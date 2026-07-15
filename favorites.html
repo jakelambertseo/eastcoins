@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <meta
+    name="robots"
+    content="noindex, nofollow, noarchive, nosnippet, noimageindex"
+  />
+  <meta
+    name="googlebot"
+    content="noindex, nofollow, noarchive, nosnippet, noimageindex"
+  />
+
+
+  <meta
+    name="description"
+    content="EastCoin favorite sites."
+  />
+
+  <title>EastCoin — Favorites</title>
+  <link rel="icon" type="image/png" href="assets/eastcoin-favicon.png" />
+  <link rel="shortcut icon" href="assets/eastcoin-favicon.png" />
+  <link rel="apple-touch-icon" href="assets/eastcoin-favicon.png" />
+
+  <link rel="stylesheet" href="assets/eastcoins-theme.css" />
+
+  <style>
+    :root {
+      --sidebar-width: 230px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      overflow: hidden;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+        BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button,
+    a {
+      font: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .favorites-layout {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+      width: 100%;
+      height: 100vh;
+      transition: grid-template-columns .24s ease;
+    }
+
+    @media (min-width: 761px) {
+      body.sidebar-collapsed .favorites-layout {
+        grid-template-columns: 0 minmax(0, 1fr);
+      }
+    }
+
+    /* ---------------- SIDEBAR ---------------- */
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      padding: 22px 16px;
+      overflow: hidden;
+      border-right: 1px solid var(--line);
+      background: #020202;
+      opacity: 1;
+      transform: translateX(0);
+      transition:
+        transform .24s ease,
+        opacity .2s ease,
+        padding .24s ease,
+        border-color .24s ease;
+      z-index: 20;
+    }
+
+    @media (min-width: 761px) {
+      body.sidebar-collapsed .sidebar {
+        padding-right: 0;
+        padding-left: 0;
+        border-right-color: transparent;
+        opacity: 0;
+        transform: translateX(-100%);
+        pointer-events: none;
+      }
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 8px 24px;
+    }
+
+    .nav-group {
+      margin-top: 12px;
+    }
+
+    .nav-label {
+      padding: 0 11px 8px;
+      color: #4f4f4f;
+      font-size: .67rem;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .nav-link {
+      appearance: none;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      width: 100%;
+      margin: 0 0 5px;
+      padding: 11px 12px;
+      border: 0;
+      border-radius: 11px;
+      outline: 0;
+      color: #747474;
+      background: transparent;
+      box-shadow: none;
+      text-align: left;
+      text-decoration: none;
+      font-weight: 700;
+      cursor: pointer;
+      transition:
+        color .18s ease,
+        background .18s ease,
+        box-shadow .18s ease;
+    }
+
+    .nav-link:visited {
+      color: #747474;
+    }
+
+    .nav-link:hover,
+    .nav-link:focus-visible,
+    .nav-link.active {
+      color: #ededed;
+      background: #090909;
+    }
+
+    .nav-link.active,
+    .nav-link.active:visited {
+      color: #ededed;
+      box-shadow: inset 2px 0 0 var(--brand-gold);
+    }
+
+    /* ---------------- SIDEBAR TOGGLE ---------------- */
+
+    .sidebar-toggle {
+      position: fixed;
+      top: 16px;
+      left: calc(var(--sidebar-width) - 20px);
+      z-index: 60;
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border: 1px solid rgba(255,255,255,.075);
+      border-radius: 11px;
+      color: var(--text);
+      background: rgba(3,3,3,.96);
+      box-shadow: 0 12px 34px rgba(0,0,0,.5);
+      cursor: pointer;
+      transition:
+        left .24s ease,
+        background .18s ease;
+    }
+
+    .sidebar-toggle:hover {
+      background: #111;
+    }
+
+    body.sidebar-collapsed .sidebar-toggle {
+      left: 16px;
+    }
+
+    .mobile-overlay {
+      display: none;
+    }
+
+    /* ---------------- CONTENT ---------------- */
+
+    .page-main {
+      min-width: 0;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 34px;
+    }
+
+    .page-shell {
+      width: min(980px, 100%);
+      margin: 0 auto;
+    }
+
+    .page-header {
+      padding: 44px 0 27px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #969696;
+      font-size: .72rem;
+      font-weight: 900;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--brand-gold);
+      box-shadow: 0 0 0 4px rgba(242,196,0,.07);
+    }
+
+    h1 {
+      margin: 13px 0 10px;
+      font-size: clamp(3rem, 6vw, 6.4rem);
+      line-height: .92;
+      letter-spacing: -.07em;
+    }
+
+    .page-header p {
+      max-width: 620px;
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .favorites-section {
+      padding: 24px 0 50px;
+    }
+
+    .favorite-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    /*
+      Add or remove favorites by copying/deleting a full
+      <a class="favorite-site" ...> block below.
+
+      Only update data-watch-url, the site name, and the visible URL.
+      JavaScript automatically creates the encoded ?watch= link.
+    */
+    .favorite-site {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      min-height: 78px;
+      padding: 18px 20px;
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 15px;
+      color: inherit;
+      background: #060606;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.015);
+      text-decoration: none;
+      transition:
+        border-color .18s ease,
+        background .18s ease,
+        transform .18s ease;
+    }
+
+    .favorite-site:hover,
+    .favorite-site:focus-visible {
+      border-color: rgba(242,196,0,.17);
+      background: #0a0a0a;
+      outline: 0;
+      transform: translateY(-1px);
+    }
+
+    .favorite-copy {
+      min-width: 0;
+    }
+
+    .site-name {
+      overflow: hidden;
+      color: #f2f2f2;
+      font-size: 1rem;
+      font-weight: 900;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .site-url {
+      margin-top: 7px;
+      overflow: hidden;
+      color: #707070;
+      font-size: .76rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .site-arrow {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border: 1px solid rgba(242,196,0,.16);
+      border-radius: 11px;
+      color: var(--brand-gold);
+      background: rgba(242,196,0,.045);
+      font-size: 1rem;
+      transition:
+        background .18s ease,
+        transform .18s ease;
+    }
+
+    .favorite-site:hover .site-arrow {
+      background: rgba(242,196,0,.08);
+      transform: translateX(2px);
+    }
+
+    .editing-note {
+      margin-top: 17px;
+      padding: 14px 15px;
+      border: 1px dashed rgba(255,255,255,.075);
+      border-radius: 13px;
+      color: #606060;
+      background: #030303;
+      font-size: .71rem;
+      line-height: 1.55;
+    }
+
+    .editing-note code {
+      color: #b5a04d;
+    }
+
+    /* ---------------- MOBILE ---------------- */
+
+    @media (max-width: 760px) {
+      body {
+        overflow: auto;
+      }
+
+      .favorites-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: 230px;
+        height: 100vh;
+        transform: translateX(-102%);
+        transition: transform .23s ease;
+      }
+
+      body.menu-open .sidebar {
+        transform: translateX(0);
+      }
+
+      body.sidebar-collapsed .sidebar {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .mobile-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 15;
+        display: block;
+        background: rgba(0,0,0,.86);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .23s ease;
+      }
+
+      body.menu-open .mobile-overlay {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .sidebar-toggle,
+      body.sidebar-collapsed .sidebar-toggle {
+        top: 16px;
+        left: 16px;
+      }
+
+      .page-main {
+        padding: 72px 16px 28px;
+      }
+
+      .page-header {
+        padding-top: 24px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .favorite-site {
+        min-height: 72px;
+        padding: 15px;
+      }
+    }
+  
+    .brand-copy-single {
+      display: flex;
+      align-items: center;
+      min-height: 48px;
+    }
+
+    .brand-copy-single strong {
+      font-size: 1.34rem;
+      line-height: 1;
+      letter-spacing: -.045em;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="mobile-overlay" id="mobileOverlay"></div>
+
+  <div class="favorites-layout">
+    <aside class="sidebar" aria-label="Primary navigation">
+      <div class="brand">
+        <div class="brand-mark brand-logo">
+          <img src="assets/eastcoins-logo.webp" alt="EastCoin logo" />
+        </div>
+
+        <div class="brand-copy brand-copy-single">
+          <strong>EastCoin</strong>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-label">EastCoin</div>
+        <a class="nav-link" href="index.html?new=1">📺 Live Player</a>
+        <a class="nav-link active" href="favorites.html">⭐ Favorites</a>
+      </div>
+    </aside>
+
+    <button
+      class="sidebar-toggle"
+      id="sidebarToggle"
+      type="button"
+      aria-label="Hide navigation"
+      aria-expanded="true">◀</button>
+
+    <main class="page-main">
+      <div class="page-shell">
+        <header class="page-header">
+          <div class="eyebrow">
+            <span class="eyebrow-dot"></span>
+            EastCoin bookmarks
+          </div>
+
+          <h1>Favorites</h1>
+
+          <p>
+            Select a site to load its URL directly into the EastCoin player.
+          </p>
+        </header>
+
+        <section class="favorites-section">
+
+          <div class="favorite-list">
+
+            <!-- FAVORITE SITE START -->
+            <a
+              class="favorite-site"
+              href="index.html"
+              data-watch-url="https://streamed.pk/">
+              <div class="favorite-copy">
+                <div class="site-name">Streamed PK</div>
+                <div class="site-url">https://streamed.pk/</div>
+              </div>
+
+              <span class="site-arrow" aria-hidden="true">→</span>
+            </a>
+            <!-- FAVORITE SITE END -->
+
+
+            <!-- FAVORITE SITE START -->
+            <a
+              class="favorite-site"
+              href="index.html"
+              data-watch-url="https://streamed.st/">
+              <div class="favorite-copy">
+                <div class="site-name">Streamed ST</div>
+                <div class="site-url">https://streamed.st/</div>
+              </div>
+
+              <span class="site-arrow" aria-hidden="true">→</span>
+            </a>
+            <!-- FAVORITE SITE END -->
+
+
+            <!-- FAVORITE SITE START -->
+            <a
+              class="favorite-site"
+              href="index.html"
+              data-watch-url="https://dlhd.st/">
+              <div class="favorite-copy">
+                <div class="site-name">DaddyLive</div>
+                <div class="site-url">https://dlhd.st/</div>
+              </div>
+
+              <span class="site-arrow" aria-hidden="true">→</span>
+            </a>
+            <!-- FAVORITE SITE END -->
+
+          </div>
+
+          <div class="editing-note">
+            Ping Booty on Discord to add sites to this list.
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const body = document.body;
+    const sidebarToggle = document.getElementById("sidebarToggle");
+    const mobileOverlay = document.getElementById("mobileOverlay");
+
+    const SIDEBAR_STORAGE_KEY = "eastcoinsSidebarCollapsed";
+
+    function isMobileNavigation() {
+      return window.matchMedia("(max-width: 760px)").matches;
+    }
+
+    function updateNavigationButton() {
+      if (isMobileNavigation()) {
+        const open = body.classList.contains("menu-open");
+
+        sidebarToggle.textContent = open ? "✕" : "☰";
+        sidebarToggle.setAttribute(
+          "aria-label",
+          open ? "Close navigation" : "Open navigation"
+        );
+        sidebarToggle.setAttribute("aria-expanded", String(open));
+        return;
+      }
+
+      const collapsed = body.classList.contains("sidebar-collapsed");
+
+      sidebarToggle.textContent = collapsed ? "☰" : "◀";
+      sidebarToggle.setAttribute(
+        "aria-label",
+        collapsed ? "Show navigation" : "Hide navigation"
+      );
+      sidebarToggle.setAttribute("aria-expanded", String(!collapsed));
+    }
+
+    function setDesktopSidebarCollapsed(collapsed, save = true) {
+      body.classList.toggle("sidebar-collapsed", collapsed);
+
+      if (save) {
+        localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed));
+      }
+
+      updateNavigationButton();
+    }
+
+    sidebarToggle.addEventListener("click", () => {
+      if (isMobileNavigation()) {
+        body.classList.toggle("menu-open");
+        updateNavigationButton();
+        return;
+      }
+
+      setDesktopSidebarCollapsed(
+        !body.classList.contains("sidebar-collapsed")
+      );
+    });
+
+    mobileOverlay.addEventListener("click", () => {
+      body.classList.remove("menu-open");
+      updateNavigationButton();
+    });
+
+    /*
+      Convert each data-watch-url into a safely encoded dynamic link.
+      This keeps manual HTML editing simple.
+    */
+    document.querySelectorAll(".favorite-site[data-watch-url]").forEach((card) => {
+      const watchUrl = card.dataset.watchUrl.trim();
+      const destination = new URL("index.html", window.location.href);
+
+      destination.searchParams.set("watch", watchUrl);
+      card.href = destination.href;
+    });
+
+    window.addEventListener("resize", () => {
+      body.classList.remove("menu-open");
+      updateNavigationButton();
+    });
+
+    const savedSidebarState =
+      localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+
+    if (!isMobileNavigation()) {
+      setDesktopSidebarCollapsed(savedSidebarState, false);
+    } else {
+      updateNavigationButton();
+    }
+  </script>
+</body>
+</html>

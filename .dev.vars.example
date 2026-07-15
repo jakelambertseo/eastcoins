@@ -1,0 +1,3 @@
+APPROVED_USERS="BootyPaper"
+SITE_PASSWORD="replace-with-your-shared-password"
+SESSION_SECRET="replace-with-a-long-random-value"

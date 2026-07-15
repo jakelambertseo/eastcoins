@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <meta
+    name="robots"
+    content="noindex, nofollow, noarchive, nosnippet, noimageindex"
+  />
+  <meta
+    name="googlebot"
+    content="noindex, nofollow, noarchive, nosnippet, noimageindex"
+  />
+
+  <meta name="description" content="EastCoin private sports watch room with an embeddable player and Twitch chat." />
+  <title>EastCoin — Watch Room</title>
+
+  <style>
+    :root {
+      --bg: #050b14;
+      --sidebar: #091321;
+      --panel: #0d1928;
+      --panel-2: #132338;
+      --line: rgba(255,255,255,.08);
+      --text: #f1f6ff;
+      --muted: #8ea1bb;
+      --green: #55d88a;
+      --green-hover: #6be59b;
+      --red: #ff7777;
+      --purple: #9d7aea;
+      --shadow: 0 24px 60px rgba(0,0,0,.35);
+      --sidebar-width: 230px;
+      --chat-width: 360px;
+      --divider-width: 10px;
+      --min-video-width: 420px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 35% 0%, rgba(81,216,138,.08), transparent 32%),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow: hidden;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns:
+        var(--sidebar-width)
+        minmax(var(--min-video-width),1fr)
+        var(--divider-width)
+        var(--chat-width);
+      width: 100%;
+      height: 100vh;
+      transition: grid-template-columns .24s ease;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      padding: 22px 16px;
+      overflow: hidden;
+      border-right: 1px solid var(--line);
+      background: rgba(9,19,33,.97);
+      opacity: 1;
+      transform: translateX(0);
+      transition:
+        transform .24s ease,
+        opacity .2s ease,
+        padding .24s ease,
+        border-color .24s ease;
+      z-index: 20;
+    }
+
+    @media (min-width: 901px) {
+      body.sidebar-collapsed .layout {
+        grid-template-columns:
+          0
+          minmax(var(--min-video-width),1fr)
+          var(--divider-width)
+          var(--chat-width);
+      }
+
+      body.sidebar-collapsed .sidebar {
+        padding-left: 0;
+        padding-right: 0;
+        border-right-color: transparent;
+        opacity: 0;
+        transform: translateX(-100%);
+        pointer-events: none;
+      }
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 8px 24px;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      border-radius: 13px;
+      color: #07110b;
+      font-weight: 950;
+      background: linear-gradient(135deg, var(--green), #b7ffca);
+      box-shadow: 0 10px 30px rgba(81,216,138,.2);
+    }
+
+    .brand-copy strong {
+      display: block;
+      letter-spacing: -.02em;
+    }
+
+    .brand-copy span {
+      color: var(--muted);
+      font-size: .74rem;
+    }
+
+    .nav-group {
+      margin-top: 12px;
+    }
+
+    .nav-label {
+      padding: 0 11px 8px;
+      color: #647994;
+      font-size: .67rem;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      width: 100%;
+      margin-bottom: 5px;
+      padding: 11px 12px;
+      border: 0;
+      border-radius: 11px;
+      color: var(--muted);
+      background: transparent;
+      text-align: left;
+      font-weight: 700;
+      transition: .2s ease;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      color: var(--text);
+      background: rgba(255,255,255,.06);
+    }
+
+    .nav-link.active {
+      box-shadow: inset 3px 0 0 var(--green);
+    }
+
+    .watch-area {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      padding: 16px;
+      background: #040912;
+    }
+
+    .player-shell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background:
+        linear-gradient(rgba(5,11,20,.35), rgba(5,11,20,.82)),
+        url("https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1800&q=85") center/cover;
+      box-shadow: var(--shadow);
+    }
+
+    .player-shell.has-frame {
+      background: #000;
+    }
+
+    .player-toolbar {
+      position: absolute;
+      inset: 0 0 auto 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 16px 18px 16px 66px;
+      background: linear-gradient(rgba(4,9,18,.95), rgba(4,9,18,.4), transparent);
+      pointer-events: none;
+    }
+
+    .player-toolbar > * {
+      pointer-events: auto;
+    }
+
+    .toolbar-title strong {
+      display: block;
+      font-size: .92rem;
+    }
+
+    .toolbar-title span {
+      color: var(--muted);
+      font-size: .72rem;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .toolbar-button {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 11px;
+      color: var(--text);
+      background: rgba(9,19,33,.78);
+      font-size: .78rem;
+      font-weight: 800;
+      backdrop-filter: blur(12px);
+    }
+
+    .toolbar-button:hover {
+      background: rgba(255,255,255,.1);
+    }
+
+    .embed-frame {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
+    }
+
+    .url-stage {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      overflow-y: auto;
+    }
+
+    .url-card {
+      width: min(720px,100%);
+      padding: 30px;
+      border: 1px solid rgba(255,255,255,.11);
+      border-radius: 20px;
+      background: rgba(8,17,29,.88);
+      box-shadow: 0 20px 60px rgba(0,0,0,.32);
+      backdrop-filter: blur(18px);
+      text-align: center;
+    }
+
+    .url-icon {
+      display: grid;
+      place-items: center;
+      width: 54px;
+      height: 54px;
+      margin: 0 auto 16px;
+      border: 1px solid rgba(81,216,138,.26);
+      border-radius: 16px;
+      background: rgba(81,216,138,.1);
+      font-size: 1.45rem;
+    }
+
+    .url-card h1 {
+      margin: 0;
+      font-size: clamp(2rem,4vw,4rem);
+      line-height: 1;
+      letter-spacing: -.05em;
+    }
+
+    .url-card > p {
+      max-width: 590px;
+      margin: 14px auto 0;
+      color: #c0cede;
+      line-height: 1.6;
+    }
+
+    .url-form {
+      margin-top: 24px;
+    }
+
+    .url-entry {
+      display: flex;
+      gap: 10px;
+    }
+
+    .url-entry input {
+      min-width: 0;
+      flex: 1;
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 11px;
+      outline: 0;
+      color: var(--text);
+      background: rgba(255,255,255,.055);
+    }
+
+    .url-entry input:focus {
+      border-color: rgba(81,216,138,.65);
+      box-shadow: 0 0 0 4px rgba(81,216,138,.08);
+    }
+
+    .url-entry input::placeholder {
+      color: #6e819b;
+    }
+
+    .load-button {
+      padding: 0 20px;
+      border: 0;
+      border-radius: 11px;
+      color: #07110b;
+      background: var(--green);
+      font-weight: 950;
+    }
+
+    .load-button:hover {
+      background: var(--green-hover);
+    }
+
+    .form-options {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-top: 12px;
+      text-align: left;
+    }
+
+    .remember-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: .77rem;
+    }
+
+    .remember-label input {
+      accent-color: var(--green);
+    }
+
+    .url-error {
+      min-height: 22px;
+      margin-top: 10px;
+      color: var(--red);
+      font-size: .8rem;
+    }
+
+    .resize-handle {
+      position: relative;
+      z-index: 30;
+      width: 100%;
+      height: 100%;
+      cursor: col-resize;
+      touch-action: none;
+      background: #07101c;
+      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+      transition: background .15s ease;
+    }
+
+    .resize-handle::before {
+      content: "";
+      position: absolute;
+      inset: 0 -5px;
+    }
+
+    .resize-handle span {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 4px;
+      height: 48px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.18);
+      transform: translate(-50%,-50%);
+      transition: height .15s ease, background .15s ease;
+    }
+
+    .resize-handle:hover,
+    .resize-handle:focus-visible,
+    body.resizing-chat .resize-handle {
+      outline: 0;
+      background: rgba(81,216,138,.12);
+    }
+
+    .resize-handle:hover span,
+    .resize-handle:focus-visible span,
+    body.resizing-chat .resize-handle span {
+      height: 70px;
+      background: var(--green);
+    }
+
+    body.resizing-chat,
+    body.resizing-chat * {
+      cursor: col-resize !important;
+      user-select: none !important;
+    }
+
+    body.resizing-chat iframe {
+      pointer-events: none !important;
+    }
+
+    .chat-panel {
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      background: #0e0e10;
+    }
+
+    .twitch-chat-frame {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      border: 0;
+      background: #0e0e10;
+    }
+
+    .mobile-menu {
+      position: fixed;
+      top: 16px;
+      left: calc(var(--sidebar-width) - 20px);
+      z-index: 60;
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      color: var(--text);
+      background: rgba(3,3,3,.94);
+      box-shadow: 0 12px 34px rgba(0,0,0,.5);
+      transition:
+        left .24s ease,
+        background .18s ease,
+        transform .18s ease;
+    }
+
+    .mobile-menu:hover {
+      background: #111;
+    }
+
+    body.sidebar-collapsed .mobile-menu {
+      left: 16px;
+    }
+
+    .mobile-overlay {
+      display: none;
+    }
+
+    .toast {
+      position: fixed;
+      right: calc(var(--chat-width) + var(--divider-width) + 24px);
+      bottom: 24px;
+      z-index: 100;
+      max-width: 360px;
+      padding: 13px 15px;
+      border: 1px solid rgba(81,216,138,.35);
+      border-radius: 12px;
+      color: var(--text);
+      background: #10233a;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(16px);
+      pointer-events: none;
+      transition: .25s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 1050px) {
+      :root {
+        --sidebar-width: 200px;
+        --chat-width: 320px;
+      }
+
+      .brand-copy span {
+        display: none;
+      }
+    }
+
+    @media (max-width: 900px) {
+      body {
+        overflow: auto;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: 230px;
+        height: 100vh;
+        transform: translateX(-102%);
+        transition: transform .25s ease;
+      }
+
+      body.menu-open .sidebar {
+        transform: translateX(0);
+      }
+
+      .mobile-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 15;
+        display: block;
+        background: rgba(0,0,0,.58);
+        opacity: 0;
+        pointer-events: none;
+        transition: .25s ease;
+      }
+
+      body.menu-open .mobile-overlay {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .watch-area {
+        min-height: 68vh;
+        padding: 12px;
+      }
+
+      .mobile-menu,
+      body.sidebar-collapsed .mobile-menu {
+        top: 16px;
+        left: 16px;
+      }
+
+      body.sidebar-collapsed .sidebar {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .player-toolbar {
+        padding-left: 66px;
+      }
+
+      .resize-handle {
+        display: none;
+      }
+
+      .chat-panel {
+        height: 520px;
+        min-height: 520px;
+        border-left: 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .toast {
+        right: 18px;
+        bottom: 18px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .watch-area {
+        min-height: 72vh;
+      }
+
+      .url-stage {
+        padding: 14px;
+      }
+
+      .url-card {
+        padding: 24px 18px;
+      }
+
+      .url-entry {
+        flex-direction: column;
+      }
+
+      .load-button {
+        min-height: 46px;
+      }
+
+      .form-options {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .player-toolbar {
+        align-items: flex-start;
+      }
+
+      .toolbar-title {
+        display: none;
+      }
+
+      .toolbar-actions {
+        margin-left: auto;
+      }
+    }
+
+  
+    .brand-copy-single {
+      display: flex;
+      align-items: center;
+      min-height: 48px;
+    }
+
+    .brand-copy-single strong {
+      font-size: 1.34rem;
+      line-height: 1;
+      letter-spacing: -.045em;
+    }
+
+    .url-image-icon {
+      width: 76px;
+      height: 76px;
+      padding: 0;
+      overflow: hidden;
+      border-color: rgba(242,196,0,.14);
+      border-radius: 22px;
+      background: #020202;
+    }
+
+    .url-image-icon img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+  
+    .share-room-button {
+      color: #ffdce3;
+      border-color: rgba(210,26,74,.38);
+      background:
+        linear-gradient(
+          180deg,
+          rgba(173,9,50,.96),
+          rgba(116,5,34,.96)
+        );
+      box-shadow:
+        0 10px 26px rgba(173,9,50,.22),
+        inset 0 1px 0 rgba(255,255,255,.09);
+    }
+
+    .share-room-button:hover,
+    .share-room-button:focus-visible {
+      color: #fff;
+      border-color: rgba(255,112,145,.5);
+      background:
+        linear-gradient(
+          180deg,
+          rgba(201,18,63,.98),
+          rgba(139,8,42,.98)
+        );
+      box-shadow:
+        0 12px 32px rgba(173,9,50,.32),
+        inset 0 1px 0 rgba(255,255,255,.12);
+      outline: 0;
+      transform: translateY(-1px);
+    }
+
+  </style>
+  <link rel="icon" type="image/png" href="assets/eastcoin-favicon.png" />
+  <link rel="shortcut icon" href="assets/eastcoin-favicon.png" />
+  <link rel="apple-touch-icon" href="assets/eastcoin-favicon.png" />
+
+  <link rel="stylesheet" href="assets/eastcoins-theme.css" />
+</head>
+
+<body>
+  <div class="mobile-overlay" id="mobileOverlay" aria-hidden="true"></div>
+
+  <div class="layout">
+    <aside class="sidebar" aria-label="Primary navigation">
+      <div class="brand">
+        <div class="brand-mark brand-logo"><img src="assets/eastcoins-logo.webp" alt="EastCoin logo" /></div>
+        <div class="brand-copy brand-copy-single">
+          <strong>EastCoin</strong>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-label">EastCoin</div>
+        <a class="nav-link active" href="index.html?new=1">📺 Live Player</a>
+        <a class="nav-link" href="favorites.html">⭐ Favorites</a>
+      </div>
+    </aside>
+
+    <main class="watch-area">
+      <button
+        class="mobile-menu"
+        id="mobileMenu"
+        type="button"
+        aria-label="Hide navigation"
+        aria-expanded="true">◀</button>
+
+      <section class="player-shell" id="playerShell" aria-label="Embedded video player">
+        <div class="player-toolbar" id="playerToolbar" hidden>
+          <div class="toolbar-title">
+            <strong>Embedded Stream</strong>
+            <span id="currentHost">External provider</span>
+          </div>
+
+          <div class="toolbar-actions">
+            <button class="toolbar-button share-room-button" id="shareButton" type="button">🔗 Share room</button>
+            <button class="toolbar-button" id="openButton" type="button">Open source ↗</button>
+            <button class="toolbar-button" id="changeButton" type="button">Change URL</button>
+          </div>
+        </div>
+
+        <div class="url-stage" id="urlStage">
+          <div class="url-card">
+            <div class="url-icon url-image-icon">
+              <img
+                src="assets/eastcoin-player-icon.webp"
+                alt=""
+                aria-hidden="true"
+              />
+            </div>
+            <h1>Embed a video URL</h1>
+            <p>
+              Paste an authorized iframe or player URL below. The page will try to load it directly inside the center player.
+            </p>
+
+            <form class="url-form" id="streamForm">
+              <div class="url-entry">
+                <input
+                  id="streamUrl"
+                  type="url"
+                  inputmode="url"
+                  autocomplete="url"
+                  placeholder="https://www.youtube.com/embed/VIDEO_ID"
+                  aria-label="Video embed URL"
+                  required
+                />
+                <button class="load-button" type="submit">Load URL</button>
+              </div>
+
+              <div class="form-options">
+                <label class="remember-label">
+                  <input id="rememberUrl" type="checkbox" checked />
+                  Remember this URL on this device
+                </label>
+              </div>
+
+              <div class="url-error" id="urlError" role="alert"></div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div
+      class="resize-handle"
+      id="resizeHandle"
+      role="separator"
+      aria-label="Resize Twitch chat"
+      aria-orientation="vertical"
+      aria-valuemin="280"
+      aria-valuenow="360"
+      tabindex="0">
+      <span aria-hidden="true"></span>
+    </div>
+
+    <aside class="chat-panel" aria-label="Twitch chat">
+      <iframe
+        class="twitch-chat-frame"
+        src="https://www.twitch.tv/embed/zwades/chat?parent=localhost&amp;parent=127.0.0.1&amp;darkpopout"
+        title="zwades Twitch chat"
+        loading="eager"
+        referrerpolicy="strict-origin-when-cross-origin">
+      </iframe>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const body = document.body;
+    const playerShell = document.getElementById("playerShell");
+    const playerToolbar = document.getElementById("playerToolbar");
+    const urlStage = document.getElementById("urlStage");
+    const streamForm = document.getElementById("streamForm");
+    const streamUrlInput = document.getElementById("streamUrl");
+    const rememberUrl = document.getElementById("rememberUrl");
+    const urlError = document.getElementById("urlError");
+    const currentHost = document.getElementById("currentHost");
+    const openButton = document.getElementById("openButton");
+    const shareButton = document.getElementById("shareButton");
+    const changeButton = document.getElementById("changeButton");
+    const mobileMenu = document.getElementById("mobileMenu");
+    const mobileOverlay = document.getElementById("mobileOverlay");
+    const layout = document.querySelector(".layout");
+    const sidebar = document.querySelector(".sidebar");
+    const resizeHandle = document.getElementById("resizeHandle");
+    const toast = document.getElementById("toast");
+
+    let activeUrl = "";
+    let toastTimer;
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+    }
+
+    function normalizeEmbedUrl(rawValue) {
+      const trimmed = rawValue.trim();
+      const valueWithProtocol = /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(trimmed)
+        ? trimmed
+        : `https://${trimmed}`;
+      const parsed = new URL(valueWithProtocol);
+
+      if (!["https:", "http:"].includes(parsed.protocol)) {
+        throw new Error("Only HTTP or HTTPS URLs can be embedded.");
+      }
+
+      // Convert common YouTube watch/share URLs into embed URLs.
+      if (parsed.hostname === "youtu.be") {
+        const videoId = parsed.pathname.replace("/", "");
+        if (videoId) {
+          return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
+        }
+      }
+
+      if (
+        parsed.hostname === "youtube.com" ||
+        parsed.hostname === "www.youtube.com" ||
+        parsed.hostname === "m.youtube.com"
+      ) {
+        if (parsed.pathname === "/watch") {
+          const videoId = parsed.searchParams.get("v");
+          if (videoId) {
+            return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
+          }
+        }
+
+        if (parsed.pathname.startsWith("/shorts/")) {
+          const videoId = parsed.pathname.split("/")[2];
+          if (videoId) {
+            return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
+          }
+        }
+      }
+
+      return parsed.href;
+    }
+
+    function loadStream(rawValue, savePreference = rememberUrl.checked) {
+      urlError.textContent = "";
+
+      let normalizedUrl;
+      let parsedUrl;
+
+      try {
+        normalizedUrl = normalizeEmbedUrl(rawValue);
+        parsedUrl = new URL(normalizedUrl);
+      } catch (error) {
+        urlError.textContent = error.message || "Please enter a valid URL.";
+        return;
+      }
+
+      const iframe = document.createElement("iframe");
+      iframe.className = "embed-frame";
+      iframe.src = normalizedUrl;
+      iframe.title = "Embedded video";
+      iframe.allow = "autoplay; fullscreen; picture-in-picture; encrypted-media";
+      iframe.allowFullscreen = true;
+
+      activeUrl = normalizedUrl;
+      currentHost.textContent = parsedUrl.hostname;
+      playerShell.classList.add("has-frame");
+      playerToolbar.hidden = false;
+      urlStage.replaceWith(iframe);
+      iframe.id = "activeFrame";
+
+      if (savePreference) {
+        localStorage.setItem("eastcoinsEmbedUrl", normalizedUrl);
+      } else {
+        localStorage.removeItem("eastcoinsEmbedUrl");
+      }
+
+      showToast("URL loaded. If the player stays blank, the provider may block iframe embedding.");
+    }
+
+    function restoreUrlPrompt() {
+      const activeFrame = document.getElementById("activeFrame");
+      if (activeFrame) {
+        activeFrame.replaceWith(urlStage);
+      }
+
+      playerShell.classList.remove("has-frame");
+      playerToolbar.hidden = true;
+      streamUrlInput.value = activeUrl;
+      urlError.textContent = "";
+      setTimeout(() => streamUrlInput.focus(), 0);
+    }
+
+    streamForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      loadStream(streamUrlInput.value);
+    });
+
+    changeButton.addEventListener("click", restoreUrlPrompt);
+
+    openButton.addEventListener("click", () => {
+      if (activeUrl) {
+        window.open(activeUrl, "_blank", "noopener,noreferrer");
+      }
+    });
+
+    function buildShareUrl(streamUrl) {
+      const shareUrl = new URL(window.location.href);
+      shareUrl.search = "";
+      shareUrl.hash = "";
+      shareUrl.searchParams.set("watch", streamUrl);
+      return shareUrl.href;
+    }
+
+    shareButton.addEventListener("click", async () => {
+      if (!activeUrl) return;
+
+      const shareUrl = buildShareUrl(activeUrl);
+
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast("Shareable watch link copied.");
+      } catch {
+        window.prompt("Copy this watch link:", shareUrl);
+      }
+    });
+
+    const SIDEBAR_STORAGE_KEY = "eastcoinsSidebarCollapsed";
+
+    function isMobileNavigation() {
+      return window.matchMedia("(max-width: 900px)").matches;
+    }
+
+    function updateNavigationButton() {
+      if (isMobileNavigation()) {
+        const open = body.classList.contains("menu-open");
+        mobileMenu.textContent = open ? "✕" : "☰";
+        mobileMenu.setAttribute(
+          "aria-label",
+          open ? "Close navigation" : "Open navigation"
+        );
+        mobileMenu.setAttribute("aria-expanded", String(open));
+        return;
+      }
+
+      const collapsed = body.classList.contains("sidebar-collapsed");
+      mobileMenu.textContent = collapsed ? "☰" : "◀";
+      mobileMenu.setAttribute(
+        "aria-label",
+        collapsed ? "Show navigation" : "Hide navigation"
+      );
+      mobileMenu.setAttribute("aria-expanded", String(!collapsed));
+    }
+
+    function setDesktopSidebarCollapsed(collapsed, save = true) {
+      body.classList.toggle("sidebar-collapsed", collapsed);
+
+      if (save) {
+        localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed));
+      }
+
+      updateNavigationButton();
+    }
+
+    mobileMenu.addEventListener("click", () => {
+      if (isMobileNavigation()) {
+        body.classList.toggle("menu-open");
+        updateNavigationButton();
+        return;
+      }
+
+      setDesktopSidebarCollapsed(
+        !body.classList.contains("sidebar-collapsed")
+      );
+    });
+
+    mobileOverlay.addEventListener("click", () => {
+      body.classList.remove("menu-open");
+      updateNavigationButton();
+    });
+
+    document.querySelectorAll(".nav-link").forEach((link) => {
+      link.addEventListener("click", () => {
+        document.querySelectorAll(".nav-link").forEach((item) => item.classList.remove("active"));
+        link.classList.add("active");
+        body.classList.remove("menu-open");
+        updateNavigationButton();
+      });
+    });
+
+
+
+    const CHAT_WIDTH_STORAGE_KEY = "eastcoinsChatWidth";
+    const DEFAULT_CHAT_WIDTH = 360;
+    const MIN_CHAT_WIDTH = 280;
+    const MIN_VIDEO_WIDTH = 420;
+    let activePointerId = null;
+
+    function getChatWidthLimits() {
+      const layoutWidth = layout.getBoundingClientRect().width;
+      const sidebarWidth = sidebar.getBoundingClientRect().width;
+      const dividerWidth = resizeHandle.getBoundingClientRect().width;
+
+      return {
+        min: MIN_CHAT_WIDTH,
+        max: Math.max(
+          MIN_CHAT_WIDTH,
+          layoutWidth - sidebarWidth - dividerWidth - MIN_VIDEO_WIDTH
+        )
+      };
+    }
+
+    function clampChatWidth(width) {
+      const limits = getChatWidthLimits();
+      return Math.min(Math.max(width, limits.min), limits.max);
+    }
+
+    function setChatWidth(width, save = false) {
+      if (window.innerWidth <= 900) return;
+
+      const clampedWidth = Math.round(clampChatWidth(width));
+      document.documentElement.style.setProperty(
+        "--chat-width",
+        `${clampedWidth}px`
+      );
+
+      resizeHandle.setAttribute("aria-valuenow", String(clampedWidth));
+      resizeHandle.setAttribute("aria-valuemax", String(Math.round(getChatWidthLimits().max)));
+
+      if (save) {
+        localStorage.setItem(CHAT_WIDTH_STORAGE_KEY, String(clampedWidth));
+      }
+    }
+
+    function widthFromPointer(clientX) {
+      const layoutRect = layout.getBoundingClientRect();
+      return layoutRect.right - clientX;
+    }
+
+    resizeHandle.addEventListener("pointerdown", (event) => {
+      if (window.innerWidth <= 900 || event.button !== 0) return;
+
+      activePointerId = event.pointerId;
+      resizeHandle.setPointerCapture(activePointerId);
+      body.classList.add("resizing-chat");
+      setChatWidth(widthFromPointer(event.clientX));
+      event.preventDefault();
+    });
+
+    resizeHandle.addEventListener("pointermove", (event) => {
+      if (event.pointerId !== activePointerId) return;
+      setChatWidth(widthFromPointer(event.clientX));
+    });
+
+    function finishChatResize(event) {
+      if (event.pointerId !== activePointerId) return;
+
+      setChatWidth(widthFromPointer(event.clientX), true);
+      body.classList.remove("resizing-chat");
+
+      if (resizeHandle.hasPointerCapture(activePointerId)) {
+        resizeHandle.releasePointerCapture(activePointerId);
+      }
+
+      activePointerId = null;
+    }
+
+    resizeHandle.addEventListener("pointerup", finishChatResize);
+    resizeHandle.addEventListener("pointercancel", (event) => {
+      if (event.pointerId !== activePointerId) return;
+      body.classList.remove("resizing-chat");
+      activePointerId = null;
+    });
+
+    resizeHandle.addEventListener("keydown", (event) => {
+      if (window.innerWidth <= 900) return;
+
+      const currentWidth = parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue("--chat-width")
+      ) || DEFAULT_CHAT_WIDTH;
+
+      const step = event.shiftKey ? 50 : 20;
+      let nextWidth = currentWidth;
+
+      if (event.key === "ArrowLeft") {
+        nextWidth += step;
+      } else if (event.key === "ArrowRight") {
+        nextWidth -= step;
+      } else if (event.key === "Home") {
+        nextWidth = MIN_CHAT_WIDTH;
+      } else if (event.key === "End") {
+        nextWidth = getChatWidthLimits().max;
+      } else {
+        return;
+      }
+
+      event.preventDefault();
+      setChatWidth(nextWidth, true);
+    });
+
+    resizeHandle.addEventListener("dblclick", () => {
+      setChatWidth(DEFAULT_CHAT_WIDTH, true);
+      showToast("Chat width reset.");
+    });
+
+    window.addEventListener("resize", () => {
+      body.classList.remove("menu-open");
+
+      if (window.innerWidth > 900) {
+        const currentWidth = parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue("--chat-width")
+        ) || DEFAULT_CHAT_WIDTH;
+        setChatWidth(currentWidth);
+      }
+
+      updateNavigationButton();
+    });
+
+    const savedSidebarState =
+      localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+
+    if (!isMobileNavigation()) {
+      setDesktopSidebarCollapsed(savedSidebarState, false);
+    } else {
+      updateNavigationButton();
+    }
+
+    const savedChatWidth = Number(localStorage.getItem(CHAT_WIDTH_STORAGE_KEY));
+    if (Number.isFinite(savedChatWidth) && savedChatWidth > 0) {
+      setChatWidth(savedChatWidth);
+    } else {
+      setChatWidth(DEFAULT_CHAT_WIDTH);
+    }
+
+    const queryParameters = new URLSearchParams(window.location.search);
+    const startFresh = queryParameters.get("new") === "1";
+
+    if (startFresh) {
+      /*
+        The Live Player navigation uses ?new=1 to intentionally return
+        to the blank “Enter a URL” screen instead of restoring the last site.
+      */
+      localStorage.removeItem("eastcoinsEmbedUrl");
+      history.replaceState({}, "", window.location.pathname);
+    } else {
+      const queryStream =
+        queryParameters.get("watch") || queryParameters.get("stream");
+      const savedUrl = localStorage.getItem("eastcoinsEmbedUrl");
+      const initialUrl = queryStream || savedUrl;
+
+      if (initialUrl) {
+        streamUrlInput.value = initialUrl;
+
+        /*
+          Keep ?watch= in the address bar.
+
+          Some third-party players reload or navigate the parent page after
+          initialization. Keeping the parameter means EastCoin can restore the
+          same player after that reload instead of falling back to the URL form.
+
+          A previously saved URL also auto-loads as a secondary fallback.
+        */
+        loadStream(initialUrl, true);
+      }
+    }
+
+  </script>
+</body>
+</html>

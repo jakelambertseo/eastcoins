@@ -1,0 +1,437 @@
+/*
+  EASTCOINS SHARED THEME
+  Reuse this stylesheet on future pages:
+  <link rel="stylesheet" href="assets/eastcoins-theme.css">
+*/
+
+:root {
+  --bg: #000000;
+  --sidebar: #020202;
+  --panel: #050505;
+  --panel-2: #090909;
+  --line: rgba(255, 255, 255, 0.065);
+  --text: #f4f4f4;
+  --muted: #858585;
+
+  /* Existing components use --green as their primary accent. */
+  --green: #f2c400;
+  --green-hover: #ffd52b;
+
+  /* Existing components use --purple as a secondary accent. */
+  --purple: #ad0932;
+  --purple-hover: #c31644;
+
+  --red: #ef6670;
+  --brand-red: #ad0932;
+  --brand-red-bright: #d21a4a;
+  --brand-gold: #f2c400;
+  --brand-gold-soft: #cda600;
+  --shadow: 0 30px 90px rgba(0, 0, 0, 0.82);
+}
+
+html {
+  color-scheme: dark;
+  background: #000;
+}
+
+body {
+  color: var(--text);
+  background:
+    radial-gradient(circle at 18% -12%, rgba(173, 9, 50, 0.11), transparent 30%),
+    radial-gradient(circle at 82% -14%, rgba(242, 196, 0, 0.055), transparent 25%),
+    #000;
+}
+
+::selection {
+  color: #fff;
+  background: rgba(173, 9, 50, 0.72);
+}
+
+* {
+  scrollbar-color: #272727 #050505;
+}
+
+/* ---------- EASTCOINS BRAND ---------- */
+
+.brand {
+  min-width: 0;
+}
+
+.brand-mark.brand-logo {
+  display: block;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(242, 196, 0, 0.22);
+  border-radius: 14px;
+  color: transparent;
+  background: #080808;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.92),
+    0 14px 38px rgba(0, 0, 0, 0.72);
+}
+
+.brand-mark.brand-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.brand-copy {
+  min-width: 0;
+}
+
+.brand-copy strong {
+  color: #fafafa;
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+}
+
+.brand-copy span {
+  color: #777;
+}
+
+/* ---------- COMMON SURFACES ---------- */
+
+.login-view,
+.denied-view,
+.watch-view,
+.watch-area,
+.denied-shell {
+  background-color: #000;
+}
+
+.login-topbar,
+.sidebar {
+  border-color: rgba(255, 255, 255, 0.05);
+  background: rgba(1, 1, 1, 0.97);
+}
+
+.login-topbar {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.018);
+}
+
+.sidebar {
+  box-shadow: 16px 0 50px rgba(0, 0, 0, 0.5);
+}
+
+.login-card,
+.modal,
+.denied-card,
+.url-card {
+  border-color: rgba(255, 255, 255, 0.07);
+  background: #050505;
+  box-shadow:
+    0 36px 110px rgba(0, 0, 0, 0.86),
+    inset 0 1px 0 rgba(255, 255, 255, 0.022);
+}
+
+.login-card p,
+.modal p,
+.denied-card p,
+.url-card p,
+.toolbar-title span,
+.user-card span,
+.feature span,
+.brand-copy span {
+  color: #818181;
+}
+
+/* ---------- LOGIN PAGE ---------- */
+
+.login-status,
+.eyebrow {
+  color: #b5b5b5;
+}
+
+.status-dot {
+  background: var(--brand-gold);
+  box-shadow: 0 0 0 4px rgba(242, 196, 0, 0.075);
+}
+
+.login-hero {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.99) 0%,
+      rgba(0, 0, 0, 0.95) 40%,
+      rgba(0, 0, 0, 0.79) 72%,
+      rgba(0, 0, 0, 0.62) 100%
+    ),
+    url("https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1800&q=76") center/cover;
+  background-blend-mode: normal, luminosity;
+}
+
+.login-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.88)),
+    radial-gradient(circle at 78% 40%, transparent, rgba(0, 0, 0, 0.72));
+}
+
+.login-hero::after {
+  z-index: 2;
+  border-color: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.56);
+}
+
+.hero-content {
+  z-index: 3;
+}
+
+.hero-content p {
+  color: #a4a4a4;
+}
+
+.feature {
+  border-color: rgba(255, 255, 255, 0.055);
+  background: rgba(4, 4, 4, 0.86);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.018);
+}
+
+.login-panel {
+  border-color: rgba(255, 255, 255, 0.05);
+  background:
+    radial-gradient(circle at 50% 40%, rgba(173, 9, 50, 0.055), transparent 35%),
+    #000;
+}
+
+.discord-icon,
+.discord-button,
+.primary-button {
+  background: #5865f2;
+}
+
+.discord-icon {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.7);
+}
+
+.discord-button:hover,
+.primary-button:hover {
+  background: #6874f5;
+}
+
+.login-list li {
+  color: #a7a7a7;
+}
+
+.check {
+  color: var(--brand-gold);
+}
+
+.fine-print {
+  border-color: rgba(255, 255, 255, 0.05);
+  color: #636363;
+}
+
+.modal-backdrop {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.demo-choice,
+.secondary-button,
+.close-modal,
+.logout-button {
+  border-color: rgba(255, 255, 255, 0.07);
+  background: #080808;
+}
+
+.demo-choice:hover,
+.secondary-button:hover,
+.close-modal:hover,
+.logout-button:hover {
+  border-color: rgba(242, 196, 0, 0.18);
+  background: #0d0d0d;
+}
+
+.demo-choice:hover {
+  border-color: rgba(173, 9, 50, 0.55);
+  background: rgba(173, 9, 50, 0.08);
+}
+
+.denied-shell {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(173, 9, 50, 0.07), transparent 30%),
+    #000;
+}
+
+.denied-icon {
+  color: #ffc5cf;
+  border-color: rgba(173, 9, 50, 0.22);
+  background: rgba(173, 9, 50, 0.09);
+}
+
+/* ---------- NAVIGATION ---------- */
+
+.nav-label {
+  color: #4f4f4f;
+}
+
+.nav-link {
+  color: #747474;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: #ededed;
+  background: #090909;
+}
+
+.nav-link.active {
+  box-shadow: inset 2px 0 0 var(--brand-gold);
+}
+
+.user-card {
+  border-color: rgba(255, 255, 255, 0.06);
+  background: #070707;
+}
+
+.avatar {
+  color: #fff4f6;
+  border: 1px solid rgba(173, 9, 50, 0.3);
+  background: #7e0928;
+}
+
+/* ---------- WATCH / INDEX PAGE ---------- */
+
+.watch-area {
+  background: #000;
+}
+
+.player-shell {
+  border-color: rgba(255, 255, 255, 0.055);
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.95)),
+    url("https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1800&q=74") center/cover;
+  background-blend-mode: normal, luminosity;
+  box-shadow: 0 34px 110px rgba(0, 0, 0, 0.9);
+}
+
+.player-shell.has-frame {
+  background: #000;
+}
+
+.player-toolbar {
+  background: linear-gradient(rgba(0, 0, 0, 0.99), rgba(0, 0, 0, 0.58), transparent);
+}
+
+.toolbar-button,
+.example-button {
+  border-color: rgba(255, 255, 255, 0.075);
+  color: #d7d7d7;
+  background: rgba(5, 5, 5, 0.88);
+}
+
+.toolbar-button:hover,
+.example-button:hover {
+  border-color: rgba(242, 196, 0, 0.2);
+  background: #0d0d0d;
+}
+
+.url-card {
+  background: rgba(4, 4, 4, 0.95);
+}
+
+.url-icon {
+  border-color: rgba(242, 196, 0, 0.18);
+  color: var(--brand-gold);
+  background: rgba(242, 196, 0, 0.055);
+}
+
+.url-entry input,
+.chat-compose input {
+  color: #f4f4f4;
+  border-color: rgba(255, 255, 255, 0.085);
+  background: #090909;
+}
+
+.url-entry input:focus,
+.chat-compose input:focus {
+  border-color: rgba(242, 196, 0, 0.34);
+  box-shadow: 0 0 0 3px rgba(242, 196, 0, 0.05);
+}
+
+.url-entry input::placeholder,
+.chat-compose input::placeholder {
+  color: #505050;
+}
+
+.load-button,
+.url-entry button,
+.chat-compose button {
+  color: #090700;
+  border: 1px solid rgba(242, 196, 0, 0.24);
+  background: var(--brand-gold);
+}
+
+.load-button:hover,
+.url-entry button:hover,
+.chat-compose button:hover {
+  background: #ffd52b;
+}
+
+.remember-label,
+.url-note {
+  color: #686868;
+}
+
+.url-error {
+  color: #ff7f8d;
+}
+
+.resize-handle {
+  border-color: rgba(255, 255, 255, 0.04);
+  background: #020202;
+}
+
+.resize-handle span {
+  background: #252525;
+}
+
+.resize-handle:hover,
+.resize-handle:focus-visible,
+body.resizing-chat .resize-handle {
+  background: rgba(242, 196, 0, 0.05);
+}
+
+.resize-handle:hover span,
+.resize-handle:focus-visible span,
+body.resizing-chat .resize-handle span {
+  background: var(--brand-gold);
+}
+
+.chat-panel,
+.twitch-chat-frame {
+  background: #0b0b0d;
+}
+
+.toast {
+  border-color: rgba(242, 196, 0, 0.28);
+  background: #080808;
+}
+
+/* ---------- MOBILE ---------- */
+
+.mobile-overlay {
+  background: rgba(0, 0, 0, 0.86);
+}
+
+.mobile-menu {
+  border-color: rgba(255, 255, 255, 0.075);
+  background: rgba(3, 3, 3, 0.96);
+}
+
+
+/* Navigation links used across EastCoins pages */
+a.nav-link {
+  text-decoration: none;
+}

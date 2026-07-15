@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Sign in to the private EastCoins sports community." />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <title>EastCoins — Sign In</title>
+
+  <link rel="icon" type="image/webp" href="assets/eastcoins-logo.webp" />
+  <link rel="stylesheet" href="assets/eastcoins-theme.css" />
+
+  <style>
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+        BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button,
+    input { font: inherit; }
+
+    .login-page {
+      display: grid;
+      grid-template-columns: minmax(0, 1.18fr) minmax(390px, .82fr);
+      min-height: 100vh;
+    }
+
+    .visual-panel {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      min-height: 650px;
+      padding: 54px;
+      overflow: hidden;
+      background:
+        linear-gradient(
+          90deg,
+          rgba(0,0,0,.995) 0%,
+          rgba(0,0,0,.95) 43%,
+          rgba(0,0,0,.78) 76%,
+          rgba(0,0,0,.62) 100%
+        ),
+        url("https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1800&q=76")
+        center / cover;
+      background-blend-mode: normal, luminosity;
+    }
+
+    .visual-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.14), rgba(0,0,0,.9)),
+        radial-gradient(circle at 75% 38%, transparent, rgba(0,0,0,.68));
+      pointer-events: none;
+    }
+
+    .visual-panel::after {
+      content: "";
+      position: absolute;
+      inset: 24px;
+      border: 1px solid rgba(255,255,255,.04);
+      border-radius: 22px;
+      box-shadow: inset 0 0 100px rgba(0,0,0,.56);
+      pointer-events: none;
+    }
+
+    .visual-content {
+      position: relative;
+      z-index: 2;
+      max-width: 760px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 34px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #aaa;
+      font-size: .74rem;
+      font-weight: 900;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--brand-gold);
+      box-shadow: 0 0 0 4px rgba(242,196,0,.07);
+    }
+
+    h1 {
+      max-width: 760px;
+      margin: 16px 0 15px;
+      font-size: clamp(3.5rem, 6.7vw, 7.5rem);
+      line-height: .9;
+      letter-spacing: -.072em;
+    }
+
+    .visual-content > p {
+      max-width: 610px;
+      margin: 0;
+      color: #9d9d9d;
+      font-size: 1rem;
+      line-height: 1.72;
+    }
+
+    .login-panel {
+      display: grid;
+      place-items: center;
+      padding: 36px;
+      border-left: 1px solid rgba(255,255,255,.05);
+      background:
+        radial-gradient(circle at 50% 38%, rgba(173,9,50,.055), transparent 36%),
+        #000;
+    }
+
+    .login-card {
+      width: min(460px, 100%);
+      padding: 34px;
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 22px;
+      background: #050505;
+      box-shadow:
+        0 36px 110px rgba(0,0,0,.86),
+        inset 0 1px 0 rgba(255,255,255,.022);
+    }
+
+    .login-card h2 {
+      margin: 0;
+      font-size: 2rem;
+      letter-spacing: -.045em;
+    }
+
+    .login-intro {
+      margin: 10px 0 0;
+      color: #818181;
+      line-height: 1.6;
+    }
+
+    .login-form {
+      display: grid;
+      gap: 15px;
+      margin-top: 25px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field label {
+      color: #c4c4c4;
+      font-size: .76rem;
+      font-weight: 850;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid rgba(255,255,255,.085);
+      border-radius: 11px;
+      outline: 0;
+      color: #f4f4f4;
+      background: #090909;
+    }
+
+    .field input:focus {
+      border-color: rgba(242,196,0,.34);
+      box-shadow: 0 0 0 3px rgba(242,196,0,.045);
+    }
+
+    .field input::placeholder { color: #4f4f4f; }
+
+    .login-button {
+      width: 100%;
+      min-height: 47px;
+      margin-top: 3px;
+      border: 1px solid rgba(242,196,0,.25);
+      border-radius: 11px;
+      color: #0b0900;
+      background: var(--brand-gold);
+      font-weight: 950;
+      cursor: pointer;
+      transition: background .18s ease, transform .18s ease;
+    }
+
+    .login-button:hover {
+      background: #ffd52b;
+      transform: translateY(-1px);
+    }
+
+    .message {
+      display: none;
+      margin-top: 18px;
+      padding: 11px 12px;
+      border-radius: 11px;
+      font-size: .78rem;
+      line-height: 1.45;
+    }
+
+    .message.visible { display: block; }
+
+    .message.error {
+      color: #ffc0ca;
+      border: 1px solid rgba(173,9,50,.25);
+      background: rgba(173,9,50,.08);
+    }
+
+    .message.success {
+      color: #e8d980;
+      border: 1px solid rgba(242,196,0,.18);
+      background: rgba(242,196,0,.05);
+    }
+
+    .login-note {
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255,255,255,.05);
+      color: #646464;
+      font-size: .72rem;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 900px) {
+      .login-page { grid-template-columns: 1fr; }
+      .visual-panel { min-height: 530px; }
+
+      .login-panel {
+        border-top: 1px solid rgba(255,255,255,.05);
+        border-left: 0;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .visual-panel,
+      .login-panel {
+        padding-right: 18px;
+        padding-left: 18px;
+      }
+
+      .visual-panel {
+        min-height: 470px;
+        align-items: center;
+      }
+
+      .visual-panel::after { inset: 12px; }
+      h1 { font-size: 3.5rem; }
+      .login-card { padding: 27px 20px; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="login-page">
+    <section class="visual-panel">
+      <div class="visual-content">
+        <div class="brand">
+          <div class="brand-mark brand-logo">
+            <img src="assets/eastcoins-logo.webp" alt="EastCoins logo" />
+          </div>
+
+          <div class="brand-copy">
+            <strong>EastCoins</strong>
+            <span>Private sports community</span>
+          </div>
+        </div>
+
+        <div class="eyebrow">
+          <span class="eyebrow-dot"></span>
+          Members only
+        </div>
+
+        <h1>Enter the EastCoins watch room.</h1>
+
+        <p>
+          Sign in with an approved username and the shared site password.
+          Protected pages are checked by Cloudflare before they are served.
+        </p>
+      </div>
+    </section>
+
+    <section class="login-panel">
+      <div class="login-card">
+        <h2>Sign in</h2>
+
+        <p class="login-intro">
+          Use your approved EastCoins credentials.
+        </p>
+
+        <div class="message error" id="errorMessage">
+          That username or password was not accepted.
+        </div>
+
+        <div class="message success" id="logoutMessage">
+          You have been logged out.
+        </div>
+
+        <form class="login-form" action="/auth/login" method="post">
+          <input id="nextPath" name="next" type="hidden" value="/" />
+
+          <div class="field">
+            <label for="username">Username</label>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              autocomplete="username"
+              maxlength="80"
+              placeholder="Enter your username"
+              required
+              autofocus
+            />
+          </div>
+
+          <div class="field">
+            <label for="password">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              maxlength="200"
+              placeholder="Enter the site password"
+              required
+            />
+          </div>
+
+          <button class="login-button" type="submit">
+            Enter EastCoins
+          </button>
+        </form>
+
+        <div class="login-note">
+          The username list, password, and session-signing secret are stored
+          server-side. They are not included in this page’s browser JavaScript.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const parameters = new URLSearchParams(window.location.search);
+    const errorMessage = document.getElementById("errorMessage");
+    const logoutMessage = document.getElementById("logoutMessage");
+    const nextPath = document.getElementById("nextPath");
+
+    const next = parameters.get("next");
+
+    if (next && next.startsWith("/") && !next.startsWith("//")) {
+      nextPath.value = next;
+    }
+
+    if (parameters.get("error") === "invalid") {
+      errorMessage.classList.add("visible");
+    }
+
+    if (parameters.get("logged_out") === "1") {
+      logoutMessage.classList.add("visible");
+    }
+  </script>
+</body>
+</html>
