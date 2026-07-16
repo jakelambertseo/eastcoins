@@ -380,6 +380,76 @@
       font-size: .8rem;
     }
 
+    .quick-favorites {
+      margin-top: 22px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,.09);
+    }
+
+    .quick-favorites-label {
+      margin: 0 0 11px;
+      color: #91a1b6;
+      font-size: .72rem;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .quick-favorites-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 9px;
+    }
+
+    .quick-favorite-button {
+      min-height: 40px;
+      padding: 9px 14px;
+      border: 1px solid rgba(210,26,74,.32);
+      border-radius: 10px;
+      color: #ffe2e8;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(132,11,43,.78),
+          rgba(75,5,28,.84)
+        );
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.07);
+      font-size: .82rem;
+      font-weight: 900;
+    }
+
+    .quick-favorite-button:hover,
+    .quick-favorite-button:focus-visible {
+      border-color: rgba(255,112,145,.55);
+      color: #fff;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(177,15,55,.92),
+          rgba(105,7,36,.94)
+        );
+      outline: 0;
+      transform: translateY(-1px);
+    }
+
+    .all-favorites-link {
+      display: inline-block;
+      margin-top: 12px;
+      color: #d1aa56;
+      font-size: .76rem;
+      font-weight: 850;
+      text-decoration: none;
+    }
+
+    .all-favorites-link:hover,
+    .all-favorites-link:focus-visible {
+      color: #f3cc73;
+      text-decoration: underline;
+      outline: 0;
+    }
+    }
+
     .resize-handle {
       position: relative;
       z-index: 30;
@@ -666,33 +736,40 @@
     }
 
   
-    .share-room-button {
-      color: #ffdce3;
-      border-color: rgba(210,26,74,.38);
-      background:
+    #shareButton.toolbar-button,
+    #shareButton.share-room-button {
+      color: #fff3f5 !important;
+      border-color: #e33a62 !important;
+      background-color: #9f1239 !important;
+      background-image:
         linear-gradient(
           180deg,
-          rgba(173,9,50,.96),
-          rgba(116,5,34,.96)
-        );
+          #d51f51 0%,
+          #9f1239 55%,
+          #700925 100%
+        ) !important;
       box-shadow:
-        0 10px 26px rgba(173,9,50,.22),
-        inset 0 1px 0 rgba(255,255,255,.09);
+        0 10px 28px rgba(213,31,81,.36),
+        inset 0 1px 0 rgba(255,255,255,.18) !important;
     }
 
-    .share-room-button:hover,
-    .share-room-button:focus-visible {
-      color: #fff;
-      border-color: rgba(255,112,145,.5);
-      background:
+    #shareButton.toolbar-button:hover,
+    #shareButton.toolbar-button:focus-visible,
+    #shareButton.share-room-button:hover,
+    #shareButton.share-room-button:focus-visible {
+      color: #fff !important;
+      border-color: #ff7897 !important;
+      background-color: #c21749 !important;
+      background-image:
         linear-gradient(
           180deg,
-          rgba(201,18,63,.98),
-          rgba(139,8,42,.98)
-        );
+          #ef3d68 0%,
+          #c21749 55%,
+          #870b2d 100%
+        ) !important;
       box-shadow:
-        0 12px 32px rgba(173,9,50,.32),
-        inset 0 1px 0 rgba(255,255,255,.12);
+        0 13px 34px rgba(213,31,81,.5),
+        inset 0 1px 0 rgba(255,255,255,.22) !important;
       outline: 0;
       transform: translateY(-1px);
     }
@@ -740,7 +817,13 @@
           </div>
 
           <div class="toolbar-actions">
-            <button class="toolbar-button share-room-button" id="shareButton" type="button">🔗 Share room</button>
+            <button
+              class="toolbar-button share-room-button"
+              id="shareButton"
+              type="button"
+              style="background-color:#9f1239;background-image:linear-gradient(180deg,#d51f51 0%,#9f1239 55%,#700925 100%);border-color:#e33a62;color:#fff3f5;">
+              🔗 Share Room
+            </button>
             <button class="toolbar-button" id="openButton" type="button">Open source ↗</button>
             <button class="toolbar-button" id="changeButton" type="button">Change URL</button>
           </div>
@@ -783,6 +866,33 @@
 
               <div class="url-error" id="urlError" role="alert"></div>
             </form>
+
+            <div class="quick-favorites" aria-label="Favorite websites">
+              <p class="quick-favorites-label">⭐ Quick Favorites</p>
+              <div class="quick-favorites-list">
+                <button
+                  class="quick-favorite-button"
+                  type="button"
+                  data-watch-url="https://streamed.pk/">
+                  Streamed PK
+                </button>
+                <button
+                  class="quick-favorite-button"
+                  type="button"
+                  data-watch-url="https://streamed.st/">
+                  Streamed ST
+                </button>
+                <button
+                  class="quick-favorite-button"
+                  type="button"
+                  data-watch-url="https://dlhd.st/">
+                  DaddyLive
+                </button>
+              </div>
+              <a class="all-favorites-link" href="favorites.html">
+                View Favorites page →
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -803,7 +913,7 @@
     <aside class="chat-panel" aria-label="Twitch chat">
       <iframe
         class="twitch-chat-frame"
-        src="https://www.twitch.tv/embed/zwades/chat?parent=eastcoins.pages.dev&amp;parent=eastcoin.vip&amp;darkpopout"
+        src="https://www.twitch.tv/embed/zwades/chat?parent=localhost&amp;parent=127.0.0.1&amp;darkpopout"
         title="zwades Twitch chat"
         loading="eager"
         referrerpolicy="strict-origin-when-cross-origin">
@@ -939,6 +1049,16 @@
       event.preventDefault();
       loadStream(streamUrlInput.value);
     });
+
+    document
+      .querySelectorAll(".quick-favorite-button[data-watch-url]")
+      .forEach((button) => {
+        button.addEventListener("click", () => {
+          const favoriteUrl = button.dataset.watchUrl.trim();
+          streamUrlInput.value = favoriteUrl;
+          loadStream(favoriteUrl);
+        });
+      });
 
     changeButton.addEventListener("click", restoreUrlPrompt);
 
