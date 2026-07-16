@@ -448,7 +448,6 @@
       text-decoration: underline;
       outline: 0;
     }
-    }
 
     .resize-handle {
       position: relative;
@@ -499,6 +498,10 @@
     body.resizing-chat * {
       cursor: col-resize !important;
       user-select: none !important;
+    }
+
+    body.resizing-chat .layout {
+      transition: none;
     }
 
     body.resizing-chat iframe {
@@ -1154,7 +1157,8 @@
 
 
 
-    const CHAT_WIDTH_STORAGE_KEY = "eastcoinsChatWidth";
+    const CHAT_WIDTH_STORAGE_KEY = "eastcoinsChatWidthV2";
+    const LEGACY_CHAT_WIDTH_STORAGE_KEY = "eastcoinsChatWidth";
     const DEFAULT_CHAT_WIDTH = 360;
     const MIN_CHAT_WIDTH = 280;
     const MIN_VIDEO_WIDTH = 420;
@@ -1165,11 +1169,15 @@
       const sidebarWidth = sidebar.getBoundingClientRect().width;
       const dividerWidth = resizeHandle.getBoundingClientRect().width;
 
+      const availableMaximum =
+        layoutWidth - sidebarWidth - dividerWidth - MIN_VIDEO_WIDTH;
+      const practicalMaximum = Math.min(560, layoutWidth * 0.38);
+
       return {
         min: MIN_CHAT_WIDTH,
         max: Math.max(
           MIN_CHAT_WIDTH,
-          layoutWidth - sidebarWidth - dividerWidth - MIN_VIDEO_WIDTH
+          Math.min(availableMaximum, practicalMaximum)
         )
       };
     }
@@ -1288,6 +1296,8 @@
     } else {
       updateNavigationButton();
     }
+
+    localStorage.removeItem(LEGACY_CHAT_WIDTH_STORAGE_KEY);
 
     const savedChatWidth = Number(localStorage.getItem(CHAT_WIDTH_STORAGE_KEY));
     if (Number.isFinite(savedChatWidth) && savedChatWidth > 0) {
