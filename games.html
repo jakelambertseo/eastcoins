@@ -13,8 +13,8 @@
     content="noindex, nofollow, noarchive, nosnippet, noimageindex"
   />
 
-  <meta name="description" content="EastCoin private sports watch room with an embeddable player and Twitch chat." />
-  <title>EastCoin — Watch Room</title>
+  <meta name="description" content="EastCoin browser games with an embedded game window and Twitch chat." />
+  <title>EastCoin — Games</title>
 
   <style>
     :root {
@@ -777,6 +777,293 @@
       transform: translateY(-1px);
     }
 
+  
+    /* ---------------- EMBEDDED GAMES ---------------- */
+
+    .player-shell {
+      background:
+        radial-gradient(circle at 82% 8%, rgba(210,26,74,.17), transparent 29%),
+        radial-gradient(circle at 16% 90%, rgba(242,196,0,.075), transparent 28%),
+        linear-gradient(155deg, #090909, #030303);
+    }
+
+    .games-stage {
+      align-items: start;
+      justify-items: stretch;
+      padding: 28px;
+    }
+
+    .games-library {
+      width: min(1000px, 100%);
+      margin: 0 auto;
+      padding: 24px 0 34px;
+    }
+
+    .games-heading {
+      text-align: center;
+    }
+
+    .games-heading-icon {
+      display: grid;
+      place-items: center;
+      width: 70px;
+      height: 70px;
+      margin: 0 auto 16px;
+      border: 1px solid rgba(210,26,74,.27);
+      border-radius: 18px;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(166,13,49,.85),
+          rgba(73,4,24,.9)
+        );
+      box-shadow:
+        0 16px 34px rgba(173,9,50,.19),
+        inset 0 1px 0 rgba(255,255,255,.08);
+      font-size: 1.9rem;
+    }
+
+    .games-heading h1 {
+      margin: 0;
+      font-size: clamp(2.5rem, 5vw, 5rem);
+      line-height: .95;
+      letter-spacing: -.065em;
+    }
+
+    .games-heading > p {
+      max-width: 680px;
+      margin: 13px auto 0;
+      color: #a0a0a0;
+      line-height: 1.65;
+    }
+
+    .game-room-form {
+      max-width: 800px;
+      margin: 22px auto 0;
+      padding: 16px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      background: rgba(8,8,8,.75);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+    }
+
+    .game-room-form-label {
+      display: block;
+      margin-bottom: 9px;
+      color: #7e7e7e;
+      font-size: .68rem;
+      font-weight: 900;
+      letter-spacing: .11em;
+      text-align: left;
+      text-transform: uppercase;
+    }
+
+    .game-room-entry {
+      display: flex;
+      gap: 9px;
+    }
+
+    .game-room-entry input {
+      min-width: 0;
+      flex: 1;
+      padding: 13px 14px;
+      border: 1px solid rgba(255,255,255,.11);
+      border-radius: 10px;
+      outline: 0;
+      color: #f4f4f4;
+      background: rgba(255,255,255,.045);
+    }
+
+    .game-room-entry input:focus {
+      border-color: rgba(210,26,74,.55);
+      box-shadow: 0 0 0 4px rgba(210,26,74,.08);
+    }
+
+    .game-room-entry input::placeholder {
+      color: #5f5f5f;
+    }
+
+    .load-game-button {
+      padding: 0 18px;
+      border: 1px solid #e33a62;
+      border-radius: 10px;
+      color: #fff;
+      background:
+        linear-gradient(
+          180deg,
+          #d51f51,
+          #8c0d31
+        );
+      font-weight: 900;
+    }
+
+    .load-game-button:hover,
+    .load-game-button:focus-visible {
+      background:
+        linear-gradient(
+          180deg,
+          #ef3d68,
+          #a6113d
+        );
+      outline: 0;
+    }
+
+    .game-url-error {
+      min-height: 20px;
+      margin-top: 8px;
+      color: #ff8da0;
+      font-size: .72rem;
+      text-align: left;
+    }
+
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .game-card {
+      position: relative;
+      display: flex;
+      min-height: 220px;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 19px;
+      border: 1px solid rgba(255,255,255,.075);
+      border-radius: 16px;
+      color: #f1f1f1;
+      background:
+        radial-gradient(
+          circle at 100% 0%,
+          rgba(176,16,52,.12),
+          transparent 40%
+        ),
+        linear-gradient(180deg, #0e0e0e, #070707);
+      box-shadow:
+        0 16px 36px rgba(0,0,0,.24),
+        inset 0 1px 0 rgba(255,255,255,.025);
+      text-align: left;
+      transition:
+        transform .18s ease,
+        border-color .18s ease,
+        background .18s ease;
+    }
+
+    .game-card:hover,
+    .game-card:focus-visible {
+      border-color: rgba(210,26,74,.4);
+      background:
+        radial-gradient(
+          circle at 100% 0%,
+          rgba(210,26,74,.18),
+          transparent 42%
+        ),
+        linear-gradient(180deg, #141414, #080808);
+      outline: 0;
+      transform: translateY(-3px);
+    }
+
+    .game-card-icon {
+      display: grid;
+      place-items: center;
+      width: 50px;
+      height: 50px;
+      border: 1px solid rgba(210,26,74,.22);
+      border-radius: 14px;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(150,11,44,.72),
+          rgba(68,4,23,.83)
+        );
+      box-shadow: 0 12px 27px rgba(173,9,50,.14);
+      font-size: 1.45rem;
+    }
+
+    .game-card h2 {
+      margin: 16px 0 6px;
+      font-size: 1.14rem;
+      letter-spacing: -.035em;
+    }
+
+    .game-card p {
+      margin: 0;
+      color: #858585;
+      font-size: .77rem;
+      line-height: 1.58;
+    }
+
+    .game-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: auto;
+      padding-top: 18px;
+    }
+
+    .game-card-type {
+      color: #696969;
+      font-size: .61rem;
+      font-weight: 900;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .game-card-action {
+      padding: 8px 10px;
+      border: 1px solid rgba(210,26,74,.31);
+      border-radius: 9px;
+      color: #ffe3e9;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(164,13,48,.9),
+          rgba(91,5,29,.94)
+        );
+      font-size: .68rem;
+      font-weight: 900;
+    }
+
+    .games-help {
+      margin-top: 16px;
+      padding: 13px 15px;
+      border: 1px solid rgba(242,196,0,.12);
+      border-radius: 12px;
+      color: #817757;
+      background: rgba(242,196,0,.025);
+      font-size: .72rem;
+      line-height: 1.58;
+      text-align: center;
+    }
+
+    @media (max-width: 680px) {
+      .games-stage {
+        padding: 14px;
+      }
+
+      .games-library {
+        padding-top: 18px;
+      }
+
+      .game-room-entry {
+        flex-direction: column;
+      }
+
+      .load-game-button {
+        min-height: 44px;
+      }
+
+      .game-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .game-card {
+        min-height: 205px;
+      }
+    }
+
   </style>
   <link rel="icon" type="image/png" href="assets/eastcoin-favicon.png" />
   <link rel="shortcut icon" href="assets/eastcoin-favicon.png" />
@@ -799,9 +1086,9 @@
 
       <div class="nav-group">
         <div class="nav-label">EastCoin</div>
-        <a class="nav-link active" href="index.html?new=1">📺 Live Player</a>
+        <a class="nav-link" href="index.html?new=1">📺 Live Player</a>
         <a class="nav-link" href="favorites.html">⭐ Favorites</a>
-        <a class="nav-link" href="games.html?new=1">🎮 Games</a>
+        <a class="nav-link active" href="games.html?new=1">🎮 Games</a>
       </div>
     </aside>
 
@@ -813,10 +1100,10 @@
         aria-label="Hide navigation"
         aria-expanded="true">◀</button>
 
-      <section class="player-shell" id="playerShell" aria-label="Embedded video player">
+      <section class="player-shell" id="playerShell" aria-label="Embedded game player">
         <div class="player-toolbar" id="playerToolbar" hidden>
           <div class="toolbar-title">
-            <strong>Embedded Stream</strong>
+            <strong>Embedded Game</strong>
             <span id="currentHost">External provider</span>
           </div>
 
@@ -828,80 +1115,158 @@
               style="background-color:#9f1239;background-image:linear-gradient(180deg,#d51f51 0%,#9f1239 55%,#700925 100%);border-color:#e33a62;color:#fff3f5;">
               🔗 Share Room
             </button>
-            <button class="toolbar-button" id="openButton" type="button">Open source ↗</button>
-            <button class="toolbar-button" id="changeButton" type="button">Change URL</button>
+            <button class="toolbar-button" id="openButton" type="button">Open game ↗</button>
+            <button class="toolbar-button" id="changeButton" type="button">All Games</button>
           </div>
         </div>
 
-        <div class="url-stage" id="urlStage">
-          <div class="url-card">
-            <div class="url-icon url-image-icon">
-              <img
-                src="assets/eastcoin-player-icon.webp"
-                alt=""
-                aria-hidden="true"
-              />
+        <div class="url-stage games-stage" id="urlStage">
+          <div class="games-library">
+            <div class="games-heading">
+              <div class="games-heading-icon" aria-hidden="true">🎮</div>
+              <h1>Games</h1>
+              <p>
+                Select a game to load it in the main EastCoin window while
+                Twitch chat stays open. For a private lobby, paste its exact
+                invitation URL below.
+              </p>
             </div>
-            <h1>Embed a video URL</h1>
-            <p>
-              Paste an authorized iframe or player URL below. The page will try to load it directly inside the center player.
-            </p>
 
-            <form class="url-form" id="streamForm">
-              <div class="url-entry">
+            <form class="game-room-form" id="gameForm">
+              <label class="game-room-form-label" for="gameUrl">
+                Paste a private game-room URL
+              </label>
+
+              <div class="game-room-entry">
                 <input
-                  id="streamUrl"
+                  id="gameUrl"
                   type="url"
                   inputmode="url"
                   autocomplete="url"
-                  placeholder="https://www.youtube.com/embed/VIDEO_ID"
-                  aria-label="Video embed URL"
+                  placeholder="https://skribbl.io/?room=..."
+                  aria-label="Private game room URL"
                   required
                 />
-                <button class="load-button" type="submit">Load URL</button>
+                <button class="load-game-button" type="submit">
+                  Load Room
+                </button>
               </div>
 
-              <div class="form-options">
-                <label class="remember-label">
-                  <input id="rememberUrl" type="checkbox" checked />
-                  Remember this URL on this device
-                </label>
+              <div
+                class="game-url-error"
+                id="gameUrlError"
+                role="alert">
               </div>
-
-              <div class="url-error" id="urlError" role="alert"></div>
             </form>
 
-            <div class="quick-favorites" aria-label="Favorite websites">
-              <p class="quick-favorites-label">⭐ Quick Favorites</p>
-              <div class="quick-favorites-list">
-                <button
-                  class="quick-favorite-button"
-                  type="button"
-                  data-watch-url="https://streamed.pk/">
-                  Streamed PK
-                </button>
-                <button
-                  class="quick-favorite-button"
-                  type="button"
-                  data-watch-url="https://streamed.st/">
-                  Streamed ST
-                </button>
-                <button
-                  class="quick-favorite-button"
-                  type="button"
-                  data-watch-url="https://dlhd.st/">
-                  DaddyLive
-                </button>
-                <button
-                  class="quick-favorite-button"
-                  type="button"
-                  data-watch-url="https://timstreams.st/">
-                  Tim Streams
-                </button>
-              </div>
-              <a class="all-favorites-link" href="favorites.html">
-                View Favorites page →
-              </a>
+            <div class="game-grid">
+              <button
+                class="game-card"
+                type="button"
+                data-game-url="https://skribbl.io/"
+                data-game-name="Skribbl.io">
+                <span class="game-card-icon">🎨</span>
+                <h2>Skribbl.io</h2>
+                <p>
+                  Draw a word while everyone else guesses. Create a private
+                  lobby and share its invite link with the EastCoin group.
+                </p>
+                <span class="game-card-footer">
+                  <span class="game-card-type">Drawing · Party</span>
+                  <span class="game-card-action">Load Game</span>
+                </span>
+              </button>
+
+              <button
+                class="game-card"
+                type="button"
+                data-game-url="https://garticphone.com/"
+                data-game-name="Gartic Phone">
+                <span class="game-card-icon">☎️</span>
+                <h2>Gartic Phone</h2>
+                <p>
+                  Combine drawing and telephone-style prompts as each round
+                  becomes stranger while moving through the group.
+                </p>
+                <span class="game-card-footer">
+                  <span class="game-card-type">Drawing · Party</span>
+                  <span class="game-card-action">Load Game</span>
+                </span>
+              </button>
+
+              <button
+                class="game-card"
+                type="button"
+                data-game-url="https://play.typeracer.com/"
+                data-game-name="TypeRacer">
+                <span class="game-card-icon">⌨️</span>
+                <h2>TypeRacer</h2>
+                <p>
+                  Race friends by typing the same passage. Create a private
+                  racetrack and share the invitation URL.
+                </p>
+                <span class="game-card-footer">
+                  <span class="game-card-type">Typing · Competitive</span>
+                  <span class="game-card-action">Load Game</span>
+                </span>
+              </button>
+
+              <button
+                class="game-card"
+                type="button"
+                data-game-url="https://playingcards.io/"
+                data-game-name="PlayingCards.io">
+                <span class="game-card-icon">🃏</span>
+                <h2>PlayingCards.io</h2>
+                <p>
+                  Create synchronized rooms for cards, board games, and
+                  custom tabletop games everyone can control together.
+                </p>
+                <span class="game-card-footer">
+                  <span class="game-card-type">Cards · Tabletop</span>
+                  <span class="game-card-action">Load Game</span>
+                </span>
+              </button>
+
+              <button
+                class="game-card"
+                type="button"
+                data-game-url="https://lichess.org/"
+                data-game-name="Lichess">
+                <span class="game-card-icon">♟️</span>
+                <h2>Lichess</h2>
+                <p>
+                  Challenge a friend to chess, create a private match, or
+                  organize a small EastCoin tournament.
+                </p>
+                <span class="game-card-footer">
+                  <span class="game-card-type">Chess · Strategy</span>
+                  <span class="game-card-action">Load Game</span>
+                </span>
+              </button>
+
+              <button
+                class="game-card"
+                type="button"
+                data-game-url="https://www.airconsole.com/"
+                data-game-name="AirConsole">
+                <span class="game-card-icon">📱</span>
+                <h2>AirConsole</h2>
+                <p>
+                  Use one main screen for browser party games while everyone
+                  joins and controls the action from their phone.
+                </p>
+                <span class="game-card-footer">
+                  <span class="game-card-type">Arcade · Party</span>
+                  <span class="game-card-action">Load Game</span>
+                </span>
+              </button>
+            </div>
+
+            <div class="games-help">
+              Some game providers may block iframe embedding. When that
+              happens, use <strong>Open game ↗</strong> while keeping the
+              EastCoin room and Twitch chat available.
             </div>
           </div>
         </div>
@@ -938,10 +1303,9 @@
     const playerShell = document.getElementById("playerShell");
     const playerToolbar = document.getElementById("playerToolbar");
     const urlStage = document.getElementById("urlStage");
-    const streamForm = document.getElementById("streamForm");
-    const streamUrlInput = document.getElementById("streamUrl");
-    const rememberUrl = document.getElementById("rememberUrl");
-    const urlError = document.getElementById("urlError");
+    const gameForm = document.getElementById("gameForm");
+    const gameUrlInput = document.getElementById("gameUrl");
+    const gameUrlError = document.getElementById("gameUrlError");
     const currentHost = document.getElementById("currentHost");
     const openButton = document.getElementById("openButton");
     const shareButton = document.getElementById("shareButton");
@@ -954,123 +1318,106 @@
     const toast = document.getElementById("toast");
 
     let activeUrl = "";
+    let activeGameName = "";
     let toastTimer;
 
     function showToast(message) {
       toast.textContent = message;
       toast.classList.add("show");
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2800);
     }
 
-    function normalizeEmbedUrl(rawValue) {
+    function normalizeGameUrl(rawValue) {
       const trimmed = rawValue.trim();
-      const valueWithProtocol = /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(trimmed)
-        ? trimmed
-        : `https://${trimmed}`;
+      const valueWithProtocol =
+        /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(trimmed)
+          ? trimmed
+          : `https://${trimmed}`;
       const parsed = new URL(valueWithProtocol);
 
       if (!["https:", "http:"].includes(parsed.protocol)) {
-        throw new Error("Only HTTP or HTTPS URLs can be embedded.");
-      }
-
-      // Convert common YouTube watch/share URLs into embed URLs.
-      if (parsed.hostname === "youtu.be") {
-        const videoId = parsed.pathname.replace("/", "");
-        if (videoId) {
-          return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
-        }
-      }
-
-      if (
-        parsed.hostname === "youtube.com" ||
-        parsed.hostname === "www.youtube.com" ||
-        parsed.hostname === "m.youtube.com"
-      ) {
-        if (parsed.pathname === "/watch") {
-          const videoId = parsed.searchParams.get("v");
-          if (videoId) {
-            return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
-          }
-        }
-
-        if (parsed.pathname.startsWith("/shorts/")) {
-          const videoId = parsed.pathname.split("/")[2];
-          if (videoId) {
-            return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
-          }
-        }
+        throw new Error("Only HTTP or HTTPS game URLs can be loaded.");
       }
 
       return parsed.href;
     }
 
-    function loadStream(rawValue, savePreference = rememberUrl.checked) {
-      urlError.textContent = "";
+    function loadGame(
+      rawValue,
+      gameName = ""
+    ) {
+      gameUrlError.textContent = "";
 
       let normalizedUrl;
       let parsedUrl;
 
       try {
-        normalizedUrl = normalizeEmbedUrl(rawValue);
+        normalizedUrl = normalizeGameUrl(rawValue);
         parsedUrl = new URL(normalizedUrl);
       } catch (error) {
-        urlError.textContent = error.message || "Please enter a valid URL.";
+        gameUrlError.textContent =
+          error.message || "Please enter a valid game-room URL.";
         return;
       }
 
       const iframe = document.createElement("iframe");
       iframe.className = "embed-frame";
+      iframe.id = "activeFrame";
       iframe.src = normalizedUrl;
-      iframe.title = "Embedded video";
-      iframe.allow = "autoplay; fullscreen; picture-in-picture; encrypted-media";
+      iframe.title = gameName
+        ? `${gameName} game`
+        : "Embedded game";
+      iframe.allow =
+        "autoplay; fullscreen; gamepad; clipboard-read; clipboard-write";
       iframe.allowFullscreen = true;
 
       activeUrl = normalizedUrl;
-      currentHost.textContent = parsedUrl.hostname;
+      activeGameName = gameName || parsedUrl.hostname;
+      currentHost.textContent =
+        `${activeGameName} · ${parsedUrl.hostname}`;
+
       playerShell.classList.add("has-frame");
       playerToolbar.hidden = false;
       urlStage.replaceWith(iframe);
-      iframe.id = "activeFrame";
 
-      if (savePreference) {
-        localStorage.setItem("eastcoinsEmbedUrl", normalizedUrl);
-      } else {
-        localStorage.removeItem("eastcoinsEmbedUrl");
-      }
-
-      showToast("URL loaded. If the player stays blank, the provider may block iframe embedding.");
+      showToast(
+        "Game loaded. Use Open game if the provider blocks iframe embedding."
+      );
     }
 
-    function restoreUrlPrompt() {
+    function restoreGameLibrary() {
       const activeFrame = document.getElementById("activeFrame");
+
       if (activeFrame) {
         activeFrame.replaceWith(urlStage);
       }
 
       playerShell.classList.remove("has-frame");
       playerToolbar.hidden = true;
-      streamUrlInput.value = activeUrl;
-      urlError.textContent = "";
-      setTimeout(() => streamUrlInput.focus(), 0);
+      gameUrlInput.value = activeUrl;
+      gameUrlError.textContent = "";
     }
 
-    streamForm.addEventListener("submit", (event) => {
+    gameForm.addEventListener("submit", (event) => {
       event.preventDefault();
-      loadStream(streamUrlInput.value);
+      loadGame(gameUrlInput.value, "Private Game Room");
     });
 
     document
-      .querySelectorAll(".quick-favorite-button[data-watch-url]")
-      .forEach((button) => {
-        button.addEventListener("click", () => {
-          const favoriteUrl = button.dataset.watchUrl.trim();
-          streamUrlInput.value = favoriteUrl;
-          loadStream(favoriteUrl);
+      .querySelectorAll(".game-card[data-game-url]")
+      .forEach((card) => {
+        card.addEventListener("click", () => {
+          loadGame(
+            card.dataset.gameUrl.trim(),
+            card.dataset.gameName.trim()
+          );
         });
       });
 
-    changeButton.addEventListener("click", restoreUrlPrompt);
+    changeButton.addEventListener("click", restoreGameLibrary);
 
     openButton.addEventListener("click", () => {
       if (activeUrl) {
@@ -1078,24 +1425,31 @@
       }
     });
 
-    function buildShareUrl(streamUrl) {
+    function buildShareUrl(gameUrl) {
       const shareUrl = new URL(window.location.href);
       shareUrl.search = "";
       shareUrl.hash = "";
-      shareUrl.searchParams.set("watch", streamUrl);
+      shareUrl.searchParams.set("game", gameUrl);
+
+      if (activeGameName) {
+        shareUrl.searchParams.set("name", activeGameName);
+      }
+
       return shareUrl.href;
     }
 
     shareButton.addEventListener("click", async () => {
-      if (!activeUrl) return;
+      if (!activeUrl) {
+        return;
+      }
 
       const shareUrl = buildShareUrl(activeUrl);
 
       try {
         await navigator.clipboard.writeText(shareUrl);
-        showToast("Shareable watch link copied.");
+        showToast("Shareable EastCoin game-room link copied.");
       } catch {
-        window.prompt("Copy this watch link:", shareUrl);
+        window.prompt("Copy this game-room link:", shareUrl);
       }
     });
 
@@ -1130,7 +1484,10 @@
       body.classList.toggle("sidebar-collapsed", collapsed);
 
       if (save) {
-        localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed));
+        localStorage.setItem(
+          SIDEBAR_STORAGE_KEY,
+          String(collapsed)
+        );
       }
 
       updateNavigationButton();
@@ -1155,14 +1512,10 @@
 
     document.querySelectorAll(".nav-link").forEach((link) => {
       link.addEventListener("click", () => {
-        document.querySelectorAll(".nav-link").forEach((item) => item.classList.remove("active"));
-        link.classList.add("active");
         body.classList.remove("menu-open");
         updateNavigationButton();
       });
     });
-
-
 
     const CHAT_WIDTH_STORAGE_KEY = "eastcoinsChatWidthV2";
     const LEGACY_CHAT_WIDTH_STORAGE_KEY = "eastcoinsChatWidth";
@@ -1174,11 +1527,16 @@
     function getChatWidthLimits() {
       const layoutWidth = layout.getBoundingClientRect().width;
       const sidebarWidth = sidebar.getBoundingClientRect().width;
-      const dividerWidth = resizeHandle.getBoundingClientRect().width;
+      const dividerWidth =
+        resizeHandle.getBoundingClientRect().width;
 
       const availableMaximum =
-        layoutWidth - sidebarWidth - dividerWidth - MIN_VIDEO_WIDTH;
-      const practicalMaximum = Math.min(560, layoutWidth * 0.38);
+        layoutWidth -
+        sidebarWidth -
+        dividerWidth -
+        MIN_VIDEO_WIDTH;
+      const practicalMaximum =
+        Math.min(560, layoutWidth * 0.38);
 
       return {
         min: MIN_CHAT_WIDTH,
@@ -1191,23 +1549,38 @@
 
     function clampChatWidth(width) {
       const limits = getChatWidthLimits();
-      return Math.min(Math.max(width, limits.min), limits.max);
+      return Math.min(
+        Math.max(width, limits.min),
+        limits.max
+      );
     }
 
     function setChatWidth(width, save = false) {
-      if (window.innerWidth <= 900) return;
+      if (window.innerWidth <= 900) {
+        return;
+      }
 
       const clampedWidth = Math.round(clampChatWidth(width));
+
       document.documentElement.style.setProperty(
         "--chat-width",
         `${clampedWidth}px`
       );
 
-      resizeHandle.setAttribute("aria-valuenow", String(clampedWidth));
-      resizeHandle.setAttribute("aria-valuemax", String(Math.round(getChatWidthLimits().max)));
+      resizeHandle.setAttribute(
+        "aria-valuenow",
+        String(clampedWidth)
+      );
+      resizeHandle.setAttribute(
+        "aria-valuemax",
+        String(Math.round(getChatWidthLimits().max))
+      );
 
       if (save) {
-        localStorage.setItem(CHAT_WIDTH_STORAGE_KEY, String(clampedWidth));
+        localStorage.setItem(
+          CHAT_WIDTH_STORAGE_KEY,
+          String(clampedWidth)
+        );
       }
     }
 
@@ -1217,7 +1590,9 @@
     }
 
     resizeHandle.addEventListener("pointerdown", (event) => {
-      if (window.innerWidth <= 900 || event.button !== 0) return;
+      if (window.innerWidth <= 900 || event.button !== 0) {
+        return;
+      }
 
       activePointerId = event.pointerId;
       resizeHandle.setPointerCapture(activePointerId);
@@ -1227,12 +1602,17 @@
     });
 
     resizeHandle.addEventListener("pointermove", (event) => {
-      if (event.pointerId !== activePointerId) return;
+      if (event.pointerId !== activePointerId) {
+        return;
+      }
+
       setChatWidth(widthFromPointer(event.clientX));
     });
 
     function finishChatResize(event) {
-      if (event.pointerId !== activePointerId) return;
+      if (event.pointerId !== activePointerId) {
+        return;
+      }
 
       setChatWidth(widthFromPointer(event.clientX), true);
       body.classList.remove("resizing-chat");
@@ -1244,19 +1624,33 @@
       activePointerId = null;
     }
 
-    resizeHandle.addEventListener("pointerup", finishChatResize);
-    resizeHandle.addEventListener("pointercancel", (event) => {
-      if (event.pointerId !== activePointerId) return;
-      body.classList.remove("resizing-chat");
-      activePointerId = null;
-    });
+    resizeHandle.addEventListener(
+      "pointerup",
+      finishChatResize
+    );
+
+    resizeHandle.addEventListener(
+      "pointercancel",
+      (event) => {
+        if (event.pointerId !== activePointerId) {
+          return;
+        }
+
+        body.classList.remove("resizing-chat");
+        activePointerId = null;
+      }
+    );
 
     resizeHandle.addEventListener("keydown", (event) => {
-      if (window.innerWidth <= 900) return;
+      if (window.innerWidth <= 900) {
+        return;
+      }
 
-      const currentWidth = parseFloat(
-        getComputedStyle(document.documentElement).getPropertyValue("--chat-width")
-      ) || DEFAULT_CHAT_WIDTH;
+      const currentWidth =
+        parseFloat(
+          getComputedStyle(document.documentElement)
+            .getPropertyValue("--chat-width")
+        ) || DEFAULT_CHAT_WIDTH;
 
       const step = event.shiftKey ? 50 : 20;
       let nextWidth = currentWidth;
@@ -1286,9 +1680,12 @@
       body.classList.remove("menu-open");
 
       if (window.innerWidth > 900) {
-        const currentWidth = parseFloat(
-          getComputedStyle(document.documentElement).getPropertyValue("--chat-width")
-        ) || DEFAULT_CHAT_WIDTH;
+        const currentWidth =
+          parseFloat(
+            getComputedStyle(document.documentElement)
+              .getPropertyValue("--chat-width")
+          ) || DEFAULT_CHAT_WIDTH;
+
         setChatWidth(currentWidth);
       }
 
@@ -1299,52 +1696,49 @@
       localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
 
     if (!isMobileNavigation()) {
-      setDesktopSidebarCollapsed(savedSidebarState, false);
+      setDesktopSidebarCollapsed(
+        savedSidebarState,
+        false
+      );
     } else {
       updateNavigationButton();
     }
 
     localStorage.removeItem(LEGACY_CHAT_WIDTH_STORAGE_KEY);
 
-    const savedChatWidth = Number(localStorage.getItem(CHAT_WIDTH_STORAGE_KEY));
-    if (Number.isFinite(savedChatWidth) && savedChatWidth > 0) {
+    const savedChatWidth =
+      Number(localStorage.getItem(CHAT_WIDTH_STORAGE_KEY));
+
+    if (
+      Number.isFinite(savedChatWidth) &&
+      savedChatWidth > 0
+    ) {
       setChatWidth(savedChatWidth);
     } else {
       setChatWidth(DEFAULT_CHAT_WIDTH);
     }
 
-    const queryParameters = new URLSearchParams(window.location.search);
-    const startFresh = queryParameters.get("new") === "1";
+    const queryParameters =
+      new URLSearchParams(window.location.search);
+    const startFresh =
+      queryParameters.get("new") === "1";
 
     if (startFresh) {
-      /*
-        The Live Player navigation uses ?new=1 to intentionally return
-        to the blank “Enter a URL” screen instead of restoring the last site.
-      */
-      localStorage.removeItem("eastcoinsEmbedUrl");
-      history.replaceState({}, "", window.location.pathname);
+      history.replaceState(
+        {},
+        "",
+        window.location.pathname
+      );
     } else {
-      const queryStream =
-        queryParameters.get("watch") || queryParameters.get("stream");
-      const savedUrl = localStorage.getItem("eastcoinsEmbedUrl");
-      const initialUrl = queryStream || savedUrl;
+      const queryGame = queryParameters.get("game");
+      const queryName =
+        queryParameters.get("name") || "Shared Game Room";
 
-      if (initialUrl) {
-        streamUrlInput.value = initialUrl;
-
-        /*
-          Keep ?watch= in the address bar.
-
-          Some third-party players reload or navigate the parent page after
-          initialization. Keeping the parameter means EastCoin can restore the
-          same player after that reload instead of falling back to the URL form.
-
-          A previously saved URL also auto-loads as a secondary fallback.
-        */
-        loadStream(initialUrl, true);
+      if (queryGame) {
+        gameUrlInput.value = queryGame;
+        loadGame(queryGame, queryName);
       }
     }
-
   </script>
 </body>
 </html>
