@@ -1064,6 +1064,95 @@
       }
     }
 
+  
+    /* ---------------- ZWADES CALLOUT ---------------- */
+
+    .zwades-callout {
+      margin-top: auto;
+      padding: 14px;
+      border: 1px solid rgba(101, 163, 255, .18);
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 18% 16%, rgba(57, 130, 255, .22), transparent 34%),
+        linear-gradient(180deg, rgba(8, 16, 36, .98), rgba(5, 11, 27, .98));
+      box-shadow:
+        0 16px 34px rgba(0, 0, 0, .26),
+        inset 0 1px 0 rgba(255, 255, 255, .03);
+    }
+
+    .zwades-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 10px;
+      color: #87a9ff;
+      font-size: .63rem;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .zwades-eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #4b93ff;
+      box-shadow: 0 0 0 4px rgba(75, 147, 255, .14);
+    }
+
+    .zwades-row {
+      display: grid;
+      grid-template-columns: 64px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+    }
+
+    .zwades-media {
+      width: 64px;
+      height: 64px;
+      overflow: hidden;
+      border: 1px solid rgba(120, 178, 255, .28);
+      border-radius: 14px;
+      background:
+        linear-gradient(180deg, rgba(17, 39, 86, .9), rgba(8, 20, 53, .96));
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.05),
+        0 10px 24px rgba(13, 52, 140, .24);
+    }
+
+    .zwades-media img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .zwades-title {
+      margin: 0;
+      color: #edf5ff;
+      font-size: 1rem;
+      line-height: 1.05;
+      letter-spacing: -.03em;
+    }
+
+    .zwades-title .is-blue {
+      color: #73abff;
+    }
+
+    .zwades-copy {
+      margin: 7px 0 0;
+      color: #8fa6ca;
+      font-size: .73rem;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 900px) {
+      .zwades-callout {
+        margin-top: 18px;
+      }
+    }
+
   </style>
   <link rel="icon" type="image/png" href="assets/eastcoin-favicon.png" />
   <link rel="shortcut icon" href="assets/eastcoin-favicon.png" />
@@ -1090,6 +1179,20 @@
         <a class="nav-link" href="favorites.html">⭐ Favorites</a>
         <a class="nav-link active" href="games.html?new=1">🎮 Games</a>
       </div>
+
+      <div class="zwades-callout" aria-label="Zwades callout">
+        <div class="zwades-eyebrow">EastCoin Lore</div>
+        <div class="zwades-row">
+          <div class="zwades-media">
+            <img src="assets/zwades-blue.webp" alt="Blue animated meme image representing Zwades" />
+          </div>
+          <div class="zwades-text">
+            <p class="zwades-title">Zwades is <span class="is-blue">blue</span></p>
+            <p class="zwades-copy">Official EastCoin fact. No further questions.</p>
+          </div>
+        </div>
+      </div>
+
     </aside>
 
     <main class="watch-area">
