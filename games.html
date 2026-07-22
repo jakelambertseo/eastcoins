@@ -1153,6 +1153,142 @@
       }
     }
 
+  
+    /* ---------------- NFL KICKOFF COUNTDOWN ---------------- */
+
+    .football-countdown {
+      margin-top: auto;
+      margin-bottom: 12px;
+      padding: 14px;
+      border: 1px solid rgba(242, 196, 0, .18);
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 90% 0%, rgba(242, 196, 0, .13), transparent 35%),
+        linear-gradient(180deg, rgba(24, 20, 8, .96), rgba(10, 9, 5, .98));
+      box-shadow:
+        0 16px 34px rgba(0, 0, 0, .25),
+        inset 0 1px 0 rgba(255, 255, 255, .035);
+    }
+
+    .football-countdown + .zwades-callout {
+      margin-top: 0;
+    }
+
+    .football-countdown-eyebrow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+      color: #d9bc57;
+      font-size: .62rem;
+      font-weight: 900;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .football-countdown-live {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #8d835e;
+      letter-spacing: .06em;
+    }
+
+    .football-countdown-live::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #f2c400;
+      box-shadow: 0 0 0 4px rgba(242, 196, 0, .09);
+    }
+
+    .football-countdown-title {
+      margin: 0;
+      color: #fff7d8;
+      font-size: .95rem;
+      line-height: 1.2;
+      letter-spacing: -.025em;
+    }
+
+    .football-countdown-matchup {
+      margin: 5px 0 0;
+      color: #9c9270;
+      font-size: .68rem;
+      line-height: 1.4;
+    }
+
+    .football-countdown-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 5px;
+      margin-top: 12px;
+    }
+
+    .football-countdown-unit {
+      min-width: 0;
+      padding: 8px 3px 7px;
+      border: 1px solid rgba(255, 255, 255, .055);
+      border-radius: 9px;
+      background: rgba(0, 0, 0, .22);
+      text-align: center;
+    }
+
+    .football-countdown-value {
+      display: block;
+      color: #fff;
+      font-size: .91rem;
+      font-variant-numeric: tabular-nums;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .football-countdown-label {
+      display: block;
+      margin-top: 5px;
+      color: #716a53;
+      font-size: .48rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .football-countdown-date {
+      margin-top: 10px;
+      color: #756e56;
+      font-size: .61rem;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    .football-countdown.is-live {
+      border-color: rgba(85, 216, 138, .22);
+      background:
+        radial-gradient(circle at 90% 0%, rgba(85, 216, 138, .13), transparent 35%),
+        linear-gradient(180deg, rgba(7, 26, 16, .97), rgba(5, 13, 9, .99));
+    }
+
+    .football-countdown.is-live .football-countdown-eyebrow,
+    .football-countdown.is-live .football-countdown-title {
+      color: #a9f1c3;
+    }
+
+    .football-countdown.is-live .football-countdown-live::before {
+      background: #55d88a;
+      box-shadow: 0 0 0 4px rgba(85, 216, 138, .1);
+    }
+
+    @media (max-width: 900px) {
+      .football-countdown {
+        margin-top: 18px;
+      }
+
+      .football-countdown + .zwades-callout {
+        margin-top: 0;
+      }
+    }
+
   </style>
   <link rel="icon" type="image/png" href="assets/eastcoin-favicon.png" />
   <link rel="shortcut icon" href="assets/eastcoin-favicon.png" />
@@ -1179,6 +1315,59 @@
         <a class="nav-link" href="favorites.html">⭐ Favorites</a>
         <a class="nav-link active" href="games.html?new=1">🎮 Games</a>
       </div>
+
+
+      <section
+        class="football-countdown"
+        data-football-countdown
+        aria-label="Countdown to the 2026 NFL regular season">
+        <div class="football-countdown-eyebrow">
+          <span>🏈 NFL Kickoff</span>
+          <span class="football-countdown-live">Countdown</span>
+        </div>
+
+        <p class="football-countdown-title">
+          Football season starts in
+        </p>
+
+        <p class="football-countdown-matchup">
+          Patriots at Seahawks
+        </p>
+
+        <div class="football-countdown-grid" aria-live="polite">
+          <div class="football-countdown-unit">
+            <span
+              class="football-countdown-value"
+              data-countdown-days>--</span>
+            <span class="football-countdown-label">Days</span>
+          </div>
+
+          <div class="football-countdown-unit">
+            <span
+              class="football-countdown-value"
+              data-countdown-hours>--</span>
+            <span class="football-countdown-label">Hours</span>
+          </div>
+
+          <div class="football-countdown-unit">
+            <span
+              class="football-countdown-value"
+              data-countdown-minutes>--</span>
+            <span class="football-countdown-label">Min</span>
+          </div>
+
+          <div class="football-countdown-unit">
+            <span
+              class="football-countdown-value"
+              data-countdown-seconds>--</span>
+            <span class="football-countdown-label">Sec</span>
+          </div>
+        </div>
+
+        <div class="football-countdown-date">
+          Wed, Sep 9 · 7:20 PM CT
+        </div>
+      </section>
 
       <div class="zwades-callout" aria-label="Zwades callout">
         <div class="zwades-eyebrow">EastCoin Lore</div>
@@ -1842,6 +2031,71 @@
         loadGame(queryGame, queryName);
       }
     }
+  
+    function initializeFootballCountdowns() {
+      const kickoffTime = new Date("2026-09-09T19:20:00-05:00");
+
+      document
+        .querySelectorAll("[data-football-countdown]")
+        .forEach((countdown) => {
+          const daysElement = countdown.querySelector(
+            "[data-countdown-days]"
+          );
+          const hoursElement = countdown.querySelector(
+            "[data-countdown-hours]"
+          );
+          const minutesElement = countdown.querySelector(
+            "[data-countdown-minutes]"
+          );
+          const secondsElement = countdown.querySelector(
+            "[data-countdown-seconds]"
+          );
+          const titleElement = countdown.querySelector(
+            ".football-countdown-title"
+          );
+          const statusElement = countdown.querySelector(
+            ".football-countdown-live"
+          );
+
+          function updateFootballCountdown() {
+            const remaining = kickoffTime.getTime() - Date.now();
+
+            if (remaining <= 0) {
+              countdown.classList.add("is-live");
+              titleElement.textContent = "Football is back";
+              statusElement.textContent = "Live";
+              daysElement.textContent = "00";
+              hoursElement.textContent = "00";
+              minutesElement.textContent = "00";
+              secondsElement.textContent = "00";
+              return false;
+            }
+
+            const totalSeconds = Math.floor(remaining / 1000);
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            daysElement.textContent = String(days);
+            hoursElement.textContent = String(hours).padStart(2, "0");
+            minutesElement.textContent = String(minutes).padStart(2, "0");
+            secondsElement.textContent = String(seconds).padStart(2, "0");
+            return true;
+          }
+
+          updateFootballCountdown();
+
+          const countdownTimer = window.setInterval(() => {
+            if (!updateFootballCountdown()) {
+              window.clearInterval(countdownTimer);
+            }
+          }, 1000);
+        });
+    }
+
+    initializeFootballCountdowns();
+
   </script>
 </body>
 </html>
