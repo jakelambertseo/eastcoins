@@ -1540,6 +1540,45 @@ h1 span{color:var(--gold-bright)}
   }
 }
 
+
+.lede-periodt{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  max-width:none;
+  color:#f1e5c9;
+  font-family:Georgia,serif;
+  font-size:1rem;
+  font-weight:800;
+}
+
+.lede-periodt img{
+  display:block;
+  width:48px;
+  height:48px;
+  flex:0 0 48px;
+  object-fit:cover;
+  border:2px solid rgba(234,209,123,.4);
+  border-radius:5px;
+  background:#120e0a;
+  box-shadow:
+    0 5px 0 rgba(0,0,0,.4),
+    0 0 14px rgba(197,163,76,.12);
+}
+
+@media(max-width:540px){
+  .lede-periodt{
+    align-items:flex-start;
+    font-size:.92rem;
+  }
+
+  .lede-periodt img{
+    width:44px;
+    height:44px;
+    flex-basis:44px;
+  }
+}
+
 </style>
 </head>
 
@@ -1549,10 +1588,12 @@ h1 span{color:var(--gold-bright)}
     <div>
       <div class="kicker">House game · 45-second round</div>
       <h1><span>EastCoin</span> Bonk</h1>
-      <p class="lede">
-        A grimy back-room casino game built around unpredictable tempo swings.
-        The opening is measured, the middle mixes slow lingerers with sudden quick pops,
-        and the final ten seconds turn the pressure up.
+      <p class="lede lede-periodt">
+        <span>Try to get the highscore lil cuh</span>
+        <img
+          src="assets/targets/periodt.png"
+          alt="Periodt reaction"
+        >
       </p>
     </div>
 
