@@ -1314,6 +1314,7 @@
         <a class="nav-link" href="index.html?new=1">📺 Live Player</a>
         <a class="nav-link" href="favorites.html">⭐ Favorites</a>
         <a class="nav-link active" href="games.html?new=1">🎮 Games</a>
+        <a class="nav-link" href="bonk.html">🔨 EastCoin Bonk</a>
       </div>
 
 
@@ -1452,6 +1453,13 @@
             </form>
 
             <div class="game-grid">
+              <button class="game-card" type="button" data-game-url="bonk.html" data-game-name="EastCoin Bonk">
+                <span class="game-card-icon">🔨</span>
+                <h2>EastCoin Bonk</h2>
+                <p>Whack the EastCoin members, build combos, and chase the high score. Watch for the rare blue Zwades bonus.</p>
+                <span class="game-card-footer"><span class="game-card-type">Arcade · EastCoin Original</span><span class="game-card-action">Play Game</span></span>
+              </button>
+
               <button
                 class="game-card"
                 type="button"
@@ -1627,8 +1635,11 @@
       const valueWithProtocol =
         /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(trimmed)
           ? trimmed
-          : `https://${trimmed}`;
-      const parsed = new URL(valueWithProtocol);
+          : trimmed.startsWith("/") || trimmed.startsWith("./") ||
+            /^[a-zA-Z0-9_-]+\.html(?:[?#].*)?$/.test(trimmed)
+            ? new URL(trimmed, window.location.href).href
+            : `https://${trimmed}`;
+      const parsed = new URL(valueWithProtocol, window.location.href);
 
       if (!["https:", "http:"].includes(parsed.protocol)) {
         throw new Error("Only HTTP or HTTPS game URLs can be loaded.");
