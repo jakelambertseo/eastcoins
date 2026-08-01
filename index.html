@@ -1002,7 +1002,155 @@
       }
     }
 
-  </style>
+  
+/* ---------------- COMPACT SHARED SIDEBAR ---------------- */
+
+.nav-group{
+  margin-top:8px;
+}
+
+.nav-label{
+  padding:0 9px 6px;
+  font-size:.59rem;
+  letter-spacing:.12em;
+}
+
+.nav-link{
+  gap:8px;
+  margin-bottom:3px;
+  padding:8px 10px;
+  border-radius:9px;
+  font-size:.82rem;
+  line-height:1.12;
+}
+
+.zwades-callout{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:0;
+  margin-top:0;
+  padding:7px 9px;
+  border-radius:9px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(8,16,36,.92),
+      rgba(5,11,27,.94)
+    );
+  box-shadow:
+    0 7px 16px rgba(0,0,0,.2),
+    inset 0 1px 0 rgba(255,255,255,.025);
+  text-align:center;
+}
+
+.football-countdown + .zwades-callout{
+  margin-top:0;
+}
+
+.zwades-title{
+  margin:0;
+  color:#dceaff;
+  font-size:.69rem;
+  font-weight:900;
+  line-height:1;
+  letter-spacing:.025em;
+  text-transform:lowercase;
+  white-space:nowrap;
+}
+
+.zwades-title .is-blue{
+  color:#73abff;
+}
+
+.zwades-eyebrow,
+.zwades-row,
+.zwades-media,
+.zwades-copy{
+  display:none;
+}
+
+@media(max-width:900px){
+  .zwades-callout{
+    margin-top:8px;
+  }
+
+  .football-countdown + .zwades-callout{
+    margin-top:0;
+  }
+}
+
+
+/* ---------------- COLLAPSIBLE PLAYER CONTROLS ---------------- */
+
+.toolbar-collapse-button{
+  border-color:rgba(130,162,203,.48);
+  color:#dceaff;
+  background:rgba(5,13,27,.9);
+  white-space:nowrap;
+}
+
+.toolbar-collapse-button:hover,
+.toolbar-collapse-button:focus-visible{
+  border-color:#78aef3;
+  background:rgba(18,45,82,.96);
+}
+
+.player-toolbar{
+  transition:
+    padding .18s ease,
+    background .18s ease,
+    inset .18s ease;
+}
+
+.player-toolbar.collapsed{
+  inset:10px 10px auto auto;
+  width:auto;
+  padding:0;
+  background:transparent;
+}
+
+.player-toolbar.collapsed .toolbar-title,
+.player-toolbar.collapsed
+  .toolbar-actions
+  > .toolbar-button:not(.toolbar-collapse-button){
+  display:none;
+}
+
+.player-toolbar.collapsed .toolbar-actions{
+  margin:0;
+  gap:0;
+}
+
+.player-toolbar.collapsed .toolbar-collapse-button{
+  padding:7px 9px;
+  border-radius:9px;
+  color:#e5efff;
+  background:rgba(5,12,24,.86);
+  box-shadow:
+    0 8px 22px rgba(0,0,0,.42),
+    inset 0 1px 0 rgba(255,255,255,.04);
+  backdrop-filter:blur(12px);
+  opacity:.78;
+}
+
+.player-toolbar.collapsed .toolbar-collapse-button:hover,
+.player-toolbar.collapsed .toolbar-collapse-button:focus-visible{
+  opacity:1;
+}
+
+@media(max-width:600px){
+  .toolbar-collapse-button{
+    padding:8px 9px;
+    font-size:.72rem;
+  }
+
+  .player-toolbar.collapsed{
+    inset:8px 8px auto auto;
+  }
+}
+
+</style>
   <link rel="icon" type="image/png" href="assets/eastcoin-favicon.png" />
   <link rel="shortcut icon" href="assets/eastcoin-favicon.png" />
   <link rel="apple-touch-icon" href="assets/eastcoin-favicon.png" />
@@ -1028,6 +1176,8 @@
         <a class="nav-link" href="favorites.html">⭐ Favorites</a>
         <a class="nav-link" href="games.html?new=1">🎮 Games</a>
         <a class="nav-link" href="bonk.html">🔨 EastCoin Bonk</a>
+        <a class="nav-link" href="aim-trainer.html">🎯 Aim Trainer</a>
+        <a class="nav-link" href="button-masher.html">🟥 Button Masher</a>
       </div>
 
       <section
@@ -1082,17 +1232,10 @@
         </div>
       </section>
 
-      <div class="zwades-callout" aria-label="Zwades callout">
-        <div class="zwades-eyebrow">EastCoin Lore</div>
-        <div class="zwades-row">
-          <div class="zwades-media">
-            <img src="assets/zwades-blue.webp" alt="Blue animated meme image representing Zwades" />
-          </div>
-          <div class="zwades-text">
-            <p class="zwades-title">Zwades is <span class="is-blue">blue</span></p>
-            <p class="zwades-copy">Official EastCoin fact. No further questions.</p>
-          </div>
-        </div>
+      <div class="zwades-callout" aria-label="Zwades is blue">
+        <p class="zwades-title">
+          zwades is <span class="is-blue">blue</span>
+        </p>
       </div>
 
     </aside>
@@ -1122,6 +1265,14 @@
             </button>
             <button class="toolbar-button" id="openButton" type="button">Open source ↗</button>
             <button class="toolbar-button" id="changeButton" type="button">Change URL</button>
+            <button
+              class="toolbar-button toolbar-collapse-button"
+              id="toolbarCollapseButton"
+              type="button"
+              aria-expanded="true"
+              aria-controls="playerToolbar">
+              Hide controls ▲
+            </button>
           </div>
         </div>
 
@@ -1238,6 +1389,8 @@
     const openButton = document.getElementById("openButton");
     const shareButton = document.getElementById("shareButton");
     const changeButton = document.getElementById("changeButton");
+    const toolbarCollapseButton =
+      document.getElementById("toolbarCollapseButton");
     const mobileMenu = document.getElementById("mobileMenu");
     const mobileOverlay = document.getElementById("mobileOverlay");
     const layout = document.querySelector(".layout");
@@ -1297,6 +1450,52 @@
       return parsed.href;
     }
 
+
+    const PLAYER_TOOLBAR_COLLAPSED_KEY =
+      "eastcoinsPlayerToolbarCollapsed";
+
+    function playerToolbarShouldBeCollapsed() {
+      return (
+        localStorage.getItem(
+          PLAYER_TOOLBAR_COLLAPSED_KEY
+        ) === "true"
+      );
+    }
+
+    function setPlayerToolbarCollapsed(
+      collapsed,
+      save = true
+    ) {
+      playerToolbar.classList.toggle(
+        "collapsed",
+        collapsed
+      );
+
+      toolbarCollapseButton.textContent =
+        collapsed
+          ? "Show controls ▼"
+          : "Hide controls ▲";
+
+      toolbarCollapseButton.setAttribute(
+        "aria-expanded",
+        String(!collapsed)
+      );
+
+      toolbarCollapseButton.setAttribute(
+        "aria-label",
+        collapsed
+          ? "Show player controls"
+          : "Hide player controls"
+      );
+
+      if (save) {
+        localStorage.setItem(
+          PLAYER_TOOLBAR_COLLAPSED_KEY,
+          String(collapsed)
+        );
+      }
+    }
+
     function loadStream(rawValue, savePreference = rememberUrl.checked) {
       urlError.textContent = "";
 
@@ -1321,6 +1520,10 @@
       activeUrl = normalizedUrl;
       currentHost.textContent = parsedUrl.hostname;
       playerShell.classList.add("has-frame");
+      setPlayerToolbarCollapsed(
+        playerToolbarShouldBeCollapsed(),
+        false
+      );
       playerToolbar.hidden = false;
       urlStage.replaceWith(iframe);
       iframe.id = "activeFrame";
@@ -1364,6 +1567,18 @@
 
     changeButton.addEventListener("click", restoreUrlPrompt);
 
+    toolbarCollapseButton.addEventListener(
+      "click",
+      () => {
+        setPlayerToolbarCollapsed(
+          !playerToolbar.classList.contains(
+            "collapsed"
+          )
+        );
+      }
+    );
+
+
     openButton.addEventListener("click", () => {
       if (activeUrl) {
         window.open(activeUrl, "_blank", "noopener,noreferrer");
@@ -1390,6 +1605,11 @@
         window.prompt("Copy this watch link:", shareUrl);
       }
     });
+
+    setPlayerToolbarCollapsed(
+      playerToolbarShouldBeCollapsed(),
+      false
+    );
 
     const SIDEBAR_STORAGE_KEY = "eastcoinsSidebarCollapsed";
 
