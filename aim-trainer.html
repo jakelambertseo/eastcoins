@@ -13,8 +13,8 @@
     content="noindex, nofollow, noarchive, nosnippet, noimageindex"
   />
 
-  <meta name="description" content="EastCoin browser games with an embedded game window and Twitch chat." />
-  <title>EastCoin — Games</title>
+  <meta name="description" content="EastCoin Aim Trainer with Twitch chat." />
+  <title>EastCoin — Aim Trainer</title>
 
   <style>
     :root {
@@ -1313,9 +1313,12 @@
         <div class="nav-label">EastCoin</div>
         <a class="nav-link" href="index.html?new=1">📺 Live Player</a>
         <a class="nav-link" href="favorites.html">⭐ Favorites</a>
-        <a class="nav-link active" href="games.html?new=1">🎮 Games</a>
+        <a class="nav-link" href="games.html?new=1">🎮 Games</a>
         <a class="nav-link" href="bonk.html">🔨 EastCoin Bonk</a>
+        <a class="nav-link active" href="aim-trainer.html">🎯 Aim Trainer</a>
+        <a class="nav-link" href="button-masher.html">🟥 Button Masher</a>
       </div>
+
 
       <section
         class="football-countdown"
@@ -1392,221 +1395,18 @@
         aria-label="Hide navigation"
         aria-expanded="true">◀</button>
 
-      <section class="player-shell" id="playerShell" aria-label="Embedded game player">
-        <div class="player-toolbar" id="playerToolbar" hidden>
-          <div class="toolbar-title">
-            <strong>Embedded Game</strong>
-            <span id="currentHost">External provider</span>
-          </div>
-
-          <div class="toolbar-actions">
-            <button
-              class="toolbar-button share-room-button"
-              id="shareButton"
-              type="button"
-              style="background-color:#9f1239;background-image:linear-gradient(180deg,#d51f51 0%,#9f1239 55%,#700925 100%);border-color:#e33a62;color:#fff3f5;">
-              🔗 Share Room
-            </button>
-            <button class="toolbar-button" id="openButton" type="button">Open game ↗</button>
-            <button class="toolbar-button" id="changeButton" type="button">All Games</button>
-          </div>
-        </div>
-
-        <div class="url-stage games-stage" id="urlStage">
-          <div class="games-library">
-            <div class="games-heading">
-              <div class="games-heading-icon" aria-hidden="true">🎮</div>
-              <h1>Games</h1>
-              <p>
-                Select a game to load it in the main EastCoin window while
-                Twitch chat stays open. For a private lobby, paste its exact
-                invitation URL below.
-              </p>
-            </div>
-
-            <form class="game-room-form" id="gameForm">
-              <label class="game-room-form-label" for="gameUrl">
-                Paste a private game-room URL
-              </label>
-
-              <div class="game-room-entry">
-                <input
-                  id="gameUrl"
-                  type="url"
-                  inputmode="url"
-                  autocomplete="url"
-                  placeholder="https://skribbl.io/?room=..."
-                  aria-label="Private game room URL"
-                  required
-                />
-                <button class="load-game-button" type="submit">
-                  Load Room
-                </button>
-              </div>
-
-              <div
-                class="game-url-error"
-                id="gameUrlError"
-                role="alert">
-              </div>
-            </form>
-
-            <div class="game-grid">
-              <button class="game-card" type="button" data-game-url="bonk-game.html?v=trap10" data-game-name="EastCoin Bonk">
-                <span class="game-card-icon">🔨</span>
-                <h2>EastCoin Bonk</h2>
-                <p>Whack the EastCoin members, build combos, and chase the high score. Watch for the rare blue Zwades bonus.</p>
-                <span class="game-card-footer"><span class="game-card-type">Arcade · EastCoin Original</span><span class="game-card-action">Play Game</span></span>
-              </button>
-
-              <button
-                class="game-card"
-                type="button"
-                data-game-url="aim-trainer-game.html?v=1"
-                data-game-name="EastCoin Aim Trainer">
-                <span class="game-card-icon">🎯</span>
-                <h2>EastCoin Aim Trainer</h2>
-                <p>
-                  Hit shrinking member targets before they disappear. Speed,
-                  accuracy, reaction time, and combos all affect your score.
-                </p>
-                <span class="game-card-footer">
-                  <span class="game-card-type">
-                    Aim · EastCoin Original
-                  </span>
-                  <span class="game-card-action">Play Game</span>
-                </span>
-              </button>
-
-              <button
-                class="game-card"
-                type="button"
-                data-game-url="button-masher-game.html?v=1"
-                data-game-name="EastCoin Button Masher">
-                <span class="game-card-icon">🟥</span>
-                <h2>EastCoin Button Masher</h2>
-                <p>
-                  Click, tap, or hammer Space for ten seconds while the house
-                  throws double payouts, traps, and a final overdrive at you.
-                </p>
-                <span class="game-card-footer">
-                  <span class="game-card-type">
-                    Speed · EastCoin Original
-                  </span>
-                  <span class="game-card-action">Play Game</span>
-                </span>
-              </button>
-
-              <button
-                class="game-card"
-                type="button"
-                data-game-url="https://skribbl.io/"
-                data-game-name="Skribbl.io">
-                <span class="game-card-icon">🎨</span>
-                <h2>Skribbl.io</h2>
-                <p>
-                  Draw a word while everyone else guesses. Create a private
-                  lobby and share its invite link with the EastCoin group.
-                </p>
-                <span class="game-card-footer">
-                  <span class="game-card-type">Drawing · Party</span>
-                  <span class="game-card-action">Load Game</span>
-                </span>
-              </button>
-
-              <button
-                class="game-card"
-                type="button"
-                data-game-url="https://garticphone.com/"
-                data-game-name="Gartic Phone">
-                <span class="game-card-icon">☎️</span>
-                <h2>Gartic Phone</h2>
-                <p>
-                  Combine drawing and telephone-style prompts as each round
-                  becomes stranger while moving through the group.
-                </p>
-                <span class="game-card-footer">
-                  <span class="game-card-type">Drawing · Party</span>
-                  <span class="game-card-action">Load Game</span>
-                </span>
-              </button>
-
-              <button
-                class="game-card"
-                type="button"
-                data-game-url="https://play.typeracer.com/"
-                data-game-name="TypeRacer">
-                <span class="game-card-icon">⌨️</span>
-                <h2>TypeRacer</h2>
-                <p>
-                  Race friends by typing the same passage. Create a private
-                  racetrack and share the invitation URL.
-                </p>
-                <span class="game-card-footer">
-                  <span class="game-card-type">Typing · Competitive</span>
-                  <span class="game-card-action">Load Game</span>
-                </span>
-              </button>
-
-              <button
-                class="game-card"
-                type="button"
-                data-game-url="https://playingcards.io/"
-                data-game-name="PlayingCards.io">
-                <span class="game-card-icon">🃏</span>
-                <h2>PlayingCards.io</h2>
-                <p>
-                  Create synchronized rooms for cards, board games, and
-                  custom tabletop games everyone can control together.
-                </p>
-                <span class="game-card-footer">
-                  <span class="game-card-type">Cards · Tabletop</span>
-                  <span class="game-card-action">Load Game</span>
-                </span>
-              </button>
-
-              <button
-                class="game-card"
-                type="button"
-                data-game-url="https://lichess.org/"
-                data-game-name="Lichess">
-                <span class="game-card-icon">♟️</span>
-                <h2>Lichess</h2>
-                <p>
-                  Challenge a friend to chess, create a private match, or
-                  organize a small EastCoin tournament.
-                </p>
-                <span class="game-card-footer">
-                  <span class="game-card-type">Chess · Strategy</span>
-                  <span class="game-card-action">Load Game</span>
-                </span>
-              </button>
-
-              <button
-                class="game-card"
-                type="button"
-                data-game-url="https://www.airconsole.com/"
-                data-game-name="AirConsole">
-                <span class="game-card-icon">📱</span>
-                <h2>AirConsole</h2>
-                <p>
-                  Use one main screen for browser party games while everyone
-                  joins and controls the action from their phone.
-                </p>
-                <span class="game-card-footer">
-                  <span class="game-card-type">Arcade · Party</span>
-                  <span class="game-card-action">Load Game</span>
-                </span>
-              </button>
-            </div>
-
-            <div class="games-help">
-              Some game providers may block iframe embedding. When that
-              happens, use <strong>Open game ↗</strong> while keeping the
-              EastCoin room and Twitch chat available.
-            </div>
-          </div>
-        </div>
+      <section
+        class="player-shell has-frame"
+        id="playerShell"
+        aria-label="EastCoin Aim Trainer game">
+        <iframe
+          class="embed-frame"
+          id="aimTrainerFrame"
+          src="aim-trainer-game.html?v=1"
+          title="EastCoin Aim Trainer"
+          allow="autoplay; fullscreen; gamepad; clipboard-read; clipboard-write"
+          allowfullscreen>
+        </iframe>
       </section>
     </main>
 
@@ -1633,165 +1433,13 @@
     </aside>
   </div>
 
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
   <script>
     const body = document.body;
-    const playerShell = document.getElementById("playerShell");
-    const playerToolbar = document.getElementById("playerToolbar");
-    const urlStage = document.getElementById("urlStage");
-    const gameForm = document.getElementById("gameForm");
-    const gameUrlInput = document.getElementById("gameUrl");
-    const gameUrlError = document.getElementById("gameUrlError");
-    const currentHost = document.getElementById("currentHost");
-    const openButton = document.getElementById("openButton");
-    const shareButton = document.getElementById("shareButton");
-    const changeButton = document.getElementById("changeButton");
     const mobileMenu = document.getElementById("mobileMenu");
     const mobileOverlay = document.getElementById("mobileOverlay");
     const layout = document.querySelector(".layout");
     const sidebar = document.querySelector(".sidebar");
     const resizeHandle = document.getElementById("resizeHandle");
-    const toast = document.getElementById("toast");
-
-    let activeUrl = "";
-    let activeGameName = "";
-    let toastTimer;
-
-    function showToast(message) {
-      toast.textContent = message;
-      toast.classList.add("show");
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
-        toast.classList.remove("show");
-      }, 2800);
-    }
-
-    function normalizeGameUrl(rawValue) {
-      const trimmed = rawValue.trim();
-      const valueWithProtocol =
-        /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(trimmed)
-          ? trimmed
-          : trimmed.startsWith("/") || trimmed.startsWith("./") ||
-            /^[a-zA-Z0-9_-]+\.html(?:[?#].*)?$/.test(trimmed)
-            ? new URL(trimmed, window.location.href).href
-            : `https://${trimmed}`;
-      const parsed = new URL(valueWithProtocol, window.location.href);
-
-      if (!["https:", "http:"].includes(parsed.protocol)) {
-        throw new Error("Only HTTP or HTTPS game URLs can be loaded.");
-      }
-
-      return parsed.href;
-    }
-
-    function loadGame(
-      rawValue,
-      gameName = ""
-    ) {
-      gameUrlError.textContent = "";
-
-      let normalizedUrl;
-      let parsedUrl;
-
-      try {
-        normalizedUrl = normalizeGameUrl(rawValue);
-        parsedUrl = new URL(normalizedUrl);
-      } catch (error) {
-        gameUrlError.textContent =
-          error.message || "Please enter a valid game-room URL.";
-        return;
-      }
-
-      const iframe = document.createElement("iframe");
-      iframe.className = "embed-frame";
-      iframe.id = "activeFrame";
-      iframe.src = normalizedUrl;
-      iframe.title = gameName
-        ? `${gameName} game`
-        : "Embedded game";
-      iframe.allow =
-        "autoplay; fullscreen; gamepad; clipboard-read; clipboard-write";
-      iframe.allowFullscreen = true;
-
-      activeUrl = normalizedUrl;
-      activeGameName = gameName || parsedUrl.hostname;
-      currentHost.textContent =
-        `${activeGameName} · ${parsedUrl.hostname}`;
-
-      playerShell.classList.add("has-frame");
-      playerToolbar.hidden = false;
-      urlStage.replaceWith(iframe);
-
-      showToast(
-        "Game loaded. Use Open game if the provider blocks iframe embedding."
-      );
-    }
-
-    function restoreGameLibrary() {
-      const activeFrame = document.getElementById("activeFrame");
-
-      if (activeFrame) {
-        activeFrame.replaceWith(urlStage);
-      }
-
-      playerShell.classList.remove("has-frame");
-      playerToolbar.hidden = true;
-      gameUrlInput.value = activeUrl;
-      gameUrlError.textContent = "";
-    }
-
-    gameForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      loadGame(gameUrlInput.value, "Private Game Room");
-    });
-
-    document
-      .querySelectorAll(".game-card[data-game-url]")
-      .forEach((card) => {
-        card.addEventListener("click", () => {
-          loadGame(
-            card.dataset.gameUrl.trim(),
-            card.dataset.gameName.trim()
-          );
-        });
-      });
-
-    changeButton.addEventListener("click", restoreGameLibrary);
-
-    openButton.addEventListener("click", () => {
-      if (activeUrl) {
-        window.open(activeUrl, "_blank", "noopener,noreferrer");
-      }
-    });
-
-    function buildShareUrl(gameUrl) {
-      const shareUrl = new URL(window.location.href);
-      shareUrl.search = "";
-      shareUrl.hash = "";
-      shareUrl.searchParams.set("game", gameUrl);
-
-      if (activeGameName) {
-        shareUrl.searchParams.set("name", activeGameName);
-      }
-
-      return shareUrl.href;
-    }
-
-    shareButton.addEventListener("click", async () => {
-      if (!activeUrl) {
-        return;
-      }
-
-      const shareUrl = buildShareUrl(activeUrl);
-
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        showToast("Shareable EastCoin game-room link copied.");
-      } catch {
-        window.prompt("Copy this game-room link:", shareUrl);
-      }
-    });
 
     const SIDEBAR_STORAGE_KEY = "eastcoinsSidebarCollapsed";
 
@@ -1858,7 +1506,6 @@
     });
 
     const CHAT_WIDTH_STORAGE_KEY = "eastcoinsChatWidthV2";
-    const LEGACY_CHAT_WIDTH_STORAGE_KEY = "eastcoinsChatWidth";
     const DEFAULT_CHAT_WIDTH = 360;
     const MIN_CHAT_WIDTH = 280;
     const MIN_VIDEO_WIDTH = 420;
@@ -1911,6 +1558,7 @@
         "aria-valuenow",
         String(clampedWidth)
       );
+
       resizeHandle.setAttribute(
         "aria-valuemax",
         String(Math.round(getChatWidthLimits().max))
@@ -1930,7 +1578,10 @@
     }
 
     resizeHandle.addEventListener("pointerdown", (event) => {
-      if (window.innerWidth <= 900 || event.button !== 0) {
+      if (
+        window.innerWidth <= 900 ||
+        event.button !== 0
+      ) {
         return;
       }
 
@@ -1954,7 +1605,11 @@
         return;
       }
 
-      setChatWidth(widthFromPointer(event.clientX), true);
+      setChatWidth(
+        widthFromPointer(event.clientX),
+        true
+      );
+
       body.classList.remove("resizing-chat");
 
       if (resizeHandle.hasPointerCapture(activePointerId)) {
@@ -2013,7 +1668,6 @@
 
     resizeHandle.addEventListener("dblclick", () => {
       setChatWidth(DEFAULT_CHAT_WIDTH, true);
-      showToast("Chat width reset.");
     });
 
     window.addEventListener("resize", () => {
@@ -2044,8 +1698,6 @@
       updateNavigationButton();
     }
 
-    localStorage.removeItem(LEGACY_CHAT_WIDTH_STORAGE_KEY);
-
     const savedChatWidth =
       Number(localStorage.getItem(CHAT_WIDTH_STORAGE_KEY));
 
@@ -2058,30 +1710,9 @@
       setChatWidth(DEFAULT_CHAT_WIDTH);
     }
 
-    const queryParameters =
-      new URLSearchParams(window.location.search);
-    const startFresh =
-      queryParameters.get("new") === "1";
-
-    if (startFresh) {
-      history.replaceState(
-        {},
-        "",
-        window.location.pathname
-      );
-    } else {
-      const queryGame = queryParameters.get("game");
-      const queryName =
-        queryParameters.get("name") || "Shared Game Room";
-
-      if (queryGame) {
-        gameUrlInput.value = queryGame;
-        loadGame(queryGame, queryName);
-      }
-    }
-  
     function initializeFootballCountdowns() {
-      const kickoffTime = new Date("2026-09-09T19:20:00-05:00");
+      const kickoffTime =
+        new Date("2026-09-09T19:20:00-05:00");
 
       document
         .querySelectorAll("[data-football-countdown]")
@@ -2106,7 +1737,8 @@
           );
 
           function updateFootballCountdown() {
-            const remaining = kickoffTime.getTime() - Date.now();
+            const remaining =
+              kickoffTime.getTime() - Date.now();
 
             if (remaining <= 0) {
               countdown.classList.add("is-live");
@@ -2119,31 +1751,40 @@
               return false;
             }
 
-            const totalSeconds = Math.floor(remaining / 1000);
-            const days = Math.floor(totalSeconds / 86400);
-            const hours = Math.floor((totalSeconds % 86400) / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
+            const totalSeconds =
+              Math.floor(remaining / 1000);
+            const days =
+              Math.floor(totalSeconds / 86400);
+            const hours =
+              Math.floor((totalSeconds % 86400) / 3600);
+            const minutes =
+              Math.floor((totalSeconds % 3600) / 60);
+            const seconds =
+              totalSeconds % 60;
 
             daysElement.textContent = String(days);
-            hoursElement.textContent = String(hours).padStart(2, "0");
-            minutesElement.textContent = String(minutes).padStart(2, "0");
-            secondsElement.textContent = String(seconds).padStart(2, "0");
+            hoursElement.textContent =
+              String(hours).padStart(2, "0");
+            minutesElement.textContent =
+              String(minutes).padStart(2, "0");
+            secondsElement.textContent =
+              String(seconds).padStart(2, "0");
+
             return true;
           }
 
           updateFootballCountdown();
 
-          const countdownTimer = window.setInterval(() => {
-            if (!updateFootballCountdown()) {
-              window.clearInterval(countdownTimer);
-            }
-          }, 1000);
+          const countdownTimer =
+            window.setInterval(() => {
+              if (!updateFootballCountdown()) {
+                window.clearInterval(countdownTimer);
+              }
+            }, 1000);
         });
     }
 
     initializeFootballCountdowns();
-
   </script>
 </body>
 </html>
