@@ -1459,12 +1459,12 @@
 
       <div class="nav-group">
         <div class="nav-label">EastCoin</div>
-        <a class="nav-link" href="index.html?new=1">📺 Live Player</a>
-        <a class="nav-link" href="favorites.html">⭐ Favorites</a>
-        <a class="nav-link active" href="games.html?new=1">🎮 Games</a>
-        <a class="nav-link" href="bonk.html">🔨 EastCoin Bonk</a>
-        <a class="nav-link" href="aim-trainer.html">🎯 Aim Trainer</a>
-        <a class="nav-link" href="button-masher.html">🟥 Button Masher</a>
+        <a class="nav-link" href="index.html?new=1" target="_top">📺 Live Player</a>
+        <a class="nav-link" href="favorites.html" target="_top">⭐ Favorites</a>
+        <a class="nav-link active" href="games.html?new=1" target="_top">🎮 Games</a>
+        <a class="nav-link" href="bonk.html" target="_top">🔨 EastCoin Bonk</a>
+        <a class="nav-link" href="aim-trainer.html" target="_top">🎯 Aim Trainer</a>
+        <a class="nav-link" href="button-masher.html" target="_top">🟥 Button Masher</a>
       </div>
 
       <section
@@ -2011,6 +2011,29 @@
     setPlayerToolbarCollapsed(
       playerToolbarShouldBeCollapsed(),
       false
+    );
+
+
+    // A full EastCoin page may occasionally be opened inside the active
+    // game or video iframe. Sidebar navigation must escape that frame.
+    document.addEventListener(
+      "click",
+      (event) => {
+        const link = event.target.closest(".nav-link");
+
+        if (!link || window.self === window.top) {
+          return;
+        }
+
+        event.preventDefault();
+
+        try {
+          window.top.location.href = link.href;
+        } catch {
+          window.open(link.href, "_top");
+        }
+      },
+      true
     );
 
     const SIDEBAR_STORAGE_KEY = "eastcoinsSidebarCollapsed";

@@ -652,7 +652,85 @@
       }
     }
 
-  </style>
+  
+/* ---------------- COMPACT SHARED SIDEBAR ---------------- */
+
+.nav-group{
+  margin-top:8px;
+}
+
+.nav-label{
+  padding:0 9px 6px;
+  font-size:.59rem;
+  letter-spacing:.12em;
+}
+
+.nav-link{
+  gap:8px;
+  margin-bottom:3px;
+  padding:8px 10px;
+  border-radius:9px;
+  font-size:.82rem;
+  line-height:1.12;
+}
+
+.zwades-callout{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:0;
+  margin-top:0;
+  padding:7px 9px;
+  border-radius:9px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(8,16,36,.92),
+      rgba(5,11,27,.94)
+    );
+  box-shadow:
+    0 7px 16px rgba(0,0,0,.2),
+    inset 0 1px 0 rgba(255,255,255,.025);
+  text-align:center;
+}
+
+.football-countdown + .zwades-callout{
+  margin-top:0;
+}
+
+.zwades-title{
+  margin:0;
+  color:#dceaff;
+  font-size:.69rem;
+  font-weight:900;
+  line-height:1;
+  letter-spacing:.025em;
+  text-transform:lowercase;
+  white-space:nowrap;
+}
+
+.zwades-title .is-blue{
+  color:#73abff;
+}
+
+.zwades-eyebrow,
+.zwades-row,
+.zwades-media,
+.zwades-copy{
+  display:none;
+}
+
+@media(max-width:900px){
+  .zwades-callout{
+    margin-top:8px;
+  }
+
+  .football-countdown + .zwades-callout{
+    margin-top:0;
+  }
+}
+
+</style>
 </head>
 
 <body>
@@ -672,10 +750,12 @@
 
       <div class="nav-group">
         <div class="nav-label">EastCoin</div>
-        <a class="nav-link" href="index.html?new=1">📺 Live Player</a>
-        <a class="nav-link active" href="favorites.html">⭐ Favorites</a>
-        <a class="nav-link" href="games.html?new=1">🎮 Games</a>
-        <a class="nav-link" href="bonk.html">🔨 EastCoin Bonk</a>
+        <a class="nav-link" href="index.html?new=1" target="_top">📺 Live Player</a>
+        <a class="nav-link active" href="favorites.html" target="_top">⭐ Favorites</a>
+        <a class="nav-link" href="games.html?new=1" target="_top">🎮 Games</a>
+        <a class="nav-link" href="bonk.html" target="_top">🔨 EastCoin Bonk</a>
+        <a class="nav-link" href="aim-trainer.html" target="_top">🎯 Aim Trainer</a>
+        <a class="nav-link" href="button-masher.html" target="_top">🟥 Button Masher</a>
       </div>
 
       <section
@@ -730,17 +810,10 @@
         </div>
       </section>
 
-      <div class="zwades-callout" aria-label="Zwades callout">
-        <div class="zwades-eyebrow">EastCoin Lore</div>
-        <div class="zwades-row">
-          <div class="zwades-media">
-            <img src="assets/zwades-blue.webp" alt="Blue animated meme image representing Zwades" />
-          </div>
-          <div class="zwades-text">
-            <p class="zwades-title">Zwades is <span class="is-blue">blue</span></p>
-            <p class="zwades-copy">Official EastCoin fact. No further questions.</p>
-          </div>
-        </div>
+      <div class="zwades-callout" aria-label="Zwades is blue">
+        <p class="zwades-title">
+          zwades is <span class="is-blue">blue</span>
+        </p>
       </div>
 
     </aside>
@@ -841,6 +914,29 @@
     const body = document.body;
     const sidebarToggle = document.getElementById("sidebarToggle");
     const mobileOverlay = document.getElementById("mobileOverlay");
+
+
+    // A full EastCoin page may occasionally be opened inside the active
+    // game or video iframe. Sidebar navigation must escape that frame.
+    document.addEventListener(
+      "click",
+      (event) => {
+        const link = event.target.closest(".nav-link");
+
+        if (!link || window.self === window.top) {
+          return;
+        }
+
+        event.preventDefault();
+
+        try {
+          window.top.location.href = link.href;
+        } catch {
+          window.open(link.href, "_top");
+        }
+      },
+      true
+    );
 
     const SIDEBAR_STORAGE_KEY = "eastcoinsSidebarCollapsed";
 
