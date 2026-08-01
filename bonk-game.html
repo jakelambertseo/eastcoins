@@ -2005,6 +2005,331 @@ h1 span{color:var(--gold-bright)}
   }
 }
 
+
+/* ---------------- MIXED, OBVIOUS HOUSE TRAPS ---------------- */
+
+.target.decoy{
+  isolation:isolate;
+  overflow:visible;
+  border:9px double #ff5d64;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      #661017 0,
+      #661017 10px,
+      #18070a 10px,
+      #18070a 20px
+    );
+  box-shadow:
+    0 0 0 5px rgba(31,5,8,.95),
+    0 0 0 10px rgba(255,68,78,.66),
+    0 0 0 15px rgba(255,214,78,.24),
+    0 0 48px rgba(228,73,79,.72),
+    0 20px 35px rgba(0,0,0,.55);
+  animation:
+    trapTargetEntrance .22s cubic-bezier(.08,.9,.16,1) forwards,
+    obviousTrapPulse .34s ease-in-out .22s infinite alternate;
+}
+
+.target.decoy::before{
+  content:"⚠ HOUSE TRAP ⚠";
+  top:-42px;
+  z-index:12;
+  min-width:142px;
+  padding:7px 10px;
+  border:3px solid #ffeaae;
+  border-radius:3px;
+  color:#fff5d0;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      #80131a 0,
+      #80131a 8px,
+      #26080c 8px,
+      #26080c 16px
+    );
+  font-size:.66rem;
+  font-weight:1000;
+  letter-spacing:.07em;
+  text-align:center;
+  text-shadow:0 2px 0 #000;
+  box-shadow:
+    0 0 20px rgba(255,74,83,.6),
+    0 5px 0 rgba(33,3,6,.84);
+  animation:obviousTrapHeader .28s linear infinite alternate;
+}
+
+.target.decoy::after{
+  content:"DO NOT BONK · −4,000";
+  left:50%;
+  right:auto;
+  bottom:-49px;
+  z-index:12;
+  min-width:154px;
+  padding:6px 9px;
+  transform:translateX(-50%);
+  border:3px solid #ffb6ba;
+  border-radius:3px;
+  color:#fff;
+  background:#72131a;
+  font-size:.65rem;
+  font-weight:1000;
+  letter-spacing:.03em;
+  box-shadow:
+    0 0 20px rgba(228,73,79,.52),
+    0 5px 0 rgba(36,3,6,.84);
+  animation:obviousTrapFooter .3s linear infinite alternate;
+}
+
+.target.decoy img{
+  position:relative;
+  z-index:3;
+  display:block;
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  object-fit:cover;
+  filter:
+    saturate(.82)
+    contrast(1.12)
+    brightness(.78);
+}
+
+.trap-picture-frame{
+  position:absolute;
+  inset:-2px;
+  z-index:5;
+  overflow:hidden;
+  border-radius:50%;
+  pointer-events:none;
+}
+
+.trap-picture-frame::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:2;
+  border-radius:50%;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,60,70,.22),
+      transparent 38%,
+      rgba(255,60,70,.16)
+    );
+  box-shadow:
+    inset 0 0 0 5px rgba(255,227,164,.4),
+    inset 0 0 35px rgba(119,5,14,.68);
+}
+
+.trap-picture-frame::after{
+  content:"";
+  position:absolute;
+  inset:-30%;
+  z-index:3;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0,
+      transparent 16px,
+      rgba(255,216,71,.68) 16px,
+      rgba(255,216,71,.68) 23px,
+      rgba(44,4,7,.82) 23px,
+      rgba(44,4,7,.82) 31px
+    );
+  opacity:.24;
+  animation:obviousTrapStripes .9s linear infinite;
+}
+
+.trap-cross{
+  position:absolute;
+  left:50%;
+  top:50%;
+  z-index:9;
+  display:grid;
+  place-items:center;
+  width:58%;
+  height:58%;
+  transform:translate(-50%,-50%) rotate(-8deg);
+  border:5px solid rgba(255,244,217,.92);
+  border-radius:50%;
+  color:#fff;
+  background:rgba(145,12,21,.68);
+  font-family:Arial,Helvetica,sans-serif;
+  font-size:clamp(2rem,6vw,4rem);
+  font-weight:1000;
+  line-height:1;
+  text-shadow:
+    0 3px 0 #59050a,
+    0 0 12px rgba(255,255,255,.7);
+  box-shadow:
+    0 0 0 5px rgba(112,6,14,.82),
+    0 0 25px rgba(255,56,66,.7);
+  animation:obviousTrapCross .3s ease-in-out infinite alternate;
+  pointer-events:none;
+}
+
+.trap-corner{
+  position:absolute;
+  z-index:10;
+  display:grid;
+  place-items:center;
+  min-width:34px;
+  height:34px;
+  padding:0 6px;
+  border:2px solid #fff1c1;
+  border-radius:999px;
+  color:#321006;
+  background:#ffd84f;
+  font-size:.78rem;
+  font-weight:1000;
+  box-shadow:0 0 15px rgba(255,216,79,.62);
+  pointer-events:none;
+  animation:obviousTrapCorner .34s ease-in-out infinite alternate;
+}
+
+.trap-corner.one{
+  left:-16px;
+  top:-9px;
+}
+
+.trap-corner.two{
+  right:-20px;
+  bottom:-8px;
+  animation-delay:.16s;
+}
+
+.trap-classic-face{
+  position:absolute;
+  inset:0;
+  z-index:4;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  color:#fff3d3;
+  background:
+    radial-gradient(
+      circle at 38% 28%,
+      #a72933,
+      #501018 55%,
+      #16070a 76%
+    );
+  font-size:clamp(3.4rem,10vw,6rem);
+  line-height:1;
+  text-shadow:
+    0 5px 0 #390408,
+    0 0 24px rgba(255,105,111,.72);
+}
+
+.target.decoy-classic .trap-cross{
+  width:52%;
+  height:52%;
+  opacity:.86;
+}
+
+.target.decoy .name{
+  z-index:11;
+  bottom:-17px;
+  border:2px solid #ff999f;
+  color:#fff;
+  background:#39080d;
+  box-shadow:0 0 13px rgba(228,73,79,.44);
+}
+
+.trap-screen-flash{
+  background:
+    radial-gradient(
+      circle at var(--trap-x) var(--trap-y),
+      rgba(255,236,237,.96),
+      rgba(228,73,79,.7) 14%,
+      rgba(126,12,22,.31) 33%,
+      transparent 61%
+    );
+  animation-duration:.48s;
+}
+
+.trap-vignette{
+  box-shadow:
+    inset 0 0 95px rgba(225,48,58,.78),
+    inset 0 0 205px rgba(91,4,13,.68);
+  animation-duration:.68s;
+}
+
+.trap-warning{
+  top:16%;
+  padding:11px 18px;
+  border:4px double #ff9ca2;
+  color:#ffd8da;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(255,255,255,.04) 0,
+      rgba(255,255,255,.04) 5px,
+      transparent 5px,
+      transparent 11px
+    ),
+    rgba(64,6,12,.96);
+  font-size:clamp(1.4rem,5vw,3.2rem);
+  letter-spacing:-.04em;
+  box-shadow:
+    0 0 36px rgba(228,73,79,.48),
+    0 10px 34px rgba(0,0,0,.54);
+  animation-duration:.72s;
+}
+
+@keyframes obviousTrapPulse{
+  from{
+    filter:brightness(1);
+    box-shadow:
+      0 0 0 5px rgba(31,5,8,.95),
+      0 0 0 10px rgba(255,68,78,.52),
+      0 0 0 15px rgba(255,214,78,.18),
+      0 0 38px rgba(228,73,79,.52),
+      0 20px 35px rgba(0,0,0,.55);
+  }
+  to{
+    filter:brightness(1.35);
+    box-shadow:
+      0 0 0 5px rgba(31,5,8,.95),
+      0 0 0 13px rgba(255,68,78,.7),
+      0 0 0 18px rgba(255,214,78,.3),
+      0 0 62px rgba(228,73,79,.82),
+      0 20px 35px rgba(0,0,0,.55);
+  }
+}
+
+@keyframes obviousTrapHeader{
+  to{
+    filter:brightness(1.35);
+    transform:translateX(-50%) scale(1.07);
+  }
+}
+
+@keyframes obviousTrapFooter{
+  to{
+    filter:brightness(1.3);
+    transform:translateX(-50%) scale(1.08);
+  }
+}
+
+@keyframes obviousTrapStripes{
+  to{transform:translate(45px,45px)}
+}
+
+@keyframes obviousTrapCross{
+  from{
+    transform:translate(-50%,-50%) rotate(-8deg) scale(.9);
+  }
+  to{
+    transform:translate(-50%,-50%) rotate(8deg) scale(1.08);
+    filter:brightness(1.35);
+  }
+}
+
+@keyframes obviousTrapCorner{
+  to{transform:scale(1.18) rotate(12deg)}
+}
+
 </style>
 </head>
 
@@ -2183,6 +2508,7 @@ let zwadesHit=false;
 let waldoSpawnTimer=null;
 let zwadesSpawnTimer=null;
 let decoyTriggerSeconds=[];
+let decoyTypes=[];
 let decoySpawnIndex=0;
 let decoyActive=false;
 let lastTrapMemberName='';
@@ -2214,6 +2540,20 @@ function pickTrapMember(){
   return selected;
 }
 
+function shuffleTrapTypes(values){
+  const copy=[...values];
+
+  for(let index=copy.length-1;index>0;index--){
+    const swapIndex=rnd(0,index);
+    [copy[index],copy[swapIndex]]=[
+      copy[swapIndex],
+      copy[index]
+    ];
+  }
+
+  return copy;
+}
+
 function buildTrapSchedule(){
   const trapCount=rnd(3,8);
   const highestSecond=40;
@@ -2222,9 +2562,6 @@ function buildTrapSchedule(){
   const segmentWidth=totalWindow/trapCount;
   const schedule=[];
 
-  // One randomized time is selected inside each segment. This allows
-  // anywhere from 3–8 traps while keeping them distributed throughout
-  // the 45-second round rather than clustering together.
   for(let index=0;index<trapCount;index++){
     const segmentHigh=
       highestSecond-index*segmentWidth;
@@ -2232,19 +2569,44 @@ function buildTrapSchedule(){
     const segmentLow=
       highestSecond-(index+1)*segmentWidth;
 
-    const safeHigh=Math.floor(segmentHigh);
-    const safeLow=Math.ceil(segmentLow);
+    const minimum=Math.max(
+      lowestSecond,
+      Math.ceil(segmentLow)
+    );
 
-    schedule.push(
-      rnd(
-        Math.max(lowestSecond,safeLow),
-        Math.max(lowestSecond,safeHigh)
-      )
+    const maximum=Math.max(
+      minimum,
+      Math.floor(segmentHigh)
+    );
+
+    let second=rnd(minimum,maximum);
+
+    while(schedule.includes(second)){
+      second--;
+
+      if(second<minimum){
+        second=maximum;
+      }
+    }
+
+    schedule.push(second);
+  }
+
+  return schedule.sort((a,b)=>b-a);
+}
+
+function buildTrapTypes(count){
+  const types=['member','classic'];
+
+  while(types.length<count){
+    types.push(
+      chance(.58)
+        ? 'member'
+        : 'classic'
     );
   }
 
-  return [...new Set(schedule)]
-    .sort((a,b)=>b-a);
+  return shuffleTrapTypes(types);
 }
 
 function getBest(){
@@ -2947,13 +3309,13 @@ function triggerTrapArrival(state){
 
   const warning=document.createElement('div');
   warning.className='trap-warning';
-  warning.textContent='SOMETHING\'S OFF...';
+  warning.textContent='HOUSE TRAP — DO NOT BONK';
   specialFxLayer.append(warning);
 
-  for(let index=0;index<26;index++){
+  for(let index=0;index<54;index++){
     const particle=document.createElement('i');
     const angle=Math.random()*Math.PI*2;
-    const distance=45+Math.random()*125;
+    const distance=65+Math.random()*190;
 
     particle.className='trap-burst-particle';
     particle.style.setProperty('--trap-x',`${x}px`);
@@ -3083,6 +3445,7 @@ function createTarget(hole,member,options={}){
   const blue=Boolean(options.blue);
   const legendary=Boolean(options.legendary);
   const decoy=Boolean(options.decoy);
+  const trapType=options.trapType||'member';
   const partial=Boolean(options.partial);
   const visualStyle=
     targetStyles[Math.floor(Math.random()*targetStyles.length)];
@@ -3092,7 +3455,7 @@ function createTarget(hole,member,options={}){
     (visualStyle.className?' '+visualStyle.className:'')+
     (blue?' blue jackpot-target jackpot-zwades':'')+
     (legendary?' legendary jackpot-target jackpot-waldo':'')+
-    (decoy?' decoy':'')+
+    (decoy?` decoy decoy-${trapType}`:'')+
     (partial?' partial':'');
 
   if(!blue&&!legendary&&!decoy){
@@ -3105,15 +3468,32 @@ function createTarget(hole,member,options={}){
   element.type='button';
 
   if(decoy){
-    element.innerHTML=
-      '<span class="trap-picture-frame"></span>'+
-      `<img src="${member.image}" alt="${member.name} suspicious house target">`+
-      `<span class="name">${member.name}</span>`;
+    if(trapType==='classic'){
+      element.innerHTML=
+        '<span class="trap-classic-face" aria-hidden="true">☠</span>'+
+        '<span class="trap-cross" aria-hidden="true">✕</span>'+
+        '<span class="trap-corner one" aria-hidden="true">⚠</span>'+
+        '<span class="trap-corner two" aria-hidden="true">−4K</span>'+
+        '<span class="name">HOUSE TRAP</span>';
 
-    element.setAttribute(
-      'aria-label',
-      `${member.name} suspicious house target.`
-    );
+      element.setAttribute(
+        'aria-label',
+        'House Trap. Do not bonk.'
+      );
+    }else{
+      element.innerHTML=
+        '<span class="trap-picture-frame"></span>'+
+        `<img src="${member.image}" alt="${member.name} house trap">`+
+        '<span class="trap-cross" aria-hidden="true">✕</span>'+
+        '<span class="trap-corner one" aria-hidden="true">⚠</span>'+
+        '<span class="trap-corner two" aria-hidden="true">−4K</span>'+
+        `<span class="name">${member.name} · TRAP</span>`;
+
+      element.setAttribute(
+        'aria-label',
+        `${member.name} House Trap. Do not bonk.`
+      );
+    }
   }else{
     const specialKind=
       legendary
@@ -3149,6 +3529,7 @@ function createTarget(hole,member,options={}){
     blue,
     legendary,
     decoy,
+    trapType,
     partial,
     hit:false,
     timeout:null
@@ -3366,15 +3747,24 @@ function spawnSingle(options={}){
   let blue=false;
   let legendary=false;
   let decoy=false;
+  let trapType='member';
 
   if(shouldSpawnDecoy()){
-    member=pickTrapMember();
+    trapType=
+      decoyTypes[decoySpawnIndex]||
+      'member';
+
+    member=
+      trapType==='member'
+        ? pickTrapMember()
+        : {name:'House Trap'};
+
     decoy=true;
     decoyActive=true;
     decoySpawnIndex++;
 
     $('status').textContent=
-      `SUSPICIOUS TARGET ${decoySpawnIndex}/${decoyTriggerSeconds.length}`;
+      `HOUSE TRAP ${decoySpawnIndex}/${decoyTriggerSeconds.length}`;
   }else{
     member=members[Math.floor(Math.random()*members.length)];
     blue=false;
@@ -3387,6 +3777,7 @@ function spawnSingle(options={}){
       blue,
       legendary,
       decoy,
+      trapType,
       partial:options.partial&&!legendary&&!decoy
     }
   );
@@ -3584,6 +3975,9 @@ function startGame(){
   zwadesHit=false;
   waldoTriggerSecond=rnd(10,34);
   decoyTriggerSeconds=buildTrapSchedule();
+  decoyTypes=buildTrapTypes(
+    decoyTriggerSeconds.length
+  );
   decoySpawnIndex=0;
   decoyActive=false;
   lastTrapMemberName='';
