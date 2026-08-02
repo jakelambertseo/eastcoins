@@ -1,0 +1,2062 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>EastCoin Button Masher — Game</title>
+<link rel="icon" href="assets/eastcoin-favicon.png">
+
+<style>
+:root{
+  --black:#080705;
+  --coal:#15110d;
+  --panel:#251d15;
+  --panel-dark:#110d09;
+  --gold:#c9a44f;
+  --gold-bright:#f2d979;
+  --cream:#f2e6c9;
+  --muted:#b9aa8e;
+  --felt:#0c3c28;
+  --felt-dark:#061e15;
+  --red:#a6262c;
+  --red-bright:#e4494f;
+  --blue:#54b3d5;
+  --green:#61d18a;
+  --shadow:0 30px 80px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box}
+html,body{width:100%;min-height:100%;margin:0}
+
+body{
+  min-height:100vh;
+  color:var(--cream);
+  background:
+    linear-gradient(rgba(0,0,0,.28),rgba(0,0,0,.28)),
+    repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,.012) 0,
+      rgba(255,255,255,.012) 1px,
+      transparent 1px,
+      transparent 5px
+    ),
+    radial-gradient(circle at 12% 0%,rgba(166,38,44,.34),transparent 28%),
+    radial-gradient(circle at 92% 8%,rgba(201,164,79,.15),transparent 25%),
+    #090705;
+  font-family:Arial,Helvetica,sans-serif;
+  overflow-x:hidden;
+}
+
+button{font:inherit;cursor:pointer}
+
+.game-shell{
+  width:min(1180px,calc(100% - 20px));
+  margin:auto;
+  padding:16px 0 24px;
+}
+
+.header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:12px;
+  padding:17px 19px;
+  border:2px solid rgba(201,164,79,.42);
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(255,255,255,.018) 0,
+      rgba(255,255,255,.018) 2px,
+      transparent 2px,
+      transparent 8px
+    ),
+    linear-gradient(180deg,#2b2118,#14100b);
+  box-shadow:var(--shadow);
+}
+
+.kicker{
+  color:var(--gold-bright);
+  font-family:Georgia,serif;
+  font-size:.69rem;
+  font-weight:900;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+h1{
+  margin:7px 0 4px;
+  font-family:Georgia,serif;
+  font-size:clamp(2rem,5vw,4.2rem);
+  line-height:.92;
+  letter-spacing:-.055em;
+  text-transform:uppercase;
+  text-shadow:0 4px 0 #000;
+}
+
+h1 span{color:var(--gold-bright)}
+
+.lede{
+  margin:0;
+  color:#cbbda1;
+  font-size:.79rem;
+  line-height:1.5;
+}
+
+.reset-button{
+  min-height:42px;
+  padding:10px 14px;
+  border:2px solid rgba(201,164,79,.3);
+  color:var(--cream);
+  background:#17120e;
+  font-size:.69rem;
+  font-weight:900;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:8px;
+  margin-bottom:12px;
+}
+
+.stat{
+  min-width:0;
+  padding:11px 12px;
+  border:2px solid rgba(201,164,79,.25);
+  background:
+    linear-gradient(rgba(255,255,255,.02),rgba(255,255,255,0)),
+    #1e1812;
+  box-shadow:0 9px 20px rgba(0,0,0,.3);
+}
+
+.stat span{
+  display:block;
+  color:var(--muted);
+  font-family:Georgia,serif;
+  font-size:.55rem;
+  font-weight:900;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+
+.stat strong{
+  display:block;
+  margin-top:5px;
+  overflow:hidden;
+  color:#fff7df;
+  font-size:1.17rem;
+  letter-spacing:-.04em;
+  text-overflow:ellipsis;
+}
+
+.time-stat{
+  background:#34260f;
+}
+
+.time-stat.warning{
+  border-color:#e1be57;
+  background:#7a5111;
+  animation:timerPulse .8s ease-in-out infinite;
+}
+
+.time-stat.critical{
+  border-color:#ff7d82;
+  background:#a5232b;
+  box-shadow:0 0 26px rgba(228,73,79,.36);
+  animation:timerCritical .4s ease-in-out infinite;
+}
+
+.multiplier-stat.hot{
+  border-color:#78dff9;
+  background:#183f4e;
+  box-shadow:0 0 24px rgba(84,179,213,.28);
+}
+
+.multiplier-stat.trap{
+  border-color:#ff7f84;
+  background:#5c1419;
+  animation:trapBlink .28s linear infinite alternate;
+}
+
+@keyframes timerPulse{
+  50%{transform:scale(1.025)}
+}
+
+@keyframes timerCritical{
+  50%{transform:scale(1.05);filter:brightness(1.25)}
+}
+
+@keyframes trapBlink{
+  to{filter:brightness(1.35)}
+}
+
+.machine{
+  position:relative;
+  overflow:hidden;
+  padding:15px;
+  border:3px solid rgba(201,164,79,.45);
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(255,255,255,.015) 0,
+      rgba(255,255,255,.015) 2px,
+      transparent 2px,
+      transparent 8px
+    ),
+    linear-gradient(180deg,#251c13,#0f0b08);
+  box-shadow:var(--shadow);
+}
+
+.machine::before{
+  content:"";
+  position:absolute;
+  inset:8px;
+  border:1px solid rgba(242,217,121,.08);
+  pointer-events:none;
+}
+
+.machine.shake{
+  animation:machineShake .26s ease;
+}
+
+.machine.jackpot{
+  animation:jackpotMachine .5s ease-in-out;
+}
+
+@keyframes machineShake{
+  0%,100%{transform:translate(0,0)}
+  25%{transform:translate(-6px,3px)}
+  50%{transform:translate(7px,-4px)}
+  75%{transform:translate(-3px,2px)}
+}
+
+@keyframes jackpotMachine{
+  0%,100%{filter:brightness(1)}
+  40%{filter:brightness(1.55)}
+}
+
+.machine-top{
+  position:relative;
+  z-index:3;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:11px;
+}
+
+.status{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:7px 10px;
+  border:1px solid rgba(201,164,79,.3);
+  color:#f3e4be;
+  background:#15100c;
+  font-family:Georgia,serif;
+  font-size:.7rem;
+  font-weight:900;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+
+.status::before{
+  content:"";
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--green);
+  box-shadow:0 0 10px rgba(97,209,138,.48);
+}
+
+.machine-tip{
+  color:#a99b80;
+  font-size:.65rem;
+  font-weight:700;
+}
+
+.arena{
+  position:relative;
+  z-index:2;
+  display:grid;
+  place-items:center;
+  min-height:590px;
+  overflow:hidden;
+  border:4px double rgba(242,217,121,.3);
+  background:
+    radial-gradient(circle at 50% 48%,rgba(37,109,73,.56),transparent 58%),
+    repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,.012) 0,
+      rgba(255,255,255,.012) 1px,
+      transparent 1px,
+      transparent 7px
+    ),
+    var(--felt-dark);
+  touch-action:manipulation;
+}
+
+.arena::before{
+  content:"";
+  position:absolute;
+  inset:15px;
+  border:1px solid rgba(242,217,121,.12);
+  pointer-events:none;
+}
+
+.opponent{
+  position:absolute;
+  left:26px;
+  top:24px;
+  z-index:5;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  max-width:220px;
+  padding:9px 11px;
+  border:2px solid rgba(201,164,79,.28);
+  color:#ebddbd;
+  background:rgba(14,10,7,.88);
+  box-shadow:0 10px 24px rgba(0,0,0,.32);
+}
+
+.opponent img{
+  width:46px;
+  height:46px;
+  flex:0 0 46px;
+  border:2px solid rgba(242,217,121,.35);
+  object-fit:cover;
+}
+
+.opponent-label{
+  display:block;
+  color:var(--muted);
+  font-size:.5rem;
+  font-weight:900;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
+
+.opponent strong{
+  display:block;
+  margin-top:3px;
+  overflow:hidden;
+  font-family:Georgia,serif;
+  font-size:.83rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.press-zone{
+  position:relative;
+  z-index:4;
+  display:grid;
+  place-items:center;
+  width:min(520px,80vw);
+  aspect-ratio:1;
+}
+
+.ring{
+  position:absolute;
+  left:50%;
+  top:50%;
+  border:2px dashed rgba(242,217,121,.25);
+  border-radius:50%;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+}
+
+.ring.one{
+  width:96%;
+  height:96%;
+  animation:ringSpin 8s linear infinite;
+}
+
+.ring.two{
+  width:78%;
+  height:78%;
+  border-style:dotted;
+  border-color:rgba(84,179,213,.22);
+  animation:ringSpin 5.5s linear infinite reverse;
+}
+
+.ring.three{
+  width:60%;
+  height:60%;
+  border-style:solid;
+  border-color:rgba(201,164,79,.13);
+  animation:ringPulse 1.1s ease-in-out infinite alternate;
+}
+
+@keyframes ringSpin{
+  to{transform:translate(-50%,-50%) rotate(360deg)}
+}
+
+@keyframes ringPulse{
+  to{transform:translate(-50%,-50%) scale(1.08)}
+}
+
+.mash-button{
+  position:relative;
+  z-index:6;
+  display:grid;
+  place-items:center;
+  width:min(300px,58vw);
+  aspect-ratio:1;
+  padding:22px;
+  border:11px double #e4c65c;
+  border-radius:50%;
+  color:#fff2bc;
+  background:
+    radial-gradient(circle at 36% 24%,rgba(255,255,255,.2),transparent 18%),
+    radial-gradient(circle at 50% 60%,#c7373e,#6c151b 68%);
+  box-shadow:
+    0 0 0 14px rgba(0,0,0,.34),
+    0 0 0 22px rgba(201,164,79,.18),
+    0 30px 0 #3b0c10,
+    0 43px 45px rgba(0,0,0,.58),
+    inset 0 -22px 38px rgba(43,4,8,.45);
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  transition:
+    transform .05s ease,
+    filter .1s ease,
+    border-color .15s ease,
+    background .15s ease;
+}
+
+.mash-button::before{
+  content:"";
+  position:absolute;
+  inset:17px;
+  border:2px solid rgba(255,255,255,.16);
+  border-radius:50%;
+  pointer-events:none;
+}
+
+.mash-button:active,
+.mash-button.pressed{
+  transform:translateY(18px) scale(.965);
+  box-shadow:
+    0 0 0 14px rgba(0,0,0,.34),
+    0 0 0 22px rgba(201,164,79,.18),
+    0 12px 0 #3b0c10,
+    0 25px 32px rgba(0,0,0,.5),
+    inset 0 -10px 24px rgba(43,4,8,.35);
+}
+
+.mash-button.hot{
+  border-color:#9de8ff;
+  color:#dff9ff;
+  background:
+    radial-gradient(circle at 36% 24%,rgba(255,255,255,.24),transparent 18%),
+    radial-gradient(circle at 50% 60%,#318dc2,#154467 70%);
+  box-shadow:
+    0 0 0 14px rgba(0,0,0,.34),
+    0 0 0 24px rgba(84,179,213,.2),
+    0 0 55px rgba(84,179,213,.58),
+    0 30px 0 #0a2942,
+    0 43px 45px rgba(0,0,0,.58);
+}
+
+.mash-button.trap{
+  border-color:#ff9ca0;
+  color:#fff;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(255,255,255,.12) 0,
+      rgba(255,255,255,.12) 8px,
+      transparent 8px,
+      transparent 16px
+    ),
+    radial-gradient(circle at 50% 60%,#8a181f,#31080b 72%);
+  box-shadow:
+    0 0 0 14px rgba(0,0,0,.34),
+    0 0 0 24px rgba(228,73,79,.18),
+    0 0 48px rgba(228,73,79,.52),
+    0 30px 0 #240508,
+    0 43px 45px rgba(0,0,0,.58);
+  animation:trapButtonBlink .24s linear infinite alternate;
+}
+
+@keyframes trapButtonBlink{
+  to{filter:brightness(1.45)}
+}
+
+.button-copy{
+  position:relative;
+  z-index:2;
+  text-align:center;
+}
+
+.button-main{
+  display:block;
+  font-family:Georgia,serif;
+  font-size:clamp(2rem,8vw,4.5rem);
+  font-weight:900;
+  line-height:.83;
+  letter-spacing:-.07em;
+  text-transform:uppercase;
+  text-shadow:0 5px 0 rgba(0,0,0,.48);
+}
+
+.button-sub{
+  display:block;
+  margin-top:12px;
+  font-size:.66rem;
+  font-weight:900;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+.space-tip{
+  position:absolute;
+  left:50%;
+  bottom:20px;
+  z-index:6;
+  transform:translateX(-50%);
+  padding:7px 11px;
+  border:1px solid rgba(242,217,121,.22);
+  color:#bfb095;
+  background:rgba(13,9,6,.78);
+  font-size:.6rem;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+
+.event-banner{
+  position:absolute;
+  left:50%;
+  top:22px;
+  z-index:12;
+  transform:translateX(-50%) scale(.8);
+  padding:11px 18px;
+  border:3px double currentColor;
+  color:#fff0ad;
+  background:rgba(13,9,6,.94);
+  font-family:Georgia,serif;
+  font-size:clamp(.95rem,3vw,1.45rem);
+  font-weight:900;
+  text-align:center;
+  text-transform:uppercase;
+  opacity:0;
+  pointer-events:none;
+}
+
+.event-banner.show{
+  animation:eventPop 1.05s ease forwards;
+}
+
+.event-banner.blue{
+  color:#bdefff;
+  box-shadow:0 0 34px rgba(84,179,213,.36);
+}
+
+.event-banner.red{
+  color:#ffb8bb;
+  box-shadow:0 0 34px rgba(228,73,79,.34);
+}
+
+@keyframes eventPop{
+  15%{opacity:1;transform:translateX(-50%) scale(1.08)}
+  75%{opacity:1;transform:translateX(-50%) scale(1)}
+  100%{opacity:0;transform:translateX(-50%) translateY(-18px)}
+}
+
+.press-pop{
+  position:fixed;
+  z-index:1100;
+  color:#fff2ad;
+  font-family:Georgia,serif;
+  font-size:1rem;
+  font-weight:900;
+  text-shadow:0 3px 0 #000;
+  pointer-events:none;
+  animation:pressPop .48s ease-out forwards;
+}
+
+.press-pop.hot{color:#c6f4ff}
+.press-pop.bad{color:#ff9da2}
+
+@keyframes pressPop{
+  from{opacity:1;transform:translate(-50%,-50%) scale(.7)}
+  to{opacity:0;transform:translate(-50%,-135%) scale(1.3)}
+}
+
+.spark{
+  position:fixed;
+  z-index:1050;
+  left:var(--x);
+  top:var(--y);
+  width:var(--size);
+  height:var(--size);
+  border-radius:50%;
+  background:var(--color);
+  box-shadow:0 0 8px var(--color);
+  pointer-events:none;
+  animation:sparkFly var(--duration) ease-out forwards;
+}
+
+@keyframes sparkFly{
+  to{
+    opacity:0;
+    transform:translate(var(--dx),var(--dy)) scale(.1);
+  }
+}
+
+.milestone{
+  position:fixed;
+  left:50%;
+  top:18%;
+  z-index:1200;
+  transform:translate(-50%,-50%);
+  color:#fff1ab;
+  font-family:Georgia,serif;
+  font-size:clamp(2rem,8vw,5.5rem);
+  font-weight:900;
+  letter-spacing:-.06em;
+  text-align:center;
+  text-shadow:
+    0 5px 0 #000,
+    0 0 28px rgba(242,217,121,.4);
+  pointer-events:none;
+  animation:milestoneBurst .82s ease forwards;
+}
+
+@keyframes milestoneBurst{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(2)}
+  28%{opacity:1;transform:translate(-50%,-50%) scale(.9)}
+  58%{transform:translate(-50%,-50%) scale(1.12)}
+  100%{opacity:0;transform:translate(-50%,-80%) scale(.96)}
+}
+
+.overlay{
+  position:absolute;
+  inset:0;
+  z-index:30;
+  display:grid;
+  place-items:center;
+  padding:20px;
+  background:rgba(4,3,2,.86);
+  backdrop-filter:blur(7px);
+}
+
+.overlay.hidden{display:none}
+
+.countdown-card,
+.result-card{
+  width:min(580px,100%);
+  padding:25px;
+  border:4px double rgba(242,217,121,.5);
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(255,255,255,.018) 0,
+      rgba(255,255,255,.018) 2px,
+      transparent 2px,
+      transparent 8px
+    ),
+    linear-gradient(180deg,#2b2118,#12100b);
+  box-shadow:var(--shadow);
+  text-align:center;
+}
+
+.countdown-number{
+  min-height:180px;
+  display:grid;
+  place-items:center;
+  color:#f4e7c8;
+  font-family:Georgia,serif;
+  font-size:clamp(6rem,18vw,11rem);
+  font-weight:900;
+  line-height:.8;
+  text-shadow:0 5px 0 #000;
+  animation:countSlam .7s ease;
+}
+
+.countdown-number.fire{
+  color:var(--gold-bright);
+  font-size:clamp(3.5rem,12vw,7rem);
+}
+
+@keyframes countSlam{
+  0%{opacity:0;transform:scale(2);filter:blur(5px)}
+  45%{opacity:1;transform:scale(.88);filter:blur(0)}
+  75%{transform:scale(1.08)}
+  100%{transform:scale(1)}
+}
+
+.result-card h2{
+  margin:5px 0;
+  font-family:Georgia,serif;
+  font-size:2rem;
+  text-transform:uppercase;
+}
+
+.result-score{
+  margin:12px 0;
+  color:var(--gold-bright);
+  font-family:Georgia,serif;
+  font-size:3rem;
+  font-weight:900;
+}
+
+.result-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  margin:14px 0;
+}
+
+.result-stat{
+  padding:9px;
+  border:1px solid rgba(201,164,79,.22);
+  background:#15100c;
+}
+
+.result-stat span{
+  display:block;
+  color:var(--muted);
+  font-size:.54rem;
+  font-weight:900;
+  text-transform:uppercase;
+}
+
+.result-stat strong{
+  display:block;
+  margin-top:4px;
+  color:#f4e7c8;
+}
+
+.play-button{
+  min-height:46px;
+  padding:11px 17px;
+  border:2px solid rgba(242,217,121,.48);
+  color:#fff2c2;
+  background:linear-gradient(180deg,#a32d32,#62191e);
+  font-weight:900;
+  text-transform:uppercase;
+}
+
+@media(max-width:800px){
+  .header{flex-direction:column}
+  .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .arena{min-height:650px}
+  .opponent{left:16px;top:16px}
+}
+
+@media(max-width:540px){
+  .game-shell{width:calc(100% - 12px)}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .arena{min-height:620px}
+  .press-zone{width:min(430px,90vw)}
+  .mash-button{width:min(250px,65vw)}
+  .opponent{
+    max-width:160px;
+    padding:7px 8px;
+  }
+  .opponent img{
+    width:38px;
+    height:38px;
+    flex-basis:38px;
+  }
+  .machine-tip{display:none}
+  .result-grid{grid-template-columns:1fr}
+}
+
+/* ---------------- SHARE SCORE CARD ---------------- */
+
+.result-actions{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:9px;
+  margin-top:4px;
+}
+
+.share-button{
+  color:#f4e7c8;
+  background:linear-gradient(180deg,#3a3022,#19130e);
+}
+
+.share-modal{
+  position:fixed;
+  inset:0;
+  z-index:1500;
+  display:none;
+  place-items:center;
+  padding:18px;
+  background:rgba(4,3,2,.84);
+  backdrop-filter:blur(7px);
+}
+
+.share-modal.show{
+  display:grid;
+}
+
+.share-card{
+  width:min(780px,100%);
+  max-height:calc(100vh - 28px);
+  overflow:auto;
+  padding:18px;
+  border:3px double rgba(240,215,127,.48);
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(255,255,255,.018) 0,
+      rgba(255,255,255,.018) 2px,
+      transparent 2px,
+      transparent 8px
+    ),
+    linear-gradient(180deg,#2b2118,#14100c);
+  box-shadow:var(--shadow);
+}
+
+.share-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+  text-align:left;
+}
+
+.share-head h2{
+  margin:5px 0;
+  font-family:Georgia,serif;
+  font-size:1.65rem;
+  text-transform:uppercase;
+}
+
+.share-head p{
+  margin:0;
+  color:#c6b797;
+  font-size:.78rem;
+  line-height:1.55;
+}
+
+.share-close{
+  flex:0 0 42px;
+  width:42px;
+  height:42px;
+  border:1px solid rgba(240,215,127,.3);
+  color:#f4e7c8;
+  background:#15100c;
+  font-size:1.4rem;
+  line-height:1;
+}
+
+.instruction-banner{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
+  padding:15px 16px;
+  border:2px solid #ead17b;
+  color:#241806;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(255,255,255,.13) 0,
+      rgba(255,255,255,.13) 4px,
+      transparent 4px,
+      transparent 10px
+    ),
+    #d7b75a;
+  box-shadow:0 10px 24px rgba(0,0,0,.3);
+  text-align:left;
+}
+
+.instruction-icon{
+  flex:0 0 40px;
+  width:40px;
+  height:40px;
+  display:grid;
+  place-items:center;
+  border:2px solid rgba(36,24,6,.35);
+  border-radius:50%;
+  background:#f3dfa0;
+  font-size:1.15rem;
+  animation:shareFlashIcon .8s ease-in-out infinite alternate;
+}
+
+.instruction-text{
+  font-size:.9rem;
+  line-height:1.45;
+  font-weight:900;
+}
+
+.scorecard-preview{
+  display:block;
+  width:100%;
+  border:2px solid rgba(240,215,127,.28);
+  background:#0b0907;
+}
+
+.scorecard-canvas{
+  display:none;
+}
+
+@keyframes shareFlashIcon{
+  from{transform:scale(1)}
+  to{transform:scale(1.1)}
+}
+
+@media(max-width:560px){
+  .result-actions{
+    flex-direction:column;
+  }
+
+  .result-actions .play-button{
+    width:100%;
+  }
+
+  .instruction-banner{
+    align-items:flex-start;
+  }
+}
+
+</style>
+
+<style>
+html.ec-game-reduced-motion *,
+html.ec-game-reduced-motion *::before,
+html.ec-game-reduced-motion *::after{
+  animation-duration:.001ms!important;
+  animation-iteration-count:1!important;
+  transition-duration:.001ms!important;
+  scroll-behavior:auto!important;
+}
+</style>
+<script>
+function eastcoinSoundAllowed(){
+  return localStorage.getItem('eastcoinsSoundEnabled')!=='false';
+}
+
+function eastcoinApplyGameSettings(settings={}){
+  const reduced=
+    typeof settings.reducedMotion==='boolean'
+      ? settings.reducedMotion
+      : localStorage.getItem('eastcoinsReducedMotion')==='true';
+
+  document.documentElement.classList.toggle(
+    'ec-game-reduced-motion',
+    reduced
+  );
+}
+
+eastcoinApplyGameSettings();
+
+addEventListener('message',event=>{
+  if(event.data?.type!=='eastcoin-settings')return;
+
+  if(typeof event.data.soundEnabled==='boolean'){
+    localStorage.setItem(
+      'eastcoinsSoundEnabled',
+      String(event.data.soundEnabled)
+    );
+  }
+
+  if(typeof event.data.reducedMotion==='boolean'){
+    localStorage.setItem(
+      'eastcoinsReducedMotion',
+      String(event.data.reducedMotion)
+    );
+  }
+
+  eastcoinApplyGameSettings(event.data);
+});
+</script>
+
+</head>
+
+<body>
+<main class="game-shell">
+  <header class="header">
+    <div>
+      <div class="kicker">EastCoin Original · 10-second hand destroyer</div>
+      <h1><span>EastCoin</span> Button Masher</h1>
+      <p class="lede">
+        Click, tap, or hammer Space. The house will try to mess with your rhythm.
+      </p>
+    </div>
+
+    <button class="reset-button" id="resetBest" type="button">
+      Reset Best
+    </button>
+  </header>
+
+  <section class="stats">
+    <div class="stat"><span>Score</span><strong id="score">0</strong></div>
+    <div class="stat"><span>Presses</span><strong id="presses">0</strong></div>
+    <div class="stat"><span>Presses / Sec</span><strong id="pps">0.0</strong></div>
+    <div class="stat multiplier-stat" id="multiplierCard">
+      <span>Multiplier</span><strong id="multiplier">×1</strong>
+    </div>
+    <div class="stat time-stat" id="timeCard">
+      <span>Time</span><strong id="time">10.0</strong>
+    </div>
+    <div class="stat"><span>Best</span><strong id="best">0</strong></div>
+  </section>
+
+  <section class="machine" id="machine">
+    <div class="machine-top">
+      <strong class="status" id="status">Table opening</strong>
+      <span class="machine-tip">Click the button or hold your cursor over it and mash Space.</span>
+    </div>
+
+    <div class="arena" id="arena">
+      <div class="opponent">
+        <img id="opponentImage" src="assets/targets/periodt.png" alt="Current EastCoin opponent">
+        <div>
+          <span class="opponent-label">Tonight's opponent</span>
+          <strong id="opponentName">Periodt</strong>
+        </div>
+      </div>
+
+      <div class="event-banner" id="eventBanner">Double Payout</div>
+
+      <div class="press-zone">
+        <span class="ring one"></span>
+        <span class="ring two"></span>
+        <span class="ring three"></span>
+
+        <button
+          class="mash-button"
+          id="mashButton"
+          type="button"
+          aria-label="Mash the EastCoin button">
+          <span class="button-copy">
+            <span class="button-main" id="buttonMain">MASH</span>
+            <span class="button-sub" id="buttonSub">Click or press Space</span>
+          </span>
+        </button>
+      </div>
+
+      <div class="space-tip">Mouse · Tap · Space Bar</div>
+
+      <div class="overlay" id="countdownOverlay">
+        <div class="countdown-card">
+          <div class="kicker">Hands on the button</div>
+          <div class="countdown-number" id="countdownNumber">3</div>
+        </div>
+      </div>
+
+      <div class="overlay hidden" id="resultOverlay">
+        <div class="result-card">
+          <div class="kicker">Round settled</div>
+          <h2 id="resultTitle">Mash Report</h2>
+          <div class="result-score" id="resultScore">0</div>
+
+          <div class="result-grid">
+            <div class="result-stat">
+              <span>Total Presses</span>
+              <strong id="resultPresses">0</strong>
+            </div>
+            <div class="result-stat">
+              <span>Average PPS</span>
+              <strong id="resultPps">0.0</strong>
+            </div>
+            <div class="result-stat">
+              <span>Peak PPS</span>
+              <strong id="resultPeak">0.0</strong>
+            </div>
+          </div>
+
+          <div class="result-actions">
+            <button
+              class="play-button share-button"
+              id="shareScore"
+              type="button">
+              Share Score Card
+            </button>
+
+            <button class="play-button" id="playAgain" type="button">
+              Mash Again
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="share-modal" id="shareModal" aria-hidden="true">
+  <div
+    class="share-card"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="shareTitle">
+    <div class="share-head">
+      <div>
+        <div class="kicker">Share score card</div>
+        <h2 id="shareTitle">Copy the card</h2>
+        <p>The instructions remain outside the generated image.</p>
+      </div>
+
+      <button
+        class="share-close"
+        id="closeShare"
+        type="button"
+        aria-label="Close share panel">
+        ×
+      </button>
+    </div>
+
+    <div class="instruction-banner">
+      <div class="instruction-icon">⚠</div>
+      <div class="instruction-text">
+        <strong>Right-click the score card</strong> →
+        choose <strong>Copy image</strong> →
+        open Discord and paste it.
+      </div>
+    </div>
+
+    <img
+      class="scorecard-preview"
+      id="scoreCardImage"
+      alt="Generated EastCoin Button Masher score card">
+
+    <canvas
+      class="scorecard-canvas"
+      id="scoreCardCanvas"
+      width="960"
+      height="540">
+    </canvas>
+  </div>
+</div>
+
+<script>
+const ROUND_MS=10000;
+const FINAL_OVERDRIVE_MS=3000;
+
+const roster=[
+  {name:'Kekinsane',image:'assets/targets/kekinsane.gif'},
+  {name:'Kellz',image:'assets/targets/kellz.png'},
+  {name:'King',image:'assets/targets/king.png'},
+  {name:'Larva',image:'assets/targets/larva.png'},
+  {name:'Mac',image:'assets/targets/mac.png'},
+  {name:'Periodt',image:'assets/targets/periodt.png'},
+  {name:'Racecar',image:'assets/targets/racecar.png'},
+  {name:'Sara',image:'assets/targets/sara.png'},
+  {name:'Zeebo',image:'assets/targets/zeebo.png'},
+  {name:'Kekwait',image:'assets/targets/kekwait.png'},
+  {name:'Andy',image:'assets/targets/andy.png'},
+  {name:'Bigghey',image:'assets/targets/bigghey.png'},
+  {name:'Boone',image:'assets/targets/boone.png'},
+  {name:'Booty',image:'assets/targets/booty.png'},
+  {name:'Bron',image:'assets/targets/bron.webp'},
+  {name:'Bronfeet',image:'assets/targets/bronfeet.jpg'},
+  {name:'Deez',image:'assets/targets/deez.png'},
+  {name:'Dookie',image:'assets/targets/dookie.png'},
+  {name:'Duke',image:'assets/targets/duke.png'},
+  {name:'Zwades',image:'assets/targets/zwades.png'},
+  {name:'Waldo',image:'assets/targets/waldo.png'}
+];
+
+const $=id=>document.getElementById(id);
+
+const mashButton=$('mashButton');
+const machine=$('machine');
+const arena=$('arena');
+const eventBanner=$('eventBanner');
+
+let active=false;
+let countdownRunning=false;
+let score=0;
+let rawPresses=0;
+let penaltyPresses=0;
+let currentMultiplier=1;
+let eventMode='normal';
+let startTime=0;
+let endTime=0;
+let lastFrame=0;
+let animationFrame=null;
+let countdownTimer=null;
+let eventTimers=[];
+let pressTimes=[];
+let peakPps=0;
+let audioContext=null;
+let currentOpponent=null;
+let lastMilestone=0;
+let lastInputAt=0;
+let lastRoundScore=0;
+let lastRoundWasBest=false;
+let lastRoundPresses=0;
+let lastRoundAveragePps=0;
+let lastRoundPeakPps=0;
+let lastRoundPenaltyPresses=0;
+let lastRoundOpponent='The House';
+
+function randomBetween(min,max){
+  return Math.floor(Math.random()*(max-min+1))+min;
+}
+
+function chance(value){
+  return Math.random()<value;
+}
+
+function loadBest(){
+  const best=Number(localStorage.getItem('eastcoinMasherBest')||0);
+  $('best').textContent=best.toLocaleString();
+  return best;
+}
+
+function unlockAudio(){
+  if(!eastcoinSoundAllowed())return;
+  try{
+    audioContext=
+      audioContext ||
+      new(window.AudioContext||window.webkitAudioContext)();
+
+    if(audioContext.state==='suspended'){
+      audioContext.resume();
+    }
+  }catch{}
+}
+
+function tone(frequency,duration,type='square',volume=.035){
+  if(!eastcoinSoundAllowed())return;
+  unlockAudio();
+  if(!audioContext)return;
+
+  const oscillator=audioContext.createOscillator();
+  const gain=audioContext.createGain();
+
+  oscillator.type=type;
+  oscillator.frequency.value=frequency;
+  gain.gain.value=volume;
+
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+
+  oscillator.start();
+  gain.gain.exponentialRampToValueAtTime(
+    .0001,
+    audioContext.currentTime+duration
+  );
+  oscillator.stop(audioContext.currentTime+duration);
+}
+
+function playEventChord(kind){
+  if(!eastcoinSoundAllowed())return;
+  if(kind==='double'){
+    [330,440,660].forEach((frequency,index)=>{
+      setTimeout(
+        ()=>tone(frequency,.18,'triangle',.055),
+        index*60
+      );
+    });
+    return;
+  }
+
+  if(kind==='trap'){
+    [160,120,85].forEach((frequency,index)=>{
+      setTimeout(
+        ()=>tone(frequency,.16,'sawtooth',.055),
+        index*55
+      );
+    });
+    return;
+  }
+
+  [440,550,660,880].forEach((frequency,index)=>{
+    setTimeout(
+      ()=>tone(frequency,.22,'square',.05),
+      index*45
+    );
+  });
+}
+
+function pickOpponent(){
+  currentOpponent=roster[Math.floor(Math.random()*roster.length)];
+  $('opponentImage').src=currentOpponent.image;
+  $('opponentImage').alt=currentOpponent.name+' opponent';
+  $('opponentName').textContent=currentOpponent.name;
+}
+
+function recentPps(now=performance.now()){
+  const cutoff=now-1000;
+  pressTimes=pressTimes.filter(value=>value>=cutoff);
+  const current=pressTimes.length;
+  peakPps=Math.max(peakPps,current);
+  return current;
+}
+
+function averagePps(){
+  return rawPresses/(ROUND_MS/1000);
+}
+
+function draw(now=performance.now()){
+  const pps=recentPps(now);
+
+  $('score').textContent=score.toLocaleString();
+  $('presses').textContent=rawPresses.toLocaleString();
+  $('pps').textContent=pps.toFixed(1);
+  $('multiplier').textContent='×'+currentMultiplier;
+
+  peakPps=Math.max(peakPps,pps);
+}
+
+function showEvent(text,className=''){
+  eventBanner.textContent=text;
+  eventBanner.className='event-banner'+(className?' '+className:'');
+  void eventBanner.offsetWidth;
+  eventBanner.classList.add('show');
+}
+
+function showPressPop(x,y,text,className=''){
+  const element=document.createElement('div');
+  element.className='press-pop'+(className?' '+className:'');
+  element.textContent=text;
+  element.style.left=x+'px';
+  element.style.top=y+'px';
+
+  document.body.append(element);
+  setTimeout(()=>element.remove(),550);
+}
+
+function sparks(x,y,kind='normal',count=7){
+  const palettes={
+    normal:['#f2d979','#fff4c6','#c9a44f'],
+    hot:['#c8f3ff','#54b3d5','#ffffff','#3f79d7'],
+    bad:['#ffb0b4','#e4494f','#ffffff'],
+    gold:['#fff4ba','#f2d979','#ff9b32','#ffffff']
+  };
+
+  const palette=palettes[kind];
+
+  for(let index=0;index<count;index++){
+    const spark=document.createElement('i');
+    const angle=Math.random()*Math.PI*2;
+    const distance=30+Math.random()*(kind==='gold'?140:75);
+
+    spark.className='spark';
+    spark.style.setProperty('--x',x+'px');
+    spark.style.setProperty('--y',y+'px');
+    spark.style.setProperty(
+      '--dx',
+      Math.cos(angle)*distance+'px'
+    );
+    spark.style.setProperty(
+      '--dy',
+      Math.sin(angle)*distance+'px'
+    );
+    spark.style.setProperty(
+      '--size',
+      (3+Math.random()*6)+'px'
+    );
+    spark.style.setProperty(
+      '--duration',
+      (.28+Math.random()*.36)+'s'
+    );
+    spark.style.setProperty(
+      '--color',
+      palette[Math.floor(Math.random()*palette.length)]
+    );
+
+    document.body.append(spark);
+    setTimeout(()=>spark.remove(),800);
+  }
+}
+
+function shakeMachine(jackpot=false){
+  machine.classList.remove('shake','jackpot');
+  void machine.offsetWidth;
+  machine.classList.add(jackpot?'jackpot':'shake');
+
+  setTimeout(
+    ()=>machine.classList.remove('shake','jackpot'),
+    jackpot?600:320
+  );
+}
+
+function showMilestone(text){
+  const element=document.createElement('div');
+  element.className='milestone';
+  element.textContent=text;
+  document.body.append(element);
+  shakeMachine(true);
+  playEventChord('jackpot');
+  setTimeout(()=>element.remove(),900);
+}
+
+function setButtonMode(mode){
+  eventMode=mode;
+
+  mashButton.classList.toggle('hot',mode==='double'||mode==='overdrive');
+  mashButton.classList.toggle('trap',mode==='trap');
+
+  $('multiplierCard').classList.toggle(
+    'hot',
+    mode==='double'||mode==='overdrive'
+  );
+
+  $('multiplierCard').classList.toggle(
+    'trap',
+    mode==='trap'
+  );
+
+  if(mode==='trap'){
+    currentMultiplier=0;
+    $('buttonMain').textContent='DON’T';
+    $('buttonSub').textContent='The house trap is live';
+    return;
+  }
+
+  if(mode==='double'){
+    currentMultiplier=2;
+    $('buttonMain').textContent='DOUBLE';
+    $('buttonSub').textContent='Every press pays ×2';
+    return;
+  }
+
+  if(mode==='overdrive'){
+    currentMultiplier=2;
+    $('buttonMain').textContent='OVERDRIVE';
+    $('buttonSub').textContent='Final three seconds';
+    return;
+  }
+
+  currentMultiplier=1;
+  $('buttonMain').textContent='MASH';
+  $('buttonSub').textContent='Click or press Space';
+}
+
+function scheduleEvents(){
+  eventTimers.forEach(clearTimeout);
+  eventTimers=[];
+
+  const doubleStart=randomBetween(2300,4200);
+  const trapStart=randomBetween(4700,6100);
+
+  eventTimers.push(
+    setTimeout(()=>{
+      if(!active)return;
+
+      setButtonMode('double');
+      showEvent('DOUBLE PAYOUT — MASH!', 'blue');
+      playEventChord('double');
+
+      eventTimers.push(
+        setTimeout(()=>{
+          if(active&&eventMode==='double'){
+            setButtonMode('normal');
+          }
+        },1150)
+      );
+    },doubleStart)
+  );
+
+  eventTimers.push(
+    setTimeout(()=>{
+      if(!active)return;
+
+      setButtonMode('trap');
+      showEvent('HOUSE TRAP — HANDS OFF!', 'red');
+      playEventChord('trap');
+
+      eventTimers.push(
+        setTimeout(()=>{
+          if(active&&eventMode==='trap'){
+            setButtonMode('normal');
+            showEvent('CLEAR — MASH AGAIN');
+            tone(520,.12,'square',.05);
+          }
+        },650)
+      );
+    },trapStart)
+  );
+}
+
+function pressButton(event){
+  if(!active)return;
+
+  const now=performance.now();
+
+  // Prevent key auto-repeat or accidental duplicated pointer events from
+  // counting at impossible browser-generated speeds.
+  if(now-lastInputAt<14){
+    return;
+  }
+
+  lastInputAt=now;
+  rawPresses++;
+  pressTimes.push(now);
+
+  mashButton.classList.remove('pressed');
+  void mashButton.offsetWidth;
+  mashButton.classList.add('pressed');
+
+  setTimeout(
+    ()=>mashButton.classList.remove('pressed'),
+    55
+  );
+
+  const rect=mashButton.getBoundingClientRect();
+  const x=
+    event?.clientX ||
+    rect.left+rect.width/2+randomBetween(-35,35);
+  const y=
+    event?.clientY ||
+    rect.top+rect.height/2+randomBetween(-25,25);
+
+  if(eventMode==='trap'){
+    penaltyPresses++;
+    score=Math.max(0,score-12);
+    showPressPop(x,y,'TRAP -12','bad');
+    sparks(x,y,'bad',10);
+    tone(105,.08,'sawtooth',.05);
+    shakeMachine();
+    draw(now);
+    return;
+  }
+
+  const value=currentMultiplier;
+  score+=value;
+
+  showPressPop(
+    x,
+    y,
+    '+'+value,
+    currentMultiplier>1?'hot':''
+  );
+
+  sparks(
+    x,
+    y,
+    currentMultiplier>1?'hot':'normal',
+    currentMultiplier>1?11:6
+  );
+
+  const pps=recentPps(now);
+  const frequency=Math.min(800,240+pps*23);
+
+  tone(
+    frequency,
+    .045,
+    pps>12?'square':'triangle',
+    .025
+  );
+
+  if(rawPresses%20===0){
+    pickOpponent();
+  }
+
+  const milestones=[25,50,75,100,125,150,175,200];
+  const crossed=milestones.find(
+    value=>rawPresses>=value&&lastMilestone<value
+  );
+
+  if(crossed){
+    lastMilestone=crossed;
+    showMilestone(crossed+' PRESSES!');
+    sparks(
+      rect.left+rect.width/2,
+      rect.top+rect.height/2,
+      'gold',
+      45
+    );
+  }
+
+  draw(now);
+}
+
+function updateRound(now){
+  if(!active)return;
+
+  const remaining=Math.max(0,endTime-now);
+  const seconds=remaining/1000;
+
+  $('time').textContent=seconds.toFixed(1);
+  $('timeCard').classList.toggle('warning',seconds<=3);
+  $('timeCard').classList.toggle('critical',seconds<=1);
+
+  if(
+    remaining<=FINAL_OVERDRIVE_MS &&
+    eventMode!=='overdrive'
+  ){
+    setButtonMode('overdrive');
+    showEvent('FINAL THREE — OVERDRIVE!', 'blue');
+    playEventChord('double');
+  }
+
+  draw(now);
+
+  if(remaining<=0){
+    endRound();
+    return;
+  }
+
+  animationFrame=requestAnimationFrame(updateRound);
+}
+
+function beginRound(){
+  score=0;
+  rawPresses=0;
+  penaltyPresses=0;
+  currentMultiplier=1;
+  eventMode='normal';
+  pressTimes=[];
+  peakPps=0;
+  lastMilestone=0;
+  lastInputAt=0;
+  active=true;
+  startTime=performance.now();
+  endTime=startTime+ROUND_MS;
+
+  pickOpponent();
+  setButtonMode('normal');
+
+  $('resultOverlay').classList.add('hidden');
+  $('status').textContent='MASHING OPEN';
+  $('timeCard').classList.remove('warning','critical');
+
+  draw(startTime);
+  scheduleEvents();
+
+  cancelAnimationFrame(animationFrame);
+  animationFrame=requestAnimationFrame(updateRound);
+}
+
+function endRound(){
+  if(!active)return;
+
+  active=false;
+  cancelAnimationFrame(animationFrame);
+  eventTimers.forEach(clearTimeout);
+  eventTimers=[];
+
+  setButtonMode('normal');
+  $('time').textContent='0.0';
+  $('timeCard').classList.remove('warning','critical');
+
+  const oldBest=loadBest();
+  const newBest=score>oldBest;
+
+  if(newBest){
+    localStorage.setItem('eastcoinMasherBest',String(score));
+    loadBest();
+  }
+
+  $('status').textContent='ROUND SETTLED';
+  $('resultTitle').textContent=
+    newBest
+      ? 'NEW PERSONAL BEST'
+      : 'MASH REPORT';
+
+  lastRoundScore=score;
+  lastRoundWasBest=newBest;
+  lastRoundPresses=rawPresses;
+  lastRoundAveragePps=averagePps();
+  lastRoundPeakPps=peakPps;
+  lastRoundPenaltyPresses=penaltyPresses;
+  lastRoundOpponent=
+    currentOpponent?.name||
+    'The House';
+
+  $('resultScore').textContent=score.toLocaleString();
+  $('resultPresses').textContent=rawPresses.toLocaleString();
+  $('resultPps').textContent=lastRoundAveragePps.toFixed(1);
+  $('resultPeak').textContent=lastRoundPeakPps.toFixed(1);
+  $('resultOverlay').classList.remove('hidden');
+
+  showEvent(
+    penaltyPresses
+      ? penaltyPresses+' TRAP PRESSES'
+      : 'CLEAN ROUND'
+  );
+
+  playEventChord(newBest?'jackpot':'double');
+}
+
+function runCountdown(){
+  if(countdownRunning)return;
+
+  closeScoreCard();
+
+  countdownRunning=true;
+  active=false;
+  cancelAnimationFrame(animationFrame);
+  clearTimeout(countdownTimer);
+  eventTimers.forEach(clearTimeout);
+  eventTimers=[];
+
+  $('resultOverlay').classList.add('hidden');
+  $('countdownOverlay').classList.remove('hidden');
+  $('time').textContent='10.0';
+  setButtonMode('normal');
+
+  const steps=[
+    {text:'3',duration:760,frequency:330},
+    {text:'2',duration:760,frequency:390},
+    {text:'1',duration:760,frequency:470},
+    {text:'MASH!',duration:650,frequency:700,fire:true}
+  ];
+
+  let index=0;
+
+  function next(){
+    const step=steps[index];
+    const number=$('countdownNumber');
+
+    number.className=
+      'countdown-number'+
+      (step.fire?' fire':'');
+
+    number.textContent=step.text;
+
+    tone(
+      step.frequency,
+      step.fire?.25:.13,
+      step.fire?'sawtooth':'square',
+      .06
+    );
+
+    if(step.fire){
+      countdownTimer=setTimeout(()=>{
+        $('countdownOverlay').classList.add('hidden');
+        countdownRunning=false;
+        beginRound();
+      },step.duration);
+      return;
+    }
+
+    index++;
+    countdownTimer=setTimeout(next,step.duration);
+  }
+
+  next();
+}
+
+
+function scoreCardRoundRect(ctx,x,y,width,height,radius){
+  ctx.beginPath();
+  ctx.moveTo(x+radius,y);
+  ctx.lineTo(x+width-radius,y);
+  ctx.quadraticCurveTo(
+    x+width,
+    y,
+    x+width,
+    y+radius
+  );
+  ctx.lineTo(x+width,y+height-radius);
+  ctx.quadraticCurveTo(
+    x+width,
+    y+height,
+    x+width-radius,
+    y+height
+  );
+  ctx.lineTo(x+radius,y+height);
+  ctx.quadraticCurveTo(
+    x,
+    y+height,
+    x,
+    y+height-radius
+  );
+  ctx.lineTo(x,y+radius);
+  ctx.quadraticCurveTo(x,y,x+radius,y);
+  ctx.closePath();
+}
+
+function drawScoreCard(){
+  const canvas=$('scoreCardCanvas');
+  const ctx=canvas.getContext('2d');
+  const width=canvas.width;
+  const height=canvas.height;
+  const personalBest=Math.max(
+    lastRoundScore,
+    Number(localStorage.getItem('eastcoinMasherBest')||0)
+  );
+
+  ctx.clearRect(0,0,width,height);
+
+  const background=ctx.createLinearGradient(
+    0,
+    0,
+    width,
+    height
+  );
+
+  background.addColorStop(0,'#381116');
+  background.addColorStop(.48,'#15100c');
+  background.addColorStop(1,'#080705');
+
+  ctx.fillStyle=background;
+  ctx.fillRect(0,0,width,height);
+
+  ctx.fillStyle='rgba(166,38,44,.28)';
+  ctx.fillRect(0,0,width,108);
+
+  ctx.fillStyle='rgba(18,74,48,.18)';
+  ctx.fillRect(0,108,width,height-108);
+
+  scoreCardRoundRect(
+    ctx,
+    24,
+    24,
+    width-48,
+    height-48,
+    22
+  );
+
+  ctx.fillStyle='rgba(255,255,255,.022)';
+  ctx.fill();
+  ctx.strokeStyle='rgba(201,164,79,.44)';
+  ctx.lineWidth=3;
+  ctx.stroke();
+
+  ctx.strokeStyle='rgba(242,217,121,.16)';
+  ctx.lineWidth=1;
+  ctx.strokeRect(38,38,width-76,height-76);
+
+  ctx.fillStyle='#f2d979';
+  ctx.font='900 20px Georgia, serif';
+  ctx.fillText(
+    'EASTCOIN BUTTON MASHER // HAND REPORT',
+    58,
+    78
+  );
+
+  ctx.fillStyle='#f4e7c8';
+  ctx.font='900 57px Georgia, serif';
+  ctx.fillText('FINAL SCORE',56,168);
+
+  ctx.fillStyle='#f2d673';
+  ctx.font='900 104px Georgia, serif';
+  ctx.fillText(
+    lastRoundScore.toLocaleString(),
+    56,
+    302
+  );
+
+  ctx.fillStyle=
+    lastRoundWasBest
+      ? '#79d89a'
+      : '#f0c9b1';
+
+  ctx.font='900 22px Georgia, serif';
+  ctx.fillText(
+    lastRoundWasBest
+      ? 'NEW PERSONAL BEST'
+      : 'ROUND SETTLED',
+    58,
+    350
+  );
+
+  ctx.fillStyle='#d9ccb0';
+  ctx.font='900 19px Georgia, serif';
+  ctx.fillText(
+    `PEAK SPEED ${lastRoundPeakPps.toFixed(1)} PPS`,
+    58,
+    389
+  );
+
+  ctx.fillStyle=
+    lastRoundPenaltyPresses
+      ? '#e9797f'
+      : '#79d89a';
+
+  ctx.font='700 16px Georgia, serif';
+  ctx.fillText(
+    lastRoundPenaltyPresses
+      ? `${lastRoundPenaltyPresses} house-trap presses`
+      : 'Clean round · no house-trap presses',
+    58,
+    422
+  );
+
+  const rightX=535;
+  const statWidth=367;
+  const rows=[
+    [
+      'Personal Best',
+      personalBest.toLocaleString(),
+      '#f2d979'
+    ],
+    [
+      'Total Presses',
+      lastRoundPresses.toLocaleString(),
+      '#f4e7c8'
+    ],
+    [
+      'Average PPS',
+      lastRoundAveragePps.toFixed(1),
+      '#bdefff'
+    ],
+    [
+      'Trap Presses',
+      lastRoundPenaltyPresses.toLocaleString(),
+      lastRoundPenaltyPresses
+        ? '#e9797f'
+        : '#79d89a'
+    ]
+  ];
+
+  rows.forEach((row,index)=>{
+    const y=92+index*98;
+
+    scoreCardRoundRect(
+      ctx,
+      rightX,
+      y,
+      statWidth,
+      78,
+      12
+    );
+
+    ctx.fillStyle='rgba(0,0,0,.24)';
+    ctx.fill();
+    ctx.strokeStyle='rgba(201,164,79,.20)';
+    ctx.stroke();
+
+    ctx.fillStyle='#b9aa8d';
+    ctx.font='900 15px Georgia, serif';
+    ctx.fillText(
+      row[0].toUpperCase(),
+      rightX+22,
+      y+28
+    );
+
+    ctx.fillStyle=row[2];
+    ctx.font='900 30px Georgia, serif';
+    ctx.fillText(
+      row[1],
+      rightX+22,
+      y+61
+    );
+  });
+
+  ctx.fillStyle='#b9aa8d';
+  ctx.font='700 17px Georgia, serif';
+  ctx.fillText(
+    `eastcoin.vip · Last opponent: ${lastRoundOpponent}`,
+    58,
+    506
+  );
+
+  const dataUrl=canvas.toDataURL('image/png');
+  $('scoreCardImage').src=dataUrl;
+
+  try{
+    localStorage.setItem(
+      'eastcoinMasherScoreCard',
+      dataUrl
+    );
+
+    localStorage.setItem(
+      'eastcoinMasherScoreCardMeta',
+      JSON.stringify({
+        roundScore:lastRoundScore,
+        personalBest,
+        totalPresses:lastRoundPresses,
+        averagePps:lastRoundAveragePps,
+        peakPps:lastRoundPeakPps,
+        trapPresses:lastRoundPenaltyPresses,
+        opponent:lastRoundOpponent,
+        newBest:lastRoundWasBest,
+        createdAt:new Date().toISOString()
+      })
+    );
+  }catch{}
+}
+
+function openScoreCard(){
+  drawScoreCard();
+  $('shareModal').classList.add('show');
+  $('shareModal').setAttribute(
+    'aria-hidden',
+    'false'
+  );
+}
+
+function closeScoreCard(){
+  $('shareModal').classList.remove('show');
+  $('shareModal').setAttribute(
+    'aria-hidden',
+    'true'
+  );
+}
+
+
+mashButton.addEventListener('pointerdown',event=>{
+  event.preventDefault();
+  pressButton(event);
+});
+
+document.addEventListener('keydown',event=>{
+  if(
+    event.code!=='Space' ||
+    event.repeat ||
+    event.target.matches('input,textarea,select')
+  ){
+    return;
+  }
+
+  event.preventDefault();
+  pressButton();
+});
+
+$('playAgain').addEventListener('click',runCountdown);
+
+$('shareScore').addEventListener(
+  'click',
+  openScoreCard
+);
+
+$('closeShare').addEventListener(
+  'click',
+  closeScoreCard
+);
+
+$('shareModal').addEventListener(
+  'click',
+  event=>{
+    if(event.target===$('shareModal')){
+      closeScoreCard();
+    }
+  }
+);
+
+document.addEventListener(
+  'keydown',
+  event=>{
+    if(event.key==='Escape'){
+      closeScoreCard();
+    }
+  }
+);
+
+$('resetBest').addEventListener('click',()=>{
+  localStorage.removeItem('eastcoinMasherBest');
+  loadBest();
+});
+
+document.addEventListener(
+  'pointerdown',
+  unlockAudio,
+  {once:true}
+);
+
+addEventListener('beforeunload',()=>{
+  active=false;
+  cancelAnimationFrame(animationFrame);
+  clearTimeout(countdownTimer);
+  eventTimers.forEach(clearTimeout);
+});
+
+loadBest();
+draw();
+pickOpponent();
+setTimeout(runCountdown,450);
+</script>
+</body>
+</html>

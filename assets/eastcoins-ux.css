@@ -1,0 +1,635 @@
+
+/* ================================================================
+   EASTCOIN SHARED UX LAYER
+   Theater mode, chat drawer, settings, embed states, continue cards,
+   game library organization, and reduced-motion support.
+   ================================================================ */
+
+:root{
+  --ec-ux-gold:#d1aa56;
+  --ec-ux-gold-bright:#f3cc73;
+  --ec-ux-panel:#0a1421;
+  --ec-ux-panel-2:#111f31;
+  --ec-ux-text:#f1f6ff;
+  --ec-ux-muted:#93a5bc;
+  --ec-ux-line:rgba(255,255,255,.11);
+  --ec-ux-shadow:0 24px 70px rgba(0,0,0,.55);
+}
+
+html.ec-reduced-motion *,
+body.ec-reduced-motion *{
+  animation-duration:.001ms!important;
+  animation-iteration-count:1!important;
+  scroll-behavior:auto!important;
+  transition-duration:.001ms!important;
+}
+
+/* Sidebar utility links */
+.sidebar-footer-link.ec-settings-link{
+  width:100%;
+  appearance:none;
+  font:inherit;
+  cursor:pointer;
+}
+
+/* Utility dock */
+.ec-utility-dock{
+  position:fixed;
+  left:calc(var(--sidebar-width,230px) + 26px);
+  bottom:24px;
+  z-index:230;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:6px;
+  border:1px solid rgba(255,255,255,.11);
+  border-radius:13px;
+  background:rgba(4,10,18,.76);
+  box-shadow:0 14px 34px rgba(0,0,0,.38);
+  backdrop-filter:blur(15px);
+  opacity:.72;
+  transition:
+    opacity .18s ease,
+    left .24s ease,
+    transform .18s ease;
+}
+
+.ec-utility-dock:hover,
+.ec-utility-dock:focus-within{
+  opacity:1;
+}
+
+body.sidebar-collapsed .ec-utility-dock,
+body.ec-theater-mode .ec-utility-dock{
+  left:24px;
+}
+
+.ec-utility-button{
+  min-height:36px;
+  padding:8px 10px;
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:9px;
+  color:#dce8f7;
+  background:rgba(13,25,40,.9);
+  font-size:.72rem;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.ec-utility-button:hover,
+.ec-utility-button:focus-visible{
+  border-color:rgba(209,170,86,.52);
+  color:#fff3c9;
+  background:rgba(52,39,19,.96);
+  outline:0;
+  transform:translateY(-1px);
+}
+
+.ec-utility-button.is-active{
+  border-color:rgba(209,170,86,.6);
+  color:#fff0b4;
+  background:linear-gradient(180deg,#5b441c,#2d210f);
+}
+
+.ec-settings-only-button{
+  position:fixed;
+  right:20px;
+  bottom:20px;
+  z-index:220;
+  width:44px;
+  height:44px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:13px;
+  color:#f1e4bf;
+  background:rgba(7,15,25,.88);
+  box-shadow:0 14px 34px rgba(0,0,0,.35);
+  backdrop-filter:blur(14px);
+  font-size:1rem;
+}
+
+/* Desktop chat collapse */
+@media(min-width:901px){
+  body.ec-chat-collapsed .layout{
+    grid-template-columns:
+      var(--sidebar-width,230px)
+      minmax(var(--min-video-width,420px),1fr)
+      0
+      0!important;
+  }
+
+  body.sidebar-collapsed.ec-chat-collapsed .layout,
+  body.ec-theater-mode .layout{
+    grid-template-columns:
+      0
+      minmax(0,1fr)
+      0
+      0!important;
+  }
+
+  body.ec-chat-collapsed .resize-handle,
+  body.ec-chat-collapsed .chat-panel{
+    display:none!important;
+  }
+}
+
+/* Theater mode */
+body.ec-theater-mode{
+  overflow:hidden!important;
+}
+
+body.ec-theater-mode .sidebar,
+body.ec-theater-mode .resize-handle,
+body.ec-theater-mode .chat-panel,
+body.ec-theater-mode .mobile-menu{
+  display:none!important;
+}
+
+body.ec-theater-mode .watch-area{
+  min-height:100vh!important;
+  padding:0!important;
+}
+
+body.ec-theater-mode .player-shell{
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+
+body.ec-theater-mode .player-toolbar{
+  opacity:0!important;
+  pointer-events:none!important;
+}
+
+body.ec-theater-mode .ec-utility-dock{
+  bottom:16px;
+  opacity:.5;
+}
+
+body.ec-theater-mode .ec-utility-dock:hover,
+body.ec-theater-mode .ec-utility-dock:focus-within{
+  opacity:1;
+}
+
+/* Mobile Twitch drawer */
+.ec-chat-scrim{
+  position:fixed;
+  inset:0;
+  z-index:238;
+  display:none;
+  border:0;
+  background:rgba(0,0,0,.66);
+  opacity:0;
+}
+
+@media(max-width:900px){
+  .ec-utility-dock{
+    left:14px!important;
+    right:14px;
+    bottom:14px;
+    justify-content:center;
+    opacity:.94;
+  }
+
+  .ec-utility-button{
+    flex:1;
+    min-width:0;
+    padding:8px 6px;
+    font-size:.68rem;
+  }
+
+  .chat-panel{
+    position:fixed!important;
+    inset:0 0 0 auto!important;
+    z-index:240!important;
+    width:min(92vw,430px)!important;
+    height:100dvh!important;
+    min-height:0!important;
+    border:0!important;
+    border-left:1px solid var(--ec-ux-line)!important;
+    background:#050b14!important;
+    box-shadow:-24px 0 60px rgba(0,0,0,.58);
+    transform:translateX(104%);
+    transition:transform .24s ease;
+  }
+
+  body.ec-chat-open .chat-panel{
+    transform:translateX(0);
+  }
+
+  body.ec-chat-open .ec-chat-scrim{
+    display:block;
+    opacity:1;
+  }
+
+  body.ec-chat-open{
+    overflow:hidden!important;
+  }
+
+  body.ec-theater-mode .ec-chat-scrim,
+  body.ec-theater-mode .chat-panel{
+    display:none!important;
+  }
+}
+
+/* Embed loading and fallback state */
+.ec-embed-status{
+  position:absolute;
+  inset:0;
+  z-index:12;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  background:
+    radial-gradient(circle at 50% 35%,rgba(63,95,129,.2),transparent 36%),
+    rgba(2,6,11,.88);
+  backdrop-filter:blur(5px);
+}
+
+.ec-embed-status[hidden]{
+  display:none!important;
+}
+
+.ec-embed-status-card{
+  width:min(470px,100%);
+  padding:26px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:18px;
+  color:var(--ec-ux-text);
+  background:
+    linear-gradient(180deg,rgba(18,34,53,.97),rgba(7,15,25,.97));
+  box-shadow:var(--ec-ux-shadow);
+  text-align:center;
+}
+
+.ec-embed-spinner{
+  width:42px;
+  height:42px;
+  margin:0 auto 16px;
+  border:4px solid rgba(255,255,255,.12);
+  border-top-color:var(--ec-ux-gold-bright);
+  border-radius:50%;
+  animation:ecSpin .8s linear infinite;
+}
+
+.ec-embed-status.is-trouble .ec-embed-spinner{
+  display:none;
+}
+
+.ec-embed-status-title{
+  display:block;
+  font-size:1.15rem;
+  font-weight:950;
+}
+
+.ec-embed-status-message{
+  margin:9px auto 0;
+  color:var(--ec-ux-muted);
+  font-size:.82rem;
+  line-height:1.55;
+}
+
+.ec-embed-status-actions{
+  display:none;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:9px;
+  margin-top:18px;
+}
+
+.ec-embed-status.is-trouble .ec-embed-status-actions{
+  display:flex;
+}
+
+.ec-embed-action{
+  padding:10px 13px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;
+  color:#f0f5ff;
+  background:#132338;
+  font-size:.76rem;
+  font-weight:900;
+}
+
+.ec-embed-action.primary{
+  border-color:rgba(209,170,86,.48);
+  color:#261a06;
+  background:var(--ec-ux-gold-bright);
+}
+
+@keyframes ecSpin{
+  to{transform:rotate(360deg)}
+}
+
+/* Continue cards */
+.ec-continue-stack{
+  display:grid;
+  gap:9px;
+  margin:18px 0 0;
+}
+
+.ec-continue-card{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:13px 14px;
+  border:1px solid rgba(209,170,86,.22);
+  border-radius:12px;
+  background:
+    linear-gradient(180deg,rgba(88,61,20,.18),rgba(13,25,40,.68));
+  text-align:left;
+}
+
+.ec-continue-copy{
+  min-width:0;
+}
+
+.ec-continue-copy span{
+  display:block;
+  color:#9caec3;
+  font-size:.62rem;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.ec-continue-copy strong{
+  display:block;
+  margin-top:4px;
+  overflow:hidden;
+  color:#f4e8c4;
+  font-size:.85rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.ec-continue-button{
+  flex:0 0 auto;
+  padding:9px 12px;
+  border:1px solid rgba(209,170,86,.4);
+  border-radius:9px;
+  color:#241806;
+  background:#e3c36a;
+  font-size:.72rem;
+  font-weight:950;
+}
+
+/* Games page organization */
+.ec-game-section{
+  margin-top:28px;
+}
+
+.ec-game-section-head{
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:12px;
+  text-align:left;
+}
+
+.ec-game-section-head h2{
+  margin:0;
+  color:#f2e7c8;
+  font-size:1.1rem;
+}
+
+.ec-game-section-head p{
+  margin:0;
+  color:#8092aa;
+  font-size:.72rem;
+}
+
+.ec-game-section .game-grid{
+  margin-top:0!important;
+}
+
+.ec-game-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin:10px 0 0;
+}
+
+.ec-game-tag{
+  display:inline-flex;
+  align-items:center;
+  min-height:23px;
+  padding:4px 7px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:999px;
+  color:#aebdd0;
+  background:rgba(255,255,255,.035);
+  font-size:.58rem;
+  font-weight:850;
+  letter-spacing:.03em;
+}
+
+.ec-recent-empty{
+  padding:18px;
+  border:1px dashed rgba(255,255,255,.12);
+  border-radius:13px;
+  color:#7f91a8;
+  background:rgba(255,255,255,.025);
+  font-size:.78rem;
+  text-align:center;
+}
+
+/* Settings modal */
+.ec-settings-modal{
+  position:fixed;
+  inset:0;
+  z-index:500;
+  display:none;
+  place-items:center;
+  padding:18px;
+  background:rgba(1,4,8,.76);
+  backdrop-filter:blur(8px);
+}
+
+.ec-settings-modal.is-open{
+  display:grid;
+}
+
+.ec-settings-panel{
+  width:min(520px,100%);
+  max-height:calc(100dvh - 36px);
+  overflow:auto;
+  border:1px solid rgba(209,170,86,.32);
+  border-radius:19px;
+  color:var(--ec-ux-text);
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(255,255,255,.013) 0,
+      rgba(255,255,255,.013) 2px,
+      transparent 2px,
+      transparent 8px
+    ),
+    linear-gradient(180deg,#111e2e,#07101b);
+  box-shadow:var(--ec-ux-shadow);
+}
+
+.ec-settings-header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  padding:20px 20px 15px;
+  border-bottom:1px solid rgba(255,255,255,.09);
+}
+
+.ec-settings-header h2{
+  margin:3px 0 0;
+  font-size:1.35rem;
+}
+
+.ec-settings-kicker{
+  color:var(--ec-ux-gold);
+  font-size:.62rem;
+  font-weight:900;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+.ec-settings-close{
+  flex:0 0 38px;
+  width:38px;
+  height:38px;
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:10px;
+  color:#eef5ff;
+  background:#111f31;
+  font-size:1.2rem;
+}
+
+.ec-settings-list{
+  display:grid;
+  gap:0;
+  padding:8px 20px;
+}
+
+.ec-setting-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  padding:14px 0;
+  border-bottom:1px solid rgba(255,255,255,.07);
+}
+
+.ec-setting-row:last-child{
+  border-bottom:0;
+}
+
+.ec-setting-copy{
+  min-width:0;
+}
+
+.ec-setting-copy strong{
+  display:block;
+  font-size:.86rem;
+}
+
+.ec-setting-copy span{
+  display:block;
+  margin-top:4px;
+  color:#8799b0;
+  font-size:.7rem;
+  line-height:1.4;
+}
+
+.ec-switch{
+  position:relative;
+  flex:0 0 46px;
+  width:46px;
+  height:26px;
+}
+
+.ec-switch input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+
+.ec-switch-track{
+  position:absolute;
+  inset:0;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:999px;
+  background:#263247;
+  transition:.18s ease;
+}
+
+.ec-switch-track::after{
+  content:"";
+  position:absolute;
+  top:3px;
+  left:3px;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:#d4deea;
+  box-shadow:0 3px 8px rgba(0,0,0,.3);
+  transition:.18s ease;
+}
+
+.ec-switch input:checked + .ec-switch-track{
+  border-color:rgba(209,170,86,.52);
+  background:#795c20;
+}
+
+.ec-switch input:checked + .ec-switch-track::after{
+  transform:translateX(20px);
+  background:#ffe89b;
+}
+
+.ec-settings-footer{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:15px 20px 20px;
+  border-top:1px solid rgba(255,255,255,.09);
+}
+
+.ec-settings-action{
+  padding:10px 13px;
+  border:1px solid rgba(255,255,255,.11);
+  border-radius:10px;
+  color:#dce7f5;
+  background:#122034;
+  font-size:.74rem;
+  font-weight:900;
+}
+
+.ec-settings-action.danger{
+  color:#ffd9dc;
+  border-color:rgba(214,72,82,.3);
+  background:rgba(93,22,29,.55);
+}
+
+@media(max-width:600px){
+  .ec-continue-card{
+    align-items:stretch;
+    flex-direction:column;
+  }
+
+  .ec-continue-button{
+    width:100%;
+  }
+
+  .ec-game-section-head{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .ec-settings-footer{
+    flex-direction:column;
+  }
+
+  .ec-settings-action{
+    width:100%;
+  }
+}

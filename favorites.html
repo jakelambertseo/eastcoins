@@ -24,6 +24,7 @@
   <link rel="apple-touch-icon" href="assets/eastcoin-favicon.png" />
 
   <link rel="stylesheet" href="assets/eastcoins-theme.css" />
+  <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux1" />
 
   <style>
     :root {
@@ -868,6 +869,13 @@
         📝 Changelog
       </a>
 
+      <button
+        class="sidebar-footer-link ec-settings-link"
+        type="button">
+        ⚙ Settings
+      </button>
+
+
     </aside>
 
     <button
@@ -962,7 +970,9 @@
     </main>
   </div>
 
-  <script>
+    <script src="assets/eastcoins-ux.js?v=ux1"></script>
+
+<script>
     const body = document.body;
     const sidebarToggle = document.getElementById("sidebarToggle");
     const mobileOverlay = document.getElementById("mobileOverlay");

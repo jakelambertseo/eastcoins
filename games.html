@@ -1488,6 +1488,7 @@
   <link rel="apple-touch-icon" href="assets/eastcoin-favicon.png" />
 
   <link rel="stylesheet" href="assets/eastcoins-theme.css" />
+  <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux1" />
 </head>
 
 <body>
@@ -1577,6 +1578,13 @@
         📝 Changelog
       </a>
 
+      <button
+        class="sidebar-footer-link ec-settings-link"
+        type="button">
+        ⚙ Settings
+      </button>
+
+
     </aside>
 
     <main class="watch-area">
@@ -1665,7 +1673,7 @@
               <button
                 class="game-card"
                 type="button"
-                data-game-url="aim-trainer-game.html?v=share2"
+                data-game-url="aim-trainer-game.html?v=ux1"
                 data-game-name="EastCoin Aim Trainer">
                 <span class="game-card-icon">🎯</span>
                 <h2>EastCoin Aim Trainer</h2>
@@ -1684,7 +1692,7 @@
               <button
                 class="game-card"
                 type="button"
-                data-game-url="button-masher-game.html?v=share2"
+                data-game-url="button-masher-game.html?v=ux1"
                 data-game-name="EastCoin Button Masher">
                 <span class="game-card-icon">🟥</span>
                 <h2>EastCoin Button Masher</h2>
@@ -1838,7 +1846,9 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script>
+    <script src="assets/eastcoins-ux.js?v=ux1"></script>
+
+<script>
     const body = document.body;
     const playerShell = document.getElementById("playerShell");
     const playerToolbar = document.getElementById("playerToolbar");

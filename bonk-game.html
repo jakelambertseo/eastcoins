@@ -2331,6 +2331,57 @@ h1 span{color:var(--gold-bright)}
 }
 
 </style>
+
+<style>
+html.ec-game-reduced-motion *,
+html.ec-game-reduced-motion *::before,
+html.ec-game-reduced-motion *::after{
+  animation-duration:.001ms!important;
+  animation-iteration-count:1!important;
+  transition-duration:.001ms!important;
+  scroll-behavior:auto!important;
+}
+</style>
+<script>
+function eastcoinSoundAllowed(){
+  return localStorage.getItem('eastcoinsSoundEnabled')!=='false';
+}
+
+function eastcoinApplyGameSettings(settings={}){
+  const reduced=
+    typeof settings.reducedMotion==='boolean'
+      ? settings.reducedMotion
+      : localStorage.getItem('eastcoinsReducedMotion')==='true';
+
+  document.documentElement.classList.toggle(
+    'ec-game-reduced-motion',
+    reduced
+  );
+}
+
+eastcoinApplyGameSettings();
+
+addEventListener('message',event=>{
+  if(event.data?.type!=='eastcoin-settings')return;
+
+  if(typeof event.data.soundEnabled==='boolean'){
+    localStorage.setItem(
+      'eastcoinsSoundEnabled',
+      String(event.data.soundEnabled)
+    );
+  }
+
+  if(typeof event.data.reducedMotion==='boolean'){
+    localStorage.setItem(
+      'eastcoinsReducedMotion',
+      String(event.data.reducedMotion)
+    );
+  }
+
+  eastcoinApplyGameSettings(event.data);
+});
+</script>
+
 </head>
 
 <body>
@@ -2711,6 +2762,7 @@ function showToast(message){
 }
 
 function tone(frequency,duration,type='square'){
+  if(!eastcoinSoundAllowed())return;
   try{
     audio=audio||new(window.AudioContext||window.webkitAudioContext)();
     const oscillator=audio.createOscillator();
@@ -2734,6 +2786,7 @@ function tone(frequency,duration,type='square'){
 
 
 function unlockAudio(){
+  if(!eastcoinSoundAllowed())return;
   try{
     audio=audio||new(window.AudioContext||window.webkitAudioContext)();
 
@@ -2744,6 +2797,7 @@ function unlockAudio(){
 }
 
 function playCountdownClip(key){
+  if(!eastcoinSoundAllowed())return;
   const clip=new Audio(`assets/audio/countdown-${key}.wav`);
   clip.volume=1;
 
@@ -2762,6 +2816,7 @@ function playCountdownClip(key){
 }
 
 function playSpecialSound(kind){
+  if(!eastcoinSoundAllowed())return;
   unlockAudio();
 
   if(!audio)return;
@@ -2849,6 +2904,7 @@ function playSpecialSound(kind){
 
 
 function playSpecialArrival(kind){
+  if(!eastcoinSoundAllowed())return;
   unlockAudio();
 
   if(!audio)return;
@@ -3225,6 +3281,7 @@ function hitTarget(state,event){
 
 
 function playTrapArrivalSound(){
+  if(!eastcoinSoundAllowed())return;
   unlockAudio();
 
   if(!audio)return;

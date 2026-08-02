@@ -1,101 +1,106 @@
-EASTCOIN — TEXT AND PLAYER ICON UPDATE
-
-CHANGES
-- Renamed visible EastCoins references to EastCoin.
-- Removed the “Private sports community” subheading on both pages.
-- Enlarged the EastCoin name beside the logo to fill the available space.
-- Replaced the chain-link icon on index.html with:
-  assets/eastcoin-player-icon.webp
-- Removed “Try YouTube embed.”
-- Removed “Try alternate embed.”
-- Removed the iframe helper text beneath those buttons.
-- Removed the unused CSS and JavaScript associated with the deleted controls.
-
-FILES
-- index.html
-- favorites.html
-- assets/eastcoin-player-icon.webp
-- assets/eastcoins-logo.webp
-- assets/eastcoins-theme.css
-
-LOCAL TEST
-Run:
-
-  py -m http.server 8080
-
-Then open:
-
-  http://localhost:8080
-  http://localhost:8080/favorites.html
 
 
-EMBED FIX
-- Removed an accidental extra closing `});` from index.html.
-- The syntax error had prevented all Live Player JavaScript from running.
-- The corrected inline JavaScript was validated with `node --check`.
+EASTCOIN COMPACT SHARED SIDEBAR
+- Reduced navigation link font size, gaps, padding, margins, and corner radius.
+- Navigation links now use roughly 25–30 percent less vertical space.
+- Updated every shared-shell page, including the currently hidden game pages.
+- Rebuilt the Zwades callout as a compact, single-line card.
+- The card now contains only: zwades is blue
+- Removed the Zwades image, eyebrow, and supporting sentence from page markup.
 
 
-IFRAME SANDBOX FIX
-- Removed the sandbox attribute from dynamically embedded player iframes.
-- This allows sites that reject sandboxed embeds to load normally.
-- JavaScript syntax was validated after the change.
-
-SECURITY NOTE
-Without sandboxing, an embedded site has more browser capabilities. Only embed
-sites and player URLs you trust.
-
-
-FAVORITES UPDATE
-The Favorites page now contains:
-- https://streamed.pk/
-- https://streamed.st/
-- https://dlhd.st/
-
-Clicking any card creates a dynamic `index.html?watch=` link and sends the
-selected URL to the EastCoin embedded player.
+EASTCOIN ARCADE NAVIGATION AND SCORE CARDS
+- Restored Aim Trainer to the compact shared navigation.
+- Restored Button Masher to the compact shared navigation.
+- Added active navigation states on each game's full wrapper page.
+- Added Bonk-style score-card sharing to Aim Trainer:
+  - branded 960x540 PNG image
+  - score, best, accuracy, reaction time, combo, hits, misses, and escapes
+  - right-click / Copy image / paste into Discord instructions outside image
+- Added Bonk-style score-card sharing to Button Masher:
+  - branded 960x540 PNG image
+  - score, best, total presses, average PPS, peak PPS, trap presses, opponent
+  - right-click / Copy image / paste into Discord instructions outside image
+- Generated score cards are stored in localStorage with round metadata.
+- Updated wrapper and Games-card cache parameters to v=share2.
 
 
-SHARE-LINK RELOAD FIX
-- EastCoin now keeps the `?watch=` parameter in the address bar.
-- Shared URLs auto-load immediately.
-- Saved URLs also auto-load as a fallback.
-- If an embedded provider reloads the parent page, the player is restored
-  instead of returning to the “Enter a URL” screen.
-- JavaScript syntax was validated with Node.
+EASTCOIN COLLAPSIBLE PLAYER CONTROLS
+- Added a Hide controls button to the Live Player toolbar.
+- Added the same control to the Games toolbar.
+- Collapsing hides Share Room, Open source/Open game, Change URL/All Games,
+  and the toolbar title.
+- A small Show controls button remains in the upper-right corner.
+- The collapsed state is stored in localStorage and shared between the
+  Live Player and Games pages.
+- Loading another video or game preserves the selected state.
 
 
-SHARE BUTTON UPDATE
-- Added a link emoji to the Share room button.
-- Added a burgundy/red gradient background.
-- Added a brighter red hover state and subtle glow.
+EASTCOIN TOP-LEVEL GAME NAVIGATION FIX
+- Added target="_top" to every shared sidebar navigation link.
+- Aim Trainer and Button Masher now open as full EastCoin wrapper pages.
+- Navigation no longer loads a second copy of EastCoin inside the active
+  game or video iframe.
+- Added a capture-level JavaScript fallback that redirects the top browser
+  window whenever a shared page is already nested in an iframe.
+- The full wrappers still embed only:
+  aim-trainer-game.html and button-masher-game.html.
 
 
-HTTP 400 EMBED FIX
-- Removed `iframe.referrerPolicy = "no-referrer"`.
-- Embedded pages now receive the browser's normal referrer behavior.
-- Some player providers reject requests with no referrer and return HTTP 400.
-- JavaScript syntax was validated after the change.
+EASTCOIN EMBEDDED GAME WRAPPER FIX
+- Aim Trainer no longer requests aim-trainer-game.html through the network.
+- Button Masher no longer requests button-masher-game.html through the network.
+- Each full wrapper contains a UTF-8/base64 copy of its game and loads it with iframe.srcdoc.
+- This prevents Cloudflare or another fallback rule from returning index.html inside the game area.
+- Standalone game files are still retained for direct testing and the Games library.
+- Shared navigation remains top-level and Twitch chat remains on the right.
 
-If a specific provider still returns 400, that response is being generated by
-the provider and may indicate that it blocks third-party iframe embedding.
-
-
-LIVE PLAYER NAVIGATION RESET
-- Live Player links now use `index.html?new=1`.
-- Selecting Live Player clears the previously remembered embed URL.
-- The page returns to the blank “Enter a URL” interface.
-- The temporary `?new=1` parameter is removed from the address bar.
-- Favorites and shared `?watch=` links still load their selected URLs normally.
+- Shared nav links use v=embedded1 to force browsers to load the new wrappers.
 
 
-NOINDEX + FAVICON UPDATE
-- Added noindex/nofollow/noarchive metadata to index.html and favorites.html.
-- Added a Googlebot-specific noindex directive.
-- Added robots.txt with Disallow: /.
-- Added Cloudflare Pages _headers with X-Robots-Tag for every route.
-- Replaced the favicon with assets/eastcoin-favicon.png.
-- Added favicon, shortcut icon, and Apple touch icon declarations.
+EASTCOIN CHANGELOG PAGE
+- Added changelog.html using the shared EastCoin sidebar and mobile navigation.
+- Added a compact Changelog link directly below the zwades is blue card on:
+  index, Favorites, Games, Bonk, Aim Trainer, Button Masher, and Changelog.
+- Added a simple vertical timeline covering the major July–August 2026
+  EastCoin feature additions.
+- Changelog uses broad release periods instead of invented exact dates.
 
-NOTE
-Noindex strongly discourages search-engine indexing, but it is not access
-control. Anyone with the URL can still open the public site.
+
+EASTCOIN SITEWIDE UX OVERHAUL
+1. Theater Mode
+   - One-click distraction-free player/game view.
+   - Hides navigation, Twitch chat, resize handle, and top toolbar.
+   - Escape exits Theater Mode.
+
+2. Collapsible Twitch Chat
+   - Hide/show control available on all player and game pages.
+   - Preference is remembered.
+   - Desktop keeps the existing draggable width.
+   - Mobile chat now opens as a slide-over drawer.
+
+3. Embed Loading and Recovery
+   - Loading overlay appears for streams and games.
+   - Long-loading/error state offers Try Again, Open Directly, and Go Back.
+   - Player Help button can open recovery options manually.
+
+4. Continue Activity
+   - Live Player offers Continue Watching and Continue Playing.
+   - Recently played games are saved locally on the current device.
+   - No accounts or server database are required.
+
+5. Games Library Upgrade
+   - Games are grouped into Recently Played, EastCoin Games, and Party Games.
+   - Cards now include concise tags such as Solo, Multiplayer, duration,
+     accuracy, speed, and strategy.
+
+6. Shared Settings
+   - Game sounds
+   - Twitch chat visibility
+   - Reduced motion
+   - Default sidebar state
+   - Default player-control state
+   - Reset interface preferences without deleting game high scores
+
+CHANGELOG
+- Added an August 2026 “Sitewide UX overhaul” timeline entry.

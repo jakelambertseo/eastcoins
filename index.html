@@ -1201,6 +1201,7 @@
   <link rel="apple-touch-icon" href="assets/eastcoin-favicon.png" />
 
   <link rel="stylesheet" href="assets/eastcoins-theme.css" />
+  <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux1" />
 </head>
 
 <body>
@@ -1289,6 +1290,13 @@
         target="_top">
         📝 Changelog
       </a>
+
+      <button
+        class="sidebar-footer-link ec-settings-link"
+        type="button">
+        ⚙ Settings
+      </button>
+
 
     </aside>
 
@@ -1428,7 +1436,9 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script>
+    <script src="assets/eastcoins-ux.js?v=ux1"></script>
+
+<script>
     const body = document.body;
     const playerShell = document.getElementById("playerShell");
     const playerToolbar = document.getElementById("playerToolbar");

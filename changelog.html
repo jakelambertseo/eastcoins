@@ -24,6 +24,7 @@
   <link rel="apple-touch-icon" href="assets/eastcoin-favicon.png" />
 
   <link rel="stylesheet" href="assets/eastcoins-theme.css" />
+  <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux1" />
 
   <style>
     :root {
@@ -1029,6 +1030,13 @@
         📝 Changelog
       </a>
 
+      <button
+        class="sidebar-footer-link ec-settings-link"
+        type="button">
+        ⚙ Settings
+      </button>
+
+
     </aside>
 
     <button
@@ -1054,7 +1062,7 @@
           </p>
 
           <div class="release-count">
-            8 major update groups
+            9 major update groups
           </div>
         </header>
 
@@ -1136,7 +1144,7 @@
             </p>
           </article>
 
-          <article class="timeline-entry latest">
+          <article class="timeline-entry">
             <div class="timeline-date">
               <time datetime="2026-08">August 2026</time>
               <span class="latest-badge">Latest</span>
@@ -1148,12 +1156,28 @@
               this update timeline.
             </p>
           </article>
+
+          <article class="timeline-entry latest">
+            <div class="timeline-date">
+              <time datetime="2026-08">August 2026</time>
+              <span class="latest-badge">Latest</span>
+            </div>
+            <h2>Sitewide UX overhaul</h2>
+            <p>
+              Added Theater Mode, collapsible Twitch chat with a mobile drawer,
+              embed loading and recovery screens, continue-watching and recent
+              game history, a reorganized Games library, and a shared Settings
+              panel for sound, motion, navigation, chat, and player controls.
+            </p>
+          </article>
         </section>
       </div>
     </main>
   </div>
 
-  <script>
+    <script src="assets/eastcoins-ux.js?v=ux1"></script>
+
+<script>
     const body = document.body;
     const sidebarToggle = document.getElementById("sidebarToggle");
     const mobileOverlay = document.getElementById("mobileOverlay");
