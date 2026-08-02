@@ -197,3 +197,18 @@ SHARED ROOM SERVER RESTORATION FIX
   remains a video-only fallback.
 - Updated Streamed JavaScript cache version from server3 to server4.
 - Updated changelog.html.
+
+
+ZWADES AGREEMENT GATE TEST
+- Test URL: /agreement-test.html
+- The live index.html and existing production pages remain unchanged.
+- Visitors must manually click “I Agree” after seeing “Zwades is Blue.”
+- The overlay has no close button and Escape cannot dismiss it.
+- Background navigation and controls are inert until agreement.
+- Test localStorage key: eastcoinZwadesBlueAgreementTest
+- Test cookie name: eastcoinZwadesBlueAgreementTest
+- Cookie lifetime: 400 days, refreshed on return visits.
+- The test intentionally uses a separate storage key from production.
+- After agreement, “Reset agreement test” appears for repeated testing.
+- Force a fresh test with /agreement-test.html?resetAgreement=1
+- Added the feature to changelog.html.

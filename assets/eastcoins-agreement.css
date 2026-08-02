@@ -1,0 +1,339 @@
+html.ec-zwades-agreement-required,
+html.ec-zwades-agreement-required body{
+  width:100%;
+  height:100%;
+  overflow:hidden!important;
+  overscroll-behavior:none;
+}
+
+html.ec-zwades-agreement-required body{
+  touch-action:none;
+}
+
+.ec-zwades-agreement-gate{
+  position:fixed;
+  inset:0;
+  z-index:2147483647;
+  display:none;
+  place-items:center;
+  padding:22px;
+  overflow:auto;
+  color:#f1e7d3;
+  background:
+    radial-gradient(
+      circle at 50% 23%,
+      rgba(104,17,29,.28),
+      transparent 36%
+    ),
+    radial-gradient(
+      circle at 50% 72%,
+      rgba(201,164,79,.07),
+      transparent 34%
+    ),
+    rgba(0,0,0,.975);
+  backdrop-filter:blur(15px);
+  opacity:1;
+  transition:opacity .28s ease;
+}
+
+html.ec-zwades-agreement-required
+  .ec-zwades-agreement-gate{
+  display:grid;
+}
+
+.ec-zwades-agreement-gate.is-leaving{
+  opacity:0;
+  pointer-events:none;
+}
+
+.ec-zwades-agreement-card{
+  position:relative;
+  width:min(560px,100%);
+  overflow:hidden;
+  border:1px solid rgba(201,164,79,.3);
+  border-radius:18px;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(255,255,255,.011) 0,
+      rgba(255,255,255,.011) 2px,
+      transparent 2px,
+      transparent 8px
+    ),
+    linear-gradient(
+      180deg,
+      rgba(16,10,9,.99),
+      rgba(3,2,2,.995)
+    );
+  box-shadow:
+    0 38px 110px rgba(0,0,0,.82),
+    inset 0 1px 0 rgba(255,255,255,.03);
+  text-align:center;
+}
+
+.ec-zwades-agreement-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  border-radius:inherit;
+  box-shadow:
+    inset 0 0 0 3px rgba(0,0,0,.42),
+    inset 0 0 65px rgba(92,12,24,.17);
+}
+
+.ec-zwades-agreement-topline{
+  height:4px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      #7a1421 20%,
+      #d5b65f 50%,
+      #7a1421 80%,
+      transparent
+    );
+}
+
+.ec-zwades-agreement-content{
+  position:relative;
+  z-index:1;
+  padding:34px 34px 30px;
+}
+
+.ec-zwades-agreement-brand{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  margin-bottom:25px;
+}
+
+.ec-zwades-agreement-brand img{
+  width:42px;
+  height:42px;
+  object-fit:contain;
+}
+
+.ec-zwades-agreement-brand strong{
+  color:#eee1c9;
+  font-size:.9rem;
+  font-weight:950;
+  letter-spacing:.02em;
+}
+
+.ec-zwades-agreement-portrait{
+  position:relative;
+  width:112px;
+  height:112px;
+  display:grid;
+  place-items:center;
+  margin:0 auto 22px;
+  border:2px solid rgba(237,208,124,.52);
+  border-radius:50%;
+  background:
+    radial-gradient(
+      circle at 40% 30%,
+      rgba(25,111,179,.52),
+      rgba(10,35,62,.88) 56%,
+      rgba(5,12,20,.98)
+    );
+  box-shadow:
+    0 0 0 7px rgba(0,0,0,.72),
+    0 0 0 8px rgba(201,164,79,.16),
+    0 18px 45px rgba(0,0,0,.62),
+    0 0 42px rgba(20,107,180,.25);
+}
+
+.ec-zwades-agreement-portrait::after{
+  content:"";
+  position:absolute;
+  inset:-7px;
+  border:1px solid rgba(201,164,79,.24);
+  border-radius:50%;
+}
+
+.ec-zwades-agreement-portrait img{
+  width:94px;
+  height:94px;
+  object-fit:contain;
+  border-radius:50%;
+}
+
+.ec-zwades-agreement-kicker{
+  color:#c9a44f;
+  font-size:.63rem;
+  font-weight:950;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
+
+.ec-zwades-agreement-title{
+  margin:10px auto 0;
+  color:#f1e6d0;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(1.35rem,4vw,2rem);
+  line-height:1.16;
+}
+
+.ec-zwades-agreement-copy{
+  max-width:440px;
+  margin:12px auto 0;
+  color:#948777;
+  font-size:.82rem;
+  line-height:1.6;
+}
+
+.ec-zwades-agreement-statement{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  margin:24px auto 0;
+  padding:17px 18px;
+  border:1px solid rgba(47,131,198,.36);
+  border-radius:12px;
+  color:#dcefff;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(17,65,104,.35),
+      rgba(4,18,31,.54)
+    );
+  box-shadow:
+    inset 0 0 25px rgba(25,114,184,.08);
+  font-size:clamp(1.05rem,3.3vw,1.35rem);
+  font-weight:950;
+  letter-spacing:.01em;
+}
+
+.ec-zwades-agreement-blue-dot{
+  width:13px;
+  height:13px;
+  flex:0 0 13px;
+  border-radius:50%;
+  background:#38a7ff;
+  box-shadow:
+    0 0 0 4px rgba(56,167,255,.12),
+    0 0 18px rgba(56,167,255,.72);
+}
+
+.ec-zwades-agreement-button{
+  width:100%;
+  min-height:54px;
+  margin-top:20px;
+  border:1px solid rgba(237,208,124,.58);
+  border-radius:11px;
+  color:#211604;
+  background:
+    linear-gradient(
+      180deg,
+      #f2d57d,
+      #cda84d
+    );
+  box-shadow:
+    0 12px 28px rgba(0,0,0,.46),
+    inset 0 1px 0 rgba(255,255,255,.38);
+  font-size:.93rem;
+  font-weight:950;
+  letter-spacing:.015em;
+}
+
+.ec-zwades-agreement-button:hover,
+.ec-zwades-agreement-button:focus-visible{
+  color:#160e02;
+  background:
+    linear-gradient(
+      180deg,
+      #ffe69a,
+      #dcb85a
+    );
+  outline:0;
+  transform:translateY(-1px);
+}
+
+.ec-zwades-agreement-button:active{
+  transform:translateY(0);
+}
+
+.ec-zwades-agreement-memory{
+  margin:13px 0 0;
+  color:#716759;
+  font-size:.66rem;
+  line-height:1.45;
+}
+
+.ec-zwades-agreement-memory strong{
+  color:#9f917d;
+}
+
+.ec-zwades-agreement-reset{
+  position:fixed;
+  right:15px;
+  bottom:15px;
+  z-index:400;
+  display:none;
+  min-height:34px;
+  padding:7px 10px;
+  border:1px solid rgba(201,164,79,.16);
+  border-radius:8px;
+  color:#9e927f;
+  background:rgba(3,3,3,.88);
+  box-shadow:0 10px 30px rgba(0,0,0,.5);
+  backdrop-filter:blur(10px);
+  font-size:.62rem;
+  font-weight:900;
+}
+
+html.ec-zwades-agreement-granted
+  .ec-zwades-agreement-reset{
+  display:block;
+}
+
+.ec-zwades-agreement-reset:hover,
+.ec-zwades-agreement-reset:focus-visible{
+  border-color:rgba(237,208,124,.4);
+  color:#ffe8a3;
+  outline:0;
+}
+
+@media(max-width:560px){
+  .ec-zwades-agreement-gate{
+    padding:12px;
+  }
+
+  .ec-zwades-agreement-content{
+    padding:27px 19px 23px;
+  }
+
+  .ec-zwades-agreement-brand{
+    margin-bottom:20px;
+  }
+
+  .ec-zwades-agreement-portrait{
+    width:96px;
+    height:96px;
+  }
+
+  .ec-zwades-agreement-portrait img{
+    width:80px;
+    height:80px;
+  }
+
+  .ec-zwades-agreement-statement{
+    padding:15px 13px;
+  }
+
+  .ec-zwades-agreement-reset{
+    right:10px;
+    bottom:10px;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .ec-zwades-agreement-gate,
+  .ec-zwades-agreement-button{
+    transition:none!important;
+  }
+}
