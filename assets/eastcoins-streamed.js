@@ -1,139 +1,204 @@
 (() => {
   "use strict";
 
-  const API_BASE = "https://streamed.pk/api";
-  const MATCH_CACHE_MS = 60_000;
-  const state = {
-    mode: "live",
-    matches: [],
-    visibleMatches: [],
-    match: null,
-    streams: [],
-    activeStream: null,
-    matchCache: new Map(),
-    panelOpen: false
-  };
+  const API = window.EastcoinStreamedAPI;
+  const discoveryRoot = document.getElementById(
+    "streamedDiscoveryRoot"
+  );
 
-  const form = document.getElementById("streamForm");
-  const input = document.getElementById("streamUrl");
-  const urlError = document.getElementById("urlError");
-  const playerShell = document.getElementById("playerShell");
-  const playerToolbar = document.getElementById("playerToolbar");
-  const toolbarActions =
-    playerToolbar?.querySelector(".toolbar-actions");
-  const currentHost = document.getElementById("currentHost");
-  const changeButton = document.getElementById("changeButton");
-  const quickStreamedButton =
-    document.getElementById("streamedBrowseButton");
-  const toolbarTitle =
-    playerToolbar?.querySelector(".toolbar-title");
-
-  if (
-    !form ||
-    !input ||
-    !playerShell ||
-    !playerToolbar ||
-    !toolbarActions ||
-    !toolbarTitle
-  ) {
+  if (!API || !discoveryRoot) {
     return;
   }
 
-  const toolbarArtwork = document.createElement("span");
-  toolbarArtwork.className = "streamed-toolbar-artwork";
-  toolbarArtwork.hidden = true;
-  toolbarArtwork.setAttribute("aria-hidden", "true");
-  toolbarTitle.insertBefore(
-    toolbarArtwork,
-    toolbarTitle.firstChild
-  );
+  const FAVORITES_KEY = "eastcoinFavoriteTeamsV1";
+  const SELECTED_MATCH_KEY = "eastcoinSelectedStreamedMatchV1";
+  const pageContext = discoveryRoot.dataset.context || "player";
+  const isEventsPage = pageContext === "events";
 
-  const launcher = document.getElementById("streamedLauncher");
-  const browser = document.getElementById("streamedBrowser");
-  const searchInput = document.getElementById("streamedSearch");
-  const status = document.getElementById("streamedStatus");
-  const matchList = document.getElementById("streamedMatchList");
-  const liveButton = document.getElementById("streamedLiveButton");
-  const todayButton = document.getElementById("streamedTodayButton");
-  const refreshButton = document.getElementById("streamedRefresh");
+  const state = {
+    live: [],
+    today: [],
+    sports: [],
+    mode: "live",
+    selectedSport: "all",
+    query: "",
+    favoriteTeams: loadFavoriteTeams(),
+    currentMatch: null,
+    streams: [],
+    activeStream: null,
+    serverPanelOpen: false,
+    updatedAt: 0,
+    stale: false
+  };
 
-  const serverButton = document.createElement("button");
-  serverButton.className = "toolbar-button";
-  serverButton.id = "streamedServersButton";
-  serverButton.type = "button";
-  serverButton.hidden = true;
-  serverButton.textContent = "Servers";
+  const elements = {
+    launcher: document.getElementById("streamedLauncher"),
+    browser: document.getElementById("streamedBrowser"),
+    search: document.getElementById("streamedSearch"),
+    status: document.getElementById("streamedStatus"),
+    refresh: document.getElementById("streamedRefresh"),
+    liveButton: document.getElementById("streamedLiveButton"),
+    todayButton: document.getElementById("streamedTodayButton"),
+    sportTabs: document.getElementById("streamedSportTabs"),
+    popularSection: document.getElementById("streamedPopularSection"),
+    popularList: document.getElementById("streamedPopularList"),
+    favoriteSection: document.getElementById("streamedFavoriteSection"),
+    favoriteTeamList: document.getElementById("streamedFavoriteTeamList"),
+    favoriteEventList: document.getElementById("streamedFavoriteEventList"),
+    soonSection: document.getElementById("streamedSoonSection"),
+    soonList: document.getElementById("streamedSoonList"),
+    listSectionTitle: document.getElementById("streamedListSectionTitle"),
+    matchList: document.getElementById("streamedMatchList"),
+    detail: document.getElementById("streamedEventDetail")
+  };
 
-  toolbarActions.insertBefore(
-    serverButton,
-    toolbarActions.firstChild
-  );
+  const player = initializePlayerBindings();
 
-  const serverPanel = document.createElement("section");
-  serverPanel.className = "streamed-server-panel";
-  serverPanel.id = "streamedServerPanel";
-  serverPanel.hidden = true;
-  serverPanel.setAttribute(
-    "aria-label",
-    "Streamed server selector"
-  );
+  function initializePlayerBindings() {
+    const form = document.getElementById("streamForm");
+    const input = document.getElementById("streamUrl");
+    const urlError = document.getElementById("urlError");
+    const playerShell = document.getElementById("playerShell");
+    const playerToolbar = document.getElementById("playerToolbar");
+    const toolbarActions =
+      playerToolbar?.querySelector(".toolbar-actions");
+    const toolbarTitle =
+      playerToolbar?.querySelector(".toolbar-title");
+    const currentHost = document.getElementById("currentHost");
+    const changeButton = document.getElementById("changeButton");
+    const quickButton = document.getElementById(
+      "streamedBrowseButton"
+    );
 
-  serverPanel.innerHTML = `
-    <div class="streamed-server-header">
-      <div class="streamed-server-event">
-        <div
-          class="streamed-server-artwork"
-          id="streamedServerArtwork"
-          aria-hidden="true">
+    if (
+      !form ||
+      !input ||
+      !urlError ||
+      !playerShell ||
+      !playerToolbar ||
+      !toolbarActions ||
+      !toolbarTitle ||
+      !currentHost
+    ) {
+      return null;
+    }
+
+    const toolbarArtwork = document.createElement("span");
+    toolbarArtwork.className = "streamed-toolbar-artwork";
+    toolbarArtwork.hidden = true;
+    toolbarArtwork.setAttribute("aria-hidden", "true");
+    toolbarTitle.insertBefore(toolbarArtwork, toolbarTitle.firstChild);
+
+    const serverButton = document.createElement("button");
+    serverButton.className = "toolbar-button";
+    serverButton.id = "streamedServersButton";
+    serverButton.type = "button";
+    serverButton.hidden = true;
+    serverButton.textContent = "Servers";
+    toolbarActions.insertBefore(serverButton, toolbarActions.firstChild);
+
+    const serverPanel = document.createElement("section");
+    serverPanel.className = "streamed-server-panel";
+    serverPanel.id = "streamedServerPanel";
+    serverPanel.hidden = true;
+    serverPanel.setAttribute("aria-label", "Streamed server selector");
+    serverPanel.innerHTML = `
+      <div class="streamed-server-header">
+        <div class="streamed-server-event">
+          <div
+            class="streamed-server-artwork"
+            id="streamedServerArtwork"
+            aria-hidden="true"></div>
+          <div class="streamed-server-heading">
+            <span>Available servers</span>
+            <strong id="streamedServerMatch">Streamed event</strong>
+          </div>
         </div>
-
-        <div class="streamed-server-heading">
-          <span>Available servers</span>
-          <strong id="streamedServerMatch">
-            Streamed event
-          </strong>
+        <div class="streamed-server-actions">
+          <button
+            class="streamed-server-back"
+            id="streamedServerBack"
+            type="button">← View all streams</button>
+          <button
+            class="streamed-server-close"
+            id="streamedServerClose"
+            type="button"
+            aria-label="Close server selector">×</button>
         </div>
       </div>
+      <div
+        class="streamed-source-groups"
+        id="streamedSourceGroups"></div>
+    `;
+    playerToolbar.insertAdjacentElement("afterend", serverPanel);
 
-      <div class="streamed-server-actions">
-        <button
-          class="streamed-server-back"
-          id="streamedServerBack"
-          type="button">
-          ← View all streams
-        </button>
+    const bindings = {
+      form,
+      input,
+      urlError,
+      playerShell,
+      playerToolbar,
+      toolbarActions,
+      toolbarTitle,
+      toolbarArtwork,
+      currentHost,
+      changeButton,
+      quickButton,
+      serverButton,
+      serverPanel,
+      serverArtwork: serverPanel.querySelector(
+        "#streamedServerArtwork"
+      ),
+      serverMatch: serverPanel.querySelector("#streamedServerMatch"),
+      sourceGroups: serverPanel.querySelector("#streamedSourceGroups"),
+      serverBack: serverPanel.querySelector("#streamedServerBack"),
+      serverClose: serverPanel.querySelector("#streamedServerClose")
+    };
 
-        <button
-          class="streamed-server-close"
-          id="streamedServerClose"
-          type="button"
-          aria-label="Close server selector">
-          ×
-        </button>
-      </div>
-    </div>
+    serverButton.addEventListener("click", () => {
+      setServerPanelOpen(!state.serverPanelOpen);
+    });
+    bindings.serverClose.addEventListener("click", () => {
+      setServerPanelOpen(false);
+    });
+    bindings.serverBack.addEventListener("click", returnToDiscovery);
+    bindings.sourceGroups.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-stream-key]");
+      if (!button) return;
+      const stream = state.streams.find(
+        (candidate) => streamKey(candidate) === button.dataset.streamKey
+      );
+      if (stream) selectStream(stream, false);
+    });
 
-    <div
-      class="streamed-source-groups"
-      id="streamedSourceGroups">
-    </div>
-  `;
+    form.addEventListener(
+      "submit",
+      (event) => {
+        const token = watchTokenFromUrl(input.value);
+        if (!token) {
+          clearPlayerState();
+          return;
+        }
 
-  playerToolbar.insertAdjacentElement(
-    "afterend",
-    serverPanel
-  );
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        urlError.textContent = "";
+        handleStreamedUrl(input.value);
+      },
+      true
+    );
 
-  const serverArtwork =
-    document.getElementById("streamedServerArtwork");
-  const serverMatch =
-    document.getElementById("streamedServerMatch");
-  const sourceGroups =
-    document.getElementById("streamedSourceGroups");
-  const serverBack =
-    document.getElementById("streamedServerBack");
-  const serverClose =
-    document.getElementById("streamedServerClose");
+    quickButton?.addEventListener("click", () => {
+      if (!state.live.length && !state.today.length) {
+        loadDiscovery(false);
+      } else {
+        showDiscovery();
+      }
+    });
+    changeButton?.addEventListener("click", clearPlayerState);
+
+    return bindings;
+  }
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -144,309 +209,9 @@
       .replaceAll("'", "&#039;");
   }
 
-  function encodeBase64Url(value) {
-    const bytes = new TextEncoder().encode(
-      String(value)
-    );
-    const binary = Array.from(
-      bytes,
-      (byte) => String.fromCharCode(byte)
-    ).join("");
-
-    return btoa(binary)
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=+$/g, "");
+  function escapeAttr(value) {
+    return escapeHtml(value);
   }
-
-  function decodeBase64Url(value) {
-    const normalized = String(value || "")
-      .replace(/-/g, "+")
-      .replace(/_/g, "/");
-
-    const padding =
-      normalized.length % 4 === 0
-        ? ""
-        : "=".repeat(4 - (normalized.length % 4));
-
-    const binary = atob(normalized + padding);
-    const bytes = Uint8Array.from(
-      binary,
-      (character) => character.charCodeAt(0)
-    );
-
-    return new TextDecoder().decode(bytes);
-  }
-
-  function compactSharedMatch(match) {
-    if (!match) {
-      return null;
-    }
-
-    return {
-      id: match.id || "",
-      title: match.title || "",
-      category: match.category || "",
-      date: Number(match.date || 0),
-      poster: match.poster || "",
-      popular: Boolean(match.popular),
-      teams: match.teams || null,
-      sources: Array.isArray(match.sources)
-        ? match.sources
-            .filter(
-              (source) =>
-                source?.source &&
-                source?.id
-            )
-            .map((source) => ({
-              source: String(source.source),
-              id: String(source.id)
-            }))
-        : []
-    };
-  }
-
-  function createRoomToken(
-    match,
-    activeStream
-  ) {
-    const compactMatch = compactSharedMatch(match);
-
-    if (
-      !compactMatch?.id ||
-      !compactMatch.sources.length ||
-      !activeStream
-    ) {
-      return "";
-    }
-
-    return encodeBase64Url(
-      JSON.stringify({
-        version: 1,
-        match: compactMatch,
-        source: activeStream.source || "",
-        streamNo: activeStream.streamNo
-      })
-    );
-  }
-
-  function parseRoomToken(token) {
-    if (!token) {
-      return null;
-    }
-
-    try {
-      const payload = JSON.parse(
-        decodeBase64Url(token)
-      );
-
-      if (
-        Number(payload?.version) !== 1 ||
-        !payload?.match?.id ||
-        !Array.isArray(payload?.match?.sources) ||
-        !payload.match.sources.length
-      ) {
-        return null;
-      }
-
-      return payload;
-    } catch {
-      return null;
-    }
-  }
-
-  function cleanImageReference(value) {
-    return String(value ?? "").trim();
-  }
-
-  function ensureWebp(value) {
-    return /\.webp(?:[?#].*)?$/i.test(value)
-      ? value
-      : `${value}.webp`;
-  }
-
-  function badgeImageUrl(value) {
-    const reference = cleanImageReference(value);
-
-    if (!reference) {
-      return "";
-    }
-
-    if (/^https?:\/\//i.test(reference)) {
-      return ensureWebp(reference);
-    }
-
-    if (reference.startsWith("/")) {
-      return `https://streamed.pk${ensureWebp(reference)}`;
-    }
-
-    const id = reference.replace(/\.webp$/i, "");
-
-    return (
-      `${API_BASE}/images/badge/` +
-      `${encodeURIComponent(id)}.webp`
-    );
-  }
-
-  function posterImageUrl(value) {
-    const reference = cleanImageReference(value);
-
-    if (!reference) {
-      return "";
-    }
-
-    if (/^https?:\/\//i.test(reference)) {
-      return ensureWebp(reference);
-    }
-
-    if (reference.startsWith("/")) {
-      return `https://streamed.pk${ensureWebp(reference)}`;
-    }
-
-    const id = reference.replace(/\.webp$/i, "");
-
-    return (
-      `${API_BASE}/images/proxy/` +
-      `${encodeURIComponent(id)}.webp`
-    );
-  }
-
-  function initials(value, maximum = 2) {
-    const words = String(value ?? "")
-      .replace(/\b(vs?\.?|at)\b/gi, " ")
-      .replace(/[^a-zA-Z0-9 ]+/g, " ")
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean);
-
-    if (!words.length) {
-      return "EC";
-    }
-
-    return words
-      .slice(0, maximum)
-      .map((word) => word.charAt(0).toUpperCase())
-      .join("");
-  }
-
-  function renderTeamBadge(team, context = "card") {
-    if (!team) {
-      return "";
-    }
-
-    const name = team.name || "Team";
-    const badgeUrl = badgeImageUrl(team.badge);
-    const loading =
-      context === "card" ? "lazy" : "eager";
-
-    return `
-      <span
-        class="streamed-team-badge"
-        title="${escapeHtml(name)}">
-        <span class="streamed-team-initials">
-          ${escapeHtml(initials(name))}
-        </span>
-        ${badgeUrl
-          ? `
-            <img
-              class="streamed-team-badge-image"
-              data-streamed-image
-              src="${escapeHtml(badgeUrl)}"
-              alt=""
-              width="44"
-              height="44"
-              loading="${loading}"
-              decoding="async">
-          `
-          : ""}
-      </span>
-    `;
-  }
-
-  function renderMatchArtwork(match, context = "card") {
-    const home = match?.teams?.home;
-    const away = match?.teams?.away;
-
-    if (home || away) {
-      return `
-        <span class="streamed-team-pair">
-          ${renderTeamBadge(home, context)}
-          ${renderTeamBadge(away, context)}
-        </span>
-      `;
-    }
-
-    const posterUrl = posterImageUrl(match?.poster);
-
-    if (posterUrl) {
-      return `
-        <span
-          class="streamed-poster-frame"
-          title="${escapeHtml(match?.title || "Event")}">
-          <span class="streamed-poster-fallback">
-            ${escapeHtml(
-              initials(match?.category || match?.title)
-            )}
-          </span>
-          <img
-            class="streamed-poster-image"
-            data-streamed-image
-            src="${escapeHtml(posterUrl)}"
-            alt=""
-            width="64"
-            height="44"
-            loading="${context === "card" ? "lazy" : "eager"}"
-            decoding="async">
-        </span>
-      `;
-    }
-
-    return `
-      <span
-        class="streamed-sport-fallback"
-        title="${escapeHtml(
-          sourceLabel(match?.category || "Sport")
-        )}">
-        ${escapeHtml(
-          initials(match?.category || match?.title)
-        )}
-      </span>
-    `;
-  }
-
-  function updateSelectedArtwork(match) {
-    const artwork = match
-      ? renderMatchArtwork(match, "selected")
-      : "";
-
-    serverArtwork.innerHTML = artwork;
-    toolbarArtwork.innerHTML = artwork;
-    toolbarArtwork.hidden = !artwork;
-    toolbarTitle.classList.toggle(
-      "streamed-has-artwork",
-      Boolean(artwork)
-    );
-  }
-
-  document.addEventListener(
-    "error",
-    (event) => {
-      const image = event.target;
-
-      if (
-        !(image instanceof HTMLImageElement) ||
-        !image.matches("[data-streamed-image]")
-      ) {
-        return;
-      }
-
-      image.parentElement?.classList.add(
-        "image-failed"
-      );
-      image.remove();
-    },
-    true
-  );
 
   function slugify(value) {
     return String(value ?? "")
@@ -459,275 +224,943 @@
 
   function sourceLabel(value) {
     const normalized = String(value ?? "").trim();
-
-    if (!normalized) {
-      return "Unknown";
-    }
-
+    if (!normalized) return "Sport";
     return normalized
       .replace(/[-_]+/g, " ")
-      .replace(/\b\w/g, (letter) =>
-        letter.toUpperCase()
-      );
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
 
-  function formatDate(timestamp) {
-    const date = new Date(Number(timestamp));
-
-    if (Number.isNaN(date.getTime())) {
-      return "Time unavailable";
-    }
-
-    return date.toLocaleString([], {
-      weekday: "short",
-      hour: "numeric",
-      minute: "2-digit"
-    });
-  }
-
-  function setStatus(message, isError = false) {
-    status.textContent = message;
-    status.classList.toggle("error", isError);
-  }
-
-  async function fetchJson(path) {
-    const response = await fetch(
-      `${API_BASE}${path}`,
-      {
-        headers: {
-          Accept: "application/json"
-        }
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        `Streamed API returned ${response.status}.`
-      );
-    }
-
-    return response.json();
-  }
-
-  async function fetchMatches(mode, force = false) {
-    const endpoint =
-      mode === "today"
-        ? "/matches/all-today"
-        : mode === "all"
-          ? "/matches/all"
-          : "/matches/live";
-
-    const cached = state.matchCache.get(endpoint);
-
-    if (
-      !force &&
-      cached &&
-      Date.now() - cached.savedAt < MATCH_CACHE_MS
-    ) {
-      return cached.data;
-    }
-
-    const matches = await fetchJson(endpoint);
-
-    if (!Array.isArray(matches)) {
-      throw new Error(
-        "Streamed returned an unexpected match response."
-      );
-    }
-
-    state.matchCache.set(endpoint, {
-      data: matches,
-      savedAt: Date.now()
-    });
-
-    return matches;
-  }
-
-  function eventSourceCount(match) {
-    return Array.isArray(match.sources)
-      ? match.sources.length
-      : 0;
-  }
-
-  function sortMatches(matches) {
-    return [...matches].sort((left, right) => {
-      const popularDifference =
-        Number(Boolean(right.popular)) -
-        Number(Boolean(left.popular));
-
-      if (popularDifference) {
-        return popularDifference;
-      }
-
-      return Number(left.date || 0) -
-        Number(right.date || 0);
-    });
-  }
-
-  function filterMatches() {
-    const query = searchInput.value
+  function initials(value, maximum = 2) {
+    const words = String(value ?? "")
+      .replace(/\b(vs?\.?|at)\b/gi, " ")
+      .replace(/[^a-zA-Z0-9 ]+/g, " ")
       .trim()
-      .toLowerCase();
+      .split(/\s+/)
+      .filter(Boolean);
 
-    if (!query) {
-      state.visibleMatches = state.matches;
-      return;
-    }
-
-    state.visibleMatches = state.matches.filter(
-      (match) => {
-        const searchable = [
-          match.title,
-          match.category,
-          match.id,
-          match.teams?.home?.name,
-          match.teams?.away?.name,
-          ...(Array.isArray(match.sources)
-            ? match.sources.flatMap((source) => [
-                source.source,
-                source.id
-              ])
-            : [])
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-
-        return searchable.includes(query);
-      }
-    );
-  }
-
-  function renderMatches() {
-    filterMatches();
-
-    if (!state.visibleMatches.length) {
-      matchList.innerHTML = `
-        <div class="streamed-empty">
-          No matching events were returned.
-        </div>
-      `;
-      return;
-    }
-
-    matchList.innerHTML = state.visibleMatches
-      .slice(0, 70)
-      .map((match, index) => {
-        const sources = eventSourceCount(match);
-        const category =
-          match.category
-            ? sourceLabel(match.category)
-            : "Sport";
-
-        return `
-          <button
-            class="streamed-match"
-            type="button"
-            data-streamed-match-index="${index}">
-            <span class="streamed-match-identity">
-              <span
-                class="streamed-match-artwork"
-                aria-hidden="true">
-                ${renderMatchArtwork(match, "card")}
-              </span>
-
-              <span class="streamed-match-copy">
-                <span class="streamed-match-title">
-                  ${escapeHtml(match.title || match.id)}
-                </span>
-                <span class="streamed-match-meta">
-                  <span>${escapeHtml(category)}</span>
-                  <span>${escapeHtml(formatDate(match.date))}</span>
-                  <span>
-                    ${sources} source${sources === 1 ? "" : "s"}
-                  </span>
-                  ${match.popular
-                    ? "<span>Popular</span>"
-                    : ""}
-                </span>
-              </span>
-            </span>
-
-            <span class="streamed-match-open">
-              Load event →
-            </span>
-          </button>
-        `;
-      })
+    if (!words.length) return "EC";
+    return words
+      .slice(0, maximum)
+      .map((word) => word.charAt(0).toUpperCase())
       .join("");
   }
 
-  async function openBrowser(mode, force = false) {
-    state.mode = mode;
-    browser.hidden = false;
-    launcher?.scrollIntoView({
-      behavior:
-        document.documentElement.classList.contains(
-          "ec-reduced-motion"
-        )
-          ? "auto"
-          : "smooth",
-      block: "nearest"
+  function normalizeTeam(team) {
+    if (!team?.name) return null;
+    return {
+      key: slugify(team.name),
+      name: String(team.name),
+      badge: String(team.badge || "")
+    };
+  }
+
+  function loadFavoriteTeams() {
+    try {
+      const parsed = JSON.parse(
+        localStorage.getItem(FAVORITES_KEY) || "[]"
+      );
+      return Array.isArray(parsed)
+        ? parsed.filter((team) => team?.name && team?.key)
+        : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveFavoriteTeams() {
+    try {
+      localStorage.setItem(
+        FAVORITES_KEY,
+        JSON.stringify(state.favoriteTeams)
+      );
+    } catch {}
+  }
+
+  function isFavoriteTeam(team) {
+    const normalized = normalizeTeam(team);
+    return normalized
+      ? state.favoriteTeams.some((item) => item.key === normalized.key)
+      : false;
+  }
+
+  function toggleFavoriteTeam(team) {
+    const normalized = normalizeTeam(team);
+    if (!normalized) return;
+
+    const index = state.favoriteTeams.findIndex(
+      (item) => item.key === normalized.key
+    );
+
+    if (index >= 0) {
+      state.favoriteTeams.splice(index, 1);
+      toast(`${normalized.name} removed from favorite teams.`);
+    } else {
+      state.favoriteTeams.push(normalized);
+      state.favoriteTeams.sort((a, b) => a.name.localeCompare(b.name));
+      toast(`${normalized.name} added to favorite teams.`);
+    }
+
+    saveFavoriteTeams();
+    renderDiscovery();
+    renderEventDetailForCurrentUrl();
+  }
+
+  function matchTeams(match) {
+    return [match?.teams?.home, match?.teams?.away].filter(Boolean);
+  }
+
+  function matchHasFavorite(match) {
+    return matchTeams(match).some(isFavoriteTeam);
+  }
+
+  function formatDate(timestamp, includeDate = false) {
+    const date = new Date(Number(timestamp));
+    if (Number.isNaN(date.getTime())) return "Time unavailable";
+    return date.toLocaleString([], includeDate
+      ? {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit"
+        }
+      : {
+          weekday: "short",
+          hour: "numeric",
+          minute: "2-digit"
+        });
+  }
+
+  function countdownText(timestamp) {
+    const difference = Number(timestamp) - Date.now();
+    if (!Number.isFinite(difference)) return "Time unavailable";
+    if (difference <= 0) return "Live or starting now";
+
+    const minutes = Math.ceil(difference / 60_000);
+    if (minutes < 60) return `Starts in ${minutes}m`;
+
+    const hours = Math.floor(minutes / 60);
+    const remainder = minutes % 60;
+    if (hours < 24) {
+      return remainder ? `Starts in ${hours}h ${remainder}m` : `Starts in ${hours}h`;
+    }
+
+    const days = Math.floor(hours / 24);
+    return `Starts in ${days}d ${hours % 24}h`;
+  }
+
+  function isLiveMatch(match) {
+    return state.live.some((item) => item.id === match.id);
+  }
+
+  function eventKey(match) {
+    return String(match?.id || slugify(match?.title));
+  }
+
+  function dedupeMatches(matches) {
+    const map = new Map();
+    matches.forEach((match) => {
+      const key = eventKey(match);
+      if (!key) return;
+      const existing = map.get(key);
+      if (!existing || (match.sources?.length || 0) > (existing.sources?.length || 0)) {
+        map.set(key, match);
+      }
+    });
+    return Array.from(map.values());
+  }
+
+  function sortedMatches(matches) {
+    return [...matches].sort((left, right) => {
+      const popular = Number(Boolean(right.popular)) -
+        Number(Boolean(left.popular));
+      if (popular) return popular;
+      return Number(left.date || 0) - Number(right.date || 0);
+    });
+  }
+
+  function sportName(category) {
+    const sport = state.sports.find(
+      (item) => String(item.id) === String(category)
+    );
+    return sport?.name || sourceLabel(category);
+  }
+
+  function searchableText(match) {
+    return [
+      match.title,
+      match.category,
+      sportName(match.category),
+      match.id,
+      match.teams?.home?.name,
+      match.teams?.away?.name,
+      ...(Array.isArray(match.sources)
+        ? match.sources.flatMap((source) => [source.source, source.id])
+        : [])
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+  }
+
+  function applyFilters(matches) {
+    const query = state.query.trim().toLowerCase();
+    return matches.filter((match) => {
+      const sportMatches =
+        state.selectedSport === "all" ||
+        String(match.category) === state.selectedSport;
+      const queryMatches = !query || searchableText(match).includes(query);
+      return sportMatches && queryMatches;
+    });
+  }
+
+  function badgeMarkup(team, size = "medium") {
+    if (!team) return "";
+    const url = API.badgeUrl(team.badge);
+    return `
+      <span class="ec-team-badge ec-team-badge-${size}">
+        <span>${escapeHtml(initials(team.name))}</span>
+        ${url ? `
+          <img
+            src="${escapeAttr(url)}"
+            alt=""
+            width="48"
+            height="48"
+            loading="lazy"
+            decoding="async"
+            data-ec-image>
+        ` : ""}
+      </span>
+    `;
+  }
+
+  function posterMarkup(match, context = "card") {
+    const suppliedPoster = API.posterUrl(match.poster);
+    const matchupPoster = API.matchupPosterUrl(match);
+    const poster = suppliedPoster || matchupPoster;
+    const home = match?.teams?.home;
+    const away = match?.teams?.away;
+
+    return `
+      <div class="ec-event-art ec-event-art-${context}">
+        ${poster ? `
+          <img
+            class="ec-event-poster"
+            src="${escapeAttr(poster)}"
+            alt=""
+            loading="lazy"
+            decoding="async"
+            data-ec-image>
+        ` : ""}
+        <div class="ec-event-art-shade"></div>
+        <div class="ec-matchup-badges" aria-hidden="true">
+          ${badgeMarkup(home, context === "hero" ? "large" : "medium")}
+          ${home && away ? '<span class="ec-matchup-vs">VS</span>' : ""}
+          ${badgeMarkup(away, context === "hero" ? "large" : "medium")}
+          ${!home && !away ? `
+            <span class="ec-event-initials">${escapeHtml(
+              initials(match.category || match.title)
+            )}</span>
+          ` : ""}
+        </div>
+      </div>
+    `;
+  }
+
+  function favoriteButton(team) {
+    const normalized = normalizeTeam(team);
+    if (!normalized) return "";
+    const active = isFavoriteTeam(team);
+    return `
+      <button
+        class="ec-team-favorite${active ? " active" : ""}"
+        type="button"
+        data-favorite-team
+        data-team-name="${escapeAttr(normalized.name)}"
+        data-team-badge="${escapeAttr(normalized.badge)}"
+        aria-label="${active ? "Remove" : "Add"} ${escapeAttr(normalized.name)} ${active ? "from" : "to"} favorites"
+        title="${active ? "Remove favorite team" : "Favorite this team"}">
+        ${active ? "★" : "☆"}
+      </button>
+    `;
+  }
+
+  function teamLine(team) {
+    if (!team) return "";
+    return `
+      <div class="ec-event-team-line">
+        ${badgeMarkup(team, "small")}
+        <span>${escapeHtml(team.name)}</span>
+        ${favoriteButton(team)}
+      </div>
+    `;
+  }
+
+  function renderEventCard(match, variant = "standard") {
+    const id = eventKey(match);
+    const live = isLiveMatch(match);
+    const sourceCount = Array.isArray(match.sources) ? match.sources.length : 0;
+    const home = match?.teams?.home;
+    const away = match?.teams?.away;
+    const detailsUrl = `events.html?event=${encodeURIComponent(id)}`;
+
+    return `
+      <article
+        class="ec-event-card ec-event-card-${variant}${live ? " is-live" : ""}${match.popular ? " is-popular" : ""}"
+        data-event-id="${escapeAttr(id)}">
+        ${posterMarkup(match, variant === "feature" ? "feature" : "card")}
+        <div class="ec-event-card-body">
+          <div class="ec-event-tags">
+            ${live ? '<span class="ec-event-tag ec-event-tag-live">Live</span>' : `
+              <span
+                class="ec-event-tag ec-event-tag-countdown"
+                data-countdown="${Number(match.date || 0)}">
+                ${escapeHtml(countdownText(match.date))}
+              </span>
+            `}
+            ${match.popular ? '<span class="ec-event-tag">Popular</span>' : ""}
+            <span class="ec-event-tag">${escapeHtml(sportName(match.category))}</span>
+          </div>
+          <h3>${escapeHtml(match.title || id)}</h3>
+          <div class="ec-event-teams">
+            ${teamLine(home)}
+            ${teamLine(away)}
+          </div>
+          <div class="ec-event-meta">
+            <span>${escapeHtml(formatDate(match.date))}</span>
+            <span>${sourceCount} source${sourceCount === 1 ? "" : "s"}</span>
+          </div>
+          <div class="ec-event-actions">
+            <button
+              class="ec-event-watch"
+              type="button"
+              data-watch-event="${escapeAttr(id)}">
+              ${live ? "Watch now" : "Open event"}
+            </button>
+            <a class="ec-event-details" href="${escapeAttr(detailsUrl)}">
+              Event page →
+            </a>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  function emptyState(message) {
+    return `<div class="streamed-empty">${escapeHtml(message)}</div>`;
+  }
+
+  function relevantSports() {
+    const current = state.mode === "today" ? state.today : state.live;
+    const counts = new Map();
+    current.forEach((match) => {
+      const id = String(match.category || "");
+      if (id) counts.set(id, (counts.get(id) || 0) + 1);
     });
 
-    liveButton.classList.toggle(
-      "active",
-      mode === "live"
-    );
-    todayButton.classList.toggle(
-      "active",
-      mode === "today"
+    const known = new Map(
+      state.sports.map((sport) => [String(sport.id), sport.name])
     );
 
-    setStatus(
-      mode === "today"
-        ? "Loading today’s Streamed events…"
-        : "Loading live Streamed events…"
+    return Array.from(counts.entries())
+      .map(([id, count]) => ({ id, count, name: known.get(id) || sourceLabel(id) }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  }
+
+  function renderSportTabs() {
+    if (!elements.sportTabs) return;
+    const sports = relevantSports();
+    elements.sportTabs.innerHTML = [
+      { id: "all", name: "All", count: state.mode === "today" ? state.today.length : state.live.length },
+      ...sports
+    ]
+      .map((sport) => `
+        <button
+          class="streamed-sport-tab${state.selectedSport === sport.id ? " active" : ""}"
+          type="button"
+          data-sport="${escapeAttr(sport.id)}">
+          <span>${escapeHtml(sport.name)}</span>
+          <small>${sport.count}</small>
+        </button>
+      `)
+      .join("");
+  }
+
+  function renderPopularLive() {
+    if (!elements.popularList || !elements.popularSection) return;
+    const popular = applyFilters(
+      sortedMatches(state.live.filter((match) => match.popular))
+    ).slice(0, 8);
+    elements.popularList.innerHTML = popular.length
+      ? popular.map((match) => renderEventCard(match, "feature")).join("")
+      : emptyState("No popular live events are marked right now.");
+  }
+
+  function renderStartingSoon() {
+    if (!elements.soonList || !elements.soonSection) return;
+    const future = applyFilters(
+      sortedMatches(
+        state.today.filter((match) => Number(match.date || 0) > Date.now())
+      )
+    ).slice(0, 8);
+    elements.soonList.innerHTML = future.length
+      ? future.map((match) => renderEventCard(match, "compact")).join("")
+      : emptyState("No upcoming events match the current filters.");
+  }
+
+  function renderFavoriteTeams() {
+    if (!elements.favoriteSection || !elements.favoriteTeamList || !elements.favoriteEventList) return;
+
+    if (!state.favoriteTeams.length) {
+      elements.favoriteTeamList.innerHTML = `
+        <span class="ec-favorite-empty-copy">
+          Tap ☆ beside a team to build your personal row.
+        </span>
+      `;
+      elements.favoriteEventList.innerHTML = "";
+      return;
+    }
+
+    elements.favoriteTeamList.innerHTML = state.favoriteTeams
+      .map((team) => `
+        <button
+          class="ec-favorite-team-chip"
+          type="button"
+          data-remove-favorite="${escapeAttr(team.key)}">
+          ${team.badge ? badgeMarkup(team, "tiny") : ""}
+          <span>${escapeHtml(team.name)}</span>
+          <span aria-hidden="true">×</span>
+        </button>
+      `)
+      .join("");
+
+    const matches = applyFilters(
+      sortedMatches(dedupeMatches([...state.live, ...state.today]))
+        .filter(matchHasFavorite)
+    ).slice(0, 10);
+
+    elements.favoriteEventList.innerHTML = matches.length
+      ? matches.map((match) => renderEventCard(match, "compact")).join("")
+      : emptyState("Your favorite teams do not have a listed event right now.");
+  }
+
+  function renderMainList() {
+    if (!elements.matchList) return;
+    const source = state.mode === "today" ? state.today : state.live;
+    const matches = applyFilters(sortedMatches(source)).slice(0, isEventsPage ? 120 : 60);
+
+    if (elements.listSectionTitle) {
+      elements.listSectionTitle.textContent =
+        state.mode === "today" ? "Today’s events" : "All live events";
+    }
+
+    elements.matchList.innerHTML = matches.length
+      ? matches.map((match) => renderEventCard(match, "standard")).join("")
+      : emptyState("No events match the current filters.");
+  }
+
+  function renderDiscovery() {
+    renderSportTabs();
+    renderPopularLive();
+    renderFavoriteTeams();
+    renderStartingSoon();
+    renderMainList();
+    updateCountdowns();
+  }
+
+  function updateCountdowns() {
+    document.querySelectorAll("[data-countdown]").forEach((element) => {
+      element.textContent = countdownText(Number(element.dataset.countdown));
+    });
+  }
+
+  function setStatus(message, error = false) {
+    if (!elements.status) return;
+    elements.status.textContent = message;
+    elements.status.classList.toggle("error", error);
+  }
+
+  function freshnessMessage(discovery) {
+    const saved = Math.max(
+      Number(discovery.live.savedAt || 0),
+      Number(discovery.today.savedAt || 0)
     );
-    matchList.innerHTML = "";
+    const stale = discovery.live.stale || discovery.today.stale;
+    state.updatedAt = saved;
+    state.stale = stale;
+    const time = saved
+      ? new Date(saved).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+      : "just now";
+    return stale
+      ? `Showing cached data from ${time}. Refresh manually when the provider is available.`
+      : `Updated ${time}. Data is cached locally; EastCoin does not auto-poll the provider.`;
+  }
+
+  async function loadDiscovery(forceMatches = false) {
+    elements.browser.hidden = false;
+    setStatus(forceMatches ? "Refreshing live and today data…" : "Loading Streamed events…");
 
     try {
-      const matches = await fetchMatches(
-        mode,
-        force
-      );
-
-      state.matches = sortMatches(matches);
-      searchInput.value = "";
-      renderMatches();
-
-      setStatus(
-        `${state.matches.length} event${
-          state.matches.length === 1 ? "" : "s"
-        } returned. Select one to load all available servers.`
-      );
+      const discovery = await API.getDiscovery({ forceMatches });
+      state.live = dedupeMatches(discovery.live.data);
+      state.today = dedupeMatches(discovery.today.data);
+      state.sports = discovery.sports.data;
+      renderDiscovery();
+      setStatus(freshnessMessage(discovery));
+      await renderEventDetailForCurrentUrl();
+      await restoreRequestedPlayerEvent();
     } catch (error) {
-      state.matches = [];
-      state.visibleMatches = [];
-      matchList.innerHTML = `
-        <div class="streamed-empty">
-          The Streamed API could not be reached from this browser.
-          Test the deployed eastcoin.vip page rather than opening the
-          HTML file directly. If it still fails, the provider may need
-          a small server-side CORS proxy.
-        </div>
-      `;
-      setStatus(
-        error.message ||
-          "Unable to load Streamed events.",
-        true
+      setStatus(error.message || "Unable to load Streamed events.", true);
+      elements.matchList.innerHTML = emptyState(
+        "The Streamed API could not be reached. EastCoin will not repeatedly retry; use Refresh later."
       );
     }
+  }
+
+  function showDiscovery() {
+    elements.browser.hidden = false;
+    elements.launcher?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function setMode(mode) {
+    state.mode = mode === "today" ? "today" : "live";
+    state.selectedSport = "all";
+    elements.liveButton?.classList.toggle("active", state.mode === "live");
+    elements.todayButton?.classList.toggle("active", state.mode === "today");
+    renderDiscovery();
+  }
+
+  function findLoadedMatch(id) {
+    const normalized = String(id || "").toLowerCase();
+    return dedupeMatches([...state.live, ...state.today]).find((match) => {
+      return eventKey(match).toLowerCase() === normalized ||
+        slugify(match.title) === normalized;
+    }) || null;
+  }
+
+  function rememberSelectedMatch(match) {
+    try {
+      sessionStorage.setItem(SELECTED_MATCH_KEY, JSON.stringify(match));
+    } catch {}
+  }
+
+  function readSelectedMatch(id) {
+    try {
+      const match = JSON.parse(sessionStorage.getItem(SELECTED_MATCH_KEY) || "null");
+      return match && eventKey(match) === String(id) ? match : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function resolveMatch(id, allowAllFallback = false) {
+    const loaded = findLoadedMatch(id) || readSelectedMatch(id);
+    if (loaded) return loaded;
+
+    if (!allowAllFallback) return null;
+    const all = await API.getAll(false);
+    return all.data.find((match) =>
+      eventKey(match) === String(id) || slugify(match.title) === String(id)
+    ) || null;
+  }
+
+  function eventDetailMarkup(match) {
+    const live = isLiveMatch(match);
+    const home = match?.teams?.home;
+    const away = match?.teams?.away;
+    const sourceCount = Array.isArray(match.sources) ? match.sources.length : 0;
+
+    return `
+      <article class="ec-event-detail-card">
+        ${posterMarkup(match, "hero")}
+        <div class="ec-event-detail-body">
+          <div class="ec-event-tags">
+            ${live ? '<span class="ec-event-tag ec-event-tag-live">Live now</span>' : `
+              <span class="ec-event-tag" data-countdown="${Number(match.date || 0)}">
+                ${escapeHtml(countdownText(match.date))}
+              </span>
+            `}
+            ${match.popular ? '<span class="ec-event-tag">Popular</span>' : ""}
+            <span class="ec-event-tag">${escapeHtml(sportName(match.category))}</span>
+          </div>
+          <h1>${escapeHtml(match.title || eventKey(match))}</h1>
+          <p class="ec-event-detail-time">${escapeHtml(formatDate(match.date, true))}</p>
+          <div class="ec-event-detail-teams">
+            ${home ? `
+              <div class="ec-event-detail-team">
+                ${badgeMarkup(home, "large")}
+                <strong>${escapeHtml(home.name)}</strong>
+                ${favoriteButton(home)}
+              </div>
+            ` : ""}
+            ${home && away ? '<span class="ec-event-detail-vs">VS</span>' : ""}
+            ${away ? `
+              <div class="ec-event-detail-team">
+                ${badgeMarkup(away, "large")}
+                <strong>${escapeHtml(away.name)}</strong>
+                ${favoriteButton(away)}
+              </div>
+            ` : ""}
+          </div>
+          <p class="ec-event-detail-summary">
+            ${sourceCount} source${sourceCount === 1 ? "" : "s"} currently listed.
+            Stream details are requested only after you choose Watch Event.
+          </p>
+          <div class="ec-event-detail-actions">
+            <button
+              class="ec-event-watch ec-event-watch-large"
+              type="button"
+              data-watch-event="${escapeAttr(eventKey(match))}">
+              ${live ? "Watch event now" : "Open event in player"}
+            </button>
+            <a class="ec-event-details" href="events.html">← All events</a>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  async function renderEventDetailForCurrentUrl() {
+    if (!isEventsPage || !elements.detail) return;
+    const id = new URLSearchParams(location.search).get("event");
+    if (!id) {
+      elements.detail.innerHTML = "";
+      return;
+    }
+
+    elements.detail.innerHTML = emptyState("Loading event page…");
+    try {
+      const match = await resolveMatch(id, true);
+      elements.detail.innerHTML = match
+        ? eventDetailMarkup(match)
+        : emptyState("This event is no longer listed by the provider.");
+      updateCountdowns();
+      elements.detail.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (error) {
+      elements.detail.innerHTML = emptyState(
+        error.message || "Unable to load this event page."
+      );
+    }
+  }
+
+  function teamFromButton(button) {
+    return {
+      name: button.dataset.teamName || "",
+      badge: button.dataset.teamBadge || ""
+    };
+  }
+
+  function handleDiscoveryClick(event) {
+    const favorite = event.target.closest("[data-favorite-team]");
+    if (favorite) {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleFavoriteTeam(teamFromButton(favorite));
+      return;
+    }
+
+    const remove = event.target.closest("[data-remove-favorite]");
+    if (remove) {
+      const team = state.favoriteTeams.find(
+        (item) => item.key === remove.dataset.removeFavorite
+      );
+      if (team) toggleFavoriteTeam(team);
+      return;
+    }
+
+    const watch = event.target.closest("[data-watch-event]");
+    if (watch) {
+      const match = findLoadedMatch(watch.dataset.watchEvent) ||
+        readSelectedMatch(watch.dataset.watchEvent);
+      if (!match) return;
+      watchMatch(match);
+    }
+  }
+
+  async function watchMatch(match) {
+    rememberSelectedMatch(match);
+    if (!player) {
+      location.href = `index.html?event=${encodeURIComponent(eventKey(match))}`;
+      return;
+    }
+    await loadMatch(match);
+  }
+
+  function toast(message) {
+    if (typeof window.showToast === "function") {
+      window.showToast(message);
+    }
+  }
+
+  function encodeBase64Url(value) {
+    const bytes = new TextEncoder().encode(String(value));
+    const binary = Array.from(bytes, (byte) => String.fromCharCode(byte)).join("");
+    return btoa(binary)
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/g, "");
+  }
+
+  function decodeBase64Url(value) {
+    const normalized = String(value || "")
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+    const padding = normalized.length % 4 === 0
+      ? ""
+      : "=".repeat(4 - (normalized.length % 4));
+    const binary = atob(normalized + padding);
+    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+  }
+
+  function compactMatch(match) {
+    return {
+      id: match.id || "",
+      title: match.title || "",
+      category: match.category || "",
+      date: Number(match.date || 0),
+      poster: match.poster || "",
+      popular: Boolean(match.popular),
+      teams: match.teams || null,
+      sources: Array.isArray(match.sources)
+        ? match.sources
+            .filter((source) => source?.source && source?.id)
+            .map((source) => ({
+              source: String(source.source),
+              id: String(source.id)
+            }))
+        : []
+    };
+  }
+
+  function createRoomToken(match, stream) {
+    if (!match || !stream) return "";
+    return encodeBase64Url(JSON.stringify({
+      version: 1,
+      match: compactMatch(match),
+      source: stream.source || "",
+      streamNo: stream.streamNo
+    }));
+  }
+
+  function parseRoomToken(token) {
+    if (!token) return null;
+    try {
+      const parsed = JSON.parse(decodeBase64Url(token));
+      return Number(parsed?.version) === 1 && parsed?.match?.id
+        ? parsed
+        : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function isEnglish(stream) {
+    return String(stream.language || "").toLowerCase().startsWith("english");
+  }
+
+  function recommendedStream(streams) {
+    return streams.find((stream) => stream.hd && isEnglish(stream)) ||
+      streams.find((stream) => stream.hd) ||
+      streams.find(isEnglish) ||
+      streams[0];
+  }
+
+  function preferredStream(streams, source, number) {
+    return streams.find((stream) => {
+      const sourceMatches = !source ||
+        String(stream.source).toLowerCase() === String(source).toLowerCase();
+      const numberMatches = number === "" || number == null ||
+        String(stream.streamNo) === String(number);
+      return sourceMatches && numberMatches;
+    }) || null;
+  }
+
+  function streamKey(stream) {
+    return [stream.source, stream.streamNo, stream.embedUrl].join("|");
+  }
+
+  function groupStreams(streams) {
+    const groups = new Map();
+    streams.forEach((stream) => {
+      const key = String(stream.source || "unknown");
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(stream);
+    });
+    return groups;
+  }
+
+  function selectedArtwork(match) {
+    return `
+      <span class="streamed-team-pair">
+        ${badgeMarkup(match?.teams?.home, "small")}
+        ${badgeMarkup(match?.teams?.away, "small")}
+      </span>
+    `;
+  }
+
+  function renderServerPanel() {
+    if (!player) return;
+    const groups = groupStreams(state.streams);
+    const recommended = recommendedStream(state.streams);
+    const recommendedKey = recommended ? streamKey(recommended) : "";
+
+    player.serverMatch.textContent = state.currentMatch?.title || "Streamed event";
+    const artwork = selectedArtwork(state.currentMatch);
+    player.serverArtwork.innerHTML = artwork;
+    player.toolbarArtwork.innerHTML = artwork;
+    player.toolbarArtwork.hidden = !artwork;
+    player.toolbarTitle.classList.toggle("streamed-has-artwork", Boolean(artwork));
+
+    player.sourceGroups.innerHTML = Array.from(groups)
+      .map(([source, streams]) => `
+        <section class="streamed-source-group">
+          <div class="streamed-source-title">
+            <strong>${escapeHtml(sourceLabel(source))}</strong>
+            <span>${streams.length} stream${streams.length === 1 ? "" : "s"}</span>
+          </div>
+          <div class="streamed-stream-buttons">
+            ${streams.map((stream) => {
+              const active = state.activeStream &&
+                streamKey(stream) === streamKey(state.activeStream);
+              const recommendedFlag = streamKey(stream) === recommendedKey;
+              return `
+                <button
+                  class="streamed-stream-button${active ? " active" : ""}"
+                  type="button"
+                  data-stream-key="${escapeAttr(streamKey(stream))}">
+                  <span class="streamed-quality">${stream.hd ? "HD" : "SD"}</span>
+                  <span>Stream ${escapeHtml(stream.streamNo)}</span>
+                  <span>${escapeHtml(stream.language || "Unknown")}</span>
+                  ${recommendedFlag ? '<span class="streamed-recommended">Recommended</span>' : ""}
+                </button>
+              `;
+            }).join("")}
+          </div>
+        </section>
+      `)
+      .join("");
+
+    player.serverButton.hidden = false;
+    player.serverButton.textContent = `Servers · ${state.streams.length}`;
+  }
+
+  function updateShareState() {
+    if (!state.currentMatch || !state.activeStream) {
+      window.eastcoinStreamedState = null;
+      return;
+    }
+
+    window.eastcoinStreamedState = {
+      matchId: state.currentMatch.id,
+      title: state.currentMatch.title,
+      source: state.activeStream.source,
+      streamNo: state.activeStream.streamNo,
+      embedUrl: state.activeStream.embedUrl,
+      roomToken: createRoomToken(state.currentMatch, state.activeStream)
+    };
+  }
+
+  function setServerPanelOpen(open) {
+    if (!player) return;
+    state.serverPanelOpen = Boolean(open);
+    player.serverPanel.hidden = !state.serverPanelOpen;
+    player.serverButton.classList.toggle("active", state.serverPanelOpen);
+    player.serverButton.setAttribute("aria-expanded", String(state.serverPanelOpen));
+  }
+
+  function revealPlayerControls() {
+    if (!player) return;
+    if (typeof window.setEastcoinPlayerToolbarCollapsed === "function") {
+      window.setEastcoinPlayerToolbarCollapsed(false, false);
+    } else {
+      player.playerToolbar.classList.remove("collapsed");
+    }
+    player.playerToolbar.hidden = false;
+    setServerPanelOpen(true);
+  }
+
+  function selectStream(stream, openPanel = false) {
+    if (!player || !stream?.embedUrl) return;
+    state.activeStream = stream;
+
+    if (typeof window.loadStream !== "function") {
+      throw new Error("The EastCoin player is unavailable.");
+    }
+
+    window.loadStream(stream.embedUrl, true);
+    player.currentHost.textContent = [
+      state.currentMatch?.title || "Streamed",
+      sourceLabel(stream.source),
+      `Stream ${stream.streamNo}`,
+      stream.hd ? "HD" : "SD",
+      stream.language || ""
+    ].filter(Boolean).join(" · ");
+
+    renderServerPanel();
+    updateShareState();
+    if (openPanel) setServerPanelOpen(true);
+    toast(`${sourceLabel(stream.source)} Stream ${stream.streamNo} loaded.`);
+  }
+
+  async function loadMatch(match, preferredSource = "", preferredNo = "") {
+    if (!player) return;
+    state.currentMatch = match;
+    setStatus(`Loading available servers for ${match.title || match.id}…`);
+
+    try {
+      state.streams = await API.getStreams(match, false);
+      const selected = preferredStream(
+        state.streams,
+        preferredSource,
+        preferredNo
+      ) || recommendedStream(state.streams);
+      selectStream(selected, true);
+      setStatus(
+        `${state.streams.length} stream${state.streams.length === 1 ? "" : "s"} loaded. ` +
+        "Stream endpoints were requested only after this event was selected."
+      );
+    } catch (error) {
+      state.streams = [];
+      state.activeStream = null;
+      updateShareState();
+      setStatus(error.message || "Unable to load event streams.", true);
+    }
+  }
+
+  function clearPlayerState() {
+    state.currentMatch = null;
+    state.streams = [];
+    state.activeStream = null;
+    state.serverPanelOpen = false;
+    window.eastcoinStreamedState = null;
+    if (!player) return;
+    player.serverButton.hidden = true;
+    player.serverPanel.hidden = true;
+    player.sourceGroups.innerHTML = "";
+    player.serverArtwork.innerHTML = "";
+    player.toolbarArtwork.innerHTML = "";
+    player.toolbarArtwork.hidden = true;
+    player.toolbarTitle.classList.remove("streamed-has-artwork");
+  }
+
+  function returnToDiscovery() {
+    setServerPanelOpen(false);
+    player?.changeButton?.click();
+    window.setTimeout(() => {
+      if (!state.live.length && !state.today.length) {
+        loadDiscovery(false);
+      } else {
+        showDiscovery();
+      }
+    }, 0);
   }
 
   function watchTokenFromUrl(rawValue) {
     let parsed;
-
     try {
       parsed = new URL(
-        /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(
-          rawValue.trim()
-        )
+        /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(rawValue.trim())
           ? rawValue.trim()
           : `https://${rawValue.trim()}`
       );
@@ -735,739 +1168,170 @@
       return "";
     }
 
-    const hostname = parsed.hostname
-      .toLowerCase()
-      .replace(/^www\./, "");
-
-    if (
-      hostname !== "streamed.pk" &&
-      hostname !== "streamed.st" &&
-      hostname !== "strmd.link"
-    ) {
+    const hostname = parsed.hostname.toLowerCase().replace(/^www\./, "");
+    if (!["streamed.pk", "streamed.st", "strmd.link"].includes(hostname)) {
       return "";
     }
 
-    const parts = parsed.pathname
-      .split("/")
-      .filter(Boolean);
-
-    const watchIndex = parts.findIndex(
-      (part) => part.toLowerCase() === "watch"
-    );
-
-    if (watchIndex === -1 || !parts[watchIndex + 1]) {
-      return "";
-    }
-
-    return decodeURIComponent(parts[watchIndex + 1]);
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    const watchIndex = parts.findIndex((part) => part.toLowerCase() === "watch");
+    return watchIndex >= 0 && parts[watchIndex + 1]
+      ? decodeURIComponent(parts[watchIndex + 1])
+      : "";
   }
 
   function matchIdentifiers(match) {
-    const identifiers = new Set();
-
-    [
-      match.id,
+    const values = new Set([
+      eventKey(match).toLowerCase(),
       slugify(match.title)
-    ]
-      .filter(Boolean)
-      .forEach((value) =>
-        identifiers.add(String(value).toLowerCase())
-      );
-
-    if (Array.isArray(match.sources)) {
-      match.sources.forEach((source) => {
-        const sourceName = String(
-          source.source || ""
-        ).toLowerCase();
-        const sourceId = String(
-          source.id || ""
-        ).toLowerCase();
-
-        if (sourceId) {
-          identifiers.add(sourceId);
-        }
-
-        if (sourceName && sourceId) {
-          identifiers.add(
-            `${sourceName}-${sourceId}`
-          );
-        }
-      });
-    }
-
-    return identifiers;
-  }
-
-  function findMatch(matches, token) {
-    const normalizedToken = String(token)
-      .toLowerCase()
-      .replace(/^\/+|\/+$/g, "");
-
-    const exact = matches.find((match) =>
-      matchIdentifiers(match).has(normalizedToken)
-    );
-
-    if (exact) {
-      return exact;
-    }
-
-    const tokenSlug = slugify(normalizedToken);
-
-    return matches.find((match) => {
-      const titleSlug = slugify(match.title);
-
-      return (
-        titleSlug &&
-        (
-          tokenSlug === titleSlug ||
-          tokenSlug.endsWith(`-${titleSlug}`) ||
-          titleSlug.endsWith(`-${tokenSlug}`)
-        )
-      );
+    ]);
+    (match.sources || []).forEach((source) => {
+      values.add(String(source.id || "").toLowerCase());
+      values.add(`${String(source.source || "").toLowerCase()}-${String(source.id || "").toLowerCase()}`);
     });
+    return values;
   }
 
-  async function resolveMatchToken(token) {
-    const endpoints = [
-      "live",
-      "today",
-      "all"
-    ];
-
-    for (const mode of endpoints) {
-      const matches = await fetchMatches(mode);
-      const match = findMatch(matches, token);
-
-      if (match) {
-        return match;
-      }
-    }
-
-    throw new Error(
-      "That Streamed event was not found in the current API listings."
+  async function resolvePastedToken(token) {
+    const normalized = String(token).toLowerCase().replace(/^\/+|\/+$/g, "");
+    const loaded = dedupeMatches([...state.live, ...state.today]).find(
+      (match) => matchIdentifiers(match).has(normalized) ||
+        slugify(normalized) === slugify(match.title)
     );
-  }
+    if (loaded) return loaded;
 
-  async function fetchStreamsForMatch(match) {
-    const sources = Array.isArray(match.sources)
-      ? match.sources
-      : [];
-
-    if (!sources.length) {
-      throw new Error(
-        "No stream sources are currently listed for this event."
-      );
-    }
-
-    const results = await Promise.allSettled(
-      sources.map(async (source, sourceIndex) => {
-        const sourceName = String(source.source || "");
-        const sourceId = String(source.id || "");
-
-        if (!sourceName || !sourceId) {
-          return [];
-        }
-
-        const streams = await fetchJson(
-          `/stream/${encodeURIComponent(sourceName)}/` +
-          `${encodeURIComponent(sourceId)}`
-        );
-
-        if (!Array.isArray(streams)) {
-          return [];
-        }
-
-        return streams.map((stream) => ({
-          ...stream,
-          source:
-            stream.source || sourceName,
-          sourceOrder: sourceIndex,
-          sourceMatchId: sourceId
-        }));
-      })
-    );
-
-    const flattened = results.flatMap((result) =>
-      result.status === "fulfilled"
-        ? result.value
-        : []
-    );
-
-    const unique = [];
-    const seen = new Set();
-
-    flattened.forEach((stream) => {
-      if (!stream?.embedUrl) {
-        return;
-      }
-
-      const key = [
-        stream.source,
-        stream.streamNo,
-        stream.embedUrl
-      ].join("|");
-
-      if (seen.has(key)) {
-        return;
-      }
-
-      seen.add(key);
-      unique.push(stream);
-    });
-
-    unique.sort((left, right) => {
-      const sourceDifference =
-        Number(left.sourceOrder || 0) -
-        Number(right.sourceOrder || 0);
-
-      if (sourceDifference) {
-        return sourceDifference;
-      }
-
-      return Number(left.streamNo || 0) -
-        Number(right.streamNo || 0);
-    });
-
-    if (!unique.length) {
-      throw new Error(
-        "The event exists, but no playable streams were returned."
-      );
-    }
-
-    return unique;
-  }
-
-  function isEnglish(stream) {
-    return String(stream.language || "")
-      .toLowerCase()
-      .startsWith("english");
-  }
-
-  function recommendedStream(streams) {
-    return (
-      streams.find(
-        (stream) => stream.hd && isEnglish(stream)
-      ) ||
-      streams.find((stream) => stream.hd) ||
-      streams.find(isEnglish) ||
-      streams[0]
-    );
-  }
-
-  function streamKey(stream) {
-    return [
-      stream.source,
-      stream.streamNo,
-      stream.embedUrl
-    ].join("|");
-  }
-
-  function preferredStream(
-    streams,
-    source,
-    streamNo
-  ) {
-    if (!source && !streamNo) {
-      return null;
-    }
-
-    return streams.find((stream) => {
-      const sourceMatches =
-        !source ||
-        String(stream.source).toLowerCase() ===
-          String(source).toLowerCase();
-
-      const numberMatches =
-        !streamNo ||
-        String(stream.streamNo) === String(streamNo);
-
-      return sourceMatches && numberMatches;
-    }) || null;
-  }
-
-  function groupStreams(streams) {
-    const groups = new Map();
-
-    streams.forEach((stream) => {
-      const key = String(stream.source || "unknown");
-
-      if (!groups.has(key)) {
-        groups.set(key, []);
-      }
-
-      groups.get(key).push(stream);
-    });
-
-    return groups;
-  }
-
-  function renderServerPanel() {
-    const groups = groupStreams(state.streams);
-    const recommended = recommendedStream(
-      state.streams
-    );
-    const recommendedKey = streamKey(recommended);
-
-    serverMatch.textContent =
-      state.match?.title || "Streamed event";
-    updateSelectedArtwork(state.match);
-
-    sourceGroups.innerHTML = Array.from(groups)
-      .map(([source, streams]) => {
-        return `
-          <section class="streamed-source-group">
-            <div class="streamed-source-title">
-              <strong>${escapeHtml(
-                sourceLabel(source)
-              )}</strong>
-              <span>
-                ${streams.length} stream${
-                  streams.length === 1 ? "" : "s"
-                }
-              </span>
-            </div>
-
-            <div class="streamed-stream-buttons">
-              ${streams.map((stream) => {
-                const active =
-                  state.activeStream &&
-                  streamKey(stream) ===
-                    streamKey(state.activeStream);
-                const isRecommended =
-                  streamKey(stream) === recommendedKey;
-                const quality = stream.hd ? "HD" : "SD";
-                const language =
-                  stream.language || "Unknown";
-
-                return `
-                  <button
-                    class="streamed-stream-button${
-                      active ? " active" : ""
-                    }"
-                    type="button"
-                    data-stream-key="${escapeHtml(
-                      streamKey(stream)
-                    )}">
-                    <span class="streamed-quality">
-                      ${quality}
-                    </span>
-                    <span>
-                      Stream ${escapeHtml(stream.streamNo)}
-                    </span>
-                    <span>
-                      ${escapeHtml(language)}
-                    </span>
-                    ${isRecommended
-                      ? '<span class="streamed-recommended">Recommended</span>'
-                      : ""}
-                  </button>
-                `;
-              }).join("")}
-            </div>
-          </section>
-        `;
-      })
-      .join("");
-
-    serverButton.hidden = false;
-    serverButton.textContent =
-      `Servers · ${state.streams.length}`;
-  }
-
-  function updateGlobalShareState() {
-    if (!state.match || !state.activeStream) {
-      window.eastcoinStreamedState = null;
-      return;
-    }
-
-    window.eastcoinStreamedState = {
-      matchId: state.match.id,
-      title: state.match.title,
-      source: state.activeStream.source,
-      streamNo: state.activeStream.streamNo,
-      embedUrl: state.activeStream.embedUrl,
-      roomToken: createRoomToken(
-        state.match,
-        state.activeStream
-      )
-    };
-  }
-
-  function selectStream(stream, openPanel = false) {
-    if (!stream?.embedUrl) {
-      return;
-    }
-
-    state.activeStream = stream;
-
-    if (typeof window.loadStream === "function") {
-      window.loadStream(stream.embedUrl, true);
-    } else {
-      throw new Error(
-        "The EastCoin player function is unavailable."
-      );
-    }
-
-    currentHost.textContent = [
-      state.match?.title || "Streamed",
-      sourceLabel(stream.source),
-      `Stream ${stream.streamNo}`,
-      stream.hd ? "HD" : "SD",
-      stream.language || ""
-    ]
-      .filter(Boolean)
-      .join(" · ");
-
-    renderServerPanel();
-    updateGlobalShareState();
-
-    if (openPanel) {
-      setServerPanelOpen(true);
-    }
-
-    if (typeof window.showToast === "function") {
-      window.showToast(
-        `${sourceLabel(stream.source)} Stream ` +
-        `${stream.streamNo} loaded.`
-      );
-    }
-  }
-
-  function setServerPanelOpen(open) {
-    state.panelOpen = Boolean(open);
-    serverPanel.hidden = !state.panelOpen;
-    serverButton.classList.toggle(
-      "active",
-      state.panelOpen
-    );
-    serverButton.setAttribute(
-      "aria-expanded",
-      String(state.panelOpen)
-    );
-  }
-
-  function revealRestoredServerControls() {
-    if (
-      typeof window
-        .setEastcoinPlayerToolbarCollapsed ===
-      "function"
-    ) {
-      window.setEastcoinPlayerToolbarCollapsed(
-        false,
-        false
-      );
-    } else {
-      playerToolbar.classList.remove("collapsed");
-    }
-
-    playerToolbar.hidden = false;
-    setServerPanelOpen(true);
-  }
-
-  async function loadMatch(
-    match,
-    preferredSource = "",
-    preferredNo = ""
-  ) {
-    state.match = match;
-    setStatus(
-      `Loading every available server for ${
-        match.title || match.id
-      }…`
-    );
-
-    try {
-      const streams = await fetchStreamsForMatch(match);
-      state.streams = streams;
-
-      const selected =
-        preferredStream(
-          streams,
-          preferredSource,
-          preferredNo
-        ) ||
-        recommendedStream(streams);
-
-      selectStream(selected, true);
-
-      setStatus(
-        `${streams.length} stream${
-          streams.length === 1 ? "" : "s"
-        } loaded across ${
-          groupStreams(streams).size
-        } source${
-          groupStreams(streams).size === 1 ? "" : "s"
-        }.`
-      );
-    } catch (error) {
-      state.streams = [];
-      state.activeStream = null;
-      updateGlobalShareState();
-      setStatus(
-        error.message ||
-          "Unable to load streams for this event.",
-        true
-      );
-      throw error;
-    }
-  }
-
-  function clearStreamedState() {
-    state.match = null;
-    state.streams = [];
-    state.activeStream = null;
-    state.panelOpen = false;
-    window.eastcoinStreamedState = null;
-    serverButton.hidden = true;
-    serverPanel.hidden = true;
-    sourceGroups.innerHTML = "";
-    serverArtwork.innerHTML = "";
-    toolbarArtwork.innerHTML = "";
-    toolbarArtwork.hidden = true;
-    toolbarTitle.classList.remove(
-      "streamed-has-artwork"
-    );
+    /* /matches/all is only used after an explicit pasted URL misses the two cached lists. */
+    const all = await API.getAll(false);
+    return all.data.find(
+      (match) => matchIdentifiers(match).has(normalized) ||
+        slugify(normalized) === slugify(match.title)
+    ) || null;
   }
 
   async function handleStreamedUrl(rawValue) {
     const token = watchTokenFromUrl(rawValue);
-
-    if (!token) {
-      return false;
-    }
-
-    browser.hidden = false;
-    setStatus(
-      "Finding this Streamed event and its available servers…"
-    );
+    if (!token) return false;
+    showDiscovery();
+    setStatus("Finding this event in the cached listings…");
 
     try {
-      const match = await resolveMatchToken(token);
+      const match = await resolvePastedToken(token);
+      if (!match) throw new Error("That event was not found in current listings.");
       await loadMatch(match);
     } catch (error) {
-      setStatus(
-        error.message ||
-          "Unable to resolve this Streamed event.",
-        true
-      );
-      urlError.textContent =
-        error.message ||
-        "Unable to resolve this Streamed event.";
+      setStatus(error.message || "Unable to resolve this event.", true);
+      if (player) player.urlError.textContent = error.message || "Unable to resolve this event.";
     }
-
     return true;
   }
 
-  liveButton.addEventListener("click", () => {
-    openBrowser("live");
-  });
+  async function restoreSharedRoom() {
+    if (!player) return false;
+    const params = new URLSearchParams(location.search);
+    const room = parseRoomToken(params.get("streamedRoom"));
+    const eventId = params.get("streamedEvent");
+    if (!room && !eventId) return false;
 
-  todayButton.addEventListener("click", () => {
-    openBrowser("today");
-  });
-
-  refreshButton.addEventListener("click", () => {
-    openBrowser(state.mode, true);
-  });
-
-  searchInput.addEventListener("input", renderMatches);
-
-  matchList.addEventListener("click", (event) => {
-    const button = event.target.closest(
-      "[data-streamed-match-index]"
-    );
-
-    if (!button) {
-      return;
-    }
-
-    const index = Number(
-      button.dataset.streamedMatchIndex
-    );
-    const match = state.visibleMatches[index];
-
-    if (match) {
-      loadMatch(match).catch(() => {});
-    }
-  });
-
-  serverButton.addEventListener("click", () => {
-    setServerPanelOpen(!state.panelOpen);
-  });
-
-  function returnToAllStreams() {
-    setServerPanelOpen(false);
-
-    if (changeButton) {
-      changeButton.click();
-    }
-
-    window.setTimeout(() => {
-      openBrowser("live");
-      launcher?.scrollIntoView({
-        behavior:
-          document.documentElement.classList.contains(
-            "ec-reduced-motion"
-          )
-            ? "auto"
-            : "smooth",
-        block: "start"
-      });
-    }, 0);
-  }
-
-  serverBack.addEventListener(
-    "click",
-    returnToAllStreams
-  );
-
-  serverClose.addEventListener("click", () => {
-    setServerPanelOpen(false);
-  });
-
-  sourceGroups.addEventListener("click", (event) => {
-    const button = event.target.closest(
-      "[data-stream-key]"
-    );
-
-    if (!button) {
-      return;
-    }
-
-    const stream = state.streams.find(
-      (candidate) =>
-        streamKey(candidate) ===
-        button.dataset.streamKey
-    );
-
-    if (stream) {
-      selectStream(stream, false);
-    }
-  });
-
-  form.addEventListener(
-    "submit",
-    (event) => {
-      const token = watchTokenFromUrl(input.value);
-
-      if (!token) {
-        clearStreamedState();
-        return;
-      }
-
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      urlError.textContent = "";
-      handleStreamedUrl(input.value);
-    },
-    true
-  );
-
-  document.addEventListener(
-    "click",
-    (event) => {
-      const favorite = event.target.closest(
-        ".quick-favorite-button[data-watch-url]"
-      );
-
-      if (favorite) {
-        clearStreamedState();
-      }
-    },
-    true
-  );
-
-  quickStreamedButton?.addEventListener(
-    "click",
-    () => {
-      openBrowser("live");
-    }
-  );
-
-  changeButton?.addEventListener("click", () => {
-    clearStreamedState();
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && state.panelOpen) {
-      setServerPanelOpen(false);
-    }
-  });
-
-  async function restoreSharedStreamedRoom() {
-    const params = new URLSearchParams(
-      window.location.search
-    );
-    const roomPayload = parseRoomToken(
-      params.get("streamedRoom")
-    );
-    const matchId = params.get("streamedEvent");
-    const normalWatchUrl = params.get("watch");
-
-    if (!roomPayload && !matchId) {
-      if (!normalWatchUrl) {
-        await openBrowser("live");
-      }
-
-      return;
-    }
-
-    const preferredSource =
-      roomPayload?.source ||
-      params.get("streamedSource") ||
-      "";
-    const preferredNo =
-      roomPayload?.streamNo ??
-      params.get("streamedStream") ??
-      "";
-
-    browser.hidden = false;
-    setStatus(
-      "Restoring the shared event and complete server list…"
-    );
-
+    setStatus("Restoring the shared event and server list…");
     try {
-      /*
-        New links carry the complete match source map, so the server list
-        can be rebuilt even if the match has moved between Live, Today, or
-        All listings. Older links still resolve through the API lists.
-      */
-      const match =
-        roomPayload?.match ||
-        await resolveMatchToken(matchId);
-
+      const match = room?.match || await resolveMatch(eventId, true);
+      if (!match) throw new Error("The shared event is no longer listed.");
       await loadMatch(
         match,
-        preferredSource,
-        preferredNo
+        room?.source || params.get("streamedSource") || "",
+        room?.streamNo ?? params.get("streamedStream") ?? ""
       );
-
-      /*
-        loadStream() respects the user's normal collapsed-controls setting.
-        A shared Streamed room is different: immediately expose the selector
-        so the recipient can see and switch every available server.
-      */
-      revealRestoredServerControls();
+      revealPlayerControls();
     } catch (error) {
-      setStatus(
-        error.message ||
-          "Unable to restore this shared event.",
-        true
-      );
-
-      /*
-        The direct embed remains a final fallback for a stale event or
-        temporary API failure. It cannot recreate server buttons, but it
-        avoids leaving the shared room blank.
-      */
-      if (
-        normalWatchUrl &&
-        typeof window.loadStream === "function"
-      ) {
-        window.loadStream(normalWatchUrl, true);
+      setStatus(error.message || "Unable to restore this shared event.", true);
+      const watch = params.get("watch");
+      if (watch && typeof window.loadStream === "function") {
+        window.loadStream(watch, true);
       }
     }
+    return true;
   }
 
-  restoreSharedStreamedRoom();
+  let requestedPlayerRestored = false;
+  async function restoreRequestedPlayerEvent() {
+    if (!player || requestedPlayerRestored) return;
+    const shared = await restoreSharedRoom();
+    if (shared) {
+      requestedPlayerRestored = true;
+      return;
+    }
+
+    const id = new URLSearchParams(location.search).get("event");
+    if (!id) return;
+    requestedPlayerRestored = true;
+    const match = await resolveMatch(id, true);
+    if (match) await loadMatch(match);
+  }
+
+  elements.liveButton?.addEventListener("click", () => setMode("live"));
+  elements.todayButton?.addEventListener("click", () => setMode("today"));
+  elements.refresh?.addEventListener("click", () => loadDiscovery(true));
+  elements.search?.addEventListener("input", () => {
+    state.query = elements.search.value;
+    renderDiscovery();
+  });
+  elements.sportTabs?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-sport]");
+    if (!button) return;
+    state.selectedSport = button.dataset.sport;
+    renderDiscovery();
+  });
+
+  discoveryRoot.addEventListener("click", handleDiscoveryClick);
+  elements.detail?.addEventListener("click", handleDiscoveryClick);
+
+  document.addEventListener(
+    "error",
+    (event) => {
+      const image = event.target;
+      if (!(image instanceof HTMLImageElement) || !image.matches("[data-ec-image]")) return;
+      image.parentElement?.classList.add("image-failed");
+      image.remove();
+    },
+    true
+  );
+
+  window.addEventListener("storage", (event) => {
+    if (event.key !== FAVORITES_KEY) return;
+    state.favoriteTeams = loadFavoriteTeams();
+    renderDiscovery();
+    renderEventDetailForCurrentUrl();
+  });
+
+  window.setInterval(updateCountdowns, 15_000);
+
+  setMode("live");
+
+  const startupParameters = new URLSearchParams(
+    window.location.search
+  );
+  const hasStreamedPlayerTarget = Boolean(
+    player &&
+    (
+      startupParameters.has("streamedRoom") ||
+      startupParameters.has("streamedEvent") ||
+      startupParameters.has("event")
+    )
+  );
+  const hasGenericWatchTarget = Boolean(
+    player &&
+    startupParameters.has("watch") &&
+    !hasStreamedPlayerTarget
+  );
+
+  if (hasStreamedPlayerTarget) {
+    /*
+      Shared rooms and event links carry enough information to load without
+      first requesting the discovery endpoints. The discovery dashboard is
+      fetched only if the visitor later returns to View all streams.
+    */
+    restoreRequestedPlayerEvent();
+  } else if (!hasGenericWatchTarget) {
+    loadDiscovery(false);
+  }
 })();

@@ -65,16 +65,17 @@
 
   <meta
     name="description"
-    content="EastCoin feature changelog and release timeline."
+    content="EastCoin live and upcoming sports events."
   />
 
-  <title>EastCoin — Changelog</title>
+  <title>EastCoin — Events</title>
   <link rel="icon" type="image/png" href="assets/eastcoin-favicon.png" />
   <link rel="shortcut icon" href="assets/eastcoin-favicon.png" />
   <link rel="apple-touch-icon" href="assets/eastcoin-favicon.png" />
 
   <link rel="stylesheet" href="assets/eastcoins-theme.css" />
   <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux2" />
+  <link rel="stylesheet" href="assets/eastcoins-streamed.css?v=server5" />
 
   <style>
     :root {
@@ -826,166 +827,6 @@
     );
 }
 
-
-/* ---------------- CHANGELOG PAGE ---------------- */
-
-.changelog-shell{
-  width:min(900px,100%);
-  margin:0 auto;
-  padding:44px 34px 70px;
-}
-
-.changelog-header{
-  margin-bottom:34px;
-}
-
-.changelog-header h1{
-  margin:9px 0 11px;
-  color:#fff;
-  font-size:clamp(2.4rem,7vw,5rem);
-  line-height:.92;
-  letter-spacing:-.065em;
-}
-
-.changelog-header p{
-  max-width:620px;
-  margin:0;
-  color:#9ca4b3;
-  font-size:.95rem;
-  line-height:1.7;
-}
-
-.release-count{
-  display:inline-flex;
-  align-items:center;
-  gap:7px;
-  margin-top:16px;
-  padding:6px 9px;
-  border:1px solid rgba(201,164,79,.2);
-  border-radius:999px;
-  color:#cabd9e;
-  background:rgba(201,164,79,.05);
-  font-size:.68rem;
-  font-weight:900;
-  letter-spacing:.05em;
-  text-transform:uppercase;
-}
-
-.timeline{
-  position:relative;
-  display:grid;
-  gap:18px;
-  padding-left:28px;
-}
-
-.timeline::before{
-  content:"";
-  position:absolute;
-  left:8px;
-  top:8px;
-  bottom:8px;
-  width:2px;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(201,164,79,.65),
-      rgba(91,36,43,.7)
-    );
-}
-
-.timeline-entry{
-  position:relative;
-  padding:18px 20px;
-  border:1px solid rgba(255,255,255,.07);
-  border-radius:13px;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255,255,255,.025),
-      rgba(255,255,255,.012)
-    );
-  box-shadow:0 12px 28px rgba(0,0,0,.2);
-}
-
-.timeline-entry::before{
-  content:"";
-  position:absolute;
-  left:-27px;
-  top:24px;
-  width:12px;
-  height:12px;
-  border:3px solid #15110d;
-  border-radius:50%;
-  background:#c9a44f;
-  box-shadow:0 0 0 3px rgba(201,164,79,.16);
-}
-
-.timeline-entry.latest{
-  border-color:rgba(201,164,79,.24);
-  background:
-    radial-gradient(
-      circle at 100% 0%,
-      rgba(201,164,79,.08),
-      transparent 38%
-    ),
-    rgba(255,255,255,.018);
-}
-
-.timeline-date{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  margin-bottom:7px;
-  color:#b9aa89;
-  font-size:.65rem;
-  font-weight:900;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-}
-
-.latest-badge{
-  padding:4px 7px;
-  border:1px solid rgba(201,164,79,.25);
-  border-radius:999px;
-  color:#efd784;
-  background:rgba(201,164,79,.07);
-  font-size:.56rem;
-}
-
-.timeline-entry h2{
-  margin:0;
-  color:#f3ead5;
-  font-size:1.18rem;
-  line-height:1.25;
-  letter-spacing:-.025em;
-}
-
-.timeline-entry p{
-  margin:8px 0 0;
-  color:#939baa;
-  font-size:.82rem;
-  line-height:1.65;
-}
-
-@media(max-width:760px){
-  .changelog-shell{
-    padding:34px 18px 54px;
-  }
-
-  .timeline{
-    padding-left:23px;
-  }
-
-  .timeline::before{
-    left:6px;
-  }
-
-  .timeline-entry::before{
-    left:-22px;
-  }
-}
-
 </style>
 </head>
 
@@ -1007,7 +848,7 @@
       <div class="nav-group">
         <div class="nav-label">EastCoin</div>
         <a class="nav-link" href="index.html?new=1" target="_top">📺 Live Player</a>
-        <a class="nav-link" href="events.html" target="_top">🏟️ Events</a>
+        <a class="nav-link active" href="events.html" target="_top">🏟️ Events</a>
         <a class="nav-link" href="favorites.html" target="_top">⭐ Favorites</a>
         <a class="nav-link" href="games.html?new=1" target="_top">🎮 Games</a>
         <a class="nav-link" href="bonk.html" target="_top">🔨 EastCoin Bonk</a>
@@ -1074,10 +915,9 @@
       </div>
 
       <a
-        class="sidebar-footer-link active"
+        class="sidebar-footer-link"
         href="changelog.html"
-        target="_top"
-        aria-current="page">
+        target="_top">
         📝 Changelog
       </a>
 
@@ -1097,190 +937,92 @@
       aria-label="Hide navigation"
       aria-expanded="true">◀</button>
 
-    <main class="page-main">
-      <div class="changelog-shell">
-        <header class="changelog-header">
-          <div class="eyebrow">
-            <span class="eyebrow-dot"></span>
-            EastCoin updates
-          </div>
-
-          <h1>Changelog</h1>
-
-          <p>
-            A simple timeline of the major features, games, and interface
-            improvements added to EastCoin.
-          </p>
-
-          <div class="release-count">
-            12 major update groups
-          </div>
-        </header>
-
-        <section class="timeline" aria-label="EastCoin feature timeline">
-          <article class="timeline-entry">
-            <div class="timeline-date">
-              <time datetime="2026-07">July 2026</time>
-            </div>
-            <h2>EastCoin goes live</h2>
-            <p>
-              Launched the dark burgundy-and-gold site shell with the Live
-              Player, user-entered stream URLs, and embedded Twitch chat.
-            </p>
-          </article>
-
-          <article class="timeline-entry">
-            <div class="timeline-date">
-              <time datetime="2026-07">July 2026</time>
-            </div>
-            <h2>Shareable rooms and Favorites</h2>
-            <p>
-              Added watch links, Share Room, quick links, and a Favorites page
-              for loading approved sites directly into the player.
-            </p>
-          </article>
-
-          <article class="timeline-entry">
-            <div class="timeline-date">
-              <time datetime="2026-07">July 2026</time>
-            </div>
-            <h2>Games hub and resizable chat</h2>
-            <p>
-              Added the Games library, embedded game player, external game
-              cards, and a draggable divider for changing Twitch chat width.
-            </p>
-          </article>
-
-          <article class="timeline-entry">
-            <div class="timeline-date">
-              <time datetime="2026-07">Late July 2026</time>
-            </div>
-            <h2>Sidebar and community upgrades</h2>
-            <p>
-              Added mobile navigation, remembered sidebar state, the NFL
-              kickoff countdown, and the official “zwades is blue” card.
-            </p>
-          </article>
-
-          <article class="timeline-entry">
-            <div class="timeline-date">
-              <time datetime="2026-07">Late July 2026</time>
-            </div>
-            <h2>EastCoin Bonk launches</h2>
-            <p>
-              Introduced 45-second rounds, the EastCoin target roster, combo
-              scoring, sound effects, local best scores, and shareable results.
-            </p>
-          </article>
-
-          <article class="timeline-entry">
-            <div class="timeline-date">
-              <time datetime="2026-08">August 2026</time>
-            </div>
-            <h2>Bonk jackpots and House Traps</h2>
-            <p>
-              Added the spoken countdown, Waldo and Blue Zwades jackpot events,
-              mixed picture and classic traps, and 3–8 temporary traps per round.
-            </p>
-          </article>
-
-          <article class="timeline-entry">
-            <div class="timeline-date">
-              <time datetime="2026-08">August 2026</time>
-            </div>
-            <h2>Aim Trainer and Button Masher</h2>
-            <p>
-              Added two new EastCoin arcade games with full wrapper pages,
-              Twitch chat, personal bests, and branded Discord score cards.
-            </p>
-          </article>
-
-          <article class="timeline-entry">
-            <div class="timeline-date">
-              <time datetime="2026-08">August 2026</time>
-            </div>
-            <h2>Interface cleanup and Changelog</h2>
-            <p>
-              Compacted the navigation, added collapsible player controls,
-              fixed nested game loading, embedded games directly, and added
-              this update timeline.
-            </p>
-          </article>
-
-          <article class="timeline-entry">
-            <div class="timeline-date">
-              <time datetime="2026-08">August 2026</time>
-            </div>
-            <h2>Sitewide UX overhaul</h2>
-            <p>
-              Added Theater Mode, collapsible Twitch chat with a mobile drawer,
-              embed loading and recovery screens, continue-watching and recent
-              game history, a reorganized Games library, and a shared Settings
-              panel for sound, motion, navigation, chat, and player controls.
-              Theater Mode was then corrected to use a true full-viewport
-              player, and the new interface was refined to match EastCoin's
-              ultra-dark burgundy-and-gold styling.
-            </p>
-          </article>
-
-          <article class="timeline-entry">
-            <div class="timeline-date">
-              <time datetime="2026-08">August 2026</time>
-            </div>
-            <h2>Streamed server browser launched</h2>
-            <p>
-              Published the Streamed event browser as the main Live Player.
-              Live events now open automatically, each event loads every
-              available source and server, and users can switch between
-              streams without reloading EastCoin. The selector includes
-              HD/SD and language labels, recommended-stream handling,
-              server-aware Share Room links, and a direct return to the
-              complete live-event list. Event rows and selected-stream
-              controls now display team badges from the Streamed Images API,
-              with event-poster and initials fallbacks when badges are not
-              available. Shared Room links now carry the event source map,
-              restore the complete server selector without a startup race,
-              reopen player controls automatically, and retain compatibility
-              with older shared links.
-            </p>
-          </article>
-
-          <article class="timeline-entry">
-            <div class="timeline-date">
-              <time datetime="2026-08">August 2026</time>
-            </div>
-            <h2>Zwades agreement gate launched</h2>
-            <p>
-              Added the mandatory one-time “Zwades is Blue” confirmation
-              across every EastCoin page, including direct game and scorecard
-              URLs. The full-screen gate requires a manual I Agree click,
-              blocks keyboard and pointer access until accepted, and remembers
-              agreement through a refreshed 400-day cookie plus browser
-              storage. The former test URL now opens a fresh agreement preview,
-              and the agreement popup now includes the Zwades-blue visual for a
-              little extra proof.
-            </p>
-          </article>
-
-<article class="timeline-entry latest">
-  <div class="timeline-date">
-    <time datetime="2026-08">August 2026</time>
-    <span class="latest-badge">Latest</span>
-  </div>
-  <h2>Event discovery dashboard</h2>
-  <p>
-    Added Popular Live, sport tabs, Starting Soon countdowns,
-    browser-local favorite teams, dedicated event pages, and richer
-    poster/matchup presentation. EastCoin now uses a provider-friendly
-    request plan: one cached Live request, one cached Today request,
-    one daily Sports request, no automatic polling, no separate
-    Popular endpoint, no per-sport requests, and stream-source calls
-    only after a user explicitly chooses an event.
-  </p>
-</article>
-        </section>
+<main class="page-main">
+  <div class="page-shell">
+    <header class="page-header">
+      <div class="eyebrow">
+        <span class="eyebrow-dot"></span>
+        EastCoin event directory
       </div>
-    </main>
+      <h1>Events</h1>
+      <p>
+        Browse popular live events, starting-soon matchups, sport tabs,
+        favorite teams, and full event pages without repeatedly polling
+        the free provider.
+      </p>
+    </header>
+
+    <section class="ec-events-page-shell">
+      <div class="streamed-launcher" id="streamedLauncher">
+        <div class="streamed-launcher-head">
+          <div class="streamed-launcher-copy">
+            <div class="streamed-launcher-kicker">Streamed event directory</div>
+            <strong class="streamed-launcher-title">Find an event, then open it in the player</strong>
+            <p class="streamed-launcher-description">
+              EastCoin fetches Live, Today, and Sports once, caches them,
+              and derives the rows below locally.
+            </p>
+          </div>
+          <div class="streamed-mode-buttons">
+            <button class="streamed-mode-button" id="streamedLiveButton" type="button">Live now</button>
+            <button class="streamed-mode-button" id="streamedTodayButton" type="button">Today</button>
+          </div>
+        </div>
+
+        <div class="streamed-browser" id="streamedBrowser">
+          <div class="streamed-browser-controls">
+            <input
+              class="streamed-search"
+              id="streamedSearch"
+              type="search"
+              placeholder="Search events, teams, or sports"
+              aria-label="Search Streamed events">
+            <button class="streamed-refresh" id="streamedRefresh" type="button">Refresh</button>
+          </div>
+          <div class="streamed-status" id="streamedStatus" role="status" aria-live="polite"></div>
+
+          <div id="streamedEventDetail"></div>
+
+          <div
+            class="streamed-discovery-root"
+            id="streamedDiscoveryRoot"
+            data-context="events">
+            <div class="streamed-sport-tabs" id="streamedSportTabs" aria-label="Filter events by sport"></div>
+
+            <section class="streamed-discovery-section" id="streamedPopularSection">
+              <div class="streamed-discovery-section-head">
+                <div><h2>Popular Live</h2><p>Derived from the Live response.</p></div>
+              </div>
+              <div class="ec-feature-row" id="streamedPopularList"></div>
+            </section>
+
+            <section class="streamed-discovery-section" id="streamedFavoriteSection">
+              <div class="streamed-discovery-section-head">
+                <div><h2>Favorite Teams</h2><p>Saved on this browser only.</p></div>
+              </div>
+              <div class="ec-favorite-team-list" id="streamedFavoriteTeamList"></div>
+              <div class="ec-event-grid" id="streamedFavoriteEventList"></div>
+            </section>
+
+            <section class="streamed-discovery-section" id="streamedSoonSection">
+              <div class="streamed-discovery-section-head">
+                <div><h2>Starting Soon</h2><p>Local countdowns; no additional requests.</p></div>
+              </div>
+              <div class="ec-event-grid" id="streamedSoonList"></div>
+            </section>
+
+            <section class="streamed-discovery-section">
+              <div class="streamed-discovery-section-head">
+                <div><h2 id="streamedListSectionTitle">All live events</h2><p>Open an event page or send it to the Live Player.</p></div>
+              </div>
+              <div class="ec-event-grid" id="streamedMatchList"></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
   </div>
 
     <script src="assets/eastcoins-ux.js?v=ux2"></script>
@@ -1460,6 +1202,8 @@
     initializeFootballCountdowns();
 
   </script>
-  <script src="assets/eastcoins-agreement.js?v=gate2"></script>
+  <script src="assets/eastcoins-streamed-api.js?v=api1"></script>
+<script src="assets/eastcoins-streamed.js?v=server5"></script>
+<script src="assets/eastcoins-agreement.js?v=gate2"></script>
 </body>
 </html>

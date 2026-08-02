@@ -228,3 +228,30 @@ ZWADES AGREEMENT GATE — SITEWIDE LAUNCH
   index.html?resetZwadesAgreement=1
 - The prior test-only agreement does not count toward production.
 - Updated changelog.html.
+
+- The agreement popup now also displays assets/zwades-blue.webp.
+
+
+STREAMED DISCOVERY DASHBOARD
+- Added events.html and an Events sidebar link.
+- Added Popular Live derived from match.popular in the cached Live response.
+- Added sport tabs using /api/sports names while filtering matches locally.
+- Added Starting Soon countdowns from the cached Today response.
+- Added favorite teams in eastcoinFavoriteTeamsV1 localStorage.
+- Added event detail URLs at events.html?event=[match-id].
+- Added supplied-poster, matchup-poster, badge, and initials fallbacks.
+- Added assets/eastcoins-streamed-api.js.
+- Provider-friendly request policy:
+  - Live cached 90 seconds across pages.
+  - Today cached 5 minutes across pages.
+  - Sports cached 24 hours across pages.
+  - no automatic API polling.
+  - manual Refresh forces only Live and Today.
+  - no Popular endpoint; the row is derived locally.
+  - no per-sport requests; tabs filter locally.
+  - All matches only as explicit event/URL fallback.
+  - stream endpoints only after an event is selected.
+  - source responses cached in sessionStorage for 5 minutes.
+
+- Selected-event source requests are limited to three concurrent calls to avoid request bursts.
+- Shared-room, event, and generic watch links skip discovery endpoints until the user opens the event browser.
