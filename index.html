@@ -14,7 +14,7 @@
   />
 
   <meta name="description" content="EastCoin private sports watch room with an embeddable player and Twitch chat." />
-  <title>EastCoin — Watch Room</title>
+  <title>Live Player | EastCoin</title>
 
   <style>
     :root {
@@ -1202,6 +1202,7 @@
 
   <link rel="stylesheet" href="assets/eastcoins-theme.css" />
   <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux2" />
+  <link rel="stylesheet" href="assets/eastcoins-streamed.css?v=server2" />
 </head>
 
 <body>
@@ -1374,14 +1375,81 @@
               <div class="url-error" id="urlError" role="alert"></div>
             </form>
 
+            <section
+              class="streamed-launcher"
+              id="streamedLauncher"
+              aria-label="Streamed event browser">
+              <div class="streamed-launcher-head">
+                <div class="streamed-launcher-copy">
+                  <div class="streamed-launcher-kicker">
+                    Streamed event browser
+                  </div>
+                  <strong class="streamed-launcher-title">
+                    Watch an event and switch servers
+                  </strong>
+                  <p class="streamed-launcher-description">
+                    Choose a live event below or paste a Streamed watch URL above.
+                    EastCoin will load every available source and stream.
+                  </p>
+                </div>
+
+                <div class="streamed-mode-buttons">
+                  <button
+                    class="streamed-mode-button"
+                    id="streamedLiveButton"
+                    type="button">
+                    Live now
+                  </button>
+                  <button
+                    class="streamed-mode-button"
+                    id="streamedTodayButton"
+                    type="button">
+                    Today
+                  </button>
+                </div>
+              </div>
+
+              <div
+                class="streamed-browser"
+                id="streamedBrowser"
+                hidden>
+                <div class="streamed-browser-controls">
+                  <input
+                    class="streamed-search"
+                    id="streamedSearch"
+                    type="search"
+                    placeholder="Search events, sports, or sources"
+                    aria-label="Search Streamed events">
+                  <button
+                    class="streamed-refresh"
+                    id="streamedRefresh"
+                    type="button">
+                    Refresh
+                  </button>
+                </div>
+
+                <div
+                  class="streamed-status"
+                  id="streamedStatus"
+                  role="status"
+                  aria-live="polite">
+                </div>
+
+                <div
+                  class="streamed-match-list"
+                  id="streamedMatchList">
+                </div>
+              </div>
+            </section>
+
             <div class="quick-favorites" aria-label="Favorite websites">
               <p class="quick-favorites-label">⭐ Quick Favorites</p>
               <div class="quick-favorites-list">
                 <button
                   class="quick-favorite-button"
-                  type="button"
-                  data-watch-url="https://streamed.pk/">
-                  Streamed PK
+                  id="streamedBrowseButton"
+                  type="button">
+                  Streamed events
                 </button>
                 <button
                   class="quick-favorite-button"
@@ -1587,7 +1655,16 @@
         false
       );
       playerToolbar.hidden = false;
-      urlStage.replaceWith(iframe);
+
+      const existingFrame =
+        document.getElementById("activeFrame");
+
+      if (existingFrame) {
+        existingFrame.replaceWith(iframe);
+      } else {
+        urlStage.replaceWith(iframe);
+      }
+
       iframe.id = "activeFrame";
 
       if (savePreference) {
@@ -1652,6 +1729,34 @@
       shareUrl.search = "";
       shareUrl.hash = "";
       shareUrl.searchParams.set("watch", streamUrl);
+
+      const streamedState =
+        window.eastcoinStreamedState;
+
+      if (streamedState?.matchId) {
+        shareUrl.searchParams.set(
+          "streamedEvent",
+          streamedState.matchId
+        );
+
+        if (streamedState.source) {
+          shareUrl.searchParams.set(
+            "streamedSource",
+            streamedState.source
+          );
+        }
+
+        if (
+          streamedState.streamNo !== undefined &&
+          streamedState.streamNo !== null
+        ) {
+          shareUrl.searchParams.set(
+            "streamedStream",
+            streamedState.streamNo
+          );
+        }
+      }
+
       return shareUrl.href;
     }
 
@@ -2006,5 +2111,6 @@
     initializeFootballCountdowns();
 
   </script>
+  <script src="assets/eastcoins-streamed.js?v=server2"></script>
 </body>
 </html>

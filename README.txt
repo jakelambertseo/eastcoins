@@ -155,3 +155,13 @@ STREAMED BROWSER CLEANUP
   Live Now view without leaving index-test.html.
 - Updated Streamed asset cache versions from server1 to server2.
 - Updated the changelog entry.
+
+
+STREAMED SERVER BROWSER PUBLISHED
+- The polished Streamed event browser is now the main index.html homepage.
+- Live Now events load automatically on the standard Live Player.
+- Existing manual URL loading remains available.
+- index-test.html now redirects to index.html while preserving query strings
+  and URL hashes so older shared test links continue working.
+- The Live Player navigation link now points to index.html?new=1.
+- The changelog now records the full homepage launch.
