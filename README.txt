@@ -386,3 +386,20 @@ WATCH ROOM + DISCOVERY UPGRADE
 - Streamed CSS and JavaScript updated to server12.
 - Shared UX JavaScript updated to ux4.
 - Updated changelog.html.
+
+
+EVENT ARTWORK LOADING SCREEN
+- Streamed publishes the selected event context before the iframe is created.
+- The loading overlay can now show:
+  - event poster or generated matchup artwork
+  - home and away team badges
+  - team-initial fallbacks
+  - event title
+  - live/sport label
+  - selected provider, stream number, quality, and language
+- Events without teams use their supplied poster when available.
+- Manually entered URLs and games retain the generic loading state.
+- Failed artwork hides cleanly without blocking the player.
+- Shared UX CSS and JavaScript were cache-busted to ux5.
+- Streamed JavaScript was cache-busted to server13.
+- Updated changelog.html.

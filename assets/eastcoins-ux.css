@@ -1063,3 +1063,240 @@ body.ec-theater-mode .player-shell > .ec-utility-dock{
     padding:8px 9px!important;
   }
 }
+
+
+/* ================================================================
+   EVENT ARTWORK LOADING SCREEN
+   ================================================================ */
+
+.ec-embed-status-card.has-event-context{
+  width:min(660px,100%);
+  display:grid;
+  grid-template-columns:
+    minmax(205px,245px)
+    minmax(0,1fr);
+  padding:0;
+  overflow:hidden;
+  text-align:left;
+}
+
+.ec-embed-status-card.has-event-context
+  .ec-embed-status-content{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-width:0;
+  padding:28px;
+}
+
+.ec-embed-event-visual{
+  position:relative;
+  min-height:255px;
+  overflow:hidden;
+  border-right:
+    1px solid rgba(201,164,79,.16);
+  background:
+    radial-gradient(
+      circle at 50% 34%,
+      rgba(41,118,180,.34),
+      transparent 38%
+    ),
+    linear-gradient(
+      145deg,
+      #0e2031,
+      #21090f 78%
+    );
+}
+
+.ec-embed-event-visual[hidden]{
+  display:none!important;
+}
+
+.ec-embed-event-poster{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  opacity:.72;
+  filter:saturate(.9) contrast(1.05);
+}
+
+.ec-embed-event-poster[hidden]{
+  display:none!important;
+}
+
+.ec-embed-event-shade{
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0,0,0,.08),
+      rgba(0,0,0,.24) 44%,
+      rgba(0,0,0,.9)
+    ),
+    linear-gradient(
+      90deg,
+      transparent 60%,
+      rgba(3,2,2,.58)
+    );
+}
+
+.ec-embed-event-badges{
+  position:absolute;
+  right:14px;
+  bottom:17px;
+  left:14px;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+
+.ec-embed-event-badge{
+  position:relative;
+  width:64px;
+  height:64px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border:2px solid rgba(237,208,124,.46);
+  border-radius:50%;
+  color:#f5df9d;
+  background:
+    radial-gradient(
+      circle at 34% 28%,
+      rgba(30,105,165,.46),
+      rgba(20,8,11,.96)
+    );
+  box-shadow:
+    0 0 0 5px rgba(0,0,0,.5),
+    0 12px 28px rgba(0,0,0,.58);
+  font-size:.8rem;
+  font-weight:950;
+}
+
+.ec-embed-event-badge[hidden]{
+  display:none!important;
+}
+
+.ec-embed-event-badge img{
+  position:absolute;
+  inset:5px;
+  width:calc(100% - 10px);
+  height:calc(100% - 10px);
+  object-fit:contain;
+  border-radius:50%;
+}
+
+.ec-embed-event-badge img[hidden]{
+  display:none!important;
+}
+
+.ec-embed-event-vs{
+  z-index:2;
+  display:grid;
+  place-items:center;
+  width:31px;
+  height:31px;
+  border:1px solid rgba(237,208,124,.4);
+  border-radius:50%;
+  color:#f2d57d;
+  background:rgba(4,3,3,.94);
+  box-shadow:0 7px 18px rgba(0,0,0,.52);
+  font-size:.55rem;
+  font-weight:950;
+}
+
+.ec-embed-event-vs[hidden]{
+  display:none!important;
+}
+
+.ec-embed-status-kicker{
+  display:block;
+  margin-bottom:7px;
+  color:#c9a44f;
+  font-size:.57rem;
+  font-weight:950;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.ec-embed-status-kicker[hidden]{
+  display:none!important;
+}
+
+.ec-embed-status-card.has-event-context
+  .ec-embed-spinner{
+  width:34px;
+  height:34px;
+  margin:0 0 15px;
+}
+
+.ec-embed-status-card.has-event-context
+  .ec-embed-status-title{
+  display:-webkit-box;
+  overflow:hidden;
+  font-size:1.08rem;
+  line-height:1.35;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:3;
+}
+
+.ec-embed-status-card.has-event-context
+  .ec-embed-status-message{
+  margin-left:0;
+  margin-right:0;
+}
+
+.ec-embed-status.is-trouble
+  .ec-embed-status-card.has-event-context
+  .ec-embed-status-actions{
+  justify-content:flex-start;
+}
+
+@media(max-width:650px){
+  .ec-embed-status-card.has-event-context{
+    grid-template-columns:1fr;
+    max-height:calc(100vh - 32px);
+    overflow-y:auto;
+  }
+
+  .ec-embed-event-visual{
+    min-height:150px;
+    border-right:0;
+    border-bottom:
+      1px solid rgba(201,164,79,.16);
+  }
+
+  .ec-embed-event-badge{
+    width:52px;
+    height:52px;
+  }
+
+  .ec-embed-status-card.has-event-context
+    .ec-embed-status-content{
+    padding:22px;
+    text-align:center;
+  }
+
+  .ec-embed-status-card.has-event-context
+    .ec-embed-spinner{
+    margin-left:auto;
+    margin-right:auto;
+  }
+
+  .ec-embed-status-card.has-event-context
+    .ec-embed-status-message{
+    margin-left:auto;
+    margin-right:auto;
+  }
+
+  .ec-embed-status.is-trouble
+    .ec-embed-status-card.has-event-context
+    .ec-embed-status-actions{
+    justify-content:center;
+  }
+}

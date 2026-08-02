@@ -1930,13 +1930,45 @@
       return;
     }
 
+    const match = state.currentMatch;
+    const stream = state.activeStream;
+    const home = match?.teams?.home || null;
+    const away = match?.teams?.away || null;
+
     window.eastcoinStreamedState = {
-      matchId: state.currentMatch.id,
-      title: state.currentMatch.title,
-      source: state.activeStream.source,
-      streamNo: state.activeStream.streamNo,
-      embedUrl: state.activeStream.embedUrl,
-      roomToken: createRoomToken(state.currentMatch, state.activeStream)
+      matchId: match.id,
+      title: match.title,
+      source: stream.source,
+      sourceLabel: sourceLabel(stream.source),
+      streamNo: stream.streamNo,
+      quality: stream.hd ? "HD" : "SD",
+      language: stream.language || "",
+      embedUrl: stream.embedUrl,
+      roomToken: createRoomToken(match, stream),
+      event: {
+        title: match.title || "",
+        category: sportName(match.category),
+        date: eventTimestamp(match.date),
+        live: isLiveMatch(match),
+        posterUrl:
+          API.posterUrl(match.poster) ||
+          API.matchupPosterUrl(match) ||
+          "",
+        home: home
+          ? {
+              name: home.name || "",
+              badgeUrl:
+                API.badgeUrl(home.badge) || ""
+            }
+          : null,
+        away: away
+          ? {
+              name: away.name || "",
+              badgeUrl:
+                API.badgeUrl(away.badge) || ""
+            }
+          : null
+      }
     };
   }
 
@@ -2020,9 +2052,14 @@
       );
     }
 
+    /*
+      Publish the event artwork before loadStream creates the iframe,
+      allowing the loading overlay to render the correct matchup
+      immediately.
+    */
+    updateShareState();
     window.loadStream(stream.embedUrl, true);
     renderServerPanel();
-    updateShareState();
     saveContinueEvent(
       state.currentMatch,
       stream

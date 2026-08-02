@@ -618,32 +618,88 @@
 
     embedStatus.innerHTML = `
       <div class="ec-embed-status-card">
-        <div class="ec-embed-spinner" aria-hidden="true"></div>
-        <strong class="ec-embed-status-title">
-          Loading…
-        </strong>
-        <p class="ec-embed-status-message">
-          Preparing the embedded player.
-        </p>
-        <div class="ec-embed-status-actions">
-          <button
-            class="ec-embed-action primary"
-            type="button"
-            data-ec-retry>
-            Try again
-          </button>
-          <button
-            class="ec-embed-action"
-            type="button"
-            data-ec-open>
-            Open directly ↗
-          </button>
-          <button
-            class="ec-embed-action"
-            type="button"
-            data-ec-back>
-            Go back
-          </button>
+        <div
+          class="ec-embed-event-visual"
+          data-ec-embed-event-visual
+          hidden>
+          <img
+            class="ec-embed-event-poster"
+            data-ec-embed-event-poster
+            alt=""
+            hidden>
+          <div
+            class="ec-embed-event-shade"
+            aria-hidden="true">
+          </div>
+          <div
+            class="ec-embed-event-badges"
+            aria-hidden="true">
+            <span
+              class="ec-embed-event-badge"
+              data-ec-embed-home
+              hidden>
+              <span data-ec-embed-home-initials></span>
+              <img
+                data-ec-embed-home-image
+                alt=""
+                hidden>
+            </span>
+            <span
+              class="ec-embed-event-vs"
+              data-ec-embed-vs
+              hidden>
+              VS
+            </span>
+            <span
+              class="ec-embed-event-badge"
+              data-ec-embed-away
+              hidden>
+              <span data-ec-embed-away-initials></span>
+              <img
+                data-ec-embed-away-image
+                alt=""
+                hidden>
+            </span>
+          </div>
+        </div>
+
+        <div class="ec-embed-status-content">
+          <div
+            class="ec-embed-spinner"
+            aria-hidden="true">
+          </div>
+          <span
+            class="ec-embed-status-kicker"
+            data-ec-embed-kicker
+            hidden>
+            Event room
+          </span>
+          <strong class="ec-embed-status-title">
+            Loading…
+          </strong>
+          <p class="ec-embed-status-message">
+            Preparing the embedded player.
+          </p>
+          <div class="ec-embed-status-actions">
+            <button
+              class="ec-embed-action primary"
+              type="button"
+              data-ec-retry>
+              Try again
+            </button>
+            <button
+              class="ec-embed-action"
+              type="button"
+              data-ec-open>
+              Open directly ↗
+            </button>
+            <button
+              class="ec-embed-action"
+              type="button"
+              data-ec-back>
+              Go back
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -663,20 +719,206 @@
       .addEventListener("click", returnFromFrame);
   }
 
+  function embedInitials(value) {
+    return String(value || "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0))
+      .join("")
+      .toUpperCase() || "EC";
+  }
+
+  function setEmbedContextImage(
+    image,
+    url,
+    fallbackContainer = null
+  ) {
+    if (!image) return;
+
+    image.onerror = null;
+    image.removeAttribute("src");
+    image.hidden = true;
+
+    if (!url) return;
+
+    image.onerror = () => {
+      image.hidden = true;
+      image.removeAttribute("src");
+
+      if (fallbackContainer) {
+        fallbackContainer.classList.add(
+          "image-failed"
+        );
+      }
+    };
+
+    image.src = url;
+    image.hidden = false;
+  }
+
+  function updateEmbedEventVisual() {
+    if (!embedStatus) return null;
+
+    const context =
+      window.eastcoinStreamedState;
+    const event = context?.event;
+    const card = embedStatus.querySelector(
+      ".ec-embed-status-card"
+    );
+    const visual = embedStatus.querySelector(
+      "[data-ec-embed-event-visual]"
+    );
+    const poster = embedStatus.querySelector(
+      "[data-ec-embed-event-poster]"
+    );
+    const homeWrap = embedStatus.querySelector(
+      "[data-ec-embed-home]"
+    );
+    const awayWrap = embedStatus.querySelector(
+      "[data-ec-embed-away]"
+    );
+    const homeImage = embedStatus.querySelector(
+      "[data-ec-embed-home-image]"
+    );
+    const awayImage = embedStatus.querySelector(
+      "[data-ec-embed-away-image]"
+    );
+    const homeInitials =
+      embedStatus.querySelector(
+        "[data-ec-embed-home-initials]"
+      );
+    const awayInitials =
+      embedStatus.querySelector(
+        "[data-ec-embed-away-initials]"
+      );
+    const versus = embedStatus.querySelector(
+      "[data-ec-embed-vs]"
+    );
+    const kicker = embedStatus.querySelector(
+      "[data-ec-embed-kicker]"
+    );
+
+    const hasEvent =
+      Boolean(context?.matchId && event);
+    card?.classList.toggle(
+      "has-event-context",
+      hasEvent
+    );
+
+    if (!hasEvent) {
+      if (visual) visual.hidden = true;
+      if (kicker) kicker.hidden = true;
+      setEmbedContextImage(poster, "");
+      setEmbedContextImage(homeImage, "");
+      setEmbedContextImage(awayImage, "");
+      return null;
+    }
+
+    const home = event.home;
+    const away = event.away;
+    const hasHome = Boolean(home?.name);
+    const hasAway = Boolean(away?.name);
+    const hasVisual = Boolean(
+      event.posterUrl ||
+      hasHome ||
+      hasAway
+    );
+
+    if (visual) {
+      visual.hidden = !hasVisual;
+    }
+
+    if (kicker) {
+      kicker.hidden = false;
+      kicker.textContent = event.live
+        ? "Live event"
+        : event.category || "Event room";
+    }
+
+    setEmbedContextImage(
+      poster,
+      event.posterUrl || ""
+    );
+
+    if (homeWrap) {
+      homeWrap.hidden = !hasHome;
+      homeWrap.classList.remove(
+        "image-failed"
+      );
+    }
+
+    if (awayWrap) {
+      awayWrap.hidden = !hasAway;
+      awayWrap.classList.remove(
+        "image-failed"
+      );
+    }
+
+    if (homeInitials) {
+      homeInitials.textContent =
+        embedInitials(home?.name);
+    }
+
+    if (awayInitials) {
+      awayInitials.textContent =
+        embedInitials(away?.name);
+    }
+
+    setEmbedContextImage(
+      homeImage,
+      home?.badgeUrl || "",
+      homeWrap
+    );
+    setEmbedContextImage(
+      awayImage,
+      away?.badgeUrl || "",
+      awayWrap
+    );
+
+    if (versus) {
+      versus.hidden = !(hasHome && hasAway);
+    }
+
+    return context;
+  }
+
   function showEmbedLoading(title = "Loading…") {
     if (!embedStatus) {
       return;
     }
 
+    const context =
+      updateEmbedEventVisual();
+
     embedStatus.hidden = false;
     embedStatus.classList.remove("is-trouble");
     embedStatus.querySelector(
       ".ec-embed-status-title"
-    ).textContent = title;
+    ).textContent = context?.title
+      ? `Loading ${context.title}…`
+      : title;
+
+    const streamDescription = context
+      ? [
+          context.sourceLabel ||
+            context.source,
+          context.streamNo != null
+            ? `Stream ${context.streamNo}`
+            : "",
+          context.quality,
+          context.language
+        ]
+          .filter(Boolean)
+          .join(" · ")
+      : "";
+
     embedStatus.querySelector(
       ".ec-embed-status-message"
-    ).textContent =
-      "Preparing the embedded player. This normally takes only a moment.";
+    ).textContent = streamDescription
+      ? `Connecting to ${streamDescription}.`
+      : "Preparing the embedded player. This normally takes only a moment.";
   }
 
   function showEmbedTrouble(title, message) {
@@ -684,6 +926,7 @@
       return;
     }
 
+    updateEmbedEventVisual();
     embedStatus.hidden = false;
     embedStatus.classList.add("is-trouble");
     embedStatus.querySelector(
