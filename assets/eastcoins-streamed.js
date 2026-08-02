@@ -94,7 +94,7 @@
     serverButton.id = "streamedServersButton";
     serverButton.type = "button";
     serverButton.hidden = true;
-    serverButton.textContent = "Servers";
+    serverButton.textContent = "Server Selector";
     serverButton.setAttribute(
       "aria-controls",
       "streamedServerPanel"
@@ -134,7 +134,9 @@
             class="streamed-server-close"
             id="streamedServerClose"
             type="button"
-            aria-label="Close server selector">×</button>
+            aria-label="Close Server List">
+            Close Server List
+          </button>
         </div>
       </div>
       <div
@@ -1169,7 +1171,12 @@
       .join("");
 
     player.serverButton.hidden = false;
-    player.serverButton.textContent = `Servers · ${state.streams.length}`;
+    player.serverButton.textContent = "Server Selector";
+    player.serverButton.setAttribute(
+      "aria-label",
+      `Server Selector, ${state.streams.length} ` +
+      `available stream${state.streams.length === 1 ? "" : "s"}`
+    );
   }
 
   function updateShareState() {
@@ -1218,13 +1225,29 @@
 
   function revealPlayerControls() {
     if (!player) return;
-    if (typeof window.setEastcoinPlayerToolbarCollapsed === "function") {
-      window.setEastcoinPlayerToolbarCollapsed(false, false);
+
+    if (
+      typeof window
+        .setEastcoinPlayerToolbarCollapsed ===
+      "function"
+    ) {
+      window.setEastcoinPlayerToolbarCollapsed(
+        false,
+        false
+      );
     } else {
-      player.playerToolbar.classList.remove("collapsed");
+      player.playerToolbar.classList.remove(
+        "collapsed"
+      );
     }
+
     player.playerToolbar.hidden = false;
-    setServerPanelOpen(true);
+
+    /*
+      Keep the server list closed until the visitor explicitly
+      clicks Server Selector.
+    */
+    setServerPanelOpen(false);
   }
 
   function selectStream(stream, openPanel = false) {
@@ -1250,10 +1273,25 @@
     toast(`${sourceLabel(stream.source)} Stream ${stream.streamNo} loaded.`);
   }
 
-  async function loadMatch(match, preferredSource = "", preferredNo = "") {
+  async function loadMatch(
+    match,
+    preferredSource = "",
+    preferredNo = ""
+  ) {
     if (!player) return;
+
     state.currentMatch = match;
-    setStatus(`Loading available servers for ${match.title || match.id}…`);
+
+    /*
+      New events always begin with the video fully visible.
+      The server drawer opens only from Server Selector.
+    */
+    setServerPanelOpen(false);
+
+    setStatus(
+      `Loading available servers for ` +
+      `${match.title || match.id}…`
+    );
 
     try {
       state.streams = await API.getStreams(match, false);
@@ -1262,12 +1300,7 @@
         preferredSource,
         preferredNo
       ) || recommendedStream(state.streams);
-      selectStream(
-        selected,
-        window.matchMedia(
-          "(min-width: 1101px)"
-        ).matches
-      );
+      selectStream(selected, false);
       setStatus(
         `${state.streams.length} stream${state.streams.length === 1 ? "" : "s"} loaded. ` +
         "Choose another server whenever the current one is not working."

@@ -330,3 +330,14 @@ VIEW ALL STREAMS FIX
 - Discovery data is requested only when it has not already been loaded.
 - Streamed JavaScript was cache-busted from server9 to server10.
 - Updated changelog.html.
+
+
+MANUAL SERVER SELECTOR
+- Loading an event no longer opens the server drawer automatically.
+- Shared and direct event links also begin with the server drawer closed.
+- The top player button is now labeled Server Selector.
+- The stream count remains available through the button's accessible label.
+- The close control now reads Close Server List.
+- Close Server List uses a prominent red treatment.
+- Streamed CSS and JavaScript were cache-busted to server11.
+- Updated changelog.html.
