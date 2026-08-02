@@ -1,6 +1,56 @@
 <!doctype html>
 <html lang="en">
 <head>
+<script>
+    (() => {
+      const storageKey =
+        "eastcoinZwadesBlueAgreement";
+      const cookieName =
+        "eastcoinZwadesBlueAgreement";
+      const version = "v1";
+      const resetParameter =
+        "resetZwadesAgreement";
+      const reset =
+        new URLSearchParams(location.search)
+          .get(resetParameter) === "1";
+
+      if (reset) {
+        try {
+          localStorage.removeItem(storageKey);
+        } catch {}
+
+        document.cookie =
+          `${cookieName}=; Max-Age=0; Path=/; SameSite=Lax`;
+      }
+
+      let localValue = "";
+
+      try {
+        localValue = localStorage.getItem(storageKey);
+      } catch {}
+
+      const cookieValue = document.cookie
+        .split(";")
+        .map((part) => part.trim())
+        .find((part) =>
+          part.startsWith(`${cookieName}=`)
+        )
+        ?.split("=")
+        .slice(1)
+        .join("=");
+
+      document.documentElement.classList.add(
+        !reset &&
+        (
+          localValue === version ||
+          cookieValue === version
+        )
+          ? "ec-zwades-agreement-granted"
+          : "ec-zwades-agreement-required"
+      );
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/eastcoins-agreement.css?v=gate2" />
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive">
@@ -2058,5 +2108,6 @@ draw();
 pickOpponent();
 setTimeout(runCountdown,450);
 </script>
+  <script src="assets/eastcoins-agreement.js?v=gate2"></script>
 </body>
 </html>

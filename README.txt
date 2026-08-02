@@ -212,3 +212,19 @@ ZWADES AGREEMENT GATE TEST
 - After agreement, “Reset agreement test” appears for repeated testing.
 - Force a fresh test with /agreement-test.html?resetAgreement=1
 - Added the feature to changelog.html.
+
+
+ZWADES AGREEMENT GATE — SITEWIDE LAUNCH
+- Runs on every active EastCoin HTML page.
+- Production localStorage key: eastcoinZwadesBlueAgreement
+- Production cookie: eastcoinZwadesBlueAgreement
+- Agreement version: v1
+- Cookie duration: 400 days, refreshed on return.
+- Manual “I Agree” click is required.
+- Background interaction, scrolling, Escape dismissal, and Tab escape are
+  blocked until acceptance.
+- No public reset button is shown.
+- agreement-test.html redirects to a fresh production preview using
+  index.html?resetZwadesAgreement=1
+- The prior test-only agreement does not count toward production.
+- Updated changelog.html.

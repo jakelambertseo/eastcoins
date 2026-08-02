@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>
+    (() => {
+      const storageKey =
+        "eastcoinZwadesBlueAgreement";
+      const cookieName =
+        "eastcoinZwadesBlueAgreement";
+      const version = "v1";
+      const resetParameter =
+        "resetZwadesAgreement";
+      const reset =
+        new URLSearchParams(location.search)
+          .get(resetParameter) === "1";
+
+      if (reset) {
+        try {
+          localStorage.removeItem(storageKey);
+        } catch {}
+
+        document.cookie =
+          `${cookieName}=; Max-Age=0; Path=/; SameSite=Lax`;
+      }
+
+      let localValue = "";
+
+      try {
+        localValue = localStorage.getItem(storageKey);
+      } catch {}
+
+      const cookieValue = document.cookie
+        .split(";")
+        .map((part) => part.trim())
+        .find((part) =>
+          part.startsWith(`${cookieName}=`)
+        )
+        ?.split("=")
+        .slice(1)
+        .join("=");
+
+      document.documentElement.classList.add(
+        !reset &&
+        (
+          localValue === version ||
+          cookieValue === version
+        )
+          ? "ec-zwades-agreement-granted"
+          : "ec-zwades-agreement-required"
+      );
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/eastcoins-agreement.css?v=gate2" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>EastCoin Bonk — Share Score Card</title>
+<link rel="icon" href="assets/eastcoin-favicon.png">
+<style>
+:root{
+  --black:#090806;
+  --cream:#eee2c5;
+  --gold:#c5a34c;
+  --gold-bright:#ead17b;
+  --muted:#b9aa8d;
+  --shadow:0 28px 70px rgba(0,0,0,.56);
+}
+
+*{box-sizing:border-box}
+html,body{width:100%;min-height:100%;margin:0}
+
+body{
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  color:var(--cream);
+  background:
+    linear-gradient(rgba(0,0,0,.38),rgba(0,0,0,.38)),
+    repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,.012) 0,
+      rgba(255,255,255,.012) 1px,
+      transparent 1px,
+      transparent 5px
+    ),
+    radial-gradient(circle at 15% 0%,rgba(118,31,36,.36),transparent 30%),
+    #0b0907;
+  font-family:Arial,Helvetica,sans-serif;
+}
+
+.shell{width:min(1040px,100%)}
+
+.title{
+  margin-bottom:14px;
+  padding:17px 19px;
+  border:2px solid rgba(197,163,76,.42);
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(255,255,255,.018) 0,
+      rgba(255,255,255,.018) 2px,
+      transparent 2px,
+      transparent 8px
+    ),
+    linear-gradient(180deg,#2a2017,#17120e);
+  box-shadow:var(--shadow);
+}
+
+.kicker{
+  color:var(--gold-bright);
+  font-family:Georgia,serif;
+  font-size:.72rem;
+  font-weight:900;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+}
+
+h1{
+  margin:8px 0 4px;
+  font-family:Georgia,serif;
+  font-size:clamp(2rem,5vw,4rem);
+  text-transform:uppercase;
+}
+
+.title p{
+  margin:0;
+  color:var(--muted);
+  font-size:.82rem;
+  line-height:1.55;
+}
+
+.instruction{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
+  padding:15px 16px;
+  border:2px solid var(--gold-bright);
+  color:#241806;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(255,255,255,.13) 0,
+      rgba(255,255,255,.13) 4px,
+      transparent 4px,
+      transparent 10px
+    ),
+    #d7b75a;
+  box-shadow:0 12px 28px rgba(0,0,0,.36);
+  font-size:.93rem;
+  line-height:1.48;
+  font-weight:900;
+}
+
+.instruction-icon{
+  flex:0 0 42px;
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border:2px solid rgba(36,24,6,.35);
+  border-radius:50%;
+  background:#f3dfa0;
+  font-size:1.15rem;
+  animation:flashIcon .8s ease-in-out infinite alternate;
+}
+
+@keyframes flashIcon{
+  from{transform:scale(1)}
+  to{transform:scale(1.1)}
+}
+
+.panel{
+  padding:16px;
+  border:3px double rgba(197,163,76,.48);
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(255,255,255,.018) 0,
+      rgba(255,255,255,.018) 2px,
+      transparent 2px,
+      transparent 8px
+    ),
+    linear-gradient(180deg,#2b2118,#14100c);
+  box-shadow:var(--shadow);
+}
+
+.image{
+  display:block;
+  width:100%;
+  border:2px solid rgba(197,163,76,.28);
+  background:#0b0907;
+}
+
+.empty{
+  display:none;
+  min-height:340px;
+  place-items:center;
+  padding:24px;
+  border:2px dashed rgba(197,163,76,.25);
+  color:var(--muted);
+  text-align:center;
+  line-height:1.55;
+}
+
+@media(max-width:600px){
+  .instruction{align-items:flex-start}
+}
+</style>
+</head>
+
+<body>
+<main class="shell">
+  <section class="title">
+    <div class="kicker">EastCoin Bonk</div>
+    <h1>House Score Card</h1>
+    <p>The instructions remain outside the image itself.</p>
+  </section>
+
+  <div class="instruction">
+    <div class="instruction-icon">⚠</div>
+    <div>
+      <strong>Right-click the score card</strong> →
+      choose <strong>Copy image</strong> →
+      open Discord and paste it.
+    </div>
+  </div>
+
+  <section class="panel">
+    <img
+      class="image"
+      id="scoreImage"
+      alt="EastCoin Bonk score card"
+    >
+
+    <div
+      class="empty"
+      id="emptyState">
+      No score card was found. Finish a Bonk round and open the share card again.
+    </div>
+  </section>
+</main>
+
+<script>
+const image=document.getElementById('scoreImage');
+const emptyState=document.getElementById('emptyState');
+const dataUrl=
+  localStorage.getItem('eastcoinBonkScoreCard')||'';
+
+if(dataUrl){
+  image.src=dataUrl;
+}else{
+  image.style.display='none';
+  emptyState.style.display='grid';
+}
+</script>
+  <script src="assets/eastcoins-agreement.js?v=gate2"></script>
+</body>
+</html>

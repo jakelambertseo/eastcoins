@@ -1,6 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+    (() => {
+      const storageKey =
+        "eastcoinZwadesBlueAgreement";
+      const cookieName =
+        "eastcoinZwadesBlueAgreement";
+      const version = "v1";
+      const resetParameter =
+        "resetZwadesAgreement";
+      const reset =
+        new URLSearchParams(location.search)
+          .get(resetParameter) === "1";
+
+      if (reset) {
+        try {
+          localStorage.removeItem(storageKey);
+        } catch {}
+
+        document.cookie =
+          `${cookieName}=; Max-Age=0; Path=/; SameSite=Lax`;
+      }
+
+      let localValue = "";
+
+      try {
+        localValue = localStorage.getItem(storageKey);
+      } catch {}
+
+      const cookieValue = document.cookie
+        .split(";")
+        .map((part) => part.trim())
+        .find((part) =>
+          part.startsWith(`${cookieName}=`)
+        )
+        ?.split("=")
+        .slice(1)
+        .join("=");
+
+      document.documentElement.classList.add(
+        !reset &&
+        (
+          localValue === version ||
+          cookieValue === version
+        )
+          ? "ec-zwades-agreement-granted"
+          : "ec-zwades-agreement-required"
+      );
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/eastcoins-agreement.css?v=gate2" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -1199,14 +1249,14 @@
               <time datetime="2026-08">August 2026</time>
               <span class="latest-badge">Latest</span>
             </div>
-            <h2>Zwades agreement gate test</h2>
+            <h2>Zwades agreement gate launched</h2>
             <p>
-              Added <strong>agreement-test.html</strong> to test a mandatory
-              one-time “Zwades is Blue” confirmation before entering EastCoin.
-              The full-screen gate requires a manual I Agree click, blocks
-              keyboard and pointer access to the site, remembers acceptance
-              through long-lived cookie and browser storage, and includes a
-              test-only reset control. The live site remains unchanged.
+              Added the mandatory one-time “Zwades is Blue” confirmation
+              across every EastCoin page, including direct game and scorecard
+              URLs. The full-screen gate requires a manual I Agree click,
+              blocks keyboard and pointer access until accepted, and remembers
+              agreement through a refreshed 400-day cookie plus browser
+              storage. The former test URL now opens a fresh agreement preview.
             </p>
           </article>
         </section>
@@ -1391,5 +1441,6 @@
     initializeFootballCountdowns();
 
   </script>
+  <script src="assets/eastcoins-agreement.js?v=gate2"></script>
 </body>
 </html>

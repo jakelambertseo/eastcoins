@@ -1,3 +1,7 @@
+/* ================================================================
+   EASTCOIN — SITEWIDE "ZWADES IS BLUE" AGREEMENT GATE
+   ================================================================ */
+
 html.ec-zwades-agreement-required,
 html.ec-zwades-agreement-required body{
   width:100%;
@@ -8,6 +12,22 @@ html.ec-zwades-agreement-required body{
 
 html.ec-zwades-agreement-required body{
   touch-action:none;
+}
+
+html.ec-zwades-agreement-required::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:2147483646;
+  display:block;
+  background:
+    radial-gradient(
+      circle at 50% 23%,
+      rgba(104,17,29,.23),
+      transparent 36%
+    ),
+    #000;
+  pointer-events:auto;
 }
 
 .ec-zwades-agreement-gate{
@@ -268,36 +288,6 @@ html.ec-zwades-agreement-required
   color:#9f917d;
 }
 
-.ec-zwades-agreement-reset{
-  position:fixed;
-  right:15px;
-  bottom:15px;
-  z-index:400;
-  display:none;
-  min-height:34px;
-  padding:7px 10px;
-  border:1px solid rgba(201,164,79,.16);
-  border-radius:8px;
-  color:#9e927f;
-  background:rgba(3,3,3,.88);
-  box-shadow:0 10px 30px rgba(0,0,0,.5);
-  backdrop-filter:blur(10px);
-  font-size:.62rem;
-  font-weight:900;
-}
-
-html.ec-zwades-agreement-granted
-  .ec-zwades-agreement-reset{
-  display:block;
-}
-
-.ec-zwades-agreement-reset:hover,
-.ec-zwades-agreement-reset:focus-visible{
-  border-color:rgba(237,208,124,.4);
-  color:#ffe8a3;
-  outline:0;
-}
-
 @media(max-width:560px){
   .ec-zwades-agreement-gate{
     padding:12px;
@@ -323,11 +313,6 @@ html.ec-zwades-agreement-granted
 
   .ec-zwades-agreement-statement{
     padding:15px 13px;
-  }
-
-  .ec-zwades-agreement-reset{
-    right:10px;
-    bottom:10px;
   }
 }
 
