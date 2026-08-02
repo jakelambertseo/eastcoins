@@ -65,16 +65,17 @@
 
   <meta
     name="description"
-    content="EastCoin favorite sites."
+    content="Current EastCoin event-service status and provider availability."
   />
 
-  <title>EastCoin — Favorites</title>
+  <title>EastCoin — Status</title>
   <link rel="icon" type="image/png" href="assets/eastcoin-favicon.png" />
   <link rel="shortcut icon" href="assets/eastcoin-favicon.png" />
   <link rel="apple-touch-icon" href="assets/eastcoin-favicon.png" />
 
   <link rel="stylesheet" href="assets/eastcoins-theme.css" />
   <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux5" />
+  <link rel="stylesheet" href="assets/eastcoins-status.css?v=status1" />
 
   <style>
     :root {
@@ -826,6 +827,166 @@
     );
 }
 
+
+/* ---------------- CHANGELOG PAGE ---------------- */
+
+.changelog-shell{
+  width:min(900px,100%);
+  margin:0 auto;
+  padding:44px 34px 70px;
+}
+
+.changelog-header{
+  margin-bottom:34px;
+}
+
+.changelog-header h1{
+  margin:9px 0 11px;
+  color:#fff;
+  font-size:clamp(2.4rem,7vw,5rem);
+  line-height:.92;
+  letter-spacing:-.065em;
+}
+
+.changelog-header p{
+  max-width:620px;
+  margin:0;
+  color:#9ca4b3;
+  font-size:.95rem;
+  line-height:1.7;
+}
+
+.release-count{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin-top:16px;
+  padding:6px 9px;
+  border:1px solid rgba(201,164,79,.2);
+  border-radius:999px;
+  color:#cabd9e;
+  background:rgba(201,164,79,.05);
+  font-size:.68rem;
+  font-weight:900;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+
+.timeline{
+  position:relative;
+  display:grid;
+  gap:18px;
+  padding-left:28px;
+}
+
+.timeline::before{
+  content:"";
+  position:absolute;
+  left:8px;
+  top:8px;
+  bottom:8px;
+  width:2px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(201,164,79,.65),
+      rgba(91,36,43,.7)
+    );
+}
+
+.timeline-entry{
+  position:relative;
+  padding:18px 20px;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:13px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.025),
+      rgba(255,255,255,.012)
+    );
+  box-shadow:0 12px 28px rgba(0,0,0,.2);
+}
+
+.timeline-entry::before{
+  content:"";
+  position:absolute;
+  left:-27px;
+  top:24px;
+  width:12px;
+  height:12px;
+  border:3px solid #15110d;
+  border-radius:50%;
+  background:#c9a44f;
+  box-shadow:0 0 0 3px rgba(201,164,79,.16);
+}
+
+.timeline-entry.latest{
+  border-color:rgba(201,164,79,.24);
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(201,164,79,.08),
+      transparent 38%
+    ),
+    rgba(255,255,255,.018);
+}
+
+.timeline-date{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:7px;
+  color:#b9aa89;
+  font-size:.65rem;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.latest-badge{
+  padding:4px 7px;
+  border:1px solid rgba(201,164,79,.25);
+  border-radius:999px;
+  color:#efd784;
+  background:rgba(201,164,79,.07);
+  font-size:.56rem;
+}
+
+.timeline-entry h2{
+  margin:0;
+  color:#f3ead5;
+  font-size:1.18rem;
+  line-height:1.25;
+  letter-spacing:-.025em;
+}
+
+.timeline-entry p{
+  margin:8px 0 0;
+  color:#939baa;
+  font-size:.82rem;
+  line-height:1.65;
+}
+
+@media(max-width:760px){
+  .changelog-shell{
+    padding:34px 18px 54px;
+  }
+
+  .timeline{
+    padding-left:23px;
+  }
+
+  .timeline::before{
+    left:6px;
+  }
+
+  .timeline-entry::before{
+    left:-22px;
+  }
+}
+
 </style>
 </head>
 
@@ -848,7 +1009,7 @@
         <div class="nav-label">EastCoin</div>
         <a class="nav-link" href="index.html?new=1" target="_top">📺 Live Player</a>
         <a class="nav-link" href="events.html" target="_top">🏟️ Events</a>
-        <a class="nav-link active" href="favorites.html" target="_top">⭐ Favorites</a>
+        <a class="nav-link" href="favorites.html" target="_top">⭐ Favorites</a>
         <details class="nav-games-menu">
           <summary class="nav-link nav-games-summary">
             <span class="nav-games-summary-copy">🎮 Games</span>
@@ -952,91 +1113,105 @@
       aria-expanded="true">◀</button>
 
     <main class="page-main">
-      <div class="page-shell">
-        <header class="page-header">
-          <div class="eyebrow">
-            <span class="eyebrow-dot"></span>
-            EastCoin bookmarks
+      <div class="status-shell">
+        <header class="status-header">
+          <div>
+            <div class="eyebrow">
+              <span class="eyebrow-dot"></span>
+              EastCoin service health
+            </div>
+            <h1>System Status</h1>
+            <p>
+              Check whether EastCoin’s event listings are responding.
+              Stream availability is checked only after opening an event.
+            </p>
           </div>
 
-          <h1>Favorites</h1>
-
-          <p>
-            Select a site to load its URL directly into the EastCoin player.
-          </p>
+          <button
+            class="status-refresh"
+            id="statusRefresh"
+            type="button">
+            Refresh status
+          </button>
         </header>
 
-        <section class="favorites-section">
-
-          <div class="favorite-list">
-
-            <!-- FAVORITE SITE START -->
-            <a
-              class="favorite-site"
-              href="index.html"
-              data-watch-url="https://streamed.pk/">
-              <div class="favorite-copy">
-                <div class="site-name">Streamed PK</div>
-                <div class="site-url">https://streamed.pk/</div>
-              </div>
-
-              <span class="site-arrow" aria-hidden="true">→</span>
-            </a>
-            <!-- FAVORITE SITE END -->
-
-            <!-- FAVORITE SITE START -->
-            <a
-              class="favorite-site"
-              href="index.html"
-              data-watch-url="https://streamed.st/">
-              <div class="favorite-copy">
-                <div class="site-name">Streamed ST</div>
-                <div class="site-url">https://streamed.st/</div>
-              </div>
-
-              <span class="site-arrow" aria-hidden="true">→</span>
-            </a>
-            <!-- FAVORITE SITE END -->
-
-            <!-- FAVORITE SITE START -->
-            <a
-              class="favorite-site"
-              href="index.html"
-              data-watch-url="https://dlhd.st/">
-              <div class="favorite-copy">
-                <div class="site-name">DaddyLive</div>
-                <div class="site-url">https://dlhd.st/</div>
-              </div>
-
-              <span class="site-arrow" aria-hidden="true">→</span>
-            </a>
-            <!-- FAVORITE SITE END -->
-
-            <!-- FAVORITE SITE START -->
-            <a
-              class="favorite-site"
-              href="index.html"
-              data-watch-url="https://timstreams.st/">
-              <div class="favorite-copy">
-                <div class="site-name">Tim Streams</div>
-                <div class="site-url">https://timstreams.st/</div>
-              </div>
-
-              <span class="site-arrow" aria-hidden="true">→</span>
-            </a>
-            <!-- FAVORITE SITE END -->
-
-          </div>
-
-          <div class="editing-note">
-            Ping Booty on Discord to add sites to this list.
+        <section
+          class="status-summary"
+          id="statusSummary"
+          aria-live="polite">
+          <span
+            class="status-summary-dot"
+            aria-hidden="true"></span>
+          <div>
+            <strong id="statusSummaryTitle">
+              Checking EastCoin services…
+            </strong>
+            <span id="statusSummaryDetail">
+              Using the same provider-friendly cache as the event browser.
+            </span>
           </div>
         </section>
+
+        <div class="status-grid">
+          <article class="status-card operational">
+            <div class="status-card-head">
+              <h2>EastCoin website</h2>
+              <span class="status-badge">Operational</span>
+            </div>
+            <div class="status-card-value">Online</div>
+            <p class="status-card-detail">
+              The EastCoin interface and navigation loaded successfully.
+            </p>
+          </article>
+
+          <article class="status-card" id="liveCard">
+            <div class="status-card-head">
+              <h2>Live event feed</h2>
+              <span class="status-badge" id="liveBadge">Checking</span>
+            </div>
+            <div class="status-card-value" id="liveValue">—</div>
+            <p class="status-card-detail" id="liveDetail">
+              Checking available live events.
+            </p>
+          </article>
+
+          <article class="status-card" id="todayCard">
+            <div class="status-card-head">
+              <h2>Today’s schedule</h2>
+              <span class="status-badge" id="todayBadge">Checking</span>
+            </div>
+            <div class="status-card-value" id="todayValue">—</div>
+            <p class="status-card-detail" id="todayDetail">
+              Checking today’s listed events.
+            </p>
+          </article>
+
+          <article class="status-card operational">
+            <div class="status-card-head">
+              <h2>Stream servers</h2>
+              <span class="status-badge">On demand</span>
+            </div>
+            <div class="status-card-value">Per event</div>
+            <p class="status-card-detail">
+              Server availability is loaded only when someone opens an event,
+              avoiding unnecessary provider requests.
+            </p>
+          </article>
+        </div>
+
+        <p class="status-note">
+          EastCoin does not continuously poll the provider. This page shares
+          the normal Live and Today cache, and a fresh check happens only when
+          necessary or when someone presses Refresh status.
+          <span id="statusChecked"></span>
+        </p>
       </div>
     </main>
   </div>
 
-    <script src="assets/eastcoins-ux.js?v=ux5"></script>
+    <script src="assets/eastcoins-streamed-api.js?v=api2"></script>
+  <script src="assets/eastcoins-status.js?v=status1"></script>
+  <script src="assets/eastcoins-ux.js?v=ux5"></script>
 
 <script>
     const body = document.body;

@@ -15,10 +15,19 @@
     "eastcoinSelectedStreamedMatchV1";
   const CONTINUE_KEY =
     "eastcoinContinueStreamedEventV1";
+  const RECENT_KEY =
+    "eastcoinRecentStreamedEventsV1";
+  const SERVER_PREFERENCES_KEY =
+    "eastcoinServerPreferencesV1";
+  const SERVER_FEEDBACK_KEY =
+    "eastcoinServerFeedbackV1";
   const SHORTCUT_HINT_KEY =
     "eastcoinStreamedShortcutHintV1";
   const CONTINUE_MAX_AGE =
     36 * 60 * 60 * 1000;
+  const RECENT_MAX_AGE =
+    7 * 24 * 60 * 60 * 1000;
+  const RECENT_LIMIT = 6;
   const AUTO_RECOVERY_TIMEOUT = 14_000;
   const AUTO_RECOVERY_LIMIT = 2;
   const pageContext = discoveryRoot.dataset.context || "player";
@@ -36,10 +45,15 @@
     query: "",
     favoriteTeams: loadFavoriteTeams(),
     continueEvent: loadContinueEvent(),
+    recentEvents: loadRecentEvents(),
+    serverPreferences: loadServerPreferences(),
+    serverFeedback: loadServerFeedback(),
     currentMatch: null,
     streams: [],
     activeStream: null,
     serverPanelOpen: false,
+    gameBreakOpen: false,
+    connectionMode: "idle",
     failedStreamKeys: new Set(),
     recoveryTimer: null,
     recoverySerial: 0,
@@ -66,6 +80,18 @@
     ),
     continueList: document.getElementById(
       "streamedContinueList"
+    ),
+    recentSection: document.getElementById(
+      "streamedRecentSection"
+    ),
+    recentList: document.getElementById(
+      "streamedRecentList"
+    ),
+    nightSection: document.getElementById(
+      "streamedNightSection"
+    ),
+    nightList: document.getElementById(
+      "streamedNightList"
     ),
     popularSection: document.getElementById("streamedPopularSection"),
     popularList: document.getElementById("streamedPopularList"),
@@ -179,6 +205,64 @@
       nextServerButton
     );
 
+    const connectionStatus =
+      document.createElement("span");
+    connectionStatus.className =
+      "streamed-connection-status";
+    connectionStatus.hidden = true;
+    connectionStatus.innerHTML = `
+      <span
+        class="streamed-connection-dot"
+        aria-hidden="true"></span>
+      <span data-connection-label>
+        Waiting
+      </span>
+    `;
+    toolbarActions.insertBefore(
+      connectionStatus,
+      serverButton
+    );
+
+    const feedbackGroup =
+      document.createElement("span");
+    feedbackGroup.className =
+      "streamed-feedback-group";
+    feedbackGroup.hidden = true;
+    feedbackGroup.innerHTML = `
+      <button
+        class="toolbar-button streamed-feedback-button works"
+        type="button"
+        data-stream-works>
+        ✓ Works
+      </button>
+      <button
+        class="toolbar-button streamed-feedback-button broken"
+        type="button"
+        data-stream-broken>
+        ✕ Broken
+      </button>
+    `;
+    nextServerButton.insertAdjacentElement(
+      "afterend",
+      feedbackGroup
+    );
+
+    const gameBreakButton =
+      document.createElement("button");
+    gameBreakButton.className =
+      "toolbar-button streamed-game-break-button";
+    gameBreakButton.type = "button";
+    gameBreakButton.hidden = true;
+    gameBreakButton.textContent = "Game Break";
+    gameBreakButton.setAttribute(
+      "aria-keyshortcuts",
+      "G"
+    );
+    feedbackGroup.insertAdjacentElement(
+      "afterend",
+      gameBreakButton
+    );
+
     const serverPanel = document.createElement("section");
     serverPanel.className = "streamed-server-panel";
     serverPanel.id = "streamedServerPanel";
@@ -210,11 +294,112 @@
           </button>
         </div>
       </div>
+
+      <section class="streamed-server-preferences">
+        <div class="streamed-server-preferences-head">
+          <strong>Your server preferences</strong>
+          <span>Saved on this browser</span>
+        </div>
+
+        <div class="streamed-server-preference-grid">
+          <label>
+            <span>Provider</span>
+            <select id="streamedPreferredSource">
+              <option value="auto">Auto</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Language</span>
+            <select id="streamedPreferredLanguage">
+              <option value="any">Any</option>
+              <option value="english">English</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Quality</span>
+            <select id="streamedPreferredQuality">
+              <option value="hd">Prefer HD</option>
+              <option value="any">Any quality</option>
+            </select>
+          </label>
+        </div>
+
+        <button
+          class="streamed-use-preferences"
+          id="streamedUsePreferences"
+          type="button">
+          Use preferred server
+        </button>
+      </section>
+
       <div
         class="streamed-source-groups"
         id="streamedSourceGroups"></div>
     `;
     playerToolbar.insertAdjacentElement("afterend", serverPanel);
+
+    const gameBreakPanel =
+      document.createElement("aside");
+    gameBreakPanel.className =
+      "streamed-game-break-panel";
+    gameBreakPanel.id =
+      "streamedGameBreakPanel";
+    gameBreakPanel.hidden = true;
+    gameBreakPanel.setAttribute(
+      "aria-label",
+      "EastCoin game break"
+    );
+    gameBreakPanel.innerHTML = `
+      <div class="streamed-game-break-head">
+        <div>
+          <span>While you wait</span>
+          <strong>Take a quick game break</strong>
+        </div>
+        <button
+          class="streamed-game-break-close"
+          type="button"
+          data-close-game-break>
+          Return to event
+        </button>
+      </div>
+
+      <p class="streamed-game-break-copy">
+        Games open in a new tab so your stream stays ready here.
+      </p>
+
+      <div class="streamed-game-break-list">
+        <a
+          href="bonk.html"
+          target="_blank"
+          rel="noopener">
+          <span>🔨</span>
+          <strong>EastCoin Bonk</strong>
+          <small>Fast reflex bonking</small>
+        </a>
+        <a
+          href="aim-trainer.html?v=embedded1"
+          target="_blank"
+          rel="noopener">
+          <span>🎯</span>
+          <strong>Aim Trainer</strong>
+          <small>Quick accuracy challenge</small>
+        </a>
+        <a
+          href="button-masher.html?v=embedded1"
+          target="_blank"
+          rel="noopener">
+          <span>🟥</span>
+          <strong>Button Masher</strong>
+          <small>Short competitive rounds</small>
+        </a>
+      </div>
+    `;
+    serverPanel.insertAdjacentElement(
+      "afterend",
+      gameBreakPanel
+    );
 
     const bindings = {
       form,
@@ -230,9 +415,37 @@
       currentHost,
       changeButton,
       quickButton,
+      connectionStatus,
+      connectionLabel: connectionStatus.querySelector(
+        "[data-connection-label]"
+      ),
+      feedbackGroup,
+      worksButton: feedbackGroup.querySelector(
+        "[data-stream-works]"
+      ),
+      brokenButton: feedbackGroup.querySelector(
+        "[data-stream-broken]"
+      ),
       serverButton,
       nextServerButton,
+      gameBreakButton,
+      gameBreakPanel,
+      gameBreakClose: gameBreakPanel.querySelector(
+        "[data-close-game-break]"
+      ),
       serverPanel,
+      preferredSource: serverPanel.querySelector(
+        "#streamedPreferredSource"
+      ),
+      preferredLanguage: serverPanel.querySelector(
+        "#streamedPreferredLanguage"
+      ),
+      preferredQuality: serverPanel.querySelector(
+        "#streamedPreferredQuality"
+      ),
+      usePreferences: serverPanel.querySelector(
+        "#streamedUsePreferences"
+      ),
       serverArtwork: serverPanel.querySelector(
         "#streamedServerArtwork"
       ),
@@ -249,6 +462,66 @@
       "click",
       () => selectNextStream("manual")
     );
+
+    bindings.worksButton.addEventListener(
+      "click",
+      () => reportCurrentStream("works")
+    );
+
+    bindings.brokenButton.addEventListener(
+      "click",
+      () => reportCurrentStream("broken")
+    );
+
+    gameBreakButton.addEventListener(
+      "click",
+      () => setGameBreakOpen(
+        !state.gameBreakOpen
+      )
+    );
+
+    bindings.gameBreakClose.addEventListener(
+      "click",
+      () => setGameBreakOpen(false)
+    );
+
+    [
+      bindings.preferredSource,
+      bindings.preferredLanguage,
+      bindings.preferredQuality
+    ].forEach((select) => {
+      select.addEventListener("change", () => {
+        state.serverPreferences = {
+          source:
+            bindings.preferredSource.value,
+          language:
+            bindings.preferredLanguage.value,
+          quality:
+            bindings.preferredQuality.value
+        };
+        saveServerPreferences();
+        renderServerPanel();
+        toast("Server preferences saved.");
+      });
+    });
+
+    bindings.usePreferences.addEventListener(
+      "click",
+      () => {
+        const preferred =
+          recommendedStream(state.streams);
+
+        if (preferred) {
+          selectStream(
+            preferred,
+            false,
+            "preference"
+          );
+          setServerPanelOpen(false);
+        }
+      }
+    );
+
     bindings.serverClose.addEventListener("click", () => {
       setServerPanelOpen(false);
     });
@@ -436,6 +709,7 @@
       )
       ?.remove();
 
+    rememberRecentEvent(match, stream);
     renderContinueWatching();
   }
 
@@ -471,6 +745,182 @@
     return hours < 24
       ? `Watched ${hours}h ago`
       : "Watched yesterday";
+  }
+
+  function loadRecentEvents() {
+    try {
+      const parsed = JSON.parse(
+        localStorage.getItem(RECENT_KEY) ||
+        "[]"
+      );
+
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+
+      const cutoff =
+        Date.now() - RECENT_MAX_AGE;
+
+      return parsed
+        .filter(
+          (item) =>
+            item?.match?.id &&
+            Number(item.watchedAt) >= cutoff
+        )
+        .slice(0, RECENT_LIMIT);
+    } catch {
+      return [];
+    }
+  }
+
+  function saveRecentEvents() {
+    try {
+      localStorage.setItem(
+        RECENT_KEY,
+        JSON.stringify(state.recentEvents)
+      );
+    } catch {}
+  }
+
+  function rememberRecentEvent(match, stream) {
+    if (!match?.id || !stream) return;
+
+    const id = eventKey(match);
+    const entry = {
+      match: compactMatch(match),
+      source: String(stream.source || ""),
+      streamNo: stream.streamNo,
+      watchedAt: Date.now()
+    };
+
+    state.recentEvents = [
+      entry,
+      ...state.recentEvents.filter(
+        (item) =>
+          eventKey(item.match) !== id
+      )
+    ].slice(0, RECENT_LIMIT);
+
+    saveRecentEvents();
+    renderRecentlyWatched();
+  }
+
+  function clearRecentEvents() {
+    state.recentEvents = [];
+
+    try {
+      localStorage.removeItem(RECENT_KEY);
+    } catch {}
+
+    renderRecentlyWatched();
+    toast("Recently Watched cleared.");
+  }
+
+  function removeRecentEvent(id) {
+    state.recentEvents =
+      state.recentEvents.filter(
+        (item) =>
+          eventKey(item.match) !== id
+      );
+
+    saveRecentEvents();
+    renderRecentlyWatched();
+  }
+
+  function loadServerPreferences() {
+    try {
+      const parsed = JSON.parse(
+        localStorage.getItem(
+          SERVER_PREFERENCES_KEY
+        ) || "null"
+      );
+
+      return {
+        source: String(
+          parsed?.source || "auto"
+        ).toLowerCase(),
+        language: String(
+          parsed?.language || "english"
+        ).toLowerCase(),
+        quality:
+          parsed?.quality === "any"
+            ? "any"
+            : "hd"
+      };
+    } catch {
+      return {
+        source: "auto",
+        language: "english",
+        quality: "hd"
+      };
+    }
+  }
+
+  function saveServerPreferences() {
+    try {
+      localStorage.setItem(
+        SERVER_PREFERENCES_KEY,
+        JSON.stringify(
+          state.serverPreferences
+        )
+      );
+    } catch {}
+  }
+
+  function loadServerFeedback() {
+    try {
+      const parsed = JSON.parse(
+        localStorage.getItem(
+          SERVER_FEEDBACK_KEY
+        ) || "{}"
+      );
+
+      return parsed &&
+        typeof parsed === "object"
+        ? parsed
+        : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveServerFeedback() {
+    try {
+      localStorage.setItem(
+        SERVER_FEEDBACK_KEY,
+        JSON.stringify(state.serverFeedback)
+      );
+    } catch {}
+  }
+
+  function sourceFeedback(source) {
+    const key = String(source || "")
+      .toLowerCase();
+
+    return state.serverFeedback[key] || {
+      works: 0,
+      broken: 0
+    };
+  }
+
+  function recordServerFeedback(source, kind) {
+    const key = String(source || "")
+      .toLowerCase();
+
+    if (!key) return;
+
+    const current = sourceFeedback(key);
+    state.serverFeedback[key] = {
+      works:
+        Number(current.works || 0) +
+        (kind === "works" ? 1 : 0),
+      broken:
+        Number(current.broken || 0) +
+        (kind === "broken" ? 1 : 0),
+      updatedAt: Date.now()
+    };
+
+    saveServerFeedback();
   }
 
   function isFavoriteTeam(team) {
@@ -943,6 +1393,191 @@
     `;
   }
 
+  function renderRecentlyWatched() {
+    if (
+      !elements.recentSection ||
+      !elements.recentList
+    ) {
+      return;
+    }
+
+    if (!state.recentEvents.length) {
+      elements.recentSection.hidden = true;
+      elements.recentList.innerHTML = "";
+      return;
+    }
+
+    elements.recentSection.hidden = false;
+    elements.recentList.innerHTML = `
+      <div class="ec-recent-heading-actions">
+        <button
+          class="ec-recent-clear-all"
+          type="button"
+          data-clear-recent>
+          Clear history
+        </button>
+      </div>
+      <div class="ec-recent-event-row">
+        ${state.recentEvents
+          .map((saved) => {
+            const match = saved.match;
+            const id = eventKey(match);
+
+            return `
+              <article class="ec-recent-event-card">
+                ${posterMarkup(match, "recent")}
+                <div class="ec-recent-event-body">
+                  <span>
+                    ${escapeHtml(
+                      continueAgeText(
+                        saved.watchedAt
+                      )
+                    )}
+                  </span>
+                  <h3>
+                    ${escapeHtml(
+                      match.title || id
+                    )}
+                  </h3>
+                  <p>
+                    ${escapeHtml(
+                      sourceLabel(saved.source)
+                    )}
+                    ${saved.streamNo != null
+                      ? ` · Stream ${escapeHtml(saved.streamNo)}`
+                      : ""}
+                  </p>
+                  <div>
+                    <button
+                      class="ec-event-watch"
+                      type="button"
+                      data-recent-event="${escapeAttr(id)}"
+                      data-recent-source="${escapeAttr(saved.source)}"
+                      data-recent-stream="${escapeAttr(saved.streamNo ?? "")}">
+                      Watch again
+                    </button>
+                    <button
+                      class="ec-recent-remove"
+                      type="button"
+                      data-remove-recent="${escapeAttr(id)}"
+                      aria-label="Remove ${escapeAttr(match.title || id)} from history">
+                      ×
+                    </button>
+                  </div>
+                </div>
+              </article>
+            `;
+          })
+          .join("")}
+      </div>
+    `;
+  }
+
+  function yourNightMatches() {
+    const now = Date.now();
+    const horizon =
+      now + 12 * 60 * 60 * 1000;
+
+    const candidates = dedupeMatches([
+      ...state.live,
+      ...state.today.filter((match) => {
+        const time = eventTimestamp(match.date);
+        return time >= now && time <= horizon;
+      })
+    ]);
+
+    return candidates
+      .sort((left, right) => {
+        const liveDifference =
+          Number(isLiveMatch(right)) -
+          Number(isLiveMatch(left));
+
+        if (liveDifference) {
+          return liveDifference;
+        }
+
+        return (
+          eventTimestamp(left.date) -
+          eventTimestamp(right.date)
+        );
+      })
+      .slice(0, 8);
+  }
+
+  function renderYourNight() {
+    if (
+      !elements.nightSection ||
+      !elements.nightList
+    ) {
+      return;
+    }
+
+    const matches = yourNightMatches();
+
+    if (!matches.length) {
+      elements.nightSection.hidden = true;
+      elements.nightList.innerHTML = "";
+      return;
+    }
+
+    elements.nightSection.hidden = false;
+    elements.nightList.innerHTML = matches
+      .map((match) => {
+        const id = eventKey(match);
+        const live = isLiveMatch(match);
+        const favorite =
+          matchHasFavorite(match);
+
+        return `
+          <button
+            class="ec-night-event${favorite ? " is-favorite" : ""}"
+            type="button"
+            data-watch-event="${escapeAttr(id)}">
+            <span class="ec-night-time">
+              ${live
+                ? "LIVE"
+                : escapeHtml(
+                    new Date(
+                      eventTimestamp(match.date)
+                    ).toLocaleTimeString([], {
+                      hour: "numeric",
+                      minute: "2-digit"
+                    })
+                  )}
+            </span>
+            <span class="ec-night-line" aria-hidden="true"></span>
+            <span class="ec-night-art">
+              ${badgeMarkup(
+                match?.teams?.home,
+                "tiny"
+              )}
+              ${badgeMarkup(
+                match?.teams?.away,
+                "tiny"
+              )}
+            </span>
+            <span class="ec-night-copy">
+              <strong>
+                ${escapeHtml(
+                  match.title || id
+                )}
+              </strong>
+              <small>
+                ${favorite
+                  ? "★ Favorite team"
+                  : escapeHtml(
+                      sportName(
+                        match.category
+                      )
+                    )}
+              </small>
+            </span>
+          </button>
+        `;
+      })
+      .join("");
+  }
+
   function renderPopularLive() {
     if (!elements.popularList || !elements.popularSection) return;
 
@@ -1118,6 +1753,8 @@
   function renderDiscovery() {
     renderSportTabs();
     renderContinueWatching();
+    renderRecentlyWatched();
+    renderYourNight();
     renderPopularLive();
     renderFavoriteTeams();
     renderStartingSoon();
@@ -1399,6 +2036,55 @@
   }
 
   function handleDiscoveryClick(event) {
+    const clearRecent =
+      event.target.closest(
+        "[data-clear-recent]"
+      );
+
+    if (clearRecent) {
+      event.preventDefault();
+      clearRecentEvents();
+      return;
+    }
+
+    const removeRecent =
+      event.target.closest(
+        "[data-remove-recent]"
+      );
+
+    if (removeRecent) {
+      event.preventDefault();
+      removeRecentEvent(
+        removeRecent.dataset.removeRecent
+      );
+      return;
+    }
+
+    const recent =
+      event.target.closest(
+        "[data-recent-event]"
+      );
+
+    if (recent) {
+      event.preventDefault();
+
+      const saved =
+        state.recentEvents.find(
+          (item) =>
+            eventKey(item.match) ===
+            recent.dataset.recentEvent
+        );
+
+      if (saved) {
+        watchMatch(
+          saved.match,
+          recent.dataset.recentSource || "",
+          recent.dataset.recentStream || ""
+        );
+      }
+      return;
+    }
+
     const clearContinue =
       event.target.closest(
         "[data-clear-continue]"
@@ -1578,11 +2264,71 @@
     return String(stream.language || "").toLowerCase().startsWith("english");
   }
 
+  function streamPreferenceScore(stream) {
+    const preferences =
+      state.serverPreferences;
+    const source = String(
+      stream.source || ""
+    ).toLowerCase();
+    const language = String(
+      stream.language || ""
+    ).toLowerCase();
+    const feedback =
+      sourceFeedback(source);
+
+    let score = 0;
+
+    if (
+      preferences.source !== "auto" &&
+      source === preferences.source
+    ) {
+      score += 120;
+    }
+
+    if (
+      preferences.language !== "any" &&
+      language.startsWith(
+        preferences.language
+      )
+    ) {
+      score += 45;
+    } else if (
+      preferences.language === "any" &&
+      isEnglish(stream)
+    ) {
+      score += 8;
+    }
+
+    if (
+      preferences.quality === "hd" &&
+      stream.hd
+    ) {
+      score += 24;
+    }
+
+    score +=
+      Math.max(
+        -6,
+        Math.min(
+          8,
+          Number(feedback.works || 0) -
+          Number(feedback.broken || 0)
+        )
+      ) * 4;
+
+    score -= Number(stream.sourceOrder || 0);
+    score -= Number(stream.streamNo || 0) / 100;
+
+    return score;
+  }
+
   function recommendedStream(streams) {
-    return streams.find((stream) => stream.hd && isEnglish(stream)) ||
-      streams.find((stream) => stream.hd) ||
-      streams.find(isEnglish) ||
-      streams[0];
+    return [...streams]
+      .sort(
+        (left, right) =>
+          streamPreferenceScore(right) -
+          streamPreferenceScore(left)
+      )[0] || null;
   }
 
   function preferredStream(streams, source, number) {
@@ -1597,6 +2343,169 @@
 
   function streamKey(stream) {
     return [stream.source, stream.streamNo, stream.embedUrl].join("|");
+  }
+
+  function setConnectionStatus(
+    mode,
+    label
+  ) {
+    state.connectionMode = mode;
+
+    if (!player) return;
+
+    player.connectionStatus.hidden =
+      mode === "idle";
+
+    player.connectionStatus.className =
+      `streamed-connection-status ${mode}`;
+
+    player.connectionLabel.textContent =
+      label || "Waiting";
+  }
+
+  function reportCurrentStream(kind) {
+    const stream = state.activeStream;
+
+    if (!stream) {
+      toast("No active stream to rate.");
+      return;
+    }
+
+    recordServerFeedback(
+      stream.source,
+      kind
+    );
+
+    if (kind === "works") {
+      state.failedStreamKeys.delete(
+        streamKey(stream)
+      );
+      setConnectionStatus(
+        "connected",
+        "Working"
+      );
+      renderServerPanel();
+      toast(
+        `${sourceLabel(stream.source)} marked as working.`
+      );
+      return;
+    }
+
+    setConnectionStatus(
+      "switching",
+      "Finding another server"
+    );
+    toast(
+      `${sourceLabel(stream.source)} marked as broken.`
+    );
+
+    if (!selectNextStream("reported")) {
+      setConnectionStatus(
+        "attention",
+        "Choose another server"
+      );
+    }
+  }
+
+  function renderServerPreferences() {
+    if (!player) return;
+
+    const sources = Array.from(
+      new Set(
+        state.streams
+          .map((stream) =>
+            String(stream.source || "")
+              .toLowerCase()
+          )
+          .filter(Boolean)
+      )
+    );
+
+    const languages = Array.from(
+      new Set(
+        state.streams
+          .map((stream) =>
+            String(stream.language || "")
+              .trim()
+          )
+          .filter(Boolean)
+      )
+    );
+
+    player.preferredSource.innerHTML = [
+      '<option value="auto">Auto</option>',
+      ...sources.map(
+        (source) =>
+          `<option value="${escapeAttr(source)}">` +
+          `${escapeHtml(sourceLabel(source))}` +
+          `</option>`
+      )
+    ].join("");
+
+    player.preferredLanguage.innerHTML = [
+      '<option value="any">Any</option>',
+      ...languages.map(
+        (language) =>
+          `<option value="${escapeAttr(language.toLowerCase())}">` +
+          `${escapeHtml(language)}` +
+          `</option>`
+      )
+    ].join("");
+
+    player.preferredSource.value =
+      sources.includes(
+        state.serverPreferences.source
+      )
+        ? state.serverPreferences.source
+        : "auto";
+
+    const preferredLanguage =
+      state.serverPreferences.language;
+
+    if (
+      preferredLanguage !== "any" &&
+      !Array.from(
+        player.preferredLanguage.options
+      ).some(
+        (option) =>
+          option.value === preferredLanguage
+      )
+    ) {
+      const option =
+        document.createElement("option");
+      option.value = preferredLanguage;
+      option.textContent =
+        sourceLabel(preferredLanguage);
+      player.preferredLanguage.append(option);
+    }
+
+    player.preferredLanguage.value =
+      preferredLanguage;
+    player.preferredQuality.value =
+      state.serverPreferences.quality;
+  }
+
+  function setGameBreakOpen(open) {
+    if (!player) return;
+
+    state.gameBreakOpen = Boolean(open);
+
+    if (state.gameBreakOpen) {
+      setServerPanelOpen(false);
+    }
+
+    player.gameBreakPanel.hidden =
+      !state.gameBreakOpen;
+
+    player.playerShell.classList.toggle(
+      "streamed-game-break-open",
+      state.gameBreakOpen
+    );
+
+    player.gameBreakButton.classList.toggle(
+      "active",
+      state.gameBreakOpen
+    );
   }
 
   function clearRecoveryTimer() {
@@ -1668,6 +2577,11 @@
       return false;
     }
 
+    setConnectionStatus(
+      "switching",
+      "Switching servers"
+    );
+
     if (reason === "automatic") {
       state.automaticRecoveryAttempts += 1;
       toast(
@@ -1721,6 +2635,10 @@
 
       settled = true;
       clearRecoveryTimer();
+      setConnectionStatus(
+        "connected",
+        "Player loaded"
+      );
     };
 
     const recover = () => {
@@ -1738,6 +2656,10 @@
         state.automaticRecoveryAttempts >=
         AUTO_RECOVERY_LIMIT
       ) {
+        setConnectionStatus(
+          "attention",
+          "Needs another server"
+        );
         setStatus(
           "The player is taking longer than expected. Try Next Server or open Server Selector.",
           true
@@ -1794,7 +2716,7 @@
 
     window.setTimeout(() => {
       toast(
-        "Quick keys: S servers · N next · T theater · C chat · M menu"
+        "Quick keys: S servers · N next · G games · T theater · C chat · M menu"
       );
     }, 1200);
   }
@@ -1834,6 +2756,9 @@
       player.currentHost.textContent =
         "External provider";
       player.nextServerButton.hidden = true;
+      player.feedbackGroup.hidden = true;
+      player.gameBreakButton.hidden = true;
+      setConnectionStatus("idle", "");
       return;
     }
 
@@ -1859,6 +2784,8 @@
 
     player.nextServerButton.hidden =
       state.streams.length < 2;
+    player.feedbackGroup.hidden = false;
+    player.gameBreakButton.hidden = false;
   }
 
   function renderServerPanel() {
@@ -1921,6 +2848,7 @@
       `available stream${state.streams.length === 1 ? "" : "s"}`
     );
 
+    renderServerPreferences();
     updateRoomHeader();
   }
 
@@ -1976,6 +2904,14 @@
     if (!player) return;
 
     state.serverPanelOpen = Boolean(open);
+
+    if (
+      state.serverPanelOpen &&
+      state.gameBreakOpen
+    ) {
+      setGameBreakOpen(false);
+    }
+
     player.serverPanel.hidden =
       !state.serverPanelOpen;
 
@@ -2045,6 +2981,16 @@
     }
 
     state.activeStream = stream;
+    setConnectionStatus(
+      reason === "automatic" ||
+      reason === "reported"
+        ? "switching"
+        : "connecting",
+      reason === "automatic" ||
+      reason === "reported"
+        ? "Trying another server"
+        : "Connecting"
+    );
 
     if (typeof window.loadStream !== "function") {
       throw new Error(
@@ -2129,14 +3075,17 @@
     state.streams = [];
     state.activeStream = null;
     state.serverPanelOpen = false;
+    state.gameBreakOpen = false;
     state.failedStreamKeys.clear();
     state.automaticRecoveryAttempts = 0;
     window.eastcoinStreamedState = null;
     if (!player) return;
     player.serverButton.hidden = true;
     player.serverPanel.hidden = true;
+    player.gameBreakPanel.hidden = true;
     player.playerShell.classList.remove(
-      "streamed-server-open"
+      "streamed-server-open",
+      "streamed-game-break-open"
     );
     player.serverPanel.setAttribute(
       "aria-hidden",
@@ -2400,6 +3349,22 @@
       state.continueEvent =
         loadContinueEvent();
       renderContinueWatching();
+      return;
+    }
+
+    if (event.key === RECENT_KEY) {
+      state.recentEvents =
+        loadRecentEvents();
+      renderRecentlyWatched();
+      return;
+    }
+
+    if (
+      event.key === SERVER_PREFERENCES_KEY
+    ) {
+      state.serverPreferences =
+        loadServerPreferences();
+      renderServerPanel();
     }
   });
 
@@ -2434,6 +3399,16 @@
         event.preventDefault();
         event.stopImmediatePropagation();
         setServerPanelOpen(false);
+        return;
+      }
+
+      if (
+        key === "escape" &&
+        state.gameBreakOpen
+      ) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        setGameBreakOpen(false);
         return;
       }
 
@@ -2476,6 +3451,16 @@
           event.preventDefault();
           chat.click();
         }
+        return;
+      }
+
+      if (
+        key === "g" &&
+        player &&
+        !player.gameBreakButton.hidden
+      ) {
+        event.preventDefault();
+        player.gameBreakButton.click();
         return;
       }
 

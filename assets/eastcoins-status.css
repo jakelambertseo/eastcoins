@@ -1,0 +1,186 @@
+
+.status-shell{
+  width:min(1120px,100%);
+  margin:0 auto;
+  padding:34px 24px 70px;
+}
+
+.status-header{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:22px;
+  margin-bottom:22px;
+  padding-bottom:22px;
+  border-bottom:1px solid rgba(201,164,79,.13);
+}
+
+.status-header h1{
+  margin:7px 0 0;
+  color:#f2e7d0;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(2rem,5vw,3.5rem);
+}
+
+.status-header p{
+  max-width:680px;
+  margin:10px 0 0;
+  color:#817667;
+  line-height:1.6;
+}
+
+.status-refresh{
+  flex:0 0 auto;
+  min-height:40px;
+  padding:9px 13px;
+  border:1px solid rgba(201,164,79,.28);
+  border-radius:9px;
+  color:#f1dfae;
+  background:#57131d;
+  font-weight:900;
+}
+
+.status-summary{
+  display:flex;
+  align-items:center;
+  gap:11px;
+  margin-bottom:17px;
+  padding:15px;
+  border:1px solid rgba(201,164,79,.14);
+  border-radius:12px;
+  background:#070605;
+}
+
+.status-summary-dot{
+  width:11px;
+  height:11px;
+  border-radius:50%;
+  background:#d3ad55;
+  box-shadow:0 0 0 5px rgba(211,173,85,.1);
+}
+
+.status-summary.operational
+  .status-summary-dot{
+  background:#47c978;
+  box-shadow:0 0 0 5px rgba(71,201,120,.1);
+}
+
+.status-summary.degraded
+  .status-summary-dot{
+  background:#e2b959;
+}
+
+.status-summary.unavailable
+  .status-summary-dot{
+  background:#df586b;
+}
+
+.status-summary strong{
+  color:#eee3cd;
+}
+
+.status-summary span{
+  display:block;
+  margin-top:3px;
+  color:#766c60;
+  font-size:.65rem;
+}
+
+.status-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.status-card{
+  min-height:165px;
+  padding:17px;
+  border:1px solid rgba(201,164,79,.12);
+  border-radius:12px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(15,10,9,.98),
+      rgba(5,4,3,.98)
+    );
+}
+
+.status-card-head{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.status-card h2{
+  margin:0;
+  color:#eadfc9;
+  font-size:.9rem;
+}
+
+.status-badge{
+  flex:0 0 auto;
+  padding:4px 7px;
+  border:1px solid rgba(201,164,79,.16);
+  border-radius:999px;
+  color:#d1b66a;
+  background:#120d08;
+  font-size:.5rem;
+  font-weight:950;
+  text-transform:uppercase;
+}
+
+.status-card.operational
+  .status-badge{
+  border-color:rgba(71,201,120,.25);
+  color:#9be4b5;
+}
+
+.status-card.degraded
+  .status-badge{
+  color:#f0cf7c;
+}
+
+.status-card.unavailable
+  .status-badge{
+  border-color:rgba(223,88,107,.3);
+  color:#f1a3ae;
+}
+
+.status-card-value{
+  margin-top:22px;
+  color:#f6e8cb;
+  font-size:1.8rem;
+  font-weight:950;
+}
+
+.status-card-detail{
+  margin-top:6px;
+  color:#796f62;
+  font-size:.66rem;
+  line-height:1.5;
+}
+
+.status-note{
+  margin-top:17px;
+  padding:13px 15px;
+  border-left:3px solid #6f1824;
+  color:#827668;
+  background:rgba(91,17,27,.12);
+  font-size:.66rem;
+  line-height:1.55;
+}
+
+@media(max-width:760px){
+  .status-header{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .status-grid{
+    grid-template-columns:1fr;
+  }
+
+  .status-refresh{
+    width:100%;
+  }
+}

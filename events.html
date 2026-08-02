@@ -75,7 +75,7 @@
 
   <link rel="stylesheet" href="assets/eastcoins-theme.css" />
   <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux5" />
-  <link rel="stylesheet" href="assets/eastcoins-streamed.css?v=server12" />
+  <link rel="stylesheet" href="assets/eastcoins-streamed.css?v=server14" />
 
   <style>
     :root {
@@ -929,6 +929,13 @@
         📝 Changelog
       </a>
 
+            <a
+              class="sidebar-footer-link"
+              href="status.html"
+              target="_top">
+              🟢 Status
+            </a>
+
       <button
         class="sidebar-footer-link ec-settings-link"
         type="button">
@@ -1008,6 +1015,32 @@
                 </div>
               </div>
               <div id="streamedContinueList"></div>
+            </section>
+
+            <section
+              class="streamed-discovery-section streamed-recent-section"
+              id="streamedRecentSection"
+              hidden>
+              <div class="streamed-discovery-section-head">
+                <div>
+                  <h2>Recently Watched</h2>
+                  <p>Reopen your latest EastCoin events and preferred servers.</p>
+                </div>
+              </div>
+              <div id="streamedRecentList"></div>
+            </section>
+
+            <section
+              class="streamed-discovery-section streamed-night-section"
+              id="streamedNightSection"
+              hidden>
+              <div class="streamed-discovery-section-head">
+                <div>
+                  <h2>Your Night</h2>
+                  <p>A quick timeline of what is live and starting over the next several hours.</p>
+                </div>
+              </div>
+              <div class="ec-night-timeline" id="streamedNightList"></div>
             </section>
 
             <section class="streamed-discovery-section" id="streamedPopularSection">
@@ -1224,7 +1257,7 @@
 
   </script>
   <script src="assets/eastcoins-streamed-api.js?v=api2"></script>
-<script src="assets/eastcoins-streamed.js?v=server13"></script>
+<script src="assets/eastcoins-streamed.js?v=server14"></script>
 <script src="assets/eastcoins-agreement.js?v=gate2"></script>
 </body>
 </html>

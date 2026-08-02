@@ -403,3 +403,43 @@ EVENT ARTWORK LOADING SCREEN
 - Shared UX CSS and JavaScript were cache-busted to ux5.
 - Streamed JavaScript was cache-busted to server13.
 - Updated changelog.html.
+
+
+WATCH-NIGHT RELIABILITY + PERSONALIZATION
+- Stream feedback:
+  - ✓ Works stores a positive browser-local provider signal
+  - ✕ Broken stores a negative signal and immediately tries another server
+  - feedback never sends extra provider requests
+- Player connection status:
+  - Connecting
+  - Player loaded
+  - Switching servers
+  - Needs another server
+- Recently Watched:
+  - keeps six unique Streamed events for seven days
+  - remembers the last provider and stream number
+  - supports individual removal and Clear history
+- Your Night:
+  - compact horizontal timeline
+  - uses only the already-loaded Live and Today event lists
+  - highlights favorite-team events
+- Server preferences:
+  - preferred provider
+  - preferred language
+  - HD preference
+  - saved locally and used by automatic server selection
+  - local Works/Broken feedback also influences ranking
+- Game Break:
+  - quick drawer with Bonk, Aim Trainer, and Button Masher
+  - games open in a new tab so the stream remains ready
+  - keyboard shortcut: G
+- Public status page:
+  - status.html
+  - linked directly below Changelog in the left navigation
+  - checks Live and Today independently
+  - shares the normal EastCoin cache
+  - does not poll automatically
+  - forced refresh happens only after a visitor clicks Refresh status
+- Streamed assets updated to server14.
+- Added assets/eastcoins-status.css and assets/eastcoins-status.js.
+- Updated changelog.html.
