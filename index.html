@@ -3,6 +3,19 @@
 <head>
 <script>
     (() => {
+      const parameters = new URLSearchParams(
+        window.location.search
+      );
+
+      if (parameters.has("event")) {
+        document.documentElement.classList.add(
+          "ec-shared-event-room-pending"
+        );
+      }
+    })();
+  </script>
+<script>
+    (() => {
       const storageKey =
         "eastcoinZwadesBlueAgreement";
       const cookieName =
@@ -1245,6 +1258,83 @@
     );
 }
 
+
+    /*
+      Shared/direct event links start in a cleaner watch-room view.
+      The temporary html selector prevents a visible sidebar flash
+      before the page controller applies its normal collapsed state.
+    */
+    html.ec-shared-event-room-pending
+      body
+      .layout {
+      grid-template-columns:
+        0
+        minmax(var(--min-video-width),1fr)
+        var(--divider-width)
+        var(--chat-width);
+    }
+
+    html.ec-shared-event-room-pending
+      body
+      .sidebar {
+      padding-left: 0;
+      padding-right: 0;
+      border-right-color: transparent;
+      opacity: 0;
+      transform: translateX(-100%);
+      pointer-events: none;
+    }
+
+    body.ec-shared-event-room
+      .mobile-menu {
+      border-color: rgba(255,105,120,.72);
+      color: #fff5f6;
+      background:
+        linear-gradient(
+          180deg,
+          #b41d38,
+          #761123
+        );
+      box-shadow:
+        0 12px 34px rgba(0,0,0,.52),
+        0 0 0 2px rgba(181,29,56,.16),
+        0 0 24px rgba(181,29,56,.27);
+    }
+
+    body.ec-shared-event-room
+      .mobile-menu:hover,
+    body.ec-shared-event-room
+      .mobile-menu:focus-visible {
+      border-color: #ff9aaa;
+      color: #fff;
+      background:
+        linear-gradient(
+          180deg,
+          #d42a48,
+          #92172d
+        );
+      outline: 0;
+    }
+
+    @media (max-width: 900px) {
+      html.ec-shared-event-room-pending
+        body
+        .layout {
+        grid-template-columns: 1fr;
+      }
+
+      html.ec-shared-event-room-pending
+        body
+        .sidebar {
+        width: 230px;
+        padding: 22px 16px;
+        border-right-color: var(--line);
+        opacity: 1;
+        transform: translateX(-102%);
+        pointer-events: auto;
+      }
+    }
+
 </style>
   <link rel="icon" type="image/png" href="assets/eastcoin-favicon.png" />
   <link rel="shortcut icon" href="assets/eastcoin-favicon.png" />
@@ -2130,14 +2220,39 @@
       updateNavigationButton();
     });
 
+    const pageParameters =
+      new URLSearchParams(window.location.search);
+    const isSharedEventRoom =
+      pageParameters.has("event");
+
+    if (isSharedEventRoom) {
+      body.classList.add("ec-shared-event-room");
+    }
+
     const savedSidebarState =
-      localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+      localStorage.getItem(
+        SIDEBAR_STORAGE_KEY
+      ) === "true";
 
     if (!isMobileNavigation()) {
-      setDesktopSidebarCollapsed(savedSidebarState, false);
+      /*
+        Direct/shared event rooms begin with navigation hidden,
+        without overwriting the visitor's normal saved preference.
+      */
+      setDesktopSidebarCollapsed(
+        isSharedEventRoom
+          ? true
+          : savedSidebarState,
+        false
+      );
     } else {
+      body.classList.remove("menu-open");
       updateNavigationButton();
     }
+
+    document.documentElement.classList.remove(
+      "ec-shared-event-room-pending"
+    );
 
     localStorage.removeItem(LEGACY_CHAT_WIDTH_STORAGE_KEY);
 

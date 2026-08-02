@@ -341,3 +341,13 @@ MANUAL SERVER SELECTOR
 - Close Server List uses a prominent red treatment.
 - Streamed CSS and JavaScript were cache-busted to server11.
 - Updated changelog.html.
+
+
+SHARED EVENT NAVIGATION
+- Any index.html URL containing ?event= starts with the left navigation hidden.
+- The forced shared-room collapse does not overwrite the visitor's normal
+  saved sidebar preference.
+- The navigation toggle is red on event-room URLs so it remains easy to find.
+- Desktop visitors can reopen the sidebar normally from the red toggle.
+- Mobile event links continue to start with the slide-out navigation closed.
+- Added the update to changelog.html.
