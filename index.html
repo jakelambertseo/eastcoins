@@ -1794,6 +1794,7 @@
 
     function restoreUrlPrompt() {
       const activeFrame = document.getElementById("activeFrame");
+
       if (activeFrame) {
         activeFrame.replaceWith(urlStage);
       }
@@ -1804,6 +1805,9 @@
       urlError.textContent = "";
       setTimeout(() => streamUrlInput.focus(), 0);
     }
+
+    window.restoreEastcoinUrlPrompt =
+      restoreUrlPrompt;
 
     streamForm.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -1832,30 +1836,27 @@
     );
 
     function buildShareUrl(streamUrl) {
-      const shareUrl = new URL(window.location.href);
-      shareUrl.search = "";
-      shareUrl.hash = "";
-      shareUrl.searchParams.set("watch", streamUrl);
-
       const streamedState =
         window.eastcoinStreamedState;
 
+      /*
+        Streamed rooms use a compact event-based link instead of
+        embedding the full match, source map, and player URL.
+      */
       if (streamedState?.matchId) {
-        shareUrl.searchParams.set(
-          "streamedEvent",
+        const eventUrl = new URL(
+          "/",
+          window.location.origin
+        );
+
+        eventUrl.searchParams.set(
+          "event",
           streamedState.matchId
         );
 
-        if (streamedState.roomToken) {
-          shareUrl.searchParams.set(
-            "streamedRoom",
-            streamedState.roomToken
-          );
-        }
-
         if (streamedState.source) {
-          shareUrl.searchParams.set(
-            "streamedSource",
+          eventUrl.searchParams.set(
+            "source",
             streamedState.source
           );
         }
@@ -1864,12 +1865,28 @@
           streamedState.streamNo !== undefined &&
           streamedState.streamNo !== null
         ) {
-          shareUrl.searchParams.set(
-            "streamedStream",
+          eventUrl.searchParams.set(
+            "stream",
             streamedState.streamNo
           );
         }
+
+        return eventUrl.href;
       }
+
+      /*
+        Manually entered non-Streamed URLs retain the existing
+        watch-link behavior because they have no event ID.
+      */
+      const shareUrl = new URL(
+        "/",
+        window.location.origin
+      );
+
+      shareUrl.searchParams.set(
+        "watch",
+        streamUrl
+      );
 
       return shareUrl.href;
     }
@@ -1881,7 +1898,11 @@
 
       try {
         await navigator.clipboard.writeText(shareUrl);
-        showToast("Shareable watch link copied.");
+        showToast(
+          window.eastcoinStreamedState?.matchId
+            ? "Short event link copied."
+            : "Shareable watch link copied."
+        );
       } catch {
         window.prompt("Copy this watch link:", shareUrl);
       }
@@ -2239,7 +2260,7 @@
 
   </script>
   <script src="assets/eastcoins-streamed-api.js?v=api2"></script>
-  <script src="assets/eastcoins-streamed.js?v=server8"></script>
+  <script src="assets/eastcoins-streamed.js?v=server10"></script>
   <script src="assets/eastcoins-agreement.js?v=gate2"></script>
 </body>
 </html>

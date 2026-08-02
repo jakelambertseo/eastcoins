@@ -1305,9 +1305,55 @@
 
   function returnToDiscovery() {
     setServerPanelOpen(false);
-    player?.changeButton?.click();
+
+    /*
+      Change URL was intentionally removed from the player toolbar,
+      so return directly through the exposed player reset instead of
+      trying to click the old button.
+    */
+    if (
+      typeof window.restoreEastcoinUrlPrompt ===
+      "function"
+    ) {
+      window.restoreEastcoinUrlPrompt();
+    }
+
+    clearPlayerState();
+
+    /*
+      Remove player-specific parameters so refreshing the browser does
+      not immediately reopen the event the visitor just left.
+    */
+    const currentUrl = new URL(
+      window.location.href
+    );
+
+    [
+      "event",
+      "source",
+      "stream",
+      "watch",
+      "streamedRoom",
+      "streamedEvent",
+      "streamedSource",
+      "streamedStream"
+    ].forEach((parameter) => {
+      currentUrl.searchParams.delete(parameter);
+    });
+
+    window.history.replaceState(
+      null,
+      "",
+      `${currentUrl.pathname}` +
+      `${currentUrl.search}` +
+      `${currentUrl.hash}`
+    );
+
     window.setTimeout(() => {
-      if (!state.live.length && !state.today.length) {
+      if (
+        !state.live.length &&
+        !state.today.length
+      ) {
         loadDiscovery(false);
       } else {
         showDiscovery();
@@ -1414,17 +1460,36 @@
   let requestedPlayerRestored = false;
   async function restoreRequestedPlayerEvent() {
     if (!player || requestedPlayerRestored) return;
+
+    /*
+      Legacy streamedRoom/streamedEvent links remain supported
+      before checking the newer compact event link.
+    */
     const shared = await restoreSharedRoom();
+
     if (shared) {
       requestedPlayerRestored = true;
       return;
     }
 
-    const id = new URLSearchParams(location.search).get("event");
+    const parameters = new URLSearchParams(
+      location.search
+    );
+    const id = parameters.get("event");
+
     if (!id) return;
+
     requestedPlayerRestored = true;
+
     const match = await resolveMatch(id, true);
-    if (match) await loadMatch(match);
+
+    if (!match) return;
+
+    await loadMatch(
+      match,
+      parameters.get("source") || "",
+      parameters.get("stream") || ""
+    );
   }
 
   elements.liveButton?.addEventListener("click", () => setMode("live"));

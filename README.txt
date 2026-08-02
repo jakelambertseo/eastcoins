@@ -305,3 +305,28 @@ VERTICAL SERVER DRAWER
 - On compact screens, choosing a server automatically closes the sheet.
 - Streamed assets were cache-busted to server8.
 - Updated changelog.html.
+
+
+SHORT EVENT-BASED SHARE LINKS
+- Share Room now uses a compact URL:
+  /?event=MATCH_ID&source=SOURCE&stream=NUMBER
+- The full room token and full embed URL are no longer included in new
+  Streamed Share Room links.
+- Opening the link resolves the current event listing and restores the
+  selected source and stream number when they remain available.
+- Older streamedRoom, streamedEvent, streamedSource, streamedStream, and
+  watch-based links remain supported.
+- Manually entered non-Streamed URLs still use the existing ?watch= format.
+- Streamed JavaScript was cache-busted from server8 to server9.
+- Updated changelog.html.
+
+
+VIEW ALL STREAMS FIX
+- The server drawer's View all streams button now directly resets the player.
+- It no longer tries to click the removed Change URL toolbar button.
+- Event, source, stream, watch, and legacy shared-room parameters are removed
+  from the browser URL when returning to the directory.
+- Existing loaded discovery results are reused.
+- Discovery data is requested only when it has not already been loaded.
+- Streamed JavaScript was cache-busted from server9 to server10.
+- Updated changelog.html.
