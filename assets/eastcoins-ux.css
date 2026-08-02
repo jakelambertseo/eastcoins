@@ -633,3 +633,249 @@ body.ec-theater-mode .ec-utility-dock:focus-within{
     width:100%;
   }
 }
+
+
+/* ================================================================
+   EASTCOIN UX FIX — TRUE THEATER MODE + ULTRA DARK PALETTE
+   ================================================================ */
+
+:root{
+  --ec-ux-gold:#c9a44f;
+  --ec-ux-gold-bright:#edd07c;
+  --ec-ux-panel:#070504;
+  --ec-ux-panel-2:#0d0908;
+  --ec-ux-text:#f1e8d5;
+  --ec-ux-muted:#938777;
+  --ec-ux-line:rgba(201,164,79,.16);
+  --ec-ux-shadow:0 26px 80px rgba(0,0,0,.78);
+}
+
+/* Theater Mode no longer relies on the normal four-column grid. */
+html.ec-theater-mode,
+body.ec-theater-mode{
+  width:100%!important;
+  height:100%!important;
+  overflow:hidden!important;
+  background:#000!important;
+}
+
+body.ec-theater-mode .layout{
+  display:block!important;
+  width:100vw!important;
+  height:100dvh!important;
+  min-height:100dvh!important;
+  background:#000!important;
+}
+
+body.ec-theater-mode .sidebar,
+body.ec-theater-mode .resize-handle,
+body.ec-theater-mode .chat-panel,
+body.ec-theater-mode .mobile-menu,
+body.ec-theater-mode .mobile-overlay{
+  display:none!important;
+}
+
+body.ec-theater-mode .watch-area{
+  position:fixed!important;
+  inset:0!important;
+  z-index:200!important;
+  width:100vw!important;
+  height:100dvh!important;
+  min-width:0!important;
+  min-height:100dvh!important;
+  padding:0!important;
+  background:#000!important;
+}
+
+body.ec-theater-mode .player-shell{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:#000!important;
+  box-shadow:none!important;
+}
+
+body.ec-theater-mode .player-shell > iframe,
+body.ec-theater-mode .embed-frame{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+}
+
+body.ec-theater-mode .player-toolbar{
+  opacity:0!important;
+  pointer-events:none!important;
+}
+
+body.ec-theater-mode .ec-utility-dock{
+  left:14px!important;
+  right:auto!important;
+  bottom:14px!important;
+  width:auto!important;
+  padding:4px!important;
+  opacity:.62!important;
+}
+
+body.ec-theater-mode .ec-utility-dock:hover,
+body.ec-theater-mode .ec-utility-dock:focus-within{
+  opacity:1!important;
+}
+
+body.ec-theater-mode .ec-utility-button:not([data-ec-theater-toggle]){
+  display:none!important;
+}
+
+body.ec-theater-mode .ec-utility-button[data-ec-theater-toggle]{
+  flex:0 0 auto!important;
+}
+
+/* Ultra-dark EastCoin styling for the newly added UX elements. */
+.ec-utility-dock{
+  border-color:rgba(201,164,79,.16)!important;
+  background:rgba(2,2,2,.91)!important;
+  box-shadow:0 16px 42px rgba(0,0,0,.7)!important;
+}
+
+.ec-utility-button,
+.ec-settings-only-button{
+  border-color:rgba(201,164,79,.14)!important;
+  color:#d3c6ae!important;
+  background:linear-gradient(180deg,#100c0a,#040303)!important;
+}
+
+.ec-utility-button:hover,
+.ec-utility-button:focus-visible,
+.ec-utility-button.is-active{
+  border-color:rgba(237,208,124,.48)!important;
+  color:#ffe9a9!important;
+  background:linear-gradient(180deg,#5f131e,#26080d)!important;
+}
+
+.ec-chat-scrim{
+  background:rgba(0,0,0,.84)!important;
+}
+
+@media(max-width:900px){
+  .chat-panel{
+    border-left-color:rgba(201,164,79,.16)!important;
+    background:#010101!important;
+    box-shadow:-24px 0 60px rgba(0,0,0,.85)!important;
+  }
+}
+
+.ec-embed-status{
+  background:
+    radial-gradient(circle at 50% 34%,rgba(107,17,27,.18),transparent 38%),
+    rgba(0,0,0,.92)!important;
+}
+
+.ec-embed-status-card,
+.ec-settings-panel{
+  border-color:rgba(201,164,79,.22)!important;
+  color:#f1e8d5!important;
+  background:
+    repeating-linear-gradient(135deg,rgba(255,255,255,.01) 0,rgba(255,255,255,.01) 2px,transparent 2px,transparent 8px),
+    linear-gradient(180deg,#0e0a09,#030202)!important;
+  box-shadow:0 26px 80px rgba(0,0,0,.8)!important;
+}
+
+.ec-embed-status-title,
+.ec-settings-header h2,
+.ec-game-section-head h2{
+  color:#f0e5cf!important;
+  font-family:Georgia,serif!important;
+}
+
+.ec-embed-status-message,
+.ec-setting-copy span,
+.ec-game-section-head p{
+  color:#857969!important;
+}
+
+.ec-embed-spinner{
+  border-color:rgba(201,164,79,.14)!important;
+  border-top-color:#edd07c!important;
+}
+
+.ec-embed-action,
+.ec-settings-action,
+.ec-settings-close{
+  border-color:rgba(201,164,79,.14)!important;
+  color:#d9cdb8!important;
+  background:#0c0908!important;
+}
+
+.ec-embed-action.primary,
+.ec-continue-button{
+  border-color:rgba(237,208,124,.38)!important;
+  color:#211604!important;
+  background:#d8b75e!important;
+}
+
+.ec-continue-card{
+  border-color:rgba(201,164,79,.15)!important;
+  background:linear-gradient(180deg,rgba(71,13,20,.2),rgba(3,3,3,.94))!important;
+}
+
+.ec-continue-copy span,
+.ec-game-tag{
+  color:#918471!important;
+}
+
+.ec-continue-copy strong{
+  color:#eadfc9!important;
+}
+
+.ec-game-tag{
+  border-color:rgba(201,164,79,.12)!important;
+  background:rgba(201,164,79,.035)!important;
+}
+
+.ec-settings-modal{
+  background:rgba(0,0,0,.9)!important;
+}
+
+.ec-settings-header,
+.ec-settings-footer,
+.ec-setting-row{
+  border-color:rgba(201,164,79,.1)!important;
+}
+
+.ec-settings-kicker{
+  color:#c9a44f!important;
+}
+
+.ec-setting-copy strong{
+  color:#ded2bd!important;
+}
+
+.ec-switch-track{
+  border-color:rgba(201,164,79,.12)!important;
+  background:#17110f!important;
+}
+
+.ec-switch-track::after{
+  background:#817566!important;
+}
+
+.ec-switch input:checked + .ec-switch-track{
+  border-color:rgba(237,208,124,.42)!important;
+  background:#64121c!important;
+}
+
+.ec-switch input:checked + .ec-switch-track::after{
+  background:#f0d47d!important;
+}
+
+.ec-settings-action.danger{
+  color:#e5a6aa!important;
+  border-color:rgba(141,25,38,.4)!important;
+  background:rgba(77,12,20,.48)!important;
+}

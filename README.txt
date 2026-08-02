@@ -104,3 +104,13 @@ EASTCOIN SITEWIDE UX OVERHAUL
 
 CHANGELOG
 - Added an August 2026 “Sitewide UX overhaul” timeline entry.
+
+
+THEATER MODE AND ULTRA-DARK STYLE FIX
+- Theater Mode now pins the watch area directly to the browser viewport.
+- The player no longer depends on the four-column layout while active.
+- Only the Exit Theater control remains visible during Theater Mode.
+- All new UX elements now match EastCoin's ultra-dark black, burgundy,
+  aged-gold, and muted-cream palette.
+- Shared UX asset cache versions were updated from ux1 to ux2.
+- The August 2026 changelog entry was updated.

@@ -170,6 +170,10 @@
 
   function setTheaterMode(enabled) {
     theaterActive = enabled;
+    document.documentElement.classList.toggle(
+      "ec-theater-mode",
+      enabled
+    );
     body.classList.toggle("ec-theater-mode", enabled);
     body.classList.remove("ec-chat-open");
 
