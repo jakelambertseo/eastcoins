@@ -768,6 +768,7 @@ body.ec-theater-mode .streamed-server-panel{
 
 .streamed-sport-tabs,
 #streamedFavoriteSection,
+#streamedSoonSection,
 .streamed-discovery-section:last-child{
   grid-column:1 / -1;
 }
@@ -876,7 +877,7 @@ body.ec-theater-mode .streamed-server-panel{
 }
 
 #streamedSoonSection .ec-event-grid{
-  grid-template-columns:1fr;
+  grid-template-columns:repeat(2,minmax(0,1fr));
 }
 
 .ec-event-card{
@@ -1286,11 +1287,13 @@ body.ec-theater-mode .streamed-server-panel{
 
   .streamed-sport-tabs,
   #streamedFavoriteSection,
+  #streamedSoonSection,
   .streamed-discovery-section:last-child{
     grid-column:auto;
   }
 
-  .ec-event-grid{
+  .ec-event-grid,
+  #streamedSoonSection .ec-event-grid{
     grid-template-columns:1fr;
   }
 }

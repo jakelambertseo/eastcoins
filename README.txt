@@ -272,3 +272,11 @@ STREAMED DISCOVERY LAYOUT + POPULATION FIX
 - Public page copy is visitor-focused rather than API-focused.
 - Request courtesy remains unchanged: cached Live/Today/Sports, no polling, no
   separate popular endpoint, and no per-sport endpoint fan-out.
+
+
+STARTING SOON TWO-COLUMN FIX
+- Starting Soon now spans the full discovery width on desktop.
+- Upcoming event cards render in two columns on wider screens.
+- At 1040px and below, Starting Soon returns to one column for readability.
+- Updated the Streamed stylesheet cache version from server6 to server7.
+- Added the change to changelog.html.
