@@ -280,3 +280,15 @@ STARTING SOON TWO-COLUMN FIX
 - At 1040px and below, Starting Soon returns to one column for readability.
 - Updated the Streamed stylesheet cache version from server6 to server7.
 - Added the change to changelog.html.
+
+
+PLAYER AND SIDEBAR UI CONSOLIDATION
+- Theater, Hide Chat, and Settings now sit centered along the bottom of the
+  player area rather than over the video volume controls.
+- Player Help was removed from the floating utility controls.
+- Open Source and Change URL were removed from the top player controls.
+- The NFL kickoff countdown was reduced in height and visual weight.
+- Bonk, Aim Trainer, and Button Masher are nested in a collapsible Games menu.
+- The Games menu opens automatically on the Games and individual game pages.
+- Shared UX assets were cache-busted from ux2 to ux3.
+- Updated changelog.html.

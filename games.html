@@ -1538,7 +1538,7 @@
   <link rel="apple-touch-icon" href="assets/eastcoin-favicon.png" />
 
   <link rel="stylesheet" href="assets/eastcoins-theme.css" />
-  <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux2" />
+  <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux3" />
 </head>
 
 <body>
@@ -1558,10 +1558,18 @@
         <a class="nav-link" href="index.html?new=1" target="_top">📺 Live Player</a>
         <a class="nav-link" href="events.html" target="_top">🏟️ Events</a>
         <a class="nav-link" href="favorites.html" target="_top">⭐ Favorites</a>
-        <a class="nav-link active" href="games.html?new=1" target="_top">🎮 Games</a>
-        <a class="nav-link" href="bonk.html" target="_top">🔨 EastCoin Bonk</a>
-        <a class="nav-link" href="aim-trainer.html" target="_top">🎯 Aim Trainer</a>
-        <a class="nav-link" href="button-masher.html" target="_top">🟥 Button Masher</a>
+        <details class="nav-games-menu" open>
+          <summary class="nav-link nav-games-summary active">
+            <span class="nav-games-summary-copy">🎮 Games</span>
+            <span class="nav-games-caret" aria-hidden="true">⌄</span>
+          </summary>
+          <div class="nav-games-submenu">
+            <a class="nav-game-link active" href="games.html?new=1" target="_top">All Games</a>
+            <a class="nav-game-link" href="bonk.html" target="_top">🔨 Bonk</a>
+            <a class="nav-game-link" href="aim-trainer.html?v=embedded1" target="_top">🎯 Aim Trainer</a>
+            <a class="nav-game-link" href="button-masher.html?v=embedded1" target="_top">🟥 Button Masher</a>
+          </div>
+        </details>
       </div>
 
       <section
@@ -1897,7 +1905,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script src="assets/eastcoins-ux.js?v=ux2"></script>
+    <script src="assets/eastcoins-ux.js?v=ux3"></script>
 
 <script>
     const body = document.body;

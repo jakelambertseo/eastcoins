@@ -563,14 +563,6 @@
         aria-pressed="true">
         💬 Hide chat
       </button>
-
-      <button
-        class="ec-utility-button"
-        type="button"
-        data-ec-trouble>
-        ? Player help
-      </button>
-
       <button
         class="ec-utility-button"
         type="button"
@@ -579,7 +571,7 @@
       </button>
     `;
 
-    document.body.appendChild(dock);
+    playerShell.appendChild(dock);
 
     dock
       .querySelector("[data-ec-theater-toggle]")
@@ -592,16 +584,6 @@
       .addEventListener("click", () => {
         setChatVisible(!chatIsVisible(), true);
       });
-
-    dock
-      .querySelector("[data-ec-trouble]")
-      .addEventListener("click", () => {
-        showEmbedTrouble(
-          "Player not showing?",
-          "The provider may block iframe embedding. Retry it, open it directly, or return to the previous screen."
-        );
-      });
-
     dock
       .querySelector("[data-ec-settings]")
       .addEventListener("click", showSettings);

@@ -1251,7 +1251,7 @@
   <link rel="apple-touch-icon" href="assets/eastcoin-favicon.png" />
 
   <link rel="stylesheet" href="assets/eastcoins-theme.css" />
-  <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux2" />
+  <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux3" />
   <link rel="stylesheet" href="assets/eastcoins-streamed.css?v=server7" />
 </head>
 
@@ -1272,10 +1272,18 @@
         <a class="nav-link active" href="index.html?new=1" target="_top">📺 Live Player</a>
         <a class="nav-link" href="events.html" target="_top">🏟️ Events</a>
         <a class="nav-link" href="favorites.html" target="_top">⭐ Favorites</a>
-        <a class="nav-link" href="games.html?new=1" target="_top">🎮 Games</a>
-        <a class="nav-link" href="bonk.html" target="_top">🔨 EastCoin Bonk</a>
-        <a class="nav-link" href="aim-trainer.html" target="_top">🎯 Aim Trainer</a>
-        <a class="nav-link" href="button-masher.html" target="_top">🟥 Button Masher</a>
+        <details class="nav-games-menu">
+          <summary class="nav-link nav-games-summary">
+            <span class="nav-games-summary-copy">🎮 Games</span>
+            <span class="nav-games-caret" aria-hidden="true">⌄</span>
+          </summary>
+          <div class="nav-games-submenu">
+            <a class="nav-game-link" href="games.html?new=1" target="_top">All Games</a>
+            <a class="nav-game-link" href="bonk.html" target="_top">🔨 Bonk</a>
+            <a class="nav-game-link" href="aim-trainer.html?v=embedded1" target="_top">🎯 Aim Trainer</a>
+            <a class="nav-game-link" href="button-masher.html?v=embedded1" target="_top">🟥 Button Masher</a>
+          </div>
+        </details>
       </div>
 
       <section
@@ -1375,8 +1383,6 @@
               style="background-color:#9f1239;background-image:linear-gradient(180deg,#d51f51 0%,#9f1239 55%,#700925 100%);border-color:#e33a62;color:#fff3f5;">
               🔗 Share Room
             </button>
-            <button class="toolbar-button" id="openButton" type="button">Open source ↗</button>
-            <button class="toolbar-button" id="changeButton" type="button">Change URL</button>
             <button
               class="toolbar-button toolbar-collapse-button"
               id="toolbarCollapseButton"
@@ -1609,7 +1615,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script src="assets/eastcoins-ux.js?v=ux2"></script>
+    <script src="assets/eastcoins-ux.js?v=ux3"></script>
 
 <script>
     const body = document.body;
@@ -1621,9 +1627,7 @@
     const rememberUrl = document.getElementById("rememberUrl");
     const urlError = document.getElementById("urlError");
     const currentHost = document.getElementById("currentHost");
-    const openButton = document.getElementById("openButton");
     const shareButton = document.getElementById("shareButton");
-    const changeButton = document.getElementById("changeButton");
     const toolbarCollapseButton =
       document.getElementById("toolbarCollapseButton");
     const mobileMenu = document.getElementById("mobileMenu");
@@ -1816,8 +1820,6 @@
         });
       });
 
-    changeButton.addEventListener("click", restoreUrlPrompt);
-
     toolbarCollapseButton.addEventListener(
       "click",
       () => {
@@ -1828,13 +1830,6 @@
         );
       }
     );
-
-
-    openButton.addEventListener("click", () => {
-      if (activeUrl) {
-        window.open(activeUrl, "_blank", "noopener,noreferrer");
-      }
-    });
 
     function buildShareUrl(streamUrl) {
       const shareUrl = new URL(window.location.href);
