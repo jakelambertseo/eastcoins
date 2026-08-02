@@ -15,10 +15,10 @@
 
   <meta
     name="description"
-    content="EastCoin favorite sites."
+    content="EastCoin feature changelog and release timeline."
   />
 
-  <title>EastCoin — Favorites</title>
+  <title>EastCoin — Changelog</title>
   <link rel="icon" type="image/png" href="assets/eastcoin-favicon.png" />
   <link rel="shortcut icon" href="assets/eastcoin-favicon.png" />
   <link rel="apple-touch-icon" href="assets/eastcoin-favicon.png" />
@@ -775,6 +775,166 @@
     );
 }
 
+
+/* ---------------- CHANGELOG PAGE ---------------- */
+
+.changelog-shell{
+  width:min(900px,100%);
+  margin:0 auto;
+  padding:44px 34px 70px;
+}
+
+.changelog-header{
+  margin-bottom:34px;
+}
+
+.changelog-header h1{
+  margin:9px 0 11px;
+  color:#fff;
+  font-size:clamp(2.4rem,7vw,5rem);
+  line-height:.92;
+  letter-spacing:-.065em;
+}
+
+.changelog-header p{
+  max-width:620px;
+  margin:0;
+  color:#9ca4b3;
+  font-size:.95rem;
+  line-height:1.7;
+}
+
+.release-count{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin-top:16px;
+  padding:6px 9px;
+  border:1px solid rgba(201,164,79,.2);
+  border-radius:999px;
+  color:#cabd9e;
+  background:rgba(201,164,79,.05);
+  font-size:.68rem;
+  font-weight:900;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+
+.timeline{
+  position:relative;
+  display:grid;
+  gap:18px;
+  padding-left:28px;
+}
+
+.timeline::before{
+  content:"";
+  position:absolute;
+  left:8px;
+  top:8px;
+  bottom:8px;
+  width:2px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(201,164,79,.65),
+      rgba(91,36,43,.7)
+    );
+}
+
+.timeline-entry{
+  position:relative;
+  padding:18px 20px;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:13px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.025),
+      rgba(255,255,255,.012)
+    );
+  box-shadow:0 12px 28px rgba(0,0,0,.2);
+}
+
+.timeline-entry::before{
+  content:"";
+  position:absolute;
+  left:-27px;
+  top:24px;
+  width:12px;
+  height:12px;
+  border:3px solid #15110d;
+  border-radius:50%;
+  background:#c9a44f;
+  box-shadow:0 0 0 3px rgba(201,164,79,.16);
+}
+
+.timeline-entry.latest{
+  border-color:rgba(201,164,79,.24);
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(201,164,79,.08),
+      transparent 38%
+    ),
+    rgba(255,255,255,.018);
+}
+
+.timeline-date{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:7px;
+  color:#b9aa89;
+  font-size:.65rem;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.latest-badge{
+  padding:4px 7px;
+  border:1px solid rgba(201,164,79,.25);
+  border-radius:999px;
+  color:#efd784;
+  background:rgba(201,164,79,.07);
+  font-size:.56rem;
+}
+
+.timeline-entry h2{
+  margin:0;
+  color:#f3ead5;
+  font-size:1.18rem;
+  line-height:1.25;
+  letter-spacing:-.025em;
+}
+
+.timeline-entry p{
+  margin:8px 0 0;
+  color:#939baa;
+  font-size:.82rem;
+  line-height:1.65;
+}
+
+@media(max-width:760px){
+  .changelog-shell{
+    padding:34px 18px 54px;
+  }
+
+  .timeline{
+    padding-left:23px;
+  }
+
+  .timeline::before{
+    left:6px;
+  }
+
+  .timeline-entry::before{
+    left:-22px;
+  }
+}
+
 </style>
 </head>
 
@@ -796,7 +956,7 @@
       <div class="nav-group">
         <div class="nav-label">EastCoin</div>
         <a class="nav-link" href="index.html?new=1" target="_top">📺 Live Player</a>
-        <a class="nav-link active" href="favorites.html" target="_top">⭐ Favorites</a>
+        <a class="nav-link" href="favorites.html" target="_top">⭐ Favorites</a>
         <a class="nav-link" href="games.html?new=1" target="_top">🎮 Games</a>
         <a class="nav-link" href="bonk.html" target="_top">🔨 EastCoin Bonk</a>
         <a class="nav-link" href="aim-trainer.html" target="_top">🎯 Aim Trainer</a>
@@ -862,9 +1022,10 @@
       </div>
 
       <a
-        class="sidebar-footer-link"
+        class="sidebar-footer-link active"
         href="changelog.html"
-        target="_top">
+        target="_top"
+        aria-current="page">
         📝 Changelog
       </a>
 
@@ -878,85 +1039,115 @@
       aria-expanded="true">◀</button>
 
     <main class="page-main">
-      <div class="page-shell">
-        <header class="page-header">
+      <div class="changelog-shell">
+        <header class="changelog-header">
           <div class="eyebrow">
             <span class="eyebrow-dot"></span>
-            EastCoin bookmarks
+            EastCoin updates
           </div>
 
-          <h1>Favorites</h1>
+          <h1>Changelog</h1>
 
           <p>
-            Select a site to load its URL directly into the EastCoin player.
+            A simple timeline of the major features, games, and interface
+            improvements added to EastCoin.
           </p>
+
+          <div class="release-count">
+            8 major update groups
+          </div>
         </header>
 
-        <section class="favorites-section">
+        <section class="timeline" aria-label="EastCoin feature timeline">
+          <article class="timeline-entry">
+            <div class="timeline-date">
+              <time datetime="2026-07">July 2026</time>
+            </div>
+            <h2>EastCoin goes live</h2>
+            <p>
+              Launched the dark burgundy-and-gold site shell with the Live
+              Player, user-entered stream URLs, and embedded Twitch chat.
+            </p>
+          </article>
 
-          <div class="favorite-list">
+          <article class="timeline-entry">
+            <div class="timeline-date">
+              <time datetime="2026-07">July 2026</time>
+            </div>
+            <h2>Shareable rooms and Favorites</h2>
+            <p>
+              Added watch links, Share Room, quick links, and a Favorites page
+              for loading approved sites directly into the player.
+            </p>
+          </article>
 
-            <!-- FAVORITE SITE START -->
-            <a
-              class="favorite-site"
-              href="index.html"
-              data-watch-url="https://streamed.pk/">
-              <div class="favorite-copy">
-                <div class="site-name">Streamed PK</div>
-                <div class="site-url">https://streamed.pk/</div>
-              </div>
+          <article class="timeline-entry">
+            <div class="timeline-date">
+              <time datetime="2026-07">July 2026</time>
+            </div>
+            <h2>Games hub and resizable chat</h2>
+            <p>
+              Added the Games library, embedded game player, external game
+              cards, and a draggable divider for changing Twitch chat width.
+            </p>
+          </article>
 
-              <span class="site-arrow" aria-hidden="true">→</span>
-            </a>
-            <!-- FAVORITE SITE END -->
+          <article class="timeline-entry">
+            <div class="timeline-date">
+              <time datetime="2026-07">Late July 2026</time>
+            </div>
+            <h2>Sidebar and community upgrades</h2>
+            <p>
+              Added mobile navigation, remembered sidebar state, the NFL
+              kickoff countdown, and the official “zwades is blue” card.
+            </p>
+          </article>
 
-            <!-- FAVORITE SITE START -->
-            <a
-              class="favorite-site"
-              href="index.html"
-              data-watch-url="https://streamed.st/">
-              <div class="favorite-copy">
-                <div class="site-name">Streamed ST</div>
-                <div class="site-url">https://streamed.st/</div>
-              </div>
+          <article class="timeline-entry">
+            <div class="timeline-date">
+              <time datetime="2026-07">Late July 2026</time>
+            </div>
+            <h2>EastCoin Bonk launches</h2>
+            <p>
+              Introduced 45-second rounds, the EastCoin target roster, combo
+              scoring, sound effects, local best scores, and shareable results.
+            </p>
+          </article>
 
-              <span class="site-arrow" aria-hidden="true">→</span>
-            </a>
-            <!-- FAVORITE SITE END -->
+          <article class="timeline-entry">
+            <div class="timeline-date">
+              <time datetime="2026-08">August 2026</time>
+            </div>
+            <h2>Bonk jackpots and House Traps</h2>
+            <p>
+              Added the spoken countdown, Waldo and Blue Zwades jackpot events,
+              mixed picture and classic traps, and 3–8 temporary traps per round.
+            </p>
+          </article>
 
-            <!-- FAVORITE SITE START -->
-            <a
-              class="favorite-site"
-              href="index.html"
-              data-watch-url="https://dlhd.st/">
-              <div class="favorite-copy">
-                <div class="site-name">DaddyLive</div>
-                <div class="site-url">https://dlhd.st/</div>
-              </div>
+          <article class="timeline-entry">
+            <div class="timeline-date">
+              <time datetime="2026-08">August 2026</time>
+            </div>
+            <h2>Aim Trainer and Button Masher</h2>
+            <p>
+              Added two new EastCoin arcade games with full wrapper pages,
+              Twitch chat, personal bests, and branded Discord score cards.
+            </p>
+          </article>
 
-              <span class="site-arrow" aria-hidden="true">→</span>
-            </a>
-            <!-- FAVORITE SITE END -->
-
-            <!-- FAVORITE SITE START -->
-            <a
-              class="favorite-site"
-              href="index.html"
-              data-watch-url="https://timstreams.st/">
-              <div class="favorite-copy">
-                <div class="site-name">Tim Streams</div>
-                <div class="site-url">https://timstreams.st/</div>
-              </div>
-
-              <span class="site-arrow" aria-hidden="true">→</span>
-            </a>
-            <!-- FAVORITE SITE END -->
-
-          </div>
-
-          <div class="editing-note">
-            Ping Booty on Discord to add sites to this list.
-          </div>
+          <article class="timeline-entry latest">
+            <div class="timeline-date">
+              <time datetime="2026-08">August 2026</time>
+              <span class="latest-badge">Latest</span>
+            </div>
+            <h2>Interface cleanup and Changelog</h2>
+            <p>
+              Compacted the navigation, added collapsible player controls,
+              fixed nested game loading, embedded games directly, and added
+              this update timeline.
+            </p>
+          </article>
         </section>
       </div>
     </main>

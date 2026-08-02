@@ -1367,6 +1367,51 @@
   }
 }
 
+
+/* ---------------- CHANGELOG SIDEBAR LINK ---------------- */
+
+.sidebar-footer-link{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  margin-top:6px;
+  padding:7px 9px;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:9px;
+  color:#9da7b8;
+  background:rgba(255,255,255,.025);
+  font-size:.7rem;
+  font-weight:800;
+  line-height:1;
+  text-decoration:none;
+  transition:
+    color .16s ease,
+    border-color .16s ease,
+    background .16s ease,
+    transform .16s ease;
+}
+
+.sidebar-footer-link:hover,
+.sidebar-footer-link:focus-visible{
+  color:#f3e5c3;
+  border-color:rgba(201,164,79,.28);
+  background:rgba(201,164,79,.07);
+  outline:none;
+  transform:translateY(-1px);
+}
+
+.sidebar-footer-link.active{
+  color:#ffe8a3;
+  border-color:rgba(201,164,79,.42);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(122,28,35,.5),
+      rgba(57,13,18,.62)
+    );
+}
+
 </style>
   <link rel="icon" type="image/png" href="assets/eastcoin-favicon.png" />
   <link rel="shortcut icon" href="assets/eastcoin-favicon.png" />
@@ -1393,8 +1438,8 @@
         <a class="nav-link" href="favorites.html" target="_top">⭐ Favorites</a>
         <a class="nav-link" href="games.html?new=1" target="_top">🎮 Games</a>
         <a class="nav-link active" href="bonk.html" target="_top">🔨 EastCoin Bonk</a>
-        <a class="nav-link" href="aim-trainer.html?v=embedded1" target="_top">🎯 Aim Trainer</a>
-        <a class="nav-link" href="button-masher.html?v=embedded1" target="_top">🟥 Button Masher</a>
+        <a class="nav-link" href="aim-trainer.html" target="_top">🎯 Aim Trainer</a>
+        <a class="nav-link" href="button-masher.html" target="_top">🟥 Button Masher</a>
       </div>
 
       <section
@@ -1454,6 +1499,13 @@
           zwades is <span class="is-blue">blue</span>
         </p>
       </div>
+
+      <a
+        class="sidebar-footer-link"
+        href="changelog.html"
+        target="_top">
+        📝 Changelog
+      </a>
 
     </aside>
 
