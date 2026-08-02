@@ -71,19 +71,19 @@
     const definitions = {
       "bonk.html": {
         name: "EastCoin Bonk",
-        url: "bonk-game.html?v=trap10",
+        url: "bonk-game.html?v=trap10&overlay=1",
         icon: "🔨",
         wrapper: "bonk.html"
       },
       "aim-trainer.html": {
         name: "EastCoin Aim Trainer",
-        url: "aim-trainer-game.html?v=ux1",
+        url: "aim-trainer-game.html?v=ux1&overlay=1",
         icon: "🎯",
         wrapper: "aim-trainer.html"
       },
       "button-masher.html": {
         name: "EastCoin Button Masher",
-        url: "button-masher-game.html?v=ux1",
+        url: "button-masher-game.html?v=ux1&overlay=1",
         icon: "🟥",
         wrapper: "button-masher.html"
       }

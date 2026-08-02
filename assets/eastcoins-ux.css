@@ -1600,3 +1600,141 @@ body.ec-theater-mode .player-shell > .ec-utility-dock{
     display:none;
   }
 }
+
+
+/* ================================================================
+   COMPACT INLINE GAME FIT + PLAYER UTILITIES
+   ================================================================ */
+
+.player-shell > .ec-utility-dock{
+  gap:4px!important;
+  padding:5px!important;
+  border-radius:12px!important;
+}
+
+.player-shell
+  > .ec-utility-dock
+  .ec-utility-button{
+  min-height:30px!important;
+  padding:6px 8px!important;
+  border-radius:7px!important;
+  font-size:.58rem!important;
+  line-height:1.1!important;
+  white-space:nowrap!important;
+}
+
+.ec-player-game-overlay{
+  top:58px;
+  right:10px;
+  bottom:54px;
+  left:10px;
+  padding:6px;
+  border-radius:13px;
+}
+
+.ec-player-game-panel{
+  border-radius:11px;
+}
+
+.ec-player-game-header{
+  min-height:43px;
+  gap:8px;
+  padding:7px 9px;
+}
+
+.ec-player-game-header span{
+  font-size:.44rem;
+}
+
+.ec-player-game-header h2{
+  margin-top:2px;
+  font-size:.72rem;
+}
+
+.ec-player-game-close{
+  min-height:29px;
+  padding:5px 8px;
+  border-radius:7px;
+  font-size:.52rem;
+}
+
+.ec-player-game-stage-actions{
+  min-height:32px;
+  padding:4px 7px;
+}
+
+.ec-player-game-stage-actions button{
+  min-height:25px;
+  padding:4px 7px;
+  font-size:.49rem;
+}
+
+.ec-player-game-stage-actions small{
+  font-size:.46rem;
+}
+
+.ec-player-game-frame{
+  display:block;
+  overflow:hidden;
+}
+
+@media(max-width:1100px){
+  .ec-player-game-overlay{
+    top:52px;
+    right:5px;
+    bottom:48px;
+    left:5px;
+    padding:4px;
+  }
+
+  .ec-player-game-header{
+    min-height:38px;
+    padding:5px 7px;
+  }
+
+  .ec-player-game-header h2{
+    font-size:.66rem;
+  }
+
+  .ec-player-game-close{
+    min-height:26px;
+    padding:4px 6px;
+    font-size:.48rem;
+  }
+
+  .ec-player-game-stage-actions{
+    min-height:28px;
+    padding:3px 6px;
+  }
+
+  .player-shell
+    > .ec-utility-dock
+    .ec-utility-button{
+    min-height:28px!important;
+    padding:5px 7px!important;
+    font-size:.53rem!important;
+  }
+}
+
+@media(max-width:760px){
+  .ec-player-game-overlay{
+    top:46px;
+    right:3px;
+    bottom:44px;
+    left:3px;
+    padding:3px;
+  }
+
+  .ec-player-game-header span{
+    display:none;
+  }
+
+  .ec-player-game-header h2{
+    margin:0;
+    font-size:.62rem;
+  }
+
+  .ec-player-game-stage-actions small{
+    display:none;
+  }
+}

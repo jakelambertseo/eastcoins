@@ -473,3 +473,23 @@ INLINE GAME STARTUP FIX
 - The normal event/video iframe continues to receive loading and recovery UI.
 - Shared UX JavaScript was cache-busted from ux6 to ux7.
 - Updated changelog.html.
+
+
+COMPACT CONTROLS + INLINE GAME FIT
+- The top event-room controls use smaller padding, type, artwork, and gaps.
+- The top controls can scroll horizontally instead of covering the player.
+- The bottom Theater / Chat / Nav / Game / Settings strip is smaller.
+- The inline game overlay now uses nearly the full available player area.
+- The overlay header and game-switching bar were reduced in height.
+- Inline game URLs now include overlay=1.
+- Each inner game has a compact overlay-only layout:
+  - shorter title/header area
+  - compact stats
+  - game board uses the remaining iframe height
+  - Bonk keeps all six holes in a 3 × 2 board
+  - Aim Trainer arena fills the remaining height
+  - Button Smasher scales its press area to the available viewport
+- Direct full-page game links retain their original layouts.
+- Shared UX CSS and JavaScript were cache-busted to ux8.
+- Streamed CSS was cache-busted to server16.
+- Updated changelog.html.
