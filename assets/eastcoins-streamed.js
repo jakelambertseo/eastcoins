@@ -25,16 +25,28 @@
   const changeButton = document.getElementById("changeButton");
   const quickStreamedButton =
     document.getElementById("streamedBrowseButton");
+  const toolbarTitle =
+    playerToolbar?.querySelector(".toolbar-title");
 
   if (
     !form ||
     !input ||
     !playerShell ||
     !playerToolbar ||
-    !toolbarActions
+    !toolbarActions ||
+    !toolbarTitle
   ) {
     return;
   }
+
+  const toolbarArtwork = document.createElement("span");
+  toolbarArtwork.className = "streamed-toolbar-artwork";
+  toolbarArtwork.hidden = true;
+  toolbarArtwork.setAttribute("aria-hidden", "true");
+  toolbarTitle.insertBefore(
+    toolbarArtwork,
+    toolbarTitle.firstChild
+  );
 
   const launcher = document.getElementById("streamedLauncher");
   const browser = document.getElementById("streamedBrowser");
@@ -68,11 +80,19 @@
 
   serverPanel.innerHTML = `
     <div class="streamed-server-header">
-      <div class="streamed-server-heading">
-        <span>Available servers</span>
-        <strong id="streamedServerMatch">
-          Streamed event
-        </strong>
+      <div class="streamed-server-event">
+        <div
+          class="streamed-server-artwork"
+          id="streamedServerArtwork"
+          aria-hidden="true">
+        </div>
+
+        <div class="streamed-server-heading">
+          <span>Available servers</span>
+          <strong id="streamedServerMatch">
+            Streamed event
+          </strong>
+        </div>
       </div>
 
       <div class="streamed-server-actions">
@@ -104,6 +124,8 @@
     serverPanel
   );
 
+  const serverArtwork =
+    document.getElementById("streamedServerArtwork");
   const serverMatch =
     document.getElementById("streamedServerMatch");
   const sourceGroups =
@@ -121,6 +143,310 @@
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
   }
+
+  function encodeBase64Url(value) {
+    const bytes = new TextEncoder().encode(
+      String(value)
+    );
+    const binary = Array.from(
+      bytes,
+      (byte) => String.fromCharCode(byte)
+    ).join("");
+
+    return btoa(binary)
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/g, "");
+  }
+
+  function decodeBase64Url(value) {
+    const normalized = String(value || "")
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+
+    const padding =
+      normalized.length % 4 === 0
+        ? ""
+        : "=".repeat(4 - (normalized.length % 4));
+
+    const binary = atob(normalized + padding);
+    const bytes = Uint8Array.from(
+      binary,
+      (character) => character.charCodeAt(0)
+    );
+
+    return new TextDecoder().decode(bytes);
+  }
+
+  function compactSharedMatch(match) {
+    if (!match) {
+      return null;
+    }
+
+    return {
+      id: match.id || "",
+      title: match.title || "",
+      category: match.category || "",
+      date: Number(match.date || 0),
+      poster: match.poster || "",
+      popular: Boolean(match.popular),
+      teams: match.teams || null,
+      sources: Array.isArray(match.sources)
+        ? match.sources
+            .filter(
+              (source) =>
+                source?.source &&
+                source?.id
+            )
+            .map((source) => ({
+              source: String(source.source),
+              id: String(source.id)
+            }))
+        : []
+    };
+  }
+
+  function createRoomToken(
+    match,
+    activeStream
+  ) {
+    const compactMatch = compactSharedMatch(match);
+
+    if (
+      !compactMatch?.id ||
+      !compactMatch.sources.length ||
+      !activeStream
+    ) {
+      return "";
+    }
+
+    return encodeBase64Url(
+      JSON.stringify({
+        version: 1,
+        match: compactMatch,
+        source: activeStream.source || "",
+        streamNo: activeStream.streamNo
+      })
+    );
+  }
+
+  function parseRoomToken(token) {
+    if (!token) {
+      return null;
+    }
+
+    try {
+      const payload = JSON.parse(
+        decodeBase64Url(token)
+      );
+
+      if (
+        Number(payload?.version) !== 1 ||
+        !payload?.match?.id ||
+        !Array.isArray(payload?.match?.sources) ||
+        !payload.match.sources.length
+      ) {
+        return null;
+      }
+
+      return payload;
+    } catch {
+      return null;
+    }
+  }
+
+  function cleanImageReference(value) {
+    return String(value ?? "").trim();
+  }
+
+  function ensureWebp(value) {
+    return /\.webp(?:[?#].*)?$/i.test(value)
+      ? value
+      : `${value}.webp`;
+  }
+
+  function badgeImageUrl(value) {
+    const reference = cleanImageReference(value);
+
+    if (!reference) {
+      return "";
+    }
+
+    if (/^https?:\/\//i.test(reference)) {
+      return ensureWebp(reference);
+    }
+
+    if (reference.startsWith("/")) {
+      return `https://streamed.pk${ensureWebp(reference)}`;
+    }
+
+    const id = reference.replace(/\.webp$/i, "");
+
+    return (
+      `${API_BASE}/images/badge/` +
+      `${encodeURIComponent(id)}.webp`
+    );
+  }
+
+  function posterImageUrl(value) {
+    const reference = cleanImageReference(value);
+
+    if (!reference) {
+      return "";
+    }
+
+    if (/^https?:\/\//i.test(reference)) {
+      return ensureWebp(reference);
+    }
+
+    if (reference.startsWith("/")) {
+      return `https://streamed.pk${ensureWebp(reference)}`;
+    }
+
+    const id = reference.replace(/\.webp$/i, "");
+
+    return (
+      `${API_BASE}/images/proxy/` +
+      `${encodeURIComponent(id)}.webp`
+    );
+  }
+
+  function initials(value, maximum = 2) {
+    const words = String(value ?? "")
+      .replace(/\b(vs?\.?|at)\b/gi, " ")
+      .replace(/[^a-zA-Z0-9 ]+/g, " ")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    if (!words.length) {
+      return "EC";
+    }
+
+    return words
+      .slice(0, maximum)
+      .map((word) => word.charAt(0).toUpperCase())
+      .join("");
+  }
+
+  function renderTeamBadge(team, context = "card") {
+    if (!team) {
+      return "";
+    }
+
+    const name = team.name || "Team";
+    const badgeUrl = badgeImageUrl(team.badge);
+    const loading =
+      context === "card" ? "lazy" : "eager";
+
+    return `
+      <span
+        class="streamed-team-badge"
+        title="${escapeHtml(name)}">
+        <span class="streamed-team-initials">
+          ${escapeHtml(initials(name))}
+        </span>
+        ${badgeUrl
+          ? `
+            <img
+              class="streamed-team-badge-image"
+              data-streamed-image
+              src="${escapeHtml(badgeUrl)}"
+              alt=""
+              width="44"
+              height="44"
+              loading="${loading}"
+              decoding="async">
+          `
+          : ""}
+      </span>
+    `;
+  }
+
+  function renderMatchArtwork(match, context = "card") {
+    const home = match?.teams?.home;
+    const away = match?.teams?.away;
+
+    if (home || away) {
+      return `
+        <span class="streamed-team-pair">
+          ${renderTeamBadge(home, context)}
+          ${renderTeamBadge(away, context)}
+        </span>
+      `;
+    }
+
+    const posterUrl = posterImageUrl(match?.poster);
+
+    if (posterUrl) {
+      return `
+        <span
+          class="streamed-poster-frame"
+          title="${escapeHtml(match?.title || "Event")}">
+          <span class="streamed-poster-fallback">
+            ${escapeHtml(
+              initials(match?.category || match?.title)
+            )}
+          </span>
+          <img
+            class="streamed-poster-image"
+            data-streamed-image
+            src="${escapeHtml(posterUrl)}"
+            alt=""
+            width="64"
+            height="44"
+            loading="${context === "card" ? "lazy" : "eager"}"
+            decoding="async">
+        </span>
+      `;
+    }
+
+    return `
+      <span
+        class="streamed-sport-fallback"
+        title="${escapeHtml(
+          sourceLabel(match?.category || "Sport")
+        )}">
+        ${escapeHtml(
+          initials(match?.category || match?.title)
+        )}
+      </span>
+    `;
+  }
+
+  function updateSelectedArtwork(match) {
+    const artwork = match
+      ? renderMatchArtwork(match, "selected")
+      : "";
+
+    serverArtwork.innerHTML = artwork;
+    toolbarArtwork.innerHTML = artwork;
+    toolbarArtwork.hidden = !artwork;
+    toolbarTitle.classList.toggle(
+      "streamed-has-artwork",
+      Boolean(artwork)
+    );
+  }
+
+  document.addEventListener(
+    "error",
+    (event) => {
+      const image = event.target;
+
+      if (
+        !(image instanceof HTMLImageElement) ||
+        !image.matches("[data-streamed-image]")
+      ) {
+        return;
+      }
+
+      image.parentElement?.classList.add(
+        "image-failed"
+      );
+      image.remove();
+    },
+    true
+  );
 
   function slugify(value) {
     return String(value ?? "")
@@ -254,6 +580,8 @@
           match.title,
           match.category,
           match.id,
+          match.teams?.home?.name,
+          match.teams?.away?.name,
           ...(Array.isArray(match.sources)
             ? match.sources.flatMap((source) => [
                 source.source,
@@ -296,19 +624,27 @@
             class="streamed-match"
             type="button"
             data-streamed-match-index="${index}">
-            <span class="streamed-match-copy">
-              <span class="streamed-match-title">
-                ${escapeHtml(match.title || match.id)}
+            <span class="streamed-match-identity">
+              <span
+                class="streamed-match-artwork"
+                aria-hidden="true">
+                ${renderMatchArtwork(match, "card")}
               </span>
-              <span class="streamed-match-meta">
-                <span>${escapeHtml(category)}</span>
-                <span>${escapeHtml(formatDate(match.date))}</span>
-                <span>
-                  ${sources} source${sources === 1 ? "" : "s"}
+
+              <span class="streamed-match-copy">
+                <span class="streamed-match-title">
+                  ${escapeHtml(match.title || match.id)}
                 </span>
-                ${match.popular
-                  ? "<span>Popular</span>"
-                  : ""}
+                <span class="streamed-match-meta">
+                  <span>${escapeHtml(category)}</span>
+                  <span>${escapeHtml(formatDate(match.date))}</span>
+                  <span>
+                    ${sources} source${sources === 1 ? "" : "s"}
+                  </span>
+                  ${match.popular
+                    ? "<span>Popular</span>"
+                    : ""}
+                </span>
               </span>
             </span>
 
@@ -674,6 +1010,7 @@
 
     serverMatch.textContent =
       state.match?.title || "Streamed event";
+    updateSelectedArtwork(state.match);
 
     sourceGroups.innerHTML = Array.from(groups)
       .map(([source, streams]) => {
@@ -748,7 +1085,11 @@
       title: state.match.title,
       source: state.activeStream.source,
       streamNo: state.activeStream.streamNo,
-      embedUrl: state.activeStream.embedUrl
+      embedUrl: state.activeStream.embedUrl,
+      roomToken: createRoomToken(
+        state.match,
+        state.activeStream
+      )
     };
   }
 
@@ -803,6 +1144,24 @@
       "aria-expanded",
       String(state.panelOpen)
     );
+  }
+
+  function revealRestoredServerControls() {
+    if (
+      typeof window
+        .setEastcoinPlayerToolbarCollapsed ===
+      "function"
+    ) {
+      window.setEastcoinPlayerToolbarCollapsed(
+        false,
+        false
+      );
+    } else {
+      playerToolbar.classList.remove("collapsed");
+    }
+
+    playerToolbar.hidden = false;
+    setServerPanelOpen(true);
   }
 
   async function loadMatch(
@@ -862,6 +1221,12 @@
     serverButton.hidden = true;
     serverPanel.hidden = true;
     sourceGroups.innerHTML = "";
+    serverArtwork.innerHTML = "";
+    toolbarArtwork.innerHTML = "";
+    toolbarArtwork.hidden = true;
+    toolbarTitle.classList.remove(
+      "streamed-has-artwork"
+    );
   }
 
   async function handleStreamedUrl(rawValue) {
@@ -1033,10 +1398,13 @@
     const params = new URLSearchParams(
       window.location.search
     );
+    const roomPayload = parseRoomToken(
+      params.get("streamedRoom")
+    );
     const matchId = params.get("streamedEvent");
     const normalWatchUrl = params.get("watch");
 
-    if (!matchId) {
+    if (!roomPayload && !matchId) {
       if (!normalWatchUrl) {
         await openBrowser("live");
       }
@@ -1045,28 +1413,59 @@
     }
 
     const preferredSource =
-      params.get("streamedSource") || "";
+      roomPayload?.source ||
+      params.get("streamedSource") ||
+      "";
     const preferredNo =
-      params.get("streamedStream") || "";
+      roomPayload?.streamNo ??
+      params.get("streamedStream") ??
+      "";
 
     browser.hidden = false;
     setStatus(
-      "Restoring the shared Streamed event and server selection…"
+      "Restoring the shared event and complete server list…"
     );
 
     try {
-      const match = await resolveMatchToken(matchId);
+      /*
+        New links carry the complete match source map, so the server list
+        can be rebuilt even if the match has moved between Live, Today, or
+        All listings. Older links still resolve through the API lists.
+      */
+      const match =
+        roomPayload?.match ||
+        await resolveMatchToken(matchId);
+
       await loadMatch(
         match,
         preferredSource,
         preferredNo
       );
+
+      /*
+        loadStream() respects the user's normal collapsed-controls setting.
+        A shared Streamed room is different: immediately expose the selector
+        so the recipient can see and switch every available server.
+      */
+      revealRestoredServerControls();
     } catch (error) {
       setStatus(
         error.message ||
-          "Unable to restore this Streamed room.",
+          "Unable to restore this shared event.",
         true
       );
+
+      /*
+        The direct embed remains a final fallback for a stale event or
+        temporary API failure. It cannot recreate server buttons, but it
+        avoids leaving the shared room blank.
+      */
+      if (
+        normalWatchUrl &&
+        typeof window.loadStream === "function"
+      ) {
+        window.loadStream(normalWatchUrl, true);
+      }
     }
   }
 

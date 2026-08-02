@@ -1202,7 +1202,7 @@
 
   <link rel="stylesheet" href="assets/eastcoins-theme.css" />
   <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux2" />
-  <link rel="stylesheet" href="assets/eastcoins-streamed.css?v=server2" />
+  <link rel="stylesheet" href="assets/eastcoins-streamed.css?v=server3" />
 </head>
 
 <body>
@@ -1626,6 +1626,9 @@
       }
     }
 
+    window.setEastcoinPlayerToolbarCollapsed =
+      setPlayerToolbarCollapsed;
+
     function loadStream(rawValue, savePreference = rememberUrl.checked) {
       urlError.textContent = "";
 
@@ -1738,6 +1741,13 @@
           "streamedEvent",
           streamedState.matchId
         );
+
+        if (streamedState.roomToken) {
+          shareUrl.searchParams.set(
+            "streamedRoom",
+            streamedState.roomToken
+          );
+        }
 
         if (streamedState.source) {
           shareUrl.searchParams.set(
@@ -2015,6 +2025,9 @@
 
     const queryParameters = new URLSearchParams(window.location.search);
     const startFresh = queryParameters.get("new") === "1";
+    const hasSharedStreamedRoom =
+      queryParameters.has("streamedRoom") ||
+      queryParameters.has("streamedEvent");
 
     if (startFresh) {
       /*
@@ -2027,7 +2040,16 @@
       const queryStream =
         queryParameters.get("watch") || queryParameters.get("stream");
       const savedUrl = localStorage.getItem("eastcoinsEmbedUrl");
-      const initialUrl = queryStream || savedUrl;
+
+      /*
+        Shared Streamed rooms are restored by eastcoins-streamed.js.
+        Do not load the fallback embed first, because doing so races the
+        event/source restoration and can leave the room without its server
+        controls.
+      */
+      const initialUrl = hasSharedStreamedRoom
+        ? ""
+        : queryStream || savedUrl;
 
       if (initialUrl) {
         streamUrlInput.value = initialUrl;
@@ -2111,6 +2133,6 @@
     initializeFootballCountdowns();
 
   </script>
-  <script src="assets/eastcoins-streamed.js?v=server2"></script>
+  <script src="assets/eastcoins-streamed.js?v=server4"></script>
 </body>
 </html>

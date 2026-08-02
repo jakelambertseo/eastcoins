@@ -165,3 +165,35 @@ STREAMED SERVER BROWSER PUBLISHED
   and URL hashes so older shared test links continue working.
 - The Live Player navigation link now points to index.html?new=1.
 - The changelog now records the full homepage launch.
+
+
+STREAMED TEAM ARTWORK
+- Live and Today event rows now display home and away team badges when the
+  Matches API supplies teams.home/teams.away badge IDs.
+- Badge URL format:
+  https://streamed.pk/api/images/badge/[id].webp
+- Selected-event artwork also appears in the server selector and player
+  toolbar.
+- Events without team badges use the provided poster image when available.
+- Events without either image type use compact team or sport initials.
+- Failed image requests automatically fall back without leaving a broken
+  image icon.
+- Team names are now included in event search matching.
+- Streamed asset cache versions were updated from server2 to server3.
+- The changelog was updated.
+
+
+SHARED ROOM SERVER RESTORATION FIX
+- Share Room links now include a compact streamedRoom payload.
+- The payload contains the event ID, title, category, optional artwork/team
+  data, and every Streamed source/source-specific match ID.
+- The selected source and stream number are included in the payload.
+- Shared Streamed rooms no longer let the generic ?watch= loader run first.
+- The Streamed restorer now owns startup and rebuilds every server button.
+- Player controls and the server selector are forced open after restoration.
+- Older links containing streamedEvent/source/stream parameters remain
+  supported through the API listing lookup.
+- If an event is stale or the API temporarily fails, the ?watch= embed URL
+  remains a video-only fallback.
+- Updated Streamed JavaScript cache version from server3 to server4.
+- Updated changelog.html.
