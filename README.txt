@@ -116,7 +116,7 @@ THEATER MODE AND ULTRA-DARK STYLE FIX
 - The August 2026 changelog entry was updated.
 
 
-STREAMED API SERVER SWITCHER BETA
+STREAMED API SERVER SWITCHER
 - Added a Streamed API browser to the Live Player URL screen.
 - Users can browse Live Now or Today and search returned events.
 - Pasting a streamed.pk/watch/... URL attempts to resolve the event.
@@ -133,14 +133,25 @@ STREAMED API SERVER SWITCHER BETA
 - The normal manual URL player still works exactly as before.
 - Direct browser fetch is used because the documented API requires no auth.
 - If production browsers report a CORS error, a Cloudflare Pages proxy will
-  be the next step; no Worker/Function was added in this beta.
+  be the next step; no Worker/Function was added in this test implementation.
 - Added the feature to changelog.html.
 
 
-STREAMED BETA MOVED TO A TEST PAGE
+STREAMED SERVER BROWSER TEST PAGE
 - index.html has been restored to the stable Live Player.
 - index-test.html contains the Streamed API event browser and server switcher.
 - Share Room URLs created from the test page remain on index-test.html.
 - The active Live Player link on the test page points to
   index-test.html?new=1.
-- The changelog identifies index-test.html as the temporary beta location.
+- The changelog identifies index-test.html as the temporary test location.
+
+
+STREAMED BROWSER CLEANUP
+- Removed beta and test-page wording from the visible Streamed interface.
+- Live Now events load automatically when index-test.html opens without a
+  shared event or normal watch URL.
+- Added “View all streams” inside the server selector.
+- Returning to all streams restores the event browser and refreshes the
+  Live Now view without leaving index-test.html.
+- Updated Streamed asset cache versions from server1 to server2.
+- Updated the changelog entry.

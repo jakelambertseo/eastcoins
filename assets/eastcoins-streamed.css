@@ -422,3 +422,51 @@ body.ec-theater-mode .streamed-server-panel{
     align-items:center;
   }
 }
+
+
+.streamed-server-actions{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex:0 0 auto;
+}
+
+.streamed-server-back{
+  min-height:32px;
+  padding:7px 9px;
+  border:1px solid rgba(201,164,79,.18);
+  border-radius:8px;
+  color:#d9cdb8;
+  background:#0a0706;
+  font-size:.64rem;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.streamed-server-back:hover,
+.streamed-server-back:focus-visible{
+  border-color:rgba(237,208,124,.46);
+  color:#ffe8a3;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(82,17,25,.96),
+      rgba(31,7,10,.98)
+    );
+  outline:0;
+}
+
+@media(max-width:560px){
+  .streamed-server-header{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .streamed-server-actions{
+    width:100%;
+  }
+
+  .streamed-server-back{
+    flex:1;
+  }
+}

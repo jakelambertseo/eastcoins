@@ -75,13 +75,22 @@
         </strong>
       </div>
 
-      <button
-        class="streamed-server-close"
-        id="streamedServerClose"
-        type="button"
-        aria-label="Close server selector">
-        ×
-      </button>
+      <div class="streamed-server-actions">
+        <button
+          class="streamed-server-back"
+          id="streamedServerBack"
+          type="button">
+          ← View all streams
+        </button>
+
+        <button
+          class="streamed-server-close"
+          id="streamedServerClose"
+          type="button"
+          aria-label="Close server selector">
+          ×
+        </button>
+      </div>
     </div>
 
     <div
@@ -99,6 +108,8 @@
     document.getElementById("streamedServerMatch");
   const sourceGroups =
     document.getElementById("streamedSourceGroups");
+  const serverBack =
+    document.getElementById("streamedServerBack");
   const serverClose =
     document.getElementById("streamedServerClose");
 
@@ -919,6 +930,32 @@
     setServerPanelOpen(!state.panelOpen);
   });
 
+  function returnToAllStreams() {
+    setServerPanelOpen(false);
+
+    if (changeButton) {
+      changeButton.click();
+    }
+
+    window.setTimeout(() => {
+      openBrowser("live");
+      launcher?.scrollIntoView({
+        behavior:
+          document.documentElement.classList.contains(
+            "ec-reduced-motion"
+          )
+            ? "auto"
+            : "smooth",
+        block: "start"
+      });
+    }, 0);
+  }
+
+  serverBack.addEventListener(
+    "click",
+    returnToAllStreams
+  );
+
   serverClose.addEventListener("click", () => {
     setServerPanelOpen(false);
   });
@@ -997,8 +1034,13 @@
       window.location.search
     );
     const matchId = params.get("streamedEvent");
+    const normalWatchUrl = params.get("watch");
 
     if (!matchId) {
+      if (!normalWatchUrl) {
+        await openBrowser("live");
+      }
+
       return;
     }
 
