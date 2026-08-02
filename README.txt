@@ -443,3 +443,23 @@ WATCH-NIGHT RELIABILITY + PERSONALIZATION
 - Streamed assets updated to server14.
 - Added assets/eastcoins-status.css and assets/eastcoins-status.js.
 - Updated changelog.html.
+
+
+INLINE GAME BREAK OVERLAY
+- Added Hide Nav / Show Nav to the centered player utility dock.
+- Added Play a Game beside Theater, chat, and Settings.
+- Play a Game opens a centered overlay over part of the player.
+- Visitors can choose:
+  - EastCoin Bonk
+  - Aim Trainer
+  - Button Smasher
+- The selected game loads in an iframe on the same page.
+- The underlying stream remains loaded and continues playing.
+- Return to event closes and unloads the game immediately.
+- Choose another game returns to the game-selection screen.
+- Clicking outside the panel or pressing Escape also exits quickly.
+- Keyboard shortcut G opens/closes the new inline game overlay.
+- The older top-toolbar Game Break button remains retired.
+- Shared UX assets updated to ux6.
+- Streamed JavaScript updated to server15.
+- Updated changelog.html.

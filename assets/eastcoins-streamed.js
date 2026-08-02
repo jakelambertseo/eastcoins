@@ -2785,7 +2785,12 @@
     player.nextServerButton.hidden =
       state.streams.length < 2;
     player.feedbackGroup.hidden = false;
-    player.gameBreakButton.hidden = false;
+
+    /*
+      Game Break now lives in the centered utility dock as a
+      same-page playable overlay.
+    */
+    player.gameBreakButton.hidden = true;
   }
 
   function renderServerPanel() {
@@ -3454,13 +3459,16 @@
         return;
       }
 
-      if (
-        key === "g" &&
-        player &&
-        !player.gameBreakButton.hidden
-      ) {
-        event.preventDefault();
-        player.gameBreakButton.click();
+      if (key === "g") {
+        const gameButton =
+          document.querySelector(
+            "[data-ec-game-overlay-toggle]"
+          );
+
+        if (gameButton) {
+          event.preventDefault();
+          gameButton.click();
+        }
         return;
       }
 

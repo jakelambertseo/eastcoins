@@ -25,6 +25,9 @@
   let watchedFrame = null;
   let loadTimer = null;
   let settingsModal = null;
+  let gameOverlay = null;
+  let gameOverlayFrame = null;
+  let gameOverlayOpen = false;
   let theaterActive = false;
 
   function readBoolean(key, fallback) {
@@ -528,6 +531,354 @@
       });
   }
 
+  function navigationIsVisible() {
+    if (isMobile()) {
+      return body.classList.contains(
+        "menu-open"
+      );
+    }
+
+    return !body.classList.contains(
+      "sidebar-collapsed"
+    );
+  }
+
+  function updateNavigationButtons() {
+    const visible = navigationIsVisible();
+
+    document
+      .querySelectorAll(
+        "[data-ec-nav-toggle]"
+      )
+      .forEach((button) => {
+        button.textContent = visible
+          ? "◀ Hide nav"
+          : "☰ Show nav";
+        button.classList.toggle(
+          "is-active",
+          !visible
+        );
+        button.setAttribute(
+          "aria-pressed",
+          String(!visible)
+        );
+      });
+  }
+
+  function toggleNavigation() {
+    const navigationButton =
+      document.getElementById("mobileMenu") ||
+      document.getElementById(
+        "sidebarToggle"
+      );
+
+    navigationButton?.click();
+
+    window.requestAnimationFrame(
+      updateNavigationButtons
+    );
+  }
+
+  function gameChoices() {
+    return [
+      {
+        id: "bonk",
+        name: "EastCoin Bonk",
+        description:
+          "Fast reflex bonking while the game is away.",
+        icon: "🔨",
+        url: "bonk-game.html?v=trap10"
+      },
+      {
+        id: "aim",
+        name: "Aim Trainer",
+        description:
+          "A quick accuracy challenge between plays.",
+        icon: "🎯",
+        url: "aim-trainer-game.html?v=ux1"
+      },
+      {
+        id: "button",
+        name: "Button Smasher",
+        description:
+          "Short competitive rounds of rapid clicking.",
+        icon: "🟥",
+        url: "button-masher-game.html?v=ux1"
+      }
+    ];
+  }
+
+  function resetGameOverlay() {
+    if (!gameOverlay) return;
+
+    const chooser = gameOverlay.querySelector(
+      "[data-ec-game-chooser]"
+    );
+    const stage = gameOverlay.querySelector(
+      "[data-ec-game-stage]"
+    );
+    const title = gameOverlay.querySelector(
+      "[data-ec-game-title]"
+    );
+
+    chooser.hidden = false;
+    stage.hidden = true;
+
+    if (title) {
+      title.textContent =
+        "Choose a quick EastCoin game";
+    }
+
+    if (gameOverlayFrame) {
+      gameOverlayFrame.removeAttribute(
+        "src"
+      );
+      gameOverlayFrame.title =
+        "EastCoin game";
+    }
+  }
+
+  function setGameOverlayOpen(open) {
+    if (!gameOverlay) return;
+
+    gameOverlayOpen = Boolean(open);
+
+    if (gameOverlayOpen) {
+      const serverButton =
+        document.getElementById(
+          "streamedServerButton"
+        );
+
+      if (
+        serverButton?.getAttribute(
+          "aria-expanded"
+        ) === "true"
+      ) {
+        serverButton.click();
+      }
+
+      gameOverlay.hidden = false;
+      gameOverlay.classList.add("is-open");
+      gameOverlay.setAttribute(
+        "aria-hidden",
+        "false"
+      );
+
+      window.requestAnimationFrame(() => {
+        gameOverlay
+          .querySelector(
+            "[data-ec-game-choice]"
+          )
+          ?.focus();
+      });
+    } else {
+      gameOverlay.classList.remove(
+        "is-open"
+      );
+      gameOverlay.hidden = true;
+      gameOverlay.setAttribute(
+        "aria-hidden",
+        "true"
+      );
+      resetGameOverlay();
+    }
+
+    document
+      .querySelectorAll(
+        "[data-ec-game-overlay-toggle]"
+      )
+      .forEach((button) => {
+        button.textContent = gameOverlayOpen
+          ? "✕ Close Game"
+          : "🎮 Play a Game";
+        button.classList.toggle(
+          "is-active",
+          gameOverlayOpen
+        );
+        button.setAttribute(
+          "aria-pressed",
+          String(gameOverlayOpen)
+        );
+      });
+  }
+
+  function loadGameInOverlay(game) {
+    if (
+      !gameOverlay ||
+      !gameOverlayFrame
+    ) {
+      return;
+    }
+
+    const chooser = gameOverlay.querySelector(
+      "[data-ec-game-chooser]"
+    );
+    const stage = gameOverlay.querySelector(
+      "[data-ec-game-stage]"
+    );
+    const title = gameOverlay.querySelector(
+      "[data-ec-game-title]"
+    );
+
+    chooser.hidden = true;
+    stage.hidden = false;
+    title.textContent = game.name;
+
+    gameOverlayFrame.title = game.name;
+    gameOverlayFrame.src = game.url;
+
+    gameOverlayFrame.addEventListener(
+      "load",
+      sendSettingsToFrames,
+      { once: true }
+    );
+  }
+
+  function buildPlayerGameOverlay() {
+    if (
+      !playerShell ||
+      gameDefinitionForPage()
+    ) {
+      return;
+    }
+
+    gameOverlay =
+      document.createElement("div");
+    gameOverlay.className =
+      "ec-player-game-overlay";
+    gameOverlay.id =
+      "ecPlayerGameOverlay";
+    gameOverlay.hidden = true;
+    gameOverlay.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+    gameOverlay.innerHTML = `
+      <section
+        class="ec-player-game-panel"
+        role="dialog"
+        aria-modal="false"
+        aria-labelledby="ecPlayerGameTitle">
+        <header class="ec-player-game-header">
+          <div>
+            <span>Game break</span>
+            <h2
+              id="ecPlayerGameTitle"
+              data-ec-game-title>
+              Choose a quick EastCoin game
+            </h2>
+          </div>
+
+          <button
+            class="ec-player-game-close"
+            type="button"
+            data-ec-close-game>
+            Return to event
+          </button>
+        </header>
+
+        <div
+          class="ec-player-game-chooser"
+          data-ec-game-chooser>
+          ${gameChoices()
+            .map(
+              (game) => `
+                <button
+                  class="ec-player-game-choice"
+                  type="button"
+                  data-ec-game-choice="${game.id}">
+                  <span>${game.icon}</span>
+                  <strong>${game.name}</strong>
+                  <small>${game.description}</small>
+                </button>
+              `
+            )
+            .join("")}
+        </div>
+
+        <div
+          class="ec-player-game-stage"
+          data-ec-game-stage
+          hidden>
+          <div class="ec-player-game-stage-actions">
+            <button
+              type="button"
+              data-ec-change-game>
+              ← Choose another game
+            </button>
+            <small>
+              Your stream continues underneath.
+            </small>
+          </div>
+
+          <iframe
+            class="ec-player-game-frame"
+            data-ec-game-frame
+            title="EastCoin game"
+            allow="autoplay; fullscreen; gamepad; clipboard-read; clipboard-write"
+            referrerpolicy="strict-origin-when-cross-origin">
+          </iframe>
+        </div>
+      </section>
+    `;
+
+    playerShell.appendChild(gameOverlay);
+
+    gameOverlayFrame =
+      gameOverlay.querySelector(
+        "[data-ec-game-frame]"
+      );
+
+    gameOverlay
+      .querySelector(
+        "[data-ec-close-game]"
+      )
+      .addEventListener(
+        "click",
+        () => setGameOverlayOpen(false)
+      );
+
+    gameOverlay
+      .querySelector(
+        "[data-ec-change-game]"
+      )
+      .addEventListener(
+        "click",
+        resetGameOverlay
+      );
+
+    gameOverlay
+      .querySelectorAll(
+        "[data-ec-game-choice]"
+      )
+      .forEach((button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            const game = gameChoices().find(
+              (item) =>
+                item.id ===
+                button.dataset.ecGameChoice
+            );
+
+            if (game) {
+              loadGameInOverlay(game);
+            }
+          }
+        );
+      });
+
+    gameOverlay.addEventListener(
+      "click",
+      (event) => {
+        if (event.target === gameOverlay) {
+          setGameOverlayOpen(false);
+        }
+      }
+    );
+  }
+
   function buildUtilityDock() {
     if (!playerShell) {
       const button = document.createElement("button");
@@ -563,6 +914,27 @@
         aria-pressed="true">
         💬 Hide chat
       </button>
+
+      <button
+        class="ec-utility-button"
+        type="button"
+        data-ec-nav-toggle
+        aria-pressed="false">
+        ◀ Hide nav
+      </button>
+
+      ${gameDefinitionForPage()
+        ? ""
+        : `
+          <button
+            class="ec-utility-button ec-play-game-button"
+            type="button"
+            data-ec-game-overlay-toggle
+            aria-pressed="false">
+            🎮 Play a Game
+          </button>
+        `}
+
       <button
         class="ec-utility-button"
         type="button"
@@ -584,11 +956,42 @@
       .addEventListener("click", () => {
         setChatVisible(!chatIsVisible(), true);
       });
+
+    dock
+      .querySelector("[data-ec-nav-toggle]")
+      .addEventListener(
+        "click",
+        toggleNavigation
+      );
+
+    dock
+      .querySelector(
+        "[data-ec-game-overlay-toggle]"
+      )
+      ?.addEventListener(
+        "click",
+        () =>
+          setGameOverlayOpen(
+            !gameOverlayOpen
+          )
+      );
+
     dock
       .querySelector("[data-ec-settings]")
       .addEventListener("click", showSettings);
 
     updateChatButtons();
+    updateNavigationButtons();
+
+    const bodyClassObserver =
+      new MutationObserver(
+        updateNavigationButtons
+      );
+
+    bodyClassObserver.observe(body, {
+      attributes: true,
+      attributeFilter: ["class"]
+    });
   }
 
   function buildChatScrim() {
@@ -1578,6 +1981,7 @@
   buildEmbedStatus();
   buildContinueCards();
   enhanceGamesLibrary();
+  buildPlayerGameOverlay();
   buildUtilityDock();
   observeFrames();
   syncSettingsInputs();
@@ -1593,10 +1997,16 @@
     }
 
     updateChatButtons();
+    updateNavigationButtons();
   });
 
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") {
+      return;
+    }
+
+    if (gameOverlayOpen) {
+      setGameOverlayOpen(false);
       return;
     }
 
