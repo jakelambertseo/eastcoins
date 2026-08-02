@@ -229,18 +229,33 @@
     );
 }
 
-/* Server selector overlay */
+/* Vertical server drawer */
+.player-shell{
+  --streamed-server-drawer-width:
+    clamp(290px,27vw,350px);
+  --streamed-server-drawer-space:
+    calc(
+      var(--streamed-server-drawer-width)
+      + 28px
+    );
+}
+
 .streamed-server-panel{
   position:absolute;
-  top:70px;
-  left:16px;
-  right:16px;
-  z-index:6;
-  max-height:min(48vh,430px);
-  padding:13px;
-  overflow:auto;
+  top:76px;
+  right:14px;
+  bottom:14px;
+  left:auto;
+  z-index:8;
+  width:var(--streamed-server-drawer-width);
+  max-height:none;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  padding:12px;
+  overflow:hidden;
   border:1px solid rgba(201,164,79,.22);
-  border-radius:12px;
+  border-radius:13px;
   background:
     repeating-linear-gradient(
       135deg,
@@ -249,8 +264,10 @@
       transparent 2px,
       transparent 8px
     ),
-    rgba(3,3,3,.96);
-  box-shadow:0 20px 60px rgba(0,0,0,.78);
+    rgba(3,3,3,.975);
+  box-shadow:
+    -18px 0 52px rgba(0,0,0,.62),
+    0 20px 60px rgba(0,0,0,.5);
   backdrop-filter:blur(14px);
 }
 
@@ -258,17 +275,65 @@
   display:none!important;
 }
 
-.player-toolbar.collapsed ~ .streamed-server-panel,
 body.ec-theater-mode .streamed-server-panel{
   display:none!important;
 }
 
+.player-shell.streamed-server-open
+  > .embed-frame{
+  width:
+    calc(
+      100%
+      - var(--streamed-server-drawer-space)
+    );
+}
+
+.player-shell.streamed-server-open
+  > .player-toolbar{
+  right:var(--streamed-server-drawer-space);
+}
+
+.player-shell.streamed-server-open
+  > .player-toolbar.collapsed{
+  right:
+    calc(
+      var(--streamed-server-drawer-space)
+      + 10px
+    );
+}
+
+.player-shell.streamed-server-open
+  > .ec-utility-dock{
+  left:
+    calc(
+      (
+        100%
+        - var(--streamed-server-drawer-space)
+      )
+      / 2
+    )!important;
+}
+
+body.ec-theater-mode
+  .player-shell.streamed-server-open
+  > .embed-frame{
+  width:100%;
+}
+
+body.ec-theater-mode
+  .player-shell.streamed-server-open
+  > .ec-utility-dock{
+  left:50%!important;
+}
+
 .streamed-server-header{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:14px;
-  margin-bottom:11px;
+  display:grid;
+  gap:10px;
+  flex:0 0 auto;
+  margin-bottom:10px;
+  padding-bottom:10px;
+  border-bottom:
+    1px solid rgba(201,164,79,.12);
 }
 
 .streamed-server-heading{
@@ -278,20 +343,23 @@ body.ec-theater-mode .streamed-server-panel{
 .streamed-server-heading span{
   display:block;
   color:#c9a44f;
-  font-size:.58rem;
+  font-size:.56rem;
   font-weight:900;
   letter-spacing:.12em;
   text-transform:uppercase;
 }
 
 .streamed-server-heading strong{
-  display:block;
+  display:-webkit-box;
   margin-top:4px;
   overflow:hidden;
   color:#f0e5cf;
-  font-size:.86rem;
+  font-size:.82rem;
+  line-height:1.35;
   text-overflow:ellipsis;
-  white-space:nowrap;
+  white-space:normal;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
 }
 
 .streamed-server-close{
@@ -307,11 +375,32 @@ body.ec-theater-mode .streamed-server-panel{
 
 .streamed-source-groups{
   display:grid;
-  gap:10px;
+  gap:9px;
+  min-height:0;
+  padding-right:3px;
+  overflow-x:hidden;
+  overflow-y:auto;
+  scrollbar-width:thin;
+  scrollbar-color:
+    rgba(201,164,79,.32)
+    rgba(255,255,255,.025);
+}
+
+.streamed-source-groups::-webkit-scrollbar{
+  width:7px;
+}
+
+.streamed-source-groups::-webkit-scrollbar-track{
+  background:rgba(255,255,255,.025);
+}
+
+.streamed-source-groups::-webkit-scrollbar-thumb{
+  border-radius:999px;
+  background:rgba(201,164,79,.32);
 }
 
 .streamed-source-group{
-  padding:10px;
+  padding:9px;
   border:1px solid rgba(201,164,79,.1);
   border-radius:10px;
   background:rgba(255,255,255,.012);
@@ -322,37 +411,43 @@ body.ec-theater-mode .streamed-server-panel{
   align-items:center;
   justify-content:space-between;
   gap:10px;
-  margin-bottom:8px;
+  margin-bottom:7px;
 }
 
 .streamed-source-title strong{
   color:#e8dcc5;
-  font-size:.72rem;
+  font-size:.7rem;
   text-transform:capitalize;
 }
 
 .streamed-source-title span{
   color:#756a5d;
-  font-size:.58rem;
+  font-size:.56rem;
 }
 
 .streamed-stream-buttons{
-  display:flex;
-  flex-wrap:wrap;
-  gap:7px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:6px;
 }
 
 .streamed-stream-button{
-  display:inline-flex;
+  width:100%;
+  min-width:0;
+  min-height:39px;
+  display:flex;
   align-items:center;
+  justify-content:flex-start;
   gap:6px;
   padding:8px 9px;
   border:1px solid rgba(201,164,79,.13);
   border-radius:8px;
   color:#cfc2ac;
   background:#080605;
-  font-size:.66rem;
+  font-size:.64rem;
   font-weight:900;
+  line-height:1.25;
+  text-align:left;
 }
 
 .streamed-stream-button:hover,
@@ -381,48 +476,85 @@ body.ec-theater-mode .streamed-server-panel{
   font-size:.52rem;
 }
 
-.streamed-stream-button.active .streamed-quality{
+.streamed-stream-button.active
+  .streamed-quality{
   color:#ffe9a9;
   background:#4d1017;
 }
 
 .streamed-recommended{
+  margin-left:auto;
   color:#c9a44f;
-  font-size:.54rem;
+  font-size:.5rem;
   font-weight:950;
-  letter-spacing:.04em;
+  letter-spacing:.035em;
   text-transform:uppercase;
 }
 
-.streamed-stream-button.active .streamed-recommended{
+.streamed-stream-button.active
+  .streamed-recommended{
   color:#5e4007;
 }
 
-@media(max-width:760px){
-  .streamed-launcher-head{
-    flex-direction:column;
+/*
+  On narrower screens the selector becomes a compact bottom sheet.
+  Selecting a server closes it automatically in JavaScript.
+*/
+@media(max-width:1100px){
+  .streamed-server-panel{
+    top:auto;
+    right:10px;
+    bottom:64px;
+    left:10px;
+    width:auto;
+    max-height:min(48vh,390px);
   }
 
-  .streamed-mode-buttons{
+  .player-shell.streamed-server-open
+    > .embed-frame{
     width:100%;
   }
 
-  .streamed-mode-button{
-    flex:1;
+  .player-shell.streamed-server-open
+    > .player-toolbar,
+  .player-shell.streamed-server-open
+    > .player-toolbar.collapsed{
+    right:0;
   }
 
-  .streamed-server-panel{
-    top:60px;
-    left:8px;
-    right:8px;
-    max-height:60vh;
+  .player-shell.streamed-server-open
+    > .player-toolbar.collapsed{
+    right:10px;
   }
 
-  .streamed-server-header{
-    align-items:center;
+  .player-shell.streamed-server-open
+    > .ec-utility-dock{
+    left:50%!important;
+  }
+
+  .streamed-source-groups{
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
   }
 }
 
+@media(max-width:680px){
+  .streamed-server-panel{
+    right:7px;
+    bottom:58px;
+    left:7px;
+    max-height:min(56vh,420px);
+    padding:10px;
+  }
+
+  .streamed-source-groups{
+    grid-template-columns:minmax(0,1fr);
+  }
+
+  .streamed-server-header{
+    gap:8px;
+  }
+}
 
 .streamed-server-actions{
   display:flex;
@@ -1357,5 +1489,45 @@ body.ec-theater-mode .streamed-server-panel{
 
   .ec-event-meta span:last-child{
     display:none;
+  }
+}
+
+
+/* Right-drawer header refinements */
+.streamed-server-panel
+  .streamed-server-event{
+  align-items:center;
+}
+
+.streamed-server-panel
+  .streamed-server-artwork
+  .streamed-team-badge{
+  width:38px;
+  height:38px;
+  flex-basis:38px;
+}
+
+.streamed-server-panel
+  .streamed-server-artwork
+  .streamed-poster-frame{
+  width:58px;
+  height:38px;
+}
+
+.streamed-server-panel
+  .streamed-server-actions{
+  width:100%;
+}
+
+.streamed-server-panel
+  .streamed-server-back{
+  flex:1;
+  min-width:0;
+}
+
+@media(min-width:1101px){
+  .streamed-server-panel
+    .streamed-server-actions{
+    justify-content:space-between;
   }
 }

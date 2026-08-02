@@ -292,3 +292,16 @@ PLAYER AND SIDEBAR UI CONSOLIDATION
 - The Games menu opens automatically on the Games and individual game pages.
 - Shared UX assets were cache-busted from ux2 to ux3.
 - Updated changelog.html.
+
+
+VERTICAL SERVER DRAWER
+- The Streamed server selector now opens as a vertical drawer on the right.
+- The video iframe shrinks to remain fully visible instead of being covered.
+- The player toolbar and centered utility controls align with the visible
+  video area while the drawer is open.
+- Server sources have their own internal scroll area.
+- Streams appear as compact full-width vertical buttons.
+- At 1100px and below, the selector becomes a bottom sheet.
+- On compact screens, choosing a server automatically closes the sheet.
+- Streamed assets were cache-busted to server8.
+- Updated changelog.html.

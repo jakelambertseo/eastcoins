@@ -95,7 +95,18 @@
     serverButton.type = "button";
     serverButton.hidden = true;
     serverButton.textContent = "Servers";
-    toolbarActions.insertBefore(serverButton, toolbarActions.firstChild);
+    serverButton.setAttribute(
+      "aria-controls",
+      "streamedServerPanel"
+    );
+    serverButton.setAttribute(
+      "aria-expanded",
+      "false"
+    );
+    toolbarActions.insertBefore(
+      serverButton,
+      toolbarActions.firstChild
+    );
 
     const serverPanel = document.createElement("section");
     serverPanel.className = "streamed-server-panel";
@@ -168,7 +179,17 @@
       const stream = state.streams.find(
         (candidate) => streamKey(candidate) === button.dataset.streamKey
       );
-      if (stream) selectStream(stream, false);
+      if (stream) {
+        selectStream(stream, false);
+
+        if (
+          window.matchMedia(
+            "(max-width: 1100px)"
+          ).matches
+        ) {
+          setServerPanelOpen(false);
+        }
+      }
     });
 
     form.addEventListener(
@@ -1169,10 +1190,30 @@
 
   function setServerPanelOpen(open) {
     if (!player) return;
+
     state.serverPanelOpen = Boolean(open);
-    player.serverPanel.hidden = !state.serverPanelOpen;
-    player.serverButton.classList.toggle("active", state.serverPanelOpen);
-    player.serverButton.setAttribute("aria-expanded", String(state.serverPanelOpen));
+    player.serverPanel.hidden =
+      !state.serverPanelOpen;
+
+    player.playerShell.classList.toggle(
+      "streamed-server-open",
+      state.serverPanelOpen
+    );
+
+    player.serverButton.classList.toggle(
+      "active",
+      state.serverPanelOpen
+    );
+
+    player.serverButton.setAttribute(
+      "aria-expanded",
+      String(state.serverPanelOpen)
+    );
+
+    player.serverPanel.setAttribute(
+      "aria-hidden",
+      String(!state.serverPanelOpen)
+    );
   }
 
   function revealPlayerControls() {
@@ -1221,7 +1262,12 @@
         preferredSource,
         preferredNo
       ) || recommendedStream(state.streams);
-      selectStream(selected, true);
+      selectStream(
+        selected,
+        window.matchMedia(
+          "(min-width: 1101px)"
+        ).matches
+      );
       setStatus(
         `${state.streams.length} stream${state.streams.length === 1 ? "" : "s"} loaded. ` +
         "Choose another server whenever the current one is not working."
@@ -1243,6 +1289,13 @@
     if (!player) return;
     player.serverButton.hidden = true;
     player.serverPanel.hidden = true;
+    player.playerShell.classList.remove(
+      "streamed-server-open"
+    );
+    player.serverPanel.setAttribute(
+      "aria-hidden",
+      "true"
+    );
     player.sourceGroups.innerHTML = "";
     player.serverArtwork.innerHTML = "";
     player.toolbarArtwork.innerHTML = "";
