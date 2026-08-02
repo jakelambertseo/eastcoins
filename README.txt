@@ -114,3 +114,33 @@ THEATER MODE AND ULTRA-DARK STYLE FIX
   aged-gold, and muted-cream palette.
 - Shared UX asset cache versions were updated from ux1 to ux2.
 - The August 2026 changelog entry was updated.
+
+
+STREAMED API SERVER SWITCHER BETA
+- Added a Streamed API browser to the Live Player URL screen.
+- Users can browse Live Now or Today and search returned events.
+- Pasting a streamed.pk/watch/... URL attempts to resolve the event.
+- EastCoin requests streams for every source in the match sources array.
+- Streams are grouped by source with:
+  - source name
+  - stream number
+  - HD or SD
+  - language
+  - recommended label
+- Recommended selection prefers English HD, then any HD, then English.
+- Switching servers replaces only the player iframe.
+- Share Room links retain match ID, source, stream number, and embed URL.
+- The normal manual URL player still works exactly as before.
+- Direct browser fetch is used because the documented API requires no auth.
+- If production browsers report a CORS error, a Cloudflare Pages proxy will
+  be the next step; no Worker/Function was added in this beta.
+- Added the feature to changelog.html.
+
+
+STREAMED BETA MOVED TO A TEST PAGE
+- index.html has been restored to the stable Live Player.
+- index-test.html contains the Streamed API event browser and server switcher.
+- Share Room URLs created from the test page remain on index-test.html.
+- The active Live Player link on the test page points to
+  index-test.html?new=1.
+- The changelog identifies index-test.html as the temporary beta location.
