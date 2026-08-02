@@ -463,3 +463,13 @@ INLINE GAME BREAK OVERLAY
 - Shared UX assets updated to ux6.
 - Streamed JavaScript updated to server15.
 - Updated changelog.html.
+
+
+INLINE GAME STARTUP FIX
+- The hidden .ec-player-game-frame is excluded from the main video observer.
+- The generic Loading EastCoin game overlay no longer appears on site startup.
+- The game iframe is still available after a visitor clicks Play a Game and
+  selects Bonk, Aim Trainer, or Button Smasher.
+- The normal event/video iframe continues to receive loading and recovery UI.
+- Shared UX JavaScript was cache-busted from ux6 to ux7.
+- Updated changelog.html.

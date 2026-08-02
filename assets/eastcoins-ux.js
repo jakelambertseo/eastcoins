@@ -1352,7 +1352,7 @@
   function activeFrame() {
     return (
       playerShell?.querySelector(
-        "iframe:not(.twitch-chat-frame)"
+        "iframe:not(.twitch-chat-frame):not(.ec-player-game-frame)"
       ) || null
     );
   }
@@ -1545,10 +1545,21 @@
   }
 
   function watchFrame(frame) {
-    if (!frame || frame === watchedFrame) {
+    if (
+      !frame ||
+      frame === watchedFrame ||
+      frame.classList.contains(
+        "ec-player-game-frame"
+      )
+    ) {
       return;
     }
 
+    /*
+      The main embed observer must never react to the optional
+      same-page game iframe. That iframe is controlled exclusively
+      by the Play a Game overlay.
+    */
     watchedFrame = frame;
     clearTimeout(loadTimer);
     showEmbedLoading(
