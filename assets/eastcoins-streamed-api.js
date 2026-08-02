@@ -50,16 +50,40 @@
     });
   }
 
+  function normalizeCollection(payload) {
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+
+    const candidates = [
+      payload?.data,
+      payload?.matches,
+      payload?.sports,
+      payload?.results,
+      payload?.items
+    ];
+
+    return candidates.find(Array.isArray) || null;
+  }
+
   async function requestJson(path) {
     const response = await fetch(`${API_BASE}${path}`, {
-      headers: { Accept: "application/json" }
+      headers: { Accept: "application/json" },
+      cache: "no-store"
     });
 
     if (!response.ok) {
       throw new Error(`Streamed API returned ${response.status}.`);
     }
 
-    return response.json();
+    const payload = await response.json();
+    const collection = normalizeCollection(payload);
+
+    if (!collection) {
+      throw new Error("Streamed returned an unexpected response.");
+    }
+
+    return collection;
   }
 
   async function cachedRequest(name, path, ttl, force = false) {
@@ -87,11 +111,6 @@
     const task = (async () => {
       try {
         const data = await requestJson(path);
-
-        if (!Array.isArray(data)) {
-          throw new Error("Streamed returned an unexpected response.");
-        }
-
         writeCache(name, data);
 
         return {
@@ -157,23 +176,55 @@
     );
   }
 
+  function emptyResult(error = null) {
+    return {
+      data: [],
+      savedAt: 0,
+      fromCache: false,
+      stale: false,
+      error
+    };
+  }
+
   async function getDiscovery({ forceMatches = false } = {}) {
     /*
       Courtesy plan:
-      - one Live request (90-second shared cache)
-      - one Today request (5-minute shared cache)
-      - one Sports request (24-hour shared cache)
-      - no Popular endpoint; popular rows are derived locally
-      - no per-sport endpoints; sport tabs filter locally
+      - at most one Live request and one Today request per refresh
+      - Sports is cached for 24 hours and is optional
+      - no Popular or per-sport requests
       - no automatic polling
+
+      Each request settles independently so a temporary Sports failure does
+      not prevent Live and Today events from rendering.
     */
-    const [live, today, sports] = await Promise.all([
+    const settled = await Promise.allSettled([
       getLive(forceMatches),
       getToday(forceMatches),
       getSports(false)
     ]);
 
-    return { live, today, sports };
+    const live = settled[0].status === "fulfilled"
+      ? settled[0].value
+      : emptyResult(settled[0].reason);
+    const today = settled[1].status === "fulfilled"
+      ? settled[1].value
+      : emptyResult(settled[1].reason);
+    const sports = settled[2].status === "fulfilled"
+      ? settled[2].value
+      : emptyResult(settled[2].reason);
+
+    if (!live.data.length && !today.data.length) {
+      throw live.error || today.error || new Error(
+        "No event listings are available right now."
+      );
+    }
+
+    return {
+      live,
+      today,
+      sports,
+      warnings: [live.error, today.error, sports.error].filter(Boolean)
+    };
   }
 
   function streamCacheKey(source, id) {

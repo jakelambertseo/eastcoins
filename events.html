@@ -75,7 +75,7 @@
 
   <link rel="stylesheet" href="assets/eastcoins-theme.css" />
   <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux2" />
-  <link rel="stylesheet" href="assets/eastcoins-streamed.css?v=server5" />
+  <link rel="stylesheet" href="assets/eastcoins-streamed.css?v=server6" />
 
   <style>
     :root {
@@ -256,7 +256,7 @@
     }
 
     .page-shell {
-      width: min(980px, 100%);
+      width: min(1280px, 100%);
       margin: 0 auto;
     }
 
@@ -946,9 +946,8 @@
       </div>
       <h1>Events</h1>
       <p>
-        Browse popular live events, starting-soon matchups, sport tabs,
-        favorite teams, and full event pages without repeatedly polling
-        the free provider.
+        Browse live and upcoming matchups, filter by sport, follow your
+        favorite teams, and open any event in the EastCoin player.
       </p>
     </header>
 
@@ -956,11 +955,11 @@
       <div class="streamed-launcher" id="streamedLauncher">
         <div class="streamed-launcher-head">
           <div class="streamed-launcher-copy">
-            <div class="streamed-launcher-kicker">Streamed event directory</div>
-            <strong class="streamed-launcher-title">Find an event, then open it in the player</strong>
+            <div class="streamed-launcher-kicker">EastCoin events</div>
+            <strong class="streamed-launcher-title">Find your game and start watching</strong>
             <p class="streamed-launcher-description">
-              EastCoin fetches Live, Today, and Sports once, caches them,
-              and derives the rows below locally.
+              Browse what is live now, see what starts next, or search for
+              a team or matchup.
             </p>
           </div>
           <div class="streamed-mode-buttons">
@@ -991,14 +990,14 @@
 
             <section class="streamed-discovery-section" id="streamedPopularSection">
               <div class="streamed-discovery-section-head">
-                <div><h2>Popular Live</h2><p>Derived from the Live response.</p></div>
+                <div><h2>Popular Live</h2><p>Browse the live events getting the most attention right now.</p></div>
               </div>
               <div class="ec-feature-row" id="streamedPopularList"></div>
             </section>
 
             <section class="streamed-discovery-section" id="streamedFavoriteSection">
               <div class="streamed-discovery-section-head">
-                <div><h2>Favorite Teams</h2><p>Saved on this browser only.</p></div>
+                <div><h2>Favorite Teams</h2><p>Follow teams and see their available events in one place.</p></div>
               </div>
               <div class="ec-favorite-team-list" id="streamedFavoriteTeamList"></div>
               <div class="ec-event-grid" id="streamedFavoriteEventList"></div>
@@ -1006,14 +1005,14 @@
 
             <section class="streamed-discovery-section" id="streamedSoonSection">
               <div class="streamed-discovery-section-head">
-                <div><h2>Starting Soon</h2><p>Local countdowns; no additional requests.</p></div>
+                <div><h2>Starting Soon</h2><p>See what begins next and how long until it starts.</p></div>
               </div>
               <div class="ec-event-grid" id="streamedSoonList"></div>
             </section>
 
             <section class="streamed-discovery-section">
               <div class="streamed-discovery-section-head">
-                <div><h2 id="streamedListSectionTitle">All live events</h2><p>Open an event page or send it to the Live Player.</p></div>
+                <div><h2 id="streamedListSectionTitle">All live events</h2><p>Browse the full lineup and open any event in the player.</p></div>
               </div>
               <div class="ec-event-grid" id="streamedMatchList"></div>
             </section>
@@ -1202,8 +1201,8 @@
     initializeFootballCountdowns();
 
   </script>
-  <script src="assets/eastcoins-streamed-api.js?v=api1"></script>
-<script src="assets/eastcoins-streamed.js?v=server5"></script>
+  <script src="assets/eastcoins-streamed-api.js?v=api2"></script>
+<script src="assets/eastcoins-streamed.js?v=server6"></script>
 <script src="assets/eastcoins-agreement.js?v=gate2"></script>
 </body>
 </html>

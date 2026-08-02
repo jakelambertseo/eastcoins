@@ -313,8 +313,22 @@
     return matchTeams(match).some(isFavoriteTeam);
   }
 
+  function eventTimestamp(value) {
+    let timestamp = Number(value);
+
+    if (!Number.isFinite(timestamp) || timestamp <= 0) {
+      return 0;
+    }
+
+    if (timestamp < 1_000_000_000_000) {
+      timestamp *= 1000;
+    }
+
+    return timestamp;
+  }
+
   function formatDate(timestamp, includeDate = false) {
-    const date = new Date(Number(timestamp));
+    const date = new Date(eventTimestamp(timestamp));
     if (Number.isNaN(date.getTime())) return "Time unavailable";
     return date.toLocaleString([], includeDate
       ? {
@@ -332,7 +346,7 @@
   }
 
   function countdownText(timestamp) {
-    const difference = Number(timestamp) - Date.now();
+    const difference = eventTimestamp(timestamp) - Date.now();
     if (!Number.isFinite(difference)) return "Time unavailable";
     if (difference <= 0) return "Live or starting now";
 
@@ -375,7 +389,7 @@
       const popular = Number(Boolean(right.popular)) -
         Number(Boolean(left.popular));
       if (popular) return popular;
-      return Number(left.date || 0) - Number(right.date || 0);
+      return eventTimestamp(left.date) - eventTimestamp(right.date);
     });
   }
 
@@ -514,7 +528,7 @@
             ${live ? '<span class="ec-event-tag ec-event-tag-live">Live</span>' : `
               <span
                 class="ec-event-tag ec-event-tag-countdown"
-                data-countdown="${Number(match.date || 0)}">
+                data-countdown="${eventTimestamp(match.date)}">
                 ${escapeHtml(countdownText(match.date))}
               </span>
             `}
@@ -553,6 +567,7 @@
   function relevantSports() {
     const current = state.mode === "today" ? state.today : state.live;
     const counts = new Map();
+
     current.forEach((match) => {
       const id = String(match.category || "");
       if (id) counts.set(id, (counts.get(id) || 0) + 1);
@@ -563,7 +578,11 @@
     );
 
     return Array.from(counts.entries())
-      .map(([id, count]) => ({ id, count, name: known.get(id) || sourceLabel(id) }))
+      .map(([id, count]) => ({
+        id,
+        count,
+        name: known.get(id) || sourceLabel(id)
+      }))
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
   }
 
@@ -588,36 +607,84 @@
 
   function renderPopularLive() {
     if (!elements.popularList || !elements.popularSection) return;
-    const popular = applyFilters(
-      sortedMatches(state.live.filter((match) => match.popular))
-    ).slice(0, 8);
+
+    const filteredLive = applyFilters(sortedMatches(state.live));
+    const markedPopular = filteredLive.filter((match) => match.popular);
+    const remaining = filteredLive.filter((match) => !match.popular);
+    const popular = [...markedPopular, ...remaining].slice(0, 6);
+
     elements.popularList.innerHTML = popular.length
       ? popular.map((match) => renderEventCard(match, "feature")).join("")
-      : emptyState("No popular live events are marked right now.");
+      : emptyState("Nothing is live right now. Check Today for upcoming events.");
   }
 
   function renderStartingSoon() {
     if (!elements.soonList || !elements.soonSection) return;
+
+    const now = Date.now();
     const future = applyFilters(
       sortedMatches(
-        state.today.filter((match) => Number(match.date || 0) > Date.now())
+        state.today.filter((match) => eventTimestamp(match.date) > now)
       )
-    ).slice(0, 8);
+    ).slice(0, 6);
+
     elements.soonList.innerHTML = future.length
       ? future.map((match) => renderEventCard(match, "compact")).join("")
-      : emptyState("No upcoming events match the current filters.");
+      : emptyState("No upcoming events are listed for later today.");
+  }
+
+  function suggestedTeams() {
+    const unique = new Map();
+
+    sortedMatches(dedupeMatches([...state.live, ...state.today]))
+      .forEach((match) => {
+        matchTeams(match).forEach((team) => {
+          const normalized = normalizeTeam(team);
+          if (!normalized || unique.has(normalized.key)) return;
+          unique.set(normalized.key, normalized);
+        });
+      });
+
+    return Array.from(unique.values()).slice(0, 12);
   }
 
   function renderFavoriteTeams() {
-    if (!elements.favoriteSection || !elements.favoriteTeamList || !elements.favoriteEventList) return;
+    if (
+      !elements.favoriteSection ||
+      !elements.favoriteTeamList ||
+      !elements.favoriteEventList
+    ) {
+      return;
+    }
 
     if (!state.favoriteTeams.length) {
-      elements.favoriteTeamList.innerHTML = `
-        <span class="ec-favorite-empty-copy">
-          Tap ☆ beside a team to build your personal row.
-        </span>
-      `;
-      elements.favoriteEventList.innerHTML = "";
+      const suggestions = suggestedTeams();
+      elements.favoriteTeamList.innerHTML = suggestions.length
+        ? `
+          <span class="ec-favorite-empty-copy">
+            Pick a team to follow:
+          </span>
+          ${suggestions.map((team) => `
+            <button
+              class="ec-favorite-team-chip ec-favorite-team-suggestion"
+              type="button"
+              data-add-favorite
+              data-team-name="${escapeAttr(team.name)}"
+              data-team-badge="${escapeAttr(team.badge)}">
+              ${team.badge ? badgeMarkup(team, "tiny") : ""}
+              <span>${escapeHtml(team.name)}</span>
+              <span aria-hidden="true">＋</span>
+            </button>
+          `).join("")}
+        `
+        : `
+          <span class="ec-favorite-empty-copy">
+            Favorite teams will appear here once event listings include teams.
+          </span>
+        `;
+      elements.favoriteEventList.innerHTML = emptyState(
+        "Choose a team above to collect its available events here."
+      );
       return;
     }
 
@@ -641,13 +708,16 @@
 
     elements.favoriteEventList.innerHTML = matches.length
       ? matches.map((match) => renderEventCard(match, "compact")).join("")
-      : emptyState("Your favorite teams do not have a listed event right now.");
+      : emptyState("There are no listed events for your favorite teams right now.");
   }
 
   function renderMainList() {
     if (!elements.matchList) return;
     const source = state.mode === "today" ? state.today : state.live;
-    const matches = applyFilters(sortedMatches(source)).slice(0, isEventsPage ? 120 : 60);
+    const matches = applyFilters(sortedMatches(source)).slice(
+      0,
+      isEventsPage ? 120 : 60
+    );
 
     if (elements.listSectionTitle) {
       elements.listSectionTitle.textContent =
@@ -656,7 +726,11 @@
 
     elements.matchList.innerHTML = matches.length
       ? matches.map((match) => renderEventCard(match, "standard")).join("")
-      : emptyState("No events match the current filters.");
+      : emptyState(
+          state.mode === "live"
+            ? "Nothing is live right now. Switch to Today to browse upcoming events."
+            : "No events match the current filters."
+        );
   }
 
   function renderDiscovery() {
@@ -689,22 +763,40 @@
     state.updatedAt = saved;
     state.stale = stale;
     const time = saved
-      ? new Date(saved).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+      ? new Date(saved).toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit"
+        })
       : "just now";
-    return stale
-      ? `Showing cached data from ${time}. Refresh manually when the provider is available.`
-      : `Updated ${time}. Data is cached locally; EastCoin does not auto-poll the provider.`;
+
+    if (stale) {
+      return `Showing the most recent event list we could load (${time}).`;
+    }
+
+    if (discovery.warnings?.length) {
+      return `Events updated ${time}. Some sport labels may be simplified.`;
+    }
+
+    return `Events updated ${time}.`;
   }
 
   async function loadDiscovery(forceMatches = false) {
     elements.browser.hidden = false;
-    setStatus(forceMatches ? "Refreshing live and today data…" : "Loading Streamed events…");
+    setStatus(forceMatches ? "Refreshing events…" : "Loading events…");
 
     try {
       const discovery = await API.getDiscovery({ forceMatches });
       state.live = dedupeMatches(discovery.live.data);
       state.today = dedupeMatches(discovery.today.data);
       state.sports = discovery.sports.data;
+
+      if (!state.live.length && state.today.length) {
+        state.mode = "today";
+        elements.liveButton?.classList.remove("active");
+        elements.todayButton?.classList.add("active");
+      }
+
+      expandDiscoveryLayout();
       renderDiscovery();
       setStatus(freshnessMessage(discovery));
       await renderEventDetailForCurrentUrl();
@@ -712,13 +804,20 @@
     } catch (error) {
       setStatus(error.message || "Unable to load Streamed events.", true);
       elements.matchList.innerHTML = emptyState(
-        "The Streamed API could not be reached. EastCoin will not repeatedly retry; use Refresh later."
+        "Events could not be loaded right now. Try Refresh in a moment."
       );
     }
   }
 
+  function expandDiscoveryLayout() {
+    elements.launcher
+      ?.closest(".url-card")
+      ?.classList.add("streamed-directory-open");
+  }
+
   function showDiscovery() {
     elements.browser.hidden = false;
+    expandDiscoveryLayout();
     elements.launcher?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -776,7 +875,7 @@
         <div class="ec-event-detail-body">
           <div class="ec-event-tags">
             ${live ? '<span class="ec-event-tag ec-event-tag-live">Live now</span>' : `
-              <span class="ec-event-tag" data-countdown="${Number(match.date || 0)}">
+              <span class="ec-event-tag" data-countdown="${eventTimestamp(match.date)}">
                 ${escapeHtml(countdownText(match.date))}
               </span>
             `}
@@ -803,8 +902,7 @@
             ` : ""}
           </div>
           <p class="ec-event-detail-summary">
-            ${sourceCount} source${sourceCount === 1 ? "" : "s"} currently listed.
-            Stream details are requested only after you choose Watch Event.
+            ${sourceCount} viewing option${sourceCount === 1 ? "" : "s"} available for this event.
           </p>
           <div class="ec-event-detail-actions">
             <button
@@ -833,7 +931,7 @@
       const match = await resolveMatch(id, true);
       elements.detail.innerHTML = match
         ? eventDetailMarkup(match)
-        : emptyState("This event is no longer listed by the provider.");
+        : emptyState("This event is no longer available in the current listings.");
       updateCountdowns();
       elements.detail.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
@@ -851,6 +949,14 @@
   }
 
   function handleDiscoveryClick(event) {
+    const addFavorite = event.target.closest("[data-add-favorite]");
+    if (addFavorite) {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleFavoriteTeam(teamFromButton(addFavorite));
+      return;
+    }
+
     const favorite = event.target.closest("[data-favorite-team]");
     if (favorite) {
       event.preventDefault();
@@ -918,7 +1024,7 @@
       id: match.id || "",
       title: match.title || "",
       category: match.category || "",
-      date: Number(match.date || 0),
+      date: eventTimestamp(match.date),
       poster: match.poster || "",
       popular: Boolean(match.popular),
       teams: match.teams || null,
@@ -1118,7 +1224,7 @@
       selectStream(selected, true);
       setStatus(
         `${state.streams.length} stream${state.streams.length === 1 ? "" : "s"} loaded. ` +
-        "Stream endpoints were requested only after this event was selected."
+        "Choose another server whenever the current one is not working."
       );
     } catch (error) {
       state.streams = [];
@@ -1212,7 +1318,7 @@
     const token = watchTokenFromUrl(rawValue);
     if (!token) return false;
     showDiscovery();
-    setStatus("Finding this event in the cached listings…");
+    setStatus("Finding that event…");
 
     try {
       const match = await resolvePastedToken(token);
@@ -1232,7 +1338,7 @@
     const eventId = params.get("streamedEvent");
     if (!room && !eventId) return false;
 
-    setStatus("Restoring the shared event and server list…");
+    setStatus("Opening the shared event…");
     try {
       const match = room?.match || await resolveMatch(eventId, true);
       if (!match) throw new Error("The shared event is no longer listed.");

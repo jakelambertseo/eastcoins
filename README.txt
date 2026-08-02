@@ -255,3 +255,20 @@ STREAMED DISCOVERY DASHBOARD
 
 - Selected-event source requests are limited to three concurrent calls to avoid request bursts.
 - Shared-room, event, and generic watch links skip discovery endpoints until the user opens the event browser.
+
+
+STREAMED DISCOVERY LAYOUT + POPULATION FIX
+- Live, Today, and Sports now settle independently, so a failed Sports request
+  does not blank the whole dashboard.
+- Supports direct arrays and common wrapped API array responses.
+- Event timestamps are normalized from seconds or milliseconds.
+- Popular Live fills from the live lineup when no events carry a popular flag.
+- Favorite Teams shows useful team suggestions before the first favorite.
+- Starting Soon uses normalized event times.
+- If nothing is live but Today has events, the initial list opens on Today.
+- Event cards use a wide horizontal layout instead of tall skinny cards.
+- Popular Live and Starting Soon sit side by side on wide screens.
+- Events page width increased to 1280px.
+- Public page copy is visitor-focused rather than API-focused.
+- Request courtesy remains unchanged: cached Live/Today/Sports, no polling, no
+  separate popular endpoint, and no per-sport endpoint fan-out.
