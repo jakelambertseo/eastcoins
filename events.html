@@ -75,7 +75,7 @@
 
   <link rel="stylesheet" href="assets/eastcoins-theme.css" />
   <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux3" />
-  <link rel="stylesheet" href="assets/eastcoins-streamed.css?v=server11" />
+  <link rel="stylesheet" href="assets/eastcoins-streamed.css?v=server12" />
 
   <style>
     :root {
@@ -973,6 +973,7 @@
           <div class="streamed-mode-buttons">
             <button class="streamed-mode-button" id="streamedLiveButton" type="button">Live now</button>
             <button class="streamed-mode-button" id="streamedTodayButton" type="button">Today</button>
+            <button class="streamed-mode-button" id="streamedTomorrowButton" type="button">Tomorrow</button>
           </div>
         </div>
 
@@ -996,6 +997,19 @@
             data-context="events">
             <div class="streamed-sport-tabs" id="streamedSportTabs" aria-label="Filter events by sport"></div>
 
+            <section
+              class="streamed-discovery-section streamed-continue-section"
+              id="streamedContinueSection"
+              hidden>
+              <div class="streamed-discovery-section-head">
+                <div>
+                  <h2>Continue Watching</h2>
+                  <p>Return to your most recent EastCoin event and server.</p>
+                </div>
+              </div>
+              <div id="streamedContinueList"></div>
+            </section>
+
             <section class="streamed-discovery-section" id="streamedPopularSection">
               <div class="streamed-discovery-section-head">
                 <div><h2>Popular Live</h2><p>Browse the live events getting the most attention right now.</p></div>
@@ -1005,7 +1019,7 @@
 
             <section class="streamed-discovery-section" id="streamedFavoriteSection">
               <div class="streamed-discovery-section-head">
-                <div><h2>Favorite Teams</h2><p>Follow teams and see their available events in one place.</p></div>
+                <div><h2 id="streamedFavoriteHeading">Favorite Teams</h2><p id="streamedFavoriteCopy">Follow teams and see their available events in one place.</p></div>
               </div>
               <div class="ec-favorite-team-list" id="streamedFavoriteTeamList"></div>
               <div class="ec-event-grid" id="streamedFavoriteEventList"></div>
@@ -1032,7 +1046,7 @@
 </main>
   </div>
 
-    <script src="assets/eastcoins-ux.js?v=ux3"></script>
+    <script src="assets/eastcoins-ux.js?v=ux4"></script>
 
 <script>
     const body = document.body;
@@ -1210,7 +1224,7 @@
 
   </script>
   <script src="assets/eastcoins-streamed-api.js?v=api2"></script>
-<script src="assets/eastcoins-streamed.js?v=server11"></script>
+<script src="assets/eastcoins-streamed.js?v=server12"></script>
 <script src="assets/eastcoins-agreement.js?v=gate2"></script>
 </body>
 </html>

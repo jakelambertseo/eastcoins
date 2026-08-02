@@ -827,6 +827,16 @@
       return;
     }
 
+    /*
+      Streamed events are remembered by event ID and server in
+      eastcoins-streamed.js, so do not create a duplicate raw iframe card.
+    */
+    if (
+      window.eastcoinStreamedState?.matchId
+    ) {
+      return;
+    }
+
     const source = frame.getAttribute("src");
 
     if (
@@ -967,8 +977,14 @@
       return;
     }
 
-    const lastWatch =
-      safeJsonRead(KEYS.lastWatch, null);
+    const streamedContinue =
+      safeJsonRead(
+        "eastcoinContinueStreamedEventV1",
+        null
+      );
+    const lastWatch = streamedContinue
+      ? null
+      : safeJsonRead(KEYS.lastWatch, null);
     const recentGames =
       safeJsonRead(KEYS.recentGames, []);
 
@@ -982,6 +998,7 @@
     if (lastWatch?.url) {
       const card = document.createElement("div");
       card.className = "ec-continue-card";
+      card.dataset.ecContinueWatch = "true";
       card.innerHTML = `
         <div class="ec-continue-copy">
           <span>Continue watching</span>

@@ -351,3 +351,38 @@ SHARED EVENT NAVIGATION
 - Desktop visitors can reopen the sidebar normally from the red toggle.
 - Mobile event links continue to start with the slide-out navigation closed.
 - Added the update to changelog.html.
+
+
+WATCH ROOM + DISCOVERY UPGRADE
+- Automatic recovery:
+  - watches for iframe load errors or a 14-second no-load timeout
+  - tries up to two alternate servers already loaded for the event
+  - does not request any additional API endpoints during recovery
+  - adds a manual Try Next Server control
+  - marks skipped servers in the server drawer
+- Event-room header:
+  - displays event title, live/start status, selected source, stream, quality,
+    and language
+  - keeps Server Selector and Try Next Server visible in the player controls
+- Keyboard shortcuts:
+  - S: Server Selector
+  - N: Try Next Server
+  - T: Theater mode
+  - C: Show/hide chat
+  - M: Show/hide navigation
+  - Escape: close the server drawer first
+  - shortcuts are ignored while typing in form fields
+- Continue Watching:
+  - remembers the latest Streamed event, selected source, and stream
+  - keeps the card for 36 hours
+  - replaces the older raw iframe-only Continue Watching entry
+- Favorite-team personalization:
+  - Favorite Teams becomes For You on the homepage after teams are selected
+  - favorite-team events are prioritized in the main and Starting Soon lists
+- Compact schedule filters:
+  - Live, Today, and Tomorrow
+  - Tomorrow calls /matches/all only after the visitor explicitly selects it
+  - the existing five-minute API cache is reused
+- Streamed CSS and JavaScript updated to server12.
+- Shared UX JavaScript updated to ux4.
+- Updated changelog.html.

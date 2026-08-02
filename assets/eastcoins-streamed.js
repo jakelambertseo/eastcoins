@@ -11,22 +11,40 @@
   }
 
   const FAVORITES_KEY = "eastcoinFavoriteTeamsV1";
-  const SELECTED_MATCH_KEY = "eastcoinSelectedStreamedMatchV1";
+  const SELECTED_MATCH_KEY =
+    "eastcoinSelectedStreamedMatchV1";
+  const CONTINUE_KEY =
+    "eastcoinContinueStreamedEventV1";
+  const SHORTCUT_HINT_KEY =
+    "eastcoinStreamedShortcutHintV1";
+  const CONTINUE_MAX_AGE =
+    36 * 60 * 60 * 1000;
+  const AUTO_RECOVERY_TIMEOUT = 14_000;
+  const AUTO_RECOVERY_LIMIT = 2;
   const pageContext = discoveryRoot.dataset.context || "player";
   const isEventsPage = pageContext === "events";
 
   const state = {
     live: [],
     today: [],
+    tomorrow: [],
+    tomorrowLoaded: false,
+    tomorrowLoading: false,
     sports: [],
     mode: "live",
     selectedSport: "all",
     query: "",
     favoriteTeams: loadFavoriteTeams(),
+    continueEvent: loadContinueEvent(),
     currentMatch: null,
     streams: [],
     activeStream: null,
     serverPanelOpen: false,
+    failedStreamKeys: new Set(),
+    recoveryTimer: null,
+    recoverySerial: 0,
+    automaticRecoveryAttempts: 0,
+    shortcutHintScheduled: false,
     updatedAt: 0,
     stale: false
   };
@@ -39,10 +57,25 @@
     refresh: document.getElementById("streamedRefresh"),
     liveButton: document.getElementById("streamedLiveButton"),
     todayButton: document.getElementById("streamedTodayButton"),
+    tomorrowButton: document.getElementById(
+      "streamedTomorrowButton"
+    ),
     sportTabs: document.getElementById("streamedSportTabs"),
+    continueSection: document.getElementById(
+      "streamedContinueSection"
+    ),
+    continueList: document.getElementById(
+      "streamedContinueList"
+    ),
     popularSection: document.getElementById("streamedPopularSection"),
     popularList: document.getElementById("streamedPopularList"),
     favoriteSection: document.getElementById("streamedFavoriteSection"),
+    favoriteHeading: document.getElementById(
+      "streamedFavoriteHeading"
+    ),
+    favoriteCopy: document.getElementById(
+      "streamedFavoriteCopy"
+    ),
     favoriteTeamList: document.getElementById("streamedFavoriteTeamList"),
     favoriteEventList: document.getElementById("streamedFavoriteEventList"),
     soonSection: document.getElementById("streamedSoonSection"),
@@ -64,6 +97,8 @@
       playerToolbar?.querySelector(".toolbar-actions");
     const toolbarTitle =
       playerToolbar?.querySelector(".toolbar-title");
+    const toolbarHeading =
+      toolbarTitle?.querySelector("strong");
     const currentHost = document.getElementById("currentHost");
     const changeButton = document.getElementById("changeButton");
     const quickButton = document.getElementById(
@@ -78,6 +113,7 @@
       !playerToolbar ||
       !toolbarActions ||
       !toolbarTitle ||
+      !toolbarHeading ||
       !currentHost
     ) {
       return null;
@@ -87,7 +123,19 @@
     toolbarArtwork.className = "streamed-toolbar-artwork";
     toolbarArtwork.hidden = true;
     toolbarArtwork.setAttribute("aria-hidden", "true");
-    toolbarTitle.insertBefore(toolbarArtwork, toolbarTitle.firstChild);
+    toolbarTitle.insertBefore(
+      toolbarArtwork,
+      toolbarTitle.firstChild
+    );
+
+    const toolbarKicker = document.createElement("span");
+    toolbarKicker.className = "streamed-room-kicker";
+    toolbarKicker.textContent = "Event room";
+    toolbarKicker.hidden = true;
+    toolbarTitle.insertBefore(
+      toolbarKicker,
+      toolbarHeading
+    );
 
     const serverButton = document.createElement("button");
     serverButton.className = "toolbar-button";
@@ -103,9 +151,32 @@
       "aria-expanded",
       "false"
     );
+    serverButton.setAttribute(
+      "aria-keyshortcuts",
+      "S"
+    );
     toolbarActions.insertBefore(
       serverButton,
       toolbarActions.firstChild
+    );
+
+    const nextServerButton =
+      document.createElement("button");
+    nextServerButton.className =
+      "toolbar-button streamed-next-server";
+    nextServerButton.id =
+      "streamedNextServerButton";
+    nextServerButton.type = "button";
+    nextServerButton.hidden = true;
+    nextServerButton.textContent =
+      "Try Next Server";
+    nextServerButton.setAttribute(
+      "aria-keyshortcuts",
+      "N"
+    );
+    serverButton.insertAdjacentElement(
+      "afterend",
+      nextServerButton
     );
 
     const serverPanel = document.createElement("section");
@@ -153,11 +224,14 @@
       playerToolbar,
       toolbarActions,
       toolbarTitle,
+      toolbarHeading,
+      toolbarKicker,
       toolbarArtwork,
       currentHost,
       changeButton,
       quickButton,
       serverButton,
+      nextServerButton,
       serverPanel,
       serverArtwork: serverPanel.querySelector(
         "#streamedServerArtwork"
@@ -171,6 +245,10 @@
     serverButton.addEventListener("click", () => {
       setServerPanelOpen(!state.serverPanelOpen);
     });
+    nextServerButton.addEventListener(
+      "click",
+      () => selectNextStream("manual")
+    );
     bindings.serverClose.addEventListener("click", () => {
       setServerPanelOpen(false);
     });
@@ -299,6 +377,102 @@
     } catch {}
   }
 
+  function loadContinueEvent() {
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem(CONTINUE_KEY) ||
+        "null"
+      );
+
+      if (
+        !saved?.match?.id ||
+        !Number.isFinite(
+          Number(saved.watchedAt)
+        ) ||
+        Date.now() -
+          Number(saved.watchedAt) >
+          CONTINUE_MAX_AGE
+      ) {
+        localStorage.removeItem(CONTINUE_KEY);
+        return null;
+      }
+
+      return saved;
+    } catch {
+      return null;
+    }
+  }
+
+  function saveContinueEvent(match, stream) {
+    if (!match?.id || !stream) return;
+
+    const saved = {
+      match: compactMatch(match),
+      source: String(stream.source || ""),
+      streamNo: stream.streamNo,
+      watchedAt: Date.now()
+    };
+
+    state.continueEvent = saved;
+
+    try {
+      localStorage.setItem(
+        CONTINUE_KEY,
+        JSON.stringify(saved)
+      );
+
+      /*
+        Streamed events have a richer continue card, so remove the
+        older generic iframe-only history entry.
+      */
+      localStorage.removeItem(
+        "eastcoinsLastWatch"
+      );
+    } catch {}
+
+    document
+      .querySelector(
+        "[data-ec-continue-watch]"
+      )
+      ?.remove();
+
+    renderContinueWatching();
+  }
+
+  function clearContinueEvent() {
+    state.continueEvent = null;
+
+    try {
+      localStorage.removeItem(CONTINUE_KEY);
+    } catch {}
+
+    renderContinueWatching();
+    toast("Continue Watching cleared.");
+  }
+
+  function continueAgeText(timestamp) {
+    const difference =
+      Date.now() - Number(timestamp || 0);
+
+    if (difference < 60_000) {
+      return "Watched just now";
+    }
+
+    const minutes = Math.floor(
+      difference / 60_000
+    );
+
+    if (minutes < 60) {
+      return `Watched ${minutes}m ago`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+
+    return hours < 24
+      ? `Watched ${hours}h ago`
+      : "Watched yesterday";
+  }
+
   function isFavoriteTeam(team) {
     const normalized = normalizeTeam(team);
     return normalized
@@ -348,6 +522,61 @@
     }
 
     return timestamp;
+  }
+
+  function localDayKey(timestamp) {
+    const date = new Date(
+      eventTimestamp(timestamp)
+    );
+
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
+
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(
+        2,
+        "0"
+      ),
+      String(date.getDate()).padStart(
+        2,
+        "0"
+      )
+    ].join("-");
+  }
+
+  function tomorrowDayKey() {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return [
+      tomorrow.getFullYear(),
+      String(tomorrow.getMonth() + 1)
+        .padStart(2, "0"),
+      String(tomorrow.getDate())
+        .padStart(2, "0")
+    ].join("-");
+  }
+
+  function currentModeMatches() {
+    if (state.mode === "today") {
+      return state.today;
+    }
+
+    if (state.mode === "tomorrow") {
+      return state.tomorrow;
+    }
+
+    return state.live;
+  }
+
+  function allPersonalizedMatches() {
+    return dedupeMatches([
+      ...state.live,
+      ...state.today,
+      ...state.tomorrow
+    ]);
   }
 
   function formatDate(timestamp, includeDate = false) {
@@ -413,6 +642,25 @@
         Number(Boolean(left.popular));
       if (popular) return popular;
       return eventTimestamp(left.date) - eventTimestamp(right.date);
+    });
+  }
+
+  function personalizedMatches(matches) {
+    const sorted = sortedMatches(matches);
+
+    if (
+      isEventsPage ||
+      !state.favoriteTeams.length
+    ) {
+      return sorted;
+    }
+
+    return sorted.sort((left, right) => {
+      const favoriteDifference =
+        Number(matchHasFavorite(right)) -
+        Number(matchHasFavorite(left));
+
+      return favoriteDifference;
     });
   }
 
@@ -588,7 +836,7 @@
   }
 
   function relevantSports() {
-    const current = state.mode === "today" ? state.today : state.live;
+    const current = currentModeMatches();
     const counts = new Map();
 
     current.forEach((match) => {
@@ -613,7 +861,11 @@
     if (!elements.sportTabs) return;
     const sports = relevantSports();
     elements.sportTabs.innerHTML = [
-      { id: "all", name: "All", count: state.mode === "today" ? state.today.length : state.live.length },
+      {
+        id: "all",
+        name: "All",
+        count: currentModeMatches().length
+      },
       ...sports
     ]
       .map((sport) => `
@@ -626,6 +878,69 @@
         </button>
       `)
       .join("");
+  }
+
+  function renderContinueWatching() {
+    if (
+      !elements.continueSection ||
+      !elements.continueList
+    ) {
+      return;
+    }
+
+    const saved = state.continueEvent;
+
+    if (!saved?.match?.id) {
+      elements.continueSection.hidden = true;
+      elements.continueList.innerHTML = "";
+      return;
+    }
+
+    const match = saved.match;
+    const id = eventKey(match);
+    const source = sourceLabel(saved.source);
+
+    elements.continueSection.hidden = false;
+    elements.continueList.innerHTML = `
+      <article class="ec-continue-event-card">
+        ${posterMarkup(match, "continue")}
+        <div class="ec-continue-event-copy">
+          <span class="ec-continue-event-kicker">
+            ${escapeHtml(
+              continueAgeText(saved.watchedAt)
+            )}
+          </span>
+          <h3>${escapeHtml(
+            match.title || id
+          )}</h3>
+          <p>
+            ${escapeHtml(source)}
+            ${saved.streamNo != null
+              ? ` · Stream ${escapeHtml(saved.streamNo)}`
+              : ""}
+          </p>
+        </div>
+        <div class="ec-continue-event-actions">
+          <button
+            class="ec-event-watch"
+            type="button"
+            data-continue-event>
+            Resume
+          </button>
+          <a
+            class="ec-event-details"
+            href="events.html?event=${encodeURIComponent(id)}">
+            Event page
+          </a>
+          <button
+            class="ec-continue-clear"
+            type="button"
+            data-clear-continue>
+            Clear
+          </button>
+        </div>
+      </article>
+    `;
   }
 
   function renderPopularLive() {
@@ -646,8 +961,11 @@
 
     const now = Date.now();
     const future = applyFilters(
-      sortedMatches(
-        state.today.filter((match) => eventTimestamp(match.date) > now)
+      personalizedMatches(
+        state.today.filter(
+          (match) =>
+            eventTimestamp(match.date) > now
+        )
       )
     ).slice(0, 6);
 
@@ -659,7 +977,7 @@
   function suggestedTeams() {
     const unique = new Map();
 
-    sortedMatches(dedupeMatches([...state.live, ...state.today]))
+    sortedMatches(allPersonalizedMatches())
       .forEach((match) => {
         matchTeams(match).forEach((team) => {
           const normalized = normalizeTeam(team);
@@ -678,6 +996,33 @@
       !elements.favoriteEventList
     ) {
       return;
+    }
+
+    const personalized =
+      !isEventsPage &&
+      state.favoriteTeams.length > 0;
+
+    elements.favoriteSection.classList.toggle(
+      "is-personalized",
+      personalized
+    );
+
+    if (elements.favoriteHeading) {
+      elements.favoriteHeading.textContent =
+        personalized
+          ? "For You"
+          : "Favorite Teams";
+    }
+
+    if (elements.favoriteCopy) {
+      elements.favoriteCopy.textContent =
+        personalized
+          ? `Live and upcoming events for ` +
+            `${state.favoriteTeams
+              .slice(0, 3)
+              .map((team) => team.name)
+              .join(", ")}.`
+          : "Follow teams and see their available events in one place.";
     }
 
     if (!state.favoriteTeams.length) {
@@ -725,8 +1070,9 @@
       .join("");
 
     const matches = applyFilters(
-      sortedMatches(dedupeMatches([...state.live, ...state.today]))
-        .filter(matchHasFavorite)
+      personalizedMatches(
+        allPersonalizedMatches()
+      ).filter(matchHasFavorite)
     ).slice(0, 10);
 
     elements.favoriteEventList.innerHTML = matches.length
@@ -736,28 +1082,42 @@
 
   function renderMainList() {
     if (!elements.matchList) return;
-    const source = state.mode === "today" ? state.today : state.live;
-    const matches = applyFilters(sortedMatches(source)).slice(
+
+    const source = currentModeMatches();
+    const matches = applyFilters(
+      personalizedMatches(source)
+    ).slice(
       0,
       isEventsPage ? 120 : 60
     );
 
     if (elements.listSectionTitle) {
       elements.listSectionTitle.textContent =
-        state.mode === "today" ? "Today’s events" : "All live events";
+        state.mode === "today"
+          ? "Today’s events"
+          : state.mode === "tomorrow"
+            ? "Tomorrow’s events"
+            : "All live events";
     }
 
     elements.matchList.innerHTML = matches.length
-      ? matches.map((match) => renderEventCard(match, "standard")).join("")
+      ? matches
+          .map((match) =>
+            renderEventCard(match, "standard")
+          )
+          .join("")
       : emptyState(
           state.mode === "live"
             ? "Nothing is live right now. Switch to Today to browse upcoming events."
-            : "No events match the current filters."
+            : state.mode === "tomorrow"
+              ? "No events are currently listed for tomorrow."
+              : "No events match the current filters."
         );
   }
 
   function renderDiscovery() {
     renderSportTabs();
+    renderContinueWatching();
     renderPopularLive();
     renderFavoriteTeams();
     renderStartingSoon();
@@ -815,9 +1175,9 @@
 
       if (!state.live.length && state.today.length) {
         state.mode = "today";
-        elements.liveButton?.classList.remove("active");
-        elements.todayButton?.classList.add("active");
       }
+
+      updateModeButtons();
 
       expandDiscoveryLayout();
       renderDiscovery();
@@ -844,11 +1204,78 @@
     elements.launcher?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  function setMode(mode) {
-    state.mode = mode === "today" ? "today" : "live";
+  function updateModeButtons() {
+    elements.liveButton?.classList.toggle(
+      "active",
+      state.mode === "live"
+    );
+    elements.todayButton?.classList.toggle(
+      "active",
+      state.mode === "today"
+    );
+    elements.tomorrowButton?.classList.toggle(
+      "active",
+      state.mode === "tomorrow"
+    );
+    if (elements.tomorrowButton) {
+      elements.tomorrowButton.disabled =
+        state.tomorrowLoading;
+    }
+  }
+
+  async function loadTomorrow(force = false) {
+    if (state.tomorrowLoading) return;
+
+    state.tomorrowLoading = true;
+    updateModeButtons();
+    setStatus("Loading tomorrow’s events…");
+
+    try {
+      const all = await API.getAll(force);
+      const key = tomorrowDayKey();
+
+      state.tomorrow = dedupeMatches(
+        all.data.filter(
+          (match) =>
+            localDayKey(match.date) === key
+        )
+      );
+      state.tomorrowLoaded = true;
+      renderDiscovery();
+      setStatus(
+        state.tomorrow.length
+          ? "Tomorrow’s schedule is ready."
+          : "No events are currently listed for tomorrow."
+      );
+    } catch (error) {
+      setStatus(
+        error.message ||
+          "Tomorrow’s events could not be loaded.",
+        true
+      );
+    } finally {
+      state.tomorrowLoading = false;
+      updateModeButtons();
+    }
+  }
+
+  async function setMode(mode) {
+    state.mode = ["today", "tomorrow"].includes(
+      mode
+    )
+      ? mode
+      : "live";
     state.selectedSport = "all";
-    elements.liveButton?.classList.toggle("active", state.mode === "live");
-    elements.todayButton?.classList.toggle("active", state.mode === "today");
+    updateModeButtons();
+
+    if (
+      state.mode === "tomorrow" &&
+      !state.tomorrowLoaded
+    ) {
+      await loadTomorrow(false);
+      return;
+    }
+
     renderDiscovery();
   }
 
@@ -972,6 +1399,32 @@
   }
 
   function handleDiscoveryClick(event) {
+    const clearContinue =
+      event.target.closest(
+        "[data-clear-continue]"
+      );
+
+    if (clearContinue) {
+      event.preventDefault();
+      clearContinueEvent();
+      return;
+    }
+
+    const resume =
+      event.target.closest(
+        "[data-continue-event]"
+      );
+
+    if (resume && state.continueEvent?.match) {
+      event.preventDefault();
+      watchMatch(
+        state.continueEvent.match,
+        state.continueEvent.source || "",
+        state.continueEvent.streamNo ?? ""
+      );
+      return;
+    }
+
     const addFavorite = event.target.closest("[data-add-favorite]");
     if (addFavorite) {
       event.preventDefault();
@@ -1006,13 +1459,50 @@
     }
   }
 
-  async function watchMatch(match) {
+  async function watchMatch(
+    match,
+    preferredSource = "",
+    preferredNo = ""
+  ) {
     rememberSelectedMatch(match);
+
     if (!player) {
-      location.href = `index.html?event=${encodeURIComponent(eventKey(match))}`;
+      const destination = new URL(
+        "index.html",
+        window.location.href
+      );
+
+      destination.searchParams.set(
+        "event",
+        eventKey(match)
+      );
+
+      if (preferredSource) {
+        destination.searchParams.set(
+          "source",
+          preferredSource
+        );
+      }
+
+      if (
+        preferredNo !== "" &&
+        preferredNo != null
+      ) {
+        destination.searchParams.set(
+          "stream",
+          preferredNo
+        );
+      }
+
+      location.href = destination.href;
       return;
     }
-    await loadMatch(match);
+
+    await loadMatch(
+      match,
+      preferredSource,
+      preferredNo
+    );
   }
 
   function toast(message) {
@@ -1109,6 +1599,206 @@
     return [stream.source, stream.streamNo, stream.embedUrl].join("|");
   }
 
+  function clearRecoveryTimer() {
+    if (state.recoveryTimer) {
+      window.clearTimeout(
+        state.recoveryTimer
+      );
+      state.recoveryTimer = null;
+    }
+  }
+
+  function nextStreamCandidate() {
+    if (
+      !state.streams.length ||
+      !state.activeStream
+    ) {
+      return null;
+    }
+
+    const activeKey =
+      streamKey(state.activeStream);
+    const activeIndex =
+      state.streams.findIndex(
+        (stream) =>
+          streamKey(stream) === activeKey
+      );
+
+    const rotated = [
+      ...state.streams.slice(activeIndex + 1),
+      ...state.streams.slice(0, activeIndex)
+    ];
+
+    return (
+      rotated.find(
+        (stream) =>
+          !state.failedStreamKeys.has(
+            streamKey(stream)
+          )
+      ) ||
+      rotated[0] ||
+      null
+    );
+  }
+
+  function selectNextStream(
+    reason = "manual"
+  ) {
+    if (
+      !state.activeStream ||
+      state.streams.length < 2
+    ) {
+      toast("No alternate server is available.");
+      return false;
+    }
+
+    state.failedStreamKeys.add(
+      streamKey(state.activeStream)
+    );
+
+    let next = nextStreamCandidate();
+
+    if (!next) {
+      state.failedStreamKeys.clear();
+      next = nextStreamCandidate();
+    }
+
+    if (!next) {
+      toast("No alternate server is available.");
+      return false;
+    }
+
+    if (reason === "automatic") {
+      state.automaticRecoveryAttempts += 1;
+      toast(
+        `That server did not load. Trying ` +
+        `${sourceLabel(next.source)} ` +
+        `Stream ${next.streamNo}…`
+      );
+    } else {
+      state.automaticRecoveryAttempts = 0;
+      toast(
+        `Trying ${sourceLabel(next.source)} ` +
+        `Stream ${next.streamNo}…`
+      );
+    }
+
+    selectStream(
+      next,
+      false,
+      reason
+    );
+
+    return true;
+  }
+
+  function armAutomaticRecovery(stream) {
+    clearRecoveryTimer();
+
+    if (
+      !stream ||
+      state.streams.length < 2
+    ) {
+      return;
+    }
+
+    const serial =
+      ++state.recoverySerial;
+    const frame =
+      document.getElementById("activeFrame");
+
+    if (!frame) return;
+
+    let settled = false;
+
+    const markLoaded = () => {
+      if (
+        settled ||
+        serial !== state.recoverySerial
+      ) {
+        return;
+      }
+
+      settled = true;
+      clearRecoveryTimer();
+    };
+
+    const recover = () => {
+      if (
+        settled ||
+        serial !== state.recoverySerial
+      ) {
+        return;
+      }
+
+      settled = true;
+      clearRecoveryTimer();
+
+      if (
+        state.automaticRecoveryAttempts >=
+        AUTO_RECOVERY_LIMIT
+      ) {
+        setStatus(
+          "The player is taking longer than expected. Try Next Server or open Server Selector.",
+          true
+        );
+        return;
+      }
+
+      selectNextStream("automatic");
+    };
+
+    frame.addEventListener(
+      "load",
+      markLoaded,
+      { once: true }
+    );
+
+    frame.addEventListener(
+      "error",
+      recover,
+      { once: true }
+    );
+
+    state.recoveryTimer =
+      window.setTimeout(
+        recover,
+        AUTO_RECOVERY_TIMEOUT
+      );
+  }
+
+  function showShortcutHintOnce() {
+    if (
+      state.shortcutHintScheduled ||
+      !player
+    ) {
+      return;
+    }
+
+    try {
+      if (
+        localStorage.getItem(
+          SHORTCUT_HINT_KEY
+        ) === "true"
+      ) {
+        return;
+      }
+
+      localStorage.setItem(
+        SHORTCUT_HINT_KEY,
+        "true"
+      );
+    } catch {}
+
+    state.shortcutHintScheduled = true;
+
+    window.setTimeout(() => {
+      toast(
+        "Quick keys: S servers · N next · T theater · C chat · M menu"
+      );
+    }, 1200);
+  }
+
   function groupStreams(streams) {
     const groups = new Map();
     streams.forEach((stream) => {
@@ -1126,6 +1816,49 @@
         ${badgeMarkup(match?.teams?.away, "small")}
       </span>
     `;
+  }
+
+  function updateRoomHeader() {
+    if (!player) return;
+
+    const match = state.currentMatch;
+    const stream = state.activeStream;
+
+    if (!match || !stream) {
+      player.playerToolbar.classList.remove(
+        "streamed-room-toolbar"
+      );
+      player.toolbarKicker.hidden = true;
+      player.toolbarHeading.textContent =
+        "Embedded Stream";
+      player.currentHost.textContent =
+        "External provider";
+      player.nextServerButton.hidden = true;
+      return;
+    }
+
+    const live = isLiveMatch(match);
+
+    player.playerToolbar.classList.add(
+      "streamed-room-toolbar"
+    );
+    player.toolbarKicker.hidden = false;
+    player.toolbarKicker.textContent =
+      live ? "Live event" : "Event room";
+    player.toolbarHeading.textContent =
+      match.title || "EastCoin event";
+    player.currentHost.textContent = [
+      live
+        ? "Live now"
+        : formatDate(match.date, true),
+      `${sourceLabel(stream.source)} ` +
+        `Stream ${stream.streamNo}`,
+      stream.hd ? "HD" : "SD",
+      stream.language || ""
+    ].filter(Boolean).join(" · ");
+
+    player.nextServerButton.hidden =
+      state.streams.length < 2;
   }
 
   function renderServerPanel() {
@@ -1152,16 +1885,26 @@
             ${streams.map((stream) => {
               const active = state.activeStream &&
                 streamKey(stream) === streamKey(state.activeStream);
-              const recommendedFlag = streamKey(stream) === recommendedKey;
+              const recommendedFlag =
+                streamKey(stream) ===
+                recommendedKey;
+              const failed =
+                state.failedStreamKeys.has(
+                  streamKey(stream)
+                );
               return `
                 <button
-                  class="streamed-stream-button${active ? " active" : ""}"
+                  class="streamed-stream-button${active ? " active" : ""}${failed ? " failed" : ""}"
                   type="button"
                   data-stream-key="${escapeAttr(streamKey(stream))}">
                   <span class="streamed-quality">${stream.hd ? "HD" : "SD"}</span>
                   <span>Stream ${escapeHtml(stream.streamNo)}</span>
                   <span>${escapeHtml(stream.language || "Unknown")}</span>
-                  ${recommendedFlag ? '<span class="streamed-recommended">Recommended</span>' : ""}
+                  ${failed
+                    ? '<span class="streamed-failed-label">Skipped</span>'
+                    : recommendedFlag
+                      ? '<span class="streamed-recommended">Recommended</span>'
+                      : ""}
                 </button>
               `;
             }).join("")}
@@ -1177,6 +1920,8 @@
       `Server Selector, ${state.streams.length} ` +
       `available stream${state.streams.length === 1 ? "" : "s"}`
     );
+
+    updateRoomHeader();
   }
 
   function updateShareState() {
@@ -1250,27 +1995,51 @@
     setServerPanelOpen(false);
   }
 
-  function selectStream(stream, openPanel = false) {
+  function selectStream(
+    stream,
+    openPanel = false,
+    reason = "initial"
+  ) {
     if (!player || !stream?.embedUrl) return;
+
+    clearRecoveryTimer();
+    state.recoverySerial += 1;
+
+    if (reason !== "automatic") {
+      state.failedStreamKeys.delete(
+        streamKey(stream)
+      );
+      state.automaticRecoveryAttempts = 0;
+    }
+
     state.activeStream = stream;
 
     if (typeof window.loadStream !== "function") {
-      throw new Error("The EastCoin player is unavailable.");
+      throw new Error(
+        "The EastCoin player is unavailable."
+      );
     }
 
     window.loadStream(stream.embedUrl, true);
-    player.currentHost.textContent = [
-      state.currentMatch?.title || "Streamed",
-      sourceLabel(stream.source),
-      `Stream ${stream.streamNo}`,
-      stream.hd ? "HD" : "SD",
-      stream.language || ""
-    ].filter(Boolean).join(" · ");
-
     renderServerPanel();
     updateShareState();
-    if (openPanel) setServerPanelOpen(true);
-    toast(`${sourceLabel(stream.source)} Stream ${stream.streamNo} loaded.`);
+    saveContinueEvent(
+      state.currentMatch,
+      stream
+    );
+    armAutomaticRecovery(stream);
+    showShortcutHintOnce();
+
+    if (openPanel) {
+      setServerPanelOpen(true);
+    }
+
+    if (reason === "initial") {
+      toast(
+        `${sourceLabel(stream.source)} ` +
+        `Stream ${stream.streamNo} loaded.`
+      );
+    }
   }
 
   async function loadMatch(
@@ -1281,6 +2050,9 @@
     if (!player) return;
 
     state.currentMatch = match;
+    state.failedStreamKeys.clear();
+    state.automaticRecoveryAttempts = 0;
+    clearRecoveryTimer();
 
     /*
       New events always begin with the video fully visible.
@@ -1314,10 +2086,14 @@
   }
 
   function clearPlayerState() {
+    clearRecoveryTimer();
+    state.recoverySerial += 1;
     state.currentMatch = null;
     state.streams = [];
     state.activeStream = null;
     state.serverPanelOpen = false;
+    state.failedStreamKeys.clear();
+    state.automaticRecoveryAttempts = 0;
     window.eastcoinStreamedState = null;
     if (!player) return;
     player.serverButton.hidden = true;
@@ -1333,7 +2109,10 @@
     player.serverArtwork.innerHTML = "";
     player.toolbarArtwork.innerHTML = "";
     player.toolbarArtwork.hidden = true;
-    player.toolbarTitle.classList.remove("streamed-has-artwork");
+    player.toolbarTitle.classList.remove(
+      "streamed-has-artwork"
+    );
+    updateRoomHeader();
   }
 
   function returnToDiscovery() {
@@ -1525,9 +2304,28 @@
     );
   }
 
-  elements.liveButton?.addEventListener("click", () => setMode("live"));
-  elements.todayButton?.addEventListener("click", () => setMode("today"));
-  elements.refresh?.addEventListener("click", () => loadDiscovery(true));
+  elements.liveButton?.addEventListener(
+    "click",
+    () => setMode("live")
+  );
+  elements.todayButton?.addEventListener(
+    "click",
+    () => setMode("today")
+  );
+  elements.tomorrowButton?.addEventListener(
+    "click",
+    () => setMode("tomorrow")
+  );
+  elements.refresh?.addEventListener(
+    "click",
+    () => {
+      if (state.mode === "tomorrow") {
+        loadTomorrow(true);
+      } else {
+        loadDiscovery(true);
+      }
+    }
+  );
   elements.search?.addEventListener("input", () => {
     state.query = elements.search.value;
     renderDiscovery();
@@ -1554,11 +2352,111 @@
   );
 
   window.addEventListener("storage", (event) => {
-    if (event.key !== FAVORITES_KEY) return;
-    state.favoriteTeams = loadFavoriteTeams();
-    renderDiscovery();
-    renderEventDetailForCurrentUrl();
+    if (event.key === FAVORITES_KEY) {
+      state.favoriteTeams = loadFavoriteTeams();
+      renderDiscovery();
+      renderEventDetailForCurrentUrl();
+      return;
+    }
+
+    if (event.key === CONTINUE_KEY) {
+      state.continueEvent =
+        loadContinueEvent();
+      renderContinueWatching();
+    }
   });
+
+  function typingTarget(target) {
+    return (
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement ||
+      target?.isContentEditable
+    );
+  }
+
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (
+        event.defaultPrevented ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
+        typingTarget(event.target)
+      ) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+
+      if (
+        key === "escape" &&
+        state.serverPanelOpen
+      ) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        setServerPanelOpen(false);
+        return;
+      }
+
+      if (event.repeat) return;
+
+      if (
+        key === "s" &&
+        player &&
+        !player.serverButton.hidden
+      ) {
+        event.preventDefault();
+        player.serverButton.click();
+        return;
+      }
+
+      if (key === "n" && player) {
+        event.preventDefault();
+        selectNextStream("manual");
+        return;
+      }
+
+      if (key === "t") {
+        const theater = document.querySelector(
+          "[data-ec-theater-toggle]"
+        );
+
+        if (theater) {
+          event.preventDefault();
+          theater.click();
+        }
+        return;
+      }
+
+      if (key === "c") {
+        const chat = document.querySelector(
+          "[data-ec-chat-toggle]"
+        );
+
+        if (chat) {
+          event.preventDefault();
+          chat.click();
+        }
+        return;
+      }
+
+      if (key === "m") {
+        const menu =
+          document.getElementById("mobileMenu") ||
+          document.getElementById(
+            "sidebarToggle"
+          );
+
+        if (menu) {
+          event.preventDefault();
+          menu.click();
+        }
+      }
+    },
+    true
+  );
 
   window.setInterval(updateCountdowns, 15_000);
 
