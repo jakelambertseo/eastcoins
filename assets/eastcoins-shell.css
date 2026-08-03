@@ -1,0 +1,951 @@
+/*
+  EastCoin unified shell
+  Version: shell1
+  Purpose: one canonical visual system for all production wrapper and content pages.
+*/
+
+:root {
+  --ec-sidebar-width: 210px;
+  --ec-chat-width: 330px;
+  --ec-divider-width: 8px;
+  --ec-mobile-breakpoint: 900px;
+
+  --ec-bg: #030202;
+  --ec-bg-soft: #070505;
+  --ec-sidebar: #020202;
+  --ec-panel: #0b0808;
+  --ec-panel-2: #120d0e;
+  --ec-panel-3: #1a1113;
+  --ec-line: rgba(216, 183, 94, .14);
+  --ec-line-soft: rgba(255, 255, 255, .075);
+  --ec-text: #f7f0df;
+  --ec-muted: #a69b87;
+  --ec-muted-dark: #756d60;
+  --ec-gold: #d8b75e;
+  --ec-gold-bright: #f1d784;
+  --ec-burgundy: #6f1026;
+  --ec-burgundy-bright: #b92146;
+  --ec-red: #df4960;
+  --ec-green: #55d88a;
+  --ec-blue: #73abff;
+  --ec-radius-sm: 9px;
+  --ec-radius-md: 13px;
+  --ec-radius-lg: 18px;
+  --ec-shadow: 0 24px 64px rgba(0, 0, 0, .48);
+}
+
+.ec-shell-page {
+  /* Compatibility aliases for older page-local CSS. */
+  --bg: var(--ec-bg);
+  --sidebar: var(--ec-sidebar);
+  --panel: var(--ec-panel);
+  --panel-2: var(--ec-panel-2);
+  --line: var(--ec-line-soft);
+  --text: var(--ec-text);
+  --muted: var(--ec-muted);
+  --green: var(--ec-gold);
+  --green-hover: var(--ec-gold-bright);
+  --red: var(--ec-red);
+  --purple: var(--ec-burgundy-bright);
+  --shadow: var(--ec-shadow);
+  --brand-gold: var(--ec-gold);
+  --brand-gold-bright: var(--ec-gold-bright);
+  --brand-burgundy: var(--ec-burgundy);
+  --sidebar-width: var(--ec-sidebar-width);
+  --chat-width: var(--ec-chat-width);
+  --divider-width: var(--ec-divider-width);
+
+  min-height: 100vh;
+  color: var(--ec-text);
+  background:
+    radial-gradient(circle at 24% -10%, rgba(111, 16, 38, .23), transparent 30%),
+    radial-gradient(circle at 90% 0%, rgba(216, 183, 94, .07), transparent 24%),
+    var(--ec-bg);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.ec-shell-page *,
+.ec-shell-page *::before,
+.ec-shell-page *::after {
+  box-sizing: border-box;
+}
+
+.ec-shell-page button,
+.ec-shell-page input,
+.ec-shell-page select,
+.ec-shell-page textarea {
+  font: inherit;
+}
+
+.ec-shell-page a,
+.ec-shell-page button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* --------------------------------------------------------------------------
+   Shared desktop shell
+   -------------------------------------------------------------------------- */
+
+.ec-shell-player .layout {
+  display: grid;
+  grid-template-columns:
+    var(--ec-sidebar-width)
+    minmax(420px, 1fr)
+    var(--ec-divider-width)
+    var(--ec-chat-width);
+  width: 100%;
+  height: 100vh;
+  min-height: 0;
+  background: var(--ec-bg);
+  transition: grid-template-columns .24s ease;
+}
+
+.ec-shell-content .favorites-layout {
+  display: grid;
+  grid-template-columns: var(--ec-sidebar-width) minmax(0, 1fr);
+  width: 100%;
+  height: 100vh;
+  min-height: 0;
+  background: var(--ec-bg);
+  transition: grid-template-columns .24s ease;
+}
+
+@media (min-width: 901px) {
+  .ec-shell-player.sidebar-collapsed .layout {
+    grid-template-columns:
+      0
+      minmax(420px, 1fr)
+      var(--ec-divider-width)
+      var(--ec-chat-width);
+  }
+
+  .ec-shell-content.sidebar-collapsed .favorites-layout {
+    grid-template-columns: 0 minmax(0, 1fr);
+  }
+
+  .ec-shell-page.sidebar-collapsed .sidebar {
+    padding-left: 0;
+    padding-right: 0;
+    border-right-color: transparent;
+    opacity: 0;
+    transform: translateX(-100%);
+    pointer-events: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar and navigation
+   -------------------------------------------------------------------------- */
+
+.ec-shell-page .sidebar {
+  position: relative;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  padding: 18px 13px 14px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(216, 183, 94, .24) transparent;
+  border-right: 1px solid var(--ec-line);
+  background:
+    linear-gradient(180deg, rgba(111, 16, 38, .08), transparent 22%),
+    var(--ec-sidebar);
+  box-shadow: 12px 0 36px rgba(0, 0, 0, .22);
+  opacity: 1;
+  transform: translateX(0);
+  transition:
+    transform .24s ease,
+    opacity .2s ease,
+    padding .24s ease,
+    border-color .24s ease;
+}
+
+.ec-shell-page .sidebar::-webkit-scrollbar {
+  width: 7px;
+}
+
+.ec-shell-page .sidebar::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(216, 183, 94, .2);
+}
+
+.ec-shell-page .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 2px 7px 16px;
+  border-bottom: 1px solid rgba(216, 183, 94, .1);
+}
+
+.ec-shell-page .brand-mark,
+.ec-shell-page .brand-mark.brand-logo {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(216, 183, 94, .2);
+  border-radius: 11px;
+  color: var(--ec-text);
+  background:
+    radial-gradient(circle at 30% 20%, rgba(216, 183, 94, .16), transparent 55%),
+    #080606;
+  box-shadow: 0 9px 24px rgba(0, 0, 0, .35);
+}
+
+.ec-shell-page .brand-logo img,
+.ec-shell-page .brand-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ec-shell-page .brand-copy,
+.ec-shell-page .brand-copy-single {
+  min-width: 0;
+}
+
+.ec-shell-page .brand-copy strong,
+.ec-shell-page .brand-copy-single strong {
+  display: block;
+  color: var(--ec-text);
+  font-size: .98rem;
+  font-weight: 900;
+  letter-spacing: -.025em;
+}
+
+.ec-shell-page .brand-copy span {
+  display: block;
+  margin-top: 1px;
+  color: var(--ec-muted-dark);
+  font-size: .68rem;
+}
+
+.ec-shell-page .nav-group {
+  margin-top: 12px;
+}
+
+.ec-shell-page .nav-label {
+  padding: 0 9px 7px;
+  color: #6f6658;
+  font-size: .58rem;
+  font-weight: 900;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.ec-shell-page .nav-link,
+.ec-shell-page .nav-game-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  margin: 0 0 3px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--ec-radius-sm);
+  color: #a89f91;
+  background: transparent;
+  text-align: left;
+  text-decoration: none;
+  font-size: .8rem;
+  font-weight: 760;
+  line-height: 1.12;
+  transition:
+    color .16s ease,
+    border-color .16s ease,
+    background .16s ease,
+    transform .16s ease;
+}
+
+.ec-shell-page .nav-link:hover,
+.ec-shell-page .nav-link:focus-visible,
+.ec-shell-page .nav-game-link:hover,
+.ec-shell-page .nav-game-link:focus-visible {
+  color: var(--ec-text);
+  border-color: rgba(216, 183, 94, .13);
+  background: rgba(216, 183, 94, .055);
+  outline: none;
+  transform: translateX(1px);
+}
+
+.ec-shell-page .nav-link.active,
+.ec-shell-page .nav-game-link.active {
+  color: #fff2c4;
+  border-color: rgba(216, 183, 94, .24);
+  background:
+    linear-gradient(90deg, rgba(111, 16, 38, .7), rgba(50, 8, 18, .34));
+  box-shadow: inset 3px 0 0 var(--ec-gold);
+}
+
+.ec-shell-page .nav-games-menu {
+  margin: 0;
+}
+
+.ec-shell-page .nav-games-summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.ec-shell-page .nav-games-summary::-webkit-details-marker {
+  display: none;
+}
+
+.ec-shell-page .nav-games-summary-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.ec-shell-page .nav-games-caret {
+  margin-left: auto;
+  color: #817764;
+  font-size: .78rem;
+  transition: transform .18s ease;
+}
+
+.ec-shell-page .nav-games-menu[open] .nav-games-caret {
+  transform: rotate(180deg);
+}
+
+.ec-shell-page .nav-games-submenu {
+  display: grid;
+  gap: 2px;
+  margin: 2px 0 5px 13px;
+  padding: 4px 0 3px 9px;
+  border-left: 1px solid rgba(216, 183, 94, .16);
+}
+
+.ec-shell-page .nav-game-link {
+  min-height: 29px;
+  margin: 0;
+  padding: 6px 8px;
+  font-size: .72rem;
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar modules
+   -------------------------------------------------------------------------- */
+
+.ec-shell-page .football-countdown {
+  margin: auto 0 8px;
+  padding: 10px;
+  border: 1px solid rgba(216, 183, 94, .17);
+  border-radius: 11px;
+  background:
+    radial-gradient(circle at 86% 0%, rgba(216, 183, 94, .09), transparent 34%),
+    linear-gradient(180deg, #0d0909, #070505);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025);
+}
+
+.ec-shell-page .football-countdown-eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #c8af70;
+  font-size: .55rem;
+  font-weight: 900;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.ec-shell-page .football-countdown-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #8c816c;
+}
+
+.ec-shell-page .football-countdown-live::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ec-burgundy-bright);
+  box-shadow: 0 0 0 3px rgba(185, 33, 70, .1);
+}
+
+.ec-shell-page .football-countdown-title {
+  margin: 9px 0 2px;
+  color: #a69b87;
+  font-size: .62rem;
+  line-height: 1.35;
+}
+
+.ec-shell-page .football-countdown-matchup {
+  margin: 0 0 9px;
+  color: var(--ec-text);
+  font-size: .72rem;
+  font-weight: 900;
+  line-height: 1.3;
+}
+
+.ec-shell-page .football-countdown-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.ec-shell-page .football-countdown-unit {
+  min-width: 0;
+  padding: 6px 2px;
+  border: 1px solid rgba(255, 255, 255, .055);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, .022);
+  text-align: center;
+}
+
+.ec-shell-page .football-countdown-value {
+  display: block;
+  color: var(--ec-gold-bright);
+  font-size: .8rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.ec-shell-page .football-countdown-label {
+  display: block;
+  margin-top: 4px;
+  color: #736a5b;
+  font-size: .43rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.ec-shell-page .football-countdown-date {
+  margin-top: 8px;
+  color: #756d60;
+  font-size: .55rem;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.ec-shell-page .football-countdown.is-live {
+  border-color: rgba(85, 216, 138, .24);
+  background:
+    radial-gradient(circle at 90% 0%, rgba(85, 216, 138, .12), transparent 35%),
+    linear-gradient(180deg, #08120d, #050906);
+}
+
+.ec-shell-page .football-countdown.is-live .football-countdown-live::before {
+  background: var(--ec-green);
+  box-shadow: 0 0 0 3px rgba(85, 216, 138, .1);
+}
+
+.ec-shell-page .zwades-callout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  margin: 0 0 3px;
+  padding: 7px 9px;
+  border: 1px solid rgba(115, 171, 255, .13);
+  border-radius: var(--ec-radius-sm);
+  background:
+    linear-gradient(180deg, rgba(10, 17, 34, .92), rgba(5, 9, 20, .96));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025);
+  text-align: center;
+}
+
+.ec-shell-page .football-countdown + .zwades-callout {
+  margin-top: 0;
+}
+
+.ec-shell-page .zwades-title {
+  margin: 0;
+  color: #dceaff;
+  font-size: .67rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: .025em;
+  text-transform: lowercase;
+  white-space: nowrap;
+}
+
+.ec-shell-page .zwades-title .is-blue {
+  color: var(--ec-blue);
+}
+
+.ec-shell-page .zwades-eyebrow,
+.ec-shell-page .zwades-row,
+.ec-shell-page .zwades-media,
+.ec-shell-page .zwades-copy {
+  display: none;
+}
+
+.ec-shell-page .sidebar-footer-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 30px;
+  margin: 3px 0 0;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: var(--ec-radius-sm);
+  color: #9d9588;
+  background: rgba(255, 255, 255, .022);
+  font-size: .67rem;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+  transition:
+    color .16s ease,
+    border-color .16s ease,
+    background .16s ease,
+    transform .16s ease;
+}
+
+.ec-shell-page .sidebar-footer-link:hover,
+.ec-shell-page .sidebar-footer-link:focus-visible {
+  color: var(--ec-text);
+  border-color: rgba(216, 183, 94, .25);
+  background: rgba(216, 183, 94, .055);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.ec-shell-page .sidebar-footer-link.active {
+  color: #ffe9a5;
+  border-color: rgba(216, 183, 94, .35);
+  background: linear-gradient(180deg, rgba(111, 16, 38, .58), rgba(45, 7, 16, .7));
+}
+
+/* --------------------------------------------------------------------------
+   Navigation toggle and overlay
+   -------------------------------------------------------------------------- */
+
+.ec-shell-page .mobile-menu,
+.ec-shell-page .sidebar-toggle {
+  position: fixed;
+  top: 14px;
+  left: calc(var(--ec-sidebar-width) + 12px);
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid rgba(216, 183, 94, .27);
+  border-radius: 10px;
+  color: var(--ec-gold-bright);
+  background: rgba(7, 5, 5, .92);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .36);
+  backdrop-filter: blur(14px);
+  font-size: .84rem;
+  font-weight: 900;
+  line-height: 1;
+  transition:
+    left .24s ease,
+    color .16s ease,
+    border-color .16s ease,
+    background .16s ease,
+    transform .16s ease;
+}
+
+.ec-shell-page .mobile-menu:hover,
+.ec-shell-page .mobile-menu:focus-visible,
+.ec-shell-page .sidebar-toggle:hover,
+.ec-shell-page .sidebar-toggle:focus-visible {
+  color: #fff2c4;
+  border-color: rgba(216, 183, 94, .5);
+  background: rgba(111, 16, 38, .88);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.ec-shell-page.sidebar-collapsed .mobile-menu,
+.ec-shell-page.sidebar-collapsed .sidebar-toggle {
+  left: 14px;
+}
+
+.ec-shell-page .mobile-overlay {
+  display: none;
+}
+
+/* --------------------------------------------------------------------------
+   Content pages
+   -------------------------------------------------------------------------- */
+
+.ec-shell-content {
+  overflow: hidden;
+}
+
+.ec-shell-content .page-main {
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(111, 16, 38, .18), transparent 34%),
+    var(--ec-bg-soft);
+}
+
+.ec-shell-content .page-shell,
+.ec-shell-content .changelog-shell {
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  padding: 72px 34px 64px;
+}
+
+.ec-shell-content .page-header,
+.ec-shell-content .changelog-header {
+  margin-bottom: 28px;
+}
+
+.ec-shell-content .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #c9b373;
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.ec-shell-content .eyebrow-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ec-burgundy-bright);
+  box-shadow: 0 0 0 4px rgba(185, 33, 70, .1);
+}
+
+.ec-shell-content .page-header h1,
+.ec-shell-content .changelog-header h1 {
+  margin: 9px 0 11px;
+  color: #fffaf0;
+  font-size: clamp(2.3rem, 6vw, 4.7rem);
+  line-height: .94;
+  letter-spacing: -.06em;
+}
+
+.ec-shell-content .page-header p,
+.ec-shell-content .changelog-header p {
+  max-width: 680px;
+  margin: 0;
+  color: var(--ec-muted);
+  font-size: .92rem;
+  line-height: 1.7;
+}
+
+.ec-shell-content .favorite-site,
+.ec-shell-content .timeline-entry,
+.ec-shell-content .status-card,
+.ec-shell-content .event-card,
+.ec-shell-content .editing-note {
+  border-color: var(--ec-line-soft);
+  background-color: var(--ec-panel);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .02);
+}
+
+/* --------------------------------------------------------------------------
+   Player and game wrapper pages
+   -------------------------------------------------------------------------- */
+
+.ec-shell-player {
+  overflow: hidden;
+}
+
+.ec-shell-player .watch-area {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px;
+  background:
+    radial-gradient(circle at 50% -20%, rgba(111, 16, 38, .15), transparent 42%),
+    #050303;
+}
+
+.ec-shell-player .player-shell {
+  border: 1px solid rgba(216, 183, 94, .13);
+  border-radius: var(--ec-radius-lg);
+  background-color: #030202;
+  box-shadow: var(--ec-shadow);
+}
+
+.ec-shell-player .player-toolbar {
+  padding: 14px 16px 14px 62px;
+  background:
+    linear-gradient(180deg, rgba(3, 2, 2, .98), rgba(3, 2, 2, .68), transparent);
+}
+
+.ec-shell-player .toolbar-title strong {
+  color: var(--ec-text);
+}
+
+.ec-shell-player .toolbar-title span {
+  color: var(--ec-muted);
+}
+
+.ec-shell-player .toolbar-actions {
+  gap: 7px;
+}
+
+.ec-shell-player .toolbar-button {
+  min-height: 36px;
+  padding: 8px 11px;
+  border: 1px solid rgba(216, 183, 94, .17);
+  border-radius: 9px;
+  color: var(--ec-text);
+  background: rgba(10, 7, 7, .82);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025);
+  backdrop-filter: blur(14px);
+  font-size: .74rem;
+  font-weight: 850;
+}
+
+.ec-shell-player .toolbar-button:hover,
+.ec-shell-player .toolbar-button:focus-visible {
+  border-color: rgba(216, 183, 94, .35);
+  background: rgba(111, 16, 38, .72);
+  outline: none;
+}
+
+.ec-shell-player .url-stage {
+  background:
+    radial-gradient(circle at 50% 20%, rgba(111, 16, 38, .12), transparent 38%);
+}
+
+.ec-shell-player .url-card {
+  border: 1px solid rgba(216, 183, 94, .16);
+  border-radius: 18px;
+  background: rgba(9, 6, 6, .92);
+  box-shadow: var(--ec-shadow);
+}
+
+.ec-shell-player .url-icon {
+  border-color: rgba(216, 183, 94, .22);
+  background: rgba(216, 183, 94, .07);
+}
+
+.ec-shell-player .url-card h1 {
+  color: #fffaf0;
+}
+
+.ec-shell-player .url-card > p {
+  color: var(--ec-muted);
+}
+
+.ec-shell-player .url-entry input,
+.ec-shell-player input[type="url"],
+.ec-shell-player input[type="search"] {
+  border-color: rgba(216, 183, 94, .15);
+  color: var(--ec-text);
+  background: rgba(255, 255, 255, .035);
+}
+
+.ec-shell-player .url-entry input:focus,
+.ec-shell-player input[type="url"]:focus,
+.ec-shell-player input[type="search"]:focus {
+  border-color: rgba(216, 183, 94, .55);
+  box-shadow: 0 0 0 4px rgba(216, 183, 94, .075);
+  outline: none;
+}
+
+.ec-shell-player .load-button {
+  color: #1a1204;
+  background: linear-gradient(180deg, var(--ec-gold-bright), var(--ec-gold));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .34);
+}
+
+.ec-shell-player .load-button:hover,
+.ec-shell-player .load-button:focus-visible {
+  background: linear-gradient(180deg, #ffe8a4, var(--ec-gold-bright));
+  outline: none;
+}
+
+.ec-shell-player .remember-label {
+  color: var(--ec-muted);
+}
+
+.ec-shell-player .remember-label input {
+  accent-color: var(--ec-gold);
+}
+
+.ec-shell-player .quick-favorite-button {
+  border-color: rgba(185, 33, 70, .34);
+  color: #ffe8ed;
+  background: linear-gradient(180deg, rgba(128, 15, 42, .86), rgba(62, 7, 23, .9));
+}
+
+.ec-shell-player .resize-handle {
+  width: var(--ec-divider-width);
+  border-left: 1px solid rgba(216, 183, 94, .09);
+  border-right: 1px solid rgba(216, 183, 94, .09);
+  background: #050303;
+}
+
+.ec-shell-player .resize-handle:hover,
+.ec-shell-player.resizing-chat .resize-handle {
+  background: rgba(216, 183, 94, .13);
+}
+
+.ec-shell-player .chat-panel {
+  min-width: 0;
+  min-height: 0;
+  border-left: 1px solid rgba(216, 183, 94, .11);
+  background: #040303;
+}
+
+.ec-shell-player .twitch-chat-frame {
+  background: #040303;
+}
+
+.ec-shell-player .toast {
+  border-color: rgba(216, 183, 94, .28);
+  color: var(--ec-text);
+  background: #160e10;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive shell
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1180px) and (min-width: 901px) {
+  :root {
+    --ec-sidebar-width: 200px;
+    --ec-chat-width: 300px;
+  }
+}
+
+@media (max-width: 900px) {
+  :root {
+    --ec-sidebar-width: 232px;
+  }
+
+  .ec-shell-page {
+    overflow: auto;
+  }
+
+  .ec-shell-player .layout,
+  .ec-shell-content .favorites-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .ec-shell-page .sidebar,
+  .ec-shell-page.sidebar-collapsed .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 70;
+    width: var(--ec-sidebar-width);
+    height: 100vh;
+    padding: 18px 13px 14px;
+    border-right-color: var(--ec-line);
+    opacity: 1;
+    transform: translateX(-102%);
+    pointer-events: auto;
+    transition: transform .23s ease;
+  }
+
+  .ec-shell-page.menu-open .sidebar {
+    transform: translateX(0);
+  }
+
+  .ec-shell-page .mobile-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: block;
+    background: rgba(0, 0, 0, .78);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .23s ease;
+  }
+
+  .ec-shell-page.menu-open .mobile-overlay {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .ec-shell-page .mobile-menu,
+  .ec-shell-page .sidebar-toggle,
+  .ec-shell-page.sidebar-collapsed .mobile-menu,
+  .ec-shell-page.sidebar-collapsed .sidebar-toggle {
+    top: 14px;
+    left: 14px;
+  }
+
+  .ec-shell-content .page-main {
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .ec-shell-content .page-shell,
+  .ec-shell-content .changelog-shell {
+    padding: 74px 18px 40px;
+  }
+
+  .ec-shell-player .watch-area {
+    min-height: 68vh;
+    padding: 10px;
+  }
+
+  .ec-shell-player .player-toolbar {
+    padding-left: 60px;
+  }
+
+  .ec-shell-player .resize-handle {
+    display: none;
+  }
+
+  .ec-shell-player .chat-panel {
+    height: 500px;
+    min-height: 500px;
+    border-top: 1px solid rgba(216, 183, 94, .11);
+    border-left: 0;
+  }
+
+  .ec-shell-page .football-countdown {
+    margin-top: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .ec-shell-content .page-header h1,
+  .ec-shell-content .changelog-header h1 {
+    font-size: clamp(2.25rem, 15vw, 4rem);
+  }
+
+  .ec-shell-player .url-stage {
+    padding: 14px;
+  }
+
+  .ec-shell-player .url-card {
+    padding: 23px 17px;
+  }
+
+  .ec-shell-player .toolbar-actions {
+    max-width: calc(100vw - 82px);
+    overflow-x: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ec-shell-page *,
+  .ec-shell-page *::before,
+  .ec-shell-page *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

@@ -73,8 +73,8 @@
   <link rel="shortcut icon" href="assets/eastcoin-favicon.png" />
   <link rel="apple-touch-icon" href="assets/eastcoin-favicon.png" />
 
-  <link rel="stylesheet" href="assets/eastcoins-theme.css" />
-  <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux8" />
+  <link rel="stylesheet" href="assets/eastcoins-theme.css?v=theme9" />
+  <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux9" />
 
   <style>
     :root {
@@ -113,7 +113,7 @@
       transition: grid-template-columns .24s ease;
     }
 
-    @media (min-width: 761px) {
+    @media (min-width: 901px) {
       body.sidebar-collapsed .favorites-layout {
         grid-template-columns: 0 minmax(0, 1fr);
       }
@@ -139,7 +139,7 @@
       z-index: 20;
     }
 
-    @media (min-width: 761px) {
+    @media (min-width: 901px) {
       body.sidebar-collapsed .sidebar {
         padding-right: 0;
         padding-left: 0;
@@ -399,7 +399,7 @@
 
     /* ---------------- MOBILE ---------------- */
 
-    @media (max-width: 760px) {
+    @media (max-width: 900px) {
       body {
         overflow: auto;
       }
@@ -827,9 +827,10 @@
 }
 
 </style>
+  <link rel="stylesheet" href="assets/eastcoins-shell.css?v=shell1" />
 </head>
 
-<body>
+<body class="ec-shell-page ec-shell-content">
   <div class="mobile-overlay" id="mobileOverlay"></div>
 
   <div class="favorites-layout">
@@ -1036,7 +1037,7 @@
     </main>
   </div>
 
-    <script src="assets/eastcoins-ux.js?v=ux8"></script>
+    <script src="assets/eastcoins-ux.js?v=ux9"></script>
 
 <script>
     const body = document.body;
@@ -1069,7 +1070,7 @@
     const SIDEBAR_STORAGE_KEY = "eastcoinsSidebarCollapsed";
 
     function isMobileNavigation() {
-      return window.matchMedia("(max-width: 760px)").matches;
+      return window.matchMedia("(max-width: 900px)").matches;
     }
 
     function updateNavigationButton() {

@@ -1,2 +1,6 @@
 /*
-  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet, noimageindex
+  Permissions-Policy: clipboard-write=(self)
+  Cache-Control: no-cache, must-revalidate
+
+/assets/*
+  Cache-Control: no-cache, must-revalidate
