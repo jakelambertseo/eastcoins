@@ -1,91 +1,77 @@
-# EastCoin Halftime Jams — Test Guide
+# EastCoin Twitch Halftime Playlist Test
 
-This test validates the user interface and synchronization behavior before a
-real multi-user backend is added.
+This page tests a real Twitch EventSub chat listener and a synchronized
+three-video YouTube sequence.
 
-## Test URL
+## Test URLs
 
-After deploying the patch:
+Listener:
 
-- Admin:
-  `https://eastcoin.vip/halftime-jams-test.html?role=admin&room=eastcoin-halftime-test`
-- Viewer:
-  `https://eastcoin.vip/halftime-jams-test.html?role=viewer&room=eastcoin-halftime-test`
+`https://eastcoin.vip/halftime-jams-test.html?role=listener&room=eastcoin-halftime-test`
 
-The admin page has an **Open viewer window** button that creates the matching
-viewer URL automatically.
+Viewer:
 
-## Recommended test
+`https://eastcoin.vip/halftime-jams-test.html?role=viewer&room=eastcoin-halftime-test`
 
-1. Open the admin test page.
-2. Click **Open viewer window**.
-3. In the viewer tab, click **Enable synced audio** once.
-4. Return to the admin tab.
-5. Paste an embeddable YouTube song URL or leave the official API demo video.
-6. Press **Start in 3 seconds**.
-7. Confirm the viewer popup appears automatically and begins at the countdown.
-8. Test **Pause**, **Resume**, **Resync everyone**, and **End jam**.
-9. Open another viewer after playback has started. It should join at the
-   current room position rather than starting from zero.
+The listener page includes an **Open viewer window** button.
 
-## What this test proves
+## Twitch setup required
 
-- Admin-triggered popup behavior
-- Scheduled synchronized starts
-- Late joining
-- Pause and resume
-- Manual and automatic resynchronization
-- Browser autoplay handling
-- Viewer-side volume
-- Ending and hiding the popup
+The test listener needs:
 
-## Test limitation
+1. A registered Twitch application Client ID.
+2. A Twitch User Access Token containing the `user:read:chat` scope.
+3. The Twitch login of the channel to monitor, currently `zwades`.
+4. A comma-separated allowlist of usernames permitted to run commands.
 
-This version uses `BroadcastChannel` and `localStorage`, so it synchronizes tabs
-in the same browser profile and origin. It does not yet synchronize unrelated
-devices or real EastCoin visitors.
+The token is kept only in JavaScript memory for the current tab. The page does
+not write the token to localStorage, the URL, or source code.
 
-The production version will replace the test transport with an authenticated
-Cloudflare Worker/Durable Object WebSocket room while keeping most of the
-YouTube-player and overlay logic.
+## Three-video playlist
 
+Enter three YouTube URLs or video IDs before connecting the listener.
 
-## Floating viewer layout
+When an authorized user posts:
 
-The viewer test now includes a mock Twitch chat column. Halftime Jams opens as
-a compact mini-player beside that chat rather than covering the center of the
-sports video.
+`!starthalftime`
 
-The blue-tinted Halftime Jams header is draggable. Dragging is local to the
-viewer and does not affect synchronization or other viewers.
+the listener snapshots those three entries and broadcasts video 1 with a
+three-second synchronized countdown.
 
-## Twitch command simulator
+A muted controller player in the listener tab monitors YouTube playback. When
+a video ends, it broadcasts the next playlist entry. After video 3 ends, the
+playlist closes automatically.
 
-The admin tab now includes a local Twitch command simulator:
+## Supported commands
 
 - `!starthalftime`
 - `!pausehalftime`
 - `!resumehalftime`
+- `!skiphalftime`
 - `!resynchaltime`
 - `!endhalftime`
 
-`!starthalftime VIDEO_URL_OR_ID` can also replace the current YouTube selection
-before starting.
+Commands from usernames outside the allowlist are logged and ignored.
 
-This simulator does not read the embedded Twitch chat. It calls the same test
-admin functions that a production Twitch bot would call.
+## Recommended test
 
-## Production Twitch command flow
+1. Open the listener page.
+2. Enter the Twitch Client ID and user access token.
+3. Replace the three demo video IDs with your three songs.
+4. Confirm `zwades` is in Authorized command users.
+5. Click **Connect Twitch listener**.
+6. Open one or more viewer tabs.
+7. Click **Enable synced audio** once in each viewer.
+8. In real Twitch chat, post `!starthalftime` from an authorized username.
+9. Confirm video 1 opens after the countdown.
+10. Let it end or use `!skiphalftime`; confirm videos 2 and 3 follow.
+11. Test pause, resume, resync, and end commands.
 
-The embedded Twitch chat iframe cannot safely expose its message contents to
-EastCoin. A production command trigger needs a Twitch chatbot/backend:
+## Current room-delivery limitation
 
-1. Subscribe to Twitch `channel.chat.message` events.
-2. Ignore commands from ordinary viewers.
-3. Allow only the broadcaster account and an explicit admin allowlist.
-4. Parse `!starthalftime`, `!pausehalftime`, and the other approved commands.
-5. Send the verified action to the EastCoin room coordinator.
-6. The room coordinator broadcasts the updated jam state to connected viewers.
+The Twitch EventSub listener is real. However, this prototype still delivers
+the resulting playlist state to viewer tabs with BroadcastChannel and
+localStorage, so viewers must be tabs in the same browser profile.
 
-The bot credentials and Twitch access tokens must stay server-side. Never place
-them in EastCoin's public HTML or browser JavaScript.
+The production version will keep the Twitch EventSub logic server-side and
+broadcast room state through a Cloudflare Worker/Durable Object WebSocket.

@@ -565,3 +565,27 @@ HALFTIME JAMS FLOATING WINDOW + COMMAND TEST
   and room-broadcast backend.
 - Test CSS and JavaScript were cache-busted to jams2.
 - Updated HALFTIME-JAMS-TEST.md and changelog.html.
+
+
+TWITCH-TRIGGERED THREE-VIDEO HALFTIME TEST
+- The test no longer has manual Start/Pause/Resume playback buttons.
+- The listener connects to Twitch EventSub WebSockets.
+- It subscribes to channel.chat.message for the configured channel.
+- Credentials are validated before the EventSub subscription is created.
+- The Twitch token is kept only in the active tab's memory.
+- Authorized users are controlled by a browser-local allowlist.
+- Three YouTube URLs/IDs and titles form the halftime sequence.
+- !starthalftime launches video 1 after a three-second countdown.
+- A muted YouTube controller in the listener tab advances to videos 2 and 3.
+- The playlist closes automatically after video 3.
+- Additional commands:
+  - !pausehalftime
+  - !resumehalftime
+  - !skiphalftime
+  - !resynchaltime
+  - !endhalftime
+- Duplicate Twitch message IDs are ignored.
+- EventSub reconnect requests and unexpected disconnects are handled.
+- Viewer delivery remains same-browser for this test.
+- Test assets were cache-busted to jams3.
+- Updated HALFTIME-JAMS-TEST.md and changelog.html.

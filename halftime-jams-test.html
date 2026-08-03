@@ -10,57 +10,108 @@
     content="noindex,nofollow,noarchive">
   <meta
     name="description"
-    content="EastCoin synchronized halftime YouTube jam test page.">
+    content="EastCoin Twitch-triggered synchronized halftime playlist test.">
 
-  <title>EastCoin — Halftime Jams Test</title>
+  <title>EastCoin — Twitch Halftime Playlist Test</title>
 
   <link
     rel="stylesheet"
-    href="assets/eastcoins-halftime-jams-test.css?v=jams2">
+    href="assets/eastcoins-halftime-jams-test.css?v=jams3">
 </head>
 
 <body>
   <header class="test-header">
     <div>
       <span class="test-eyebrow">EastCoin experiment</span>
-      <h1>Halftime Jams Sync Lab</h1>
+      <h1>Twitch Halftime Playlist Lab</h1>
       <p>
-        Test admin-triggered YouTube popups and synchronized playback
-        between browser tabs before connecting a real multi-user backend.
+        Connect a Twitch chat listener, then trigger a synchronized sequence
+        of three YouTube videos with <code>!starthalftime</code>.
       </p>
     </div>
 
     <div class="header-badges">
-      <span class="test-badge">Test page</span>
-      <span class="test-badge role-badge" id="roleBadge">Admin</span>
+      <span class="test-badge">Private test</span>
+      <span class="test-badge role-badge" id="roleBadge">Listener</span>
     </div>
   </header>
 
   <nav class="role-nav" aria-label="Test roles">
-    <a id="adminRoleLink" href="#">Admin console</a>
+    <a id="listenerRoleLink" href="#">Twitch listener</a>
     <a id="viewerRoleLink" href="#">Viewer window</a>
     <a href="index.html">Return to EastCoin</a>
   </nav>
 
   <main>
-    <section class="admin-shell" data-role-panel="admin">
-      <div class="admin-grid">
-        <article class="panel admin-control-panel">
+    <section class="listener-shell" data-role-panel="listener">
+      <div class="listener-grid">
+        <article class="panel listener-config-panel">
           <div class="panel-heading">
             <div>
-              <span>Broadcast controls</span>
-              <h2>Start a synchronized jam</h2>
+              <span>Twitch EventSub</span>
+              <h2>Connect the chat listener</h2>
             </div>
-            <span class="connection-pill" id="adminConnectionPill">
-              Local test ready
+
+            <span class="connection-pill offline" id="listenerConnectionPill">
+              Disconnected
             </span>
+          </div>
+
+          <p class="security-note">
+            Your access token is kept only in this tab's memory. It is not
+            written to localStorage, the URL, or the EastCoin source files.
+          </p>
+
+          <div class="field split-field">
+            <label>
+              <span>Twitch Client ID</span>
+              <input
+                id="clientIdInput"
+                type="text"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="Your registered Twitch app client ID">
+            </label>
+
+            <label>
+              <span>User access token</span>
+              <input
+                id="accessTokenInput"
+                type="password"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="Token with user:read:chat">
+            </label>
+          </div>
+
+          <div class="field split-field">
+            <label>
+              <span>Channel login</span>
+              <input
+                id="channelInput"
+                type="text"
+                autocomplete="off"
+                spellcheck="false"
+                value="zwades">
+            </label>
+
+            <label>
+              <span>Authorized command users</span>
+              <input
+                id="authorizedUsersInput"
+                type="text"
+                autocomplete="off"
+                spellcheck="false"
+                value="zwades"
+                placeholder="zwades,pingbooty">
+            </label>
           </div>
 
           <label class="field">
             <span>Test room</span>
             <div class="field-row">
               <input
-                id="adminRoomInput"
+                id="listenerRoomInput"
                 type="text"
                 maxlength="48"
                 autocomplete="off"
@@ -74,144 +125,142 @@
             </div>
           </label>
 
-          <label class="field">
-            <span>YouTube URL or video ID</span>
-            <input
-              id="videoInput"
-              type="text"
-              autocomplete="off"
-              placeholder="https://www.youtube.com/watch?v=..."
-              value="M7lc1UVf-VE">
-            <small>
-              The default is YouTube's official IFrame API demo video.
-              Replace it with one of your halftime songs.
-            </small>
-          </label>
-
-          <label class="field">
-            <span>Display title</span>
-            <input
-              id="titleInput"
-              type="text"
-              autocomplete="off"
-              maxlength="100"
-              value="EastCoin Halftime Jam">
-          </label>
-
-          <div class="field split-field">
-            <label>
-              <span>Start delay</span>
-              <select id="delaySelect">
-                <option value="3" selected>3 seconds</option>
-                <option value="5">5 seconds</option>
-                <option value="10">10 seconds</option>
-              </select>
-            </label>
-
-            <label>
-              <span>Target audience</span>
-              <select disabled>
-                <option>Test room viewers</option>
-              </select>
-            </label>
-          </div>
-
-          <p
-            class="form-error"
-            id="adminError"
-            role="alert">
-          </p>
-
-          <div class="primary-actions">
+          <div class="listener-actions">
             <button
               class="primary-button"
-              id="startJamButton"
+              id="connectListenerButton"
               type="button">
-              ▶ Start in 3 seconds
+              Connect Twitch listener
             </button>
 
             <button
               class="secondary-button"
-              id="loadDemoButton"
-              type="button">
-              Use demo video
+              id="disconnectListenerButton"
+              type="button"
+              disabled>
+              Disconnect
             </button>
           </div>
 
-          <div class="playback-actions">
-            <button id="pauseButton" type="button">Pause</button>
-            <button id="resumeButton" type="button">Resume</button>
-            <button id="resyncButton" type="button">Resync everyone</button>
-            <button
-              class="danger-button"
-              id="endButton"
-              type="button">
-              End jam
-            </button>
-          </div>
+          <p class="form-error" id="listenerError" role="alert"></p>
 
-          <section class="twitch-command-test">
-            <div class="twitch-command-heading">
-              <div>
-                <span>Twitch command simulator</span>
-                <h3>Test chat-triggered controls</h3>
-              </div>
-              <span class="simulator-pill">Local simulation</span>
+          <dl class="listener-details">
+            <div>
+              <dt>Token user</dt>
+              <dd id="tokenUserValue">—</dd>
             </div>
-
-            <p>
-              Enter the command exactly as it would appear in the
-              <strong>zwades</strong> Twitch chat. This test calls the same
-              admin controls without connecting a Twitch bot yet.
-            </p>
-
-            <div class="command-entry">
-              <input
-                id="twitchCommandInput"
-                type="text"
-                autocomplete="off"
-                spellcheck="false"
-                value="!starthalftime">
-              <button
-                class="secondary-button"
-                id="runTwitchCommandButton"
-                type="button">
-                Run command
-              </button>
+            <div>
+              <dt>Listening to</dt>
+              <dd id="channelValue">#zwades</dd>
             </div>
-
-            <div class="command-examples" aria-label="Test command examples">
-              <button type="button" data-test-command="!starthalftime">
-                !starthalftime
-              </button>
-              <button type="button" data-test-command="!pausehalftime">
-                !pausehalftime
-              </button>
-              <button type="button" data-test-command="!resumehalftime">
-                !resumehalftime
-              </button>
-              <button type="button" data-test-command="!resynchaltime">
-                !resynchaltime
-              </button>
-              <button type="button" data-test-command="!endhalftime">
-                !endhalftime
-              </button>
+            <div>
+              <dt>Subscription</dt>
+              <dd id="subscriptionValue">Not created</dd>
             </div>
-
-            <output
-              class="command-result"
-              id="twitchCommandResult">
-              No simulated command has run yet.
-            </output>
-          </section>
+            <div>
+              <dt>Last command</dt>
+              <dd id="lastCommandValue">None</dd>
+            </div>
+          </dl>
         </article>
 
+        <article class="panel playlist-panel">
+          <div class="panel-heading">
+            <div>
+              <span>Three-video sequence</span>
+              <h2>Halftime playlist</h2>
+            </div>
+
+            <span class="playlist-count">3 videos</span>
+          </div>
+
+          <div class="playlist-editor">
+            <article class="playlist-item">
+              <span class="playlist-number">1</span>
+              <label>
+                <span>Video 1 title</span>
+                <input
+                  id="playlistTitle1"
+                  type="text"
+                  maxlength="100"
+                  value="Halftime Jam 1">
+              </label>
+              <label>
+                <span>YouTube URL or ID</span>
+                <input
+                  id="playlistVideo1"
+                  type="text"
+                  spellcheck="false"
+                  value="M7lc1UVf-VE">
+              </label>
+            </article>
+
+            <article class="playlist-item">
+              <span class="playlist-number">2</span>
+              <label>
+                <span>Video 2 title</span>
+                <input
+                  id="playlistTitle2"
+                  type="text"
+                  maxlength="100"
+                  value="Halftime Jam 2">
+              </label>
+              <label>
+                <span>YouTube URL or ID</span>
+                <input
+                  id="playlistVideo2"
+                  type="text"
+                  spellcheck="false"
+                  value="M7lc1UVf-VE">
+              </label>
+            </article>
+
+            <article class="playlist-item">
+              <span class="playlist-number">3</span>
+              <label>
+                <span>Video 3 title</span>
+                <input
+                  id="playlistTitle3"
+                  type="text"
+                  maxlength="100"
+                  value="Halftime Jam 3">
+              </label>
+              <label>
+                <span>YouTube URL or ID</span>
+                <input
+                  id="playlistVideo3"
+                  type="text"
+                  spellcheck="false"
+                  value="M7lc1UVf-VE">
+              </label>
+            </article>
+          </div>
+
+          <p class="playlist-help">
+            Replace the demo IDs with your three songs before connecting.
+            The listener snapshots this list when the command arrives.
+          </p>
+
+          <div class="command-reference">
+            <h3>Authorized Twitch commands</h3>
+            <code>!starthalftime</code>
+            <code>!pausehalftime</code>
+            <code>!resumehalftime</code>
+            <code>!skiphalftime</code>
+            <code>!resynchaltime</code>
+            <code>!endhalftime</code>
+          </div>
+        </article>
+      </div>
+
+      <div class="listener-monitor-grid">
         <article class="panel room-status-panel">
           <div class="panel-heading">
             <div>
               <span>Room monitor</span>
-              <h2>Current halftime state</h2>
+              <h2>Current playlist state</h2>
             </div>
+
             <span class="listener-count">
               <strong id="listenerCount">0</strong>
               viewer tabs
@@ -221,31 +270,32 @@
           <dl class="state-list">
             <div>
               <dt>Status</dt>
-              <dd id="adminStateStatus">Idle</dd>
+              <dd id="stateStatus">Idle</dd>
             </div>
             <div>
-              <dt>Song</dt>
-              <dd id="adminStateTitle">Nothing selected</dd>
+              <dt>Video</dt>
+              <dd id="stateVideo">Nothing selected</dd>
             </div>
             <div>
-              <dt>Video ID</dt>
-              <dd id="adminStateVideo">—</dd>
+              <dt>Playlist</dt>
+              <dd id="statePlaylistPosition">0 / 3</dd>
             </div>
             <div>
               <dt>Position</dt>
-              <dd id="adminStatePosition">0:00</dd>
+              <dd id="statePosition">0:00</dd>
             </div>
             <div>
               <dt>Revision</dt>
-              <dd id="adminStateRevision">0</dd>
+              <dd id="stateRevision">0</dd>
             </div>
           </dl>
 
           <div class="viewer-launch">
-            <h3>Open a viewer for testing</h3>
+            <h3>Open viewers for testing</h3>
             <p>
-              Keep this admin tab open, then launch one or more viewer tabs.
-              Press Start here and watch the jam popup appear there.
+              Each viewer tab should click Enable synced audio once. Then type
+              <strong>!starthalftime</strong> in the real zwades Twitch chat
+              from an authorized username.
             </p>
 
             <div class="viewer-launch-actions">
@@ -266,16 +316,44 @@
             <code id="viewerUrlPreview"></code>
           </div>
         </article>
+
+        <article class="panel controller-monitor-panel">
+          <div class="panel-heading">
+            <div>
+              <span>Muted sequence controller</span>
+              <h2>Playlist progression monitor</h2>
+            </div>
+
+            <span class="controller-pill" id="controllerPill">Waiting</span>
+          </div>
+
+          <div class="controller-player" id="controllerYoutubePlayer"></div>
+
+          <p>
+            This muted controller advances the shared room to video 2 and then
+            video 3 when YouTube reports that each video has ended.
+          </p>
+        </article>
       </div>
 
-      <article class="panel test-instructions">
-        <span class="panel-kicker">Recommended test</span>
-        <ol>
-          <li>Open the viewer window and click Enable synced audio once.</li>
-          <li>Return here and press Start in 3 seconds.</li>
-          <li>Open a second viewer after the video starts to test late joining.</li>
-          <li>Test Pause, Resume, Resync everyone, and End jam.</li>
-        </ol>
+      <article class="panel listener-log-panel">
+        <div class="panel-heading">
+          <div>
+            <span>Listener activity</span>
+            <h2>Twitch command log</h2>
+          </div>
+
+          <button
+            class="secondary-button compact-button"
+            id="clearLogButton"
+            type="button">
+            Clear
+          </button>
+        </div>
+
+        <div class="listener-log" id="listenerLog">
+          <p class="muted-log">Connect the Twitch listener to begin.</p>
+        </div>
       </article>
     </section>
 
@@ -288,7 +366,7 @@
 
         <div class="viewer-topbar-actions">
           <span class="sync-chip waiting" id="viewerSyncChip">
-            Waiting for admin
+            Waiting for Twitch command
           </span>
 
           <button
@@ -305,10 +383,10 @@
           <div class="mock-player-header">
             <div>
               <span>Live event</span>
-              <strong>EastCoin Halftime Jams Test</strong>
+              <strong>EastCoin Twitch Playlist Test</strong>
               <small>
-                The sports stream remains visible while the jam mini-player
-                floats beside chat.
+                The sports stream stays visible while the three-video playlist
+                runs in a floating mini-player.
               </small>
             </div>
 
@@ -318,7 +396,7 @@
           <div class="mock-video">
             <div class="mock-video-center">
               <span>EastCoin event player</span>
-              <strong>Waiting for halftime…</strong>
+              <strong>Waiting for !starthalftime…</strong>
             </div>
           </div>
         </section>
@@ -335,25 +413,23 @@
           <div class="mock-chat-messages">
             <p>
               <strong class="chat-red">PingBooty:</strong>
-              halftime jams when?
+              three songs this halftime?
             </p>
             <p>
               <strong class="chat-blue">EastCoinBot:</strong>
-              Admin controls the synchronized music test.
+              Waiting for an authorized !starthalftime command.
             </p>
             <p>
               <strong class="chat-gold">Zwades:</strong>
-              type !starthalftime
+              !starthalftime
             </p>
             <p>
               <strong class="chat-green">Viewer42:</strong>
-              the sports video stays visible 👀
+              the playlist floats beside chat
             </p>
           </div>
 
-          <div class="mock-chat-entry">
-            Send a message
-          </div>
+          <div class="mock-chat-entry">Send a message</div>
         </aside>
 
         <section
@@ -366,11 +442,9 @@
               data-jam-drag-handle
               title="Drag the Halftime Jams window">
               <div>
-                <span>Halftime Jams · Drag to move</span>
+                <span>Halftime playlist · Drag to move</span>
                 <h2 id="viewerSongTitle">EastCoin Jam</h2>
-                <p id="viewerSongMeta">
-                  Waiting for the admin to begin.
-                </p>
+                <p id="viewerSongMeta">Waiting for Twitch chat.</p>
               </div>
 
               <button
@@ -397,26 +471,25 @@
                 class="start-countdown"
                 id="startCountdown"
                 hidden>
-                <span>Starting together in</span>
+                <span>Playlist begins in</span>
                 <strong id="countdownValue">3</strong>
               </div>
             </div>
 
             <footer class="jam-footer">
               <div class="jam-status">
-                <span
-                  class="jam-status-dot"
-                  aria-hidden="true">
-                </span>
+                <span class="jam-status-dot" aria-hidden="true"></span>
                 <div>
                   <strong id="viewerPlaybackStatus">Waiting</strong>
-                  <small id="viewerDriftStatus">
-                    No active halftime jam.
-                  </small>
+                  <small id="viewerDriftStatus">No active playlist.</small>
                 </div>
               </div>
 
               <div class="viewer-controls">
+                <span class="playlist-progress" id="viewerPlaylistProgress">
+                  0 / 3
+                </span>
+
                 <label>
                   Volume
                   <input
@@ -442,8 +515,9 @@
       <article class="viewer-help">
         <strong>Viewer test mode</strong>
         <p>
-          This prototype synchronizes tabs in the same browser profile.
-          It does not yet connect separate devices or real EastCoin visitors.
+          The Twitch listener is real, but room delivery in this prototype
+          still uses same-browser BroadcastChannel and localStorage. The final
+          site will replace that transport with a shared backend.
         </p>
       </article>
     </section>
@@ -451,6 +525,6 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="assets/eastcoins-halftime-jams-test.js?v=jams2"></script>
+  <script src="assets/eastcoins-halftime-jams-test.js?v=jams3"></script>
 </body>
 </html>

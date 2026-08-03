@@ -1,21 +1,27 @@
 (() => {
   "use strict";
 
-  const ROLE_ADMIN = "admin";
+  const ROLE_LISTENER = "listener";
   const ROLE_VIEWER = "viewer";
   const CHANNEL_PREFIX =
-    "eastcoin-halftime-jams-test-v1:";
+    "eastcoin-halftime-jams-test-v2:";
   const STATE_PREFIX =
-    "eastcoinHalftimeJamTestState:v1:";
+    "eastcoinHalftimeJamTestState:v2:";
   const AUDIO_KEY =
     "eastcoinHalftimeJamAudioEnabledV1";
+  const SETTINGS_KEY =
+    "eastcoinHalftimeListenerSettingsV1";
+  const EVENTSUB_URL =
+    "wss://eventsub.wss.twitch.tv/ws?keepalive_timeout_seconds=30";
+  const START_DELAY_MS = 3000;
 
   const parameters =
     new URLSearchParams(location.search);
+  const rawRole = parameters.get("role");
   const role =
-    parameters.get("role") === ROLE_VIEWER
+    rawRole === ROLE_VIEWER
       ? ROLE_VIEWER
-      : ROLE_ADMIN;
+      : ROLE_LISTENER;
   const initialRoom =
     cleanRoom(
       parameters.get("room") ||
@@ -30,62 +36,120 @@
   const elements = {
     roleBadge:
       document.getElementById("roleBadge"),
-    adminRoleLink:
-      document.getElementById("adminRoleLink"),
+    listenerRoleLink:
+      document.getElementById(
+        "listenerRoleLink"
+      ),
     viewerRoleLink:
-      document.getElementById("viewerRoleLink"),
+      document.getElementById(
+        "viewerRoleLink"
+      ),
     toast:
       document.getElementById("toast"),
 
-    adminRoomInput:
-      document.getElementById("adminRoomInput"),
+    clientIdInput:
+      document.getElementById(
+        "clientIdInput"
+      ),
+    accessTokenInput:
+      document.getElementById(
+        "accessTokenInput"
+      ),
+    channelInput:
+      document.getElementById(
+        "channelInput"
+      ),
+    authorizedUsersInput:
+      document.getElementById(
+        "authorizedUsersInput"
+      ),
+    listenerRoomInput:
+      document.getElementById(
+        "listenerRoomInput"
+      ),
     switchRoomButton:
-      document.getElementById("switchRoomButton"),
-    videoInput:
-      document.getElementById("videoInput"),
-    titleInput:
-      document.getElementById("titleInput"),
-    delaySelect:
-      document.getElementById("delaySelect"),
-    startJamButton:
-      document.getElementById("startJamButton"),
-    loadDemoButton:
-      document.getElementById("loadDemoButton"),
-    pauseButton:
-      document.getElementById("pauseButton"),
-    resumeButton:
-      document.getElementById("resumeButton"),
-    resyncButton:
-      document.getElementById("resyncButton"),
-    endButton:
-      document.getElementById("endButton"),
-    adminError:
-      document.getElementById("adminError"),
-    adminConnectionPill:
       document.getElementById(
-        "adminConnectionPill"
+        "switchRoomButton"
       ),
+    connectListenerButton:
+      document.getElementById(
+        "connectListenerButton"
+      ),
+    disconnectListenerButton:
+      document.getElementById(
+        "disconnectListenerButton"
+      ),
+    listenerError:
+      document.getElementById(
+        "listenerError"
+      ),
+    listenerConnectionPill:
+      document.getElementById(
+        "listenerConnectionPill"
+      ),
+    tokenUserValue:
+      document.getElementById(
+        "tokenUserValue"
+      ),
+    channelValue:
+      document.getElementById(
+        "channelValue"
+      ),
+    subscriptionValue:
+      document.getElementById(
+        "subscriptionValue"
+      ),
+    lastCommandValue:
+      document.getElementById(
+        "lastCommandValue"
+      ),
+    playlistTitles: [1, 2, 3].map(
+      (number) =>
+        document.getElementById(
+          `playlistTitle${number}`
+        )
+    ),
+    playlistVideos: [1, 2, 3].map(
+      (number) =>
+        document.getElementById(
+          `playlistVideo${number}`
+        )
+    ),
     listenerCount:
-      document.getElementById("listenerCount"),
-    adminStateStatus:
       document.getElementById(
-        "adminStateStatus"
+        "listenerCount"
       ),
-    adminStateTitle:
+    stateStatus:
       document.getElementById(
-        "adminStateTitle"
+        "stateStatus"
       ),
-    adminStateVideo:
+    stateVideo:
       document.getElementById(
-        "adminStateVideo"
+        "stateVideo"
       ),
-    adminStatePosition:
+    statePlaylistPosition:
       document.getElementById(
-        "adminStatePosition"
+        "statePlaylistPosition"
       ),
-    adminStateRevision:
+    statePosition:
       document.getElementById(
-        "adminStateRevision"
+        "statePosition"
+      ),
+    stateRevision:
+      document.getElementById(
+        "stateRevision"
+      ),
+    controllerPill:
+      document.getElementById(
+        "controllerPill"
+      ),
+    listenerLog:
+      document.getElementById(
+        "listenerLog"
+      ),
+    clearLogButton:
+      document.getElementById(
+        "clearLogButton"
       ),
     openViewerButton:
       document.getElementById(
@@ -112,8 +176,14 @@
       document.getElementById(
         "enableAudioButton"
       ),
+    viewerWatchLayout:
+      document.getElementById(
+        "viewerWatchLayout"
+      ),
     jamOverlay:
-      document.getElementById("jamOverlay"),
+      document.getElementById(
+        "jamOverlay"
+      ),
     viewerSongTitle:
       document.getElementById(
         "viewerSongTitle"
@@ -146,6 +216,10 @@
       document.getElementById(
         "viewerDriftStatus"
       ),
+    viewerPlaylistProgress:
+      document.getElementById(
+        "viewerPlaylistProgress"
+      ),
     viewerResyncButton:
       document.getElementById(
         "viewerResyncButton"
@@ -153,38 +227,31 @@
     volumeControl:
       document.getElementById(
         "volumeControl"
-      ),
-    viewerWatchLayout:
-      document.getElementById(
-        "viewerWatchLayout"
-      ),
-    twitchCommandInput:
-      document.getElementById(
-        "twitchCommandInput"
-      ),
-    runTwitchCommandButton:
-      document.getElementById(
-        "runTwitchCommandButton"
-      ),
-    twitchCommandResult:
-      document.getElementById(
-        "twitchCommandResult"
       )
   };
 
   let room = initialRoom;
-  let channel = null;
+  let roomChannel = null;
   let jamState = readState();
-  let adminStartTimer = null;
+  let twitchSocket = null;
+  let reconnectTimer = null;
+  let intentionalDisconnect = false;
+  let listenerCredentials = null;
+  let currentSessionId = "";
+  let currentSubscriptionId = "";
+  let seenMessageIds = new Set();
   let viewerStartTimer = null;
   let countdownTimer = null;
   let driftTimer = null;
   let presenceTimer = null;
-  let adminRenderTimer = null;
+  let monitorTimer = null;
   let toastTimer = null;
   let youtubePromise = null;
-  let player = null;
-  let playerReady = false;
+  let viewerPlayer = null;
+  let viewerPlayerReady = false;
+  let controllerPlayer = null;
+  let controllerPlayerReady = false;
+  let controllerExpectedVideoId = "";
   let audioEnabled =
     sessionStorage.getItem(AUDIO_KEY) ===
     "true";
@@ -205,39 +272,47 @@
       "eastcoin-halftime-test";
   }
 
+  function cleanLogin(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/^@/, "")
+      .replace(/[^a-z0-9_]/g, "");
+  }
+
   function stateKey() {
     return `${STATE_PREFIX}${room}`;
   }
 
   function buildRoleUrl(nextRole) {
-    const url = new URL(
-      location.href
+    const url = new URL(location.href);
+    url.searchParams.set(
+      "role",
+      nextRole
     );
-
-    url.searchParams.set("role", nextRole);
     url.searchParams.set("room", room);
     return url;
   }
 
   function applyRoleLinks() {
     elements.roleBadge.textContent =
-      role === ROLE_ADMIN
-        ? "Admin"
+      role === ROLE_LISTENER
+        ? "Listener"
         : "Viewer";
 
-    const adminUrl =
-      buildRoleUrl(ROLE_ADMIN);
+    const listenerUrl =
+      buildRoleUrl(ROLE_LISTENER);
     const viewerUrl =
       buildRoleUrl(ROLE_VIEWER);
 
-    elements.adminRoleLink.href =
-      adminUrl.href;
+    elements.listenerRoleLink.href =
+      listenerUrl.href;
     elements.viewerRoleLink.href =
       viewerUrl.href;
 
-    elements.adminRoleLink.classList.toggle(
+    elements.listenerRoleLink.classList.toggle(
       "active",
-      role === ROLE_ADMIN
+      role === ROLE_LISTENER
     );
     elements.viewerRoleLink.classList.toggle(
       "active",
@@ -252,7 +327,9 @@
     if (!elements.toast) return;
 
     elements.toast.textContent = message;
-    elements.toast.classList.add("visible");
+    elements.toast.classList.add(
+      "visible"
+    );
 
     window.clearTimeout(toastTimer);
     toastTimer = window.setTimeout(() => {
@@ -260,6 +337,53 @@
         "visible"
       );
     }, 2600);
+  }
+
+  function addLog(
+    message,
+    mode = ""
+  ) {
+    if (!elements.listenerLog) return;
+
+    const empty =
+      elements.listenerLog.querySelector(
+        ".muted-log"
+      );
+    empty?.remove();
+
+    const entry =
+      document.createElement("p");
+    entry.className = mode;
+    entry.textContent =
+      `[${new Date().toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit"
+      })}] ${message}`;
+
+    elements.listenerLog.prepend(entry);
+
+    while (
+      elements.listenerLog.children.length >
+      60
+    ) {
+      elements.listenerLog.lastElementChild
+        ?.remove();
+    }
+  }
+
+  function setListenerStatus(
+    mode,
+    label
+  ) {
+    if (!elements.listenerConnectionPill) {
+      return;
+    }
+
+    elements.listenerConnectionPill.className =
+      `connection-pill ${mode || ""}`;
+    elements.listenerConnectionPill.textContent =
+      label;
   }
 
   function readState() {
@@ -288,17 +412,18 @@
       );
     } catch {}
 
-    sendMessage({
+    sendRoomMessage({
       type: "state",
       state: nextState
     });
 
-    renderAdminState();
+    renderRoomState();
     applyViewerState();
+    applyControllerState();
   }
 
-  function sendMessage(message) {
-    channel?.postMessage({
+  function sendRoomMessage(message) {
+    roomChannel?.postMessage({
       ...message,
       room,
       senderId: clientId,
@@ -306,28 +431,28 @@
     });
   }
 
-  function connectChannel() {
-    channel?.close();
+  function connectRoomChannel() {
+    roomChannel?.close();
 
     if ("BroadcastChannel" in window) {
-      channel = new BroadcastChannel(
+      roomChannel = new BroadcastChannel(
         `${CHANNEL_PREFIX}${room}`
       );
 
-      channel.addEventListener(
+      roomChannel.addEventListener(
         "message",
         (event) => {
-          handleChannelMessage(event.data);
+          handleRoomMessage(event.data);
         }
       );
     }
 
-    sendMessage({
+    sendRoomMessage({
       type: "presence-request"
     });
   }
 
-  function handleChannelMessage(message) {
+  function handleRoomMessage(message) {
     if (
       !message ||
       message.room !== room ||
@@ -338,8 +463,9 @@
 
     if (message.type === "state") {
       jamState = message.state;
-      renderAdminState();
+      renderRoomState();
       applyViewerState();
+      applyControllerState();
       return;
     }
 
@@ -354,7 +480,7 @@
 
     if (
       message.type === "presence" &&
-      role === ROLE_ADMIN
+      role === ROLE_LISTENER
     ) {
       viewers.set(
         message.senderId,
@@ -366,7 +492,7 @@
   }
 
   function sendPresence() {
-    sendMessage({
+    sendRoomMessage({
       type: "presence",
       role
     });
@@ -375,37 +501,38 @@
   function startPresence() {
     if (role === ROLE_VIEWER) {
       sendPresence();
-
       presenceTimer =
         window.setInterval(
           sendPresence,
           4000
         );
-    } else {
-      presenceTimer =
-        window.setInterval(() => {
-          const cutoff =
-            Date.now() - 11_000;
-
-          for (
-            const [id, seenAt]
-            of viewers.entries()
-          ) {
-            if (seenAt < cutoff) {
-              viewers.delete(id);
-            }
-          }
-
-          renderViewerCount();
-          sendMessage({
-            type: "presence-request"
-          });
-        }, 4000);
+      return;
     }
+
+    presenceTimer =
+      window.setInterval(() => {
+        const cutoff =
+          Date.now() - 11_000;
+
+        for (
+          const [id, seenAt]
+          of viewers.entries()
+        ) {
+          if (seenAt < cutoff) {
+            viewers.delete(id);
+          }
+        }
+
+        renderViewerCount();
+        sendRoomMessage({
+          type: "presence-request"
+        });
+      }, 4000);
   }
 
   function renderViewerCount() {
     if (!elements.listenerCount) return;
+
     elements.listenerCount.textContent =
       String(viewers.size);
   }
@@ -445,9 +572,8 @@
 
         const markerIndex =
           parts.findIndex((part) =>
-            ["embed", "shorts", "live"].includes(
-              part
-            )
+            ["embed", "shorts", "live"]
+              .includes(part)
           );
 
         if (
@@ -460,6 +586,50 @@
     } catch {}
 
     return "";
+  }
+
+  function playlistFromInputs() {
+    const playlist =
+      elements.playlistVideos.map(
+        (input, index) => ({
+          videoId:
+            parseVideoId(input.value),
+          title:
+            elements.playlistTitles[index]
+              .value.trim() ||
+            `Halftime Jam ${index + 1}`
+        })
+      );
+
+    if (
+      playlist.some(
+        (item) => !item.videoId
+      )
+    ) {
+      throw new Error(
+        "All three playlist entries need a valid YouTube URL or video ID."
+      );
+    }
+
+    return playlist;
+  }
+
+  function authorizedUsers() {
+    const users =
+      elements.authorizedUsersInput.value
+        .split(",")
+        .map(cleanLogin)
+        .filter(Boolean);
+
+    const broadcaster =
+      cleanLogin(
+        elements.channelInput.value
+      );
+
+    return new Set([
+      ...users,
+      broadcaster
+    ]);
   }
 
   function expectedPosition(
@@ -505,6 +675,16 @@
     return state.status || "idle";
   }
 
+  function currentPlaylistItem(
+    state = jamState
+  ) {
+    return (
+      state?.playlist?.[
+        Number(state.currentIndex || 0)
+      ] || null
+    );
+  }
+
   function formatTime(seconds) {
     const safe =
       Math.max(
@@ -527,11 +707,15 @@
     ) + 1;
   }
 
-  function renderAdminState() {
-    if (role !== ROLE_ADMIN) return;
+  function renderRoomState() {
+    if (role !== ROLE_LISTENER) return;
 
     const status =
       effectiveStatus(jamState);
+    const item =
+      currentPlaylistItem(jamState);
+    const index =
+      Number(jamState?.currentIndex || 0);
 
     const labels = {
       idle: "Idle",
@@ -541,133 +725,103 @@
       ended: "Ended"
     };
 
-    elements.adminStateStatus.textContent =
+    elements.stateStatus.textContent =
       labels[status] || status;
-    elements.adminStateTitle.textContent =
-      jamState?.title ||
+    elements.stateVideo.textContent =
+      item?.title ||
       "Nothing selected";
-    elements.adminStateVideo.textContent =
-      jamState?.videoId || "—";
-    elements.adminStatePosition.textContent =
+    elements.statePlaylistPosition
+      .textContent =
+      jamState?.playlist?.length
+        ? `${index + 1} / ${jamState.playlist.length}`
+        : "0 / 3";
+    elements.statePosition.textContent =
       formatTime(
         expectedPosition(jamState)
       );
-    elements.adminStateRevision.textContent =
+    elements.stateRevision.textContent =
       String(
         jamState?.revision || 0
       );
 
-    const active =
-      ["scheduled", "playing", "paused"]
-        .includes(status);
-
-    elements.pauseButton.disabled =
-      status !== "playing" &&
-      status !== "scheduled";
-    elements.resumeButton.disabled =
-      status !== "paused";
-    elements.resyncButton.disabled =
-      !active;
-    elements.endButton.disabled =
-      !active;
-
-    if (status === "scheduled") {
-      const remaining =
-        Math.max(
-          0,
-          Math.ceil(
-            (
-              Number(jamState.startAt) -
-              Date.now()
-            ) / 1000
-          )
-        );
-
-      elements.adminConnectionPill.textContent =
-        `Starts in ${remaining}s`;
-    } else if (status === "playing") {
-      elements.adminConnectionPill.textContent =
-        "Broadcasting";
-    } else if (status === "paused") {
-      elements.adminConnectionPill.textContent =
-        "Paused";
-    } else {
-      elements.adminConnectionPill.textContent =
-        "Local test ready";
+    if (elements.controllerPill) {
+      elements.controllerPill.textContent =
+        status === "playing"
+          ? `Playing ${index + 1} / 3`
+          : labels[status] || "Waiting";
     }
   }
 
-  function scheduleAdminRender() {
-    adminRenderTimer =
+  function scheduleMonitorRender() {
+    monitorTimer =
       window.setInterval(
-        renderAdminState,
+        renderRoomState,
         500
       );
   }
 
-  function updateStartButton() {
-    const delay =
-      Number(elements.delaySelect.value) ||
-      3;
+  function startPlaylistFromCommand(
+    commandEvent
+  ) {
+    let playlist;
 
-    elements.startJamButton.textContent =
-      `▶ Start in ${delay} seconds`;
-  }
-
-  function startJam() {
-    elements.adminError.textContent = "";
-
-    const videoId =
-      parseVideoId(
-        elements.videoInput.value
+    try {
+      playlist = playlistFromInputs();
+    } catch (error) {
+      addLog(
+        `Start rejected: ${error.message}`,
+        "error"
       );
-
-    if (!videoId) {
-      elements.adminError.textContent =
-        "Enter a valid YouTube URL or 11-character video ID.";
       return;
     }
 
-    const delay =
-      Number(elements.delaySelect.value) ||
-      3;
-    const title =
-      elements.titleInput.value.trim() ||
-      "EastCoin Halftime Jam";
-    const startAt =
-      Date.now() + delay * 1000;
-
     const next = {
-      version: 1,
+      version: 2,
       room,
       status: "scheduled",
-      videoId,
-      title,
+      playlist,
+      currentIndex: 0,
       position: 0,
-      startAt,
+      startAt:
+        Date.now() + START_DELAY_MS,
       updatedAt: Date.now(),
       revision: nextRevision(),
       commandId:
+        commandEvent.message_id ||
         crypto.randomUUID?.() ||
-        `jam-${Date.now()}`
+        `start-${Date.now()}`,
+      triggeredBy:
+        commandEvent.chatter_user_login ||
+        ""
     };
 
     viewerHiddenCurrentJam = false;
     saveState(next);
-    showToast(
-      `Jam scheduled for ${delay} seconds from now.`
-    );
 
-    window.clearTimeout(adminStartTimer);
-    adminStartTimer =
-      window.setTimeout(
-        renderAdminState,
-        delay * 1000 + 100
-      );
+    addLog(
+      `${commandEvent.chatter_user_login} started the three-video playlist.`,
+      "success"
+    );
+    showToast(
+      "Authorized Twitch command started the playlist."
+    );
   }
 
-  function pauseJam() {
-    if (!jamState) return;
+  function pausePlaylist(
+    commandEvent
+  ) {
+    if (
+      !jamState ||
+      !["scheduled", "playing"].includes(
+        effectiveStatus(jamState)
+      )
+    ) {
+      addLog(
+        "Pause ignored because no playlist is playing.",
+        "error"
+      );
+      return;
+    }
 
     const next = {
       ...jamState,
@@ -678,36 +832,54 @@
       updatedAt: Date.now(),
       revision: nextRevision(),
       commandId:
-        crypto.randomUUID?.() ||
+        commandEvent.message_id ||
         `pause-${Date.now()}`
     };
 
     saveState(next);
-    showToast("Jam paused for the room.");
+    addLog(
+      `${commandEvent.chatter_user_login} paused the playlist.`,
+      "command"
+    );
   }
 
-  function resumeJam() {
-    if (!jamState) return;
+  function resumePlaylist(
+    commandEvent
+  ) {
+    if (
+      !jamState ||
+      effectiveStatus(jamState) !==
+      "paused"
+    ) {
+      addLog(
+        "Resume ignored because the playlist is not paused.",
+        "error"
+      );
+      return;
+    }
 
     const next = {
       ...jamState,
       status: "scheduled",
-      startAt: Date.now() + 1500,
+      startAt:
+        Date.now() + 1500,
       updatedAt: Date.now(),
       revision: nextRevision(),
       commandId:
-        crypto.randomUUID?.() ||
+        commandEvent.message_id ||
         `resume-${Date.now()}`
     };
 
-    viewerHiddenCurrentJam = false;
     saveState(next);
-    showToast(
-      "Jam resumes together in 1.5 seconds."
+    addLog(
+      `${commandEvent.chatter_user_login} resumed the playlist.`,
+      "command"
     );
   }
 
-  function resyncJam() {
+  function resyncPlaylist(
+    commandEvent
+  ) {
     if (!jamState) return;
 
     const status =
@@ -729,17 +901,86 @@
       updatedAt: Date.now(),
       revision: nextRevision(),
       commandId:
-        crypto.randomUUID?.() ||
+        commandEvent.message_id ||
         `resync-${Date.now()}`
     };
 
     saveState(next);
-    showToast(
-      "Resync command sent to every viewer tab."
+    addLog(
+      `${commandEvent.chatter_user_login} resynchronized the playlist.`,
+      "command"
     );
   }
 
-  function endJam() {
+  function advancePlaylist(
+    reason = "ended"
+  ) {
+    if (!jamState?.playlist?.length) {
+      return;
+    }
+
+    const nextIndex =
+      Number(jamState.currentIndex || 0) +
+      1;
+
+    if (
+      nextIndex >=
+      jamState.playlist.length
+    ) {
+      endPlaylist({
+        chatter_user_login:
+          "Playlist controller",
+        message_id:
+          `complete-${Date.now()}`
+      });
+      addLog(
+        "All three halftime videos finished.",
+        "success"
+      );
+      return;
+    }
+
+    const next = {
+      ...jamState,
+      status: "scheduled",
+      currentIndex: nextIndex,
+      position: 0,
+      startAt:
+        Date.now() + 1200,
+      updatedAt: Date.now(),
+      revision: nextRevision(),
+      commandId:
+        `${reason}-${Date.now()}`
+    };
+
+    saveState(next);
+    addLog(
+      `Advancing automatically to video ${nextIndex + 1} of 3.`,
+      "success"
+    );
+  }
+
+  function skipPlaylist(
+    commandEvent
+  ) {
+    if (!jamState?.playlist?.length) {
+      addLog(
+        "Skip ignored because no playlist is active.",
+        "error"
+      );
+      return;
+    }
+
+    addLog(
+      `${commandEvent.chatter_user_login} skipped the current video.`,
+      "command"
+    );
+    advancePlaylist("skip");
+  }
+
+  function endPlaylist(
+    commandEvent
+  ) {
     if (!jamState) return;
 
     const next = {
@@ -751,18 +992,591 @@
       updatedAt: Date.now(),
       revision: nextRevision(),
       commandId:
-        crypto.randomUUID?.() ||
+        commandEvent.message_id ||
         `end-${Date.now()}`
     };
 
     saveState(next);
-    showToast("Halftime jam ended.");
+    addLog(
+      `${commandEvent.chatter_user_login} ended the halftime playlist.`,
+      "command"
+    );
+  }
+
+  function handleAuthorizedCommand(
+    event
+  ) {
+    const text =
+      String(event.message?.text || "")
+        .trim();
+    const [command] =
+      text.split(/\s+/);
+    const normalized =
+      String(command || "").toLowerCase();
+
+    const handlers = {
+      "!starthalftime":
+        startPlaylistFromCommand,
+      "!pausehalftime":
+        pausePlaylist,
+      "!resumehalftime":
+        resumePlaylist,
+      "!skiphalftime":
+        skipPlaylist,
+      "!resynchaltime":
+        resyncPlaylist,
+      "!endhalftime":
+        endPlaylist
+    };
+
+    const handler = handlers[normalized];
+
+    if (!handler) return;
+
+    elements.lastCommandValue.textContent =
+      `${normalized} — ${event.chatter_user_login}`;
+
+    if (
+      !authorizedUsers().has(
+        cleanLogin(
+          event.chatter_user_login
+        )
+      )
+    ) {
+      addLog(
+        `Ignored ${normalized} from unauthorized user ${event.chatter_user_login}.`,
+        "error"
+      );
+      return;
+    }
+
+    addLog(
+      `Received ${normalized} from ${event.chatter_user_login}.`,
+      "command"
+    );
+    handler(event);
+  }
+
+  async function twitchFetch(
+    url,
+    options = {}
+  ) {
+    const response = await fetch(
+      url,
+      {
+        ...options,
+        headers: {
+          Authorization:
+            `Bearer ${listenerCredentials.accessToken}`,
+          "Client-Id":
+            listenerCredentials.clientId,
+          ...(options.headers || {})
+        }
+      }
+    );
+
+    if (!response.ok) {
+      let detail = "";
+
+      try {
+        const payload =
+          await response.json();
+        detail =
+          payload.message ||
+          payload.error ||
+          "";
+      } catch {}
+
+      throw new Error(
+        detail ||
+        `Twitch request failed (${response.status}).`
+      );
+    }
+
+    return response.json();
+  }
+
+  async function validateListenerCredentials() {
+    const clientId =
+      elements.clientIdInput.value.trim();
+    const accessToken =
+      elements.accessTokenInput.value
+        .trim()
+        .replace(/^oauth:/i, "");
+    const channel =
+      cleanLogin(
+        elements.channelInput.value
+      );
+
+    if (
+      !clientId ||
+      !accessToken ||
+      !channel
+    ) {
+      throw new Error(
+        "Client ID, access token, and channel login are required."
+      );
+    }
+
+    setListenerStatus(
+      "connecting",
+      "Validating token"
+    );
+
+    const validationResponse =
+      await fetch(
+        "https://id.twitch.tv/oauth2/validate",
+        {
+          headers: {
+            Authorization:
+              `OAuth ${accessToken}`
+          }
+        }
+      );
+
+    if (!validationResponse.ok) {
+      throw new Error(
+        "Twitch rejected the access token."
+      );
+    }
+
+    const validation =
+      await validationResponse.json();
+
+    if (
+      validation.client_id !== clientId
+    ) {
+      throw new Error(
+        "The Client ID does not match the access token."
+      );
+    }
+
+    if (
+      !Array.isArray(validation.scopes) ||
+      !validation.scopes.includes(
+        "user:read:chat"
+      )
+    ) {
+      throw new Error(
+        "The token needs the user:read:chat scope."
+      );
+    }
+
+    listenerCredentials = {
+      clientId,
+      accessToken,
+      channel,
+      tokenUserId:
+        validation.user_id,
+      tokenLogin:
+        validation.login
+    };
+
+    const broadcasterPayload =
+      await twitchFetch(
+        `https://api.twitch.tv/helix/users?login=${encodeURIComponent(channel)}`
+      );
+
+    const broadcaster =
+      broadcasterPayload.data?.[0];
+
+    if (!broadcaster?.id) {
+      throw new Error(
+        `Twitch channel "${channel}" was not found.`
+      );
+    }
+
+    listenerCredentials.broadcasterId =
+      broadcaster.id;
+    listenerCredentials.broadcasterLogin =
+      broadcaster.login;
+
+    elements.tokenUserValue.textContent =
+      validation.login ||
+      validation.user_id;
+    elements.channelValue.textContent =
+      `#${broadcaster.login}`;
+
+    saveListenerSettings();
+  }
+
+  function saveListenerSettings() {
+    try {
+      localStorage.setItem(
+        SETTINGS_KEY,
+        JSON.stringify({
+          clientId:
+            elements.clientIdInput.value
+              .trim(),
+          channel:
+            cleanLogin(
+              elements.channelInput.value
+            ),
+          authorizedUsers:
+            elements.authorizedUsersInput
+              .value,
+          playlistTitles:
+            elements.playlistTitles.map(
+              (input) => input.value
+            ),
+          playlistVideos:
+            elements.playlistVideos.map(
+              (input) => input.value
+            )
+        })
+      );
+    } catch {}
+  }
+
+  function loadListenerSettings() {
+    try {
+      const settings = JSON.parse(
+        localStorage.getItem(
+          SETTINGS_KEY
+        ) || "null"
+      );
+
+      if (!settings) return;
+
+      elements.clientIdInput.value =
+        settings.clientId || "";
+      elements.channelInput.value =
+        settings.channel || "zwades";
+      elements.authorizedUsersInput.value =
+        settings.authorizedUsers ||
+        "zwades";
+
+      settings.playlistTitles
+        ?.slice(0, 3)
+        .forEach((value, index) => {
+          elements.playlistTitles[index]
+            .value = value;
+        });
+
+      settings.playlistVideos
+        ?.slice(0, 3)
+        .forEach((value, index) => {
+          elements.playlistVideos[index]
+            .value = value;
+        });
+    } catch {}
+  }
+
+  async function createChatSubscription(
+    sessionId
+  ) {
+    setListenerStatus(
+      "connecting",
+      "Creating subscription"
+    );
+
+    const payload =
+      await twitchFetch(
+        "https://api.twitch.tv/helix/eventsub/subscriptions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+          body: JSON.stringify({
+            type:
+              "channel.chat.message",
+            version: "1",
+            condition: {
+              broadcaster_user_id:
+                listenerCredentials
+                  .broadcasterId,
+              user_id:
+                listenerCredentials
+                  .tokenUserId
+            },
+            transport: {
+              method: "websocket",
+              session_id: sessionId
+            }
+          })
+        }
+      );
+
+    currentSubscriptionId =
+      payload.data?.[0]?.id || "";
+
+    elements.subscriptionValue.textContent =
+      currentSubscriptionId
+        ? `Active · ${currentSubscriptionId.slice(0, 8)}…`
+        : "Active";
+
+    setListenerStatus(
+      "",
+      "Listening"
+    );
+    elements.connectListenerButton.disabled =
+      true;
+    elements.disconnectListenerButton.disabled =
+      false;
+
+    addLog(
+      `Listening to #${listenerCredentials.broadcasterLogin} chat through Twitch EventSub.`,
+      "success"
+    );
+  }
+
+  function connectTwitchSocket(
+    url = EVENTSUB_URL,
+    isReconnect = false
+  ) {
+    window.clearTimeout(reconnectTimer);
+
+    if (
+      twitchSocket &&
+      twitchSocket.readyState <= 1
+    ) {
+      twitchSocket.close();
+    }
+
+    twitchSocket = new WebSocket(url);
+
+    twitchSocket.addEventListener(
+      "open",
+      () => {
+        setListenerStatus(
+          "connecting",
+          isReconnect
+            ? "Reconnecting"
+            : "Connecting"
+        );
+      }
+    );
+
+    twitchSocket.addEventListener(
+      "message",
+      async (message) => {
+        let packet;
+
+        try {
+          packet = JSON.parse(
+            message.data
+          );
+        } catch {
+          return;
+        }
+
+        const messageType =
+          packet.metadata?.message_type;
+
+        if (
+          messageType ===
+          "session_welcome"
+        ) {
+          currentSessionId =
+            packet.payload?.session?.id ||
+            "";
+
+          if (!isReconnect) {
+            try {
+              await createChatSubscription(
+                currentSessionId
+              );
+            } catch (error) {
+              elements.listenerError.textContent =
+                error.message;
+              addLog(
+                error.message,
+                "error"
+              );
+              disconnectTwitchListener();
+            }
+          } else {
+            setListenerStatus(
+              "",
+              "Listening"
+            );
+            addLog(
+              "Twitch EventSub reconnected.",
+              "success"
+            );
+          }
+          return;
+        }
+
+        if (
+          messageType ===
+          "session_reconnect"
+        ) {
+          const reconnectUrl =
+            packet.payload?.session
+              ?.reconnect_url;
+
+          if (reconnectUrl) {
+            addLog(
+              "Twitch requested an EventSub reconnect."
+            );
+            connectTwitchSocket(
+              reconnectUrl,
+              true
+            );
+          }
+          return;
+        }
+
+        if (
+          messageType ===
+          "revocation"
+        ) {
+          const status =
+            packet.payload?.subscription
+              ?.status ||
+            "revoked";
+          elements.listenerError.textContent =
+            `Twitch revoked the subscription: ${status}.`;
+          addLog(
+            `Subscription revoked: ${status}.`,
+            "error"
+          );
+          return;
+        }
+
+        if (
+          messageType !==
+          "notification" ||
+          packet.metadata
+            ?.subscription_type !==
+          "channel.chat.message"
+        ) {
+          return;
+        }
+
+        const event =
+          packet.payload?.event;
+
+        if (!event?.message_id) return;
+
+        if (
+          seenMessageIds.has(
+            event.message_id
+          )
+        ) {
+          return;
+        }
+
+        seenMessageIds.add(
+          event.message_id
+        );
+
+        if (seenMessageIds.size > 300) {
+          seenMessageIds =
+            new Set(
+              [...seenMessageIds].slice(-150)
+            );
+        }
+
+        handleAuthorizedCommand(event);
+      }
+    );
+
+    twitchSocket.addEventListener(
+      "close",
+      () => {
+        currentSessionId = "";
+
+        if (intentionalDisconnect) {
+          return;
+        }
+
+        setListenerStatus(
+          "connecting",
+          "Reconnecting"
+        );
+        addLog(
+          "Twitch listener disconnected. Retrying in three seconds.",
+          "error"
+        );
+
+        reconnectTimer =
+          window.setTimeout(
+            () =>
+              connectTwitchSocket(
+                EVENTSUB_URL,
+                false
+              ),
+            3000
+          );
+      }
+    );
+
+    twitchSocket.addEventListener(
+      "error",
+      () => {
+        addLog(
+          "The Twitch EventSub WebSocket reported an error.",
+          "error"
+        );
+      }
+    );
+  }
+
+  async function connectTwitchListener() {
+    if (role !== ROLE_LISTENER) return;
+
+    elements.listenerError.textContent =
+      "";
+    intentionalDisconnect = false;
+    elements.connectListenerButton.disabled =
+      true;
+
+    try {
+      await validateListenerCredentials();
+      addLog(
+        `Validated Twitch token for ${listenerCredentials.tokenLogin}.`,
+        "success"
+      );
+      connectTwitchSocket();
+    } catch (error) {
+      elements.listenerError.textContent =
+        error.message;
+      addLog(error.message, "error");
+      setListenerStatus(
+        "offline",
+        "Disconnected"
+      );
+      elements.connectListenerButton.disabled =
+        false;
+    }
+  }
+
+  function disconnectTwitchListener() {
+    intentionalDisconnect = true;
+    window.clearTimeout(reconnectTimer);
+
+    if (twitchSocket) {
+      twitchSocket.close();
+      twitchSocket = null;
+    }
+
+    listenerCredentials = null;
+    currentSessionId = "";
+    currentSubscriptionId = "";
+    elements.accessTokenInput.value = "";
+    elements.subscriptionValue.textContent =
+      "Not created";
+    setListenerStatus(
+      "offline",
+      "Disconnected"
+    );
+    elements.connectListenerButton.disabled =
+      false;
+    elements.disconnectListenerButton.disabled =
+      true;
+    addLog(
+      "Twitch listener disconnected."
+    );
   }
 
   function switchRoom() {
     const nextRoom =
       cleanRoom(
-        elements.adminRoomInput.value
+        elements.listenerRoomInput.value
       );
 
     localStorage.setItem(
@@ -771,7 +1585,10 @@
     );
 
     const url = buildRoleUrl(role);
-    url.searchParams.set("room", nextRoom);
+    url.searchParams.set(
+      "room",
+      nextRoom
+    );
     location.href = url.href;
   }
 
@@ -794,22 +1611,13 @@
       showToast("Viewer link copied.");
     } catch {
       showToast(
-        "Copy failed. Use the link shown below."
+        "Copy failed. Use the displayed link."
       );
     }
   }
 
-  function loadDemo() {
-    elements.videoInput.value =
-      "M7lc1UVf-VE";
-    elements.titleInput.value =
-      "YouTube Player API Demo";
-  }
-
   function loadYouTubeApi() {
-    if (
-      window.YT?.Player
-    ) {
+    if (window.YT?.Player) {
       return Promise.resolve();
     }
 
@@ -839,27 +1647,196 @@
     return youtubePromise;
   }
 
-  async function ensurePlayer() {
-    if (player && playerReady) {
-      return player;
+  async function ensureControllerPlayer() {
+    if (
+      controllerPlayer &&
+      controllerPlayerReady
+    ) {
+      return controllerPlayer;
     }
 
     await loadYouTubeApi();
 
-    if (player) {
+    if (controllerPlayer) {
       return new Promise((resolve) => {
         const wait =
           window.setInterval(() => {
-            if (playerReady) {
+            if (controllerPlayerReady) {
               window.clearInterval(wait);
-              resolve(player);
+              resolve(controllerPlayer);
             }
           }, 50);
       });
     }
 
     return new Promise((resolve) => {
-      player = new YT.Player(
+      controllerPlayer = new YT.Player(
+        "controllerYoutubePlayer",
+        {
+          width: "100%",
+          height: "100%",
+          playerVars: {
+            autoplay: 0,
+            controls: 1,
+            rel: 0,
+            playsinline: 1,
+            modestbranding: 1,
+            enablejsapi: 1,
+            origin:
+              location.origin === "null"
+                ? undefined
+                : location.origin
+          },
+          events: {
+            onReady(event) {
+              controllerPlayerReady = true;
+              event.target.mute();
+              event.target.setVolume(0);
+              resolve(event.target);
+            },
+            onStateChange(event) {
+              if (
+                event.data ===
+                YT.PlayerState.ENDED &&
+                currentPlaylistItem()
+                  ?.videoId ===
+                controllerExpectedVideoId
+              ) {
+                advancePlaylist(
+                  "video-ended"
+                );
+              }
+            },
+            onError() {
+              addLog(
+                "The controller could not load the current YouTube video.",
+                "error"
+              );
+            }
+          }
+        }
+      );
+    });
+  }
+
+  async function applyControllerState() {
+    if (role !== ROLE_LISTENER) return;
+
+    const status =
+      effectiveStatus(jamState);
+    const item =
+      currentPlaylistItem(jamState);
+
+    if (
+      !item ||
+      ["idle", "ended"].includes(
+        status
+      )
+    ) {
+      if (controllerPlayerReady) {
+        controllerPlayer.stopVideo();
+      }
+      controllerExpectedVideoId = "";
+      return;
+    }
+
+    const youtube =
+      await ensureControllerPlayer();
+    const expected =
+      expectedPosition(jamState);
+    const currentId =
+      youtube.getVideoData?.()
+        ?.video_id || "";
+
+    controllerExpectedVideoId =
+      item.videoId;
+
+    if (
+      currentId !== item.videoId
+    ) {
+      youtube.cueVideoById({
+        videoId: item.videoId,
+        startSeconds: expected
+      });
+    }
+
+    youtube.mute();
+    youtube.setVolume(0);
+
+    if (status === "paused") {
+      youtube.seekTo(expected, true);
+      youtube.pauseVideo();
+      return;
+    }
+
+    if (
+      jamState.status === "scheduled" &&
+      Date.now() <
+        Number(jamState.startAt)
+    ) {
+      window.setTimeout(
+        () => applyControllerState(),
+        Math.max(
+          0,
+          Number(jamState.startAt) -
+          Date.now()
+        )
+      );
+      return;
+    }
+
+    if (
+      currentId !== item.videoId
+    ) {
+      youtube.loadVideoById({
+        videoId: item.videoId,
+        startSeconds: expected
+      });
+    } else {
+      const current =
+        Number(
+          youtube.getCurrentTime?.() ||
+          0
+        );
+
+      if (
+        Math.abs(current - expected) >
+        1
+      ) {
+        youtube.seekTo(
+          expected,
+          true
+        );
+      }
+
+      youtube.playVideo();
+    }
+  }
+
+  async function ensureViewerPlayer() {
+    if (
+      viewerPlayer &&
+      viewerPlayerReady
+    ) {
+      return viewerPlayer;
+    }
+
+    await loadYouTubeApi();
+
+    if (viewerPlayer) {
+      return new Promise((resolve) => {
+        const wait =
+          window.setInterval(() => {
+            if (viewerPlayerReady) {
+              window.clearInterval(wait);
+              resolve(viewerPlayer);
+            }
+          }, 50);
+      });
+    }
+
+    return new Promise((resolve) => {
+      viewerPlayer = new YT.Player(
         "jamYoutubePlayer",
         {
           width: "100%",
@@ -878,7 +1855,7 @@
           },
           events: {
             onReady(event) {
-              playerReady = true;
+              viewerPlayerReady = true;
               event.target.setVolume(
                 Number(
                   elements.volumeControl.value
@@ -887,7 +1864,9 @@
               resolve(event.target);
             },
             onStateChange(event) {
-              handlePlayerState(event.data);
+              handleViewerPlayerState(
+                event.data
+              );
             },
             onAutoplayBlocked() {
               elements.joinJamButton.hidden =
@@ -902,7 +1881,7 @@
               setViewerStatus(
                 "waiting",
                 "YouTube could not load",
-                "Check that the video allows embedding."
+                "Check that this video allows embedding."
               );
             }
           }
@@ -912,23 +1891,14 @@
   }
 
   function setOverlayVisible(visible) {
-    if (visible) {
-      elements.jamOverlay.classList.add(
-        "active"
-      );
-      elements.jamOverlay.setAttribute(
-        "aria-hidden",
-        "false"
-      );
-    } else {
-      elements.jamOverlay.classList.remove(
-        "active"
-      );
-      elements.jamOverlay.setAttribute(
-        "aria-hidden",
-        "true"
-      );
-    }
+    elements.jamOverlay.classList.toggle(
+      "active",
+      visible
+    );
+    elements.jamOverlay.setAttribute(
+      "aria-hidden",
+      String(!visible)
+    );
   }
 
   function setViewerStatus(
@@ -975,7 +1945,7 @@
         window.clearInterval(
           countdownTimer
         );
-        startPlaybackFromState(state);
+        startViewerPlayback(state);
         return;
       }
 
@@ -995,17 +1965,19 @@
       window.setInterval(update, 100);
   }
 
-  async function startPlaybackFromState(
+  async function startViewerPlayback(
     state,
     force = false
   ) {
-    if (!state?.videoId) return;
+    const item =
+      currentPlaylistItem(state);
+
+    if (!item) return;
 
     const youtube =
-      await ensurePlayer();
+      await ensureViewerPlayer();
     const expected =
       expectedPosition(state);
-
     const currentId =
       youtube.getVideoData?.()
         ?.video_id || "";
@@ -1016,10 +1988,10 @@
 
     if (
       force ||
-      currentId !== state.videoId
+      currentId !== item.videoId
     ) {
       youtube.loadVideoById({
-        videoId: state.videoId,
+        videoId: item.videoId,
         startSeconds: expected
       });
     } else if (
@@ -1049,7 +2021,7 @@
     setViewerStatus(
       "syncing",
       "Synchronizing",
-      `Target position ${formatTime(expected)}`
+      `Video ${Number(state.currentIndex) + 1} of ${state.playlist.length}`
     );
   }
 
@@ -1062,26 +2034,31 @@
       jamState || readState();
     const status =
       effectiveStatus(state);
+    const item =
+      currentPlaylistItem(state);
 
     elements.viewerRoomName.textContent =
       room;
 
     if (
       !state ||
+      !item ||
       ["idle", "ended"].includes(status)
     ) {
       clearViewerTimers();
       setOverlayVisible(false);
       elements.joinJamButton.hidden = true;
+      elements.viewerPlaylistProgress
+        .textContent = "0 / 3";
 
-      if (playerReady) {
-        player.stopVideo();
+      if (viewerPlayerReady) {
+        viewerPlayer.stopVideo();
       }
 
       setViewerStatus(
         "waiting",
-        "Waiting for admin",
-        "No active halftime jam."
+        "Waiting for Twitch command",
+        "No active halftime playlist."
       );
       return;
     }
@@ -1101,24 +2078,25 @@
 
     setOverlayVisible(true);
     elements.viewerSongTitle.textContent =
-      state.title ||
-      "EastCoin Halftime Jam";
+      item.title;
     elements.viewerSongMeta.textContent =
-      `Video ${state.videoId} · Room ${room}`;
+      `Video ${Number(state.currentIndex) + 1} of ${state.playlist.length}`;
+    elements.viewerPlaylistProgress
+      .textContent =
+      `${Number(state.currentIndex) + 1} / ${state.playlist.length}`;
 
     const youtube =
-      await ensurePlayer();
+      await ensureViewerPlayer();
 
     if (status === "paused") {
       clearViewerTimers();
-
       const currentId =
         youtube.getVideoData?.()
           ?.video_id || "";
 
-      if (currentId !== state.videoId) {
+      if (currentId !== item.videoId) {
         youtube.cueVideoById({
-          videoId: state.videoId,
+          videoId: item.videoId,
           startSeconds:
             Number(state.position || 0)
         });
@@ -1133,8 +2111,8 @@
 
       setViewerStatus(
         "paused",
-        "Paused by admin",
-        `Held at ${formatTime(state.position)}`
+        "Paused by Twitch command",
+        `Video ${Number(state.currentIndex) + 1} of ${state.playlist.length}`
       );
       return;
     }
@@ -1145,28 +2123,32 @@
         Number(state.startAt)
     ) {
       youtube.cueVideoById({
-        videoId: state.videoId,
+        videoId: item.videoId,
         startSeconds:
           Number(state.position || 0)
       });
 
       setViewerStatus(
         "scheduled",
-        "Jam starting",
-        "Preparing the synchronized start."
+        Number(state.currentIndex) === 0
+          ? "Playlist starting"
+          : "Next video starting",
+        `Video ${Number(state.currentIndex) + 1} of ${state.playlist.length}`
       );
       showCountdown(state);
       return;
     }
 
     clearViewerTimers();
-    await startPlaybackFromState(
+    await startViewerPlayback(
       state,
       force
     );
   }
 
-  function handlePlayerState(playerState) {
+  function handleViewerPlayerState(
+    playerState
+  ) {
     if (role !== ROLE_VIEWER) return;
 
     if (
@@ -1197,21 +2179,21 @@
 
     if (
       playerState ===
-      YT.PlayerState.PAUSED &&
+      YT.PlayerState.ENDED &&
       effectiveStatus(jamState) ===
-      "paused"
+      "playing"
     ) {
       setViewerStatus(
-        "paused",
-        "Paused by admin",
-        `Held at ${formatTime(jamState.position)}`
+        "syncing",
+        "Waiting for next video",
+        "The Twitch listener is advancing the playlist."
       );
     }
   }
 
   function driftDescription() {
     if (
-      !playerReady ||
+      !viewerPlayerReady ||
       effectiveStatus(jamState) !==
       "playing"
     ) {
@@ -1220,7 +2202,8 @@
 
     const current =
       Number(
-        player.getCurrentTime?.() || 0
+        viewerPlayer.getCurrentTime?.() ||
+        0
       );
     const expected =
       expectedPosition(jamState);
@@ -1243,7 +2226,7 @@
       window.setInterval(() => {
         if (
           role !== ROLE_VIEWER ||
-          !playerReady ||
+          !viewerPlayerReady ||
           effectiveStatus(jamState) !==
           "playing"
         ) {
@@ -1252,7 +2235,8 @@
 
         const current =
           Number(
-            player.getCurrentTime?.() ||
+            viewerPlayer
+              .getCurrentTime?.() ||
             0
           );
         const expected =
@@ -1267,7 +2251,7 @@
         if (
           Math.abs(drift) > 1.15
         ) {
-          player.seekTo(
+          viewerPlayer.seekTo(
             expected,
             true
           );
@@ -1294,7 +2278,7 @@
       true;
 
     const youtube =
-      await ensurePlayer();
+      await ensureViewerPlayer();
 
     youtube.unMute();
     youtube.setVolume(
@@ -1308,7 +2292,7 @@
         effectiveStatus(jamState)
       )
     ) {
-      await startPlaybackFromState(
+      await startViewerPlayback(
         jamState,
         true
       );
@@ -1317,122 +2301,6 @@
     elements.joinJamButton.hidden = true;
     showToast(
       "Synced halftime audio enabled for this tab."
-    );
-  }
-
-  function hideCurrentJam() {
-    viewerHiddenCurrentJam = true;
-    setOverlayVisible(false);
-  }
-
-  function manualViewerResync() {
-    viewerHiddenCurrentJam = false;
-    applyViewerState(true);
-    showToast("Viewer resync requested.");
-  }
-
-  function handleStorage(event) {
-    if (event.key !== stateKey()) {
-      return;
-    }
-
-    jamState = readState();
-    renderAdminState();
-    applyViewerState();
-  }
-
-  function setCommandResult(message, success = true) {
-    if (!elements.twitchCommandResult) return;
-
-    elements.twitchCommandResult.textContent =
-      message;
-    elements.twitchCommandResult.classList.toggle(
-      "error",
-      !success
-    );
-  }
-
-  function simulateTwitchCommand(rawCommand) {
-    const commandLine =
-      String(rawCommand || "").trim();
-    const [command, ...argumentsList] =
-      commandLine.split(/\s+/);
-    const normalized =
-      String(command || "").toLowerCase();
-    const optionalVideo =
-      argumentsList.join(" ").trim();
-
-    if (!normalized) {
-      setCommandResult(
-        "Enter a Twitch command to simulate.",
-        false
-      );
-      return;
-    }
-
-    if (
-      normalized ===
-      "!starthalftime"
-    ) {
-      if (optionalVideo) {
-        elements.videoInput.value =
-          optionalVideo;
-      }
-
-      startJam();
-      setCommandResult(
-        `Simulated ${normalized} as an authorized admin command.`
-      );
-      return;
-    }
-
-    if (
-      normalized ===
-      "!pausehalftime"
-    ) {
-      pauseJam();
-      setCommandResult(
-        `Simulated ${normalized}.`
-      );
-      return;
-    }
-
-    if (
-      normalized ===
-      "!resumehalftime"
-    ) {
-      resumeJam();
-      setCommandResult(
-        `Simulated ${normalized}.`
-      );
-      return;
-    }
-
-    if (
-      normalized ===
-      "!resynchaltime"
-    ) {
-      resyncJam();
-      setCommandResult(
-        `Simulated ${normalized}.`
-      );
-      return;
-    }
-
-    if (
-      normalized ===
-      "!endhalftime"
-    ) {
-      endJam();
-      setCommandResult(
-        `Simulated ${normalized}.`
-      );
-      return;
-    }
-
-    setCommandResult(
-      `Unknown test command: ${normalized}`,
-      false
     );
   }
 
@@ -1488,8 +2356,7 @@
           offsetX:
             event.clientX - panel.left,
           offsetY:
-            event.clientY - panel.top,
-          bounds
+            event.clientY - panel.top
         };
 
         elements.jamOverlay.style.right =
@@ -1500,7 +2367,6 @@
         handle.setPointerCapture(
           event.pointerId
         );
-
         event.preventDefault();
       }
     );
@@ -1531,7 +2397,10 @@
               bounds.left -
               dragState.offsetX
           ),
-          Math.max(0, bounds.width - width)
+          Math.max(
+            0,
+            bounds.width - width
+          )
         );
 
         const top = Math.min(
@@ -1541,7 +2410,10 @@
               bounds.top -
               dragState.offsetY
           ),
-          Math.max(0, bounds.height - height)
+          Math.max(
+            0,
+            bounds.height - height
+          )
         );
 
         elements.jamOverlay.style.left =
@@ -1561,42 +2433,31 @@
     );
   }
 
-  function initializeAdmin() {
-    elements.adminRoomInput.value = room;
+  function initializeListener() {
+    loadListenerSettings();
+
+    elements.listenerRoomInput.value =
+      room;
+    elements.channelValue.textContent =
+      `#${cleanLogin(
+        elements.channelInput.value
+      ) || "zwades"}`;
 
     elements.switchRoomButton
       .addEventListener(
         "click",
         switchRoom
       );
-    elements.delaySelect.addEventListener(
-      "change",
-      updateStartButton
-    );
-    elements.startJamButton.addEventListener(
-      "click",
-      startJam
-    );
-    elements.loadDemoButton.addEventListener(
-      "click",
-      loadDemo
-    );
-    elements.pauseButton.addEventListener(
-      "click",
-      pauseJam
-    );
-    elements.resumeButton.addEventListener(
-      "click",
-      resumeJam
-    );
-    elements.resyncButton.addEventListener(
-      "click",
-      resyncJam
-    );
-    elements.endButton.addEventListener(
-      "click",
-      endJam
-    );
+    elements.connectListenerButton
+      .addEventListener(
+        "click",
+        connectTwitchListener
+      );
+    elements.disconnectListenerButton
+      .addEventListener(
+        "click",
+        disconnectTwitchListener
+      );
     elements.openViewerButton
       .addEventListener(
         "click",
@@ -1607,48 +2468,31 @@
         "click",
         copyViewerLink
       );
-
-    elements.runTwitchCommandButton
-      ?.addEventListener(
+    elements.clearLogButton
+      .addEventListener(
         "click",
-        () => simulateTwitchCommand(
-          elements.twitchCommandInput.value
-        )
-      );
-
-    elements.twitchCommandInput
-      ?.addEventListener(
-        "keydown",
-        (event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            simulateTwitchCommand(
-              elements.twitchCommandInput.value
-            );
-          }
+        () => {
+          elements.listenerLog.innerHTML =
+            '<p class="muted-log">Log cleared.</p>';
         }
       );
 
-    document
-      .querySelectorAll(
-        "[data-test-command]"
-      )
-      .forEach((button) => {
-        button.addEventListener(
-          "click",
-          () => {
-            elements.twitchCommandInput.value =
-              button.dataset.testCommand;
-            simulateTwitchCommand(
-              button.dataset.testCommand
-            );
-          }
-        );
-      });
+    [
+      elements.clientIdInput,
+      elements.channelInput,
+      elements.authorizedUsersInput,
+      ...elements.playlistTitles,
+      ...elements.playlistVideos
+    ].forEach((input) => {
+      input.addEventListener(
+        "change",
+        saveListenerSettings
+      );
+    });
 
-    updateStartButton();
-    renderAdminState();
-    scheduleAdminRender();
+    renderRoomState();
+    scheduleMonitorRender();
+    applyControllerState();
   }
 
   function initializeViewer() {
@@ -1660,31 +2504,43 @@
         "click",
         enableAudio
       );
-    elements.joinJamButton.addEventListener(
-      "click",
-      enableAudio
-    );
-    elements.leaveJamButton.addEventListener(
-      "click",
-      hideCurrentJam
-    );
+    elements.joinJamButton
+      .addEventListener(
+        "click",
+        enableAudio
+      );
+    elements.leaveJamButton
+      .addEventListener(
+        "click",
+        () => {
+          viewerHiddenCurrentJam = true;
+          setOverlayVisible(false);
+        }
+      );
     elements.viewerResyncButton
       .addEventListener(
         "click",
-        manualViewerResync
-      );
-    elements.volumeControl.addEventListener(
-      "input",
-      () => {
-        if (playerReady) {
-          player.setVolume(
-            Number(
-              elements.volumeControl.value
-            ) || 0
+        () => {
+          viewerHiddenCurrentJam = false;
+          applyViewerState(true);
+          showToast(
+            "Viewer resync requested."
           );
         }
-      }
-    );
+      );
+    elements.volumeControl
+      .addEventListener(
+        "input",
+        () => {
+          if (viewerPlayerReady) {
+            viewerPlayer.setVolume(
+              Number(
+                elements.volumeControl.value
+              ) || 0
+            );
+          }
+        }
+      );
 
     if (audioEnabled) {
       elements.enableAudioButton.textContent =
@@ -1700,13 +2556,24 @@
 
   window.addEventListener(
     "storage",
-    handleStorage
+    (event) => {
+      if (event.key !== stateKey()) {
+        return;
+      }
+
+      jamState = readState();
+      renderRoomState();
+      applyViewerState();
+      applyControllerState();
+    }
   );
 
   window.addEventListener(
     "beforeunload",
     () => {
-      channel?.close();
+      intentionalDisconnect = true;
+      twitchSocket?.close();
+      roomChannel?.close();
       window.clearInterval(
         presenceTimer
       );
@@ -1714,7 +2581,10 @@
         driftTimer
       );
       window.clearInterval(
-        adminRenderTimer
+        monitorTimer
+      );
+      window.clearTimeout(
+        reconnectTimer
       );
     }
   );
@@ -1725,11 +2595,11 @@
   );
 
   applyRoleLinks();
-  connectChannel();
+  connectRoomChannel();
   startPresence();
 
-  if (role === ROLE_ADMIN) {
-    initializeAdmin();
+  if (role === ROLE_LISTENER) {
+    initializeListener();
   } else {
     initializeViewer();
   }
