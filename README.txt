@@ -517,3 +517,30 @@ COLLAPSED PLAYER CONTROLS FIX
 - When the desktop server drawer is open, the button remains beside it.
 - Streamed CSS was cache-busted from server17 to server18.
 - Updated changelog.html.
+
+
+HALFTIME JAMS SYNC TEST
+- Added halftime-jams-test.html.
+- Added assets/eastcoins-halftime-jams-test.css.
+- Added assets/eastcoins-halftime-jams-test.js.
+- Added HALFTIME-JAMS-TEST.md.
+- Admin and viewer roles share a room ID through URL parameters.
+- Admin controls:
+  - Start in 3, 5, or 10 seconds
+  - Pause
+  - Resume
+  - Resync everyone
+  - End jam
+  - Open/copy viewer link
+- Viewer behavior:
+  - automatic halftime popup
+  - one-time Enable synced audio interaction
+  - late joining at the current room position
+  - four-second drift checks and correction
+  - viewer volume and manual Resync
+  - popup hide without ending the room
+- Test transport uses same-browser BroadcastChannel plus localStorage.
+- This is intentionally isolated from the normal EastCoin navigation.
+- Production cross-device synchronization still requires an authenticated
+  Worker/Durable Object WebSocket backend.
+- Updated changelog.html.

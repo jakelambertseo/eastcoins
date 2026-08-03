@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1">
+  <meta
+    name="robots"
+    content="noindex,nofollow,noarchive">
+  <meta
+    name="description"
+    content="EastCoin synchronized halftime YouTube jam test page.">
+
+  <title>EastCoin — Halftime Jams Test</title>
+
+  <link
+    rel="stylesheet"
+    href="assets/eastcoins-halftime-jams-test.css?v=jams1">
+</head>
+
+<body>
+  <header class="test-header">
+    <div>
+      <span class="test-eyebrow">EastCoin experiment</span>
+      <h1>Halftime Jams Sync Lab</h1>
+      <p>
+        Test admin-triggered YouTube popups and synchronized playback
+        between browser tabs before connecting a real multi-user backend.
+      </p>
+    </div>
+
+    <div class="header-badges">
+      <span class="test-badge">Test page</span>
+      <span class="test-badge role-badge" id="roleBadge">Admin</span>
+    </div>
+  </header>
+
+  <nav class="role-nav" aria-label="Test roles">
+    <a id="adminRoleLink" href="#">Admin console</a>
+    <a id="viewerRoleLink" href="#">Viewer window</a>
+    <a href="index.html">Return to EastCoin</a>
+  </nav>
+
+  <main>
+    <section class="admin-shell" data-role-panel="admin">
+      <div class="admin-grid">
+        <article class="panel admin-control-panel">
+          <div class="panel-heading">
+            <div>
+              <span>Broadcast controls</span>
+              <h2>Start a synchronized jam</h2>
+            </div>
+            <span class="connection-pill" id="adminConnectionPill">
+              Local test ready
+            </span>
+          </div>
+
+          <label class="field">
+            <span>Test room</span>
+            <div class="field-row">
+              <input
+                id="adminRoomInput"
+                type="text"
+                maxlength="48"
+                autocomplete="off"
+                value="eastcoin-halftime-test">
+              <button
+                class="secondary-button"
+                id="switchRoomButton"
+                type="button">
+                Switch room
+              </button>
+            </div>
+          </label>
+
+          <label class="field">
+            <span>YouTube URL or video ID</span>
+            <input
+              id="videoInput"
+              type="text"
+              autocomplete="off"
+              placeholder="https://www.youtube.com/watch?v=..."
+              value="M7lc1UVf-VE">
+            <small>
+              The default is YouTube's official IFrame API demo video.
+              Replace it with one of your halftime songs.
+            </small>
+          </label>
+
+          <label class="field">
+            <span>Display title</span>
+            <input
+              id="titleInput"
+              type="text"
+              autocomplete="off"
+              maxlength="100"
+              value="EastCoin Halftime Jam">
+          </label>
+
+          <div class="field split-field">
+            <label>
+              <span>Start delay</span>
+              <select id="delaySelect">
+                <option value="3" selected>3 seconds</option>
+                <option value="5">5 seconds</option>
+                <option value="10">10 seconds</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Target audience</span>
+              <select disabled>
+                <option>Test room viewers</option>
+              </select>
+            </label>
+          </div>
+
+          <p
+            class="form-error"
+            id="adminError"
+            role="alert">
+          </p>
+
+          <div class="primary-actions">
+            <button
+              class="primary-button"
+              id="startJamButton"
+              type="button">
+              ▶ Start in 3 seconds
+            </button>
+
+            <button
+              class="secondary-button"
+              id="loadDemoButton"
+              type="button">
+              Use demo video
+            </button>
+          </div>
+
+          <div class="playback-actions">
+            <button id="pauseButton" type="button">Pause</button>
+            <button id="resumeButton" type="button">Resume</button>
+            <button id="resyncButton" type="button">Resync everyone</button>
+            <button
+              class="danger-button"
+              id="endButton"
+              type="button">
+              End jam
+            </button>
+          </div>
+        </article>
+
+        <article class="panel room-status-panel">
+          <div class="panel-heading">
+            <div>
+              <span>Room monitor</span>
+              <h2>Current halftime state</h2>
+            </div>
+            <span class="listener-count">
+              <strong id="listenerCount">0</strong>
+              viewer tabs
+            </span>
+          </div>
+
+          <dl class="state-list">
+            <div>
+              <dt>Status</dt>
+              <dd id="adminStateStatus">Idle</dd>
+            </div>
+            <div>
+              <dt>Song</dt>
+              <dd id="adminStateTitle">Nothing selected</dd>
+            </div>
+            <div>
+              <dt>Video ID</dt>
+              <dd id="adminStateVideo">—</dd>
+            </div>
+            <div>
+              <dt>Position</dt>
+              <dd id="adminStatePosition">0:00</dd>
+            </div>
+            <div>
+              <dt>Revision</dt>
+              <dd id="adminStateRevision">0</dd>
+            </div>
+          </dl>
+
+          <div class="viewer-launch">
+            <h3>Open a viewer for testing</h3>
+            <p>
+              Keep this admin tab open, then launch one or more viewer tabs.
+              Press Start here and watch the jam popup appear there.
+            </p>
+
+            <div class="viewer-launch-actions">
+              <button
+                class="primary-button"
+                id="openViewerButton"
+                type="button">
+                Open viewer window
+              </button>
+              <button
+                class="secondary-button"
+                id="copyViewerButton"
+                type="button">
+                Copy viewer link
+              </button>
+            </div>
+
+            <code id="viewerUrlPreview"></code>
+          </div>
+        </article>
+      </div>
+
+      <article class="panel test-instructions">
+        <span class="panel-kicker">Recommended test</span>
+        <ol>
+          <li>Open the viewer window and click Enable synced audio once.</li>
+          <li>Return here and press Start in 3 seconds.</li>
+          <li>Open a second viewer after the video starts to test late joining.</li>
+          <li>Test Pause, Resume, Resync everyone, and End jam.</li>
+        </ol>
+      </article>
+    </section>
+
+    <section class="viewer-shell" data-role-panel="viewer">
+      <div class="viewer-topbar">
+        <div>
+          <span class="viewer-room-label">Test room</span>
+          <strong id="viewerRoomName">eastcoin-halftime-test</strong>
+        </div>
+
+        <div class="viewer-topbar-actions">
+          <span class="sync-chip waiting" id="viewerSyncChip">
+            Waiting for admin
+          </span>
+
+          <button
+            class="secondary-button"
+            id="enableAudioButton"
+            type="button">
+            Enable synced audio
+          </button>
+        </div>
+      </div>
+
+      <section class="mock-event-player" aria-label="Mock EastCoin player">
+        <div class="mock-player-header">
+          <div>
+            <span>Live event</span>
+            <strong>EastCoin Halftime Jams Test</strong>
+            <small>
+              The sports stream would remain loaded underneath this popup.
+            </small>
+          </div>
+
+          <span class="mock-live-pill">Live</span>
+        </div>
+
+        <div class="mock-video">
+          <div class="mock-video-center">
+            <span>EastCoin event player</span>
+            <strong>Waiting for halftime…</strong>
+          </div>
+        </div>
+
+        <section
+          class="jam-overlay"
+          id="jamOverlay"
+          aria-hidden="true">
+          <div class="jam-panel">
+            <header class="jam-header">
+              <div>
+                <span>Halftime Jams</span>
+                <h2 id="viewerSongTitle">EastCoin Jam</h2>
+                <p id="viewerSongMeta">
+                  Waiting for the admin to begin.
+                </p>
+              </div>
+
+              <button
+                class="jam-leave-button"
+                id="leaveJamButton"
+                type="button">
+                Hide popup
+              </button>
+            </header>
+
+            <div class="youtube-stage">
+              <div id="jamYoutubePlayer"></div>
+
+              <button
+                class="join-jam-button"
+                id="joinJamButton"
+                type="button"
+                hidden>
+                ▶ Join the Jam
+                <small>Browser interaction is needed for sound.</small>
+              </button>
+
+              <div
+                class="start-countdown"
+                id="startCountdown"
+                hidden>
+                <span>Starting together in</span>
+                <strong id="countdownValue">3</strong>
+              </div>
+            </div>
+
+            <footer class="jam-footer">
+              <div class="jam-status">
+                <span
+                  class="jam-status-dot"
+                  aria-hidden="true">
+                </span>
+                <div>
+                  <strong id="viewerPlaybackStatus">Waiting</strong>
+                  <small id="viewerDriftStatus">
+                    No active halftime jam.
+                  </small>
+                </div>
+              </div>
+
+              <div class="viewer-controls">
+                <label>
+                  Volume
+                  <input
+                    id="volumeControl"
+                    type="range"
+                    min="0"
+                    max="100"
+                    value="70">
+                </label>
+
+                <button
+                  class="secondary-button"
+                  id="viewerResyncButton"
+                  type="button">
+                  Resync
+                </button>
+              </div>
+            </footer>
+          </div>
+        </section>
+      </section>
+
+      <article class="viewer-help">
+        <strong>Viewer test mode</strong>
+        <p>
+          This prototype synchronizes tabs in the same browser profile.
+          It does not yet connect separate devices or real EastCoin visitors.
+        </p>
+      </article>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="assets/eastcoins-halftime-jams-test.js?v=jams1"></script>
+</body>
+</html>
