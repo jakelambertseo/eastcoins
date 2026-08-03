@@ -16,7 +16,7 @@
 
   <link
     rel="stylesheet"
-    href="assets/eastcoins-halftime-jams-test.css?v=jams1">
+    href="assets/eastcoins-halftime-jams-test.css?v=jams2">
 </head>
 
 <body>
@@ -149,6 +149,61 @@
               End jam
             </button>
           </div>
+
+          <section class="twitch-command-test">
+            <div class="twitch-command-heading">
+              <div>
+                <span>Twitch command simulator</span>
+                <h3>Test chat-triggered controls</h3>
+              </div>
+              <span class="simulator-pill">Local simulation</span>
+            </div>
+
+            <p>
+              Enter the command exactly as it would appear in the
+              <strong>zwades</strong> Twitch chat. This test calls the same
+              admin controls without connecting a Twitch bot yet.
+            </p>
+
+            <div class="command-entry">
+              <input
+                id="twitchCommandInput"
+                type="text"
+                autocomplete="off"
+                spellcheck="false"
+                value="!starthalftime">
+              <button
+                class="secondary-button"
+                id="runTwitchCommandButton"
+                type="button">
+                Run command
+              </button>
+            </div>
+
+            <div class="command-examples" aria-label="Test command examples">
+              <button type="button" data-test-command="!starthalftime">
+                !starthalftime
+              </button>
+              <button type="button" data-test-command="!pausehalftime">
+                !pausehalftime
+              </button>
+              <button type="button" data-test-command="!resumehalftime">
+                !resumehalftime
+              </button>
+              <button type="button" data-test-command="!resynchaltime">
+                !resynchaltime
+              </button>
+              <button type="button" data-test-command="!endhalftime">
+                !endhalftime
+              </button>
+            </div>
+
+            <output
+              class="command-result"
+              id="twitchCommandResult">
+              No simulated command has run yet.
+            </output>
+          </section>
         </article>
 
         <article class="panel room-status-panel">
@@ -245,34 +300,73 @@
         </div>
       </div>
 
-      <section class="mock-event-player" aria-label="Mock EastCoin player">
-        <div class="mock-player-header">
-          <div>
-            <span>Live event</span>
-            <strong>EastCoin Halftime Jams Test</strong>
-            <small>
-              The sports stream would remain loaded underneath this popup.
-            </small>
+      <div class="viewer-watch-layout" id="viewerWatchLayout">
+        <section class="mock-event-player" aria-label="Mock EastCoin player">
+          <div class="mock-player-header">
+            <div>
+              <span>Live event</span>
+              <strong>EastCoin Halftime Jams Test</strong>
+              <small>
+                The sports stream remains visible while the jam mini-player
+                floats beside chat.
+              </small>
+            </div>
+
+            <span class="mock-live-pill">Live</span>
           </div>
 
-          <span class="mock-live-pill">Live</span>
-        </div>
-
-        <div class="mock-video">
-          <div class="mock-video-center">
-            <span>EastCoin event player</span>
-            <strong>Waiting for halftime…</strong>
+          <div class="mock-video">
+            <div class="mock-video-center">
+              <span>EastCoin event player</span>
+              <strong>Waiting for halftime…</strong>
+            </div>
           </div>
-        </div>
+        </section>
+
+        <aside class="mock-chat-panel" aria-label="Mock Twitch chat">
+          <header>
+            <div>
+              <span>Twitch chat</span>
+              <strong>zwades</strong>
+            </div>
+            <span class="mock-chat-live">Live</span>
+          </header>
+
+          <div class="mock-chat-messages">
+            <p>
+              <strong class="chat-red">PingBooty:</strong>
+              halftime jams when?
+            </p>
+            <p>
+              <strong class="chat-blue">EastCoinBot:</strong>
+              Admin controls the synchronized music test.
+            </p>
+            <p>
+              <strong class="chat-gold">Zwades:</strong>
+              type !starthalftime
+            </p>
+            <p>
+              <strong class="chat-green">Viewer42:</strong>
+              the sports video stays visible 👀
+            </p>
+          </div>
+
+          <div class="mock-chat-entry">
+            Send a message
+          </div>
+        </aside>
 
         <section
           class="jam-overlay"
           id="jamOverlay"
           aria-hidden="true">
           <div class="jam-panel">
-            <header class="jam-header">
+            <header
+              class="jam-header"
+              data-jam-drag-handle
+              title="Drag the Halftime Jams window">
               <div>
-                <span>Halftime Jams</span>
+                <span>Halftime Jams · Drag to move</span>
                 <h2 id="viewerSongTitle">EastCoin Jam</h2>
                 <p id="viewerSongMeta">
                   Waiting for the admin to begin.
@@ -283,7 +377,7 @@
                 class="jam-leave-button"
                 id="leaveJamButton"
                 type="button">
-                Hide popup
+                Hide
               </button>
             </header>
 
@@ -343,7 +437,7 @@
             </footer>
           </div>
         </section>
-      </section>
+      </div>
 
       <article class="viewer-help">
         <strong>Viewer test mode</strong>
@@ -357,6 +451,6 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="assets/eastcoins-halftime-jams-test.js?v=jams1"></script>
+  <script src="assets/eastcoins-halftime-jams-test.js?v=jams2"></script>
 </body>
 </html>

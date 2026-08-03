@@ -544,3 +544,24 @@ HALFTIME JAMS SYNC TEST
 - Production cross-device synchronization still requires an authenticated
   Worker/Durable Object WebSocket backend.
 - Updated changelog.html.
+
+
+HALFTIME JAMS FLOATING WINDOW + COMMAND TEST
+- The viewer test now has a two-column watch layout with a mock Twitch chat.
+- Halftime Jams opens as a compact mini-player beside chat.
+- The main sports-video mock remains visible.
+- The mini-player can be dragged within the watch area.
+- Mobile layouts keep the mini-player compact over the video.
+- The admin tab includes a Twitch command simulator:
+  - !starthalftime
+  - !pausehalftime
+  - !resumehalftime
+  - !resynchaltime
+  - !endhalftime
+- !starthalftime may optionally include a YouTube URL or video ID.
+- The simulator calls the same local admin functions as the normal buttons.
+- It does not yet connect to real Twitch chat.
+- Production Twitch commands require a server-side authenticated Twitch bot
+  and room-broadcast backend.
+- Test CSS and JavaScript were cache-busted to jams2.
+- Updated HALFTIME-JAMS-TEST.md and changelog.html.

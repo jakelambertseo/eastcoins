@@ -48,3 +48,44 @@ devices or real EastCoin visitors.
 The production version will replace the test transport with an authenticated
 Cloudflare Worker/Durable Object WebSocket room while keeping most of the
 YouTube-player and overlay logic.
+
+
+## Floating viewer layout
+
+The viewer test now includes a mock Twitch chat column. Halftime Jams opens as
+a compact mini-player beside that chat rather than covering the center of the
+sports video.
+
+The blue-tinted Halftime Jams header is draggable. Dragging is local to the
+viewer and does not affect synchronization or other viewers.
+
+## Twitch command simulator
+
+The admin tab now includes a local Twitch command simulator:
+
+- `!starthalftime`
+- `!pausehalftime`
+- `!resumehalftime`
+- `!resynchaltime`
+- `!endhalftime`
+
+`!starthalftime VIDEO_URL_OR_ID` can also replace the current YouTube selection
+before starting.
+
+This simulator does not read the embedded Twitch chat. It calls the same test
+admin functions that a production Twitch bot would call.
+
+## Production Twitch command flow
+
+The embedded Twitch chat iframe cannot safely expose its message contents to
+EastCoin. A production command trigger needs a Twitch chatbot/backend:
+
+1. Subscribe to Twitch `channel.chat.message` events.
+2. Ignore commands from ordinary viewers.
+3. Allow only the broadcaster account and an explicit admin allowlist.
+4. Parse `!starthalftime`, `!pausehalftime`, and the other approved commands.
+5. Send the verified action to the EastCoin room coordinator.
+6. The room coordinator broadcasts the updated jam state to connected viewers.
+
+The bot credentials and Twitch access tokens must stay server-side. Never place
+them in EastCoin's public HTML or browser JavaScript.

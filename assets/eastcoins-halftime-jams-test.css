@@ -859,3 +859,357 @@ button:disabled{
     max-height:calc(100vh - 130px);
   }
 }
+
+
+/* ================================================================
+   FLOATING HALFTIME JAMS + MOCK CHAT
+   ================================================================ */
+
+.twitch-command-test{
+  margin-top:14px;
+  padding:13px;
+  border:1px solid rgba(145,89,193,.2);
+  border-radius:10px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(64,28,91,.22),
+      rgba(18,8,25,.24)
+    );
+}
+
+.twitch-command-heading{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.twitch-command-heading span:first-child{
+  color:#bd8ae2;
+  font-size:.55rem;
+  font-weight:950;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.twitch-command-heading h3{
+  margin:4px 0 0;
+  font-size:.77rem;
+}
+
+.simulator-pill{
+  flex:0 0 auto;
+  padding:5px 7px;
+  border:1px solid rgba(174,119,215,.24);
+  border-radius:999px;
+  color:#d6b5ed;
+  background:rgba(64,28,91,.34);
+  font-size:.49rem;
+  font-weight:900;
+}
+
+.twitch-command-test > p{
+  margin:9px 0;
+  color:#8b8291;
+  font-size:.59rem;
+  line-height:1.5;
+}
+
+.command-entry{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:7px;
+}
+
+.command-examples{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:8px;
+}
+
+.command-examples button{
+  min-height:27px;
+  padding:5px 7px;
+  border-color:rgba(174,119,215,.16);
+  color:#bba7c9;
+  background:#0d0811;
+  font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  font-size:.49rem;
+}
+
+.command-result{
+  display:block;
+  min-height:32px;
+  margin-top:9px;
+  padding:8px 9px;
+  border-left:3px solid #765092;
+  color:#9f90a9;
+  background:rgba(0,0,0,.23);
+  font-size:.56rem;
+  line-height:1.45;
+}
+
+.viewer-watch-layout{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 285px;
+  gap:10px;
+  align-items:stretch;
+}
+
+.mock-event-player{
+  min-width:0;
+}
+
+.mock-chat-panel{
+  min-width:0;
+  min-height:640px;
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr) auto;
+  overflow:hidden;
+  border:1px solid rgba(145,89,193,.2);
+  border-radius:14px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(13,8,17,.99),
+      rgba(4,3,5,.99)
+    );
+  box-shadow:0 28px 80px rgba(0,0,0,.32);
+}
+
+.mock-chat-panel header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:11px 12px;
+  border-bottom:1px solid rgba(145,89,193,.14);
+  background:#09060b;
+}
+
+.mock-chat-panel header span:first-child{
+  display:block;
+  color:#9d6cc2;
+  font-size:.48rem;
+  font-weight:950;
+  letter-spacing:.11em;
+  text-transform:uppercase;
+}
+
+.mock-chat-panel header strong{
+  display:block;
+  margin-top:2px;
+  font-size:.68rem;
+}
+
+.mock-chat-live{
+  padding:4px 6px;
+  border:1px solid rgba(225,94,112,.28);
+  border-radius:999px;
+  color:#ef9ba7;
+  background:rgba(105,16,31,.34);
+  font-size:.45rem;
+  font-weight:900;
+}
+
+.mock-chat-messages{
+  display:flex;
+  flex-direction:column;
+  gap:11px;
+  padding:12px;
+  overflow-y:auto;
+  color:#afa6b3;
+  font-size:.57rem;
+  line-height:1.45;
+}
+
+.mock-chat-messages p{
+  margin:0;
+}
+
+.mock-chat-messages strong{
+  margin-right:3px;
+}
+
+.chat-red{color:#e06a7c}
+.chat-blue{color:#70bff0}
+.chat-gold{color:#d8b85d}
+.chat-green{color:#76d39a}
+
+.mock-chat-entry{
+  margin:9px;
+  padding:9px;
+  border:1px solid rgba(145,89,193,.14);
+  border-radius:7px;
+  color:#615968;
+  background:#050406;
+  font-size:.54rem;
+}
+
+.jam-overlay{
+  position:absolute;
+  inset:auto 297px auto auto;
+  top:84px;
+  z-index:20;
+  width:min(380px,calc(100% - 335px));
+  display:none;
+  padding:0;
+  background:transparent;
+  backdrop-filter:none;
+  touch-action:none;
+}
+
+.jam-overlay.active{
+  display:block;
+}
+
+.jam-panel{
+  width:100%;
+  max-height:none;
+  border-radius:12px;
+  box-shadow:
+    0 26px 80px rgba(0,0,0,.78),
+    0 0 0 1px rgba(74,167,232,.06);
+}
+
+.jam-header{
+  min-height:55px;
+  padding:8px 9px;
+  cursor:grab;
+  user-select:none;
+  touch-action:none;
+}
+
+.jam-header:active{
+  cursor:grabbing;
+}
+
+.jam-header h2{
+  max-width:260px;
+  overflow:hidden;
+  font-size:.78rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.jam-header p{
+  max-width:260px;
+  overflow:hidden;
+  font-size:.48rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.jam-leave-button{
+  min-height:27px;
+  padding:5px 7px;
+  font-size:.48rem;
+}
+
+.youtube-stage{
+  min-height:0;
+  aspect-ratio:16/9;
+}
+
+.jam-footer{
+  align-items:center;
+  padding:7px 9px;
+}
+
+.jam-status strong{
+  font-size:.56rem;
+}
+
+.jam-status small{
+  max-width:165px;
+  overflow:hidden;
+  font-size:.45rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.viewer-controls{
+  flex-wrap:nowrap;
+}
+
+.viewer-controls label{
+  gap:4px;
+  font-size:.47rem;
+}
+
+.viewer-controls input{
+  width:65px;
+}
+
+.viewer-controls button{
+  min-height:27px;
+  padding:5px 7px;
+  font-size:.47rem;
+}
+
+.join-jam-button{
+  font-size:.78rem;
+}
+
+.join-jam-button small{
+  font-size:.48rem;
+}
+
+.start-countdown span{
+  font-size:.53rem;
+}
+
+.start-countdown strong{
+  font-size:3rem;
+}
+
+@media(max-width:980px){
+  .viewer-watch-layout{
+    grid-template-columns:minmax(0,1fr) 235px;
+  }
+
+  .jam-overlay{
+    right:247px;
+    width:min(360px,calc(100% - 275px));
+  }
+}
+
+@media(max-width:760px){
+  .viewer-watch-layout{
+    grid-template-columns:1fr;
+  }
+
+  .mock-chat-panel{
+    min-height:260px;
+  }
+
+  .jam-overlay{
+    top:78px;
+    right:8px;
+    width:min(350px,calc(100% - 16px));
+  }
+}
+
+@media(max-width:520px){
+  .command-entry{
+    grid-template-columns:1fr;
+  }
+
+  .jam-overlay{
+    top:72px;
+    right:4px;
+    width:calc(100% - 8px);
+  }
+
+  .jam-footer{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .viewer-controls{
+    width:100%;
+  }
+}

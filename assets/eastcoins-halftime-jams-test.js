@@ -153,6 +153,22 @@
     volumeControl:
       document.getElementById(
         "volumeControl"
+      ),
+    viewerWatchLayout:
+      document.getElementById(
+        "viewerWatchLayout"
+      ),
+    twitchCommandInput:
+      document.getElementById(
+        "twitchCommandInput"
+      ),
+    runTwitchCommandButton:
+      document.getElementById(
+        "runTwitchCommandButton"
+      ),
+    twitchCommandResult:
+      document.getElementById(
+        "twitchCommandResult"
       )
   };
 
@@ -1325,6 +1341,226 @@
     applyViewerState();
   }
 
+  function setCommandResult(message, success = true) {
+    if (!elements.twitchCommandResult) return;
+
+    elements.twitchCommandResult.textContent =
+      message;
+    elements.twitchCommandResult.classList.toggle(
+      "error",
+      !success
+    );
+  }
+
+  function simulateTwitchCommand(rawCommand) {
+    const commandLine =
+      String(rawCommand || "").trim();
+    const [command, ...argumentsList] =
+      commandLine.split(/\s+/);
+    const normalized =
+      String(command || "").toLowerCase();
+    const optionalVideo =
+      argumentsList.join(" ").trim();
+
+    if (!normalized) {
+      setCommandResult(
+        "Enter a Twitch command to simulate.",
+        false
+      );
+      return;
+    }
+
+    if (
+      normalized ===
+      "!starthalftime"
+    ) {
+      if (optionalVideo) {
+        elements.videoInput.value =
+          optionalVideo;
+      }
+
+      startJam();
+      setCommandResult(
+        `Simulated ${normalized} as an authorized admin command.`
+      );
+      return;
+    }
+
+    if (
+      normalized ===
+      "!pausehalftime"
+    ) {
+      pauseJam();
+      setCommandResult(
+        `Simulated ${normalized}.`
+      );
+      return;
+    }
+
+    if (
+      normalized ===
+      "!resumehalftime"
+    ) {
+      resumeJam();
+      setCommandResult(
+        `Simulated ${normalized}.`
+      );
+      return;
+    }
+
+    if (
+      normalized ===
+      "!resynchaltime"
+    ) {
+      resyncJam();
+      setCommandResult(
+        `Simulated ${normalized}.`
+      );
+      return;
+    }
+
+    if (
+      normalized ===
+      "!endhalftime"
+    ) {
+      endJam();
+      setCommandResult(
+        `Simulated ${normalized}.`
+      );
+      return;
+    }
+
+    setCommandResult(
+      `Unknown test command: ${normalized}`,
+      false
+    );
+  }
+
+  function initializeJamDragging() {
+    if (
+      role !== ROLE_VIEWER ||
+      !elements.jamOverlay ||
+      !elements.viewerWatchLayout
+    ) {
+      return;
+    }
+
+    const handle =
+      elements.jamOverlay.querySelector(
+        "[data-jam-drag-handle]"
+      );
+
+    if (!handle) return;
+
+    let dragState = null;
+
+    const stopDragging = (event) => {
+      if (!dragState) return;
+
+      try {
+        handle.releasePointerCapture(
+          event.pointerId
+        );
+      } catch {}
+
+      dragState = null;
+    };
+
+    handle.addEventListener(
+      "pointerdown",
+      (event) => {
+        if (
+          event.button !== 0 ||
+          event.target.closest("button")
+        ) {
+          return;
+        }
+
+        const bounds =
+          elements.viewerWatchLayout
+            .getBoundingClientRect();
+        const panel =
+          elements.jamOverlay
+            .getBoundingClientRect();
+
+        dragState = {
+          pointerId: event.pointerId,
+          offsetX:
+            event.clientX - panel.left,
+          offsetY:
+            event.clientY - panel.top,
+          bounds
+        };
+
+        elements.jamOverlay.style.right =
+          "auto";
+        elements.jamOverlay.style.bottom =
+          "auto";
+
+        handle.setPointerCapture(
+          event.pointerId
+        );
+
+        event.preventDefault();
+      }
+    );
+
+    handle.addEventListener(
+      "pointermove",
+      (event) => {
+        if (
+          !dragState ||
+          event.pointerId !==
+          dragState.pointerId
+        ) {
+          return;
+        }
+
+        const bounds =
+          elements.viewerWatchLayout
+            .getBoundingClientRect();
+        const width =
+          elements.jamOverlay.offsetWidth;
+        const height =
+          elements.jamOverlay.offsetHeight;
+
+        const left = Math.min(
+          Math.max(
+            0,
+            event.clientX -
+              bounds.left -
+              dragState.offsetX
+          ),
+          Math.max(0, bounds.width - width)
+        );
+
+        const top = Math.min(
+          Math.max(
+            0,
+            event.clientY -
+              bounds.top -
+              dragState.offsetY
+          ),
+          Math.max(0, bounds.height - height)
+        );
+
+        elements.jamOverlay.style.left =
+          `${left}px`;
+        elements.jamOverlay.style.top =
+          `${top}px`;
+      }
+    );
+
+    handle.addEventListener(
+      "pointerup",
+      stopDragging
+    );
+    handle.addEventListener(
+      "pointercancel",
+      stopDragging
+    );
+  }
+
   function initializeAdmin() {
     elements.adminRoomInput.value = room;
 
@@ -1371,6 +1607,44 @@
         "click",
         copyViewerLink
       );
+
+    elements.runTwitchCommandButton
+      ?.addEventListener(
+        "click",
+        () => simulateTwitchCommand(
+          elements.twitchCommandInput.value
+        )
+      );
+
+    elements.twitchCommandInput
+      ?.addEventListener(
+        "keydown",
+        (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            simulateTwitchCommand(
+              elements.twitchCommandInput.value
+            );
+          }
+        }
+      );
+
+    document
+      .querySelectorAll(
+        "[data-test-command]"
+      )
+      .forEach((button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            elements.twitchCommandInput.value =
+              button.dataset.testCommand;
+            simulateTwitchCommand(
+              button.dataset.testCommand
+            );
+          }
+        );
+      });
 
     updateStartButton();
     renderAdminState();
@@ -1419,6 +1693,7 @@
         true;
     }
 
+    initializeJamDragging();
     applyViewerState();
     beginDriftCorrection();
   }
