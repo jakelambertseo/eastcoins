@@ -19,8 +19,6 @@
     "eastcoinRecentStreamedEventsV1";
   const SERVER_PREFERENCES_KEY =
     "eastcoinServerPreferencesV1";
-  const SERVER_FEEDBACK_KEY =
-    "eastcoinServerFeedbackV1";
   const SHORTCUT_HINT_KEY =
     "eastcoinStreamedShortcutHintV1";
   const CONTINUE_MAX_AGE =
@@ -47,7 +45,6 @@
     continueEvent: loadContinueEvent(),
     recentEvents: loadRecentEvents(),
     serverPreferences: loadServerPreferences(),
-    serverFeedback: loadServerFeedback(),
     currentMatch: null,
     streams: [],
     activeStream: null,
@@ -164,7 +161,8 @@
     );
 
     const serverButton = document.createElement("button");
-    serverButton.className = "toolbar-button";
+    serverButton.className =
+      "toolbar-button streamed-server-selector-button";
     serverButton.id = "streamedServersButton";
     serverButton.type = "button";
     serverButton.hidden = true;
@@ -223,30 +221,6 @@
       serverButton
     );
 
-    const feedbackGroup =
-      document.createElement("span");
-    feedbackGroup.className =
-      "streamed-feedback-group";
-    feedbackGroup.hidden = true;
-    feedbackGroup.innerHTML = `
-      <button
-        class="toolbar-button streamed-feedback-button works"
-        type="button"
-        data-stream-works>
-        ✓ Works
-      </button>
-      <button
-        class="toolbar-button streamed-feedback-button broken"
-        type="button"
-        data-stream-broken>
-        ✕ Broken
-      </button>
-    `;
-    nextServerButton.insertAdjacentElement(
-      "afterend",
-      feedbackGroup
-    );
-
     const gameBreakButton =
       document.createElement("button");
     gameBreakButton.className =
@@ -258,7 +232,7 @@
       "aria-keyshortcuts",
       "G"
     );
-    feedbackGroup.insertAdjacentElement(
+    nextServerButton.insertAdjacentElement(
       "afterend",
       gameBreakButton
     );
@@ -419,13 +393,6 @@
       connectionLabel: connectionStatus.querySelector(
         "[data-connection-label]"
       ),
-      feedbackGroup,
-      worksButton: feedbackGroup.querySelector(
-        "[data-stream-works]"
-      ),
-      brokenButton: feedbackGroup.querySelector(
-        "[data-stream-broken]"
-      ),
       serverButton,
       nextServerButton,
       gameBreakButton,
@@ -461,16 +428,6 @@
     nextServerButton.addEventListener(
       "click",
       () => selectNextStream("manual")
-    );
-
-    bindings.worksButton.addEventListener(
-      "click",
-      () => reportCurrentStream("works")
-    );
-
-    bindings.brokenButton.addEventListener(
-      "click",
-      () => reportCurrentStream("broken")
     );
 
     gameBreakButton.addEventListener(
@@ -865,62 +822,6 @@
         )
       );
     } catch {}
-  }
-
-  function loadServerFeedback() {
-    try {
-      const parsed = JSON.parse(
-        localStorage.getItem(
-          SERVER_FEEDBACK_KEY
-        ) || "{}"
-      );
-
-      return parsed &&
-        typeof parsed === "object"
-        ? parsed
-        : {};
-    } catch {
-      return {};
-    }
-  }
-
-  function saveServerFeedback() {
-    try {
-      localStorage.setItem(
-        SERVER_FEEDBACK_KEY,
-        JSON.stringify(state.serverFeedback)
-      );
-    } catch {}
-  }
-
-  function sourceFeedback(source) {
-    const key = String(source || "")
-      .toLowerCase();
-
-    return state.serverFeedback[key] || {
-      works: 0,
-      broken: 0
-    };
-  }
-
-  function recordServerFeedback(source, kind) {
-    const key = String(source || "")
-      .toLowerCase();
-
-    if (!key) return;
-
-    const current = sourceFeedback(key);
-    state.serverFeedback[key] = {
-      works:
-        Number(current.works || 0) +
-        (kind === "works" ? 1 : 0),
-      broken:
-        Number(current.broken || 0) +
-        (kind === "broken" ? 1 : 0),
-      updatedAt: Date.now()
-    };
-
-    saveServerFeedback();
   }
 
   function isFavoriteTeam(team) {
@@ -2273,9 +2174,6 @@
     const language = String(
       stream.language || ""
     ).toLowerCase();
-    const feedback =
-      sourceFeedback(source);
-
     let score = 0;
 
     if (
@@ -2305,16 +2203,6 @@
     ) {
       score += 24;
     }
-
-    score +=
-      Math.max(
-        -6,
-        Math.min(
-          8,
-          Number(feedback.works || 0) -
-          Number(feedback.broken || 0)
-        )
-      ) * 4;
 
     score -= Number(stream.sourceOrder || 0);
     score -= Number(stream.streamNo || 0) / 100;
@@ -2361,50 +2249,6 @@
 
     player.connectionLabel.textContent =
       label || "Waiting";
-  }
-
-  function reportCurrentStream(kind) {
-    const stream = state.activeStream;
-
-    if (!stream) {
-      toast("No active stream to rate.");
-      return;
-    }
-
-    recordServerFeedback(
-      stream.source,
-      kind
-    );
-
-    if (kind === "works") {
-      state.failedStreamKeys.delete(
-        streamKey(stream)
-      );
-      setConnectionStatus(
-        "connected",
-        "Working"
-      );
-      renderServerPanel();
-      toast(
-        `${sourceLabel(stream.source)} marked as working.`
-      );
-      return;
-    }
-
-    setConnectionStatus(
-      "switching",
-      "Finding another server"
-    );
-    toast(
-      `${sourceLabel(stream.source)} marked as broken.`
-    );
-
-    if (!selectNextStream("reported")) {
-      setConnectionStatus(
-        "attention",
-        "Choose another server"
-      );
-    }
   }
 
   function renderServerPreferences() {
@@ -2756,7 +2600,6 @@
       player.currentHost.textContent =
         "External provider";
       player.nextServerButton.hidden = true;
-      player.feedbackGroup.hidden = true;
       player.gameBreakButton.hidden = true;
       setConnectionStatus("idle", "");
       return;
@@ -2784,7 +2627,6 @@
 
     player.nextServerButton.hidden =
       state.streams.length < 2;
-    player.feedbackGroup.hidden = false;
 
     /*
       Game Break now lives in the centered utility dock as a

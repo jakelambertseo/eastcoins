@@ -493,3 +493,15 @@ COMPACT CONTROLS + INLINE GAME FIT
 - Shared UX CSS and JavaScript were cache-busted to ux8.
 - Streamed CSS was cache-busted to server16.
 - Updated changelog.html.
+
+
+SIMPLIFIED EVENT-ROOM CONTROLS
+- Removed the ✓ Works and ✕ Broken buttons.
+- Removed browser-local Works/Broken feedback storage and scoring.
+- Automatic failure recovery and Try Next Server remain unchanged.
+- Saved provider, language, and quality preferences still influence selection.
+- Try Next Server, Share Room, and Hide Controls now use one neutral style.
+- Server Selector remains the only visually emphasized player action.
+- Connection status remains visible but uses a more restrained treatment.
+- Streamed CSS and JavaScript were cache-busted to server17.
+- Updated changelog.html.
