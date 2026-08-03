@@ -1305,9 +1305,10 @@
   <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux9" />
   <link rel="stylesheet" href="assets/eastcoins-streamed.css?v=server18" />
   <link rel="stylesheet" href="assets/eastcoins-shell.css?v=shell1" />
+  <link rel="stylesheet" href="assets/eastcoins-events-clean.css?v=events1" />
 </head>
 
-<body class="ec-shell-page ec-shell-player">
+<body class="ec-shell-page ec-shell-player ec-events-clean">
   <div class="mobile-overlay" id="mobileOverlay" aria-hidden="true"></div>
 
   <div class="layout">
@@ -1494,18 +1495,18 @@
             <section
               class="streamed-launcher"
               id="streamedLauncher"
-              aria-label="Streamed event browser">
+              aria-label="EastCoin event browser">
               <div class="streamed-launcher-head">
                 <div class="streamed-launcher-copy">
                   <div class="streamed-launcher-kicker">
-                    Streamed event browser
+                    EastCoin events
                   </div>
                   <strong class="streamed-launcher-title">
-                    Watch an event and switch servers
+                    Pick an event
                   </strong>
                   <p class="streamed-launcher-description">
-                    Choose a live event below or paste a Streamed watch URL above.
-                    EastCoin will load every available source and stream.
+                    Live events appear first. Search by team or filter by sport,
+                    then start watching with one click.
                   </p>
                 </div>
 
@@ -1540,12 +1541,15 @@
                     class="streamed-search"
                     id="streamedSearch"
                     type="search"
-                    placeholder="Search events, sports, or sources"
+                    placeholder="Search teams or matchups"
                     aria-label="Search Streamed events">
                   <button
                     class="streamed-refresh"
                     id="streamedRefresh"
-                    type="button">
+                    type="button"
+                    hidden
+                    aria-hidden="true"
+                    tabindex="-1">
                     Refresh
                   </button>
                 </div>
@@ -1647,9 +1651,10 @@
   <section class="streamed-discovery-section">
     <div class="streamed-discovery-section-head">
       <div>
-        <h2 id="streamedListSectionTitle">All live events</h2>
-        <p>Browse every event currently available to watch.</p>
+        <h2 id="streamedListSectionTitle">Events</h2>
+        <p>Live games first, followed by upcoming matchups.</p>
       </div>
+      <a class="streamed-discovery-section-link" href="events.html">View all events →</a>
     </div>
     <div class="ec-event-grid" id="streamedMatchList"></div>
   </section>
@@ -2390,6 +2395,7 @@
   </script>
   <script src="assets/eastcoins-streamed-api.js?v=api2"></script>
   <script src="assets/eastcoins-streamed.js?v=server17"></script>
+  <script src="assets/eastcoins-events-clean.js?v=events1"></script>
   <script src="assets/eastcoins-agreement.js?v=gate2"></script>
 </body>
 </html>

@@ -1,0 +1,388 @@
+/*
+  EastCoin streamlined event browser
+  Version: events1
+  Purpose: keep event selection focused on quick discovery and playback.
+*/
+
+body.ec-events-clean {
+  --ec-events-gap: 10px;
+  --ec-events-radius: 12px;
+}
+
+/* Remove secondary discovery features that duplicate the main event list. */
+body.ec-events-clean #streamedRecentSection,
+body.ec-events-clean #streamedNightSection,
+body.ec-events-clean #streamedPopularSection,
+body.ec-events-clean #streamedFavoriteSection,
+body.ec-events-clean #streamedSoonSection {
+  display: none !important;
+}
+
+/* Manual refresh and routine timestamps add clutter. Errors remain visible. */
+body.ec-events-clean .streamed-refresh {
+  display: none !important;
+}
+
+body.ec-events-clean .streamed-status:not(.error) {
+  display: none !important;
+}
+
+body.ec-events-clean .streamed-status.error {
+  min-height: 0;
+  margin: 8px 0 0;
+  padding: 9px 11px;
+  border: 1px solid rgba(222, 85, 103, .24);
+  border-radius: 9px;
+  background: rgba(96, 15, 27, .18);
+}
+
+/* The browser is now a compact utility instead of a dashboard. */
+body.ec-events-clean .streamed-launcher {
+  padding: 14px;
+  border-color: rgba(201, 164, 79, .15);
+  border-radius: var(--ec-events-radius);
+  background:
+    linear-gradient(180deg, rgba(77, 16, 24, .14), rgba(4, 3, 3, .88));
+}
+
+body.ec-events-clean .streamed-launcher-head {
+  align-items: center;
+  gap: 12px;
+}
+
+body.ec-events-clean .streamed-launcher-title {
+  font-size: .9rem;
+}
+
+body.ec-events-clean .streamed-launcher-description {
+  max-width: 610px;
+  margin-top: 4px;
+}
+
+body.ec-events-clean .streamed-mode-buttons {
+  flex-wrap: nowrap;
+}
+
+body.ec-events-clean .streamed-browser {
+  margin-top: 11px;
+}
+
+body.ec-events-clean .streamed-browser-controls {
+  gap: 0;
+}
+
+body.ec-events-clean .streamed-search {
+  min-height: 40px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: .74rem;
+}
+
+body.ec-events-clean .streamed-discovery-root {
+  display: block;
+  margin-top: 10px;
+}
+
+body.ec-events-clean .streamed-sport-tabs {
+  margin: 0 0 10px;
+  padding: 0 0 4px;
+}
+
+body.ec-events-clean .streamed-sport-tab {
+  min-height: 32px;
+  padding: 6px 10px;
+}
+
+/* Continue Watching remains, but only as a compact resume strip. */
+body.ec-events-clean .streamed-continue-section {
+  margin: 0 0 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+body.ec-events-clean .streamed-continue-section .streamed-discovery-section-head {
+  margin-bottom: 7px;
+}
+
+body.ec-events-clean .streamed-continue-section .streamed-discovery-section-head p {
+  display: none;
+}
+
+body.ec-events-clean .ec-continue-event-card {
+  grid-template-columns: 86px minmax(0, 1fr) auto;
+  gap: 10px;
+  min-height: 86px;
+  border-radius: 10px;
+}
+
+body.ec-events-clean .ec-continue-event-card .ec-event-art {
+  min-height: 86px;
+}
+
+body.ec-events-clean .ec-continue-event-copy {
+  padding: 9px 0;
+}
+
+body.ec-events-clean .ec-continue-event-copy h3 {
+  margin-top: 3px;
+  font-size: .8rem;
+}
+
+body.ec-events-clean .ec-continue-event-copy p {
+  margin-top: 3px;
+  font-size: .58rem;
+}
+
+body.ec-events-clean .ec-continue-event-actions {
+  display: flex;
+  align-items: center;
+  min-width: auto;
+  padding: 9px 10px 9px 0;
+}
+
+body.ec-events-clean .ec-continue-event-actions .ec-event-details,
+body.ec-events-clean .ec-continue-clear {
+  display: none !important;
+}
+
+/* One unified results section. */
+body.ec-events-clean .streamed-discovery-section:last-child {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+body.ec-events-clean .streamed-discovery-section:last-child
+  .streamed-discovery-section-head {
+  align-items: center;
+  margin-bottom: 9px;
+}
+
+body.ec-events-clean .streamed-discovery-section-head h2 {
+  font-size: .88rem;
+}
+
+body.ec-events-clean .streamed-discovery-section-head p {
+  margin-top: 3px;
+  font-size: .62rem;
+}
+
+body.ec-events-clean .ec-event-grid {
+  grid-template-columns: repeat(3, minmax(230px, 1fr));
+  gap: var(--ec-events-gap);
+}
+
+body.ec-events-clean .ec-event-card,
+body.ec-events-clean .ec-event-card-feature,
+body.ec-events-clean .ec-event-card-compact {
+  grid-template-columns: 88px minmax(0, 1fr);
+  min-height: 118px;
+  border-radius: 10px;
+  box-shadow: 0 7px 18px rgba(0, 0, 0, .2);
+}
+
+body.ec-events-clean .ec-event-art {
+  min-height: 118px;
+}
+
+body.ec-events-clean .ec-event-card-body {
+  padding: 9px 10px;
+}
+
+body.ec-events-clean .ec-event-tags {
+  gap: 4px;
+  margin-bottom: 5px;
+}
+
+body.ec-events-clean .ec-event-tag {
+  min-height: 18px;
+  padding: 2px 6px;
+  font-size: .47rem;
+}
+
+body.ec-events-clean .ec-event-card h3 {
+  font-size: .72rem;
+  line-height: 1.24;
+}
+
+body.ec-events-clean .ec-event-teams {
+  gap: 2px;
+  margin-top: 5px;
+}
+
+body.ec-events-clean .ec-event-team-line {
+  gap: 5px;
+  font-size: .58rem;
+}
+
+body.ec-events-clean .ec-team-badge-tiny {
+  width: 19px;
+  height: 19px;
+  flex-basis: 19px;
+}
+
+/* Favorite-team management and duplicate detail actions are not part of quick selection. */
+body.ec-events-clean .ec-team-favorite,
+body.ec-events-clean .ec-event-details {
+  display: none !important;
+}
+
+body.ec-events-clean .ec-event-meta {
+  gap: 4px 7px;
+  padding-top: 5px;
+  font-size: .51rem;
+}
+
+body.ec-events-clean .ec-event-meta span:last-child {
+  display: none;
+}
+
+body.ec-events-clean .ec-event-actions {
+  margin-top: 6px;
+}
+
+body.ec-events-clean .ec-event-watch {
+  min-height: 28px;
+  padding: 5px 8px;
+  font-size: .56rem;
+}
+
+/* Homepage: show a useful sample, then send users to the full Events page. */
+body.ec-events-clean #streamedDiscoveryRoot[data-context="player"]
+  #streamedMatchList .ec-event-card:nth-child(n + 7) {
+  display: none;
+}
+
+body.ec-events-clean #streamedDiscoveryRoot[data-context="player"]
+  .ec-event-grid {
+  grid-template-columns: repeat(2, minmax(250px, 1fr));
+}
+
+body.ec-events-clean .url-card.streamed-directory-open > .quick-favorites {
+  display: none;
+}
+
+/* Events page: remove the duplicate hero-like launcher heading. */
+body.ec-events-clean.ec-shell-content .page-main {
+  padding-top: 22px;
+}
+
+body.ec-events-clean.ec-shell-content .page-header {
+  padding: 24px 0 18px;
+}
+
+body.ec-events-clean.ec-shell-content .page-header h1 {
+  margin: 8px 0 6px;
+  font-size: clamp(2.1rem, 4vw, 3.8rem);
+  line-height: .96;
+}
+
+body.ec-events-clean.ec-shell-content .page-header p {
+  max-width: 700px;
+  line-height: 1.5;
+}
+
+body.ec-events-clean .ec-events-page-shell {
+  padding: 14px 0 42px;
+}
+
+body.ec-events-clean .ec-events-page-shell .streamed-launcher {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+body.ec-events-clean .ec-events-page-shell .streamed-launcher-copy {
+  display: none;
+}
+
+body.ec-events-clean .ec-events-page-shell .streamed-launcher-head {
+  justify-content: flex-start;
+}
+
+body.ec-events-clean .ec-events-page-shell .streamed-browser {
+  margin-top: 10px;
+}
+
+@media (max-width: 1180px) {
+  body.ec-events-clean .ec-event-grid {
+    grid-template-columns: repeat(2, minmax(230px, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  body.ec-events-clean .streamed-launcher-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  body.ec-events-clean .streamed-mode-buttons {
+    width: 100%;
+  }
+
+  body.ec-events-clean .streamed-mode-button {
+    flex: 1;
+  }
+
+  body.ec-events-clean .ec-event-grid,
+  body.ec-events-clean #streamedDiscoveryRoot[data-context="player"]
+    .ec-event-grid {
+    grid-template-columns: 1fr;
+  }
+
+  body.ec-events-clean .ec-continue-event-card {
+    grid-template-columns: 78px minmax(0, 1fr) auto;
+  }
+
+  body.ec-events-clean .ec-continue-event-card .ec-event-art {
+    min-height: 82px;
+  }
+
+  body.ec-events-clean .ec-continue-event-actions {
+    grid-column: auto;
+    width: auto;
+    padding: 8px 8px 8px 0;
+  }
+}
+
+@media (max-width: 520px) {
+  body.ec-events-clean .streamed-launcher {
+    padding: 11px;
+  }
+
+  body.ec-events-clean .streamed-launcher-description {
+    display: none;
+  }
+
+  body.ec-events-clean .ec-continue-event-card {
+    grid-template-columns: 70px minmax(0, 1fr);
+  }
+
+  body.ec-events-clean .ec-continue-event-actions {
+    grid-column: 1 / -1;
+    justify-content: stretch;
+    padding: 0 8px 8px;
+  }
+
+  body.ec-events-clean .ec-continue-event-actions .ec-event-watch {
+    width: 100%;
+  }
+
+  body.ec-events-clean .ec-event-card,
+  body.ec-events-clean .ec-event-card-feature,
+  body.ec-events-clean .ec-event-card-compact {
+    grid-template-columns: 78px minmax(0, 1fr);
+  }
+}
+
+body.ec-events-clean .ec-event-card-selectable {
+  cursor: pointer;
+}
+
+body.ec-events-clean .ec-event-card-selectable:focus-visible {
+  border-color: rgba(237, 208, 124, .48);
+  outline: 2px solid rgba(237, 208, 124, .2);
+  outline-offset: 2px;
+}
