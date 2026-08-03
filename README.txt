@@ -505,3 +505,15 @@ SIMPLIFIED EVENT-ROOM CONTROLS
 - Connection status remains visible but uses a more restrained treatment.
 - Streamed CSS and JavaScript were cache-busted to server17.
 - Updated changelog.html.
+
+
+COLLAPSED PLAYER CONTROLS FIX
+- The collapsed event toolbar now displays only Show controls.
+- Connection status and every other toolbar item are force-hidden while
+  controls are collapsed.
+- Compact event-room sizing can no longer override the collapsed toolbar.
+- The visible Show controls button receives its own high stacking layer and
+  pointer access above the iframe.
+- When the desktop server drawer is open, the button remains beside it.
+- Streamed CSS was cache-busted from server17 to server18.
+- Updated changelog.html.

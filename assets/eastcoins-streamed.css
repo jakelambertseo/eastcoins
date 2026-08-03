@@ -2575,3 +2575,135 @@ body.ec-theater-mode
   color:#aad8b9;
   background:#07100a;
 }
+
+
+/* ================================================================
+   COLLAPSED PLAYER CONTROLS CLICK FIX
+   ================================================================ */
+
+.player-toolbar.streamed-room-toolbar.collapsed{
+  position:absolute!important;
+  inset:8px 8px auto auto!important;
+  z-index:96!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:none!important;
+  height:auto!important;
+  min-height:0!important;
+  display:block!important;
+  padding:0!important;
+  gap:0!important;
+  overflow:visible!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  pointer-events:none!important;
+}
+
+.player-toolbar.streamed-room-toolbar.collapsed
+  .toolbar-title{
+  display:none!important;
+}
+
+.player-toolbar.streamed-room-toolbar.collapsed
+  .toolbar-actions{
+  width:auto!important;
+  min-width:0!important;
+  max-width:none!important;
+  height:auto!important;
+  display:flex!important;
+  flex:0 0 auto!important;
+  align-items:center!important;
+  margin:0!important;
+  padding:0!important;
+  gap:0!important;
+  overflow:visible!important;
+  pointer-events:auto!important;
+}
+
+.player-toolbar.streamed-room-toolbar.collapsed
+  .toolbar-actions
+  > *{
+  display:none!important;
+}
+
+.player-toolbar.streamed-room-toolbar.collapsed
+  .toolbar-actions
+  > .toolbar-collapse-button{
+  position:relative!important;
+  z-index:97!important;
+  width:auto!important;
+  min-width:max-content!important;
+  min-height:30px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:6px 9px!important;
+  border:1px solid
+    rgba(201,164,79,.24)!important;
+  border-radius:8px!important;
+  color:#eee2ca!important;
+  background:
+    rgba(8,8,7,.94)!important;
+  background-image:none!important;
+  box-shadow:
+    0 8px 24px rgba(0,0,0,.58),
+    inset 0 1px 0
+      rgba(255,255,255,.04)!important;
+  font-size:.54rem!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  opacity:1!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+  cursor:pointer!important;
+  transform:none!important;
+  backdrop-filter:blur(12px);
+}
+
+.player-toolbar.streamed-room-toolbar.collapsed
+  .toolbar-actions
+  > .toolbar-collapse-button:hover,
+.player-toolbar.streamed-room-toolbar.collapsed
+  .toolbar-actions
+  > .toolbar-collapse-button:focus-visible{
+  border-color:
+    rgba(226,196,108,.52)!important;
+  color:#fff0c3!important;
+  background:
+    rgba(20,18,14,.98)!important;
+  outline:0;
+}
+
+/*
+  Keep the compact handle beside the desktop server drawer rather
+  than allowing it to sit underneath the drawer.
+*/
+.player-shell.streamed-server-open
+  > .player-toolbar.streamed-room-toolbar.collapsed{
+  right:
+    calc(
+      var(--streamed-server-drawer-space)
+      + 10px
+    )!important;
+}
+
+@media(max-width:1100px){
+  .player-shell.streamed-server-open
+    > .player-toolbar.streamed-room-toolbar.collapsed{
+    right:8px!important;
+  }
+}
+
+@media(max-width:600px){
+  .player-toolbar.streamed-room-toolbar.collapsed{
+    inset:6px 6px auto auto!important;
+  }
+
+  .player-toolbar.streamed-room-toolbar.collapsed
+    .toolbar-actions
+    > .toolbar-collapse-button{
+    min-height:28px!important;
+    padding:5px 8px!important;
+    font-size:.5rem!important;
+  }
+}
