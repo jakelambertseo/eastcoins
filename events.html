@@ -829,7 +829,29 @@
 
 </style>
   <link rel="stylesheet" href="assets/eastcoins-shell.css?v=shell1" />
-  <link rel="stylesheet" href="assets/eastcoins-events-clean.css?v=events1" />
+  <script>
+    (() => {
+      const version = "events2";
+      const storageKey = "eastcoinEventsUiVersion";
+
+      try {
+        if (localStorage.getItem(storageKey) !== version) {
+          localStorage.setItem(storageKey, version);
+
+          if ("caches" in window) {
+            caches.keys()
+              .then((keys) => Promise.all(
+                keys
+                  .filter((key) => /eastcoin/i.test(key))
+                  .map((key) => caches.delete(key))
+              ))
+              .catch(() => {});
+          }
+        }
+      } catch {}
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/eastcoins-events-clean.css?v=events2" />
 </head>
 
 <body class="ec-shell-page ec-shell-content ec-events-clean">
@@ -1259,7 +1281,7 @@
   </script>
   <script src="assets/eastcoins-streamed-api.js?v=api2"></script>
 <script src="assets/eastcoins-streamed.js?v=server17"></script>
-  <script src="assets/eastcoins-events-clean.js?v=events1"></script>
+  <script src="assets/eastcoins-events-clean-v2.js?v=events2"></script>
 <script src="assets/eastcoins-agreement.js?v=gate2"></script>
 </body>
 </html>

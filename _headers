@@ -4,3 +4,12 @@
 
 /assets/*
   Cache-Control: no-cache, must-revalidate
+
+/index.html
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/events.html
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-events-clean-v2.js
+  Cache-Control: no-store, max-age=0, must-revalidate
