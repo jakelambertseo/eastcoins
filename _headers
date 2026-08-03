@@ -13,3 +13,9 @@
 
 /assets/eastcoins-events-clean-v2.js
   Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-events-directory.js
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-events-directory.css
+  Cache-Control: no-store, max-age=0, must-revalidate

@@ -1,0 +1,397 @@
+/*
+  EastCoin categorized Events directory
+  Version: directory1
+  Purpose: preserve fast filters while grouping the full Events page by sport.
+*/
+
+body.ec-events-directory {
+  --ec-directory-gap: 12px;
+  --ec-directory-card-height: 126px;
+  --ec-directory-art-width: 106px;
+}
+
+body.ec-events-directory.ec-shell-content .page-main {
+  padding-top: 16px;
+}
+
+body.ec-events-directory.ec-shell-content .page-header {
+  padding: 20px 0 16px;
+}
+
+body.ec-events-directory.ec-shell-content .page-header h1 {
+  margin: 7px 0 5px;
+  font-size: clamp(2rem, 4vw, 3.45rem);
+}
+
+body.ec-events-directory.ec-shell-content .page-header p {
+  max-width: 760px;
+  color: #948879;
+  font-size: .8rem;
+}
+
+body.ec-events-directory .ec-events-page-shell {
+  padding-top: 12px;
+}
+
+/* Compact filter bar inspired by a traditional sports directory. */
+body.ec-events-directory .streamed-launcher-head {
+  position: sticky;
+  top: -1px;
+  z-index: 12;
+  display: flex;
+  justify-content: flex-end;
+  padding: 9px;
+  border: 1px solid rgba(201, 164, 79, .14);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(28, 13, 15, .98), rgba(8, 5, 5, .98));
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .3);
+  backdrop-filter: blur(14px);
+}
+
+body.ec-events-directory .streamed-mode-buttons {
+  margin-left: auto;
+}
+
+body.ec-events-directory .streamed-mode-button {
+  min-height: 34px;
+  padding: 7px 12px;
+  color: #cfc1aa;
+  font-size: .66rem;
+}
+
+body.ec-events-directory .streamed-mode-button.active {
+  color: #fff0bd;
+  box-shadow: inset 0 0 0 1px rgba(237, 208, 124, .15);
+}
+
+body.ec-events-directory .streamed-browser {
+  margin-top: 10px;
+}
+
+body.ec-events-directory .streamed-browser-controls {
+  margin-bottom: 8px;
+}
+
+body.ec-events-directory .streamed-search {
+  min-height: 42px;
+  border-color: rgba(201, 164, 79, .18);
+  background: rgba(7, 4, 4, .92);
+}
+
+body.ec-events-directory .streamed-sport-tabs {
+  position: sticky;
+  top: 54px;
+  z-index: 11;
+  gap: 7px;
+  margin: 0 0 18px;
+  padding: 8px;
+  border: 1px solid rgba(201, 164, 79, .12);
+  border-radius: 12px;
+  background: rgba(5, 3, 3, .96);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .24);
+  backdrop-filter: blur(14px);
+}
+
+body.ec-events-directory .streamed-sport-tab {
+  min-height: 34px;
+  padding: 7px 11px;
+  border-color: rgba(201, 164, 79, .12);
+  color: #b8aa95;
+  background: #0a0707;
+}
+
+body.ec-events-directory .streamed-sport-tab:hover,
+body.ec-events-directory .streamed-sport-tab:focus-visible,
+body.ec-events-directory .streamed-sport-tab.active {
+  border-color: rgba(237, 208, 124, .4);
+  color: #ffe7a0;
+  background:
+    linear-gradient(180deg, rgba(101, 22, 32, .92), rgba(40, 8, 13, .98));
+}
+
+body.ec-events-directory .streamed-continue-section {
+  margin-bottom: 18px;
+}
+
+body.ec-events-directory .streamed-discovery-section:last-child
+  > .streamed-discovery-section-head {
+  display: none;
+}
+
+body.ec-events-directory #streamedMatchList.ec-event-category-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+body.ec-events-directory .ec-event-category {
+  min-width: 0;
+}
+
+body.ec-events-directory .ec-event-category-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+body.ec-events-directory .ec-event-category-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border: 1px solid rgba(201, 164, 79, .2);
+  border-radius: 11px;
+  color: #ffe19a;
+  background:
+    radial-gradient(circle at 35% 20%, rgba(147, 32, 45, .45), transparent 56%),
+    #10090a;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035);
+  font-size: 1rem;
+}
+
+body.ec-events-directory .ec-event-category-copy {
+  min-width: 0;
+}
+
+body.ec-events-directory .ec-event-category-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+body.ec-events-directory .ec-event-category-title {
+  margin: 0;
+  color: #f4ead6;
+  font-size: 1rem;
+  font-weight: 950;
+  letter-spacing: -.025em;
+}
+
+body.ec-events-directory .ec-event-category-count {
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  min-height: 20px;
+  padding: 2px 6px;
+  border: 1px solid rgba(201, 164, 79, .12);
+  border-radius: 999px;
+  color: #9e907a;
+  background: rgba(255, 255, 255, .025);
+  font-size: .54rem;
+  font-weight: 900;
+}
+
+body.ec-events-directory .ec-event-category-rule {
+  width: 64px;
+  height: 2px;
+  margin-top: 7px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, #c9a44f 0 34%, #9d2032 34% 72%, transparent 72%);
+}
+
+body.ec-events-directory .ec-event-category-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ec-directory-gap);
+}
+
+/* Matchup cards retain API artwork and logos but become much faster to scan. */
+body.ec-events-directory .ec-event-category-grid .ec-event-card,
+body.ec-events-directory .ec-event-category-grid .ec-event-card-feature,
+body.ec-events-directory .ec-event-category-grid .ec-event-card-compact {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--ec-directory-art-width) minmax(0, 1fr);
+  min-height: var(--ec-directory-card-height);
+  overflow: hidden;
+  border: 1px solid rgba(201, 164, 79, .13);
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, rgba(57, 12, 18, .2), transparent 52%),
+    linear-gradient(180deg, #100b0b, #060404);
+  box-shadow:
+    0 9px 24px rgba(0, 0, 0, .3),
+    inset 0 1px 0 rgba(255, 255, 255, .025);
+  transition:
+    border-color .16s ease,
+    transform .16s ease,
+    box-shadow .16s ease;
+}
+
+body.ec-events-directory .ec-event-category-grid .ec-event-card:hover,
+body.ec-events-directory .ec-event-category-grid .ec-event-card:focus-visible {
+  border-color: rgba(237, 208, 124, .38);
+  box-shadow:
+    0 13px 30px rgba(0, 0, 0, .36),
+    0 0 0 1px rgba(122, 28, 39, .2);
+  transform: translateY(-2px);
+}
+
+body.ec-events-directory .ec-event-category-grid .ec-event-art {
+  min-height: var(--ec-directory-card-height);
+  border-right: 1px solid rgba(201, 164, 79, .09);
+  background:
+    radial-gradient(circle at 50% 32%, rgba(121, 25, 37, .62), rgba(8, 5, 5, .98) 70%);
+}
+
+body.ec-events-directory .ec-event-category-grid .ec-event-poster {
+  opacity: .48;
+  filter: saturate(.9) contrast(1.05);
+}
+
+body.ec-events-directory .ec-event-category-grid .ec-event-art-shade {
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, .08), rgba(0, 0, 0, .44)),
+    linear-gradient(180deg, rgba(0, 0, 0, .04), rgba(0, 0, 0, .7));
+}
+
+body.ec-events-directory .ec-event-category-grid .ec-matchup-badges {
+  gap: 5px;
+  padding: 7px;
+}
+
+body.ec-events-directory .ec-event-category-grid .ec-team-badge-medium {
+  width: 38px;
+  height: 38px;
+  flex-basis: 38px;
+}
+
+body.ec-events-directory .ec-event-category-grid .ec-event-initials {
+  width: 45px;
+  height: 45px;
+  font-size: .67rem;
+}
+
+body.ec-events-directory .ec-event-category-grid .ec-event-card-body {
+  justify-content: center;
+  padding: 12px 12px 10px;
+}
+
+body.ec-events-directory .ec-event-category-grid .ec-event-tags {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  z-index: 5;
+  margin: 0;
+}
+
+body.ec-events-directory .ec-event-category-grid
+  .ec-event-tag:not(.ec-event-tag-live):not(.ec-event-tag-countdown) {
+  display: none;
+}
+
+body.ec-events-directory .ec-event-category-grid .ec-event-tag {
+  min-height: 21px;
+  padding: 3px 7px;
+  border-color: rgba(237, 208, 124, .2);
+  color: #f8df98;
+  background: rgba(8, 5, 5, .9);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .35);
+  font-size: .52rem;
+}
+
+body.ec-events-directory .ec-event-category-grid .ec-event-tag-live {
+  border-color: rgba(255, 92, 110, .5);
+  color: #fff2f3;
+  background: #a71931;
+}
+
+body.ec-events-directory .ec-event-category-grid .ec-event-card h3 {
+  margin: 0;
+  color: #f1e6d1;
+  font-size: .76rem;
+  line-height: 1.28;
+}
+
+body.ec-events-directory .ec-event-category-grid .ec-event-teams {
+  gap: 4px;
+  margin-top: 7px;
+}
+
+body.ec-events-directory .ec-event-category-grid .ec-event-team-line {
+  gap: 6px;
+  color: #c7baa5;
+  font-size: .61rem;
+}
+
+body.ec-events-directory .ec-event-category-grid .ec-event-team-line .ec-team-badge-small {
+  width: 23px;
+  height: 23px;
+  flex-basis: 23px;
+}
+
+body.ec-events-directory .ec-event-category-grid .ec-event-meta {
+  margin-top: 7px;
+  padding-top: 0;
+  color: #847767;
+  font-size: .54rem;
+}
+
+body.ec-events-directory .ec-event-category-grid .ec-event-actions {
+  display: none;
+}
+
+body.ec-events-directory .ec-event-category-grid .ec-event-card::after {
+  content: "›";
+  position: absolute;
+  right: 9px;
+  bottom: 7px;
+  color: rgba(201, 164, 79, .5);
+  font-size: 1rem;
+  font-weight: 900;
+  transition: color .16s ease, transform .16s ease;
+}
+
+body.ec-events-directory .ec-event-category-grid .ec-event-card:hover::after,
+body.ec-events-directory .ec-event-category-grid .ec-event-card:focus-visible::after {
+  color: #f0cf79;
+  transform: translateX(2px);
+}
+
+@media (max-width: 1180px) {
+  body.ec-events-directory .ec-event-category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  body.ec-events-directory .streamed-launcher-head,
+  body.ec-events-directory .streamed-sport-tabs {
+    position: static;
+  }
+
+  body.ec-events-directory .streamed-launcher-head {
+    padding: 8px;
+  }
+
+  body.ec-events-directory .streamed-mode-buttons {
+    width: 100%;
+  }
+
+  body.ec-events-directory .ec-event-category-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  body.ec-events-directory {
+    --ec-directory-art-width: 88px;
+    --ec-directory-card-height: 118px;
+  }
+
+  body.ec-events-directory .ec-event-category-grid .ec-event-card-body {
+    padding-right: 10px;
+  }
+
+  body.ec-events-directory .ec-event-category-grid .ec-event-card h3 {
+    font-size: .71rem;
+  }
+
+  body.ec-events-directory .ec-event-category-grid .ec-event-team-line {
+    font-size: .57rem;
+  }
+}
