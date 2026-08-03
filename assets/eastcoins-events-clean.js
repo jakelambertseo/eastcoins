@@ -7,30 +7,58 @@
     return;
   }
 
+  let enhancementFrame = 0;
+
   function normalizeBrowserCopy() {
-    document.querySelectorAll(".streamed-empty").forEach((element) => {
-      element.textContent = element.textContent.replace(
+    root.querySelectorAll(".streamed-empty").forEach((element) => {
+      const currentText = element.textContent || "";
+      const updatedText = currentText.replace(
         "Try Refresh in a moment.",
         "Try again in a moment."
       );
+
+      /*
+        Only touch the DOM when the copy actually changes. The previous
+        version assigned textContent on every MutationObserver callback,
+        which created another child-list mutation and could trap the event
+        browser in a continuous render loop.
+      */
+      if (updatedText !== currentText) {
+        element.textContent = updatedText;
+      }
     });
   }
 
   function prepareEventCards() {
     root.querySelectorAll(".ec-event-card").forEach((card) => {
-      card.classList.add("ec-event-card-selectable");
+      if (!card.classList.contains("ec-event-card-selectable")) {
+        card.classList.add("ec-event-card-selectable");
+      }
 
       if (!card.hasAttribute("tabindex")) {
         card.tabIndex = 0;
       }
 
-      card.setAttribute("role", "group");
+      if (!card.hasAttribute("role")) {
+        card.setAttribute("role", "group");
+      }
     });
   }
 
   function refreshEnhancements() {
+    enhancementFrame = 0;
     normalizeBrowserCopy();
     prepareEventCards();
+  }
+
+  function scheduleEnhancements() {
+    if (enhancementFrame) {
+      return;
+    }
+
+    enhancementFrame = window.requestAnimationFrame(
+      refreshEnhancements
+    );
   }
 
   root.addEventListener("click", (event) => {
@@ -64,11 +92,25 @@
     watchButton.click();
   });
 
-  const observer = new MutationObserver(refreshEnhancements);
+  const observer = new MutationObserver(scheduleEnhancements);
+
   observer.observe(root, {
     childList: true,
     subtree: true
   });
 
-  refreshEnhancements();
+  window.addEventListener(
+    "pagehide",
+    () => {
+      observer.disconnect();
+
+      if (enhancementFrame) {
+        window.cancelAnimationFrame(enhancementFrame);
+        enhancementFrame = 0;
+      }
+    },
+    { once: true }
+  );
+
+  scheduleEnhancements();
 })();
