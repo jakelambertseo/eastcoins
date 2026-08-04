@@ -19,6 +19,17 @@
     return;
   }
 
+  /*
+    The persistent shell owns navigation and no longer uses the legacy
+    sitewide settings dock. Remove any stale controls restored from browser
+    back/forward cache before initializing the shell.
+  */
+  document
+    .querySelectorAll(
+      ".ec-settings-only-button, .ec-utility-dock, #ecSettingsModal, .ec-settings-modal"
+    )
+    .forEach((element) => element.remove());
+
   const SIDEBAR_STORAGE_KEY = "eastcoinsSidebarCollapsed";
   const CHAT_WIDTH_STORAGE_KEY = "eastcoinsChatWidthV2";
   const DEFAULT_CHAT_WIDTH = 360;
@@ -80,17 +91,28 @@
     updateNavigationButton();
   }
 
-  mobileMenu.addEventListener("click", () => {
-    if (isMobileNavigation()) {
-      body.classList.toggle("menu-open");
-      updateNavigationButton();
-      return;
-    }
+  mobileMenu.addEventListener(
+    "click",
+    (event) => {
+      /*
+        Capture the toggle before any legacy page script can also react to
+        the same button and immediately undo the sidebar state change.
+      */
+      event.preventDefault();
+      event.stopImmediatePropagation();
 
-    setDesktopSidebarCollapsed(
-      !body.classList.contains("sidebar-collapsed")
-    );
-  });
+      if (isMobileNavigation()) {
+        body.classList.toggle("menu-open");
+        updateNavigationButton();
+        return;
+      }
+
+      setDesktopSidebarCollapsed(
+        !body.classList.contains("sidebar-collapsed")
+      );
+    },
+    true
+  );
 
   mobileOverlay.addEventListener("click", () => {
     body.classList.remove("menu-open");
