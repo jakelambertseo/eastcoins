@@ -50,3 +50,11 @@
 /assets/eastcoins-view-bridge.js
   Cache-Control: no-store, max-age=0, must-revalidate
 
+/emote-help.html
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-persistent-shell.js
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-emote-help.css
+  Cache-Control: no-store, max-age=0, must-revalidate

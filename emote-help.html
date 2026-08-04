@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    (() => {
+      const parameters = new URLSearchParams(window.location.search);
+      if (parameters.get("shell") === "1" && window.parent !== window) {
+        document.documentElement.classList.add("ec-embedded-view");
+      }
+    })();
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+  <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+  <meta
+    name="description"
+    content="EastCoin guide for enabling BetterTTV and 7TV emotes in embedded Twitch chat." />
+  <title>Emote Help | EastCoin</title>
+
+  <link rel="icon" type="image/png" href="assets/eastcoin-favicon.png" />
+  <link rel="shortcut icon" href="assets/eastcoin-favicon.png" />
+  <link rel="apple-touch-icon" href="assets/eastcoin-favicon.png" />
+
+  <link rel="stylesheet" href="assets/eastcoins-theme.css?v=theme9" />
+  <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux9" />
+  <link rel="stylesheet" href="assets/eastcoins-embedded-view.css?v=embedded1" />
+  <link rel="stylesheet" href="assets/eastcoins-emote-help.css?v=emotes1" />
+</head>
+
+<body class="ec-emote-help-page" data-ec-view="emotes">
+  <main class="page-main">
+    <div class="page-shell ec-emote-guide">
+      <a class="ec-help-back" href="index.html?view=player" target="_top">
+        ← Back to EastCoin
+      </a>
+
+      <header class="ec-help-hero">
+        <div class="ec-help-eyebrow">
+          <span aria-hidden="true"></span>
+          Twitch chat setup
+        </div>
+        <h1>Make the emotes show.</h1>
+        <p>
+          EastCoin now keeps Twitch chat mounted while you move between the
+          Live Player and Events. That prevents chat reconnects, but your
+          browser extension still has to load inside Twitch's embedded chat.
+        </p>
+      </header>
+
+      <section class="ec-help-notice" aria-labelledby="emote-recommendation">
+        <div class="ec-help-notice-icon" aria-hidden="true">✓</div>
+        <div>
+          <span class="ec-help-kicker">Recommended for EastCoin</span>
+          <h2 id="emote-recommendation">Use BetterTTV for both BTTV and 7TV emotes</h2>
+          <p>
+            BetterTTV includes separate provider switches for
+            <strong>BetterTTV Emotes</strong> and <strong>7TV Emotes</strong>.
+            This is usually the simplest setup for an embedded Twitch chat.
+          </p>
+        </div>
+      </section>
+
+      <div class="ec-help-provider-grid">
+        <section class="ec-provider-card ec-provider-bttv" aria-labelledby="bttv-heading">
+          <div class="ec-provider-head">
+            <div class="ec-provider-logo" aria-hidden="true">BTTV</div>
+            <div>
+              <span>Best EastCoin option</span>
+              <h2 id="bttv-heading">BetterTTV setup</h2>
+            </div>
+          </div>
+
+          <ol class="ec-help-steps">
+            <li>
+              <strong>Install BetterTTV.</strong>
+              <span>
+                Use the official extension from
+                <a href="https://betterttv.com/" target="_blank" rel="noopener noreferrer">betterttv.com</a>.
+              </span>
+            </li>
+            <li>
+              <strong>Open Twitch directly once.</strong>
+              <span>
+                Visit any normal Twitch channel in the same browser and make
+                sure BetterTTV appears in the chat settings or user menu.
+              </span>
+            </li>
+            <li>
+              <strong>Open BetterTTV Settings.</strong>
+              <span>
+                Use Twitch's chat settings gear or the BetterTTV entry in the
+                Twitch user menu.
+              </span>
+            </li>
+            <li>
+              <strong>Go to Emotes → Emote Providers.</strong>
+              <span>Turn on all of the following:</span>
+              <ul>
+                <li>BetterTTV Emotes</li>
+                <li>7TV Emotes</li>
+                <li>Animated Emotes</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Allow Twitch site access.</strong>
+              <span>
+                In Chrome or Edge, open the extension's Details page and make
+                sure Site access includes <code>twitch.tv</code>. In Firefox,
+                confirm the extension is enabled and has Twitch permissions.
+              </span>
+            </li>
+            <li>
+              <strong>Reload EastCoin one time.</strong>
+              <span>
+                After that reload, moving between Live Player and Events will
+                no longer recreate the Twitch chat iframe.
+              </span>
+            </li>
+          </ol>
+
+          <div class="ec-provider-tip">
+            You do not need the separate 7TV extension when BetterTTV's
+            <strong>7TV Emotes</strong> provider is working.
+          </div>
+        </section>
+
+        <section class="ec-provider-card ec-provider-seventv" aria-labelledby="seventv-heading">
+          <div class="ec-provider-head">
+            <div class="ec-provider-logo" aria-hidden="true">7TV</div>
+            <div>
+              <span>Official extension</span>
+              <h2 id="seventv-heading">7TV setup</h2>
+            </div>
+          </div>
+
+          <ol class="ec-help-steps">
+            <li>
+              <strong>Install the official 7TV extension.</strong>
+              <span>
+                Download it through
+                <a href="https://7tv.app/" target="_blank" rel="noopener noreferrer">7tv.app</a>.
+              </span>
+            </li>
+            <li>
+              <strong>Verify it on Twitch first.</strong>
+              <span>
+                Open a normal Twitch channel and confirm that 7TV emotes and
+                the 7TV controls appear there.
+              </span>
+            </li>
+            <li>
+              <strong>Check browser permissions.</strong>
+              <span>
+                Make sure the extension is enabled and allowed to read and
+                change data on <code>twitch.tv</code>.
+              </span>
+            </li>
+            <li>
+              <strong>Return to EastCoin and reload once.</strong>
+              <span>Test a known 7TV emote code in the embedded chat.</span>
+            </li>
+          </ol>
+
+          <div class="ec-provider-warning">
+            <strong>Still seeing plain text?</strong>
+            The current official 7TV extension may not inject into every
+            embedded Twitch iframe. That is an extension/embed limitation,
+            not an EastCoin setting. Use the BetterTTV method and enable its
+            <strong>7TV Emotes</strong> provider instead.
+          </div>
+        </section>
+      </div>
+
+      <section class="ec-help-troubleshooting" aria-labelledby="troubleshooting-heading">
+        <div class="ec-help-section-heading">
+          <span>Quick checks</span>
+          <h2 id="troubleshooting-heading">If emotes still show as words</h2>
+        </div>
+
+        <div class="ec-troubleshooting-grid">
+          <article>
+            <span aria-hidden="true">1</span>
+            <h3>Test on Twitch</h3>
+            <p>
+              Open the same channel directly on Twitch. If the emotes fail
+              there too, the issue is with the extension or its settings.
+            </p>
+          </article>
+          <article>
+            <span aria-hidden="true">2</span>
+            <h3>Use one provider</h3>
+            <p>
+              Temporarily disable the official 7TV extension and let
+              BetterTTV provide both BTTV and 7TV emotes to rule out conflicts.
+            </p>
+          </article>
+          <article>
+            <span aria-hidden="true">3</span>
+            <h3>Check blockers</h3>
+            <p>
+              Temporarily test with privacy or ad-blocking extensions disabled
+              for Twitch, BetterTTV, and 7TV domains.
+            </p>
+          </article>
+          <article>
+            <span aria-hidden="true">4</span>
+            <h3>Desktop browsers</h3>
+            <p>
+              Standard Chrome, Edge, and Firefox extensions generally do not
+              run inside mobile browsers or the Twitch mobile app.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="ec-help-summary">
+        <div>
+          <span class="ec-help-kicker">The reliable EastCoin recipe</span>
+          <h2>BetterTTV + both provider switches + one reload</h2>
+          <p>
+            Once the extension has initialized, EastCoin's persistent shell
+            keeps that same Twitch chat iframe alive while you browse events.
+          </p>
+        </div>
+        <a href="index.html?view=player" target="_top">Return to Live Player →</a>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      const embedded =
+        new URLSearchParams(window.location.search).get("shell") === "1" &&
+        window.parent !== window;
+
+      if (embedded) {
+        window.parent.postMessage(
+          { type: "eastcoin:view-ready", view: "emotes" },
+          window.location.origin
+        );
+      }
+    })();
+  </script>
+</body>
+</html>

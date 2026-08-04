@@ -230,12 +230,14 @@
     const eventDetail = parameters.get("eventDetail");
     const pathView = /\/events\/?$/i.test(url.pathname)
       ? "events"
-      : /\/watch\/?$/i.test(url.pathname)
-        ? "player"
-        : "";
+      : /\/emotes\/?$/i.test(url.pathname)
+        ? "emotes"
+        : /\/watch\/?$/i.test(url.pathname)
+          ? "player"
+          : "";
     const view = hasPlayerParameter
       ? "player"
-      : ["player", "events"].includes(requestedView)
+      : ["player", "events", "emotes"].includes(requestedView)
         ? requestedView
         : pathView || "player";
 
@@ -260,6 +262,8 @@
       if (childParameters.has("event")) {
         clean.set("eventDetail", childParameters.get("event"));
       }
+    } else if (view === "emotes") {
+      clean.set("view", "emotes");
     } else {
       const playerNames = [
         "event",
@@ -283,10 +287,13 @@
   }
 
   function childUrl(view, parameters) {
-    const url = new URL(
-      view === "events" ? "events.html" : "player.html",
-      window.location.href
-    );
+    const filename =
+      view === "events"
+        ? "events.html"
+        : view === "emotes"
+          ? "emote-help.html"
+          : "player.html";
+    const url = new URL(filename, window.location.href);
     url.search = parameters.toString();
     return url.href;
   }
@@ -304,7 +311,9 @@
     viewLoaderLabel.textContent =
       view === "events"
         ? "Loading Events"
-        : "Loading Live Player";
+        : view === "emotes"
+          ? "Loading Emote Help"
+          : "Loading Live Player";
     viewLoader.classList.remove("is-hidden");
   }
 
@@ -312,7 +321,9 @@
     document.title =
       view === "events"
         ? "Events | EastCoin"
-        : "Live Player | EastCoin";
+        : view === "emotes"
+          ? "Emote Help | EastCoin"
+          : "Live Player | EastCoin";
   }
 
   function openView(
@@ -320,7 +331,10 @@
     parameters = new URLSearchParams(),
     { push = true, replace = false } = {}
   ) {
-    const normalizedView = view === "events" ? "events" : "player";
+    const normalizedView =
+      ["events", "emotes"].includes(view)
+        ? view
+        : "player";
     const nextParameters = new URLSearchParams(parameters);
     nextParameters.set("shell", "1");
     const nextFrameUrl = childUrl(normalizedView, nextParameters);
@@ -337,7 +351,9 @@
       viewFrame.title =
         normalizedView === "events"
           ? "EastCoin Events"
-          : "EastCoin Live Player";
+          : normalizedView === "emotes"
+            ? "EastCoin Emote Help"
+            : "EastCoin Live Player";
       viewFrame.src = nextFrameUrl;
     }
 
