@@ -8,6 +8,14 @@
 
   if (!embedded) return;
 
+  function removeServerPreferenceUi() {
+    document
+      .querySelectorAll(".streamed-server-preferences")
+      .forEach((section) => section.remove());
+  }
+
+  removeServerPreferenceUi();
+
   function post(message) {
     window.parent.postMessage(message, window.location.origin);
   }
@@ -246,9 +254,10 @@
     true
   );
 
-  const controlObserver = new MutationObserver(
-    scheduleControlUpdate
-  );
+  const controlObserver = new MutationObserver(() => {
+    removeServerPreferenceUi();
+    scheduleControlUpdate();
+  });
 
   controlObserver.observe(document.body, {
     childList: true,

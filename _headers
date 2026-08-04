@@ -58,3 +58,6 @@
 
 /assets/eastcoins-emote-help.css
   Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-shell-polish.css
+  Cache-Control: no-store, max-age=0, must-revalidate
