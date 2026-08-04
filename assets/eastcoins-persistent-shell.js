@@ -51,6 +51,7 @@
   let currentFrameUrl = "";
   let activePointerId = null;
   let toastTimer = 0;
+  let theaterActive = false;
 
   function showToast(message) {
     if (!toast) return;
@@ -80,6 +81,73 @@
     } catch {}
   }
 
+  function navigationIsVisible() {
+    if (theaterActive) return false;
+
+    return isMobileNavigation()
+      ? body.classList.contains("menu-open")
+      : !body.classList.contains("sidebar-collapsed");
+  }
+
+  function chatIsVisible() {
+    return (
+      !theaterActive &&
+      !body.classList.contains("chat-collapsed")
+    );
+  }
+
+  function shellState() {
+    return {
+      type: "eastcoin:shell-state",
+      navigationVisible: navigationIsVisible(),
+      chatVisible: chatIsVisible(),
+      theaterActive
+    };
+  }
+
+  function postShellState() {
+    try {
+      viewFrame.contentWindow?.postMessage(
+        shellState(),
+        window.location.origin
+      );
+    } catch {}
+  }
+
+  function setTheaterMode(enabled) {
+    theaterActive = Boolean(enabled);
+    body.classList.toggle("theater-mode", theaterActive);
+    body.classList.remove("menu-open");
+    updateNavigationButton();
+    postShellState();
+  }
+
+  function toggleShellNavigation() {
+    if (theaterActive) {
+      setTheaterMode(false);
+
+      if (isMobileNavigation()) {
+        body.classList.add("menu-open");
+        updateNavigationButton();
+        postShellState();
+      } else {
+        setDesktopSidebarCollapsed(false, true);
+      }
+      return;
+    }
+
+    if (isMobileNavigation()) {
+      body.classList.toggle("menu-open");
+      updateNavigationButton();
+      postShellState();
+      return;
+    }
+
+    setDesktopSidebarCollapsed(
+      !body.classList.contains("sidebar-collapsed")
+    );
+  }
+
   function setChatCollapsed(collapsed, save = true) {
     body.classList.toggle("chat-collapsed", Boolean(collapsed));
 
@@ -90,6 +158,8 @@
     if (settingChat) {
       settingChat.checked = !collapsed;
     }
+
+    postShellState();
   }
 
   function setReducedMotion(enabled, save = true) {
@@ -222,6 +292,7 @@
     }
 
     updateNavigationButton();
+    postShellState();
   }
 
   mobileMenu.addEventListener(
@@ -234,15 +305,7 @@
       event.preventDefault();
       event.stopImmediatePropagation();
 
-      if (isMobileNavigation()) {
-        body.classList.toggle("menu-open");
-        updateNavigationButton();
-        return;
-      }
-
-      setDesktopSidebarCollapsed(
-        !body.classList.contains("sidebar-collapsed")
-      );
+      toggleShellNavigation();
     },
     true
   );
@@ -250,6 +313,7 @@
   mobileOverlay.addEventListener("click", () => {
     body.classList.remove("menu-open");
     updateNavigationButton();
+    postShellState();
   });
 
   function getChatWidthLimits() {
@@ -541,6 +605,7 @@
 
   viewFrame.addEventListener("load", () => {
     viewLoader.classList.add("is-hidden");
+    postShellState();
   });
 
   window.addEventListener("message", (event) => {
@@ -552,6 +617,35 @@
 
     if (message.type === "eastcoin:view-ready") {
       viewLoader.classList.add("is-hidden");
+      postShellState();
+      return;
+    }
+
+    if (message.type === "eastcoin:request-shell-state") {
+      postShellState();
+      return;
+    }
+
+    if (message.type === "eastcoin:toggle-navigation") {
+      toggleShellNavigation();
+      return;
+    }
+
+    if (message.type === "eastcoin:toggle-chat") {
+      if (theaterActive) {
+        setTheaterMode(false);
+        setChatCollapsed(false, true);
+      } else {
+        setChatCollapsed(
+          !body.classList.contains("chat-collapsed"),
+          true
+        );
+      }
+      return;
+    }
+
+    if (message.type === "eastcoin:toggle-theater") {
+      setTheaterMode(!theaterActive);
       return;
     }
 
@@ -595,6 +689,7 @@
     }
 
     updateNavigationButton();
+    postShellState();
   });
 
   function initializeFootballCountdowns() {

@@ -18,6 +18,106 @@
     event.stopImmediatePropagation();
   }
 
+  let lastShellState = null;
+  let controlUpdateFrame = 0;
+
+  function setControlText(button, text) {
+    if (button.textContent !== text) {
+      button.textContent = text;
+    }
+  }
+
+  function setControlPressed(button, pressed) {
+    const value = String(Boolean(pressed));
+
+    if (button.getAttribute("aria-pressed") !== value) {
+      button.setAttribute("aria-pressed", value);
+    }
+  }
+
+  function applyShellState(state) {
+    if (!state) return;
+    lastShellState = state;
+
+    document
+      .querySelectorAll("[data-ec-theater-toggle]")
+      .forEach((button) => {
+        setControlText(
+          button,
+          state.theaterActive
+            ? "↙ Exit theater"
+            : "⛶ Theater"
+        );
+        button.classList.toggle(
+          "is-active",
+          Boolean(state.theaterActive)
+        );
+        setControlPressed(
+          button,
+          state.theaterActive
+        );
+      });
+
+    document
+      .querySelectorAll("[data-ec-chat-toggle]")
+      .forEach((button) => {
+        setControlText(
+          button,
+          state.chatVisible
+            ? "💬 Hide chat"
+            : "💬 Show chat"
+        );
+        button.classList.toggle(
+          "is-active",
+          Boolean(state.chatVisible)
+        );
+        setControlPressed(
+          button,
+          state.chatVisible
+        );
+      });
+
+    document
+      .querySelectorAll("[data-ec-nav-toggle]")
+      .forEach((button) => {
+        setControlText(
+          button,
+          state.navigationVisible
+            ? "◀ Hide nav"
+            : "☰ Show nav"
+        );
+        button.classList.toggle(
+          "is-active",
+          !state.navigationVisible
+        );
+        setControlPressed(
+          button,
+          !state.navigationVisible
+        );
+      });
+  }
+
+  function scheduleControlUpdate() {
+    if (!lastShellState || controlUpdateFrame) return;
+
+    controlUpdateFrame = window.requestAnimationFrame(() => {
+      controlUpdateFrame = 0;
+      applyShellState(lastShellState);
+    });
+  }
+
+  window.addEventListener("message", (event) => {
+    if (
+      event.origin !== window.location.origin ||
+      event.source !== window.parent ||
+      event.data?.type !== "eastcoin:shell-state"
+    ) {
+      return;
+    }
+
+    applyShellState(event.data);
+  });
+
   function eventFromContinueStorage() {
     try {
       const saved = JSON.parse(
@@ -37,6 +137,25 @@
   document.addEventListener(
     "click",
     (event) => {
+      const shellControl = event.target.closest(
+        "[data-ec-theater-toggle], " +
+        "[data-ec-chat-toggle], " +
+        "[data-ec-nav-toggle]"
+      );
+
+      if (shellControl) {
+        stopNavigation(event);
+
+        if (shellControl.matches("[data-ec-theater-toggle]")) {
+          post({ type: "eastcoin:toggle-theater" });
+        } else if (shellControl.matches("[data-ec-chat-toggle]")) {
+          post({ type: "eastcoin:toggle-chat" });
+        } else {
+          post({ type: "eastcoin:toggle-navigation" });
+        }
+        return;
+      }
+
       const playerExists = Boolean(
         document.getElementById("playerShell")
       );
@@ -127,6 +246,16 @@
     true
   );
 
+  const controlObserver = new MutationObserver(
+    scheduleControlUpdate
+  );
+
+  controlObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+
+  post({ type: "eastcoin:request-shell-state" });
   post({
     type: "eastcoin:view-ready",
     view: document.getElementById("playerShell") ? "player" : "events"

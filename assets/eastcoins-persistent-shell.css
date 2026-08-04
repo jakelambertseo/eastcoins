@@ -917,3 +917,47 @@ html.ec-shell-reduced-motion *::after {
   }
 }
 
+
+
+/* ================================================================
+   PERSISTENT SHELL DISPLAY CONTROLS
+   The embedded player dock sends these actions to the outer shell.
+   ================================================================ */
+
+.ec-persistent-shell.theater-mode {
+  overflow: hidden !important;
+}
+
+.ec-persistent-shell.theater-mode .ec-persistent-layout {
+  grid-template-columns: 0 minmax(0, 1fr) 0 0 !important;
+  height: 100vh !important;
+}
+
+.ec-persistent-shell.theater-mode .sidebar {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+  overflow: hidden !important;
+  border-right-color: transparent !important;
+  opacity: 0 !important;
+  transform: translateX(-100%) !important;
+  pointer-events: none !important;
+}
+
+.ec-persistent-shell.theater-mode .resize-handle,
+.ec-persistent-shell.theater-mode .chat-panel {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.ec-persistent-shell.theater-mode .mobile-menu {
+  display: none !important;
+}
+
+.ec-persistent-shell.theater-mode .ec-persistent-view-area {
+  height: 100vh !important;
+  min-height: 100vh !important;
+}
+
+.ec-persistent-shell.theater-mode .toast {
+  right: 24px !important;
+}
