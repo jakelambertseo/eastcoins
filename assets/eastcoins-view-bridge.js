@@ -6,6 +6,138 @@
     parameters.get("shell") === "1" &&
     window.parent !== window;
 
+  function buildCopyLinkUrl() {
+    const streamedState = window.eastcoinStreamedState;
+
+    if (streamedState?.matchId) {
+      const eventUrl = new URL("/", window.location.origin);
+      eventUrl.searchParams.set("event", streamedState.matchId);
+
+      if (streamedState.source) {
+        eventUrl.searchParams.set("source", streamedState.source);
+      }
+
+      if (
+        streamedState.streamNo !== undefined &&
+        streamedState.streamNo !== null
+      ) {
+        eventUrl.searchParams.set(
+          "stream",
+          String(streamedState.streamNo)
+        );
+      }
+
+      return eventUrl.href;
+    }
+
+    const activeFrame = document.getElementById("activeFrame");
+    const activeUrl =
+      activeFrame?.getAttribute("src") ||
+      activeFrame?.src ||
+      localStorage.getItem("eastcoinsEmbedUrl") ||
+      "";
+
+    if (!activeUrl) return "";
+
+    const shareUrl = new URL("/", window.location.origin);
+    shareUrl.searchParams.set("watch", activeUrl);
+    return shareUrl.href;
+  }
+
+  async function copyText(value) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+
+    const fallback = document.createElement("textarea");
+    fallback.value = value;
+    fallback.setAttribute("readonly", "");
+    fallback.style.position = "fixed";
+    fallback.style.opacity = "0";
+    document.body.appendChild(fallback);
+    fallback.select();
+
+    let copied = false;
+    try {
+      copied = document.execCommand("copy");
+    } finally {
+      fallback.remove();
+    }
+
+    return copied;
+  }
+
+  function enhanceCopyLinkButton() {
+    const shareButton = document.getElementById("shareButton");
+    if (!shareButton || shareButton.dataset.copyLinkReady === "true") {
+      return;
+    }
+
+    shareButton.dataset.copyLinkReady = "true";
+    shareButton.textContent = "🔗 Copy Link";
+    shareButton.setAttribute("aria-describedby", "copyLinkTooltip");
+
+    const tooltip = document.createElement("span");
+    tooltip.className = "copy-link-tooltip";
+    tooltip.id = "copyLinkTooltip";
+    tooltip.setAttribute("role", "status");
+    tooltip.setAttribute("aria-live", "polite");
+    tooltip.setAttribute("aria-hidden", "true");
+    tooltip.textContent = "Link Copied! Paste in chat";
+    document.body.appendChild(tooltip);
+
+    let hideTimer = 0;
+
+    function showTooltip() {
+      const rect = shareButton.getBoundingClientRect();
+      const tooltipWidth = Math.min(220, window.innerWidth - 20);
+      const left = Math.min(
+        Math.max(10, rect.right - tooltipWidth),
+        Math.max(10, window.innerWidth - tooltipWidth - 10)
+      );
+      const top = Math.min(
+        rect.bottom + 9,
+        Math.max(10, window.innerHeight - 50)
+      );
+
+      tooltip.style.width = `${tooltipWidth}px`;
+      tooltip.style.left = `${Math.round(left)}px`;
+      tooltip.style.top = `${Math.round(top)}px`;
+      tooltip.classList.add("show");
+      tooltip.setAttribute("aria-hidden", "false");
+
+      window.clearTimeout(hideTimer);
+      hideTimer = window.setTimeout(() => {
+        tooltip.classList.remove("show");
+        tooltip.setAttribute("aria-hidden", "true");
+      }, 2400);
+    }
+
+    shareButton.addEventListener(
+      "click",
+      async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        const shareUrl = buildCopyLinkUrl();
+        if (!shareUrl) return;
+
+        try {
+          const copied = await copyText(shareUrl);
+          if (!copied) throw new Error("Clipboard copy failed");
+          showTooltip();
+        } catch {
+          window.prompt("Copy this watch link:", shareUrl);
+        }
+      },
+      true
+    );
+  }
+
+  enhanceCopyLinkButton();
+
   if (!embedded) return;
 
   function removeServerPreferenceUi() {

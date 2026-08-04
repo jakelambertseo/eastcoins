@@ -142,3 +142,49 @@
     padding-bottom: 8px;
   }
 }
+
+/* Copy-link confirmation shown beside the Live Player toolbar button. */
+.copy-link-tooltip {
+  position: fixed;
+  z-index: 1000;
+  display: block;
+  max-width: calc(100vw - 20px);
+  padding: 9px 11px;
+  border: 1px solid rgba(201, 164, 79, .38);
+  border-radius: 9px;
+  color: #fff0c5;
+  background:
+    linear-gradient(180deg, rgba(83, 20, 29, .98), rgba(34, 8, 12, .99));
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .58);
+  font-size: .68rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(-5px) scale(.98);
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity .16s ease,
+    transform .16s ease,
+    visibility .16s ease;
+}
+
+.copy-link-tooltip::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  right: 18px;
+  width: 9px;
+  height: 9px;
+  border-top: 1px solid rgba(201, 164, 79, .38);
+  border-left: 1px solid rgba(201, 164, 79, .38);
+  background: rgba(83, 20, 29, .98);
+  transform: rotate(45deg);
+}
+
+.copy-link-tooltip.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+}
