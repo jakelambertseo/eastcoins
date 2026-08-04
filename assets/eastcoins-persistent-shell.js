@@ -447,16 +447,18 @@
     );
     const requestedView = parameters.get("view");
     const eventDetail = parameters.get("eventDetail");
-    const pathView = /\/events\/?$/i.test(url.pathname)
+    const pathView = /\/events(?:\.html)?\/?$/i.test(url.pathname)
       ? "events"
-      : /\/emotes\/?$/i.test(url.pathname)
-        ? "emotes"
-        : /\/watch\/?$/i.test(url.pathname)
-          ? "player"
-          : "";
+      : /\/favorites(?:\.html)?\/?$/i.test(url.pathname)
+        ? "favorites"
+        : /\/emotes(?:\.html)?\/?$/i.test(url.pathname)
+          ? "emotes"
+          : /\/watch\/?$/i.test(url.pathname)
+            ? "player"
+            : "";
     const view = hasPlayerParameter
       ? "player"
-      : ["player", "events", "emotes"].includes(requestedView)
+      : ["player", "events", "favorites", "emotes"].includes(requestedView)
         ? requestedView
         : pathView || "player";
 
@@ -481,6 +483,8 @@
       if (childParameters.has("event")) {
         clean.set("eventDetail", childParameters.get("event"));
       }
+    } else if (view === "favorites") {
+      clean.set("view", "favorites");
     } else if (view === "emotes") {
       clean.set("view", "emotes");
     } else {
@@ -509,9 +513,11 @@
     const filename =
       view === "events"
         ? "events.html"
-        : view === "emotes"
-          ? "emote-help.html"
-          : "player.html";
+        : view === "favorites"
+          ? "favorites.html"
+          : view === "emotes"
+            ? "emote-help.html"
+            : "player.html";
     const url = new URL(filename, window.location.href);
     url.search = parameters.toString();
     return url.href;
@@ -530,9 +536,11 @@
     viewLoaderLabel.textContent =
       view === "events"
         ? "Loading Events"
-        : view === "emotes"
-          ? "Loading Emote Help"
-          : "Loading Live Player";
+        : view === "favorites"
+          ? "Loading Other Streams"
+          : view === "emotes"
+            ? "Loading Emote Help"
+            : "Loading Live Player";
     viewLoader.classList.remove("is-hidden");
   }
 
@@ -540,9 +548,11 @@
     document.title =
       view === "events"
         ? "Events | EastCoin"
-        : view === "emotes"
-          ? "Emote Help | EastCoin"
-          : "Live Player | EastCoin";
+        : view === "favorites"
+          ? "Other Streams | EastCoin"
+          : view === "emotes"
+            ? "Emote Help | EastCoin"
+            : "Live Player | EastCoin";
   }
 
   function openView(
@@ -551,7 +561,7 @@
     { push = true, replace = false } = {}
   ) {
     const normalizedView =
-      ["events", "emotes"].includes(view)
+      ["events", "favorites", "emotes"].includes(view)
         ? view
         : "player";
     const nextParameters = new URLSearchParams(parameters);
@@ -570,9 +580,11 @@
       viewFrame.title =
         normalizedView === "events"
           ? "EastCoin Events"
-          : normalizedView === "emotes"
-            ? "EastCoin Emote Help"
-            : "EastCoin Live Player";
+          : normalizedView === "favorites"
+            ? "EastCoin Other Streams"
+            : normalizedView === "emotes"
+              ? "EastCoin Emote Help"
+              : "EastCoin Live Player";
       viewFrame.src = nextFrameUrl;
     }
 
@@ -669,6 +681,13 @@
       parameters.set("shell", "1");
       if (message.event) parameters.set("event", String(message.event));
       openView("events", parameters, { push: true });
+      return;
+    }
+
+    if (message.type === "eastcoin:open-favorites") {
+      const parameters = new URLSearchParams();
+      parameters.set("shell", "1");
+      openView("favorites", parameters, { push: true });
     }
   });
 

@@ -1,6 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    (() => {
+      const parameters = new URLSearchParams(window.location.search);
+      const embedded =
+        parameters.get("shell") === "1" &&
+        window.parent !== window;
+
+      if (embedded) {
+        document.documentElement.classList.add("ec-embedded-view");
+        return;
+      }
+
+      if (window.top === window.self) {
+        window.location.replace("index.html?view=favorites");
+      }
+    })();
+  </script>
 <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -18,7 +35,7 @@
     content="EastCoin favorite sites."
   />
 
-  <title>EastCoin — Favorites</title>
+  <title>Other Streams | EastCoin</title>
   <link rel="icon" type="image/png" href="assets/eastcoin-favicon.png" />
   <link rel="shortcut icon" href="assets/eastcoin-favicon.png" />
   <link rel="apple-touch-icon" href="assets/eastcoin-favicon.png" />
@@ -778,6 +795,7 @@
 
 </style>
   <link rel="stylesheet" href="assets/eastcoins-shell.css?v=shell2" />
+  <link rel="stylesheet" href="assets/eastcoins-embedded-view.css?v=embed2" />
 </head>
 
 <body class="ec-shell-page ec-shell-content">
@@ -902,7 +920,7 @@
             EastCoin bookmarks
           </div>
 
-          <h1>Favorites</h1>
+          <h1>Other Streams</h1>
 
           <p>
             Select a site to load its URL directly into the EastCoin player.
@@ -1156,5 +1174,6 @@
     initializeFootballCountdowns();
 
   </script>
+  <script src="assets/eastcoins-view-bridge.js?v=bridge4"></script>
 </body>
 </html>

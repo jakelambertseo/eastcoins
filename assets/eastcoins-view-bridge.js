@@ -367,6 +367,12 @@
         return;
       }
 
+      if (filename === "favorites.html") {
+        stopNavigation(event);
+        post({ type: "eastcoin:open-favorites" });
+        return;
+      }
+
       if (
         filename === "index.html" ||
         filename === "player.html" ||
@@ -397,8 +403,16 @@
   });
 
   post({ type: "eastcoin:request-shell-state" });
+  const readyView = document.getElementById("playerShell")
+    ? "player"
+    : document.querySelector(".favorite-list")
+      ? "favorites"
+      : document.getElementById("streamedDiscoveryRoot")
+        ? "events"
+        : "content";
+
   post({
     type: "eastcoin:view-ready",
-    view: document.getElementById("playerShell") ? "player" : "events"
+    view: readyView
   });
 })();

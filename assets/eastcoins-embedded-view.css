@@ -1,4 +1,4 @@
-@import url("eastcoins-shell-polish.css?v=polish1");
+@import url("eastcoins-shell-polish.css?v=polish2");
 
 /* ================================================================
    EASTCOIN — EMBEDDED CENTER VIEW MODE
@@ -25,7 +25,11 @@ html.ec-embedded-view .mobile-menu,
 html.ec-embedded-view .sidebar-toggle,
 html.ec-embedded-view .resize-handle,
 html.ec-embedded-view .chat-panel,
-html.ec-embedded-view .toast {
+html.ec-embedded-view .toast,
+html.ec-embedded-view .ec-settings-only-button,
+html.ec-embedded-view .ec-utility-dock,
+html.ec-embedded-view #ecSettingsModal,
+html.ec-embedded-view .ec-settings-modal {
   display: none !important;
 }
 
