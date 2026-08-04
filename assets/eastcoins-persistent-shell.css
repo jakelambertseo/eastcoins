@@ -665,3 +665,255 @@ body.resizing-chat iframe { pointer-events: none !important; }
     transition-duration: .01ms !important;
   }
 }
+
+/* ================================================================
+   EASTCOIN — COMPACT SIDEBAR UTILITIES / SHELL SETTINGS
+   ================================================================ */
+
+/* The joke artwork remains, but no longer dominates the lower sidebar. */
+.ec-persistent-shell .zwades-callout {
+  min-height: 0 !important;
+  margin: 0 0 5px !important;
+  padding: 5px !important;
+  gap: 3px !important;
+  border-radius: 9px !important;
+}
+
+.ec-persistent-shell .zwades-callout::before {
+  width: 38px !important;
+  height: 38px !important;
+  aspect-ratio: 1 !important;
+  border-radius: 7px !important;
+  box-shadow:
+    inset 0 0 12px rgba(46,120,225,.1),
+    0 4px 10px rgba(0,0,0,.28) !important;
+}
+
+.ec-persistent-shell .zwades-callout::after {
+  font-size: .48rem !important;
+  letter-spacing: .1em !important;
+}
+
+/* Compact two-column utility area: Emote Help, Status, Settings, reserve. */
+.ec-persistent-shell .sidebar-utility-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  width: 100%;
+  margin-top: 0;
+}
+
+.ec-persistent-shell .sidebar-utility-grid .sidebar-footer-link,
+.ec-persistent-shell .sidebar-utility-placeholder {
+  min-width: 0;
+  min-height: 32px;
+  margin: 0;
+  padding: 5px 4px;
+  border-radius: 8px;
+}
+
+.ec-persistent-shell .sidebar-utility-grid .sidebar-footer-link {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid rgba(255,255,255,.065);
+  color: #9d9488;
+  background: rgba(255,255,255,.022);
+  font-size: .56rem;
+  font-weight: 850;
+  line-height: 1.05;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ec-persistent-shell .sidebar-utility-grid .sidebar-footer-link:hover,
+.ec-persistent-shell .sidebar-utility-grid .sidebar-footer-link:focus-visible,
+.ec-persistent-shell .sidebar-utility-grid .sidebar-footer-link.active {
+  color: #f3e5c3;
+  border-color: rgba(201,164,79,.28);
+  background: rgba(201,164,79,.07);
+  outline: none;
+}
+
+.ec-persistent-shell .sidebar-utility-placeholder {
+  display: block;
+  border: 1px dashed rgba(255,255,255,.045);
+  background: rgba(255,255,255,.01);
+  opacity: .48;
+}
+
+/* Shell-owned chat visibility setting. */
+.ec-persistent-shell.chat-collapsed .ec-persistent-layout {
+  grid-template-columns:
+    var(--ec-sidebar-width)
+    minmax(var(--ec-min-view-width), 1fr)
+    0
+    0;
+}
+
+.ec-persistent-shell.sidebar-collapsed.chat-collapsed .ec-persistent-layout {
+  grid-template-columns: 0 minmax(var(--ec-min-view-width), 1fr) 0 0;
+}
+
+.ec-persistent-shell.chat-collapsed .resize-handle,
+.ec-persistent-shell.chat-collapsed .chat-panel {
+  display: none;
+}
+
+.ec-persistent-shell.chat-collapsed .toast {
+  right: 24px;
+}
+
+/* Settings dialog belongs to the shell and never floats over Twitch chat. */
+.ec-shell-settings-modal[hidden] {
+  display: none !important;
+}
+
+.ec-shell-settings-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(0,0,0,.76);
+  backdrop-filter: blur(8px);
+}
+
+.ec-shell-settings-panel {
+  width: min(460px, 100%);
+  max-height: calc(100dvh - 36px);
+  overflow: auto;
+  border: 1px solid rgba(201,164,79,.3);
+  border-radius: 17px;
+  color: #f1e7d5;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(119,19,35,.16), transparent 35%),
+    linear-gradient(180deg, #120d0e, #060505);
+  box-shadow: 0 28px 80px rgba(0,0,0,.72);
+}
+
+.ec-shell-settings-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+
+.ec-shell-settings-header span {
+  color: #c9a44f;
+  font-size: .58rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.ec-shell-settings-header h2 {
+  margin: 4px 0 0;
+  font-size: 1.25rem;
+}
+
+.ec-shell-settings-close {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 9px;
+  color: #f4ead7;
+  background: rgba(255,255,255,.035);
+  font-size: 1.05rem;
+}
+
+.ec-shell-settings-list {
+  display: grid;
+  padding: 6px 18px 14px;
+}
+
+.ec-shell-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 13px 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.ec-shell-setting-row > span {
+  min-width: 0;
+}
+
+.ec-shell-setting-row strong,
+.ec-shell-setting-row small {
+  display: block;
+}
+
+.ec-shell-setting-row strong {
+  font-size: .8rem;
+}
+
+.ec-shell-setting-row small {
+  margin-top: 4px;
+  color: #8e8377;
+  font-size: .65rem;
+  line-height: 1.4;
+}
+
+.ec-shell-setting-row input {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  accent-color: #a62538;
+}
+
+.ec-shell-settings-reset,
+.ec-shell-settings-footer button {
+  min-height: 36px;
+  border: 1px solid rgba(201,164,79,.2);
+  border-radius: 9px;
+  color: #e9dcc5;
+  background: rgba(201,164,79,.055);
+  font-size: .7rem;
+  font-weight: 850;
+}
+
+.ec-shell-settings-reset {
+  margin-top: 12px;
+}
+
+.ec-shell-settings-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 18px 18px;
+}
+
+.ec-shell-settings-footer button {
+  min-width: 90px;
+  color: #1b1005;
+  background: linear-gradient(180deg, #e3c66e, #bd9841);
+}
+
+html.ec-shell-reduced-motion *,
+html.ec-shell-reduced-motion *::before,
+html.ec-shell-reduced-motion *::after {
+  animation-duration: .01ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+  transition-duration: .01ms !important;
+}
+
+@media (max-width: 900px) {
+  .ec-persistent-shell.chat-collapsed .ec-persistent-layout,
+  .ec-persistent-shell.sidebar-collapsed.chat-collapsed .ec-persistent-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ec-persistent-shell.chat-collapsed .chat-panel {
+    display: none;
+  }
+}
+

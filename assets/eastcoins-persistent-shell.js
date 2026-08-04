@@ -11,6 +11,15 @@
   const viewLoader = document.getElementById("viewLoader");
   const viewLoaderLabel = document.getElementById("viewLoaderLabel");
   const toast = document.getElementById("toast");
+  const chatPanel = document.getElementById("persistentChat");
+  const settingsButton = document.getElementById("persistentSettingsButton");
+  const settingsModal = document.getElementById("persistentSettingsModal");
+  const settingsClose = document.getElementById("persistentSettingsClose");
+  const settingsDone = document.getElementById("persistentSettingsDone");
+  const settingChat = document.getElementById("persistentSettingChat");
+  const settingSidebar = document.getElementById("persistentSettingSidebar");
+  const settingMotion = document.getElementById("persistentSettingMotion");
+  const resetChatWidth = document.getElementById("persistentResetChatWidth");
 
   if (
     !body || !layout || !sidebar || !mobileMenu || !mobileOverlay ||
@@ -32,6 +41,8 @@
 
   const SIDEBAR_STORAGE_KEY = "eastcoinsSidebarCollapsed";
   const CHAT_WIDTH_STORAGE_KEY = "eastcoinsChatWidthV2";
+  const CHAT_COLLAPSED_STORAGE_KEY = "eastcoinsChatCollapsed";
+  const REDUCED_MOTION_STORAGE_KEY = "eastcoinsReducedMotion";
   const DEFAULT_CHAT_WIDTH = 360;
   const MIN_CHAT_WIDTH = 280;
   const MIN_VIEW_WIDTH = 420;
@@ -53,6 +64,128 @@
   }
 
   window.showToast = showToast;
+
+  function readStoredBoolean(key, fallback = false) {
+    try {
+      const value = localStorage.getItem(key);
+      return value === null ? fallback : value === "true";
+    } catch {
+      return fallback;
+    }
+  }
+
+  function writeStoredBoolean(key, value) {
+    try {
+      localStorage.setItem(key, String(Boolean(value)));
+    } catch {}
+  }
+
+  function setChatCollapsed(collapsed, save = true) {
+    body.classList.toggle("chat-collapsed", Boolean(collapsed));
+
+    if (save) {
+      writeStoredBoolean(CHAT_COLLAPSED_STORAGE_KEY, collapsed);
+    }
+
+    if (settingChat) {
+      settingChat.checked = !collapsed;
+    }
+  }
+
+  function setReducedMotion(enabled, save = true) {
+    document.documentElement.classList.toggle(
+      "ec-shell-reduced-motion",
+      Boolean(enabled)
+    );
+
+    if (save) {
+      writeStoredBoolean(REDUCED_MOTION_STORAGE_KEY, enabled);
+    }
+
+    if (settingMotion) {
+      settingMotion.checked = Boolean(enabled);
+    }
+  }
+
+  function syncSettings() {
+    if (settingChat) {
+      settingChat.checked = !body.classList.contains("chat-collapsed");
+    }
+
+    if (settingSidebar) {
+      settingSidebar.checked = readStoredBoolean(
+        SIDEBAR_STORAGE_KEY,
+        false
+      );
+    }
+
+    if (settingMotion) {
+      settingMotion.checked = document.documentElement.classList.contains(
+        "ec-shell-reduced-motion"
+      );
+    }
+  }
+
+  function openSettings() {
+    if (!settingsModal) return;
+    syncSettings();
+    settingsModal.hidden = false;
+    settingsModal.setAttribute("aria-hidden", "false");
+    settingsClose?.focus({ preventScroll: true });
+  }
+
+  function closeSettings() {
+    if (!settingsModal) return;
+    settingsModal.hidden = true;
+    settingsModal.setAttribute("aria-hidden", "true");
+    settingsButton?.focus({ preventScroll: true });
+  }
+
+  settingsButton?.addEventListener("click", openSettings);
+  settingsClose?.addEventListener("click", closeSettings);
+  settingsDone?.addEventListener("click", closeSettings);
+
+  settingsModal?.addEventListener("click", (event) => {
+    if (event.target === settingsModal) {
+      closeSettings();
+    }
+  });
+
+  settingChat?.addEventListener("change", () => {
+    setChatCollapsed(!settingChat.checked, true);
+  });
+
+  settingSidebar?.addEventListener("change", () => {
+    writeStoredBoolean(SIDEBAR_STORAGE_KEY, settingSidebar.checked);
+
+    if (!isMobileNavigation()) {
+      setDesktopSidebarCollapsed(settingSidebar.checked, false);
+    }
+  });
+
+  settingMotion?.addEventListener("change", () => {
+    setReducedMotion(settingMotion.checked, true);
+  });
+
+  resetChatWidth?.addEventListener("click", () => {
+    try {
+      localStorage.removeItem(CHAT_WIDTH_STORAGE_KEY);
+    } catch {}
+
+    setChatWidth(DEFAULT_CHAT_WIDTH, false);
+    showToast("Chat width reset.");
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (
+      event.key === "Escape" &&
+      settingsModal &&
+      !settingsModal.hidden
+    ) {
+      event.preventDefault();
+      closeSettings();
+    }
+  });
 
   function isMobileNavigation() {
     return window.matchMedia("(max-width: 900px)").matches;
@@ -511,9 +644,13 @@
 
   let savedSidebarState = false;
   let savedChatWidth = DEFAULT_CHAT_WIDTH;
+  let savedChatCollapsed = false;
+  let savedReducedMotion = false;
 
   try {
     savedSidebarState = localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+    savedChatCollapsed = readStoredBoolean(CHAT_COLLAPSED_STORAGE_KEY, false);
+    savedReducedMotion = readStoredBoolean(REDUCED_MOTION_STORAGE_KEY, false);
     const candidate = Number(localStorage.getItem(CHAT_WIDTH_STORAGE_KEY));
     if (Number.isFinite(candidate) && candidate > 0) savedChatWidth = candidate;
   } catch {}
@@ -525,6 +662,9 @@
     updateNavigationButton();
   }
 
+  setChatCollapsed(savedChatCollapsed, false);
+  setReducedMotion(savedReducedMotion, false);
+  syncSettings();
   initializeFootballCountdowns();
 
   const initialRoute = routeFromLocation();
