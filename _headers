@@ -19,3 +19,18 @@
 
 /assets/eastcoins-events-directory.css
   Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-home-events-directory.js
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-home-events-directory.css
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-shell.css
+  Cache-Control: no-store, max-age=0
+
+/assets/eastcoins-agreement.css
+  Cache-Control: no-store, max-age=0
+
+/assets/eastcoins-agreement.js
+  Cache-Control: no-store, max-age=0

@@ -14,57 +14,7 @@
       }
     })();
   </script>
-<script>
-    (() => {
-      const storageKey =
-        "eastcoinZwadesBlueAgreement";
-      const cookieName =
-        "eastcoinZwadesBlueAgreement";
-      const version = "v1";
-      const resetParameter =
-        "resetZwadesAgreement";
-      const reset =
-        new URLSearchParams(location.search)
-          .get(resetParameter) === "1";
-
-      if (reset) {
-        try {
-          localStorage.removeItem(storageKey);
-        } catch {}
-
-        document.cookie =
-          `${cookieName}=; Max-Age=0; Path=/; SameSite=Lax`;
-      }
-
-      let localValue = "";
-
-      try {
-        localValue = localStorage.getItem(storageKey);
-      } catch {}
-
-      const cookieValue = document.cookie
-        .split(";")
-        .map((part) => part.trim())
-        .find((part) =>
-          part.startsWith(`${cookieName}=`)
-        )
-        ?.split("=")
-        .slice(1)
-        .join("=");
-
-      document.documentElement.classList.add(
-        !reset &&
-        (
-          localValue === version ||
-          cookieValue === version
-        )
-          ? "ec-zwades-agreement-granted"
-          : "ec-zwades-agreement-required"
-      );
-    })();
-  </script>
-  <link rel="stylesheet" href="assets/eastcoins-agreement.css?v=gate2" />
-  <meta charset="UTF-8" />
+<meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <meta
@@ -1304,7 +1254,7 @@
   <link rel="stylesheet" href="assets/eastcoins-theme.css?v=theme9" />
   <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux9" />
   <link rel="stylesheet" href="assets/eastcoins-streamed.css?v=server18" />
-  <link rel="stylesheet" href="assets/eastcoins-shell.css?v=shell1" />
+  <link rel="stylesheet" href="assets/eastcoins-shell.css?v=shell2" />
   <script>
     (() => {
       const version = "events2";
@@ -1328,9 +1278,10 @@
     })();
   </script>
   <link rel="stylesheet" href="assets/eastcoins-events-clean.css?v=events2" />
+  <link rel="stylesheet" href="assets/eastcoins-home-events-directory.css?v=home-directory1" />
 </head>
 
-<body class="ec-shell-page ec-shell-player ec-events-clean">
+<body class="ec-shell-page ec-shell-player ec-events-clean ec-home-events-directory">
   <div class="mobile-overlay" id="mobileOverlay" aria-hidden="true"></div>
 
   <div class="layout">
@@ -1418,15 +1369,7 @@
           zwades is <span class="is-blue">blue</span>
         </p>
       </div>
-
-      <a
-        class="sidebar-footer-link"
-        href="changelog.html"
-        target="_top">
-        📝 Changelog
-      </a>
-
-            <a
+<a
               class="sidebar-footer-link"
               href="status.html"
               target="_top">
@@ -1524,11 +1467,11 @@
                     EastCoin events
                   </div>
                   <strong class="streamed-launcher-title">
-                    Pick an event
+                    Browse events by sport
                   </strong>
                   <p class="streamed-launcher-description">
-                    Live events appear first. Search by team or filter by sport,
-                    then start watching with one click.
+                    Choose Live, Today, or Tomorrow. Events are grouped by sport
+                    and ordered by starting time for quicker selection.
                   </p>
                 </div>
 
@@ -2418,6 +2361,6 @@
   <script src="assets/eastcoins-streamed-api.js?v=api2"></script>
   <script src="assets/eastcoins-streamed.js?v=server17"></script>
   <script src="assets/eastcoins-events-clean-v2.js?v=events2"></script>
-  <script src="assets/eastcoins-agreement.js?v=gate2"></script>
+  <script src="assets/eastcoins-home-events-directory.js?v=home-directory1"></script>
 </body>
 </html>

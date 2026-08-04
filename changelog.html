@@ -1,57 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>
-    (() => {
-      const storageKey =
-        "eastcoinZwadesBlueAgreement";
-      const cookieName =
-        "eastcoinZwadesBlueAgreement";
-      const version = "v1";
-      const resetParameter =
-        "resetZwadesAgreement";
-      const reset =
-        new URLSearchParams(location.search)
-          .get(resetParameter) === "1";
-
-      if (reset) {
-        try {
-          localStorage.removeItem(storageKey);
-        } catch {}
-
-        document.cookie =
-          `${cookieName}=; Max-Age=0; Path=/; SameSite=Lax`;
-      }
-
-      let localValue = "";
-
-      try {
-        localValue = localStorage.getItem(storageKey);
-      } catch {}
-
-      const cookieValue = document.cookie
-        .split(";")
-        .map((part) => part.trim())
-        .find((part) =>
-          part.startsWith(`${cookieName}=`)
-        )
-        ?.split("=")
-        .slice(1)
-        .join("=");
-
-      document.documentElement.classList.add(
-        !reset &&
-        (
-          localValue === version ||
-          cookieValue === version
-        )
-          ? "ec-zwades-agreement-granted"
-          : "ec-zwades-agreement-required"
-      );
-    })();
-  </script>
-  <link rel="stylesheet" href="assets/eastcoins-agreement.css?v=gate2" />
-  <meta charset="UTF-8" />
+<meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <meta
@@ -987,7 +937,7 @@
 }
 
 </style>
-  <link rel="stylesheet" href="assets/eastcoins-shell.css?v=shell1" />
+  <link rel="stylesheet" href="assets/eastcoins-shell.css?v=shell2" />
 </head>
 
 <body class="ec-shell-page ec-shell-content">
@@ -1081,16 +1031,7 @@
           zwades is <span class="is-blue">blue</span>
         </p>
       </div>
-
-      <a
-        class="sidebar-footer-link active"
-        href="changelog.html"
-        target="_top"
-        aria-current="page">
-        📝 Changelog
-      </a>
-
-            <a
+<a
               class="sidebar-footer-link"
               href="status.html"
               target="_top">
@@ -1589,10 +1530,9 @@
 </article>
 
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
   <div class="timeline-date">
     <time datetime="2026-08-03">August 3, 2026</time>
-    <span class="latest-badge">Latest</span>
   </div>
   <h2>Events directory grouped by sport</h2>
   <p>
@@ -1602,6 +1542,38 @@
     events first followed by the nearest start times. Matchup cards retain
     provider artwork and team logos while using the shared EastCoin black,
     burgundy, and gold styling.
+  </p>
+</article>
+
+
+<article class="timeline-entry">
+  <div class="timeline-date">
+    <time datetime="2026-08-03">August 3, 2026</time>
+    <span class="latest-badge">Latest</span>
+  </div>
+  <h2>Homepage event picker grouped by sport</h2>
+  <p>
+    Updated the Live Player homepage picker to match the categorized Events
+    directory. Live, Today, Tomorrow, search, and sport filters remain, while
+    matchup cards are now grouped by category and ordered with live events
+    first followed by nearest start time. The compact homepage view keeps team
+    logos and event artwork, shows the top three events per category by default,
+    and expands filtered or searched results for faster selection.
+  </p>
+</article>
+
+
+<article class="timeline-entry latest">
+  <div class="timeline-date">
+    <time datetime="2026-08-03">August 3, 2026</time>
+    <span class="latest-badge">Latest</span>
+  </div>
+  <h2>Agreement gate retired and navigation simplified</h2>
+  <p>
+    Removed the temporary “Zwades is Blue” entry agreement from EastCoin.
+    The sidebar joke card now displays the existing Zwades Blue artwork with
+    a simple “blue” label, and the Changelog remains available by direct URL
+    without appearing in public navigation.
   </p>
 </article>
         </section>
@@ -1786,6 +1758,5 @@
     initializeFootballCountdowns();
 
   </script>
-  <script src="assets/eastcoins-agreement.js?v=gate2"></script>
 </body>
 </html>

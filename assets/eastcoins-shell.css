@@ -1,6 +1,6 @@
 /*
   EastCoin unified shell
-  Version: shell1
+  Version: shell2
   Purpose: one canonical visual system for all production wrapper and content pages.
 */
 
@@ -948,4 +948,69 @@
     animation-iteration-count: 1 !important;
     transition-duration: .01ms !important;
   }
+}
+
+
+/* ================================================================
+   ZWADES BLUE NAV CARD + PRIVATE CHANGELOG
+   ================================================================ */
+
+.ec-shell-page .zwades-callout {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  margin-top: 8px !important;
+  padding: 8px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(86, 153, 255, .24) !important;
+  border-radius: 12px !important;
+  background:
+    linear-gradient(180deg, rgba(9, 19, 39, .98), rgba(3, 8, 19, .99)) !important;
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, .28),
+    inset 0 1px 0 rgba(255, 255, 255, .035) !important;
+  text-align: center !important;
+}
+
+.ec-shell-page .zwades-callout > * {
+  display: none !important;
+}
+
+.ec-shell-page .zwades-callout::before {
+  content: "";
+  display: block;
+  width: min(100%, 132px);
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+  border: 1px solid rgba(117, 173, 255, .22);
+  border-radius: 9px;
+  background:
+    #02050b
+    url("zwades-blue.webp")
+    center / contain
+    no-repeat;
+  box-shadow:
+    inset 0 0 24px rgba(46, 120, 225, .12),
+    0 7px 18px rgba(0, 0, 0, .35);
+}
+
+.ec-shell-page .zwades-callout::after {
+  content: "blue";
+  display: block;
+  color: #79adff;
+  font-size: .69rem;
+  font-weight: 950;
+  line-height: 1;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+/* Keep changelog.html available by direct URL, but never expose it in nav. */
+.ec-shell-page .sidebar a.sidebar-footer-link[href="changelog.html"],
+.ec-shell-page .sidebar a.sidebar-footer-link[href="./changelog.html"] {
+  display: none !important;
 }

@@ -1,57 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>
-    (() => {
-      const storageKey =
-        "eastcoinZwadesBlueAgreement";
-      const cookieName =
-        "eastcoinZwadesBlueAgreement";
-      const version = "v1";
-      const resetParameter =
-        "resetZwadesAgreement";
-      const reset =
-        new URLSearchParams(location.search)
-          .get(resetParameter) === "1";
-
-      if (reset) {
-        try {
-          localStorage.removeItem(storageKey);
-        } catch {}
-
-        document.cookie =
-          `${cookieName}=; Max-Age=0; Path=/; SameSite=Lax`;
-      }
-
-      let localValue = "";
-
-      try {
-        localValue = localStorage.getItem(storageKey);
-      } catch {}
-
-      const cookieValue = document.cookie
-        .split(";")
-        .map((part) => part.trim())
-        .find((part) =>
-          part.startsWith(`${cookieName}=`)
-        )
-        ?.split("=")
-        .slice(1)
-        .join("=");
-
-      document.documentElement.classList.add(
-        !reset &&
-        (
-          localValue === version ||
-          cookieValue === version
-        )
-          ? "ec-zwades-agreement-granted"
-          : "ec-zwades-agreement-required"
-      );
-    })();
-  </script>
-  <link rel="stylesheet" href="assets/eastcoins-agreement.css?v=gate2" />
-  <meta charset="UTF-8" />
+<meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <meta
@@ -828,7 +778,7 @@
 }
 
 </style>
-  <link rel="stylesheet" href="assets/eastcoins-shell.css?v=shell1" />
+  <link rel="stylesheet" href="assets/eastcoins-shell.css?v=shell2" />
   <script>
     (() => {
       const version = "events2";
@@ -946,15 +896,7 @@
           zwades is <span class="is-blue">blue</span>
         </p>
       </div>
-
-      <a
-        class="sidebar-footer-link"
-        href="changelog.html"
-        target="_top">
-        📝 Changelog
-      </a>
-
-            <a
+<a
               class="sidebar-footer-link"
               href="status.html"
               target="_top">
@@ -1285,6 +1227,5 @@
 <script src="assets/eastcoins-streamed.js?v=server17"></script>
   <script src="assets/eastcoins-events-clean-v2.js?v=events2"></script>
   <script src="assets/eastcoins-events-directory.js?v=directory1"></script>
-<script src="assets/eastcoins-agreement.js?v=gate2"></script>
 </body>
 </html>
