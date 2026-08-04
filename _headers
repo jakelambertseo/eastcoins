@@ -34,3 +34,19 @@
 
 /assets/eastcoins-agreement.js
   Cache-Control: no-store, max-age=0
+
+/player.html
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-persistent-shell.js
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-persistent-shell.css
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-embedded-view.css
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-view-bridge.js
+  Cache-Control: no-store, max-age=0, must-revalidate
+

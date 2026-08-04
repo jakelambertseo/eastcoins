@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    (() => {
+      if (new URLSearchParams(location.search).get("shell") === "1") {
+        document.documentElement.classList.add("ec-embedded-view");
+      }
+    })();
+  </script>
 <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -803,6 +810,7 @@
   </script>
   <link rel="stylesheet" href="assets/eastcoins-events-clean.css?v=events2" />
   <link rel="stylesheet" href="assets/eastcoins-events-directory.css?v=directory1" />
+  <link rel="stylesheet" href="assets/eastcoins-embedded-view.css?v=embed1" />
 </head>
 
 <body class="ec-shell-page ec-shell-content ec-events-clean ec-events-directory">
@@ -822,8 +830,8 @@
 
       <div class="nav-group">
         <div class="nav-label">EastCoin</div>
-        <a class="nav-link" href="index.html?new=1" target="_top">📺 Live Player</a>
-        <a class="nav-link active" href="events.html" target="_top">🏟️ Events</a>
+        <a class="nav-link" href="index.html?view=player&amp;new=1" target="_top">📺 Live Player</a>
+        <a class="nav-link active" href="index.html?view=events" target="_top">🏟️ Events</a>
         <a class="nav-link" href="favorites.html" target="_top">⭐ Favorites</a>
         <details class="nav-games-menu">
           <summary class="nav-link nav-games-summary">
@@ -1227,5 +1235,6 @@
 <script src="assets/eastcoins-streamed.js?v=server17"></script>
   <script src="assets/eastcoins-events-clean-v2.js?v=events2"></script>
   <script src="assets/eastcoins-events-directory.js?v=directory1"></script>
+  <script src="assets/eastcoins-view-bridge.js?v=bridge1"></script>
 </body>
 </html>

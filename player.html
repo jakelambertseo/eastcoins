@@ -1,0 +1,2394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    (() => {
+      if (new URLSearchParams(location.search).get("shell") === "1") {
+        document.documentElement.classList.add("ec-embedded-view");
+      }
+    })();
+  </script>
+<script>
+    (() => {
+      const parameters = new URLSearchParams(
+        window.location.search
+      );
+
+      if (parameters.has("event")) {
+        document.documentElement.classList.add(
+          "ec-shared-event-room-pending"
+        );
+      }
+    })();
+  </script>
+<meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <meta
+    name="robots"
+    content="noindex, nofollow, noarchive, nosnippet, noimageindex"
+  />
+  <meta
+    name="googlebot"
+    content="noindex, nofollow, noarchive, nosnippet, noimageindex"
+  />
+
+  <meta name="description" content="EastCoin private sports watch room with an embeddable player and Twitch chat." />
+  <title>Live Player View | EastCoin</title>
+
+  <style>
+    :root {
+      --bg: #050b14;
+      --sidebar: #091321;
+      --panel: #0d1928;
+      --panel-2: #132338;
+      --line: rgba(255,255,255,.08);
+      --text: #f1f6ff;
+      --muted: #8ea1bb;
+      --green: #55d88a;
+      --green-hover: #6be59b;
+      --red: #ff7777;
+      --purple: #9d7aea;
+      --shadow: 0 24px 60px rgba(0,0,0,.35);
+      --sidebar-width: 230px;
+      --chat-width: 360px;
+      --divider-width: 10px;
+      --min-video-width: 420px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 35% 0%, rgba(81,216,138,.08), transparent 32%),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow: hidden;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns:
+        var(--sidebar-width)
+        minmax(var(--min-video-width),1fr)
+        var(--divider-width)
+        var(--chat-width);
+      width: 100%;
+      height: 100vh;
+      transition: grid-template-columns .24s ease;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      padding: 22px 16px;
+      overflow: hidden;
+      border-right: 1px solid var(--line);
+      background: rgba(9,19,33,.97);
+      opacity: 1;
+      transform: translateX(0);
+      transition:
+        transform .24s ease,
+        opacity .2s ease,
+        padding .24s ease,
+        border-color .24s ease;
+      z-index: 20;
+    }
+
+    @media (min-width: 901px) {
+      body.sidebar-collapsed .layout {
+        grid-template-columns:
+          0
+          minmax(var(--min-video-width),1fr)
+          var(--divider-width)
+          var(--chat-width);
+      }
+
+      body.sidebar-collapsed .sidebar {
+        padding-left: 0;
+        padding-right: 0;
+        border-right-color: transparent;
+        opacity: 0;
+        transform: translateX(-100%);
+        pointer-events: none;
+      }
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 8px 24px;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      border-radius: 13px;
+      color: #07110b;
+      font-weight: 950;
+      background: linear-gradient(135deg, var(--green), #b7ffca);
+      box-shadow: 0 10px 30px rgba(81,216,138,.2);
+    }
+
+    .brand-copy strong {
+      display: block;
+      letter-spacing: -.02em;
+    }
+
+    .brand-copy span {
+      color: var(--muted);
+      font-size: .74rem;
+    }
+
+    .nav-group {
+      margin-top: 12px;
+    }
+
+    .nav-label {
+      padding: 0 11px 8px;
+      color: #647994;
+      font-size: .67rem;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      width: 100%;
+      margin-bottom: 5px;
+      padding: 11px 12px;
+      border: 0;
+      border-radius: 11px;
+      color: var(--muted);
+      background: transparent;
+      text-align: left;
+      font-weight: 700;
+      transition: .2s ease;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      color: var(--text);
+      background: rgba(255,255,255,.06);
+    }
+
+    .nav-link.active {
+      box-shadow: inset 3px 0 0 var(--green);
+    }
+
+    .watch-area {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      padding: 16px;
+      background: #040912;
+    }
+
+    .player-shell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background:
+        linear-gradient(rgba(5,11,20,.35), rgba(5,11,20,.82)),
+        url("https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1800&q=85") center/cover;
+      box-shadow: var(--shadow);
+    }
+
+    .player-shell.has-frame {
+      background: #000;
+    }
+
+    .player-toolbar {
+      position: absolute;
+      inset: 0 0 auto 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 16px 18px 16px 66px;
+      background: linear-gradient(rgba(4,9,18,.95), rgba(4,9,18,.4), transparent);
+      pointer-events: none;
+    }
+
+    .player-toolbar > * {
+      pointer-events: auto;
+    }
+
+    .toolbar-title strong {
+      display: block;
+      font-size: .92rem;
+    }
+
+    .toolbar-title span {
+      color: var(--muted);
+      font-size: .72rem;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .toolbar-button {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 11px;
+      color: var(--text);
+      background: rgba(9,19,33,.78);
+      font-size: .78rem;
+      font-weight: 800;
+      backdrop-filter: blur(12px);
+    }
+
+    .toolbar-button:hover {
+      background: rgba(255,255,255,.1);
+    }
+
+    .embed-frame {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
+    }
+
+    .url-stage {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      overflow-y: auto;
+    }
+
+    .url-card {
+      width: min(720px,100%);
+      padding: 30px;
+      border: 1px solid rgba(255,255,255,.11);
+      border-radius: 20px;
+      background: rgba(8,17,29,.88);
+      box-shadow: 0 20px 60px rgba(0,0,0,.32);
+      backdrop-filter: blur(18px);
+      text-align: center;
+    }
+
+    .url-icon {
+      display: grid;
+      place-items: center;
+      width: 54px;
+      height: 54px;
+      margin: 0 auto 16px;
+      border: 1px solid rgba(81,216,138,.26);
+      border-radius: 16px;
+      background: rgba(81,216,138,.1);
+      font-size: 1.45rem;
+    }
+
+    .url-card h1 {
+      margin: 0;
+      font-size: clamp(2rem,4vw,4rem);
+      line-height: 1;
+      letter-spacing: -.05em;
+    }
+
+    .url-card > p {
+      max-width: 590px;
+      margin: 14px auto 0;
+      color: #c0cede;
+      line-height: 1.6;
+    }
+
+    .url-form {
+      margin-top: 24px;
+    }
+
+    .url-entry {
+      display: flex;
+      gap: 10px;
+    }
+
+    .url-entry input {
+      min-width: 0;
+      flex: 1;
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 11px;
+      outline: 0;
+      color: var(--text);
+      background: rgba(255,255,255,.055);
+    }
+
+    .url-entry input:focus {
+      border-color: rgba(81,216,138,.65);
+      box-shadow: 0 0 0 4px rgba(81,216,138,.08);
+    }
+
+    .url-entry input::placeholder {
+      color: #6e819b;
+    }
+
+    .load-button {
+      padding: 0 20px;
+      border: 0;
+      border-radius: 11px;
+      color: #07110b;
+      background: var(--green);
+      font-weight: 950;
+    }
+
+    .load-button:hover {
+      background: var(--green-hover);
+    }
+
+    .form-options {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-top: 12px;
+      text-align: left;
+    }
+
+    .remember-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: .77rem;
+    }
+
+    .remember-label input {
+      accent-color: var(--green);
+    }
+
+    .url-error {
+      min-height: 22px;
+      margin-top: 10px;
+      color: var(--red);
+      font-size: .8rem;
+    }
+
+    .quick-favorites {
+      margin-top: 22px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,.09);
+    }
+
+    .quick-favorites-label {
+      margin: 0 0 11px;
+      color: #91a1b6;
+      font-size: .72rem;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .quick-favorites-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 9px;
+    }
+
+    .quick-favorite-button {
+      min-height: 40px;
+      padding: 9px 14px;
+      border: 1px solid rgba(210,26,74,.32);
+      border-radius: 10px;
+      color: #ffe2e8;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(132,11,43,.78),
+          rgba(75,5,28,.84)
+        );
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.07);
+      font-size: .82rem;
+      font-weight: 900;
+    }
+
+    .quick-favorite-button:hover,
+    .quick-favorite-button:focus-visible {
+      border-color: rgba(255,112,145,.55);
+      color: #fff;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(177,15,55,.92),
+          rgba(105,7,36,.94)
+        );
+      outline: 0;
+      transform: translateY(-1px);
+    }
+
+    .all-favorites-link {
+      display: inline-block;
+      margin-top: 12px;
+      color: #d1aa56;
+      font-size: .76rem;
+      font-weight: 850;
+      text-decoration: none;
+    }
+
+    .all-favorites-link:hover,
+    .all-favorites-link:focus-visible {
+      color: #f3cc73;
+      text-decoration: underline;
+      outline: 0;
+    }
+
+    .resize-handle {
+      position: relative;
+      z-index: 30;
+      width: 100%;
+      height: 100%;
+      cursor: col-resize;
+      touch-action: none;
+      background: #07101c;
+      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+      transition: background .15s ease;
+    }
+
+    .resize-handle::before {
+      content: "";
+      position: absolute;
+      inset: 0 -5px;
+    }
+
+    .resize-handle span {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 4px;
+      height: 48px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.18);
+      transform: translate(-50%,-50%);
+      transition: height .15s ease, background .15s ease;
+    }
+
+    .resize-handle:hover,
+    .resize-handle:focus-visible,
+    body.resizing-chat .resize-handle {
+      outline: 0;
+      background: rgba(81,216,138,.12);
+    }
+
+    .resize-handle:hover span,
+    .resize-handle:focus-visible span,
+    body.resizing-chat .resize-handle span {
+      height: 70px;
+      background: var(--green);
+    }
+
+    body.resizing-chat,
+    body.resizing-chat * {
+      cursor: col-resize !important;
+      user-select: none !important;
+    }
+
+    body.resizing-chat .layout {
+      transition: none;
+    }
+
+    body.resizing-chat iframe {
+      pointer-events: none !important;
+    }
+
+    .chat-panel {
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      background: #0e0e10;
+    }
+
+    .twitch-chat-frame {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      border: 0;
+      background: #0e0e10;
+    }
+
+    .mobile-menu {
+      position: fixed;
+      top: 16px;
+      left: calc(var(--sidebar-width) - 20px);
+      z-index: 60;
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      color: var(--text);
+      background: rgba(3,3,3,.94);
+      box-shadow: 0 12px 34px rgba(0,0,0,.5);
+      transition:
+        left .24s ease,
+        background .18s ease,
+        transform .18s ease;
+    }
+
+    .mobile-menu:hover {
+      background: #111;
+    }
+
+    body.sidebar-collapsed .mobile-menu {
+      left: 16px;
+    }
+
+    .mobile-overlay {
+      display: none;
+    }
+
+    .toast {
+      position: fixed;
+      right: calc(var(--chat-width) + var(--divider-width) + 24px);
+      bottom: 24px;
+      z-index: 100;
+      max-width: 360px;
+      padding: 13px 15px;
+      border: 1px solid rgba(81,216,138,.35);
+      border-radius: 12px;
+      color: var(--text);
+      background: #10233a;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(16px);
+      pointer-events: none;
+      transition: .25s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 1050px) {
+      :root {
+        --sidebar-width: 200px;
+        --chat-width: 320px;
+      }
+
+      .brand-copy span {
+        display: none;
+      }
+    }
+
+    @media (max-width: 900px) {
+      body {
+        overflow: auto;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: 230px;
+        height: 100vh;
+        transform: translateX(-102%);
+        transition: transform .25s ease;
+      }
+
+      body.menu-open .sidebar {
+        transform: translateX(0);
+      }
+
+      .mobile-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 15;
+        display: block;
+        background: rgba(0,0,0,.58);
+        opacity: 0;
+        pointer-events: none;
+        transition: .25s ease;
+      }
+
+      body.menu-open .mobile-overlay {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .watch-area {
+        min-height: 68vh;
+        padding: 12px;
+      }
+
+      .mobile-menu,
+      body.sidebar-collapsed .mobile-menu {
+        top: 16px;
+        left: 16px;
+      }
+
+      body.sidebar-collapsed .sidebar {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .player-toolbar {
+        padding-left: 66px;
+      }
+
+      .resize-handle {
+        display: none;
+      }
+
+      .chat-panel {
+        height: 520px;
+        min-height: 520px;
+        border-left: 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .toast {
+        right: 18px;
+        bottom: 18px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .watch-area {
+        min-height: 72vh;
+      }
+
+      .url-stage {
+        padding: 14px;
+      }
+
+      .url-card {
+        padding: 24px 18px;
+      }
+
+      .url-entry {
+        flex-direction: column;
+      }
+
+      .load-button {
+        min-height: 46px;
+      }
+
+      .form-options {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .player-toolbar {
+        align-items: flex-start;
+      }
+
+      .toolbar-title {
+        display: none;
+      }
+
+      .toolbar-actions {
+        margin-left: auto;
+      }
+    }
+
+  
+    .brand-copy-single {
+      display: flex;
+      align-items: center;
+      min-height: 48px;
+    }
+
+    .brand-copy-single strong {
+      font-size: 1.34rem;
+      line-height: 1;
+      letter-spacing: -.045em;
+    }
+
+    .url-image-icon {
+      width: 76px;
+      height: 76px;
+      padding: 0;
+      overflow: hidden;
+      border-color: rgba(242,196,0,.14);
+      border-radius: 22px;
+      background: #020202;
+    }
+
+    .url-image-icon img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+  
+    /* ---------------- ZWADES CALLOUT ---------------- */
+
+    .zwades-callout {
+      margin-top: auto;
+      padding: 14px;
+      border: 1px solid rgba(101, 163, 255, .18);
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 18% 16%, rgba(57, 130, 255, .22), transparent 34%),
+        linear-gradient(180deg, rgba(8, 16, 36, .98), rgba(5, 11, 27, .98));
+      box-shadow:
+        0 16px 34px rgba(0, 0, 0, .26),
+        inset 0 1px 0 rgba(255, 255, 255, .03);
+    }
+
+    .zwades-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 10px;
+      color: #87a9ff;
+      font-size: .63rem;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .zwades-eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #4b93ff;
+      box-shadow: 0 0 0 4px rgba(75, 147, 255, .14);
+    }
+
+    .zwades-row {
+      display: grid;
+      grid-template-columns: 64px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+    }
+
+    .zwades-media {
+      width: 64px;
+      height: 64px;
+      overflow: hidden;
+      border: 1px solid rgba(120, 178, 255, .28);
+      border-radius: 14px;
+      background:
+        linear-gradient(180deg, rgba(17, 39, 86, .9), rgba(8, 20, 53, .96));
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.05),
+        0 10px 24px rgba(13, 52, 140, .24);
+    }
+
+    .zwades-media img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .zwades-title {
+      margin: 0;
+      color: #edf5ff;
+      font-size: 1rem;
+      line-height: 1.05;
+      letter-spacing: -.03em;
+    }
+
+    .zwades-title .is-blue {
+      color: #73abff;
+    }
+
+    .zwades-copy {
+      margin: 7px 0 0;
+      color: #8fa6ca;
+      font-size: .73rem;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 900px) {
+      .zwades-callout {
+        margin-top: 18px;
+      }
+    }
+
+  
+    /* ---------------- NFL KICKOFF COUNTDOWN ---------------- */
+
+    .football-countdown {
+      margin-top: auto;
+      margin-bottom: 12px;
+      padding: 14px;
+      border: 1px solid rgba(242, 196, 0, .18);
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 90% 0%, rgba(242, 196, 0, .13), transparent 35%),
+        linear-gradient(180deg, rgba(24, 20, 8, .96), rgba(10, 9, 5, .98));
+      box-shadow:
+        0 16px 34px rgba(0, 0, 0, .25),
+        inset 0 1px 0 rgba(255, 255, 255, .035);
+    }
+
+    .football-countdown + .zwades-callout {
+      margin-top: 0;
+    }
+
+    .football-countdown-eyebrow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+      color: #d9bc57;
+      font-size: .62rem;
+      font-weight: 900;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .football-countdown-live {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #8d835e;
+      letter-spacing: .06em;
+    }
+
+    .football-countdown-live::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #f2c400;
+      box-shadow: 0 0 0 4px rgba(242, 196, 0, .09);
+    }
+
+    .football-countdown-title {
+      margin: 0;
+      color: #fff7d8;
+      font-size: .95rem;
+      line-height: 1.2;
+      letter-spacing: -.025em;
+    }
+
+    .football-countdown-matchup {
+      margin: 5px 0 0;
+      color: #9c9270;
+      font-size: .68rem;
+      line-height: 1.4;
+    }
+
+    .football-countdown-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 5px;
+      margin-top: 12px;
+    }
+
+    .football-countdown-unit {
+      min-width: 0;
+      padding: 8px 3px 7px;
+      border: 1px solid rgba(255, 255, 255, .055);
+      border-radius: 9px;
+      background: rgba(0, 0, 0, .22);
+      text-align: center;
+    }
+
+    .football-countdown-value {
+      display: block;
+      color: #fff;
+      font-size: .91rem;
+      font-variant-numeric: tabular-nums;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .football-countdown-label {
+      display: block;
+      margin-top: 5px;
+      color: #716a53;
+      font-size: .48rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .football-countdown-date {
+      margin-top: 10px;
+      color: #756e56;
+      font-size: .61rem;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    .football-countdown.is-live {
+      border-color: rgba(85, 216, 138, .22);
+      background:
+        radial-gradient(circle at 90% 0%, rgba(85, 216, 138, .13), transparent 35%),
+        linear-gradient(180deg, rgba(7, 26, 16, .97), rgba(5, 13, 9, .99));
+    }
+
+    .football-countdown.is-live .football-countdown-eyebrow,
+    .football-countdown.is-live .football-countdown-title {
+      color: #a9f1c3;
+    }
+
+    .football-countdown.is-live .football-countdown-live::before {
+      background: #55d88a;
+      box-shadow: 0 0 0 4px rgba(85, 216, 138, .1);
+    }
+
+    @media (max-width: 900px) {
+      .football-countdown {
+        margin-top: 18px;
+      }
+
+      .football-countdown + .zwades-callout {
+        margin-top: 0;
+      }
+    }
+
+  
+/* ---------------- COMPACT SHARED SIDEBAR ---------------- */
+
+.nav-group{
+  margin-top:8px;
+}
+
+.nav-label{
+  padding:0 9px 6px;
+  font-size:.59rem;
+  letter-spacing:.12em;
+}
+
+.nav-link{
+  gap:8px;
+  margin-bottom:3px;
+  padding:8px 10px;
+  border-radius:9px;
+  font-size:.82rem;
+  line-height:1.12;
+}
+
+.zwades-callout{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:0;
+  margin-top:0;
+  padding:7px 9px;
+  border-radius:9px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(8,16,36,.92),
+      rgba(5,11,27,.94)
+    );
+  box-shadow:
+    0 7px 16px rgba(0,0,0,.2),
+    inset 0 1px 0 rgba(255,255,255,.025);
+  text-align:center;
+}
+
+.football-countdown + .zwades-callout{
+  margin-top:0;
+}
+
+.zwades-title{
+  margin:0;
+  color:#dceaff;
+  font-size:.69rem;
+  font-weight:900;
+  line-height:1;
+  letter-spacing:.025em;
+  text-transform:lowercase;
+  white-space:nowrap;
+}
+
+.zwades-title .is-blue{
+  color:#73abff;
+}
+
+.zwades-eyebrow,
+.zwades-row,
+.zwades-media,
+.zwades-copy{
+  display:none;
+}
+
+@media(max-width:900px){
+  .zwades-callout{
+    margin-top:8px;
+  }
+
+  .football-countdown + .zwades-callout{
+    margin-top:0;
+  }
+}
+
+
+/* ---------------- COLLAPSIBLE PLAYER CONTROLS ---------------- */
+
+.toolbar-collapse-button{
+  border-color:rgba(130,162,203,.48);
+  color:#dceaff;
+  background:rgba(5,13,27,.9);
+  white-space:nowrap;
+}
+
+.toolbar-collapse-button:hover,
+.toolbar-collapse-button:focus-visible{
+  border-color:#78aef3;
+  background:rgba(18,45,82,.96);
+}
+
+.player-toolbar{
+  transition:
+    padding .18s ease,
+    background .18s ease,
+    inset .18s ease;
+}
+
+.player-toolbar.collapsed{
+  inset:10px 10px auto auto;
+  width:auto;
+  padding:0;
+  background:transparent;
+}
+
+.player-toolbar.collapsed .toolbar-title,
+.player-toolbar.collapsed
+  .toolbar-actions
+  > .toolbar-button:not(.toolbar-collapse-button){
+  display:none;
+}
+
+.player-toolbar.collapsed .toolbar-actions{
+  margin:0;
+  gap:0;
+}
+
+.player-toolbar.collapsed .toolbar-collapse-button{
+  padding:7px 9px;
+  border-radius:9px;
+  color:#e5efff;
+  background:rgba(5,12,24,.86);
+  box-shadow:
+    0 8px 22px rgba(0,0,0,.42),
+    inset 0 1px 0 rgba(255,255,255,.04);
+  backdrop-filter:blur(12px);
+  opacity:.78;
+}
+
+.player-toolbar.collapsed .toolbar-collapse-button:hover,
+.player-toolbar.collapsed .toolbar-collapse-button:focus-visible{
+  opacity:1;
+}
+
+@media(max-width:600px){
+  .toolbar-collapse-button{
+    padding:8px 9px;
+    font-size:.72rem;
+  }
+
+  .player-toolbar.collapsed{
+    inset:8px 8px auto auto;
+  }
+}
+
+
+/* ---------------- CHANGELOG SIDEBAR LINK ---------------- */
+
+.sidebar-footer-link{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  margin-top:6px;
+  padding:7px 9px;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:9px;
+  color:#9da7b8;
+  background:rgba(255,255,255,.025);
+  font-size:.7rem;
+  font-weight:800;
+  line-height:1;
+  text-decoration:none;
+  transition:
+    color .16s ease,
+    border-color .16s ease,
+    background .16s ease,
+    transform .16s ease;
+}
+
+.sidebar-footer-link:hover,
+.sidebar-footer-link:focus-visible{
+  color:#f3e5c3;
+  border-color:rgba(201,164,79,.28);
+  background:rgba(201,164,79,.07);
+  outline:none;
+  transform:translateY(-1px);
+}
+
+.sidebar-footer-link.active{
+  color:#ffe8a3;
+  border-color:rgba(201,164,79,.42);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(122,28,35,.5),
+      rgba(57,13,18,.62)
+    );
+}
+
+
+    /*
+      Shared/direct event links start in a cleaner watch-room view.
+      The temporary html selector prevents a visible sidebar flash
+      before the page controller applies its normal collapsed state.
+    */
+    html.ec-shared-event-room-pending
+      body
+      .layout {
+      grid-template-columns:
+        0
+        minmax(var(--min-video-width),1fr)
+        var(--divider-width)
+        var(--chat-width);
+    }
+
+    html.ec-shared-event-room-pending
+      body
+      .sidebar {
+      padding-left: 0;
+      padding-right: 0;
+      border-right-color: transparent;
+      opacity: 0;
+      transform: translateX(-100%);
+      pointer-events: none;
+    }
+
+    body.ec-shared-event-room
+      .mobile-menu {
+      border-color: rgba(255,105,120,.72);
+      color: #fff5f6;
+      background:
+        linear-gradient(
+          180deg,
+          #b41d38,
+          #761123
+        );
+      box-shadow:
+        0 12px 34px rgba(0,0,0,.52),
+        0 0 0 2px rgba(181,29,56,.16),
+        0 0 24px rgba(181,29,56,.27);
+    }
+
+    body.ec-shared-event-room
+      .mobile-menu:hover,
+    body.ec-shared-event-room
+      .mobile-menu:focus-visible {
+      border-color: #ff9aaa;
+      color: #fff;
+      background:
+        linear-gradient(
+          180deg,
+          #d42a48,
+          #92172d
+        );
+      outline: 0;
+    }
+
+    @media (max-width: 900px) {
+      html.ec-shared-event-room-pending
+        body
+        .layout {
+        grid-template-columns: 1fr;
+      }
+
+      html.ec-shared-event-room-pending
+        body
+        .sidebar {
+        width: 230px;
+        padding: 22px 16px;
+        border-right-color: var(--line);
+        opacity: 1;
+        transform: translateX(-102%);
+        pointer-events: auto;
+      }
+    }
+
+</style>
+  <link rel="icon" type="image/png" href="assets/eastcoin-favicon.png" />
+  <link rel="shortcut icon" href="assets/eastcoin-favicon.png" />
+  <link rel="apple-touch-icon" href="assets/eastcoin-favicon.png" />
+
+  <link rel="stylesheet" href="assets/eastcoins-theme.css?v=theme9" />
+  <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux9" />
+  <link rel="stylesheet" href="assets/eastcoins-streamed.css?v=server18" />
+  <link rel="stylesheet" href="assets/eastcoins-shell.css?v=shell2" />
+  <script>
+    (() => {
+      const version = "events2";
+      const storageKey = "eastcoinEventsUiVersion";
+
+      try {
+        if (localStorage.getItem(storageKey) !== version) {
+          localStorage.setItem(storageKey, version);
+
+          if ("caches" in window) {
+            caches.keys()
+              .then((keys) => Promise.all(
+                keys
+                  .filter((key) => /eastcoin/i.test(key))
+                  .map((key) => caches.delete(key))
+              ))
+              .catch(() => {});
+          }
+        }
+      } catch {}
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/eastcoins-events-clean.css?v=events2" />
+  <link rel="stylesheet" href="assets/eastcoins-home-events-directory.css?v=home-directory1" />
+  <link rel="stylesheet" href="assets/eastcoins-embedded-view.css?v=embed1" />
+</head>
+
+<body class="ec-shell-page ec-shell-player ec-events-clean ec-home-events-directory">
+  <div class="mobile-overlay" id="mobileOverlay" aria-hidden="true"></div>
+
+  <div class="layout">
+    <aside class="sidebar" aria-label="Primary navigation">
+      <div class="brand">
+        <div class="brand-mark brand-logo"><img src="assets/eastcoins-logo.webp" alt="EastCoin logo" /></div>
+        <div class="brand-copy brand-copy-single">
+          <strong>EastCoin</strong>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-label">EastCoin</div>
+        <a class="nav-link active" href="index.html?view=player&amp;new=1" target="_top">📺 Live Player</a>
+        <a class="nav-link" href="index.html?view=events" target="_top">🏟️ Events</a>
+        <a class="nav-link" href="favorites.html" target="_top">⭐ Favorites</a>
+        <details class="nav-games-menu">
+          <summary class="nav-link nav-games-summary">
+            <span class="nav-games-summary-copy">🎮 Games</span>
+            <span class="nav-games-caret" aria-hidden="true">⌄</span>
+          </summary>
+          <div class="nav-games-submenu">
+            <a class="nav-game-link" href="games.html?new=1" target="_top">All Games</a>
+            <a class="nav-game-link" href="bonk.html" target="_top">🔨 Bonk</a>
+            <a class="nav-game-link" href="aim-trainer.html?v=embedded1" target="_top">🎯 Aim Trainer</a>
+            <a class="nav-game-link" href="button-masher.html?v=embedded1" target="_top">🟥 Button Masher</a>
+          </div>
+        </details>
+      </div>
+
+      <section
+        class="football-countdown"
+        data-football-countdown
+        aria-label="Countdown to the 2026 NFL regular season">
+        <div class="football-countdown-eyebrow">
+          <span>🏈 NFL Kickoff</span>
+          <span class="football-countdown-live">Countdown</span>
+        </div>
+
+        <p class="football-countdown-title">
+          Football season starts in
+        </p>
+
+        <p class="football-countdown-matchup">
+          Patriots at Seahawks
+        </p>
+
+        <div class="football-countdown-grid" aria-live="polite">
+          <div class="football-countdown-unit">
+            <span
+              class="football-countdown-value"
+              data-countdown-days>--</span>
+            <span class="football-countdown-label">Days</span>
+          </div>
+
+          <div class="football-countdown-unit">
+            <span
+              class="football-countdown-value"
+              data-countdown-hours>--</span>
+            <span class="football-countdown-label">Hours</span>
+          </div>
+
+          <div class="football-countdown-unit">
+            <span
+              class="football-countdown-value"
+              data-countdown-minutes>--</span>
+            <span class="football-countdown-label">Min</span>
+          </div>
+
+          <div class="football-countdown-unit">
+            <span
+              class="football-countdown-value"
+              data-countdown-seconds>--</span>
+            <span class="football-countdown-label">Sec</span>
+          </div>
+        </div>
+
+        <div class="football-countdown-date">
+          Wed, Sep 9 · 7:20 PM CT
+        </div>
+      </section>
+
+      <div class="zwades-callout" aria-label="Zwades is blue">
+        <p class="zwades-title">
+          zwades is <span class="is-blue">blue</span>
+        </p>
+      </div>
+<a
+              class="sidebar-footer-link"
+              href="status.html"
+              target="_top">
+              🟢 Status
+            </a>
+
+      <button
+        class="sidebar-footer-link ec-settings-link"
+        type="button">
+        ⚙ Settings
+      </button>
+
+
+    </aside>
+
+    <main class="watch-area">
+      <button
+        class="mobile-menu"
+        id="mobileMenu"
+        type="button"
+        aria-label="Hide navigation"
+        aria-expanded="true">◀</button>
+
+      <section class="player-shell" id="playerShell" aria-label="Embedded video player">
+        <div class="player-toolbar" id="playerToolbar" hidden>
+          <div class="toolbar-title">
+            <strong>Embedded Stream</strong>
+            <span id="currentHost">External provider</span>
+          </div>
+
+          <div class="toolbar-actions">
+            <button
+              class="toolbar-button share-room-button"
+              id="shareButton"
+              type="button"
+              style="background-color:#9f1239;background-image:linear-gradient(180deg,#d51f51 0%,#9f1239 55%,#700925 100%);border-color:#e33a62;color:#fff3f5;">
+              🔗 Share Room
+            </button>
+            <button
+              class="toolbar-button toolbar-collapse-button"
+              id="toolbarCollapseButton"
+              type="button"
+              aria-expanded="true"
+              aria-controls="playerToolbar">
+              Hide controls ▲
+            </button>
+          </div>
+        </div>
+
+        <div class="url-stage" id="urlStage">
+          <div class="url-card">
+            <div class="url-icon url-image-icon">
+              <img
+                src="assets/eastcoin-player-icon.webp"
+                alt=""
+                aria-hidden="true"
+              />
+            </div>
+            <h1>Embed a video URL</h1>
+            <p>
+              Paste an authorized iframe or player URL below. The page will try to load it directly inside the center player.
+            </p>
+
+            <form class="url-form" id="streamForm">
+              <div class="url-entry">
+                <input
+                  id="streamUrl"
+                  type="url"
+                  inputmode="url"
+                  autocomplete="url"
+                  placeholder="https://www.youtube.com/embed/VIDEO_ID"
+                  aria-label="Video embed URL"
+                  required
+                />
+                <button class="load-button" type="submit">Load URL</button>
+              </div>
+
+              <div class="form-options">
+                <label class="remember-label">
+                  <input id="rememberUrl" type="checkbox" checked />
+                  Remember this URL on this device
+                </label>
+              </div>
+
+              <div class="url-error" id="urlError" role="alert"></div>
+            </form>
+
+            <section
+              class="streamed-launcher"
+              id="streamedLauncher"
+              aria-label="EastCoin event browser">
+              <div class="streamed-launcher-head">
+                <div class="streamed-launcher-copy">
+                  <div class="streamed-launcher-kicker">
+                    EastCoin events
+                  </div>
+                  <strong class="streamed-launcher-title">
+                    Browse events by sport
+                  </strong>
+                  <p class="streamed-launcher-description">
+                    Choose Live, Today, or Tomorrow. Events are grouped by sport
+                    and ordered by starting time for quicker selection.
+                  </p>
+                </div>
+
+                <div class="streamed-mode-buttons">
+                  <button
+                    class="streamed-mode-button"
+                    id="streamedLiveButton"
+                    type="button">
+                    Live now
+                  </button>
+                  <button
+                    class="streamed-mode-button"
+                    id="streamedTodayButton"
+                    type="button">
+                    Today
+                  </button>
+                  <button
+                    class="streamed-mode-button"
+                    id="streamedTomorrowButton"
+                    type="button">
+                    Tomorrow
+                  </button>
+                </div>
+              </div>
+
+              <div
+                class="streamed-browser"
+                id="streamedBrowser"
+                hidden>
+                <div class="streamed-browser-controls">
+                  <input
+                    class="streamed-search"
+                    id="streamedSearch"
+                    type="search"
+                    placeholder="Search teams or matchups"
+                    aria-label="Search Streamed events">
+                  <button
+                    class="streamed-refresh"
+                    id="streamedRefresh"
+                    type="button"
+                    hidden
+                    aria-hidden="true"
+                    tabindex="-1">
+                    Refresh
+                  </button>
+                </div>
+
+<div
+  class="streamed-status"
+  id="streamedStatus"
+  role="status"
+  aria-live="polite">
+</div>
+
+<div
+  class="streamed-discovery-root"
+  id="streamedDiscoveryRoot"
+  data-context="player">
+  <div
+    class="streamed-sport-tabs"
+    id="streamedSportTabs"
+    aria-label="Filter events by sport">
+  </div>
+
+  <section
+    class="streamed-discovery-section streamed-continue-section"
+    id="streamedContinueSection"
+    hidden>
+    <div class="streamed-discovery-section-head">
+      <div>
+        <h2>Continue Watching</h2>
+        <p>Return to your most recent EastCoin event and server.</p>
+      </div>
+    </div>
+    <div id="streamedContinueList"></div>
+  </section>
+
+  <section
+    class="streamed-discovery-section streamed-recent-section"
+    id="streamedRecentSection"
+    hidden>
+    <div class="streamed-discovery-section-head">
+      <div>
+        <h2>Recently Watched</h2>
+        <p>Reopen your latest EastCoin events and preferred servers.</p>
+      </div>
+    </div>
+    <div id="streamedRecentList"></div>
+  </section>
+
+  <section
+    class="streamed-discovery-section streamed-night-section"
+    id="streamedNightSection"
+    hidden>
+    <div class="streamed-discovery-section-head">
+      <div>
+        <h2>Your Night</h2>
+        <p>A quick timeline of what is live and starting over the next several hours.</p>
+      </div>
+    </div>
+    <div class="ec-night-timeline" id="streamedNightList"></div>
+  </section>
+
+  <section
+    class="streamed-discovery-section"
+    id="streamedPopularSection">
+    <div class="streamed-discovery-section-head">
+      <div>
+        <h2>Popular Live</h2>
+        <p>Browse the live events getting the most attention right now.</p>
+      </div>
+      <a class="streamed-discovery-section-link" href="events.html">Open full events page →</a>
+    </div>
+    <div class="ec-feature-row" id="streamedPopularList"></div>
+  </section>
+
+  <section
+    class="streamed-discovery-section"
+    id="streamedFavoriteSection">
+    <div class="streamed-discovery-section-head">
+      <div>
+        <h2 id="streamedFavoriteHeading">Favorite Teams</h2>
+        <p id="streamedFavoriteCopy">Follow teams and see their available events in one place.</p>
+      </div>
+    </div>
+    <div class="ec-favorite-team-list" id="streamedFavoriteTeamList"></div>
+    <div class="ec-event-grid" id="streamedFavoriteEventList"></div>
+  </section>
+
+  <section
+    class="streamed-discovery-section"
+    id="streamedSoonSection">
+    <div class="streamed-discovery-section-head">
+      <div>
+        <h2>Starting Soon</h2>
+        <p>See what begins next and how long until it starts.</p>
+      </div>
+    </div>
+    <div class="ec-event-grid" id="streamedSoonList"></div>
+  </section>
+
+  <section class="streamed-discovery-section">
+    <div class="streamed-discovery-section-head">
+      <div>
+        <h2 id="streamedListSectionTitle">Events</h2>
+        <p>Live games first, followed by upcoming matchups.</p>
+      </div>
+      <a class="streamed-discovery-section-link" href="events.html">View all events →</a>
+    </div>
+    <div class="ec-event-grid" id="streamedMatchList"></div>
+  </section>
+</div>
+              </div>
+            </section>
+
+            <div class="quick-favorites" aria-label="Favorite websites">
+              <p class="quick-favorites-label">⭐ Quick Favorites</p>
+              <div class="quick-favorites-list">
+                <button
+                  class="quick-favorite-button"
+                  id="streamedBrowseButton"
+                  type="button">
+                  Streamed events
+                </button>
+                <button
+                  class="quick-favorite-button"
+                  type="button"
+                  data-watch-url="https://streamed.st/">
+                  Streamed ST
+                </button>
+                <button
+                  class="quick-favorite-button"
+                  type="button"
+                  data-watch-url="https://dlhd.st/">
+                  DaddyLive
+                </button>
+                <button
+                  class="quick-favorite-button"
+                  type="button"
+                  data-watch-url="https://timstreams.st/">
+                  Tim Streams
+                </button>
+              </div>
+              <a class="all-favorites-link" href="favorites.html">
+                View Favorites page →
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div
+      class="resize-handle"
+      id="resizeHandle"
+      role="separator"
+      aria-label="Resize Twitch chat"
+      aria-orientation="vertical"
+      aria-valuemin="280"
+      aria-valuenow="360"
+      tabindex="0">
+      <span aria-hidden="true"></span>
+    </div>
+
+    <aside class="chat-panel" aria-label="Twitch chat">
+      <iframe
+        class="twitch-chat-frame"
+        src="about:blank"
+        data-standalone-src="https://www.twitch.tv/embed/zwades/chat?parent=eastcoins.pages.dev&amp;parent=eastcoin.vip&amp;parent=www.eastcoin.vip&amp;parent=localhost&amp;parent=127.0.0.1&amp;darkpopout"
+        title="zwades Twitch chat"
+        loading="eager"
+        referrerpolicy="strict-origin-when-cross-origin">
+      </iframe>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="assets/eastcoins-ux.js?v=ux9"></script>
+
+<script>
+    const body = document.body;
+    const playerShell = document.getElementById("playerShell");
+    const playerToolbar = document.getElementById("playerToolbar");
+    const urlStage = document.getElementById("urlStage");
+    const streamForm = document.getElementById("streamForm");
+    const streamUrlInput = document.getElementById("streamUrl");
+    const rememberUrl = document.getElementById("rememberUrl");
+    const urlError = document.getElementById("urlError");
+    const currentHost = document.getElementById("currentHost");
+    const shareButton = document.getElementById("shareButton");
+    const toolbarCollapseButton =
+      document.getElementById("toolbarCollapseButton");
+    const mobileMenu = document.getElementById("mobileMenu");
+    const mobileOverlay = document.getElementById("mobileOverlay");
+    const layout = document.querySelector(".layout");
+    const sidebar = document.querySelector(".sidebar");
+    const resizeHandle = document.getElementById("resizeHandle");
+    const toast = document.getElementById("toast");
+
+    let activeUrl = "";
+    let toastTimer;
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+    }
+
+    window.showToast = showToast;
+
+    function normalizeEmbedUrl(rawValue) {
+      const trimmed = rawValue.trim();
+      const valueWithProtocol = /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(trimmed)
+        ? trimmed
+        : `https://${trimmed}`;
+      const parsed = new URL(valueWithProtocol);
+
+      if (!["https:", "http:"].includes(parsed.protocol)) {
+        throw new Error("Only HTTP or HTTPS URLs can be embedded.");
+      }
+
+      // Convert common YouTube watch/share URLs into embed URLs.
+      if (parsed.hostname === "youtu.be") {
+        const videoId = parsed.pathname.replace("/", "");
+        if (videoId) {
+          return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
+        }
+      }
+
+      if (
+        parsed.hostname === "youtube.com" ||
+        parsed.hostname === "www.youtube.com" ||
+        parsed.hostname === "m.youtube.com"
+      ) {
+        if (parsed.pathname === "/watch") {
+          const videoId = parsed.searchParams.get("v");
+          if (videoId) {
+            return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
+          }
+        }
+
+        if (parsed.pathname.startsWith("/shorts/")) {
+          const videoId = parsed.pathname.split("/")[2];
+          if (videoId) {
+            return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
+          }
+        }
+      }
+
+      return parsed.href;
+    }
+
+
+    const PLAYER_TOOLBAR_COLLAPSED_KEY =
+      "eastcoinsPlayerToolbarCollapsed";
+
+    function playerToolbarShouldBeCollapsed() {
+      return (
+        localStorage.getItem(
+          PLAYER_TOOLBAR_COLLAPSED_KEY
+        ) === "true"
+      );
+    }
+
+    function setPlayerToolbarCollapsed(
+      collapsed,
+      save = true
+    ) {
+      playerToolbar.classList.toggle(
+        "collapsed",
+        collapsed
+      );
+
+      toolbarCollapseButton.textContent =
+        collapsed
+          ? "Show controls ▼"
+          : "Hide controls ▲";
+
+      toolbarCollapseButton.setAttribute(
+        "aria-expanded",
+        String(!collapsed)
+      );
+
+      toolbarCollapseButton.setAttribute(
+        "aria-label",
+        collapsed
+          ? "Show player controls"
+          : "Hide player controls"
+      );
+
+      if (save) {
+        localStorage.setItem(
+          PLAYER_TOOLBAR_COLLAPSED_KEY,
+          String(collapsed)
+        );
+      }
+    }
+
+    window.setEastcoinPlayerToolbarCollapsed =
+      setPlayerToolbarCollapsed;
+
+    function loadStream(rawValue, savePreference = rememberUrl.checked) {
+      urlError.textContent = "";
+
+      let normalizedUrl;
+      let parsedUrl;
+
+      try {
+        normalizedUrl = normalizeEmbedUrl(rawValue);
+        parsedUrl = new URL(normalizedUrl);
+      } catch (error) {
+        urlError.textContent = error.message || "Please enter a valid URL.";
+        return;
+      }
+
+      const iframe = document.createElement("iframe");
+      iframe.className = "embed-frame";
+      iframe.src = normalizedUrl;
+      iframe.title = "Embedded video";
+      iframe.allow = "autoplay; fullscreen; picture-in-picture; encrypted-media";
+      iframe.allowFullscreen = true;
+
+      activeUrl = normalizedUrl;
+      currentHost.textContent = parsedUrl.hostname;
+      playerShell.classList.add("has-frame");
+      setPlayerToolbarCollapsed(
+        playerToolbarShouldBeCollapsed(),
+        false
+      );
+      playerToolbar.hidden = false;
+
+      const existingFrame =
+        document.getElementById("activeFrame");
+
+      if (existingFrame) {
+        existingFrame.replaceWith(iframe);
+      } else {
+        urlStage.replaceWith(iframe);
+      }
+
+      iframe.id = "activeFrame";
+
+      if (savePreference) {
+        localStorage.setItem("eastcoinsEmbedUrl", normalizedUrl);
+      } else {
+        localStorage.removeItem("eastcoinsEmbedUrl");
+      }
+
+      showToast("URL loaded. If the player stays blank, the provider may block iframe embedding.");
+    }
+
+    window.loadStream = loadStream;
+
+    function restoreUrlPrompt() {
+      const activeFrame = document.getElementById("activeFrame");
+
+      if (activeFrame) {
+        activeFrame.replaceWith(urlStage);
+      }
+
+      playerShell.classList.remove("has-frame");
+      playerToolbar.hidden = true;
+      streamUrlInput.value = activeUrl;
+      urlError.textContent = "";
+      setTimeout(() => streamUrlInput.focus(), 0);
+    }
+
+    window.restoreEastcoinUrlPrompt =
+      restoreUrlPrompt;
+
+    streamForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      loadStream(streamUrlInput.value);
+    });
+
+    document
+      .querySelectorAll(".quick-favorite-button[data-watch-url]")
+      .forEach((button) => {
+        button.addEventListener("click", () => {
+          const favoriteUrl = button.dataset.watchUrl.trim();
+          streamUrlInput.value = favoriteUrl;
+          loadStream(favoriteUrl);
+        });
+      });
+
+    toolbarCollapseButton.addEventListener(
+      "click",
+      () => {
+        setPlayerToolbarCollapsed(
+          !playerToolbar.classList.contains(
+            "collapsed"
+          )
+        );
+      }
+    );
+
+    function buildShareUrl(streamUrl) {
+      const streamedState =
+        window.eastcoinStreamedState;
+
+      /*
+        Streamed rooms use a compact event-based link instead of
+        embedding the full match, source map, and player URL.
+      */
+      if (streamedState?.matchId) {
+        const eventUrl = new URL(
+          "/",
+          window.location.origin
+        );
+
+        eventUrl.searchParams.set(
+          "event",
+          streamedState.matchId
+        );
+
+        if (streamedState.source) {
+          eventUrl.searchParams.set(
+            "source",
+            streamedState.source
+          );
+        }
+
+        if (
+          streamedState.streamNo !== undefined &&
+          streamedState.streamNo !== null
+        ) {
+          eventUrl.searchParams.set(
+            "stream",
+            streamedState.streamNo
+          );
+        }
+
+        return eventUrl.href;
+      }
+
+      /*
+        Manually entered non-Streamed URLs retain the existing
+        watch-link behavior because they have no event ID.
+      */
+      const shareUrl = new URL(
+        "/",
+        window.location.origin
+      );
+
+      shareUrl.searchParams.set(
+        "watch",
+        streamUrl
+      );
+
+      return shareUrl.href;
+    }
+
+    shareButton.addEventListener("click", async () => {
+      if (!activeUrl) return;
+
+      const shareUrl = buildShareUrl(activeUrl);
+
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast(
+          window.eastcoinStreamedState?.matchId
+            ? "Short event link copied."
+            : "Shareable watch link copied."
+        );
+      } catch {
+        window.prompt("Copy this watch link:", shareUrl);
+      }
+    });
+
+    setPlayerToolbarCollapsed(
+      playerToolbarShouldBeCollapsed(),
+      false
+    );
+
+
+    // A full EastCoin page may occasionally be opened inside the active
+    // game or video iframe. Sidebar navigation must escape that frame.
+    document.addEventListener(
+      "click",
+      (event) => {
+        const link = event.target.closest(".nav-link");
+
+        if (!link || window.self === window.top) {
+          return;
+        }
+
+        event.preventDefault();
+
+        try {
+          window.top.location.href = link.href;
+        } catch {
+          window.open(link.href, "_top");
+        }
+      },
+      true
+    );
+
+    const SIDEBAR_STORAGE_KEY = "eastcoinsSidebarCollapsed";
+
+    function isMobileNavigation() {
+      return window.matchMedia("(max-width: 900px)").matches;
+    }
+
+    function updateNavigationButton() {
+      if (isMobileNavigation()) {
+        const open = body.classList.contains("menu-open");
+        mobileMenu.textContent = open ? "✕" : "☰";
+        mobileMenu.setAttribute(
+          "aria-label",
+          open ? "Close navigation" : "Open navigation"
+        );
+        mobileMenu.setAttribute("aria-expanded", String(open));
+        return;
+      }
+
+      const collapsed = body.classList.contains("sidebar-collapsed");
+      mobileMenu.textContent = collapsed ? "☰" : "◀";
+      mobileMenu.setAttribute(
+        "aria-label",
+        collapsed ? "Show navigation" : "Hide navigation"
+      );
+      mobileMenu.setAttribute("aria-expanded", String(!collapsed));
+    }
+
+    function setDesktopSidebarCollapsed(collapsed, save = true) {
+      body.classList.toggle("sidebar-collapsed", collapsed);
+
+      if (save) {
+        localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed));
+      }
+
+      updateNavigationButton();
+    }
+
+    mobileMenu.addEventListener("click", () => {
+      if (isMobileNavigation()) {
+        body.classList.toggle("menu-open");
+        updateNavigationButton();
+        return;
+      }
+
+      setDesktopSidebarCollapsed(
+        !body.classList.contains("sidebar-collapsed")
+      );
+    });
+
+    mobileOverlay.addEventListener("click", () => {
+      body.classList.remove("menu-open");
+      updateNavigationButton();
+    });
+
+    document.querySelectorAll(".nav-link").forEach((link) => {
+      link.addEventListener("click", () => {
+        document.querySelectorAll(".nav-link").forEach((item) => item.classList.remove("active"));
+        link.classList.add("active");
+        body.classList.remove("menu-open");
+        updateNavigationButton();
+      });
+    });
+
+    const CHAT_WIDTH_STORAGE_KEY = "eastcoinsChatWidthV2";
+    const LEGACY_CHAT_WIDTH_STORAGE_KEY = "eastcoinsChatWidth";
+    const DEFAULT_CHAT_WIDTH = 360;
+    const MIN_CHAT_WIDTH = 280;
+    const MIN_VIDEO_WIDTH = 420;
+    let activePointerId = null;
+
+    function getChatWidthLimits() {
+      const layoutWidth = layout.getBoundingClientRect().width;
+      const sidebarWidth = sidebar.getBoundingClientRect().width;
+      const dividerWidth = resizeHandle.getBoundingClientRect().width;
+
+      const availableMaximum =
+        layoutWidth - sidebarWidth - dividerWidth - MIN_VIDEO_WIDTH;
+      const practicalMaximum = Math.min(560, layoutWidth * 0.38);
+
+      return {
+        min: MIN_CHAT_WIDTH,
+        max: Math.max(
+          MIN_CHAT_WIDTH,
+          Math.min(availableMaximum, practicalMaximum)
+        )
+      };
+    }
+
+    function clampChatWidth(width) {
+      const limits = getChatWidthLimits();
+      return Math.min(Math.max(width, limits.min), limits.max);
+    }
+
+    function setChatWidth(width, save = false) {
+      if (window.innerWidth <= 900) return;
+
+      const clampedWidth = Math.round(clampChatWidth(width));
+      document.documentElement.style.setProperty(
+        "--chat-width",
+        `${clampedWidth}px`
+      );
+
+      resizeHandle.setAttribute("aria-valuenow", String(clampedWidth));
+      resizeHandle.setAttribute("aria-valuemax", String(Math.round(getChatWidthLimits().max)));
+
+      if (save) {
+        localStorage.setItem(CHAT_WIDTH_STORAGE_KEY, String(clampedWidth));
+      }
+    }
+
+    function widthFromPointer(clientX) {
+      const layoutRect = layout.getBoundingClientRect();
+      return layoutRect.right - clientX;
+    }
+
+    resizeHandle.addEventListener("pointerdown", (event) => {
+      if (window.innerWidth <= 900 || event.button !== 0) return;
+
+      activePointerId = event.pointerId;
+      resizeHandle.setPointerCapture(activePointerId);
+      body.classList.add("resizing-chat");
+      setChatWidth(widthFromPointer(event.clientX));
+      event.preventDefault();
+    });
+
+    resizeHandle.addEventListener("pointermove", (event) => {
+      if (event.pointerId !== activePointerId) return;
+      setChatWidth(widthFromPointer(event.clientX));
+    });
+
+    function finishChatResize(event) {
+      if (event.pointerId !== activePointerId) return;
+
+      setChatWidth(widthFromPointer(event.clientX), true);
+      body.classList.remove("resizing-chat");
+
+      if (resizeHandle.hasPointerCapture(activePointerId)) {
+        resizeHandle.releasePointerCapture(activePointerId);
+      }
+
+      activePointerId = null;
+    }
+
+    resizeHandle.addEventListener("pointerup", finishChatResize);
+    resizeHandle.addEventListener("pointercancel", (event) => {
+      if (event.pointerId !== activePointerId) return;
+      body.classList.remove("resizing-chat");
+      activePointerId = null;
+    });
+
+    resizeHandle.addEventListener("keydown", (event) => {
+      if (window.innerWidth <= 900) return;
+
+      const currentWidth = parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue("--chat-width")
+      ) || DEFAULT_CHAT_WIDTH;
+
+      const step = event.shiftKey ? 50 : 20;
+      let nextWidth = currentWidth;
+
+      if (event.key === "ArrowLeft") {
+        nextWidth += step;
+      } else if (event.key === "ArrowRight") {
+        nextWidth -= step;
+      } else if (event.key === "Home") {
+        nextWidth = MIN_CHAT_WIDTH;
+      } else if (event.key === "End") {
+        nextWidth = getChatWidthLimits().max;
+      } else {
+        return;
+      }
+
+      event.preventDefault();
+      setChatWidth(nextWidth, true);
+    });
+
+    resizeHandle.addEventListener("dblclick", () => {
+      setChatWidth(DEFAULT_CHAT_WIDTH, true);
+      showToast("Chat width reset.");
+    });
+
+    window.addEventListener("resize", () => {
+      body.classList.remove("menu-open");
+
+      if (window.innerWidth > 900) {
+        const currentWidth = parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue("--chat-width")
+        ) || DEFAULT_CHAT_WIDTH;
+        setChatWidth(currentWidth);
+      }
+
+      updateNavigationButton();
+    });
+
+    const pageParameters =
+      new URLSearchParams(window.location.search);
+    const isSharedEventRoom =
+      pageParameters.has("event");
+
+    if (isSharedEventRoom) {
+      body.classList.add("ec-shared-event-room");
+    }
+
+    const savedSidebarState =
+      localStorage.getItem(
+        SIDEBAR_STORAGE_KEY
+      ) === "true";
+
+    if (!isMobileNavigation()) {
+      /*
+        Direct/shared event rooms begin with navigation hidden,
+        without overwriting the visitor's normal saved preference.
+      */
+      setDesktopSidebarCollapsed(
+        isSharedEventRoom
+          ? true
+          : savedSidebarState,
+        false
+      );
+    } else {
+      body.classList.remove("menu-open");
+      updateNavigationButton();
+    }
+
+    document.documentElement.classList.remove(
+      "ec-shared-event-room-pending"
+    );
+
+    localStorage.removeItem(LEGACY_CHAT_WIDTH_STORAGE_KEY);
+
+    const savedChatWidth = Number(localStorage.getItem(CHAT_WIDTH_STORAGE_KEY));
+    if (Number.isFinite(savedChatWidth) && savedChatWidth > 0) {
+      setChatWidth(savedChatWidth);
+    } else {
+      setChatWidth(DEFAULT_CHAT_WIDTH);
+    }
+
+    const queryParameters = new URLSearchParams(window.location.search);
+    const startFresh = queryParameters.get("new") === "1";
+    const hasSharedStreamedRoom =
+      queryParameters.has("streamedRoom") ||
+      queryParameters.has("streamedEvent") ||
+      queryParameters.has("event");
+
+    if (startFresh) {
+      /*
+        The Live Player navigation uses ?new=1 to intentionally return
+        to the blank “Enter a URL” screen instead of restoring the last site.
+      */
+      localStorage.removeItem("eastcoinsEmbedUrl");
+      const cleanedPlayerUrl = new URL(window.location.href);
+      cleanedPlayerUrl.searchParams.delete("new");
+      history.replaceState(
+        {},
+        "",
+        `${cleanedPlayerUrl.pathname}${cleanedPlayerUrl.search}${cleanedPlayerUrl.hash}`
+      );
+    } else {
+      const queryStream =
+        queryParameters.get("watch") || queryParameters.get("stream");
+      const savedUrl = localStorage.getItem("eastcoinsEmbedUrl");
+
+      /*
+        Shared Streamed rooms are restored by eastcoins-streamed.js.
+        Do not load the fallback embed first, because doing so races the
+        event/source restoration and can leave the room without its server
+        controls.
+      */
+      const initialUrl = hasSharedStreamedRoom
+        ? ""
+        : queryStream || savedUrl;
+
+      if (initialUrl) {
+        streamUrlInput.value = initialUrl;
+
+        /*
+          Keep ?watch= in the address bar.
+
+          Some third-party players reload or navigate the parent page after
+          initialization. Keeping the parameter means EastCoin can restore the
+          same player after that reload instead of falling back to the URL form.
+
+          A previously saved URL also auto-loads as a secondary fallback.
+        */
+        loadStream(initialUrl, true);
+      }
+    }
+
+  
+    function initializeFootballCountdowns() {
+      const kickoffTime = new Date("2026-09-09T19:20:00-05:00");
+
+      document
+        .querySelectorAll("[data-football-countdown]")
+        .forEach((countdown) => {
+          const daysElement = countdown.querySelector(
+            "[data-countdown-days]"
+          );
+          const hoursElement = countdown.querySelector(
+            "[data-countdown-hours]"
+          );
+          const minutesElement = countdown.querySelector(
+            "[data-countdown-minutes]"
+          );
+          const secondsElement = countdown.querySelector(
+            "[data-countdown-seconds]"
+          );
+          const titleElement = countdown.querySelector(
+            ".football-countdown-title"
+          );
+          const statusElement = countdown.querySelector(
+            ".football-countdown-live"
+          );
+
+          function updateFootballCountdown() {
+            const remaining = kickoffTime.getTime() - Date.now();
+
+            if (remaining <= 0) {
+              countdown.classList.add("is-live");
+              titleElement.textContent = "Football is back";
+              statusElement.textContent = "Live";
+              daysElement.textContent = "00";
+              hoursElement.textContent = "00";
+              minutesElement.textContent = "00";
+              secondsElement.textContent = "00";
+              return false;
+            }
+
+            const totalSeconds = Math.floor(remaining / 1000);
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            daysElement.textContent = String(days);
+            hoursElement.textContent = String(hours).padStart(2, "0");
+            minutesElement.textContent = String(minutes).padStart(2, "0");
+            secondsElement.textContent = String(seconds).padStart(2, "0");
+            return true;
+          }
+
+          updateFootballCountdown();
+
+          const countdownTimer = window.setInterval(() => {
+            if (!updateFootballCountdown()) {
+              window.clearInterval(countdownTimer);
+            }
+          }, 1000);
+        });
+    }
+
+    initializeFootballCountdowns();
+
+  </script>
+  <script src="assets/eastcoins-streamed-api.js?v=api2"></script>
+  <script src="assets/eastcoins-streamed.js?v=server17"></script>
+  <script src="assets/eastcoins-events-clean-v2.js?v=events2"></script>
+  <script src="assets/eastcoins-home-events-directory.js?v=home-directory1"></script>
+  <script>
+    (() => {
+      if (document.documentElement.classList.contains("ec-embedded-view")) {
+        return;
+      }
+
+      const chat = document.querySelector(".twitch-chat-frame[data-standalone-src]");
+      if (chat) {
+        chat.src = chat.dataset.standaloneSrc;
+      }
+    })();
+  </script>
+  <script src="assets/eastcoins-view-bridge.js?v=bridge1"></script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+/* ================================================================
+   EASTCOIN — EMBEDDED CENTER VIEW MODE
+   Activated only when player.html or events.html receives ?shell=1.
+   ================================================================ */
+
+html.ec-embedded-view,
+html.ec-embedded-view body {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
+  overflow: hidden !important;
+  background: #020202;
+}
+
+html.ec-embedded-view body.ec-shell-page {
+  min-height: 100%;
+}
+
+html.ec-embedded-view .sidebar,
+html.ec-embedded-view .mobile-overlay,
+html.ec-embedded-view .mobile-menu,
+html.ec-embedded-view .sidebar-toggle,
+html.ec-embedded-view .resize-handle,
+html.ec-embedded-view .chat-panel,
+html.ec-embedded-view .toast {
+  display: none !important;
+}
+
+html.ec-embedded-view .layout,
+html.ec-embedded-view .favorites-layout {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  width: 100% !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  overflow: hidden !important;
+}
+
+html.ec-embedded-view .watch-area {
+  grid-column: 1 !important;
+  width: 100% !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+html.ec-embedded-view .player-shell {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+html.ec-embedded-view .page-main {
+  grid-column: 1 !important;
+  width: 100% !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  overflow: auto !important;
+  padding: 0 !important;
+}
+
+html.ec-embedded-view .page-shell {
+  width: min(1480px, 100%) !important;
+  min-height: 100% !important;
+  margin: 0 auto !important;
+  padding: 28px 30px 54px !important;
+}
+
+html.ec-embedded-view .page-header {
+  padding-top: 4px !important;
+}
+
+html.ec-embedded-view body.sidebar-collapsed .layout,
+html.ec-embedded-view body.sidebar-collapsed .favorites-layout {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+@media (max-width: 900px) {
+  html.ec-embedded-view,
+  html.ec-embedded-view body {
+    overflow: hidden !important;
+  }
+
+  html.ec-embedded-view .watch-area,
+  html.ec-embedded-view .page-main {
+    height: 100vh !important;
+    min-height: 100vh !important;
+  }
+
+  html.ec-embedded-view .page-shell {
+    padding: 22px 18px 44px !important;
+  }
+}
