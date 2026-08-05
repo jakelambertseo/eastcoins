@@ -203,18 +203,18 @@
 .ec-persistent-utility-dock {
   position: absolute;
   left: 50%;
-  bottom: 18px;
+  bottom: 14px;
   z-index: 90;
   display: flex;
   align-items: center;
-  gap: 7px;
-  max-width: calc(100% - 28px);
-  padding: 6px;
+  gap: 4px;
+  max-width: calc(100% - 24px);
+  padding: 4px;
   overflow-x: auto;
-  border: 1px solid rgba(255, 255, 255, .11);
-  border-radius: 13px;
-  background: rgba(4, 4, 4, .82);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, .46);
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 10px;
+  background: rgba(4, 4, 4, .84);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .44);
   backdrop-filter: blur(15px);
   opacity: .76;
   transform: translateX(-50%);
@@ -236,15 +236,16 @@
 
 .ec-persistent-utility-button {
   flex: 0 0 auto;
-  min-height: 36px;
-  padding: 8px 10px;
-  border: 1px solid rgba(255, 255, 255, .1);
-  border-radius: 9px;
+  min-height: 29px;
+  padding: 5px 7px;
+  border: 1px solid rgba(255, 255, 255, .09);
+  border-radius: 7px;
   color: #ddd5c7;
   background: rgba(16, 14, 13, .94);
-  font-size: .7rem;
-  font-weight: 900;
+  font-size: 9px !important;
+  font-weight: 850;
   line-height: 1;
+  letter-spacing: 0;
   white-space: nowrap;
 }
 
@@ -264,7 +265,7 @@
 }
 
 body.theater-mode .ec-persistent-utility-dock {
-  bottom: 14px;
+  bottom: 11px;
   opacity: .64;
 }
 
@@ -280,21 +281,32 @@ html.ec-shell-reduced-motion .ec-persistent-utility-button {
 
 @media (max-width: 900px) {
   .ec-persistent-utility-dock {
-    right: 10px;
-    bottom: 10px;
-    left: 10px;
+    right: 7px;
+    bottom: 7px;
+    left: 7px;
+    gap: 3px;
     max-width: none;
+    padding: 3px;
+    border-radius: 9px;
     transform: none;
     opacity: .94;
   }
 
   body.theater-mode .ec-persistent-utility-dock {
-    bottom: 10px;
+    bottom: 7px;
   }
 
   .ec-persistent-utility-button {
-    min-height: 34px;
-    padding: 7px 8px;
-    font-size: .64rem;
+    min-height: 27px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-size: 8px !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .ec-persistent-utility-button {
+    padding-inline: 5px;
+    font-size: 7.5px !important;
   }
 }
