@@ -84,6 +84,30 @@
     "new"
   ];
   const DRAWER_VIEWS = new Set(["events", "favorites", "emotes"]);
+  const SHARED_PLAYER_PARAMETER_NAMES = [
+    "event",
+    "source",
+    "stream",
+    "watch",
+    "streamedRoom",
+    "streamedEvent",
+    "streamedSource",
+    "streamedStream"
+  ];
+
+  function initialRequestUsesSharedPlayerLink() {
+    const url = new URL(window.location.href);
+
+    return (
+      /\/watch\/?$/i.test(url.pathname) ||
+      SHARED_PLAYER_PARAMETER_NAMES.some((name) =>
+        url.searchParams.has(name)
+      )
+    );
+  }
+
+  const sharedInitialPlayerRequest =
+    initialRequestUsesSharedPlayerLink();
 
   let currentView = "player";
   let currentPlayerUrl = "";
@@ -1142,7 +1166,16 @@
   } catch {}
 
   if (!isMobileNavigation()) {
-    setDesktopSidebarMode(savedSidebarMode, false);
+    /*
+      Shared event and watch URLs should open with the compact icon rail so
+      the video gets priority without removing navigation entirely. This is
+      intentionally not saved, preserving the visitor's normal preference
+      for future non-shared EastCoin visits.
+    */
+    setDesktopSidebarMode(
+      sharedInitialPlayerRequest ? "rail" : savedSidebarMode,
+      false
+    );
     setChatWidth(savedChatWidth);
   } else {
     updateNavigationButton();
