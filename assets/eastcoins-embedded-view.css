@@ -1,4 +1,4 @@
-@import url("eastcoins-shell-polish.css?v=polish2");
+@import url("eastcoins-shell-polish.css?v=polish3");
 
 /* ================================================================
    EASTCOIN — EMBEDDED CENTER VIEW MODE
@@ -74,7 +74,7 @@ html.ec-embedded-view .page-shell {
   width: min(1480px, 100%) !important;
   min-height: 100% !important;
   margin: 0 auto !important;
-  padding: 28px 30px 54px !important;
+  padding: 28px 30px 104px !important;
 }
 
 html.ec-embedded-view .page-header {
@@ -99,6 +99,6 @@ html.ec-embedded-view body.sidebar-collapsed .favorites-layout {
   }
 
   html.ec-embedded-view .page-shell {
-    padding: 22px 18px 44px !important;
+    padding: 22px 18px 96px !important;
   }
 }

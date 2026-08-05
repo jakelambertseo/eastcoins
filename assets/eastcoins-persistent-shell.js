@@ -20,6 +20,12 @@
   const settingSidebar = document.getElementById("persistentSettingSidebar");
   const settingMotion = document.getElementById("persistentSettingMotion");
   const resetChatWidth = document.getElementById("persistentResetChatWidth");
+  const utilityDock = document.getElementById("persistentUtilityDock");
+  const theaterButton = document.getElementById("persistentTheaterButton");
+  const chatButton = document.getElementById("persistentChatButton");
+  const navButton = document.getElementById("persistentNavButton");
+  const gameButton = document.getElementById("persistentGameButton");
+  const dockSettingsButton = document.getElementById("persistentDockSettingsButton");
 
   if (
     !body || !layout || !sidebar || !mobileMenu || !mobileOverlay ||
@@ -52,6 +58,8 @@
   let activePointerId = null;
   let toastTimer = 0;
   let theaterActive = false;
+  let pendingGameOverlay = false;
+  let lastSettingsTrigger = settingsButton;
 
   function showToast(message) {
     if (!toast) return;
@@ -81,6 +89,35 @@
     } catch {}
   }
 
+  function updateUtilityDock() {
+    const navigationVisible = navigationIsVisible();
+    const chatVisible = chatIsVisible();
+
+    if (theaterButton) {
+      theaterButton.textContent = theaterActive
+        ? "↙ Exit theater"
+        : "⛶ Theater";
+      theaterButton.classList.toggle("is-active", theaterActive);
+      theaterButton.setAttribute("aria-pressed", String(theaterActive));
+    }
+
+    if (chatButton) {
+      chatButton.textContent = chatVisible
+        ? "💬 Hide chat"
+        : "💬 Show chat";
+      chatButton.classList.toggle("is-active", chatVisible);
+      chatButton.setAttribute("aria-pressed", String(chatVisible));
+    }
+
+    if (navButton) {
+      navButton.textContent = navigationVisible
+        ? "◀ Hide nav"
+        : "☰ Show nav";
+      navButton.classList.toggle("is-active", !navigationVisible);
+      navButton.setAttribute("aria-pressed", String(!navigationVisible));
+    }
+  }
+
   function navigationIsVisible() {
     if (theaterActive) return false;
 
@@ -105,13 +142,48 @@
     };
   }
 
-  function postShellState() {
+  function postToView(message) {
     try {
       viewFrame.contentWindow?.postMessage(
-        shellState(),
+        message,
         window.location.origin
       );
     } catch {}
+  }
+
+  function postShellState() {
+    postToView(shellState());
+  }
+
+  function flushPendingGameOverlay() {
+    if (!pendingGameOverlay || currentView !== "player") return;
+    pendingGameOverlay = false;
+    postToView({ type: "eastcoin:toggle-game-overlay" });
+  }
+
+  function requestGameOverlay() {
+    if (currentView === "player") {
+      postToView({ type: "eastcoin:toggle-game-overlay" });
+      return;
+    }
+
+    pendingGameOverlay = true;
+    const parameters = new URLSearchParams();
+    parameters.set("shell", "1");
+    openView("player", parameters, { push: true });
+  }
+
+  function togglePersistentChat() {
+    if (theaterActive) {
+      setTheaterMode(false);
+      setChatCollapsed(false, true);
+      return;
+    }
+
+    setChatCollapsed(
+      !body.classList.contains("chat-collapsed"),
+      true
+    );
   }
 
   function setTheaterMode(enabled) {
@@ -119,6 +191,7 @@
     body.classList.toggle("theater-mode", theaterActive);
     body.classList.remove("menu-open");
     updateNavigationButton();
+    updateUtilityDock();
     postShellState();
   }
 
@@ -159,6 +232,7 @@
       settingChat.checked = !collapsed;
     }
 
+    updateUtilityDock();
     postShellState();
   }
 
@@ -196,8 +270,9 @@
     }
   }
 
-  function openSettings() {
+  function openSettings(trigger = settingsButton) {
     if (!settingsModal) return;
+    lastSettingsTrigger = trigger || settingsButton;
     syncSettings();
     settingsModal.hidden = false;
     settingsModal.setAttribute("aria-hidden", "false");
@@ -208,10 +283,17 @@
     if (!settingsModal) return;
     settingsModal.hidden = true;
     settingsModal.setAttribute("aria-hidden", "true");
-    settingsButton?.focus({ preventScroll: true });
+    lastSettingsTrigger?.focus?.({ preventScroll: true });
   }
 
-  settingsButton?.addEventListener("click", openSettings);
+  settingsButton?.addEventListener("click", () => openSettings(settingsButton));
+  dockSettingsButton?.addEventListener("click", () => openSettings(dockSettingsButton));
+  theaterButton?.addEventListener("click", () => {
+    setTheaterMode(!theaterActive);
+  });
+  chatButton?.addEventListener("click", togglePersistentChat);
+  navButton?.addEventListener("click", toggleShellNavigation);
+  gameButton?.addEventListener("click", requestGameOverlay);
   settingsClose?.addEventListener("click", closeSettings);
   settingsDone?.addEventListener("click", closeSettings);
 
@@ -257,6 +339,41 @@
     }
   });
 
+  function isTypingTarget(target) {
+    return (
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement ||
+      target?.isContentEditable
+    );
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if (
+      event.defaultPrevented || event.repeat ||
+      event.ctrlKey || event.metaKey || event.altKey ||
+      isTypingTarget(event.target)
+    ) {
+      return;
+    }
+
+    const key = event.key.toLowerCase();
+
+    if (key === "t") {
+      event.preventDefault();
+      setTheaterMode(!theaterActive);
+    } else if (key === "c") {
+      event.preventDefault();
+      togglePersistentChat();
+    } else if (key === "m") {
+      event.preventDefault();
+      toggleShellNavigation();
+    } else if (key === "g") {
+      event.preventDefault();
+      requestGameOverlay();
+    }
+  });
+
   function isMobileNavigation() {
     return window.matchMedia("(max-width: 900px)").matches;
   }
@@ -270,16 +387,17 @@
         open ? "Close navigation" : "Open navigation"
       );
       mobileMenu.setAttribute("aria-expanded", String(open));
-      return;
+    } else {
+      const collapsed = body.classList.contains("sidebar-collapsed");
+      mobileMenu.textContent = collapsed ? "☰" : "◀";
+      mobileMenu.setAttribute(
+        "aria-label",
+        collapsed ? "Show navigation" : "Hide navigation"
+      );
+      mobileMenu.setAttribute("aria-expanded", String(!collapsed));
     }
 
-    const collapsed = body.classList.contains("sidebar-collapsed");
-    mobileMenu.textContent = collapsed ? "☰" : "◀";
-    mobileMenu.setAttribute(
-      "aria-label",
-      collapsed ? "Show navigation" : "Hide navigation"
-    );
-    mobileMenu.setAttribute("aria-expanded", String(!collapsed));
+    updateUtilityDock();
   }
 
   function setDesktopSidebarCollapsed(collapsed, save = true) {
@@ -618,6 +736,7 @@
   viewFrame.addEventListener("load", () => {
     viewLoader.classList.add("is-hidden");
     postShellState();
+    window.setTimeout(flushPendingGameOverlay, 120);
   });
 
   window.addEventListener("message", (event) => {
@@ -630,6 +749,7 @@
     if (message.type === "eastcoin:view-ready") {
       viewLoader.classList.add("is-hidden");
       postShellState();
+      flushPendingGameOverlay();
       return;
     }
 
@@ -644,15 +764,7 @@
     }
 
     if (message.type === "eastcoin:toggle-chat") {
-      if (theaterActive) {
-        setTheaterMode(false);
-        setChatCollapsed(false, true);
-      } else {
-        setChatCollapsed(
-          !body.classList.contains("chat-collapsed"),
-          true
-        );
-      }
+      togglePersistentChat();
       return;
     }
 
@@ -779,6 +891,7 @@
   setChatCollapsed(savedChatCollapsed, false);
   setReducedMotion(savedReducedMotion, false);
   syncSettings();
+  updateUtilityDock();
   initializeFootballCountdowns();
 
   const initialRoute = routeFromLocation();

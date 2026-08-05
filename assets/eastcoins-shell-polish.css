@@ -188,3 +188,113 @@
   transform: translateY(0) scale(1);
   visibility: visible;
 }
+
+
+/* ================================================================
+   PERSISTENT SHELL UTILITY DOCK
+   Lives in the outer shell so it remains available across Live Player,
+   Events, Other Streams, and Emote Help without touching Twitch chat.
+   ================================================================ */
+
+.ec-persistent-view-area {
+  position: relative;
+}
+
+.ec-persistent-utility-dock {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: calc(100% - 28px);
+  padding: 6px;
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, .11);
+  border-radius: 13px;
+  background: rgba(4, 4, 4, .82);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .46);
+  backdrop-filter: blur(15px);
+  opacity: .76;
+  transform: translateX(-50%);
+  scrollbar-width: none;
+  transition:
+    opacity .18s ease,
+    bottom .18s ease,
+    transform .18s ease;
+}
+
+.ec-persistent-utility-dock::-webkit-scrollbar {
+  display: none;
+}
+
+.ec-persistent-utility-dock:hover,
+.ec-persistent-utility-dock:focus-within {
+  opacity: 1;
+}
+
+.ec-persistent-utility-button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 9px;
+  color: #ddd5c7;
+  background: rgba(16, 14, 13, .94);
+  font-size: .7rem;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ec-persistent-utility-button:hover,
+.ec-persistent-utility-button:focus-visible {
+  border-color: rgba(209, 170, 86, .52);
+  color: #fff3c9;
+  background: rgba(52, 39, 19, .96);
+  outline: 0;
+  transform: translateY(-1px);
+}
+
+.ec-persistent-utility-button.is-active {
+  border-color: rgba(209, 170, 86, .6);
+  color: #fff0b4;
+  background: linear-gradient(180deg, #5b441c, #2d210f);
+}
+
+body.theater-mode .ec-persistent-utility-dock {
+  bottom: 14px;
+  opacity: .64;
+}
+
+body.theater-mode .ec-persistent-utility-dock:hover,
+body.theater-mode .ec-persistent-utility-dock:focus-within {
+  opacity: 1;
+}
+
+html.ec-shell-reduced-motion .ec-persistent-utility-dock,
+html.ec-shell-reduced-motion .ec-persistent-utility-button {
+  transition: none !important;
+}
+
+@media (max-width: 900px) {
+  .ec-persistent-utility-dock {
+    right: 10px;
+    bottom: 10px;
+    left: 10px;
+    max-width: none;
+    transform: none;
+    opacity: .94;
+  }
+
+  body.theater-mode .ec-persistent-utility-dock {
+    bottom: 10px;
+  }
+
+  .ec-persistent-utility-button {
+    min-height: 34px;
+    padding: 7px 8px;
+    font-size: .64rem;
+  }
+}

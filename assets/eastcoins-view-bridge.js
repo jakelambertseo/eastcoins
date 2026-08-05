@@ -246,16 +246,42 @@
     });
   }
 
+  function toggleGameOverlayFromShell(attempt = 0) {
+    const button = document.querySelector(
+      "[data-ec-game-overlay-toggle]"
+    );
+
+    if (button) {
+      button.click();
+      return;
+    }
+
+    if (attempt < 12) {
+      window.setTimeout(
+        () => toggleGameOverlayFromShell(attempt + 1),
+        75
+      );
+    }
+  }
+
   window.addEventListener("message", (event) => {
     if (
       event.origin !== window.location.origin ||
-      event.source !== window.parent ||
-      event.data?.type !== "eastcoin:shell-state"
+      event.source !== window.parent
     ) {
       return;
     }
 
-    applyShellState(event.data);
+    const message = event.data || {};
+
+    if (message.type === "eastcoin:shell-state") {
+      applyShellState(message);
+      return;
+    }
+
+    if (message.type === "eastcoin:toggle-game-overlay") {
+      toggleGameOverlayFromShell();
+    }
   });
 
   function eventFromContinueStorage() {

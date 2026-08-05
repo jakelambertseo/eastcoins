@@ -13,7 +13,7 @@
 <link href="assets/eastcoin-favicon.png" rel="apple-touch-icon"/>
 <link href="assets/eastcoins-theme.css?v=theme9" rel="stylesheet"/>
 <link href="assets/eastcoins-shell.css?v=shell2" rel="stylesheet"/>
-<link href="assets/eastcoins-persistent-shell.css?v=persistent5" rel="stylesheet"/><link href="assets/eastcoins-shell-polish.css?v=polish2" rel="stylesheet"/>
+<link href="assets/eastcoins-persistent-shell.css?v=persistent5" rel="stylesheet"/><link href="assets/eastcoins-shell-polish.css?v=polish3" rel="stylesheet"/>
 </head>
 <body class="ec-shell-page ec-persistent-shell">
 <div aria-hidden="true" class="mobile-overlay" id="mobileOverlay"></div>
@@ -88,6 +88,13 @@
 </div>
 <iframe allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write" allowfullscreen="" class="ec-view-frame" id="eastcoinViewFrame" referrerpolicy="strict-origin-when-cross-origin" src="player.html?shell=1" title="EastCoin Live Player">
 </iframe>
+<div aria-label="EastCoin display controls" class="ec-persistent-utility-dock" id="persistentUtilityDock" role="toolbar">
+<button aria-pressed="false" class="ec-persistent-utility-button" id="persistentTheaterButton" type="button">⛶ Theater</button>
+<button aria-pressed="true" class="ec-persistent-utility-button" id="persistentChatButton" type="button">💬 Hide chat</button>
+<button aria-pressed="false" class="ec-persistent-utility-button" id="persistentNavButton" type="button">◀ Hide nav</button>
+<button class="ec-persistent-utility-button ec-persistent-game-button" id="persistentGameButton" type="button">🎮 Play a Game</button>
+<button aria-controls="persistentSettingsModal" aria-haspopup="dialog" class="ec-persistent-utility-button" id="persistentDockSettingsButton" type="button">⚙ Settings</button>
+</div>
 </main>
 <div aria-label="Resize Twitch chat" aria-orientation="vertical" aria-valuemin="280" aria-valuenow="360" class="resize-handle" id="resizeHandle" role="separator" tabindex="0">
 <span aria-hidden="true"></span>
@@ -137,6 +144,6 @@
 </footer>
 </section>
 </div><div aria-live="polite" class="toast" id="toast" role="status"></div>
-<script src="assets/eastcoins-persistent-shell.js?v=persistent6"></script>
+<script src="assets/eastcoins-persistent-shell.js?v=persistent7"></script>
 </body>
 </html>
