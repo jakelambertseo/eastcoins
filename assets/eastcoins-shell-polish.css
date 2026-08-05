@@ -621,3 +621,628 @@ html.ec-shell-reduced-motion .ec-browse-drawer-panel {
     animation: none !important;
   }
 }
+
+
+/* ================================================================
+   EASTCOIN SIDEBAR NAVIGATION REFINEMENT
+   Adds a compact icon rail, consistent SVG icon boxes, active descriptions,
+   live/count badges, expandable community countdown, and mobile drawer polish.
+   ================================================================ */
+
+:root {
+  --ec-sidebar-rail-width: 58px;
+}
+
+.ec-persistent-shell .sidebar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201,164,79,.16) transparent;
+}
+
+.ec-persistent-shell .sidebar::-webkit-scrollbar { width: 5px; }
+.ec-persistent-shell .sidebar::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(201,164,79,.14);
+}
+
+.ec-persistent-shell .sidebar-mobile-header {
+  display: none;
+}
+
+.ec-persistent-shell .brand {
+  padding: 3px 3px 13px;
+}
+
+.ec-persistent-shell .brand-home-button {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 4px;
+  border: 0;
+  border-radius: 12px;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+}
+
+.ec-persistent-shell .brand-home-button:hover,
+.ec-persistent-shell .brand-home-button:focus-visible {
+  background: rgba(255,255,255,.025);
+  outline: 1px solid rgba(201,164,79,.14);
+}
+
+.ec-persistent-shell .brand-copy-single {
+  display: grid;
+  align-content: center;
+  min-width: 0;
+}
+
+.ec-persistent-shell .brand-copy-single strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ec-persistent-shell .brand-copy-single small {
+  display: block;
+  margin-top: 4px;
+  color: #746b60;
+  font-size: .48rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.ec-persistent-shell .nav-group {
+  margin-top: 0;
+}
+
+.ec-persistent-shell .nav-label,
+.ec-persistent-shell .sidebar-section-label {
+  padding: 0 8px 6px;
+  color: #6f665b;
+  font-size: .56rem;
+  font-weight: 900;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.ec-persistent-shell .nav-link {
+  position: relative;
+  align-items: flex-start;
+  min-height: 44px;
+  gap: 9px;
+  padding: 7px 8px;
+  overflow: visible;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  transform: none;
+}
+
+.ec-persistent-shell .nav-link:hover,
+.ec-persistent-shell .nav-link:focus-visible {
+  border-color: rgba(255,255,255,.055);
+  background: rgba(255,255,255,.038);
+  transform: none;
+}
+
+.ec-persistent-shell .nav-link.active {
+  border-color: rgba(201,164,79,.15);
+  background:
+    radial-gradient(circle at 0 50%, rgba(201,164,79,.08), transparent 38%),
+    rgba(97,17,29,.34);
+  box-shadow:
+    inset 2px 0 0 var(--ec-gold),
+    inset 0 1px 0 rgba(255,255,255,.025),
+    0 7px 18px rgba(0,0,0,.14);
+}
+
+.ec-persistent-shell .nav-icon-box,
+.ec-persistent-shell .sidebar-utility-icon,
+.ec-persistent-shell .football-countdown-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: #8d8478;
+}
+
+.ec-persistent-shell .nav-icon-box {
+  width: 29px;
+  height: 29px;
+  border: 1px solid rgba(255,255,255,.065);
+  border-radius: 8px;
+  background: rgba(255,255,255,.025);
+}
+
+.ec-persistent-shell .nav-link:hover .nav-icon-box,
+.ec-persistent-shell .nav-link:focus-visible .nav-icon-box {
+  color: #d8c8aa;
+  border-color: rgba(201,164,79,.16);
+  background: rgba(201,164,79,.045);
+}
+
+.ec-persistent-shell .nav-link.active .nav-icon-box {
+  color: #f2cf72;
+  border-color: rgba(201,164,79,.3);
+  background: linear-gradient(180deg, rgba(117,25,37,.76), rgba(54,10,17,.82));
+  box-shadow: 0 0 18px rgba(201,164,79,.08);
+}
+
+.ec-persistent-shell .sidebar-icon-svg {
+  width: 15px;
+  height: 15px;
+}
+
+.ec-persistent-shell .nav-link-content {
+  display: block;
+  min-width: 0;
+  flex: 1;
+  padding-top: 1px;
+}
+
+.ec-persistent-shell .nav-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 16px;
+}
+
+.ec-persistent-shell .nav-link-title {
+  overflow: hidden;
+  color: inherit;
+  font-size: .76rem;
+  font-weight: 860;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ec-persistent-shell .nav-link-description {
+  display: none;
+  margin-top: 4px;
+  overflow: hidden;
+  color: #807568;
+  font-size: .49rem;
+  font-weight: 720;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ec-persistent-shell .nav-link.active .nav-link-description {
+  display: block;
+}
+
+.ec-persistent-shell .nav-link-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  min-height: 17px;
+  padding: 2px 5px;
+  border: 1px solid rgba(201,164,79,.16);
+  border-radius: 999px;
+  color: #bba66c;
+  background: rgba(201,164,79,.055);
+  font-size: .46rem;
+  font-weight: 950;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ec-persistent-shell .nav-live-badge {
+  color: #ffb4bd;
+  border-color: rgba(224,71,92,.25);
+  background: rgba(130,19,37,.28);
+}
+
+.ec-persistent-shell .nav-live-badge:not(.is-zero)::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: #ef435c;
+  box-shadow: 0 0 0 3px rgba(239,67,92,.1);
+}
+
+.ec-persistent-shell .nav-live-badge.is-zero {
+  color: #766e64;
+  border-color: rgba(255,255,255,.07);
+  background: rgba(255,255,255,.02);
+}
+
+.ec-persistent-shell .sidebar-lower {
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.ec-persistent-shell .football-countdown {
+  display: block;
+  margin: 0 0 10px;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 11px;
+}
+
+.ec-persistent-shell .football-countdown summary {
+  list-style: none;
+}
+.ec-persistent-shell .football-countdown summary::-webkit-details-marker { display: none; }
+
+.ec-persistent-shell .football-countdown-summary {
+  position: relative;
+  display: grid;
+  grid-template-columns: 29px minmax(0,1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 43px;
+  padding: 7px 8px;
+  color: #c6b78f;
+  cursor: pointer;
+}
+
+.ec-persistent-shell .football-countdown-summary:hover,
+.ec-persistent-shell .football-countdown-summary:focus-visible {
+  color: #f1d998;
+  background: rgba(201,164,79,.045);
+  outline: none;
+}
+
+.ec-persistent-shell .football-countdown-icon {
+  width: 29px;
+  height: 29px;
+  border: 1px solid rgba(201,164,79,.16);
+  border-radius: 8px;
+  background: rgba(201,164,79,.045);
+}
+
+.ec-persistent-shell .football-countdown-summary-copy {
+  min-width: 0;
+}
+
+.ec-persistent-shell .football-countdown-summary-copy strong,
+.ec-persistent-shell .football-countdown-summary-copy small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ec-persistent-shell .football-countdown-summary-copy strong {
+  color: #e9d7aa;
+  font-size: .66rem;
+  line-height: 1;
+}
+
+.ec-persistent-shell .football-countdown-summary-copy small {
+  margin-top: 4px;
+  color: #756d5d;
+  font-size: .47rem;
+  font-weight: 700;
+}
+
+.ec-persistent-shell .football-countdown-compact {
+  color: #c9aa55;
+  font-size: .56rem;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.ec-persistent-shell .football-countdown-chevron {
+  color: #716754;
+  font-size: .7rem;
+  transition: transform .16s ease;
+}
+
+.ec-persistent-shell .football-countdown[open] .football-countdown-chevron {
+  transform: rotate(180deg);
+}
+
+.ec-persistent-shell .football-countdown-details {
+  padding: 1px 9px 9px;
+  border-top: 1px solid rgba(255,255,255,.035);
+}
+
+.ec-persistent-shell .football-countdown.is-live .football-countdown-compact {
+  color: #7be6a4;
+}
+
+.ec-persistent-shell .sidebar-support-label {
+  padding-top: 1px;
+}
+
+.ec-persistent-shell .sidebar-utility-grid .sidebar-footer-link {
+  position: relative;
+  min-height: 34px;
+  padding: 5px 6px;
+  gap: 5px;
+}
+
+.ec-persistent-shell .sidebar-utility-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.ec-persistent-shell .sidebar-utility-icon .sidebar-icon-svg {
+  width: 13px;
+  height: 13px;
+}
+
+.ec-persistent-shell .sidebar-status-link {
+  color: #a2ad9f !important;
+}
+
+.ec-persistent-shell .sidebar-status-dot {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
+  border-radius: 50%;
+  background: #4ec77d;
+  box-shadow: 0 0 0 3px rgba(78,199,125,.08);
+}
+
+.ec-persistent-shell .sidebar-settings-link:hover,
+.ec-persistent-shell .sidebar-settings-link:focus-visible {
+  color: #f3d57b !important;
+}
+
+/* Desktop icon rail and fully hidden states. */
+@media (min-width: 901px) {
+  .ec-persistent-shell.sidebar-collapsed .ec-persistent-layout {
+    grid-template-columns:
+      var(--ec-sidebar-rail-width)
+      minmax(var(--ec-min-view-width),1fr)
+      var(--ec-divider-width)
+      var(--ec-chat-width) !important;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed.chat-collapsed .ec-persistent-layout {
+    grid-template-columns:
+      var(--ec-sidebar-rail-width)
+      minmax(var(--ec-min-view-width),1fr)
+      0 0 !important;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .sidebar {
+    padding: 12px 7px 10px;
+    overflow: visible;
+    border-right-color: var(--ec-line);
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .brand {
+    padding: 0 0 12px;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .brand-home-button {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .brand-logo {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .brand-copy,
+  .ec-persistent-shell.sidebar-collapsed .nav-label,
+  .ec-persistent-shell.sidebar-collapsed .sidebar-section-label,
+  .ec-persistent-shell.sidebar-collapsed .nav-link-content,
+  .ec-persistent-shell.sidebar-collapsed .football-countdown-summary-copy,
+  .ec-persistent-shell.sidebar-collapsed .football-countdown-compact,
+  .ec-persistent-shell.sidebar-collapsed .football-countdown-chevron,
+  .ec-persistent-shell.sidebar-collapsed .football-countdown-details,
+  .ec-persistent-shell.sidebar-collapsed .sidebar-utility-label,
+  .ec-persistent-shell.sidebar-collapsed .sidebar-status-dot,
+  .ec-persistent-shell.sidebar-collapsed .sidebar-tos {
+    display: none !important;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .nav-link {
+    justify-content: center;
+    width: 44px;
+    min-height: 44px;
+    margin: 0 auto 4px;
+    padding: 7px;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .nav-link.active {
+    box-shadow:
+      inset 2px 0 0 var(--ec-gold),
+      0 8px 20px rgba(0,0,0,.18);
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .nav-icon-box {
+    width: 29px;
+    height: 29px;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .sidebar-lower {
+    padding-top: 8px;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .football-countdown {
+    width: 44px;
+    margin: 0 auto 8px;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .football-countdown-summary {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 44px;
+    min-height: 44px;
+    padding: 7px;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .sidebar-utility-grid {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .sidebar-utility-grid .sidebar-footer-link {
+    width: 44px;
+    min-height: 36px;
+    margin: 0 auto;
+    padding: 5px;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .sidebar-zwades-thumb {
+    width: 23px;
+    height: 23px;
+    flex-basis: 23px;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .mobile-menu {
+    left: calc(var(--ec-sidebar-rail-width) - 18px) !important;
+  }
+
+  .ec-persistent-shell.sidebar-hidden .ec-persistent-layout,
+  .ec-persistent-shell.sidebar-hidden.chat-collapsed .ec-persistent-layout {
+    grid-template-columns:
+      0
+      minmax(var(--ec-min-view-width),1fr)
+      var(--ec-divider-width)
+      var(--ec-chat-width) !important;
+  }
+
+  .ec-persistent-shell.sidebar-hidden.chat-collapsed .ec-persistent-layout {
+    grid-template-columns: 0 minmax(var(--ec-min-view-width),1fr) 0 0 !important;
+  }
+
+  .ec-persistent-shell.sidebar-hidden .sidebar {
+    padding-left: 0;
+    padding-right: 0;
+    overflow: hidden;
+    border-right-color: transparent;
+    opacity: 0;
+    transform: translateX(-100%);
+    pointer-events: none;
+  }
+
+  .ec-persistent-shell.sidebar-hidden .mobile-menu {
+    left: 16px !important;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .nav-link::after,
+  .ec-persistent-shell.sidebar-collapsed .sidebar-footer-link::after,
+  .ec-persistent-shell.sidebar-collapsed .football-countdown-summary::after,
+  .ec-persistent-shell.sidebar-collapsed .brand-home-button::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 10px);
+    z-index: 180;
+    width: max-content;
+    max-width: 210px;
+    padding: 6px 8px;
+    border: 1px solid rgba(201,164,79,.22);
+    border-radius: 7px;
+    color: #ede1c9;
+    background: rgba(9,7,7,.98);
+    box-shadow: 0 10px 28px rgba(0,0,0,.55);
+    font-size: .58rem;
+    font-weight: 850;
+    line-height: 1.25;
+    opacity: 0;
+    transform: translate(4px,-50%);
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .14s ease, transform .14s ease, visibility .14s ease;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .nav-link:hover::after,
+  .ec-persistent-shell.sidebar-collapsed .nav-link:focus-visible::after,
+  .ec-persistent-shell.sidebar-collapsed .sidebar-footer-link:hover::after,
+  .ec-persistent-shell.sidebar-collapsed .sidebar-footer-link:focus-visible::after,
+  .ec-persistent-shell.sidebar-collapsed .football-countdown-summary:hover::after,
+  .ec-persistent-shell.sidebar-collapsed .football-countdown-summary:focus-visible::after,
+  .ec-persistent-shell.sidebar-collapsed .brand-home-button:hover::after,
+  .ec-persistent-shell.sidebar-collapsed .brand-home-button:focus-visible::after {
+    opacity: 1;
+    transform: translate(0,-50%);
+    visibility: visible;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .brand-home-button {
+    position: relative;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .brand-home-button::after {
+    content: "Expand navigation";
+  }
+}
+
+/* Mobile navigation drawer refinements. */
+@media (max-width: 900px) {
+  .ec-persistent-shell .sidebar {
+    width: min(88vw, 286px);
+    padding: 12px 14px 14px;
+  }
+
+  .ec-persistent-shell .sidebar-mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 42px;
+    padding: 0 3px 8px;
+    color: #a89b89;
+    font-size: .61rem;
+    font-weight: 900;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .ec-persistent-shell #mobileSidebarClose {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid rgba(201,164,79,.18);
+    border-radius: 9px;
+    color: #e8dac5;
+    background: rgba(255,255,255,.025);
+    font-size: 1rem;
+  }
+
+  .ec-persistent-shell .brand {
+    padding-bottom: 14px;
+  }
+
+  .ec-persistent-shell .nav-link {
+    min-height: 48px;
+    padding: 8px 9px;
+  }
+
+  .ec-persistent-shell .nav-link-title {
+    font-size: .82rem;
+  }
+
+  .ec-persistent-shell .nav-link-description {
+    font-size: .53rem;
+  }
+
+  .ec-persistent-shell .sidebar-lower {
+    margin-top: auto;
+    padding-top: 18px;
+  }
+
+  .ec-persistent-shell .sidebar-tos {
+    max-height: 72px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 3px;
+  }
+
+  .ec-persistent-shell.menu-open .mobile-menu {
+    opacity: 0;
+    pointer-events: none;
+  }
+}

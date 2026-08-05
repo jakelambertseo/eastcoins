@@ -152,6 +152,43 @@
     window.parent.postMessage(message, window.location.origin);
   }
 
+  let navigationCountFrame = 0;
+  let lastNavigationCountSignature = "";
+
+  function postNavigationCounts() {
+    navigationCountFrame = 0;
+    const eventRoot = document.getElementById("streamedDiscoveryRoot");
+    const eventCards = Array.from(document.querySelectorAll(".ec-event-card"));
+    const favoriteCards = Array.from(
+      document.querySelectorAll(".favorite-site[data-watch-url]")
+    );
+    const payload = { type: "eastcoin:navigation-counts" };
+
+    if (eventRoot || eventCards.length) {
+      payload.liveCount = eventCards.filter((card) =>
+        card.classList.contains("is-live")
+      ).length;
+    }
+
+    if (favoriteCards.length || document.querySelector(".favorite-list")) {
+      payload.favoriteCount = favoriteCards.length;
+    }
+
+    if (payload.liveCount === undefined && payload.favoriteCount === undefined) {
+      return;
+    }
+
+    const signature = JSON.stringify(payload);
+    if (signature === lastNavigationCountSignature) return;
+    lastNavigationCountSignature = signature;
+    post(payload);
+  }
+
+  function scheduleNavigationCountUpdate() {
+    if (navigationCountFrame) return;
+    navigationCountFrame = window.requestAnimationFrame(postNavigationCounts);
+  }
+
   function stopNavigation(event) {
     event.preventDefault();
     event.stopPropagation();
@@ -421,14 +458,18 @@
   const controlObserver = new MutationObserver(() => {
     removeServerPreferenceUi();
     scheduleControlUpdate();
+    scheduleNavigationCountUpdate();
   });
 
   controlObserver.observe(document.body, {
     childList: true,
-    subtree: true
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["class"]
   });
 
   post({ type: "eastcoin:request-shell-state" });
+  scheduleNavigationCountUpdate();
   const readyView = document.getElementById("playerShell")
     ? "player"
     : document.querySelector(".favorite-list")

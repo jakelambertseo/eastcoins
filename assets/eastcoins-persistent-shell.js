@@ -39,6 +39,12 @@
   const dockSettingsButton = document.getElementById(
     "persistentDockSettingsButton"
   );
+  const brandButton = document.getElementById("persistentBrandButton");
+  const mobileSidebarClose = document.getElementById("mobileSidebarClose");
+  const eventsLiveBadge = document.getElementById("eventsLiveBadge");
+  const eventsLiveCount = document.getElementById("eventsLiveCount");
+  const otherStreamsBadge = document.getElementById("otherStreamsBadge");
+  const otherStreamsCount = document.getElementById("otherStreamsCount");
 
   if (
     !body || !layout || !sidebar || !mobileMenu || !mobileOverlay ||
@@ -57,6 +63,8 @@
     .forEach((element) => element.remove());
 
   const SIDEBAR_STORAGE_KEY = "eastcoinsSidebarCollapsed";
+  const SIDEBAR_MODE_STORAGE_KEY = "eastcoinsSidebarMode";
+  const COUNTDOWN_EXPANDED_STORAGE_KEY = "eastcoinsCountdownExpanded";
   const CHAT_WIDTH_STORAGE_KEY = "eastcoinsChatWidthV2";
   const CHAT_COLLAPSED_STORAGE_KEY = "eastcoinsChatCollapsed";
   const REDUCED_MOTION_STORAGE_KEY = "eastcoinsReducedMotion";
@@ -203,11 +211,17 @@
     button.classList.toggle("is-active", Boolean(active));
   }
 
+  function desktopSidebarMode() {
+    if (body.classList.contains("sidebar-hidden")) return "hidden";
+    if (body.classList.contains("sidebar-collapsed")) return "rail";
+    return "expanded";
+  }
+
   function navigationIsVisible() {
     if (theaterActive) return false;
     return isMobileNavigation()
       ? body.classList.contains("menu-open")
-      : !body.classList.contains("sidebar-collapsed");
+      : desktopSidebarMode() !== "hidden";
   }
 
   function chatIsVisible() {
@@ -234,13 +248,17 @@
     );
     chatButton?.setAttribute("aria-pressed", String(chatVisible));
 
-    setUtilityButton(
-      navButton,
-      navigationVisible ? "◀" : "☰",
-      navigationVisible ? "Hide nav" : "Show nav",
-      !navigationVisible
-    );
-    navButton?.setAttribute("aria-pressed", String(!navigationVisible));
+    const sidebarMode = isMobileNavigation()
+      ? (navigationVisible ? "expanded" : "hidden")
+      : desktopSidebarMode();
+    const navIcon = sidebarMode === "expanded" ? "‹" : sidebarMode === "rail" ? "×" : "☰";
+    const navLabel = sidebarMode === "expanded"
+      ? "Compact nav"
+      : sidebarMode === "rail"
+        ? "Hide nav"
+        : "Show nav";
+    setUtilityButton(navButton, navIcon, navLabel, sidebarMode !== "expanded");
+    navButton?.setAttribute("aria-pressed", String(sidebarMode !== "expanded"));
   }
 
   function shellState() {
@@ -327,8 +345,34 @@
 
   function updateActiveNavigation(view) {
     document.querySelectorAll("[data-ec-shell-view]").forEach((link) => {
-      link.classList.toggle("active", link.dataset.ecShellView === view);
+      const active = link.dataset.ecShellView === view;
+      link.classList.toggle("active", active);
+      if (active) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
     });
+  }
+
+  function updateNavigationCounts({ liveCount, favoriteCount } = {}) {
+    if (Number.isFinite(Number(liveCount)) && eventsLiveBadge && eventsLiveCount) {
+      const count = Math.max(0, Number(liveCount));
+      eventsLiveCount.textContent = String(count);
+      eventsLiveBadge.hidden = false;
+      eventsLiveBadge.classList.toggle("is-zero", count === 0);
+      eventsLiveBadge.setAttribute(
+        "aria-label",
+        count === 1 ? "1 live event" : `${count} live events`
+      );
+    }
+
+    if (Number.isFinite(Number(favoriteCount)) && otherStreamsBadge && otherStreamsCount) {
+      const count = Math.max(0, Number(favoriteCount));
+      otherStreamsCount.textContent = String(count);
+      otherStreamsBadge.hidden = false;
+      otherStreamsBadge.setAttribute(
+        "aria-label",
+        count === 1 ? "1 approved stream" : `${count} approved streams`
+      );
+    }
   }
 
   function updateDocumentTitle(view) {
@@ -555,6 +599,32 @@
     showUtilityDock(true);
   }
 
+  function setDesktopSidebarMode(mode, save = true) {
+    const normalized = ["expanded", "rail", "hidden"].includes(mode)
+      ? mode
+      : "expanded";
+
+    body.classList.toggle("sidebar-collapsed", normalized === "rail");
+    body.classList.toggle("sidebar-hidden", normalized === "hidden");
+
+    if (save) {
+      try {
+        localStorage.setItem(SIDEBAR_MODE_STORAGE_KEY, normalized);
+        localStorage.setItem(
+          SIDEBAR_STORAGE_KEY,
+          String(normalized !== "expanded")
+        );
+      } catch {}
+    }
+
+    updateNavigationButton();
+    postShellState();
+  }
+
+  function setDesktopSidebarCollapsed(collapsed, save = true) {
+    setDesktopSidebarMode(collapsed ? "rail" : "expanded", save);
+  }
+
   function toggleShellNavigation() {
     if (theaterActive) {
       setTheaterMode(false);
@@ -563,7 +633,7 @@
         updateNavigationButton();
         postShellState();
       } else {
-        setDesktopSidebarCollapsed(false, true);
+        setDesktopSidebarMode("expanded", true);
       }
       return;
     }
@@ -575,7 +645,10 @@
       return;
     }
 
-    setDesktopSidebarCollapsed(!body.classList.contains("sidebar-collapsed"));
+    const mode = desktopSidebarMode();
+    setDesktopSidebarMode(
+      mode === "expanded" ? "rail" : mode === "rail" ? "hidden" : "expanded"
+    );
   }
 
   function setChatCollapsed(collapsed, save = true) {
@@ -600,7 +673,7 @@
       settingChat.checked = !body.classList.contains("chat-collapsed");
     }
     if (settingSidebar) {
-      settingSidebar.checked = readStoredBoolean(SIDEBAR_STORAGE_KEY, false);
+      settingSidebar.checked = desktopSidebarMode() === "rail";
     }
     if (settingMotion) {
       settingMotion.checked = document.documentElement.classList.contains(
@@ -636,6 +709,18 @@
   theaterButton?.addEventListener("click", () => setTheaterMode(!theaterActive));
   chatButton?.addEventListener("click", togglePersistentChat);
   navButton?.addEventListener("click", toggleShellNavigation);
+  mobileSidebarClose?.addEventListener("click", () => {
+    body.classList.remove("menu-open");
+    updateNavigationButton();
+    postShellState();
+  });
+  brandButton?.addEventListener("click", () => {
+    if (!isMobileNavigation() && desktopSidebarMode() === "rail") {
+      setDesktopSidebarMode("expanded", true);
+      return;
+    }
+    openView("player", currentPlayerParameters, { push: true, trigger: brandButton });
+  });
   gameButton?.addEventListener("click", requestGameOverlay);
   settingsClose?.addEventListener("click", closeSettings);
   settingsDone?.addEventListener("click", closeSettings);
@@ -649,9 +734,8 @@
     setChatCollapsed(!settingChat.checked, true);
   });
   settingSidebar?.addEventListener("change", () => {
-    writeStoredBoolean(SIDEBAR_STORAGE_KEY, settingSidebar.checked);
     if (!isMobileNavigation()) {
-      setDesktopSidebarCollapsed(settingSidebar.checked, false);
+      setDesktopSidebarMode(settingSidebar.checked ? "rail" : "expanded", true);
     }
   });
   settingMotion?.addEventListener("change", () => {
@@ -666,6 +750,20 @@
     } catch {}
     setChatWidth(DEFAULT_CHAT_WIDTH, false);
     showToast("Chat width reset.");
+  });
+
+  document.querySelectorAll("[data-football-countdown]").forEach((countdown) => {
+    const summary = countdown.querySelector(".football-countdown-summary");
+    summary?.addEventListener("click", (event) => {
+      if (!isMobileNavigation() && desktopSidebarMode() === "rail") {
+        event.preventDefault();
+        setDesktopSidebarMode("expanded", true);
+        countdown.open = true;
+      }
+    });
+    countdown.addEventListener("toggle", () => {
+      writeStoredBoolean(COUNTDOWN_EXPANDED_STORAGE_KEY, countdown.open);
+    });
   });
 
   function isTypingTarget(target) {
@@ -722,33 +820,27 @@
   function updateNavigationButton() {
     if (isMobileNavigation()) {
       const open = body.classList.contains("menu-open");
-      mobileMenu.textContent = open ? "✕" : "☰";
+      mobileMenu.textContent = open ? "×" : "☰";
       mobileMenu.setAttribute(
         "aria-label",
         open ? "Close navigation" : "Open navigation"
       );
       mobileMenu.setAttribute("aria-expanded", String(open));
     } else {
-      const collapsed = body.classList.contains("sidebar-collapsed");
-      mobileMenu.textContent = collapsed ? "☰" : "◀";
+      const mode = desktopSidebarMode();
+      mobileMenu.textContent = mode === "expanded" ? "‹" : mode === "rail" ? "×" : "☰";
       mobileMenu.setAttribute(
         "aria-label",
-        collapsed ? "Show navigation" : "Hide navigation"
+        mode === "expanded"
+          ? "Collapse navigation to icon rail"
+          : mode === "rail"
+            ? "Hide navigation"
+            : "Show navigation"
       );
-      mobileMenu.setAttribute("aria-expanded", String(!collapsed));
+      mobileMenu.setAttribute("aria-expanded", String(mode !== "hidden"));
+      mobileMenu.dataset.sidebarMode = mode;
     }
     updateUtilityDock();
-  }
-
-  function setDesktopSidebarCollapsed(collapsed, save = true) {
-    body.classList.toggle("sidebar-collapsed", collapsed);
-    if (save) {
-      try {
-        localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed));
-      } catch {}
-    }
-    updateNavigationButton();
-    postShellState();
   }
 
   mobileMenu.addEventListener(
@@ -894,6 +986,11 @@
 
     const message = event.data || {};
 
+    if (message.type === "eastcoin:navigation-counts") {
+      updateNavigationCounts(message);
+      return;
+    }
+
     if (message.type === "eastcoin:view-ready") {
       if (fromPlayer) {
         playerLoader.classList.add("is-hidden");
@@ -973,11 +1070,18 @@
 
   function initializeFootballCountdowns() {
     const kickoffTime = new Date("2026-09-09T19:20:00-05:00");
+    const savedExpanded = readStoredBoolean(
+      COUNTDOWN_EXPANDED_STORAGE_KEY,
+      false
+    );
+
     document.querySelectorAll("[data-football-countdown]").forEach((countdown) => {
+      countdown.open = savedExpanded;
       const daysElement = countdown.querySelector("[data-countdown-days]");
       const hoursElement = countdown.querySelector("[data-countdown-hours]");
       const minutesElement = countdown.querySelector("[data-countdown-minutes]");
       const secondsElement = countdown.querySelector("[data-countdown-seconds]");
+      const compactElement = countdown.querySelector("[data-countdown-compact]");
       const titleElement = countdown.querySelector(".football-countdown-title");
       const statusElement = countdown.querySelector(".football-countdown-live");
 
@@ -987,12 +1091,14 @@
           countdown.classList.add("is-live");
           titleElement.textContent = "Football is back";
           statusElement.textContent = "Live";
+          compactElement.textContent = "LIVE";
           daysElement.textContent = "00";
           hoursElement.textContent = "00";
           minutesElement.textContent = "00";
           secondsElement.textContent = "00";
           return false;
         }
+
         const totalSeconds = Math.floor(remaining / 1000);
         const days = Math.floor(totalSeconds / 86400);
         const hours = Math.floor((totalSeconds % 86400) / 3600);
@@ -1002,6 +1108,9 @@
         hoursElement.textContent = String(hours).padStart(2, "0");
         minutesElement.textContent = String(minutes).padStart(2, "0");
         secondsElement.textContent = String(seconds).padStart(2, "0");
+        compactElement.textContent = days > 0
+          ? `${days}d ${hours}h`
+          : `${hours}h ${minutes}m`;
         return true;
       }
 
@@ -1012,14 +1121,19 @@
     });
   }
 
-  let savedSidebarState = false;
+  let savedSidebarMode = "expanded";
   let savedChatWidth = DEFAULT_CHAT_WIDTH;
   let savedChatCollapsed = false;
   let savedReducedMotion = false;
   let savedDockAutohide = true;
 
   try {
-    savedSidebarState = localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+    const storedMode = localStorage.getItem(SIDEBAR_MODE_STORAGE_KEY);
+    savedSidebarMode = ["expanded", "rail", "hidden"].includes(storedMode)
+      ? storedMode
+      : localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true"
+        ? "rail"
+        : "expanded";
     savedChatCollapsed = readStoredBoolean(CHAT_COLLAPSED_STORAGE_KEY, false);
     savedReducedMotion = readStoredBoolean(REDUCED_MOTION_STORAGE_KEY, false);
     savedDockAutohide = readStoredBoolean(DOCK_AUTOHIDE_STORAGE_KEY, true);
@@ -1028,7 +1142,7 @@
   } catch {}
 
   if (!isMobileNavigation()) {
-    setDesktopSidebarCollapsed(savedSidebarState, false);
+    setDesktopSidebarMode(savedSidebarMode, false);
     setChatWidth(savedChatWidth);
   } else {
     updateNavigationButton();
