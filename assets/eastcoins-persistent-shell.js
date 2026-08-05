@@ -7,11 +7,19 @@
   const mobileMenu = document.getElementById("mobileMenu");
   const mobileOverlay = document.getElementById("mobileOverlay");
   const resizeHandle = document.getElementById("resizeHandle");
-  const viewFrame = document.getElementById("eastcoinViewFrame");
-  const viewLoader = document.getElementById("viewLoader");
-  const viewLoaderLabel = document.getElementById("viewLoaderLabel");
+  const playerFrame = document.getElementById("eastcoinViewFrame");
+  const playerLoader = document.getElementById("viewLoader");
+  const playerLoaderLabel = document.getElementById("viewLoaderLabel");
+  const browseDrawer = document.getElementById("persistentBrowseDrawer");
+  const browsePanel = document.getElementById("persistentBrowsePanel");
+  const browseScrim = document.getElementById("persistentBrowseScrim");
+  const browseClose = document.getElementById("persistentBrowseClose");
+  const browseTitle = document.getElementById("persistentBrowseTitle");
+  const browseKicker = document.getElementById("persistentBrowseKicker");
+  const browseFrame = document.getElementById("eastcoinBrowseFrame");
+  const browseLoader = document.getElementById("browseLoader");
+  const browseLoaderLabel = document.getElementById("browseLoaderLabel");
   const toast = document.getElementById("toast");
-  const chatPanel = document.getElementById("persistentChat");
   const settingsButton = document.getElementById("persistentSettingsButton");
   const settingsModal = document.getElementById("persistentSettingsModal");
   const settingsClose = document.getElementById("persistentSettingsClose");
@@ -19,26 +27,29 @@
   const settingChat = document.getElementById("persistentSettingChat");
   const settingSidebar = document.getElementById("persistentSettingSidebar");
   const settingMotion = document.getElementById("persistentSettingMotion");
+  const settingDockAutohide = document.getElementById(
+    "persistentSettingDockAutohide"
+  );
   const resetChatWidth = document.getElementById("persistentResetChatWidth");
   const utilityDock = document.getElementById("persistentUtilityDock");
   const theaterButton = document.getElementById("persistentTheaterButton");
   const chatButton = document.getElementById("persistentChatButton");
   const navButton = document.getElementById("persistentNavButton");
   const gameButton = document.getElementById("persistentGameButton");
-  const dockSettingsButton = document.getElementById("persistentDockSettingsButton");
+  const dockSettingsButton = document.getElementById(
+    "persistentDockSettingsButton"
+  );
 
   if (
     !body || !layout || !sidebar || !mobileMenu || !mobileOverlay ||
-    !resizeHandle || !viewFrame || !viewLoader || !viewLoaderLabel
+    !resizeHandle || !playerFrame || !playerLoader || !playerLoaderLabel ||
+    !browseDrawer || !browsePanel || !browseScrim || !browseClose ||
+    !browseTitle || !browseKicker || !browseFrame || !browseLoader ||
+    !browseLoaderLabel
   ) {
     return;
   }
 
-  /*
-    The persistent shell owns navigation and no longer uses the legacy
-    sitewide settings dock. Remove any stale controls restored from browser
-    back/forward cache before initializing the shell.
-  */
   document
     .querySelectorAll(
       ".ec-settings-only-button, .ec-utility-dock, #ecSettingsModal, .ec-settings-modal"
@@ -49,17 +60,38 @@
   const CHAT_WIDTH_STORAGE_KEY = "eastcoinsChatWidthV2";
   const CHAT_COLLAPSED_STORAGE_KEY = "eastcoinsChatCollapsed";
   const REDUCED_MOTION_STORAGE_KEY = "eastcoinsReducedMotion";
+  const DOCK_AUTOHIDE_STORAGE_KEY = "eastcoinsDockAutohide";
   const DEFAULT_CHAT_WIDTH = 360;
   const MIN_CHAT_WIDTH = 280;
   const MIN_VIEW_WIDTH = 420;
+  const PLAYER_PARAMETER_NAMES = [
+    "event",
+    "source",
+    "stream",
+    "watch",
+    "streamedRoom",
+    "streamedEvent",
+    "streamedSource",
+    "streamedStream",
+    "new"
+  ];
+  const DRAWER_VIEWS = new Set(["events", "favorites", "emotes"]);
 
-  let currentView = "";
-  let currentFrameUrl = "";
+  let currentView = "player";
+  let currentPlayerUrl = "";
+  let currentBrowseUrl = "";
+  let currentPlayerParameters = new URLSearchParams("shell=1");
   let activePointerId = null;
   let toastTimer = 0;
   let theaterActive = false;
   let pendingGameOverlay = false;
+  let playerReady = false;
+  let browseReady = false;
   let lastSettingsTrigger = settingsButton;
+  let lastDrawerTrigger = null;
+  let dockAutoHideEnabled = true;
+  let dockHideTimer = 0;
+  let dockActivityFrame = 0;
 
   function showToast(message) {
     if (!toast) return;
@@ -89,48 +121,126 @@
     } catch {}
   }
 
-  function updateUtilityDock() {
-    const navigationVisible = navigationIsVisible();
-    const chatVisible = chatIsVisible();
+  function clearDockHideTimer() {
+    window.clearTimeout(dockHideTimer);
+    dockHideTimer = 0;
+  }
 
-    if (theaterButton) {
-      theaterButton.textContent = theaterActive
-        ? "↙ Exit theater"
-        : "⛶ Theater";
-      theaterButton.classList.toggle("is-active", theaterActive);
-      theaterButton.setAttribute("aria-pressed", String(theaterActive));
+  function dockShouldRemainVisible() {
+    return Boolean(
+      !dockAutoHideEnabled ||
+      (settingsModal && !settingsModal.hidden) ||
+      utilityDock?.matches(":hover") ||
+      utilityDock?.contains(document.activeElement)
+    );
+  }
+
+  function scheduleDockHide() {
+    clearDockHideTimer();
+    if (!dockAutoHideEnabled || !utilityDock) return;
+
+    const delay = isMobileNavigation() ? 4300 : 3000;
+    dockHideTimer = window.setTimeout(() => {
+      if (dockShouldRemainVisible()) {
+        scheduleDockHide();
+        return;
+      }
+      body.classList.add("dock-idle");
+    }, delay);
+  }
+
+  function showUtilityDock(schedule = true) {
+    body.classList.remove("dock-idle");
+    if (schedule) scheduleDockHide();
+  }
+
+  function setDockAutoHide(enabled, save = true) {
+    dockAutoHideEnabled = Boolean(enabled);
+    body.classList.toggle("dock-autohide-disabled", !dockAutoHideEnabled);
+
+    if (settingDockAutohide) {
+      settingDockAutohide.checked = dockAutoHideEnabled;
     }
 
-    if (chatButton) {
-      chatButton.textContent = chatVisible
-        ? "💬 Hide chat"
-        : "💬 Show chat";
-      chatButton.classList.toggle("is-active", chatVisible);
-      chatButton.setAttribute("aria-pressed", String(chatVisible));
+    if (save) {
+      writeStoredBoolean(DOCK_AUTOHIDE_STORAGE_KEY, dockAutoHideEnabled);
     }
 
-    if (navButton) {
-      navButton.textContent = navigationVisible
-        ? "◀ Hide nav"
-        : "☰ Show nav";
-      navButton.classList.toggle("is-active", !navigationVisible);
-      navButton.setAttribute("aria-pressed", String(!navigationVisible));
-    }
+    clearDockHideTimer();
+    showUtilityDock(dockAutoHideEnabled);
+  }
+
+  function noteDockActivity() {
+    if (dockActivityFrame) return;
+    dockActivityFrame = window.requestAnimationFrame(() => {
+      dockActivityFrame = 0;
+      showUtilityDock(true);
+    });
+  }
+
+  ["pointermove", "pointerdown", "touchstart"].forEach((eventName) => {
+    document.addEventListener(eventName, noteDockActivity, { passive: true });
+  });
+
+  document.addEventListener("keydown", noteDockActivity);
+  document.addEventListener("focusin", noteDockActivity);
+  utilityDock?.addEventListener("pointerenter", () => {
+    clearDockHideTimer();
+    showUtilityDock(false);
+  });
+  utilityDock?.addEventListener("pointerleave", scheduleDockHide);
+  utilityDock?.addEventListener("focusout", scheduleDockHide);
+
+  function setUtilityButton(button, icon, label, active = false) {
+    if (!button) return;
+    const iconElement = button.querySelector(".ec-persistent-utility-icon");
+    const labelElement = button.querySelector(".ec-persistent-utility-label");
+
+    if (iconElement) iconElement.textContent = icon;
+    if (labelElement) labelElement.textContent = label;
+    button.setAttribute("aria-label", label);
+    button.dataset.tooltip = label;
+    button.classList.toggle("is-active", Boolean(active));
   }
 
   function navigationIsVisible() {
     if (theaterActive) return false;
-
     return isMobileNavigation()
       ? body.classList.contains("menu-open")
       : !body.classList.contains("sidebar-collapsed");
   }
 
   function chatIsVisible() {
-    return (
-      !theaterActive &&
-      !body.classList.contains("chat-collapsed")
+    return !theaterActive && !body.classList.contains("chat-collapsed");
+  }
+
+  function updateUtilityDock() {
+    const navigationVisible = navigationIsVisible();
+    const chatVisible = chatIsVisible();
+
+    setUtilityButton(
+      theaterButton,
+      theaterActive ? "↙" : "⛶",
+      theaterActive ? "Exit theater" : "Theater",
+      theaterActive
     );
+    theaterButton?.setAttribute("aria-pressed", String(theaterActive));
+
+    setUtilityButton(
+      chatButton,
+      "💬",
+      chatVisible ? "Hide chat" : "Show chat",
+      chatVisible
+    );
+    chatButton?.setAttribute("aria-pressed", String(chatVisible));
+
+    setUtilityButton(
+      navButton,
+      navigationVisible ? "◀" : "☰",
+      navigationVisible ? "Hide nav" : "Show nav",
+      !navigationVisible
+    );
+    navButton?.setAttribute("aria-pressed", String(!navigationVisible));
   }
 
   function shellState() {
@@ -142,35 +252,285 @@
     };
   }
 
-  function postToView(message) {
+  function postToFrame(frame, message) {
     try {
-      viewFrame.contentWindow?.postMessage(
-        message,
-        window.location.origin
-      );
+      frame?.contentWindow?.postMessage(message, window.location.origin);
     } catch {}
   }
 
+  function postToPlayer(message) {
+    postToFrame(playerFrame, message);
+  }
+
   function postShellState() {
-    postToView(shellState());
+    const state = shellState();
+    postToFrame(playerFrame, state);
+    if (!browseDrawer.hidden) postToFrame(browseFrame, state);
+  }
+
+  function drawerIsOpen() {
+    return !browseDrawer.hidden;
+  }
+
+  function setPlayerLoading(label = "Loading Live Player") {
+    playerLoaderLabel.textContent = label;
+    playerLoader.classList.remove("is-hidden");
+  }
+
+  function setBrowseLoading(view) {
+    browseLoaderLabel.textContent =
+      view === "events"
+        ? "Loading Events"
+        : view === "favorites"
+          ? "Loading Other Streams"
+          : "Loading Emote Help";
+    browseLoader.classList.remove("is-hidden");
+  }
+
+  function copyParameters(source, target, names) {
+    names.forEach((name) => {
+      source.getAll(name).forEach((value) => target.append(name, value));
+    });
+  }
+
+  function childUrl(view, parameters) {
+    const filename =
+      view === "events"
+        ? "events.html"
+        : view === "favorites"
+          ? "favorites.html"
+          : view === "emotes"
+            ? "emote-help.html"
+            : "player.html";
+    const url = new URL(filename, window.location.href);
+    url.search = parameters.toString();
+    return url.href;
+  }
+
+  function shellUrl(view, parameters = new URLSearchParams()) {
+    const url = new URL("index.html", window.location.href);
+    const clean = new URLSearchParams();
+
+    if (DRAWER_VIEWS.has(view)) {
+      clean.set("view", view);
+      if (view === "events" && parameters.has("event")) {
+        clean.set("eventDetail", parameters.get("event"));
+      }
+    } else {
+      copyParameters(parameters, clean, PLAYER_PARAMETER_NAMES);
+      if (!Array.from(clean.keys()).length) clean.set("view", "player");
+    }
+
+    url.search = clean.toString();
+    return `${url.pathname}${url.search}${url.hash}`;
+  }
+
+  function updateActiveNavigation(view) {
+    document.querySelectorAll("[data-ec-shell-view]").forEach((link) => {
+      link.classList.toggle("active", link.dataset.ecShellView === view);
+    });
+  }
+
+  function updateDocumentTitle(view) {
+    document.title =
+      view === "events"
+        ? "Events | EastCoin"
+        : view === "favorites"
+          ? "Other Streams | EastCoin"
+          : view === "emotes"
+            ? "Emote Help | EastCoin"
+            : "Live Player | EastCoin";
+  }
+
+  function updateHistory(view, parameters, { push = true, replace = false } = {}) {
+    if (!push && !replace) return;
+    const method = replace ? "replaceState" : "pushState";
+    window.history[method]({ view }, "", shellUrl(view, parameters));
+  }
+
+  function loadPlayer(parameters = new URLSearchParams(), force = false) {
+    const nextParameters = new URLSearchParams(parameters);
+    nextParameters.set("shell", "1");
+    const nextUrl = childUrl("player", nextParameters);
+    currentPlayerParameters = new URLSearchParams(nextParameters);
+
+    if (!force && nextUrl === currentPlayerUrl) return false;
+
+    currentPlayerUrl = nextUrl;
+    playerReady = false;
+    setPlayerLoading();
+    playerFrame.title = "EastCoin Live Player";
+    playerFrame.src = nextUrl;
+    return true;
+  }
+
+  function drawerCopy(view) {
+    if (view === "events") {
+      return {
+        title: "Events",
+        kicker: "Browse games without stopping playback"
+      };
+    }
+    if (view === "favorites") {
+      return {
+        title: "Other Streams",
+        kicker: "Browse sites without stopping playback"
+      };
+    }
+    return {
+      title: "Emote Help",
+      kicker: "Review setup help without stopping playback"
+    };
+  }
+
+  function openBrowseDrawer(view, parameters = new URLSearchParams(), trigger = null) {
+    const nextParameters = new URLSearchParams(parameters);
+    nextParameters.set("shell", "1");
+    const nextUrl = childUrl(view, nextParameters);
+    const copy = drawerCopy(view);
+
+    currentView = view;
+    lastDrawerTrigger = trigger || lastDrawerTrigger;
+    browseTitle.textContent = copy.title;
+    browseKicker.textContent = copy.kicker;
+    browsePanel.setAttribute("aria-label", copy.title);
+    browseFrame.title = `EastCoin ${copy.title}`;
+    browseDrawer.hidden = false;
+    browseDrawer.setAttribute("aria-hidden", "false");
+    body.classList.add("drawer-open");
+    updateActiveNavigation(view);
+    updateDocumentTitle(view);
+    body.classList.remove("menu-open");
+    updateNavigationButton();
+    showUtilityDock(true);
+
+    if (nextUrl !== currentBrowseUrl) {
+      currentBrowseUrl = nextUrl;
+      browseReady = false;
+      setBrowseLoading(view);
+      browseFrame.src = nextUrl;
+    } else if (browseReady) {
+      browseLoader.classList.add("is-hidden");
+    } else {
+      setBrowseLoading(view);
+    }
+
+    window.setTimeout(() => {
+      browseClose.focus({ preventScroll: true });
+    }, 40);
+  }
+
+  function closeBrowseDrawer({ replaceHistory = true, restoreFocus = true } = {}) {
+    if (!drawerIsOpen()) return;
+
+    browseDrawer.hidden = true;
+    browseDrawer.setAttribute("aria-hidden", "true");
+    body.classList.remove("drawer-open");
+    currentView = "player";
+    updateActiveNavigation("player");
+    updateDocumentTitle("player");
+    showUtilityDock(true);
+
+    if (replaceHistory) {
+      updateHistory("player", currentPlayerParameters, {
+        push: false,
+        replace: true
+      });
+    }
+
+    if (restoreFocus) {
+      const playerLink = document.querySelector('[data-ec-shell-view="player"]');
+      (lastDrawerTrigger || playerLink)?.focus?.({ preventScroll: true });
+    }
+  }
+
+  function openView(
+    view,
+    parameters = new URLSearchParams(),
+    { push = true, replace = false, trigger = null } = {}
+  ) {
+    const normalizedView = DRAWER_VIEWS.has(view) ? view : "player";
+    const nextParameters = new URLSearchParams(parameters);
+    nextParameters.set("shell", "1");
+
+    if (!currentPlayerUrl) loadPlayer(currentPlayerParameters);
+
+    if (normalizedView === "player") {
+      closeBrowseDrawer({ replaceHistory: false, restoreFocus: false });
+      currentView = "player";
+      updateActiveNavigation("player");
+      updateDocumentTitle("player");
+      body.classList.remove("menu-open");
+      updateNavigationButton();
+      const hasExplicitPlayerRequest = PLAYER_PARAMETER_NAMES.some(
+        (name) => nextParameters.has(name)
+      );
+      if (hasExplicitPlayerRequest || !currentPlayerUrl) {
+        loadPlayer(nextParameters);
+      }
+    } else {
+      openBrowseDrawer(normalizedView, nextParameters, trigger);
+    }
+
+    updateHistory(normalizedView, nextParameters, { push, replace });
+  }
+
+  function routeFromLocation() {
+    const url = new URL(window.location.href);
+    const parameters = url.searchParams;
+    const hasPlayerParameter = PLAYER_PARAMETER_NAMES.some(
+      (name) => parameters.has(name)
+    );
+    const requestedView = parameters.get("view");
+    const eventDetail = parameters.get("eventDetail");
+    const pathView = /\/events(?:\.html)?\/?$/i.test(url.pathname)
+      ? "events"
+      : /\/favorites(?:\.html)?\/?$/i.test(url.pathname)
+        ? "favorites"
+        : /\/emotes(?:\.html)?\/?$/i.test(url.pathname)
+          ? "emotes"
+          : /\/watch\/?$/i.test(url.pathname)
+            ? "player"
+            : "";
+    const view = hasPlayerParameter
+      ? "player"
+      : ["player", "events", "favorites", "emotes"].includes(requestedView)
+        ? requestedView
+        : pathView || "player";
+    const childParameters = new URLSearchParams();
+    childParameters.set("shell", "1");
+
+    if (view === "player") {
+      copyParameters(parameters, childParameters, PLAYER_PARAMETER_NAMES);
+    } else if (eventDetail) {
+      childParameters.set("event", eventDetail);
+    }
+
+    return { view, childParameters };
   }
 
   function flushPendingGameOverlay() {
-    if (!pendingGameOverlay || currentView !== "player") return;
+    if (!pendingGameOverlay || !playerReady) return;
     pendingGameOverlay = false;
-    postToView({ type: "eastcoin:toggle-game-overlay" });
+    postToPlayer({ type: "eastcoin:toggle-game-overlay" });
   }
 
   function requestGameOverlay() {
-    if (currentView === "player") {
-      postToView({ type: "eastcoin:toggle-game-overlay" });
-      return;
+    showUtilityDock(true);
+    if (drawerIsOpen()) {
+      closeBrowseDrawer({ replaceHistory: false, restoreFocus: false });
+      updateHistory("player", currentPlayerParameters, { push: true });
     }
 
-    pendingGameOverlay = true;
-    const parameters = new URLSearchParams();
-    parameters.set("shell", "1");
-    openView("player", parameters, { push: true });
+    currentView = "player";
+    updateActiveNavigation("player");
+    updateDocumentTitle("player");
+
+    if (playerReady) {
+      postToPlayer({ type: "eastcoin:toggle-game-overlay" });
+    } else {
+      pendingGameOverlay = true;
+    }
   }
 
   function togglePersistentChat() {
@@ -179,26 +539,25 @@
       setChatCollapsed(false, true);
       return;
     }
-
-    setChatCollapsed(
-      !body.classList.contains("chat-collapsed"),
-      true
-    );
+    setChatCollapsed(!body.classList.contains("chat-collapsed"), true);
   }
 
   function setTheaterMode(enabled) {
+    if (enabled && drawerIsOpen()) {
+      closeBrowseDrawer({ replaceHistory: true, restoreFocus: false });
+    }
     theaterActive = Boolean(enabled);
     body.classList.toggle("theater-mode", theaterActive);
     body.classList.remove("menu-open");
     updateNavigationButton();
     updateUtilityDock();
     postShellState();
+    showUtilityDock(true);
   }
 
   function toggleShellNavigation() {
     if (theaterActive) {
       setTheaterMode(false);
-
       if (isMobileNavigation()) {
         body.classList.add("menu-open");
         updateNavigationButton();
@@ -216,22 +575,13 @@
       return;
     }
 
-    setDesktopSidebarCollapsed(
-      !body.classList.contains("sidebar-collapsed")
-    );
+    setDesktopSidebarCollapsed(!body.classList.contains("sidebar-collapsed"));
   }
 
   function setChatCollapsed(collapsed, save = true) {
     body.classList.toggle("chat-collapsed", Boolean(collapsed));
-
-    if (save) {
-      writeStoredBoolean(CHAT_COLLAPSED_STORAGE_KEY, collapsed);
-    }
-
-    if (settingChat) {
-      settingChat.checked = !collapsed;
-    }
-
+    if (save) writeStoredBoolean(CHAT_COLLAPSED_STORAGE_KEY, collapsed);
+    if (settingChat) settingChat.checked = !collapsed;
     updateUtilityDock();
     postShellState();
   }
@@ -241,32 +591,24 @@
       "ec-shell-reduced-motion",
       Boolean(enabled)
     );
-
-    if (save) {
-      writeStoredBoolean(REDUCED_MOTION_STORAGE_KEY, enabled);
-    }
-
-    if (settingMotion) {
-      settingMotion.checked = Boolean(enabled);
-    }
+    if (save) writeStoredBoolean(REDUCED_MOTION_STORAGE_KEY, enabled);
+    if (settingMotion) settingMotion.checked = Boolean(enabled);
   }
 
   function syncSettings() {
     if (settingChat) {
       settingChat.checked = !body.classList.contains("chat-collapsed");
     }
-
     if (settingSidebar) {
-      settingSidebar.checked = readStoredBoolean(
-        SIDEBAR_STORAGE_KEY,
-        false
-      );
+      settingSidebar.checked = readStoredBoolean(SIDEBAR_STORAGE_KEY, false);
     }
-
     if (settingMotion) {
       settingMotion.checked = document.documentElement.classList.contains(
         "ec-shell-reduced-motion"
       );
+    }
+    if (settingDockAutohide) {
+      settingDockAutohide.checked = dockAutoHideEnabled;
     }
   }
 
@@ -274,6 +616,8 @@
     if (!settingsModal) return;
     lastSettingsTrigger = trigger || settingsButton;
     syncSettings();
+    clearDockHideTimer();
+    showUtilityDock(false);
     settingsModal.hidden = false;
     settingsModal.setAttribute("aria-hidden", "false");
     settingsClose?.focus({ preventScroll: true });
@@ -284,59 +628,44 @@
     settingsModal.hidden = true;
     settingsModal.setAttribute("aria-hidden", "true");
     lastSettingsTrigger?.focus?.({ preventScroll: true });
+    scheduleDockHide();
   }
 
   settingsButton?.addEventListener("click", () => openSettings(settingsButton));
   dockSettingsButton?.addEventListener("click", () => openSettings(dockSettingsButton));
-  theaterButton?.addEventListener("click", () => {
-    setTheaterMode(!theaterActive);
-  });
+  theaterButton?.addEventListener("click", () => setTheaterMode(!theaterActive));
   chatButton?.addEventListener("click", togglePersistentChat);
   navButton?.addEventListener("click", toggleShellNavigation);
   gameButton?.addEventListener("click", requestGameOverlay);
   settingsClose?.addEventListener("click", closeSettings);
   settingsDone?.addEventListener("click", closeSettings);
+  browseClose.addEventListener("click", () => closeBrowseDrawer());
+  browseScrim.addEventListener("click", () => closeBrowseDrawer());
 
   settingsModal?.addEventListener("click", (event) => {
-    if (event.target === settingsModal) {
-      closeSettings();
-    }
+    if (event.target === settingsModal) closeSettings();
   });
-
   settingChat?.addEventListener("change", () => {
     setChatCollapsed(!settingChat.checked, true);
   });
-
   settingSidebar?.addEventListener("change", () => {
     writeStoredBoolean(SIDEBAR_STORAGE_KEY, settingSidebar.checked);
-
     if (!isMobileNavigation()) {
       setDesktopSidebarCollapsed(settingSidebar.checked, false);
     }
   });
-
   settingMotion?.addEventListener("change", () => {
     setReducedMotion(settingMotion.checked, true);
   });
-
+  settingDockAutohide?.addEventListener("change", () => {
+    setDockAutoHide(settingDockAutohide.checked, true);
+  });
   resetChatWidth?.addEventListener("click", () => {
     try {
       localStorage.removeItem(CHAT_WIDTH_STORAGE_KEY);
     } catch {}
-
     setChatWidth(DEFAULT_CHAT_WIDTH, false);
     showToast("Chat width reset.");
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (
-      event.key === "Escape" &&
-      settingsModal &&
-      !settingsModal.hidden
-    ) {
-      event.preventDefault();
-      closeSettings();
-    }
   });
 
   function isTypingTarget(target) {
@@ -349,6 +678,19 @@
   }
 
   document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      if (settingsModal && !settingsModal.hidden) {
+        event.preventDefault();
+        closeSettings();
+        return;
+      }
+      if (drawerIsOpen()) {
+        event.preventDefault();
+        closeBrowseDrawer();
+        return;
+      }
+    }
+
     if (
       event.defaultPrevented || event.repeat ||
       event.ctrlKey || event.metaKey || event.altKey ||
@@ -358,7 +700,6 @@
     }
 
     const key = event.key.toLowerCase();
-
     if (key === "t") {
       event.preventDefault();
       setTheaterMode(!theaterActive);
@@ -396,19 +737,16 @@
       );
       mobileMenu.setAttribute("aria-expanded", String(!collapsed));
     }
-
     updateUtilityDock();
   }
 
   function setDesktopSidebarCollapsed(collapsed, save = true) {
     body.classList.toggle("sidebar-collapsed", collapsed);
-
     if (save) {
       try {
         localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed));
       } catch {}
     }
-
     updateNavigationButton();
     postShellState();
   }
@@ -416,13 +754,8 @@
   mobileMenu.addEventListener(
     "click",
     (event) => {
-      /*
-        Capture the toggle before any legacy page script can also react to
-        the same button and immediately undo the sidebar state change.
-      */
       event.preventDefault();
       event.stopImmediatePropagation();
-
       toggleShellNavigation();
     },
     true
@@ -441,7 +774,6 @@
     const availableMaximum =
       layoutWidth - sidebarWidth - dividerWidth - MIN_VIEW_WIDTH;
     const practicalMaximum = Math.min(560, layoutWidth * .4);
-
     return {
       min: MIN_CHAT_WIDTH,
       max: Math.max(
@@ -458,7 +790,6 @@
 
   function setChatWidth(width, save = false) {
     if (isMobileNavigation()) return;
-
     const clampedWidth = Math.round(clampChatWidth(width));
     document.documentElement.style.setProperty(
       "--ec-chat-width",
@@ -469,7 +800,6 @@
       "aria-valuemax",
       String(Math.round(getChatWidthLimits().max))
     );
-
     if (save) {
       try {
         localStorage.setItem(CHAT_WIDTH_STORAGE_KEY, String(clampedWidth));
@@ -489,7 +819,6 @@
     setChatWidth(widthFromPointer(event.clientX));
     event.preventDefault();
   });
-
   resizeHandle.addEventListener("pointermove", (event) => {
     if (event.pointerId !== activePointerId) return;
     setChatWidth(widthFromPointer(event.clientX));
@@ -499,11 +828,9 @@
     if (event.pointerId !== activePointerId) return;
     setChatWidth(widthFromPointer(event.clientX), true);
     body.classList.remove("resizing-chat");
-
     if (resizeHandle.hasPointerCapture(activePointerId)) {
       resizeHandle.releasePointerCapture(activePointerId);
     }
-
     activePointerId = null;
   }
 
@@ -513,262 +840,88 @@
     body.classList.remove("resizing-chat");
     activePointerId = null;
   });
-
   resizeHandle.addEventListener("keydown", (event) => {
     if (isMobileNavigation()) return;
-
     const currentWidth = parseFloat(
       getComputedStyle(document.documentElement)
         .getPropertyValue("--ec-chat-width")
     ) || DEFAULT_CHAT_WIDTH;
     const step = event.shiftKey ? 50 : 20;
     let nextWidth = currentWidth;
-
     if (event.key === "ArrowLeft") nextWidth += step;
     else if (event.key === "ArrowRight") nextWidth -= step;
     else if (event.key === "Home") nextWidth = MIN_CHAT_WIDTH;
     else if (event.key === "End") nextWidth = getChatWidthLimits().max;
     else return;
-
     event.preventDefault();
     setChatWidth(nextWidth, true);
   });
-
   resizeHandle.addEventListener("dblclick", () => {
     setChatWidth(DEFAULT_CHAT_WIDTH, true);
     showToast("Chat width reset.");
   });
 
-  function copyParameters(source, target, names) {
-    names.forEach((name) => {
-      const values = source.getAll(name);
-      values.forEach((value) => target.append(name, value));
-    });
-  }
-
-  function routeFromLocation() {
-    const url = new URL(window.location.href);
-    const parameters = url.searchParams;
-    const playerParameters = [
-      "event",
-      "source",
-      "stream",
-      "watch",
-      "streamedRoom",
-      "streamedEvent",
-      "streamedSource",
-      "streamedStream",
-      "new"
-    ];
-    const hasPlayerParameter = playerParameters.some(
-      (name) => parameters.has(name)
-    );
-    const requestedView = parameters.get("view");
-    const eventDetail = parameters.get("eventDetail");
-    const pathView = /\/events(?:\.html)?\/?$/i.test(url.pathname)
-      ? "events"
-      : /\/favorites(?:\.html)?\/?$/i.test(url.pathname)
-        ? "favorites"
-        : /\/emotes(?:\.html)?\/?$/i.test(url.pathname)
-          ? "emotes"
-          : /\/watch\/?$/i.test(url.pathname)
-            ? "player"
-            : "";
-    const view = hasPlayerParameter
-      ? "player"
-      : ["player", "events", "favorites", "emotes"].includes(requestedView)
-        ? requestedView
-        : pathView || "player";
-
-    const childParameters = new URLSearchParams();
-    childParameters.set("shell", "1");
-
-    if (view === "player") {
-      copyParameters(parameters, childParameters, playerParameters);
-    } else if (eventDetail) {
-      childParameters.set("event", eventDetail);
-    }
-
-    return { view, childParameters };
-  }
-
-  function shellUrl(view, childParameters = new URLSearchParams()) {
-    const url = new URL("index.html", window.location.href);
-    const clean = new URLSearchParams();
-
-    if (view === "events") {
-      clean.set("view", "events");
-      if (childParameters.has("event")) {
-        clean.set("eventDetail", childParameters.get("event"));
-      }
-    } else if (view === "favorites") {
-      clean.set("view", "favorites");
-    } else if (view === "emotes") {
-      clean.set("view", "emotes");
-    } else {
-      const playerNames = [
-        "event",
-        "source",
-        "stream",
-        "watch",
-        "streamedRoom",
-        "streamedEvent",
-        "streamedSource",
-        "streamedStream",
-        "new"
-      ];
-      copyParameters(childParameters, clean, playerNames);
-      if (!Array.from(clean.keys()).length) {
-        clean.set("view", "player");
-      }
-    }
-
-    url.search = clean.toString();
-    return `${url.pathname}${url.search}${url.hash}`;
-  }
-
-  function childUrl(view, parameters) {
-    const filename =
-      view === "events"
-        ? "events.html"
-        : view === "favorites"
-          ? "favorites.html"
-          : view === "emotes"
-            ? "emote-help.html"
-            : "player.html";
-    const url = new URL(filename, window.location.href);
-    url.search = parameters.toString();
-    return url.href;
-  }
-
-  function updateActiveNavigation(view) {
-    document.querySelectorAll("[data-ec-shell-view]").forEach((link) => {
-      link.classList.toggle(
-        "active",
-        link.dataset.ecShellView === view
-      );
-    });
-  }
-
-  function setLoading(view) {
-    viewLoaderLabel.textContent =
-      view === "events"
-        ? "Loading Events"
-        : view === "favorites"
-          ? "Loading Other Streams"
-          : view === "emotes"
-            ? "Loading Emote Help"
-            : "Loading Live Player";
-    viewLoader.classList.remove("is-hidden");
-  }
-
-  function updateDocumentTitle(view) {
-    document.title =
-      view === "events"
-        ? "Events | EastCoin"
-        : view === "favorites"
-          ? "Other Streams | EastCoin"
-          : view === "emotes"
-            ? "Emote Help | EastCoin"
-            : "Live Player | EastCoin";
-  }
-
-  function openView(
-    view,
-    parameters = new URLSearchParams(),
-    { push = true, replace = false } = {}
-  ) {
-    const normalizedView =
-      ["events", "favorites", "emotes"].includes(view)
-        ? view
-        : "player";
-    const nextParameters = new URLSearchParams(parameters);
-    nextParameters.set("shell", "1");
-    const nextFrameUrl = childUrl(normalizedView, nextParameters);
-
-    currentView = normalizedView;
-    updateActiveNavigation(normalizedView);
-    updateDocumentTitle(normalizedView);
-    body.classList.remove("menu-open");
-    updateNavigationButton();
-
-    if (nextFrameUrl !== currentFrameUrl) {
-      currentFrameUrl = nextFrameUrl;
-      setLoading(normalizedView);
-      viewFrame.title =
-        normalizedView === "events"
-          ? "EastCoin Events"
-          : normalizedView === "favorites"
-            ? "EastCoin Other Streams"
-            : normalizedView === "emotes"
-              ? "EastCoin Emote Help"
-              : "EastCoin Live Player";
-      viewFrame.src = nextFrameUrl;
-    }
-
-    if (push || replace) {
-      const nextShellUrl = shellUrl(normalizedView, nextParameters);
-      window.history[replace ? "replaceState" : "pushState"](
-        { view: normalizedView },
-        "",
-        nextShellUrl
-      );
-    }
-  }
-
   document.addEventListener("click", (event) => {
     const link = event.target.closest("[data-ec-shell-view]");
     if (!link) return;
-
     event.preventDefault();
     const view = link.dataset.ecShellView;
     const url = new URL(link.href, window.location.href);
     const parameters = new URLSearchParams();
     parameters.set("shell", "1");
-
-    if (url.searchParams.get("new") === "1") {
-      parameters.set("new", "1");
-    }
-
-    openView(view, parameters, { push: true });
+    if (url.searchParams.get("new") === "1") parameters.set("new", "1");
+    openView(view, parameters, { push: true, trigger: link });
   });
 
-  viewFrame.addEventListener("load", () => {
-    viewLoader.classList.add("is-hidden");
-    postShellState();
+  playerFrame.addEventListener("load", () => {
+    playerLoader.classList.add("is-hidden");
+    playerReady = true;
+    postToFrame(playerFrame, shellState());
     window.setTimeout(flushPendingGameOverlay, 120);
   });
 
+  browseFrame.addEventListener("load", () => {
+    browseReady = true;
+    browseLoader.classList.add("is-hidden");
+    postToFrame(browseFrame, shellState());
+  });
+
   window.addEventListener("message", (event) => {
-    if (event.origin !== window.location.origin || event.source !== viewFrame.contentWindow) {
-      return;
-    }
+    if (event.origin !== window.location.origin) return;
+    const fromPlayer = event.source === playerFrame.contentWindow;
+    const fromBrowse = event.source === browseFrame.contentWindow;
+    if (!fromPlayer && !fromBrowse) return;
 
     const message = event.data || {};
 
     if (message.type === "eastcoin:view-ready") {
-      viewLoader.classList.add("is-hidden");
-      postShellState();
-      flushPendingGameOverlay();
+      if (fromPlayer) {
+        playerLoader.classList.add("is-hidden");
+        playerReady = true;
+        postToFrame(playerFrame, shellState());
+        flushPendingGameOverlay();
+      } else {
+        browseReady = true;
+        browseLoader.classList.add("is-hidden");
+        postToFrame(browseFrame, shellState());
+      }
       return;
     }
 
     if (message.type === "eastcoin:request-shell-state") {
-      postShellState();
+      postToFrame(fromPlayer ? playerFrame : browseFrame, shellState());
       return;
     }
 
-    if (message.type === "eastcoin:toggle-navigation") {
+    if (fromPlayer && message.type === "eastcoin:toggle-navigation") {
       toggleShellNavigation();
       return;
     }
-
-    if (message.type === "eastcoin:toggle-chat") {
+    if (fromPlayer && message.type === "eastcoin:toggle-chat") {
       togglePersistentChat();
       return;
     }
-
-    if (message.type === "eastcoin:toggle-theater") {
+    if (fromPlayer && message.type === "eastcoin:toggle-theater") {
       setTheaterMode(!theaterActive);
       return;
     }
@@ -776,14 +929,12 @@
     if (message.type === "eastcoin:open-player") {
       const parameters = new URLSearchParams();
       parameters.set("shell", "1");
-
       ["event", "source", "stream", "watch", "new"].forEach((name) => {
         const value = message[name];
         if (value !== undefined && value !== null && String(value) !== "") {
           parameters.set(name, String(value));
         }
       });
-
       openView("player", parameters, { push: true });
       return;
     }
@@ -797,9 +948,7 @@
     }
 
     if (message.type === "eastcoin:open-favorites") {
-      const parameters = new URLSearchParams();
-      parameters.set("shell", "1");
-      openView("favorites", parameters, { push: true });
+      openView("favorites", new URLSearchParams("shell=1"), { push: true });
     }
   });
 
@@ -810,7 +959,6 @@
 
   window.addEventListener("resize", () => {
     body.classList.remove("menu-open");
-
     if (!isMobileNavigation()) {
       const currentWidth = parseFloat(
         getComputedStyle(document.documentElement)
@@ -818,14 +966,13 @@
       ) || DEFAULT_CHAT_WIDTH;
       setChatWidth(currentWidth);
     }
-
     updateNavigationButton();
     postShellState();
+    showUtilityDock(true);
   });
 
   function initializeFootballCountdowns() {
     const kickoffTime = new Date("2026-09-09T19:20:00-05:00");
-
     document.querySelectorAll("[data-football-countdown]").forEach((countdown) => {
       const daysElement = countdown.querySelector("[data-countdown-days]");
       const hoursElement = countdown.querySelector("[data-countdown-hours]");
@@ -836,7 +983,6 @@
 
       function update() {
         const remaining = kickoffTime.getTime() - Date.now();
-
         if (remaining <= 0) {
           countdown.classList.add("is-live");
           titleElement.textContent = "Football is back";
@@ -847,13 +993,11 @@
           secondsElement.textContent = "00";
           return false;
         }
-
         const totalSeconds = Math.floor(remaining / 1000);
         const days = Math.floor(totalSeconds / 86400);
         const hours = Math.floor((totalSeconds % 86400) / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         const seconds = totalSeconds % 60;
-
         daysElement.textContent = String(days);
         hoursElement.textContent = String(hours).padStart(2, "0");
         minutesElement.textContent = String(minutes).padStart(2, "0");
@@ -872,11 +1016,13 @@
   let savedChatWidth = DEFAULT_CHAT_WIDTH;
   let savedChatCollapsed = false;
   let savedReducedMotion = false;
+  let savedDockAutohide = true;
 
   try {
     savedSidebarState = localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
     savedChatCollapsed = readStoredBoolean(CHAT_COLLAPSED_STORAGE_KEY, false);
     savedReducedMotion = readStoredBoolean(REDUCED_MOTION_STORAGE_KEY, false);
+    savedDockAutohide = readStoredBoolean(DOCK_AUTOHIDE_STORAGE_KEY, true);
     const candidate = Number(localStorage.getItem(CHAT_WIDTH_STORAGE_KEY));
     if (Number.isFinite(candidate) && candidate > 0) savedChatWidth = candidate;
   } catch {}
@@ -890,13 +1036,19 @@
 
   setChatCollapsed(savedChatCollapsed, false);
   setReducedMotion(savedReducedMotion, false);
+  setDockAutoHide(savedDockAutohide, false);
   syncSettings();
   updateUtilityDock();
   initializeFootballCountdowns();
 
   const initialRoute = routeFromLocation();
+  if (initialRoute.view === "player") {
+    currentPlayerParameters = new URLSearchParams(initialRoute.childParameters);
+  }
+  loadPlayer(currentPlayerParameters);
   openView(initialRoute.view, initialRoute.childParameters, {
     push: false,
     replace: true
   });
+  showUtilityDock(true);
 })();

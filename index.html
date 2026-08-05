@@ -13,7 +13,7 @@
 <link href="assets/eastcoin-favicon.png" rel="apple-touch-icon"/>
 <link href="assets/eastcoins-theme.css?v=theme9" rel="stylesheet"/>
 <link href="assets/eastcoins-shell.css?v=shell2" rel="stylesheet"/>
-<link href="assets/eastcoins-persistent-shell.css?v=persistent5" rel="stylesheet"/><link href="assets/eastcoins-shell-polish.css?v=polish3" rel="stylesheet"/>
+<link href="assets/eastcoins-persistent-shell.css?v=persistent5" rel="stylesheet"/><link href="assets/eastcoins-shell-polish.css?v=polish4" rel="stylesheet"/>
 </head>
 <body class="ec-shell-page ec-persistent-shell">
 <div aria-hidden="true" class="mobile-overlay" id="mobileOverlay"></div>
@@ -29,7 +29,7 @@
 </div>
 <div class="nav-group">
 <div class="nav-label">EastCoin</div>
-<a class="nav-link active" data-ec-shell-view="player" href="index.html?view=player&amp;new=1">
+<a class="nav-link active" data-ec-shell-view="player" href="index.html?view=player">
           📺 Live Player
         </a>
 <a class="nav-link" data-ec-shell-view="events" href="index.html?view=events">
@@ -64,7 +64,6 @@
 </div>
 <div class="football-countdown-date">Wed, Sep 9 · 7:20 PM CT</div>
 </section>
-
 <div aria-label="EastCoin utilities" class="sidebar-utility-grid">
 <a class="sidebar-footer-link" data-ec-shell-view="emotes" href="index.html?view=emotes">
 <span aria-hidden="true">🙂</span>
@@ -87,14 +86,24 @@
 <strong id="viewLoaderLabel">Loading Live Player</strong>
 </div>
 <iframe allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write" allowfullscreen="" class="ec-view-frame" id="eastcoinViewFrame" referrerpolicy="strict-origin-when-cross-origin" src="player.html?shell=1" title="EastCoin Live Player">
-</iframe>
-<div aria-label="EastCoin display controls" class="ec-persistent-utility-dock" id="persistentUtilityDock" role="toolbar">
-<button aria-pressed="false" class="ec-persistent-utility-button" id="persistentTheaterButton" type="button">⛶ Theater</button>
-<button aria-pressed="true" class="ec-persistent-utility-button" id="persistentChatButton" type="button">💬 Hide chat</button>
-<button aria-pressed="false" class="ec-persistent-utility-button" id="persistentNavButton" type="button">◀ Hide nav</button>
-<button class="ec-persistent-utility-button ec-persistent-game-button" id="persistentGameButton" type="button">🎮 Play a Game</button>
-<button aria-controls="persistentSettingsModal" aria-haspopup="dialog" class="ec-persistent-utility-button" id="persistentDockSettingsButton" type="button">⚙ Settings</button>
+</iframe><section aria-hidden="true" class="ec-browse-drawer" hidden="" id="persistentBrowseDrawer">
+<button aria-label="Return to video" class="ec-browse-drawer-scrim" id="persistentBrowseScrim" type="button"></button>
+<div aria-labelledby="persistentBrowseTitle" aria-modal="false" class="ec-browse-drawer-panel" id="persistentBrowsePanel" role="dialog">
+<header class="ec-browse-drawer-header">
+<div class="ec-browse-drawer-copy">
+<span id="persistentBrowseKicker">Browse without stopping playback</span>
+<h2 id="persistentBrowseTitle">Events</h2>
 </div>
+<button aria-label="Close browser and return to video" class="ec-browse-drawer-close" id="persistentBrowseClose" type="button">Back to video</button>
+</header>
+<div aria-live="polite" class="ec-browse-loader" id="browseLoader">
+<span aria-hidden="true" class="ec-view-loader-spinner"></span>
+<strong id="browseLoaderLabel">Loading Events</strong>
+</div>
+<iframe allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write" allowfullscreen="" class="ec-browse-frame" id="eastcoinBrowseFrame" referrerpolicy="strict-origin-when-cross-origin" src="about:blank" title="EastCoin browser"></iframe>
+</div>
+</section>
+<div aria-label="EastCoin display controls" class="ec-persistent-utility-dock" id="persistentUtilityDock" role="toolbar"><button aria-label="Theater" aria-pressed="false" class="ec-persistent-utility-button" data-tooltip="Theater" id="persistentTheaterButton" type="button"><span aria-hidden="true" class="ec-persistent-utility-icon">⛶</span><span class="ec-persistent-utility-label">Theater</span></button><button aria-label="Hide chat" aria-pressed="true" class="ec-persistent-utility-button" data-tooltip="Hide chat" id="persistentChatButton" type="button"><span aria-hidden="true" class="ec-persistent-utility-icon">💬</span><span class="ec-persistent-utility-label">Hide chat</span></button><button aria-label="Hide nav" aria-pressed="false" class="ec-persistent-utility-button" data-tooltip="Hide nav" id="persistentNavButton" type="button"><span aria-hidden="true" class="ec-persistent-utility-icon">◀</span><span class="ec-persistent-utility-label">Hide nav</span></button><button aria-label="Play a Game" class="ec-persistent-utility-button ec-persistent-game-button" data-tooltip="Play a Game" id="persistentGameButton" type="button"><span aria-hidden="true" class="ec-persistent-utility-icon">🎮</span><span class="ec-persistent-utility-label">Play a Game</span></button><button aria-controls="persistentSettingsModal" aria-haspopup="dialog" aria-label="Settings" class="ec-persistent-utility-button" data-tooltip="Settings" id="persistentDockSettingsButton" type="button"><span aria-hidden="true" class="ec-persistent-utility-icon">⚙</span><span class="ec-persistent-utility-label">Settings</span></button></div>
 </main>
 <div aria-label="Resize Twitch chat" aria-orientation="vertical" aria-valuemin="280" aria-valuenow="360" class="resize-handle" id="resizeHandle" role="separator" tabindex="0">
 <span aria-hidden="true"></span>
@@ -135,7 +144,13 @@
 </span>
 <input id="persistentSettingMotion" type="checkbox"/>
 </label>
-<button class="ec-shell-settings-reset" id="persistentResetChatWidth" type="button">
+<label class="ec-shell-setting-row">
+<span>
+<strong>Auto-hide bottom controls</strong>
+<small>Fade the utility dock after a few seconds without activity.</small>
+</span>
+<input id="persistentSettingDockAutohide" type="checkbox"/>
+</label><button class="ec-shell-settings-reset" id="persistentResetChatWidth" type="button">
         Reset chat width
       </button>
 </div>
@@ -144,6 +159,6 @@
 </footer>
 </section>
 </div><div aria-live="polite" class="toast" id="toast" role="status"></div>
-<script src="assets/eastcoins-persistent-shell.js?v=persistent7"></script>
+<script src="assets/eastcoins-persistent-shell.js?v=persistent8"></script>
 </body>
 </html>

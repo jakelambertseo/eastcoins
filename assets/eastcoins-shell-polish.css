@@ -310,3 +310,314 @@ html.ec-shell-reduced-motion .ec-persistent-utility-button {
     font-size: 7.5px !important;
   }
 }
+
+
+/* ================================================================
+   PERSISTENT PLAYER BROWSE DRAWERS + ADAPTIVE UTILITY DOCK
+   Events, Other Streams, and Emote Help slide above the player so the
+   active stream remains mounted and continues playing underneath.
+   ================================================================ */
+
+.ec-browse-drawer[hidden] {
+  display: none !important;
+}
+
+.ec-browse-drawer {
+  position: absolute;
+  inset: 0;
+  z-index: 72;
+  display: flex;
+  justify-content: flex-end;
+  overflow: hidden;
+}
+
+.ec-browse-drawer-scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, .66);
+  backdrop-filter: blur(2px);
+  cursor: default;
+}
+
+.ec-browse-drawer-panel {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: min(760px, 78%);
+  height: 100%;
+  min-width: 360px;
+  overflow: hidden;
+  border-left: 1px solid rgba(201, 164, 79, .2);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(121, 19, 37, .13), transparent 31%),
+    #050404;
+  box-shadow: -28px 0 70px rgba(0, 0, 0, .72);
+  animation: eastcoin-drawer-in .2s ease-out;
+}
+
+.ec-browse-drawer-header {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 58px;
+  padding: 10px 13px 10px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+  background: rgba(5, 4, 4, .96);
+}
+
+.ec-browse-drawer-copy {
+  min-width: 0;
+}
+
+.ec-browse-drawer-copy > span {
+  display: block;
+  overflow: hidden;
+  color: #806f5e;
+  font-size: .48rem;
+  font-weight: 900;
+  letter-spacing: .11em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ec-browse-drawer-copy h2 {
+  margin: 4px 0 0;
+  color: #eee4d1;
+  font-size: .92rem;
+  line-height: 1;
+  letter-spacing: -.02em;
+}
+
+.ec-browse-drawer-close {
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 6px 9px;
+  border: 1px solid rgba(201, 164, 79, .22);
+  border-radius: 8px;
+  color: #d8c6a7;
+  background: rgba(77, 17, 25, .45);
+  font-size: .58rem;
+  font-weight: 900;
+}
+
+.ec-browse-drawer-close:hover,
+.ec-browse-drawer-close:focus-visible {
+  border-color: rgba(237, 208, 124, .48);
+  color: #fff0c1;
+  background: rgba(112, 23, 35, .72);
+  outline: 0;
+}
+
+.ec-browse-frame {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  background: #020202;
+}
+
+.ec-browse-loader {
+  position: absolute;
+  inset: 58px 0 0;
+  z-index: 2;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  color: #d8c7aa;
+  background: rgba(0, 0, 0, .96);
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity .18s ease, visibility .18s ease;
+}
+
+.ec-browse-loader.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.ec-browse-loader strong {
+  font-size: .66rem;
+  font-weight: 850;
+  letter-spacing: .04em;
+}
+
+.ec-persistent-shell.drawer-open #eastcoinViewFrame {
+  filter: brightness(.56) saturate(.8);
+  pointer-events: none;
+}
+
+@keyframes eastcoin-drawer-in {
+  from { transform: translateX(24px); opacity: .45; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Keep the compact shell dock above drawers but let it disappear when idle. */
+.ec-persistent-utility-dock {
+  z-index: 96 !important;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  overflow: visible;
+  transition:
+    opacity .18s ease,
+    visibility .18s ease,
+    transform .18s ease !important;
+}
+
+.ec-persistent-utility-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 29px;
+  padding: 5px 7px;
+  font-size: 9px !important;
+}
+
+.ec-persistent-utility-icon {
+  display: inline-grid;
+  min-width: 1em;
+  place-items: center;
+  font-size: 1em;
+  line-height: 1;
+}
+
+.ec-persistent-shell.dock-idle:not(.dock-autohide-disabled)
+  .ec-persistent-utility-dock:not(:focus-within) {
+  opacity: 0 !important;
+  visibility: hidden;
+  transform: translate(-50%, 9px) !important;
+  pointer-events: none;
+}
+
+.ec-persistent-utility-button::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 140;
+  width: max-content;
+  max-width: 160px;
+  padding: 5px 7px;
+  border: 1px solid rgba(201, 164, 79, .22);
+  border-radius: 6px;
+  color: #eee1c5;
+  background: rgba(10, 7, 7, .98);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .48);
+  font-size: 8px;
+  font-weight: 850;
+  line-height: 1.15;
+  text-align: center;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .14s ease, transform .14s ease, visibility .14s ease;
+}
+
+.ec-persistent-utility-button:hover::after,
+.ec-persistent-utility-button:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  visibility: visible;
+}
+
+@media (max-width: 900px) {
+  .ec-browse-drawer {
+    position: absolute;
+  }
+
+  .ec-browse-drawer-panel {
+    width: 100%;
+    min-width: 0;
+    border-left: 0;
+  }
+
+  .ec-browse-drawer-header {
+    padding-left: 58px;
+  }
+
+  .ec-persistent-shell.dock-idle:not(.dock-autohide-disabled)
+    .ec-persistent-utility-dock:not(:focus-within) {
+    transform: translateY(9px) !important;
+  }
+
+  .ec-persistent-utility-button {
+    min-height: 27px;
+    padding: 4px 6px;
+    font-size: 8px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .ec-persistent-utility-dock {
+    left: 50% !important;
+    right: auto !important;
+    width: auto;
+    max-width: calc(100% - 16px);
+    transform: translateX(-50%) !important;
+  }
+
+  .ec-persistent-utility-button {
+    width: 29px;
+    min-width: 29px;
+    padding: 0;
+  }
+
+  .ec-persistent-utility-label {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+
+  .ec-persistent-shell.dock-idle:not(.dock-autohide-disabled)
+    .ec-persistent-utility-dock:not(:focus-within) {
+    transform: translate(-50%, 9px) !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .ec-browse-drawer-header {
+    min-height: 54px;
+    padding-right: 8px;
+  }
+
+  .ec-browse-drawer-copy > span {
+    max-width: 44vw;
+  }
+
+  .ec-browse-drawer-close {
+    min-height: 29px;
+    padding: 5px 7px;
+    font-size: .52rem;
+  }
+}
+
+html.ec-shell-reduced-motion .ec-browse-drawer-panel {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ec-browse-drawer-panel {
+    animation: none !important;
+  }
+}
