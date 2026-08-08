@@ -533,8 +533,16 @@
       const hasExplicitPlayerRequest = PLAYER_PARAMETER_NAMES.some(
         (name) => nextParameters.has(name)
       );
+      const startFresh = nextParameters.get("new") === "1";
+
       if (hasExplicitPlayerRequest || !currentPlayerUrl) {
-        loadPlayer(nextParameters);
+        /*
+          Live Player is also the shell's Home action. Force a reload for
+          ?new=1 even when the parent still remembers the same player.html URL.
+          This matters after a user manually loads a stream inside the already
+          mounted player iframe, because the outer shell URL does not change.
+        */
+        loadPlayer(nextParameters, startFresh);
       }
     } else {
       openBrowseDrawer(normalizedView, nextParameters, trigger);
