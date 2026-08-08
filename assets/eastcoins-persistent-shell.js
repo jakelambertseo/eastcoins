@@ -119,6 +119,10 @@
   let pendingGameOverlay = false;
   let playerReady = false;
   let browseReady = false;
+  let pendingPlayerReveal = null;
+  let pendingPlayerRevealPollTimer = 0;
+  let pendingPlayerRevealWarningTimer = 0;
+  let pendingPlayerRevealStopTimer = 0;
   let lastSettingsTrigger = settingsButton;
   let lastDrawerTrigger = null;
   let dockAutoHideEnabled = true;
@@ -314,6 +318,122 @@
     return !browseDrawer.hidden;
   }
 
+  function clearPendingPlayerRevealTimers() {
+    window.clearInterval(pendingPlayerRevealPollTimer);
+    window.clearTimeout(pendingPlayerRevealWarningTimer);
+    window.clearTimeout(pendingPlayerRevealStopTimer);
+    pendingPlayerRevealPollTimer = 0;
+    pendingPlayerRevealWarningTimer = 0;
+    pendingPlayerRevealStopTimer = 0;
+  }
+
+  function playerHasVisibleContent() {
+    try {
+      return Boolean(
+        playerFrame.contentDocument?.getElementById("activeFrame")
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function cancelPendingPlayerReveal({ hideLoader = true } = {}) {
+    if (!pendingPlayerReveal) return;
+
+    pendingPlayerReveal = null;
+    clearPendingPlayerRevealTimers();
+    body.classList.remove("player-transition-pending");
+
+    if (hideLoader) {
+      browseLoader.classList.add("is-hidden");
+    }
+  }
+
+  function finishPendingPlayerReveal() {
+    if (!pendingPlayerReveal) return;
+
+    pendingPlayerReveal = null;
+    clearPendingPlayerRevealTimers();
+    body.classList.remove("player-transition-pending");
+    browseLoader.classList.add("is-hidden");
+
+    /*
+      Only reveal the player after its real event/video iframe exists.
+      This prevents the blank Live Player homepage from flashing between
+      the Events drawer and the selected stream.
+    */
+    closeBrowseDrawer({
+      replaceHistory: false,
+      restoreFocus: false
+    });
+
+    body.classList.remove("menu-open");
+    updateNavigationButton();
+    postShellState();
+    showUtilityDock(true);
+  }
+
+  function startPendingPlayerRevealWatch() {
+    if (!pendingPlayerReveal || pendingPlayerReveal.watchStarted) {
+      return;
+    }
+
+    pendingPlayerReveal.watchStarted = true;
+
+    const checkPlayer = () => {
+      if (!pendingPlayerReveal) return;
+
+      if (playerHasVisibleContent()) {
+        finishPendingPlayerReveal();
+      }
+    };
+
+    checkPlayer();
+    if (!pendingPlayerReveal) return;
+
+    pendingPlayerRevealPollTimer = window.setInterval(
+      checkPlayer,
+      100
+    );
+
+    /*
+      A slow/broken provider should never strand somebody on the
+      Live Player homepage. After 12 seconds, uncover Events again so
+      the visitor can retry or choose something else while the player
+      is still allowed a little more time to finish in the background.
+    */
+    pendingPlayerRevealWarningTimer = window.setTimeout(() => {
+      if (!pendingPlayerReveal) return;
+
+      browseLoader.classList.add("is-hidden");
+      showToast(
+        "This event is taking longer to open. You can retry it or choose another event."
+      );
+    }, 12000);
+
+    pendingPlayerRevealStopTimer = window.setTimeout(() => {
+      if (!pendingPlayerReveal) return;
+
+      cancelPendingPlayerReveal({ hideLoader: true });
+    }, 30000);
+  }
+
+  function beginPendingPlayerReveal(parameters) {
+    cancelPendingPlayerReveal({ hideLoader: false });
+
+    const request = new URLSearchParams(parameters);
+    pendingPlayerReveal = {
+      watchStarted: false,
+      requestedAt: Date.now()
+    };
+
+    body.classList.add("player-transition-pending");
+    browseLoaderLabel.textContent = request.has("event")
+      ? "Opening event…"
+      : "Opening stream…";
+    browseLoader.classList.remove("is-hidden");
+  }
+
   function setPlayerLoading(label = "Loading Live Player") {
     playerLoaderLabel.textContent = label;
     playerLoader.classList.remove("is-hidden");
@@ -489,6 +609,8 @@
   }
 
   function closeBrowseDrawer({ replaceHistory = true, restoreFocus = true } = {}) {
+    cancelPendingPlayerReveal();
+
     if (!drawerIsOpen()) return;
 
     browseDrawer.hidden = true;
@@ -524,25 +646,64 @@
     if (!currentPlayerUrl) loadPlayer(currentPlayerParameters);
 
     if (normalizedView === "player") {
-      closeBrowseDrawer({ replaceHistory: false, restoreFocus: false });
-      currentView = "player";
-      updateActiveNavigation("player");
-      updateDocumentTitle("player");
-      body.classList.remove("menu-open");
-      updateNavigationButton();
       const hasExplicitPlayerRequest = PLAYER_PARAMETER_NAMES.some(
         (name) => nextParameters.has(name)
       );
       const startFresh = nextParameters.get("new") === "1";
+      const hasMediaRequest =
+        !startFresh &&
+        SHARED_PLAYER_PARAMETER_NAMES.some((name) => {
+          const value = nextParameters.get(name);
+          return value !== null && String(value).trim() !== "";
+        });
+      const deferPlayerReveal =
+        drawerIsOpen() &&
+        hasMediaRequest;
 
-      if (hasExplicitPlayerRequest || !currentPlayerUrl) {
+      if (deferPlayerReveal) {
         /*
-          Live Player is also the shell's Home action. Force a reload for
-          ?new=1 even when the parent still remembers the same player.html URL.
-          This matters after a user manually loads a stream inside the already
-          mounted player iframe, because the outer shell URL does not change.
+          Events and Other Streams are browse drawers over the persistent
+          player. Keep the drawer visible until player.html has replaced its
+          homepage/form with the requested event or external stream.
         */
-        loadPlayer(nextParameters, startFresh);
+        beginPendingPlayerReveal(nextParameters);
+        body.classList.remove("menu-open");
+        updateNavigationButton();
+
+        const playerReloaded = loadPlayer(
+          nextParameters,
+          false
+        );
+
+        /*
+          If the requested player URL is already mounted (for example,
+          selecting the same event again), its active frame can be checked
+          immediately. Otherwise the player iframe load handler starts the
+          watch against the newly loaded document.
+        */
+        if (!playerReloaded) {
+          startPendingPlayerRevealWatch();
+        }
+      } else {
+        closeBrowseDrawer({
+          replaceHistory: false,
+          restoreFocus: false
+        });
+        currentView = "player";
+        updateActiveNavigation("player");
+        updateDocumentTitle("player");
+        body.classList.remove("menu-open");
+        updateNavigationButton();
+
+        if (hasExplicitPlayerRequest || !currentPlayerUrl) {
+          /*
+            Live Player is also the shell's Home action. Force a reload for
+            ?new=1 even when the parent still remembers the same player.html URL.
+            This matters after a user manually loads a stream inside the already
+            mounted player iframe, because the outer shell URL does not change.
+          */
+          loadPlayer(nextParameters, startFresh);
+        }
       }
     } else {
       openBrowseDrawer(normalizedView, nextParameters, trigger);
@@ -1002,6 +1163,13 @@
     playerReady = true;
     postToFrame(playerFrame, shellState());
     window.setTimeout(flushPendingGameOverlay, 120);
+
+    /*
+      player.html itself is now loaded. If this navigation came from the
+      Events/Other Streams drawer, wait for its actual activeFrame before
+      uncovering the player.
+    */
+    startPendingPlayerRevealWatch();
   });
 
   browseFrame.addEventListener("load", () => {
@@ -1029,6 +1197,7 @@
         playerReady = true;
         postToFrame(playerFrame, shellState());
         flushPendingGameOverlay();
+        startPendingPlayerRevealWatch();
       } else {
         browseReady = true;
         browseLoader.classList.add("is-hidden");
