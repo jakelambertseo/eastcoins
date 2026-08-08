@@ -64,3 +64,18 @@
 
 /favorites.html
   Cache-Control: no-store, max-age=0, must-revalidate
+
+/win95-test.html
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-persistent-shell-win95.js
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-win95-test.js
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-win95.css
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-win95-embedded.css
+  Cache-Control: no-store, max-age=0, must-revalidate

@@ -1,0 +1,297 @@
+/* ================================================================
+   EASTCOIN — WINDOWS 95 EMBEDDED VIEW TEST SKIN
+   Injected only by win95-test.html into same-origin center/drawer frames.
+   ================================================================ */
+
+html.ec-win95-embedded {
+  --w95-face: #c0c0c0;
+  --w95-face-light: #dfdfdf;
+  --w95-white: #ffffff;
+  --w95-shadow: #808080;
+  --w95-dark-shadow: #404040;
+  --w95-black: #000000;
+  --w95-blue: #000080;
+  --w95-blue-light: #1084d0;
+  --w95-tooltip: #ffffe1;
+}
+
+html.ec-win95-embedded,
+html.ec-win95-embedded body {
+  color: var(--w95-black) !important;
+  background: var(--w95-face) !important;
+  font-family: "MS Sans Serif", "Microsoft Sans Serif", Tahoma, Arial, sans-serif !important;
+}
+
+html.ec-win95-embedded *,
+html.ec-win95-embedded *::before,
+html.ec-win95-embedded *::after {
+  border-radius: 0 !important;
+  text-shadow: none !important;
+}
+
+html.ec-win95-embedded button,
+html.ec-win95-embedded input,
+html.ec-win95-embedded select,
+html.ec-win95-embedded textarea {
+  font-family: inherit !important;
+}
+
+/* Generic Windows 95 raised buttons. */
+html.ec-win95-embedded button,
+html.ec-win95-embedded .toolbar-button,
+html.ec-win95-embedded .load-button,
+html.ec-win95-embedded .quick-favorite-button,
+html.ec-win95-embedded .streamed-mode-button,
+html.ec-win95-embedded .streamed-refresh,
+html.ec-win95-embedded .streamed-server-button,
+html.ec-win95-embedded .streamed-source-button,
+html.ec-win95-embedded .streamed-server-close,
+html.ec-win95-embedded .streamed-server-return,
+html.ec-win95-embedded .ec-event-action,
+html.ec-win95-embedded .ec-continue-button {
+  border: 2px solid !important;
+  border-color: var(--w95-white) var(--w95-dark-shadow) var(--w95-dark-shadow) var(--w95-white) !important;
+  color: var(--w95-black) !important;
+  background: var(--w95-face) !important;
+  background-image: none !important;
+  box-shadow:
+    inset 1px 1px var(--w95-face-light),
+    inset -1px -1px var(--w95-shadow) !important;
+}
+
+html.ec-win95-embedded button:hover,
+html.ec-win95-embedded button:focus-visible,
+html.ec-win95-embedded .toolbar-button:hover,
+html.ec-win95-embedded .toolbar-button:focus-visible {
+  color: var(--w95-black) !important;
+  background: #d4d4d4 !important;
+  outline: 1px dotted var(--w95-black) !important;
+  outline-offset: -4px !important;
+  transform: none !important;
+}
+
+html.ec-win95-embedded button:active,
+html.ec-win95-embedded .toolbar-button:active,
+html.ec-win95-embedded .streamed-server-button.active,
+html.ec-win95-embedded .streamed-source-button.active,
+html.ec-win95-embedded .streamed-mode-button.active,
+html.ec-win95-embedded .streamed-mode-button.is-active {
+  border-color: var(--w95-shadow) var(--w95-white) var(--w95-white) var(--w95-shadow) !important;
+  box-shadow:
+    inset 1px 1px var(--w95-dark-shadow),
+    inset -1px -1px var(--w95-face-light) !important;
+}
+
+/* Player shell / prompt / toolbar. */
+html.ec-win95-embedded .player-shell,
+html.ec-win95-embedded .url-stage,
+html.ec-win95-embedded .page-main {
+  background: var(--w95-face) !important;
+}
+
+html.ec-win95-embedded .url-card,
+html.ec-win95-embedded .streamed-launcher,
+html.ec-win95-embedded .streamed-browser,
+html.ec-win95-embedded .editing-note,
+html.ec-win95-embedded .emote-help-card,
+html.ec-win95-embedded .help-card {
+  border: 2px solid !important;
+  border-color: var(--w95-white) var(--w95-dark-shadow) var(--w95-dark-shadow) var(--w95-white) !important;
+  color: var(--w95-black) !important;
+  background: var(--w95-face) !important;
+  box-shadow:
+    inset 1px 1px var(--w95-face-light),
+    inset -1px -1px var(--w95-shadow) !important;
+}
+
+html.ec-win95-embedded .url-card h1,
+html.ec-win95-embedded .url-card h2,
+html.ec-win95-embedded .url-card h3,
+html.ec-win95-embedded .streamed-launcher-title,
+html.ec-win95-embedded .streamed-discovery-section h2,
+html.ec-win95-embedded .page-header h1,
+html.ec-win95-embedded .page-header h2,
+html.ec-win95-embedded .site-name {
+  color: var(--w95-black) !important;
+  letter-spacing: 0 !important;
+}
+
+html.ec-win95-embedded .url-card p,
+html.ec-win95-embedded .streamed-launcher-description,
+html.ec-win95-embedded .streamed-discovery-section p,
+html.ec-win95-embedded .page-header p,
+html.ec-win95-embedded .site-url,
+html.ec-win95-embedded .editing-note {
+  color: var(--w95-dark-shadow) !important;
+}
+
+html.ec-win95-embedded input,
+html.ec-win95-embedded textarea,
+html.ec-win95-embedded select,
+html.ec-win95-embedded .streamed-search {
+  border: 2px solid !important;
+  border-color: var(--w95-shadow) var(--w95-white) var(--w95-white) var(--w95-shadow) !important;
+  color: var(--w95-black) !important;
+  background: var(--w95-white) !important;
+  box-shadow:
+    inset 1px 1px var(--w95-dark-shadow),
+    inset -1px -1px var(--w95-face-light) !important;
+}
+
+html.ec-win95-embedded .player-toolbar {
+  border: 2px solid !important;
+  border-color: var(--w95-white) var(--w95-dark-shadow) var(--w95-dark-shadow) var(--w95-white) !important;
+  color: var(--w95-black) !important;
+  background: var(--w95-face) !important;
+  box-shadow:
+    inset 1px 1px var(--w95-face-light),
+    inset -1px -1px var(--w95-shadow) !important;
+}
+
+html.ec-win95-embedded .toolbar-title strong,
+html.ec-win95-embedded .toolbar-title span,
+html.ec-win95-embedded #currentHost {
+  color: var(--w95-black) !important;
+}
+
+html.ec-win95-embedded .share-room-button {
+  color: var(--w95-black) !important;
+  background: var(--w95-face) !important;
+  background-image: none !important;
+  border-color: var(--w95-white) var(--w95-dark-shadow) var(--w95-dark-shadow) var(--w95-white) !important;
+}
+
+/* Streamed event browser. */
+html.ec-win95-embedded .streamed-status,
+html.ec-win95-embedded .streamed-browser-controls,
+html.ec-win95-embedded .streamed-sport-tabs,
+html.ec-win95-embedded .streamed-discovery-section,
+html.ec-win95-embedded .ec-event-category {
+  color: var(--w95-black) !important;
+  background: transparent !important;
+}
+
+html.ec-win95-embedded .streamed-sport-tab,
+html.ec-win95-embedded .ec-event-card,
+html.ec-win95-embedded .ec-feature-card,
+html.ec-win95-embedded .ec-continue-card,
+html.ec-win95-embedded .favorite-site {
+  border: 2px solid !important;
+  border-color: var(--w95-white) var(--w95-dark-shadow) var(--w95-dark-shadow) var(--w95-white) !important;
+  color: var(--w95-black) !important;
+  background: var(--w95-face) !important;
+  box-shadow:
+    inset 1px 1px var(--w95-face-light),
+    inset -1px -1px var(--w95-shadow) !important;
+}
+
+html.ec-win95-embedded .streamed-sport-tab:hover,
+html.ec-win95-embedded .streamed-sport-tab.active,
+html.ec-win95-embedded .ec-event-card:hover,
+html.ec-win95-embedded .favorite-site:hover,
+html.ec-win95-embedded .favorite-site:focus-visible {
+  color: var(--w95-white) !important;
+  background: var(--w95-blue) !important;
+  outline: none !important;
+  transform: none !important;
+}
+
+html.ec-win95-embedded .ec-event-card h3,
+html.ec-win95-embedded .ec-event-card strong,
+html.ec-win95-embedded .ec-feature-card strong,
+html.ec-win95-embedded .favorite-site:hover .site-name,
+html.ec-win95-embedded .favorite-site:focus-visible .site-name {
+  color: inherit !important;
+}
+
+html.ec-win95-embedded .ec-event-tag,
+html.ec-win95-embedded .ec-event-category-count,
+html.ec-win95-embedded .streamed-server-status,
+html.ec-win95-embedded .streamed-stream-meta {
+  border: 1px solid var(--w95-shadow) !important;
+  color: var(--w95-black) !important;
+  background: var(--w95-face-light) !important;
+  box-shadow: none !important;
+}
+
+html.ec-win95-embedded .ec-event-tag-live {
+  color: var(--w95-white) !important;
+  background: #800000 !important;
+}
+
+/* Server selector becomes a classic dialog. */
+html.ec-win95-embedded .streamed-server-panel {
+  border: 3px solid !important;
+  border-color: var(--w95-white) var(--w95-dark-shadow) var(--w95-dark-shadow) var(--w95-white) !important;
+  color: var(--w95-black) !important;
+  background: var(--w95-face) !important;
+  box-shadow:
+    inset 1px 1px var(--w95-face-light),
+    inset -1px -1px var(--w95-shadow),
+    6px 6px 0 rgba(0,0,0,.22) !important;
+}
+
+html.ec-win95-embedded .streamed-server-header {
+  margin: 3px !important;
+  padding: 4px !important;
+  border: 0 !important;
+  color: var(--w95-white) !important;
+  background: var(--w95-blue) !important;
+}
+
+html.ec-win95-embedded .streamed-server-header *,
+html.ec-win95-embedded .streamed-server-title,
+html.ec-win95-embedded .streamed-server-subtitle {
+  color: var(--w95-white) !important;
+}
+
+html.ec-win95-embedded .streamed-source-group,
+html.ec-win95-embedded .streamed-server-list {
+  color: var(--w95-black) !important;
+  background: var(--w95-face) !important;
+}
+
+/* Page headers / Favorites / Emote Help. */
+html.ec-win95-embedded .page-shell {
+  color: var(--w95-black) !important;
+  background: var(--w95-face) !important;
+}
+
+html.ec-win95-embedded .page-header {
+  border-bottom: 2px solid var(--w95-shadow) !important;
+}
+
+html.ec-win95-embedded .eyebrow,
+html.ec-win95-embedded .page-header .eyebrow {
+  color: var(--w95-blue) !important;
+}
+
+html.ec-win95-embedded .site-arrow {
+  border: 2px solid !important;
+  border-color: var(--w95-white) var(--w95-dark-shadow) var(--w95-dark-shadow) var(--w95-white) !important;
+  color: var(--w95-black) !important;
+  background: var(--w95-face) !important;
+}
+
+/* Existing EastCoin copy-link tooltip adopts a classic Windows tooltip. */
+html.ec-win95-embedded .copy-link-tooltip {
+  border: 1px solid var(--w95-black) !important;
+  color: var(--w95-black) !important;
+  background: var(--w95-tooltip) !important;
+  box-shadow: 2px 2px 0 rgba(0,0,0,.22) !important;
+  font-weight: 400 !important;
+}
+html.ec-win95-embedded .copy-link-tooltip::before {
+  display: none !important;
+}
+
+/* Scrollbars where supported. */
+html.ec-win95-embedded * {
+  scrollbar-color: var(--w95-shadow) var(--w95-face);
+}
+
+@media (max-width: 900px) {
+  html.ec-win95-embedded .page-shell {
+    padding: 20px 14px 42px !important;
+  }
+}
