@@ -64,6 +64,7 @@
   let activeResize = null;
   let verticalResizer = null;
   let horizontalResizer = null;
+  let diagonalResizer = null;
   let eventsLoaded = false;
   let eventsLoading = false;
   let eventData = {
@@ -481,6 +482,11 @@
       "aria-valuenow",
       String(Math.round(split.row))
     );
+
+    diagonalResizer?.setAttribute(
+      "aria-valuetext",
+      `Player 1 width ${Math.round(split.col)} percent, height ${Math.round(split.row)} percent`
+    );
   }
 
   function setSplit(axis, value, save = false) {
@@ -514,6 +520,15 @@
     );
   }
 
+  function resetDiagonalSplit() {
+    state.splits[4] = {
+      ...DEFAULT_SPLITS[4]
+    };
+    applyGridSplits();
+    saveState();
+    showToast("Player 1 size reset.");
+  }
+
   function finishGridResize() {
     if (!activeResize) return;
 
@@ -521,7 +536,8 @@
     body.classList.remove(
       "mv-grid-resizing",
       "mv-grid-resizing-col",
-      "mv-grid-resizing-row"
+      "mv-grid-resizing-row",
+      "mv-grid-resizing-both"
     );
 
     activeResize = null;
@@ -540,13 +556,28 @@
       return;
     }
 
+    if (activeResize.axis === "both") {
+      const columnPercent =
+        ((clientX - rect.left) / rect.width) * 100;
+      const rowPercent =
+        ((clientY - rect.top) / rect.height) * 100;
+
+      setSplit("col", columnPercent, false);
+      setSplit("row", rowPercent, false);
+      return;
+    }
+
     const percent =
       ((clientY - rect.top) / rect.height) * 100;
     setSplit("row", percent, false);
   }
 
   function startGridResize(axis, event, element) {
-    if (isMobile() || focusedSlot !== null) {
+    if (
+      isMobile() ||
+      focusedSlot !== null ||
+      (axis === "both" && state.layout !== 4)
+    ) {
       return;
     }
 
@@ -561,11 +592,14 @@
     element.classList.add("is-active");
     element.setPointerCapture?.(event.pointerId);
 
+    body.classList.add("mv-grid-resizing");
+
     body.classList.add(
-      "mv-grid-resizing",
       axis === "col"
         ? "mv-grid-resizing-col"
-        : "mv-grid-resizing-row"
+        : axis === "row"
+          ? "mv-grid-resizing-row"
+          : "mv-grid-resizing-both"
     );
 
     updateGridResize(
@@ -621,9 +655,23 @@
     horizontalResizer.title =
       "Drag to resize panel heights · double-click to reset";
 
+    diagonalResizer = document.createElement("button");
+    diagonalResizer.type = "button";
+    diagonalResizer.className =
+      "mv-grid-resizer mv-grid-resizer-diagonal";
+    diagonalResizer.innerHTML =
+      '<span aria-hidden="true">↘</span>';
+    diagonalResizer.setAttribute(
+      "aria-label",
+      "Resize Player 1 width and height"
+    );
+    diagonalResizer.title =
+      "Drag down-right to make Player 1 larger · double-click to reset";
+
     grid.append(
       verticalResizer,
-      horizontalResizer
+      horizontalResizer,
+      diagonalResizer
     );
 
     verticalResizer.addEventListener(
@@ -646,7 +694,21 @@
         )
     );
 
-    [verticalResizer, horizontalResizer].forEach(
+    diagonalResizer.addEventListener(
+      "pointerdown",
+      (event) =>
+        startGridResize(
+          "both",
+          event,
+          diagonalResizer
+        )
+    );
+
+    [
+      verticalResizer,
+      horizontalResizer,
+      diagonalResizer
+    ].forEach(
       (resizer) => {
         resizer.addEventListener(
           "pointermove",
@@ -686,6 +748,11 @@
       () => resetSplit("row")
     );
 
+    diagonalResizer.addEventListener(
+      "dblclick",
+      resetDiagonalSplit
+    );
+
     verticalResizer.addEventListener(
       "keydown",
       (event) => {
@@ -723,6 +790,47 @@
             (event.key === "ArrowDown" ? 2 : -2),
           true
         );
+      }
+    );
+
+    diagonalResizer.addEventListener(
+      "keydown",
+      (event) => {
+        if (state.layout !== 4) {
+          return;
+        }
+
+        if (
+          ![
+            "ArrowLeft",
+            "ArrowRight",
+            "ArrowUp",
+            "ArrowDown"
+          ].includes(event.key)
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+
+        if (
+          event.key === "ArrowLeft" ||
+          event.key === "ArrowRight"
+        ) {
+          setSplit(
+            "col",
+            splitForLayout().col +
+              (event.key === "ArrowRight" ? 2 : -2),
+            true
+          );
+        } else {
+          setSplit(
+            "row",
+            splitForLayout().row +
+              (event.key === "ArrowDown" ? 2 : -2),
+            true
+          );
+        }
       }
     );
 
