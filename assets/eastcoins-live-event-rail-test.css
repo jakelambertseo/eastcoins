@@ -1,0 +1,355 @@
+/* ================================================================
+   EASTCOIN — LIVE EVENT RAIL PROTOTYPE
+   Test page only. The rail lives in the persistent outer shell so
+   Twitch chat and navigation remain mounted while events switch.
+   ================================================================ */
+
+.ec-live-rail-test-page {
+  --ec-live-rail-height: 68px;
+  --ec-live-rail-bottom: 56px;
+}
+
+.ec-live-event-rail {
+  position: absolute;
+  right: 12px;
+  bottom: var(--ec-live-rail-bottom);
+  left: 12px;
+  z-index: 92;
+  min-width: 0;
+  pointer-events: none;
+}
+
+.ec-live-event-rail-inner {
+  display: grid;
+  grid-template-columns: auto 30px minmax(0, 1fr) 30px 28px;
+  gap: 5px;
+  align-items: center;
+  min-width: 0;
+  min-height: var(--ec-live-rail-height);
+  padding: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(201, 164, 79, .16);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(9, 8, 8, .94), rgba(3, 3, 3, .96));
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, .48),
+    inset 0 1px 0 rgba(255, 255, 255, .025);
+  backdrop-filter: blur(14px);
+  pointer-events: auto;
+}
+
+.ec-live-event-rail-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 91px;
+  padding: 0 7px 0 5px;
+  border-right: 1px solid rgba(255, 255, 255, .06);
+}
+
+.ec-live-event-rail-live-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  background: #ff334c;
+  box-shadow: 0 0 0 4px rgba(255, 51, 76, .09);
+}
+
+.ec-live-event-rail-brand strong {
+  display: block;
+  color: #fff1d9;
+  font-size: .72rem;
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.ec-live-event-rail-brand small {
+  display: block;
+  margin-top: 4px;
+  color: #766d61;
+  font-size: .48rem;
+  font-weight: 750;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ec-live-event-rail-arrow,
+.ec-live-event-rail-hide {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, .065);
+  border-radius: 8px;
+  color: #9f968a;
+  background: rgba(255, 255, 255, .025);
+  font-weight: 900;
+}
+
+.ec-live-event-rail-arrow {
+  font-size: 1.12rem;
+}
+
+.ec-live-event-rail-hide {
+  height: 28px;
+  font-size: .75rem;
+}
+
+.ec-live-event-rail-arrow:hover,
+.ec-live-event-rail-arrow:focus-visible,
+.ec-live-event-rail-hide:hover,
+.ec-live-event-rail-hide:focus-visible {
+  color: #ffe8ad;
+  border-color: rgba(201, 164, 79, .3);
+  background: rgba(201, 164, 79, .07);
+  outline: 0;
+}
+
+.ec-live-event-rail-arrow:disabled {
+  opacity: .28;
+  cursor: default;
+}
+
+.ec-live-event-rail-viewport {
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.ec-live-event-rail-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.ec-live-event-rail-list {
+  display: flex;
+  gap: 5px;
+  width: max-content;
+  min-width: 100%;
+}
+
+.ec-live-event-rail-loading {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 12px;
+  color: #766f65;
+  font-size: .62rem;
+  font-weight: 700;
+}
+
+.ec-live-event-rail-item {
+  appearance: none;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  width: 218px;
+  min-width: 218px;
+  height: 48px;
+  padding: 6px 9px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .06);
+  border-radius: 8px;
+  color: #dcd5cb;
+  background:
+    linear-gradient(180deg, rgba(15, 14, 14, .93), rgba(7, 7, 7, .95));
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color .15s ease,
+    background .15s ease,
+    transform .15s ease;
+}
+
+.ec-live-event-rail-item:hover,
+.ec-live-event-rail-item:focus-visible {
+  border-color: rgba(201, 164, 79, .27);
+  background:
+    linear-gradient(180deg, rgba(33, 24, 18, .95), rgba(12, 10, 9, .97));
+  outline: 0;
+  transform: translateY(-1px);
+}
+
+.ec-live-event-rail-item.is-active {
+  border-color: rgba(232, 191, 91, .48);
+  background:
+    linear-gradient(180deg, rgba(76, 23, 31, .97), rgba(28, 9, 14, .98));
+  box-shadow: inset 2px 0 0 #c9a44f;
+}
+
+.ec-live-event-rail-status {
+  display: grid;
+  place-items: center;
+  min-width: 37px;
+  height: 30px;
+  padding: 0 5px;
+  border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: 7px;
+  color: #a79d90;
+  background: rgba(0, 0, 0, .25);
+  font-size: .48rem;
+  font-weight: 950;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.ec-live-event-rail-item.is-live .ec-live-event-rail-status {
+  color: #fff;
+  border-color: rgba(255, 70, 91, .28);
+  background: #ad2135;
+}
+
+.ec-live-event-rail-copy {
+  min-width: 0;
+}
+
+.ec-live-event-rail-copy strong {
+  display: block;
+  overflow: hidden;
+  color: #f4eadb;
+  font-size: .64rem;
+  font-weight: 900;
+  line-height: 1.18;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ec-live-event-rail-copy small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  margin-top: 4px;
+  color: #746d64;
+  font-size: .48rem;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.ec-live-event-rail-copy small span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ec-live-event-rail-copy small b {
+  color: #a38c56;
+  font-weight: 900;
+}
+
+.ec-live-event-rail-show {
+  position: absolute;
+  left: 12px;
+  bottom: var(--ec-live-rail-bottom);
+  z-index: 93;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid rgba(201, 164, 79, .22);
+  border-radius: 9px;
+  color: #d7c7aa;
+  background: rgba(7, 6, 6, .94);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .44);
+  font-size: .58rem;
+  font-weight: 900;
+}
+
+.ec-live-event-rail-show[hidden] {
+  display: none;
+}
+
+.ec-live-event-rail-show:hover,
+.ec-live-event-rail-show:focus-visible {
+  color: #ffe8ad;
+  border-color: rgba(201, 164, 79, .38);
+  outline: 0;
+}
+
+.ec-live-event-test-badge {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 52;
+  padding: 5px 7px;
+  border: 1px solid rgba(201, 164, 79, .17);
+  border-radius: 7px;
+  color: #9b895f;
+  background: rgba(4, 4, 4, .78);
+  font-size: .46rem;
+  font-weight: 950;
+  letter-spacing: .09em;
+  pointer-events: none;
+}
+
+body.theater-mode .ec-live-event-rail,
+body.theater-mode .ec-live-event-rail-show {
+  bottom: 52px;
+}
+
+body.drawer-open .ec-live-event-rail,
+body.drawer-open .ec-live-event-rail-show {
+  opacity: .22;
+  pointer-events: none;
+}
+
+@media (max-width: 900px) {
+  .ec-live-rail-test-page {
+    --ec-live-rail-bottom: 46px;
+  }
+
+  .ec-live-event-rail {
+    right: 7px;
+    left: 7px;
+  }
+
+  .ec-live-event-rail-inner {
+    grid-template-columns: 30px minmax(0, 1fr) 30px 26px;
+    min-height: 58px;
+    padding: 5px;
+  }
+
+  .ec-live-event-rail-brand {
+    display: none;
+  }
+
+  .ec-live-event-rail-item {
+    width: 188px;
+    min-width: 188px;
+    height: 44px;
+  }
+
+  .ec-live-event-test-badge {
+    display: none;
+  }
+
+  .ec-live-event-rail-show {
+    left: 7px;
+    bottom: var(--ec-live-rail-bottom);
+  }
+}
+
+@media (max-width: 520px) {
+  .ec-live-event-rail-arrow {
+    display: none;
+  }
+
+  .ec-live-event-rail-inner {
+    grid-template-columns: minmax(0, 1fr) 26px;
+  }
+
+  .ec-live-event-rail-item {
+    width: 172px;
+    min-width: 172px;
+  }
+}
