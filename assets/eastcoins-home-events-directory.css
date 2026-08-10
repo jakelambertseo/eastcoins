@@ -1,0 +1,135 @@
+/* ================================================================
+   EASTCOIN — LIVE PLAYER HOME EVENT GUIDE
+   Restores and promotes Live Now + Starting Soon on the streamlined
+   player homepage, then places the complete current directory below.
+   ================================================================ */
+
+body.ec-home-events-directory #streamedPopularSection,
+body.ec-home-events-directory #streamedSoonSection {
+  display: block !important;
+}
+
+body.ec-home-events-directory .streamed-discovery-root {
+  gap: 12px;
+}
+
+/* Live Now and Starting Soon become the primary homepage rows. */
+body.ec-home-events-directory #streamedPopularSection,
+body.ec-home-events-directory #streamedSoonSection,
+body.ec-home-events-directory .ec-home-full-directory {
+  grid-column: 1 / -1;
+}
+
+body.ec-home-events-directory #streamedPopularSection {
+  margin-top: 1px;
+  padding: 13px;
+  border-color: rgba(176, 43, 58, .24);
+  background:
+    radial-gradient(
+      circle at 12% 0%,
+      rgba(128, 24, 37, .18),
+      transparent 34%
+    ),
+    rgba(255, 255, 255, .014);
+}
+
+body.ec-home-events-directory #streamedPopularSection
+  .streamed-discovery-section-head h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+body.ec-home-events-directory #streamedPopularSection
+  .streamed-discovery-section-head h2::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #d9364f;
+  box-shadow: 0 0 0 4px rgba(217, 54, 79, .1);
+}
+
+body.ec-home-events-directory #streamedPopularSection
+  .ec-feature-row {
+  grid-auto-columns: minmax(300px, 46%);
+  gap: 9px;
+}
+
+body.ec-home-events-directory #streamedSoonSection {
+  padding: 13px;
+  border-color: rgba(201, 164, 79, .17);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(201, 164, 79, .03),
+      rgba(255, 255, 255, .01)
+    );
+}
+
+body.ec-home-events-directory #streamedSoonSection
+  .ec-event-grid {
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 9px;
+}
+
+/* The homepage's full-directory section should actually remain complete. */
+body.ec-home-events-directory #streamedDiscoveryRoot[data-context="player"]
+  #streamedMatchList .ec-event-card:nth-child(n + 7) {
+  display: grid;
+}
+
+body.ec-home-events-directory .ec-home-full-directory {
+  margin-bottom: 2px !important;
+  padding: 13px !important;
+  border: 1px solid rgba(255, 255, 255, .055) !important;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .009) !important;
+}
+
+body.ec-home-events-directory .ec-home-full-directory
+  #streamedMatchList {
+  grid-template-columns: repeat(2, minmax(250px, 1fr));
+}
+
+/* Countdown emphasis becomes stronger only as kickoff gets close. */
+body.ec-home-events-directory .ec-event-tag-countdown.is-imminent,
+body.ec-home-events-directory [data-countdown].is-imminent {
+  border-color: rgba(237, 208, 124, .42) !important;
+  color: #ffe29a !important;
+  background: rgba(126, 91, 22, .18) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+body.ec-home-events-directory .ec-event-tag-countdown.is-starting,
+body.ec-home-events-directory [data-countdown].is-starting {
+  border-color: rgba(204, 52, 70, .42) !important;
+  color: #ffb1ba !important;
+  background: rgba(117, 18, 31, .32) !important;
+}
+
+@media (max-width: 1080px) {
+  body.ec-home-events-directory #streamedSoonSection
+    .ec-event-grid {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+
+  body.ec-home-events-directory #streamedPopularSection
+    .ec-feature-row {
+    grid-auto-columns: minmax(280px, 72%);
+  }
+}
+
+@media (max-width: 760px) {
+  body.ec-home-events-directory #streamedPopularSection
+    .ec-feature-row {
+    grid-auto-columns: minmax(260px, 91%);
+  }
+
+  body.ec-home-events-directory #streamedSoonSection
+    .ec-event-grid,
+  body.ec-home-events-directory .ec-home-full-directory
+    #streamedMatchList {
+    grid-template-columns: 1fr;
+  }
+}

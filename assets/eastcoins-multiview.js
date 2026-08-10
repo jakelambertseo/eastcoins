@@ -9,6 +9,11 @@
   const CONTROLS_HIDDEN_KEY = "eastcoinMultiviewControlsHidden";
   const DEFAULT_LAYOUT = 4;
   const VALID_LAYOUTS = new Set([2, 3, 4]);
+  const DEFAULT_SPLITS = {
+    2: { col: 50, row: 50 },
+    3: { col: 65, row: 50 },
+    4: { col: 50, row: 50 }
+  };
 
   const body = document.body;
   const grid = document.getElementById("mvGrid");
@@ -55,6 +60,10 @@
   let sourceTab = "events";
   let eventMode = "live";
   let focusedSlot = null;
+  let draggedSlot = null;
+  let activeResize = null;
+  let verticalResizer = null;
+  let horizontalResizer = null;
   let eventsLoaded = false;
   let eventsLoading = false;
   let eventData = {
@@ -64,10 +73,54 @@
     sports: new Map()
   };
 
+  function defaultSplits() {
+    return {
+      2: { ...DEFAULT_SPLITS[2] },
+      3: { ...DEFAULT_SPLITS[3] },
+      4: { ...DEFAULT_SPLITS[4] }
+    };
+  }
+
+  function normalizeSplit(value, fallback) {
+    const numeric = Number(value);
+    return Number.isFinite(numeric)
+      ? Math.min(75, Math.max(25, numeric))
+      : fallback;
+  }
+
+  function normalizeSplits(raw) {
+    const defaults = defaultSplits();
+
+    [2, 3, 4].forEach((layout) => {
+      defaults[layout] = {
+        col: normalizeSplit(
+          raw?.[layout]?.col ?? raw?.[String(layout)]?.col,
+          DEFAULT_SPLITS[layout].col
+        ),
+        row: normalizeSplit(
+          raw?.[layout]?.row ?? raw?.[String(layout)]?.row,
+          DEFAULT_SPLITS[layout].row
+        )
+      };
+    });
+
+    /*
+      The 3-panel layout is intentionally asymmetric: keep the main panel
+      from becoming too narrow even if an older saved value is extreme.
+    */
+    defaults[3].col = Math.min(
+      75,
+      Math.max(45, defaults[3].col)
+    );
+
+    return defaults;
+  }
+
   function blankState() {
     return {
       layout: DEFAULT_LAYOUT,
-      slots: [null, null, null, null]
+      slots: [null, null, null, null],
+      splits: defaultSplits()
     };
   }
 
@@ -105,7 +158,8 @@
           }
 
           return null;
-        })
+        }),
+        splits: normalizeSplits(raw.splits)
       };
     } catch {
       return blankState();
@@ -327,9 +381,26 @@
     const source = state.slots[slot];
     const title = panel.querySelector("[data-panel-title]");
     const bodyEl = panel.querySelector("[data-panel-body]");
+    const dragHandle = panel.querySelector(".mv-panel-title");
 
     panel.classList.toggle("is-loaded", Boolean(source));
     title.textContent = source?.title || `Stream ${slot + 1}`;
+
+    if (dragHandle) {
+      dragHandle.draggable = Boolean(source) && !isMobile();
+      dragHandle.setAttribute(
+        "title",
+        source
+          ? "Drag this title to move the stream to another panel"
+          : "Add a stream before reordering this panel"
+      );
+      dragHandle.setAttribute(
+        "aria-label",
+        source
+          ? `Drag ${source.title || `Stream ${slot + 1}`} to reorder MultiView`
+          : `Empty MultiView panel ${slot + 1}`
+      );
+    }
 
     if (!source) {
       if (bodyEl.dataset.renderedType !== "empty") {
@@ -385,6 +456,279 @@
       "Each panel keeps the normal EastCoin player and server selector.";
   }
 
+  function splitForLayout(layout = state.layout) {
+    state.splits = normalizeSplits(state.splits);
+    return state.splits[layout];
+  }
+
+  function applyGridSplits() {
+    const split = splitForLayout();
+
+    grid.style.setProperty(
+      "--mv-col-split",
+      `${split.col}%`
+    );
+    grid.style.setProperty(
+      "--mv-row-split",
+      `${split.row}%`
+    );
+
+    verticalResizer?.setAttribute(
+      "aria-valuenow",
+      String(Math.round(split.col))
+    );
+    horizontalResizer?.setAttribute(
+      "aria-valuenow",
+      String(Math.round(split.row))
+    );
+  }
+
+  function setSplit(axis, value, save = false) {
+    const split = splitForLayout();
+    const minimum =
+      axis === "col" && state.layout === 3
+        ? 45
+        : 25;
+    const next = Math.min(
+      75,
+      Math.max(minimum, Number(value))
+    );
+
+    if (!Number.isFinite(next)) return;
+
+    split[axis] = next;
+    applyGridSplits();
+
+    if (save) {
+      saveState();
+    }
+  }
+
+  function resetSplit(axis) {
+    const fallback = DEFAULT_SPLITS[state.layout][axis];
+    setSplit(axis, fallback, true);
+    showToast(
+      axis === "col"
+        ? "Panel widths reset."
+        : "Panel heights reset."
+    );
+  }
+
+  function finishGridResize() {
+    if (!activeResize) return;
+
+    activeResize.element?.classList.remove("is-active");
+    body.classList.remove(
+      "mv-grid-resizing",
+      "mv-grid-resizing-col",
+      "mv-grid-resizing-row"
+    );
+
+    activeResize = null;
+    saveState();
+  }
+
+  function updateGridResize(clientX, clientY) {
+    if (!activeResize) return;
+
+    const rect = grid.getBoundingClientRect();
+
+    if (activeResize.axis === "col") {
+      const percent =
+        ((clientX - rect.left) / rect.width) * 100;
+      setSplit("col", percent, false);
+      return;
+    }
+
+    const percent =
+      ((clientY - rect.top) / rect.height) * 100;
+    setSplit("row", percent, false);
+  }
+
+  function startGridResize(axis, event, element) {
+    if (isMobile() || focusedSlot !== null) {
+      return;
+    }
+
+    event.preventDefault();
+
+    activeResize = {
+      axis,
+      element,
+      pointerId: event.pointerId
+    };
+
+    element.classList.add("is-active");
+    element.setPointerCapture?.(event.pointerId);
+
+    body.classList.add(
+      "mv-grid-resizing",
+      axis === "col"
+        ? "mv-grid-resizing-col"
+        : "mv-grid-resizing-row"
+    );
+
+    updateGridResize(
+      event.clientX,
+      event.clientY
+    );
+  }
+
+  function createGridResizers() {
+    verticalResizer = document.createElement("button");
+    verticalResizer.type = "button";
+    verticalResizer.className =
+      "mv-grid-resizer mv-grid-resizer-vertical";
+    verticalResizer.setAttribute(
+      "aria-label",
+      "Resize MultiView panel widths"
+    );
+    verticalResizer.setAttribute(
+      "aria-orientation",
+      "vertical"
+    );
+    verticalResizer.setAttribute(
+      "aria-valuemin",
+      state.layout === 3 ? "45" : "25"
+    );
+    verticalResizer.setAttribute(
+      "aria-valuemax",
+      "75"
+    );
+    verticalResizer.title =
+      "Drag to resize panel widths · double-click to reset";
+
+    horizontalResizer = document.createElement("button");
+    horizontalResizer.type = "button";
+    horizontalResizer.className =
+      "mv-grid-resizer mv-grid-resizer-horizontal";
+    horizontalResizer.setAttribute(
+      "aria-label",
+      "Resize MultiView panel heights"
+    );
+    horizontalResizer.setAttribute(
+      "aria-orientation",
+      "horizontal"
+    );
+    horizontalResizer.setAttribute(
+      "aria-valuemin",
+      "25"
+    );
+    horizontalResizer.setAttribute(
+      "aria-valuemax",
+      "75"
+    );
+    horizontalResizer.title =
+      "Drag to resize panel heights · double-click to reset";
+
+    grid.append(
+      verticalResizer,
+      horizontalResizer
+    );
+
+    verticalResizer.addEventListener(
+      "pointerdown",
+      (event) =>
+        startGridResize(
+          "col",
+          event,
+          verticalResizer
+        )
+    );
+
+    horizontalResizer.addEventListener(
+      "pointerdown",
+      (event) =>
+        startGridResize(
+          "row",
+          event,
+          horizontalResizer
+        )
+    );
+
+    [verticalResizer, horizontalResizer].forEach(
+      (resizer) => {
+        resizer.addEventListener(
+          "pointermove",
+          (event) => {
+            if (
+              !activeResize ||
+              activeResize.pointerId !==
+                event.pointerId
+            ) {
+              return;
+            }
+
+            updateGridResize(
+              event.clientX,
+              event.clientY
+            );
+          }
+        );
+
+        resizer.addEventListener(
+          "pointerup",
+          finishGridResize
+        );
+        resizer.addEventListener(
+          "pointercancel",
+          finishGridResize
+        );
+      }
+    );
+
+    verticalResizer.addEventListener(
+      "dblclick",
+      () => resetSplit("col")
+    );
+    horizontalResizer.addEventListener(
+      "dblclick",
+      () => resetSplit("row")
+    );
+
+    verticalResizer.addEventListener(
+      "keydown",
+      (event) => {
+        if (
+          event.key !== "ArrowLeft" &&
+          event.key !== "ArrowRight"
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        setSplit(
+          "col",
+          splitForLayout().col +
+            (event.key === "ArrowRight" ? 2 : -2),
+          true
+        );
+      }
+    );
+
+    horizontalResizer.addEventListener(
+      "keydown",
+      (event) => {
+        if (
+          event.key !== "ArrowUp" &&
+          event.key !== "ArrowDown"
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        setSplit(
+          "row",
+          splitForLayout().row +
+            (event.key === "ArrowDown" ? 2 : -2),
+          true
+        );
+      }
+    );
+
+    applyGridSplits();
+  }
+
   function setLayout(count, save = true) {
     const layout = VALID_LAYOUTS.has(Number(count)) ? Number(count) : DEFAULT_LAYOUT;
     state.layout = layout;
@@ -405,6 +749,12 @@
     if (focusedSlot !== null && focusedSlot >= layout) {
       clearFocus();
     }
+
+    verticalResizer?.setAttribute(
+      "aria-valuemin",
+      layout === 3 ? "45" : "25"
+    );
+    applyGridSplits();
 
     if (save) {
       saveState();
@@ -464,6 +814,140 @@
       if (button) button.textContent = focused ? "Grid" : "Focus";
     });
   }
+
+  function clearDragState() {
+    draggedSlot = null;
+
+    panels.forEach((panel) => {
+      panel.classList.remove(
+        "is-dragging",
+        "is-drop-target"
+      );
+    });
+  }
+
+  function swapPanelSources(fromSlot, toSlot) {
+    if (
+      fromSlot === toSlot ||
+      fromSlot == null ||
+      toSlot == null
+    ) {
+      return;
+    }
+
+    const fromSource = state.slots[fromSlot];
+    const toSource = state.slots[toSlot];
+
+    if (!fromSource) return;
+
+    state.slots[fromSlot] = toSource;
+    state.slots[toSlot] = fromSource;
+
+    if (focusedSlot !== null) {
+      clearFocus();
+    }
+
+    saveState();
+    renderSlot(fromSlot);
+    renderSlot(toSlot);
+    updateStatus();
+
+    showToast(
+      toSource
+        ? `Swapped panels ${fromSlot + 1} and ${toSlot + 1}.`
+        : `Moved stream to panel ${toSlot + 1}.`
+    );
+  }
+
+  panels.forEach((panel, slot) => {
+    const dragHandle =
+      panel.querySelector(".mv-panel-title");
+
+    dragHandle?.addEventListener(
+      "dragstart",
+      (event) => {
+        if (!state.slots[slot]) {
+          event.preventDefault();
+          return;
+        }
+
+        draggedSlot = slot;
+        panel.classList.add("is-dragging");
+
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData(
+            "text/plain",
+            String(slot)
+          );
+        }
+      }
+    );
+
+    dragHandle?.addEventListener(
+      "dragend",
+      clearDragState
+    );
+
+    panel.addEventListener(
+      "dragover",
+      (event) => {
+        if (
+          draggedSlot == null ||
+          draggedSlot === slot
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+
+        if (event.dataTransfer) {
+          event.dataTransfer.dropEffect = "move";
+        }
+
+        panels.forEach((candidate, index) => {
+          candidate.classList.toggle(
+            "is-drop-target",
+            index === slot
+          );
+        });
+      }
+    );
+
+    panel.addEventListener(
+      "dragleave",
+      (event) => {
+        if (
+          !panel.contains(event.relatedTarget)
+        ) {
+          panel.classList.remove(
+            "is-drop-target"
+          );
+        }
+      }
+    );
+
+    panel.addEventListener(
+      "drop",
+      (event) => {
+        event.preventDefault();
+
+        const sourceSlot =
+          draggedSlot ??
+          Number(
+            event.dataTransfer?.getData(
+              "text/plain"
+            )
+          );
+
+        swapPanelSources(
+          Number(sourceSlot),
+          slot
+        );
+        clearDragState();
+      }
+    );
+  });
 
   panels.forEach((panel, slot) => {
     panel.querySelector("[data-panel-replace]")?.addEventListener("click", () => {
@@ -949,6 +1433,11 @@
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
 
+    if (activeResize) {
+      finishGridResize();
+      return;
+    }
+
     if (!sourceModal.hidden) {
       closeSourcePicker();
       return;
@@ -978,6 +1467,11 @@
   window.addEventListener("resize", () => {
     body.classList.remove("menu-open");
     updateNavigationButton();
+    finishGridResize();
+    applyGridSplits();
+    panels.forEach((_, index) =>
+      renderSlot(index)
+    );
   });
 
   let savedMode = "expanded";
@@ -999,6 +1493,7 @@
   setReducedMotion(readReducedMotion(), false);
   setControlsHidden(readControlsHidden(), false);
   initializeCountdown();
+  createGridResizers();
   setLayout(state.layout, false);
   panels.forEach((_, index) => renderSlot(index));
   updateStatus();

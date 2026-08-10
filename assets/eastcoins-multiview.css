@@ -275,6 +275,9 @@ body.ec-multiview-page{
 }
 
 .mv-grid{
+  --mv-col-split:50%;
+  --mv-row-split:50%;
+  position:relative;
   display:grid;
   gap:7px;
   min-width:0;
@@ -283,13 +286,13 @@ body.ec-multiview-page{
 }
 
 .mv-grid.layout-2{
-  grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-template-columns:minmax(0,var(--mv-col-split)) minmax(0,1fr);
   grid-template-rows:minmax(0,1fr);
 }
 
 .mv-grid.layout-3{
-  grid-template-columns:minmax(0,1.65fr) minmax(280px,.85fr);
-  grid-template-rows:repeat(2,minmax(0,1fr));
+  grid-template-columns:minmax(0,var(--mv-col-split)) minmax(0,1fr);
+  grid-template-rows:minmax(0,var(--mv-row-split)) minmax(0,1fr);
 }
 
 .mv-grid.layout-3 .mv-panel[data-slot="0"]{
@@ -297,8 +300,8 @@ body.ec-multiview-page{
 }
 
 .mv-grid.layout-4{
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  grid-template-rows:repeat(2,minmax(0,1fr));
+  grid-template-columns:minmax(0,var(--mv-col-split)) minmax(0,1fr);
+  grid-template-rows:minmax(0,var(--mv-row-split)) minmax(0,1fr);
 }
 
 .mv-panel{
@@ -373,6 +376,34 @@ body.ec-multiview-page{
   font-size:.68rem;
   text-overflow:ellipsis;
   white-space:nowrap;
+}
+
+.mv-panel.is-loaded .mv-panel-title{
+  cursor:grab;
+  user-select:none;
+}
+
+.mv-panel.is-loaded .mv-panel-title:active{
+  cursor:grabbing;
+}
+
+.mv-panel.is-loaded .mv-panel-title::after{
+  content:"⋮⋮";
+  margin-left:2px;
+  color:#4f4a42;
+  font-size:.62rem;
+  letter-spacing:-.18em;
+}
+
+.mv-panel.is-dragging{
+  opacity:.48;
+}
+
+.mv-panel.is-drop-target{
+  border-color:rgba(237,208,124,.5);
+  box-shadow:
+    inset 0 0 0 2px rgba(201,164,79,.15),
+    0 0 0 1px rgba(201,164,79,.13);
 }
 
 .mv-panel-actions{
@@ -498,6 +529,133 @@ body.ec-multiview-page{
   color:#4f4f4f;
   font-size:.58rem;
   line-height:1.35;
+}
+
+/* ---------------- MULTIVIEW GRID RESIZERS ---------------- */
+
+.mv-grid-resizer{
+  position:absolute;
+  z-index:30;
+  display:none;
+  border:0;
+  padding:0;
+  background:transparent;
+  touch-action:none;
+  user-select:none;
+}
+
+.mv-grid-resizer::before{
+  content:"";
+  position:absolute;
+  border-radius:999px;
+  background:rgba(201,164,79,.22);
+  opacity:.55;
+  transition:
+    opacity .14s ease,
+    background .14s ease,
+    transform .14s ease;
+}
+
+.mv-grid-resizer:hover::before,
+.mv-grid-resizer:focus-visible::before,
+.mv-grid-resizer.is-active::before{
+  background:#d0ad58;
+  opacity:1;
+}
+
+.mv-grid-resizer:focus-visible{
+  outline:0;
+}
+
+.mv-grid-resizer-vertical{
+  top:0;
+  bottom:0;
+  left:var(--mv-col-split);
+  width:14px;
+  transform:translateX(-50%);
+  cursor:col-resize;
+}
+
+.mv-grid-resizer-vertical::before{
+  top:50%;
+  left:50%;
+  width:3px;
+  height:54px;
+  transform:translate(-50%,-50%);
+}
+
+.mv-grid-resizer-horizontal{
+  top:var(--mv-row-split);
+  right:0;
+  left:0;
+  height:14px;
+  transform:translateY(-50%);
+  cursor:row-resize;
+}
+
+.mv-grid-resizer-horizontal::before{
+  top:50%;
+  left:50%;
+  width:54px;
+  height:3px;
+  transform:translate(-50%,-50%);
+}
+
+/* In 3-up mode only the two right-side panels share a row divider. */
+.mv-grid.layout-3 .mv-grid-resizer-horizontal{
+  left:calc(var(--mv-col-split) + 4px);
+}
+
+.mv-grid.layout-2 .mv-grid-resizer-vertical,
+.mv-grid.layout-3 .mv-grid-resizer-vertical,
+.mv-grid.layout-4 .mv-grid-resizer-vertical{
+  display:block;
+}
+
+.mv-grid.layout-3 .mv-grid-resizer-horizontal,
+.mv-grid.layout-4 .mv-grid-resizer-horizontal{
+  display:block;
+}
+
+.mv-grid.is-focus .mv-grid-resizer{
+  display:none!important;
+}
+
+body.mv-grid-resizing,
+body.mv-grid-resizing *{
+  user-select:none!important;
+}
+
+body.mv-grid-resizing.mv-grid-resizing-col,
+body.mv-grid-resizing.mv-grid-resizing-col *{
+  cursor:col-resize!important;
+}
+
+body.mv-grid-resizing.mv-grid-resizing-row,
+body.mv-grid-resizing.mv-grid-resizing-row *{
+  cursor:row-resize!important;
+}
+
+body.mv-grid-resizing .mv-player-frame{
+  pointer-events:none!important;
+}
+
+body.mv-grid-resizing .mv-grid{
+  transition:none!important;
+}
+
+@media(max-width:900px){
+  .mv-grid-resizer{
+    display:none!important;
+  }
+
+  .mv-panel.is-loaded .mv-panel-title{
+    cursor:default;
+  }
+
+  .mv-panel.is-loaded .mv-panel-title::after{
+    display:none;
+  }
 }
 
 /* ---------------- CHAT DRAWER ---------------- */
