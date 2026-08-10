@@ -1373,3 +1373,70 @@ body.mv-controls-hidden .mv-stage{
     font-size:.58rem;
   }
 }
+
+/* ================================================================
+   MULTIVIEW CHAT + FLOATING CONTROLS FIX
+   Keep panel header actions unobstructed and make desktop Twitch chat
+   reserve its own width instead of covering the right-side streams.
+   ================================================================ */
+
+:root{
+  --mv-chat-width:clamp(320px,27vw,390px);
+}
+
+/*
+  The restore pill previously sat in the upper-right corner, directly
+  over panel 2's Solo / Focus / Replace controls when the toolbar was
+  hidden. Keep it out of every panel header by docking it near the
+  lower-right edge instead.
+*/
+.mv-controls-reveal{
+  top:auto;
+  right:12px;
+  bottom:28px;
+  opacity:.58;
+}
+
+.mv-controls-reveal:hover,
+.mv-controls-reveal:focus-visible{
+  opacity:1;
+}
+
+/*
+  On desktop/tablet widths, opening chat now creates real space for the
+  drawer. The MultiView layout shrinks by exactly the chat width, so the
+  right-side video panels remain completely visible rather than sitting
+  underneath Twitch chat.
+*/
+@media(min-width:901px){
+  .mv-layout{
+    transition:
+      width .2s ease,
+      grid-template-columns .2s ease;
+  }
+
+  body.mv-chat-open .mv-layout{
+    width:calc(100% - var(--mv-chat-width));
+  }
+
+  .mv-chat-drawer{
+    width:var(--mv-chat-width);
+  }
+}
+
+/*
+  Small screens still use the drawer as an overlay because reserving
+  320px would make the video grid unusably narrow. The chat can be
+  closed with its existing × button to return immediately to video.
+*/
+@media(max-width:900px){
+  .mv-chat-drawer{
+    width:min(390px,92vw);
+  }
+
+  .mv-controls-reveal{
+    top:auto;
+    right:8px;
+    bottom:14px;
+  }
+}
