@@ -1,153 +1,334 @@
 /* ================================================================
-   EASTCOIN — LIVE PLAYER HOME EVENT GUIDE
-   Restores and promotes Live Now + Starting Soon on the streamlined
-   player homepage, then places the complete current directory below.
+   EASTCOIN — SIMPLE LIVE PLAYER EVENT DIRECTORY
+   A flatter sports-directory presentation inspired by traditional live-event
+   listings: Jump to category -> Live now -> category sections.
    ================================================================ */
 
-body.ec-home-events-directory #streamedPopularSection,
-body.ec-home-events-directory #streamedSoonSection {
-  display: block !important;
+body.ec-home-events-directory {
+  --ec-home-simple-gap: 11px;
+  --ec-home-simple-art-height: 132px;
 }
 
-body.ec-home-events-directory .streamed-discovery-root {
-  gap: 12px;
-}
-
-/* Live Now and Starting Soon become the primary homepage rows. */
+/* Keep the streamlined player homepage focused on one event directory. */
+body.ec-home-events-directory #streamedContinueSection,
+body.ec-home-events-directory #streamedRecentSection,
+body.ec-home-events-directory #streamedNightSection,
 body.ec-home-events-directory #streamedPopularSection,
+body.ec-home-events-directory #streamedFavoriteSection,
 body.ec-home-events-directory #streamedSoonSection,
-body.ec-home-events-directory .ec-home-full-directory {
-  grid-column: 1 / -1;
+body.ec-home-events-directory #streamedSportTabs {
+  display: none !important;
 }
 
-body.ec-home-events-directory #streamedPopularSection {
-  margin-top: 1px;
-  padding: 13px;
-  border-color: rgba(176, 43, 58, .24);
+body.ec-home-events-directory .streamed-launcher {
+  padding: 14px !important;
+  border-color: rgba(201, 164, 79, .13) !important;
   background:
-    radial-gradient(
-      circle at 12% 0%,
-      rgba(128, 24, 37, .18),
-      transparent 34%
-    ),
-    rgba(255, 255, 255, .014);
+    radial-gradient(circle at 100% 0%, rgba(116, 21, 36, .12), transparent 32%),
+    rgba(7, 4, 5, .96) !important;
 }
 
-body.ec-home-events-directory #streamedPopularSection
-  .streamed-discovery-section-head h2 {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
+body.ec-home-events-directory .streamed-launcher-head {
+  align-items: flex-end !important;
+  gap: 12px !important;
 }
 
-body.ec-home-events-directory #streamedPopularSection
-  .streamed-discovery-section-head h2::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #d9364f;
-  box-shadow: 0 0 0 4px rgba(217, 54, 79, .1);
+body.ec-home-events-directory .streamed-mode-buttons {
+  gap: 2px !important;
+  padding: 3px !important;
+  border: 1px solid rgba(201, 164, 79, .12);
+  border-radius: 10px;
+  background: rgba(3, 3, 4, .82);
 }
 
-body.ec-home-events-directory #streamedPopularSection
-  .ec-feature-row {
-  grid-auto-columns: minmax(300px, 46%);
-  gap: 9px;
+body.ec-home-events-directory .streamed-mode-button {
+  min-height: 30px !important;
+  padding: 6px 9px !important;
+  border-color: transparent !important;
+  background: transparent !important;
+  font-size: .58rem !important;
 }
 
-body.ec-home-events-directory #streamedSoonSection {
-  padding: 13px;
-  border-color: rgba(201, 164, 79, .17);
-  background:
-    linear-gradient(
-      180deg,
-      rgba(201, 164, 79, .03),
-      rgba(255, 255, 255, .01)
-    );
+body.ec-home-events-directory .streamed-mode-button.active {
+  border-color: rgba(237, 208, 124, .2) !important;
+  color: #ffe7a0 !important;
+  background: rgba(105, 20, 33, .74) !important;
 }
 
-body.ec-home-events-directory #streamedSoonSection
-  .ec-event-grid {
-  grid-template-columns: repeat(3, minmax(220px, 1fr));
-  gap: 9px;
+body.ec-home-events-directory .streamed-browser {
+  margin-top: 10px !important;
 }
 
-/* The homepage's full-directory section should actually remain complete. */
-body.ec-home-events-directory #streamedDiscoveryRoot[data-context="player"]
-  #streamedMatchList .ec-event-card:nth-child(n + 7) {
+body.ec-home-events-directory .streamed-search {
+  min-height: 38px !important;
+  background: #050405 !important;
+}
+
+body.ec-home-events-directory .streamed-discovery-section.ec-home-simple-directory-section {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+body.ec-home-events-directory .ec-home-simple-directory-section > .streamed-discovery-section-head {
+  display: none !important;
+}
+
+/* Critical full-width parent fix. The old .ec-event-grid class otherwise tries
+   to lay our sections out as two event columns. */
+body.ec-home-events-directory #streamedMatchList.ec-home-simple-directory {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-auto-flow: row !important;
+  align-items: start !important;
+  gap: 24px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+
+body.ec-home-events-directory .ec-home-simple-jump,
+body.ec-home-events-directory .ec-home-simple-live,
+body.ec-home-events-directory .ec-home-simple-category {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+body.ec-home-events-directory .ec-home-simple-jump,
+body.ec-home-events-directory .ec-home-simple-live,
+body.ec-home-events-directory .ec-home-simple-category {
   display: grid;
+  gap: 10px;
 }
 
-body.ec-home-events-directory .ec-home-full-directory {
-  margin-bottom: 2px !important;
-  padding: 13px !important;
-  border: 1px solid rgba(255, 255, 255, .055) !important;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, .009) !important;
+body.ec-home-events-directory .ec-home-simple-heading,
+body.ec-home-events-directory .ec-home-simple-category-title {
+  margin: 0;
+  color: #f1e7d5;
+  font-size: .9rem;
+  font-weight: 950;
+  line-height: 1.2;
+  letter-spacing: -.02em;
 }
 
-body.ec-home-events-directory .ec-home-full-directory
-  #streamedMatchList {
-  grid-template-columns: repeat(2, minmax(250px, 1fr));
+body.ec-home-events-directory .ec-home-simple-jump-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 7px !important;
+  width: 100% !important;
 }
 
-/* Countdown emphasis becomes stronger only as kickoff gets close. */
-body.ec-home-events-directory .ec-event-tag-countdown.is-imminent,
-body.ec-home-events-directory [data-countdown].is-imminent {
-  border-color: rgba(237, 208, 124, .42) !important;
-  color: #ffe29a !important;
-  background: rgba(126, 91, 22, .18) !important;
-  font-variant-numeric: tabular-nums;
+body.ec-home-events-directory .ec-home-simple-jump-button {
+  min-width: 0;
+  min-height: 34px;
+  padding: 7px 8px;
+  border: 1px solid rgba(48, 73, 143, .46);
+  border-radius: 8px;
+  color: #eef1f7;
+  background: rgba(3, 6, 16, .76);
+  font-size: .57rem;
+  font-weight: 850;
+  text-align: center;
+  cursor: pointer;
 }
 
-body.ec-home-events-directory .ec-event-tag-countdown.is-starting,
-body.ec-home-events-directory [data-countdown].is-starting {
-  border-color: rgba(204, 52, 70, .42) !important;
-  color: #ffb1ba !important;
-  background: rgba(117, 18, 31, .32) !important;
+body.ec-home-events-directory .ec-home-simple-jump-button:hover,
+body.ec-home-events-directory .ec-home-simple-jump-button:focus-visible {
+  border-color: rgba(93, 128, 218, .76);
+  background: rgba(9, 13, 28, .96);
+  outline: 0;
 }
 
-@media (max-width: 1080px) {
-  body.ec-home-events-directory #streamedSoonSection
-    .ec-event-grid {
-    grid-template-columns: repeat(2, minmax(220px, 1fr));
-  }
-
-  body.ec-home-events-directory #streamedPopularSection
-    .ec-feature-row {
-    grid-auto-columns: minmax(280px, 72%);
-  }
+body.ec-home-events-directory .ec-home-simple-section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-@media (max-width: 760px) {
-  body.ec-home-events-directory #streamedPopularSection
-    .ec-feature-row {
-    grid-auto-columns: minmax(260px, 91%);
-  }
-
-  body.ec-home-events-directory #streamedSoonSection
-    .ec-event-grid,
-  body.ec-home-events-directory .ec-home-full-directory
-    #streamedMatchList {
-    grid-template-columns: 1fr;
-  }
+body.ec-home-events-directory .ec-home-simple-live-dot {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+  border-radius: 50%;
+  background: #ff3d50;
+  box-shadow: 0 0 0 4px rgba(255, 61, 80, .08);
 }
 
-/* ================================================================
-   RESPONSIVE HOME CENTERING FIX
-   The Live Player homepage grows from a small URL card into a full
-   event directory. Keep that expanded directory centered against the
-   actual available player viewport (including when the persistent
-   shell has navigation and Twitch chat visible).
-   ================================================================ */
+body.ec-home-events-directory .ec-home-simple-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: var(--ec-home-simple-gap) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
 
+body.ec-home-events-directory .ec-home-simple-category {
+  scroll-margin-top: 14px;
+}
+
+body.ec-home-events-directory .ec-home-simple-category-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+body.ec-home-events-directory .ec-home-simple-more {
+  color: #c9a44f;
+  font-size: .53rem;
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Preserve card text explicitly. The old event card CSS is horizontal; this
+   converts it to a vertical card without collapsing the body below the art. */
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-card,
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-card-feature,
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-card-compact {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: var(--ec-home-simple-art-height) auto !important;
+  align-content: start !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(201, 164, 79, .1) !important;
+  border-radius: 12px !important;
+  background: #05070d !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.27) !important;
+}
+
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-card:hover,
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-card:focus-visible {
+  border-color: rgba(237, 208, 124, .27) !important;
+  transform: translateY(-2px);
+  outline: 0;
+}
+
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-art {
+  position: relative !important;
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: var(--ec-home-simple-art-height) !important;
+  height: var(--ec-home-simple-art-height) !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(255,255,255,.05) !important;
+}
+
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-poster {
+  opacity: .6 !important;
+  filter: saturate(.95) contrast(1.05) !important;
+}
+
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-art-shade {
+  background: linear-gradient(180deg, rgba(0,0,0,.04), rgba(0,0,0,.48)) !important;
+}
+
+body.ec-home-events-directory .ec-home-simple-grid .ec-matchup-badges {
+  justify-content: center !important;
+  gap: 7px !important;
+  padding: 11px !important;
+}
+
+body.ec-home-events-directory .ec-home-simple-grid .ec-team-badge-medium,
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-initials {
+  width: 43px !important;
+  height: 43px !important;
+  flex-basis: 43px !important;
+}
+
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-card-body {
+  position: relative !important;
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 82px !important;
+  height: auto !important;
+  padding: 10px 11px 11px !important;
+  overflow: visible !important;
+  color: #f2eadc !important;
+  background: rgba(3, 5, 10, .98) !important;
+}
+
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-tags {
+  position: absolute !important;
+  top: calc(-1 * var(--ec-home-simple-art-height) + 8px) !important;
+  left: 8px !important;
+  z-index: 6 !important;
+  display: flex !important;
+  gap: 4px !important;
+  margin: 0 !important;
+}
+
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-tag:not(.ec-event-tag-live):not(.ec-event-tag-countdown) {
+  display: none !important;
+}
+
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-tag {
+  min-height: 19px !important;
+  padding: 3px 6px !important;
+  border-radius: 999px !important;
+  color: #f8f1e7 !important;
+  background: rgba(4,5,9,.88) !important;
+  font-size: .46rem !important;
+  font-weight: 900 !important;
+}
+
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-tag-live {
+  border-color: rgba(255, 92, 110, .45) !important;
+  color: #fff !important;
+  background: #ff3148 !important;
+}
+
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-card h3 {
+  display: block !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  color: #f4f0e8 !important;
+  font-size: .69rem !important;
+  font-weight: 900 !important;
+  line-height: 1.34 !important;
+  white-space: normal !important;
+}
+
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-teams,
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-actions,
+body.ec-home-events-directory .ec-home-simple-grid .ec-team-favorite,
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-details {
+  display: none !important;
+}
+
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-meta {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 7px !important;
+  margin-top: 8px !important;
+  padding-top: 0 !important;
+  color: #91a5bd !important;
+  font-size: .51rem !important;
+  line-height: 1.3 !important;
+}
+
+body.ec-home-events-directory .ec-home-simple-grid .ec-event-meta span {
+  display: inline-flex !important;
+}
+
+/* Keep the existing centering fix for the expanded homepage directory. */
 body.ec-home-events-directory .url-stage {
-  /*
-    An explicit minmax(0, 1fr) track prevents the directory's
-    max-content width from influencing the grid track and shifting the
-    centered card outside the visible player viewport.
-  */
   grid-template-columns: minmax(0, 1fr);
   justify-items: center;
   overflow-x: hidden;
@@ -163,31 +344,17 @@ body.ec-home-events-directory .url-card.streamed-directory-open {
   margin-left: auto;
 }
 
-body.ec-home-events-directory .url-card.streamed-directory-open
-  > .streamed-launcher,
-body.ec-home-events-directory .url-card.streamed-directory-open
-  .streamed-browser,
-body.ec-home-events-directory .url-card.streamed-directory-open
-  .streamed-discovery-root,
-body.ec-home-events-directory .url-card.streamed-directory-open
-  .streamed-discovery-section,
-body.ec-home-events-directory .url-card.streamed-directory-open
-  .ec-feature-row,
-body.ec-home-events-directory .url-card.streamed-directory-open
-  .ec-event-grid {
+body.ec-home-events-directory .url-card.streamed-directory-open .streamed-launcher,
+body.ec-home-events-directory .url-card.streamed-directory-open .streamed-browser,
+body.ec-home-events-directory .url-card.streamed-directory-open .streamed-discovery-root,
+body.ec-home-events-directory .url-card.streamed-directory-open .streamed-discovery-section,
+body.ec-home-events-directory .url-card.streamed-directory-open .ec-event-grid {
   max-width: 100%;
   min-width: 0;
 }
 
-/*
-  Once the directory has expanded, treat the stage like a scrollable
-  page rather than vertically centering a tall dashboard. This also
-  keeps the top URL form and the event directory aligned to the same
-  horizontal center while the page grows.
-*/
 @supports selector(:has(*)) {
-  body.ec-home-events-directory
-    .url-stage:has(.url-card.streamed-directory-open) {
+  body.ec-home-events-directory .url-stage:has(.url-card.streamed-directory-open) {
     align-items: start;
     padding-top: clamp(76px, 9vh, 96px);
     padding-bottom: 78px;
@@ -195,6 +362,11 @@ body.ec-home-events-directory .url-card.streamed-directory-open
 }
 
 @media (max-width: 1180px) {
+  body.ec-home-events-directory .ec-home-simple-grid,
+  body.ec-home-events-directory .ec-home-simple-jump-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
   body.ec-home-events-directory .url-stage {
     padding-right: 18px;
     padding-left: 18px;
@@ -205,23 +377,41 @@ body.ec-home-events-directory .url-card.streamed-directory-open
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
+  body.ec-home-events-directory .ec-home-simple-grid,
+  body.ec-home-events-directory .ec-home-simple-jump-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 620px) {
+  body.ec-home-events-directory .streamed-launcher-head {
+    align-items: stretch !important;
+    flex-direction: column !important;
+  }
+
+  body.ec-home-events-directory .streamed-mode-buttons {
+    width: 100% !important;
+  }
+
+  body.ec-home-events-directory .streamed-mode-button {
+    flex: 1 !important;
+  }
+
+  body.ec-home-events-directory .ec-home-simple-grid,
+  body.ec-home-events-directory .ec-home-simple-jump-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
   body.ec-home-events-directory .url-stage {
     padding-right: 12px;
     padding-left: 12px;
   }
 
-  body.ec-home-events-directory .url-card.streamed-directory-open {
-    padding-right: 12px;
-    padding-left: 12px;
-  }
-
   @supports selector(:has(*)) {
-    body.ec-home-events-directory
-      .url-stage:has(.url-card.streamed-directory-open) {
+    body.ec-home-events-directory .url-stage:has(.url-card.streamed-directory-open) {
       padding-top: 72px;
       padding-bottom: 68px;
     }
   }
 }
-
