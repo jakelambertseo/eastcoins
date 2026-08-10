@@ -91,3 +91,16 @@
 
 /assets/eastcoins-ux.js
   Cache-Control: no-store, max-age=0, must-revalidate
+
+/ppv-test.html
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-ppv-api.js
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-provider-test.js
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-provider-test.css
+  Cache-Control: no-store, max-age=0, must-revalidate
+

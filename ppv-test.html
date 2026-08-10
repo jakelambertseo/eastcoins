@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+  <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+  <meta name="description" content="EastCoin experimental Streamed + PPV provider integration test page.">
+  <title>Provider Test Lab | EastCoin</title>
+
+  <link rel="icon" type="image/png" href="assets/eastcoin-favicon.png">
+  <link rel="shortcut icon" href="assets/eastcoin-favicon.png">
+  <link rel="apple-touch-icon" href="assets/eastcoin-favicon.png">
+
+  <link rel="stylesheet" href="assets/eastcoins-theme.css?v=theme9">
+  <link rel="stylesheet" href="assets/eastcoins-provider-test.css?v=provider1">
+</head>
+<body class="ec-provider-test-page">
+  <header class="pt-topbar">
+    <div class="pt-brand">
+      <img src="assets/eastcoins-logo.webp" alt="EastCoin">
+      <div>
+        <span>EastCoin experiment</span>
+        <strong>Provider Test Lab</strong>
+      </div>
+    </div>
+
+    <div class="pt-topbar-actions">
+      <button id="ptRefresh" type="button">↻ Refresh APIs</button>
+      <a href="index.html?new=1">← Back to EastCoin</a>
+    </div>
+  </header>
+
+  <main class="pt-shell">
+    <section class="pt-intro">
+      <div>
+        <span class="pt-eyebrow">Streamed + PPV.ST</span>
+        <h1>Unified event provider test</h1>
+        <p>
+          This page is isolated from the production Events and Live Player flow.
+          It merges both catalogs, highlights deduplicated events, and lets us
+          verify real provider playback before moving the adapter into EastCoin.
+        </p>
+      </div>
+
+      <div class="pt-provider-health" aria-label="Provider API status">
+        <div class="pt-health-card" data-health="streamed">
+          <span class="pt-health-dot"></span>
+          <div>
+            <strong>Streamed</strong>
+            <small id="ptStreamedHealth">Waiting…</small>
+          </div>
+        </div>
+        <div class="pt-health-card" data-health="ppv">
+          <span class="pt-health-dot"></span>
+          <div>
+            <strong>PPV.ST</strong>
+            <small id="ptPpvHealth">Waiting…</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pt-stats" aria-label="Provider merge statistics">
+      <article>
+        <span id="ptTotalCount">0</span>
+        <small>Unified events</small>
+      </article>
+      <article>
+        <span id="ptBothCount">0</span>
+        <small>Matched on both</small>
+      </article>
+      <article>
+        <span id="ptStreamedOnlyCount">0</span>
+        <small>Streamed only</small>
+      </article>
+      <article>
+        <span id="ptPpvOnlyCount">0</span>
+        <small>PPV only</small>
+      </article>
+      <article>
+        <span id="ptPlayablePpvCount">0</span>
+        <small>PPV iframe ready</small>
+      </article>
+    </section>
+
+    <section class="pt-tools">
+      <div class="pt-filter-tabs" role="group" aria-label="Filter events">
+        <button type="button" class="active" data-filter="all">All</button>
+        <button type="button" data-filter="live">Live</button>
+        <button type="button" data-filter="soon">Starting Soon</button>
+        <button type="button" data-filter="both">Both APIs</button>
+        <button type="button" data-filter="streamed">Streamed</button>
+        <button type="button" data-filter="ppv">PPV</button>
+      </div>
+
+      <input id="ptSearch" type="search" placeholder="Search teams, events, categories…" aria-label="Search provider events">
+    </section>
+
+    <section class="pt-workspace">
+      <div class="pt-directory">
+        <div class="pt-section-head">
+          <div>
+            <span>Unified catalog</span>
+            <h2>Events</h2>
+          </div>
+          <small id="ptDirectoryStatus">Loading providers…</small>
+        </div>
+
+        <div class="pt-event-list" id="ptEventList">
+          <div class="pt-loading-card">Loading Streamed and PPV.ST…</div>
+        </div>
+      </div>
+
+      <aside class="pt-inspector">
+        <div class="pt-player-card">
+          <header class="pt-player-head">
+            <div>
+              <span>Playback test</span>
+              <strong id="ptPlayerTitle">Choose an event</strong>
+            </div>
+            <button id="ptClearPlayer" type="button" hidden>Clear</button>
+          </header>
+
+          <div class="pt-server-row" id="ptServerRow" hidden></div>
+
+          <div class="pt-player-stage" id="ptPlayerStage">
+            <div class="pt-player-empty">
+              <span>▶</span>
+              <strong>Select an event</strong>
+              <p>
+                EastCoin will gather Streamed servers and any PPV iframe source,
+                then show the providers here for testing.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-debug-card">
+          <header>
+            <span>Merge diagnostics</span>
+            <strong id="ptDebugTitle">No event selected</strong>
+          </header>
+          <pre id="ptDebugOutput">Select an event to inspect how it was normalized and matched.</pre>
+        </div>
+      </aside>
+    </section>
+
+    <section class="pt-notes">
+      <strong>Test-page rules</strong>
+      <p>
+        PPV iframe markup is only used when the API explicitly supplies an
+        <code>&lt;iframe&gt;</code>. This test does not invent an undocumented
+        stream endpoint from <code>uri_name</code>. Provider names are visible
+        here for debugging; a production integration can collapse these back
+        into normal EastCoin server labels.
+      </p>
+    </section>
+  </main>
+
+  <div class="toast" id="ptToast" role="status" aria-live="polite"></div>
+
+  <script src="assets/eastcoins-streamed-api.js?v=api2"></script>
+  <script src="assets/eastcoins-ppv-api.js?v=ppv1"></script>
+  <script src="assets/eastcoins-provider-test.js?v=provider1"></script>
+</body>
+</html>
