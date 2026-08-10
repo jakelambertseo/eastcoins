@@ -246,7 +246,7 @@
             <small>
               ${providerBadges(event)}
               ${type === "both" ? '<span class="pt-match-score">merged event</span>' : ""}
-              ${ppv && !ppv.iframeReady ? '<span class="pt-warning-pill">PPV embed pending</span>' : ""}
+              ${ppv && !ppv.playbackReady ? '<span class="pt-warning-pill">PPV source unavailable</span>' : ""}
             </small>
           </span>
         </button>
@@ -291,7 +291,7 @@
     });
 
     const ppvReady = (ppvCatalog?.streams || []).filter(
-      (stream) => PPV?.iframeReady?.(stream)
+      (stream) => PPV?.playbackReady?.(stream)
     ).length;
 
     totalCount.textContent = String(unifiedEvents.length);

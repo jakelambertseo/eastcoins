@@ -80,7 +80,7 @@
       </article>
       <article>
         <span id="ptPlayablePpvCount">0</span>
-        <small>PPV iframe ready</small>
+        <small>PPV playable</small>
       </article>
     </section>
 
@@ -149,11 +149,11 @@
     <section class="pt-notes">
       <strong>Test-page rules</strong>
       <p>
-        PPV iframe markup is only used when the API explicitly supplies an
-        <code>&lt;iframe&gt;</code>. This test does not invent an undocumented
-        stream endpoint from <code>uri_name</code>. Provider names are visible
-        here for debugging; a production integration can collapse these back
-        into normal EastCoin server labels.
+        PPV playback prefers an explicit API <code>&lt;iframe&gt;</code> when
+        present, then uses PPV's current copyable embed mapping:
+        <code>https://embedindia.st/embed/{uri_name}</code>. Provider names stay
+        visible here for debugging while production EastCoin uses the normal
+        server selector.
       </p>
     </section>
   </main>

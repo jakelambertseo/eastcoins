@@ -2,6 +2,7 @@
   "use strict";
 
   const PRIMARY_BASE = "https://api.ppv.st";
+  const EMBED_BASE = "https://embedindia.st/embed";
   const CACHE_KEY = "eastcoinPpvCatalogV2";
   const MIRROR_CACHE_KEY = "eastcoinPpvMirrorsV2";
   const LAST_NETWORK_KEY = "eastcoinPpvLastNetworkV1";
@@ -369,6 +370,128 @@
     );
   }
 
+  function iframeSrc(
+    stream,
+    apiBase = PRIMARY_BASE
+  ) {
+    if (!iframeReady(stream)) {
+      return "";
+    }
+
+    const template =
+      document.createElement("template");
+
+    template.innerHTML =
+      String(stream.iframe || "").trim();
+
+    const children =
+      Array.from(
+        template.content.children
+      );
+
+    if (
+      children.length !== 1 ||
+      children[0].tagName !== "IFRAME"
+    ) {
+      return "";
+    }
+
+    const iframe = children[0];
+
+    if (
+      iframe.hasAttribute("srcdoc")
+    ) {
+      return "";
+    }
+
+    const rawSrc =
+      iframe.getAttribute("src") || "";
+
+    if (!rawSrc) {
+      return "";
+    }
+
+    try {
+      const resolved = new URL(
+        rawSrc,
+        apiBase || PRIMARY_BASE
+      );
+
+      return ["http:", "https:"].includes(
+        resolved.protocol
+      )
+        ? resolved.href
+        : "";
+    } catch {
+      return "";
+    }
+  }
+
+  function decodeURIComponentSafe(value) {
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  }
+
+  function uriEmbedUrl(stream) {
+    const raw =
+      String(
+        stream?.uri_name || ""
+      ).trim();
+
+    if (!raw) {
+      return "";
+    }
+
+    /*
+      PPV's current event pages publish copyable embeds using:
+        https://embedindia.st/embed/{uri_name}
+
+      Preserve slash-separated PPV paths while safely encoding each
+      individual path segment.
+    */
+    const path = raw
+      .replace(/^\/+|\/+$/g, "")
+      .split("/")
+      .filter(Boolean)
+      .map((segment) =>
+        encodeURIComponent(
+          decodeURIComponentSafe(segment)
+        )
+      )
+      .join("/");
+
+    return path
+      ? `${EMBED_BASE}/${path}`
+      : "";
+  }
+
+  function embedUrl(
+    stream,
+    apiBase = PRIMARY_BASE
+  ) {
+    /*
+      Explicit API iframe wins if PPV begins returning it again.
+      Otherwise use the same uri_name mapping PPV currently exposes
+      in its copyable embed code.
+    */
+    return (
+      iframeSrc(stream, apiBase) ||
+      uriEmbedUrl(stream)
+    );
+  }
+
+  function playbackReady(
+    stream,
+    apiBase = PRIMARY_BASE
+  ) {
+    return Boolean(
+      embedUrl(stream, apiBase)
+    );
+  }
+
   async function getStreamById(id, force = false) {
     const catalog = await getCatalog(force);
     const normalized = String(id || "");
@@ -380,23 +503,46 @@
           normalized
       ) || null;
 
+    const apiBase =
+      catalog.apiBase || PRIMARY_BASE;
+
+    const explicitSrc =
+      iframeSrc(stream, apiBase);
+
+    const resolvedEmbed =
+      explicitSrc ||
+      uriEmbedUrl(stream);
+
     return {
       stream,
-      apiBase:
-        catalog.apiBase || PRIMARY_BASE,
+      apiBase,
       savedAt: catalog.savedAt || 0,
       stale: Boolean(catalog.stale),
-      iframeReady: iframeReady(stream)
+      iframeReady: iframeReady(stream),
+      playbackReady:
+        Boolean(resolvedEmbed),
+      embedUrl: resolvedEmbed,
+      embedSource:
+        explicitSrc
+          ? "api-iframe"
+          : resolvedEmbed
+            ? "uri-name"
+            : "none"
     };
   }
 
   window.EastcoinPpvAPI = Object.freeze({
     PRIMARY_BASE,
+    EMBED_BASE,
     CATALOG_TTL,
     MIN_NETWORK_INTERVAL,
     refreshMirrors,
     getCatalog,
     getStreamById,
-    iframeReady
+    iframeReady,
+    iframeSrc,
+    uriEmbedUrl,
+    embedUrl,
+    playbackReady
   });
 })();

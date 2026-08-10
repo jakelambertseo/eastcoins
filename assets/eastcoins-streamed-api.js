@@ -539,7 +539,17 @@
           iframeReady:
             Boolean(
               PPV?.iframeReady?.(stream)
-            )
+            ),
+          playbackReady:
+            Boolean(
+              PPV?.playbackReady?.(stream)
+            ),
+          embedSource:
+            PPV?.iframeReady?.(stream)
+              ? "api-iframe"
+              : stream?.uri_name
+                ? "uri-name"
+                : "none"
         }
       }
     };
@@ -1304,40 +1314,23 @@
       : null;
   }
 
-  function ppvWrapperUrl(stream) {
-    const id = String(
-      stream?.id ?? ""
-    );
+  function ppvPlayerStream(stream) {
+    const embedUrl =
+      PPV?.embedUrl?.(stream) || "";
 
-    const relative =
-      `ppv-player.html?id=` +
-      encodeURIComponent(id);
-
-    try {
-      return new URL(
-        relative,
-        window.location.href
-      ).href;
-    } catch {
-      return relative;
+    if (!embedUrl) {
+      return null;
     }
-  }
 
-  function ppvPlayerStream(
-    stream,
-    ready = false
-  ) {
     return {
       /*
-        Keep PPV as a normal server in EastCoin even while its
-        provider iframe is still preparing. The same-origin wrapper
-        handles the one-minute availability checks without blocking
-        a working Streamed server.
+        PPV is now a normal EastCoin server. Current PPV listings map
+        uri_name directly to the provider's public embed path instead
+        of routing through a pending/waiting wrapper.
       */
       source: "PPV",
       streamNo: 1,
-      embedUrl:
-        ppvWrapperUrl(stream),
+      embedUrl,
       hd: false,
       language:
         String(
@@ -1348,7 +1341,11 @@
       ppvId: String(
         stream?.id ?? ""
       ),
-      ppvReady: Boolean(ready)
+      ppvReady: true,
+      ppvEmbedSource:
+        PPV?.iframeReady?.(stream)
+          ? "api-iframe"
+          : "uri-name"
     };
   }
 
@@ -1401,18 +1398,15 @@
       };
     }
 
-    if (
-      PPV.iframeReady(
+    const playerStream =
+      ppvPlayerStream(
         found.stream
-      )
-    ) {
+      );
+
+    if (playerStream) {
       return {
         state: "ready",
-        stream:
-          ppvPlayerStream(
-            found.stream,
-            true
-          ),
+        stream: playerStream,
         ppvEvent:
           found.stream,
         matchMethod:
@@ -1424,12 +1418,8 @@
     }
 
     return {
-      state: "pending",
-      stream:
-        ppvPlayerStream(
-          found.stream,
-          false
-        ),
+      state: "unavailable",
+      stream: null,
       ppvEvent:
         found.stream,
       matchMethod:
@@ -1438,7 +1428,7 @@
         found.score,
       checkedAt: Date.now(),
       message:
-        "PPV embed pending."
+        "The PPV listing does not include a playable iframe or uri_name."
     };
   }
 
@@ -1527,12 +1517,8 @@
       );
 
     if (
-      (
-        ppvStatus.state ===
-          "ready" ||
-        ppvStatus.state ===
-          "pending"
-      ) &&
+      ppvStatus.state ===
+        "ready" &&
       ppvStatus.stream
     ) {
       const key = [
