@@ -1,0 +1,940 @@
+/* ================================================================
+   EASTCOIN NFL PICK'EM PROTOTYPE
+   Test page only.
+   ================================================================ */
+
+.ec-pickem-test-page .ec-persistent-utility-dock {
+  display: none !important;
+}
+
+.ec-pickem-test {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  overflow-y: auto;
+  color: #e8dfd2;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(104, 20, 34, .15), transparent 30%),
+    radial-gradient(circle at 85% 8%, rgba(201, 164, 79, .06), transparent 24%),
+    #030303;
+}
+
+.ec-pickem-test-page.drawer-open .ec-pickem-test {
+  filter: brightness(.5);
+  pointer-events: none;
+}
+
+.pickem-page {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 34px 0 70px;
+}
+
+.pickem-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 12px 0 24px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+
+.pickem-hero-copy {
+  min-width: 0;
+}
+
+.pickem-eyebrow {
+  color: #a88c50;
+  font-size: .62rem;
+  font-weight: 950;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+.pickem-hero h1 {
+  margin: 8px 0 7px;
+  color: #f4ead9;
+  font-size: clamp(2rem, 4vw, 3.8rem);
+  line-height: .95;
+  letter-spacing: -.055em;
+}
+
+.pickem-hero p {
+  max-width: 660px;
+  margin: 0;
+  color: #7d766e;
+  font-size: .76rem;
+  line-height: 1.6;
+}
+
+.pickem-week-controls {
+  display: grid;
+  grid-template-columns: 32px auto 32px;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 6px;
+  border: 1px solid rgba(201,164,79,.15);
+  border-radius: 12px;
+  background: rgba(7,7,7,.88);
+}
+
+.pickem-week-controls button {
+  width: 32px;
+  height: 34px;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 8px;
+  color: #9d958b;
+  background: #0d0d0d;
+  font-size: 1rem;
+}
+
+.pickem-week-controls button:hover,
+.pickem-week-controls button:focus-visible {
+  color: #ffe8ad;
+  border-color: rgba(201,164,79,.3);
+  outline: 0;
+}
+
+.pickem-week-controls div {
+  min-width: 92px;
+  text-align: center;
+}
+
+.pickem-week-controls small {
+  display: block;
+  color: #70685e;
+  font-size: .46rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.pickem-week-controls strong {
+  display: block;
+  margin-top: 3px;
+  color: #f1e4ca;
+  font-size: .72rem;
+}
+
+.pickem-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.pickem-stats article {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 11px;
+  background: rgba(7,7,7,.8);
+}
+
+.pickem-stats span {
+  display: block;
+  color: #756e66;
+  font-size: .5rem;
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.pickem-stats strong {
+  display: block;
+  margin-top: 5px;
+  color: #f1e5d1;
+  font-size: 1.22rem;
+  letter-spacing: -.03em;
+}
+
+.pickem-stats small {
+  display: block;
+  margin-top: 4px;
+  color: #756e66;
+  font-size: .48rem;
+}
+
+.pickem-view-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 13px;
+  padding: 4px;
+  border: 1px solid rgba(255,255,255,.055);
+  border-radius: 10px;
+  background: rgba(5,5,5,.84);
+}
+
+.pickem-view-tabs button {
+  min-height: 31px;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: #827a70;
+  background: transparent;
+  font-size: .56rem;
+  font-weight: 900;
+}
+
+.pickem-view-tabs button.is-active {
+  color: #ffe9b0;
+  border-color: rgba(201,164,79,.23);
+  background: linear-gradient(180deg, rgba(99,22,34,.9), rgba(43,9,15,.94));
+}
+
+.pickem-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 12px;
+  align-items: start;
+}
+
+.pickem-main {
+  display: grid;
+  gap: 13px;
+  min-width: 0;
+}
+
+.pickem-section {
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px;
+  background: rgba(5,5,5,.82);
+}
+
+.pickem-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 13px;
+  border-bottom: 1px solid rgba(255,255,255,.055);
+  background: rgba(10,10,10,.78);
+}
+
+.pickem-section-heading span {
+  display: block;
+  color: #9b8452;
+  font-size: .46rem;
+  font-weight: 950;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.pickem-section-heading h2 {
+  margin: 3px 0 0;
+  color: #ece2d2;
+  font-size: .76rem;
+  font-weight: 900;
+}
+
+.pickem-section-heading > small {
+  color: #6d665f;
+  font-size: .48rem;
+}
+
+.pickem-game-list {
+  display: grid;
+}
+
+.pickem-game {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.045);
+}
+
+.pickem-game:last-child {
+  border-bottom: 0;
+}
+
+.pickem-game.is-live {
+  background:
+    linear-gradient(90deg, rgba(111,22,36,.12), transparent 48%);
+}
+
+.pickem-game.is-complete {
+  background: rgba(255,255,255,.012);
+}
+
+.pickem-game-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.pickem-game-meta > span {
+  color: #836d43;
+  font-size: .44rem;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.pickem-game.is-live .pickem-game-meta > span {
+  color: #ff5268;
+}
+
+.pickem-game-meta small {
+  color: #68615a;
+  font-size: .44rem;
+}
+
+.pickem-matchup {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 28px minmax(0,1fr);
+  gap: 6px;
+  align-items: stretch;
+}
+
+.pickem-versus {
+  display: grid;
+  place-items: center;
+  color: #514d48;
+  font-size: .42rem;
+  font-weight: 950;
+}
+
+.pickem-team {
+  display: grid;
+  grid-template-columns: 38px minmax(0,1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  min-height: 54px;
+  padding: 7px 9px;
+  border: 1px solid rgba(255,255,255,.065);
+  border-radius: 9px;
+  color: #c9c1b7;
+  background: #0a0a0a;
+  text-align: left;
+}
+
+.pickem-team:not(:disabled) {
+  cursor: pointer;
+}
+
+.pickem-team:not(:disabled):hover,
+.pickem-team:not(:disabled):focus-visible {
+  border-color: rgba(201,164,79,.25);
+  background: #0e0c0b;
+  outline: 0;
+}
+
+.pickem-team.is-picked {
+  border-color: rgba(201,164,79,.45);
+  color: #fff0c5;
+  background:
+    linear-gradient(180deg, rgba(78,24,31,.88), rgba(28,8,12,.95));
+  box-shadow: inset 2px 0 0 #c9a44f;
+}
+
+.pickem-team.is-correct {
+  border-color: rgba(99,173,105,.34);
+  box-shadow: inset 2px 0 0 #5fa36a;
+}
+
+.pickem-team.is-wrong {
+  border-color: rgba(211,79,94,.3);
+  box-shadow: inset 2px 0 0 #b63b4c;
+}
+
+.pickem-team:disabled {
+  opacity: .8;
+}
+
+.pickem-team-mark {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 8px;
+  color: #b69d60;
+  background:
+    linear-gradient(180deg, rgba(201,164,79,.07), rgba(255,255,255,.02));
+  font-size: .5rem;
+  font-weight: 950;
+}
+
+.pickem-team strong {
+  display: block;
+  overflow: hidden;
+  font-size: .62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pickem-team small {
+  display: block;
+  margin-top: 3px;
+  color: #68625b;
+  font-size: .43rem;
+}
+
+.pickem-team b {
+  color: #e9dfcf;
+  font-size: .68rem;
+}
+
+.pickem-game-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 20px;
+  margin-top: 7px;
+  color: #69635c;
+  font-size: .44rem;
+}
+
+.pickem-community {
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+
+.pickem-game.has-pick .pickem-community,
+.pickem-game.is-locked .pickem-community,
+.pickem-game.is-complete .pickem-community {
+  opacity: 1;
+}
+
+.pickem-result {
+  font-weight: 900;
+}
+
+.pickem-result.is-correct { color: #72b87b; }
+.pickem-result.is-wrong { color: #cf5b69; }
+.pickem-result.is-live { color: #e8b75d; }
+
+.pickem-lock-note {
+  color: #7f7464;
+  font-weight: 800;
+}
+
+.pickem-sidebar {
+  display: grid;
+  gap: 10px;
+  position: sticky;
+  top: 12px;
+}
+
+.pickem-side-card {
+  padding: 11px;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 11px;
+  background: rgba(7,7,7,.86);
+}
+
+.pickem-side-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+
+.pickem-side-heading span {
+  display: block;
+  color: #746b60;
+  font-size: .45rem;
+  font-weight: 900;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.pickem-side-heading strong {
+  display: block;
+  margin-top: 3px;
+  color: #e9ddca;
+  font-size: .64rem;
+}
+
+.pickem-side-heading > b {
+  color: #d0aa50;
+  font-size: 1.1rem;
+}
+
+.pickem-side-heading button {
+  padding: 4px 6px;
+  border: 1px solid rgba(201,164,79,.13);
+  border-radius: 6px;
+  color: #978157;
+  background: rgba(201,164,79,.03);
+  font-size: .43rem;
+  font-weight: 900;
+}
+
+.pickem-standing-row {
+  display: grid;
+  grid-template-columns: 20px 30px minmax(0,1fr) auto;
+  gap: 7px;
+  align-items: center;
+  padding: 9px 5px 3px;
+}
+
+.pickem-rank {
+  color: #8d8377;
+  font-size: .52rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.pickem-avatar {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(201,164,79,.15);
+  border-radius: 8px;
+  color: #d4b96d;
+  background: rgba(201,164,79,.04);
+  font-size: .46rem;
+  font-weight: 950;
+}
+
+.pickem-standing-row strong {
+  display: block;
+  color: #ddd4c7;
+  font-size: .54rem;
+}
+
+.pickem-standing-row small {
+  display: block;
+  margin-top: 2px;
+  color: #6f685f;
+  font-size: .42rem;
+}
+
+.pickem-standing-row > b {
+  color: #a99467;
+  font-size: .5rem;
+}
+
+.pickem-rank-gap {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 7px;
+  padding: 8px;
+  border-radius: 7px;
+  color: #70685f;
+  background: rgba(255,255,255,.02);
+  font-size: .46rem;
+}
+
+.pickem-rank-gap strong {
+  color: #d9c086;
+}
+
+.pickem-mini-leaderboard {
+  display: grid;
+  gap: 3px;
+  margin-top: 6px;
+}
+
+.pickem-mini-row {
+  display: grid;
+  grid-template-columns: 18px minmax(0,1fr) auto;
+  gap: 7px;
+  align-items: center;
+  padding: 6px 5px;
+  border-radius: 6px;
+}
+
+.pickem-mini-row.is-you {
+  background: rgba(201,164,79,.035);
+}
+
+.pickem-mini-row > span:first-child {
+  color: #70695f;
+  font-size: .46rem;
+  font-weight: 900;
+}
+
+.pickem-mini-row strong {
+  overflow: hidden;
+  color: #cec6bb;
+  font-size: .5rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pickem-mini-row b {
+  color: #9b895d;
+  font-size: .47rem;
+}
+
+.pickem-lock-icon {
+  font-size: .8rem;
+}
+
+.pickem-lock-countdown {
+  padding-top: 9px;
+}
+
+.pickem-lock-countdown strong {
+  display: block;
+  color: #e1c26c;
+  font-size: 1rem;
+}
+
+.pickem-lock-countdown small {
+  display: block;
+  margin-top: 4px;
+  color: #6c655d;
+  font-size: .45rem;
+  line-height: 1.45;
+}
+
+.pickem-rules p {
+  margin: 9px 0 0;
+  color: #716a62;
+  font-size: .48rem;
+  line-height: 1.55;
+}
+
+.pickem-submit-bar {
+  position: sticky;
+  bottom: 8px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 11px;
+  border: 1px solid rgba(201,164,79,.18);
+  border-radius: 10px;
+  background: rgba(8,7,7,.95);
+  box-shadow: 0 16px 38px rgba(0,0,0,.55);
+  backdrop-filter: blur(12px);
+}
+
+.pickem-submit-bar strong {
+  display: block;
+  color: #e8dbc4;
+  font-size: .58rem;
+}
+
+.pickem-submit-bar small {
+  display: block;
+  margin-top: 3px;
+  color: #6e675f;
+  font-size: .43rem;
+}
+
+.pickem-submit-bar button {
+  min-height: 32px;
+  padding: 6px 12px;
+  border: 1px solid rgba(222,183,88,.32);
+  border-radius: 8px;
+  color: #fff0b9;
+  background: linear-gradient(180deg, #6f1d2b, #3d0e17);
+  font-size: .52rem;
+  font-weight: 950;
+}
+
+.pickem-full-view {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.pickem-full-view[hidden] {
+  display: none;
+}
+
+.pickem-full-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px;
+  background: rgba(7,7,7,.82);
+}
+
+.pickem-full-header span {
+  color: #9a8250;
+  font-size: .48rem;
+  font-weight: 950;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.pickem-full-header h2 {
+  margin: 4px 0;
+  color: #eee4d3;
+  font-size: 1.3rem;
+}
+
+.pickem-full-header p {
+  margin: 0;
+  color: #746d65;
+  font-size: .54rem;
+}
+
+.pickem-board-toggle {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 8px;
+  background: #0a0a0a;
+}
+
+.pickem-board-toggle button {
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #7d756d;
+  background: transparent;
+  font-size: .48rem;
+  font-weight: 900;
+}
+
+.pickem-board-toggle button.is-active {
+  color: #ffe6a4;
+  border-color: rgba(201,164,79,.22);
+  background: rgba(88,21,31,.68);
+}
+
+.pickem-leaderboard-table {
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px;
+  background: rgba(6,6,6,.84);
+}
+
+.pickem-board-row {
+  display: grid;
+  grid-template-columns: 48px minmax(0,1.4fr) 90px 80px 80px 70px;
+  gap: 8px;
+  align-items: center;
+  min-height: 48px;
+  padding: 6px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.045);
+}
+
+.pickem-board-row:last-child {
+  border-bottom: 0;
+}
+
+.pickem-board-row.is-header {
+  min-height: 36px;
+  color: #6f685f;
+  background: rgba(255,255,255,.018);
+  font-size: .44rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.pickem-board-row.is-you {
+  background: rgba(201,164,79,.035);
+  box-shadow: inset 2px 0 0 rgba(201,164,79,.5);
+}
+
+.pickem-board-rank {
+  color: #958b7d;
+  font-size: .58rem;
+  font-weight: 950;
+}
+
+.pickem-board-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pickem-board-name strong {
+  overflow: hidden;
+  color: #ddd4c7;
+  font-size: .56rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pickem-board-row > span:not(.pickem-board-rank):not(.pickem-board-name) {
+  color: #897f72;
+  font-size: .52rem;
+}
+
+.pickem-board-row > b {
+  color: #c3a45f;
+  font-size: .55rem;
+}
+
+.pickem-result-summary {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.pickem-result-summary article {
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  background: rgba(7,7,7,.82);
+}
+
+.pickem-result-summary span {
+  display: block;
+  color: #716a62;
+  font-size: .46rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.pickem-result-summary strong {
+  display: block;
+  margin-top: 5px;
+  color: #e9dfd0;
+  font-size: 1.1rem;
+}
+
+.pickem-results-list {
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 11px;
+  background: rgba(6,6,6,.84);
+}
+
+.pickem-results-list > div {
+  display: grid;
+  grid-template-columns: 26px minmax(0,1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 42px;
+  padding: 7px 11px;
+  border-bottom: 1px solid rgba(255,255,255,.045);
+}
+
+.pickem-results-list > div:last-child {
+  border-bottom: 0;
+}
+
+.pickem-results-list span {
+  color: #8b8276;
+  font-weight: 950;
+}
+
+.pickem-results-list strong {
+  color: #cfc6b9;
+  font-size: .54rem;
+}
+
+.pickem-results-list small {
+  color: #716a62;
+  font-size: .46rem;
+}
+
+.pickem-results-list .is-correct span { color: #67ad72; }
+.pickem-results-list .is-wrong span { color: #c85666; }
+.pickem-results-list .is-live span { color: #e1ad50; }
+
+.pickem-test-label {
+  position: fixed;
+  right: 10px;
+  bottom: 10px;
+  z-index: 8;
+  padding: 4px 6px;
+  border: 1px solid rgba(201,164,79,.12);
+  border-radius: 6px;
+  color: #6e6149;
+  background: rgba(3,3,3,.85);
+  font-size: .4rem;
+  font-weight: 950;
+  letter-spacing: .08em;
+  pointer-events: none;
+}
+
+@media (max-width: 980px) {
+  .pickem-content {
+    grid-template-columns: minmax(0,1fr) 240px;
+  }
+
+  .pickem-stats {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+
+  .pickem-board-row {
+    grid-template-columns: 42px minmax(0,1fr) 76px 70px 60px;
+  }
+
+  .pickem-board-row > :nth-child(5) {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .pickem-page {
+    width: calc(100% - 20px);
+    padding-top: 72px;
+  }
+
+  .pickem-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pickem-week-controls {
+    align-self: flex-start;
+  }
+
+  .pickem-content {
+    grid-template-columns: 1fr;
+  }
+
+  .pickem-sidebar {
+    position: static;
+    grid-row: auto;
+  }
+
+  .pickem-matchup {
+    grid-template-columns: 1fr;
+  }
+
+  .pickem-versus {
+    display: none;
+  }
+
+  .pickem-result-summary {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+
+  .pickem-board-row {
+    grid-template-columns: 34px minmax(0,1fr) 65px 55px;
+  }
+
+  .pickem-board-row > :nth-child(4),
+  .pickem-board-row > :nth-child(5) {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .pickem-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pickem-view-tabs {
+    overflow-x: auto;
+  }
+
+  .pickem-view-tabs button {
+    flex: 0 0 auto;
+  }
+
+  .pickem-submit-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pickem-submit-bar button {
+    width: 100%;
+  }
+}

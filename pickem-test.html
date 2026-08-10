@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="noindex, nofollow, noarchive, nosnippet, noimageindex" name="robots"/>
+<meta content="noindex, nofollow, noarchive, nosnippet, noimageindex" name="googlebot"/>
+<meta content="EastCoin private sports watch room with persistent Twitch chat." name="description"/>
+<title>NFL Pick'em Test | EastCoin</title>
+<link href="assets/eastcoin-favicon.png" rel="icon" type="image/png"/>
+<link href="assets/eastcoin-favicon.png" rel="shortcut icon"/>
+<link href="assets/eastcoin-favicon.png" rel="apple-touch-icon"/>
+<link href="assets/eastcoins-theme.css?v=theme9" rel="stylesheet"/>
+<link href="assets/eastcoins-shell.css?v=shell2" rel="stylesheet"/>
+<link href="assets/eastcoins-persistent-shell.css?v=persistent6" rel="stylesheet"/><link href="assets/eastcoins-shell-polish.css?v=polish5" rel="stylesheet"/><link href="assets/eastcoins-pickem-test.css?v=pickem1" rel="stylesheet"/>
+</head>
+<body class="ec-shell-page ec-persistent-shell ec-pickem-test-page">
+<div aria-hidden="true" class="mobile-overlay" id="mobileOverlay"></div>
+<div class="ec-persistent-layout" id="persistentLayout">
+<aside aria-label="Primary navigation" class="sidebar" id="persistentSidebar">
+  <div class="sidebar-mobile-header">
+    <span>EastCoin Menu</span>
+    <button aria-label="Close navigation" id="mobileSidebarClose" type="button">×</button>
+  </div>
+
+  <div class="brand">
+    <button class="brand-home-button" data-tooltip="Expand navigation" id="persistentBrandButton" type="button" aria-label="Return to Live Player">
+      <span class="brand-mark brand-logo">
+        <img alt="EastCoin logo" src="assets/eastcoins-logo.webp"/>
+      </span>
+      <span class="brand-copy brand-copy-single">
+        <strong>EastCoin</strong>
+        <small>Watch together</small>
+      </span>
+    </button>
+  </div>
+
+  <nav aria-label="Watch" class="nav-group">
+    <div class="nav-label">Watch</div>
+
+    <a class="nav-link active" data-ec-shell-view="player" data-tooltip="Return to the EastCoin homepage" href="index.html?view=player&amp;new=1">
+      <span class="nav-icon-box"><svg aria-hidden="true" class="sidebar-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M8 21h8"></path><path d="M12 19v2"></path><path d="m10 9 5 3-5 3Z"></path></svg></span>
+      <span class="nav-link-content">
+        <span class="nav-link-row"><span class="nav-link-title">Live Player</span></span>
+        <span class="nav-link-description">URL form &amp; event list</span>
+      </span>
+    </a>
+
+    <a class="nav-link" data-ec-shell-view="events" data-tooltip="Browse games without stopping playback" href="index.html?view=events">
+      <span class="nav-icon-box"><svg aria-hidden="true" class="sidebar-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M8 2v4"></path><path d="M16 2v4"></path><path d="M3 9h18"></path><path d="M8 13h3"></path><path d="M13 13h3"></path><path d="M8 17h3"></path></svg></span>
+      <span class="nav-link-content">
+        <span class="nav-link-row">
+          <span class="nav-link-title">Events</span>
+          <span class="nav-link-badge nav-live-badge" id="eventsLiveBadge" hidden><span id="eventsLiveCount">0</span><span class="nav-link-badge-suffix"> LIVE</span></span>
+        </span>
+        <span class="nav-link-description">Browse without stopping playback</span>
+      </span>
+    </a>
+
+    <a class="nav-link" data-tooltip="Watch multiple streams at once" href="multiview.html">
+      <span class="nav-icon-box"><svg aria-hidden="true" class="sidebar-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1"></rect><rect x="13" y="3" width="8" height="8" rx="1"></rect><rect x="3" y="13" width="8" height="8" rx="1"></rect><rect x="13" y="13" width="8" height="8" rx="1"></rect></svg></span>
+      <span class="nav-link-content">
+        <span class="nav-link-row"><span class="nav-link-title">MultiView</span></span>
+        <span class="nav-link-description">Watch up to four streams</span>
+      </span>
+    </a>
+
+    <a class="nav-link" data-ec-shell-view="favorites" data-tooltip="Open approved stream sites" href="index.html?view=favorites">
+      <span class="nav-icon-box"><svg aria-hidden="true" class="sidebar-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M7 9a5 5 0 0 1 5 5"></path><path d="M7 13a1 1 0 0 1 1 1"></path><path d="m15 9 2-2 2 2"></path><path d="M17 7v6"></path></svg></span>
+      <span class="nav-link-content">
+        <span class="nav-link-row">
+          <span class="nav-link-title">Other Streams</span>
+          <span class="nav-link-badge" id="otherStreamsBadge"><span id="otherStreamsCount">4</span></span>
+        </span>
+        <span class="nav-link-description">Approved stream sites</span>
+      </span>
+    </a>
+  </nav>
+
+  <div class="sidebar-lower">
+    <div class="sidebar-section-label">Community</div>
+    <details aria-label="Countdown to the 2026 NFL regular season" class="football-countdown" data-football-countdown="">
+      <summary class="football-countdown-summary" data-tooltip="NFL kickoff countdown">
+        <span class="football-countdown-icon"><svg aria-hidden="true" class="sidebar-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 17.5c-3-3-2.7-7.4.6-10.7s7.7-3.6 10.7-.6 2.7 7.4-.6 10.7-7.7 3.6-10.7.6Z"></path><path d="m8.5 15.5 7-7"></path><path d="m10.3 9.7 4 4"></path><path d="m9 11 4 4"></path></svg></span>
+        <span class="football-countdown-summary-copy">
+          <strong>Football season</strong>
+          <small>Patriots at Seahawks</small>
+        </span>
+        <span class="football-countdown-compact" data-countdown-compact>--</span>
+        <span aria-hidden="true" class="football-countdown-chevron">⌄</span>
+      </summary>
+      <div class="football-countdown-details">
+        <div class="football-countdown-eyebrow">
+          <span>🏈 NFL Kickoff</span>
+          <span class="football-countdown-live">Countdown</span>
+        </div>
+        <p class="football-countdown-title">Football season starts in</p>
+        <p class="football-countdown-matchup">Patriots at Seahawks</p>
+        <div aria-live="polite" class="football-countdown-grid">
+          <div class="football-countdown-unit"><span class="football-countdown-value" data-countdown-days>--</span><span class="football-countdown-label">Days</span></div>
+          <div class="football-countdown-unit"><span class="football-countdown-value" data-countdown-hours>--</span><span class="football-countdown-label">Hours</span></div>
+          <div class="football-countdown-unit"><span class="football-countdown-value" data-countdown-minutes>--</span><span class="football-countdown-label">Min</span></div>
+          <div class="football-countdown-unit"><span class="football-countdown-value" data-countdown-seconds>--</span><span class="football-countdown-label">Sec</span></div>
+        </div>
+        <div class="football-countdown-date">Wed, Sep 9 · 7:20 PM CT</div>
+      </div>
+    </details>
+
+    <div class="sidebar-section-label sidebar-support-label">Support</div>
+    <div aria-label="EastCoin utilities" class="sidebar-utility-grid">
+      <a class="sidebar-footer-link sidebar-help-link" data-ec-shell-view="emotes" data-tooltip="Emote Help" href="index.html?view=emotes">
+        <span class="sidebar-utility-icon"><svg aria-hidden="true" class="sidebar-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.8 9a2.4 2.4 0 1 1 3.8 1.95c-1.05.7-1.6 1.15-1.6 2.25"></path><path d="M12 17h.01"></path></svg></span><span class="sidebar-utility-label">Emote Help</span>
+      </a>
+      <a class="sidebar-footer-link sidebar-status-link" data-tooltip="View EastCoin status" href="status.html" target="_top">
+        <span class="sidebar-utility-icon"><svg aria-hidden="true" class="sidebar-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h3l2-5 4 10 2-5h5"></path></svg></span><span class="sidebar-utility-label">Status</span><span aria-hidden="true" class="sidebar-status-dot"></span>
+      </a>
+      <button aria-controls="persistentSettingsModal" aria-haspopup="dialog" class="sidebar-footer-link sidebar-settings-link" data-tooltip="Settings" id="persistentSettingsButton" type="button">
+        <span class="sidebar-utility-icon"><svg aria-hidden="true" class="sidebar-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.12 2.12-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V20h-3v-.08a1.7 1.7 0 0 0-1.03-1.56 1.7 1.7 0 0 0-1.88.34l-.06.06-2.12-2.12.06-.06A1.7 1.7 0 0 0 5 15.4 1.7 1.7 0 0 0 3.44 14H3v-3h.44A1.7 1.7 0 0 0 5 9.97a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.12-2.12.06.06A1.7 1.7 0 0 0 8.66 6.3 1.7 1.7 0 0 0 9.7 4.74V4h3v.74a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.12 2.12-.06.06a1.7 1.7 0 0 0-.34 1.88A1.7 1.7 0 0 0 18.96 11H21v3h-2.04A1.7 1.7 0 0 0 19.4 15Z"></path></svg></span><span class="sidebar-utility-label">Settings</span>
+      </button>
+      <div aria-label="Zwades Blue: blue" class="sidebar-footer-link sidebar-zwades-utility" data-tooltip="blue" role="img"><span aria-hidden="true" class="sidebar-zwades-thumb"></span><span class="sidebar-utility-label">blue</span></div>
+    </div>
+    <p class="sidebar-tos">We DO NOT host nor transmit any audiovisual content itself and DO NOT control nor influence such content. We cannot accept any liability for the content transmitted by others. Any responsibility for this content lies with those who host or transmit it. We are not affiliated nor claim to be affiliated with any of the owners of streams and/or videos. All content is copyright of their respective owners</p>
+  </div>
+</aside>
+<main aria-label="EastCoin content" class="ec-persistent-view-area">
+<button aria-expanded="true" aria-label="Hide navigation" class="mobile-menu" id="mobileMenu" type="button">◀</button>
+<div aria-live="polite" class="ec-view-loader" id="viewLoader">
+<span aria-hidden="true" class="ec-view-loader-spinner"></span>
+<strong id="viewLoaderLabel">Loading Live Player</strong>
+</div>
+<iframe allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write" allowfullscreen="" class="ec-view-frame" id="eastcoinViewFrame" referrerpolicy="strict-origin-when-cross-origin" src="player.html?shell=1" title="EastCoin Live Player">
+
+</iframe>
+<section class="ec-pickem-test" id="pickemTest" aria-label="NFL Pick'em prototype">
+  <div class="pickem-page">
+    <header class="pickem-hero">
+      <div class="pickem-hero-copy">
+        <span class="pickem-eyebrow">🏈 EastCoin NFL Pick'em</span>
+        <h1>Week 1 Picks</h1>
+        <p>Pick every winner before kickoff. Games lock individually, so late-window picks stay editable until their own kickoff.</p>
+      </div>
+
+      <div class="pickem-week-controls" aria-label="Pick'em week">
+        <button type="button" id="pickemPrevWeek" aria-label="Previous week">‹</button>
+        <div>
+          <small>2026 Season</small>
+          <strong id="pickemWeekLabel">Week 1</strong>
+        </div>
+        <button type="button" id="pickemNextWeek" aria-label="Next week">›</button>
+      </div>
+    </header>
+
+    <section class="pickem-stats" aria-label="Your Pick'em summary">
+      <article>
+        <span>Picks made</span>
+        <strong id="pickemMade">10/16</strong>
+        <small id="pickemProgressCopy">6 picks remaining</small>
+      </article>
+      <article>
+        <span>Week record</span>
+        <strong>7–2</strong>
+        <small>2 games completed</small>
+      </article>
+      <article>
+        <span>Current streak</span>
+        <strong>🔥 4</strong>
+        <small>Four straight correct</small>
+      </article>
+      <article>
+        <span>Season rank</span>
+        <strong>#2</strong>
+        <small>1 game behind Zwades</small>
+      </article>
+    </section>
+
+    <nav class="pickem-view-tabs" aria-label="Pick'em views">
+      <button class="is-active" type="button" data-pickem-view="picks">My Picks</button>
+      <button type="button" data-pickem-view="leaderboard">Leaderboard</button>
+      <button type="button" data-pickem-view="results">Week Results</button>
+    </nav>
+
+    <div class="pickem-content">
+      <main class="pickem-main" id="pickemPicksView">
+        <section class="pickem-section">
+          <div class="pickem-section-heading">
+            <div>
+              <span>Thursday Night</span>
+              <h2>Kickoff game</h2>
+            </div>
+            <small>Locked</small>
+          </div>
+
+          <article class="pickem-game is-complete" data-game-id="dal-phi" data-locked="true" data-result="PHI">
+            <div class="pickem-game-meta">
+              <span>FINAL</span>
+              <small>Thursday · 7:20 PM CT</small>
+            </div>
+            <div class="pickem-matchup">
+              <button class="pickem-team" type="button" data-team="DAL" disabled>
+                <span class="pickem-team-mark">DAL</span>
+                <span><strong>Cowboys</strong><small>0–0</small></span>
+                <b>20</b>
+              </button>
+              <span class="pickem-versus">AT</span>
+              <button class="pickem-team is-picked is-correct" type="button" data-team="PHI" disabled>
+                <span class="pickem-team-mark">PHI</span>
+                <span><strong>Eagles</strong><small>0–0</small></span>
+                <b>27</b>
+              </button>
+            </div>
+            <div class="pickem-game-footer">
+              <span class="pickem-result is-correct">✓ Correct pick</span>
+              <span>Community: PHI 64%</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="pickem-section">
+          <div class="pickem-section-heading">
+            <div>
+              <span>Sunday · Early Window</span>
+              <h2>Noon games</h2>
+            </div>
+            <small>12:00 PM CT</small>
+          </div>
+
+          <div class="pickem-game-list" id="pickemEarlyGames"></div>
+        </section>
+
+        <section class="pickem-section">
+          <div class="pickem-section-heading">
+            <div>
+              <span>Sunday · Late Window</span>
+              <h2>Afternoon games</h2>
+            </div>
+            <small>3:05–3:25 PM CT</small>
+          </div>
+
+          <div class="pickem-game-list" id="pickemLateGames"></div>
+        </section>
+
+        <section class="pickem-section">
+          <div class="pickem-section-heading">
+            <div>
+              <span>Primetime</span>
+              <h2>Sunday & Monday Night</h2>
+            </div>
+            <small>National games</small>
+          </div>
+
+          <div class="pickem-game-list" id="pickemPrimeGames"></div>
+        </section>
+
+        <div class="pickem-submit-bar">
+          <div>
+            <strong id="pickemSubmitTitle">6 picks remaining</strong>
+            <small>Selections save locally on this prototype. In production, each game would lock at kickoff.</small>
+          </div>
+          <button id="pickemSubmit" type="button">Save Picks</button>
+        </div>
+      </main>
+
+      <aside class="pickem-sidebar" id="pickemSidebar">
+        <section class="pickem-side-card pickem-your-standing">
+          <div class="pickem-side-heading">
+            <div>
+              <span>Your standing</span>
+              <strong>Week 1</strong>
+            </div>
+            <b>#2</b>
+          </div>
+
+          <div class="pickem-standing-row is-you">
+            <span class="pickem-rank">2</span>
+            <span class="pickem-avatar">JL</span>
+            <span><strong>Jake</strong><small>7–2 · 🔥 4</small></span>
+            <b>78%</b>
+          </div>
+
+          <div class="pickem-rank-gap">
+            <span>Behind first</span>
+            <strong>1 game</strong>
+          </div>
+        </section>
+
+        <section class="pickem-side-card">
+          <div class="pickem-side-heading">
+            <div>
+              <span>Community</span>
+              <strong>Week Leaderboard</strong>
+            </div>
+            <button type="button" data-pickem-view="leaderboard">View all</button>
+          </div>
+
+          <div class="pickem-mini-leaderboard" id="pickemMiniLeaderboard"></div>
+        </section>
+
+        <section class="pickem-side-card">
+          <div class="pickem-side-heading">
+            <div>
+              <span>Next lock</span>
+              <strong>Sunday at Noon</strong>
+            </div>
+            <span class="pickem-lock-icon">🔒</span>
+          </div>
+
+          <div class="pickem-lock-countdown">
+            <strong>6d 20h</strong>
+            <small>Early-window games lock individually at kickoff.</small>
+          </div>
+        </section>
+
+        <section class="pickem-side-card pickem-rules">
+          <div class="pickem-side-heading">
+            <div>
+              <span>Format</span>
+              <strong>How it works</strong>
+            </div>
+          </div>
+          <p>One winner per NFL game. A correct pick earns one win. No point spreads, no money, just season-long bragging rights.</p>
+        </section>
+      </aside>
+
+      <section class="pickem-full-view" id="pickemLeaderboardView" hidden>
+        <header class="pickem-full-header">
+          <div>
+            <span>EastCoin Pick'em</span>
+            <h2>Season Leaderboard</h2>
+            <p>Weekly records roll into the full 2026 regular-season standings.</p>
+          </div>
+          <div class="pickem-board-toggle">
+            <button class="is-active" type="button" data-board-mode="season">Season</button>
+            <button type="button" data-board-mode="week">Week 1</button>
+          </div>
+        </header>
+
+        <div class="pickem-leaderboard-table" id="pickemLeaderboardTable"></div>
+      </section>
+
+      <section class="pickem-full-view" id="pickemResultsView" hidden>
+        <header class="pickem-full-header">
+          <div>
+            <span>Week 1</span>
+            <h2>Your Results</h2>
+            <p>A quick visual recap of correct, incorrect, live, and upcoming picks.</p>
+          </div>
+        </header>
+
+        <div class="pickem-result-summary">
+          <article><span>Correct</span><strong>7</strong></article>
+          <article><span>Wrong</span><strong>2</strong></article>
+          <article><span>Live</span><strong>1</strong></article>
+          <article><span>Upcoming</span><strong>6</strong></article>
+        </div>
+
+        <div class="pickem-results-list">
+          <div class="is-correct"><span>✓</span><strong>Eagles over Cowboys</strong><small>Correct</small></div>
+          <div class="is-correct"><span>✓</span><strong>Packers over Bears</strong><small>Correct</small></div>
+          <div class="is-wrong"><span>×</span><strong>Bills over Patriots</strong><small>Incorrect</small></div>
+          <div class="is-live"><span>●</span><strong>Ravens over Bengals</strong><small>Live · pick locked</small></div>
+          <div><span>○</span><strong>Chiefs over Chargers</strong><small>Upcoming</small></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="pickem-test-label">PICK'EM PROTOTYPE</div>
+  </div>
+</section>
+<section aria-hidden="true" class="ec-browse-drawer" hidden="" id="persistentBrowseDrawer">
+<button aria-label="Return to video" class="ec-browse-drawer-scrim" id="persistentBrowseScrim" type="button"></button>
+<div aria-labelledby="persistentBrowseTitle" aria-modal="false" class="ec-browse-drawer-panel" id="persistentBrowsePanel" role="dialog">
+<header class="ec-browse-drawer-header">
+<div class="ec-browse-drawer-copy">
+<span id="persistentBrowseKicker">Browse without stopping playback</span>
+<h2 id="persistentBrowseTitle">Events</h2>
+</div>
+<button aria-label="Close browser and return to video" class="ec-browse-drawer-close" id="persistentBrowseClose" type="button">Back to video</button>
+</header>
+<div aria-live="polite" class="ec-browse-loader" id="browseLoader">
+<span aria-hidden="true" class="ec-view-loader-spinner"></span>
+<strong id="browseLoaderLabel">Loading Events</strong>
+</div>
+<iframe allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write" allowfullscreen="" class="ec-browse-frame" id="eastcoinBrowseFrame" referrerpolicy="strict-origin-when-cross-origin" src="about:blank" title="EastCoin browser"></iframe>
+</div>
+</section>
+<div aria-label="EastCoin display controls" class="ec-persistent-utility-dock" id="persistentUtilityDock" role="toolbar"><button aria-label="Theater" aria-pressed="false" class="ec-persistent-utility-button" data-tooltip="Theater" id="persistentTheaterButton" type="button"><span aria-hidden="true" class="ec-persistent-utility-icon">⛶</span><span class="ec-persistent-utility-label">Theater</span></button><button aria-label="Hide chat" aria-pressed="true" class="ec-persistent-utility-button" data-tooltip="Hide chat" id="persistentChatButton" type="button"><span aria-hidden="true" class="ec-persistent-utility-icon">💬</span><span class="ec-persistent-utility-label">Hide chat</span></button><button aria-label="Hide nav" aria-pressed="false" class="ec-persistent-utility-button" data-tooltip="Hide nav" id="persistentNavButton" type="button"><span aria-hidden="true" class="ec-persistent-utility-icon">◀</span><span class="ec-persistent-utility-label">Hide nav</span></button><button aria-label="Play a Game" class="ec-persistent-utility-button ec-persistent-game-button" data-tooltip="Play a Game" id="persistentGameButton" type="button"><span aria-hidden="true" class="ec-persistent-utility-icon">🎮</span><span class="ec-persistent-utility-label">Play a Game</span></button><button aria-controls="persistentSettingsModal" aria-haspopup="dialog" aria-label="Settings" class="ec-persistent-utility-button" data-tooltip="Settings" id="persistentDockSettingsButton" type="button"><span aria-hidden="true" class="ec-persistent-utility-icon">⚙</span><span class="ec-persistent-utility-label">Settings</span></button></div>
+</main>
+<div aria-label="Resize Twitch chat" aria-orientation="vertical" aria-valuemin="280" aria-valuenow="360" class="resize-handle" id="resizeHandle" role="separator" tabindex="0">
+<span aria-hidden="true"></span>
+</div>
+<aside aria-label="Twitch chat" class="chat-panel" id="persistentChat">
+<iframe class="twitch-chat-frame" id="persistentTwitchChat" loading="eager" referrerpolicy="strict-origin-when-cross-origin" src="https://www.twitch.tv/embed/zwades/chat?parent=eastcoins.pages.dev&amp;parent=eastcoin.vip&amp;parent=www.eastcoin.vip&amp;parent=localhost&amp;parent=127.0.0.1&amp;darkpopout" title="zwades Twitch chat">
+</iframe>
+</aside>
+</div>
+<div aria-hidden="true" class="ec-shell-settings-modal" hidden="" id="persistentSettingsModal">
+<section aria-labelledby="persistentSettingsTitle" aria-modal="true" class="ec-shell-settings-panel" role="dialog">
+<header class="ec-shell-settings-header">
+<div>
+<span>EastCoin interface</span>
+<h2 id="persistentSettingsTitle">Settings</h2>
+</div>
+<button aria-label="Close settings" class="ec-shell-settings-close" id="persistentSettingsClose" type="button">×</button>
+</header>
+<div class="ec-shell-settings-list">
+<label class="ec-shell-setting-row">
+<span>
+<strong>Show Twitch chat</strong>
+<small>Keep the persistent chat column visible.</small>
+</span>
+<input id="persistentSettingChat" type="checkbox"/>
+</label>
+<label class="ec-shell-setting-row">
+<span>
+<strong>Start with compact navigation</strong>
+<small>Use the icon rail while keeping every destination one click away.</small>
+</span>
+<input id="persistentSettingSidebar" type="checkbox"/>
+</label>
+<label class="ec-shell-setting-row">
+<span>
+<strong>Reduce motion</strong>
+<small>Minimize shell transitions and animations.</small>
+</span>
+<input id="persistentSettingMotion" type="checkbox"/>
+</label>
+<label class="ec-shell-setting-row">
+<span>
+<strong>Auto-hide bottom controls</strong>
+<small>Fade the utility dock after a few seconds without activity.</small>
+</span>
+<input id="persistentSettingDockAutohide" type="checkbox"/>
+</label><button class="ec-shell-settings-reset" id="persistentResetChatWidth" type="button">
+        Reset chat width
+      </button>
+</div>
+<footer class="ec-shell-settings-footer">
+<button id="persistentSettingsDone" type="button">Done</button>
+</footer>
+</section>
+</div><div aria-live="polite" class="toast" id="toast" role="status"></div>
+<script src="assets/eastcoins-persistent-shell.js?v=persistent12"></script>
+<script src="assets/eastcoins-pickem-test.js?v=pickem1"></script>
+</body>
+</html>
