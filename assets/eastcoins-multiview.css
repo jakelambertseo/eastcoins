@@ -1119,3 +1119,29 @@ body.ec-shell-reduced-motion *{
   transition:none!important;
   animation:none!important;
 }
+
+/* ================================================================
+   SHARED SIDEBAR SHELL SAFEGUARDS
+   MultiView uses the same persistent-shell navigation as index.html.
+   These rules prevent browser-default link/header styling if shared
+   selector specificity changes later.
+   ================================================================ */
+
+.ec-multiview-page .brand-home-button{
+  color:inherit;
+  text-decoration:none;
+}
+
+.ec-multiview-page .brand-home-button:visited{
+  color:inherit;
+}
+
+.ec-multiview-page .sidebar-mobile-header{
+  display:none;
+}
+
+@media(max-width:900px){
+  .ec-multiview-page .sidebar-mobile-header{
+    display:flex;
+  }
+}
