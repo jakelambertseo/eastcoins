@@ -2056,3 +2056,44 @@
     }
   });
 })();
+
+/* ---------------- SITEWIDE MULTIVIEW NAV ---------------- */
+(() => {
+  "use strict";
+
+  document.querySelectorAll(".nav-group").forEach((nav) => {
+    if (nav.querySelector('a[href*="multiview.html"]')) {
+      return;
+    }
+
+    const link = document.createElement("a");
+    link.className = "nav-link";
+    link.href = "multiview.html";
+    link.target = "_top";
+    link.textContent = "▦ MultiView";
+
+    const eventsLink = Array.from(
+      nav.querySelectorAll("a.nav-link")
+    ).find((candidate) => {
+      try {
+        return new URL(
+          candidate.href,
+          window.location.href
+        ).pathname
+          .toLowerCase()
+          .endsWith("/events.html");
+      } catch {
+        return false;
+      }
+    });
+
+    if (eventsLink) {
+      eventsLink.insertAdjacentElement(
+        "afterend",
+        link
+      );
+    } else {
+      nav.appendChild(link);
+    }
+  });
+})();

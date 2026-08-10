@@ -79,3 +79,15 @@
 
 /assets/eastcoins-win95-embedded.css
   Cache-Control: no-store, max-age=0, must-revalidate
+
+/multiview.html
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-multiview.js
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-multiview.css
+  Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-ux.js
+  Cache-Control: no-store, max-age=0, must-revalidate
