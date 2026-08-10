@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+  <title>PPV Player | EastCoin</title>
+
+  <style>
+    *{box-sizing:border-box}
+    html,body{
+      width:100%;
+      height:100%;
+      margin:0;
+      overflow:hidden;
+      background:#000;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+
+    #ppvMount{
+      position:absolute;
+      inset:0;
+      background:#000;
+    }
+
+    #ppvMount > iframe{
+      display:block!important;
+      width:100%!important;
+      height:100%!important;
+      min-width:100%!important;
+      min-height:100%!important;
+      border:0!important;
+    }
+
+    .pending{
+      position:absolute;
+      inset:0;
+      z-index:10;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      color:#e8dfcf;
+      background:
+        radial-gradient(circle at 50% 20%,rgba(122,28,35,.18),transparent 36%),
+        #030303;
+      text-align:center;
+    }
+
+    .pending[hidden]{
+      display:none!important;
+    }
+
+    .card{
+      width:min(460px,100%);
+      padding:22px;
+      border:1px solid rgba(201,164,79,.2);
+      border-radius:14px;
+      background:rgba(8,8,8,.95);
+      box-shadow:0 24px 70px rgba(0,0,0,.62);
+    }
+
+    .icon{
+      display:grid;
+      place-items:center;
+      width:42px;
+      height:42px;
+      margin:0 auto 11px;
+      border:1px solid rgba(201,164,79,.25);
+      border-radius:10px;
+      color:#e1c369;
+      background:rgba(201,164,79,.045);
+      font-size:1.05rem;
+    }
+
+    strong{
+      display:block;
+      font-size:.92rem;
+    }
+
+    p{
+      margin:7px 0 0;
+      color:#767064;
+      font-size:.68rem;
+      line-height:1.55;
+    }
+
+    button{
+      min-height:31px;
+      margin-top:13px;
+      padding:6px 10px;
+      border:1px solid rgba(201,164,79,.25);
+      border-radius:8px;
+      color:#f0d98d;
+      background:rgba(122,28,35,.36);
+      font:800 .64rem/1 Inter,ui-sans-serif,system-ui,sans-serif;
+      cursor:pointer;
+    }
+
+    button:disabled{
+      opacity:.5;
+      cursor:wait;
+    }
+  </style>
+</head>
+<body>
+  <div id="ppvMount"></div>
+
+  <div class="pending" id="ppvPending">
+    <div class="card">
+      <div class="icon">⏳</div>
+      <strong id="ppvPendingTitle">Preparing PPV source…</strong>
+      <p id="ppvPendingCopy">
+        EastCoin is waiting for the provider-supplied embed and will check again automatically.
+      </p>
+      <button id="ppvRetry" type="button">Check again</button>
+    </div>
+  </div>
+
+  <script src="assets/eastcoins-ppv-api.js?v=ppv2"></script>
+  <script>
+    (() => {
+      "use strict";
+
+      const API = window.EastcoinPpvAPI;
+      const params = new URLSearchParams(
+        window.location.search
+      );
+      const id = params.get("id") || "";
+
+      const mount =
+        document.getElementById("ppvMount");
+      const pending =
+        document.getElementById("ppvPending");
+      const title =
+        document.getElementById("ppvPendingTitle");
+      const copy =
+        document.getElementById("ppvPendingCopy");
+      const retry =
+        document.getElementById("ppvRetry");
+
+      const POLL_INTERVAL = 60_000;
+      let pollTimer = 0;
+      let mounted = false;
+
+      function setPending(
+        heading,
+        message
+      ) {
+        if (mounted) return;
+
+        pending.hidden = false;
+        title.textContent = heading;
+        copy.textContent = message;
+      }
+
+      function clearPoll() {
+        window.clearTimeout(pollTimer);
+        pollTimer = 0;
+      }
+
+      function schedulePoll() {
+        clearPoll();
+
+        if (mounted) return;
+
+        pollTimer = window.setTimeout(
+          () => check(true),
+          POLL_INTERVAL
+        );
+      }
+
+      function normalizeIframe(
+        markup,
+        base
+      ) {
+        const template =
+          document.createElement("template");
+
+        template.innerHTML =
+          String(markup || "").trim();
+
+        const children =
+          Array.from(
+            template.content.children
+          );
+
+        if (
+          children.length !== 1 ||
+          children[0].tagName !== "IFRAME"
+        ) {
+          throw new Error(
+            "PPV returned unexpected embed markup."
+          );
+        }
+
+        const iframe = children[0];
+
+        /*
+          Do not execute provider srcdoc inside EastCoin's origin.
+          The documented API is expected to provide an iframe src.
+        */
+        if (
+          iframe.hasAttribute("srcdoc")
+        ) {
+          throw new Error(
+            "PPV returned an unsupported srcdoc embed."
+          );
+        }
+
+        const rawSrc =
+          iframe.getAttribute("src") || "";
+
+        if (!rawSrc) {
+          throw new Error(
+            "PPV iframe did not include a source URL."
+          );
+        }
+
+        const resolved =
+          new URL(
+            rawSrc,
+            base ||
+              API.PRIMARY_BASE
+          );
+
+        if (
+          ![
+            "http:",
+            "https:"
+          ].includes(
+            resolved.protocol
+          )
+        ) {
+          throw new Error(
+            "PPV iframe source was not HTTP or HTTPS."
+          );
+        }
+
+        /*
+          Preserve the provider's iframe attributes and behavior.
+          Only resolve a relative src to its equivalent absolute URL.
+          No sandbox is added and no provider attributes are removed.
+        */
+        iframe.setAttribute(
+          "src",
+          resolved.href
+        );
+
+        return iframe;
+      }
+
+      function mountIframe(
+        markup,
+        base
+      ) {
+        const iframe =
+          normalizeIframe(
+            markup,
+            base
+          );
+
+        mount.replaceChildren(iframe);
+        mounted = true;
+        pending.hidden = true;
+        clearPoll();
+      }
+
+      async function check(
+        force = false
+      ) {
+        if (
+          !API ||
+          !id ||
+          mounted
+        ) {
+          if (!id) {
+            setPending(
+              "PPV source unavailable",
+              "This EastCoin PPV player did not receive an event ID."
+            );
+          }
+          return;
+        }
+
+        retry.disabled = true;
+
+        try {
+          const result =
+            await API.getStreamById(
+              id,
+              force
+            );
+
+          if (
+            result.stream &&
+            result.iframeReady
+          ) {
+            mountIframe(
+              result.stream.iframe,
+              result.apiBase
+            );
+            return;
+          }
+
+          if (result.stream) {
+            const endTime =
+              Number(result.stream.ends_at || 0) *
+              1000;
+            const pastAllowed =
+              Number(
+                result.stream.allowpaststreams || 0
+              ) === 1;
+            const ended =
+              endTime > 0 &&
+              Date.now() > endTime;
+
+            if (ended && !pastAllowed) {
+              setPending(
+                "PPV source unavailable",
+                "This provider listing has ended without publishing a playable embed."
+              );
+              clearPoll();
+              return;
+            }
+
+            setPending(
+              "PPV embed pending",
+              "The event is listed, but its provider embed has not been published yet. EastCoin will check again automatically."
+            );
+          } else {
+            setPending(
+              "Waiting for PPV listing",
+              "The provider does not currently list this event ID. EastCoin will check again automatically."
+            );
+          }
+
+          schedulePoll();
+        } catch (error) {
+          setPending(
+            "PPV temporarily unavailable",
+            "EastCoin could not reach the PPV API. The player will retry automatically."
+          );
+          schedulePoll();
+        } finally {
+          retry.disabled = false;
+        }
+      }
+
+      retry.addEventListener(
+        "click",
+        () => check(true)
+      );
+
+      window.addEventListener(
+        "pagehide",
+        clearPoll,
+        { once: true }
+      );
+
+      check(false);
+    })();
+  </script>
+</body>
+</html>

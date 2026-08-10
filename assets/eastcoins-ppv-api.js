@@ -2,12 +2,15 @@
   "use strict";
 
   const PRIMARY_BASE = "https://api.ppv.st";
-  const CACHE_KEY = "eastcoinPpvCatalogV1";
-  const MIRROR_CACHE_KEY = "eastcoinPpvMirrorsV1";
+  const CACHE_KEY = "eastcoinPpvCatalogV2";
+  const MIRROR_CACHE_KEY = "eastcoinPpvMirrorsV2";
+  const LAST_NETWORK_KEY = "eastcoinPpvLastNetworkV1";
   const CATALOG_TTL = 60_000;
+  const MIN_NETWORK_INTERVAL = 55_000;
   const MIRROR_TTL = 6 * 60 * 60 * 1000;
+  const inFlight = new Map();
 
-  function parseJson(value) {
+  function safeParse(value) {
     try {
       return JSON.parse(value);
     } catch {
@@ -15,17 +18,31 @@
     }
   }
 
-  function readCache(key) {
+  function readStorage(key) {
     try {
-      return parseJson(localStorage.getItem(key));
+      return safeParse(localStorage.getItem(key));
     } catch {
       return null;
     }
   }
 
-  function writeCache(key, value) {
+  function writeStorage(key, value) {
     try {
       localStorage.setItem(key, JSON.stringify(value));
+    } catch {}
+  }
+
+  function readNumber(key) {
+    try {
+      return Number(localStorage.getItem(key) || 0);
+    } catch {
+      return 0;
+    }
+  }
+
+  function writeNumber(key, value) {
+    try {
+      localStorage.setItem(key, String(value));
     } catch {}
   }
 
@@ -39,6 +56,11 @@
           ? raw
           : `https://${raw}`
       );
+
+      if (!["http:", "https:"].includes(url.protocol)) {
+        return "";
+      }
+
       return `${url.protocol}//${url.host}`;
     } catch {
       return "";
@@ -60,7 +82,7 @@
   }
 
   function cachedMirrors() {
-    const cached = readCache(MIRROR_CACHE_KEY);
+    const cached = readStorage(MIRROR_CACHE_KEY);
     const fresh =
       cached &&
       Array.isArray(cached.domains) &&
@@ -69,7 +91,18 @@
     return fresh ? cached.domains : [];
   }
 
-  async function request(base, path) {
+  function cachedCatalog() {
+    const cached = readStorage(CACHE_KEY);
+
+    return (
+      cached &&
+      Array.isArray(cached.data?.streams)
+    )
+      ? cached
+      : null;
+  }
+
+  async function requestJson(base, path) {
     const response = await fetch(`${base}${path}`, {
       headers: {
         Accept: "application/json"
@@ -79,26 +112,39 @@
 
     if (!response.ok) {
       throw new Error(
-        `PPV API ${base} returned ${response.status}.`
+        `PPV API returned ${response.status}.`
       );
     }
 
     return response.json();
   }
 
-  async function refreshMirrors() {
+  async function refreshMirrors(force = false) {
+    const cached = cachedMirrors();
+
+    if (!force && cached.length) {
+      return uniqueBases([
+        PRIMARY_BASE,
+        ...cached
+      ]);
+    }
+
     const candidates = uniqueBases([
       PRIMARY_BASE,
-      ...cachedMirrors()
+      ...cached
     ]);
 
     let lastError = null;
 
     for (const base of candidates) {
       try {
-        const payload = await request(base, "/api/ping");
+        const payload = await requestJson(
+          base,
+          "/api/ping"
+        );
+
         const domains = Array.isArray(payload?.domains)
-          ? uniqueBases(payload.domains)
+          ? payload.domains
           : [];
 
         const result = uniqueBases([
@@ -107,7 +153,7 @@
           ...domains
         ]);
 
-        writeCache(MIRROR_CACHE_KEY, {
+        writeStorage(MIRROR_CACHE_KEY, {
           domains: result,
           savedAt: Date.now()
         });
@@ -118,10 +164,10 @@
       }
     }
 
-    if (cachedMirrors().length) {
+    if (cached.length) {
       return uniqueBases([
         PRIMARY_BASE,
-        ...cachedMirrors()
+        ...cached
       ]);
     }
 
@@ -130,7 +176,7 @@
     );
   }
 
-  function flattenCatalog(payload) {
+  function flattenCatalog(payload, apiBase) {
     if (!payload || payload.success !== true) {
       throw new Error(
         "PPV returned an unsuccessful response."
@@ -142,9 +188,25 @@
       : [];
 
     const streams = [];
+    const categoryMetadata = [];
 
     categories.forEach((category) => {
-      const categoryStreams = Array.isArray(category?.streams)
+      const categoryName = String(
+        category?.category || "Other"
+      );
+      const categoryId = category?.id ?? "";
+      const categoryAlwaysLive =
+        Number(category?.always_live || 0);
+
+      categoryMetadata.push({
+        id: categoryId,
+        name: categoryName,
+        always_live: categoryAlwaysLive
+      });
+
+      const categoryStreams = Array.isArray(
+        category?.streams
+      )
         ? category.streams
         : [];
 
@@ -153,11 +215,10 @@
           ...stream,
           category_name:
             stream.category_name ||
-            category.category ||
-            "Other",
-          category_id: category.id,
+            categoryName,
+          category_id: categoryId,
           category_always_live:
-            Number(category.always_live || 0)
+            categoryAlwaysLive
         });
       });
     });
@@ -166,58 +227,54 @@
       timestamp: Number(payload.timestamp || 0),
       readMe: String(payload.READ_ME || ""),
       performance: Number(payload.performance || 0),
+      apiBase,
+      categories: categoryMetadata,
       streams
     };
   }
 
-  async function getCatalog(force = false) {
-    const cached = readCache(CACHE_KEY);
-    const fresh =
-      cached &&
-      Array.isArray(cached.data?.streams) &&
-      Date.now() - Number(cached.savedAt || 0) < CATALOG_TTL;
-
-    if (!force && fresh) {
-      return {
-        ...cached.data,
-        fromCache: true,
-        stale: false
-      };
-    }
-
+  async function networkCatalogRequest() {
     let bases = uniqueBases([
       PRIMARY_BASE,
       ...cachedMirrors()
     ]);
 
     try {
-      const mirrors = await refreshMirrors();
+      const mirrors = await refreshMirrors(false);
       bases = uniqueBases([
         ...bases,
         ...mirrors
       ]);
     } catch {
-      // Catalog can still be attempted against known bases.
+      // Known bases are still attempted below.
     }
 
     let lastError = null;
 
     for (const base of bases) {
       try {
-        const payload = await request(
+        const payload = await requestJson(
           base,
           "/api/streams"
         );
-        const data = flattenCatalog(payload);
 
-        writeCache(CACHE_KEY, {
+        const data = flattenCatalog(
+          payload,
+          base
+        );
+
+        writeStorage(CACHE_KEY, {
           data,
           savedAt: Date.now()
         });
+        writeNumber(
+          LAST_NETWORK_KEY,
+          Date.now()
+        );
 
         return {
           ...data,
-          apiBase: base,
+          savedAt: Date.now(),
           fromCache: false,
           stale: false
         };
@@ -226,24 +283,120 @@
       }
     }
 
-    if (cached && Array.isArray(cached.data?.streams)) {
-      return {
-        ...cached.data,
-        fromCache: true,
-        stale: true,
-        error: lastError
-      };
-    }
-
     throw lastError || new Error(
       "PPV catalog is unavailable."
     );
   }
 
+  async function getCatalog(force = false) {
+    const cached = cachedCatalog();
+    const now = Date.now();
+
+    const fresh =
+      cached &&
+      now - Number(cached.savedAt || 0) <
+        CATALOG_TTL;
+
+    if (!force && fresh) {
+      return {
+        ...cached.data,
+        savedAt: cached.savedAt,
+        fromCache: true,
+        stale: false
+      };
+    }
+
+    /*
+      MultiView can contain several same-origin player iframes.
+      Respect PPV's roughly-one-minute polling guidance across all of
+      them by refusing another network refresh inside this interval.
+    */
+    const lastNetwork =
+      readNumber(LAST_NETWORK_KEY);
+
+    if (
+      force &&
+      cached &&
+      now - lastNetwork <
+        MIN_NETWORK_INTERVAL
+    ) {
+      return {
+        ...cached.data,
+        savedAt: cached.savedAt,
+        fromCache: true,
+        stale:
+          now - Number(cached.savedAt || 0) >=
+          CATALOG_TTL
+      };
+    }
+
+    const flightKey = force
+      ? "catalog-force"
+      : "catalog-normal";
+
+    if (inFlight.has(flightKey)) {
+      return inFlight.get(flightKey);
+    }
+
+    const task = (async () => {
+      try {
+        return await networkCatalogRequest();
+      } catch (error) {
+        if (cached) {
+          return {
+            ...cached.data,
+            savedAt: cached.savedAt,
+            fromCache: true,
+            stale: true,
+            error
+          };
+        }
+
+        throw error;
+      } finally {
+        inFlight.delete(flightKey);
+      }
+    })();
+
+    inFlight.set(flightKey, task);
+    return task;
+  }
+
+  function iframeReady(stream) {
+    return (
+      typeof stream?.iframe === "string" &&
+      /<iframe\b/i.test(stream.iframe)
+    );
+  }
+
+  async function getStreamById(id, force = false) {
+    const catalog = await getCatalog(force);
+    const normalized = String(id || "");
+
+    const stream =
+      catalog.streams.find(
+        (candidate) =>
+          String(candidate?.id ?? "") ===
+          normalized
+      ) || null;
+
+    return {
+      stream,
+      apiBase:
+        catalog.apiBase || PRIMARY_BASE,
+      savedAt: catalog.savedAt || 0,
+      stale: Boolean(catalog.stale),
+      iframeReady: iframeReady(stream)
+    };
+  }
+
   window.EastcoinPpvAPI = Object.freeze({
     PRIMARY_BASE,
     CATALOG_TTL,
+    MIN_NETWORK_INTERVAL,
     refreshMirrors,
-    getCatalog
+    getCatalog,
+    getStreamById,
+    iframeReady
   });
 })();
