@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="assets/eastcoins-shell.css?v=shell2">
   <link rel="stylesheet" href="assets/eastcoins-persistent-shell.css?v=persistent6">
   <link rel="stylesheet" href="assets/eastcoins-shell-polish.css?v=polish5">
-  <link rel="stylesheet" href="assets/eastcoins-multiview.css?v=mv3">
+  <link rel="stylesheet" href="assets/eastcoins-multiview.css?v=mv4">
 </head>
 <body class="ec-shell-page ec-persistent-shell ec-multiview-page">
   <div class="mv-mobile-overlay" id="mvMobileOverlay" aria-hidden="true"></div>
@@ -169,7 +169,7 @@
     <main class="mv-main">
       <button class="mv-nav-toggle" id="mvNavToggle" type="button" aria-label="Compact navigation" aria-expanded="true">‹</button>
 
-      <header class="mv-toolbar" aria-label="MultiView controls">
+      <header class="mv-toolbar" id="mvControlsBar" aria-label="MultiView controls">
         <div class="mv-toolbar-actions">
           <div class="mv-layout-switcher" role="group" aria-label="MultiView layout">
             <button type="button" data-layout-count="2" title="Two-panel layout">2</button>
@@ -179,8 +179,11 @@
 
           <button class="mv-action" id="mvChatButton" type="button" aria-expanded="false">💬 Chat</button>
           <button class="mv-action" id="mvClearButton" type="button">Clear all</button>
+          <button class="mv-action mv-controls-toggle" id="mvControlsHide" type="button" aria-controls="mvControlsBar">↑ Hide controls</button>
         </div>
       </header>
+
+      <button class="mv-controls-reveal" id="mvControlsShow" type="button" aria-controls="mvControlsBar" hidden>↓ Show controls</button>
 
       <section class="mv-stage">
         <div class="mv-grid layout-4" id="mvGrid" aria-label="MultiView streams">
@@ -331,6 +334,6 @@
   <div class="toast" id="mvToast" role="status" aria-live="polite"></div>
 
   <script src="assets/eastcoins-streamed-api.js?v=api2"></script>
-  <script src="assets/eastcoins-multiview.js?v=mv2"></script>
+  <script src="assets/eastcoins-multiview.js?v=mv3"></script>
 </body>
 </html>

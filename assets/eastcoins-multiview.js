@@ -6,6 +6,7 @@
   const SIDEBAR_MODE_KEY = "eastcoinsSidebarMode";
   const LEGACY_SIDEBAR_KEY = "eastcoinsSidebarCollapsed";
   const REDUCED_MOTION_KEY = "eastcoinsReducedMotion";
+  const CONTROLS_HIDDEN_KEY = "eastcoinMultiviewControlsHidden";
   const DEFAULT_LAYOUT = 4;
   const VALID_LAYOUTS = new Set([2, 3, 4]);
 
@@ -44,6 +45,9 @@
   const settingReducedMotion = document.getElementById("mvSettingReducedMotion");
 
   const clearButton = document.getElementById("mvClearButton");
+  const controlsHideButton = document.getElementById("mvControlsHide");
+  const controlsShowButton = document.getElementById("mvControlsShow");
+  const controlsBar = document.getElementById("mvControlsBar");
   const toast = document.getElementById("mvToast");
 
   let toastTimer = 0;
@@ -124,6 +128,51 @@
     toastTimer = window.setTimeout(() => {
       toast.classList.remove("show");
     }, 2400);
+  }
+
+  function readControlsHidden() {
+    try {
+      return localStorage.getItem(CONTROLS_HIDDEN_KEY) === "true";
+    } catch {
+      return false;
+    }
+  }
+
+  function setControlsHidden(hidden, save = true) {
+    const shouldHide = Boolean(hidden);
+
+    body.classList.toggle("mv-controls-hidden", shouldHide);
+
+    if (controlsBar) {
+      controlsBar.setAttribute(
+        "aria-hidden",
+        String(shouldHide)
+      );
+    }
+
+    if (controlsShowButton) {
+      controlsShowButton.hidden = !shouldHide;
+      controlsShowButton.setAttribute(
+        "aria-expanded",
+        String(!shouldHide)
+      );
+    }
+
+    if (controlsHideButton) {
+      controlsHideButton.setAttribute(
+        "aria-expanded",
+        String(!shouldHide)
+      );
+    }
+
+    if (save) {
+      try {
+        localStorage.setItem(
+          CONTROLS_HIDDEN_KEY,
+          String(shouldHide)
+        );
+      } catch {}
+    }
   }
 
   function isMobile() {
@@ -449,6 +498,14 @@
     panels.forEach((_, index) => renderSlot(index));
     updateStatus();
     showToast("MultiView cleared.");
+  });
+
+  controlsHideButton?.addEventListener("click", () => {
+    setControlsHidden(true, true);
+  });
+
+  controlsShowButton?.addEventListener("click", () => {
+    setControlsHidden(false, true);
   });
 
   function setSourceTab(tab) {
@@ -940,6 +997,7 @@
   }
 
   setReducedMotion(readReducedMotion(), false);
+  setControlsHidden(readControlsHidden(), false);
   initializeCountdown();
   setLayout(state.layout, false);
   panels.forEach((_, index) => renderSlot(index));
