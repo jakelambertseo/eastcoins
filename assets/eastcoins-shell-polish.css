@@ -1246,3 +1246,31 @@ html.ec-shell-reduced-motion .ec-browse-drawer-panel {
     pointer-events: none;
   }
 }
+
+/* ================================================================
+   EASTCOIN NAV VERSION
+   The changelog major-update count is the visible pre-1.0 version.
+   Group 52 = EastCoin v0.52.
+   ================================================================ */
+
+.ec-persistent-shell .sidebar-tos::after {
+  content: "EastCoin v0.52";
+  display: block;
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(201, 164, 79, .08);
+  color: #706756;
+  font-size: .48rem;
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: .08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/*
+  The parent legal block is already hidden by the persistent shell
+  when desktop navigation enters compact rail mode, so the version
+  disappears with it automatically.
+*/
+
