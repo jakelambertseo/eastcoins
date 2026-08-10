@@ -1,14 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script>
+<script>
     (() => {
-      if (new URLSearchParams(location.search).get("shell") === "1") {
-        document.documentElement.classList.add("ec-embedded-view");
+      const storageKey =
+        "eastcoinZwadesBlueAgreement";
+      const cookieName =
+        "eastcoinZwadesBlueAgreement";
+      const version = "v1";
+      const resetParameter =
+        "resetZwadesAgreement";
+      const reset =
+        new URLSearchParams(location.search)
+          .get(resetParameter) === "1";
+
+      if (reset) {
+        try {
+          localStorage.removeItem(storageKey);
+        } catch {}
+
+        document.cookie =
+          `${cookieName}=; Max-Age=0; Path=/; SameSite=Lax`;
       }
+
+      let localValue = "";
+
+      try {
+        localValue = localStorage.getItem(storageKey);
+      } catch {}
+
+      const cookieValue = document.cookie
+        .split(";")
+        .map((part) => part.trim())
+        .find((part) =>
+          part.startsWith(`${cookieName}=`)
+        )
+        ?.split("=")
+        .slice(1)
+        .join("=");
+
+      document.documentElement.classList.add(
+        !reset &&
+        (
+          localValue === version ||
+          cookieValue === version
+        )
+          ? "ec-zwades-agreement-granted"
+          : "ec-zwades-agreement-required"
+      );
     })();
   </script>
-<meta charset="UTF-8" />
+  <link rel="stylesheet" href="assets/eastcoins-agreement.css?v=gate2" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <meta
@@ -30,9 +73,10 @@
   <link rel="shortcut icon" href="assets/eastcoin-favicon.png" />
   <link rel="apple-touch-icon" href="assets/eastcoin-favicon.png" />
 
-  <link rel="stylesheet" href="assets/eastcoins-theme.css?v=theme9" />
-  <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux9" />
+  <link rel="stylesheet" href="assets/eastcoins-theme.css" />
+  <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux8" />
   <link rel="stylesheet" href="assets/eastcoins-streamed.css?v=server18" />
+  <link rel="stylesheet" href="assets/eastcoins-events-simple.css?v=events-simple1" />
 
   <style>
     :root {
@@ -71,7 +115,7 @@
       transition: grid-template-columns .24s ease;
     }
 
-    @media (min-width: 901px) {
+    @media (min-width: 761px) {
       body.sidebar-collapsed .favorites-layout {
         grid-template-columns: 0 minmax(0, 1fr);
       }
@@ -97,7 +141,7 @@
       z-index: 20;
     }
 
-    @media (min-width: 901px) {
+    @media (min-width: 761px) {
       body.sidebar-collapsed .sidebar {
         padding-right: 0;
         padding-left: 0;
@@ -357,7 +401,7 @@
 
     /* ---------------- MOBILE ---------------- */
 
-    @media (max-width: 900px) {
+    @media (max-width: 760px) {
       body {
         overflow: auto;
       }
@@ -785,35 +829,9 @@
 }
 
 </style>
-  <link rel="stylesheet" href="assets/eastcoins-shell.css?v=shell2" />
-  <script>
-    (() => {
-      const version = "events2";
-      const storageKey = "eastcoinEventsUiVersion";
-
-      try {
-        if (localStorage.getItem(storageKey) !== version) {
-          localStorage.setItem(storageKey, version);
-
-          if ("caches" in window) {
-            caches.keys()
-              .then((keys) => Promise.all(
-                keys
-                  .filter((key) => /eastcoin/i.test(key))
-                  .map((key) => caches.delete(key))
-              ))
-              .catch(() => {});
-          }
-        }
-      } catch {}
-    })();
-  </script>
-  <link rel="stylesheet" href="assets/eastcoins-events-clean.css?v=events2" />
-  <link rel="stylesheet" href="assets/eastcoins-events-directory.css?v=directory1" />
-  <link rel="stylesheet" href="assets/eastcoins-embedded-view.css?v=embed1" />
 </head>
 
-<body class="ec-shell-page ec-shell-content ec-events-clean ec-events-directory">
+<body class="ec-events-simple">
   <div class="mobile-overlay" id="mobileOverlay"></div>
 
   <div class="favorites-layout">
@@ -830,8 +848,8 @@
 
       <div class="nav-group">
         <div class="nav-label">EastCoin</div>
-        <a class="nav-link" href="index.html?view=player&amp;new=1" target="_top">📺 Live Player</a>
-        <a class="nav-link active" href="index.html?view=events" target="_top">🏟️ Events</a>
+        <a class="nav-link" href="index.html?new=1" target="_top">📺 Live Player</a>
+        <a class="nav-link active" href="events.html" target="_top">🏟️ Events</a>
         <a class="nav-link" href="favorites.html" target="_top">⭐ Favorites</a>
         <details class="nav-games-menu">
           <summary class="nav-link nav-games-summary">
@@ -904,7 +922,15 @@
           zwades is <span class="is-blue">blue</span>
         </p>
       </div>
-<a
+
+      <a
+        class="sidebar-footer-link"
+        href="changelog.html"
+        target="_top">
+        📝 Changelog
+      </a>
+
+            <a
               class="sidebar-footer-link"
               href="status.html"
               target="_top">
@@ -932,13 +958,12 @@
     <header class="page-header">
       <div class="eyebrow">
         <span class="eyebrow-dot"></span>
-        EastCoin events
+        EastCoin event directory
       </div>
-      <h1>Browse Events</h1>
+      <h1>Events</h1>
       <p>
-        Choose Live, Today, or Tomorrow, then browse matchups grouped by
-        sport and ordered by start time. Team logos and event artwork stay
-        visible for faster scanning.
+        Browse live and upcoming matchups, filter by sport, follow your
+        favorite teams, and open any event in the EastCoin player.
       </p>
     </header>
 
@@ -947,9 +972,10 @@
         <div class="streamed-launcher-head">
           <div class="streamed-launcher-copy">
             <div class="streamed-launcher-kicker">EastCoin events</div>
-            <strong class="streamed-launcher-title">Pick an event</strong>
+            <strong class="streamed-launcher-title">Find your game and start watching</strong>
             <p class="streamed-launcher-description">
-              Live events appear first, followed by upcoming matchups.
+              Browse what is live now, see what starts next, or search for
+              a team or matchup.
             </p>
           </div>
           <div class="streamed-mode-buttons">
@@ -965,9 +991,9 @@
               class="streamed-search"
               id="streamedSearch"
               type="search"
-              placeholder="Search teams or matchups"
+              placeholder="Search events, teams, or sports"
               aria-label="Search Streamed events">
-            <button class="streamed-refresh" id="streamedRefresh" type="button" hidden aria-hidden="true" tabindex="-1">Refresh</button>
+            <button class="streamed-refresh" id="streamedRefresh" type="button">Refresh</button>
           </div>
           <div class="streamed-status" id="streamedStatus" role="status" aria-live="polite"></div>
 
@@ -1042,7 +1068,7 @@
 
             <section class="streamed-discovery-section">
               <div class="streamed-discovery-section-head">
-                <div><h2 id="streamedListSectionTitle">Events</h2><p>Live games first, followed by today’s upcoming matchups.</p></div>
+                <div><h2 id="streamedListSectionTitle">All live events</h2><p>Browse the full lineup and open any event in the player.</p></div>
               </div>
               <div class="ec-event-grid" id="streamedMatchList"></div>
             </section>
@@ -1054,7 +1080,7 @@
 </main>
   </div>
 
-    <script src="assets/eastcoins-ux.js?v=ux9"></script>
+    <script src="assets/eastcoins-ux.js?v=ux8"></script>
 
 <script>
     const body = document.body;
@@ -1087,7 +1113,7 @@
     const SIDEBAR_STORAGE_KEY = "eastcoinsSidebarCollapsed";
 
     function isMobileNavigation() {
-      return window.matchMedia("(max-width: 900px)").matches;
+      return window.matchMedia("(max-width: 760px)").matches;
     }
 
     function updateNavigationButton() {
@@ -1231,11 +1257,9 @@
     initializeFootballCountdowns();
 
   </script>
-  <script src="assets/eastcoins-ppv-api.js?v=ppv2"></script>
-  <script src="assets/eastcoins-streamed-api.js?v=api3"></script>
+  <script src="assets/eastcoins-streamed-api.js?v=api2"></script>
 <script src="assets/eastcoins-streamed.js?v=server17"></script>
-  <script src="assets/eastcoins-events-clean-v2.js?v=events2"></script>
-  <script src="assets/eastcoins-events-directory.js?v=directory1"></script>
-  <script src="assets/eastcoins-view-bridge.js?v=bridge1"></script>
+<script src="assets/eastcoins-agreement.js?v=gate2"></script>
+  <script src="assets/eastcoins-events-simple.js?v=events-simple1"></script>
 </body>
 </html>

@@ -1,0 +1,295 @@
+
+/*
+  EastCoin simplified homepage event listings
+  Version: home-simple1
+  Purpose: make the embedded event browser cleaner and easier to scan while
+  keeping the current homepage player layout and EastCoin styling.
+*/
+
+body.ec-home-events-simple {
+  --ec-home-simple-gap: 12px;
+}
+
+body.ec-home-events-simple #streamedContinueSection,
+body.ec-home-events-simple #streamedRecentSection,
+body.ec-home-events-simple #streamedNightSection,
+body.ec-home-events-simple #streamedPopularSection,
+body.ec-home-events-simple #streamedFavoriteSection,
+body.ec-home-events-simple #streamedSoonSection,
+body.ec-home-events-simple #streamedSportTabs,
+body.ec-home-events-simple .streamed-discovery-section:last-child > .streamed-discovery-section-head p {
+  display: none !important;
+}
+
+body.ec-home-events-simple .streamed-launcher {
+  padding: 16px;
+  border-color: rgba(201, 164, 79, .14);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(120, 24, 39, .13), transparent 30%),
+    linear-gradient(180deg, rgba(18, 9, 11, .96), rgba(6, 4, 5, .97));
+}
+
+body.ec-home-events-simple .streamed-launcher-title {
+  color: #f4ead8;
+}
+
+body.ec-home-events-simple .streamed-launcher-description {
+  color: #9b8e7c;
+}
+
+body.ec-home-events-simple .streamed-mode-buttons {
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid rgba(201,164,79,.12);
+  border-radius: 12px;
+  background: rgba(7,7,10,.76);
+}
+
+body.ec-home-events-simple .streamed-mode-button {
+  min-height: 30px;
+  padding: 6px 10px;
+  border-color: transparent;
+  background: transparent;
+  color: #ccbfae;
+  font-size: .63rem;
+}
+
+body.ec-home-events-simple .streamed-mode-button.active {
+  color: #ffe8a7;
+  border-color: rgba(237, 208, 124, .18);
+  background: linear-gradient(180deg, rgba(114,22,37,.98), rgba(53,10,18,.98));
+}
+
+body.ec-home-events-simple .streamed-search {
+  min-height: 40px;
+}
+
+body.ec-home-events-simple .streamed-discovery-section:last-child {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+body.ec-home-events-simple .streamed-discovery-section:last-child > .streamed-discovery-section-head {
+  margin-bottom: 12px;
+}
+
+body.ec-home-events-simple .streamed-discovery-section:last-child > .streamed-discovery-section-head h2 {
+  font-size: .95rem;
+}
+
+body.ec-home-events-simple #streamedMatchList.ec-home-simple-directory {
+  display: grid;
+  gap: 22px;
+}
+
+body.ec-home-events-simple .ec-home-simple-section {
+  display: grid;
+  gap: 12px;
+}
+
+body.ec-home-events-simple .ec-home-simple-section-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+body.ec-home-events-simple .ec-home-simple-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #ff3a4d;
+  box-shadow: 0 0 0 4px rgba(255, 58, 77, .08);
+}
+
+body.ec-home-events-simple .ec-home-simple-title {
+  margin: 0;
+  color: #f4ead8;
+  font-size: 1.02rem;
+  font-weight: 950;
+  letter-spacing: -.02em;
+}
+
+body.ec-home-events-simple .ec-home-simple-jumps {
+  display: grid;
+  gap: 10px;
+}
+
+body.ec-home-events-simple .ec-home-simple-jump-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+body.ec-home-events-simple .ec-home-simple-jump-button {
+  min-height: 36px;
+  padding: 8px 10px;
+  border: 1px solid rgba(55, 83, 160, .4);
+  border-radius: 10px;
+  color: #f0f4ff;
+  background: rgba(4, 7, 18, .72);
+  font-size: .68rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+body.ec-home-events-simple .ec-home-simple-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--ec-home-simple-gap);
+}
+
+body.ec-home-events-simple .ec-home-simple-category {
+  display: grid;
+  gap: 12px;
+}
+
+body.ec-home-events-simple .ec-home-simple-category h3 {
+  margin: 0;
+  color: #f4ead8;
+  font-size: 1rem;
+  font-weight: 950;
+}
+
+body.ec-home-events-simple .ec-event-card,
+body.ec-home-events-simple .ec-home-simple-event-proxy {
+  position: relative;
+  display: grid !important;
+  grid-template-rows: 140px minmax(0, 1fr);
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(201, 164, 79, .1);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(6, 10, 19, .98), rgba(4, 6, 12, .98));
+  box-shadow: 0 10px 24px rgba(0,0,0,.26);
+  transition: transform .16s ease, border-color .16s ease;
+}
+
+body.ec-home-events-simple .ec-event-card:hover,
+body.ec-home-events-simple .ec-event-card:focus-visible,
+body.ec-home-events-simple .ec-home-simple-event-proxy:hover,
+body.ec-home-events-simple .ec-home-simple-event-proxy:focus-visible {
+  border-color: rgba(237, 208, 124, .24);
+  transform: translateY(-2px);
+  outline: 0;
+}
+
+body.ec-home-events-simple .ec-event-art {
+  min-height: 140px;
+  border-right: 0;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+
+body.ec-home-events-simple .ec-event-poster {
+  opacity: .54;
+}
+
+body.ec-home-events-simple .ec-event-art-shade {
+  background: linear-gradient(180deg, rgba(0,0,0,.12), rgba(0,0,0,.56));
+}
+
+body.ec-home-events-simple .ec-matchup-badges {
+  justify-content: center;
+  gap: 10px;
+  padding: 14px;
+}
+
+body.ec-home-events-simple .ec-team-badge-medium,
+body.ec-home-events-simple .ec-event-initials {
+  width: 48px;
+  height: 48px;
+  flex-basis: 48px;
+}
+
+body.ec-home-events-simple .ec-event-card-body {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 7px;
+  padding: 12px 12px 14px;
+}
+
+body.ec-home-events-simple .ec-event-tag:not(.ec-event-tag-live):not(.ec-event-tag-countdown) {
+  display: none;
+}
+
+body.ec-home-events-simple .ec-event-tags {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 4;
+  display: flex;
+  gap: 5px;
+  margin: 0;
+}
+
+body.ec-home-events-simple .ec-event-tag {
+  min-height: 22px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(7, 12, 22, .82);
+  border: 1px solid rgba(255,255,255,.08);
+  color: #f6f6fa;
+  font-size: .53rem;
+  font-weight: 900;
+}
+
+body.ec-home-events-simple .ec-event-tag-live {
+  background: #ff3146;
+  border-color: rgba(255, 92, 110, .35);
+}
+
+body.ec-home-events-simple .ec-event-card h3 {
+  margin: 0;
+  color: #f1f6ff;
+  font-size: .9rem;
+  line-height: 1.35;
+}
+
+body.ec-home-events-simple .ec-event-teams,
+body.ec-home-events-simple .ec-event-actions {
+  display: none !important;
+}
+
+body.ec-home-events-simple .ec-event-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #9cb1ca;
+  font-size: .68rem;
+}
+
+body.ec-home-events-simple .ec-event-meta .ec-event-viewers,
+body.ec-home-events-simple .ec-event-meta [data-ec-viewers] {
+  color: #ff3a4d;
+  font-weight: 900;
+}
+
+body.ec-home-events-simple .ec-home-simple-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #c9a44f;
+  text-decoration: none;
+  font-size: .62rem;
+  font-weight: 900;
+}
+
+body.ec-home-events-simple .ec-home-simple-empty {
+  color: #857b6f;
+  font-size: .8rem;
+}
+
+@media (max-width: 1180px) {
+  body.ec-home-events-simple .ec-home-simple-grid,
+  body.ec-home-events-simple .ec-home-simple-jump-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  body.ec-home-events-simple .ec-home-simple-grid,
+  body.ec-home-events-simple .ec-home-simple-jump-grid {
+    grid-template-columns: 1fr;
+  }
+}

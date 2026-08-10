@@ -1,0 +1,357 @@
+
+/*
+  EastCoin simple events directory redesign
+  Version: events-simple1
+  Purpose: simplify the events directory into a cleaner jump-to-category +
+  live-now + sport sections layout while preserving EastCoin branding.
+*/
+
+body.ec-events-simple {
+  --ec-simple-card-radius: 16px;
+  --ec-simple-card-border: rgba(201, 164, 79, .12);
+  --ec-simple-card-shadow: 0 12px 30px rgba(0, 0, 0, .28);
+  --ec-simple-gap: 14px;
+}
+
+body.ec-events-simple .page-header p {
+  max-width: 760px;
+}
+
+body.ec-events-simple #streamedContinueSection,
+body.ec-events-simple #streamedRecentSection,
+body.ec-events-simple #streamedNightSection,
+body.ec-events-simple #streamedPopularSection,
+body.ec-events-simple #streamedFavoriteSection,
+body.ec-events-simple #streamedSoonSection,
+body.ec-events-simple #streamedSportTabs {
+  display: none !important;
+}
+
+body.ec-events-simple .streamed-launcher {
+  padding: 18px;
+  border: 1px solid rgba(201, 164, 79, .12);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(120, 24, 39, .13), transparent 34%),
+    linear-gradient(180deg, rgba(10, 10, 14, .96), rgba(5, 5, 8, .98));
+}
+
+body.ec-events-simple .streamed-launcher-head {
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+body.ec-events-simple .streamed-launcher-title {
+  color: #f4ead8;
+}
+
+body.ec-events-simple .streamed-launcher-description {
+  color: #948879;
+  max-width: 620px;
+}
+
+body.ec-events-simple .streamed-mode-buttons {
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(201,164,79,.12);
+  border-radius: 12px;
+  background: rgba(7,7,10,.78);
+}
+
+body.ec-events-simple .streamed-mode-button {
+  min-height: 34px;
+  padding: 8px 12px;
+  border-color: transparent;
+  background: transparent;
+  color: #c9baa7;
+  font-size: .68rem;
+}
+
+body.ec-events-simple .streamed-mode-button.active {
+  color: #ffe8a7;
+  background: linear-gradient(180deg, rgba(114,22,37,.98), rgba(53,10,18,.98));
+  border-color: rgba(237, 208, 124, .2);
+}
+
+body.ec-events-simple .streamed-browser-controls {
+  margin-bottom: 14px;
+}
+
+body.ec-events-simple .streamed-search {
+  min-height: 44px;
+  border-color: rgba(201, 164, 79, .14);
+  background: rgba(9, 9, 12, .95);
+}
+
+body.ec-events-simple .streamed-refresh {
+  min-height: 44px;
+}
+
+body.ec-events-simple .streamed-discovery-section:last-child {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+body.ec-events-simple .streamed-discovery-section:last-child > .streamed-discovery-section-head {
+  display: none;
+}
+
+body.ec-events-simple #streamedMatchList.ec-simple-event-directory {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+}
+
+body.ec-events-simple .ec-simple-jump-nav {
+  display: grid;
+  gap: 14px;
+}
+
+body.ec-events-simple .ec-simple-section-label {
+  margin: 0;
+  color: #f3e9d7;
+  font-size: clamp(1.2rem, 2vw, 1.8rem);
+  font-weight: 950;
+  letter-spacing: -.03em;
+}
+
+body.ec-events-simple .ec-simple-jump-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+body.ec-events-simple .ec-simple-jump-button {
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 1px solid rgba(55, 83, 160, .42);
+  border-radius: 10px;
+  color: #f0f4ff;
+  background: rgba(4, 7, 18, .72);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  cursor: pointer;
+  transition: border-color .16s ease, transform .16s ease, background .16s ease;
+}
+
+body.ec-events-simple .ec-simple-jump-button:hover,
+body.ec-events-simple .ec-simple-jump-button:focus-visible {
+  border-color: rgba(106, 141, 232, .8);
+  background: rgba(10, 15, 32, .95);
+  transform: translateY(-1px);
+  outline: 0;
+}
+
+body.ec-events-simple .ec-simple-live-section,
+body.ec-events-simple .ec-simple-category {
+  display: grid;
+  gap: 16px;
+}
+
+body.ec-events-simple .ec-simple-section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+body.ec-events-simple .ec-simple-live-dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  background: #ff3a4d;
+  box-shadow: 0 0 0 5px rgba(255, 58, 77, .08);
+  flex: 0 0 15px;
+}
+
+body.ec-events-simple .ec-simple-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--ec-simple-gap);
+}
+
+body.ec-events-simple .ec-event-card,
+body.ec-events-simple .ec-event-card-feature,
+body.ec-events-simple .ec-event-card-compact,
+body.ec-events-simple .ec-simple-event-proxy {
+  position: relative;
+  display: grid !important;
+  grid-template-rows: 168px minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--ec-simple-card-border);
+  border-radius: var(--ec-simple-card-radius);
+  background: linear-gradient(180deg, rgba(6, 10, 19, .98), rgba(4, 6, 12, .98));
+  box-shadow: var(--ec-simple-card-shadow);
+  cursor: pointer;
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+
+body.ec-events-simple .ec-event-card:hover,
+body.ec-events-simple .ec-event-card:focus-visible,
+body.ec-events-simple .ec-simple-event-proxy:hover,
+body.ec-events-simple .ec-simple-event-proxy:focus-visible {
+  border-color: rgba(237, 208, 124, .28);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, .34);
+  transform: translateY(-2px);
+  outline: 0;
+}
+
+body.ec-events-simple .ec-event-art {
+  position: relative;
+  min-height: 168px;
+  border-right: 0;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  background: linear-gradient(90deg, rgba(9, 26, 60, .88), rgba(45, 28, 22, .88));
+}
+
+body.ec-events-simple .ec-event-poster {
+  opacity: .55;
+  filter: saturate(.95) contrast(1.04);
+}
+
+body.ec-events-simple .ec-event-art-shade {
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.12), rgba(0,0,0,.54)),
+    linear-gradient(90deg, rgba(0,0,0,.02), rgba(0,0,0,.12));
+}
+
+body.ec-events-simple .ec-matchup-badges {
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px;
+}
+
+body.ec-events-simple .ec-team-badge-medium,
+body.ec-events-simple .ec-event-initials {
+  width: 56px;
+  height: 56px;
+  flex-basis: 56px;
+}
+
+body.ec-events-simple .ec-event-card-body {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 8px;
+  padding: 14px 14px 16px;
+}
+
+body.ec-events-simple .ec-event-tags {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+}
+
+body.ec-events-simple .ec-event-tag:not(.ec-event-tag-live):not(.ec-event-tag-countdown) {
+  display: none;
+}
+
+body.ec-events-simple .ec-event-tag {
+  min-height: 24px;
+  padding: 4px 9px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px;
+  color: #f6f6fa;
+  background: rgba(7, 12, 22, .82);
+  font-size: .56rem;
+  font-weight: 900;
+}
+
+body.ec-events-simple .ec-event-tag-live {
+  border-color: rgba(255, 92, 110, .35);
+  background: #ff3146;
+  color: white;
+}
+
+body.ec-events-simple .ec-event-card h3 {
+  margin: 0;
+  color: #f1f6ff;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+body.ec-events-simple .ec-event-teams,
+body.ec-events-simple .ec-event-actions {
+  display: none !important;
+}
+
+body.ec-events-simple .ec-event-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #9cb1ca;
+  font-size: .75rem;
+  margin-top: 2px;
+}
+
+body.ec-events-simple .ec-event-meta .ec-event-viewers,
+body.ec-events-simple .ec-event-meta [data-ec-viewers] {
+  color: #ff3a4d;
+  font-weight: 900;
+}
+
+body.ec-events-simple .ec-simple-category-head h2 {
+  margin: 0;
+  color: #f3e9d7;
+  font-size: clamp(1.25rem, 2.1vw, 1.85rem);
+  font-weight: 950;
+  letter-spacing: -.03em;
+}
+
+body.ec-events-simple .ec-simple-empty {
+  padding: 20px 0 4px;
+  color: #857b6f;
+  font-size: .85rem;
+}
+
+@media (max-width: 1200px) {
+  body.ec-events-simple .ec-simple-grid,
+  body.ec-events-simple .ec-simple-jump-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 920px) {
+  body.ec-events-simple .ec-simple-grid,
+  body.ec-events-simple .ec-simple-jump-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  body.ec-events-simple .page-main {
+    padding: 20px 16px 24px;
+  }
+
+  body.ec-events-simple .streamed-launcher-head {
+    align-items: stretch;
+  }
+
+  body.ec-events-simple .streamed-mode-buttons {
+    width: 100%;
+  }
+
+  body.ec-events-simple .ec-simple-grid,
+  body.ec-events-simple .ec-simple-jump-grid {
+    grid-template-columns: 1fr;
+  }
+
+  body.ec-events-simple .ec-event-card,
+  body.ec-events-simple .ec-simple-event-proxy {
+    grid-template-rows: 150px minmax(0, 1fr);
+  }
+
+  body.ec-events-simple .ec-event-art {
+    min-height: 150px;
+  }
+}
