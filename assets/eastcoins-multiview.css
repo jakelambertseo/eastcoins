@@ -204,41 +204,13 @@ body.ec-multiview-page{
 
 .mv-toolbar{
   display:flex;
-  align-items:flex-end;
-  justify-content:space-between;
-  gap:24px;
+  align-items:center;
+  justify-content:flex-end;
   min-width:0;
-  padding:18px 22px 16px 62px;
+  min-height:48px;
+  padding:7px 10px 7px 58px;
   border-bottom:1px solid rgba(255,255,255,.06);
   background:rgba(2,2,2,.96);
-}
-
-.mv-toolbar-copy{
-  min-width:0;
-}
-
-.mv-eyebrow{
-  color:#a88c4d;
-  font-size:.62rem;
-  font-weight:900;
-  letter-spacing:.13em;
-  text-transform:uppercase;
-}
-
-.mv-toolbar h1{
-  margin:5px 0 4px;
-  color:#f5efe3;
-  font-size:clamp(1.45rem,2.6vw,2.35rem);
-  line-height:1;
-  letter-spacing:-.045em;
-}
-
-.mv-toolbar p{
-  max-width:720px;
-  margin:0;
-  color:#777;
-  font-size:.72rem;
-  line-height:1.45;
 }
 
 .mv-toolbar-actions{
@@ -246,7 +218,8 @@ body.ec-multiview-page{
   align-items:center;
   justify-content:flex-end;
   gap:7px;
-  flex:0 0 auto;
+  width:100%;
+  min-width:0;
 }
 
 .mv-layout-switcher{
@@ -951,16 +924,9 @@ body.mv-chat-open .mv-chat-drawer{
 }
 
 @media(max-width:1100px){
-  .mv-toolbar{
-    align-items:flex-start;
-    flex-direction:column;
-    gap:10px;
-  }
-
   .mv-toolbar-actions{
-    width:100%;
-    justify-content:flex-start;
-    flex-wrap:wrap;
+    justify-content:flex-end;
+    flex-wrap:nowrap;
   }
 
   .mv-grid.layout-3{
@@ -1017,7 +983,13 @@ body.mv-chat-open .mv-chat-drawer{
   }
 
   .mv-toolbar{
-    padding:64px 14px 13px;
+    min-height:52px;
+    padding:7px 8px 7px 58px;
+  }
+
+  .mv-toolbar-actions{
+    justify-content:flex-end;
+    width:100%;
   }
 
   .mv-nav-toggle{
@@ -1071,17 +1043,29 @@ body.mv-chat-open .mv-chat-drawer{
 }
 
 @media(max-width:560px){
+  .mv-toolbar{
+    min-height:48px;
+    padding-right:6px;
+  }
+
   .mv-toolbar-actions{
-    display:grid;
-    grid-template-columns:1fr 1fr;
+    display:flex;
+    gap:4px;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+
+  .mv-toolbar-actions::-webkit-scrollbar{
+    display:none;
   }
 
   .mv-layout-switcher{
-    grid-column:1 / -1;
+    flex:0 0 auto;
   }
 
-  .mv-layout-switcher button{
-    flex:1;
+  .mv-action{
+    flex:0 0 auto;
+    white-space:nowrap;
   }
 
   .mv-panel{

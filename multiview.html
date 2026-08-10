@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="assets/eastcoins-shell.css?v=shell2">
   <link rel="stylesheet" href="assets/eastcoins-persistent-shell.css?v=persistent6">
   <link rel="stylesheet" href="assets/eastcoins-shell-polish.css?v=polish5">
-  <link rel="stylesheet" href="assets/eastcoins-multiview.css?v=mv2">
+  <link rel="stylesheet" href="assets/eastcoins-multiview.css?v=mv3">
 </head>
 <body class="ec-shell-page ec-persistent-shell ec-multiview-page">
   <div class="mv-mobile-overlay" id="mvMobileOverlay" aria-hidden="true"></div>
@@ -169,18 +169,12 @@
     <main class="mv-main">
       <button class="mv-nav-toggle" id="mvNavToggle" type="button" aria-label="Compact navigation" aria-expanded="true">‹</button>
 
-      <header class="mv-toolbar">
-        <div class="mv-toolbar-copy">
-          <span class="mv-eyebrow">EastCoin MultiView</span>
-          <h1>Watch more than one game.</h1>
-          <p id="mvStatusText">Choose 2–4 streams. Each panel uses the normal EastCoin player and server selector.</p>
-        </div>
-
+      <header class="mv-toolbar" aria-label="MultiView controls">
         <div class="mv-toolbar-actions">
           <div class="mv-layout-switcher" role="group" aria-label="MultiView layout">
-            <button type="button" data-layout-count="2">2</button>
-            <button type="button" data-layout-count="3">3</button>
-            <button type="button" data-layout-count="4" class="active">4</button>
+            <button type="button" data-layout-count="2" title="Two-panel layout">2</button>
+            <button type="button" data-layout-count="3" title="Three-panel layout">3</button>
+            <button type="button" data-layout-count="4" class="active" title="Four-panel layout">4</button>
           </div>
 
           <button class="mv-action" id="mvChatButton" type="button" aria-expanded="false">💬 Chat</button>
@@ -337,6 +331,6 @@
   <div class="toast" id="mvToast" role="status" aria-live="polite"></div>
 
   <script src="assets/eastcoins-streamed-api.js?v=api2"></script>
-  <script src="assets/eastcoins-multiview.js?v=mv1"></script>
+  <script src="assets/eastcoins-multiview.js?v=mv2"></script>
 </body>
 </html>

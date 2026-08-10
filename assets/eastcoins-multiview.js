@@ -324,6 +324,8 @@
   }
 
   function updateStatus() {
+    if (!statusText) return;
+
     const loadedVisible = state.slots
       .slice(0, state.layout)
       .filter(Boolean)
