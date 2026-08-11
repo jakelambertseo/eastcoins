@@ -1,4 +1,157 @@
-@import url("eastcoins-shell-polish.css?v=polish3");
+/* ================================================================
+   EASTCOIN — EMBEDDED PLAYER POLISH
+   Player-specific shell polish is folded into this stylesheet so the
+   embedded document does not make a nested stylesheet request.
+   ================================================================ */
+
+/* Remove the browser-saved server preference controls from the selector. */
+.streamed-server-preferences {
+  display: none !important;
+}
+
+/*
+  On narrower player widths, the server selector opens downward from the
+  toolbar instead of sitting in the middle/bottom of the video.
+*/
+@media (max-width: 1100px) {
+  .streamed-server-panel {
+    top: 64px !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: 50% !important;
+    width: min(620px, calc(100% - 18px)) !important;
+    max-height: min(52vh, 420px) !important;
+    transform: translateX(-50%);
+    transform-origin: top center;
+    border-radius: 0 0 14px 14px !important;
+    box-shadow:
+      0 24px 54px rgba(0, 0, 0, .72),
+      0 1px 0 rgba(255, 255, 255, .03) inset !important;
+    animation: eastcoin-server-pop-down .18s ease-out;
+  }
+
+  .streamed-server-panel::before {
+    content: "";
+    position: absolute;
+    top: -7px;
+    right: 92px;
+    width: 12px;
+    height: 12px;
+    border-top: 1px solid rgba(201, 164, 79, .22);
+    border-left: 1px solid rgba(201, 164, 79, .22);
+    background: #050404;
+    transform: rotate(45deg);
+  }
+
+  .player-shell.streamed-server-open > .embed-frame {
+    width: 100% !important;
+  }
+
+  .player-shell.streamed-server-open > .player-toolbar,
+  .player-shell.streamed-server-open > .player-toolbar.collapsed {
+    right: 0 !important;
+  }
+
+  .player-shell.streamed-server-open > .player-toolbar.collapsed {
+    right: 10px !important;
+  }
+
+  .player-shell.streamed-server-open > .ec-utility-dock {
+    left: 50% !important;
+  }
+
+  .streamed-source-groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 680px) {
+  .streamed-server-panel {
+    top: 56px !important;
+    width: calc(100% - 12px) !important;
+    max-height: min(58vh, 390px) !important;
+    padding: 9px !important;
+  }
+
+  .streamed-server-panel::before {
+    right: 72px;
+  }
+
+  .streamed-source-groups {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .streamed-server-header {
+    gap: 7px !important;
+    margin-bottom: 7px !important;
+    padding-bottom: 7px !important;
+  }
+}
+
+@keyframes eastcoin-server-pop-down {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px) scale(.985);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+/* Copy-link confirmation shown beside the Live Player toolbar button. */
+.copy-link-tooltip {
+  position: fixed;
+  z-index: 1000;
+  display: block;
+  max-width: calc(100vw - 20px);
+  padding: 9px 11px;
+  border: 1px solid rgba(201, 164, 79, .38);
+  border-radius: 9px;
+  color: #fff0c5;
+  background:
+    linear-gradient(180deg, rgba(83, 20, 29, .98), rgba(34, 8, 12, .99));
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .58);
+  font-size: .68rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(-5px) scale(.98);
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity .16s ease,
+    transform .16s ease,
+    visibility .16s ease;
+}
+
+.copy-link-tooltip::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  right: 18px;
+  width: 9px;
+  height: 9px;
+  border-top: 1px solid rgba(201, 164, 79, .38);
+  border-left: 1px solid rgba(201, 164, 79, .38);
+  background: rgba(83, 20, 29, .98);
+  transform: rotate(45deg);
+}
+
+.copy-link-tooltip.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+}
+
+/* Production embedded player no longer uses the legacy remote photo. */
+html.ec-embedded-view .player-shell:not(.has-frame) {
+  background:
+    radial-gradient(circle at 50% 12%, rgba(120, 24, 39, .16), transparent 36%),
+    radial-gradient(circle at 18% 88%, rgba(201, 164, 79, .055), transparent 30%),
+    linear-gradient(180deg, #070505 0%, #020202 58%, #000 100%) !important;
+}
 
 /* ================================================================
    EASTCOIN — EMBEDDED CENTER VIEW MODE

@@ -263,13 +263,56 @@
     }
   });
 
+  function countdownUpdateDelay() {
+    let nearest = Number.POSITIVE_INFINITY;
+    const now = Date.now();
+
+    root.querySelectorAll("[data-countdown]").forEach((element) => {
+      const timestamp = normalizedTimestamp(element.dataset.countdown);
+      if (!Number.isFinite(timestamp)) return;
+      nearest = Math.min(nearest, timestamp - now);
+    });
+
+    if (nearest <= 10 * 60 * 1000) return 1000;
+    if (nearest <= 60 * 60 * 1000) return 30_000;
+    return 60_000;
+  }
+
+  function clearCountdownTimer() {
+    window.clearTimeout(countdownTimer);
+    countdownTimer = 0;
+  }
+
+  function scheduleCountdownUpdates(runNow = true) {
+    clearCountdownTimer();
+
+    if (document.hidden) return;
+
+    if (runNow) {
+      updateCountdowns();
+    }
+
+    countdownTimer = window.setTimeout(
+      () => scheduleCountdownUpdates(true),
+      countdownUpdateDelay()
+    );
+  }
+
   observer.observe(list, { childList: true });
-  countdownTimer = window.setInterval(updateCountdowns, 1000);
   schedule();
+  scheduleCountdownUpdates(false);
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      clearCountdownTimer();
+    } else {
+      scheduleCountdownUpdates(true);
+    }
+  });
 
   window.addEventListener("pagehide", () => {
     observer.disconnect();
-    window.clearInterval(countdownTimer);
+    clearCountdownTimer();
     if (frameId) cancelAnimationFrame(frameId);
   }, { once: true });
 })();

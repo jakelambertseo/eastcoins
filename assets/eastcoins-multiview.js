@@ -150,12 +150,18 @@
           }
 
           if (source.type === "url" && source.url) {
-            return {
-              type: "url",
-              url: String(source.url),
-              title: String(source.title || hostLabel(source.url)),
-              meta: "Manual URL"
-            };
+            try {
+              const normalizedUrl = normalizeUrl(source.url);
+
+              return {
+                type: "url",
+                url: normalizedUrl,
+                title: String(source.title || hostLabel(normalizedUrl)),
+                meta: "Manual URL"
+              };
+            } catch {
+              return null;
+            }
           }
 
           return null;
@@ -328,6 +334,20 @@
     const parsed = new URL(withProtocol);
     if (!["http:", "https:"].includes(parsed.protocol)) {
       throw new Error("Only HTTP or HTTPS URLs can be used.");
+    }
+
+    const localDevelopment =
+      ["localhost", "127.0.0.1", "::1"].includes(
+        window.location.hostname
+      );
+
+    if (
+      parsed.protocol === "http:" &&
+      !localDevelopment
+    ) {
+      throw new Error(
+        "Use an HTTPS stream URL on EastCoin. HTTP is only allowed during local development."
+      );
     }
 
     return parsed.href;

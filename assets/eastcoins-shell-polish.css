@@ -1250,11 +1250,11 @@ html.ec-shell-reduced-motion .ec-browse-drawer-panel {
 /* ================================================================
    EASTCOIN NAV VERSION
    The changelog major-update count is the visible pre-1.0 version.
-   Group 55 = EastCoin v0.55.
+   Group 56 = EastCoin v0.56.
    ================================================================ */
 
 .ec-persistent-shell .sidebar-tos::after {
-  content: "EastCoin v0.55";
+  content: "EastCoin v0.56";
   display: block;
   margin-top: 7px;
   padding-top: 6px;

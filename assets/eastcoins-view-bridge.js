@@ -138,7 +138,108 @@
 
   enhanceCopyLinkButton();
 
-  if (!embedded) return;
+  function isLocalDevelopmentHost() {
+    return ["localhost", "127.0.0.1", "::1"].includes(
+      window.location.hostname
+    );
+  }
+
+  function validateManualStreamUrl(rawValue) {
+    const trimmed = String(rawValue || "").trim();
+
+    if (!trimmed) return;
+
+    const valueWithProtocol = /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(trimmed)
+      ? trimmed
+      : `https://${trimmed}`;
+    const parsed = new URL(valueWithProtocol);
+
+    if (!["https:", "http:"].includes(parsed.protocol)) {
+      throw new Error("Only HTTP or HTTPS URLs can be embedded.");
+    }
+
+    if (
+      parsed.protocol === "http:" &&
+      !isLocalDevelopmentHost()
+    ) {
+      throw new Error(
+        "Use an HTTPS stream URL on EastCoin. HTTP is only allowed during local development."
+      );
+    }
+  }
+
+  /*
+    Run before the player form's existing submit handler. Provider/event
+    playback is untouched; this only validates a URL somebody manually enters.
+  */
+  document.addEventListener(
+    "submit",
+    (event) => {
+      const form = event.target;
+
+      if (!(form instanceof HTMLFormElement) || form.id !== "streamForm") {
+        return;
+      }
+
+      const input = form.querySelector("#streamUrl");
+      const error = form.querySelector("#urlError");
+
+      try {
+        validateManualStreamUrl(input?.value);
+      } catch (validationError) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        if (error) {
+          error.textContent =
+            validationError?.message ||
+            "Please enter a secure HTTPS stream URL.";
+        }
+
+        input?.focus();
+      }
+    },
+    true
+  );
+
+  function hardenActiveFrame() {
+    const frame = document.getElementById("activeFrame");
+
+    if (!frame) return;
+
+    if (
+      frame.referrerPolicy !==
+      "strict-origin-when-cross-origin"
+    ) {
+      frame.referrerPolicy =
+        "strict-origin-when-cross-origin";
+    }
+  }
+
+  const playerShellForHardening =
+    document.getElementById("playerShell");
+  const frameHardeningObserver =
+    playerShellForHardening
+      ? new MutationObserver(hardenActiveFrame)
+      : null;
+
+  frameHardeningObserver?.observe(
+    playerShellForHardening,
+    {
+      childList: true,
+      subtree: true
+    }
+  );
+  hardenActiveFrame();
+
+  if (!embedded) {
+    window.addEventListener(
+      "pagehide",
+      () => frameHardeningObserver?.disconnect(),
+      { once: true }
+    );
+    return;
+  }
 
   function removeServerPreferenceUi() {
     document
@@ -457,16 +558,53 @@
 
   const controlObserver = new MutationObserver(() => {
     removeServerPreferenceUi();
+    hardenActiveFrame();
     scheduleControlUpdate();
     scheduleNavigationCountUpdate();
   });
 
-  controlObserver.observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ["class"]
+  /*
+    Watch only regions that can add event/favorite cards or player controls.
+    The previous bridge watched every class mutation across document.body.
+  */
+  const observationRoots = [
+    document.getElementById("streamedDiscoveryRoot"),
+    document.querySelector(".favorite-list"),
+    document.getElementById("playerShell"),
+    document.getElementById("playerToolbar"),
+    document.getElementById("streamedServerPanel")
+  ].filter(
+    (element, index, collection) =>
+      element && collection.indexOf(element) === index
+  );
+
+  (
+    observationRoots.length
+      ? observationRoots
+      : [document.body]
+  ).forEach((root) => {
+    controlObserver.observe(root, {
+      childList: true,
+      subtree: true
+    });
   });
+
+  window.addEventListener(
+    "pagehide",
+    () => {
+      controlObserver.disconnect();
+      frameHardeningObserver?.disconnect();
+
+      if (navigationCountFrame) {
+        window.cancelAnimationFrame(navigationCountFrame);
+      }
+
+      if (controlUpdateFrame) {
+        window.cancelAnimationFrame(controlUpdateFrame);
+      }
+    },
+    { once: true }
+  );
 
   post({ type: "eastcoin:request-shell-state" });
   scheduleNavigationCountUpdate();
