@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex" />
+  <meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet,noimageindex" />
+  <meta name="description" content="EastCoin unified navigation and simplified Events redesign prototype." />
+  <title>Events Redesign v4 Test | EastCoin</title>
+  <link rel="icon" href="assets/eastcoin-favicon.png" type="image/png" />
+  <link rel="stylesheet" href="assets/eastcoins-theme.css?v=theme9" />
+  <link rel="stylesheet" href="assets/eastcoins-events-redesign-v4-test.css?v=events5" />
+</head>
+<body class="ec-events-v2-page">
+  <div class="ec-events-v2-layout" id="eventsV2Layout">
+    <aside class="ec-events-v2-nav" id="eventsV2Nav" aria-label="EastCoin navigation and event filters">
+      <div class="ec-events-v2-mobile-head">
+        <strong>EastCoin</strong>
+        <button id="eventsV2MobileClose" type="button" aria-label="Close navigation">×</button>
+      </div>
+
+      <a class="ec-events-v2-brand" href="events-redesign-v4-test.html" aria-label="EastCoin Events">
+        <span class="ec-events-v2-logo"><img src="assets/eastcoins-logo.webp" alt="" /></span>
+        <span class="ec-events-v2-brand-copy"><strong>EastCoin</strong><small>Events</small></span>
+      </a>
+
+      <form class="ec-events-v2-omni" id="eventsV2OmniForm" autocomplete="off">
+        <span class="ec-events-v2-omni-icon" aria-hidden="true">⌕</span>
+        <input id="eventsV2OmniInput" type="text" placeholder="Search events or paste a URL" aria-label="Search events or paste a stream URL" />
+        <button id="eventsV2OmniAction" type="submit">Search</button>
+      </form>
+      <button class="ec-events-v2-rail-search" id="eventsV2RailSearch" type="button" title="Search events or paste a URL" aria-label="Expand navigation to search">⌕</button>
+      <p class="ec-events-v2-omni-hint" id="eventsV2OmniHint">Search teams, games and leagues — or paste a stream URL.</p>
+
+      <nav class="ec-events-v2-nav-scroll">
+        <section class="ec-events-v2-nav-section" aria-label="Watch">
+          <div class="ec-events-v2-nav-label">Watch</div>
+          <button class="ec-events-v2-nav-item is-active" type="button" data-events-scope="all" data-nav-tooltip="All Events">
+            <span class="ec-events-v2-nav-icon">▦</span>
+            <span class="ec-events-v2-nav-copy"><strong>All Events</strong><small>EastCoin event home</small></span>
+            <span class="ec-events-v2-count" id="eventsV2AllCount">0</span>
+          </button>
+          <a class="ec-events-v2-nav-item" href="multiview.html" data-nav-tooltip="MultiView">
+            <span class="ec-events-v2-nav-icon">▥</span>
+            <span class="ec-events-v2-nav-copy"><strong>MultiView</strong><small>Watch up to four streams</small></span>
+          </a>
+          <a class="ec-events-v2-nav-item" href="index.html?view=favorites" data-nav-tooltip="Other Streams">
+            <span class="ec-events-v2-nav-icon">⌁</span>
+            <span class="ec-events-v2-nav-copy"><strong>Other Streams</strong><small>Approved stream sites</small></span>
+          </a>
+        </section>
+
+        <span id="eventsV2NavLiveCount" hidden>0</span>
+        <section class="ec-events-v2-nav-section" aria-label="Event views">
+          <div class="ec-events-v2-nav-label">Events</div>
+          <button class="ec-events-v2-nav-item" type="button" data-events-scope="live" data-nav-tooltip="Live Only">
+            <span class="ec-events-v2-nav-icon">▶</span>
+            <span class="ec-events-v2-nav-copy"><strong>Live Only</strong><small>Games happening now</small></span>
+            <span class="ec-events-v2-count is-live" id="eventsV2LiveCount">0</span>
+          </button>
+          <button class="ec-events-v2-nav-item" type="button" data-events-scope="trending" data-nav-tooltip="Trending">
+            <span class="ec-events-v2-nav-icon">🔥</span>
+            <span class="ec-events-v2-nav-copy"><strong>Trending</strong><small>Popular and active games</small></span>
+            <span class="ec-events-v2-count" id="eventsV2TrendingCount">0</span>
+          </button>
+          <button class="ec-events-v2-nav-item" id="eventsV2PrefsButton" type="button" aria-haspopup="dialog" aria-controls="eventsV2PrefsModal" data-nav-tooltip="Settings">
+            <span class="ec-events-v2-nav-icon">⚙</span>
+            <span class="ec-events-v2-nav-copy"><strong>Settings</strong><small>Events + interface settings</small></span>
+          </button>
+        </section>
+
+        <section class="ec-events-v2-nav-section" aria-label="Categories">
+          <div class="ec-events-v2-nav-label">Categories</div>
+          <div id="eventsV2CategoryNav"></div>
+        </section>
+
+        <section class="ec-events-v2-nav-section ec-events-v2-support" aria-label="Support">
+          <div class="ec-events-v2-nav-label">Support</div>
+          <button class="ec-events-v2-nav-item" id="eventsV2EmoteHelpButton" type="button" data-support-view="emotes" data-nav-tooltip="Emote Help">
+            <span class="ec-events-v2-nav-icon">?</span>
+            <span class="ec-events-v2-nav-copy"><strong>Emote Help</strong><small>Twitch emote reference</small></span>
+          </button>
+          <button class="ec-events-v2-nav-item" id="eventsV2StatusButton" type="button" data-support-view="status" data-nav-tooltip="Status">
+            <span class="ec-events-v2-nav-icon">⌁</span>
+            <span class="ec-events-v2-nav-copy"><strong>Status</strong><small>EastCoin service health</small></span>
+            <span class="ec-events-v2-status-dot" aria-hidden="true"></span>
+          </button>
+        </section>
+      </nav>
+
+      <div class="ec-events-v2-nav-footer">
+        <p>We DO NOT host nor transmit audiovisual content. Responsibility for content lies with those who host or transmit it.</p>
+        <span>EastCoin v0.56 · Events v4 test</span>
+      </div>
+    </aside>
+
+    <main class="ec-events-v2-main" id="eventsV2Main">
+      <button class="ec-events-v2-mobile-menu" id="eventsV2MobileMenu" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
+      <button class="ec-events-v2-nav-cycle" id="eventsV2NavCycle" type="button" aria-label="Compact navigation" title="Compact navigation">‹</button>
+
+      <header class="ec-events-v2-toolbar">
+        <div class="ec-events-v2-toolbar-copy">
+          <span>Event browser</span>
+          <strong id="eventsV2ViewTitle">All Events</strong>
+        </div>
+        <div class="ec-events-v2-day-tabs" role="group" aria-label="Event date">
+          <button class="is-active" type="button" data-events-mode="today">Today</button>
+          <button type="button" data-events-mode="tomorrow">Tomorrow</button>
+        </div>
+        <button class="ec-events-v2-refresh" id="eventsV2Refresh" type="button">↻ Refresh</button>
+      </header>
+
+      <section class="ec-events-v2-continue" id="eventsV2Continue" hidden>
+        <div class="ec-events-v2-continue-art" id="eventsV2ContinueArt"></div>
+        <div class="ec-events-v2-continue-copy">
+          <span>Continue watching</span>
+          <strong id="eventsV2ContinueTitle">Recent event</strong>
+          <small id="eventsV2ContinueMeta">Resume your last EastCoin event.</small>
+        </div>
+        <button id="eventsV2ContinueButton" type="button">Resume</button>
+      </section>
+
+      <div class="ec-events-v2-status" id="eventsV2Status" role="status" aria-live="polite">
+        <span class="ec-events-v2-status-pulse" aria-hidden="true"></span>
+        <strong id="eventsV2StatusText">Loading events…</strong>
+        <small id="eventsV2StatusMeta"></small>
+      </div>
+
+      <section class="ec-events-v2-directory" id="eventsV2Directory">
+        <div class="ec-events-v2-loading">
+          <span></span>
+          <strong>Loading events</strong>
+          <small>Building the simplified EastCoin event list.</small>
+        </div>
+      </section>
+    </main>
+
+    <div class="ec-events-v2-chat-resizer" id="eventsV2ChatResizer" role="separator" aria-label="Resize Twitch chat" aria-orientation="vertical" tabindex="0"><span></span></div>
+
+    <aside class="ec-events-v2-chat" id="eventsV2Chat" aria-label="Twitch chat">
+      <iframe
+        id="eventsV2TwitchChat"
+        title="zwades Twitch chat"
+        src="https://www.twitch.tv/embed/zwades/chat?parent=eastcoins.pages.dev&parent=eastcoin.vip&parent=www.eastcoin.vip&parent=localhost&parent=127.0.0.1&darkpopout"
+        referrerpolicy="strict-origin-when-cross-origin"
+        loading="eager"></iframe>
+    </aside>
+  </div>
+
+  <div class="ec-events-v2-mobile-overlay" id="eventsV2MobileOverlay" hidden></div>
+
+
+  <section class="ec-events-v2-support-drawer" id="eventsV2SupportDrawer" hidden aria-hidden="true">
+    <button class="ec-events-v2-support-scrim" id="eventsV2SupportScrim" type="button" aria-label="Close support panel"></button>
+    <aside class="ec-events-v2-support-panel" role="dialog" aria-modal="true" aria-labelledby="eventsV2SupportTitle">
+      <header class="ec-events-v2-support-head">
+        <div>
+          <span id="eventsV2SupportKicker">EastCoin support</span>
+          <h2 id="eventsV2SupportTitle">Support</h2>
+        </div>
+        <button id="eventsV2SupportClose" type="button" aria-label="Close support panel">×</button>
+      </header>
+      <div class="ec-events-v2-support-body">
+        <iframe
+          id="eventsV2SupportFrame"
+          title="EastCoin support"
+          referrerpolicy="strict-origin-when-cross-origin"
+          hidden></iframe>
+        <div class="ec-events-v2-status-drawer-content" id="eventsV2StatusDrawerContent" hidden></div>
+      </div>
+    </aside>
+  </section>
+
+  <div class="ec-events-v2-modal" id="eventsV2PrefsModal" hidden aria-hidden="true">
+    <section class="ec-events-v2-dialog" role="dialog" aria-modal="true" aria-labelledby="eventsV2PrefsTitle">
+      <header>
+        <div><span>EastCoin interface</span><h2 id="eventsV2PrefsTitle">Settings</h2></div>
+        <button id="eventsV2PrefsClose" type="button" aria-label="Close settings">×</button>
+      </header>
+
+      <div class="ec-events-v2-pref-group">
+        <h3>Events</h3>
+        <label><span><strong>Show artwork</strong><small>Use team badges and event imagery when available.</small></span><input id="eventsV2PrefArtwork" type="checkbox" /></label>
+        <label><span><strong>Compact event cards</strong><small>Fit more games on screen while keeping the larger type scale.</small></span><input id="eventsV2PrefCompact" type="checkbox" /></label>
+        <label><span><strong>Starting soon first</strong><small>Prioritize live and near-kickoff events within each category.</small></span><input id="eventsV2PrefSoon" type="checkbox" /></label>
+      </div>
+
+      <div class="ec-events-v2-pref-group">
+        <h3>Interface</h3>
+        <label><span><strong>Show Twitch chat</strong><small>Keep the EastCoin Twitch chat column visible.</small></span><input id="eventsV2PrefChat" type="checkbox" /></label>
+        <label><span><strong>Start with compact navigation</strong><small>Use the icon rail instead of the full navigation panel.</small></span><input id="eventsV2PrefCompactNav" type="checkbox" /></label>
+        <label><span><strong>Reduce motion</strong><small>Minimize interface transitions and animations.</small></span><input id="eventsV2PrefMotion" type="checkbox" /></label>
+        <label><span><strong>Auto-hide bottom controls</strong><small>Preserve the existing EastCoin preference for the player utility dock.</small></span><input id="eventsV2PrefDock" type="checkbox" /></label>
+        <button class="ec-events-v2-reset" id="eventsV2ResetChat" type="button">Reset chat width</button>
+      </div>
+
+      <footer><button id="eventsV2PrefsDone" type="button">Done</button></footer>
+    </section>
+  </div>
+
+
+  <div class="ec-events-v2-modal" id="eventsV2MvPromptModal" hidden aria-hidden="true">
+    <section class="ec-events-v2-dialog ec-events-v4-open-mv-dialog" role="dialog" aria-modal="true" aria-labelledby="eventsV4MvPromptTitle">
+      <header>
+        <div>
+          <span id="eventsV4MvPromptKicker">MultiView ready</span>
+          <h2 id="eventsV4MvPromptTitle">Open these streams in MultiView?</h2>
+        </div>
+        <button id="eventsV4MvPromptClose" type="button" aria-label="Close MultiView prompt">×</button>
+      </header>
+
+      <div class="ec-events-v4-open-mv-body">
+        <p id="eventsV4MvPromptCopy">You have multiple streams queued and ready to watch together.</p>
+        <div class="ec-events-v4-open-mv-streams" id="eventsV4MvPromptStreams"></div>
+      </div>
+
+      <footer class="ec-events-v4-open-mv-actions">
+        <button class="ec-events-v4-keep-browsing" id="eventsV4MvKeepBrowsing" type="button">Keep Browsing</button>
+        <button class="ec-events-v4-open-multiview" id="eventsV4MvOpen" type="button">Open MultiView</button>
+      </footer>
+    </section>
+  </div>
+
+  <div class="ec-events-v2-modal" id="eventsV2MvModal" hidden aria-hidden="true">
+    <section class="ec-events-v2-dialog ec-events-v2-mv-dialog" role="dialog" aria-modal="true" aria-labelledby="eventsV2MvTitle">
+      <header>
+        <div><span>MultiView is full</span><h2 id="eventsV2MvTitle">Choose a slot to replace</h2></div>
+        <button id="eventsV2MvClose" type="button" aria-label="Close MultiView slot picker">×</button>
+      </header>
+      <div class="ec-events-v2-mv-slots" id="eventsV2MvSlots"></div>
+    </section>
+  </div>
+
+  <div class="ec-events-v2-toast" id="eventsV2Toast" role="status" aria-live="polite"></div>
+
+  <script src="assets/eastcoins-ppv-api.js?v=ppv-direct1"></script>
+  <script src="assets/eastcoins-streamed-api.js?v=api-unified2"></script>
+  <script src="assets/eastcoins-events-redesign-v4-test.js?v=events5"></script>
+</body>
+</html>
