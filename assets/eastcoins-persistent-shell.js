@@ -139,8 +139,7 @@
   let pendingPlayerRevealPollTimer = 0;
   let pendingPlayerRevealWarningTimer = 0;
   let pendingPlayerRevealStopTimer = 0;
-  let directPlayerRevealPollTimer = 0;
-  let directPlayerRevealWarningTimer = 0;
+  let playerDocumentWarningTimer = 0;
   let lastSettingsTrigger = settingsButton;
   let lastDrawerTrigger = null;
 
@@ -316,59 +315,41 @@
     }
   }
 
-  function playerRequestHasMedia(parameters = currentPlayerParameters) {
-    return SHARED_PLAYER_PARAMETER_NAMES.some((name) => {
-      const value = parameters.get(name);
-      return value !== null && String(value).trim() !== "";
-    });
+  function clearPlayerDocumentWarningTimer() {
+    window.clearTimeout(playerDocumentWarningTimer);
+    playerDocumentWarningTimer = 0;
   }
 
-  function clearDirectPlayerRevealTimers() {
-    window.clearInterval(directPlayerRevealPollTimer);
-    window.clearTimeout(directPlayerRevealWarningTimer);
-    directPlayerRevealPollTimer = 0;
-    directPlayerRevealWarningTimer = 0;
-  }
-
-  function finishDirectPlayerReveal() {
-    clearDirectPlayerRevealTimers();
+  function finishPlayerDocumentLoad() {
+    clearPlayerDocumentWarningTimer();
     playerLoader.classList.add("is-hidden");
     if (playerLoaderActions) playerLoaderActions.hidden = true;
   }
 
-  function startDirectPlayerRevealWatch() {
-    if (pendingPlayerReveal || !playerRequestHasMedia()) return false;
+  /*
+    The outer shell is responsible only for loading EastCoin's own
+    player.html document. It must not remain on top while waiting for a
+    provider iframe. player.html already owns event resolution, server
+    selection, provider loading, retries, and provider error states.
+  */
+  function startPlayerDocumentWarning() {
+    clearPlayerDocumentWarningTimer();
 
-    clearDirectPlayerRevealTimers();
+    playerDocumentWarningTimer = window.setTimeout(() => {
+      if (playerReady) return;
 
-    const check = () => {
-      if (playerHasVisibleContent()) finishDirectPlayerReveal();
-    };
+      playerLoaderLabel.textContent =
+        "EastCoin player is taking longer than expected";
 
-    check();
-    if (playerHasVisibleContent()) return true;
-
-    playerLoader.classList.remove("is-hidden");
-    if (playerLoaderHint) {
-      playerLoaderHint.textContent = "Waiting for the selected stream to finish loading.";
-    }
-    if (playerLoaderActions) playerLoaderActions.hidden = true;
-
-    directPlayerRevealPollTimer = window.setInterval(check, 100);
-    directPlayerRevealWarningTimer = window.setTimeout(() => {
-      if (playerHasVisibleContent()) {
-        finishDirectPlayerReveal();
-        return;
-      }
-      playerLoaderLabel.textContent = "This stream is taking longer than usual";
       if (playerLoaderHint) {
         playerLoaderHint.textContent =
-          "You can keep waiting, retry the same stream, or return to Events without reloading EastCoin.";
+          "The player page has not finished loading. You can retry it or return to Events.";
       }
-      if (playerLoaderActions) playerLoaderActions.hidden = false;
-    }, 12000);
 
-    return true;
+      if (playerLoaderActions) {
+        playerLoaderActions.hidden = false;
+      }
+    }, 7000);
   }
 
   function cancelPendingPlayerReveal({ hideLoader = true } = {}) {
@@ -431,25 +412,39 @@
     );
 
     /*
-      A slow/broken provider should never strand somebody on the
-      Live Player homepage. After 12 seconds, uncover Events again so
-      the visitor can retry or choose something else while the player
-      is still allowed a little more time to finish in the background.
+      Prefer the seamless real-frame handoff, but do not keep Events
+      covering a provider that is simply slow to resolve.
+
+      Once player.html itself is ready, give the player a brief chance
+      to create activeFrame. If it still has not, reveal player.html so
+      its own loading/server/error UI can take over.
     */
     pendingPlayerRevealWarningTimer = window.setTimeout(() => {
       if (!pendingPlayerReveal) return;
 
+      if (playerReady) {
+        showToast(
+          "The provider is still loading. Opening the player so you can see its status."
+        );
+        finishPendingPlayerReveal();
+        return;
+      }
+
       browseLoader.classList.add("is-hidden");
       showToast(
-        "This event is taking longer to open. You can retry it or choose another event."
+        "EastCoin is still preparing the player. You can retry the event or choose another."
       );
-    }, 12000);
+    }, 3500);
 
     pendingPlayerRevealStopTimer = window.setTimeout(() => {
       if (!pendingPlayerReveal) return;
 
-      cancelPendingPlayerReveal({ hideLoader: true });
-    }, 30000);
+      if (playerReady) {
+        finishPendingPlayerReveal();
+      } else {
+        cancelPendingPlayerReveal({ hideLoader: true });
+      }
+    }, 10000);
   }
 
   function beginPendingPlayerReveal(parameters) {
@@ -470,11 +465,16 @@
   }
 
   function setPlayerLoading(label = "Loading Live Player") {
-    clearDirectPlayerRevealTimers();
+    clearPlayerDocumentWarningTimer();
     playerLoaderLabel.textContent = label;
-    if (playerLoaderHint) playerLoaderHint.textContent = "Preparing the EastCoin player.";
-    if (playerLoaderActions) playerLoaderActions.hidden = true;
+    if (playerLoaderHint) {
+      playerLoaderHint.textContent = "Preparing the EastCoin player.";
+    }
+    if (playerLoaderActions) {
+      playerLoaderActions.hidden = true;
+    }
     playerLoader.classList.remove("is-hidden");
+    startPlayerDocumentWarning();
   }
 
   function setBrowseLoading(view) {
@@ -1360,7 +1360,7 @@
   });
 
   playerLoaderEvents?.addEventListener("click", () => {
-    clearDirectPlayerRevealTimers();
+    clearPlayerDocumentWarningTimer();
     openView("events", lastEventsParameters, { push: true });
   });
 
@@ -1388,15 +1388,18 @@
 
   playerFrame.addEventListener("load", () => {
     playerReady = true;
+    clearPlayerDocumentWarningTimer();
     postToFrame(playerFrame, shellState());
     window.setTimeout(flushPendingGameOverlay, 120);
 
-    /* Direct event/watch links now wait for activeFrame too, so the player
-       homepage/form never flashes merely because player.html loaded first. */
     if (pendingPlayerReveal) {
       startPendingPlayerRevealWatch();
-    } else if (!startDirectPlayerRevealWatch()) {
-      playerLoader.classList.add("is-hidden");
+    } else {
+      /*
+        EastCoin's own player document is ready. Remove the outer loader
+        immediately and let player.html handle the event/provider from here.
+      */
+      finishPlayerDocumentLoad();
     }
   });
 
@@ -1432,12 +1435,14 @@
     if (message.type === "eastcoin:view-ready") {
       if (fromPlayer) {
         playerReady = true;
+        clearPlayerDocumentWarningTimer();
         postToFrame(playerFrame, shellState());
         flushPendingGameOverlay();
+
         if (pendingPlayerReveal) {
           startPendingPlayerRevealWatch();
-        } else if (!startDirectPlayerRevealWatch()) {
-          playerLoader.classList.add("is-hidden");
+        } else {
+          finishPlayerDocumentLoad();
         }
       } else {
         browseReady = true;
@@ -1497,7 +1502,7 @@
   });
 
   window.addEventListener("pagehide", () => {
-    clearDirectPlayerRevealTimers();
+    clearPlayerDocumentWarningTimer();
     clearPendingPlayerRevealTimers();
   }, { once: true });
 

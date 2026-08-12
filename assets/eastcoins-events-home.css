@@ -1904,3 +1904,92 @@ html.ec-events-shell-embedded .ec-events-v2-toolbar {
   .ec-events-v2-section-head { align-items: flex-start; }
   .ec-events-v2-section-counts { flex: 0 0 auto; }
 }
+
+
+/* ================================================================
+   v0.58 HOTFIX — GUARANTEE COMPACT-NAV HAMBURGER VISIBILITY
+   The button already exists and its JS toggle is intact. These rules
+   intentionally sit last so legacy shell CSS cannot hide it on desktop.
+   ================================================================ */
+
+@media (min-width: 901px) {
+  body.ec-persistent-shell #mobileMenu.ec-compact-nav-toggle {
+    position: fixed !important;
+    top: 12px !important;
+    left: calc(var(--ec-nav-width, 276px) + 12px) !important;
+    z-index: 9999 !important;
+
+    display: grid !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+
+    place-items: center !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+
+    clip: auto !important;
+    clip-path: none !important;
+    overflow: visible !important;
+    transform: none !important;
+
+    border: 1px solid rgba(201,164,79,.30) !important;
+    border-radius: 10px !important;
+    outline: 0 !important;
+
+    color: #ead6a7 !important;
+    background: rgba(5,5,5,.97) !important;
+    box-shadow:
+      0 12px 30px rgba(0,0,0,.52),
+      inset 0 1px 0 rgba(255,255,255,.025) !important;
+
+    font-size: 1rem !important;
+    font-weight: 950 !important;
+    line-height: 1 !important;
+  }
+
+  body.ec-persistent-shell #mobileMenu.ec-compact-nav-toggle:hover,
+  body.ec-persistent-shell #mobileMenu.ec-compact-nav-toggle:focus-visible {
+    color: #fff1bd !important;
+    border-color: rgba(201,164,79,.55) !important;
+    background: rgba(54,13,21,.98) !important;
+    outline: 2px solid rgba(201,164,79,.18) !important;
+    outline-offset: 2px !important;
+  }
+
+  /* Full navigation: place the hamburger just inside the player area. */
+  body.ec-persistent-shell:not(.sidebar-collapsed):not(.sidebar-hidden)
+    #mobileMenu.ec-compact-nav-toggle {
+    left: calc(var(--ec-nav-width, 276px) + 12px) !important;
+  }
+
+  /* Compact rail: this is the state that was losing the hamburger. */
+  body.ec-persistent-shell.sidebar-collapsed
+    #mobileMenu.ec-compact-nav-toggle {
+    left: calc(var(--ec-nav-rail, 72px) + 12px) !important;
+    display: grid !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  /* Fully hidden nav remains recoverable from the same control. */
+  body.ec-persistent-shell.sidebar-hidden
+    #mobileMenu.ec-compact-nav-toggle {
+    left: 12px !important;
+    display: grid !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  /* Theater intentionally remains distraction-free. */
+  body.ec-persistent-shell.theater-mode
+    #mobileMenu.ec-compact-nav-toggle {
+    display: none !important;
+  }
+}
