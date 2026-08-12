@@ -27,11 +27,13 @@
   const settingChat = document.getElementById("persistentSettingChat");
   const settingSidebar = document.getElementById("persistentSettingSidebar");
   const settingMotion = document.getElementById("persistentSettingMotion");
-  const settingDockAutohide = document.getElementById(
-    "persistentSettingDockAutohide"
-  );
+  const settingArtwork = document.getElementById("persistentSettingArtwork");
+  const settingCompactEvents = document.getElementById("persistentSettingCompactEvents");
+  const settingSoonFirst = document.getElementById("persistentSettingSoonFirst");
   const resetChatWidth = document.getElementById("persistentResetChatWidth");
-  const utilityDock = document.getElementById("persistentUtilityDock");
+  const controlsToggle = document.getElementById("persistentControlsToggle");
+  const controlsDrawer = document.getElementById("persistentControlsDrawer");
+  const controlsClose = document.getElementById("persistentControlsClose");
   const theaterButton = document.getElementById("persistentTheaterButton");
   const chatButton = document.getElementById("persistentChatButton");
   const navButton = document.getElementById("persistentNavButton");
@@ -45,6 +47,13 @@
   const eventsLiveCount = document.getElementById("eventsLiveCount");
   const otherStreamsBadge = document.getElementById("otherStreamsBadge");
   const otherStreamsCount = document.getElementById("otherStreamsCount");
+  const allEventsCount = document.getElementById("persistentAllEventsCount");
+  const trendingEventsCount = document.getElementById("persistentTrendingCount");
+  const omniForm = document.getElementById("persistentOmniForm");
+  const omniInput = document.getElementById("persistentOmniInput");
+  const omniAction = document.getElementById("persistentOmniAction");
+  const omniHint = document.getElementById("persistentOmniHint");
+  const railSearch = document.getElementById("persistentRailSearch");
 
   if (
     !body || !layout || !sidebar || !mobileMenu || !mobileOverlay ||
@@ -68,7 +77,7 @@
   const CHAT_WIDTH_STORAGE_KEY = "eastcoinsChatWidthV2";
   const CHAT_COLLAPSED_STORAGE_KEY = "eastcoinsChatCollapsed";
   const REDUCED_MOTION_STORAGE_KEY = "eastcoinsReducedMotion";
-  const DOCK_AUTOHIDE_STORAGE_KEY = "eastcoinsDockAutohide";
+  const EVENT_PREFS_STORAGE_KEY = "eastcoinEventsRedesignV2Prefs";
   const DEFAULT_CHAT_WIDTH = 360;
   const MIN_CHAT_WIDTH = 280;
   const MIN_VIEW_WIDTH = 420;
@@ -83,7 +92,8 @@
     "streamedStream",
     "new"
   ];
-  const DRAWER_VIEWS = new Set(["events", "favorites", "emotes"]);
+  const DRAWER_VIEWS = new Set(["events", "favorites", "emotes", "status"]);
+  const EVENT_FILTER_PARAMETER_NAMES = ["scope", "sport", "q", "mode"];
   const SHARED_PLAYER_PARAMETER_NAMES = [
     "event",
     "source",
@@ -109,7 +119,9 @@
   const sharedInitialPlayerRequest =
     initialRequestUsesSharedPlayerLink();
 
-  let currentView = "player";
+  let currentView = "events";
+  let lastEventsParameters = new URLSearchParams("scope=all");
+  let drawerReturnView = null;
   let currentPlayerUrl = "";
   let currentBrowseUrl = "";
   let currentPlayerParameters = new URLSearchParams("shell=1");
@@ -125,9 +137,6 @@
   let pendingPlayerRevealStopTimer = 0;
   let lastSettingsTrigger = settingsButton;
   let lastDrawerTrigger = null;
-  let dockAutoHideEnabled = true;
-  let dockHideTimer = 0;
-  let dockActivityFrame = 0;
 
   function showToast(message) {
     if (!toast) return;
@@ -157,85 +166,52 @@
     } catch {}
   }
 
-  function clearDockHideTimer() {
-    window.clearTimeout(dockHideTimer);
-    dockHideTimer = 0;
-  }
-
-  function dockShouldRemainVisible() {
-    return Boolean(
-      !dockAutoHideEnabled ||
-      (settingsModal && !settingsModal.hidden) ||
-      utilityDock?.matches(":hover") ||
-      utilityDock?.contains(document.activeElement)
-    );
-  }
-
-  function scheduleDockHide() {
-    clearDockHideTimer();
-    if (!dockAutoHideEnabled || !utilityDock) return;
-
-    const delay = isMobileNavigation() ? 4300 : 3000;
-    dockHideTimer = window.setTimeout(() => {
-      if (dockShouldRemainVisible()) {
-        scheduleDockHide();
-        return;
-      }
-      body.classList.add("dock-idle");
-    }, delay);
-  }
-
-  function showUtilityDock(schedule = true) {
-    body.classList.remove("dock-idle");
-    if (schedule) scheduleDockHide();
-  }
-
-  function setDockAutoHide(enabled, save = true) {
-    dockAutoHideEnabled = Boolean(enabled);
-    body.classList.toggle("dock-autohide-disabled", !dockAutoHideEnabled);
-
-    if (settingDockAutohide) {
-      settingDockAutohide.checked = dockAutoHideEnabled;
+  function readEventPrefs() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(EVENT_PREFS_STORAGE_KEY) || "null") || {};
+      return {
+        artwork: parsed.artwork !== false,
+        compact: Boolean(parsed.compact),
+        soonFirst: parsed.soonFirst !== false
+      };
+    } catch {
+      return { artwork: true, compact: false, soonFirst: true };
     }
+  }
 
-    if (save) {
-      writeStoredBoolean(DOCK_AUTOHIDE_STORAGE_KEY, dockAutoHideEnabled);
+  function writeEventPrefs(prefs) {
+    try {
+      localStorage.setItem(EVENT_PREFS_STORAGE_KEY, JSON.stringify(prefs));
+    } catch {}
+    if (!browseDrawer.hidden) {
+      postToFrame(browseFrame, { type: "eastcoin:event-prefs-updated", prefs });
     }
-
-    clearDockHideTimer();
-    showUtilityDock(dockAutoHideEnabled);
   }
 
-  function noteDockActivity() {
-    if (dockActivityFrame) return;
-    dockActivityFrame = window.requestAnimationFrame(() => {
-      dockActivityFrame = 0;
-      showUtilityDock(true);
-    });
+  function clearDockHideTimer() {}
+  function scheduleDockHide() {}
+  function showUtilityDock() {}
+
+  function controlsDrawerIsOpen() {
+    return Boolean(controlsDrawer && controlsDrawer.classList.contains("is-open"));
   }
 
-  ["pointermove", "pointerdown", "touchstart"].forEach((eventName) => {
-    document.addEventListener(eventName, noteDockActivity, { passive: true });
-  });
-
-  document.addEventListener("keydown", noteDockActivity);
-  document.addEventListener("focusin", noteDockActivity);
-  utilityDock?.addEventListener("pointerenter", () => {
-    clearDockHideTimer();
-    showUtilityDock(false);
-  });
-  utilityDock?.addEventListener("pointerleave", scheduleDockHide);
-  utilityDock?.addEventListener("focusout", scheduleDockHide);
+  function setControlsDrawerOpen(open) {
+    if (!controlsDrawer || !controlsToggle) return;
+    const enabled = Boolean(open);
+    controlsDrawer.classList.toggle("is-open", enabled);
+    controlsDrawer.setAttribute("aria-hidden", String(!enabled));
+    controlsToggle.setAttribute("aria-expanded", String(enabled));
+    controlsToggle.setAttribute("aria-label", enabled ? "Close view controls" : "Open view controls");
+  }
 
   function setUtilityButton(button, icon, label, active = false) {
     if (!button) return;
-    const iconElement = button.querySelector(".ec-persistent-utility-icon");
-    const labelElement = button.querySelector(".ec-persistent-utility-label");
-
+    const iconElement = button.querySelector(".ec-persistent-control-icon");
+    const labelElement = button.querySelector("strong");
     if (iconElement) iconElement.textContent = icon;
     if (labelElement) labelElement.textContent = label;
     button.setAttribute("aria-label", label);
-    button.dataset.tooltip = label;
     button.classList.toggle("is-active", Boolean(active));
   }
 
@@ -279,14 +255,11 @@
     const sidebarMode = isMobileNavigation()
       ? (navigationVisible ? "expanded" : "hidden")
       : desktopSidebarMode();
-    const navIcon = sidebarMode === "expanded" ? "‹" : sidebarMode === "rail" ? "×" : "☰";
-    const navLabel = sidebarMode === "expanded"
-      ? "Compact nav"
-      : sidebarMode === "rail"
-        ? "Hide nav"
-        : "Show nav";
-    setUtilityButton(navButton, navIcon, navLabel, sidebarMode !== "expanded");
-    navButton?.setAttribute("aria-pressed", String(sidebarMode !== "expanded"));
+    const navVisible = sidebarMode !== "hidden";
+    const navIcon = navVisible ? "◀" : "☰";
+    const navLabel = navVisible ? "Hide nav" : "Show nav";
+    setUtilityButton(navButton, navIcon, navLabel, navVisible);
+    navButton?.setAttribute("aria-pressed", String(navVisible));
   }
 
   function shellState() {
@@ -420,6 +393,7 @@
 
   function beginPendingPlayerReveal(parameters) {
     cancelPendingPlayerReveal({ hideLoader: false });
+    drawerReturnView = null;
 
     const request = new URLSearchParams(parameters);
     pendingPlayerReveal = {
@@ -445,7 +419,9 @@
         ? "Loading Events"
         : view === "favorites"
           ? "Loading Other Streams"
-          : "Loading Emote Help";
+          : view === "emotes"
+            ? "Loading Emote Help"
+            : "Loading Status";
     browseLoader.classList.remove("is-hidden");
   }
 
@@ -463,7 +439,9 @@
           ? "favorites.html"
           : view === "emotes"
             ? "emote-help.html"
-            : "player.html";
+            : view === "status"
+              ? "status.html"
+              : "player.html";
     const url = new URL(filename, window.location.href);
     url.search = parameters.toString();
     return url.href;
@@ -475,8 +453,8 @@
 
     if (DRAWER_VIEWS.has(view)) {
       clean.set("view", view);
-      if (view === "events" && parameters.has("event")) {
-        clean.set("eventDetail", parameters.get("event"));
+      if (view === "events") {
+        copyParameters(parameters, clean, EVENT_FILTER_PARAMETER_NAMES);
       }
     } else {
       copyParameters(parameters, clean, PLAYER_PARAMETER_NAMES);
@@ -487,16 +465,39 @@
     return `${url.pathname}${url.search}${url.hash}`;
   }
 
-  function updateActiveNavigation(view) {
-    document.querySelectorAll("[data-ec-shell-view]").forEach((link) => {
-      const active = link.dataset.ecShellView === view;
-      link.classList.toggle("active", active);
-      if (active) link.setAttribute("aria-current", "page");
-      else link.removeAttribute("aria-current");
+  function updateActiveNavigation(view, parameters = new URLSearchParams()) {
+    const scope = parameters.get("scope") || "all";
+    const sport = parameters.get("sport") || "";
+
+    document.querySelectorAll("[data-ec-shell-view]").forEach((item) => {
+      const itemView = item.dataset.ecShellView;
+      let active = itemView === view;
+
+      if (active && view === "events") {
+        const itemScope = item.dataset.ecEventsScope || "";
+        const itemSport = item.dataset.ecEventsSport || "";
+        if (itemSport) active = itemSport === sport;
+        else if (itemScope) active = !sport && itemScope === scope;
+        else active = false;
+      }
+
+      item.classList.toggle("is-active", active);
+      item.classList.toggle("active", active);
+      if (active) item.setAttribute("aria-current", "page");
+      else item.removeAttribute("aria-current");
     });
   }
 
-  function updateNavigationCounts({ liveCount, favoriteCount } = {}) {
+  function updateNavigationCounts({ allCount, liveCount, trendingCount, categoryCounts, favoriteCount } = {}) {
+    if (Number.isFinite(Number(allCount)) && allEventsCount) allEventsCount.textContent = String(Math.max(0, Number(allCount)));
+    if (Number.isFinite(Number(trendingCount)) && trendingEventsCount) trendingEventsCount.textContent = String(Math.max(0, Number(trendingCount)));
+    if (categoryCounts && typeof categoryCounts === "object") {
+      document.querySelectorAll("[data-ec-category-count]").forEach((badge) => {
+        const count = Math.max(0, Number(categoryCounts[badge.dataset.ecCategoryCount] || 0));
+        badge.textContent = String(count);
+        badge.hidden = count === 0;
+      });
+    }
     if (Number.isFinite(Number(liveCount)) && eventsLiveBadge && eventsLiveCount) {
       const count = Math.max(0, Number(liveCount));
       eventsLiveCount.textContent = String(count);
@@ -523,7 +524,9 @@
     document.title =
       view === "events"
         ? "Events | EastCoin"
-        : view === "favorites"
+        : view === "status"
+          ? "Status | EastCoin"
+          : view === "favorites"
           ? "Other Streams | EastCoin"
           : view === "emotes"
             ? "Emote Help | EastCoin"
@@ -565,10 +568,10 @@
         kicker: "Browse sites without stopping playback"
       };
     }
-    return {
-      title: "Emote Help",
-      kicker: "Review setup help without stopping playback"
-    };
+    if (view === "emotes") {
+      return { title: "Emote Help", kicker: "Review setup help without stopping playback" };
+    }
+    return { title: "Status", kicker: "Check EastCoin without stopping playback" };
   }
 
   function openBrowseDrawer(view, parameters = new URLSearchParams(), trigger = null) {
@@ -576,6 +579,14 @@
     nextParameters.set("shell", "1");
     const nextUrl = childUrl(view, nextParameters);
     const copy = drawerCopy(view);
+    const previousView = currentView;
+
+    if (view !== "events" && previousView === "events") {
+      drawerReturnView = "events";
+    } else if (view === "events") {
+      lastEventsParameters = new URLSearchParams(nextParameters);
+      drawerReturnView = null;
+    }
 
     currentView = view;
     lastDrawerTrigger = trigger || lastDrawerTrigger;
@@ -586,7 +597,8 @@
     browseDrawer.hidden = false;
     browseDrawer.setAttribute("aria-hidden", "false");
     body.classList.add("drawer-open");
-    updateActiveNavigation(view);
+    body.classList.toggle("drawer-events-home", view === "events");
+    updateActiveNavigation(view, nextParameters);
     updateDocumentTitle(view);
     body.classList.remove("menu-open");
     updateNavigationButton();
@@ -603,9 +615,25 @@
       setBrowseLoading(view);
     }
 
-    window.setTimeout(() => {
-      browseClose.focus({ preventScroll: true });
-    }, 40);
+    if (view === "events") {
+      browseClose.textContent = "▶ Back to video";
+      browseClose.setAttribute("aria-label", "Return to the current video");
+      browseClose.hidden = !currentPlayerUrl;
+    } else {
+      browseClose.hidden = false;
+      browseClose.textContent = previousView === "events"
+        ? "Back to Events"
+        : "Back to video";
+      browseClose.setAttribute(
+        "aria-label",
+        previousView === "events"
+          ? "Return to Events"
+          : "Close browser and return to video"
+      );
+      window.setTimeout(() => {
+        browseClose.focus({ preventScroll: true });
+      }, 40);
+    }
   }
 
   function closeBrowseDrawer({ replaceHistory = true, restoreFocus = true } = {}) {
@@ -613,9 +641,19 @@
 
     if (!drawerIsOpen()) return;
 
+    if (replaceHistory && drawerReturnView === "events") {
+      drawerReturnView = null;
+      openBrowseDrawer("events", lastEventsParameters, null);
+      updateHistory("events", lastEventsParameters, {
+        push: false,
+        replace: true
+      });
+      return;
+    }
+
     browseDrawer.hidden = true;
     browseDrawer.setAttribute("aria-hidden", "true");
-    body.classList.remove("drawer-open");
+    body.classList.remove("drawer-open", "drawer-events-home");
     currentView = "player";
     updateActiveNavigation("player");
     updateDocumentTitle("player");
@@ -642,8 +680,6 @@
     const normalizedView = DRAWER_VIEWS.has(view) ? view : "player";
     const nextParameters = new URLSearchParams(parameters);
     nextParameters.set("shell", "1");
-
-    if (!currentPlayerUrl) loadPlayer(currentPlayerParameters);
 
     if (normalizedView === "player") {
       const hasExplicitPlayerRequest = PLAYER_PARAMETER_NAMES.some(
@@ -731,14 +767,16 @@
             : "";
     const view = hasPlayerParameter
       ? "player"
-      : ["player", "events", "favorites", "emotes"].includes(requestedView)
+      : ["player", "events", "favorites", "emotes", "status"].includes(requestedView)
         ? requestedView
-        : pathView || "player";
+        : pathView || "events";
     const childParameters = new URLSearchParams();
     childParameters.set("shell", "1");
 
     if (view === "player") {
       copyParameters(parameters, childParameters, PLAYER_PARAMETER_NAMES);
+    } else if (view === "events") {
+      copyParameters(parameters, childParameters, EVENT_FILTER_PARAMETER_NAMES);
     } else if (eventDetail) {
       childParameters.set("event", eventDetail);
     }
@@ -763,6 +801,10 @@
     updateActiveNavigation("player");
     updateDocumentTitle("player");
 
+    if (!currentPlayerUrl) {
+      loadPlayer(new URLSearchParams("shell=1"), true);
+    }
+
     if (playerReady) {
       postToPlayer({ type: "eastcoin:toggle-game-overlay" });
     } else {
@@ -780,6 +822,10 @@
   }
 
   function setTheaterMode(enabled) {
+    if (enabled && !currentPlayerUrl) {
+      showToast("Open a stream before entering Theater mode.");
+      return;
+    }
     if (enabled && drawerIsOpen()) {
       closeBrowseDrawer({ replaceHistory: true, restoreFocus: false });
     }
@@ -844,6 +890,27 @@
     );
   }
 
+  function toggleNavigationVisibility() {
+    if (theaterActive) {
+      setTheaterMode(false);
+    }
+
+    if (isMobileNavigation()) {
+      body.classList.toggle("menu-open");
+      updateNavigationButton();
+      postShellState();
+      return;
+    }
+
+    const current = desktopSidebarMode();
+    if (current === "hidden") {
+      const preferRail = settingSidebar?.checked === true;
+      setDesktopSidebarMode(preferRail ? "rail" : "expanded", true);
+    } else {
+      setDesktopSidebarMode("hidden", true);
+    }
+  }
+
   function setChatCollapsed(collapsed, save = true) {
     body.classList.toggle("chat-collapsed", Boolean(collapsed));
     if (save) writeStoredBoolean(CHAT_COLLAPSED_STORAGE_KEY, collapsed);
@@ -873,9 +940,10 @@
         "ec-shell-reduced-motion"
       );
     }
-    if (settingDockAutohide) {
-      settingDockAutohide.checked = dockAutoHideEnabled;
-    }
+    const eventPrefs = readEventPrefs();
+    if (settingArtwork) settingArtwork.checked = eventPrefs.artwork;
+    if (settingCompactEvents) settingCompactEvents.checked = eventPrefs.compact;
+    if (settingSoonFirst) settingSoonFirst.checked = eventPrefs.soonFirst;
   }
 
   function openSettings(trigger = settingsButton) {
@@ -898,10 +966,12 @@
   }
 
   settingsButton?.addEventListener("click", () => openSettings(settingsButton));
-  dockSettingsButton?.addEventListener("click", () => openSettings(dockSettingsButton));
-  theaterButton?.addEventListener("click", () => setTheaterMode(!theaterActive));
-  chatButton?.addEventListener("click", togglePersistentChat);
-  navButton?.addEventListener("click", toggleShellNavigation);
+  controlsToggle?.addEventListener("click", () => setControlsDrawerOpen(!controlsDrawerIsOpen()));
+  controlsClose?.addEventListener("click", () => setControlsDrawerOpen(false));
+  dockSettingsButton?.addEventListener("click", () => { setControlsDrawerOpen(false); openSettings(dockSettingsButton); });
+  theaterButton?.addEventListener("click", () => { setTheaterMode(!theaterActive); setControlsDrawerOpen(false); });
+  chatButton?.addEventListener("click", () => { togglePersistentChat(); setControlsDrawerOpen(false); });
+  navButton?.addEventListener("click", () => { toggleNavigationVisibility(); setControlsDrawerOpen(false); });
   mobileSidebarClose?.addEventListener("click", () => {
     body.classList.remove("menu-open");
     updateNavigationButton();
@@ -912,9 +982,9 @@
       setDesktopSidebarMode("expanded", true);
       return;
     }
-    openView("player", currentPlayerParameters, { push: true, trigger: brandButton });
+    openView("events", new URLSearchParams("scope=all"), { push: true, trigger: brandButton });
   });
-  gameButton?.addEventListener("click", requestGameOverlay);
+  gameButton?.addEventListener("click", () => { requestGameOverlay(); setControlsDrawerOpen(false); });
   settingsClose?.addEventListener("click", closeSettings);
   settingsDone?.addEventListener("click", closeSettings);
   browseClose.addEventListener("click", () => closeBrowseDrawer());
@@ -934,8 +1004,14 @@
   settingMotion?.addEventListener("change", () => {
     setReducedMotion(settingMotion.checked, true);
   });
-  settingDockAutohide?.addEventListener("change", () => {
-    setDockAutoHide(settingDockAutohide.checked, true);
+  [settingArtwork, settingCompactEvents, settingSoonFirst].forEach((input) => {
+    input?.addEventListener("change", () => {
+      writeEventPrefs({
+        artwork: settingArtwork?.checked !== false,
+        compact: Boolean(settingCompactEvents?.checked),
+        soonFirst: settingSoonFirst?.checked !== false
+      });
+    });
   });
   resetChatWidth?.addEventListener("click", () => {
     try {
@@ -970,6 +1046,11 @@
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
+      if (controlsDrawerIsOpen()) {
+        event.preventDefault();
+        setControlsDrawerOpen(false);
+        return;
+      }
       if (settingsModal && !settingsModal.hidden) {
         event.preventDefault();
         closeSettings();
@@ -999,7 +1080,7 @@
       togglePersistentChat();
     } else if (key === "m") {
       event.preventDefault();
-      toggleShellNavigation();
+      toggleNavigationVisibility();
     } else if (key === "g") {
       event.preventDefault();
       requestGameOverlay();
@@ -1146,6 +1227,66 @@
     showToast("Chat width reset.");
   });
 
+  function looksLikeOmniUrl(value) {
+    const trimmed = String(value || "").trim();
+    return /^(https?:\/\/)/i.test(trimmed) || /^[a-z0-9.-]+\.[a-z]{2,}(?:[\/:?#]|$)/i.test(trimmed);
+  }
+
+  function normalizeOmniUrl(value) {
+    const trimmed = String(value || "").trim();
+    const candidate = /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(trimmed) ? trimmed : `https://${trimmed}`;
+    const parsed = new URL(candidate);
+    const local = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+    if (!["https:", "http:"].includes(parsed.protocol)) throw new Error("Only HTTP or HTTPS URLs can be embedded.");
+    if (parsed.protocol === "http:" && !local) throw new Error("Use an HTTPS stream URL on EastCoin.");
+    return parsed.href;
+  }
+
+  function updateOmniMode() {
+    if (!omniForm || !omniInput || !omniAction) return;
+    const urlMode = looksLikeOmniUrl(omniInput.value);
+    omniForm.classList.toggle("is-url", urlMode);
+    omniAction.textContent = urlMode ? "Load" : "Search";
+    if (omniHint) omniHint.textContent = urlMode
+      ? "Press Enter to open this stream in EastCoin."
+      : "Search teams, games and leagues — or paste a stream URL.";
+  }
+
+  omniInput?.addEventListener("input", updateOmniMode);
+  omniForm?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const value = String(omniInput?.value || "").trim();
+    if (!value) {
+      openView("events", new URLSearchParams("scope=all"), { push: true, trigger: omniInput });
+      return;
+    }
+    if (looksLikeOmniUrl(value)) {
+      try {
+        const parameters = new URLSearchParams();
+        parameters.set("watch", normalizeOmniUrl(value));
+        openView("player", parameters, { push: true, trigger: omniInput });
+      } catch (error) {
+        showToast(error?.message || "Enter a valid HTTPS stream URL.");
+      }
+      return;
+    }
+    const parameters = new URLSearchParams();
+    parameters.set("scope", "all");
+    parameters.set("q", value);
+    openView("events", parameters, { push: true, trigger: omniInput });
+  });
+
+  railSearch?.addEventListener("click", () => {
+    if (!isMobileNavigation()) setDesktopSidebarMode("expanded", true);
+    window.setTimeout(() => omniInput?.focus({ preventScroll: true }), 40);
+  });
+
+  document.addEventListener("pointerdown", (event) => {
+    if (!controlsDrawerIsOpen()) return;
+    if (controlsDrawer?.contains(event.target) || controlsToggle?.contains(event.target)) return;
+    setControlsDrawerOpen(false);
+  }, true);
+
   document.addEventListener("click", (event) => {
     const link = event.target.closest("[data-ec-shell-view]");
     if (!link) return;
@@ -1155,6 +1296,10 @@
     const parameters = new URLSearchParams();
     parameters.set("shell", "1");
     if (url.searchParams.get("new") === "1") parameters.set("new", "1");
+    if (view === "events") {
+      if (link.dataset.ecEventsScope) parameters.set("scope", link.dataset.ecEventsScope);
+      if (link.dataset.ecEventsSport) parameters.set("sport", link.dataset.ecEventsSport);
+    }
     openView(view, parameters, { push: true, trigger: link });
   });
 
@@ -1188,6 +1333,16 @@
 
     if (message.type === "eastcoin:navigation-counts") {
       updateNavigationCounts(message);
+      return;
+    }
+
+    if (message.type === "eastcoin:event-nav-state") {
+      updateNavigationCounts(message);
+      return;
+    }
+
+    if (message.type === "eastcoin:open-multiview") {
+      window.location.href = new URL("multiview.html", window.location.href).href;
       return;
     }
 
@@ -1326,7 +1481,6 @@
   let savedChatWidth = DEFAULT_CHAT_WIDTH;
   let savedChatCollapsed = false;
   let savedReducedMotion = false;
-  let savedDockAutohide = true;
 
   try {
     const storedMode = localStorage.getItem(SIDEBAR_MODE_STORAGE_KEY);
@@ -1337,7 +1491,6 @@
         : "expanded";
     savedChatCollapsed = readStoredBoolean(CHAT_COLLAPSED_STORAGE_KEY, false);
     savedReducedMotion = readStoredBoolean(REDUCED_MOTION_STORAGE_KEY, false);
-    savedDockAutohide = readStoredBoolean(DOCK_AUTOHIDE_STORAGE_KEY, true);
     const candidate = Number(localStorage.getItem(CHAT_WIDTH_STORAGE_KEY));
     if (Number.isFinite(candidate) && candidate > 0) savedChatWidth = candidate;
   } catch {}
@@ -1360,7 +1513,6 @@
 
   setChatCollapsed(savedChatCollapsed, false);
   setReducedMotion(savedReducedMotion, false);
-  setDockAutoHide(savedDockAutohide, false);
   syncSettings();
   updateUtilityDock();
   initializeFootballCountdowns();
@@ -1369,10 +1521,10 @@
   if (initialRoute.view === "player") {
     currentPlayerParameters = new URLSearchParams(initialRoute.childParameters);
   }
-  loadPlayer(currentPlayerParameters);
   openView(initialRoute.view, initialRoute.childParameters, {
     push: false,
     replace: true
   });
-  showUtilityDock(true);
+  setControlsDrawerOpen(false);
+  updateOmniMode();
 })();

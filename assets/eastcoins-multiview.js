@@ -1620,9 +1620,56 @@
 
   setReducedMotion(readReducedMotion(), false);
   setControlsHidden(readControlsHidden(), false);
-  initializeCountdown();
   createGridResizers();
   setLayout(state.layout, false);
   panels.forEach((_, index) => renderSlot(index));
   updateStatus();
+
+  const unifiedOmni = document.getElementById("mvUnifiedOmni");
+  const unifiedOmniInput = document.getElementById("mvUnifiedOmniInput");
+  const unifiedOmniAction = document.getElementById("mvUnifiedOmniAction");
+  const unifiedOmniHint = document.getElementById("mvUnifiedOmniHint");
+  const unifiedRailSearch = document.getElementById("mvUnifiedRailSearch");
+
+  function unifiedLooksLikeUrl(value) {
+    const trimmed = String(value || "").trim();
+    return /^(https?:\/\/)/i.test(trimmed) ||
+      /^[a-z0-9.-]+\.[a-z]{2,}(?:[\/:?#]|$)/i.test(trimmed);
+  }
+
+  function updateUnifiedOmni() {
+    const urlMode = unifiedLooksLikeUrl(unifiedOmniInput?.value);
+    unifiedOmni?.classList.toggle("is-url", urlMode);
+    if (unifiedOmniAction) unifiedOmniAction.textContent = urlMode ? "Load" : "Search";
+    if (unifiedOmniHint) unifiedOmniHint.textContent = urlMode
+      ? "Press Enter to open this stream in EastCoin."
+      : "Search teams, games and leagues — or paste a stream URL.";
+  }
+
+  unifiedOmniInput?.addEventListener("input", updateUnifiedOmni);
+  unifiedOmni?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const value = String(unifiedOmniInput?.value || "").trim();
+    if (!value) {
+      window.location.href = "index.html";
+      return;
+    }
+    if (unifiedLooksLikeUrl(value)) {
+      try {
+        const normalized = normalizeUrl(value);
+        window.location.href = `index.html?watch=${encodeURIComponent(normalized)}`;
+      } catch (error) {
+        showToast(error?.message || "Enter a valid HTTPS stream URL.");
+      }
+      return;
+    }
+    window.location.href = `index.html?view=events&q=${encodeURIComponent(value)}`;
+  });
+
+  unifiedRailSearch?.addEventListener("click", () => {
+    if (!isMobile()) setDesktopSidebarMode("expanded", true);
+    window.setTimeout(() => unifiedOmniInput?.focus({ preventScroll: true }), 40);
+  });
+
+  updateUnifiedOmni();
 })();

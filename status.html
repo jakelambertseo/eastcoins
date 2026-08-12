@@ -939,6 +939,31 @@
 
 </style>
   <link rel="stylesheet" href="assets/eastcoins-shell.css?v=shell2" />
+
+<script>
+(() => {
+  const url = new URL(window.location.href);
+  const embedded = url.searchParams.get("shell") === "1" && window.parent !== window;
+  if (embedded) {
+    document.documentElement.classList.add("ec-status-shell-embedded");
+  } else if (window.top === window && url.searchParams.get("shell") !== "1") {
+    window.location.replace("index.html?view=status");
+  }
+})();
+</script>
+<style>
+html.ec-status-shell-embedded,
+html.ec-status-shell-embedded body { width:100%; min-height:100%; overflow:hidden; }
+html.ec-status-shell-embedded .favorites-layout { grid-template-columns:minmax(0,1fr) !important; height:100vh; }
+html.ec-status-shell-embedded .sidebar,
+html.ec-status-shell-embedded .sidebar-toggle,
+html.ec-status-shell-embedded .mobile-overlay { display:none !important; }
+html.ec-status-shell-embedded .page-main { height:100vh; overflow-y:auto; padding:20px 18px 34px; }
+html.ec-status-shell-embedded .page-header { padding-top:16px; }
+@media (max-width:900px) {
+  html.ec-status-shell-embedded .page-main { padding:16px 12px 28px; }
+}
+</style>
 </head>
 
 <body class="ec-shell-page ec-shell-content">

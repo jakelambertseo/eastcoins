@@ -1,1241 +1,305 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script>
-    (() => {
-      if (new URLSearchParams(location.search).get("shell") === "1") {
-        document.documentElement.classList.add("ec-embedded-view");
-      }
-    })();
-  </script>
-<meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <meta
-    name="robots"
-    content="noindex, nofollow, noarchive, nosnippet, noimageindex"
-  />
-  <meta
-    name="googlebot"
-    content="noindex, nofollow, noarchive, nosnippet, noimageindex"
-  />
-
-  <meta
-    name="description"
-    content="EastCoin live and upcoming sports events."
-  />
-
-  <title>EastCoin — Events</title>
-  <link rel="icon" type="image/png" href="assets/eastcoin-favicon.png" />
-  <link rel="shortcut icon" href="assets/eastcoin-favicon.png" />
-  <link rel="apple-touch-icon" href="assets/eastcoin-favicon.png" />
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex" />
+  <meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet,noimageindex" />
+  <meta name="description" content="EastCoin simplified live and upcoming event directory." />
+  <title>Events | EastCoin</title>
+  <link rel="icon" href="assets/eastcoin-favicon.png" type="image/png" />
   <link rel="stylesheet" href="assets/eastcoins-theme.css?v=theme9" />
-  <link rel="stylesheet" href="assets/eastcoins-ux.css?v=ux9" />
-  <link rel="stylesheet" href="assets/eastcoins-streamed.css?v=server18" />
-
-  <style>
-    :root {
-      --sidebar-width: 230px;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      width: 100%;
-      min-height: 100%;
-      margin: 0;
-    }
-
-    body {
-      min-height: 100vh;
-      overflow: hidden;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system,
-        BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    button,
-    a {
-      font: inherit;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .favorites-layout {
-      display: grid;
-      grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
-      width: 100%;
-      height: 100vh;
-      transition: grid-template-columns .24s ease;
-    }
-
-    @media (min-width: 901px) {
-      body.sidebar-collapsed .favorites-layout {
-        grid-template-columns: 0 minmax(0, 1fr);
-      }
-    }
-
-    /* ---------------- SIDEBAR ---------------- */
-
-    .sidebar {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      padding: 22px 16px;
-      overflow: hidden;
-      border-right: 1px solid var(--line);
-      background: #020202;
-      opacity: 1;
-      transform: translateX(0);
-      transition:
-        transform .24s ease,
-        opacity .2s ease,
-        padding .24s ease,
-        border-color .24s ease;
-      z-index: 20;
-    }
-
-    @media (min-width: 901px) {
-      body.sidebar-collapsed .sidebar {
-        padding-right: 0;
-        padding-left: 0;
-        border-right-color: transparent;
-        opacity: 0;
-        transform: translateX(-100%);
-        pointer-events: none;
-      }
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 4px 8px 24px;
-    }
-
-    .nav-group {
-      margin-top: 12px;
-    }
-
-    .nav-label {
-      padding: 0 11px 8px;
-      color: #4f4f4f;
-      font-size: .67rem;
-      font-weight: 900;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-    }
-
-    .nav-link {
-      appearance: none;
-      display: flex;
-      align-items: center;
-      gap: 11px;
-      width: 100%;
-      margin: 0 0 5px;
-      padding: 11px 12px;
-      border: 0;
-      border-radius: 11px;
-      outline: 0;
-      color: #747474;
-      background: transparent;
-      box-shadow: none;
-      text-align: left;
-      text-decoration: none;
-      font-weight: 700;
-      cursor: pointer;
-      transition:
-        color .18s ease,
-        background .18s ease,
-        box-shadow .18s ease;
-    }
-
-    .nav-link:visited {
-      color: #747474;
-    }
-
-    .nav-link:hover,
-    .nav-link:focus-visible,
-    .nav-link.active {
-      color: #ededed;
-      background: #090909;
-    }
-
-    .nav-link.active,
-    .nav-link.active:visited {
-      color: #ededed;
-      box-shadow: inset 2px 0 0 var(--brand-gold);
-    }
-
-    /* ---------------- SIDEBAR TOGGLE ---------------- */
-
-    .sidebar-toggle {
-      position: fixed;
-      top: 16px;
-      left: calc(var(--sidebar-width) - 20px);
-      z-index: 60;
-      display: grid;
-      place-items: center;
-      width: 40px;
-      height: 40px;
-      border: 1px solid rgba(255,255,255,.075);
-      border-radius: 11px;
-      color: var(--text);
-      background: rgba(3,3,3,.96);
-      box-shadow: 0 12px 34px rgba(0,0,0,.5);
-      cursor: pointer;
-      transition:
-        left .24s ease,
-        background .18s ease;
-    }
-
-    .sidebar-toggle:hover {
-      background: #111;
-    }
-
-    body.sidebar-collapsed .sidebar-toggle {
-      left: 16px;
-    }
-
-    .mobile-overlay {
-      display: none;
-    }
-
-    /* ---------------- CONTENT ---------------- */
-
-    .page-main {
-      min-width: 0;
-      min-height: 0;
-      overflow-y: auto;
-      padding: 34px;
-    }
-
-    .page-shell {
-      width: min(1280px, 100%);
-      margin: 0 auto;
-    }
-
-    .page-header {
-      padding: 44px 0 27px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      color: #969696;
-      font-size: .72rem;
-      font-weight: 900;
-      letter-spacing: .13em;
-      text-transform: uppercase;
-    }
-
-    .eyebrow-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--brand-gold);
-      box-shadow: 0 0 0 4px rgba(242,196,0,.07);
-    }
-
-    h1 {
-      margin: 13px 0 10px;
-      font-size: clamp(3rem, 6vw, 6.4rem);
-      line-height: .92;
-      letter-spacing: -.07em;
-    }
-
-    .page-header p {
-      max-width: 620px;
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.7;
-    }
-
-    .favorites-section {
-      padding: 24px 0 50px;
-    }
-
-    .favorite-list {
-      display: grid;
-      gap: 10px;
-    }
-
-    /*
-      Add or remove favorites by copying/deleting a full
-      <a class="favorite-site" ...> block below.
-
-      Only update data-watch-url, the site name, and the visible URL.
-      JavaScript automatically creates the encoded ?watch= link.
-    */
-    .favorite-site {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 18px;
-      align-items: center;
-      min-height: 78px;
-      padding: 18px 20px;
-      border: 1px solid rgba(255,255,255,.06);
-      border-radius: 15px;
-      color: inherit;
-      background: #060606;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.015);
-      text-decoration: none;
-      transition:
-        border-color .18s ease,
-        background .18s ease,
-        transform .18s ease;
-    }
-
-    .favorite-site:hover,
-    .favorite-site:focus-visible {
-      border-color: rgba(242,196,0,.17);
-      background: #0a0a0a;
-      outline: 0;
-      transform: translateY(-1px);
-    }
-
-    .favorite-copy {
-      min-width: 0;
-    }
-
-    .site-name {
-      overflow: hidden;
-      color: #f2f2f2;
-      font-size: 1rem;
-      font-weight: 900;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .site-url {
-      margin-top: 7px;
-      overflow: hidden;
-      color: #707070;
-      font-size: .76rem;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .site-arrow {
-      display: grid;
-      place-items: center;
-      width: 38px;
-      height: 38px;
-      border: 1px solid rgba(242,196,0,.16);
-      border-radius: 11px;
-      color: var(--brand-gold);
-      background: rgba(242,196,0,.045);
-      font-size: 1rem;
-      transition:
-        background .18s ease,
-        transform .18s ease;
-    }
-
-    .favorite-site:hover .site-arrow {
-      background: rgba(242,196,0,.08);
-      transform: translateX(2px);
-    }
-
-    .editing-note {
-      margin-top: 17px;
-      padding: 14px 15px;
-      border: 1px dashed rgba(255,255,255,.075);
-      border-radius: 13px;
-      color: #606060;
-      background: #030303;
-      font-size: .71rem;
-      line-height: 1.55;
-    }
-
-    .editing-note code {
-      color: #b5a04d;
-    }
-
-    /* ---------------- MOBILE ---------------- */
-
-    @media (max-width: 900px) {
-      body {
-        overflow: auto;
-      }
-
-      .favorites-layout {
-        grid-template-columns: 1fr;
-        height: auto;
-        min-height: 100vh;
-      }
-
-      .sidebar {
-        position: fixed;
-        inset: 0 auto 0 0;
-        width: 230px;
-        height: 100vh;
-        transform: translateX(-102%);
-        transition: transform .23s ease;
-      }
-
-      body.menu-open .sidebar {
-        transform: translateX(0);
-      }
-
-      body.sidebar-collapsed .sidebar {
-        opacity: 1;
-        pointer-events: auto;
-      }
-
-      .mobile-overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 15;
-        display: block;
-        background: rgba(0,0,0,.86);
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity .23s ease;
-      }
-
-      body.menu-open .mobile-overlay {
-        opacity: 1;
-        pointer-events: auto;
-      }
-
-      .sidebar-toggle,
-      body.sidebar-collapsed .sidebar-toggle {
-        top: 16px;
-        left: 16px;
-      }
-
-      .page-main {
-        padding: 72px 16px 28px;
-      }
-
-      .page-header {
-        padding-top: 24px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .favorite-site {
-        min-height: 72px;
-        padding: 15px;
-      }
-    }
-  
-    .brand-copy-single {
-      display: flex;
-      align-items: center;
-      min-height: 48px;
-    }
-
-    .brand-copy-single strong {
-      font-size: 1.34rem;
-      line-height: 1;
-      letter-spacing: -.045em;
-    }
-
-  
-    /* ---------------- ZWADES CALLOUT ---------------- */
-
-    .zwades-callout {
-      margin-top: auto;
-      padding: 14px;
-      border: 1px solid rgba(101, 163, 255, .18);
-      border-radius: 16px;
-      background:
-        radial-gradient(circle at 18% 16%, rgba(57, 130, 255, .22), transparent 34%),
-        linear-gradient(180deg, rgba(8, 16, 36, .98), rgba(5, 11, 27, .98));
-      box-shadow:
-        0 16px 34px rgba(0, 0, 0, .26),
-        inset 0 1px 0 rgba(255, 255, 255, .03);
-    }
-
-    .zwades-eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      margin-bottom: 10px;
-      color: #87a9ff;
-      font-size: .63rem;
-      font-weight: 900;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-    }
-
-    .zwades-eyebrow::before {
-      content: "";
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #4b93ff;
-      box-shadow: 0 0 0 4px rgba(75, 147, 255, .14);
-    }
-
-    .zwades-row {
-      display: grid;
-      grid-template-columns: 64px minmax(0, 1fr);
-      gap: 12px;
-      align-items: center;
-    }
-
-    .zwades-media {
-      width: 64px;
-      height: 64px;
-      overflow: hidden;
-      border: 1px solid rgba(120, 178, 255, .28);
-      border-radius: 14px;
-      background:
-        linear-gradient(180deg, rgba(17, 39, 86, .9), rgba(8, 20, 53, .96));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.05),
-        0 10px 24px rgba(13, 52, 140, .24);
-    }
-
-    .zwades-media img {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .zwades-title {
-      margin: 0;
-      color: #edf5ff;
-      font-size: 1rem;
-      line-height: 1.05;
-      letter-spacing: -.03em;
-    }
-
-    .zwades-title .is-blue {
-      color: #73abff;
-    }
-
-    .zwades-copy {
-      margin: 7px 0 0;
-      color: #8fa6ca;
-      font-size: .73rem;
-      line-height: 1.45;
-    }
-
-    @media (max-width: 900px) {
-      .zwades-callout {
-        margin-top: 18px;
-      }
-    }
-
-  
-    /* ---------------- NFL KICKOFF COUNTDOWN ---------------- */
-
-    .football-countdown {
-      margin-top: auto;
-      margin-bottom: 12px;
-      padding: 14px;
-      border: 1px solid rgba(242, 196, 0, .18);
-      border-radius: 16px;
-      background:
-        radial-gradient(circle at 90% 0%, rgba(242, 196, 0, .13), transparent 35%),
-        linear-gradient(180deg, rgba(24, 20, 8, .96), rgba(10, 9, 5, .98));
-      box-shadow:
-        0 16px 34px rgba(0, 0, 0, .25),
-        inset 0 1px 0 rgba(255, 255, 255, .035);
-    }
-
-    .football-countdown + .zwades-callout {
-      margin-top: 0;
-    }
-
-    .football-countdown-eyebrow {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 10px;
-      color: #d9bc57;
-      font-size: .62rem;
-      font-weight: 900;
-      letter-spacing: .11em;
-      text-transform: uppercase;
-    }
-
-    .football-countdown-live {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      color: #8d835e;
-      letter-spacing: .06em;
-    }
-
-    .football-countdown-live::before {
-      content: "";
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #f2c400;
-      box-shadow: 0 0 0 4px rgba(242, 196, 0, .09);
-    }
-
-    .football-countdown-title {
-      margin: 0;
-      color: #fff7d8;
-      font-size: .95rem;
-      line-height: 1.2;
-      letter-spacing: -.025em;
-    }
-
-    .football-countdown-matchup {
-      margin: 5px 0 0;
-      color: #9c9270;
-      font-size: .68rem;
-      line-height: 1.4;
-    }
-
-    .football-countdown-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 5px;
-      margin-top: 12px;
-    }
-
-    .football-countdown-unit {
-      min-width: 0;
-      padding: 8px 3px 7px;
-      border: 1px solid rgba(255, 255, 255, .055);
-      border-radius: 9px;
-      background: rgba(0, 0, 0, .22);
-      text-align: center;
-    }
-
-    .football-countdown-value {
-      display: block;
-      color: #fff;
-      font-size: .91rem;
-      font-variant-numeric: tabular-nums;
-      font-weight: 900;
-      line-height: 1;
-    }
-
-    .football-countdown-label {
-      display: block;
-      margin-top: 5px;
-      color: #716a53;
-      font-size: .48rem;
-      font-weight: 900;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
-
-    .football-countdown-date {
-      margin-top: 10px;
-      color: #756e56;
-      font-size: .61rem;
-      line-height: 1.4;
-      text-align: center;
-    }
-
-    .football-countdown.is-live {
-      border-color: rgba(85, 216, 138, .22);
-      background:
-        radial-gradient(circle at 90% 0%, rgba(85, 216, 138, .13), transparent 35%),
-        linear-gradient(180deg, rgba(7, 26, 16, .97), rgba(5, 13, 9, .99));
-    }
-
-    .football-countdown.is-live .football-countdown-eyebrow,
-    .football-countdown.is-live .football-countdown-title {
-      color: #a9f1c3;
-    }
-
-    .football-countdown.is-live .football-countdown-live::before {
-      background: #55d88a;
-      box-shadow: 0 0 0 4px rgba(85, 216, 138, .1);
-    }
-
-    @media (max-width: 900px) {
-      .football-countdown {
-        margin-top: 18px;
-      }
-
-      .football-countdown + .zwades-callout {
-        margin-top: 0;
-      }
-    }
-
-  
-/* ---------------- COMPACT SHARED SIDEBAR ---------------- */
-
-.nav-group{
-  margin-top:8px;
-}
-
-.nav-label{
-  padding:0 9px 6px;
-  font-size:.59rem;
-  letter-spacing:.12em;
-}
-
-.nav-link{
-  gap:8px;
-  margin-bottom:3px;
-  padding:8px 10px;
-  border-radius:9px;
-  font-size:.82rem;
-  line-height:1.12;
-}
-
-.zwades-callout{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  min-height:0;
-  margin-top:0;
-  padding:7px 9px;
-  border-radius:9px;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(8,16,36,.92),
-      rgba(5,11,27,.94)
-    );
-  box-shadow:
-    0 7px 16px rgba(0,0,0,.2),
-    inset 0 1px 0 rgba(255,255,255,.025);
-  text-align:center;
-}
-
-.football-countdown + .zwades-callout{
-  margin-top:0;
-}
-
-.zwades-title{
-  margin:0;
-  color:#dceaff;
-  font-size:.69rem;
-  font-weight:900;
-  line-height:1;
-  letter-spacing:.025em;
-  text-transform:lowercase;
-  white-space:nowrap;
-}
-
-.zwades-title .is-blue{
-  color:#73abff;
-}
-
-.zwades-eyebrow,
-.zwades-row,
-.zwades-media,
-.zwades-copy{
-  display:none;
-}
-
-@media(max-width:900px){
-  .zwades-callout{
-    margin-top:8px;
-  }
-
-  .football-countdown + .zwades-callout{
-    margin-top:0;
-  }
-}
-
-
-/* ---------------- CHANGELOG SIDEBAR LINK ---------------- */
-
-.sidebar-footer-link{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:7px;
-  margin-top:6px;
-  padding:7px 9px;
-  border:1px solid rgba(255,255,255,.07);
-  border-radius:9px;
-  color:#9da7b8;
-  background:rgba(255,255,255,.025);
-  font-size:.7rem;
-  font-weight:800;
-  line-height:1;
-  text-decoration:none;
-  transition:
-    color .16s ease,
-    border-color .16s ease,
-    background .16s ease,
-    transform .16s ease;
-}
-
-.sidebar-footer-link:hover,
-.sidebar-footer-link:focus-visible{
-  color:#f3e5c3;
-  border-color:rgba(201,164,79,.28);
-  background:rgba(201,164,79,.07);
-  outline:none;
-  transform:translateY(-1px);
-}
-
-.sidebar-footer-link.active{
-  color:#ffe8a3;
-  border-color:rgba(201,164,79,.42);
-  background:
-    linear-gradient(
-      180deg,
-      rgba(122,28,35,.5),
-      rgba(57,13,18,.62)
-    );
-}
-
-</style>
-  <link rel="stylesheet" href="assets/eastcoins-shell.css?v=shell2" />
-  <script>
-    (() => {
-      const version = "events2";
-      const storageKey = "eastcoinEventsUiVersion";
-
-      try {
-        if (localStorage.getItem(storageKey) !== version) {
-          localStorage.setItem(storageKey, version);
-
-          if ("caches" in window) {
-            caches.keys()
-              .then((keys) => Promise.all(
-                keys
-                  .filter((key) => /eastcoin/i.test(key))
-                  .map((key) => caches.delete(key))
-              ))
-              .catch(() => {});
-          }
-        }
-      } catch {}
-    })();
-  </script>
-  <link rel="stylesheet" href="assets/eastcoins-events-clean.css?v=events2" />
-  <link rel="stylesheet" href="assets/eastcoins-events-directory.css?v=directory1" />
-  <link rel="stylesheet" href="assets/eastcoins-embedded-view.css?v=embed1" />
+  <link rel="stylesheet" href="assets/eastcoins-events-home.css?v=events1" />
 </head>
-
-<body class="ec-shell-page ec-shell-content ec-events-clean ec-events-directory">
-  <div class="mobile-overlay" id="mobileOverlay"></div>
-
-  <div class="favorites-layout">
-    <aside class="sidebar" aria-label="Primary navigation">
-      <div class="brand">
-        <div class="brand-mark brand-logo">
-          <img src="assets/eastcoins-logo.webp" alt="EastCoin logo" />
-        </div>
-
-        <div class="brand-copy brand-copy-single">
-          <strong>EastCoin</strong>
-        </div>
+<body class="ec-events-v2-page">
+  <div class="ec-events-v2-layout" id="eventsV2Layout">
+    <aside class="ec-events-v2-nav" id="eventsV2Nav" aria-label="EastCoin navigation and event filters">
+      <div class="ec-events-v2-mobile-head">
+        <strong>EastCoin</strong>
+        <button id="eventsV2MobileClose" type="button" aria-label="Close navigation">×</button>
       </div>
 
-      <div class="nav-group">
-        <div class="nav-label">EastCoin</div>
-        <a class="nav-link" href="index.html?view=player&amp;new=1" target="_top">📺 Live Player</a>
-        <a class="nav-link active" href="index.html?view=events" target="_top">🏟️ Events</a>
-        <a class="nav-link" href="favorites.html" target="_top">⭐ Favorites</a>
-        <details class="nav-games-menu">
-          <summary class="nav-link nav-games-summary">
-            <span class="nav-games-summary-copy">🎮 Games</span>
-            <span class="nav-games-caret" aria-hidden="true">⌄</span>
-          </summary>
-          <div class="nav-games-submenu">
-            <a class="nav-game-link" href="games.html?new=1" target="_top">All Games</a>
-            <a class="nav-game-link" href="bonk.html" target="_top">🔨 Bonk</a>
-            <a class="nav-game-link" href="aim-trainer.html?v=embedded1" target="_top">🎯 Aim Trainer</a>
-            <a class="nav-game-link" href="button-masher.html?v=embedded1" target="_top">🟥 Button Masher</a>
-          </div>
-        </details>
+      <a class="ec-events-v2-brand" href="index.html" aria-label="EastCoin Events">
+        <span class="ec-events-v2-logo"><img src="assets/eastcoins-logo.webp" alt="" /></span>
+        <span class="ec-events-v2-brand-copy"><strong>EastCoin</strong><small>Events</small></span>
+      </a>
+
+      <form class="ec-events-v2-omni" id="eventsV2OmniForm" autocomplete="off">
+        <span class="ec-events-v2-omni-icon" aria-hidden="true">⌕</span>
+        <input id="eventsV2OmniInput" type="text" placeholder="Search events or paste a URL" aria-label="Search events or paste a stream URL" />
+        <button id="eventsV2OmniAction" type="submit">Search</button>
+      </form>
+      <button class="ec-events-v2-rail-search" id="eventsV2RailSearch" type="button" title="Search events or paste a URL" aria-label="Expand navigation to search">⌕</button>
+      <p class="ec-events-v2-omni-hint" id="eventsV2OmniHint">Search teams, games and leagues — or paste a stream URL.</p>
+
+      <nav class="ec-events-v2-nav-scroll">
+        <section class="ec-events-v2-nav-section" aria-label="Watch">
+          <div class="ec-events-v2-nav-label">Watch</div>
+          <button class="ec-events-v2-nav-item is-active" type="button" data-events-scope="all" data-nav-tooltip="All Events">
+            <span class="ec-events-v2-nav-icon">▦</span>
+            <span class="ec-events-v2-nav-copy"><strong>All Events</strong><small>EastCoin event home</small></span>
+            <span class="ec-events-v2-count" id="eventsV2AllCount">0</span>
+          </button>
+          <a class="ec-events-v2-nav-item" href="multiview.html" data-nav-tooltip="MultiView">
+            <span class="ec-events-v2-nav-icon">▥</span>
+            <span class="ec-events-v2-nav-copy"><strong>MultiView</strong><small>Watch up to four streams</small></span>
+          </a>
+          <a class="ec-events-v2-nav-item" href="index.html?view=favorites" data-nav-tooltip="Other Streams">
+            <span class="ec-events-v2-nav-icon">⌁</span>
+            <span class="ec-events-v2-nav-copy"><strong>Other Streams</strong><small>Approved stream sites</small></span>
+          </a>
+        </section>
+
+        <span id="eventsV2NavLiveCount" hidden>0</span>
+        <section class="ec-events-v2-nav-section" aria-label="Event views">
+          <div class="ec-events-v2-nav-label">Events</div>
+          <button class="ec-events-v2-nav-item" type="button" data-events-scope="live" data-nav-tooltip="Live Only">
+            <span class="ec-events-v2-nav-icon">▶</span>
+            <span class="ec-events-v2-nav-copy"><strong>Live Only</strong><small>Games happening now</small></span>
+            <span class="ec-events-v2-count is-live" id="eventsV2LiveCount">0</span>
+          </button>
+          <button class="ec-events-v2-nav-item" type="button" data-events-scope="trending" data-nav-tooltip="Trending">
+            <span class="ec-events-v2-nav-icon">🔥</span>
+            <span class="ec-events-v2-nav-copy"><strong>Trending</strong><small>Popular and active games</small></span>
+            <span class="ec-events-v2-count" id="eventsV2TrendingCount">0</span>
+          </button>
+          <button class="ec-events-v2-nav-item" id="eventsV2PrefsButton" type="button" aria-haspopup="dialog" aria-controls="eventsV2PrefsModal" data-nav-tooltip="Settings">
+            <span class="ec-events-v2-nav-icon">⚙</span>
+            <span class="ec-events-v2-nav-copy"><strong>Settings</strong><small>Events + interface settings</small></span>
+          </button>
+        </section>
+
+        <section class="ec-events-v2-nav-section" aria-label="Categories">
+          <div class="ec-events-v2-nav-label">Categories</div>
+          <div id="eventsV2CategoryNav"></div>
+        </section>
+
+        <section class="ec-events-v2-nav-section ec-events-v2-support" aria-label="Support">
+          <div class="ec-events-v2-nav-label">Support</div>
+          <button class="ec-events-v2-nav-item" id="eventsV2EmoteHelpButton" type="button" data-support-view="emotes" data-nav-tooltip="Emote Help">
+            <span class="ec-events-v2-nav-icon">?</span>
+            <span class="ec-events-v2-nav-copy"><strong>Emote Help</strong><small>Twitch emote reference</small></span>
+          </button>
+          <button class="ec-events-v2-nav-item" id="eventsV2StatusButton" type="button" data-support-view="status" data-nav-tooltip="Status">
+            <span class="ec-events-v2-nav-icon">⌁</span>
+            <span class="ec-events-v2-nav-copy"><strong>Status</strong><small>EastCoin service health</small></span>
+            <span class="ec-events-v2-status-dot" aria-hidden="true"></span>
+          </button>
+        </section>
+      </nav>
+
+      <div class="ec-events-v2-nav-footer">
+        <p>We DO NOT host nor transmit audiovisual content. Responsibility for content lies with those who host or transmit it.</p>
+        <span>EastCoin v0.57</span>
       </div>
-
-      <section
-        class="football-countdown"
-        data-football-countdown
-        aria-label="Countdown to the 2026 NFL regular season">
-        <div class="football-countdown-eyebrow">
-          <span>🏈 NFL Kickoff</span>
-          <span class="football-countdown-live">Countdown</span>
-        </div>
-
-        <p class="football-countdown-title">
-          Football season starts in
-        </p>
-
-        <p class="football-countdown-matchup">
-          Patriots at Seahawks
-        </p>
-
-        <div class="football-countdown-grid" aria-live="polite">
-          <div class="football-countdown-unit">
-            <span
-              class="football-countdown-value"
-              data-countdown-days>--</span>
-            <span class="football-countdown-label">Days</span>
-          </div>
-
-          <div class="football-countdown-unit">
-            <span
-              class="football-countdown-value"
-              data-countdown-hours>--</span>
-            <span class="football-countdown-label">Hours</span>
-          </div>
-
-          <div class="football-countdown-unit">
-            <span
-              class="football-countdown-value"
-              data-countdown-minutes>--</span>
-            <span class="football-countdown-label">Min</span>
-          </div>
-
-          <div class="football-countdown-unit">
-            <span
-              class="football-countdown-value"
-              data-countdown-seconds>--</span>
-            <span class="football-countdown-label">Sec</span>
-          </div>
-        </div>
-
-        <div class="football-countdown-date">
-          Wed, Sep 9 · 7:20 PM CT
-        </div>
-      </section>
-
-      <div class="zwades-callout" aria-label="Zwades is blue">
-        <p class="zwades-title">
-          zwades is <span class="is-blue">blue</span>
-        </p>
-      </div>
-<a
-              class="sidebar-footer-link"
-              href="status.html"
-              target="_top">
-              🟢 Status
-            </a>
-
-      <button
-        class="sidebar-footer-link ec-settings-link"
-        type="button">
-        ⚙ Settings
-      </button>
-
-
     </aside>
 
-    <button
-      class="sidebar-toggle"
-      id="sidebarToggle"
-      type="button"
-      aria-label="Hide navigation"
-      aria-expanded="true">◀</button>
+    <main class="ec-events-v2-main" id="eventsV2Main">
+      <button class="ec-events-v2-mobile-menu" id="eventsV2MobileMenu" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
+      <button class="ec-events-v2-nav-cycle" id="eventsV2NavCycle" type="button" aria-label="Compact navigation" title="Compact navigation">‹</button>
 
-<main class="page-main">
-  <div class="page-shell">
-    <header class="page-header">
-      <div class="eyebrow">
-        <span class="eyebrow-dot"></span>
-        EastCoin events
-      </div>
-      <h1>Browse Events</h1>
-      <p>
-        Choose Live, Today, or Tomorrow, then browse matchups grouped by
-        sport and ordered by start time. Team logos and event artwork stay
-        visible for faster scanning.
-      </p>
-    </header>
-
-    <section class="ec-events-page-shell">
-      <div class="streamed-launcher" id="streamedLauncher">
-        <div class="streamed-launcher-head">
-          <div class="streamed-launcher-copy">
-            <div class="streamed-launcher-kicker">EastCoin events</div>
-            <strong class="streamed-launcher-title">Pick an event</strong>
-            <p class="streamed-launcher-description">
-              Live events appear first, followed by upcoming matchups.
-            </p>
-          </div>
-          <div class="streamed-mode-buttons">
-            <button class="streamed-mode-button" id="streamedLiveButton" type="button">Live now</button>
-            <button class="streamed-mode-button" id="streamedTodayButton" type="button">Today</button>
-            <button class="streamed-mode-button" id="streamedTomorrowButton" type="button">Tomorrow</button>
-          </div>
+      <section class="ec-events-v5-player-stage" id="eventsV5PlayerStage" hidden aria-hidden="true">
+        <div class="ec-events-v5-player-loader" id="eventsV5PlayerLoader" aria-live="polite">
+          <span class="ec-events-v5-player-spinner" aria-hidden="true"></span>
+          <strong id="eventsV5PlayerLoaderTitle">Opening event…</strong>
+          <small id="eventsV5PlayerLoaderMeta">Preparing the EastCoin player.</small>
         </div>
+        <iframe
+          class="ec-events-v5-player-frame"
+          id="eventsV5PlayerFrame"
+          title="EastCoin player"
+          src="about:blank"
+          allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write"
+          allowfullscreen
+          referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      </section>
 
-        <div class="streamed-browser" id="streamedBrowser">
-          <div class="streamed-browser-controls">
-            <input
-              class="streamed-search"
-              id="streamedSearch"
-              type="search"
-              placeholder="Search teams or matchups"
-              aria-label="Search Streamed events">
-            <button class="streamed-refresh" id="streamedRefresh" type="button" hidden aria-hidden="true" tabindex="-1">Refresh</button>
+      <button
+        class="ec-events-v5-controls-toggle"
+        id="eventsV5ControlsToggle"
+        type="button"
+        aria-controls="eventsV5ControlsDrawer"
+        aria-expanded="false"
+        aria-label="Open view controls"
+        title="View controls">
+        <span aria-hidden="true">☷</span>
+      </button>
+
+      <aside
+        class="ec-events-v5-controls-drawer"
+        id="eventsV5ControlsDrawer"
+        aria-label="EastCoin view controls"
+        aria-hidden="true">
+        <header class="ec-events-v5-controls-head">
+          <div>
+            <span>EastCoin</span>
+            <strong>View controls</strong>
           </div>
-          <div class="streamed-status" id="streamedStatus" role="status" aria-live="polite"></div>
-
-          <div id="streamedEventDetail"></div>
-
-          <div
-            class="streamed-discovery-root"
-            id="streamedDiscoveryRoot"
-            data-context="events">
-            <div class="streamed-sport-tabs" id="streamedSportTabs" aria-label="Filter events by sport"></div>
-
-            <section
-              class="streamed-discovery-section streamed-continue-section"
-              id="streamedContinueSection"
-              hidden>
-              <div class="streamed-discovery-section-head">
-                <div>
-                  <h2>Continue Watching</h2>
-                  <p>Return to your most recent EastCoin event and server.</p>
-                </div>
-              </div>
-              <div id="streamedContinueList"></div>
-            </section>
-
-            <section
-              class="streamed-discovery-section streamed-recent-section"
-              id="streamedRecentSection"
-              hidden>
-              <div class="streamed-discovery-section-head">
-                <div>
-                  <h2>Recently Watched</h2>
-                  <p>Reopen your latest EastCoin events and preferred servers.</p>
-                </div>
-              </div>
-              <div id="streamedRecentList"></div>
-            </section>
-
-            <section
-              class="streamed-discovery-section streamed-night-section"
-              id="streamedNightSection"
-              hidden>
-              <div class="streamed-discovery-section-head">
-                <div>
-                  <h2>Your Night</h2>
-                  <p>A quick timeline of what is live and starting over the next several hours.</p>
-                </div>
-              </div>
-              <div class="ec-night-timeline" id="streamedNightList"></div>
-            </section>
-
-            <section class="streamed-discovery-section" id="streamedPopularSection">
-              <div class="streamed-discovery-section-head">
-                <div><h2>Popular Live</h2><p>Browse the live events getting the most attention right now.</p></div>
-              </div>
-              <div class="ec-feature-row" id="streamedPopularList"></div>
-            </section>
-
-            <section class="streamed-discovery-section" id="streamedFavoriteSection">
-              <div class="streamed-discovery-section-head">
-                <div><h2 id="streamedFavoriteHeading">Favorite Teams</h2><p id="streamedFavoriteCopy">Follow teams and see their available events in one place.</p></div>
-              </div>
-              <div class="ec-favorite-team-list" id="streamedFavoriteTeamList"></div>
-              <div class="ec-event-grid" id="streamedFavoriteEventList"></div>
-            </section>
-
-            <section class="streamed-discovery-section" id="streamedSoonSection">
-              <div class="streamed-discovery-section-head">
-                <div><h2>Starting Soon</h2><p>See what begins next and how long until it starts.</p></div>
-              </div>
-              <div class="ec-event-grid" id="streamedSoonList"></div>
-            </section>
-
-            <section class="streamed-discovery-section">
-              <div class="streamed-discovery-section-head">
-                <div><h2 id="streamedListSectionTitle">Events</h2><p>Live games first, followed by today’s upcoming matchups.</p></div>
-              </div>
-              <div class="ec-event-grid" id="streamedMatchList"></div>
-            </section>
-          </div>
+          <button id="eventsV5ControlsClose" type="button" aria-label="Close view controls">×</button>
+        </header>
+        <div class="ec-events-v5-controls-list">
+          <button type="button" id="eventsV5TheaterControl">
+            <span class="ec-events-v5-control-icon">⛶</span>
+            <span><strong>Theater</strong><small>Focus on the player</small></span>
+          </button>
+          <button type="button" id="eventsV5ChatControl">
+            <span class="ec-events-v5-control-icon">💬</span>
+            <span><strong>Hide chat</strong><small>Toggle Twitch chat</small></span>
+          </button>
+          <button type="button" id="eventsV5NavControl">
+            <span class="ec-events-v5-control-icon">◀</span>
+            <span><strong>Hide nav</strong><small>Toggle navigation</small></span>
+          </button>
+          <button type="button" id="eventsV5GameControl">
+            <span class="ec-events-v5-control-icon">🎮</span>
+            <span><strong>Play a Game</strong><small>Open the EastCoin game overlay</small></span>
+          </button>
+          <button type="button" id="eventsV5SettingsControl">
+            <span class="ec-events-v5-control-icon">⚙</span>
+            <span><strong>Settings</strong><small>Event and interface preferences</small></span>
+          </button>
         </div>
+      </aside>
+
+      <header class="ec-events-v2-toolbar">
+        <div class="ec-events-v2-toolbar-copy">
+          <span>Event browser</span>
+          <strong id="eventsV2ViewTitle">All Events</strong>
+        </div>
+        <div class="ec-events-v2-day-tabs" role="group" aria-label="Event date">
+          <button class="is-active" type="button" data-events-mode="today">Today</button>
+          <button type="button" data-events-mode="tomorrow">Tomorrow</button>
+        </div>
+        <div class="ec-events-v5-toolbar-actions">
+          <button class="ec-events-v5-back-video" id="eventsV5BackVideo" type="button" hidden>▶ Back to video</button>
+          <button class="ec-events-v2-refresh" id="eventsV2Refresh" type="button">↻ Refresh</button>
+        </div>
+      </header>
+
+      <section class="ec-events-v2-continue" id="eventsV2Continue" hidden>
+        <div class="ec-events-v2-continue-art" id="eventsV2ContinueArt"></div>
+        <div class="ec-events-v2-continue-copy">
+          <span>Continue watching</span>
+          <strong id="eventsV2ContinueTitle">Recent event</strong>
+          <small id="eventsV2ContinueMeta">Resume your last EastCoin event.</small>
+        </div>
+        <button id="eventsV2ContinueButton" type="button">Resume</button>
+      </section>
+
+      <div class="ec-events-v2-status" id="eventsV2Status" role="status" aria-live="polite">
+        <span class="ec-events-v2-status-pulse" aria-hidden="true"></span>
+        <strong id="eventsV2StatusText">Loading events…</strong>
+        <small id="eventsV2StatusMeta"></small>
       </div>
+
+      <section class="ec-events-v2-directory" id="eventsV2Directory">
+        <div class="ec-events-v2-loading">
+          <span></span>
+          <strong>Loading events</strong>
+          <small>Building the simplified EastCoin event list.</small>
+        </div>
+      </section>
+    </main>
+
+    <div class="ec-events-v2-chat-resizer" id="eventsV2ChatResizer" role="separator" aria-label="Resize Twitch chat" aria-orientation="vertical" tabindex="0"><span></span></div>
+
+    <aside class="ec-events-v2-chat" id="eventsV2Chat" aria-label="Twitch chat">
+      <iframe
+        id="eventsV2TwitchChat"
+        title="zwades Twitch chat"
+        src="https://www.twitch.tv/embed/zwades/chat?parent=eastcoins.pages.dev&parent=eastcoin.vip&parent=www.eastcoin.vip&parent=localhost&parent=127.0.0.1&darkpopout"
+        referrerpolicy="strict-origin-when-cross-origin"
+        loading="eager"></iframe>
+    </aside>
+  </div>
+
+  <div class="ec-events-v2-mobile-overlay" id="eventsV2MobileOverlay" hidden></div>
+
+
+  <section class="ec-events-v2-support-drawer" id="eventsV2SupportDrawer" hidden aria-hidden="true">
+    <button class="ec-events-v2-support-scrim" id="eventsV2SupportScrim" type="button" aria-label="Close support panel"></button>
+    <aside class="ec-events-v2-support-panel" role="dialog" aria-modal="true" aria-labelledby="eventsV2SupportTitle">
+      <header class="ec-events-v2-support-head">
+        <div>
+          <span id="eventsV2SupportKicker">EastCoin support</span>
+          <h2 id="eventsV2SupportTitle">Support</h2>
+        </div>
+        <button id="eventsV2SupportClose" type="button" aria-label="Close support panel">×</button>
+      </header>
+      <div class="ec-events-v2-support-body">
+        <iframe
+          id="eventsV2SupportFrame"
+          title="EastCoin support"
+          referrerpolicy="strict-origin-when-cross-origin"
+          hidden></iframe>
+        <div class="ec-events-v2-status-drawer-content" id="eventsV2StatusDrawerContent" hidden></div>
+      </div>
+    </aside>
+  </section>
+
+  <div class="ec-events-v2-modal" id="eventsV2PrefsModal" hidden aria-hidden="true">
+    <section class="ec-events-v2-dialog" role="dialog" aria-modal="true" aria-labelledby="eventsV2PrefsTitle">
+      <header>
+        <div><span>EastCoin interface</span><h2 id="eventsV2PrefsTitle">Settings</h2></div>
+        <button id="eventsV2PrefsClose" type="button" aria-label="Close settings">×</button>
+      </header>
+
+      <div class="ec-events-v2-pref-group">
+        <h3>Events</h3>
+        <label><span><strong>Show artwork</strong><small>Use team badges and event imagery when available.</small></span><input id="eventsV2PrefArtwork" type="checkbox" /></label>
+        <label><span><strong>Compact event cards</strong><small>Fit more games on screen while keeping the larger type scale.</small></span><input id="eventsV2PrefCompact" type="checkbox" /></label>
+        <label><span><strong>Starting soon first</strong><small>Prioritize live and near-kickoff events within each category.</small></span><input id="eventsV2PrefSoon" type="checkbox" /></label>
+      </div>
+
+      <div class="ec-events-v2-pref-group">
+        <h3>Interface</h3>
+        <label><span><strong>Show Twitch chat</strong><small>Keep the EastCoin Twitch chat column visible.</small></span><input id="eventsV2PrefChat" type="checkbox" /></label>
+        <label><span><strong>Start with compact navigation</strong><small>Use the icon rail instead of the full navigation panel.</small></span><input id="eventsV2PrefCompactNav" type="checkbox" /></label>
+        <label><span><strong>Reduce motion</strong><small>Minimize interface transitions and animations.</small></span><input id="eventsV2PrefMotion" type="checkbox" /></label>
+        <button class="ec-events-v2-reset" id="eventsV2ResetChat" type="button">Reset chat width</button>
+      </div>
+
+      <footer><button id="eventsV2PrefsDone" type="button">Done</button></footer>
     </section>
   </div>
-</main>
+
+
+  <div class="ec-events-v2-modal" id="eventsV2MvPromptModal" hidden aria-hidden="true">
+    <section class="ec-events-v2-dialog ec-events-v4-open-mv-dialog" role="dialog" aria-modal="true" aria-labelledby="eventsV4MvPromptTitle">
+      <header>
+        <div>
+          <span id="eventsV4MvPromptKicker">MultiView ready</span>
+          <h2 id="eventsV4MvPromptTitle">Open these streams in MultiView?</h2>
+        </div>
+        <button id="eventsV4MvPromptClose" type="button" aria-label="Close MultiView prompt">×</button>
+      </header>
+
+      <div class="ec-events-v4-open-mv-body">
+        <p id="eventsV4MvPromptCopy">You have multiple streams queued and ready to watch together.</p>
+        <div class="ec-events-v4-open-mv-streams" id="eventsV4MvPromptStreams"></div>
+      </div>
+
+      <footer class="ec-events-v4-open-mv-actions">
+        <button class="ec-events-v4-keep-browsing" id="eventsV4MvKeepBrowsing" type="button">Keep Browsing</button>
+        <button class="ec-events-v4-open-multiview" id="eventsV4MvOpen" type="button">Open MultiView</button>
+      </footer>
+    </section>
   </div>
 
-    <script src="assets/eastcoins-ux.js?v=ux9"></script>
+  <div class="ec-events-v2-modal" id="eventsV2MvModal" hidden aria-hidden="true">
+    <section class="ec-events-v2-dialog ec-events-v2-mv-dialog" role="dialog" aria-modal="true" aria-labelledby="eventsV2MvTitle">
+      <header>
+        <div><span>MultiView is full</span><h2 id="eventsV2MvTitle">Choose a slot to replace</h2></div>
+        <button id="eventsV2MvClose" type="button" aria-label="Close MultiView slot picker">×</button>
+      </header>
+      <div class="ec-events-v2-mv-slots" id="eventsV2MvSlots"></div>
+    </section>
+  </div>
 
-<script>
-    const body = document.body;
-    const sidebarToggle = document.getElementById("sidebarToggle");
-    const mobileOverlay = document.getElementById("mobileOverlay");
+  <div class="ec-events-v2-toast" id="eventsV2Toast" role="status" aria-live="polite"></div>
 
-
-    // A full EastCoin page may occasionally be opened inside the active
-    // game or video iframe. Sidebar navigation must escape that frame.
-    document.addEventListener(
-      "click",
-      (event) => {
-        const link = event.target.closest(".nav-link");
-
-        if (!link || window.self === window.top) {
-          return;
-        }
-
-        event.preventDefault();
-
-        try {
-          window.top.location.href = link.href;
-        } catch {
-          window.open(link.href, "_top");
-        }
-      },
-      true
-    );
-
-    const SIDEBAR_STORAGE_KEY = "eastcoinsSidebarCollapsed";
-
-    function isMobileNavigation() {
-      return window.matchMedia("(max-width: 900px)").matches;
-    }
-
-    function updateNavigationButton() {
-      if (isMobileNavigation()) {
-        const open = body.classList.contains("menu-open");
-
-        sidebarToggle.textContent = open ? "✕" : "☰";
-        sidebarToggle.setAttribute(
-          "aria-label",
-          open ? "Close navigation" : "Open navigation"
-        );
-        sidebarToggle.setAttribute("aria-expanded", String(open));
-        return;
-      }
-
-      const collapsed = body.classList.contains("sidebar-collapsed");
-
-      sidebarToggle.textContent = collapsed ? "☰" : "◀";
-      sidebarToggle.setAttribute(
-        "aria-label",
-        collapsed ? "Show navigation" : "Hide navigation"
-      );
-      sidebarToggle.setAttribute("aria-expanded", String(!collapsed));
-    }
-
-    function setDesktopSidebarCollapsed(collapsed, save = true) {
-      body.classList.toggle("sidebar-collapsed", collapsed);
-
-      if (save) {
-        localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed));
-      }
-
-      updateNavigationButton();
-    }
-
-    sidebarToggle.addEventListener("click", () => {
-      if (isMobileNavigation()) {
-        body.classList.toggle("menu-open");
-        updateNavigationButton();
-        return;
-      }
-
-      setDesktopSidebarCollapsed(
-        !body.classList.contains("sidebar-collapsed")
-      );
-    });
-
-    mobileOverlay.addEventListener("click", () => {
-      body.classList.remove("menu-open");
-      updateNavigationButton();
-    });
-
-    /*
-      Convert each data-watch-url into a safely encoded dynamic link.
-      This keeps manual HTML editing simple.
-    */
-    document.querySelectorAll(".favorite-site[data-watch-url]").forEach((card) => {
-      const watchUrl = card.dataset.watchUrl.trim();
-      const destination = new URL("index.html", window.location.href);
-
-      destination.searchParams.set("watch", watchUrl);
-      card.href = destination.href;
-    });
-
-    window.addEventListener("resize", () => {
-      body.classList.remove("menu-open");
-      updateNavigationButton();
-    });
-
-    const savedSidebarState =
-      localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
-
-    if (!isMobileNavigation()) {
-      setDesktopSidebarCollapsed(savedSidebarState, false);
-    } else {
-      updateNavigationButton();
-    }
-  
-    function initializeFootballCountdowns() {
-      const kickoffTime = new Date("2026-09-09T19:20:00-05:00");
-
-      document
-        .querySelectorAll("[data-football-countdown]")
-        .forEach((countdown) => {
-          const daysElement = countdown.querySelector(
-            "[data-countdown-days]"
-          );
-          const hoursElement = countdown.querySelector(
-            "[data-countdown-hours]"
-          );
-          const minutesElement = countdown.querySelector(
-            "[data-countdown-minutes]"
-          );
-          const secondsElement = countdown.querySelector(
-            "[data-countdown-seconds]"
-          );
-          const titleElement = countdown.querySelector(
-            ".football-countdown-title"
-          );
-          const statusElement = countdown.querySelector(
-            ".football-countdown-live"
-          );
-
-          function updateFootballCountdown() {
-            const remaining = kickoffTime.getTime() - Date.now();
-
-            if (remaining <= 0) {
-              countdown.classList.add("is-live");
-              titleElement.textContent = "Football is back";
-              statusElement.textContent = "Live";
-              daysElement.textContent = "00";
-              hoursElement.textContent = "00";
-              minutesElement.textContent = "00";
-              secondsElement.textContent = "00";
-              return false;
-            }
-
-            const totalSeconds = Math.floor(remaining / 1000);
-            const days = Math.floor(totalSeconds / 86400);
-            const hours = Math.floor((totalSeconds % 86400) / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
-
-            daysElement.textContent = String(days);
-            hoursElement.textContent = String(hours).padStart(2, "0");
-            minutesElement.textContent = String(minutes).padStart(2, "0");
-            secondsElement.textContent = String(seconds).padStart(2, "0");
-            return true;
-          }
-
-          updateFootballCountdown();
-
-          const countdownTimer = window.setInterval(() => {
-            if (!updateFootballCountdown()) {
-              window.clearInterval(countdownTimer);
-            }
-          }, 1000);
-        });
-    }
-
-    initializeFootballCountdowns();
-
-  </script>
-  <script src="assets/eastcoins-ppv-api.js?v=ppv2"></script>
-  <script src="assets/eastcoins-streamed-api.js?v=api3"></script>
-<script src="assets/eastcoins-streamed.js?v=server17"></script>
-  <script src="assets/eastcoins-events-clean-v2.js?v=events2"></script>
-  <script src="assets/eastcoins-events-directory.js?v=directory1"></script>
-  <script src="assets/eastcoins-view-bridge.js?v=bridge1"></script>
+  <script src="assets/eastcoins-ppv-api.js?v=ppv-direct1"></script>
+  <script src="assets/eastcoins-streamed-api.js?v=api-unified2"></script>
+  <script src="assets/eastcoins-events-home.js?v=events1"></script>
 </body>
 </html>

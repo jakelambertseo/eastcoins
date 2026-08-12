@@ -1250,11 +1250,11 @@ html.ec-shell-reduced-motion .ec-browse-drawer-panel {
 /* ================================================================
    EASTCOIN NAV VERSION
    The changelog major-update count is the visible pre-1.0 version.
-   Group 56 = EastCoin v0.56.
+   Group 57 = EastCoin v0.57.
    ================================================================ */
 
 .ec-persistent-shell .sidebar-tos::after {
-  content: "EastCoin v0.56";
+  content: "EastCoin v0.57";
   display: block;
   margin-top: 7px;
   padding-top: 6px;
@@ -1274,3 +1274,397 @@ html.ec-shell-reduced-motion .ec-browse-drawer-panel {
   disappears with it automatically.
 */
 
+
+
+/* Unified navigation base */
+.ec-events-v2-nav {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 14px 12px 10px;
+  overflow: hidden;
+  border-right: 1px solid var(--ec-line);
+  background:
+    linear-gradient(180deg, rgba(5,5,5,.99), rgba(2,2,2,.99));
+  transition: opacity .2s ease, transform .22s ease, padding .22s ease;
+}
+body.sidebar-hidden .ec-events-v2-nav {
+  opacity: 0;
+  transform: translateX(-100%);
+  pointer-events: none;
+}
+
+.ec-events-v2-mobile-head { display: none; }
+
+.ec-events-v2-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 52px;
+  padding: 4px 7px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.055);
+}
+.ec-events-v2-logo {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  overflow: hidden;
+  border: 1px solid rgba(201,164,79,.13);
+  border-radius: 10px;
+  background: #090606;
+}
+.ec-events-v2-logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.ec-events-v2-brand-copy { min-width: 0; }
+.ec-events-v2-brand-copy strong {
+  display: block;
+  font-size: 1.14rem;
+  font-weight: 950;
+  line-height: 1;
+  letter-spacing: -.035em;
+}
+.ec-events-v2-brand-copy small {
+  display: block;
+  margin-top: 4px;
+  color: #756b61;
+  font-size: .78rem;
+  font-weight: 750;
+}
+
+.ec-events-v2-omni {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  margin: 12px 0 0;
+  padding: 4px;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 11px;
+  background: #0a0909;
+}
+.ec-events-v2-omni:focus-within { border-color: rgba(201,164,79,.32); }
+.ec-events-v2-omni-icon { display: grid; place-items: center; color: #8f8274; font-size: 1rem; }
+.ec-events-v2-omni input {
+  width: 100%; min-width: 0; height: 34px; padding: 0 3px; border: 0; outline: 0;
+  color: #efe4d5; background: transparent; font-size: .87rem;
+}
+.ec-events-v2-omni input::placeholder { color: #665f58; }
+.ec-events-v2-omni button {
+  min-height: 31px; padding: 0 9px; border: 1px solid rgba(201,164,79,.15); border-radius: 8px;
+  color: #d6bf8a; background: rgba(201,164,79,.035); font-size: .76rem; font-weight: 900;
+}
+.ec-events-v2-omni.is-url { border-color: rgba(201,164,79,.3); background: linear-gradient(180deg, rgba(67,18,27,.55), rgba(15,8,10,.95)); }
+.ec-events-v2-omni.is-url button { color: #fff0bd; border-color: rgba(201,164,79,.31); background: rgba(115,28,42,.58); }
+.ec-events-v2-omni-hint {
+  margin: 6px 4px 0;
+  color: #625a54;
+  font-size: .72rem;
+  line-height: 1.35;
+}
+.ec-events-v2-rail-search { display: none; }
+
+.ec-events-v2-nav-scroll {
+  min-height: 0;
+  margin-top: 9px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201,164,79,.16) transparent;
+}
+.ec-events-v2-nav-section {
+  padding: 11px 0;
+  border-top: 1px solid rgba(255,255,255,.05);
+}
+.ec-events-v2-nav-section:first-child { border-top: 0; padding-top: 4px; }
+.ec-events-v2-nav-label {
+  padding: 0 8px 7px;
+  color: #6b5e50;
+  font-size: .72rem;
+  font-weight: 950;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.ec-events-v2-nav-item {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 45px;
+  margin: 0 0 3px;
+  padding: 7px 8px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  outline: 0;
+  color: #a29a92;
+  background: transparent;
+  text-align: left;
+  transition: color .15s ease, border-color .15s ease, background .15s ease;
+}
+.ec-events-v2-nav-item:hover,
+.ec-events-v2-nav-item:focus-visible,
+.ec-events-v2-nav-item.is-active {
+  color: #f2e9dd;
+  border-color: rgba(255,255,255,.055);
+  background: #090808;
+}
+.ec-events-v2-nav-item.is-active { box-shadow: inset 2px 0 0 var(--ec-gold); }
+.ec-events-v2-nav-icon {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  flex: 0 0 29px;
+  border: 1px solid rgba(255,255,255,.065);
+  border-radius: 8px;
+  color: #c0aa79;
+  background: #080707;
+  font-size: .88rem;
+  font-weight: 900;
+}
+.ec-events-v2-nav-copy { min-width: 0; flex: 1; }
+.ec-events-v2-nav-copy strong {
+  display: block;
+  overflow: hidden;
+  color: inherit;
+  font-size: .87rem;
+  font-weight: 900;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ec-events-v2-nav-copy small {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  color: #68615b;
+  font-size: .72rem;
+  font-weight: 650;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ec-events-v2-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 23px;
+  padding: 0 7px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  color: #a89f96;
+  background: #171719;
+  font-size: .72rem;
+  font-weight: 950;
+}
+.ec-events-v2-count.is-live { color: #fff; background: #bc2440; }
+.ec-events-v2-status-dot { width: 7px; height: 7px; margin-right: 3px; border-radius: 50%; background: var(--ec-green); box-shadow: 0 0 0 4px rgba(85,185,118,.07); }
+.ec-events-v2-nav-footer {
+  flex: 0 0 auto;
+  margin-top: 7px;
+  padding: 8px 4px 0;
+  border-top: 1px solid rgba(255,255,255,.05);
+}
+.ec-events-v2-nav-footer p { margin: 0; color: #4e4944; font-size: .64rem; line-height: 1.35; }
+.ec-events-v2-nav-footer span { display: block; margin-top: 6px; color: #6e624d; font-size: .65rem; font-weight: 850; }
+
+/* Compact rail */
+body.sidebar-collapsed .ec-events-v2-nav { padding-inline: 7px; }
+body.sidebar-collapsed .ec-events-v2-brand { justify-content: center; padding-inline: 0; }
+body.sidebar-collapsed .ec-events-v2-brand-copy,
+body.sidebar-collapsed .ec-events-v2-omni,
+body.sidebar-collapsed .ec-events-v2-omni-hint,
+body.sidebar-collapsed .ec-events-v2-nav-label,
+body.sidebar-collapsed .ec-events-v2-nav-copy,
+body.sidebar-collapsed .ec-events-v2-count,
+body.sidebar-collapsed .ec-events-v2-status-dot,
+body.sidebar-collapsed .ec-events-v2-nav-footer { display: none; }
+body.sidebar-collapsed .ec-events-v2-rail-search {
+  display: grid; place-items: center; width: 42px; height: 42px; margin: 12px auto 6px;
+  border: 1px solid rgba(255,255,255,.075); border-radius: 10px; color: #b6a689; background: #090808; font-size: 1rem;
+}
+body.sidebar-collapsed .ec-events-v2-nav-section { padding-block: 8px; }
+body.sidebar-collapsed .ec-events-v2-nav-item { justify-content: center; min-height: 44px; padding: 6px; }
+body.sidebar-collapsed .ec-events-v2-nav-item::after {
+  content: attr(data-nav-tooltip);
+  position: fixed;
+  left: 78px;
+  z-index: 110;
+  padding: 7px 9px;
+  border: 1px solid rgba(201,164,79,.18);
+  border-radius: 7px;
+  color: #f1e4cb;
+  background: rgba(8,7,7,.98);
+  box-shadow: 0 10px 28px rgba(0,0,0,.45);
+  font-size: .76rem;
+  font-weight: 850;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(-4px);
+  transition: .12s ease;
+}
+body.sidebar-collapsed .ec-events-v2-nav-item:hover::after,
+body.sidebar-collapsed .ec-events-v2-nav-item:focus-visible::after { opacity: 1; visibility: visible; transform: translateX(0); }
+
+
+
+/* ================================================================
+   EASTCOIN v0.57 — UNIFIED SITE NAVIGATION
+   Promotes the simplified Events navigation across the persistent shell
+   and MultiView while preserving the three-state desktop nav model.
+   ================================================================ */
+:root {
+  --ec-sidebar-width: 276px;
+  --ec-sidebar-rail-width: 72px;
+  --ec-nav-width: 276px;
+  --ec-nav-rail: 72px;
+  --ec-green: #55b976;
+}
+
+.ec-persistent-shell .sidebar.ec-events-v2-nav,
+.ec-multiview-page .sidebar.ec-events-v2-nav {
+  height: 100vh;
+  padding: 14px 12px 10px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(5,5,5,.99), rgba(2,2,2,.99));
+}
+
+/* Old shell navigation pieces are not used by the unified drawer. */
+.ec-persistent-shell .ec-events-v2-nav .brand,
+.ec-persistent-shell .ec-events-v2-nav .nav-group,
+.ec-persistent-shell .ec-events-v2-nav .sidebar-lower,
+.ec-multiview-page .ec-events-v2-nav .brand,
+.ec-multiview-page .ec-events-v2-nav .nav-group,
+.ec-multiview-page .ec-events-v2-nav .sidebar-lower { display: none !important; }
+
+/* Compact rail for the new navigation. */
+body.sidebar-collapsed .ec-events-v2-nav { padding-inline: 7px; }
+body.sidebar-collapsed .ec-events-v2-brand { justify-content: center; padding-inline: 0; }
+body.sidebar-collapsed .ec-events-v2-brand-copy,
+body.sidebar-collapsed .ec-events-v2-omni,
+body.sidebar-collapsed .ec-events-v2-omni-hint,
+body.sidebar-collapsed .ec-events-v2-nav-label,
+body.sidebar-collapsed .ec-events-v2-nav-copy,
+body.sidebar-collapsed .ec-events-v2-count,
+body.sidebar-collapsed .ec-events-v2-status-dot,
+body.sidebar-collapsed .ec-events-v2-nav-footer { display: none; }
+body.sidebar-collapsed .ec-events-v2-rail-search {
+  display: grid; place-items: center; width: 42px; height: 42px; margin: 12px auto 6px;
+  border: 1px solid rgba(255,255,255,.075); border-radius: 10px; color: #b6a689; background: #090808; font-size: 1rem;
+}
+body.sidebar-collapsed .ec-events-v2-nav-section { padding-block: 8px; }
+body.sidebar-collapsed .ec-events-v2-nav-item { position: relative; justify-content: center; min-height: 44px; padding: 6px; }
+body.sidebar-collapsed .ec-events-v2-nav-item::after {
+  content: attr(data-nav-tooltip); position: fixed; left: 78px; z-index: 210; padding: 7px 9px;
+  border: 1px solid rgba(201,164,79,.18); border-radius: 7px; color: #f1e4cb; background: rgba(8,7,7,.98);
+  box-shadow: 0 10px 28px rgba(0,0,0,.45); font-size: .76rem; font-weight: 850; opacity: 0; visibility: hidden;
+  pointer-events: none; transform: translateX(-4px); transition: .12s ease;
+}
+body.sidebar-collapsed .ec-events-v2-nav-item:hover::after,
+body.sidebar-collapsed .ec-events-v2-nav-item:focus-visible::after { opacity: 1; visibility: visible; transform: translateX(0); }
+
+/* Events is the home surface, not a narrow browse drawer. */
+.ec-persistent-shell.drawer-events-home .ec-browse-drawer { justify-content: stretch; }
+.ec-persistent-shell.drawer-events-home .ec-browse-drawer-scrim { display: none; }
+.ec-persistent-shell.drawer-events-home .ec-browse-drawer-panel {
+  width: 100%; min-width: 0; border-left: 0; grid-template-rows: minmax(0,1fr); box-shadow: none; animation: none;
+}
+.ec-persistent-shell.drawer-events-home .ec-browse-drawer-header {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 8;
+  display: flex;
+  width: auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+}
+.ec-persistent-shell.drawer-events-home .ec-browse-drawer-copy { display: none; }
+.ec-persistent-shell.drawer-events-home .ec-browse-drawer-close {
+  min-height: 34px;
+  padding: 6px 10px;
+  pointer-events: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,.38);
+}
+.ec-persistent-shell.drawer-events-home .ec-browse-drawer-close[hidden] { display: none !important; }
+.ec-persistent-shell.drawer-events-home .ec-browse-loader { inset: 0; }
+.ec-persistent-shell.drawer-events-home #eastcoinViewFrame { filter: none; }
+
+/* ================================================================
+   CLOSED-BY-DEFAULT SIDE VIEW CONTROLS
+   Replaces the old bottom utility dock across the persistent shell.
+   ================================================================ */
+.ec-persistent-utility-dock { display: none !important; }
+.ec-persistent-controls-toggle {
+  position: absolute; top: 50%; right: 8px; z-index: 102; display: grid; place-items: center;
+  width: 34px; height: 58px; padding: 0; border: 1px solid rgba(201,164,79,.2); border-radius: 11px;
+  color: #d7bd80; background: linear-gradient(180deg, rgba(31,20,20,.98), rgba(9,8,8,.98));
+  box-shadow: 0 14px 34px rgba(0,0,0,.48); transform: translateY(-50%);
+}
+.ec-persistent-controls-toggle span { font-size: 1rem; line-height: 1; transform: rotate(90deg); }
+.ec-persistent-controls-toggle:hover,.ec-persistent-controls-toggle:focus-visible,.ec-persistent-controls-toggle[aria-expanded="true"] {
+  color:#fff0bd; border-color:rgba(201,164,79,.4); background:linear-gradient(180deg,rgba(92,22,36,.96),rgba(38,10,16,.98)); outline:0;
+}
+.ec-persistent-controls-drawer {
+  position:absolute; top:50%; right:49px; z-index:101; width:238px; max-height:calc(100% - 28px); overflow:hidden auto;
+  border:1px solid rgba(201,164,79,.2); border-radius:13px; background:radial-gradient(circle at 100% 0%,rgba(112,22,37,.14),transparent 32%),rgba(7,6,6,.985);
+  box-shadow:0 22px 55px rgba(0,0,0,.66); opacity:0; visibility:hidden; pointer-events:none;
+  transform:translate(18px,-50%) scale(.98); transform-origin:right center; transition:opacity .16s ease,transform .16s ease,visibility .16s ease;
+}
+.ec-persistent-controls-drawer.is-open { opacity:1; visibility:visible; pointer-events:auto; transform:translate(0,-50%) scale(1); }
+.ec-persistent-controls-head { display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:54px;padding:9px 10px 9px 12px;border-bottom:1px solid rgba(255,255,255,.06); }
+.ec-persistent-controls-head span { display:block;color:#776957;font-size:.62rem;font-weight:900;letter-spacing:.09em;text-transform:uppercase; }
+.ec-persistent-controls-head strong { display:block;margin-top:2px;color:#e9ddc8;font-size:.86rem; }
+.ec-persistent-controls-head button { width:29px;height:29px;border:1px solid rgba(255,255,255,.07);border-radius:8px;color:#9c9388;background:#0d0c0c; }
+.ec-persistent-controls-list { display:grid;gap:4px;padding:7px; }
+.ec-persistent-controls-list>button { display:grid;grid-template-columns:34px minmax(0,1fr);gap:9px;align-items:center;width:100%;min-height:50px;padding:7px 8px;border:1px solid transparent;border-radius:9px;color:#b9afa2;background:transparent;text-align:left; }
+.ec-persistent-controls-list>button:hover,.ec-persistent-controls-list>button:focus-visible,.ec-persistent-controls-list>button.is-active { color:#f3e7d5;border-color:rgba(201,164,79,.15);background:rgba(201,164,79,.045);outline:0; }
+.ec-persistent-control-icon { display:grid;place-items:center;width:34px;height:34px;border:1px solid rgba(255,255,255,.065);border-radius:9px;background:#0d0b0b;font-size:.88rem; }
+.ec-persistent-controls-list strong { display:block;font-size:.79rem;line-height:1.1; }
+.ec-persistent-controls-list small { display:block;margin-top:3px;color:#675f58;font-size:.66rem;line-height:1.25; }
+body.theater-mode .ec-persistent-controls-toggle { right:10px; }
+
+@media (min-width:901px) {
+  .ec-persistent-shell .mobile-menu { display:none !important; }
+}
+
+.ec-shell-settings-group + .ec-shell-settings-group { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.06); }
+.ec-shell-settings-group h3 { margin: 0 0 7px; color:#7f6d58; font-size:.64rem; font-weight:900; letter-spacing:.1em; text-transform:uppercase; }
+
+@media (max-width:900px) {
+  .ec-persistent-shell .sidebar.ec-events-v2-nav,
+  .ec-multiview-page .sidebar.ec-events-v2-nav {
+    position:fixed; inset:0 auto 0 0; z-index:120; width:min(310px,88vw); height:100vh; padding:12px;
+    opacity:1 !important; transform:translateX(-102%) !important; pointer-events:auto !important; box-shadow:24px 0 60px rgba(0,0,0,.6);
+  }
+  body.menu-open .ec-events-v2-nav { transform:translateX(0) !important; }
+  .ec-events-v2-mobile-head { display:flex !important;align-items:center;justify-content:space-between;min-height:38px;padding:0 4px 8px; }
+  .ec-events-v2-mobile-head strong { color:#d9ccb7;font-size:.8rem; }
+  .ec-events-v2-mobile-head button { width:30px;height:30px;border:1px solid rgba(255,255,255,.07);border-radius:8px;color:#948a81;background:#0b0b0b; }
+  body.sidebar-collapsed .ec-events-v2-brand-copy,
+  body.sidebar-collapsed .ec-events-v2-omni,
+  body.sidebar-collapsed .ec-events-v2-omni-hint,
+  body.sidebar-collapsed .ec-events-v2-nav-label,
+  body.sidebar-collapsed .ec-events-v2-nav-copy,
+  body.sidebar-collapsed .ec-events-v2-count,
+  body.sidebar-collapsed .ec-events-v2-status-dot,
+  body.sidebar-collapsed .ec-events-v2-nav-footer { display: initial; }
+  body.sidebar-collapsed .ec-events-v2-omni { display:grid; }
+  body.sidebar-collapsed .ec-events-v2-nav-item { justify-content:flex-start;min-height:45px;padding:7px 8px; }
+  body.sidebar-collapsed .ec-events-v2-rail-search { display:none; }
+  body.sidebar-collapsed .ec-events-v2-nav-item::after { display:none; }
+  .ec-persistent-controls-toggle { top:auto;right:8px;bottom:12px;width:48px;height:40px;transform:none; }
+  .ec-persistent-controls-toggle span { transform:none; }
+  .ec-persistent-controls-drawer { top:auto;right:8px;bottom:59px;width:min(270px,calc(100vw - 16px));max-height:min(420px,calc(100vh - 80px));transform:translateY(14px) scale(.98);transform-origin:right bottom; }
+  .ec-persistent-controls-drawer.is-open { transform:translateY(0) scale(1); }
+}

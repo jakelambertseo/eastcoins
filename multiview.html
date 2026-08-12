@@ -15,156 +15,32 @@
   <link rel="stylesheet" href="assets/eastcoins-theme.css?v=theme9">
   <link rel="stylesheet" href="assets/eastcoins-shell.css?v=shell2">
   <link rel="stylesheet" href="assets/eastcoins-persistent-shell.css?v=persistent6">
-  <link rel="stylesheet" href="assets/eastcoins-shell-polish.css?v=polish5">
+  <link rel="stylesheet" href="assets/eastcoins-shell-polish.css?v=polish6">
   <link rel="stylesheet" href="assets/eastcoins-multiview.css?v=mv7">
 </head>
 <body class="ec-shell-page ec-persistent-shell ec-multiview-page">
   <div class="mv-mobile-overlay" id="mvMobileOverlay" aria-hidden="true"></div>
 
   <div class="mv-layout" id="mvLayout">
-    <aside class="sidebar" id="mvSidebar" aria-label="Primary navigation">
-      <div class="sidebar-mobile-header">
-        <span>EastCoin Menu</span>
-        <button id="mvMobileSidebarClose" type="button" aria-label="Close navigation">×</button>
-      </div>
-
-      <div class="brand">
-        <a class="brand-home-button" href="index.html?new=1" data-tooltip="Return to Live Player" aria-label="Return to Live Player">
-          <span class="brand-mark brand-logo">
-            <img alt="EastCoin logo" src="assets/eastcoins-logo.webp">
-          </span>
-          <span class="brand-copy brand-copy-single">
-            <strong>EastCoin</strong>
-            <small>Watch together</small>
-          </span>
-        </a>
-      </div>
-
-      <nav class="nav-group" aria-label="Watch">
-        <div class="nav-label">Watch</div>
-
-        <a class="nav-link" data-tooltip="Return to the EastCoin homepage" href="index.html?new=1">
-          <span class="nav-icon-box">
-            <svg aria-hidden="true" class="sidebar-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M8 21h8"></path><path d="M12 19v2"></path><path d="m10 9 5 3-5 3Z"></path>
-            </svg>
-          </span>
-          <span class="nav-link-content">
-            <span class="nav-link-row"><span class="nav-link-title">Live Player</span></span>
-            <span class="nav-link-description">URL form &amp; event list</span>
-          </span>
-        </a>
-
-        <a class="nav-link" data-tooltip="Browse the complete event directory" href="index.html?view=events">
-          <span class="nav-icon-box">
-            <svg aria-hidden="true" class="sidebar-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M8 2v4"></path><path d="M16 2v4"></path><path d="M3 9h18"></path><path d="M8 13h3"></path><path d="M13 13h3"></path><path d="M8 17h3"></path>
-            </svg>
-          </span>
-          <span class="nav-link-content">
-            <span class="nav-link-row"><span class="nav-link-title">Events</span></span>
-            <span class="nav-link-description">Browse available games</span>
-          </span>
-        </a>
-
-        <a class="nav-link active" data-tooltip="Watch multiple streams at once" href="multiview.html" aria-current="page">
-          <span class="nav-icon-box">
-            <svg aria-hidden="true" class="sidebar-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="8" height="8" rx="1"></rect><rect x="13" y="3" width="8" height="8" rx="1"></rect><rect x="3" y="13" width="8" height="8" rx="1"></rect><rect x="13" y="13" width="8" height="8" rx="1"></rect>
-            </svg>
-          </span>
-          <span class="nav-link-content">
-            <span class="nav-link-row"><span class="nav-link-title">MultiView</span></span>
-            <span class="nav-link-description">Watch up to four streams</span>
-          </span>
-        </a>
-
-        <a class="nav-link" data-tooltip="Open approved stream sites" href="index.html?view=favorites">
-          <span class="nav-icon-box">
-            <svg aria-hidden="true" class="sidebar-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M7 9a5 5 0 0 1 5 5"></path><path d="M7 13a1 1 0 0 1 1 1"></path><path d="m15 9 2-2 2 2"></path><path d="M17 7v6"></path>
-            </svg>
-          </span>
-          <span class="nav-link-content">
-            <span class="nav-link-row"><span class="nav-link-title">Other Streams</span></span>
-            <span class="nav-link-description">Approved stream sites</span>
-          </span>
-        </a>
-      </nav>
-
-      <div class="sidebar-lower">
-        <div class="sidebar-section-label">Community</div>
-
-        <details class="football-countdown" data-football-countdown aria-label="Countdown to the 2026 NFL regular season">
-          <summary class="football-countdown-summary" data-tooltip="NFL kickoff countdown">
-            <span class="football-countdown-icon">
-              <svg aria-hidden="true" class="sidebar-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6.5 17.5c-3-3-2.7-7.4.6-10.7s7.7-3.6 10.7-.6 2.7 7.4-.6 10.7-7.7 3.6-10.7.6Z"></path><path d="m8.5 15.5 7-7"></path><path d="m10.3 9.7 4 4"></path><path d="m9 11 4 4"></path>
-              </svg>
-            </span>
-            <span class="football-countdown-summary-copy">
-              <strong>Football season</strong>
-              <small>Patriots at Seahawks</small>
-            </span>
-            <span class="football-countdown-compact" data-countdown-compact>--</span>
-            <span aria-hidden="true" class="football-countdown-chevron">⌄</span>
-          </summary>
-
-          <div class="football-countdown-details">
-            <div class="football-countdown-eyebrow">
-              <span>🏈 NFL Kickoff</span>
-              <span class="football-countdown-live">Countdown</span>
-            </div>
-            <p class="football-countdown-title">Football season starts in</p>
-            <p class="football-countdown-matchup">Patriots at Seahawks</p>
-            <div class="football-countdown-grid" aria-live="polite">
-              <div class="football-countdown-unit"><span class="football-countdown-value" data-countdown-days>--</span><span class="football-countdown-label">Days</span></div>
-              <div class="football-countdown-unit"><span class="football-countdown-value" data-countdown-hours>--</span><span class="football-countdown-label">Hours</span></div>
-              <div class="football-countdown-unit"><span class="football-countdown-value" data-countdown-minutes>--</span><span class="football-countdown-label">Min</span></div>
-              <div class="football-countdown-unit"><span class="football-countdown-value" data-countdown-seconds>--</span><span class="football-countdown-label">Sec</span></div>
-            </div>
-            <div class="football-countdown-date">Wed, Sep 9 · 7:20 PM CT</div>
-          </div>
-        </details>
-
-        <div class="sidebar-section-label sidebar-support-label">Support</div>
-        <div class="sidebar-utility-grid" aria-label="EastCoin utilities">
-          <a class="sidebar-footer-link sidebar-help-link" data-tooltip="Emote Help" href="index.html?view=emotes">
-            <span class="sidebar-utility-icon">
-              <svg aria-hidden="true" class="sidebar-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="9"></circle><path d="M9.8 9a2.4 2.4 0 1 1 3.8 1.95c-1.05.7-1.6 1.15-1.6 2.25"></path><path d="M12 17h.01"></path>
-              </svg>
-            </span>
-            <span class="sidebar-utility-label">Emote Help</span>
-          </a>
-
-          <a class="sidebar-footer-link sidebar-status-link" data-tooltip="View EastCoin status" href="status.html">
-            <span class="sidebar-utility-icon">
-              <svg aria-hidden="true" class="sidebar-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 12h3l2-5 4 10 2-5h5"></path>
-              </svg>
-            </span>
-            <span class="sidebar-utility-label">Status</span><span class="sidebar-status-dot" aria-hidden="true"></span>
-          </a>
-
-          <button class="sidebar-footer-link sidebar-settings-link" data-tooltip="Settings" id="mvSettingsButton" type="button">
-            <span class="sidebar-utility-icon">
-              <svg aria-hidden="true" class="sidebar-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.12 2.12-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V20h-3v-.08a1.7 1.7 0 0 0-1.03-1.56 1.7 1.7 0 0 0-1.88.34l-.06.06-2.12-2.12.06-.06A1.7 1.7 0 0 0 5 15.4 1.7 1.7 0 0 0 3.44 14H3v-3h.44A1.7 1.7 0 0 0 5 9.97a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.12-2.12.06.06A1.7 1.7 0 0 0 8.66 6.3 1.7 1.7 0 0 0 9.7 4.74V4h3v.74a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.12 2.12-.06.06a1.7 1.7 0 0 0-.34 1.88A1.7 1.7 0 0 0 18.96 11H21v3h-2.04A1.7 1.7 0 0 0 19.4 15Z"></path>
-              </svg>
-            </span>
-            <span class="sidebar-utility-label">Settings</span>
-          </button>
-
-          <div class="sidebar-footer-link sidebar-zwades-utility" data-tooltip="blue" role="img" aria-label="Zwades Blue: blue">
-            <span class="sidebar-zwades-thumb" aria-hidden="true"></span>
-            <span class="sidebar-utility-label">blue</span>
-          </div>
-        </div>
-
-        <p class="sidebar-tos">We DO NOT host nor transmit any audiovisual content itself and DO NOT control nor influence such content. We cannot accept any liability for the content transmitted by others. Any responsibility for this content lies with those who host or transmit it. We are not affiliated nor claim to be affiliated with any of the owners of streams and/or videos. All content is copyright of their respective owners</p>
-      </div>
-    </aside>
+    <aside class="sidebar ec-events-v2-nav" id="mvSidebar" aria-label="EastCoin navigation and event filters">
+<div class="ec-events-v2-mobile-head"><strong>EastCoin</strong><button id="mvMobileSidebarClose" type="button" aria-label="Close navigation">×</button></div>
+<a class="ec-events-v2-brand" href="index.html" aria-label="Open All Events"><span class="ec-events-v2-logo"><img src="assets/eastcoins-logo.webp" alt=""></span><span class="ec-events-v2-brand-copy"><strong>EastCoin</strong><small>Watch together</small></span></a>
+<form class="ec-events-v2-omni" id="mvUnifiedOmni" autocomplete="off"><span class="ec-events-v2-omni-icon">⌕</span><input id="mvUnifiedOmniInput" type="text" placeholder="Search events or paste a URL" aria-label="Search events or paste a stream URL"><button id="mvUnifiedOmniAction" type="submit">Search</button></form>
+<button class="ec-events-v2-rail-search" id="mvUnifiedRailSearch" type="button" aria-label="Expand navigation to search">⌕</button><p class="ec-events-v2-omni-hint" id="mvUnifiedOmniHint">Search teams, games and leagues — or paste a stream URL.</p>
+<nav class="ec-events-v2-nav-scroll" aria-label="EastCoin">
+<section class="ec-events-v2-nav-section"><div class="ec-events-v2-nav-label">Watch</div>
+<a class="ec-events-v2-nav-item" href="index.html" data-nav-tooltip="All Events"><span class="ec-events-v2-nav-icon">▦</span><span class="ec-events-v2-nav-copy"><strong>All Events</strong><small>EastCoin event home</small></span></a>
+<a class="ec-events-v2-nav-item is-active" href="multiview.html" data-nav-tooltip="MultiView" aria-current="page"><span class="ec-events-v2-nav-icon">▥</span><span class="ec-events-v2-nav-copy"><strong>MultiView</strong><small>Watch up to four streams</small></span></a>
+<a class="ec-events-v2-nav-item" href="index.html?view=favorites" data-nav-tooltip="Other Streams"><span class="ec-events-v2-nav-icon">⌁</span><span class="ec-events-v2-nav-copy"><strong>Other Streams</strong><small>Approved stream sites</small></span></a></section>
+<section class="ec-events-v2-nav-section"><div class="ec-events-v2-nav-label">Events</div>
+<a class="ec-events-v2-nav-item" href="index.html?view=events&amp;scope=live" data-nav-tooltip="Live Only"><span class="ec-events-v2-nav-icon">▶</span><span class="ec-events-v2-nav-copy"><strong>Live Only</strong><small>Games happening now</small></span></a>
+<a class="ec-events-v2-nav-item" href="index.html?view=events&amp;scope=trending" data-nav-tooltip="Trending"><span class="ec-events-v2-nav-icon">🔥</span><span class="ec-events-v2-nav-copy"><strong>Trending</strong><small>Popular and active games</small></span></a>
+<button class="ec-events-v2-nav-item" id="mvSettingsButton" type="button" data-nav-tooltip="Settings"><span class="ec-events-v2-nav-icon">⚙</span><span class="ec-events-v2-nav-copy"><strong>Settings</strong><small>MultiView preferences</small></span></button></section>
+<section class="ec-events-v2-nav-section"><div class="ec-events-v2-nav-label">Categories</div><a class="ec-events-v2-nav-item" href="index.html?view=events&amp;sport=american-football" data-nav-tooltip="Football"><span class="ec-events-v2-nav-icon">🏈</span><span class="ec-events-v2-nav-copy"><strong>Football</strong><small>Browse football</small></span></a><a class="ec-events-v2-nav-item" href="index.html?view=events&amp;sport=combat" data-nav-tooltip="UFC / Combat"><span class="ec-events-v2-nav-icon">🥊</span><span class="ec-events-v2-nav-copy"><strong>UFC / Combat</strong><small>Browse ufc / combat</small></span></a><a class="ec-events-v2-nav-item" href="index.html?view=events&amp;sport=basketball" data-nav-tooltip="Basketball"><span class="ec-events-v2-nav-icon">🏀</span><span class="ec-events-v2-nav-copy"><strong>Basketball</strong><small>Browse basketball</small></span></a><a class="ec-events-v2-nav-item" href="index.html?view=events&amp;sport=baseball" data-nav-tooltip="Baseball"><span class="ec-events-v2-nav-icon">⚾</span><span class="ec-events-v2-nav-copy"><strong>Baseball</strong><small>Browse baseball</small></span></a><a class="ec-events-v2-nav-item" href="index.html?view=events&amp;sport=hockey" data-nav-tooltip="Hockey"><span class="ec-events-v2-nav-icon">🏒</span><span class="ec-events-v2-nav-copy"><strong>Hockey</strong><small>Browse hockey</small></span></a><a class="ec-events-v2-nav-item" href="index.html?view=events&amp;sport=soccer" data-nav-tooltip="Soccer"><span class="ec-events-v2-nav-icon">⚽</span><span class="ec-events-v2-nav-copy"><strong>Soccer</strong><small>Browse soccer</small></span></a><a class="ec-events-v2-nav-item" href="index.html?view=events&amp;sport=wrestling" data-nav-tooltip="Wrestling"><span class="ec-events-v2-nav-icon">🤼</span><span class="ec-events-v2-nav-copy"><strong>Wrestling</strong><small>Browse wrestling</small></span></a><a class="ec-events-v2-nav-item" href="index.html?view=events&amp;sport=motorsport" data-nav-tooltip="Motorsport"><span class="ec-events-v2-nav-icon">🏎</span><span class="ec-events-v2-nav-copy"><strong>Motorsport</strong><small>Browse motorsport</small></span></a><a class="ec-events-v2-nav-item" href="index.html?view=events&amp;sport=tennis" data-nav-tooltip="Tennis"><span class="ec-events-v2-nav-icon">🎾</span><span class="ec-events-v2-nav-copy"><strong>Tennis</strong><small>Browse tennis</small></span></a><a class="ec-events-v2-nav-item" href="index.html?view=events&amp;sport=golf" data-nav-tooltip="Golf"><span class="ec-events-v2-nav-icon">⛳</span><span class="ec-events-v2-nav-copy"><strong>Golf</strong><small>Browse golf</small></span></a><a class="ec-events-v2-nav-item" href="index.html?view=events&amp;sport=other" data-nav-tooltip="Other Events"><span class="ec-events-v2-nav-icon">≡</span><span class="ec-events-v2-nav-copy"><strong>Other Events</strong><small>Browse other events</small></span></a></section>
+<section class="ec-events-v2-nav-section"><div class="ec-events-v2-nav-label">Support</div>
+<a class="ec-events-v2-nav-item" href="index.html?view=emotes" data-nav-tooltip="Emote Help"><span class="ec-events-v2-nav-icon">?</span><span class="ec-events-v2-nav-copy"><strong>Emote Help</strong><small>Twitch emote reference</small></span></a>
+<a class="ec-events-v2-nav-item" href="index.html?view=status" data-nav-tooltip="Status"><span class="ec-events-v2-nav-icon">⌁</span><span class="ec-events-v2-nav-copy"><strong>Status</strong><small>EastCoin service health</small></span><span class="ec-events-v2-status-dot"></span></a></section>
+</nav><div class="ec-events-v2-nav-footer"><p>We DO NOT host nor transmit any audiovisual content itself and DO NOT control nor influence such content. We cannot accept any liability for the content transmitted by others. Any responsibility for this content lies with those who host or transmit it. We are not affiliated nor claim to be affiliated with any of the owners of streams and/or videos. All content is copyright of their respective owners</p><span>EastCoin v0.57</span></div></aside>
 
     <main class="mv-main">
       <button class="mv-nav-toggle" id="mvNavToggle" type="button" aria-label="Compact navigation" aria-expanded="true">‹</button>
@@ -335,6 +211,6 @@
 
   <script src="assets/eastcoins-ppv-api.js?v=ppv2"></script>
   <script src="assets/eastcoins-streamed-api.js?v=api3"></script>
-  <script src="assets/eastcoins-multiview.js?v=mv5"></script>
+  <script src="assets/eastcoins-multiview.js?v=mv6"></script>
 </body>
 </html>
