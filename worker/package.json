@@ -1,0 +1,13 @@
+{
+  "name": "eastcoin-music-room",
+  "version": "0.59.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

@@ -15,6 +15,7 @@
 <link href="assets/eastcoins-shell.css?v=shell2" rel="stylesheet"/>
 <link href="assets/eastcoins-persistent-shell.css?v=persistent7" rel="stylesheet"/><link href="assets/eastcoins-shell-polish.css?v=polish7" rel="stylesheet"/>
 <link href="assets/eastcoins-events-home.css?v=events5" rel="stylesheet"/>
+<link href="assets/eastcoins-music-player.css?v=music1" rel="stylesheet"/>
 </head>
 <body class="ec-shell-page ec-persistent-shell">
 <div aria-hidden="true" class="mobile-overlay" id="mobileOverlay"></div>
@@ -150,7 +151,7 @@
 
   <div class="ec-events-v2-nav-footer">
     <p>We DO NOT host nor transmit any audiovisual content itself and DO NOT control nor influence such content. We cannot accept any liability for the content transmitted by others. Any responsibility for this content lies with those who host or transmit it. We are not affiliated nor claim to be affiliated with any of the owners of streams and/or videos. All content is copyright of their respective owners</p>
-    <span>EastCoin v0.58</span>
+    <span>EastCoin v0.59</span>
   </div>
 </aside>
 <main aria-label="EastCoin content" class="ec-persistent-view-area">
@@ -189,6 +190,7 @@
     <button aria-label="Theater" aria-pressed="false" id="persistentTheaterButton" type="button"><span class="ec-persistent-control-icon">⛶</span><span><strong>Theater</strong><small>Focus on the player</small></span></button>
     <button aria-label="Hide chat" aria-pressed="true" id="persistentChatButton" type="button"><span class="ec-persistent-control-icon">💬</span><span><strong>Hide chat</strong><small>Toggle Twitch chat</small></span></button>
     <button aria-label="Hide nav" aria-pressed="false" id="persistentNavButton" type="button"><span class="ec-persistent-control-icon">◀</span><span><strong>Hide nav</strong><small>Toggle navigation</small></span></button>
+    <button aria-label="Music Player" aria-pressed="false" id="persistentMusicButton" type="button"><span class="ec-persistent-control-icon">♫</span><span><strong>Music Player</strong><small>Music + song requests</small></span></button>
     <button aria-label="Play a Game" id="persistentGameButton" type="button"><span class="ec-persistent-control-icon">🎮</span><span><strong>Play a Game</strong><small>Open the EastCoin game overlay</small></span></button>
     <button aria-controls="persistentSettingsModal" aria-haspopup="dialog" aria-label="Settings" id="persistentDockSettingsButton" type="button"><span class="ec-persistent-control-icon">⚙</span><span><strong>Settings</strong><small>Events + interface preferences</small></span></button>
   </div>
@@ -230,5 +232,7 @@
 </section>
 </div><div aria-live="polite" class="toast" id="toast" role="status"></div>
 <script src="assets/eastcoins-persistent-shell.js?v=persistent17"></script>
+<script src="assets/eastcoins-music-config.js?v=music1"></script>
+<script src="assets/eastcoins-music-player.js?v=music1"></script>
 </body>
 </html>

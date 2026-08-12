@@ -1,0 +1,491 @@
+/* ================================================================
+   EASTCOIN — MUSIC PLAYER / SONG REQUEST DOCK
+   v0.59 production candidate
+   ================================================================ */
+
+:root {
+  --ec-music-width: 360px;
+}
+
+.ec-music-dock[hidden] {
+  display: none !important;
+}
+
+@media (min-width: 901px) {
+  body.ec-persistent-shell.music-dock-open:not(.theater-mode) .ec-persistent-layout {
+    grid-template-columns:
+      var(--ec-sidebar-width)
+      minmax(var(--ec-min-view-width), 1fr)
+      var(--ec-music-width)
+      var(--ec-divider-width)
+      var(--ec-chat-width);
+  }
+
+  body.ec-persistent-shell.music-dock-open.sidebar-collapsed:not(.theater-mode) .ec-persistent-layout {
+    grid-template-columns:
+      72px
+      minmax(var(--ec-min-view-width), 1fr)
+      var(--ec-music-width)
+      var(--ec-divider-width)
+      var(--ec-chat-width);
+  }
+
+  body.ec-persistent-shell.music-dock-open.sidebar-hidden:not(.theater-mode) .ec-persistent-layout {
+    grid-template-columns:
+      0
+      minmax(var(--ec-min-view-width), 1fr)
+      var(--ec-music-width)
+      var(--ec-divider-width)
+      var(--ec-chat-width);
+  }
+
+  body.ec-persistent-shell.music-dock-open.chat-collapsed:not(.theater-mode) .ec-persistent-layout {
+    grid-template-columns:
+      var(--ec-sidebar-width)
+      minmax(var(--ec-min-view-width), 1fr)
+      var(--ec-music-width)
+      0
+      0;
+  }
+
+  body.ec-persistent-shell.music-dock-open.sidebar-collapsed.chat-collapsed:not(.theater-mode) .ec-persistent-layout {
+    grid-template-columns:
+      72px
+      minmax(var(--ec-min-view-width), 1fr)
+      var(--ec-music-width)
+      0
+      0;
+  }
+
+  body.ec-persistent-shell.music-dock-open.sidebar-hidden.chat-collapsed:not(.theater-mode) .ec-persistent-layout {
+    grid-template-columns:
+      0
+      minmax(var(--ec-min-view-width), 1fr)
+      var(--ec-music-width)
+      0
+      0;
+  }
+}
+
+.ec-music-dock {
+  position: relative;
+  z-index: 34;
+  display: flex;
+  align-items: flex-end;
+  min-width: 0;
+  min-height: 0;
+  height: 100vh;
+  border-left: 1px solid rgba(255,255,255,.075);
+  background:
+    radial-gradient(circle at 50% 100%, rgba(120,21,34,.11), transparent 44%),
+    #020202;
+}
+
+.ec-music-panel {
+  width: 100%;
+  max-height: min(720px, calc(100vh - 18px));
+  margin: 0;
+  overflow: hidden;
+  border-top: 1px solid rgba(201,164,79,.22);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(120,21,34,.18), transparent 34%),
+    linear-gradient(180deg, #100b0c, #050404 72%);
+  box-shadow: 0 -24px 58px rgba(0,0,0,.48);
+}
+
+.ec-music-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 12px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.065);
+}
+
+.ec-music-title-wrap {
+  min-width: 0;
+}
+
+.ec-music-kicker,
+.ec-music-mode {
+  display: block;
+  color: #c9a44f;
+  font-size: .58rem;
+  font-weight: 900;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.ec-music-head strong {
+  display: block;
+  margin-top: 2px;
+  color: #f3e7d2;
+  font-size: .88rem;
+}
+
+.ec-music-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ec-music-icon-button {
+  display: grid;
+  place-items: center;
+  width: 31px;
+  height: 31px;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 8px;
+  color: #e8dac4;
+  background: rgba(255,255,255,.035);
+}
+
+.ec-music-icon-button:hover,
+.ec-music-icon-button:focus-visible {
+  border-color: rgba(201,164,79,.35);
+  color: #fff0cd;
+  outline: none;
+}
+
+.ec-music-youtube-shell {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 200px;
+  background: #000;
+}
+
+.ec-music-youtube-shell iframe,
+#eastcoinMusicYoutube {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 200px;
+  border: 0;
+}
+
+.ec-music-empty-player {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-content: center;
+  gap: 6px;
+  padding: 24px;
+  color: #9d9385;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(120,21,34,.24), transparent 36%),
+    #050505;
+  text-align: center;
+  pointer-events: none;
+}
+
+.ec-music-empty-player[hidden] {
+  display: none !important;
+}
+
+.ec-music-empty-player strong {
+  color: #efe0c7;
+  font-size: .8rem;
+}
+
+.ec-music-empty-player small {
+  font-size: .65rem;
+  line-height: 1.45;
+}
+
+.ec-music-autoplay {
+  display: none;
+  width: calc(100% - 20px);
+  margin: 9px 10px 0;
+  padding: 9px 10px;
+  border: 1px solid rgba(201,164,79,.34);
+  border-radius: 9px;
+  color: #191005;
+  background: linear-gradient(180deg, #e0c36b, #b9913a);
+  font-size: .7rem;
+  font-weight: 900;
+}
+
+.ec-music-autoplay.is-visible {
+  display: block;
+}
+
+.ec-music-now {
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid rgba(255,255,255,.055);
+}
+
+.ec-music-now-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.ec-music-now-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.ec-music-now-copy strong,
+.ec-music-now-copy small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ec-music-now-copy strong {
+  color: #f4ead7;
+  font-size: .74rem;
+}
+
+.ec-music-now-copy small {
+  margin-top: 2px;
+  color: #857c71;
+  font-size: .59rem;
+}
+
+.ec-music-room-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+  color: #776f64;
+  font-size: .57rem;
+}
+
+.ec-music-room-stats span + span::before {
+  content: "•";
+  margin-right: 6px;
+  color: #4f4942;
+}
+
+.ec-music-request {
+  padding: 9px 12px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.055);
+}
+
+.ec-music-request label,
+.ec-music-nickname label {
+  display: block;
+  margin-bottom: 5px;
+  color: #8f8578;
+  font-size: .58rem;
+  font-weight: 850;
+}
+
+.ec-music-request-row {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 6px;
+}
+
+.ec-music-request input,
+.ec-music-nickname input {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  padding: 0 9px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 8px;
+  color: #eee1ca;
+  background: #080707;
+  font-size: .67rem;
+  outline: none;
+}
+
+.ec-music-request input:focus,
+.ec-music-nickname input:focus {
+  border-color: rgba(201,164,79,.45);
+  box-shadow: 0 0 0 2px rgba(201,164,79,.08);
+}
+
+.ec-music-request button,
+.ec-music-skip {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid rgba(201,164,79,.25);
+  border-radius: 8px;
+  color: #1a1005;
+  background: linear-gradient(180deg, #dfc36b, #b9933c);
+  font-size: .63rem;
+  font-weight: 900;
+}
+
+.ec-music-request-help {
+  min-height: 15px;
+  margin-top: 5px;
+  color: #6f675e;
+  font-size: .55rem;
+  line-height: 1.35;
+}
+
+.ec-music-request-help.is-error {
+  color: #d77783;
+}
+
+.ec-music-queue-wrap {
+  min-height: 0;
+  max-height: 210px;
+  overflow: auto;
+}
+
+.ec-music-queue-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px 6px;
+  color: #7f7569;
+  background: rgba(5,4,4,.96);
+  font-size: .56rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.ec-music-queue {
+  list-style: none;
+  margin: 0;
+  padding: 0 8px 8px;
+}
+
+.ec-music-queue-item {
+  display: grid;
+  grid-template-columns: 22px minmax(0,1fr);
+  gap: 7px;
+  padding: 7px 5px;
+  border-bottom: 1px solid rgba(255,255,255,.045);
+}
+
+.ec-music-queue-index {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  color: #a98b45;
+  background: rgba(201,164,79,.07);
+  font-size: .56rem;
+  font-weight: 900;
+}
+
+.ec-music-queue-copy {
+  min-width: 0;
+}
+
+.ec-music-queue-copy strong,
+.ec-music-queue-copy small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ec-music-queue-copy strong {
+  color: #d9ccb9;
+  font-size: .63rem;
+}
+
+.ec-music-queue-copy small {
+  margin-top: 2px;
+  color: #756d63;
+  font-size: .53rem;
+}
+
+.ec-music-empty-queue {
+  padding: 14px 12px 16px;
+  color: #6f675e;
+  font-size: .6rem;
+  text-align: center;
+}
+
+.ec-music-footer {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 8px;
+  align-items: end;
+  padding: 8px 12px 10px;
+  border-top: 1px solid rgba(255,255,255,.055);
+  background: rgba(0,0,0,.18);
+}
+
+.ec-music-nickname {
+  min-width: 0;
+}
+
+.ec-music-nickname label {
+  margin-bottom: 3px;
+}
+
+.ec-music-nickname input {
+  height: 30px;
+}
+
+.ec-music-skip {
+  height: 30px;
+  min-height: 30px;
+  color: #e7dac6;
+  background: rgba(255,255,255,.035);
+  border-color: rgba(255,255,255,.09);
+}
+
+.ec-music-skip:hover,
+.ec-music-skip:focus-visible {
+  border-color: rgba(201,164,79,.32);
+  color: #fff0cd;
+  outline: none;
+}
+
+.ec-music-skip[disabled] {
+  opacity: .45;
+  cursor: default;
+}
+
+.ec-music-control-active {
+  border-color: rgba(201,164,79,.35) !important;
+  background: rgba(201,164,79,.09) !important;
+}
+
+body.theater-mode .ec-music-dock {
+  display: none !important;
+}
+
+@media (max-width: 1280px) and (min-width: 901px) {
+  :root { --ec-music-width: 356px; }
+}
+
+@media (max-width: 900px) {
+  body.ec-persistent-shell.music-dock-open .ec-persistent-layout,
+  body.ec-persistent-shell.music-dock-open.sidebar-collapsed .ec-persistent-layout,
+  body.ec-persistent-shell.music-dock-open.sidebar-hidden .ec-persistent-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ec-music-dock {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    border-top: 1px solid rgba(201,164,79,.18);
+    border-left: 0;
+  }
+
+  .ec-music-panel {
+    max-height: none;
+    border-top: 0;
+  }
+
+  .ec-music-youtube-shell,
+  .ec-music-youtube-shell iframe,
+  #eastcoinMusicYoutube {
+    min-height: 200px;
+  }
+
+  .ec-music-queue-wrap {
+    max-height: 240px;
+  }
+}
