@@ -1,6 +1,6 @@
 /* ================================================================
-   EASTCOIN — MUSIC PLAYER / SONG REQUEST DOCK
-   v0.59 production candidate
+   EASTCOIN — MUSIC PLAYER / SONG REQUEST OVERLAY
+   v0.59.1 floating-player hotfix
    ================================================================ */
 
 :root {
@@ -11,86 +11,38 @@
   display: none !important;
 }
 
-@media (min-width: 901px) {
-  body.ec-persistent-shell.music-dock-open:not(.theater-mode) .ec-persistent-layout {
-    grid-template-columns:
-      var(--ec-sidebar-width)
-      minmax(var(--ec-min-view-width), 1fr)
-      var(--ec-music-width)
-      var(--ec-divider-width)
-      var(--ec-chat-width);
-  }
-
-  body.ec-persistent-shell.music-dock-open.sidebar-collapsed:not(.theater-mode) .ec-persistent-layout {
-    grid-template-columns:
-      72px
-      minmax(var(--ec-min-view-width), 1fr)
-      var(--ec-music-width)
-      var(--ec-divider-width)
-      var(--ec-chat-width);
-  }
-
-  body.ec-persistent-shell.music-dock-open.sidebar-hidden:not(.theater-mode) .ec-persistent-layout {
-    grid-template-columns:
-      0
-      minmax(var(--ec-min-view-width), 1fr)
-      var(--ec-music-width)
-      var(--ec-divider-width)
-      var(--ec-chat-width);
-  }
-
-  body.ec-persistent-shell.music-dock-open.chat-collapsed:not(.theater-mode) .ec-persistent-layout {
-    grid-template-columns:
-      var(--ec-sidebar-width)
-      minmax(var(--ec-min-view-width), 1fr)
-      var(--ec-music-width)
-      0
-      0;
-  }
-
-  body.ec-persistent-shell.music-dock-open.sidebar-collapsed.chat-collapsed:not(.theater-mode) .ec-persistent-layout {
-    grid-template-columns:
-      72px
-      minmax(var(--ec-min-view-width), 1fr)
-      var(--ec-music-width)
-      0
-      0;
-  }
-
-  body.ec-persistent-shell.music-dock-open.sidebar-hidden.chat-collapsed:not(.theater-mode) .ec-persistent-layout {
-    grid-template-columns:
-      0
-      minmax(var(--ec-min-view-width), 1fr)
-      var(--ec-music-width)
-      0
-      0;
-  }
-}
-
+/*
+  The music player intentionally floats INSIDE .ec-persistent-view-area.
+  It no longer participates in the persistent shell grid, so opening it
+  never creates a tall empty black column between video and Twitch chat.
+*/
 .ec-music-dock {
-  position: relative;
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
   z-index: 34;
-  display: flex;
-  align-items: flex-end;
+  width: min(var(--ec-music-width), calc(100% - 28px));
+  max-height: calc(100% - 28px);
   min-width: 0;
   min-height: 0;
-  height: 100vh;
-  border-left: 1px solid rgba(255,255,255,.075);
-  background:
-    radial-gradient(circle at 50% 100%, rgba(120,21,34,.11), transparent 44%),
-    #020202;
+  overflow: hidden;
+  border: 1px solid rgba(201,164,79,.2);
+  border-radius: 14px;
+  background: #050404;
+  box-shadow: 0 22px 60px rgba(0,0,0,.62);
 }
 
 .ec-music-panel {
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  max-height: min(720px, calc(100vh - 18px));
+  max-height: min(720px, calc(100vh - 28px));
+  min-height: 0;
   margin: 0;
   overflow: hidden;
-  border-top: 1px solid rgba(201,164,79,.22);
   background:
     radial-gradient(circle at 100% 0%, rgba(120,21,34,.18), transparent 34%),
     linear-gradient(180deg, #100b0c, #050404 72%);
-  box-shadow: 0 -24px 58px rgba(0,0,0,.48);
 }
 
 .ec-music-head {
@@ -455,28 +407,19 @@ body.theater-mode .ec-music-dock {
   display: none !important;
 }
 
-@media (max-width: 1280px) and (min-width: 901px) {
-  :root { --ec-music-width: 356px; }
-}
-
 @media (max-width: 900px) {
-  body.ec-persistent-shell.music-dock-open .ec-persistent-layout,
-  body.ec-persistent-shell.music-dock-open.sidebar-collapsed .ec-persistent-layout,
-  body.ec-persistent-shell.music-dock-open.sidebar-hidden .ec-persistent-layout {
-    grid-template-columns: 1fr;
-  }
-
   .ec-music-dock {
-    width: 100%;
-    height: auto;
-    min-height: 0;
-    border-top: 1px solid rgba(201,164,79,.18);
-    border-left: 0;
+    position: fixed;
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    width: auto;
+    max-height: calc(100dvh - 24px);
+    z-index: 220;
   }
 
   .ec-music-panel {
-    max-height: none;
-    border-top: 0;
+    max-height: calc(100dvh - 24px);
   }
 
   .ec-music-youtube-shell,
@@ -486,6 +429,6 @@ body.theater-mode .ec-music-dock {
   }
 
   .ec-music-queue-wrap {
-    max-height: 240px;
+    max-height: 190px;
   }
 }

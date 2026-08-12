@@ -2,14 +2,12 @@
   "use strict";
 
   const body = document.body;
-  const layout = document.getElementById("persistentLayout");
+  const viewArea = document.querySelector(".ec-persistent-view-area");
   const controlsDrawer = document.getElementById("persistentControlsDrawer");
   const controlsList = controlsDrawer?.querySelector(".ec-persistent-controls-list");
   const controlsToggle = document.getElementById("persistentControlsToggle");
-  const resizeHandle = document.getElementById("resizeHandle");
-  const chatPanel = document.getElementById("persistentChat");
 
-  if (!body || !layout || !controlsList || !resizeHandle || !chatPanel) return;
+  if (!body || !viewArea || !controlsList) return;
 
   const STORAGE_KEY = "eastcoinMusicLocalStateV1";
   const OPEN_KEY = "eastcoinMusicDockOpen";
@@ -215,7 +213,11 @@
       </div>
     `;
 
-    layout.insertBefore(section, resizeHandle);
+    // The music player belongs to the persistent video surface, but it is
+    // deliberately not a grid column. Keeping it inside the view area lets it
+    // float over the lower-right corner of the active video immediately to the
+    // left of Twitch chat, with no empty column above it.
+    viewArea.appendChild(section);
     return section;
   }
 
@@ -375,7 +377,9 @@
       addedAt: Date.now()
     };
 
-    if (!state.current) {
+    const startsPlayback = !state.current;
+
+    if (startsPlayback) {
       state.current = item;
       state.startedAt = Date.now();
       state.skipVotes = 0;
@@ -389,7 +393,11 @@
     state.revision += 1;
     saveLocalState();
     render();
-    syncPlayerToState(true);
+
+    // Adding an item to Up Next must not reload/restart the song that is
+    // already playing. Only force a YouTube load when this request starts an
+    // otherwise empty room.
+    syncPlayerToState(startsPlayback);
   }
 
   function voteSkip() {
@@ -405,7 +413,11 @@
     advanceLocal();
   }
 
-  function advanceLocal() {
+  function advanceLocal(expectedCurrentId = "") {
+    // YouTube can emit overlapping error/ended callbacks. Never let a stale
+    // callback for the previous song skip the newly promoted song.
+    if (expectedCurrentId && state.current?.id !== expectedCurrentId) return;
+
     state.current = state.queue.shift() || null;
     state.startedAt = state.current ? Date.now() : null;
     state.skipVotes = 0;
@@ -415,14 +427,16 @@
     syncPlayerToState(true);
   }
 
-  function handleEnded() {
-    if (!state.current) return;
+  function handleEnded(expectedCurrentId = state.current?.id || "") {
+    if (!state.current || !expectedCurrentId) return;
+    if (state.current.id !== expectedCurrentId) return;
+
     if (remoteMode) {
       if (socket?.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: "ended", currentId: state.current.id }));
+        socket.send(JSON.stringify({ type: "ended", currentId: expectedCurrentId }));
       }
     } else {
-      advanceLocal();
+      advanceLocal(expectedCurrentId);
     }
   }
 
@@ -525,7 +539,9 @@
           syncPlayerToState(true);
         },
         onStateChange: (event) => {
-          if (event.data === YT.PlayerState.ENDED) handleEnded();
+          if (event.data === YT.PlayerState.ENDED) {
+            handleEnded(state.current?.id || "");
+          }
           if (event.data === YT.PlayerState.PLAYING) {
             autoplayBlocked = false;
             render();
@@ -536,8 +552,9 @@
           render();
         },
         onError: () => {
+          const failedCurrentId = state.current?.id || "";
           setHelp("YouTube could not play that video. Skipping it.", true);
-          window.setTimeout(handleEnded, 800);
+          window.setTimeout(() => handleEnded(failedCurrentId), 800);
         }
       }
     });
