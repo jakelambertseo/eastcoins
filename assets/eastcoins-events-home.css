@@ -1817,3 +1817,59 @@ html.ec-events-shell-embedded .ec-events-v2-toolbar {
     overflow-y: auto;
   }
 }
+
+
+/* ================================================================
+   v0.57 HOTFIX — RESTORE DESKTOP COMPACT-NAV HAMBURGER
+   The right-side View Controls drawer handles fully hiding navigation.
+   This top button is intentionally limited to full nav <-> icon rail.
+   ================================================================ */
+
+@media (min-width: 901px) {
+  .ec-persistent-shell .mobile-menu {
+    position: fixed;
+    top: 12px;
+    left: calc(var(--ec-nav-width) + 12px) !important;
+    z-index: 90;
+    display: grid !important;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 1px solid rgba(201,164,79,.22);
+    border-radius: 10px;
+    color: #e4d0a1;
+    background: rgba(4,4,4,.92);
+    box-shadow: 0 12px 30px rgba(0,0,0,.42);
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1;
+    opacity: .9;
+    transition:
+      left .22s ease,
+      opacity .16s ease,
+      border-color .16s ease,
+      background .16s ease;
+  }
+
+  .ec-persistent-shell .mobile-menu:hover,
+  .ec-persistent-shell .mobile-menu:focus-visible {
+    opacity: 1;
+    color: #fff0bd;
+    border-color: rgba(201,164,79,.4);
+    background: rgba(43,12,18,.96);
+    outline: 0;
+  }
+
+  .ec-persistent-shell.sidebar-collapsed .mobile-menu {
+    left: calc(var(--ec-nav-rail) + 12px) !important;
+  }
+
+  .ec-persistent-shell.sidebar-hidden .mobile-menu {
+    left: 12px !important;
+  }
+
+  .ec-persistent-shell.theater-mode .mobile-menu {
+    display: none !important;
+  }
+}

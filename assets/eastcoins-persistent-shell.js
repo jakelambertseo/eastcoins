@@ -867,13 +867,15 @@
   function toggleShellNavigation() {
     if (theaterActive) {
       setTheaterMode(false);
+
       if (isMobileNavigation()) {
         body.classList.add("menu-open");
         updateNavigationButton();
         postShellState();
       } else {
-        setDesktopSidebarMode("expanded", true);
+        setDesktopSidebarMode("rail", true);
       }
+
       return;
     }
 
@@ -885,8 +887,15 @@
     }
 
     const mode = desktopSidebarMode();
+
+    /*
+      The top hamburger is now a dedicated compact-nav control:
+      expanded <-> rail. Fully hiding navigation remains the job of
+      the separate right-side View Controls drawer.
+    */
     setDesktopSidebarMode(
-      mode === "expanded" ? "rail" : mode === "rail" ? "hidden" : "expanded"
+      mode === "expanded" ? "rail" : mode === "rail" ? "expanded" : "rail",
+      true
     );
   }
 
@@ -1102,15 +1111,16 @@
       mobileMenu.setAttribute("aria-expanded", String(open));
     } else {
       const mode = desktopSidebarMode();
-      mobileMenu.textContent = mode === "expanded" ? "‹" : mode === "rail" ? "×" : "☰";
-      mobileMenu.setAttribute(
-        "aria-label",
+      const label =
         mode === "expanded"
-          ? "Collapse navigation to icon rail"
+          ? "Compact navigation"
           : mode === "rail"
-            ? "Hide navigation"
-            : "Show navigation"
-      );
+            ? "Expand navigation"
+            : "Show compact navigation";
+
+      mobileMenu.textContent = "☰";
+      mobileMenu.setAttribute("aria-label", label);
+      mobileMenu.setAttribute("title", label);
       mobileMenu.setAttribute("aria-expanded", String(mode !== "hidden"));
       mobileMenu.dataset.sidebarMode = mode;
     }
