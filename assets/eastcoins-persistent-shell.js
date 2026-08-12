@@ -373,10 +373,12 @@
     browseLoader.classList.add("is-hidden");
 
     /*
-      Only reveal the player after its real event/video iframe exists.
-      This prevents the blank Live Player homepage from flashing between
-      the Events drawer and the selected stream.
+      The requested player is now ready enough to reveal. Dismiss the
+      OUTER shell loader before removing the Events drawer; otherwise the
+      viewLoader can remain layered above a stream that is already playing.
     */
+    finishPlayerDocumentLoad();
+
     closeBrowseDrawer({
       replaceHistory: false,
       restoreFocus: false
@@ -718,6 +720,15 @@
     browseDrawer.hidden = true;
     browseDrawer.setAttribute("aria-hidden", "true");
     body.classList.remove("drawer-open", "drawer-events-home");
+
+    /*
+      Back to video can expose an already-ready player. Make sure no
+      stale shell loader survives underneath the browse drawer.
+    */
+    if (playerReady) {
+      finishPlayerDocumentLoad();
+    }
+
     currentView = "player";
     updateActiveNavigation("player");
     updateDocumentTitle("player");
