@@ -88,12 +88,24 @@ body.sidebar-hidden .ec-events-v2-nav {
 .ec-events-v2-mobile-head { display: none; }
 
 .ec-events-v2-brand {
+  appearance: none;
   display: flex;
   align-items: center;
   gap: 11px;
+  width: 100%;
   min-height: 52px;
   padding: 4px 7px 12px;
+  border: 0;
   border-bottom: 1px solid rgba(255,255,255,.055);
+  border-radius: 0;
+  outline: 0;
+  color: inherit;
+  background: transparent;
+  box-shadow: none;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
 }
 .ec-events-v2-logo {
   display: grid;
@@ -192,8 +204,18 @@ body.sidebar-hidden .ec-events-v2-nav {
   outline: 0;
   color: #a29a92;
   background: transparent;
+  box-shadow: none;
+  font: inherit;
   text-align: left;
+  text-decoration: none;
   transition: color .15s ease, border-color .15s ease, background .15s ease;
+}
+.ec-events-v2-nav-item:link,
+.ec-events-v2-nav-item:visited,
+.ec-events-v2-brand:link,
+.ec-events-v2-brand:visited {
+  color: inherit;
+  text-decoration: none;
 }
 .ec-events-v2-nav-item:hover,
 .ec-events-v2-nav-item:focus-visible,
