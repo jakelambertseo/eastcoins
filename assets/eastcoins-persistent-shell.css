@@ -961,3 +961,31 @@ html.ec-shell-reduced-motion *::after {
 .ec-persistent-shell.theater-mode .toast {
   right: 24px !important;
 }
+
+
+/* ================================================================
+   EASTCOIN v0.58 — PLAYER LOAD / FAILURE POLISH
+   ================================================================ */
+.ec-view-loader-hint {
+  display: block;
+  max-width: 460px;
+  margin-top: 5px;
+  color: rgba(238,228,212,.58);
+  font-size: .78rem;
+  line-height: 1.45;
+  text-align: center;
+}
+.ec-view-loader-actions { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+.ec-view-loader-actions[hidden] { display: none !important; }
+.ec-view-loader-actions button {
+  min-height: 34px; padding: 6px 11px; border: 1px solid rgba(255,255,255,.09);
+  border-radius: 8px; color: #cfc1ad; background: rgba(12,11,11,.92);
+  font-size: .78rem; font-weight: 900;
+}
+.ec-view-loader-actions button:first-child {
+  border-color: rgba(201,164,79,.28); color: #f0dca5; background: rgba(75,20,30,.72);
+}
+.ec-view-loader-actions button:hover,
+.ec-view-loader-actions button:focus-visible {
+  color: #fff0bd; border-color: rgba(201,164,79,.44); outline: 0;
+}

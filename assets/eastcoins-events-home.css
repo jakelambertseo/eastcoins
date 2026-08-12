@@ -1873,3 +1873,34 @@ html.ec-events-shell-embedded .ec-events-v2-toolbar {
     display: none !important;
   }
 }
+
+
+/* ================================================================
+   EASTCOIN v0.58 — PRODUCTION QA / POLISH
+   ================================================================ */
+.ec-events-v2-section {
+  content-visibility: auto;
+  contain-intrinsic-size: 360px;
+}
+.ec-events-v2-team-name,
+.ec-events-v2-single-copy strong {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  hyphens: auto;
+}
+.ec-events-v2-card-footer-meta,
+.ec-events-v2-card-actions { min-width: 0; }
+.ec-events-v2-card-actions { flex-wrap: wrap; justify-content: flex-end; }
+.ec-events-v2-card:focus-visible,
+.ec-events-v2-watch:focus-visible,
+.ec-events-v2-add-mv:focus-visible {
+  outline: 2px solid rgba(201,164,79,.62);
+  outline-offset: 2px;
+}
+@media (max-width: 520px) {
+  .ec-events-v2-section { contain-intrinsic-size: 520px; }
+  .ec-events-v2-section-head { align-items: flex-start; }
+  .ec-events-v2-section-counts { flex: 0 0 auto; }
+}

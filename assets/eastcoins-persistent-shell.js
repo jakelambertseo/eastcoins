@@ -10,6 +10,10 @@
   const playerFrame = document.getElementById("eastcoinViewFrame");
   const playerLoader = document.getElementById("viewLoader");
   const playerLoaderLabel = document.getElementById("viewLoaderLabel");
+  const playerLoaderHint = document.getElementById("viewLoaderHint");
+  const playerLoaderActions = document.getElementById("viewLoaderActions");
+  const playerLoaderRetry = document.getElementById("viewLoaderRetry");
+  const playerLoaderEvents = document.getElementById("viewLoaderEvents");
   const browseDrawer = document.getElementById("persistentBrowseDrawer");
   const browsePanel = document.getElementById("persistentBrowsePanel");
   const browseScrim = document.getElementById("persistentBrowseScrim");
@@ -135,6 +139,8 @@
   let pendingPlayerRevealPollTimer = 0;
   let pendingPlayerRevealWarningTimer = 0;
   let pendingPlayerRevealStopTimer = 0;
+  let directPlayerRevealPollTimer = 0;
+  let directPlayerRevealWarningTimer = 0;
   let lastSettingsTrigger = settingsButton;
   let lastDrawerTrigger = null;
 
@@ -310,6 +316,61 @@
     }
   }
 
+  function playerRequestHasMedia(parameters = currentPlayerParameters) {
+    return SHARED_PLAYER_PARAMETER_NAMES.some((name) => {
+      const value = parameters.get(name);
+      return value !== null && String(value).trim() !== "";
+    });
+  }
+
+  function clearDirectPlayerRevealTimers() {
+    window.clearInterval(directPlayerRevealPollTimer);
+    window.clearTimeout(directPlayerRevealWarningTimer);
+    directPlayerRevealPollTimer = 0;
+    directPlayerRevealWarningTimer = 0;
+  }
+
+  function finishDirectPlayerReveal() {
+    clearDirectPlayerRevealTimers();
+    playerLoader.classList.add("is-hidden");
+    if (playerLoaderActions) playerLoaderActions.hidden = true;
+  }
+
+  function startDirectPlayerRevealWatch() {
+    if (pendingPlayerReveal || !playerRequestHasMedia()) return false;
+
+    clearDirectPlayerRevealTimers();
+
+    const check = () => {
+      if (playerHasVisibleContent()) finishDirectPlayerReveal();
+    };
+
+    check();
+    if (playerHasVisibleContent()) return true;
+
+    playerLoader.classList.remove("is-hidden");
+    if (playerLoaderHint) {
+      playerLoaderHint.textContent = "Waiting for the selected stream to finish loading.";
+    }
+    if (playerLoaderActions) playerLoaderActions.hidden = true;
+
+    directPlayerRevealPollTimer = window.setInterval(check, 100);
+    directPlayerRevealWarningTimer = window.setTimeout(() => {
+      if (playerHasVisibleContent()) {
+        finishDirectPlayerReveal();
+        return;
+      }
+      playerLoaderLabel.textContent = "This stream is taking longer than usual";
+      if (playerLoaderHint) {
+        playerLoaderHint.textContent =
+          "You can keep waiting, retry the same stream, or return to Events without reloading EastCoin.";
+      }
+      if (playerLoaderActions) playerLoaderActions.hidden = false;
+    }, 12000);
+
+    return true;
+  }
+
   function cancelPendingPlayerReveal({ hideLoader = true } = {}) {
     if (!pendingPlayerReveal) return;
 
@@ -409,7 +470,10 @@
   }
 
   function setPlayerLoading(label = "Loading Live Player") {
+    clearDirectPlayerRevealTimers();
     playerLoaderLabel.textContent = label;
+    if (playerLoaderHint) playerLoaderHint.textContent = "Preparing the EastCoin player.";
+    if (playerLoaderActions) playerLoaderActions.hidden = true;
     playerLoader.classList.remove("is-hidden");
   }
 
@@ -1291,6 +1355,15 @@
     window.setTimeout(() => omniInput?.focus({ preventScroll: true }), 40);
   });
 
+  playerLoaderRetry?.addEventListener("click", () => {
+    loadPlayer(currentPlayerParameters, true);
+  });
+
+  playerLoaderEvents?.addEventListener("click", () => {
+    clearDirectPlayerRevealTimers();
+    openView("events", lastEventsParameters, { push: true });
+  });
+
   document.addEventListener("pointerdown", (event) => {
     if (!controlsDrawerIsOpen()) return;
     if (controlsDrawer?.contains(event.target) || controlsToggle?.contains(event.target)) return;
@@ -1314,17 +1387,17 @@
   });
 
   playerFrame.addEventListener("load", () => {
-    playerLoader.classList.add("is-hidden");
     playerReady = true;
     postToFrame(playerFrame, shellState());
     window.setTimeout(flushPendingGameOverlay, 120);
 
-    /*
-      player.html itself is now loaded. If this navigation came from the
-      Events/Other Streams drawer, wait for its actual activeFrame before
-      uncovering the player.
-    */
-    startPendingPlayerRevealWatch();
+    /* Direct event/watch links now wait for activeFrame too, so the player
+       homepage/form never flashes merely because player.html loaded first. */
+    if (pendingPlayerReveal) {
+      startPendingPlayerRevealWatch();
+    } else if (!startDirectPlayerRevealWatch()) {
+      playerLoader.classList.add("is-hidden");
+    }
   });
 
   browseFrame.addEventListener("load", () => {
@@ -1358,11 +1431,14 @@
 
     if (message.type === "eastcoin:view-ready") {
       if (fromPlayer) {
-        playerLoader.classList.add("is-hidden");
         playerReady = true;
         postToFrame(playerFrame, shellState());
         flushPendingGameOverlay();
-        startPendingPlayerRevealWatch();
+        if (pendingPlayerReveal) {
+          startPendingPlayerRevealWatch();
+        } else if (!startDirectPlayerRevealWatch()) {
+          playerLoader.classList.add("is-hidden");
+        }
       } else {
         browseReady = true;
         browseLoader.classList.add("is-hidden");
@@ -1419,6 +1495,11 @@
     const route = routeFromLocation();
     openView(route.view, route.childParameters, { push: false });
   });
+
+  window.addEventListener("pagehide", () => {
+    clearDirectPlayerRevealTimers();
+    clearPendingPlayerRevealTimers();
+  }, { once: true });
 
   window.addEventListener("resize", () => {
     body.classList.remove("menu-open");

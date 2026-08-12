@@ -667,7 +667,28 @@
     renderCategoryNav();
 
     if (!matches.length) {
-      directory.innerHTML = `<div class="ec-events-v2-empty"><strong>No matching events</strong><small>Try another category, date, or search.</small></div>`;
+      const sport = state.sport !== "all" ? sportMeta(state.sport).label : "";
+      const copy = state.query
+        ? {
+            title: `No events match “${state.query}”`,
+            detail: "Try another team, league, category, or date."
+          }
+        : state.scope === "live"
+          ? {
+              title: sport ? `No live ${sport} events right now` : "No live events right now",
+              detail: "Try All Events or check back when the next game starts."
+            }
+          : sport
+            ? {
+                title: `No ${sport} events in this view`,
+                detail: "Try another date or return to All Events."
+              }
+            : {
+                title: "No events scheduled in this view",
+                detail: "Try another date or refresh the event feed."
+              };
+
+      directory.innerHTML = `<div class="ec-events-v2-empty"><strong>${escapeHtml(copy.title)}</strong><small>${escapeHtml(copy.detail)}</small></div>`;
       updateImageStates();
       return;
     }
@@ -980,11 +1001,24 @@
   function readMultiviewState() {
     const raw = readJson(STORAGE.multiview, null);
     if (!raw || !Array.isArray(raw.slots)) return defaultMultiviewState();
+
+    const layout = [2, 3, 4].includes(Number(raw.layout))
+      ? Number(raw.layout)
+      : 2;
+
     return {
       ...defaultMultiviewState(),
       ...raw,
-      slots: Array.from({ length: 4 }, (_, index) => raw.slots[index] || null),
-      splits: raw.splits || defaultMultiviewState().splits
+      layout,
+      slots: Array.from({ length: 4 }, (_, index) => {
+        const slot = raw.slots[index];
+        if (!slot || !["event", "url"].includes(slot.type)) return null;
+        return slot;
+      }),
+      splits:
+        raw.splits && typeof raw.splits === "object"
+          ? raw.splits
+          : defaultMultiviewState().splits
     };
   }
 

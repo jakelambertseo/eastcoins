@@ -13,8 +13,8 @@
 <link href="assets/eastcoin-favicon.png" rel="apple-touch-icon"/>
 <link href="assets/eastcoins-theme.css?v=theme9" rel="stylesheet"/>
 <link href="assets/eastcoins-shell.css?v=shell2" rel="stylesheet"/>
-<link href="assets/eastcoins-persistent-shell.css?v=persistent6" rel="stylesheet"/><link href="assets/eastcoins-shell-polish.css?v=polish6" rel="stylesheet"/>
-<link href="assets/eastcoins-events-home.css?v=events3" rel="stylesheet"/>
+<link href="assets/eastcoins-persistent-shell.css?v=persistent7" rel="stylesheet"/><link href="assets/eastcoins-shell-polish.css?v=polish7" rel="stylesheet"/>
+<link href="assets/eastcoins-events-home.css?v=events4" rel="stylesheet"/>
 </head>
 <body class="ec-shell-page ec-persistent-shell">
 <div aria-hidden="true" class="mobile-overlay" id="mobileOverlay"></div>
@@ -150,7 +150,7 @@
 
   <div class="ec-events-v2-nav-footer">
     <p>We DO NOT host nor transmit any audiovisual content itself and DO NOT control nor influence such content. We cannot accept any liability for the content transmitted by others. Any responsibility for this content lies with those who host or transmit it. We are not affiliated nor claim to be affiliated with any of the owners of streams and/or videos. All content is copyright of their respective owners</p>
-    <span>EastCoin v0.57</span>
+    <span>EastCoin v0.58</span>
   </div>
 </aside>
 <main aria-label="EastCoin content" class="ec-persistent-view-area">
@@ -158,6 +158,11 @@
 <div aria-live="polite" class="ec-view-loader" id="viewLoader">
 <span aria-hidden="true" class="ec-view-loader-spinner"></span>
 <strong id="viewLoaderLabel">Loading Live Player</strong>
+<small class="ec-view-loader-hint" id="viewLoaderHint">Preparing the EastCoin player.</small>
+<div class="ec-view-loader-actions" id="viewLoaderActions" hidden>
+<button id="viewLoaderRetry" type="button">Retry</button>
+<button id="viewLoaderEvents" type="button">Back to Events</button>
+</div>
 </div>
 <iframe allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write" allowfullscreen="" class="ec-view-frame" id="eastcoinViewFrame" referrerpolicy="strict-origin-when-cross-origin" src="about:blank" title="EastCoin Live Player">
 </iframe><section aria-hidden="true" class="ec-browse-drawer" hidden="" id="persistentBrowseDrawer">
@@ -224,6 +229,6 @@
 </footer>
 </section>
 </div><div aria-live="polite" class="toast" id="toast" role="status"></div>
-<script src="assets/eastcoins-persistent-shell.js?v=persistent14"></script>
+<script src="assets/eastcoins-persistent-shell.js?v=persistent15"></script>
 </body>
 </html>
