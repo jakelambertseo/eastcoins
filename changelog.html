@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">62 major update groups</div>
+<div class="release-count">63 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1573,6 +1573,20 @@
     schedule or 24/7 channel response can no longer hold the entire Events
     directory on “Loading events.” Streamed and PPV can now finish rendering
     even when the optional DLStreams feed is delayed.
+  </p>
+</article>
+
+<article class="timeline-entry">
+<div class="timeline-date">
+<time datetime="2026-08-21">August 21, 2026</time>
+</div>
+<h2>Event provider loading hardened</h2>
+<p>
+    Prevented external event providers from leaving the Events directory on
+    an endless loading screen. Streamed now prefers the current .st host with
+    .pk as a timed fallback, PPV requests have hard deadlines, and Events has
+    a final load timeout so provider outages degrade cleanly instead of
+    freezing the interface.
   </p>
 </article>
 </section>

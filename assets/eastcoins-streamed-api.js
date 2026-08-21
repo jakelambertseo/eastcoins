@@ -9,7 +9,9 @@
     existing controller code.
   */
 
-  const API_BASE = "https://streamed.pk/api";
+  const API_BASE = "https://streamed.st/api";
+  const API_FALLBACK_BASE = "https://streamed.pk/api";
+  const REQUEST_TIMEOUT_MS = 3500;
   const PPV = window.EastcoinPpvAPI || null;
 
   const CACHE_PREFIX =
@@ -91,34 +93,76 @@
       null;
   }
 
-  async function requestJson(path) {
-    const response = await fetch(
-      `${API_BASE}${path}`,
-      {
-        headers: {
-          Accept: "application/json"
-        },
-        cache: "no-store"
-      }
+  async function requestFromBase(base, path) {
+    const controller = new AbortController();
+    const timer = window.setTimeout(
+      () => controller.abort(),
+      REQUEST_TIMEOUT_MS
     );
 
-    if (!response.ok) {
-      throw new Error(
-        `Streamed API returned ${response.status}.`
+    try {
+      const response = await fetch(
+        `${base}${path}`,
+        {
+          headers: {
+            Accept: "application/json"
+          },
+          cache: "no-store",
+          signal: controller.signal
+        }
       );
+
+      if (!response.ok) {
+        throw new Error(
+          `Streamed API returned ${response.status} from ${base}.`
+        );
+      }
+
+      const payload = await response.json();
+      const collection =
+        normalizeCollection(payload);
+
+      if (!collection) {
+        throw new Error(
+          `Streamed returned an unexpected response from ${base}.`
+        );
+      }
+
+      return collection;
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        throw new Error(
+          `Streamed request timed out at ${base}.`
+        );
+      }
+
+      throw error;
+    } finally {
+      window.clearTimeout(timer);
+    }
+  }
+
+  async function requestJson(path) {
+    let lastError = null;
+
+    for (const base of [
+      API_BASE,
+      API_FALLBACK_BASE
+    ]) {
+      try {
+        return await requestFromBase(
+          base,
+          path
+        );
+      } catch (error) {
+        lastError = error;
+      }
     }
 
-    const payload = await response.json();
-    const collection =
-      normalizeCollection(payload);
-
-    if (!collection) {
-      throw new Error(
-        "Streamed returned an unexpected response."
-      );
-    }
-
-    return collection;
+    throw (
+      lastError ||
+      new Error("Streamed API is unavailable.")
+    );
   }
 
   async function cachedRequest(
@@ -1736,7 +1780,7 @@
       reference.startsWith("/")
     ) {
       return (
-        `https://streamed.pk` +
+        `https://streamed.st` +
         `${ensureWebp(reference)}`
       );
     }
@@ -1770,7 +1814,7 @@
       reference.startsWith("/")
     ) {
       return (
-        `https://streamed.pk` +
+        `https://streamed.st` +
         `${ensureWebp(reference)}`
       );
     }

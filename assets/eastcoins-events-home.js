@@ -1429,6 +1429,26 @@
     elements.continueButton.onclick = () => openEvent(match);
   }
 
+  function eventLoadDeadline(promise, timeoutMs = 10000) {
+    let timer = 0;
+
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        timer = window.setTimeout(
+          () => reject(
+            new Error(
+              "Event providers did not respond in time."
+            )
+          ),
+          timeoutMs
+        );
+      })
+    ]).finally(() => {
+      window.clearTimeout(timer);
+    });
+  }
+
   async function loadEvents(force = false) {
     elements.status.classList.remove("is-ready", "is-error");
     elements.statusText.textContent = force ? "Refreshing events…" : "Loading events…";
@@ -1436,10 +1456,13 @@
     directory.innerHTML = `<div class="ec-events-v2-loading"><span></span><strong>Loading events</strong><small>Building the simplified EastCoin event list.</small></div>`;
 
     try {
-      const [discovery, allResult] = await Promise.all([
-        API.getDiscovery({ forceMatches: force }),
-        API.getAll(force)
-      ]);
+      const [discovery, allResult] = await eventLoadDeadline(
+        Promise.all([
+          API.getDiscovery({ forceMatches: force }),
+          API.getAll(force)
+        ]),
+        10000
+      );
 
       state.live = uniqueMatches(Array.isArray(discovery?.live?.data) ? discovery.live.data : []);
       state.today = uniqueMatches(Array.isArray(discovery?.today?.data) ? discovery.today.data : []);

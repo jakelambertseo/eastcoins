@@ -9,6 +9,7 @@
   const CATALOG_TTL = 60_000;
   const MIN_NETWORK_INTERVAL = 55_000;
   const MIRROR_TTL = 6 * 60 * 60 * 1000;
+  const REQUEST_TIMEOUT_MS = 3500;
   const inFlight = new Map();
 
   function safeParse(value) {
@@ -104,20 +105,40 @@
   }
 
   async function requestJson(base, path) {
-    const response = await fetch(`${base}${path}`, {
-      headers: {
-        Accept: "application/json"
-      },
-      cache: "no-store"
-    });
+    const controller = new AbortController();
+    const timer = window.setTimeout(
+      () => controller.abort(),
+      REQUEST_TIMEOUT_MS
+    );
 
-    if (!response.ok) {
-      throw new Error(
-        `PPV API returned ${response.status}.`
+    try {
+      const response = await fetch(
+        `${base}${path}`,
+        {
+          headers: {
+            Accept: "application/json"
+          },
+          cache: "no-store",
+          signal: controller.signal
+        }
       );
-    }
 
-    return response.json();
+      if (!response.ok) {
+        throw new Error(
+          `PPV API returned ${response.status}.`
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        throw new Error("PPV request timed out.");
+      }
+
+      throw error;
+    } finally {
+      window.clearTimeout(timer);
+    }
   }
 
   async function refreshMirrors(force = false) {
