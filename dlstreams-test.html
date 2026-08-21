@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>EastCoin | DLStreams Provider Prototype</title>
+  <link rel="icon" href="assets/eastcoin-favicon.svg?v=full-logo1" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/eastcoins-dlstreams-test.css?v=dl1">
+</head>
+<body>
+  <main class="dl-wrap">
+    <header class="dl-head">
+      <div>
+        <div class="dl-kicker">EastCoin provider lab</div>
+        <h1>DLStreams no-key prototype</h1>
+        <p>
+          Isolated experiment that reads the public DLStreams schedule through a small
+          Cloudflare Worker, normalizes events and channels, and lets you test their
+          documented iframe player folders without changing EastCoin production Events,
+          Live Player, Streamed, PPV, or MultiView.
+        </p>
+      </div>
+      <div class="dl-badge">PROTOTYPE · NO API KEY</div>
+    </header>
+
+    <section class="dl-config" aria-label="Worker connection">
+      <input id="dlWorkerUrl" type="url" placeholder="https://eastcoin-dlstreams-prototype.YOUR.workers.dev" aria-label="DLStreams prototype Worker URL">
+      <button class="primary" id="dlConnect" type="button">Connect</button>
+      <button id="dlRefresh" type="button">Force refresh</button>
+    </section>
+    <div class="dl-status" id="dlStatus">Deploy the included Worker, paste its workers.dev URL above, then click Connect.</div>
+
+    <section class="dl-stats" aria-label="Prototype stats">
+      <article><strong id="dlStatEvents">0</strong><span>parsed events</span></article>
+      <article><strong id="dlStatChannels">0</strong><span>unique channels</span></article>
+      <article><strong id="dlStatSports">0</strong><span>sport families</span></article>
+      <article><strong id="dlStatCache">—</strong><span>source fetch</span></article>
+    </section>
+
+    <section class="dl-toolbar" aria-label="Filters">
+      <input id="dlSearch" type="search" placeholder="Search events or channels">
+      <select id="dlSport" aria-label="Sport filter"><option value="">All sports</option></select>
+      <button id="dlLiveOnly" type="button" data-enabled="false">Live-ish only: off</button>
+    </section>
+
+    <div class="dl-layout">
+      <section class="dl-grid" aria-label="DLStreams events">
+        <div class="dl-events" id="dlEvents">
+          <div class="dl-empty">No schedule loaded yet.</div>
+        </div>
+      </section>
+
+      <aside class="dl-player" aria-label="DLStreams player test">
+        <div class="dl-player-head">
+          <div>
+            <strong id="dlPlayerTitle">Player test</strong>
+            <small id="dlPlayerMeta">Select a channel from an event</small>
+          </div>
+          <div class="dl-player-actions">
+            <button id="dlNextPlayer" type="button" disabled>Try next player</button>
+            <button id="dlOpenSource" type="button" disabled>Open source</button>
+          </div>
+        </div>
+        <div class="dl-frame-wrap">
+          <div class="dl-empty" id="dlEmpty">Choose a DLStreams channel to load its documented iframe player.</div>
+          <iframe
+            id="dlFrame"
+            title="DLStreams prototype player"
+            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+            allowfullscreen
+            referrerpolicy="strict-origin-when-cross-origin"
+            hidden></iframe>
+        </div>
+        <div class="dl-debug" id="dlDebug">No player loaded.</div>
+      </aside>
+    </div>
+
+    <div class="dl-note">
+      This is intentionally isolated. If the public schedule HTML changes, the no-key parser
+      may need adjustment. If DLStreams approves an API key or dedicated embed domain, the
+      production adapter can swap to that source while keeping the same normalized EastCoin event model.
+    </div>
+  </main>
+
+  <script src="assets/eastcoins-dlstreams-test.js?v=dl1"></script>
+</body>
+</html>

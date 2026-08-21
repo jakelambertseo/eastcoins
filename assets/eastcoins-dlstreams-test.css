@@ -1,0 +1,80 @@
+/* EastCoin DLStreams no-key provider prototype */
+:root {
+  color-scheme: dark;
+  --dl-bg: #020202;
+  --dl-panel: #090909;
+  --dl-panel-2: #0d0d0d;
+  --dl-line: rgba(255,255,255,.09);
+  --dl-text: #eee7da;
+  --dl-muted: #817b72;
+  --dl-gold: #c6a44f;
+  --dl-red: #711b22;
+  --dl-good: #48bd76;
+  --dl-warn: #e0b85a;
+  --dl-bad: #e05b68;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--dl-bg); color: var(--dl-text); }
+body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+button, input { font: inherit; }
+.dl-wrap { width: min(1540px, 100%); margin: 0 auto; padding: 20px; }
+.dl-head { display: flex; justify-content: space-between; gap: 20px; align-items: end; padding: 14px 0 18px; }
+.dl-kicker { color: #987f46; font-size: .65rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.dl-head h1 { margin: 7px 0 5px; font-size: clamp(1.8rem, 4vw, 3.2rem); letter-spacing: -.045em; }
+.dl-head p { max-width: 760px; margin: 0; color: var(--dl-muted); line-height: 1.55; font-size: .78rem; }
+.dl-badge { flex: 0 0 auto; padding: 8px 11px; border: 1px solid var(--dl-line); border-radius: 999px; color: #cab77c; background: #080808; font-size: .68rem; font-weight: 800; }
+.dl-config, .dl-toolbar, .dl-stats, .dl-grid, .dl-player { border: 1px solid var(--dl-line); background: var(--dl-panel); }
+.dl-config { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; padding: 10px; border-radius: 12px; }
+.dl-config input, .dl-toolbar input { min-width: 0; border: 1px solid var(--dl-line); border-radius: 8px; padding: 9px 10px; background: #050505; color: var(--dl-text); outline: none; }
+.dl-config button, .dl-toolbar button, .dl-channel, .dl-player button {
+  border: 1px solid var(--dl-line); border-radius: 8px; padding: 8px 10px;
+  color: #d7cfbf; background: #0d0d0d; cursor: pointer; font-weight: 800; font-size: .7rem;
+}
+.dl-config button:hover, .dl-toolbar button:hover, .dl-channel:hover, .dl-player button:hover { border-color: rgba(198,164,79,.45); color: #f0d98d; }
+.dl-config .primary { border-color: rgba(113,27,34,.8); background: rgba(113,27,34,.38); }
+.dl-status { min-height: 20px; margin: 8px 2px 12px; color: var(--dl-muted); font-size: .68rem; }
+.dl-status[data-state="ok"] { color: var(--dl-good); }
+.dl-status[data-state="error"] { color: var(--dl-bad); }
+.dl-stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 1px; border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+.dl-stats article { padding: 12px; background: var(--dl-panel-2); }
+.dl-stats strong { display: block; color: #ead495; font-size: 1.25rem; }
+.dl-stats span { color: #716c63; font-size: .62rem; }
+.dl-toolbar { display: grid; grid-template-columns: minmax(180px, 1fr) auto auto; gap: 7px; padding: 8px; border-radius: 12px; margin-bottom: 10px; }
+.dl-toolbar select {
+  border: 1px solid var(--dl-line); border-radius: 8px; padding: 8px 10px;
+  color: #d7cfbf; background: #090909;
+}
+.dl-layout { display: grid; grid-template-columns: minmax(0,1fr) minmax(340px, 42%); gap: 10px; align-items: start; }
+.dl-grid { border-radius: 12px; overflow: hidden; }
+.dl-events { max-height: calc(100vh - 285px); overflow: auto; }
+.dl-event { padding: 12px; border-bottom: 1px solid var(--dl-line); }
+.dl-event:last-child { border-bottom: 0; }
+.dl-event-top { display: flex; gap: 12px; justify-content: space-between; align-items: start; }
+.dl-event h2 { margin: 0; font-size: .92rem; line-height: 1.25; }
+.dl-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; color: var(--dl-muted); font-size: .62rem; }
+.dl-meta span { padding: 3px 6px; border: 1px solid rgba(255,255,255,.06); border-radius: 999px; background: #060606; }
+.dl-time { white-space: nowrap; color: #d2bd7b; font-size: .7rem; font-weight: 900; }
+.dl-channels { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+.dl-channel { padding: 6px 8px; font-size: .62rem; }
+.dl-player { position: sticky; top: 10px; border-radius: 12px; overflow: hidden; }
+.dl-player-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 11px; border-bottom: 1px solid var(--dl-line); }
+.dl-player-head strong { display: block; font-size: .76rem; }
+.dl-player-head small { color: var(--dl-muted); font-size: .58rem; }
+.dl-player-actions { display: flex; gap: 5px; }
+.dl-frame-wrap { aspect-ratio: 16/9; background: #000; }
+.dl-frame-wrap iframe { width: 100%; height: 100%; border: 0; background: #000; }
+.dl-empty { display: grid; place-items: center; min-height: 220px; padding: 30px; color: var(--dl-muted); text-align: center; font-size: .72rem; }
+.dl-debug { padding: 9px 11px; border-top: 1px solid var(--dl-line); color: #666; font: 11px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; word-break: break-all; }
+.dl-note { margin-top: 10px; padding: 10px 12px; border: 1px solid rgba(224,184,90,.18); border-radius: 10px; background: rgba(224,184,90,.04); color: #a99d7d; font-size: .66rem; line-height: 1.55; }
+@media (max-width: 980px) {
+  .dl-layout { grid-template-columns: 1fr; }
+  .dl-player { position: static; order: -1; }
+  .dl-events { max-height: none; }
+}
+@media (max-width: 640px) {
+  .dl-wrap { padding: 12px; }
+  .dl-head { display: block; }
+  .dl-badge { display: inline-block; margin-top: 12px; }
+  .dl-config, .dl-toolbar { grid-template-columns: 1fr; }
+  .dl-stats { grid-template-columns: repeat(2, 1fr); }
+}
