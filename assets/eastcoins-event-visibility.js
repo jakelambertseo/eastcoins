@@ -250,12 +250,16 @@
     const strong = button.querySelector("strong");
     const small = button.querySelector("small");
 
-    if (icon) icon.textContent = meta.icon;
-    if (strong) strong.textContent = meta.label;
+    if (icon && icon.textContent !== meta.icon) icon.textContent = meta.icon;
+    if (strong && strong.textContent !== meta.label) strong.textContent = meta.label;
     if (small) {
-      small.textContent = selectedSecondaryFamily === family
+      const nextSmallText = selectedSecondaryFamily === family
         ? "Browsing now"
         : "Browse on demand";
+
+      if (small.textContent !== nextSmallText) {
+        small.textContent = nextSmallText;
+      }
     }
 
     return button;
@@ -440,17 +444,13 @@
   }
 
   function finishUiSetup() {
+    /*
+      Navigation is already present when this runs. Do not observe the whole
+      document and repeatedly rewrite nav labels: textContent mutations can
+      recursively trigger another observer callback and starve the browser's
+      event loop, freezing clicks and preventing loader timers from firing.
+    */
     organizeNavigation();
-
-    const observer = new MutationObserver((mutations) => {
-      if (!mutations.some((mutation) => mutation.addedNodes.length)) return;
-      organizeNavigation();
-    });
-
-    observer.observe(document.documentElement, {
-      childList: true,
-      subtree: true
-    });
   }
 
   clearRetiredDlstreamsCache();

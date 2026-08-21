@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">65 major update groups</div>
+<div class="release-count">66 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1615,6 +1615,20 @@
     covers can never remain over child pages that are already usable. The shell
     now fails open after a short transition timeout while the player and Events
     pages continue to own their normal provider loading and error states.
+  </p>
+</article>
+
+<article class="timeline-entry">
+<div class="timeline-date">
+<time datetime="2026-08-21">August 21, 2026</time>
+</div>
+<h2>Navigation UI freeze fixed</h2>
+<p>
+    Fixed a recursive navigation observer introduced while separating
+    secondary sports into More Sports. The observer could continuously rewrite
+    its own watched content, starving the browser event loop and leaving Events
+    stuck on its loading screen while clicks appeared unresponsive. Navigation
+    is now initialized once with idempotent label updates.
   </p>
 </article>
 </section>
