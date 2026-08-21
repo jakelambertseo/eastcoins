@@ -1,4 +1,5 @@
 const SOURCE_URL = "https://dlstreams.st/";
+const CHANNELS_URL = "https://dlstreams.st/24-7-channels.php";
 const CACHE_SECONDS = 120;
 const CACHE_NAME = "eastcoin-dlstreams-prototype-v1";
 
@@ -74,20 +75,50 @@ function stripTags(value) {
 }
 
 function normalizeChannelAnchors(html) {
-  return String(html || "").replace(
-    /<a\b[^>]*href=["'](?:https?:\/\/(?:www\.)?dlstreams\.st)?\/?watch\.php\?id=(\d+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi,
+  let output = String(html || "");
+
+  // Public schedule/watch links.
+  output = output.replace(
+    /<a\b[^>]*href\s*=\s*["'][^"']*watch\.php\?[^"']*?\bid=(\d+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi,
     (_, id, label) => ` [[DLCHANNEL:${id}|${stripTags(label)}]] `
   );
+
+  // Direct iframe embeds, e.g.
+  // <iframe src="https://dlstreams.st/stream/stream-30.php" ...></iframe>
+  output = output.replace(
+    /<iframe\b[^>]*src\s*=\s*["']https?:\/\/(?:www\.)?dlstreams\.st\/stream\/stream-(\d+)\.php[^"']*["'][^>]*>[\s\S]*?<\/iframe>/gi,
+    (_, id) => ` [[DLCHANNEL:${id}|Channel ${id}]] `
+  );
+
+  // Also catch a bare documented stream URL if it appears outside an iframe.
+  output = output.replace(
+    /https?:\/\/(?:www\.)?dlstreams\.st\/stream\/stream-(\d+)\.php/gi,
+    (_, id) => ` [[DLCHANNEL:${id}|Channel ${id}]] `
+  );
+
+  return output;
 }
 
 function htmlToLines(html) {
+  /*
+    DLStreams changes its schedule markup fairly often. Do not depend on
+    specific div/class names. Preserve channel anchors as tokens, strip the
+    remaining markup, then force boundaries around dates, clock times and
+    channel tokens. That makes the parser resilient whether the site uses
+    cards, table rows, spans or nested divs.
+  */
   return normalizeChannelAnchors(html)
     .replace(/<!--[\s\S]*?-->/g, " ")
     .replace(/<script\b[\s\S]*?<\/script>/gi, " ")
     .replace(/<style\b[\s\S]*?<\/style>/gi, " ")
-    .replace(/<\/(?:div|p|li|tr|td|th|section|article|header|footer|h1|h2|h3|h4|h5|h6)>/gi, "\n")
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<[^>]*>/g, " ")
+    .replace(
+      /((?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]{3,9}\s+\d{4}\s*-\s*Schedule Time UK GMT)/gi,
+      "\n$1\n"
+    )
+    .replace(/(\b\d{1,2}:\d{2}\b)/g, "\n$1")
+    .replace(/(\[\[DLCHANNEL:\d+\|[^\]]*\]\])/g, "\n$1\n")
     .split(/\r?\n/)
     .map((line) => decodeEntities(line).replace(/\s+/g, " ").trim())
     .filter(Boolean);
@@ -182,6 +213,33 @@ function looksLikeCategory(line) {
   return /(?:⚾|🏀|🏈|⚽|🏒|🎾|🥊|🤼|⛳|🏎|🏁|🏉|🏐|🏏|🏸|🚴|🏇|🤾|🤸|🎯|📺|events?|baseball|basketball|football|soccer|tennis|hockey|golf|motorsport|boxing|mma|wrestling|rugby|cricket|volleyball|softball)/i.test(text);
 }
 
+
+function categoryHeading(line) {
+  const text = cleanEventText(line)
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!text || text.length > 88) return "";
+  if (/^\d{1,2}:\d{2}\b/.test(text)) return "";
+  if (/\b(?:vs\.?|versus)\b|[|:]/i.test(text)) return "";
+  if (/\bS\d+\s*,?\s*E\d+\b|\bpremiere\b|\bfinale\b/i.test(text)) return "";
+  if (/schedule time uk gmt/i.test(text)) return "";
+
+  if (
+    /^(?:Upcoming Events\b|TV Shows\b|Big Brother.*LIVE CAMERA FEEDS)/i.test(text)
+  ) {
+    return text;
+  }
+
+  if (
+    /\b(?:American Football|Am\.?\s*Football|High School Football|NFL|CFL|NCAAF|Baseball|MLB|Softball|Basketball|WNBA|Ice Hockey|Hockey|Boxing|MMA|Wrestling|Motorsport|Formula|Tennis|ATP|WTA|Golf|Soccer|Football|Premier League|NWSL)\b/i.test(text)
+  ) {
+    return text;
+  }
+
+  return "";
+}
+
 function parseDayHeader(line) {
   const match = String(line || "").match(
     /\b(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9})\s+(\d{4})\s*-\s*Schedule Time UK GMT/i
@@ -230,85 +288,186 @@ function scheduleTimestamp(day, time) {
 }
 
 function parseScheduleHtml(html) {
-  const lines = htmlToLines(html);
+  /*
+    Parser v4:
+    Do not depend on DLStreams' CSS classes or exact card/table markup.
+
+    1. Convert public watch links / documented iframe URLs into channel tokens.
+    2. Strip scripts/styles and flatten the remaining markup to text.
+    3. Find every clock time.
+    4. Treat the text between this clock time and the next clock time as one
+       event window.
+    5. The title is everything before the first channel token.
+    6. Every channel token in the window becomes an EastCoin source.
+  */
+  const sourceText = String(html || "");
+
+  const marked = normalizeChannelAnchors(sourceText)
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<script\b[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style\b[\s\S]*?<\/style>/gi, " ")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(
+      /<\/(?:div|p|li|tr|td|th|section|article|header|footer|h1|h2|h3|h4|h5|h6|a)>/gi,
+      "\n"
+    )
+    .replace(/<[^>]*>/g, " ");
+
+  const text = decodeEntities(marked)
+    .replace(/\u00a0/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n");
+
+  const dayPattern =
+    /(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]{3,9}\s+\d{4}\s*-\s*Schedule Time UK GMT/gi;
+
+  const dayMatches = [...text.matchAll(dayPattern)].map((match) => ({
+    index: match.index || 0,
+    day: parseDayHeader(match[0])
+  }));
+
+  function dayAt(index) {
+    let result = null;
+    for (const item of dayMatches) {
+      if (item.index > index) break;
+      if (item.day) result = item.day;
+    }
+    return result;
+  }
+
+  const timePattern = /\b([01]?\d|2[0-3]):([0-5]\d)\b/g;
+  const times = [...text.matchAll(timePattern)];
   const events = [];
-  let currentDay = null;
+  const parserSamples = [];
   let currentCategory = "Other";
-  let currentEvent = null;
 
-  function flush() {
-    if (!currentEvent) return;
-    if (!currentEvent.channels.length) {
-      currentEvent = null;
-      return;
+  for (let i = 0; i < times.length; i += 1) {
+    const match = times[i];
+
+    const currentDayIndex = [...dayMatches]
+      .reverse()
+      .find((item) => item.index <= (match.index || 0))
+      ?.index || 0;
+
+    const previousTimeEnd =
+      i === 0
+        ? 0
+        : (times[i - 1].index || 0) + times[i - 1][0].length;
+
+    const categoryWindowStart = Math.max(
+      currentDayIndex,
+      previousTimeEnd
+    );
+
+    const categoryWindow = text.slice(
+      categoryWindowStart,
+      match.index || 0
+    );
+
+    const categoryCandidates = categoryWindow
+      .split(/\n+/)
+      .map(categoryHeading)
+      .filter(Boolean);
+
+    if (categoryCandidates.length) {
+      currentCategory =
+        categoryCandidates[categoryCandidates.length - 1];
+    }
+    const startIndex = (match.index || 0) + match[0].length;
+    const endIndex =
+      i + 1 < times.length
+        ? (times[i + 1].index || text.length)
+        : text.length;
+
+    let windowText = text.slice(startIndex, endIndex).trim();
+    if (!windowText) continue;
+
+    const channels = extractChannels(windowText);
+    if (!channels.length) continue;
+
+    const firstChannelIndex = windowText.indexOf("[[DLCHANNEL:");
+    const titleArea =
+      firstChannelIndex >= 0
+        ? windowText.slice(0, firstChannelIndex)
+        : windowText;
+
+    let title = cleanEventText(titleArea)
+      .replace(/^[-–—|:•\s]+/, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    /*
+      A category heading can occasionally survive in the event window after
+      DLStreams changes markup. Keep the event-facing portion nearest the
+      channel list when line boundaries are available.
+    */
+    const titleLines = titleArea
+      .split(/\n+/)
+      .map((line) => cleanEventText(line))
+      .filter(Boolean)
+      .filter((line) => !parseDayHeader(line))
+      .filter((line) => !/^(Schedule|All|24\/7|Chat|Menu)$/i.test(line));
+
+    if (titleLines.length) {
+      title = titleLines[titleLines.length - 1];
     }
 
-    currentEvent.sport = inferSport(currentEvent.category, currentEvent.title);
-    currentEvent.id = `dlstreams:${slugify(
-      `${currentEvent.dayKey}:${currentEvent.time}:${currentEvent.title}`
+    title = String(title || "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 260);
+
+    if (!title || title.length < 2) continue;
+
+    const time = match[0].padStart(5, "0");
+    const day = dayAt(match.index || 0);
+    const timestamp = scheduleTimestamp(day, time);
+    const sport = inferSport(currentCategory, title);
+
+    const event = {
+      id: "",
+      provider: "dlstreams",
+      title,
+      category: currentCategory || sport,
+      sport,
+      time,
+      timestamp,
+      startsAt: timestamp ? new Date(timestamp).toISOString() : null,
+      dayKey: timestamp ? new Date(timestamp).toISOString().slice(0, 10) : "",
+      channels
+    };
+
+    event.id = `dlstreams:${slugify(
+      `${event.dayKey}:${event.time}:${event.title}`
     )}`;
-    events.push(currentEvent);
-    currentEvent = null;
-  }
 
-  for (const line of lines) {
-    const day = parseDayHeader(line);
-    if (day) {
-      flush();
-      currentDay = day;
-      continue;
-    }
+    events.push(event);
 
-    const timed = line.match(/^(\d{1,2}:\d{2})\s+([\s\S]+)$/);
-    if (timed) {
-      flush();
-
-      const time = timed[1].padStart(5, "0");
-      const title = cleanEventText(timed[2]);
-      const channels = extractChannels(line);
-
-      if (!title) continue;
-
-      const timestamp = scheduleTimestamp(currentDay, time);
-      currentEvent = {
-        id: "",
-        provider: "dlstreams",
-        title,
-        category: currentCategory || "Other",
-        sport: "other",
+    if (parserSamples.length < 8) {
+      parserSamples.push({
         time,
-        timestamp,
-        startsAt: timestamp ? new Date(timestamp).toISOString() : null,
-        dayKey: timestamp ? new Date(timestamp).toISOString().slice(0, 10) : "",
-        channels
-      };
-      continue;
-    }
-
-    const channels = extractChannels(line);
-    if (channels.length && currentEvent) {
-      const known = new Set(currentEvent.channels.map((channel) => channel.id));
-      channels.forEach((channel) => {
-        if (!known.has(channel.id)) {
-          known.add(channel.id);
-          currentEvent.channels.push(channel);
-        }
+        title,
+        category: currentCategory,
+        sport,
+        channels: channels.slice(0, 4).map((channel) => ({
+          id: channel.id,
+          name: channel.name
+        }))
       });
-      continue;
-    }
-
-    if (looksLikeCategory(line)) {
-      flush();
-      currentCategory = cleanEventText(line);
     }
   }
-
-  flush();
 
   const seen = new Set();
   const deduped = events.filter((event) => {
-    const channelKey = event.channels.map((channel) => channel.id).sort().join(",");
-    const key = `${event.dayKey}|${event.time}|${slugify(event.title)}|${channelKey}`;
+    const channelKey = event.channels
+      .map((channel) => channel.id)
+      .sort()
+      .join(",");
+    const key =
+      `${event.dayKey}|${event.time}|${slugify(event.title)}|${channelKey}`;
+
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -316,7 +475,176 @@ function parseScheduleHtml(html) {
 
   return {
     events: deduped,
-    lineCount: lines.length
+    lineCount: text.split(/\n/).filter(Boolean).length,
+    diagnostics: {
+      htmlBytes: sourceText.length,
+      watchLinkCount:
+        (sourceText.match(/watch\.php\?[^"'<> \s]*?id=\d+/gi) || []).length,
+      directEmbedCount:
+        (sourceText.match(/dlstreams\.st\/stream\/stream-\d+\.php/gi) || []).length,
+      channelTokenCount:
+        (marked.match(/\[\[DLCHANNEL:/g) || []).length,
+      rawTimeMatchCount: times.length,
+      dayHeaderCount: dayMatches.length,
+      eventsWithChannelsBeforeDedupe: events.length,
+      sampleEvents: parserSamples,
+      firstText:
+        text.slice(0, 900)
+    }
+  };
+}
+
+function preferChannelName(currentName, nextName, id) {
+  const current = String(currentName || "").trim();
+  const next = String(nextName || "").trim();
+  const generic = (value) =>
+    !value ||
+    new RegExp(`^Channel\\s+${String(id).replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}$`, "i").test(value) ||
+    /^(?:Watch|Live|Stream|Open)$/i.test(value);
+
+  if (generic(current) && !generic(next)) return next;
+  if (!current && next) return next;
+  return current || next || `Channel ${id}`;
+}
+
+function extractChannelCatalog(html) {
+  const marked = normalizeChannelAnchors(String(html || ""));
+  const channelMap = new Map();
+  const pattern = /\[\[DLCHANNEL:(\d+)\|([^\]]*)\]\]/g;
+  let match;
+
+  while ((match = pattern.exec(marked))) {
+    const id = String(match[1] || "").trim();
+    if (!id) continue;
+
+    const next = {
+      id,
+      name: String(match[2] || "").replace(/\s+/g, " ").trim() || `Channel ${id}`,
+      watchUrl: `https://dlstreams.st/watch.php?id=${encodeURIComponent(id)}`,
+      embedUrl: `https://dlstreams.st/stream/stream-${encodeURIComponent(id)}.php`,
+      embedUrls: [
+        "stream",
+        "cast",
+        "watch",
+        "plus",
+        "casting",
+        "player"
+      ].map((folder) =>
+        `https://dlstreams.st/${folder}/stream-${encodeURIComponent(id)}.php`
+      )
+    };
+
+    const existing = channelMap.get(id);
+    if (existing) {
+      existing.name = preferChannelName(existing.name, next.name, id);
+    } else {
+      channelMap.set(id, next);
+    }
+  }
+
+  /*
+    Some versions of the 24/7 page keep channel metadata inside an inline JSON
+    payload even when the browser-rendered channel cards are populated later.
+    Accept the two common key orders as a no-key fallback.
+  */
+  const jsonPatterns = [
+    /"channel_id"\s*:\s*"?(\d+)"?[\s\S]{0,240}?"channel_name"\s*:\s*"([^"]+)"/gi,
+    /"channel_name"\s*:\s*"([^"]+)"[\s\S]{0,240}?"channel_id"\s*:\s*"?(\d+)"?/gi
+  ];
+
+  jsonPatterns.forEach((jsonPattern, patternIndex) => {
+    let jsonMatch;
+    while ((jsonMatch = jsonPattern.exec(String(html || "")))) {
+      const id = String(patternIndex === 0 ? jsonMatch[1] : jsonMatch[2]).trim();
+      const name = decodeEntities(
+        String(patternIndex === 0 ? jsonMatch[2] : jsonMatch[1])
+      )
+        .replace(/\\\//g, "/")
+        .replace(/\\"/g, '"')
+        .replace(/\s+/g, " ")
+        .trim();
+
+      if (!id) continue;
+      const existing = channelMap.get(id);
+      if (existing) {
+        existing.name = preferChannelName(existing.name, name, id);
+      } else {
+        channelMap.set(id, {
+          id,
+          name: name || `Channel ${id}`,
+          watchUrl: `https://dlstreams.st/watch.php?id=${encodeURIComponent(id)}`,
+          embedUrl: `https://dlstreams.st/stream/stream-${encodeURIComponent(id)}.php`,
+          embedUrls: [
+            "stream",
+            "cast",
+            "watch",
+            "plus",
+            "casting",
+            "player"
+          ].map((folder) =>
+            `https://dlstreams.st/${folder}/stream-${encodeURIComponent(id)}.php`
+          )
+        });
+      }
+    }
+  });
+
+  return [...channelMap.values()].sort((a, b) =>
+    a.name.localeCompare(b.name, "en", { sensitivity: "base" })
+  );
+}
+
+async function fetchChannelsSource(request, force = false) {
+  const cache = caches.default;
+  const cacheKey = new Request(
+    "https://eastcoin.invalid/dlstreams-channels?v=2",
+    { method: "GET" }
+  );
+
+  if (!force) {
+    const cached = await cache.match(cacheKey);
+    if (cached) {
+      return {
+        html: await cached.text(),
+        fromCache: true,
+        status: 200
+      };
+    }
+  }
+
+  const response = await fetch(CHANNELS_URL, {
+    headers: {
+      Accept: "text/html,application/xhtml+xml",
+      "Accept-Language": "en-US,en;q=0.9",
+      "User-Agent":
+        "Mozilla/5.0 (compatible; EastCoin-DLStreams-Provider/1.0; +https://eastcoin.vip/)"
+    },
+    redirect: "follow",
+    cf: {
+      cacheTtl: 0,
+      cacheEverything: false
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `DLStreams 24/7 channels page returned HTTP ${response.status}.`
+    );
+  }
+
+  const html = await response.text();
+  const cachedResponse = new Response(html, {
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": `public, max-age=${CACHE_SECONDS}`
+    }
+  });
+  await cache.put(cacheKey, cachedResponse.clone());
+
+  return {
+    html,
+    fromCache: false,
+    status: response.status
   };
 }
 
@@ -343,7 +671,7 @@ async function fetchSource(request, force = false) {
       Accept: "text/html,application/xhtml+xml",
       "Accept-Language": "en-US,en;q=0.9",
       "User-Agent":
-        "Mozilla/5.0 (compatible; EastCoin-DLStreams-Prototype/1.0; +https://eastcoin.vip/)"
+        "Mozilla/5.0 (compatible; EastCoin-DLStreams-Provider/1.0; +https://eastcoin.vip/)"
     },
     redirect: "follow",
     cf: {
@@ -411,8 +739,9 @@ export default {
       return json(
         {
           ok: true,
-          service: "eastcoin-dlstreams-prototype",
+          service: "eastcoin-dlstreams-provider",
           source: SOURCE_URL,
+          channelsSource: CHANNELS_URL,
           cacheSeconds: CACHE_SECONDS
         },
         200,
@@ -432,13 +761,14 @@ export default {
           {
             ok: true,
             provider: "dlstreams",
-            prototype: true,
+            prototype: false,
             source: SOURCE_URL,
             sourceFromCache: source.fromCache,
             fetchedAt: new Date().toISOString(),
             parser: {
-              version: 1,
-              lineCount: parsed.lineCount
+              version: 5,
+              lineCount: parsed.lineCount,
+              ...parsed.diagnostics
             },
             summary,
             events: parsed.events
@@ -452,10 +782,97 @@ export default {
           {
             ok: false,
             provider: "dlstreams",
-            prototype: true,
+            prototype: false,
             error: String(error?.message || error),
             hint:
               "If DLStreams blocks Cloudflare Worker requests or changes its public HTML, the scraper will need adjustment. The official API remains the preferred production path."
+          },
+          502,
+          request,
+          env
+        );
+      }
+    }
+
+
+    if (url.pathname === "/channels") {
+      try {
+        const force = url.searchParams.get("force") === "1";
+
+        const [channelSourceResult, scheduleSourceResult] =
+          await Promise.allSettled([
+            fetchChannelsSource(request, force),
+            fetchSource(request, force)
+          ]);
+
+        const directSource =
+          channelSourceResult.status === "fulfilled"
+            ? channelSourceResult.value
+            : null;
+        const scheduleSource =
+          scheduleSourceResult.status === "fulfilled"
+            ? scheduleSourceResult.value
+            : null;
+
+        const directChannels = directSource
+          ? extractChannelCatalog(directSource.html)
+          : [];
+
+        const scheduleChannels = scheduleSource
+          ? extractChannelCatalog(scheduleSource.html)
+          : [];
+
+        const merged = new Map();
+
+        [...directChannels, ...scheduleChannels].forEach((channel) => {
+          const id = String(channel?.id || "").trim();
+          if (!id) return;
+
+          const existing = merged.get(id);
+          if (!existing) {
+            merged.set(id, { ...channel });
+            return;
+          }
+
+          existing.name = preferChannelName(
+            existing.name,
+            channel.name,
+            id
+          );
+        });
+
+        const channels = [...merged.values()].sort((a, b) =>
+          a.name.localeCompare(b.name, "en", { sensitivity: "base" })
+        );
+
+        return json(
+          {
+            ok: true,
+            provider: "dlstreams",
+            source: CHANNELS_URL,
+            fetchedAt: new Date().toISOString(),
+            sourceFromCache:
+              Boolean(directSource?.fromCache) &&
+              Boolean(scheduleSource?.fromCache),
+            summary: {
+              channelCount: channels.length,
+              direct247Count: directChannels.length,
+              scheduleFallbackCount: scheduleChannels.length
+            },
+            channels
+          },
+          200,
+          request,
+          env
+        );
+      } catch (error) {
+        return json(
+          {
+            ok: false,
+            provider: "dlstreams",
+            error: String(error?.message || error),
+            hint:
+              "EastCoin can still derive a partial Live TV catalog from /schedule if the dedicated 24/7 page changes."
           },
           502,
           request,
@@ -490,11 +907,13 @@ export default {
     return json(
       {
         ok: true,
-        service: "eastcoin-dlstreams-prototype",
+        service: "eastcoin-dlstreams-provider",
         endpoints: {
           health: "/health",
           schedule: "/schedule",
           forceRefresh: "/schedule?force=1",
+          channels: "/channels",
+          forceChannelsRefresh: "/channels?force=1",
           channel: "/channel/<channel-id>"
         }
       },
