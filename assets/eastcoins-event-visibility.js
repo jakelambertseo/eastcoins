@@ -337,23 +337,49 @@
   }
 
   async function dlJson(path) {
-    const response = await fetch(`${DL_BASE}${path}`, {
-      headers: { Accept: "application/json" },
-      cache: "no-store"
-    });
+    /*
+      DLStreams is an additive provider. A slow upstream page must never block
+      EastCoin's Streamed/PPV event directory from rendering.
 
-    if (!response.ok) {
-      throw new Error(`DLStreams Worker returned ${response.status}.`);
+      The provider bridge already uses Promise.allSettled(), so aborting a slow
+      DLStreams request lets the normal event feed continue while preserving any
+      schedule/channel result that did arrive in time.
+    */
+    const controller = new AbortController();
+    const timeoutMs = path.startsWith("/channels") ? 2500 : 3500;
+    const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(`${DL_BASE}${path}`, {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        throw new Error(`DLStreams Worker returned ${response.status}.`);
+      }
+
+      const payload = await response.json();
+      if (payload?.ok !== true) {
+        throw new Error(
+          payload?.error || "DLStreams Worker returned an unsuccessful response."
+        );
+      }
+
+      return payload;
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        throw new Error(
+          path.startsWith("/channels")
+            ? "DLStreams Live TV request timed out."
+            : "DLStreams schedule request timed out."
+        );
+      }
+      throw error;
+    } finally {
+      window.clearTimeout(timer);
     }
-
-    const payload = await response.json();
-    if (payload?.ok !== true) {
-      throw new Error(
-        payload?.error || "DLStreams Worker returned an unsuccessful response."
-      );
-    }
-
-    return payload;
   }
 
   async function getDlData(force = false) {
