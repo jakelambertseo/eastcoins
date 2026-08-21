@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">64 major update groups</div>
+<div class="release-count">65 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1602,6 +1602,19 @@
     secondary sports remain available through the More Sports dropdown. The
     isolated DLStreams prototype is retained for future testing without loading
     it on the main site.
+  </p>
+</article>
+
+<article class="timeline-entry">
+<div class="timeline-date">
+<time datetime="2026-08-21">August 21, 2026</time>
+</div>
+<h2>Persistent shell loader fail-safe added</h2>
+<p>
+    Fixed the persistent shell so its temporary Live Player and Events loading
+    covers can never remain over child pages that are already usable. The shell
+    now fails open after a short transition timeout while the player and Events
+    pages continue to own their normal provider loading and error states.
   </p>
 </article>
 </section>

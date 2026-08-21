@@ -23,3 +23,6 @@
 
 /assets/eastcoins-events-home.js
   Cache-Control: no-store, max-age=0, must-revalidate
+
+/assets/eastcoins-persistent-shell.js
+  Cache-Control: no-store, max-age=0, must-revalidate

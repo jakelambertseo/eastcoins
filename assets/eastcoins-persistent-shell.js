@@ -140,6 +140,8 @@
   let pendingPlayerRevealWarningTimer = 0;
   let pendingPlayerRevealStopTimer = 0;
   let playerDocumentWarningTimer = 0;
+  let playerLoaderFailsafeTimer = 0;
+  let browseLoaderFailsafeTimer = 0;
   let lastSettingsTrigger = settingsButton;
   let lastDrawerTrigger = null;
 
@@ -320,8 +322,54 @@
     playerDocumentWarningTimer = 0;
   }
 
+  function clearPlayerLoaderFailsafe() {
+    window.clearTimeout(playerLoaderFailsafeTimer);
+    playerLoaderFailsafeTimer = 0;
+  }
+
+  function clearBrowseLoaderFailsafe() {
+    window.clearTimeout(browseLoaderFailsafeTimer);
+    browseLoaderFailsafeTimer = 0;
+  }
+
+  /*
+    The child pages own their real loading/error UI. The outer shell loader is
+    only a transition cover, so it must fail open even if a browser misses an
+    iframe load event. This prevents a fully rendered player/events page from
+    remaining trapped behind "Loading Live Player" or "Loading Events".
+  */
+  function startPlayerLoaderFailsafe() {
+    clearPlayerLoaderFailsafe();
+
+    playerLoaderFailsafeTimer = window.setTimeout(() => {
+      if (playerLoader.classList.contains("is-hidden")) return;
+
+      playerReady = true;
+      finishPlayerDocumentLoad();
+      postToFrame(playerFrame, shellState());
+      flushPendingGameOverlay();
+
+      if (pendingPlayerReveal) {
+        startPendingPlayerRevealWatch();
+      }
+    }, 3000);
+  }
+
+  function startBrowseLoaderFailsafe() {
+    clearBrowseLoaderFailsafe();
+
+    browseLoaderFailsafeTimer = window.setTimeout(() => {
+      if (browseLoader.classList.contains("is-hidden")) return;
+
+      browseReady = true;
+      browseLoader.classList.add("is-hidden");
+      postToFrame(browseFrame, shellState());
+    }, 3000);
+  }
+
   function finishPlayerDocumentLoad() {
     clearPlayerDocumentWarningTimer();
+    clearPlayerLoaderFailsafe();
     playerLoader.classList.add("is-hidden");
     if (playerLoaderActions) playerLoaderActions.hidden = true;
   }
@@ -477,6 +525,7 @@
     }
     playerLoader.classList.remove("is-hidden");
     startPlayerDocumentWarning();
+    startPlayerLoaderFailsafe();
   }
 
   function setBrowseLoading(view) {
@@ -489,6 +538,7 @@
             ? "Loading Emote Help"
             : "Loading Status";
     browseLoader.classList.remove("is-hidden");
+    startBrowseLoaderFailsafe();
   }
 
   function copyParameters(source, target, names) {
@@ -1398,6 +1448,7 @@
   });
 
   playerFrame.addEventListener("load", () => {
+    clearPlayerLoaderFailsafe();
     playerReady = true;
     clearPlayerDocumentWarningTimer();
     postToFrame(playerFrame, shellState());
@@ -1415,6 +1466,7 @@
   });
 
   browseFrame.addEventListener("load", () => {
+    clearBrowseLoaderFailsafe();
     browseReady = true;
     browseLoader.classList.add("is-hidden");
     postToFrame(browseFrame, shellState());
@@ -1514,6 +1566,8 @@
 
   window.addEventListener("pagehide", () => {
     clearPlayerDocumentWarningTimer();
+    clearPlayerLoaderFailsafe();
+    clearBrowseLoaderFailsafe();
     clearPendingPlayerRevealTimers();
   }, { once: true });
 
