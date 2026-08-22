@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+(() => {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("embed") === "1") {
+    document.documentElement.classList.add("ec-gameday-embed");
+  }
+})();
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
+<title>EastCoin MLB Gameday Replica Test v2</title>
+<link rel="icon" href="assets/eastcoin-favicon.svg?v=full-logo1" type="image/svg+xml">
+<style>
+:root{
+  --ec-sidebar:216px;
+  --ec-chat:340px;
+  --ec-bg:#020202;
+  --ec-shell:#050505;
+  --ec-line:rgba(255,255,255,.075);
+  --ec-text:#f5ebdc;
+  --ec-muted:#92887e;
+  --ec-gold:#c9a44f;
+  --ec-burg:#7b1425;
+
+  --gd-bg:#10151a;
+  --gd-panel:#151c22;
+  --gd-panel2:#11171c;
+  --gd-panel3:#1b232b;
+  --gd-line:#27313a;
+  --gd-text:#f5f7f8;
+  --gd-muted:#a4adb5;
+  --away:#ab0003;
+  --away2:#14225a;
+  --home:#00a3e0;
+  --home2:#ef3340;
+  --strike:#d62840;
+  --ball:#19a85a;
+  --neutral:#8b6fd1;
+  --inplay:#d59b28;
+}
+*{box-sizing:border-box}
+html,body{
+  width:100%;height:100%;margin:0;background:#000;color:var(--ec-text);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+}
+body{overflow:hidden}
+button,input{font:inherit}
+button{cursor:pointer}
+img{display:block;max-width:100%}
+
+.shell{
+  display:grid;
+  grid-template-columns:var(--ec-sidebar) minmax(0,1fr) var(--ec-chat);
+  height:100vh;
+  background:#000
+}
+
+/* EASTCOIN NAV */
+.ec-sidebar{
+  display:flex;flex-direction:column;min-width:0;padding:14px 12px;overflow:auto;
+  border-right:1px solid var(--ec-line);
+  background:radial-gradient(circle at 20% 0%,rgba(123,20,37,.12),transparent 28%),#040404
+}
+.ec-brand{display:flex;align-items:center;gap:10px;padding:2px 6px 14px;border-bottom:1px solid var(--ec-line)}
+.ec-logo{width:38px;height:38px;border-radius:10px;overflow:hidden;border:1px solid rgba(201,164,79,.2);background:#080707}
+.ec-logo img{width:100%;height:100%;object-fit:contain}
+.ec-brand strong{display:block;font-size:.92rem}
+.ec-brand small{display:block;color:var(--ec-muted);font-size:.65rem}
+.ec-search{display:flex;gap:5px;margin:12px 0 10px}
+.ec-search input{
+  width:100%;min-width:0;padding:9px 10px;border:1px solid var(--ec-line);border-radius:9px;
+  background:#070606;color:#eee2d0;outline:none;font-size:.72rem
+}
+.ec-search button{
+  border:1px solid rgba(201,164,79,.25);border-radius:9px;background:#120d08;color:#e6c878;
+  font-size:.66rem;font-weight:900;padding:0 9px
+}
+.nav-label{margin:9px 7px 5px;color:#71685e;font-size:.56rem;font-weight:950;letter-spacing:.13em;text-transform:uppercase}
+.nav-item{
+  display:flex;align-items:center;gap:8px;width:100%;padding:8px;margin-bottom:2px;
+  border:0;border-radius:8px;background:transparent;color:#a79e91;text-align:left
+}
+.nav-item:hover,.nav-item.active{color:#fff1d9;background:rgba(255,255,255,.045)}
+.nav-item.active{box-shadow:inset 3px 0 0 var(--ec-gold)}
+.nav-icon{
+  width:26px;height:26px;flex:0 0 26px;display:grid;place-items:center;
+  border:1px solid rgba(255,255,255,.07);border-radius:7px;background:#0b0a0a;font-size:.73rem
+}
+.nav-copy{min-width:0}
+.nav-copy strong{display:block;font-size:.71rem}
+.nav-copy small{display:block;color:#71695f;font-size:.58rem}
+.nav-count{
+  margin-left:auto;min-width:20px;height:20px;padding:0 5px;border-radius:999px;
+  display:grid;place-items:center;background:#141313;color:#938a80;font-size:.58rem;font-weight:900
+}
+.ec-foot{margin-top:auto;padding:12px 7px 2px;color:#5e574f;font-size:.54rem;line-height:1.45;border-top:1px solid var(--ec-line)}
+
+/* VIDEO / SHELL */
+.watch{position:relative;min-width:0;overflow:hidden;background:#000}
+.video{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(circle at 50% 38%,rgba(102,13,28,.18),transparent 27%),
+    linear-gradient(180deg,#020202,#000)
+}
+.video-placeholder{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.video-placeholder span{
+  display:grid;place-items:center;width:64px;height:64px;margin:0 auto 14px;border-radius:20px;
+  border:1px solid rgba(201,164,79,.2);background:#0d0908;color:var(--ec-gold);font-size:1.45rem
+}
+.video-placeholder strong{display:block;font-size:1rem}
+.video-placeholder small{display:block;color:#6f675f;margin-top:5px;font-size:.72rem}
+.video-tools{
+  position:absolute;z-index:8;top:16px;left:18px;right:18px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px
+}
+.live-chip,.tool{
+  border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(7,7,7,.84);
+  backdrop-filter:blur(12px);color:#d7c9b3;font-size:.66rem;font-weight:850
+}
+.live-chip{display:flex;align-items:center;gap:7px;padding:8px 10px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#ef4557}
+.tool{padding:8px 10px}
+.tool:hover{border-color:rgba(201,164,79,.3);color:#ffe9ae}
+.tool-row{display:flex;gap:7px}
+
+/* TWITCH */
+.chat{
+  min-width:0;border-left:1px solid var(--ec-line);background:#0e0e10;
+  display:flex;flex-direction:column
+}
+.chat-head{
+  height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;
+  border-bottom:1px solid rgba(255,255,255,.08);background:#151515
+}
+.chat-head strong{font-size:.72rem}
+.chat-head span{color:#8a8290;font-size:.61rem}
+.chat-frame{flex:1;width:100%;border:0;background:#0e0e10}
+
+/* POPUP */
+.scrim{
+  position:absolute;inset:0;z-index:30;background:rgba(0,0,0,.69);backdrop-filter:blur(5px);
+  opacity:0;pointer-events:none;transition:.18s
+}
+.scrim.show{opacity:1;pointer-events:auto}
+.gameday-modal{
+  position:absolute;z-index:35;left:12px;right:12px;top:12px;bottom:12px;
+  display:grid;grid-template-rows:42px 104px minmax(0,1fr);
+  min-width:0;
+  overflow:hidden;border:1px solid #28323b;border-radius:12px;
+  background:var(--gd-bg);color:var(--gd-text);box-shadow:0 30px 90px rgba(0,0,0,.65);
+  transform:scale(.98);opacity:0;pointer-events:none;transition:.2s
+}
+.gameday-modal.open{transform:scale(1);opacity:1;pointer-events:auto}
+
+/* TOP HEADER */
+.gd-head{
+  display:grid;grid-template-columns:150px 1fr 150px;align-items:center;padding:0 12px;
+  background:#121920;border-bottom:1px solid var(--gd-line)
+}
+.gd-head-left{display:flex;align-items:center;gap:8px}
+.mlb-mark{
+  width:42px;height:22px;border-radius:4px;display:grid;place-items:center;
+  background:linear-gradient(90deg,#153b70 0 50%,#b41331 50%);color:white;font-size:.56rem;font-weight:950
+}
+.gd-title{text-align:center;font-size:.78rem;font-weight:900}
+.gd-head-right{display:flex;justify-content:flex-end;gap:6px}
+.icon-btn{
+  width:29px;height:29px;border:1px solid #313b44;border-radius:7px;background:#171f26;color:#c5ccd2
+}
+
+/* SCORE CAROUSEL */
+.score-strip{
+  display:grid;grid-template-columns:72px minmax(0,1fr);gap:9px;padding:9px 12px 7px;
+  align-items:stretch;overflow:hidden;
+  background:#11181e;border-bottom:1px solid var(--gd-line);min-width:0
+}
+.date-card{
+  display:grid;grid-template-columns:18px 1fr 18px;align-items:center;min-height:78px;
+  border:1px solid #2c3842;border-radius:5px;background:#151e25;overflow:hidden
+}
+.date-card button{height:100%;border:0;background:#151e25;color:#cbd2d7}
+.date-mid{text-align:center;font-size:.62rem;font-weight:900;line-height:1.15}
+.schedule-scroll{
+  min-width:0;height:88px;overflow-x:auto;overflow-y:hidden;display:flex;align-items:flex-start;gap:7px;
+  padding-bottom:13px;scrollbar-width:auto;scrollbar-color:#aeb5ba #27313a
+}
+.schedule-scroll::-webkit-scrollbar{height:11px}
+.schedule-scroll::-webkit-scrollbar-track{background:#27313a;border-radius:999px}
+.schedule-scroll::-webkit-scrollbar-thumb{background:#aeb5ba;border-radius:999px;border:2px solid #27313a}
+.schedule-game{
+  flex:0 0 152px;min-width:152px;height:72px;padding:7px 9px;border:1px solid #2b3741;border-radius:5px;
+  background:#141c22;color:#f0f3f4;text-align:left;overflow:hidden
+}
+.schedule-game.selected{border-color:#c9d0d5;box-shadow:inset 0 0 0 1px #c9d0d5}
+.sg-state{font-size:.52rem;color:#9aa4ac;font-weight:850;text-transform:uppercase}
+.sg-team{
+  display:grid;grid-template-columns:14px 1fr auto;gap:5px;align-items:center;margin-top:4px;
+  font-size:.60rem;font-weight:900
+}
+.sg-team img{width:14px;height:14px;object-fit:contain}
+.sg-score{font-size:.65rem}
+
+/* MAIN 3-COLUMN Gameday area */
+.gd-body{
+  min-width:0;width:100%;max-width:100%;min-height:0;
+  display:block;
+  padding:10px 10px 16px;
+  background:#0d1318;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scrollbar-gutter:stable;
+  scrollbar-width:auto;
+  scrollbar-color:#aeb5ba #27313a;
+  overscroll-behavior-x:contain
+}
+.gd-body::-webkit-scrollbar{height:14px}
+.gd-body::-webkit-scrollbar-track{background:#27313a;border-radius:999px}
+.gd-body::-webkit-scrollbar-thumb{background:#aeb5ba;border-radius:999px;border:3px solid #27313a}
+
+/*
+  True MLB-style wide canvas:
+  gd-body is ONLY the viewport/scroll container.
+  gd-canvas owns the three-column layout and is allowed to be wider.
+  V8 intentionally gives the center panel less width so the right stat column
+  enters the viewport much earlier on smaller desktop screens.
+*/
+.gd-canvas{
+  display:grid;
+  grid-template-columns:250px minmax(500px,1fr) 430px;
+  gap:10px;
+  width:max(100%,1200px);
+  min-width:1200px;
+  height:100%;
+  min-height:0;
+  align-items:stretch
+}
+.column{min-width:0;min-height:0}
+.card{
+  min-width:0;background:var(--gd-panel);border:1px solid var(--gd-line);border-radius:6px;overflow:hidden
+}
+.card-head{
+  height:36px;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:0 10px;background:#171f26;border-bottom:1px solid var(--gd-line);
+  font-size:.59rem;font-weight:900
+}
+.card-head small{color:#929da5;font-size:.48rem;font-weight:700}
+
+/* LEFT: field + live timeline */
+.left-column{display:grid;grid-template-rows:auto 210px minmax(0,1fr);gap:10px}
+.left-intro{display:flex;align-items:center;justify-content:space-between;padding:0 2px;color:#d7dde1}
+.live-label{font-size:.72rem;font-weight:950}
+.venue-label{font-size:.54rem;color:#9aa3aa}
+.hide-btn{border:1px solid #316e9e;border-radius:999px;background:#17232d;color:#68b7ee;font-size:.48rem;font-weight:900;padding:4px 8px}
+
+.field-card{position:relative;background:#233241;overflow:hidden}
+.field-svg{width:100%;height:100%;display:block}
+.field-note{
+  position:absolute;right:7px;top:7px;padding:3px 5px;border-radius:4px;
+  background:rgba(0,0,0,.45);font-size:.45rem;color:#e6ecef
+}
+
+.timeline{min-height:0;overflow:auto;background:#111920}
+.play-item{
+  position:relative;display:grid;grid-template-columns:38px minmax(0,1fr);gap:8px;
+  padding:10px 10px 10px 13px;border-bottom:1px solid #263039
+}
+.play-item:before{
+  content:"";position:absolute;left:30px;top:0;bottom:0;width:1px;background:#31404b
+}
+.play-bubble{
+  position:relative;z-index:2;width:26px;height:26px;border-radius:50%;
+  display:grid;place-items:center;background:#199bc9;border:2px solid #70d5ef;
+  color:#fff;font-size:.48rem;font-weight:950
+}
+.play-bubble.pitch{background:#7049bd;border-color:#b69bff}
+.play-bubble.strike{background:var(--strike);border-color:#ff8394}
+.play-bubble.ball{background:var(--ball);border-color:#7ee6a5}
+.play-copy strong{display:block;font-size:.58rem;line-height:1.35}
+.play-copy p{margin:3px 0 0;color:#a3adb5;font-size:.5rem;line-height:1.38}
+.play-tag{
+  display:inline-block;margin-bottom:3px;padding:2px 5px;border:1px solid #248bb8;border-radius:999px;
+  color:#6acdf3;font-size:.43rem;font-weight:850
+}
+
+
+.timeline-card{display:flex;flex-direction:column;min-height:0}
+.play-bubble.player{
+  position:relative;overflow:hidden;background:#1d2a33;border-color:#4a6577
+}
+.play-bubble.player img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.play-bubble.player span{position:relative;z-index:0}
+
+/* compact pitch tracker under field */
+.pitch-mini-wrap{padding:7px 8px;border-top:1px solid #27323b;background:#121a20}
+.pitch-mini-title{display:flex;justify-content:space-between;color:#aab3b9;font-size:.47rem;margin-bottom:5px}
+.pitch-mini{
+  position:relative;height:128px;overflow:hidden;border:1px solid #2b3943;
+  background:
+    linear-gradient(180deg,rgba(46,83,47,.85) 0 36%,rgba(152,108,63,.88) 36% 100%)
+}
+.zone-outer{
+  position:absolute;left:50%;bottom:6%;width:54%;height:70%;transform:translateX(-50%);
+  background:rgba(74,168,199,.22)
+}
+.zone{
+  position:absolute;left:25%;top:24%;width:50%;height:53%;
+  border:2px solid #0b0b0b;background:rgba(79,184,215,.12)
+}
+.zone i{position:absolute;background:#090909}
+.zone .h1,.zone .h2{height:1px;left:0;right:0}
+.zone .h1{top:33.333%}.zone .h2{top:66.666%}
+.zone .v1,.zone .v2{width:1px;top:0;bottom:0}
+.zone .v1{left:33.333%}.zone .v2{left:66.666%}
+.pitch-svg{position:absolute;inset:0;width:100%;height:100%;z-index:4}
+.pitch-path{fill:none;stroke-width:5;stroke-linecap:round;opacity:.6}
+.pitch-marker circle{stroke:#fff;stroke-width:1.5}
+.pitch-marker text{fill:#fff;font-size:10px;font-weight:950;text-anchor:middle;dominant-baseline:middle}
+
+/* CENTER */
+.center-column{display:grid;grid-template-rows:64px minmax(0,1fr) 116px;gap:10px}
+.score-card{
+  display:grid;grid-template-columns:1fr 80px 1fr;align-items:center;
+  padding:0 11px;border-left:4px solid var(--away)
+}
+.team-score{display:flex;align-items:center;gap:9px;min-width:0}
+.team-score.home{justify-content:flex-end;text-align:right}
+.team-logo{width:34px;height:34px;object-fit:contain}
+.team-score-copy strong{display:block;font-size:.6rem}
+.team-score-copy small{display:block;font-size:.45rem;color:#929da5}
+.big-score{font-size:1.25rem;font-weight:950}
+.mid-state{text-align:center;font-size:.5rem;color:#d4dadd;font-weight:900}
+
+.stage{
+  position:relative;overflow:hidden;border-radius:7px;border:1px solid #2b3741;
+  background:
+    linear-gradient(180deg,rgba(29,58,48,.74) 0 35%,rgba(146,103,61,.92) 35.5% 100%)
+}
+.stage:before{
+  content:"";position:absolute;left:0;right:0;top:0;height:23%;
+  background:
+    linear-gradient(180deg,#496341 0 18%,#27372c 18% 23%,#486ca0 23% 58%,#d9d8d2 58% 61%,#405c37 61%);
+  opacity:.95
+}
+.stadium-name{
+  position:absolute;z-index:4;top:7.5%;left:50%;transform:translateX(-50%);
+  font-size:18px;font-style:italic;font-weight:950;color:var(--home);
+  text-shadow:0 2px 4px rgba(0,0,0,.8)
+}
+.center-zone-shell{position:absolute;z-index:3;inset:10% 13% 13% 10%;overflow:hidden}
+.center-zone-outer{
+  position:absolute;left:44%;bottom:6%;width:42%;height:72%;transform:translateX(-50%);
+  background:rgba(73,177,208,.21)
+}
+.center-zone{
+  position:absolute;left:25%;top:24%;width:50%;height:53%;
+  border:3px solid rgba(10,10,10,.96);background:rgba(77,184,214,.13)
+}
+.center-zone i{position:absolute;background:#0a0a0a}
+.center-zone .h1,.center-zone .h2{left:0;right:0;height:2px}
+.center-zone .h1{top:33.333%}.center-zone .h2{top:66.666%}
+.center-zone .v1,.center-zone .v2{top:0;bottom:0;width:2px}
+.center-zone .v1{left:33.333%}.center-zone .v2{left:66.666%}
+.center-pitch-svg{position:absolute;z-index:6;inset:0;width:100%;height:100%;overflow:visible}
+.center-pitch-svg .pitch-path{stroke-width:13;opacity:.5}
+.center-pitch-svg .pitch-marker circle{stroke-width:3}
+.center-pitch-svg .pitch-marker text{font-size:19px}
+.center-plate{
+  position:absolute;z-index:5;left:50%;bottom:3%;width:54px;height:34px;transform:translateX(-50%);
+  background:#efe9da;clip-path:polygon(0 0,100% 0,86% 62%,50% 100%,14% 62%)
+}
+.fake-batter{
+  position:absolute;z-index:4;right:6%;bottom:14%;width:96px;height:96px;pointer-events:none;
+  filter:drop-shadow(0 10px 16px rgba(0,0,0,.35))
+}
+.fake-head{
+  position:absolute;inset:0;border-radius:50%;overflow:hidden;
+  background:#0d141a;border:5px solid rgba(255,255,255,.20);display:grid;place-items:center
+}
+.fake-head:before{
+  content:"Batter";position:absolute;left:50%;bottom:-28px;transform:translateX(-50%);
+  padding:4px 10px;border-radius:999px;background:rgba(5,9,12,.82);border:1px solid rgba(255,255,255,.09);
+  color:#dfe6ea;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap
+}
+.fake-head img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.fake-head span{position:relative;z-index:0;color:#fff;font-size:12px;font-weight:950}
+.center-matchup{
+  position:absolute;z-index:9;top:12px;display:flex;align-items:center;gap:9px;
+  padding:7px 9px;border-radius:8px;background:rgba(5,9,12,.78);border:1px solid rgba(255,255,255,.09)
+}
+.center-matchup.batter-side{left:12px}
+.center-matchup.pitcher-side{right:12px;text-align:right}
+.center-matchup small{display:block;color:#9aa5ad;font-size:10px;text-transform:uppercase;font-weight:850}
+.center-matchup strong{display:block;margin-top:2px;font-size:13px;max-width:155px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.center-headshot{
+  position:relative;width:42px;height:42px;border-radius:50%;overflow:hidden;
+  display:grid;place-items:center;background:#1c252d;border:2px solid rgba(255,255,255,.18);
+  font-size:11px;font-weight:950
+}
+.center-headshot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.stage-info{
+  position:absolute;z-index:9;left:12px;top:86px;padding:7px 9px;border-radius:6px;
+  background:rgba(4,6,8,.72);font-size:12px;color:#dbe1e4
+}
+.stage-current{
+  position:absolute;z-index:10;left:12px;right:12px;bottom:12px;
+  display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:end;gap:10px
+}
+.stage-play{
+  max-width:none;padding:10px 11px;border-radius:7px;background:rgba(5,9,12,.82);
+  border:1px solid rgba(255,255,255,.08)
+}
+.stage-play small{display:block;color:#8d99a1;font-size:10px}
+.stage-play strong{display:block;margin-top:3px;font-size:13px;line-height:1.35}
+.center-pitch-summary{
+  min-width:155px;padding:9px 10px;border-radius:7px;background:rgba(5,9,12,.82);
+  border:1px solid rgba(255,255,255,.08)
+}
+.center-pitch-summary small{display:block;color:#8d99a1;font-size:10px}
+.center-pitch-summary strong{display:block;margin-top:3px;font-size:12px}
+.stage-mini-score{
+  display:flex;gap:8px;align-items:center;padding:8px 10px;border-radius:7px;background:rgba(5,9,12,.84)
+}
+.stage-mini-score img{width:30px;height:30px}
+.stage-mini-score b{font-size:15px}
+
+.lineup-strip{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:7px
+}
+.lineup-player{
+  display:grid;grid-template-columns:34px 1fr;gap:7px;align-items:center;
+  padding:8px;border-radius:5px;background:#151d23;border:1px solid #27313a
+}
+.lp-avatar{
+  position:relative;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;overflow:hidden;
+  background:linear-gradient(135deg,var(--away2),var(--away));font-size:11px;font-weight:950
+}
+.lp-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.lp-avatar span{position:relative;z-index:0}
+.lineup-player:nth-child(2) .lp-avatar,.lineup-player:nth-child(3) .lp-avatar{
+  background:linear-gradient(135deg,#063c55,var(--home))
+}
+.lineup-player{grid-template-columns:54px 1fr;padding:9px 10px}
+.lineup-player strong{display:block;font-size:13px}
+.lineup-player small{display:block;color:#909aa2;font-size:10px}
+
+/* RIGHT: dense stat board */
+.right-column{display:grid;grid-template-rows:auto minmax(0,1fr);gap:8px}
+.lines-card{overflow:auto}
+.lines-table{width:100%;border-collapse:collapse}
+.lines-table th,.lines-table td{
+  padding:5px 6px;text-align:center;border-bottom:1px solid #26313a;font-size:.48rem
+}
+.lines-table th{color:#9aa4ac;font-size:.42rem}
+.lines-table th:first-child,.lines-table td:first-child{text-align:left;font-weight:900}
+.lines-table .tot{font-weight:950}
+
+.stat-scroll{min-height:0;overflow:auto}
+.two-team-stats{
+  display:grid;grid-template-columns:1fr 1fr;min-height:100%;
+  background:#131a20
+}
+.team-stat-col{min-width:0;padding:8px}
+.team-stat-col+ .team-stat-col{border-left:1px solid #29343d}
+.section-label{
+  padding:6px 0 4px;color:#fff;font-size:.49rem;font-weight:950;border-bottom:1px solid #28333c
+}
+.stat-copy{padding:5px 0;color:#c3cbd0;font-size:.45rem;line-height:1.55}
+.stat-copy b{color:#fff}
+.mini-table{width:100%;border-collapse:collapse;margin-top:5px}
+.mini-table th,.mini-table td{
+  padding:4px 3px;border-bottom:1px solid #253039;text-align:right;font-size:.42rem;white-space:nowrap
+}
+.mini-table th{color:#8f9aa1;font-size:.38rem;text-transform:uppercase}
+.mini-table td:first-child,.mini-table th:first-child{text-align:left;font-weight:850}
+.bench-wrap{overflow-x:auto}
+
+/* modal UI extras */
+.data-status{
+  position:absolute;z-index:50;right:20px;bottom:18px;max-width:360px;
+  padding:7px 9px;border-radius:6px;background:rgba(7,12,15,.92);
+  border:1px solid #33414c;color:#aab4bb;font-size:.47rem;pointer-events:none
+}
+.data-status.good{color:#8de2ac;border-color:#28543a}
+.data-status.bad{color:#ffa0ab;border-color:#63313a}
+
+
+
+/* ================================================================
+   EASTCOIN GAME CENTER BRANDING
+   Preserve the MLB-style information layout, but make the module
+   visually native to EastCoin.
+   ================================================================ */
+:root{
+  --gd-bg:#050404;
+  --gd-panel:#0c0909;
+  --gd-panel2:#100a0b;
+  --gd-panel3:#160d10;
+  --gd-line:rgba(209,173,85,.16);
+  --gd-text:#f5ead8;
+  --gd-muted:#95897c;
+  --ec-gold-2:#ebcc7a;
+  --ec-burg-2:#a61e38;
+  --ec-burg-deep:#4d0c17;
+}
+
+.gameday-modal{
+  border-color:rgba(209,173,85,.24);
+  background:
+    radial-gradient(circle at 52% -18%,rgba(123,20,37,.24),transparent 31%),
+    linear-gradient(180deg,#080506 0%,#030303 100%);
+  color:var(--gd-text);
+  box-shadow:
+    0 34px 100px rgba(0,0,0,.72),
+    0 0 0 1px rgba(123,20,37,.14),
+    inset 0 1px rgba(255,255,255,.025)
+}
+
+.gd-head{
+  background:
+    linear-gradient(90deg,rgba(91,12,27,.22),transparent 29%),
+    linear-gradient(180deg,#0d0909,#070505);
+  border-bottom-color:rgba(209,173,85,.18)
+}
+.gd-head:after{
+  content:"";
+  position:absolute;
+  left:14px;right:14px;bottom:-1px;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(209,173,85,.45),transparent);
+  pointer-events:none
+}
+.gd-head{position:relative}
+
+.ec-gameday-brand{
+  display:flex;align-items:center;gap:8px;
+  min-width:0
+}
+.ec-gameday-brand img{
+  width:27px;height:27px;object-fit:contain;
+  filter:drop-shadow(0 3px 8px rgba(0,0,0,.4))
+}
+.ec-gameday-brand span{
+  color:#f5ead8;
+  font-size:11px;
+  font-weight:950;
+  letter-spacing:-.02em
+}
+.gd-title{
+  color:#fff1d1;
+  text-shadow:0 0 18px rgba(209,173,85,.12);
+  letter-spacing:-.025em
+}
+.icon-btn{
+  border-color:rgba(209,173,85,.17);
+  background:#0d0909;
+  color:#cbbda8;
+  box-shadow:inset 0 1px rgba(255,255,255,.02)
+}
+.icon-btn:hover{
+  border-color:rgba(209,173,85,.42);
+  background:#190d10;
+  color:#ffe4a0
+}
+
+/* Daily score ribbon */
+.score-strip{
+  background:
+    linear-gradient(90deg,rgba(123,20,37,.11),transparent 24%),
+    #070606;
+  border-bottom-color:rgba(209,173,85,.12)
+}
+.date-card{
+  border-color:rgba(209,173,85,.19);
+  background:linear-gradient(180deg,#120b0c,#0a0808)
+}
+.date-card button{
+  background:#0c0909;
+  color:#b9a98e
+}
+.date-card button:hover{
+  background:#211014;
+  color:#f2cd73
+}
+.date-mid{
+  color:#f2d487
+}
+.schedule-game{
+  border-color:rgba(255,255,255,.075);
+  background:linear-gradient(180deg,#0f0b0c,#090707);
+  color:#eee2d0
+}
+.schedule-game:hover{
+  border-color:rgba(209,173,85,.22);
+  background:#140b0d
+}
+.schedule-game.selected{
+  border-color:var(--ec-gold);
+  box-shadow:
+    inset 3px 0 0 var(--ec-burg-2),
+    inset 0 0 0 1px rgba(209,173,85,.28),
+    0 0 16px rgba(123,20,37,.10);
+  background:
+    linear-gradient(135deg,rgba(123,20,37,.18),transparent 48%),
+    #100b0c
+}
+.sg-state{color:#8f8375}
+.schedule-game.selected .sg-state{color:#e6c970}
+
+.schedule-scroll,
+.gd-body{
+  scrollbar-color:#b9974c #1b1012
+}
+.schedule-scroll::-webkit-scrollbar-track,
+.gd-body::-webkit-scrollbar-track{
+  background:#1b1012
+}
+.schedule-scroll::-webkit-scrollbar-thumb,
+.gd-body::-webkit-scrollbar-thumb{
+  background:#b9974c;
+  border-color:#1b1012
+}
+
+/* Main Game Center */
+.gd-body{
+  background:
+    radial-gradient(circle at 50% 0%,rgba(91,12,27,.10),transparent 36%),
+    #040303
+}
+.card{
+  background:linear-gradient(180deg,#0d0a0a,#080707);
+  border-color:rgba(209,173,85,.13);
+  box-shadow:
+    0 8px 24px rgba(0,0,0,.18),
+    inset 0 1px rgba(255,255,255,.014)
+}
+.card-head{
+  background:
+    linear-gradient(90deg,rgba(123,20,37,.19),transparent 55%),
+    #100b0c;
+  border-bottom-color:rgba(209,173,85,.13);
+  color:#f2e3ca
+}
+.card-head small{color:#8f8376}
+
+.live-label{color:#f1d27a}
+.venue-label{color:#938678}
+.hide-btn{
+  border-color:rgba(209,173,85,.28);
+  background:#170d0f;
+  color:#e6c66f
+}
+.hide-btn:hover{
+  background:#260f15;
+  color:#ffe5a3
+}
+.field-card{
+  border-color:rgba(209,173,85,.14);
+  background:#11100d
+}
+.field-note{
+  border:1px solid rgba(209,173,85,.13);
+  background:rgba(7,5,5,.78);
+  color:#dfd0ba
+}
+
+/* Play-by-play */
+.timeline{background:#080707}
+.play-item{
+  border-bottom-color:rgba(209,173,85,.09)
+}
+.play-item:before{background:rgba(209,173,85,.16)}
+.play-copy strong{color:#f4ead9}
+.play-copy p{color:#998e82}
+.play-tag{
+  border-color:rgba(209,173,85,.30);
+  background:rgba(123,20,37,.13);
+  color:#efce78
+}
+
+/* Score / center */
+.score-card{
+  background:
+    linear-gradient(90deg,rgba(123,20,37,.18),transparent 28%,transparent 72%,rgba(209,173,85,.055)),
+    linear-gradient(180deg,#0f0b0c,#090707);
+  border-color:rgba(209,173,85,.16);
+  box-shadow:inset 0 1px rgba(255,255,255,.02)
+}
+.team-score-copy strong{color:#f5ead8}
+.team-score-copy small{color:#978b80}
+.big-score{color:#fff4dc}
+.mid-state{
+  color:#e3c671;
+  letter-spacing:.025em
+}
+
+.stage{
+  border-color:rgba(209,173,85,.18);
+  box-shadow:
+    inset 0 0 60px rgba(0,0,0,.17),
+    0 8px 28px rgba(0,0,0,.18)
+}
+.stadium-name{
+  color:#e8c76e !important;
+  text-shadow:
+    0 2px 4px rgba(0,0,0,.88),
+    0 0 14px rgba(209,173,85,.13)
+}
+.center-matchup{
+  background:rgba(9,6,6,.88);
+  border-color:rgba(209,173,85,.12);
+  color:#eadfcf
+}
+.center-player-card{
+  border-color:rgba(209,173,85,.16);
+  background:
+    linear-gradient(135deg,rgba(123,20,37,.16),transparent 52%),
+    rgba(8,6,6,.92)
+}
+.center-player-card.pitcher{
+  background:
+    linear-gradient(225deg,rgba(209,173,85,.10),transparent 52%),
+    rgba(8,6,6,.92)
+}
+.center-player-card .role{color:#9d9082}
+.center-player-card strong{color:#f5ead8}
+.center-headshot{
+  border-color:rgba(209,173,85,.36)
+}
+.fake-head{
+  border-color:rgba(209,173,85,.34);
+  background:#0b0708;
+  box-shadow:0 0 0 5px rgba(123,20,37,.13)
+}
+.fake-head:before{
+  background:rgba(12,7,8,.94);
+  border-color:rgba(209,173,85,.17);
+  color:#e7cb79
+}
+.stage-current > *{
+  border-color:rgba(209,173,85,.12)
+}
+.stage-play,
+.stage-mini-score{
+  background:rgba(10,6,7,.91)
+}
+.stage-play small{color:#968a7d}
+.stage-play strong{color:#f4e8d5}
+
+/* Bottom player cards */
+.lineup-player{
+  background:
+    linear-gradient(145deg,rgba(123,20,37,.10),transparent 48%),
+    #0c0909;
+  border-color:rgba(209,173,85,.13)
+}
+.lineup-player:hover{
+  border-color:rgba(209,173,85,.25)
+}
+.lineup-player strong{color:#f3e6d2}
+.lineup-player small{color:#8e8276}
+.lp-avatar{
+  box-shadow:0 0 0 2px rgba(209,173,85,.18)
+}
+
+/* Right data board */
+.lines-card,
+.stat-scroll{
+  background:#080707
+}
+.lines-table th,
+.lines-table td{
+  border-bottom-color:rgba(209,173,85,.085)
+}
+.lines-table th{
+  color:#b7a991;
+  background:#0d090a
+}
+.lines-table td{color:#ede1ce}
+.section-label{
+  color:#e6c66d;
+  border-bottom-color:rgba(209,173,85,.15)
+}
+.stat-copy{color:#b5aa9d}
+.stat-copy b{color:#f0e4d0}
+.two-team-stats{
+  background:#080707
+}
+.team-stat-col + .team-stat-col{
+  border-left-color:rgba(209,173,85,.14)
+}
+.mini-table th,
+.mini-table td{
+  border-bottom-color:rgba(209,173,85,.08)
+}
+.mini-table th{color:#9f927f}
+.mini-table td{color:#e4d8c6}
+
+/* Live-source status */
+.data-status{
+  background:rgba(10,6,7,.96);
+  border-color:rgba(209,173,85,.22);
+  color:#b9ab97;
+  box-shadow:0 8px 24px rgba(0,0,0,.35)
+}
+.data-status.good{
+  color:#e4c96e;
+  border-color:rgba(209,173,85,.36)
+}
+.data-status.bad{
+  color:#ff9da8;
+  border-color:rgba(166,30,56,.48)
+}
+
+/* Readability pass for large desktop displays */
+.gameday-modal{font-size:14px}
+.gd-title{font-size:16px}
+.mlb-mark{font-size:10px}
+.date-mid{font-size:12px}
+.sg-state{font-size:10px}
+.sg-team{font-size:12px}
+.sg-score{font-size:13px}
+.card-head{height:42px;font-size:13px}
+.card-head small{font-size:11px}
+.live-label{font-size:15px}
+.venue-label{font-size:11px}
+.hide-btn{font-size:10px;padding:5px 9px}
+.field-note{font-size:10px}
+.play-item{grid-template-columns:44px minmax(0,1fr);gap:9px;padding:11px 11px 11px 14px}
+.play-item:before{left:34px}
+.play-bubble{width:30px;height:30px;font-size:10px}
+.play-copy strong{font-size:13px}
+.play-copy p{font-size:11px}
+.play-tag{font-size:10px;padding:3px 7px}
+.team-score-copy strong{font-size:14px}
+.team-score-copy small{font-size:11px}
+.big-score{font-size:27px}
+.mid-state{font-size:13px}
+.lines-table th,.lines-table td{font-size:12px;padding:8px 7px}
+.lines-table th{font-size:11px}
+.section-label{font-size:13px;padding:9px 0 7px}
+.stat-copy{font-size:12px;line-height:1.65}
+.mini-table th,.mini-table td{font-size:11px;padding:6px 4px}
+.mini-table th{font-size:10px}
+.data-status{font-size:11px}
+.schedule-game{flex-basis:150px;min-width:150px;height:64px}
+.sg-team img{width:17px;height:17px}
+.team-logo{width:42px;height:42px}
+.score-card{grid-template-columns:1fr 105px 1fr;padding:0 14px}
+
+@media(max-width:1460px){
+  :root{--ec-sidebar:190px;--ec-chat:290px}
+  .gd-canvas{
+    grid-template-columns:240px 500px 420px;
+    width:1180px;
+    min-width:1180px
+  }
+}
+@media(max-width:1200px){
+  .gd-canvas{
+    grid-template-columns:230px 480px 410px;
+    width:1140px;
+    min-width:1140px
+  }
+}
+@media(max-width:1050px){
+  .gd-canvas{
+    grid-template-columns:220px 460px 400px;
+    width:1100px;
+    min-width:1100px
+  }
+  .right-column{display:grid}
+}
+@media(max-width:850px){
+  body{overflow:auto}
+  .shell{grid-template-columns:1fr;height:auto;min-height:100vh}
+  .ec-sidebar{display:none}
+  .watch{height:72vh;min-height:680px;overflow:hidden}
+  .chat{height:420px;border-left:0;border-top:1px solid var(--ec-line)}
+  .gameday-modal{left:5px;right:5px;top:5px;bottom:5px}
+  .gd-head{grid-template-columns:90px 1fr 50px}
+  .gd-canvas{
+    grid-template-columns:210px 440px 390px;
+    width:1060px;
+    min-width:1060px
+  }
+  .left-column,.center-column,.right-column{min-height:0}
+}
+
+/* ================================================================
+   PRODUCTION EMBED MODE
+   The EastCoin player owns navigation/video/chat. In embed mode this
+   document renders only the Game Center module inside the player.
+   ================================================================ */
+html.ec-gameday-embed,
+html.ec-gameday-embed body{
+  width:100%;
+  height:100%;
+  min-height:0;
+  overflow:hidden;
+  background:#050404
+}
+html.ec-gameday-embed .shell{
+  display:block;
+  width:100%;
+  height:100%;
+  min-height:0
+}
+html.ec-gameday-embed .ec-sidebar,
+html.ec-gameday-embed .chat,
+html.ec-gameday-embed .video-placeholder,
+html.ec-gameday-embed .video-tools{
+  display:none !important
+}
+html.ec-gameday-embed .watch,
+html.ec-gameday-embed .video{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  min-height:0;
+  overflow:hidden;
+  background:#050404
+}
+html.ec-gameday-embed .scrim{
+  display:none !important
+}
+html.ec-gameday-embed .gameday-modal{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  border-radius:0;
+  transform:none !important;
+  opacity:1 !important;
+  pointer-events:auto !important
+}
+
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="ec-sidebar">
+    <div class="ec-brand">
+      <div class="ec-logo"><img src="assets/eastcoins-logo.webp" alt="EastCoin"></div>
+      <div><strong>EastCoin</strong><small>Watch together</small></div>
+    </div>
+    <form class="ec-search" id="ecSearch"><input placeholder="Search events or paste URL"><button>Search</button></form>
+
+    <div class="nav-label">Watch</div>
+    <button class="nav-item active"><span class="nav-icon">▦</span><span class="nav-copy"><strong>All Events</strong><small>EastCoin event home</small></span><span class="nav-count">18</span></button>
+    <button class="nav-item"><span class="nav-icon">▥</span><span class="nav-copy"><strong>MultiView</strong><small>Watch up to four streams</small></span></button>
+    <button class="nav-item"><span class="nav-icon">⌁</span><span class="nav-copy"><strong>Other Streams</strong><small>Approved stream sites</small></span></button>
+
+    <div class="nav-label">Events</div>
+    <button class="nav-item"><span class="nav-icon">▶</span><span class="nav-copy"><strong>Live Only</strong><small>Games happening now</small></span></button>
+    <button class="nav-item"><span class="nav-icon">🔥</span><span class="nav-copy"><strong>Trending</strong><small>Popular and active games</small></span></button>
+
+    <div class="nav-label">Categories</div>
+    <button class="nav-item"><span class="nav-icon">🏈</span><span class="nav-copy"><strong>Football</strong><small>Browse football</small></span></button>
+    <button class="nav-item"><span class="nav-icon">🥊</span><span class="nav-copy"><strong>UFC / Combat</strong><small>Browse combat</small></span></button>
+    <button class="nav-item"><span class="nav-icon">🏀</span><span class="nav-copy"><strong>Basketball</strong><small>Browse basketball</small></span></button>
+    <button class="nav-item"><span class="nav-icon">⚾</span><span class="nav-copy"><strong>Baseball</strong><small>Browse baseball</small></span></button>
+    <button class="nav-item"><span class="nav-icon">🏒</span><span class="nav-copy"><strong>Hockey</strong><small>Browse hockey</small></span></button>
+
+    <div class="ec-foot">
+      MLB test stays isolated from production. The popup mirrors the MLB Gameday desktop information layout while keeping EastCoin's player and Twitch chat mounted.
+    </div>
+  </aside>
+
+  <main class="watch">
+    <div class="video">
+      <div class="video-placeholder">
+        <div><span>▶</span><strong>EastCoin Live Player</strong><small>Nationals @ Marlins stream remains underneath the popup.</small></div>
+      </div>
+
+      <div class="video-tools">
+        <div class="live-chip"><span class="live-dot"></span><span id="shellGameState">MLB · Nationals @ Marlins</span></div>
+        <div class="tool-row">
+          <button class="tool" id="openGameday">⚾ Gameday</button>
+          <button class="tool">▣ Servers</button>
+          <button class="tool">⛶ Theater</button>
+        </div>
+      </div>
+
+      <div class="scrim" id="scrim"></div>
+
+      <section class="gameday-modal" id="gameday" aria-hidden="true">
+        <header class="gd-head">
+          <div class="gd-head-left">
+            <div class="ec-gameday-brand">
+              <img src="assets/eastcoins-logo.webp" alt="EastCoin">
+              <span>EastCoin</span>
+            </div>
+          </div>
+          <div class="gd-title">MLB Game Center</div>
+          <div class="gd-head-right">
+            <button class="icon-btn" id="statsJumpBtn" title="Jump to right-side stats">→</button>
+            <button class="icon-btn" id="refreshBtn" title="Refresh game data">↻</button>
+            <button class="icon-btn" id="closeBtn" title="Close">×</button>
+          </div>
+        </header>
+
+        <section class="score-strip">
+          <div class="date-card">
+            <button type="button">‹</button>
+            <div class="date-mid">AUG<br>22</div>
+            <button type="button">›</button>
+          </div>
+          <div class="schedule-scroll" id="scheduleStrip">
+            <div class="schedule-game selected">
+              <div class="sg-state">Loading</div>
+              <div class="sg-team"><span></span><span>WSH</span><b class="sg-score">–</b></div>
+              <div class="sg-team"><span></span><span>MIA</span><b class="sg-score">–</b></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="gd-body">
+          <div class="gd-canvas">
+          <!-- LEFT -->
+          <div class="column left-column">
+            <div class="left-intro">
+              <div><div class="live-label">Live</div><div class="venue-label" id="leftVenue">loanDepot park</div></div>
+              <button class="hide-btn" type="button">Hide</button>
+            </div>
+
+            <section class="card field-card">
+              <svg class="field-svg" viewBox="0 0 300 190" aria-label="Baseball field">
+                <rect width="300" height="190" fill="#2c3e4d"></rect>
+                <path d="M150 171 L25 67 Q150 -12 275 67 Z" fill="#5d6e3b" stroke="#b99a72" stroke-width="9"></path>
+                <path d="M150 170 L74 84 L150 42 L226 84 Z" fill="#a77c54"></path>
+                <path d="M150 164 L98 104 L150 73 L202 104 Z" fill="#4d763c"></path>
+                <circle cx="150" cy="112" r="8" fill="#b99169"></circle>
+                <rect x="144" y="156" width="12" height="8" fill="#eee8d8" transform="rotate(45 150 160)"></rect>
+                <g fill="#e7e8e8" font-size="7" font-family="system-ui" text-anchor="middle">
+                  <text x="60" y="81">LF</text><text x="150" y="35">CF</text><text x="240" y="81">RF</text>
+                  <text x="104" y="120">3B</text><text x="196" y="120">1B</text><text x="150" y="91">2B</text>
+                </g>
+              </svg>
+              <div class="field-note" id="fieldSituation">Bases empty</div>
+            </section>
+
+            <section class="card timeline-card">
+              <div class="card-head">
+                <span>Live Play-by-Play</span>
+                <small id="timelineState">Latest plays and pitches</small>
+              </div>
+              <div class="timeline" id="timeline"></div>
+            </section>
+          </div>
+
+          <!-- CENTER -->
+          <div class="column center-column">
+            <section class="card score-card" id="scoreCard">
+              <div class="team-score">
+                <img class="team-logo" id="awayLogo" alt="Away team">
+                <div class="team-score-copy"><strong id="awayAbbr">WSH</strong><small id="awayRecord">–</small></div>
+                <span class="big-score" id="awayScore">–</span>
+              </div>
+
+              <div class="mid-state" id="midState">Loading</div>
+
+              <div class="team-score home">
+                <span class="big-score" id="homeScore">–</span>
+                <div class="team-score-copy"><strong id="homeAbbr">MIA</strong><small id="homeRecord">–</small></div>
+                <img class="team-logo" id="homeLogo" alt="Home team">
+              </div>
+            </section>
+
+            <section class="stage pitch-stage">
+              <div class="stadium-name" id="stadiumName">loanDepot park</div>
+
+              <div class="center-matchup batter-side">
+                <div class="center-headshot"><span>B</span><img id="centerBatterPhoto" alt=""></div>
+                <div>
+                  <small>Batter</small>
+                  <strong id="centerBatterName">Loading…</strong>
+                </div>
+              </div>
+
+              <div class="center-matchup pitcher-side">
+                <div>
+                  <small>Pitcher</small>
+                  <strong id="centerPitcherName">Loading…</strong>
+                </div>
+                <div class="center-headshot"><span>P</span><img id="centerPitcherPhoto" alt=""></div>
+              </div>
+
+              <div class="center-zone-shell">
+                <div class="center-zone-outer">
+                  <div class="center-zone">
+                    <i class="h1"></i><i class="h2"></i><i class="v1"></i><i class="v2"></i>
+                  </div>
+                </div>
+                <svg class="center-pitch-svg" id="centerPitchSvg" viewBox="0 0 900 560" aria-label="Live pitch tracker"></svg>
+                <div class="center-plate"></div>
+              </div>
+
+              <div class="fake-batter" aria-hidden="true">
+                <div class="fake-head"><span>AB</span><img id="fakeBatterHead" alt=""></div>
+              </div>
+
+              <div class="stage-info">
+                <div id="stageMatchup">Loading matchup…</div>
+              </div>
+
+              <div class="stage-current">
+                <div class="stage-play">
+                  <small id="stageMeta">Current play</small>
+                  <strong id="stagePlay">Loading live game data…</strong>
+                </div>
+                <div class="center-pitch-summary">
+                  <small id="centerPitchCount">0 pitches</small>
+                  <strong id="centerPitchResult">Waiting for pitch data</strong>
+                </div>
+                <div class="stage-mini-score">
+                  <img id="stageAwayLogo" alt=""><b id="stageAwayScore">–</b>
+                  <span style="color:#85919a">–</span>
+                  <b id="stageHomeScore">–</b><img id="stageHomeLogo2" alt="">
+                </div>
+              </div>
+            </section>
+
+            <section class="lineup-strip">
+              <div class="lineup-player">
+                <div class="lp-avatar"><span>AB</span><img id="batterPhoto" alt=""></div>
+                <div><strong id="batterCard">Current Batter</strong><small>Batter</small></div>
+              </div>
+              <div class="lineup-player">
+                <div class="lp-avatar"><span>ON</span><img id="onDeckPhoto" alt=""></div>
+                <div><strong id="onDeckCard">On Deck</strong><small>On deck</small></div>
+              </div>
+              <div class="lineup-player">
+                <div class="lp-avatar"><span>P</span><img id="pitcherPhoto" alt=""></div>
+                <div><strong id="pitcherCard">Current Pitcher</strong><small>Pitcher</small></div>
+              </div>
+            </section>
+          </div>
+
+          <!-- RIGHT -->
+          <div class="column right-column">
+            <section class="card lines-card">
+              <table class="lines-table" id="linesTable">
+                <thead><tr><th>Team</th><th>1</th><th>2</th><th>3</th><th>R</th><th>H</th><th>E</th></tr></thead>
+                <tbody><tr><td>WSH</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td></tr></tbody>
+              </table>
+            </section>
+
+            <section class="card stat-scroll">
+              <div class="two-team-stats">
+                <div class="team-stat-col">
+                  <div class="section-label" id="awayTotalsLabel">Nationals</div>
+                  <div class="stat-copy" id="awaySummary">Loading team summary…</div>
+
+                  <div class="section-label">Pitchers</div>
+                  <div class="bench-wrap"><table class="mini-table" id="awayPitchers"></table></div>
+
+                  <div class="section-label">Batting / Bench</div>
+                  <div class="bench-wrap"><table class="mini-table" id="awayBatters"></table></div>
+                </div>
+
+                <div class="team-stat-col">
+                  <div class="section-label" id="homeTotalsLabel">Marlins</div>
+                  <div class="stat-copy" id="homeSummary">Loading team summary…</div>
+
+                  <div class="section-label">Pitchers</div>
+                  <div class="bench-wrap"><table class="mini-table" id="homePitchers"></table></div>
+
+                  <div class="section-label">Batting / Bench</div>
+                  <div class="bench-wrap"><table class="mini-table" id="homeBatters"></table></div>
+                </div>
+              </div>
+            </section>
+          </div>
+          </div>
+        </section>
+
+        <div class="data-status" id="dataStatus">Connecting to MLB…</div>
+      </section>
+    </div>
+  </main>
+
+  <aside class="chat">
+    <header class="chat-head"><div><strong>Stream Chat</strong><span> · zwades</span></div><span>● Live</span></header>
+    <iframe
+      class="chat-frame"
+      title="zwades Twitch chat"
+      src="https://www.twitch.tv/embed/zwades/chat?parent=eastcoin.vip&parent=www.eastcoin.vip&parent=eastcoins.pages.dev&darkpopout"
+      referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  </aside>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const PAGE_PARAMS = new URLSearchParams(window.location.search);
+  const EMBED_MODE = PAGE_PARAMS.get("embed") === "1";
+  const GAME_PK = Number(PAGE_PARAMS.get("gamePk")) || 823831;
+  const requestedDate = String(PAGE_PARAMS.get("date") || "").trim();
+  const DATE = /^\d{4}-\d{2}-\d{2}$/.test(requestedDate)
+    ? requestedDate
+    : new Date().toISOString().slice(0, 10);
+  const LIVE_URL = `https://statsapi.mlb.com/api/v1.1/game/${GAME_PK}/feed/live`;
+  const SCHEDULE_URL = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${DATE}&hydrate=team`;
+  const REFRESH_MS = 12000;
+
+  const TEAM_COLORS = {
+    120: ["#ab0003","#14225a"], // Washington
+    146: ["#00a3e0","#ef3340"]  // Miami
+  };
+
+  const modal = document.getElementById("gameday");
+  const scrim = document.getElementById("scrim");
+  const dataStatus = document.getElementById("dataStatus");
+
+  let timer = 0;
+
+  function esc(v){
+    return String(v ?? "").replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    })[m]);
+  }
+
+  function text(v, fallback="–"){
+    return v === undefined || v === null || v === "" ? fallback : String(v);
+  }
+
+  function open(){
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden","false");
+    scrim.classList.add("show");
+  }
+
+  function close(){
+    if (EMBED_MODE && window.parent !== window) {
+      window.parent.postMessage(
+        { type: "eastcoin:mlb-gameday-close" },
+        window.location.origin
+      );
+      return;
+    }
+
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden","true");
+    scrim.classList.remove("show");
+  }
+
+  function logo(teamId){
+    return `https://www.mlbstatic.com/team-logos/${teamId}.svg`;
+  }
+
+  function headshot(personId){
+    return personId
+      ? `https://img.mlbstatic.com/mlb-photos/image/upload/w_180,q_auto:best/v1/people/${personId}/headshot/67/current`
+      : "";
+  }
+
+  function setPlayerPhoto(imgId, person, fallbackTeamId){
+    const img=document.getElementById(imgId);
+    if(!img) return;
+    const personId=person?.id;
+    img.alt=person?.fullName || "MLB player";
+    img.onerror=()=>{
+      img.onerror=null;
+      img.src=logo(fallbackTeamId);
+      img.style.objectFit="contain";
+      img.style.padding="5px";
+      img.style.background="#182028";
+    };
+    img.style.objectFit="cover";
+    img.style.padding="0";
+    img.src=personId ? headshot(personId) : logo(fallbackTeamId);
+  }
+
+  function record(team){
+    if (!team) return "–";
+    const w = team.record?.wins;
+    const l = team.record?.losses;
+    return Number.isFinite(w) && Number.isFinite(l) ? `${w}-${l}` : "–";
+  }
+
+  function gameState(linescore,status){
+    if (linescore?.currentInningOrdinal) {
+      return `${linescore.inningHalf || linescore.halfInning || ""} ${linescore.currentInningOrdinal}`.trim();
+    }
+    return text(status?.detailedState || status?.abstractGameState);
+  }
+
+  function classify(description,code){
+    const s = `${description || ""} ${code || ""}`.toLowerCase();
+    if (s.includes("ball") || s.includes("intent")) return { color:"#19a85a", type:"ball" };
+    if (s.includes("foul") || s.includes("in play") || s.includes("hit into play")) return { color:"#d59b28", type:"inplay" };
+    return { color:"#d62840", type:"strike" };
+  }
+
+  function currentPitches(play){
+    return (play?.playEvents || [])
+      .filter(e => e?.isPitch && e?.pitchData?.coordinates)
+      .map((e,i) => {
+        const c = e.pitchData.coordinates || {};
+        const d = e.details || {};
+        const kind = classify(d.description,d.code);
+        return {
+          seq:i+1,
+          px:Number(c.pX),
+          pz:Number(c.pZ),
+          x0:Number(c.x0),
+          z0:Number(c.z0),
+          vx0:Number(c.vX0),
+          ax:Number(c.aX),
+          szTop:Number(e.pitchData.strikeZoneTop),
+          szBottom:Number(e.pitchData.strikeZoneBottom),
+          speed:Number(e.pitchData.startSpeed),
+          description:d.description || d.call?.description || "Pitch",
+          type:d?.type?.description || d?.type?.code || "Pitch",
+          color:kind.color,
+          kind:kind.type
+        };
+      })
+      .filter(p => Number.isFinite(p.px) && Number.isFinite(p.pz));
+  }
+
+  function sx(p){ return Number.isFinite(p.x0) ? Math.max(102,Math.min(168,135-p.x0*10)) : 135; }
+  function sy(p){ return Number.isFinite(p.z0) ? Math.max(14,Math.min(34,28-(p.z0-5.5)*7)) : 26; }
+  function ex(p){
+    const c=Math.max(-2,Math.min(2,p.px));
+    return 68 + ((c+2)/4)*136;
+  }
+  function ey(p){
+    const low=Number.isFinite(p.szBottom)?p.szBottom-1:.5;
+    const high=Number.isFinite(p.szTop)?p.szTop+1:4.5;
+    const c=Math.max(low,Math.min(high,p.pz));
+    return 111 - ((c-low)/(high-low))*78;
+  }
+  function svgEl(tag,attrs={}){
+    const el=document.createElementNS("http://www.w3.org/2000/svg",tag);
+    Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,String(v)));
+    return el;
+  }
+
+  function drawPitches(pitches){
+    const svg=document.getElementById("centerPitchSvg");
+    svg.innerHTML="";
+
+    const W=900,H=560;
+    const mapX=px=>{
+      const c=Math.max(-2,Math.min(2,px));
+      return 240 + ((c+2)/4)*420;
+    };
+    const mapY=p=>{
+      const low=Number.isFinite(p.szBottom)?p.szBottom-1:.5;
+      const high=Number.isFinite(p.szTop)?p.szTop+1:4.5;
+      const c=Math.max(low,Math.min(high,p.pz));
+      return 455 - ((c-low)/(high-low))*310;
+    };
+
+    pitches.forEach(p=>{
+      const x1=Number.isFinite(p.x0)?Math.max(360,Math.min(540,450-p.x0*24)):450;
+      const y1=Number.isFinite(p.z0)?Math.max(42,Math.min(92,76-(p.z0-5.5)*13)):68;
+      const x2=mapX(p.px), y2=mapY(p);
+      let bend=(Number.isFinite(p.ax)?p.ax*2.3:0)+(Number.isFinite(p.vx0)?p.vx0*1.05:0);
+      bend=Math.max(-110,Math.min(110,bend));
+
+      const path=svgEl("path",{
+        class:"pitch-path",
+        stroke:p.color,
+        d:`M ${x1} ${y1} C ${x1+bend*.28} ${y1+(y2-y1)*.35}, ${x2-bend*.22} ${y1+(y2-y1)*.72}, ${x2} ${y2}`
+      });
+      svg.appendChild(path);
+
+      const g=svgEl("g",{class:"pitch-marker",transform:`translate(${x2} ${y2})`});
+      const c=svgEl("circle",{r:15,fill:p.color});
+      const t=svgEl("text",{y:1});t.textContent=p.seq;
+      g.append(c,t);svg.appendChild(g);
+    });
+
+    const last=pitches[pitches.length-1];
+    document.getElementById("centerPitchCount").textContent=
+      `${pitches.length} pitch${pitches.length===1?"":"es"} this at-bat`;
+    document.getElementById("centerPitchResult").textContent=
+      last ? `${last.type} · ${Number.isFinite(last.speed)?last.speed.toFixed(1)+" mph · ":""}${last.description}` : "Waiting for pitch data";
+  }
+
+  function runnerText(linescore){
+    const o=linescore?.offense || {};
+    const bases=[];
+    if(o.first) bases.push("1B");
+    if(o.second) bases.push("2B");
+    if(o.third) bases.push("3B");
+    return bases.length ? `Runner${bases.length>1?"s":""}: ${bases.join(", ")}` : "Bases empty";
+  }
+
+  function renderTimeline(plays,currentPlay){
+    const recent=[...(plays||[])].slice(-14).reverse();
+    const timeline=document.getElementById("timeline");
+    timeline.innerHTML="";
+
+    recent.forEach(play=>{
+      const playEvents=[...(play.playEvents||[])].filter(x=>x.isPitch).slice(-3).reverse();
+
+      const major=document.createElement("div");
+      major.className="play-item";
+      const batter=play.matchup?.batter || {};
+      major.innerHTML=`
+        <div class="play-bubble player">
+          <span>${esc((batter.fullName || play.result?.event || "P").slice(0,1))}</span>
+          ${batter.id ? `<img src="${headshot(batter.id)}" alt="${esc(batter.fullName || "Player")}" onerror="this.remove()">` : ""}
+        </div>
+        <div class="play-copy">
+          <span class="play-tag">${esc(play.result?.event || "Play")}</span>
+          <strong>${esc(play.result?.description || "Play update")}</strong>
+          <p>${esc(batter.fullName || "")}${play.about?.inning ? ` · ${esc(play.about.halfInning)} ${esc(play.about.inning)}` : ""}</p>
+        </div>`;
+      timeline.appendChild(major);
+
+      playEvents.forEach((pe,idx)=>{
+        const k=classify(pe.details?.description,pe.details?.code);
+        const p=document.createElement("div");
+        p.className="play-item";
+        p.innerHTML=`
+          <div class="play-bubble pitch ${k.type}">${Math.max(1,(play.playEvents||[]).filter(x=>x.isPitch).length-idx)}</div>
+          <div class="play-copy">
+            <strong>${esc(pe.details?.description || "Pitch")}</strong>
+            <p>${Number.isFinite(pe.pitchData?.startSpeed)?`${pe.pitchData.startSpeed.toFixed(1)} mph · `:""}${esc(pe.details?.type?.description || "")}</p>
+          </div>`;
+        timeline.appendChild(p);
+      });
+    });
+  }
+
+  function renderLines(linescore,away,home){
+    const innings=Array.isArray(linescore?.innings)?linescore.innings:[];
+    const cols=innings.map(i=>i.num);
+    const head=["",...cols,"R","H","E"];
+    const a=[away.abbreviation||"AWY",...innings.map(i=>i.away?.runs ?? "–"),
+      linescore?.teams?.away?.runs ?? "–",linescore?.teams?.away?.hits ?? "–",linescore?.teams?.away?.errors ?? "–"];
+    const h=[home.abbreviation||"HME",...innings.map(i=>i.home?.runs ?? "–"),
+      linescore?.teams?.home?.runs ?? "–",linescore?.teams?.home?.hits ?? "–",linescore?.teams?.home?.errors ?? "–"];
+
+    document.getElementById("linesTable").innerHTML=`
+      <thead><tr>${head.map(x=>`<th>${esc(x)}</th>`).join("")}</tr></thead>
+      <tbody>
+        <tr>${a.map((x,i)=>`<td class="${i>=a.length-3?"tot":""}">${esc(x)}</td>`).join("")}</tr>
+        <tr>${h.map((x,i)=>`<td class="${i>=h.length-3?"tot":""}">${esc(x)}</td>`).join("")}</tr>
+      </tbody>`;
+  }
+
+  function pitchingTable(box,side){
+    const team=box?.teams?.[side] || {};
+    const players=team.players || {};
+    const ids=team.pitchers || [];
+    const rows=ids.map(id=>{
+      const p=players[`ID${id}`] || {};
+      const s=p.stats?.pitching || {};
+      return [p.person?.fullName || id,s.inningsPitched??"",s.hits??"",s.runs??"",s.earnedRuns??"",s.baseOnBalls??"",s.strikeOuts??"",s.homeRuns??"",s.era??""];
+    });
+    return `<thead><tr><th>Pitcher</th><th>IP</th><th>H</th><th>R</th><th>ER</th><th>BB</th><th>K</th><th>HR</th><th>ERA</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr>${r.map(x=>`<td>${esc(x)}</td>`).join("")}</tr>`).join("")}</tbody>`;
+  }
+
+  function battingTable(box,side){
+    const team=box?.teams?.[side] || {};
+    const players=team.players || {};
+    const order=team.battingOrder || [];
+    const ids=order.length?order:Object.keys(players).map(k=>Number(k.replace("ID",""))).filter(Boolean);
+    const rows=ids.slice(0,14).map(id=>{
+      const p=players[`ID${id}`] || {};
+      const s=p.stats?.batting || {};
+      return [p.person?.fullName || id,p.position?.abbreviation||"",s.atBats??"",s.runs??"",s.hits??"",s.homeRuns??"",s.rbi??""];
+    });
+    return `<thead><tr><th>Player</th><th>Pos</th><th>AB</th><th>R</th><th>H</th><th>HR</th><th>RBI</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr>${r.map(x=>`<td>${esc(x)}</td>`).join("")}</tr>`).join("")}</tbody>`;
+  }
+
+  function summaryText(box,side){
+    const stats=box?.teams?.[side]?.teamStats?.batting || {};
+    const field=box?.teams?.[side]?.teamStats?.fielding || {};
+    const parts=[
+      `<b>Totals</b> ${text(stats.atBats,0)} AB · ${text(stats.runs,0)} R · ${text(stats.hits,0)} H`,
+      `<b>Extra-base</b> ${text(stats.doubles,0)} 2B · ${text(stats.triples,0)} 3B · ${text(stats.homeRuns,0)} HR`,
+      `<b>RBI</b> ${text(stats.rbi,0)} · <b>BB</b> ${text(stats.baseOnBalls,0)} · <b>SO</b> ${text(stats.strikeOuts,0)}`,
+      `<b>LOB</b> ${text(stats.leftOnBase,0)} · <b>Errors</b> ${text(field.errors,0)}`
+    ];
+    return parts.join("<br>");
+  }
+
+  function currentPlayers(play,linescore){
+    const batterPerson=play?.matchup?.batter || {};
+    const pitcherPerson=play?.matchup?.pitcher || {};
+    const onDeckPerson=linescore?.offense?.onDeck || {};
+    return {
+      batter:batterPerson.fullName || "Current batter",
+      pitcher:pitcherPerson.fullName || "Current pitcher",
+      onDeck:onDeckPerson.fullName || "On deck",
+      batterPerson,
+      pitcherPerson,
+      onDeckPerson
+    };
+  }
+
+  function applyTeamTheme(awayId,homeId){
+    const ac=TEAM_COLORS[awayId] || ["#8a1730","#213b66"];
+    const hc=TEAM_COLORS[homeId] || ["#188fbd","#d64d59"];
+    document.documentElement.style.setProperty("--away",ac[0]);
+    document.documentElement.style.setProperty("--away2",ac[1]);
+    document.documentElement.style.setProperty("--home",hc[0]);
+    document.documentElement.style.setProperty("--home2",hc[1]);
+  }
+
+  function updateGame(payload){
+    const gd=payload.gameData || {};
+    const live=payload.liveData || {};
+    const lines=live.linescore || {};
+    const box=live.boxscore || {};
+    const plays=live.plays?.allPlays || [];
+    const current=plays[plays.length-1] || null;
+    const away=gd.teams?.away || {};
+    const home=gd.teams?.home || {};
+    const awayId=away.id || 120;
+    const homeId=home.id || 146;
+    const state=gameState(lines,gd.status);
+    const p=currentPitches(current);
+    const cp=currentPlayers(current,lines);
+
+    applyTeamTheme(awayId,homeId);
+
+    // logos and team text
+    const awayLogo=logo(awayId), homeLogo=logo(homeId);
+    ["awayLogo","stageAwayLogo"].forEach(id=>document.getElementById(id).src=awayLogo);
+    ["homeLogo","stageHomeLogo2"].forEach(id=>document.getElementById(id).src=homeLogo);
+
+    document.getElementById("awayAbbr").textContent=text(away.abbreviation,"WSH");
+    document.getElementById("homeAbbr").textContent=text(home.abbreviation,"MIA");
+    document.getElementById("awayRecord").textContent=record(away);
+    document.getElementById("homeRecord").textContent=record(home);
+    document.getElementById("awayScore").textContent=text(lines?.teams?.away?.runs);
+    document.getElementById("homeScore").textContent=text(lines?.teams?.home?.runs);
+    document.getElementById("stageAwayScore").textContent=text(lines?.teams?.away?.runs);
+    document.getElementById("stageHomeScore").textContent=text(lines?.teams?.home?.runs);
+    document.getElementById("midState").textContent=state;
+    document.getElementById("shellGameState").textContent=`MLB · ${text(gd.status?.detailedState||gd.status?.abstractGameState,state)}`;
+    document.getElementById("leftVenue").textContent=text(gd.venue?.name,"loanDepot park");
+    document.getElementById("stadiumName").textContent=text(gd.venue?.name,"loanDepot park");
+
+    // current play / matchup
+    const count=current?.count || {};
+    document.getElementById("stageMatchup").textContent=`${cp.batter} vs ${cp.pitcher} · ${Number.isFinite(count.balls)?count.balls:"–"}-${Number.isFinite(count.strikes)?count.strikes:"–"} · ${Number.isFinite(count.outs)?count.outs:text(lines.outs)} out`;
+    document.getElementById("stageMeta").textContent=state;
+    document.getElementById("stagePlay").textContent=current?.result?.description || current?.result?.event || "Waiting for play update";
+    document.getElementById("batterCard").textContent=cp.batter;
+    document.getElementById("onDeckCard").textContent=cp.onDeck;
+    document.getElementById("pitcherCard").textContent=cp.pitcher;
+    document.getElementById("centerBatterName").textContent=cp.batter;
+    document.getElementById("centerPitcherName").textContent=cp.pitcher;
+    const offenseIsAway=String(lines.inningHalf || lines.halfInning || "").toLowerCase() !== "bottom";
+    const offenseTeamId=offenseIsAway ? awayId : homeId;
+    const defenseTeamId=offenseIsAway ? homeId : awayId;
+    setPlayerPhoto("batterPhoto",cp.batterPerson,offenseTeamId);
+    setPlayerPhoto("onDeckPhoto",cp.onDeckPerson,offenseTeamId);
+    setPlayerPhoto("pitcherPhoto",cp.pitcherPerson,defenseTeamId);
+    setPlayerPhoto("centerBatterPhoto",cp.batterPerson,offenseTeamId);
+    setPlayerPhoto("centerPitcherPhoto",cp.pitcherPerson,defenseTeamId);
+    setPlayerPhoto("fakeBatterHead",cp.batterPerson,offenseTeamId);
+    document.getElementById("fieldSituation").textContent=runnerText(lines);
+    document.getElementById("timelineState").textContent=state;
+
+    // dense columns
+    drawPitches(p);
+    renderTimeline(plays,current);
+    renderLines(lines,away,home);
+
+    document.getElementById("awayTotalsLabel").textContent=text(away.teamName||away.name,"Nationals");
+    document.getElementById("homeTotalsLabel").textContent=text(home.teamName||home.name,"Marlins");
+    document.getElementById("awaySummary").innerHTML=summaryText(box,"away");
+    document.getElementById("homeSummary").innerHTML=summaryText(box,"home");
+    document.getElementById("awayPitchers").innerHTML=pitchingTable(box,"away");
+    document.getElementById("homePitchers").innerHTML=pitchingTable(box,"home");
+    document.getElementById("awayBatters").innerHTML=battingTable(box,"away");
+    document.getElementById("homeBatters").innerHTML=battingTable(box,"home");
+  }
+
+  function scheduleState(game){
+    const s=game.status?.detailedState || game.status?.abstractGameState || "";
+    if (s.toLowerCase().includes("final")) return "Final";
+    if (game.linescore?.currentInningOrdinal) return `${game.linescore.inningHalf||""} ${game.linescore.currentInningOrdinal}`.trim();
+    return s || new Date(game.gameDate).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
+  }
+
+  function renderSchedule(payload){
+    const games=payload?.dates?.[0]?.games || [];
+    const strip=document.getElementById("scheduleStrip");
+    strip.innerHTML="";
+    games.forEach(game=>{
+      const away=game.teams?.away?.team || {};
+      const home=game.teams?.home?.team || {};
+      const aid=away.id, hid=home.id;
+      const card=document.createElement("button");
+      card.className=`schedule-game ${game.gamePk===GAME_PK?"selected":""}`;
+      card.type="button";
+      card.innerHTML=`
+        <div class="sg-state">${esc(scheduleState(game))}</div>
+        <div class="sg-team"><img src="${logo(aid)}" alt=""><span>${esc(away.abbreviation||away.name||"Away")}</span><b class="sg-score">${esc(game.teams?.away?.score ?? "–")}</b></div>
+        <div class="sg-team"><img src="${logo(hid)}" alt=""><span>${esc(home.abbreviation||home.name||"Home")}</span><b class="sg-score">${esc(game.teams?.home?.score ?? "–")}</b></div>`;
+      strip.appendChild(card);
+    });
+  }
+
+  async function fetchJson(url,timeout=7000){
+    const controller=new AbortController();
+    const t=setTimeout(()=>controller.abort(),timeout);
+    try{
+      const r=await fetch(`${url}${url.includes("?")?"&":"?"}_=${Date.now()}`,{
+        headers:{Accept:"application/json"},
+        cache:"no-store",
+        signal:controller.signal
+      });
+      if(!r.ok) throw new Error(`HTTP ${r.status}`);
+      return await r.json();
+    } finally {
+      clearTimeout(t);
+    }
+  }
+
+  async function refresh(){
+    clearTimeout(timer);
+    dataStatus.className="data-status";
+    dataStatus.textContent="Connecting to MLB Stats API…";
+
+    try{
+      const [live,schedule]=await Promise.all([
+        fetchJson(LIVE_URL),
+        fetchJson(SCHEDULE_URL)
+      ]);
+      updateGame(live);
+      renderSchedule(schedule);
+      dataStatus.className="data-status good";
+      dataStatus.textContent=`Live MLB data · gamePk ${GAME_PK} · ${new Date().toLocaleTimeString()}`;
+    }catch(err){
+      console.error(err);
+      dataStatus.className="data-status bad";
+      dataStatus.textContent=`MLB browser request failed: ${err?.message||"request failed"}. Production can proxy the same feed through an EastCoin Worker.`;
+    }finally{
+      timer=setTimeout(refresh,REFRESH_MS);
+    }
+  }
+
+  document.getElementById("openGameday").addEventListener("click",open);
+  document.getElementById("statsJumpBtn")?.addEventListener("click",()=>{
+    const body=document.querySelector(".gd-body");
+    const stats=document.querySelector(".right-column");
+    if(body && stats){
+      body.scrollTo({left:Math.max(0,stats.offsetLeft-20),behavior:"smooth"});
+    }
+  });
+  document.getElementById("closeBtn").addEventListener("click",close);
+  document.getElementById("refreshBtn").addEventListener("click",refresh);
+  scrim.addEventListener("click",close);
+  document.getElementById("ecSearch").addEventListener("submit",e=>e.preventDefault());
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape") close(); });
+
+  function renderDateCard(){
+    const parts = DATE.split("-").map(Number);
+    const date = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
+    const month = date.toLocaleDateString([], { month: "short" }).toUpperCase();
+    const day = String(date.getDate());
+
+    const dateMid = document.querySelector(".date-mid");
+    if (dateMid) {
+      dateMid.innerHTML = `${month}<br>${day}`;
+    }
+  }
+
+  renderDateCard();
+  open();
+  refresh();
+})();
+</script>
+</body>
+</html>
