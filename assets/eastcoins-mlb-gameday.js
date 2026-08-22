@@ -54,6 +54,22 @@
   );
 
   overlay.innerHTML = `
+    <div
+      class="ec-mlb-gameday-loading"
+      data-mlb-gameday-loading>
+      <span class="ec-mlb-gameday-spinner" aria-hidden="true"></span>
+      <strong>Opening MLB Game Center</strong>
+      <small>Loading live Gameday data…</small>
+    </div>
+
+    <button
+      class="ec-mlb-gameday-close"
+      type="button"
+      data-mlb-gameday-close
+      aria-label="Close MLB Gameday">
+      ×
+    </button>
+
     <iframe
       class="ec-mlb-gameday-frame"
       title="EastCoin MLB Game Center"
@@ -63,11 +79,24 @@
     </iframe>
   `;
 
-  playerShell.append(overlay);
+  /*
+    Production player.html runs inside the persistent EastCoin center frame.
+    Mount the Gameday surface at document.body instead of inside playerShell
+    so player-shell overflow/stacking rules cannot hide the overlay.
+  */
+  document.body.append(overlay);
 
   const frame = overlay.querySelector(
     ".ec-mlb-gameday-frame"
   );
+  const overlayClose = overlay.querySelector(
+    "[data-mlb-gameday-close]"
+  );
+  const overlayLoading = overlay.querySelector(
+    "[data-mlb-gameday-loading]"
+  );
+
+  let frameLoadTimer = 0;
 
   let lastStateKey = "";
   let resolutionSerial = 0;
@@ -489,14 +518,28 @@
   }
 
   function closeGameday() {
+    window.clearTimeout(frameLoadTimer);
+    frameLoadTimer = 0;
+
     overlay.hidden = true;
     overlay.setAttribute(
       "aria-hidden",
       "true"
     );
-    playerShell.classList.remove(
+    overlay.classList.remove(
+      "is-ready",
+      "is-slow"
+    );
+    document.body.classList.remove(
       "ec-mlb-gameday-open"
     );
+
+    if (overlayLoading) {
+      overlayLoading.querySelector("strong").textContent =
+        "Opening MLB Game Center";
+      overlayLoading.querySelector("small").textContent =
+        "Loading live Gameday data…";
+    }
 
     button.classList.remove(
       "active"
@@ -507,8 +550,8 @@
     );
 
     /*
-      Blank the frame after close so the Stats API polling in the
-      Game Center stops while the video remains untouched underneath.
+      Blank only the Game Center iframe. The actual video iframe remains
+      mounted and untouched behind this fixed overlay.
     */
     window.setTimeout(() => {
       if (overlay.hidden) {
@@ -542,13 +585,21 @@
       resolvedGame.date
     );
 
-    frame.src = url.href;
+    /*
+      Make the overlay visible BEFORE navigating the child iframe. This
+      guarantees immediate visual feedback from the click even if the
+      Game Center document or MLB API takes a moment to respond.
+    */
+    overlay.classList.remove(
+      "is-ready",
+      "is-slow"
+    );
     overlay.hidden = false;
     overlay.setAttribute(
       "aria-hidden",
       "false"
     );
-    playerShell.classList.add(
+    document.body.classList.add(
       "ec-mlb-gameday-open"
     );
 
@@ -559,6 +610,22 @@
       "aria-expanded",
       "true"
     );
+
+    frame.src = url.href;
+
+    window.clearTimeout(frameLoadTimer);
+    frameLoadTimer = window.setTimeout(() => {
+      if (!overlay.hidden && !overlay.classList.contains("is-ready")) {
+        overlay.classList.add("is-slow");
+
+        if (overlayLoading) {
+          overlayLoading.querySelector("strong").textContent =
+            "Game Center is taking longer than expected";
+          overlayLoading.querySelector("small").textContent =
+            "The overlay opened correctly; waiting for the Gameday document.";
+        }
+      }
+    }, 8000);
   }
 
   button.setAttribute(
@@ -568,12 +635,39 @@
 
   button.addEventListener(
     "click",
-    () => {
+    (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
       if (overlay.hidden) {
         openGameday();
       } else {
         closeGameday();
       }
+    },
+    true
+  );
+
+  overlayClose?.addEventListener(
+    "click",
+    (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      closeGameday();
+    }
+  );
+
+  frame.addEventListener(
+    "load",
+    () => {
+      if (overlay.hidden || frame.src === "about:blank") {
+        return;
+      }
+
+      window.clearTimeout(frameLoadTimer);
+      frameLoadTimer = 0;
+      overlay.classList.add("is-ready");
+      overlay.classList.remove("is-slow");
     }
   );
 
