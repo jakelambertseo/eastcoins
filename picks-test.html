@@ -825,6 +825,101 @@ h1{font-size:2.25rem}
   .wallet-foot{font-size:.61rem}
 }
 
+
+/* ================================================================
+   PICKS V4 — PREDICTIONS STYLE + TITLED RANKS
+   ================================================================ */
+.games{
+  display:grid;
+  grid-auto-flow:column;
+  grid-auto-columns:minmax(278px,278px);
+  gap:14px;
+  overflow-x:auto;
+  align-items:start;
+  padding:2px 2px 12px;
+  scrollbar-width:thin
+}
+.games::-webkit-scrollbar{height:10px}
+.games::-webkit-scrollbar-thumb{background:#2f4349;border-radius:999px}
+.games::-webkit-scrollbar-track{background:#12181a;border-radius:999px}
+.game-card{
+  position:relative;
+  overflow:hidden;
+  border:2px solid #0d7180;
+  border-radius:8px;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(64,214,255,.09),transparent 34%),
+    linear-gradient(180deg,#141516,#090909);
+  box-shadow:0 8px 20px rgba(0,0,0,.32)
+}
+.game-card.locked{opacity:.88}
+.game-card > *:not(.pick-card-poster):not(.pick-card-poster-shade){position:relative;z-index:2}
+.pick-card-poster{opacity:.10}
+.pick-card-poster-shade{background:linear-gradient(180deg,rgba(0,0,0,.10),rgba(5,5,5,.54) 48%,rgba(6,6,6,.90))}
+.prediction-shell{display:grid;grid-template-columns:18px minmax(0,1fr)}
+.prediction-rail{
+  display:flex;flex-direction:column;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;
+  color:#d8edf2;background:linear-gradient(180deg,#0f8aa0,#095565);border-right:1px solid rgba(255,255,255,.10)
+}
+.prediction-rail-date,.prediction-rail-time{
+  writing-mode:vertical-rl;transform:rotate(180deg);font-size:.67rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase
+}
+.prediction-board{min-width:0}
+.prediction-head{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px 7px;
+  border-bottom:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02)
+}
+.prediction-sport{color:#eaf7fa;font-size:.78rem;font-weight:950;letter-spacing:.05em;text-transform:uppercase}
+.prediction-status{font-size:.61rem;font-weight:900;letter-spacing:.04em;color:#8ee6f5;text-transform:uppercase}
+.prediction-status.locked{color:#ffc66f}
+.prediction-market{display:grid;gap:7px;padding:9px}
+.prediction-row{
+  position:relative;display:grid;grid-template-columns:40px minmax(0,1fr) auto 22px;gap:9px;align-items:center;
+  width:100%;min-height:56px;padding:6px 8px;border:1px solid #7fc6d1;border-radius:5px;
+  background:linear-gradient(180deg,rgba(239,247,249,.98),rgba(213,230,235,.98));color:#101417;text-align:left
+}
+.prediction-row:hover:not(:disabled){transform:translateY(-1px);border-color:#0a6574;box-shadow:0 4px 12px rgba(7,45,51,.18)}
+.prediction-row:disabled{cursor:not-allowed}
+.prediction-row.selected{border-color:#f0c54a;box-shadow:inset 0 0 0 2px rgba(240,197,74,.45), 0 5px 14px rgba(0,0,0,.18)}
+.prediction-teamlogo{width:36px;height:36px;display:grid;place-items:center;border-radius:6px;overflow:hidden;border:1px solid rgba(0,0,0,.10);background:#fff}
+.prediction-teamlogo img{width:82%;height:82%;object-fit:contain}
+.prediction-teamlogo span{font-size:.72rem;font-weight:950;color:#10232a}
+.prediction-copy{min-width:0}
+.prediction-copy strong{display:block;font-size:.84rem;line-height:1.05;color:#081217;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prediction-copy small{display:block;margin-top:3px;color:#30464c;font-size:.62rem;font-weight:800}
+.prediction-odds{min-width:54px;text-align:right}
+.prediction-odds b{display:block;font-size:.70rem;color:#0f2a31}
+.prediction-odds span{display:block;margin-top:2px;font-size:.58rem;font-weight:800;color:#3a555c}
+.prediction-check{width:18px;height:18px;border:3px solid #141414;border-radius:5px;background:#f6fbfd}
+.prediction-row.selected .prediction-check{border-color:#0c6a79;background:linear-gradient(180deg,#10b4cb,#0a6d7e);box-shadow:inset 0 0 0 2px #dffafd}
+.prediction-footer{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:0 10px 10px}
+.prediction-ticket{display:flex;align-items:center;gap:7px;min-width:0;color:#b8d8de;font-size:.63rem;font-weight:800}
+.prediction-ticket strong{color:#fff3d2;font-size:.72rem}
+.prediction-ticket small{color:#8aa3a9;font-size:.58rem}
+.prediction-badge{
+  display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.08);background:#0c1315;color:#86dae8;font-size:.58rem;font-weight:950;letter-spacing:.05em;text-transform:uppercase
+}
+.prediction-badge.hot{color:#ffd688;border-color:rgba(240,197,74,.18);background:rgba(120,68,8,.20)}
+.prediction-badge.lock{color:#ffb57f;border-color:rgba(255,154,74,.16);background:rgba(140,60,16,.18)}
+.prediction-badge.cold{color:#92dff2;border-color:rgba(87,172,196,.16);background:rgba(7,64,76,.18)}
+.game-status{position:absolute;top:10px;right:10px;border-radius:6px}
+.leader-card{border:1px solid rgba(83,161,178,.18);background:radial-gradient(circle at 100% 0%,rgba(64,214,255,.05),transparent 34%), #070707}
+.leader-head{background:linear-gradient(180deg,rgba(15,30,36,.94),rgba(10,14,16,.94));border-bottom:1px solid rgba(255,255,255,.07)}
+.rank{grid-template-columns:54px 34px minmax(0,1fr) auto;gap:8px}
+.rank-num{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;color:#e8d5b2;font-size:.52rem;line-height:1.05;font-weight:950;text-align:left}
+.rank-num b{color:#ffffff;font-size:.70rem}
+.rank-copy strong{font-size:.70rem}
+.rank-copy small{font-size:.56rem}
+.rank-score{font-size:.65rem}
+.leader-rank-tag{display:inline-block;margin-top:2px;color:#7bd0df;font-size:.54rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+@media (max-width: 900px){.games{grid-auto-columns:minmax(252px,252px)}}
+@media (max-width: 640px){
+  .games{grid-auto-columns:minmax(232px,232px)}
+  .prediction-row{grid-template-columns:36px minmax(0,1fr) auto 20px;min-height:53px}
+  .prediction-copy strong{font-size:.78rem}
+}
+
 </style>
 </head>
 <body>
@@ -1424,18 +1519,71 @@ h1{font-size:2.25rem}
     `;
   }
 
+  function seededOdds(game,selection){
+    const key=`${game.id}:${selection}`;
+    let hash=0;
+    for(const char of key){
+      hash=(hash*31 + char.charCodeAt(0)) >>> 0;
+    }
+    return (1.55 + (hash % 95)/100).toFixed(3);
+  }
+
+  function shortEventDate(game){
+    if(!game?.startTs) return game?.sport || "Today";
+    const d=new Date(game.startTs);
+    const month=String(d.getMonth()+1).padStart(2,"0");
+    const day=String(d.getDate()).padStart(2,"0");
+    return `${month}/${day}`;
+  }
+
+  function shortEventTime(game){
+    if(game?.live) return "LIVE";
+    if(!game?.startTs) return (game?.start || "SOON").replace(/\s+/g," ").slice(0,10);
+    return new Intl.DateTimeFormat("en-US",{
+      hour:"numeric",
+      minute:"2-digit",
+      hour12:true,
+      timeZoneName:"short"
+    }).format(new Date(game.startTs));
+  }
+
+  function sportTicker(game){
+    const family=game?.family||"";
+    if(family==="american-football") return "NFL";
+    if(family==="baseball") return "MLB";
+    if(family==="basketball") return "NBA";
+    if(family==="hockey") return "NHL";
+    if(family==="soccer") return "SOCCER";
+    if(family==="combat") return "UFC";
+    return (game?.sport||"SPORT").toUpperCase();
+  }
+
   function choiceButtonMarkup(game,selection,selected,disabled){
-    const src=selection==="away"?game.awayLogo:game.homeLogo;
-    const short=selection==="away"?game.awayShort:game.homeShort;
+    const name=selection==="away" ? game.away : game.home;
+    const short=selection==="away" ? game.awayShort : game.homeShort;
+    const src=selection==="away" ? game.awayLogo : game.homeLogo;
+    const publicPct=selection==="away" ? game.community[0] : game.community[1];
+    const odds=seededOdds(game,selection);
+    const fallback=initials(name);
 
     return `
       <button
-        class="pick-team${selected===selection?" selected":""}"
+        class="prediction-row${selected===selection?" selected":""}"
         data-pick="${game.id}"
         data-selection="${selection}"
         ${disabled?"disabled":""}>
-        ${src?`<img class="pick-choice-watermark" src="${src}" alt="" loading="lazy" decoding="async">`:""}
-        <span>${selected===selection?"✓ ":""}Pick ${short}</span>
+        <span class="prediction-teamlogo${src?" has-image":""}">
+          ${src?`<img src="${src}" alt="" loading="lazy" decoding="async" data-pick-team-logo>`:`<span>${fallback}</span>`}
+        </span>
+        <span class="prediction-copy">
+          <strong>${name}</strong>
+          <small>Odds: ${odds} · Public: ${publicPct}%</small>
+        </span>
+        <span class="prediction-odds">
+          <b>${short}</b>
+          <span>${selected===selection?"Selected":"Pick"}</span>
+        </span>
+        <span class="prediction-check" aria-hidden="true"></span>
       </button>
     `;
   }
@@ -1581,44 +1729,45 @@ h1{font-size:2.25rem}
         ? (result==="void"?"VOID":`FINAL · ${teamShort(game,result)} won`)
         : lockCountdown(game);
 
+      const badgeClass = locked ? "lock" : (game.popular ? "hot" : "cold");
+      const badgeText = locked ? "Locked" : (game.popular ? "Hot board" : "Open");
+      const ticketLabel = pick
+        ? `${statusLabel(pick)} · ${money(pick.wager)} EC`
+        : `Community pot ${money(matchupCommunityPot(game))} EC`;
+
       return `
         <article class="game-card${locked?" locked":""}${poster?" has-streamed-art":""}">
           ${poster?`<img class="pick-card-poster" src="${poster}" alt="" loading="lazy" decoding="async"><span class="pick-card-poster-shade"></span>`:""}
-          <div class="game-top">
-            <span class="sport-chip">${game.sport}</span>
-            <span class="game-time">${statusText}</span>
-          </div>
-          <div class="matchup">
-            <div class="team away">
-              ${logoMarkup(game,"away")}
-              <strong>${game.away}</strong>
-              <small>Away</small>
+          <div class="prediction-shell">
+            <div class="prediction-rail">
+              <span class="prediction-rail-date">${shortEventDate(game)}</span>
+              <span class="prediction-rail-time">${shortEventTime(game)}</span>
             </div>
-            <div class="vs">VS</div>
-            <div class="team home">
-              ${logoMarkup(game,"home")}
-              <strong>${game.home}</strong>
-              <small>Home</small>
+
+            <div class="prediction-board">
+              <div class="prediction-head">
+                <span class="prediction-sport">${sportTicker(game)}</span>
+                <span class="prediction-status ${locked?"locked":""}">${statusText}</span>
+              </div>
+
+              <div class="prediction-market">
+                ${choiceButtonMarkup(game,"away",selected,Boolean(pick)||locked)}
+                ${choiceButtonMarkup(game,"home",selected,Boolean(pick)||locked)}
+              </div>
+
+              <div class="prediction-footer">
+                <div class="prediction-ticket">
+                  ${ecLogo("sm")}
+                  <span>
+                    <strong>${ticketLabel}</strong>
+                    <small>${game.awayShort} vs ${game.homeShort}</small>
+                  </span>
+                </div>
+                <span class="prediction-badge ${badgeClass}">${badgeText}</span>
+              </div>
             </div>
           </div>
-          <div class="game-hype">
-            <div class="hype-copy">
-              <strong>${game.popular ? "🔥 Hot board" : "Community action"}</strong>
-              <small>${money(matchupCommunityPot(game))} fake EC currently riding on this matchup</small>
-            </div>
-            <span class="hype-badge ${locked ? "lock" : (game.popular ? "hot" : "")}">
-              ${locked ? "LOCKED" : (game.popular ? "HEATING UP" : "OPEN")}
-            </span>
-          </div>
-          <div class="game-actions">
-            ${choiceButtonMarkup(game,"away",selected,Boolean(pick)||locked)}
-            ${choiceButtonMarkup(game,"home",selected,Boolean(pick)||locked)}
-          </div>
-          <div class="community">
-            <span>${game.community[0]}%</span>
-            <div class="bar"><i style="width:${game.community[0]}%"></i><i style="width:${game.community[1]}%"></i></div>
-            <span>${game.community[1]}%</span>
-          </div>
+
           ${pick
             ? `<span class="game-status ${pick.status}">${statusLabel(pick)} · ${ecLogo("sm")}${money(pick.wager)} EC</span>`
             : locked
@@ -1628,14 +1777,13 @@ h1{font-size:2.25rem}
       `;
     }).join("");
 
-    /*
-      If an external team badge fails, reveal the initials fallback exactly
-      like EastCoin event cards do.
-    */
     elements.games.querySelectorAll("[data-pick-team-logo]").forEach(img=>{
       img.addEventListener("error",()=>{
-        img.closest(".team-logo")?.classList.remove("has-image");
-        img.remove();
+        const wrap=img.closest(".prediction-teamlogo");
+        if(wrap){
+          const name=img.closest(".prediction-row")?.querySelector(".prediction-copy strong")?.textContent || "EC";
+          wrap.innerHTML=`<span>${initials(name)}</span>`;
+        }
       },{once:true});
     });
   }
@@ -1697,6 +1845,22 @@ h1{font-size:2.25rem}
     }).join("");
   }
 
+  function rankTitle(position){
+    const titles={
+      1:"Hall of Famer",
+      2:"Super Bowl Winner",
+      3:"Pro Bowler",
+      4:"All-Pro",
+      5:"Franchise Player",
+      6:"Team Captain",
+      7:"Starter",
+      8:"Role Player",
+      9:"Practice Squad",
+      10:"Waterboy"
+    };
+    return titles[position] || "Free Agent";
+  }
+
   function leaderboardData(){
     const stats=currentStats();
     const user={name:"You",initials:"YOU",balance:state.balance,wins:stats.wins,losses:stats.losses,streak:stats.streak};
@@ -1718,9 +1882,9 @@ h1{font-size:2.25rem}
         <div class="leader-head"><strong>${title}</strong><small>${sub}</small></div>
         ${list.map((person,index)=>`
           <div class="rank">
-            <span class="rank-num">${index+1}</span>
+            <span class="rank-num"><b>#${index+1}</b><span>${rankTitle(index+1)}</span></span>
             <span class="avatar">${person.initials.slice(0,2)}</span>
-            <span class="rank-copy"><strong>${person.name}</strong><small>${person.wins}–${person.losses}</small></span>
+            <span class="rank-copy"><strong>${person.name}</strong><small>${person.wins}–${person.losses}<span class="leader-rank-tag"> · ${rankTitle(index+1)}</span></small></span>
             <span class="rank-score">${format(person)}</span>
           </div>
         `).join("")}
@@ -1728,7 +1892,7 @@ h1{font-size:2.25rem}
     `;
 
     elements.leaderboards.innerHTML=
-      board("💰 Richest","Current available EastCoin balance",richest,p=>`${ecLogo("sm")}${money(p.balance)} EC`)+
+      board("💰 Money Ladder","Current available EastCoin balance",richest,p=>`${ecLogo("sm")}${money(p.balance)} EC`)+
       board("🎯 Best Accuracy","Settled picks",accuracy,p=>{
         const total=p.wins+p.losses;
         return total?`${Math.round(p.wins/total*100)}%`:"—";
@@ -1736,7 +1900,7 @@ h1{font-size:2.25rem}
       board("🔥 Hot Streak","Consecutive results",streaks,p=>p.streak>0?`W${p.streak}`:p.streak<0?`L${Math.abs(p.streak)}`:"—");
 
     const position=richest.findIndex(p=>p.name==="You")+1;
-    elements.rank.textContent="#"+position;
+    elements.rank.textContent=`${rankTitle(position)} · #${position}`;
   }
 
   function renderPrototype(){
