@@ -1535,6 +1535,66 @@ h1{font-size:2.25rem}
   }
 }
 
+
+/* ================================================================
+   PICKS V7 — PAGE ORDER / GAMIFICATION BELOW PICKS
+   ================================================================ */
+.post-games-gamification{
+  margin-top:22px;
+  padding-top:18px;
+  border-top:1px solid rgba(242,196,0,.11)
+}
+.post-games-head{
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:10px
+}
+.post-games-head > div{
+  min-width:0
+}
+.post-games-head span{
+  display:block;
+  color:#8a7d70;
+  font-size:.62rem;
+  font-weight:950;
+  letter-spacing:.09em;
+  text-transform:uppercase
+}
+.post-games-head strong{
+  display:block;
+  margin-top:3px;
+  color:#f2eadf;
+  font-size:1rem
+}
+.post-games-head small{
+  color:#6f675f;
+  font-size:.61rem;
+  text-align:right
+}
+.post-games-gamification .stakes-strip{
+  margin-bottom:12px
+}
+.post-games-gamification .badge-rack{
+  margin-bottom:0
+}
+
+@media(max-width:760px){
+  .post-games-gamification{
+    margin-top:18px;
+    padding-top:15px
+  }
+  .post-games-head{
+    display:block
+  }
+  .post-games-head small{
+    display:block;
+    margin-top:4px;
+    text-align:left
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1582,35 +1642,7 @@ h1{font-size:2.25rem}
       <button id="bailoutButton">Claim +250 EC</button>
     </div>
 
-    <section class="stakes-strip" aria-label="EastCoin stakes">
-      <article class="stake-card hot">
-        <span>🔥 Hot Streak</span>
-        <strong id="stakeHotStreak">No streak yet</strong>
-        <small>Win consecutive picks to heat up your profile.</small>
-      </article>
-
-      <article class="stake-card pot">
-        <span><img class="ec-coin-logo" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"> Community Pot</span>
-        <strong class="ec-coin-inline"><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="stakeCommunityPot">6,480</span> EC</strong>
-        <small>Fake EastCoins currently riding on today's board.</small>
-      </article>
-
-      <article class="stake-card mission">
-        <span>🎯 Daily Mission</span>
-        <strong id="stakeMission">Risk 100 EC</strong>
-        <small id="stakeMissionCopy">0 / 100 EC wagered today · test reward +50 EC.</small>
-      </article>
-
-      <article class="stake-card rank">
-        <span>🏆 High Roller Tier</span>
-        <strong id="stakeTier">Bronze Bettor</strong>
-        <small id="stakeTierCopy">Lock more fake EC to climb the test tiers.</small>
-      </article>
-    </section>
-
-    <section class="badge-rack" id="badgeRack" aria-label="Achievements"></section>
-
-    <section class="metrics">
+<section class="metrics">
       <div class="metric"><span>Season Record</span><strong id="record">0–0</strong><small id="accuracy">No settled picks</small></div>
       <div class="metric"><span>Pending</span><strong id="pendingCount">0</strong><small id="pendingEc">0 EC at risk</small></div>
       <div class="metric"><span>Current Streak</span><strong id="streak">—</strong><small>Settled picks</small></div>
@@ -1646,6 +1678,45 @@ h1{font-size:2.25rem}
       <div class="section-head"><div><h2>EC History</h2><p>Every balance change has a ledger entry</p></div></div>
       <div class="list" id="history"></div>
     </section>
+
+    <section class="post-games-gamification">
+      <div class="post-games-head">
+        <div>
+          <span>EastCoin Gamification</span>
+          <strong>Season Challenges & Stakes</strong>
+        </div>
+        <small>Streaks, missions, community action and achievements</small>
+      </div>
+
+    <section class="stakes-strip" aria-label="EastCoin stakes">
+      <article class="stake-card hot">
+        <span>🔥 Hot Streak</span>
+        <strong id="stakeHotStreak">No streak yet</strong>
+        <small>Win consecutive picks to heat up your profile.</small>
+      </article>
+
+      <article class="stake-card pot">
+        <span><img class="ec-coin-logo" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"> Community Pot</span>
+        <strong class="ec-coin-inline"><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="stakeCommunityPot">6,480</span> EC</strong>
+        <small>Fake EastCoins currently riding on today's board.</small>
+      </article>
+
+      <article class="stake-card mission">
+        <span>🎯 Daily Mission</span>
+        <strong id="stakeMission">Risk 100 EC</strong>
+        <small id="stakeMissionCopy">0 / 100 EC wagered today · test reward +50 EC.</small>
+      </article>
+
+      <article class="stake-card rank">
+        <span>🏆 High Roller Tier</span>
+        <strong id="stakeTier">Bronze Bettor</strong>
+        <small id="stakeTierCopy">Lock more fake EC to climb the test tiers.</small>
+      </article>
+    </section>
+
+    <section class="badge-rack" id="badgeRack" aria-label="Achievements"></section>
+
+        </section>
 
     <details class="prototype">
       <summary>🧪 Prototype controls — fake-settle games and test the economy</summary>
