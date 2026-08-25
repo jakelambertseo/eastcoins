@@ -1,0 +1,1454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>EastCoin Picks — V1 Mockup</title>
+<style>
+:root{
+  --bg:#000;
+  --panel:#070707;
+  --panel2:#0b0909;
+  --panel3:#100b0d;
+  --line:rgba(255,255,255,.07);
+  --line-gold:rgba(242,196,0,.2);
+  --text:#f4f0e8;
+  --muted:#81796f;
+  --gold:#f2c400;
+  --gold2:#ffd52b;
+  --burg:#ad0932;
+  --burg2:#d21a4a;
+  --green:#38c877;
+  --red:#ef6670;
+  --blue:#4c7ed9;
+  --shadow:0 28px 80px rgba(0,0,0,.72);
+}
+*{box-sizing:border-box}
+html{background:#000;color-scheme:dark}
+body{
+  margin:0;
+  min-height:100vh;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 15% -10%,rgba(173,9,50,.11),transparent 27%),
+    radial-gradient(circle at 90% -12%,rgba(242,196,0,.055),transparent 23%),
+    #000;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+}
+button,input{font:inherit}
+button{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.app{display:grid;grid-template-columns:220px minmax(0,1fr);min-height:100vh}
+.sidebar{
+  position:sticky;top:0;height:100vh;overflow:auto;padding:16px 13px;
+  border-right:1px solid var(--line);background:rgba(2,2,2,.97)
+}
+.brand{display:flex;align-items:center;gap:10px;padding:2px 6px 16px;border-bottom:1px solid var(--line)}
+.brand-mark{
+  width:42px;height:42px;display:grid;place-items:center;border:1px solid rgba(242,196,0,.25);
+  border-radius:12px;background:linear-gradient(135deg,#16050a,#080808);
+  box-shadow:0 12px 30px rgba(0,0,0,.55);font-weight:1000;color:var(--gold);letter-spacing:-.08em
+}
+.brand strong{display:block;font-size:.95rem;font-weight:950}
+.brand small{display:block;margin-top:2px;color:#6d6660;font-size:.61rem}
+.nav-label{margin:15px 8px 6px;color:#4f4a45;font-size:.56rem;font-weight:950;letter-spacing:.14em;text-transform:uppercase}
+.nav-btn{
+  width:100%;display:flex;align-items:center;gap:9px;padding:9px;border:0;border-radius:9px;
+  color:#878078;background:transparent;text-align:left
+}
+.nav-btn:hover,.nav-btn.active{color:#f3eadb;background:#0a0a0a}
+.nav-btn.active{box-shadow:inset 3px 0 0 var(--gold)}
+.nav-icon{
+  width:29px;height:29px;display:grid;place-items:center;flex:0 0 29px;border:1px solid var(--line);
+  border-radius:8px;background:#080808;font-size:.74rem
+}
+.nav-copy strong{display:block;font-size:.7rem}
+.nav-copy small{display:block;margin-top:1px;color:#65605a;font-size:.55rem}
+.side-wallet{
+  margin-top:18px;padding:11px;border:1px solid var(--line-gold);border-radius:10px;
+  background:linear-gradient(145deg,rgba(173,9,50,.08),rgba(242,196,0,.025)),#080707
+}
+.side-wallet span{display:block;color:#756d64;font-size:.52rem;font-weight:850;text-transform:uppercase;letter-spacing:.08em}
+.side-wallet strong{display:block;margin-top:4px;color:#fff0b0;font-size:1.2rem}
+.side-wallet small{display:block;margin-top:4px;color:#68615a;font-size:.52rem}
+.side-foot{margin-top:auto;padding:14px 8px 4px;color:#4e4944;font-size:.52rem;line-height:1.5}
+.main{min-width:0;padding:24px 26px 60px}
+.topbar{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:20px
+}
+.eyebrow{color:var(--gold);font-size:.58rem;font-weight:950;letter-spacing:.14em;text-transform:uppercase}
+h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
+.sub{max-width:660px;margin:0;color:#817a72;font-size:.72rem;line-height:1.55}
+.wallet-card{
+  min-width:225px;padding:13px 14px;border:1px solid rgba(242,196,0,.18);border-radius:12px;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(242,196,0,.08),transparent 42%),
+    linear-gradient(135deg,rgba(173,9,50,.12),transparent 58%),#080707
+}
+.wallet-card span{display:block;color:#796f63;font-size:.55rem;font-weight:900;text-transform:uppercase}
+.wallet-balance{display:flex;align-items:baseline;gap:7px;margin-top:3px}
+.wallet-balance strong{font-size:1.7rem;letter-spacing:-.04em}
+.wallet-balance b{color:var(--gold);font-size:.68rem}
+.wallet-foot{display:flex;justify-content:space-between;gap:10px;margin-top:7px;color:#6f675f;font-size:.52rem}
+
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-bottom:17px}
+.metric{
+  padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#060606
+}
+.metric span{display:block;color:#68625c;font-size:.51rem;text-transform:uppercase;font-weight:900;letter-spacing:.06em}
+.metric strong{display:block;margin-top:4px;font-size:1rem}
+.metric small{display:block;margin-top:2px;color:#66605a;font-size:.5rem}
+
+.tabs{
+  display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;padding-bottom:2px
+}
+.tab{
+  flex:0 0 auto;border:1px solid var(--line);border-radius:999px;background:#060606;color:#8e857d;
+  padding:8px 12px;font-size:.62rem;font-weight:900
+}
+.tab.active{border-color:rgba(242,196,0,.3);background:rgba(242,196,0,.075);color:#ffe375}
+.panel{display:none}.panel.active{display:block}
+
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:0 0 9px}
+.section-head h2{margin:0;font-size:.92rem;letter-spacing:-.02em}
+.section-head p{margin:2px 0 0;color:#6f675f;font-size:.57rem}
+.section-head-right{color:#675f57;font-size:.52rem}
+
+.games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.game-card{
+  position:relative;overflow:hidden;border:1px solid var(--line);border-radius:12px;
+  background:
+    radial-gradient(circle at 90% 0%,rgba(242,196,0,.035),transparent 32%),
+    linear-gradient(145deg,rgba(173,9,50,.055),transparent 40%),
+    #070707
+}
+.game-card > *:not(.pick-card-poster):not(.pick-card-poster-shade){
+  position:relative;
+  z-index:2
+}
+.pick-card-poster{
+  position:absolute;
+  z-index:0;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  opacity:.15;
+  filter:saturate(.78) contrast(1.08);
+  pointer-events:none
+}
+.pick-card-poster-shade{
+  position:absolute;
+  z-index:1;
+  inset:0;
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.14),rgba(3,3,3,.55) 54%,rgba(3,3,3,.91));
+  pointer-events:none
+}
+.game-card.has-streamed-art{
+  border-color:rgba(255,255,255,.075)
+}
+.game-card.has-streamed-art:hover{
+  border-color:rgba(242,196,0,.24)
+}
+.game-card.locked{opacity:.72}
+.game-top{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;
+  border-bottom:1px solid var(--line);background:#090808
+}
+.sport-chip{
+  display:inline-flex;align-items:center;gap:5px;padding:4px 7px;border:1px solid var(--line);
+  border-radius:999px;color:#aca39a;font-size:.49rem;font-weight:900
+}
+.game-time{color:#7b736b;font-size:.5rem;font-weight:800}
+.matchup{display:grid;grid-template-columns:1fr 52px 1fr;align-items:center;gap:8px;padding:14px 12px 10px}
+.team{text-align:center}
+.team-logo{
+  position:relative;
+  width:50px;height:50px;margin:auto;display:grid;place-items:center;overflow:hidden;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;background:rgba(5,5,5,.62);font-size:.65rem;font-weight:1000;
+  box-shadow:0 8px 22px rgba(0,0,0,.28)
+}
+.team-logo img{
+  width:78%;
+  height:78%;
+  object-fit:contain;
+  filter:drop-shadow(0 4px 7px rgba(0,0,0,.28))
+}
+.team-logo span{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center
+}
+.team-logo.has-image span{display:none}
+.team.away .team-logo:not(.has-image){background:linear-gradient(135deg,#2a1016,#78142b)}
+.team.home .team-logo:not(.has-image){background:linear-gradient(135deg,#101827,#244a77)}
+.team strong{display:block;margin-top:7px;font-size:.69rem}
+.team small{display:block;margin-top:2px;color:#6c655e;font-size:.5rem}
+.vs{text-align:center;color:#554f49;font-size:.55rem;font-weight:950}
+.game-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:0 12px 12px}
+.pick-team{
+  position:relative;
+  min-height:46px;overflow:hidden;border:1px solid rgba(255,255,255,.08);border-radius:8px;
+  background:rgba(10,9,9,.92);color:#ded5ca;font-size:.58rem;font-weight:900
+}
+.pick-team > span:not(.pick-choice-watermark){
+  position:relative;
+  z-index:2
+}
+.pick-choice-watermark{
+  position:absolute;
+  z-index:0;
+  right:-8px;
+  top:50%;
+  width:58px;
+  height:58px;
+  object-fit:contain;
+  opacity:.13;
+  transform:translateY(-50%);
+  filter:saturate(1.25) contrast(1.05);
+  pointer-events:none
+}
+.pick-team:after{
+  content:"";
+  position:absolute;
+  z-index:1;
+  inset:0;
+  background:linear-gradient(90deg,rgba(7,7,7,.92),rgba(7,7,7,.63) 68%,rgba(7,7,7,.26));
+  pointer-events:none
+}
+.pick-team:hover{border-color:rgba(242,196,0,.22);background:#100d08}
+.pick-team.selected{border-color:var(--gold);color:#fff0a8;background:rgba(242,196,0,.075)}
+.pick-team.selected:after{
+  background:linear-gradient(90deg,rgba(52,42,5,.83),rgba(31,25,5,.56),rgba(7,7,7,.18))
+}
+.pick-team:disabled{cursor:not-allowed;opacity:.5}
+.pick-team:disabled .pick-choice-watermark{opacity:.08}
+
+.catalog-source{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  margin-left:5px;
+  color:#7c746b;
+  font-size:.52rem
+}
+.catalog-source:before{
+  content:"";
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#72685f
+}
+.catalog-source.live{
+  color:#bba46c
+}
+.catalog-source.live:before{
+  background:var(--gold);
+  box-shadow:0 0 0 3px rgba(242,196,0,.06)
+}
+.catalog-source.error{
+  color:#a16d73
+}
+.catalog-source.error:before{
+  background:#ad4860
+}
+.community{
+  display:grid;grid-template-columns:auto 1fr auto;gap:7px;align-items:center;padding:9px 12px;
+  border-top:1px solid var(--line);background:#050505
+}
+.community span{font-size:.49rem;color:#716961}
+.community .bar{height:6px;border-radius:999px;overflow:hidden;background:#161313;display:flex}
+.community .bar i:first-child{background:var(--burg)}
+.community .bar i:last-child{background:#4b5d78}
+.game-status{
+  position:absolute;right:10px;bottom:10px;padding:4px 7px;border:1px solid var(--line);
+  border-radius:999px;background:#080707;color:#706861;font-size:.44rem;font-weight:900;text-transform:uppercase
+}
+.game-status.pending{color:#efcf80;border-color:rgba(242,196,0,.2)}
+.game-status.won{color:#7ce5a8;border-color:rgba(56,200,119,.25)}
+.game-status.lost{color:#ff8994;border-color:rgba(239,102,112,.25)}
+
+.empty{
+  padding:34px 20px;border:1px dashed rgba(255,255,255,.08);border-radius:11px;
+  color:#6d655e;text-align:center;font-size:.65rem
+}
+
+.list{display:grid;gap:8px}
+.pick-row,.history-row{
+  display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;
+  padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:#070707
+}
+.row-icon{
+  width:42px;height:42px;display:grid;place-items:center;border-radius:11px;border:1px solid rgba(255,255,255,.07);
+  background:#0c090a;font-size:.74rem;font-weight:950
+}
+.row-copy strong{display:block;font-size:.67rem}
+.row-copy p{margin:2px 0 0;color:#716961;font-size:.53rem}
+.row-copy small{display:block;margin-top:3px;color:#8a8178;font-size:.49rem}
+.row-value{text-align:right}
+.row-value strong{display:block;font-size:.66rem}
+.row-value small{display:block;margin-top:2px;color:#6e665f;font-size:.48rem}
+.positive{color:#72df9d}.negative{color:#ff7d89}.pending-text{color:#e3c664}
+
+.leader-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.leader-card{border:1px solid var(--line);border-radius:11px;background:#070707;overflow:hidden}
+.leader-head{padding:10px 11px;border-bottom:1px solid var(--line);background:#090808}
+.leader-head strong{display:block;font-size:.68rem}.leader-head small{display:block;color:#69625b;font-size:.49rem;margin-top:2px}
+.rank{
+  display:grid;grid-template-columns:28px 34px 1fr auto;gap:7px;align-items:center;padding:9px 10px;
+  border-bottom:1px solid rgba(255,255,255,.045)
+}
+.rank:last-child{border-bottom:0}
+.rank-num{color:#6b645c;font-size:.55rem;font-weight:950;text-align:center}
+.avatar{
+  width:32px;height:32px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(242,196,0,.2);
+  background:linear-gradient(135deg,#5b1123,#161616);font-size:.52rem;font-weight:950
+}
+.rank-copy strong{display:block;font-size:.59rem}.rank-copy small{display:block;color:#6a635c;font-size:.46rem}
+.rank-score{text-align:right;font-size:.58rem;font-weight:950;color:#eee0c8}
+
+.prototype{
+  margin-top:18px;border:1px solid rgba(173,9,50,.18);border-radius:12px;overflow:hidden;background:#070505
+}
+.prototype summary{
+  cursor:pointer;padding:10px 12px;color:#a49387;font-size:.58rem;font-weight:900;
+  list-style:none;background:#0c0708
+}
+.prototype summary::-webkit-details-marker{display:none}
+.proto-body{padding:11px}
+.proto-copy{margin:0 0 9px;color:#70675f;font-size:.53rem;line-height:1.5}
+.proto-games{display:grid;gap:6px}
+.proto-game{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px;
+  border:1px solid var(--line);border-radius:8px;background:#080707
+}
+.proto-game strong{display:block;font-size:.58rem}.proto-game small{display:block;color:#68615b;font-size:.46rem;margin-top:2px}
+.proto-actions{display:flex;gap:5px;flex-wrap:wrap}
+.proto-btn{
+  border:1px solid rgba(255,255,255,.08);border-radius:7px;background:#0d0b0b;color:#aaa099;
+  padding:6px 8px;font-size:.48rem;font-weight:900
+}
+.proto-btn:hover{border-color:rgba(242,196,0,.25);color:#f1d77b}
+.proto-reset{margin-top:8px;border-color:rgba(239,102,112,.2);color:#e8959d}
+
+.modal-backdrop{
+  position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);
+  display:none;place-items:center;padding:18px
+}
+.modal-backdrop.open{display:grid}
+.modal{
+  width:min(480px,100%);border:1px solid rgba(242,196,0,.22);border-radius:14px;overflow:hidden;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(242,196,0,.06),transparent 34%),
+    linear-gradient(145deg,rgba(173,9,50,.1),transparent 45%),
+    #080707;box-shadow:var(--shadow)
+}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 13px;border-bottom:1px solid var(--line)}
+.modal-head strong{font-size:.76rem}
+.close{
+  width:32px;height:32px;border:1px solid var(--line);border-radius:8px;background:#0a0909;color:#aaa
+}
+.modal-body{padding:13px}
+.selected-team{
+  display:flex;align-items:center;gap:10px;padding:10px;border:1px solid rgba(242,196,0,.15);
+  border-radius:9px;background:rgba(242,196,0,.04)
+}
+.selected-team .team-logo{width:42px;height:42px;margin:0}
+.selected-team strong{font-size:.7rem}.selected-team small{display:block;color:#777068;font-size:.5rem;margin-top:2px}
+.bet-info{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:10px 0}
+.bet-stat{padding:8px;border:1px solid var(--line);border-radius:8px;background:#060606}
+.bet-stat span{display:block;color:#6d655e;font-size:.45rem;text-transform:uppercase;font-weight:900}.bet-stat strong{display:block;margin-top:3px;font-size:.72rem}
+.wager-label{display:flex;justify-content:space-between;gap:10px;margin-bottom:6px;color:#948a80;font-size:.53rem}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:7px}
+.quick button{
+  min-height:39px;border:1px solid var(--line);border-radius:8px;background:#090808;color:#a79c91;font-size:.55rem;font-weight:900
+}
+.quick button:hover,.quick button.active{border-color:rgba(242,196,0,.3);color:#ffe27c;background:rgba(242,196,0,.06)}
+.custom{display:flex;align-items:center;border:1px solid var(--line);border-radius:8px;background:#060606;overflow:hidden}
+.custom input{width:100%;min-width:0;border:0;background:transparent;color:#fff;padding:10px 11px;outline:0;font-size:16px}
+.custom span{padding:0 11px;color:#766e65;font-size:.56rem;font-weight:900}
+.error{min-height:16px;margin-top:6px;color:#f17c87;font-size:.5rem}
+.return{
+  display:flex;justify-content:space-between;align-items:center;margin-top:9px;padding:9px 10px;
+  border:1px solid var(--line);border-radius:8px;background:#050505
+}
+.return span{color:#756d64;font-size:.52rem}.return strong{color:#e9cc72;font-size:.72rem}
+.lock{
+  width:100%;margin-top:9px;min-height:44px;border:1px solid rgba(242,196,0,.27);border-radius:9px;
+  color:#100c00;background:var(--gold);font-weight:950;font-size:.62rem
+}
+.lock:hover{background:var(--gold2)}
+.lock:disabled{cursor:not-allowed;opacity:.45}
+
+.bailout{
+  display:none;margin-bottom:14px;padding:11px 12px;border:1px solid rgba(239,102,112,.2);border-radius:10px;
+  background:linear-gradient(90deg,rgba(173,9,50,.1),transparent),#080606
+}
+.bailout.show{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.bailout strong{display:block;font-size:.68rem}.bailout p{margin:2px 0 0;color:#766b63;font-size:.52rem}
+.bailout button{border:1px solid rgba(242,196,0,.24);border-radius:8px;background:#130d08;color:#e4c569;padding:8px 10px;font-size:.54rem;font-weight:950}
+
+.toast{
+  position:fixed;right:18px;bottom:18px;z-index:200;max-width:340px;padding:10px 12px;border:1px solid rgba(242,196,0,.25);
+  border-radius:9px;background:#090808;color:#eadfcf;box-shadow:0 16px 44px rgba(0,0,0,.6);font-size:.58rem;font-weight:850;
+  opacity:0;transform:translateY(8px);pointer-events:none;transition:.18s
+}
+.toast.show{opacity:1;transform:translateY(0)}
+
+@media(max-width:1000px){
+  .app{grid-template-columns:76px minmax(0,1fr)}
+  .sidebar{padding:12px 8px}
+  .brand{justify-content:center}.brand>div:last-child,.nav-copy,.nav-label,.side-wallet,.side-foot{display:none}
+  .nav-btn{justify-content:center;padding:8px}.nav-icon{width:34px;height:34px;flex-basis:34px}
+}
+@media(max-width:760px){
+  .app{display:block}
+  .sidebar{
+    position:sticky;z-index:20;top:0;width:100%;height:auto;display:flex;flex-direction:row;align-items:center;
+    gap:5px;padding:7px 8px;border-right:0;border-bottom:1px solid var(--line);overflow-x:auto
+  }
+  .brand{padding:0 6px 0 0;border:0}.brand-mark{width:34px;height:34px;border-radius:9px;font-size:.72rem}
+  .nav-btn{width:auto;flex:0 0 auto;padding:4px}.nav-btn.active{box-shadow:none;background:#10100c}.nav-icon{width:34px;height:34px}
+  .main{padding:16px 12px 42px}
+  .topbar{display:block}.wallet-card{margin-top:12px;min-width:0}
+  h1{font-size:1.45rem}
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  .games{grid-template-columns:1fr}
+  .leader-grid{grid-template-columns:1fr}
+  .matchup{grid-template-columns:1fr 34px 1fr}
+  .team-logo{width:46px;height:46px}
+  .pick-row,.history-row{grid-template-columns:40px minmax(0,1fr) auto}
+  .row-icon{width:38px;height:38px}
+  .modal-backdrop{padding:10px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">EC</div>
+      <div><strong>EastCoin</strong><small>Watch together</small></div>
+    </div>
+
+    <div class="nav-label">EastCoin</div>
+    <button class="nav-btn"><span class="nav-icon">▦</span><span class="nav-copy"><strong>All Events</strong><small>Watch together</small></span></button>
+    <button class="nav-btn active"><span class="nav-icon">🪙</span><span class="nav-copy"><strong>Picks</strong><small>Risk EC on games</small></span></button>
+    <button class="nav-btn"><span class="nav-icon">▥</span><span class="nav-copy"><strong>MultiView</strong><small>Four streams</small></span></button>
+
+    <div class="nav-label">Community</div>
+    <button class="nav-btn" data-tab-jump="leaderboard"><span class="nav-icon">🏆</span><span class="nav-copy"><strong>Leaderboard</strong><small>Season rankings</small></span></button>
+    <button class="nav-btn" data-tab-jump="history"><span class="nav-icon">↻</span><span class="nav-copy"><strong>History</strong><small>EC transactions</small></span></button>
+
+    <div class="side-wallet">
+      <span>Available Balance</span>
+      <strong><span data-balance>1,000</span> EC</strong>
+      <small>2026 EastCoin Season</small>
+    </div>
+    <div class="side-foot">Prototype wallet uses localStorage. Game/team artwork loads from EastCoin’s existing Streamed API adapter.</div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">2026 EastCoin Season</div>
+        <h1>EastCoin Picks</h1>
+        <p class="sub">Pick winners, risk fake EastCoins, climb the leaderboard, and give everyone something else to argue about in chat. Virtual points only — no cash value.</p>
+      </div>
+
+      <section class="wallet-card">
+        <span>Available Balance</span>
+        <div class="wallet-balance"><strong data-balance>1,000</strong><b>EC</b></div>
+        <div class="wallet-foot"><span>Starting: 1,000 EC</span><span data-profit>+0 EC</span></div>
+      </section>
+    </header>
+
+    <div class="bailout" id="bailout">
+      <div><strong>🛟 EastCoin Bailout available</strong><p>Your balance is below 50 EC. Claim 250 EC so you can get back in the action.</p></div>
+      <button id="bailoutButton">Claim +250 EC</button>
+    </div>
+
+    <section class="metrics">
+      <div class="metric"><span>Season Record</span><strong id="record">0–0</strong><small id="accuracy">No settled picks</small></div>
+      <div class="metric"><span>Pending</span><strong id="pendingCount">0</strong><small id="pendingEc">0 EC at risk</small></div>
+      <div class="metric"><span>Current Streak</span><strong id="streak">—</strong><small>Settled picks</small></div>
+      <div class="metric"><span>Season Rank</span><strong id="rank">#4</strong><small>Richest leaderboard</small></div>
+    </section>
+
+    <nav class="tabs" aria-label="Picks views">
+      <button class="tab active" data-tab="games">Games</button>
+      <button class="tab" data-tab="mypicks">My Picks <span id="myPicksBadge"></span></button>
+      <button class="tab" data-tab="leaderboard">Leaderboard</button>
+      <button class="tab" data-tab="history">History</button>
+    </nav>
+
+    <section class="panel active" data-panel="games">
+      <div class="section-head">
+        <div><h2>Today's Games</h2><p>Winner-only markets · 1:1 payouts · picks lock at start <span class="catalog-source" id="catalogStatus">Loading Streamed branding…</span></p></div>
+        <div class="section-head-right">Min 10 EC · Max 250 EC / 25%</div>
+      </div>
+      <div class="games" id="games"></div>
+    </section>
+
+    <section class="panel" data-panel="mypicks">
+      <div class="section-head"><div><h2>My Picks</h2><p>Pending and completed wagers</p></div></div>
+      <div class="list" id="myPicks"></div>
+    </section>
+
+    <section class="panel" data-panel="leaderboard">
+      <div class="section-head"><div><h2>Leaderboards</h2><p>Season competition across the EastCoin group</p></div></div>
+      <div class="leader-grid" id="leaderboards"></div>
+    </section>
+
+    <section class="panel" data-panel="history">
+      <div class="section-head"><div><h2>EC History</h2><p>Every balance change has a ledger entry</p></div></div>
+      <div class="list" id="history"></div>
+    </section>
+
+    <details class="prototype">
+      <summary>🧪 Prototype controls — fake-settle games and test the economy</summary>
+      <div class="proto-body">
+        <p class="proto-copy">This section only exists in the mockup. Settle a game to see payouts, records, streaks, history, and leaderboards update as if a backend processed the final score.</p>
+        <div class="proto-games" id="prototypeGames"></div>
+        <button class="proto-btn proto-reset" id="resetPrototype">Reset entire prototype</button>
+      </div>
+    </details>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="betBackdrop">
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="betTitle">
+    <header class="modal-head"><strong id="betTitle">Lock EastCoin Pick</strong><button class="close" id="closeBet" aria-label="Close">×</button></header>
+    <div class="modal-body">
+      <div class="selected-team" id="selectedTeam"></div>
+
+      <div class="bet-info">
+        <div class="bet-stat"><span>Balance</span><strong><span id="modalBalance">0</span> EC</strong></div>
+        <div class="bet-stat"><span>Max Wager</span><strong><span id="modalMax">0</span> EC</strong></div>
+        <div class="bet-stat"><span>Payout</span><strong>1:1</strong></div>
+      </div>
+
+      <div class="wager-label"><span>Choose your wager</span><span>Minimum 10 EC</span></div>
+      <div class="quick">
+        <button data-wager="10">10</button>
+        <button data-wager="25">25</button>
+        <button data-wager="50">50</button>
+        <button data-wager="100">100</button>
+      </div>
+      <div class="custom"><input id="customWager" type="number" inputmode="numeric" min="10" step="1" placeholder="Custom wager"><span>EC</span></div>
+      <div class="error" id="betError"></div>
+
+      <div class="return"><span>Potential return</span><strong id="potentialReturn">0 EC</strong></div>
+      <button class="lock" id="lockPick">Lock Pick</button>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="assets/eastcoins-ppv-api.js?v=ppv2"></script>
+<script src="assets/eastcoins-streamed-api.js?v=picks-branding1"></script>
+<script>
+(() => {
+  "use strict";
+
+  const STORAGE_KEY = "eastcoinPicksV2StreamedBrandingMockup";
+  const STARTING_BALANCE = 1000;
+  const MIN_WAGER = 10;
+  const MAX_FLAT_WAGER = 250;
+  const BAILOUT_AMOUNT = 250;
+
+  const fallbackGames = [
+    {
+      id:"was-phi",
+      sport:"🏈 NFL",
+      away:"Washington",
+      awayShort:"WAS",
+      home:"Philadelphia",
+      homeShort:"PHI",
+      start:"Tonight · 7:20 PM",
+      community:[37,63]
+    },
+    {
+      id:"buf-kc",
+      sport:"🏈 NFL",
+      away:"Buffalo",
+      awayShort:"BUF",
+      home:"Kansas City",
+      homeShort:"KC",
+      start:"Tonight · 8:15 PM",
+      community:[46,54]
+    },
+    {
+      id:"nyy-bos",
+      sport:"⚾ MLB",
+      away:"New York",
+      awayShort:"NYY",
+      home:"Boston",
+      homeShort:"BOS",
+      start:"Tonight · 6:10 PM",
+      community:[58,42]
+    },
+    {
+      id:"dal-min",
+      sport:"🏀 NBA",
+      away:"Dallas",
+      awayShort:"DAL",
+      home:"Minnesota",
+      homeShort:"MIN",
+      start:"Tomorrow · 7:00 PM",
+      community:[44,56]
+    }
+  ];
+
+  /*
+    Streamed becomes the market/branding catalog when this prototype is
+    hosted in the EastCoin repo. The fallback list keeps the mockup usable
+    if Streamed is temporarily unavailable.
+  */
+  let games = fallbackGames;
+
+  const rivals = [
+    {name:"Zwades", initials:"Z", balance:1820, wins:28, losses:17, streak:4},
+    {name:"Waldo", initials:"W", balance:1410, wins:22, losses:18, streak:2},
+    {name:"Booty", initials:"B", balance:1130, wins:19, losses:21, streak:-1}
+  ];
+
+  const elements = {
+    balances:[...document.querySelectorAll("[data-balance]")],
+    profit:document.querySelector("[data-profit]"),
+    record:document.getElementById("record"),
+    accuracy:document.getElementById("accuracy"),
+    pendingCount:document.getElementById("pendingCount"),
+    pendingEc:document.getElementById("pendingEc"),
+    streak:document.getElementById("streak"),
+    rank:document.getElementById("rank"),
+    myPicksBadge:document.getElementById("myPicksBadge"),
+    games:document.getElementById("games"),
+    myPicks:document.getElementById("myPicks"),
+    leaderboards:document.getElementById("leaderboards"),
+    history:document.getElementById("history"),
+    prototypeGames:document.getElementById("prototypeGames"),
+    bailout:document.getElementById("bailout"),
+    bailoutButton:document.getElementById("bailoutButton"),
+    backdrop:document.getElementById("betBackdrop"),
+    closeBet:document.getElementById("closeBet"),
+    selectedTeam:document.getElementById("selectedTeam"),
+    modalBalance:document.getElementById("modalBalance"),
+    modalMax:document.getElementById("modalMax"),
+    customWager:document.getElementById("customWager"),
+    betError:document.getElementById("betError"),
+    potentialReturn:document.getElementById("potentialReturn"),
+    lockPick:document.getElementById("lockPick"),
+    reset:document.getElementById("resetPrototype"),
+    toast:document.getElementById("toast"),
+    catalogStatus:document.getElementById("catalogStatus")
+  };
+
+  let activeBet = null;
+  let toastTimer = 0;
+
+  function defaultState(){
+    return {
+      balance:STARTING_BALANCE,
+      picks:[],
+      transactions:[
+        {
+          id:"start-"+Date.now(),
+          type:"starting_balance",
+          amount:STARTING_BALANCE,
+          description:"2026 season starting balance",
+          createdAt:Date.now()
+        }
+      ],
+      results:{},
+      bailouts:0
+    };
+  }
+
+  function loadState(){
+    try{
+      const parsed=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");
+      if(parsed && Number.isFinite(parsed.balance) && Array.isArray(parsed.picks) && Array.isArray(parsed.transactions)){
+        return parsed;
+      }
+    }catch{}
+    return defaultState();
+  }
+
+  let state=loadState();
+
+  function save(){
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  }
+
+  function money(value){
+    return Math.round(Number(value)||0).toLocaleString();
+  }
+
+  function eventTimestamp(value){
+    let numeric=Number(value);
+    if(!Number.isFinite(numeric)||numeric<=0)return 0;
+    if(numeric<1_000_000_000_000)numeric*=1000;
+    return numeric;
+  }
+
+  function badgeReference(team){
+    return team?.badge||team?.logo||team?.image||team?.icon||"";
+  }
+
+  function normalizedTeam(value,fallback=""){
+    if(!value)return null;
+    if(typeof value==="string")return {name:value,badge:""};
+    return {
+      ...value,
+      name:String(value.name||value.title||value.team||fallback||"Team"),
+      badge:badgeReference(value)
+    };
+  }
+
+  function splitTitleTeams(title){
+    const text=String(title||"").trim();
+    const parts=text
+      .split(/\s+(?:vs\.?|versus|@|at)\s+/i)
+      .map(part=>part.trim())
+      .filter(Boolean);
+
+    if(parts.length!==2)return {away:null,home:null};
+
+    return {
+      away:{name:parts[0],badge:""},
+      home:{name:parts[1],badge:""}
+    };
+  }
+
+  function normalizedTeams(match){
+    const raw=match?.teams;
+    let away=null;
+    let home=null;
+
+    if(Array.isArray(raw)){
+      away=normalizedTeam(raw[0],"Away");
+      home=normalizedTeam(raw[1],"Home");
+    }else if(raw&&typeof raw==="object"){
+      away=normalizedTeam(raw.away||raw.visitor||raw.team1||raw.a,"Away");
+      home=normalizedTeam(raw.home||raw.host||raw.team2||raw.h,"Home");
+    }
+
+    away ||= normalizedTeam(match?.awayTeam||match?.away||match?.visitor,"Away");
+    home ||= normalizedTeam(match?.homeTeam||match?.home||match?.host,"Home");
+
+    if(!away||!home){
+      const parsed=splitTitleTeams(match?.title);
+      away ||= parsed.away;
+      home ||= parsed.home;
+    }
+
+    return {away,home};
+  }
+
+  function sportFamily(match){
+    const text=String(
+      match?._eastcoinProviders?.ppv?.category||
+      match?.category||
+      ""
+    ).toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+
+    const has=(...values)=>values.some(value=>text.includes(value));
+
+    if(has("nfl","ncaaf","american football","college football"))return "american-football";
+    if(has("mlb","baseball"))return "baseball";
+    if(has("nba","wnba","ncaab","basketball"))return "basketball";
+    if(has("nhl","hockey"))return "hockey";
+    if(has("soccer","epl","uefa","fifa","premier league")||text==="football")return "soccer";
+    if(has("ufc","mma","boxing","combat"))return "combat";
+    return "other";
+  }
+
+  function sportLabel(match){
+    const family=sportFamily(match);
+    const meta={
+      "american-football":"🏈 NFL / Football",
+      baseball:"⚾ MLB / Baseball",
+      basketball:"🏀 Basketball",
+      hockey:"🏒 Hockey",
+      soccer:"⚽ Soccer",
+      combat:"🥊 Combat",
+      other:"🎯 Event"
+    };
+    return meta[family]||meta.other;
+  }
+
+  function initials(name){
+    const words=String(name||"Team").trim().split(/\s+/).filter(Boolean);
+    if(!words.length)return "?";
+    if(words.length===1)return words[0].slice(0,3).toUpperCase();
+    return `${words[0][0]||""}${words[words.length-1][0]||""}`.toUpperCase();
+  }
+
+  function teamAbbr(name){
+    const words=String(name||"Team").trim().split(/\s+/).filter(Boolean);
+    const last=words.at(-1)||"TEAM";
+    if(last.length<=4)return last.toUpperCase();
+    if(words.length>1){
+      const acronym=words.map(word=>word[0]).join("").toUpperCase();
+      if(acronym.length>=2&&acronym.length<=4)return acronym;
+    }
+    return last.slice(0,3).toUpperCase();
+  }
+
+  function teamBadgeUrl(team){
+    const ref=badgeReference(team);
+    const API=window.EastcoinStreamedAPI;
+    return ref&&API?.badgeUrl ? API.badgeUrl(ref)||"" : "";
+  }
+
+  function matchupPoster(match){
+    const API=window.EastcoinStreamedAPI;
+    if(!API)return "";
+    return API.posterUrl?.(match?.poster)||API.matchupPosterUrl?.(match)||"";
+  }
+
+  function formatStreamedStart(match){
+    if(match?._eastcoinLive)return "LIVE · picks locked";
+    const start=eventTimestamp(match?.date);
+    if(!start)return "Upcoming";
+
+    const date=new Date(start);
+    const now=new Date();
+    const sameDay=
+      date.getFullYear()===now.getFullYear()&&
+      date.getMonth()===now.getMonth()&&
+      date.getDate()===now.getDate();
+
+    return `${sameDay?"Today":date.toLocaleDateString([],{weekday:"short"})} · ${date.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}`;
+  }
+
+  function seededCommunity(id){
+    let hash=0;
+    for(const char of String(id||"event")){
+      hash=((hash<<5)-hash)+char.charCodeAt(0);
+      hash|=0;
+    }
+    const away=38+(Math.abs(hash)%25);
+    return [away,100-away];
+  }
+
+  function streamedGame(match){
+    const teams=normalizedTeams(match);
+    if(!teams.away||!teams.home)return null;
+
+    const id=String(match?.id||match?.matchId||match?.slug||"").trim();
+    if(!id)return null;
+
+    const startTs=eventTimestamp(match?.date);
+    return {
+      id,
+      sport:sportLabel(match),
+      family:sportFamily(match),
+      away:teams.away.name||"Away",
+      awayShort:teamAbbr(teams.away.name),
+      awayLogo:teamBadgeUrl(teams.away),
+      home:teams.home.name||"Home",
+      homeShort:teamAbbr(teams.home.name),
+      homeLogo:teamBadgeUrl(teams.home),
+      poster:matchupPoster(match),
+      start:formatStreamedStart(match),
+      startTs,
+      live:Boolean(match?._eastcoinLive),
+      popular:Boolean(match?.popular),
+      community:seededCommunity(id),
+      streamed:true
+    };
+  }
+
+  function isGameLocked(game){
+    if(!game)return true;
+    if(game.live)return true;
+    if(game.startTs&&game.startTs<=Date.now())return true;
+    return false;
+  }
+
+  function logoMarkup(game,selection){
+    const src=selection==="away"?game?.awayLogo:game?.homeLogo;
+    const name=selection==="away"?game?.away:game?.home;
+    const fallback=initials(name);
+
+    return `
+      <div class="team-logo${src?" has-image":""}">
+        ${src?`<img src="${src}" alt="" loading="lazy" decoding="async" data-pick-team-logo>`:""}
+        <span>${fallback}</span>
+      </div>
+    `;
+  }
+
+  function choiceButtonMarkup(game,selection,selected,disabled){
+    const src=selection==="away"?game.awayLogo:game.homeLogo;
+    const short=selection==="away"?game.awayShort:game.homeShort;
+
+    return `
+      <button
+        class="pick-team${selected===selection?" selected":""}"
+        data-pick="${game.id}"
+        data-selection="${selection}"
+        ${disabled?"disabled":""}>
+        ${src?`<img class="pick-choice-watermark" src="${src}" alt="" loading="lazy" decoding="async">`:""}
+        <span>${selected===selection?"✓ ":""}Pick ${short}</span>
+      </button>
+    `;
+  }
+
+  function gameById(id){
+    return games.find(game=>game.id===id);
+  }
+
+  async function loadStreamedGames(){
+    const API=window.EastcoinStreamedAPI;
+
+    if(!API?.getToday){
+      elements.catalogStatus.textContent="Demo catalog · Streamed adapter unavailable";
+      elements.catalogStatus.classList.add("error");
+      return;
+    }
+
+    try{
+      const result=await API.getToday(false);
+      const raw=Array.isArray(result?.data)?result.data:[];
+      const mapped=raw
+        .map(streamedGame)
+        .filter(Boolean);
+
+      const preferredOrder={
+        "american-football":0,
+        baseball:1,
+        basketball:2,
+        hockey:3,
+        soccer:4,
+        combat:5,
+        other:9
+      };
+
+      mapped.sort((a,b)=>{
+        const aLocked=isGameLocked(a);
+        const bLocked=isGameLocked(b);
+
+        /*
+          Upcoming wagerable events first, then live/started events. Within
+          each group use EastCoin's major-sport preference and start time.
+        */
+        if(aLocked!==bLocked)return Number(aLocked)-Number(bLocked);
+
+        const sportDiff=
+          (preferredOrder[a.family]??9)-
+          (preferredOrder[b.family]??9);
+        if(sportDiff)return sportDiff;
+
+        if(a.popular!==b.popular)return Number(b.popular)-Number(a.popular);
+        return (a.startTs||Infinity)-(b.startTs||Infinity);
+      });
+
+      if(mapped.length){
+        /*
+          Keep the prototype focused. Eight real markets is enough to judge
+          the visual direction without turning this into the full sportsbook.
+        */
+        games=mapped.slice(0,8);
+        elements.catalogStatus.textContent=`Live Streamed catalog · ${games.length} branded games`;
+        elements.catalogStatus.classList.remove("error");
+        elements.catalogStatus.classList.add("live");
+        render();
+      }else{
+        elements.catalogStatus.textContent="Demo catalog · no two-team Streamed events found";
+        elements.catalogStatus.classList.add("error");
+      }
+    }catch(error){
+      console.warn("EastCoin Picks Streamed branding load failed:",error);
+      elements.catalogStatus.textContent="Demo catalog · Streamed temporarily unavailable";
+      elements.catalogStatus.classList.add("error");
+    }
+  }
+
+  function pickForGame(id){
+    return state.picks.find(p=>p.gameId===id);
+  }
+
+  function maxWager(){
+    return Math.max(0,Math.min(MAX_FLAT_WAGER,Math.floor(state.balance*.25)));
+  }
+
+  function teamName(game,selection){
+    return selection==="away"?game.away:game.home;
+  }
+
+  function teamShort(game,selection){
+    return selection==="away"?game.awayShort:game.homeShort;
+  }
+
+  function currentStats(){
+    const settled=state.picks.filter(p=>p.status==="won"||p.status==="lost");
+    const wins=settled.filter(p=>p.status==="won").length;
+    const losses=settled.filter(p=>p.status==="lost").length;
+    const pending=state.picks.filter(p=>p.status==="pending");
+    let streak=0;
+    const ordered=[...settled].sort((a,b)=>(b.settledAt||0)-(a.settledAt||0));
+    if(ordered.length){
+      const first=ordered[0].status;
+      for(const pick of ordered){
+        if(pick.status!==first) break;
+        streak+=first==="won"?1:-1;
+      }
+    }
+    return {wins,losses,pending,streak};
+  }
+
+  function ledger(type,amount,description,pickId=null){
+    state.transactions.unshift({
+      id:"tx-"+Date.now()+"-"+Math.random().toString(36).slice(2,7),
+      type,
+      amount,
+      pickId,
+      description,
+      createdAt:Date.now()
+    });
+  }
+
+  function toast(message){
+    elements.toast.textContent=message;
+    elements.toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(()=>elements.toast.classList.remove("show"),2400);
+  }
+
+  function statusLabel(pick){
+    if(!pick) return "";
+    if(pick.status==="pending") return "Pending";
+    if(pick.status==="won") return "Won";
+    if(pick.status==="lost") return "Lost";
+    if(pick.status==="refunded") return "Refunded";
+    return pick.status;
+  }
+
+  function renderGames(){
+    elements.games.innerHTML=games.map(game=>{
+      const pick=pickForGame(game.id);
+      const result=state.results[game.id];
+      const locked=Boolean(result)||isGameLocked(game);
+      const selected=pick?.selection;
+      const poster=game.poster||"";
+      const statusText=result
+        ? (result==="void"?"VOID":`FINAL · ${teamShort(game,result)} won`)
+        : game.live
+          ? "LIVE · PICKS LOCKED"
+          : locked
+            ? "STARTED · PICKS LOCKED"
+            : game.start;
+
+      return `
+        <article class="game-card${locked?" locked":""}${poster?" has-streamed-art":""}">
+          ${poster?`<img class="pick-card-poster" src="${poster}" alt="" loading="lazy" decoding="async"><span class="pick-card-poster-shade"></span>`:""}
+          <div class="game-top">
+            <span class="sport-chip">${game.sport}</span>
+            <span class="game-time">${statusText}</span>
+          </div>
+          <div class="matchup">
+            <div class="team away">
+              ${logoMarkup(game,"away")}
+              <strong>${game.away}</strong>
+              <small>Away</small>
+            </div>
+            <div class="vs">VS</div>
+            <div class="team home">
+              ${logoMarkup(game,"home")}
+              <strong>${game.home}</strong>
+              <small>Home</small>
+            </div>
+          </div>
+          <div class="game-actions">
+            ${choiceButtonMarkup(game,"away",selected,Boolean(pick)||locked)}
+            ${choiceButtonMarkup(game,"home",selected,Boolean(pick)||locked)}
+          </div>
+          <div class="community">
+            <span>${game.community[0]}%</span>
+            <div class="bar"><i style="width:${game.community[0]}%"></i><i style="width:${game.community[1]}%"></i></div>
+            <span>${game.community[1]}%</span>
+          </div>
+          ${pick
+            ? `<span class="game-status ${pick.status}">${statusLabel(pick)} · ${money(pick.wager)} EC</span>`
+            : locked
+              ? `<span class="game-status">Picks locked</span>`
+              : ""}
+        </article>
+      `;
+    }).join("");
+
+    /*
+      If an external team badge fails, reveal the initials fallback exactly
+      like EastCoin event cards do.
+    */
+    elements.games.querySelectorAll("[data-pick-team-logo]").forEach(img=>{
+      img.addEventListener("error",()=>{
+        img.closest(".team-logo")?.classList.remove("has-image");
+        img.remove();
+      },{once:true});
+    });
+  }
+
+  function renderMyPicks(){
+    const sorted=[...state.picks].sort((a,b)=>b.createdAt-a.createdAt);
+    if(!sorted.length){
+      elements.myPicks.innerHTML='<div class="empty">No picks yet. Choose a winner from the Games tab and lock your first wager.</div>';
+      return;
+    }
+
+    elements.myPicks.innerHTML=sorted.map(pick=>{
+      const game=gameById(pick.gameId)||pick.game;
+      const cls=pick.status==="won"?"positive":pick.status==="lost"?"negative":"pending-text";
+      const value=pick.status==="won"?`+${money(pick.wager)} EC profit`:pick.status==="lost"?`-${money(pick.wager)} EC`:`${money(pick.wager*2)} EC return`;
+      return `
+        <article class="pick-row">
+          <div class="row-icon">${teamShort(game,pick.selection)}</div>
+          <div class="row-copy">
+            <strong>${teamName(game,pick.selection)} over ${teamName(game,pick.selection==="away"?"home":"away")}</strong>
+            <p>${game.sport} · ${game.awayShort} vs ${game.homeShort}</p>
+            <small>${statusLabel(pick)} · Wagered ${money(pick.wager)} EC</small>
+          </div>
+          <div class="row-value ${cls}">
+            <strong>${value}</strong>
+            <small>${pick.status==="pending"?"Potential payout":"Settled"}</small>
+          </div>
+        </article>
+      `;
+    }).join("");
+  }
+
+  function renderHistory(){
+    if(!state.transactions.length){
+      elements.history.innerHTML='<div class="empty">No EC transactions yet.</div>';
+      return;
+    }
+    const icons={starting_balance:"＋",wager:"−",payout:"＋",refund:"↩",bailout:"🛟",admin_adjustment:"±"};
+    elements.history.innerHTML=state.transactions.map(tx=>{
+      const positive=tx.amount>0;
+      return `
+        <article class="history-row">
+          <div class="row-icon">${icons[tx.type]||"EC"}</div>
+          <div class="row-copy">
+            <strong>${tx.description}</strong>
+            <p>${tx.type.replaceAll("_"," ")}</p>
+            <small>${new Date(tx.createdAt).toLocaleString()}</small>
+          </div>
+          <div class="row-value ${positive?"positive":"negative"}">
+            <strong>${positive?"+":""}${money(tx.amount)} EC</strong>
+            <small>Ledger entry</small>
+          </div>
+        </article>
+      `;
+    }).join("");
+  }
+
+  function leaderboardData(){
+    const stats=currentStats();
+    const user={name:"You",initials:"YOU",balance:state.balance,wins:stats.wins,losses:stats.losses,streak:stats.streak};
+    return [user,...rivals];
+  }
+
+  function renderLeaderboards(){
+    const people=leaderboardData();
+    const richest=[...people].sort((a,b)=>b.balance-a.balance);
+    const accuracy=[...people].sort((a,b)=>{
+      const ap=a.wins+ a.losses ? a.wins/(a.wins+a.losses):0;
+      const bp=b.wins+ b.losses ? b.wins/(b.wins+b.losses):0;
+      return bp-ap;
+    });
+    const streaks=[...people].sort((a,b)=>b.streak-a.streak);
+
+    const board=(title,sub,list,format)=>`
+      <section class="leader-card">
+        <div class="leader-head"><strong>${title}</strong><small>${sub}</small></div>
+        ${list.map((person,index)=>`
+          <div class="rank">
+            <span class="rank-num">${index+1}</span>
+            <span class="avatar">${person.initials.slice(0,2)}</span>
+            <span class="rank-copy"><strong>${person.name}</strong><small>${person.wins}–${person.losses}</small></span>
+            <span class="rank-score">${format(person)}</span>
+          </div>
+        `).join("")}
+      </section>
+    `;
+
+    elements.leaderboards.innerHTML=
+      board("💰 Richest","Current available EC",richest,p=>`${money(p.balance)} EC`)+
+      board("🎯 Best Accuracy","Settled picks",accuracy,p=>{
+        const total=p.wins+p.losses;
+        return total?`${Math.round(p.wins/total*100)}%`:"—";
+      })+
+      board("🔥 Hot Streak","Consecutive results",streaks,p=>p.streak>0?`W${p.streak}`:p.streak<0?`L${Math.abs(p.streak)}`:"—");
+
+    const position=richest.findIndex(p=>p.name==="You")+1;
+    elements.rank.textContent="#"+position;
+  }
+
+  function renderPrototype(){
+    elements.prototypeGames.innerHTML=games.map(game=>{
+      const result=state.results[game.id];
+      return `
+        <div class="proto-game">
+          <div>
+            <strong>${game.awayShort} vs ${game.homeShort}</strong>
+            <small>${result
+              ? (result==="void"?"Voided":teamShort(game,result)+" already settled")
+              : game.streamed
+                ? "Streamed market · choose a fake result"
+                : "Demo market · choose a fake result"}</small>
+          </div>
+          <div class="proto-actions">
+            <button class="proto-btn" data-settle="${game.id}" data-winner="away" ${result?"disabled":""}>${game.awayShort} wins</button>
+            <button class="proto-btn" data-settle="${game.id}" data-winner="home" ${result?"disabled":""}>${game.homeShort} wins</button>
+            <button class="proto-btn" data-void="${game.id}" ${result?"disabled":""}>Void</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderMetrics(){
+    const stats=currentStats();
+    elements.record.textContent=`${stats.wins}–${stats.losses}`;
+    const total=stats.wins+stats.losses;
+    elements.accuracy.textContent=total?`${Math.round(stats.wins/total*100)}% accuracy`:"No settled picks";
+    elements.pendingCount.textContent=stats.pending.length;
+    elements.pendingEc.textContent=`${money(stats.pending.reduce((sum,p)=>sum+p.wager,0))} EC at risk`;
+    elements.streak.textContent=stats.streak>0?`W${stats.streak}`:stats.streak<0?`L${Math.abs(stats.streak)}`:"—";
+    elements.myPicksBadge.textContent=stats.pending.length?`(${stats.pending.length})`:"";
+    const profit=state.balance-STARTING_BALANCE;
+    elements.profit.textContent=`${profit>=0?"+":""}${money(profit)} EC`;
+    elements.profit.className=profit>0?"positive":profit<0?"negative":"";
+  }
+
+  function renderWallet(){
+    elements.balances.forEach(node=>node.textContent=money(state.balance));
+    elements.bailout.classList.toggle("show",state.balance<50);
+    elements.bailoutButton.disabled=state.balance>=50;
+  }
+
+  function render(){
+    renderWallet();
+    renderMetrics();
+    renderGames();
+    renderMyPicks();
+    renderLeaderboards();
+    renderHistory();
+    renderPrototype();
+  }
+
+  function openBet(gameId,selection){
+    const game=gameById(gameId);
+    if(!game || pickForGame(gameId) || state.results[gameId] || isGameLocked(game)){
+      if(game && isGameLocked(game)) toast("Picks are locked because this event has started.");
+      return;
+    }
+
+    activeBet={gameId,selection,wager:Math.min(50,maxWager())};
+    const max=maxWager();
+
+    elements.selectedTeam.innerHTML=`
+      ${logoMarkup(game,selection)}
+      <div><strong>${teamName(game,selection)}</strong><small>${game.awayShort} vs ${game.homeShort} · ${game.start}</small></div>
+    `;
+    elements.modalBalance.textContent=money(state.balance);
+    elements.modalMax.textContent=money(max);
+    elements.customWager.value=activeBet.wager>=MIN_WAGER?activeBet.wager:"";
+    elements.betError.textContent="";
+    elements.backdrop.classList.add("open");
+    document.body.style.overflow="hidden";
+    updateBetPreview();
+    elements.customWager.focus();
+  }
+
+  function closeBet(){
+    elements.backdrop.classList.remove("open");
+    document.body.style.overflow="";
+    activeBet=null;
+  }
+
+  function updateBetPreview(){
+    if(!activeBet) return;
+    const wager=Math.floor(Number(elements.customWager.value)||0);
+    activeBet.wager=wager;
+    const max=maxWager();
+    let error="";
+    if(wager && wager<MIN_WAGER) error=`Minimum wager is ${MIN_WAGER} EC.`;
+    if(wager>max) error=`Maximum wager right now is ${max} EC.`;
+    if(wager>state.balance) error="You do not have enough EC.";
+    elements.betError.textContent=error;
+    elements.potentialReturn.textContent=`${money(wager*2)} EC`;
+    elements.lockPick.disabled=Boolean(error)||wager<MIN_WAGER;
+    document.querySelectorAll("[data-wager]").forEach(btn=>{
+      btn.classList.toggle("active",Number(btn.dataset.wager)===wager);
+      btn.disabled=Number(btn.dataset.wager)>max;
+    });
+  }
+
+  function lockPick(){
+    if(!activeBet) return;
+    const game=gameById(activeBet.gameId);
+    const wager=Math.floor(Number(activeBet.wager)||0);
+    const max=maxWager();
+
+    if(wager<MIN_WAGER || wager>max || wager>state.balance){
+      updateBetPreview();
+      return;
+    }
+
+    const pick={
+      id:"pick-"+Date.now(),
+      gameId:activeBet.gameId,
+      selection:activeBet.selection,
+      wager,
+      status:"pending",
+      createdAt:Date.now(),
+      game:{
+        id:game.id,
+        sport:game.sport,
+        away:game.away,
+        awayShort:game.awayShort,
+        awayLogo:game.awayLogo||"",
+        home:game.home,
+        homeShort:game.homeShort,
+        homeLogo:game.homeLogo||"",
+        poster:game.poster||"",
+        start:game.start
+      }
+    };
+
+    state.balance-=wager;
+    state.picks.push(pick);
+    ledger("wager",-wager,`${teamShort(game,pick.selection)} pick locked`,pick.id);
+    save();
+    closeBet();
+    render();
+    toast(`${teamShort(game,pick.selection)} locked for ${money(wager)} EC.`);
+  }
+
+  function settle(gameId,winner){
+    if(state.results[gameId]) return;
+    const game=gameById(gameId);
+    state.results[gameId]=winner;
+
+    state.picks.filter(p=>p.gameId===gameId && p.status==="pending").forEach(pick=>{
+      pick.settledAt=Date.now();
+      if(pick.selection===winner){
+        pick.status="won";
+        const returnAmount=pick.wager*2;
+        state.balance+=returnAmount;
+        ledger("payout",returnAmount,`${teamShort(game,pick.selection)} winning payout`,pick.id);
+      }else{
+        pick.status="lost";
+      }
+    });
+
+    save();
+    render();
+    toast(`${teamShort(game,winner)} marked winner. Picks settled.`);
+  }
+
+  function voidGame(gameId){
+    if(state.results[gameId]) return;
+    const game=gameById(gameId);
+    state.results[gameId]="void";
+
+    state.picks.filter(p=>p.gameId===gameId && p.status==="pending").forEach(pick=>{
+      pick.status="refunded";
+      pick.settledAt=Date.now();
+      state.balance+=pick.wager;
+      ledger("refund",pick.wager,`${game.awayShort} vs ${game.homeShort} void refund`,pick.id);
+    });
+
+    save();
+    render();
+    toast(`${game.awayShort} vs ${game.homeShort} voided and refunded.`);
+  }
+
+  function claimBailout(){
+    if(state.balance>=50) return;
+    state.balance+=BAILOUT_AMOUNT;
+    state.bailouts=(state.bailouts||0)+1;
+    ledger("bailout",BAILOUT_AMOUNT,`EastCoin bailout #${state.bailouts}`);
+    save();
+    render();
+    toast(`Bailout claimed: +${BAILOUT_AMOUNT} EC.`);
+  }
+
+  function switchTab(tab){
+    document.querySelectorAll(".tab").forEach(btn=>btn.classList.toggle("active",btn.dataset.tab===tab));
+    document.querySelectorAll(".panel").forEach(panel=>panel.classList.toggle("active",panel.dataset.panel===tab));
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+
+  document.addEventListener("click",event=>{
+    const pick=event.target.closest("[data-pick]");
+    if(pick){
+      openBet(pick.dataset.pick,pick.dataset.selection);
+      return;
+    }
+
+    const tab=event.target.closest("[data-tab]");
+    if(tab){
+      switchTab(tab.dataset.tab);
+      return;
+    }
+
+    const jump=event.target.closest("[data-tab-jump]");
+    if(jump){
+      switchTab(jump.dataset.tabJump);
+      return;
+    }
+
+    const quick=event.target.closest("[data-wager]");
+    if(quick){
+      elements.customWager.value=quick.dataset.wager;
+      updateBetPreview();
+      return;
+    }
+
+    const settleButton=event.target.closest("[data-settle]");
+    if(settleButton){
+      settle(settleButton.dataset.settle,settleButton.dataset.winner);
+      return;
+    }
+
+    const voidButton=event.target.closest("[data-void]");
+    if(voidButton){
+      voidGame(voidButton.dataset.void);
+    }
+  });
+
+  elements.customWager.addEventListener("input",updateBetPreview);
+  elements.lockPick.addEventListener("click",lockPick);
+  elements.closeBet.addEventListener("click",closeBet);
+  elements.backdrop.addEventListener("click",event=>{
+    if(event.target===elements.backdrop) closeBet();
+  });
+  elements.bailoutButton.addEventListener("click",claimBailout);
+  elements.reset.addEventListener("click",()=>{
+    if(!confirm("Reset all mock picks, EC, results, and history?")) return;
+    localStorage.removeItem(STORAGE_KEY);
+    state=defaultState();
+    save();
+    render();
+    toast("Prototype reset to 1,000 EC.");
+  });
+  document.addEventListener("keydown",event=>{
+    if(event.key==="Escape" && elements.backdrop.classList.contains("open")) closeBet();
+  });
+
+  render();
+  loadStreamedGames();
+})();
+</script>
+</body>
+</html>
