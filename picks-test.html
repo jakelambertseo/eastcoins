@@ -920,6 +920,367 @@ h1{font-size:2.25rem}
   .prediction-copy strong{font-size:.78rem}
 }
 
+
+/* ================================================================
+   PICKS V5 — OVERFLOW FIXES + LOCKED-PICK CELEBRATION
+   ================================================================ */
+
+/* Defensive wrapping for rank/tier and EC values. */
+.stake-card,
+.stake-card > *,
+.wallet-card,
+.wallet-card > *,
+.metric,
+.metric > *,
+.prediction-ticket,
+.prediction-ticket > span,
+.rank-copy,
+.row-copy,
+.row-value{
+  min-width:0
+}
+.stake-card strong,
+.stake-card small,
+#stakeTier,
+#stakeTierCopy,
+.metric strong,
+.metric small{
+  max-width:100%;
+  overflow-wrap:anywhere;
+  word-break:normal
+}
+.wallet-foot{
+  flex-wrap:wrap;
+  align-items:center
+}
+.wallet-foot > span{
+  min-width:0;
+  max-width:100%;
+  overflow-wrap:anywhere
+}
+.wallet-foot [data-profit]{
+  white-space:nowrap
+}
+.prediction-ticket strong,
+.prediction-ticket small{
+  display:block;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.prediction-footer{
+  min-width:0
+}
+.prediction-footer > *{
+  min-width:0
+}
+/*
+  V4 already repeats the ticket state in the prediction footer.
+  Hide the older absolute status pill so "Pending · 50 EC" can never
+  overlap the compact prediction card.
+*/
+.game-status{
+  display:none !important
+}
+.section-head-right{
+  max-width:48%;
+  text-align:right;
+  line-height:1.35;
+  overflow-wrap:anywhere
+}
+
+/* ---------------------------------------------------------------
+   Casino-style locked pick celebration.
+   --------------------------------------------------------------- */
+.lock-celebration{
+  position:fixed;
+  inset:0;
+  z-index:10000;
+  display:grid;
+  place-items:center;
+  padding:18px;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 50% 44%,rgba(242,196,0,.12),transparent 28%),
+    rgba(0,0,0,.78);
+  backdrop-filter:blur(9px);
+  transition:opacity .18s ease,visibility .18s ease
+}
+.lock-celebration.open{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto
+}
+.lock-celebration-card{
+  position:relative;
+  width:min(470px,100%);
+  overflow:hidden;
+  border:1px solid rgba(242,196,0,.44);
+  border-radius:18px;
+  padding:22px 20px 18px;
+  color:#f8f1e4;
+  text-align:center;
+  background:
+    radial-gradient(circle at 50% -15%,rgba(242,196,0,.20),transparent 36%),
+    radial-gradient(circle at 0% 100%,rgba(173,9,50,.22),transparent 42%),
+    linear-gradient(145deg,#14090d,#050505 60%);
+  box-shadow:
+    0 34px 100px rgba(0,0,0,.76),
+    0 0 0 1px rgba(173,9,50,.25),
+    0 0 44px rgba(242,196,0,.09);
+  transform:scale(.88) translateY(14px);
+  transition:transform .26s cubic-bezier(.2,.9,.25,1.2)
+}
+.lock-celebration.open .lock-celebration-card{
+  transform:scale(1) translateY(0)
+}
+.lock-celebration-card:before,
+.lock-celebration-card:after{
+  content:"";
+  position:absolute;
+  top:-70%;
+  width:76px;
+  height:240%;
+  opacity:.18;
+  pointer-events:none;
+  background:linear-gradient(90deg,transparent,#ffe978,transparent);
+  transform:rotate(28deg);
+  animation:ec-lock-sweep 1.8s ease-in-out infinite
+}
+.lock-celebration-card:before{left:-28%}
+.lock-celebration-card:after{
+  right:-30%;
+  animation-delay:.55s
+}
+@keyframes ec-lock-sweep{
+  0%,20%{transform:translateX(-120px) rotate(28deg);opacity:0}
+  40%{opacity:.20}
+  72%,100%{transform:translateX(620px) rotate(28deg);opacity:0}
+}
+
+.lock-celebration-logo{
+  position:relative;
+  z-index:2;
+  width:58px;
+  height:58px;
+  margin:0 auto 10px;
+  object-fit:contain;
+  filter:
+    drop-shadow(0 7px 14px rgba(0,0,0,.5))
+    drop-shadow(0 0 12px rgba(242,196,0,.18))
+}
+.lock-celebration-kicker{
+  position:relative;
+  z-index:2;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 9px;
+  border:1px solid rgba(242,196,0,.20);
+  border-radius:999px;
+  color:#f4d26d;
+  background:rgba(242,196,0,.055);
+  font-size:.66rem;
+  font-weight:950;
+  letter-spacing:.10em;
+  text-transform:uppercase
+}
+.lock-celebration h2{
+  position:relative;
+  z-index:2;
+  margin:10px 0 2px;
+  color:#fff5d0;
+  font-size:1.75rem;
+  line-height:1;
+  letter-spacing:-.04em;
+  text-shadow:0 2px 16px rgba(242,196,0,.16)
+}
+.lock-celebration-sub{
+  position:relative;
+  z-index:2;
+  margin:5px 0 13px;
+  color:#a89d91;
+  font-size:.82rem;
+  font-weight:750
+}
+.lock-celebration-team{
+  position:relative;
+  z-index:2;
+  display:grid;
+  grid-template-columns:54px minmax(0,1fr);
+  gap:10px;
+  align-items:center;
+  padding:10px 11px;
+  border:1px solid rgba(255,255,255,.075);
+  border-radius:11px;
+  background:rgba(6,6,6,.76);
+  text-align:left
+}
+.lock-team-logo{
+  width:54px;
+  height:54px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border:1px solid rgba(242,196,0,.16);
+  border-radius:12px;
+  background:#fff
+}
+.lock-team-logo img{
+  width:82%;
+  height:82%;
+  object-fit:contain
+}
+.lock-team-logo span{
+  color:#101010;
+  font-size:.72rem;
+  font-weight:1000
+}
+.lock-team-copy strong{
+  display:block;
+  overflow:hidden;
+  color:#f6ecdd;
+  font-size:.94rem;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.lock-team-copy small{
+  display:block;
+  margin-top:3px;
+  color:#877d73;
+  font-size:.67rem
+}
+.lock-celebration-stats{
+  position:relative;
+  z-index:2;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:9px
+}
+.lock-celebration-stat{
+  min-width:0;
+  padding:9px 10px;
+  border:1px solid rgba(255,255,255,.065);
+  border-radius:9px;
+  background:rgba(5,5,5,.72)
+}
+.lock-celebration-stat span{
+  display:block;
+  color:#766d64;
+  font-size:.59rem;
+  font-weight:900;
+  letter-spacing:.06em;
+  text-transform:uppercase
+}
+.lock-celebration-stat strong{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  margin-top:4px;
+  min-width:0;
+  color:#ffe58a;
+  font-size:.89rem;
+  white-space:nowrap
+}
+.lock-celebration-actions{
+  position:relative;
+  z-index:2;
+  margin-top:11px
+}
+.lock-celebration-dismiss{
+  width:100%;
+  min-height:45px;
+  border:1px solid rgba(242,196,0,.32);
+  border-radius:9px;
+  color:#130f00;
+  background:linear-gradient(180deg,#ffd83e,#e5b500);
+  font-size:.76rem;
+  font-weight:1000;
+  box-shadow:0 8px 22px rgba(0,0,0,.28)
+}
+.lock-celebration-dismiss:hover{
+  background:#ffe064
+}
+.lock-celebration-note{
+  position:relative;
+  z-index:2;
+  display:block;
+  margin-top:8px;
+  color:#625b55;
+  font-size:.57rem
+}
+
+/* Animated fake EastCoin chips bursting around the card. */
+.lock-chip{
+  position:absolute;
+  z-index:1;
+  left:50%;
+  top:48%;
+  width:34px;
+  height:34px;
+  border:2px dashed rgba(242,196,0,.7);
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  opacity:0;
+  color:#ffd858;
+  background:#16100b;
+  font-size:.53rem;
+  font-weight:1000;
+  box-shadow:0 4px 14px rgba(0,0,0,.4);
+  animation:ec-chip-burst .95s cubic-bezier(.15,.65,.2,1) forwards
+}
+.lock-chip img{
+  width:75%;
+  height:75%;
+  object-fit:contain
+}
+@keyframes ec-chip-burst{
+  0%{
+    opacity:0;
+    transform:translate(-50%,-50%) scale(.25) rotate(0)
+  }
+  18%{opacity:1}
+  100%{
+    opacity:0;
+    transform:
+      translate(
+        calc(-50% + var(--chip-x)),
+        calc(-50% + var(--chip-y))
+      )
+      scale(.92)
+      rotate(var(--chip-r))
+  }
+}
+
+@media(max-width:520px){
+  .lock-celebration{
+    padding:10px
+  }
+  .lock-celebration-card{
+    padding:19px 14px 15px;
+    border-radius:15px
+  }
+  .lock-celebration h2{
+    font-size:1.5rem
+  }
+  .lock-celebration-team{
+    grid-template-columns:48px minmax(0,1fr)
+  }
+  .lock-team-logo{
+    width:48px;
+    height:48px
+  }
+  .lock-celebration-stat strong{
+    font-size:.80rem
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1082,6 +1443,50 @@ h1{font-size:2.25rem}
   </section>
 </div>
 
+
+<div class="lock-celebration" id="lockCelebration" aria-hidden="true">
+  <section class="lock-celebration-card" role="dialog" aria-modal="true" aria-labelledby="lockCelebrationTitle">
+    <div id="lockChipBurst" aria-hidden="true"></div>
+
+    <img class="lock-celebration-logo" src="assets/eastcoins-logo.webp" alt="EastCoin">
+    <div class="lock-celebration-kicker">✓ Ticket Confirmed</div>
+
+    <h2 id="lockCelebrationTitle">Good luck!</h2>
+    <p class="lock-celebration-sub">Your pick is locked!</p>
+
+    <div class="lock-celebration-team">
+      <div class="lock-team-logo" id="lockCelebrationTeamLogo"></div>
+      <div class="lock-team-copy">
+        <strong id="lockCelebrationTeam">Team</strong>
+        <small id="lockCelebrationMatchup">Matchup</small>
+      </div>
+    </div>
+
+    <div class="lock-celebration-stats">
+      <div class="lock-celebration-stat">
+        <span>Fake EastCoin Wager</span>
+        <strong>
+          <img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true">
+          <span id="lockCelebrationWager">0 EC</span>
+        </strong>
+      </div>
+
+      <div class="lock-celebration-stat">
+        <span>Potential Return</span>
+        <strong>
+          <img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true">
+          <span id="lockCelebrationReturn">0 EC</span>
+        </strong>
+      </div>
+    </div>
+
+    <div class="lock-celebration-actions">
+      <button class="lock-celebration-dismiss" id="lockCelebrationDismiss" type="button">Let It Ride</button>
+      <small class="lock-celebration-note">Virtual EastCoins only · no cash value</small>
+    </div>
+  </section>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="assets/eastcoins-ppv-api.js?v=ppv2"></script>
@@ -1192,11 +1597,20 @@ h1{font-size:2.25rem}
     riskFill:document.getElementById("riskFill"),
     riskCopy:document.getElementById("riskCopy"),
     matchupPot:document.getElementById("matchupPot"),
-    potentialReturnValue:document.getElementById("potentialReturnValue")
+    potentialReturnValue:document.getElementById("potentialReturnValue"),
+    lockCelebration:document.getElementById("lockCelebration"),
+    lockCelebrationTeamLogo:document.getElementById("lockCelebrationTeamLogo"),
+    lockCelebrationTeam:document.getElementById("lockCelebrationTeam"),
+    lockCelebrationMatchup:document.getElementById("lockCelebrationMatchup"),
+    lockCelebrationWager:document.getElementById("lockCelebrationWager"),
+    lockCelebrationReturn:document.getElementById("lockCelebrationReturn"),
+    lockCelebrationDismiss:document.getElementById("lockCelebrationDismiss"),
+    lockChipBurst:document.getElementById("lockChipBurst")
   };
 
   let activeBet = null;
   let toastTimer = 0;
+  let lockCelebrationTimer = 0;
 
   function defaultState(){
     return {
@@ -2090,6 +2504,82 @@ h1{font-size:2.25rem}
     });
   }
 
+  function dismissLockCelebration(){
+    clearTimeout(lockCelebrationTimer);
+    lockCelebrationTimer=0;
+
+    if(!elements.lockCelebration)return;
+
+    elements.lockCelebration.classList.remove("open");
+    elements.lockCelebration.setAttribute("aria-hidden","true");
+  }
+
+  function burstLockedPickChips(){
+    if(!elements.lockChipBurst)return;
+
+    elements.lockChipBurst.innerHTML="";
+    const total=18;
+
+    for(let i=0;i<total;i++){
+      const chip=document.createElement("span");
+      chip.className="lock-chip";
+
+      const angle=(Math.PI*2*i/total)+(Math.random()*.22);
+      const distance=105+Math.random()*155;
+
+      chip.style.setProperty("--chip-x",`${Math.cos(angle)*distance}px`);
+      chip.style.setProperty("--chip-y",`${Math.sin(angle)*distance}px`);
+      chip.style.setProperty("--chip-r",`${Math.round((Math.random()-.5)*720)}deg`);
+      chip.style.animationDelay=`${Math.random()*.16}s`;
+
+      if(i%3===0){
+        chip.innerHTML='<img src="assets/eastcoins-logo.webp" alt="">';
+      }else{
+        chip.textContent="EC";
+      }
+
+      elements.lockChipBurst.appendChild(chip);
+      window.setTimeout(()=>chip.remove(),1300);
+    }
+  }
+
+  function showLockCelebration(game,pick,wager){
+    if(!elements.lockCelebration || !game || !pick)return;
+
+    const selection=pick.selection;
+    const name=teamName(game,selection);
+    const short=teamShort(game,selection);
+    const logo=selection==="away" ? game.awayLogo : game.homeLogo;
+    const opponent=teamName(game,selection==="away"?"home":"away");
+
+    elements.lockCelebrationTeam.textContent=name;
+    elements.lockCelebrationMatchup.textContent=`${short} over ${opponent}`;
+    elements.lockCelebrationWager.textContent=`${money(wager)} EC`;
+    elements.lockCelebrationReturn.textContent=`${money(wager*2)} EC`;
+
+    elements.lockCelebrationTeamLogo.innerHTML=logo
+      ? `<img src="${logo}" alt="" loading="eager" decoding="async">`
+      : `<span>${initials(name)}</span>`;
+
+    clearTimeout(lockCelebrationTimer);
+    elements.lockCelebration.classList.remove("open");
+    elements.lockCelebration.setAttribute("aria-hidden","false");
+
+    /*
+      Force a fresh entrance animation even when locking several tickets
+      during one prototype session.
+    */
+    void elements.lockCelebration.offsetWidth;
+    elements.lockCelebration.classList.add("open");
+
+    burstLockedPickChips();
+
+    lockCelebrationTimer=window.setTimeout(
+      dismissLockCelebration,
+      3300
+    );
+  }
+
   function lockPick(){
     if(!activeBet) return;
     const game=gameById(activeBet.gameId);
@@ -2136,7 +2626,7 @@ h1{font-size:2.25rem}
     save();
     closeBet();
     render();
-    toast(`${teamShort(game,pick.selection)} locked for ${money(wager)} EC.`);
+    showLockCelebration(game,pick,wager);
   }
 
   function launchConfetti(){
@@ -2280,6 +2770,14 @@ h1{font-size:2.25rem}
   elements.backdrop.addEventListener("click",event=>{
     if(event.target===elements.backdrop) closeBet();
   });
+  elements.lockCelebrationDismiss?.addEventListener("click",dismissLockCelebration);
+
+  elements.lockCelebration?.addEventListener("click",event=>{
+    if(event.target===elements.lockCelebration){
+      dismissLockCelebration();
+    }
+  });
+
   elements.bailoutButton.addEventListener("click",claimBailout);
   elements.reset.addEventListener("click",()=>{
     if(!confirm("Reset all mock picks, EC, results, and history?")) return;
@@ -2290,7 +2788,14 @@ h1{font-size:2.25rem}
     toast("Prototype reset to 1,000 EC.");
   });
   document.addEventListener("keydown",event=>{
-    if(event.key==="Escape" && elements.backdrop.classList.contains("open")) closeBet();
+    if(event.key!=="Escape")return;
+
+    if(elements.lockCelebration?.classList.contains("open")){
+      dismissLockCelebration();
+      return;
+    }
+
+    if(elements.backdrop.classList.contains("open"))closeBet();
   });
 
   render();
