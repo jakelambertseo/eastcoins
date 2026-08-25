@@ -1595,6 +1595,719 @@ h1{font-size:2.25rem}
   }
 }
 
+
+/* ================================================================
+   PICKS V8 — EASTCOIN COMMUNITY ODDS
+   ================================================================ */
+.prediction-row{
+  grid-template-columns:40px minmax(0,1fr) 72px 22px
+}
+.prediction-copy small{
+  line-height:1.25
+}
+.prediction-odds{
+  min-width:68px;
+  text-align:right
+}
+.prediction-odds b{
+  display:block;
+  color:#07151a;
+  font-size:1.03rem;
+  line-height:1;
+  letter-spacing:-.035em
+}
+.prediction-odds span{
+  display:block;
+  margin-top:4px;
+  font-size:.54rem;
+  line-height:1.05;
+  font-weight:1000;
+  letter-spacing:.035em;
+  text-transform:uppercase
+}
+.prediction-odds.value b{
+  color:#9b162d
+}
+.prediction-odds.value span{
+  color:#9b162d
+}
+.prediction-odds.favorite b{
+  color:#123e47
+}
+.prediction-odds.favorite span{
+  color:#315d65
+}
+.prediction-odds.fallback b{
+  color:#5b5147
+}
+.prediction-odds.fallback span{
+  color:#6a6057
+}
+.community-odds-label{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  margin-top:4px;
+  color:#4a656c;
+  font-size:.57rem;
+  font-weight:900
+}
+.community-odds-label:before{
+  content:"";
+  width:5px;
+  height:5px;
+  flex:0 0 5px;
+  border-radius:50%;
+  background:#0e7d8f
+}
+.prediction-row.is-underdog{
+  border-color:#cf8e55;
+  background:
+    linear-gradient(180deg,rgba(255,244,220,.99),rgba(231,215,193,.99))
+}
+.prediction-row.is-underdog:hover:not(:disabled){
+  border-color:#b51b36;
+  box-shadow:0 5px 16px rgba(141,27,47,.17)
+}
+.prediction-row.is-underdog .prediction-check{
+  border-color:#8e2537
+}
+.underdog-ribbon{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  margin-left:4px;
+  padding:2px 5px;
+  border-radius:999px;
+  color:#a61731;
+  background:rgba(166,23,49,.07);
+  border:1px solid rgba(166,23,49,.14);
+  font-size:.48rem;
+  font-weight:1000;
+  letter-spacing:.04em;
+  text-transform:uppercase
+}
+.market-odds-summary{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin:0 9px 8px
+}
+.market-side{
+  min-width:0;
+  padding:7px 8px;
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:7px;
+  background:#0a1012
+}
+.market-side span{
+  display:block;
+  color:#738990;
+  font-size:.53rem;
+  font-weight:900;
+  text-transform:uppercase
+}
+.market-side strong{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  margin-top:3px;
+  color:#e8edf0;
+  font-size:.64rem
+}
+.market-side.underdog{
+  border-color:rgba(242,196,0,.18);
+  background:linear-gradient(135deg,rgba(173,9,50,.10),transparent),#0b0b0b
+}
+.market-side.underdog strong{
+  color:#ffd977
+}
+
+.community-odds-preview{
+  margin-top:9px;
+  padding:10px;
+  border:1px solid rgba(242,196,0,.16);
+  border-radius:9px;
+  background:
+    linear-gradient(135deg,rgba(173,9,50,.07),transparent 46%),
+    #060606
+}
+.community-odds-preview-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:end;
+  gap:10px
+}
+.community-odds-preview-head span{
+  color:#81786f;
+  font-size:.62rem;
+  font-weight:950;
+  letter-spacing:.06em;
+  text-transform:uppercase
+}
+.community-odds-preview-head strong{
+  color:#ffe074;
+  font-size:1.45rem;
+  line-height:1;
+  letter-spacing:-.04em
+}
+.community-odds-preview-note{
+  display:block;
+  margin-top:4px;
+  color:#746b63;
+  font-size:.60rem;
+  line-height:1.35
+}
+.projected-pool{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-top:8px
+}
+.projected-pool-side{
+  padding:7px 8px;
+  border:1px solid rgba(255,255,255,.055);
+  border-radius:7px;
+  background:#090808
+}
+.projected-pool-side span{
+  display:block;
+  color:#776f67;
+  font-size:.55rem
+}
+.projected-pool-side strong{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  margin-top:3px;
+  color:#eee4d5;
+  font-size:.66rem
+}
+.projected-pool-side.selected{
+  border-color:rgba(242,196,0,.18)
+}
+.projected-pool-side.selected strong{
+  color:#f3d571
+}
+
+.bet-stat .dynamic-payout{
+  color:#f1d474
+}
+
+.lock-celebration-stats{
+  grid-template-columns:repeat(3,minmax(0,1fr))
+}
+@media(max-width:520px){
+  .lock-celebration-stats{
+    grid-template-columns:1fr 1fr
+  }
+  .lock-celebration-stat.odds-stat{
+    grid-column:1/-1
+  }
+}
+
+
+/* ================================================================
+   PICKS V9 — COMPACT ODDS STATUS + MARKET ACTION BAR
+   ================================================================ */
+
+/* The odds multiplier remains prominent; redundant explanatory line is gone. */
+.community-odds-label{
+  display:none !important
+}
+
+.prediction-head{
+  align-items:center
+}
+.prediction-head-status{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:6px;
+  min-width:0
+}
+.prediction-status{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.market-live-tag{
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:3px 6px;
+  border:1px solid rgba(81,205,122,.28);
+  border-radius:999px;
+  color:#86ecaa;
+  background:rgba(45,153,82,.11);
+  font-size:.51rem;
+  font-weight:1000;
+  letter-spacing:.055em;
+  line-height:1;
+  text-transform:uppercase
+}
+.market-live-tag:before{
+  content:"";
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:#54dd83;
+  box-shadow:0 0 7px rgba(84,221,131,.45)
+}
+.market-live-tag.waiting{
+  border-color:rgba(242,196,0,.22);
+  color:#e8ca72;
+  background:rgba(242,196,0,.055)
+}
+.market-live-tag.waiting:before{
+  background:#d4ad36;
+  box-shadow:none
+}
+
+/* Split pool bar. Width = share of EastCoins. Green intensity rises with share. */
+.market-action{
+  margin:0 9px 8px;
+  padding:8px 8px 7px;
+  border:1px solid rgba(255,255,255,.055);
+  border-radius:8px;
+  background:#080b0b
+}
+.market-action-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:6px
+}
+.market-action-head span{
+  color:#738079;
+  font-size:.54rem;
+  font-weight:900;
+  letter-spacing:.045em;
+  text-transform:uppercase
+}
+.market-action-head strong{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  color:#c7d4cc;
+  font-size:.58rem
+}
+.market-action-track{
+  position:relative;
+  display:flex;
+  width:100%;
+  height:19px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.065);
+  border-radius:5px;
+  background:#101514
+}
+.market-action-side{
+  position:relative;
+  display:flex;
+  align-items:center;
+  min-width:3px;
+  overflow:hidden;
+  transition:width .2s ease,background-color .2s ease
+}
+.market-action-side + .market-action-side{
+  border-left:1px solid rgba(0,0,0,.32)
+}
+.market-action-side span{
+  position:relative;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  min-width:max-content;
+  padding:0 6px;
+  color:#07130b;
+  font-size:.54rem;
+  line-height:1;
+  font-weight:1000;
+  text-shadow:0 1px rgba(255,255,255,.16)
+}
+.market-action-side.home{
+  justify-content:flex-end
+}
+.market-action-side.home span{
+  margin-left:auto
+}
+
+/*
+  Share-strength levels:
+  0–24%  = muted/dark green
+  25–49% = medium green
+  50–74% = strong green
+  75–100%= bright casino-board green
+*/
+.market-action-side.strength-1{
+  background:#24422e
+}
+.market-action-side.strength-2{
+  background:#39744b
+}
+.market-action-side.strength-3{
+  background:#4fae6c
+}
+.market-action-side.strength-4{
+  background:#66d98a;
+  box-shadow:inset 0 0 13px rgba(184,255,203,.20)
+}
+.market-action-side.strength-4 span{
+  color:#021807
+}
+.market-action-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:5px;
+  color:#68736c;
+  font-size:.51rem;
+  font-weight:850
+}
+.market-action-footer b{
+  color:#93a89b;
+  font-size:.53rem
+}
+.market-action-footer .value-side{
+  color:#e1bc66
+}
+
+/* The older pair of pool boxes is replaced by the single split bar. */
+.market-odds-summary{
+  display:none !important
+}
+
+@media(max-width:640px){
+  .prediction-head{
+    gap:5px
+  }
+  .prediction-head-status{
+    gap:4px
+  }
+  .prediction-status{
+    max-width:102px;
+    font-size:.54rem
+  }
+  .market-live-tag{
+    padding:3px 5px;
+    font-size:.47rem
+  }
+  .market-action-side span{
+    padding:0 4px;
+    font-size:.49rem
+  }
+}
+
+
+/* ================================================================
+   PICKS V10 — CLEAN PREDICTION CARDS
+   ================================================================ */
+
+/* Give cards more breathing room. */
+.games{
+  grid-auto-columns:minmax(320px,320px)
+}
+.game-card{
+  border-color:rgba(91,174,190,.32);
+  background:
+    radial-gradient(circle at 100% 0%,rgba(64,214,255,.05),transparent 36%),
+    linear-gradient(180deg,#111416,#070808);
+}
+
+/* Slimmer card header. */
+.prediction-shell{
+  grid-template-columns:16px minmax(0,1fr)
+}
+.prediction-rail{
+  background:linear-gradient(180deg,#0c7587,#074957)
+}
+.prediction-head{
+  min-height:39px;
+  padding:8px 10px;
+  background:rgba(7,9,10,.92)
+}
+.prediction-sport{
+  font-size:.72rem
+}
+.prediction-status{
+  max-width:122px;
+  font-size:.57rem
+}
+.market-live-tag{
+  padding:3px 6px;
+  font-size:.48rem
+}
+
+/* Main team rows — only team, payout and Pick. */
+.prediction-market{
+  gap:8px;
+  padding:10px
+}
+.prediction-row{
+  grid-template-columns:44px minmax(0,1fr) auto auto;
+  gap:10px;
+  min-height:66px;
+  padding:9px 10px;
+  border:1px solid rgba(154,205,214,.55);
+  border-radius:8px;
+  background:linear-gradient(180deg,#edf4f5,#d8e6e9);
+  transition:
+    transform .14s ease,
+    border-color .14s ease,
+    box-shadow .14s ease
+}
+.prediction-row:hover:not(:disabled){
+  transform:translateY(-1px);
+  border-color:#167a89;
+  box-shadow:0 6px 15px rgba(0,0,0,.14)
+}
+.prediction-row.selected{
+  border-color:#e1b82f;
+  box-shadow:
+    inset 0 0 0 2px rgba(225,184,47,.34),
+    0 6px 15px rgba(0,0,0,.16)
+}
+.prediction-row.is-underdog{
+  border-color:rgba(210,168,82,.78);
+  background:linear-gradient(180deg,#f6f0df,#e7dcc0)
+}
+
+.prediction-teamlogo{
+  width:42px;
+  height:42px;
+  border-radius:8px
+}
+.prediction-copy strong{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+  color:#0b1518;
+  font-size:.87rem;
+  line-height:1.08
+}
+.prediction-copy small,
+.community-odds-label{
+  display:none !important
+}
+
+/* Make the multiplier the main hook. */
+.prediction-odds{
+  min-width:67px;
+  text-align:right
+}
+.prediction-odds b{
+  color:#0a2830;
+  font-size:1.30rem;
+  line-height:.95;
+  letter-spacing:-.055em
+}
+.prediction-odds span{
+  display:none
+}
+.prediction-odds.value b{
+  color:#9d1730
+}
+.prediction-odds.favorite b{
+  color:#123c45
+}
+.prediction-odds.fallback b{
+  color:#574e47
+}
+
+/* One small underdog/value tag only. */
+.underdog-ribbon{
+  margin:0;
+  padding:2px 6px;
+  border:1px solid rgba(160,31,52,.16);
+  border-radius:999px;
+  color:#9e1931;
+  background:rgba(160,31,52,.06);
+  font-size:.48rem;
+  line-height:1.15;
+  white-space:nowrap
+}
+
+/* Replace checkbox-look with a clear Pick pill. */
+.prediction-check{
+  width:auto;
+  min-width:48px;
+  height:30px;
+  display:grid;
+  place-items:center;
+  padding:0 8px;
+  border:1px solid rgba(13,81,93,.25);
+  border-radius:7px;
+  color:#123b43;
+  background:rgba(255,255,255,.68);
+  font-size:.57rem;
+  font-weight:1000;
+  letter-spacing:.04em;
+  text-transform:uppercase
+}
+.prediction-check:before{
+  content:"PICK"
+}
+.prediction-row.selected .prediction-check{
+  border-color:#b68a13;
+  color:#3c2c00;
+  background:#f1cc53;
+  box-shadow:none
+}
+.prediction-row.selected .prediction-check:before{
+  content:"PICKED"
+}
+
+/* Simplified popularity bar: favorite is green, remainder neutral. */
+.market-action{
+  margin:0 10px 10px;
+  padding:0;
+  border:0;
+  background:transparent
+}
+.market-action-head{
+  margin-bottom:5px
+}
+.market-action-head span{
+  color:#6f7b77;
+  font-size:.52rem
+}
+.market-action-head strong{
+  color:#bfc9c3;
+  font-size:.56rem
+}
+.market-action-track{
+  position:relative;
+  height:11px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:999px;
+  background:#1a1d1d
+}
+.market-action-side{
+  display:none
+}
+.market-action-favorite{
+  position:absolute;
+  top:0;
+  bottom:0;
+  border-radius:999px;
+  background:linear-gradient(90deg,#3da35d,#68d98b);
+  box-shadow:inset 0 0 10px rgba(199,255,213,.12)
+}
+.market-action-favorite.away{
+  left:0
+}
+.market-action-favorite.home{
+  right:0
+}
+.market-action-labels{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:5px
+}
+.market-action-labels span{
+  color:#79827e;
+  font-size:.55rem;
+  font-weight:900
+}
+.market-action-labels .is-favorite{
+  color:#6fd28e
+}
+.market-action-labels .is-value{
+  color:#e2bd67
+}
+
+/* Footer now only shows total pool. */
+.prediction-footer{
+  display:block;
+  padding:0 10px 10px
+}
+.prediction-ticket{
+  justify-content:center;
+  color:#6f7a75;
+  font-size:.57rem
+}
+.prediction-ticket strong{
+  color:#a7b4ad;
+  font-size:.58rem;
+  font-weight:850
+}
+.prediction-ticket small{
+  display:none
+}
+.prediction-badge{
+  display:none
+}
+
+/* Clean out legacy pool boxes entirely. */
+.market-odds-summary,
+.market-action-footer{
+  display:none !important
+}
+
+@media(max-width:900px){
+  .games{
+    grid-auto-columns:minmax(292px,292px)
+  }
+}
+@media(max-width:640px){
+  .games{
+    grid-auto-columns:minmax(276px,276px)
+  }
+  .prediction-row{
+    grid-template-columns:40px minmax(0,1fr) auto auto;
+    gap:8px;
+    padding:8px
+  }
+  .prediction-teamlogo{
+    width:38px;
+    height:38px
+  }
+  .prediction-copy strong{
+    font-size:.80rem
+  }
+  .prediction-odds{
+    min-width:60px
+  }
+  .prediction-odds b{
+    font-size:1.17rem
+  }
+  .prediction-check{
+    min-width:43px;
+    padding:0 6px;
+    font-size:.52rem
+  }
+}
+
+
+/* ================================================================
+   PICKS V11 — GAMES BEFORE SEASON STATS
+   ================================================================ */
+.post-games-season-stats{
+  margin-top:18px;
+  padding-top:16px;
+  border-top:1px solid rgba(255,255,255,.055)
+}
+.post-games-season-stats .metrics{
+  margin-bottom:0
+}
+
+@media(max-width:760px){
+  .post-games-season-stats{
+    margin-top:14px;
+    padding-top:13px
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1642,12 +2355,6 @@ h1{font-size:2.25rem}
       <button id="bailoutButton">Claim +250 EC</button>
     </div>
 
-<section class="metrics">
-      <div class="metric"><span>Season Record</span><strong id="record">0–0</strong><small id="accuracy">No settled picks</small></div>
-      <div class="metric"><span>Pending</span><strong id="pendingCount">0</strong><small id="pendingEc">0 EC at risk</small></div>
-      <div class="metric"><span>Current Streak</span><strong id="streak">—</strong><small>Settled picks</small></div>
-      <div class="metric"><span>Season Rank</span><strong id="rank">#4</strong><small>Richest leaderboard</small></div>
-    </section>
 
     <nav class="tabs" aria-label="Picks views">
       <button class="tab active" data-tab="games">Games</button>
@@ -1658,7 +2365,7 @@ h1{font-size:2.25rem}
 
     <section class="panel active" data-panel="games">
       <div class="section-head">
-        <div><h2>Today's Games</h2><p>Winner-only markets · 1:1 payouts · picks lock at start <span class="catalog-source" id="catalogStatus">Loading Streamed branding…</span></p></div>
+        <div><h2>Today's Games</h2><p>Pick a winner · multiplier shows your current payout · final odds lock at game start <span class="catalog-source" id="catalogStatus">Loading Streamed branding…</span></p></div>
         <div class="section-head-right">Min 10 EC · Max 250 EC / 25%</div>
       </div>
       <div class="games" id="games"></div>
@@ -1678,6 +2385,15 @@ h1{font-size:2.25rem}
       <div class="section-head"><div><h2>EC History</h2><p>Every balance change has a ledger entry</p></div></div>
       <div class="list" id="history"></div>
     </section>
+
+    <div class="post-games-season-stats">
+<section class="metrics">
+      <div class="metric"><span>Season Record</span><strong id="record">0–0</strong><small id="accuracy">No settled picks</small></div>
+      <div class="metric"><span>Pending</span><strong id="pendingCount">0</strong><small id="pendingEc">0 EC at risk</small></div>
+      <div class="metric"><span>Current Streak</span><strong id="streak">—</strong><small>Settled picks</small></div>
+      <div class="metric"><span>Season Rank</span><strong id="rank">#4</strong><small>Richest leaderboard</small></div>
+    </section>
+    </div>
 
     <section class="post-games-gamification">
       <div class="post-games-head">
@@ -1738,7 +2454,7 @@ h1{font-size:2.25rem}
       <div class="bet-info">
         <div class="bet-stat"><span class="ec-balance-label"><img class="ec-coin-logo" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"> Balance</span><strong class="ec-coin-inline"><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="modalBalance">0</span> EC</strong></div>
         <div class="bet-stat"><span>Max Wager</span><strong class="ec-coin-inline"><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="modalMax">0</span> EC</strong></div>
-        <div class="bet-stat"><span>Payout</span><strong>1:1</strong></div>
+        <div class="bet-stat"><span>Payout</span><strong class="dynamic-payout" id="modalOddsMode">Community</strong></div>
       </div>
 
       <div class="wager-label"><span>Choose your wager</span><span>Minimum 10 EC</span></div>
@@ -1751,6 +2467,25 @@ h1{font-size:2.25rem}
       <div class="custom"><input id="customWager" type="number" inputmode="numeric" min="10" step="1" placeholder="Custom wager"><span>EC</span></div>
       <div class="error" id="betError"></div>
 
+      <div class="community-odds-preview">
+        <div class="community-odds-preview-head">
+          <span>Projected Community Odds</span>
+          <strong id="projectedOdds">2.00x</strong>
+        </div>
+        <small class="community-odds-preview-note" id="projectedOddsNote">1:1 fallback until both sides have real community action.</small>
+
+        <div class="projected-pool">
+          <div class="projected-pool-side" id="projectedAwayPool">
+            <span id="projectedAwayName">Away</span>
+            <strong><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="projectedAwayValue">0 EC</span></strong>
+          </div>
+          <div class="projected-pool-side" id="projectedHomePool">
+            <span id="projectedHomeName">Home</span>
+            <strong><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="projectedHomeValue">0 EC</span></strong>
+          </div>
+        </div>
+      </div>
+
       <div class="risk-meter">
         <div class="risk-head"><span>Risk level</span><strong id="riskLabel">Low</strong></div>
         <div class="risk-track"><div class="risk-fill" id="riskFill"></div></div>
@@ -1762,7 +2497,7 @@ h1{font-size:2.25rem}
         <strong><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="matchupPot">0</span> EC</strong>
       </div>
 
-      <div class="return"><span>Potential return</span><strong class="ec-coin-inline"><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="potentialReturnValue">0</span> EC</strong></div>
+      <div class="return"><span>Estimated return</span><strong class="ec-coin-inline"><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="potentialReturnValue">0</span> EC</strong></div>
       <button class="lock" id="lockPick">Lock Pick</button>
     </div>
   </section>
@@ -1797,11 +2532,15 @@ h1{font-size:2.25rem}
       </div>
 
       <div class="lock-celebration-stat">
-        <span>Potential Return</span>
+        <span>Estimated Return</span>
         <strong>
           <img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true">
           <span id="lockCelebrationReturn">0 EC</span>
         </strong>
+      </div>
+      <div class="lock-celebration-stat odds-stat">
+        <span>Current Community Odds</span>
+        <strong id="lockCelebrationOdds">2.00x</strong>
       </div>
     </div>
 
@@ -1820,7 +2559,7 @@ h1{font-size:2.25rem}
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "eastcoinPicksV2StreamedBrandingMockup";
+  const STORAGE_KEY = "eastcoinPicksV8CommunityOddsMockup";
   const STARTING_BALANCE = 1000;
   const MIN_WAGER = 10;
   const MAX_FLAT_WAGER = 250;
@@ -1938,7 +2677,17 @@ h1{font-size:2.25rem}
     lockCelebrationDismiss:document.getElementById("lockCelebrationDismiss"),
     lockChipBurst:document.getElementById("lockChipBurst"),
     topRankViewport:document.getElementById("topRankViewport"),
-    topRankTrack:document.getElementById("topRankTrack")
+    topRankTrack:document.getElementById("topRankTrack"),
+    modalOddsMode:document.getElementById("modalOddsMode"),
+    projectedOdds:document.getElementById("projectedOdds"),
+    projectedOddsNote:document.getElementById("projectedOddsNote"),
+    projectedAwayPool:document.getElementById("projectedAwayPool"),
+    projectedHomePool:document.getElementById("projectedHomePool"),
+    projectedAwayName:document.getElementById("projectedAwayName"),
+    projectedHomeName:document.getElementById("projectedHomeName"),
+    projectedAwayValue:document.getElementById("projectedAwayValue"),
+    projectedHomeValue:document.getElementById("projectedHomeValue"),
+    lockCelebrationOdds:document.getElementById("lockCelebrationOdds")
   };
 
   let activeBet = null;
@@ -1996,24 +2745,152 @@ h1{font-size:2.25rem}
     return state.picks.reduce((sum,pick)=>sum+Number(pick.wager||0),0);
   }
 
-  function communityPot(){
+  function marketHash(value){
+    let hash=2166136261;
+    for(const char of String(value||"market")){
+      hash^=char.charCodeAt(0);
+      hash=Math.imul(hash,16777619);
+    }
+    return hash>>>0;
+  }
+
+  function baseCommunityMarket(game){
     /*
-      Fake derived "pot" for visual stakes only. It is NOT a payout pool.
-      Base value + deterministic contribution from the current board.
+      Test-only simulated EastCoin users.
+      Most markets begin with 2–8 community tickets so the community-odds
+      behavior is visible. A few intentionally begin with 0 or 1 ticket so
+      the 1:1 fallback behavior can also be tested.
     */
-    const marketBase=games.reduce((sum,game,index)=>{
-      const split=Array.isArray(game.community)?game.community:[50,50];
-      return sum+520+(index*135)+Math.abs(split[0]-50)*17;
-    },0);
-    return marketBase+totalWagered();
+    const seed=marketHash(`eastcoin-community:${game?.id||"game"}`);
+    let totalBets=2+(seed%7);
+
+    if(seed%13===0){
+      totalBets=0;
+    }else if(seed%11===0){
+      totalBets=1;
+    }
+
+    const split=Array.isArray(game?.community)?game.community:[50,50];
+    let awayCount=0;
+    let homeCount=0;
+
+    if(totalBets===1){
+      if((seed>>>5)%100 < split[0]){
+        awayCount=1;
+      }else{
+        homeCount=1;
+      }
+    }else if(totalBets>=2){
+      awayCount=Math.round(totalBets*(split[0]/100));
+      awayCount=Math.max(1,Math.min(totalBets-1,awayCount));
+      homeCount=totalBets-awayCount;
+    }
+
+    const sumBets=(selection,count)=>{
+      let total=0;
+      for(let i=0;i<count;i++){
+        const sub=marketHash(`${game?.id}:${selection}:${i}`);
+        const wagerSteps=[10,25,50,75,100,125];
+        total+=wagerSteps[sub%wagerSteps.length];
+      }
+      return total;
+    };
+
+    return {
+      away:{count:awayCount,ec:sumBets("away",awayCount)},
+      home:{count:homeCount,ec:sumBets("home",homeCount)}
+    };
+  }
+
+  function communityMarket(game,extraSelection=null,extraWager=0){
+    const base=baseCommunityMarket(game);
+    const market={
+      away:{count:base.away.count,ec:base.away.ec},
+      home:{count:base.home.count,ec:base.home.ec}
+    };
+
+    state.picks
+      .filter(pick=>pick.gameId===game?.id && pick.status!=="refunded")
+      .forEach(pick=>{
+        const side=pick.selection==="away"?"away":"home";
+        market[side].count+=1;
+        market[side].ec+=Number(pick.wager||0);
+      });
+
+    if(extraSelection && Number(extraWager)>0){
+      const side=extraSelection==="away"?"away":"home";
+      market[side].count+=1;
+      market[side].ec+=Number(extraWager);
+    }
+
+    const totalCount=market.away.count+market.home.count;
+    const totalEc=market.away.ec+market.home.ec;
+    const active=
+      totalCount>=2 &&
+      market.away.count>0 &&
+      market.home.count>0 &&
+      market.away.ec>0 &&
+      market.home.ec>0;
+
+    for(const side of ["away","home"]){
+      market[side].share=totalEc>0 ? market[side].ec/totalEc : .5;
+      market[side].multiplier=active
+        ? totalEc/market[side].ec
+        : 2;
+    }
+
+    let underdog=null;
+    if(active && market.away.ec!==market.home.ec){
+      underdog=market.away.ec<market.home.ec ? "away" : "home";
+    }
+
+    return {
+      ...market,
+      totalCount,
+      totalEc,
+      active,
+      underdog
+    };
+  }
+
+  function communityPot(){
+    return games.reduce((sum,game)=>sum+communityMarket(game).totalEc,0);
   }
 
   function matchupCommunityPot(game){
-    const split=Array.isArray(game?.community)?game.community:[50,50];
-    const marketIndex=Math.max(0,games.findIndex(candidate=>candidate.id===game?.id));
-    const base=950+(marketIndex*170)+(Math.abs(split[0]-50)*31);
-    const userPick=state.picks.find(pick=>pick.gameId===game?.id);
-    return base+(userPick?.wager||0);
+    return communityMarket(game).totalEc;
+  }
+
+  function oddsFor(game,selection,extraWager=0){
+    const market=communityMarket(
+      game,
+      extraWager>0 ? selection : null,
+      extraWager
+    );
+
+    const side=selection==="away"?"away":"home";
+
+    return {
+      market,
+      multiplier:market[side].multiplier,
+      share:market[side].share,
+      count:market[side].count,
+      ec:market[side].ec,
+      active:market.active,
+      underdog:market.underdog===side
+    };
+  }
+
+  function estimatedReturn(game,selection,wager,includeProspective=false){
+    const info=oddsFor(
+      game,
+      selection,
+      includeProspective ? Number(wager||0) : 0
+    );
+    return {
+      ...info,
+      returnAmount:Math.round(Number(wager||0)*info.multiplier)
+    };
   }
 
   function riskMeta(wager){
@@ -2305,31 +3182,98 @@ h1{font-size:2.25rem}
     return (game?.sport||"SPORT").toUpperCase();
   }
 
+  function marketStrengthClass(share){
+    const pct=Math.round(Number(share||0)*100);
+    if(pct>=75)return "strength-4";
+    if(pct>=50)return "strength-3";
+    if(pct>=25)return "strength-2";
+    return "strength-1";
+  }
+
+  function marketActionMarkup(game){
+    const market=communityMarket(game);
+    const awayPct=Math.round(market.away.share*100);
+    const homePct=100-awayPct;
+
+    /*
+      Only the most-backed side gets the green fill. The remainder stays
+      neutral, which makes a lopsided 88/12 market instantly readable.
+    */
+    const favorite=
+      awayPct===homePct
+        ? null
+        : awayPct>homePct
+          ? "away"
+          : "home";
+
+    const favoritePct=favorite==="away" ? awayPct : favorite==="home" ? homePct : 50;
+    const favoriteSide=favorite==="away" ? game.awayShort : favorite==="home" ? game.homeShort : "";
+    const valueSide=market.underdog;
+
+    return `
+      <div class="market-action">
+        <div class="market-action-head">
+          <span>Community Picks</span>
+          <strong>${ecLogo("sm")}${money(market.totalEc)} EC in pool</strong>
+        </div>
+
+        <div
+          class="market-action-track"
+          aria-label="${game.awayShort} ${awayPct} percent, ${game.homeShort} ${homePct} percent">
+          ${favorite
+            ? `<span
+                class="market-action-favorite ${favorite}"
+                style="width:${Math.max(2,Math.min(98,favoritePct))}%"
+                title="${favoriteSide} ${favoritePct}%">
+              </span>`
+            : ""}
+        </div>
+
+        <div class="market-action-labels">
+          <span class="${favorite==="away"?"is-favorite":valueSide==="away"?"is-value":""}">
+            ${game.awayShort} ${awayPct}%
+          </span>
+          <span class="${favorite==="home"?"is-favorite":valueSide==="home"?"is-value":""}">
+            ${homePct}% ${game.homeShort}
+          </span>
+        </div>
+      </div>
+    `;
+  }
+
   function choiceButtonMarkup(game,selection,selected,disabled){
     const name=selection==="away" ? game.away : game.home;
-    const short=selection==="away" ? game.awayShort : game.homeShort;
     const src=selection==="away" ? game.awayLogo : game.homeLogo;
-    const publicPct=selection==="away" ? game.community[0] : game.community[1];
-    const odds=seededOdds(game,selection);
     const fallback=initials(name);
+    const info=oddsFor(game,selection);
+
+    const oddsClass=!info.active
+      ? "fallback"
+      : info.underdog
+        ? "value"
+        : "favorite";
 
     return `
       <button
-        class="prediction-row${selected===selection?" selected":""}"
+        class="prediction-row${selected===selection?" selected":""}${info.underdog?" is-underdog":""}"
         data-pick="${game.id}"
         data-selection="${selection}"
         ${disabled?"disabled":""}>
         <span class="prediction-teamlogo${src?" has-image":""}">
           ${src?`<img src="${src}" alt="" loading="lazy" decoding="async" data-pick-team-logo>`:`<span>${fallback}</span>`}
         </span>
+
         <span class="prediction-copy">
-          <strong>${name}</strong>
-          <small>Odds: ${odds} · Public: ${publicPct}%</small>
+          <strong>
+            ${name}
+            ${info.underdog?'<span class="underdog-ribbon">VALUE</span>':""}
+          </strong>
         </span>
-        <span class="prediction-odds">
-          <b>${short}</b>
-          <span>${selected===selection?"Selected":"Pick"}</span>
+
+        <span class="prediction-odds ${oddsClass}">
+          <b>${info.multiplier.toFixed(2)}x</b>
         </span>
+
         <span class="prediction-check" aria-hidden="true"></span>
       </button>
     `;
@@ -2479,8 +3423,8 @@ h1{font-size:2.25rem}
       const badgeClass = locked ? "lock" : (game.popular ? "hot" : "cold");
       const badgeText = locked ? "Locked" : (game.popular ? "Hot board" : "Open");
       const ticketLabel = pick
-        ? `${statusLabel(pick)} · ${money(pick.wager)} EC`
-        : `Community pot ${money(matchupCommunityPot(game))} EC`;
+        ? `${statusLabel(pick)} · ${money(pick.wager)} EC locked`
+        : `${money(matchupCommunityPot(game))} EC total pool`;
 
       return `
         <article class="game-card${locked?" locked":""}${poster?" has-streamed-art":""}">
@@ -2494,13 +3438,17 @@ h1{font-size:2.25rem}
             <div class="prediction-board">
               <div class="prediction-head">
                 <span class="prediction-sport">${sportTicker(game)}</span>
-                <span class="prediction-status ${locked?"locked":""}">${statusText}</span>
+                <span class="prediction-head-status">
+                  <span class="prediction-status ${locked?"locked":""}">${statusText}</span>
+                  <span class="market-live-tag ${communityMarket(game).active?"":"waiting"}">${communityMarket(game).active?"Live":"Waiting"}</span>
+                </span>
               </div>
 
               <div class="prediction-market">
                 ${choiceButtonMarkup(game,"away",selected,Boolean(pick)||locked)}
                 ${choiceButtonMarkup(game,"home",selected,Boolean(pick)||locked)}
               </div>
+              ${marketActionMarkup(game)}
 
               <div class="prediction-footer">
                 <div class="prediction-ticket">
@@ -2545,18 +3493,30 @@ h1{font-size:2.25rem}
     elements.myPicks.innerHTML=sorted.map(pick=>{
       const game=gameById(pick.gameId)||pick.game;
       const cls=pick.status==="won"?"positive":pick.status==="lost"?"negative":"pending-text";
+      const currentEstimate=pick.status==="pending"
+        ? estimatedReturn(game,pick.selection,pick.wager,false)
+        : null;
+      const finalReturn=Number(pick.finalReturn||0);
+      const finalMultiplier=Number(pick.finalMultiplier||0);
+
       const value=pick.status==="won"
-        ? `${ecLogo("sm")}+${money(pick.wager)} EC profit`
+        ? `${ecLogo("sm")}+${money(Math.max(0,finalReturn-pick.wager))} EC profit`
         : pick.status==="lost"
           ? `${ecLogo("sm")}-${money(pick.wager)} EC`
-          : `${ecLogo("sm")}${money(pick.wager*2)} EC return`;
+          : `${ecLogo("sm")}${money(currentEstimate.returnAmount)} EC est. return`;
+
+      const oddsLine=pick.status==="pending"
+        ? `${currentEstimate.multiplier.toFixed(2)}x current community odds`
+        : finalMultiplier
+          ? `${finalMultiplier.toFixed(2)}x final odds`
+          : "1:1 fallback";
       return `
         <article class="pick-row">
           <div class="row-icon">${teamShort(game,pick.selection)}</div>
           <div class="row-copy">
             <strong>${teamName(game,pick.selection)} over ${teamName(game,pick.selection==="away"?"home":"away")}</strong>
             <p>${game.sport} · ${game.awayShort} vs ${game.homeShort}</p>
-            <small>${statusLabel(pick)} · Wagered ${money(pick.wager)} EC</small>
+            <small>${statusLabel(pick)} · Wagered ${money(pick.wager)} EC · ${oddsLine}</small>
           </div>
           <div class="row-value ${cls}">
             <strong>${value}</strong>
@@ -2897,30 +3857,81 @@ h1{font-size:2.25rem}
 
   function updateBetPreview(){
     if(!activeBet) return;
+
     const wager=Math.floor(Number(elements.customWager.value)||0);
     activeBet.wager=wager;
+
     const max=maxWager();
     let error="";
+
     if(wager && wager<MIN_WAGER) error=`Minimum wager is ${MIN_WAGER} EC.`;
     if(wager>max) error=`Maximum wager right now is ${max} EC.`;
     if(wager>state.balance) error="You do not have enough EC.";
+
     elements.betError.textContent=error;
 
+    const game=gameById(activeBet.gameId);
+    const estimate=estimatedReturn(
+      game,
+      activeBet.selection,
+      wager,
+      true
+    );
+    const market=estimate.market;
+
     if(elements.potentialReturnValue){
-      elements.potentialReturnValue.textContent=money(wager*2);
+      elements.potentialReturnValue.textContent=money(estimate.returnAmount);
     }
+
+    if(elements.modalOddsMode){
+      elements.modalOddsMode.textContent=estimate.active
+        ? "Community"
+        : "1:1 fallback";
+    }
+
+    if(elements.projectedOdds){
+      elements.projectedOdds.textContent=`${estimate.multiplier.toFixed(2)}x`;
+    }
+
+    if(elements.projectedOddsNote){
+      elements.projectedOddsNote.textContent=estimate.active
+        ? estimate.underdog
+          ? "Your pick is currently the less-backed side, so the projected payout is higher. Final odds are set when the market locks."
+          : "Your pick is currently the more-backed side. Final odds are set when the market locks."
+        : "1:1 fallback is active until at least two tickets exist and both sides have EastCoin action.";
+    }
+
+    if(elements.projectedAwayName)elements.projectedAwayName.textContent=game.awayShort;
+    if(elements.projectedHomeName)elements.projectedHomeName.textContent=game.homeShort;
+
+    if(elements.projectedAwayValue){
+      elements.projectedAwayValue.textContent=`${money(market.away.ec)} EC · ${Math.round(market.away.share*100)}%`;
+    }
+
+    if(elements.projectedHomeValue){
+      elements.projectedHomeValue.textContent=`${money(market.home.ec)} EC · ${Math.round(market.home.share*100)}%`;
+    }
+
+    elements.projectedAwayPool?.classList.toggle(
+      "selected",
+      activeBet.selection==="away"
+    );
+    elements.projectedHomePool?.classList.toggle(
+      "selected",
+      activeBet.selection==="home"
+    );
 
     const risk=riskMeta(wager);
     if(elements.riskLabel)elements.riskLabel.textContent=risk.label;
     if(elements.riskFill)elements.riskFill.style.width=`${risk.pct}%`;
     if(elements.riskCopy)elements.riskCopy.textContent=risk.copy;
 
-    const game=activeBet ? gameById(activeBet.gameId) : null;
     if(elements.matchupPot){
-      elements.matchupPot.textContent=money(matchupCommunityPot(game));
+      elements.matchupPot.textContent=money(market.totalEc);
     }
 
     elements.lockPick.disabled=Boolean(error)||wager<MIN_WAGER;
+
     document.querySelectorAll("[data-wager]").forEach(btn=>{
       btn.classList.toggle("active",Number(btn.dataset.wager)===wager);
       btn.disabled=Number(btn.dataset.wager)>max;
@@ -2977,8 +3988,14 @@ h1{font-size:2.25rem}
 
     elements.lockCelebrationTeam.textContent=name;
     elements.lockCelebrationMatchup.textContent=`${short} over ${opponent}`;
+    const estimate=estimatedReturn(game,selection,wager,false);
+
     elements.lockCelebrationWager.textContent=`${money(wager)} EC`;
-    elements.lockCelebrationReturn.textContent=`${money(wager*2)} EC`;
+    elements.lockCelebrationReturn.textContent=`${money(estimate.returnAmount)} EC`;
+
+    if(elements.lockCelebrationOdds){
+      elements.lockCelebrationOdds.textContent=`${estimate.multiplier.toFixed(2)}x`;
+    }
 
     elements.lockCelebrationTeamLogo.innerHTML=logo
       ? `<img src="${logo}" alt="" loading="eager" decoding="async">`
@@ -3082,37 +4099,62 @@ h1{font-size:2.25rem}
 
   function settle(gameId,winner){
     if(state.results[gameId]) return;
+
     const game=gameById(gameId);
+    const market=communityMarket(game);
+    const winningSide=winner==="away"?"away":"home";
+    const finalMultiplier=market[winningSide].multiplier;
+
     state.results[gameId]=winner;
 
     let userWon=false;
     let userLost=false;
 
-    state.picks.filter(p=>p.gameId===gameId && p.status==="pending").forEach(pick=>{
-      pick.settledAt=Date.now();
-      if(pick.selection===winner){
-        userWon=true;
-        pick.status="won";
-        const returnAmount=pick.wager*2;
-        state.balance+=returnAmount;
-        ledger("payout",returnAmount,`${teamShort(game,pick.selection)} winning payout`,pick.id);
-      }else{
-        userLost=true;
-        pick.status="lost";
-      }
-    });
+    state.picks
+      .filter(p=>p.gameId===gameId && p.status==="pending")
+      .forEach(pick=>{
+        pick.settledAt=Date.now();
+        pick.finalMultiplier=finalMultiplier;
+
+        if(pick.selection===winner){
+          userWon=true;
+          pick.status="won";
+
+          const returnAmount=Math.round(pick.wager*finalMultiplier);
+          pick.finalReturn=returnAmount;
+
+          state.balance+=returnAmount;
+
+          ledger(
+            "payout",
+            returnAmount,
+            `${teamShort(game,pick.selection)} payout at ${finalMultiplier.toFixed(2)}x final community odds`,
+            pick.id
+          );
+        }else{
+          userLost=true;
+          pick.status="lost";
+          pick.finalReturn=0;
+        }
+      });
 
     save();
     render();
 
     if(userWon){
       flashOutcome(true);
-      toast(`WINNER — ${teamShort(game,winner)} paid out fake EastCoins.`);
+      toast(
+        `WINNER — ${teamShort(game,winner)} settled at ${finalMultiplier.toFixed(2)}x community odds.`
+      );
     }else if(userLost){
       flashOutcome(false);
-      toast(`${teamShort(game,winner)} won. Your fake EastCoin ticket lost.`);
+      toast(
+        `${teamShort(game,winner)} won at ${finalMultiplier.toFixed(2)}x final community odds. Your ticket lost.`
+      );
     }else{
-      toast(`${teamShort(game,winner)} marked winner. Picks settled.`);
+      toast(
+        `${teamShort(game,winner)} marked winner at ${finalMultiplier.toFixed(2)}x final community odds.`
+      );
     }
   }
 
