@@ -1281,6 +1281,260 @@ h1{font-size:2.25rem}
   }
 }
 
+
+/* ================================================================
+   PICKS V6 — TOP 10 POWER RANK TICKER
+   ================================================================ */
+.top-rank-ticker{
+  position:relative;
+  overflow:hidden;
+  margin:0 0 16px;
+  border:1px solid rgba(242,196,0,.14);
+  border-radius:13px;
+  background:
+    radial-gradient(circle at 0% 0%,rgba(173,9,50,.13),transparent 30%),
+    radial-gradient(circle at 100% 0%,rgba(242,196,0,.06),transparent 28%),
+    #050505;
+  box-shadow:0 12px 34px rgba(0,0,0,.22)
+}
+.top-rank-ticker-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:9px 12px;
+  border-bottom:1px solid rgba(255,255,255,.055);
+  background:linear-gradient(180deg,#0c0909,#080707)
+}
+.top-rank-ticker-head > div{
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+  min-width:0
+}
+.top-rank-kicker{
+  color:#dfbe60;
+  font-size:.68rem;
+  font-weight:950;
+  letter-spacing:.06em;
+  text-transform:uppercase
+}
+.top-rank-ticker-head strong{
+  color:#fff0c7;
+  font-size:.84rem
+}
+.top-rank-ticker-head small{
+  color:#6e665f;
+  font-size:.62rem;
+  text-align:right
+}
+
+.top-rank-viewport{
+  position:relative;
+  width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:10px 0 11px;
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+  overscroll-behavior-x:contain;
+  -webkit-overflow-scrolling:touch
+}
+.top-rank-viewport::-webkit-scrollbar{display:none}
+
+.top-rank-viewport:before,
+.top-rank-viewport:after{
+  content:"";
+  position:sticky;
+  z-index:8;
+  top:0;
+  bottom:0;
+  width:28px;
+  height:100%;
+  pointer-events:none
+}
+.top-rank-viewport:before{
+  left:0;
+  float:left;
+  background:linear-gradient(90deg,#050505,transparent)
+}
+.top-rank-viewport:after{
+  right:0;
+  float:right;
+  background:linear-gradient(270deg,#050505,transparent)
+}
+
+.top-rank-track{
+  display:flex;
+  width:max-content;
+  gap:8px;
+  padding:0 10px;
+  will-change:scroll-position
+}
+.top-rank-card{
+  position:relative;
+  display:grid;
+  grid-template-columns:42px minmax(118px,1fr);
+  gap:9px;
+  align-items:center;
+  width:226px;
+  min-height:78px;
+  padding:9px 10px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.065);
+  border-radius:10px;
+  background:
+    linear-gradient(145deg,rgba(173,9,50,.055),transparent 48%),
+    #080808;
+  box-shadow:inset 0 1px rgba(255,255,255,.014)
+}
+.top-rank-card:after{
+  content:"";
+  position:absolute;
+  right:-26px;
+  bottom:-38px;
+  width:92px;
+  height:92px;
+  border:1px solid rgba(242,196,0,.05);
+  border-radius:50%;
+  pointer-events:none
+}
+.top-rank-card.is-you{
+  border-color:rgba(242,196,0,.40);
+  background:
+    radial-gradient(circle at 100% 0%,rgba(242,196,0,.09),transparent 40%),
+    linear-gradient(145deg,rgba(173,9,50,.12),transparent 54%),
+    #090808;
+  box-shadow:
+    inset 3px 0 0 var(--gold),
+    0 0 18px rgba(242,196,0,.045)
+}
+.top-rank-card.rank-1{
+  border-color:rgba(255,216,73,.36);
+  background:
+    radial-gradient(circle at 100% 0%,rgba(255,216,73,.12),transparent 40%),
+    #0b0905
+}
+.top-rank-card.rank-2{
+  border-color:rgba(207,218,224,.22)
+}
+.top-rank-card.rank-3{
+  border-color:rgba(206,133,67,.25)
+}
+.top-rank-position{
+  width:42px;
+  min-width:0;
+  text-align:center
+}
+.top-rank-position b{
+  display:block;
+  color:#ffffff;
+  font-size:1rem;
+  line-height:1
+}
+.top-rank-position span{
+  display:block;
+  margin-top:4px;
+  color:#c1a45c;
+  font-size:.53rem;
+  font-weight:950;
+  line-height:1.08;
+  text-transform:uppercase;
+  overflow-wrap:anywhere
+}
+.top-rank-main{
+  min-width:0
+}
+.top-rank-user{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-width:0
+}
+.top-rank-avatar{
+  width:25px;
+  height:25px;
+  flex:0 0 25px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(242,196,0,.16);
+  border-radius:50%;
+  background:linear-gradient(135deg,#4d1120,#111);
+  color:#fff3dd;
+  font-size:.49rem;
+  font-weight:950
+}
+.top-rank-user strong{
+  min-width:0;
+  overflow:hidden;
+  color:#f6eee3;
+  font-size:.72rem;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.top-rank-user em{
+  flex:0 0 auto;
+  padding:2px 5px;
+  border:1px solid rgba(242,196,0,.15);
+  border-radius:999px;
+  color:#e5c76b;
+  background:rgba(242,196,0,.04);
+  font-size:.46rem;
+  font-style:normal;
+  font-weight:950;
+  text-transform:uppercase
+}
+.top-rank-meta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:7px;
+  min-width:0;
+  margin-top:5px
+}
+.top-rank-record{
+  color:#756e67;
+  font-size:.57rem;
+  font-weight:850;
+  white-space:nowrap
+}
+.top-rank-balance{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  min-width:0;
+  color:#f1d271;
+  font-size:.61rem;
+  font-weight:950;
+  white-space:nowrap
+}
+.top-rank-balance img{
+  width:14px;
+  height:14px;
+  flex:0 0 14px;
+  object-fit:contain
+}
+
+@media(max-width:760px){
+  .top-rank-ticker{
+    margin-bottom:12px;
+    border-radius:10px
+  }
+  .top-rank-ticker-head{
+    padding:8px 9px
+  }
+  .top-rank-ticker-head small{
+    display:none
+  }
+  .top-rank-kicker{
+    font-size:.62rem
+  }
+  .top-rank-card{
+    width:205px;
+    min-height:74px
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1309,19 +1563,19 @@ h1{font-size:2.25rem}
   </aside>
 
   <main class="main">
-    <header class="topbar">
-      <div>
-        <div class="eyebrow">2026 EastCoin Season</div>
-        <h1>EastCoin Picks</h1>
-        <p class="sub">Pick winners, risk fake EastCoins, climb the leaderboard, and give everyone something else to argue about in chat. Virtual points only — no cash value.</p>
+    <section class="top-rank-ticker" aria-label="Top 10 EastCoin rankings">
+      <div class="top-rank-ticker-head">
+        <div>
+          <span class="top-rank-kicker">🏆 EastCoin Power Rankings</span>
+          <strong>Top 10</strong>
+        </div>
+        <small>Season rank · record · EastCoin balance</small>
       </div>
 
-      <section class="wallet-card">
-        <span class="ec-balance-label"><img class="ec-coin-logo" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"> Available Balance</span>
-        <div class="wallet-balance"><img class="ec-coin-logo lg" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><strong data-balance>1,000</strong><b>EC</b></div>
-        <div class="wallet-foot"><span>Starting: 1,000 EC</span><span data-profit>+0 EC</span></div>
-      </section>
-    </header>
+      <div class="top-rank-viewport" id="topRankViewport">
+        <div class="top-rank-track" id="topRankTrack"></div>
+      </div>
+    </section>
 
     <div class="bailout" id="bailout">
       <div><strong>🛟 <span class="ec-coin-inline"><img class="ec-coin-logo" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"> EastCoin Bailout available</span></strong><p>Your balance is below 50 EC. Claim 250 EC so you can get back in the action.</p></div>
@@ -1554,7 +1808,13 @@ h1{font-size:2.25rem}
   const rivals = [
     {name:"Zwades", initials:"Z", balance:1820, wins:28, losses:17, streak:4},
     {name:"Waldo", initials:"W", balance:1410, wins:22, losses:18, streak:2},
-    {name:"Booty", initials:"B", balance:1130, wins:19, losses:21, streak:-1}
+    {name:"Booty", initials:"B", balance:1130, wins:19, losses:21, streak:-1},
+    {name:"Arbino", initials:"A", balance:1015, wins:18, losses:19, streak:1},
+    {name:"Police", initials:"P", balance:935, wins:17, losses:20, streak:-2},
+    {name:"Tommy", initials:"T", balance:860, wins:16, losses:22, streak:2},
+    {name:"Mason", initials:"M", balance:745, wins:14, losses:20, streak:-1},
+    {name:"Rico", initials:"R", balance:655, wins:12, losses:19, streak:1},
+    {name:"Swag", initials:"S", balance:510, wins:11, losses:23, streak:-3}
   ];
 
   const elements = {
@@ -1605,7 +1865,9 @@ h1{font-size:2.25rem}
     lockCelebrationWager:document.getElementById("lockCelebrationWager"),
     lockCelebrationReturn:document.getElementById("lockCelebrationReturn"),
     lockCelebrationDismiss:document.getElementById("lockCelebrationDismiss"),
-    lockChipBurst:document.getElementById("lockChipBurst")
+    lockChipBurst:document.getElementById("lockChipBurst"),
+    topRankViewport:document.getElementById("topRankViewport"),
+    topRankTrack:document.getElementById("topRankTrack")
   };
 
   let activeBet = null;
@@ -2281,6 +2543,93 @@ h1{font-size:2.25rem}
     return [user,...rivals];
   }
 
+  let topRankScrollFrame=0;
+  let topRankPaused=false;
+
+  function topRankCard(person,position,duplicate=false){
+    const you=person.name==="You";
+    const duplicateAttr=duplicate ? ' aria-hidden="true"' : "";
+    const title=rankTitle(position);
+
+    return `
+      <article class="top-rank-card rank-${position}${you?" is-you":""}"${duplicateAttr}>
+        <div class="top-rank-position">
+          <b>#${position}</b>
+          <span>${title}</span>
+        </div>
+
+        <div class="top-rank-main">
+          <div class="top-rank-user">
+            <span class="top-rank-avatar">${person.initials.slice(0,2)}</span>
+            <strong>${person.name}</strong>
+            ${you?'<em>You</em>':""}
+          </div>
+
+          <div class="top-rank-meta">
+            <span class="top-rank-record">${person.wins}–${person.losses}</span>
+            <span class="top-rank-balance">
+              <img src="assets/eastcoins-logo.webp" alt="" aria-hidden="true">
+              ${money(person.balance)} EC
+            </span>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderTopRanks(){
+    if(!elements.topRankTrack || !elements.topRankViewport)return;
+
+    const ranked=[...leaderboardData()]
+      .sort((a,b)=>b.balance-a.balance)
+      .slice(0,10);
+
+    const cards=ranked
+      .map((person,index)=>topRankCard(person,index+1,false))
+      .join("");
+
+    /*
+      Duplicate the same ten cards to create a seamless auto-scrolling loop.
+      The second set is aria-hidden because it is purely visual.
+    */
+    const duplicates=ranked
+      .map((person,index)=>topRankCard(person,index+1,true))
+      .join("");
+
+    elements.topRankTrack.innerHTML=cards+duplicates;
+
+    if(elements.topRankViewport.scrollLeft===0){
+      elements.topRankViewport.scrollLeft=1;
+    }
+  }
+
+  function startTopRankAutoScroll(){
+    if(!elements.topRankViewport)return;
+
+    cancelAnimationFrame(topRankScrollFrame);
+
+    let last=performance.now();
+
+    const tick=(now)=>{
+      const viewport=elements.topRankViewport;
+      const delta=Math.min(32,now-last);
+      last=now;
+
+      if(!topRankPaused && viewport.scrollWidth>viewport.clientWidth){
+        viewport.scrollLeft += delta*.022;
+
+        const halfway=viewport.scrollWidth/2;
+        if(viewport.scrollLeft>=halfway){
+          viewport.scrollLeft-=halfway;
+        }
+      }
+
+      topRankScrollFrame=requestAnimationFrame(tick);
+    };
+
+    topRankScrollFrame=requestAnimationFrame(tick);
+  }
+
   function renderLeaderboards(){
     const people=leaderboardData();
     const richest=[...people].sort((a,b)=>b.balance-a.balance);
@@ -2350,8 +2699,10 @@ h1{font-size:2.25rem}
     elements.streak.textContent=stats.streak>0?`W${stats.streak}`:stats.streak<0?`L${Math.abs(stats.streak)}`:"—";
     elements.myPicksBadge.textContent=stats.pending.length?`(${stats.pending.length})`:"";
     const profit=state.balance-STARTING_BALANCE;
-    elements.profit.textContent=`${profit>=0?"+":""}${money(profit)} EC`;
-    elements.profit.className=profit>0?"positive":profit<0?"negative":"";
+    if(elements.profit){
+      elements.profit.textContent=`${profit>=0?"+":""}${money(profit)} EC`;
+      elements.profit.className=profit>0?"positive":profit<0?"negative":"";
+    }
   }
 
   function renderGamification(){
@@ -2435,6 +2786,7 @@ h1{font-size:2.25rem}
     renderWallet();
     renderMetrics();
     renderGamification();
+    renderTopRanks();
     renderGames();
     renderMyPicks();
     renderLeaderboards();
@@ -2798,7 +3150,19 @@ h1{font-size:2.25rem}
     if(elements.backdrop.classList.contains("open"))closeBet();
   });
 
+  elements.topRankViewport?.addEventListener("mouseenter",()=>{topRankPaused=true});
+  elements.topRankViewport?.addEventListener("mouseleave",()=>{topRankPaused=false});
+  elements.topRankViewport?.addEventListener("pointerdown",()=>{topRankPaused=true});
+  elements.topRankViewport?.addEventListener("pointerup",()=>{
+    window.setTimeout(()=>{topRankPaused=false},900);
+  });
+  elements.topRankViewport?.addEventListener("touchstart",()=>{topRankPaused=true},{passive:true});
+  elements.topRankViewport?.addEventListener("touchend",()=>{
+    window.setTimeout(()=>{topRankPaused=false},1100);
+  },{passive:true});
+
   render();
+  startTopRankAutoScroll();
   loadStreamedGames();
 })();
 </script>
