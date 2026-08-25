@@ -425,13 +425,413 @@ h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
   .row-icon{width:38px;height:38px}
   .modal-backdrop{padding:10px}
 }
+
+/* ================================================================
+   PICKS V3 — LARGE TYPE + GAMIFICATION PASS
+   ================================================================ */
+:root{
+  --ec-type-xs:.70rem;
+  --ec-type-sm:.80rem;
+  --ec-type-md:.92rem;
+  --ec-type-lg:1.06rem;
+  --ec-type-xl:1.28rem;
+  --ec-type-2xl:1.8rem;
+}
+
+/* EastCoin currency/logo language */
+.ec-coin-inline{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  vertical-align:middle
+}
+.ec-coin-logo{
+  width:18px;
+  height:18px;
+  flex:0 0 18px;
+  object-fit:contain;
+  border-radius:4px;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))
+}
+.ec-coin-logo.sm{
+  width:15px;
+  height:15px;
+  flex-basis:15px
+}
+.ec-coin-logo.lg{
+  width:25px;
+  height:25px;
+  flex-basis:25px
+}
+.ec-balance-label{
+  display:inline-flex !important;
+  align-items:center;
+  gap:6px
+}
+
+/* Broad type increase */
+body{font-size:16px}
+.brand strong{font-size:1.08rem}
+.brand small{font-size:.76rem}
+.nav-label{font-size:.68rem}
+.nav-copy strong{font-size:.84rem}
+.nav-copy small{font-size:.68rem}
+.side-wallet span{font-size:.66rem}
+.side-wallet strong{font-size:1.48rem}
+.side-wallet small{font-size:.66rem}
+.side-foot{font-size:.64rem}
+
+.eyebrow{font-size:.72rem}
+h1{font-size:2.25rem}
+.sub{font-size:.88rem;line-height:1.62}
+.wallet-card span{font-size:.69rem}
+.wallet-balance strong{font-size:2.1rem}
+.wallet-balance b{font-size:.88rem}
+.wallet-foot{font-size:.66rem}
+
+.metric span{font-size:.65rem}
+.metric strong{font-size:1.3rem}
+.metric small{font-size:.64rem}
+
+.tab{font-size:.79rem;padding:10px 14px}
+.section-head h2{font-size:1.18rem}
+.section-head p{font-size:.72rem}
+.section-head-right{font-size:.68rem}
+
+.sport-chip{font-size:.63rem}
+.game-time{font-size:.63rem}
+.team strong{font-size:.88rem}
+.team small{font-size:.64rem}
+.vs{font-size:.72rem}
+.pick-team{font-size:.76rem;min-height:52px}
+.community span{font-size:.64rem}
+.game-status{font-size:.58rem}
+
+.row-copy strong{font-size:.84rem}
+.row-copy p{font-size:.68rem}
+.row-copy small{font-size:.62rem}
+.row-value strong{font-size:.80rem}
+.row-value small{font-size:.61rem}
+
+.leader-head strong{font-size:.84rem}
+.leader-head small{font-size:.61rem}
+.rank-num{font-size:.68rem}
+.rank-copy strong{font-size:.76rem}
+.rank-copy small{font-size:.59rem}
+.rank-score{font-size:.73rem}
+
+.prototype summary{font-size:.72rem}
+.proto-copy{font-size:.67rem}
+.proto-game strong{font-size:.72rem}
+.proto-game small{font-size:.60rem}
+.proto-btn{font-size:.62rem}
+
+.modal-head strong{font-size:.95rem}
+.selected-team strong{font-size:.87rem}
+.selected-team small{font-size:.65rem}
+.bet-stat span{font-size:.58rem}
+.bet-stat strong{font-size:.90rem}
+.wager-label{font-size:.68rem}
+.quick button{font-size:.72rem}
+.custom span{font-size:.70rem}
+.error{font-size:.64rem}
+.return span{font-size:.68rem}
+.return strong{font-size:.90rem}
+.lock{font-size:.78rem;min-height:49px}
+
+.bailout strong{font-size:.83rem}
+.bailout p{font-size:.66rem}
+.bailout button{font-size:.70rem}
+.toast{font-size:.72rem}
+
+/* Larger visual identity */
+.team-logo{
+  width:62px;
+  height:62px
+}
+.team-logo img{
+  width:80%;
+  height:80%
+}
+.matchup{
+  grid-template-columns:1fr 58px 1fr;
+  padding-top:18px
+}
+.team-logo + strong{margin-top:8px}
+
+/* Stakes / gambling-like visual language */
+.stakes-strip{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:9px;
+  margin:0 0 16px
+}
+.stake-card{
+  position:relative;
+  overflow:hidden;
+  min-height:92px;
+  padding:12px 13px;
+  border:1px solid rgba(242,196,0,.14);
+  border-radius:11px;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(242,196,0,.06),transparent 45%),
+    linear-gradient(135deg,rgba(173,9,50,.09),transparent 56%),
+    #070707
+}
+.stake-card:after{
+  content:"";
+  position:absolute;
+  inset:auto -22px -30px auto;
+  width:88px;
+  height:88px;
+  border:1px solid rgba(242,196,0,.08);
+  border-radius:50%
+}
+.stake-card span{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:#81786f;
+  font-size:.66rem;
+  font-weight:950;
+  letter-spacing:.06em;
+  text-transform:uppercase
+}
+.stake-card strong{
+  display:block;
+  margin-top:7px;
+  font-size:1.18rem;
+  line-height:1.08
+}
+.stake-card small{
+  display:block;
+  margin-top:4px;
+  color:#70675f;
+  font-size:.63rem;
+  line-height:1.3
+}
+.stake-card.hot strong{color:#ffb05e}
+.stake-card.pot strong{color:#ffe174}
+.stake-card.mission strong{color:#89e6a9}
+.stake-card.rank strong{color:#c9b6ff}
+
+.game-hype{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+  align-items:center;
+  padding:9px 12px;
+  border-top:1px solid rgba(255,255,255,.05);
+  border-bottom:1px solid rgba(255,255,255,.05);
+  background:rgba(8,6,6,.74)
+}
+.hype-copy{
+  min-width:0
+}
+.hype-copy strong{
+  display:block;
+  font-size:.70rem;
+  color:#e9dfd2
+}
+.hype-copy small{
+  display:block;
+  margin-top:2px;
+  color:#6f675f;
+  font-size:.60rem
+}
+.hype-badge{
+  padding:6px 8px;
+  border:1px solid rgba(242,196,0,.18);
+  border-radius:999px;
+  color:#f0cf70;
+  background:rgba(242,196,0,.05);
+  font-size:.62rem;
+  font-weight:950;
+  white-space:nowrap
+}
+.hype-badge.hot{
+  border-color:rgba(255,126,55,.24);
+  color:#ffb068;
+  background:rgba(167,55,15,.09)
+}
+.hype-badge.lock{
+  border-color:rgba(239,102,112,.22);
+  color:#ff8d98;
+  background:rgba(173,9,50,.08)
+}
+
+.risk-meter{
+  margin-top:10px;
+  padding:10px;
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:9px;
+  background:#050505
+}
+.risk-head{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+  color:#8a8076;
+  font-size:.66rem;
+  font-weight:900
+}
+.risk-head strong{
+  color:#f4d778;
+  font-size:.72rem
+}
+.risk-track{
+  height:9px;
+  margin-top:7px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#181312
+}
+.risk-fill{
+  height:100%;
+  width:0;
+  border-radius:999px;
+  background:linear-gradient(90deg,#4aac74,#e6bd45 62%,#cb4e5b);
+  transition:width .16s ease
+}
+.risk-copy{
+  display:block;
+  margin-top:6px;
+  color:#6f675f;
+  font-size:.61rem
+}
+
+.pot-callout{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+  align-items:center;
+  margin-top:8px;
+  padding:8px 10px;
+  border:1px solid rgba(242,196,0,.10);
+  border-radius:8px;
+  background:rgba(242,196,0,.025)
+}
+.pot-callout span{
+  color:#756c63;
+  font-size:.62rem
+}
+.pot-callout strong{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  color:#f2d77d;
+  font-size:.72rem
+}
+
+.badge-rack{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin:0 0 16px
+}
+.achievement{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-height:45px;
+  padding:8px 10px;
+  border:1px solid rgba(255,255,255,.065);
+  border-radius:9px;
+  background:#070707
+}
+.achievement-icon{
+  width:29px;
+  height:29px;
+  display:grid;
+  place-items:center;
+  border-radius:8px;
+  background:#110c0d;
+  border:1px solid rgba(242,196,0,.12);
+  font-size:.80rem
+}
+.achievement strong{
+  display:block;
+  font-size:.68rem
+}
+.achievement small{
+  display:block;
+  margin-top:1px;
+  color:#69615a;
+  font-size:.56rem
+}
+.achievement.locked{
+  opacity:.42;
+  filter:saturate(.25)
+}
+
+.win-flash,
+.loss-flash{
+  animation-duration:.52s;
+  animation-timing-function:ease-out
+}
+.win-flash{animation-name:ec-win-flash}
+.loss-flash{animation-name:ec-loss-flash}
+@keyframes ec-win-flash{
+  0%{box-shadow:inset 0 0 0 0 rgba(56,200,119,0)}
+  35%{box-shadow:inset 0 0 0 999px rgba(56,200,119,.10)}
+  100%{box-shadow:inset 0 0 0 0 rgba(56,200,119,0)}
+}
+@keyframes ec-loss-flash{
+  0%{transform:translateX(0)}
+  20%{transform:translateX(-3px)}
+  40%{transform:translateX(3px)}
+  60%{transform:translateX(-2px)}
+  80%{transform:translateX(2px)}
+  100%{transform:translateX(0)}
+}
+
+.confetti-piece{
+  position:fixed;
+  z-index:9999;
+  width:7px;
+  height:10px;
+  border-radius:2px;
+  pointer-events:none;
+  animation:ec-confetti 1.05s ease-out forwards
+}
+@keyframes ec-confetti{
+  from{
+    opacity:1;
+    transform:translate3d(0,0,0) rotate(0deg)
+  }
+  to{
+    opacity:0;
+    transform:translate3d(var(--x),var(--y),0) rotate(680deg)
+  }
+}
+
+@media(max-width:900px){
+  .stakes-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  h1{font-size:1.9rem}
+  .sub{font-size:.82rem}
+  .wallet-balance strong{font-size:1.9rem}
+  .metric strong{font-size:1.18rem}
+  .team-logo{width:56px;height:56px}
+  .team strong{font-size:.82rem}
+  .pick-team{font-size:.72rem}
+  .stakes-strip{grid-template-columns:1fr 1fr}
+}
+@media(max-width:440px){
+  .stakes-strip{grid-template-columns:1fr}
+  .metrics{grid-template-columns:1fr 1fr}
+  .wallet-foot{font-size:.61rem}
+}
+
 </style>
 </head>
 <body>
 <div class="app">
   <aside class="sidebar">
     <div class="brand">
-      <div class="brand-mark">EC</div>
+      <div class="brand-mark"><img src="assets/eastcoins-logo.webp" alt="EastCoin" style="width:82%;height:82%;object-fit:contain"></div>
       <div><strong>EastCoin</strong><small>Watch together</small></div>
     </div>
 
@@ -445,11 +845,11 @@ h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
     <button class="nav-btn" data-tab-jump="history"><span class="nav-icon">↻</span><span class="nav-copy"><strong>History</strong><small>EC transactions</small></span></button>
 
     <div class="side-wallet">
-      <span>Available Balance</span>
-      <strong><span data-balance>1,000</span> EC</strong>
+      <span class="ec-balance-label"><img class="ec-coin-logo" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"> Available Balance</span>
+      <strong class="ec-coin-inline"><img class="ec-coin-logo lg" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span data-balance>1,000</span> EC</strong>
       <small>2026 EastCoin Season</small>
     </div>
-    <div class="side-foot">Prototype wallet uses localStorage. Game/team artwork loads from EastCoin’s existing Streamed API adapter.</div>
+    <div class="side-foot">Prototype wallet uses localStorage and fake EastCoins only. Game/team artwork loads from EastCoin’s existing Streamed API adapter.</div>
   </aside>
 
   <main class="main">
@@ -461,16 +861,44 @@ h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
       </div>
 
       <section class="wallet-card">
-        <span>Available Balance</span>
-        <div class="wallet-balance"><strong data-balance>1,000</strong><b>EC</b></div>
+        <span class="ec-balance-label"><img class="ec-coin-logo" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"> Available Balance</span>
+        <div class="wallet-balance"><img class="ec-coin-logo lg" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><strong data-balance>1,000</strong><b>EC</b></div>
         <div class="wallet-foot"><span>Starting: 1,000 EC</span><span data-profit>+0 EC</span></div>
       </section>
     </header>
 
     <div class="bailout" id="bailout">
-      <div><strong>🛟 EastCoin Bailout available</strong><p>Your balance is below 50 EC. Claim 250 EC so you can get back in the action.</p></div>
+      <div><strong>🛟 <span class="ec-coin-inline"><img class="ec-coin-logo" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"> EastCoin Bailout available</span></strong><p>Your balance is below 50 EC. Claim 250 EC so you can get back in the action.</p></div>
       <button id="bailoutButton">Claim +250 EC</button>
     </div>
+
+    <section class="stakes-strip" aria-label="EastCoin stakes">
+      <article class="stake-card hot">
+        <span>🔥 Hot Streak</span>
+        <strong id="stakeHotStreak">No streak yet</strong>
+        <small>Win consecutive picks to heat up your profile.</small>
+      </article>
+
+      <article class="stake-card pot">
+        <span><img class="ec-coin-logo" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"> Community Pot</span>
+        <strong class="ec-coin-inline"><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="stakeCommunityPot">6,480</span> EC</strong>
+        <small>Fake EastCoins currently riding on today's board.</small>
+      </article>
+
+      <article class="stake-card mission">
+        <span>🎯 Daily Mission</span>
+        <strong id="stakeMission">Risk 100 EC</strong>
+        <small id="stakeMissionCopy">0 / 100 EC wagered today · test reward +50 EC.</small>
+      </article>
+
+      <article class="stake-card rank">
+        <span>🏆 High Roller Tier</span>
+        <strong id="stakeTier">Bronze Bettor</strong>
+        <small id="stakeTierCopy">Lock more fake EC to climb the test tiers.</small>
+      </article>
+    </section>
+
+    <section class="badge-rack" id="badgeRack" aria-label="Achievements"></section>
 
     <section class="metrics">
       <div class="metric"><span>Season Record</span><strong id="record">0–0</strong><small id="accuracy">No settled picks</small></div>
@@ -527,8 +955,8 @@ h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
       <div class="selected-team" id="selectedTeam"></div>
 
       <div class="bet-info">
-        <div class="bet-stat"><span>Balance</span><strong><span id="modalBalance">0</span> EC</strong></div>
-        <div class="bet-stat"><span>Max Wager</span><strong><span id="modalMax">0</span> EC</strong></div>
+        <div class="bet-stat"><span class="ec-balance-label"><img class="ec-coin-logo" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"> Balance</span><strong class="ec-coin-inline"><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="modalBalance">0</span> EC</strong></div>
+        <div class="bet-stat"><span>Max Wager</span><strong class="ec-coin-inline"><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="modalMax">0</span> EC</strong></div>
         <div class="bet-stat"><span>Payout</span><strong>1:1</strong></div>
       </div>
 
@@ -542,7 +970,18 @@ h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
       <div class="custom"><input id="customWager" type="number" inputmode="numeric" min="10" step="1" placeholder="Custom wager"><span>EC</span></div>
       <div class="error" id="betError"></div>
 
-      <div class="return"><span>Potential return</span><strong id="potentialReturn">0 EC</strong></div>
+      <div class="risk-meter">
+        <div class="risk-head"><span>Risk level</span><strong id="riskLabel">Low</strong></div>
+        <div class="risk-track"><div class="risk-fill" id="riskFill"></div></div>
+        <span class="risk-copy" id="riskCopy">Small test wager relative to your available EastCoin balance.</span>
+      </div>
+
+      <div class="pot-callout">
+        <span>Community riding on this matchup</span>
+        <strong><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="matchupPot">0</span> EC</strong>
+      </div>
+
+      <div class="return"><span>Potential return</span><strong class="ec-coin-inline"><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="potentialReturnValue">0</span> EC</strong></div>
       <button class="lock" id="lockPick">Lock Pick</button>
     </div>
   </section>
@@ -646,7 +1085,19 @@ h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
     lockPick:document.getElementById("lockPick"),
     reset:document.getElementById("resetPrototype"),
     toast:document.getElementById("toast"),
-    catalogStatus:document.getElementById("catalogStatus")
+    catalogStatus:document.getElementById("catalogStatus"),
+    stakeHotStreak:document.getElementById("stakeHotStreak"),
+    stakeCommunityPot:document.getElementById("stakeCommunityPot"),
+    stakeMission:document.getElementById("stakeMission"),
+    stakeMissionCopy:document.getElementById("stakeMissionCopy"),
+    stakeTier:document.getElementById("stakeTier"),
+    stakeTierCopy:document.getElementById("stakeTierCopy"),
+    badgeRack:document.getElementById("badgeRack"),
+    riskLabel:document.getElementById("riskLabel"),
+    riskFill:document.getElementById("riskFill"),
+    riskCopy:document.getElementById("riskCopy"),
+    matchupPot:document.getElementById("matchupPot"),
+    potentialReturnValue:document.getElementById("potentialReturnValue")
   };
 
   let activeBet = null;
@@ -666,7 +1117,8 @@ h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
         }
       ],
       results:{},
-      bailouts:0
+      bailouts:0,
+      missionRewardClaimed:false
     };
   }
 
@@ -688,6 +1140,92 @@ h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
 
   function money(value){
     return Math.round(Number(value)||0).toLocaleString();
+  }
+
+  function ecLogo(size="sm"){
+    return `<img class="ec-coin-logo ${size}" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true">`;
+  }
+
+  function ecAmount(value,size="sm"){
+    return `<span class="ec-coin-inline">${ecLogo(size)}<span>${money(value)}</span> EC</span>`;
+  }
+
+  function totalWagered(){
+    return state.picks.reduce((sum,pick)=>sum+Number(pick.wager||0),0);
+  }
+
+  function communityPot(){
+    /*
+      Fake derived "pot" for visual stakes only. It is NOT a payout pool.
+      Base value + deterministic contribution from the current board.
+    */
+    const marketBase=games.reduce((sum,game,index)=>{
+      const split=Array.isArray(game.community)?game.community:[50,50];
+      return sum+520+(index*135)+Math.abs(split[0]-50)*17;
+    },0);
+    return marketBase+totalWagered();
+  }
+
+  function matchupCommunityPot(game){
+    const split=Array.isArray(game?.community)?game.community:[50,50];
+    const marketIndex=Math.max(0,games.findIndex(candidate=>candidate.id===game?.id));
+    const base=950+(marketIndex*170)+(Math.abs(split[0]-50)*31);
+    const userPick=state.picks.find(pick=>pick.gameId===game?.id);
+    return base+(userPick?.wager||0);
+  }
+
+  function riskMeta(wager){
+    const balance=Math.max(1,state.balance);
+    const ratio=Math.max(0,Math.min(1,Number(wager||0)/balance));
+
+    if(ratio>=.22){
+      return {
+        label:"High",
+        pct:100,
+        copy:"Big swing — this fake wager uses a large chunk of your available EastCoin balance."
+      };
+    }
+
+    if(ratio>=.12){
+      return {
+        label:"Medium",
+        pct:64,
+        copy:"Meaningful sweat — enough fake EastCoins are on the line to move your rank."
+      };
+    }
+
+    return {
+      label:"Low",
+      pct:30,
+      copy:"Small test wager relative to your available EastCoin balance."
+    };
+  }
+
+  function highRollerTier(){
+    const wagered=totalWagered();
+
+    if(wagered>=1000)return {name:"👑 EastCoin Whale",copy:"1,000+ EC wagered in the prototype."};
+    if(wagered>=500)return {name:"💎 Gold Roller",copy:"500+ EC wagered in the prototype."};
+    if(wagered>=250)return {name:"🥈 Silver Sweat",copy:"250+ EC wagered in the prototype."};
+    return {name:"🥉 Bronze Bettor",copy:`${money(wagered)} EC wagered so far.`};
+  }
+
+  function lockCountdown(game){
+    if(game?.live)return "LIVE · PICKS LOCKED";
+    const start=Number(game?.startTs||0);
+    if(!start)return game?.start||"Upcoming";
+
+    const diff=start-Date.now();
+    if(diff<=0)return "STARTED · PICKS LOCKED";
+
+    const minutes=Math.ceil(diff/60000);
+    if(minutes<=60)return `LOCKS IN ${minutes}m`;
+
+    const hours=Math.floor(minutes/60);
+    const remain=minutes%60;
+    if(hours<=4)return `LOCKS IN ${hours}h ${remain}m`;
+
+    return game?.start||"Upcoming";
   }
 
   function eventTimestamp(value){
@@ -1041,11 +1579,7 @@ h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
       const poster=game.poster||"";
       const statusText=result
         ? (result==="void"?"VOID":`FINAL · ${teamShort(game,result)} won`)
-        : game.live
-          ? "LIVE · PICKS LOCKED"
-          : locked
-            ? "STARTED · PICKS LOCKED"
-            : game.start;
+        : lockCountdown(game);
 
       return `
         <article class="game-card${locked?" locked":""}${poster?" has-streamed-art":""}">
@@ -1067,6 +1601,15 @@ h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
               <small>Home</small>
             </div>
           </div>
+          <div class="game-hype">
+            <div class="hype-copy">
+              <strong>${game.popular ? "🔥 Hot board" : "Community action"}</strong>
+              <small>${money(matchupCommunityPot(game))} fake EC currently riding on this matchup</small>
+            </div>
+            <span class="hype-badge ${locked ? "lock" : (game.popular ? "hot" : "")}">
+              ${locked ? "LOCKED" : (game.popular ? "HEATING UP" : "OPEN")}
+            </span>
+          </div>
           <div class="game-actions">
             ${choiceButtonMarkup(game,"away",selected,Boolean(pick)||locked)}
             ${choiceButtonMarkup(game,"home",selected,Boolean(pick)||locked)}
@@ -1077,7 +1620,7 @@ h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
             <span>${game.community[1]}%</span>
           </div>
           ${pick
-            ? `<span class="game-status ${pick.status}">${statusLabel(pick)} · ${money(pick.wager)} EC</span>`
+            ? `<span class="game-status ${pick.status}">${statusLabel(pick)} · ${ecLogo("sm")}${money(pick.wager)} EC</span>`
             : locked
               ? `<span class="game-status">Picks locked</span>`
               : ""}
@@ -1107,7 +1650,11 @@ h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
     elements.myPicks.innerHTML=sorted.map(pick=>{
       const game=gameById(pick.gameId)||pick.game;
       const cls=pick.status==="won"?"positive":pick.status==="lost"?"negative":"pending-text";
-      const value=pick.status==="won"?`+${money(pick.wager)} EC profit`:pick.status==="lost"?`-${money(pick.wager)} EC`:`${money(pick.wager*2)} EC return`;
+      const value=pick.status==="won"
+        ? `${ecLogo("sm")}+${money(pick.wager)} EC profit`
+        : pick.status==="lost"
+          ? `${ecLogo("sm")}-${money(pick.wager)} EC`
+          : `${ecLogo("sm")}${money(pick.wager*2)} EC return`;
       return `
         <article class="pick-row">
           <div class="row-icon">${teamShort(game,pick.selection)}</div>
@@ -1142,7 +1689,7 @@ h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
             <small>${new Date(tx.createdAt).toLocaleString()}</small>
           </div>
           <div class="row-value ${positive?"positive":"negative"}">
-            <strong>${positive?"+":""}${money(tx.amount)} EC</strong>
+            <strong class="ec-coin-inline">${ecLogo("sm")}<span>${positive?"+":""}${money(tx.amount)} EC</span></strong>
             <small>Ledger entry</small>
           </div>
         </article>
@@ -1181,7 +1728,7 @@ h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
     `;
 
     elements.leaderboards.innerHTML=
-      board("💰 Richest","Current available EC",richest,p=>`${money(p.balance)} EC`)+
+      board("💰 Richest","Current available EastCoin balance",richest,p=>`${ecLogo("sm")}${money(p.balance)} EC`)+
       board("🎯 Best Accuracy","Settled picks",accuracy,p=>{
         const total=p.wins+p.losses;
         return total?`${Math.round(p.wins/total*100)}%`:"—";
@@ -1229,6 +1776,77 @@ h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
     elements.profit.className=profit>0?"positive":profit<0?"negative":"";
   }
 
+  function renderGamification(){
+    const stats=currentStats();
+    const wagered=totalWagered();
+    const tier=highRollerTier();
+    const missionGoal=100;
+    const missionProgress=Math.min(missionGoal,wagered);
+
+    elements.stakeHotStreak.textContent=
+      stats.streak>1
+        ? `🔥 W${stats.streak} — you're hot`
+        : stats.streak<-1
+          ? `🥶 L${Math.abs(stats.streak)} — cold spell`
+          : "No streak yet";
+
+    elements.stakeCommunityPot.textContent=money(communityPot());
+    elements.stakeMission.textContent=
+      wagered>=missionGoal
+        ? "Mission complete"
+        : `Risk ${money(missionGoal-wagered)} more EC`;
+
+    elements.stakeMissionCopy.textContent=
+      `${money(missionProgress)} / ${money(missionGoal)} EC wagered · test reward unlocks at 100 EC.`;
+
+    elements.stakeTier.textContent=tier.name;
+    elements.stakeTierCopy.textContent=tier.copy;
+
+    const achievements=[
+      {
+        icon:"🎟",
+        name:"First Ticket",
+        copy:"Lock your first pick",
+        unlocked:state.picks.length>=1
+      },
+      {
+        icon:"🔥",
+        name:"Heating Up",
+        copy:"Win 3 straight",
+        unlocked:stats.streak>=3
+      },
+      {
+        icon:"💎",
+        name:"High Roller",
+        copy:"Wager 250+ EC total",
+        unlocked:wagered>=250
+      },
+      {
+        icon:"🎯",
+        name:"Sharpshooter",
+        copy:"Reach 70% accuracy (5+ settled)",
+        unlocked:(stats.wins+stats.losses)>=5 &&
+          stats.wins/(stats.wins+stats.losses)>=.70
+      },
+      {
+        icon:"🛟",
+        name:"Bailed Out",
+        copy:"Claim an EastCoin bailout",
+        unlocked:Number(state.bailouts||0)>0
+      }
+    ];
+
+    elements.badgeRack.innerHTML=achievements.map(item=>`
+      <article class="achievement${item.unlocked?"":" locked"}">
+        <span class="achievement-icon">${item.icon}</span>
+        <span>
+          <strong>${item.name}</strong>
+          <small>${item.unlocked?"Unlocked":item.copy}</small>
+        </span>
+      </article>
+    `).join("");
+  }
+
   function renderWallet(){
     elements.balances.forEach(node=>node.textContent=money(state.balance));
     elements.bailout.classList.toggle("show",state.balance<50);
@@ -1238,6 +1856,7 @@ h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
   function render(){
     renderWallet();
     renderMetrics();
+    renderGamification();
     renderGames();
     renderMyPicks();
     renderLeaderboards();
@@ -1285,7 +1904,21 @@ h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
     if(wager>max) error=`Maximum wager right now is ${max} EC.`;
     if(wager>state.balance) error="You do not have enough EC.";
     elements.betError.textContent=error;
-    elements.potentialReturn.textContent=`${money(wager*2)} EC`;
+
+    if(elements.potentialReturnValue){
+      elements.potentialReturnValue.textContent=money(wager*2);
+    }
+
+    const risk=riskMeta(wager);
+    if(elements.riskLabel)elements.riskLabel.textContent=risk.label;
+    if(elements.riskFill)elements.riskFill.style.width=`${risk.pct}%`;
+    if(elements.riskCopy)elements.riskCopy.textContent=risk.copy;
+
+    const game=activeBet ? gameById(activeBet.gameId) : null;
+    if(elements.matchupPot){
+      elements.matchupPot.textContent=money(matchupCommunityPot(game));
+    }
+
     elements.lockPick.disabled=Boolean(error)||wager<MIN_WAGER;
     document.querySelectorAll("[data-wager]").forEach(btn=>{
       btn.classList.toggle("active",Number(btn.dataset.wager)===wager);
@@ -1328,10 +1961,46 @@ h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
     state.balance-=wager;
     state.picks.push(pick);
     ledger("wager",-wager,`${teamShort(game,pick.selection)} pick locked`,pick.id);
+
+    const wageredAfter=state.picks.reduce((sum,item)=>sum+Number(item.wager||0),0);
+    if(wageredAfter>=100 && !state.missionRewardClaimed){
+      state.missionRewardClaimed=true;
+      state.balance+=50;
+      ledger("admin_adjustment",50,"Daily mission reward: wager 100 fake EC");
+    }
+
     save();
     closeBet();
     render();
     toast(`${teamShort(game,pick.selection)} locked for ${money(wager)} EC.`);
+  }
+
+  function launchConfetti(){
+    const colors=["#f2c400","#ad0932","#38c877","#ffffff"];
+    const originX=window.innerWidth*.5;
+    const originY=Math.min(window.innerHeight*.38,300);
+
+    for(let i=0;i<28;i++){
+      const piece=document.createElement("span");
+      piece.className="confetti-piece";
+      piece.style.left=`${originX}px`;
+      piece.style.top=`${originY}px`;
+      piece.style.background=colors[i%colors.length];
+      piece.style.setProperty("--x",`${(Math.random()-.5)*420}px`);
+      piece.style.setProperty("--y",`${120+Math.random()*300}px`);
+      document.body.appendChild(piece);
+      window.setTimeout(()=>piece.remove(),1200);
+    }
+  }
+
+  function flashOutcome(won){
+    const target=document.querySelector(".wallet-card")||document.querySelector(".main");
+    if(!target)return;
+    target.classList.remove("win-flash","loss-flash");
+    void target.offsetWidth;
+    target.classList.add(won?"win-flash":"loss-flash");
+    window.setTimeout(()=>target.classList.remove("win-flash","loss-flash"),650);
+    if(won)launchConfetti();
   }
 
   function settle(gameId,winner){
@@ -1339,21 +2008,35 @@ h1{margin:5px 0 5px;font-size:1.75rem;letter-spacing:-.045em}
     const game=gameById(gameId);
     state.results[gameId]=winner;
 
+    let userWon=false;
+    let userLost=false;
+
     state.picks.filter(p=>p.gameId===gameId && p.status==="pending").forEach(pick=>{
       pick.settledAt=Date.now();
       if(pick.selection===winner){
+        userWon=true;
         pick.status="won";
         const returnAmount=pick.wager*2;
         state.balance+=returnAmount;
         ledger("payout",returnAmount,`${teamShort(game,pick.selection)} winning payout`,pick.id);
       }else{
+        userLost=true;
         pick.status="lost";
       }
     });
 
     save();
     render();
-    toast(`${teamShort(game,winner)} marked winner. Picks settled.`);
+
+    if(userWon){
+      flashOutcome(true);
+      toast(`WINNER — ${teamShort(game,winner)} paid out fake EastCoins.`);
+    }else if(userLost){
+      flashOutcome(false);
+      toast(`${teamShort(game,winner)} won. Your fake EastCoin ticket lost.`);
+    }else{
+      toast(`${teamShort(game,winner)} marked winner. Picks settled.`);
+    }
   }
 
   function voidGame(gameId){
