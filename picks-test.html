@@ -2308,6 +2308,145 @@ h1{font-size:2.25rem}
   }
 }
 
+
+/* ================================================================
+   PICKS V12 — HARDENED MARKET + BET SLIDER
+   ================================================================ */
+
+/* Available balance should read immediately as "money". */
+.bet-stat.balance-stat{
+  border-color:rgba(72,203,112,.32);
+  background:
+    radial-gradient(circle at 0% 0%,rgba(130,255,164,.16),transparent 48%),
+    linear-gradient(145deg,#123d23,#092514);
+  box-shadow:inset 0 1px rgba(255,255,255,.04)
+}
+.bet-stat.balance-stat span{
+  color:#b9eec7
+}
+.bet-stat.balance-stat strong{
+  color:#f2fff5
+}
+.bet-stat.balance-stat .ec-coin-logo{
+  filter:
+    drop-shadow(0 2px 4px rgba(0,0,0,.40))
+    drop-shadow(0 0 6px rgba(255,255,255,.08))
+}
+
+/* Replace numeric spinner with a sportsbook-style wager slider. */
+.wager-slider-card{
+  padding:11px 12px 9px;
+  border:1px solid rgba(255,255,255,.075);
+  border-radius:10px;
+  background:
+    linear-gradient(145deg,rgba(242,196,0,.025),transparent 45%),
+    #060606
+}
+.wager-slider-value{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px
+}
+.wager-slider-value > span{
+  color:#827970;
+  font-size:.62rem;
+  font-weight:900
+}
+.wager-slider-value strong{
+  color:#ffe278;
+  font-size:.90rem
+}
+.wager-slider{
+  --wager-pct:0%;
+  width:100%;
+  height:25px;
+  margin:0;
+  padding:0;
+  appearance:none;
+  -webkit-appearance:none;
+  border:0;
+  outline:0;
+  background:transparent;
+  cursor:pointer
+}
+.wager-slider::-webkit-slider-runnable-track{
+  height:8px;
+  border:1px solid rgba(255,255,255,.055);
+  border-radius:999px;
+  background:
+    linear-gradient(
+      90deg,
+      #d5a800 0%,
+      #f2c400 var(--wager-pct),
+      #201a08 var(--wager-pct),
+      #151515 100%
+    )
+}
+.wager-slider::-moz-range-track{
+  height:8px;
+  border:1px solid rgba(255,255,255,.055);
+  border-radius:999px;
+  background:#151515
+}
+.wager-slider::-moz-range-progress{
+  height:8px;
+  border-radius:999px;
+  background:linear-gradient(90deg,#d5a800,#f2c400)
+}
+.wager-slider::-webkit-slider-thumb{
+  width:23px;
+  height:23px;
+  margin-top:-8px;
+  appearance:none;
+  -webkit-appearance:none;
+  border:3px solid #ffe273;
+  border-radius:50%;
+  background:#151004;
+  box-shadow:
+    0 4px 12px rgba(0,0,0,.46),
+    0 0 0 3px rgba(242,196,0,.09)
+}
+.wager-slider::-moz-range-thumb{
+  width:19px;
+  height:19px;
+  border:3px solid #ffe273;
+  border-radius:50%;
+  background:#151004;
+  box-shadow:0 4px 12px rgba(0,0,0,.46)
+}
+.wager-slider:focus-visible::-webkit-slider-thumb{
+  outline:2px solid #fff0a8;
+  outline-offset:3px
+}
+.wager-slider-scale{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:1px;
+  color:#675f58;
+  font-size:.54rem;
+  font-weight:850
+}
+
+/* "Higher payout" is descriptive, not an assertion of betting value. */
+.underdog-ribbon{
+  color:#9e1931
+}
+
+/* Final/fallback language. */
+.no-action-tag{
+  color:#eca68e !important
+}
+
+/* Bailout disabled state should be explicit. */
+.bailout button:disabled{
+  opacity:.48;
+  cursor:not-allowed
+}
+
 </style>
 </head>
 <body>
@@ -2351,7 +2490,7 @@ h1{font-size:2.25rem}
     </section>
 
     <div class="bailout" id="bailout">
-      <div><strong>🛟 <span class="ec-coin-inline"><img class="ec-coin-logo" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"> EastCoin Bailout available</span></strong><p>Your balance is below 50 EC. Claim 250 EC so you can get back in the action.</p></div>
+      <div><strong>🛟 <span class="ec-coin-inline"><img class="ec-coin-logo" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"> EastCoin Bailout available</span></strong><p id="bailoutCopy">Your balance is below 50 EC. Claim 250 EC so you can get back in the action.</p></div>
       <button id="bailoutButton">Claim +250 EC</button>
     </div>
 
@@ -2401,7 +2540,7 @@ h1{font-size:2.25rem}
           <span>EastCoin Gamification</span>
           <strong>Season Challenges & Stakes</strong>
         </div>
-        <small>Streaks, missions, community action and achievements</small>
+        <small>Streaks, missions, EastCoin pool action and achievements</small>
       </div>
 
     <section class="stakes-strip" aria-label="EastCoin stakes">
@@ -2452,7 +2591,7 @@ h1{font-size:2.25rem}
       <div class="selected-team" id="selectedTeam"></div>
 
       <div class="bet-info">
-        <div class="bet-stat"><span class="ec-balance-label"><img class="ec-coin-logo" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"> Balance</span><strong class="ec-coin-inline"><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="modalBalance">0</span> EC</strong></div>
+        <div class="bet-stat balance-stat"><span class="ec-balance-label"><img class="ec-coin-logo" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"> Balance</span><strong class="ec-coin-inline"><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="modalBalance">0</span> EC</strong></div>
         <div class="bet-stat"><span>Max Wager</span><strong class="ec-coin-inline"><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="modalMax">0</span> EC</strong></div>
         <div class="bet-stat"><span>Payout</span><strong class="dynamic-payout" id="modalOddsMode">Community</strong></div>
       </div>
@@ -2464,15 +2603,40 @@ h1{font-size:2.25rem}
         <button data-wager="50">50</button>
         <button data-wager="100">100</button>
       </div>
-      <div class="custom"><input id="customWager" type="number" inputmode="numeric" min="10" step="1" placeholder="Custom wager"><span>EC</span></div>
+
+      <div class="wager-slider-card">
+        <div class="wager-slider-value">
+          <span>Wager amount</span>
+          <strong class="ec-coin-inline">
+            <img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true">
+            <span id="wagerAmountValue">50</span> EC
+          </strong>
+        </div>
+
+        <input
+          id="customWager"
+          class="wager-slider"
+          type="range"
+          min="10"
+          max="250"
+          step="1"
+          value="50"
+          aria-label="EastCoin wager amount">
+
+        <div class="wager-slider-scale">
+          <span>10 EC</span>
+          <span id="sliderMaxLabel">250 EC max</span>
+        </div>
+      </div>
+
       <div class="error" id="betError"></div>
 
       <div class="community-odds-preview">
         <div class="community-odds-preview-head">
           <span>Projected Community Odds</span>
-          <strong id="projectedOdds">2.00x</strong>
+          <strong id="projectedOdds">Even</strong>
         </div>
-        <small class="community-odds-preview-note" id="projectedOddsNote">1:1 fallback until both sides have real community action.</small>
+        <small class="community-odds-preview-note" id="projectedOddsNote">Even payout while waiting for two-sided EastCoin action.</small>
 
         <div class="projected-pool">
           <div class="projected-pool-side" id="projectedAwayPool">
@@ -2540,7 +2704,7 @@ h1{font-size:2.25rem}
       </div>
       <div class="lock-celebration-stat odds-stat">
         <span>Current Community Odds</span>
-        <strong id="lockCelebrationOdds">2.00x</strong>
+        <strong id="lockCelebrationOdds">Even</strong>
       </div>
     </div>
 
@@ -2559,11 +2723,13 @@ h1{font-size:2.25rem}
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "eastcoinPicksV8CommunityOddsMockup";
+  const STORAGE_KEY = "eastcoinPicksV12HardenedMarketMockup";
   const STARTING_BALANCE = 1000;
   const MIN_WAGER = 10;
   const MAX_FLAT_WAGER = 250;
   const BAILOUT_AMOUNT = 250;
+  const BAILOUT_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+  const MAX_SEASON_BAILOUTS = 3;
 
   const fallbackGames = [
     {
@@ -2644,12 +2810,15 @@ h1{font-size:2.25rem}
     prototypeGames:document.getElementById("prototypeGames"),
     bailout:document.getElementById("bailout"),
     bailoutButton:document.getElementById("bailoutButton"),
+    bailoutCopy:document.getElementById("bailoutCopy"),
     backdrop:document.getElementById("betBackdrop"),
     closeBet:document.getElementById("closeBet"),
     selectedTeam:document.getElementById("selectedTeam"),
     modalBalance:document.getElementById("modalBalance"),
     modalMax:document.getElementById("modalMax"),
     customWager:document.getElementById("customWager"),
+    wagerAmountValue:document.getElementById("wagerAmountValue"),
+    sliderMaxLabel:document.getElementById("sliderMaxLabel"),
     betError:document.getElementById("betError"),
     potentialReturn:document.getElementById("potentialReturn"),
     lockPick:document.getElementById("lockPick"),
@@ -2708,7 +2877,9 @@ h1{font-size:2.25rem}
         }
       ],
       results:{},
+      marketSnapshots:{},
       bailouts:0,
+      bailoutHistory:[],
       missionRewardClaimed:false
     };
   }
@@ -2717,6 +2888,10 @@ h1{font-size:2.25rem}
     try{
       const parsed=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");
       if(parsed && Number.isFinite(parsed.balance) && Array.isArray(parsed.picks) && Array.isArray(parsed.transactions)){
+        parsed.results ||= {};
+        parsed.marketSnapshots ||= {};
+        parsed.bailoutHistory = Array.isArray(parsed.bailoutHistory) ? parsed.bailoutHistory : [];
+        parsed.bailouts = Math.max(Number(parsed.bailouts||0),parsed.bailoutHistory.length);
         return parsed;
       }
     }catch{}
@@ -2735,6 +2910,21 @@ h1{font-size:2.25rem}
 
   function ecLogo(size="sm"){
     return `<img class="ec-coin-logo ${size}" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true">`;
+  }
+
+  function oddsLabel(multiplier){
+    const value=Number(multiplier||0);
+    return Math.abs(value-2)<0.005
+      ? "Even"
+      : `${value.toFixed(2)}x`;
+  }
+
+  function marketSnapshot(gameId){
+    return state.marketSnapshots?.[gameId] || null;
+  }
+
+  function marketClosed(game){
+    return Boolean(marketSnapshot(game?.id)) || isGameLocked(game);
   }
 
   function ecAmount(value,size="sm"){
@@ -2759,7 +2949,7 @@ h1{font-size:2.25rem}
       Test-only simulated EastCoin users.
       Most markets begin with 2–8 community tickets so the community-odds
       behavior is visible. A few intentionally begin with 0 or 1 ticket so
-      the 1:1 fallback behavior can also be tested.
+      the Even behavior can also be tested.
     */
     const seed=marketHash(`eastcoin-community:${game?.id||"game"}`);
     let totalBets=2+(seed%7);
@@ -2786,41 +2976,86 @@ h1{font-size:2.25rem}
       homeCount=totalBets-awayCount;
     }
 
-    const sumBets=(selection,count)=>{
-      let total=0;
+    const buildTickets=(selection,count)=>{
+      const tickets=[];
+      let ec=0;
+
       for(let i=0;i<count;i++){
         const sub=marketHash(`${game?.id}:${selection}:${i}`);
         const wagerSteps=[10,25,50,75,100,125];
-        total+=wagerSteps[sub%wagerSteps.length];
+        const wager=wagerSteps[sub%wagerSteps.length];
+
+        tickets.push({
+          id:`sim:${game?.id}:${selection}:${i}`,
+          wager,
+          local:false
+        });
+
+        ec+=wager;
       }
-      return total;
+
+      return {tickets,ec};
     };
 
+    const awayData=buildTickets("away",awayCount);
+    const homeData=buildTickets("home",homeCount);
+
     return {
-      away:{count:awayCount,ec:sumBets("away",awayCount)},
-      home:{count:homeCount,ec:sumBets("home",homeCount)}
+      away:{
+        count:awayCount,
+        ec:awayData.ec,
+        tickets:awayData.tickets
+      },
+      home:{
+        count:homeCount,
+        ec:homeData.ec,
+        tickets:homeData.tickets
+      }
     };
   }
 
   function communityMarket(game,extraSelection=null,extraWager=0){
     const base=baseCommunityMarket(game);
     const market={
-      away:{count:base.away.count,ec:base.away.ec},
-      home:{count:base.home.count,ec:base.home.ec}
+      away:{
+        count:base.away.count,
+        ec:base.away.ec,
+        tickets:[...(base.away.tickets||[])]
+      },
+      home:{
+        count:base.home.count,
+        ec:base.home.ec,
+        tickets:[...(base.home.tickets||[])]
+      }
     };
 
     state.picks
       .filter(pick=>pick.gameId===game?.id && pick.status!=="refunded")
       .forEach(pick=>{
         const side=pick.selection==="away"?"away":"home";
+        const wager=Number(pick.wager||0);
+
         market[side].count+=1;
-        market[side].ec+=Number(pick.wager||0);
+        market[side].ec+=wager;
+        market[side].tickets.push({
+          id:pick.id,
+          wager,
+          local:true
+        });
       });
 
     if(extraSelection && Number(extraWager)>0){
       const side=extraSelection==="away"?"away":"home";
+      const wager=Number(extraWager);
+
       market[side].count+=1;
-      market[side].ec+=Number(extraWager);
+      market[side].ec+=wager;
+      market[side].tickets.push({
+        id:"prospective-user-wager",
+        wager,
+        local:true,
+        prospective:true
+      });
     }
 
     const totalCount=market.away.count+market.home.count;
@@ -2892,6 +3127,164 @@ h1{font-size:2.25rem}
       returnAmount:Math.round(Number(wager||0)*info.multiplier)
     };
   }
+
+  function exactSettlementPayouts(snapshot,selection){
+    const side=selection==="away" ? "away" : "home";
+    const tickets=Array.isArray(snapshot?.[`${side}Tickets`])
+      ? snapshot[`${side}Tickets`]
+      : [];
+
+    const sideEc=Number(snapshot?.[`${side}Ec`]||0);
+    const totalEc=Number(snapshot?.totalEc||0);
+
+    if(!tickets.length || sideEc<=0 || totalEc<=0){
+      return new Map();
+    }
+
+    const rows=tickets.map(ticket=>{
+      const raw=Number(ticket.wager||0)*totalEc/sideEc;
+      const floor=Math.floor(raw);
+
+      return {
+        id:String(ticket.id),
+        raw,
+        floor,
+        remainder:raw-floor,
+        payout:floor
+      };
+    });
+
+    let distributed=rows.reduce((sum,row)=>sum+row.payout,0);
+    let dust=Math.max(0,totalEc-distributed);
+
+    /*
+      Largest remainder method:
+      1. floor every proportional payout
+      2. distribute remaining whole EC to the largest fractional remainders
+      3. stable ticket id breaks exact ties
+
+      Result invariant for every active market:
+      sum(winner payouts) === total EC pool
+    */
+    const order=[...rows].sort((a,b)=>
+      (b.remainder-a.remainder) ||
+      a.id.localeCompare(b.id)
+    );
+
+    for(let i=0;i<dust && order.length;i++){
+      order[i%order.length].payout+=1;
+    }
+
+    return new Map(rows.map(row=>[row.id,row.payout]));
+  }
+
+  function proportionalSettlementReturn(wager,snapshot,selection,pickId=null){
+    const payouts=exactSettlementPayouts(snapshot,selection);
+
+    if(pickId && payouts.has(pickId)){
+      return payouts.get(pickId);
+    }
+
+    const side=selection==="away" ? "away" : "home";
+    const sideEc=Number(snapshot?.[`${side}Ec`]||0);
+    const totalEc=Number(snapshot?.totalEc||0);
+
+    if(sideEc<=0 || totalEc<=0){
+      return Number(wager||0);
+    }
+
+    return Math.floor(Number(wager||0)*totalEc/sideEc);
+  }
+
+  function createMarketSnapshot(game,{force=false}={}){
+    if(!game)return null;
+
+    const existing=marketSnapshot(game.id);
+    if(existing)return existing;
+
+    if(!force && !isGameLocked(game)){
+      return null;
+    }
+
+    const market=communityMarket(game);
+    const lockedAt=Date.now();
+
+    const snapshot={
+      gameId:game.id,
+      lockedAt,
+      status:market.active ? "locked" : "no_action",
+      totalCount:market.totalCount,
+      totalEc:market.totalEc,
+      awayCount:market.away.count,
+      homeCount:market.home.count,
+      awayEc:market.away.ec,
+      homeEc:market.home.ec,
+      awayMultiplier:market.away.multiplier,
+      homeMultiplier:market.home.multiplier,
+      awayTickets:market.away.tickets.map(ticket=>({...ticket})),
+      homeTickets:market.home.tickets.map(ticket=>({...ticket}))
+    };
+
+    state.marketSnapshots[game.id]=snapshot;
+
+    if(!market.active){
+      state.results[game.id]="refund";
+
+      state.picks
+        .filter(pick=>pick.gameId===game.id && pick.status==="pending")
+        .forEach(pick=>{
+          pick.status="refunded";
+          pick.settledAt=lockedAt;
+          pick.finalMultiplier=2;
+          pick.finalReturn=pick.wager;
+          state.balance+=pick.wager;
+
+          ledger(
+            "refund",
+            pick.wager,
+            `${game.awayShort} vs ${game.homeShort} no-action refund — one-sided market`,
+            pick.id
+          );
+        });
+    }
+
+    return snapshot;
+  }
+
+  function processMarketLocks(){
+    let changed=false;
+
+    for(const game of games){
+      if(
+        isGameLocked(game) &&
+        !marketSnapshot(game.id) &&
+        !state.results[game.id]
+      ){
+        createMarketSnapshot(game,{force:true});
+        changed=true;
+      }
+    }
+
+    if(changed)save();
+  }
+
+  function prototypeLockMarket(gameId){
+    const game=gameById(gameId);
+    if(!game || marketSnapshot(gameId) || state.results[gameId])return;
+
+    const snapshot=createMarketSnapshot(game,{force:true});
+    save();
+    render();
+
+    if(snapshot?.status==="no_action"){
+      toast(`${game.awayShort} vs ${game.homeShort}: one-sided market — No Action, wagers refunded.`);
+    }else if(snapshot){
+      toast(
+        `${game.awayShort} vs ${game.homeShort} locked: ${oddsLabel(snapshot.awayMultiplier)} / ${oddsLabel(snapshot.homeMultiplier)}.`
+      );
+    }
+  }
+
 
   function riskMeta(wager){
     const balance=Math.max(1,state.balance);
@@ -3213,7 +3606,7 @@ h1{font-size:2.25rem}
     return `
       <div class="market-action">
         <div class="market-action-head">
-          <span>Community Picks</span>
+          <span>EastCoin Pool</span>
           <strong>${ecLogo("sm")}${money(market.totalEc)} EC in pool</strong>
         </div>
 
@@ -3266,12 +3659,12 @@ h1{font-size:2.25rem}
         <span class="prediction-copy">
           <strong>
             ${name}
-            ${info.underdog?'<span class="underdog-ribbon">VALUE</span>':""}
+            ${info.underdog?'<span class="underdog-ribbon">HIGHER PAYOUT</span>':""}
           </strong>
         </span>
 
         <span class="prediction-odds ${oddsClass}">
-          <b>${info.multiplier.toFixed(2)}x</b>
+          <b>${oddsLabel(info.multiplier)}</b>
         </span>
 
         <span class="prediction-check" aria-hidden="true"></span>
@@ -3413,12 +3806,19 @@ h1{font-size:2.25rem}
     elements.games.innerHTML=games.map(game=>{
       const pick=pickForGame(game.id);
       const result=state.results[game.id];
-      const locked=Boolean(result)||isGameLocked(game);
+      const snapshot=marketSnapshot(game.id);
+      const locked=Boolean(result)||marketClosed(game);
       const selected=pick?.selection;
       const poster=game.poster||"";
       const statusText=result
-        ? (result==="void"?"VOID":`FINAL · ${teamShort(game,result)} won`)
-        : lockCountdown(game);
+        ? result==="void"
+          ? "VOID"
+          : result==="refund"
+            ? "NO ACTION · REFUNDED"
+            : `FINAL · ${teamShort(game,result)} won`
+        : snapshot?.status==="locked"
+          ? "FINAL ODDS LOCKED"
+          : lockCountdown(game);
 
       const badgeClass = locked ? "lock" : (game.popular ? "hot" : "cold");
       const badgeText = locked ? "Locked" : (game.popular ? "Hot board" : "Open");
@@ -3492,7 +3892,14 @@ h1{font-size:2.25rem}
 
     elements.myPicks.innerHTML=sorted.map(pick=>{
       const game=gameById(pick.gameId)||pick.game;
-      const cls=pick.status==="won"?"positive":pick.status==="lost"?"negative":"pending-text";
+      const cls=
+        pick.status==="won"
+          ? "positive"
+          : pick.status==="lost"
+            ? "negative"
+            : pick.status==="refunded"
+              ? "pending-text"
+              : "pending-text";
       const currentEstimate=pick.status==="pending"
         ? estimatedReturn(game,pick.selection,pick.wager,false)
         : null;
@@ -3503,13 +3910,17 @@ h1{font-size:2.25rem}
         ? `${ecLogo("sm")}+${money(Math.max(0,finalReturn-pick.wager))} EC profit`
         : pick.status==="lost"
           ? `${ecLogo("sm")}-${money(pick.wager)} EC`
-          : `${ecLogo("sm")}${money(currentEstimate.returnAmount)} EC est. return`;
+          : pick.status==="refunded"
+            ? `${ecLogo("sm")}${money(pick.wager)} EC refunded`
+            : `${ecLogo("sm")}${money(currentEstimate.returnAmount)} EC est. return`;
 
       const oddsLine=pick.status==="pending"
-        ? `${currentEstimate.multiplier.toFixed(2)}x current community odds`
-        : finalMultiplier
-          ? `${finalMultiplier.toFixed(2)}x final odds`
-          : "1:1 fallback";
+        ? `${oddsLabel(currentEstimate.multiplier)} current community odds`
+        : pick.status==="refunded"
+          ? "No Action · wager returned"
+          : finalMultiplier
+            ? `${oddsLabel(finalMultiplier)} final odds`
+            : "Even";
       return `
         <article class="pick-row">
           <div class="row-icon">${teamShort(game,pick.selection)}</div>
@@ -3700,17 +4111,37 @@ h1{font-size:2.25rem}
   function renderPrototype(){
     elements.prototypeGames.innerHTML=games.map(game=>{
       const result=state.results[game.id];
+      const snapshot=marketSnapshot(game.id);
+      const market=communityMarket(game);
+
+      const marketCopy=snapshot
+        ? snapshot.status==="no_action"
+          ? "No Action · one-sided market refunded"
+          : `Locked · ${game.awayShort} ${oddsLabel(snapshot.awayMultiplier)} / ${game.homeShort} ${oddsLabel(snapshot.homeMultiplier)}`
+        : market.active
+          ? `Open · ${game.awayShort} ${oddsLabel(market.away.multiplier)} / ${game.homeShort} ${oddsLabel(market.home.multiplier)}`
+          : "Waiting · Even · one-sided market";
+
       return `
         <div class="proto-game">
           <div>
             <strong>${game.awayShort} vs ${game.homeShort}</strong>
             <small>${result
-              ? (result==="void"?"Voided":teamShort(game,result)+" already settled")
-              : game.streamed
-                ? "Streamed market · choose a fake result"
-                : "Demo market · choose a fake result"}</small>
+              ? result==="void"
+                ? "Voided"
+                : result==="refund"
+                  ? "No Action · refunded"
+                  : `${teamShort(game,result)} already settled`
+              : marketCopy}</small>
           </div>
+
           <div class="proto-actions">
+            <button
+              class="proto-btn"
+              data-lock-market="${game.id}"
+              ${snapshot||result?"disabled":""}>
+              Lock market
+            </button>
             <button class="proto-btn" data-settle="${game.id}" data-winner="away" ${result?"disabled":""}>${game.awayShort} wins</button>
             <button class="proto-btn" data-settle="${game.id}" data-winner="home" ${result?"disabled":""}>${game.homeShort} wins</button>
             <button class="proto-btn" data-void="${game.id}" ${result?"disabled":""}>Void</button>
@@ -3809,11 +4240,32 @@ h1{font-size:2.25rem}
 
   function renderWallet(){
     elements.balances.forEach(node=>node.textContent=money(state.balance));
-    elements.bailout.classList.toggle("show",state.balance<50);
-    elements.bailoutButton.disabled=state.balance>=50;
+
+    const eligibility=bailoutEligibility();
+    const lowBalance=state.balance<50;
+
+    elements.bailout.classList.toggle("show",lowBalance);
+    elements.bailoutButton.disabled=!eligibility.canClaim;
+
+    if(lowBalance && elements.bailoutCopy){
+      if(eligibility.seasonLimitReached){
+        elements.bailoutCopy.textContent=
+          `Season bailout limit reached (${eligibility.count}/${MAX_SEASON_BAILOUTS}).`;
+        elements.bailoutButton.textContent="Season limit reached";
+      }else if(eligibility.remaining>0){
+        elements.bailoutCopy.textContent=
+          `Next bailout available in ${formatCooldown(eligibility.remaining)}. Limit: one every 7 days, max ${MAX_SEASON_BAILOUTS} per season.`;
+        elements.bailoutButton.textContent="Bailout on cooldown";
+      }else{
+        elements.bailoutCopy.textContent=
+          `Balance below 50 EC. Claim 250 EC. Limit: one every 7 days, max ${MAX_SEASON_BAILOUTS} per season.`;
+        elements.bailoutButton.textContent="Claim +250 EC";
+      }
+    }
   }
 
   function render(){
+    processMarketLocks();
     renderWallet();
     renderMetrics();
     renderGamification();
@@ -3827,8 +4279,8 @@ h1{font-size:2.25rem}
 
   function openBet(gameId,selection){
     const game=gameById(gameId);
-    if(!game || pickForGame(gameId) || state.results[gameId] || isGameLocked(game)){
-      if(game && isGameLocked(game)) toast("Picks are locked because this event has started.");
+    if(!game || pickForGame(gameId) || state.results[gameId] || marketClosed(game)){
+      if(game && marketClosed(game)) toast("Picks are locked for this market.");
       return;
     }
 
@@ -3841,7 +4293,20 @@ h1{font-size:2.25rem}
     `;
     elements.modalBalance.textContent=money(state.balance);
     elements.modalMax.textContent=money(max);
-    elements.customWager.value=activeBet.wager>=MIN_WAGER?activeBet.wager:"";
+
+    elements.customWager.min=String(MIN_WAGER);
+    elements.customWager.max=String(Math.max(MIN_WAGER,max));
+    elements.customWager.value=String(
+      Math.max(
+        MIN_WAGER,
+        Math.min(max,activeBet.wager)
+      )
+    );
+
+    if(elements.sliderMaxLabel){
+      elements.sliderMaxLabel.textContent=`${money(max)} EC max`;
+    }
+
     elements.betError.textContent="";
     elements.backdrop.classList.add("open");
     document.body.style.overflow="hidden";
@@ -3870,6 +4335,21 @@ h1{font-size:2.25rem}
 
     elements.betError.textContent=error;
 
+    if(elements.wagerAmountValue){
+      elements.wagerAmountValue.textContent=money(wager);
+    }
+
+    const min=Number(elements.customWager.min||MIN_WAGER);
+    const sliderMax=Number(elements.customWager.max||max||MIN_WAGER);
+    const sliderPct=sliderMax>min
+      ? ((wager-min)/(sliderMax-min))*100
+      : 0;
+
+    elements.customWager.style.setProperty(
+      "--wager-pct",
+      `${Math.max(0,Math.min(100,sliderPct))}%`
+    );
+
     const game=gameById(activeBet.gameId);
     const estimate=estimatedReturn(
       game,
@@ -3886,11 +4366,11 @@ h1{font-size:2.25rem}
     if(elements.modalOddsMode){
       elements.modalOddsMode.textContent=estimate.active
         ? "Community"
-        : "1:1 fallback";
+        : "Even";
     }
 
     if(elements.projectedOdds){
-      elements.projectedOdds.textContent=`${estimate.multiplier.toFixed(2)}x`;
+      elements.projectedOdds.textContent=oddsLabel(estimate.multiplier);
     }
 
     if(elements.projectedOddsNote){
@@ -3898,7 +4378,7 @@ h1{font-size:2.25rem}
         ? estimate.underdog
           ? "Your pick is currently the less-backed side, so the projected payout is higher. Final odds are set when the market locks."
           : "Your pick is currently the more-backed side. Final odds are set when the market locks."
-        : "1:1 fallback is active until at least two tickets exist and both sides have EastCoin action.";
+        : "Even payout is shown while the market is one-sided. If it is still one-sided when picks lock, the market is No Action and your wager is refunded.";
     }
 
     if(elements.projectedAwayName)elements.projectedAwayName.textContent=game.awayShort;
@@ -3994,7 +4474,7 @@ h1{font-size:2.25rem}
     elements.lockCelebrationReturn.textContent=`${money(estimate.returnAmount)} EC`;
 
     if(elements.lockCelebrationOdds){
-      elements.lockCelebrationOdds.textContent=`${estimate.multiplier.toFixed(2)}x`;
+      elements.lockCelebrationOdds.textContent=oddsLabel(estimate.multiplier);
     }
 
     elements.lockCelebrationTeamLogo.innerHTML=logo
@@ -4101,9 +4581,23 @@ h1{font-size:2.25rem}
     if(state.results[gameId]) return;
 
     const game=gameById(gameId);
-    const market=communityMarket(game);
-    const winningSide=winner==="away"?"away":"home";
-    const finalMultiplier=market[winningSide].multiplier;
+    if(!game)return;
+
+    const snapshot=
+      marketSnapshot(gameId) ||
+      createMarketSnapshot(game,{force:true});
+
+    if(!snapshot)return;
+
+    if(snapshot.status==="no_action"){
+      save();
+      render();
+      toast(`${game.awayShort} vs ${game.homeShort}: No Action — one-sided market refunded.`);
+      return;
+    }
+
+    const winningSide=winner==="away" ? "away" : "home";
+    const finalMultiplier=Number(snapshot[`${winningSide}Multiplier`]||2);
 
     state.results[gameId]=winner;
 
@@ -4120,15 +4614,20 @@ h1{font-size:2.25rem}
           userWon=true;
           pick.status="won";
 
-          const returnAmount=Math.round(pick.wager*finalMultiplier);
-          pick.finalReturn=returnAmount;
+          const returnAmount=proportionalSettlementReturn(
+            pick.wager,
+            snapshot,
+            pick.selection,
+            pick.id
+          );
 
+          pick.finalReturn=returnAmount;
           state.balance+=returnAmount;
 
           ledger(
             "payout",
             returnAmount,
-            `${teamShort(game,pick.selection)} payout at ${finalMultiplier.toFixed(2)}x final community odds`,
+            `${teamShort(game,pick.selection)} payout at ${oddsLabel(finalMultiplier)} final community odds`,
             pick.id
           );
         }else{
@@ -4144,16 +4643,16 @@ h1{font-size:2.25rem}
     if(userWon){
       flashOutcome(true);
       toast(
-        `WINNER — ${teamShort(game,winner)} settled at ${finalMultiplier.toFixed(2)}x community odds.`
+        `WINNER — ${teamShort(game,winner)} settled at ${oddsLabel(finalMultiplier)} final community odds.`
       );
     }else if(userLost){
       flashOutcome(false);
       toast(
-        `${teamShort(game,winner)} won at ${finalMultiplier.toFixed(2)}x final community odds. Your ticket lost.`
+        `${teamShort(game,winner)} won at ${oddsLabel(finalMultiplier)} final community odds. Your ticket lost.`
       );
     }else{
       toast(
-        `${teamShort(game,winner)} marked winner at ${finalMultiplier.toFixed(2)}x final community odds.`
+        `${teamShort(game,winner)} marked winner at ${oddsLabel(finalMultiplier)} final community odds.`
       );
     }
   }
@@ -4163,23 +4662,63 @@ h1{font-size:2.25rem}
     const game=gameById(gameId);
     state.results[gameId]="void";
 
-    state.picks.filter(p=>p.gameId===gameId && p.status==="pending").forEach(pick=>{
-      pick.status="refunded";
-      pick.settledAt=Date.now();
-      state.balance+=pick.wager;
-      ledger("refund",pick.wager,`${game.awayShort} vs ${game.homeShort} void refund`,pick.id);
-    });
+    state.picks
+      .filter(p=>p.gameId===gameId && p.status==="pending")
+      .forEach(pick=>{
+        pick.status="refunded";
+        pick.settledAt=Date.now();
+        pick.finalReturn=pick.wager;
+        state.balance+=pick.wager;
+        ledger("refund",pick.wager,`${game.awayShort} vs ${game.homeShort} void refund`,pick.id);
+      });
 
     save();
     render();
     toast(`${game.awayShort} vs ${game.homeShort} voided and refunded.`);
   }
 
+  function bailoutEligibility(){
+    const history=Array.isArray(state.bailoutHistory) ? state.bailoutHistory : [];
+    const count=history.length;
+    const last=count ? Number(history[history.length-1]||0) : 0;
+    const remaining=Math.max(0,BAILOUT_COOLDOWN_MS-(Date.now()-last));
+
+    return {
+      count,
+      remaining,
+      seasonLimitReached:count>=MAX_SEASON_BAILOUTS,
+      canClaim:
+        state.balance<50 &&
+        count<MAX_SEASON_BAILOUTS &&
+        remaining<=0
+    };
+  }
+
+  function formatCooldown(ms){
+    if(ms<=0)return "available now";
+    const hours=Math.ceil(ms/(60*60*1000));
+    const days=Math.floor(hours/24);
+    const remainder=hours%24;
+    return days
+      ? `${days}d ${remainder}h`
+      : `${hours}h`;
+  }
+
   function claimBailout(){
-    if(state.balance>=50) return;
+    const eligibility=bailoutEligibility();
+    if(!eligibility.canClaim)return;
+
     state.balance+=BAILOUT_AMOUNT;
-    state.bailouts=(state.bailouts||0)+1;
-    ledger("bailout",BAILOUT_AMOUNT,`EastCoin bailout #${state.bailouts}`);
+    state.bailoutHistory ||= [];
+    state.bailoutHistory.push(Date.now());
+    state.bailouts=state.bailoutHistory.length;
+
+    ledger(
+      "bailout",
+      BAILOUT_AMOUNT,
+      `EastCoin bailout #${state.bailouts} of ${MAX_SEASON_BAILOUTS}`
+    );
+
     save();
     render();
     toast(`Bailout claimed: +${BAILOUT_AMOUNT} EC.`);
@@ -4212,8 +4751,16 @@ h1{font-size:2.25rem}
 
     const quick=event.target.closest("[data-wager]");
     if(quick){
-      elements.customWager.value=quick.dataset.wager;
+      const max=Number(elements.customWager.max||maxWager());
+      const next=Math.min(max,Number(quick.dataset.wager||MIN_WAGER));
+      elements.customWager.value=String(next);
       updateBetPreview();
+      return;
+    }
+
+    const lockMarketButton=event.target.closest("[data-lock-market]");
+    if(lockMarketButton){
+      prototypeLockMarket(lockMarketButton.dataset.lockMarket);
       return;
     }
 
