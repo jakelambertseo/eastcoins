@@ -3869,6 +3869,196 @@ body.auth-logged-out .prediction-check{min-width:58px}
   line-height:1.15;
 }
 
+
+/* ================================================================
+   PICKS V23 — CLEANER WAGER SLIP
+   ================================================================ */
+
+/* Slider is now the only wager control. */
+.wager-slider-card{
+  margin-top:10px;
+  padding:13px 14px 11px;
+}
+.wager-slider-value{
+  margin-bottom:12px;
+}
+.wager-slider-value > span{
+  color:#aaa198;
+  font-size:.72rem;
+}
+.wager-slider-value strong{
+  font-size:1.08rem;
+}
+.wager-slider-scale{
+  margin-top:3px;
+  font-size:.66rem;
+}
+
+/* Selected matchup uses full team names and slightly stronger hierarchy. */
+.selected-team{
+  padding:11px 12px;
+}
+.selected-team strong{
+  font-size:1rem;
+}
+.selected-team small{
+  margin-top:3px;
+  color:#aaa198;
+  font-size:.68rem;
+  line-height:1.35;
+}
+
+/* Community odds becomes a compact disclosure/dropdown. */
+details.community-odds-preview{
+  padding:0;
+  overflow:hidden;
+}
+.community-odds-preview summary{
+  list-style:none;
+  cursor:pointer;
+}
+.community-odds-preview summary::-webkit-details-marker{
+  display:none;
+}
+.community-odds-preview-head{
+  align-items:center;
+  padding:11px 12px;
+}
+.community-odds-summary-label{
+  min-width:0;
+}
+.community-odds-summary-label > span{
+  display:block;
+  color:#aaa198;
+  font-size:.70rem;
+  font-weight:950;
+  letter-spacing:.055em;
+  text-transform:uppercase;
+}
+.community-odds-summary-label > small{
+  display:block;
+  margin-top:3px;
+  color:#686159;
+  font-size:.59rem;
+  font-weight:750;
+  letter-spacing:0;
+  text-transform:none;
+}
+.community-odds-summary-value{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  flex:0 0 auto;
+}
+.community-odds-summary-value strong{
+  color:#ffe074;
+  font-size:1.55rem;
+  line-height:1;
+}
+.community-odds-chevron{
+  display:grid;
+  place-items:center;
+  width:23px;
+  height:23px;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:7px;
+  color:#8c837a;
+  background:#090909;
+  font-size:.72rem;
+  transition:transform .16s ease;
+}
+.community-odds-preview[open] .community-odds-chevron{
+  transform:rotate(180deg);
+}
+.community-odds-preview-body{
+  padding:0 11px 11px;
+  border-top:1px solid rgba(255,255,255,.045);
+}
+.community-odds-preview-note{
+  margin-top:9px;
+  color:#aaa198;
+  font-size:.67rem;
+  line-height:1.45;
+}
+
+/* Full team names + actual team logo in the projected pool. */
+.projected-pool{
+  gap:8px;
+  margin-top:10px;
+}
+.projected-pool-side{
+  min-width:0;
+  padding:9px 10px;
+}
+.projected-team-name{
+  display:flex !important;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+  color:#d7cec3 !important;
+  font-size:.67rem !important;
+  font-weight:900;
+  line-height:1.25;
+}
+.projected-team-name > span:last-child{
+  min-width:0;
+}
+.projected-team-logo{
+  width:28px;
+  height:28px;
+  display:grid !important;
+  place-items:center;
+  flex:0 0 28px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:8px;
+  background:#0b0b0b;
+  color:#b8aea3 !important;
+  font-size:.52rem !important;
+  font-weight:1000;
+}
+.projected-team-logo img{
+  width:80%;
+  height:80%;
+  object-fit:contain;
+}
+.projected-team-logo > span{
+  color:#b8aea3 !important;
+  font-size:.52rem !important;
+}
+.projected-pool-side strong{
+  margin-top:7px;
+  font-size:.70rem;
+}
+
+/* Make total market money read as its own clean summary line. */
+.total-zcoins-callout{
+  padding:10px 12px;
+}
+.total-zcoins-callout > span{
+  color:#aaa198;
+  font-size:.68rem;
+  font-weight:850;
+}
+.total-zcoins-callout > strong{
+  color:#f1d675;
+  font-size:.80rem;
+}
+
+/* Quick button grid is intentionally retired in V23. */
+.quick{
+  display:none !important;
+}
+
+@media(max-width:520px){
+  .projected-pool{
+    grid-template-columns:1fr;
+  }
+  .community-odds-summary-value strong{
+    font-size:1.35rem;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -4060,14 +4250,6 @@ body.auth-logged-out .prediction-check{min-width:58px}
         <div class="bet-stat"><span>Payout</span><strong class="dynamic-payout" id="modalOddsMode">Community</strong></div>
       </div>
 
-      <div class="wager-label"><span>Choose your wager</span><span>Minimum 10 EC</span></div>
-      <div class="quick">
-        <button data-wager="10">10</button>
-        <button data-wager="25">25</button>
-        <button data-wager="50">50</button>
-        <button data-wager="100">100</button>
-      </div>
-
       <div class="wager-slider-card">
         <div class="wager-slider-value">
           <span>Wager amount</span>
@@ -4103,24 +4285,39 @@ body.auth-logged-out .prediction-check{min-width:58px}
 
       <div class="error" id="betError"></div>
 
-      <div class="community-odds-preview">
-        <div class="community-odds-preview-head">
-          <span>Projected Community Odds</span>
-          <strong id="projectedOdds">Even</strong>
-        </div>
-        <small class="community-odds-preview-note" id="projectedOddsNote">Even payout while waiting for two-sided EastCoin action.</small>
+      <details class="community-odds-preview">
+        <summary class="community-odds-preview-head">
+          <span class="community-odds-summary-label">
+            <span>Projected Community Odds</span>
+            <small>View pool breakdown</small>
+          </span>
+          <span class="community-odds-summary-value">
+            <strong id="projectedOdds">Even</strong>
+            <span class="community-odds-chevron" aria-hidden="true">⌄</span>
+          </span>
+        </summary>
 
-        <div class="projected-pool">
-          <div class="projected-pool-side" id="projectedAwayPool">
-            <span id="projectedAwayName">Away</span>
-            <strong><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="projectedAwayValue">0 EC</span></strong>
-          </div>
-          <div class="projected-pool-side" id="projectedHomePool">
-            <span id="projectedHomeName">Home</span>
-            <strong><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="projectedHomeValue">0 EC</span></strong>
+        <div class="community-odds-preview-body">
+          <small class="community-odds-preview-note" id="projectedOddsNote">Even payout while waiting for two-sided EastCoin action.</small>
+
+          <div class="projected-pool">
+            <div class="projected-pool-side" id="projectedAwayPool">
+              <span class="projected-team-name">
+                <span class="projected-team-logo" id="projectedAwayLogo" aria-hidden="true"></span>
+                <span id="projectedAwayName">Away</span>
+              </span>
+              <strong><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="projectedAwayValue">0 EC</span></strong>
+            </div>
+            <div class="projected-pool-side" id="projectedHomePool">
+              <span class="projected-team-name">
+                <span class="projected-team-logo" id="projectedHomeLogo" aria-hidden="true"></span>
+                <span id="projectedHomeName">Home</span>
+              </span>
+              <strong><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="projectedHomeValue">0 EC</span></strong>
+            </div>
           </div>
         </div>
-      </div>
+      </details>
 
       <div class="risk-meter">
         <div class="risk-head"><span>Risk level</span><strong id="riskLabel">Low</strong></div>
@@ -4128,9 +4325,9 @@ body.auth-logged-out .prediction-check{min-width:58px}
         <span class="risk-copy" id="riskCopy">Small test wager relative to your available EastCoin balance.</span>
       </div>
 
-      <div class="pot-callout">
-        <span>Community riding on this matchup</span>
-        <strong><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="matchupPot">0</span> EC</strong>
+      <div class="pot-callout total-zcoins-callout">
+        <span>Total ZCoins riding on this game</span>
+        <strong><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="matchupPot">0</span> ZCoins</strong>
       </div>
 
       <div class="return potential-winnings">
@@ -4371,6 +4568,8 @@ body.auth-logged-out .prediction-check{min-width:58px}
     projectedHomePool:document.getElementById("projectedHomePool"),
     projectedAwayName:document.getElementById("projectedAwayName"),
     projectedHomeName:document.getElementById("projectedHomeName"),
+    projectedAwayLogo:document.getElementById("projectedAwayLogo"),
+    projectedHomeLogo:document.getElementById("projectedHomeLogo"),
     projectedAwayValue:document.getElementById("projectedAwayValue"),
     projectedHomeValue:document.getElementById("projectedHomeValue"),
     lockCelebrationOdds:document.getElementById("lockCelebrationOdds"),
@@ -6117,7 +6316,7 @@ body.auth-logged-out .prediction-check{min-width:58px}
 
     elements.selectedTeam.innerHTML=`
       ${logoMarkup(game,selection)}
-      <div><strong>${teamName(game,selection)}</strong><small>${game.awayShort} vs ${game.homeShort} · ${game.start}</small></div>
+      <div><strong>${teamName(game,selection)}</strong><small>${game.away} vs ${game.home} · ${game.start}</small></div>
     `;
     elements.modalBalance.textContent=money(state.balance);
     elements.modalMax.textContent=money(max);
@@ -6226,8 +6425,20 @@ body.auth-logged-out .prediction-check{min-width:58px}
         : "Even payout is shown while the market is one-sided. If it is still one-sided when picks lock, the market is No Action and your wager is refunded.";
     }
 
-    if(elements.projectedAwayName)elements.projectedAwayName.textContent=game.awayShort;
-    if(elements.projectedHomeName)elements.projectedHomeName.textContent=game.homeShort;
+    if(elements.projectedAwayName)elements.projectedAwayName.textContent=game.away;
+    if(elements.projectedHomeName)elements.projectedHomeName.textContent=game.home;
+
+    if(elements.projectedAwayLogo){
+      elements.projectedAwayLogo.innerHTML=game.awayLogo
+        ? `<img src="${game.awayLogo}" alt="" loading="lazy" decoding="async">`
+        : `<span>${initials(game.away)}</span>`;
+    }
+
+    if(elements.projectedHomeLogo){
+      elements.projectedHomeLogo.innerHTML=game.homeLogo
+        ? `<img src="${game.homeLogo}" alt="" loading="lazy" decoding="async">`
+        : `<span>${initials(game.home)}</span>`;
+    }
 
     if(elements.projectedAwayValue){
       elements.projectedAwayValue.textContent=`${money(market.away.ec)} EC · ${Math.round(market.away.share*100)}%`;
@@ -6257,10 +6468,6 @@ body.auth-logged-out .prediction-check{min-width:58px}
 
     elements.lockPick.disabled=Boolean(error)||wager<MIN_WAGER;
 
-    document.querySelectorAll("[data-wager]").forEach(btn=>{
-      btn.classList.toggle("active",Number(btn.dataset.wager)===wager);
-      btn.disabled=Number(btn.dataset.wager)>max;
-    });
   }
 
   function dismissLockCelebration(){
@@ -6630,15 +6837,6 @@ body.auth-logged-out .prediction-check{min-width:58px}
     const jump=event.target.closest("[data-tab-jump]");
     if(jump){
       switchTab(jump.dataset.tabJump);
-      return;
-    }
-
-    const quick=event.target.closest("[data-wager]");
-    if(quick){
-      const max=Number(elements.customWager.max||maxWager());
-      const next=Math.min(max,Number(quick.dataset.wager||MIN_WAGER));
-      elements.customWager.value=String(next);
-      updateBetPreview();
       return;
     }
 
