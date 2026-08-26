@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">70 major update groups</div>
+<div class="release-count">71 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1680,10 +1680,9 @@
   </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-25">August 25, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Twitch application configuration added for Picks</h2>
 <p>
@@ -1694,6 +1693,25 @@
     files so Twitch credentials cannot be accidentally committed. Real OAuth
     login and EastCoin session creation remain disabled until the next backend
     phase.
+  </p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-08-26">August 26, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Real Twitch login enabled for EastCoin Picks</h2>
+<p>
+    Connected the EastCoin Picks account layer to Twitch using the
+    server-side OAuth/OIDC authorization-code flow. Users can now authorize
+    EastCoinBot on Twitch, return to EastCoin with their stable Twitch user ID,
+    current login, display name and Twitch profile image, and receive a secure
+    HttpOnly EastCoin session backed by D1. Added CSRF state protection,
+    hashed session storage, real logout, authenticated bootstrap data and a
+    session-health check. Twitch OAuth tokens are used only to establish
+    identity in this phase and are not stored. StreamElements wallet access
+    and real ZCoin wagering remain disabled.
   </p>
 </article>
 </section>
