@@ -2680,6 +2680,45 @@ h1{font-size:2.25rem}
   }
 }
 
+
+
+/* ================================================================
+   PICKS V14 — MODAL VIEWPORT FIX
+   Keeps Lock Pick visible on shorter screens / laptops.
+   ================================================================ */
+.modal{
+  max-height:min(calc(100vh - 24px), 920px);
+  display:flex;
+  flex-direction:column;
+}
+.modal-body{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+  padding-bottom:18px;
+}
+.lock{
+  position:sticky;
+  bottom:0;
+  z-index:3;
+  margin-top:12px;
+  box-shadow:0 -8px 20px rgba(0,0,0,.20), 0 10px 24px rgba(0,0,0,.28);
+}
+@media(max-width:760px){
+  .modal{
+    max-height:calc(100vh - 12px);
+    width:min(480px,100%);
+  }
+  .modal-body{
+    padding-bottom:14px;
+  }
+  .lock{
+    min-height:48px;
+  }
+}
+
 </style>
 </head>
 <body>
