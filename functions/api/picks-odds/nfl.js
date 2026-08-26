@@ -1,6 +1,6 @@
 const SPORT_KEY = "americanfootball_nfl";
 const CACHE_TTL_SECONDS = 60;
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 
 function americanToImplied(price) {
   const value = Number(price);
@@ -362,12 +362,6 @@ export async function onRequestGet(context) {
     "iso"
   );
 
-  // Sport-specific odds requests support commenceTimeFrom.
-  // This keeps the test strictly upcoming-only on the provider side.
-  upstreamUrl.searchParams.set(
-    "commenceTimeFrom",
-    new Date().toISOString()
-  );
 
   let upstream;
 
@@ -403,15 +397,30 @@ export async function onRequestGet(context) {
   }
 
   if (!upstream.ok) {
-    const providerBody =
-      await upstream.text().catch(
-        () => ""
+    const providerPayload =
+      await upstream.json().catch(
+        () => null
+      );
+
+    const providerCode =
+      String(
+        providerPayload?.error_code ||
+        providerPayload?.code ||
+        ""
+      );
+
+    const providerMessage =
+      String(
+        providerPayload?.message ||
+        providerPayload?.error ||
+        ""
       );
 
     console.error(
       "The Odds API returned an error",
       upstream.status,
-      providerBody.slice(0, 300)
+      providerCode,
+      providerMessage
     );
 
     return Response.json(
@@ -419,8 +428,28 @@ export async function onRequestGet(context) {
         ok: false,
         code: "ODDS_API_ERROR",
         providerStatus: upstream.status,
+        providerCode:
+          providerCode || null,
+        providerMessage:
+          providerMessage || null,
+        quota: {
+          remaining:
+            upstream.headers.get(
+              "x-requests-remaining"
+            ),
+          used:
+            upstream.headers.get(
+              "x-requests-used"
+            ),
+          lastCost:
+            upstream.headers.get(
+              "x-requests-last"
+            )
+        },
         message:
-          "The Odds API rejected the NFL odds request."
+          providerMessage
+            ? `The Odds API rejected the NFL request: ${providerMessage}`
+            : "The Odds API rejected the NFL odds request."
       },
       {
         status:
@@ -428,7 +457,8 @@ export async function onRequestGet(context) {
             ? 429
             : 502,
         headers: {
-          "Cache-Control": "no-store"
+          "Cache-Control": "no-store",
+          "X-Content-Type-Options": "nosniff"
         }
       }
     );
@@ -437,6 +467,9 @@ export async function onRequestGet(context) {
   const rawGames =
     await upstream.json();
 
+  // The provider endpoint returns live + upcoming games.
+  // Keep the upstream request simple and perform the upcoming-only
+  // cutoff here, avoiding provider timestamp-format edge cases.
   const now = Date.now();
 
   const games = (
@@ -483,6 +516,14 @@ export async function onRequestGet(context) {
     consensusMethod:
       "median_no_vig_implied_probability",
     generatedAt,
+    diagnostics: {
+      upstreamGameCount:
+        Array.isArray(rawGames)
+          ? rawGames.length
+          : 0,
+      consensusGameCount:
+        games.length
+    },
     games,
     quota: {
       remaining:

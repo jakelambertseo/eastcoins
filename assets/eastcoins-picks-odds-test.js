@@ -17,6 +17,7 @@
     },
     data: null,
     games: [],
+    oddsError: null,
     picks: [],
     wallet: 0,
     activeGameId: null,
@@ -496,6 +497,7 @@
         );
       }
 
+      state.oddsError = null;
       state.data = payload;
       state.games =
         Array.isArray(payload.games)
@@ -519,17 +521,16 @@
         error
       );
 
-      els.marketList.innerHTML = `
-        <div class="odds-error">
-          ${String(
-            error?.message ||
-            "NFL odds could not be loaded."
-          )}
-        </div>
-      `;
+      state.oddsError =
+        String(
+          error?.message ||
+          "NFL odds could not be loaded."
+        );
 
-      els.catalogStatus.textContent =
-        "NFL odds unavailable.";
+      state.data = null;
+      state.games = [];
+
+      renderAll();
 
       return null;
     } finally {
@@ -738,6 +739,21 @@
   }
 
   function renderMarkets() {
+    if (state.oddsError) {
+      els.marketList.innerHTML = `
+        <div class="odds-error">
+          <strong>NFL odds request failed.</strong>
+          <div>${state.oddsError}</div>
+          <small>Open /api/picks-odds/provider-check for provider diagnostics.</small>
+        </div>
+      `;
+
+      els.catalogStatus.textContent =
+        "NFL odds unavailable — provider diagnostics needed.";
+
+      return;
+    }
+
     if (!state.games.length) {
       els.marketList.innerHTML = `
         <div class="odds-empty">

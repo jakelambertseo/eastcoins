@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">72 major update groups</div>
+<div class="release-count">73 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1714,10 +1714,9 @@
   </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>NFL sportsbook-odds Picks test added</h2>
 <p>
@@ -1728,6 +1727,23 @@
     test Picks against a local 1,000-ZCoin mock wallet. Odds are cached for 60
     seconds, new Picks close at kickoff, API quota usage is visible, and no
     StreamElements balance or production Picks ledger is touched.
+  </p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-08-26">August 26, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>NFL Odds API test diagnostics hardened</h2>
+<p>
+    Hardened the isolated NFL sportsbook-odds Picks test after the first
+    provider integration check. Removed the unnecessary provider-side kickoff
+    timestamp filter, retained EastCoin's own upcoming-only cutoff, added a
+    no-cost provider/key/NFL availability diagnostic endpoint, exposed safe
+    upstream error codes and messages, bypassed the previous edge-cache
+    version, and fixed the test UI so a failed Odds API request cannot be
+    mistaken for a legitimate zero-game response.
   </p>
 </article>
 </section>
