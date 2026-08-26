@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<meta name="description" content="EastCoin Picks community ZCoin prediction markets.">
+<title>EastCoin | Picks</title>
+<link href="assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
+<link href="assets/eastcoin-favicon.svg?v=full-logo1" rel="shortcut icon" type="image/svg+xml">
+<link href="assets/eastcoin-favicon.png" rel="apple-touch-icon">
+<link href="assets/eastcoins-picks.css?v=1" rel="stylesheet">
+</head>
+<body class="logged-out">
+
+<div class="shell">
+  <aside class="sidebar" aria-label="EastCoin navigation">
+    <a class="brand" href="index.html">
+      <span class="brand-logo"><img src="assets/eastcoins-logo.webp" alt=""></span>
+      <span><strong>EastCoin</strong><small>Watch together</small></span>
+    </a>
+
+    <label class="nav-search">
+      <span aria-hidden="true">⌕</span>
+      <input id="navSearch" type="text" placeholder="Search events" aria-label="Search events">
+    </label>
+
+    <nav class="nav-scroll">
+      <section class="nav-section">
+        <div class="nav-label">Watch</div>
+        <a class="nav-item" href="index.html"><span class="nav-icon">▦</span><span class="nav-copy"><strong>All Events</strong><small>EastCoin event home</small></span></a>
+        <a class="nav-item" href="multiview.html"><span class="nav-icon">▥</span><span class="nav-copy"><strong>MultiView</strong><small>Watch up to four streams</small></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">⌁</span><span class="nav-copy"><strong>Other Streams</strong><small>Approved stream sites</small></span></a>
+        <a class="nav-item active" href="picks.html" aria-current="page"><span class="nav-icon">🎯</span><span class="nav-copy"><strong>Picks</strong><small>ZCoin prediction markets</small></span><span class="nav-new">NEW</span></a>
+      </section>
+
+      <section class="nav-section">
+        <div class="nav-label">Events</div>
+        <a class="nav-item" href="index.html"><span class="nav-icon">▶</span><span class="nav-copy"><strong>Live Only</strong><small>Games happening now</small></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">🔥</span><span class="nav-copy"><strong>Trending</strong><small>Popular and active games</small></span></a>
+        <button class="nav-item" type="button" data-shell-message="Settings stay on the main EastCoin shell."><span class="nav-icon">⚙</span><span class="nav-copy"><strong>Settings</strong><small>Events + interface settings</small></span></button>
+      </section>
+
+      <section class="nav-section">
+        <div class="nav-label">Categories</div>
+        <a class="nav-item" href="index.html"><span class="nav-icon">🏈</span><span class="nav-copy"><strong>Football</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">🥊</span><span class="nav-copy"><strong>UFC / Combat</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">🏀</span><span class="nav-copy"><strong>Basketball</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">⚾</span><span class="nav-copy"><strong>Baseball</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">🏒</span><span class="nav-copy"><strong>Hockey</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">⚽</span><span class="nav-copy"><strong>Soccer</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">🤼</span><span class="nav-copy"><strong>Wrestling</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">🏎</span><span class="nav-copy"><strong>Motorsport</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">🎾</span><span class="nav-copy"><strong>Tennis</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">⛳</span><span class="nav-copy"><strong>Golf</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">≡</span><span class="nav-copy"><strong>Other Events</strong></span></a>
+      </section>
+
+      <section class="nav-section">
+        <div class="nav-label">Support</div>
+        <button class="nav-item" type="button" data-shell-message="Emote Help stays on the main EastCoin shell."><span class="nav-icon">?</span><span class="nav-copy"><strong>Emote Help</strong><small>Twitch emote reference</small></span></button>
+        <button class="nav-item" type="button" data-shell-message="EastCoin mock services are online."><span class="nav-icon">⌁</span><span class="nav-copy"><strong>Status</strong><small>EastCoin service health</small></span><span class="nav-dot"></span></button>
+      </section>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <section class="auth-card" id="authCardLoggedOut">
+        <span class="auth-card-kicker">Picks account</span>
+        <strong>Connect Twitch</strong>
+        <p>Sign in before placing picks. Your Twitch account becomes your Picks identity.</p>
+        <button class="twitch-btn" type="button" data-login><span class="twitch-mark">T</span>Log in with Twitch</button>
+      </section>
+
+      <section class="auth-card" id="authCardLoggedIn" hidden>
+        <div class="nav-user">
+          <span class="nav-avatar">Z</span>
+          <span><strong>Zwades</strong><small>● Twitch connected</small></span>
+        </div>
+        <button class="logout-btn" id="logoutBtn" type="button">Log out</button>
+      </section>
+
+      <div class="wallet-mini">
+        <span>ZCoins wallet</span>
+        <strong><img src="assets/eastcoins-logo.webp" alt=""><b data-wallet>—</b> ZCoins</strong>
+        <small id="walletSync">Sign in to sync StreamElements</small>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="page-head">
+      <div class="page-title">
+        <span class="page-kicker">EastCoin <b class="mode-badge" id="modeBadge" hidden>Frontend Preview</b></span>
+        <h1>Picks</h1>
+        <p>Pick winners with ZCoins. Community action sets the payout. Final odds lock when the game starts.</p>
+      </div>
+      <div class="page-actions">
+        <button class="ghost-btn" id="rulesBtn" type="button">How Picks Works</button>
+        <button class="gold-btn" id="refreshBtn" type="button">Refresh Games</button>
+      </div>
+    </header>
+
+    <section class="login-banner">
+      <div class="login-banner-copy">
+        <span class="login-banner-icon">T</span>
+        <span><strong>Twitch login required to make picks</strong><small>You can browse every market while logged out. Sign in only when you're ready to lock a ticket.</small></span>
+      </div>
+      <button class="twitch-btn" type="button" data-login><span class="twitch-mark">T</span>Continue with Twitch</button>
+    </section>
+
+    <section class="top-leaders" aria-label="Top Picks players">
+      <div class="top-leaders-label">
+        <span>🏆</span>
+        <div><strong>Top Picks</strong><small>Season profit leaders</small></div>
+      </div>
+      <div class="top-leaders-list" id="topLeadersList" aria-label="Season profit leaders">
+        <div class="top-leaders-track" id="topLeadersTrack"></div>
+      </div>
+      <button class="top-leaders-link" type="button" data-jump-view="leaderboard">View all</button>
+    </section>
+
+    <section class="summary-strip" aria-label="Picks summary">
+      <article class="summary-card wallet"><span>ZCoins Wallet</span><strong><b data-wallet>—</b> ZCoins</strong><small id="mainWalletSync">StreamElements wallet</small></article>
+      <article class="summary-card"><span>2026 Picks Profit</span><strong id="seasonProfit">+0 ZCoins</strong><small>Wagers vs settled returns</small></article>
+      <article class="summary-card"><span>Record</span><strong id="seasonRecord">0–0</strong><small id="seasonAccuracy">No settled picks</small></article>
+      <article class="summary-card"><span>Picks Rank</span><strong id="seasonRank">Unranked</strong><small>Ranked by Picks profit</small></article>
+    </section>
+
+    <nav class="view-tabs" aria-label="Picks views">
+      <button class="view-tab active" type="button" data-view="markets">Markets</button>
+      <button class="view-tab" type="button" data-view="mypicks">My Picks <span class="tab-count" id="pendingCount">0</span></button>
+      <button class="view-tab" type="button" data-view="leaderboard">Leaderboard</button>
+      <button class="view-tab" type="button" data-view="history">History</button>
+    </nav>
+
+    <section class="view active" data-view-panel="markets">
+      <div class="section-head">
+        <div><h2>Today's Markets</h2><p id="catalogStatus">Loading current EastCoin games…</p></div>
+        <div class="right-note">1 ZCoin min · 15% wallet · 50 ZCoin max</div>
+      </div>
+      <div class="market-list" id="marketList"></div>
+    </section>
+
+    <section class="view" data-view-panel="mypicks">
+      <div class="section-head">
+        <div><h2>My Picks</h2><p>Your pending and settled ZCoin tickets.</p></div>
+      </div>
+      <div class="ticket-list" id="ticketList"></div>
+    </section>
+
+    <section class="view" data-view-panel="leaderboard">
+      <div class="section-head">
+        <div><h2>Picks Leaderboard</h2><p>Ranked by ZCoins profit from Picks — not total StreamElements wealth.</p></div>
+      </div>
+      <div class="leader-card" id="leaderboard"></div>
+    </section>
+
+    <section class="view" data-view-panel="history">
+      <div class="section-head">
+        <div><h2>Picks History</h2><p>Only EastCoin Picks wagers, payouts and refunds appear here.</p></div>
+        <div class="right-note">Newest first</div>
+      </div>
+      <div class="history-list" id="historyList"></div>
+    </section>
+  </main>
+
+  <aside class="chat" aria-label="Twitch chat">
+    <iframe
+      src="https://www.twitch.tv/embed/zwades/chat?parent=eastcoins.pages.dev&amp;parent=eastcoin.vip&amp;parent=www.eastcoin.vip&amp;parent=localhost&amp;parent=127.0.0.1&amp;darkpopout"
+      title="zwades Twitch chat"
+      loading="eager"
+      referrerpolicy="strict-origin-when-cross-origin">
+    </iframe>
+  </aside>
+</div>
+
+<!-- BET SLIP -->
+<div class="backdrop" id="betBackdrop" aria-hidden="true">
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="betTitle">
+    <header class="modal-head">
+      <strong id="betTitle">Lock Pick</strong>
+      <button class="close-btn" id="closeBet" type="button" aria-label="Close">×</button>
+    </header>
+    <div class="modal-body">
+      <div class="selected-match" id="selectedMatch"></div>
+
+      <div class="selected-side">
+        <span>Your pick</span>
+        <strong id="selectedSide"></strong>
+      </div>
+
+      <div class="bet-meta">
+        <div class="bet-meta-card wallet"><span>Available</span><strong id="betWallet">0 ZCoins</strong></div>
+        <div class="bet-meta-card"><span>Your Max</span><strong id="betMax">0 ZCoins</strong></div>
+      </div>
+
+      <div class="wager-card">
+        <div class="wager-top"><span>Wager</span><strong id="wagerValue">1 ZCoin</strong></div>
+        <input class="wager-range" id="wagerRange" type="range" min="1" max="50" value="1" step="1">
+        <div class="wager-scale"><span>1 min</span><span id="maxScale">50 max</span></div>
+        <div class="balance-after"><span>Balance after wager</span><strong id="balanceAfter">0 ZCoins</strong></div>
+      </div>
+
+      <details class="odds-details">
+        <summary>
+          <span class="odds-summary-copy"><strong>Projected Community Odds</strong><small>View pool breakdown</small></span>
+          <span class="odds-summary-value"><strong id="projectedOdds">Even</strong><span class="chevron">⌄</span></span>
+        </summary>
+        <div class="odds-body">
+          <div class="odds-note" id="oddsNote">Even payout until both sides have community action.</div>
+          <div class="projected-pools" id="projectedPools"></div>
+        </div>
+      </details>
+
+      <div class="total-riding">
+        <span>Total ZCoins riding on this game</span>
+        <strong><img src="assets/eastcoins-logo.webp" alt=""><b id="totalRiding">0</b> ZCoins</strong>
+      </div>
+
+      <div class="winnings">
+        <span>Potential Winnings<small>Projected return at current community odds</small></span>
+        <strong id="potentialWinnings">0</strong>
+      </div>
+
+      <button class="lock-btn" id="lockPickBtn" type="button">Lock Pick</button>
+    </div>
+  </section>
+</div>
+
+<!-- TWITCH AUTH -->
+<div class="backdrop" id="authBackdrop" aria-hidden="true">
+  <section class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="auth-modal-top">
+      <span class="auth-logo">T</span>
+      <button class="close-btn" id="closeAuth" type="button" aria-label="Close">×</button>
+    </div>
+    <h2 id="authTitle">Sign in to make your pick</h2>
+    <p>EastCoin uses Twitch as your Picks identity and connects your existing ZCoins balance.</p>
+
+    <div class="auth-checks">
+      <div class="auth-check"><span>✓</span><strong>Use your existing StreamElements ZCoins wallet.</strong></div>
+      <div class="auth-check"><span>✓</span><strong>One locked pick per game — no picking both sides.</strong></div>
+      <div class="auth-check"><span>✓</span><strong>Track your Picks profit, record and rank.</strong></div>
+      <div class="auth-check privacy"><span>✓</span><strong>Your Twitch password stays with Twitch. EastCoin never sees or stores it; Twitch only sends the account information you approve.</strong></div>
+    </div>
+
+    <button class="twitch-btn" id="mockLoginBtn" type="button"><span class="twitch-mark">T</span>Continue with Twitch</button>
+    <small class="auth-note" id="authNote">Twitch sign-in is handled by Twitch. EastCoin never receives your Twitch password.</small>
+  </section>
+</div>
+
+<!-- RULES -->
+<div class="backdrop" id="rulesBackdrop" aria-hidden="true">
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+    <header class="modal-head">
+      <strong id="rulesTitle">How EastCoin Picks Works</strong>
+      <button class="close-btn" id="closeRules" type="button" aria-label="Close">×</button>
+    </header>
+    <div class="modal-body">
+      <div class="rules-list">
+        <div class="rule"><strong>1 ZCoin minimum</strong><p>Small wallets can still participate without risking most of their balance.</p></div>
+        <div class="rule"><strong>Your max = lower of 15% of wallet or 50 ZCoins</strong><p>This limits whale influence while still rewarding members who have accumulated ZCoins.</p></div>
+        <div class="rule"><strong>Community action sets the payout</strong><p>The current multiplier is total ZCoins in the game divided by ZCoins on that side.</p></div>
+        <div class="rule"><strong>Final odds lock at game start</strong><p>Your projected payout may move before lock as more community ZCoins enter the market.</p></div>
+        <div class="rule"><strong>One-sided markets are No Action</strong><p>If only one team has action when the market locks, every ticket is refunded.</p></div>
+        <div class="rule"><strong>One pick per game</strong><p>Once you lock a side, you cannot also pick the other team in that same game.</p></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="assets/eastcoins-streamed-api.js"></script>
+<script src="assets/eastcoins-picks-api.js?v=1"></script>
+<script src="assets/eastcoins-picks-preview.js?v=1"></script>
+<script src="assets/eastcoins-picks.js?v=1"></script>
+
+</body>
+</html>

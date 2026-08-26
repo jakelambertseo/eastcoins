@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<title>EastCoin | Picks Admin</title>
+<link href="assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
+<link href="assets/eastcoins-picks-admin.css?v=1" rel="stylesheet">
+</head>
+<body>
+<main class="admin-shell">
+  <header class="admin-head">
+    <div class="brand">
+      <img src="assets/eastcoins-logo.webp" alt="">
+      <div>
+        <div class="eyebrow">EastCoin Admin</div>
+        <h1>Picks Settlement</h1>
+        <p>Choose the winning side, No Action, or Void for a market. Real settlement requires server-side Twitch admin authorization.</p>
+      </div>
+    </div>
+    <div class="head-actions">
+      <a class="btn" href="picks.html">← Back to Picks</a>
+      <button class="btn gold" id="refreshAdmin" type="button">Refresh Markets</button>
+    </div>
+  </header>
+
+  <div class="mode-banner" id="modeBanner">
+    <span class="mode-dot"></span>
+    <span id="modeText">Checking admin authorization…</span>
+  </div>
+
+  <div class="toolbar">
+    <div>
+      <h2>Markets needing a result</h2>
+      <small id="marketCount">—</small>
+    </div>
+  </div>
+
+  <section class="market-list" id="adminMarketList">
+    <div class="empty">Loading settlement console…</div>
+  </section>
+</main>
+
+<div class="backdrop" id="confirmBackdrop" aria-hidden="true">
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <header class="modal-head">
+      <strong>Confirm Settlement</strong>
+      <button class="close" id="closeConfirm" type="button" aria-label="Close">×</button>
+    </header>
+    <div class="modal-body">
+      <h2 class="confirm-title" id="confirmTitle">Set market result</h2>
+      <p class="confirm-copy" id="confirmCopy"></p>
+      <div class="confirm-grid" id="confirmGrid"></div>
+      <div class="warning" id="confirmWarning">
+        In production this action must be authorized and settled by the Worker. The browser never calculates authoritative payouts.
+      </div>
+      <button class="confirm-action" id="confirmAction" type="button">Confirm Result</button>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="adminToast"></div>
+
+<script src="assets/eastcoins-streamed-api.js"></script>
+<script src="assets/eastcoins-picks-api.js?v=1"></script>
+<script src="assets/eastcoins-picks-preview.js?v=1"></script>
+<script src="assets/eastcoins-picks-admin.js?v=1"></script>
+</body>
+</html>
