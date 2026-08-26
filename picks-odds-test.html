@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<meta name="description" content="EastCoin Picks NFL moneyline test powered by live US bookmaker odds.">
+<title>EastCoin | NFL Odds Picks Test</title>
+<link href="assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
+<link href="assets/eastcoins-picks.css?v=1" rel="stylesheet">
+<link href="assets/eastcoins-picks-odds-test.css?v=1" rel="stylesheet">
+</head>
+<body class="logged-out odds-test-page">
+
+<div class="shell">
+  <aside class="sidebar" aria-label="EastCoin navigation">
+    <a class="brand" href="index.html">
+      <span class="brand-logo"><img src="assets/eastcoins-logo.webp" alt=""></span>
+      <span><strong>EastCoin</strong><small>Watch together</small></span>
+    </a>
+
+    <nav class="nav-scroll">
+      <section class="nav-section">
+        <div class="nav-label">Watch</div>
+        <a class="nav-item" href="index.html"><span class="nav-icon">▦</span><span class="nav-copy"><strong>All Events</strong><small>EastCoin event home</small></span></a>
+        <a class="nav-item" href="multiview.html"><span class="nav-icon">▥</span><span class="nav-copy"><strong>MultiView</strong><small>Watch up to four streams</small></span></a>
+        <a class="nav-item" href="picks.html"><span class="nav-icon">🎯</span><span class="nav-copy"><strong>Picks</strong><small>Community market test</small></span></a>
+        <a class="nav-item active" href="picks-odds-test.html" aria-current="page"><span class="nav-icon">🏈</span><span class="nav-copy"><strong>NFL Odds Test</strong><small>Consensus moneylines</small></span><span class="nav-new">TEST</span></a>
+      </section>
+
+      <section class="nav-section">
+        <div class="nav-label">Test Rules</div>
+        <button class="nav-item" id="navMethodBtn" type="button"><span class="nav-icon">Σ</span><span class="nav-copy"><strong>Consensus Method</strong><small>Median no-vig model</small></span></button>
+        <button class="nav-item" id="resetTestBtn" type="button"><span class="nav-icon">↺</span><span class="nav-copy"><strong>Reset Test Data</strong><small>Restore 1,000 test ZCoins</small></span></button>
+      </section>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <section class="auth-card" id="authCardLoggedOut">
+        <span class="auth-card-kicker">Test identity</span>
+        <strong>Connect Twitch</strong>
+        <p>Browse odds logged out. Twitch login is required to lock local test picks.</p>
+        <button class="twitch-btn" type="button" data-login><span class="twitch-mark">T</span>Log in with Twitch</button>
+      </section>
+
+      <section class="auth-card" id="authCardLoggedIn" hidden>
+        <div class="nav-user">
+          <span class="nav-avatar" id="navAvatar">EC</span>
+          <span><strong id="navUserName">EastCoin User</strong><small>● Twitch connected</small></span>
+        </div>
+        <button class="logout-btn" id="logoutBtn" type="button">Log out</button>
+      </section>
+
+      <div class="wallet-mini test-wallet-mini">
+        <span>Test wallet</span>
+        <strong><img src="assets/eastcoins-logo.webp" alt=""><b id="sidebarWallet">—</b> Test ZCoins</strong>
+        <small>No StreamElements coins are used.</small>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="page-head">
+      <div class="page-title">
+        <span class="page-kicker">EastCoin Picks <b class="test-mode-badge">ODDS API TEST</b></span>
+        <h1>NFL Moneyline Test</h1>
+        <p>Upcoming NFL games with US head-to-head odds. EastCoin creates a median no-vig consensus line and locks the fixed payout when you submit a test Pick.</p>
+      </div>
+      <div class="page-actions">
+        <button class="ghost-btn" id="methodBtn" type="button">How Consensus Works</button>
+        <button class="gold-btn" id="refreshBtn" type="button">Refresh Odds</button>
+      </div>
+    </header>
+
+    <section class="test-warning">
+      <span class="test-warning-icon">TEST</span>
+      <div>
+        <strong>This does not use real ZCoins.</strong>
+        <small>Picks and the 1,000-ZCoin test wallet live only in this browser. Nothing is written to the production Picks ledger.</small>
+      </div>
+    </section>
+
+    <section class="login-banner" id="loginBanner">
+      <div class="login-banner-copy">
+        <span class="login-banner-icon">T</span>
+        <span><strong>Twitch login required to lock a test Pick</strong><small>Real Twitch identity, mock local wallet. Upcoming odds can be browsed without signing in.</small></span>
+      </div>
+      <button class="twitch-btn" type="button" data-login><span class="twitch-mark">T</span>Continue with Twitch</button>
+    </section>
+
+    <section class="summary-strip odds-summary-strip" aria-label="NFL odds test summary">
+      <article class="summary-card wallet"><span>Test Wallet</span><strong id="summaryWallet">—</strong><small>Starts at 1,000 local ZCoins</small></article>
+      <article class="summary-card"><span>Upcoming NFL Games</span><strong id="gameCount">—</strong><small>Games with consensus h2h odds</small></article>
+      <article class="summary-card"><span>Odds Snapshot</span><strong id="oddsAge">Loading…</strong><small id="cacheStatus">60-second server cache</small></article>
+      <article class="summary-card"><span>API Credits</span><strong id="creditsRemaining">—</strong><small id="creditsUsed">Usage unavailable</small></article>
+    </section>
+
+    <nav class="view-tabs" aria-label="NFL odds test views">
+      <button class="view-tab active" type="button" data-view="markets">NFL Markets</button>
+      <button class="view-tab" type="button" data-view="mypicks">My Test Picks <span class="tab-count" id="pickCount">0</span></button>
+    </nav>
+
+    <section class="view active" data-view-panel="markets">
+      <div class="section-head">
+        <div>
+          <h2>Upcoming NFL Moneylines</h2>
+          <p id="catalogStatus">Loading current US bookmaker odds…</p>
+        </div>
+        <div class="right-note">Upcoming only · closes at kickoff · fixed line</div>
+      </div>
+      <div class="odds-market-list" id="marketList">
+        <div class="odds-loading">Loading NFL odds…</div>
+      </div>
+    </section>
+
+    <section class="view" data-view-panel="mypicks">
+      <div class="section-head">
+        <div>
+          <h2>My Test Picks</h2>
+          <p>Odds are frozen at the consensus line shown when each Pick was submitted.</p>
+        </div>
+        <div class="right-note">Local test data only</div>
+      </div>
+      <div class="test-picks-list" id="testPicksList"></div>
+    </section>
+  </main>
+
+  <aside class="chat" aria-label="Twitch chat">
+    <iframe
+      src="https://www.twitch.tv/embed/zwades/chat?parent=eastcoins.pages.dev&amp;parent=eastcoin.vip&amp;parent=www.eastcoin.vip&amp;parent=localhost&amp;parent=127.0.0.1&amp;darkpopout"
+      title="zwades Twitch chat"
+      loading="eager"
+      referrerpolicy="strict-origin-when-cross-origin">
+    </iframe>
+  </aside>
+</div>
+
+<div class="backdrop" id="betBackdrop" aria-hidden="true">
+  <section class="modal odds-bet-modal" role="dialog" aria-modal="true" aria-labelledby="betTitle">
+    <header class="modal-head">
+      <strong id="betTitle">Lock Test Pick</strong>
+      <button class="close-btn" id="closeBet" type="button" aria-label="Close">×</button>
+    </header>
+    <div class="modal-body">
+      <div class="odds-slip-match">
+        <span id="slipGameTime"></span>
+        <strong id="slipMatchup"></strong>
+      </div>
+
+      <div class="odds-slip-selection">
+        <div>
+          <span>Your Pick</span>
+          <strong id="slipTeam"></strong>
+        </div>
+        <div class="locked-line-preview">
+          <span>Current Consensus</span>
+          <strong id="slipOdds"></strong>
+        </div>
+      </div>
+
+      <div class="bet-meta">
+        <div class="bet-meta-card wallet"><span>Test Wallet</span><strong id="betWallet">0 ZCoins</strong></div>
+        <div class="bet-meta-card"><span>Your Max</span><strong id="betMax">0 ZCoins</strong></div>
+      </div>
+
+      <div class="wager-card">
+        <div class="wager-top"><span>Test Wager</span><strong id="wagerValue">1 ZCoin</strong></div>
+        <input class="wager-range" id="wagerRange" type="range" min="1" max="50" value="1" step="1">
+        <div class="wager-scale"><span>1 min</span><span id="maxScale">50 max</span></div>
+      </div>
+
+      <div class="fixed-payout-box">
+        <div><span>Fixed odds</span><strong id="fixedOdds">+100</strong></div>
+        <div><span>Potential return</span><strong id="potentialReturn">2 ZCoins</strong></div>
+        <div><span>Potential profit</span><strong id="potentialProfit">1 ZCoin</strong></div>
+      </div>
+
+      <p class="quote-note" id="quoteNote">The latest 60-second consensus snapshot is checked again when you submit.</p>
+
+      <button class="lock-btn" id="lockPickBtn" type="button">Lock Test Pick</button>
+    </div>
+  </section>
+</div>
+
+<div class="backdrop" id="methodBackdrop" aria-hidden="true">
+  <section class="auth-modal method-modal" role="dialog" aria-modal="true" aria-labelledby="methodTitle">
+    <div class="auth-modal-top">
+      <span class="auth-logo">Σ</span>
+      <button class="close-btn" id="closeMethod" type="button" aria-label="Close">×</button>
+    </div>
+    <h2 id="methodTitle">How EastCoin Consensus Odds Work</h2>
+    <p>We do not average American moneyline numbers directly.</p>
+    <div class="method-steps">
+      <div><b>1</b><span>Read each US bookmaker's home and away h2h prices.</span></div>
+      <div><b>2</b><span>Convert each price to implied probability.</span></div>
+      <div><b>3</b><span>Remove that bookmaker's vig by normalizing its two probabilities to 100%.</span></div>
+      <div><b>4</b><span>Take the median fair probability across bookmakers for each team.</span></div>
+      <div><b>5</b><span>Normalize the median pair and convert it back to American odds.</span></div>
+    </div>
+    <div class="formula-card">
+      <strong>Fixed payout</strong>
+      <code>+A: return = wager × (1 + A/100)</code>
+      <code>-A: return = wager × (1 + 100/A)</code>
+      <small>Test payouts are floored to whole ZCoins.</small>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/eastcoins-picks-odds-test.js?v=1"></script>
+</body>
+</html>

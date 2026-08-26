@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">71 major update groups</div>
+<div class="release-count">72 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1696,10 +1696,9 @@
   </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Real Twitch login enabled for EastCoin Picks</h2>
 <p>
@@ -1712,6 +1711,23 @@
     session-health check. Twitch OAuth tokens are used only to establish
     identity in this phase and are not stored. StreamElements wallet access
     and real ZCoin wagering remain disabled.
+  </p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-08-26">August 26, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>NFL sportsbook-odds Picks test added</h2>
+<p>
+    Added an isolated NFL Picks experiment powered by The Odds API. The test
+    reads upcoming U.S. head-to-head bookmaker prices through a server-side
+    Cloudflare proxy, removes each book's vig, calculates a median fair
+    consensus moneyline, and lets Twitch-authenticated users lock fixed-odds
+    test Picks against a local 1,000-ZCoin mock wallet. Odds are cached for 60
+    seconds, new Picks close at kickoff, API quota usage is visible, and no
+    StreamElements balance or production Picks ledger is touched.
   </p>
 </article>
 </section>
