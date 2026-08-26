@@ -1,5 +1,4 @@
-const KALSHI_BASE =
-  "https://external-api.kalshi.com/trade-api/v2";
+import { kalshiFetch, safeAttempts } from "./_kalshi.js";
 
 function number(value, fallback = 0) {
   const parsed = Number(value);
@@ -142,27 +141,25 @@ export async function onRequestGet(context) {
     );
   }
 
-  const upstream =
-    await fetch(
-      `${KALSHI_BASE}/markets/${encodeURIComponent(ticker)}`,
-      {
-        headers: {
-          Accept:
-            "application/json"
-        }
-      }
-    );
+  let result;
 
-  if (!upstream.ok) {
+  try {
+    result =
+      await kalshiFetch(
+        `/markets/${encodeURIComponent(ticker)}`
+      );
+  } catch (error) {
     return Response.json(
       {
         ok: false,
         code:
           "KALSHI_QUOTE_FAILED",
-        providerStatus:
-          upstream.status,
         message:
-          "Kalshi could not provide a fresh quote for this market."
+          "Kalshi could not provide a fresh quote for this market.",
+        attempts:
+          safeAttempts(
+            error?.attempts
+          )
       },
       {
         status: 502,
@@ -175,7 +172,7 @@ export async function onRequestGet(context) {
   }
 
   const payload =
-    await upstream.json();
+    await result.response.json();
 
   const market =
     payload?.market;
@@ -230,6 +227,14 @@ export async function onRequestGet(context) {
     {
       ok: true,
       provider: "Kalshi",
+      providerHost:
+        new URL(
+          result.base
+        ).host,
+      fallbackAttempts:
+        safeAttempts(
+          result.attempts
+        ),
       generatedAt:
         new Date().toISOString(),
       market: {

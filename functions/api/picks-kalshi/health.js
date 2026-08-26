@@ -1,46 +1,58 @@
-const URL =
-  "https://external-api.kalshi.com/trade-api/v2/events?status=open&limit=1";
+import {
+  kalshiFetch,
+  safeAttempts
+} from "./_kalshi.js";
 
 export async function onRequestGet() {
   try {
-    const response =
-      await fetch(
-        URL,
-        {
-          headers: {
-            Accept:
-              "application/json"
-          }
-        }
+    const result =
+      await kalshiFetch(
+        "/events?limit=1"
       );
+
+    const payload =
+      await result.response
+        .json()
+        .catch(() => null);
 
     return Response.json(
       {
-        ok: response.ok,
+        ok: true,
         test: true,
         integration:
           "kalshi-public-market-data",
         authenticationRequired:
           false,
-        providerStatus:
-          response.status,
+        providerReachable:
+          true,
+        providerHost:
+          new URL(
+            result.base
+          ).host,
+        eventReturned:
+          Boolean(
+            payload?.events?.length
+          ),
+        fallbackAttempts:
+          safeAttempts(
+            result.attempts
+          ),
         message:
-          response.ok
-            ? "Kalshi public market data is reachable."
-            : "Kalshi public market data returned an error."
+          "Kalshi public market data is reachable from EastCoin."
       },
       {
-        status:
-          response.ok
-            ? 200
-            : 502,
+        status: 200,
         headers: {
           "Cache-Control":
-            "no-store"
+            "no-store",
+          "X-Content-Type-Options":
+            "nosniff"
         }
       }
     );
   } catch (error) {
+    // Return 200 intentionally so the diagnostic body is easy to inspect
+    // even when both upstream Kalshi hostnames fail.
     return Response.json(
       {
         ok: false,
@@ -49,16 +61,24 @@ export async function onRequestGet() {
           "kalshi-public-market-data",
         authenticationRequired:
           false,
+        providerReachable:
+          false,
         code:
-          "KALSHI_UNREACHABLE",
+          "KALSHI_ALL_BASES_FAILED",
+        attempts:
+          safeAttempts(
+            error?.attempts
+          ),
         message:
-          "EastCoin could not reach Kalshi."
+          "Both Kalshi public API hostnames failed from the EastCoin Cloudflare Function."
       },
       {
-        status: 502,
+        status: 200,
         headers: {
           "Cache-Control":
-            "no-store"
+            "no-store",
+          "X-Content-Type-Options":
+            "nosniff"
         }
       }
     );

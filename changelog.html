@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">73 major update groups</div>
+<div class="release-count">74 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1730,10 +1730,9 @@
   </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>NFL Odds API test diagnostics hardened</h2>
 <p>
@@ -1744,6 +1743,22 @@
     upstream error codes and messages, bypassed the previous edge-cache
     version, and fixed the test UI so a failed Odds API request cannot be
     mistaken for a legitimate zero-game response.
+  </p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-08-26">August 26, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Kalshi API connectivity fallback added</h2>
+<p>
+    Hardened the Kalshi public-data experiment after the initial Cloudflare
+    connectivity test returned a 502. EastCoin now attempts Kalshi's current
+    external-api hostname first and falls back to the still-live
+    api.elections hostname when necessary. Added safe per-host diagnostics and
+    applied the same fallback behavior to catalog discovery and fresh
+    pre-lock market quotes.
   </p>
 </article>
 </section>

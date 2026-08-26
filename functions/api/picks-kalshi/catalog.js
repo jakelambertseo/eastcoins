@@ -1,5 +1,4 @@
-const KALSHI_BASE =
-  "https://external-api.kalshi.com/trade-api/v2";
+import { kalshiFetch, safeAttempts } from "./_kalshi.js";
 
 const CACHE_TTL_SECONDS = 30;
 const CACHE_VERSION = "v1";
@@ -388,60 +387,37 @@ function pickDiversified(candidates) {
 }
 
 async function fetchOpenEvents() {
-  const url = new URL(
-    `${KALSHI_BASE}/events`
-  );
+  const params =
+    new URLSearchParams({
+      status: "open",
+      limit: "200",
+      with_nested_markets: "true"
+    });
 
-  url.searchParams.set(
-    "status",
-    "open"
-  );
-
-  url.searchParams.set(
-    "limit",
-    "200"
-  );
-
-  url.searchParams.set(
-    "with_nested_markets",
-    "true"
-  );
-
-  const response =
-    await fetch(
-      url.toString(),
-      {
-        headers: {
-          Accept: "application/json"
-        }
-      }
+  const result =
+    await kalshiFetch(
+      `/events?${params.toString()}`
     );
-
-  if (!response.ok) {
-    const text =
-      await response.text().catch(
-        () => ""
-      );
-
-    console.error(
-      "Kalshi events request failed",
-      response.status,
-      text.slice(0, 500)
-    );
-
-    throw new Error(
-      `KALSHI_HTTP_${response.status}`
-    );
-  }
 
   const payload =
-    await response.json();
+    await result.response.json();
 
-  return Array.isArray(
-    payload?.events
-  )
-    ? payload.events
-    : [];
+  return {
+    events:
+      Array.isArray(
+        payload?.events
+      )
+        ? payload.events
+        : [],
+    providerHost:
+      new URL(
+        result.base
+      ).host,
+    fallbackAttempts:
+      safeAttempts(
+        result.attempts
+      )
+  };
 }
 
 function clientResponse(
@@ -507,8 +483,11 @@ export async function onRequestGet(context) {
   }
 
   try {
-    const events =
+    const fetched =
       await fetchOpenEvents();
+
+    const events =
+      fetched.events;
 
     const candidates =
       events
@@ -529,6 +508,10 @@ export async function onRequestGet(context) {
       provider: "Kalshi",
       source:
         "public_market_data",
+      providerHost:
+        fetched.providerHost,
+      fallbackAttempts:
+        fetched.fallbackAttempts,
       generatedAt,
       selection: {
         requested: TARGET_COUNT,
@@ -592,6 +575,10 @@ export async function onRequestGet(context) {
           String(
             error?.message ||
             "unknown"
+          ),
+        attempts:
+          safeAttempts(
+            error?.attempts
           )
       },
       {
