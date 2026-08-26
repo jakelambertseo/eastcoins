@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<meta name="description" content="EastCoin Kalshi public prediction-market test.">
+<title>EastCoin | Kalshi Picks Test</title>
+<link href="assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
+<link href="assets/eastcoins-picks.css?v=1" rel="stylesheet">
+<link href="assets/eastcoins-picks-kalshi-test.css?v=1" rel="stylesheet">
+</head>
+<body class="logged-out kalshi-test-page">
+
+<div class="shell">
+  <aside class="sidebar" aria-label="EastCoin navigation">
+    <a class="brand" href="index.html">
+      <span class="brand-logo"><img src="assets/eastcoins-logo.webp" alt=""></span>
+      <span><strong>EastCoin</strong><small>Watch together</small></span>
+    </a>
+
+    <nav class="nav-scroll">
+      <section class="nav-section">
+        <div class="nav-label">Watch</div>
+        <a class="nav-item" href="index.html"><span class="nav-icon">▦</span><span class="nav-copy"><strong>All Events</strong><small>EastCoin event home</small></span></a>
+        <a class="nav-item" href="multiview.html"><span class="nav-icon">▥</span><span class="nav-copy"><strong>MultiView</strong><small>Watch up to four streams</small></span></a>
+        <a class="nav-item" href="picks.html"><span class="nav-icon">🎯</span><span class="nav-copy"><strong>Picks</strong><small>Community market test</small></span></a>
+        <a class="nav-item" href="picks-odds-test.html"><span class="nav-icon">🏈</span><span class="nav-copy"><strong>NFL Odds Test</strong><small>Consensus moneylines</small></span></a>
+        <a class="nav-item active" href="picks-kalshi-test.html" aria-current="page"><span class="nav-icon">K</span><span class="nav-copy"><strong>Kalshi Test</strong><small>10 non-sports markets</small></span><span class="nav-new">TEST</span></a>
+      </section>
+
+      <section class="nav-section">
+        <div class="nav-label">Test Controls</div>
+        <button class="nav-item" id="explainBtnNav" type="button"><span class="nav-icon">?</span><span class="nav-copy"><strong>How Pricing Works</strong><small>Kalshi ask → fixed odds</small></span></button>
+        <button class="nav-item" id="resetTestBtn" type="button"><span class="nav-icon">↺</span><span class="nav-copy"><strong>Reset Test Data</strong><small>Restore 1,000 test ZCoins</small></span></button>
+      </section>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <section class="auth-card" id="authCardLoggedOut">
+        <span class="auth-card-kicker">Test identity</span>
+        <strong>Connect Twitch</strong>
+        <p>Browse Kalshi markets logged out. Twitch login is required to lock local test Picks.</p>
+        <button class="twitch-btn" type="button" data-login><span class="twitch-mark">T</span>Log in with Twitch</button>
+      </section>
+
+      <section class="auth-card" id="authCardLoggedIn" hidden>
+        <div class="nav-user">
+          <span class="nav-avatar" id="navAvatar">EC</span>
+          <span><strong id="navUserName">EastCoin User</strong><small>● Twitch connected</small></span>
+        </div>
+        <button class="logout-btn" id="logoutBtn" type="button">Log out</button>
+      </section>
+
+      <div class="wallet-mini kalshi-wallet-mini">
+        <span>Test wallet</span>
+        <strong><img src="assets/eastcoins-logo.webp" alt=""><b id="sidebarWallet">—</b> Test ZCoins</strong>
+        <small>No StreamElements coins are used.</small>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="page-head">
+      <div class="page-title">
+        <span class="page-kicker">EastCoin Picks <b class="kalshi-mode-badge">KALSHI PUBLIC DATA TEST</b></span>
+        <h1>Prediction Market Test</h1>
+        <p>Ten open non-sports Kalshi markets selected for category diversity and activity. Pick YES or NO at the current executable ask and lock a fixed test payout.</p>
+      </div>
+      <div class="page-actions">
+        <button class="ghost-btn" id="explainBtn" type="button">How Pricing Works</button>
+        <button class="gold-btn" id="refreshBtn" type="button">Refresh Markets</button>
+      </div>
+    </header>
+
+    <section class="kalshi-warning">
+      <span>TEST</span>
+      <div>
+        <strong>Public Kalshi data, fake EastCoin wallet.</strong>
+        <small>Nothing here places a Kalshi trade, uses a Kalshi account, or moves production ZCoins. Test Picks are stored only in this browser.</small>
+      </div>
+    </section>
+
+    <section class="login-banner">
+      <div class="login-banner-copy">
+        <span class="login-banner-icon">T</span>
+        <span><strong>Twitch login required to lock a test Pick</strong><small>Real EastCoin identity, 1,000 local Test ZCoins, no production ledger.</small></span>
+      </div>
+      <button class="twitch-btn" type="button" data-login><span class="twitch-mark">T</span>Continue with Twitch</button>
+    </section>
+
+    <section class="summary-strip kalshi-summary" aria-label="Kalshi test summary">
+      <article class="summary-card wallet"><span>Test Wallet</span><strong id="summaryWallet">—</strong><small>Starts at 1,000 local ZCoins</small></article>
+      <article class="summary-card"><span>Markets Shown</span><strong id="marketCount">—</strong><small>Non-sports, category-diverse</small></article>
+      <article class="summary-card"><span>Categories</span><strong id="categoryCount">—</strong><small id="categoryPreview">Loading…</small></article>
+      <article class="summary-card"><span>Snapshot</span><strong id="snapshotAge">Loading…</strong><small id="cacheStatus">30-second server cache</small></article>
+    </section>
+
+    <nav class="view-tabs" aria-label="Kalshi test views">
+      <button class="view-tab active" type="button" data-view="markets">10 Markets</button>
+      <button class="view-tab" type="button" data-view="mypicks">My Test Picks <span class="tab-count" id="pickCount">0</span></button>
+    </nav>
+
+    <section class="view active" data-view-panel="markets">
+      <div class="section-head">
+        <div>
+          <h2>Open Non-Sports Markets</h2>
+          <p id="catalogStatus">Loading current public Kalshi markets…</p>
+        </div>
+        <div class="right-note">Fresh quote on Lock · one Pick per market</div>
+      </div>
+      <div class="kalshi-market-list" id="marketList">
+        <div class="kalshi-loading">Loading Kalshi markets…</div>
+      </div>
+    </section>
+
+    <section class="view" data-view-panel="mypicks">
+      <div class="section-head">
+        <div>
+          <h2>My Kalshi Test Picks</h2>
+          <p>Each Pick stores the executable Kalshi ask that was confirmed when it was locked.</p>
+        </div>
+        <div class="right-note">Local test data only</div>
+      </div>
+      <div class="kalshi-picks-list" id="testPicksList"></div>
+    </section>
+  </main>
+
+  <aside class="chat" aria-label="Twitch chat">
+    <iframe
+      src="https://www.twitch.tv/embed/zwades/chat?parent=eastcoins.pages.dev&amp;parent=eastcoin.vip&amp;parent=www.eastcoin.vip&amp;parent=localhost&amp;parent=127.0.0.1&amp;darkpopout"
+      title="zwades Twitch chat"
+      loading="eager"
+      referrerpolicy="strict-origin-when-cross-origin">
+    </iframe>
+  </aside>
+</div>
+
+<div class="backdrop" id="betBackdrop" aria-hidden="true">
+  <section class="modal kalshi-bet-modal" role="dialog" aria-modal="true" aria-labelledby="betTitle">
+    <header class="modal-head">
+      <strong id="betTitle">Lock Kalshi Test Pick</strong>
+      <button class="close-btn" id="closeBet" type="button" aria-label="Close">×</button>
+    </header>
+    <div class="modal-body">
+      <div class="kalshi-slip-market">
+        <span id="slipCategory"></span>
+        <strong id="slipEvent"></strong>
+        <small id="slipMarket"></small>
+      </div>
+
+      <div class="kalshi-slip-selection">
+        <div>
+          <span>Your Side</span>
+          <strong id="slipSide">YES</strong>
+        </div>
+        <div>
+          <span>Current Ask</span>
+          <strong id="slipPrice">50¢</strong>
+        </div>
+        <div>
+          <span>Equivalent Odds</span>
+          <strong id="slipOdds">+100</strong>
+        </div>
+      </div>
+
+      <div class="bet-meta">
+        <div class="bet-meta-card wallet"><span>Test Wallet</span><strong id="betWallet">0 ZCoins</strong></div>
+        <div class="bet-meta-card"><span>Your Max</span><strong id="betMax">0 ZCoins</strong></div>
+      </div>
+
+      <div class="wager-card">
+        <div class="wager-top"><span>Test Wager</span><strong id="wagerValue">1 ZCoin</strong></div>
+        <input class="wager-range" id="wagerRange" type="range" min="1" max="50" value="1" step="1">
+        <div class="wager-scale"><span>1 min</span><span id="maxScale">50 max</span></div>
+      </div>
+
+      <div class="kalshi-payout-grid">
+        <div><span>Fixed price</span><strong id="fixedPrice">50¢</strong></div>
+        <div><span>Potential return</span><strong id="potentialReturn">2 ZCoins</strong></div>
+        <div><span>Potential profit</span><strong id="potentialProfit">1 ZCoin</strong></div>
+      </div>
+
+      <p class="kalshi-quote-note" id="quoteNote">EastCoin will request this exact Kalshi market again before the Pick locks.</p>
+      <button class="lock-btn" id="lockPickBtn" type="button">Check & Lock Test Pick</button>
+    </div>
+  </section>
+</div>
+
+<div class="backdrop" id="explainBackdrop" aria-hidden="true">
+  <section class="auth-modal kalshi-explain-modal" role="dialog" aria-modal="true" aria-labelledby="explainTitle">
+    <div class="auth-modal-top">
+      <span class="auth-logo">K</span>
+      <button class="close-btn" id="closeExplain" type="button" aria-label="Close">×</button>
+    </div>
+    <h2 id="explainTitle">How Kalshi Pricing Maps to EastCoin</h2>
+    <p>EastCoin uses the current executable ask for the side you choose — not the last trade or a synthetic consensus.</p>
+
+    <div class="kalshi-method">
+      <div><b>1</b><span>Kalshi YES ask = the dollar cost of a $1 YES contract.</span></div>
+      <div><b>2</b><span>Kalshi NO ask = the dollar cost of a $1 NO contract.</span></div>
+      <div><b>3</b><span>Decimal return = 1 ÷ ask price.</span></div>
+      <div><b>4</b><span>EastCoin converts that return to equivalent American odds for display.</span></div>
+      <div><b>5</b><span>When you lock, EastCoin fetches the exact market fresh. If the price moved, you must review it again.</span></div>
+    </div>
+
+    <div class="kalshi-formula">
+      <strong>Example</strong>
+      <code>YES ask = $0.40 → 1 / 0.40 = 2.50x → +150</code>
+      <code>10 Test ZCoins → 25 return → 15 profit</code>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/eastcoins-picks-kalshi-test.js?v=1"></script>
+</body>
+</html>
