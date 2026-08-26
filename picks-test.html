@@ -3765,6 +3765,18 @@ body{
   }
 }
 
+
+
+/* PICKS V18 — full team names on EastCoin Pool bar */
+.market-action-labels{
+  gap:10px;
+}
+.market-action-labels span{
+  min-width:0;
+  white-space:normal;
+  line-height:1.25;
+}
+
 </style>
 </head>
 <body>
@@ -5197,7 +5209,7 @@ body{
           : "home";
 
     const favoritePct=favorite==="away" ? awayPct : favorite==="home" ? homePct : 50;
-    const favoriteSide=favorite==="away" ? game.awayShort : favorite==="home" ? game.homeShort : "";
+    const favoriteSide=favorite==="away" ? game.away : favorite==="home" ? game.home : "";
     const valueSide=market.underdog;
 
     return `
@@ -5209,7 +5221,7 @@ body{
 
         <div
           class="market-action-track"
-          aria-label="${game.awayShort} ${awayPct} percent, ${game.homeShort} ${homePct} percent">
+          aria-label="${game.away} ${awayPct} percent, ${game.home} ${homePct} percent">
           ${favorite
             ? `<span
                 class="market-action-favorite ${favorite}"
@@ -5221,10 +5233,10 @@ body{
 
         <div class="market-action-labels">
           <span class="${favorite==="away"?"is-favorite":valueSide==="away"?"is-value":""}">
-            ${game.awayShort} ${awayPct}%
+            ${game.away} ${awayPct}%
           </span>
           <span class="${favorite==="home"?"is-favorite":valueSide==="home"?"is-value":""}">
-            ${homePct}% ${game.homeShort}
+            ${homePct}% ${game.home}
           </span>
         </div>
       </div>
