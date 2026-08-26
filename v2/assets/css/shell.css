@@ -1,0 +1,59 @@
+/* EastCoin V2: global header, nav, search, account and sport strip */
+
+.topbar{position:sticky;top:0;z-index:60;height:var(--header);display:flex;align-items:center;gap:20px;padding:0 22px;border-bottom:1px solid var(--line);background:rgba(5,5,5,.94);backdrop-filter:blur(18px)}
+
+.brand{display:flex;align-items:center;gap:9px;text-decoration:none}
+
+.logo{width:44px;height:44px;display:grid;place-items:center;border:1px solid rgba(229,185,43,.15);border-radius:10px;background:#0d0a04}
+
+.logo img{width:100%;height:100%;object-fit:contain}
+
+.brand strong,.brand small{display:block}
+
+.brand strong{font-size:1rem}
+
+.brand small{color:var(--muted2);font-size:0.8rem}
+
+.nav{align-self:stretch;display:flex;align-items:stretch;gap:2px}
+
+.nav a,.nav button{position:relative;display:flex;align-items:center;padding:0 13px;border:0;border-bottom:2px solid transparent;color:#898078;background:transparent;text-decoration:none;font-size:0.875rem;font-weight:850}
+
+.nav .active{border-bottom-color:var(--gold);color:#f1e9e1}
+
+.nav b{position:absolute;top:10px;right:-2px;color:#e16481;font-size:0.75rem}
+
+.actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+
+.search{width:min(310px,24vw);height:42px;display:flex;align-items:center;gap:8px;padding:0 9px;border:1px solid var(--line);border-radius:9px;background:#090909}
+
+.search input{min-width:0;flex:1;border:0;outline:0;color:#ddd4cc;background:transparent;font-size:0.875rem}
+
+.search kbd{padding:2px 5px;border:1px solid var(--line);border-radius:4px;color:#5c554f;font-size:0.75rem}
+
+.wallet,.profile{height:42px;display:flex;align-items:center;gap:8px;padding:0 9px;border:1px solid var(--line);border-radius:9px;background:#090909;text-decoration:none;font-size:0.8rem}
+
+.wallet{border-color:rgba(229,185,43,.13);color:#e8cf5e}
+
+.profile span{width:32px;height:32px;display:grid;place-items:center;overflow:hidden;border-radius:7px;background:#220b13;color:#efc2cf;font-weight:1000}
+
+.profile img{width:100%;height:100%;object-fit:cover}
+
+.iconbtn{position:relative;width:38px;height:42px;border:1px solid var(--line);border-radius:9px;color:#aaa198;background:#0a0a0a}
+
+.iconbtn i{position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;background:#e14a65}
+
+.moremenu{position:absolute;top:58px;left:300px;width:180px;padding:6px;border:1px solid var(--line2);border-radius:9px;background:#0c0c0c;box-shadow:0 24px 70px rgba(0,0,0,.5)}
+
+.moremenu a{display:block;padding:11px;border-radius:6px;color:#9a9188;text-decoration:none;font-size:0.8rem}
+
+.moremenu a:hover{background:#151515}
+
+.sportbar{position:sticky;top:var(--header);z-index:50;height:var(--sport);display:flex;align-items:center;gap:4px;padding:0 22px;overflow-x:auto;border-bottom:1px solid var(--line);background:rgba(7,7,7,.94);backdrop-filter:blur(14px);scrollbar-width:none}
+
+.sportbar::-webkit-scrollbar{display:none}
+
+.sportbar button{flex:0 0 auto;height:36px;padding:0 10px;border:1px solid transparent;border-radius:7px;color:#746d66;background:transparent;font-size:0.8rem;font-weight:850}
+
+.sportbar .active{border-color:rgba(229,185,43,.13);color:#efd566;background:rgba(229,185,43,.045)}
+
+.sportbar .live{color:#c27e89}

@@ -1,0 +1,95 @@
+/* EastCoin V2: Twitch chat, player, custom-stream modal and toast */
+
+.chat{position:fixed;top:0;right:0;z-index:90;width:min(390px,92vw);height:100%;display:grid;grid-template-rows:auto 1fr;border-left:1px solid var(--line2);background:#080808;box-shadow:-24px 0 70px rgba(0,0,0,.52);transform:translateX(102%);transition:.18s}
+
+.chat.open{transform:translateX(0)}
+
+.chat header{min-height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid var(--line)}
+
+.chat header small,.chat header strong{display:block}
+
+.chat header small{color:#897965;font-size:0.75rem}
+
+.chat header strong{font-size:0.875rem}
+
+.chat header button{width:36px;height:36px;border:1px solid var(--line);border-radius:7px;color:#898179;background:#0c0c0c}
+
+.chat iframe{width:100%;height:100%;border:0}
+
+.scrim{position:fixed;inset:0;z-index:85;border:0;background:rgba(0,0,0,.52)}
+
+.modal{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:17px;background:rgba(0,0,0,.82);opacity:0;pointer-events:none;transition:.16s}
+
+.modal.open{opacity:1;pointer-events:auto}
+
+.player{width:min(1240px,100%);max-height:calc(100vh - 34px);overflow:hidden;border:1px solid var(--line2);border-radius:13px;background:#080808;box-shadow:0 32px 100px rgba(0,0,0,.72)}
+
+.player>header{min-height:57px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 13px;border-bottom:1px solid var(--line)}
+
+.player>header small,.player>header strong,.player>header em{display:block}
+
+.player>header small{color:#8a7a67;font-size:0.75rem}
+
+.player>header strong{font-size:0.875rem}
+
+.player>header em{color:#615a54;font-size:0.75rem;font-style:normal}
+
+.player>header button{height:38px;min-width:31px;padding:0 8px;border:1px solid var(--line);border-radius:7px;color:#8f867e;background:#0c0c0c;font-size:0.8rem}
+
+.playerbody{display:grid;grid-template-columns:minmax(0,1fr) 245px}
+
+.surface{position:relative;aspect-ratio:16/9;background:#020202}
+
+.surface iframe{width:100%;height:100%;border:0}
+
+.playerloading{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;flex-direction:column;background:#030303}
+
+.playerloading span{width:23px;height:23px;border:2px solid rgba(255,255,255,.09);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.playerloading strong{margin-top:8px;font-size:0.875rem}
+
+.playerloading small{margin-top:3px;color:#635c56;font-size:0.75rem}
+
+.playerbody aside{padding:11px;border-left:1px solid var(--line);overflow:auto}
+
+.playerbody aside>span{color:#8c7c67;font-size:0.75rem;font-weight:1000}
+
+.playerbody aside>strong{display:block;margin-top:5px;font-size:0.875rem}
+
+.playerbody aside>small{display:block;margin-top:3px;color:#655e58;font-size:0.75rem}
+
+.playerbody aside hr{border:0;border-top:1px solid var(--line);margin:11px 0}
+
+.playerbody aside>a{display:flex;align-items:center;justify-content:center;min-height:40px;margin-top:12px;border:1px solid var(--line);border-radius:7px;color:#918880;background:#0c0c0c;text-decoration:none;font-size:0.75rem;font-weight:900}
+
+#streams{display:grid;gap:5px;margin-top:7px}
+
+.stream{min-height:40px;display:flex;align-items:center;justify-content:space-between;padding:0 8px;border:1px solid var(--line);border-radius:7px;color:#8b837b;background:#0c0c0c;font-size:0.75rem}
+
+.stream.active{border-color:rgba(229,185,43,.17);color:#ebd16c}
+
+.smallmodal{width:min(480px,100%);border:1px solid var(--line2);border-radius:12px;background:#0a0a0a}
+
+.smallmodal header{min-height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 13px;border-bottom:1px solid var(--line)}
+
+.smallmodal header strong{font-size:0.875rem}
+
+.smallmodal header button{width:30px;height:36px;border:1px solid var(--line);border-radius:7px;color:#898179;background:#0d0d0d}
+
+.smallmodal form{padding:12px}
+
+.smallmodal label{display:grid;gap:5px;color:#8d857d;font-size:0.75rem}
+
+.smallmodal input{height:39px;padding:0 9px;border:1px solid var(--line);border-radius:8px;outline:0;color:#ddd5cd;background:#080808;font-size:0.8rem}
+
+.smallmodal p{color:#625b55;font-size:0.75rem}
+
+.smallmodal form>div{display:flex;justify-content:flex-end;gap:6px}
+
+.smallmodal form>div button{min-height:40px;padding:0 10px;border:1px solid var(--line);border-radius:7px;color:#938981;background:#0c0c0c;font-size:0.75rem}
+
+.toast{position:fixed;left:50%;bottom:18px;z-index:130;padding:11px 12px;border:1px solid var(--line2);border-radius:9px;color:#e7dfd7;background:#111;font-size:0.8rem;opacity:0;pointer-events:none;transform:translate(-50%,10px);transition:.16s}
+
+.toast.show{opacity:1;transform:translate(-50%,0)}

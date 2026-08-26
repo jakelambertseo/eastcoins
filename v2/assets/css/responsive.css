@@ -1,0 +1,9 @@
+/* EastCoin V2: responsive behavior only */
+
+@media(max-width:1260px){.search{width:200px}.grid{grid-template-columns:repeat(3,1fr)}}
+
+@media(max-width:1050px){.brand>span:last-child,.profile strong{display:none}.hero{grid-template-columns:1fr}.lower{grid-template-columns:1fr 1fr}.lower article:last-child{grid-column:1/-1}}
+
+@media(max-width:830px){:root{--header:58px}.topbar{gap:8px;padding:0 10px}.nav{position:absolute;left:0;right:0;top:58px;height:40px;padding:0 10px;overflow-x:auto;border-bottom:1px solid var(--line);background:#070707}.nav a,.nav button{height:40px}.moremenu{top:94px;left:auto;right:10px}.sportbar{top:98px;height:42px;padding:0 10px}main{width:calc(100% - 20px);padding-top:55px}.search{width:36px;min-width:0;padding:0;justify-content:center}.search input,.search kbd{display:none}.wallet{width:36px;padding:0;justify-content:center}.wallet strong{display:none}.intro{align-items:flex-start;flex-direction:column}.schedule>header{align-items:flex-start;flex-direction:column}.dates{width:100%}.grid{grid-template-columns:repeat(2,1fr)}}
+
+@media(max-width:620px){.status small{display:none}.grid{grid-template-columns:1fr}.lower{grid-template-columns:1fr}.lower article:last-child{grid-column:auto}.playerbody{grid-template-columns:1fr}.playerbody aside{max-height:190px;border-left:0;border-top:1px solid var(--line)}.sicko{grid-template-columns:auto 1fr auto}.sicko>a{display:none}}

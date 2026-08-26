@@ -1,0 +1,17 @@
+/* EastCoin V2: design tokens + global reset */
+
+:root{color-scheme:dark;--bg:#050505;--panel:#0a0a0a;--panel2:#101010;--text:#f1ebe4;--muted:#817970;--muted2:#5f5852;--line:rgba(255,255,255,.075);--line2:rgba(255,255,255,.12);--red:#8e1231;--gold:#e5b92b;--green:#47c778;--header:76px;--sport:52px}
+
+*{box-sizing:border-box}
+
+html{background:var(--bg)}
+
+body{margin:0;min-width:320px;color:var(--text);background:radial-gradient(circle at 10% -10%,rgba(142,18,49,.12),transparent 30rem),var(--bg);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+
+a{color:inherit}
+
+button,input{font:inherit}
+
+button{cursor:pointer}
+
+[hidden]{display:none!important}

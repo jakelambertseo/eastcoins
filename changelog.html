@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">76 major update groups</div>
+<div class="release-count">77 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1767,10 +1767,9 @@
 <p>Added an isolated /v2/ clean-room staging shell with horizontal navigation. V2 reuses EastCoin's existing Streamed + PPV provider adapters for real event discovery and playable stream resolution, adds functional sport/date/status filters, search, the real Twitch chat drawer, saved and recent local UI state, current Picks Twitch identity when available, custom streams, and an optional weekly Kalshi Sicko Prop callout. Existing production routes and provider/backend logic remain unchanged so future V2 iterations can replace complete files instead of accumulating patches.</p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>EastCoin V2 typography pass</h2>
 <p>
@@ -1783,6 +1782,24 @@
     network/channel metadata and viewer-count support. Viewer totals are never
     fabricated: V2 displays a real provider/event count when present and an
     explicit unavailable state otherwise.
+  </p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-08-26">August 26, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>EastCoin V2 frontend modularized</h2>
+<p>
+    Reorganized the isolated EastCoin V2 staging frontend into small,
+    responsibility-based CSS and JavaScript modules without intentionally
+    redesigning the Iteration 2 experience. Global tokens, shell/navigation,
+    homepage content, overlays and responsive styles now live independently,
+    while shared utilities, event browsing, player/chat behavior, external
+    integrations and page startup are separated into dedicated scripts. Future
+    V2 iterations can now replace only the files owned by the requested scope
+    instead of regenerating the full frontend on routine design changes.
   </p>
 </article>
 </section>

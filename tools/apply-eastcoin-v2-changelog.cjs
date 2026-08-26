@@ -7,11 +7,11 @@ if (!fs.existsSync(changelogPath)) {
   throw new Error("Missing changelog.html");
 }
 
-const title = "EastCoin V2 typography pass";
+const title = "EastCoin V2 frontend modularized";
 let html = fs.readFileSync(changelogPath, "utf8");
 
 if (html.includes(`<h2>${title}</h2>`)) {
-  console.log("No change: EastCoin V2 Iteration 2 changelog entry already exists.");
+  console.log("No change: V2 modularization changelog entry already exists.");
   process.exit(0);
 }
 
@@ -29,15 +29,14 @@ const entry = `
 </div>
 <h2>${title}</h2>
 <p>
-    Updated the isolated EastCoin V2 homepage staging experience with a larger,
-    more modern typography scale while preserving the Iteration 1 navigation,
-    layout, event provider flow, filters, player, chat, Picks integration and
-    overall visual structure. Small utility text that previously rendered near
-    6–10 pixels now targets roughly 12–14 pixels, with larger interface labels
-    and headings scaled proportionally. Event presentation also gained compact
-    network/channel metadata and viewer-count support. Viewer totals are never
-    fabricated: V2 displays a real provider/event count when present and an
-    explicit unavailable state otherwise.
+    Reorganized the isolated EastCoin V2 staging frontend into small,
+    responsibility-based CSS and JavaScript modules without intentionally
+    redesigning the Iteration 2 experience. Global tokens, shell/navigation,
+    homepage content, overlays and responsive styles now live independently,
+    while shared utilities, event browsing, player/chat behavior, external
+    integrations and page startup are separated into dedicated scripts. Future
+    V2 iterations can now replace only the files owned by the requested scope
+    instead of regenerating the full frontend on routine design changes.
   </p>
 </article>
 `;
@@ -58,6 +57,7 @@ html =
   html.slice(timelineEnd);
 
 let countUpdated = false;
+
 html = html.replace(
   /<div class="release-count">(\d+) major update groups<\/div>/,
   (_, count) => {
@@ -72,4 +72,4 @@ if (!countUpdated) {
 
 fs.writeFileSync(changelogPath, html, "utf8");
 console.log("Updated: changelog.html");
-console.log("EastCoin V2 Iteration 2 typography changelog patch complete.");
+console.log("EastCoin V2 modularization changelog patch complete.");
