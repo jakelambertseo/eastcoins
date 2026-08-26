@@ -2447,6 +2447,239 @@ h1{font-size:2.25rem}
   cursor:not-allowed
 }
 
+
+/* ================================================================
+   PICKS V13 — MONEY HIERARCHY + POTENTIAL WINNINGS + KING CROWN
+   ================================================================ */
+
+/* Left navigation balance gets the same clear green money treatment. */
+.side-wallet{
+  position:relative;
+  overflow:hidden;
+  border-color:rgba(72,203,112,.36);
+  background:
+    radial-gradient(circle at 0% 0%,rgba(139,255,170,.18),transparent 46%),
+    radial-gradient(circle at 100% 100%,rgba(45,153,82,.12),transparent 48%),
+    linear-gradient(145deg,#123d23,#082313);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.045),
+    0 8px 22px rgba(0,0,0,.18)
+}
+.side-wallet:after{
+  content:"";
+  position:absolute;
+  right:-24px;
+  bottom:-34px;
+  width:92px;
+  height:92px;
+  border:1px solid rgba(171,255,191,.10);
+  border-radius:50%;
+  pointer-events:none
+}
+.side-wallet span{
+  position:relative;
+  z-index:2;
+  color:#b9eec7
+}
+.side-wallet strong{
+  position:relative;
+  z-index:2;
+  color:#f1fff5;
+  text-shadow:0 2px 9px rgba(0,0,0,.28)
+}
+.side-wallet small{
+  position:relative;
+  z-index:2;
+  color:#81bd91
+}
+.side-wallet .ec-coin-logo{
+  filter:
+    drop-shadow(0 2px 4px rgba(0,0,0,.42))
+    drop-shadow(0 0 7px rgba(255,255,255,.08))
+}
+
+/* ---------------------------------------------------------------
+   Potential Winnings: make it the "jackpot" moment in the bet modal.
+   --------------------------------------------------------------- */
+.return.potential-winnings{
+  position:relative;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  min-height:78px;
+  margin-top:10px;
+  padding:13px 15px;
+  border:1px solid rgba(242,196,0,.46);
+  border-radius:12px;
+  background:
+    radial-gradient(circle at 92% 10%,rgba(111,230,142,.17),transparent 40%),
+    radial-gradient(circle at 0% 100%,rgba(242,196,0,.10),transparent 46%),
+    linear-gradient(145deg,#111408,#070807);
+  box-shadow:
+    inset 0 0 0 1px rgba(89,216,121,.08),
+    0 8px 24px rgba(0,0,0,.28),
+    0 0 20px rgba(242,196,0,.045);
+  animation:ec-winnings-pulse 1.9s ease-in-out infinite
+}
+.return.potential-winnings:before{
+  content:"";
+  position:absolute;
+  top:-90%;
+  left:-35%;
+  width:72px;
+  height:280%;
+  opacity:0;
+  background:linear-gradient(90deg,transparent,rgba(255,235,145,.30),transparent);
+  transform:rotate(24deg);
+  animation:ec-winnings-shine 2.7s ease-in-out infinite
+}
+.return.potential-winnings > *{
+  position:relative;
+  z-index:2
+}
+.potential-winnings-copy{
+  min-width:0
+}
+.potential-winnings-copy span{
+  display:block;
+  color:#f0ca4e;
+  font-size:.66rem;
+  font-weight:1000;
+  letter-spacing:.09em;
+  text-transform:uppercase
+}
+.potential-winnings-copy small{
+  display:block;
+  margin-top:4px;
+  color:#7b8178;
+  font-size:.57rem;
+  line-height:1.35
+}
+.return.potential-winnings strong{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:7px;
+  min-width:0;
+  color:#86eda4;
+  font-size:1.62rem;
+  line-height:1;
+  letter-spacing:-.05em;
+  text-shadow:
+    0 0 15px rgba(93,224,127,.18),
+    0 2px 8px rgba(0,0,0,.46)
+}
+.return.potential-winnings .ec-coin-logo{
+  width:25px;
+  height:25px;
+  flex-basis:25px
+}
+.potential-winnings-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  margin-top:5px;
+  padding:3px 6px;
+  border:1px solid rgba(89,216,121,.15);
+  border-radius:999px;
+  color:#96d9a8;
+  background:rgba(89,216,121,.05);
+  font-size:.49rem;
+  font-weight:900;
+  letter-spacing:.04em;
+  text-transform:uppercase
+}
+@keyframes ec-winnings-pulse{
+  0%,100%{
+    border-color:rgba(242,196,0,.35);
+    box-shadow:
+      inset 0 0 0 1px rgba(89,216,121,.06),
+      0 8px 24px rgba(0,0,0,.28),
+      0 0 14px rgba(242,196,0,.03)
+  }
+  50%{
+    border-color:rgba(114,235,146,.52);
+    box-shadow:
+      inset 0 0 0 1px rgba(89,216,121,.12),
+      0 8px 24px rgba(0,0,0,.28),
+      0 0 28px rgba(94,222,128,.10)
+  }
+}
+@keyframes ec-winnings-shine{
+  0%,48%{opacity:0;transform:translateX(-90px) rotate(24deg)}
+  58%{opacity:.55}
+  78%,100%{opacity:0;transform:translateX(620px) rotate(24deg)}
+}
+
+/* ---------------------------------------------------------------
+   #1 gets an unmistakable crown treatment.
+   --------------------------------------------------------------- */
+.leader-crown{
+  display:inline-block;
+  margin-left:6px;
+  font-size:1.28rem;
+  line-height:1;
+  vertical-align:-.12em;
+  filter:drop-shadow(0 3px 5px rgba(0,0,0,.38));
+  animation:ec-crown-float 2.2s ease-in-out infinite
+}
+.rank:first-child{
+  background:
+    radial-gradient(circle at 100% 50%,rgba(242,196,0,.06),transparent 35%),
+    rgba(242,196,0,.012)
+}
+.rank:first-child .rank-num b{
+  color:#ffe170
+}
+.rank:first-child .avatar{
+  border-color:rgba(242,196,0,.46);
+  box-shadow:0 0 12px rgba(242,196,0,.07)
+}
+
+/* Scrolling Top 10 crown. */
+.top-rank-crown{
+  position:absolute;
+  z-index:4;
+  top:5px;
+  right:7px;
+  font-size:1.42rem;
+  line-height:1;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.48));
+  animation:ec-crown-float 2.2s ease-in-out infinite
+}
+.top-rank-card.rank-1{
+  padding-right:36px
+}
+.top-rank-card.rank-1 .top-rank-position b{
+  color:#ffe171
+}
+@keyframes ec-crown-float{
+  0%,100%{transform:translateY(0) rotate(-3deg)}
+  50%{transform:translateY(-2px) rotate(3deg)}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .return.potential-winnings,
+  .return.potential-winnings:before,
+  .leader-crown,
+  .top-rank-crown{
+    animation:none !important
+  }
+}
+
+@media(max-width:520px){
+  .return.potential-winnings{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .return.potential-winnings strong{
+    justify-content:flex-start;
+    font-size:1.48rem
+  }
+}
+
 </style>
 </head>
 <body>
@@ -2661,7 +2894,18 @@ h1{font-size:2.25rem}
         <strong><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="matchupPot">0</span> EC</strong>
       </div>
 
-      <div class="return"><span>Estimated return</span><strong class="ec-coin-inline"><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="potentialReturnValue">0</span> EC</strong></div>
+      <div class="return potential-winnings">
+        <div class="potential-winnings-copy">
+          <span>💰 Potential Winnings</span>
+          <small>Projected return at the current EastCoin community odds.</small>
+          <em class="potential-winnings-badge">Updates live with your wager</em>
+        </div>
+
+        <strong class="ec-coin-inline">
+          <img class="ec-coin-logo" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true">
+          <span id="potentialReturnValue">0</span> EC
+        </strong>
+      </div>
       <button class="lock" id="lockPick">Lock Pick</button>
     </div>
   </section>
@@ -2696,7 +2940,7 @@ h1{font-size:2.25rem}
       </div>
 
       <div class="lock-celebration-stat">
-        <span>Estimated Return</span>
+        <span>Potential Winnings</span>
         <strong>
           <img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true">
           <span id="lockCelebrationReturn">0 EC</span>
@@ -3995,6 +4239,7 @@ h1{font-size:2.25rem}
 
     return `
       <article class="top-rank-card rank-${position}${you?" is-you":""}"${duplicateAttr}>
+        ${position===1?'<span class="top-rank-crown" title="Current #1">👑</span>':""}
         <div class="top-rank-position">
           <b>#${position}</b>
           <span>${title}</span>
@@ -4089,7 +4334,7 @@ h1{font-size:2.25rem}
           <div class="rank">
             <span class="rank-num"><b>#${index+1}</b><span>${rankTitle(index+1)}</span></span>
             <span class="avatar">${person.initials.slice(0,2)}</span>
-            <span class="rank-copy"><strong>${person.name}</strong><small>${person.wins}–${person.losses}<span class="leader-rank-tag"> · ${rankTitle(index+1)}</span></small></span>
+            <span class="rank-copy"><strong>${person.name}${index===0?'<span class="leader-crown" title="Current #1">👑</span>':""}</strong><small>${person.wins}–${person.losses}<span class="leader-rank-tag"> · ${rankTitle(index+1)}</span></small></span>
             <span class="rank-score">${format(person)}</span>
           </div>
         `).join("")}
