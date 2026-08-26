@@ -3777,6 +3777,14 @@ body{
   line-height:1.25;
 }
 
+
+/* PICKS V19 — lower gamification module removed */
+.post-games-gamification,
+.stakes-strip,
+.badge-rack{
+  display:none !important;
+}
+
 </style>
 </head>
 <body>
@@ -3867,45 +3875,6 @@ body{
       <div class="metric"><span>Season Rank</span><strong id="rank">#4</strong><small>Richest leaderboard</small></div>
     </section>
     </div>
-
-    <section class="post-games-gamification">
-      <div class="post-games-head">
-        <div>
-          <span>EastCoin Gamification</span>
-          <strong>Season Challenges & Stakes</strong>
-        </div>
-        <small>Streaks, missions, EastCoin pool action and achievements</small>
-      </div>
-
-    <section class="stakes-strip" aria-label="EastCoin stakes">
-      <article class="stake-card hot">
-        <span>🔥 Hot Streak</span>
-        <strong id="stakeHotStreak">No streak yet</strong>
-        <small>Win consecutive picks to heat up your profile.</small>
-      </article>
-
-      <article class="stake-card pot">
-        <span><img class="ec-coin-logo" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"> Community Pot</span>
-        <strong class="ec-coin-inline"><img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span id="stakeCommunityPot">6,480</span> EC</strong>
-        <small>Fake EastCoins currently riding on today's board.</small>
-      </article>
-
-      <article class="stake-card mission">
-        <span>🎯 Daily Mission</span>
-        <strong id="stakeMission">Risk 100 EC</strong>
-        <small id="stakeMissionCopy">0 / 100 EC wagered today · test reward +50 EC.</small>
-      </article>
-
-      <article class="stake-card rank">
-        <span>🏆 High Roller Tier</span>
-        <strong id="stakeTier">Bronze Bettor</strong>
-        <small id="stakeTierCopy">Lock more fake EC to climb the test tiers.</small>
-      </article>
-    </section>
-
-    <section class="badge-rack" id="badgeRack" aria-label="Achievements"></section>
-
-        </section>
 
     <details class="prototype">
       <summary>🧪 Prototype controls — fake-settle games and test the economy</summary>
@@ -4230,13 +4199,6 @@ body{
     reset:document.getElementById("resetPrototype"),
     toast:document.getElementById("toast"),
     catalogStatus:document.getElementById("catalogStatus"),
-    stakeHotStreak:document.getElementById("stakeHotStreak"),
-    stakeCommunityPot:document.getElementById("stakeCommunityPot"),
-    stakeMission:document.getElementById("stakeMission"),
-    stakeMissionCopy:document.getElementById("stakeMissionCopy"),
-    stakeTier:document.getElementById("stakeTier"),
-    stakeTierCopy:document.getElementById("stakeTierCopy"),
-    badgeRack:document.getElementById("badgeRack"),
     riskLabel:document.getElementById("riskLabel"),
     riskFill:document.getElementById("riskFill"),
     riskCopy:document.getElementById("riskCopy"),
@@ -4301,8 +4263,7 @@ body{
       results:{},
       marketSnapshots:{},
       bailouts:0,
-      bailoutHistory:[],
-      missionRewardClaimed:false
+      bailoutHistory:[]
     };
   }
 
@@ -5859,77 +5820,6 @@ body{
     }
   }
 
-  function renderGamification(){
-    const stats=currentStats();
-    const wagered=totalWagered();
-    const tier=highRollerTier();
-    const missionGoal=100;
-    const missionProgress=Math.min(missionGoal,wagered);
-
-    elements.stakeHotStreak.textContent=
-      stats.streak>1
-        ? `🔥 W${stats.streak} — you're hot`
-        : stats.streak<-1
-          ? `🥶 L${Math.abs(stats.streak)} — cold spell`
-          : "No streak yet";
-
-    elements.stakeCommunityPot.textContent=money(communityPot());
-    elements.stakeMission.textContent=
-      wagered>=missionGoal
-        ? "Mission complete"
-        : `Risk ${money(missionGoal-wagered)} more EC`;
-
-    elements.stakeMissionCopy.textContent=
-      `${money(missionProgress)} / ${money(missionGoal)} EC wagered · test reward unlocks at 100 EC.`;
-
-    elements.stakeTier.textContent=tier.name;
-    elements.stakeTierCopy.textContent=tier.copy;
-
-    const achievements=[
-      {
-        icon:"🎟",
-        name:"First Ticket",
-        copy:"Lock your first pick",
-        unlocked:state.picks.length>=1
-      },
-      {
-        icon:"🔥",
-        name:"Heating Up",
-        copy:"Win 3 straight",
-        unlocked:stats.streak>=3
-      },
-      {
-        icon:"💎",
-        name:"High Roller",
-        copy:"Wager 250+ EC total",
-        unlocked:wagered>=250
-      },
-      {
-        icon:"🎯",
-        name:"Sharpshooter",
-        copy:"Reach 70% accuracy (5+ settled)",
-        unlocked:(stats.wins+stats.losses)>=5 &&
-          stats.wins/(stats.wins+stats.losses)>=.70
-      },
-      {
-        icon:"🛟",
-        name:"Bailed Out",
-        copy:"Claim an EastCoin bailout",
-        unlocked:Number(state.bailouts||0)>0
-      }
-    ];
-
-    elements.badgeRack.innerHTML=achievements.map(item=>`
-      <article class="achievement${item.unlocked?"":" locked"}">
-        <span class="achievement-icon">${item.icon}</span>
-        <span>
-          <strong>${item.name}</strong>
-          <small>${item.unlocked?"Unlocked":item.copy}</small>
-        </span>
-      </article>
-    `).join("");
-  }
-
   function renderWallet(){
     elements.balances.forEach(node=>node.textContent=money(state.balance));
 
@@ -5961,7 +5851,6 @@ body{
     renderCasinoSoundToggle();
     renderWallet();
     renderMetrics();
-    renderGamification();
     renderTopRanks();
     renderGames();
     renderMyPicks();
@@ -6255,13 +6144,6 @@ body{
     state.balance-=wager;
     state.picks.push(pick);
     ledger("wager",-wager,`${teamShort(game,pick.selection)} pick locked`,pick.id);
-
-    const wageredAfter=state.picks.reduce((sum,item)=>sum+Number(item.wager||0),0);
-    if(wageredAfter>=100 && !state.missionRewardClaimed){
-      state.missionRewardClaimed=true;
-      state.balance+=50;
-      ledger("admin_adjustment",50,"Daily mission reward: wager 100 fake EC");
-    }
 
     save();
     closeBet();
