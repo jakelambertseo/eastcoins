@@ -2719,6 +2719,381 @@ h1{font-size:2.25rem}
   }
 }
 
+
+/* ================================================================
+   PICKS V15 — BET SLIPS + SEASON FEEDBACK + OPTIONAL SOUNDS
+   ================================================================ */
+
+/* Casino sounds toggle gets a clear enabled state. */
+#casinoSoundToggle[aria-pressed="true"]{
+  border-color:rgba(242,196,0,.24);
+  background:rgba(242,196,0,.055)
+}
+#casinoSoundToggle[aria-pressed="true"] .nav-icon{
+  border-color:rgba(242,196,0,.28);
+  color:#ffe072;
+  background:rgba(242,196,0,.06)
+}
+
+/* Balance after wager: visible but secondary to wager/winnings. */
+.remaining-balance{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:9px;
+  padding-top:8px;
+  border-top:1px solid rgba(255,255,255,.055)
+}
+.remaining-balance > span{
+  color:#777168;
+  font-size:.57rem;
+  font-weight:900
+}
+.remaining-balance strong{
+  color:#86e6a0;
+  font-size:.72rem
+}
+.remaining-balance.warning strong{color:#e2c46a}
+.remaining-balance.danger strong{color:#ef7b87}
+
+/* ---------------------------------------------------------------
+   My Picks as real ticket/slip cards.
+   --------------------------------------------------------------- */
+#myPicks{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px
+}
+.pick-slip{
+  position:relative;
+  overflow:hidden;
+  min-width:0;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:12px;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(242,196,0,.04),transparent 34%),
+    linear-gradient(145deg,rgba(173,9,50,.045),transparent 45%),
+    #070707
+}
+.pick-slip.pending{
+  border-color:rgba(242,196,0,.18)
+}
+.pick-slip.won{
+  border-color:rgba(77,203,112,.28);
+  background:
+    radial-gradient(circle at 100% 0%,rgba(77,203,112,.08),transparent 34%),
+    #070907
+}
+.pick-slip.lost{
+  border-color:rgba(219,78,93,.20)
+}
+.pick-slip.refunded{
+  border-color:rgba(111,147,160,.18)
+}
+.pick-slip-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:9px 10px;
+  border-bottom:1px dashed rgba(255,255,255,.07);
+  background:rgba(255,255,255,.012)
+}
+.pick-slip-head-left{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0
+}
+.pick-slip-logo{
+  width:34px;
+  height:34px;
+  flex:0 0 34px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.075);
+  border-radius:8px;
+  background:#fff
+}
+.pick-slip-logo img{
+  width:82%;
+  height:82%;
+  object-fit:contain
+}
+.pick-slip-logo span{
+  color:#111;
+  font-size:.62rem;
+  font-weight:1000
+}
+.pick-slip-title{
+  min-width:0
+}
+.pick-slip-title strong{
+  display:block;
+  overflow:hidden;
+  color:#f2eadf;
+  font-size:.75rem;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.pick-slip-title small{
+  display:block;
+  margin-top:2px;
+  color:#716a63;
+  font-size:.55rem
+}
+.pick-status-pill{
+  flex:0 0 auto;
+  padding:4px 7px;
+  border:1px solid rgba(242,196,0,.16);
+  border-radius:999px;
+  color:#e7c865;
+  background:rgba(242,196,0,.045);
+  font-size:.51rem;
+  font-weight:1000;
+  letter-spacing:.055em;
+  text-transform:uppercase
+}
+.pick-slip.won .pick-status-pill{
+  border-color:rgba(76,207,114,.20);
+  color:#7be19a;
+  background:rgba(76,207,114,.055)
+}
+.pick-slip.lost .pick-status-pill{
+  border-color:rgba(225,89,103,.20);
+  color:#ef8b95;
+  background:rgba(225,89,103,.05)
+}
+.pick-slip.refunded .pick-status-pill{
+  color:#91a7ad;
+  border-color:rgba(126,153,161,.17);
+  background:rgba(126,153,161,.04)
+}
+.pick-slip-body{
+  padding:10px
+}
+.pick-slip-stats{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px
+}
+.pick-slip-stat{
+  min-width:0;
+  padding:8px 9px;
+  border:1px solid rgba(255,255,255,.055);
+  border-radius:8px;
+  background:#050505
+}
+.pick-slip-stat span{
+  display:block;
+  color:#6f675f;
+  font-size:.51rem;
+  font-weight:900;
+  letter-spacing:.045em;
+  text-transform:uppercase
+}
+.pick-slip-stat strong{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  min-width:0;
+  margin-top:4px;
+  color:#eadfce;
+  font-size:.70rem
+}
+.pick-slip-stat.winnings strong{
+  color:#82e69f;
+  font-size:.80rem
+}
+.pick-slip-movement{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:8px;
+  padding:7px 8px;
+  border:1px solid rgba(255,255,255,.05);
+  border-radius:7px;
+  background:#080707
+}
+.pick-slip-movement span{
+  color:#716a63;
+  font-size:.54rem;
+  font-weight:850
+}
+.pick-slip-movement strong{
+  font-size:.59rem;
+  font-weight:1000
+}
+.pick-slip-movement.up strong{color:#78dc96}
+.pick-slip-movement.down strong{color:#eb7b88}
+.pick-slip-movement.flat strong{color:#9b9187}
+.pick-slip-foot{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:8px;
+  color:#625b55;
+  font-size:.51rem
+}
+.pick-slip-foot b{
+  color:#877e75;
+  font-size:.52rem
+}
+
+/* ---------------------------------------------------------------
+   Settlement season feedback.
+   --------------------------------------------------------------- */
+.season-feedback{
+  position:fixed;
+  z-index:10020;
+  top:18px;
+  left:50%;
+  width:min(460px,calc(100% - 24px));
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transform:translate(-50%,-16px) scale(.96);
+  transition:
+    opacity .18s ease,
+    transform .22s cubic-bezier(.2,.9,.25,1.15),
+    visibility .18s ease
+}
+.season-feedback.open{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  transform:translate(-50%,0) scale(1)
+}
+.season-feedback-card{
+  position:relative;
+  overflow:hidden;
+  padding:14px;
+  border:1px solid rgba(242,196,0,.26);
+  border-radius:14px;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(242,196,0,.10),transparent 36%),
+    linear-gradient(145deg,rgba(173,9,50,.10),transparent 48%),
+    #090808;
+  box-shadow:0 24px 70px rgba(0,0,0,.62)
+}
+.season-feedback.won .season-feedback-card{
+  border-color:rgba(76,207,114,.36);
+  background:
+    radial-gradient(circle at 100% 0%,rgba(76,207,114,.12),transparent 36%),
+    linear-gradient(145deg,rgba(242,196,0,.06),transparent 48%),
+    #070907
+}
+.season-feedback.lost .season-feedback-card{
+  border-color:rgba(226,83,98,.25)
+}
+.season-feedback-close{
+  position:absolute;
+  top:8px;
+  right:8px;
+  width:28px;
+  height:28px;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:7px;
+  color:#91877f;
+  background:#090808
+}
+.season-feedback-kicker{
+  color:#bca45f;
+  font-size:.55rem;
+  font-weight:1000;
+  letter-spacing:.09em;
+  text-transform:uppercase
+}
+.season-feedback-result{
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr) auto;
+  gap:9px;
+  align-items:center;
+  margin-top:8px
+}
+.season-feedback-icon{
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(242,196,0,.14);
+  border-radius:11px;
+  background:#100c08;
+  font-size:1.15rem
+}
+.season-feedback-result strong{
+  display:block;
+  color:#f4ecdf;
+  font-size:.88rem
+}
+.season-feedback-result small{
+  display:block;
+  margin-top:2px;
+  color:#756d65;
+  font-size:.57rem
+}
+.season-feedback-result > b{
+  color:#83e6a0;
+  font-size:1.02rem;
+  white-space:nowrap
+}
+.season-feedback.lost .season-feedback-result > b{
+  color:#ed7c88
+}
+.season-feedback-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:6px;
+  margin-top:10px
+}
+.season-feedback-grid > div{
+  min-width:0;
+  padding:7px 8px;
+  border:1px solid rgba(255,255,255,.05);
+  border-radius:8px;
+  background:#060606
+}
+.season-feedback-grid span{
+  display:block;
+  color:#69615a;
+  font-size:.48rem;
+  font-weight:900;
+  text-transform:uppercase
+}
+.season-feedback-grid strong{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  min-width:0;
+  margin-top:3px;
+  color:#dfd3c4;
+  font-size:.62rem
+}
+.season-feedback-note{
+  margin-top:9px;
+  padding-top:8px;
+  border-top:1px solid rgba(255,255,255,.05);
+  color:#9a8f84;
+  font-size:.58rem;
+  font-weight:850
+}
+
+@media(max-width:760px){
+  #myPicks{grid-template-columns:1fr}
+}
+@media(max-width:520px){
+  .season-feedback{
+    top:8px;
+    width:calc(100% - 16px)
+  }
+  .season-feedback-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+}
+
 </style>
 </head>
 <body>
@@ -2737,6 +3112,10 @@ h1{font-size:2.25rem}
     <div class="nav-label">Community</div>
     <button class="nav-btn" data-tab-jump="leaderboard"><span class="nav-icon">🏆</span><span class="nav-copy"><strong>Leaderboard</strong><small>Season rankings</small></span></button>
     <button class="nav-btn" data-tab-jump="history"><span class="nav-icon">↻</span><span class="nav-copy"><strong>History</strong><small>EC transactions</small></span></button>
+    <button class="nav-btn" id="casinoSoundToggle" type="button" aria-pressed="false">
+      <span class="nav-icon" id="casinoSoundIcon">🔇</span>
+      <span class="nav-copy"><strong>Casino Sounds</strong><small id="casinoSoundState">Off · optional</small></span>
+    </button>
 
     <div class="side-wallet">
       <span class="ec-balance-label"><img class="ec-coin-logo" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"> Available Balance</span>
@@ -2899,6 +3278,14 @@ h1{font-size:2.25rem}
           <span>10 EC</span>
           <span id="sliderMaxLabel">250 EC max</span>
         </div>
+
+        <div class="remaining-balance" id="remainingBalanceRow">
+          <span>Balance after wager</span>
+          <strong class="ec-coin-inline">
+            <img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true">
+            <span id="remainingBalance">950</span> EC
+          </strong>
+        </div>
       </div>
 
       <div class="error" id="betError"></div>
@@ -2995,6 +3382,47 @@ h1{font-size:2.25rem}
       <button class="lock-celebration-dismiss" id="lockCelebrationDismiss" type="button">Let It Ride</button>
       <small class="lock-celebration-note">Virtual EastCoins only · no cash value</small>
     </div>
+  </section>
+</div>
+
+
+<div class="season-feedback" id="seasonFeedback" aria-hidden="true">
+  <section class="season-feedback-card" role="status" aria-live="polite">
+    <button class="season-feedback-close" id="seasonFeedbackClose" type="button" aria-label="Close season result">×</button>
+
+    <div class="season-feedback-kicker" id="seasonFeedbackKicker">Season Update</div>
+    <div class="season-feedback-result">
+      <span class="season-feedback-icon" id="seasonFeedbackIcon">🏆</span>
+      <div>
+        <strong id="seasonFeedbackHeadline">Winner!</strong>
+        <small id="seasonFeedbackSub">Your season numbers just moved.</small>
+      </div>
+      <b id="seasonFeedbackDelta">+0 EC</b>
+    </div>
+
+    <div class="season-feedback-grid">
+      <div>
+        <span>Record</span>
+        <strong id="seasonFeedbackRecord">0–0</strong>
+      </div>
+      <div>
+        <span>Streak</span>
+        <strong id="seasonFeedbackStreak">—</strong>
+      </div>
+      <div>
+        <span>Season Rank</span>
+        <strong id="seasonFeedbackRank">#1</strong>
+      </div>
+      <div>
+        <span>Balance</span>
+        <strong class="ec-coin-inline">
+          <img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true">
+          <span id="seasonFeedbackBalance">1,000</span> EC
+        </strong>
+      </div>
+    </div>
+
+    <div class="season-feedback-note" id="seasonFeedbackNote">Keep climbing.</div>
   </section>
 </div>
 
@@ -3139,7 +3567,24 @@ h1{font-size:2.25rem}
     projectedHomeName:document.getElementById("projectedHomeName"),
     projectedAwayValue:document.getElementById("projectedAwayValue"),
     projectedHomeValue:document.getElementById("projectedHomeValue"),
-    lockCelebrationOdds:document.getElementById("lockCelebrationOdds")
+    lockCelebrationOdds:document.getElementById("lockCelebrationOdds"),
+    remainingBalanceRow:document.getElementById("remainingBalanceRow"),
+    remainingBalance:document.getElementById("remainingBalance"),
+    casinoSoundToggle:document.getElementById("casinoSoundToggle"),
+    casinoSoundIcon:document.getElementById("casinoSoundIcon"),
+    casinoSoundState:document.getElementById("casinoSoundState"),
+    seasonFeedback:document.getElementById("seasonFeedback"),
+    seasonFeedbackClose:document.getElementById("seasonFeedbackClose"),
+    seasonFeedbackKicker:document.getElementById("seasonFeedbackKicker"),
+    seasonFeedbackIcon:document.getElementById("seasonFeedbackIcon"),
+    seasonFeedbackHeadline:document.getElementById("seasonFeedbackHeadline"),
+    seasonFeedbackSub:document.getElementById("seasonFeedbackSub"),
+    seasonFeedbackDelta:document.getElementById("seasonFeedbackDelta"),
+    seasonFeedbackRecord:document.getElementById("seasonFeedbackRecord"),
+    seasonFeedbackStreak:document.getElementById("seasonFeedbackStreak"),
+    seasonFeedbackRank:document.getElementById("seasonFeedbackRank"),
+    seasonFeedbackBalance:document.getElementById("seasonFeedbackBalance"),
+    seasonFeedbackNote:document.getElementById("seasonFeedbackNote")
   };
 
   let activeBet = null;
@@ -3212,6 +3657,193 @@ h1{font-size:2.25rem}
 
   function ecAmount(value,size="sm"){
     return `<span class="ec-coin-inline">${ecLogo(size)}<span>${money(value)}</span> EC</span>`;
+  }
+
+  const SOUND_PREF_KEY="eastcoinPicksCasinoSound";
+  let casinoSoundEnabled=localStorage.getItem(SOUND_PREF_KEY)==="true";
+  let audioContext=null;
+  let seasonFeedbackTimer=0;
+
+  function renderCasinoSoundToggle(){
+    if(!elements.casinoSoundToggle)return;
+
+    elements.casinoSoundToggle.setAttribute(
+      "aria-pressed",
+      casinoSoundEnabled ? "true" : "false"
+    );
+    if(elements.casinoSoundIcon){
+      elements.casinoSoundIcon.textContent=casinoSoundEnabled ? "🔊" : "🔇";
+    }
+    if(elements.casinoSoundState){
+      elements.casinoSoundState.textContent=casinoSoundEnabled
+        ? "On · lock / win / loss"
+        : "Off · optional";
+    }
+  }
+
+  function ensureAudioContext(){
+    const AudioCtx=window.AudioContext||window.webkitAudioContext;
+    if(!AudioCtx)return null;
+
+    if(!audioContext){
+      audioContext=new AudioCtx();
+    }
+
+    if(audioContext.state==="suspended"){
+      audioContext.resume().catch(()=>{});
+    }
+
+    return audioContext;
+  }
+
+  function casinoTone(ctx,frequency,start,duration,gain=.05,type="sine"){
+    const osc=ctx.createOscillator();
+    const amp=ctx.createGain();
+
+    osc.type=type;
+    osc.frequency.setValueAtTime(frequency,start);
+
+    amp.gain.setValueAtTime(.0001,start);
+    amp.gain.exponentialRampToValueAtTime(gain,start+.015);
+    amp.gain.exponentialRampToValueAtTime(.0001,start+duration);
+
+    osc.connect(amp);
+    amp.connect(ctx.destination);
+
+    osc.start(start);
+    osc.stop(start+duration+.02);
+  }
+
+  function playCasinoSound(kind){
+    if(!casinoSoundEnabled)return;
+
+    const ctx=ensureAudioContext();
+    if(!ctx)return;
+
+    const now=ctx.currentTime+.01;
+
+    if(kind==="lock"){
+      [523.25,659.25,783.99].forEach((freq,index)=>{
+        casinoTone(ctx,freq,now+index*.07,.18,.035,"triangle");
+      });
+      return;
+    }
+
+    if(kind==="win"){
+      [659.25,783.99,987.77,1318.51].forEach((freq,index)=>{
+        casinoTone(ctx,freq,now+index*.085,.24,.045,"triangle");
+      });
+      return;
+    }
+
+    if(kind==="rank"){
+      [783.99,987.77,1174.66,1567.98].forEach((freq,index)=>{
+        casinoTone(ctx,freq,now+index*.065,.20,.035,"sine");
+      });
+      return;
+    }
+
+    if(kind==="loss"){
+      casinoTone(ctx,246.94,now,.25,.035,"sine");
+      casinoTone(ctx,196,now+.13,.32,.03,"sine");
+      return;
+    }
+
+    if(kind==="toggle"){
+      casinoTone(ctx,659.25,now,.12,.03,"triangle");
+      casinoTone(ctx,880,now+.08,.16,.03,"triangle");
+    }
+  }
+
+  function userSeasonRank(){
+    const stats=currentStats();
+    const people=[
+      {
+        name:"You",
+        initials:"YOU",
+        balance:state.balance,
+        wins:stats.wins,
+        losses:stats.losses,
+        streak:stats.streak
+      },
+      ...rivals
+    ].sort((a,b)=>b.balance-a.balance);
+
+    return people.findIndex(person=>person.name==="You")+1;
+  }
+
+  function dismissSeasonFeedback(){
+    clearTimeout(seasonFeedbackTimer);
+    seasonFeedbackTimer=0;
+
+    if(!elements.seasonFeedback)return;
+    elements.seasonFeedback.classList.remove("open","won","lost");
+    elements.seasonFeedback.setAttribute("aria-hidden","true");
+  }
+
+  function showSeasonFeedback({
+    won,
+    ticketDelta,
+    beforeRank,
+    afterRank,
+    stats
+  }){
+    if(!elements.seasonFeedback)return;
+
+    const improved=afterRank<beforeRank;
+    const dropped=afterRank>beforeRank;
+    const streakText=stats.streak>0
+      ? `W${stats.streak}`
+      : stats.streak<0
+        ? `L${Math.abs(stats.streak)}`
+        : "—";
+
+    elements.seasonFeedback.classList.remove("won","lost");
+    elements.seasonFeedback.classList.add(won?"won":"lost");
+
+    elements.seasonFeedbackKicker.textContent="Season Update";
+    elements.seasonFeedbackIcon.textContent=won?"🏆":"🎟";
+    elements.seasonFeedbackHeadline.textContent=won
+      ? "Winning ticket settled!"
+      : "Ticket settled.";
+    elements.seasonFeedbackSub.textContent=won
+      ? "Your EastCoin season numbers just moved."
+      : "On to the next one.";
+
+    elements.seasonFeedbackDelta.textContent=
+      `${ticketDelta>=0?"+":""}${money(ticketDelta)} EC`;
+
+    elements.seasonFeedbackRecord.textContent=`${stats.wins}–${stats.losses}`;
+    elements.seasonFeedbackStreak.textContent=streakText;
+    elements.seasonFeedbackRank.textContent=`${rankTitle(afterRank)} · #${afterRank}`;
+    elements.seasonFeedbackBalance.textContent=money(state.balance);
+
+    let note="Season position unchanged.";
+
+    if(improved){
+      const spots=beforeRank-afterRank;
+      note=`📈 Climbed ${spots} ${spots===1?"spot":"spots"}: #${beforeRank} → #${afterRank}.`;
+    }else if(dropped){
+      const spots=afterRank-beforeRank;
+      note=`📉 Dropped ${spots} ${spots===1?"spot":"spots"}: #${beforeRank} → #${afterRank}.`;
+    }
+
+    if(stats.streak>=3){
+      note+=` 🔥 ${stats.streak}-win streak.`;
+    }
+
+    if(won && afterRank===1){
+      note+=" 👑 You are the current Hall of Famer.";
+    }
+
+    elements.seasonFeedbackNote.textContent=note;
+
+    elements.seasonFeedback.setAttribute("aria-hidden","false");
+    void elements.seasonFeedback.offsetWidth;
+    elements.seasonFeedback.classList.add("open");
+
+    clearTimeout(seasonFeedbackTimer);
+    seasonFeedbackTimer=window.setTimeout(dismissSeasonFeedback,5200);
   }
 
   function totalWagered(){
@@ -4168,53 +4800,135 @@ h1{font-size:2.25rem}
 
   function renderMyPicks(){
     const sorted=[...state.picks].sort((a,b)=>b.createdAt-a.createdAt);
+
     if(!sorted.length){
-      elements.myPicks.innerHTML='<div class="empty">No picks yet. Choose a winner from the Games tab and lock your first wager.</div>';
+      elements.myPicks.innerHTML=
+        '<div class="empty">No picks yet. Choose a winner from the Games tab and lock your first wager.</div>';
       return;
     }
 
     elements.myPicks.innerHTML=sorted.map(pick=>{
       const game=gameById(pick.gameId)||pick.game;
-      const cls=
-        pick.status==="won"
-          ? "positive"
-          : pick.status==="lost"
-            ? "negative"
-            : pick.status==="refunded"
-              ? "pending-text"
-              : "pending-text";
+      const selection=pick.selection;
+      const opponentSelection=selection==="away"?"home":"away";
+      const logo=selection==="away" ? game?.awayLogo : game?.homeLogo;
+      const selectedName=teamName(game,selection);
+      const opponentName=teamName(game,opponentSelection);
+
       const currentEstimate=pick.status==="pending"
-        ? estimatedReturn(game,pick.selection,pick.wager,false)
+        ? estimatedReturn(game,selection,pick.wager,false)
         : null;
+
+      const lockedMultiplier=Number(
+        pick.lockedMultiplier ||
+        currentEstimate?.multiplier ||
+        pick.finalMultiplier ||
+        2
+      );
+
+      const currentMultiplier=pick.status==="pending"
+        ? Number(currentEstimate?.multiplier||lockedMultiplier)
+        : Number(pick.finalMultiplier||lockedMultiplier);
+
       const finalReturn=Number(pick.finalReturn||0);
-      const finalMultiplier=Number(pick.finalMultiplier||0);
 
-      const value=pick.status==="won"
-        ? `${ecLogo("sm")}+${money(Math.max(0,finalReturn-pick.wager))} EC profit`
-        : pick.status==="lost"
-          ? `${ecLogo("sm")}-${money(pick.wager)} EC`
-          : pick.status==="refunded"
-            ? `${ecLogo("sm")}${money(pick.wager)} EC refunded`
-            : `${ecLogo("sm")}${money(currentEstimate.returnAmount)} EC est. return`;
+      const displayedReturn=
+        pick.status==="pending"
+          ? Number(currentEstimate?.returnAmount||pick.lockedProjectedReturn||pick.wager*2)
+          : pick.status==="won"
+            ? finalReturn
+            : pick.status==="refunded"
+              ? pick.wager
+              : 0;
 
-      const oddsLine=pick.status==="pending"
-        ? `${oddsLabel(currentEstimate.multiplier)} current community odds`
-        : pick.status==="refunded"
-          ? "No Action · wager returned"
-          : finalMultiplier
-            ? `${oddsLabel(finalMultiplier)} final odds`
-            : "Even";
+      const movement=currentMultiplier-lockedMultiplier;
+      const movementClass=
+        Math.abs(movement)<.005
+          ? "flat"
+          : movement>0
+            ? "up"
+            : "down";
+
+      const movementCopy=
+        movementClass==="flat"
+          ? "No market movement yet"
+          : movementClass==="up"
+            ? `↑ +${movement.toFixed(2)}x since lock`
+            : `↓ ${movement.toFixed(2)}x since lock`;
+
+      const outcomeCopy=
+        pick.status==="won"
+          ? `+${money(Math.max(0,finalReturn-pick.wager))} EC profit`
+          : pick.status==="lost"
+            ? `${money(pick.wager)} EC lost`
+            : pick.status==="refunded"
+              ? `${money(pick.wager)} EC returned`
+              : `${money(displayedReturn)} EC projected`;
+
+      const statusClass=
+        pick.status==="won"
+          ? "won"
+          : pick.status==="lost"
+            ? "lost"
+            : pick.status==="refunded"
+              ? "refunded"
+              : "pending";
+
       return `
-        <article class="pick-row">
-          <div class="row-icon">${teamShort(game,pick.selection)}</div>
-          <div class="row-copy">
-            <strong>${teamName(game,pick.selection)} over ${teamName(game,pick.selection==="away"?"home":"away")}</strong>
-            <p>${game.sport} · ${game.awayShort} vs ${game.homeShort}</p>
-            <small>${statusLabel(pick)} · Wagered ${money(pick.wager)} EC · ${oddsLine}</small>
+        <article class="pick-slip ${statusClass}">
+          <div class="pick-slip-head">
+            <div class="pick-slip-head-left">
+              <div class="pick-slip-logo">
+                ${logo
+                  ? `<img src="${logo}" alt="" loading="lazy" decoding="async">`
+                  : `<span>${initials(selectedName)}</span>`}
+              </div>
+
+              <div class="pick-slip-title">
+                <strong>${selectedName}</strong>
+                <small>over ${opponentName} · ${game?.sport||"Game"}</small>
+              </div>
+            </div>
+
+            <span class="pick-status-pill">${statusLabel(pick)}</span>
           </div>
-          <div class="row-value ${cls}">
-            <strong>${value}</strong>
-            <small>${pick.status==="pending"?"Potential payout":"Settled"}</small>
+
+          <div class="pick-slip-body">
+            <div class="pick-slip-stats">
+              <div class="pick-slip-stat">
+                <span>Wager</span>
+                <strong>${ecLogo("sm")}${money(pick.wager)} EC</strong>
+              </div>
+
+              <div class="pick-slip-stat">
+                <span>${pick.status==="pending"?"Current Odds":"Final Odds"}</span>
+                <strong>${oddsLabel(currentMultiplier)}</strong>
+              </div>
+
+              <div class="pick-slip-stat">
+                <span>Locked At</span>
+                <strong>${oddsLabel(lockedMultiplier)}</strong>
+              </div>
+
+              <div class="pick-slip-stat winnings">
+                <span>${pick.status==="pending"?"Potential Winnings":"Result"}</span>
+                <strong>${ecLogo("sm")}${outcomeCopy}</strong>
+              </div>
+            </div>
+
+            <div class="pick-slip-movement ${movementClass}">
+              <span>Market movement</span>
+              <strong>${pick.status==="pending"?movementCopy:"Market closed"}</strong>
+            </div>
+
+            <div class="pick-slip-foot">
+              <span>${game?.awayShort||"AWY"} vs ${game?.homeShort||"HME"}</span>
+              <b>${pick.status==="pending"
+                ? "Final odds set when market locks"
+                : pick.status==="refunded"
+                  ? "No Action"
+                  : "Settled"}</b>
+            </div>
           </div>
         </article>
       `;
@@ -4550,6 +5264,7 @@ h1{font-size:2.25rem}
 
   function render(){
     processMarketLocks();
+    renderCasinoSoundToggle();
     renderWallet();
     renderMetrics();
     renderGamification();
@@ -4621,6 +5336,23 @@ h1{font-size:2.25rem}
 
     if(elements.wagerAmountValue){
       elements.wagerAmountValue.textContent=money(wager);
+    }
+
+    const afterWager=Math.max(0,state.balance-wager);
+
+    if(elements.remainingBalance){
+      elements.remainingBalance.textContent=money(afterWager);
+    }
+
+    if(elements.remainingBalanceRow){
+      const ratio=state.balance>0 ? afterWager/state.balance : 0;
+      elements.remainingBalanceRow.classList.remove("warning","danger");
+
+      if(ratio<.25){
+        elements.remainingBalanceRow.classList.add("danger");
+      }else if(ratio<.50){
+        elements.remainingBalanceRow.classList.add("warning");
+      }
     }
 
     const min=Number(elements.customWager.min||MIN_WAGER);
@@ -4795,6 +5527,13 @@ h1{font-size:2.25rem}
       return;
     }
 
+    const lockEstimate=estimatedReturn(
+      game,
+      activeBet.selection,
+      wager,
+      true
+    );
+
     const pick={
       id:"pick-"+Date.now(),
       gameId:activeBet.gameId,
@@ -4802,6 +5541,9 @@ h1{font-size:2.25rem}
       wager,
       status:"pending",
       createdAt:Date.now(),
+      lockedMultiplier:lockEstimate.multiplier,
+      lockedProjectedReturn:lockEstimate.returnAmount,
+      balanceAfterWager:Math.max(0,state.balance-wager),
       game:{
         id:game.id,
         sport:game.sport,
@@ -4831,6 +5573,7 @@ h1{font-size:2.25rem}
     closeBet();
     render();
     showLockCelebration(game,pick,wager);
+    playCasinoSound("lock");
   }
 
   function launchConfetti(){
@@ -4883,10 +5626,13 @@ h1{font-size:2.25rem}
     const winningSide=winner==="away" ? "away" : "home";
     const finalMultiplier=Number(snapshot[`${winningSide}Multiplier`]||2);
 
+    const beforeRank=userSeasonRank();
+
     state.results[gameId]=winner;
 
     let userWon=false;
     let userLost=false;
+    let ticketDelta=0;
 
     state.picks
       .filter(p=>p.gameId===gameId && p.status==="pending")
@@ -4907,6 +5653,7 @@ h1{font-size:2.25rem}
 
           pick.finalReturn=returnAmount;
           state.balance+=returnAmount;
+          ticketDelta=returnAmount-pick.wager;
 
           ledger(
             "payout",
@@ -4918,11 +5665,35 @@ h1{font-size:2.25rem}
           userLost=true;
           pick.status="lost";
           pick.finalReturn=0;
+          ticketDelta=-pick.wager;
         }
       });
 
     save();
     render();
+
+    const afterRank=userSeasonRank();
+    const afterStats=currentStats();
+
+    if(userWon || userLost){
+      showSeasonFeedback({
+        won:userWon,
+        ticketDelta,
+        beforeRank,
+        afterRank,
+        stats:afterStats
+      });
+
+      if(userWon){
+        playCasinoSound("win");
+
+        if(afterRank<beforeRank){
+          window.setTimeout(()=>playCasinoSound("rank"),430);
+        }
+      }else{
+        playCasinoSound("loss");
+      }
+    }
 
     if(userWon){
       flashOutcome(true);
@@ -5060,6 +5831,27 @@ h1{font-size:2.25rem}
     }
   });
 
+  elements.casinoSoundToggle?.addEventListener("click",()=>{
+    casinoSoundEnabled=!casinoSoundEnabled;
+    localStorage.setItem(SOUND_PREF_KEY,String(casinoSoundEnabled));
+    renderCasinoSoundToggle();
+
+    if(casinoSoundEnabled){
+      playCasinoSound("toggle");
+      toast("Casino sounds enabled.");
+    }else{
+      toast("Casino sounds disabled.");
+    }
+  });
+
+  elements.seasonFeedbackClose?.addEventListener("click",dismissSeasonFeedback);
+
+  elements.seasonFeedback?.addEventListener("click",event=>{
+    if(event.target===elements.seasonFeedback){
+      dismissSeasonFeedback();
+    }
+  });
+
   elements.customWager.addEventListener("input",updateBetPreview);
   elements.lockPick.addEventListener("click",lockPick);
   elements.closeBet.addEventListener("click",closeBet);
@@ -5088,6 +5880,11 @@ h1{font-size:2.25rem}
 
     if(elements.lockCelebration?.classList.contains("open")){
       dismissLockCelebration();
+      return;
+    }
+
+    if(elements.seasonFeedback?.classList.contains("open")){
+      dismissSeasonFeedback();
       return;
     }
 
