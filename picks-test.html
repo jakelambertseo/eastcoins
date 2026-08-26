@@ -3785,38 +3785,159 @@ body{
   display:none !important;
 }
 
+
+/* PICKS V20 — full navigation + Twitch login gate */
+.app{grid-template-columns:260px minmax(0,1fr) 340px}
+.sidebar.full-eastcoin-nav{padding:14px 12px;display:flex;flex-direction:column;overflow:hidden;background:#030304}
+.full-nav-brand{text-decoration:none;color:inherit}
+.full-nav-search{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:5px;align-items:center;margin:10px 2px 4px;padding:5px 6px;border:1px solid var(--line);border-radius:10px;background:#080808}
+.full-nav-search input{min-width:0;height:30px;border:0;outline:0;background:transparent;color:#eee5da;font-size:.72rem}
+.full-nav-search button{height:28px;padding:0 8px;border:1px solid rgba(242,196,0,.14);border-radius:7px;background:rgba(242,196,0,.04);color:#c2a95c;font-size:.60rem;font-weight:900}
+.full-nav-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:2px;scrollbar-width:thin}
+.full-eastcoin-nav .nav-btn{text-decoration:none;position:relative;min-height:44px;padding:7px 8px}
+.full-eastcoin-nav .nav-copy{min-width:0;flex:1}
+.full-eastcoin-nav .nav-copy strong{font-size:.76rem}
+.full-eastcoin-nav .nav-copy small{font-size:.62rem}
+.full-eastcoin-nav .nav-label{margin:12px 8px 5px;font-size:.62rem}
+.picks-nav-item{border:1px solid rgba(242,196,0,.16);background:linear-gradient(90deg,rgba(173,9,50,.11),transparent),rgba(242,196,0,.045)!important;box-shadow:inset 3px 0 0 var(--gold)}
+.nav-mini-badge{padding:3px 5px;border:1px solid rgba(242,196,0,.18);border-radius:999px;color:#d9bb5c;font-size:.48rem;font-weight:1000}
+.nav-status-dot{width:7px;height:7px;margin-left:auto;border-radius:50%;background:#43d078;box-shadow:0 0 0 3px rgba(67,208,120,.07)}
+.nav-twitch-auth{margin:7px 2px 0;padding:10px;border:1px solid rgba(145,70,255,.22);border-radius:11px;background:radial-gradient(circle at 100% 0%,rgba(145,70,255,.12),transparent 42%),#080708}
+.twitch-kicker{display:block;color:#a692bc;font-size:.55rem;font-weight:1000;letter-spacing:.08em;text-transform:uppercase}
+#navTwitchLoggedOut>strong{display:block;margin-top:3px;font-size:.79rem}
+#navTwitchLoggedOut>small{display:block;margin-top:3px;color:#887d8d;font-size:.60rem;line-height:1.4}
+.twitch-login-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:38px;margin-top:9px;border:1px solid rgba(205,178,255,.25);border-radius:8px;color:#fff;background:linear-gradient(180deg,#9146ff,#772ce8);font-size:.68rem;font-weight:1000}
+.twitch-mark{width:20px;height:20px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.25);border-radius:5px;background:rgba(0,0,0,.14);font-weight:1000}
+.twitch-user{display:flex;align-items:center;gap:8px}
+.twitch-avatar{width:34px;height:34px;display:grid;place-items:center;border-radius:9px;background:linear-gradient(135deg,#9146ff,#511779);font-weight:1000}
+.twitch-user strong{display:block;font-size:.75rem}.twitch-user small{display:block;margin-top:2px;color:#73d492;font-size:.57rem}
+.twitch-logout-button{width:100%;margin-top:8px;min-height:30px;border:1px solid var(--line);border-radius:7px;background:#090909;color:#908780;font-size:.60rem}
+.zcoin-wallet{margin:8px 2px 0}.zcoin-wallet small{color:#83b58f}
+body.auth-logged-out .zcoin-wallet strong{opacity:.45;color:#76867b}
+body.auth-logged-out .bailout{display:none!important}
+.full-eastcoin-nav .side-foot{margin-top:5px;padding:6px 7px 0;font-size:.57rem}
+
+.twitch-required-banner{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:13px;padding:11px 12px;border:1px solid rgba(145,70,255,.18);border-radius:11px;background:linear-gradient(90deg,rgba(145,70,255,.08),transparent 50%),#070707}
+.twitch-required-copy{display:flex;align-items:center;gap:10px}
+.twitch-required-icon{width:36px;height:36px;display:grid;place-items:center;border-radius:9px;background:linear-gradient(135deg,#9146ff,#5b2189);font-weight:1000}
+.twitch-required-copy strong{display:block;font-size:.76rem}.twitch-required-copy small{display:block;margin-top:2px;color:#918792;font-size:.64rem}
+.twitch-login-button.compact{width:auto;min-width:170px;margin:0}
+body.auth-logged-in .twitch-required-banner{display:none}
+body.auth-logged-out .prediction-check:before{content:"LOGIN"}
+body.auth-logged-out .prediction-check{min-width:58px}
+
+.twitch-auth-backdrop{position:fixed;inset:0;z-index:10040;display:grid;place-items:center;padding:18px;opacity:0;visibility:hidden;pointer-events:none;background:rgba(0,0,0,.77);backdrop-filter:blur(8px);transition:.16s}
+.twitch-auth-backdrop.open{opacity:1;visibility:visible;pointer-events:auto}
+.twitch-auth-modal{position:relative;width:min(430px,100%);padding:22px;border:1px solid rgba(193,161,255,.26);border-radius:16px;background:radial-gradient(circle at 100% 0%,rgba(145,70,255,.17),transparent 34%),#090809;box-shadow:0 32px 90px rgba(0,0,0,.72)}
+.twitch-auth-close{position:absolute;top:10px;right:10px;width:31px;height:31px;border:1px solid var(--line);border-radius:8px;background:#090909;color:#99909b}
+.twitch-auth-brand{display:flex;align-items:center;gap:8px;color:#918795;font-size:.58rem;font-weight:900;text-transform:uppercase}
+.twitch-auth-logo{width:45px;height:45px;display:grid;place-items:center;border-radius:11px;background:linear-gradient(135deg,#9146ff,#5c1d8d);color:#fff;font-size:1rem}
+.twitch-auth-modal h2{margin:15px 0 6px;font-size:1.4rem}.twitch-auth-modal p{margin:0;color:#9b929d;font-size:.72rem;line-height:1.55}.twitch-auth-modal p strong{color:#efe2bd}
+.twitch-auth-benefits{display:grid;gap:6px;margin-top:14px}.twitch-auth-benefits div{padding:8px 9px;border:1px solid var(--line);border-radius:8px;background:#070707;color:#71db93;font-size:.68rem}.twitch-auth-benefits strong{color:#dbd2dc}
+.twitch-login-button.modal-login{min-height:45px;margin-top:15px;font-size:.75rem}.twitch-auth-note{display:block;margin-top:9px;color:#6b626d;font-size:.56rem;text-align:center;line-height:1.45}
+
+@media(min-width:1381px){.app{grid-template-columns:260px minmax(680px,1fr) 340px!important}}
+@media(max-width:1380px){.app{grid-template-columns:260px minmax(0,1fr)!important}}
+@media(max-width:820px){.app{grid-template-columns:1fr!important}.sidebar.full-eastcoin-nav{position:static;height:auto;max-height:520px;border-right:0;border-bottom:1px solid var(--line)}.full-nav-scroll{max-height:260px}.twitch-required-banner{flex-direction:column;align-items:stretch}.twitch-login-button.compact{width:100%}}
+
+
+/* PICKS V21 — clearer one-pick rule + Twitch privacy reassurance */
+.twitch-auth-benefits .twitch-auth-privacy{
+  border-color:rgba(242,196,0,.34);
+  background:
+    linear-gradient(90deg,rgba(242,196,0,.10),rgba(242,196,0,.035)),
+    #0a0905;
+  box-shadow:inset 3px 0 0 var(--gold)
+}
+.twitch-auth-benefits .twitch-auth-privacy > span{
+  color:#ffd84a;
+  font-size:.82rem;
+  font-weight:1000
+}
+.twitch-auth-benefits .twitch-auth-privacy strong{
+  color:#ffe697;
+  font-size:.66rem;
+  line-height:1.45
+}
+
 </style>
 </head>
 <body>
 <div class="app">
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="brand-mark"><img src="assets/eastcoins-logo.webp" alt="EastCoin" style="width:82%;height:82%;object-fit:contain"></div>
-      <div><strong>EastCoin</strong><small>Watch together</small></div>
+  <aside class="sidebar full-eastcoin-nav" aria-label="EastCoin navigation">
+  <a class="brand full-nav-brand" href="index.html">
+    <div class="brand-mark"><img src="assets/eastcoins-logo.webp" alt="" style="width:82%;height:82%;object-fit:contain"></div>
+    <div><strong>EastCoin</strong><small>Watch together</small></div>
+  </a>
+
+  <form class="full-nav-search" id="fullNavSearch" autocomplete="off">
+    <span>⌕</span>
+    <input type="text" placeholder="Search events" aria-label="Search events">
+    <button type="submit">Search</button>
+  </form>
+
+  <nav class="full-nav-scroll">
+    <div class="nav-label">Watch</div>
+    <a class="nav-btn" href="index.html"><span class="nav-icon">▦</span><span class="nav-copy"><strong>All Events</strong><small>EastCoin event home</small></span></a>
+    <a class="nav-btn" href="multiview.html"><span class="nav-icon">▥</span><span class="nav-copy"><strong>MultiView</strong><small>Watch up to four streams</small></span></a>
+    <a class="nav-btn" href="index.html"><span class="nav-icon">⌁</span><span class="nav-copy"><strong>Other Streams</strong><small>Approved stream sites</small></span></a>
+    <a class="nav-btn active picks-nav-item" href="picks-test.html"><span class="nav-icon">🎯</span><span class="nav-copy"><strong>Picks</strong><small>ZCoin prediction markets</small></span><span class="nav-mini-badge">NEW</span></a>
+
+    <div class="nav-label">Events</div>
+    <a class="nav-btn" href="index.html"><span class="nav-icon">▶</span><span class="nav-copy"><strong>Live Only</strong><small>Games happening now</small></span></a>
+    <a class="nav-btn" href="index.html"><span class="nav-icon">🔥</span><span class="nav-copy"><strong>Trending</strong><small>Popular and active games</small></span></a>
+    <button class="nav-btn" type="button" id="mockSettingsButton"><span class="nav-icon">⚙</span><span class="nav-copy"><strong>Settings</strong><small>Events + interface settings</small></span></button>
+
+    <div class="nav-label">Categories</div>
+    <a class="nav-btn" href="index.html"><span class="nav-icon">🏈</span><span class="nav-copy"><strong>Football</strong><small>Browse football</small></span></a>
+    <a class="nav-btn" href="index.html"><span class="nav-icon">🥊</span><span class="nav-copy"><strong>UFC / Combat</strong><small>Browse combat</small></span></a>
+    <a class="nav-btn" href="index.html"><span class="nav-icon">🏀</span><span class="nav-copy"><strong>Basketball</strong><small>Browse basketball</small></span></a>
+    <a class="nav-btn" href="index.html"><span class="nav-icon">⚾</span><span class="nav-copy"><strong>Baseball</strong><small>Browse baseball</small></span></a>
+    <a class="nav-btn" href="index.html"><span class="nav-icon">🏒</span><span class="nav-copy"><strong>Hockey</strong><small>Browse hockey</small></span></a>
+    <a class="nav-btn" href="index.html"><span class="nav-icon">⚽</span><span class="nav-copy"><strong>Soccer</strong><small>Browse soccer</small></span></a>
+    <a class="nav-btn" href="index.html"><span class="nav-icon">🤼</span><span class="nav-copy"><strong>Wrestling</strong><small>Browse wrestling</small></span></a>
+    <a class="nav-btn" href="index.html"><span class="nav-icon">🏎</span><span class="nav-copy"><strong>Motorsport</strong><small>Browse motorsport</small></span></a>
+    <a class="nav-btn" href="index.html"><span class="nav-icon">🎾</span><span class="nav-copy"><strong>Tennis</strong><small>Browse tennis</small></span></a>
+    <a class="nav-btn" href="index.html"><span class="nav-icon">⛳</span><span class="nav-copy"><strong>Golf</strong><small>Browse golf</small></span></a>
+    <a class="nav-btn" href="index.html"><span class="nav-icon">≡</span><span class="nav-copy"><strong>Other Events</strong><small>Browse everything else</small></span></a>
+
+    <div class="nav-label">Support</div>
+    <button class="nav-btn" type="button" id="mockEmoteHelp"><span class="nav-icon">?</span><span class="nav-copy"><strong>Emote Help</strong><small>Twitch emote reference</small></span></button>
+    <button class="nav-btn" type="button" id="mockStatusButton"><span class="nav-icon">⌁</span><span class="nav-copy"><strong>Status</strong><small>EastCoin service health</small></span><span class="nav-status-dot"></span></button>
+    <button class="nav-btn" id="casinoSoundToggle" type="button" aria-pressed="false"><span class="nav-icon" id="casinoSoundIcon">🔇</span><span class="nav-copy"><strong>Casino Sounds</strong><small id="casinoSoundState">Off · optional</small></span></button>
+  </nav>
+
+  <section class="nav-twitch-auth">
+    <div id="navTwitchLoggedOut">
+      <span class="twitch-kicker">Picks account</span>
+      <strong>Connect Twitch</strong>
+      <small>Sign in before placing picks or using your ZCoins wallet.</small>
+      <button class="twitch-login-button" id="navTwitchLogin" type="button"><span class="twitch-mark">T</span>Log in with Twitch</button>
     </div>
-
-    <div class="nav-label">EastCoin</div>
-    <button class="nav-btn"><span class="nav-icon">▦</span><span class="nav-copy"><strong>All Events</strong><small>Watch together</small></span></button>
-    <button class="nav-btn active"><span class="nav-icon">🪙</span><span class="nav-copy"><strong>Picks</strong><small>Risk EC on games</small></span></button>
-    <button class="nav-btn"><span class="nav-icon">▥</span><span class="nav-copy"><strong>MultiView</strong><small>Four streams</small></span></button>
-
-    <div class="nav-label">Community</div>
-    <button class="nav-btn" data-tab-jump="leaderboard"><span class="nav-icon">🏆</span><span class="nav-copy"><strong>Leaderboard</strong><small>Season rankings</small></span></button>
-    <button class="nav-btn" data-tab-jump="history"><span class="nav-icon">↻</span><span class="nav-copy"><strong>History</strong><small>EC transactions</small></span></button>
-    <button class="nav-btn" id="casinoSoundToggle" type="button" aria-pressed="false">
-      <span class="nav-icon" id="casinoSoundIcon">🔇</span>
-      <span class="nav-copy"><strong>Casino Sounds</strong><small id="casinoSoundState">Off · optional</small></span>
-    </button>
-
-    <div class="side-wallet">
-      <span class="ec-balance-label"><img class="ec-coin-logo" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"> Available Balance</span>
-      <strong class="ec-coin-inline"><img class="ec-coin-logo lg" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span data-balance>1,000</span> EC</strong>
-      <small>2026 EastCoin Season</small>
+    <div id="navTwitchUser" hidden>
+      <div class="twitch-user"><span class="twitch-avatar">Z</span><span><strong id="navTwitchDisplayName">Zwades</strong><small>● Twitch connected</small></span></div>
+      <button class="twitch-logout-button" id="mockTwitchLogout" type="button">Log out</button>
     </div>
-    <div class="side-foot">Prototype wallet uses localStorage and fake EastCoins only. Game/team artwork loads from EastCoin’s existing Streamed API adapter.</div>
-  </aside>
+  </section>
+
+  <div class="side-wallet zcoin-wallet">
+    <span class="ec-balance-label"><img class="ec-coin-logo" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"> ZCoins Wallet</span>
+    <strong class="ec-coin-inline"><img class="ec-coin-logo lg" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true"><span data-balance>1,000</span> ZCoins</strong>
+    <small id="zcoinWalletState">Sign in with Twitch to sync StreamElements</small>
+  </div>
+
+  <div class="side-foot">Prototype auth is simulated. Production will use Twitch OAuth and the existing StreamElements ZCoins wallet.</div>
+</aside>
 
   <main class="main">
+    <section class="twitch-required-banner" id="twitchRequiredBanner">
+      <div class="twitch-required-copy">
+        <span class="twitch-required-icon">T</span>
+        <div><strong>Twitch login required to make picks</strong><small>Browse freely. Sign in to connect your EastCoin identity and ZCoins wallet before locking a pick.</small></div>
+      </div>
+      <button class="twitch-login-button compact" id="mainTwitchLogin" type="button"><span class="twitch-mark">T</span>Continue with Twitch</button>
+    </section>
+
     <section class="top-rank-ticker" aria-label="Top 10 EastCoin rankings">
       <div class="top-rank-ticker-head">
         <div>
@@ -3898,9 +4019,29 @@ body{
   </aside>
 </div>
 
+<div class="twitch-auth-backdrop" id="twitchAuthBackdrop" aria-hidden="true">
+  <section class="twitch-auth-modal" role="dialog" aria-modal="true" aria-labelledby="twitchAuthTitle">
+    <button class="twitch-auth-close" id="closeTwitchAuth" type="button" aria-label="Close">×</button>
+    <div class="twitch-auth-brand"><span class="twitch-auth-logo">T</span><span>Prototype Login</span></div>
+    <h2 id="twitchAuthTitle">Sign in to make your pick</h2>
+    <p>EastCoin Picks will use Twitch as your Picks identity and connect to your existing <strong>ZCoins</strong> balance.</p>
+    <div class="twitch-auth-benefits">
+      <div>✓ <strong>Use your ZCoins wallet</strong></div>
+      <div>✓ <strong>One locked pick per game — no picking both sides</strong></div>
+      <div>✓ <strong>Track My Picks, record and rank</strong></div>
+      <div class="twitch-auth-privacy">
+        <span>✓</span>
+        <strong>Your Twitch password stays with Twitch. EastCoin never sees or stores it; Twitch only sends the account info you approve.</strong>
+      </div>
+    </div>
+    <button class="twitch-login-button modal-login" id="confirmMockTwitchLogin" type="button"><span class="twitch-mark">T</span>Continue with Twitch</button>
+    <small class="twitch-auth-note">Mockup only — this simulates Twitch OAuth as Zwades. In production, sign-in happens on Twitch and EastCoin receives only the authorized account data needed to identify your Picks account.</small>
+  </section>
+</div>
+
 <div class="modal-backdrop" id="betBackdrop">
   <section class="modal" role="dialog" aria-modal="true" aria-labelledby="betTitle">
-    <header class="modal-head"><strong id="betTitle">Lock EastCoin Pick</strong><button class="close" id="closeBet" aria-label="Close">×</button></header>
+    <header class="modal-head"><strong id="betTitle">Lock ZCoins Pick</strong><button class="close" id="closeBet" aria-label="Close">×</button></header>
     <div class="modal-body">
       <div class="selected-team" id="selectedTeam"></div>
 
@@ -4021,7 +4162,7 @@ body{
 
     <div class="lock-celebration-stats">
       <div class="lock-celebration-stat">
-        <span>Fake EastCoin Wager</span>
+        <span>ZCoins Wager</span>
         <strong>
           <img class="ec-coin-logo sm" src="assets/eastcoins-logo.webp" alt="" aria-hidden="true">
           <span id="lockCelebrationWager">0 EC</span>
@@ -4043,7 +4184,7 @@ body{
 
     <div class="lock-celebration-actions">
       <button class="lock-celebration-dismiss" id="lockCelebrationDismiss" type="button">Let It Ride</button>
-      <small class="lock-celebration-note">Virtual EastCoins only · no cash value</small>
+      <small class="lock-celebration-note">ZCoins are virtual loyalty points · no cash value</small>
     </div>
   </section>
 </div>
@@ -4240,12 +4381,102 @@ body{
     seasonFeedbackStreak:document.getElementById("seasonFeedbackStreak"),
     seasonFeedbackRank:document.getElementById("seasonFeedbackRank"),
     seasonFeedbackBalance:document.getElementById("seasonFeedbackBalance"),
-    seasonFeedbackNote:document.getElementById("seasonFeedbackNote")
+    seasonFeedbackNote:document.getElementById("seasonFeedbackNote"),
+    twitchAuthBackdrop:document.getElementById("twitchAuthBackdrop"),
+    closeTwitchAuth:document.getElementById("closeTwitchAuth"),
+    navTwitchLogin:document.getElementById("navTwitchLogin"),
+    mainTwitchLogin:document.getElementById("mainTwitchLogin"),
+    confirmMockTwitchLogin:document.getElementById("confirmMockTwitchLogin"),
+    navTwitchLoggedOut:document.getElementById("navTwitchLoggedOut"),
+    navTwitchUser:document.getElementById("navTwitchUser"),
+    navTwitchDisplayName:document.getElementById("navTwitchDisplayName"),
+    mockTwitchLogout:document.getElementById("mockTwitchLogout"),
+    zcoinWalletState:document.getElementById("zcoinWalletState"),
+    fullNavSearch:document.getElementById("fullNavSearch")
   };
 
   let activeBet = null;
   let toastTimer = 0;
   let lockCelebrationTimer = 0;
+
+  const TWITCH_AUTH_MOCK_KEY="eastcoinPicksMockTwitchAuthV1";
+  let mockTwitchUser=null;
+  let pendingAuthPick=null;
+
+  try{
+    mockTwitchUser=JSON.parse(localStorage.getItem(TWITCH_AUTH_MOCK_KEY)||"null");
+  }catch{
+    mockTwitchUser=null;
+  }
+
+  function renderMockTwitchAuth(){
+    const loggedIn=Boolean(mockTwitchUser);
+    document.body.classList.toggle("auth-logged-in",loggedIn);
+    document.body.classList.toggle("auth-logged-out",!loggedIn);
+
+    if(elements.navTwitchLoggedOut)elements.navTwitchLoggedOut.hidden=loggedIn;
+    if(elements.navTwitchUser)elements.navTwitchUser.hidden=!loggedIn;
+
+    if(elements.navTwitchDisplayName && loggedIn){
+      elements.navTwitchDisplayName.textContent=mockTwitchUser.displayName||"Zwades";
+    }
+
+    if(elements.zcoinWalletState){
+      elements.zcoinWalletState.textContent=loggedIn
+        ? "● Twitch connected · StreamElements ZCoins mock"
+        : "Sign in with Twitch to sync StreamElements";
+    }
+
+    if(!loggedIn){
+      elements.balances.forEach(node=>node.textContent="—");
+    }
+  }
+
+  function openTwitchAuth(gameId=null,selection=null){
+    if(mockTwitchUser){
+      if(gameId && selection)openBet(gameId,selection,true);
+      return;
+    }
+
+    pendingAuthPick=gameId && selection ? {gameId,selection} : null;
+    if(!elements.twitchAuthBackdrop)return;
+
+    elements.twitchAuthBackdrop.classList.add("open");
+    elements.twitchAuthBackdrop.setAttribute("aria-hidden","false");
+    document.body.style.overflow="hidden";
+  }
+
+  function closeTwitchAuth(){
+    if(!elements.twitchAuthBackdrop)return;
+    elements.twitchAuthBackdrop.classList.remove("open");
+    elements.twitchAuthBackdrop.setAttribute("aria-hidden","true");
+    if(!elements.backdrop.classList.contains("open"))document.body.style.overflow="";
+  }
+
+  function completeMockTwitchLogin(){
+    mockTwitchUser={id:"mock-zwades",login:"zwades",displayName:"Zwades"};
+    localStorage.setItem(TWITCH_AUTH_MOCK_KEY,JSON.stringify(mockTwitchUser));
+
+    const pending=pendingAuthPick;
+    pendingAuthPick=null;
+
+    closeTwitchAuth();
+    render();
+    toast("Twitch connected. ZCoins wallet ready.");
+
+    if(pending){
+      window.setTimeout(()=>openBet(pending.gameId,pending.selection,true),120);
+    }
+  }
+
+  function logoutMockTwitch(){
+    mockTwitchUser=null;
+    pendingAuthPick=null;
+    localStorage.removeItem(TWITCH_AUTH_MOCK_KEY);
+    if(elements.backdrop.classList.contains("open"))closeBet();
+    render();
+    toast("Logged out of the Twitch mock account.");
+  }
 
   function defaultState(){
     return {
@@ -5850,6 +6081,7 @@ body{
     processMarketLocks();
     renderCasinoSoundToggle();
     renderWallet();
+    renderMockTwitchAuth();
     renderMetrics();
     renderTopRanks();
     renderGames();
@@ -5859,7 +6091,12 @@ body{
     renderPrototype();
   }
 
-  function openBet(gameId,selection){
+  function openBet(gameId,selection,skipAuth=false){
+    if(!mockTwitchUser && !skipAuth){
+      openTwitchAuth(gameId,selection);
+      return;
+    }
+
     const game=gameById(gameId);
     if(!game || pickForGame(gameId) || state.results[gameId] || marketClosed(game)){
       if(game && marketClosed(game)) toast("Picks are locked for this market.");
@@ -6100,6 +6337,13 @@ body{
   }
 
   function lockPick(){
+    if(!mockTwitchUser){
+      const pending=activeBet ? {gameId:activeBet.gameId,selection:activeBet.selection} : null;
+      if(activeBet)closeBet();
+      openTwitchAuth(pending?.gameId||null,pending?.selection||null);
+      return;
+    }
+
     if(!activeBet) return;
     const game=gameById(activeBet.gameId);
     const wager=Math.floor(Number(activeBet.wager)||0);
@@ -6407,6 +6651,25 @@ body{
     }
   });
 
+  elements.navTwitchLogin?.addEventListener("click",()=>openTwitchAuth());
+  elements.mainTwitchLogin?.addEventListener("click",()=>openTwitchAuth());
+  elements.confirmMockTwitchLogin?.addEventListener("click",completeMockTwitchLogin);
+  elements.mockTwitchLogout?.addEventListener("click",logoutMockTwitch);
+  elements.closeTwitchAuth?.addEventListener("click",closeTwitchAuth);
+
+  elements.twitchAuthBackdrop?.addEventListener("click",event=>{
+    if(event.target===elements.twitchAuthBackdrop)closeTwitchAuth();
+  });
+
+  elements.fullNavSearch?.addEventListener("submit",event=>{
+    event.preventDefault();
+    toast("Search stays on the main EastCoin Events shell in this mockup.");
+  });
+
+  document.getElementById("mockSettingsButton")?.addEventListener("click",()=>toast("Settings stay on the main EastCoin shell."));
+  document.getElementById("mockEmoteHelp")?.addEventListener("click",()=>toast("Emote Help stays on the main EastCoin shell."));
+  document.getElementById("mockStatusButton")?.addEventListener("click",()=>toast("EastCoin status: mock services operational."));
+
   elements.casinoSoundToggle?.addEventListener("click",()=>{
     casinoSoundEnabled=!casinoSoundEnabled;
     localStorage.setItem(SOUND_PREF_KEY,String(casinoSoundEnabled));
@@ -6453,6 +6716,11 @@ body{
   });
   document.addEventListener("keydown",event=>{
     if(event.key!=="Escape")return;
+
+    if(elements.twitchAuthBackdrop?.classList.contains("open")){
+      closeTwitchAuth();
+      return;
+    }
 
     if(elements.lockCelebration?.classList.contains("open")){
       dismissLockCelebration();
