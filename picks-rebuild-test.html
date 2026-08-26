@@ -1,0 +1,2372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>EastCoin Picks — Rebuild Mockup</title>
+<style>
+:root{
+  --bg:#000;
+  --panel:#070707;
+  --panel-2:#0a0a0a;
+  --panel-3:#0e0c0d;
+  --line:rgba(255,255,255,.075);
+  --line-strong:rgba(255,255,255,.12);
+  --text:#f3eee7;
+  --muted:#9a9188;
+  --muted-2:#716a63;
+  --gold:#f2c400;
+  --gold-soft:#ffe27b;
+  --burg:#ad0932;
+  --burg-2:#d31d4d;
+  --green:#49d27e;
+  --green-soft:#a9f0bd;
+  --red:#f06b77;
+  --purple:#9146ff;
+  --purple-2:#772ce8;
+  --shadow:0 24px 70px rgba(0,0,0,.62);
+  --nav-w:248px;
+  --chat-w:330px;
+}
+*{box-sizing:border-box}
+html{background:#000;color-scheme:dark}
+body{
+  margin:0;
+  min-height:100vh;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 28% -15%,rgba(173,9,50,.10),transparent 31%),
+    radial-gradient(circle at 75% -20%,rgba(242,196,0,.045),transparent 25%),
+    #000;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:16px;
+}
+button,input{font:inherit}
+button,a{-webkit-tap-highlight-color:transparent}
+button{cursor:pointer}
+a{color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{
+  outline:2px solid var(--gold);
+  outline-offset:2px;
+}
+
+.shell{
+  min-height:100vh;
+  display:grid;
+  grid-template-columns:var(--nav-w) minmax(0,1fr) var(--chat-w);
+}
+
+/* ==============================
+   LEFT NAV
+   ============================== */
+.sidebar{
+  position:sticky;
+  top:0;
+  height:100vh;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  border-right:1px solid var(--line);
+  background:rgba(3,3,4,.985);
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:15px 14px 12px;
+  text-decoration:none;
+}
+.brand-logo{
+  width:42px;height:42px;display:grid;place-items:center;
+  flex:0 0 42px;
+  border:1px solid rgba(242,196,0,.20);
+  border-radius:11px;
+  background:linear-gradient(135deg,#18060c,#070707);
+  overflow:hidden;
+}
+.brand-logo img{width:82%;height:82%;object-fit:contain}
+.brand strong{display:block;font-size:.95rem}
+.brand small{display:block;margin-top:1px;color:#777069;font-size:.66rem}
+
+.nav-search{
+  display:grid;
+  grid-template-columns:24px minmax(0,1fr);
+  align-items:center;
+  gap:4px;
+  margin:0 12px 6px;
+  padding:0 9px;
+  height:38px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:#080808;
+}
+.nav-search span{color:#6f6861}
+.nav-search input{
+  min-width:0;
+  border:0;
+  outline:0;
+  color:#e9e1d7;
+  background:transparent;
+  font-size:.72rem;
+}
+.nav-search input::placeholder{color:#5d5751}
+.nav-scroll{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  padding:0 8px 12px;
+  scrollbar-width:thin;
+}
+.nav-scroll::-webkit-scrollbar{width:7px}
+.nav-scroll::-webkit-scrollbar-thumb{background:#282421;border-radius:999px}
+.nav-section{margin-top:11px}
+.nav-label{
+  padding:0 8px 5px;
+  color:#5e5751;
+  font-size:.61rem;
+  font-weight:1000;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.nav-item{
+  width:100%;
+  min-height:41px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin:1px 0;
+  padding:6px 8px;
+  border:1px solid transparent;
+  border-radius:9px;
+  color:#8f8780;
+  background:transparent;
+  text-decoration:none;
+  text-align:left;
+}
+.nav-item:hover{
+  color:#eee7dd;
+  background:#090909;
+}
+.nav-item.active{
+  color:#f4ecdf;
+  border-color:rgba(242,196,0,.16);
+  background:
+    linear-gradient(90deg,rgba(173,9,50,.10),transparent 72%),
+    rgba(242,196,0,.04);
+  box-shadow:inset 3px 0 0 var(--gold);
+}
+.nav-icon{
+  width:29px;height:29px;display:grid;place-items:center;
+  flex:0 0 29px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:#080808;
+  font-size:.72rem;
+}
+.nav-item.active .nav-icon{
+  border-color:rgba(242,196,0,.20);
+  color:#ffe071;
+}
+.nav-copy{min-width:0;flex:1}
+.nav-copy strong{
+  display:block;
+  overflow:hidden;
+  font-size:.74rem;
+  line-height:1.15;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.nav-copy small{
+  display:block;
+  margin-top:2px;
+  overflow:hidden;
+  color:#67615b;
+  font-size:.60rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.nav-new{
+  padding:3px 5px;
+  border:1px solid rgba(242,196,0,.18);
+  border-radius:999px;
+  color:#d7ba5d;
+  font-size:.46rem;
+  font-weight:1000;
+}
+.nav-dot{
+  width:7px;height:7px;flex:0 0 7px;
+  border-radius:50%;
+  background:#45cf78;
+  box-shadow:0 0 0 3px rgba(69,207,120,.07);
+}
+.sidebar-bottom{
+  flex:0 0 auto;
+  padding:9px 10px 11px;
+  border-top:1px solid var(--line);
+  background:#040404;
+}
+.auth-card{
+  padding:10px;
+  border:1px solid rgba(145,70,255,.20);
+  border-radius:10px;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(145,70,255,.12),transparent 44%),
+    #080708;
+}
+.auth-card-kicker{
+  color:#a394af;
+  font-size:.55rem;
+  font-weight:1000;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.auth-card strong{display:block;margin-top:3px;font-size:.76rem}
+.auth-card p{
+  margin:3px 0 0;
+  color:#867c89;
+  font-size:.59rem;
+  line-height:1.42;
+}
+.twitch-btn{
+  width:100%;
+  min-height:37px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  margin-top:9px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:8px;
+  color:white;
+  background:linear-gradient(180deg,var(--purple),var(--purple-2));
+  font-size:.67rem;
+  font-weight:1000;
+}
+.twitch-mark{
+  width:19px;height:19px;display:grid;place-items:center;
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:5px;
+  background:rgba(0,0,0,.15);
+  font-size:.61rem;
+}
+.nav-user{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.nav-avatar{
+  width:33px;height:33px;display:grid;place-items:center;
+  flex:0 0 33px;
+  border:1px solid rgba(193,161,255,.24);
+  border-radius:9px;
+  background:linear-gradient(135deg,#9146ff,#4b1473);
+  font-size:.72rem;
+  font-weight:1000;
+}
+.nav-user strong{margin:0;font-size:.75rem}
+.nav-user small{
+  display:block;
+  margin-top:2px;
+  color:#75d496;
+  font-size:.56rem;
+}
+.logout-btn{
+  width:100%;
+  min-height:29px;
+  margin-top:8px;
+  border:1px solid var(--line);
+  border-radius:7px;
+  color:#8d857e;
+  background:#080808;
+  font-size:.58rem;
+}
+.wallet-mini{
+  margin-top:7px;
+  padding:9px 10px;
+  border:1px solid rgba(75,205,116,.23);
+  border-radius:10px;
+  background:
+    radial-gradient(circle at 0 0,rgba(75,205,116,.13),transparent 48%),
+    #071008;
+}
+.wallet-mini span{
+  display:block;
+  color:#8cc59b;
+  font-size:.55rem;
+  font-weight:950;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.wallet-mini strong{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-top:3px;
+  color:#eaffe9;
+  font-size:1.13rem;
+}
+.wallet-mini img{width:18px;height:18px;object-fit:contain}
+.wallet-mini small{
+  display:block;
+  margin-top:2px;
+  color:#6d9c78;
+  font-size:.55rem;
+}
+body.logged-out .wallet-mini strong{opacity:.45}
+
+/* ==============================
+   MAIN
+   ============================== */
+.main{
+  min-width:0;
+  padding:22px 22px 48px;
+}
+.page-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+  margin-bottom:16px;
+}
+.page-title span{
+  color:var(--gold);
+  font-size:.62rem;
+  font-weight:1000;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.page-title h1{
+  margin:3px 0 4px;
+  font-size:1.65rem;
+  letter-spacing:-.045em;
+}
+.page-title p{
+  max-width:640px;
+  margin:0;
+  color:#8d857d;
+  font-size:.72rem;
+  line-height:1.5;
+}
+.page-actions{display:flex;gap:7px;align-items:center}
+.ghost-btn,.gold-btn{
+  min-height:35px;
+  padding:0 11px;
+  border-radius:8px;
+  font-size:.65rem;
+  font-weight:900;
+}
+.ghost-btn{
+  border:1px solid var(--line);
+  color:#aca39a;
+  background:#070707;
+}
+.gold-btn{
+  border:1px solid rgba(242,196,0,.26);
+  color:#180f00;
+  background:linear-gradient(180deg,#ffe15c,#e6b900);
+}
+.login-banner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:13px;
+  padding:11px 12px;
+  border:1px solid rgba(145,70,255,.19);
+  border-radius:11px;
+  background:
+    linear-gradient(90deg,rgba(145,70,255,.08),transparent 55%),
+    #070707;
+}
+.login-banner-copy{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.login-banner-icon{
+  width:36px;height:36px;display:grid;place-items:center;
+  flex:0 0 36px;
+  border-radius:9px;
+  color:white;
+  background:linear-gradient(135deg,#9146ff,#5b1b89);
+  font-weight:1000;
+}
+.login-banner strong{display:block;font-size:.75rem}
+.login-banner small{
+  display:block;
+  margin-top:2px;
+  color:#918793;
+  font-size:.63rem;
+  line-height:1.35;
+}
+.login-banner .twitch-btn{
+  width:auto;
+  min-width:165px;
+  margin:0;
+  padding:0 12px;
+}
+body.logged-in .login-banner{display:none}
+
+.summary-strip{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  margin-bottom:13px;
+}
+.summary-card{
+  min-width:0;
+  padding:10px 11px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#060606;
+}
+.summary-card.wallet{
+  border-color:rgba(75,205,116,.20);
+  background:
+    linear-gradient(135deg,rgba(75,205,116,.06),transparent 60%),
+    #060706;
+}
+.summary-card span{
+  display:block;
+  color:#777069;
+  font-size:.59rem;
+  font-weight:900;
+  letter-spacing:.055em;
+  text-transform:uppercase;
+}
+.summary-card strong{
+  display:block;
+  margin-top:4px;
+  overflow:hidden;
+  color:#eee6dc;
+  font-size:1.04rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.summary-card.wallet strong{color:#b6f1c4}
+.summary-card small{
+  display:block;
+  margin-top:2px;
+  color:#69635d;
+  font-size:.56rem;
+}
+body.logged-out .summary-card.wallet strong{opacity:.45}
+
+.view-tabs{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  margin-bottom:13px;
+  padding-bottom:9px;
+  border-bottom:1px solid rgba(255,255,255,.055);
+}
+.view-tab{
+  min-height:34px;
+  padding:0 12px;
+  border:1px solid transparent;
+  border-radius:8px;
+  color:#8b837b;
+  background:transparent;
+  font-size:.67rem;
+  font-weight:900;
+}
+.view-tab:hover{color:#d8d0c6;background:#080808}
+.view-tab.active{
+  border-color:rgba(242,196,0,.18);
+  color:#ffe27b;
+  background:rgba(242,196,0,.055);
+}
+.tab-count{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:18px;
+  height:18px;
+  margin-left:3px;
+  padding:0 5px;
+  border-radius:999px;
+  color:#d5c9a0;
+  background:#171309;
+  font-size:.54rem;
+}
+.view{display:none}.view.active{display:block}
+.section-head{
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:9px;
+}
+.section-head h2{
+  margin:0;
+  font-size:1rem;
+  letter-spacing:-.02em;
+}
+.section-head p{
+  margin:2px 0 0;
+  color:#7f776f;
+  font-size:.64rem;
+}
+.section-head .right-note{
+  color:#777069;
+  font-size:.61rem;
+}
+
+/* ==============================
+   MARKET BOARD
+   ============================== */
+.market-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.market-card{
+  position:relative;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:
+    radial-gradient(circle at 94% 0%,rgba(242,196,0,.03),transparent 29%),
+    #070707;
+}
+.market-card:hover{border-color:rgba(255,255,255,.11)}
+.market-card.locked{opacity:.72}
+.market-card-head{
+  min-height:39px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:8px 11px;
+  border-bottom:1px solid var(--line);
+  background:#090808;
+}
+.market-meta{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+}
+.sport-badge{
+  padding:4px 7px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  color:#b3aaa1;
+  background:#080808;
+  font-size:.56rem;
+  font-weight:1000;
+}
+.market-lock{
+  color:#817970;
+  font-size:.60rem;
+  font-weight:800;
+}
+.market-status{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:4px 7px;
+  border:1px solid rgba(75,205,116,.19);
+  border-radius:999px;
+  color:#83d89d;
+  background:rgba(75,205,116,.045);
+  font-size:.54rem;
+  font-weight:1000;
+}
+.market-status.waiting{
+  border-color:rgba(242,196,0,.16);
+  color:#d1b65c;
+  background:rgba(242,196,0,.035);
+}
+.market-status.locked{
+  border-color:var(--line);
+  color:#867f78;
+  background:#070707;
+}
+.market-body{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+}
+.team-choice{
+  min-width:0;
+  min-height:78px;
+  display:grid;
+  grid-template-columns:44px minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  padding:12px;
+  border:0;
+  color:inherit;
+  background:transparent;
+  text-align:left;
+}
+.team-choice:first-child{border-right:1px solid var(--line)}
+.team-choice:hover:not(:disabled){background:rgba(255,255,255,.018)}
+.team-choice:disabled{cursor:not-allowed}
+.team-logo{
+  width:44px;height:44px;display:grid;place-items:center;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:#0a0a0a;
+  color:#aaa096;
+  font-size:.61rem;
+  font-weight:1000;
+}
+.team-logo img{width:80%;height:80%;object-fit:contain}
+.team-name{min-width:0}
+.team-name strong{
+  display:block;
+  overflow:hidden;
+  color:#eee7de;
+  font-size:.82rem;
+  line-height:1.18;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.team-name small{
+  display:block;
+  margin-top:3px;
+  color:#777069;
+  font-size:.59rem;
+}
+.team-price{
+  min-width:72px;
+  text-align:right;
+}
+.team-price strong{
+  display:block;
+  color:#f5eaca;
+  font-size:1.24rem;
+  letter-spacing:-.04em;
+}
+.team-price small{
+  display:block;
+  margin-top:2px;
+  color:#6e675f;
+  font-size:.53rem;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.team-choice.higher-payout .team-price small{color:#b54a5e}
+.team-choice.user-pick{
+  background:linear-gradient(90deg,rgba(242,196,0,.045),rgba(242,196,0,.015));
+}
+.team-choice.user-pick .team-price small{color:#d2b956}
+.market-pool{
+  padding:9px 11px 10px;
+  border-top:1px solid var(--line);
+  background:#050505;
+}
+.pool-head,.pool-labels{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.pool-head{
+  margin-bottom:6px;
+}
+.pool-head span{
+  color:#80786f;
+  font-size:.59rem;
+  font-weight:900;
+}
+.pool-head strong{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  color:#d8c77f;
+  font-size:.61rem;
+}
+.pool-head img{width:14px;height:14px;object-fit:contain}
+.pool-track{
+  height:7px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#161616;
+}
+.pool-track i{
+  display:block;
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(90deg,#229352,#48cd79);
+}
+.pool-labels{
+  margin-top:6px;
+  color:#8d857d;
+  font-size:.58rem;
+}
+.pool-labels b{color:#bbb2a9;font-weight:850}
+.empty{
+  padding:32px 20px;
+  border:1px dashed rgba(255,255,255,.09);
+  border-radius:11px;
+  color:#827a72;
+  text-align:center;
+  font-size:.68rem;
+}
+
+/* ==============================
+   MY PICKS
+   ============================== */
+.ticket-list{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:9px;
+}
+.ticket{
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:#070707;
+}
+.ticket.pending{border-color:rgba(242,196,0,.17)}
+.ticket-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:9px 10px;
+  border-bottom:1px dashed rgba(255,255,255,.07);
+}
+.ticket-team{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.ticket-team .team-logo{width:34px;height:34px;border-radius:9px}
+.ticket-team strong{
+  display:block;
+  overflow:hidden;
+  font-size:.74rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.ticket-team small{
+  display:block;
+  margin-top:2px;
+  color:#746d66;
+  font-size:.57rem;
+}
+.ticket-status{
+  padding:4px 6px;
+  border:1px solid rgba(242,196,0,.15);
+  border-radius:999px;
+  color:#d4b95f;
+  font-size:.52rem;
+  font-weight:1000;
+  text-transform:uppercase;
+}
+.ticket-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+.ticket-stat{
+  padding:9px 10px;
+  border-right:1px solid rgba(255,255,255,.05);
+}
+.ticket-stat:last-child{border-right:0}
+.ticket-stat span{
+  display:block;
+  color:#6f6861;
+  font-size:.54rem;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.ticket-stat strong{
+  display:block;
+  margin-top:3px;
+  color:#e9e1d7;
+  font-size:.77rem;
+}
+.ticket-stat.return strong{color:#9de8b1}
+.ticket-foot{
+  padding:8px 10px;
+  border-top:1px solid rgba(255,255,255,.045);
+  color:#6f6861;
+  font-size:.57rem;
+}
+
+/* ==============================
+   LEADERBOARD
+   ============================== */
+.leader-card{
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:#070707;
+}
+.leader-head,.leader-row{
+  display:grid;
+  grid-template-columns:54px minmax(0,1fr) 110px 90px 100px;
+  align-items:center;
+  gap:8px;
+}
+.leader-head{
+  min-height:35px;
+  padding:0 11px;
+  border-bottom:1px solid var(--line);
+  color:#6d665f;
+  background:#090808;
+  font-size:.55rem;
+  font-weight:950;
+  text-transform:uppercase;
+}
+.leader-row{
+  min-height:49px;
+  padding:7px 11px;
+  border-bottom:1px solid rgba(255,255,255,.045);
+}
+.leader-row:last-child{border-bottom:0}
+.leader-row.me{
+  background:
+    linear-gradient(90deg,rgba(242,196,0,.06),transparent 60%),
+    #080706;
+}
+.leader-rank{color:#8c847c;font-size:.65rem;font-weight:900}
+.leader-user{display:flex;align-items:center;gap:8px;min-width:0}
+.leader-avatar{
+  width:31px;height:31px;display:grid;place-items:center;
+  flex:0 0 31px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:#0b0b0b;
+  color:#b7aca2;
+  font-size:.61rem;
+  font-weight:1000;
+}
+.leader-user strong{
+  overflow:hidden;
+  font-size:.72rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.leader-user small{display:block;margin-top:1px;color:#6e675f;font-size:.54rem}
+.leader-profit{
+  color:#8fe0a7;
+  font-size:.70rem;
+  font-weight:950;
+  text-align:right;
+}
+.leader-record,.leader-wallet{
+  color:#9a9188;
+  font-size:.64rem;
+  text-align:right;
+}
+
+/* ==============================
+   CHAT
+   ============================== */
+.chat{
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow:hidden;
+  border-left:1px solid var(--line);
+  background:#080808;
+}
+.chat iframe{
+  width:100%;
+  height:100%;
+  display:block;
+  border:0;
+  background:#080808;
+}
+
+/* ==============================
+   MODALS
+   ============================== */
+.backdrop{
+  position:fixed;
+  inset:0;
+  z-index:10000;
+  display:grid;
+  place-items:center;
+  padding:18px;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  background:rgba(0,0,0,.76);
+  backdrop-filter:blur(7px);
+  transition:opacity .15s ease,visibility .15s ease;
+}
+.backdrop.open{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+}
+.modal{
+  width:min(470px,100%);
+  max-height:calc(100vh - 24px);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  border:1px solid var(--line-strong);
+  border-radius:15px;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(242,196,0,.04),transparent 30%),
+    #090909;
+  box-shadow:var(--shadow);
+}
+.modal-head{
+  min-height:48px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:0 13px;
+  border-bottom:1px solid var(--line);
+}
+.modal-head strong{font-size:.81rem}
+.close-btn{
+  width:31px;height:31px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  color:#978e85;
+  background:#080808;
+}
+.modal-body{
+  min-height:0;
+  overflow-y:auto;
+  padding:12px;
+}
+.selected-match{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 26px minmax(0,1fr);
+  align-items:center;
+  gap:8px;
+  padding:10px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#070707;
+}
+.match-side{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.match-side .team-logo{width:36px;height:36px;border-radius:9px}
+.match-side strong{
+  overflow:hidden;
+  font-size:.70rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.match-vs{color:#5f5953;font-size:.55rem;font-weight:1000;text-align:center}
+.selected-side{
+  margin-top:9px;
+  padding:9px 10px;
+  border:1px solid rgba(242,196,0,.16);
+  border-radius:9px;
+  background:rgba(242,196,0,.035);
+}
+.selected-side span{
+  display:block;
+  color:#80776e;
+  font-size:.55rem;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.selected-side strong{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin-top:3px;
+  font-size:.82rem;
+}
+.bet-meta{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+  margin-top:9px;
+}
+.bet-meta-card{
+  padding:9px 10px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:#070707;
+}
+.bet-meta-card.wallet{
+  border-color:rgba(75,205,116,.21);
+  background:rgba(75,205,116,.035);
+}
+.bet-meta-card span{
+  display:block;
+  color:#756e67;
+  font-size:.55rem;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.bet-meta-card strong{
+  display:block;
+  margin-top:3px;
+  font-size:.79rem;
+}
+.bet-meta-card.wallet strong{color:#a8eaba}
+.wager-card{
+  margin-top:9px;
+  padding:11px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#070707;
+}
+.wager-top,.wager-scale,.balance-after{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.wager-top span{color:#8e867e;font-size:.66rem;font-weight:900}
+.wager-top strong{color:#ffe078;font-size:1rem}
+.wager-range{
+  --pct:0%;
+  width:100%;
+  height:25px;
+  margin:8px 0 0;
+  appearance:none;
+  -webkit-appearance:none;
+  background:transparent;
+  cursor:pointer;
+}
+.wager-range::-webkit-slider-runnable-track{
+  height:8px;
+  border-radius:999px;
+  background:
+    linear-gradient(90deg,#e2b400 0%,#f2c400 var(--pct),#181818 var(--pct),#181818 100%);
+}
+.wager-range::-webkit-slider-thumb{
+  width:22px;height:22px;
+  margin-top:-7px;
+  appearance:none;
+  -webkit-appearance:none;
+  border:3px solid #ffe373;
+  border-radius:50%;
+  background:#171104;
+  box-shadow:0 4px 11px rgba(0,0,0,.45);
+}
+.wager-range::-moz-range-track{height:8px;border-radius:999px;background:#181818}
+.wager-range::-moz-range-progress{height:8px;border-radius:999px;background:#f2c400}
+.wager-range::-moz-range-thumb{
+  width:18px;height:18px;
+  border:3px solid #ffe373;
+  border-radius:50%;
+  background:#171104;
+}
+.wager-scale{
+  margin-top:1px;
+  color:#69625c;
+  font-size:.55rem;
+}
+.balance-after{
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px solid rgba(255,255,255,.055);
+  color:#817970;
+  font-size:.61rem;
+}
+.balance-after strong{color:#91dda5}
+.odds-details{
+  margin-top:9px;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#070707;
+}
+.odds-details summary{
+  min-height:44px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:8px 10px;
+  list-style:none;
+  cursor:pointer;
+}
+.odds-details summary::-webkit-details-marker{display:none}
+.odds-summary-copy strong{display:block;font-size:.65rem}
+.odds-summary-copy small{display:block;margin-top:2px;color:#6e675f;font-size:.56rem}
+.odds-summary-value{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.odds-summary-value strong{color:#ffe079;font-size:1.15rem}
+.chevron{
+  width:23px;height:23px;display:grid;place-items:center;
+  border:1px solid var(--line);
+  border-radius:7px;
+  color:#857d75;
+  background:#080808;
+  transition:transform .15s ease;
+}
+.odds-details[open] .chevron{transform:rotate(180deg)}
+.odds-body{
+  padding:9px 10px 10px;
+  border-top:1px solid rgba(255,255,255,.05);
+}
+.odds-note{
+  color:#8e867e;
+  font-size:.60rem;
+  line-height:1.4;
+}
+.projected-pools{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+  margin-top:8px;
+}
+.projected-side{
+  padding:8px;
+  border:1px solid rgba(255,255,255,.055);
+  border-radius:8px;
+  background:#060606;
+}
+.projected-team{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+}
+.projected-team .team-logo{width:26px;height:26px;border-radius:7px}
+.projected-team strong{
+  overflow:hidden;
+  font-size:.61rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.projected-side>strong{
+  display:block;
+  margin-top:6px;
+  color:#d9cfbf;
+  font-size:.65rem;
+}
+.total-riding{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:9px;
+  padding:9px 10px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:#070707;
+}
+.total-riding span{color:#91887f;font-size:.63rem}
+.total-riding strong{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  color:#e2ce78;
+  font-size:.70rem;
+}
+.total-riding img{width:16px;height:16px;object-fit:contain}
+.winnings{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-top:9px;
+  padding:12px;
+  border:1px solid rgba(75,205,116,.28);
+  border-radius:10px;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(75,205,116,.11),transparent 45%),
+    #071008;
+}
+.winnings span{
+  color:#b1d9bc;
+  font-size:.61rem;
+  font-weight:1000;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.winnings small{
+  display:block;
+  margin-top:3px;
+  color:#73907a;
+  font-size:.55rem;
+  font-weight:500;
+  letter-spacing:0;
+  text-transform:none;
+}
+.winnings strong{
+  color:#b8f5c8;
+  font-size:1.65rem;
+  letter-spacing:-.04em;
+}
+.lock-btn{
+  width:100%;
+  min-height:46px;
+  margin-top:9px;
+  border:1px solid rgba(242,196,0,.30);
+  border-radius:9px;
+  color:#171000;
+  background:linear-gradient(180deg,#ffe15b,#e5b900);
+  font-size:.75rem;
+  font-weight:1000;
+}
+.lock-btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* Twitch auth modal */
+.auth-modal{
+  width:min(430px,100%);
+  padding:21px;
+  border:1px solid rgba(193,161,255,.24);
+  border-radius:15px;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(145,70,255,.15),transparent 35%),
+    #090809;
+  box-shadow:var(--shadow);
+}
+.auth-modal-top{display:flex;align-items:center;justify-content:space-between}
+.auth-logo{
+  width:44px;height:44px;display:grid;place-items:center;
+  border-radius:11px;
+  color:white;
+  background:linear-gradient(135deg,#9146ff,#571985);
+  font-weight:1000;
+}
+.auth-modal h2{margin:14px 0 6px;font-size:1.28rem;letter-spacing:-.03em}
+.auth-modal>p{margin:0;color:#9c929d;font-size:.70rem;line-height:1.55}
+.auth-checks{
+  display:grid;
+  gap:6px;
+  margin-top:13px;
+}
+.auth-check{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  padding:8px 9px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:#070707;
+  color:#d7cfd8;
+  font-size:.65rem;
+  line-height:1.4;
+}
+.auth-check span{color:#70d992;font-weight:1000}
+.auth-check.privacy{
+  border-color:rgba(242,196,0,.28);
+  background:rgba(242,196,0,.055);
+  color:#ffe89e;
+  box-shadow:inset 3px 0 0 var(--gold);
+}
+.auth-check.privacy span{color:#ffd83d}
+.auth-modal .twitch-btn{min-height:44px;margin-top:13px;font-size:.73rem}
+.auth-note{
+  display:block;
+  margin-top:8px;
+  color:#665e68;
+  font-size:.55rem;
+  line-height:1.45;
+  text-align:center;
+}
+
+/* Rules modal */
+.rules-list{
+  display:grid;
+  gap:7px;
+  margin-top:6px;
+}
+.rule{
+  padding:9px 10px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:#070707;
+}
+.rule strong{display:block;font-size:.69rem}
+.rule p{margin:3px 0 0;color:#847c74;font-size:.62rem;line-height:1.45}
+
+/* Toast */
+.toast{
+  position:fixed;
+  z-index:12000;
+  left:50%;
+  bottom:22px;
+  max-width:min(430px,calc(100vw - 24px));
+  padding:9px 12px;
+  opacity:0;
+  pointer-events:none;
+  transform:translate(-50%,12px);
+  border:1px solid var(--line-strong);
+  border-radius:9px;
+  color:#e9e1d7;
+  background:#0b0b0b;
+  box-shadow:0 14px 36px rgba(0,0,0,.5);
+  font-size:.65rem;
+  transition:.18s;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* Responsive */
+@media(max-width:1180px){
+  .shell{grid-template-columns:230px minmax(0,1fr)}
+  .chat{
+    position:static;
+    grid-column:2;
+    height:560px;
+    margin:0 18px 22px;
+    border:1px solid var(--line);
+    border-radius:12px;
+  }
+}
+@media(max-width:820px){
+  .shell{grid-template-columns:1fr}
+  .sidebar{
+    position:static;
+    height:auto;
+    max-height:520px;
+    border-right:0;
+    border-bottom:1px solid var(--line);
+  }
+  .nav-scroll{max-height:270px}
+  .main{padding:17px 13px 28px}
+  .chat{grid-column:auto;height:500px;margin:0 13px 18px}
+  .page-head{flex-direction:column}
+  .page-actions{width:100%}
+  .page-actions>*{flex:1}
+  .summary-strip{grid-template-columns:1fr 1fr}
+  .ticket-list{grid-template-columns:1fr}
+}
+@media(max-width:570px){
+  .summary-strip{grid-template-columns:1fr 1fr}
+  .market-body{grid-template-columns:1fr}
+  .team-choice:first-child{border-right:0;border-bottom:1px solid var(--line)}
+  .team-name strong{white-space:normal}
+  .login-banner{align-items:stretch;flex-direction:column}
+  .login-banner .twitch-btn{width:100%}
+  .leader-head{display:none}
+  .leader-row{
+    grid-template-columns:42px minmax(0,1fr) auto;
+  }
+  .leader-record,.leader-wallet{display:none}
+  .projected-pools{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body class="logged-out">
+<div class="shell">
+  <aside class="sidebar" aria-label="EastCoin navigation">
+    <a class="brand" href="index.html">
+      <span class="brand-logo"><img src="assets/eastcoins-logo.webp" alt=""></span>
+      <span><strong>EastCoin</strong><small>Watch together</small></span>
+    </a>
+
+    <label class="nav-search">
+      <span aria-hidden="true">⌕</span>
+      <input id="navSearch" type="text" placeholder="Search events" aria-label="Search events">
+    </label>
+
+    <nav class="nav-scroll">
+      <section class="nav-section">
+        <div class="nav-label">Watch</div>
+        <a class="nav-item" href="index.html"><span class="nav-icon">▦</span><span class="nav-copy"><strong>All Events</strong><small>EastCoin event home</small></span></a>
+        <a class="nav-item" href="multiview.html"><span class="nav-icon">▥</span><span class="nav-copy"><strong>MultiView</strong><small>Watch up to four streams</small></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">⌁</span><span class="nav-copy"><strong>Other Streams</strong><small>Approved stream sites</small></span></a>
+        <a class="nav-item active" href="picks-rebuild-test.html" aria-current="page"><span class="nav-icon">🎯</span><span class="nav-copy"><strong>Picks</strong><small>ZCoin prediction markets</small></span><span class="nav-new">NEW</span></a>
+      </section>
+
+      <section class="nav-section">
+        <div class="nav-label">Events</div>
+        <a class="nav-item" href="index.html"><span class="nav-icon">▶</span><span class="nav-copy"><strong>Live Only</strong><small>Games happening now</small></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">🔥</span><span class="nav-copy"><strong>Trending</strong><small>Popular and active games</small></span></a>
+        <button class="nav-item" type="button" data-shell-message="Settings stay on the main EastCoin shell."><span class="nav-icon">⚙</span><span class="nav-copy"><strong>Settings</strong><small>Events + interface settings</small></span></button>
+      </section>
+
+      <section class="nav-section">
+        <div class="nav-label">Categories</div>
+        <a class="nav-item" href="index.html"><span class="nav-icon">🏈</span><span class="nav-copy"><strong>Football</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">🥊</span><span class="nav-copy"><strong>UFC / Combat</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">🏀</span><span class="nav-copy"><strong>Basketball</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">⚾</span><span class="nav-copy"><strong>Baseball</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">🏒</span><span class="nav-copy"><strong>Hockey</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">⚽</span><span class="nav-copy"><strong>Soccer</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">🤼</span><span class="nav-copy"><strong>Wrestling</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">🏎</span><span class="nav-copy"><strong>Motorsport</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">🎾</span><span class="nav-copy"><strong>Tennis</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">⛳</span><span class="nav-copy"><strong>Golf</strong></span></a>
+        <a class="nav-item" href="index.html"><span class="nav-icon">≡</span><span class="nav-copy"><strong>Other Events</strong></span></a>
+      </section>
+
+      <section class="nav-section">
+        <div class="nav-label">Support</div>
+        <button class="nav-item" type="button" data-shell-message="Emote Help stays on the main EastCoin shell."><span class="nav-icon">?</span><span class="nav-copy"><strong>Emote Help</strong><small>Twitch emote reference</small></span></button>
+        <button class="nav-item" type="button" data-shell-message="EastCoin mock services are online."><span class="nav-icon">⌁</span><span class="nav-copy"><strong>Status</strong><small>EastCoin service health</small></span><span class="nav-dot"></span></button>
+      </section>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <section class="auth-card" id="authCardLoggedOut">
+        <span class="auth-card-kicker">Picks account</span>
+        <strong>Connect Twitch</strong>
+        <p>Sign in before placing picks. Your Twitch account becomes your Picks identity.</p>
+        <button class="twitch-btn" type="button" data-login><span class="twitch-mark">T</span>Log in with Twitch</button>
+      </section>
+
+      <section class="auth-card" id="authCardLoggedIn" hidden>
+        <div class="nav-user">
+          <span class="nav-avatar">Z</span>
+          <span><strong>Zwades</strong><small>● Twitch connected</small></span>
+        </div>
+        <button class="logout-btn" id="logoutBtn" type="button">Log out</button>
+      </section>
+
+      <div class="wallet-mini">
+        <span>ZCoins wallet</span>
+        <strong><img src="assets/eastcoins-logo.webp" alt=""><b data-wallet>—</b> ZCoins</strong>
+        <small id="walletSync">Sign in to sync StreamElements</small>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="page-head">
+      <div class="page-title">
+        <span>EastCoin</span>
+        <h1>Picks</h1>
+        <p>Pick winners with ZCoins. Community action sets the payout. Final odds lock when the game starts.</p>
+      </div>
+      <div class="page-actions">
+        <button class="ghost-btn" id="rulesBtn" type="button">How Picks Works</button>
+        <button class="gold-btn" id="refreshBtn" type="button">Refresh Games</button>
+      </div>
+    </header>
+
+    <section class="login-banner">
+      <div class="login-banner-copy">
+        <span class="login-banner-icon">T</span>
+        <span><strong>Twitch login required to make picks</strong><small>You can browse every market while logged out. Sign in only when you're ready to lock a ticket.</small></span>
+      </div>
+      <button class="twitch-btn" type="button" data-login><span class="twitch-mark">T</span>Continue with Twitch</button>
+    </section>
+
+    <section class="summary-strip" aria-label="Picks summary">
+      <article class="summary-card wallet"><span>ZCoins Wallet</span><strong><b data-wallet>—</b> ZCoins</strong><small id="mainWalletSync">StreamElements wallet</small></article>
+      <article class="summary-card"><span>2026 Picks Profit</span><strong id="seasonProfit">+0 ZCoins</strong><small>Wagers vs settled returns</small></article>
+      <article class="summary-card"><span>Record</span><strong id="seasonRecord">0–0</strong><small id="seasonAccuracy">No settled picks</small></article>
+      <article class="summary-card"><span>Picks Rank</span><strong id="seasonRank">Unranked</strong><small>Ranked by Picks profit</small></article>
+    </section>
+
+    <nav class="view-tabs" aria-label="Picks views">
+      <button class="view-tab active" type="button" data-view="markets">Markets</button>
+      <button class="view-tab" type="button" data-view="mypicks">My Picks <span class="tab-count" id="pendingCount">0</span></button>
+      <button class="view-tab" type="button" data-view="leaderboard">Leaderboard</button>
+    </nav>
+
+    <section class="view active" data-view-panel="markets">
+      <div class="section-head">
+        <div><h2>Today's Markets</h2><p id="catalogStatus">Loading current EastCoin games…</p></div>
+        <div class="right-note">1 ZCoin min · 15% wallet · 50 ZCoin max</div>
+      </div>
+      <div class="market-list" id="marketList"></div>
+    </section>
+
+    <section class="view" data-view-panel="mypicks">
+      <div class="section-head">
+        <div><h2>My Picks</h2><p>Your pending and settled ZCoin tickets.</p></div>
+      </div>
+      <div class="ticket-list" id="ticketList"></div>
+    </section>
+
+    <section class="view" data-view-panel="leaderboard">
+      <div class="section-head">
+        <div><h2>Picks Leaderboard</h2><p>Ranked by ZCoins profit from Picks — not total StreamElements wealth.</p></div>
+      </div>
+      <div class="leader-card" id="leaderboard"></div>
+    </section>
+  </main>
+
+  <aside class="chat" aria-label="Twitch chat">
+    <iframe
+      src="https://www.twitch.tv/embed/zwades/chat?parent=eastcoins.pages.dev&amp;parent=eastcoin.vip&amp;parent=www.eastcoin.vip&amp;parent=localhost&amp;parent=127.0.0.1&amp;darkpopout"
+      title="zwades Twitch chat"
+      loading="eager"
+      referrerpolicy="strict-origin-when-cross-origin">
+    </iframe>
+  </aside>
+</div>
+
+<!-- BET SLIP -->
+<div class="backdrop" id="betBackdrop" aria-hidden="true">
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="betTitle">
+    <header class="modal-head">
+      <strong id="betTitle">Lock Pick</strong>
+      <button class="close-btn" id="closeBet" type="button" aria-label="Close">×</button>
+    </header>
+    <div class="modal-body">
+      <div class="selected-match" id="selectedMatch"></div>
+
+      <div class="selected-side">
+        <span>Your pick</span>
+        <strong id="selectedSide"></strong>
+      </div>
+
+      <div class="bet-meta">
+        <div class="bet-meta-card wallet"><span>Available</span><strong id="betWallet">0 ZCoins</strong></div>
+        <div class="bet-meta-card"><span>Your Max</span><strong id="betMax">0 ZCoins</strong></div>
+      </div>
+
+      <div class="wager-card">
+        <div class="wager-top"><span>Wager</span><strong id="wagerValue">1 ZCoin</strong></div>
+        <input class="wager-range" id="wagerRange" type="range" min="1" max="50" value="1" step="1">
+        <div class="wager-scale"><span>1 min</span><span id="maxScale">50 max</span></div>
+        <div class="balance-after"><span>Balance after wager</span><strong id="balanceAfter">0 ZCoins</strong></div>
+      </div>
+
+      <details class="odds-details">
+        <summary>
+          <span class="odds-summary-copy"><strong>Projected Community Odds</strong><small>View pool breakdown</small></span>
+          <span class="odds-summary-value"><strong id="projectedOdds">Even</strong><span class="chevron">⌄</span></span>
+        </summary>
+        <div class="odds-body">
+          <div class="odds-note" id="oddsNote">Even payout until both sides have community action.</div>
+          <div class="projected-pools" id="projectedPools"></div>
+        </div>
+      </details>
+
+      <div class="total-riding">
+        <span>Total ZCoins riding on this game</span>
+        <strong><img src="assets/eastcoins-logo.webp" alt=""><b id="totalRiding">0</b> ZCoins</strong>
+      </div>
+
+      <div class="winnings">
+        <span>Potential Winnings<small>Projected return at current community odds</small></span>
+        <strong id="potentialWinnings">0</strong>
+      </div>
+
+      <button class="lock-btn" id="lockPickBtn" type="button">Lock Pick</button>
+    </div>
+  </section>
+</div>
+
+<!-- TWITCH AUTH -->
+<div class="backdrop" id="authBackdrop" aria-hidden="true">
+  <section class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="auth-modal-top">
+      <span class="auth-logo">T</span>
+      <button class="close-btn" id="closeAuth" type="button" aria-label="Close">×</button>
+    </div>
+    <h2 id="authTitle">Sign in to make your pick</h2>
+    <p>EastCoin uses Twitch as your Picks identity and connects your existing ZCoins balance.</p>
+
+    <div class="auth-checks">
+      <div class="auth-check"><span>✓</span><strong>Use your existing StreamElements ZCoins wallet.</strong></div>
+      <div class="auth-check"><span>✓</span><strong>One locked pick per game — no picking both sides.</strong></div>
+      <div class="auth-check"><span>✓</span><strong>Track your Picks profit, record and rank.</strong></div>
+      <div class="auth-check privacy"><span>✓</span><strong>Your Twitch password stays with Twitch. EastCoin never sees or stores it; Twitch only sends the account information you approve.</strong></div>
+    </div>
+
+    <button class="twitch-btn" id="mockLoginBtn" type="button"><span class="twitch-mark">T</span>Continue with Twitch</button>
+    <small class="auth-note">Prototype only — this button simulates Twitch OAuth as Zwades and uses a mock 3,051 ZCoin wallet.</small>
+  </section>
+</div>
+
+<!-- RULES -->
+<div class="backdrop" id="rulesBackdrop" aria-hidden="true">
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+    <header class="modal-head">
+      <strong id="rulesTitle">How EastCoin Picks Works</strong>
+      <button class="close-btn" id="closeRules" type="button" aria-label="Close">×</button>
+    </header>
+    <div class="modal-body">
+      <div class="rules-list">
+        <div class="rule"><strong>1 ZCoin minimum</strong><p>Small wallets can still participate without risking most of their balance.</p></div>
+        <div class="rule"><strong>Your max = lower of 15% of wallet or 50 ZCoins</strong><p>This limits whale influence while still rewarding members who have accumulated ZCoins.</p></div>
+        <div class="rule"><strong>Community action sets the payout</strong><p>The current multiplier is total ZCoins in the game divided by ZCoins on that side.</p></div>
+        <div class="rule"><strong>Final odds lock at game start</strong><p>Your projected payout may move before lock as more community ZCoins enter the market.</p></div>
+        <div class="rule"><strong>One-sided markets are No Action</strong><p>If only one team has action when the market locks, every ticket is refunded.</p></div>
+        <div class="rule"><strong>One pick per game</strong><p>Once you lock a side, you cannot also pick the other team in that same game.</p></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="assets/eastcoins-streamed-api.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  const WALLET = 3051;
+  const MIN_BET = 1;
+  const GLOBAL_MAX = 50;
+  const PERSONAL_PCT = .15;
+  const AUTH_KEY = "eastcoinPicksRebuildAuthV1";
+  const PICKS_KEY = "eastcoinPicksRebuildTicketsV1";
+
+  const fallbackGames = [
+    {
+      id:"demo-cle-bos",
+      sport:"MLB",
+      family:"baseball",
+      away:"Cleveland Guardians",
+      home:"Boston Red Sox",
+      awayLogo:"",
+      homeLogo:"",
+      startTs:Date.now()+75*60*1000
+    },
+    {
+      id:"demo-min-oak",
+      sport:"MLB",
+      family:"baseball",
+      away:"Minnesota Twins",
+      home:"Oakland Athletics",
+      awayLogo:"",
+      homeLogo:"",
+      startTs:Date.now()+135*60*1000
+    },
+    {
+      id:"demo-kc-phi",
+      sport:"NFL",
+      family:"american-football",
+      away:"Kansas City Chiefs",
+      home:"Philadelphia Eagles",
+      awayLogo:"",
+      homeLogo:"",
+      startTs:Date.now()+210*60*1000
+    },
+    {
+      id:"demo-lal-bos",
+      sport:"NBA",
+      family:"basketball",
+      away:"Los Angeles Lakers",
+      home:"Boston Celtics",
+      awayLogo:"",
+      homeLogo:"",
+      startTs:Date.now()+270*60*1000
+    }
+  ];
+
+  const leaderboardSeed = [
+    {name:"heartlarva",profit:428,record:"18–9",wallet:4117,title:"Hall of Famer"},
+    {name:"jimmytomato",profit:352,record:"16–10",wallet:3747,title:"Super Bowl Winner"},
+    {name:"charleskellybirdlaw",profit:281,record:"14–10",wallet:2890,title:"Pro Bowler"},
+    {name:"zwades",profit:214,record:"13–11",wallet:3051,title:"All-Pro",me:true},
+    {name:"danielsdong",profit:182,record:"12–10",wallet:1760,title:"Franchise Player"},
+    {name:"psilocyboone",profit:138,record:"11–10",wallet:1697,title:"Team Captain"},
+    {name:"curiousfolk",profit:94,record:"10–10",wallet:1032,title:"Starter"},
+    {name:"bootypaper",profit:61,record:"9–10",wallet:501,title:"Role Player"}
+  ];
+
+  let games = [...fallbackGames];
+  let loggedIn = localStorage.getItem(AUTH_KEY) === "1";
+  let tickets = loadTickets();
+  let activeBet = null;
+  let pendingAuthPick = null;
+  let toastTimer = 0;
+
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    marketList:$("marketList"),
+    ticketList:$("ticketList"),
+    leaderboard:$("leaderboard"),
+    catalogStatus:$("catalogStatus"),
+    pendingCount:$("pendingCount"),
+    seasonProfit:$("seasonProfit"),
+    seasonRecord:$("seasonRecord"),
+    seasonAccuracy:$("seasonAccuracy"),
+    seasonRank:$("seasonRank"),
+    authCardLoggedOut:$("authCardLoggedOut"),
+    authCardLoggedIn:$("authCardLoggedIn"),
+    walletSync:$("walletSync"),
+    mainWalletSync:$("mainWalletSync"),
+    logoutBtn:$("logoutBtn"),
+    betBackdrop:$("betBackdrop"),
+    closeBet:$("closeBet"),
+    selectedMatch:$("selectedMatch"),
+    selectedSide:$("selectedSide"),
+    betWallet:$("betWallet"),
+    betMax:$("betMax"),
+    wagerValue:$("wagerValue"),
+    wagerRange:$("wagerRange"),
+    maxScale:$("maxScale"),
+    balanceAfter:$("balanceAfter"),
+    projectedOdds:$("projectedOdds"),
+    oddsNote:$("oddsNote"),
+    projectedPools:$("projectedPools"),
+    totalRiding:$("totalRiding"),
+    potentialWinnings:$("potentialWinnings"),
+    lockPickBtn:$("lockPickBtn"),
+    authBackdrop:$("authBackdrop"),
+    closeAuth:$("closeAuth"),
+    mockLoginBtn:$("mockLoginBtn"),
+    rulesBackdrop:$("rulesBackdrop"),
+    rulesBtn:$("rulesBtn"),
+    closeRules:$("closeRules"),
+    refreshBtn:$("refreshBtn"),
+    navSearch:$("navSearch"),
+    toast:$("toast")
+  };
+
+  function loadTickets(){
+    try{
+      const parsed = JSON.parse(localStorage.getItem(PICKS_KEY) || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    }catch{
+      return [];
+    }
+  }
+
+  function saveTickets(){
+    localStorage.setItem(PICKS_KEY, JSON.stringify(tickets));
+  }
+
+  function money(value){
+    return Math.max(0,Math.floor(Number(value)||0)).toLocaleString("en-US");
+  }
+
+  function initials(value){
+    const words = String(value||"")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    return words.slice(-2).map(word=>word[0]).join("").toUpperCase().slice(0,3) || "EC";
+  }
+
+  function hashString(value){
+    let h=2166136261;
+    for(const ch of String(value)){
+      h ^= ch.charCodeAt(0);
+      h = Math.imul(h,16777619);
+    }
+    return h>>>0;
+  }
+
+  function familyLabel(family, sport){
+    const map = {
+      "american-football":"NFL",
+      baseball:"MLB",
+      basketball:"NBA",
+      hockey:"NHL",
+      soccer:"SOCCER",
+      combat:"UFC",
+      wrestling:"WRESTLING",
+      motorsport:"MOTORSPORT",
+      tennis:"TENNIS",
+      golf:"GOLF"
+    };
+    return map[family] || String(sport||"SPORT").toUpperCase();
+  }
+
+  function cleanLogo(value){
+    return String(value || "").trim();
+  }
+
+  function badgeRef(team){
+    return cleanLogo(team?.badge || team?.logo || team?.image || team?.icon || "");
+  }
+
+  function badgeUrl(team){
+    const ref = badgeRef(team);
+    if(!ref)return "";
+    if(/^https?:\/\//i.test(ref))return ref;
+
+    const api = window.EastcoinStreamedAPI;
+    if(api?.badgeUrl){
+      try{return api.badgeUrl(ref)||""}catch{}
+    }
+
+    if(ref.startsWith("/"))return `https://streamed.st${ref}`;
+    return `https://streamed.st/api/images/badge/${encodeURIComponent(ref.replace(/\.webp$/i,""))}.webp`;
+  }
+
+  function teamObject(raw,fallback){
+    if(!raw)return {name:fallback,badge:""};
+    if(typeof raw==="string")return {name:raw,badge:""};
+    return {
+      name:String(raw.name||raw.title||raw.team||fallback),
+      badge:badgeRef(raw)
+    };
+  }
+
+  function splitTitle(title){
+    const text = String(title||"");
+    const parts = text.split(/\s+(?:vs\.?|v\.?|@|at)\s+/i);
+    if(parts.length===2){
+      return {
+        away:{name:parts[0].trim(),badge:""},
+        home:{name:parts[1].trim(),badge:""}
+      };
+    }
+    return null;
+  }
+
+  function normalizeMatch(match){
+    const rawTeams = match?.teams;
+    let away=null,home=null;
+
+    if(Array.isArray(rawTeams)){
+      away=teamObject(rawTeams[0],"Away");
+      home=teamObject(rawTeams[1],"Home");
+    }else if(rawTeams && typeof rawTeams==="object"){
+      away=teamObject(rawTeams.away||rawTeams.visitor||rawTeams.team1||rawTeams.a,"Away");
+      home=teamObject(rawTeams.home||rawTeams.host||rawTeams.team2||rawTeams.h,"Home");
+    }
+
+    if(!away || !home){
+      const parsed=splitTitle(match?.title);
+      away ||= parsed?.away;
+      home ||= parsed?.home;
+    }
+
+    if(!away || !home || !away.name || !home.name)return null;
+
+    let ts = Number(match?.date||match?.start||match?.starts_at||0);
+    if(ts && ts<1e12)ts*=1000;
+    if(!ts)ts=Date.now()+60*60*1000;
+
+    const api=window.EastcoinStreamedAPI;
+    let family="other";
+    try{
+      family=api?.categoryFamily?.(match?.category||match?.sport||"")||"other";
+    }catch{}
+
+    return {
+      id:String(match?.id||`${away.name}-${home.name}-${ts}`),
+      sport:String(match?.category||match?.sport||family),
+      family,
+      away:away.name,
+      home:home.name,
+      awayLogo:badgeUrl(away),
+      homeLogo:badgeUrl(home),
+      startTs:ts,
+      popular:Boolean(match?.popular),
+      live:Boolean(match?._eastcoinLive)
+    };
+  }
+
+  function gameById(id){
+    return games.find(game=>game.id===id);
+  }
+
+  function ticketForGame(id){
+    return tickets.find(ticket=>ticket.gameId===id);
+  }
+
+  function basePool(game){
+    const h=hashString(game.id);
+    let away=45+(h%180);
+    let home=45+((h>>>8)%180);
+
+    // Some waiting markets intentionally begin one-sided or empty-ish.
+    if((h%9)===0)home=0;
+    if((h%11)===0)away=0;
+
+    return {away,home};
+  }
+
+  function market(game, prospectiveSide=null, prospectiveWager=0){
+    const base=basePool(game);
+    const localTickets=tickets.filter(t=>t.gameId===game.id && t.status==="pending");
+
+    let away=base.away;
+    let home=base.home;
+    let awayCount=away>0?2+(hashString(game.id+"a")%6):0;
+    let homeCount=home>0?2+(hashString(game.id+"h")%6):0;
+
+    for(const ticket of localTickets){
+      if(ticket.side==="away"){away+=ticket.wager;awayCount+=1}
+      else {home+=ticket.wager;homeCount+=1}
+    }
+
+    if(prospectiveSide==="away" && prospectiveWager>0){
+      away+=prospectiveWager;
+      awayCount+=1;
+    }
+    if(prospectiveSide==="home" && prospectiveWager>0){
+      home+=prospectiveWager;
+      homeCount+=1;
+    }
+
+    const total=away+home;
+    const active=away>0 && home>0 && (awayCount+homeCount)>=2;
+
+    return {
+      away,home,total,awayCount,homeCount,active,
+      awayShare:total?away/total:.5,
+      homeShare:total?home/total:.5,
+      awayOdds:active?total/away:2,
+      homeOdds:active?total/home:2
+    };
+  }
+
+  function oddsText(multiplier,active){
+    return active ? `${multiplier.toFixed(2)}x` : "Even";
+  }
+
+  function maxBet(balance=WALLET){
+    return Math.max(
+      MIN_BET,
+      Math.min(
+        GLOBAL_MAX,
+        Math.floor(balance*PERSONAL_PCT)
+      )
+    );
+  }
+
+  function formatStart(game){
+    if(game.live)return "Live";
+    const diff=game.startTs-Date.now();
+    if(diff<=0)return "Locked";
+    const mins=Math.ceil(diff/60000);
+    if(mins<60)return `Locks in ${mins}m`;
+    const h=Math.floor(mins/60);
+    const m=mins%60;
+    return `Locks in ${h}h ${m}m`;
+  }
+
+  function isLocked(game){
+    return game.live || game.startTs<=Date.now();
+  }
+
+  function logoMarkup(name,src){
+    return `
+      <span class="team-logo">
+        ${src?`<img src="${src}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`:""}
+        <span>${initials(name)}</span>
+      </span>
+    `;
+  }
+
+  function renderAuth(){
+    document.body.classList.toggle("logged-in",loggedIn);
+    document.body.classList.toggle("logged-out",!loggedIn);
+
+    els.authCardLoggedOut.hidden=loggedIn;
+    els.authCardLoggedIn.hidden=!loggedIn;
+
+    document.querySelectorAll("[data-wallet]").forEach(node=>{
+      node.textContent=loggedIn?money(WALLET):"—";
+    });
+
+    els.walletSync.textContent=loggedIn
+      ? "● Twitch connected · StreamElements mock"
+      : "Sign in to sync StreamElements";
+
+    els.mainWalletSync.textContent=loggedIn
+      ? "StreamElements ZCoins mock"
+      : "Sign in to view balance";
+  }
+
+  function renderSummary(){
+    const settled=tickets.filter(t=>t.status==="won"||t.status==="lost");
+    const wins=settled.filter(t=>t.status==="won").length;
+    const losses=settled.filter(t=>t.status==="lost").length;
+    const profit=settled.reduce((sum,t)=>sum+(t.profit||0),0);
+
+    els.seasonProfit.textContent=`${profit>=0?"+":""}${money(Math.abs(profit))} ZCoins`;
+    if(profit<0)els.seasonProfit.textContent=`-${money(Math.abs(profit))} ZCoins`;
+    els.seasonRecord.textContent=`${wins}–${losses}`;
+    els.seasonAccuracy.textContent=settled.length
+      ? `${Math.round((wins/settled.length)*100)}% accuracy`
+      : "No settled picks";
+    els.seasonRank.textContent=loggedIn?"#4 All-Pro":"Unranked";
+    els.pendingCount.textContent=String(tickets.filter(t=>t.status==="pending").length);
+  }
+
+  function renderMarkets(filter=""){
+    const query=String(filter||"").trim().toLowerCase();
+    const list=games.filter(game=>{
+      if(!query)return true;
+      return `${game.away} ${game.home} ${game.sport} ${game.family}`.toLowerCase().includes(query);
+    });
+
+    if(!list.length){
+      els.marketList.innerHTML='<div class="empty">No current markets match that search.</div>';
+      return;
+    }
+
+    els.marketList.innerHTML=list.map(game=>{
+      const m=market(game);
+      const ticket=ticketForGame(game.id);
+      const locked=isLocked(game);
+      const lower=m.active
+        ? (m.awayOdds>m.homeOdds?"away":m.homeOdds>m.awayOdds?"home":null)
+        : null;
+
+      const statusClass=locked?"locked":m.active?"":"waiting";
+      const statusText=locked?"Locked":m.active?"Live odds":"Waiting";
+
+      return `
+        <article class="market-card ${locked?"locked":""}">
+          <header class="market-card-head">
+            <div class="market-meta">
+              <span class="sport-badge">${familyLabel(game.family,game.sport)}</span>
+              <span class="market-lock">${formatStart(game)}</span>
+            </div>
+            <span class="market-status ${statusClass}">${statusText}</span>
+          </header>
+
+          <div class="market-body">
+            ${marketChoice(game,"away",m,ticket,locked,lower)}
+            ${marketChoice(game,"home",m,ticket,locked,lower)}
+          </div>
+
+          <div class="market-pool">
+            <div class="pool-head">
+              <span>EastCoin Pool</span>
+              <strong><img src="assets/eastcoins-logo.webp" alt="">${money(m.total)} ZCoins</strong>
+            </div>
+            <div class="pool-track"><i style="width:${Math.max(0,Math.min(100,m.awayShare*100))}%"></i></div>
+            <div class="pool-labels">
+              <span><b>${game.away}</b> ${Math.round(m.awayShare*100)}%</span>
+              <span>${Math.round(m.homeShare*100)}% <b>${game.home}</b></span>
+            </div>
+          </div>
+        </article>
+      `;
+    }).join("");
+
+    els.marketList.querySelectorAll("[data-pick]").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const gameId=btn.dataset.game;
+        const side=btn.dataset.pick;
+        requestPick(gameId,side);
+      });
+    });
+  }
+
+  function marketChoice(game,side,m,ticket,locked,lower){
+    const name=side==="away"?game.away:game.home;
+    const logo=side==="away"?game.awayLogo:game.homeLogo;
+    const odds=side==="away"?m.awayOdds:m.homeOdds;
+    const selected=ticket?.side===side;
+    const higher=lower===side;
+
+    return `
+      <button
+        class="team-choice ${selected?"user-pick":""} ${higher?"higher-payout":""}"
+        type="button"
+        data-pick="${side}"
+        data-game="${game.id}"
+        ${locked||Boolean(ticket)?"disabled":""}>
+        ${logoMarkup(name,logo)}
+        <span class="team-name">
+          <strong>${name}</strong>
+          <small>${selected?"Your locked pick":higher?"Higher payout":"Pick winner"}</small>
+        </span>
+        <span class="team-price">
+          <strong>${oddsText(odds,m.active)}</strong>
+          <small>${loggedIn?"Pick": "Login"}</small>
+        </span>
+      </button>
+    `;
+  }
+
+  function renderTickets(){
+    const sorted=[...tickets].sort((a,b)=>b.createdAt-a.createdAt);
+
+    if(!sorted.length){
+      els.ticketList.innerHTML='<div class="empty">No picks yet. Choose a team from Markets to create your first ticket.</div>';
+      return;
+    }
+
+    els.ticketList.innerHTML=sorted.map(ticket=>{
+      const game=ticket.game;
+      const pickedName=ticket.side==="away"?game.away:game.home;
+      const pickedLogo=ticket.side==="away"?game.awayLogo:game.homeLogo;
+      const opponent=ticket.side==="away"?game.home:game.away;
+      const currentGame=gameById(ticket.gameId)||game;
+      const current=market(currentGame);
+      const currentOdds=ticket.side==="away"?current.awayOdds:current.homeOdds;
+      const projected=current.active?Math.max(ticket.wager,Math.round(ticket.wager*currentOdds)):ticket.wager*2;
+
+      return `
+        <article class="ticket ${ticket.status}">
+          <header class="ticket-head">
+            <div class="ticket-team">
+              ${logoMarkup(pickedName,pickedLogo)}
+              <span><strong>${pickedName}</strong><small>vs ${opponent}</small></span>
+            </div>
+            <span class="ticket-status">${ticket.status}</span>
+          </header>
+          <div class="ticket-grid">
+            <div class="ticket-stat"><span>Wager</span><strong>${money(ticket.wager)} ZC</strong></div>
+            <div class="ticket-stat"><span>Current Odds</span><strong>${current.active?currentOdds.toFixed(2)+"x":"Even"}</strong></div>
+            <div class="ticket-stat return"><span>Potential</span><strong>${money(projected)} ZC</strong></div>
+          </div>
+          <div class="ticket-foot">Final odds lock when the game starts.</div>
+        </article>
+      `;
+    }).join("");
+  }
+
+  function renderLeaderboard(){
+    els.leaderboard.innerHTML=`
+      <div class="leader-head">
+        <span>Rank</span><span>User</span><span style="text-align:right">Picks Profit</span><span style="text-align:right">Record</span><span style="text-align:right">Wallet</span>
+      </div>
+      ${leaderboardSeed.map((row,index)=>`
+        <div class="leader-row ${row.me?"me":""}">
+          <span class="leader-rank">#${index+1}</span>
+          <div class="leader-user">
+            <span class="leader-avatar">${initials(row.name)}</span>
+            <span><strong>${row.name}${index===0?" 👑":""}</strong><small>${row.title}</small></span>
+          </div>
+          <span class="leader-profit">+${money(row.profit)} ZC</span>
+          <span class="leader-record">${row.record}</span>
+          <span class="leader-wallet">${money(row.wallet)} ZC</span>
+        </div>
+      `).join("")}
+    `;
+  }
+
+  function render(){
+    renderAuth();
+    renderSummary();
+    renderMarkets(els.navSearch.value);
+    renderTickets();
+    renderLeaderboard();
+  }
+
+  function requestPick(gameId,side){
+    const game=gameById(gameId);
+    if(!game || isLocked(game) || ticketForGame(gameId))return;
+
+    if(!loggedIn){
+      pendingAuthPick={gameId,side};
+      openBackdrop(els.authBackdrop);
+      return;
+    }
+
+    openBet(gameId,side);
+  }
+
+  function openBet(gameId,side){
+    const game=gameById(gameId);
+    if(!game)return;
+
+    activeBet={gameId,side,wager:Math.min(10,maxBet())};
+    const max=maxBet();
+
+    els.selectedMatch.innerHTML=`
+      <span class="match-side">${logoMarkup(game.away,game.awayLogo)}<strong>${game.away}</strong></span>
+      <span class="match-vs">VS</span>
+      <span class="match-side" style="justify-content:flex-end"><strong>${game.home}</strong>${logoMarkup(game.home,game.homeLogo)}</span>
+    `;
+
+    const selectedName=side==="away"?game.away:game.home;
+    const selectedLogo=side==="away"?game.awayLogo:game.homeLogo;
+    els.selectedSide.innerHTML=`${logoMarkup(selectedName,selectedLogo)}<span>${selectedName}</span>`;
+
+    els.betWallet.textContent=`${money(WALLET)} ZCoins`;
+    els.betMax.textContent=`${money(max)} ZCoins`;
+    els.wagerRange.min=String(MIN_BET);
+    els.wagerRange.max=String(max);
+    els.wagerRange.value=String(activeBet.wager);
+    els.maxScale.textContent=`${money(max)} max`;
+
+    updateBet();
+    openBackdrop(els.betBackdrop);
+    els.wagerRange.focus();
+  }
+
+  function updateBet(){
+    if(!activeBet)return;
+
+    const game=gameById(activeBet.gameId);
+    const wager=Math.max(MIN_BET,Math.floor(Number(els.wagerRange.value)||MIN_BET));
+    activeBet.wager=wager;
+
+    const max=maxBet();
+    const pct=max===MIN_BET?100:((wager-MIN_BET)/(max-MIN_BET))*100;
+    els.wagerRange.style.setProperty("--pct",`${Math.max(0,Math.min(100,pct))}%`);
+    els.wagerValue.textContent=`${money(wager)} ${wager===1?"ZCoin":"ZCoins"}`;
+    els.balanceAfter.textContent=`${money(WALLET-wager)} ZCoins`;
+
+    const m=market(game,activeBet.side,wager);
+    const mult=activeBet.side==="away"?m.awayOdds:m.homeOdds;
+    const returnAmount=m.active?Math.round(wager*mult):wager*2;
+
+    els.projectedOdds.textContent=oddsText(mult,m.active);
+    els.oddsNote.textContent=m.active
+      ? "Your wager is included in this projected pool. Final odds remain live until game start."
+      : "Even is shown while the projected pool is still one-sided. A one-sided market at lock is No Action and refunded.";
+
+    els.projectedPools.innerHTML=`
+      <div class="projected-side">
+        <div class="projected-team">${logoMarkup(game.away,game.awayLogo)}<strong>${game.away}</strong></div>
+        <strong>${money(m.away)} ZCoins · ${Math.round(m.awayShare*100)}%</strong>
+      </div>
+      <div class="projected-side">
+        <div class="projected-team">${logoMarkup(game.home,game.homeLogo)}<strong>${game.home}</strong></div>
+        <strong>${money(m.home)} ZCoins · ${Math.round(m.homeShare*100)}%</strong>
+      </div>
+    `;
+    els.totalRiding.textContent=money(m.total);
+    els.potentialWinnings.textContent=`${money(returnAmount)} ZCoins`;
+  }
+
+  function lockPick(){
+    if(!loggedIn || !activeBet)return;
+
+    const game=gameById(activeBet.gameId);
+    const m=market(game,activeBet.side,activeBet.wager);
+    const mult=activeBet.side==="away"?m.awayOdds:m.homeOdds;
+
+    tickets.push({
+      id:`ticket-${Date.now()}`,
+      gameId:game.id,
+      side:activeBet.side,
+      wager:activeBet.wager,
+      status:"pending",
+      createdAt:Date.now(),
+      lockedPreview:m.active?mult:2,
+      game:{...game}
+    });
+
+    saveTickets();
+    closeBackdrop(els.betBackdrop);
+    activeBet=null;
+    render();
+    toast("Pick locked. Final odds will be set when the game starts.");
+  }
+
+  function openBackdrop(node){
+    node.classList.add("open");
+    node.setAttribute("aria-hidden","false");
+    document.body.style.overflow="hidden";
+  }
+
+  function closeBackdrop(node){
+    node.classList.remove("open");
+    node.setAttribute("aria-hidden","true");
+    if(!document.querySelector(".backdrop.open"))document.body.style.overflow="";
+  }
+
+  function completeLogin(){
+    loggedIn=true;
+    localStorage.setItem(AUTH_KEY,"1");
+    closeBackdrop(els.authBackdrop);
+    render();
+    toast("Twitch connected. ZCoins wallet ready.");
+
+    if(pendingAuthPick){
+      const pending=pendingAuthPick;
+      pendingAuthPick=null;
+      setTimeout(()=>openBet(pending.gameId,pending.side),100);
+    }
+  }
+
+  function logout(){
+    loggedIn=false;
+    localStorage.removeItem(AUTH_KEY);
+    pendingAuthPick=null;
+    closeBackdrop(els.betBackdrop);
+    render();
+    toast("Logged out of the Twitch mock account.");
+  }
+
+  function toast(message){
+    els.toast.textContent=message;
+    els.toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(()=>els.toast.classList.remove("show"),2300);
+  }
+
+  async function loadGames(force=false){
+    const api=window.EastcoinStreamedAPI;
+    els.catalogStatus.textContent="Loading current EastCoin games…";
+
+    if(!api){
+      games=[...fallbackGames];
+      els.catalogStatus.textContent="Demo markets · Streamed adapter unavailable";
+      render();
+      return;
+    }
+
+    try{
+      let result=null;
+
+      if(typeof api.getToday==="function"){
+        result=await api.getToday(force);
+      }else if(typeof api.getDiscovery==="function"){
+        result=await api.getDiscovery(force);
+      }else if(typeof api.getAll==="function"){
+        result=await api.getAll(force);
+      }
+
+      const raw=Array.isArray(result)?result:Array.isArray(result?.data)?result.data:[];
+      const mapped=raw
+        .map(normalizeMatch)
+        .filter(Boolean)
+        .filter(game=>game.startTs>Date.now()-3*60*60*1000)
+        .sort((a,b)=>(Number(b.popular)-Number(a.popular))||(a.startTs-b.startTs))
+        .slice(0,10);
+
+      if(mapped.length){
+        games=mapped;
+        els.catalogStatus.textContent=`Live EastCoin catalog · ${mapped.length} current markets`;
+      }else{
+        games=[...fallbackGames];
+        els.catalogStatus.textContent="Demo markets · no current two-team events found";
+      }
+    }catch(error){
+      console.warn("Picks rebuild catalog load failed",error);
+      games=[...fallbackGames];
+      els.catalogStatus.textContent="Demo markets · current catalog temporarily unavailable";
+    }
+
+    render();
+  }
+
+  // Tabs
+  document.querySelectorAll("[data-view]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      document.querySelectorAll("[data-view]").forEach(item=>item.classList.toggle("active",item===btn));
+      document.querySelectorAll("[data-view-panel]").forEach(panel=>panel.classList.toggle("active",panel.dataset.viewPanel===btn.dataset.view));
+    });
+  });
+
+  // Login controls
+  document.querySelectorAll("[data-login]").forEach(btn=>btn.addEventListener("click",()=>openBackdrop(els.authBackdrop)));
+  els.mockLoginBtn.addEventListener("click",completeLogin);
+  els.closeAuth.addEventListener("click",()=>closeBackdrop(els.authBackdrop));
+  els.logoutBtn.addEventListener("click",logout);
+
+  // Bet slip
+  els.closeBet.addEventListener("click",()=>closeBackdrop(els.betBackdrop));
+  els.wagerRange.addEventListener("input",updateBet);
+  els.lockPickBtn.addEventListener("click",lockPick);
+
+  // Rules
+  els.rulesBtn.addEventListener("click",()=>openBackdrop(els.rulesBackdrop));
+  els.closeRules.addEventListener("click",()=>closeBackdrop(els.rulesBackdrop));
+
+  // Search
+  els.navSearch.addEventListener("input",()=>renderMarkets(els.navSearch.value));
+
+  // Refresh
+  els.refreshBtn.addEventListener("click",()=>loadGames(true));
+
+  // Shell mock messages
+  document.querySelectorAll("[data-shell-message]").forEach(btn=>{
+    btn.addEventListener("click",()=>toast(btn.dataset.shellMessage));
+  });
+
+  // Click backdrop to close
+  [els.betBackdrop,els.authBackdrop,els.rulesBackdrop].forEach(backdrop=>{
+    backdrop.addEventListener("click",event=>{
+      if(event.target===backdrop)closeBackdrop(backdrop);
+    });
+  });
+
+  document.addEventListener("keydown",event=>{
+    if(event.key!=="Escape")return;
+    const open=[els.betBackdrop,els.authBackdrop,els.rulesBackdrop].find(node=>node.classList.contains("open"));
+    if(open)closeBackdrop(open);
+  });
+
+  render();
+  loadGames(false);
+})();
+</script>
+</body>
+</html>
