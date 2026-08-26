@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<title>EastCoin V2 | Events</title>
+<link href="../assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
+<link href="assets/eastcoin-v2.css?v=1" rel="stylesheet">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="./"><span class="logo"><img src="../assets/eastcoins-logo.webp" alt=""></span><span><strong>EastCoin</strong><small>V2 staging</small></span></a>
+  <nav class="nav">
+    <a class="active" href="./">Events</a>
+    <a href="../multiview.html">MultiView</a>
+    <a href="../picks.html">Picks <b>HOT</b></a>
+    <a href="../games.html">Games</a>
+    <button id="moreBtn" type="button">More ▾</button>
+  </nav>
+  <div class="actions">
+    <label class="search"><span>⌕</span><input id="search" placeholder="Teams, leagues, events…"><kbd>/</kbd></label>
+    <a class="wallet" href="../picks.html"><span>◉</span><strong id="walletLabel">ZCoins</strong></a>
+    <button class="iconbtn" id="chatBtn" type="button">◫<i></i></button>
+    <a class="profile" id="profile" href="/api/picks/auth/twitch/start?returnTo=%2Fv2%2F"><span id="avatar">T</span><strong id="profileName">Log in</strong></a>
+  </div>
+  <div class="moremenu" id="moreMenu" hidden>
+    <a href="../favorites.html">Other Streams</a>
+    <a href="../changelog.html">Changelog</a>
+    <a href="../events.html">Legacy Events</a>
+    <a href="../index.html">Current EastCoin</a>
+  </div>
+</header>
+<div class="sportbar" id="sportbar">
+  <button class="active" data-sport="all">All</button><button class="live" data-sport="live">● Live <b id="liveCount">0</b></button>
+  <button data-sport="american-football">🏈 Football</button><button data-sport="basketball">🏀 Basketball</button><button data-sport="baseball">⚾ Baseball</button><button data-sport="hockey">🏒 Hockey</button><button data-sport="combat">🥊 UFC</button><button data-sport="soccer">⚽ Soccer</button><button data-sport="tennis">🎾 Tennis</button><button data-sport="other">More</button>
+</div>
+<main>
+  <section class="intro"><div><span id="dateLabel">EastCoin V2</span><h1>What are we watching?</h1><p>Real EastCoin events on a clean horizontal shell.</p></div><div><button class="secondary" id="customBtn">＋ Custom Stream</button><button class="primary" id="featureOpen" disabled>▶ Open Featured</button></div></section>
+  <section class="status" id="status"><i></i><strong id="statusTitle">Loading EastCoin events…</strong><small id="statusMeta">Connecting to Streamed + PPV.</small><button id="refresh">Refresh</button></section>
+  <section class="hero"><article class="featured" id="featured"><div class="loading">Loading featured event…</div></article><aside class="upnext"><header><span>UP NEXT</span><h2>Coming up</h2></header><div id="upnext">Loading…</div><button id="scheduleJump">Full schedule →</button></aside></section>
+  <section class="sicko" id="sicko" hidden><span class="fire">🔥</span><div><small>SICKO PROP OF THE WEEK</small><strong id="sickoTitle">Weekly prop</strong><em id="sickoMeta"></em></div><div class="odds"><span id="sickoSide">YES</span><strong id="sickoOdds">—</strong><em id="sickoPrice">—</em></div><a href="../picks-kalshi-test.html#prop-of-week">View Prop →</a></section>
+  <section class="schedule" id="schedule"><header><div><span>EVENTS</span><h2>Your sports timeline</h2></div><div class="dates" id="dates"></div></header><div class="toolbar"><div class="statuses"><button class="active" data-status="all">All</button><button data-status="live">Live</button><button data-status="upcoming">Upcoming</button><button data-status="saved">Saved</button></div><span id="eventCount">0 events</span><span id="cacheMeta"></span><button id="sort">Sort: Recommended ▾</button></div><div class="grid" id="grid"></div><div class="empty" id="empty" hidden><strong>No matching events</strong><small>Try another sport, day or search.</small><button id="clear">Clear filters</button></div></section>
+  <section class="lower"><article><header><span>RECENT</span><h2>Continue watching</h2></header><div id="recent" class="recent"></div></article><article><header><span>PICKS</span><h2>EastCoin Picks</h2></header><div id="picks" class="picks">Loading Picks identity…</div></article><article><header><span>QUICK LAUNCH</span><h2>EastCoin tools</h2></header><div class="quick"><a href="../multiview.html">▥<strong>MultiView</strong><small>Up to four streams</small></a><a href="../games.html">🎮<strong>Mini Games</strong><small>Kill halftime</small></a><button id="quickChat">◫<strong>Open Chat</strong><small>Join Twitch chat</small></button><a href="../favorites.html">↗<strong>Other Streams</strong><small>Approved sites</small></a></div></article></section>
+  <footer>EastCoin V2 Functional Baseline · <a href="../index.html">Current EastCoin</a></footer>
+</main>
+<aside class="chat" id="chat" aria-hidden="true"><header><div><small>LIVE CHAT</small><strong>zwades</strong></div><button id="closeChat">×</button></header><iframe src="https://www.twitch.tv/embed/zwades/chat?parent=eastcoins.pages.dev&parent=eastcoin.vip&parent=www.eastcoin.vip&parent=localhost&parent=127.0.0.1&darkpopout" title="zwades Twitch chat"></iframe></aside><button class="scrim" id="scrim" hidden></button>
+<div class="modal" id="player"><section class="player"><header><div><small id="playerKicker">EASTCOIN PLAYER</small><strong id="playerTitle">Event</strong><em id="playerMeta"></em></div><div><button id="saveActive">☆</button><button id="playerChat">Chat</button><button id="closePlayer">×</button></div></header><div class="playerbody"><div class="surface"><div class="playerloading" id="playerLoading"><span></span><strong id="loaderTitle">Finding streams…</strong><small id="loaderMeta">Checking EastCoin sources.</small></div><iframe id="frame" src="about:blank" allow="autoplay;fullscreen;picture-in-picture;encrypted-media;clipboard-write" allowfullscreen></iframe></div><aside><span>STREAMS</span><div id="streams"></div><hr><span>EVENT</span><strong id="sideTitle"></strong><small id="sideMeta"></small><a href="../multiview.html">Open MultiView</a></aside></div></section></div>
+<div class="modal" id="custom"><section class="smallmodal"><header><strong>Custom Stream</strong><button id="closeCustom">×</button></header><form id="customForm"><label>Stream / embed URL<input id="customUrl" type="url" placeholder="https://…" required></label><p>V2 opens the URL directly in its player iframe.</p><div><button type="button" id="cancelCustom">Cancel</button><button class="primary" type="submit">Open Stream</button></div></form></section></div>
+<div class="toast" id="toast"></div>
+<script src="../assets/eastcoins-ppv-api.js?v=ppv-loader2"></script>
+<script src="../assets/eastcoins-streamed-api.js?v=api-loader2"></script>
+<script src="assets/eastcoin-v2.js?v=1"></script>
+</body></html>

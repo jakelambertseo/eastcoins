@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">74 major update groups</div>
+<div class="release-count">75 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1746,10 +1746,9 @@
   </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Kalshi API connectivity fallback added</h2>
 <p>
@@ -1760,6 +1759,12 @@
     applied the same fallback behavior to catalog discovery and fresh
     pre-lock market quotes.
   </p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date"><time datetime="2026-08-26">August 26, 2026</time><span class="latest-badge">Latest</span></div>
+<h2>EastCoin V2 functional staging shell added</h2>
+<p>Added an isolated /v2/ clean-room staging shell with horizontal navigation. V2 reuses EastCoin's existing Streamed + PPV provider adapters for real event discovery and playable stream resolution, adds functional sport/date/status filters, search, the real Twitch chat drawer, saved and recent local UI state, current Picks Twitch identity when available, custom streams, and an optional weekly Kalshi Sicko Prop callout. Existing production routes and provider/backend logic remain unchanged so future V2 iterations can replace complete files instead of accumulating patches.</p>
 </article>
 </section>
 </div>
