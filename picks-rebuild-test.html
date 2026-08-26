@@ -1348,6 +1348,733 @@ body.logged-out .summary-card.wallet strong{opacity:.45}
   .leader-record,.leader-wallet{display:none}
   .projected-pools{grid-template-columns:1fr}
 }
+
+/* ================================================================
+   PICKS REBUILD V2
+   ================================================================ */
+
+/* Compact leaderboard at top: useful context without becoming a ticker. */
+.top-leaders{
+  min-height:58px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:13px;
+  padding:8px 9px 8px 11px;
+  overflow:hidden;
+  border:1px solid rgba(242,196,0,.12);
+  border-radius:11px;
+  background:
+    linear-gradient(90deg,rgba(242,196,0,.035),transparent 34%),
+    #060606;
+}
+.top-leaders-label{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex:0 0 auto;
+  padding-right:11px;
+  border-right:1px solid rgba(255,255,255,.055);
+}
+.top-leaders-label>span{
+  font-size:.86rem;
+}
+.top-leaders-label strong{
+  display:block;
+  color:#e9dfc2;
+  font-size:.66rem;
+}
+.top-leaders-label small{
+  display:block;
+  margin-top:1px;
+  color:#6d665e;
+  font-size:.52rem;
+}
+.top-leaders-list{
+  min-width:0;
+  flex:1 1 auto;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  overflow:hidden;
+}
+.top-leader-chip{
+  min-width:0;
+  flex:1 1 0;
+  display:grid;
+  grid-template-columns:22px minmax(0,1fr) auto;
+  align-items:center;
+  gap:6px;
+  padding:6px 7px;
+  border:1px solid rgba(255,255,255,.055);
+  border-radius:8px;
+  background:#080808;
+}
+.top-leader-rank{
+  width:22px;
+  height:22px;
+  display:grid;
+  place-items:center;
+  border-radius:6px;
+  color:#a99d84;
+  background:#0d0b07;
+  font-size:.52rem;
+  font-weight:1000;
+}
+.top-leader-chip:first-child .top-leader-rank{
+  color:#ffe06d;
+  background:rgba(242,196,0,.07);
+}
+.top-leader-name{
+  min-width:0;
+}
+.top-leader-name strong{
+  display:block;
+  overflow:hidden;
+  color:#dcd4ca;
+  font-size:.60rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.top-leader-name small{
+  display:block;
+  margin-top:1px;
+  color:#625d57;
+  font-size:.48rem;
+}
+.top-leader-profit{
+  color:#86dda0;
+  font-size:.59rem;
+  font-weight:1000;
+  white-space:nowrap;
+}
+.top-leaders-link{
+  flex:0 0 auto;
+  min-height:31px;
+  padding:0 9px;
+  border:1px solid rgba(242,196,0,.12);
+  border-radius:7px;
+  color:#c4aa59;
+  background:rgba(242,196,0,.025);
+  font-size:.56rem;
+  font-weight:950;
+}
+
+/* ---------------------------------------------------------------
+   Stronger market/team selection hierarchy
+   --------------------------------------------------------------- */
+.market-card{
+  border-color:rgba(255,255,255,.09);
+}
+.market-body{
+  gap:8px;
+  padding:10px;
+  background:
+    linear-gradient(180deg,#070707,#050505);
+}
+.team-choice{
+  position:relative;
+  min-height:104px;
+  grid-template-columns:58px minmax(0,1fr) auto;
+  gap:12px;
+  padding:13px 14px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.085) !important;
+  border-radius:10px;
+  background:
+    radial-gradient(circle at 10% 50%,rgba(173,9,50,.08),transparent 34%),
+    linear-gradient(135deg,#0d0b0c,#080808 62%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.018),
+    0 7px 18px rgba(0,0,0,.16);
+  transition:
+    border-color .15s ease,
+    transform .15s ease,
+    background .15s ease,
+    box-shadow .15s ease;
+}
+.team-choice:first-child{
+  border-right:1px solid rgba(255,255,255,.085);
+}
+.team-choice:nth-child(2){
+  background:
+    radial-gradient(circle at 10% 50%,rgba(242,196,0,.055),transparent 34%),
+    linear-gradient(135deg,#0d0c09,#080808 62%);
+}
+.team-choice:hover:not(:disabled){
+  z-index:2;
+  border-color:rgba(242,196,0,.34) !important;
+  background:
+    radial-gradient(circle at 10% 50%,rgba(242,196,0,.09),transparent 37%),
+    #0d0c09;
+  transform:translateY(-1px);
+  box-shadow:
+    0 10px 24px rgba(0,0,0,.26),
+    inset 0 0 0 1px rgba(242,196,0,.035);
+}
+.team-choice:after{
+  content:"";
+  position:absolute;
+  inset:auto 12px 0 12px;
+  height:2px;
+  opacity:.0;
+  border-radius:999px;
+  background:var(--gold);
+  transition:opacity .15s ease;
+}
+.team-choice:hover:not(:disabled):after,
+.team-choice.user-pick:after{
+  opacity:.72;
+}
+.team-choice .team-logo{
+  width:58px;
+  height:58px;
+  border-color:rgba(255,255,255,.13);
+  border-radius:14px;
+  background:
+    radial-gradient(circle at 50% 35%,rgba(255,255,255,.055),transparent 55%),
+    #090909;
+  box-shadow:
+    0 8px 18px rgba(0,0,0,.30),
+    inset 0 0 0 1px rgba(255,255,255,.018);
+}
+.team-choice .team-logo img{
+  width:84%;
+  height:84%;
+}
+.team-choice .team-name strong{
+  color:#fff8ed;
+  font-size:.94rem;
+  font-weight:950;
+  line-height:1.16;
+  letter-spacing:-.015em;
+}
+.team-choice .team-name small{
+  margin-top:5px;
+  color:#8e857c;
+  font-size:.62rem;
+  font-weight:750;
+}
+.team-choice .team-price{
+  min-width:86px;
+}
+.team-choice .team-price strong{
+  color:#fff0b0;
+  font-size:1.42rem;
+  font-weight:1000;
+}
+.team-choice .team-price small{
+  margin-top:4px;
+  color:#958a78;
+  font-size:.56rem;
+}
+.team-choice:not(:disabled) .team-price small{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:21px;
+  padding:0 7px;
+  border:1px solid rgba(242,196,0,.13);
+  border-radius:999px;
+  color:#c7ae5d;
+  background:rgba(242,196,0,.03);
+}
+.team-choice.higher-payout{
+  border-color:rgba(173,9,50,.18) !important;
+}
+.team-choice.higher-payout .team-price small{
+  border-color:rgba(211,29,77,.23);
+  color:#dc748b;
+  background:rgba(173,9,50,.06);
+}
+.team-choice.user-pick{
+  border-color:rgba(242,196,0,.40) !important;
+  background:
+    radial-gradient(circle at 10% 50%,rgba(242,196,0,.11),transparent 40%),
+    #0e0c07;
+  box-shadow:inset 0 0 0 1px rgba(242,196,0,.05);
+}
+.team-choice.user-pick .team-name small{
+  color:#d3bc68;
+}
+.market-pool{
+  border-top:0;
+  padding-top:10px;
+}
+
+/* ---------------------------------------------------------------
+   History
+   --------------------------------------------------------------- */
+.history-list{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+.history-row{
+  min-height:58px;
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  padding:9px 10px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:#070707;
+}
+.history-icon{
+  width:36px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.065);
+  border-radius:9px;
+  color:#b8afa6;
+  background:#0a0a0a;
+  font-size:.72rem;
+  font-weight:1000;
+}
+.history-row.wager .history-icon{
+  border-color:rgba(242,196,0,.15);
+  color:#d3b95d;
+  background:rgba(242,196,0,.035);
+}
+.history-row.payout .history-icon{
+  border-color:rgba(75,205,116,.22);
+  color:#83dfa0;
+  background:rgba(75,205,116,.045);
+}
+.history-row.refund .history-icon{
+  border-color:rgba(103,156,180,.18);
+  color:#8fc3d7;
+  background:rgba(83,134,157,.04);
+}
+.history-copy{
+  min-width:0;
+}
+.history-copy strong{
+  display:block;
+  overflow:hidden;
+  color:#e7dfd5;
+  font-size:.70rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.history-copy small{
+  display:block;
+  margin-top:3px;
+  overflow:hidden;
+  color:#746d66;
+  font-size:.58rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.history-amount{
+  text-align:right;
+}
+.history-amount strong{
+  display:block;
+  font-size:.75rem;
+}
+.history-row.wager .history-amount strong{color:#d7bd68}
+.history-row.payout .history-amount strong{color:#8fe2a7}
+.history-row.refund .history-amount strong{color:#9ac7d8}
+.history-amount small{
+  display:block;
+  margin-top:2px;
+  color:#655f59;
+  font-size:.52rem;
+}
+
+@media(max-width:1160px){
+  .top-leader-chip:nth-child(n+4){display:none}
+}
+@media(max-width:760px){
+  .top-leaders{
+    align-items:stretch;
+    flex-direction:column;
+  }
+  .top-leaders-label{
+    border-right:0;
+    border-bottom:1px solid rgba(255,255,255,.055);
+    padding:0 0 7px;
+  }
+  .top-leaders-list{
+    overflow-x:auto;
+  }
+  .top-leader-chip{
+    min-width:145px;
+  }
+  .top-leaders-link{
+    width:100%;
+  }
+}
+@media(max-width:570px){
+  .market-body{
+    gap:7px;
+  }
+  .team-choice{
+    min-height:92px;
+    grid-template-columns:52px minmax(0,1fr) auto;
+    padding:11px;
+  }
+  .team-choice .team-logo{
+    width:52px;
+    height:52px;
+  }
+  .team-choice .team-name strong{
+    font-size:.86rem;
+  }
+  .team-choice .team-price strong{
+    font-size:1.24rem;
+  }
+}
+
+
+/* ================================================================
+   PICKS REBUILD V3 — LARGER, MORE READABLE TYPOGRAPHY
+   ================================================================ */
+
+body{
+  font-size:17px;
+}
+
+/* LEFT NAV */
+.brand strong{font-size:1.02rem}
+.brand small{font-size:.72rem}
+.nav-search input{font-size:.80rem}
+.nav-label{font-size:.69rem}
+.nav-copy strong{font-size:.82rem}
+.nav-copy small{font-size:.68rem}
+.nav-new{font-size:.52rem}
+.auth-card-kicker{font-size:.62rem}
+.auth-card strong{font-size:.84rem}
+.auth-card p{font-size:.67rem}
+.twitch-btn{font-size:.75rem}
+.nav-user strong{font-size:.83rem}
+.nav-user small{font-size:.64rem}
+.logout-btn{font-size:.66rem}
+.wallet-mini span{font-size:.62rem}
+.wallet-mini strong{font-size:1.28rem}
+.wallet-mini small{font-size:.63rem}
+
+/* PAGE HEADER + SUMMARY */
+.page-title span{font-size:.69rem}
+.page-title h1{font-size:1.92rem}
+.page-title p{font-size:.82rem}
+.ghost-btn,.gold-btn{font-size:.74rem}
+.login-banner strong{font-size:.84rem}
+.login-banner small{font-size:.72rem}
+.summary-card span{font-size:.66rem}
+.summary-card strong{font-size:1.16rem}
+.summary-card small{font-size:.64rem}
+
+/* TOP LEADERBOARD */
+.top-leaders-label strong{font-size:.75rem}
+.top-leaders-label small{font-size:.59rem}
+.top-leader-rank{font-size:.59rem}
+.top-leader-name strong{font-size:.69rem}
+.top-leader-name small{font-size:.56rem}
+.top-leader-profit{font-size:.68rem}
+.top-leaders-link{font-size:.64rem}
+
+/* TABS + SECTION HEADERS */
+.view-tab{font-size:.76rem}
+.tab-count{font-size:.60rem}
+.section-head h2{font-size:1.12rem}
+.section-head p{font-size:.72rem}
+.section-head .right-note{font-size:.69rem}
+
+/* MARKET HEADER */
+.sport-badge{font-size:.63rem}
+.market-lock{font-size:.69rem}
+.market-status{font-size:.61rem}
+
+/* TEAM PICK CARDS — intentionally larger than everything else */
+.team-choice{
+  min-height:118px;
+  grid-template-columns:66px minmax(0,1fr) auto;
+  gap:14px;
+  padding:15px 16px;
+}
+.team-choice .team-logo{
+  width:66px;
+  height:66px;
+  border-radius:16px;
+}
+.team-choice .team-name strong{
+  font-size:1.10rem;
+  line-height:1.16;
+}
+.team-choice .team-name small{
+  margin-top:6px;
+  font-size:.72rem;
+}
+.team-choice .team-price{
+  min-width:96px;
+}
+.team-choice .team-price strong{
+  font-size:1.58rem;
+}
+.team-choice .team-price small{
+  font-size:.64rem;
+  min-height:24px;
+  padding:0 8px;
+}
+
+/* POOL */
+.pool-head span{font-size:.68rem}
+.pool-head strong{font-size:.70rem}
+.pool-labels{font-size:.68rem}
+
+/* MY PICKS */
+.ticket-team strong{font-size:.84rem}
+.ticket-team small{font-size:.65rem}
+.ticket-status{font-size:.59rem}
+.ticket-stat span{font-size:.61rem}
+.ticket-stat strong{font-size:.86rem}
+.ticket-foot{font-size:.65rem}
+
+/* FULL LEADERBOARD */
+.leader-head{font-size:.62rem}
+.leader-rank{font-size:.73rem}
+.leader-user strong{font-size:.81rem}
+.leader-user small{font-size:.61rem}
+.leader-profit{font-size:.79rem}
+.leader-record,.leader-wallet{font-size:.73rem}
+
+/* HISTORY */
+.history-copy strong{font-size:.79rem}
+.history-copy small{font-size:.66rem}
+.history-amount strong{font-size:.84rem}
+.history-amount small{font-size:.59rem}
+
+/* BET SLIP */
+.modal-head strong{font-size:.92rem}
+.selected-match .match-side strong{font-size:.80rem}
+.match-vs{font-size:.62rem}
+.selected-side span{font-size:.62rem}
+.selected-side strong{font-size:.93rem}
+.bet-meta-card span{font-size:.62rem}
+.bet-meta-card strong{font-size:.90rem}
+.wager-top span{font-size:.75rem}
+.wager-top strong{font-size:1.12rem}
+.wager-scale{font-size:.62rem}
+.balance-after{font-size:.70rem}
+.odds-summary-copy strong{font-size:.74rem}
+.odds-summary-copy small{font-size:.63rem}
+.odds-summary-value strong{font-size:1.28rem}
+.odds-note{font-size:.69rem}
+.projected-team strong{font-size:.70rem}
+.projected-side>strong{font-size:.74rem}
+.total-riding span{font-size:.72rem}
+.total-riding strong{font-size:.80rem}
+.winnings span{font-size:.70rem}
+.winnings small{font-size:.62rem}
+.winnings strong{font-size:1.82rem}
+.lock-btn{font-size:.86rem}
+
+/* TWITCH AUTH + RULES */
+.auth-modal h2{font-size:1.45rem}
+.auth-modal>p{font-size:.79rem}
+.auth-check{font-size:.73rem}
+.auth-note{font-size:.62rem}
+.rule strong{font-size:.78rem}
+.rule p{font-size:.70rem}
+
+/* TOAST + EMPTY STATES */
+.toast{font-size:.74rem}
+.empty{font-size:.77rem}
+
+/* Responsive: keep team names comfortably readable on small screens */
+@media(max-width:570px){
+  .team-choice{
+    min-height:104px;
+    grid-template-columns:58px minmax(0,1fr) auto;
+    gap:11px;
+    padding:12px;
+  }
+  .team-choice .team-logo{
+    width:58px;
+    height:58px;
+  }
+  .team-choice .team-name strong{
+    font-size:1rem;
+  }
+  .team-choice .team-name small{
+    font-size:.68rem;
+  }
+  .team-choice .team-price strong{
+    font-size:1.38rem;
+  }
+  .team-choice .team-price small{
+    font-size:.60rem;
+  }
+}
+
+
+/* ================================================================
+   PICKS REBUILD V4 — AUTO-SCROLLING TOP PICKS + TWITCH AVATARS
+   ================================================================ */
+
+.top-leaders{
+  overflow:hidden;
+}
+
+/* The list is now a true clipping viewport, not a flex-shrink container. */
+.top-leaders-list{
+  position:relative;
+  min-width:0;
+  flex:1 1 auto;
+  display:block;
+  overflow-x:hidden;
+  overflow-y:hidden;
+  scrollbar-width:none;
+  mask-image:linear-gradient(
+    90deg,
+    transparent 0,
+    #000 12px,
+    #000 calc(100% - 12px),
+    transparent 100%
+  );
+  -webkit-mask-image:linear-gradient(
+    90deg,
+    transparent 0,
+    #000 12px,
+    #000 calc(100% - 12px),
+    transparent 100%
+  );
+}
+.top-leaders-list::-webkit-scrollbar{
+  display:none;
+}
+
+.top-leaders-track{
+  width:max-content;
+  display:flex;
+  align-items:center;
+}
+
+.top-leader-set{
+  width:max-content;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding-right:7px;
+}
+
+/* Never compress cards: fixed footprint prevents username/profit overlap. */
+.top-leader-chip{
+  width:186px;
+  min-width:186px;
+  flex:0 0 186px;
+  grid-template-columns:36px minmax(0,1fr) auto;
+  gap:8px;
+  padding:7px 8px;
+}
+
+.top-leader-avatar{
+  position:relative;
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  overflow:visible;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:9px;
+  background:
+    linear-gradient(135deg,rgba(145,70,255,.18),rgba(173,9,50,.09)),
+    #0b0b0b;
+  color:#c9beca;
+  font-size:.58rem;
+  font-weight:1000;
+}
+
+.top-leader-avatar>img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  border-radius:8px;
+  opacity:0;
+  transition:opacity .18s ease;
+}
+
+.top-leader-avatar.has-image>img{
+  opacity:1;
+}
+
+.top-leader-avatar>b{
+  position:absolute;
+  right:-6px;
+  bottom:-5px;
+  z-index:2;
+  min-width:20px;
+  height:18px;
+  display:grid;
+  place-items:center;
+  padding:0 4px;
+  border:1px solid rgba(242,196,0,.23);
+  border-radius:999px;
+  color:#dec76f;
+  background:#120f06;
+  box-shadow:0 3px 8px rgba(0,0,0,.45);
+  font-size:.48rem;
+  line-height:1;
+}
+
+.top-leader-name strong{
+  font-size:.72rem;
+}
+
+.top-leader-name small{
+  font-size:.58rem;
+}
+
+.top-leader-profit{
+  font-size:.70rem;
+}
+
+/* Full leaderboard uses the exact same retrieved Twitch avatars. */
+.leader-avatar{
+  position:relative;
+  overflow:hidden;
+}
+
+.leader-avatar>img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  opacity:0;
+  transition:opacity .18s ease;
+}
+
+.leader-avatar.has-image>img{
+  opacity:1;
+}
+
+.leader-avatar>span{
+  position:relative;
+  z-index:0;
+}
+
+/* Manual horizontal touch scroll remains available on mobile.
+   Auto-scroll continues when the rail isn't being hovered. */
+@media(max-width:760px){
+  .top-leaders-list{
+    overflow-x:auto;
+    overscroll-behavior-x:contain;
+    scroll-behavior:auto;
+  }
+  .top-leader-chip{
+    width:178px;
+    min-width:178px;
+    flex-basis:178px;
+  }
+}
+
 </style>
 </head>
 <body class="logged-out">
@@ -1446,6 +2173,17 @@ body.logged-out .summary-card.wallet strong{opacity:.45}
       <button class="twitch-btn" type="button" data-login><span class="twitch-mark">T</span>Continue with Twitch</button>
     </section>
 
+    <section class="top-leaders" aria-label="Top Picks players">
+      <div class="top-leaders-label">
+        <span>🏆</span>
+        <div><strong>Top Picks</strong><small>Season profit leaders</small></div>
+      </div>
+      <div class="top-leaders-list" id="topLeadersList" aria-label="Season profit leaders">
+        <div class="top-leaders-track" id="topLeadersTrack"></div>
+      </div>
+      <button class="top-leaders-link" type="button" data-jump-view="leaderboard">View all</button>
+    </section>
+
     <section class="summary-strip" aria-label="Picks summary">
       <article class="summary-card wallet"><span>ZCoins Wallet</span><strong><b data-wallet>—</b> ZCoins</strong><small id="mainWalletSync">StreamElements wallet</small></article>
       <article class="summary-card"><span>2026 Picks Profit</span><strong id="seasonProfit">+0 ZCoins</strong><small>Wagers vs settled returns</small></article>
@@ -1457,6 +2195,7 @@ body.logged-out .summary-card.wallet strong{opacity:.45}
       <button class="view-tab active" type="button" data-view="markets">Markets</button>
       <button class="view-tab" type="button" data-view="mypicks">My Picks <span class="tab-count" id="pendingCount">0</span></button>
       <button class="view-tab" type="button" data-view="leaderboard">Leaderboard</button>
+      <button class="view-tab" type="button" data-view="history">History</button>
     </nav>
 
     <section class="view active" data-view-panel="markets">
@@ -1479,6 +2218,14 @@ body.logged-out .summary-card.wallet strong{opacity:.45}
         <div><h2>Picks Leaderboard</h2><p>Ranked by ZCoins profit from Picks — not total StreamElements wealth.</p></div>
       </div>
       <div class="leader-card" id="leaderboard"></div>
+    </section>
+
+    <section class="view" data-view-panel="history">
+      <div class="section-head">
+        <div><h2>Picks History</h2><p>Only EastCoin Picks wagers, payouts and refunds appear here.</p></div>
+        <div class="right-note">Newest first</div>
+      </div>
+      <div class="history-list" id="historyList"></div>
     </section>
   </main>
 
@@ -1655,18 +2402,59 @@ body.logged-out .summary-card.wallet strong{opacity:.45}
     {name:"bootypaper",profit:61,record:"9–10",wallet:501,title:"Role Player"}
   ];
 
+  const historySeed = [
+    {
+      id:"hist-demo-1",
+      type:"payout",
+      amount:42,
+      title:"Kansas City Chiefs won",
+      detail:"25 ZCoin wager · 1.68x final return",
+      createdAt:Date.now()-18*60*60*1000
+    },
+    {
+      id:"hist-demo-2",
+      type:"wager",
+      amount:-25,
+      title:"Kansas City Chiefs vs Philadelphia Eagles",
+      detail:"Picked Kansas City Chiefs",
+      createdAt:Date.now()-26*60*60*1000
+    },
+    {
+      id:"hist-demo-3",
+      type:"refund",
+      amount:15,
+      title:"Minnesota Twins vs Oakland Athletics",
+      detail:"Market closed No Action · full refund",
+      createdAt:Date.now()-2*24*60*60*1000
+    },
+    {
+      id:"hist-demo-4",
+      type:"wager",
+      amount:-15,
+      title:"Minnesota Twins vs Oakland Athletics",
+      detail:"Picked Minnesota Twins",
+      createdAt:Date.now()-2*24*60*60*1000-45*60*1000
+    }
+  ];
+
   let games = [...fallbackGames];
   let loggedIn = localStorage.getItem(AUTH_KEY) === "1";
   let tickets = loadTickets();
   let activeBet = null;
   let pendingAuthPick = null;
   let toastTimer = 0;
+  let topLeaderScrollFrame = 0;
+  let topLeaderLastTime = 0;
+  const twitchAvatarMemory = new Map();
 
   const $ = (id) => document.getElementById(id);
   const els = {
     marketList:$("marketList"),
     ticketList:$("ticketList"),
     leaderboard:$("leaderboard"),
+    topLeadersList:$("topLeadersList"),
+    topLeadersTrack:$("topLeadersTrack"),
+    historyList:$("historyList"),
     catalogStatus:$("catalogStatus"),
     pendingCount:$("pendingCount"),
     seasonProfit:$("seasonProfit"),
@@ -2098,6 +2886,164 @@ body.logged-out .summary-card.wallet strong{opacity:.45}
     }).join("");
   }
 
+  function twitchAvatarCacheKey(username){
+    return `eastcoinTwitchAvatarV1:${String(username||"").toLowerCase()}`;
+  }
+
+  function readCachedTwitchAvatar(username){
+    const key=String(username||"").toLowerCase();
+    if(twitchAvatarMemory.has(key))return twitchAvatarMemory.get(key);
+
+    try{
+      const cached=JSON.parse(localStorage.getItem(twitchAvatarCacheKey(key))||"null");
+      if(
+        cached &&
+        /^https?:\/\//i.test(String(cached.url||"")) &&
+        Date.now()-Number(cached.savedAt||0)<6*60*60*1000
+      ){
+        twitchAvatarMemory.set(key,cached.url);
+        return cached.url;
+      }
+    }catch{}
+
+    return "";
+  }
+
+  function cacheTwitchAvatar(username,url){
+    const key=String(username||"").toLowerCase();
+    if(!key || !/^https?:\/\//i.test(String(url||"")))return;
+
+    twitchAvatarMemory.set(key,url);
+    try{
+      localStorage.setItem(
+        twitchAvatarCacheKey(key),
+        JSON.stringify({url,savedAt:Date.now()})
+      );
+    }catch{}
+  }
+
+  async function getTwitchAvatar(username){
+    const cached=readCachedTwitchAvatar(username);
+    if(cached)return cached;
+
+    const response=await fetch(
+      `https://decapi.me/twitch/avatar/${encodeURIComponent(String(username||"").toLowerCase())}`,
+      {headers:{Accept:"text/plain"},cache:"no-store"}
+    );
+
+    if(!response.ok)throw new Error(`Avatar request returned ${response.status}`);
+
+    const url=(await response.text()).trim();
+    if(!/^https?:\/\//i.test(url))throw new Error("Avatar service returned an invalid URL");
+
+    cacheTwitchAvatar(username,url);
+    return url;
+  }
+
+  async function hydrateTwitchAvatars(root=document){
+    const nodes=[...root.querySelectorAll("[data-twitch-avatar]")];
+    const usernames=[...new Set(
+      nodes
+        .map(node=>String(node.dataset.twitchAvatar||"").toLowerCase())
+        .filter(Boolean)
+    )];
+
+    await Promise.allSettled(
+      usernames.map(async username=>{
+        try{
+          const url=await getTwitchAvatar(username);
+          document.querySelectorAll(`[data-twitch-avatar="${CSS.escape(username)}"]`).forEach(node=>{
+            if(node.querySelector("img"))return;
+            const img=document.createElement("img");
+            img.src=url;
+            img.alt="";
+            img.loading="lazy";
+            img.decoding="async";
+            img.referrerPolicy="no-referrer";
+            img.addEventListener("load",()=>node.classList.add("has-image"),{once:true});
+            img.addEventListener("error",()=>img.remove(),{once:true});
+            node.prepend(img);
+          });
+        }catch(error){
+          console.warn(`Twitch avatar unavailable for ${username}`,error);
+        }
+      })
+    );
+  }
+
+  function leaderChipMarkup(row,index){
+    const rank=index+1;
+    return `
+      <article class="top-leader-chip">
+        <span class="top-leader-avatar" data-twitch-avatar="${row.name.toLowerCase()}">
+          <span>${initials(row.name)}</span>
+          <b>${rank===1?"👑":"#"+rank}</b>
+        </span>
+        <span class="top-leader-name">
+          <strong>${row.name}</strong>
+          <small>${row.record}</small>
+        </span>
+        <span class="top-leader-profit">+${money(row.profit)} ZC</span>
+      </article>
+    `;
+  }
+
+  function stopTopLeaderAutoScroll(){
+    if(topLeaderScrollFrame){
+      cancelAnimationFrame(topLeaderScrollFrame);
+      topLeaderScrollFrame=0;
+    }
+    topLeaderLastTime=0;
+  }
+
+  function startTopLeaderAutoScroll(){
+    stopTopLeaderAutoScroll();
+
+    const viewport=els.topLeadersList;
+    const firstSet=els.topLeadersTrack?.querySelector(".top-leader-set");
+    if(!viewport || !firstSet)return;
+
+    viewport.scrollLeft=0;
+
+    const tick=(time)=>{
+      if(!topLeaderLastTime)topLeaderLastTime=time;
+      const delta=Math.min(50,time-topLeaderLastTime);
+      topLeaderLastTime=time;
+
+      const setWidth=firstSet.getBoundingClientRect().width;
+
+      if(
+        setWidth>viewport.clientWidth &&
+        !viewport.matches(":hover") &&
+        !document.hidden
+      ){
+        // ~30 px/sec: readable rather than "ticker fast".
+        viewport.scrollLeft += delta*0.030;
+
+        if(viewport.scrollLeft>=setWidth){
+          viewport.scrollLeft-=setWidth;
+        }
+      }
+
+      topLeaderScrollFrame=requestAnimationFrame(tick);
+    };
+
+    topLeaderScrollFrame=requestAnimationFrame(tick);
+  }
+
+  function renderTopLeaders(){
+    const leaders=leaderboardSeed.slice(0,5);
+    const chips=leaders.map(leaderChipMarkup).join("");
+
+    els.topLeadersTrack.innerHTML=`
+      <div class="top-leader-set">${chips}</div>
+      <div class="top-leader-set" aria-hidden="true">${chips}</div>
+    `;
+
+    hydrateTwitchAvatars(els.topLeadersTrack);
+    startTopLeaderAutoScroll();
+  }
+
   function renderLeaderboard(){
     els.leaderboard.innerHTML=`
       <div class="leader-head">
@@ -2107,7 +3053,7 @@ body.logged-out .summary-card.wallet strong{opacity:.45}
         <div class="leader-row ${row.me?"me":""}">
           <span class="leader-rank">#${index+1}</span>
           <div class="leader-user">
-            <span class="leader-avatar">${initials(row.name)}</span>
+            <span class="leader-avatar" data-twitch-avatar="${row.name.toLowerCase()}"><span>${initials(row.name)}</span></span>
             <span><strong>${row.name}${index===0?" 👑":""}</strong><small>${row.title}</small></span>
           </div>
           <span class="leader-profit">+${money(row.profit)} ZC</span>
@@ -2116,14 +3062,99 @@ body.logged-out .summary-card.wallet strong{opacity:.45}
         </div>
       `).join("")}
     `;
+
+    hydrateTwitchAvatars(els.leaderboard);
+  }
+
+  function historyEntries(){
+    const ticketEntries=tickets.flatMap(ticket=>{
+      const game=ticket.game||gameById(ticket.gameId)||{};
+      const pickedName=ticket.side==="away"?game.away:game.home;
+      const opponent=ticket.side==="away"?game.home:game.away;
+      const matchup=[game.away,game.home].filter(Boolean).join(" vs ");
+
+      const rows=[
+        {
+          id:`${ticket.id}-wager`,
+          type:"wager",
+          amount:-ticket.wager,
+          title:matchup||"EastCoin Picks wager",
+          detail:`Picked ${pickedName||"team"}`,
+          createdAt:ticket.createdAt
+        }
+      ];
+
+      if(ticket.status==="won"){
+        const returnAmount=Math.max(ticket.wager,Math.round(ticket.wager*(ticket.finalMultiplier||ticket.lockedPreview||2)));
+        rows.push({
+          id:`${ticket.id}-payout`,
+          type:"payout",
+          amount:returnAmount,
+          title:`${pickedName||"Your pick"} won`,
+          detail:`${ticket.wager} ZCoin wager · ${Number(ticket.finalMultiplier||ticket.lockedPreview||2).toFixed(2)}x return`,
+          createdAt:(ticket.settledAt||ticket.createdAt+1)
+        });
+      }else if(ticket.status==="refunded"||ticket.status==="no_action"){
+        rows.push({
+          id:`${ticket.id}-refund`,
+          type:"refund",
+          amount:ticket.wager,
+          title:matchup||"Market refunded",
+          detail:"No Action · full wager refunded",
+          createdAt:(ticket.settledAt||ticket.createdAt+1)
+        });
+      }
+
+      return rows;
+    });
+
+    return [...historySeed,...ticketEntries]
+      .sort((a,b)=>b.createdAt-a.createdAt);
+  }
+
+  function historyTime(timestamp){
+    const diff=Math.max(0,Date.now()-Number(timestamp||0));
+    const mins=Math.floor(diff/60000);
+    if(mins<60)return mins<=1?"Just now":`${mins}m ago`;
+    const hours=Math.floor(mins/60);
+    if(hours<24)return `${hours}h ago`;
+    const days=Math.floor(hours/24);
+    return `${days}d ago`;
+  }
+
+  function renderHistory(){
+    const rows=historyEntries();
+
+    if(!rows.length){
+      els.historyList.innerHTML='<div class="empty">Your Picks wagers, payouts and refunds will appear here.</div>';
+      return;
+    }
+
+    const icon={wager:"↗",payout:"✓",refund:"↩"};
+
+    els.historyList.innerHTML=rows.map(row=>`
+      <article class="history-row ${row.type}">
+        <span class="history-icon">${icon[row.type]||"•"}</span>
+        <span class="history-copy">
+          <strong>${row.title}</strong>
+          <small>${row.detail}</small>
+        </span>
+        <span class="history-amount">
+          <strong>${row.amount<0?"−":"+"}${money(Math.abs(row.amount))} ZCoins</strong>
+          <small>${historyTime(row.createdAt)}</small>
+        </span>
+      </article>
+    `).join("");
   }
 
   function render(){
     renderAuth();
     renderSummary();
+    renderTopLeaders();
     renderMarkets(els.navSearch.value);
     renderTickets();
     renderLeaderboard();
+    renderHistory();
   }
 
   function requestPick(gameId,side){
@@ -2317,6 +3348,16 @@ body.logged-out .summary-card.wallet strong{opacity:.45}
     render();
   }
 
+  // Compact top leaderboard jump
+  document.querySelectorAll("[data-jump-view]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const target=btn.dataset.jumpView;
+      const tab=document.querySelector(`[data-view="${target}"]`);
+      if(tab)tab.click();
+      window.scrollTo({top:0,behavior:"smooth"});
+    });
+  });
+
   // Tabs
   document.querySelectorAll("[data-view]").forEach(btn=>{
     btn.addEventListener("click",()=>{
@@ -2356,6 +3397,10 @@ body.logged-out .summary-card.wallet strong{opacity:.45}
     backdrop.addEventListener("click",event=>{
       if(event.target===backdrop)closeBackdrop(backdrop);
     });
+  });
+
+  document.addEventListener("visibilitychange",()=>{
+    topLeaderLastTime=0;
   });
 
   document.addEventListener("keydown",event=>{
