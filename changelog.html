@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">68 major update groups</div>
+<div class="release-count">69 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1644,10 +1644,9 @@
   batting, pitching, and linescore data over the player. A fixed production overlay now mounts above the embedded player surface so Gameday opens reliably without replacing or reloading the active stream.</p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-25">August 25, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>EastCoin Picks production foundation added</h2>
 <p>
@@ -1661,6 +1660,24 @@
     be connected without rebuilding the interface again. Added an unlinked
     Picks settlement console whose real winner, No Action, and Void controls
     remain disabled until server-side Twitch admin authorization is live.
+  </p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-08-25">August 25, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>EastCoin Picks backend database foundation added</h2>
+<p>
+    Added the server-side EastCoin Picks database foundation on Cloudflare:
+    Pages Functions now connect to the production D1 database through the
+    <code>PICKS_DB</code> binding, and the first versioned migration defines
+    durable users, secure session records, seasons, winner-only markets, Picks
+    tickets, idempotent ZCoin wallet-operation journaling, admin settlement
+    audit history, and Picks-profit season statistics. Added database and schema
+    health checks so backend readiness can be verified before Twitch login or
+    real ZCoin wagering is enabled.
   </p>
 </article>
 </section>

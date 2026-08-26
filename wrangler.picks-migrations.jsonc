@@ -1,0 +1,12 @@
+{
+  "name": "eastcoin-picks-migrations",
+  "compatibility_date": "2026-08-26",
+  "d1_databases": [
+    {
+      "binding": "PICKS_DB",
+      "database_name": "eastcoin-picks",
+      "database_id": "93a6155a-7e1e-4d92-a713-70f2550a40c0",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
