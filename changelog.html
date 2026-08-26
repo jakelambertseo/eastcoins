@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">69 major update groups</div>
+<div class="release-count">70 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1663,10 +1663,9 @@
   </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-25">August 25, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>EastCoin Picks backend database foundation added</h2>
 <p>
@@ -1678,6 +1677,23 @@
     audit history, and Picks-profit season statistics. Added database and schema
     health checks so backend readiness can be verified before Twitch login or
     real ZCoin wagering is enabled.
+  </p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-08-25">August 25, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Twitch application configuration added for Picks</h2>
+<p>
+    Prepared EastCoin Picks for real Twitch account authentication by
+    registering the production OAuth callback contract and adding server-side
+    configuration checks for the Twitch Client ID, encrypted Client Secret, and
+    redirect URI. Added repository protections for local environment-secret
+    files so Twitch credentials cannot be accidentally committed. Real OAuth
+    login and EastCoin session creation remain disabled until the next backend
+    phase.
   </p>
 </article>
 </section>
