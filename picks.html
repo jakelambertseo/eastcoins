@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
 <meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
-<meta name="description" content="EastCoin Picks community ZCoin prediction markets.">
+<meta name="description" content="EastCoin Picks ZCoin moneyline prediction markets powered by live sportsbook odds.">
 <title>EastCoin | Picks</title>
 <link rel="preconnect" href="https://www.twitch.tv" crossorigin>
 <script id="ec-v2-picks-embedded-bootstrap">
@@ -226,22 +226,22 @@
 
       <details class="odds-details">
         <summary>
-          <span class="odds-summary-copy"><strong>Projected Community Odds</strong><small>View pool breakdown</small></span>
-          <span class="odds-summary-value"><strong id="projectedOdds">Even</strong><span class="chevron">⌄</span></span>
+          <span class="odds-summary-copy"><strong>Sportsbook Moneyline</strong><small>View payout lines</small></span>
+          <span class="odds-summary-value"><strong id="projectedOdds">—</strong><span class="chevron">⌄</span></span>
         </summary>
         <div class="odds-body">
-          <div class="odds-note" id="oddsNote">Even payout until both sides have community action.</div>
+          <div class="odds-note" id="oddsNote">Your payout uses the current EastCoin consensus moneyline from The Odds API.</div>
           <div class="projected-pools" id="projectedPools"></div>
         </div>
       </details>
 
       <div class="total-riding">
-        <span>Total ZCoins riding on this game</span>
-        <strong><img src="assets/eastcoins-logo.webp" alt=""><b id="totalRiding">0</b> ZCoins</strong>
+        <span>Potential profit</span>
+        <strong><b id="totalRiding">0 ZCoins</b></strong>
       </div>
 
       <div class="winnings">
-        <span>Potential Winnings<small>Projected return at current community odds</small></span>
+        <span>Potential Return<small>Total return including your original wager</small></span>
         <strong id="potentialWinnings">0</strong>
       </div>
 
@@ -281,12 +281,12 @@
     </header>
     <div class="modal-body">
       <div class="rules-list">
-        <div class="rule"><strong>Live sportsbook moneylines are real reference odds</strong><p>For supported games, EastCoin matches the event to The Odds API and shows the current sportsbook consensus/reference moneyline. Those market prices can move before game time and are shown for real-world context.</p></div>
-        <div class="rule"><strong>Sportsbook odds do not directly set your ZCoin payout</strong><p>EastCoin Picks uses a community pool. Your projected multiplier is total ZCoins wagered on the game divided by the ZCoins currently on your selected side.</p></div>
-        <div class="rule"><strong>Your projected return moves with the community pool</strong><p>Example: if 100 ZCoins are in the game and 40 are on your side, the current projection is 2.50x. More Picks on either side can change that projection before lock.</p></div>
-        <div class="rule"><strong>The community multiplier locks when the game starts</strong><p>At the scheduled start, EastCoin freezes the pool used for payout calculations. The sportsbook moneyline remains reference information; the locked EastCoin pool determines the ZCoin return.</p></div>
-        <div class="rule"><strong>One-sided markets are No Action</strong><p>If only one side has community action when the game locks, the market is No Action and affected ZCoin wagers are refunded instead of creating a one-sided payout.</p></div>
-        <div class="rule"><strong>Wager limits protect the pool</strong><p>The minimum is 1 ZCoin. Your maximum wager is the lower of 15% of your available wallet or 50 ZCoins.</p></div>
+        <div class="rule"><strong>Live moneylines set the ZCoin payout</strong><p>For supported games, EastCoin uses live U.S. h2h prices from The Odds API to build the displayed consensus moneyline. That displayed moneyline is the payout price for your Pick.</p></div>
+        <div class="rule"><strong>Your moneyline locks when you confirm</strong><p>Odds can move while you are building a ticket. When a Pick is confirmed, the moneyline shown on the confirmed ticket is the line used to calculate that ticket’s payout.</p></div>
+        <div class="rule"><strong>Positive moneylines pay more than the wager in profit</strong><p>Example: a 10 ZCoin Pick at +150 returns 25 ZCoins total if it wins — your original 10 plus 15 ZCoins profit.</p></div>
+        <div class="rule"><strong>Negative moneylines use the favorite price</strong><p>Example: a 10 ZCoin Pick at -200 returns 15 ZCoins total if it wins — your original 10 plus 5 ZCoins profit. EastCoin rounds final returns to the nearest whole ZCoin.</p></div>
+        <div class="rule"><strong>Voids and No Action are refunded</strong><p>If a supported event is voided, cancelled, postponed beyond the settlement rules, or otherwise graded No Action, the affected ZCoin wager is returned. A market does not need community action on both sides to be valid.</p></div>
+        <div class="rule"><strong>Wager limits protect bankrolls</strong><p>The minimum is 1 ZCoin. Your maximum wager is the lower of 15% of your available wallet or 50 ZCoins.</p></div>
         <div class="rule"><strong>One pick per game</strong><p>After you confirm a side, you cannot also pick the other side of that same game. Your open and settled activity remains visible in My Picks, History, and the Community Ledger.</p></div>
       </div>
     </div>
@@ -297,6 +297,8 @@
 <script defer src="assets/eastcoins-streamed-api.js"></script>
 <script defer src="assets/eastcoins-picks-api.js?v=43"></script>
 <script defer src="assets/eastcoins-picks-preview.js?v=1"></script>
+<script defer src="assets/eastcoins-moneyline.js?v=44"></script>
+<script defer src="assets/eastcoins-moneyline-runtime.js?v=44"></script>
 <script defer src="assets/eastcoins-picks.js?v=43"></script>
 
 </body>

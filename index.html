@@ -107,10 +107,10 @@
 
     <div class="quickbetbody" id="quickBetBody" hidden>
       <div class="quickbet-reference" id="quickBetReference" hidden>
-        <span>SPORTSBOOK REFERENCE</span>
+        <span>PAYOUT MONEYLINE</span>
         <div>
           <strong id="quickBetAwayML">—</strong>
-          <small>Consensus ML</small>
+          <small>The Odds API consensus</small>
           <strong id="quickBetHomeML">—</strong>
         </div>
       </div>
@@ -158,8 +158,8 @@
 
       <div class="quickbet-summary">
         <div class="quickbet-summary-wallet"><span>Wallet</span><strong id="quickBetWallet">Pending StreamElements</strong></div>
-        <div class="quickbet-summary-payout"><span>Projected pool payout</span><strong id="quickBetMultiplier">—</strong></div>
-        <div class="quickbet-summary-return"><span>Estimated return</span><strong id="quickBetReturn">—</strong></div>
+        <div class="quickbet-summary-payout"><span>Moneyline</span><strong id="quickBetMultiplier">—</strong></div>
+        <div class="quickbet-summary-return"><span>Total Return</span><strong id="quickBetReturn">—</strong></div>
       </div>
 
       <p class="quickbet-note" id="quickBetNote">
@@ -189,12 +189,12 @@
         </div>
 
         <div class="quickbet-review-green">
-          <span>Projected Pool Payout</span>
+          <span>Payout Moneyline</span>
           <strong id="quickBetReviewMultiplier">—</strong>
         </div>
 
         <div class="quickbet-review-green strong">
-          <span>Estimated Return</span>
+          <span>Total Return</span>
           <strong id="quickBetReviewReturn">—</strong>
         </div>
       </div>
@@ -202,8 +202,8 @@
       <div class="quickbet-review-warning">
         <strong>Review before confirming</strong>
         <p>
-          Your community-pool multiplier is projected until the market locks.
-          The final confirmed pick cannot be changed after submission.
+          Your payout is calculated from the displayed consensus moneyline.
+          The moneyline locks when the Pick is confirmed; odds can move before confirmation.
         </p>
       </div>
 
@@ -222,18 +222,18 @@
           <strong id="quickBetSuccessWager">—</strong>
         </div>
         <div>
-          <span>Projected Payout</span>
+          <span>Locked Moneyline</span>
           <strong id="quickBetSuccessMultiplier">—</strong>
         </div>
         <div>
-          <span>Estimated Return</span>
+          <span>Total Return</span>
           <strong id="quickBetSuccessReturn">—</strong>
         </div>
       </div>
 
       <p>
-        Your pick has been recorded. The projected community-pool multiplier
-        can continue moving until the market locks.
+        Your pick has been recorded at its locked sportsbook moneyline.
+        Community wagering volume does not change the payout.
       </p>
     </div>
 
@@ -335,6 +335,8 @@
 <script defer src="/v2/assets/js/card-scores.js?v=16"></script>
 <script defer src="/v2/assets/js/integrations.js?v=40"></script>
 <script defer src="/v2/assets/js/router.js?v=41"></script>
+<script defer src="/assets/eastcoins-moneyline.js?v=44"></script>
+<script defer src="/assets/eastcoins-moneyline-runtime.js?v=44"></script>
 <script defer src="/v2/assets/js/quick-bet.js?v=40"></script>
 <script defer src="/v2/assets/js/settings.js?v=5"></script>
 <script defer src="/v2/assets/js/app.js?v=41"></script>
