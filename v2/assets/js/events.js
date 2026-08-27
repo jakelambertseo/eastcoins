@@ -375,6 +375,15 @@
     `;
   }
 
+  function canBet(match) {
+    if (V2.live(match)) return false;
+
+    const start = V2.ts(match?.date);
+
+    return Number.isFinite(start) &&
+      start > Date.now();
+  }
+
   function card(match) {
     const key = V2.id(match);
     const [icon, label] = V2.sportMeta(V2.family(match));
@@ -418,13 +427,12 @@
           </div>
 
           <footer class="v1-event-footer">
-            <div class="v1-event-footer-copy">
-              <strong>${V2.esc(label)}</strong>
-            </div>
 
             <div class="v1-event-actions">
               <button class="v1-save ${saved ? "saved" : ""}" data-save="${V2.esc(key)}" aria-label="Save event">${saved ? "★" : "☆"}</button>
               <button class="v1-multiview" data-multiview="${V2.esc(key)}">＋ MultiView</button>
+
+              ${canBet(match) ? `<button class="v1-bet" data-bet="${V2.esc(key)}">Bet</button>` : ""}
               <button class="v1-watch" data-watch="${V2.esc(key)}">${V2.live(match) ? "Watch" : "Open"}</button>
             </div>
           </footer>
@@ -477,13 +485,12 @@
         </div>
 
         <footer class="v1-event-footer">
-          <div class="v1-event-footer-copy">
-            <strong>${icon} ${V2.esc(label)}</strong>
-          </div>
 
           <div class="v1-event-actions">
             <button class="v1-save ${saved ? "saved" : ""}" data-save="${V2.esc(key)}" aria-label="Save event">${saved ? "★" : "☆"}</button>
             <button class="v1-multiview" data-multiview="${V2.esc(key)}">＋ MultiView</button>
+
+            ${canBet(match) ? `<button class="v1-bet" data-bet="${V2.esc(key)}">Bet</button>` : ""}
             <button class="v1-watch" data-watch="${V2.esc(key)}">${V2.live(match) ? "Watch" : "Open"}</button>
           </div>
         </footer>
@@ -534,6 +541,21 @@
         event.stopPropagation();
         const match = find(button.dataset.multiview);
         if (match) addToMultiview(match);
+      };
+    });
+
+    $$("[data-bet]", E.grid).forEach((button) => {
+      button.onclick = (event) => {
+        event.stopPropagation();
+
+        const match = find(button.dataset.bet);
+
+        if (!match || !canBet(match)) {
+          V2.toast("Betting is closed for this event.");
+          return;
+        }
+
+        V2.router?.openPicksForMatch?.(match);
       };
     });
 

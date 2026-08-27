@@ -552,3 +552,39 @@
     display:none;
   }
 }
+
+
+/* Iteration 13: direct Picks handoff and cleaner card footer */
+.v1-event-footer{
+  display:flex !important;
+  align-items:center;
+  justify-content:flex-end;
+}
+
+.v1-event-footer-copy{
+  display:none !important;
+}
+
+.v1-event-actions{
+  margin-left:auto;
+}
+
+.v1-bet{
+  min-width:48px;
+  padding:0 10px;
+  border:1px solid rgba(229,185,43,.34);
+  color:#181100;
+  background:linear-gradient(180deg,#f0ce4d,#d6aa13);
+}
+
+.v1-bet:hover{
+  border-color:rgba(255,225,118,.55);
+  background:linear-gradient(180deg,#f6da68,#dfb521);
+}
+
+@media(max-width:1160px){
+  .v1-bet{
+    min-width:44px;
+    padding:0 8px;
+  }
+}

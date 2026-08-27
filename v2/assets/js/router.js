@@ -15,6 +15,7 @@
   });
 
   let current = "events";
+  let pendingPicksFocus = null;
 
   function routeFromLocation() {
     const requested = new URLSearchParams(location.search).get("view") || "events";
@@ -53,13 +54,111 @@
           .shell { grid-template-columns:minmax(0,1fr) !important; }
           .main { grid-column:1 !important; width:100% !important; max-width:none !important; }
           .ec-events-v2-layout { grid-template-columns:minmax(0,1fr) !important; }
+          .market-card.ec-v2-picks-focus {
+            outline:2px solid rgba(229,185,43,.7) !important;
+            outline-offset:2px !important;
+            box-shadow:0 0 0 4px rgba(229,185,43,.08) !important;
+          }
         `;
         doc.head.appendChild(style);
+      }
+      if (current === "picks" && pendingPicksFocus) {
+        applyPicksFocus(pendingPicksFocus);
       }
     } catch {
       // If a future route becomes cross-origin, the persistent shell still works;
       // it simply cannot clean up that child document's internal chrome.
     }
+  }
+
+  function applyPicksFocus(focus) {
+    if (!focus) return false;
+
+    try {
+      const doc = E.workspaceFrame.contentDocument;
+      const search = doc?.getElementById("navSearch");
+      const marketList = doc?.getElementById("marketList");
+
+      if (!search || !marketList) {
+        return false;
+      }
+
+      const filterTo = (value) => {
+        search.value = String(value || "");
+        search.dispatchEvent(
+          new Event("input", {
+            bubbles: true
+          })
+        );
+      };
+
+      const both = [
+        focus.away,
+        focus.home
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+
+      if (both) {
+        filterTo(both);
+      }
+
+      window.setTimeout(() => {
+        let card = marketList.querySelector(".market-card");
+
+        if (!card && focus.away) {
+          filterTo(focus.away);
+          card = marketList.querySelector(".market-card");
+        }
+
+        if (!card && focus.home) {
+          filterTo(focus.home);
+          card = marketList.querySelector(".market-card");
+        }
+
+        if (!card) {
+          V2.toast("No open Picks market currently matches this event.");
+          return;
+        }
+
+        marketList
+          .querySelectorAll(".market-card.ec-v2-picks-focus")
+          .forEach((node) =>
+            node.classList.remove("ec-v2-picks-focus")
+          );
+
+        card.classList.add("ec-v2-picks-focus");
+
+        card.scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+      }, 150);
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function openPicksForMatch(match) {
+    if (!match) return;
+
+    pendingPicksFocus = {
+      id: String(match?.id || ""),
+      away: String(match?.teams?.away?.name || ""),
+      home: String(match?.teams?.home?.name || ""),
+      startsAt: Number(match?.date || 0) || null
+    };
+
+    go("picks");
+
+    // If Picks was already mounted there may be no iframe load event.
+    window.setTimeout(
+      () => applyPicksFocus(pendingPicksFocus),
+      100
+    );
   }
 
   function go(name, options = {}) {
@@ -124,6 +223,8 @@
     routes: ROUTES,
     go,
     current: () => current,
+    openPicksForMatch,
+    applyPicksFocus,
     init
   };
 })();
