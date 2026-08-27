@@ -1,0 +1,113 @@
+/* EastCoin V2 — Iteration 35
+   Compact date buttons + tighter nav/date spacing */
+
+.schedule{
+  margin-top: 8px;
+}
+
+.schedule > header{
+  margin-bottom: 10px !important;
+}
+
+.schedule .toolbar{
+  gap: 10px !important;
+  align-items: center;
+  margin-top: 2px !important;
+  margin-bottom: 8px !important;
+}
+
+.schedule .dates{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px !important;
+  align-items: stretch;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.schedule .dates > *{
+  min-width: 74px !important;
+  min-height: 52px !important;
+  padding: 8px 10px !important;
+  border-radius: 12px !important;
+  font-size: 0.92rem !important;
+  line-height: 1.05 !important;
+}
+
+.schedule .dates button,
+.schedule .dates a{
+  min-width: 74px !important;
+  min-height: 52px !important;
+  padding: 8px 10px !important;
+  border-radius: 12px !important;
+  font-size: 0.92rem !important;
+  line-height: 1.05 !important;
+}
+
+.schedule .dates button small,
+.schedule .dates a small,
+.schedule .dates > * small{
+  font-size: 0.72rem !important;
+  letter-spacing: 0.11em !important;
+}
+
+.schedule .dates button strong,
+.schedule .dates a strong,
+.schedule .dates > * strong{
+  font-size: 0.88rem !important;
+  letter-spacing: 0.06em !important;
+}
+
+header + .sportbar{
+  margin-bottom: 4px !important;
+}
+
+.sportbar{
+  padding-bottom: 6px !important;
+  margin-bottom: 6px !important;
+}
+
+main{
+  padding-top: 10px !important;
+}
+
+@media (max-width: 900px){
+  .schedule{
+    margin-top: 6px;
+  }
+
+  .schedule .toolbar{
+    gap: 8px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .schedule .dates{
+    gap: 6px !important;
+  }
+
+  .schedule .dates > *,
+  .schedule .dates button,
+  .schedule .dates a{
+    min-width: 66px !important;
+    min-height: 46px !important;
+    padding: 6px 8px !important;
+    border-radius: 11px !important;
+    font-size: 0.82rem !important;
+  }
+
+  .schedule .dates button small,
+  .schedule .dates a small,
+  .schedule .dates > * small{
+    font-size: 0.66rem !important;
+  }
+
+  .schedule .dates button strong,
+  .schedule .dates a strong,
+  .schedule .dates > * strong{
+    font-size: 0.8rem !important;
+  }
+
+  main{
+    padding-top: 8px !important;
+  }
+}
