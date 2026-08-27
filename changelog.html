@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">101 major update groups</div>
+<div class="release-count">102 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -2137,10 +2137,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>EastCoin V2 category headers now have stronger visual separators</h2>
 <p>
@@ -2148,6 +2147,24 @@
     underline treatment so each sport section reads as a clearer visual block.
     The section header now has a subtle bottom divider, a glowing red sweep
     underneath, and a smaller gold-to-red accent beneath the category title.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-08-27">August 27, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>EastCoin V2 NFL cards now use the full cached NFL moneyline feed</h2>
+<p>
+    NFL event cards now prefer a complete sport-specific
+    americanfootball_nfl h2h snapshot instead of relying on the provider's
+    small cross-sport upcoming window for displayed moneylines. The full NFL
+    snapshot is shared through Cloudflare edge cache for two hours by default
+    and automatically stretches to four, eight, or twelve hours as provider
+    quota gets low. Exact quota-free NFL event verification remains the final
+    fallback, so a game can still be eligible for Picks even if bookmakers
+    temporarily remove its line.
 </p>
 </article>
 </section>

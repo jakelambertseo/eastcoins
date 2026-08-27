@@ -2,8 +2,13 @@ const SPORT_KEY = "upcoming";
 const NFL_SPORT_KEY = "americanfootball_nfl";
 const CACHE_VERSION = "v2";
 const NFL_EVENTS_CACHE_VERSION = "v1";
+const NFL_ODDS_CACHE_VERSION = "v1";
 const DEFAULT_CACHE_SECONDS = 30 * 60;
 const NFL_EVENTS_CACHE_SECONDS = 15 * 60;
+
+// NFL card moneylines are browse/reference context, not locked wager quotes.
+// Keep one shared provider snapshot for two hours by default to protect quota.
+const NFL_ODDS_DEFAULT_CACHE_SECONDS = 2 * 60 * 60;
 
 const STOP_WORDS = new Set([
   "fc", "cf", "sc", "afc", "club", "team",
@@ -237,6 +242,118 @@ function providerEventPayload(game, orientation, line = null, verificationSource
   return payload;
 }
 
+async function getNflProviderOdds(context) {
+  const apiKey = String(
+    context.env.ODDS_API_KEY || ""
+  ).trim();
+
+  if (!apiKey) {
+    throw new Error("ODDS_API_KEY_MISSING");
+  }
+
+  const origin = new URL(context.request.url).origin;
+
+  const cacheKey = new Request(
+    `${origin}/__eastcoin_internal_cache__/v2/nfl-card-odds/${NFL_ODDS_CACHE_VERSION}`,
+    { method: "GET" }
+  );
+
+  let edgeCache = null;
+
+  try {
+    edgeCache = caches.default;
+  } catch {}
+
+  if (edgeCache) {
+    const cached = await edgeCache.match(cacheKey);
+
+    if (cached) {
+      return {
+        payload: await cached.json(),
+        cacheStatus: "HIT"
+      };
+    }
+  }
+
+  const upstreamUrl = new URL(
+    `https://api.the-odds-api.com/v4/sports/${NFL_SPORT_KEY}/odds`
+  );
+
+  upstreamUrl.searchParams.set("apiKey", apiKey);
+  upstreamUrl.searchParams.set("regions", "us");
+  upstreamUrl.searchParams.set("markets", "h2h");
+  upstreamUrl.searchParams.set("oddsFormat", "american");
+  upstreamUrl.searchParams.set("dateFormat", "iso");
+
+  const upstream = await fetch(upstreamUrl.toString(), {
+    headers: {
+      "Accept": "application/json"
+    }
+  });
+
+  if (!upstream.ok) {
+    const error = new Error(
+      `ODDS_API_NFL_ODDS_${upstream.status}`
+    );
+
+    error.status = upstream.status;
+    throw error;
+  }
+
+  const games = await upstream.json();
+
+  const quota = {
+    remaining: Number(
+      upstream.headers.get("x-requests-remaining")
+    ),
+    used: Number(
+      upstream.headers.get("x-requests-used")
+    ),
+    lastCost: Number(
+      upstream.headers.get("x-requests-last")
+    )
+  };
+
+  let ttl = NFL_ODDS_DEFAULT_CACHE_SECONDS;
+
+  // The displayed ML is reference data only, so preserving the monthly
+  // provider quota is more valuable than minute-by-minute line movement.
+  if (Number.isFinite(quota.remaining)) {
+    if (quota.remaining <= 75) {
+      ttl = 12 * 60 * 60;
+    } else if (quota.remaining <= 150) {
+      ttl = 8 * 60 * 60;
+    } else if (quota.remaining <= 250) {
+      ttl = 4 * 60 * 60;
+    }
+  }
+
+  const payload = {
+    games: Array.isArray(games) ? games : [],
+    generatedAt: new Date().toISOString(),
+    quota,
+    ttl
+  };
+
+  if (edgeCache) {
+    context.waitUntil(
+      edgeCache.put(
+        cacheKey,
+        Response.json(payload, {
+          headers: {
+            "Cache-Control": `public, max-age=${ttl}`
+          }
+        })
+      )
+    );
+  }
+
+  return {
+    payload,
+    cacheStatus: "MISS"
+  };
+}
+
 async function getNflProviderEvents(context) {
   const apiKey = String(
     context.env.ODDS_API_KEY || ""
@@ -443,19 +560,99 @@ export async function onRequestPost(context) {
     let nflProviderEvents = [];
     let nflEventsCacheStatus = "SKIP";
 
+    let nflOddsGames = [];
+    let nflOddsCacheStatus = "SKIP";
+    let nflOddsGeneratedAt = null;
+    let nflOddsTtl = null;
+    let nflOddsQuota = null;
+
     if (wantsNflCatalog) {
-      try {
-        const nflCatalog = await getNflProviderEvents(context);
-        nflProviderEvents = nflCatalog.events || [];
-        nflEventsCacheStatus = nflCatalog.cacheStatus;
-      } catch (error) {
-        // Quota-free NFL verification is optional enrichment.
-        // Never break normal card odds if it is unavailable.
-        console.error("NFL event catalog verification failed", error);
+      const [nflOddsResult, nflEventsResult] =
+        await Promise.allSettled([
+          getNflProviderOdds(context),
+          getNflProviderEvents(context)
+        ]);
+
+      if (nflOddsResult.status === "fulfilled") {
+        nflOddsGames =
+          nflOddsResult.value?.payload?.games || [];
+
+        nflOddsCacheStatus =
+          nflOddsResult.value?.cacheStatus || "MISS";
+
+        nflOddsGeneratedAt =
+          nflOddsResult.value?.payload?.generatedAt || null;
+
+        nflOddsTtl =
+          Number(
+            nflOddsResult.value?.payload?.ttl
+          ) || null;
+
+        nflOddsQuota =
+          nflOddsResult.value?.payload?.quota || null;
+      } else {
+        // Full NFL ML is optional browse enrichment. If it fails, retain
+        // the Iteration 25 exact-event verification path.
+        console.error(
+          "NFL full odds enrichment failed",
+          nflOddsResult.reason
+        );
+      }
+
+      if (nflEventsResult.status === "fulfilled") {
+        nflProviderEvents =
+          nflEventsResult.value?.events || [];
+
+        nflEventsCacheStatus =
+          nflEventsResult.value?.cacheStatus || "MISS";
+      } else {
+        console.error(
+          "NFL event catalog verification failed",
+          nflEventsResult.reason
+        );
       }
     }
 
     for (const event of events) {
+      const isNflCandidate =
+        String(event?.sport || "").toLowerCase() ===
+        "american-football";
+
+      // For NFL cards, prefer the complete sport-specific h2h feed.
+      // This is what makes ML visible on games that fall outside the
+      // provider's tiny cross-sport `upcoming` window.
+      if (isNflCandidate && nflOddsGames.length) {
+        const fullNflMatch = bestProviderMatch(
+          event,
+          nflOddsGames
+        );
+
+        if (fullNflMatch) {
+          const line = consensus(
+            fullNflMatch.game
+          );
+
+          if (
+            line?.away?.american &&
+            line?.home?.american
+          ) {
+            odds[String(event.id)] =
+              providerEventPayload(
+                fullNflMatch.game,
+                fullNflMatch.orientation,
+                line,
+                "nfl_full_odds"
+              );
+
+            matched += 1;
+            priced += 1;
+            continue;
+          }
+        }
+      }
+
+      // Retain the original shared cross-sport odds path as a fallback
+      // for NFL and as the primary path for all other sports.
       const paidMatch = bestProviderMatch(
         event,
         providerGames
@@ -468,14 +665,15 @@ export async function onRequestPost(context) {
           line?.home?.american
         );
 
-        odds[String(event.id)] = providerEventPayload(
-          paidMatch.game,
-          paidMatch.orientation,
-          hasLine ? line : null,
-          hasLine
-            ? "upcoming_odds"
-            : "upcoming_event"
-        );
+        odds[String(event.id)] =
+          providerEventPayload(
+            paidMatch.game,
+            paidMatch.orientation,
+            hasLine ? line : null,
+            hasLine
+              ? "upcoming_odds"
+              : "upcoming_event"
+          );
 
         matched += 1;
 
@@ -488,12 +686,13 @@ export async function onRequestPost(context) {
         continue;
       }
 
-      if (
-        String(event?.sport || "").toLowerCase() !== "american-football"
-      ) {
+      if (!isNflCandidate) {
         continue;
       }
 
+      // Final NFL fallback: exact provider identity without an ML.
+      // This keeps Bet eligibility working even when bookmakers have
+      // temporarily removed the game from the odds feed.
       const nflMatch = bestProviderMatch(
         event,
         nflProviderEvents
@@ -503,12 +702,13 @@ export async function onRequestPost(context) {
         continue;
       }
 
-      odds[String(event.id)] = providerEventPayload(
-        nflMatch.game,
-        nflMatch.orientation,
-        null,
-        "nfl_events_catalog"
-      );
+      odds[String(event.id)] =
+        providerEventPayload(
+          nflMatch.game,
+          nflMatch.orientation,
+          null,
+          "nfl_events_catalog"
+        );
 
       matched += 1;
       verifiedOnly += 1;
@@ -521,6 +721,13 @@ export async function onRequestPost(context) {
       priced,
       verifiedOnly,
       providerGameCount: providerGames.length,
+      nflOddsGameCount: nflOddsGames.length,
+      nflOdds: {
+        cacheStatus: nflOddsCacheStatus,
+        generatedAt: nflOddsGeneratedAt,
+        ttlSeconds: nflOddsTtl,
+        quota: nflOddsQuota
+      },
       nflEventCatalogCount: nflProviderEvents.length,
       nflEventsCacheStatus,
       provider: "The Odds API",
@@ -560,6 +767,6 @@ export function onRequestGet() {
     provider: "The Odds API",
     sport: "upcoming",
     market: "h2h",
-    note: "Paid cross-sport odds feed plus quota-free NFL event verification. NFL event IDs can enable Picks even when the small cross-sport odds snapshot does not include that game."
+    note: "Paid cross-sport odds feed plus a separately cached full NFL h2h snapshot and quota-free NFL event verification. NFL cards prefer the full NFL feed for ML display, then fall back to exact event verification."
   });
 }
