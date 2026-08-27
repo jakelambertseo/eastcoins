@@ -17,6 +17,8 @@
       id: V2.id(match),
       title: String(match?.title || ""),
       sport: V2.family(match),
+      category: String(match?.category || ""),
+      league: String(match?.league || ""),
       startsAt: V2.ts(match?.date) || null,
       away: String(match?.teams?.away?.name || ""),
       home: String(match?.teams?.home?.name || "")
@@ -26,11 +28,12 @@
   function schedule() {
     clearTimeout(refreshTimer);
 
-    // Card odds are browse context, not locked wager quotes. Keep them
-    // deliberately low-frequency to protect the shared Odds API quota.
+    // The server now owns a fixed shared cache for each exact sport feed.
+    // Check often in the browser so a newly refreshed edge snapshot appears
+    // quickly without creating one provider request per user.
     refreshTimer = window.setTimeout(
       () => refresh(S.events),
-      document.hidden ? 60 * 60 * 1000 : 30 * 60 * 1000
+      document.hidden ? 30 * 60 * 1000 : 5 * 60 * 1000
     );
   }
 
@@ -38,11 +41,16 @@
     schedule();
 
     const candidates = events
-      .filter((match) =>
-        match?.teams?.away?.name &&
-        match?.teams?.home?.name
-      )
-      .slice(0, 80);
+      .filter((match) => {
+        const family = V2.family(match);
+
+        return (
+          ["american-football", "baseball", "combat"].includes(family) &&
+          match?.teams?.away?.name &&
+          match?.teams?.home?.name
+        );
+      })
+      .slice(0, 120);
 
     if (!candidates.length) return;
 

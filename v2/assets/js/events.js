@@ -627,6 +627,47 @@
       start > Date.now();
   }
 
+  function allowedMoneylineSportKey(value) {
+    const key = String(value || "").toLowerCase();
+
+    return (
+      key.startsWith("americanfootball_") ||
+      key.startsWith("baseball_") ||
+      key === "mma_mixed_martial_arts"
+    );
+  }
+
+  function potentialMoneylineSport(match) {
+    const family = eventFamily(match);
+
+    if (
+      family === "american-football" ||
+      family === "baseball"
+    ) {
+      return true;
+    }
+
+    if (family !== "combat") {
+      return false;
+    }
+
+    const text = [
+      match?.title,
+      match?.category,
+      match?.league,
+      match?.sport
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return (
+      text.includes("ufc") ||
+      text.includes("mma") ||
+      text.includes("mixed martial")
+    );
+  }
+
   function canShowBet(match) {
     if (!canBet(match)) return false;
 
@@ -634,7 +675,10 @@
 
     return Boolean(
       odds?.providerEventId &&
-      odds?.provider === "odds_api"
+      odds?.provider === "odds_api" &&
+      allowedMoneylineSportKey(odds?.sportKey) &&
+      americanPrice(odds?.away?.american) &&
+      americanPrice(odds?.home?.american)
     );
   }
 
@@ -774,7 +818,7 @@
           <footer class="v1-event-footer">
 
             <div class="v1-event-actions">
-              ${hasStarted(match)
+              ${hasStarted(match) && potentialMoneylineSport(match)
               ? `<button class="v1-bets-closed" type="button" disabled aria-disabled="true">Bets Closed</button>`
               : `<button class="v1-save ${saved ? "saved" : ""}" data-save="${V2.esc(key)}" aria-label="Save event">${saved ? "★" : "☆"}</button>`
             }
@@ -847,7 +891,7 @@
         <footer class="v1-event-footer">
 
           <div class="v1-event-actions">
-            ${hasStarted(match)
+            ${hasStarted(match) && potentialMoneylineSport(match)
               ? `<button class="v1-bets-closed" type="button" disabled aria-disabled="true">Bets Closed</button>`
               : `<button class="v1-save ${saved ? "saved" : ""}" data-save="${V2.esc(key)}" aria-label="Save event">${saved ? "★" : "☆"}</button>`
             }

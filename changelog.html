@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">102 major update groups</div>
+<div class="release-count">103 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -2150,10 +2150,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>EastCoin V2 NFL cards now use the full cached NFL moneyline feed</h2>
 <p>
@@ -2165,6 +2164,28 @@
     quota gets low. Exact quota-free NFL event verification remains the final
     fallback, so a game can still be eligible for Picks even if bookmakers
     temporarily remove its line.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-08-27">August 27, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>EastCoin Picks expands full moneyline feeds for football, baseball, and UFC/MMA</h2>
+<p>
+    Rebuilt V2's betting catalog around full sport-specific h2h moneyline feeds
+    for American football, baseball, and MMA. EastCoin now uses the provider's
+    quota-free sports and event catalogs to identify the exact league and event,
+    then requests the complete moneyline feed only for sport keys represented
+    by current EastCoin cards. Previous low-quota adaptive cache guardrails and
+    the tiny cross-sport upcoming feed were removed. Moneyline snapshots now use
+    a fixed 15-minute shared edge cache, and live/final score snapshots use a
+    fixed 5-minute shared cache instead of the previous quota-based cache
+    stretching. Bet requires an exact provider event
+    and an actual current home/away h2h price, and the Picks market backend
+    independently rejects basketball, soccer, hockey, boxing, and other
+    unsupported betting sports.
 </p>
 </article>
 </section>

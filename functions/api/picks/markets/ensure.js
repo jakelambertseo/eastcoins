@@ -44,6 +44,16 @@ function familyFromSportKey(value) {
   return "other";
 }
 
+function allowedMoneylineSportKey(value) {
+  const key = String(value || "").toLowerCase();
+
+  return (
+    key.startsWith("americanfootball_") ||
+    key.startsWith("baseball_") ||
+    key === "mma_mixed_martial_arts"
+  );
+}
+
 async function poolForMarket(db, marketId) {
   const result = await db
     .prepare(
@@ -179,6 +189,27 @@ async function verifiedOddsEvent(context, input) {
     );
 
     error.code = "ODDS_EVENT_MISMATCH";
+    throw error;
+  }
+
+  if (!allowedMoneylineSportKey(result.sportKey)) {
+    const error = new Error(
+      "EastCoin Picks currently allows moneyline betting only on football, baseball, and UFC/MMA."
+    );
+
+    error.code = "MONEYLINE_SPORT_NOT_ALLOWED";
+    throw error;
+  }
+
+  if (
+    !Number.isFinite(Number(result?.away?.american)) ||
+    !Number.isFinite(Number(result?.home?.american))
+  ) {
+    const error = new Error(
+      "This event does not currently have a verified moneyline available."
+    );
+
+    error.code = "MONEYLINE_NOT_AVAILABLE";
     throw error;
   }
 
@@ -422,7 +453,9 @@ export async function onRequestPost(context) {
     const clientConflict = [
       "ODDS_EVENT_NOT_FOUND",
       "ODDS_EVENT_MISMATCH",
-      "MARKET_ALREADY_STARTED"
+      "MARKET_ALREADY_STARTED",
+      "MONEYLINE_SPORT_NOT_ALLOWED",
+      "MONEYLINE_NOT_AVAILABLE"
     ].includes(code);
 
     return json({

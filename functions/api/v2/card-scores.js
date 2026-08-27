@@ -2,7 +2,7 @@ const ODDS_API_BASE =
   "https://api.the-odds-api.com/v4";
 
 const DEFAULT_TTL_SECONDS =
-  10 * 60;
+  5 * 60;
 
 function json(data, status = 200) {
   return Response.json(
@@ -54,26 +54,9 @@ function scoreSupportedKey(value) {
   return true;
 }
 
-function cacheTtl(quota) {
-  const remaining =
-    Number(quota?.remaining);
-
-  if (!Number.isFinite(remaining)) {
-    return DEFAULT_TTL_SECONDS;
-  }
-
-  if (remaining <= 75) {
-    return 60 * 60;
-  }
-
-  if (remaining <= 150) {
-    return 30 * 60;
-  }
-
-  if (remaining <= 250) {
-    return 20 * 60;
-  }
-
+function cacheTtl() {
+  // Iteration 30: predictable score freshness.
+  // The previous low-credit adaptive cache stretching is retired.
   return DEFAULT_TTL_SECONDS;
 }
 
