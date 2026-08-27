@@ -204,6 +204,104 @@
     // Up Next rail was removed in Iteration 9.
   }
 
+  function broadcastLabel(match) {
+    for (const value of [
+      match?.network,
+      match?.channel,
+      match?.broadcast,
+      match?.broadcaster,
+      match?.station,
+      match?.tv,
+      match?.network_name,
+      match?.channel_name,
+      match?._eastcoinProviders?.ppv?.network,
+      match?._eastcoinProviders?.ppv?.channel
+    ]) {
+      if (typeof value === "string" && value.trim()) return value.trim();
+    }
+
+    return "";
+  }
+
+  function defaultMultiviewState() {
+    return {
+      layout: 4,
+      slots: [null, null, null, null],
+      splits: {
+        2: { col: 50, row: 50 },
+        3: { col: 50, row: 50 },
+        4: { col: 50, row: 50 }
+      }
+    };
+  }
+
+  function readMultiviewState() {
+    const raw = V2.read("eastcoinMultiviewV1", null);
+
+    if (!raw || !Array.isArray(raw.slots)) {
+      return defaultMultiviewState();
+    }
+
+    return {
+      layout: [2, 3, 4].includes(Number(raw.layout))
+        ? Number(raw.layout)
+        : 4,
+      slots: [...raw.slots.slice(0, 4), null, null, null, null].slice(0, 4),
+      splits:
+        raw.splits && typeof raw.splits === "object"
+          ? raw.splits
+          : defaultMultiviewState().splits
+    };
+  }
+
+  function multiviewSource(match) {
+    const [, label] = V2.sportMeta(V2.family(match));
+
+    return {
+      type: "event",
+      id: V2.id(match),
+      title: String(match?.title || "EastCoin event"),
+      meta: label
+    };
+  }
+
+  function addToMultiview(match) {
+    if (!match) return;
+
+    const mv = readMultiviewState();
+    const key = V2.id(match);
+
+    const existing = mv.slots.findIndex(
+      (slot) =>
+        slot?.type === "event" &&
+        String(slot.id) === key
+    );
+
+    if (existing !== -1) {
+      V2.toast(`${match.title || "Event"} is already in MultiView slot ${existing + 1}.`);
+      return;
+    }
+
+    const slot = mv.slots.findIndex((item) => !item);
+
+    if (slot === -1) {
+      V2.toast("MultiView is full. Open MultiView to manage your four slots.");
+      return;
+    }
+
+    mv.slots[slot] = multiviewSource(match);
+
+    if (slot >= 3) mv.layout = 4;
+    else if (slot === 2 && Number(mv.layout) < 3) mv.layout = 3;
+    else if (slot === 1 && Number(mv.layout) < 2) mv.layout = 2;
+
+    V2.write("eastcoinMultiviewV1", mv);
+
+    V2.toast(
+      `${match.title || "Event"} added to MultiView slot ${slot + 1}.`
+    );
+  }
+
   function liveCardData(match) {
     return V2.liveData?.forMatch?.(match) || null;
   }
@@ -249,7 +347,7 @@
               <span class="v1-event-state ${V2.live(match) ? "live" : ""}">
                 ${V2.live(match) ? "LIVE" : V2.esc(V2.time(match))}
               </span>
-              <span class="v1-event-network">📺 ${V2.esc(V2.network(match))}</span>
+              ${broadcastLabel(match) ? `<span class="v1-event-network">📺 ${V2.esc(broadcastLabel(match))}</span>` : ""}
             </div>
             <div class="v1-single-event">
               <span>${icon}</span>
@@ -260,10 +358,10 @@
           <footer class="v1-event-footer">
             <div class="v1-event-footer-copy">
               <strong>${V2.esc(label)}</strong>
-              <small>${V2.live(match) ? "Live now" : V2.esc(V2.datetime(match))}</small>
             </div>
             <div class="v1-event-actions">
               <button class="v1-save ${saved ? "saved" : ""}" data-save="${V2.esc(key)}" aria-label="Save event">${saved ? "★" : "☆"}</button>
+              <button class="v1-multiview" data-multiview="${V2.esc(key)}">＋ MultiView</button>
               <button class="v1-watch" data-watch="${V2.esc(key)}">${V2.live(match) ? "Watch" : "Open"}</button>
             </div>
           </footer>
@@ -281,7 +379,7 @@
             <span class="v1-event-state ${V2.live(match) ? "live" : ""}">
               ${V2.live(match) ? "LIVE" : V2.esc(V2.time(match))}
             </span>
-            <span class="v1-event-network">📺 ${V2.esc(V2.network(match))}</span>
+            ${broadcastLabel(match) ? `<span class="v1-event-network">📺 ${V2.esc(broadcastLabel(match))}</span>` : ""}
           </div>
 
           <div class="v1-matchup">
@@ -299,7 +397,6 @@
                     <strong>${scoreValue(liveData.homeScore)}</strong>
                   </div>
                   <span class="v1-live-game-state">${V2.esc(liveStateLabel(liveData, match))}</span>
-                  <small class="v1-live-source">${liveData.source === "kalshi" ? "LIVE DATA" : "LIVE SCORE"}</small>
                 `
                 : `
                   <span class="v1-vs">VS</span>
@@ -318,15 +415,11 @@
         <footer class="v1-event-footer">
           <div class="v1-event-footer-copy">
             <strong>${icon} ${V2.esc(label)}</strong>
-            <small>
-              ${V2.live(match) ? "Live now" : V2.esc(V2.datetime(match))}
-              · ${V2.esc(V2.viewerText(match))}
-              · ${V2.sources(match)} source${V2.sources(match) === 1 ? "" : "s"}
-            </small>
           </div>
 
           <div class="v1-event-actions">
             <button class="v1-save ${saved ? "saved" : ""}" data-save="${V2.esc(key)}" aria-label="Save event">${saved ? "★" : "☆"}</button>
+            <button class="v1-multiview" data-multiview="${V2.esc(key)}">＋ MultiView</button>
             <button class="v1-watch" data-watch="${V2.esc(key)}">${V2.live(match) ? "Watch" : "Open"}</button>
           </div>
         </footer>
@@ -346,6 +439,13 @@
       button.onclick = () => {
         const match = find(button.dataset.watch);
         if (match) V2.player.openMatch(match);
+      };
+    });
+
+    $$("[data-multiview]", E.grid).forEach((button) => {
+      button.onclick = () => {
+        const match = find(button.dataset.multiview);
+        if (match) addToMultiview(match);
       };
     });
 

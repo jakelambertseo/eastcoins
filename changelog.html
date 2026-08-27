@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">84 major update groups</div>
+<div class="release-count">85 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1871,10 +1871,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>EastCoin V2 event cards rebuilt with live score test</h2>
 <p>
@@ -1887,6 +1886,23 @@
     against Kalshi's public sports milestones and batch live-data endpoint.
     Scores are only displayed when a real away/home score pair is returned;
     unavailable scores are never fabricated.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-08-26">August 26, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>EastCoin V2 live scores moved to ESPN and MultiView restored</h2>
+<p>
+    Replaced the first Kalshi-based V2 live-score experiment with a fail-soft
+    server-side ESPN public scoreboard matcher that uses both team names and
+    event start time to enrich live cards with real scores and game state.
+    Cleaned the V1-style cards by removing Streamed/PPV provider fallback labels
+    and the Live now / viewers / source-count footer metadata. Restored the
+    + MultiView event action using the existing eastcoinMultiviewV1 four-slot
+    storage format so V2 event cards can feed the current MultiView experience.
 </p>
 </article>
 </section>

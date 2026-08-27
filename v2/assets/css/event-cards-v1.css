@@ -342,3 +342,50 @@
     height:58px;
   }
 }
+
+
+/* Iteration 11 card cleanup */
+.v1-event-footer{
+  min-height:48px;
+}
+
+.v1-event-footer-copy strong{
+  font-size:.78rem;
+}
+
+.v1-event-footer-copy small{
+  display:none !important;
+}
+
+.v1-event-actions{
+  gap:4px;
+}
+
+.v1-multiview{
+  min-width:82px;
+  padding:0 8px;
+  border:1px solid rgba(229,185,43,.16);
+  color:#ddc86e;
+  background:#0b0a07;
+}
+
+.v1-multiview:hover{
+  border-color:rgba(229,185,43,.30);
+  color:#f1d96f;
+  background:#121005;
+}
+
+.v1-event-network:empty{
+  display:none;
+}
+
+@media(max-width:1160px){
+  .v1-save{
+    display:none;
+  }
+
+  .v1-multiview{
+    min-width:74px;
+    font-size:.67rem !important;
+  }
+}

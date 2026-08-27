@@ -108,7 +108,7 @@
 
     refreshTimer = window.setTimeout(
       () => refresh(S.events),
-      document.hidden ? 60000 : 30000
+      document.hidden ? 60000 : 20000
     );
   }
 

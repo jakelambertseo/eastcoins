@@ -1,23 +1,45 @@
-const KALSHI_BASE = "https://external-api.kalshi.com/trade-api/v2";
+const SCOREBOARDS = {
+  "baseball": [
+    ["baseball", "mlb"]
+  ],
+  "basketball": [
+    ["basketball", "wnba"],
+    ["basketball", "nba"],
+    ["basketball", "mens-college-basketball"]
+  ],
+  "american-football": [
+    ["football", "nfl"],
+    ["football", "college-football"]
+  ],
+  "hockey": [
+    ["hockey", "nhl"]
+  ],
+  "soccer": [
+    ["soccer", "usa.1"],
+    ["soccer", "eng.1"],
+    ["soccer", "usa.nwsl"],
+    ["soccer", "mex.1"],
+    ["soccer", "uefa.champions"]
+  ]
+};
 
 const STOP_WORDS = new Set([
   "fc", "cf", "sc", "afc", "club", "team",
   "women", "womens", "men", "mens",
-  "university", "college", "the"
+  "the", "university", "college"
 ]);
 
-function json(data, status = 200, extraHeaders = {}) {
+function response(data, status = 200) {
   return Response.json(data, {
     status,
     headers: {
       "Cache-Control": "no-store",
-      "X-Content-Type-Options": "nosniff",
-      ...extraHeaders
+      "X-Content-Type-Options": "nosniff"
     }
   });
 }
 
-function normalized(value) {
+function normalize(value) {
   return String(value || "")
     .toLowerCase()
     .normalize("NFKD")
@@ -28,395 +50,314 @@ function normalized(value) {
 }
 
 function tokens(value) {
-  return normalized(value)
+  return normalize(value)
     .split(" ")
     .filter((token) => token.length > 1 && !STOP_WORDS.has(token));
 }
 
-function overlapScore(haystack, team) {
-  const hay = normalized(haystack);
-  const target = normalized(team);
+function nameScore(candidate, target) {
+  const left = normalize(candidate);
+  const right = normalize(target);
 
-  if (!hay || !target) return 0;
-  if (hay.includes(target)) return 1;
+  if (!left || !right) return 0;
+  if (left === right) return 1;
+  if (left.includes(right) || right.includes(left)) return 0.95;
 
-  const teamTokens = tokens(team);
-  if (!teamTokens.length) return 0;
+  const targetTokens = tokens(target);
+  if (!targetTokens.length) return 0;
 
-  const hayTokens = new Set(tokens(haystack));
-  const matched = teamTokens.filter((token) => hayTokens.has(token)).length;
+  const candidateTokens = new Set(tokens(candidate));
+  const hits = targetTokens.filter((token) => candidateTokens.has(token)).length;
 
-  return matched / teamTokens.length;
+  return hits / targetTokens.length;
 }
 
-function milestoneText(milestone) {
+function teamText(competitor) {
+  const team = competitor?.team || {};
+
   return [
-    milestone?.title,
-    milestone?.notification_message,
-    milestone?.type,
-    milestone?.competition,
-    JSON.stringify(milestone?.details || {}),
-    JSON.stringify(milestone?.source_ids || {})
+    team.displayName,
+    team.shortDisplayName,
+    team.location,
+    team.name,
+    team.abbreviation
   ].filter(Boolean).join(" ");
 }
 
-function eventTimeScore(event, milestone) {
-  const left = Number(event?.startsAt || 0);
-  const right = Date.parse(milestone?.start_date || "");
+function dateParam(timestamp) {
+  const date = new Date(Number(timestamp) || Date.now());
 
-  if (!left || !Number.isFinite(right)) return 0.5;
-
-  const hours = Math.abs(left - right) / 3600000;
-
-  if (hours <= 2) return 1;
-  if (hours <= 6) return 0.8;
-  if (hours <= 12) return 0.5;
-  if (hours <= 20) return 0.2;
-  return 0;
+  return [
+    date.getUTCFullYear(),
+    String(date.getUTCMonth() + 1).padStart(2, "0"),
+    String(date.getUTCDate()).padStart(2, "0")
+  ].join("");
 }
 
-function matchMilestone(event, milestones) {
-  let best = null;
-  let bestScore = 0;
-
-  for (const milestone of milestones) {
-    const text = milestoneText(milestone);
-    const away = overlapScore(text, event.away);
-    const home = overlapScore(text, event.home);
-
-    // Both teams must have useful evidence. This prevents attaching a score
-    // merely because one popular team name happens to appear.
-    if (away < 0.5 || home < 0.5) continue;
-
-    const time = eventTimeScore(event, milestone);
-    const score = away * 0.38 + home * 0.38 + time * 0.24;
-
-    if (score > bestScore) {
-      bestScore = score;
-      best = milestone;
-    }
-  }
-
-  return bestScore >= 0.58 ? best : null;
-}
-
-async function cachedFetch(url, ttlSeconds) {
+async function cachedFetch(url, ttl = 15) {
   const cache = caches.default;
-  const key = new Request(url, { method: "GET" });
-  const cached = await cache.match(key);
+  const request = new Request(url, { method: "GET" });
+  const cached = await cache.match(request);
 
   if (cached) return cached.clone();
 
-  const response = await fetch(url, {
+  const upstream = await fetch(url, {
     headers: {
       "Accept": "application/json",
-      "User-Agent": "EastCoin-V2-Live-Scores/1.0"
+      "User-Agent": "EastCoin-V2-Live-Scores/2.0"
     }
   });
 
-  if (!response.ok) return response;
+  if (!upstream.ok) return upstream;
 
-  const headers = new Headers(response.headers);
-  headers.set("Cache-Control", `public, max-age=${ttlSeconds}`);
+  const headers = new Headers(upstream.headers);
+  headers.set("Cache-Control", `public, max-age=${ttl}`);
 
-  const stored = new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
+  const stored = new Response(upstream.body, {
+    status: upstream.status,
+    statusText: upstream.statusText,
     headers
   });
 
-  await cache.put(key, stored.clone());
+  await cache.put(request, stored.clone());
   return stored;
 }
 
-function flatten(value, prefix = "", output = {}, depth = 0) {
-  if (depth > 5 || value == null) return output;
+async function loadBoard(sport, league, date) {
+  const url = new URL(
+    `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/scoreboard`
+  );
 
-  if (Array.isArray(value)) {
-    value.slice(0, 50).forEach((item, index) => {
-      flatten(item, `${prefix}${prefix ? "." : ""}${index}`, output, depth + 1);
-    });
-    return output;
+  url.searchParams.set("dates", date);
+  url.searchParams.set("limit", "100");
+
+  const upstream = await cachedFetch(url.toString(), 15);
+
+  if (!upstream.ok) {
+    return {
+      sport,
+      league,
+      events: []
+    };
   }
 
-  if (typeof value === "object") {
-    Object.entries(value).forEach(([key, child]) => {
-      const next = `${prefix}${prefix ? "." : ""}${key}`;
-      flatten(child, next, output, depth + 1);
-    });
-    return output;
-  }
-
-  output[prefix.toLowerCase().replace(/[^a-z0-9]/g, "")] = value;
-  return output;
-}
-
-function firstNumber(flat, keys) {
-  for (const key of keys) {
-    const value = flat[key.toLowerCase().replace(/[^a-z0-9]/g, "")];
-    const number = Number(value);
-    if (Number.isFinite(number)) return number;
-  }
-  return null;
-}
-
-function firstText(flat, keys) {
-  for (const key of keys) {
-    const value = flat[key.toLowerCase().replace(/[^a-z0-9]/g, "")];
-    if (value == null) continue;
-    const string = String(value).trim();
-    if (string) return string;
-  }
-  return null;
-}
-
-function scoreFromTeamArray(details, event) {
-  const candidates = [];
-
-  function visit(value, depth = 0) {
-    if (depth > 5 || value == null) return;
-
-    if (Array.isArray(value)) {
-      value.forEach((item) => visit(item, depth + 1));
-      return;
-    }
-
-    if (typeof value !== "object") return;
-
-    const name =
-      value.name ??
-      value.team_name ??
-      value.teamName ??
-      value.display_name ??
-      value.displayName;
-
-    const score =
-      value.score ??
-      value.points ??
-      value.runs ??
-      value.goals;
-
-    if (name != null && Number.isFinite(Number(score))) {
-      candidates.push({
-        name: String(name),
-        score: Number(score)
-      });
-    }
-
-    Object.values(value).forEach((child) => visit(child, depth + 1));
-  }
-
-  visit(details);
-
-  if (!candidates.length) return null;
-
-  const away = candidates
-    .map((candidate) => ({
-      ...candidate,
-      confidence: overlapScore(candidate.name, event.away)
-    }))
-    .sort((a, b) => b.confidence - a.confidence)[0];
-
-  const home = candidates
-    .map((candidate) => ({
-      ...candidate,
-      confidence: overlapScore(candidate.name, event.home)
-    }))
-    .sort((a, b) => b.confidence - a.confidence)[0];
-
-  if (
-    !away ||
-    !home ||
-    away.confidence < 0.5 ||
-    home.confidence < 0.5
-  ) {
-    return null;
-  }
+  const payload = await upstream.json();
 
   return {
-    awayScore: away.score,
-    homeScore: home.score
+    sport,
+    league,
+    events: Array.isArray(payload?.events) ? payload.events : []
   };
 }
 
-function parseLiveData(liveData, event) {
-  const details = liveData?.details || {};
-  const flat = flatten(details);
+function parseCompetition(boardEvent) {
+  const competition = boardEvent?.competitions?.[0];
 
-  let awayScore = firstNumber(flat, [
-    "away_score",
-    "awayScore",
-    "visitor_score",
-    "visitorScore",
-    "road_score",
-    "roadScore",
-    "away_team_score",
-    "awayTeamScore"
-  ]);
+  if (!competition) return null;
 
-  let homeScore = firstNumber(flat, [
-    "home_score",
-    "homeScore",
-    "host_score",
-    "hostScore",
-    "home_team_score",
-    "homeTeamScore"
-  ]);
+  const competitors = Array.isArray(competition.competitors)
+    ? competition.competitors
+    : [];
 
-  if (awayScore === null || homeScore === null) {
-    const teamScores = scoreFromTeamArray(details, event);
-    if (teamScores) {
-      awayScore ??= teamScores.awayScore;
-      homeScore ??= teamScores.homeScore;
-    }
+  const away = competitors.find((item) => item?.homeAway === "away");
+  const home = competitors.find((item) => item?.homeAway === "home");
+
+  if (!away || !home) return null;
+
+  return {
+    event: boardEvent,
+    competition,
+    away,
+    home,
+    startsAt: Date.parse(boardEvent?.date || competition?.date || "")
+  };
+}
+
+function matchScore(event, game) {
+  const away = nameScore(teamText(game.away), event.away);
+  const home = nameScore(teamText(game.home), event.home);
+
+  // Also permit feeds whose home/away orientation differs.
+  const swappedAway = nameScore(teamText(game.home), event.away);
+  const swappedHome = nameScore(teamText(game.away), event.home);
+
+  let orientation = "normal";
+  let teamScore = away * 0.44 + home * 0.44;
+
+  if (swappedAway + swappedHome > away + home) {
+    orientation = "swapped";
+    teamScore = swappedAway * 0.44 + swappedHome * 0.44;
   }
 
-  if (awayScore === null || homeScore === null) return null;
+  const eventStart = Number(event.startsAt || 0);
+  let timeScore = 0.5;
+
+  if (eventStart && Number.isFinite(game.startsAt)) {
+    const hours = Math.abs(eventStart - game.startsAt) / 3600000;
+    if (hours <= 1) timeScore = 1;
+    else if (hours <= 3) timeScore = 0.85;
+    else if (hours <= 8) timeScore = 0.5;
+    else if (hours <= 16) timeScore = 0.15;
+    else timeScore = 0;
+  }
+
+  return {
+    score: teamScore + timeScore * 0.12,
+    orientation
+  };
+}
+
+function gameState(game, orientation) {
+  const competition = game.competition;
+  const status = competition?.status || game.event?.status || {};
+  const type = status?.type || {};
+
+  const away = orientation === "swapped" ? game.home : game.away;
+  const home = orientation === "swapped" ? game.away : game.home;
+
+  const awayScore = Number(away?.score);
+  const homeScore = Number(home?.score);
+
+  if (!Number.isFinite(awayScore) || !Number.isFinite(homeScore)) {
+    return null;
+  }
+
+  const periodNumber = Number(status?.period);
+  const clock = String(status?.displayClock || "").trim();
+
+  let period = "";
+
+  // ESPN shortDetail is particularly useful for baseball (Top 7th / Bot 8th)
+  // and still provides good status text for other sports.
+  const shortDetail = String(
+    type?.shortDetail ||
+    type?.detail ||
+    status?.type?.description ||
+    ""
+  ).trim();
+
+  if (shortDetail) {
+    period = shortDetail;
+  } else if (Number.isFinite(periodNumber) && periodNumber > 0) {
+    period = `P${periodNumber}`;
+  }
+
+  // Avoid duplicating the clock if ESPN already included it in shortDetail.
+  const displayClock =
+    clock && !period.includes(clock)
+      ? clock
+      : "";
 
   return {
     awayScore,
     homeScore,
-    period: firstText(flat, [
-      "period",
-      "period_name",
-      "periodName",
-      "current_period",
-      "currentPeriod",
-      "quarter",
-      "inning",
-      "inning_half",
-      "inningHalf",
-      "stage"
-    ]),
-    clock: firstText(flat, [
-      "clock",
-      "game_clock",
-      "gameClock",
-      "time_remaining",
-      "timeRemaining",
-      "display_clock",
-      "displayClock"
-    ]),
-    status: firstText(flat, [
-      "status",
-      "state",
-      "game_status",
-      "gameStatus",
-      "match_status",
-      "matchStatus"
-    ]),
-    source: "kalshi"
+    period,
+    clock: displayClock,
+    status:
+      String(type?.state || type?.description || "").trim() || "live",
+    source: "espn"
   };
 }
 
-async function milestonesForToday() {
-  const minimum = new Date(Date.now() - 14 * 3600000).toISOString();
+async function boardsForEvents(events) {
+  const requests = new Map();
 
-  const url = new URL(`${KALSHI_BASE}/milestones`);
-  url.searchParams.set("limit", "500");
-  url.searchParams.set("category", "Sports");
-  url.searchParams.set("minimum_start_date", minimum);
+  for (const event of events) {
+    const pairs = SCOREBOARDS[event.sport] || [];
 
-  const response = await cachedFetch(url.toString(), 60);
+    for (const [sport, league] of pairs) {
+      const date = dateParam(event.startsAt);
+      const key = `${sport}:${league}:${date}`;
 
-  if (!response.ok) {
-    throw new Error(`Kalshi milestones returned ${response.status}`);
+      if (!requests.has(key)) {
+        requests.set(key, loadBoard(sport, league, date));
+      }
+    }
   }
 
-  const payload = await response.json();
-
-  return Array.isArray(payload?.milestones)
-    ? payload.milestones
-    : [];
-}
-
-async function batchLiveData(ids) {
-  if (!ids.length) return [];
-
-  const url = new URL(`${KALSHI_BASE}/live_data/batch`);
-
-  ids.slice(0, 100).forEach((id) => {
-    url.searchParams.append("milestone_ids", id);
-  });
-
-  const response = await cachedFetch(url.toString(), 20);
-
-  if (!response.ok) {
-    throw new Error(`Kalshi live data returned ${response.status}`);
-  }
-
-  const payload = await response.json();
-
-  return Array.isArray(payload?.live_datas)
-    ? payload.live_datas
-    : [];
+  return Promise.all(requests.values());
 }
 
 export async function onRequestPost(context) {
   try {
     const body = await context.request.json();
-    const events = Array.isArray(body?.events)
-      ? body.events.slice(0, 20)
-      : [];
 
-    const valid = events.filter((event) =>
-      event &&
-      String(event.id || "") &&
-      String(event.away || "").trim() &&
-      String(event.home || "").trim()
-    );
+    const events = (Array.isArray(body?.events) ? body.events : [])
+      .slice(0, 20)
+      .filter((event) =>
+        event &&
+        String(event.id || "") &&
+        String(event.away || "").trim() &&
+        String(event.home || "").trim()
+      );
 
-    if (!valid.length) {
-      return json({
+    if (!events.length) {
+      return response({
         ok: true,
         scores: {},
-        matched: 0
+        matched: 0,
+        provider: "espn_public_scoreboard"
       });
     }
 
-    const milestones = await milestonesForToday();
-    const matches = new Map();
-
-    valid.forEach((event) => {
-      const milestone = matchMilestone(event, milestones);
-      if (milestone?.id) {
-        matches.set(String(milestone.id), event);
-      }
-    });
-
-    if (!matches.size) {
-      return json({
-        ok: true,
-        scores: {},
-        matched: 0
-      });
-    }
-
-    const liveDatas = await batchLiveData([...matches.keys()]);
+    const boards = await boardsForEvents(events);
     const scores = {};
+    let matched = 0;
 
-    liveDatas.forEach((liveData) => {
-      const event = matches.get(String(liveData?.milestone_id || ""));
-      if (!event) return;
+    for (const event of events) {
+      const candidates = [];
 
-      const parsed = parseLiveData(liveData, event);
-      if (!parsed) return;
+      for (const board of boards) {
+        if (!(SCOREBOARDS[event.sport] || []).some(
+          ([sport, league]) =>
+            sport === board.sport &&
+            league === board.league
+        )) {
+          continue;
+        }
 
-      scores[String(event.id)] = parsed;
-    });
+        for (const boardEvent of board.events) {
+          const parsed = parseCompetition(boardEvent);
+          if (parsed) {
+            candidates.push(parsed);
+          }
+        }
+      }
 
-    return json({
+      let best = null;
+      let bestMatch = null;
+
+      for (const game of candidates) {
+        const result = matchScore(event, game);
+
+        if (!bestMatch || result.score > bestMatch.score) {
+          bestMatch = result;
+          best = game;
+        }
+      }
+
+      if (!best || !bestMatch || bestMatch.score < 0.78) {
+        continue;
+      }
+
+      const state = gameState(best, bestMatch.orientation);
+
+      if (!state) continue;
+
+      scores[String(event.id)] = state;
+      matched += 1;
+    }
+
+    return response({
       ok: true,
       scores,
-      matched: matches.size,
-      scored: Object.keys(scores).length,
-      provider: "kalshi_public_live_data"
+      matched,
+      provider: "espn_public_scoreboard"
     });
   } catch (error) {
-    console.error("V2 live score enrichment failed", error);
+    console.error("V2 ESPN live-score enrichment failed", error);
 
-    // Fail soft: the event catalog is more important than live-score decoration.
-    return json({
+    return response({
       ok: false,
       scores: {},
       code: "LIVE_SCORE_ENRICHMENT_FAILED",
@@ -426,11 +367,11 @@ export async function onRequestPost(context) {
 }
 
 export function onRequestGet() {
-  return json({
+  return response({
     ok: true,
     endpoint: "EastCoin V2 live score enrichment",
     method: "POST",
-    provider: "kalshi_public_live_data",
-    note: "This endpoint only enriches matching live EastCoin events and never fabricates scores."
+    provider: "espn_public_scoreboard",
+    note: "Scores are matched by both team names and event start time. No score is fabricated."
   });
 }
