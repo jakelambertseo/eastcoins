@@ -442,8 +442,19 @@
     `;
   }
 
+  function hasStarted(match) {
+    if (V2.live(match) || finalScore(match)) {
+      return true;
+    }
+
+    const start = V2.ts(match?.date);
+
+    return Number.isFinite(start) &&
+      start <= Date.now();
+  }
+
   function canBet(match) {
-    if (V2.live(match) || finalScore(match)) return false;
+    if (hasStarted(match)) return false;
 
     const start = V2.ts(match?.date);
 
@@ -504,7 +515,10 @@
           <footer class="v1-event-footer">
 
             <div class="v1-event-actions">
-              <button class="v1-save ${saved ? "saved" : ""}" data-save="${V2.esc(key)}" aria-label="Save event">${saved ? "★" : "☆"}</button>
+              ${hasStarted(match)
+              ? `<button class="v1-bets-closed" type="button" disabled aria-disabled="true">Bets Closed</button>`
+              : `<button class="v1-save ${saved ? "saved" : ""}" data-save="${V2.esc(key)}" aria-label="Save event">${saved ? "★" : "☆"}</button>`
+            }
               <button class="v1-multiview" data-multiview="${V2.esc(key)}">＋ MultiView</button>
 
               ${canBet(match) ? `<button class="v1-bet" data-bet="${V2.esc(key)}">Bet</button>` : ""}
@@ -574,7 +588,10 @@
         <footer class="v1-event-footer">
 
           <div class="v1-event-actions">
-            <button class="v1-save ${saved ? "saved" : ""}" data-save="${V2.esc(key)}" aria-label="Save event">${saved ? "★" : "☆"}</button>
+            ${hasStarted(match)
+              ? `<button class="v1-bets-closed" type="button" disabled aria-disabled="true">Bets Closed</button>`
+              : `<button class="v1-save ${saved ? "saved" : ""}" data-save="${V2.esc(key)}" aria-label="Save event">${saved ? "★" : "☆"}</button>`
+            }
             <button class="v1-multiview" data-multiview="${V2.esc(key)}">＋ MultiView</button>
 
             ${canBet(match) ? `<button class="v1-bet" data-bet="${V2.esc(key)}">Bet</button>` : ""}

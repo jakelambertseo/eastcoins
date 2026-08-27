@@ -588,3 +588,28 @@
     padding:0 8px;
   }
 }
+
+
+/* Iteration 20: started events replace Favorite with Bets Closed */
+.v1-bets-closed{
+  min-width:78px;
+  padding:0 9px;
+  border:1px solid rgba(184,24,60,.20);
+  color:#8b7479;
+  background:#120b0d;
+  cursor:not-allowed;
+  opacity:.9;
+}
+
+.v1-bets-closed:disabled{
+  color:#8b7479;
+  background:#120b0d;
+}
+
+@media(max-width:1160px){
+  .v1-bets-closed{
+    min-width:72px;
+    padding:0 7px;
+    font-size:.66rem !important;
+  }
+}
