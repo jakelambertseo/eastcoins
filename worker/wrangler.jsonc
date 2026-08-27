@@ -1,26 +1,11 @@
 {
-  "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "eastcoin-music-room",
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "eastcoin-dlstreams-prototype",
   "main": "src/index.js",
-  "compatibility_date": "2026-08-12",
-  "durable_objects": {
-    "bindings": [
-      {
-        "name": "MUSIC_ROOM",
-        "class_name": "MusicRoom"
-      }
-    ]
-  },
-  "exports": {
-    "MusicRoom": {
-      "type": "durable-object",
-      "storage": "sqlite"
-    }
-  },
+  "compatibility_date": "2026-08-21",
+  "workers_dev": true,
+  "preview_urls": true,
   "vars": {
     "ALLOWED_ORIGINS": "https://eastcoin.vip,https://www.eastcoin.vip,https://eastcoins.pages.dev,http://localhost:4321,http://127.0.0.1:4321"
-  },
-  "observability": {
-    "enabled": true
   }
 }

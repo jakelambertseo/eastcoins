@@ -1,0 +1,14 @@
+diff --git a/player.html b/player.html
+index dcf3271..37a2666 100644
+--- a/player.html
++++ b/player.html
+@@ -2372,7 +2372,8 @@
+     initializeFootballCountdowns();
+ 
+   </script>
+-  <script src="assets/eastcoins-streamed-api.js?v=api2"></script>
++  <script src="assets/eastcoins-ppv-api.js?v=ppv2"></script>
++  <script src="assets/eastcoins-streamed-api.js?v=api3"></script>
+   <script src="assets/eastcoins-streamed.js?v=server17"></script>
+   <script src="assets/eastcoins-events-clean-v2.js?v=events2"></script>
+   <script src="assets/eastcoins-home-events-directory.js?v=home-directory1"></script>

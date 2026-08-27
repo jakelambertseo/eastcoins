@@ -302,26 +302,77 @@
     );
   }
 
-  function liveCardData(match) {
-    return V2.liveData?.forMatch?.(match) || null;
+  function cardOdds(match) {
+    return V2.cardOdds?.forMatch?.(match) || null;
   }
 
-  function scoreValue(value) {
+  function americanPrice(value) {
     const number = Number(value);
-    return Number.isFinite(number) ? String(number) : "—";
+
+    if (!Number.isFinite(number) || number === 0) return "";
+
+    return number > 0
+      ? `+${Math.round(number)}`
+      : String(Math.round(number));
   }
 
-  function liveStateLabel(data, match) {
-    if (!data) return V2.live(match) ? "LIVE" : V2.time(match);
+  function oddsBadge(side, odds) {
+    const price = americanPrice(odds?.[side]?.american);
 
-    const pieces = [
-      data.period,
-      data.clock
-    ].filter(Boolean);
+    if (!price) return "";
 
-    return pieces.length
-      ? pieces.join(" · ")
-      : String(data.status || (V2.live(match) ? "LIVE" : V2.time(match)));
+    return `
+      <span class="v1-team-odds" title="Consensus moneyline">
+        <small>ML</small>
+        <strong>${V2.esc(price)}</strong>
+      </span>
+    `;
+  }
+
+  function categoryOrder(family) {
+    const order = [
+      "american-football",
+      "baseball",
+      "combat",
+      "soccer",
+      "basketball",
+      "hockey",
+      "tennis",
+      "other"
+    ];
+
+    const index = order.indexOf(family);
+    return index === -1 ? order.length : index;
+  }
+
+  function categorySection(family, matches) {
+    const [icon, label] = V2.sportMeta(family);
+    const liveCount = matches.filter(V2.live).length;
+
+    return `
+      <section class="v1-category-section" data-category="${V2.esc(family)}">
+        <header class="v1-category-header">
+          <div class="v1-category-title">
+            <span class="v1-category-icon">${icon}</span>
+            <span>
+              <strong>${V2.esc(label)}</strong>
+              <small>${liveCount ? `${liveCount} live now` : `${matches.length} upcoming`}</small>
+            </span>
+          </div>
+
+          <div class="v1-category-counts">
+            ${liveCount
+              ? `<span class="live">${liveCount} LIVE</span>`
+              : ""}
+            <span>${matches.length} total</span>
+          </div>
+        </header>
+
+        <div class="v1-category-grid">
+          ${matches.map(card).join("")}
+        </div>
+      </section>
+    `;
   }
 
   function card(match) {
@@ -331,34 +382,46 @@
     const home = match?.teams?.home;
     const away = match?.teams?.away;
     const saved = S.favorites.has(key);
-    const liveData = liveCardData(match);
-    const hasScore =
-      liveData &&
-      Number.isFinite(Number(liveData.awayScore)) &&
-      Number.isFinite(Number(liveData.homeScore));
+    const odds = cardOdds(match);
+    const hasOdds = Boolean(
+      americanPrice(odds?.away?.american) &&
+      americanPrice(odds?.home?.american)
+    );
 
     if (!home && !away) {
       return `
-        <article class="card v1-event-card v1-event-card-single ${V2.live(match) ? "is-live" : ""}">
+        <article
+          class="card v1-event-card v1-event-card-single ${V2.live(match) ? "is-live" : ""}"
+          data-card-open="${V2.esc(key)}"
+          role="button"
+          tabindex="0"
+          aria-label="Open ${V2.esc(match.title || "event")}"
+        >
           <div class="v1-event-visual">
             ${poster ? `<div class="v1-event-bg" style="background-image:url('${V2.esc(poster)}')"></div>` : ""}
             <div class="v1-event-shade"></div>
+
             <div class="v1-event-topbar">
               <span class="v1-event-state ${V2.live(match) ? "live" : ""}">
                 ${V2.live(match) ? "LIVE" : V2.esc(V2.time(match))}
               </span>
-              ${broadcastLabel(match) ? `<span class="v1-event-network">📺 ${V2.esc(broadcastLabel(match))}</span>` : ""}
+              ${broadcastLabel(match)
+                ? `<span class="v1-event-network">📺 ${V2.esc(broadcastLabel(match))}</span>`
+                : ""}
             </div>
+
             <div class="v1-single-event">
               <span>${icon}</span>
               <strong>${V2.esc(match.title || "EastCoin Event")}</strong>
               <small>${V2.esc(label)}</small>
             </div>
           </div>
+
           <footer class="v1-event-footer">
             <div class="v1-event-footer-copy">
               <strong>${V2.esc(label)}</strong>
             </div>
+
             <div class="v1-event-actions">
               <button class="v1-save ${saved ? "saved" : ""}" data-save="${V2.esc(key)}" aria-label="Save event">${saved ? "★" : "☆"}</button>
               <button class="v1-multiview" data-multiview="${V2.esc(key)}">＋ MultiView</button>
@@ -370,7 +433,13 @@
     }
 
     return `
-      <article class="card v1-event-card ${V2.live(match) ? "is-live" : ""}" data-event-id="${V2.esc(key)}">
+      <article
+        class="card v1-event-card ${V2.live(match) ? "is-live" : ""}"
+        data-card-open="${V2.esc(key)}"
+        role="button"
+        tabindex="0"
+        aria-label="Open ${V2.esc(match.title || "event")}"
+      >
         <div class="v1-event-visual">
           ${poster ? `<div class="v1-event-bg" style="background-image:url('${V2.esc(poster)}')"></div>` : ""}
           <div class="v1-event-shade"></div>
@@ -379,35 +448,30 @@
             <span class="v1-event-state ${V2.live(match) ? "live" : ""}">
               ${V2.live(match) ? "LIVE" : V2.esc(V2.time(match))}
             </span>
-            ${broadcastLabel(match) ? `<span class="v1-event-network">📺 ${V2.esc(broadcastLabel(match))}</span>` : ""}
+            ${broadcastLabel(match)
+              ? `<span class="v1-event-network">📺 ${V2.esc(broadcastLabel(match))}</span>`
+              : ""}
           </div>
 
-          <div class="v1-matchup">
+          <div class="v1-matchup ${hasOdds ? "has-odds" : ""}">
             <div class="v1-matchup-team away">
               ${V2.logo(away)}
               <strong>${V2.esc(away?.name || "Away")}</strong>
+              ${oddsBadge("away", odds)}
             </div>
 
-            <div class="v1-matchup-center ${hasScore ? "has-score" : ""}">
-              ${hasScore
-                ? `
-                  <div class="v1-scoreline">
-                    <strong>${scoreValue(liveData.awayScore)}</strong>
-                    <span>–</span>
-                    <strong>${scoreValue(liveData.homeScore)}</strong>
-                  </div>
-                  <span class="v1-live-game-state">${V2.esc(liveStateLabel(liveData, match))}</span>
-                `
-                : `
-                  <span class="v1-vs">VS</span>
-                  <small>${V2.live(match) ? "Live now" : V2.esc(V2.time(match))}</small>
-                `
+            <div class="v1-matchup-center">
+              <span class="v1-vs">VS</span>
+              ${hasOdds
+                ? `<small class="v1-market-label">CONSENSUS ML</small>`
+                : `<small>${V2.live(match) ? "Live now" : V2.esc(V2.time(match))}</small>`
               }
             </div>
 
             <div class="v1-matchup-team home">
               ${V2.logo(home)}
               <strong>${V2.esc(home?.name || "Home")}</strong>
+              ${oddsBadge("home", odds)}
             </div>
           </div>
         </div>
@@ -431,26 +495,77 @@
     const events = filtered();
 
     E.eventCount.textContent = `${events.length} event${events.length === 1 ? "" : "s"}`;
-    E.grid.innerHTML = events.map(card).join("");
+
+    const groups = new Map();
+
+    events.forEach((match) => {
+      const family = V2.family(match);
+
+      if (!groups.has(family)) {
+        groups.set(family, []);
+      }
+
+      groups.get(family).push(match);
+    });
+
+    const orderedGroups = [...groups.entries()]
+      .sort(
+        ([left], [right]) =>
+          categoryOrder(left) - categoryOrder(right)
+      );
+
+    E.grid.innerHTML = orderedGroups
+      .map(([family, matches]) => categorySection(family, matches))
+      .join("");
+
     E.grid.hidden = !events.length;
     E.empty.hidden = Boolean(events.length);
 
     $$("[data-watch]", E.grid).forEach((button) => {
-      button.onclick = () => {
+      button.onclick = (event) => {
+        event.stopPropagation();
         const match = find(button.dataset.watch);
         if (match) V2.player.openMatch(match);
       };
     });
 
     $$("[data-multiview]", E.grid).forEach((button) => {
-      button.onclick = () => {
+      button.onclick = (event) => {
+        event.stopPropagation();
         const match = find(button.dataset.multiview);
         if (match) addToMultiview(match);
       };
     });
 
     $$("[data-save]", E.grid).forEach((button) => {
-      button.onclick = () => toggleFavorite(button.dataset.save);
+      button.onclick = (event) => {
+        event.stopPropagation();
+        toggleFavorite(button.dataset.save);
+      };
+    });
+
+    $$("[data-card-open]", E.grid).forEach((cardNode) => {
+      const open = () => {
+        const match = find(cardNode.dataset.cardOpen);
+        if (match) V2.player.openMatch(match);
+      };
+
+      cardNode.onclick = (event) => {
+        if (event.target.closest("button,a,input,label")) return;
+        open();
+      };
+
+      cardNode.onkeydown = (event) => {
+        if (
+          event.target !== cardNode ||
+          !["Enter", " "].includes(event.key)
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        open();
+      };
     });
   }
 
@@ -544,7 +659,7 @@
       renderRecent();
 
       // Score enrichment is optional and never blocks the event catalog.
-      V2.liveData?.refresh?.(S.events);
+      V2.cardOdds?.refresh?.(S.events);
     } catch (error) {
       fatal(error?.message || "EastCoin providers unavailable.");
     }

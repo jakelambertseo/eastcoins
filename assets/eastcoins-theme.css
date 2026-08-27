@@ -429,9 +429,3 @@ body.resizing-chat .resize-handle span {
   border-color: rgba(255, 255, 255, 0.075);
   background: rgba(3, 3, 3, 0.96);
 }
-
-
-/* Navigation links used across EastCoins pages */
-a.nav-link {
-  text-decoration: none;
-}

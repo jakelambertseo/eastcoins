@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">85 major update groups</div>
+<div class="release-count">86 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1889,10 +1889,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>EastCoin V2 live scores moved to ESPN and MultiView restored</h2>
 <p>
@@ -1903,6 +1902,24 @@
     and the Live now / viewers / source-count footer metadata. Restored the
     + MultiView event action using the existing eastcoinMultiviewV1 four-slot
     storage format so V2 event cards can feed the current MultiView experience.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-08-26">August 26, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>EastCoin V2 card odds and sport sections added</h2>
+<p>
+    Replaced the unsuccessful V2 live-score card experiment with cached
+    consensus moneyline card odds from The Odds API. One shared cross-sport
+    upcoming/h2h request feeds matching cards instead of requesting odds per
+    event, with automatic longer cache windows as provider quota gets low.
+    Reintroduced V1-style sport/category headers with live and total counts,
+    preserved the four-card desktop layout within each category, and made the
+    entire event card clickable while keeping Save, MultiView and Watch actions
+    independently clickable.
 </p>
 </article>
 </section>

@@ -1,0 +1,11 @@
+cd C:\Users\jake\OneDrive\Desktop\eastcoins
+
+git add assets/eastcoins-streamed-api.js favorites.html player.html multiview.html events.html status.html changelog.html
+
+git status
+
+git commit -m "Migrate Streamed integration to streamed.st"
+
+git -c gc.auto=0 push origin main
+
+Commit note: Moves EastCoin's active Streamed API and image traffic to streamed.st, refreshes provider caches, updates the visible Streamed favorite, cache-busts the production API adapter, and documents the domain migration in the changelog.

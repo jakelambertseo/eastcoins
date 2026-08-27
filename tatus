@@ -1,0 +1,11 @@
+warning: in the working copy of '_headers', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'assets/eastcoins-event-visibility.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'changelog.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'dlstreams-worker/src/index.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'dlstreams-worker/wrangler.jsonc', LF will be replaced by CRLF the next time Git touches it
+ _headers                             |    3 [32m+[m
+ assets/eastcoins-event-visibility.js | 1597 [32m+++++++++++++++++++++++++++++++++[m[31m-[m
+ changelog.html                       |   26 [32m+[m[31m-[m
+ dlstreams-worker/src/index.js        |  565 [32m++++++++++[m[31m--[m
+ dlstreams-worker/wrangler.jsonc      |    2 [32m+[m
+ 5 files changed, 2075 insertions(+), 118 deletions(-)

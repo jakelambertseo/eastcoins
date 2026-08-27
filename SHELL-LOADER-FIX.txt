@@ -1,0 +1,20 @@
+EastCoin Persistent Shell Loader Failsafe
+
+Why:
+The player/events iframe can be fully rendered while the persistent shell's
+transition overlay remains visible. The shell currently relies on iframe load
+readiness to dismiss that cover.
+
+This installer:
+- adds a 3-second fail-open to the outer Live Player loader
+- adds a 3-second fail-open to the outer Events/browser loader
+- preserves the child player/events pages' own loading/error states
+- cache-busts eastcoins-persistent-shell.js to persistent18
+- adds a no-store header for the persistent shell controller
+- documents the fix in changelog.html
+
+Run from the EastCoin repo root:
+  node scripts\apply-shell-loader-failsafe.js
+
+Then delete the installer before committing:
+  del scripts\apply-shell-loader-failsafe.js

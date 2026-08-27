@@ -1,0 +1,17 @@
+EastCoin Provider Loader Repair
+
+Run this from the EastCoin repository root:
+
+  node scripts\apply-provider-loader-repair.js
+
+What it changes:
+- Streamed uses streamed.st first, with streamed.pk as a timed fallback.
+- Streamed network requests time out instead of hanging forever.
+- PPV network requests time out instead of hanging forever.
+- The Events controller has a final 10-second loader deadline.
+- events.html script query versions are bumped.
+- _headers gets no-store rules for the three loader/provider scripts.
+- changelog.html receives the repair entry.
+
+After it succeeds, delete the installer:
+  del scripts\apply-provider-loader-repair.js

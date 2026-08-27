@@ -1,0 +1,21 @@
+EastCoin UI Freeze Hotfix
+
+Root cause:
+The production visibility/More Sports script installed a MutationObserver on
+the whole document. organizeNavigation() rewrote textContent, which itself
+generated child-list mutations. That could recursively trigger the observer,
+starve the JavaScript event loop, prevent loader timers from running, and make
+the page appear completely unclickable.
+
+This hotfix:
+- removes that MutationObserver
+- initializes More Sports once after the DOM is ready
+- makes its label writes idempotent
+- bumps eastcoins-event-visibility.js to visibility3 in index.html/events.html
+- updates changelog.html
+
+Run from the EastCoin repo root:
+  node scripts\apply-ui-freeze-hotfix.js
+
+Then:
+  del scripts\apply-ui-freeze-hotfix.js
