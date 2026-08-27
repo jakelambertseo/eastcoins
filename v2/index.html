@@ -17,7 +17,7 @@
 <link href="assets/css/sport-more-fix.css?v=8" rel="stylesheet">
 <link href="assets/css/event-cards-v1.css?v=28" rel="stylesheet">
 <link href="assets/css/card-scores.css?v=18" rel="stylesheet">
-<link href="assets/css/quick-bet.css?v=32" rel="stylesheet">
+<link href="assets/css/quick-bet.css?v=33" rel="stylesheet">
 </head>
 <body>
 <header class="topbar">
@@ -133,14 +133,8 @@
           </strong>
         </div>
 
-        <div class="quickbet-amount-row">
+        <div class="quickbet-amount-row quickbet-amount-row-simple">
           <input id="quickBetAmount" class="quickbet-amount" type="number" min="1" step="1" inputmode="numeric" aria-label="Quick Bet wager amount" value="10">
-          <div class="quickbet-chips" aria-label="Quick wager amounts">
-            <button type="button" data-quick-amount="5">5</button>
-            <button type="button" data-quick-amount="10">10</button>
-            <button type="button" data-quick-amount="25">25</button>
-            <button type="button" data-quick-amount="50">50</button>
-          </div>
         </div>
 
         <input id="quickBetRange" type="range" min="1" max="50" value="10">
@@ -156,9 +150,9 @@
       </section>
 
       <div class="quickbet-summary">
-        <div><span>Wallet</span><strong id="quickBetWallet">Pending StreamElements</strong></div>
-        <div><span>Projected pool payout</span><strong id="quickBetMultiplier">—</strong></div>
-        <div><span>Estimated return</span><strong id="quickBetReturn">—</strong></div>
+        <div class="quickbet-summary-wallet"><span>Wallet</span><strong id="quickBetWallet">Pending StreamElements</strong></div>
+        <div class="quickbet-summary-payout"><span>Projected pool payout</span><strong id="quickBetMultiplier">—</strong></div>
+        <div class="quickbet-summary-return"><span>Estimated return</span><strong id="quickBetReturn">—</strong></div>
       </div>
 
       <p class="quickbet-note" id="quickBetNote">
@@ -189,7 +183,7 @@
 <script src="assets/js/card-scores.js?v=16"></script>
 <script src="assets/js/integrations.js?v=4"></script>
 <script src="assets/js/router.js?v=13"></script>
-<script src="assets/js/quick-bet.js?v=32"></script>
+<script src="assets/js/quick-bet.js?v=33"></script>
 <script src="assets/js/settings.js?v=5"></script>
 <script src="assets/js/app.js?v=19"></script>
 </body></html>
