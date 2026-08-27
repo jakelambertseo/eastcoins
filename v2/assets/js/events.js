@@ -204,50 +204,132 @@
     // Up Next rail was removed in Iteration 9.
   }
 
+  function liveCardData(match) {
+    return V2.liveData?.forMatch?.(match) || null;
+  }
+
+  function scoreValue(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? String(number) : "—";
+  }
+
+  function liveStateLabel(data, match) {
+    if (!data) return V2.live(match) ? "LIVE" : V2.time(match);
+
+    const pieces = [
+      data.period,
+      data.clock
+    ].filter(Boolean);
+
+    return pieces.length
+      ? pieces.join(" · ")
+      : String(data.status || (V2.live(match) ? "LIVE" : V2.time(match)));
+  }
+
   function card(match) {
     const key = V2.id(match);
     const [icon, label] = V2.sportMeta(V2.family(match));
     const poster = V2.poster(match);
     const home = match?.teams?.home;
     const away = match?.teams?.away;
+    const saved = S.favorites.has(key);
+    const liveData = liveCardData(match);
+    const hasScore =
+      liveData &&
+      Number.isFinite(Number(liveData.awayScore)) &&
+      Number.isFinite(Number(liveData.homeScore));
+
+    if (!home && !away) {
+      return `
+        <article class="card v1-event-card v1-event-card-single ${V2.live(match) ? "is-live" : ""}">
+          <div class="v1-event-visual">
+            ${poster ? `<div class="v1-event-bg" style="background-image:url('${V2.esc(poster)}')"></div>` : ""}
+            <div class="v1-event-shade"></div>
+            <div class="v1-event-topbar">
+              <span class="v1-event-state ${V2.live(match) ? "live" : ""}">
+                ${V2.live(match) ? "LIVE" : V2.esc(V2.time(match))}
+              </span>
+              <span class="v1-event-network">📺 ${V2.esc(V2.network(match))}</span>
+            </div>
+            <div class="v1-single-event">
+              <span>${icon}</span>
+              <strong>${V2.esc(match.title || "EastCoin Event")}</strong>
+              <small>${V2.esc(label)}</small>
+            </div>
+          </div>
+          <footer class="v1-event-footer">
+            <div class="v1-event-footer-copy">
+              <strong>${V2.esc(label)}</strong>
+              <small>${V2.live(match) ? "Live now" : V2.esc(V2.datetime(match))}</small>
+            </div>
+            <div class="v1-event-actions">
+              <button class="v1-save ${saved ? "saved" : ""}" data-save="${V2.esc(key)}" aria-label="Save event">${saved ? "★" : "☆"}</button>
+              <button class="v1-watch" data-watch="${V2.esc(key)}">${V2.live(match) ? "Watch" : "Open"}</button>
+            </div>
+          </footer>
+        </article>
+      `;
+    }
 
     return `
-      <article class="card">
-        <div class="cardart">
-          ${poster ? `<div class="cardbg" style="background-image:url('${V2.esc(poster)}')"></div>` : ""}
-          <div class="cardcover"></div>
-          <div class="cardtop">
-            <span class="pill ${V2.live(match) ? "live" : ""}">
-              ${V2.live(match) ? "● LIVE" : V2.esc(V2.time(match))}
+      <article class="card v1-event-card ${V2.live(match) ? "is-live" : ""}" data-event-id="${V2.esc(key)}">
+        <div class="v1-event-visual">
+          ${poster ? `<div class="v1-event-bg" style="background-image:url('${V2.esc(poster)}')"></div>` : ""}
+          <div class="v1-event-shade"></div>
+
+          <div class="v1-event-topbar">
+            <span class="v1-event-state ${V2.live(match) ? "live" : ""}">
+              ${V2.live(match) ? "LIVE" : V2.esc(V2.time(match))}
             </span>
-            <span class="category">${icon} ${V2.esc(label)}</span>
+            <span class="v1-event-network">📺 ${V2.esc(V2.network(match))}</span>
+          </div>
+
+          <div class="v1-matchup">
+            <div class="v1-matchup-team away">
+              ${V2.logo(away)}
+              <strong>${V2.esc(away?.name || "Away")}</strong>
+            </div>
+
+            <div class="v1-matchup-center ${hasScore ? "has-score" : ""}">
+              ${hasScore
+                ? `
+                  <div class="v1-scoreline">
+                    <strong>${scoreValue(liveData.awayScore)}</strong>
+                    <span>–</span>
+                    <strong>${scoreValue(liveData.homeScore)}</strong>
+                  </div>
+                  <span class="v1-live-game-state">${V2.esc(liveStateLabel(liveData, match))}</span>
+                  <small class="v1-live-source">${liveData.source === "kalshi" ? "LIVE DATA" : "LIVE SCORE"}</small>
+                `
+                : `
+                  <span class="v1-vs">VS</span>
+                  <small>${V2.live(match) ? "Live now" : V2.esc(V2.time(match))}</small>
+                `
+              }
+            </div>
+
+            <div class="v1-matchup-team home">
+              ${V2.logo(home)}
+              <strong>${V2.esc(home?.name || "Home")}</strong>
+            </div>
           </div>
         </div>
 
-        <div class="cardbody">
-          <strong>${V2.esc(match.title || "EastCoin Event")}</strong>
-          <small>${V2.esc(V2.datetime(match))}</small>
-
-          ${home || away
-            ? `<div class="miniTeams">${V2.logo(away, true)}<span>VS</span>${V2.logo(home, true)}</div>`
-            : ""}
-
-          <div class="meta">
-            <span class="network-label">📺 ${V2.esc(V2.network(match))}</span>
-            <span class="viewer-label">👥 ${V2.esc(V2.viewerText(match))}</span>
-            <span>${V2.sources(match)} source${V2.sources(match) === 1 ? "" : "s"}</span>
-            ${match?.popular ? "<span>🔥 Popular</span>" : ""}
+        <footer class="v1-event-footer">
+          <div class="v1-event-footer-copy">
+            <strong>${icon} ${V2.esc(label)}</strong>
+            <small>
+              ${V2.live(match) ? "Live now" : V2.esc(V2.datetime(match))}
+              · ${V2.esc(V2.viewerText(match))}
+              · ${V2.sources(match)} source${V2.sources(match) === 1 ? "" : "s"}
+            </small>
           </div>
-        </div>
 
-        <div class="cardfooter">
-          <button data-watch="${V2.esc(key)}">
-            ${V2.live(match) ? "Watch Live →" : "Open Event →"}
-          </button>
-          <button class="save ${S.favorites.has(key) ? "saved" : ""}" data-save="${V2.esc(key)}">
-            ${S.favorites.has(key) ? "★" : "☆"}
-          </button>
-        </div>
+          <div class="v1-event-actions">
+            <button class="v1-save ${saved ? "saved" : ""}" data-save="${V2.esc(key)}" aria-label="Save event">${saved ? "★" : "☆"}</button>
+            <button class="v1-watch" data-watch="${V2.esc(key)}">${V2.live(match) ? "Watch" : "Open"}</button>
+          </div>
+        </footer>
       </article>
     `;
   }
@@ -360,6 +442,9 @@
       providerStatus(discovery, allResult);
       renderGrid();
       renderRecent();
+
+      // Score enrichment is optional and never blocks the event catalog.
+      V2.liveData?.refresh?.(S.events);
     } catch (error) {
       fatal(error?.message || "EastCoin providers unavailable.");
     }

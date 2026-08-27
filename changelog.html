@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">83 major update groups</div>
+<div class="release-count">84 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1857,8 +1857,8 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
-<div class="timeline-date"><time datetime="2026-08-26">August 26, 2026</time><span class="latest-badge">Latest</span></div>
+<article class="timeline-entry">
+<div class="timeline-date"><time datetime="2026-08-26">August 26, 2026</time></div>
 <h2>EastCoin V2 landing shell and chat header actually removed</h2>
 <p>
     Corrected the previous V2 cleanup by removing the old “What are we watching?”
@@ -1868,6 +1868,25 @@
     chat markup and restored the Twitch iframe to the full chat-panel height.
     Event loading now feeds the timeline directly and no longer depends on the
     deleted featured/status elements.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-08-26">August 26, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>EastCoin V2 event cards rebuilt with live score test</h2>
+<p>
+    Rebuilt the V2 event cards around the cleaner matchup-first visual language
+    used by the previous EastCoin events experience while retaining V2's
+    four-card desktop grid. Team logos and names now anchor each side of the
+    matchup with a central VS or live-score area and a compact action footer.
+    Added an experimental live-game enrichment layer that first reads any score
+    fields already present in EastCoin event data and can then match live events
+    against Kalshi's public sports milestones and batch live-data endpoint.
+    Scores are only displayed when a real away/home score pair is returned;
+    unavailable scores are never fabricated.
 </p>
 </article>
 </section>
