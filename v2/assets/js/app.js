@@ -73,6 +73,14 @@
           item.classList.toggle("active", item === button);
         });
 
+        // "Upcoming" is a forward-looking view, so default it to the full
+        // seven-day catalog instead of silently limiting it to Today.
+        // Users can still narrow it back to Tomorrow / Fri / etc afterward.
+        if (S.status === "upcoming") {
+          S.date = "week";
+          V2.events.renderDates();
+        }
+
         V2.events.renderGrid();
       };
     });
