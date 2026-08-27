@@ -1,0 +1,23 @@
+/* EastCoin V2 Iteration 7: remove the featured/home shell shown in the old landing page */
+.view-home .hero-row,
+.view-home .hero-status-card,
+.view-home .hero-feature-grid {
+  display: none !important;
+}
+
+/* Keep the home view effectively empty if it is ever opened */
+.view-home .page-shell {
+  padding: 0 !important;
+  min-height: 0 !important;
+}
+
+.view-home .page-shell::before {
+  content: "";
+  display: block;
+  height: 0;
+}
+
+/* Tighten Events since it is now the default landing area */
+.view-events .section-head {
+  margin-top: 0 !important;
+}
