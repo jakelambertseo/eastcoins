@@ -13,6 +13,7 @@
 <link href="assets/css/workspace.css?v=4" rel="stylesheet">
 <link href="assets/css/responsive.css?v=4" rel="stylesheet">
 <link href="assets/css/date-rail-compact.css?v=35" rel="stylesheet">
+<link href="assets/css/watch-view.css?v=36" rel="stylesheet">
 <link href="assets/css/settings.css?v=5" rel="stylesheet">
 <link href="assets/css/chat-cleanup.css?v=9" rel="stylesheet">
 <link href="assets/css/sport-more-fix.css?v=8" rel="stylesheet">
@@ -242,13 +243,66 @@
     </footer>
   </section>
 </div>
-<div class="modal" id="player"><section class="player"><header><div><small id="playerKicker">EASTCOIN PLAYER</small><strong id="playerTitle">Event</strong><em id="playerMeta"></em></div><div><button id="saveActive">☆</button><button id="playerChat">Chat</button><button id="closePlayer">×</button></div></header><div class="playerbody"><div class="surface"><div class="playerloading" id="playerLoading"><span></span><strong id="loaderTitle">Finding streams…</strong><small id="loaderMeta">Checking EastCoin sources.</small></div><iframe id="frame" src="about:blank" allow="autoplay;fullscreen;picture-in-picture;encrypted-media;clipboard-write" allowfullscreen></iframe></div><aside><span>STREAMS</span><div id="streams"></div><hr><span>EVENT</span><strong id="sideTitle"></strong><small id="sideMeta"></small><a href="?view=multiview" data-v2-route="multiview">Open MultiView</a></aside></div></section></div>
+<section class="watchview" id="player" aria-label="EastCoin event player" hidden>
+  <div class="watch-shell">
+    <div class="watch-surface">
+      <div class="playerloading" id="playerLoading">
+        <span></span>
+        <strong id="loaderTitle">Finding streams…</strong>
+        <small id="loaderMeta">Checking EastCoin sources.</small>
+      </div>
+
+      <iframe
+        id="frame"
+        src="about:blank"
+        title="EastCoin event stream"
+        allow="autoplay;fullscreen;picture-in-picture;encrypted-media;clipboard-write"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen
+      ></iframe>
+
+      <header class="watch-topbar">
+        <div class="watch-title">
+          <button class="watch-back" id="closePlayer" type="button" aria-label="Back to Events">←</button>
+
+          <div>
+            <small id="playerKicker">EASTCOIN PLAYER</small>
+            <strong id="playerTitle">Event</strong>
+            <em id="playerMeta"></em>
+          </div>
+        </div>
+
+        <div class="watch-actions">
+          <button id="saveActive" type="button" title="Favorite event" aria-label="Favorite event">☆</button>
+          <button id="watchMultiView" type="button">＋ MultiView</button>
+          <button id="copyWatchLink" type="button">🔗 Copy Link</button>
+          <button id="openStreamExternal" type="button">↗ Open Source</button>
+          <button id="playerChat" type="button">💬 Chat</button>
+        </div>
+      </header>
+
+      <footer class="watch-controlbar">
+        <div class="watch-server-label">
+          <span>SERVER</span>
+          <strong id="watchServerCount">Finding streams…</strong>
+        </div>
+
+        <div class="watch-servers" id="streams"></div>
+
+        <div class="watch-event-meta" aria-hidden="true">
+          <strong id="sideTitle"></strong>
+          <small id="sideMeta"></small>
+        </div>
+      </footer>
+    </div>
+  </div>
+</section>
 <div class="modal" id="custom"><section class="smallmodal"><header><strong>Custom Stream</strong><button id="closeCustom">×</button></header><form id="customForm"><label>Stream / embed URL<input id="customUrl" type="url" placeholder="https://…" required></label><p>V2 opens the URL directly in its player iframe.</p><div><button type="button" id="cancelCustom">Cancel</button><button class="primary" type="submit">Open Stream</button></div></form></section></div>
 <div class="toast" id="toast"></div>
 <script src="../assets/eastcoins-ppv-api.js?v=ppv-loader2"></script>
 <script src="../assets/eastcoins-streamed-api.js?v=api-loader2"></script>
 <script src="assets/js/core.js?v=4"></script>
-<script src="assets/js/player.js?v=5"></script>
+<script src="assets/js/player.js?v=36"></script>
 <script src="assets/js/events.js?v=30"></script>
 <script src="assets/js/card-odds.js?v=30"></script>
 <script src="assets/js/card-scores.js?v=16"></script>

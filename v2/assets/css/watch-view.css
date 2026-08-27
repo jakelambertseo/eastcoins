@@ -1,0 +1,394 @@
+/* EastCoin V2 — Iteration 36
+   Full event watch experience */
+
+.watchview{
+  position:fixed;
+  top:calc(var(--header) + var(--sport));
+  left:0;
+  right:360px;
+  bottom:0;
+  z-index:45;
+  display:block;
+  overflow:hidden;
+  background:#000;
+  pointer-events:none;
+}
+
+.watchview[hidden]{
+  display:none!important;
+}
+
+.watch-shell{
+  width:100%;
+  height:100%;
+  min-width:0;
+  min-height:0;
+  pointer-events:auto;
+  background:#000;
+}
+
+.watch-surface{
+  position:relative;
+  width:100%;
+  height:100%;
+  min-width:0;
+  min-height:0;
+  overflow:hidden;
+  background:#000;
+}
+
+.watch-surface>iframe{
+  display:block;
+  width:100%;
+  height:100%;
+  border:0;
+  background:#000;
+}
+
+.watch-topbar{
+  position:absolute;
+  z-index:6;
+  top:0;
+  left:0;
+  right:0;
+  min-height:70px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  padding:12px 14px 22px;
+  pointer-events:none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0,0,0,.92) 0%,
+      rgba(0,0,0,.67) 58%,
+      rgba(0,0,0,0) 100%
+    );
+}
+
+.watch-topbar>*{
+  pointer-events:auto;
+}
+
+.watch-title{
+  min-width:0;
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+}
+
+.watch-title>div{
+  min-width:0;
+  padding-top:1px;
+}
+
+.watch-title small,
+.watch-title strong,
+.watch-title em{
+  display:block;
+}
+
+.watch-title small{
+  color:#c4435e;
+  font-size:.61rem;
+  font-weight:1000;
+  letter-spacing:.095em;
+}
+
+.watch-title strong{
+  max-width:min(620px,48vw);
+  margin-top:2px;
+  overflow:hidden;
+  color:#f5eee8;
+  font-size:.95rem;
+  font-weight:1000;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  text-shadow:0 2px 12px rgba(0,0,0,.8);
+}
+
+.watch-title em{
+  margin-top:2px;
+  color:#8a8179;
+  font-size:.64rem;
+  font-style:normal;
+}
+
+.watch-back,
+.watch-actions button{
+  min-height:36px;
+  padding:0 10px;
+  border:1px solid rgba(255,255,255,.11);
+  border-radius:8px;
+  color:#d7cec6;
+  background:rgba(10,10,10,.76);
+  box-shadow:0 6px 20px rgba(0,0,0,.25);
+  backdrop-filter:blur(10px);
+  font-size:.66rem;
+  font-weight:950;
+}
+
+.watch-back{
+  width:38px;
+  min-width:38px;
+  padding:0;
+  color:#e4c95a;
+  font-size:1rem;
+}
+
+.watch-back:hover,
+.watch-actions button:hover{
+  border-color:rgba(229,185,43,.28);
+  color:#f1d969;
+  background:rgba(20,17,10,.88);
+}
+
+.watch-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.watch-controlbar{
+  position:absolute;
+  z-index:6;
+  left:0;
+  right:0;
+  bottom:0;
+  min-height:68px;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:center;
+  gap:12px;
+  padding:20px 14px 10px;
+  pointer-events:none;
+  background:
+    linear-gradient(
+      0deg,
+      rgba(0,0,0,.94) 0%,
+      rgba(0,0,0,.72) 58%,
+      rgba(0,0,0,0) 100%
+    );
+}
+
+.watch-controlbar>*{
+  pointer-events:auto;
+}
+
+.watch-server-label{
+  min-width:112px;
+}
+
+.watch-server-label span,
+.watch-server-label strong{
+  display:block;
+}
+
+.watch-server-label span{
+  color:#aa1d3f;
+  font-size:.55rem;
+  font-weight:1000;
+  letter-spacing:.10em;
+}
+
+.watch-server-label strong{
+  margin-top:2px;
+  color:#a79d94;
+  font-size:.62rem;
+  font-weight:850;
+  white-space:nowrap;
+}
+
+.watch-servers{
+  min-width:0;
+  display:flex!important;
+  align-items:center;
+  gap:6px!important;
+  margin:0!important;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+
+.watch-servers::-webkit-scrollbar{
+  display:none;
+}
+
+.watch-servers .stream{
+  min-width:max-content;
+  min-height:36px;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  justify-content:center;
+  padding:0 11px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:8px;
+  color:#968d84;
+  background:rgba(9,9,9,.78);
+  backdrop-filter:blur(10px);
+  font-size:.64rem;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.watch-servers .stream small{
+  color:#655f58;
+  font-size:.54rem;
+}
+
+.watch-servers .stream.active{
+  border-color:rgba(229,185,43,.36);
+  color:#f0d662;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(229,185,43,.10),
+      rgba(84,55,2,.15)
+    ),
+    rgba(8,8,8,.86);
+  box-shadow:
+    0 0 18px rgba(229,185,43,.055);
+}
+
+.watch-event-meta{
+  display:none;
+}
+
+.watchview .playerloading{
+  z-index:5;
+  background:
+    radial-gradient(circle at 50% 44%,rgba(116,16,42,.13),transparent 30%),
+    #020202;
+}
+
+body.ec-watching main,
+body.ec-watching .workspace{
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+
+body.ec-chat-hidden .watchview{
+  right:0;
+}
+
+body.ec-nav-hidden .watchview{
+  top:0;
+}
+
+@media(max-width:1180px){
+  .watchview{
+    right:320px;
+  }
+
+  body.ec-chat-hidden .watchview{
+    right:0;
+  }
+
+  .watch-title strong{
+    max-width:38vw;
+  }
+
+  .watch-actions button{
+    padding:0 8px;
+  }
+}
+
+@media(max-width:830px){
+  .watchview{
+    top:calc(var(--header) + 40px + var(--sport));
+  }
+
+  body.ec-nav-hidden .watchview{
+    top:0;
+  }
+
+  .watch-topbar{
+    min-height:62px;
+    padding:8px 9px 20px;
+  }
+
+  .watch-actions{
+    gap:4px;
+  }
+
+  .watch-actions button{
+    min-height:32px;
+    padding:0 7px;
+    font-size:.58rem;
+  }
+
+  .watch-title strong{
+    max-width:32vw;
+    font-size:.82rem;
+  }
+
+  .watch-title em{
+    display:none;
+  }
+}
+
+@media(max-width:760px){
+  .watchview{
+    right:0;
+    bottom:300px;
+  }
+
+  body.ec-chat-hidden .watchview{
+    bottom:0;
+  }
+
+  .watch-topbar{
+    align-items:flex-start;
+  }
+
+  .watch-actions button:nth-child(2),
+  .watch-actions button:nth-child(4){
+    display:none;
+  }
+
+  .watch-controlbar{
+    grid-template-columns:1fr;
+    gap:5px;
+    min-height:82px;
+    padding:28px 9px 8px;
+  }
+
+  .watch-server-label{
+    display:none;
+  }
+
+  .watch-servers .stream{
+    min-height:34px;
+    padding:0 9px;
+  }
+}
+
+@media(max-width:520px){
+  .watch-title small{
+    font-size:.52rem;
+  }
+
+  .watch-title strong{
+    max-width:45vw;
+    font-size:.75rem;
+  }
+
+  .watch-actions button{
+    min-height:30px;
+  }
+
+  #copyWatchLink{
+    display:none;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .watchview *,
+  .watchview *::before,
+  .watchview *::after{
+    scroll-behavior:auto!important;
+  }
+}

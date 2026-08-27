@@ -6,124 +6,543 @@
   const E = V2.els;
   const $$ = V2.$$;
 
+  const watchServerCount =
+    document.querySelector("#watchServerCount");
+
+  const copyWatchLink =
+    document.querySelector("#copyWatchLink");
+
+  const openStreamExternal =
+    document.querySelector("#openStreamExternal");
+
+  const watchMultiView =
+    document.querySelector("#watchMultiView");
+
+  let pendingPreference = null;
+  let deepLinkHandled = false;
+  let deepLinkTimer = 0;
+
   function openModal(node) {
-    node.classList.add("open");
+    node?.classList.add("open");
   }
 
   function closeModal(node) {
-    node.classList.remove("open");
+    node?.classList.remove("open");
   }
 
   function openChat() {
-    // Preserve the persistent iframe; Settings changes visibility only.
-    if (V2.settings) { V2.settings.setChatVisible(true); return; }
-    E.chat.classList.add("open", "attention");
-    window.setTimeout(() => E.chat.classList.remove("attention"), 700);
+    if (V2.settings) {
+      V2.settings.setChatVisible(
+        true
+      );
+      return;
+    }
+
+    E.chat?.classList.add(
+      "open",
+      "attention"
+    );
+
+    window.setTimeout(
+      () =>
+        E.chat?.classList.remove(
+          "attention"
+        ),
+      700
+    );
   }
 
   function closeChat() {
-    if (V2.settings) V2.settings.setChatVisible(false, { attention: false });
+    if (V2.settings) {
+      V2.settings.setChatVisible(
+        false,
+        { attention: false }
+      );
+    }
   }
 
-  function closePlayer() {
-    E.frame.src = "about:blank";
-    closeModal(E.player);
+  function activeStream() {
+    return (
+      S.streams[
+        Number(
+          S.activeStreamIndex || 0
+        )
+      ] || null
+    );
+  }
+
+  function normalizedSource(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase();
+  }
+
+  function serverName(stream, index) {
+    const source =
+      String(
+        stream?.source ||
+        stream?.provider ||
+        "Server"
+      ).trim();
+
+    const number =
+      stream?.streamNo !==
+        undefined &&
+      stream?.streamNo !== null
+        ? ` #${stream.streamNo}`
+        : S.streams.length > 1
+          ? ` ${index + 1}`
+          : "";
+
+    return `${source}${number}`;
+  }
+
+  function watchUrl() {
+    const stream =
+      activeStream();
+
+    const url =
+      new URL(
+        "/v2/",
+        window.location.origin
+      );
+
+    if (
+      S.active &&
+      !String(
+        S.active.id || ""
+      ).startsWith("custom:")
+    ) {
+      url.searchParams.set(
+        "event",
+        V2.id(S.active)
+      );
+
+      if (
+        stream?.source ||
+        stream?.provider
+      ) {
+        url.searchParams.set(
+          "source",
+          String(
+            stream.source ||
+            stream.provider
+          )
+        );
+      }
+
+      if (
+        stream?.streamNo !==
+          undefined &&
+        stream?.streamNo !== null
+      ) {
+        url.searchParams.set(
+          "stream",
+          String(stream.streamNo)
+        );
+      }
+
+      return url;
+    }
+
+    if (stream?.embedUrl) {
+      url.searchParams.set(
+        "watch",
+        stream.embedUrl
+      );
+    }
+
+    return url;
+  }
+
+  function syncBrowserUrl() {
+    if (
+      !document.body.classList.contains(
+        "ec-watching"
+      )
+    ) {
+      return;
+    }
+
+    const url = watchUrl();
+
+    window.history.replaceState(
+      {},
+      "",
+      `${url.pathname}${url.search}`
+    );
+  }
+
+  function clearWatchParams() {
+    const url =
+      new URL(
+        window.location.href
+      );
+
+    for (const key of [
+      "event",
+      "source",
+      "stream",
+      "watch"
+    ]) {
+      url.searchParams.delete(key);
+    }
+
+    window.history.replaceState(
+      {},
+      "",
+      `${url.pathname}${
+        url.search
+      }${url.hash}`
+    );
+  }
+
+  function showWatchView() {
+    document.body.classList.add(
+      "ec-watching"
+    );
+
+    E.player.hidden = false;
+    E.player.setAttribute(
+      "aria-hidden",
+      "false"
+    );
+  }
+
+  function closePlayer(
+    {
+      clearUrl = true
+    } = {}
+  ) {
+    if (E.frame) {
+      E.frame.onload = null;
+      E.frame.src = "about:blank";
+    }
+
+    E.playerLoading.hidden = true;
+
+    E.player.hidden = true;
+    E.player.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+    document.body.classList.remove(
+      "ec-watching"
+    );
+
     S.active = null;
     S.streams = [];
+    S.activeStreamIndex = 0;
+    pendingPreference = null;
+
+    if (E.streams) {
+      E.streams.innerHTML = "";
+    }
+
+    if (watchServerCount) {
+      watchServerCount.textContent =
+        "No stream selected";
+    }
+
+    if (clearUrl) {
+      clearWatchParams();
+    }
   }
 
-  async function openMatch(match) {
+  function preferredStreamIndex() {
+    if (
+      !pendingPreference ||
+      !S.streams.length
+    ) {
+      return 0;
+    }
+
+    const source =
+      normalizedSource(
+        pendingPreference.source
+      );
+
+    const streamNo =
+      String(
+        pendingPreference.streamNo ??
+        ""
+      );
+
+    let index =
+      S.streams.findIndex(
+        (stream) =>
+          source &&
+          normalizedSource(
+            stream?.source ||
+            stream?.provider
+          ) === source &&
+          streamNo &&
+          String(
+            stream?.streamNo ?? ""
+          ) === streamNo
+      );
+
+    if (index !== -1) {
+      return index;
+    }
+
+    index =
+      S.streams.findIndex(
+        (stream) =>
+          streamNo &&
+          String(
+            stream?.streamNo ?? ""
+          ) === streamNo
+      );
+
+    if (index !== -1) {
+      return index;
+    }
+
+    index =
+      S.streams.findIndex(
+        (stream) =>
+          source &&
+          normalizedSource(
+            stream?.source ||
+            stream?.provider
+          ) === source
+      );
+
+    return index === -1
+      ? 0
+      : index;
+  }
+
+  async function openMatch(
+    match,
+    options = {}
+  ) {
+    if (!match) return;
+
     S.active = match;
     S.streams = [];
     S.activeStreamIndex = 0;
 
-    E.playerTitle.textContent = match.title || "Event";
-    E.playerMeta.textContent = V2.datetime(match);
-    E.playerKicker.textContent = V2.live(match)
-      ? "● LIVE · EASTCOIN PLAYER"
-      : "EASTCOIN PLAYER";
-    E.sideTitle.textContent = match.title || "Event";
-    E.sideMeta.textContent = `${V2.datetime(match)} · ${V2.provider(match)}`;
-    E.saveActive.textContent = S.favorites.has(V2.id(match)) ? "★" : "☆";
+    pendingPreference = {
+      source:
+        options.source || "",
+      streamNo:
+        options.streamNo ??
+        options.stream ??
+        ""
+    };
+
+    E.playerTitle.textContent =
+      match.title || "Event";
+
+    E.playerMeta.textContent =
+      V2.datetime(match);
+
+    E.playerKicker.textContent =
+      V2.live(match)
+        ? "● LIVE · EASTCOIN PLAYER"
+        : "EASTCOIN PLAYER";
+
+    E.sideTitle.textContent =
+      match.title || "Event";
+
+    E.sideMeta.textContent =
+      `${V2.datetime(match)} · ${V2.provider(match)}`;
+
+    E.saveActive.textContent =
+      S.favorites.has(
+        V2.id(match)
+      )
+        ? "★"
+        : "☆";
 
     E.frame.src = "about:blank";
     E.playerLoading.hidden = false;
-    E.loaderTitle.textContent = "Finding playable streams…";
-    E.loaderMeta.textContent = "Checking EastCoin sources.";
+
+    E.loaderTitle.textContent =
+      "Finding playable streams…";
+
+    E.loaderMeta.textContent =
+      "Checking EastCoin sources.";
+
     E.streams.innerHTML = "";
 
-    openModal(E.player);
+    if (watchServerCount) {
+      watchServerCount.textContent =
+        "Finding streams…";
+    }
+
+    showWatchView();
 
     if (V2.events?.addRecent) {
       V2.events.addRecent(match);
     }
 
-    try {
-      const streams = await V2.API().getStreams(match, false);
+    // Put the event in the address bar immediately. The selected source
+    // is added once its stream list arrives.
+    syncBrowserUrl();
 
-      S.streams = (Array.isArray(streams) ? streams : [])
-        .filter((stream) => Boolean(stream?.embedUrl));
+    try {
+      const streams =
+        await V2.API()
+          .getStreams(
+            match,
+            false
+          );
+
+      S.streams =
+        (
+          Array.isArray(streams)
+            ? streams
+            : []
+        ).filter(
+          (stream) =>
+            Boolean(
+              stream?.embedUrl
+            )
+        );
 
       if (!S.streams.length) {
-        throw new Error("No playable streams returned.");
+        throw new Error(
+          "No playable streams returned."
+        );
       }
 
       renderStreams();
-      selectStream(0);
+      selectStream(
+        preferredStreamIndex()
+      );
+
+      pendingPreference = null;
     } catch (error) {
-      E.loaderTitle.textContent = "No playable stream available";
+      E.loaderTitle.textContent =
+        "No playable stream available";
+
       E.loaderMeta.textContent =
-        error?.message || "EastCoin could not load this event.";
+        error?.message ||
+        "EastCoin could not load this event.";
+
+      if (watchServerCount) {
+        watchServerCount.textContent =
+          "No servers available";
+      }
     }
   }
 
   function renderStreams() {
-    E.streams.innerHTML = S.streams.map((stream, index) => `
-      <button
-        class="stream ${index === S.activeStreamIndex ? "active" : ""}"
-        data-stream="${index}"
-      >
-        <span>
-          ${V2.esc(stream.source || stream.provider || `Stream ${index + 1}`)}
-          ${stream.streamNo ? `#${V2.esc(stream.streamNo)}` : ""}
-        </span>
-        <small>${V2.esc(stream.language || "")}</small>
-      </button>
-    `).join("");
+    if (!E.streams) return;
 
-    $$("[data-stream]", E.streams).forEach((button) => {
-      button.onclick = () => selectStream(Number(button.dataset.stream));
+    if (watchServerCount) {
+      watchServerCount.textContent =
+        `${S.streams.length} ${
+          S.streams.length === 1
+            ? "server"
+            : "servers"
+        } available`;
+    }
+
+    E.streams.innerHTML =
+      S.streams
+        .map(
+          (stream, index) => `
+            <button
+              class="stream ${
+                index ===
+                S.activeStreamIndex
+                  ? "active"
+                  : ""
+              }"
+              data-stream="${index}"
+              type="button"
+              title="${V2.esc(
+                stream.language ||
+                ""
+              )}"
+            >
+              <span>${V2.esc(
+                serverName(
+                  stream,
+                  index
+                )
+              )}</span>
+              ${
+                stream.language
+                  ? `<small>${V2.esc(
+                      stream.language
+                    )}</small>`
+                  : ""
+              }
+            </button>
+          `
+        )
+        .join("");
+
+    $$(
+      "[data-stream]",
+      E.streams
+    ).forEach((button) => {
+      button.onclick = () =>
+        selectStream(
+          Number(
+            button.dataset.stream
+          )
+        );
     });
   }
 
   function selectStream(index) {
-    const stream = S.streams[index];
+    const stream =
+      S.streams[index];
+
     if (!stream) return;
 
-    S.activeStreamIndex = index;
+    S.activeStreamIndex =
+      index;
 
-    $$("[data-stream]", E.streams).forEach((button, buttonIndex) => {
-      button.classList.toggle("active", buttonIndex === index);
-    });
+    $$(
+      "[data-stream]",
+      E.streams
+    ).forEach(
+      (
+        button,
+        buttonIndex
+      ) => {
+        button.classList.toggle(
+          "active",
+          buttonIndex === index
+        );
+      }
+    );
 
     E.playerLoading.hidden = false;
-    E.loaderTitle.textContent = "Opening stream…";
-    E.loaderMeta.textContent = stream.source || "EastCoin";
+    E.loaderTitle.textContent =
+      "Opening stream…";
+    E.loaderMeta.textContent =
+      serverName(
+        stream,
+        index
+      );
 
     E.frame.onload = () => {
       E.playerLoading.hidden = true;
     };
 
-    E.frame.src = stream.embedUrl;
+    E.frame.src =
+      stream.embedUrl;
 
-    setTimeout(() => {
+    syncBrowserUrl();
+
+    window.setTimeout(() => {
       E.playerLoading.hidden = true;
     }, 3500);
   }
 
   function openCustom(url) {
     S.active = {
-      id: `custom:${Date.now()}`,
+      id:
+        `custom:${Date.now()}`,
       title: "Custom Stream",
       date: Date.now()
     };
@@ -136,17 +555,384 @@
     }];
 
     S.activeStreamIndex = 0;
+    pendingPreference = null;
 
-    E.playerTitle.textContent = "Custom Stream";
-    E.playerMeta.textContent = url;
-    E.playerKicker.textContent = "CUSTOM STREAM";
-    E.sideTitle.textContent = "Custom Stream";
-    E.sideMeta.textContent = "User-supplied embed URL";
+    E.playerTitle.textContent =
+      "Custom Stream";
 
-    openModal(E.player);
+    E.playerMeta.textContent =
+      url;
+
+    E.playerKicker.textContent =
+      "CUSTOM STREAM";
+
+    E.sideTitle.textContent =
+      "Custom Stream";
+
+    E.sideMeta.textContent =
+      "User-supplied embed URL";
+
+    E.saveActive.textContent =
+      "☆";
+
+    showWatchView();
     renderStreams();
     selectStream(0);
   }
+
+  async function copyLink() {
+    const url =
+      watchUrl().href;
+
+    try {
+      if (
+        navigator.clipboard
+          ?.writeText
+      ) {
+        await navigator.clipboard
+          .writeText(url);
+      } else {
+        throw new Error(
+          "Clipboard unavailable"
+        );
+      }
+
+      V2.toast(
+        "Watch link copied."
+      );
+    } catch {
+      window.prompt(
+        "Copy this watch link:",
+        url
+      );
+    }
+  }
+
+  function openExternal() {
+    const stream =
+      activeStream();
+
+    if (!stream?.embedUrl) {
+      V2.toast(
+        "No active source to open."
+      );
+      return;
+    }
+
+    window.open(
+      stream.embedUrl,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  }
+
+  function defaultMultiviewState() {
+    return {
+      layout: 4,
+      slots: [
+        null,
+        null,
+        null,
+        null
+      ],
+      splits: {
+        2: {
+          col: 50,
+          row: 50
+        },
+        3: {
+          col: 50,
+          row: 50
+        },
+        4: {
+          col: 50,
+          row: 50
+        }
+      }
+    };
+  }
+
+  function addToMultiview() {
+    if (!S.active) return;
+
+    if (
+      String(
+        S.active.id || ""
+      ).startsWith("custom:")
+    ) {
+      V2.toast(
+        "Custom streams can be managed from MultiView."
+      );
+      V2.router?.go?.(
+        "multiview"
+      );
+      closePlayer({
+        clearUrl: true
+      });
+      return;
+    }
+
+    const raw =
+      V2.read(
+        "eastcoinMultiviewV1",
+        null
+      );
+
+    const mv =
+      raw &&
+      Array.isArray(
+        raw.slots
+      )
+        ? {
+            layout:
+              [2, 3, 4]
+                .includes(
+                  Number(
+                    raw.layout
+                  )
+                )
+                ? Number(
+                    raw.layout
+                  )
+                : 4,
+            slots: [
+              ...raw.slots
+                .slice(0, 4),
+              null,
+              null,
+              null,
+              null
+            ].slice(0, 4),
+            splits:
+              raw.splits &&
+              typeof raw.splits ===
+                "object"
+                ? raw.splits
+                : defaultMultiviewState()
+                    .splits
+          }
+        : defaultMultiviewState();
+
+    const key =
+      V2.id(S.active);
+
+    const existing =
+      mv.slots.findIndex(
+        (slot) =>
+          slot?.type ===
+            "event" &&
+          String(slot.id) ===
+            key
+      );
+
+    if (existing !== -1) {
+      V2.toast(
+        `Already in MultiView slot ${
+          existing + 1
+        }.`
+      );
+      return;
+    }
+
+    const slot =
+      mv.slots.findIndex(
+        (item) => !item
+      );
+
+    if (slot === -1) {
+      V2.toast(
+        "MultiView is full."
+      );
+      return;
+    }
+
+    const [, sportLabel] =
+      V2.sportMeta(
+        V2.family(S.active)
+      );
+
+    mv.slots[slot] = {
+      type: "event",
+      id: key,
+      title:
+        String(
+          S.active.title ||
+          "EastCoin event"
+        ),
+      meta: sportLabel
+    };
+
+    if (slot >= 3) {
+      mv.layout = 4;
+    } else if (
+      slot === 2 &&
+      Number(mv.layout) < 3
+    ) {
+      mv.layout = 3;
+    } else if (
+      slot === 1 &&
+      Number(mv.layout) < 2
+    ) {
+      mv.layout = 2;
+    }
+
+    V2.write(
+      "eastcoinMultiviewV1",
+      mv
+    );
+
+    V2.toast(
+      `Added to MultiView slot ${
+        slot + 1
+      }.`
+    );
+  }
+
+  function openPendingFromUrl(
+    attempt = 0
+  ) {
+    if (
+      deepLinkHandled
+    ) {
+      return;
+    }
+
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
+
+    const eventId =
+      params.get("event");
+
+    const watch =
+      params.get("watch");
+
+    if (!eventId && !watch) {
+      deepLinkHandled = true;
+      return;
+    }
+
+    if (watch) {
+      deepLinkHandled = true;
+      openCustom(watch);
+      return;
+    }
+
+    const match =
+      V2.events?.find?.(
+        eventId
+      );
+
+    if (match) {
+      deepLinkHandled = true;
+
+      openMatch(
+        match,
+        {
+          source:
+            params.get(
+              "source"
+            ) || "",
+          streamNo:
+            params.get(
+              "stream"
+            ) || ""
+        }
+      );
+      return;
+    }
+
+    // Events load asynchronously after player.js. Retry briefly so copied
+    // event links can restore the watch view after a refresh.
+    if (attempt < 60) {
+      window.clearTimeout(
+        deepLinkTimer
+      );
+
+      deepLinkTimer =
+        window.setTimeout(
+          () =>
+            openPendingFromUrl(
+              attempt + 1
+            ),
+          250
+        );
+    } else {
+      deepLinkHandled = true;
+      V2.toast(
+        "That event is no longer available."
+      );
+      clearWatchParams();
+    }
+  }
+
+  // If the user chooses another top-level V2 route or sport while watching,
+  // treat it as leaving the player rather than leaving an invisible iframe
+  // running behind the new view.
+  document.addEventListener(
+    "click",
+    (event) => {
+      if (
+        !document.body.classList.contains(
+          "ec-watching"
+        )
+      ) {
+        return;
+      }
+
+      const route =
+        event.target.closest(
+          "[data-v2-route]"
+        );
+
+      const sport =
+        event.target.closest(
+          "[data-sport]"
+        );
+
+      if (
+        route &&
+        !route.closest(
+          "#player"
+        )
+      ) {
+        closePlayer({
+          clearUrl: true
+        });
+        return;
+      }
+
+      if (sport) {
+        closePlayer({
+          clearUrl: true
+        });
+      }
+    },
+    true
+  );
+
+  copyWatchLink?.addEventListener(
+    "click",
+    copyLink
+  );
+
+  openStreamExternal?.addEventListener(
+    "click",
+    openExternal
+  );
+
+  watchMultiView?.addEventListener(
+    "click",
+    addToMultiview
+  );
+
+  // Start deep-link restoration after the remaining V2 scripts have had
+  // a chance to initialize the event provider.
+  window.setTimeout(
+    () => openPendingFromUrl(),
+    150
+  );
 
   V2.player = {
     openModal,
@@ -157,6 +943,10 @@
     openMatch,
     renderStreams,
     selectStream,
-    openCustom
+    openCustom,
+    copyLink,
+    openExternal,
+    addToMultiview,
+    openPendingFromUrl
   };
 })();
