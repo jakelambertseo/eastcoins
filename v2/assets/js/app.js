@@ -110,17 +110,6 @@
       }
     };
 
-    E.refresh.onclick = () => V2.events.load(true);
-
-    E.featureOpen.onclick = () => {
-      const match = V2.events.find(S.featured);
-      if (match) V2.player.openMatch(match);
-    };
-
-    $("#scheduleJump").onclick = () => {
-      $("#schedule").scrollIntoView({ behavior: "smooth" });
-    };
-
     $("#clear").onclick = clearFilters;
 
     E.sort.onclick = () => {
@@ -165,12 +154,6 @@
 
     E.saveActive.onclick = () => {
       if (S.active) V2.events.toggleFavorite(V2.id(S.active));
-    };
-
-    $("#customBtn").onclick = () => {
-      E.customUrl.value = "";
-      V2.player.openModal(E.custom);
-      setTimeout(() => E.customUrl.focus(), 50);
     };
 
     const closeCustom = () => V2.player.closeModal(E.custom);
@@ -223,11 +206,6 @@
   }
 
   function init() {
-    $("#dateLabel").textContent = new Date().toLocaleDateString(undefined, {
-      weekday: "long",
-      month: "long",
-      day: "numeric"
-    });
 
     V2.settings.init();
     V2.events.renderDates();

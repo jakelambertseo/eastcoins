@@ -189,7 +189,6 @@
 
     V2.write("eastcoinV2Favorites", [...S.favorites]);
 
-    renderFeature();
     renderGrid();
 
     if (S.active && V2.id(S.active) === key) {
@@ -198,97 +197,11 @@
   }
 
   function renderFeature() {
-    const match = sorted(S.events)[0];
-
-    if (!match) {
-      S.featured = null;
-      E.featureOpen.disabled = true;
-      E.featured.innerHTML = '<div class="loading">No featured event available.</div>';
-      return;
-    }
-
-    S.featured = V2.id(match);
-    E.featureOpen.disabled = false;
-
-    const [icon, label] = V2.sportMeta(V2.family(match));
-    const poster = V2.poster(match);
-    const home = match?.teams?.home;
-    const away = match?.teams?.away;
-    const key = V2.id(match);
-
-    E.featured.innerHTML = `
-      ${poster ? `<div class="featureart" style="background-image:url('${V2.esc(poster)}')"></div>` : ""}
-      <div class="featureoverlay"></div>
-      <div class="featureinner">
-        <div class="featuretop">
-          <span class="pill ${V2.live(match) ? "live" : ""}">
-            ${V2.live(match) ? "● LIVE" : V2.esc(V2.time(match))}
-          </span>
-          <span class="category">${icon} ${V2.esc(label)}</span>
-          <span class="network-label">📺 ${V2.esc(V2.network(match))}</span>
-          <button class="save ${S.favorites.has(key) ? "saved" : ""}" data-fsave>
-            ${S.favorites.has(key) ? "★" : "☆"}
-          </button>
-        </div>
-
-        <div class="featuremain">
-          <h2>${V2.esc(match.title || "EastCoin event")}</h2>
-          <p>
-            ${V2.esc(V2.datetime(match))} ·
-            <span class="viewer-label">👥 ${V2.esc(V2.viewerText(match))}</span> ·
-            ${V2.sources(match)} source${V2.sources(match) === 1 ? "" : "s"}
-          </p>
-          ${home || away
-            ? `<div class="teams">${V2.logo(away)}<span>VS</span>${V2.logo(home)}</div>`
-            : ""}
-        </div>
-
-        <div class="featurefoot">
-          <div>
-            <small>${V2.live(match) ? "Happening now" : "Upcoming"} · ${V2.esc(V2.provider(match))}</small>
-          </div>
-          <div>
-            <button data-fchat>Open Chat</button>
-            <button class="watch" data-fopen>Watch Now →</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    $("[data-fopen]", E.featured).onclick = () => V2.player.openMatch(match);
-    $("[data-fchat]", E.featured).onclick = V2.player.openChat;
-    $("[data-fsave]", E.featured).onclick = () => toggleFavorite(key);
+    // Featured landing surface was removed in Iteration 9.
   }
 
   function renderUpNext() {
-    const upcoming = S.events
-      .filter((match) => !V2.live(match) && V2.ts(match?.date) > Date.now())
-      .sort((left, right) => V2.ts(left?.date) - V2.ts(right?.date))
-      .slice(0, 4);
-
-    E.upnext.innerHTML = upcoming.length
-      ? upcoming.map((match) => {
-          const [icon, label] = V2.sportMeta(V2.family(match));
-
-          return `
-            <button class="uprow" data-up="${V2.esc(V2.id(match))}">
-              <span>${V2.esc(V2.time(match))}</span>
-              <span>
-                <strong>${V2.esc(match.title || "Event")}</strong>
-                <small>${icon} ${V2.esc(label)} · 📺 ${V2.esc(V2.network(match))} · ${V2.esc(V2.datetime(match))}</small>
-              </span>
-              <em>Open</em>
-            </button>
-          `;
-        }).join("")
-      : "<small>No upcoming events found.</small>";
-
-    $$("[data-up]", E.upnext).forEach((button) => {
-      button.onclick = () => {
-        const match = find(button.dataset.up);
-        if (match) V2.player.openMatch(match);
-      };
-    });
+    // Up Next rail was removed in Iteration 9.
   }
 
   function card(match) {
@@ -413,35 +326,20 @@
   }
 
   function providerStatus(discovery, allResult) {
-    const warnings = discovery?.warnings || [];
-
     const savedAt = Math.max(
       Number(discovery?.today?.savedAt || 0),
       Number(allResult?.savedAt || 0)
     );
 
-    const stale = Boolean(
-      discovery?.today?.stale ||
-      discovery?.live?.stale ||
-      allResult?.stale
-    );
+    if (!E.cacheMeta) return;
 
-    E.status.className = `status ${stale || warnings.length ? "warn" : "ok"}`;
-
-    E.statusTitle.textContent = stale
-      ? "Using cached EastCoin events"
-      : warnings.length
-        ? "Events loaded with provider warnings"
-        : "EastCoin event providers connected";
-
-    E.statusMeta.textContent = stale
-      ? "Latest usable snapshot retained."
-      : `${S.events.length} events available in the V2 seven-day catalog.`;
-
-    if (savedAt) {
-      const age = Math.max(0, Math.round((Date.now() - savedAt) / 60000));
-      E.cacheMeta.textContent = age ? `snapshot ${age}m old` : "updated now";
+    if (!savedAt) {
+      E.cacheMeta.textContent = "";
+      return;
     }
+
+    const age = Math.max(0, Math.round((Date.now() - savedAt) / 60000));
+    E.cacheMeta.textContent = age ? `snapshot ${age}m old` : "updated now";
   }
 
   async function load(force = false) {
@@ -449,10 +347,6 @@
       fatal("EastCoin provider adapter did not load.");
       return;
     }
-
-    E.statusTitle.textContent = force
-      ? "Refreshing EastCoin events…"
-      : "Loading EastCoin events…";
 
     try {
       const [discovery, allResult] = await Promise.all([
@@ -464,8 +358,6 @@
       E.liveCount.textContent = S.events.filter(V2.live).length;
 
       providerStatus(discovery, allResult);
-      renderFeature();
-      renderUpNext();
       renderGrid();
       renderRecent();
     } catch (error) {
@@ -475,13 +367,17 @@
 
   function fatal(message) {
     S.events = [];
-    E.status.className = "status error";
-    E.statusTitle.textContent = "Event catalog unavailable";
-    E.statusMeta.textContent = message;
-    E.featured.innerHTML = `<div class="loading">${V2.esc(message)}</div>`;
-    E.featureOpen.disabled = true;
     E.grid.innerHTML = "";
+    E.grid.hidden = true;
     E.eventCount.textContent = "0 events";
+
+    if (E.empty) {
+      E.empty.hidden = false;
+      const title = E.empty.querySelector("strong");
+      const copy = E.empty.querySelector("small");
+      if (title) title.textContent = "Events unavailable";
+      if (copy) copy.textContent = message || "EastCoin providers are temporarily unavailable.";
+    }
   }
 
   V2.events = {

@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">82 major update groups</div>
+<div class="release-count">83 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1844,10 +1844,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>EastCoin V2 sports dropdown styling fixed</h2>
 <p>
@@ -1855,6 +1854,20 @@
     sport options use the same near-black EastCoin surfaces, subtle borders,
     muted typography and gold hover/active states as the rest of the V2 shell,
     replacing inconsistent browser-like gray button backgrounds.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date"><time datetime="2026-08-26">August 26, 2026</time><span class="latest-badge">Latest</span></div>
+<h2>EastCoin V2 landing shell and chat header actually removed</h2>
+<p>
+    Corrected the previous V2 cleanup by removing the old “What are we watching?”
+    intro, provider-status banner, featured-event surface and Up Next rail directly
+    from the V2 HTML instead of relying on mismatched CSS selectors. Also removed
+    the custom LIVE CHAT / zwades / PERSISTENT header directly from the persistent
+    chat markup and restored the Twitch iframe to the full chat-panel height.
+    Event loading now feeds the timeline directly and no longer depends on the
+    deleted featured/status elements.
 </p>
 </article>
 </section>

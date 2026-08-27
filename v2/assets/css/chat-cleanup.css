@@ -1,31 +1,15 @@
-/* EastCoin V2 Iteration 6: remove the chat header above Twitch chat */
-.chathead{
-  display:none !important;
-}
+/* EastCoin V2 Iteration 9: true full-height persistent Twitch chat */
 
 .chat{
-  overflow:hidden;
+  display:block !important;
+  overflow:hidden !important;
 }
 
-/* Ensure the Twitch embed occupies the full chat panel height */
-.chat iframe,
-.chat .chatframe,
 #persistentTwitchChat{
-  display:block;
-  width:100%;
+  display:block !important;
+  width:100% !important;
   height:100% !important;
-  min-height:0;
-  border:0;
-}
-
-/* If the chat shell uses a two-row grid, collapse it to one row */
-.chat{
-  grid-template-rows:minmax(0,1fr) !important;
-}
-
-/* If the chat shell uses flex, this keeps the iframe filling available space */
-.chat iframe,
-.chat .chatframe,
-#persistentTwitchChat{
-  flex:1 1 auto;
+  min-width:0 !important;
+  min-height:0 !important;
+  border:0 !important;
 }
