@@ -67,6 +67,117 @@
     );
   }
 
+  const NFL_TEAM_NAMES = [
+    "arizona cardinals",
+    "atlanta falcons",
+    "baltimore ravens",
+    "buffalo bills",
+    "carolina panthers",
+    "chicago bears",
+    "cincinnati bengals",
+    "cleveland browns",
+    "dallas cowboys",
+    "denver broncos",
+    "detroit lions",
+    "green bay packers",
+    "houston texans",
+    "indianapolis colts",
+    "jacksonville jaguars",
+    "kansas city chiefs",
+    "las vegas raiders",
+    "los angeles chargers",
+    "los angeles rams",
+    "miami dolphins",
+    "minnesota vikings",
+    "new england patriots",
+    "new orleans saints",
+    "new york giants",
+    "new york jets",
+    "philadelphia eagles",
+    "pittsburgh steelers",
+    "san francisco 49ers",
+    "seattle seahawks",
+    "tampa bay buccaneers",
+    "tennessee titans",
+    "washington commanders"
+  ];
+
+  function footballLeagueText(match) {
+    const odds =
+      V2.cardOdds?.forMatch?.(match);
+
+    return [
+      match?.title,
+      match?.category,
+      match?.sport,
+      match?.league,
+      match?.competition,
+      match?.tournament,
+      match?.network,
+      match?.broadcast,
+      match?.teams?.away?.name,
+      match?.teams?.home?.name,
+      odds?.sportKey,
+      odds?.sportTitle
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/s+/g, " ")
+      .trim();
+  }
+
+  function isNflGame(match) {
+    if (isRedZone(match)) {
+      return true;
+    }
+
+    const odds =
+      V2.cardOdds?.forMatch?.(match);
+
+    if (
+      String(odds?.sportKey || "")
+        .toLowerCase() ===
+      "americanfootball_nfl"
+    ) {
+      return true;
+    }
+
+    const text =
+      footballLeagueText(match);
+
+    if (
+      /(^| )nfl( |$)/.test(text) ||
+      text.includes(
+        "national football league"
+      ) ||
+      text.includes(
+        "americanfootball nfl"
+      )
+    ) {
+      return true;
+    }
+
+    /*
+      Explicit college markers win before team-name fallback. This keeps NCAA,
+      FBS and FCS games below the NFL even when school/team wording overlaps.
+    */
+    if (
+      /(^| )(ncaaf|ncaa|fbs|fcs)( |$)/.test(text) ||
+      text.includes(
+        "college football"
+      )
+    ) {
+      return false;
+    }
+
+    return NFL_TEAM_NAMES.some(
+      (team) =>
+        text.includes(team)
+    );
+  }
+
   function eventFamily(match) {
     return isRedZone(match)
       ? "american-football"
@@ -433,13 +544,29 @@
   function categorySection(family, matches) {
     const [icon, label] = V2.sportMeta(family);
 
-    // RedZone is a featured NFL broadcast surface. Keep it at the front of
-    // Football regardless of Recommended vs Time sorting.
+    /*
+      Football priority is intentionally tiered:
+      1. RedZone
+      2. NFL games
+      3. College / other football
+
+      "matches" is already sorted by the user's Recommended/Time choice, so
+      filtering into tiers preserves that ordering inside each tier.
+    */
     const orderedMatches =
       family === "american-football"
         ? [
             ...matches.filter(isRedZone),
-            ...matches.filter((match) => !isRedZone(match))
+            ...matches.filter(
+              (match) =>
+                !isRedZone(match) &&
+                isNflGame(match)
+            ),
+            ...matches.filter(
+              (match) =>
+                !isRedZone(match) &&
+                !isNflGame(match)
+            )
           ]
         : matches;
 
