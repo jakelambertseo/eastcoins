@@ -27,8 +27,12 @@
     awayProjection: $("#quickBetAwayProjection"),
     homeProjection: $("#quickBetHomeProjection"),
     range: $("#quickBetRange"),
+    amount: $("#quickBetAmount"),
+    wagerLabel: $("#quickBetWagerLabel"),
     wagerValue: $("#quickBetWagerValue"),
+    min: $("#quickBetMin"),
     max: $("#quickBetMax"),
+    previewStatus: $("#quickBetPreviewStatus"),
     wallet: $("#quickBetWallet"),
     multiplier: $("#quickBetMultiplier"),
     potentialReturn: $("#quickBetReturn"),
@@ -46,6 +50,10 @@
     cardOdds: null,
     busy: false
   };
+
+  const PREVIEW_MIN_WAGER = 1;
+  const PREVIEW_MAX_WAGER = 50;
+  const PREVIEW_DEFAULT_WAGER = 10;
 
   function money(value) {
     return Math.max(
@@ -101,7 +109,7 @@
     state.market = null;
     state.bootstrap = null;
     state.side = null;
-    state.wager = 0;
+    state.wager = PREVIEW_DEFAULT_WAGER;
     state.cardOdds = null;
     state.busy = false;
 
@@ -189,6 +197,57 @@
     };
   }
 
+  function wagerLimits() {
+    const config =
+      state.bootstrap?.config || {};
+
+    const wallet =
+      walletState();
+
+    if (
+      wallet.authenticated &&
+      wallet.walletConnected &&
+      wallet.max >= 1
+    ) {
+      const serverMin =
+        Math.max(
+          1,
+          Math.floor(
+            Number(config.minWager || 1)
+          )
+        );
+
+      return {
+        preview: false,
+        min: serverMin,
+        max: Math.max(
+          serverMin,
+          wallet.max
+        )
+      };
+    }
+
+    return {
+      preview: true,
+      min: PREVIEW_MIN_WAGER,
+      max: PREVIEW_MAX_WAGER
+    };
+  }
+
+  function normalizeWager(value) {
+    const limits = wagerLimits();
+
+    return Math.min(
+      limits.max,
+      Math.max(
+        limits.min,
+        Math.floor(
+          Number(value) || limits.min
+        )
+      )
+    );
+  }
+
   function poolSnapshot(
     side = state.side,
     wager = state.wager
@@ -266,6 +325,7 @@
 
   function renderTicket() {
     const wallet = walletState();
+    const limits = wagerLimits();
 
     els.away.classList.toggle(
       "selected",
@@ -277,55 +337,53 @@
       state.side === "home"
     );
 
-    renderProjectionLabels();
+    if (
+      state.wager < limits.min ||
+      state.wager > limits.max
+    ) {
+      state.wager = normalizeWager(
+        state.wager || PREVIEW_DEFAULT_WAGER
+      );
+    }
+
+    els.range.disabled = false;
+    els.range.min = String(limits.min);
+    els.range.max = String(limits.max);
+    els.range.value = String(state.wager);
+
+    els.amount.disabled = false;
+    els.amount.min = String(limits.min);
+    els.amount.max = String(limits.max);
+    els.amount.value = String(state.wager);
+
+    els.min.textContent =
+      `${money(limits.min)} ZCoin${limits.min === 1 ? "" : "s"}`;
+
+    els.max.textContent =
+      `${money(limits.max)} ZCoins`;
+
+    els.wagerValue.textContent =
+      money(state.wager);
+
+    els.wagerLabel.textContent =
+      limits.preview
+        ? "PREVIEW WAGER"
+        : "WAGER";
+
+    els.previewStatus.hidden =
+      !limits.preview;
+
+    els.previewStatus.textContent =
+      limits.preview
+        ? "Preview only · no ZCoins will be charged until the StreamElements wallet is connected."
+        : "";
 
     els.wallet.textContent =
       wallet.walletConnected
         ? `${money(wallet.balance)} ZCoins`
-        : "Not connected";
+        : "Pending StreamElements";
 
-    els.max.textContent =
-      wallet.max > 0
-        ? `${money(wallet.max)} ZCoins`
-        : "—";
-
-    const validRange =
-      wallet.authenticated &&
-      wallet.walletConnected &&
-      wallet.max >= 1;
-
-    els.range.disabled = !validRange;
-
-    if (validRange) {
-      els.range.min = "1";
-      els.range.max = String(wallet.max);
-
-      if (
-        state.wager < 1 ||
-        state.wager > wallet.max
-      ) {
-        state.wager =
-          Math.min(
-            wallet.max,
-            Math.max(
-              1,
-              Math.min(10, wallet.max)
-            )
-          );
-      }
-
-      els.range.value = String(
-        state.wager
-      );
-    } else {
-      state.wager = 0;
-      els.range.min = "1";
-      els.range.max = "1";
-      els.range.value = "1";
-    }
-
-    els.wagerValue.textContent =
-      money(state.wager);
+    renderProjectionLabels();
 
     if (
       state.side &&
@@ -350,7 +408,7 @@
 
     if (!wallet.authenticated) {
       els.note.textContent =
-        "Log in with Twitch to place this Picks wager.";
+        "You can preview this ticket now. Log in with Twitch before real wagering becomes available.";
 
       els.submit.disabled = false;
       els.submit.textContent =
@@ -360,17 +418,19 @@
 
     if (!wallet.walletConnected) {
       els.note.textContent =
-        "Your Picks market is ready, but the StreamElements ZCoin wallet is not connected yet.";
+        state.side
+          ? "Ticket preview ready. Your team, wager and projected return are shown above. Real submission will unlock when the StreamElements ZCoin wallet is connected."
+          : "Choose a team to preview the complete ticket. Real submission will unlock when the StreamElements ZCoin wallet is connected.";
 
       els.submit.disabled = true;
       els.submit.textContent =
-        "Wallet not connected";
+        "Connect ZCoin Wallet to Bet";
       return;
     }
 
     if (!wallet.wageringEnabled) {
       els.note.textContent =
-        "Your Picks market is ready. Real ZCoin wagering is currently disabled by the Picks backend.";
+        "Your wallet is connected, but real ZCoin wagering is currently disabled by the Picks backend.";
 
       els.submit.disabled = true;
       els.submit.textContent =
@@ -388,7 +448,7 @@
       return;
     }
 
-    if (state.wager < 1) {
+    if (state.wager < limits.min) {
       els.note.textContent =
         "Choose a valid ZCoin wager.";
 
@@ -402,11 +462,18 @@
 
     els.note.textContent =
       snapshot.active
-        ? "Projected payout updates with the community pool until the market locks."
-        : "Early pool preview: one-sided markets become No Action at lock if the other side never receives action.";
+        ? "Projected pool payout updates as other EastCoin users bet. The final multiplier is locked with the market."
+        : "Early pool preview. If only one side receives action by lock, the market can settle as No Action.";
 
     els.submit.disabled = false;
     els.submit.textContent = "Place Bet";
+  }
+
+  function setWager(value) {
+    state.wager =
+      normalizeWager(value);
+
+    renderTicket();
   }
 
   function renderPrepared() {
@@ -578,6 +645,7 @@
     reset();
 
     state.match = match;
+    state.wager = PREVIEW_DEFAULT_WAGER;
     state.cardOdds =
       V2.cardOdds?.forMatch?.(match) ||
       null;
@@ -760,18 +828,27 @@
   };
 
   els.range.oninput = () => {
-    state.wager =
-      Math.max(
-        1,
-        Math.floor(
-          Number(
-            els.range.value
-          ) || 1
-        )
-      );
-
-    renderTicket();
+    setWager(els.range.value);
   };
+
+  els.amount.oninput = () => {
+    if (els.amount.value === "") return;
+    setWager(els.amount.value);
+  };
+
+  els.amount.onblur = () => {
+    setWager(els.amount.value);
+  };
+
+  document.querySelectorAll(
+    "[data-quick-amount]"
+  ).forEach((button) => {
+    button.onclick = () => {
+      setWager(
+        button.dataset.quickAmount
+      );
+    };
+  });
 
   els.fullPicks.onclick =
     openFullPicks;

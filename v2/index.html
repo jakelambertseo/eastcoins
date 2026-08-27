@@ -17,7 +17,7 @@
 <link href="assets/css/sport-more-fix.css?v=8" rel="stylesheet">
 <link href="assets/css/event-cards-v1.css?v=28" rel="stylesheet">
 <link href="assets/css/card-scores.css?v=18" rel="stylesheet">
-<link href="assets/css/quick-bet.css?v=15" rel="stylesheet">
+<link href="assets/css/quick-bet.css?v=31" rel="stylesheet">
 </head>
 <body>
 <header class="topbar">
@@ -124,22 +124,41 @@
 
       <section class="quickbet-wager">
         <div class="quickbet-wager-head">
-          <span>WAGER</span>
-          <strong><b id="quickBetWagerValue">0</b> ZCoins</strong>
+          <span id="quickBetWagerLabel">PREVIEW WAGER</span>
+          <strong>
+            <span class="quickbet-zcoin" aria-hidden="true">
+              <img src="https://cdn.7tv.app/emote/01KY8QC028T1NJD49NTEH898BC/2x.webp" alt="">
+            </span>
+            <b id="quickBetWagerValue">10</b> ZCoins
+          </strong>
         </div>
 
-        <input id="quickBetRange" type="range" min="1" max="1" value="1" disabled>
+        <div class="quickbet-amount-row">
+          <input id="quickBetAmount" class="quickbet-amount" type="number" min="1" step="1" inputmode="numeric" aria-label="Quick Bet wager amount" value="10">
+          <div class="quickbet-chips" aria-label="Quick wager amounts">
+            <button type="button" data-quick-amount="5">5</button>
+            <button type="button" data-quick-amount="10">10</button>
+            <button type="button" data-quick-amount="25">25</button>
+            <button type="button" data-quick-amount="50">50</button>
+          </div>
+        </div>
+
+        <input id="quickBetRange" type="range" min="1" max="50" value="10">
 
         <div class="quickbet-range-meta">
-          <span>1</span>
-          <span>Max <b id="quickBetMax">—</b></span>
+          <span>Min <b id="quickBetMin">1 ZCoin</b></span>
+          <span>Max <b id="quickBetMax">50 ZCoins</b></span>
+        </div>
+
+        <div class="quickbet-preview-status" id="quickBetPreviewStatus">
+          Preview only · no ZCoins will be charged
         </div>
       </section>
 
       <div class="quickbet-summary">
-        <div><span>Wallet</span><strong id="quickBetWallet">—</strong></div>
-        <div><span>Projected</span><strong id="quickBetMultiplier">—</strong></div>
-        <div><span>Potential return</span><strong id="quickBetReturn">—</strong></div>
+        <div><span>Wallet</span><strong id="quickBetWallet">Pending StreamElements</strong></div>
+        <div><span>Projected pool payout</span><strong id="quickBetMultiplier">—</strong></div>
+        <div><span>Estimated return</span><strong id="quickBetReturn">—</strong></div>
       </div>
 
       <p class="quickbet-note" id="quickBetNote">
@@ -170,7 +189,7 @@
 <script src="assets/js/card-scores.js?v=16"></script>
 <script src="assets/js/integrations.js?v=4"></script>
 <script src="assets/js/router.js?v=13"></script>
-<script src="assets/js/quick-bet.js?v=15"></script>
+<script src="assets/js/quick-bet.js?v=31"></script>
 <script src="assets/js/settings.js?v=5"></script>
 <script src="assets/js/app.js?v=19"></script>
 </body></html>
