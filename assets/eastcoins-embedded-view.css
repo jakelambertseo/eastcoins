@@ -255,3 +255,22 @@ html.ec-embedded-view body.sidebar-collapsed .favorites-layout {
     padding: 22px 18px 96px !important;
   }
 }
+
+
+/* ================================================================
+   EASTCOIN MULTIVIEW PLAYER CLEANUP
+   The parent MultiView owns controls. Nested legacy player chrome is removed.
+   ================================================================ */
+html.ec-multiview-player .player-toolbar,
+html.ec-multiview-player .ec-utility-dock,
+html.ec-multiview-player .streamed-server-panel,
+html.ec-multiview-player .copy-link-tooltip,
+html.ec-multiview-player #eastcoinMlbGamedayButton,
+html.ec-multiview-player #eastcoinMlbGamedayOverlay{
+  display:none!important;
+}
+
+html.ec-multiview-player .embed-frame{
+  width:100%!important;
+  height:100%!important;
+}

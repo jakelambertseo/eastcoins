@@ -4,6 +4,30 @@
   const API = window.EastcoinPicksAPI;
   const Preview = window.EastcoinPicksPreview;
 
+  const QUERY =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  const V2_EMBEDDED =
+    QUERY.get(
+      "ecV2Embedded"
+    ) === "1";
+
+  const PREVIEW_REQUESTED =
+    QUERY.get(
+      "preview"
+    ) === "1";
+
+  const LOCAL_PREVIEW_ALLOWED =
+    [
+      "localhost",
+      "127.0.0.1",
+      "::1"
+    ].includes(
+      window.location.hostname
+    );
+
   if (!Preview) {
     console.error("EastCoin Picks preview engine failed to load.");
     return;
@@ -16,10 +40,12 @@
     leaderboard:[],
     tickets:[],
     history:[],
+    communityLedger:[],
     session:{
       authenticated:false,
       user:null,
-      walletBalance:0
+      walletBalance:0,
+      walletConnected:false
     },
     season:{
       wins:0,
@@ -46,6 +72,8 @@
     topLeadersList:$("topLeadersList"),
     topLeadersTrack:$("topLeadersTrack"),
     historyList:$("historyList"),
+    communityLedger:$("communityLedger"),
+    ledgerCount:$("ledgerCount"),
     catalogStatus:$("catalogStatus"),
     pendingCount:$("pendingCount"),
     seasonProfit:$("seasonProfit"),
@@ -91,6 +119,139 @@
       .toLocaleString("en-US");
   }
 
+  function toTimestamp(
+    value,
+    fallback = 0
+  ) {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ""
+    ) {
+      return fallback;
+    }
+
+    const numeric =
+      Number(value);
+
+    if (
+      Number.isFinite(numeric) &&
+      numeric > 0
+    ) {
+      return numeric < 1e12
+        ? numeric * 1000
+        : numeric;
+    }
+
+    const parsed =
+      Date.parse(
+        String(value)
+      );
+
+    return Number.isFinite(
+      parsed
+    )
+      ? parsed
+      : fallback;
+  }
+
+  function normalizePickStatus(
+    value
+  ) {
+    const status =
+      String(value || "")
+        .toUpperCase();
+
+    if (
+      [
+        "ACTIVE",
+        "PENDING_PAYMENT",
+        "PENDING"
+      ].includes(status)
+    ) {
+      return "pending";
+    }
+
+    if (status === "WON") {
+      return "won";
+    }
+
+    if (status === "LOST") {
+      return "lost";
+    }
+
+    if (status === "REFUNDED") {
+      return "refunded";
+    }
+
+    if (status === "CANCELLED") {
+      return "cancelled";
+    }
+
+    return status
+      ? status.toLowerCase()
+      : "pending";
+  }
+
+  function sportFamilyFromKey(
+    value
+  ) {
+    const key =
+      String(value || "")
+        .toLowerCase();
+
+    if (
+      key.startsWith(
+        "americanfootball_"
+      )
+    ) {
+      return "american-football";
+    }
+
+    if (
+      key.startsWith(
+        "baseball_"
+      )
+    ) {
+      return "baseball";
+    }
+
+    if (
+      key ===
+        "mma_mixed_martial_arts" ||
+      key.includes("mma") ||
+      key.includes("ufc")
+    ) {
+      return "combat";
+    }
+
+    if (
+      key.startsWith(
+        "basketball_"
+      )
+    ) {
+      return "basketball";
+    }
+
+    if (
+      key.startsWith(
+        "icehockey_"
+      )
+    ) {
+      return "hockey";
+    }
+
+    if (
+      key.startsWith(
+        "soccer_"
+      )
+    ) {
+      return "soccer";
+    }
+
+    return "other";
+  }
+
   function initials(value) {
     return Preview.initials(value);
   }
@@ -123,95 +284,263 @@
   }
 
   function normalizeBackendMarket(raw) {
-    const awayRaw = raw?.away || raw?.teams?.away || {};
-    const homeRaw = raw?.home || raw?.teams?.home || {};
+    const awayRaw =
+      raw?.away ||
+      raw?.teams?.away ||
+      {};
 
-    let startsAt = Number(
-      raw?.startsAt ||
-      raw?.starts_at ||
-      raw?.date ||
-      0
-    );
+    const homeRaw =
+      raw?.home ||
+      raw?.teams?.home ||
+      {};
 
-    if (startsAt && startsAt < 1e12) {
-      startsAt *= 1000;
-    }
+    const startsAt =
+      toTimestamp(
+        raw?.startsAt ||
+        raw?.starts_at ||
+        raw?.date,
+        Date.now()
+      );
 
-    const awayZ = Number(
-      raw?.pool?.awayZcoins ??
-      raw?.pool?.away ??
-      raw?.awayZcoins ??
-      0
-    );
+    const awayZ =
+      Number(
+        raw?.pool?.awayZcoins ??
+        raw?.pool?.away ??
+        raw?.awayZcoins ??
+        0
+      );
 
-    const homeZ = Number(
-      raw?.pool?.homeZcoins ??
-      raw?.pool?.home ??
-      raw?.homeZcoins ??
-      0
-    );
+    const homeZ =
+      Number(
+        raw?.pool?.homeZcoins ??
+        raw?.pool?.home ??
+        raw?.homeZcoins ??
+        0
+      );
 
-    const awayTickets = Number(
-      raw?.pool?.awayTickets ??
-      raw?.awayTickets ??
-      0
-    );
+    const awayTickets =
+      Number(
+        raw?.pool?.awayTickets ??
+        raw?.awayTickets ??
+        0
+      );
 
-    const homeTickets = Number(
-      raw?.pool?.homeTickets ??
-      raw?.homeTickets ??
-      0
-    );
+    const homeTickets =
+      Number(
+        raw?.pool?.homeTickets ??
+        raw?.homeTickets ??
+        0
+      );
 
     return {
-      id:String(raw?.id || raw?.marketId || raw?.eventId || ""),
-      eventId:String(raw?.eventId || raw?.event_id || ""),
-      sport:String(raw?.sport || raw?.category || "other"),
-      family:String(raw?.family || raw?.sportFamily || "other"),
-      away:String(awayRaw?.name || awayRaw?.displayName || "Away"),
-      home:String(homeRaw?.name || homeRaw?.displayName || "Home"),
-      awayLogo:String(awayRaw?.badge || awayRaw?.logo || awayRaw?.image || ""),
-      homeLogo:String(homeRaw?.badge || homeRaw?.logo || homeRaw?.image || ""),
-      startTs:startsAt || Date.now(),
+      id:String(
+        raw?.id ||
+        raw?.marketId ||
+        raw?.eventId ||
+        ""
+      ),
+      eventId:String(
+        raw?.eventId ||
+        raw?.event_id ||
+        ""
+      ),
+      sport:String(
+        raw?.sport ||
+        raw?.category ||
+        "other"
+      ),
+      family:String(
+        raw?.family ||
+        raw?.sportFamily ||
+        sportFamilyFromKey(
+          raw?.sport
+        )
+      ),
+      away:String(
+        awayRaw?.name ||
+        awayRaw?.displayName ||
+        "Away"
+      ),
+      home:String(
+        homeRaw?.name ||
+        homeRaw?.displayName ||
+        "Home"
+      ),
+      awayLogo:String(
+        awayRaw?.badge ||
+        awayRaw?.logo ||
+        awayRaw?.image ||
+        ""
+      ),
+      homeLogo:String(
+        homeRaw?.badge ||
+        homeRaw?.logo ||
+        homeRaw?.image ||
+        ""
+      ),
+      startTs:startsAt,
       live:Boolean(raw?.live),
-      popular:Boolean(raw?.popular),
-      state:String(raw?.state || "OPEN").toUpperCase(),
+      popular:Boolean(
+        raw?.popular
+      ),
+      state:String(
+        raw?.state ||
+        "OPEN"
+      ).toUpperCase(),
       pool:{
         away:awayZ,
         home:homeZ,
-        total:Number(raw?.pool?.totalZcoins ?? awayZ + homeZ),
-        awayCount:awayTickets,
-        homeCount:homeTickets
+        total:Number(
+          raw?.pool?.totalZcoins ??
+          raw?.pool?.total ??
+          awayZ + homeZ
+        ),
+        awayCount:
+          awayTickets,
+        homeCount:
+          homeTickets
       },
-      userPick:raw?.userPick || null
+      userPick:
+        raw?.userPick ||
+        null
     };
   }
 
   function normalizeBackendPick(raw) {
-    const market = raw?.market || {};
-    const game = normalizeBackendMarket({
-      ...market,
-      id:raw?.marketId || market?.id,
-      away:market?.away || raw?.away,
-      home:market?.home || raw?.home
-    });
+    const market =
+      raw?.market || {};
+
+    const game =
+      normalizeBackendMarket({
+        ...market,
+        id:
+          raw?.marketId ||
+          market?.id,
+        away:
+          market?.away ||
+          raw?.away,
+        home:
+          market?.home ||
+          raw?.home
+      });
 
     return {
-      id:String(raw?.id || ""),
-      gameId:String(raw?.marketId || raw?.gameId || game.id),
-      side:String(raw?.selection || raw?.side || ""),
-      wager:Number(raw?.wager || 0),
-      status:String(raw?.status || "pending").toLowerCase(),
-      createdAt:Number(raw?.createdAt || raw?.created_at || Date.now()),
-      settledAt:Number(raw?.settledAt || raw?.settled_at || 0) || null,
+      id:String(
+        raw?.id ||
+        ""
+      ),
+      gameId:String(
+        raw?.marketId ||
+        raw?.gameId ||
+        game.id
+      ),
+      side:String(
+        raw?.selection ||
+        raw?.side ||
+        ""
+      ),
+      wager:Number(
+        raw?.wager ||
+        0
+      ),
+      status:
+        normalizePickStatus(
+          raw?.status
+        ),
+      createdAt:
+        toTimestamp(
+          raw?.createdAt ||
+          raw?.created_at,
+          Date.now()
+        ),
+      settledAt:
+        toTimestamp(
+          raw?.settledAt ||
+          raw?.settled_at,
+          0
+        ) || null,
       lockedPreview:Number(
         raw?.finalMultiplier ||
         raw?.projectedMultiplier ||
         raw?.lockedPreview ||
         2
       ),
-      payout:Number(raw?.payout || 0),
-      profit:Number(raw?.profit || 0),
+      payout:Number(
+        raw?.payout ||
+        0
+      ),
+      profit:Number(
+        raw?.profit ||
+        0
+      ),
+      game
+    };
+  }
+
+  function normalizeCommunityLedgerRow(
+    raw
+  ) {
+    const market =
+      raw?.market || {};
+
+    const game =
+      normalizeBackendMarket({
+        ...market,
+        id:
+          raw?.marketId ||
+          market?.id
+      });
+
+    return {
+      id:String(
+        raw?.id ||
+        ""
+      ),
+      user:
+        normalizeUser(
+          raw?.user ||
+          {}
+        ),
+      side:String(
+        raw?.selection ||
+        raw?.side ||
+        ""
+      ),
+      wager:Number(
+        raw?.wager ||
+        0
+      ),
+      status:
+        normalizePickStatus(
+          raw?.status
+        ),
+      payout:Number(
+        raw?.payout ||
+        0
+      ),
+      profit:Number(
+        raw?.profit ||
+        0
+      ),
+      finalMultiplier:
+        raw?.finalMultiplier ==
+        null
+          ? null
+          : Number(
+              raw.finalMultiplier
+            ),
+      createdAt:
+        toTimestamp(
+          raw?.createdAt ||
+          raw?.created_at,
+          Date.now()
+        ),
+      settledAt:
+        toTimestamp(
+          raw?.settledAt ||
+          raw?.settled_at,
+          0
+        ) || null,
       game
     };
   }
@@ -306,12 +635,12 @@
 
   function familyLabel(family, sport) {
     const map = {
-      "american-football":"NFL",
-      baseball:"MLB",
+      "american-football":"FOOTBALL",
+      baseball:"BASEBALL",
       basketball:"NBA",
       hockey:"NHL",
       soccer:"SOCCER",
-      combat:"UFC",
+      combat:"UFC / MMA",
       wrestling:"WRESTLING",
       motorsport:"MOTORSPORT",
       tennis:"TENNIS",
@@ -489,6 +818,13 @@
         (ticket) => ticket.status === "pending"
       ).length
     );
+
+    if (els.ledgerCount) {
+      els.ledgerCount.textContent =
+        String(
+          state.communityLedger.length
+        );
+    }
   }
 
   function marketChoice(
@@ -763,7 +1099,7 @@
             <div class="ticket-foot">
               ${
                 ticket.status === "pending"
-                  ? "Final odds lock when the game starts."
+                  ? "Final pool multiplier locks when the game starts."
                   : ticket.status === "won"
                     ? "Winning ticket settled."
                     : ticket.status === "refunded"
@@ -1069,8 +1405,11 @@
   }
 
   function renderLeaderboard() {
-    const rows = state.leaderboard
-      .map(normalizeLeaderboardRow);
+    const rows =
+      state.leaderboard
+        .map(
+          normalizeLeaderboardRow
+        );
 
     if (!rows.length) {
       els.leaderboard.innerHTML =
@@ -1084,13 +1423,14 @@
         <span>User</span>
         <span style="text-align:right">Picks Profit</span>
         <span style="text-align:right">Record</span>
-        <span style="text-align:right">Wallet</span>
       </div>
 
       ${rows
-        .map((row) => `
+        .map(
+          (row) => `
           <div class="leader-row ${
-            row.user.login === state.session.user?.login
+            row.user.login ===
+            state.session.user?.login
               ? "me"
               : ""
           }">
@@ -1111,15 +1451,15 @@
               ${row.profit >= 0 ? "+" : "−"}${money(Math.abs(row.profit))} ZC
             </span>
             <span class="leader-record">${row.wins}–${row.losses}</span>
-            <span class="leader-wallet">
-              ${row.wallet ? money(row.wallet) + " ZC" : "—"}
-            </span>
           </div>
-        `)
+        `
+        )
         .join("")}
     `;
 
-    hydrateTwitchAvatars(els.leaderboard);
+    hydrateTwitchAvatars(
+      els.leaderboard
+    );
   }
 
   function historyTime(timestamp) {
@@ -1182,6 +1522,171 @@
       .join("");
   }
 
+  function ledgerStatusLabel(
+    status
+  ) {
+    return ({
+      pending: "Bet Open",
+      won: "Won",
+      lost: "Lost",
+      refunded: "Refund"
+    })[status] ||
+      status ||
+      "Pick";
+  }
+
+  function renderCommunityLedger() {
+    if (
+      !els.communityLedger
+    ) {
+      return;
+    }
+
+    const rows =
+      [
+        ...state.communityLedger
+      ].sort(
+        (left, right) =>
+          Number(
+            right.settledAt ||
+            right.createdAt ||
+            0
+          ) -
+          Number(
+            left.settledAt ||
+            left.createdAt ||
+            0
+          )
+      );
+
+    if (!rows.length) {
+      els.communityLedger.innerHTML =
+        state.mode === "preview"
+          ? '<div class="empty">Community Ledger uses live Picks database records and is not populated with preview users.</div>'
+          : '<div class="empty">No community Picks activity has been recorded yet.</div>';
+      return;
+    }
+
+    els.communityLedger.innerHTML =
+      rows.map((row) => {
+        const game =
+          row.game || {};
+
+        const picked =
+          row.side === "away"
+            ? game.away
+            : game.home;
+
+        const opponent =
+          row.side === "away"
+            ? game.home
+            : game.away;
+
+        const status =
+          row.status ||
+          "pending";
+
+        const returned =
+          status === "won"
+            ? Number(
+                row.payout || 0
+              )
+            : status ===
+                "refunded"
+              ? Number(
+                  row.wager || 0
+                )
+              : status === "lost"
+                ? 0
+                : null;
+
+        const net =
+          status === "won"
+            ? Number(
+                row.profit ||
+                returned -
+                  Number(
+                    row.wager || 0
+                  )
+              )
+            : status === "lost"
+              ? -Math.abs(
+                  Number(
+                    row.wager || 0
+                  )
+                )
+              : status ===
+                  "refunded"
+                ? 0
+                : null;
+
+        const user =
+          row.user || {};
+
+        const mine =
+          Boolean(
+            state.session.user?.id &&
+            user.id &&
+            String(
+              state.session.user.id
+            ) ===
+              String(user.id)
+          );
+
+        return `
+          <article class="community-ledger-row ${status} ${mine ? "me" : ""}">
+            <div class="ledger-user">
+              <span
+                class="ledger-avatar"
+                data-twitch-avatar="${user.login || ""}"
+                data-avatar-url="${user.profileImageUrl || ""}">
+                <span>${initials(user.displayName || user.login || "EC")}</span>
+              </span>
+              <span class="ledger-user-copy">
+                <strong>${user.displayName || user.login || "EastCoin User"}</strong>
+                <small>${user.login ? "@" + user.login : "Community member"}</small>
+              </span>
+            </div>
+
+            <div class="ledger-pick">
+              <strong>${picked || "Pick"}</strong>
+              <small>
+                vs ${opponent || "Opponent"} ·
+                ${familyLabel(game.family, game.sport)}
+              </small>
+            </div>
+
+            <div class="ledger-stat">
+              <span>Wager</span>
+              <strong>${money(row.wager)} ZC</strong>
+            </div>
+
+            <div class="ledger-stat net ${net == null ? "" : net >= 0 ? "positive" : "negative"}">
+              <span>${returned == null ? "Pool" : "Net"}</span>
+              <strong>
+                ${net == null
+                  ? "Open"
+                  : (net > 0 ? "+" : net < 0 ? "−" : "") +
+                    money(
+                      Math.abs(net)
+                    ) +
+                    " ZC"}
+              </strong>
+            </div>
+
+            <div class="ledger-result">
+              <span class="ledger-status">${ledgerStatusLabel(status)}</span>
+              <small>${historyTime(row.settledAt || row.createdAt)}</small>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+    hydrateTwitchAvatars(
+      els.communityLedger
+    );
+  }
+
   function render() {
     renderMode();
     renderAuth();
@@ -1191,6 +1696,7 @@
     renderTickets();
     renderLeaderboard();
     renderHistory();
+    renderCommunityLedger();
   }
 
   async function loadPreview(force = false) {
@@ -1220,6 +1726,10 @@
 
     state.history =
       Preview.historyEntries();
+
+    state.communityLedger = [];
+
+    state.session.walletConnected = true;
 
     const previewSeason =
       Preview.seasonStats();
@@ -1266,6 +1776,9 @@
         session?.wallet?.balance ??
         session?.walletBalance ??
         0
+      ),
+      walletConnected:Boolean(
+        session?.wallet?.connected
       )
     };
 
@@ -1287,13 +1800,23 @@
           amount:Number(row?.amount || 0),
           title:String(row?.title || "EastCoin Picks"),
           detail:String(row?.detail || ""),
-          createdAt:Number(
+          createdAt:toTimestamp(
             row?.createdAt ||
-            row?.created_at ||
+            row?.created_at,
             Date.now()
           )
         }))
       : [];
+
+    state.communityLedger =
+      Array.isArray(
+        payload?.communityLedger
+      )
+        ? payload.communityLedger
+            .map(
+              normalizeCommunityLedgerRow
+            )
+        : [];
 
     const season = payload?.season || {};
 
@@ -1330,40 +1853,121 @@
     render();
   }
 
-  async function bootstrap({forcePreview = false} = {}) {
-    els.catalogStatus.textContent =
-      "Loading current EastCoin games…";
+  function setUnavailable(
+    error
+  ) {
+    state.mode =
+      "unavailable";
 
-    if (!forcePreview && API?.getBootstrap) {
+    state.backend = null;
+    state.games = [];
+    state.leaderboard = [];
+    state.tickets = [];
+    state.history = [];
+    state.communityLedger = [];
+
+    state.session = {
+      authenticated:false,
+      user:null,
+      walletBalance:0,
+      walletConnected:false
+    };
+
+    state.season = {
+      wins:0,
+      losses:0,
+      profit:0,
+      accuracy:null,
+      rank:null,
+      rankTitle:""
+    };
+
+    els.catalogStatus.textContent =
+      error?.message ||
+      "Picks is temporarily unavailable.";
+
+    render();
+  }
+
+  async function bootstrap({
+    forcePreview = false
+  } = {}) {
+    els.catalogStatus.textContent =
+      "Loading current EastCoin markets…";
+
+    if (
+      forcePreview ||
+      PREVIEW_REQUESTED
+    ) {
+      await loadPreview(false);
+      return;
+    }
+
+    if (API?.getBootstrap) {
       try {
         const payload =
           await API.getBootstrap();
 
         if (
           payload &&
-          Array.isArray(payload.markets)
+          Array.isArray(
+            payload.markets
+          )
         ) {
-          applyBackendBootstrap(payload);
+          applyBackendBootstrap(
+            payload
+          );
           return;
         }
+
+        throw new Error(
+          "Picks returned an invalid response."
+        );
       } catch (error) {
-        console.info(
-          "Picks backend is not connected yet; using frontend preview.",
+        if (
+          LOCAL_PREVIEW_ALLOWED
+        ) {
+          await loadPreview(
+            false
+          );
+          return;
+        }
+
+        console.error(
+          "Live Picks bootstrap failed.",
           error
         );
+
+        setUnavailable(
+          error
+        );
+        return;
       }
     }
 
-    await loadPreview(false);
-  }
-
-  async function refresh() {
-    if (state.mode === "backend") {
-      await bootstrap();
+    if (
+      LOCAL_PREVIEW_ALLOWED
+    ) {
+      await loadPreview(false);
       return;
     }
 
-    await loadPreview(true);
+    setUnavailable(
+      new Error(
+        "The Picks API did not load."
+      )
+    );
+  }
+
+  async function refresh() {
+    if (
+      state.mode === "preview"
+    ) {
+      await loadPreview(true);
+      return;
+    }
+
+    await bootstrap();
   }
 
   function requestPick(gameId, side) {
@@ -1526,7 +2130,7 @@
 
     els.oddsNote.textContent =
       snapshot.active
-        ? "Your wager is included in this projected pool. Final odds remain live until game start."
+        ? "Your wager is included in this projected pool. Projected pool multiplier remains live until game start."
         : "Even is shown while the projected pool is still one-sided. A one-sided market at lock is No Action and refunded.";
 
     els.projectedPools.innerHTML = `
@@ -1637,10 +2241,33 @@
     }
   }
 
+  function authReturnTo() {
+    if (
+      V2_EMBEDDED &&
+      window.parent !== window
+    ) {
+      try {
+        return (
+          window.parent.location.pathname +
+          window.parent.location.search +
+          window.parent.location.hash
+        );
+      } catch {}
+    }
+
+    return (
+      window.location.pathname +
+      window.location.search +
+      window.location.hash
+    );
+  }
+
   async function completeLogin() {
-    if (state.mode === "backend") {
+    if (state.mode !== "preview") {
       window.location.href =
-        API.authUrl("/picks.html");
+        API.authUrl(
+          authReturnTo()
+        );
       return;
     }
 
@@ -1671,7 +2298,7 @@
 
   async function logout() {
     try {
-      if (state.mode === "backend") {
+      if (state.mode !== "preview") {
         await API.logout();
         await bootstrap();
         return;
@@ -1886,5 +2513,27 @@
     }
   );
 
+  function initializeStandalonePicksChat() {
+    if (V2_EMBEDDED) {
+      return;
+    }
+
+    const frame =
+      document.querySelector(
+        ".chat iframe[data-src]"
+      );
+
+    if (
+      frame &&
+      frame.getAttribute(
+        "src"
+      ) === "about:blank"
+    ) {
+      frame.src =
+        frame.dataset.src;
+    }
+  }
+
+  initializeStandalonePicksChat();
   bootstrap();
 })();

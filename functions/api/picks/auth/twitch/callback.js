@@ -106,7 +106,7 @@ function sanitizeReturnTo(value) {
   if (
     !raw.startsWith("/") ||
     raw.startsWith("//") ||
-    raw.length > 500
+    raw.length > 1800
   ) {
     return "/picks.html";
   }

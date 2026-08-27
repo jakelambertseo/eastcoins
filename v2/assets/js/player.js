@@ -39,7 +39,34 @@
     node?.classList.remove("open");
   }
 
+  function ensureChatLoaded() {
+    const frame =
+      document.querySelector(
+        "#persistentTwitchChat"
+      );
+
+    if (
+      !frame ||
+      !frame.dataset.src
+    ) {
+      return;
+    }
+
+    const current =
+      frame.getAttribute("src");
+
+    if (
+      !current ||
+      current === "about:blank"
+    ) {
+      frame.src =
+        frame.dataset.src;
+    }
+  }
+
   function openChat() {
+    ensureChatLoaded();
+
     if (V2.settings) {
       V2.settings.setChatVisible(
         true
@@ -254,7 +281,7 @@
 
     const url =
       new URL(
-        "/v2/",
+        "/",
         window.location.origin
       );
 
@@ -390,6 +417,8 @@
     document.body.classList.remove(
       "ec-watching"
     );
+
+    V2.mlbGameday?.reset?.();
 
     S.active = null;
     S.streams = [];
@@ -537,6 +566,7 @@
     showWatchView();
 
     updateWatchBet();
+    V2.mlbGameday?.sync?.(match);
 
     // Card odds can finish enriching just after a deep-linked player opens.
     // Recheck briefly so an eligible event gets the same Bet shortcut as its
@@ -751,6 +781,7 @@
 
     showWatchView();
     updateWatchBet();
+    V2.mlbGameday?.reset?.();
     renderStreams();
     selectStream(0);
   }
@@ -801,166 +832,29 @@
     );
   }
 
-  function defaultMultiviewState() {
-    return {
-      layout: 4,
-      slots: [
-        null,
-        null,
-        null,
-        null
-      ],
-      splits: {
-        2: {
-          col: 50,
-          row: 50
-        },
-        3: {
-          col: 50,
-          row: 50
-        },
-        4: {
-          col: 50,
-          row: 50
-        }
-      }
-    };
-  }
-
   function addToMultiview() {
-    if (!S.active) return;
+    const stream =
+      activeStream();
 
     if (
-      String(
-        S.active.id || ""
-      ).startsWith("custom:")
+      !S.active ||
+      !stream?.embedUrl
     ) {
       V2.toast(
-        "Custom streams can be managed from MultiView."
-      );
-      V2.router?.go?.(
-        "multiview"
-      );
-      closePlayer({
-        clearUrl: true
-      });
-      return;
-    }
-
-    const raw =
-      V2.read(
-        "eastcoinMultiviewV1",
-        null
-      );
-
-    const mv =
-      raw &&
-      Array.isArray(
-        raw.slots
-      )
-        ? {
-            layout:
-              [2, 3, 4]
-                .includes(
-                  Number(
-                    raw.layout
-                  )
-                )
-                ? Number(
-                    raw.layout
-                  )
-                : 4,
-            slots: [
-              ...raw.slots
-                .slice(0, 4),
-              null,
-              null,
-              null,
-              null
-            ].slice(0, 4),
-            splits:
-              raw.splits &&
-              typeof raw.splits ===
-                "object"
-                ? raw.splits
-                : defaultMultiviewState()
-                    .splits
-          }
-        : defaultMultiviewState();
-
-    const key =
-      V2.id(S.active);
-
-    const existing =
-      mv.slots.findIndex(
-        (slot) =>
-          slot?.type ===
-            "event" &&
-          String(slot.id) ===
-            key
-      );
-
-    if (existing !== -1) {
-      V2.toast(
-        `Already in MultiView slot ${
-          existing + 1
-        }.`
+        "No active stream is available to add."
       );
       return;
     }
 
-    const slot =
-      mv.slots.findIndex(
-        (item) => !item
-      );
-
-    if (slot === -1) {
-      V2.toast(
-        "MultiView is full."
-      );
-      return;
-    }
-
-    const [, sportLabel] =
-      V2.sportMeta(
-        V2.family(S.active)
-      );
-
-    mv.slots[slot] = {
-      type: "event",
-      id: key,
-      title:
-        String(
-          S.active.title ||
-          "EastCoin event"
-        ),
-      meta: sportLabel
-    };
-
-    if (slot >= 3) {
-      mv.layout = 4;
-    } else if (
-      slot === 2 &&
-      Number(mv.layout) < 3
-    ) {
-      mv.layout = 3;
-    } else if (
-      slot === 1 &&
-      Number(mv.layout) < 2
-    ) {
-      mv.layout = 2;
-    }
-
-    V2.write(
-      "eastcoinMultiviewV1",
-      mv
-    );
-
-    V2.toast(
-      `Added to MultiView slot ${
-        slot + 1
-      }.`
-    );
+    V2.multiview?.addStream?.({
+      match: S.active,
+      stream,
+      index:
+        Number(
+          S.activeStreamIndex ||
+          0
+        )
+    });
   }
 
   function openPendingFromUrl(

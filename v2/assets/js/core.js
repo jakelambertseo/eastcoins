@@ -331,7 +331,7 @@
 
     return `<span class="${className}">${
       url
-        ? `<img src="${esc(url)}" alt="">`
+        ? `<img src="${esc(url)}" alt="" loading="lazy" decoding="async">`
         : esc(initials(team?.name))
     }</span>`;
   }
@@ -350,9 +350,64 @@
     return Number.isFinite(numeric) ? `${Math.round(numeric * 100)}¢` : "—";
   }
 
+  function currentReturnTo() {
+    const url =
+      new URL(
+        window.location.href
+      );
+
+    url.searchParams.delete(
+      "auth"
+    );
+
+    return (
+      `${url.pathname}${url.search}${url.hash}`
+    );
+  }
+
+  function authUrl(
+    returnTo =
+      currentReturnTo()
+  ) {
+    return (
+      "/api/picks/auth/twitch/start?returnTo=" +
+      encodeURIComponent(
+        returnTo
+      )
+    );
+  }
+
+  function idle(
+    task,
+    timeout = 900
+  ) {
+    if (
+      "requestIdleCallback" in
+      window
+    ) {
+      return window.requestIdleCallback(
+        task,
+        {
+          timeout
+        }
+      );
+    }
+
+    return window.setTimeout(
+      task,
+      Math.min(
+        250,
+        timeout
+      )
+    );
+  }
+
   Object.assign(V2, {
     read,
     write,
+    currentReturnTo,
+    authUrl,
+    idle,
     toast,
     esc,
     id,

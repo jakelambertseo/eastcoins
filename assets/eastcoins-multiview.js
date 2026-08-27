@@ -160,8 +160,19 @@
               return {
                 type: "url",
                 url: normalizedUrl,
-                title: String(source.title || hostLabel(normalizedUrl)),
-                meta: "Manual URL"
+                eventId: String(
+                  source.eventId || ""
+                ),
+                title: String(
+                  source.title ||
+                  hostLabel(
+                    normalizedUrl
+                  )
+                ),
+                meta: String(
+                  source.meta ||
+                  "Manual URL"
+                )
               };
             } catch {
               return null;

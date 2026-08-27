@@ -790,6 +790,16 @@
   }
 
   async function fetchBootstrap() {
+    if (
+      V2.integrations
+        ?.picksBootstrap
+    ) {
+      return (
+        V2.integrations
+          .picksBootstrap()
+      );
+    }
+
     const response = await fetch(
       "/api/picks/bootstrap",
       {
@@ -803,7 +813,10 @@
         .json()
         .catch(() => null);
 
-    if (!response.ok || !payload?.ok) {
+    if (
+      !response.ok ||
+      !payload?.ok
+    ) {
       throw new Error(
         payload?.message ||
         "EastCoin Picks could not load your current session."
@@ -1034,13 +1047,8 @@
     const wallet = walletState();
 
     if (!wallet.authenticated) {
-      const returnTo =
-        encodeURIComponent(
-          "/v2/"
-        );
-
       location.href =
-        `/api/picks/auth/twitch/start?returnTo=${returnTo}`;
+        V2.authUrl();
       return;
     }
 
@@ -1098,7 +1106,7 @@
 
       renderSuccess(payload);
 
-      V2.integrations?.identity?.();
+      V2.integrations?.identity?.({ force: true });
     } catch (error) {
       state.busy = false;
 

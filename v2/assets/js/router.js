@@ -7,11 +7,11 @@
 
   const ROUTES = Object.freeze({
     events: { title: "Events", src: null },
-    multiview: { title: "MultiView", src: "../multiview.html?ecV2Embedded=1" },
-    picks: { title: "Picks", src: "../picks.html?ecV2Embedded=1" },
-    games: { title: "Games", src: "../games.html?ecV2Embedded=1" },
-    streams: { title: "Other Streams", src: "../favorites.html?ecV2Embedded=1" },
-    sicko: { title: "Sicko Prop", src: "../picks-kalshi-test.html?ecV2Embedded=1#prop-of-week" }
+    multiview: { title: "MultiView", src: "/multiview.html?ecV2Embedded=1" },
+    picks: { title: "Picks", src: "/picks.html?ecV2Embedded=1" },
+    games: { title: "Games", src: "/games.html?ecV2Embedded=1" },
+    streams: { title: "Other Streams", src: "/favorites.html?ecV2Embedded=1" },
+    sicko: { title: "Sicko Prop", src: "/picks-kalshi-test.html?ecV2Embedded=1#prop-of-week" }
   });
 
   let current = "events";
@@ -23,7 +23,9 @@
   }
 
   function urlFor(name) {
-    return name === "events" ? "./" : `?view=${encodeURIComponent(name)}`;
+    return name === "events"
+      ? "/"
+      : `/?view=${encodeURIComponent(name)}`;
   }
 
   function setNav(name) {
@@ -41,6 +43,12 @@
 
       if (current === "multiview") {
         doc.documentElement.classList.add("ec-v2-embedded");
+      }
+
+      if (current === "picks") {
+        doc.documentElement.classList.add(
+          "ec-v2-picks-embedded"
+        );
       }
 
       if (!doc.getElementById("ecV2EmbeddedCleanup")) {
@@ -176,6 +184,11 @@
     document.body.classList.toggle(
       "workspace-multiview",
       routeName === "multiview"
+    );
+
+    document.body.classList.toggle(
+      "workspace-picks",
+      routeName === "picks"
     );
 
     if (routeName === "events") {

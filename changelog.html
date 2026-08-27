@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">111 major update groups</div>
+<div class="release-count">113 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1763,24 +1763,24 @@
 
 <article class="timeline-entry">
 <div class="timeline-date"><time datetime="2026-08-26">August 26, 2026</time></div>
-<h2>EastCoin V2 functional staging shell added</h2>
-<p>Added an isolated /v2/ clean-room staging shell with horizontal navigation. V2 reuses EastCoin's existing Streamed + PPV provider adapters for real event discovery and playable stream resolution, adds functional sport/date/status filters, search, the real Twitch chat drawer, saved and recent local UI state, current Picks Twitch identity when available, custom streams, and an optional weekly Kalshi Sicko Prop callout. Existing production routes and provider/backend logic remain unchanged so future V2 iterations can replace complete files instead of accumulating patches.</p>
+<h2>EastCoin functional staging shell added</h2>
+<p>Added an isolated /v2/ clean-room staging shell with horizontal navigation. EastCoin reuses EastCoin's existing Streamed + PPV provider adapters for real event discovery and playable stream resolution, adds functional sport/date/status filters, search, the real Twitch chat drawer, saved and recent local UI state, current Picks Twitch identity when available, custom streams, and an optional weekly Kalshi Sicko Prop callout. Existing production routes and provider/backend logic remain unchanged so future EastCoin iterations can replace complete files instead of accumulating patches.</p>
 </article>
 
 <article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
 </div>
-<h2>EastCoin V2 typography pass</h2>
+<h2>EastCoin typography pass</h2>
 <p>
-    Updated the isolated EastCoin V2 homepage staging experience with a larger,
+    Updated the isolated EastCoin homepage staging experience with a larger,
     more modern typography scale while preserving the Iteration 1 navigation,
     layout, event provider flow, filters, player, chat, Picks integration and
     overall visual structure. Small utility text that previously rendered near
     6–10 pixels now targets roughly 12–14 pixels, with larger interface labels
     and headings scaled proportionally. Event presentation also gained compact
     network/channel metadata and viewer-count support. Viewer totals are never
-    fabricated: V2 displays a real provider/event count when present and an
+    fabricated: EastCoin displays a real provider/event count when present and an
     explicit unavailable state otherwise.
   </p>
 </article>
@@ -1789,15 +1789,15 @@
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
 </div>
-<h2>EastCoin V2 frontend modularized</h2>
+<h2>EastCoin frontend modularized</h2>
 <p>
-    Reorganized the isolated EastCoin V2 staging frontend into small,
+    Reorganized the isolated EastCoin staging frontend into small,
     responsibility-based CSS and JavaScript modules without intentionally
     redesigning the Iteration 2 experience. Global tokens, shell/navigation,
     homepage content, overlays and responsive styles now live independently,
     while shared utilities, event browsing, player/chat behavior, external
     integrations and page startup are separated into dedicated scripts. Future
-    V2 iterations can now replace only the files owned by the requested scope
+    EastCoin iterations can now replace only the files owned by the requested scope
     instead of regenerating the full frontend on routine design changes.
   </p>
 </article>
@@ -1806,41 +1806,41 @@
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
 </div>
-<h2>EastCoin V2 persistent chat shell locked</h2>
+<h2>EastCoin persistent chat shell locked</h2>
 <p>
-    Cleaned the EastCoin V2 staging shell navigation and locked Twitch chat as
-    a permanent, always-open V2 surface. The top navigation now focuses on
+    Cleaned the EastCoin staging shell navigation and locked Twitch chat as
+    a permanent, always-open EastCoin surface. The top navigation now focuses on
     Events, MultiView and Picks, with the existing Picks HOT marker preserved,
     while the sports bar exposes the primary requested categories and moves
     Hockey, Tennis and other secondary sports into a compact More menu. Added a
-    persistent V2 workspace/router so normal V2 page switches keep the outer
+    persistent EastCoin workspace/router so normal EastCoin page switches keep the outer
     document—and therefore the exact same Twitch chat iframe—mounted instead of
     reloading chat on each navigation. Search now also advertises and supports
     direct stream URLs while retaining event search.
   </p>
 </article>
 
-<article class="timeline-entry"><div class="timeline-date"><time datetime="2026-08-26">August 26, 2026</time></div><h2>EastCoin V2 settings control center added</h2><p>Replaced the V2 header chat control with a global Settings control center. Settings can hide the top navigation and sports categories with a fixed hamburger recovery button, hide or reopen the persistent Twitch chat without unloading its iframe, toggle event artwork, enable compact event cards, and prioritize events starting soon. Preferences are stored locally. Twitch chat remains mounted across V2 route changes, so normal page navigation and hide/show actions do not recreate or refresh the chat iframe.</p></article>
+<article class="timeline-entry"><div class="timeline-date"><time datetime="2026-08-26">August 26, 2026</time></div><h2>EastCoin settings control center added</h2><p>Replaced the EastCoin header chat control with a global Settings control center. Settings can hide the top navigation and sports categories with a fixed hamburger recovery button, hide or reopen the persistent Twitch chat without unloading its iframe, toggle event artwork, enable compact event cards, and prioritize events starting soon. Preferences are stored locally. Twitch chat remains mounted across EastCoin route changes, so normal page navigation and hide/show actions do not recreate or refresh the chat iframe.</p></article>
 
 <article class="timeline-entry">
 <div class="timeline-date"><time datetime="2026-08-26">August 26, 2026</time></div>
-<h2>EastCoin V2 chat header removed</h2>
+<h2>EastCoin chat header removed</h2>
 <p>
-    Removed the header strip above the Twitch chat in EastCoin V2 so the chat embed
+    Removed the header strip above the Twitch chat in EastCoin so the chat embed
     can use the full vertical panel area. The Twitch iframe remains persistent and
-    still stays mounted across V2 page changes, but the extra LIVE CHAT / PERSISTENT
+    still stays mounted across EastCoin page changes, but the extra LIVE CHAT / PERSISTENT
     header row is no longer shown.
 </p>
 </article>
 
 <article class="timeline-entry">
 <div class="timeline-date"><time datetime="2026-08-26">August 26, 2026</time></div>
-<h2>EastCoin V2 featured home shell removed</h2>
+<h2>EastCoin featured home shell removed</h2>
 <p>
-    Removed the old V2 featured landing shell content from the main view, including
+    Removed the old EastCoin featured landing shell content from the main view, including
     the “What are we watching?” event header, featured event block, upcoming events
     rail, provider-connected status message, and related home-page controls shown in
-    the previous screenshot. EastCoin V2 now opens directly into the Events view by default.
+    the previous screenshot. EastCoin now opens directly into the Events view by default.
 </p>
 </article>
 
@@ -1848,22 +1848,22 @@
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
 </div>
-<h2>EastCoin V2 sports dropdown styling fixed</h2>
+<h2>EastCoin sports dropdown styling fixed</h2>
 <p>
-    Updated the V2 sports-category More dropdown so Hockey, Tennis and Other
+    Updated the EastCoin sports-category More dropdown so Hockey, Tennis and Other
     sport options use the same near-black EastCoin surfaces, subtle borders,
-    muted typography and gold hover/active states as the rest of the V2 shell,
+    muted typography and gold hover/active states as the rest of the EastCoin shell,
     replacing inconsistent browser-like gray button backgrounds.
 </p>
 </article>
 
 <article class="timeline-entry">
 <div class="timeline-date"><time datetime="2026-08-26">August 26, 2026</time></div>
-<h2>EastCoin V2 landing shell and chat header actually removed</h2>
+<h2>EastCoin landing shell and chat header actually removed</h2>
 <p>
-    Corrected the previous V2 cleanup by removing the old “What are we watching?”
+    Corrected the previous EastCoin cleanup by removing the old “What are we watching?”
     intro, provider-status banner, featured-event surface and Up Next rail directly
-    from the V2 HTML instead of relying on mismatched CSS selectors. Also removed
+    from the EastCoin HTML instead of relying on mismatched CSS selectors. Also removed
     the custom LIVE CHAT / zwades / PERSISTENT header directly from the persistent
     chat markup and restored the Twitch iframe to the full chat-panel height.
     Event loading now feeds the timeline directly and no longer depends on the
@@ -1875,10 +1875,10 @@
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
 </div>
-<h2>EastCoin V2 event cards rebuilt with live score test</h2>
+<h2>EastCoin event cards rebuilt with live score test</h2>
 <p>
-    Rebuilt the V2 event cards around the cleaner matchup-first visual language
-    used by the previous EastCoin events experience while retaining V2's
+    Rebuilt the EastCoin event cards around the cleaner matchup-first visual language
+    used by the previous EastCoin events experience while retaining EastCoin's
     four-card desktop grid. Team logos and names now anchor each side of the
     matchup with a central VS or live-score area and a compact action footer.
     Added an experimental live-game enrichment layer that first reads any score
@@ -1893,15 +1893,15 @@
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
 </div>
-<h2>EastCoin V2 live scores moved to ESPN and MultiView restored</h2>
+<h2>EastCoin live scores moved to ESPN and MultiView restored</h2>
 <p>
-    Replaced the first Kalshi-based V2 live-score experiment with a fail-soft
+    Replaced the first Kalshi-based EastCoin live-score experiment with a fail-soft
     server-side ESPN public scoreboard matcher that uses both team names and
     event start time to enrich live cards with real scores and game state.
     Cleaned the V1-style cards by removing Streamed/PPV provider fallback labels
     and the Live now / viewers / source-count footer metadata. Restored the
     + MultiView event action using the existing eastcoinMultiviewV1 four-slot
-    storage format so V2 event cards can feed the current MultiView experience.
+    storage format so EastCoin event cards can feed the current MultiView experience.
 </p>
 </article>
 
@@ -1909,9 +1909,9 @@
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
 </div>
-<h2>EastCoin V2 card odds and sport sections added</h2>
+<h2>EastCoin card odds and sport sections added</h2>
 <p>
-    Replaced the unsuccessful V2 live-score card experiment with cached
+    Replaced the unsuccessful EastCoin live-score card experiment with cached
     consensus moneyline card odds from The Odds API. One shared cross-sport
     upcoming/h2h request feeds matching cards instead of requesting odds per
     event, with automatic longer cache windows as provider quota gets low.
@@ -1926,12 +1926,12 @@
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
 </div>
-<h2>EastCoin V2 event cards now link directly into Picks</h2>
+<h2>EastCoin event cards now link directly into Picks</h2>
 <p>
-    Added a Bet action beside MultiView on pregame V2 event cards. The Bet
+    Added a Bet action beside MultiView on pregame EastCoin event cards. The Bet
     button is omitted once an event is live or its scheduled start time has
     passed. Bet opens the existing Picks workspace without unloading the
-    persistent V2 shell/chat, filters Picks to the selected matchup, highlights
+    persistent EastCoin shell/chat, filters Picks to the selected matchup, highlights
     the matching market, and leaves side selection to the user. Removed the
     redundant sport/category footer label because category section headers now
     provide that context.
@@ -1942,16 +1942,16 @@
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
 </div>
-<h2>EastCoin V2 Quick Bet and exact Picks market handoff added</h2>
+<h2>EastCoin Quick Bet and exact Picks market handoff added</h2>
 <p>
-    Replaced the V2 Bet card action's fuzzy Picks-page search with an exact,
+    Replaced the EastCoin Bet card action's fuzzy Picks-page search with an exact,
     server-verified market handoff. Card odds now retain the underlying Odds API
     event ID. When Bet is selected on a pregame event, EastCoin verifies that
     provider event against the shared cached Odds API catalog, reuses an existing
     odds_api Picks market or creates one idempotently in D1 under the active
-    Picks season, then opens a native V2 Quick Bet ticket over the Events page.
+    Picks season, then opens a native EastCoin Quick Bet ticket over the Events page.
     The ticket lets users choose a side and use the Picks wager slider without
-    leaving the persistent V2 shell. Sportsbook moneyline numbers remain labeled
+    leaving the persistent EastCoin shell. Sportsbook moneyline numbers remain labeled
     as reference odds while projected Picks payouts use the community pool.
     Real submission continues to honor the production Picks wallet and wagering
     flags rather than simulating a successful ZCoin wager.
@@ -1962,9 +1962,9 @@
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
 </div>
-<h2>EastCoin V2 live scores now use exact Odds API event IDs</h2>
+<h2>EastCoin live scores now use exact Odds API event IDs</h2>
 <p>
-    Added live score enrichment using The Odds API scores endpoint. V2 carries
+    Added live score enrichment using The Odds API scores endpoint. EastCoin carries
     the exact provider event ID from card odds into score requests, eliminating
     the fuzzy team-name matching used by earlier experiments. Supported live
     cards now show the real away/home score and provider update age. Requests
@@ -1979,9 +1979,9 @@
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
 </div>
-<h2>EastCoin V2 event card score and odds labels simplified</h2>
+<h2>EastCoin event card score and odds labels simplified</h2>
 <p>
-    Simplified V2 event cards by removing the provider score update-age text
+    Simplified EastCoin event cards by removing the provider score update-age text
     and the CONSENSUS ML helper label. Real live scores and the individual
     team moneyline values remain unchanged.
 </p>
@@ -1991,10 +1991,10 @@
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
 </div>
-<h2>EastCoin V2 now treats verified final scores as completed events</h2>
+<h2>EastCoin now treats verified final scores as completed events</h2>
 <p>
     Odds API completed=true now overrides lingering Streamed/PPV live status
-    for the V2 Events experience. A verified completed game immediately stops
+    for the EastCoin Events experience. A verified completed game immediately stops
     counting as Live, shows its final score with a FINAL state for a short
     ten-minute grace period, and is then automatically removed from the normal
     Events timeline even if the underlying stream remains online. Category live
@@ -2007,7 +2007,7 @@
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
 </div>
-<h2>EastCoin V2 Upcoming filter now opens the full week</h2>
+<h2>EastCoin Upcoming filter now opens the full week</h2>
 <p>
     Improved the Events filter behavior so selecting Upcoming automatically
     changes the date scope to This Week instead of leaving the user silently
@@ -2020,9 +2020,9 @@
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
 </div>
-<h2>EastCoin V2 started event cards now show Bets Closed</h2>
+<h2>EastCoin started event cards now show Bets Closed</h2>
 <p>
-    Updated V2 event-card actions so games that have already started no longer
+    Updated EastCoin event-card actions so games that have already started no longer
     show the Favorite control. Started, live, and verified-final events now show
     a disabled Bets Closed button instead. Pregame events keep the Favorite and
     Bet actions, while MultiView and Watch/Open behavior remain unchanged.
@@ -2033,9 +2033,9 @@
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
 </div>
-<h2>EastCoin V2 Bet buttons now require a verified Odds API market</h2>
+<h2>EastCoin Bet buttons now require a verified Odds API market</h2>
 <p>
-    Tightened V2 event-card Bet visibility so a pregame event only shows Bet
+    Tightened EastCoin event-card Bet visibility so a pregame event only shows Bet
     when the card has an exact verified Odds API provider event ID. Future
     events that are visible in the EastCoin schedule but are not yet present in
     the verified Odds API catalog no longer expose a dead-end Bet action.
@@ -2047,9 +2047,9 @@
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
 </div>
-<h2>EastCoin V2 event categories now collapse large game lists</h2>
+<h2>EastCoin event categories now collapse large game lists</h2>
 <p>
-    Large V2 sport categories now show the first 16 recommended event cards by
+    Large EastCoin sport categories now show the first 16 recommended event cards by
     default and add a full-width Show More expander for the remaining games.
     Each sport expands independently, category totals still reflect the full
     result set, and expanded categories can be collapsed again. Explicit Live
@@ -2062,7 +2062,7 @@
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
 </div>
-<h2>EastCoin V2 now features NFL RedZone as a pinned broadcast card</h2>
+<h2>EastCoin now features NFL RedZone as a pinned broadcast card</h2>
 <p>
     Added special NFL RedZone detection across event title, category, league,
     network and broadcast metadata. RedZone variations are forced into the
@@ -2078,7 +2078,7 @@
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
 </div>
-<h2>EastCoin V2 matchup backgrounds now follow actual away/home team order</h2>
+<h2>EastCoin matchup backgrounds now follow actual away/home team order</h2>
 <p>
     Removed provider-generated composite poster artwork from normal two-team
     event-card backgrounds because provider artwork can display teams in a
@@ -2094,7 +2094,7 @@
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
 </div>
-<h2>EastCoin V2 adds quota-free NFL Picks verification and the ZCoins nav icon</h2>
+<h2>EastCoin adds quota-free NFL Picks verification and the ZCoins nav icon</h2>
 <p>
     Fixed missing NFL Bet actions caused by The Odds API's special upcoming
     sport key only exposing a small cross-sport event window. EastCoin now
@@ -2102,7 +2102,7 @@
     catalog, allowing exact NFL provider event IDs to verify Picks markets even
     when the game is outside the cross-sport odds slice. Sportsbook ML remains
     optional reference data, and the existing paid odds request/cache strategy
-    remains unchanged. The V2 top-nav ZCoins wallet shortcut also now displays
+    remains unchanged. The EastCoin top-nav ZCoins wallet shortcut also now displays
     the supplied 7TV ZCoins emote instead of the generic yellow dot.
 </p>
 </article>
@@ -2111,7 +2111,7 @@
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
 </div>
-<h2>EastCoin V2 event cards now show brighter matchup art and full team names</h2>
+<h2>EastCoin event cards now show brighter matchup art and full team names</h2>
 <p>
     Increased visibility of the generated away/home matchup background artwork
     by raising team-logo opacity and reducing the heavy dark overlay. Event-card
@@ -2126,9 +2126,9 @@
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
 </div>
-<h2>EastCoin V2 Events now uses a three-card desktop grid</h2>
+<h2>EastCoin Events now uses a three-card desktop grid</h2>
 <p>
-    Changed the V2 Events desktop category layout from four cards per row to
+    Changed the EastCoin Events desktop category layout from four cards per row to
     three, giving matchup artwork and full team names substantially more
     horizontal room. Large category previews now show 15 cards by default so
     the collapsed desktop layout ends on five complete rows of three. Tablet
@@ -2141,9 +2141,9 @@
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
 </div>
-<h2>EastCoin V2 category headers now have stronger visual separators</h2>
+<h2>EastCoin category headers now have stronger visual separators</h2>
 <p>
-    Updated the V2 event category headers with a stronger EastCoin-style red
+    Updated the EastCoin event category headers with a stronger EastCoin-style red
     underline treatment so each sport section reads as a clearer visual block.
     The section header now has a subtle bottom divider, a glowing red sweep
     underneath, and a smaller gold-to-red accent beneath the category title.
@@ -2154,7 +2154,7 @@
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
 </div>
-<h2>EastCoin V2 NFL cards now use the full cached NFL moneyline feed</h2>
+<h2>EastCoin NFL cards now use the full cached NFL moneyline feed</h2>
 <p>
     NFL event cards now prefer a complete sport-specific
     americanfootball_nfl h2h snapshot instead of relying on the provider's
@@ -2173,7 +2173,7 @@
 </div>
 <h2>EastCoin Picks expands full moneyline feeds for football, baseball, and UFC/MMA</h2>
 <p>
-    Rebuilt V2's betting catalog around full sport-specific h2h moneyline feeds
+    Rebuilt EastCoin's betting catalog around full sport-specific h2h moneyline feeds
     for American football, baseball, and MMA. EastCoin now uses the provider's
     quota-free sports and event catalogs to identify the exact league and event,
     then requests the complete moneyline feed only for sport keys represented
@@ -2192,9 +2192,9 @@
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
 </div>
-<h2>EastCoin V2 Quick Bet now supports full ticket previews before wallet integration</h2>
+<h2>EastCoin Quick Bet now supports full ticket previews before wallet integration</h2>
 <p>
-    Completed the V2 Quick Bet ticket preview flow independently of the pending
+    Completed the EastCoin Quick Bet ticket preview flow independently of the pending
     StreamElements wallet connection. Verified football, baseball, and UFC/MMA
     markets can now be opened, a team can be selected, and a clearly labeled
     preview ZCoin stake can be changed with a slider, numeric input, or quick
@@ -2209,7 +2209,7 @@
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
 </div>
-<h2>EastCoin V2 Quick Bet preview no longer requires an active Picks season</h2>
+<h2>EastCoin Quick Bet preview no longer requires an active Picks season</h2>
 <p>
     Fixed the Quick Bet preview flow when the Picks database has no active
     season. The server still verifies the exact Odds API event and moneyline,
@@ -2225,9 +2225,9 @@
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
 </div>
-<h2>EastCoin V2 Quick Bet simplifies wager controls and highlights payouts</h2>
+<h2>EastCoin Quick Bet simplifies wager controls and highlights payouts</h2>
 <p>
-    Simplified the V2 Quick Bet wager controls by removing the 5, 10, 25, and
+    Simplified the EastCoin Quick Bet wager controls by removing the 5, 10, 25, and
     50 ZCoin quick-amount buttons, leaving the direct amount field and slider.
     The projected pool payout and estimated return cards now use a brighter
     casino-inspired green treatment, with the estimated return receiving a
@@ -2240,9 +2240,9 @@
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
 </div>
-<h2>EastCoin V2 Quick Bet adds Lock In Pick review and confirmation flow</h2>
+<h2>EastCoin Quick Bet adds Lock In Pick review and confirmation flow</h2>
 <p>
-    Reintroduced the V1-style two-step Picks confirmation experience inside V2
+    Reintroduced the V1-style two-step Picks confirmation experience inside EastCoin
     Quick Bet. Users now build a ticket, choose Lock In Pick, and move to a
     dedicated review screen showing the selected team, sportsbook reference
     moneyline, ZCoin stake, projected community-pool multiplier, and estimated
@@ -2258,9 +2258,9 @@
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
 </div>
-<h2>EastCoin V2 compacts the timeline date buttons</h2>
+<h2>EastCoin compacts the timeline date buttons</h2>
 <p>
-  Tightened the V2 schedule toolbar by reducing the size of the day/date filter
+  Tightened the EastCoin schedule toolbar by reducing the size of the day/date filter
   buttons and trimming the spacing between the nav/category area and the date
   row. The timeline controls now feel cleaner, more compact, and less space
   heavy while keeping the same overall EastCoin look.
@@ -2271,14 +2271,14 @@
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
 </div>
-<h2>EastCoin V2 event playback now uses a full watch workspace</h2>
+<h2>EastCoin event playback now uses a full watch workspace</h2>
 <p>
-    Replaced the centered V2 event-player popup with a dedicated watch
+    Replaced the centered EastCoin event-player popup with a dedicated watch
     workspace. Opening an event now fills the entire viewing area beneath the
     EastCoin navigation and beside the persistent Twitch chat. V1-style player
     controls remain available as overlays, including server switching,
     Favorite, MultiView, Copy Link, Open Source, Chat, and Back to Events.
-    Server changes update the shareable event URL, and copied V2 watch links can
+    Server changes update the shareable event URL, and copied EastCoin watch links can
     restore the same event/source after refresh without unloading the persistent
     Twitch chat.
 </p>
@@ -2288,18 +2288,60 @@
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
 </div>
-<h2>EastCoin V2 watch controls add Quick Bet, clean servers, and collapse mode</h2>
+<h2>EastCoin watch controls add Quick Bet, clean servers, and collapse mode</h2>
 <p>
-    Simplified the V2 watch workspace controls. Removed the redundant Chat
+    Simplified the EastCoin watch workspace controls. Removed the redundant Chat
     button while keeping the persistent Twitch chat and Settings-based chat
     controls intact. Stream choices now display only Server 1, Server 2,
     Server 3, and so on, with provider/source and language labels hidden from
     the interface while exact source IDs remain preserved internally for
     playback and share-link restoration. Added the same gold Bet action used
-    on eligible Events cards, opening the existing V2 Quick Bet ticket for the
+    on eligible Events cards, opening the existing EastCoin Quick Bet ticket for the
     active pregame event. Added a remembered Collapse control that hides the
     title/actions and server bar while leaving a small Show Controls button
     available over the video.
+</p>
+</article>
+
+<article class="timeline-entry">
+<div class="timeline-date">
+<time datetime="2026-08-27">August 27, 2026</time>
+</div>
+<h2>EastCoin MultiView now fills the workspace without legacy navigation</h2>
+<p>
+    Repaired the EastCoin MultiView workspace after the standalone legacy MultiView
+    document was being squeezed inside EastCoin. Embedded MultiView now removes the
+    old left-navigation column before first paint, disables its duplicate
+    Twitch-chat drawer, and expands the two-, three-, and four-stream grid to
+    the full EastCoin workspace beneath the top navigation and sports strip. The
+    redundant EastCoin workspace title bar is also removed on the MultiView route.
+    Standalone MultiView keeps its existing navigation and chat behavior, while
+    EastCoin Solo actions now hand the selected stream back to the native EastCoin player
+    instead of navigating the embedded frame into an old EastCoin page.
+</p>
+</article>
+
+<article class="timeline-entry">
+<div class="timeline-date">
+<time datetime="2026-08-27">August 27, 2026</time>
+</div>
+<h2>Launch hardening adds return-to-page login, exact MultiView handoff, and faster startup</h2>
+<p>
+    Completed a pre-launch reliability and performance pass. Twitch login now
+    returns members to the exact EastCoin page, route, or active watch link they
+    started from. The player’s + MultiView action now saves the exact currently
+    playing server/video instead of re-resolving the event later, and all
+    MultiView add actions show a Stay Here / Open MultiView confirmation. The
+    previously partial Picks Community Ledger update was completed end-to-end:
+    real D1 ledger/history records, current community pools, backend ticket-state
+    normalization, accurate market timestamps, private-wallet leaderboard cleanup,
+    production-safe preview behavior, and native Picks workspace routing are now
+    connected. Startup work was reduced by sharing the Picks identity request,
+    deferring the persistent Twitch iframe and non-critical enrichment until the
+    first idle window, preconnecting required third-party origins, parallelizing
+    launch script downloads with defer, lazily decoding team imagery, and deferring
+    offscreen section paint. Visible development-version wording was removed from
+    the launch-facing EastCoin experience and changelog.
 </p>
 </article>
 
@@ -2308,17 +2350,19 @@
 <time datetime="2026-08-27">August 27, 2026</time>
 <span class="latest-badge">Latest</span>
 </div>
-<h2>EastCoin V2 MultiView now fills the workspace without legacy navigation</h2>
+<h2>EastCoin moves to the root domain with MLB Gameday and launch fixes</h2>
 <p>
-    Repaired the V2 MultiView workspace after the standalone legacy MultiView
-    document was being squeezed inside V2. Embedded MultiView now removes the
-    old left-navigation column before first paint, disables its duplicate
-    Twitch-chat drawer, and expands the two-, three-, and four-stream grid to
-    the full V2 workspace beneath the top navigation and sports strip. The
-    redundant V2 workspace title bar is also removed on the MultiView route.
-    Standalone MultiView keeps its existing navigation and chat behavior, while
-    V2 Solo actions now hand the selected stream back to the native V2 player
-    instead of navigating the embedded frame into an old EastCoin page.
+    Promoted the hardened EastCoin application to the root domain so Events,
+    shared event/watch links, Picks, MultiView, games and Twitch login all work
+    from eastcoin.vip without a /v2/ page path; old /v2/ page links now forward
+    to the equivalent root URL. Updated the Picks rules popup to explain the
+    real sportsbook consensus moneylines used as live reference odds and the
+    separate community-pool multiplier that determines ZCoin returns. Restored
+    MLB Gameday as a main-player control for verified MLB matchups using the
+    existing MLB Game Center. MultiView panels now suppress the remaining legacy
+    player toolbar and utility controls, while the parent MultiView controls stay
+    intact. Pressing Enter in the global search while watching an event now exits
+    the player, returns to Events and applies the requested team/game search.
 </p>
 </article>
 </section>

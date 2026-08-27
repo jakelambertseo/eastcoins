@@ -330,82 +330,11 @@
     return "";
   }
 
-  function defaultMultiviewState() {
-    return {
-      layout: 4,
-      slots: [null, null, null, null],
-      splits: {
-        2: { col: 50, row: 50 },
-        3: { col: 50, row: 50 },
-        4: { col: 50, row: 50 }
-      }
-    };
-  }
-
-  function readMultiviewState() {
-    const raw = V2.read("eastcoinMultiviewV1", null);
-
-    if (!raw || !Array.isArray(raw.slots)) {
-      return defaultMultiviewState();
-    }
-
-    return {
-      layout: [2, 3, 4].includes(Number(raw.layout))
-        ? Number(raw.layout)
-        : 4,
-      slots: [...raw.slots.slice(0, 4), null, null, null, null].slice(0, 4),
-      splits:
-        raw.splits && typeof raw.splits === "object"
-          ? raw.splits
-          : defaultMultiviewState().splits
-    };
-  }
-
-  function multiviewSource(match) {
-    const [, label] = V2.sportMeta(V2.family(match));
-
-    return {
-      type: "event",
-      id: V2.id(match),
-      title: String(match?.title || "EastCoin event"),
-      meta: label
-    };
-  }
-
   function addToMultiview(match) {
     if (!match) return;
 
-    const mv = readMultiviewState();
-    const key = V2.id(match);
-
-    const existing = mv.slots.findIndex(
-      (slot) =>
-        slot?.type === "event" &&
-        String(slot.id) === key
-    );
-
-    if (existing !== -1) {
-      V2.toast(`${match.title || "Event"} is already in MultiView slot ${existing + 1}.`);
-      return;
-    }
-
-    const slot = mv.slots.findIndex((item) => !item);
-
-    if (slot === -1) {
-      V2.toast("MultiView is full. Open MultiView to manage your four slots.");
-      return;
-    }
-
-    mv.slots[slot] = multiviewSource(match);
-
-    if (slot >= 3) mv.layout = 4;
-    else if (slot === 2 && Number(mv.layout) < 3) mv.layout = 3;
-    else if (slot === 1 && Number(mv.layout) < 2) mv.layout = 2;
-
-    V2.write("eastcoinMultiviewV1", mv);
-
-    V2.toast(
-      `${match.title || "Event"} added to MultiView slot ${slot + 1}.`
+    V2.multiview?.addEvent?.(
+      match
     );
   }
 
@@ -464,7 +393,7 @@
       <div class="v1-matchup-bg" aria-hidden="true">
         <div class="v1-matchup-bg-side away">
           ${awayBadge
-            ? `<img src="${V2.esc(awayBadge)}" alt="">`
+            ? `<img src="${V2.esc(awayBadge)}" alt="" loading="lazy" decoding="async" fetchpriority="low">`
             : `<span>${V2.esc(V2.initials(away?.name || "Away"))}</span>`
           }
         </div>
@@ -477,7 +406,7 @@
 
         <div class="v1-matchup-bg-side home">
           ${homeBadge
-            ? `<img src="${V2.esc(homeBadge)}" alt="">`
+            ? `<img src="${V2.esc(homeBadge)}" alt="" loading="lazy" decoding="async" fetchpriority="low">`
             : `<span>${V2.esc(V2.initials(home?.name || "Home"))}</span>`
           }
         </div>
@@ -1062,7 +991,7 @@
 
   function renderRecent() {
     if (!S.recent.length) {
-      E.recent.innerHTML = "<small>Your recently opened V2 events will appear here.</small>";
+      E.recent.innerHTML = "<small>Your recently opened events will appear here.</small>";
       return;
     }
 
@@ -1129,8 +1058,14 @@
       renderGrid();
       renderRecent();
 
-      // Score enrichment is optional and never blocks the event catalog.
-      V2.cardOdds?.refresh?.(S.events);
+      // Enrichment is useful but is not required for the first event paint.
+      V2.idle(
+        () =>
+          V2.cardOdds?.refresh?.(
+            S.events
+          ),
+        800
+      );
     } catch (error) {
       fatal(error?.message || "EastCoin providers unavailable.");
     }

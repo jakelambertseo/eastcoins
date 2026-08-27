@@ -7,6 +7,7 @@
 <meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
 <meta name="description" content="EastCoin Picks community ZCoin prediction markets.">
 <title>EastCoin | Picks</title>
+<link rel="preconnect" href="https://www.twitch.tv" crossorigin>
 <script id="ec-v2-picks-embedded-bootstrap">
 (() => {
   if (
@@ -107,7 +108,7 @@
         <h1>Picks</h1>
       </div>
       <div class="page-actions">
-        <button class="ghost-btn" id="rulesBtn" type="button">How Picks Works</button>
+        <button class="ghost-btn" id="rulesBtn" type="button">How Picks Work</button>
         <button class="gold-btn" id="refreshBtn" type="button">Refresh Games</button>
       </div>
     </header>
@@ -275,27 +276,28 @@
 <div class="backdrop" id="rulesBackdrop" aria-hidden="true">
   <section class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
     <header class="modal-head">
-      <strong id="rulesTitle">How EastCoin Picks Works</strong>
+      <strong id="rulesTitle">How EastCoin Picks Work</strong>
       <button class="close-btn" id="closeRules" type="button" aria-label="Close">×</button>
     </header>
     <div class="modal-body">
       <div class="rules-list">
-        <div class="rule"><strong>1 ZCoin minimum</strong><p>Small wallets can still participate without risking most of their balance.</p></div>
-        <div class="rule"><strong>Your max = lower of 15% of wallet or 50 ZCoins</strong><p>This limits whale influence while still rewarding members who have accumulated ZCoins.</p></div>
-        <div class="rule"><strong>Community action sets the payout</strong><p>The current multiplier is total ZCoins in the game divided by ZCoins on that side.</p></div>
-        <div class="rule"><strong>Final pool multiplier locks at game start</strong><p>Your projected community-pool return may move before lock as more ZCoins enter the market.</p></div>
-        <div class="rule"><strong>One-sided markets are No Action</strong><p>If only one team has action when the market locks, every ticket is refunded.</p></div>
-        <div class="rule"><strong>One pick per game</strong><p>Once you lock a side, you cannot also pick the other team in that same game.</p></div>
+        <div class="rule"><strong>Live sportsbook moneylines are real reference odds</strong><p>For supported games, EastCoin matches the event to The Odds API and shows the current sportsbook consensus/reference moneyline. Those market prices can move before game time and are shown for real-world context.</p></div>
+        <div class="rule"><strong>Sportsbook odds do not directly set your ZCoin payout</strong><p>EastCoin Picks uses a community pool. Your projected multiplier is total ZCoins wagered on the game divided by the ZCoins currently on your selected side.</p></div>
+        <div class="rule"><strong>Your projected return moves with the community pool</strong><p>Example: if 100 ZCoins are in the game and 40 are on your side, the current projection is 2.50x. More Picks on either side can change that projection before lock.</p></div>
+        <div class="rule"><strong>The community multiplier locks when the game starts</strong><p>At the scheduled start, EastCoin freezes the pool used for payout calculations. The sportsbook moneyline remains reference information; the locked EastCoin pool determines the ZCoin return.</p></div>
+        <div class="rule"><strong>One-sided markets are No Action</strong><p>If only one side has community action when the game locks, the market is No Action and affected ZCoin wagers are refunded instead of creating a one-sided payout.</p></div>
+        <div class="rule"><strong>Wager limits protect the pool</strong><p>The minimum is 1 ZCoin. Your maximum wager is the lower of 15% of your available wallet or 50 ZCoins.</p></div>
+        <div class="rule"><strong>One pick per game</strong><p>After you confirm a side, you cannot also pick the other side of that same game. Your open and settled activity remains visible in My Picks, History, and the Community Ledger.</p></div>
       </div>
     </div>
   </section>
 </div>
 
 <div class="toast" id="toast"></div>
-<script src="assets/eastcoins-streamed-api.js"></script>
-<script src="assets/eastcoins-picks-api.js?v=1"></script>
-<script src="assets/eastcoins-picks-preview.js?v=1"></script>
-<script src="assets/eastcoins-picks.js?v=2"></script>
+<script defer src="assets/eastcoins-streamed-api.js"></script>
+<script defer src="assets/eastcoins-picks-api.js?v=1"></script>
+<script defer src="assets/eastcoins-picks-preview.js?v=1"></script>
+<script defer src="assets/eastcoins-picks.js?v=40"></script>
 
 </body>
 </html>

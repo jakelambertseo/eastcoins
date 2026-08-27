@@ -3,8 +3,14 @@
 <head>
   <script>
     (() => {
-      if (new URLSearchParams(location.search).get("shell") === "1") {
+      const params = new URLSearchParams(location.search);
+
+      if (params.get("shell") === "1") {
         document.documentElement.classList.add("ec-embedded-view");
+      }
+
+      if (params.get("multiview") === "1") {
+        document.documentElement.classList.add("ec-multiview-player");
       }
     })();
   </script>

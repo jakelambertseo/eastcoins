@@ -112,10 +112,39 @@
           E.search.value = "";
           S.search = "";
           V2.player.openCustom(url.href);
+          return;
         }
       } catch {
-        // Normal text search continues unchanged.
+        // Continue below as a normal EastCoin event search.
       }
+
+      event.preventDefault();
+
+      if (
+        document.body.classList.contains(
+          "ec-watching"
+        )
+      ) {
+        V2.player.closePlayer({
+          clearUrl: true
+        });
+      }
+
+      if (
+        V2.router?.current() !==
+        "events"
+      ) {
+        V2.router.go("events");
+      }
+
+      S.search =
+        raw.toLowerCase();
+      S.date = "week";
+
+      V2.events.renderDates();
+      V2.events.renderGrid();
+
+      E.search.blur();
     };
 
     $("#clear").onclick = clearFilters;
@@ -220,14 +249,33 @@
     V2.router.init();
     wire();
 
-    // Chat defaults visible, but hide/show never recreates its iframe.
-    if (V2.state.settings.chatVisible) V2.player.openChat();
+    V2.integrations.handleAuthStatus?.();
+
+    /*
+      The visible shell and event catalog get first network/CPU priority.
+      Twitch chat stays persistent once mounted, but its heavy iframe waits
+      for the first idle window. Sicko is also non-critical launch content.
+    */
+    if (
+      V2.state.settings.chatVisible
+    ) {
+      V2.idle(
+        () =>
+          V2.player.openChat(),
+        450
+      );
+    }
 
     Promise.all([
       V2.events.load(false),
-      V2.integrations.identity(),
-      V2.integrations.sicko()
+      V2.integrations.identity()
     ]);
+
+    V2.idle(
+      () =>
+        V2.integrations.sicko(),
+      1400
+    );
   }
 
   V2.app = {

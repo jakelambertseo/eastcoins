@@ -1,6 +1,14 @@
 (() => {
   "use strict";
 
+  if (
+    new URLSearchParams(
+      window.location.search
+    ).get("multiview") === "1"
+  ) {
+    return;
+  }
+
   const BUTTON_ID = "eastcoinMlbGamedayButton";
   const OVERLAY_ID = "eastcoinMlbGamedayOverlay";
   const CACHE_PREFIX = "eastcoinMlbGameResolutionV1:";

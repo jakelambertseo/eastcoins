@@ -1,0 +1,220 @@
+/* EastCoin launch hardening: MultiView handoff + rendering performance */
+
+.multiview-handoff-panel{
+  width:min(440px,calc(100vw - 28px));
+  overflow:hidden;
+  border:1px solid rgba(229,185,43,.18);
+  border-radius:13px;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(122,28,35,.17),transparent 36%),
+    #090909;
+  box-shadow:0 26px 85px rgba(0,0,0,.7);
+}
+
+.multiview-handoff-panel header{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-height:58px;
+  padding:11px 13px;
+  border-bottom:1px solid rgba(255,255,255,.065);
+}
+
+.multiview-handoff-icon{
+  width:36px;
+  height:36px;
+  flex:0 0 36px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(229,185,43,.18);
+  border-radius:9px;
+  color:#edd067;
+  background:rgba(229,185,43,.045);
+  font-size:1rem;
+}
+
+.multiview-handoff-panel header small{
+  display:block;
+  color:#887861;
+  font-size:.68rem;
+  font-weight:1000;
+  letter-spacing:.09em;
+}
+
+.multiview-handoff-panel header strong{
+  display:block;
+  margin-top:2px;
+  color:#eee6dd;
+  font-size:.9rem;
+}
+
+.multiview-handoff-body{
+  padding:14px;
+}
+
+.multiview-handoff-body p{
+  margin:0;
+  color:#8c837b;
+  font-size:.78rem;
+  line-height:1.5;
+}
+
+.multiview-handoff-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:7px;
+  margin-top:14px;
+}
+
+.multiview-handoff-actions button{
+  min-height:38px;
+  padding:0 12px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:8px;
+  color:#9d948c;
+  background:#0d0d0d;
+  font-size:.76rem;
+  font-weight:900;
+}
+
+.multiview-handoff-actions .primary{
+  border-color:rgba(229,185,43,.26);
+  color:#1b1200;
+  background:linear-gradient(180deg,#f1ce4b,#d7aa13);
+}
+
+.multiview-handoff-actions .primary:hover{
+  background:linear-gradient(180deg,#f6da67,#dfb521);
+}
+
+/*
+  Large sports sections below the viewport do not need full layout/paint work
+  during first contentful render. Browsers without content-visibility support
+  simply ignore these declarations.
+*/
+.v1-category-section{
+  content-visibility:auto;
+  contain-intrinsic-size:auto 680px;
+}
+
+.lower{
+  content-visibility:auto;
+  contain-intrinsic-size:auto 360px;
+}
+
+
+/* ================================================================
+   EASTCOIN ROOT MLB GAMEDAY
+   ================================================================ */
+.watch-actions #watchGameday{
+  border-color:rgba(229,185,43,.24);
+  color:#ffe5a0;
+  background:linear-gradient(180deg,rgba(129,22,39,.94),rgba(78,10,23,.97));
+}
+
+.watch-actions #watchGameday:hover,
+.watch-actions #watchGameday.active{
+  border-color:rgba(240,210,121,.52);
+  color:#fff4d0;
+  background:linear-gradient(180deg,rgba(166,31,55,.98),rgba(102,14,30,.98));
+}
+
+.ec-v2-mlb-gameday{
+  position:absolute;
+  inset:0;
+  z-index:80;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 10%,rgba(123,20,37,.17),transparent 34%),
+    #050404;
+}
+
+.ec-v2-mlb-gameday[hidden]{
+  display:none!important;
+}
+
+.ec-v2-mlb-gameday-frame{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  width:100%;
+  height:100%;
+  border:0;
+  opacity:0;
+  background:#050404;
+  transition:opacity .14s ease;
+}
+
+.ec-v2-mlb-gameday.is-ready .ec-v2-mlb-gameday-frame{
+  opacity:1;
+}
+
+.ec-v2-mlb-gameday-loading{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  display:grid;
+  place-content:center;
+  justify-items:center;
+  gap:8px;
+  padding:30px;
+  color:#f5ead8;
+  text-align:center;
+  background:
+    radial-gradient(circle at 50% 42%,rgba(123,20,37,.18),transparent 30%),
+    #050404;
+}
+
+.ec-v2-mlb-gameday-loading strong{
+  color:#fff0c8;
+  font-size:.95rem;
+}
+
+.ec-v2-mlb-gameday-loading small{
+  color:#978a7c;
+  font-size:.72rem;
+}
+
+.ec-v2-mlb-gameday.is-ready .ec-v2-mlb-gameday-loading{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+}
+
+.ec-v2-mlb-gameday-spinner{
+  width:34px;
+  height:34px;
+  border:3px solid rgba(209,173,85,.16);
+  border-top-color:#d1ad55;
+  border-radius:50%;
+  animation:ec-root-mlb-spin .8s linear infinite;
+}
+
+@keyframes ec-root-mlb-spin{
+  to{transform:rotate(360deg)}
+}
+
+.ec-v2-mlb-gameday-close{
+  position:absolute;
+  z-index:5;
+  top:10px;
+  right:10px;
+  width:36px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(209,173,85,.28);
+  border-radius:9px;
+  color:#f6ead6;
+  background:rgba(16,9,10,.94);
+  box-shadow:0 8px 24px rgba(0,0,0,.42);
+  font-size:1.15rem;
+}
+
+.ec-v2-mlb-gameday-close:hover,
+.ec-v2-mlb-gameday-close:focus-visible{
+  border-color:rgba(235,204,122,.62);
+  color:#fff6d8;
+  background:#57101f;
+  outline:0;
+}
