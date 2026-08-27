@@ -555,7 +555,7 @@
           return;
         }
 
-        V2.router?.openPicksForMatch?.(match);
+        V2.quickBet?.open?.(match);
       };
     });
 

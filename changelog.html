@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">87 major update groups</div>
+<div class="release-count">88 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1922,10 +1922,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>EastCoin V2 event cards now link directly into Picks</h2>
 <p>
@@ -1936,6 +1935,27 @@
     the matching market, and leaves side selection to the user. Removed the
     redundant sport/category footer label because category section headers now
     provide that context.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-08-26">August 26, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>EastCoin V2 Quick Bet and exact Picks market handoff added</h2>
+<p>
+    Replaced the V2 Bet card action's fuzzy Picks-page search with an exact,
+    server-verified market handoff. Card odds now retain the underlying Odds API
+    event ID. When Bet is selected on a pregame event, EastCoin verifies that
+    provider event against the shared cached Odds API catalog, reuses an existing
+    odds_api Picks market or creates one idempotently in D1 under the active
+    Picks season, then opens a native V2 Quick Bet ticket over the Events page.
+    The ticket lets users choose a side and use the Picks wager slider without
+    leaving the persistent V2 shell. Sportsbook moneyline numbers remain labeled
+    as reference odds while projected Picks payouts use the community pool.
+    Real submission continues to honor the production Picks wallet and wagering
+    flags rather than simulating a successful ZCoin wager.
 </p>
 </article>
 </section>

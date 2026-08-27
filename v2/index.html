@@ -15,7 +15,8 @@
 <link href="assets/css/settings.css?v=5" rel="stylesheet">
 <link href="assets/css/chat-cleanup.css?v=9" rel="stylesheet">
 <link href="assets/css/sport-more-fix.css?v=8" rel="stylesheet">
-<link href="assets/css/event-cards-v1.css?v=13" rel="stylesheet">
+<link href="assets/css/event-cards-v1.css?v=15" rel="stylesheet">
+<link href="assets/css/quick-bet.css?v=15" rel="stylesheet">
 </head>
 <body>
 <header class="topbar">
@@ -79,6 +80,83 @@
 </section></div>
 <footer><small>Settings are saved on this device.</small><button id="settingsDone" type="button">Done</button></footer>
 </section></div>
+<div class="quickbetmodal" id="quickBetModal" aria-hidden="true">
+  <section class="quickbetpanel" role="dialog" aria-modal="true" aria-labelledby="quickBetTitle">
+    <header class="quickbethead">
+      <div>
+        <small>QUICK BET</small>
+        <strong id="quickBetTitle">Preparing market…</strong>
+        <em id="quickBetStart"></em>
+      </div>
+      <button id="quickBetClose" type="button" aria-label="Close quick bet">×</button>
+    </header>
+
+    <div class="quickbetloading" id="quickBetLoading">
+      <span></span>
+      <strong>Preparing Picks market…</strong>
+      <small id="quickBetLoadingMeta">Verifying the game and loading Picks.</small>
+    </div>
+
+    <div class="quickbetbody" id="quickBetBody" hidden>
+      <div class="quickbet-reference" id="quickBetReference" hidden>
+        <span>SPORTSBOOK REFERENCE</span>
+        <div>
+          <strong id="quickBetAwayML">—</strong>
+          <small>Consensus ML</small>
+          <strong id="quickBetHomeML">—</strong>
+        </div>
+      </div>
+
+      <div class="quickbet-sides">
+        <button id="quickBetAway" type="button" data-quick-side="away">
+          <span class="quickbet-team-logo" id="quickBetAwayLogo"></span>
+          <span><small>AWAY</small><strong id="quickBetAwayName">Away</strong></span>
+          <b id="quickBetAwayProjection">Choose</b>
+        </button>
+
+        <button id="quickBetHome" type="button" data-quick-side="home">
+          <span class="quickbet-team-logo" id="quickBetHomeLogo"></span>
+          <span><small>HOME</small><strong id="quickBetHomeName">Home</strong></span>
+          <b id="quickBetHomeProjection">Choose</b>
+        </button>
+      </div>
+
+      <section class="quickbet-wager">
+        <div class="quickbet-wager-head">
+          <span>WAGER</span>
+          <strong><b id="quickBetWagerValue">0</b> ZCoins</strong>
+        </div>
+
+        <input id="quickBetRange" type="range" min="1" max="1" value="1" disabled>
+
+        <div class="quickbet-range-meta">
+          <span>1</span>
+          <span>Max <b id="quickBetMax">—</b></span>
+        </div>
+      </section>
+
+      <div class="quickbet-summary">
+        <div><span>Wallet</span><strong id="quickBetWallet">—</strong></div>
+        <div><span>Projected</span><strong id="quickBetMultiplier">—</strong></div>
+        <div><span>Potential return</span><strong id="quickBetReturn">—</strong></div>
+      </div>
+
+      <p class="quickbet-note" id="quickBetNote">
+        Choose a side to preview your Picks ticket.
+      </p>
+    </div>
+
+    <div class="quickbeterror" id="quickBetError" hidden>
+      <strong id="quickBetErrorTitle">Quick Bet unavailable</strong>
+      <small id="quickBetErrorText"></small>
+    </div>
+
+    <footer class="quickbetfoot">
+      <button id="quickBetFullPicks" type="button">Full Picks</button>
+      <button class="quickbet-submit" id="quickBetSubmit" type="button" disabled>Place Bet</button>
+    </footer>
+  </section>
+</div>
 <div class="modal" id="player"><section class="player"><header><div><small id="playerKicker">EASTCOIN PLAYER</small><strong id="playerTitle">Event</strong><em id="playerMeta"></em></div><div><button id="saveActive">☆</button><button id="playerChat">Chat</button><button id="closePlayer">×</button></div></header><div class="playerbody"><div class="surface"><div class="playerloading" id="playerLoading"><span></span><strong id="loaderTitle">Finding streams…</strong><small id="loaderMeta">Checking EastCoin sources.</small></div><iframe id="frame" src="about:blank" allow="autoplay;fullscreen;picture-in-picture;encrypted-media;clipboard-write" allowfullscreen></iframe></div><aside><span>STREAMS</span><div id="streams"></div><hr><span>EVENT</span><strong id="sideTitle"></strong><small id="sideMeta"></small><a href="?view=multiview" data-v2-route="multiview">Open MultiView</a></aside></div></section></div>
 <div class="modal" id="custom"><section class="smallmodal"><header><strong>Custom Stream</strong><button id="closeCustom">×</button></header><form id="customForm"><label>Stream / embed URL<input id="customUrl" type="url" placeholder="https://…" required></label><p>V2 opens the URL directly in its player iframe.</p><div><button type="button" id="cancelCustom">Cancel</button><button class="primary" type="submit">Open Stream</button></div></form></section></div>
 <div class="toast" id="toast"></div>
@@ -86,10 +164,11 @@
 <script src="../assets/eastcoins-streamed-api.js?v=api-loader2"></script>
 <script src="assets/js/core.js?v=4"></script>
 <script src="assets/js/player.js?v=5"></script>
-<script src="assets/js/events.js?v=13"></script>
-<script src="assets/js/card-odds.js?v=12"></script>
+<script src="assets/js/events.js?v=15"></script>
+<script src="assets/js/card-odds.js?v=15"></script>
 <script src="assets/js/integrations.js?v=4"></script>
 <script src="assets/js/router.js?v=13"></script>
+<script src="assets/js/quick-bet.js?v=15"></script>
 <script src="assets/js/settings.js?v=5"></script>
 <script src="assets/js/app.js?v=9"></script>
 </body></html>

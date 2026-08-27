@@ -330,14 +330,24 @@ export async function onRequestPost(context) {
           ? {
               away: line.home,
               home: line.away,
+              providerEventId: String(bestGame.id || ""),
+              provider: "odds_api",
               sportKey: bestGame.sport_key,
-              commenceTime: bestGame.commence_time
+              sportTitle: bestGame.sport_title,
+              commenceTime: bestGame.commence_time,
+              providerAway: bestGame.home_team,
+              providerHome: bestGame.away_team
             }
           : {
               away: line.away,
               home: line.home,
+              providerEventId: String(bestGame.id || ""),
+              provider: "odds_api",
               sportKey: bestGame.sport_key,
-              commenceTime: bestGame.commence_time
+              sportTitle: bestGame.sport_title,
+              commenceTime: bestGame.commence_time,
+              providerAway: bestGame.away_team,
+              providerHome: bestGame.home_team
             };
 
       matched += 1;
