@@ -1287,3 +1287,30 @@
     font-size:.80rem;
   }
 }
+
+
+/* Iteration 27: three-card desktop Events grid */
+.v1-category-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+}
+
+/* RedZone remains a featured two-column card in the three-column layout. */
+.card.v1-redzone-card{
+  grid-column:span 2;
+}
+
+@media(max-width:900px){
+  .v1-category-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+}
+
+@media(max-width:590px){
+  .v1-category-grid{
+    grid-template-columns:1fr !important;
+  }
+
+  .card.v1-redzone-card{
+    grid-column:span 1;
+  }
+}

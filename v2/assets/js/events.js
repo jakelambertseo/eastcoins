@@ -7,7 +7,7 @@
   const $ = V2.$;
   const $$ = V2.$$;
 
-  const CATEGORY_INITIAL_LIMIT = 16;
+  const CATEGORY_INITIAL_LIMIT = 15;
   const expandedCategories = new Set();
   let categoryRenderSignature = "";
 
