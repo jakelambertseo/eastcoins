@@ -155,7 +155,6 @@
       }
     });
 
-    $("#chatBtn").onclick = V2.player.openChat;
     $("#quickChat").onclick = V2.player.openChat;
     $("#playerChat").onclick = V2.player.openChat;
     $("#closePlayer").onclick = V2.player.closePlayer;
@@ -214,6 +213,7 @@
       }
 
       if (event.key === "Escape") {
+        V2.settings?.close?.();
         V2.player.closePlayer();
         V2.player.closeModal(E.custom);
         E.sportMoreMenu.hidden = true;
@@ -229,13 +229,14 @@
       day: "numeric"
     });
 
+    V2.settings.init();
     V2.events.renderDates();
     V2.events.renderRecent();
     V2.router.init();
     wire();
 
-    // Locked V2 behavior: chat is mounted once with the outer shell and remains open.
-    V2.player.openChat();
+    // Chat defaults visible, but hide/show never recreates its iframe.
+    if (V2.state.settings.chatVisible) V2.player.openChat();
 
     Promise.all([
       V2.events.load(false),

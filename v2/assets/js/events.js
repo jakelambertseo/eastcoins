@@ -57,7 +57,9 @@
     score += Math.min(V2.sources(match), 10) * 40;
 
     if (eventTime > now) {
-      score += Math.max(0, 900 - ((eventTime - now) / 3600000) * 20);
+      const hoursUntilStart = (eventTime - now) / 3600000;
+      score += Math.max(0, 900 - hoursUntilStart * 20);
+      if (S.settings?.startingSoonFirst) score += Math.max(0, 3600 - hoursUntilStart * 240);
     }
 
     if (["american-football", "basketball", "baseball", "combat"].includes(V2.family(match))) {

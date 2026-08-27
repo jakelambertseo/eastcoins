@@ -15,14 +15,14 @@
   }
 
   function openChat() {
-    // Chat is a locked V2 shell surface. Never recreate or close its iframe.
+    // Preserve the persistent iframe; Settings changes visibility only.
+    if (V2.settings) { V2.settings.setChatVisible(true); return; }
     E.chat.classList.add("open", "attention");
     window.setTimeout(() => E.chat.classList.remove("attention"), 700);
   }
 
   function closeChat() {
-    // Intentionally locked: persistent chat may not be closed inside V2.
-    E.chat.classList.add("open");
+    if (V2.settings) V2.settings.setChatVisible(false, { attention: false });
   }
 
   function closePlayer() {
