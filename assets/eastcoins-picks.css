@@ -2126,3 +2126,309 @@ body{
 .team-choice.backend-disabled:not(:disabled){
   cursor:not-allowed;
 }
+
+
+/* ================================================================
+   PICKS V2 EMBEDDED + COMMUNITY LEDGER
+   ================================================================ */
+
+/*
+  /v2/ already owns EastCoin navigation and one persistent Twitch chat.
+  Do this from a head-applied html class so the old Picks sidebar never
+  receives a first paint before router cleanup runs.
+*/
+html.ec-v2-picks-embedded,
+html.ec-v2-picks-embedded body{
+  width:100%;
+  min-width:0;
+  min-height:100%;
+}
+
+html.ec-v2-picks-embedded .shell{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:100dvh!important;
+  grid-template-columns:minmax(0,1fr)!important;
+}
+
+html.ec-v2-picks-embedded .sidebar,
+html.ec-v2-picks-embedded .chat{
+  display:none!important;
+  width:0!important;
+  min-width:0!important;
+  max-width:0!important;
+}
+
+html.ec-v2-picks-embedded .main{
+  grid-column:1!important;
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  padding:18px 20px 42px;
+}
+
+.page-title h1{
+  margin-bottom:0;
+}
+
+.view-tabs{
+  max-width:100%;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+
+.view-tabs::-webkit-scrollbar{
+  display:none;
+}
+
+.view-tab{
+  flex:0 0 auto;
+  white-space:nowrap;
+}
+
+/* Leaderboard is Picks performance only; private wallet balance is not public. */
+.leader-head,
+.leader-row{
+  grid-template-columns:54px minmax(0,1fr) 120px 90px;
+}
+
+/* Live-backend failure is explicit rather than silently switching to mock data. */
+.backend-note.error{
+  color:#e47c87!important;
+}
+
+/* ---------------- COMMUNITY LEDGER ---------------- */
+
+.community-ledger{
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:#070707;
+}
+
+.community-ledger > .empty{
+  border:0;
+  border-radius:0;
+}
+
+.community-ledger-row{
+  min-height:66px;
+  display:grid;
+  grid-template-columns:minmax(150px,1.05fr) minmax(190px,1.35fr) 88px 92px 102px;
+  align-items:center;
+  gap:10px;
+  padding:9px 11px;
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+
+.community-ledger-row:last-child{
+  border-bottom:0;
+}
+
+.community-ledger-row.me{
+  background:
+    linear-gradient(90deg,rgba(242,196,0,.045),transparent 58%),
+    #080706;
+}
+
+.ledger-user{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.ledger-avatar{
+  position:relative;
+  width:34px;
+  height:34px;
+  flex:0 0 34px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:9px;
+  color:#c8beb5;
+  background:#0d0d0d;
+  font-size:.61rem;
+  font-weight:1000;
+}
+
+.ledger-avatar img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.ledger-avatar span{
+  position:relative;
+  z-index:1;
+}
+
+.ledger-avatar.has-image span{
+  display:none;
+}
+
+.ledger-user-copy,
+.ledger-pick{
+  min-width:0;
+}
+
+.ledger-user-copy strong,
+.ledger-pick strong{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.ledger-user-copy strong{
+  color:#dfd7cd;
+  font-size:.70rem;
+}
+
+.ledger-user-copy small{
+  display:block;
+  margin-top:2px;
+  overflow:hidden;
+  color:#69635d;
+  font-size:.54rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.ledger-pick strong{
+  color:#e9e1d7;
+  font-size:.72rem;
+}
+
+.ledger-pick small{
+  display:block;
+  margin-top:3px;
+  overflow:hidden;
+  color:#716a63;
+  font-size:.56rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.ledger-stat{
+  text-align:right;
+}
+
+.ledger-stat span{
+  display:block;
+  color:#68615b;
+  font-size:.50rem;
+  font-weight:900;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+
+.ledger-stat strong{
+  display:block;
+  margin-top:3px;
+  color:#c9c0b6;
+  font-size:.66rem;
+}
+
+.ledger-stat.net.positive strong{
+  color:#83dfa0;
+}
+
+.ledger-stat.net.negative strong{
+  color:#e77a86;
+}
+
+.ledger-result{
+  min-width:0;
+  text-align:right;
+}
+
+.ledger-status{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:58px;
+  padding:5px 7px;
+  border:1px solid rgba(242,196,0,.14);
+  border-radius:999px;
+  color:#d0b65c;
+  background:rgba(242,196,0,.035);
+  font-size:.51rem;
+  font-weight:1000;
+  text-transform:uppercase;
+}
+
+.community-ledger-row.won .ledger-status{
+  border-color:rgba(73,210,126,.25);
+  color:#9ce8b2;
+  background:rgba(73,210,126,.055);
+}
+
+.community-ledger-row.lost .ledger-status{
+  border-color:rgba(240,107,119,.24);
+  color:#ee939d;
+  background:rgba(240,107,119,.05);
+}
+
+.community-ledger-row.refunded .ledger-status{
+  border-color:rgba(129,157,205,.20);
+  color:#a8bad9;
+  background:rgba(129,157,205,.045);
+}
+
+.ledger-result small{
+  display:block;
+  margin-top:4px;
+  color:#605a54;
+  font-size:.52rem;
+}
+
+@media(max-width:900px){
+  html.ec-v2-picks-embedded .main{
+    padding:14px 12px 30px;
+  }
+
+  .community-ledger-row{
+    grid-template-columns:minmax(140px,1fr) minmax(160px,1.2fr) 80px 88px;
+  }
+
+  .community-ledger-row .ledger-stat.net{
+    display:none;
+  }
+}
+
+@media(max-width:650px){
+  .community-ledger-row{
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:8px 10px;
+  }
+
+  .ledger-user{
+    grid-column:1;
+  }
+
+  .ledger-result{
+    grid-column:2;
+    grid-row:1;
+  }
+
+  .ledger-pick{
+    grid-column:1 / -1;
+    padding-top:7px;
+    border-top:1px solid rgba(255,255,255,.045);
+  }
+
+  .ledger-stat{
+    text-align:left;
+  }
+
+  .community-ledger-row .ledger-stat.net{
+    display:block;
+    text-align:right;
+  }
+}

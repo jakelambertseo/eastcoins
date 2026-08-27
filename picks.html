@@ -7,10 +7,22 @@
 <meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
 <meta name="description" content="EastCoin Picks community ZCoin prediction markets.">
 <title>EastCoin | Picks</title>
+<script id="ec-v2-picks-embedded-bootstrap">
+(() => {
+  if (
+    new URLSearchParams(location.search)
+      .get("ecV2Embedded") === "1"
+  ) {
+    document.documentElement.classList.add(
+      "ec-v2-picks-embedded"
+    );
+  }
+})();
+</script>
 <link href="assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
 <link href="assets/eastcoin-favicon.svg?v=full-logo1" rel="shortcut icon" type="image/svg+xml">
 <link href="assets/eastcoin-favicon.png" rel="apple-touch-icon">
-<link href="assets/eastcoins-picks.css?v=1" rel="stylesheet">
+<link href="assets/eastcoins-picks.css?v=2" rel="stylesheet">
 </head>
 <body class="logged-out">
 
@@ -93,7 +105,6 @@
       <div class="page-title">
         <span class="page-kicker">EastCoin <b class="mode-badge" id="modeBadge" hidden>Frontend Preview</b></span>
         <h1>Picks</h1>
-        <p>Pick winners with ZCoins. Community action sets the payout. Final odds lock when the game starts.</p>
       </div>
       <div class="page-actions">
         <button class="ghost-btn" id="rulesBtn" type="button">How Picks Works</button>
@@ -132,11 +143,12 @@
       <button class="view-tab" type="button" data-view="mypicks">My Picks <span class="tab-count" id="pendingCount">0</span></button>
       <button class="view-tab" type="button" data-view="leaderboard">Leaderboard</button>
       <button class="view-tab" type="button" data-view="history">History</button>
+      <button class="view-tab" type="button" data-view="ledger">Community Ledger <span class="tab-count" id="ledgerCount">0</span></button>
     </nav>
 
     <section class="view active" data-view-panel="markets">
       <div class="section-head">
-        <div><h2>Today's Markets</h2><p id="catalogStatus">Loading current EastCoin games…</p></div>
+        <div><h2>Open Markets</h2><p id="catalogStatus">Loading current EastCoin markets…</p></div>
         <div class="right-note">1 ZCoin min · 15% wallet · 50 ZCoin max</div>
       </div>
       <div class="market-list" id="marketList"></div>
@@ -158,16 +170,25 @@
 
     <section class="view" data-view-panel="history">
       <div class="section-head">
-        <div><h2>Picks History</h2><p>Only EastCoin Picks wagers, payouts and refunds appear here.</p></div>
+        <div><h2>Picks History</h2><p>Your EastCoin Picks wagers, payouts and refunds.</p></div>
         <div class="right-note">Newest first</div>
       </div>
       <div class="history-list" id="historyList"></div>
+    </section>
+
+    <section class="view" data-view-panel="ledger">
+      <div class="section-head">
+        <div><h2>Community Ledger</h2><p>Public Picks activity for community transparency — wagers and results, not private wallet balances.</p></div>
+        <div class="right-note">Latest 200 records</div>
+      </div>
+      <div class="community-ledger" id="communityLedger"></div>
     </section>
   </main>
 
   <aside class="chat" aria-label="Twitch chat">
     <iframe
-      src="https://www.twitch.tv/embed/zwades/chat?parent=eastcoins.pages.dev&amp;parent=eastcoin.vip&amp;parent=www.eastcoin.vip&amp;parent=localhost&amp;parent=127.0.0.1&amp;darkpopout"
+      src="about:blank"
+      data-src="https://www.twitch.tv/embed/zwades/chat?parent=eastcoins.pages.dev&amp;parent=eastcoin.vip&amp;parent=www.eastcoin.vip&amp;parent=localhost&amp;parent=127.0.0.1&amp;darkpopout"
       title="zwades Twitch chat"
       loading="eager"
       referrerpolicy="strict-origin-when-cross-origin">
@@ -262,7 +283,7 @@
         <div class="rule"><strong>1 ZCoin minimum</strong><p>Small wallets can still participate without risking most of their balance.</p></div>
         <div class="rule"><strong>Your max = lower of 15% of wallet or 50 ZCoins</strong><p>This limits whale influence while still rewarding members who have accumulated ZCoins.</p></div>
         <div class="rule"><strong>Community action sets the payout</strong><p>The current multiplier is total ZCoins in the game divided by ZCoins on that side.</p></div>
-        <div class="rule"><strong>Final odds lock at game start</strong><p>Your projected payout may move before lock as more community ZCoins enter the market.</p></div>
+        <div class="rule"><strong>Final pool multiplier locks at game start</strong><p>Your projected community-pool return may move before lock as more ZCoins enter the market.</p></div>
         <div class="rule"><strong>One-sided markets are No Action</strong><p>If only one team has action when the market locks, every ticket is refunded.</p></div>
         <div class="rule"><strong>One pick per game</strong><p>Once you lock a side, you cannot also pick the other team in that same game.</p></div>
       </div>
@@ -274,7 +295,7 @@
 <script src="assets/eastcoins-streamed-api.js"></script>
 <script src="assets/eastcoins-picks-api.js?v=1"></script>
 <script src="assets/eastcoins-picks-preview.js?v=1"></script>
-<script src="assets/eastcoins-picks.js?v=1"></script>
+<script src="assets/eastcoins-picks.js?v=2"></script>
 
 </body>
 </html>
