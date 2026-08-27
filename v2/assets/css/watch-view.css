@@ -1,5 +1,5 @@
-/* EastCoin V2 — Iteration 36
-   Full event watch experience */
+/* EastCoin V2 — Iteration 37
+   Cleaner watch controls, Quick Bet shortcut, generic servers and collapse */
 
 .watchview{
   position:fixed;
@@ -152,6 +152,69 @@
   flex-wrap:wrap;
 }
 
+/* Match the gold Bet action used on the V2 Events cards. */
+.watch-actions .v1-bet{
+  min-width:48px;
+  padding:0 10px;
+  border:1px solid rgba(229,185,43,.34);
+  color:#181100;
+  background:linear-gradient(180deg,#f0ce4d,#d6aa13);
+  box-shadow:0 6px 20px rgba(0,0,0,.25);
+}
+
+.watch-actions .v1-bet:hover{
+  border-color:rgba(255,225,118,.55);
+  color:#181100;
+  background:linear-gradient(180deg,#f6da68,#dfb521);
+}
+
+.watch-actions .v1-bet[hidden]{
+  display:none!important;
+}
+
+.watch-collapse{
+  white-space:nowrap;
+}
+
+/*
+  Collapse hides the title/action overlays and the entire server bar while
+  preserving one small recovery button. The stream iframe itself is untouched.
+*/
+.watchview.controls-collapsed .watch-topbar{
+  min-height:0;
+  justify-content:flex-end;
+  padding:10px;
+  background:none;
+}
+
+.watchview.controls-collapsed .watch-title,
+.watchview.controls-collapsed .watch-actions>button:not(#watchCollapse),
+.watchview.controls-collapsed .watch-controlbar{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+}
+
+.watchview.controls-collapsed .watch-actions{
+  margin-left:auto;
+}
+
+.watchview.controls-collapsed #watchCollapse{
+  position:relative;
+  z-index:8;
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  border-color:rgba(229,185,43,.22);
+  color:#e3d5b2;
+  background:rgba(8,8,8,.82);
+}
+
+.watchview.controls-collapsed #watchCollapse:hover{
+  border-color:rgba(229,185,43,.38);
+  color:#f1d969;
+}
+
 .watch-controlbar{
   position:absolute;
   z-index:6;
@@ -232,11 +295,6 @@
   font-size:.64rem;
   font-weight:900;
   white-space:nowrap;
-}
-
-.watch-servers .stream small{
-  color:#655f58;
-  font-size:.54rem;
 }
 
 .watch-servers .stream.active{

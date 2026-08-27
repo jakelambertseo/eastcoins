@@ -18,6 +18,15 @@
   const watchMultiView =
     document.querySelector("#watchMultiView");
 
+  const watchBet =
+    document.querySelector("#watchBet");
+
+  const watchCollapse =
+    document.querySelector("#watchCollapse");
+
+  const WATCH_CONTROLS_KEY =
+    "eastcoinV2WatchControlsCollapsed";
+
   let pendingPreference = null;
   let deepLinkHandled = false;
   let deepLinkTimer = 0;
@@ -61,6 +70,165 @@
     }
   }
 
+  function savedControlsCollapsed() {
+    try {
+      return (
+        localStorage.getItem(
+          WATCH_CONTROLS_KEY
+        ) === "true"
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function setControlsCollapsed(
+    collapsed,
+    {
+      save = true
+    } = {}
+  ) {
+    const next =
+      Boolean(collapsed);
+
+    E.player?.classList.toggle(
+      "controls-collapsed",
+      next
+    );
+
+    if (watchCollapse) {
+      watchCollapse.textContent =
+        next
+          ? "☷ Show Controls"
+          : "▾ Collapse";
+
+      watchCollapse.setAttribute(
+        "aria-expanded",
+        String(!next)
+      );
+
+      watchCollapse.setAttribute(
+        "aria-label",
+        next
+          ? "Show player controls"
+          : "Collapse player controls"
+      );
+    }
+
+    if (save) {
+      try {
+        localStorage.setItem(
+          WATCH_CONTROLS_KEY,
+          String(next)
+        );
+      } catch {}
+    }
+  }
+
+  function toggleControls() {
+    setControlsCollapsed(
+      !E.player?.classList.contains(
+        "controls-collapsed"
+      )
+    );
+  }
+
+  function supportedMoneylineKey(value) {
+    const key =
+      String(value || "")
+        .toLowerCase();
+
+    return (
+      key.startsWith(
+        "americanfootball_"
+      ) ||
+      key.startsWith(
+        "baseball_"
+      ) ||
+      key ===
+        "mma_mixed_martial_arts"
+    );
+  }
+
+  function hasAmericanPrice(value) {
+    const number =
+      Number(value);
+
+    return (
+      Number.isFinite(number) &&
+      number !== 0
+    );
+  }
+
+  function canShowWatchBet(match) {
+    if (
+      !match ||
+      String(
+        match.id || ""
+      ).startsWith("custom:")
+    ) {
+      return false;
+    }
+
+    const start =
+      V2.ts(match?.date);
+
+    if (
+      V2.live(match) ||
+      !Number.isFinite(start) ||
+      start <= Date.now()
+    ) {
+      return false;
+    }
+
+    const odds =
+      V2.cardOdds?.forMatch?.(
+        match
+      ) || null;
+
+    return Boolean(
+      odds?.providerEventId &&
+      odds?.provider === "odds_api" &&
+      supportedMoneylineKey(
+        odds?.sportKey
+      ) &&
+      hasAmericanPrice(
+        odds?.away?.american
+      ) &&
+      hasAmericanPrice(
+        odds?.home?.american
+      )
+    );
+  }
+
+  function updateWatchBet() {
+    if (!watchBet) return;
+
+    watchBet.hidden =
+      !canShowWatchBet(
+        S.active
+      );
+  }
+
+  function openBet() {
+    if (!S.active) return;
+
+    if (!canShowWatchBet(S.active)) {
+      V2.toast(
+        V2.live(S.active) ||
+        V2.ts(S.active?.date) <=
+          Date.now()
+          ? "Betting is closed for this event."
+          : "Betting is not available for this event."
+      );
+      updateWatchBet();
+      return;
+    }
+
+    V2.quickBet?.open?.(
+      S.active
+    );
+  }
   function activeStream() {
     return (
       S.streams[
@@ -78,25 +246,8 @@
   }
 
   function serverName(stream, index) {
-    const source =
-      String(
-        stream?.source ||
-        stream?.provider ||
-        "Server"
-      ).trim();
-
-    const number =
-      stream?.streamNo !==
-        undefined &&
-      stream?.streamNo !== null
-        ? ` #${stream.streamNo}`
-        : S.streams.length > 1
-          ? ` ${index + 1}`
-          : "";
-
-    return `${source}${number}`;
+    return `Server ${index + 1}`;
   }
-
   function watchUrl() {
     const stream =
       activeStream();
@@ -207,6 +358,15 @@
       "aria-hidden",
       "false"
     );
+
+    setControlsCollapsed(
+      savedControlsCollapsed(),
+      {
+        save: false
+      }
+    );
+
+    updateWatchBet();
   }
 
   function closePlayer(
@@ -376,6 +536,20 @@
 
     showWatchView();
 
+    updateWatchBet();
+
+    // Card odds can finish enriching just after a deep-linked player opens.
+    // Recheck briefly so an eligible event gets the same Bet shortcut as its
+    // Events card without changing the stream or Twitch chat.
+    [500, 1500, 3000].forEach(
+      (delay) => {
+        window.setTimeout(
+          updateWatchBet,
+          delay
+        );
+      }
+    );
+
     if (V2.events?.addRecent) {
       V2.events.addRecent(match);
     }
@@ -456,9 +630,17 @@
               }"
               data-stream="${index}"
               type="button"
-              title="${V2.esc(
-                stream.language ||
-                ""
+              title="Switch to ${V2.esc(
+                serverName(
+                  stream,
+                  index
+                )
+              )}"
+              aria-label="Switch to ${V2.esc(
+                serverName(
+                  stream,
+                  index
+                )
               )}"
             >
               <span>${V2.esc(
@@ -467,13 +649,6 @@
                   index
                 )
               )}</span>
-              ${
-                stream.language
-                  ? `<small>${V2.esc(
-                      stream.language
-                    )}</small>`
-                  : ""
-              }
             </button>
           `
         )
@@ -491,7 +666,6 @@
         );
     });
   }
-
   function selectStream(index) {
     const stream =
       S.streams[index];
@@ -576,6 +750,7 @@
       "☆";
 
     showWatchView();
+    updateWatchBet();
     renderStreams();
     selectStream(0);
   }
@@ -927,6 +1102,16 @@
     addToMultiview
   );
 
+  watchBet?.addEventListener(
+    "click",
+    openBet
+  );
+
+  watchCollapse?.addEventListener(
+    "click",
+    toggleControls
+  );
+
   // Start deep-link restoration after the remaining V2 scripts have had
   // a chance to initialize the event provider.
   window.setTimeout(
@@ -947,6 +1132,10 @@
     copyLink,
     openExternal,
     addToMultiview,
+    openBet,
+    updateWatchBet,
+    setControlsCollapsed,
+    toggleControls,
     openPendingFromUrl
   };
 })();

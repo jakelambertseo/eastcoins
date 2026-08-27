@@ -153,7 +153,6 @@
     });
 
     $("#quickChat").onclick = V2.player.openChat;
-    $("#playerChat").onclick = V2.player.openChat;
     $("#closePlayer").onclick = V2.player.closePlayer;
 
     E.player.onclick = (event) => {
