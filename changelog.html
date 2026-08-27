@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">90 major update groups</div>
+<div class="release-count">91 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1975,16 +1975,32 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>EastCoin V2 event card score and odds labels simplified</h2>
 <p>
     Simplified V2 event cards by removing the provider score update-age text
     and the CONSENSUS ML helper label. Real live scores and the individual
     team moneyline values remain unchanged.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-08-26">August 26, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>EastCoin V2 now treats verified final scores as completed events</h2>
+<p>
+    Odds API completed=true now overrides lingering Streamed/PPV live status
+    for the V2 Events experience. A verified completed game immediately stops
+    counting as Live, shows its final score with a FINAL state for a short
+    ten-minute grace period, and is then automatically removed from the normal
+    Events timeline even if the underlying stream remains online. Category live
+    counts and Live filters also exclude verified finals. An already-open player
+    is not forcibly closed when its event becomes final.
 </p>
 </article>
 </section>

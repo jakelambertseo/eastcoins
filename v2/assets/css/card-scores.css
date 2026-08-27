@@ -53,3 +53,25 @@
     font-size:1.75rem;
   }
 }
+
+
+/* Iteration 18 — completed-game authority */
+.v1-event-state.final{
+  border-color:rgba(229,185,43,.20) !important;
+  color:#e7ca61 !important;
+  background:#151108 !important;
+}
+
+.v1-category-counts span.final{
+  border-color:rgba(229,185,43,.16);
+  color:#bca95f;
+  background:#11100b;
+}
+
+.v1-event-card.is-final{
+  opacity:.92;
+}
+
+.v1-event-card.is-final .v1-event-visual{
+  filter:saturate(.82);
+}

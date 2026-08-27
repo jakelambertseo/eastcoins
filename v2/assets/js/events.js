@@ -46,12 +46,41 @@
     );
   }
 
+  const FINAL_CARD_GRACE_MS = 10 * 60 * 1000;
+
+  function finalScore(match) {
+    const score = cardScore(match);
+
+    return Boolean(
+      score?.completed &&
+      Number.isFinite(Number(score.awayScore)) &&
+      Number.isFinite(Number(score.homeScore))
+    );
+  }
+
+  function effectiveLive(match) {
+    return V2.live(match) && !finalScore(match);
+  }
+
+  function finalCardExpired(match) {
+    if (!finalScore(match)) return false;
+
+    const score = cardScore(match);
+    const updated = Date.parse(String(score?.lastUpdate || ""));
+
+    // If the provider omitted last_update, remove the completed event from the
+    // normal timeline immediately rather than leaving a stale LIVE stream card.
+    if (!Number.isFinite(updated)) return true;
+
+    return Date.now() - updated > FINAL_CARD_GRACE_MS;
+  }
+
   function recommendationScore(match) {
     let score = 0;
     const eventTime = V2.ts(match?.date);
     const now = Date.now();
 
-    if (V2.live(match)) score += 10000;
+    if (effectiveLive(match)) score += 10000;
     if (match?.popular) score += 1200;
 
     score += Math.min(V2.sources(match), 10) * 40;
@@ -80,20 +109,30 @@
   function filtered() {
     return sorted(S.events.filter((match) => {
       const family = V2.family(match);
+      const isLive = effectiveLive(match);
+      const isFinal = finalScore(match);
+
+      // A verified final score overrides a provider/stream that is still
+      // technically marked live. Keep the FINAL card briefly for context,
+      // then remove it from the normal Events timeline.
+      if (isFinal && finalCardExpired(match)) {
+        return false;
+      }
 
       const sportMatch =
         S.sport === "all" ||
-        (S.sport === "live" && V2.live(match)) ||
+        (S.sport === "live" && isLive) ||
         (S.sport === "other"
           ? ["other", "wrestling", "motorsport", "golf"].includes(family)
           : family === S.sport);
 
       const statusMatch =
         S.status === "all" ||
-        (S.status === "live" && V2.live(match)) ||
+        (S.status === "live" && isLive) ||
         (
           S.status === "upcoming" &&
           !V2.live(match) &&
+          !isFinal &&
           V2.ts(match?.date) > Date.now()
         ) ||
         (
@@ -104,7 +143,8 @@
       const dateKey = V2.dayKey(match);
 
       const dateMatch =
-        V2.live(match) ||
+        isLive ||
+        isFinal ||
         (
           S.date === "week"
             ? ["today", "day1", "day2", "day3", "day4", "week"].includes(dateKey)
@@ -359,7 +399,19 @@
 
   function categorySection(family, matches) {
     const [icon, label] = V2.sportMeta(family);
-    const liveCount = matches.filter(V2.live).length;
+    const liveCount = matches.filter(effectiveLive).length;
+    const finalCount = matches.filter(finalScore).length;
+    const upcomingCount = Math.max(
+      0,
+      matches.length - liveCount - finalCount
+    );
+
+    const subtitle =
+      liveCount
+        ? `${liveCount} live now`
+        : finalCount && !upcomingCount
+          ? `${finalCount} final`
+          : `${upcomingCount} upcoming`;
 
     return `
       <section class="v1-category-section" data-category="${V2.esc(family)}">
@@ -368,13 +420,16 @@
             <span class="v1-category-icon">${icon}</span>
             <span>
               <strong>${V2.esc(label)}</strong>
-              <small>${liveCount ? `${liveCount} live now` : `${matches.length} upcoming`}</small>
+              <small>${subtitle}</small>
             </span>
           </div>
 
           <div class="v1-category-counts">
             ${liveCount
               ? `<span class="live">${liveCount} LIVE</span>`
+              : ""}
+            ${finalCount
+              ? `<span class="final">${finalCount} FINAL</span>`
               : ""}
             <span>${matches.length} total</span>
           </div>
@@ -388,7 +443,7 @@
   }
 
   function canBet(match) {
-    if (V2.live(match)) return false;
+    if (V2.live(match) || finalScore(match)) return false;
 
     const start = V2.ts(match?.date);
 
@@ -414,11 +469,13 @@
       Number.isFinite(Number(score.awayScore)) &&
       Number.isFinite(Number(score.homeScore))
     );
+    const isFinal = finalScore(match);
+    const isLive = effectiveLive(match);
 
     if (!home && !away) {
       return `
         <article
-          class="card v1-event-card v1-event-card-single ${V2.live(match) ? "is-live" : ""}"
+          class="card v1-event-card v1-event-card-single ${isLive ? "is-live" : ""} ${isFinal ? "is-final" : ""}"
           data-card-open="${V2.esc(key)}"
           role="button"
           tabindex="0"
@@ -429,8 +486,8 @@
             <div class="v1-event-shade"></div>
 
             <div class="v1-event-topbar">
-              <span class="v1-event-state ${V2.live(match) ? "live" : ""}">
-                ${V2.live(match) ? "LIVE" : V2.esc(V2.time(match))}
+              <span class="v1-event-state ${isLive ? "live" : ""} ${isFinal ? "final" : ""}">
+                ${isFinal ? "FINAL" : isLive ? "LIVE" : V2.esc(V2.time(match))}
               </span>
               ${broadcastLabel(match)
                 ? `<span class="v1-event-network">📺 ${V2.esc(broadcastLabel(match))}</span>`
@@ -451,7 +508,7 @@
               <button class="v1-multiview" data-multiview="${V2.esc(key)}">＋ MultiView</button>
 
               ${canBet(match) ? `<button class="v1-bet" data-bet="${V2.esc(key)}">Bet</button>` : ""}
-              <button class="v1-watch" data-watch="${V2.esc(key)}">${V2.live(match) ? "Watch" : "Open"}</button>
+              <button class="v1-watch" data-watch="${V2.esc(key)}">${isLive ? "Watch" : "Open"}</button>
             </div>
           </footer>
         </article>
@@ -460,7 +517,7 @@
 
     return `
       <article
-        class="card v1-event-card ${V2.live(match) ? "is-live" : ""}"
+        class="card v1-event-card ${isLive ? "is-live" : ""} ${isFinal ? "is-final" : ""}"
         data-card-open="${V2.esc(key)}"
         role="button"
         tabindex="0"
@@ -521,7 +578,7 @@
             <button class="v1-multiview" data-multiview="${V2.esc(key)}">＋ MultiView</button>
 
             ${canBet(match) ? `<button class="v1-bet" data-bet="${V2.esc(key)}">Bet</button>` : ""}
-            <button class="v1-watch" data-watch="${V2.esc(key)}">${V2.live(match) ? "Watch" : "Open"}</button>
+            <button class="v1-watch" data-watch="${V2.esc(key)}">${isLive ? "Watch" : "Open"}</button>
           </div>
         </footer>
       </article>
