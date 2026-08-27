@@ -82,7 +82,9 @@
       const sportMatch =
         S.sport === "all" ||
         (S.sport === "live" && V2.live(match)) ||
-        family === S.sport;
+        (S.sport === "other"
+          ? ["other", "wrestling", "motorsport", "golf"].includes(family)
+          : family === S.sport);
 
       const statusMatch =
         S.status === "all" ||

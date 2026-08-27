@@ -56,7 +56,6 @@
     liveCount: $("#liveCount"),
     sort: $("#sort"),
     chat: $("#chat"),
-    scrim: $("#scrim"),
     player: $("#player"),
     frame: $("#frame"),
     playerLoading: $("#playerLoading"),
@@ -74,8 +73,6 @@
     toast: $("#toast"),
     recent: $("#recent"),
     picks: $("#picks"),
-    moreMenu: $("#moreMenu"),
-    moreBtn: $("#moreBtn"),
     sicko: $("#sicko"),
     sickoTitle: $("#sickoTitle"),
     sickoMeta: $("#sickoMeta"),
@@ -85,7 +82,13 @@
     profile: $("#profile"),
     avatar: $("#avatar"),
     profileName: $("#profileName"),
-    walletLabel: $("#walletLabel")
+    walletLabel: $("#walletLabel"),
+    workspace: $("#workspace"),
+    workspaceFrame: $("#workspaceFrame"),
+    workspaceTitle: $("#workspaceTitle"),
+    workspaceHome: $("#workspaceHome"),
+    sportMoreBtn: $("#sportMoreBtn"),
+    sportMoreMenu: $("#sportMoreMenu")
   };
 
   let toastTimer = 0;

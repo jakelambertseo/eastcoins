@@ -8,11 +8,7 @@
 
 .logo img{width:100%;height:100%;object-fit:contain}
 
-.brand strong,.brand small{display:block}
-
 .brand strong{font-size:1rem}
-
-.brand small{color:var(--muted2);font-size:0.8rem}
 
 .nav{align-self:stretch;display:flex;align-items:stretch;gap:2px}
 
@@ -42,11 +38,6 @@
 
 .iconbtn i{position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;background:#e14a65}
 
-.moremenu{position:absolute;top:58px;left:300px;width:180px;padding:6px;border:1px solid var(--line2);border-radius:9px;background:#0c0c0c;box-shadow:0 24px 70px rgba(0,0,0,.5)}
-
-.moremenu a{display:block;padding:11px;border-radius:6px;color:#9a9188;text-decoration:none;font-size:0.8rem}
-
-.moremenu a:hover{background:#151515}
 
 .sportbar{position:sticky;top:var(--header);z-index:50;height:var(--sport);display:flex;align-items:center;gap:4px;padding:0 22px;overflow-x:auto;border-bottom:1px solid var(--line);background:rgba(7,7,7,.94);backdrop-filter:blur(14px);scrollbar-width:none}
 
@@ -57,3 +48,11 @@
 .sportbar .active{border-color:rgba(229,185,43,.13);color:#efd566;background:rgba(229,185,43,.045)}
 
 .sportbar .live{color:#c27e89}
+
+
+.sportmore{position:relative;flex:0 0 auto}
+.sportmore>button{display:flex;align-items:center;gap:5px}
+.sportmore>button.active{border-color:rgba(229,185,43,.13);color:#efd566;background:rgba(229,185,43,.045)}
+.sportmoremenu{position:fixed;z-index:72;width:170px;padding:6px;border:1px solid var(--line2);border-radius:9px;background:#0c0c0c;box-shadow:0 18px 55px rgba(0,0,0,.48)}
+.sportmoremenu button{width:100%;height:auto;min-height:38px;display:flex;align-items:center;padding:8px 10px;border-radius:6px;color:#9a9188;text-align:left}
+.sportmoremenu button:hover,.sportmoremenu button.active{color:#f0e7df;background:#151515}

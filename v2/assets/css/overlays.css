@@ -1,8 +1,10 @@
-/* EastCoin V2: Twitch chat, player, custom-stream modal and toast */
+/* EastCoin V2: persistent Twitch chat + player/custom overlays */
 
-.chat{position:fixed;top:0;right:0;z-index:90;width:min(390px,92vw);height:100%;display:grid;grid-template-rows:auto 1fr;border-left:1px solid var(--line2);background:#080808;box-shadow:-24px 0 70px rgba(0,0,0,.52);transform:translateX(102%);transition:.18s}
+body{padding-right:360px}
 
-.chat.open{transform:translateX(0)}
+.chat{position:fixed;top:0;right:0;z-index:90;width:360px;height:100dvh;display:grid;grid-template-rows:auto 1fr;border-left:1px solid var(--line2);background:#080808;box-shadow:-16px 0 45px rgba(0,0,0,.34)}
+
+.chat.open{transform:none}
 
 .chat header{min-height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid var(--line)}
 
@@ -12,11 +14,11 @@
 
 .chat header strong{font-size:0.875rem}
 
-.chat header button{width:36px;height:36px;border:1px solid var(--line);border-radius:7px;color:#898179;background:#0c0c0c}
+.chatlocked{display:inline-flex;align-items:center;padding:5px 7px;border:1px solid rgba(71,199,120,.14);border-radius:999px;color:#78d99b;background:rgba(71,199,120,.05);font-size:.68rem;font-weight:1000;letter-spacing:.04em}
 
-.chat iframe{width:100%;height:100%;border:0}
+.chat iframe{width:100%;height:100%;border:0;background:#050505}
 
-.scrim{position:fixed;inset:0;z-index:85;border:0;background:rgba(0,0,0,.52)}
+.chat.attention{box-shadow:-18px 0 60px rgba(229,185,43,.12)}
 
 .modal{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:17px;background:rgba(0,0,0,.82);opacity:0;pointer-events:none;transition:.16s}
 

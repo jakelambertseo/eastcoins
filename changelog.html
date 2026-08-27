@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">77 major update groups</div>
+<div class="release-count">78 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1785,10 +1785,9 @@
   </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>EastCoin V2 frontend modularized</h2>
 <p>
@@ -1800,6 +1799,25 @@
     integrations and page startup are separated into dedicated scripts. Future
     V2 iterations can now replace only the files owned by the requested scope
     instead of regenerating the full frontend on routine design changes.
+  </p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-08-26">August 26, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>EastCoin V2 persistent chat shell locked</h2>
+<p>
+    Cleaned the EastCoin V2 staging shell navigation and locked Twitch chat as
+    a permanent, always-open V2 surface. The top navigation now focuses on
+    Events, MultiView and Picks, with the existing Picks HOT marker preserved,
+    while the sports bar exposes the primary requested categories and moves
+    Hockey, Tennis and other secondary sports into a compact More menu. Added a
+    persistent V2 workspace/router so normal V2 page switches keep the outer
+    document—and therefore the exact same Twitch chat iframe—mounted instead of
+    reloading chat on each navigation. Search now also advertises and supports
+    direct stream URLs while retaining event search.
   </p>
 </article>
 </section>

@@ -20,7 +20,8 @@
       const user = session?.user;
 
       if (session?.authenticated && user) {
-        E.profile.href = "../picks.html";
+        E.profile.href = "?view=picks";
+        E.profile.dataset.v2Route = "picks";
         E.profileName.textContent = user.displayName || user.login || "Twitch";
         E.avatar.innerHTML = user.profileImageUrl
           ? `<img src="${V2.esc(user.profileImageUrl)}" alt="">`
