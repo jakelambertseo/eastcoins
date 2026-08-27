@@ -462,6 +462,17 @@
       start > Date.now();
   }
 
+  function canShowBet(match) {
+    if (!canBet(match)) return false;
+
+    const odds = cardOdds(match);
+
+    return Boolean(
+      odds?.providerEventId &&
+      odds?.provider === "odds_api"
+    );
+  }
+
   function card(match) {
     const key = V2.id(match);
     const [icon, label] = V2.sportMeta(V2.family(match));
@@ -521,7 +532,7 @@
             }
               <button class="v1-multiview" data-multiview="${V2.esc(key)}">＋ MultiView</button>
 
-              ${canBet(match) ? `<button class="v1-bet" data-bet="${V2.esc(key)}">Bet</button>` : ""}
+              ${canShowBet(match) ? `<button class="v1-bet" data-bet="${V2.esc(key)}">Bet</button>` : ""}
               <button class="v1-watch" data-watch="${V2.esc(key)}">${isLive ? "Watch" : "Open"}</button>
             </div>
           </footer>
@@ -594,7 +605,7 @@
             }
             <button class="v1-multiview" data-multiview="${V2.esc(key)}">＋ MultiView</button>
 
-            ${canBet(match) ? `<button class="v1-bet" data-bet="${V2.esc(key)}">Bet</button>` : ""}
+            ${canShowBet(match) ? `<button class="v1-bet" data-bet="${V2.esc(key)}">Bet</button>` : ""}
             <button class="v1-watch" data-watch="${V2.esc(key)}">${isLive ? "Watch" : "Open"}</button>
           </div>
         </footer>
@@ -656,6 +667,11 @@
 
         if (!match || !canBet(match)) {
           V2.toast("Betting is closed for this event.");
+          return;
+        }
+
+        if (!canShowBet(match)) {
+          V2.toast("Betting is not available for this event.");
           return;
         }
 
