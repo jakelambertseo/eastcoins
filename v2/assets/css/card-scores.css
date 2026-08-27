@@ -1,0 +1,55 @@
+/* EastCoin V2 Iteration 16 — Odds API live scores */
+
+.v1-matchup-center.has-live-score{
+  min-width:82px;
+}
+
+.v1-card-score{
+  width:100%;
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  gap:6px;
+}
+
+.v1-card-score strong{
+  color:#fff7ed;
+  font-size:1.6rem;
+  font-weight:1000;
+  letter-spacing:-.055em;
+  line-height:1;
+}
+
+.v1-card-score span{
+  color:#544d46;
+  font-size:.8rem;
+  font-weight:900;
+}
+
+.v1-score-state{
+  display:block;
+  margin-top:6px !important;
+  color:#efc84d !important;
+  font-size:.62rem !important;
+  font-weight:1000;
+  letter-spacing:.075em;
+}
+
+.v1-score-age{
+  display:block;
+  margin-top:3px !important;
+  color:#625b54 !important;
+  font-size:.57rem !important;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+.v1-event-card.is-live .v1-card-score strong{
+  text-shadow:0 0 16px rgba(229,185,43,.08);
+}
+
+@media(max-width:590px){
+  .v1-card-score strong{
+    font-size:1.75rem;
+  }
+}

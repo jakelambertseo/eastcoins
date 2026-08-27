@@ -306,6 +306,44 @@
     return V2.cardOdds?.forMatch?.(match) || null;
   }
 
+  function cardScore(match) {
+    return V2.cardScores?.forMatch?.(match) || null;
+  }
+
+  function scoreNumber(value) {
+    const number = Number(value);
+
+    return Number.isFinite(number)
+      ? String(number)
+      : "—";
+  }
+
+  function scoreAge(value) {
+    const timestamp = Date.parse(String(value || ""));
+
+    if (!Number.isFinite(timestamp)) {
+      return "";
+    }
+
+    const seconds = Math.max(
+      0,
+      Math.floor((Date.now() - timestamp) / 1000)
+    );
+
+    if (seconds < 60) return "Updated <1m ago";
+
+    const minutes = Math.floor(seconds / 60);
+
+    if (minutes < 60) {
+      return `Updated ${minutes}m ago`;
+    }
+
+    return `Updated ${new Date(timestamp).toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit"
+    })}`;
+  }
+
   function americanPrice(value) {
     const number = Number(value);
 
@@ -392,9 +430,15 @@
     const away = match?.teams?.away;
     const saved = S.favorites.has(key);
     const odds = cardOdds(match);
+    const score = cardScore(match);
     const hasOdds = Boolean(
       americanPrice(odds?.away?.american) &&
       americanPrice(odds?.home?.american)
+    );
+    const hasScore = Boolean(
+      score &&
+      Number.isFinite(Number(score.awayScore)) &&
+      Number.isFinite(Number(score.homeScore))
     );
 
     if (!home && !away) {
@@ -468,11 +512,26 @@
               ${oddsBadge("away", odds)}
             </div>
 
-            <div class="v1-matchup-center">
-              <span class="v1-vs">VS</span>
-              ${hasOdds
-                ? `<small class="v1-market-label">CONSENSUS ML</small>`
-                : `<small>${V2.live(match) ? "Live now" : V2.esc(V2.time(match))}</small>`
+            <div class="v1-matchup-center ${hasScore ? "has-live-score" : ""}">
+              ${hasScore
+                ? `
+                  <div class="v1-card-score">
+                    <strong>${scoreNumber(score.awayScore)}</strong>
+                    <span>–</span>
+                    <strong>${scoreNumber(score.homeScore)}</strong>
+                  </div>
+                  <small class="v1-score-state">${score.completed ? "FINAL" : "LIVE SCORE"}</small>
+                  ${scoreAge(score.lastUpdate)
+                    ? `<small class="v1-score-age">${V2.esc(scoreAge(score.lastUpdate))}</small>`
+                    : ""}
+                `
+                : `
+                  <span class="v1-vs">VS</span>
+                  ${hasOdds
+                    ? `<small class="v1-market-label">CONSENSUS ML</small>`
+                    : `<small>${V2.live(match) ? "Live now" : V2.esc(V2.time(match))}</small>`
+                  }
+                `
               }
             </div>
 

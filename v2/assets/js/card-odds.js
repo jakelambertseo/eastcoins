@@ -77,6 +77,9 @@
       });
 
       V2.events?.renderGrid?.();
+
+      // Scores use the exact Odds API event IDs populated by this module.
+      V2.cardScores?.refresh?.(S.events);
     } catch {
       // Odds are optional decoration. Event browsing must always work without them.
     }

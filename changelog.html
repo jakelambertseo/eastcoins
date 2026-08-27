@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">88 major update groups</div>
+<div class="release-count">89 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1938,10 +1938,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-26">August 26, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>EastCoin V2 Quick Bet and exact Picks market handoff added</h2>
 <p>
@@ -1956,6 +1955,24 @@
     as reference odds while projected Picks payouts use the community pool.
     Real submission continues to honor the production Picks wallet and wagering
     flags rather than simulating a successful ZCoin wager.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-08-26">August 26, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>EastCoin V2 live scores now use exact Odds API event IDs</h2>
+<p>
+    Added live score enrichment using The Odds API scores endpoint. V2 carries
+    the exact provider event ID from card odds into score requests, eliminating
+    the fuzzy team-name matching used by earlier experiments. Supported live
+    cards now show the real away/home score and provider update age. Requests
+    use the lower-cost live/upcoming scores path and adaptive shared per-sport
+    edge caching to protect the monthly quota. The documented scores schema
+    does not expose inning, quarter, period or game-clock fields, so EastCoin
+    does not fabricate those values.
 </p>
 </article>
 </section>
