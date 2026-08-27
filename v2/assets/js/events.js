@@ -318,32 +318,6 @@
       : "—";
   }
 
-  function scoreAge(value) {
-    const timestamp = Date.parse(String(value || ""));
-
-    if (!Number.isFinite(timestamp)) {
-      return "";
-    }
-
-    const seconds = Math.max(
-      0,
-      Math.floor((Date.now() - timestamp) / 1000)
-    );
-
-    if (seconds < 60) return "Updated <1m ago";
-
-    const minutes = Math.floor(seconds / 60);
-
-    if (minutes < 60) {
-      return `Updated ${minutes}m ago`;
-    }
-
-    return `Updated ${new Date(timestamp).toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit"
-    })}`;
-  }
-
   function americanPrice(value) {
     const number = Number(value);
 
@@ -521,14 +495,11 @@
                     <strong>${scoreNumber(score.homeScore)}</strong>
                   </div>
                   <small class="v1-score-state">${score.completed ? "FINAL" : "LIVE SCORE"}</small>
-                  ${scoreAge(score.lastUpdate)
-                    ? `<small class="v1-score-age">${V2.esc(scoreAge(score.lastUpdate))}</small>`
-                    : ""}
                 `
                 : `
                   <span class="v1-vs">VS</span>
                   ${hasOdds
-                    ? `<small class="v1-market-label">CONSENSUS ML</small>`
+                    ? ""
                     : `<small>${V2.live(match) ? "Live now" : V2.esc(V2.time(match))}</small>`
                   }
                 `
