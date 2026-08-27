@@ -90,6 +90,43 @@
     return request("/bootstrap");
   }
 
+  function getCatalog() {
+    return request(
+      "/catalog",
+      {
+        timeout: 12000
+      }
+    );
+  }
+
+  function ensureMarket({
+    providerEventId,
+    title,
+    sport,
+    startsAt,
+    away,
+    home,
+    awayBadge,
+    homeBadge
+  }) {
+    return request(
+      "/markets/ensure",
+      {
+        method: "POST",
+        body: {
+          providerEventId,
+          title,
+          sport,
+          startsAt,
+          away,
+          home,
+          awayBadge,
+          homeBadge
+        }
+      }
+    );
+  }
+
   function placePick({marketId, selection, wager, idempotencyKey}) {
     return request("/wagers", {
       method: "POST",
@@ -126,6 +163,8 @@
     PicksApiError,
     authUrl,
     getBootstrap,
+    getCatalog,
+    ensureMarket,
     placePick,
     logout,
     getAdminMarkets,

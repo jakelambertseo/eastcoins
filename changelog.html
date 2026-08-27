@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">114 major update groups</div>
+<div class="release-count">115 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -2365,10 +2365,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Football listings now prioritize NFL games above college football</h2>
 <p>
@@ -2377,6 +2376,24 @@
     followed by NFL games, then NCAA and other football events. Recommended or
     Time sorting is still preserved inside each tier, so college games remain
     fully available without burying the NFL slate.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-08-27">August 27, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Picks now browses the live sportsbook catalog instead of empty D1-only markets</h2>
+<p>
+    Fixed the misleading empty Picks state by separating the live sportsbook
+    catalog from persisted D1 community-pool records. Picks now loads verified
+    upcoming NFL, MLB, UFC/MMA and NCAAF moneyline markets from The Odds API,
+    overlays any existing EastCoin pool/ticket state by provider event ID, and
+    only creates a D1 market when a signed-in member actually selects a
+    catalog-only game. Provider failures no longer masquerade as a search miss,
+    and a genuinely empty search is labeled separately from an unavailable or
+    empty live catalog.
 </p>
 </article>
 </section>

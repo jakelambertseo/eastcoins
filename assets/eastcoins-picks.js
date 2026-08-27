@@ -899,8 +899,16 @@
     });
 
     if (!list.length) {
+      const message =
+        query
+          ? "No current markets match your search."
+          : state.mode ===
+              "unavailable"
+            ? "Picks is temporarily unavailable."
+            : "No eligible sportsbook markets are available right now.";
+
       els.marketList.innerHTML =
-        '<div class="empty">No current markets match that search.</div>';
+        `<div class="empty">${message}</div>`;
       return;
     }
 
@@ -1756,7 +1764,246 @@
     render();
   }
 
-  function applyBackendBootstrap(payload) {
+  function normalizeCatalogMarket(
+    raw,
+    persistedByEvent
+  ) {
+    const eventId =
+      String(
+        raw?.providerEventId ||
+        raw?.id ||
+        ""
+      );
+
+    if (!eventId) {
+      return null;
+    }
+
+    const persisted =
+      persistedByEvent.get(
+        eventId
+      );
+
+    if (persisted) {
+      return {
+        ...persisted,
+        sportsbook:
+          raw?.consensus ||
+          null,
+        catalogOnly: false
+      };
+    }
+
+    const startsAt =
+      toTimestamp(
+        raw?.commenceTime,
+        0
+      );
+
+    if (
+      !startsAt ||
+      startsAt <= Date.now()
+    ) {
+      return null;
+    }
+
+    return {
+      id:
+        `catalog:${eventId}`,
+      eventId,
+      sport:
+        String(
+          raw?.sportKey ||
+          raw?.sportTitle ||
+          "other"
+        ),
+      family:
+        String(
+          raw?.family ||
+          sportFamilyFromKey(
+            raw?.sportKey
+          )
+        ),
+      league:
+        String(
+          raw?.sportTitle ||
+          ""
+        ),
+      away:
+        String(
+          raw?.awayTeam ||
+          "Away"
+        ),
+      home:
+        String(
+          raw?.homeTeam ||
+          "Home"
+        ),
+      awayLogo: "",
+      homeLogo: "",
+      startTs: startsAt,
+      live: false,
+      popular:
+        String(
+          raw?.sportKey ||
+          ""
+        ) ===
+          "americanfootball_nfl",
+      state: "OPEN",
+      pool: {
+        away: 0,
+        home: 0,
+        total: 0,
+        awayCount: 0,
+        homeCount: 0
+      },
+      userPick: null,
+      sportsbook:
+        raw?.consensus ||
+        null,
+      catalogOnly: true
+    };
+  }
+
+  function mergedBackendMarkets(
+    payload,
+    catalogPayload
+  ) {
+    const persisted =
+      Array.isArray(
+        payload?.markets
+      )
+        ? payload.markets
+            .map(
+              normalizeBackendMarket
+            )
+            .filter(
+              (market) =>
+                market.id
+            )
+        : [];
+
+    const persistedByEvent =
+      new Map(
+        persisted
+          .filter(
+            (market) =>
+              market.eventId
+          )
+          .map(
+            (market) => [
+              market.eventId,
+              market
+            ]
+          )
+      );
+
+    const catalogGames =
+      Array.isArray(
+        catalogPayload?.games
+      )
+        ? catalogPayload.games
+        : [];
+
+    const merged =
+      catalogGames
+        .map(
+          (game) =>
+            normalizeCatalogMarket(
+              game,
+              persistedByEvent
+            )
+        )
+        .filter(Boolean);
+
+    const catalogIds =
+      new Set(
+        merged.map(
+          (market) =>
+            market.eventId
+        )
+      );
+
+    /*
+      Keep a persisted upcoming market if the provider catalog was temporarily
+      incomplete, but do not reintroduce already-started games into Open Markets.
+    */
+    for (
+      const market of
+      persisted
+    ) {
+      if (
+        catalogIds.has(
+          market.eventId
+        )
+      ) {
+        continue;
+      }
+
+      if (
+        market.startTs >
+        Date.now()
+      ) {
+        merged.push({
+          ...market,
+          catalogOnly: false
+        });
+      }
+    }
+
+    return merged.sort(
+      (left, right) => {
+        const priority = (
+          market
+        ) => {
+          const sport =
+            String(
+              market?.sport ||
+              ""
+            ).toLowerCase();
+
+          if (
+            sport ===
+            "americanfootball_nfl"
+          ) {
+            return 0;
+          }
+
+          if (
+            sport ===
+            "baseball_mlb"
+          ) {
+            return 1;
+          }
+
+          if (
+            sport ===
+            "mma_mixed_martial_arts"
+          ) {
+            return 2;
+          }
+
+          if (
+            sport ===
+            "americanfootball_ncaaf"
+          ) {
+            return 3;
+          }
+
+          return 4;
+        };
+
+        return (
+          priority(left) -
+            priority(right) ||
+          left.startTs -
+            right.startTs
+        );
+      }
+    );
+  }
+
+  function applyBackendBootstrap(payload, catalogPayload = null) {
     state.mode = "backend";
     state.backend = payload || {};
 
@@ -1782,11 +2029,11 @@
       )
     };
 
-    state.games = Array.isArray(payload?.markets)
-      ? payload.markets
-          .map(normalizeBackendMarket)
-          .filter((market) => market.id)
-      : [];
+    state.games =
+      mergedBackendMarkets(
+        payload,
+        catalogPayload
+      );
 
     state.tickets = Array.isArray(payload?.myPicks)
       ? payload.myPicks
@@ -1847,8 +2094,15 @@
       ? payload.leaderboard
       : [];
 
+    const catalogLive =
+      Boolean(
+        catalogPayload?.ok
+      );
+
     els.catalogStatus.textContent =
-      `Live Picks · ${state.games.length} current markets`;
+      catalogLive
+        ? `Live sportsbook catalog · ${state.games.length} eligible markets`
+        : `EastCoin Picks · ${state.games.length} current markets · live catalog unavailable`;
 
     render();
   }
@@ -1905,8 +2159,22 @@
 
     if (API?.getBootstrap) {
       try {
-        const payload =
-          await API.getBootstrap();
+        const [
+          payload,
+          catalogPayload
+        ] =
+          await Promise.all([
+            API.getBootstrap(),
+            API?.getCatalog
+              ? API
+                  .getCatalog()
+                  .catch(
+                    () => null
+                  )
+              : Promise.resolve(
+                  null
+                )
+          ]);
 
         if (
           payload &&
@@ -1915,7 +2183,8 @@
           )
         ) {
           applyBackendBootstrap(
-            payload
+            payload,
+            catalogPayload
           );
           return;
         }
@@ -2007,9 +2276,121 @@
     openBackdrop(els.authBackdrop);
   }
 
+  async function prepareCatalogMarket(
+    game,
+    side
+  ) {
+    if (
+      !game?.catalogOnly ||
+      state.mode !==
+        "backend"
+    ) {
+      return false;
+    }
+
+    if (
+      !state.session
+        .authenticated
+    ) {
+      state.pendingAuthPick = {
+        gameId: game.id,
+        side
+      };
+
+      openAuth();
+      return true;
+    }
+
+    if (!API?.ensureMarket) {
+      toast(
+        "This market is still loading into EastCoin Picks."
+      );
+      return true;
+    }
+
+    try {
+      const result =
+        await API.ensureMarket({
+          providerEventId:
+            game.eventId,
+          title:
+            `${game.away} vs ${game.home}`,
+          sport:
+            game.family,
+          startsAt:
+            game.startTs,
+          away:
+            game.away,
+          home:
+            game.home,
+          awayBadge:
+            game.awayLogo,
+          homeBadge:
+            game.homeLogo
+        });
+
+      if (!result?.market) {
+        throw new Error(
+          "EastCoin could not prepare this market."
+        );
+      }
+
+      const prepared =
+        normalizeBackendMarket(
+          result.market
+        );
+
+      Object.assign(
+        game,
+        prepared,
+        {
+          sportsbook:
+            game.sportsbook ||
+            null,
+          catalogOnly:
+            false
+        }
+      );
+
+      openBet(
+        game.id,
+        side
+      );
+    } catch (error) {
+      if (
+        error?.code ===
+        "NO_ACTIVE_PICKS_SEASON"
+      ) {
+        toast(
+          "Live odds are available, but the Picks season is not active yet."
+        );
+        return true;
+      }
+
+      toast(
+        error?.message ||
+        "EastCoin could not prepare this Picks market."
+      );
+    }
+
+    return true;
+  }
+
   function openBet(gameId, side) {
     const game = gameById(gameId);
     if (!game) return;
+
+    if (
+      game.catalogOnly &&
+      state.mode ===
+        "backend"
+    ) {
+      prepareCatalogMarket(
+        game,
+        side
+      );
+      return;
+    }
 
     const max = currentMaxBet();
 
