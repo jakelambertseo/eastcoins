@@ -1158,3 +1158,132 @@
 .wallet:hover .wallet-zcoin-icon{
   transform:translateY(-1px) scale(1.04);
 }
+
+
+/* Iteration 26: brighter matchup art + full team names */
+.card.v1-event-card:not(.v1-event-card-single):not(.v1-redzone-card) .v1-event-visual{
+  min-height:184px;
+  background:
+    radial-gradient(circle at 20% 46%,rgba(87,103,158,.085),transparent 40%),
+    radial-gradient(circle at 80% 46%,rgba(142,18,49,.10),transparent 40%),
+    #0b0b0b;
+}
+
+.v1-matchup{
+  min-height:148px;
+  align-items:center;
+  padding:6px 12px 17px;
+}
+
+.v1-matchup-team{
+  align-self:stretch;
+  justify-content:center;
+}
+
+.v1-matchup-team strong{
+  width:100%;
+  min-height:2.35em;
+  margin-top:8px;
+  overflow:visible;
+  color:#f5eee7;
+  font-size:.79rem;
+  font-weight:950;
+  line-height:1.18;
+  text-overflow:clip;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+
+/* Iteration 24 generated background logos were intentionally very subtle.
+   Bring them forward without competing with the real foreground team logos. */
+.v1-matchup-bg-side img{
+  width:min(72%,165px);
+  height:min(84%,145px);
+  opacity:.205;
+  filter:
+    saturate(.94)
+    contrast(1.08)
+    brightness(1.10)
+    drop-shadow(0 8px 19px rgba(0,0,0,.28));
+}
+
+.v1-matchup-bg-side.away img{
+  transform:translateX(-5%) scale(1.20);
+}
+
+.v1-matchup-bg-side.home img{
+  transform:translateX(5%) scale(1.20);
+}
+
+.v1-matchup-bg-side>span{
+  color:rgba(255,255,255,.10);
+}
+
+/* Soften the overlay that was making the generated matchup art almost disappear. */
+.v1-matchup-shade{
+  background:
+    linear-gradient(
+      90deg,
+      rgba(4,4,5,.52),
+      rgba(5,5,5,.16) 35%,
+      rgba(4,4,4,.31) 50%,
+      rgba(5,5,5,.16) 65%,
+      rgba(4,4,5,.52)
+    ),
+    linear-gradient(
+      180deg,
+      rgba(3,3,3,.01),
+      rgba(3,3,3,.31)
+    ) !important;
+}
+
+.v1-matchup-bg::before{
+  background:
+    linear-gradient(
+      90deg,
+      rgba(4,5,8,.10) 0%,
+      rgba(4,4,4,0) 34%,
+      rgba(0,0,0,.18) 49.5%,
+      rgba(0,0,0,.18) 50.5%,
+      rgba(4,4,4,0) 66%,
+      rgba(9,3,5,.10) 100%
+    );
+}
+
+/* Long college/team names are allowed to grow the visual instead of being cut. */
+.card.v1-event-card:not(.v1-event-card-single):not(.v1-redzone-card){
+  min-height:242px;
+}
+
+@media(max-width:1260px){
+  .v1-matchup-team strong{
+    font-size:.77rem;
+  }
+}
+
+@media(max-width:900px){
+  .card.v1-event-card:not(.v1-event-card-single):not(.v1-redzone-card) .v1-event-visual{
+    min-height:192px;
+  }
+
+  .v1-matchup{
+    min-height:154px;
+  }
+}
+
+@media(max-width:590px){
+  .card.v1-event-card:not(.v1-event-card-single):not(.v1-redzone-card) .v1-event-visual{
+    min-height:200px;
+  }
+
+  .v1-matchup{
+    min-height:160px;
+    padding-left:10px;
+    padding-right:10px;
+  }
+
+  .v1-matchup-team strong{
+    font-size:.80rem;
+  }
+}
