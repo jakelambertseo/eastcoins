@@ -17,6 +17,17 @@
   let catalogByPair = new Map();
   let renderQueued = false;
 
+  const IS_PICKS_PAGE =
+    Boolean(
+      document.getElementById(
+        "marketList"
+      )
+    );
+
+  let picksSportFilter = "all";
+  let teamLogoPromise = null;
+  let teamLogoByName = new Map();
+
   function norm(value) {
     return String(value || "")
       .toLowerCase()
@@ -27,6 +38,103 @@
 
   function pairKey(away, home) {
     return `${norm(away)}|${norm(home)}`;
+  }
+
+  function eventTimestamp(value) {
+    const direct = Number(value);
+
+    if (Number.isFinite(direct) && direct > 0) {
+      return direct < 1e12
+        ? direct * 1000
+        : direct;
+    }
+
+    const parsed = Date.parse(
+      String(value || "")
+    );
+
+    return Number.isFinite(parsed)
+      ? parsed
+      : 0;
+  }
+
+  function picksWindow() {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(start);
+    end.setDate(end.getDate() + 2);
+
+    return {
+      start: start.getTime(),
+      end: end.getTime()
+    };
+  }
+
+  function isTodayOrTomorrow(game) {
+    const ts = eventTimestamp(
+      game?.commenceTime ||
+      game?.startsAt ||
+      game?.starts_at ||
+      game?.startTs ||
+      game?.date
+    );
+
+    if (!ts) return false;
+
+    const window = picksWindow();
+
+    return (
+      ts >= window.start &&
+      ts < window.end
+    );
+  }
+
+  function picksCatalogGames(games) {
+    if (!IS_PICKS_PAGE) {
+      return Array.isArray(games)
+        ? games
+        : [];
+    }
+
+    return (
+      Array.isArray(games)
+        ? games
+        : []
+    ).filter(isTodayOrTomorrow);
+  }
+
+  function sportBucket(value) {
+    const key = String(value || "")
+      .toLowerCase();
+
+    if (
+      key.startsWith("americanfootball_") ||
+      key.includes("football") ||
+      key.includes("nfl") ||
+      key.includes("ncaaf")
+    ) {
+      return "football";
+    }
+
+    if (
+      key.startsWith("baseball_") ||
+      key.includes("baseball") ||
+      key.includes("mlb")
+    ) {
+      return "baseball";
+    }
+
+    if (
+      key === "mma_mixed_martial_arts" ||
+      key.includes("mma") ||
+      key.includes("ufc") ||
+      key.includes("combat")
+    ) {
+      return "combat";
+    }
+
+    return "other";
   }
 
   function reversePairKey(away, home) {
@@ -251,7 +359,20 @@
           ? await api.getCatalog(...args)
           : await loadCatalog();
 
-        if (payload?.games) indexCatalog(payload.games);
+        if (payload?.games) {
+          indexCatalog(payload.games);
+
+          if (IS_PICKS_PAGE) {
+            return {
+              ...payload,
+              games:
+                picksCatalogGames(
+                  payload.games
+                )
+            };
+          }
+        }
+
         return payload;
       },
 
@@ -262,7 +383,15 @@
         ]);
 
         if (Array.isArray(payload?.markets)) {
-          payload.markets = payload.markets.map((market) => decorateMarket(market));
+          payload.markets =
+            (IS_PICKS_PAGE
+              ? payload.markets.filter(
+                  isTodayOrTomorrow
+                )
+              : payload.markets
+            ).map((market) =>
+              decorateMarket(market)
+            );
         }
 
         if (Array.isArray(payload?.myPicks)) {
@@ -314,7 +443,12 @@
 
         return {
           ...result,
-          games: result.games.map((game) => {
+          games: (IS_PICKS_PAGE
+            ? result.games.filter(
+                isTodayOrTomorrow
+              )
+            : result.games
+          ).map((game) => {
             const live = catalogGameByTeams(game?.away, game?.home);
             const sides = normalizedSides(live);
             return live
@@ -530,13 +664,574 @@
     return teams ? catalogGameByTeams(teams.away, teams.home) : null;
   }
 
+  function injectPicksMarketStyles() {
+    if (
+      document.getElementById(
+        "eastcoinPicksMarketToolsStyle"
+      )
+    ) {
+      return;
+    }
+
+    const style =
+      document.createElement("style");
+
+    style.id =
+      "eastcoinPicksMarketToolsStyle";
+
+    style.textContent = `
+      .picks-market-filters {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin: 0 0 14px;
+        padding: 10px 12px;
+        border: 1px solid rgba(255,255,255,.08);
+        border-radius: 12px;
+        background: rgba(255,255,255,.025);
+      }
+
+      .picks-market-filters > span {
+        margin-right: 2px;
+        color: #8f8f96;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+
+      .picks-market-filter {
+        appearance: none;
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 999px;
+        background: #17171b;
+        color: #c9c9ce;
+        cursor: pointer;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 750;
+        line-height: 1;
+        padding: 8px 11px;
+        transition: border-color .15s ease, background .15s ease, color .15s ease;
+      }
+
+      .picks-market-filter:hover {
+        border-color: rgba(215,174,84,.42);
+        color: #f1f1f3;
+      }
+
+      .picks-market-filter.active {
+        border-color: rgba(215,174,84,.55);
+        background: rgba(215,174,84,.12);
+        color: #e7c879;
+      }
+
+      .picks-market-filter[hidden] {
+        display: none !important;
+      }
+
+      .picks-market-window {
+        margin-left: auto;
+        color: #7f7f86;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .market-card[hidden] {
+        display: none !important;
+      }
+
+      .market-filter-empty {
+        padding: 28px 18px;
+        border: 1px dashed rgba(255,255,255,.1);
+        border-radius: 12px;
+        color: #8f8f96;
+        text-align: center;
+      }
+
+      .team-logo img[data-eastcoin-market-logo="1"] {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      @media (max-width: 720px) {
+        .picks-market-window {
+          width: 100%;
+          margin-left: 0;
+          padding-top: 2px;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  function ensurePicksMarketFilters() {
+    if (!IS_PICKS_PAGE) return null;
+
+    const list =
+      document.getElementById(
+        "marketList"
+      );
+
+    if (!list) return null;
+
+    let controls =
+      document.getElementById(
+        "picksMarketFilters"
+      );
+
+    if (controls) return controls;
+
+    injectPicksMarketStyles();
+
+    controls =
+      document.createElement("div");
+
+    controls.id =
+      "picksMarketFilters";
+    controls.className =
+      "picks-market-filters";
+    controls.setAttribute(
+      "aria-label",
+      "Filter Picks markets by sport"
+    );
+
+    controls.innerHTML = `
+      <span>Sport</span>
+      <button class="picks-market-filter active" type="button" data-picks-sport="all">All</button>
+      <button class="picks-market-filter" type="button" data-picks-sport="football">🏈 Football</button>
+      <button class="picks-market-filter" type="button" data-picks-sport="baseball">⚾ Baseball</button>
+      <button class="picks-market-filter" type="button" data-picks-sport="combat">🥊 UFC / MMA</button>
+      <small class="picks-market-window">Today + tomorrow only</small>
+    `;
+
+    controls.addEventListener(
+      "click",
+      (event) => {
+        const button =
+          event.target.closest(
+            "[data-picks-sport]"
+          );
+
+        if (!button) return;
+
+        picksSportFilter =
+          button.dataset.picksSport ||
+          "all";
+
+        controls
+          .querySelectorAll(
+            "[data-picks-sport]"
+          )
+          .forEach((item) => {
+            item.classList.toggle(
+              "active",
+              item === button
+            );
+          });
+
+        scheduleRender();
+      }
+    );
+
+    list.parentNode.insertBefore(
+      controls,
+      list
+    );
+
+    return controls;
+  }
+
+  function rawTeamObjects(match) {
+    const teams = match?.teams;
+
+    if (Array.isArray(teams)) {
+      return teams;
+    }
+
+    if (
+      teams &&
+      typeof teams === "object"
+    ) {
+      return [
+        teams.away ||
+          teams.visitor ||
+          teams.team1 ||
+          teams.a,
+        teams.home ||
+          teams.host ||
+          teams.team2 ||
+          teams.h
+      ].filter(Boolean);
+    }
+
+    return [];
+  }
+
+  function streamedBadgeUrl(team) {
+    if (!team || typeof team !== "object") {
+      return "";
+    }
+
+    const ref = String(
+      team.badge ||
+      team.logo ||
+      team.image ||
+      team.icon ||
+      ""
+    ).trim();
+
+    if (!ref) return "";
+
+    if (/^https?:\/\//i.test(ref)) {
+      return ref;
+    }
+
+    try {
+      return (
+        window.EastcoinStreamedAPI
+          ?.badgeUrl?.(ref) ||
+        ""
+      );
+    } catch {
+      return "";
+    }
+  }
+
+  function teamDisplayName(team) {
+    if (typeof team === "string") {
+      return team;
+    }
+
+    return String(
+      team?.name ||
+      team?.title ||
+      team?.team ||
+      team?.displayName ||
+      ""
+    ).trim();
+  }
+
+  function indexStreamedTeamLogos(matches) {
+    const next = new Map();
+
+    for (
+      const match of
+      Array.isArray(matches)
+        ? matches
+        : []
+    ) {
+      for (
+        const team of
+        rawTeamObjects(match)
+      ) {
+        const name =
+          teamDisplayName(team);
+        const url =
+          streamedBadgeUrl(team);
+
+        if (!name || !url) continue;
+
+        next.set(
+          norm(name),
+          url
+        );
+      }
+    }
+
+    if (next.size) {
+      teamLogoByName = next;
+    }
+
+    scheduleRender();
+  }
+
+  async function loadTeamLogos() {
+    if (!IS_PICKS_PAGE) return null;
+    if (teamLogoPromise) return teamLogoPromise;
+
+    teamLogoPromise = (async () => {
+      const api =
+        window.EastcoinStreamedAPI;
+
+      if (!api) return null;
+
+      try {
+        let result = null;
+
+        if (typeof api.getAll === "function") {
+          result = await api.getAll(false);
+        } else if (
+          typeof api.getDiscovery ===
+          "function"
+        ) {
+          result =
+            await api.getDiscovery(false);
+        } else if (
+          typeof api.getToday ===
+          "function"
+        ) {
+          result = await api.getToday(false);
+        }
+
+        const matches =
+          Array.isArray(result)
+            ? result
+            : Array.isArray(result?.data)
+              ? result.data
+              : [];
+
+        indexStreamedTeamLogos(
+          matches
+        );
+      } catch (error) {
+        console.warn(
+          "EastCoin Picks team logos unavailable",
+          error
+        );
+      }
+
+      return teamLogoByName;
+    })();
+
+    return teamLogoPromise;
+  }
+
+  function logoForTeam(name) {
+    const exact =
+      teamLogoByName.get(
+        norm(name)
+      );
+
+    if (exact) return exact;
+
+    const target = norm(name);
+    if (!target) return "";
+
+    for (
+      const [key, url] of
+      teamLogoByName
+    ) {
+      if (
+        key.length >= 5 &&
+        target.length >= 5 &&
+        (
+          key.includes(target) ||
+          target.includes(key)
+        )
+      ) {
+        return url;
+      }
+    }
+
+    return "";
+  }
+
+  function hydratePicksTeamLogos(card) {
+    for (
+      const choice of
+      card.querySelectorAll(
+        ".team-choice"
+      )
+    ) {
+      const name =
+        choice.querySelector(
+          ".team-name strong"
+        )?.textContent?.trim();
+
+      const holder =
+        choice.querySelector(
+          ".team-logo"
+        );
+
+      if (!name || !holder) continue;
+      if (holder.querySelector("img")) {
+        continue;
+      }
+
+      const url =
+        logoForTeam(name);
+
+      if (!url) continue;
+
+      const image =
+        document.createElement("img");
+
+      image.src = url;
+      image.alt = "";
+      image.loading = "lazy";
+      image.decoding = "async";
+      image.dataset.eastcoinMarketLogo =
+        "1";
+
+      image.addEventListener(
+        "error",
+        () => image.remove(),
+        { once: true }
+      );
+
+      holder.prepend(image);
+    }
+  }
+
+  function cardSportBucket(
+    card,
+    game
+  ) {
+    const fromGame =
+      sportBucket(
+        game?.sportKey ||
+        game?.sportTitle ||
+        game?.sport ||
+        ""
+      );
+
+    if (fromGame !== "other") {
+      return fromGame;
+    }
+
+    return sportBucket(
+      card.querySelector(
+        ".sport-badge"
+      )?.textContent ||
+      ""
+    );
+  }
+
+  function applyPicksMarketFilter() {
+    const list =
+      document.getElementById(
+        "marketList"
+      );
+
+    if (!list) return;
+
+    const controls =
+      ensurePicksMarketFilters();
+
+    const counts = {
+      all: 0,
+      football: 0,
+      baseball: 0,
+      combat: 0
+    };
+
+    let visible = 0;
+
+    const cards = [
+      ...list.querySelectorAll(
+        ".market-card"
+      )
+    ];
+
+    for (const card of cards) {
+      const game =
+        catalogForCard(card);
+      const bucket =
+        cardSportBucket(
+          card,
+          game
+        );
+
+      card.dataset.marketSport =
+        bucket;
+
+      counts.all += 1;
+
+      if (counts[bucket] != null) {
+        counts[bucket] += 1;
+      }
+
+      const show =
+        picksSportFilter === "all" ||
+        bucket === picksSportFilter;
+
+      card.hidden = !show;
+
+      if (show) visible += 1;
+    }
+
+    if (controls) {
+      controls
+        .querySelectorAll(
+          "[data-picks-sport]"
+        )
+        .forEach((button) => {
+          const key =
+            button.dataset.picksSport;
+
+          button.hidden =
+            key !== "all" &&
+            !counts[key];
+        });
+    }
+
+    let empty =
+      document.getElementById(
+        "marketFilterEmpty"
+      );
+
+    if (!empty) {
+      empty =
+        document.createElement("div");
+      empty.id =
+        "marketFilterEmpty";
+      empty.className =
+        "market-filter-empty";
+      empty.hidden = true;
+      list.parentNode.appendChild(empty);
+    }
+
+    empty.hidden =
+      visible > 0 ||
+      cards.length === 0;
+
+    if (!empty.hidden) {
+      empty.textContent =
+        "No markets in this sport are available today or tomorrow.";
+    }
+
+    const status =
+      document.getElementById(
+        "catalogStatus"
+      );
+
+    if (cards.length) {
+      setText(
+        status,
+        `Today + tomorrow · ${visible} ${visible === 1 ? "market" : "markets"}`
+      );
+    }
+  }
+
+  function removeEventsDateRail() {
+    if (IS_PICKS_PAGE) return;
+
+    const dates =
+      document.getElementById(
+        "dates"
+      );
+
+    if (!dates) return;
+
+    dates.remove();
+  }
+
   function renderPicksMarkets() {
     const list = document.getElementById("marketList");
     if (!list) return;
 
+    ensurePicksMarketFilters();
+
     for (const card of list.querySelectorAll(".market-card")) {
       const game = catalogForCard(card);
       const sides = normalizedSides(game);
+
+      hydratePicksTeamLogos(card);
+
       if (!game || !sides) continue;
 
       const choices = [...card.querySelectorAll(".team-choice")];
@@ -589,6 +1284,8 @@
         `;
       }
     }
+
+    applyPicksMarketFilter();
   }
 
   function selectedPicksMatch() {
@@ -793,6 +1490,8 @@
   }
 
   setupEarlyPicksWrapping();
+  removeEventsDateRail();
   loadCatalog();
+  loadTeamLogos();
   observeUi();
 })();
