@@ -1,0 +1,52 @@
+/* EastCoin V2 Iteration 8: brand the sports "More" dropdown consistently */
+
+.sportmoremenu{
+  padding:6px !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  border-radius:10px !important;
+  background:#090909 !important;
+  box-shadow:0 14px 36px rgba(0,0,0,.55) !important;
+}
+
+.sportmoremenu button{
+  width:100% !important;
+  min-height:36px !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  padding:0 10px !important;
+  border:1px solid transparent !important;
+  border-radius:7px !important;
+  color:#9a9188 !important;
+  background:#0d0d0d !important;
+  box-shadow:none !important;
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  text-align:left !important;
+  font-size:.875rem !important;
+  font-weight:800 !important;
+}
+
+.sportmoremenu button + button{
+  margin-top:4px !important;
+}
+
+.sportmoremenu button:hover,
+.sportmoremenu button:focus-visible{
+  border-color:rgba(229,185,43,.16) !important;
+  color:#f0d86f !important;
+  background:#14120b !important;
+}
+
+.sportmoremenu button.active{
+  border-color:rgba(229,185,43,.20) !important;
+  color:#f4dc72 !important;
+  background:rgba(229,185,43,.07) !important;
+}
+
+.sportmoremenu button:disabled{
+  opacity:.42 !important;
+  color:#6d665f !important;
+  background:#0b0b0b !important;
+  cursor:not-allowed !important;
+}
