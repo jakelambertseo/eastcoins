@@ -579,3 +579,312 @@
     animation:none !important;
   }
 }
+
+
+/* Iteration 34: V1-style Lock In Pick -> Review -> Confirm flow */
+.quickbetreview,
+.quickbetsuccess{
+  padding:16px;
+}
+
+.quickbet-review-kicker{
+  margin-bottom:10px;
+  color:#b89943;
+  font-size:.62rem;
+  font-weight:1000;
+  letter-spacing:.11em;
+  text-align:center;
+}
+
+.quickbet-review-team{
+  display:grid;
+  grid-template-columns:58px minmax(0,1fr) auto;
+  align-items:center;
+  gap:11px;
+  padding:13px;
+  border:1px solid rgba(229,185,43,.22);
+  border-radius:11px;
+  background:
+    radial-gradient(circle at 82% 0,rgba(229,185,43,.07),transparent 46%),
+    linear-gradient(180deg,rgba(173,9,50,.055),rgba(10,9,7,.92));
+}
+
+.quickbet-review-logo{
+  width:58px;
+  height:58px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:11px;
+  background:#090909;
+}
+
+.quickbet-review-logo img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  padding:4px;
+}
+
+.quickbet-review-team small{
+  display:block;
+  color:#9a8240;
+  font-size:.56rem;
+  font-weight:1000;
+  letter-spacing:.08em;
+}
+
+.quickbet-review-team strong{
+  display:block;
+  margin-top:2px;
+  color:#f2eae2;
+  font-size:1rem;
+  font-weight:1000;
+  line-height:1.12;
+}
+
+.quickbet-review-team em{
+  display:block;
+  margin-top:3px;
+  color:#716961;
+  font-size:.65rem;
+  font-style:normal;
+}
+
+.quickbet-review-ml{
+  padding:5px 7px;
+  border:1px solid rgba(229,185,43,.13);
+  border-radius:7px;
+  color:#dcc151;
+  background:#110e06;
+  font-size:.66rem;
+  font-weight:1000;
+  white-space:nowrap;
+}
+
+.quickbet-review-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px;
+  margin-top:10px;
+}
+
+.quickbet-review-grid>div{
+  min-width:0;
+  padding:10px;
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:9px;
+  background:#0b0b0b;
+}
+
+.quickbet-review-grid span{
+  display:block;
+  color:#655e57;
+  font-size:.55rem;
+  font-weight:1000;
+  letter-spacing:.035em;
+  text-transform:uppercase;
+}
+
+.quickbet-review-grid strong{
+  display:block;
+  margin-top:4px;
+  color:#ded6ce;
+  font-size:.82rem;
+}
+
+.quickbet-review-grid .quickbet-review-green{
+  border-color:rgba(65,223,113,.21);
+  background:
+    radial-gradient(circle at 50% 0,rgba(72,255,135,.08),transparent 50%),
+    linear-gradient(180deg,rgba(21,81,41,.14),#081009);
+}
+
+.quickbet-review-grid .quickbet-review-green span{
+  color:#71a680;
+}
+
+.quickbet-review-grid .quickbet-review-green strong{
+  color:#7dffa6;
+  text-shadow:0 0 12px rgba(80,255,138,.16);
+}
+
+.quickbet-review-grid .quickbet-review-green.strong{
+  border-color:rgba(76,255,139,.34);
+  animation:quickbetReviewWinPulse 2.1s ease-in-out infinite;
+}
+
+.quickbet-review-warning{
+  margin-top:10px;
+  padding:10px 11px;
+  border-left:3px solid rgba(229,185,43,.40);
+  background:rgba(229,185,43,.025);
+}
+
+.quickbet-review-warning strong{
+  display:block;
+  color:#cbb45f;
+  font-size:.66rem;
+}
+
+.quickbet-review-warning p{
+  margin:4px 0 0;
+  color:#797067;
+  font-size:.64rem;
+  line-height:1.45;
+}
+
+.quickbet-review-mode{
+  margin-top:10px;
+  padding:8px 9px;
+  border:1px solid rgba(116,185,255,.13);
+  border-radius:8px;
+  color:#8ca9c0;
+  background:rgba(31,73,112,.045);
+  font-size:.62rem;
+  font-weight:800;
+  line-height:1.4;
+  text-align:center;
+}
+
+.quickbetsuccess{
+  min-height:330px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  text-align:center;
+  background:
+    radial-gradient(circle at 50% 35%,rgba(51,230,108,.075),transparent 34%);
+}
+
+.quickbet-success-check{
+  width:62px;
+  height:62px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(80,255,139,.40);
+  border-radius:50%;
+  color:#8dffae;
+  background:
+    radial-gradient(circle,rgba(56,222,108,.18),rgba(13,49,25,.44));
+  box-shadow:
+    0 0 26px rgba(59,230,112,.12);
+  font-size:1.65rem;
+  font-weight:1000;
+  animation:quickbetSuccessPop .28s ease-out both;
+}
+
+.quickbetsuccess>small{
+  margin-top:12px;
+  color:#65c881;
+  font-size:.59rem;
+  font-weight:1000;
+  letter-spacing:.12em;
+}
+
+.quickbetsuccess>strong{
+  margin-top:4px;
+  color:#f1eae2;
+  font-size:1.12rem;
+  font-weight:1000;
+}
+
+.quickbetsuccess>em{
+  margin-top:2px;
+  color:#756d65;
+  font-size:.67rem;
+  font-style:normal;
+}
+
+.quickbet-success-receipt{
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px;
+  margin-top:16px;
+}
+
+.quickbet-success-receipt>div{
+  padding:10px;
+  border:1px solid rgba(58,220,108,.16);
+  border-radius:8px;
+  background:rgba(14,45,23,.20);
+}
+
+.quickbet-success-receipt span{
+  display:block;
+  color:#6d9e79;
+  font-size:.54rem;
+  font-weight:1000;
+  text-transform:uppercase;
+}
+
+.quickbet-success-receipt strong{
+  display:block;
+  margin-top:3px;
+  color:#82f9a5;
+  font-size:.8rem;
+}
+
+.quickbetsuccess>p{
+  max-width:390px;
+  margin:13px 0 0;
+  color:#756f68;
+  font-size:.64rem;
+  line-height:1.45;
+}
+
+@keyframes quickbetReviewWinPulse{
+  0%,100%{
+    box-shadow:0 0 14px rgba(58,232,113,.035);
+  }
+  50%{
+    box-shadow:0 0 24px rgba(58,232,113,.10);
+  }
+}
+
+@keyframes quickbetSuccessPop{
+  from{
+    opacity:0;
+    transform:scale(.72);
+  }
+  to{
+    opacity:1;
+    transform:scale(1);
+  }
+}
+
+.quickbetfoot .quickbet-submit:not(:disabled){
+  min-width:145px;
+  box-shadow:0 0 16px rgba(229,185,43,.08);
+}
+
+@media(max-width:560px){
+  .quickbet-review-team{
+    grid-template-columns:50px minmax(0,1fr);
+  }
+
+  .quickbet-review-logo{
+    width:50px;
+    height:50px;
+  }
+
+  .quickbet-review-ml{
+    grid-column:1 / -1;
+    justify-self:start;
+  }
+
+  .quickbet-review-grid,
+  .quickbet-success-receipt{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .quickbet-review-grid .quickbet-review-green.strong,
+  .quickbet-success-check{
+    animation:none !important;
+  }
+}

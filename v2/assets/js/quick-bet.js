@@ -37,6 +37,22 @@
     multiplier: $("#quickBetMultiplier"),
     potentialReturn: $("#quickBetReturn"),
     note: $("#quickBetNote"),
+    review: $("#quickBetReview"),
+    reviewLogo: $("#quickBetReviewLogo"),
+    reviewSide: $("#quickBetReviewSide"),
+    reviewTeam: $("#quickBetReviewTeam"),
+    reviewOpponent: $("#quickBetReviewOpponent"),
+    reviewML: $("#quickBetReviewML"),
+    reviewWager: $("#quickBetReviewWager"),
+    reviewMultiplier: $("#quickBetReviewMultiplier"),
+    reviewReturn: $("#quickBetReviewReturn"),
+    reviewMode: $("#quickBetReviewMode"),
+    success: $("#quickBetSuccess"),
+    successTeam: $("#quickBetSuccessTeam"),
+    successMatchup: $("#quickBetSuccessMatchup"),
+    successWager: $("#quickBetSuccessWager"),
+    successMultiplier: $("#quickBetSuccessMultiplier"),
+    successReturn: $("#quickBetSuccessReturn"),
     fullPicks: $("#quickBetFullPicks"),
     submit: $("#quickBetSubmit")
   };
@@ -50,6 +66,8 @@
     cardOdds: null,
     previewOnly: false,
     previewReason: "",
+    stage: "ticket",
+    receipt: null,
     busy: false
   };
 
@@ -115,16 +133,21 @@
     state.cardOdds = null;
     state.previewOnly = false;
     state.previewReason = "";
+    state.stage = "ticket";
+    state.receipt = null;
     state.busy = false;
 
     els.body.hidden = true;
+    els.review.hidden = true;
+    els.success.hidden = true;
     els.error.hidden = true;
     els.loading.hidden = false;
     els.loadingMeta.textContent =
       "Verifying the game and loading Picks.";
 
     els.submit.disabled = true;
-    els.submit.textContent = "Place Bet";
+    els.submit.textContent = "Lock In Pick";
+    els.fullPicks.textContent = "Full Picks";
 
     els.away.classList.remove("selected");
     els.home.classList.remove("selected");
@@ -137,6 +160,8 @@
     state.busy = false;
     els.loading.hidden = true;
     els.body.hidden = true;
+    els.review.hidden = true;
+    els.success.hidden = true;
     els.error.hidden = false;
     els.errorTitle.textContent =
       title || "Quick Bet unavailable";
@@ -412,45 +437,57 @@
 
     if (!wallet.authenticated) {
       els.note.textContent =
-        "You can preview this ticket now. Log in with Twitch before real wagering becomes available.";
+        state.side
+          ? "Ticket preview ready. You can review the pick before logging in; Twitch authentication is only required at final confirmation."
+          : "Choose a team to build your ticket. You can review it before logging in.";
 
-      els.submit.disabled = false;
+      els.submit.disabled = !state.side;
       els.submit.textContent =
-        "Log in with Twitch";
+        state.side
+          ? "Lock In Pick"
+          : "Choose a Side";
       return;
     }
 
     if (state.previewOnly) {
       els.note.textContent =
         state.side
-          ? "Preview ticket ready. No active Picks season exists yet, so this ticket is not saved to the Picks database. Your selection, preview wager and projected return are safe to test."
-          : "Choose a team to preview the complete ticket. No active Picks season exists yet, so nothing will be saved or charged.";
+          ? "Preview ticket ready. Lock In Pick will open the confirmation screen, but no active Picks season exists yet so the final confirmation cannot submit."
+          : "Choose a team to preview the complete V1-style lock-in and confirmation flow.";
 
-      els.submit.disabled = true;
+      els.submit.disabled = !state.side;
       els.submit.textContent =
-        "Preview Only — Season Not Active";
+        state.side
+          ? "Lock In Pick"
+          : "Choose a Side";
       return;
     }
 
     if (!wallet.walletConnected) {
       els.note.textContent =
         state.side
-          ? "Ticket preview ready. Your team, wager and projected return are shown above. Real submission will unlock when the StreamElements ZCoin wallet is connected."
-          : "Choose a team to preview the complete ticket. Real submission will unlock when the StreamElements ZCoin wallet is connected.";
+          ? "Ticket preview ready. Lock In Pick will open the review screen; StreamElements is only required for the final confirmation."
+          : "Choose a team to preview the complete ticket and review screen.";
 
-      els.submit.disabled = true;
+      els.submit.disabled = !state.side;
       els.submit.textContent =
-        "Connect ZCoin Wallet to Bet";
+        state.side
+          ? "Lock In Pick"
+          : "Choose a Side";
       return;
     }
 
     if (!wallet.wageringEnabled) {
       els.note.textContent =
-        "Your wallet is connected, but real ZCoin wagering is currently disabled by the Picks backend.";
+        state.side
+          ? "You can review this ticket, but real confirmation remains disabled while wagering is offline."
+          : "Choose a team to build the ticket.";
 
-      els.submit.disabled = true;
+      els.submit.disabled = !state.side;
       els.submit.textContent =
-        "Wagering offline";
+        state.side
+          ? "Lock In Pick"
+          : "Choose a Side";
       return;
     }
 
@@ -460,7 +497,7 @@
 
       els.submit.disabled = true;
       els.submit.textContent =
-        "Choose a side";
+        "Choose a Side";
       return;
     }
 
@@ -470,7 +507,7 @@
 
       els.submit.disabled = true;
       els.submit.textContent =
-        "Choose wager";
+        "Choose Wager";
       return;
     }
 
@@ -478,11 +515,11 @@
 
     els.note.textContent =
       snapshot.active
-        ? "Projected pool payout updates as other EastCoin users bet. The final multiplier is locked with the market."
-        : "Early pool preview. If only one side receives action by lock, the market can settle as No Action.";
+        ? "Review your projected community-pool payout, then lock in the ticket for confirmation."
+        : "Early pool preview. Review your ticket before confirming; one-sided markets can still settle as No Action.";
 
     els.submit.disabled = false;
-    els.submit.textContent = "Place Bet";
+    els.submit.textContent = "Lock In Pick";
   }
 
   function setWager(value) {
@@ -490,6 +527,200 @@
       normalizeWager(value);
 
     renderTicket();
+  }
+
+  function selectedTeam() {
+    if (!state.market || !state.side) {
+      return null;
+    }
+
+    return state.side === "away"
+      ? state.market.away
+      : state.market.home;
+  }
+
+  function opponentTeam() {
+    if (!state.market || !state.side) {
+      return null;
+    }
+
+    return state.side === "away"
+      ? state.market.home
+      : state.market.away;
+  }
+
+  function selectedReferenceML() {
+    if (!state.side) return null;
+
+    return Number(
+      state.cardOdds?.[state.side]?.american
+    );
+  }
+
+  function ticketProjection() {
+    if (!state.side || state.wager < 1) {
+      return {
+        multiplier: 0,
+        estimatedReturn: 0
+      };
+    }
+
+    const multiplier =
+      sideMultiplier(state.side);
+
+    return {
+      multiplier,
+      estimatedReturn:
+        Math.floor(
+          state.wager * multiplier
+        )
+    };
+  }
+
+  function showTicketStage() {
+    state.stage = "ticket";
+
+    els.body.hidden = false;
+    els.review.hidden = true;
+    els.success.hidden = true;
+    els.error.hidden = true;
+
+    els.fullPicks.textContent = "Full Picks";
+
+    renderTicket();
+  }
+
+  function renderReview() {
+    if (!state.side) {
+      showTicketStage();
+      return;
+    }
+
+    const team = selectedTeam();
+    const opponent = opponentTeam();
+    const projection = ticketProjection();
+    const referenceML = selectedReferenceML();
+    const wallet = walletState();
+
+    state.stage = "review";
+
+    els.body.hidden = true;
+    els.review.hidden = false;
+    els.success.hidden = true;
+    els.error.hidden = true;
+
+    const matchTeam =
+      state.side === "away"
+        ? state.match?.teams?.away
+        : state.match?.teams?.home;
+
+    els.reviewLogo.innerHTML =
+      badgeMarkup(
+        matchTeam || {
+          name: team?.name
+        }
+      );
+
+    els.reviewSide.textContent =
+      state.side === "away"
+        ? "YOUR PICK · AWAY"
+        : "YOUR PICK · HOME";
+
+    els.reviewTeam.textContent =
+      team?.name || "Team";
+
+    els.reviewOpponent.textContent =
+      `vs ${opponent?.name || "Opponent"}`;
+
+    els.reviewML.textContent =
+      Number.isFinite(referenceML)
+        ? `ML ${american(referenceML)}`
+        : "ML —";
+
+    els.reviewWager.textContent =
+      `${money(state.wager)} ZCoins`;
+
+    els.reviewMultiplier.textContent =
+      `${projection.multiplier.toFixed(2)}x`;
+
+    els.reviewReturn.textContent =
+      `${money(projection.estimatedReturn)} ZCoins`;
+
+    if (state.previewOnly) {
+      els.reviewMode.textContent =
+        "PREVIEW MODE · No active Picks season exists. This review is not saved and cannot be submitted.";
+
+      els.submit.disabled = true;
+      els.submit.textContent =
+        "Season Required to Confirm";
+    } else if (!wallet.authenticated) {
+      els.reviewMode.textContent =
+        "Twitch login is required only for the final confirmation.";
+
+      els.submit.disabled = false;
+      els.submit.textContent =
+        "Log In to Confirm";
+    } else if (!wallet.walletConnected) {
+      els.reviewMode.textContent =
+        "StreamElements wallet connection is required for the final ZCoin debit.";
+
+      els.submit.disabled = true;
+      els.submit.textContent =
+        "Wallet Required to Confirm";
+    } else if (!wallet.wageringEnabled) {
+      els.reviewMode.textContent =
+        "The ticket is ready, but real wagering is currently disabled.";
+
+      els.submit.disabled = true;
+      els.submit.textContent =
+        "Wagering Offline";
+    } else {
+      els.reviewMode.textContent =
+        "Confirming will debit the displayed ZCoins and permanently record this pick.";
+
+      els.submit.disabled = false;
+      els.submit.textContent =
+        "Confirm Pick";
+    }
+
+    els.fullPicks.textContent =
+      "← Edit Pick";
+  }
+
+  function renderSuccess(payload = null) {
+    const team = selectedTeam();
+    const opponent = opponentTeam();
+    const projection = ticketProjection();
+
+    state.stage = "success";
+    state.receipt = payload || {};
+
+    els.body.hidden = true;
+    els.review.hidden = true;
+    els.success.hidden = false;
+    els.error.hidden = true;
+
+    els.successTeam.textContent =
+      team?.name || "Pick Confirmed";
+
+    els.successMatchup.textContent =
+      `vs ${opponent?.name || "Opponent"}`;
+
+    els.successWager.textContent =
+      `${money(state.wager)} ZCoins`;
+
+    els.successMultiplier.textContent =
+      `${projection.multiplier.toFixed(2)}x`;
+
+    els.successReturn.textContent =
+      `${money(projection.estimatedReturn)} ZCoins`;
+
+    els.fullPicks.textContent =
+      "View My Picks";
+
+    els.submit.disabled = false;
+    els.submit.textContent =
+      "Done";
   }
 
   function renderPrepared() {
@@ -549,15 +780,13 @@
     }
 
     els.loading.hidden = true;
-    els.error.hidden = true;
-    els.body.hidden = false;
 
     els.body.classList.toggle(
       "quickbet-preview-only",
       state.previewOnly
     );
 
-    renderTicket();
+    showTicketStage();
   }
 
   async function fetchBootstrap() {
@@ -799,7 +1028,7 @@
     }
   }
 
-  async function submit() {
+  async function confirmPick() {
     if (state.busy) return;
 
     const wallet = walletState();
@@ -816,20 +1045,21 @@
     }
 
     if (
+      state.previewOnly ||
       !wallet.walletConnected ||
       !wallet.wageringEnabled ||
       !state.market?.id ||
       !state.side ||
       state.wager < 1
     ) {
-      renderTicket();
+      renderReview();
       return;
     }
 
     state.busy = true;
     els.submit.disabled = true;
     els.submit.textContent =
-      "Placing…";
+      "Confirming…";
 
     try {
       const response = await fetch(
@@ -860,29 +1090,46 @@
       if (!response.ok || !payload?.ok) {
         throw new Error(
           payload?.message ||
-          "EastCoin could not place this wager."
+          "EastCoin could not confirm this pick."
         );
       }
 
       state.busy = false;
-      V2.toast("Bet placed.");
 
-      els.modal.classList.remove(
-        "open"
-      );
-
-      els.modal.setAttribute(
-        "aria-hidden",
-        "true"
-      );
+      renderSuccess(payload);
 
       V2.integrations?.identity?.();
     } catch (error) {
       state.busy = false;
-      els.note.textContent =
+
+      els.reviewMode.textContent =
         error?.message ||
-        "EastCoin could not place this wager.";
-      renderTicket();
+        "EastCoin could not confirm this pick.";
+
+      renderReview();
+    }
+  }
+
+  function primaryAction() {
+    if (state.busy) return;
+
+    if (state.stage === "ticket") {
+      if (!state.side) {
+        renderTicket();
+        return;
+      }
+
+      renderReview();
+      return;
+    }
+
+    if (state.stage === "review") {
+      confirmPick();
+      return;
+    }
+
+    if (state.stage === "success") {
+      close();
     }
   }
 
@@ -892,7 +1139,7 @@
 
     close();
 
-    if (market && match) {
+    if (market && match && market.id) {
       V2.router?.openPicksForMatch?.({
         id: market.id,
         date:
@@ -916,6 +1163,20 @@
     }
 
     V2.router?.go?.("picks");
+  }
+
+  function secondaryAction() {
+    if (state.stage === "review") {
+      showTicketStage();
+      return;
+    }
+
+    if (state.stage === "success") {
+      openFullPicks();
+      return;
+    }
+
+    openFullPicks();
   }
 
   els.close.onclick = close;
@@ -951,22 +1212,11 @@
   els.amount.onblur = () => {
     setWager(els.amount.value);
   };
-
-  document.querySelectorAll(
-    "[data-quick-amount]"
-  ).forEach((button) => {
-    button.onclick = () => {
-      setWager(
-        button.dataset.quickAmount
-      );
-    };
-  });
-
-  els.fullPicks.onclick =
-    openFullPicks;
+els.fullPicks.onclick =
+    secondaryAction;
 
   els.submit.onclick =
-    submit;
+    primaryAction;
 
   document.addEventListener(
     "keydown",

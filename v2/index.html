@@ -17,7 +17,7 @@
 <link href="assets/css/sport-more-fix.css?v=8" rel="stylesheet">
 <link href="assets/css/event-cards-v1.css?v=28" rel="stylesheet">
 <link href="assets/css/card-scores.css?v=18" rel="stylesheet">
-<link href="assets/css/quick-bet.css?v=33" rel="stylesheet">
+<link href="assets/css/quick-bet.css?v=34" rel="stylesheet">
 </head>
 <body>
 <header class="topbar">
@@ -160,6 +160,76 @@
       </p>
     </div>
 
+    <div class="quickbetreview" id="quickBetReview" hidden>
+      <div class="quickbet-review-kicker">REVIEW YOUR PICK</div>
+
+      <section class="quickbet-review-team">
+        <span class="quickbet-review-logo" id="quickBetReviewLogo"></span>
+
+        <div>
+          <small id="quickBetReviewSide">YOUR PICK</small>
+          <strong id="quickBetReviewTeam">Team</strong>
+          <em id="quickBetReviewOpponent">vs Opponent</em>
+        </div>
+
+        <span class="quickbet-review-ml" id="quickBetReviewML">ML —</span>
+      </section>
+
+      <div class="quickbet-review-grid">
+        <div>
+          <span>Wager</span>
+          <strong id="quickBetReviewWager">—</strong>
+        </div>
+
+        <div class="quickbet-review-green">
+          <span>Projected Pool Payout</span>
+          <strong id="quickBetReviewMultiplier">—</strong>
+        </div>
+
+        <div class="quickbet-review-green strong">
+          <span>Estimated Return</span>
+          <strong id="quickBetReviewReturn">—</strong>
+        </div>
+      </div>
+
+      <div class="quickbet-review-warning">
+        <strong>Review before confirming</strong>
+        <p>
+          Your community-pool multiplier is projected until the market locks.
+          The final confirmed pick cannot be changed after submission.
+        </p>
+      </div>
+
+      <div class="quickbet-review-mode" id="quickBetReviewMode"></div>
+    </div>
+
+    <div class="quickbetsuccess" id="quickBetSuccess" hidden>
+      <div class="quickbet-success-check">✓</div>
+      <small>PICK LOCKED IN</small>
+      <strong id="quickBetSuccessTeam">Team</strong>
+      <em id="quickBetSuccessMatchup">Matchup</em>
+
+      <div class="quickbet-success-receipt">
+        <div>
+          <span>Wager</span>
+          <strong id="quickBetSuccessWager">—</strong>
+        </div>
+        <div>
+          <span>Projected Payout</span>
+          <strong id="quickBetSuccessMultiplier">—</strong>
+        </div>
+        <div>
+          <span>Estimated Return</span>
+          <strong id="quickBetSuccessReturn">—</strong>
+        </div>
+      </div>
+
+      <p>
+        Your pick has been recorded. The projected community-pool multiplier
+        can continue moving until the market locks.
+      </p>
+    </div>
+
     <div class="quickbeterror" id="quickBetError" hidden>
       <strong id="quickBetErrorTitle">Quick Bet unavailable</strong>
       <small id="quickBetErrorText"></small>
@@ -167,7 +237,7 @@
 
     <footer class="quickbetfoot">
       <button id="quickBetFullPicks" type="button">Full Picks</button>
-      <button class="quickbet-submit" id="quickBetSubmit" type="button" disabled>Place Bet</button>
+      <button class="quickbet-submit" id="quickBetSubmit" type="button" disabled>Lock In Pick</button>
     </footer>
   </section>
 </div>
@@ -183,7 +253,7 @@
 <script src="assets/js/card-scores.js?v=16"></script>
 <script src="assets/js/integrations.js?v=4"></script>
 <script src="assets/js/router.js?v=13"></script>
-<script src="assets/js/quick-bet.js?v=33"></script>
+<script src="assets/js/quick-bet.js?v=34"></script>
 <script src="assets/js/settings.js?v=5"></script>
 <script src="assets/js/app.js?v=19"></script>
 </body></html>
