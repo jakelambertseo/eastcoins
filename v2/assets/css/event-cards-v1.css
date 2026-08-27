@@ -682,3 +682,308 @@
     flex-basis:100%;
   }
 }
+
+
+/* Iteration 23: pinned NFL RedZone featured broadcast card */
+.card.v1-redzone-card{
+  position:relative;
+  grid-column:span 2;
+  min-height:235px;
+  overflow:hidden;
+  isolation:isolate;
+  border-color:rgba(244,38,69,.48);
+  background:
+    radial-gradient(circle at 14% 20%,rgba(255,38,67,.18),transparent 34%),
+    linear-gradient(135deg,#170307,#080304 66%);
+  box-shadow:
+    0 0 0 1px rgba(236,24,58,.08),
+    0 12px 32px rgba(76,0,13,.28);
+  animation:redzoneCardPulse 2.35s ease-in-out infinite;
+}
+
+.card.v1-redzone-card:hover{
+  transform:translateY(-2px);
+  border-color:rgba(255,72,97,.78);
+  background:
+    radial-gradient(circle at 14% 20%,rgba(255,38,67,.23),transparent 35%),
+    linear-gradient(135deg,#1d0409,#090304 66%);
+  box-shadow:
+    0 0 0 1px rgba(255,53,82,.14),
+    0 16px 42px rgba(104,0,17,.34);
+}
+
+.v1-redzone-glow{
+  position:absolute;
+  z-index:4;
+  inset:-45% -20%;
+  pointer-events:none;
+  opacity:.28;
+  background:
+    linear-gradient(
+      105deg,
+      transparent 38%,
+      rgba(255,74,96,.02) 43%,
+      rgba(255,74,96,.22) 50%,
+      rgba(255,74,96,.02) 57%,
+      transparent 62%
+    );
+  transform:translateX(-44%);
+  animation:redzoneSweep 3.8s ease-in-out infinite;
+}
+
+.v1-redzone-card .v1-event-visual{
+  min-height:180px;
+  background:
+    radial-gradient(circle at 20% 20%,rgba(233,22,54,.20),transparent 42%),
+    linear-gradient(120deg,#180306,#080304 72%);
+}
+
+.v1-redzone-bg{
+  opacity:.17 !important;
+  filter:saturate(.72) contrast(1.12);
+}
+
+.v1-redzone-shade{
+  background:
+    linear-gradient(90deg,rgba(16,1,4,.94),rgba(29,3,8,.62) 52%,rgba(8,3,4,.88)),
+    linear-gradient(180deg,rgba(130,0,25,.05),rgba(3,3,3,.76)) !important;
+}
+
+.v1-redzone-topbar{
+  padding:10px 11px 0;
+}
+
+.v1-redzone-ribbon{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  min-height:27px;
+  padding:0 9px;
+  border:1px solid rgba(255,90,109,.34);
+  border-radius:7px;
+  color:#fff4f5;
+  background:
+    linear-gradient(180deg,#d3153a,#8f0b27);
+  box-shadow:
+    0 0 16px rgba(211,21,58,.22);
+  font-size:.68rem;
+  font-weight:1000;
+  letter-spacing:.075em;
+}
+
+.v1-redzone-ribbon i{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#fff2f3;
+  box-shadow:0 0 0 4px rgba(255,255,255,.08);
+  animation:redzoneLiveDot 1.1s ease-in-out infinite;
+}
+
+.v1-redzone-state{
+  display:inline-flex;
+  align-items:center;
+  min-height:27px;
+  padding:0 8px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:7px;
+  color:#a58f91;
+  background:rgba(7,3,4,.76);
+  font-size:.65rem;
+  font-weight:1000;
+  letter-spacing:.045em;
+}
+
+.v1-redzone-state.live{
+  border-color:rgba(255,62,90,.34);
+  color:#ffe8eb;
+  background:rgba(164,8,42,.56);
+}
+
+.v1-redzone-content{
+  position:relative;
+  z-index:2;
+  min-height:142px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:12px 18px 17px;
+}
+
+.v1-redzone-mark{
+  width:74px;
+  height:74px;
+  flex:0 0 74px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(255,88,107,.38);
+  border-radius:18px;
+  color:#fff7f7;
+  background:
+    linear-gradient(145deg,#d31338,#78091f);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.05),
+    0 0 28px rgba(211,19,56,.24);
+  font-size:1.20rem;
+  font-weight:1000;
+  letter-spacing:-.07em;
+  transform:skew(-6deg);
+}
+
+.v1-redzone-copy{
+  min-width:0;
+}
+
+.v1-redzone-copy small{
+  display:block;
+  color:#d46272;
+  font-size:.59rem;
+  font-weight:1000;
+  letter-spacing:.11em;
+}
+
+.v1-redzone-copy strong{
+  display:block;
+  max-width:760px;
+  margin-top:4px;
+  overflow:hidden;
+  color:#fff7f5;
+  font-size:1.34rem;
+  font-weight:1000;
+  line-height:1.10;
+  letter-spacing:-.035em;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  text-shadow:0 2px 16px rgba(139,0,23,.22);
+}
+
+.v1-redzone-copy span{
+  display:block;
+  margin-top:6px;
+  color:#a9878b;
+  font-size:.69rem;
+  font-weight:800;
+}
+
+.v1-redzone-footer{
+  min-height:54px !important;
+  justify-content:space-between !important;
+  gap:10px;
+  padding:8px 9px 8px 12px !important;
+  border-top-color:rgba(255,72,96,.12) !important;
+  background:
+    linear-gradient(90deg,rgba(87,5,22,.14),transparent 45%),
+    #090506 !important;
+}
+
+.v1-redzone-footer-copy{
+  min-width:0;
+}
+
+.v1-redzone-footer-copy strong{
+  display:block;
+  color:#d3a2a8;
+  font-size:.68rem;
+  font-weight:1000;
+}
+
+.v1-redzone-footer-copy small{
+  display:block;
+  margin-top:2px;
+  color:#6f5d60;
+  font-size:.57rem;
+}
+
+.v1-redzone-watch{
+  min-width:98px !important;
+  border-color:rgba(255,58,88,.55) !important;
+  color:#fff3f4 !important;
+  background:
+    linear-gradient(180deg,#b71336,#72091f) !important;
+}
+
+.v1-redzone-watch:hover{
+  border-color:rgba(255,99,121,.78) !important;
+  background:
+    linear-gradient(180deg,#cf193f,#850b25) !important;
+}
+
+@keyframes redzoneCardPulse{
+  0%,100%{
+    border-color:rgba(244,38,69,.40);
+    box-shadow:
+      0 0 0 1px rgba(236,24,58,.06),
+      0 12px 32px rgba(76,0,13,.24);
+  }
+  50%{
+    border-color:rgba(255,74,96,.68);
+    box-shadow:
+      0 0 0 1px rgba(255,56,84,.12),
+      0 0 24px rgba(177,7,38,.18),
+      0 14px 38px rgba(88,0,15,.31);
+  }
+}
+
+@keyframes redzoneSweep{
+  0%,58%{transform:translateX(-46%);opacity:.12}
+  76%{opacity:.34}
+  100%{transform:translateX(44%);opacity:.10}
+}
+
+@keyframes redzoneLiveDot{
+  0%,100%{opacity:.55;transform:scale(.92)}
+  50%{opacity:1;transform:scale(1.16)}
+}
+
+@media(max-width:900px){
+  .card.v1-redzone-card{
+    grid-column:span 2;
+  }
+
+  .v1-redzone-copy strong{
+    font-size:1.18rem;
+  }
+}
+
+@media(max-width:590px){
+  .card.v1-redzone-card{
+    grid-column:span 1;
+    min-height:0;
+  }
+
+  .v1-redzone-content{
+    min-height:132px;
+    gap:11px;
+    padding:11px 12px 14px;
+  }
+
+  .v1-redzone-mark{
+    width:58px;
+    height:58px;
+    flex-basis:58px;
+    border-radius:14px;
+    font-size:1rem;
+  }
+
+  .v1-redzone-copy strong{
+    font-size:1.02rem;
+    white-space:normal;
+  }
+
+  .v1-redzone-footer{
+    align-items:flex-end !important;
+    flex-direction:column;
+  }
+
+  .v1-redzone-footer-copy{
+    align-self:flex-start;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .card.v1-redzone-card,
+  .v1-redzone-glow,
+  .v1-redzone-ribbon i{
+    animation:none !important;
+  }
+}

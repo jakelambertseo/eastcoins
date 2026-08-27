@@ -32,6 +32,47 @@
     expandedCategories.clear();
   }
 
+  function redZoneText(match) {
+    return [
+      match?.title,
+      match?.name,
+      match?.category,
+      match?.sport,
+      match?.league,
+      match?.network,
+      match?.channel,
+      match?.broadcast,
+      match?.broadcaster,
+      match?.station,
+      match?.tv,
+      match?.network_name,
+      match?.channel_name,
+      match?._eastcoinProviders?.ppv?.network,
+      match?._eastcoinProviders?.ppv?.channel
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function isRedZone(match) {
+    const text = redZoneText(match);
+
+    return (
+      text.includes("redzone") ||
+      text.includes("red zone")
+    );
+  }
+
+  function eventFamily(match) {
+    return isRedZone(match)
+      ? "american-football"
+      : V2.family(match);
+  }
+
   function merge(discovery, allResult) {
     const map = new Map();
 
@@ -105,6 +146,7 @@
     const eventTime = V2.ts(match?.date);
     const now = Date.now();
 
+    if (isRedZone(match)) score += 100000;
     if (effectiveLive(match)) score += 10000;
     if (match?.popular) score += 1200;
 
@@ -116,7 +158,7 @@
       if (S.settings?.startingSoonFirst) score += Math.max(0, 3600 - hoursUntilStart * 240);
     }
 
-    if (["american-football", "basketball", "baseball", "combat"].includes(V2.family(match))) {
+    if (["american-football", "basketball", "baseball", "combat"].includes(eventFamily(match))) {
       score += 100;
     }
 
@@ -133,7 +175,7 @@
 
   function filtered() {
     return sorted(S.events.filter((match) => {
-      const family = V2.family(match);
+      const family = eventFamily(match);
       const isLive = effectiveLive(match);
       const isFinal = finalScore(match);
 
@@ -424,11 +466,22 @@
 
   function categorySection(family, matches) {
     const [icon, label] = V2.sportMeta(family);
-    const liveCount = matches.filter(effectiveLive).length;
-    const finalCount = matches.filter(finalScore).length;
+
+    // RedZone is a featured NFL broadcast surface. Keep it at the front of
+    // Football regardless of Recommended vs Time sorting.
+    const orderedMatches =
+      family === "american-football"
+        ? [
+            ...matches.filter(isRedZone),
+            ...matches.filter((match) => !isRedZone(match))
+          ]
+        : matches;
+
+    const liveCount = orderedMatches.filter(effectiveLive).length;
+    const finalCount = orderedMatches.filter(finalScore).length;
     const upcomingCount = Math.max(
       0,
-      matches.length - liveCount - finalCount
+      orderedMatches.length - liveCount - finalCount
     );
 
     const subtitle =
@@ -441,7 +494,7 @@
     // Live and Saved are intentional narrow views, so do not hide results
     // behind a category expander there.
     const canCollapse =
-      matches.length > CATEGORY_INITIAL_LIMIT &&
+      orderedMatches.length > CATEGORY_INITIAL_LIMIT &&
       S.status !== "live" &&
       S.sport !== "live" &&
       S.status !== "saved";
@@ -452,13 +505,13 @@
 
     const visibleMatches =
       canCollapse && !expanded
-        ? matches.slice(0, CATEGORY_INITIAL_LIMIT)
-        : matches;
+        ? orderedMatches.slice(0, CATEGORY_INITIAL_LIMIT)
+        : orderedMatches;
 
     const hiddenCount =
       Math.max(
         0,
-        matches.length - visibleMatches.length
+        orderedMatches.length - visibleMatches.length
       );
 
     const expander =
@@ -478,8 +531,8 @@
               </strong>
               <small>
                 ${expanded
-                  ? `${matches.length} games currently shown`
-                  : `${visibleMatches.length} of ${matches.length} shown`}
+                  ? `${orderedMatches.length} games currently shown`
+                  : `${visibleMatches.length} of ${orderedMatches.length} shown`}
               </small>
             </button>
           </div>
@@ -504,7 +557,7 @@
             ${finalCount
               ? `<span class="final">${finalCount} FINAL</span>`
               : ""}
-            <span>${matches.length} total</span>
+            <span>${orderedMatches.length} total</span>
           </div>
         </header>
 
@@ -548,9 +601,92 @@
     );
   }
 
-  function card(match) {
+  function redZoneCard(match) {
     const key = V2.id(match);
-    const [icon, label] = V2.sportMeta(V2.family(match));
+    const poster = V2.poster(match);
+    const saved = S.favorites.has(key);
+    const isLive = effectiveLive(match);
+    const stateLabel =
+      finalScore(match)
+        ? "FINAL"
+        : isLive
+          ? "LIVE NOW"
+          : V2.time(match);
+
+    return `
+      <article
+        class="card v1-event-card v1-redzone-card ${isLive ? "is-live" : ""}"
+        data-card-open="${V2.esc(key)}"
+        role="button"
+        tabindex="0"
+        aria-label="Open ${V2.esc(match.title || "NFL RedZone")}"
+      >
+        <div class="v1-redzone-glow" aria-hidden="true"></div>
+
+        <div class="v1-event-visual">
+          ${poster
+            ? `<div class="v1-event-bg v1-redzone-bg" style="background-image:url('${V2.esc(poster)}')"></div>`
+            : ""}
+          <div class="v1-event-shade v1-redzone-shade"></div>
+
+          <div class="v1-event-topbar v1-redzone-topbar">
+            <span class="v1-redzone-ribbon">
+              <i></i>
+              NFL REDZONE
+            </span>
+            <span class="v1-redzone-state ${isLive ? "live" : ""}">
+              ${V2.esc(stateLabel)}
+            </span>
+          </div>
+
+          <div class="v1-redzone-content">
+            <div class="v1-redzone-mark" aria-hidden="true">RZ</div>
+            <div class="v1-redzone-copy">
+              <small>SUNDAY FOOTBALL COMMAND CENTER</small>
+              <strong>${V2.esc(match.title || "NFL RedZone")}</strong>
+              <span>
+                ${isLive
+                  ? "Every scoring drive, pinned first on EastCoin."
+                  : `Opens ${V2.esc(V2.datetime(match))}`
+                }
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <footer class="v1-event-footer v1-redzone-footer">
+          <div class="v1-redzone-footer-copy">
+            <strong>${isLive ? "RedZone is live" : "RedZone broadcast"}</strong>
+            <small>Featured NFL hub</small>
+          </div>
+
+          <div class="v1-event-actions">
+            <button
+              class="v1-save ${saved ? "saved" : ""}"
+              data-save="${V2.esc(key)}"
+              aria-label="Save NFL RedZone"
+            >${saved ? "★" : "☆"}</button>
+
+            <button class="v1-multiview" data-multiview="${V2.esc(key)}">
+              ＋ MultiView
+            </button>
+
+            <button class="v1-watch v1-redzone-watch" data-watch="${V2.esc(key)}">
+              ${isLive ? "Watch RedZone" : "Open RedZone"}
+            </button>
+          </div>
+        </footer>
+      </article>
+    `;
+  }
+
+  function card(match) {
+    if (isRedZone(match)) {
+      return redZoneCard(match);
+    }
+
+    const key = V2.id(match);
+    const [icon, label] = V2.sportMeta(eventFamily(match));
     const poster = V2.poster(match);
     const home = match?.teams?.home;
     const away = match?.teams?.away;
@@ -698,7 +834,7 @@
     const groups = new Map();
 
     events.forEach((match) => {
-      const family = V2.family(match);
+      const family = eventFamily(match);
 
       if (!groups.has(family)) {
         groups.set(family, []);
