@@ -416,3 +416,26 @@
   }
 }
 \n\n/* Iteration 31: complete Quick Bet preview ticket */\n.quickbetpanel{width:min(520px,100%)}\n.quickbet-reference{position:relative;overflow:hidden}\n.quickbet-reference::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#f2c400,#a71334)}\n.quickbet-sides>button{min-height:108px;grid-template-columns:48px minmax(0,1fr)}\n.quickbet-team-logo{width:48px;height:48px}\n.quickbet-sides strong{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.15}\n.quickbet-sides>button.selected{box-shadow:inset 0 0 0 1px rgba(229,185,43,.08),0 0 22px rgba(173,9,50,.08)}\n.quickbet-sides>button.selected::after{content:"YOUR PICK";grid-column:1/-1;justify-self:end;margin-top:5px;color:#e5c85c;font-size:.52rem;font-weight:1000;letter-spacing:.09em}\n.quickbet-wager-head strong{display:flex;align-items:center;gap:5px}\n.quickbet-zcoin{width:23px;height:23px;display:inline-grid;place-items:center}\n.quickbet-zcoin img{width:100%;height:100%;object-fit:contain}\n.quickbet-amount-row{display:grid;grid-template-columns:88px minmax(0,1fr);gap:8px;margin-top:12px}\n.quickbet-amount{width:100%;min-height:38px;padding:0 10px;border:1px solid rgba(229,185,43,.19);border-radius:8px;outline:0;color:#f1d45f;background:#080808;font-weight:1000;text-align:center}\n.quickbet-amount:focus{border-color:rgba(229,185,43,.45);box-shadow:0 0 0 3px rgba(229,185,43,.05)}\n.quickbet-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}\n.quickbet-chips button{min-width:0;min-height:38px;padding:0 5px;border:1px solid rgba(255,255,255,.07);border-radius:8px;color:#9c938a;background:#0b0b0b;font-size:.65rem;font-weight:1000}\n.quickbet-chips button:hover{border-color:rgba(229,185,43,.22);color:#e3c95f;background:#110e07}\n.quickbet-preview-status{margin-top:9px;padding:7px 8px;border:1px solid rgba(116,185,255,.12);border-radius:7px;color:#819bb3;background:rgba(30,73,111,.05);font-size:.61rem;font-weight:850;text-align:center}\n.quickbet-summary{grid-template-columns:1.05fr .95fr 1.15fr}\n.quickbet-summary>div{min-height:58px}\n.quickbet-summary strong{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25}\n.quickbet-note{min-height:52px}\n.quickbetfoot{position:sticky;bottom:0;background:rgba(9,9,9,.97);backdrop-filter:blur(10px)}\n.quickbetfoot .quickbet-submit{min-width:170px}\n@media(max-width:560px){.quickbet-amount-row{grid-template-columns:1fr}.quickbet-summary{grid-template-columns:1fr 1fr}.quickbet-summary>div:last-child{grid-column:1/-1}.quickbetfoot{display:grid;grid-template-columns:auto minmax(0,1fr)}.quickbetfoot button,.quickbetfoot .quickbet-submit{width:100%;min-width:0}}\n
+
+/* Iteration 32: preview ticket when no active Picks season exists */
+.quickbet-preview-only .quickbet-wager{
+  border-color:rgba(116,185,255,.14);
+  background:
+    linear-gradient(180deg,rgba(31,73,112,.035),rgba(31,73,112,.01)),
+    #0b0b0b;
+}
+
+.quickbet-preview-only .quickbet-preview-status{
+  border-color:rgba(116,185,255,.22);
+  color:#9ab5cc;
+}
+
+.quickbet-preview-only .quickbet-preview-status::before{
+  content:"PREVIEW MODE · ";
+  color:#74b9ff;
+  font-weight:1000;
+}
+
+.quickbetfoot .quickbet-submit:disabled{
+  min-width:190px;
+}

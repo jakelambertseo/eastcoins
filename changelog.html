@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">104 major update groups</div>
+<div class="release-count">105 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -2188,10 +2188,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>EastCoin V2 Quick Bet now supports full ticket previews before wallet integration</h2>
 <p>
@@ -2203,6 +2202,23 @@
     community-pool multiplier, and estimated return. No wallet balance is
     fabricated and no wager can be submitted while StreamElements remains
     disconnected; the final CTA stays locked until a real wallet is available.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-08-27">August 27, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>EastCoin V2 Quick Bet preview no longer requires an active Picks season</h2>
+<p>
+    Fixed the Quick Bet preview flow when the Picks database has no active
+    season. The server still verifies the exact Odds API event and moneyline,
+    but NO_ACTIVE_PICKS_SEASON now falls back to a clearly labeled local preview
+    ticket instead of an unavailable error. Preview mode does not create a fake
+    D1 market, fabricate a wallet balance, save a pick, or allow wager
+    submission. Once a real season is activated, Quick Bet automatically returns
+    to the normal persisted-market flow.
 </p>
 </article>
 </section>

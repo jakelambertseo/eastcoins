@@ -48,6 +48,8 @@
     side: null,
     wager: 0,
     cardOdds: null,
+    previewOnly: false,
+    previewReason: "",
     busy: false
   };
 
@@ -111,6 +113,8 @@
     state.side = null;
     state.wager = PREVIEW_DEFAULT_WAGER;
     state.cardOdds = null;
+    state.previewOnly = false;
+    state.previewReason = "";
     state.busy = false;
 
     els.body.hidden = true;
@@ -416,6 +420,18 @@
       return;
     }
 
+    if (state.previewOnly) {
+      els.note.textContent =
+        state.side
+          ? "Preview ticket ready. No active Picks season exists yet, so this ticket is not saved to the Picks database. Your selection, preview wager and projected return are safe to test."
+          : "Choose a team to preview the complete ticket. No active Picks season exists yet, so nothing will be saved or charged.";
+
+      els.submit.disabled = true;
+      els.submit.textContent =
+        "Preview Only — Season Not Active";
+      return;
+    }
+
     if (!wallet.walletConnected) {
       els.note.textContent =
         state.side
@@ -536,6 +552,11 @@
     els.error.hidden = true;
     els.body.hidden = false;
 
+    els.body.classList.toggle(
+      "quickbet-preview-only",
+      state.previewOnly
+    );
+
     renderTicket();
   }
 
@@ -561,6 +582,72 @@
     }
 
     return payload;
+  }
+
+  function previewMarket(match) {
+    const odds =
+      V2.cardOdds?.forMatch?.(match) ||
+      state.cardOdds ||
+      null;
+
+    const away =
+      String(
+        odds?.providerAway ||
+        match?.teams?.away?.name ||
+        "Away"
+      );
+
+    const home =
+      String(
+        odds?.providerHome ||
+        match?.teams?.home?.name ||
+        "Home"
+      );
+
+    return {
+      id: "",
+      provider: "odds_api",
+      providerEventId:
+        String(
+          odds?.providerEventId || ""
+        ),
+      seasonId: "",
+      sport:
+        V2.family(match),
+      league:
+        String(
+          odds?.sportTitle ||
+          odds?.sportKey ||
+          ""
+        ),
+      away: {
+        name: away,
+        badge:
+          V2.badge(
+            match?.teams?.away
+          ) || ""
+      },
+      home: {
+        name: home,
+        badge:
+          V2.badge(
+            match?.teams?.home
+          ) || ""
+      },
+      startsAt:
+        odds?.commenceTime ||
+        new Date(
+          V2.ts(match?.date)
+        ).toISOString(),
+      state: "PREVIEW",
+      pool: {
+        away: 0,
+        home: 0,
+        total: 0,
+        awayCount: 0,
+        homeCount: 0
+      }
+    };
   }
 
   async function ensureMarket(match) {
@@ -663,16 +750,41 @@
       els.loadingMeta.textContent =
         "Verifying the exact Odds API event…";
 
-      const ensured =
-        await ensureMarket(match);
+      try {
+        const ensured =
+          await ensureMarket(match);
 
-      state.market =
-        ensured.market;
+        state.market =
+          ensured.market;
 
-      els.loadingMeta.textContent =
-        ensured.created
-          ? "Picks market created. Loading your wallet…"
-          : "Picks market found. Loading your wallet…";
+        state.previewOnly = false;
+        state.previewReason = "";
+
+        els.loadingMeta.textContent =
+          ensured.created
+            ? "Picks market created. Loading your wallet…"
+            : "Picks market found. Loading your wallet…";
+      } catch (error) {
+        if (
+          error?.code !==
+          "NO_ACTIVE_PICKS_SEASON"
+        ) {
+          throw error;
+        }
+
+        // Previewing the ticket should not require creating a real D1 market.
+        // The exact Odds API event was already verified by /markets/ensure
+        // before it returned NO_ACTIVE_PICKS_SEASON.
+        state.market =
+          previewMarket(match);
+
+        state.previewOnly = true;
+        state.previewReason =
+          "NO_ACTIVE_PICKS_SEASON";
+
+        els.loadingMeta.textContent =
+          "Event verified. Opening preview ticket…";
+      }
 
       state.bootstrap =
         await fetchBootstrap();
