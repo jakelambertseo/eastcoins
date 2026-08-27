@@ -613,3 +613,72 @@
     font-size:.66rem !important;
   }
 }
+
+
+/* Iteration 22: category game expanders */
+.v1-category-expander{
+  padding:0 10px 10px;
+}
+
+.v1-category-expander button{
+  width:100%;
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:7px 12px;
+  border:1px solid rgba(229,185,43,.14);
+  border-radius:9px;
+  color:#cdbb70;
+  background:
+    linear-gradient(180deg,rgba(229,185,43,.035),rgba(229,185,43,.012)),
+    #090806;
+  transition:
+    border-color .14s ease,
+    background .14s ease,
+    color .14s ease;
+}
+
+.v1-category-expander button:hover{
+  border-color:rgba(229,185,43,.28);
+  color:#efd66d;
+  background:
+    linear-gradient(180deg,rgba(229,185,43,.07),rgba(229,185,43,.025)),
+    #0c0a06;
+}
+
+.v1-category-expander-icon{
+  color:#e5c84f;
+  font-size:.86rem;
+  font-weight:1000;
+  line-height:1;
+}
+
+.v1-category-expander strong{
+  color:inherit;
+  font-size:.69rem;
+  font-weight:1000;
+}
+
+.v1-category-expander small{
+  color:#6f675c;
+  font-size:.59rem;
+  font-weight:850;
+}
+
+@media(max-width:590px){
+  .v1-category-expander{
+    padding:0 8px 8px;
+  }
+
+  .v1-category-expander button{
+    min-height:44px;
+    flex-wrap:wrap;
+    gap:5px 7px;
+  }
+
+  .v1-category-expander small{
+    flex-basis:100%;
+  }
+}

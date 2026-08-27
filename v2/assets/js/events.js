@@ -7,6 +7,31 @@
   const $ = V2.$;
   const $$ = V2.$$;
 
+  const CATEGORY_INITIAL_LIMIT = 16;
+  const expandedCategories = new Set();
+  let categoryRenderSignature = "";
+
+  function categoryFilterSignature() {
+    return [
+      S.sport,
+      S.date,
+      S.status,
+      S.search,
+      S.sort
+    ].join("|");
+  }
+
+  function syncCategoryExpansionState() {
+    const signature = categoryFilterSignature();
+
+    if (signature === categoryRenderSignature) {
+      return;
+    }
+
+    categoryRenderSignature = signature;
+    expandedCategories.clear();
+  }
+
   function merge(discovery, allResult) {
     const map = new Map();
 
@@ -413,6 +438,54 @@
           ? `${finalCount} final`
           : `${upcomingCount} upcoming`;
 
+    // Live and Saved are intentional narrow views, so do not hide results
+    // behind a category expander there.
+    const canCollapse =
+      matches.length > CATEGORY_INITIAL_LIMIT &&
+      S.status !== "live" &&
+      S.sport !== "live" &&
+      S.status !== "saved";
+
+    const expanded =
+      canCollapse &&
+      expandedCategories.has(family);
+
+    const visibleMatches =
+      canCollapse && !expanded
+        ? matches.slice(0, CATEGORY_INITIAL_LIMIT)
+        : matches;
+
+    const hiddenCount =
+      Math.max(
+        0,
+        matches.length - visibleMatches.length
+      );
+
+    const expander =
+      canCollapse
+        ? `
+          <div class="v1-category-expander">
+            <button
+              type="button"
+              data-category-expand="${V2.esc(family)}"
+              aria-expanded="${expanded ? "true" : "false"}"
+            >
+              <span class="v1-category-expander-icon">${expanded ? "−" : "＋"}</span>
+              <strong>
+                ${expanded
+                  ? "Show Fewer Games"
+                  : `Show ${hiddenCount} More Game${hiddenCount === 1 ? "" : "s"}`}
+              </strong>
+              <small>
+                ${expanded
+                  ? `${matches.length} games currently shown`
+                  : `${visibleMatches.length} of ${matches.length} shown`}
+              </small>
+            </button>
+          </div>
+        `
+        : "";
+
     return `
       <section class="v1-category-section" data-category="${V2.esc(family)}">
         <header class="v1-category-header">
@@ -436,8 +509,10 @@
         </header>
 
         <div class="v1-category-grid">
-          ${matches.map(card).join("")}
+          ${visibleMatches.map(card).join("")}
         </div>
+
+        ${expander}
       </section>
     `;
   }
@@ -614,6 +689,8 @@
   }
 
   function renderGrid() {
+    syncCategoryExpansionState();
+
     const events = filtered();
 
     E.eventCount.textContent = `${events.length} event${events.length === 1 ? "" : "s"}`;
@@ -642,6 +719,41 @@
 
     E.grid.hidden = !events.length;
     E.empty.hidden = Boolean(events.length);
+
+    $$("[data-category-expand]", E.grid).forEach((button) => {
+      button.onclick = () => {
+        const family = String(
+          button.dataset.categoryExpand || ""
+        );
+
+        if (!family) return;
+
+        const expanding =
+          !expandedCategories.has(family);
+
+        if (expanding) {
+          expandedCategories.add(family);
+        } else {
+          expandedCategories.delete(family);
+        }
+
+        renderGrid();
+
+        // When collapsing a very long category, return the user to its header
+        // instead of leaving the viewport stranded far below the shortened DOM.
+        if (!expanding) {
+          requestAnimationFrame(() => {
+            const section = [...E.grid.querySelectorAll("[data-category]")]
+              .find((node) => node.dataset.category === family);
+
+            section?.scrollIntoView?.({
+              behavior: "smooth",
+              block: "start"
+            });
+          });
+        }
+      };
+    });
 
     $$("[data-watch]", E.grid).forEach((button) => {
       button.onclick = (event) => {
