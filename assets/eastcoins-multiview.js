@@ -8,6 +8,10 @@
   const REDUCED_MOTION_KEY = "eastcoinsReducedMotion";
   const CONTROLS_HIDDEN_KEY = "eastcoinMultiviewControlsHidden";
   const DEFAULT_LAYOUT = 4;
+  const V2_EMBEDDED =
+    new URLSearchParams(
+      window.location.search
+    ).get("ecV2Embedded") === "1";
   const VALID_LAYOUTS = new Set([2, 3, 4]);
   const DEFAULT_SPLITS = {
     2: { col: 50, row: 50 },
@@ -1092,7 +1096,23 @@
 
     panel.querySelector("[data-panel-solo]")?.addEventListener("click", () => {
       const source = state.slots[slot];
-      if (source) window.location.href = soloUrl(source);
+      if (!source) return;
+
+      if (
+        V2_EMBEDDED &&
+        window.parent !== window
+      ) {
+        window.parent.postMessage(
+          {
+            type: "ec-v2-multiview-solo",
+            source
+          },
+          window.location.origin
+        );
+        return;
+      }
+
+      window.location.href = soloUrl(source);
     });
   });
 
@@ -1439,6 +1459,23 @@
   });
 
   function setChatOpen(open) {
+    /*
+      V2 already owns one persistent Twitch chat iframe outside this document.
+      Never mount or reserve a second chat drawer when MultiView is embedded.
+    */
+    if (V2_EMBEDDED) {
+      body.classList.remove("mv-chat-open");
+      chatDrawer?.setAttribute(
+        "aria-hidden",
+        "true"
+      );
+      chatButton?.setAttribute(
+        "aria-expanded",
+        "false"
+      );
+      return;
+    }
+
     const enabled = Boolean(open);
     body.classList.toggle("mv-chat-open", enabled);
     chatDrawer.setAttribute("aria-hidden", String(!enabled));
@@ -1612,7 +1649,21 @@
         : "expanded";
   } catch {}
 
-  if (!isMobile()) {
+  if (V2_EMBEDDED) {
+    /*
+      The parent V2 shell owns navigation. Keep the standalone sidebar state
+      completely out of layout calculations and do not overwrite its saved mode.
+    */
+    body.classList.add(
+      "sidebar-hidden"
+    );
+    body.classList.remove(
+      "sidebar-collapsed",
+      "menu-open",
+      "mv-chat-open"
+    );
+    updateNavigationButton();
+  } else if (!isMobile()) {
     setDesktopSidebarMode(savedMode, false);
   } else {
     updateNavigationButton();

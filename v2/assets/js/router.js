@@ -39,6 +39,10 @@
 
       doc.body.dataset.ecV2Embedded = "true";
 
+      if (current === "multiview") {
+        doc.documentElement.classList.add("ec-v2-embedded");
+      }
+
       if (!doc.getElementById("ecV2EmbeddedCleanup")) {
         const style = doc.createElement("style");
         style.id = "ecV2EmbeddedCleanup";
@@ -169,6 +173,11 @@
     current = routeName;
     setNav(routeName);
 
+    document.body.classList.toggle(
+      "workspace-multiview",
+      routeName === "multiview"
+    );
+
     if (routeName === "events") {
       document.body.classList.remove("workspace-active");
       E.workspace.hidden = true;
@@ -192,6 +201,61 @@
     }
   }
 
+
+  function handleWorkspaceMessage(event) {
+    if (
+      event.origin !== window.location.origin ||
+      event.source !==
+        E.workspaceFrame.contentWindow
+    ) {
+      return;
+    }
+
+    const message =
+      event.data || {};
+
+    if (
+      message.type !==
+      "ec-v2-multiview-solo"
+    ) {
+      return;
+    }
+
+    const source =
+      message.source || {};
+
+    if (
+      source.type === "event" &&
+      source.id
+    ) {
+      const match =
+        V2.events?.find?.(
+          String(source.id)
+        );
+
+      if (!match) {
+        V2.toast(
+          "That event is no longer available."
+        );
+        return;
+      }
+
+      V2.player?.openMatch?.(
+        match
+      );
+      return;
+    }
+
+    if (
+      source.type === "url" &&
+      source.url
+    ) {
+      V2.player?.openCustom?.(
+        source.url
+      );
+    }
+  }
+
   function wire() {
     document.addEventListener("click", (event) => {
       const link = event.target.closest("[data-v2-route]");
@@ -208,6 +272,10 @@
 
     E.workspaceHome.onclick = () => go("events");
     E.workspaceFrame.addEventListener("load", injectEmbeddedCleanup);
+    window.addEventListener(
+      "message",
+      handleWorkspaceMessage
+    );
 
     window.addEventListener("popstate", () => {
       go(routeFromLocation(), { push: false });

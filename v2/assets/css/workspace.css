@@ -9,3 +9,25 @@
 .workspacebar button{min-height:32px;padding:0 10px;border:1px solid var(--line);border-radius:7px;color:#9b9187;background:#0d0d0d;font-size:.8rem;font-weight:900}
 .workspace iframe{width:100%;height:calc(100% - 44px);display:block;border:0;background:#050505}
 body.workspace-active main{display:none}
+
+
+/* ================================================================
+   V2 MULTIVIEW FULL WORKSPACE
+   The outer V2 top nav and sport strip already identify the route, so the
+   generic 44px workspace header is redundant for MultiView.
+   ================================================================ */
+body.workspace-multiview .workspace{
+  min-height:0;
+  overflow:hidden;
+}
+
+body.workspace-multiview .workspacebar{
+  display:none!important;
+}
+
+body.workspace-multiview .workspace iframe{
+  width:100%!important;
+  height:100%!important;
+  min-width:0;
+  min-height:0;
+}

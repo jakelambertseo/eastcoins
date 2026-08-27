@@ -1509,3 +1509,167 @@ body.mv-controls-hidden .mv-stage{
     bottom:14px;
   }
 }
+
+
+/* ================================================================
+   EASTCOIN V2 EMBEDDED MULTIVIEW
+   V2 owns the outer navigation and persistent Twitch chat. When this
+   standalone MultiView document is mounted inside /v2/, remove every
+   legacy shell reservation and let the MultiView canvas fill its iframe.
+   ================================================================ */
+
+html.ec-v2-embedded,
+html.ec-v2-embedded body.ec-multiview-page{
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  margin:0!important;
+  overflow:hidden!important;
+}
+
+html.ec-v2-embedded body.ec-multiview-page{
+  --mv-sidebar-expanded:0px;
+  --mv-sidebar-rail:0px;
+  --mv-chat-width:0px;
+  background:#000;
+}
+
+/* The old V1 / standalone navigation must not render or reserve a column. */
+html.ec-v2-embedded .mv-layout{
+  display:block!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  width:100%!important;
+  max-width:none!important;
+  height:100dvh!important;
+  min-width:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+}
+
+html.ec-v2-embedded body.mv-chat-open .mv-layout{
+  width:100%!important;
+}
+
+html.ec-v2-embedded .mv-layout > .sidebar,
+html.ec-v2-embedded .ec-events-v2-nav,
+html.ec-v2-embedded .mv-nav-toggle,
+html.ec-v2-embedded .mv-mobile-overlay,
+html.ec-v2-embedded #mvChatButton,
+html.ec-v2-embedded .mv-chat-drawer{
+  display:none!important;
+  width:0!important;
+  min-width:0!important;
+  max-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+}
+
+/* The actual MultiView app becomes the entire child viewport. */
+html.ec-v2-embedded .mv-main{
+  position:relative!important;
+  display:grid!important;
+  grid-template-rows:auto minmax(0,1fr)!important;
+  grid-column:1!important;
+  width:100%!important;
+  max-width:none!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  margin:0!important;
+  overflow:hidden!important;
+}
+
+html.ec-v2-embedded body.mv-controls-hidden .mv-main{
+  grid-template-rows:minmax(0,1fr)!important;
+}
+
+html.ec-v2-embedded .mv-toolbar{
+  width:100%!important;
+  min-width:0!important;
+  min-height:46px!important;
+  padding:7px 10px!important;
+}
+
+html.ec-v2-embedded .mv-toolbar-actions{
+  width:100%!important;
+  min-width:0!important;
+}
+
+html.ec-v2-embedded .mv-stage{
+  display:grid!important;
+  grid-template-rows:minmax(0,1fr) auto!important;
+  width:100%!important;
+  max-width:none!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:8px!important;
+  overflow:hidden!important;
+}
+
+html.ec-v2-embedded .mv-grid,
+html.ec-v2-embedded .mv-grid.layout-2,
+html.ec-v2-embedded .mv-grid.layout-3,
+html.ec-v2-embedded .mv-grid.layout-4{
+  width:100%!important;
+  max-width:none!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+}
+
+html.ec-v2-embedded .mv-panel,
+html.ec-v2-embedded .mv-panel-body,
+html.ec-v2-embedded .mv-player-frame{
+  min-width:0!important;
+  min-height:0!important;
+}
+
+html.ec-v2-embedded .mv-controls-reveal{
+  position:absolute!important;
+  right:12px!important;
+  bottom:14px!important;
+}
+
+/*
+  On narrow V2 layouts keep the existing stacked-panel behavior, but do not
+  re-enable the legacy mobile sidebar or convert the app back to an auto-height
+  standalone document.
+*/
+@media(max-width:900px){
+  html.ec-v2-embedded,
+  html.ec-v2-embedded body.ec-multiview-page{
+    overflow:auto!important;
+  }
+
+  html.ec-v2-embedded .mv-layout{
+    min-height:100dvh!important;
+    height:auto!important;
+  }
+
+  html.ec-v2-embedded .mv-main{
+    display:block!important;
+    width:100%!important;
+    min-height:100dvh!important;
+    height:auto!important;
+    overflow:visible!important;
+  }
+
+  html.ec-v2-embedded .mv-stage{
+    display:block!important;
+    width:100%!important;
+    height:auto!important;
+    overflow:visible!important;
+  }
+
+  html.ec-v2-embedded .mv-grid,
+  html.ec-v2-embedded .mv-grid.layout-2,
+  html.ec-v2-embedded .mv-grid.layout-3,
+  html.ec-v2-embedded .mv-grid.layout-4{
+    height:auto!important;
+  }
+}
