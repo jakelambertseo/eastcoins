@@ -987,3 +987,150 @@
     animation:none !important;
   }
 }
+
+
+/* Iteration 24: deterministic away-left / home-right matchup backgrounds */
+.v1-matchup-bg{
+  position:absolute;
+  z-index:0;
+  inset:0;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);
+  align-items:stretch;
+  overflow:hidden;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 18% 48%,rgba(96,117,181,.055),transparent 36%),
+    radial-gradient(circle at 82% 48%,rgba(173,9,50,.075),transparent 36%);
+}
+
+.v1-matchup-bg::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(4,5,8,.22) 0%,
+      rgba(4,4,4,.02) 34%,
+      rgba(0,0,0,.30) 49.5%,
+      rgba(0,0,0,.30) 50.5%,
+      rgba(4,4,4,.02) 66%,
+      rgba(9,3,5,.22) 100%
+    );
+}
+
+.v1-matchup-bg-side{
+  position:relative;
+  min-width:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+.v1-matchup-bg-side img{
+  width:min(66%,150px);
+  height:min(78%,132px);
+  object-fit:contain;
+  opacity:.105;
+  filter:
+    saturate(.82)
+    contrast(1.06)
+    drop-shadow(0 7px 17px rgba(0,0,0,.4));
+  transform:scale(1.16);
+}
+
+.v1-matchup-bg-side.away img{
+  transform:translateX(-5%) scale(1.16);
+}
+
+.v1-matchup-bg-side.home img{
+  transform:translateX(5%) scale(1.16);
+}
+
+.v1-matchup-bg-side>span{
+  color:rgba(255,255,255,.055);
+  font-size:2.2rem;
+  font-weight:1000;
+  letter-spacing:-.08em;
+}
+
+.v1-matchup-bg-center{
+  position:relative;
+  z-index:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:5px;
+  color:rgba(255,255,255,.065);
+}
+
+.v1-matchup-bg-center span{
+  font-size:.56rem;
+  font-weight:1000;
+  letter-spacing:.12em;
+}
+
+.v1-matchup-bg-center i{
+  width:1px;
+  flex:1;
+  max-height:38px;
+  background:
+    linear-gradient(
+      180deg,
+      transparent,
+      rgba(255,255,255,.065),
+      transparent
+    );
+}
+
+.v1-matchup-bg-empty{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.v1-matchup-bg-empty>span{
+  color:rgba(255,255,255,.035);
+  font-size:1.1rem;
+  font-weight:1000;
+  letter-spacing:.16em;
+}
+
+.v1-matchup-shade{
+  z-index:1;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(4,4,5,.70),
+      rgba(5,5,5,.31) 36%,
+      rgba(4,4,4,.52) 50%,
+      rgba(5,5,5,.31) 64%,
+      rgba(4,4,5,.70)
+    ),
+    linear-gradient(
+      180deg,
+      rgba(3,3,3,.05),
+      rgba(3,3,3,.50)
+    ) !important;
+}
+
+/* The foreground card UI always stays above the generated background. */
+.v1-event-topbar,
+.v1-matchup{
+  position:relative;
+  z-index:2;
+}
+
+@media(max-width:590px){
+  .v1-matchup-bg{
+    grid-template-columns:minmax(0,1fr) 52px minmax(0,1fr);
+  }
+
+  .v1-matchup-bg-side img{
+    width:min(70%,125px);
+    height:min(75%,118px);
+  }
+}

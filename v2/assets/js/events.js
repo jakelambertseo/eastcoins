@@ -448,6 +448,43 @@
     `;
   }
 
+  function matchupBackground(away, home) {
+    const awayBadge = V2.badge(away);
+    const homeBadge = V2.badge(home);
+
+    if (!awayBadge && !homeBadge) {
+      return `
+        <div class="v1-matchup-bg v1-matchup-bg-empty" aria-hidden="true">
+          <span>VS</span>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="v1-matchup-bg" aria-hidden="true">
+        <div class="v1-matchup-bg-side away">
+          ${awayBadge
+            ? `<img src="${V2.esc(awayBadge)}" alt="">`
+            : `<span>${V2.esc(V2.initials(away?.name || "Away"))}</span>`
+          }
+        </div>
+
+        <div class="v1-matchup-bg-center">
+          <i></i>
+          <span>VS</span>
+          <i></i>
+        </div>
+
+        <div class="v1-matchup-bg-side home">
+          ${homeBadge
+            ? `<img src="${V2.esc(homeBadge)}" alt="">`
+            : `<span>${V2.esc(V2.initials(home?.name || "Home"))}</span>`
+          }
+        </div>
+      </div>
+    `;
+  }
+
   function categoryOrder(family) {
     const order = [
       "american-football",
@@ -760,8 +797,8 @@
         aria-label="Open ${V2.esc(match.title || "event")}"
       >
         <div class="v1-event-visual">
-          ${poster ? `<div class="v1-event-bg" style="background-image:url('${V2.esc(poster)}')"></div>` : ""}
-          <div class="v1-event-shade"></div>
+          ${matchupBackground(away, home)}
+          <div class="v1-event-shade v1-matchup-shade"></div>
 
           <div class="v1-event-topbar">
             <span class="v1-event-state ${V2.live(match) ? "live" : ""}">
