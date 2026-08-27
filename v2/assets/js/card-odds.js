@@ -71,7 +71,9 @@
       oddsByEvent.clear();
 
       Object.entries(payload.odds).forEach(([eventId, value]) => {
-        if (!value?.away || !value?.home) return;
+        // A verified provider event ID is enough to make the EastCoin Picks
+        // market available. Sportsbook ML is optional display/reference data.
+        if (!value?.providerEventId) return;
 
         oddsByEvent.set(String(eventId), value);
       });

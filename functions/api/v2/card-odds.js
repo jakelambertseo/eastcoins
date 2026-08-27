@@ -1,6 +1,9 @@
 const SPORT_KEY = "upcoming";
-const CACHE_VERSION = "v1";
+const NFL_SPORT_KEY = "americanfootball_nfl";
+const CACHE_VERSION = "v2";
+const NFL_EVENTS_CACHE_VERSION = "v1";
 const DEFAULT_CACHE_SECONDS = 30 * 60;
+const NFL_EVENTS_CACHE_SECONDS = 15 * 60;
 
 const STOP_WORDS = new Set([
   "fc", "cf", "sc", "afc", "club", "team",
@@ -180,6 +183,134 @@ function eventMatchScore(event, game) {
   };
 }
 
+function bestProviderMatch(event, games) {
+  let bestGame = null;
+  let best = null;
+
+  for (const game of games || []) {
+    const result = eventMatchScore(event, game);
+
+    if (!best || result.score > best.score) {
+      best = result;
+      bestGame = game;
+    }
+  }
+
+  if (!bestGame || !best || best.score < 0.79) {
+    return null;
+  }
+
+  return {
+    game: bestGame,
+    score: best.score,
+    orientation: best.orientation
+  };
+}
+
+function providerEventPayload(game, orientation, line = null, verificationSource = "odds") {
+  const swapped = orientation === "swapped";
+
+  const payload = {
+    providerEventId: String(game?.id || ""),
+    provider: "odds_api",
+    sportKey: String(game?.sport_key || ""),
+    sportTitle: String(game?.sport_title || ""),
+    commenceTime: game?.commence_time || null,
+    providerAway: String(
+      swapped
+        ? game?.home_team || ""
+        : game?.away_team || ""
+    ),
+    providerHome: String(
+      swapped
+        ? game?.away_team || ""
+        : game?.home_team || ""
+    ),
+    verificationSource
+  };
+
+  if (line?.away && line?.home) {
+    payload.away = swapped ? line.home : line.away;
+    payload.home = swapped ? line.away : line.home;
+  }
+
+  return payload;
+}
+
+async function getNflProviderEvents(context) {
+  const apiKey = String(
+    context.env.ODDS_API_KEY || ""
+  ).trim();
+
+  if (!apiKey) {
+    throw new Error("ODDS_API_KEY_MISSING");
+  }
+
+  const origin = new URL(context.request.url).origin;
+
+  const cacheKey = new Request(
+    `${origin}/__eastcoin_internal_cache__/v2/nfl-events/${NFL_EVENTS_CACHE_VERSION}`,
+    { method: "GET" }
+  );
+
+  let edgeCache = null;
+
+  try {
+    edgeCache = caches.default;
+  } catch {}
+
+  if (edgeCache) {
+    const cached = await edgeCache.match(cacheKey);
+
+    if (cached) {
+      return {
+        events: await cached.json(),
+        cacheStatus: "HIT"
+      };
+    }
+  }
+
+  const upstreamUrl = new URL(
+    `https://api.the-odds-api.com/v4/sports/${NFL_SPORT_KEY}/events`
+  );
+
+  upstreamUrl.searchParams.set("apiKey", apiKey);
+  upstreamUrl.searchParams.set("dateFormat", "iso");
+
+  const upstream = await fetch(upstreamUrl.toString(), {
+    headers: {
+      "Accept": "application/json"
+    }
+  });
+
+  if (!upstream.ok) {
+    const error = new Error(`ODDS_API_NFL_EVENTS_${upstream.status}`);
+    error.status = upstream.status;
+    throw error;
+  }
+
+  const raw = await upstream.json();
+  const events = Array.isArray(raw) ? raw : [];
+
+  if (edgeCache) {
+    context.waitUntil(
+      edgeCache.put(
+        cacheKey,
+        Response.json(events, {
+          headers: {
+            "Cache-Control": `public, max-age=${NFL_EVENTS_CACHE_SECONDS}`
+          }
+        })
+      )
+    );
+  }
+
+  return {
+    events,
+    cacheStatus: "MISS"
+  };
+}
+
 async function getProviderGames(context) {
   const apiKey = String(
     context.env.ODDS_API_KEY || ""
@@ -301,63 +432,97 @@ export async function onRequestPost(context) {
     const providerGames = payload.games || [];
     const odds = {};
     let matched = 0;
+    let priced = 0;
+    let verifiedOnly = 0;
+
+    const wantsNflCatalog = events.some(
+      (event) =>
+        String(event?.sport || "").toLowerCase() === "american-football"
+    );
+
+    let nflProviderEvents = [];
+    let nflEventsCacheStatus = "SKIP";
+
+    if (wantsNflCatalog) {
+      try {
+        const nflCatalog = await getNflProviderEvents(context);
+        nflProviderEvents = nflCatalog.events || [];
+        nflEventsCacheStatus = nflCatalog.cacheStatus;
+      } catch (error) {
+        // Quota-free NFL verification is optional enrichment.
+        // Never break normal card odds if it is unavailable.
+        console.error("NFL event catalog verification failed", error);
+      }
+    }
 
     for (const event of events) {
-      let bestGame = null;
-      let best = null;
+      const paidMatch = bestProviderMatch(
+        event,
+        providerGames
+      );
 
-      for (const game of providerGames) {
-        const result = eventMatchScore(event, game);
+      if (paidMatch) {
+        const line = consensus(paidMatch.game);
+        const hasLine = Boolean(
+          line?.away?.american &&
+          line?.home?.american
+        );
 
-        if (!best || result.score > best.score) {
-          best = result;
-          bestGame = game;
+        odds[String(event.id)] = providerEventPayload(
+          paidMatch.game,
+          paidMatch.orientation,
+          hasLine ? line : null,
+          hasLine
+            ? "upcoming_odds"
+            : "upcoming_event"
+        );
+
+        matched += 1;
+
+        if (hasLine) {
+          priced += 1;
+        } else {
+          verifiedOnly += 1;
         }
-      }
 
-      if (!bestGame || !best || best.score < 0.79) {
         continue;
       }
 
-      const line = consensus(bestGame);
-
-      if (!line?.away?.american || !line?.home?.american) {
+      if (
+        String(event?.sport || "").toLowerCase() !== "american-football"
+      ) {
         continue;
       }
 
-      odds[String(event.id)] =
-        best.orientation === "swapped"
-          ? {
-              away: line.home,
-              home: line.away,
-              providerEventId: String(bestGame.id || ""),
-              provider: "odds_api",
-              sportKey: bestGame.sport_key,
-              sportTitle: bestGame.sport_title,
-              commenceTime: bestGame.commence_time,
-              providerAway: bestGame.home_team,
-              providerHome: bestGame.away_team
-            }
-          : {
-              away: line.away,
-              home: line.home,
-              providerEventId: String(bestGame.id || ""),
-              provider: "odds_api",
-              sportKey: bestGame.sport_key,
-              sportTitle: bestGame.sport_title,
-              commenceTime: bestGame.commence_time,
-              providerAway: bestGame.away_team,
-              providerHome: bestGame.home_team
-            };
+      const nflMatch = bestProviderMatch(
+        event,
+        nflProviderEvents
+      );
+
+      if (!nflMatch) {
+        continue;
+      }
+
+      odds[String(event.id)] = providerEventPayload(
+        nflMatch.game,
+        nflMatch.orientation,
+        null,
+        "nfl_events_catalog"
+      );
 
       matched += 1;
+      verifiedOnly += 1;
     }
 
     return reply({
       ok: true,
       odds,
       matched,
+      priced,
+      verifiedOnly,
       providerGameCount: providerGames.length,
+      nflEventCatalogCount: nflProviderEvents.length,
+      nflEventsCacheStatus,
       provider: "The Odds API",
       market: "h2h",
       consensusMethod: "median_no_vig_implied_probability",
@@ -395,6 +560,6 @@ export function onRequestGet() {
     provider: "The Odds API",
     sport: "upcoming",
     market: "h2h",
-    note: "One shared cached cross-sport request feeds matching EastCoin cards."
+    note: "Paid cross-sport odds feed plus quota-free NFL event verification. NFL event IDs can enable Picks even when the small cross-sport odds snapshot does not include that game."
   });
 }

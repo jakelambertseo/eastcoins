@@ -1134,3 +1134,27 @@
     height:min(75%,118px);
   }
 }
+
+
+/* Iteration 25: supplied ZCoins emote in the V2 wallet shortcut */
+.wallet-zcoin-icon{
+  width:25px;
+  height:25px;
+  flex:0 0 25px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border-radius:6px;
+  transition:transform .14s ease;
+}
+
+.wallet-zcoin-icon img{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:contain;
+}
+
+.wallet:hover .wallet-zcoin-icon{
+  transform:translateY(-1px) scale(1.04);
+}
