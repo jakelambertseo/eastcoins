@@ -287,6 +287,205 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<script id="ec-v2-picks-popup-auth">
+(() => {
+  "use strict";
+
+  const query =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  const embedded =
+    query.get(
+      "ecV2Embedded"
+    ) === "1" &&
+    window.top !== window;
+
+  if (!embedded) {
+    return;
+  }
+
+  const AUTH_COMPLETE =
+    "/auth-complete.html?source=picks";
+
+  let authPopup = null;
+
+  function setAuthNote(message) {
+    const note =
+      document.getElementById(
+        "authNote"
+      );
+
+    if (note) {
+      note.textContent =
+        String(message);
+    }
+  }
+
+  function authUrl() {
+    return (
+      "/api/picks/auth/twitch/start" +
+      "?returnTo=" +
+      encodeURIComponent(
+        AUTH_COMPLETE
+      )
+    );
+  }
+
+  function openAuthPopup() {
+    const width = 560;
+    const height = 760;
+
+    const left =
+      Math.max(
+        0,
+        Math.round(
+          (
+            window.screenX +
+            (window.outerWidth - width) / 2
+          )
+        )
+      );
+
+    const top =
+      Math.max(
+        0,
+        Math.round(
+          (
+            window.screenY +
+            (window.outerHeight - height) / 2
+          )
+        )
+      );
+
+    authPopup =
+      window.open(
+        authUrl(),
+        "eastcoinTwitchAuth",
+        [
+          "popup=yes",
+          `width=${width}`,
+          `height=${height}`,
+          `left=${left}`,
+          `top=${top}`,
+          "resizable=yes",
+          "scrollbars=yes"
+        ].join(",")
+      );
+
+    if (!authPopup) {
+      setAuthNote(
+        "Popup blocked. Use Log in in the top-right corner of EastCoin, then return to Picks."
+      );
+
+      return false;
+    }
+
+    try {
+      authPopup.focus();
+    } catch {}
+
+    setAuthNote(
+      "Twitch login opened in a separate secure window. Keep this Picks page open."
+    );
+
+    return true;
+  }
+
+  /*
+    Capture the embedded Picks login clicks before eastcoins-picks.js can
+    navigate this iframe to Twitch. Firefox intentionally blocks Twitch OAuth
+    pages from being framed, so embedded auth always uses a real popup window.
+  */
+  document.addEventListener(
+    "click",
+    (event) => {
+      const target =
+        event.target instanceof Element
+          ? event.target
+          : null;
+
+      const login =
+        target?.closest(
+          "#mockLoginBtn, [data-login]"
+        );
+
+      if (!login) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      openAuthPopup();
+    },
+    true
+  );
+
+  /*
+    auth-complete.html runs on eastcoin.vip after the Twitch callback has
+    created the session cookie. Reload only the Picks iframe so the persistent
+    EastCoin shell/chat stays mounted.
+  */
+  window.addEventListener(
+    "message",
+    (event) => {
+      if (
+        event.origin !==
+        window.location.origin
+      ) {
+        return;
+      }
+
+      const message =
+        event.data || {};
+
+      if (
+        message.type !==
+        "eastcoin:picks-auth-complete"
+      ) {
+        return;
+      }
+
+      const status =
+        String(
+          message.status || ""
+        );
+
+      if (status === "success") {
+        setAuthNote(
+          "Twitch connected. Refreshing Picks…"
+        );
+
+        window.setTimeout(
+          () => {
+            window.location.reload();
+          },
+          180
+        );
+
+        return;
+      }
+
+      if (status === "denied") {
+        setAuthNote(
+          "Twitch login was cancelled. You can try again whenever you're ready."
+        );
+
+        return;
+      }
+
+      setAuthNote(
+        "Twitch login could not be completed. Try the Log in button in the top-right."
+      );
+    }
+  );
+})();
+</script>
+
 <script defer src="assets/eastcoins-streamed-api.js"></script>
 <script defer src="assets/eastcoins-picks-api.js?v=43"></script>
 <script defer src="assets/eastcoins-picks-preview.js?v=1"></script>

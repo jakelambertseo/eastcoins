@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>EastCoin | Twitch Login</title>
+<style>
+  :root{
+    color-scheme:dark;
+    --gold:#e5b92b;
+    --text:#f1ece7;
+    --muted:#918981;
+    --line:rgba(255,255,255,.09);
+  }
+
+  *{box-sizing:border-box}
+
+  html,body{
+    width:100%;
+    min-height:100%;
+    margin:0;
+  }
+
+  body{
+    min-height:100vh;
+    display:grid;
+    place-items:center;
+    padding:24px;
+    background:
+      radial-gradient(circle at 50% 20%,rgba(229,185,43,.08),transparent 34%),
+      #050505;
+    color:var(--text);
+    font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+
+  main{
+    width:min(430px,100%);
+    padding:28px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:#0a0a0a;
+    box-shadow:0 24px 70px rgba(0,0,0,.45);
+    text-align:center;
+  }
+
+  .mark{
+    width:44px;
+    height:44px;
+    margin:0 auto 16px;
+    display:grid;
+    place-items:center;
+    border-radius:12px;
+    background:#7c3aed;
+    font-weight:950;
+  }
+
+  h1{
+    margin:0;
+    font-size:1.25rem;
+  }
+
+  p{
+    margin:10px 0 0;
+    color:var(--muted);
+    font-size:.9rem;
+    line-height:1.55;
+  }
+
+  a{
+    display:inline-flex;
+    margin-top:18px;
+    color:var(--gold);
+    font-weight:800;
+    text-decoration:none;
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="mark">T</div>
+  <h1 id="title">Finishing Twitch login…</h1>
+  <p id="message">EastCoin is updating your Picks session.</p>
+  <a id="fallback" href="/?view=picks" hidden>Return to Picks</a>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  const status =
+    String(
+      params.get("auth") ||
+      "failed"
+    );
+
+  const title =
+    document.getElementById(
+      "title"
+    );
+
+  const message =
+    document.getElementById(
+      "message"
+    );
+
+  const fallback =
+    document.getElementById(
+      "fallback"
+    );
+
+  const copy = {
+    success: [
+      "Twitch connected",
+      "You’re signed in. Returning you to EastCoin Picks…"
+    ],
+    denied: [
+      "Login cancelled",
+      "No changes were made to your EastCoin account."
+    ],
+    invalid_state: [
+      "Login session expired",
+      "Close this window and try Twitch login again from EastCoin."
+    ],
+    failed: [
+      "Login could not be completed",
+      "Close this window and try again, or use Log in in the EastCoin header."
+    ]
+  };
+
+  const selected =
+    copy[status] ||
+    copy.failed;
+
+  title.textContent =
+    selected[0];
+
+  message.textContent =
+    selected[1];
+
+  let notified = false;
+
+  try {
+    if (
+      window.opener &&
+      !window.opener.closed
+    ) {
+      window.opener.postMessage(
+        {
+          type:
+            "eastcoin:picks-auth-complete",
+          status
+        },
+        window.location.origin
+      );
+
+      notified = true;
+    }
+  } catch {}
+
+  if (notified) {
+    window.setTimeout(
+      () => {
+        window.close();
+      },
+      status === "success"
+        ? 350
+        : 900
+    );
+  } else {
+    fallback.hidden = false;
+  }
+})();
+</script>
+</body>
+</html>
