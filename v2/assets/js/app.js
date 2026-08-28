@@ -72,7 +72,7 @@
   function installStartupStyles() {
     if (
       document.getElementById(
-        "eastcoinPerformanceV50"
+        "eastcoinPerformanceV51"
       )
     ) {
       return;
@@ -84,7 +84,7 @@
       );
 
     style.id =
-      "eastcoinPerformanceV50";
+      "eastcoinPerformanceV51";
 
     style.textContent = `
       .dates{
@@ -107,11 +107,6 @@
         font-weight:800;
         letter-spacing:.08em;
         text-transform:uppercase;
-      }
-
-      #chat{
-        position:relative!important;
-        contain:layout paint;
       }
 
       .chatdefer{
