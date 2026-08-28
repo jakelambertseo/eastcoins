@@ -1,0 +1,132 @@
+/* EastCoin Iteration 47 — MultiView per-panel server selector */
+
+.mv-panel-actions [data-panel-server][hidden]{
+  display:none!important;
+}
+
+.mv-panel-actions [data-panel-server]{
+  color:#d9c37f;
+  border-color:rgba(201,164,79,.18);
+  background:rgba(201,164,79,.045);
+}
+
+.mv-panel-actions [data-panel-server]:hover,
+.mv-panel-actions [data-panel-server]:focus-visible{
+  color:#ffe7a3;
+  border-color:rgba(201,164,79,.4);
+  background:rgba(122,28,35,.38);
+  outline:0;
+}
+
+.mv-server-menu{
+  position:absolute;
+  top:37px;
+  right:5px;
+  z-index:80;
+  width:min(220px,calc(100% - 10px));
+  max-height:min(310px,calc(100% - 48px));
+  overflow:auto;
+  padding:7px;
+  border:1px solid rgba(201,164,79,.22);
+  border-radius:9px;
+  color:#ddd5c7;
+  background:rgba(7,7,7,.98);
+  box-shadow:0 18px 45px rgba(0,0,0,.58);
+}
+
+.mv-server-menu[hidden]{
+  display:none!important;
+}
+
+.mv-server-menu-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:4px 5px 7px;
+  border-bottom:1px solid rgba(255,255,255,.055);
+}
+
+.mv-server-menu-head strong{
+  color:#e7dcc4;
+  font-size:.66rem;
+}
+
+.mv-server-menu-head small{
+  overflow:hidden;
+  max-width:130px;
+  color:#696969;
+  font-size:.56rem;
+  text-align:right;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.mv-server-options{
+  display:grid;
+  gap:4px;
+  padding-top:6px;
+}
+
+.mv-server-option{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  width:100%;
+  min-height:31px;
+  padding:6px 8px;
+  border:1px solid rgba(255,255,255,.065);
+  border-radius:7px;
+  color:#aaa297;
+  background:#0d0d0d;
+  cursor:pointer;
+  font:inherit;
+  text-align:left;
+}
+
+.mv-server-option:hover,
+.mv-server-option:focus-visible{
+  color:#f0e6d1;
+  border-color:rgba(201,164,79,.22);
+  background:#141414;
+  outline:0;
+}
+
+.mv-server-option.active{
+  color:#ffe39a;
+  border-color:rgba(201,164,79,.35);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(122,28,35,.55),
+      rgba(53,12,17,.64)
+    );
+}
+
+.mv-server-option span{
+  font-size:.63rem;
+  font-weight:850;
+}
+
+.mv-server-option small{
+  color:#6e695f;
+  font-size:.54rem;
+  font-weight:800;
+  text-transform:uppercase;
+}
+
+.mv-server-option.active small{
+  color:#c9ad62;
+}
+
+@media(max-width:640px){
+  .mv-panel-actions [data-panel-server]{
+    padding-inline:6px;
+  }
+
+  .mv-server-menu{
+    right:4px;
+    width:min(190px,calc(100% - 8px));
+  }
+}
