@@ -310,7 +310,20 @@
   const AUTH_COMPLETE =
     "/auth-complete.html?source=picks";
 
+  const AUTH_CHANNEL =
+    "eastcoin-picks-auth";
+
+  const SESSION_POLL_MS =
+    1250;
+
+  const SESSION_POLL_LIMIT =
+    72;
+
   let authPopup = null;
+  let authChannel = null;
+  let pollTimer = 0;
+  let pollCount = 0;
+  let finishing = false;
 
   function setAuthNote(message) {
     const note =
@@ -334,6 +347,138 @@
     );
   }
 
+  function stopPolling() {
+    if (pollTimer) {
+      window.clearInterval(
+        pollTimer
+      );
+
+      pollTimer = 0;
+    }
+
+    pollCount = 0;
+  }
+
+  function closePopup() {
+    try {
+      if (
+        authPopup &&
+        !authPopup.closed
+      ) {
+        authPopup.close();
+      }
+    } catch {}
+
+    authPopup = null;
+  }
+
+  function finishAuthenticated() {
+    if (finishing) {
+      return;
+    }
+
+    finishing = true;
+    stopPolling();
+    closePopup();
+
+    setAuthNote(
+      "Twitch connected. Refreshing EastCoin…"
+    );
+
+    window.setTimeout(
+      () => {
+        try {
+          /*
+            Authentication changes the global EastCoin identity. Reload the
+            OUTER shell rather than only the Picks iframe so the top-right
+            profile and Picks session update together.
+          */
+          window.top.location.reload();
+        } catch {
+          window.location.reload();
+        }
+      },
+      180
+    );
+  }
+
+  async function sessionAuthenticated() {
+    try {
+      const response =
+        await fetch(
+          "/api/picks/bootstrap",
+          {
+            credentials:
+              "same-origin",
+            cache:
+              "no-store",
+            headers: {
+              Accept:
+                "application/json"
+            }
+          }
+        );
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const payload =
+        await response
+          .json()
+          .catch(
+            () => null
+          );
+
+      return Boolean(
+        payload?.ok &&
+        payload?.session
+          ?.authenticated
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function startSessionPolling() {
+    stopPolling();
+
+    async function check() {
+      pollCount += 1;
+
+      if (
+        await sessionAuthenticated()
+      ) {
+        finishAuthenticated();
+        return;
+      }
+
+      if (
+        pollCount >=
+        SESSION_POLL_LIMIT
+      ) {
+        stopPolling();
+
+        setAuthNote(
+          "Twitch login window is still open or was cancelled. If you completed login, close the popup and try the top-right Log in button."
+        );
+      }
+    }
+
+    /*
+      Check immediately, then keep polling as a fallback. Firefox/Twitch may
+      sever window.opener while OAuth crosses id.twitch.tv, but the resulting
+      EastCoin session cookie is still visible to this same-origin iframe.
+    */
+    check();
+
+    pollTimer =
+      window.setInterval(
+        check,
+        SESSION_POLL_MS
+      );
+  }
+
   function openAuthPopup() {
     const width = 560;
     const height = 760;
@@ -342,10 +487,11 @@
       Math.max(
         0,
         Math.round(
+          window.screenX +
           (
-            window.screenX +
-            (window.outerWidth - width) / 2
-          )
+            window.outerWidth -
+            width
+          ) / 2
         )
       );
 
@@ -353,10 +499,11 @@
       Math.max(
         0,
         Math.round(
+          window.screenY +
           (
-            window.screenY +
-            (window.outerHeight - height) / 2
-          )
+            window.outerHeight -
+            height
+          ) / 2
         )
       );
 
@@ -388,16 +535,89 @@
     } catch {}
 
     setAuthNote(
-      "Twitch login opened in a separate secure window. Keep this Picks page open."
+      "Twitch login opened in a separate secure window. EastCoin will reconnect automatically when authentication finishes."
     );
+
+    startSessionPolling();
 
     return true;
   }
 
+  function handleAuthStatus(status) {
+    const value =
+      String(status || "");
+
+    if (value === "success") {
+      /*
+        Do not trust the visual success page alone. Verify the actual EastCoin
+        session cookie before reloading the shell.
+      */
+      sessionAuthenticated()
+        .then(
+          (authenticated) => {
+            if (authenticated) {
+              finishAuthenticated();
+            }
+          }
+        );
+
+      return;
+    }
+
+    if (value === "denied") {
+      stopPolling();
+
+      setAuthNote(
+        "Twitch login was cancelled. You can try again whenever you're ready."
+      );
+
+      return;
+    }
+
+    if (
+      value === "failed" ||
+      value === "invalid_state"
+    ) {
+      stopPolling();
+
+      setAuthNote(
+        "Twitch login could not be completed. Try again or use Log in in the top-right."
+      );
+    }
+  }
+
   /*
-    Capture the embedded Picks login clicks before eastcoins-picks.js can
-    navigate this iframe to Twitch. Firefox intentionally blocks Twitch OAuth
-    pages from being framed, so embedded auth always uses a real popup window.
+    BroadcastChannel does not depend on window.opener. The callback returns to
+    auth-complete.html on eastcoin.vip, which broadcasts the result to this
+    embedded Picks document even if Firefox/Twitch severed the opener chain.
+  */
+  try {
+    authChannel =
+      new BroadcastChannel(
+        AUTH_CHANNEL
+      );
+
+    authChannel.addEventListener(
+      "message",
+      (event) => {
+        const message =
+          event.data || {};
+
+        if (
+          message.type ===
+          "eastcoin:picks-auth-complete"
+        ) {
+          handleAuthStatus(
+            message.status
+          );
+        }
+      }
+    );
+  } catch {}
+
+  /*
+    Capture embedded Picks login clicks before eastcoins-picks.js can navigate
+    this iframe to Twitch. Twitch OAuth pages may not be embedded by Firefox.
   */
   document.addEventListener(
     "click",
@@ -420,15 +640,15 @@
       event.stopPropagation();
       event.stopImmediatePropagation();
 
+      finishing = false;
       openAuthPopup();
     },
     true
   );
 
   /*
-    auth-complete.html runs on eastcoin.vip after the Twitch callback has
-    created the session cookie. Reload only the Picks iframe so the persistent
-    EastCoin shell/chat stays mounted.
+    Keep the old opener-message path as another optional signal for browsers
+    where Twitch leaves the opener relationship intact.
   */
   window.addEventListener(
     "message",
@@ -450,37 +670,20 @@
         return;
       }
 
-      const status =
-        String(
-          message.status || ""
-        );
-
-      if (status === "success") {
-        setAuthNote(
-          "Twitch connected. Refreshing Picks…"
-        );
-
-        window.setTimeout(
-          () => {
-            window.location.reload();
-          },
-          180
-        );
-
-        return;
-      }
-
-      if (status === "denied") {
-        setAuthNote(
-          "Twitch login was cancelled. You can try again whenever you're ready."
-        );
-
-        return;
-      }
-
-      setAuthNote(
-        "Twitch login could not be completed. Try the Log in button in the top-right."
+      handleAuthStatus(
+        message.status
       );
+    }
+  );
+
+  window.addEventListener(
+    "pagehide",
+    () => {
+      stopPolling();
+
+      try {
+        authChannel?.close();
+      } catch {}
     }
   );
 })();

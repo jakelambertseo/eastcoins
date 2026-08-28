@@ -88,6 +88,9 @@
 (() => {
   "use strict";
 
+  const AUTH_CHANNEL =
+    "eastcoin-picks-auth";
+
   const params =
     new URLSearchParams(
       window.location.search
@@ -117,7 +120,7 @@
   const copy = {
     success: [
       "Twitch connected",
-      "You’re signed in. Returning you to EastCoin Picks…"
+      "EastCoin detected your login. This window should close automatically."
     ],
     denied: [
       "Login cancelled",
@@ -143,38 +146,78 @@
   message.textContent =
     selected[1];
 
-  let notified = false;
+  const payload = {
+    type:
+      "eastcoin:picks-auth-complete",
+    status
+  };
 
+  /*
+    Primary signal: same-origin BroadcastChannel. This does not depend on
+    window.opener surviving the Twitch cross-origin OAuth navigation.
+  */
+  try {
+    const channel =
+      new BroadcastChannel(
+        AUTH_CHANNEL
+      );
+
+    channel.postMessage(
+      payload
+    );
+
+    window.setTimeout(
+      () => {
+        try {
+          channel.close();
+        } catch {}
+      },
+      500
+    );
+  } catch {}
+
+  /*
+    Secondary signal for browsers that preserve the opener relationship.
+  */
   try {
     if (
       window.opener &&
       !window.opener.closed
     ) {
       window.opener.postMessage(
-        {
-          type:
-            "eastcoin:picks-auth-complete",
-          status
-        },
+        payload,
         window.location.origin
       );
-
-      notified = true;
     }
   } catch {}
 
-  if (notified) {
+  if (status === "success") {
+    /*
+      The parent Picks iframe independently verifies /api/picks/bootstrap and
+      reloads the full EastCoin shell. This close is only a convenience.
+    */
     window.setTimeout(
       () => {
-        window.close();
+        try {
+          window.close();
+        } catch {}
+
+        window.setTimeout(
+          () => {
+            fallback.hidden = false;
+            message.textContent =
+              "Twitch is connected. If this window did not close automatically, you can close it or return to Picks.";
+          },
+          500
+        );
       },
-      status === "success"
-        ? 350
-        : 900
+      900
     );
-  } else {
-    fallback.hidden = false;
+
+    return;
   }
+
+  fallback.hidden = false;
 })();
 </script>
 </body>
