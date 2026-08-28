@@ -10,6 +10,7 @@
   let extendedCatalogReady = false;
   let extendedCatalogPromise = null;
   let allowExtendedCatalog = false;
+  let categoryNav = null;
 
   const NFL_TEAMS = new Set([
     "arizona cardinals",
@@ -72,7 +73,7 @@
   function installStartupStyles() {
     if (
       document.getElementById(
-        "eastcoinPerformanceV51"
+        "eastcoinPerformanceV54"
       )
     ) {
       return;
@@ -84,9 +85,103 @@
       );
 
     style.id =
-      "eastcoinPerformanceV51";
+      "eastcoinPerformanceV54";
 
     style.textContent = `
+      :root{
+        --sport:0px;
+      }
+
+      .sportbar,
+      #sportMoreMenu{
+        display:none!important;
+      }
+
+      .navcategory{
+        position:relative;
+        align-self:stretch;
+        display:flex;
+        align-items:stretch;
+      }
+
+      .navcategory-toggle{
+        position:relative;
+        display:flex;
+        align-items:center;
+        gap:6px;
+        padding:0 13px;
+        border:0;
+        border-bottom:2px solid transparent;
+        color:#898078;
+        background:transparent;
+        font-size:.875rem;
+        font-weight:850;
+      }
+
+      .navcategory-toggle:hover,
+      .navcategory-toggle[aria-expanded="true"],
+      .navcategory-toggle.active{
+        color:#f1e9e1;
+        border-bottom-color:var(--gold);
+      }
+
+      .navcategory-menu{
+        position:absolute;
+        top:calc(100% - 1px);
+        left:0;
+        z-index:80;
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:4px;
+        width:290px;
+        padding:8px;
+        border:1px solid var(--line2);
+        border-radius:0 0 10px 10px;
+        background:rgba(8,8,8,.985);
+        box-shadow:0 22px 60px rgba(0,0,0,.58);
+      }
+
+      .navcategory-menu[hidden]{
+        display:none!important;
+      }
+
+      .navcategory-menu button{
+        min-height:42px;
+        display:flex;
+        align-items:center;
+        justify-content:flex-start;
+        gap:7px;
+        padding:8px 10px;
+        border:1px solid transparent;
+        border-radius:7px;
+        color:#918880;
+        background:#0c0c0c;
+        font-size:.76rem;
+        font-weight:850;
+        text-align:left;
+        white-space:nowrap;
+      }
+
+      .navcategory-menu button:hover,
+      .navcategory-menu button.active{
+        color:#f0e7df;
+        border-color:rgba(229,185,43,.15);
+        background:#15130d;
+      }
+
+      .navcategory-menu button.live{
+        color:#c27e89;
+      }
+
+      @media(max-width:760px){
+        .navcategory-menu{
+          position:fixed;
+          top:var(--header);
+          left:8px;
+          width:min(310px,calc(100vw - 16px));
+        }
+      }
+
       .dates{
         display:none!important;
       }
@@ -455,6 +550,278 @@
     );
   }
 
+  function closeCategoryMenu() {
+    if (!categoryNav) return;
+
+    categoryNav.menu.hidden = true;
+    categoryNav.button.setAttribute(
+      "aria-expanded",
+      "false"
+    );
+  }
+
+  function syncCategoryNav() {
+    if (!categoryNav) return;
+
+    categoryNav.button.classList.toggle(
+      "active",
+      S.sport !== "all"
+    );
+
+    categoryNav.menu
+      .querySelectorAll(
+        "[data-sport]"
+      )
+      .forEach(
+        (button) => {
+          button.classList.toggle(
+            "active",
+            button.dataset.sport ===
+              S.sport
+          );
+        }
+      );
+  }
+
+  function setupCategoryNav() {
+    const nav =
+      document.querySelector(
+        ".topbar .nav"
+      );
+
+    const sportbar =
+      document.getElementById(
+        "sportbar"
+      );
+
+    const legacyMore =
+      document.getElementById(
+        "sportMoreMenu"
+      );
+
+    if (
+      !nav ||
+      !sportbar
+    ) {
+      return;
+    }
+
+    const wrap =
+      document.createElement(
+        "div"
+      );
+
+    wrap.className =
+      "navcategory";
+
+    const button =
+      document.createElement(
+        "button"
+      );
+
+    button.type =
+      "button";
+
+    button.className =
+      "navcategory-toggle";
+
+    button.innerHTML =
+      'Categories <span aria-hidden="true">▾</span>';
+
+    button.setAttribute(
+      "aria-haspopup",
+      "menu"
+    );
+
+    button.setAttribute(
+      "aria-expanded",
+      "false"
+    );
+
+    const menu =
+      document.createElement(
+        "div"
+      );
+
+    menu.className =
+      "navcategory-menu";
+
+    menu.setAttribute(
+      "role",
+      "menu"
+    );
+
+    menu.hidden = true;
+
+    const labels = new Map([
+      [
+        "all",
+        "▦ All Events"
+      ],
+      [
+        "live",
+        "● Live Events"
+      ],
+      [
+        "american-football",
+        "🏈 Football"
+      ],
+      [
+        "baseball",
+        "⚾ Baseball"
+      ],
+      [
+        "combat",
+        "🥊 UFC / Fighting"
+      ],
+      [
+        "soccer",
+        "⚽ Soccer"
+      ],
+      [
+        "basketball",
+        "🏀 Basketball"
+      ],
+      [
+        "hockey",
+        "🏒 Hockey"
+      ],
+      [
+        "tennis",
+        "🎾 Tennis"
+      ],
+      [
+        "other",
+        "＋ Other"
+      ]
+    ]);
+
+    const existing =
+      [
+        ...sportbar.querySelectorAll(
+          "[data-sport]"
+        ),
+        ...(
+          legacyMore
+            ? legacyMore.querySelectorAll(
+                "[data-sport]"
+              )
+            : []
+        )
+      ];
+
+    const bySport =
+      new Map(
+        existing.map(
+          (item) => [
+            item.dataset.sport,
+            item
+          ]
+        )
+      );
+
+    for (
+      const [
+        sport,
+        label
+      ] of labels
+    ) {
+      const item =
+        bySport.get(
+          sport
+        );
+
+      if (!item) continue;
+
+      if (
+        sport === "live"
+      ) {
+        /*
+          Preserve the live-count node captured earlier by core.js.
+        */
+        const count =
+          item.querySelector(
+            "#liveCount"
+          );
+
+        item.textContent =
+          "● Live Events ";
+
+        if (count) {
+          item.appendChild(
+            count
+          );
+        }
+      } else {
+        item.textContent =
+          label;
+      }
+
+      item.setAttribute(
+        "role",
+        "menuitem"
+      );
+
+      menu.appendChild(
+        item
+      );
+    }
+
+    wrap.append(
+      button,
+      menu
+    );
+
+    const picksLink =
+      nav.querySelector(
+        '[data-v2-route="picks"]'
+      );
+
+    nav.insertBefore(
+      wrap,
+      picksLink || null
+    );
+
+    sportbar.remove();
+    legacyMore?.remove();
+
+    const settingsCopy =
+      document.querySelector(
+        "#settingsNavAction small"
+      );
+
+    if (settingsCopy) {
+      settingsCopy.textContent =
+        "Hide the main EastCoin navigation.";
+    }
+
+    categoryNav = {
+      wrap,
+      button,
+      menu
+    };
+
+    button.addEventListener(
+      "click",
+      (event) => {
+        event.stopPropagation();
+
+        const opening =
+          menu.hidden;
+
+        menu.hidden =
+          !opening;
+
+        button.setAttribute(
+          "aria-expanded",
+          String(opening)
+        );
+      }
+    );
+
+    syncCategoryNav();
+  }
+
   function clearFilters() {
     S.sport = "all";
     S.date = "today";
@@ -469,9 +836,9 @@
     $$("[data-sport]").forEach((button) => {
       button.classList.toggle("active", button.dataset.sport === "all");
     });
-    E.sportMoreBtn.classList.remove("active");
-    E.sportMoreMenu.hidden = true;
-    E.sportMoreBtn.setAttribute("aria-expanded", "false");
+
+    syncCategoryNav();
+    closeCategoryMenu();
 
     $$("[data-status]").forEach((button) => {
       button.classList.toggle("active", button.dataset.status === "all");
@@ -479,14 +846,6 @@
 
     V2.events.renderDates();
     V2.events.renderGrid();
-  }
-
-  function positionSportMoreMenu() {
-    const rect = E.sportMoreBtn.getBoundingClientRect();
-    const menuWidth = 170;
-    const left = Math.max(8, Math.min(window.innerWidth - menuWidth - 8, rect.right - menuWidth));
-    E.sportMoreMenu.style.left = `${left}px`;
-    E.sportMoreMenu.style.top = `${rect.bottom + 5}px`;
   }
 
   function wire() {
@@ -502,12 +861,8 @@
           item.classList.toggle("active", item === button);
         });
 
-        E.sportMoreBtn.classList.toggle(
-          "active",
-          ["hockey", "tennis", "other"].includes(S.sport)
-        );
-        E.sportMoreMenu.hidden = true;
-        E.sportMoreBtn.setAttribute("aria-expanded", "false");
+        syncCategoryNav();
+        closeCategoryMenu();
 
         V2.events.renderGrid();
       };
@@ -609,26 +964,15 @@
       V2.events.renderGrid();
     };
 
-    E.sportMoreBtn.onclick = (event) => {
-      event.stopPropagation();
-      const opening = E.sportMoreMenu.hidden;
-      if (opening) positionSportMoreMenu();
-      E.sportMoreMenu.hidden = !opening;
-      E.sportMoreBtn.setAttribute("aria-expanded", String(opening));
-    };
-
-    window.addEventListener("resize", () => {
-      if (!E.sportMoreMenu.hidden) positionSportMoreMenu();
-    });
-
     document.addEventListener("click", (event) => {
       if (
-        !E.sportMoreMenu.hidden &&
-        !E.sportMoreMenu.contains(event.target) &&
-        event.target !== E.sportMoreBtn
+        categoryNav &&
+        !categoryNav.menu.hidden &&
+        !categoryNav.wrap.contains(
+          event.target
+        )
       ) {
-        E.sportMoreMenu.hidden = true;
-        E.sportMoreBtn.setAttribute("aria-expanded", "false");
+        closeCategoryMenu();
       }
     });
 
@@ -686,8 +1030,7 @@
         V2.settings?.close?.();
         V2.player.closePlayer();
         V2.player.closeModal(E.custom);
-        E.sportMoreMenu.hidden = true;
-        E.sportMoreBtn.setAttribute("aria-expanded", "false");
+        closeCategoryMenu();
       }
     });
   }
@@ -696,6 +1039,7 @@
     installStartupStyles();
     installDeferredExtendedCatalog();
     installNflOnlyCardOdds();
+    setupCategoryNav();
 
     V2.settings.init();
     V2.events.renderDates();

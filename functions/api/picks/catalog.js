@@ -1,8 +1,9 @@
-const CACHE_TTL_SECONDS = 15 * 60;
-const CACHE_VERSION = "v2";
+const CACHE_TTL_SECONDS = 30 * 60;
+const CACHE_VERSION = "v4";
 const MAX_HORIZON_MS = 14 * 24 * 60 * 60 * 1000;
-const MAX_GAMES = 120;
-const MAX_MMA_MARKETS = 5;
+const MAX_GAMES = 140;
+const MAX_MARKETS_PER_SPORT_PER_DAY = 3;
+const MARKET_DAY_TIME_ZONE = "America/Chicago";
 
 const SPORTS = [
   {
@@ -25,6 +26,18 @@ const SPORTS = [
   }
 ];
 
+const dayFormatter =
+  new Intl.DateTimeFormat(
+    "en-CA",
+    {
+      timeZone:
+        MARKET_DAY_TIME_ZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }
+  );
+
 function json(data, status = 200) {
   return Response.json(data, {
     status,
@@ -35,10 +48,28 @@ function json(data, status = 200) {
   });
 }
 
+function marketDay(value) {
+  const timestamp =
+    Date.parse(
+      String(value || "")
+    );
+
+  if (!Number.isFinite(timestamp)) {
+    return "unknown";
+  }
+
+  return dayFormatter.format(
+    new Date(timestamp)
+  );
+}
+
 function americanToImplied(price) {
   const value = Number(price);
 
-  if (!Number.isFinite(value) || value === 0) {
+  if (
+    !Number.isFinite(value) ||
+    value === 0
+  ) {
     return null;
   }
 
@@ -48,7 +79,9 @@ function americanToImplied(price) {
       (Math.abs(value) + 100);
 }
 
-function probabilityToAmerican(probability) {
+function probabilityToAmerican(
+  probability
+) {
   const p = Number(probability);
 
   if (
@@ -59,7 +92,10 @@ function probabilityToAmerican(probability) {
     return null;
   }
 
-  if (Math.abs(p - 0.5) < 0.000001) {
+  if (
+    Math.abs(p - 0.5) <
+    0.000001
+  ) {
     return 100;
   }
 
@@ -78,10 +114,14 @@ function median(values) {
     .filter(Number.isFinite)
     .sort((a, b) => a - b);
 
-  if (!clean.length) return null;
+  if (!clean.length) {
+    return null;
+  }
 
   const middle =
-    Math.floor(clean.length / 2);
+    Math.floor(
+      clean.length / 2
+    );
 
   return clean.length % 2
     ? clean[middle]
@@ -93,10 +133,14 @@ function median(values) {
 
 function consensus(game) {
   const homeName =
-    String(game?.home_team || "");
+    String(
+      game?.home_team || ""
+    );
 
   const awayName =
-    String(game?.away_team || "");
+    String(
+      game?.away_team || ""
+    );
 
   const pairs = [];
 
@@ -117,23 +161,31 @@ function consensus(game) {
       (market.outcomes || [])
         .find(
           (item) =>
-            item?.name === homeName
+            item?.name ===
+            homeName
         );
 
     const away =
       (market.outcomes || [])
         .find(
           (item) =>
-            item?.name === awayName
+            item?.name ===
+            awayName
         );
 
-    if (!home || !away) continue;
+    if (!home || !away) {
+      continue;
+    }
 
     const homeRaw =
-      americanToImplied(home.price);
+      americanToImplied(
+        home.price
+      );
 
     const awayRaw =
-      americanToImplied(away.price);
+      americanToImplied(
+        away.price
+      );
 
     if (
       homeRaw == null ||
@@ -145,11 +197,15 @@ function consensus(game) {
     const total =
       homeRaw + awayRaw;
 
-    if (total <= 0) continue;
+    if (total <= 0) {
+      continue;
+    }
 
     pairs.push({
-      home: homeRaw / total,
-      away: awayRaw / total
+      home:
+        homeRaw / total,
+      away:
+        awayRaw / total
     });
   }
 
@@ -185,15 +241,23 @@ function consensus(game) {
   return {
     home: {
       american:
-        probabilityToAmerican(home),
-      fairProbability: home,
-      bookCount: pairs.length
+        probabilityToAmerican(
+          home
+        ),
+      fairProbability:
+        home,
+      bookCount:
+        pairs.length
     },
     away: {
       american:
-        probabilityToAmerican(away),
-      fairProbability: away,
-      bookCount: pairs.length
+        probabilityToAmerican(
+          away
+        ),
+      fairProbability:
+        away,
+      bookCount:
+        pairs.length
     }
   };
 }
@@ -210,45 +274,56 @@ async function fetchSport(
     "apiKey",
     apiKey
   );
+
   url.searchParams.set(
     "regions",
     "us"
   );
+
   url.searchParams.set(
     "markets",
     "h2h"
   );
+
   url.searchParams.set(
     "oddsFormat",
     "american"
   );
+
   url.searchParams.set(
     "dateFormat",
     "iso"
   );
 
-  const response = await fetch(
-    url.toString(),
-    {
-      headers: {
-        Accept: "application/json"
+  const response =
+    await fetch(
+      url.toString(),
+      {
+        headers: {
+          Accept:
+            "application/json"
+        }
       }
-    }
-  );
+    );
 
   if (!response.ok) {
     const payload =
       await response
         .json()
-        .catch(() => null);
+        .catch(
+          () => null
+        );
 
-    const error = new Error(
-      payload?.message ||
-      payload?.error ||
-      `The Odds API returned ${response.status}.`
-    );
+    const error =
+      new Error(
+        payload?.message ||
+        payload?.error ||
+        `The Odds API returned ${response.status}.`
+      );
 
-    error.status = response.status;
+    error.status =
+      response.status;
+
     error.code =
       payload?.error_code ||
       payload?.code ||
@@ -265,7 +340,27 @@ async function fetchSport(
     games:
       Array.isArray(raw)
         ? raw
-        : []
+        : [],
+    quota: {
+      remaining:
+        Number(
+          response.headers.get(
+            "x-requests-remaining"
+          )
+        ),
+      used:
+        Number(
+          response.headers.get(
+            "x-requests-used"
+          )
+        ),
+      lastCost:
+        Number(
+          response.headers.get(
+            "x-requests-last"
+          )
+        )
+    }
   };
 }
 
@@ -309,7 +404,8 @@ function normalizeGame(
   }
 
   return {
-    provider: "odds_api",
+    provider:
+      "odds_api",
     providerEventId:
       String(raw?.id || ""),
     sportKey:
@@ -322,11 +418,17 @@ function normalizeGame(
         raw?.sport_title ||
         sport.title
       ),
-    family: sport.family,
-    priority: sport.priority,
+    family:
+      sport.family,
+    priority:
+      sport.priority,
     commenceTime:
       raw?.commence_time ||
       null,
+    marketDay:
+      marketDay(
+        raw?.commence_time
+      ),
     awayTeam:
       String(
         raw?.away_team ||
@@ -337,28 +439,46 @@ function normalizeGame(
         raw?.home_team ||
         "Home"
       ),
-    consensus: line
+    consensus:
+      line
   };
 }
 
-function capMmaMarkets(games) {
-  let mmaCount = 0;
+function capMarketsPerDay(
+  games
+) {
+  const counts =
+    new Map();
 
   return games.filter(
     (game) => {
+      const key =
+        `${String(
+          game?.sportKey ||
+          ""
+        )}|${String(
+          game?.marketDay ||
+          marketDay(
+            game?.commenceTime
+          )
+        )}`;
+
+      const count =
+        counts.get(key) || 0;
+
       if (
-        game?.sportKey !==
-        "mma_mixed_martial_arts"
+        count >=
+        MAX_MARKETS_PER_SPORT_PER_DAY
       ) {
-        return true;
+        return false;
       }
 
-      mmaCount += 1;
-
-      return (
-        mmaCount <=
-        MAX_MMA_MARKETS
+      counts.set(
+        key,
+        count + 1
       );
+
+      return true;
     }
   );
 }
@@ -371,7 +491,8 @@ function clientResponse(
     ...payload,
     cache: {
       ...(payload.cache || {}),
-      status: cacheStatus,
+      status:
+        cacheStatus,
       ttlSeconds:
         CACHE_TTL_SECONDS
     }
@@ -384,7 +505,8 @@ export async function onRequestGet(
   const apiKey =
     String(
       context.env
-        .ODDS_API_KEY || ""
+        .ODDS_API_KEY ||
+      ""
     ).trim();
 
   if (!apiKey) {
@@ -435,8 +557,8 @@ export async function onRequestGet(
   }
 
   /*
-    Provider requests are now NFL + MLB + MMA only.
-    NCAAF is intentionally not requested because EastCoin Picks is NFL-only.
+    One paid sportsbook feed per supported sport, shared across Picks,
+    Events cards and Quick Bet verification.
   */
   const settled =
     await Promise.allSettled(
@@ -452,10 +574,12 @@ export async function onRequestGet(
   const now = Date.now();
   const games = [];
   const errors = [];
+  const quota = [];
 
   for (
     let index = 0;
-    index < settled.length;
+    index <
+      settled.length;
     index += 1
   ) {
     const result =
@@ -469,7 +593,8 @@ export async function onRequestGet(
       "rejected"
     ) {
       errors.push({
-        sportKey: sport.key,
+        sportKey:
+          sport.key,
         code:
           String(
             result.reason?.code ||
@@ -486,8 +611,15 @@ export async function onRequestGet(
             "Provider request failed."
           )
       });
+
       continue;
     }
+
+    quota.push({
+      sportKey:
+        sport.key,
+      ...result.value.quota
+    });
 
     for (
       const raw of
@@ -525,15 +657,21 @@ export async function onRequestGet(
   );
 
   /*
-    Because games are sorted by sport priority then start time, the first five
-    MMA games are the nearest five upcoming MMA moneyline markets.
+    Because the list is start-time sorted within each sport, each
+    Central Time calendar day keeps the nearest three NFL, three MLB
+    and three MMA moneyline events.
   */
   const limitedGames =
-    capMmaMarkets(games);
+    capMarketsPerDay(
+      games
+    );
 
   const cleanGames =
     limitedGames
-      .slice(0, MAX_GAMES)
+      .slice(
+        0,
+        MAX_GAMES
+      )
       .map(
         ({
           priority,
@@ -542,7 +680,8 @@ export async function onRequestGet(
       );
 
   const generatedAt =
-    new Date().toISOString();
+    new Date()
+      .toISOString();
 
   const payload = {
     ok:
@@ -557,20 +696,32 @@ export async function onRequestGet(
     upcomingOnly: true,
     horizonDays: 14,
     limits: {
-      mmaMarkets:
-        MAX_MMA_MARKETS
+      marketsPerSportPerDay:
+        MAX_MARKETS_PER_SPORT_PER_DAY,
+      timeZone:
+        MARKET_DAY_TIME_ZONE,
+      nflPerDay:
+        MAX_MARKETS_PER_SPORT_PER_DAY,
+      baseballPerDay:
+        MAX_MARKETS_PER_SPORT_PER_DAY,
+      mmaPerDay:
+        MAX_MARKETS_PER_SPORT_PER_DAY
     },
     sports:
       SPORTS.map(
         (sport) => ({
-          key: sport.key,
-          title: sport.title,
+          key:
+            sport.key,
+          title:
+            sport.title,
           family:
             sport.family
         })
       ),
-    games: cleanGames,
+    games:
+      cleanGames,
     errors,
+    quota,
     cache: {
       generatedAt,
       expiresAt:

@@ -1,60 +1,123 @@
 (() => {
   "use strict";
 
-  const V2 = window.ECV2;
-  const $ = V2.$;
+  const V2 =
+    window.ECV2;
+
+  const $ =
+    V2.$;
+
+  const ML =
+    window.EastcoinMoneyline;
+
+  if (!ML) {
+    console.error(
+      "EastCoin Quick Bet could not load the moneyline calculator."
+    );
+    return;
+  }
 
   const els = {
-    modal: $("#quickBetModal"),
-    close: $("#quickBetClose"),
-    title: $("#quickBetTitle"),
-    start: $("#quickBetStart"),
-    loading: $("#quickBetLoading"),
-    loadingMeta: $("#quickBetLoadingMeta"),
-    body: $("#quickBetBody"),
-    error: $("#quickBetError"),
-    errorTitle: $("#quickBetErrorTitle"),
-    errorText: $("#quickBetErrorText"),
-    reference: $("#quickBetReference"),
-    awayML: $("#quickBetAwayML"),
-    homeML: $("#quickBetHomeML"),
-    away: $("#quickBetAway"),
-    home: $("#quickBetHome"),
-    awayLogo: $("#quickBetAwayLogo"),
-    homeLogo: $("#quickBetHomeLogo"),
-    awayName: $("#quickBetAwayName"),
-    homeName: $("#quickBetHomeName"),
-    awayProjection: $("#quickBetAwayProjection"),
-    homeProjection: $("#quickBetHomeProjection"),
-    range: $("#quickBetRange"),
-    amount: $("#quickBetAmount"),
-    wagerLabel: $("#quickBetWagerLabel"),
-    wagerValue: $("#quickBetWagerValue"),
-    min: $("#quickBetMin"),
-    max: $("#quickBetMax"),
-    previewStatus: $("#quickBetPreviewStatus"),
-    wallet: $("#quickBetWallet"),
-    multiplier: $("#quickBetMultiplier"),
-    potentialReturn: $("#quickBetReturn"),
-    note: $("#quickBetNote"),
-    review: $("#quickBetReview"),
-    reviewLogo: $("#quickBetReviewLogo"),
-    reviewSide: $("#quickBetReviewSide"),
-    reviewTeam: $("#quickBetReviewTeam"),
-    reviewOpponent: $("#quickBetReviewOpponent"),
-    reviewML: $("#quickBetReviewML"),
-    reviewWager: $("#quickBetReviewWager"),
-    reviewMultiplier: $("#quickBetReviewMultiplier"),
-    reviewReturn: $("#quickBetReviewReturn"),
-    reviewMode: $("#quickBetReviewMode"),
-    success: $("#quickBetSuccess"),
-    successTeam: $("#quickBetSuccessTeam"),
-    successMatchup: $("#quickBetSuccessMatchup"),
-    successWager: $("#quickBetSuccessWager"),
-    successMultiplier: $("#quickBetSuccessMultiplier"),
-    successReturn: $("#quickBetSuccessReturn"),
-    fullPicks: $("#quickBetFullPicks"),
-    submit: $("#quickBetSubmit")
+    modal:
+      $("#quickBetModal"),
+    close:
+      $("#quickBetClose"),
+    title:
+      $("#quickBetTitle"),
+    start:
+      $("#quickBetStart"),
+    loading:
+      $("#quickBetLoading"),
+    loadingMeta:
+      $("#quickBetLoadingMeta"),
+    body:
+      $("#quickBetBody"),
+    error:
+      $("#quickBetError"),
+    errorTitle:
+      $("#quickBetErrorTitle"),
+    errorText:
+      $("#quickBetErrorText"),
+    reference:
+      $("#quickBetReference"),
+    awayML:
+      $("#quickBetAwayML"),
+    homeML:
+      $("#quickBetHomeML"),
+    away:
+      $("#quickBetAway"),
+    home:
+      $("#quickBetHome"),
+    awayLogo:
+      $("#quickBetAwayLogo"),
+    homeLogo:
+      $("#quickBetHomeLogo"),
+    awayName:
+      $("#quickBetAwayName"),
+    homeName:
+      $("#quickBetHomeName"),
+    awayProjection:
+      $("#quickBetAwayProjection"),
+    homeProjection:
+      $("#quickBetHomeProjection"),
+    range:
+      $("#quickBetRange"),
+    amount:
+      $("#quickBetAmount"),
+    wagerLabel:
+      $("#quickBetWagerLabel"),
+    wagerValue:
+      $("#quickBetWagerValue"),
+    min:
+      $("#quickBetMin"),
+    max:
+      $("#quickBetMax"),
+    previewStatus:
+      $("#quickBetPreviewStatus"),
+    wallet:
+      $("#quickBetWallet"),
+    multiplier:
+      $("#quickBetMultiplier"),
+    potentialReturn:
+      $("#quickBetReturn"),
+    note:
+      $("#quickBetNote"),
+    review:
+      $("#quickBetReview"),
+    reviewLogo:
+      $("#quickBetReviewLogo"),
+    reviewSide:
+      $("#quickBetReviewSide"),
+    reviewTeam:
+      $("#quickBetReviewTeam"),
+    reviewOpponent:
+      $("#quickBetReviewOpponent"),
+    reviewML:
+      $("#quickBetReviewML"),
+    reviewWager:
+      $("#quickBetReviewWager"),
+    reviewMultiplier:
+      $("#quickBetReviewMultiplier"),
+    reviewReturn:
+      $("#quickBetReviewReturn"),
+    reviewMode:
+      $("#quickBetReviewMode"),
+    success:
+      $("#quickBetSuccess"),
+    successTeam:
+      $("#quickBetSuccessTeam"),
+    successMatchup:
+      $("#quickBetSuccessMatchup"),
+    successWager:
+      $("#quickBetSuccessWager"),
+    successMultiplier:
+      $("#quickBetSuccessMultiplier"),
+    successReturn:
+      $("#quickBetSuccessReturn"),
+    fullPicks:
+      $("#quickBetFullPicks"),
+    submit:
+      $("#quickBetSubmit")
   };
 
   const state = {
@@ -78,34 +141,365 @@
   function money(value) {
     return Math.max(
       0,
-      Math.floor(Number(value) || 0)
-    ).toLocaleString("en-US");
-  }
-
-  function american(value) {
-    const number = Number(value);
-
-    if (!Number.isFinite(number) || number === 0) {
-      return "—";
-    }
-
-    return number > 0
-      ? `+${Math.round(number)}`
-      : String(Math.round(number));
+      Math.round(
+        Number(value) || 0
+      )
+    ).toLocaleString(
+      "en-US"
+    );
   }
 
   function badgeMarkup(team) {
-    const url = V2.badge(team);
+    const url =
+      V2.badge(team);
 
     if (url) {
-      return `<img src="${V2.esc(url)}" alt="">`;
+      return (
+        `<img src="${V2.esc(url)}" alt="">`
+      );
     }
 
-    return `<span>${V2.esc(V2.initials(team?.name))}</span>`;
+    return (
+      `<span>${V2.esc(
+        V2.initials(
+          team?.name
+        )
+      )}</span>`
+    );
+  }
+
+  function moneylineForSide(
+    side
+  ) {
+    if (
+      ![
+        "away",
+        "home"
+      ].includes(side)
+    ) {
+      return null;
+    }
+
+    return ML.normalize(
+      state.cardOdds
+        ?.[side]
+        ?.american ??
+      state.market
+        ?.sportsbook
+        ?.[side]
+        ?.american
+    );
+  }
+
+  function ticketProjection(
+    side = state.side,
+    wager = state.wager
+  ) {
+    const moneyline =
+      moneylineForSide(
+        side
+      );
+
+    const payout =
+      ML.payout(
+        wager,
+        moneyline
+      );
+
+    return {
+      ...payout,
+      moneyline,
+      loss:
+        payout.available
+          ? -payout.wager
+          : 0,
+      refund:
+        payout.available
+          ? payout.wager
+          : 0
+    };
+  }
+
+  function installOutcomeUi() {
+    if (
+      document.getElementById(
+        "eastcoinQuickBetOutcomeStyle"
+      )
+    ) {
+      return;
+    }
+
+    const style =
+      document.createElement(
+        "style"
+      );
+
+    style.id =
+      "eastcoinQuickBetOutcomeStyle";
+
+    style.textContent = `
+      .quickbet-outcomes{
+        display:grid;
+        gap:6px;
+        margin-top:9px;
+        padding:9px;
+        border:1px solid rgba(255,255,255,.075);
+        border-radius:9px;
+        background:#080808;
+      }
+
+      .quickbet-outcome{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        min-height:32px;
+        padding:6px 8px;
+        border-radius:7px;
+        background:#0d0d0d;
+      }
+
+      .quickbet-outcome span{
+        color:#7e7e84;
+        font-size:.64rem;
+        font-weight:850;
+        letter-spacing:.045em;
+        text-transform:uppercase;
+      }
+
+      .quickbet-outcome strong{
+        color:#d9d9de;
+        font-size:.72rem;
+        text-align:right;
+      }
+
+      .quickbet-outcome.win strong{
+        color:#76d294;
+      }
+
+      .quickbet-outcome.loss strong{
+        color:#e07986;
+      }
+
+      .quickbet-outcome.void strong{
+        color:#d3bd74;
+      }
+
+      .quickbet-review-outcomes{
+        margin-top:10px;
+      }
+    `;
+
+    document.head.appendChild(
+      style
+    );
+
+    const summary =
+      document.querySelector(
+        ".quickbet-summary"
+      );
+
+    if (
+      summary &&
+      !document.getElementById(
+        "quickBetOutcomes"
+      )
+    ) {
+      const block =
+        document.createElement(
+          "div"
+        );
+
+      block.id =
+        "quickBetOutcomes";
+
+      block.className =
+        "quickbet-outcomes";
+
+      block.innerHTML = `
+        <div class="quickbet-outcome win">
+          <span>If Pick Wins</span>
+          <strong id="quickBetOutcomeWin">—</strong>
+        </div>
+        <div class="quickbet-outcome loss">
+          <span>If Pick Loses</span>
+          <strong id="quickBetOutcomeLoss">—</strong>
+        </div>
+        <div class="quickbet-outcome void">
+          <span>Void / No Action</span>
+          <strong id="quickBetOutcomeVoid">—</strong>
+        </div>
+      `;
+
+      summary.insertAdjacentElement(
+        "afterend",
+        block
+      );
+    }
+
+    const reviewGrid =
+      document.querySelector(
+        ".quickbet-review-grid"
+      );
+
+    if (
+      reviewGrid &&
+      !document.getElementById(
+        "quickBetReviewOutcomes"
+      )
+    ) {
+      const block =
+        document.createElement(
+          "div"
+        );
+
+      block.id =
+        "quickBetReviewOutcomes";
+
+      block.className =
+        "quickbet-outcomes quickbet-review-outcomes";
+
+      block.innerHTML = `
+        <div class="quickbet-outcome win">
+          <span>If Pick Wins</span>
+          <strong id="quickBetReviewOutcomeWin">—</strong>
+        </div>
+        <div class="quickbet-outcome loss">
+          <span>If Pick Loses</span>
+          <strong id="quickBetReviewOutcomeLoss">—</strong>
+        </div>
+        <div class="quickbet-outcome void">
+          <span>Void / No Action</span>
+          <strong id="quickBetReviewOutcomeVoid">—</strong>
+        </div>
+      `;
+
+      reviewGrid.insertAdjacentElement(
+        "afterend",
+        block
+      );
+    }
+
+    const summaryReturnLabel =
+      els.potentialReturn
+        ?.parentElement
+        ?.querySelector(
+          "span"
+        );
+
+    if (summaryReturnLabel) {
+      summaryReturnLabel.textContent =
+        "If Pick Wins";
+    }
+
+    const reviewMoneylineLabel =
+      els.reviewMultiplier
+        ?.parentElement
+        ?.querySelector(
+          "span"
+        );
+
+    if (reviewMoneylineLabel) {
+      reviewMoneylineLabel.textContent =
+        "Moneyline";
+    }
+
+    const reviewReturnLabel =
+      els.reviewReturn
+        ?.parentElement
+        ?.querySelector(
+          "span"
+        );
+
+    if (reviewReturnLabel) {
+      reviewReturnLabel.textContent =
+        "If Pick Wins";
+    }
+
+    const successReturnLabel =
+      els.successReturn
+        ?.parentElement
+        ?.querySelector(
+          "span"
+        );
+
+    if (successReturnLabel) {
+      successReturnLabel.textContent =
+        "If Pick Wins";
+    }
+  }
+
+  function setText(
+    id,
+    value
+  ) {
+    const node =
+      document.getElementById(
+        id
+      );
+
+    if (node) {
+      node.textContent =
+        String(value);
+    }
+  }
+
+  function renderOutcomeValues(
+    prefix,
+    projection
+  ) {
+    if (
+      !projection.available
+    ) {
+      setText(
+        `${prefix}Win`,
+        "—"
+      );
+
+      setText(
+        `${prefix}Loss`,
+        "—"
+      );
+
+      setText(
+        `${prefix}Void`,
+        "—"
+      );
+
+      return;
+    }
+
+    setText(
+      `${prefix}Win`,
+      `+${money(
+        projection.profit
+      )} profit · ${money(
+        projection.totalReturn
+      )} total`
+    );
+
+    setText(
+      `${prefix}Loss`,
+      `-${money(
+        projection.wager
+      )} ZCoins · 0 returned`
+    );
+
+    setText(
+      `${prefix}Void`,
+      `${money(
+        projection.refund
+      )} ZCoins refunded`
+    );
   }
 
   function openModal() {
-    els.modal.classList.add("open");
+    installOutcomeUi();
+
+    els.modal.classList.add(
+      "open"
+    );
+
     els.modal.setAttribute(
       "aria-hidden",
       "false"
@@ -113,9 +507,14 @@
   }
 
   function close() {
-    if (state.busy) return;
+    if (state.busy) {
+      return;
+    }
 
-    els.modal.classList.remove("open");
+    els.modal.classList.remove(
+      "open"
+    );
+
     els.modal.setAttribute(
       "aria-hidden",
       "true"
@@ -129,7 +528,8 @@
     state.market = null;
     state.bootstrap = null;
     state.side = null;
-    state.wager = PREVIEW_DEFAULT_WAGER;
+    state.wager =
+      PREVIEW_DEFAULT_WAGER;
     state.cardOdds = null;
     state.previewOnly = false;
     state.previewReason = "";
@@ -142,15 +542,38 @@
     els.success.hidden = true;
     els.error.hidden = true;
     els.loading.hidden = false;
+
     els.loadingMeta.textContent =
       "Verifying the game and loading Picks.";
 
     els.submit.disabled = true;
-    els.submit.textContent = "Lock In Pick";
-    els.fullPicks.textContent = "Full Picks";
+    els.submit.textContent =
+      "Lock In Pick";
 
-    els.away.classList.remove("selected");
-    els.home.classList.remove("selected");
+    els.fullPicks.textContent =
+      "Full Picks";
+
+    els.away.classList.remove(
+      "selected"
+    );
+
+    els.home.classList.remove(
+      "selected"
+    );
+
+    renderOutcomeValues(
+      "quickBetOutcome",
+      {
+        available: false
+      }
+    );
+
+    renderOutcomeValues(
+      "quickBetReviewOutcome",
+      {
+        available: false
+      }
+    );
   }
 
   function showError(
@@ -158,55 +581,72 @@
     message
   ) {
     state.busy = false;
+
     els.loading.hidden = true;
     els.body.hidden = true;
     els.review.hidden = true;
     els.success.hidden = true;
     els.error.hidden = false;
+
     els.errorTitle.textContent =
-      title || "Quick Bet unavailable";
+      title ||
+      "Quick Bet unavailable";
+
     els.errorText.textContent =
       message ||
       "This Picks market could not be prepared.";
+
     els.submit.disabled = true;
   }
 
   function walletState() {
     const session =
-      state.bootstrap?.session || {};
+      state.bootstrap
+        ?.session || {};
 
     const config =
-      state.bootstrap?.config || {};
+      state.bootstrap
+        ?.config || {};
 
     const wallet =
       session.wallet || {};
 
-    const balance = Math.max(
-      0,
-      Math.floor(Number(wallet.balance || 0))
-    );
+    const balance =
+      Math.max(
+        0,
+        Math.floor(
+          Number(
+            wallet.balance ||
+            0
+          )
+        )
+      );
 
     const personalMax =
       balance >= 1
         ? Math.min(
-            Math.floor(balance * 0.15),
+            Math.floor(
+              balance * 0.15
+            ),
             50
           )
         : 0;
 
-    const serverMax = Math.floor(
-      Number(
-        wallet.maxWager ??
-        config.maxWager ??
-        0
-      ) || 0
-    );
+    const serverMax =
+      Math.floor(
+        Number(
+          wallet.maxWager ??
+          config.maxWager ??
+          0
+        ) || 0
+      );
 
     const max =
       serverMax > 0
         ? Math.min(
             balance,
-            personalMax || serverMax,
+            personalMax ||
+              serverMax,
             serverMax
           )
         : Math.min(
@@ -216,19 +656,30 @@
 
     return {
       authenticated:
-        Boolean(session.authenticated),
+        Boolean(
+          session.authenticated
+        ),
       walletConnected:
-        Boolean(wallet.connected),
+        Boolean(
+          wallet.connected
+        ),
       wageringEnabled:
-        Boolean(config.wageringEnabled),
+        Boolean(
+          config.wageringEnabled
+        ),
       balance,
-      max: Math.max(0, max)
+      max:
+        Math.max(
+          0,
+          max
+        )
     };
   }
 
   function wagerLimits() {
     const config =
-      state.bootstrap?.config || {};
+      state.bootstrap
+        ?.config || {};
 
     const wallet =
       walletState();
@@ -242,119 +693,76 @@
         Math.max(
           1,
           Math.floor(
-            Number(config.minWager || 1)
+            Number(
+              config.minWager ||
+              1
+            )
           )
         );
 
       return {
         preview: false,
-        min: serverMin,
-        max: Math.max(
+        min:
           serverMin,
-          wallet.max
-        )
+        max:
+          Math.max(
+            serverMin,
+            wallet.max
+          )
       };
     }
 
     return {
       preview: true,
-      min: PREVIEW_MIN_WAGER,
-      max: PREVIEW_MAX_WAGER
+      min:
+        PREVIEW_MIN_WAGER,
+      max:
+        PREVIEW_MAX_WAGER
     };
   }
 
-  function normalizeWager(value) {
-    const limits = wagerLimits();
+  function normalizeWager(
+    value
+  ) {
+    const limits =
+      wagerLimits();
 
     return Math.min(
       limits.max,
       Math.max(
         limits.min,
         Math.floor(
-          Number(value) || limits.min
+          Number(value) ||
+          limits.min
         )
       )
     );
   }
 
-  function poolSnapshot(
-    side = state.side,
-    wager = state.wager
-  ) {
-    const pool =
-      state.market?.pool || {};
-
-    let away = Number(pool.away || 0);
-    let home = Number(pool.home || 0);
-    let awayCount =
-      Number(pool.awayCount || 0);
-    let homeCount =
-      Number(pool.homeCount || 0);
-
-    if (side === "away" && wager > 0) {
-      away += wager;
-      awayCount += 1;
-    }
-
-    if (side === "home" && wager > 0) {
-      home += wager;
-      homeCount += 1;
-    }
-
-    const total = away + home;
-    const active =
-      away > 0 &&
-      home > 0 &&
-      awayCount + homeCount >= 2;
-
-    return {
-      away,
-      home,
-      total,
-      active,
-      awayMultiplier:
-        active
-          ? total / away
-          : 2,
-      homeMultiplier:
-        active
-          ? total / home
-          : 2
-    };
-  }
-
-  function sideMultiplier(side) {
-    const snapshot = poolSnapshot(
-      side,
-      state.wager
-    );
-
-    return side === "away"
-      ? snapshot.awayMultiplier
-      : snapshot.homeMultiplier;
-  }
-
   function renderProjectionLabels() {
-    const away = poolSnapshot(
-      "away",
-      Math.max(1, state.wager || 1)
-    );
+    const away =
+      moneylineForSide(
+        "away"
+      );
 
-    const home = poolSnapshot(
-      "home",
-      Math.max(1, state.wager || 1)
-    );
+    const home =
+      moneylineForSide(
+        "home"
+      );
 
     els.awayProjection.textContent =
-      `${away.awayMultiplier.toFixed(2)}x`;
+      ML.format(away);
 
     els.homeProjection.textContent =
-      `${home.homeMultiplier.toFixed(2)}x`;
+      ML.format(home);
   }
 
   function renderTicket() {
-    const wallet = walletState();
-    const limits = wagerLimits();
+    const wallet =
+      walletState();
+
+    const limits =
+      wagerLimits();
 
     els.away.classList.toggle(
       "selected",
@@ -367,32 +775,52 @@
     );
 
     if (
-      state.wager < limits.min ||
-      state.wager > limits.max
+      state.wager <
+        limits.min ||
+      state.wager >
+        limits.max
     ) {
-      state.wager = normalizeWager(
-        state.wager || PREVIEW_DEFAULT_WAGER
-      );
+      state.wager =
+        normalizeWager(
+          state.wager ||
+          PREVIEW_DEFAULT_WAGER
+        );
     }
 
     els.range.disabled = false;
-    els.range.min = String(limits.min);
-    els.range.max = String(limits.max);
-    els.range.value = String(state.wager);
+    els.range.min =
+      String(limits.min);
+    els.range.max =
+      String(limits.max);
+    els.range.value =
+      String(state.wager);
 
     els.amount.disabled = false;
-    els.amount.min = String(limits.min);
-    els.amount.max = String(limits.max);
-    els.amount.value = String(state.wager);
+    els.amount.min =
+      String(limits.min);
+    els.amount.max =
+      String(limits.max);
+    els.amount.value =
+      String(state.wager);
 
     els.min.textContent =
-      `${money(limits.min)} ZCoin${limits.min === 1 ? "" : "s"}`;
+      `${money(
+        limits.min
+      )} ZCoin${
+        limits.min === 1
+          ? ""
+          : "s"
+      }`;
 
     els.max.textContent =
-      `${money(limits.max)} ZCoins`;
+      `${money(
+        limits.max
+      )} ZCoins`;
 
     els.wagerValue.textContent =
-      money(state.wager);
+      money(
+        state.wager
+      );
 
     els.wagerLabel.textContent =
       limits.preview
@@ -409,183 +837,240 @@
 
     els.wallet.textContent =
       wallet.walletConnected
-        ? `${money(wallet.balance)} ZCoins`
+        ? `${money(
+            wallet.balance
+          )} ZCoins`
         : "Pending StreamElements";
 
     renderProjectionLabels();
 
+    const projection =
+      ticketProjection();
+
     if (
       state.side &&
-      state.wager > 0
+      projection.available
     ) {
-      const multiplier =
-        sideMultiplier(state.side);
-
       els.multiplier.textContent =
-        `${multiplier.toFixed(2)}x`;
+        ML.format(
+          projection.moneyline
+        );
 
       els.potentialReturn.textContent =
         `${money(
-          Math.floor(
-            state.wager * multiplier
-          )
+          projection.totalReturn
         )} ZCoins`;
+
+      renderOutcomeValues(
+        "quickBetOutcome",
+        projection
+      );
     } else {
-      els.multiplier.textContent = "—";
-      els.potentialReturn.textContent = "—";
+      els.multiplier.textContent =
+        "—";
+
+      els.potentialReturn.textContent =
+        "—";
+
+      renderOutcomeValues(
+        "quickBetOutcome",
+        {
+          available: false
+        }
+      );
     }
 
-    if (!wallet.authenticated) {
+    if (
+      state.side &&
+      !projection.available
+    ) {
+      els.note.textContent =
+        "This side no longer has a valid sportsbook moneyline. Refresh Events and try again.";
+
+      els.submit.disabled = true;
+      els.submit.textContent =
+        "Moneyline Unavailable";
+
+      return;
+    }
+
+    if (
+      !wallet.authenticated
+    ) {
       els.note.textContent =
         state.side
-          ? "Ticket preview ready. You can review the pick before logging in; Twitch authentication is only required at final confirmation."
-          : "Choose a team to build your ticket. You can review it before logging in.";
+          ? `If this Pick wins, it returns ${money(
+              projection.totalReturn
+            )} ZCoins total. If it loses, the full ${money(
+              state.wager
+            )} ZCoin wager is lost.`
+          : "Choose a team to build your ticket. The displayed return applies only if that team wins.";
 
-      els.submit.disabled = !state.side;
+      els.submit.disabled =
+        !state.side;
+
       els.submit.textContent =
         state.side
           ? "Lock In Pick"
           : "Choose a Side";
+
       return;
     }
 
     if (state.previewOnly) {
       els.note.textContent =
         state.side
-          ? "Preview ticket ready. Lock In Pick will open the confirmation screen, but no active Picks season exists yet so the final confirmation cannot submit."
-          : "Choose a team to preview the complete V1-style lock-in and confirmation flow.";
+          ? `Preview only. A win returns ${money(
+              projection.totalReturn
+            )} total; a loss returns 0 and loses the ${money(
+              state.wager
+            )} ZCoin wager; Void / No Action refunds the wager.`
+          : "Choose a team to preview the complete moneyline ticket.";
 
-      els.submit.disabled = !state.side;
+      els.submit.disabled =
+        !state.side;
+
       els.submit.textContent =
         state.side
           ? "Lock In Pick"
           : "Choose a Side";
+
       return;
     }
 
-    if (!wallet.walletConnected) {
+    if (
+      !wallet.walletConnected
+    ) {
       els.note.textContent =
         state.side
-          ? "Ticket preview ready. Lock In Pick will open the review screen; StreamElements is only required for the final confirmation."
-          : "Choose a team to preview the complete ticket and review screen.";
+          ? "Ticket preview ready. A losing Pick returns 0 ZCoins; Void / No Action refunds the wager."
+          : "Choose a team to build your ticket.";
 
-      els.submit.disabled = !state.side;
+      els.submit.disabled =
+        !state.side;
+
       els.submit.textContent =
         state.side
           ? "Lock In Pick"
           : "Choose a Side";
+
       return;
     }
 
-    if (!wallet.wageringEnabled) {
+    if (
+      !wallet.wageringEnabled
+    ) {
       els.note.textContent =
         state.side
-          ? "You can review this ticket, but real confirmation remains disabled while wagering is offline."
+          ? "You can review this sportsbook ticket, but real confirmation remains disabled while wagering is offline."
           : "Choose a team to build the ticket.";
 
-      els.submit.disabled = !state.side;
+      els.submit.disabled =
+        !state.side;
+
       els.submit.textContent =
         state.side
           ? "Lock In Pick"
           : "Choose a Side";
+
       return;
     }
 
     if (!state.side) {
       els.note.textContent =
-        "Choose the team you want to back.";
+        "Choose the team you want to back. Returns shown on a team apply only if that team wins.";
 
       els.submit.disabled = true;
       els.submit.textContent =
         "Choose a Side";
+
       return;
     }
 
-    if (state.wager < limits.min) {
+    if (
+      state.wager <
+      limits.min
+    ) {
       els.note.textContent =
         "Choose a valid ZCoin wager.";
 
       els.submit.disabled = true;
       els.submit.textContent =
         "Choose Wager";
+
       return;
     }
 
-    const snapshot = poolSnapshot();
-
     els.note.textContent =
-      snapshot.active
-        ? "Review your projected community-pool payout, then lock in the ticket for confirmation."
-        : "Early pool preview. Review your ticket before confirming; one-sided markets can still settle as No Action.";
+      `Moneyline ${ML.format(
+        projection.moneyline
+      )}: win = +${money(
+        projection.profit
+      )} profit / ${money(
+        projection.totalReturn
+      )} total; loss = -${money(
+        projection.wager
+      )} ZCoins / 0 returned; Void / No Action = ${money(
+        projection.refund
+      )} refunded.`;
 
     els.submit.disabled = false;
-    els.submit.textContent = "Lock In Pick";
+    els.submit.textContent =
+      "Lock In Pick";
   }
 
-  function setWager(value) {
+  function setWager(
+    value
+  ) {
     state.wager =
-      normalizeWager(value);
+      normalizeWager(
+        value
+      );
 
     renderTicket();
   }
 
   function selectedTeam() {
-    if (!state.market || !state.side) {
+    if (
+      !state.market ||
+      !state.side
+    ) {
       return null;
     }
 
-    return state.side === "away"
-      ? state.market.away
-      : state.market.home;
-  }
-
-  function opponentTeam() {
-    if (!state.market || !state.side) {
-      return null;
-    }
-
-    return state.side === "away"
-      ? state.market.home
-      : state.market.away;
-  }
-
-  function selectedReferenceML() {
-    if (!state.side) return null;
-
-    return Number(
-      state.cardOdds?.[state.side]?.american
+    return (
+      state.side === "away"
+        ? state.market.away
+        : state.market.home
     );
   }
 
-  function ticketProjection() {
-    if (!state.side || state.wager < 1) {
-      return {
-        multiplier: 0,
-        estimatedReturn: 0
-      };
+  function opponentTeam() {
+    if (
+      !state.market ||
+      !state.side
+    ) {
+      return null;
     }
 
-    const multiplier =
-      sideMultiplier(state.side);
-
-    return {
-      multiplier,
-      estimatedReturn:
-        Math.floor(
-          state.wager * multiplier
-        )
-    };
+    return (
+      state.side === "away"
+        ? state.market.home
+        : state.market.away
+    );
   }
 
   function showTicketStage() {
-    state.stage = "ticket";
+    state.stage =
+      "ticket";
 
     els.body.hidden = false;
     els.review.hidden = true;
     els.success.hidden = true;
     els.error.hidden = true;
 
-    els.fullPicks.textContent = "Full Picks";
+    els.fullPicks.textContent =
+      "Full Picks";
 
     renderTicket();
   }
@@ -596,13 +1081,27 @@
       return;
     }
 
-    const team = selectedTeam();
-    const opponent = opponentTeam();
-    const projection = ticketProjection();
-    const referenceML = selectedReferenceML();
-    const wallet = walletState();
+    const team =
+      selectedTeam();
 
-    state.stage = "review";
+    const opponent =
+      opponentTeam();
+
+    const projection =
+      ticketProjection();
+
+    const wallet =
+      walletState();
+
+    if (
+      !projection.available
+    ) {
+      showTicketStage();
+      return;
+    }
+
+    state.stage =
+      "review";
 
     els.body.hidden = true;
     els.review.hidden = false;
@@ -610,64 +1109,93 @@
     els.error.hidden = true;
 
     const matchTeam =
-      state.side === "away"
-        ? state.match?.teams?.away
-        : state.match?.teams?.home;
+      state.side ===
+        "away"
+        ? state.match
+            ?.teams
+            ?.away
+        : state.match
+            ?.teams
+            ?.home;
 
     els.reviewLogo.innerHTML =
       badgeMarkup(
         matchTeam || {
-          name: team?.name
+          name:
+            team?.name
         }
       );
 
     els.reviewSide.textContent =
-      state.side === "away"
+      state.side ===
+        "away"
         ? "YOUR PICK · AWAY"
         : "YOUR PICK · HOME";
 
     els.reviewTeam.textContent =
-      team?.name || "Team";
+      team?.name ||
+      "Team";
 
     els.reviewOpponent.textContent =
-      `vs ${opponent?.name || "Opponent"}`;
+      `vs ${
+        opponent?.name ||
+        "Opponent"
+      }`;
 
     els.reviewML.textContent =
-      Number.isFinite(referenceML)
-        ? `ML ${american(referenceML)}`
-        : "ML —";
+      `ML ${ML.format(
+        projection.moneyline
+      )}`;
 
     els.reviewWager.textContent =
-      `${money(state.wager)} ZCoins`;
+      `${money(
+        state.wager
+      )} ZCoins`;
 
     els.reviewMultiplier.textContent =
-      `${projection.multiplier.toFixed(2)}x`;
+      ML.format(
+        projection.moneyline
+      );
 
     els.reviewReturn.textContent =
-      `${money(projection.estimatedReturn)} ZCoins`;
+      `${money(
+        projection.totalReturn
+      )} ZCoins`;
+
+    renderOutcomeValues(
+      "quickBetReviewOutcome",
+      projection
+    );
 
     if (state.previewOnly) {
       els.reviewMode.textContent =
-        "PREVIEW MODE · No active Picks season exists. This review is not saved and cannot be submitted.";
-
+        "PREVIEW MODE · No active Picks season exists. No ZCoins are charged.";
       els.submit.disabled = true;
       els.submit.textContent =
         "Season Required to Confirm";
-    } else if (!wallet.authenticated) {
+    } else if (
+      !wallet.authenticated
+    ) {
       els.reviewMode.textContent =
-        "Twitch login is required only for the final confirmation.";
+        `Twitch login is required to confirm. If this Pick loses, the ${money(
+          state.wager
+        )} ZCoin wager is lost and 0 ZCoins are returned.`;
 
       els.submit.disabled = false;
       els.submit.textContent =
         "Log In to Confirm";
-    } else if (!wallet.walletConnected) {
+    } else if (
+      !wallet.walletConnected
+    ) {
       els.reviewMode.textContent =
         "StreamElements wallet connection is required for the final ZCoin debit.";
 
       els.submit.disabled = true;
       els.submit.textContent =
         "Wallet Required to Confirm";
-    } else if (!wallet.wageringEnabled) {
+    } else if (
+      !wallet.wageringEnabled
+    ) {
       els.reviewMode.textContent =
         "The ticket is ready, but real wagering is currently disabled.";
 
@@ -676,7 +1204,13 @@
         "Wagering Offline";
     } else {
       els.reviewMode.textContent =
-        "Confirming will debit the displayed ZCoins and permanently record this pick.";
+        `Confirming debits ${money(
+          state.wager
+        )} ZCoins. Win = ${money(
+          projection.totalReturn
+        )} total; loss = 0 returned; Void / No Action = ${money(
+          projection.refund
+        )} refunded.`;
 
       els.submit.disabled = false;
       els.submit.textContent =
@@ -687,13 +1221,23 @@
       "← Edit Pick";
   }
 
-  function renderSuccess(payload = null) {
-    const team = selectedTeam();
-    const opponent = opponentTeam();
-    const projection = ticketProjection();
+  function renderSuccess(
+    payload = null
+  ) {
+    const team =
+      selectedTeam();
 
-    state.stage = "success";
-    state.receipt = payload || {};
+    const opponent =
+      opponentTeam();
+
+    const projection =
+      ticketProjection();
+
+    state.stage =
+      "success";
+
+    state.receipt =
+      payload || {};
 
     els.body.hidden = true;
     els.review.hidden = true;
@@ -701,19 +1245,29 @@
     els.error.hidden = true;
 
     els.successTeam.textContent =
-      team?.name || "Pick Confirmed";
+      team?.name ||
+      "Pick Confirmed";
 
     els.successMatchup.textContent =
-      `vs ${opponent?.name || "Opponent"}`;
+      `vs ${
+        opponent?.name ||
+        "Opponent"
+      }`;
 
     els.successWager.textContent =
-      `${money(state.wager)} ZCoins`;
+      `${money(
+        state.wager
+      )} ZCoins`;
 
     els.successMultiplier.textContent =
-      `${projection.multiplier.toFixed(2)}x`;
+      ML.format(
+        projection.moneyline
+      );
 
     els.successReturn.textContent =
-      `${money(projection.estimatedReturn)} ZCoins`;
+      `${money(
+        projection.totalReturn
+      )} ZCoins`;
 
     els.fullPicks.textContent =
       "View My Picks";
@@ -726,15 +1280,22 @@
   function renderPrepared() {
     state.busy = false;
 
-    const match = state.match;
-    const market = state.market;
-    const cardOdds = state.cardOdds;
+    const match =
+      state.match;
+
+    const market =
+      state.market;
+
+    const cardOdds =
+      state.cardOdds;
 
     els.title.textContent =
       `${market.away.name} vs ${market.home.name}`;
 
     els.start.textContent =
-      V2.datetime(match);
+      V2.datetime(
+        match
+      );
 
     els.awayName.textContent =
       market.away.name;
@@ -744,38 +1305,48 @@
 
     els.awayLogo.innerHTML =
       badgeMarkup(
-        match?.teams?.away || {
-          name: market.away.name
+        match?.teams
+          ?.away || {
+          name:
+            market.away.name
         }
       );
 
     els.homeLogo.innerHTML =
       badgeMarkup(
-        match?.teams?.home || {
-          name: market.home.name
+        match?.teams
+          ?.home || {
+          name:
+            market.home.name
         }
       );
 
-    const hasReference =
-      Number.isFinite(
-        Number(cardOdds?.away?.american)
-      ) &&
-      Number.isFinite(
-        Number(cardOdds?.home?.american)
+    const awayLine =
+      moneylineForSide(
+        "away"
       );
+
+    const homeLine =
+      moneylineForSide(
+        "home"
+      );
+
+    const hasReference =
+      awayLine != null &&
+      homeLine != null;
 
     els.reference.hidden =
       !hasReference;
 
     if (hasReference) {
       els.awayML.textContent =
-        american(
-          cardOdds.away.american
+        ML.format(
+          awayLine
         );
 
       els.homeML.textContent =
-        american(
-          cardOdds.home.american
+        ML.format(
+          homeLine
         );
     }
 
@@ -800,18 +1371,23 @@
       );
     }
 
-    const response = await fetch(
-      "/api/picks/bootstrap",
-      {
-        credentials: "same-origin",
-        cache: "no-store"
-      }
-    );
+    const response =
+      await fetch(
+        "/api/picks/bootstrap",
+        {
+          credentials:
+            "same-origin",
+          cache:
+            "no-store"
+        }
+      );
 
     const payload =
       await response
         .json()
-        .catch(() => null);
+        .catch(
+          () => null
+        );
 
     if (
       !response.ok ||
@@ -826,36 +1402,48 @@
     return payload;
   }
 
-  function previewMarket(match) {
+  function previewMarket(
+    match
+  ) {
     const odds =
-      V2.cardOdds?.forMatch?.(match) ||
+      V2.cardOdds
+        ?.forMatch?.(
+          match
+        ) ||
       state.cardOdds ||
       null;
 
     const away =
       String(
         odds?.providerAway ||
-        match?.teams?.away?.name ||
+        match?.teams
+          ?.away?.name ||
         "Away"
       );
 
     const home =
       String(
         odds?.providerHome ||
-        match?.teams?.home?.name ||
+        match?.teams
+          ?.home?.name ||
         "Home"
       );
 
     return {
       id: "",
-      provider: "odds_api",
+      provider:
+        "odds_api",
       providerEventId:
         String(
-          odds?.providerEventId || ""
+          odds
+            ?.providerEventId ||
+          ""
         ),
       seasonId: "",
       sport:
-        V2.family(match),
+        V2.family(
+          match
+        ),
       league:
         String(
           odds?.sportTitle ||
@@ -863,90 +1451,119 @@
           ""
         ),
       away: {
-        name: away,
+        name:
+          away,
         badge:
           V2.badge(
-            match?.teams?.away
+            match?.teams
+              ?.away
           ) || ""
       },
       home: {
-        name: home,
+        name:
+          home,
         badge:
           V2.badge(
-            match?.teams?.home
+            match?.teams
+              ?.home
           ) || ""
       },
       startsAt:
-        odds?.commenceTime ||
+        odds
+          ?.commenceTime ||
         new Date(
-          V2.ts(match?.date)
+          V2.ts(
+            match?.date
+          )
         ).toISOString(),
-      state: "PREVIEW",
-      pool: {
-        away: 0,
-        home: 0,
-        total: 0,
-        awayCount: 0,
-        homeCount: 0
-      }
+      state:
+        "PREVIEW"
     };
   }
 
-  async function ensureMarket(match) {
+  async function ensureMarket(
+    match
+  ) {
     const odds =
-      V2.cardOdds?.forMatch?.(match) ||
+      V2.cardOdds
+        ?.forMatch?.(
+          match
+        ) ||
       null;
 
-    const response = await fetch(
-      "/api/picks/markets/ensure",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type":
-            "application/json"
-        },
-        body: JSON.stringify({
-          providerEventId:
-            odds?.providerEventId || "",
-          title:
-            String(match?.title || ""),
-          sport:
-            V2.family(match),
-          startsAt:
-            V2.ts(match?.date) || null,
-          away:
-            String(
-              match?.teams?.away?.name ||
-              ""
-            ),
-          home:
-            String(
-              match?.teams?.home?.name ||
-              ""
-            ),
-          awayBadge:
-            V2.badge(
-              match?.teams?.away
-            ),
-          homeBadge:
-            V2.badge(
-              match?.teams?.home
-            )
-        }),
-        cache: "no-store"
-      }
-    );
+    const response =
+      await fetch(
+        "/api/picks/markets/ensure",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+          body:
+            JSON.stringify({
+              providerEventId:
+                odds
+                  ?.providerEventId ||
+                "",
+              title:
+                String(
+                  match?.title ||
+                  ""
+                ),
+              sport:
+                V2.family(
+                  match
+                ),
+              startsAt:
+                V2.ts(
+                  match?.date
+                ) ||
+                null,
+              away:
+                String(
+                  match?.teams
+                    ?.away?.name ||
+                  ""
+                ),
+              home:
+                String(
+                  match?.teams
+                    ?.home?.name ||
+                  ""
+                ),
+              awayBadge:
+                V2.badge(
+                  match?.teams
+                    ?.away
+                ),
+              homeBadge:
+                V2.badge(
+                  match?.teams
+                    ?.home
+                )
+            }),
+          cache:
+            "no-store"
+        }
+      );
 
     const payload =
       await response
         .json()
-        .catch(() => null);
+        .catch(
+          () => null
+        );
 
-    if (!response.ok || !payload?.ok) {
-      const error = new Error(
-        payload?.message ||
-        "This game could not be prepared for Picks."
-      );
+    if (
+      !response.ok ||
+      !payload?.ok
+    ) {
+      const error =
+        new Error(
+          payload?.message ||
+          "This game could not be prepared for Picks."
+        );
 
       error.code =
         payload?.code ||
@@ -958,43 +1575,84 @@
     return payload;
   }
 
-  async function open(match) {
-    if (!match) return;
+  async function open(
+    match
+  ) {
+    if (!match) {
+      return;
+    }
 
     if (
       V2.live(match) ||
-      V2.ts(match?.date) <= Date.now()
+      V2.ts(
+        match?.date
+      ) <= Date.now()
     ) {
       V2.toast(
         "Betting is closed for this event."
       );
+
       return;
     }
 
     reset();
 
-    state.match = match;
-    state.wager = PREVIEW_DEFAULT_WAGER;
+    state.match =
+      match;
+
+    state.wager =
+      PREVIEW_DEFAULT_WAGER;
+
     state.cardOdds =
-      V2.cardOdds?.forMatch?.(match) ||
+      V2.cardOdds
+        ?.forMatch?.(
+          match
+        ) ||
       null;
+
+    const awayLine =
+      moneylineForSide(
+        "away"
+      );
+
+    const homeLine =
+      moneylineForSide(
+        "home"
+      );
+
+    if (
+      awayLine == null ||
+      homeLine == null
+    ) {
+      V2.toast(
+        "This event does not currently have a wagerable moneyline."
+      );
+
+      return;
+    }
+
     state.busy = true;
 
     els.title.textContent =
-      match.title || "Quick Bet";
+      match.title ||
+      "Quick Bet";
 
     els.start.textContent =
-      V2.datetime(match);
+      V2.datetime(
+        match
+      );
 
     openModal();
 
     try {
       els.loadingMeta.textContent =
-        "Verifying the exact Odds API event…";
+        "Verifying the exact sportsbook event…";
 
       try {
         const ensured =
-          await ensureMarket(match);
+          await ensureMarket(
+            match
+          );
 
         state.market =
           ensured.market;
@@ -1014,11 +1672,10 @@
           throw error;
         }
 
-        // Previewing the ticket should not require creating a real D1 market.
-        // The exact Odds API event was already verified by /markets/ensure
-        // before it returned NO_ACTIVE_PICKS_SEASON.
         state.market =
-          previewMarket(match);
+          previewMarket(
+            match
+          );
 
         state.previewOnly = true;
         state.previewReason =
@@ -1042,13 +1699,19 @@
   }
 
   async function confirmPick() {
-    if (state.busy) return;
+    if (state.busy) {
+      return;
+    }
 
-    const wallet = walletState();
+    const wallet =
+      walletState();
 
-    if (!wallet.authenticated) {
+    if (
+      !wallet.authenticated
+    ) {
       location.href =
         V2.authUrl();
+
       return;
     }
 
@@ -1064,38 +1727,56 @@
       return;
     }
 
+    const projection =
+      ticketProjection();
+
+    if (
+      !projection.available
+    ) {
+      renderTicket();
+      return;
+    }
+
     state.busy = true;
     els.submit.disabled = true;
     els.submit.textContent =
       "Confirming…";
 
     try {
-      const response = await fetch(
-        "/api/picks/wagers",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-          body: JSON.stringify({
-            marketId:
-              state.market.id,
-            selection:
-              state.side,
-            wager:
-              state.wager
-          }),
-          credentials: "same-origin"
-        }
-      );
+      const response =
+        await fetch(
+          "/api/picks/wagers",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+            body:
+              JSON.stringify({
+                marketId:
+                  state.market.id,
+                selection:
+                  state.side,
+                wager:
+                  state.wager
+              }),
+            credentials:
+              "same-origin"
+          }
+        );
 
       const payload =
         await response
           .json()
-          .catch(() => null);
+          .catch(
+            () => null
+          );
 
-      if (!response.ok || !payload?.ok) {
+      if (
+        !response.ok ||
+        !payload?.ok
+      ) {
         throw new Error(
           payload?.message ||
           "EastCoin could not confirm this pick."
@@ -1104,9 +1785,14 @@
 
       state.busy = false;
 
-      renderSuccess(payload);
+      renderSuccess(
+        payload
+      );
 
-      V2.integrations?.identity?.({ force: true });
+      V2.integrations
+        ?.identity?.({
+          force: true
+        });
     } catch (error) {
       state.busy = false;
 
@@ -1119,9 +1805,14 @@
   }
 
   function primaryAction() {
-    if (state.busy) return;
+    if (state.busy) {
+      return;
+    }
 
-    if (state.stage === "ticket") {
+    if (
+      state.stage ===
+      "ticket"
+    ) {
       if (!state.side) {
         renderTicket();
         return;
@@ -1131,55 +1822,82 @@
       return;
     }
 
-    if (state.stage === "review") {
+    if (
+      state.stage ===
+      "review"
+    ) {
       confirmPick();
       return;
     }
 
-    if (state.stage === "success") {
+    if (
+      state.stage ===
+      "success"
+    ) {
       close();
     }
   }
 
   function openFullPicks() {
-    const market = state.market;
-    const match = state.match;
+    const market =
+      state.market;
+
+    const match =
+      state.match;
 
     close();
 
-    if (market && match && market.id) {
-      V2.router?.openPicksForMatch?.({
-        id: market.id,
-        date:
-          Date.parse(
-            market.startsAt || ""
-          ) ||
-          V2.ts(match?.date),
-        teams: {
-          away: {
-            name:
-              market.away.name
-          },
-          home: {
-            name:
-              market.home.name
+    if (
+      market &&
+      match &&
+      market.id
+    ) {
+      V2.router
+        ?.openPicksForMatch?.({
+          id:
+            market.id,
+          date:
+            Date.parse(
+              market.startsAt ||
+              ""
+            ) ||
+            V2.ts(
+              match?.date
+            ),
+          teams: {
+            away: {
+              name:
+                market.away.name
+            },
+            home: {
+              name:
+                market.home.name
+            }
           }
-        }
-      });
+        });
 
       return;
     }
 
-    V2.router?.go?.("picks");
+    V2.router
+      ?.go?.(
+        "picks"
+      );
   }
 
   function secondaryAction() {
-    if (state.stage === "review") {
+    if (
+      state.stage ===
+      "review"
+    ) {
       showTicketStage();
       return;
     }
 
-    if (state.stage === "success") {
+    if (
+      state.stage ===
+      "success"
+    ) {
       openFullPicks();
       return;
     }
@@ -1187,40 +1905,66 @@
     openFullPicks();
   }
 
-  els.close.onclick = close;
+  els.close.onclick =
+    close;
 
   els.modal.addEventListener(
     "click",
     (event) => {
-      if (event.target === els.modal) {
+      if (
+        event.target ===
+        els.modal
+      ) {
         close();
       }
     }
   );
 
-  els.away.onclick = () => {
-    state.side = "away";
-    renderTicket();
-  };
+  els.away.onclick =
+    () => {
+      state.side =
+        "away";
 
-  els.home.onclick = () => {
-    state.side = "home";
-    renderTicket();
-  };
+      renderTicket();
+    };
 
-  els.range.oninput = () => {
-    setWager(els.range.value);
-  };
+  els.home.onclick =
+    () => {
+      state.side =
+        "home";
 
-  els.amount.oninput = () => {
-    if (els.amount.value === "") return;
-    setWager(els.amount.value);
-  };
+      renderTicket();
+    };
 
-  els.amount.onblur = () => {
-    setWager(els.amount.value);
-  };
-els.fullPicks.onclick =
+  els.range.oninput =
+    () => {
+      setWager(
+        els.range.value
+      );
+    };
+
+  els.amount.oninput =
+    () => {
+      if (
+        els.amount.value ===
+        ""
+      ) {
+        return;
+      }
+
+      setWager(
+        els.amount.value
+      );
+    };
+
+  els.amount.onblur =
+    () => {
+      setWager(
+        els.amount.value
+      );
+    };
+
+  els.fullPicks.onclick =
     secondaryAction;
 
   els.submit.onclick =
@@ -1231,14 +1975,17 @@ els.fullPicks.onclick =
     (event) => {
       if (
         event.key === "Escape" &&
-        els.modal.classList.contains(
-          "open"
-        )
+        els.modal.classList
+          .contains(
+            "open"
+          )
       ) {
         close();
       }
     }
   );
+
+  installOutcomeUi();
 
   V2.quickBet = {
     open,

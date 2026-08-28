@@ -24,6 +24,9 @@
 /v2/assets/js/card-odds.js
   Cache-Control: no-cache, max-age=0, must-revalidate
 
+/v2/assets/js/quick-bet.js
+  Cache-Control: no-cache, max-age=0, must-revalidate
+
 /assets/eastcoins-event-visibility.js
   Cache-Control: public, max-age=3600, must-revalidate
 

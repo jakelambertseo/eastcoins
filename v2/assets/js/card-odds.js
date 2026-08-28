@@ -1,254 +1,476 @@
 (() => {
   "use strict";
 
-  const V2 = window.ECV2;
-  const S = V2.state;
+  const V2 =
+    window.ECV2;
+  const S =
+    V2.state;
 
-  const oddsByEvent = new Map();
+  const oddsByEvent =
+    new Map();
+
   let requestToken = 0;
   let refreshTimer = 0;
+  let lastRefreshAt = 0;
+  let lastCandidateSignature = "";
 
-  const MAX_MMA_MARKETS = 5;
+  const MAX_EVENTS_PER_SPORT_PER_DAY = 3;
+  const MARKET_DAY_TIME_ZONE = "America/Chicago";
+  const REFRESH_INTERVAL_MS =
+    30 * 60 * 1000;
 
-  const NFL_TEAMS = new Set([
-    "arizona cardinals",
-    "atlanta falcons",
-    "baltimore ravens",
-    "buffalo bills",
-    "carolina panthers",
-    "chicago bears",
-    "cincinnati bengals",
-    "cleveland browns",
-    "dallas cowboys",
-    "denver broncos",
-    "detroit lions",
-    "green bay packers",
-    "houston texans",
-    "indianapolis colts",
-    "jacksonville jaguars",
-    "kansas city chiefs",
-    "las vegas raiders",
-    "los angeles chargers",
-    "los angeles rams",
-    "miami dolphins",
-    "minnesota vikings",
-    "new england patriots",
-    "new orleans saints",
-    "new york giants",
-    "new york jets",
-    "philadelphia eagles",
-    "pittsburgh steelers",
-    "san francisco 49ers",
-    "seattle seahawks",
-    "tampa bay buccaneers",
-    "tennessee titans",
-    "washington commanders"
-  ]);
+  const dayFormatter =
+    new Intl.DateTimeFormat(
+      "en-CA",
+      {
+        timeZone:
+          MARKET_DAY_TIME_ZONE,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }
+    );
 
-  function normalizeTeam(value) {
-    return String(value || "")
+  const NFL_TEAMS =
+    new Set([
+      "arizona cardinals",
+      "atlanta falcons",
+      "baltimore ravens",
+      "buffalo bills",
+      "carolina panthers",
+      "chicago bears",
+      "cincinnati bengals",
+      "cleveland browns",
+      "dallas cowboys",
+      "denver broncos",
+      "detroit lions",
+      "green bay packers",
+      "houston texans",
+      "indianapolis colts",
+      "jacksonville jaguars",
+      "kansas city chiefs",
+      "las vegas raiders",
+      "los angeles chargers",
+      "los angeles rams",
+      "miami dolphins",
+      "minnesota vikings",
+      "new england patriots",
+      "new orleans saints",
+      "new york giants",
+      "new york jets",
+      "philadelphia eagles",
+      "pittsburgh steelers",
+      "san francisco 49ers",
+      "seattle seahawks",
+      "tampa bay buccaneers",
+      "tennessee titans",
+      "washington commanders"
+    ]);
+
+  function normalizeTeam(
+    value
+  ) {
+    return String(
+      value || ""
+    )
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, " ")
-      .replace(/\s+/g, " ")
+      .replace(
+        /[^a-z0-9]+/g,
+        " "
+      )
+      .replace(
+        /\s+/g,
+        " "
+      )
       .trim();
   }
 
-  function isNflMatch(match) {
+  function isNflMatch(
+    match
+  ) {
     return (
       NFL_TEAMS.has(
         normalizeTeam(
-          match?.teams?.away?.name
+          match?.teams
+            ?.away?.name
         )
       ) &&
       NFL_TEAMS.has(
         normalizeTeam(
-          match?.teams?.home?.name
+          match?.teams
+            ?.home?.name
         )
       )
     );
   }
 
-  function eventStart(match) {
-    const value =
+  function eventStart(
+    match
+  ) {
+    return (
       V2.ts(
         match?.date
-      );
-
-    return value ||
-      Number.MAX_SAFE_INTEGER;
-  }
-
-  function forMatch(match) {
-    return oddsByEvent.get(V2.id(match)) || null;
-  }
-
-  function eventPayload(match) {
-    return {
-      id: V2.id(match),
-      title: String(match?.title || ""),
-      sport: V2.family(match),
-      category: String(match?.category || ""),
-      league: String(match?.league || ""),
-      startsAt: V2.ts(match?.date) || null,
-      away: String(match?.teams?.away?.name || ""),
-      home: String(match?.teams?.home?.name || "")
-    };
-  }
-
-  function schedule() {
-    clearTimeout(refreshTimer);
-
-    // The server owns a shared fixed cache for each exact sport feed.
-    refreshTimer = window.setTimeout(
-      () => refresh(S.events),
-      document.hidden ? 30 * 60 * 1000 : 5 * 60 * 1000
+      ) ||
+      Number.MAX_SAFE_INTEGER
     );
   }
 
-  async function refresh(events = S.events) {
-    schedule();
+  function marketDay(
+    match
+  ) {
+    const timestamp =
+      eventStart(match);
 
-    const eligible =
-      events.filter((match) => {
-        const family = V2.family(match);
+    if (
+      !Number.isFinite(
+        timestamp
+      ) ||
+      timestamp ===
+        Number.MAX_SAFE_INTEGER
+    ) {
+      return "unknown";
+    }
 
-        if (
-          !["american-football", "baseball", "combat"].includes(family) ||
-          !match?.teams?.away?.name ||
-          !match?.teams?.home?.name
-        ) {
-          return false;
-        }
+    return dayFormatter.format(
+      new Date(timestamp)
+    );
+  }
 
-        /*
-          College football remains watchable in Events, but only NFL teams
-          receive Odds API enrichment and therefore Quick Bet eligibility.
-        */
-        if (
-          family === "american-football" &&
-          !isNflMatch(match)
-        ) {
-          return false;
-        }
+  function forMatch(
+    match
+  ) {
+    return (
+      oddsByEvent.get(
+        V2.id(match)
+      ) ||
+      null
+    );
+  }
 
-        return true;
-      });
+  function eventPayload(
+    match
+  ) {
+    return {
+      id:
+        V2.id(match),
+      title:
+        String(
+          match?.title || ""
+        ),
+      sport:
+        V2.family(match),
+      category:
+        String(
+          match?.category ||
+          ""
+        ),
+      league:
+        String(
+          match?.league ||
+          ""
+        ),
+      startsAt:
+        V2.ts(
+          match?.date
+        ) || null,
+      away:
+        String(
+          match?.teams
+            ?.away?.name ||
+          ""
+        ),
+      home:
+        String(
+          match?.teams
+            ?.home?.name ||
+          ""
+        )
+    };
+  }
 
-    /*
-      Limit combat enrichment to the five nearest upcoming MMA/fighting events.
-      This keeps at most five fight cards/bouts wagerable from Events.
-    */
-    const combat =
-      eligible
+  function eligibleEvents(
+    events
+  ) {
+    const list =
+      (
+        Array.isArray(events)
+          ? events
+          : []
+      )
         .filter(
-          (match) =>
-            V2.family(match) ===
-            "combat"
+          (match) => {
+            const family =
+              V2.family(
+                match
+              );
+
+            if (
+              ![
+                "american-football",
+                "baseball",
+                "combat"
+              ].includes(
+                family
+              ) ||
+              !match?.teams
+                ?.away?.name ||
+              !match?.teams
+                ?.home?.name
+            ) {
+              return false;
+            }
+
+            if (
+              V2.live(match) ||
+              eventStart(match) <=
+                Date.now()
+            ) {
+              return false;
+            }
+
+            /*
+              Football betting is NFL only.
+            */
+            if (
+              family ===
+                "american-football" &&
+              !isNflMatch(match)
+            ) {
+              return false;
+            }
+
+            return true;
+          }
         )
         .sort(
           (left, right) =>
             eventStart(left) -
             eventStart(right)
-        )
-        .slice(
-          0,
-          MAX_MMA_MARKETS
         );
 
-    /*
-      Reserve five of the 120 candidate slots for combat so the cap does not
-      accidentally turn into zero MMA markets on a large NFL/MLB slate.
-    */
-    const nonCombat =
-      eligible
-        .filter(
+    const counts =
+      new Map();
+
+    return list.filter(
+      (match) => {
+        const key =
+          `${V2.family(
+            match
+          )}|${marketDay(
+            match
+          )}`;
+
+        const count =
+          counts.get(key) || 0;
+
+        if (
+          count >=
+          MAX_EVENTS_PER_SPORT_PER_DAY
+        ) {
+          return false;
+        }
+
+        counts.set(
+          key,
+          count + 1
+        );
+
+        return true;
+      }
+    );
+  }
+
+  function schedule() {
+    window.clearTimeout(
+      refreshTimer
+    );
+
+    refreshTimer =
+      window.setTimeout(
+        () =>
+          refresh(
+            S.events
+          ),
+        document.hidden
+          ? 60 * 60 * 1000
+          : REFRESH_INTERVAL_MS
+      );
+  }
+
+  async function refresh(
+    events = S.events
+  ) {
+    const candidates =
+      eligibleEvents(
+        events
+      );
+
+    const signature =
+      candidates
+        .map(
           (match) =>
-            V2.family(match) !==
-            "combat"
+            V2.id(match)
         )
-        .slice(
-          0,
-          120 -
-          MAX_MMA_MARKETS
-        );
+        .join("|");
 
-    const candidates = [
-      ...nonCombat,
-      ...combat
-    ];
+    const now =
+      Date.now();
 
-    if (!candidates.length) {
-      oddsByEvent.clear();
-      V2.events?.renderGrid?.();
+    if (
+      signature ===
+        lastCandidateSignature &&
+      lastRefreshAt &&
+      now - lastRefreshAt <
+        REFRESH_INTERVAL_MS &&
+      oddsByEvent.size
+    ) {
+      schedule();
       return;
     }
 
-    const token = ++requestToken;
+    if (
+      !candidates.length
+    ) {
+      oddsByEvent.clear();
+      lastCandidateSignature =
+        "";
+      lastRefreshAt =
+        now;
+      schedule();
+
+      V2.events
+        ?.renderGrid?.();
+
+      return;
+    }
+
+    lastCandidateSignature =
+      signature;
+    lastRefreshAt =
+      now;
+
+    schedule();
+
+    const token =
+      ++requestToken;
 
     try {
-      const response = await fetch("/api/v2/card-odds", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          events: candidates.map(eventPayload)
-        }),
-        cache: "no-store"
-      });
+      const response =
+        await fetch(
+          "/api/v2/card-odds",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+            body:
+              JSON.stringify({
+                events:
+                  candidates.map(
+                    eventPayload
+                  )
+              }),
+            cache:
+              "no-store"
+          }
+        );
 
-      if (!response.ok || token !== requestToken) return;
+      if (
+        !response.ok ||
+        token !==
+          requestToken
+      ) {
+        return;
+      }
 
-      const payload = await response.json();
+      const payload =
+        await response.json();
 
-      if (!payload?.ok || !payload?.odds || token !== requestToken) {
+      if (
+        !payload?.ok ||
+        !payload?.odds ||
+        token !==
+          requestToken
+      ) {
         return;
       }
 
       oddsByEvent.clear();
 
-      Object.entries(payload.odds).forEach(([eventId, value]) => {
-        /*
-          The exact provider event ID plus both sportsbook moneylines makes
-          the event eligible for EastCoin Quick Bet. Football reaches this
-          point only after the NFL-team guard above.
-        */
-        if (
-          !value?.providerEventId ||
-          !Number.isFinite(
-            Number(
-              value?.away?.american
+      Object.entries(
+        payload.odds
+      ).forEach(
+        ([
+          eventId,
+          value
+        ]) => {
+          if (
+            !value
+              ?.providerEventId ||
+            !Number.isFinite(
+              Number(
+                value?.away
+                  ?.american
+              )
+            ) ||
+            !Number.isFinite(
+              Number(
+                value?.home
+                  ?.american
+              )
             )
-          ) ||
-          !Number.isFinite(
-            Number(
-              value?.home?.american
-            )
-          )
-        ) {
-          return;
+          ) {
+            return;
+          }
+
+          oddsByEvent.set(
+            String(eventId),
+            value
+          );
         }
+      );
 
-        oddsByEvent.set(String(eventId), value);
-      });
+      V2.events
+        ?.renderGrid?.();
 
-      V2.events?.renderGrid?.();
-
-      // Scores reuse the verified Odds API event IDs populated by this module.
-      V2.cardScores?.refresh?.(S.events);
+      V2.cardScores
+        ?.refresh?.(
+          S.events
+        );
     } catch {
-      // Odds are optional decoration. Event browsing must always work without them.
+      /*
+        Sportsbook odds are optional decoration.
+        Event browsing must always continue.
+      */
     }
   }
 
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) {
-      refresh(S.events);
+  document.addEventListener(
+    "visibilitychange",
+    () => {
+      if (
+        !document.hidden &&
+        (
+          !lastRefreshAt ||
+          Date.now() -
+            lastRefreshAt >=
+            REFRESH_INTERVAL_MS
+        )
+      ) {
+        refresh(
+          S.events
+        );
+      }
     }
-  });
+  );
 
   V2.cardOdds = {
     forMatch,
-    refresh
+    refresh,
+    maxPerSportPerDay:
+      MAX_EVENTS_PER_SPORT_PER_DAY,
+    marketDayTimeZone:
+      MARKET_DAY_TIME_ZONE
   };
 })();

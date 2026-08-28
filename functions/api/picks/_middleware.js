@@ -33,7 +33,20 @@ const NFL_TEAMS = new Set([
   "washington commanders"
 ]);
 
-const MAX_MMA_MARKETS = 5;
+const MAX_MARKETS_PER_SPORT_PER_DAY = 3;
+const MARKET_DAY_TIME_ZONE = "America/Chicago";
+
+const dayFormatter =
+  new Intl.DateTimeFormat(
+    "en-CA",
+    {
+      timeZone:
+        MARKET_DAY_TIME_ZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }
+  );
 
 function normalizeTeam(value) {
   return String(value || "")
@@ -43,7 +56,10 @@ function normalizeTeam(value) {
     .trim();
 }
 
-function isNflTeams(away, home) {
+function isNflTeams(
+  away,
+  home
+) {
   return (
     NFL_TEAMS.has(
       normalizeTeam(away)
@@ -54,81 +70,91 @@ function isNflTeams(away, home) {
   );
 }
 
-function gameStart(game) {
-  const parsed =
+function marketDay(value) {
+  const timestamp =
     Date.parse(
-      String(
-        game?.commenceTime ||
-        game?.startsAt ||
-        ""
-      )
+      String(value || "")
     );
 
-  return Number.isFinite(parsed)
-    ? parsed
-    : Number.MAX_SAFE_INTEGER;
-}
+  if (
+    !Number.isFinite(
+      timestamp
+    )
+  ) {
+    return "unknown";
+  }
 
-function isMmaGame(game) {
-  return (
-    String(
-      game?.sportKey ||
-      ""
-    ).toLowerCase() ===
-    "mma_mixed_martial_arts"
+  return dayFormatter.format(
+    new Date(timestamp)
   );
 }
 
-function capMmaMarkets(games) {
-  const list =
+function capMarketsPerDay(
+  games
+) {
+  const counts =
+    new Map();
+
+  return (
     Array.isArray(games)
       ? games
-      : [];
-
-  const selected =
-    list
-      .filter(isMmaGame)
-      .sort(
-        (left, right) =>
-          gameStart(left) -
-          gameStart(right)
-      )
-      .slice(
-        0,
-        MAX_MMA_MARKETS
-      );
-
-  const allowedIds =
-    new Set(
-      selected.map(
-        (game) =>
-          String(
-            game?.providerEventId ||
-            ""
-          )
-      )
-    );
-
-  return list.filter(
-    (game) =>
-      !isMmaGame(game) ||
-      allowedIds.has(
-        String(
-          game?.providerEventId ||
+      : []
+  )
+    .slice()
+    .sort(
+      (left, right) =>
+        Date.parse(
+          left?.commenceTime ||
+          ""
+        ) -
+        Date.parse(
+          right?.commenceTime ||
           ""
         )
-      )
-  );
+    )
+    .filter(
+      (game) => {
+        const key =
+          `${String(
+            game?.sportKey ||
+            ""
+          )}|${marketDay(
+            game?.commenceTime
+          )}`;
+
+        const count =
+          counts.get(key) || 0;
+
+        if (
+          count >=
+          MAX_MARKETS_PER_SPORT_PER_DAY
+        ) {
+          return false;
+        }
+
+        counts.set(
+          key,
+          count + 1
+        );
+
+        return true;
+      }
+    );
 }
 
-function json(data, status = 200) {
+function json(
+  data,
+  status = 200
+) {
   return Response.json(
     data,
     {
       status,
       headers: {
-        "Cache-Control": "no-store",
-        "X-Content-Type-Options": "nosniff"
+        "Cache-Control":
+          "no-store",
+        "X-Content-Type-Options":
+          "nosniff"
       }
     }
   );
@@ -149,8 +175,7 @@ export async function onRequest(
     );
 
   /*
-    Hard guard at market creation. College football remains an Events
-    category, but EastCoin Picks currently accepts NFL football only.
+    College football stays watchable but can never create a Picks market.
   */
   if (
     path.endsWith(
@@ -169,7 +194,8 @@ export async function onRequest(
 
     const sport =
       String(
-        body?.sport || ""
+        body?.sport ||
+        ""
       ).toLowerCase();
 
     if (
@@ -183,7 +209,8 @@ export async function onRequest(
       return json(
         {
           ok: false,
-          code: "NFL_ONLY",
+          code:
+            "NFL_ONLY",
           message:
             "EastCoin Picks currently supports NFL football only."
         },
@@ -195,10 +222,6 @@ export async function onRequest(
   const response =
     await context.next();
 
-  /*
-    Filter the live sportsbook catalog itself. This removes NCAAF before
-    Picks, Quick Bet or any future client can treat those games as eligible.
-  */
   if (
     !path.endsWith(
       "/api/picks/catalog"
@@ -261,12 +284,8 @@ export async function onRequest(
         }
       );
 
-    /*
-      EastCoin exposes no more than five MMA moneyline markets at once.
-      Keep the nearest upcoming five so the wagerable list stays relevant.
-    */
     payload.games =
-      capMmaMarkets(
+      capMarketsPerDay(
         nflFiltered
       );
   }
@@ -281,7 +300,8 @@ export async function onRequest(
         (sport) => {
           const key =
             String(
-              sport?.key || ""
+              sport?.key ||
+              ""
             ).toLowerCase();
 
           return (
@@ -304,7 +324,8 @@ export async function onRequest(
       payload.errors.filter(
         (error) =>
           String(
-            error?.sportKey || ""
+            error?.sportKey ||
+            ""
           ).toLowerCase() !==
           "americanfootball_ncaaf"
       );
@@ -312,8 +333,16 @@ export async function onRequest(
 
   payload.limits = {
     ...(payload.limits || {}),
-    mmaMarkets:
-      MAX_MMA_MARKETS
+    marketsPerSportPerDay:
+      MAX_MARKETS_PER_SPORT_PER_DAY,
+    timeZone:
+      MARKET_DAY_TIME_ZONE,
+    nflPerDay:
+      MAX_MARKETS_PER_SPORT_PER_DAY,
+    baseballPerDay:
+      MAX_MARKETS_PER_SPORT_PER_DAY,
+    mmaPerDay:
+      MAX_MARKETS_PER_SPORT_PER_DAY
   };
 
   const headers =
