@@ -6,7 +6,7 @@
 
   if (
     !BASE ||
-    BASE.__eastcoinFootballWindow49
+    BASE.__eastcoinFootballWindow50
   ) {
     return;
   }
@@ -82,6 +82,38 @@
     return "other";
   }
 
+  function isNflGame(game) {
+    const key =
+      String(
+        game?.sportKey ||
+        game?.sport_key ||
+        ""
+      ).toLowerCase();
+
+    const title =
+      String(
+        game?.sportTitle ||
+        game?.sport_title ||
+        game?.league ||
+        game?.sport ||
+        ""
+      ).toLowerCase();
+
+    return (
+      key ===
+        "americanfootball_nfl" ||
+      (
+        !key &&
+        (
+          title === "nfl" ||
+          title.includes(
+            "national football league"
+          )
+        )
+      )
+    );
+  }
+
   function todayTomorrow(game) {
     const start =
       timestamp(
@@ -134,14 +166,17 @@
 
     /*
       The server catalog itself already has a 14-day maximum horizon.
-      Football can therefore keep every still-upcoming NFL/NCAAF line,
-      while Baseball and UFC/MMA retain the compact today + tomorrow view.
+      Football can therefore keep every still-upcoming NFL line,
+      while NCAAF is excluded and Baseball/UFC/MMA retain today + tomorrow.
     */
     if (
       sportBucket(game) ===
       "football"
     ) {
-      return start > Date.now();
+      return (
+        isNflGame(game) &&
+        start > Date.now()
+      );
     }
 
     return todayTomorrow(game);
@@ -203,7 +238,7 @@
         "AbortError"
       ) {
         throw new Error(
-          "Football catalog request timed out."
+          "NFL catalog request timed out."
         );
       }
 
@@ -234,7 +269,7 @@
       task.catch(
         (error) => {
           console.warn(
-            "EastCoin extended football catalog unavailable",
+            "EastCoin extended NFL catalog unavailable",
             error
           );
 
@@ -251,7 +286,7 @@
   const wrapped = {
     ...BASE,
 
-    __eastcoinFootballWindow49:
+    __eastcoinFootballWindow50:
       true,
 
     async getCatalog(
@@ -382,9 +417,9 @@
     setText(
       note,
       filter === "football"
-        ? "Upcoming football · 14-day catalog"
+        ? "Upcoming NFL · 14-day catalog"
         : filter === "all"
-          ? "Today + tomorrow · Football upcoming"
+          ? "Today + tomorrow · NFL upcoming"
           : "Today + tomorrow only"
     );
 

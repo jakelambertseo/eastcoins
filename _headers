@@ -10,19 +10,31 @@
   Cache-Control: no-store, max-age=0, must-revalidate
 
 /assets/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/v2/assets/css/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+
+/v2/assets/js/*
   Cache-Control: public, max-age=3600, must-revalidate
 
+/v2/assets/js/app.js
+  Cache-Control: no-cache, max-age=0, must-revalidate
+
+/v2/assets/js/card-odds.js
+  Cache-Control: no-cache, max-age=0, must-revalidate
+
 /assets/eastcoins-event-visibility.js
-  Cache-Control: no-store, max-age=0, must-revalidate
+  Cache-Control: public, max-age=3600, must-revalidate
 
 /assets/eastcoins-streamed-api.js
-  Cache-Control: no-store, max-age=0, must-revalidate
+  Cache-Control: public, max-age=3600, must-revalidate
 
 /assets/eastcoins-ppv-api.js
-  Cache-Control: no-store, max-age=0, must-revalidate
+  Cache-Control: public, max-age=3600, must-revalidate
 
 /assets/eastcoins-events-home.js
-  Cache-Control: no-store, max-age=0, must-revalidate
+  Cache-Control: public, max-age=3600, must-revalidate
 
 /assets/eastcoins-persistent-shell.js
-  Cache-Control: no-store, max-age=0, must-revalidate
+  Cache-Control: public, max-age=3600, must-revalidate

@@ -8,6 +8,64 @@
   let requestToken = 0;
   let refreshTimer = 0;
 
+  const NFL_TEAMS = new Set([
+    "arizona cardinals",
+    "atlanta falcons",
+    "baltimore ravens",
+    "buffalo bills",
+    "carolina panthers",
+    "chicago bears",
+    "cincinnati bengals",
+    "cleveland browns",
+    "dallas cowboys",
+    "denver broncos",
+    "detroit lions",
+    "green bay packers",
+    "houston texans",
+    "indianapolis colts",
+    "jacksonville jaguars",
+    "kansas city chiefs",
+    "las vegas raiders",
+    "los angeles chargers",
+    "los angeles rams",
+    "miami dolphins",
+    "minnesota vikings",
+    "new england patriots",
+    "new orleans saints",
+    "new york giants",
+    "new york jets",
+    "philadelphia eagles",
+    "pittsburgh steelers",
+    "san francisco 49ers",
+    "seattle seahawks",
+    "tampa bay buccaneers",
+    "tennessee titans",
+    "washington commanders"
+  ]);
+
+  function normalizeTeam(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function isNflMatch(match) {
+    return (
+      NFL_TEAMS.has(
+        normalizeTeam(
+          match?.teams?.away?.name
+        )
+      ) &&
+      NFL_TEAMS.has(
+        normalizeTeam(
+          match?.teams?.home?.name
+        )
+      )
+    );
+  }
+
   function forMatch(match) {
     return oddsByEvent.get(V2.id(match)) || null;
   }
@@ -28,9 +86,7 @@
   function schedule() {
     clearTimeout(refreshTimer);
 
-    // The server now owns a fixed shared cache for each exact sport feed.
-    // Check often in the browser so a newly refreshed edge snapshot appears
-    // quickly without creating one provider request per user.
+    // The server owns a shared fixed cache for each exact sport feed.
     refreshTimer = window.setTimeout(
       () => refresh(S.events),
       document.hidden ? 30 * 60 * 1000 : 5 * 60 * 1000
@@ -44,15 +100,34 @@
       .filter((match) => {
         const family = V2.family(match);
 
-        return (
-          ["american-football", "baseball", "combat"].includes(family) &&
-          match?.teams?.away?.name &&
-          match?.teams?.home?.name
-        );
+        if (
+          !["american-football", "baseball", "combat"].includes(family) ||
+          !match?.teams?.away?.name ||
+          !match?.teams?.home?.name
+        ) {
+          return false;
+        }
+
+        /*
+          College football remains watchable in Events, but only NFL teams
+          receive Odds API enrichment and therefore Quick Bet eligibility.
+        */
+        if (
+          family === "american-football" &&
+          !isNflMatch(match)
+        ) {
+          return false;
+        }
+
+        return true;
       })
       .slice(0, 120);
 
-    if (!candidates.length) return;
+    if (!candidates.length) {
+      oddsByEvent.clear();
+      V2.events?.renderGrid?.();
+      return;
+    }
 
     const token = ++requestToken;
 
@@ -79,16 +154,33 @@
       oddsByEvent.clear();
 
       Object.entries(payload.odds).forEach(([eventId, value]) => {
-        // A verified provider event ID is enough to make the EastCoin Picks
-        // market available. Sportsbook ML is optional display/reference data.
-        if (!value?.providerEventId) return;
+        /*
+          The exact provider event ID plus both sportsbook moneylines makes
+          the event eligible for EastCoin Quick Bet. Football reaches this
+          point only after the NFL-team guard above.
+        */
+        if (
+          !value?.providerEventId ||
+          !Number.isFinite(
+            Number(
+              value?.away?.american
+            )
+          ) ||
+          !Number.isFinite(
+            Number(
+              value?.home?.american
+            )
+          )
+        ) {
+          return;
+        }
 
         oddsByEvent.set(String(eventId), value);
       });
 
       V2.events?.renderGrid?.();
 
-      // Scores use the exact Odds API event IDs populated by this module.
+      // Scores reuse the verified Odds API event IDs populated by this module.
       V2.cardScores?.refresh?.(S.events);
     } catch {
       // Odds are optional decoration. Event browsing must always work without them.
