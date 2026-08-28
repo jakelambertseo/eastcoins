@@ -6,13 +6,15 @@
 
   if (
     !BASE ||
-    BASE.__eastcoinFootballWindow47
+    BASE.__eastcoinFootballWindow49
   ) {
     return;
   }
 
   const CATALOG_URL =
     "/api/picks/catalog";
+
+  const RAW_TIMEOUT_MS = 5000;
 
   let rawCatalogPromise = null;
 
@@ -95,6 +97,7 @@
     }
 
     const now = new Date();
+
     const floor =
       new Date(
         now.getFullYear(),
@@ -130,9 +133,9 @@
     }
 
     /*
-      EastCoin's sportsbook catalog already limits games to the next 14 days.
-      Football keeps every still-upcoming NFL/NCAAF market in that catalog,
-      while Baseball and UFC/MMA retain the tighter today + tomorrow view.
+      The server catalog itself already has a 14-day maximum horizon.
+      Football can therefore keep every still-upcoming NFL/NCAAF line,
+      while Baseball and UFC/MMA retain the compact today + tomorrow view.
     */
     if (
       sportBucket(game) ===
@@ -144,7 +147,75 @@
     return todayTomorrow(game);
   }
 
-  async function loadRawCatalog(
+  async function fetchRawCatalog(
+    force = false
+  ) {
+    const controller =
+      new AbortController();
+
+    const timer =
+      window.setTimeout(
+        () => controller.abort(),
+        RAW_TIMEOUT_MS
+      );
+
+    try {
+      const response =
+        await fetch(
+          CATALOG_URL,
+          {
+            credentials:
+              "same-origin",
+            cache:
+              force
+                ? "reload"
+                : "default",
+            headers: {
+              Accept:
+                "application/json"
+            },
+            signal:
+              controller.signal
+          }
+        );
+
+      const payload =
+        await response
+          .json()
+          .catch(
+            () => null
+          );
+
+      if (
+        !response.ok ||
+        !payload?.ok
+      ) {
+        throw new Error(
+          payload?.message ||
+          "Live sportsbook catalog unavailable."
+        );
+      }
+
+      return payload;
+    } catch (error) {
+      if (
+        error?.name ===
+        "AbortError"
+      ) {
+        throw new Error(
+          "Football catalog request timed out."
+        );
+      }
+
+      throw error;
+    } finally {
+      window.clearTimeout(
+        timer
+      );
+    }
+  }
+
+  function loadRawCatalog(
     force = false
   ) {
     if (
@@ -155,51 +226,22 @@
     }
 
     const task =
-      fetch(
-        CATALOG_URL,
-        {
-          credentials:
-            "same-origin",
-          cache:
-            force
-              ? "reload"
-              : "default",
-          headers: {
-            Accept:
-              "application/json"
-          }
-        }
-      )
-        .then(
-          async (response) => {
-            const payload =
-              await response
-                .json()
-                .catch(
-                  () => null
-                );
-
-            if (
-              !response.ok ||
-              !payload?.ok
-            ) {
-              throw new Error(
-                payload?.message ||
-                "Live sportsbook catalog unavailable."
-              );
-            }
-
-            return payload;
-          }
-        );
+      fetchRawCatalog(
+        force
+      );
 
     rawCatalogPromise =
       task.catch(
         (error) => {
+          console.warn(
+            "EastCoin extended football catalog unavailable",
+            error
+          );
+
           rawCatalogPromise =
             null;
 
-          throw error;
+          return null;
         }
       );
 
@@ -209,30 +251,30 @@
   const wrapped = {
     ...BASE,
 
-    __eastcoinFootballWindow47:
+    __eastcoinFootballWindow49:
       true,
 
     async getCatalog(
       ...args
     ) {
       /*
-        Calling the existing runtime first keeps its internal moneyline index,
-        team matching, and ticket pricing hydrated. The raw request then
-        restores eligible football games that Iteration 45 trimmed away.
+        Both paths are bounded now:
+        - BASE already has the Picks API's 12s request timeout.
+        - The supplemental raw catalog aborts after 5s.
+
+        If either one fails, use whichever result succeeded. Most importantly,
+        the supplemental Football request can never leave Open Markets waiting
+        forever.
       */
       const [
-        current,
-        raw
+        currentResult,
+        rawResult
       ] =
-        await Promise.all([
+        await Promise.allSettled([
           BASE.getCatalog
-            ? BASE
-                .getCatalog(
-                  ...args
-                )
-                .catch(
-                  () => null
-                )
+            ? BASE.getCatalog(
+                ...args
+              )
             : Promise.resolve(
                 null
               ),
@@ -242,10 +284,20 @@
               args?.[0]
                 ?.force
             )
-          ).catch(
-            () => null
           )
         ]);
+
+      const current =
+        currentResult.status ===
+        "fulfilled"
+          ? currentResult.value
+          : null;
+
+      const raw =
+        rawResult.status ===
+        "fulfilled"
+          ? rawResult.value
+          : null;
 
       const source =
         raw?.games
@@ -276,6 +328,29 @@
       wrapped
     );
 
+  function setText(
+    node,
+    value
+  ) {
+    if (!node) return;
+
+    const next =
+      String(value);
+
+    /*
+      Critical: never rewrite identical text. The previous v47 helper wrote
+      textContent from inside a MutationObserver that was watching childList,
+      so its own text update immediately triggered itself again.
+    */
+    if (
+      node.textContent !==
+      next
+    ) {
+      node.textContent =
+        next;
+    }
+  }
+
   function activeFilter() {
     return (
       document.querySelector(
@@ -304,32 +379,32 @@
         ".picks-market-window"
       );
 
-    if (note) {
-      note.textContent =
-        filter === "football"
-          ? "Upcoming football · 14-day catalog"
-          : filter === "all"
-            ? "Today + tomorrow · Football upcoming"
-            : "Today + tomorrow only";
-    }
+    setText(
+      note,
+      filter === "football"
+        ? "Upcoming football · 14-day catalog"
+        : filter === "all"
+          ? "Today + tomorrow · Football upcoming"
+          : "Today + tomorrow only"
+    );
 
     const status =
       document.getElementById(
         "catalogStatus"
       );
 
-    if (
-      status &&
-      document.querySelector(
+    const cards = [
+      ...document.querySelectorAll(
         "#marketList .market-card"
       )
+    ];
+
+    if (
+      status &&
+      cards.length
     ) {
       const visible =
-        [
-          ...document.querySelectorAll(
-            "#marketList .market-card"
-          )
-        ].filter(
+        cards.filter(
           (card) =>
             !card.hidden
         ).length;
@@ -337,48 +412,62 @@
       if (
         filter === "football"
       ) {
-        status.textContent =
+        setText(
+          status,
           `Upcoming football · ${visible} ${
             visible === 1
               ? "market"
               : "markets"
-          }`;
+          }`
+        );
       } else if (
         filter === "all"
       ) {
-        status.textContent =
+        setText(
+          status,
           `Current slate · ${visible} ${
             visible === 1
               ? "market"
               : "markets"
-          }`;
+          }`
+        );
       }
     }
   }
 
-  const observer =
-    new MutationObserver(
-      syncMarketTools
+  /*
+    NO MutationObserver here.
+
+    The Picks controls are injected shortly after startup, so use a small,
+    bounded readiness poll. It stops after 10 seconds and cannot create a
+    self-triggering DOM loop.
+  */
+  let startupChecks = 0;
+
+  const startupTimer =
+    window.setInterval(
+      () => {
+        startupChecks += 1;
+        syncMarketTools();
+
+        if (
+          startupChecks >= 40 ||
+          (
+            document.querySelector(
+              "[data-picks-sport]"
+            ) &&
+            document.querySelector(
+              "#marketList .market-card"
+            )
+          )
+        ) {
+          window.clearInterval(
+            startupTimer
+          );
+        }
+      },
+      250
     );
-
-  const marketRoot =
-    document.querySelector(
-      '[data-view-panel="markets"]'
-    ) ||
-    document.body;
-
-  observer.observe(
-    marketRoot,
-    {
-      subtree: true,
-      childList: true,
-      attributes: true,
-      attributeFilter: [
-        "hidden",
-        "class"
-      ]
-    }
-  );
 
   document.addEventListener(
     "click",
@@ -388,14 +477,14 @@
           "[data-picks-sport]"
         )
       ) {
-        requestAnimationFrame(
+        window.requestAnimationFrame(
           syncMarketTools
         );
       }
     }
   );
 
-  requestAnimationFrame(
+  window.requestAnimationFrame(
     syncMarketTools
   );
 })();
