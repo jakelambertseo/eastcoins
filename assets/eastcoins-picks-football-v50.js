@@ -1,6 +1,15 @@
 (() => {
   "use strict";
 
+  /*
+    Picks is normally embedded inside the EastCoin shell, which already owns
+    the account/login control in the upper-right. Remove only the redundant
+    horizontal Twitch login banner inside the Picks document.
+  */
+  document.querySelector(
+    ".login-banner"
+  )?.remove();
+
   const BASE =
     window.EastcoinPicksAPI;
 
