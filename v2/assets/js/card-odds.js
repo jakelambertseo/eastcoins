@@ -8,6 +8,8 @@
   let requestToken = 0;
   let refreshTimer = 0;
 
+  const MAX_MMA_MARKETS = 5;
+
   const NFL_TEAMS = new Set([
     "arizona cardinals",
     "atlanta falcons",
@@ -66,6 +68,16 @@
     );
   }
 
+  function eventStart(match) {
+    const value =
+      V2.ts(
+        match?.date
+      );
+
+    return value ||
+      Number.MAX_SAFE_INTEGER;
+  }
+
   function forMatch(match) {
     return oddsByEvent.get(V2.id(match)) || null;
   }
@@ -96,8 +108,8 @@
   async function refresh(events = S.events) {
     schedule();
 
-    const candidates = events
-      .filter((match) => {
+    const eligible =
+      events.filter((match) => {
         const family = V2.family(match);
 
         if (
@@ -120,8 +132,50 @@
         }
 
         return true;
-      })
-      .slice(0, 120);
+      });
+
+    /*
+      Limit combat enrichment to the five nearest upcoming MMA/fighting events.
+      This keeps at most five fight cards/bouts wagerable from Events.
+    */
+    const combat =
+      eligible
+        .filter(
+          (match) =>
+            V2.family(match) ===
+            "combat"
+        )
+        .sort(
+          (left, right) =>
+            eventStart(left) -
+            eventStart(right)
+        )
+        .slice(
+          0,
+          MAX_MMA_MARKETS
+        );
+
+    /*
+      Reserve five of the 120 candidate slots for combat so the cap does not
+      accidentally turn into zero MMA markets on a large NFL/MLB slate.
+    */
+    const nonCombat =
+      eligible
+        .filter(
+          (match) =>
+            V2.family(match) !==
+            "combat"
+        )
+        .slice(
+          0,
+          120 -
+          MAX_MMA_MARKETS
+        );
+
+    const candidates = [
+      ...nonCombat,
+      ...combat
+    ];
 
     if (!candidates.length) {
       oddsByEvent.clear();

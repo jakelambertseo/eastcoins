@@ -33,6 +33,8 @@ const NFL_TEAMS = new Set([
   "washington commanders"
 ]);
 
+const MAX_MMA_MARKETS = 5;
+
 function normalizeTeam(value) {
   return String(value || "")
     .toLowerCase()
@@ -49,6 +51,73 @@ function isNflTeams(away, home) {
     NFL_TEAMS.has(
       normalizeTeam(home)
     )
+  );
+}
+
+function gameStart(game) {
+  const parsed =
+    Date.parse(
+      String(
+        game?.commenceTime ||
+        game?.startsAt ||
+        ""
+      )
+    );
+
+  return Number.isFinite(parsed)
+    ? parsed
+    : Number.MAX_SAFE_INTEGER;
+}
+
+function isMmaGame(game) {
+  return (
+    String(
+      game?.sportKey ||
+      ""
+    ).toLowerCase() ===
+    "mma_mixed_martial_arts"
+  );
+}
+
+function capMmaMarkets(games) {
+  const list =
+    Array.isArray(games)
+      ? games
+      : [];
+
+  const selected =
+    list
+      .filter(isMmaGame)
+      .sort(
+        (left, right) =>
+          gameStart(left) -
+          gameStart(right)
+      )
+      .slice(
+        0,
+        MAX_MMA_MARKETS
+      );
+
+  const allowedIds =
+    new Set(
+      selected.map(
+        (game) =>
+          String(
+            game?.providerEventId ||
+            ""
+          )
+      )
+    );
+
+  return list.filter(
+    (game) =>
+      !isMmaGame(game) ||
+      allowedIds.has(
+        String(
+          game?.providerEventId ||
+          ""
+        )
+      )
   );
 }
 
@@ -173,7 +242,7 @@ export async function onRequest(
       payload.games
     )
   ) {
-    payload.games =
+    const nflFiltered =
       payload.games.filter(
         (game) => {
           const key =
@@ -190,6 +259,15 @@ export async function onRequest(
               "americanfootball_nfl"
           );
         }
+      );
+
+    /*
+      EastCoin exposes no more than five MMA moneyline markets at once.
+      Keep the nearest upcoming five so the wagerable list stays relevant.
+    */
+    payload.games =
+      capMmaMarkets(
+        nflFiltered
       );
   }
 
@@ -217,7 +295,6 @@ export async function onRequest(
       );
   }
 
-
   if (
     Array.isArray(
       payload.errors
@@ -232,6 +309,12 @@ export async function onRequest(
           "americanfootball_ncaaf"
       );
   }
+
+  payload.limits = {
+    ...(payload.limits || {}),
+    mmaMarkets:
+      MAX_MMA_MARKETS
+  };
 
   const headers =
     new Headers(

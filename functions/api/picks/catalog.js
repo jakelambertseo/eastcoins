@@ -1,7 +1,8 @@
 const CACHE_TTL_SECONDS = 15 * 60;
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const MAX_HORIZON_MS = 14 * 24 * 60 * 60 * 1000;
 const MAX_GAMES = 120;
+const MAX_MMA_MARKETS = 5;
 
 const SPORTS = [
   {
@@ -21,12 +22,6 @@ const SPORTS = [
     title: "UFC / MMA",
     family: "combat",
     priority: 2
-  },
-  {
-    key: "americanfootball_ncaaf",
-    title: "NCAAF",
-    family: "american-football",
-    priority: 3
   }
 ];
 
@@ -346,6 +341,28 @@ function normalizeGame(
   };
 }
 
+function capMmaMarkets(games) {
+  let mmaCount = 0;
+
+  return games.filter(
+    (game) => {
+      if (
+        game?.sportKey !==
+        "mma_mixed_martial_arts"
+      ) {
+        return true;
+      }
+
+      mmaCount += 1;
+
+      return (
+        mmaCount <=
+        MAX_MMA_MARKETS
+      );
+    }
+  );
+}
+
 function clientResponse(
   payload,
   cacheStatus
@@ -417,6 +434,10 @@ export async function onRequestGet(
     }
   }
 
+  /*
+    Provider requests are now NFL + MLB + MMA only.
+    NCAAF is intentionally not requested because EastCoin Picks is NFL-only.
+  */
   const settled =
     await Promise.allSettled(
       SPORTS.map(
@@ -503,8 +524,15 @@ export async function onRequestGet(
         )
   );
 
+  /*
+    Because games are sorted by sport priority then start time, the first five
+    MMA games are the nearest five upcoming MMA moneyline markets.
+  */
+  const limitedGames =
+    capMmaMarkets(games);
+
   const cleanGames =
-    games
+    limitedGames
       .slice(0, MAX_GAMES)
       .map(
         ({
@@ -528,6 +556,10 @@ export async function onRequestGet(
     generatedAt,
     upcomingOnly: true,
     horizonDays: 14,
+    limits: {
+      mmaMarkets:
+        MAX_MMA_MARKETS
+    },
     sports:
       SPORTS.map(
         (sport) => ({
