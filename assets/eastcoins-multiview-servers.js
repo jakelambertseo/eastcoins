@@ -1,18 +1,16 @@
 (() => {
   "use strict";
 
-  const API =
-    window.EastcoinStreamedAPI;
+  /*
+    Iteration 48:
+    MultiView and each player.html tile are same-origin. The child player
+    already owns the real event, the loaded stream list, fallback logic and
+    selectStream() behavior. Do not fetch the event catalog a second time here.
 
-  if (!API) {
-    console.warn(
-      "EastCoin MultiView server selector could not initialize."
-    );
-    return;
-  }
-
-  const STORAGE_KEY =
-    "eastcoinMultiviewServersV47";
+    Instead, read the existing hidden server buttons inside player.html and
+    activate the selected button directly. This keeps one source of truth and
+    makes the parent Servers menu instant once the child player is ready.
+  */
 
   const panels = [
     ...document.querySelectorAll(
@@ -25,7 +23,12 @@
       "mvToast"
     );
 
-  let catalogPromise = null;
+  const STORAGE_KEY =
+    "eastcoinMultiviewServerSelectionsV48";
+
+  const READY_POLL_MS = 200;
+  const READY_POLL_LIMIT = 100;
+
   let toastTimer = 0;
 
   function showToast(message) {
@@ -38,12 +41,12 @@
       "show"
     );
 
-    clearTimeout(
+    window.clearTimeout(
       toastTimer
     );
 
     toastTimer =
-      setTimeout(
+      window.setTimeout(
         () =>
           toast.classList.remove(
             "show"
@@ -52,210 +55,15 @@
       );
   }
 
-  function readSaved() {
-    try {
-      const parsed =
-        JSON.parse(
-          localStorage.getItem(
-            STORAGE_KEY
-          ) || "{}"
-        );
-
-      return (
-        parsed &&
-        typeof parsed ===
-          "object"
-      )
-        ? parsed
-        : {};
-    } catch {
-      return {};
-    }
-  }
-
-  function saveServer(
-    slot,
-    eventId,
-    stream,
-    index
-  ) {
-    try {
-      const saved =
-        readSaved();
-
-      saved[
-        `${slot}:${eventId}`
-      ] = {
-        source:
-          String(
-            stream?.source ||
-            stream?.provider ||
-            ""
-          ),
-        stream:
-          stream?.streamNo ??
-          stream?.stream ??
-          null,
-        index,
-        savedAt:
-          Date.now()
-      };
-
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(
-          saved
-        )
-      );
-    } catch {}
-  }
-
-  function savedServer(
-    slot,
-    eventId
-  ) {
-    return (
-      readSaved()[
-        `${slot}:${eventId}`
-      ] ||
-      null
-    );
-  }
-
-  function eventKey(match) {
-    return String(
-      match?.id ||
-      match?.matchId ||
-      match?.slug ||
-      `${match?.category || "event"}:${match?.title || ""}:${match?.date || ""}`
-    );
-  }
-
-  function rows(value) {
-    if (Array.isArray(value)) {
-      return value;
-    }
-
-    if (
-      Array.isArray(
-        value?.data
-      )
-    ) {
-      return value.data;
-    }
-
-    return [];
-  }
-
-  function dedupe(matches) {
-    const map =
-      new Map();
-
-    for (
-      const match of matches
-    ) {
-      map.set(
-        eventKey(match),
-        match
-      );
-    }
-
-    return [
-      ...map.values()
-    ];
-  }
-
-  async function catalog() {
-    if (catalogPromise) {
-      return catalogPromise;
-    }
-
-    catalogPromise =
-      (async () => {
-        const requests = [];
-
-        if (
-          typeof API.getAll ===
-          "function"
-        ) {
-          requests.push(
-            API.getAll(false)
-          );
-        }
-
-        if (
-          typeof API.getDiscovery ===
-          "function"
-        ) {
-          requests.push(
-            API.getDiscovery({
-              forceMatches:
-                false
-            })
-          );
-        }
-
-        const settled =
-          await Promise.allSettled(
-            requests
-          );
-
-        const matches = [];
-
-        for (
-          const result of settled
-        ) {
-          if (
-            result.status !==
-            "fulfilled"
-          ) {
-            continue;
-          }
-
-          const value =
-            result.value;
-
-          matches.push(
-            ...rows(value)
-          );
-
-          matches.push(
-            ...rows(value?.live),
-            ...rows(value?.today),
-            ...rows(value?.matches)
-          );
-        }
-
-        return dedupe(
-          matches
-        );
-      })()
-        .catch(
-          (error) => {
-            catalogPromise =
-              null;
-
-            throw error;
-          }
-        );
-
-    return catalogPromise;
-  }
-
-  function frameFor(panel) {
-    return (
-      panel.querySelector(
-        ".mv-player-frame"
-      ) ||
-      panel.querySelector(
-        "iframe"
-      )
+  function panelFrame(panel) {
+    return panel.querySelector(
+      ".mv-player-frame"
     );
   }
 
   function frameInfo(panel) {
     const frame =
-      frameFor(panel);
+      panelFrame(panel);
 
     if (!frame) {
       return null;
@@ -292,200 +100,133 @@
     };
   }
 
-  async function resolveEvent(
-    eventId
-  ) {
-    const matches =
-      await catalog();
-
-    return (
-      matches.find(
-        (match) =>
-          eventKey(match) ===
-          String(eventId)
-      ) ||
-      null
-    );
+  function childDocument(frame) {
+    try {
+      return (
+        frame.contentDocument ||
+        frame.contentWindow
+          ?.document ||
+        null
+      );
+    } catch {
+      return null;
+    }
   }
 
-  async function streamsFor(
-    eventId
-  ) {
-    const match =
-      await resolveEvent(
-        eventId
-      );
+  function childServerButtons(frame) {
+    const doc =
+      childDocument(frame);
 
-    if (!match) {
-      throw new Error(
-        "Event is no longer available."
-      );
+    if (!doc) {
+      return [];
     }
 
-    const streams =
-      await API.getStreams(
-        match,
-        false
-      );
-
-    return {
-      match,
-      streams:
-        (
-          Array.isArray(streams)
-            ? streams
-            : []
-        ).filter(
-          (stream) =>
-            Boolean(
-              stream?.embedUrl ||
-              stream?.source ||
-              stream?.provider
-            )
-        )
-    };
-  }
-
-  function streamSource(stream) {
-    return String(
-      stream?.source ||
-      stream?.provider ||
-      ""
+    return [
+      ...doc.querySelectorAll(
+        ".streamed-stream-button[data-stream-key]"
+      )
+    ].filter(
+      (button) =>
+        !button.disabled
     );
   }
 
-  function streamNumber(stream) {
-    return (
-      stream?.streamNo ??
-      stream?.stream ??
-      null
-    );
-  }
-
-  function currentIndex(
-    url,
-    streams,
-    saved
+  function activeServerIndex(
+    buttons
   ) {
-    const source =
-      url.searchParams.get(
-        "source"
-      ) ||
-      String(
-        saved?.source ||
-        ""
+    const index =
+      buttons.findIndex(
+        (button) =>
+          button.classList.contains(
+            "active"
+          )
       );
 
-    const number =
-      url.searchParams.get(
-        "stream"
-      ) ??
-      saved?.stream ??
-      null;
-
-    const found =
-      streams.findIndex(
-        (stream) => {
-          const sameSource =
-            !source ||
-            streamSource(
-              stream
-            ) === source;
-
-          const candidate =
-            streamNumber(
-              stream
-            );
-
-          const sameNumber =
-            number == null ||
-            candidate == null ||
-            String(candidate) ===
-              String(number);
-
-          return (
-            sameSource &&
-            sameNumber
-          );
-        }
-      );
-
-    return found >= 0
-      ? found
+    return index >= 0
+      ? index
       : 0;
   }
 
-  function switchPanel(
+  function readSelections() {
+    try {
+      const value =
+        JSON.parse(
+          localStorage.getItem(
+            STORAGE_KEY
+          ) ||
+          "{}"
+        );
+
+      return (
+        value &&
+        typeof value ===
+          "object"
+      )
+        ? value
+        : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function selectionKey(
     slot,
-    panel,
+    eventId
+  ) {
+    return `${slot}:${eventId}`;
+  }
+
+  function savedIndex(
+    slot,
+    eventId
+  ) {
+    const saved =
+      readSelections()[
+        selectionKey(
+          slot,
+          eventId
+        )
+      ];
+
+    const index =
+      Number(
+        saved?.index
+      );
+
+    return Number.isInteger(
+      index
+    )
+      ? index
+      : null;
+  }
+
+  function saveIndex(
+    slot,
     eventId,
-    stream,
     index
   ) {
-    const info =
-      frameInfo(panel);
+    try {
+      const values =
+        readSelections();
 
-    if (!info) {
-      return;
-    }
+      values[
+        selectionKey(
+          slot,
+          eventId
+        )
+      ] = {
+        index,
+        savedAt:
+          Date.now()
+      };
 
-    const source =
-      streamSource(stream);
-
-    const number =
-      streamNumber(stream);
-
-    if (source) {
-      info.url
-        .searchParams
-        .set(
-          "source",
-          source
-        );
-    } else {
-      info.url
-        .searchParams
-        .delete(
-          "source"
-        );
-    }
-
-    if (
-      number !== null &&
-      number !== undefined
-    ) {
-      info.url
-        .searchParams
-        .set(
-          "stream",
-          String(number)
-        );
-    } else {
-      info.url
-        .searchParams
-        .delete(
-          "stream"
-        );
-    }
-
-    saveServer(
-      slot,
-      eventId,
-      stream,
-      index
-    );
-
-    info.frame.src =
-      info.url.href;
-
-    syncPanel(
-      panel,
-      slot
-    );
-
-    showToast(
-      `Panel ${slot + 1} switched to Server ${index + 1}.`
-    );
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(
+          values
+        )
+      );
+    } catch {}
   }
 
   function ensureMenu(panel) {
@@ -518,152 +259,31 @@
   function closeMenus(
     except = null
   ) {
-    for (
-      const panel of panels
-    ) {
-      const menu =
-        panel.querySelector(
-          ".mv-server-menu"
-        );
+    panels.forEach(
+      (panel) => {
+        const menu =
+          panel.querySelector(
+            ".mv-server-menu"
+          );
 
-      if (
-        menu &&
-        menu !== except
-      ) {
-        menu.hidden =
-          true;
+        if (
+          menu &&
+          menu !== except
+        ) {
+          menu.hidden = true;
+        }
       }
-    }
+    );
   }
 
-  async function openMenu(
-    panel,
-    slot
+  function setButtonLabel(
+    button,
+    index
   ) {
-    const info =
-      frameInfo(panel);
-
-    if (!info) {
-      return;
-    }
-
-    const menu =
-      ensureMenu(panel);
-
-    const opening =
-      menu.hidden;
-
-    closeMenus();
-
-    if (!opening) {
-      menu.hidden = true;
-      return;
-    }
-
-    menu.hidden = false;
-
-    menu.innerHTML = `
-      <div class="mv-server-menu-head">
-        <strong>Servers</strong>
-        <small>Loading…</small>
-      </div>
-    `;
-
-    try {
-      const {
-        streams
-      } =
-        await streamsFor(
-          info.eventId
-        );
-
-      if (!streams.length) {
-        throw new Error(
-          "No alternate servers are available."
-        );
-      }
-
-      const saved =
-        savedServer(
-          slot,
-          info.eventId
-        );
-
-      const selected =
-        currentIndex(
-          info.url,
-          streams,
-          saved
-        );
-
-      menu.innerHTML = `
-        <div class="mv-server-menu-head">
-          <strong>Choose server</strong>
-          <small>${streams.length} available</small>
-        </div>
-        <div class="mv-server-options"></div>
-      `;
-
-      const options =
-        menu.querySelector(
-          ".mv-server-options"
-        );
-
-      streams.forEach(
-        (
-          stream,
-          index
-        ) => {
-          const button =
-            document.createElement(
-              "button"
-            );
-
-          button.type =
-            "button";
-
-          button.className =
-            "mv-server-option";
-
-          button.classList.toggle(
-            "active",
-            index === selected
-          );
-
-          button.innerHTML = `
-            <span>Server ${index + 1}</span>
-            <small>${index === selected ? "Current" : "Switch"}</small>
-          `;
-
-          button.addEventListener(
-            "click",
-            () => {
-              menu.hidden =
-                true;
-
-              switchPanel(
-                slot,
-                panel,
-                info.eventId,
-                stream,
-                index
-              );
-            }
-          );
-
-          options.appendChild(
-            button
-          );
-        }
-      );
-    } catch (error) {
-      menu.innerHTML = `
-        <div class="mv-server-menu-head">
-          <strong>Servers unavailable</strong>
-          <small>${String(error?.message || "Try again.")}</small>
-        </div>
-      `;
-    }
+    button.textContent =
+      Number.isInteger(index)
+        ? `Server ${index + 1} ▾`
+        : "Servers ▾";
   }
 
   function ensureButton(
@@ -684,54 +304,64 @@
         "[data-panel-server]"
       );
 
-    if (!button) {
-      button =
-        document.createElement(
-          "button"
-        );
-
-      button.type =
-        "button";
-
-      button.dataset.panelServer =
-        "1";
-
-      button.textContent =
-        "Servers ▾";
-
-      button.title =
-        "Choose server for this panel";
-
-      const replace =
-        actions.querySelector(
-          "[data-panel-replace]"
-        );
-
-      actions.insertBefore(
-        button,
-        replace ||
-        null
-      );
-
-      button.addEventListener(
-        "click",
-        (event) => {
-          event.stopPropagation();
-
-          openMenu(
-            panel,
-            slot
-          );
-        }
-      );
+    if (button) {
+      return button;
     }
+
+    button =
+      document.createElement(
+        "button"
+      );
+
+    button.type =
+      "button";
+
+    button.dataset.panelServer =
+      "1";
+
+    button.title =
+      "Choose server for this panel";
+
+    setButtonLabel(
+      button,
+      null
+    );
+
+    /*
+      Hide until player.html has actually populated its server list.
+      This prevents a clickable-looking control that is not ready yet.
+    */
+    button.hidden = true;
+
+    const replace =
+      actions.querySelector(
+        "[data-panel-replace]"
+      );
+
+    actions.insertBefore(
+      button,
+      replace || null
+    );
+
+    button.addEventListener(
+      "click",
+      (event) => {
+        event.stopPropagation();
+
+        openMenu(
+          panel,
+          slot
+        );
+      }
+    );
 
     return button;
   }
 
-  function syncPanel(
+  function syncReadyState(
     panel,
-    slot
+    slot,
+    restore = false
   ) {
     const button =
       ensureButton(
@@ -740,132 +370,442 @@
       );
 
     if (!button) {
-      return;
+      return false;
     }
 
     const info =
       frameInfo(panel);
 
-    button.hidden =
-      !info;
-
     if (!info) {
+      button.hidden = true;
+
       ensureMenu(
         panel
       ).hidden = true;
 
-      button.textContent =
-        "Servers ▾";
-
-      return;
+      return false;
     }
 
-    const saved =
-      savedServer(
+    const buttons =
+      childServerButtons(
+        info.frame
+      );
+
+    if (!buttons.length) {
+      button.hidden = true;
+      return false;
+    }
+
+    button.hidden = false;
+
+    let current =
+      activeServerIndex(
+        buttons
+      );
+
+    const remembered =
+      savedIndex(
         slot,
         info.eventId
       );
 
-    const requestedSource =
-      info.url
-        .searchParams
-        .get(
-          "source"
-        );
+    /*
+      Restore a previously selected server only after the child player has
+      completed its own normal event/server initialization.
+    */
+    if (
+      restore &&
+      remembered !== null &&
+      remembered >= 0 &&
+      remembered <
+        buttons.length &&
+      remembered !== current
+    ) {
+      buttons[
+        remembered
+      ].click();
 
-    const requestedStream =
-      info.url
-        .searchParams
-        .get(
-          "stream"
-        );
+      current =
+        remembered;
+    }
 
-    const hasSaved =
-      saved &&
-      (
-        saved.source ||
-        saved.stream !== null
+    setButtonLabel(
+      button,
+      current
+    );
+
+    return true;
+  }
+
+  function armReadyPoll(
+    panel,
+    slot,
+    restore = false
+  ) {
+    const previous =
+      Number(
+        panel.dataset
+          .serverReadyTimer ||
+        0
       );
 
-    if (
-      hasSaved &&
-      !requestedSource &&
-      requestedStream == null
-    ) {
-      if (saved.source) {
-        info.url
-          .searchParams
-          .set(
-            "source",
-            saved.source
-          );
-      }
+    if (previous) {
+      window.clearInterval(
+        previous
+      );
+    }
+
+    let attempts = 0;
+
+    const run = () => {
+      attempts += 1;
+
+      const ready =
+        syncReadyState(
+          panel,
+          slot,
+          restore
+        );
 
       if (
-        saved.stream !==
-          null &&
-        saved.stream !==
-          undefined
+        ready ||
+        attempts >=
+          READY_POLL_LIMIT
       ) {
-        info.url
-          .searchParams
-          .set(
-            "stream",
-            String(
-              saved.stream
-            )
+        const timer =
+          Number(
+            panel.dataset
+              .serverReadyTimer ||
+            0
           );
-      }
 
-      info.frame.src =
-        info.url.href;
+        if (timer) {
+          window.clearInterval(
+            timer
+          );
+        }
+
+        delete panel.dataset
+          .serverReadyTimer;
+      }
+    };
+
+    run();
+
+    if (
+      syncReadyState(
+        panel,
+        slot,
+        false
+      )
+    ) {
+      return;
+    }
+
+    const timer =
+      window.setInterval(
+        run,
+        READY_POLL_MS
+      );
+
+    panel.dataset
+      .serverReadyTimer =
+      String(timer);
+  }
+
+  function renderMenu(
+    menu,
+    panel,
+    slot,
+    info,
+    buttons
+  ) {
+    const current =
+      activeServerIndex(
+        buttons
+      );
+
+    menu.innerHTML = `
+      <div class="mv-server-menu-head">
+        <strong>Choose server</strong>
+        <small>${buttons.length} available</small>
+      </div>
+      <div class="mv-server-options"></div>
+    `;
+
+    const options =
+      menu.querySelector(
+        ".mv-server-options"
+      );
+
+    buttons.forEach(
+      (
+        childButton,
+        index
+      ) => {
+        const option =
+          document.createElement(
+            "button"
+          );
+
+        option.type =
+          "button";
+
+        option.className =
+          "mv-server-option";
+
+        option.classList.toggle(
+          "active",
+          index === current
+        );
+
+        option.innerHTML = `
+          <span>Server ${index + 1}</span>
+          <small>${index === current ? "Current" : "Switch"}</small>
+        `;
+
+        option.addEventListener(
+          "click",
+          () => {
+            /*
+              This is the important part: trigger the existing player.html
+              server button. The child player's own selectStream(), fallback,
+              active-frame replacement, persistence, and status logic all run
+              normally. No parent API request and no player-page reload.
+            */
+            childButton.click();
+
+            saveIndex(
+              slot,
+              info.eventId,
+              index
+            );
+
+            const parentButton =
+              panel.querySelector(
+                "[data-panel-server]"
+              );
+
+            if (parentButton) {
+              setButtonLabel(
+                parentButton,
+                index
+              );
+            }
+
+            menu.hidden = true;
+
+            showToast(
+              `Panel ${slot + 1} switched to Server ${index + 1}.`
+            );
+
+            /*
+              Let the child's DOM update its active class and then re-sync the
+              label from the actual player state.
+            */
+            window.setTimeout(
+              () =>
+                syncReadyState(
+                  panel,
+                  slot,
+                  false
+                ),
+              80
+            );
+          }
+        );
+
+        options.appendChild(
+          option
+        );
+      }
+    );
+  }
+
+  function openMenu(
+    panel,
+    slot
+  ) {
+    const info =
+      frameInfo(panel);
+
+    if (!info) {
+      return;
+    }
+
+    const menu =
+      ensureMenu(
+        panel
+      );
+
+    const opening =
+      menu.hidden;
+
+    closeMenus();
+
+    if (!opening) {
+      menu.hidden = true;
+      return;
+    }
+
+    const buttons =
+      childServerButtons(
+        info.frame
+      );
+
+    if (!buttons.length) {
+      /*
+        In normal use the button is hidden until ready, but keep a defensive
+        state for a click that races an event/player refresh.
+      */
+      menu.hidden = false;
+
+      menu.innerHTML = `
+        <div class="mv-server-menu-head">
+          <strong>Servers</strong>
+          <small>Player is still loading…</small>
+        </div>
+      `;
+
+      armReadyPoll(
+        panel,
+        slot,
+        false
+      );
+
+      window.setTimeout(
+        () => {
+          if (
+            !menu.hidden
+          ) {
+            const readyButtons =
+              childServerButtons(
+                info.frame
+              );
+
+            if (
+              readyButtons.length
+            ) {
+              renderMenu(
+                menu,
+                panel,
+                slot,
+                info,
+                readyButtons
+              );
+            }
+          }
+        },
+        400
+      );
 
       return;
     }
 
-    button.textContent =
-      Number.isInteger(
-        Number(
-          saved?.index
-        )
-      )
-        ? `Server ${Number(saved.index) + 1} ▾`
-        : "Servers ▾";
+    menu.hidden = false;
+
+    renderMenu(
+      menu,
+      panel,
+      slot,
+      info,
+      buttons
+    );
   }
 
-  panels.forEach(
-    (
+  function bindPanel(
+    panel,
+    slot
+  ) {
+    ensureMenu(panel);
+    ensureButton(
       panel,
       slot
-    ) => {
-      ensureMenu(panel);
-      syncPanel(
-        panel,
-        slot
+    );
+
+    let currentFrame = null;
+
+    const bindFrame = () => {
+      const frame =
+        panelFrame(panel);
+
+      if (
+        frame ===
+        currentFrame
+      ) {
+        syncReadyState(
+          panel,
+          slot,
+          false
+        );
+
+        return;
+      }
+
+      currentFrame =
+        frame;
+
+      if (!frame) {
+        syncReadyState(
+          panel,
+          slot,
+          false
+        );
+
+        return;
+      }
+
+      frame.addEventListener(
+        "load",
+        () => {
+          armReadyPoll(
+            panel,
+            slot,
+            true
+          );
+        }
       );
 
+      /*
+        The outer player.html document may already be loaded before this
+        extension notices the iframe.
+      */
+      armReadyPoll(
+        panel,
+        slot,
+        true
+      );
+    };
+
+    bindFrame();
+
+    /*
+      Watch only for the MultiView controller replacing the player iframe.
+      Do not observe the full child/player DOM; that was another source of
+      unnecessary work in the previous implementation.
+    */
+    const body =
+      panel.querySelector(
+        "[data-panel-body]"
+      );
+
+    if (body) {
       const observer =
         new MutationObserver(
-          () =>
-            syncPanel(
-              panel,
-              slot
-            )
+          bindFrame
         );
 
       observer.observe(
-        panel,
+        body,
         {
-          subtree: true,
-          childList: true,
-          attributes: true,
-          attributeFilter: [
-            "src",
-            "class"
-          ]
+          childList: true
         }
       );
     }
+  }
+
+  panels.forEach(
+    bindPanel
   );
 
   document.addEventListener(
