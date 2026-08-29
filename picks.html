@@ -24,6 +24,128 @@
 <link href="assets/eastcoin-favicon.svg?v=full-logo1" rel="shortcut icon" type="image/svg+xml">
 <link href="assets/eastcoin-favicon.png" rel="apple-touch-icon">
 <link href="assets/eastcoins-picks.css?v=2" rel="stylesheet">
+
+<style id="ec-betting-paused-style">
+  @keyframes ecBettingPausedPulse {
+    0%, 100% {
+      background:
+        linear-gradient(
+          135deg,
+          rgba(105, 0, 12, .98),
+          rgba(55, 0, 7, .98)
+        );
+      border-color:#ff3249;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.04) inset,
+        0 0 16px rgba(255,20,50,.28),
+        0 10px 34px rgba(0,0,0,.4);
+      transform:scale(1);
+    }
+
+    50% {
+      background:
+        linear-gradient(
+          135deg,
+          rgba(210, 0, 28, .98),
+          rgba(100, 0, 12, .98)
+        );
+      border-color:#ff8795;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.12) inset,
+        0 0 34px rgba(255,24,55,.62),
+        0 12px 42px rgba(0,0,0,.52);
+      transform:scale(1.006);
+    }
+  }
+
+  .ec-betting-paused-banner{
+    position:relative;
+    overflow:hidden;
+    width:100%;
+    margin:0 0 18px;
+    padding:18px 22px;
+    border:3px solid #ff3249;
+    border-radius:12px;
+    color:#fff;
+    background:#72000e;
+    text-align:center;
+    animation:
+      ecBettingPausedPulse
+      1.35s
+      ease-in-out
+      infinite;
+  }
+
+  .ec-betting-paused-banner::before,
+  .ec-betting-paused-banner::after{
+    content:"";
+    position:absolute;
+    top:0;
+    bottom:0;
+    width:5px;
+    background:#ffdfdf;
+    opacity:.7;
+  }
+
+  .ec-betting-paused-banner::before{
+    left:0;
+  }
+
+  .ec-betting-paused-banner::after{
+    right:0;
+  }
+
+  .ec-betting-paused-banner strong{
+    display:block;
+    margin-bottom:7px;
+    color:#fff;
+    font-size:clamp(.88rem,1.5vw,1.05rem);
+    font-weight:1000;
+    letter-spacing:.11em;
+    text-transform:uppercase;
+    text-shadow:0 1px 8px rgba(0,0,0,.5);
+  }
+
+  .ec-betting-paused-banner p{
+    max-width:980px;
+    margin:0 auto;
+    color:#fff;
+    font-size:clamp(.9rem,1.45vw,1.06rem);
+    font-weight:850;
+    line-height:1.45;
+    text-shadow:0 1px 7px rgba(0,0,0,.6);
+  }
+
+  .ec-betting-paused-banner .ec-alert-icon{
+    margin-right:7px;
+    font-size:1.05em;
+  }
+
+  .ec-betting-paused-banner.ec-betting-paused-modal{
+    margin:0 0 16px;
+    padding:15px 16px;
+    border-radius:10px;
+  }
+
+  .ec-betting-paused-banner.ec-betting-paused-modal strong{
+    font-size:.8rem;
+  }
+
+  .ec-betting-paused-banner.ec-betting-paused-modal p{
+    font-size:.82rem;
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .ec-betting-paused-banner{
+      animation:none;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.08) inset,
+        0 0 24px rgba(255,20,50,.42),
+        0 10px 34px rgba(0,0,0,.4);
+    }
+  }
+</style>
+
 </head>
 <body class="logged-out">
 
@@ -113,6 +235,23 @@
       </div>
     </header>
 
+
+    <section
+      class="ec-betting-paused-banner"
+      role="status"
+      aria-label="Betting currently paused"
+    >
+      <strong>
+        <span class="ec-alert-icon" aria-hidden="true">🚨</span>
+        Betting Paused
+        <span class="ec-alert-icon" aria-hidden="true">🚨</span>
+      </strong>
+      <p>
+        Your streamer Zwades is disallowing us from placing bets at the moment.
+        Ask him kindly to allow us to have fun in chat.
+      </p>
+    </section>
+
     <section class="top-leaders" aria-label="Top Picks players">
       <div class="top-leaders-label">
         <span>🏆</span>
@@ -197,6 +336,22 @@
       <button class="close-btn" id="closeBet" type="button" aria-label="Close">×</button>
     </header>
     <div class="modal-body">
+
+      <section
+        class="ec-betting-paused-banner ec-betting-paused-modal"
+        role="status"
+        aria-label="Betting currently paused"
+      >
+        <strong>
+          <span class="ec-alert-icon" aria-hidden="true">🚨</span>
+          Betting Paused
+          <span class="ec-alert-icon" aria-hidden="true">🚨</span>
+        </strong>
+        <p>
+          Your streamer Zwades is disallowing us from placing bets at the moment.
+          Ask him kindly to allow us to have fun in chat.
+        </p>
+      </section>
       <div class="selected-match" id="selectedMatch"></div>
 
       <div class="selected-side">
