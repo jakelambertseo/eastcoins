@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">117 major update groups</div>
+<div class="release-count">118 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -2415,10 +2415,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-08-27">August 27, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Picks markets now focus on today and tomorrow with sport filters and team logos</h2>
 <p>
@@ -2432,6 +2431,25 @@
     moneyline remains the payout source. The Events page date-button rail was
     also removed for a cleaner timeline header without changing the underlying
     event search, status, or sport filters.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Submit a YouTube stream and get a shareable EastCoin link</h2>
+<p>
+    Added <code>/submit</code>, a standalone page where anyone can paste a
+    YouTube watch, youtu.be, Shorts, or live link. EastCoin extracts the
+    video ID client-side, builds the corresponding
+    <code>youtube.com/embed/…</code> URL (carrying over a start time or
+    <code>si</code> parameter when present), and returns a normal EastCoin
+    watch link — <code>eastcoin.vip/?watch=…</code> — using the same custom-URL
+    player path MultiView and the root player already support. No new backend
+    or storage was needed. The page previews the embed inline before you share
+    it.
 </p>
 </article>
 </section>

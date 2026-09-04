@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<title>EastCoin | Submit a Stream</title>
+<link href="/assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
+<link href="/v2/assets/css/tokens.css?v=3" rel="stylesheet">
+<style>
+  body{min-height:100vh}
+
+  .submitbar{position:sticky;top:0;z-index:10;height:var(--header);display:flex;align-items:center;gap:12px;padding:0 22px;border-bottom:1px solid var(--line);background:rgba(5,5,5,.94);backdrop-filter:blur(18px)}
+  .submitbar a{display:flex;align-items:center;gap:9px;text-decoration:none}
+  .submitbar .logo{width:44px;height:44px;display:grid;place-items:center;border:1px solid rgba(229,185,43,.15);border-radius:10px;background:#0d0a04}
+  .submitbar .logo img{width:100%;height:100%;object-fit:contain}
+  .submitbar strong{font-size:1rem}
+  .submitbar .back{margin-left:auto;height:38px;display:flex;align-items:center;padding:0 12px;border:1px solid var(--line);border-radius:8px;color:#a8a098;font-size:.8rem;font-weight:900}
+
+  main{width:min(600px,calc(100% - 32px));margin:0 auto;padding:60px 0 80px}
+
+  .eyebrow{color:#887964;font-size:.8rem;font-weight:1000;letter-spacing:.12em;text-transform:uppercase}
+  h1{margin:8px 0 6px;font-size:1.9rem;letter-spacing:-.045em}
+  main>p{margin:0 0 26px;color:var(--muted);font-size:.9rem;line-height:1.6}
+
+  .card{padding:20px;border:1px solid var(--line);border-radius:13px;background:var(--panel)}
+
+  label{display:block;color:#c9c0b6;font-size:.8rem;font-weight:850;margin-bottom:8px}
+
+  .field{display:flex;gap:8px}
+  .field input{flex:1;min-width:0;height:48px;padding:0 13px;border:1px solid var(--line);border-radius:9px;color:var(--text);background:#050505;font-size:.9rem}
+  .field input:focus{outline:0;border-color:rgba(229,185,43,.35)}
+  .field input::placeholder{color:var(--muted2)}
+
+  .go{min-width:110px;height:48px;padding:0 16px;border:1px solid rgba(229,185,43,.18);border-radius:9px;color:#160f00;background:linear-gradient(#f0cb46,#d4a80e);font-size:.875rem;font-weight:950}
+  .go:disabled{opacity:.45}
+
+  .hint{margin-top:9px;color:#5f5852;font-size:.75rem}
+
+  .error{display:none;margin-top:12px;padding:10px 12px;border:1px solid rgba(225,52,83,.28);border-radius:9px;color:#f3c2cb;background:rgba(142,18,49,.12);font-size:.82rem}
+  .error.show{display:block}
+
+  .result{display:none;margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}
+  .result.show{display:block}
+
+  .result .eyebrow{font-size:.72rem}
+  .result h2{margin:5px 0 12px;font-size:1.05rem}
+
+  .linkrow{display:flex;gap:8px}
+  .linkrow input{flex:1;min-width:0;height:46px;padding:0 12px;border:1px solid var(--line);border-radius:9px;color:#e8cf5e;background:#050505;font-size:.83rem}
+  .copy{min-width:88px;height:46px;padding:0 12px;border:1px solid var(--line);border-radius:9px;color:#a8a098;background:#0a0a0a;font-size:.8rem;font-weight:900}
+  .copy.copied{border-color:rgba(71,199,120,.3);color:#78d99b}
+
+  .open{display:block;width:100%;margin-top:9px;height:46px;padding:0 12px;border:1px solid rgba(229,185,43,.18);border-radius:9px;color:#160f00;background:linear-gradient(#f0cb46,#d4a80e);font-size:.85rem;font-weight:950;text-align:center;line-height:46px;text-decoration:none}
+
+  .preview{position:relative;width:100%;aspect-ratio:16/9;margin-top:16px;overflow:hidden;border:1px solid var(--line);border-radius:11px;background:#000}
+  .preview iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+
+  footer{width:min(600px,calc(100% - 32px));margin:0 auto;padding-bottom:40px;color:#514b46;font-size:.75rem}
+  footer a{color:#71685f}
+</style>
+</head>
+<body>
+
+<div class="submitbar">
+  <a href="/"><span class="logo"><img src="/assets/eastcoins-logo.webp" alt=""></span><strong>EastCoin</strong></a>
+  <a class="back" href="/">← Events</a>
+</div>
+
+<main>
+  <span class="eyebrow">SUBMIT</span>
+  <h1>Share a YouTube stream</h1>
+  <p>Paste a YouTube link below. EastCoin pulls the embeddable version and gives you a link back to share in chat — anyone who opens it watches together in the EastCoin player.</p>
+
+  <div class="card">
+    <label for="ytUrl">YouTube URL</label>
+    <div class="field">
+      <input id="ytUrl" type="text" placeholder="https://www.youtube.com/watch?v=…" autocomplete="off" spellcheck="false">
+      <button class="go" id="ytGo" type="button">Get Link</button>
+    </div>
+    <p class="hint">Works with youtube.com/watch, youtu.be, /shorts and /live links.</p>
+
+    <div class="error" id="ytError"></div>
+
+    <div class="result" id="ytResult">
+      <span class="eyebrow">YOUR EASTCOIN LINK</span>
+      <h2>Ready to share</h2>
+
+      <div class="linkrow">
+        <input id="ytShareLink" type="text" readonly>
+        <button class="copy" id="ytCopy" type="button">Copy</button>
+      </div>
+
+      <a class="open" id="ytOpen" href="#">Open in EastCoin →</a>
+
+      <div class="preview" id="ytPreview" hidden>
+        <iframe
+          id="ytFrame"
+          src=""
+          title="YouTube video preview"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>EastCoin · <a href="/changelog.html">Changelog</a></footer>
+
+<script>
+(() => {
+  "use strict";
+
+  const input = document.getElementById("ytUrl");
+  const button = document.getElementById("ytGo");
+  const errorBox = document.getElementById("ytError");
+  const result = document.getElementById("ytResult");
+  const shareLink = document.getElementById("ytShareLink");
+  const copyBtn = document.getElementById("ytCopy");
+  const openLink = document.getElementById("ytOpen");
+  const preview = document.getElementById("ytPreview");
+  const frame = document.getElementById("ytFrame");
+
+  function parseStart(value) {
+    if (!value) return null;
+
+    if (/^\d+$/.test(value)) return parseInt(value, 10);
+
+    const match = value.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/i);
+    if (!match || (!match[1] && !match[2] && !match[3])) return null;
+
+    const hours = parseInt(match[1] || "0", 10);
+    const minutes = parseInt(match[2] || "0", 10);
+    const seconds = parseInt(match[3] || "0", 10);
+
+    return hours * 3600 + minutes * 60 + seconds;
+  }
+
+  function extractVideo(raw) {
+    const trimmed = String(raw || "").trim();
+    if (!trimmed) return null;
+
+    let url;
+    try {
+      url = new URL(/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(trimmed) ? trimmed : `https://${trimmed}`);
+    } catch {
+      return null;
+    }
+
+    const host = url.hostname.replace(/^www\.|^m\./, "").toLowerCase();
+    let id = null;
+
+    if (host === "youtu.be") {
+      id = url.pathname.slice(1).split("/")[0] || null;
+    } else if (host === "youtube.com" || host === "youtube-nocookie.com") {
+      if (url.pathname === "/watch") {
+        id = url.searchParams.get("v");
+      } else {
+        const match = url.pathname.match(/^\/(?:embed|shorts|live)\/([^/]+)/);
+        if (match) id = match[1];
+      }
+    }
+
+    if (!id || !/^[a-zA-Z0-9_-]{10,12}$/.test(id)) return null;
+
+    return {
+      id,
+      start: parseStart(url.searchParams.get("t") || url.searchParams.get("start")),
+      si: url.searchParams.get("si")
+    };
+  }
+
+  function buildEmbedUrl(video) {
+    const params = [];
+    if (video.start) params.push(`start=${video.start}`);
+    if (video.si) params.push(`si=${encodeURIComponent(video.si)}`);
+
+    return `https://www.youtube.com/embed/${video.id}${params.length ? `?${params.join("&")}` : ""}`;
+  }
+
+  function showError(message) {
+    errorBox.textContent = message;
+    errorBox.classList.add("show");
+    result.classList.remove("show");
+  }
+
+  function clearError() {
+    errorBox.classList.remove("show");
+    errorBox.textContent = "";
+  }
+
+  function submit() {
+    clearError();
+
+    const video = extractVideo(input.value);
+
+    if (!video) {
+      showError("That doesn't look like a YouTube link. Paste a youtube.com or youtu.be URL.");
+      return;
+    }
+
+    const embedUrl = buildEmbedUrl(video);
+    const eastcoinUrl = new URL("/", window.location.origin);
+    eastcoinUrl.searchParams.set("watch", embedUrl);
+
+    shareLink.value = eastcoinUrl.href;
+    openLink.href = eastcoinUrl.href;
+    frame.src = embedUrl;
+    preview.hidden = false;
+
+    copyBtn.textContent = "Copy";
+    copyBtn.classList.remove("copied");
+
+    result.classList.add("show");
+  }
+
+  async function copyLink() {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareLink.value);
+      } else {
+        throw new Error("Clipboard unavailable");
+      }
+      copyBtn.textContent = "Copied";
+      copyBtn.classList.add("copied");
+      window.setTimeout(() => {
+        copyBtn.textContent = "Copy";
+        copyBtn.classList.remove("copied");
+      }, 1800);
+    } catch {
+      window.prompt("Copy this EastCoin link:", shareLink.value);
+    }
+  }
+
+  button.addEventListener("click", submit);
+  copyBtn.addEventListener("click", copyLink);
+
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      submit();
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
