@@ -71,7 +71,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">125 major update groups</div>
+<div class="release-count">126 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1639,10 +1639,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-09-04">September 4, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Music Player redesigned with real Twitch identity</h2>
 <p>
@@ -1660,6 +1659,36 @@
     the title field for every request (it only worked for state restored
     after a Worker restart) — now fixed and covered by an automated
     WebSocket protocol test.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Music Player gets its own volume control, reactions, and a request cap</h2>
+<p>
+    Follow-up polish pass on the redesigned Music Player. The dock is now
+    named <strong>EastCoin Music Player</strong> with a small channel icon
+    beside the title, and got its own volume slider + mute button — the
+    mute/CC/settings cluster you'd see before was YouTube's own player
+    chrome, which gets cramped in a narrow dock; since the player already
+    uses the official YouTube IFrame API, EastCoin now drives volume
+    directly instead of fighting YouTube's layout. The Up Next queue caps
+    its height and scrolls internally (with a visible themed scrollbar)
+    instead of growing the whole dock, and each queued song now shows its
+    position number. The current track gets a proper "Now Playing" label
+    with a pulsing indicator and a bigger, bolder row so it's the clear
+    anchor of the dock. A 👍 reaction button lets the room react to the
+    current song (synced live in the shared room, local-only in solo mode).
+    A Share button copies a direct <code>?music=on</code> room link, reusing
+    the existing auto-open-on-load behavior. Song requests in the shared
+    room are now capped at 4 per hour per browser, enforced server-side in
+    the Worker (not just the client) so it can't be bypassed by reloading
+    the page — verified with an automated test confirming the 5th request
+    within the hour is rejected with a clear retry-time message. The Skip
+    button/vote-to-skip control is removed from the UI for now.
 </p>
 </article>
 </section>

@@ -144,7 +144,8 @@
       title: String(item.title || "").slice(0, 120).trim(),
       requestedBy: String(item.requestedBy || "Guest").slice(0, 24),
       requestedByAvatar: sanitizeAvatarUrl(item.requestedByAvatar),
-      addedAt: Number(item.addedAt) || Date.now()
+      addedAt: Number(item.addedAt) || Date.now(),
+      reactions: Math.max(0, Number(item.reactions) || 0)
     };
   }
 
@@ -178,9 +179,15 @@
         <header class="ec-music-head">
           <div class="ec-music-title-wrap">
             <span class="ec-music-kicker" id="eastcoinMusicStatus">Music Player</span>
-            <strong>Music Player</strong>
+            <div class="ec-music-title-row">
+              <img class="ec-music-title-icon" src="https://cdn.betterttv.net/emote/635dd342ed98a03da0ce387d/3x.webp" alt="" />
+              <strong>EastCoin Music Player</strong>
+            </div>
           </div>
-          <button class="ec-music-icon-button" id="eastcoinMusicClose" type="button" aria-label="Close Music Player">×</button>
+          <div class="ec-music-head-actions">
+            <button class="ec-music-icon-button" id="eastcoinMusicShare" type="button" aria-label="Copy shareable room link">⤴</button>
+            <button class="ec-music-icon-button" id="eastcoinMusicClose" type="button" aria-label="Close Music Player">×</button>
+          </div>
         </header>
 
         <div class="ec-music-youtube-shell">
@@ -193,13 +200,25 @@
 
         <button class="ec-music-autoplay" id="eastcoinMusicJoin" type="button">▶ Join music</button>
 
+        <div class="ec-music-volume-row">
+          <button class="ec-music-icon-button ec-music-mute" id="eastcoinMusicMute" type="button" aria-label="Mute">🔊</button>
+          <input class="ec-music-volume" id="eastcoinMusicVolume" type="range" min="0" max="100" value="55" aria-label="Volume" />
+        </div>
+
         <section class="ec-music-now" aria-label="Now playing">
-          <span class="ec-music-now-avatar" id="eastcoinMusicNowAvatar" hidden></span>
-          <div class="ec-music-now-copy">
-            <strong id="eastcoinMusicNowTitle">Nothing queued</strong>
-            <small id="eastcoinMusicNowMeta">Paste a YouTube URL to start</small>
+          <div class="ec-music-now-label" id="eastcoinMusicNowLabel" hidden>
+            <span class="ec-music-now-label-dot"></span>Now Playing
           </div>
-          <button class="ec-music-skip" id="eastcoinMusicSkip" type="button" hidden>Skip</button>
+          <div class="ec-music-now-row">
+            <span class="ec-music-now-avatar" id="eastcoinMusicNowAvatar" hidden></span>
+            <div class="ec-music-now-copy">
+              <strong id="eastcoinMusicNowTitle">Nothing queued</strong>
+              <small id="eastcoinMusicNowMeta">Paste a YouTube URL to start</small>
+            </div>
+            <button class="ec-music-react" id="eastcoinMusicReact" type="button" hidden aria-label="React with a thumbs up">
+              👍 <span id="eastcoinMusicReactCount">0</span>
+            </button>
+          </div>
         </section>
 
         <section class="ec-music-request">
@@ -232,12 +251,16 @@
     return {
       control: controlButton,
       close: document.getElementById("eastcoinMusicClose"),
+      share: document.getElementById("eastcoinMusicShare"),
       status: document.getElementById("eastcoinMusicStatus"),
       join: document.getElementById("eastcoinMusicJoin"),
       emptyPlayer: document.getElementById("eastcoinMusicEmptyPlayer"),
+      nowLabel: document.getElementById("eastcoinMusicNowLabel"),
       nowAvatar: document.getElementById("eastcoinMusicNowAvatar"),
       nowTitle: document.getElementById("eastcoinMusicNowTitle"),
       nowMeta: document.getElementById("eastcoinMusicNowMeta"),
+      react: document.getElementById("eastcoinMusicReact"),
+      reactCount: document.getElementById("eastcoinMusicReactCount"),
       identity: document.getElementById("eastcoinMusicIdentity"),
       url: document.getElementById("eastcoinMusicUrl"),
       add: document.getElementById("eastcoinMusicAdd"),
@@ -245,7 +268,8 @@
       queue: document.getElementById("eastcoinMusicQueue"),
       queueCount: document.getElementById("eastcoinMusicQueueCount"),
       emptyQueue: document.getElementById("eastcoinMusicEmptyQueue"),
-      skip: document.getElementById("eastcoinMusicSkip")
+      mute: document.getElementById("eastcoinMusicMute"),
+      volume: document.getElementById("eastcoinMusicVolume")
     };
   }
 
@@ -270,6 +294,7 @@
     });
 
     els.close?.addEventListener("click", () => setDockOpen(false));
+    els.share?.addEventListener("click", shareRoomLink);
     els.join?.addEventListener("click", () => {
       autoplayBlocked = false;
       els.join.classList.remove("is-visible");
@@ -281,7 +306,30 @@
       if (event.key === "Enter") submitRequest();
     });
 
-    els.skip?.addEventListener("click", voteSkip);
+    els.react?.addEventListener("click", sendReaction);
+
+    els.volume?.addEventListener("input", () => {
+      if (!player) return;
+      const value = Math.max(0, Math.min(100, Number(els.volume.value) || 0));
+      try {
+        player.setVolume(value);
+        if (value > 0 && player.isMuted?.()) player.unMute();
+        try { localStorage.setItem(VOLUME_KEY, String(value)); } catch {}
+      } catch {}
+      renderMuteIcon();
+    });
+
+    els.mute?.addEventListener("click", () => {
+      if (!player) return;
+      try {
+        if (player.isMuted?.()) {
+          player.unMute();
+        } else {
+          player.mute();
+        }
+      } catch {}
+      renderMuteIcon();
+    });
 
     window.addEventListener("storage", (event) => {
       if (!remoteMode && event.key === STORAGE_KEY) {
@@ -387,7 +435,8 @@
       title,
       requestedBy,
       requestedByAvatar,
-      addedAt: Date.now()
+      addedAt: Date.now(),
+      reactions: 0
     };
 
     const startsPlayback = !state.current;
@@ -413,17 +462,35 @@
     syncPlayerToState(startsPlayback);
   }
 
-  function voteSkip() {
-    if (!state.current) return;
+  function sendReaction() {
+    const current = state.current;
+    if (!current) return;
 
     if (remoteMode) {
       if (socket?.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: "skip-vote", currentId: state.current.id }));
+        socket.send(JSON.stringify({ type: "react", currentId: current.id }));
       }
       return;
     }
 
-    advanceLocal();
+    current.reactions = (Number(current.reactions) || 0) + 1;
+    saveLocalState();
+    render();
+  }
+
+  async function shareRoomLink() {
+    const url = `${window.location.origin}/?music=on`;
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(url);
+      if (window.V2?.toast) {
+        window.V2.toast("Music room link copied.");
+      } else {
+        setHelp("Music room link copied.");
+      }
+    } catch {
+      window.prompt("Copy this music room link:", url);
+    }
   }
 
   function advanceLocal(expectedCurrentId = "") {
@@ -468,8 +535,6 @@
 
   function render() {
     const current = state.current;
-    const skipThreshold = Math.max(1, Number(state.skipThreshold) || 1);
-    const listeners = Math.max(1, Number(state.listeners) || 1);
 
     els.status.textContent = statusText();
     els.status.classList.toggle("is-live", remoteMode && connectionState === "open");
@@ -491,21 +556,20 @@
     }
 
     els.emptyPlayer.hidden = Boolean(current);
+    els.nowLabel.hidden = !current;
 
-    els.skip.hidden = !current;
-    els.skip.disabled = !current || (remoteMode && connectionState !== "open");
-    els.skip.textContent =
-      remoteMode && current && listeners > 1
-        ? `Skip (${state.skipVotes || 0}/${skipThreshold})`
-        : "Skip";
+    els.react.hidden = !current;
+    els.react.disabled = !current || (remoteMode && connectionState !== "open");
+    els.reactCount.textContent = String(Math.max(0, Number(current?.reactions) || 0));
 
     els.queueCount.textContent = String(state.queue.length);
     els.queue.replaceChildren();
 
-    state.queue.forEach((item) => {
+    state.queue.forEach((item, index) => {
       const li = document.createElement("li");
       li.className = "ec-music-queue-item";
       li.innerHTML = `
+        <span class="ec-music-queue-num">${index + 1}</span>
         <span class="ec-music-queue-avatar">${avatarMarkup(item.requestedBy, item.requestedByAvatar)}</span>
         <span class="ec-music-queue-copy">
           <strong>${escapeHtml(item.title || "YouTube video")}</strong>
@@ -517,6 +581,14 @@
 
     els.emptyQueue.hidden = state.queue.length > 0;
     els.join.classList.toggle("is-visible", autoplayBlocked && Boolean(current));
+  }
+
+  function renderMuteIcon() {
+    if (!els.mute || !player) return;
+    let muted = false;
+    try { muted = Boolean(player.isMuted?.()); } catch {}
+    els.mute.textContent = muted ? "🔇" : "🔊";
+    els.mute.setAttribute("aria-label", muted ? "Unmute" : "Mute");
   }
 
   function escapeHtml(value) {
@@ -569,12 +641,14 @@
       events: {
         onReady: (event) => {
           playerReady = true;
+          let volume = 55;
           try {
             const stored = Number(localStorage.getItem(VOLUME_KEY));
-            event.target.setVolume(Number.isFinite(stored) ? Math.max(0, Math.min(100, stored)) : 55);
-          } catch {
-            event.target.setVolume(55);
-          }
+            volume = Number.isFinite(stored) ? Math.max(0, Math.min(100, stored)) : 55;
+          } catch {}
+          try { event.target.setVolume(volume); } catch {}
+          if (els.volume) els.volume.value = String(volume);
+          renderMuteIcon();
           syncPlayerToState(true);
         },
         onStateChange: (event) => {

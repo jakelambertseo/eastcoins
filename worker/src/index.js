@@ -1,6 +1,8 @@
 import { DurableObject } from "cloudflare:workers";
 
 const MAX_QUEUE = 25;
+const REQUEST_LIMIT = 4;
+const REQUEST_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const DEFAULT_ALLOWED_ORIGINS = new Set([
   "https://eastcoin.vip",
   "https://www.eastcoin.vip",
@@ -79,6 +81,9 @@ export class MusicRoom extends DurableObject {
     super(ctx, env);
     this.sessions = new Map();
     this.state = this.emptyState();
+    // In-memory only (not persisted to storage) — a DO restart resets everyone's
+    // hourly count, which is an acceptable tradeoff for a small friend-group room.
+    this.requestLog = new Map();
 
     this.ctx.getWebSockets().forEach((ws) => {
       const attachment = ws.deserializeAttachment();
@@ -117,7 +122,8 @@ export class MusicRoom extends DurableObject {
       title: this.safeTitle(item.title),
       requestedBy: this.safeName(item.requestedBy),
       requestedByAvatar: this.safeAvatarUrl(item.requestedByAvatar),
-      addedAt: Number(item.addedAt) || Date.now()
+      addedAt: Number(item.addedAt) || Date.now(),
+      reactions: Math.max(0, Number(item.reactions) || 0)
     };
   }
 
@@ -236,13 +242,30 @@ export class MusicRoom extends DurableObject {
         return this.sendError(ws, `Queue is limited to ${MAX_QUEUE} songs.`);
       }
 
+      const now = Date.now();
+      const recentRequests = (this.requestLog.get(session.clientId) || [])
+        .filter((timestamp) => now - timestamp < REQUEST_LIMIT_WINDOW_MS);
+
+      if (recentRequests.length >= REQUEST_LIMIT) {
+        this.requestLog.set(session.clientId, recentRequests);
+        const retryMinutes = Math.max(1, Math.ceil((REQUEST_LIMIT_WINDOW_MS - (now - recentRequests[0])) / 60000));
+        return this.sendError(
+          ws,
+          `You've hit the ${REQUEST_LIMIT}-song hourly limit. Try again in ${retryMinutes} minute${retryMinutes === 1 ? "" : "s"}.`
+        );
+      }
+
+      recentRequests.push(now);
+      this.requestLog.set(session.clientId, recentRequests);
+
       const item = {
         id: crypto.randomUUID(),
         videoId,
         title: this.safeTitle(message.title),
         requestedBy: this.safeName(message.requestedBy || session.name),
         requestedByAvatar: this.safeAvatarUrl(message.requestedByAvatar || session.avatar),
-        addedAt: Date.now()
+        addedAt: Date.now(),
+        reactions: 0
       };
 
       if (!this.state.current) {
@@ -253,6 +276,14 @@ export class MusicRoom extends DurableObject {
         this.state.queue.push(item);
       }
 
+      this.state.revision += 1;
+      await this.persistAndBroadcast();
+      return;
+    }
+
+    if (message.type === "react") {
+      if (!this.state.current || String(message.currentId || "") !== this.state.current.id) return;
+      this.state.current.reactions = (Number(this.state.current.reactions) || 0) + 1;
       this.state.revision += 1;
       await this.persistAndBroadcast();
       return;
