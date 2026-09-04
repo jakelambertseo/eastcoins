@@ -8,10 +8,10 @@
 
   const STORAGE_KEY = "eastcoinMusicLocalStateV1";
   const OPEN_KEY = "eastcoinMusicDockOpen";
-  const NICKNAME_KEY = "eastcoinMusicNickname";
   const CLIENT_KEY = "eastcoinMusicClientId";
   const VOLUME_KEY = "eastcoinMusicVolume";
   const MAX_QUEUE = 25;
+  const TITLE_FETCH_TIMEOUT_MS = 3500;
 
   const config = window.EASTCOIN_MUSIC_CONFIG || {};
   const roomName = String(config.room || "main").trim() || "main";
@@ -27,18 +27,61 @@
   let remoteMode = Boolean(configuredEndpoint);
   let connectionState = remoteMode ? "connecting" : "local";
   let state = loadLocalState();
+  let currentUser = null;
 
   const clientId = getOrCreateClientId();
 
-  const dock = createDock();
-  const els = collectElements();
-  bindUi();
-  loadYouTubeApi();
+  let dock = null;
+  let els = null;
 
-  if (remoteMode) connectSharedRoom();
-  restoreDockState();
-  render();
-  startProgressSync();
+  // Identity resolves before the dock ever renders so "Requested by" always
+  // reflects the real signed-in Twitch member (or an honest "Guest"/login
+  // prompt) instead of a placeholder that gets swapped in a beat later.
+  fetchIdentity().finally(init);
+
+  function init() {
+    dock = createDock();
+    els = collectElements();
+    bindUi();
+    renderIdentity();
+    loadYouTubeApi();
+
+    if (remoteMode) connectSharedRoom();
+    restoreDockState();
+    render();
+    startProgressSync();
+  }
+
+  async function fetchIdentity() {
+    try {
+      const response = await fetch("/api/picks/bootstrap", {
+        credentials: "same-origin",
+        cache: "no-store"
+      });
+
+      const payload = await response.json().catch(() => null);
+      const session = payload?.ok ? payload.session : null;
+
+      if (session?.authenticated && session.user?.login) {
+        currentUser = session.user;
+      }
+    } catch {
+      currentUser = null;
+    }
+  }
+
+  function identityName() {
+    return currentUser?.displayName || currentUser?.login || "Guest";
+  }
+
+  function identityAvatar() {
+    return currentUser?.profileImageUrl || "";
+  }
+
+  function authUrl() {
+    const returnTo = `${window.location.pathname}${window.location.search}`;
+    return `/api/picks/auth/twitch/start?returnTo=${encodeURIComponent(returnTo)}`;
+  }
 
   function getOrCreateClientId() {
     try {
@@ -51,20 +94,6 @@
     } catch {
       return crypto.randomUUID();
     }
-  }
-
-  function readNickname() {
-    try {
-      return (localStorage.getItem(NICKNAME_KEY) || "Guest").trim() || "Guest";
-    } catch {
-      return "Guest";
-    }
-  }
-
-  function writeNickname(value) {
-    const clean = String(value || "Guest").trim().slice(0, 24) || "Guest";
-    try { localStorage.setItem(NICKNAME_KEY, clean); } catch {}
-    return clean;
   }
 
   function loadLocalState() {
@@ -94,6 +123,17 @@
     };
   }
 
+  function sanitizeAvatarUrl(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    try {
+      const url = new URL(raw);
+      return url.protocol === "https:" ? url.href : "";
+    } catch {
+      return "";
+    }
+  }
+
   function sanitizeItem(item) {
     if (!item || typeof item !== "object") return null;
     const videoId = String(item.videoId || "").trim();
@@ -101,7 +141,9 @@
     return {
       id: String(item.id || crypto.randomUUID()),
       videoId,
+      title: String(item.title || "").slice(0, 120).trim(),
       requestedBy: String(item.requestedBy || "Guest").slice(0, 24),
+      requestedByAvatar: sanitizeAvatarUrl(item.requestedByAvatar),
       addedAt: Number(item.addedAt) || Date.now()
     };
   }
@@ -135,13 +177,10 @@
       <div class="ec-music-panel">
         <header class="ec-music-head">
           <div class="ec-music-title-wrap">
-            <span class="ec-music-kicker">EastCoin jukebox</span>
+            <span class="ec-music-kicker" id="eastcoinMusicStatus">Music Player</span>
             <strong>Music Player</strong>
           </div>
-          <div class="ec-music-head-actions">
-            <span class="ec-music-mode" id="eastcoinMusicMode">Local</span>
-            <button class="ec-music-icon-button" id="eastcoinMusicClose" type="button" aria-label="Close Music Player">×</button>
-          </div>
+          <button class="ec-music-icon-button" id="eastcoinMusicClose" type="button" aria-label="Close Music Player">×</button>
         </header>
 
         <div class="ec-music-youtube-shell">
@@ -155,22 +194,18 @@
         <button class="ec-music-autoplay" id="eastcoinMusicJoin" type="button">▶ Join music</button>
 
         <section class="ec-music-now" aria-label="Now playing">
-          <div class="ec-music-now-row">
-            <div class="ec-music-now-copy">
-              <strong id="eastcoinMusicNowTitle">Nothing queued</strong>
-              <small id="eastcoinMusicNowMeta">Paste a YouTube URL to start</small>
-            </div>
+          <span class="ec-music-now-avatar" id="eastcoinMusicNowAvatar" hidden></span>
+          <div class="ec-music-now-copy">
+            <strong id="eastcoinMusicNowTitle">Nothing queued</strong>
+            <small id="eastcoinMusicNowMeta">Paste a YouTube URL to start</small>
           </div>
-          <div class="ec-music-room-stats">
-            <span id="eastcoinMusicListeners">1 listener</span>
-            <span id="eastcoinMusicSkipStatus">0 / 1 skip votes</span>
-          </div>
+          <button class="ec-music-skip" id="eastcoinMusicSkip" type="button" hidden>Skip</button>
         </section>
 
         <section class="ec-music-request">
-          <label for="eastcoinMusicUrl">Request a song</label>
+          <div class="ec-music-identity" id="eastcoinMusicIdentity"></div>
           <div class="ec-music-request-row">
-            <input id="eastcoinMusicUrl" type="url" inputmode="url" autocomplete="off" placeholder="Paste YouTube link" />
+            <input id="eastcoinMusicUrl" type="url" inputmode="url" autocomplete="off" placeholder="Paste a YouTube link" />
             <button id="eastcoinMusicAdd" type="button">Add</button>
           </div>
           <div class="ec-music-request-help" id="eastcoinMusicHelp">youtube.com, music.youtube.com and youtu.be links work.</div>
@@ -181,14 +216,6 @@
           <ol class="ec-music-queue" id="eastcoinMusicQueue"></ol>
           <div class="ec-music-empty-queue" id="eastcoinMusicEmptyQueue">Queue is empty.</div>
         </div>
-
-        <footer class="ec-music-footer">
-          <div class="ec-music-nickname">
-            <label for="eastcoinMusicNickname">Requested by</label>
-            <input id="eastcoinMusicNickname" type="text" maxlength="24" autocomplete="nickname" />
-          </div>
-          <button class="ec-music-skip" id="eastcoinMusicSkip" type="button">Vote skip</button>
-        </footer>
       </div>
     `;
 
@@ -205,27 +232,39 @@
     return {
       control: controlButton,
       close: document.getElementById("eastcoinMusicClose"),
-      mode: document.getElementById("eastcoinMusicMode"),
+      status: document.getElementById("eastcoinMusicStatus"),
       join: document.getElementById("eastcoinMusicJoin"),
       emptyPlayer: document.getElementById("eastcoinMusicEmptyPlayer"),
+      nowAvatar: document.getElementById("eastcoinMusicNowAvatar"),
       nowTitle: document.getElementById("eastcoinMusicNowTitle"),
       nowMeta: document.getElementById("eastcoinMusicNowMeta"),
-      listeners: document.getElementById("eastcoinMusicListeners"),
-      skipStatus: document.getElementById("eastcoinMusicSkipStatus"),
+      identity: document.getElementById("eastcoinMusicIdentity"),
       url: document.getElementById("eastcoinMusicUrl"),
       add: document.getElementById("eastcoinMusicAdd"),
       help: document.getElementById("eastcoinMusicHelp"),
       queue: document.getElementById("eastcoinMusicQueue"),
       queueCount: document.getElementById("eastcoinMusicQueueCount"),
       emptyQueue: document.getElementById("eastcoinMusicEmptyQueue"),
-      nickname: document.getElementById("eastcoinMusicNickname"),
       skip: document.getElementById("eastcoinMusicSkip")
     };
   }
 
-  function bindUi() {
-    els.nickname.value = readNickname();
+  function renderIdentity() {
+    if (currentUser?.login) {
+      els.identity.innerHTML = `
+        <span class="ec-music-identity-avatar">${avatarMarkup(currentUser.displayName || currentUser.login, currentUser.profileImageUrl)}</span>
+        <span>Requesting as <strong>${escapeHtml(identityName())}</strong></span>
+      `;
+    } else {
+      els.identity.innerHTML = `
+        <span class="ec-music-identity-avatar">T</span>
+        <span>Requesting as <strong>Guest</strong></span>
+        <a class="ec-music-identity-login" href="${escapeHtml(authUrl())}">Log in with Twitch</a>
+      `;
+    }
+  }
 
+  function bindUi() {
     els.control?.addEventListener("click", () => {
       setDockOpen(!body.classList.contains("music-dock-open"));
     });
@@ -240,13 +279,6 @@
     els.add?.addEventListener("click", submitRequest);
     els.url?.addEventListener("keydown", (event) => {
       if (event.key === "Enter") submitRequest();
-    });
-
-    els.nickname?.addEventListener("change", () => {
-      els.nickname.value = writeNickname(els.nickname.value);
-      if (socket?.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: "identity", name: readNickname() }));
-      }
     });
 
     els.skip?.addEventListener("click", voteSkip);
@@ -292,31 +324,58 @@
     return window.EastcoinYouTube?.extractVideo?.(raw)?.id || "";
   }
 
-  function submitRequest() {
+  async function fetchVideoTitle(videoId) {
+    try {
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), TITLE_FETCH_TIMEOUT_MS);
+
+      const response = await fetch(
+        `https://www.youtube.com/oembed?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${videoId}`)}&format=json`,
+        { signal: controller.signal }
+      );
+
+      window.clearTimeout(timer);
+      if (!response.ok) return "";
+
+      const payload = await response.json().catch(() => null);
+      return String(payload?.title || "").trim().slice(0, 120);
+    } catch {
+      return "";
+    }
+  }
+
+  async function submitRequest() {
     const videoId = normalizeYouTubeId(els.url.value);
     if (!videoId) {
       setHelp("That does not look like a valid YouTube video link.", true);
       return;
     }
 
-    const requestedBy = writeNickname(els.nickname.value);
-    els.nickname.value = requestedBy;
+    els.add.disabled = true;
+    els.add.textContent = "Adding…";
+
+    const title = await fetchVideoTitle(videoId);
+    const requestedBy = identityName();
+    const requestedByAvatar = identityAvatar();
+
+    els.add.disabled = false;
+    els.add.textContent = "Add";
 
     if (remoteMode) {
       if (!socket || socket.readyState !== WebSocket.OPEN) {
         setHelp("Shared music room is reconnecting. Try again in a moment.", true);
         return;
       }
-      socket.send(JSON.stringify({ type: "add", videoId, requestedBy }));
+      socket.send(JSON.stringify({ type: "add", videoId, title, requestedBy, requestedByAvatar }));
     } else {
-      addLocal(videoId, requestedBy);
+      addLocal(videoId, title, requestedBy, requestedByAvatar);
     }
 
     els.url.value = "";
-    setHelp(remoteMode ? "Request sent to the shared queue." : "Added to your local queue.");
+    setHelp(remoteMode ? "Request sent to the shared queue." : "Added to your queue.");
   }
 
-  function addLocal(videoId, requestedBy) {
+  function addLocal(videoId, title, requestedBy, requestedByAvatar) {
     if (state.current?.videoId === videoId || state.queue.some((item) => item.videoId === videoId)) {
       setHelp("That video is already in the queue.", true);
       return;
@@ -325,7 +384,9 @@
     const item = {
       id: crypto.randomUUID(),
       videoId,
+      title,
       requestedBy,
+      requestedByAvatar,
       addedAt: Date.now()
     };
 
@@ -392,39 +453,62 @@
     }
   }
 
+  function statusText() {
+    if (!remoteMode) return "Solo queue";
+    if (connectionState !== "open") return "Reconnecting…";
+
+    const listeners = Math.max(1, Number(state.listeners) || 1);
+    return listeners === 1 ? "Just you" : `${listeners} listening`;
+  }
+
+  function avatarMarkup(name, avatarUrl) {
+    if (avatarUrl) return `<img src="${escapeHtml(avatarUrl)}" alt="">`;
+    return escapeHtml((String(name || "G").trim().slice(0, 1) || "G").toUpperCase());
+  }
+
   function render() {
     const current = state.current;
-    const listeners = Math.max(1, Number(state.listeners) || 1);
     const skipThreshold = Math.max(1, Number(state.skipThreshold) || 1);
+    const listeners = Math.max(1, Number(state.listeners) || 1);
 
-    els.mode.textContent = remoteMode
-      ? (connectionState === "open" ? "Shared" : "Connecting")
-      : "Local";
+    els.status.textContent = statusText();
+    els.status.classList.toggle("is-live", remoteMode && connectionState === "open");
+    els.status.title = !remoteMode
+      ? "Only playing in your browser"
+      : connectionState === "open"
+        ? "Synced with everyone in the room"
+        : "Reconnecting to the shared room";
 
-    els.mode.title = remoteMode
-      ? "Shared Cloudflare music room"
-      : "Single-browser mode — deploy the included Worker to sync everyone";
+    if (current) {
+      els.nowTitle.textContent = current.title || "YouTube video";
+      els.nowMeta.textContent = `Requested by ${current.requestedBy || "Guest"}`;
+      els.nowAvatar.innerHTML = avatarMarkup(current.requestedBy, current.requestedByAvatar);
+      els.nowAvatar.hidden = false;
+    } else {
+      els.nowTitle.textContent = "Nothing queued";
+      els.nowMeta.textContent = "Paste a YouTube URL to start";
+      els.nowAvatar.hidden = true;
+    }
 
-    els.nowTitle.textContent = current ? formatVideoLabel(current.videoId) : "Nothing queued";
-    els.nowMeta.textContent = current
-      ? `Requested by ${current.requestedBy || "Guest"}`
-      : "Paste a YouTube URL to start";
     els.emptyPlayer.hidden = Boolean(current);
 
-    els.listeners.textContent = `${listeners} ${listeners === 1 ? "listener" : "listeners"}`;
-    els.skipStatus.textContent = `${state.skipVotes || 0} / ${skipThreshold} skip votes`;
+    els.skip.hidden = !current;
     els.skip.disabled = !current || (remoteMode && connectionState !== "open");
+    els.skip.textContent =
+      remoteMode && current && listeners > 1
+        ? `Skip (${state.skipVotes || 0}/${skipThreshold})`
+        : "Skip";
 
     els.queueCount.textContent = String(state.queue.length);
     els.queue.replaceChildren();
 
-    state.queue.forEach((item, index) => {
+    state.queue.forEach((item) => {
       const li = document.createElement("li");
       li.className = "ec-music-queue-item";
       li.innerHTML = `
-        <span class="ec-music-queue-index">${index + 1}</span>
+        <span class="ec-music-queue-avatar">${avatarMarkup(item.requestedBy, item.requestedByAvatar)}</span>
         <span class="ec-music-queue-copy">
-          <strong>${escapeHtml(formatVideoLabel(item.videoId))}</strong>
+          <strong>${escapeHtml(item.title || "YouTube video")}</strong>
           <small>Requested by ${escapeHtml(item.requestedBy || "Guest")}</small>
         </span>
       `;
@@ -433,10 +517,6 @@
 
     els.emptyQueue.hidden = state.queue.length > 0;
     els.join.classList.toggle("is-visible", autoplayBlocked && Boolean(current));
-  }
-
-  function formatVideoLabel(videoId) {
-    return `YouTube · ${videoId}`;
   }
 
   function escapeHtml(value) {
@@ -575,7 +655,8 @@
     if (!/\/room\//.test(path)) path += `/room/${encodeURIComponent(roomName)}`;
     url.pathname = path;
     url.searchParams.set("client", clientId);
-    url.searchParams.set("name", readNickname());
+    url.searchParams.set("name", identityName());
+    if (identityAvatar()) url.searchParams.set("avatar", identityAvatar());
     return url.toString();
   }
 
@@ -584,7 +665,7 @@
     if (!wsUrl) {
       remoteMode = false;
       connectionState = "local";
-      setHelp("Shared-room URL is invalid. Running in local mode.", true);
+      setHelp("Shared-room URL is invalid. Running in solo mode.", true);
       render();
       return;
     }
@@ -600,7 +681,7 @@
     socket.addEventListener("open", () => {
       connectionState = "open";
       setHelp("Connected to the shared EastCoin music room.");
-      socket.send(JSON.stringify({ type: "identity", name: readNickname() }));
+      socket.send(JSON.stringify({ type: "identity", name: identityName(), avatar: identityAvatar() }));
       render();
     });
 

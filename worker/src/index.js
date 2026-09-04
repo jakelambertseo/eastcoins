@@ -114,9 +114,30 @@ export class MusicRoom extends DurableObject {
     return {
       id: String(item.id || crypto.randomUUID()),
       videoId,
+      title: this.safeTitle(item.title),
       requestedBy: this.safeName(item.requestedBy),
+      requestedByAvatar: this.safeAvatarUrl(item.requestedByAvatar),
       addedAt: Number(item.addedAt) || Date.now()
     };
+  }
+
+  safeAvatarUrl(value) {
+    const raw = String(value || "").trim();
+    if (!raw || raw.length > 300) return "";
+
+    try {
+      const url = new URL(raw);
+      return url.protocol === "https:" ? url.href : "";
+    } catch {
+      return "";
+    }
+  }
+
+  safeTitle(value) {
+    return String(value || "")
+      .replace(/[<>\u0000-\u001f]/g, "")
+      .trim()
+      .slice(0, 120);
   }
 
   sanitizeStoredState(input) {
@@ -162,7 +183,8 @@ export class MusicRoom extends DurableObject {
 
     const clientId = String(url.searchParams.get("client") || crypto.randomUUID()).slice(0, 80);
     const name = this.safeName(url.searchParams.get("name"));
-    const attachment = { clientId, name };
+    const avatar = this.safeAvatarUrl(url.searchParams.get("avatar"));
+    const attachment = { clientId, name, avatar };
 
     this.ctx.acceptWebSocket(server);
     server.serializeAttachment(attachment);
@@ -184,11 +206,13 @@ export class MusicRoom extends DurableObject {
 
     const session = this.sessions.get(ws) || ws.deserializeAttachment() || {
       clientId: crypto.randomUUID(),
-      name: "Guest"
+      name: "Guest",
+      avatar: ""
     };
 
     if (message.type === "identity") {
       session.name = this.safeName(message.name);
+      session.avatar = this.safeAvatarUrl(message.avatar);
       this.sessions.set(ws, session);
       ws.serializeAttachment(session);
       this.broadcastState();
@@ -215,7 +239,9 @@ export class MusicRoom extends DurableObject {
       const item = {
         id: crypto.randomUUID(),
         videoId,
+        title: this.safeTitle(message.title),
         requestedBy: this.safeName(message.requestedBy || session.name),
+        requestedByAvatar: this.safeAvatarUrl(message.requestedByAvatar || session.avatar),
         addedAt: Date.now()
       };
 

@@ -71,7 +71,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">124 major update groups</div>
+<div class="release-count">125 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1609,10 +1609,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-09-04">September 4, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Games, Other Streams, and Changelog rebuilt on the V2 shell</h2>
 <p>
@@ -1637,6 +1636,30 @@
     <code>changelog.html</code> (this page) also drops its old amber sidebar
     shell for the same dark/burgundy/gold tokens the rest of V2 uses, with
     every historical entry preserved unchanged.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Music Player redesigned with real Twitch identity</h2>
+<p>
+    Redesigned the Music Player dock: it now shows who's actually asking for
+    each song. Requesting is tied to your logged-in Twitch account — your
+    real display name and profile picture appear on the current track, in
+    the queue, and in a new "Requesting as" chip above the request form
+    (with a one-click login prompt if you're not signed in yet), replacing
+    the old local nickname field. Song titles are now fetched automatically
+    from YouTube instead of showing a raw video ID, and the leftover "Local"
+    mode badge from the prototype is gone — the dock now shows a live status
+    line ("Just you", "3 listening", "Reconnecting…") that reflects the
+    actual room state. The Worker also picked up a real bug fix during this
+    pass: the shared room's live "add song" handler was silently dropping
+    the title field for every request (it only worked for state restored
+    after a Worker restart) — now fixed and covered by an automated
+    WebSocket protocol test.
 </p>
 </article>
 </section>

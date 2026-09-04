@@ -5,7 +5,7 @@
 */
 window.EASTCOIN_MUSIC_CONFIG = Object.assign(
   {
-    websocketUrl: "",
+    websocketUrl: "https://eastcoin-music-room.jake-7f5.workers.dev",
     room: "main"
   },
   window.EASTCOIN_MUSIC_CONFIG || {}
