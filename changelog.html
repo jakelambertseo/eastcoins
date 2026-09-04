@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">118 major update groups</div>
+<div class="release-count">119 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -2434,10 +2434,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-09-04">September 4, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Submit a YouTube stream and get a shareable EastCoin link</h2>
 <p>
@@ -2450,6 +2449,27 @@
     player path MultiView and the root player already support. No new backend
     or storage was needed. The page previews the embed inline before you share
     it.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Submit links now credit the sharer's Twitch identity</h2>
+<p>
+    <code>/submit</code> now checks the existing Picks Twitch session
+    (<code>/api/picks/bootstrap</code>) and shows the signed-in member's
+    avatar and display name above the form, with a login prompt when signed
+    out. A logged-in member's generated link is now
+    <code>eastcoin.vip/user/&lt;twitch-login&gt;/?watch=…</code> instead of
+    the plain root link, crediting who shared it. A new
+    <code>functions/user/[[path]].js</code> catch-all serves the normal
+    EastCoin app shell under <code>/user/…</code> — the existing player only
+    ever reads the <code>?watch=</code> query string, so no player changes
+    were needed for the link to work. Clicking Copy now also shows a small
+    "Link Copied! Share in chat" tooltip next to the button.
 </p>
 </article>
 </section>

@@ -21,7 +21,16 @@
 
   .eyebrow{color:#887964;font-size:.8rem;font-weight:1000;letter-spacing:.12em;text-transform:uppercase}
   h1{margin:8px 0 6px;font-size:1.9rem;letter-spacing:-.045em}
-  main>p{margin:0 0 26px;color:var(--muted);font-size:.9rem;line-height:1.6}
+  main>p{margin:0 0 22px;color:var(--muted);font-size:.9rem;line-height:1.6}
+
+  /* Twitch identity strip */
+  .identity{display:flex;align-items:center;gap:11px;min-height:56px;margin-bottom:18px;padding:9px 13px;border:1px solid var(--line);border-radius:11px;background:var(--panel)}
+  .identity .avatar{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;overflow:hidden;border-radius:9px;background:#220b13;color:#efc2cf;font-weight:1000;font-size:.8rem}
+  .identity .avatar img{width:100%;height:100%;object-fit:cover;display:block}
+  .identity strong{display:block;font-size:.85rem}
+  .identity small{display:block;margin-top:2px;color:#68615b;font-size:.72rem}
+  .identity .loginlink{margin-left:auto;height:36px;display:flex;align-items:center;padding:0 12px;border:1px solid rgba(229,185,43,.18);border-radius:8px;color:#160f00;background:linear-gradient(#f0cb46,#d4a80e);font-size:.78rem;font-weight:950;text-decoration:none}
+  .identity.pending{color:#68615b;font-size:.82rem}
 
   .card{padding:20px;border:1px solid var(--line);border-radius:13px;background:var(--panel)}
 
@@ -48,8 +57,19 @@
 
   .linkrow{display:flex;gap:8px}
   .linkrow input{flex:1;min-width:0;height:46px;padding:0 12px;border:1px solid var(--line);border-radius:9px;color:#e8cf5e;background:#050505;font-size:.83rem}
+
+  .copywrap{position:relative;flex:0 0 auto}
   .copy{min-width:88px;height:46px;padding:0 12px;border:1px solid var(--line);border-radius:9px;color:#a8a098;background:#0a0a0a;font-size:.8rem;font-weight:900}
   .copy.copied{border-color:rgba(71,199,120,.3);color:#78d99b}
+
+  .copytip{position:absolute;left:50%;bottom:calc(100% + 9px);z-index:5;width:max-content;max-width:220px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 11px;border:1px solid rgba(71,199,120,.28);border-radius:9px;background:#0a1610;box-shadow:0 12px 30px rgba(0,0,0,.4);color:#9ceab5;font-size:.72rem;font-weight:850;text-align:center;line-height:1.35;opacity:0;transform:translate(-50%,4px);pointer-events:none;transition:opacity .16s ease,transform .16s ease}
+  .copytip::after{content:"";position:absolute;top:100%;left:50%;width:8px;height:8px;margin-left:-4px;margin-top:-4px;background:#0a1610;border-right:1px solid rgba(71,199,120,.28);border-bottom:1px solid rgba(71,199,120,.28);transform:rotate(45deg)}
+  .copytip.show{opacity:1;transform:translate(-50%,0)}
+  .copytip strong{color:#c9f5d8;font-size:.74rem;font-weight:1000}
+
+  .personalnote{display:none;align-items:center;gap:6px;margin-top:9px;color:#a3927a;font-size:.74rem}
+  .personalnote.show{display:flex}
+  .personalnote .dot{width:6px;height:6px;border-radius:50%;background:#e5b92b;flex:0 0 auto}
 
   .open{display:block;width:100%;margin-top:9px;height:46px;padding:0 12px;border:1px solid rgba(229,185,43,.18);border-radius:9px;color:#160f00;background:linear-gradient(#f0cb46,#d4a80e);font-size:.85rem;font-weight:950;text-align:center;line-height:46px;text-decoration:none}
 
@@ -72,6 +92,8 @@
   <h1>Share a YouTube stream</h1>
   <p>Paste a YouTube link below. EastCoin pulls the embeddable version and gives you a link back to share in chat — anyone who opens it watches together in the EastCoin player.</p>
 
+  <div class="identity pending" id="identity">Checking Twitch login…</div>
+
   <div class="card">
     <label for="ytUrl">YouTube URL</label>
     <div class="field">
@@ -88,8 +110,16 @@
 
       <div class="linkrow">
         <input id="ytShareLink" type="text" readonly>
-        <button class="copy" id="ytCopy" type="button">Copy</button>
+        <div class="copywrap">
+          <button class="copy" id="ytCopy" type="button">Copy</button>
+          <div class="copytip" id="ytCopyTip" role="status" aria-live="polite">
+            <strong>Link Copied!</strong>
+            <span>Share in chat</span>
+          </div>
+        </div>
       </div>
+
+      <p class="personalnote" id="ytPersonalNote"><span class="dot"></span><span></span></p>
 
       <a class="open" id="ytOpen" href="#">Open in EastCoin →</a>
 
@@ -114,15 +144,95 @@
 (() => {
   "use strict";
 
+  const identityBox = document.getElementById("identity");
   const input = document.getElementById("ytUrl");
   const button = document.getElementById("ytGo");
   const errorBox = document.getElementById("ytError");
   const result = document.getElementById("ytResult");
   const shareLink = document.getElementById("ytShareLink");
   const copyBtn = document.getElementById("ytCopy");
+  const copyTip = document.getElementById("ytCopyTip");
+  const personalNote = document.getElementById("ytPersonalNote");
   const openLink = document.getElementById("ytOpen");
   const preview = document.getElementById("ytPreview");
   const frame = document.getElementById("ytFrame");
+
+  let currentUser = null;
+  let copyTipTimer = 0;
+
+  function esc(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function currentPath() {
+    return `${window.location.pathname}${window.location.search}`;
+  }
+
+  function authUrl() {
+    return `/api/picks/auth/twitch/start?returnTo=${encodeURIComponent(currentPath())}`;
+  }
+
+  async function loadIdentity() {
+    try {
+      const response = await fetch("/api/picks/bootstrap", {
+        credentials: "same-origin",
+        cache: "no-store"
+      });
+
+      const payload = await response.json().catch(() => null);
+      const session = payload?.ok ? payload.session : null;
+
+      if (session?.authenticated && session.user?.login) {
+        currentUser = session.user;
+
+        identityBox.classList.remove("pending");
+        identityBox.innerHTML = `
+          <span class="avatar">${
+            currentUser.profileImageUrl
+              ? `<img src="${esc(currentUser.profileImageUrl)}" alt="">`
+              : esc((currentUser.displayName || currentUser.login).slice(0, 1).toUpperCase())
+          }</span>
+          <span>
+            <strong>Sharing as ${esc(currentUser.displayName || currentUser.login)}</strong>
+            <small>Links you create will be credited to eastcoin.vip/user/${esc(currentUser.login)}/</small>
+          </span>
+        `;
+      } else {
+        currentUser = null;
+
+        identityBox.classList.remove("pending");
+        identityBox.innerHTML = `
+          <span class="avatar">T</span>
+          <span>
+            <strong>Not logged in</strong>
+            <small>Log in with Twitch to put your name on links you share</small>
+          </span>
+          <a class="loginlink" href="${esc(authUrl())}">Log in with Twitch</a>
+        `;
+      }
+    } catch {
+      currentUser = null;
+      identityBox.classList.remove("pending");
+      identityBox.innerHTML = `
+        <span class="avatar">T</span>
+        <span><strong>Not logged in</strong><small>Log in with Twitch to put your name on links you share</small></span>
+        <a class="loginlink" href="${esc(authUrl())}">Log in with Twitch</a>
+      `;
+    }
+  }
+
+  function handleAuthStatus() {
+    const url = new URL(window.location.href);
+    const status = url.searchParams.get("auth");
+    if (!status) return;
+
+    url.searchParams.delete("auth");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  }
 
   function parseStart(value) {
     if (!value) return null;
@@ -181,6 +291,16 @@
     return `https://www.youtube.com/embed/${video.id}${params.length ? `?${params.join("&")}` : ""}`;
   }
 
+  function buildShareUrl(embedUrl) {
+    const path = currentUser?.login
+      ? `/user/${encodeURIComponent(currentUser.login)}/`
+      : "/";
+
+    const eastcoinUrl = new URL(path, window.location.origin);
+    eastcoinUrl.searchParams.set("watch", embedUrl);
+    return eastcoinUrl;
+  }
+
   function showError(message) {
     errorBox.textContent = message;
     errorBox.classList.add("show");
@@ -203,8 +323,7 @@
     }
 
     const embedUrl = buildEmbedUrl(video);
-    const eastcoinUrl = new URL("/", window.location.origin);
-    eastcoinUrl.searchParams.set("watch", embedUrl);
+    const eastcoinUrl = buildShareUrl(embedUrl);
 
     shareLink.value = eastcoinUrl.href;
     openLink.href = eastcoinUrl.href;
@@ -214,7 +333,23 @@
     copyBtn.textContent = "Copy";
     copyBtn.classList.remove("copied");
 
+    if (currentUser?.login) {
+      personalNote.querySelector("span:last-child").textContent =
+        `Credited to you — anyone who opens it will see it came from ${currentUser.displayName || currentUser.login}.`;
+      personalNote.classList.add("show");
+    } else {
+      personalNote.classList.remove("show");
+    }
+
     result.classList.add("show");
+  }
+
+  function showCopyTip() {
+    window.clearTimeout(copyTipTimer);
+    copyTip.classList.add("show");
+    copyTipTimer = window.setTimeout(() => {
+      copyTip.classList.remove("show");
+    }, 2200);
   }
 
   async function copyLink() {
@@ -226,6 +361,7 @@
       }
       copyBtn.textContent = "Copied";
       copyBtn.classList.add("copied");
+      showCopyTip();
       window.setTimeout(() => {
         copyBtn.textContent = "Copy";
         copyBtn.classList.remove("copied");
@@ -244,6 +380,9 @@
       submit();
     }
   });
+
+  handleAuthStatus();
+  loadIdentity();
 })();
 </script>
 
