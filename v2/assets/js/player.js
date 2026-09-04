@@ -275,13 +275,25 @@
   function serverName(stream, index) {
     return `Server ${index + 1}`;
   }
+  function watchBasePath() {
+    // Preserve a credited /user/<twitch-login>/ vanity path (see
+    // functions/user/[[path]].js) through playback instead of always
+    // resetting the address bar to root.
+    const path =
+      window.location.pathname;
+
+    return path.startsWith("/user/")
+      ? path
+      : "/";
+  }
+
   function watchUrl() {
     const stream =
       activeStream();
 
     const url =
       new URL(
-        "/",
+        watchBasePath(),
         window.location.origin
       );
 

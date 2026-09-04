@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">119 major update groups</div>
+<div class="release-count">120 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -2452,10 +2452,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-09-04">September 4, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Submit links now credit the sharer's Twitch identity</h2>
 <p>
@@ -2466,10 +2465,25 @@
     <code>eastcoin.vip/user/&lt;twitch-login&gt;/?watch=…</code> instead of
     the plain root link, crediting who shared it. A new
     <code>functions/user/[[path]].js</code> catch-all serves the normal
-    EastCoin app shell under <code>/user/…</code> — the existing player only
-    ever reads the <code>?watch=</code> query string, so no player changes
-    were needed for the link to work. Clicking Copy now also shows a small
-    "Link Copied! Share in chat" tooltip next to the button.
+    EastCoin app shell under <code>/user/…</code>. Clicking Copy now also
+    shows a small "Link Copied! Share in chat" tooltip next to the button.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Credited watch links now survive playback</h2>
+<p>
+    The root V2 player's address-bar sync and Copy Link previously rewrote
+    any <code>/user/&lt;twitch-login&gt;/</code> credited path back to the
+    plain root URL as soon as a stream loaded. <code>v2/assets/js/player.js</code>
+    now keeps the current <code>/user/…</code> path (when present) for every
+    watch URL it generates — deep-link restores, in-player Copy Link, and the
+    address bar all stay credited to the person who shared it for the whole
+    viewing session. Plain root links are unaffected.
 </p>
 </article>
 </section>
