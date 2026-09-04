@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">120 major update groups</div>
+<div class="release-count">122 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -2470,10 +2470,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-09-04">September 4, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Credited watch links now survive playback</h2>
 <p>
@@ -2484,6 +2483,49 @@
     watch URL it generates — deep-link restores, in-player Copy Link, and the
     address bar all stay credited to the person who shared it for the whole
     viewing session. Plain root links are unaffected.
+</p>
+</article>
+
+<article class="timeline-entry">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+</div>
+<h2>Top search bar now unwraps pasted YouTube links</h2>
+<p>
+    Pasting a <code>youtube.com/watch</code>, youtu.be, Shorts, or live URL
+    directly into the top search bar and pressing Enter previously tried to
+    embed that exact page, which YouTube blocks in a third-party iframe — the
+    stream silently failed to load. The search bar now runs the same
+    conversion <code>/submit</code> uses to swap in the embeddable
+    <code>youtube.com/embed/…</code> URL before opening the player. That
+    conversion now lives in one shared file,
+    <code>assets/eastcoins-youtube.js</code>, used by both the search bar and
+    <code>/submit</code> instead of two separate copies. Any other pasted URL
+    still opens exactly as typed.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Custom Stream modal unwraps YouTube links too; embeds switch to youtube-nocookie.com</h2>
+<p>
+    The header's Custom Stream modal now runs a pasted URL through the same
+    YouTube-embed conversion as the search bar and <code>/submit</code>, so a
+    watch/youtu.be/Shorts link works there too instead of failing silently.
+    Every generated embed across EastCoin (search bar, Custom Stream,
+    <code>/submit</code>) now points at
+    <code>youtube-nocookie.com/embed/…</code>, YouTube's own
+    privacy-enhanced embed domain, which avoids the tracking-cookie handling
+    that was showing Firefox users a hard "will not allow Firefox to display
+    the page" error on some videos that loaded fine in Chrome.
+    <code>/submit</code>'s preview now also shows a "Watch it directly on
+    YouTube" link, since a video with embedding turned off by its owner
+    stays blocked in any iframe on any site — that restriction is YouTube's
+    own and can't be overridden client-side, so the link opens the real
+    watch page directly instead of the embed.
 </p>
 </article>
 </section>

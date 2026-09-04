@@ -916,7 +916,14 @@
           event.preventDefault();
           E.search.value = "";
           S.search = "";
-          V2.player.openCustom(url.href);
+
+          // YouTube's watch/shorts/live pages refuse to load in EastCoin's
+          // iframe; swap in the embeddable URL when one is pasted. Any other
+          // URL still opens exactly as typed.
+          const embedUrl =
+            window.EastcoinYouTube?.toEmbedUrl?.(url.href);
+
+          V2.player.openCustom(embedUrl || url.href);
           return;
         }
       } catch {
@@ -1014,7 +1021,11 @@
       }
 
       closeCustom();
-      V2.player.openCustom(url.href);
+
+      const embedUrl =
+        window.EastcoinYouTube?.toEmbedUrl?.(url.href);
+
+      V2.player.openCustom(embedUrl || url.href);
     };
 
     document.addEventListener("keydown", (event) => {
