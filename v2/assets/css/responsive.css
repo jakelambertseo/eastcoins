@@ -1,6 +1,12 @@
 /* EastCoin V2: responsive behavior only */
 
-@media(max-width:1260px){.search{width:200px}.grid{grid-template-columns:repeat(3,1fr)}}
+/* Chat reserves a fixed 360px of body padding regardless of window width, so
+   the topbar's real usable width is much less than the viewport width — this
+   tier covers common laptop resolutions (1366/1440/1536/1600) where that
+   squeeze causes the nav/search/actions row to overflow past the chat panel. */
+@media(max-width:1700px){.topbar{gap:12px}.nav a,.nav button{padding:0 9px;font-size:.82rem}.actions{gap:6px}.search{width:200px}.wallet{padding:0 7px}.wallet strong{display:none}}
+
+@media(max-width:1260px){.grid{grid-template-columns:repeat(3,1fr)}}
 
 @media(max-width:1050px){.brand>span:last-child,.profile strong{display:none}.hero{grid-template-columns:1fr}.lower{grid-template-columns:1fr 1fr}.lower article:last-child{grid-column:1/-1}}
 

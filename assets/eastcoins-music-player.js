@@ -185,7 +185,13 @@
             </div>
           </div>
           <div class="ec-music-head-actions">
-            <button class="ec-music-icon-button" id="eastcoinMusicShare" type="button" aria-label="Copy shareable room link">⤴</button>
+            <div class="ec-music-share-wrap">
+              <button class="ec-music-icon-button" id="eastcoinMusicShare" type="button" aria-label="Copy shareable room link" title="Copy shareable room link">⤴</button>
+              <div class="ec-music-copytip" id="eastcoinMusicCopyTip" role="status" aria-live="polite">
+                <strong>Link Copied!</strong>
+                <span>Music room link copied</span>
+              </div>
+            </div>
             <button class="ec-music-icon-button" id="eastcoinMusicClose" type="button" aria-label="Close Music Player">×</button>
           </div>
         </header>
@@ -252,6 +258,7 @@
       control: controlButton,
       close: document.getElementById("eastcoinMusicClose"),
       share: document.getElementById("eastcoinMusicShare"),
+      copyTip: document.getElementById("eastcoinMusicCopyTip"),
       status: document.getElementById("eastcoinMusicStatus"),
       join: document.getElementById("eastcoinMusicJoin"),
       emptyPlayer: document.getElementById("eastcoinMusicEmptyPlayer"),
@@ -478,16 +485,21 @@
     render();
   }
 
+  let copyTipTimer = 0;
+
+  function showCopyTip() {
+    if (!els.copyTip) return;
+    window.clearTimeout(copyTipTimer);
+    els.copyTip.classList.add("show");
+    copyTipTimer = window.setTimeout(() => els.copyTip.classList.remove("show"), 2200);
+  }
+
   async function shareRoomLink() {
     const url = `${window.location.origin}/?music=on`;
     try {
       if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
       await navigator.clipboard.writeText(url);
-      if (window.V2?.toast) {
-        window.V2.toast("Music room link copied.");
-      } else {
-        setHelp("Music room link copied.");
-      }
+      showCopyTip();
     } catch {
       window.prompt("Copy this music room link:", url);
     }
@@ -533,8 +545,41 @@
     return escapeHtml((String(name || "G").trim().slice(0, 1) || "G").toUpperCase());
   }
 
+  // Tracks the last reaction count we've already animated for the current
+  // song so every listener — not just the person who clicked — sees a
+  // floating 👍 burst the moment the shared count ticks up.
+  let lastReactionSnapshot = { id: "", count: 0 };
+
+  function maybeAnimateReaction(current) {
+    if (!current) {
+      lastReactionSnapshot = { id: "", count: 0 };
+      return;
+    }
+
+    const count = Math.max(0, Number(current.reactions) || 0);
+
+    if (current.id !== lastReactionSnapshot.id) {
+      lastReactionSnapshot = { id: current.id, count };
+      return;
+    }
+
+    if (count > lastReactionSnapshot.count) spawnReactionBurst();
+    lastReactionSnapshot = { id: current.id, count };
+  }
+
+  function spawnReactionBurst() {
+    if (!els.react) return;
+    const burst = document.createElement("span");
+    burst.className = "ec-music-reaction-burst";
+    burst.textContent = "👍";
+    burst.setAttribute("aria-hidden", "true");
+    els.react.appendChild(burst);
+    window.setTimeout(() => burst.remove(), 900);
+  }
+
   function render() {
     const current = state.current;
+    maybeAnimateReaction(current);
 
     els.status.textContent = statusText();
     els.status.classList.toggle("is-live", remoteMode && connectionState === "open");

@@ -71,7 +71,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">126 major update groups</div>
+<div class="release-count">127 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1662,10 +1662,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-09-04">September 4, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Music Player gets its own volume control, reactions, and a request cap</h2>
 <p>
@@ -1689,6 +1688,34 @@
     the page — verified with an automated test confirming the 5th request
     within the hour is rejected with a clear retry-time message. The Skip
     button/vote-to-skip control is removed from the UI for now.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Reaction bursts, a real copy confirmation, and a fixed laptop-width nav</h2>
+<p>
+    Two more Music Player refinements: a 👍 reaction now plays a small
+    floating burst animation over the reaction button for everyone
+    currently in the room, not just a silent count bump, so a thumbs-up
+    actually reads as a moment. The Share button's confirmation was moved
+    off the easy-to-miss inline help line and into a proper anchored
+    tooltip ("Link Copied! / Music room link copied") matching the same
+    pattern already used by Copy Link elsewhere on EastCoin, and the
+    button now has a native hover tooltip explaining what it does.
+    Separately, fixed a real layout bug: on common laptop widths
+    (1366/1440px and similar), the top navigation could overflow past the
+    persistent Twitch chat panel, clipping the Settings and profile
+    controls off the edge of the screen entirely — the chat reserves a
+    fixed 360px regardless of window size, so the topbar's actual usable
+    width was much narrower than it looked at first glance. Nav link
+    spacing, the search bar, and topbar gaps now tighten starting at a
+    wider breakpoint that actually covers laptop-class screens, and the
+    ZCoins pill collapses to its icon (still a working shortcut to Picks)
+    instead of overflowing with its full label.
 </p>
 </article>
 </section>

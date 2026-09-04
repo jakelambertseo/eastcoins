@@ -124,6 +124,62 @@ body.ec-chat-hidden .ec-music-dock {
   flex: 0 0 auto;
 }
 
+.ec-music-share-wrap {
+  position: relative;
+}
+
+.ec-music-copytip {
+  position: absolute;
+  top: calc(100% + 9px);
+  right: 0;
+  z-index: 6;
+  width: max-content;
+  max-width: 190px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 11px;
+  border: 1px solid rgba(71,199,120,.28);
+  border-radius: 9px;
+  background: #0a1610;
+  box-shadow: 0 12px 30px rgba(0,0,0,.4);
+  color: #9ceab5;
+  font-size: .66rem;
+  font-weight: 850;
+  text-align: center;
+  line-height: 1.35;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity .16s ease, transform .16s ease;
+}
+
+.ec-music-copytip::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  margin-bottom: -4px;
+  background: #0a1610;
+  border-left: 1px solid rgba(71,199,120,.28);
+  border-top: 1px solid rgba(71,199,120,.28);
+  transform: rotate(45deg);
+}
+
+.ec-music-copytip.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ec-music-copytip strong {
+  color: #c9f5d8;
+  font-size: .68rem;
+  font-weight: 1000;
+}
+
 .ec-music-icon-button {
   display: grid;
   place-items: center;
@@ -380,6 +436,7 @@ body.ec-chat-hidden .ec-music-dock {
 }
 
 .ec-music-react {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -393,10 +450,33 @@ body.ec-chat-hidden .ec-music-dock {
   font-size: .72rem;
   font-weight: 900;
   white-space: nowrap;
+  overflow: visible;
 }
 
 .ec-music-react[hidden] {
   display: none !important;
+}
+
+.ec-music-reaction-burst {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  font-size: 1.05rem;
+  pointer-events: none;
+  animation: ec-music-reaction-burst .9s ease-out forwards;
+}
+
+@keyframes ec-music-reaction-burst {
+  0% { opacity: 0; transform: translate(-50%, 4px) scale(.6); }
+  18% { opacity: 1; transform: translate(-50%, -4px) scale(1.2); }
+  100% { opacity: 0; transform: translate(-50%, -32px) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ec-music-reaction-burst {
+    animation: none;
+    opacity: 0;
+  }
 }
 
 .ec-music-react:hover,
