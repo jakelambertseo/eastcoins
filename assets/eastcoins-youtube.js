@@ -32,7 +32,7 @@
       return null;
     }
 
-    const host = url.hostname.replace(/^www\.|^m\./, "").toLowerCase();
+    const host = url.hostname.replace(/^www\.|^m\.|^music\./, "").toLowerCase();
     let id = null;
 
     if (host === "youtu.be") {

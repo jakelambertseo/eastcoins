@@ -1,6 +1,9 @@
 /* ================================================================
    EASTCOIN — MUSIC PLAYER / SONG REQUEST OVERLAY
-   v0.59.1 floating-player hotfix
+   V2: reskinned onto v2/assets/css/tokens.css, mounted as a fixed
+   overlay owned by the outer V2 shell (not the old persistent-shell
+   view area), floating beside the persistent Twitch chat regardless
+   of which V2 route (Events, Player, MultiView, Picks) is active.
    ================================================================ */
 
 :root {
@@ -11,25 +14,25 @@
   display: none !important;
 }
 
-/*
-  The music player intentionally floats INSIDE .ec-persistent-view-area.
-  It no longer participates in the persistent shell grid, so opening it
-  never creates a tall empty black column between video and Twitch chat.
-*/
 .ec-music-dock {
-  position: absolute;
-  right: 14px;
+  position: fixed;
+  right: calc(360px + 14px);
   bottom: 14px;
-  z-index: 34;
-  width: min(var(--ec-music-width), calc(100% - 28px));
-  max-height: calc(100% - 28px);
+  z-index: 95;
+  width: min(var(--ec-music-width), calc(100vw - 388px));
+  max-height: calc(100vh - 28px);
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  border: 1px solid rgba(201,164,79,.2);
+  border: 1px solid rgba(229,185,43,.2);
   border-radius: 14px;
-  background: #050404;
+  background: var(--bg);
   box-shadow: 0 22px 60px rgba(0,0,0,.62);
+}
+
+body.ec-chat-hidden .ec-music-dock {
+  right: 14px;
+  width: min(var(--ec-music-width), calc(100vw - 28px));
 }
 
 .ec-music-panel {
@@ -41,8 +44,8 @@
   margin: 0;
   overflow: hidden;
   background:
-    radial-gradient(circle at 100% 0%, rgba(120,21,34,.18), transparent 34%),
-    linear-gradient(180deg, #100b0c, #050404 72%);
+    radial-gradient(circle at 100% 0%, rgba(142,18,49,.16), transparent 34%),
+    var(--panel);
 }
 
 .ec-music-head {
@@ -51,7 +54,7 @@
   justify-content: space-between;
   gap: 10px;
   padding: 11px 12px 10px;
-  border-bottom: 1px solid rgba(255,255,255,.065);
+  border-bottom: 1px solid var(--line);
 }
 
 .ec-music-title-wrap {
@@ -61,7 +64,7 @@
 .ec-music-kicker,
 .ec-music-mode {
   display: block;
-  color: #c9a44f;
+  color: var(--gold);
   font-size: .58rem;
   font-weight: 900;
   letter-spacing: .1em;
@@ -71,7 +74,7 @@
 .ec-music-head strong {
   display: block;
   margin-top: 2px;
-  color: #f3e7d2;
+  color: var(--text);
   font-size: .88rem;
 }
 
@@ -87,16 +90,16 @@
   width: 31px;
   height: 31px;
   padding: 0;
-  border: 1px solid rgba(255,255,255,.09);
+  border: 1px solid var(--line);
   border-radius: 8px;
-  color: #e8dac4;
-  background: rgba(255,255,255,.035);
+  color: var(--text);
+  background: #0a0a0a;
 }
 
 .ec-music-icon-button:hover,
 .ec-music-icon-button:focus-visible {
-  border-color: rgba(201,164,79,.35);
-  color: #fff0cd;
+  border-color: rgba(229,185,43,.35);
+  color: #f1e9e1;
   outline: none;
 }
 
@@ -125,10 +128,10 @@
   place-content: center;
   gap: 6px;
   padding: 24px;
-  color: #9d9385;
+  color: var(--muted);
   background:
-    radial-gradient(circle at 50% 40%, rgba(120,21,34,.24), transparent 36%),
-    #050505;
+    radial-gradient(circle at 50% 40%, rgba(142,18,49,.2), transparent 36%),
+    var(--bg);
   text-align: center;
   pointer-events: none;
 }
@@ -138,7 +141,7 @@
 }
 
 .ec-music-empty-player strong {
-  color: #efe0c7;
+  color: var(--text);
   font-size: .8rem;
 }
 
@@ -152,10 +155,10 @@
   width: calc(100% - 20px);
   margin: 9px 10px 0;
   padding: 9px 10px;
-  border: 1px solid rgba(201,164,79,.34);
+  border: 1px solid rgba(229,185,43,.34);
   border-radius: 9px;
-  color: #191005;
-  background: linear-gradient(180deg, #e0c36b, #b9913a);
+  color: #160f00;
+  background: linear-gradient(180deg, #f0cb46, #d4a80e);
   font-size: .7rem;
   font-weight: 900;
 }
@@ -166,7 +169,7 @@
 
 .ec-music-now {
   padding: 10px 12px 8px;
-  border-bottom: 1px solid rgba(255,255,255,.055);
+  border-bottom: 1px solid var(--line);
 }
 
 .ec-music-now-row {
@@ -189,13 +192,13 @@
 }
 
 .ec-music-now-copy strong {
-  color: #f4ead7;
+  color: var(--text);
   font-size: .74rem;
 }
 
 .ec-music-now-copy small {
   margin-top: 2px;
-  color: #857c71;
+  color: var(--muted);
   font-size: .59rem;
 }
 
@@ -204,26 +207,26 @@
   align-items: center;
   gap: 6px;
   margin-top: 7px;
-  color: #776f64;
+  color: var(--muted2);
   font-size: .57rem;
 }
 
 .ec-music-room-stats span + span::before {
   content: "•";
   margin-right: 6px;
-  color: #4f4942;
+  color: var(--muted2);
 }
 
 .ec-music-request {
   padding: 9px 12px 10px;
-  border-bottom: 1px solid rgba(255,255,255,.055);
+  border-bottom: 1px solid var(--line);
 }
 
 .ec-music-request label,
 .ec-music-nickname label {
   display: block;
   margin-bottom: 5px;
-  color: #8f8578;
+  color: var(--muted);
   font-size: .58rem;
   font-weight: 850;
 }
@@ -240,28 +243,28 @@
   min-width: 0;
   height: 34px;
   padding: 0 9px;
-  border: 1px solid rgba(255,255,255,.09);
+  border: 1px solid var(--line);
   border-radius: 8px;
-  color: #eee1ca;
-  background: #080707;
+  color: var(--text);
+  background: #050505;
   font-size: .67rem;
   outline: none;
 }
 
 .ec-music-request input:focus,
 .ec-music-nickname input:focus {
-  border-color: rgba(201,164,79,.45);
-  box-shadow: 0 0 0 2px rgba(201,164,79,.08);
+  border-color: rgba(229,185,43,.45);
+  box-shadow: 0 0 0 2px rgba(229,185,43,.08);
 }
 
 .ec-music-request button,
 .ec-music-skip {
   min-height: 34px;
   padding: 0 10px;
-  border: 1px solid rgba(201,164,79,.25);
+  border: 1px solid rgba(229,185,43,.25);
   border-radius: 8px;
-  color: #1a1005;
-  background: linear-gradient(180deg, #dfc36b, #b9933c);
+  color: #160f00;
+  background: linear-gradient(180deg, #f0cb46, #d4a80e);
   font-size: .63rem;
   font-weight: 900;
 }
@@ -269,13 +272,13 @@
 .ec-music-request-help {
   min-height: 15px;
   margin-top: 5px;
-  color: #6f675e;
+  color: var(--muted2);
   font-size: .55rem;
   line-height: 1.35;
 }
 
 .ec-music-request-help.is-error {
-  color: #d77783;
+  color: #f3c2cb;
 }
 
 .ec-music-queue-wrap {
@@ -292,8 +295,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px 6px;
-  color: #7f7569;
-  background: rgba(5,4,4,.96);
+  color: var(--muted);
+  background: rgba(5,5,5,.96);
   font-size: .56rem;
   font-weight: 900;
   letter-spacing: .08em;
@@ -320,8 +323,8 @@
   width: 22px;
   height: 22px;
   border-radius: 6px;
-  color: #a98b45;
-  background: rgba(201,164,79,.07);
+  color: var(--gold);
+  background: rgba(229,185,43,.07);
   font-size: .56rem;
   font-weight: 900;
 }
@@ -339,19 +342,19 @@
 }
 
 .ec-music-queue-copy strong {
-  color: #d9ccb9;
+  color: #ddd4cc;
   font-size: .63rem;
 }
 
 .ec-music-queue-copy small {
   margin-top: 2px;
-  color: #756d63;
+  color: var(--muted2);
   font-size: .53rem;
 }
 
 .ec-music-empty-queue {
   padding: 14px 12px 16px;
-  color: #6f675e;
+  color: var(--muted2);
   font-size: .6rem;
   text-align: center;
 }
@@ -362,7 +365,7 @@
   gap: 8px;
   align-items: end;
   padding: 8px 12px 10px;
-  border-top: 1px solid rgba(255,255,255,.055);
+  border-top: 1px solid var(--line);
   background: rgba(0,0,0,.18);
 }
 
@@ -381,15 +384,15 @@
 .ec-music-skip {
   height: 30px;
   min-height: 30px;
-  color: #e7dac6;
-  background: rgba(255,255,255,.035);
-  border-color: rgba(255,255,255,.09);
+  color: #a8a098;
+  background: #0a0a0a;
+  border-color: var(--line);
 }
 
 .ec-music-skip:hover,
 .ec-music-skip:focus-visible {
-  border-color: rgba(201,164,79,.32);
-  color: #fff0cd;
+  border-color: rgba(229,185,43,.32);
+  color: #f1e9e1;
   outline: none;
 }
 
@@ -398,18 +401,24 @@
   cursor: default;
 }
 
-.ec-music-control-active {
-  border-color: rgba(201,164,79,.35) !important;
-  background: rgba(201,164,79,.09) !important;
+.musicbtn.ec-music-control-active {
+  border-color: rgba(229,185,43,.35) !important;
+  color: var(--gold) !important;
+  background: rgba(229,185,43,.09) !important;
 }
 
-body.theater-mode .ec-music-dock {
-  display: none !important;
+@media (max-width: 1180px) {
+  .ec-music-dock {
+    right: calc(320px + 12px);
+  }
+
+  body.ec-chat-hidden .ec-music-dock {
+    right: 12px;
+  }
 }
 
 @media (max-width: 900px) {
   .ec-music-dock {
-    position: fixed;
     right: 12px;
     bottom: 12px;
     left: 12px;

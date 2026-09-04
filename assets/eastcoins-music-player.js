@@ -2,12 +2,9 @@
   "use strict";
 
   const body = document.body;
-  const viewArea = document.querySelector(".ec-persistent-view-area");
-  const controlsDrawer = document.getElementById("persistentControlsDrawer");
-  const controlsList = controlsDrawer?.querySelector(".ec-persistent-controls-list");
-  const controlsToggle = document.getElementById("persistentControlsToggle");
+  const controlButton = document.getElementById("musicBtn");
 
-  if (!body || !viewArea || !controlsList) return;
+  if (!body || !controlButton) return;
 
   const STORAGE_KEY = "eastcoinMusicLocalStateV1";
   const OPEN_KEY = "eastcoinMusicDockOpen";
@@ -33,7 +30,6 @@
 
   const clientId = getOrCreateClientId();
 
-  ensureControlButton();
   const dock = createDock();
   const els = collectElements();
   bindUi();
@@ -126,23 +122,6 @@
     };
   }
 
-  function ensureControlButton() {
-    if (document.getElementById("persistentMusicButton")) return;
-
-    const button = document.createElement("button");
-    button.id = "persistentMusicButton";
-    button.type = "button";
-    button.setAttribute("aria-label", "Music Player");
-    button.setAttribute("aria-pressed", "false");
-    button.innerHTML = `
-      <span class="ec-persistent-control-icon">♫</span>
-      <span><strong>Music Player</strong><small>Music + song requests</small></span>
-    `;
-
-    const gameButton = document.getElementById("persistentGameButton");
-    controlsList.insertBefore(button, gameButton || null);
-  }
-
   function createDock() {
     let existing = document.getElementById("eastcoinMusicDock");
     if (existing) return existing;
@@ -213,17 +192,18 @@
       </div>
     `;
 
-    // The music player belongs to the persistent video surface, but it is
-    // deliberately not a grid column. Keeping it inside the view area lets it
-    // float over the lower-right corner of the active video immediately to the
-    // left of Twitch chat, with no empty column above it.
-    viewArea.appendChild(section);
+    // Mounted directly on <body> as a fixed overlay rather than inside any
+    // one V2 route container (main / .workspace / #player) — that's what
+    // lets it stay open and keep playing across Events, the watch view, and
+    // MultiView/Picks (which live inside #workspaceFrame) without the outer
+    // shell ever unmounting it, the same way #persistentTwitchChat does.
+    body.appendChild(section);
     return section;
   }
 
   function collectElements() {
     return {
-      control: document.getElementById("persistentMusicButton"),
+      control: controlButton,
       close: document.getElementById("eastcoinMusicClose"),
       mode: document.getElementById("eastcoinMusicMode"),
       join: document.getElementById("eastcoinMusicJoin"),
@@ -248,7 +228,6 @@
 
     els.control?.addEventListener("click", () => {
       setDockOpen(!body.classList.contains("music-dock-open"));
-      closeControlsDrawer();
     });
 
     els.close?.addEventListener("click", () => setDockOpen(false));
@@ -281,14 +260,6 @@
     });
   }
 
-  function closeControlsDrawer() {
-    if (!controlsDrawer) return;
-    controlsDrawer.classList.remove("is-open");
-    controlsDrawer.setAttribute("aria-hidden", "true");
-    controlsToggle?.setAttribute("aria-expanded", "false");
-    controlsToggle?.setAttribute("aria-label", "Open view controls");
-  }
-
   function restoreDockState() {
     let open = false;
     try { open = localStorage.getItem(OPEN_KEY) === "true"; } catch {}
@@ -316,28 +287,9 @@
     const raw = String(value || "").trim();
     if (/^[A-Za-z0-9_-]{11}$/.test(raw)) return raw;
 
-    let url;
-    try { url = new URL(raw); } catch { return ""; }
-
-    const host = url.hostname.replace(/^www\./, "").toLowerCase();
-    let id = "";
-
-    if (host === "youtu.be") {
-      id = url.pathname.split("/").filter(Boolean)[0] || "";
-    } else if (
-      host === "youtube.com" ||
-      host === "m.youtube.com" ||
-      host === "music.youtube.com" ||
-      host.endsWith(".youtube.com")
-    ) {
-      if (url.pathname === "/watch") id = url.searchParams.get("v") || "";
-      else {
-        const parts = url.pathname.split("/").filter(Boolean);
-        if (["embed", "shorts", "live"].includes(parts[0])) id = parts[1] || "";
-      }
-    }
-
-    return /^[A-Za-z0-9_-]{11}$/.test(id) ? id : "";
+    // Shared with the top search bar, the Custom Stream modal and /submit
+    // (assets/eastcoins-youtube.js) so all four accept the same link shapes.
+    return window.EastcoinYouTube?.extractVideo?.(raw)?.id || "";
   }
 
   function submitRequest() {
@@ -522,6 +474,13 @@
     player = new YT.Player("eastcoinMusicYoutube", {
       width: "100%",
       height: "100%",
+      // Tried pointing this at youtube-nocookie.com (same fix used for the
+      // plain <iframe src> embeds elsewhere) but the IFrame Player API's
+      // widget script does not create a player at all when mixed with the
+      // standard youtube.com/iframe_api bootstrap — confirmed by testing,
+      // not by assumption. Left on youtube.com; only the Firefox-embed fix
+      // for direct <iframe> URLs (search bar, Custom Stream, /submit) uses
+      // the nocookie domain.
       playerVars: {
         playsinline: 1,
         rel: 0,

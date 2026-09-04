@@ -1015,7 +1015,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">122 major update groups</div>
+<div class="release-count">123 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -2505,10 +2505,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-09-04">September 4, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Custom Stream modal unwraps YouTube links too; embeds switch to youtube-nocookie.com</h2>
 <p>
@@ -2526,6 +2525,32 @@
     stays blocked in any iframe on any site — that restriction is YouTube's
     own and can't be overridden client-side, so the link opens the real
     watch page directly instead of the embed.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Music Player ported to the V2 shell</h2>
+<p>
+    The shared YouTube jukebox prototype (local queue, IFrame API playback,
+    optional Cloudflare Durable Object shared room with listener count and
+    skip voting) was built against the old persistent-shell UI and was never
+    actually reachable on the live site. It's now a native part of the V2
+    shell: a ♫ button in the top nav next to Settings opens a floating dock
+    beside Twitch chat, restyled onto the current dark/burgundy/gold tokens,
+    and it stays mounted across Events, the watch view, and MultiView/Picks
+    the same way persistent chat does. Song-link parsing now goes through
+    the shared <code>assets/eastcoins-youtube.js</code> module used
+    everywhere else. The Worker's Durable Object binding — missing from
+    <code>worker/wrangler.jsonc</code>, which is why shared listening never
+    actually worked — is fixed and verified locally with two simulated
+    listeners (queueing, broadcast, duplicate rejection, skip-vote quorum,
+    listener count all confirmed over real WebSocket messages). The old
+    install scripts, which blindly overwrote <code>index.html</code> with a
+    pre-V2 snapshot, are removed now that the feature ships natively.
 </p>
 </article>
 </section>

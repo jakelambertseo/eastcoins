@@ -1,10 +1,18 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "eastcoin-dlstreams-prototype",
+  "name": "eastcoin-music-room",
   "main": "src/index.js",
   "compatibility_date": "2026-08-21",
   "workers_dev": true,
   "preview_urls": true,
+  "durable_objects": {
+    "bindings": [
+      { "name": "MUSIC_ROOM", "class_name": "MusicRoom" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["MusicRoom"] }
+  ],
   "vars": {
     "ALLOWED_ORIGINS": "https://eastcoin.vip,https://www.eastcoin.vip,https://eastcoins.pages.dev,http://localhost:4321,http://127.0.0.1:4321"
   }

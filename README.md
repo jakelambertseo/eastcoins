@@ -1,98 +1,65 @@
-# EastCoin Music Player v0.59.1
+# EastCoin Music Player
 
-Built from GitHub `main` at commit:
+A shell-owned YouTube jukebox that floats beside the persistent Twitch chat, on the V2 shell (`index.html`). Opened from the ♫ button in the top nav, next to Settings — reachable from Events, the watch view, and MultiView/Picks alike, and stays mounted (and playing) across all of them the same way the persistent Twitch chat does.
 
-`64a8495ed182bb1bdd4ca13c35ebf1f5a71c4c6d` — **Fix player loading regression**
+## What it does
 
-## What this package adds
-
-- `Music Player` in the existing right-side **View Controls** drawer.
-- A 360px desktop music dock placed **between the live video and Twitch chat**.
-- Real YouTube playback using the YouTube IFrame Player API.
-- Pasted `youtube.com`, `music.youtube.com`, `youtu.be`, Shorts, Live and Embed links.
-- Automatic next-song playback.
-- Local persistent queue that works immediately with **no API key and no backend**.
+- Real YouTube playback via the YouTube IFrame Player API.
+- Accepts pasted `youtube.com/watch`, `music.youtube.com`, `youtu.be`, Shorts, Live and `/embed` links — parsed with the same shared `assets/eastcoins-youtube.js` module the search bar, Custom Stream modal, and `/submit` use.
+- Automatic next-song playback, with hardening against duplicate/stale YouTube `ended`/`error` callbacks.
+- **Local mode** (default): a per-browser queue in `localStorage` — works immediately, no backend or API key.
+- **Shared mode** (optional): a synced queue across everyone via the Cloudflare Worker + Durable Object in `worker/`, with live listener count and majority-vote skip.
 - Browser autoplay-block handling with a visible **Join music** button.
-- Nicknames / `Requested by` labels.
-- Optional synchronized shared queue using the included Cloudflare Worker + Durable Object + WebSockets.
-- Shared listener count and community skip voting when the Worker is enabled.
-- `changelog.html` update to document the release.
-- EastCoin version bump to **v0.59.1** on the main shell and MultiView footer.
+- Nicknames / "Requested by" labels, persisted per-browser.
 
-## Important architecture choice
+## Files
 
-The existing `assets/eastcoins-persistent-shell.js` and `assets/eastcoins-persistent-shell.css` are **not replaced**. The music feature is isolated in its own files so the current Events/player loader, Twitch chat persistence, compact nav, browse drawer and View Controls logic stay intact.
-
-## Install into your local EastCoin repo
-
-From PowerShell, after extracting this ZIP:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\install-music-player.ps1 -RepoPath "C:\path\to\eastcoins"
+```
+assets/eastcoins-music-player.js    — dock UI, local queue, YouTube IFrame API, WebSocket client
+assets/eastcoins-music-player.css   — styled against v2/assets/css/tokens.css (V2 dark/burgundy/gold)
+assets/eastcoins-music-config.js    — websocketUrl / room config, plus the ?music=on share-link opener
+worker/                             — optional Cloudflare Worker + Durable Object for shared mode
 ```
 
-At this point the Music Player already works in **Local** mode. You can test and deploy the static site before setting up the shared backend.
+`index.html` links all three assets and includes the `#musicBtn` toggle button — no install step, no separate package. It's part of the normal site now.
 
-## Shared queue setup — no YouTube API key required
+## Local mode (default, already live)
 
-The optional Worker lives at:
+Nothing to do — `assets/eastcoins-music-config.js` ships with `websocketUrl: ""`, which keeps every browser's queue independent. Good enough to use immediately.
 
-`worker/eastcoin-music-room`
+## Shared mode (optional — requires deploying the Worker yourself)
 
-After the installer copies it into your EastCoin repo:
+The Worker needs your own Cloudflare login, so this part can't be done for you — here's the exact process:
 
-```powershell
-cd C:\path\to\eastcoins\worker\eastcoin-music-room
+```bash
+cd worker
 npm install
 npx wrangler login
 npx wrangler deploy
 ```
 
-Wrangler will print a URL similar to:
+Wrangler will print a URL like:
 
-`https://eastcoin-music-room.<your-workers-subdomain>.workers.dev`
-
-Configure EastCoin with that URL:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File C:\path\to\EastCoin-Music-Player-v0.59.1\scripts\configure-music-worker.ps1 -RepoPath "C:\path\to\eastcoins" -WorkerUrl "https://eastcoin-music-room.<your-workers-subdomain>.workers.dev"
+```
+https://eastcoin-music-room.<your-workers-subdomain>.workers.dev
 ```
 
-The browser automatically converts the URL to WebSocket form and connects to `/room/main`.
+Then edit `assets/eastcoins-music-config.js` and set:
 
-## Test the Worker
-
-Open:
-
-`https://eastcoin-music-room.<your-workers-subdomain>.workers.dev/health`
-
-Expected JSON:
-
-```json
-{"ok":true,"service":"eastcoin-music-room"}
+```js
+websocketUrl: "https://eastcoin-music-room.<your-workers-subdomain>.workers.dev",
 ```
 
-Then open EastCoin in two different browser windows/devices, open **View Controls → Music Player**, and request a YouTube link. Both clients should receive the same queue/current song state.
+The client converts that to `wss://` automatically and connects to `/room/main`. Commit and push the change like any other edit — no script needed.
 
-## Git commands
+### Verify the Worker
 
-From the EastCoin repo root:
-
-```powershell
-git add index.html changelog.html multiview.html assets/eastcoins-music-player.css assets/eastcoins-music-player.js assets/eastcoins-music-config.js worker/eastcoin-music-room
-
-git commit -m "Add shared Music Player and song requests"
-
-git -c gc.auto=0 push
+```
+https://eastcoin-music-room.<your-workers-subdomain>.workers.dev/health
 ```
 
-### Commit note
+should return `{"ok":true,"service":"eastcoin-music-room"}`. Then open EastCoin in two different browsers/devices, open the ♫ Music Player, and request a link — both should show the same queue, and the header should read "Shared" instead of "Local".
 
-Adds the v0.59.1 shell-owned YouTube Music Player, pasted-link song requests, local queue fallback, optional Cloudflare Durable Object shared queue, listener/skip-vote synchronization, View Controls entry, and changelog/version updates without modifying the existing persistent-shell loader logic.
+### If you deploy from a non-default origin
 
-
-## v0.59.1 hotfix
-- Music Player is now a floating overlay over the lower-right of the video area, immediately left of Twitch chat. It no longer consumes a full shell grid column.
-- Local Up Next requests no longer restart the current YouTube video when added.
-- Local automatic queue advancement is hardened against duplicate/stale YouTube ended/error callbacks.
-- `index.html` uses `music2` asset versions to force browsers/CDNs to pick up the hotfix.
+The Worker only accepts WebSocket connections from an allow-listed `Origin`. `worker/wrangler.jsonc`'s `ALLOWED_ORIGINS` already covers `eastcoin.vip`, `www.eastcoin.vip`, `eastcoins.pages.dev`, and the common local-dev ports (`localhost`/`127.0.0.1` on `4321` and `8788`). Add any other origin you actually serve EastCoin from to that comma-separated list before deploying.
