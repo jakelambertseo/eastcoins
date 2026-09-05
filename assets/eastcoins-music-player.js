@@ -203,7 +203,9 @@
       requestedBy: String(item.requestedBy || "Guest").slice(0, 24),
       requestedByAvatar: sanitizeAvatarUrl(item.requestedByAvatar),
       addedAt: Number(item.addedAt) || Date.now(),
-      reactions: Math.max(0, Number(item.reactions) || 0)
+      reactions: Math.max(0, Number(item.reactions) || 0),
+      special: item.special === "rasputin" ? "rasputin" : null,
+      unskippable: Boolean(item.unskippable)
     };
   }
 
@@ -258,7 +260,7 @@
 
         <div class="ec-music-resize-handle" id="eastcoinMusicResizeHandle" aria-hidden="true"></div>
 
-        <div class="ec-music-youtube-shell">
+        <div class="ec-music-youtube-shell" id="eastcoinMusicYoutubeShell">
           <div id="eastcoinMusicYoutube"></div>
           <div class="ec-music-empty-player" id="eastcoinMusicEmptyPlayer">
             <strong>No song playing</strong>
@@ -328,6 +330,7 @@
       status: document.getElementById("eastcoinMusicStatus"),
       join: document.getElementById("eastcoinMusicJoin"),
       emptyPlayer: document.getElementById("eastcoinMusicEmptyPlayer"),
+      youtubeShell: document.getElementById("eastcoinMusicYoutubeShell"),
       nowLabel: document.getElementById("eastcoinMusicNowLabel"),
       nowAvatar: document.getElementById("eastcoinMusicNowAvatar"),
       nowTitle: document.getElementById("eastcoinMusicNowTitle"),
@@ -910,15 +913,18 @@
 
     els.emptyPlayer.hidden = Boolean(current);
     els.nowLabel.hidden = !current;
+    els.youtubeShell?.classList.toggle("is-special-rasputin", current?.special === "rasputin");
 
     const listeners = Math.max(1, Number(state.listeners) || 1);
     const skipThreshold = Math.max(1, Number(state.skipThreshold) || 1);
 
     els.skip.hidden = !current;
-    els.skip.disabled = !current || (remoteMode && connectionState !== "open");
-    els.skip.textContent = remoteMode && current && listeners > 1
-      ? `Skip ${state.skipVotes || 0}/${skipThreshold}`
-      : "Skip";
+    els.skip.disabled = !current || current?.unskippable || (remoteMode && connectionState !== "open");
+    els.skip.textContent = current?.unskippable
+      ? "🎉 Unskippable"
+      : remoteMode && current && listeners > 1
+        ? `Skip ${state.skipVotes || 0}/${skipThreshold}`
+        : "Skip";
 
     els.react.hidden = !current;
     els.react.disabled = !current || (remoteMode && connectionState !== "open");
@@ -930,11 +936,12 @@
     state.queue.forEach((item, index) => {
       const li = document.createElement("li");
       li.className = "ec-music-queue-item";
+      li.classList.toggle("is-special-rasputin", item.special === "rasputin");
       li.innerHTML = `
         <span class="ec-music-queue-num">${index + 1}</span>
         <span class="ec-music-queue-thumb">${thumbnailMarkup(item.videoId)}</span>
         <span class="ec-music-queue-copy">
-          <strong>${escapeHtml(item.title || "YouTube video")}</strong>
+          <strong>${item.special === "rasputin" ? "🎉 " : ""}${escapeHtml(item.title || "YouTube video")}</strong>
           <small>Requested by ${escapeHtml(item.requestedBy || "Guest")}</small>
         </span>
       `;

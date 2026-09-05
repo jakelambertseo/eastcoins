@@ -9,6 +9,16 @@ const MAX_USER_STATS = 500;
 const SE_POLL_INTERVAL_MS = 20 * 1000;
 const MAX_SE_SEEN_IDS = 500;
 const TWITCH_IRC_SKIP_COOLDOWN_MS = 5000;
+const RASPUTIN_COOLDOWN_MS = 60 * 1000;
+const RASPUTIN_ALLOWED_LOGINS = new Set(["andyreidisapawg", "zwades"]);
+// A fixed, hand-picked block — not resolved through search at request time —
+// so "!rasputin" always queues exactly this, the same way, every time.
+const RASPUTIN_BLOCK = [
+  { videoId: "Nl_Eo2QzqU4", title: "Boney M. - Rasputin (Official Audio)" },
+  { videoId: "FYGTT7YhywA", title: "Boney M. - Daddy Cool (Sopot Festival 1979)" },
+  { videoId: "ZaI2IlHwmgQ", title: "The Black Eyed Peas - Pump It (Official Music Video)" },
+  { videoId: "flDt8TC6Fok", title: "Don Diablo - Momentum | Official Music Video" }
+];
 const DEFAULT_ALLOWED_ORIGINS = new Set([
   "https://eastcoin.vip",
   "https://www.eastcoin.vip",
@@ -324,6 +334,7 @@ export class MusicRoom extends DurableObject {
     this.seenStreamElementsIds = new Set();
     this.twitchIrcSocket = null;
     this.lastChatSkipAt = 0;
+    this.lastRasputinAt = 0;
 
     this.ctx.getWebSockets().forEach((ws) => {
       const attachment = ws.deserializeAttachment();
@@ -381,7 +392,12 @@ export class MusicRoom extends DurableObject {
       requestedBy: this.safeName(item.requestedBy),
       requestedByAvatar: this.safeAvatarUrl(item.requestedByAvatar),
       addedAt: Number(item.addedAt) || Date.now(),
-      reactions: Math.max(0, Number(item.reactions) || 0)
+      reactions: Math.max(0, Number(item.reactions) || 0),
+      // Both only ever set by the server itself (the !rasputin block) — kept
+      // through storage round-trips so a DO restart mid-block doesn't quietly
+      // turn a "can't skip this" song into a skippable one.
+      special: item.special === "rasputin" ? "rasputin" : null,
+      unskippable: Boolean(item.unskippable)
     };
   }
 
@@ -666,17 +682,24 @@ export class MusicRoom extends DurableObject {
       if (parsed.command !== "PRIVMSG") continue;
 
       const text = String(parsed.params[parsed.params.length - 1] || "").trim();
-      if (!/^!skip\b/i.test(text)) continue;
-
       const login = String(parsed.prefix.split("!")[0] || "").trim().toLowerCase();
       if (!login) continue;
-      console.log(`Twitch IRC: !skip from ${login}`);
-      this.ctx.waitUntil(this.handleChatSkip(login));
+
+      if (/^!skip\b/i.test(text)) {
+        console.log(`Twitch IRC: !skip from ${login}`);
+        this.ctx.waitUntil(this.handleChatSkip(login));
+      } else if (/^!rasputin\b/i.test(text)) {
+        this.ctx.waitUntil(this.handleRasputinCommand(login));
+      }
     }
   }
 
   async handleChatSkip(login) {
     if (!this.state.current) return;
+    if (this.state.current.unskippable) {
+      console.log(`Twitch IRC: !skip from ${login} ignored — "${this.state.current.title}" is unskippable`);
+      return;
+    }
 
     // A simple cooldown, not a vote count — chat's "!skip" is meant as a
     // direct, immediate control (mirroring the trust already placed in the
@@ -689,6 +712,52 @@ export class MusicRoom extends DurableObject {
     console.log(`Twitch IRC: skipping "${this.state.current.title}" (requested by ${login})`);
     this.advance();
     await this.persistAndBroadcast();
+  }
+
+  // "!rasputin" — a fixed, hand-picked 4-song block only andyreidisapawg and
+  // zwades can trigger from chat. Jumps to the front of the queue (right
+  // after whatever's currently playing) rather than waiting behind it, and
+  // every song in it is flagged unskippable — see the skip-vote and
+  // handleChatSkip guards. A real, natural end-of-video (or a genuinely
+  // broken video) still advances past it normally; only a deliberate skip
+  // attempt is blocked.
+  async handleRasputinCommand(login) {
+    if (!RASPUTIN_ALLOWED_LOGINS.has(login)) {
+      console.log(`!rasputin attempted by ${login} — not authorized, ignoring`);
+      return;
+    }
+
+    const now = Date.now();
+    if (now - this.lastRasputinAt < RASPUTIN_COOLDOWN_MS) return;
+    this.lastRasputinAt = now;
+
+    console.log(`🎉 !rasputin triggered by ${login} — queuing the block`);
+
+    const items = RASPUTIN_BLOCK.map((song) => ({
+      id: crypto.randomUUID(),
+      videoId: song.videoId,
+      title: this.safeTitle(song.title),
+      requestedBy: this.safeName(login),
+      requestedByAvatar: "",
+      addedAt: Date.now(),
+      reactions: 0,
+      special: "rasputin",
+      unskippable: true
+    }));
+
+    let toQueue = items;
+    if (!this.state.current) {
+      this.state.current = items[0];
+      this.state.startedAt = Date.now();
+      this.state.skipVoters = [];
+      toQueue = items.slice(1);
+    }
+
+    this.state.queue = [...toQueue, ...this.state.queue].slice(0, MAX_QUEUE);
+    this.state.revision += 1;
+    items.forEach((item) => this.recordRequest(item, login));
+
+    await Promise.all([this.persistAndBroadcast(), this.persistHistoryAndStats()]);
   }
 
   listenerNames() {
@@ -861,6 +930,9 @@ export class MusicRoom extends DurableObject {
 
     if (message.type === "skip-vote") {
       if (!this.state.current || String(message.currentId || "") !== this.state.current.id) return;
+      if (this.state.current.unskippable) {
+        return this.sendError(ws, "This one can't be skipped 🎉");
+      }
 
       if (!this.state.skipVoters.includes(session.clientId)) {
         this.state.skipVoters.push(session.clientId);

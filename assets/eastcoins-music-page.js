@@ -159,6 +159,7 @@
       status: document.getElementById("pageStatus"),
       statusText: document.getElementById("pageStatusText"),
       youtube: document.getElementById("pageYoutube"),
+      videoShell: document.getElementById("pageVideoShell"),
       emptyPlayer: document.getElementById("pageEmptyPlayer"),
       join: document.getElementById("pageJoin"),
       mute: document.getElementById("pageMute"),
@@ -578,15 +579,18 @@
 
     els.emptyPlayer.hidden = Boolean(current);
     els.nowLabel.hidden = !current;
+    els.videoShell?.classList.toggle("is-special-rasputin", current?.special === "rasputin");
 
     const listeners = Math.max(1, Number(state.listeners) || 1);
     const skipThreshold = Math.max(1, Number(state.skipThreshold) || 1);
 
     els.skip.hidden = !current;
-    els.skip.disabled = !current || connectionState !== "open";
-    els.skip.textContent = current && listeners > 1
-      ? `Skip ${state.skipVotes || 0}/${skipThreshold}`
-      : "Skip";
+    els.skip.disabled = !current || current?.unskippable || connectionState !== "open";
+    els.skip.textContent = current?.unskippable
+      ? "🎉 Unskippable"
+      : current && listeners > 1
+        ? `Skip ${state.skipVotes || 0}/${skipThreshold}`
+        : "Skip";
 
     els.react.hidden = !current;
     els.react.disabled = !current || connectionState !== "open";
@@ -598,11 +602,12 @@
     state.queue.forEach((item, index) => {
       const li = document.createElement("li");
       li.className = "list-item";
+      li.classList.toggle("is-special-rasputin", item.special === "rasputin");
       li.innerHTML = `
         <span class="list-num">${index + 1}</span>
         <span class="queue-thumb">${thumbnailMarkup(item.videoId)}</span>
         <span class="list-copy">
-          <strong>${escapeHtml(item.title || "YouTube video")}</strong>
+          <strong>${item.special === "rasputin" ? "🎉 " : ""}${escapeHtml(item.title || "YouTube video")}</strong>
           <small>Requested by ${escapeHtml(item.requestedBy || "Guest")}</small>
         </span>
       `;
@@ -884,7 +889,9 @@
       requestedBy: String(item.requestedBy || "Guest").slice(0, 24),
       requestedByAvatar: sanitizeAvatarUrl(item.requestedByAvatar),
       addedAt: Number(item.addedAt) || Date.now(),
-      reactions: Math.max(0, Number(item.reactions) || 0)
+      reactions: Math.max(0, Number(item.reactions) || 0),
+      special: item.special === "rasputin" ? "rasputin" : null,
+      unskippable: Boolean(item.unskippable)
     };
   }
 

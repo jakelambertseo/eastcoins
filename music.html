@@ -167,6 +167,19 @@
   @media(max-width:900px){
     .layout{grid-template-columns:1fr}
   }
+
+  /* ---- !rasputin special block ---- */
+  @keyframes rasputin-glow{
+    0%,100%{box-shadow:0 0 0 3px #ff2d75,0 0 26px 6px rgba(255,45,117,.55)}
+    25%{box-shadow:0 0 0 3px #ffd23f,0 0 26px 6px rgba(255,210,63,.55)}
+    50%{box-shadow:0 0 0 3px #3ddc84,0 0 26px 6px rgba(61,220,132,.55)}
+    75%{box-shadow:0 0 0 3px #3d9bff,0 0 26px 6px rgba(61,155,255,.55)}
+  }
+  .video-shell.is-special-rasputin{border-radius:10px;animation:rasputin-glow 2s ease-in-out infinite}
+  .list-item.is-special-rasputin{border-radius:9px;animation:rasputin-glow 2.6s ease-in-out infinite}
+  @media(prefers-reduced-motion:reduce){
+    .video-shell.is-special-rasputin,.list-item.is-special-rasputin{animation:none;box-shadow:0 0 0 3px #ffd23f,0 0 26px 6px rgba(255,210,63,.5)}
+  }
 </style>
 </head>
 <body>
@@ -195,7 +208,7 @@
   <div class="layout">
     <section class="main-col">
       <div class="card" style="margin-bottom:18px">
-        <div class="video-shell">
+        <div class="video-shell" id="pageVideoShell">
           <div id="pageYoutube"></div>
           <div class="empty-player" id="pageEmptyPlayer">
             <strong>No song playing</strong>
@@ -260,6 +273,6 @@
 </aside>
 
 <script defer src="/assets/eastcoins-music-config.js?v=2"></script>
-<script defer src="/assets/eastcoins-music-page.js?v=9"></script>
+<script defer src="/assets/eastcoins-music-page.js?v=10"></script>
 </body>
 </html>

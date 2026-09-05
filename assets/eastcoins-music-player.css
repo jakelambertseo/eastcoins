@@ -917,3 +917,30 @@ body.ec-chat-hidden .ec-music-dock {
     max-height: 220px;
   }
 }
+
+/* ---------------- !rasputin special block ---------------- */
+
+@keyframes ec-rasputin-glow {
+  0%, 100% { box-shadow: 0 0 0 3px #ff2d75, 0 0 26px 6px rgba(255,45,117,.55); }
+  25%      { box-shadow: 0 0 0 3px #ffd23f, 0 0 26px 6px rgba(255,210,63,.55); }
+  50%      { box-shadow: 0 0 0 3px #3ddc84, 0 0 26px 6px rgba(61,220,132,.55); }
+  75%      { box-shadow: 0 0 0 3px #3d9bff, 0 0 26px 6px rgba(61,155,255,.55); }
+}
+
+.ec-music-youtube-shell.is-special-rasputin {
+  border-radius: 8px;
+  animation: ec-rasputin-glow 2s ease-in-out infinite;
+}
+
+.ec-music-queue-item.is-special-rasputin {
+  border-radius: 8px;
+  animation: ec-rasputin-glow 2.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ec-music-youtube-shell.is-special-rasputin,
+  .ec-music-queue-item.is-special-rasputin {
+    animation: none;
+    box-shadow: 0 0 0 3px #ffd23f, 0 0 26px 6px rgba(255,210,63,.5);
+  }
+}
