@@ -14,6 +14,12 @@
     { "tag": "v1", "new_sqlite_classes": ["MusicRoom"] }
   ],
   "vars": {
-    "ALLOWED_ORIGINS": "https://eastcoin.vip,https://www.eastcoin.vip,https://eastcoins.pages.dev,http://localhost:4321,http://127.0.0.1:4321"
+    "ALLOWED_ORIGINS": "https://eastcoin.vip,https://www.eastcoin.vip,https://eastcoins.pages.dev,http://localhost:4321,http://127.0.0.1:4321",
+    // StreamElements' internal channel id for zwades (resolved from the
+    // public https://api.streamelements.com/kappa/v2/channels/zwades
+    // lookup) — not a secret, just an opaque identifier. Room "!sr" chat
+    // requests get synced in from this channel's public media-request
+    // queue. Leave blank to disable the sync entirely.
+    "STREAMELEMENTS_CHANNEL_ID": "65107c296068cc894e4ac7b9"
   }
 }

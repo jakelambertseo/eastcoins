@@ -7,6 +7,8 @@ const SKIP_VOTE_THRESHOLD = 3;
 const MAX_VIDEO_SECONDS = 600;
 const MAX_HISTORY = 300;
 const MAX_USER_STATS = 500;
+const SE_POLL_INTERVAL_MS = 20 * 1000;
+const MAX_SE_SEEN_IDS = 500;
 const DEFAULT_ALLOWED_ORIGINS = new Set([
   "https://eastcoin.vip",
   "https://www.eastcoin.vip",
@@ -159,6 +161,23 @@ async function searchYouTube(query, apiKey) {
   return { results };
 }
 
+// StreamElements' own "!sr" media-request queue for a channel, read from its
+// public (no-auth, not CORS-enabled — this only ever runs server-side)
+// endpoint. Lets chat requests land in the shared EastCoin queue without
+// anyone needing to also use the site's search bar.
+async function fetchStreamElementsQueue(channelId) {
+  try {
+    const response = await fetch(
+      `https://api.streamelements.com/kappa/v2/songrequest/${encodeURIComponent(channelId)}/queue/public`
+    );
+    if (!response.ok) return [];
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -250,6 +269,7 @@ export class MusicRoom extends DurableObject {
     // In-memory only (not persisted to storage) — a DO restart resets everyone's
     // hourly count, which is an acceptable tradeoff for a small friend-group room.
     this.requestLog = new Map();
+    this.seenStreamElementsIds = new Set();
 
     this.ctx.getWebSockets().forEach((ws) => {
       const attachment = ws.deserializeAttachment();
@@ -277,6 +297,11 @@ export class MusicRoom extends DurableObject {
           const sanitized = this.sanitizeUserStat(login, entry);
           if (sanitized) this.userStats.set(login, sanitized);
         });
+      }
+
+      const storedSeenIds = await this.ctx.storage.get("music-se-seen-ids");
+      if (Array.isArray(storedSeenIds)) {
+        this.seenStreamElementsIds = new Set(storedSeenIds.map(String).slice(-MAX_SE_SEEN_IDS));
       }
     });
   }
@@ -374,6 +399,23 @@ export class MusicRoom extends DurableObject {
     };
   }
 
+  // Shared by a normal "add" request and the StreamElements chat-request
+  // sync below — both just need the current/queue placement and history/stat
+  // bookkeeping, they only differ in where the item and its verified
+  // requester came from.
+  enqueueItem(item, login) {
+    if (!this.state.current) {
+      this.state.current = item;
+      this.state.startedAt = Date.now();
+      this.state.skipVoters = [];
+    } else {
+      this.state.queue.push(item);
+    }
+
+    this.state.revision += 1;
+    this.recordRequest(item, login);
+  }
+
   recordRequest(item, login) {
     this.history.push({
       id: item.id,
@@ -414,6 +456,83 @@ export class MusicRoom extends DurableObject {
   async persistHistoryAndStats() {
     await this.ctx.storage.put("music-history", this.history);
     await this.ctx.storage.put("music-user-stats", Object.fromEntries(this.userStats));
+  }
+
+  // Pulls new "!sr" requests out of StreamElements' own public queue and
+  // drops them into the shared EastCoin queue, so chat doesn't need to also
+  // use the site's search bar. Runs on a self-rearming alarm (see alarm()
+  // below) rather than trusting any client to trigger it.
+  async pollStreamElements() {
+    const channelId = String(this.env.STREAMELEMENTS_CHANNEL_ID || "").trim();
+    if (!channelId) return;
+
+    const queue = await fetchStreamElementsQueue(channelId);
+    if (!queue.length) return;
+
+    let changed = false;
+
+    for (const entry of queue) {
+      const seId = String(entry?._id || "");
+      if (!seId || this.seenStreamElementsIds.has(seId)) continue;
+      this.seenStreamElementsIds.add(seId);
+
+      const videoId = String(entry?.videoId || "").trim();
+      const login = String(entry?.user?.username || "").trim().toLowerCase();
+      const durationSeconds = Number(entry?.duration);
+
+      const alreadyQueued =
+        this.state.current?.videoId === videoId ||
+        this.state.queue.some((queued) => queued.videoId === videoId);
+      const queueFull = this.state.queue.length >= MAX_QUEUE && this.state.current;
+      const tooLong = Number.isFinite(durationSeconds) && durationSeconds > MAX_VIDEO_SECONDS;
+
+      if (!/^[A-Za-z0-9_-]{11}$/.test(videoId) || !login || alreadyQueued || queueFull || tooLong) {
+        continue;
+      }
+
+      const item = {
+        id: crypto.randomUUID(),
+        videoId,
+        title: this.safeTitle(entry.title),
+        requestedBy: this.safeName(login),
+        requestedByAvatar: "",
+        addedAt: Date.now(),
+        reactions: 0
+      };
+
+      this.enqueueItem(item, login);
+      changed = true;
+    }
+
+    if (this.seenStreamElementsIds.size > MAX_SE_SEEN_IDS) {
+      // A Set preserves insertion order, so slicing from the front drops
+      // the oldest entries first.
+      this.seenStreamElementsIds = new Set([...this.seenStreamElementsIds].slice(-MAX_SE_SEEN_IDS));
+    }
+    await this.ctx.storage.put("music-se-seen-ids", [...this.seenStreamElementsIds]);
+
+    if (changed) {
+      await Promise.all([this.persistAndBroadcast(), this.persistHistoryAndStats()]);
+    }
+  }
+
+  // Arms the polling alarm if one isn't already scheduled. Called whenever a
+  // listener connects, since the alarm intentionally stops rearming itself
+  // once the room is empty (see alarm()) to avoid polling StreamElements
+  // around the clock for a room nobody is in.
+  async ensurePolling() {
+    if (!this.env.STREAMELEMENTS_CHANNEL_ID) return;
+    const existing = await this.ctx.storage.getAlarm();
+    if (existing === null) {
+      await this.ctx.storage.setAlarm(Date.now() + SE_POLL_INTERVAL_MS);
+    }
+  }
+
+  async alarm() {
+    await this.pollStreamElements();
+    if (this.sessions.size > 0) {
+      await this.ctx.storage.setAlarm(Date.now() + SE_POLL_INTERVAL_MS);
+    }
   }
 
   listenerNames() {
@@ -467,6 +586,7 @@ export class MusicRoom extends DurableObject {
 
     this.sendState(server);
     this.broadcastState();
+    await this.ensurePolling();
 
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -569,16 +689,7 @@ export class MusicRoom extends DurableObject {
         reactions: 0
       };
 
-      if (!this.state.current) {
-        this.state.current = item;
-        this.state.startedAt = Date.now();
-        this.state.skipVoters = [];
-      } else {
-        this.state.queue.push(item);
-      }
-
-      this.state.revision += 1;
-      this.recordRequest(item, auth.login);
+      this.enqueueItem(item, auth.login);
       await Promise.all([this.persistAndBroadcast(), this.persistHistoryAndStats()]);
       return;
     }

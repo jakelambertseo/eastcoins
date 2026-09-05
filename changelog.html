@@ -71,7 +71,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">137 major update groups</div>
+<div class="release-count">138 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1937,10 +1937,9 @@
     queue a song.
 </p>
 </article>
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-09-04">September 4, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Music Room now shows who's actually listening</h2>
 <p>
@@ -1952,6 +1951,24 @@
     the same way it already double-checks who's actually requesting a
     song, so nobody can put a name in that list that isn't really them.
     Guests still count toward the total, just without a name attached.
+</p>
+</article>
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Twitch chat's "!sr" song requests now land in the shared queue</h2>
+<p>
+    Song requests made straight in Twitch chat (StreamElements' own
+    <code>!sr</code> media-request bot) now show up automatically in
+    EastCoin's shared Music Room queue — no need to also paste or search
+    for it on the site. The Worker checks the channel's public request
+    queue every 20 seconds while anyone's connected to the room, and
+    adds anything new it hasn't already queued, skipping duplicates and
+    anything over the room's length limit. This only runs while at
+    least one listener is actually in the room, so it doesn't poll
+    around the clock for no reason.
 </p>
 </article>
 </section>
