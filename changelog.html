@@ -71,7 +71,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">134 major update groups</div>
+<div class="release-count">135 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1869,10 +1869,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-09-04">September 4, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Music Room page: full-height Stream Chat, tighter header</h2>
 <p>
@@ -1890,6 +1889,37 @@
     beneath it — so combined with reduced top padding, the video player
     now starts well within the fold instead of requiring a scroll to
     reach it.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Music Room player locked down; search bar takes over requesting</h2>
+<p>
+    The shared jukebox player (both the floating dock and
+    <a href="/music">/music</a>) no longer shows YouTube's own seek bar or
+    play/pause button, and keyboard shortcuts for the same are disabled
+    too. The room's playback position is entirely server-driven, so
+    letting one listener scrub or pause only ever desynced their own
+    view — removing the control avoids that "did I just break something"
+    moment for something that was never actually doing anything useful.
+    On <a href="/music">/music</a>, the separate paste-a-link card is
+    gone; the search bar at the top now accepts a raw YouTube URL
+    directly (detected instantly, no need to search for it) as well as a
+    plain search query, and every result — searched or pasted — adds to
+    the queue the same way. The "Requesting as" identity now lives inside
+    the search card instead of its own row. The Up Next queue also moved
+    into the sidebar, above Top Requesters, next to the video instead of
+    stacked beneath the request form. The BetterTTV emote already used in
+    the floating dock's header now appears next to the Music Room title
+    too. Verified directly: pasting a full YouTube URL correctly bypasses
+    search and renders as a single ready-to-add result with its real
+    title, and the embedded player's own URL confirms
+    <code>controls=0&amp;disablekb=1</code> are actually being applied,
+    not just requested.
 </p>
 </article>
 </section>

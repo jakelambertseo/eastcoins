@@ -143,9 +143,6 @@
       react: document.getElementById("pageReact"),
       reactCount: document.getElementById("pageReactCount"),
       identity: document.getElementById("pageIdentity"),
-      url: document.getElementById("pageUrl"),
-      add: document.getElementById("pageAdd"),
-      help: document.getElementById("pageHelp"),
       queue: document.getElementById("pageQueue"),
       queueCount: document.getElementById("pageQueueCount"),
       emptyQueue: document.getElementById("pageEmptyQueue"),
@@ -185,11 +182,6 @@
       try { player?.playVideo(); } catch {}
     });
 
-    els.add?.addEventListener("click", submitRequest);
-    els.url?.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") submitRequest();
-    });
-
     els.skip?.addEventListener("click", voteSkip);
     els.react?.addEventListener("click", sendReaction);
 
@@ -217,10 +209,20 @@
     els.search?.addEventListener("input", () => {
       window.clearTimeout(searchTimer);
       const query = els.search.value.trim();
+
       if (query.length < SEARCH_MIN_LENGTH) {
         clearSearchResults();
         return;
       }
+
+      // A pasted YouTube link resolves to a real video ID immediately — skip
+      // the search API entirely and show it as a single ready-to-add result.
+      const pastedId = normalizeYouTubeId(query);
+      if (pastedId) {
+        runPastedLink(pastedId);
+        return;
+      }
+
       searchTimer = window.setTimeout(() => runSearch(query), SEARCH_DEBOUNCE_MS);
     });
 
@@ -289,6 +291,27 @@
     }
   }
 
+  let pastedLinkToken = 0;
+
+  async function runPastedLink(videoId) {
+    const token = ++pastedLinkToken;
+
+    if (els.searchHelp) {
+      els.searchHelp.textContent = "Looking up that link…";
+      els.searchHelp.classList.remove("is-error");
+    }
+
+    const title = await fetchVideoTitle(videoId);
+    if (token !== pastedLinkToken) return; // input changed again while this was in flight
+
+    renderSearchResults([{
+      videoId,
+      title: title || "YouTube video",
+      channelTitle: "",
+      thumbnail: `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`
+    }]);
+  }
+
   function renderSearchResults(results) {
     if (!els.searchResults) return;
 
@@ -339,8 +362,9 @@
   }
 
   function setHelp(message, error = false) {
-    els.help.textContent = message;
-    els.help.classList.toggle("is-error", Boolean(error));
+    if (!els.searchHelp) return;
+    els.searchHelp.textContent = message;
+    els.searchHelp.classList.toggle("is-error", Boolean(error));
   }
 
   function normalizeYouTubeId(value) {
@@ -366,22 +390,6 @@
     }
   }
 
-  async function submitRequest() {
-    if (!currentUser) {
-      setHelp("Log in with Twitch above to request a song.", true);
-      return;
-    }
-
-    const videoId = normalizeYouTubeId(els.url.value);
-    if (!videoId) {
-      setHelp("That does not look like a valid YouTube video link.", true);
-      return;
-    }
-
-    await sendAdd(videoId, await fetchVideoTitle(videoId));
-    els.url.value = "";
-  }
-
   async function requestAgain(videoId, title) {
     if (!currentUser) {
       setHelp("Log in with Twitch above to request a song.", true);
@@ -391,15 +399,11 @@
   }
 
   async function sendAdd(videoId, title) {
-    els.add.disabled = true;
-    els.add.textContent = "Adding…";
+    setHelp("Adding…");
 
     if (!musicAuthToken || Date.now() > musicAuthTokenExpiresAt - 60000) {
       await fetchMusicAuthToken();
     }
-
-    els.add.disabled = false;
-    els.add.textContent = "Add to Queue";
 
     if (!socket || socket.readyState !== WebSocket.OPEN) {
       setHelp("Shared music room is reconnecting. Try again in a moment.", true);
@@ -418,6 +422,8 @@
       requestedByAvatar: identityAvatar(),
       token: musicAuthToken
     }));
+
+    setHelp("Added to the queue.");
   }
 
   function sendReaction() {
@@ -498,7 +504,7 @@
       els.nowAvatar.hidden = false;
     } else {
       els.nowTitle.textContent = "Nothing queued";
-      els.nowMeta.textContent = "Paste a YouTube URL to start";
+      els.nowMeta.textContent = "Search for a song above to start";
       els.nowAvatar.hidden = true;
     }
 
@@ -537,11 +543,9 @@
 
     els.emptyQueue.hidden = state.queue.length > 0;
 
-    const gated = !currentUser;
-    els.url.disabled = gated;
-    els.url.placeholder = gated ? "Log in with Twitch to request a song" : "Paste a YouTube link";
-    els.add.disabled = gated;
-
+    // Searching/pasting a link stays open to guests — each result button is
+    // already individually gated (see renderSearchResults) with its own
+    // "Log in" prompt, so there's no need to block the search box itself.
     els.join.classList.toggle("is-visible", autoplayBlocked && Boolean(current));
 
     renderHistory();
@@ -637,7 +641,14 @@
     player = new YT.Player("pageYoutube", {
       width: "100%",
       height: "100%",
-      playerVars: { playsinline: 1, rel: 0, origin: window.location.origin },
+      // controls:0 hides YouTube's own seek bar/play-pause button, and
+      // disablekb:1 blocks spacebar/arrow-key shortcuts for the same — the
+      // shared queue's position is server-driven, so letting one listener
+      // scrub or pause the video would only desync their own view anyway
+      // (see syncPlayerToState), but removing the affordance avoids the
+      // "did I break something" confusion of a control that quietly does
+      // nothing useful.
+      playerVars: { playsinline: 1, rel: 0, controls: 0, disablekb: 1, origin: window.location.origin },
       events: {
         onReady: (event) => {
           playerReady = true;

@@ -866,9 +866,17 @@
       // not by assumption. Left on youtube.com; only the Firefox-embed fix
       // for direct <iframe> URLs (search bar, Custom Stream, /submit) uses
       // the nocookie domain.
+      // controls:0 hides YouTube's own seek bar/play-pause button, and
+      // disablekb:1 blocks spacebar/arrow-key shortcuts for the same — the
+      // shared queue's position is server-driven, so scrubbing or pausing
+      // only desyncs the one listener who does it (see syncPlayerToState),
+      // but removing the affordance avoids the "did I break something"
+      // confusion of a control that quietly does nothing useful.
       playerVars: {
         playsinline: 1,
         rel: 0,
+        controls: 0,
+        disablekb: 1,
         origin: window.location.origin
       },
       events: {

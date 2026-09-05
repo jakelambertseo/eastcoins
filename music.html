@@ -43,7 +43,8 @@
   .page-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
   .eyebrow{display:inline-flex;align-items:center;gap:8px;color:#887964;font-size:.68rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
   .eyebrow-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 4px rgba(229,185,43,.09)}
-  .page-head h1{margin:0;color:var(--text);font-size:clamp(1.3rem,2.2vw,1.6rem);line-height:1;letter-spacing:-.03em}
+  .page-head h1{display:flex;align-items:center;gap:8px;margin:0;color:var(--text);font-size:clamp(1.3rem,2.2vw,1.6rem);line-height:1;letter-spacing:-.03em}
+  .title-icon{width:22px;height:22px;flex:0 0 auto;border-radius:5px;object-fit:contain}
 
   /* ---- search-to-add bar ---- */
   .search-card{margin-bottom:14px}
@@ -115,21 +116,12 @@
   @keyframes reactburst{0%{opacity:0;transform:translate(-50%,4px) scale(.6)}18%{opacity:1;transform:translate(-50%,-4px) scale(1.2)}100%{opacity:0;transform:translate(-50%,-36px) scale(1)}}
   @media(prefers-reduced-motion:reduce){.reaction-burst{animation:none;opacity:0}}
 
-  /* ---- request ---- */
+  /* ---- identity (lives inside the search card now) ---- */
   .identity-row{display:flex;align-items:center;gap:9px;margin-bottom:12px;color:var(--muted);font-size:.78rem}
   .identity-row strong{color:var(--text)}
   .identity-avatar{width:26px;height:26px;font-size:.68rem}
   .identity-login{margin-left:auto;color:var(--gold);font-weight:900;text-decoration:none;white-space:nowrap}
   .identity-login:hover,.identity-login:focus-visible{text-decoration:underline;outline:none}
-
-  .request-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px}
-  .request-row input{width:100%;min-width:0;height:44px;padding:0 13px;border:1px solid var(--line);border-radius:9px;color:var(--text);background:#050505;font-size:.85rem;outline:none}
-  .request-row input:focus{border-color:rgba(229,185,43,.45);box-shadow:0 0 0 2px rgba(229,185,43,.08)}
-  .request-row input:disabled{opacity:.5;cursor:not-allowed}
-  .request-row button{min-height:44px;padding:0 20px;border:1px solid rgba(229,185,43,.25);border-radius:9px;color:#160f00;background:linear-gradient(180deg,#f0cb46,#d4a80e);font-size:.85rem;font-weight:900}
-  .request-row button[disabled]{opacity:.6}
-  .request-help{min-height:16px;margin-top:9px;color:var(--muted2);font-size:.72rem;line-height:1.4}
-  .request-help.is-error{color:#f3c2cb}
 
   /* ---- lists (queue / history / leaderboard) ---- */
   .card-head{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--line);color:var(--muted);font-size:.68rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
@@ -181,12 +173,13 @@
 <main>
   <header class="page-head">
     <div class="eyebrow"><span class="eyebrow-dot"></span>EASTCOIN JUKEBOX</div>
-    <h1>Music Room</h1>
+    <h1><img class="title-icon" src="https://cdn.betterttv.net/emote/635dd342ed98a03da0ce387d/3x.webp" alt="">Music Room</h1>
   </header>
 
   <div class="card card-pad search-card">
+    <div class="identity-row" id="pageIdentity"></div>
     <div class="search-row">
-      <input id="pageSearch" type="text" autocomplete="off" placeholder="Search YouTube for a song to add…">
+      <input id="pageSearch" type="text" autocomplete="off" placeholder="Search YouTube for a song or paste a URL">
     </div>
     <div class="search-help" id="pageSearchHelp"></div>
     <ol class="search-results" id="pageSearchResults" hidden></ol>
@@ -199,7 +192,7 @@
           <div id="pageYoutube"></div>
           <div class="empty-player" id="pageEmptyPlayer">
             <strong>No song playing</strong>
-            <small>Paste a YouTube link below to start the room.</small>
+            <small>Search for a song above to start the room.</small>
           </div>
         </div>
 
@@ -216,7 +209,7 @@
             <span class="now-avatar" id="pageNowAvatar" hidden></span>
             <div class="now-copy">
               <strong id="pageNowTitle">Nothing queued</strong>
-              <small id="pageNowMeta">Paste a YouTube URL to start</small>
+              <small id="pageNowMeta">Search for a song above to start</small>
             </div>
             <div class="now-actions">
               <button class="pillbtn" id="pageSkip" type="button" hidden>Skip</button>
@@ -226,23 +219,15 @@
         </div>
       </div>
 
-      <div class="card card-pad" style="margin-bottom:18px">
-        <div class="identity-row" id="pageIdentity"></div>
-        <div class="request-row">
-          <input id="pageUrl" type="url" inputmode="url" autocomplete="off" placeholder="Paste a YouTube link">
-          <button id="pageAdd" type="button">Add to Queue</button>
-        </div>
-        <div class="request-help" id="pageHelp">youtube.com, music.youtube.com and youtu.be links work.</div>
-      </div>
+    </section>
 
+    <aside class="side-col">
       <div class="card">
         <div class="card-head"><span>Up Next</span><span id="pageQueueCount">0</span></div>
         <ol class="list" id="pageQueue"></ol>
         <div class="empty-state" id="pageEmptyQueue">Queue is empty.</div>
       </div>
-    </section>
 
-    <aside class="side-col">
       <div class="card">
         <div class="card-head"><span>Top Requesters</span><span id="pageLeaderboardTotal">0</span></div>
         <ol class="list" id="pageLeaderboard"></ol>
@@ -268,6 +253,6 @@
 </aside>
 
 <script defer src="/assets/eastcoins-music-config.js?v=2"></script>
-<script defer src="/assets/eastcoins-music-page.js?v=3"></script>
+<script defer src="/assets/eastcoins-music-page.js?v=4"></script>
 </body>
 </html>
