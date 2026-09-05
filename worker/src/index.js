@@ -3,7 +3,6 @@ import { DurableObject } from "cloudflare:workers";
 const MAX_QUEUE = 25;
 const REQUEST_LIMIT = 25;
 const REQUEST_LIMIT_WINDOW_MS = 60 * 60 * 1000;
-const SKIP_VOTE_THRESHOLD = 3;
 const MAX_VIDEO_SECONDS = 600;
 const MAX_HISTORY = 300;
 const MAX_USER_STATS = 500;
@@ -160,6 +159,16 @@ async function searchYouTube(query, apiKey) {
   try { await cache.put(cacheKey, cacheResponse); } catch {}
 
   return { results };
+}
+
+// With 2 or fewer listeners, everyone has to agree to skip. Above that, it's
+// a simple majority (strictly more than half) rather than a fixed vote
+// count, so a packed room doesn't get stuck needing the same 3 votes a
+// nearly-empty one does: 3 listeners -> 2 votes, 4 -> 3, 6 -> 4, and so on.
+function skipThresholdFor(listeners) {
+  const count = Math.max(1, Number(listeners) || 1);
+  if (count <= 2) return count;
+  return Math.floor(count / 2) + 1;
 }
 
 // StreamElements' own "!sr" media-request queue for a channel, read from its
@@ -704,7 +713,7 @@ export class MusicRoom extends DurableObject {
       listeners,
       listenerNames: this.listenerNames(),
       skipVotes: this.state.skipVoters.length,
-      skipThreshold: Math.min(SKIP_VOTE_THRESHOLD, Math.max(1, listeners))
+      skipThreshold: skipThresholdFor(listeners)
     };
   }
 
@@ -857,12 +866,7 @@ export class MusicRoom extends DurableObject {
         this.state.skipVoters.push(session.clientId);
       }
 
-      // The threshold scales down with the room size specifically so a
-      // lone listener (or two) isn't stuck unable to ever reach 3 votes —
-      // but that also means a single click skips outright whenever the
-      // room has 1-2 people in it, which can look "random" to whoever
-      // didn't click it.
-      const threshold = Math.min(SKIP_VOTE_THRESHOLD, Math.max(1, this.sessions.size));
+      const threshold = skipThresholdFor(this.sessions.size);
       if (this.state.skipVoters.length >= threshold) {
         console.log(
           `Skip vote: threshold reached (${this.state.skipVoters.length}/${threshold} of ${this.sessions.size} listeners) — skipping "${this.state.current.title}"`
