@@ -569,7 +569,12 @@
     try {
       const playerState = player.getPlayerState();
       const localTime = player.getCurrentTime();
-      if (playerState === YT.PlayerState.PLAYING && Math.abs(localTime - elapsed) > 4) {
+      const duration = player.getDuration();
+      // See the matching comment in assets/eastcoins-music-player.js: seeking
+      // to/past a video's real duration while the "ended, advance" round-trip
+      // is still in flight can make YouTube snap back and replay from 0.
+      const pastEnd = Number.isFinite(duration) && duration > 0 && elapsed >= duration - 0.5;
+      if (!pastEnd && playerState === YT.PlayerState.PLAYING && Math.abs(localTime - elapsed) > 4) {
         player.seekTo(elapsed, true);
       }
     } catch {}
@@ -578,7 +583,17 @@
   function startProgressSync() {
     window.clearInterval(progressTimer);
     progressTimer = window.setInterval(() => {
-      if (remoteMode && state.current) syncPlayerToState(false);
+      if (remoteMode && state.current) {
+        syncPlayerToState(false);
+        // Safety net — see the matching comment in
+        // assets/eastcoins-music-player.js: catches a genuinely-finished
+        // video whose ENDED event or "ended" message never made it through.
+        try {
+          if (playerReady && player && player.getPlayerState() === YT.PlayerState.ENDED) {
+            handleEnded(state.current.id);
+          }
+        } catch {}
+      }
       try {
         if (playerReady && player && player.getVolume) {
           localStorage.setItem(VOLUME_KEY, String(player.getVolume()));

@@ -71,7 +71,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">130 major update groups</div>
+<div class="release-count">131 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1778,10 +1778,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-09-04">September 4, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Fixed the Music Player autoplaying for every visitor on load</h2>
 <p>
@@ -1799,6 +1798,32 @@
     in the background. Verified directly: with dock-open state cleared, no
     player and no video element exist on the page at all after load;
     opening the dock creates the player and loads on demand.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Hardened end-of-song handling against a video restarting instead of advancing</h2>
+<p>
+    Closed a real race condition in both the floating dock and the
+    <a href="/music">/music</a> page's playback sync: right as a song
+    naturally finishes, there's a brief window while the "song ended,
+    advance the queue" message round-trips to the Worker. During that
+    window the position EastCoin expects the video to be at keeps ticking
+    forward with the wall clock, and if the periodic resync landed in that
+    exact window it could try to seek the YouTube player to a time at or
+    past the video's real length — which is a known way to make a YouTube
+    embed snap back and replay from 0 instead of staying finished, rather
+    than picking up the next queued song. The resync now checks the
+    video's actual duration and skips seeking once a song is right at its
+    end, letting the real end-of-video handoff finish cleanly. Also added
+    a safety net: if a video is ever found sitting in a finished state
+    without the queue having advanced (a dropped WebSocket message at the
+    wrong moment, for example), the next progress check now catches it and
+    advances the queue itself rather than leaving the room stuck.
 </p>
 </article>
 </section>

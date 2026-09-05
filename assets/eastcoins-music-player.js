@@ -932,7 +932,16 @@
       try {
         const playerState = player.getPlayerState();
         const localTime = player.getCurrentTime();
-        if (playerState === YT.PlayerState.PLAYING && Math.abs(localTime - elapsed) > 4) {
+        const duration = player.getDuration();
+        // Wall-clock elapsed keeps growing while waiting on the "song ended,
+        // advance to next" round-trip to the Worker, so right at the end of a
+        // song it can briefly exceed the video's real length. Seeking a
+        // YouTube player to a time at/past its duration is a known trigger
+        // for it to snap back and replay from 0 instead of staying ended —
+        // skip the resync there and let the natural ENDED event (or the
+        // next state broadcast once the server actually advances) handle it.
+        const pastEnd = Number.isFinite(duration) && duration > 0 && elapsed >= duration - 0.5;
+        if (!pastEnd && playerState === YT.PlayerState.PLAYING && Math.abs(localTime - elapsed) > 4) {
           player.seekTo(elapsed, true);
         }
       } catch {}
@@ -942,7 +951,21 @@
   function startProgressSync() {
     window.clearInterval(progressTimer);
     progressTimer = window.setInterval(() => {
-      if (remoteMode && state.current) syncPlayerToState(false);
+      if (remoteMode && state.current) {
+        syncPlayerToState(false);
+        // Safety net: if the player has genuinely finished but the normal
+        // onStateChange(ENDED) handler never fired, or its "ended" message
+        // never reached the Worker (a dropped WS frame at the wrong moment),
+        // this catches it within one tick instead of leaving the room stuck
+        // on a finished song. Idempotent — the server ignores an "ended" for
+        // a song that isn't current anymore, so this is a no-op once the
+        // real advance has already happened.
+        try {
+          if (playerReady && player && player.getPlayerState() === YT.PlayerState.ENDED) {
+            handleEnded(state.current.id);
+          }
+        } catch {}
+      }
       try {
         if (playerReady && player && player.getVolume) {
           localStorage.setItem(VOLUME_KEY, String(player.getVolume()));
