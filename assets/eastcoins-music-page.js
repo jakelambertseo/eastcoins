@@ -8,6 +8,11 @@
   const TOKEN_REFRESH_MS = 10 * 60 * 1000;
   const SEARCH_DEBOUNCE_MS = 450;
   const SEARCH_MIN_LENGTH = 2;
+  // Shared with the floating dock (assets/eastcoins-music-player.js) so the
+  // two surfaces coordinate over the same channel — whichever one the
+  // visitor last focused silences the other's YouTube player instead of
+  // both playing the shared room's audio at once.
+  const AUDIO_LOCK_CHANNEL = "eastcoin-music-audio-lock";
 
   const config = window.EASTCOIN_MUSIC_CONFIG || {};
   const roomName = String(config.room || "main").trim() || "main";
@@ -28,8 +33,11 @@
   let musicAuthTokenExpiresAt = 0;
   let history = [];
   let leaderboard = [];
+  let isAudioOwner = true;
+  let audioChannel = null;
 
   const clientId = getOrCreateClientId();
+  const audioInstanceId = crypto.randomUUID ? crypto.randomUUID() : String(Math.random());
   let els = null;
 
   fetchIdentity()
@@ -47,6 +55,7 @@
       bindDeferredChat();
     }
     renderIdentity();
+    initAudioLock();
 
     // Deliberately not synchronous with the rest of init() — see the comment
     // on bindDeferredChat() for why this page in particular (the only place
@@ -205,13 +214,14 @@
     els.react?.addEventListener("click", sendReaction);
 
     els.volume?.addEventListener("input", () => {
-      if (!player) return;
       const value = Math.max(0, Math.min(100, Number(els.volume.value) || 0));
-      try {
-        player.setVolume(value);
-        if (value > 0 && player.isMuted?.()) player.unMute();
-        try { localStorage.setItem(VOLUME_KEY, String(value)); } catch {}
-      } catch {}
+      try { localStorage.setItem(VOLUME_KEY, String(value)); } catch {}
+      if (player && isAudioOwner) {
+        try {
+          player.setVolume(value);
+          if (value > 0 && player.isMuted?.()) player.unMute();
+        } catch {}
+      }
       renderMuteIcon();
     });
 
@@ -666,6 +676,52 @@
     els.mute.setAttribute("aria-label", muted ? "Unmute" : "Mute");
   }
 
+  // This page and the floating dock play the same shared room independently
+  // — without this, having both open at once means the room's audio plays
+  // twice. Whichever surface last had real OS/tab focus "owns" audible
+  // sound; the other silences its player via volume, not the mute button,
+  // so the visitor's own mute/volume choice stays untouched and instantly
+  // resumes the moment they get ownership back.
+  function initAudioLock() {
+    if (typeof BroadcastChannel === "undefined") return;
+
+    audioChannel = new BroadcastChannel(AUDIO_LOCK_CHANNEL);
+    audioChannel.addEventListener("message", (event) => {
+      if (event.data?.type === "claim" && event.data.id !== audioInstanceId) {
+        isAudioOwner = false;
+        applyAudioOwnership();
+      }
+    });
+
+    const claim = () => {
+      isAudioOwner = true;
+      applyAudioOwnership();
+      try { audioChannel.postMessage({ type: "claim", id: audioInstanceId }); } catch {}
+    };
+
+    window.addEventListener("focus", claim);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") claim();
+    });
+
+    if (document.hasFocus()) {
+      claim();
+    } else {
+      isAudioOwner = false;
+    }
+  }
+
+  function applyAudioOwnership() {
+    if (!player) return;
+    try {
+      if (isAudioOwner) {
+        player.setVolume(Math.max(0, Math.min(100, Number(els.volume?.value) || 0)));
+      } else {
+        player.setVolume(0);
+      }
+    } catch {}
+  }
+
   function escapeHtml(value) {
     return String(value)
       .replaceAll("&", "&amp;")
@@ -715,8 +771,8 @@
             const stored = Number(localStorage.getItem(VOLUME_KEY));
             volume = Number.isFinite(stored) ? Math.max(0, Math.min(100, stored)) : 55;
           } catch {}
-          try { event.target.setVolume(volume); } catch {}
           if (els.volume) els.volume.value = String(volume);
+          applyAudioOwnership();
           renderMuteIcon();
           syncPlayerToState(true);
         },
@@ -796,7 +852,10 @@
         } catch {}
       }
       try {
-        if (playerReady && player && player.getVolume) {
+        // Skipped while not the audio owner — the lock has forced the real
+        // player volume to 0 in that case, and persisting that would
+        // overwrite the visitor's actual chosen volume for next time.
+        if (playerReady && player && player.getVolume && isAudioOwner) {
           localStorage.setItem(VOLUME_KEY, String(player.getVolume()));
         }
       } catch {}

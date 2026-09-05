@@ -71,7 +71,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">140 major update groups</div>
+<div class="release-count">142 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1988,7 +1988,6 @@
 <article class="timeline-entry latest">
 <div class="timeline-date">
 <time datetime="2026-09-04">September 4, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Best-effort fix for a rare Firefox crash on the Music Room page</h2>
 <p>
@@ -2005,6 +2004,40 @@
     the player's own startup room to finish first. This is a mitigation,
     not a confirmed fix — the original reporter left before it could be
     verified against their setup.
+</p>
+</article>
+<article class="timeline-entry">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+</div>
+<h2>Twitch chat can now skip the current song with "!skip"</h2>
+<p>
+    Typing <code>!skip</code> in Twitch chat now skips whatever's currently
+    playing in the shared Music Room — no need to be on the site at all.
+    The Worker listens to the channel's public chat anonymously and
+    read-only (the same kind of connection many chat overlays use, no bot
+    account or login involved) purely to catch that one command; it can't
+    see or do anything else in chat. It's a direct skip, not a vote, with
+    a short cooldown so a burst of people typing it at once only skips
+    once.
+</p>
+</article>
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Fixed: the shared room could play twice at once across tabs</h2>
+<p>
+    Having both the floating dock and <a href="/music">/music</a> open at
+    the same time (even in separate windows) meant the shared room's audio
+    played out of both simultaneously. Whichever one you're actually
+    looking at now automatically claims sound the moment it gets focus,
+    and the other silences its player — not by touching your mute button
+    or volume setting, so it picks back up exactly where you left the
+    volume the instant you switch back. Both stay in sync with the room's
+    playback position the whole time, so switching between them is
+    instant with no catch-up seek or stutter.
 </p>
 </article>
 </section>

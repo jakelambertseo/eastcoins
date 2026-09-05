@@ -9,6 +9,7 @@ const MAX_HISTORY = 300;
 const MAX_USER_STATS = 500;
 const SE_POLL_INTERVAL_MS = 20 * 1000;
 const MAX_SE_SEEN_IDS = 500;
+const TWITCH_IRC_SKIP_COOLDOWN_MS = 5000;
 const DEFAULT_ALLOWED_ORIGINS = new Set([
   "https://eastcoin.vip",
   "https://www.eastcoin.vip",
@@ -178,6 +179,48 @@ async function fetchStreamElementsQueue(channelId) {
   }
 }
 
+// Minimal parser for one line of Twitch IRC (RFC1459-style, plus the
+// IRCv3 "@tag=value;..." prefix Twitch's tags capability adds). Only pulls
+// out what the room actually needs — the sender's login and the message
+// text of a PRIVMSG — not a general-purpose IRC client.
+function parseTwitchIrcLine(line) {
+  let rest = line;
+  const tags = {};
+
+  if (rest.startsWith("@")) {
+    const spaceIndex = rest.indexOf(" ");
+    if (spaceIndex === -1) return null;
+    rest.slice(1, spaceIndex).split(";").forEach((pair) => {
+      const eq = pair.indexOf("=");
+      if (eq === -1) return;
+      tags[pair.slice(0, eq)] = pair.slice(eq + 1);
+    });
+    rest = rest.slice(spaceIndex + 1);
+  }
+
+  let prefix = "";
+  if (rest.startsWith(":")) {
+    const spaceIndex = rest.indexOf(" ");
+    if (spaceIndex === -1) return null;
+    prefix = rest.slice(1, spaceIndex);
+    rest = rest.slice(spaceIndex + 1);
+  }
+
+  const trailingIndex = rest.indexOf(" :");
+  let command, params;
+  if (trailingIndex === -1) {
+    const parts = rest.trim().split(" ").filter(Boolean);
+    command = parts[0] || "";
+    params = parts.slice(1);
+  } else {
+    const head = rest.slice(0, trailingIndex).trim().split(" ").filter(Boolean);
+    command = head[0] || "";
+    params = [...head.slice(1), rest.slice(trailingIndex + 2)];
+  }
+
+  return { tags, prefix, command, params };
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -270,6 +313,8 @@ export class MusicRoom extends DurableObject {
     // hourly count, which is an acceptable tradeoff for a small friend-group room.
     this.requestLog = new Map();
     this.seenStreamElementsIds = new Set();
+    this.twitchIrcSocket = null;
+    this.lastChatSkipAt = 0;
 
     this.ctx.getWebSockets().forEach((ws) => {
       const attachment = ws.deserializeAttachment();
@@ -516,12 +561,14 @@ export class MusicRoom extends DurableObject {
     }
   }
 
-  // Arms the polling alarm if one isn't already scheduled. Called whenever a
-  // listener connects, since the alarm intentionally stops rearming itself
-  // once the room is empty (see alarm()) to avoid polling StreamElements
-  // around the clock for a room nobody is in.
+  // Arms the polling alarm (which also double-checks the Twitch IRC
+  // connection each cycle) if one isn't already scheduled. Called whenever
+  // a listener connects, since the alarm intentionally stops rearming
+  // itself once the room is empty (see alarm()) to avoid polling
+  // StreamElements or holding a chat connection open for a room nobody is
+  // actually in.
   async ensurePolling() {
-    if (!this.env.STREAMELEMENTS_CHANNEL_ID) return;
+    if (!this.env.STREAMELEMENTS_CHANNEL_ID && !this.env.TWITCH_CHAT_CHANNEL) return;
     const existing = await this.ctx.storage.getAlarm();
     if (existing === null) {
       await this.ctx.storage.setAlarm(Date.now() + SE_POLL_INTERVAL_MS);
@@ -530,9 +577,109 @@ export class MusicRoom extends DurableObject {
 
   async alarm() {
     await this.pollStreamElements();
+    await this.ensureTwitchIrc();
     if (this.sessions.size > 0) {
       await this.ctx.storage.setAlarm(Date.now() + SE_POLL_INTERVAL_MS);
     }
+  }
+
+  // Anonymous, read-only connection to Twitch's own chat (the same IRC-over-
+  // WebSocket gateway many chat overlays/bots use) — no OAuth or bot account
+  // needed, since we only ever read public chat, never post to it. This is
+  // what lets a plain "!skip" typed in chat skip the room's current song
+  // without StreamElements needing to expose anything for it (unlike "!sr",
+  // there's no public queue endpoint for "someone typed a command" — chat
+  // itself is the only place that exists).
+  async ensureTwitchIrc() {
+    const channel = String(this.env.TWITCH_CHAT_CHANNEL || "").trim().toLowerCase();
+    if (!channel) return;
+    if (this.twitchIrcSocket && this.twitchIrcSocket.readyState === WebSocket.OPEN) return;
+
+    try {
+      const response = await fetch("https://irc-ws.chat.twitch.tv:443", {
+        headers: { Upgrade: "websocket" }
+      });
+      const ws = response.webSocket;
+      if (!ws) {
+        console.error("Twitch IRC: server did not upgrade the connection");
+        return;
+      }
+
+      ws.accept();
+      this.twitchIrcSocket = ws;
+      console.log(`Twitch IRC: connecting, joining #${channel}`);
+
+      ws.addEventListener("message", (event) => {
+        try { this.handleTwitchIrcMessage(event); } catch {}
+      });
+      ws.addEventListener("close", (event) => {
+        console.log(`Twitch IRC: closed (${event.code} ${event.reason || ""})`);
+        if (this.twitchIrcSocket === ws) this.twitchIrcSocket = null;
+      });
+      ws.addEventListener("error", (event) => {
+        console.error("Twitch IRC: connection error", event.message || "");
+        try { ws.close(); } catch {}
+        if (this.twitchIrcSocket === ws) this.twitchIrcSocket = null;
+      });
+
+      const anonNick = `justinfan${Math.floor(10000 + Math.random() * 90000)}`;
+      ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands");
+      ws.send("PASS SCHMOOPIE");
+      ws.send(`NICK ${anonNick}`);
+      ws.send(`JOIN #${channel}`);
+    } catch (error) {
+      console.error("Twitch IRC: failed to connect", error);
+      this.twitchIrcSocket = null;
+    }
+  }
+
+  handleTwitchIrcMessage(event) {
+    const raw = typeof event.data === "string" ? event.data : "";
+    for (const line of raw.split("\r\n")) {
+      if (!line) continue;
+
+      if (line.startsWith("PING")) {
+        try { this.twitchIrcSocket?.send("PONG :tmi.twitch.tv"); } catch {}
+        continue;
+      }
+
+      const parsed = parseTwitchIrcLine(line);
+      if (!parsed) continue;
+
+      if (parsed.command === "JOIN") {
+        console.log(`Twitch IRC: joined ${parsed.params[0] || ""}`);
+        continue;
+      }
+      if (parsed.command === "NOTICE") {
+        console.error("Twitch IRC: notice", parsed.params.join(" "));
+        continue;
+      }
+      if (parsed.command !== "PRIVMSG") continue;
+
+      const text = String(parsed.params[parsed.params.length - 1] || "").trim();
+      if (!/^!skip\b/i.test(text)) continue;
+
+      const login = String(parsed.prefix.split("!")[0] || "").trim().toLowerCase();
+      if (!login) continue;
+      console.log(`Twitch IRC: !skip from ${login}`);
+      this.ctx.waitUntil(this.handleChatSkip(login));
+    }
+  }
+
+  async handleChatSkip(login) {
+    if (!this.state.current) return;
+
+    // A simple cooldown, not a vote count — chat's "!skip" is meant as a
+    // direct, immediate control (mirroring the trust already placed in the
+    // stream's own chat), just guarded against a burst of near-simultaneous
+    // messages triggering more than one skip.
+    const now = Date.now();
+    if (now - this.lastChatSkipAt < TWITCH_IRC_SKIP_COOLDOWN_MS) return;
+    this.lastChatSkipAt = now;
+
+    console.log(`Twitch IRC: skipping "${this.state.current.title}" (requested by ${login})`);
+    this.advance();
+    await this.persistAndBroadcast();
   }
 
   listenerNames() {
@@ -587,6 +734,7 @@ export class MusicRoom extends DurableObject {
     this.sendState(server);
     this.broadcastState();
     await this.ensurePolling();
+    await this.ensureTwitchIrc();
 
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -760,10 +908,22 @@ export class MusicRoom extends DurableObject {
     this.sessions.delete(ws);
     try { ws.close(code, reason); } catch {}
     this.broadcastState();
+    this.closeTwitchIrcIfEmpty();
   }
 
   webSocketError(ws) {
     this.sessions.delete(ws);
     this.broadcastState();
+    this.closeTwitchIrcIfEmpty();
+  }
+
+  // Mirrors the alarm loop's own "stop once the room is empty" behavior —
+  // without this, the outbound Twitch chat connection (and the DO holding
+  // it open to receive messages) would never go idle even after everyone
+  // leaves. ensureTwitchIrc() reopens it the moment someone reconnects.
+  closeTwitchIrcIfEmpty() {
+    if (this.sessions.size > 0) return;
+    try { this.twitchIrcSocket?.close(); } catch {}
+    this.twitchIrcSocket = null;
   }
 }

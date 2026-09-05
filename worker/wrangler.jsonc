@@ -20,6 +20,10 @@
     // lookup) — not a secret, just an opaque identifier. Room "!sr" chat
     // requests get synced in from this channel's public media-request
     // queue. Leave blank to disable the sync entirely.
-    "STREAMELEMENTS_CHANNEL_ID": "65107c296068cc894e4ac7b9"
+    "STREAMELEMENTS_CHANNEL_ID": "65107c296068cc894e4ac7b9",
+    // Twitch login (lowercase, not a display name) whose chat the room
+    // listens to anonymously/read-only for a plain "!skip" message. Leave
+    // blank to disable that listener.
+    "TWITCH_CHAT_CHANNEL": "zwades"
   }
 }
