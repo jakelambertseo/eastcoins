@@ -65,7 +65,16 @@ body.ec-chat-hidden .ec-music-dock {
 
 /* Minimizing collapses the panel down to just the header strip via overflow
    rather than display:none, so the YouTube iframe stays mounted and keeps
-   playing audio in the background. */
+   playing audio in the background. The !important on the dock itself is
+   required to win over the inline height a manual resize (see
+   eastcoins-music-player.js) sets directly on this same element — without
+   it, a previously-resized dock keeps its full inline height while only the
+   inner panel shrinks, leaving a large empty box that looks like minimize
+   did nothing at all. */
+.ec-music-dock.is-minimized {
+  height: auto !important;
+}
+
 .ec-music-dock.is-minimized .ec-music-panel {
   max-height: 52px;
 }

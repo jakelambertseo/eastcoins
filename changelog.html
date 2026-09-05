@@ -71,7 +71,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">131 major update groups</div>
+<div class="release-count">132 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1801,10 +1801,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-09-04">September 4, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Hardened end-of-song handling against a video restarting instead of advancing</h2>
 <p>
@@ -1824,6 +1823,26 @@
     without the queue having advanced (a dropped WebSocket message at the
     wrong moment, for example), the next progress check now catches it and
     advances the queue itself rather than leaving the room stuck.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Fixed the Minimize button doing nothing after a manual resize</h2>
+<p>
+    Fixed a real bug: minimizing the Music Player dock after resizing it
+    (by dragging its corner) appeared to do nothing. Minimizing correctly
+    shrank the inner panel down to a slim header strip, but the outer dock
+    box kept whatever fixed height the resize had set directly on it,
+    leaving a large empty box behind the collapsed header instead of an
+    actual small tray — easy to mistake for the button not working at all.
+    The outer dock now explicitly resets to its natural height while
+    minimized, regardless of any prior manual resize, and correctly
+    restores the resized size when un-minimized. Verified both the
+    never-resized case and the resized-then-minimized case directly.
 </p>
 </article>
 </section>
