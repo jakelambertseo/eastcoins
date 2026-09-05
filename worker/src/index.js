@@ -1,7 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 
 const MAX_QUEUE = 25;
-const REQUEST_LIMIT = 4;
+const REQUEST_LIMIT = 25;
 const REQUEST_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const SKIP_VOTE_THRESHOLD = 3;
 const MAX_VIDEO_SECONDS = 600;
