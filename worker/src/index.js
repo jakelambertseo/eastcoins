@@ -126,6 +126,39 @@ async function fetchVideoDurationSeconds(videoId, apiKey) {
   }
 }
 
+// search.list costs 100 quota units per call (vs. 1 for the duration lookup
+// above) against the same 10,000/day default quota, so results are cached at
+// the edge for a few minutes — repeat/popular searches across the room don't
+// re-spend quota.
+async function searchYouTube(query, apiKey) {
+  const cache = caches.default;
+  const cacheKey = new Request(`https://eastcoin-music-search.internal/search?q=${encodeURIComponent(query)}`);
+
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached.json();
+
+  const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q=${encodeURIComponent(query)}&key=${apiKey}`;
+  const response = await fetch(apiUrl);
+  if (!response.ok) throw new Error(`YouTube search failed with status ${response.status}`);
+
+  const data = await response.json();
+  const results = (data.items || [])
+    .map((item) => ({
+      videoId: String(item.id?.videoId || ""),
+      title: String(item.snippet?.title || "").slice(0, 120),
+      channelTitle: String(item.snippet?.channelTitle || "").slice(0, 80),
+      thumbnail: String(item.snippet?.thumbnails?.default?.url || "")
+    }))
+    .filter((item) => /^[A-Za-z0-9_-]{11}$/.test(item.videoId));
+
+  const cacheResponse = new Response(JSON.stringify({ results }), {
+    headers: { "content-type": "application/json; charset=utf-8", "Cache-Control": "public, max-age=300" }
+  });
+  try { await cache.put(cacheKey, cacheResponse); } catch {}
+
+  return { results };
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -165,12 +198,43 @@ export default {
       return stub.fetch(request);
     }
 
+    // Stateless YouTube search used by the /music page's "search to add"
+    // bar — lives at the top level (not DO-scoped) since it doesn't touch
+    // any one room's state.
+    if (url.pathname === "/search") {
+      if (!originAllowed(request, env)) {
+        return new Response("Origin not allowed", { status: 403 });
+      }
+
+      const cors = corsHeaders(request, env);
+      const query = String(url.searchParams.get("q") || "").trim().slice(0, 100);
+
+      if (!query) return json({ ok: true, results: [] }, 200, cors);
+
+      if (!env.YOUTUBE_API_KEY) {
+        return json(
+          { ok: false, code: "SEARCH_NOT_CONFIGURED", message: "YouTube search is not configured." },
+          503,
+          cors
+        );
+      }
+
+      try {
+        const { results } = await searchYouTube(query, env.YOUTUBE_API_KEY);
+        return json({ ok: true, results }, 200, cors);
+      } catch (error) {
+        console.error("YouTube search failed", error);
+        return json({ ok: false, code: "SEARCH_FAILED", message: "YouTube search failed." }, 502, cors);
+      }
+    }
+
     return json({
       ok: true,
       endpoints: {
         health: "/health",
         websocket: "/room/<room-name>",
-        history: "/history/<room-name>"
+        history: "/history/<room-name>",
+        search: "/search?q=<query>"
       }
     });
   }

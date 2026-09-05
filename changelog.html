@@ -71,7 +71,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">132 major update groups</div>
+<div class="release-count">133 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1826,10 +1826,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-09-04">September 4, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Fixed the Minimize button doing nothing after a manual resize</h2>
 <p>
@@ -1843,6 +1842,31 @@
     minimized, regardless of any prior manual resize, and correctly
     restores the resized size when un-minimized. Verified both the
     never-resized case and the resized-then-minimized case directly.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Music Room page gets a bigger player, search-to-add, and Stream Chat</h2>
+<p>
+    Reworked the <a href="/music">/music</a> page layout: the intro
+    paragraph is gone, the page runs wider, and the video player is
+    noticeably larger as a result. Added a search bar across the top of
+    the page — type a song or artist and pick from real YouTube results
+    instead of needing a link, with each result adding straight to the
+    queue through the same Twitch-gated flow as every other request.
+    Search runs through a new Worker endpoint that calls the YouTube Data
+    API and caches results for a few minutes at the edge, since search
+    queries cost far more of the daily API quota than the existing title
+    and duration lookups. Also added the zwades Stream Chat to the
+    sidebar, sitting above Top Requesters in a fixed-height panel rather
+    than taking over the page, and deferred behind the visitor's first
+    interaction — same performance-minded pattern the main EastCoin shell
+    already uses for its own persistent chat, so nothing loads Twitch's
+    scripts until someone actually engages with the page.
 </p>
 </article>
 </section>

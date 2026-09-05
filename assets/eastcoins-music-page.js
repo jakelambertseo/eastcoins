@@ -6,6 +6,8 @@
   const MAX_QUEUE = 25;
   const TITLE_FETCH_TIMEOUT_MS = 3500;
   const TOKEN_REFRESH_MS = 10 * 60 * 1000;
+  const SEARCH_DEBOUNCE_MS = 450;
+  const SEARCH_MIN_LENGTH = 2;
 
   const config = window.EASTCOIN_MUSIC_CONFIG || {};
   const roomName = String(config.room || "main").trim() || "main";
@@ -39,6 +41,7 @@
     if (!els.youtube) return;
 
     bindUi();
+    bindDeferredChat();
     renderIdentity();
     loadYouTubeApi();
 
@@ -151,7 +154,12 @@
       emptyLeaderboard: document.getElementById("pageEmptyLeaderboard"),
       history: document.getElementById("pageHistory"),
       historyCount: document.getElementById("pageHistoryCount"),
-      emptyHistory: document.getElementById("pageEmptyHistory")
+      emptyHistory: document.getElementById("pageEmptyHistory"),
+      search: document.getElementById("pageSearch"),
+      searchHelp: document.getElementById("pageSearchHelp"),
+      searchResults: document.getElementById("pageSearchResults"),
+      chatFrame: document.getElementById("pageTwitchChat"),
+      chatDefer: document.getElementById("pageChatDefer")
     };
   }
 
@@ -204,6 +212,130 @@
       } catch {}
       renderMuteIcon();
     });
+
+    let searchTimer = 0;
+    els.search?.addEventListener("input", () => {
+      window.clearTimeout(searchTimer);
+      const query = els.search.value.trim();
+      if (query.length < SEARCH_MIN_LENGTH) {
+        clearSearchResults();
+        return;
+      }
+      searchTimer = window.setTimeout(() => runSearch(query), SEARCH_DEBOUNCE_MS);
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!els.search || !els.searchResults) return;
+      if (event.target === els.search || els.searchResults.contains(event.target)) return;
+      clearSearchResults();
+    });
+  }
+
+  // Twitch chat is deferred behind the visitor's first interaction, matching
+  // the same performance-minded pattern the root EastCoin shell uses for its
+  // own persistent chat — no reason to pay Twitch's script/request cost
+  // before anyone actually engages with the page.
+  function bindDeferredChat() {
+    const frame = els.chatFrame;
+    if (!frame || !frame.dataset.src) return;
+
+    const events = ["pointerdown", "keydown", "touchstart", "wheel"];
+    const mount = () => {
+      if (frame.getAttribute("src") === "about:blank") {
+        frame.src = frame.dataset.src;
+      }
+      if (els.chatDefer) els.chatDefer.hidden = true;
+      events.forEach((name) => window.removeEventListener(name, mount));
+    };
+
+    events.forEach((name) => window.addEventListener(name, mount, { passive: true }));
+  }
+
+  function clearSearchResults() {
+    if (!els.searchResults) return;
+    els.searchResults.hidden = true;
+    els.searchResults.replaceChildren();
+    if (els.searchHelp) els.searchHelp.textContent = "";
+  }
+
+  async function runSearch(query) {
+    if (!remoteMode) return;
+    const url = searchUrl(query);
+    if (!url) return;
+
+    if (els.searchHelp) {
+      els.searchHelp.textContent = "Searching…";
+      els.searchHelp.classList.remove("is-error");
+    }
+
+    try {
+      const response = await fetch(url, { cache: "no-store" });
+      const payload = await response.json().catch(() => null);
+
+      if (!payload?.ok) {
+        if (els.searchHelp) {
+          els.searchHelp.textContent = payload?.message || "Search is unavailable right now.";
+          els.searchHelp.classList.add("is-error");
+        }
+        return;
+      }
+
+      renderSearchResults(payload.results || []);
+    } catch {
+      if (els.searchHelp) {
+        els.searchHelp.textContent = "Search failed. Try again.";
+        els.searchHelp.classList.add("is-error");
+      }
+    }
+  }
+
+  function renderSearchResults(results) {
+    if (!els.searchResults) return;
+
+    if (!results.length) {
+      els.searchResults.hidden = true;
+      els.searchResults.replaceChildren();
+      if (els.searchHelp) els.searchHelp.textContent = "No results.";
+      return;
+    }
+
+    if (els.searchHelp) els.searchHelp.textContent = "";
+    els.searchResults.hidden = false;
+    els.searchResults.replaceChildren();
+
+    const gated = !currentUser;
+
+    results.forEach((result) => {
+      const li = document.createElement("li");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "search-result";
+      button.disabled = gated;
+      button.innerHTML = `
+        <span class="search-thumb">${result.thumbnail ? `<img src="${escapeHtml(result.thumbnail)}" alt="">` : ""}</span>
+        <span class="search-copy">
+          <strong>${escapeHtml(result.title || "YouTube video")}</strong>
+          <small>${escapeHtml(result.channelTitle || "")}</small>
+        </span>
+        <span class="search-add">${gated ? "Log in" : "+ Add"}</span>
+      `;
+      button.addEventListener("click", () => {
+        requestAgain(result.videoId, result.title);
+        clearSearchResults();
+        els.search.value = "";
+      });
+      li.appendChild(button);
+      els.searchResults.appendChild(li);
+    });
+  }
+
+  function searchUrl(query) {
+    const url = endpointBase({ "wss:": "https:", "ws:": "http:", "https:": "https:", "http:": "http:" });
+    if (!url) return "";
+    url.pathname = "/search";
+    url.search = "";
+    url.searchParams.set("q", query);
+    return url.toString();
   }
 
   function setHelp(message, error = false) {

@@ -22,14 +22,35 @@
   .musicbar-status.is-live .dot{background:var(--green);box-shadow:0 0 0 3px rgba(71,199,120,.15)}
   .musicbar .back{margin-left:auto;height:38px;display:flex;align-items:center;padding:0 12px;border:1px solid var(--line);border-radius:8px;color:#a8a098;font-size:.8rem;font-weight:900}
 
-  main{width:min(1180px,calc(100% - 32px));margin:0 auto;padding:40px 0 80px}
+  main{width:min(1440px,calc(100% - 32px));margin:0 auto;padding:40px 0 80px}
 
   .eyebrow{display:inline-flex;align-items:center;gap:8px;color:#887964;font-size:.72rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
   .eyebrow-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 4px rgba(229,185,43,.09)}
-  .page-head h1{margin:9px 0 8px;color:var(--text);font-size:clamp(2rem,5vw,3rem);line-height:.98;letter-spacing:-.05em}
-  .page-head p{max-width:640px;margin:0 0 30px;color:var(--muted);font-size:.9rem;line-height:1.65}
+  .page-head h1{margin:9px 0 24px;color:var(--text);font-size:clamp(2rem,5vw,3rem);line-height:.98;letter-spacing:-.05em}
 
-  .layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:22px;align-items:start}
+  /* ---- search-to-add bar ---- */
+  .search-card{margin-bottom:18px}
+  .search-row{position:relative}
+  .search-row input{width:100%;min-width:0;height:50px;padding:0 46px 0 16px;border:1px solid var(--line);border-radius:11px;color:var(--text);background:#050505;font-size:.92rem;outline:none}
+  .search-row input:focus{border-color:rgba(229,185,43,.45);box-shadow:0 0 0 2px rgba(229,185,43,.08)}
+  .search-row input:disabled{opacity:.5;cursor:not-allowed}
+  .search-row::after{content:"🔍";position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:.9rem;opacity:.5;pointer-events:none}
+  .search-help{min-height:16px;margin-top:9px;padding:0 2px;color:var(--muted2);font-size:.72rem;line-height:1.4}
+  .search-help.is-error{color:#f3c2cb}
+
+  .search-results{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+  .search-results[hidden]{display:none!important}
+  .search-result{display:flex;align-items:center;gap:11px;padding:8px 9px;border:1px solid var(--line);border-radius:9px;background:#0a0a0a;text-align:left;width:100%}
+  .search-result:hover,.search-result:focus-visible{border-color:rgba(229,185,43,.35);background:rgba(229,185,43,.06);outline:none}
+  .search-result[disabled]{opacity:.45;cursor:default}
+  .search-thumb{flex:0 0 auto;width:64px;height:36px;overflow:hidden;border-radius:6px;background:#050505}
+  .search-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .search-copy{min-width:0;flex:1}
+  .search-copy strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#ddd4cc;font-size:.8rem}
+  .search-copy small{display:block;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted2);font-size:.68rem}
+  .search-add{flex:0 0 auto;color:var(--gold);font-size:.68rem;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
+
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:22px;align-items:start}
 
   .card{border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}
   .card-pad{padding:16px 18px}
@@ -127,6 +148,16 @@
 
   .side-col{display:flex;flex-direction:column;gap:18px}
 
+  /* ---- chat (fixed height, never full-height) ---- */
+  .chat-card{height:340px;display:flex;flex-direction:column}
+  .chat-body{position:relative;flex:1;min-height:0}
+  .chat-body iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .chatdefer{position:absolute;inset:0;z-index:2;display:grid;place-content:center;gap:6px;padding:20px;color:var(--muted);background:var(--bg);text-align:center}
+  .chatdefer[hidden]{display:none!important}
+  .chatdefer span{font-size:1.1rem;opacity:.6}
+  .chatdefer strong{color:var(--text);font-size:.82rem}
+  .chatdefer small{font-size:.68rem;line-height:1.5}
+
   @media(max-width:900px){
     .layout{grid-template-columns:1fr}
   }
@@ -144,8 +175,15 @@
   <header class="page-head">
     <div class="eyebrow"><span class="eyebrow-dot"></span>EASTCOIN JUKEBOX</div>
     <h1>Music Room</h1>
-    <p>The same shared room as the floating player everywhere else on EastCoin — request a song, see what's coming up, and browse everything the room has ever played.</p>
   </header>
+
+  <div class="card card-pad search-card">
+    <div class="search-row">
+      <input id="pageSearch" type="text" autocomplete="off" placeholder="Search YouTube for a song to add…">
+    </div>
+    <div class="search-help" id="pageSearchHelp"></div>
+    <ol class="search-results" id="pageSearchResults" hidden></ol>
+  </div>
 
   <div class="layout">
     <section class="main-col">
@@ -198,6 +236,18 @@
     </section>
 
     <aside class="side-col">
+      <div class="card chat-card">
+        <div class="card-head"><span>Stream Chat</span></div>
+        <div class="chat-body">
+          <iframe id="pageTwitchChat" src="about:blank" data-src="https://www.twitch.tv/embed/zwades/chat?parent=eastcoins.pages.dev&amp;parent=eastcoin.vip&amp;parent=www.eastcoin.vip&amp;parent=localhost&amp;parent=127.0.0.1&amp;darkpopout" title="zwades Twitch chat"></iframe>
+          <div class="chatdefer" id="pageChatDefer">
+            <span aria-hidden="true">◫</span>
+            <strong>Stream Chat</strong>
+            <small>Loads when you interact with the page.</small>
+          </div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-head"><span>Top Requesters</span><span id="pageLeaderboardTotal">0</span></div>
         <ol class="list" id="pageLeaderboard"></ol>
@@ -214,6 +264,6 @@
 </main>
 
 <script defer src="/assets/eastcoins-music-config.js?v=2"></script>
-<script defer src="/assets/eastcoins-music-page.js?v=2"></script>
+<script defer src="/assets/eastcoins-music-page.js?v=3"></script>
 </body>
 </html>
