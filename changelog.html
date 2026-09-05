@@ -71,7 +71,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">138 major update groups</div>
+<div class="release-count">140 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1953,10 +1953,9 @@
     Guests still count toward the total, just without a name attached.
 </p>
 </article>
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-09-04">September 4, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Twitch chat's "!sr" song requests now land in the shared queue</h2>
 <p>
@@ -1969,6 +1968,43 @@
     anything over the room's length limit. This only runs while at
     least one listener is actually in the room, so it doesn't poll
     around the clock for no reason.
+</p>
+</article>
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+</div>
+<h2>Fixed: /music ignoring the "Close Twitch Chat" setting</h2>
+<p>
+    The dedicated Music Room page was loading the Twitch chat embed
+    unconditionally, even for visitors who'd already turned chat off
+    sitewide in Settings — which, for at least one Firefox user, was
+    crashing their browser outright. <a href="/music">/music</a> now
+    checks the same site-wide chat preference everywhere else already
+    respects before ever loading the embed, and skips it entirely
+    (rather than just hiding it) when chat is turned off.
+</p>
+</article>
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Best-effort fix for a rare Firefox crash on the Music Room page</h2>
+<p>
+    Following up on the Firefox crash report above: <a href="/music">/music</a>
+    is the only EastCoin page where a live YouTube player and a live Twitch
+    chat embed ever run in the same document at once (the floating dock's
+    own player only exists once someone opens the dock), and the crash
+    reportedly took down an entirely separate browser window too —
+    consistent with a shared GPU-process crash from both embeds starting
+    their video pipelines at the same moment, rather than anything scoped
+    to one tab.
+    Chat now waits a couple of seconds after you first interact with the
+    page before it actually loads, instead of firing immediately, giving
+    the player's own startup room to finish first. This is a mitigation,
+    not a confirmed fix — the original reporter left before it could be
+    verified against their setup.
 </p>
 </article>
 </section>

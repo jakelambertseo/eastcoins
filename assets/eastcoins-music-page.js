@@ -41,9 +41,18 @@
     if (!els.youtube) return;
 
     bindUi();
-    bindDeferredChat();
+    if (siteChatDisabled()) {
+      document.body.classList.add("music-chat-hidden");
+    } else {
+      bindDeferredChat();
+    }
     renderIdentity();
-    loadYouTubeApi();
+
+    // Deliberately not synchronous with the rest of init() — see the comment
+    // on bindDeferredChat() for why this page in particular (the only place
+    // a live YouTube player and Twitch chat both run on the same document)
+    // avoids starting both of their GPU/video pipelines in the same tick.
+    (window.requestIdleCallback || window.setTimeout)(loadYouTubeApi);
 
     if (remoteMode) {
       connectSharedRoom();
@@ -243,21 +252,53 @@
     });
   }
 
+  // This page has never had its own chat toggle — it needs to honor whatever
+  // the visitor already set sitewide (root Settings modal's "Close Twitch
+  // Chat", or the older standalone pages' own chat-collapsed toggle), rather
+  // than loading the embed unconditionally regardless of that preference.
+  function siteChatDisabled() {
+    try {
+      const settings = JSON.parse(localStorage.getItem("eastcoinV2SettingsV1") || "null");
+      if (settings && typeof settings === "object" && settings.chatVisible === false) return true;
+    } catch {}
+    try {
+      if (localStorage.getItem("eastcoinsChatCollapsed") === "true") return true;
+    } catch {}
+    return false;
+  }
+
   // Twitch chat is deferred behind the visitor's first interaction, matching
   // the same performance-minded pattern the root EastCoin shell uses for its
   // own persistent chat — no reason to pay Twitch's script/request cost
   // before anyone actually engages with the page.
+  //
+  // This is also the only EastCoin page where a live YouTube player and a
+  // live Twitch chat embed both run in the same top-level document at once
+  // (the floating dock's own player only exists once someone opens the
+  // dock, so it rarely overlaps with chat the way this page's player —
+  // which loads for every visitor — always does). A Firefox user reported
+  // this page crashing their entire browser, including an unrelated window
+  // that also had Twitch chat open elsewhere — consistent with a shared
+  // GPU-process crash from two heavy embeds negotiating hardware video/GPU
+  // contexts at the same moment, rather than anything scoped to one tab.
+  // There's no way to confirm that without reproducing it, so the fix here
+  // is a best-effort mitigation: give the YouTube player's own startup (see
+  // the requestIdleCallback in init()) a head start by delaying chat's
+  // mount a couple of seconds after the qualifying interaction, instead of
+  // firing the instant the visitor so much as scrolls.
   function bindDeferredChat() {
     const frame = els.chatFrame;
     if (!frame || !frame.dataset.src) return;
 
     const events = ["pointerdown", "keydown", "touchstart", "wheel"];
     const mount = () => {
-      if (frame.getAttribute("src") === "about:blank") {
-        frame.src = frame.dataset.src;
-      }
-      if (els.chatDefer) els.chatDefer.hidden = true;
       events.forEach((name) => window.removeEventListener(name, mount));
+      window.setTimeout(() => {
+        if (frame.getAttribute("src") === "about:blank") {
+          frame.src = frame.dataset.src;
+        }
+        if (els.chatDefer) els.chatDefer.hidden = true;
+      }, 2000);
     };
 
     events.forEach((name) => window.addEventListener(name, mount, { passive: true }));

@@ -27,6 +27,13 @@
     .chat{position:static;width:100%;height:420px;border-left:0;border-top:1px solid var(--line2);box-shadow:none;margin-top:18px}
   }
 
+  /* Mirrors the "Close Twitch Chat" site setting — this page never had its
+     own chat toggle, so it was loading the embed even for people who'd
+     turned chat off everywhere else on the site (and, for at least one
+     Firefox user, crashing their browser doing it). */
+  body.music-chat-hidden{padding-right:0}
+  body.music-chat-hidden .chat{display:none!important}
+
   .musicbar{position:sticky;top:0;z-index:10;height:var(--header);display:flex;align-items:center;gap:12px;padding:0 22px;border-bottom:1px solid var(--line);background:rgba(5,5,5,.94);backdrop-filter:blur(18px)}
   .musicbar a{display:flex;align-items:center;gap:9px;text-decoration:none}
   .musicbar .logo{width:44px;height:44px;display:grid;place-items:center;border:1px solid rgba(229,185,43,.15);border-radius:10px;background:#0d0a04}
@@ -253,6 +260,6 @@
 </aside>
 
 <script defer src="/assets/eastcoins-music-config.js?v=2"></script>
-<script defer src="/assets/eastcoins-music-page.js?v=5"></script>
+<script defer src="/assets/eastcoins-music-page.js?v=7"></script>
 </body>
 </html>
