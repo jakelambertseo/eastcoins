@@ -416,6 +416,18 @@ export class MusicRoom extends DurableObject {
     await this.ctx.storage.put("music-user-stats", Object.fromEntries(this.userStats));
   }
 
+  listenerNames() {
+    const seenLogins = new Set();
+    const names = [];
+    for (const session of this.sessions.values()) {
+      if (!session.verifiedLogin || seenLogins.has(session.verifiedLogin)) continue;
+      seenLogins.add(session.verifiedLogin);
+      names.push(this.safeName(session.name));
+      if (names.length >= 40) break;
+    }
+    return names;
+  }
+
   publicState() {
     const listeners = Math.max(1, this.sessions.size);
     return {
@@ -424,6 +436,7 @@ export class MusicRoom extends DurableObject {
       startedAt: this.state.startedAt,
       revision: this.state.revision,
       listeners,
+      listenerNames: this.listenerNames(),
       skipVotes: this.state.skipVoters.length,
       skipThreshold: Math.min(SKIP_VOTE_THRESHOLD, Math.max(1, listeners))
     };
@@ -446,7 +459,7 @@ export class MusicRoom extends DurableObject {
     const clientId = String(url.searchParams.get("client") || crypto.randomUUID()).slice(0, 80);
     const name = this.safeName(url.searchParams.get("name"));
     const avatar = this.safeAvatarUrl(url.searchParams.get("avatar"));
-    const attachment = { clientId, name, avatar };
+    const attachment = { clientId, name, avatar, verifiedLogin: null };
 
     this.ctx.acceptWebSocket(server);
     server.serializeAttachment(attachment);
@@ -475,6 +488,21 @@ export class MusicRoom extends DurableObject {
     if (message.type === "identity") {
       session.name = this.safeName(message.name);
       session.avatar = this.safeAvatarUrl(message.avatar);
+
+      // The public "who's listening" roster only ever shows a name backed by
+      // a verified Twitch session — never whatever a client claims — the same
+      // way "add" re-derives the requester from the token instead of trusting
+      // the message body. No token (or an expired one) just drops the
+      // listener out of the roster; they're still counted in the total.
+      const auth = message.token ? await verifyMusicToken(message.token, this.env.MUSIC_AUTH_SECRET) : null;
+      if (auth) {
+        session.verifiedLogin = auth.login;
+        session.name = this.safeName(auth.displayName || auth.login);
+        session.avatar = this.safeAvatarUrl(auth.avatar) || session.avatar;
+      } else {
+        session.verifiedLogin = null;
+      }
+
       this.sessions.set(ws, session);
       ws.serializeAttachment(session);
       this.broadcastState();

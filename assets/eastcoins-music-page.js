@@ -56,7 +56,7 @@
     startProgressSync();
 
     window.setInterval(() => {
-      if (currentUser) fetchMusicAuthToken();
+      if (currentUser) fetchMusicAuthToken().then(sendIdentity);
     }, TOKEN_REFRESH_MS);
   }
 
@@ -67,6 +67,7 @@
       startedAt: null,
       revision: 0,
       listeners: 1,
+      listenerNames: [],
       skipVotes: 0,
       skipThreshold: 1
     };
@@ -98,6 +99,15 @@
       musicAuthToken = null;
       musicAuthTokenExpiresAt = 0;
     }
+  }
+
+  // Sent on connect and again after every token refresh, so the room's
+  // "who's listening" roster (verified server-side against the token, never
+  // trusted from the client) drops a name within one refresh cycle of that
+  // person logging out or their session expiring.
+  function sendIdentity() {
+    if (!socket || socket.readyState !== WebSocket.OPEN) return;
+    socket.send(JSON.stringify({ type: "identity", name: identityName(), avatar: identityAvatar(), token: musicAuthToken }));
   }
 
   function identityName() {
@@ -440,8 +450,14 @@
   function statusText() {
     if (!remoteMode) return "Unavailable";
     if (connectionState !== "open") return "Reconnecting…";
+
     const listeners = Math.max(1, Number(state.listeners) || 1);
-    return listeners === 1 ? "Just you" : `${listeners} listening`;
+    const names = Array.isArray(state.listenerNames) ? state.listenerNames : [];
+    if (!names.length) return listeners === 1 ? "Just you" : `${listeners} listening`;
+
+    const shown = names.slice(0, 3).join(", ");
+    const extra = names.length > 3 ? ` +${names.length - 3} more` : "";
+    return listeners === 1 ? `Just you (${shown})` : `${listeners} listening: ${shown}${extra}`;
   }
 
   function avatarMarkup(name, avatarUrl) {
@@ -496,6 +512,7 @@
 
     els.statusText.textContent = statusText();
     els.status.classList.toggle("is-live", remoteMode && connectionState === "open");
+    els.status.title = state.listenerNames?.length ? `Listening now: ${state.listenerNames.join(", ")}` : "";
 
     if (current) {
       els.nowTitle.textContent = current.title || "YouTube video";
@@ -782,6 +799,7 @@
       startedAt: current ? (Number(input.startedAt) || Date.now()) : null,
       revision: Number(input.revision) || 0,
       listeners: Math.max(1, Number(input.listeners) || 1),
+      listenerNames: Array.isArray(input.listenerNames) ? input.listenerNames.map(String).slice(0, 40) : [],
       skipVotes: Math.max(0, Number(input.skipVotes) || 0),
       skipThreshold: Math.max(1, Number(input.skipThreshold) || 1)
     };
@@ -849,7 +867,7 @@
     socket.addEventListener("open", () => {
       connectionState = "open";
       setHelp("Connected to the shared EastCoin music room.");
-      socket.send(JSON.stringify({ type: "identity", name: identityName(), avatar: identityAvatar() }));
+      sendIdentity();
       render();
     });
 

@@ -71,7 +71,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">136 major update groups</div>
+<div class="release-count">137 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1921,10 +1921,9 @@
     not just requested.
 </p>
 </article>
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-09-04">September 4, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Floating Music Player dock gets the same YouTube search bar</h2>
 <p>
@@ -1936,6 +1935,23 @@
     search and preview results without logging in; each result (and the
     direct-add button) still requires a real Twitch login to actually
     queue a song.
+</p>
+</article>
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Music Room now shows who's actually listening</h2>
+<p>
+    The listener count in both the floating dock and <a href="/music">/music</a>
+    now names names: "3 listening: BootyPaper, jdoe" instead of just a
+    number, with the full roster on hover if it's a longer list. Only
+    real, currently-logged-in-with-Twitch listeners show up by name — the
+    server verifies each one against their signed session token itself,
+    the same way it already double-checks who's actually requesting a
+    song, so nobody can put a name in that list that isn't really them.
+    Guests still count toward the total, just without a name attached.
 </p>
 </article>
 </section>
