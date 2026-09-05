@@ -9,7 +9,23 @@
 <link href="/v2/assets/css/tokens.css?v=3" rel="stylesheet">
 <script defer src="/assets/eastcoins-youtube.js?v=2"></script>
 <style>
-  body{min-height:100vh}
+  body{min-height:100vh;padding-right:360px}
+
+  /* Same fixed right-side panel as every other EastCoin page — full
+     viewport height, not a bounded card, so there's no fixed-height
+     tradeoff to make at all. */
+  .chat{position:fixed;top:0;right:0;z-index:90;width:360px;height:100dvh;border-left:1px solid var(--line2);background:#080808;box-shadow:-16px 0 45px rgba(0,0,0,.34)}
+  .chat iframe{display:block;width:100%;height:100%;border:0;background:#050505}
+  .chatdefer{position:absolute;inset:0;z-index:2;display:grid;place-content:center;gap:6px;padding:20px;color:var(--muted);background:var(--bg);text-align:center}
+  .chatdefer[hidden]{display:none!important}
+  .chatdefer span{font-size:1.1rem;opacity:.6}
+  .chatdefer strong{color:var(--text);font-size:.82rem}
+  .chatdefer small{font-size:.68rem;line-height:1.5}
+
+  @media(max-width:900px){
+    body{padding-right:0}
+    .chat{position:static;width:100%;height:420px;border-left:0;border-top:1px solid var(--line2);box-shadow:none;margin-top:18px}
+  }
 
   .musicbar{position:sticky;top:0;z-index:10;height:var(--header);display:flex;align-items:center;gap:12px;padding:0 22px;border-bottom:1px solid var(--line);background:rgba(5,5,5,.94);backdrop-filter:blur(18px)}
   .musicbar a{display:flex;align-items:center;gap:9px;text-decoration:none}
@@ -22,16 +38,17 @@
   .musicbar-status.is-live .dot{background:var(--green);box-shadow:0 0 0 3px rgba(71,199,120,.15)}
   .musicbar .back{margin-left:auto;height:38px;display:flex;align-items:center;padding:0 12px;border:1px solid var(--line);border-radius:8px;color:#a8a098;font-size:.8rem;font-weight:900}
 
-  main{width:min(1440px,calc(100% - 32px));margin:0 auto;padding:40px 0 80px}
+  main{width:min(1440px,calc(100% - 32px));margin:0 auto;padding:18px 0 60px}
 
-  .eyebrow{display:inline-flex;align-items:center;gap:8px;color:#887964;font-size:.72rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
+  .page-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;color:#887964;font-size:.68rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
   .eyebrow-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 4px rgba(229,185,43,.09)}
-  .page-head h1{margin:9px 0 24px;color:var(--text);font-size:clamp(2rem,5vw,3rem);line-height:.98;letter-spacing:-.05em}
+  .page-head h1{margin:0;color:var(--text);font-size:clamp(1.3rem,2.2vw,1.6rem);line-height:1;letter-spacing:-.03em}
 
   /* ---- search-to-add bar ---- */
-  .search-card{margin-bottom:18px}
+  .search-card{margin-bottom:14px}
   .search-row{position:relative}
-  .search-row input{width:100%;min-width:0;height:50px;padding:0 46px 0 16px;border:1px solid var(--line);border-radius:11px;color:var(--text);background:#050505;font-size:.92rem;outline:none}
+  .search-row input{width:100%;min-width:0;height:44px;padding:0 44px 0 14px;border:1px solid var(--line);border-radius:10px;color:var(--text);background:#050505;font-size:.88rem;outline:none}
   .search-row input:focus{border-color:rgba(229,185,43,.45);box-shadow:0 0 0 2px rgba(229,185,43,.08)}
   .search-row input:disabled{opacity:.5;cursor:not-allowed}
   .search-row::after{content:"🔍";position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:.9rem;opacity:.5;pointer-events:none}
@@ -148,16 +165,6 @@
 
   .side-col{display:flex;flex-direction:column;gap:18px}
 
-  /* ---- chat (fixed height, never full-height) ---- */
-  .chat-card{height:340px;display:flex;flex-direction:column}
-  .chat-body{position:relative;flex:1;min-height:0}
-  .chat-body iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-  .chatdefer{position:absolute;inset:0;z-index:2;display:grid;place-content:center;gap:6px;padding:20px;color:var(--muted);background:var(--bg);text-align:center}
-  .chatdefer[hidden]{display:none!important}
-  .chatdefer span{font-size:1.1rem;opacity:.6}
-  .chatdefer strong{color:var(--text);font-size:.82rem}
-  .chatdefer small{font-size:.68rem;line-height:1.5}
-
   @media(max-width:900px){
     .layout{grid-template-columns:1fr}
   }
@@ -236,18 +243,6 @@
     </section>
 
     <aside class="side-col">
-      <div class="card chat-card">
-        <div class="card-head"><span>Stream Chat</span></div>
-        <div class="chat-body">
-          <iframe id="pageTwitchChat" src="about:blank" data-src="https://www.twitch.tv/embed/zwades/chat?parent=eastcoins.pages.dev&amp;parent=eastcoin.vip&amp;parent=www.eastcoin.vip&amp;parent=localhost&amp;parent=127.0.0.1&amp;darkpopout" title="zwades Twitch chat"></iframe>
-          <div class="chatdefer" id="pageChatDefer">
-            <span aria-hidden="true">◫</span>
-            <strong>Stream Chat</strong>
-            <small>Loads when you interact with the page.</small>
-          </div>
-        </div>
-      </div>
-
       <div class="card">
         <div class="card-head"><span>Top Requesters</span><span id="pageLeaderboardTotal">0</span></div>
         <ol class="list" id="pageLeaderboard"></ol>
@@ -262,6 +257,15 @@
     </aside>
   </div>
 </main>
+
+<aside class="chat open" id="chat" aria-label="Stream chat">
+  <iframe id="pageTwitchChat" src="about:blank" data-src="https://www.twitch.tv/embed/zwades/chat?parent=eastcoins.pages.dev&amp;parent=eastcoin.vip&amp;parent=www.eastcoin.vip&amp;parent=localhost&amp;parent=127.0.0.1&amp;darkpopout" title="zwades Twitch chat"></iframe>
+  <div class="chatdefer" id="pageChatDefer">
+    <span aria-hidden="true">◫</span>
+    <strong>Stream Chat</strong>
+    <small>Loads when you interact with the page.</small>
+  </div>
+</aside>
 
 <script defer src="/assets/eastcoins-music-config.js?v=2"></script>
 <script defer src="/assets/eastcoins-music-page.js?v=3"></script>
