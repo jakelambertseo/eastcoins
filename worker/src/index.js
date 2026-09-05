@@ -3,6 +3,10 @@ import { DurableObject } from "cloudflare:workers";
 const MAX_QUEUE = 25;
 const REQUEST_LIMIT = 4;
 const REQUEST_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+const SKIP_VOTE_THRESHOLD = 3;
+const MAX_VIDEO_SECONDS = 600;
+const MAX_HISTORY = 300;
+const MAX_USER_STATS = 500;
 const DEFAULT_ALLOWED_ORIGINS = new Set([
   "https://eastcoin.vip",
   "https://www.eastcoin.vip",
@@ -13,12 +17,13 @@ const DEFAULT_ALLOWED_ORIGINS = new Set([
   "http://127.0.0.1:8788"
 ]);
 
-function json(data, status = 200) {
+function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store"
+      "cache-control": "no-store",
+      ...extraHeaders
     }
   });
 }
@@ -37,6 +42,88 @@ function originAllowed(request, env) {
   const origin = request.headers.get("Origin");
   if (!origin) return true;
   return configuredOrigins(env).has(origin);
+}
+
+// The /history endpoint is fetched with plain fetch() from the site's own
+// domain, which is a different origin than this Worker — unlike the
+// WebSocket upgrade, a cross-origin GET like this is subject to CORS and
+// needs an explicit Access-Control-Allow-Origin header or the browser
+// discards the response before JS ever sees it.
+function corsHeaders(request, env) {
+  const origin = request.headers.get("Origin");
+  if (!origin || !configuredOrigins(env).has(origin)) return {};
+  return { "Access-Control-Allow-Origin": origin, "Vary": "Origin" };
+}
+
+function base64urlDecode(value) {
+  let normalized = String(value || "").replace(/-/g, "+").replace(/_/g, "/");
+  while (normalized.length % 4) normalized += "=";
+  const binary = atob(normalized);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+// Verifies the short-lived token minted by the site's own /api/music/token
+// Pages Function (same secret on both sides — see worker/README or the
+// deploy notes) so a song request can only be attributed to a real,
+// currently-authenticated Twitch account, not whatever a client claims.
+async function verifyMusicToken(token, secret) {
+  if (!token || !secret) return null;
+
+  const parts = String(token).split(".");
+  if (parts.length !== 2) return null;
+
+  try {
+    const payloadBytes = base64urlDecode(parts[0]);
+    const signatureBytes = base64urlDecode(parts[1]);
+
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"]
+    );
+
+    const valid = await crypto.subtle.verify("HMAC", key, signatureBytes, payloadBytes);
+    if (!valid) return null;
+
+    const payload = JSON.parse(new TextDecoder().decode(payloadBytes));
+    if (!payload.login || !Number.isFinite(payload.exp) || Date.now() > payload.exp) return null;
+
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+function parseIso8601Duration(value) {
+  const match = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/.exec(String(value || ""));
+  if (!match) return null;
+  const hours = Number(match[1] || 0);
+  const minutes = Number(match[2] || 0);
+  const seconds = Number(match[3] || 0);
+  return hours * 3600 + minutes * 60 + seconds;
+}
+
+// Returns null (rather than blocking requests) when YOUTUBE_API_KEY isn't
+// configured yet, or when the lookup itself fails — the length limit is
+// best-effort, not a hard dependency for the room to function.
+async function fetchVideoDurationSeconds(videoId, apiKey) {
+  if (!apiKey) return null;
+
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/videos?id=${encodeURIComponent(videoId)}&part=contentDetails&key=${apiKey}`;
+    const response = await fetch(url);
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const iso = data?.items?.[0]?.contentDetails?.duration;
+    return iso ? parseIso8601Duration(iso) : null;
+  } catch {
+    return null;
+  }
 }
 
 export default {
@@ -66,11 +153,24 @@ export default {
       return stub.fetch(request);
     }
 
+    // Plain JSON GET — powers the full /music page's historical request log
+    // and per-user totals without bloating every live WebSocket broadcast.
+    if (url.pathname.startsWith("/history/")) {
+      if (!originAllowed(request, env)) {
+        return new Response("Origin not allowed", { status: 403 });
+      }
+
+      const roomName = decodeURIComponent(url.pathname.slice("/history/".length)) || "main";
+      const stub = env.MUSIC_ROOM.getByName(roomName);
+      return stub.fetch(request);
+    }
+
     return json({
       ok: true,
       endpoints: {
         health: "/health",
-        websocket: "/room/<room-name>"
+        websocket: "/room/<room-name>",
+        history: "/history/<room-name>"
       }
     });
   }
@@ -81,6 +181,8 @@ export class MusicRoom extends DurableObject {
     super(ctx, env);
     this.sessions = new Map();
     this.state = this.emptyState();
+    this.history = [];
+    this.userStats = new Map();
     // In-memory only (not persisted to storage) — a DO restart resets everyone's
     // hourly count, which is an acceptable tradeoff for a small friend-group room.
     this.requestLog = new Map();
@@ -98,6 +200,19 @@ export class MusicRoom extends DurableObject {
       const stored = await this.ctx.storage.get("music-state");
       if (stored && typeof stored === "object") {
         this.state = this.sanitizeStoredState(stored);
+      }
+
+      const storedHistory = await this.ctx.storage.get("music-history");
+      if (Array.isArray(storedHistory)) {
+        this.history = storedHistory.map((entry) => this.sanitizeHistoryEntry(entry)).filter(Boolean).slice(-MAX_HISTORY);
+      }
+
+      const storedStats = await this.ctx.storage.get("music-user-stats");
+      if (storedStats && typeof storedStats === "object") {
+        Object.entries(storedStats).forEach(([login, entry]) => {
+          const sanitized = this.sanitizeUserStat(login, entry);
+          if (sanitized) this.userStats.set(login, sanitized);
+        });
       }
     });
   }
@@ -169,6 +284,74 @@ export class MusicRoom extends DurableObject {
       .slice(0, 24) || "Guest";
   }
 
+  sanitizeHistoryEntry(entry) {
+    if (!entry || typeof entry !== "object") return null;
+    const videoId = String(entry.videoId || "").trim();
+    if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) return null;
+    return {
+      id: String(entry.id || crypto.randomUUID()),
+      videoId,
+      title: this.safeTitle(entry.title),
+      requestedBy: this.safeName(entry.requestedBy),
+      requestedByAvatar: this.safeAvatarUrl(entry.requestedByAvatar),
+      requestedByLogin: String(entry.requestedByLogin || "").slice(0, 64),
+      requestedAt: Number(entry.requestedAt) || Date.now()
+    };
+  }
+
+  sanitizeUserStat(login, entry) {
+    const safeLogin = String(login || "").trim().slice(0, 64);
+    if (!safeLogin || !entry || typeof entry !== "object") return null;
+    return {
+      login: safeLogin,
+      displayName: this.safeName(entry.displayName),
+      avatar: this.safeAvatarUrl(entry.avatar),
+      count: Math.max(0, Number(entry.count) || 0)
+    };
+  }
+
+  recordRequest(item, login) {
+    this.history.push({
+      id: item.id,
+      videoId: item.videoId,
+      title: item.title,
+      requestedBy: item.requestedBy,
+      requestedByAvatar: item.requestedByAvatar,
+      requestedByLogin: login,
+      requestedAt: item.addedAt
+    });
+    if (this.history.length > MAX_HISTORY) {
+      this.history = this.history.slice(-MAX_HISTORY);
+    }
+
+    const existing = this.userStats.get(login) || {
+      login,
+      displayName: item.requestedBy,
+      avatar: item.requestedByAvatar,
+      count: 0
+    };
+    existing.displayName = item.requestedBy || existing.displayName;
+    existing.avatar = item.requestedByAvatar || existing.avatar;
+    existing.count += 1;
+    this.userStats.set(login, existing);
+
+    if (this.userStats.size > MAX_USER_STATS) {
+      const sorted = [...this.userStats.entries()].sort((a, b) => b[1].count - a[1].count);
+      this.userStats = new Map(sorted.slice(0, MAX_USER_STATS));
+    }
+  }
+
+  userStatsList() {
+    return [...this.userStats.values()]
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 100);
+  }
+
+  async persistHistoryAndStats() {
+    await this.ctx.storage.put("music-history", this.history);
+    await this.ctx.storage.put("music-user-stats", Object.fromEntries(this.userStats));
+  }
+
   publicState() {
     const listeners = Math.max(1, this.sessions.size);
     return {
@@ -178,14 +361,23 @@ export class MusicRoom extends DurableObject {
       revision: this.state.revision,
       listeners,
       skipVotes: this.state.skipVoters.length,
-      skipThreshold: Math.max(1, Math.ceil(listeners / 2))
+      skipThreshold: Math.min(SKIP_VOTE_THRESHOLD, Math.max(1, listeners))
     };
   }
 
   async fetch(request) {
+    const url = new URL(request.url);
+
+    if (url.pathname.startsWith("/history/")) {
+      return json(
+        { history: this.history, userStats: this.userStatsList() },
+        200,
+        corsHeaders(request, this.env)
+      );
+    }
+
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
-    const url = new URL(request.url);
 
     const clientId = String(url.searchParams.get("client") || crypto.randomUUID()).slice(0, 80);
     const name = this.safeName(url.searchParams.get("name"));
@@ -231,6 +423,15 @@ export class MusicRoom extends DurableObject {
         return this.sendError(ws, "Invalid YouTube video ID.");
       }
 
+      // Song requests require a currently-authenticated Twitch account —
+      // guests can still listen, react, and vote to skip, but the identity
+      // and avatar on a request always come from the verified token, never
+      // from whatever the client claims.
+      const auth = await verifyMusicToken(message.token, this.env.MUSIC_AUTH_SECRET);
+      if (!auth) {
+        return this.sendError(ws, "You need to be logged in with Twitch to request a song.");
+      }
+
       if (
         this.state.current?.videoId === videoId ||
         this.state.queue.some((item) => item.videoId === videoId)
@@ -240,6 +441,14 @@ export class MusicRoom extends DurableObject {
 
       if (this.state.queue.length >= MAX_QUEUE && this.state.current) {
         return this.sendError(ws, `Queue is limited to ${MAX_QUEUE} songs.`);
+      }
+
+      const durationSeconds = await fetchVideoDurationSeconds(videoId, this.env.YOUTUBE_API_KEY);
+      if (durationSeconds !== null && durationSeconds > MAX_VIDEO_SECONDS) {
+        return this.sendError(
+          ws,
+          `That video is too long. EastCoin's music room is limited to ${Math.round(MAX_VIDEO_SECONDS / 60)}-minute songs.`
+        );
       }
 
       const now = Date.now();
@@ -262,8 +471,8 @@ export class MusicRoom extends DurableObject {
         id: crypto.randomUUID(),
         videoId,
         title: this.safeTitle(message.title),
-        requestedBy: this.safeName(message.requestedBy || session.name),
-        requestedByAvatar: this.safeAvatarUrl(message.requestedByAvatar || session.avatar),
+        requestedBy: this.safeName(auth.displayName || auth.login),
+        requestedByAvatar: this.safeAvatarUrl(auth.avatar),
         addedAt: Date.now(),
         reactions: 0
       };
@@ -277,7 +486,8 @@ export class MusicRoom extends DurableObject {
       }
 
       this.state.revision += 1;
-      await this.persistAndBroadcast();
+      this.recordRequest(item, auth.login);
+      await Promise.all([this.persistAndBroadcast(), this.persistHistoryAndStats()]);
       return;
     }
 
@@ -296,7 +506,7 @@ export class MusicRoom extends DurableObject {
         this.state.skipVoters.push(session.clientId);
       }
 
-      const threshold = Math.max(1, Math.ceil(Math.max(1, this.sessions.size) / 2));
+      const threshold = Math.min(SKIP_VOTE_THRESHOLD, Math.max(1, this.sessions.size));
       if (this.state.skipVoters.length >= threshold) {
         this.advance();
       } else {

@@ -10,8 +10,14 @@
   const OPEN_KEY = "eastcoinMusicDockOpen";
   const CLIENT_KEY = "eastcoinMusicClientId";
   const VOLUME_KEY = "eastcoinMusicVolume";
+  const SIZE_KEY = "eastcoinMusicDockSize";
+  const MINIMIZED_KEY = "eastcoinMusicDockMinimized";
   const MAX_QUEUE = 25;
   const TITLE_FETCH_TIMEOUT_MS = 3500;
+  const TOKEN_REFRESH_MS = 10 * 60 * 1000;
+  const MIN_DOCK_WIDTH = 300;
+  const MAX_DOCK_WIDTH = 560;
+  const MIN_DOCK_HEIGHT = 420;
 
   const config = window.EASTCOIN_MUSIC_CONFIG || {};
   const roomName = String(config.room || "main").trim() || "main";
@@ -28,6 +34,8 @@
   let connectionState = remoteMode ? "connecting" : "local";
   let state = loadLocalState();
   let currentUser = null;
+  let musicAuthToken = null;
+  let musicAuthTokenExpiresAt = 0;
 
   const clientId = getOrCreateClientId();
 
@@ -36,20 +44,50 @@
 
   // Identity resolves before the dock ever renders so "Requested by" always
   // reflects the real signed-in Twitch member (or an honest "Guest"/login
-  // prompt) instead of a placeholder that gets swapped in a beat later.
-  fetchIdentity().finally(init);
+  // prompt) instead of a placeholder that gets swapped in a beat later. The
+  // signed music-room token only makes sense to fetch once we know there's a
+  // real session to sign it from.
+  fetchIdentity()
+    .then(() => (currentUser ? fetchMusicAuthToken() : null))
+    .finally(init);
 
   function init() {
     dock = createDock();
     els = collectElements();
     bindUi();
     renderIdentity();
-    loadYouTubeApi();
 
+    // The YouTube player is created lazily — only once the dock is actually
+    // opened (see setDockOpen) — never eagerly here. Creating it on every
+    // page load meant YT.Player.loadVideoById() (which cues AND plays)
+    // fired for every visitor the instant the shared room had a current
+    // song, regardless of whether they'd ever opened the dock.
     if (remoteMode) connectSharedRoom();
     restoreDockState();
+    restoreDockSize();
     render();
     startProgressSync();
+
+    window.setInterval(() => {
+      if (currentUser) fetchMusicAuthToken();
+    }, TOKEN_REFRESH_MS);
+  }
+
+  async function fetchMusicAuthToken() {
+    try {
+      const response = await fetch("/api/music/token", { credentials: "same-origin", cache: "no-store" });
+      const payload = await response.json().catch(() => null);
+      if (payload?.ok && payload.authenticated && payload.token) {
+        musicAuthToken = payload.token;
+        musicAuthTokenExpiresAt = Number(payload.expiresAt) || 0;
+      } else {
+        musicAuthToken = null;
+        musicAuthTokenExpiresAt = 0;
+      }
+    } catch {
+      musicAuthToken = null;
+      musicAuthTokenExpiresAt = 0;
+    }
   }
 
   async function fetchIdentity() {
@@ -185,6 +223,7 @@
             </div>
           </div>
           <div class="ec-music-head-actions">
+            <button class="ec-music-icon-button" id="eastcoinMusicMinimize" type="button" aria-label="Minimize player" title="Minimize player">–</button>
             <div class="ec-music-share-wrap">
               <button class="ec-music-icon-button" id="eastcoinMusicShare" type="button" aria-label="Copy shareable room link" title="Copy shareable room link">⤴</button>
               <div class="ec-music-copytip" id="eastcoinMusicCopyTip" role="status" aria-live="polite">
@@ -195,6 +234,8 @@
             <button class="ec-music-icon-button" id="eastcoinMusicClose" type="button" aria-label="Close Music Player">×</button>
           </div>
         </header>
+
+        <div class="ec-music-resize-handle" id="eastcoinMusicResizeHandle" aria-hidden="true"></div>
 
         <div class="ec-music-youtube-shell">
           <div id="eastcoinMusicYoutube"></div>
@@ -221,6 +262,7 @@
               <strong id="eastcoinMusicNowTitle">Nothing queued</strong>
               <small id="eastcoinMusicNowMeta">Paste a YouTube URL to start</small>
             </div>
+            <button class="ec-music-skip" id="eastcoinMusicSkip" type="button" hidden>Skip</button>
             <button class="ec-music-react" id="eastcoinMusicReact" type="button" hidden aria-label="React with a thumbs up">
               👍 <span id="eastcoinMusicReactCount">0</span>
             </button>
@@ -229,7 +271,7 @@
 
         <section class="ec-music-request">
           <div class="ec-music-identity" id="eastcoinMusicIdentity"></div>
-          <div class="ec-music-request-row">
+          <div class="ec-music-request-row" id="eastcoinMusicRequestRow">
             <input id="eastcoinMusicUrl" type="url" inputmode="url" autocomplete="off" placeholder="Paste a YouTube link" />
             <button id="eastcoinMusicAdd" type="button">Add</button>
           </div>
@@ -257,6 +299,8 @@
     return {
       control: controlButton,
       close: document.getElementById("eastcoinMusicClose"),
+      minimize: document.getElementById("eastcoinMusicMinimize"),
+      resizeHandle: document.getElementById("eastcoinMusicResizeHandle"),
       share: document.getElementById("eastcoinMusicShare"),
       copyTip: document.getElementById("eastcoinMusicCopyTip"),
       status: document.getElementById("eastcoinMusicStatus"),
@@ -266,9 +310,11 @@
       nowAvatar: document.getElementById("eastcoinMusicNowAvatar"),
       nowTitle: document.getElementById("eastcoinMusicNowTitle"),
       nowMeta: document.getElementById("eastcoinMusicNowMeta"),
+      skip: document.getElementById("eastcoinMusicSkip"),
       react: document.getElementById("eastcoinMusicReact"),
       reactCount: document.getElementById("eastcoinMusicReactCount"),
       identity: document.getElementById("eastcoinMusicIdentity"),
+      requestRow: document.getElementById("eastcoinMusicRequestRow"),
       url: document.getElementById("eastcoinMusicUrl"),
       add: document.getElementById("eastcoinMusicAdd"),
       help: document.getElementById("eastcoinMusicHelp"),
@@ -301,6 +347,7 @@
     });
 
     els.close?.addEventListener("click", () => setDockOpen(false));
+    els.minimize?.addEventListener("click", toggleMinimized);
     els.share?.addEventListener("click", shareRoomLink);
     els.join?.addEventListener("click", () => {
       autoplayBlocked = false;
@@ -313,7 +360,9 @@
       if (event.key === "Enter") submitRequest();
     });
 
+    els.skip?.addEventListener("click", voteSkip);
     els.react?.addEventListener("click", sendReaction);
+    bindResizeHandle();
 
     els.volume?.addEventListener("input", () => {
       if (!player) return;
@@ -349,8 +398,11 @@
 
   function restoreDockState() {
     let open = false;
+    let minimized = false;
     try { open = localStorage.getItem(OPEN_KEY) === "true"; } catch {}
+    try { minimized = localStorage.getItem(MINIMIZED_KEY) === "true"; } catch {}
     setDockOpen(open, false);
+    setMinimized(minimized, false);
   }
 
   function setDockOpen(open, persist = true) {
@@ -362,7 +414,96 @@
     if (persist) {
       try { localStorage.setItem(OPEN_KEY, String(enabled)); } catch {}
     }
-    if (enabled) syncPlayerToState();
+    if (enabled) {
+      // Lazy — no-ops if the player already exists. This is the only path
+      // that creates the YouTube player, so nothing plays until the visitor
+      // (or a previously-open, persisted session) actually opens the dock.
+      loadYouTubeApi();
+      syncPlayerToState();
+    }
+  }
+
+  // Minimizing collapses the panel's visible height via CSS (overflow, not
+  // display:none) so the YouTube iframe stays mounted and keeps playing
+  // audio in the background — only the Close button actually tears it down.
+  function setMinimized(minimized, persist = true) {
+    const enabled = Boolean(minimized);
+    dock.classList.toggle("is-minimized", enabled);
+    els.minimize?.setAttribute("aria-label", enabled ? "Restore player" : "Minimize player");
+    els.minimize?.setAttribute("title", enabled ? "Restore player" : "Minimize player");
+    if (persist) {
+      try { localStorage.setItem(MINIMIZED_KEY, String(enabled)); } catch {}
+    }
+  }
+
+  function toggleMinimized() {
+    setMinimized(!dock.classList.contains("is-minimized"));
+  }
+
+  function restoreDockSize() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SIZE_KEY) || "null");
+      if (!saved || typeof saved !== "object") return;
+      const width = Number(saved.width);
+      const height = Number(saved.height);
+      if (Number.isFinite(width) && Number.isFinite(height)) {
+        applyDockSize(width, height);
+      }
+    } catch {}
+  }
+
+  function applyDockSize(width, height) {
+    const maxHeight = Math.max(MIN_DOCK_HEIGHT, window.innerHeight - 28);
+    const clampedWidth = Math.max(MIN_DOCK_WIDTH, Math.min(MAX_DOCK_WIDTH, width));
+    const clampedHeight = Math.max(MIN_DOCK_HEIGHT, Math.min(maxHeight, height));
+    dock.style.width = `${clampedWidth}px`;
+    dock.style.height = `${clampedHeight}px`;
+    dock.classList.add("is-resized");
+  }
+
+  function bindResizeHandle() {
+    const handle = els.resizeHandle;
+    if (!handle) return;
+
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startWidth = 0;
+    let startHeight = 0;
+
+    handle.addEventListener("pointerdown", (event) => {
+      dragging = true;
+      const rect = dock.getBoundingClientRect();
+      startX = event.clientX;
+      startY = event.clientY;
+      startWidth = rect.width;
+      startHeight = rect.height;
+      try { handle.setPointerCapture(event.pointerId); } catch {}
+      event.preventDefault();
+    });
+
+    handle.addEventListener("pointermove", (event) => {
+      if (!dragging) return;
+      // The dock is anchored via right/bottom, so the handle sits at the
+      // panel's top-left — dragging up and left (away from that anchor)
+      // is what should grow the box, hence the reversed deltas here.
+      const nextWidth = startWidth + (startX - event.clientX);
+      const nextHeight = startHeight + (startY - event.clientY);
+      applyDockSize(nextWidth, nextHeight);
+    });
+
+    const stopDragging = (event) => {
+      if (!dragging) return;
+      dragging = false;
+      try { handle.releasePointerCapture(event.pointerId); } catch {}
+      const rect = dock.getBoundingClientRect();
+      try {
+        localStorage.setItem(SIZE_KEY, JSON.stringify({ width: rect.width, height: rect.height }));
+      } catch {}
+    };
+
+    handle.addEventListener("pointerup", stopDragging);
+    handle.addEventListener("pointercancel", stopDragging);
   }
 
   function setHelp(message, error = false) {
@@ -400,6 +541,11 @@
   }
 
   async function submitRequest() {
+    if (remoteMode && !currentUser) {
+      setHelp("Log in with Twitch above to request a song.", true);
+      return;
+    }
+
     const videoId = normalizeYouTubeId(els.url.value);
     if (!videoId) {
       setHelp("That does not look like a valid YouTube video link.", true);
@@ -413,6 +559,10 @@
     const requestedBy = identityName();
     const requestedByAvatar = identityAvatar();
 
+    if (remoteMode && (!musicAuthToken || Date.now() > musicAuthTokenExpiresAt - 60000)) {
+      await fetchMusicAuthToken();
+    }
+
     els.add.disabled = false;
     els.add.textContent = "Add";
 
@@ -421,13 +571,17 @@
         setHelp("Shared music room is reconnecting. Try again in a moment.", true);
         return;
       }
-      socket.send(JSON.stringify({ type: "add", videoId, title, requestedBy, requestedByAvatar }));
+      if (!musicAuthToken) {
+        setHelp("Log in with Twitch above to request a song.", true);
+        return;
+      }
+      socket.send(JSON.stringify({ type: "add", videoId, title, requestedBy, requestedByAvatar, token: musicAuthToken }));
     } else {
       addLocal(videoId, title, requestedBy, requestedByAvatar);
     }
 
     els.url.value = "";
-    setHelp(remoteMode ? "Request sent to the shared queue." : "Added to your queue.");
+    if (!remoteMode) setHelp("Added to your queue.");
   }
 
   function addLocal(videoId, title, requestedBy, requestedByAvatar) {
@@ -483,6 +637,19 @@
     current.reactions = (Number(current.reactions) || 0) + 1;
     saveLocalState();
     render();
+  }
+
+  function voteSkip() {
+    if (!state.current) return;
+
+    if (remoteMode) {
+      if (socket?.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "skip-vote", currentId: state.current.id }));
+      }
+      return;
+    }
+
+    advanceLocal();
   }
 
   let copyTipTimer = 0;
@@ -545,6 +712,10 @@
     return escapeHtml((String(name || "G").trim().slice(0, 1) || "G").toUpperCase());
   }
 
+  function thumbnailMarkup(videoId) {
+    return `<img src="https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/mqdefault.jpg" alt="" loading="lazy">`;
+  }
+
   // Tracks the last reaction count we've already animated for the current
   // song so every listener — not just the person who clicked — sees a
   // floating 👍 burst the moment the shared count ticks up.
@@ -603,6 +774,15 @@
     els.emptyPlayer.hidden = Boolean(current);
     els.nowLabel.hidden = !current;
 
+    const listeners = Math.max(1, Number(state.listeners) || 1);
+    const skipThreshold = Math.max(1, Number(state.skipThreshold) || 1);
+
+    els.skip.hidden = !current;
+    els.skip.disabled = !current || (remoteMode && connectionState !== "open");
+    els.skip.textContent = remoteMode && current && listeners > 1
+      ? `Skip ${state.skipVotes || 0}/${skipThreshold}`
+      : "Skip";
+
     els.react.hidden = !current;
     els.react.disabled = !current || (remoteMode && connectionState !== "open");
     els.reactCount.textContent = String(Math.max(0, Number(current?.reactions) || 0));
@@ -615,7 +795,7 @@
       li.className = "ec-music-queue-item";
       li.innerHTML = `
         <span class="ec-music-queue-num">${index + 1}</span>
-        <span class="ec-music-queue-avatar">${avatarMarkup(item.requestedBy, item.requestedByAvatar)}</span>
+        <span class="ec-music-queue-thumb">${thumbnailMarkup(item.videoId)}</span>
         <span class="ec-music-queue-copy">
           <strong>${escapeHtml(item.title || "YouTube video")}</strong>
           <small>Requested by ${escapeHtml(item.requestedBy || "Guest")}</small>
@@ -626,6 +806,14 @@
 
     els.emptyQueue.hidden = state.queue.length > 0;
     els.join.classList.toggle("is-visible", autoplayBlocked && Boolean(current));
+
+    // Song requests require a real, currently-authenticated Twitch account —
+    // guests can still listen, react, and vote to skip in the shared room.
+    const requestsGated = remoteMode && !currentUser;
+    els.url.disabled = requestsGated;
+    els.url.placeholder = requestsGated ? "Log in with Twitch to request a song" : "Paste a YouTube link";
+    els.add.disabled = requestsGated;
+    els.requestRow.classList.toggle("is-gated", requestsGated);
   }
 
   function renderMuteIcon() {

@@ -71,7 +71,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">127 major update groups</div>
+<div class="release-count">130 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -1691,10 +1691,9 @@
 </p>
 </article>
 
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-09-04">September 4, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Reaction bursts, a real copy confirmation, and a fixed laptop-width nav</h2>
 <p>
@@ -1716,6 +1715,90 @@
     wider breakpoint that actually covers laptop-class screens, and the
     ZCoins pill collapses to its icon (still a working shortcut to Picks)
     instead of overflowing with its full label.
+</p>
+</article>
+
+<article class="timeline-entry">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+</div>
+<h2>Song requests now require Twitch login, plus a length limit, resizing, and a minimize tray</h2>
+<p>
+    Requesting a song in the shared Music Player room now requires a real,
+    currently-authenticated Twitch account — guests can still listen, react,
+    and vote to skip, but can no longer add songs anonymously. This is
+    enforced server-side, not just hidden in the UI: a new same-origin
+    endpoint (<code>/api/music/token</code>) mints a short-lived signed
+    token from the site's existing Twitch session, and the Worker verifies
+    that signature itself before accepting a request, always using the
+    verified name and avatar rather than whatever a client claims. Verified
+    with an automated sign/verify roundtrip test (matching secret, wrong
+    secret, expired token, and tampered payload all behave correctly).
+    Song length is now capped at 10 minutes via the YouTube Data API when
+    configured, so a 2-hour video can't quietly take over the queue. The
+    Up Next queue now shows each video's real thumbnail instead of the
+    requester's Twitch avatar (still credited by name underneath). Skip is
+    back as a small button beside the reaction button — now a fixed
+    3-vote threshold (one vote per listener, shown as "Skip 1/3") instead
+    of a majority vote, capped down automatically in smaller rooms so it's
+    never mathematically unreachable. The whole dock can now be resized by
+    dragging its top-left corner (remembered between visits), and a new
+    minimize button collapses it to a slim header strip without unloading
+    the video — audio keeps playing in the background — while Close still
+    fully ends the session. The "Request sent to the shared queue" message
+    was removed as requested.
+</p>
+</article>
+
+<article class="timeline-entry">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+</div>
+<h2>Dedicated Music Room page launched at /music</h2>
+<p>
+    Added a full standalone Music Room page at
+    <a href="/music">eastcoin.vip/music</a> — a bigger, dedicated view of the
+    exact same shared room the floating dock plays everywhere else on
+    EastCoin (same Worker, same queue, same currently-playing song), built
+    for actually sitting with the room open rather than as a small corner
+    widget. Alongside a full-width player, live queue, and the same
+    Twitch-gated request form, it adds two things the compact dock has no
+    room for: a <strong>Recently Requested</strong> history of everything
+    the room has played, each with a one-click <strong>↻ Again</strong>
+    button that re-queues it, and a <strong>Top Requesters</strong>
+    leaderboard showing lifetime request counts per person (medals for the
+    top three). The Worker now keeps a capped request history and per-user
+    totals in durable storage, exposed through a new
+    <code>/history/&lt;room&gt;</code> endpoint — kept separate from the
+    live WebSocket broadcast so the compact dock doesn't pay for data it
+    never shows. Fixed a real cross-origin bug found while building this:
+    that endpoint was being silently blocked by the browser's CORS policy
+    until the Worker started sending back an explicit
+    <code>Access-Control-Allow-Origin</code> header for it.
+</p>
+</article>
+
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-04">September 4, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Fixed the Music Player autoplaying for every visitor on load</h2>
+<p>
+    Fixed a real bug: the floating Music Player was creating its YouTube
+    player and loading the shared room's current song on every single page
+    load, for every visitor, regardless of whether they had ever opened the
+    dock — including a brand-new visitor with no cookies or saved
+    preferences at all. The dock's own open/closed state was already being
+    tracked correctly; the YouTube player just wasn't checking it before
+    loading and playing whatever the shared room happened to be on. The
+    player is now created lazily, only the moment the dock is actually
+    opened — either by a visitor's own click, or by a previously-saved
+    "I left it open" preference, which still resumes as expected. A closed
+    dock now creates no player, loads no YouTube script, and starts nothing
+    in the background. Verified directly: with dock-open state cleared, no
+    player and no video element exist on the page at all after load;
+    opening the dock creates the player and loads on demand.
 </p>
 </article>
 </section>
