@@ -816,13 +816,13 @@
     syncPlayerToState(true);
   }
 
-  function handleEnded(expectedCurrentId = state.current?.id || "") {
+  function handleEnded(expectedCurrentId = state.current?.id || "", reason = "state-change") {
     if (!state.current || !expectedCurrentId) return;
     if (state.current.id !== expectedCurrentId) return;
 
     if (remoteMode) {
       if (socket?.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: "ended", currentId: expectedCurrentId }));
+        socket.send(JSON.stringify({ type: "ended", currentId: expectedCurrentId, reason }));
       }
     } else {
       advanceLocal(expectedCurrentId);
@@ -1098,7 +1098,7 @@
         onError: () => {
           const failedCurrentId = state.current?.id || "";
           setHelp("YouTube could not play that video. Skipping it.", true);
-          window.setTimeout(() => handleEnded(failedCurrentId), 800);
+          window.setTimeout(() => handleEnded(failedCurrentId, "player-error"), 800);
         }
       }
     });
@@ -1160,7 +1160,7 @@
         // real advance has already happened.
         try {
           if (playerReady && player && player.getPlayerState() === YT.PlayerState.ENDED) {
-            handleEnded(state.current.id);
+            handleEnded(state.current.id, "safety-net");
           }
         } catch {}
       }

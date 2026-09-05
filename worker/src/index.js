@@ -857,8 +857,16 @@ export class MusicRoom extends DurableObject {
         this.state.skipVoters.push(session.clientId);
       }
 
+      // The threshold scales down with the room size specifically so a
+      // lone listener (or two) isn't stuck unable to ever reach 3 votes —
+      // but that also means a single click skips outright whenever the
+      // room has 1-2 people in it, which can look "random" to whoever
+      // didn't click it.
       const threshold = Math.min(SKIP_VOTE_THRESHOLD, Math.max(1, this.sessions.size));
       if (this.state.skipVoters.length >= threshold) {
+        console.log(
+          `Skip vote: threshold reached (${this.state.skipVoters.length}/${threshold} of ${this.sessions.size} listeners) — skipping "${this.state.current.title}"`
+        );
         this.advance();
       } else {
         this.state.revision += 1;
@@ -870,6 +878,10 @@ export class MusicRoom extends DurableObject {
 
     if (message.type === "ended") {
       if (!this.state.current || String(message.currentId || "") !== this.state.current.id) return;
+      const reason = String(message.reason || "state-change").slice(0, 40);
+      console.log(
+        `Client-reported ended (${reason}): advancing past "${this.state.current.title}" (clientId ${session.clientId})`
+      );
       this.advance();
       await this.persistAndBroadcast();
     }

@@ -790,16 +790,16 @@
         onError: () => {
           const failedCurrentId = state.current?.id || "";
           setHelp("YouTube could not play that video. Skipping it.", true);
-          window.setTimeout(() => handleEnded(failedCurrentId), 800);
+          window.setTimeout(() => handleEnded(failedCurrentId, "player-error"), 800);
         }
       }
     });
   }
 
-  function handleEnded(expectedCurrentId) {
+  function handleEnded(expectedCurrentId, reason = "state-change") {
     if (!state.current || !expectedCurrentId || state.current.id !== expectedCurrentId) return;
     if (socket?.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ type: "ended", currentId: expectedCurrentId }));
+      socket.send(JSON.stringify({ type: "ended", currentId: expectedCurrentId, reason }));
     }
   }
 
@@ -847,7 +847,7 @@
         // video whose ENDED event or "ended" message never made it through.
         try {
           if (playerReady && player && player.getPlayerState() === YT.PlayerState.ENDED) {
-            handleEnded(state.current.id);
+            handleEnded(state.current.id, "safety-net");
           }
         } catch {}
       }
