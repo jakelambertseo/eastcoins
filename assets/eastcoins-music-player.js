@@ -15,6 +15,8 @@
   const MAX_QUEUE = 25;
   const TITLE_FETCH_TIMEOUT_MS = 3500;
   const TOKEN_REFRESH_MS = 10 * 60 * 1000;
+  const SEARCH_DEBOUNCE_MS = 450;
+  const SEARCH_MIN_LENGTH = 2;
   const MIN_DOCK_WIDTH = 300;
   const MAX_DOCK_WIDTH = 560;
   const MIN_DOCK_HEIGHT = 420;
@@ -272,10 +274,11 @@
         <section class="ec-music-request">
           <div class="ec-music-identity" id="eastcoinMusicIdentity"></div>
           <div class="ec-music-request-row" id="eastcoinMusicRequestRow">
-            <input id="eastcoinMusicUrl" type="url" inputmode="url" autocomplete="off" placeholder="Paste a YouTube link" />
+            <input id="eastcoinMusicUrl" type="text" autocomplete="off" placeholder="Search YouTube or paste a link" />
             <button id="eastcoinMusicAdd" type="button">Add</button>
           </div>
           <div class="ec-music-request-help" id="eastcoinMusicHelp">youtube.com, music.youtube.com and youtu.be links work.</div>
+          <ol class="ec-music-search-results" id="eastcoinMusicSearchResults" hidden></ol>
         </section>
 
         <div class="ec-music-queue-wrap">
@@ -318,6 +321,7 @@
       url: document.getElementById("eastcoinMusicUrl"),
       add: document.getElementById("eastcoinMusicAdd"),
       help: document.getElementById("eastcoinMusicHelp"),
+      searchResults: document.getElementById("eastcoinMusicSearchResults"),
       queue: document.getElementById("eastcoinMusicQueue"),
       queueCount: document.getElementById("eastcoinMusicQueueCount"),
       emptyQueue: document.getElementById("eastcoinMusicEmptyQueue"),
@@ -357,7 +361,35 @@
 
     els.add?.addEventListener("click", submitRequest);
     els.url?.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") submitRequest();
+      if (event.key !== "Enter") return;
+      // Enter adds the top search result when the dropdown is open (so
+      // typing a query and hitting Enter behaves like a normal search box);
+      // otherwise it falls back to the paste-a-link flow.
+      const firstResult = els.searchResults?.hidden ? null : els.searchResults?.querySelector(".ec-music-search-result");
+      if (firstResult && !firstResult.disabled) {
+        firstResult.click();
+      } else {
+        submitRequest();
+      }
+    });
+
+    let searchTimer = 0;
+    els.url?.addEventListener("input", () => {
+      window.clearTimeout(searchTimer);
+      const query = els.url.value.trim();
+
+      if (normalizeYouTubeId(query) || query.length < SEARCH_MIN_LENGTH) {
+        clearSearchResults();
+        return;
+      }
+
+      searchTimer = window.setTimeout(() => runSearch(query), SEARCH_DEBOUNCE_MS);
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!els.url || !els.searchResults) return;
+      if (event.target === els.url || els.searchResults.contains(event.target)) return;
+      clearSearchResults();
     });
 
     els.skip?.addEventListener("click", voteSkip);
@@ -554,17 +586,34 @@
 
     els.add.disabled = true;
     els.add.textContent = "Adding…";
-
     const title = await fetchVideoTitle(videoId);
+    els.add.disabled = false;
+    els.add.textContent = "Add";
+
+    await sendAddRequest(videoId, title);
+    els.url.value = "";
+    clearSearchResults();
+  }
+
+  // Shared by the paste-a-link flow above and search-result clicks below —
+  // both already know the videoId/title, they just differ in how they got it.
+  async function addFromSearchResult(videoId, title) {
+    if (remoteMode && !currentUser) {
+      setHelp("Log in with Twitch above to request a song.", true);
+      return;
+    }
+    await sendAddRequest(videoId, title);
+    els.url.value = "";
+    clearSearchResults();
+  }
+
+  async function sendAddRequest(videoId, title) {
     const requestedBy = identityName();
     const requestedByAvatar = identityAvatar();
 
     if (remoteMode && (!musicAuthToken || Date.now() > musicAuthTokenExpiresAt - 60000)) {
       await fetchMusicAuthToken();
     }
-
-    els.add.disabled = false;
-    els.add.textContent = "Add";
 
     if (remoteMode) {
       if (!socket || socket.readyState !== WebSocket.OPEN) {
@@ -576,12 +625,73 @@
         return;
       }
       socket.send(JSON.stringify({ type: "add", videoId, title, requestedBy, requestedByAvatar, token: musicAuthToken }));
+      setHelp("Added to the queue.");
     } else {
       addLocal(videoId, title, requestedBy, requestedByAvatar);
+      setHelp("Added to your queue.");
+    }
+  }
+
+  async function runSearch(query) {
+    if (!remoteMode) return;
+    const url = searchUrl(query);
+    if (!url) return;
+
+    setHelp("Searching…");
+    try {
+      const response = await fetch(url, { cache: "no-store" });
+      const payload = await response.json().catch(() => null);
+      if (!payload?.ok) {
+        setHelp(payload?.message || "Search is unavailable right now.", true);
+        return;
+      }
+      renderSearchResults(payload.results || []);
+    } catch {
+      setHelp("Search failed. Try again.", true);
+    }
+  }
+
+  function renderSearchResults(results) {
+    if (!els.searchResults) return;
+
+    if (!results.length) {
+      els.searchResults.hidden = true;
+      els.searchResults.replaceChildren();
+      setHelp("No results.");
+      return;
     }
 
-    els.url.value = "";
-    if (!remoteMode) setHelp("Added to your queue.");
+    setHelp("");
+    els.searchResults.hidden = false;
+    els.searchResults.replaceChildren();
+
+    const gated = remoteMode && !currentUser;
+    results.forEach((result) => {
+      const li = document.createElement("li");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "ec-music-search-result";
+      button.disabled = gated;
+      button.innerHTML = `
+        <span class="ec-music-search-thumb">${result.thumbnail ? `<img src="${escapeHtml(result.thumbnail)}" alt="">` : ""}</span>
+        <span class="ec-music-search-copy">
+          <strong>${escapeHtml(result.title || "YouTube video")}</strong>
+          <small>${escapeHtml(result.channelTitle || "")}</small>
+        </span>
+        <span class="ec-music-search-add">${gated ? "Log in" : "+ Add"}</span>
+      `;
+      button.addEventListener("click", () => {
+        addFromSearchResult(result.videoId, result.title);
+      });
+      li.appendChild(button);
+      els.searchResults.appendChild(li);
+    });
+  }
+
+  function clearSearchResults() {
+    if (!els.searchResults) return;
+    els.searchResults.hidden = true;
+    els.searchResults.replaceChildren();
   }
 
   function addLocal(videoId, title, requestedBy, requestedByAvatar) {
@@ -807,13 +917,19 @@
     els.emptyQueue.hidden = state.queue.length > 0;
     els.join.classList.toggle("is-visible", autoplayBlocked && Boolean(current));
 
-    // Song requests require a real, currently-authenticated Twitch account —
-    // guests can still listen, react, and vote to skip in the shared room.
+    // Searching/pasting a link stays open to guests — each search result is
+    // individually gated with its own "Log in" prompt (renderSearchResults),
+    // so only the direct-paste Add button needs blocking here.
     const requestsGated = remoteMode && !currentUser;
-    els.url.disabled = requestsGated;
-    els.url.placeholder = requestsGated ? "Log in with Twitch to request a song" : "Paste a YouTube link";
     els.add.disabled = requestsGated;
     els.requestRow.classList.toggle("is-gated", requestsGated);
+    if (els.searchResults && !els.searchResults.hidden) {
+      els.searchResults.querySelectorAll(".ec-music-search-result").forEach((button) => {
+        button.disabled = requestsGated;
+        const addLabel = button.querySelector(".ec-music-search-add");
+        if (addLabel) addLabel.textContent = requestsGated ? "Log in" : "+ Add";
+      });
+    }
   }
 
   function renderMuteIcon() {
@@ -995,6 +1111,17 @@
     url.searchParams.set("client", clientId);
     url.searchParams.set("name", identityName());
     if (identityAvatar()) url.searchParams.set("avatar", identityAvatar());
+    return url.toString();
+  }
+
+  function searchUrl(query) {
+    let url;
+    try { url = new URL(configuredEndpoint); } catch { return ""; }
+    if (url.protocol === "wss:") url.protocol = "https:";
+    else if (url.protocol === "ws:") url.protocol = "http:";
+    url.pathname = "/search";
+    url.search = "";
+    url.searchParams.set("q", query);
     return url.toString();
   }
 

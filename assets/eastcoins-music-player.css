@@ -670,6 +670,94 @@ body.ec-chat-hidden .ec-music-dock {
   color: #f3c2cb;
 }
 
+.ec-music-search-results {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.ec-music-search-results[hidden] {
+  display: none !important;
+}
+
+.ec-music-search-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 7px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0a0a0a;
+  text-align: left;
+}
+
+.ec-music-search-result:hover,
+.ec-music-search-result:focus-visible {
+  border-color: rgba(229,185,43,.35);
+  background: rgba(229,185,43,.06);
+  outline: none;
+}
+
+.ec-music-search-result[disabled] {
+  opacity: .45;
+  cursor: default;
+}
+
+.ec-music-search-thumb {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 27px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: #050505;
+}
+
+.ec-music-search-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ec-music-search-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.ec-music-search-copy strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: .68rem;
+}
+
+.ec-music-search-copy small {
+  display: block;
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted2);
+  font-size: .6rem;
+}
+
+.ec-music-search-add {
+  flex: 0 0 auto;
+  color: var(--gold);
+  font-size: .6rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
 /* ---------------- Queue ---------------- */
 
 .ec-music-queue-wrap {
