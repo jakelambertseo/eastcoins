@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<title>EastCoin | 49ers vs Rams — Picks Results</title>
+<link href="/assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700;800&display=swap">
+</head>
+<body>
+<style>
+  :root{
+    --ink:#0c0a09;
+    --panel:#161311;
+    --panel-2:#1e1a17;
+    --line:rgba(255,255,255,.09);
+    --line-2:rgba(255,255,255,.16);
+    --text:#f4ede5;
+    --muted:#aca298;
+    --muted-2:#7d746a;
+    --gold:#e8bf35;
+    --gold-dim:rgba(232,191,53,.13);
+    --green:#4ddb8b;
+    --green-dim:rgba(77,219,139,.11);
+    --red:#ff6b85;
+    --red-dim:rgba(255,107,133,.1);
+    --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+    --body:"Figtree","Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--ink);color:var(--text);
+    font-family:var(--body);font-size:16px;line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:720px;margin:0 auto;padding:26px 18px 70px}
+  .nums{font-variant-numeric:tabular-nums}
+
+  /* demo banner */
+  .demo{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    border:1px solid rgba(232,191,53,.34);border-radius:11px;
+    background:linear-gradient(140deg,var(--gold-dim),transparent 70%),var(--panel);
+    padding:11px 15px;margin-bottom:20px;font-size:.84rem;color:var(--muted);
+  }
+  .demo b{
+    color:var(--gold);font-size:.66rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;
+    border:1px solid rgba(232,191,53,.34);border-radius:999px;padding:3px 9px;flex:0 0 auto;
+  }
+
+  /* topbar */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding-bottom:18px;border-bottom:1px solid var(--line);margin-bottom:22px;
+  }
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:-.01em;color:var(--text);text-decoration:none}
+  .brand .dot{
+    width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+    background:linear-gradient(150deg,#8e1231,#4a0a1c);color:var(--gold);
+    font-size:.8rem;font-weight:800;
+  }
+  .final{
+    display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:999px;
+    border:1px solid rgba(77,219,139,.35);background:var(--green-dim);
+    color:var(--green);font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  }
+  .final::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green)}
+
+  /* scoreboard */
+  .board{
+    border:1px solid var(--line);border-radius:16px;background:var(--panel);
+    overflow:hidden;margin-bottom:10px;
+  }
+  .board-meta{
+    padding:10px 18px;border-bottom:1px solid var(--line);background:var(--panel-2);
+    display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    font-size:.72rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted-2);
+  }
+  .teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:22px 18px}
+  .team{display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center}
+  .team .crest{
+    width:52px;height:52px;border-radius:13px;display:grid;place-items:center;
+    background:var(--panel-2);border:1px solid var(--line-2);
+    font-family:var(--display);font-weight:800;font-size:1.05rem;color:var(--muted);
+  }
+  .team.won .crest{border-color:rgba(77,219,139,.45);color:var(--green);background:var(--green-dim)}
+  .team .name{font-family:var(--display);font-weight:700;font-size:1rem;letter-spacing:-.01em;line-height:1.2}
+  .team .line{font-size:.76rem;color:var(--muted-2);font-weight:600}
+  .team.won .name{color:#fff}
+  .score{display:flex;align-items:center;gap:12px}
+  .score b{
+    font-family:var(--display);font-weight:800;font-size:2.5rem;letter-spacing:-.04em;
+    color:var(--muted-2);line-height:1;
+  }
+  .score b.win{color:var(--text)}
+  .score i{color:var(--muted-2);font-style:normal;font-size:1.1rem}
+  .winner-tag{
+    text-align:center;padding:9px 18px;border-top:1px solid var(--line);
+    background:var(--green-dim);color:var(--green);
+    font-size:.78rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  }
+
+  /* highlight cards */
+  .highlights{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:20px 0 26px}
+  .hl{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px 16px}
+  .hl span{
+    display:block;font-size:.66rem;font-weight:800;letter-spacing:.11em;
+    text-transform:uppercase;color:var(--muted-2);margin-bottom:6px;
+  }
+  .hl b{display:block;font-family:var(--display);font-weight:700;font-size:1.02rem;letter-spacing:-.01em}
+  .hl em{display:block;font-style:normal;font-size:.82rem;color:var(--muted);margin-top:2px}
+  .hl.good b{color:var(--green)}
+  .hl.bad b{color:var(--red)}
+
+  /* split bar */
+  .split{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:16px 18px;margin-bottom:26px}
+  .split-top{display:flex;justify-content:space-between;gap:12px;font-size:.8rem;font-weight:700;margin-bottom:9px}
+  .split-top .l{color:var(--green)}
+  .split-top .r{color:var(--muted);text-align:right}
+  .bar{height:9px;border-radius:999px;overflow:hidden;background:rgba(255,255,255,.07);display:flex}
+  .bar i{display:block;height:100%}
+  .bar .a{background:linear-gradient(90deg,#4ddb8b,#2fae68)}
+  .bar .b{background:rgba(255,255,255,.16)}
+  .split-note{margin-top:9px;font-size:.78rem;color:var(--muted-2)}
+
+  h2{
+    font-family:var(--display);font-weight:700;font-size:1.15rem;letter-spacing:-.02em;
+    margin:0 0 4px;
+  }
+  .sub{margin:0 0 14px;color:var(--muted-2);font-size:.84rem}
+
+  /* pick rows */
+  .rows{display:flex;flex-direction:column;gap:7px}
+  .row{
+    display:flex;align-items:center;gap:12px;
+    border:1px solid var(--line);border-left:3px solid var(--muted-2);
+    border-radius:11px;background:var(--panel);padding:12px 15px;
+  }
+  .row.won{border-left-color:var(--green)}
+  .row.lost{border-left-color:var(--red)}
+  .av{
+    width:34px;height:34px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;
+    background:#2a1119;color:#f0c3cf;font-weight:800;font-size:.8rem;
+  }
+  .who{flex:1;min-width:0}
+  .who b{display:block;font-weight:700;font-size:.94rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .who span{display:block;font-size:.78rem;color:var(--muted-2)}
+  .stake{flex:0 0 auto;text-align:right;font-size:.78rem;color:var(--muted-2);min-width:62px}
+  .stake b{display:block;color:var(--muted);font-weight:700;font-size:.88rem}
+  .payout{
+    flex:0 0 auto;text-align:right;min-width:80px;
+    font-family:var(--display);font-weight:800;font-size:1.05rem;letter-spacing:-.01em;
+  }
+  .payout.up{color:var(--green)}
+  .payout.down{color:var(--red)}
+  .payout small{display:block;font-family:var(--body);font-size:.7rem;font-weight:600;color:var(--muted-2);letter-spacing:0}
+
+  /* settlement footer */
+  .settle{
+    margin-top:26px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2);
+    padding:16px 18px;
+  }
+  .settle h3{
+    font-size:.68rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;
+    color:var(--muted-2);margin:0 0 10px;
+  }
+  .settle dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px 20px;margin:0}
+  .settle dt{font-size:.74rem;color:var(--muted-2);margin-bottom:1px}
+  .settle dd{margin:0;font-size:.9rem;font-weight:600;color:var(--text)}
+
+  footer{margin-top:28px;color:var(--muted-2);font-size:.78rem;text-align:center}
+  footer a{color:var(--gold);text-decoration:none;font-weight:600}
+  footer a:hover{text-decoration:underline}
+  .backlink{display:inline-block;margin-top:22px;color:var(--muted);font-size:.86rem;text-decoration:none;font-weight:600}
+  .backlink:hover{color:var(--text)}
+
+  @media (max-width:420px){
+    .teams{padding:18px 12px;gap:6px}
+    .score b{font-size:2rem}
+    .team .crest{width:44px;height:44px}
+    .stake{display:none}
+  }
+</style>
+
+<div class="wrap">
+
+  <div class="demo">
+    <b>Example</b>
+    <span>Demo data — this is what a settled game page will look like. No real picks or ZCoins here yet.</span>
+  </div>
+
+  <div class="topbar">
+    <a class="brand" href="/"><span class="dot">E</span> EastCoin Picks</a>
+    <span class="final">Settled</span>
+  </div>
+
+  <!-- scoreboard -->
+  <div class="board">
+    <div class="board-meta">
+      <span>NFL · Week 1</span>
+      <span>Sun 6 Sep · 4:25 PM</span>
+    </div>
+    <div class="teams">
+      <div class="team won">
+        <div class="crest">SF</div>
+        <div class="name">49ers</div>
+        <div class="line">−150</div>
+      </div>
+      <div class="score"><b class="win nums">27</b><i>–</i><b class="nums">24</b></div>
+      <div class="team">
+        <div class="crest">LAR</div>
+        <div class="name">Rams</div>
+        <div class="line">+150</div>
+      </div>
+    </div>
+    <div class="winner-tag">49ers win · favourites hold</div>
+  </div>
+
+  <!-- highlights -->
+  <div class="highlights">
+    <div class="hl good">
+      <span>Biggest win</span>
+      <b>jimmytomato +67</b>
+      <em>heartlarva matched it, coin for coin</em>
+    </div>
+    <div class="hl bad">
+      <span>Worst beat</span>
+      <b>psilocyboone −60</b>
+      <em>Backed the Rams, bigger of the two</em>
+    </div>
+    <div class="hl">
+      <span>Chat was</span>
+      <b>67% right</b>
+      <em>4 of 6 took the 49ers</em>
+    </div>
+  </div>
+
+  <!-- split -->
+  <div class="split">
+    <div class="split-top"><span class="l">49ers · 4 picks · 300 ZC</span><span class="r">110 ZC · 2 picks · Rams</span></div>
+    <div class="bar"><i class="a" style="width:73%"></i><i class="b" style="width:27%"></i></div>
+    <div class="split-note">410 ZCoins staked across 6 picks</div>
+  </div>
+
+  <!-- results -->
+  <h2>Every pick</h2>
+  <p class="sub">Everyone gets the same line — it was locked at −150 / +150 when the market opened, and never moved after that.</p>
+
+  <div class="rows">
+
+    <div class="row won">
+      <div class="av">J</div>
+      <div class="who"><b>jimmytomato</b><span>49ers @ −150</span></div>
+      <div class="stake"><b class="nums">100</b>staked</div>
+      <div class="payout up nums">+67<small>returned 167</small></div>
+    </div>
+
+    <div class="row won">
+      <div class="av">H</div>
+      <div class="who"><b>heartlarva</b><span>49ers @ −150</span></div>
+      <div class="stake"><b class="nums">100</b>staked</div>
+      <div class="payout up nums">+67<small>returned 167</small></div>
+    </div>
+
+    <div class="row won">
+      <div class="av">C</div>
+      <div class="who"><b>charleskellybirdlaw</b><span>49ers @ −150</span></div>
+      <div class="stake"><b class="nums">75</b>staked</div>
+      <div class="payout up nums">+50<small>returned 125</small></div>
+    </div>
+
+    <div class="row won">
+      <div class="av">A</div>
+      <div class="who"><b>andyreidisapawg</b><span>49ers @ −150</span></div>
+      <div class="stake"><b class="nums">25</b>staked</div>
+      <div class="payout up nums">+17<small>returned 42</small></div>
+    </div>
+
+    <div class="row lost">
+      <div class="av">P</div>
+      <div class="who"><b>psilocyboone</b><span>Rams @ +150</span></div>
+      <div class="stake"><b class="nums">60</b>staked</div>
+      <div class="payout down nums">−60<small>returned 0</small></div>
+    </div>
+
+    <div class="row lost">
+      <div class="av">B</div>
+      <div class="who"><b>bootypaper</b><span>Rams @ +150</span></div>
+      <div class="stake"><b class="nums">50</b>staked</div>
+      <div class="payout down nums">−50<small>returned 0</small></div>
+    </div>
+
+  </div>
+
+  <!-- settlement transparency -->
+  <div class="settle">
+    <h3>Settlement</h3>
+    <dl>
+      <div><dt>Graded from</dt><dd>The Odds API · final score</dd></div>
+      <div><dt>Settled at</dt><dd>7:48 PM, 12 min after full time</dd></div>
+      <div><dt>Total staked</dt><dd class="nums">410 ZCoins</dd></div>
+      <div><dt>Paid out</dt><dd class="nums">501 ZCoins</dd></div>
+      <div><dt>Rounding</dt><dd>Up, in the bettor's favour</dd></div>
+      <div><dt>Ledger</dt><dd>6 operations, all confirmed</dd></div>
+    </dl>
+  </div>
+
+  <footer>
+    Every pick, payout and balance change on this page is recorded in the Community Ledger ·
+    <a href="/zcoin-picks">How ZCoin Picks works</a>
+  </footer>
+
+  <a class="backlink" href="/">← Back to EastCoin</a>
+
+</div>
+</body>
+</html>
