@@ -25,126 +25,6 @@
 <link href="assets/eastcoin-favicon.png" rel="apple-touch-icon">
 <link href="assets/eastcoins-picks.css?v=2" rel="stylesheet">
 
-<style id="ec-betting-paused-style">
-  @keyframes ecBettingPausedPulse {
-    0%, 100% {
-      background:
-        linear-gradient(
-          135deg,
-          rgba(105, 0, 12, .98),
-          rgba(55, 0, 7, .98)
-        );
-      border-color:#ff3249;
-      box-shadow:
-        0 0 0 1px rgba(255,255,255,.04) inset,
-        0 0 16px rgba(255,20,50,.28),
-        0 10px 34px rgba(0,0,0,.4);
-      transform:scale(1);
-    }
-
-    50% {
-      background:
-        linear-gradient(
-          135deg,
-          rgba(210, 0, 28, .98),
-          rgba(100, 0, 12, .98)
-        );
-      border-color:#ff8795;
-      box-shadow:
-        0 0 0 1px rgba(255,255,255,.12) inset,
-        0 0 34px rgba(255,24,55,.62),
-        0 12px 42px rgba(0,0,0,.52);
-      transform:scale(1.006);
-    }
-  }
-
-  .ec-betting-paused-banner{
-    position:relative;
-    overflow:hidden;
-    width:100%;
-    margin:0 0 18px;
-    padding:18px 22px;
-    border:3px solid #ff3249;
-    border-radius:12px;
-    color:#fff;
-    background:#72000e;
-    text-align:center;
-    animation:
-      ecBettingPausedPulse
-      1.35s
-      ease-in-out
-      infinite;
-  }
-
-  .ec-betting-paused-banner::before,
-  .ec-betting-paused-banner::after{
-    content:"";
-    position:absolute;
-    top:0;
-    bottom:0;
-    width:5px;
-    background:#ffdfdf;
-    opacity:.7;
-  }
-
-  .ec-betting-paused-banner::before{
-    left:0;
-  }
-
-  .ec-betting-paused-banner::after{
-    right:0;
-  }
-
-  .ec-betting-paused-banner strong{
-    display:block;
-    margin-bottom:7px;
-    color:#fff;
-    font-size:clamp(.88rem,1.5vw,1.05rem);
-    font-weight:1000;
-    letter-spacing:.11em;
-    text-transform:uppercase;
-    text-shadow:0 1px 8px rgba(0,0,0,.5);
-  }
-
-  .ec-betting-paused-banner p{
-    max-width:980px;
-    margin:0 auto;
-    color:#fff;
-    font-size:clamp(.9rem,1.45vw,1.06rem);
-    font-weight:850;
-    line-height:1.45;
-    text-shadow:0 1px 7px rgba(0,0,0,.6);
-  }
-
-  .ec-betting-paused-banner .ec-alert-icon{
-    margin-right:7px;
-    font-size:1.05em;
-  }
-
-  .ec-betting-paused-banner.ec-betting-paused-modal{
-    margin:0 0 16px;
-    padding:15px 16px;
-    border-radius:10px;
-  }
-
-  .ec-betting-paused-banner.ec-betting-paused-modal strong{
-    font-size:.8rem;
-  }
-
-  .ec-betting-paused-banner.ec-betting-paused-modal p{
-    font-size:.82rem;
-  }
-
-  @media (prefers-reduced-motion:reduce){
-    .ec-betting-paused-banner{
-      animation:none;
-      box-shadow:
-        0 0 0 1px rgba(255,255,255,.08) inset,
-        0 0 24px rgba(255,20,50,.42),
-        0 10px 34px rgba(0,0,0,.4);
-    }
-  }
-</style>
 
 </head>
 <body class="logged-out">
@@ -235,23 +115,6 @@
       </div>
     </header>
 
-
-    <section
-      class="ec-betting-paused-banner"
-      role="status"
-      aria-label="Betting currently paused"
-    >
-      <strong>
-        <span class="ec-alert-icon" aria-hidden="true">🚨</span>
-        Betting Paused
-        <span class="ec-alert-icon" aria-hidden="true">🚨</span>
-      </strong>
-      <p>
-        Your streamer Zwades is disallowing us from placing bets at the moment.
-        Ask him kindly to allow us to have fun in chat.
-      </p>
-    </section>
-
     <section class="top-leaders" aria-label="Top Picks players">
       <div class="top-leaders-label">
         <span>🏆</span>
@@ -281,7 +144,7 @@
     <section class="view active" data-view-panel="markets">
       <div class="section-head">
         <div><h2>Open Markets</h2><p id="catalogStatus">Loading current EastCoin markets…</p></div>
-        <div class="right-note">1 ZCoin min · 15% wallet · 50 ZCoin max</div>
+        <div class="right-note">1 ZCoin minimum · stake up to your full balance</div>
       </div>
       <div class="market-list" id="marketList"></div>
     </section>
@@ -336,22 +199,6 @@
       <button class="close-btn" id="closeBet" type="button" aria-label="Close">×</button>
     </header>
     <div class="modal-body">
-
-      <section
-        class="ec-betting-paused-banner ec-betting-paused-modal"
-        role="status"
-        aria-label="Betting currently paused"
-      >
-        <strong>
-          <span class="ec-alert-icon" aria-hidden="true">🚨</span>
-          Betting Paused
-          <span class="ec-alert-icon" aria-hidden="true">🚨</span>
-        </strong>
-        <p>
-          Your streamer Zwades is disallowing us from placing bets at the moment.
-          Ask him kindly to allow us to have fun in chat.
-        </p>
-      </section>
       <div class="selected-match" id="selectedMatch"></div>
 
       <div class="selected-side">
@@ -430,11 +277,11 @@
       <div class="rules-list">
         <div class="rule"><strong>Live moneylines set the ZCoin payout</strong><p>For supported games, EastCoin uses live U.S. h2h prices from The Odds API to build the displayed consensus moneyline. That displayed moneyline is the payout price for your Pick.</p></div>
         <div class="rule"><strong>Football Picks are NFL only</strong><p>College football can still be watched on EastCoin, but NCAAF games do not receive Picks markets or Quick Bet eligibility.</p></div>
-        <div class="rule"><strong>Your moneyline locks when you confirm</strong><p>Odds can move while you are building a ticket. When a Pick is confirmed, the moneyline shown on the confirmed ticket is the line used to calculate that ticket’s payout.</p></div>
+        <div class="rule"><strong>Everyone gets the same line</strong><p>The moneyline is fixed when the market opens and announced in chat. It does not move afterwards, so every Pick on a game settles at the same price no matter when it was placed.</p></div>
         <div class="rule"><strong>Positive moneylines pay more than the wager in profit</strong><p>Example: a 10 ZCoin Pick at +150 returns 25 ZCoins total if it wins — your original 10 plus 15 ZCoins profit.</p></div>
         <div class="rule"><strong>Negative moneylines use the favorite price</strong><p>Example: a 10 ZCoin Pick at -200 returns 15 ZCoins total if it wins — your original 10 plus 5 ZCoins profit. EastCoin rounds final returns to the nearest whole ZCoin.</p></div>
         <div class="rule"><strong>Voids and No Action are refunded</strong><p>If a supported event is voided, cancelled, postponed beyond the settlement rules, or otherwise graded No Action, the affected ZCoin wager is returned. A market does not need community action on both sides to be valid.</p></div>
-        <div class="rule"><strong>Wager limits protect bankrolls</strong><p>The minimum is 1 ZCoin. Your maximum wager is the lower of 15% of your available wallet or 50 ZCoins.</p></div>
+        <div class="rule"><strong>Stake anything you actually hold</strong><p>The minimum is 1 ZCoin and there is no upper limit beyond your balance — you can put your whole wallet on a single Pick if you want to.</p></div>
         <div class="rule"><strong>One pick per game</strong><p>After you confirm a side, you cannot also pick the other side of that same game. Your open and settled activity remains visible in My Picks, History, and the Community Ledger.</p></div>
       </div>
     </div>
@@ -846,11 +693,11 @@
 
 <script defer src="assets/eastcoins-streamed-api.js"></script>
 <script defer src="assets/eastcoins-picks-api.js?v=43"></script>
-<script defer src="assets/eastcoins-picks-preview.js?v=1"></script>
-<script defer src="assets/eastcoins-moneyline.js?v=44"></script>
-<script defer src="assets/eastcoins-moneyline-runtime.js?v=45"></script>
+<script defer src="assets/eastcoins-picks-preview.js?v=2"></script>
+<script defer src="assets/eastcoins-moneyline.js?v=45"></script>
+<script defer src="assets/eastcoins-moneyline-runtime.js?v=47"></script>
 <script defer src="assets/eastcoins-picks-football-v50.js?v=50"></script>
-<script defer src="assets/eastcoins-picks.js?v=43"></script>
+<script defer src="assets/eastcoins-picks.js?v=44"></script>
 
 </body>
 </html>

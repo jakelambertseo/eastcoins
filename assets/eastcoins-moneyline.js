@@ -46,8 +46,12 @@
       };
     }
 
-    // ZCoins are whole-number currency: round the final total return.
-    const totalReturn = Math.max(amount, Math.round(amount * decimal));
+    // ZCoins are whole-number currency, and the house rule is to round the
+    // total return UP, always in the bettor's favour. This has to be the one
+    // and only place it happens — the ticket preview, the market card and
+    // settlement all call through here, so the number someone is promised is
+    // by construction the number they are paid.
+    const totalReturn = Math.max(amount, Math.ceil(amount * decimal));
 
     return {
       available: true,

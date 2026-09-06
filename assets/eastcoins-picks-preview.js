@@ -3,8 +3,6 @@
 
   const BASE_WALLET = 3051;
   const MIN_BET = 1;
-  const HARD_CAP = 50;
-  const WALLET_CAP = 0.15;
 
   const AUTH_KEY = "eastcoinPicksPreviewAuthV1";
   const TICKETS_KEY = "eastcoinPicksPreviewTicketsV1";
@@ -425,16 +423,12 @@
     return Math.max(0, Math.floor(balance));
   }
 
+  // No cap beyond the balance itself — see the matching note in
+  // functions/api/picks/bootstrap.js.
   function maxBet(balance = walletBalance()) {
     if (balance <= 0) return 0;
 
-    return Math.max(
-      MIN_BET,
-      Math.min(
-        HARD_CAP,
-        Math.floor(balance * WALLET_CAP)
-      )
-    );
+    return Math.max(MIN_BET, Math.floor(balance));
   }
 
   function market(
@@ -664,8 +658,6 @@
   window.EastcoinPicksPreview = Object.freeze({
     BASE_WALLET,
     MIN_BET,
-    HARD_CAP,
-    WALLET_CAP,
     fallbackGames,
     leaderboardSeed,
     initials,

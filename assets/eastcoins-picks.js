@@ -692,7 +692,8 @@
     if (stateName === "VOID") return "Void";
     if (stateName === "NO_ACTION") return "No Action";
 
-    const diff = Number(game?.startTs || 0) - Date.now();
+    const startTs = Number(game?.startTs || 0);
+    const diff = startTs - Date.now();
 
     if (diff <= 0 || stateName === "LOCKED") {
       return "Locked";
@@ -700,13 +701,46 @@
 
     const mins = Math.ceil(diff / 60000);
 
+    // A countdown is only useful while it feels urgent. Past a few hours,
+    // "Locks in 177h 19m" is a number nobody converts into a day and time —
+    // so beyond today, show the actual kickoff instead.
     if (mins < 60) {
       return `Locks in ${mins}m`;
     }
 
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
-    return `Locks in ${h}h ${m}m`;
+    if (mins < 360) {
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      return `Locks in ${h}h ${m}m`;
+    }
+
+    try {
+      const start = new Date(startTs);
+      const today = new Date();
+      const sameDay = start.toDateString() === today.toDateString();
+
+      const time = start.toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit"
+      });
+
+      if (sameDay) return `Today ${time}`;
+
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+      if (start.toDateString() === tomorrow.toDateString()) {
+        return `Tomorrow ${time}`;
+      }
+
+      return `${start.toLocaleDateString([], {
+        weekday: "short",
+        month: "short",
+        day: "numeric"
+      })} · ${time}`;
+    } catch {
+      const h = Math.floor(mins / 60);
+      return `Locks in ${h}h`;
+    }
   }
 
   function logoMarkup(name, src) {
@@ -788,9 +822,29 @@
 
     els.mainWalletSync.textContent = loggedIn
       ? state.mode === "backend"
-        ? "StreamElements ZCoins"
+        ? walletStatusLabel()
         : "StreamElements ZCoins preview"
       : "Sign in to view balance";
+  }
+
+  // The balance is read live from StreamElements, so say which of the three
+  // real situations the visitor is in rather than one generic label: it's
+  // working, they genuinely have nothing yet, or we couldn't reach it.
+  function walletStatusLabel() {
+    const status = state.session.walletStatus;
+
+    if (status === "no_balance" || (state.session.walletConnected && !currentWallet())) {
+      return "No ZCoins yet — watch the stream to earn";
+    }
+
+    if (!state.session.walletConnected) {
+      return "Balance unavailable right now";
+    }
+
+    const rank = state.session.walletRank;
+    return rank
+      ? `Live from StreamElements · rank #${rank}`
+      : "Live from StreamElements";
   }
 
   function renderSummary() {
@@ -952,26 +1006,6 @@
             <div class="market-body">
               ${marketChoice(game, "away", snapshot, ticket, locked, lower)}
               ${marketChoice(game, "home", snapshot, ticket, locked, lower)}
-            </div>
-
-            <div class="market-pool">
-              <div class="pool-head">
-                <span>EastCoin Pool</span>
-                <strong>
-                  <img src="assets/eastcoins-logo.webp" alt="">
-                  ${money(snapshot.total)} ZCoins
-                </strong>
-              </div>
-              <div class="pool-track">
-                <i style="width:${Math.max(
-                  0,
-                  Math.min(100, snapshot.awayShare * 100)
-                )}%"></i>
-              </div>
-              <div class="pool-labels">
-                <span><b>${game.away}</b> ${Math.round(snapshot.awayShare * 100)}%</span>
-                <span>${Math.round(snapshot.homeShare * 100)}% <b>${game.home}</b></span>
-              </div>
             </div>
           </article>
         `;
@@ -2026,7 +2060,13 @@
       ),
       walletConnected:Boolean(
         session?.wallet?.connected
-      )
+      ),
+      walletStatus:String(
+        session?.wallet?.status || ""
+      ),
+      walletRank:Number(
+        session?.wallet?.rank
+      ) || null
     };
 
     state.games =
@@ -2495,6 +2535,39 @@
       activeBet.side,
       wager
     );
+
+    // Payouts come from the sportsbook moneyline, and only the moneyline
+    // layer knows the American price for this market. This base pass used to
+    // fill these fields from the retired community-pool model and let the
+    // moneyline layer overwrite them a moment later — which meant that if
+    // that layer ever failed to resolve the game, the ticket quietly showed a
+    // pool-derived payout that settlement would never honour. Showing nothing
+    // is the safe failure: a price that can't be sourced isn't a price.
+    if (state.mode === "backend") {
+      els.projectedOdds.textContent = "—";
+      els.oddsNote.textContent =
+        "Pricing this pick from the live sportsbook moneyline…";
+      els.projectedPools.innerHTML = `
+        <div class="projected-side">
+          <div class="projected-team">
+            ${logoMarkup(game.away, game.awayLogo)}
+            <strong>${game.away}</strong>
+          </div>
+          <strong>—</strong>
+        </div>
+
+        <div class="projected-side">
+          <div class="projected-team">
+            ${logoMarkup(game.home, game.homeLogo)}
+            <strong>${game.home}</strong>
+          </div>
+          <strong>—</strong>
+        </div>
+      `;
+      els.totalRiding.textContent = "—";
+      els.potentialWinnings.textContent = "—";
+      return;
+    }
 
     const multiplier =
       activeBet.side === "away"

@@ -1,5 +1,84 @@
 const SESSION_COOKIE = "__Host-ec_session";
 
+// ZCoins are StreamElements loyalty points. Their points API is public and
+// unauthenticated for reads, so balances come straight from the same numbers
+// !points reports in chat — there is only ever one balance, and EastCoin is
+// not a second source of truth for it.
+const SE_POINTS_API = "https://api.streamelements.com/kappa/v2/points";
+const SE_CHANNEL_ID_FALLBACK = "65107c296068cc894e4ac7b9";
+const SE_TIMEOUT_MS = 4000;
+
+// There is no cap on a pick beyond what someone actually holds — the old
+// "15% of wallet, 50 max" rule is gone. It had the side effect of locking out
+// anyone under 7 ZCoins entirely, since 15% of 6 floors to zero.
+const WAGER_MIN = 1;
+
+function walletMaxWager(balance) {
+  const affordable = Math.floor(balance);
+  return affordable >= WAGER_MIN ? affordable : 0;
+}
+
+function disconnectedWallet(status = "not_connected") {
+  return {
+    connected: false,
+    balance: 0,
+    maxWager: 0,
+    provider: "streamelements",
+    status
+  };
+}
+
+// Never throws and never blocks the page — an unreachable StreamElements
+// degrades Picks to a signed-in-but-no-balance state rather than failing the
+// whole bootstrap.
+async function fetchZCoinWallet(env, login) {
+  const channelId = String(
+    env?.STREAMELEMENTS_CHANNEL_ID || SE_CHANNEL_ID_FALLBACK
+  ).trim();
+
+  const user = String(login || "").trim().toLowerCase();
+
+  if (!channelId || !user) return disconnectedWallet();
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), SE_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(
+      `${SE_POINTS_API}/${encodeURIComponent(channelId)}/${encodeURIComponent(user)}`,
+      { signal: controller.signal }
+    );
+
+    // A viewer StreamElements has never seen has no row yet — that's a real
+    // zero balance, not a broken integration.
+    if (response.status === 404) {
+      return {
+        ...disconnectedWallet("no_balance"),
+        connected: true
+      };
+    }
+
+    if (!response.ok) return disconnectedWallet("provider_error");
+
+    const payload = await response.json();
+    const balance = Math.max(0, Math.floor(Number(payload?.points) || 0));
+
+    return {
+      connected: true,
+      balance,
+      maxWager: walletMaxWager(balance),
+      provider: "streamelements",
+      status: "connected",
+      rank: Number(payload?.rank) || null,
+      watchtime: Number(payload?.watchtime) || null
+    };
+  } catch {
+    return disconnectedWallet("provider_error");
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function parseCookies(request) {
   const header =
     request.headers.get("Cookie") ||
@@ -1023,6 +1102,12 @@ export async function onRequestGet(
         me?.rank || null;
     }
 
+    // Only signed-in visitors have a balance to look up — a logged-out
+    // bootstrap should never make an outbound call on their behalf.
+    const wallet = user
+      ? await fetchZCoinWallet(context.env, user.login)
+      : disconnectedWallet("signed_out");
+
     return Response.json(
       {
         ok: true,
@@ -1031,15 +1116,7 @@ export async function onRequestGet(
           authenticated:
             Boolean(user),
           user,
-          wallet: {
-            connected: false,
-            balance: 0,
-            maxWager: 0,
-            provider:
-              "streamelements",
-            status:
-              "not_connected"
-          }
+          wallet
         },
         season,
         markets,
@@ -1048,12 +1125,14 @@ export async function onRequestGet(
         communityLedger,
         leaderboard,
         config: {
+          // Reading balances is live; placing real wagers still waits on the
+          // /wagers implementation and the ZCoin write path.
           wageringEnabled:
             false,
           walletConnected:
-            false,
-          minWager: 1,
-          maxWager: 0
+            wallet.connected,
+          minWager: WAGER_MIN,
+          maxWager: wallet.maxWager
         }
       },
       {

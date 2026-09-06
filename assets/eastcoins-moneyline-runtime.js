@@ -11,6 +11,11 @@
   const LOCKS_KEY = "eastcoinMoneylinePreviewLocksV1";
   const PREVIEW_SETTLEMENTS_KEY = "eastcoinPicksPreviewSettlementsV1";
 
+  // Reference stake for the "what does this actually pay" line under each
+  // price. A fixed unit keeps every card comparable at a glance and doesn't
+  // depend on knowing the viewer's balance.
+  const PAYOUT_PREVIEW_STAKE = 10;
+
   let catalogPromise = null;
   let catalog = [];
   let catalogByEvent = new Map();
@@ -738,7 +743,27 @@
         font-weight: 700;
       }
 
+      /* Full-width row beneath the sport chips — states the payout basis once
+         for the whole list, replacing the identical footer that used to sit
+         on every single card. */
+      .picks-payout-note {
+        flex-basis: 100%;
+        margin-top: 8px;
+        padding-top: 9px;
+        border-top: 1px solid rgba(255,255,255,.06);
+        color: #74747c;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.5;
+      }
+
       .market-card[hidden] {
+        display: none !important;
+      }
+
+      /* The status chip is now only rendered for states that differ between
+         cards, so make sure hiding it actually hides it. */
+      .market-status[hidden] {
         display: none !important;
       }
 
@@ -806,6 +831,7 @@
       <button class="picks-market-filter" type="button" data-picks-sport="baseball">⚾ Baseball</button>
       <button class="picks-market-filter" type="button" data-picks-sport="combat">🥊 UFC / MMA</button>
       <small class="picks-market-window">Today + tomorrow only</small>
+      <small class="picks-payout-note">Prices are sportsbook moneylines from The Odds API. Payouts shown per ${PAYOUT_PREVIEW_STAKE} ZCoins; your own line locks when you confirm.</small>
     `;
 
     controls.addEventListener(
@@ -1000,6 +1026,40 @@
     return teamLogoPromise;
   }
 
+  /*
+    Streamed only knows about teams playing in the near term, because its
+    catalogue exists to list watchable streams. Picks markets run up to two
+    weeks out, so an NFL game a fortnight away has no Streamed entry and used
+    to fall back to two-letter initials while an MLB game starting in twenty
+    minutes showed a real badge. This static map covers that gap for the one
+    league where it actually bites.
+  */
+  const NFL_LOGO_SLUGS = {
+    "arizona cardinals": "ari", "atlanta falcons": "atl",
+    "baltimore ravens": "bal", "buffalo bills": "buf",
+    "carolina panthers": "car", "chicago bears": "chi",
+    "cincinnati bengals": "cin", "cleveland browns": "cle",
+    "dallas cowboys": "dal", "denver broncos": "den",
+    "detroit lions": "det", "green bay packers": "gb",
+    "houston texans": "hou", "indianapolis colts": "ind",
+    "jacksonville jaguars": "jax", "kansas city chiefs": "kc",
+    "las vegas raiders": "lv", "los angeles chargers": "lac",
+    "los angeles rams": "lar", "miami dolphins": "mia",
+    "minnesota vikings": "min", "new england patriots": "ne",
+    "new orleans saints": "no", "new york giants": "nyg",
+    "new york jets": "nyj", "philadelphia eagles": "phi",
+    "pittsburgh steelers": "pit", "san francisco 49ers": "sf",
+    "seattle seahawks": "sea", "tampa bay buccaneers": "tb",
+    "tennessee titans": "ten", "washington commanders": "wsh"
+  };
+
+  function fallbackLogoForTeam(name) {
+    const slug = NFL_LOGO_SLUGS[String(name || "").trim().toLowerCase()];
+    return slug
+      ? `https://a.espncdn.com/i/teamlogos/nfl/500/${slug}.png`
+      : "";
+  }
+
   function logoForTeam(name) {
     const exact =
       teamLogoByName.get(
@@ -1027,7 +1087,9 @@
       }
     }
 
-    return "";
+    // Streamed had nothing for this team — usually a game too far out to be
+    // in its catalogue yet.
+    return fallbackLogoForTeam(name);
   }
 
   function hydratePicksTeamLogos(card) {
@@ -1200,9 +1262,13 @@
       );
 
     if (cards.length) {
+      // Deliberately no date window here — NFL markets run to a 14-day
+      // horizon while the other sports are today + tomorrow, so a single
+      // window label was always wrong for at least one of them. The
+      // per-filter window note next to the sport chips carries that nuance.
       setText(
         status,
-        `Today + tomorrow · ${visible} ${visible === 1 ? "market" : "markets"}`
+        `${visible} open ${visible === 1 ? "market" : "markets"}`
       );
     }
   }
@@ -1242,7 +1308,19 @@
         const labelNode = choice.querySelector(".team-price small");
 
         setText(priceNode, ML.format(price));
-        setText(labelNode, "Moneyline");
+
+        // This slot used to repeat "Moneyline" on both sides of every card —
+        // the same word three times per card counting the status chip, and no
+        // help at all to anyone who doesn't read American odds fluently.
+        // A worked example of what the price actually returns is the same
+        // number of pixels and infinitely more useful.
+        const preview = ML.payout(PAYOUT_PREVIEW_STAKE, price);
+        setText(
+          labelNode,
+          preview.available
+            ? `${PAYOUT_PREVIEW_STAKE} → ${preview.totalReturn}`
+            : "—"
+        );
       }
 
       const awayDecimal = ML.toDecimal(sides?.away?.american);
@@ -1263,26 +1341,19 @@
         );
       }
 
+      // Every market here is a moneyline, so a chip saying "Moneyline" on
+      // every card carried no information. Reserve the slot for the states
+      // that actually differ — locked, settled — and hide it otherwise.
       const status = card.querySelector(".market-status");
       if (status && !card.classList.contains("locked")) {
-        setText(status, "Moneyline");
-        status.classList.remove("waiting");
+        status.hidden = true;
       }
 
+      // The old footer repeated an identical four-line disclosure on every
+      // card, roughly doubling each card's height for text nobody rereads.
+      // It's stated once above the list instead.
       const pool = card.querySelector(".market-pool");
-      if (pool && pool.dataset.moneylineUi !== "1") {
-        pool.dataset.moneylineUi = "1";
-        pool.innerHTML = `
-          <div class="pool-head">
-            <span>Payout source</span>
-            <strong>Sportsbook Moneyline</strong>
-          </div>
-          <div class="pool-labels">
-            <span>Live consensus from The Odds API</span>
-            <span>Locks when the Pick is confirmed</span>
-          </div>
-        `;
-      }
+      if (pool) pool.remove();
     }
 
     applyPicksMarketFilter();
