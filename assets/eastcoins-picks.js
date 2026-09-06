@@ -1094,7 +1094,9 @@
                 : snapshot.active
                   ? Math.max(
                       ticket.wager,
-                      Math.round(ticket.wager * currentOdds)
+                      // Round the total return UP, in the bettor's favour —
+                      // same rule as ML.payout() in eastcoins-moneyline.js.
+                      Math.ceil(ticket.wager * currentOdds)
                     )
                   : ticket.wager * 2;
 
@@ -2576,7 +2578,9 @@
 
     const returnAmount =
       snapshot.active
-        ? Math.round(wager * multiplier)
+        // Round the total return UP, in the bettor's favour —
+        // same rule as ML.payout() in eastcoins-moneyline.js.
+        ? Math.max(wager, Math.ceil(wager * multiplier))
         : wager * 2;
 
     els.projectedOdds.textContent =

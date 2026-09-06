@@ -71,7 +71,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">145 major update groups</div>
+<div class="release-count">146 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -2059,10 +2059,9 @@
     The per-person hourly song-request cap went from 4 to 25.
 </p>
 </article>
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-09-06">September 6, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Picks now shows your real ZCoin balance, and betting limits are gone</h2>
 <p>
@@ -2084,7 +2083,7 @@
     about where the odds come from, which is now stated once above the list.
     That space went to something useful instead: each price now shows what it
     actually returns, so <strong>+166</strong> also reads
-    <strong>10 → 27</strong> without opening anything. Cards are about a
+    <strong>10 pays 27</strong> without opening anything. Cards are about a
     quarter shorter, so noticeably more of the slate fits on screen, and NFL
     games now show real team logos instead of two-letter initials.
 </p>
@@ -2094,6 +2093,25 @@
     countdown only appears once a game is genuinely close. Payouts also round
     up consistently everywhere now, always in your favour, so the number on
     the ticket is exactly the number that settles.
+</p>
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-06">September 6, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>Fixed: two Picks screens were rounding payouts down</h2>
+<p>
+    Payouts are supposed to round up, always in your favour. That rule was
+    applied to the market cards, but the potential return on a My Picks ticket
+    and the figure on the bet slip were still rounding to the nearest whole
+    coin — so whenever a return landed on a fraction below a half, both showed
+    one ZCoin less than the Pick actually pays. A 40 ZCoin Pick at −220 read
+    58 and should have read 59.
+</p>
+<p>
+    Both now round up like everywhere else, so the number you agree to on the
+    slip, the number on your ticket and the number that settles are the same
+    figure.
 </p>
 </article>
 </section>
