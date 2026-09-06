@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<title>EastCoin | ZCoin Picks</title>
+<link href="/assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;700&display=swap">
+</head>
+<body>
+<style>
+  :root{
+    --ink:#0c0a09;
+    --panel:#161311;
+    --panel-2:#1e1a17;
+    --line:rgba(255,255,255,.1);
+    --text:#f4ede5;
+    --muted:#aca298;
+    --muted-2:#7d746a;
+    --gold:#e8bf35;
+    --gold-dim:rgba(232,191,53,.13);
+    --green:#4ddb8b;
+    --red:#ff6b85;
+    --purple:#a56bff;
+    --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+    --body:"Figtree","Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--ink);color:var(--text);
+    font-family:var(--body);font-size:17px;line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:660px;margin:0 auto;padding:38px 20px 80px}
+
+  .kicker{
+    display:inline-flex;align-items:center;gap:8px;color:var(--gold);
+    font-size:.76rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  }
+  .kicker::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 4px var(--gold-dim)}
+  h1{
+    font-family:var(--display);font-weight:800;
+    font-size:clamp(2.2rem,8vw,3rem);line-height:1.03;letter-spacing:-.03em;
+    margin:14px 0 0;text-wrap:balance;
+  }
+  .lede{margin:14px 0 0;color:var(--muted);font-size:1.1rem}
+
+  h2{
+    font-family:var(--display);font-weight:700;font-size:1.35rem;
+    letter-spacing:-.02em;margin:46px 0 10px;text-wrap:balance;
+  }
+  p{margin:0 0 14px}
+  strong{color:#fff9f0;font-weight:700}
+
+  /* chat mock */
+  .chat{
+    border:1px solid var(--line);border-radius:14px;background:var(--panel);
+    overflow:hidden;margin:22px 0 8px;
+  }
+  .chat-bar{
+    padding:11px 16px;border-bottom:1px solid var(--line);background:var(--panel-2);
+    font-size:.76rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);
+  }
+  .chat-body{padding:14px 16px;display:flex;flex-direction:column;gap:11px;font-size:.95rem;line-height:1.5}
+  .msg{color:#ded5cb}
+  .msg .u{font-weight:700}
+  .msg .bot{color:var(--purple);font-weight:700}
+  .msg .j{color:#5bc8f5;font-weight:700}
+  .msg .a{color:#ff9f5b;font-weight:700}
+  .msg .h{color:#6ee7a8;font-weight:700}
+  .msg .p{color:#c48bff;font-weight:700}
+  .msg .c{color:#ffd166;font-weight:700}
+  .msg .b{color:#ff8fa8;font-weight:700}
+  .msg.sys{color:var(--muted-2);font-style:italic;font-size:.88rem;padding:2px 0}
+  .win{color:var(--green);font-weight:700}
+  .loss{color:var(--red);font-weight:700}
+  .cap{margin:0 0 26px;color:var(--muted-2);font-size:.86rem}
+
+  .card{
+    border:1px solid var(--line);border-radius:12px;background:var(--panel);
+    padding:18px 20px;margin-bottom:12px;
+  }
+  .card h3{
+    font-family:var(--display);font-weight:700;font-size:1.05rem;
+    margin:0 0 6px;letter-spacing:-.01em;
+  }
+  .card p{margin:0;color:var(--muted);font-size:.95rem}
+
+  .cmds{display:flex;flex-direction:column;gap:9px;margin:20px 0 0}
+  .cmd{
+    display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+    border:1px solid var(--line);border-radius:11px;background:var(--panel);padding:14px 17px;
+  }
+  .cmd code{
+    flex:0 0 auto;color:var(--gold);background:var(--panel-2);
+    border:1px solid rgba(232,191,53,.22);border-radius:7px;padding:4px 10px;
+    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.88rem;font-weight:600;
+  }
+  .cmd span{flex:1;min-width:200px;color:var(--muted);font-size:.92rem;line-height:1.5}
+
+  code{
+    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:5px;
+    padding:1px 6px;color:#e9ddc9;
+  }
+
+  .todo{
+    border:1px solid rgba(232,191,53,.35);border-radius:14px;
+    background:linear-gradient(150deg,var(--gold-dim),transparent 60%),var(--panel);
+    padding:22px 24px;margin-top:20px;
+  }
+  .todo h3{font-family:var(--display);font-weight:700;font-size:1.1rem;margin:0 0 12px}
+  .todo ol{margin:0;padding-left:20px;color:var(--muted)}
+  .todo li{margin-bottom:9px}
+  .todo li strong{color:#fff9f0}
+  .todo li::marker{color:var(--gold);font-weight:700}
+
+  .note{
+    margin-top:18px;padding:16px 20px;border-radius:12px;
+    border:1px solid var(--line);background:var(--panel-2);
+    color:var(--muted);font-size:.93rem;
+  }
+  .note b{color:var(--text)}
+
+  footer{margin-top:52px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted-2);font-size:.85rem}
+  footer a{color:var(--gold);text-decoration:none;font-weight:600}
+  footer a:hover{text-decoration:underline}
+  .backlink{display:inline-block;margin-top:24px;color:var(--muted);font-size:.86rem;text-decoration:none;font-weight:600}
+  .backlink:hover{color:var(--text)}
+</style>
+
+<div class="wrap">
+
+  <span class="kicker">EastCoin × StreamElements</span>
+  <h1>ZCoin Picks</h1>
+  <p class="lede">
+    Chat bets on real games using the ZCoins people already have. No real money, no new accounts —
+    just a scoreboard and bragging rights.
+  </p>
+
+  <h2>How it looks in chat</h2>
+
+  <div class="chat">
+    <div class="chat-bar">#zwades</div>
+    <div class="chat-body">
+      <div class="msg"><span class="bot">ZCoinBot:</span> 🏈 49ers vs Rams kicks off in 30 min — bets are open!<br>
+        49ers <strong>-150</strong> · Rams <strong>+150</strong> — type <strong>!pick &lt;amount&gt; &lt;team&gt;</strong></div>
+      <div class="msg"><span class="j">jimmytomato:</span> !pick 100 49ers</div>
+      <div class="msg"><span class="bot">ZCoinBot:</span> @jimmytomato — 100 ZCoins on the 49ers, locked in 🔒</div>
+      <div class="msg"><span class="h">heartlarva:</span> !pick 100 49ers</div>
+      <div class="msg"><span class="bot">ZCoinBot:</span> @heartlarva — 100 ZCoins on the 49ers, locked in 🔒</div>
+      <div class="msg"><span class="p">psilocyboone:</span> !pick 60 rams</div>
+      <div class="msg"><span class="bot">ZCoinBot:</span> @psilocyboone — 60 ZCoins on the Rams, locked in 🔒</div>
+      <div class="msg"><span class="c">charleskellybirdlaw:</span> !pick 75 49ers</div>
+      <div class="msg"><span class="b">bootypaper:</span> !pick 50 rams</div>
+      <div class="msg"><span class="a">andyreidisapawg:</span> !pick 25 49ers</div>
+      <div class="msg sys">…and the bot confirms each of those too</div>
+      <div class="msg"><span class="bot">ZCoinBot:</span> ⏰ Bets close in 5 minutes — 6 picks in, 67% on the 49ers</div>
+      <div class="msg sys">— game plays out —</div>
+      <div class="msg"><span class="bot">ZCoinBot:</span> 🏁 49ers 27–24 Rams — 49ers win!<br>
+        jimmytomato <span class="win">+67</span> · heartlarva <span class="win">+67</span> ·
+        charleskellybirdlaw <span class="win">+50</span> · andyreidisapawg <span class="win">+17</span><br>
+        psilocyboone <span class="loss">−60</span> · bootypaper <span class="loss">−50</span><br>
+        Full results → <strong>eastcoin.vip/g/49ers-rams</strong></div>
+    </div>
+  </div>
+  <p class="cap">People can also place picks on the EastCoin site instead of chat — same bets, same balance, whichever they prefer.</p>
+
+  <h2>Commands chat gets</h2>
+
+  <div class="cmds">
+    <div class="cmd">
+      <code>!pick 100 49ers</code>
+      <span>Puts 100 ZCoins on the 49ers. The bot confirms it and the coins come out straight away.</span>
+    </div>
+    <div class="cmd">
+      <code>!odds</code>
+      <span>What's open to pick right now, and at what price.</span>
+    </div>
+    <div class="cmd">
+      <code>!mypicks</code>
+      <span>Everything you've got riding, and what each one returns if it lands.</span>
+    </div>
+    <div class="cmd">
+      <code>!record</code>
+      <span>Your Picks record and profit for the season — separate from your ZCoin balance.</span>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Nothing you already have changes.</b> <code>!points</code>, <code>!top</code>, <code>!duel</code>,
+    <code>!roulette</code> and the rest are StreamElements' own commands and keep working exactly as they do
+    today — Picks doesn't touch or replace any of them.
+    <br><br>
+    <b>One thing to check:</b> StreamElements has its own <code>!bet</code> command for its built-in betting
+    contests, which is why these use <code>!pick</code> instead. If you'd rather chat typed <code>!bet</code>,
+    that's fine — it just means turning off the StreamElements betting module first so the two aren't fighting
+    over the same word.
+  </div>
+
+  <h2>What happens to your ZCoins</h2>
+
+  <div class="card">
+    <h3>The stake comes out when the bet is placed</h3>
+    <p>jimmytomato's 100 leaves his balance the moment he types it, so nobody can bet points they've already spent somewhere else.</p>
+  </div>
+  <div class="card">
+    <h3>Winners get paid the moment the game is graded</h3>
+    <p>He gets his 100 back plus 67 profit — 167 in total. A losing Pick gets nothing back, so those ZCoins are gone: bet 50 out of 100 and you're left with 50 whether you wait for the result or not.</p>
+  </div>
+  <div class="card">
+    <h3>Everything else keeps working exactly as it does now</h3>
+    <p>Raffles, duels, giveaways and watchtime are untouched. Someone can win a raffle in the middle of a bet and both land correctly — Picks only ever adds or subtracts, it never overwrites anyone's balance.</p>
+  </div>
+
+  <div class="note">
+    <b>One honest note:</b> slightly more points go out than come in over time, because payouts round up in the viewer's
+    favour and there's no house taking a cut. At the scale of your chat that's small, and it's a dial we can turn if it
+    ever drifts.
+  </div>
+
+  <h2>What we'd need from you</h2>
+
+  <div class="todo">
+    <h3>Two clicks, and you're done</h3>
+    <ol>
+      <li><strong>Mod ZCoinBot</strong> in your chat — <code>/mod ZCoinBot</code></li>
+      <li><strong>Add it to Super Moderators</strong> in your StreamElements dashboard, so it's allowed to award points</li>
+    </ol>
+  </div>
+
+  <div class="note">
+    <b>It's the same access a human mod already has.</b> The bot awards and deducts points exactly the way you could by
+    hand — it just does it instantly and keeps a record of every single one. It never sees your password or your
+    StreamElements login.
+    <br><br>
+    <b>And you can switch it off any time</b> by unmodding it. That's the kill switch — no code, no waiting on anyone.
+  </div>
+
+  <footer>
+    Built into <a href="/">EastCoin</a> · uses your existing StreamElements loyalty points · no real money involved at any point
+  </footer>
+
+  <a class="backlink" href="/">← Back to EastCoin</a>
+
+</div>
+</body>
+</html>
