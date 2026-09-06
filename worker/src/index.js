@@ -333,6 +333,7 @@ export class MusicRoom extends DurableObject {
     this.requestLog = new Map();
     this.seenStreamElementsIds = new Set();
     this.twitchIrcSocket = null;
+    this.connectingIrc = false;
     this.lastChatSkipAt = 0;
     this.lastRasputinAt = 0;
 
@@ -618,8 +619,26 @@ export class MusicRoom extends DurableObject {
   async ensureTwitchIrc() {
     const channel = String(this.env.TWITCH_CHAT_CHANNEL || "").trim().toLowerCase();
     if (!channel) return;
-    if (this.twitchIrcSocket && this.twitchIrcSocket.readyState === WebSocket.OPEN) return;
 
+    // A concurrency guard, not just a liveness check — without it, the
+    // fetch() below (which awaits a network round-trip) can overlap between
+    // an alarm tick and a new listener connecting, spinning up two IRC
+    // sockets where only the second ever gets tracked in
+    // this.twitchIrcSocket. If the first one's close event later fires, its
+    // "if (this.twitchIrcSocket === ws)" check correctly no-ops (it's not
+    // the current one) — but that also means a *dead* first connection can
+    // silently coexist with a live second one, or vice versa, with nothing
+    // in the logs to explain why reconnects stopped happening.
+    if (this.connectingIrc) return;
+
+    if (this.twitchIrcSocket) {
+      const state = this.twitchIrcSocket.readyState;
+      if (state === WebSocket.OPEN || state === WebSocket.CONNECTING) return;
+      console.log(`Twitch IRC: clearing stale socket (readyState ${state}) before reconnecting`);
+      this.twitchIrcSocket = null;
+    }
+
+    this.connectingIrc = true;
     try {
       const response = await fetch("https://irc-ws.chat.twitch.tv:443", {
         headers: { Upgrade: "websocket" }
@@ -655,6 +674,8 @@ export class MusicRoom extends DurableObject {
     } catch (error) {
       console.error("Twitch IRC: failed to connect", error);
       this.twitchIrcSocket = null;
+    } finally {
+      this.connectingIrc = false;
     }
   }
 
@@ -696,7 +717,11 @@ export class MusicRoom extends DurableObject {
 
   async handleChatSkip(login) {
     if (!this.state.current) return;
-    if (this.state.current.unskippable) {
+
+    // Unskippable blocks everyone except the same two logins who can
+    // trigger !rasputin in the first place — they can still bail out of
+    // their own block from chat, just nobody else.
+    if (this.state.current.unskippable && !RASPUTIN_ALLOWED_LOGINS.has(login)) {
       console.log(`Twitch IRC: !skip from ${login} ignored — "${this.state.current.title}" is unskippable`);
       return;
     }
