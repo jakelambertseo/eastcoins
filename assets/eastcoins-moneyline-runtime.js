@@ -831,7 +831,7 @@
       <button class="picks-market-filter" type="button" data-picks-sport="baseball">⚾ Baseball</button>
       <button class="picks-market-filter" type="button" data-picks-sport="combat">🥊 UFC / MMA</button>
       <small class="picks-market-window">Today + tomorrow only</small>
-      <small class="picks-payout-note">Prices are sportsbook moneylines from The Odds API. Payouts shown per ${PAYOUT_PREVIEW_STAKE} ZCoins; your own line locks when you confirm.</small>
+      <small class="picks-payout-note">Prices are sportsbook moneylines from The Odds API, fixed when the market opens. Payouts show what ${PAYOUT_PREVIEW_STAKE} ZCoins returns <strong>if that side wins</strong> — a losing Pick returns nothing.</small>
     `;
 
     controls.addEventListener(
@@ -1312,13 +1312,17 @@
         // This slot used to repeat "Moneyline" on both sides of every card —
         // the same word three times per card counting the status chip, and no
         // help at all to anyone who doesn't read American odds fluently.
-        // A worked example of what the price actually returns is the same
-        // number of pixels and infinitely more useful.
+        // A worked example of what the price returns is the same number of
+        // pixels and infinitely more useful.
+        //
+        // "pays" rather than an arrow, deliberately: an arrow reads as a
+        // transformation that simply happens, which made two sides of the same
+        // market look like they both made money. "Pays" carries the condition.
         const preview = ML.payout(PAYOUT_PREVIEW_STAKE, price);
         setText(
           labelNode,
           preview.available
-            ? `${PAYOUT_PREVIEW_STAKE} → ${preview.totalReturn}`
+            ? `${PAYOUT_PREVIEW_STAKE} pays ${preview.totalReturn}`
             : "—"
         );
       }
