@@ -89,6 +89,23 @@
   }
   .card p{margin:0;color:var(--muted);font-size:.95rem}
 
+  .timeline{margin:22px 0 4px;padding:0}
+  .step{position:relative;padding:0 0 21px 30px;border-left:1px solid var(--line)}
+  .step:last-child{border-left-color:transparent;padding-bottom:0}
+  .step::before{
+    content:"";position:absolute;left:-6px;top:6px;width:11px;height:11px;border-radius:50%;
+    background:var(--gold);box-shadow:0 0 0 4px var(--gold-dim),0 0 0 5px var(--ink);
+  }
+  .step .when{
+    display:block;color:var(--gold);font-size:.68rem;font-weight:800;
+    letter-spacing:.12em;text-transform:uppercase;margin-bottom:3px;
+  }
+  .step b{
+    display:block;font-family:var(--display);font-weight:700;font-size:1.05rem;
+    letter-spacing:-.01em;margin-bottom:3px;
+  }
+  .step p{margin:0;color:var(--muted);font-size:.93rem}
+
   .cmds{display:flex;flex-direction:column;gap:9px;margin:20px 0 0}
   .cmd{
     display:flex;flex-direction:column;gap:11px;
@@ -176,6 +193,46 @@
     </div>
   </div>
   <p class="cap">People can also place picks on the EastCoin site instead of chat — same bets, same balance, whichever they prefer.</p>
+
+  <h2>Nobody has to run it</h2>
+  <p>
+    Every message in that chat log is the bot acting on its own. You don't start a bet, watch a clock,
+    tally anything up or pay anyone out — and none of it needs you to be live.
+  </p>
+
+  <div class="timeline">
+    <div class="step">
+      <span class="when">30 minutes before kickoff</span>
+      <b>Bets open by themselves</b>
+      <p>The bot is already watching the schedule. It takes the sportsbook line, locks it so it can't
+        move, and posts the announcement in chat. Nothing triggers this but the clock.</p>
+    </div>
+    <div class="step">
+      <span class="when">The half hour that follows</span>
+      <b>Picks are taken and confirmed instantly</b>
+      <p>Each <code>!pick</code> is checked against that person's real balance, the coins come out, and the
+        bot replies. Not enough ZCoins, a second pick on the same game, a typo'd team — it says so and
+        takes nothing.</p>
+    </div>
+    <div class="step">
+      <span class="when">At kickoff</span>
+      <b>Betting closes by itself</b>
+      <p>A last call goes out at five minutes. At kickoff the market shuts and anything typed after that
+        gets told it's too late. No one can sneak a pick in once the game is underway.</p>
+    </div>
+    <div class="step">
+      <span class="when">After the final whistle</span>
+      <b>Winners are paid without anyone asking</b>
+      <p>The bot waits for the official final score, grades every pick against the line it locked, pays the
+        winners into their real balance and posts the results with a link to the full breakdown.</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>The one thing that isn't instant:</b> settlement waits on the official final score, which usually
+    lands within about ten minutes of full time. The bot posts the moment it has it — whether that's
+    straight away or an hour later, and whether or not you're still streaming.
+  </div>
 
   <h2>Commands chat gets</h2>
 
