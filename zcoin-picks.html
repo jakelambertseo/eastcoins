@@ -91,15 +91,23 @@
 
   .cmds{display:flex;flex-direction:column;gap:9px;margin:20px 0 0}
   .cmd{
-    display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+    display:flex;flex-direction:column;gap:11px;
     border:1px solid var(--line);border-radius:11px;background:var(--panel);padding:14px 17px;
   }
-  .cmd code{
+  .cmd-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .cmd-head code{
     flex:0 0 auto;color:var(--gold);background:var(--panel-2);
     border:1px solid rgba(232,191,53,.22);border-radius:7px;padding:4px 10px;
     font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.88rem;font-weight:600;
   }
-  .cmd span{flex:1;min-width:200px;color:var(--muted);font-size:.92rem;line-height:1.5}
+  .cmd-head span{flex:1;min-width:200px;color:var(--muted);font-size:.92rem;line-height:1.5}
+  .reply{
+    border-left:2px solid rgba(165,107,255,.45);border-radius:0 9px 9px 0;
+    background:var(--panel-2);padding:10px 14px;
+    font-size:.87rem;line-height:1.55;color:#ded5cb;
+  }
+  .reply b{color:var(--purple);font-weight:700}
+  .reply em{font-style:normal;color:var(--muted-2)}
 
   code{
     font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em;
@@ -173,20 +181,36 @@
 
   <div class="cmds">
     <div class="cmd">
-      <code>!pick 100 49ers</code>
-      <span>Puts 100 ZCoins on the 49ers. The bot confirms it and the coins come out straight away.</span>
+      <div class="cmd-head">
+        <code>!pick 100 49ers</code>
+        <span>Puts 100 ZCoins on the 49ers. The bot confirms it and the coins come out straight away.</span>
+      </div>
+      <div class="reply"><b>ZCoinBot:</b> @jimmytomato — 100 ZCoins on the 49ers @ −150, locked in 🔒<br>
+        Returns <strong>167</strong> if they win · balance now <strong>1,140</strong></div>
     </div>
     <div class="cmd">
-      <code>!odds</code>
-      <span>What's open to pick right now, and at what price.</span>
+      <div class="cmd-head">
+        <code>!odds</code>
+        <span>What's open to pick right now, and at what price.</span>
+      </div>
+      <div class="reply"><b>ZCoinBot:</b> Open now — 49ers <strong>−150</strong> / Rams <strong>+150</strong> (closes 4:10 PM)
+        · Chiefs <strong>−220</strong> / Broncos <strong>+180</strong> (Mon 7:15 PM)</div>
     </div>
     <div class="cmd">
-      <code>!mypicks</code>
-      <span>Everything you've got riding, and what each one returns if it lands.</span>
+      <div class="cmd-head">
+        <code>!mypicks</code>
+        <span>Everything you've got riding, and what each one returns if it lands.</span>
+      </div>
+      <div class="reply"><b>ZCoinBot:</b> @jimmytomato — 2 open picks, 140 ZCoins riding<br>
+        100 on 49ers −150 → returns <strong>167</strong> · 40 on Chiefs −220 → returns <strong>59</strong></div>
     </div>
     <div class="cmd">
-      <code>!record</code>
-      <span>Your Picks record and profit for the season — separate from your ZCoin balance.</span>
+      <div class="cmd-head">
+        <code>!record</code>
+        <span>Your Picks record and profit for the season — separate from your ZCoin balance.</span>
+      </div>
+      <div class="reply"><b>ZCoinBot:</b> @jimmytomato — <strong>14–9</strong> this season, <strong>+312 ZCoins</strong>, rank <strong>#3</strong> of 24
+        <em>· best month: November, +180</em></div>
     </div>
   </div>
 
