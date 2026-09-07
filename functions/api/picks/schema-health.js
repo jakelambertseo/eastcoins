@@ -47,6 +47,18 @@ export async function onRequestGet(context) {
     const missing = EXPECTED_TABLES.filter((name) => !presentSet.has(name));
 
     let latestMigration = null;
+    // Derived, not hardcoded: a literal here went stale the moment 0002
+    // was applied and reported version 1 against migration 0002.
+    let migrationCount = 0;
+
+    try {
+      const counted = await db
+        .prepare(`SELECT COUNT(*) AS n FROM d1_migrations`)
+        .first();
+      migrationCount = Number(counted?.n) || 0;
+    } catch {
+      migrationCount = 0;
+    }
 
     try {
       const migration = await db
@@ -73,7 +85,7 @@ export async function onRequestGet(context) {
         service: "eastcoin-picks",
         database: "eastcoin-picks",
         binding: "PICKS_DB",
-        schemaVersion: 1,
+        schemaVersion: migrationCount,
         latestMigration,
         tables: {
           expected: EXPECTED_TABLES.length,

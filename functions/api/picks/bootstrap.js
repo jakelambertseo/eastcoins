@@ -1,3 +1,5 @@
+import { WAGER_ALLOWLIST } from "./_lib.js";
+
 const SESSION_COOKIE = "__Host-ec_session";
 
 // ZCoins are StreamElements loyalty points. Their points API is public and
@@ -1125,10 +1127,18 @@ export async function onRequestGet(
         communityLedger,
         leaderboard,
         config: {
-          // Reading balances is live; placing real wagers still waits on the
-          // /wagers implementation and the ZCoin write path.
+          // Wagering is open only when the server can actually move ZCoins
+          // AND this viewer is in the limited test. Reporting a blanket
+          // false once /wagers exists would hide a working feature; a
+          // blanket true would offer a button that 403s.
           wageringEnabled:
-            false,
+            Boolean(
+              String(context.env.STREAMELEMENTS_JWT || "").trim() &&
+              user &&
+              WAGER_ALLOWLIST.has(String(user.login || "").toLowerCase())
+            ),
+          inWagerTest:
+            Boolean(user && WAGER_ALLOWLIST.has(String(user.login || "").toLowerCase())),
           walletConnected:
             wallet.connected,
           minWager: WAGER_MIN,
