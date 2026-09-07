@@ -27,7 +27,8 @@
     walletValue: document.getElementById("walletValue"),
     settingsBtn: document.getElementById("settingsBtn"),
     settingsMenu: document.getElementById("settingsMenu"),
-    navPeek: document.getElementById("navPeek")
+    navPeek: document.getElementById("navPeek"),
+    navAdmin: document.getElementById("navAdmin")
   };
 
   const views = Object.create(null);
@@ -44,7 +45,7 @@
   // modules load after the shell, so checking registration here would
   // send every deep link (?view=picks) back to Events before its module
   // had a chance to register. An unknown name still falls back.
-  const ROUTES = ["events", "multiview", "picks", "music", "watch"];
+  const ROUTES = ["events", "multiview", "picks", "music", "watch", "admin"];
 
   function routeFromUrl() {
     const view = new URL(location.href).searchParams.get("view");
@@ -258,6 +259,13 @@
       if (user?.login) {
         els.loginBtn.textContent = user.displayName || user.login;
         els.loginBtn.href = "/v3/?view=picks";
+
+        // Cosmetic only: the server re-checks on every admin endpoint,
+        // so revealing this link in devtools grants nothing.
+        const ADMINS = ["zwades", "bootypaper", "andyreidisapawg"];
+        if (ADMINS.includes(String(user.login).toLowerCase())) {
+          els.navAdmin.hidden = false;
+        }
       }
       if (wallet?.connected && Number.isFinite(Number(wallet.balance))) {
         els.walletValue.textContent = Number(wallet.balance).toLocaleString();

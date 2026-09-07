@@ -1102,3 +1102,76 @@ body.nav-hidden .navpeek{display:inline-flex}
   .mv-resizer,.mv-resizer::after,.mv-select select,.picker-row,.picker-logo img{transition:none}
 }
 
+
+/* ============================================================
+   PICKS ADMIN
+   ============================================================ */
+.adm-card{
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--panel);padding:18px 20px;margin-bottom:14px;
+}
+.adm-cardhead{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px}
+.adm-h{margin:0;font-family:var(--display);font-weight:700;font-size:1.1rem;letter-spacing:-.02em}
+.adm-note{margin:6px 0 0;color:var(--muted-2);font-size:.82rem;line-height:1.55}
+.adm-warn{margin:8px 0 0;color:var(--gold);font-size:.82rem}
+
+.adm-health{display:flex;align-items:center;gap:12px}
+.adm-health strong{display:block;font-size:.98rem}
+.adm-health small{display:block;margin-top:2px;color:var(--muted-2);font-size:.8rem}
+.adm-dot{width:11px;height:11px;flex:0 0 auto;border-radius:50%;background:var(--muted-2)}
+.adm-dot.good{background:var(--green);box-shadow:0 0 0 4px var(--green-dim)}
+.adm-dot.bad{background:var(--red);box-shadow:0 0 0 4px var(--red-dim)}
+.adm-tag{
+  margin-left:auto;flex:0 0 auto;padding:3px 9px;border-radius:999px;
+  border:1px solid var(--line-2);color:var(--muted);
+  font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+}
+.adm-tag.bad{border-color:rgba(255,107,133,.4);color:var(--red);background:var(--red-dim)}
+
+.adm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:11px;margin-top:14px}
+.adm-field{display:flex;flex-direction:column;gap:5px}
+.adm-field span{
+  color:var(--muted-2);font-size:.64rem;font-weight:800;
+  letter-spacing:.1em;text-transform:uppercase;
+}
+.adm-field input,.adm-field select{
+  height:40px;padding:0 12px;border-radius:10px;
+  border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);
+  font-size:.9rem;outline:none;
+}
+.adm-field input:focus,.adm-field select:focus{border-color:rgba(232,191,53,.45)}
+
+.adm-preview{
+  margin-top:14px;padding:12px 14px;border-radius:11px;
+  border:1px solid rgba(232,191,53,.24);background:var(--gold-dim);
+}
+.adm-preview-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:4px 0}
+.adm-preview-row strong{flex:1;min-width:120px;font-size:.92rem}
+.adm-line{font-family:var(--display);font-weight:800;font-size:1rem;color:var(--gold)}
+.adm-pays{color:var(--muted);font-size:.8rem}
+.adm-actions{display:flex;gap:9px;margin-top:14px}
+
+.adm-market{
+  padding:13px 0;border-top:1px solid var(--line);
+}
+.adm-market:first-of-type{border-top:0}
+.adm-market-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.adm-market-top strong{font-family:var(--display);font-weight:700;font-size:1rem}
+.adm-market.settled .adm-market-top strong{color:var(--muted)}
+.adm-bettors{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.adm-bettor{
+  padding:4px 9px;border-radius:999px;
+  border:1px solid var(--line);background:var(--panel-2);
+  color:var(--muted);font-size:.74rem;
+}
+.adm-bettor.won{border-color:rgba(77,219,139,.34);color:var(--green);background:var(--green-dim)}
+.adm-bettor.lost{border-color:rgba(255,107,133,.3);color:var(--red);background:var(--red-dim)}
+.adm-bettor.refunded{border-color:rgba(143,195,215,.28);color:#8fc3d7}
+
+.adm-message{
+  padding:12px 16px;border-radius:11px;margin-bottom:14px;
+  border:1px solid var(--line-2);background:var(--panel-2);
+  color:var(--text);font-size:.88rem;
+}
+.adm-message.good{border-color:rgba(77,219,139,.4);background:var(--green-dim);color:#b6f1c4}
+.adm-message.bad{border-color:rgba(255,107,133,.4);background:var(--red-dim);color:#ffc9d2}
