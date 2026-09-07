@@ -24,7 +24,9 @@
     chatClose: document.getElementById("chatClose"),
     loginBtn: document.getElementById("loginBtn"),
     walletChip: document.getElementById("walletChip"),
-    walletValue: document.getElementById("walletValue")
+    walletValue: document.getElementById("walletValue"),
+    settingsBtn: document.getElementById("settingsBtn"),
+    settingsMenu: document.getElementById("settingsMenu")
   };
 
   const views = Object.create(null);
@@ -115,7 +117,9 @@
     chatMounted = true;
     els.chatFrame.src = els.chatFrame.dataset.src;
     els.chatFrame.hidden = false;
-    els.chatPlaceholder.hidden = true;
+    // .chat-placeholder sets display:grid, which beats [hidden]'s UA
+    // display:none — so remove it outright rather than hiding it.
+    els.chatPlaceholder.remove();
   }
 
   function chatVisible() {
@@ -139,17 +143,83 @@
     if (visible) mountChat();
   }
 
-  function armChatDeferral() {
+  // Chat is core to this site, not an extra, so it should not wait for a
+  // click. It is still kept off the critical path: the browser paints the
+  // events grid first, then mounts Twitch on the first idle moment. That
+  // keeps the original performance win without the page sitting there
+  // half-built until someone happens to touch it.
+  function armChatLoad() {
     if (!chatVisible()) return;
-    const events = ["pointerdown", "keydown", "touchstart", "wheel"];
-    const fire = () => {
-      events.forEach((e) => window.removeEventListener(e, fire));
-      mountChat();
-    };
-    events.forEach((e) => window.addEventListener(e, fire, { once: true, passive: true }));
-    // Don't wait forever for someone who is only reading.
-    window.setTimeout(fire, 4000);
+    const start = () => mountChat();
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(start, { timeout: 1500 });
+    } else {
+      window.setTimeout(start, 300);
+    }
   }
+
+  /* ---------------------------------------------------------- settings */
+
+  const PREF_KEY = "eastcoinV3Prefs";
+  const prefs = { chat: true, nav: true, art: true, scores: true };
+
+  function loadPrefs() {
+    try {
+      Object.assign(prefs, JSON.parse(localStorage.getItem(PREF_KEY) || "{}"));
+    } catch {
+      /* defaults are fine */
+    }
+    prefs.chat = chatVisible();
+  }
+
+  function savePrefs() {
+    try {
+      localStorage.setItem(PREF_KEY, JSON.stringify(prefs));
+    } catch {
+      /* private mode */
+    }
+  }
+
+  function applyPrefs() {
+    document.body.classList.toggle("nav-compact", !prefs.nav);
+    document.body.classList.toggle("no-art", !prefs.art);
+    for (const item of els.settingsMenu.querySelectorAll("[data-toggle]")) {
+      const on = Boolean(prefs[item.dataset.toggle]);
+      item.querySelector(".switch").dataset.on = on ? "1" : "0";
+      item.setAttribute("aria-checked", String(on));
+    }
+  }
+
+  function setMenuOpen(open) {
+    els.settingsMenu.hidden = !open;
+    els.settingsBtn.setAttribute("aria-expanded", String(open));
+    els.settingsBtn.classList.toggle("on", open);
+  }
+
+  els.settingsBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    setMenuOpen(els.settingsMenu.hidden);
+  });
+  document.addEventListener("click", (event) => {
+    if (!els.settingsMenu.hidden && !els.settingsMenu.contains(event.target)) setMenuOpen(false);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") setMenuOpen(false);
+  });
+
+  els.settingsMenu.addEventListener("click", (event) => {
+    const item = event.target.closest("[data-toggle]");
+    if (!item) return;
+    const key = item.dataset.toggle;
+    prefs[key] = !prefs[key];
+
+    if (key === "chat") setChatVisible(prefs.chat);
+    savePrefs();
+    applyPrefs();
+    if (key === "art" || key === "scores") views.events?.onPrefs?.(prefs);
+  });
+
+  window.ECV3Prefs = prefs;
 
   /* ---------------------------------------------------------- session */
 
@@ -197,11 +267,47 @@
   els.chatToggle.addEventListener("click", () => setChatVisible(document.body.classList.contains("chat-hidden")));
   els.chatClose.addEventListener("click", () => setChatVisible(false));
 
+  function looksLikeUrl(value) {
+    return /^(https?:\/\/|www\.)\S+$/i.test(value) || /^[a-z0-9-]+\.[a-z]{2,}\/\S+$/i.test(value);
+  }
+
+  function embedUrl(raw) {
+    let value = raw.trim();
+    if (!/^https?:\/\//i.test(value)) value = `https://${value}`;
+    try {
+      const parsed = new URL(value);
+      if (parsed.protocol !== "https:") return "";
+      return parsed.href;
+    } catch {
+      return "";
+    }
+  }
+
   let searchTimer = 0;
+
+  // A pasted link is an instruction to watch it, not a search term.
+  els.search.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    const value = els.search.value.trim();
+    if (!looksLikeUrl(value)) return;
+    const url = embedUrl(value);
+    if (!url) return;
+    event.preventDefault();
+    window.clearTimeout(searchTimer);
+    els.search.value = "";
+    state.search = "";
+    history.pushState({ view: "watch" }, "", `/v3/?view=watch&url=${encodeURIComponent(url)}`);
+    state.route = "watch";
+    render();
+  });
+
   els.search.addEventListener("input", () => {
     window.clearTimeout(searchTimer);
+    const value = els.search.value.trim();
+    // Don't filter the grid down to nothing while a URL is being pasted.
+    if (looksLikeUrl(value)) return;
     searchTimer = window.setTimeout(() => {
-      state.search = els.search.value.trim();
+      state.search = value;
       if (state.route !== "events") go("events");
       else views.events?.onSearch?.(state.search);
     }, 220);
@@ -210,8 +316,10 @@
   window.ECV3 = { register, go, state, stub };
 
   state.route = routeFromUrl();
-  setChatVisible(chatVisible());
-  armChatDeferral();
+  loadPrefs();
+  setChatVisible(prefs.chat);
+  applyPrefs();
+  armChatLoad();
   render();
   loadSession();
 })();

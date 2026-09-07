@@ -17,12 +17,12 @@
   "use strict";
 
   const SPORT_LABELS = {
-    football: "⚽ Football",
-    "american-football": "🏈 NFL",
-    basketball: "🏀 Basketball",
+    "american-football": "🏈 NFL/CFB",
     baseball: "⚾ Baseball",
-    hockey: "🏒 Hockey",
     fight: "🥊 Fighting",
+    basketball: "🏀 Basketball",
+    hockey: "🏒 Hockey",
+    football: "⚽ Soccer",
     "motor-sports": "🏎 Motorsport",
     tennis: "🎾 Tennis",
     golf: "⛳ Golf",
@@ -30,6 +30,10 @@
     rugby: "🏉 Rugby",
     other: "📺 Other"
   };
+
+  // Fixed running order. Anything not named here sorts after the listed
+  // sports (by how much is live), and "other" is pinned to the bottom.
+  const SPORT_ORDER = ["american-football", "baseball", "fight"];
 
   const local = {
     filter: "all",
@@ -180,9 +184,20 @@
     const el = document.createElement("article");
     el.className = "eventcard";
 
-    // poster ------------------------------------------------
-    const poster = document.createElement("div");
+    const href = `/v3/?view=watch&event=${encodeURIComponent(match.id)}`;
+    const openMatch = (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+      event.preventDefault();
+      history.pushState({ view: "watch" }, "", href);
+      shell.go("watch", { push: false });
+    };
+
+    // poster — the whole banner is the primary way into the event
+    const poster = document.createElement("a");
     poster.className = "ec-poster";
+    poster.href = href;
+    poster.setAttribute("aria-label", `Watch ${match?.title || "event"}`);
+    poster.addEventListener("click", openMatch);
 
     // posterUrl() takes the poster STRING; matchupPosterUrl() takes the
     // match and composes one from the two team badges. Passing the match
@@ -227,7 +242,17 @@
 
     const title = document.createElement("h3");
     title.className = "ec-title";
-    title.textContent = match?.title || "Untitled event";
+
+    const home = match?.teams?.home;
+    const away = match?.teams?.away;
+    if (home?.name && away?.name) {
+      // One row per team, each with its own crest, so the matchup reads
+      // at a glance instead of as one long run-on string.
+      title.append(teamRow(home), teamRow(away));
+      title.classList.add("is-matchup");
+    } else {
+      title.textContent = match?.title || "Untitled event";
+    }
 
     const meta = document.createElement("p");
     meta.className = "ec-meta";
@@ -239,7 +264,14 @@
     );
 
     body.append(title, meta);
+
+    const score = document.createElement("div");
+    score.className = "ec-score";
+    score.hidden = true;
+    body.append(score);
     el.append(body);
+
+    attachScore(match, score, title);
 
     // actions -----------------------------------------------
     const actions = document.createElement("div");
@@ -247,17 +279,9 @@
 
     const watch = document.createElement("a");
     watch.className = "btn primary";
-    watch.href = `/v3/?view=watch&event=${encodeURIComponent(match.id)}`;
+    watch.href = href;
     watch.textContent = live ? "Watch live" : "Watch";
-    watch.addEventListener("click", (event) => {
-      event.preventDefault();
-      // The player lands in phase 2; until then say so honestly
-      // rather than routing into a view that does not exist.
-      watch.textContent = "Player: phase 2";
-      window.setTimeout(() => {
-        watch.textContent = live ? "Watch live" : "Watch";
-      }, 1400);
-    });
+    watch.addEventListener("click", openMatch);
 
     const multi = document.createElement("button");
     multi.className = "btn ghost";
@@ -269,6 +293,73 @@
     el.append(actions);
 
     return el;
+  }
+
+  function teamRow(team) {
+    const row = document.createElement("span");
+    row.className = "teamrow";
+
+    const badge = document.createElement("span");
+    badge.className = "teamlogo";
+    const API = window.EastcoinStreamedAPI;
+    const url = team?.badge && API?.badgeUrl ? API.badgeUrl(team.badge) : "";
+    if (url) {
+      const img = document.createElement("img");
+      img.alt = "";
+      img.loading = "lazy";
+      img.addEventListener("load", () => badge.classList.add("has-badge"));
+      img.addEventListener("error", () => img.remove());
+      img.src = url;
+      badge.append(img);
+    }
+    const name = document.createElement("span");
+    name.className = "teamname";
+    name.textContent = team?.name || "TBC";
+
+    row.append(badge, name);
+    return row;
+  }
+
+  // Scores are additive: the card is complete without them, and a match
+  // that ESPN doesn't have simply never shows one.
+  async function attachScore(match, mount, titleEl) {
+    if (!window.ECV3Scores) return;
+    if (window.ECV3Prefs && window.ECV3Prefs.scores === false) return;
+
+    let score = null;
+    try {
+      score = await window.ECV3Scores.forMatch(match);
+    } catch {
+      return;
+    }
+    if (!score || score.state === "pre" || !mount.isConnected) return;
+
+    const rows = titleEl.querySelectorAll(".teamrow");
+    const line = document.createElement("span");
+    line.className = "ec-score-state";
+    line.textContent = score.state === "post" ? "Final" : score.detail || "Live";
+    if (score.state === "in") line.classList.add("in");
+
+    // Prefer painting each score against its own team row.
+    if (rows.length === 2) {
+      appendScore(rows[0], score.home.score);
+      appendScore(rows[1], score.away.score);
+      mount.append(line);
+    } else {
+      const compact = document.createElement("span");
+      compact.className = "ec-score-compact nums";
+      compact.textContent = `${score.home.score ?? "-"}–${score.away.score ?? "-"}`;
+      mount.append(compact, line);
+    }
+    mount.hidden = false;
+  }
+
+  function appendScore(row, value) {
+    if (value === null || value === undefined) return;
+    const el = document.createElement("span");
+    el.className = "teamscore nums";
+    el.textContent = String(value);
+    row.append(el);
   }
 
   function fallbackArt(match) {
@@ -305,6 +396,36 @@
       grid.append(s);
     }
     return grid;
+  }
+
+  function picksBanner() {
+    const banner = document.createElement("a");
+    banner.className = "picksbanner";
+    banner.href = "/v3/?view=picks";
+    banner.addEventListener("click", (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+      event.preventDefault();
+      shell.go("picks");
+    });
+
+    const tag = document.createElement("span");
+    tag.className = "picksbanner-tag";
+    tag.textContent = "New";
+
+    const copy = document.createElement("span");
+    copy.className = "picksbanner-copy";
+    const strong = document.createElement("strong");
+    strong.textContent = "Picks are now live";
+    const rest = document.createElement("span");
+    rest.textContent = " — back a team with your ZCoins and see where you land on the leaderboard.";
+    copy.append(strong, rest);
+
+    const cta = document.createElement("span");
+    cta.className = "picksbanner-cta";
+    cta.textContent = "Make your picks →";
+
+    banner.append(tag, copy, cta);
+    return banner;
   }
 
   function filterBar() {
@@ -355,11 +476,11 @@
     const titleWrap = document.createElement("div");
     const h1 = document.createElement("h1");
     h1.textContent = "Events";
-    const sub = document.createElement("p");
-    sub.textContent = "Everything on right now, and what's coming today.";
-    titleWrap.append(h1, sub);
+    titleWrap.append(h1);
     head.append(titleWrap);
     root.append(head);
+
+    root.append(picksBanner());
 
     if (!local.loaded && !local.failed) {
       root.append(skeletonGrid());
@@ -417,7 +538,15 @@
       groups.get(key).push(match);
     }
 
+    const rank = (key) => {
+      if (key === "other") return 900;                    // always last
+      const fixed = SPORT_ORDER.indexOf(key);
+      return fixed === -1 ? 100 : fixed;                  // then the rest
+    };
+
     const ordered = [...groups.entries()].sort((a, b) => {
+      const rankDelta = rank(a[0]) - rank(b[0]);
+      if (rankDelta) return rankDelta;
       const aLive = a[1].filter(isLive).length;
       const bLive = b[1].filter(isLive).length;
       if (aLive !== bLive) return bLive - aLive;
@@ -470,6 +599,9 @@
     },
     onSearch(term) {
       local.search = term;
+      if (root?.isConnected) paint();
+    },
+    onPrefs() {
       if (root?.isConnected) paint();
     }
   };

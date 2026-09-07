@@ -9,13 +9,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://streamed.st">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;700;800&display=swap">
-<link rel="stylesheet" href="/v3/assets/css/v3.css?v=1">
+<link rel="stylesheet" href="/v3/assets/css/v3.css?v=2">
 </head>
 <body>
 
 <header class="topnav">
   <a class="brand" href="/v3/" data-route="events">
-    <span class="brand-mark">E</span> EastCoin
+    <span class="brand-mark"><img src="/assets/eastcoins-logo.webp" alt="" width="30" height="30"></span> EastCoin
   </a>
 
   <nav class="nav-links" aria-label="Main">
@@ -28,11 +28,23 @@
   <div class="nav-right">
     <div class="navsearch">
       <span aria-hidden="true">🔍</span>
-      <input id="navSearch" type="search" placeholder="Search games, teams" aria-label="Search events" autocomplete="off">
+      <input id="navSearch" type="search" placeholder="Search or embed" aria-label="Search events, or paste a stream link to embed" autocomplete="off">
     </div>
-    <span class="wallet-chip" id="walletChip" hidden><span aria-hidden="true">🪙</span><span id="walletValue">—</span></span>
+    <a class="wallet-chip" id="walletChip" href="/v3/?view=picks" data-route="picks" title="Your ZCoins — open Picks" hidden><span aria-hidden="true">🪙</span><span id="walletValue">—</span></a>
     <a class="login-btn" id="loginBtn" href="/api/picks/auth/twitch/start?returnTo=%2Fv3%2F">Log in</a>
     <button class="iconbtn on" id="chatToggle" type="button" aria-pressed="true" title="Toggle Twitch chat">💬</button>
+    <div class="menuwrap">
+      <button class="iconbtn" id="settingsBtn" type="button" aria-haspopup="true" aria-expanded="false" title="Settings">⚙</button>
+      <div class="menu" id="settingsMenu" role="menu" hidden>
+        <p class="menu-title">Layout</p>
+        <button class="menu-item" type="button" role="menuitemcheckbox" data-toggle="chat"><span>Twitch chat</span><span class="switch" data-on="1"></span></button>
+        <button class="menu-item" type="button" role="menuitemcheckbox" data-toggle="nav"><span>Navigation labels</span><span class="switch" data-on="1"></span></button>
+        <p class="menu-title">Events</p>
+        <button class="menu-item" type="button" role="menuitemcheckbox" data-toggle="art"><span>Event artwork</span><span class="switch" data-on="1"></span></button>
+        <button class="menu-item" type="button" role="menuitemcheckbox" data-toggle="scores"><span>Live scores</span><span class="switch" data-on="1"></span></button>
+        <p class="menu-note">Saved on this device only.</p>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -59,7 +71,9 @@
 
 <script defer src="/assets/eastcoins-ppv-api.js"></script>
 <script defer src="/assets/eastcoins-streamed-api.js"></script>
-<script defer src="/v3/assets/js/v3-shell.js?v=1"></script>
-<script defer src="/v3/assets/js/v3-events.js?v=1"></script>
+<script defer src="/v3/assets/js/v3-shell.js?v=2"></script>
+<script defer src="/v3/assets/js/v3-scores.js?v=2"></script>
+<script defer src="/v3/assets/js/v3-events.js?v=2"></script>
+<script defer src="/v3/assets/js/v3-watch.js?v=2"></script>
 </body>
 </html>

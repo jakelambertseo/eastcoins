@@ -405,3 +405,176 @@ body.chat-hidden .chatrail{display:none}
 @media (prefers-reduced-motion:reduce){
   .chatrail{transition:none}
 }
+
+/* ============================================================
+   ADDED IN PHASE 1 REVISION
+   Red is drawn from the logo (crimson disc, gold ring) so the
+   two accents belong to the same object. Gold stays the primary
+   action colour; red marks live state and brand surfaces only.
+   ============================================================ */
+
+:root{
+  --red-brand:#a5122f;
+  --red-brand-2:#d31d4d;
+  --red-glow:rgba(165,18,47,.42);
+}
+
+/* brand ---------------------------------------------------- */
+.brand-mark{
+  background:none;
+  padding:0;
+  overflow:hidden;
+  box-shadow:0 0 0 1px rgba(232,191,53,.25), 0 4px 14px var(--red-glow);
+}
+.brand-mark img{width:100%;height:100%;object-fit:contain;display:block}
+.brand:hover .brand-mark{box-shadow:0 0 0 1px rgba(232,191,53,.45), 0 6px 18px var(--red-glow)}
+
+/* a low crimson wash under the nav ties it to the logo */
+.topnav{
+  background:
+    linear-gradient(180deg,rgba(165,18,47,.16),transparent 92%),
+    rgba(12,10,9,.92);
+  border-bottom-color:rgba(165,18,47,.26);
+}
+
+/* live state reads red, matching the mark */
+.chip[aria-pressed="true"] .dot{background:var(--red-brand-2)}
+.ec-flag.live{
+  border-color:rgba(211,29,77,.6);
+  background:rgba(94,10,26,.86);
+  color:#ffd0da;
+}
+.sportgroup-head .rule{
+  background:linear-gradient(90deg,rgba(165,18,47,.34),var(--line) 40%);
+}
+
+/* settings menu -------------------------------------------- */
+.menuwrap{position:relative}
+.menu{
+  position:absolute;top:calc(100% + 8px);right:0;z-index:70;
+  width:246px;padding:8px;
+  border:1px solid var(--line-2);border-radius:12px;
+  background:var(--panel-2);box-shadow:var(--shadow);
+}
+.menu-title{
+  margin:6px 8px 4px;color:var(--muted-2);
+  font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+}
+.menu-item{
+  width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:8px 9px;border-radius:8px;
+  color:var(--text);font-size:.84rem;font-weight:600;text-align:left;
+}
+.menu-item:hover{background:var(--panel-3)}
+.switch{
+  position:relative;flex:0 0 auto;width:32px;height:18px;border-radius:999px;
+  background:var(--panel-3);border:1px solid var(--line-2);transition:background .16s ease;
+}
+.switch::after{
+  content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;
+  background:var(--muted-2);transition:transform .16s ease,background .16s ease;
+}
+.switch[data-on="1"]{background:var(--gold-dim);border-color:rgba(232,191,53,.42)}
+.switch[data-on="1"]::after{transform:translateX(14px);background:var(--gold)}
+.menu-note{margin:8px 9px 4px;color:var(--muted-2);font-size:.7rem}
+@media (prefers-reduced-motion:reduce){
+  .switch,.switch::after{transition:none}
+}
+
+/* compact nav (settings toggle) ---------------------------- */
+body.nav-compact .nav-link{font-size:0;padding:0 11px}
+body.nav-compact .nav-link::before{
+  content:attr(data-route);font-size:.85rem;text-transform:capitalize;
+}
+body.no-art .ec-poster img{display:none}
+
+/* wallet chip is a link now -------------------------------- */
+a.wallet-chip:hover{border-color:rgba(77,219,139,.45);filter:brightness(1.06)}
+
+/* picks banner --------------------------------------------- */
+.picksbanner{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin-bottom:18px;padding:12px 16px;border-radius:12px;
+  border:1px solid rgba(165,18,47,.42);
+  background:
+    linear-gradient(135deg,rgba(165,18,47,.28),transparent 62%),
+    linear-gradient(200deg,rgba(232,191,53,.12),transparent 55%),
+    var(--panel);
+  color:var(--text);font-size:.9rem;
+  transition:border-color .16s ease,transform .16s ease;
+}
+.picksbanner:hover{border-color:rgba(211,29,77,.7);transform:translateY(-1px)}
+.picksbanner-tag{
+  flex:0 0 auto;padding:3px 9px;border-radius:999px;
+  background:var(--red-brand-2);color:#fff;
+  font-size:.6rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;
+}
+.picksbanner-copy{flex:1;min-width:200px;color:var(--muted)}
+.picksbanner-copy strong{color:var(--text);font-weight:800}
+.picksbanner-cta{flex:0 0 auto;color:var(--gold);font-weight:800;font-size:.84rem}
+@media (prefers-reduced-motion:reduce){
+  .picksbanner,.picksbanner:hover{transition:none;transform:none}
+}
+
+/* poster is a link ----------------------------------------- */
+a.ec-poster{display:grid;text-decoration:none}
+a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+
+/* team rows in the card title ------------------------------ */
+.ec-title.is-matchup{
+  display:flex;flex-direction:column;gap:5px;
+  -webkit-line-clamp:none;overflow:visible;
+}
+.teamrow{display:flex;align-items:center;gap:8px;min-width:0}
+.teamlogo{
+  position:relative;flex:0 0 auto;width:19px;height:19px;border-radius:5px;
+  background:var(--panel-3);border:1px solid var(--line);overflow:hidden;
+}
+.teamlogo img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:2px;
+  opacity:0;transition:opacity .2s ease;
+}
+.teamlogo.has-badge img{opacity:1}
+.teamname{
+  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:.9rem;
+}
+.teamscore{
+  flex:0 0 auto;font-family:var(--display);font-weight:800;font-size:.98rem;
+  color:var(--text);letter-spacing:-.01em;
+}
+@media (prefers-reduced-motion:reduce){
+  .teamlogo img{transition:none}
+}
+
+/* score line ----------------------------------------------- */
+.ec-score{display:flex;align-items:center;gap:8px;margin-top:7px}
+.ec-score-state{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:2px 8px;border-radius:999px;
+  border:1px solid var(--line);background:var(--panel-2);
+  color:var(--muted-2);font-size:.66rem;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase;
+}
+.ec-score-state.in{
+  border-color:rgba(211,29,77,.5);background:rgba(94,10,26,.5);color:#ffc2ce;
+}
+.ec-score-compact{
+  font-family:var(--display);font-weight:800;font-size:1rem;color:var(--text);
+}
+
+/* watch view ----------------------------------------------- */
+.playerframe{
+  position:relative;aspect-ratio:16/9;width:100%;
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:#000;overflow:hidden;
+}
+.playerframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.serverbar{
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+  margin-top:12px;padding-top:12px;border-top:1px solid var(--line);
+}
+.serverbar-label{
+  color:var(--muted-2);font-size:.66rem;font-weight:800;
+  letter-spacing:.11em;text-transform:uppercase;margin-right:4px;
+}
