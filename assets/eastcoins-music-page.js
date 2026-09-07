@@ -87,7 +87,8 @@
       listeners: 1,
       listenerNames: [],
       skipVotes: 0,
-      skipThreshold: 1
+      skipThreshold: 1,
+      notice: null
     };
   }
 
@@ -174,6 +175,7 @@
       identity: document.getElementById("pageIdentity"),
       queue: document.getElementById("pageQueue"),
       queueCount: document.getElementById("pageQueueCount"),
+      notice: document.getElementById("pageNotice"),
       emptyQueue: document.getElementById("pageEmptyQueue"),
       leaderboard: document.getElementById("pageLeaderboard"),
       leaderboardTotal: document.getElementById("pageLeaderboardTotal"),
@@ -423,6 +425,61 @@
     return url.toString();
   }
 
+  // A song can end five ways and only one of them is normal. The worker says
+  // which; this turns that into something a listener actually sees, because
+  // the common complaint was songs "randomly" vanishing — usually a chat
+  // !skip nobody on the site could see, or a video that never played at all.
+  const NOTICE_TTL_MS = 30000;
+  let lastNoticeId = "";
+  let noticeTimer = 0;
+
+  function noticeText(notice) {
+    const title = notice.title ? `\u201c${notice.title}\u201d` : "That one";
+    switch (notice.kind) {
+      case "chat-skip":
+        return { text: `${notice.actor} skipped ${title} from chat`, tone: "skip" };
+      case "vote-skip":
+        return {
+          text: `${title} skipped \u2014 ${notice.votes} of ${notice.listeners} listening voted`,
+          tone: "skip"
+        };
+      case "error":
+        return { text: `Couldn\u2019t play ${title} \u2014 video unavailable. Skipped.`, tone: "error" };
+      case "safety-net":
+        return { text: `${title} stopped responding and was skipped`, tone: "error" };
+      default:
+        return null;
+    }
+  }
+
+  function renderNotice(notice) {
+    const el = els.notice;
+    if (!el) return;
+
+    // Ignore anything stale: a late joiner shouldn't be told about a skip
+    // that happened before they opened the page.
+    if (!notice || !notice.id || Date.now() - Number(notice.at || 0) > NOTICE_TTL_MS) return;
+    if (notice.id === lastNoticeId) return;
+    lastNoticeId = notice.id;
+
+    const copy = noticeText(notice);
+    if (!copy) return;
+
+    el.textContent = copy.text;
+    el.dataset.tone = copy.tone;
+    el.hidden = false;
+    // Restart the entrance animation even when one notice follows another.
+    el.classList.remove("is-in");
+    void el.offsetWidth;
+    el.classList.add("is-in");
+
+    window.clearTimeout(noticeTimer);
+    noticeTimer = window.setTimeout(() => {
+      el.classList.remove("is-in");
+      el.hidden = true;
+    }, 9000);
+  }
+
   function setHelp(message, error = false) {
     if (!els.searchHelp) return;
     els.searchHelp.textContent = message;
@@ -596,6 +653,7 @@
     els.react.disabled = !current || connectionState !== "open";
     els.reactCount.textContent = String(Math.max(0, Number(current?.reactions) || 0));
 
+    renderNotice(state.notice);
     els.queueCount.textContent = String(state.queue.length);
     els.queue.replaceChildren();
 
@@ -895,6 +953,21 @@
     };
   }
 
+  function sanitizeNotice(input) {
+    if (!input || typeof input !== "object") return null;
+    const kind = String(input.kind || "");
+    if (!["chat-skip", "vote-skip", "error", "safety-net"].includes(kind)) return null;
+    return {
+      id: String(input.id || "").slice(0, 64),
+      kind,
+      at: Number(input.at) || 0,
+      title: String(input.title || "").slice(0, 120),
+      actor: String(input.actor || "").slice(0, 40),
+      votes: Math.max(0, Number(input.votes) || 0),
+      listeners: Math.max(1, Number(input.listeners) || 1)
+    };
+  }
+
   function sanitizeState(input) {
     const current = sanitizeItem(input.current);
     const queue = Array.isArray(input.queue)
@@ -908,7 +981,8 @@
       listeners: Math.max(1, Number(input.listeners) || 1),
       listenerNames: Array.isArray(input.listenerNames) ? input.listenerNames.map(String).slice(0, 40) : [],
       skipVotes: Math.max(0, Number(input.skipVotes) || 0),
-      skipThreshold: Math.max(1, Number(input.skipThreshold) || 1)
+      skipThreshold: Math.max(1, Number(input.skipThreshold) || 1),
+      notice: sanitizeNotice(input.notice)
     };
   }
 

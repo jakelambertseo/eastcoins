@@ -944,3 +944,32 @@ body.ec-chat-hidden .ec-music-dock {
     box-shadow: 0 0 0 3px #ffd23f, 0 0 26px 6px rgba(255,210,63,.5);
   }
 }
+
+/* Why a song ended. Only shown for the endings worth explaining — a chat
+   skip, a vote, or a video that failed — never for a normal finish. */
+.ec-music-notice{
+  margin: 0 12px 10px;
+  padding: 10px 13px;
+  border: 1px solid rgba(232, 191, 53, .4);
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(232, 191, 53, .14), transparent 70%), #1a1611;
+  color: #f6e6b8;
+  font-size: .78rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.ec-music-notice[data-tone="error"]{
+  border-color: rgba(255, 107, 133, .42);
+  background: linear-gradient(135deg, rgba(255, 107, 133, .14), transparent 70%), #1c1214;
+  color: #ffc9d2;
+}
+.ec-music-notice.is-in{
+  animation: ecMusicNoticeIn .34s cubic-bezier(.2, .9, .3, 1) both;
+}
+@keyframes ecMusicNoticeIn{
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce){
+  .ec-music-notice.is-in{ animation: none; }
+}

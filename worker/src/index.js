@@ -186,6 +186,22 @@ async function searchYouTube(query, apiKey) {
 // a simple majority (strictly more than half) rather than a fixed vote
 // count, so a packed room doesn't get stuck needing the same 3 votes a
 // nearly-empty one does: 3 listeners -> 2 votes, 4 -> 3, 6 -> 4, and so on.
+function noticeChatText(notice) {
+  const title = notice.title ? `"${notice.title}"` : "that one";
+  switch (notice.kind) {
+    case "chat-skip":
+      return `\u23ed ${notice.actor} skipped ${title}`;
+    case "vote-skip":
+      return `\u23ed Skipped ${title} \u2014 ${notice.votes} of ${notice.listeners} listening voted`;
+    case "error":
+      return `\u26a0 Couldn't play ${title} \u2014 the video is unavailable. Skipped.`;
+    case "safety-net":
+      return `\u26a0 ${title} stopped responding and was skipped`;
+    default:
+      return "";
+  }
+}
+
 function skipThresholdFor(listeners) {
   const count = Math.max(1, Number(listeners) || 1);
   if (count <= 2) return count;
@@ -750,7 +766,7 @@ export class MusicRoom extends DurableObject {
     this.lastChatSkipAt = now;
 
     console.log(`Twitch IRC: skipping "${this.state.current.title}" (requested by ${login})`);
-    this.advance();
+    this.advance({ kind: "chat-skip", actor: this.safeName(login) });
     await this.persistAndBroadcast();
   }
 
@@ -856,7 +872,8 @@ export class MusicRoom extends DurableObject {
       listeners,
       listenerNames: this.listenerNames(),
       skipVotes: this.state.skipVoters.length,
-      skipThreshold: skipThresholdFor(listeners)
+      skipThreshold: skipThresholdFor(listeners),
+      notice: this.state.notice || null
     };
   }
 
@@ -1017,7 +1034,11 @@ export class MusicRoom extends DurableObject {
         console.log(
           `Skip vote: threshold reached (${this.state.skipVoters.length}/${threshold} of ${this.sessions.size} listeners) — skipping "${this.state.current.title}"`
         );
-        this.advance();
+        this.advance({
+          kind: "vote-skip",
+          votes: this.state.skipVoters.length,
+          listeners: this.sessions.size
+        });
       } else {
         this.state.revision += 1;
       }
@@ -1032,16 +1053,77 @@ export class MusicRoom extends DurableObject {
       console.log(
         `Client-reported ended (${reason}): advancing past "${this.state.current.title}" (clientId ${session.clientId})`
       );
-      this.advance();
+      this.advance(
+        reason === "player-error"
+          ? { kind: "error" }
+          : reason === "safety-net"
+            ? { kind: "safety-net" }
+            : null
+      );
       await this.persistAndBroadcast();
     }
   }
 
-  advance() {
+  // `notice` explains why the song ended, so listeners aren't left guessing.
+  // A natural end passes nothing: only the unusual endings are worth saying
+  // out loud. Whatever is set here rides along in publicState() and is shown
+  // by every connected client.
+  advance(notice = null) {
+    const outgoing = this.state.current;
+
     this.state.current = this.state.queue.shift() || null;
     this.state.startedAt = this.state.current ? Date.now() : null;
     this.state.skipVoters = [];
     this.state.revision += 1;
+
+    this.state.notice = notice
+      ? {
+          id: crypto.randomUUID(),
+          at: Date.now(),
+          title: this.safeTitle(outgoing?.title || ""),
+          ...notice
+        }
+      : null;
+
+    if (this.state.notice) {
+      this.ctx.waitUntil(this.announceNotice(this.state.notice));
+    }
+  }
+
+  // Mirrors the same explanation into Twitch chat. Chat can already skip a
+  // song without the site showing why; this closes the other half, so a skip
+  // that happens on the site is visible to chat too. Silently does nothing
+  // until STREAMELEMENTS_JWT is set, so it is safe to ship ahead of the token.
+  async announceNotice(notice) {
+    const jwt = String(this.env.STREAMELEMENTS_JWT || "").trim();
+    const channelId = String(this.env.STREAMELEMENTS_CHANNEL_ID || "").trim();
+    if (!jwt || !channelId) return;
+
+    const message = noticeChatText(notice);
+    if (!message) return;
+
+    try {
+      const response = await fetch(
+        `https://api.streamelements.com/kappa/v2/bot/${encodeURIComponent(channelId)}/say`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${jwt}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ message })
+        }
+      );
+      if (!response.ok) {
+        // Loud on purpose: a revoked or rotated token fails silently
+        // otherwise, and the room just quietly stops talking to chat.
+        console.error(
+          `StreamElements say failed (${response.status}) — check STREAMELEMENTS_JWT`
+        );
+      }
+    } catch (error) {
+      console.error("StreamElements say threw", error);
+    }
   }
 
   async persistAndBroadcast() {

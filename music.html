@@ -131,6 +131,25 @@
   .identity-login:hover,.identity-login:focus-visible{text-decoration:underline;outline:none}
 
   /* ---- lists (queue / history / leaderboard) ---- */
+  .page-notice{
+    margin:0 0 14px;padding:12px 15px;border-radius:11px;
+    border:1px solid rgba(232,191,53,.4);
+    background:linear-gradient(135deg,rgba(232,191,53,.14),transparent 70%),#1a1611;
+    color:#f6e6b8;font-size:.9rem;font-weight:600;line-height:1.45;
+  }
+  .page-notice[data-tone="error"]{
+    border-color:rgba(255,107,133,.42);
+    background:linear-gradient(135deg,rgba(255,107,133,.14),transparent 70%),#1c1214;
+    color:#ffc9d2;
+  }
+  .page-notice.is-in{animation:noticeIn .34s cubic-bezier(.2,.9,.3,1) both}
+  @keyframes noticeIn{
+    from{opacity:0;transform:translateY(-6px)}
+    to{opacity:1;transform:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .page-notice.is-in{animation:none}
+  }
   .card-head{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--line);color:var(--muted);font-size:.68rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
 
   .list{list-style:none;margin:0;padding:6px;max-height:420px;overflow:auto;scrollbar-width:thin;scrollbar-color:rgba(229,185,43,.35) rgba(255,255,255,.04)}
@@ -205,6 +224,8 @@
     <ol class="search-results" id="pageSearchResults" hidden></ol>
   </div>
 
+  <div class="page-notice" id="pageNotice" role="status" aria-live="polite" hidden></div>
+
   <div class="layout">
     <section class="main-col">
       <div class="card" style="margin-bottom:18px">
@@ -273,6 +294,6 @@
 </aside>
 
 <script defer src="/assets/eastcoins-music-config.js?v=2"></script>
-<script defer src="/assets/eastcoins-music-page.js?v=10"></script>
+<script defer src="/assets/eastcoins-music-page.js?v=12"></script>
 </body>
 </html>
