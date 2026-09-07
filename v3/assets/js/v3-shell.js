@@ -38,9 +38,15 @@
 
   /* ---------------------------------------------------------- routing */
 
+  // Known routes are listed rather than read from the registry: view
+  // modules load after the shell, so checking registration here would
+  // send every deep link (?view=picks) back to Events before its module
+  // had a chance to register. An unknown name still falls back.
+  const ROUTES = ["events", "multiview", "picks", "music", "watch"];
+
   function routeFromUrl() {
     const view = new URL(location.href).searchParams.get("view");
-    return views[view] ? view : "events";
+    return ROUTES.includes(view) ? view : "events";
   }
 
   function register(name, view) {
@@ -52,7 +58,7 @@
   }
 
   function go(name, { push = true } = {}) {
-    if (!views[name]) name = "events";
+    if (!ROUTES.includes(name)) name = "events";
     state.route = name;
 
     if (push) {

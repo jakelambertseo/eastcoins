@@ -646,32 +646,7 @@
     if (!ECV3) return window.setTimeout(boot, 30);
     ECV3.register("events", view);
 
-    ECV3.register("multiview", {
-      mount(container, api) {
-        container.append(
-          api.stub("MultiView", "Arriving in phase 2 of the V3 rebuild.", [
-            "2, 3 and 4 panel layouts with draggable splits",
-            "Per-panel server switching without refetching the catalogue",
-            "Shareable layouts on root-domain links",
-            "No nested player.html — panels mount the V3 player directly"
-          ])
-        );
-      }
-    });
 
-    ECV3.register("picks", {
-      mount(container, api) {
-        container.append(
-          api.stub("Picks", "Arriving in phase 2, with the changes we already agreed.", [
-            "No maximum bet — 1 ZCoin minimum, stake up to your balance",
-            "Odds locked when the market opens; everyone gets the same line",
-            "Moneylines shown as −150, never as a 1.67x multiplier",
-            "Payouts round up, matching the bot and the results page",
-            "My Picks, Leaderboard, History and Community Ledger as mocked up"
-          ])
-        );
-      }
-    });
 
     ECV3.register("music", {
       mount(container, api) {
