@@ -1,3 +1,5 @@
+import { ADMIN_ALLOWLIST, getSessionUser } from "../_lib.js";
+
 function json(data, status = 200) {
   return Response.json(data, {
     status,
@@ -264,6 +266,17 @@ export async function onRequestPost(context) {
       code: "PICKS_DB_BINDING_MISSING",
       message: "The Picks database is unavailable."
     }, 503);
+  }
+
+  // This endpoint inserts market rows, so it cannot stay open to
+  // anonymous callers now that markets carry prices people bet against.
+  const caller = await getSessionUser(db, context.request);
+  if (!caller || !ADMIN_ALLOWLIST.has(caller.login)) {
+    return json({
+      ok: false,
+      code: "NOT_ADMIN",
+      message: "Only Picks admins can create markets."
+    }, 403);
   }
 
   let input;
