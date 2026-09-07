@@ -1,0 +1,762 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<title>EastCoin | Picks Views Preview</title>
+<link href="/assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+</head>
+<body>
+<style>
+  :root{
+    --bg:#000;
+    --panel:#070707;
+    --panel-2:#0a0a0a;
+    --line:rgba(255,255,255,.075);
+    --line-strong:rgba(255,255,255,.12);
+    --text:#f3eee7;
+    --muted:#9a9188;
+    --muted-2:#716a63;
+    --gold:#f2c400;
+    --gold-soft:#ffe27b;
+    --green:#49d27e;
+    --green-soft:#a9f0bd;
+    --red:#f06b77;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    color:var(--text);
+    background:
+      radial-gradient(circle at 28% -15%,rgba(173,9,50,.10),transparent 31%),
+      radial-gradient(circle at 75% -20%,rgba(242,196,0,.045),transparent 25%),
+      #000;
+    font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:16px;
+  }
+  button{font:inherit;cursor:pointer}
+  button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .zc{
+    display:inline-block;width:1em;height:1em;
+    margin-right:.2em;vertical-align:-.15em;
+    background:url("data:image/webp;base64,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") center/contain no-repeat;
+  }
+  .nums{font-variant-numeric:tabular-nums}
+
+  .page{max-width:1020px;margin:0 auto;padding:22px 18px 60px}
+
+  /* demo banner */
+  .demo{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    margin-bottom:16px;padding:10px 13px;
+    border:1px solid rgba(242,196,0,.22);border-radius:10px;
+    background:linear-gradient(135deg,rgba(242,196,0,.05),transparent 62%),#070606;
+    color:var(--muted);font-size:.72rem;
+  }
+  .demo b{
+    flex:0 0 auto;padding:3px 8px;border-radius:999px;
+    border:1px solid rgba(242,196,0,.26);color:var(--gold-soft);
+    font-size:.55rem;font-weight:900;letter-spacing:.09em;text-transform:uppercase;
+  }
+
+  /* summary strip — real component */
+  .summary-strip{
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:13px;
+  }
+  .summary-card{
+    min-width:0;padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:#060606;
+  }
+  .summary-card.wallet{
+    border-color:rgba(75,205,116,.20);
+    background:linear-gradient(135deg,rgba(75,205,116,.06),transparent 60%),#060706;
+  }
+  .summary-card span{
+    display:block;color:#777069;font-size:.59rem;font-weight:900;
+    letter-spacing:.055em;text-transform:uppercase;
+  }
+  .summary-card strong{
+    display:block;margin-top:4px;overflow:hidden;color:#eee6dc;font-size:1.04rem;
+    text-overflow:ellipsis;white-space:nowrap;
+  }
+  .summary-card.wallet strong{color:#b6f1c4}
+  .summary-card small{display:block;margin-top:2px;color:#69635d;font-size:.56rem}
+
+  /* tab module — real component */
+  .view-tabs{
+    display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+    margin-bottom:13px;padding-bottom:9px;border-bottom:1px solid rgba(255,255,255,.055);
+  }
+  .view-tab{
+    min-height:34px;padding:0 12px;border:1px solid transparent;border-radius:8px;
+    color:#8b837b;background:transparent;font-size:.67rem;font-weight:900;
+    transition:color .12s ease,background .12s ease,border-color .12s ease;
+  }
+  .view-tab:hover{color:#d8d0c6;background:#080808}
+  .view-tab.active{border-color:rgba(242,196,0,.18);color:var(--gold-soft);background:rgba(242,196,0,.055)}
+  .tab-count{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:18px;height:18px;margin-left:3px;padding:0 5px;border-radius:999px;
+    color:#d5c9a0;background:#171309;font-size:.54rem;
+  }
+  .view{display:none}
+  .view.active{display:block}
+
+  .section-head{
+    display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:9px;
+  }
+  .section-head h2{margin:0;font-size:1rem;letter-spacing:-.02em}
+  .section-head p{margin:2px 0 0;color:#7f776f;font-size:.64rem}
+  .section-head .right-note{color:#777069;font-size:.61rem;white-space:nowrap}
+
+  /* ===== MY PICKS ===== */
+  .ticket-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .ticket{overflow:hidden;border:1px solid var(--line);border-radius:11px;background:var(--panel)}
+  .ticket.pending{border-color:rgba(242,196,0,.17)}
+  .ticket.won{border-color:rgba(73,210,126,.20)}
+  .ticket-head{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:9px 10px;border-bottom:1px dashed rgba(255,255,255,.07);
+  }
+  .ticket-team{min-width:0;display:flex;align-items:center;gap:8px}
+  .team-logo{
+    width:34px;height:34px;flex:0 0 34px;border-radius:9px;display:grid;place-items:center;
+    border:1px solid rgba(255,255,255,.09);background:#0d0d0d;
+    color:#c8beb5;font-size:.58rem;font-weight:900;
+  }
+  .ticket-team strong{display:block;overflow:hidden;font-size:.74rem;text-overflow:ellipsis;white-space:nowrap}
+  .ticket-team small{display:block;margin-top:2px;color:#746d66;font-size:.57rem}
+  .ticket-status{
+    flex:0 0 auto;padding:4px 6px;border:1px solid rgba(242,196,0,.15);border-radius:999px;
+    color:#d4b95f;font-size:.52rem;font-weight:900;text-transform:uppercase;
+  }
+  .ticket.won .ticket-status{border-color:rgba(73,210,126,.25);color:var(--green-soft);background:rgba(73,210,126,.055)}
+  .ticket.lost .ticket-status{border-color:rgba(240,107,119,.24);color:#ee939d;background:rgba(240,107,119,.05)}
+  .ticket.refunded .ticket-status{border-color:rgba(129,157,205,.20);color:#a8bad9;background:rgba(129,157,205,.045)}
+  .ticket-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+  .ticket-stat{padding:9px 10px;border-right:1px solid rgba(255,255,255,.05)}
+  .ticket-stat:last-child{border-right:0}
+  .ticket-stat span{display:block;color:#6f6861;font-size:.54rem;font-weight:900;text-transform:uppercase}
+  .ticket-stat strong{display:block;margin-top:3px;color:#e9e1d7;font-size:.77rem}
+  .ticket-stat.return strong{color:var(--green-soft)}
+  .ticket.lost .ticket-stat.return strong{color:#ee939d}
+  .ticket-foot{
+    padding:8px 10px;border-top:1px solid rgba(255,255,255,.045);color:#6f6861;font-size:.57rem;
+  }
+
+  /* ===== LEADERBOARD ===== */
+  .leader-card{overflow:hidden;border:1px solid var(--line);border-radius:11px;background:var(--panel)}
+  .leader-head,.leader-row{
+    display:grid;grid-template-columns:54px minmax(0,1fr) 120px 90px;align-items:center;gap:8px;
+  }
+  .leader-head{
+    min-height:35px;padding:0 11px;border-bottom:1px solid var(--line);
+    color:#6d665f;background:#090808;font-size:.55rem;font-weight:900;text-transform:uppercase;
+  }
+  .leader-row{min-height:49px;padding:7px 11px;border-bottom:1px solid rgba(255,255,255,.045)}
+  .leader-row:last-child{border-bottom:0}
+  .leader-row.me{background:linear-gradient(90deg,rgba(242,196,0,.06),transparent 60%),#080706}
+  .leader-rank{color:#8c847c;font-size:.65rem;font-weight:900}
+  .leader-user{display:flex;align-items:center;gap:8px;min-width:0}
+  .leader-avatar{
+    width:31px;height:31px;flex:0 0 31px;display:grid;place-items:center;
+    border:1px solid var(--line);border-radius:9px;background:#0b0b0b;
+    color:#b7aca2;font-size:.61rem;font-weight:900;
+  }
+  .leader-user strong{display:block;overflow:hidden;font-size:.72rem;text-overflow:ellipsis;white-space:nowrap}
+  .leader-user small{display:block;margin-top:1px;color:#6e675f;font-size:.54rem}
+  .leader-profit{color:var(--green-soft);font-size:.70rem;font-weight:900;text-align:right}
+  .leader-profit.down{color:#ee939d}
+  .leader-record{color:var(--muted);font-size:.64rem;text-align:right}
+
+  /* ===== HISTORY ===== */
+  .history-list{display:flex;flex-direction:column;gap:7px}
+  .history-row{
+    min-height:58px;display:grid;grid-template-columns:38px minmax(0,1fr) auto;
+    align-items:center;gap:10px;padding:9px 10px;
+    border:1px solid var(--line);border-radius:9px;background:var(--panel);
+  }
+  .history-icon{
+    width:36px;height:36px;display:grid;place-items:center;
+    border:1px solid rgba(255,255,255,.065);border-radius:9px;
+    color:#b8afa6;background:#0a0a0a;font-size:.72rem;font-weight:900;
+  }
+  .history-row.wager .history-icon{border-color:rgba(242,196,0,.15);color:#d3b95d;background:rgba(242,196,0,.035)}
+  .history-row.payout .history-icon{border-color:rgba(75,205,116,.22);color:#83dfa0;background:rgba(75,205,116,.045)}
+  .history-row.refund .history-icon{border-color:rgba(103,156,180,.18);color:#8fc3d7;background:rgba(83,134,157,.04)}
+  .history-copy{min-width:0}
+  .history-copy strong{display:block;overflow:hidden;color:#e7dfd5;font-size:.70rem;text-overflow:ellipsis;white-space:nowrap}
+  .history-copy small{display:block;margin-top:3px;overflow:hidden;color:#746d66;font-size:.58rem;text-overflow:ellipsis;white-space:nowrap}
+  .history-amount{text-align:right}
+  .history-amount strong{display:block;font-size:.75rem}
+  .history-row.wager .history-amount strong{color:#d7bd68}
+  .history-row.payout .history-amount strong{color:#8fe2a7}
+  .history-row.refund .history-amount strong{color:#9ac7d8}
+  .history-amount small{display:block;margin-top:2px;color:#655f59;font-size:.52rem}
+
+  /* ===== COMMUNITY LEDGER ===== */
+  .community-ledger{overflow:hidden;border:1px solid var(--line);border-radius:11px;background:var(--panel)}
+  .community-ledger-row{
+    min-height:66px;display:grid;
+    grid-template-columns:minmax(150px,1.05fr) minmax(190px,1.35fr) 88px 92px 102px;
+    align-items:center;gap:10px;padding:9px 11px;
+    border-bottom:1px solid rgba(255,255,255,.05);
+  }
+  .community-ledger-row:last-child{border-bottom:0}
+  .community-ledger-row.me{background:linear-gradient(90deg,rgba(242,196,0,.045),transparent 58%),#080706}
+  .ledger-user{min-width:0;display:flex;align-items:center;gap:8px}
+  .ledger-avatar{
+    width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;
+    border:1px solid rgba(255,255,255,.09);border-radius:9px;background:#0d0d0d;
+    color:#c8beb5;font-size:.61rem;font-weight:900;
+  }
+  .ledger-user-copy,.ledger-pick{min-width:0}
+  .ledger-user-copy strong,.ledger-pick strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ledger-user-copy strong{color:#dfd7cd;font-size:.70rem}
+  .ledger-user-copy small{display:block;margin-top:2px;overflow:hidden;color:#69635d;font-size:.54rem;text-overflow:ellipsis;white-space:nowrap}
+  .ledger-pick strong{color:#e9e1d7;font-size:.72rem}
+  .ledger-pick small{display:block;margin-top:3px;overflow:hidden;color:#716a63;font-size:.56rem;text-overflow:ellipsis;white-space:nowrap}
+  .ledger-stat{text-align:right}
+  .ledger-stat span{display:block;color:#68615b;font-size:.50rem;font-weight:900;letter-spacing:.05em;text-transform:uppercase}
+  .ledger-stat strong{display:block;margin-top:3px;color:#c9c0b6;font-size:.66rem}
+  .ledger-stat.net.positive strong{color:#83dfa0}
+  .ledger-stat.net.negative strong{color:#e77a86}
+  .ledger-result{min-width:0;text-align:right}
+  .ledger-status{
+    display:inline-flex;align-items:center;justify-content:center;min-width:58px;
+    padding:5px 7px;border:1px solid rgba(242,196,0,.14);border-radius:999px;
+    color:#d0b65c;background:rgba(242,196,0,.035);
+    font-size:.51rem;font-weight:900;text-transform:uppercase;
+  }
+  .community-ledger-row.won .ledger-status{border-color:rgba(73,210,126,.25);color:#9ce8b2;background:rgba(73,210,126,.055)}
+  .community-ledger-row.lost .ledger-status{border-color:rgba(240,107,119,.24);color:#ee939d;background:rgba(240,107,119,.05)}
+  .community-ledger-row.refunded .ledger-status{border-color:rgba(129,157,205,.20);color:#a8bad9;background:rgba(129,157,205,.045)}
+  .ledger-result small{display:block;margin-top:4px;color:#605a54;font-size:.52rem}
+
+  /* notes on what changed */
+  .notes{
+    margin-top:26px;padding:15px 17px;border:1px solid var(--line);border-radius:11px;background:#060606;
+  }
+  .notes h3{
+    margin:0 0 9px;color:#777069;font-size:.58rem;font-weight:900;
+    letter-spacing:.09em;text-transform:uppercase;
+  }
+  .notes ul{margin:0;padding-left:17px;color:var(--muted);font-size:.72rem;line-height:1.6}
+  .notes li{margin-bottom:5px}
+  .notes li:last-child{margin-bottom:0}
+  .notes b{color:#ded6cc}
+
+  .preview-foot{
+    margin-top:26px;padding-top:15px;border-top:1px solid var(--line);
+    color:#69635d;font-size:.68rem;
+  }
+  .preview-foot a{color:var(--gold-soft);text-decoration:none;font-weight:700}
+  .preview-foot a:hover{text-decoration:underline}
+  .backlink{
+    display:inline-block;margin-top:16px;color:var(--muted);
+    font-size:.72rem;text-decoration:none;font-weight:700;
+  }
+  .backlink:hover{color:var(--text)}
+
+  @media(max-width:820px){
+    .summary-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .ticket-list{grid-template-columns:1fr}
+    .leader-head,.leader-row{grid-template-columns:40px minmax(0,1fr) 96px 70px}
+    .community-ledger-row{grid-template-columns:minmax(120px,1fr) minmax(140px,1.2fr) 74px 84px}
+    .community-ledger-row .ledger-result{grid-column:1 / -1;text-align:left}
+  }
+</style>
+
+<div class="page">
+
+  <div class="demo">
+    <b>Mockup</b>
+    <span>Example data for the four Picks views — same tab module, real component styles. Nobody has these balances yet.</span>
+  </div>
+
+  <!-- summary strip -->
+  <section class="summary-strip">
+    <article class="summary-card wallet">
+      <span><i class="zc" aria-hidden="true"></i>ZCoins Wallet</span>
+      <strong><b class="nums">1,140</b> <i class="zc" aria-hidden="true"></i>ZCoins</strong>
+      <small>StreamElements wallet</small>
+    </article>
+    <article class="summary-card">
+      <span>2026 Picks Profit</span>
+      <strong class="nums">+312 <i class="zc" aria-hidden="true"></i>ZCoins</strong>
+      <small>Wagers vs settled returns</small>
+    </article>
+    <article class="summary-card">
+      <span>Record</span>
+      <strong class="nums">14–9</strong>
+      <small>61% of settled picks</small>
+    </article>
+    <article class="summary-card">
+      <span>Picks Rank</span>
+      <strong>#3 of 24</strong>
+      <small>Ranked by Picks profit</small>
+    </article>
+  </section>
+
+  <!-- tabs -->
+  <nav class="view-tabs" aria-label="Picks views">
+    <button class="view-tab" type="button" data-view="markets">Markets</button>
+    <button class="view-tab active" type="button" data-view="mypicks" aria-current="page">My Picks <span class="tab-count nums">2</span></button>
+    <button class="view-tab" type="button" data-view="leaderboard">Leaderboard</button>
+    <button class="view-tab" type="button" data-view="history">History</button>
+    <button class="view-tab" type="button" data-view="ledger">Community Ledger <span class="tab-count nums">6</span></button>
+  </nav>
+
+  <!-- ============ MARKETS (context only) ============ -->
+  <section class="view" data-view-panel="markets">
+    <div class="section-head">
+      <div><h2>Open Markets</h2><p>3 open markets</p></div>
+      <div class="right-note">1 <i class="zc" aria-hidden="true"></i>ZCoin minimum · stake up to your full balance</div>
+    </div>
+    <div class="notes" style="margin-top:0">
+      <h3>Unchanged</h3>
+      <ul><li>Markets already ships on the live Picks page — it's here only so the tab bar reads correctly. The other four tabs are the previews.</li></ul>
+    </div>
+  </section>
+
+  <!-- ============ MY PICKS ============ -->
+  <section class="view active" data-view-panel="mypicks">
+    <div class="section-head">
+      <div><h2>My Picks</h2><p>Your pending and settled ZCoin tickets.</p></div>
+      <div class="right-note">2 open · 140 <i class="zc" aria-hidden="true"></i>ZCoins riding</div>
+    </div>
+
+    <div class="ticket-list">
+
+      <article class="ticket pending">
+        <header class="ticket-head">
+          <div class="ticket-team">
+            <span class="team-logo">SF</span>
+            <span><strong>49ers</strong><small>vs Rams</small></span>
+          </div>
+          <span class="ticket-status">Pending</span>
+        </header>
+        <div class="ticket-grid">
+          <div class="ticket-stat"><span>Wager</span><strong class="nums">100 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+          <div class="ticket-stat"><span>Locked Odds</span><strong class="nums">−150</strong></div>
+          <div class="ticket-stat return"><span>Potential</span><strong class="nums">167 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+        </div>
+        <div class="ticket-foot">Kicks off 4:25 PM · line locked when the market opened</div>
+      </article>
+
+      <article class="ticket pending">
+        <header class="ticket-head">
+          <div class="ticket-team">
+            <span class="team-logo">KC</span>
+            <span><strong>Chiefs</strong><small>vs Broncos</small></span>
+          </div>
+          <span class="ticket-status">Pending</span>
+        </header>
+        <div class="ticket-grid">
+          <div class="ticket-stat"><span>Wager</span><strong class="nums">40 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+          <div class="ticket-stat"><span>Locked Odds</span><strong class="nums">−220</strong></div>
+          <div class="ticket-stat return"><span>Potential</span><strong class="nums">59 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+        </div>
+        <div class="ticket-foot">Kicks off Mon 7:15 PM · line locked when the market opened</div>
+      </article>
+
+      <article class="ticket won">
+        <header class="ticket-head">
+          <div class="ticket-team">
+            <span class="team-logo">BAL</span>
+            <span><strong>Ravens</strong><small>vs Bengals</small></span>
+          </div>
+          <span class="ticket-status">Won</span>
+        </header>
+        <div class="ticket-grid">
+          <div class="ticket-stat"><span>Wager</span><strong class="nums">60 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+          <div class="ticket-stat"><span>Final</span><strong class="nums">+130</strong></div>
+          <div class="ticket-stat return"><span>Payout</span><strong class="nums">138 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+        </div>
+        <div class="ticket-foot">Ravens 24–17 · paid 9 min after full time</div>
+      </article>
+
+      <article class="ticket won">
+        <header class="ticket-head">
+          <div class="ticket-team">
+            <span class="team-logo">GB</span>
+            <span><strong>Packers</strong><small>vs Vikings</small></span>
+          </div>
+          <span class="ticket-status">Won</span>
+        </header>
+        <div class="ticket-grid">
+          <div class="ticket-stat"><span>Wager</span><strong class="nums">80 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+          <div class="ticket-stat"><span>Final</span><strong class="nums">−105</strong></div>
+          <div class="ticket-stat return"><span>Payout</span><strong class="nums">157 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+        </div>
+        <div class="ticket-foot">Packers 31–28 · paid 14 min after full time</div>
+      </article>
+
+      <article class="ticket lost">
+        <header class="ticket-head">
+          <div class="ticket-team">
+            <span class="team-logo">DAL</span>
+            <span><strong>Cowboys</strong><small>vs Eagles</small></span>
+          </div>
+          <span class="ticket-status">Lost</span>
+        </header>
+        <div class="ticket-grid">
+          <div class="ticket-stat"><span>Wager</span><strong class="nums">25 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+          <div class="ticket-stat"><span>Final</span><strong class="nums">−110</strong></div>
+          <div class="ticket-stat return"><span>Return</span><strong class="nums">0 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+        </div>
+        <div class="ticket-foot">Eagles 20–13 · stake lost</div>
+      </article>
+
+      <article class="ticket refunded">
+        <header class="ticket-head">
+          <div class="ticket-team">
+            <span class="team-logo">UFC</span>
+            <span><strong>Ortega</strong><small>vs Volkanovski</small></span>
+          </div>
+          <span class="ticket-status">Refund</span>
+        </header>
+        <div class="ticket-grid">
+          <div class="ticket-stat"><span>Wager</span><strong class="nums">30 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+          <div class="ticket-stat"><span>Final</span><strong>No action</strong></div>
+          <div class="ticket-stat return"><span>Refund</span><strong class="nums">30 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+        </div>
+        <div class="ticket-foot">Bout scratched at weigh-in · full stake returned</div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ============ LEADERBOARD ============ -->
+  <section class="view" data-view-panel="leaderboard">
+    <div class="section-head">
+      <div><h2>Picks Leaderboard</h2><p>Ranked by ZCoins profit from Picks — not total StreamElements wealth.</p></div>
+      <div class="right-note">Season to date</div>
+    </div>
+
+    <div class="leader-card">
+      <div class="leader-head">
+        <span>Rank</span>
+        <span>User</span>
+        <span style="text-align:right">Picks Profit</span>
+        <span style="text-align:right">Record</span>
+      </div>
+
+      <div class="leader-row">
+        <span class="leader-rank">#1</span>
+        <div class="leader-user">
+          <span class="leader-avatar">HL</span>
+          <span><strong>heartlarva 👑</strong><small>Longest streak · 7</small></span>
+        </div>
+        <span class="leader-profit nums">+412 <i class="zc" aria-hidden="true"></i>ZC</span>
+        <span class="leader-record nums">22–14</span>
+      </div>
+
+      <div class="leader-row">
+        <span class="leader-rank">#2</span>
+        <div class="leader-user">
+          <span class="leader-avatar">CK</span>
+          <span><strong>charleskellybirdlaw</strong><small>EastCoin Picks</small></span>
+        </div>
+        <span class="leader-profit nums">+327 <i class="zc" aria-hidden="true"></i>ZC</span>
+        <span class="leader-record nums">19–12</span>
+      </div>
+
+      <div class="leader-row me">
+        <span class="leader-rank">#3</span>
+        <div class="leader-user">
+          <span class="leader-avatar">JT</span>
+          <span><strong>jimmytomato</strong><small>You</small></span>
+        </div>
+        <span class="leader-profit nums">+312 <i class="zc" aria-hidden="true"></i>ZC</span>
+        <span class="leader-record nums">14–9</span>
+      </div>
+
+      <div class="leader-row">
+        <span class="leader-rank">#4</span>
+        <div class="leader-user">
+          <span class="leader-avatar">ZW</span>
+          <span><strong>zwades</strong><small>EastCoin Picks</small></span>
+        </div>
+        <span class="leader-profit nums">+180 <i class="zc" aria-hidden="true"></i>ZC</span>
+        <span class="leader-record nums">16–15</span>
+      </div>
+
+      <div class="leader-row">
+        <span class="leader-rank">#5</span>
+        <div class="leader-user">
+          <span class="leader-avatar">AR</span>
+          <span><strong>andyreidisapawg</strong><small>EastCoin Picks</small></span>
+        </div>
+        <span class="leader-profit nums">+96 <i class="zc" aria-hidden="true"></i>ZC</span>
+        <span class="leader-record nums">11–10</span>
+      </div>
+
+      <div class="leader-row">
+        <span class="leader-rank">#6</span>
+        <div class="leader-user">
+          <span class="leader-avatar">BP</span>
+          <span><strong>bootypaper</strong><small>EastCoin Picks</small></span>
+        </div>
+        <span class="leader-profit down nums">−45 <i class="zc" aria-hidden="true"></i>ZC</span>
+        <span class="leader-record nums">8–13</span>
+      </div>
+
+      <div class="leader-row">
+        <span class="leader-rank">#7</span>
+        <div class="leader-user">
+          <span class="leader-avatar">PS</span>
+          <span><strong>psilocyboone</strong><small>Backs the dog every time</small></span>
+        </div>
+        <span class="leader-profit down nums">−118 <i class="zc" aria-hidden="true"></i>ZC</span>
+        <span class="leader-record nums">6–15</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HISTORY ============ -->
+  <section class="view" data-view-panel="history">
+    <div class="section-head">
+      <div><h2>Picks History</h2><p>Your EastCoin Picks wagers, payouts and refunds.</p></div>
+      <div class="right-note">Newest first</div>
+    </div>
+
+    <div class="history-list">
+
+      <article class="history-row wager">
+        <span class="history-icon">↗</span>
+        <span class="history-copy">
+          <strong>Pick locked · 49ers −150</strong>
+          <small>49ers vs Rams · NFL · returns 167 if it lands</small>
+        </span>
+        <span class="history-amount">
+          <strong class="nums">−100 <i class="zc" aria-hidden="true"></i>ZCoins</strong>
+          <small>Today, 3:55 PM</small>
+        </span>
+      </article>
+
+      <article class="history-row wager">
+        <span class="history-icon">↗</span>
+        <span class="history-copy">
+          <strong>Pick locked · Chiefs −220</strong>
+          <small>Chiefs vs Broncos · NFL · returns 59 if it lands</small>
+        </span>
+        <span class="history-amount">
+          <strong class="nums">−40 <i class="zc" aria-hidden="true"></i>ZCoins</strong>
+          <small>Today, 3:51 PM</small>
+        </span>
+      </article>
+
+      <article class="history-row payout">
+        <span class="history-icon">✓</span>
+        <span class="history-copy">
+          <strong>Won · Packers −105</strong>
+          <small>Packers 31–28 Vikings · settled from final score</small>
+        </span>
+        <span class="history-amount">
+          <strong class="nums">+157 <i class="zc" aria-hidden="true"></i>ZCoins</strong>
+          <small>Yesterday, 10:41 PM</small>
+        </span>
+      </article>
+
+      <article class="history-row wager">
+        <span class="history-icon">↗</span>
+        <span class="history-copy">
+          <strong>Pick locked · Packers −105</strong>
+          <small>Packers vs Vikings · NFL</small>
+        </span>
+        <span class="history-amount">
+          <strong class="nums">−80 <i class="zc" aria-hidden="true"></i>ZCoins</strong>
+          <small>Yesterday, 7:32 PM</small>
+        </span>
+      </article>
+
+      <article class="history-row payout">
+        <span class="history-icon">✓</span>
+        <span class="history-copy">
+          <strong>Won · Ravens +130</strong>
+          <small>Ravens 24–17 Bengals · settled from final score</small>
+        </span>
+        <span class="history-amount">
+          <strong class="nums">+138 <i class="zc" aria-hidden="true"></i>ZCoins</strong>
+          <small>Sun, 7:48 PM</small>
+        </span>
+      </article>
+
+      <article class="history-row refund">
+        <span class="history-icon">↩</span>
+        <span class="history-copy">
+          <strong>Refunded · Ortega vs Volkanovski</strong>
+          <small>Bout scratched at weigh-in · no action</small>
+        </span>
+        <span class="history-amount">
+          <strong class="nums">+30 <i class="zc" aria-hidden="true"></i>ZCoins</strong>
+          <small>Sat, 11:02 PM</small>
+        </span>
+      </article>
+
+      <article class="history-row wager">
+        <span class="history-icon">↗</span>
+        <span class="history-copy">
+          <strong>Pick locked · Cowboys −110</strong>
+          <small>Cowboys vs Eagles · NFL</small>
+        </span>
+        <span class="history-amount">
+          <strong class="nums">−25 <i class="zc" aria-hidden="true"></i>ZCoins</strong>
+          <small>Sat, 4:12 PM</small>
+        </span>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ============ COMMUNITY LEDGER ============ -->
+  <section class="view" data-view-panel="ledger">
+    <div class="section-head">
+      <div><h2>Community Ledger</h2><p>Public Picks activity for community transparency — wagers and results, not private wallet balances.</p></div>
+      <div class="right-note">Latest 200 records</div>
+    </div>
+
+    <div class="community-ledger">
+
+      <article class="community-ledger-row pending">
+        <div class="ledger-user">
+          <span class="ledger-avatar">HL</span>
+          <span class="ledger-user-copy"><strong>heartlarva</strong><small>@heartlarva</small></span>
+        </div>
+        <div class="ledger-pick">
+          <strong>49ers</strong>
+          <small>vs Rams · NFL</small>
+        </div>
+        <div class="ledger-stat"><span>Wager</span><strong class="nums">100 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+        <div class="ledger-stat net"><span>Net</span><strong>Open</strong></div>
+        <div class="ledger-result">
+          <span class="ledger-status">Bet Open</span>
+          <small>3:58 PM</small>
+        </div>
+      </article>
+
+      <article class="community-ledger-row pending me">
+        <div class="ledger-user">
+          <span class="ledger-avatar">JT</span>
+          <span class="ledger-user-copy"><strong>jimmytomato</strong><small>@jimmytomato</small></span>
+        </div>
+        <div class="ledger-pick">
+          <strong>49ers</strong>
+          <small>vs Rams · NFL</small>
+        </div>
+        <div class="ledger-stat"><span>Wager</span><strong class="nums">100 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+        <div class="ledger-stat net"><span>Net</span><strong>Open</strong></div>
+        <div class="ledger-result">
+          <span class="ledger-status">Bet Open</span>
+          <small>3:55 PM</small>
+        </div>
+      </article>
+
+      <article class="community-ledger-row pending">
+        <div class="ledger-user">
+          <span class="ledger-avatar">PS</span>
+          <span class="ledger-user-copy"><strong>psilocyboone</strong><small>@psilocyboone</small></span>
+        </div>
+        <div class="ledger-pick">
+          <strong>Rams</strong>
+          <small>vs 49ers · NFL</small>
+        </div>
+        <div class="ledger-stat"><span>Wager</span><strong class="nums">60 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+        <div class="ledger-stat net"><span>Net</span><strong>Open</strong></div>
+        <div class="ledger-result">
+          <span class="ledger-status">Bet Open</span>
+          <small>3:52 PM</small>
+        </div>
+      </article>
+
+      <article class="community-ledger-row won">
+        <div class="ledger-user">
+          <span class="ledger-avatar">CK</span>
+          <span class="ledger-user-copy"><strong>charleskellybirdlaw</strong><small>@charleskellybirdlaw</small></span>
+        </div>
+        <div class="ledger-pick">
+          <strong>Ravens</strong>
+          <small>vs Bengals · NFL</small>
+        </div>
+        <div class="ledger-stat"><span>Wager</span><strong class="nums">80 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+        <div class="ledger-stat net positive"><span>Net</span><strong class="nums">+104 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+        <div class="ledger-result">
+          <span class="ledger-status">Won</span>
+          <small>Sun, 7:48 PM</small>
+        </div>
+      </article>
+
+      <article class="community-ledger-row lost">
+        <div class="ledger-user">
+          <span class="ledger-avatar">ZW</span>
+          <span class="ledger-user-copy"><strong>zwades</strong><small>@zwades</small></span>
+        </div>
+        <div class="ledger-pick">
+          <strong>Bengals</strong>
+          <small>vs Ravens · NFL</small>
+        </div>
+        <div class="ledger-stat"><span>Wager</span><strong class="nums">50 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+        <div class="ledger-stat net negative"><span>Net</span><strong class="nums">−50 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+        <div class="ledger-result">
+          <span class="ledger-status">Lost</span>
+          <small>Sun, 7:48 PM</small>
+        </div>
+      </article>
+
+      <article class="community-ledger-row refunded">
+        <div class="ledger-user">
+          <span class="ledger-avatar">BP</span>
+          <span class="ledger-user-copy"><strong>bootypaper</strong><small>@bootypaper</small></span>
+        </div>
+        <div class="ledger-pick">
+          <strong>Ortega</strong>
+          <small>vs Volkanovski · UFC</small>
+        </div>
+        <div class="ledger-stat"><span>Wager</span><strong class="nums">30 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+        <div class="ledger-stat net"><span>Net</span><strong class="nums">0 <i class="zc" aria-hidden="true"></i>ZC</strong></div>
+        <div class="ledger-result">
+          <span class="ledger-status">Refund</span>
+          <small>Sat, 11:02 PM</small>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+
+  <footer class="preview-foot">
+    Preview of the Picks views · <a href="/zcoin-picks">How ZCoin Picks works</a> ·
+    <a href="/picks">Live Picks page</a>
+  </footer>
+
+  <a class="backlink" href="/">← Back to EastCoin</a>
+
+</div>
+
+<script>
+  (function () {
+    var tabs = document.querySelectorAll(".view-tab");
+    var panels = document.querySelectorAll(".view");
+
+    function show(name) {
+      tabs.forEach(function (tab) {
+        var on = tab.dataset.view === name;
+        tab.classList.toggle("active", on);
+        if (on) { tab.setAttribute("aria-current", "page"); }
+        else { tab.removeAttribute("aria-current"); }
+      });
+      panels.forEach(function (panel) {
+        panel.classList.toggle("active", panel.dataset.viewPanel === name);
+      });
+    }
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener("click", function () { show(tab.dataset.view); });
+    });
+  })();
+</script>
+
+</body>
+</html>
