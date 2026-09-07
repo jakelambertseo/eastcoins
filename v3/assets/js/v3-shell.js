@@ -26,7 +26,8 @@
     walletChip: document.getElementById("walletChip"),
     walletValue: document.getElementById("walletValue"),
     settingsBtn: document.getElementById("settingsBtn"),
-    settingsMenu: document.getElementById("settingsMenu")
+    settingsMenu: document.getElementById("settingsMenu"),
+    navPeek: document.getElementById("navPeek")
   };
 
   const views = Object.create(null);
@@ -173,7 +174,7 @@
   /* ---------------------------------------------------------- settings */
 
   const PREF_KEY = "eastcoinV3Prefs";
-  const prefs = { chat: true, nav: true, art: true, scores: true };
+  const prefs = { chat: true, topnav: true, art: true, scores: true };
 
   function loadPrefs() {
     try {
@@ -193,7 +194,7 @@
   }
 
   function applyPrefs() {
-    document.body.classList.toggle("nav-compact", !prefs.nav);
+    document.body.classList.toggle("nav-hidden", !prefs.topnav);
     document.body.classList.toggle("no-art", !prefs.art);
     for (const item of els.settingsMenu.querySelectorAll("[data-toggle]")) {
       const on = Boolean(prefs[item.dataset.toggle]);
@@ -229,6 +230,14 @@
     savePrefs();
     applyPrefs();
     if (key === "art" || key === "scores") views.events?.onPrefs?.(prefs);
+  });
+
+  // Restores the nav once it's hidden — otherwise the settings menu that
+  // turned it off is itself out of reach.
+  els.navPeek.addEventListener("click", () => {
+    prefs.topnav = true;
+    savePrefs();
+    applyPrefs();
   });
 
   window.ECV3Prefs = prefs;
