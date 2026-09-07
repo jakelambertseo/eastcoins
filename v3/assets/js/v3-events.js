@@ -207,10 +207,11 @@
       flag.className = "ec-flag live";
       flag.textContent = "Live";
       poster.append(flag);
-    } else if (startsSoon(match)) {
+    } else {
+      const soon = startsSoon(match);
       const flag = document.createElement("span");
-      flag.className = "ec-flag soon";
-      flag.textContent = "Soon";
+      flag.className = soon ? "ec-flag soon" : "ec-flag upcoming";
+      flag.textContent = soon ? "Soon" : "Upcoming";
       poster.append(flag);
     }
     el.append(poster);
@@ -233,14 +234,11 @@
       title.textContent = match?.title || "Untitled event";
     }
 
+    // The sport is already stated by the group heading this card sits
+    // under, so repeating it on every card is noise.
     const meta = document.createElement("p");
     meta.className = "ec-meta";
-    const label = SPORT_LABELS[sportKey(match)] || SPORT_LABELS.other;
-    meta.append(
-      document.createTextNode(label.replace(/^\S+\s/, "")),
-      Object.assign(document.createElement("span"), { className: "sep", textContent: "·" }),
-      document.createTextNode(timeLabel(match))
-    );
+    meta.textContent = timeLabel(match);
 
     body.append(title, meta);
 
@@ -267,6 +265,21 @@
     multi.type = "button";
     multi.title = "Add to MultiView";
     multi.textContent = "＋";
+    multi.addEventListener("click", () => {
+      const MV = window.ECV3MultiView;
+      if (!MV) return;
+      const result = MV.addEvent(match.id);
+
+      multi.classList.add(result.ok ? "added" : "full");
+      multi.textContent = result.ok ? "✓" : "!";
+      multi.title = result.message;
+
+      window.setTimeout(() => {
+        multi.classList.remove("added", "full");
+        multi.textContent = "＋";
+        multi.title = "Add to MultiView";
+      }, 1500);
+    });
 
     actions.append(watch, multi);
     el.append(actions);

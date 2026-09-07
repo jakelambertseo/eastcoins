@@ -300,7 +300,10 @@ body.chat-hidden .chatrail{display:none}
 }
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 @media (prefers-reduced-motion:reduce){.ec-flag.live::before{animation:none}}
-.ec-flag.soon{border:1px solid rgba(232,191,53,.42);color:var(--gold)}
+.ec-flag.soon{border:1px solid rgba(232,191,53,.55);color:#1a1408;background:var(--gold)}
+/* Upcoming is the quiet end of the same gold, so "soon" still reads as
+   the more urgent of the two rather than looking identical. */
+.ec-flag.upcoming{border:1px solid rgba(232,191,53,.36);color:var(--gold)}
 
 .ec-body{padding:11px 13px 0;flex:1;min-width:0}
 .ec-title{
@@ -1096,3 +1099,7 @@ body.nav-hidden .navpeek{display:inline-flex}
 @media (prefers-reduced-motion:reduce){
   .mv-resizer,.mv-resizer::after,.mv-select select,.picker-row,.picker-logo img{transition:none}
 }
+
+/* + button feedback when a card is sent to MultiView */
+.btn.ghost.added{border-color:rgba(77,219,139,.5);color:var(--green);background:var(--green-dim)}
+.btn.ghost.full{border-color:rgba(255,107,133,.5);color:var(--red);background:var(--red-dim)}

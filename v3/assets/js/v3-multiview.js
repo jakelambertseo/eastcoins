@@ -664,6 +664,77 @@
     }
   };
 
+  /* ---------------------------------------------------------- public API
+     The Events grid needs to drop a match into MultiView without this
+     view being mounted, so the store is written here rather than there:
+     one module owns the storage shape. If MultiView happens to be on
+     screen, the panel is filled immediately too. */
+
+  function addEvent(matchId) {
+    if (!matchId) return { ok: false, message: "Nothing to add" };
+
+    const mounted = Boolean(dom.grid && dom.grid.isConnected);
+    const saved = mounted ? null : readStore();
+    const ids = mounted
+      ? local.panels.slice(0, MAX_PANELS).map((p) => p?.match?.id || null)
+      : saved.ids;
+    let count = mounted ? local.count : saved.count;
+
+    if (ids.includes(matchId)) {
+      return { ok: false, message: "Already in MultiView" };
+    }
+
+    let slot = -1;
+    for (let i = 0; i < MAX_PANELS; i += 1) {
+      if (!ids[i]) { slot = i; break; }
+    }
+    if (slot === -1) {
+      return { ok: false, message: "MultiView is full — replace a panel there" };
+    }
+
+    ids[slot] = matchId;
+    // Grow the layout so the newly filled panel is actually visible.
+    count = Math.max(count, Math.min(MAX_PANELS, slot + 1));
+    if (count === 1) count = 2;
+
+    if (mounted) {
+      local.count = count;
+      applyLayout();
+      syncCountChips();
+      const match = local.catalog.find((m) => m.id === matchId);
+      if (match) fillPanel(slot, match);
+      else save();
+    } else {
+      writeStore({ c: count, x: saved.x, y: saved.y, i: ids });
+    }
+
+    return { ok: true, slot, message: `Added to panel ${slot + 1}` };
+  }
+
+  function readStore() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(STORE_KEY) || "{}");
+      return {
+        count: raw.c >= 2 && raw.c <= MAX_PANELS ? raw.c : 2,
+        x: Number.isFinite(raw.x) ? raw.x : 50,
+        y: Number.isFinite(raw.y) ? raw.y : 50,
+        ids: Array.isArray(raw.i) ? raw.i.slice(0, MAX_PANELS) : []
+      };
+    } catch {
+      return { count: 2, x: 50, y: 50, ids: [] };
+    }
+  }
+
+  function writeStore(data) {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(data));
+    } catch {
+      /* private mode — the add simply doesn't persist */
+    }
+  }
+
+  window.ECV3MultiView = Object.freeze({ addEvent });
+
   function boot() {
     if (!window.ECV3) return window.setTimeout(boot, 30);
     window.ECV3.register("multiview", view);
