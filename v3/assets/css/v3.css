@@ -304,6 +304,7 @@ body.chat-hidden .chatrail{display:none}
 /* Upcoming is the quiet end of the same gold, so "soon" still reads as
    the more urgent of the two rather than looking identical. */
 .ec-flag.upcoming{border:1px solid rgba(232,191,53,.36);color:var(--gold)}
+.ec-flag.final{border:1px solid var(--line-2);color:var(--muted)}
 
 .ec-body{padding:11px 13px 0;flex:1;min-width:0}
 .ec-title{
@@ -519,6 +520,7 @@ a.wallet-chip:hover{border-color:rgba(77,219,139,.45);filter:brightness(1.06)}
   transition:border-color .16s ease,transform .16s ease;
 }
 .picksbanner:hover{border-color:rgba(211,29,77,.7);transform:translateY(-1px)}
+.picksbanner-coin{width:30px;height:30px;flex:0 0 auto;object-fit:contain}
 .picksbanner-tag{
   flex:0 0 auto;padding:3px 9px;border-radius:999px;
   background:var(--red-brand-2);color:#fff;
@@ -1100,6 +1102,3 @@ body.nav-hidden .navpeek{display:inline-flex}
   .mv-resizer,.mv-resizer::after,.mv-select select,.picker-row,.picker-logo img{transition:none}
 }
 
-/* + button feedback when a card is sent to MultiView */
-.btn.ghost.added{border-color:rgba(77,219,139,.5);color:var(--green);background:var(--green-dim)}
-.btn.ghost.full{border-color:rgba(255,107,133,.5);color:var(--red);background:var(--red-dim)}

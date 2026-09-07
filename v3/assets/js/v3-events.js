@@ -202,18 +202,10 @@
       poster.append(img);
     }
 
-    if (live) {
-      const flag = document.createElement("span");
-      flag.className = "ec-flag live";
-      flag.textContent = "Live";
-      poster.append(flag);
-    } else {
-      const soon = startsSoon(match);
-      const flag = document.createElement("span");
-      flag.className = soon ? "ec-flag soon" : "ec-flag upcoming";
-      flag.textContent = soon ? "Soon" : "Upcoming";
-      poster.append(flag);
-    }
+    const flag = document.createElement("span");
+    flag.className = "ec-flag";
+    setFlag(flag, flagStateFor(match));
+    poster.append(flag);
     el.append(poster);
 
     // body --------------------------------------------------
@@ -248,7 +240,7 @@
     body.append(score);
     el.append(body);
 
-    attachScore(match, score, title);
+    attachScore(match, score, title, flag);
 
     // actions -----------------------------------------------
     const actions = document.createElement("div");
@@ -260,31 +252,28 @@
     watch.textContent = live ? "Watch live" : "Watch";
     watch.addEventListener("click", openMatch);
 
-    const multi = document.createElement("button");
-    multi.className = "btn ghost";
-    multi.type = "button";
-    multi.title = "Add to MultiView";
-    multi.textContent = "＋";
-    multi.addEventListener("click", () => {
-      const MV = window.ECV3MultiView;
-      if (!MV) return;
-      const result = MV.addEvent(match.id);
 
-      multi.classList.add(result.ok ? "added" : "full");
-      multi.textContent = result.ok ? "✓" : "!";
-      multi.title = result.message;
-
-      window.setTimeout(() => {
-        multi.classList.remove("added", "full");
-        multi.textContent = "＋";
-        multi.title = "Add to MultiView";
-      }, 1500);
-    });
-
-    actions.append(watch, multi);
+    actions.append(watch);
     el.append(actions);
 
     return el;
+  }
+
+  // "Upcoming" is only true of something that hasn't started. Once a
+  // start time is in the past the card must not claim otherwise — which
+  // is how a game could end up tagged Upcoming and Final at once.
+  function flagStateFor(match) {
+    if (isLive(match)) return "live";
+    const start = Number(match?.date) || 0;
+    if (start && start <= Date.now()) return "";   // started already: say nothing
+    return startsSoon(match) ? "soon" : "upcoming";
+  }
+
+  function setFlag(flag, state) {
+    const copy = { live: "Live", soon: "Soon", upcoming: "Upcoming", final: "Final" };
+    flag.className = `ec-flag${state ? ` ${state}` : ""}`;
+    flag.textContent = copy[state] || "";
+    flag.hidden = !state;
   }
 
   function teamRow(team) {
@@ -314,7 +303,7 @@
 
   // Scores are additive: the card is complete without them, and a match
   // that ESPN doesn't have simply never shows one.
-  async function attachScore(match, mount, titleEl) {
+  async function attachScore(match, mount, titleEl, flag) {
     if (!window.ECV3Scores) return;
     if (window.ECV3Prefs && window.ECV3Prefs.scores === false) return;
 
@@ -325,6 +314,9 @@
       return;
     }
     if (!score || score.state === "pre" || !mount.isConnected) return;
+
+    // ESPN is authoritative about state; the schedule-derived guess isn't.
+    if (flag) setFlag(flag, score.state === "post" ? "final" : "live");
 
     const rows = titleEl.querySelectorAll(".teamrow");
     const line = document.createElement("span");
@@ -400,6 +392,13 @@
       shell.go("picks");
     });
 
+    const coin = document.createElement("img");
+    coin.className = "picksbanner-coin";
+    coin.src = "/v3/assets/img/zcoin.webp";
+    coin.alt = "";
+    coin.width = 30;
+    coin.height = 30;
+
     const tag = document.createElement("span");
     tag.className = "picksbanner-tag";
     tag.textContent = "New";
@@ -416,7 +415,7 @@
     cta.className = "picksbanner-cta";
     cta.textContent = "Make your picks →";
 
-    banner.append(tag, copy, cta);
+    banner.append(coin, tag, copy, cta);
     return banner;
   }
 
