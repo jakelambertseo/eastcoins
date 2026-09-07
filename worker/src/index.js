@@ -11,6 +11,17 @@ const MAX_SE_SEEN_IDS = 500;
 const TWITCH_IRC_SKIP_COOLDOWN_MS = 5000;
 const RASPUTIN_COOLDOWN_MS = 60 * 1000;
 const RASPUTIN_ALLOWED_LOGINS = new Set(["andyreidisapawg", "zwades"]);
+
+// "!srclear" (and its StreamElements alias "!mrclear") is a StreamElements
+// command — SE clears its own media request queue when a moderator types it.
+// SE has no way to tell us that happened, and our sync is one-way and
+// additive: pollStreamElements only ever copies NEW entries in, so without
+// this the Music Room would keep playing a backlog SE has already dropped.
+// We therefore watch chat for the same command and clear our mirror at the
+// same moment. Keep this list in step with who SE will accept the command
+// from, or the two queues drift apart.
+const QUEUE_CLEAR_ALLOWED_LOGINS = new Set(["zwades", "andyreidisapawg", "bootypaper"]);
+const QUEUE_CLEAR_COOLDOWN_MS = 3000;
 // A fixed, hand-picked block — not resolved through search at request time —
 // so "!rasputin" always queues exactly this, the same way, every time.
 const RASPUTIN_BLOCK = [
@@ -336,6 +347,7 @@ export class MusicRoom extends DurableObject {
     this.connectingIrc = false;
     this.lastChatSkipAt = 0;
     this.lastRasputinAt = 0;
+    this.lastQueueClearAt = 0;
 
     this.ctx.getWebSockets().forEach((ws) => {
       const attachment = ws.deserializeAttachment();
@@ -711,6 +723,9 @@ export class MusicRoom extends DurableObject {
         this.ctx.waitUntil(this.handleChatSkip(login));
       } else if (/^!rasputin\b/i.test(text)) {
         this.ctx.waitUntil(this.handleRasputinCommand(login));
+      } else if (/^!(sr|mr)clear\b/i.test(text)) {
+        console.log(`Twitch IRC: !srclear from ${login}`);
+        this.ctx.waitUntil(this.clearQueue(login));
       }
     }
   }
@@ -783,6 +798,40 @@ export class MusicRoom extends DurableObject {
     items.forEach((item) => this.recordRequest(item, login));
 
     await Promise.all([this.persistAndBroadcast(), this.persistHistoryAndStats()]);
+  }
+
+  // Mirrors a StreamElements "!srclear" into the Music Room. The song that
+  // is playing right now is deliberately left alone: SE drops the pending
+  // queue, not the track already handed to the player, and cutting someone
+  // off mid-song is not what chat means by "clear the queue".
+  //
+  // seenStreamElementsIds is deliberately NOT reset. Those ids are what stop
+  // pollStreamElements re-importing a request, so keeping them is what makes
+  // the clear stick: if SE's own queue did not actually empty (the command
+  // was refused there, or SE lagged), the next poll would otherwise refill
+  // the room within seconds.
+  async clearQueue(login) {
+    if (!QUEUE_CLEAR_ALLOWED_LOGINS.has(login)) {
+      console.log(`!srclear from ${login} ignored — not authorized`);
+      return false;
+    }
+
+    const now = Date.now();
+    if (now - this.lastQueueClearAt < QUEUE_CLEAR_COOLDOWN_MS) return false;
+    this.lastQueueClearAt = now;
+
+    const cleared = this.state.queue.length;
+    if (!cleared) {
+      console.log(`!srclear from ${login} — Music Room queue was already empty`);
+      return false;
+    }
+
+    this.state.queue = [];
+    this.state.revision += 1;
+    console.log(`!srclear from ${login} — cleared ${cleared} queued request(s)`);
+
+    await this.persistAndBroadcast();
+    return true;
   }
 
   listenerNames() {

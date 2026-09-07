@@ -71,7 +71,7 @@
             A simple timeline of the major features, games, and interface
             improvements added to EastCoin.
           </p>
-<div class="release-count">146 major update groups</div>
+<div class="release-count">147 major update groups</div>
 </header>
 <section aria-label="EastCoin feature timeline" class="timeline">
 <article class="timeline-entry">
@@ -2094,10 +2094,9 @@
     up consistently everywhere now, always in your favour, so the number on
     the ticket is exactly the number that settles.
 </p>
-<article class="timeline-entry latest">
+<article class="timeline-entry">
 <div class="timeline-date">
 <time datetime="2026-09-06">September 6, 2026</time>
-<span class="latest-badge">Latest</span>
 </div>
 <h2>Fixed: two Picks screens were rounding payouts down</h2>
 <p>
@@ -2112,6 +2111,24 @@
     Both now round up like everywhere else, so the number you agree to on the
     slip, the number on your ticket and the number that settles are the same
     figure.
+</p>
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-09-06">September 6, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>"!srclear" in chat now clears the Music Room too</h2>
+<p>
+    <code>!srclear</code> is a StreamElements command, so it has always emptied
+    the StreamElements request queue — but the Music Room never heard about it
+    and carried on playing a backlog that had already been thrown away. The
+    room now watches chat for the same command and clears its own copy at the
+    same moment, so one <code>!srclear</code> empties both.
+</p>
+<p>
+    Zwades, andyreidisapawg and BootyPaper can use it. Whatever is playing
+    right now keeps playing — it clears what is waiting, without cutting anyone
+    off mid-song — and everyone's queue updates at once.
 </p>
 </article>
 </section>
