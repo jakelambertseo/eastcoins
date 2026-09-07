@@ -30,6 +30,7 @@
   };
 
   const views = Object.create(null);
+  let currentView = null;
   const state = {
     route: "events",
     search: "",
@@ -79,6 +80,11 @@
         else link.removeAttribute("aria-current");
       }
     }
+
+    // Give the outgoing view a chance to clean up anything it put
+    // outside its own container (body classes, open dialogs).
+    if (currentView && currentView !== view) currentView.unmount?.();
+    currentView = view || null;
 
     els.view.replaceChildren();
     els.view.dataset.rendered = "1";

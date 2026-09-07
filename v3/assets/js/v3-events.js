@@ -16,55 +16,10 @@
 (() => {
   "use strict";
 
-  const SPORT_LABELS = {
-    "american-football": "🏈 NFL/CFB",
-    baseball: "⚾ Baseball",
-    fight: "🥊 Fighting",
-    basketball: "🏀 Basketball",
-    hockey: "🏒 Hockey",
-    football: "⚽ Soccer",
-    "motor-sports": "🏎 Motorsport",
-    tennis: "🎾 Tennis",
-    golf: "⛳ Golf",
-    cricket: "🏏 Cricket",
-    rugby: "🏉 Rugby",
-    other: "📺 Other"
-  };
-
-  // Fixed running order. Anything not named here sorts after the listed
-  // sports (by how much is live), and "other" is pinned to the bottom.
-  const SPORT_ORDER = ["american-football", "baseball", "fight"];
-
-  // streamed.st files NFL, US college and the CFL under one "american-football"
-  // category with no league field, so the only way to order them is by team.
-  // The 32 NFL clubs are a fixed list; the CFL is only nine. Everything left
-  // over is college, which is far too large to enumerate — so it is inferred
-  // as "not NFL and not CFL" and sits between the two.
-  const NFL_TEAMS = new Set([
-    "cardinals","falcons","ravens","bills","panthers","bears","bengals","browns",
-    "cowboys","broncos","lions","packers","texans","colts","jaguars","chiefs",
-    "raiders","chargers","rams","dolphins","vikings","patriots","saints","giants",
-    "jets","eagles","steelers","49ers","seahawks","buccaneers","titans","commanders"
-  ]);
-  const CFL_TEAMS = new Set([
-    "argonauts","tiger-cats","alouettes","redblacks","blue bombers","roughriders",
-    "stampeders","elks","lions bc"
-  ]);
-
-  function footballRank(match) {
-    const names = [match?.teams?.home?.name, match?.teams?.away?.name, match?.title]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-
-    for (const team of NFL_TEAMS) {
-      if (names.includes(team)) return 0;   // NFL first
-    }
-    for (const team of CFL_TEAMS) {
-      if (names.includes(team)) return 2;   // CFL last
-    }
-    return 1;                               // college in between
-  }
+  // Grouping, labels and the NFL/college/CFL running order live in
+  // v3-sports.js so this view and the MultiView picker cannot drift apart.
+  const Sports = window.ECV3Sports;
+  const SPORT_LABELS = Sports.SPORT_LABELS;
 
   const local = {
     filter: "all",
@@ -117,12 +72,8 @@
 
   /* ---------------------------------------------------------- helpers */
 
-  function isLive(match) {
-    const start = Number(match?.date) || 0;
-    if (!start) return Boolean(match?.popular && match?.sources?.length);
-    const now = Date.now();
-    return now >= start && now - start < 4 * 60 * 60 * 1000;
-  }
+  const isLive = Sports.isLive;
+
 
   function startsSoon(match) {
     const start = Number(match?.date) || 0;
@@ -149,10 +100,7 @@
     return `${date.toLocaleDateString([], { weekday: "short" })} ${time}`;
   }
 
-  function sportKey(match) {
-    const raw = String(match?.category || "other").toLowerCase();
-    return SPORT_LABELS[raw] ? raw : "other";
-  }
+  const sportKey = Sports.sportKey;
 
   function matches(match) {
     if (local.filter === "live" && !isLive(match)) return false;
@@ -561,40 +509,9 @@
       return;
     }
 
-    // Group by sport, live-first within each group.
-    const groups = new Map();
-    for (const match of visible) {
-      const key = sportKey(match);
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key).push(match);
-    }
-
-    const rank = (key) => {
-      if (key === "other") return 900;                    // always last
-      const fixed = SPORT_ORDER.indexOf(key);
-      return fixed === -1 ? 100 : fixed;                  // then the rest
-    };
-
-    const ordered = [...groups.entries()].sort((a, b) => {
-      const rankDelta = rank(a[0]) - rank(b[0]);
-      if (rankDelta) return rankDelta;
-      const aLive = a[1].filter(isLive).length;
-      const bLive = b[1].filter(isLive).length;
-      if (aLive !== bLive) return bLive - aLive;
-      return b[1].length - a[1].length;
-    });
+    const ordered = Sports.grouped(visible);
 
     for (const [key, list] of ordered) {
-      list.sort((a, b) => {
-        if (key === "american-football") {
-          const leagueDelta = footballRank(a) - footballRank(b);
-          if (leagueDelta) return leagueDelta;
-        }
-        const liveDelta = Number(isLive(b)) - Number(isLive(a));
-        if (liveDelta) return liveDelta;
-        return (Number(a.date) || 0) - (Number(b.date) || 0);
-      });
-
       const group = document.createElement("section");
       group.className = "sportgroup";
 

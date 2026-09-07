@@ -42,6 +42,11 @@
 }
 
 *{box-sizing:border-box}
+/* Any author display rule beats the hidden attribute's UA display:none,
+   so an element with display set stays visible when hidden is applied.
+   This has caught the chat placeholder and MultiView panels already —
+   enforce it once, globally, instead of per component. */
+[hidden]{display:none!important}
 html{background:var(--ink);color-scheme:dark}
 body{
   margin:0;
@@ -678,7 +683,7 @@ a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
   width:min(420px,100%);border:1px solid var(--line-2);border-radius:16px;
   background:var(--panel);box-shadow:var(--shadow);padding:18px 20px 20px;
 }
-.ticket-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.ticket-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex:0 0 auto}
 .ticket-head strong{font-family:var(--display);font-weight:700;font-size:1.06rem}
 .ticket-pick{
   display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -839,70 +844,12 @@ a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
 .historyrow.refund .historyamount strong{color:#8fc3d7}
 .historyamount small{display:block;margin-top:2px;color:var(--muted-2);font-size:.74rem}
 
-/* ============================================================
-   PHASE 2 — MULTIVIEW
-   ============================================================ */
-.mv-controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.mv-grid{display:grid;gap:10px}
-.mv-grid.count-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-.mv-grid.count-3{grid-template-columns:repeat(2,minmax(0,1fr))}
-.mv-grid.count-3 .mv-panel:first-child{grid-column:1/-1}
-.mv-grid.count-4{grid-template-columns:repeat(2,minmax(0,1fr))}
-.mv-panel{
-  display:flex;flex-direction:column;
-  border:1px solid var(--line);border-radius:var(--radius);
-  background:var(--panel);overflow:hidden;
-}
-.mv-bar{
-  display:flex;align-items:center;gap:6px;
-  padding:7px 10px;border-bottom:1px solid var(--line);background:var(--panel-2);
-}
-.mv-title{
-  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  color:var(--muted);font-size:.76rem;font-weight:700;
-}
-.mv-chip{
-  flex:0 0 auto;height:24px;min-width:24px;padding:0 8px;border-radius:7px;
-  border:1px solid var(--line);background:var(--panel);
-  color:var(--muted-2);font-size:.68rem;font-weight:800;
-  transition:color .14s ease,background .14s ease,border-color .14s ease;
-}
-.mv-chip:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(232,191,53,.3)}
-.mv-chip[aria-pressed="true"]{border-color:rgba(232,191,53,.34);color:var(--gold);background:var(--gold-dim)}
-.mv-frame{position:relative;aspect-ratio:16/9;width:100%;background:#000}
-.mv-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-.mv-empty{
-  aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:10px;padding:16px;text-align:center;background:var(--panel-2);
-}
-.mv-empty-num{
-  font-family:var(--display);font-weight:800;font-size:1.6rem;color:var(--muted-2);opacity:.5;
-}
-.mv-empty-note{color:var(--muted-2);font-size:.8rem;max-width:34ch}
-
 .picker{
   width:min(520px,100%);max-height:min(560px,84vh);display:flex;flex-direction:column;
   border:1px solid var(--line-2);border-radius:16px;
   background:var(--panel);box-shadow:var(--shadow);padding:18px 20px 16px;
 }
-.picker-search{
-  height:38px;padding:0 13px;margin-bottom:12px;border-radius:10px;
-  border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);
-  font-size:.86rem;outline:none;
-}
-.picker-search:focus{border-color:rgba(232,191,53,.4)}
 .picker-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:5px}
-.picker-row{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:10px 12px;border-radius:9px;border:1px solid transparent;text-align:left;
-  transition:background .14s ease,border-color .14s ease;
-}
-.picker-row:hover{background:var(--gold-dim);border-color:rgba(232,191,53,.24)}
-.picker-title{
-  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  font-size:.9rem;font-weight:600;
-}
-.picker-meta{flex:0 0 auto;color:var(--muted-2);font-size:.72rem;text-transform:capitalize}
 
 @media (max-width:900px){
   .summarystrip{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -912,4 +859,178 @@ a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
 }
 @media (prefers-reduced-motion:reduce){
   .viewtab,.side,.mv-chip,.picker-row{transition:none}
+}
+
+/* ============================================================
+   MULTIVIEW v2 — height-filling layouts with draggable splits
+   The grid fills the viewport rather than stacking fixed-ratio
+   boxes, so two panels genuinely use the screen and three don't
+   leave one giant tile above two small ones.
+   ============================================================ */
+.mv-head{margin-bottom:12px}
+
+.mv-grid{
+  position:relative;
+  display:grid;
+  gap:8px;
+  height:calc(100vh - var(--nav-h) - 132px);
+  min-height:420px;
+}
+
+/* 2 — side by side, full height */
+.mv-grid.count-2{
+  grid-template-columns:var(--mv-x) 1fr;
+  grid-template-rows:minmax(0,1fr);
+}
+/* 3 — one main panel left, two stacked right */
+.mv-grid.count-3{
+  grid-template-columns:var(--mv-x) 1fr;
+  grid-template-rows:var(--mv-y) 1fr;
+}
+.mv-grid.count-3 .mv-panel:nth-child(1){grid-column:1;grid-row:1/3}
+.mv-grid.count-3 .mv-panel:nth-child(2){grid-column:2;grid-row:1}
+.mv-grid.count-3 .mv-panel:nth-child(3){grid-column:2;grid-row:2}
+/* 4 — even quarters */
+.mv-grid.count-4{
+  grid-template-columns:var(--mv-x) 1fr;
+  grid-template-rows:var(--mv-y) 1fr;
+}
+
+.mv-panel{
+  min-width:0;min-height:0;
+  display:flex;flex-direction:column;
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--panel);overflow:hidden;
+}
+.mv-body{flex:1;min-height:0;display:flex}
+.mv-frame{position:relative;flex:1;min-height:0;width:100%;background:#000}
+.mv-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.mv-empty{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;padding:16px;text-align:center;background:var(--panel-2);
+}
+
+/* resizers -------------------------------------------------- */
+.mv-resizer{
+  position:absolute;z-index:6;
+  background:transparent;border:0;padding:0;
+  transition:background .14s ease;
+}
+.mv-resizer::after{
+  content:"";position:absolute;border-radius:999px;background:var(--line-2);
+  transition:background .14s ease;
+}
+.mv-resizer.x{
+  top:0;bottom:0;width:16px;left:var(--mv-x);transform:translateX(-50%);
+  cursor:col-resize;
+}
+.mv-resizer.x::after{top:50%;left:50%;width:3px;height:44px;transform:translate(-50%,-50%)}
+.mv-resizer.y{
+  left:0;right:0;height:16px;top:var(--mv-y);transform:translateY(-50%);
+  cursor:row-resize;
+}
+.mv-resizer.y::after{left:50%;top:50%;height:3px;width:44px;transform:translate(-50%,-50%)}
+.mv-resizer:hover::after,.mv-resizer:focus-visible::after{background:var(--gold)}
+
+/* a two-panel layout has no horizontal split to drag */
+.mv-grid.count-2 .mv-resizer.y{display:none}
+/* with three panels the row split only governs the right column */
+.mv-grid.count-3 .mv-resizer.y{left:var(--mv-x);right:0}
+
+/* Iframes swallow pointer events, which would stall a drag the moment
+   the cursor crossed a video. Disable them for the duration. */
+.mv-grid.is-resizing iframe{pointer-events:none}
+.mv-grid.is-resizing{user-select:none}
+
+/* server dropdown ------------------------------------------- */
+.mv-select{position:relative;display:inline-flex;align-items:center;flex:0 0 auto}
+.mv-select select{
+  appearance:none;
+  height:24px;padding:0 24px 0 9px;border-radius:7px;
+  border:1px solid var(--line);background:var(--panel);color:var(--muted);
+  font-family:var(--body);font-size:.68rem;font-weight:800;cursor:pointer;
+  transition:color .14s ease,border-color .14s ease,background .14s ease;
+}
+.mv-select select:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(232,191,53,.3)}
+.mv-select::after{
+  content:"▾";position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  pointer-events:none;color:var(--muted-2);font-size:.6rem;
+}
+.mv-select select option{background:var(--panel-2);color:var(--text)}
+
+/* hide-controls mode ---------------------------------------- */
+body.mv-bare .mv-head{display:none}
+body.mv-bare .mv-bar{display:none}
+body.mv-bare .mv-grid{height:calc(100vh - var(--nav-h) - 40px)}
+.mv-restore{
+  position:fixed;right:calc(var(--chat-w) + 18px);bottom:18px;z-index:40;
+  display:none;height:32px;padding:0 14px;border-radius:999px;
+  border:1px solid rgba(232,191,53,.34);background:rgba(12,10,9,.9);
+  color:var(--gold);font-size:.76rem;font-weight:800;backdrop-filter:blur(6px);
+}
+body.mv-bare .mv-restore{display:inline-flex;align-items:center}
+body.mv-bare.chat-hidden .mv-restore{right:18px}
+
+/* picker ---------------------------------------------------- */
+.picker-search{
+  /* The picker is a column flex container; without this the input is
+     shrunk to min-content as soon as the event list overflows, which
+     silently undoes the height. */
+  flex:0 0 auto;
+  height:46px;padding:0 16px;margin-bottom:14px;border-radius:11px;
+  border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);
+  font-size:.94rem;outline:none;
+}
+.picker-search::placeholder{color:var(--muted-2)}
+.picker-search:focus{border-color:rgba(232,191,53,.45);background:var(--panel-3)}
+
+.picker-group{
+  position:sticky;top:0;z-index:2;
+  margin:10px 0 4px;padding:6px 12px;
+  background:var(--panel);color:var(--muted-2);
+  font-size:.64rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;
+}
+.picker-group:first-child{margin-top:0}
+.picker-row{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:9px 12px;border-radius:9px;border:1px solid transparent;text-align:left;
+  transition:background .14s ease,border-color .14s ease;
+}
+.picker-row:hover{background:var(--gold-dim);border-color:rgba(232,191,53,.24)}
+.picker-teams{min-width:0;display:flex;flex-direction:column;gap:4px}
+.picker-team{display:flex;align-items:center;gap:9px;min-width:0}
+.picker-team > span:last-child{
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:.88rem;font-weight:600;
+}
+.picker-logo{
+  position:relative;flex:0 0 auto;border-radius:5px;overflow:hidden;
+  background:var(--panel-3);border:1px solid var(--line);
+}
+.picker-logo img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:2px;
+  opacity:0;transition:opacity .2s ease;
+}
+.picker-logo.has-badge img{opacity:1}
+.picker-meta.live{
+  flex:0 0 auto;padding:2px 8px;border-radius:999px;
+  border:1px solid rgba(211,29,77,.5);background:rgba(94,10,26,.5);color:#ffc2ce;
+  font-size:.6rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+}
+
+@media (max-width:900px){
+  .mv-grid.count-2,.mv-grid.count-3,.mv-grid.count-4{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:none;
+    height:auto;
+  }
+  .mv-grid.count-3 .mv-panel:nth-child(1),
+  .mv-grid.count-3 .mv-panel:nth-child(2),
+  .mv-grid.count-3 .mv-panel:nth-child(3){grid-column:auto;grid-row:auto}
+  .mv-panel{aspect-ratio:16/10}
+  .mv-resizer{display:none}
+  .mv-restore{right:18px}
+}
+@media (prefers-reduced-motion:reduce){
+  .mv-resizer,.mv-resizer::after,.mv-select select,.picker-row,.picker-logo img{transition:none}
 }
