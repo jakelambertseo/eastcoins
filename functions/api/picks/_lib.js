@@ -118,8 +118,14 @@ export async function getSessionUser(db, request) {
    place ZCoins actually move, so every write is paired with a
    wallet_operations row before it is attempted. */
 
+// The StreamElements channel id is not a secret — it is a public,
+// opaque identifier, and bootstrap.js already falls back to this same
+// constant for balance READS. Writes fell back to nothing, so reads
+// worked while transfers reported "no channel". Same source for both.
+const SE_CHANNEL_ID_FALLBACK = "65107c296068cc894e4ac7b9";
+
 function seChannel(env) {
-  return String(env.STREAMELEMENTS_CHANNEL_ID || "").trim();
+  return String(env.STREAMELEMENTS_CHANNEL_ID || SE_CHANNEL_ID_FALLBACK).trim();
 }
 
 export function walletWritesEnabled(env) {

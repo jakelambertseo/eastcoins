@@ -19,6 +19,7 @@
 import { ADMIN_ALLOWLIST, getSessionUser, json, fail } from "./_lib.js";
 
 const SE_API = "https://api.streamelements.com/kappa/v2";
+const SE_CHANNEL_ID_FALLBACK = "65107c296068cc894e4ac7b9";
 
 export async function onRequestGet(context) {
   const db = context.env.PICKS_DB;
@@ -30,7 +31,9 @@ export async function onRequestGet(context) {
   }
 
   const jwt = String(context.env.STREAMELEMENTS_JWT || "").trim();
-  const channelId = String(context.env.STREAMELEMENTS_CHANNEL_ID || "").trim();
+  // Same resolution the write path uses, so this reports on what would
+  // actually happen rather than on the env var alone.
+  const channelId = String(context.env.STREAMELEMENTS_CHANNEL_ID || SE_CHANNEL_ID_FALLBACK).trim();
 
   if (!jwt) {
     return json({
