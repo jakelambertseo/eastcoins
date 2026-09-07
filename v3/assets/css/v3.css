@@ -93,7 +93,7 @@ img{max-width:100%}
   color:var(--muted-2);font-weight:700;font-size:.85rem;
   transition:color .14s ease,background .14s ease,border-color .14s ease;
 }
-.nav-link:hover{color:var(--text);background:var(--panel)}
+.nav-link:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(232,191,53,.2)}
 .nav-link[aria-current="page"]{
   border-color:rgba(232,191,53,.3);color:var(--gold);background:var(--gold-dim);
 }
@@ -120,7 +120,7 @@ img{max-width:100%}
   color:var(--muted);font-size:.9rem;
   transition:color .14s ease,border-color .14s ease;
 }
-.iconbtn:hover{color:var(--text);border-color:var(--line-2)}
+.iconbtn:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(232,191,53,.3)}
 .iconbtn.on{border-color:rgba(232,191,53,.3);color:var(--gold);background:var(--gold-dim)}
 .wallet-chip{
   display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 12px;
@@ -161,16 +161,28 @@ body.chat-hidden .chatrail{display:none}
 
 .chatrail{
   position:sticky;top:var(--nav-h);
+  isolation:isolate;
   height:calc(100vh - var(--nav-h));
   border-left:1px solid var(--line);
   background:var(--panel);
   display:flex;flex-direction:column;
 }
+/* No header strip above the chat — Twitch's own embed already says whose
+   channel it is, so the label was a duplicate eating vertical space. The
+   close control floats over the top-right corner instead. */
 .chatrail-head{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:9px 13px;border-bottom:1px solid var(--line);
-  color:var(--muted-2);
-  font-size:.66rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;
+  position:absolute;top:8px;right:10px;z-index:5;
+  display:flex;align-items:center;
+}
+.chatrail-head #chatClose{
+  width:24px;height:24px;font-size:.66rem;
+  background:rgba(12,10,9,.78);border-color:rgba(255,255,255,.16);
+  backdrop-filter:blur(4px);opacity:0;transition:opacity .16s ease;
+}
+.chatrail:hover .chatrail-head #chatClose,
+.chatrail-head #chatClose:focus-visible{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .chatrail-head #chatClose{transition:none}
 }
 .chatrail iframe{flex:1;width:100%;border:0;background:var(--panel)}
 .chat-placeholder{
@@ -577,4 +589,10 @@ a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
 .serverbar-label{
   color:var(--muted-2);font-size:.66rem;font-weight:800;
   letter-spacing:.11em;text-transform:uppercase;margin-right:4px;
+}
+
+/* ZCoin mark — the same coin used across Picks and the explainer. */
+.zcoin-mark{
+  width:17px;height:17px;flex:0 0 auto;display:block;
+  object-fit:contain;
 }

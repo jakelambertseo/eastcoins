@@ -35,6 +35,37 @@
   // sports (by how much is live), and "other" is pinned to the bottom.
   const SPORT_ORDER = ["american-football", "baseball", "fight"];
 
+  // streamed.st files NFL, US college and the CFL under one "american-football"
+  // category with no league field, so the only way to order them is by team.
+  // The 32 NFL clubs are a fixed list; the CFL is only nine. Everything left
+  // over is college, which is far too large to enumerate — so it is inferred
+  // as "not NFL and not CFL" and sits between the two.
+  const NFL_TEAMS = new Set([
+    "cardinals","falcons","ravens","bills","panthers","bears","bengals","browns",
+    "cowboys","broncos","lions","packers","texans","colts","jaguars","chiefs",
+    "raiders","chargers","rams","dolphins","vikings","patriots","saints","giants",
+    "jets","eagles","steelers","49ers","seahawks","buccaneers","titans","commanders"
+  ]);
+  const CFL_TEAMS = new Set([
+    "argonauts","tiger-cats","alouettes","redblacks","blue bombers","roughriders",
+    "stampeders","elks","lions bc"
+  ]);
+
+  function footballRank(match) {
+    const names = [match?.teams?.home?.name, match?.teams?.away?.name, match?.title]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    for (const team of NFL_TEAMS) {
+      if (names.includes(team)) return 0;   // NFL first
+    }
+    for (const team of CFL_TEAMS) {
+      if (names.includes(team)) return 2;   // CFL last
+    }
+    return 1;                               // college in between
+  }
+
   const local = {
     filter: "all",
     matches: [],
@@ -555,6 +586,10 @@
 
     for (const [key, list] of ordered) {
       list.sort((a, b) => {
+        if (key === "american-football") {
+          const leagueDelta = footballRank(a) - footballRank(b);
+          if (leagueDelta) return leagueDelta;
+        }
         const liveDelta = Number(isLive(b)) - Number(isLive(a));
         if (liveDelta) return liveDelta;
         return (Number(a.date) || 0) - (Number(b.date) || 0);
