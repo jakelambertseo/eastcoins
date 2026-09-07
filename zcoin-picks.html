@@ -171,21 +171,21 @@
   <div class="chat">
     <div class="chat-bar">#zwades</div>
     <div class="chat-body">
-      <div class="msg"><span class="bot">ZCoinBot:</span> 🏈 49ers vs Rams kicks off in 30 min — bets are open!<br>
+      <div class="msg"><span class="bot">StreamElements:</span> 🏈 49ers vs Rams kicks off in 30 min — bets are open!<br>
         49ers <strong>-150</strong> · Rams <strong>+150</strong> — type <strong>!pick &lt;amount&gt; &lt;team&gt;</strong></div>
       <div class="msg"><span class="j">jimmytomato:</span> !pick 100 49ers</div>
-      <div class="msg"><span class="bot">ZCoinBot:</span> @jimmytomato — 100 ZCoins on the 49ers, locked in 🔒</div>
+      <div class="msg"><span class="bot">StreamElements:</span> @jimmytomato — 100 ZCoins on the 49ers, locked in 🔒</div>
       <div class="msg"><span class="h">heartlarva:</span> !pick 100 49ers</div>
-      <div class="msg"><span class="bot">ZCoinBot:</span> @heartlarva — 100 ZCoins on the 49ers, locked in 🔒</div>
+      <div class="msg"><span class="bot">StreamElements:</span> @heartlarva — 100 ZCoins on the 49ers, locked in 🔒</div>
       <div class="msg"><span class="p">psilocyboone:</span> !pick 60 rams</div>
-      <div class="msg"><span class="bot">ZCoinBot:</span> @psilocyboone — 60 ZCoins on the Rams, locked in 🔒</div>
+      <div class="msg"><span class="bot">StreamElements:</span> @psilocyboone — 60 ZCoins on the Rams, locked in 🔒</div>
       <div class="msg"><span class="c">charleskellybirdlaw:</span> !pick 75 49ers</div>
       <div class="msg"><span class="b">bootypaper:</span> !pick 50 rams</div>
       <div class="msg"><span class="a">andyreidisapawg:</span> !pick 25 49ers</div>
       <div class="msg sys">…and the bot confirms each of those too</div>
-      <div class="msg"><span class="bot">ZCoinBot:</span> ⏰ Bets close in 5 minutes — 6 picks in, 67% on the 49ers</div>
+      <div class="msg"><span class="bot">StreamElements:</span> ⏰ Bets close in 5 minutes — 6 picks in, 67% on the 49ers</div>
       <div class="msg sys">— game plays out —</div>
-      <div class="msg"><span class="bot">ZCoinBot:</span> 🏁 49ers 27–24 Rams — 49ers win!<br>
+      <div class="msg"><span class="bot">StreamElements:</span> 🏁 49ers 27–24 Rams — 49ers win!<br>
         jimmytomato <span class="win">+67</span> · heartlarva <span class="win">+67</span> ·
         charleskellybirdlaw <span class="win">+50</span> · andyreidisapawg <span class="win">+17</span><br>
         psilocyboone <span class="loss">−60</span> · bootypaper <span class="loss">−50</span><br>
@@ -242,7 +242,7 @@
         <code>!pick 100 49ers</code>
         <span>Puts 100 ZCoins on the 49ers. The bot confirms it and the coins come out straight away.</span>
       </div>
-      <div class="reply"><b>ZCoinBot:</b> @jimmytomato — 100 ZCoins on the 49ers @ −150, locked in 🔒<br>
+      <div class="reply"><b>StreamElements:</b> @jimmytomato — 100 ZCoins on the 49ers @ −150, locked in 🔒<br>
         Returns <strong>167</strong> if they win · balance now <strong>1,140</strong></div>
     </div>
     <div class="cmd">
@@ -250,7 +250,7 @@
         <code>!odds</code>
         <span>What's open to pick right now, and at what price.</span>
       </div>
-      <div class="reply"><b>ZCoinBot:</b> Open now — 49ers <strong>−150</strong> / Rams <strong>+150</strong> (closes 4:10 PM)
+      <div class="reply"><b>StreamElements:</b> Open now — 49ers <strong>−150</strong> / Rams <strong>+150</strong> (closes 4:10 PM)
         · Chiefs <strong>−220</strong> / Broncos <strong>+180</strong> (Mon 7:15 PM)</div>
     </div>
     <div class="cmd">
@@ -258,7 +258,7 @@
         <code>!mypicks</code>
         <span>Everything you've got riding, and what each one returns if it lands.</span>
       </div>
-      <div class="reply"><b>ZCoinBot:</b> @jimmytomato — 2 open picks, 140 ZCoins riding<br>
+      <div class="reply"><b>StreamElements:</b> @jimmytomato — 2 open picks, 140 ZCoins riding<br>
         100 on 49ers −150 → returns <strong>167</strong> · 40 on Chiefs −220 → returns <strong>59</strong></div>
     </div>
     <div class="cmd">
@@ -266,15 +266,15 @@
         <code>!record</code>
         <span>Your Picks record and profit for the season — separate from your ZCoin balance.</span>
       </div>
-      <div class="reply"><b>ZCoinBot:</b> @jimmytomato — <strong>14–9</strong> this season, <strong>+312 ZCoins</strong>, rank <strong>#3</strong> of 24
+      <div class="reply"><b>StreamElements:</b> @jimmytomato — <strong>14–9</strong> this season, <strong>+312 ZCoins</strong>, rank <strong>#3</strong> of 24
         <em>· best month: November, +180</em></div>
     </div>
   </div>
 
   <div class="note">
     <b>Nothing you already have changes.</b> <code>!points</code>, <code>!top</code>, <code>!duel</code>,
-    <code>!roulette</code> and the rest are StreamElements' own commands and keep working exactly as they do
-    today — Picks doesn't touch or replace any of them.
+    <code>!roulette</code> and the rest keep working exactly as they do today — Picks adds commands alongside
+    them and replaces none of them.
     <br><br>
     <b>One thing to check:</b> StreamElements has its own <code>!bet</code> command for its built-in betting
     contests, which is why these use <code>!pick</code> instead. If you'd rather chat typed <code>!bet</code>,
@@ -303,22 +303,56 @@
     ever drifts.
   </div>
 
+  <h2>How it plugs in</h2>
+  <p>
+    There's no second bot. EastCoin talks to StreamElements directly through its API, using the channel token
+    you've already generated — so the messages come from <strong>StreamElements</strong>, the same account that
+    already runs <code>!points</code> and <code>!duel</code>, and the ZCoins move on the real balance rather than
+    through a separate scoreboard.
+  </p>
+
+  <div class="cmds">
+    <div class="cmd">
+      <div class="cmd-head">
+        <code>Posting in chat</code>
+        <span>Bets opening, confirmations and results are sent as StreamElements, so chat sees one familiar bot
+          instead of a new account nobody recognises.</span>
+      </div>
+    </div>
+    <div class="cmd">
+      <div class="cmd-head">
+        <code>Moving ZCoins</code>
+        <span>Stakes and payouts are written straight to the loyalty balance. No <code>!addpoints</code> typed into
+          chat, nothing to mod, and no rounding through a second ledger.</span>
+      </div>
+    </div>
+    <div class="cmd">
+      <div class="cmd-head">
+        <code>Reading balances</code>
+        <span>Before a Pick is accepted, the balance is checked the same way <code>!points</code> reports it — so
+          nobody can stake coins they've already spent.</span>
+      </div>
+    </div>
+  </div>
+
   <h2>What we'd need from you</h2>
 
   <div class="todo">
-    <h3>Two clicks, and you're done</h3>
+    <h3>Nothing further — you've already done it</h3>
     <ol>
-      <li><strong>Mod ZCoinBot</strong> in your chat — <code>/mod ZCoinBot</code></li>
-      <li><strong>Add it to Super Moderators</strong> in your StreamElements dashboard, so it's allowed to award points</li>
+      <li><strong>The channel token</strong> is what grants all of the above, and you've generated it.</li>
+      <li><strong>It lives on EastCoin's server</strong>, never in the website and never in anyone's browser.</li>
     </ol>
   </div>
 
   <div class="note">
-    <b>It's the same access a human mod already has.</b> The bot awards and deducts points exactly the way you could by
-    hand — it just does it instantly and keeps a record of every single one. It never sees your password or your
-    StreamElements login.
+    <b>Worth knowing what that token can reach.</b> It isn't limited to Picks — it's the same channel access you have
+    in your own dashboard, so it's a real key rather than a minor one. It's stored server-side, isn't in the code
+    anywhere, and is never sent to a viewer's browser.
     <br><br>
-    <b>And you can switch it off any time</b> by unmodding it. That's the kill switch — no code, no waiting on anyone.
+    <b>And you can switch it off any time.</b> Regenerating the token in your StreamElements dashboard instantly
+    invalidates the old one and Picks stops being able to touch anything. That's the kill switch — no code, no
+    waiting on anyone.
   </div>
 
   <footer>
