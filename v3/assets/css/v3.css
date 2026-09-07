@@ -864,13 +864,28 @@ a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
    ============================================================ */
 .mv-head{margin-bottom:12px}
 
+/* The grid absorbs whatever height is left rather than subtracting a
+   guessed constant for the header and padding — that guess is what left
+   dead space under the panels. .view becomes a flex column while
+   MultiView is mounted, and the grid takes the remainder. */
 .mv-grid{
   position:relative;
   display:grid;
   gap:8px;
-  height:calc(100vh - var(--nav-h) - 132px);
-  min-height:420px;
+  flex:1;
+  min-height:320px;
 }
+body.mv-on .view{
+  display:flex;
+  flex-direction:column;
+  height:calc(100vh - var(--nav-h));
+  padding:14px 12px 8px;
+  overflow:hidden;
+}
+/* With the chrome hidden there is nothing to separate from, so trim
+   the frame to the grid gap and give the rest to the video. */
+body.mv-on.mv-bare .view{padding:8px}
+body.mv-on .mv-head{flex:0 0 auto;margin-bottom:10px}
 
 /* 2 — side by side, full height */
 .mv-grid.count-2{
@@ -956,7 +971,7 @@ a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
 /* hide-controls mode ---------------------------------------- */
 body.mv-bare .mv-head{display:none}
 body.mv-bare .mv-bar{display:none}
-body.mv-bare .mv-grid{height:calc(100vh - var(--nav-h) - 40px)}
+body.mv-bare .mv-head{display:none}
 .mv-restore{
   position:fixed;right:calc(var(--chat-w) + 18px);bottom:18px;z-index:40;
   display:none;height:32px;padding:0 14px;border-radius:999px;
@@ -1064,6 +1079,8 @@ body.nav-hidden .navpeek{display:inline-flex}
 .navpeek-bars i{display:block;width:14px;height:2px;border-radius:2px;background:currentColor}
 
 @media (max-width:900px){
+  body.mv-on .view{height:auto;overflow:visible;padding-bottom:50px}
+  .mv-grid{flex:none}
   .mv-grid.count-2,.mv-grid.count-3,.mv-grid.count-4{
     grid-template-columns:minmax(0,1fr);
     grid-template-rows:none;

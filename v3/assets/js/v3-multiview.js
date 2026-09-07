@@ -630,6 +630,9 @@
       }
       dom.grid.append(makeResizer("x"), makeResizer("y"));
 
+      // Lets .view become a flex column so the grid can absorb the
+      // leftover height instead of a hardcoded subtraction.
+      document.body.classList.add("mv-on");
       container.replaceChildren(dom.head, dom.grid, buildRestore());
       applyLayout();
       syncCountChips();
@@ -656,7 +659,7 @@
     },
 
     unmount() {
-      document.body.classList.remove("mv-bare");
+      document.body.classList.remove("mv-bare", "mv-on");
       closePicker();
     }
   };
