@@ -41,6 +41,7 @@
     details: null,
     episodes: [],
     loading: false,
+    epsOpen: false,
     hasKey: true
   };
 
@@ -161,6 +162,9 @@
     refs.frame.append(iframe);
     refs.stage.hidden = false;
     refs.stage.classList.add("is-playing");
+    // The video is the page while something plays: heading, search and
+    // shelves step aside, same as the event player.
+    document.body.classList.add("screen-on");
 
     refs.nowTitle.textContent = local.now.title;
     refs.nowMeta.textContent = local.now.type === "tv"
@@ -168,11 +172,11 @@
       : local.now.year || "";
     refs.prevEp.hidden = refs.nextEp.hidden = local.now.type !== "tv";
     refs.seasonSel.hidden = local.now.type !== "tv";
-    refs.about.hidden = true;
-    refs.epStrip.hidden = true;
+    refs.epToggle.hidden = local.now.type !== "tv";
+    if (local.now.type !== "tv") refs.epStrip.hidden = true;
 
     writeUrl();
-    root.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.scrollTo(0, 0);
     loadDetails();
   }
 
@@ -182,7 +186,9 @@
     local.now = null;
     refs.stage.hidden = true;
     refs.stage.classList.remove("is-playing");
+    document.body.classList.remove("screen-on");
     writeUrl();
+    renderContinue();
   }
 
   async function loadDetails() {
@@ -198,21 +204,9 @@
     if (t.title && /^(Show|Movie) #/.test(item.title)) { item.title = t.title; refs.nowTitle.textContent = t.title; }
     if (t.poster && !item.poster) item.poster = t.poster;
     if (t.year && !item.year) item.year = t.year;
-    refs.nowMeta.textContent = item.type === "tv" ? `S${item.season} · E${item.episode} · ${t.year}` : t.year;
-
-    refs.about.replaceChildren();
-    if (t.poster) { const img = el("img"); img.src = t.poster; img.alt = ""; refs.about.append(img); }
-    const copy = el("div");
-    copy.append(el("strong", "sc-about-title", t.title + (t.year ? ` (${t.year})` : "")));
-    if (t.tagline) copy.append(el("p", "sc-tagline", t.tagline));
-    if (t.overview) copy.append(el("p", null, t.overview));
-    const tags = el("div", "sc-tags");
-    for (const g of t.genres || []) tags.append(el("span", null, g));
-    if (t.runtime) tags.append(el("span", null, `${t.runtime} min`));
-    if (t.rating) tags.append(el("span", null, `★ ${t.rating}`));
-    copy.append(tags);
-    refs.about.append(copy);
-    refs.about.hidden = false;
+    refs.nowMeta.textContent = item.type === "tv"
+      ? `S${item.season} · E${item.episode} · ${t.year}${t.runtime ? " · " + t.runtime + " min" : ""}`
+      : [t.year, t.runtime ? `${t.runtime} min` : "", t.rating ? `★ ${t.rating}` : ""].filter(Boolean).join(" · ");
 
     if (item.type === "tv") {
       refs.seasonSel.replaceChildren();
@@ -231,6 +225,7 @@
     const item = local.now;
     refs.epStrip.replaceChildren();
     if (!item || item.type !== "tv" || !local.episodes.length) { refs.epStrip.hidden = true; return; }
+    // Stays folded unless the viewer opened it; the bar's Episodes button toggles it.
     for (const ep of local.episodes) {
       const b = el("button", `sc-ep${ep.number === item.episode ? " on" : ""}`);
       b.type = "button";
@@ -242,8 +237,8 @@
       b.addEventListener("click", () => play({ ...item, episode: ep.number }));
       refs.epStrip.append(b);
     }
-    refs.epStrip.hidden = false;
-    refs.epStrip.querySelector(".sc-ep.on")?.scrollIntoView({ inline: "center", block: "nearest" });
+    refs.epStrip.hidden = !local.epsOpen;
+    if (local.epsOpen) refs.epStrip.querySelector(".sc-ep.on")?.scrollIntoView({ inline: "center", block: "nearest" });
   }
 
   function onMessage(event) {
@@ -473,6 +468,12 @@
     seasonSel.addEventListener("change", () => { if (local.now?.type === "tv") play({ ...local.now, season: Number(seasonSel.value), episode: 1 }); });
     const prevEp = btn("‹ Prev", "sc-btn", () => { if (local.now?.type === "tv" && local.now.episode > 1) play({ ...local.now, episode: local.now.episode - 1 }); });
     const nextEp = btn("Next ›", "sc-btn", () => { if (local.now?.type === "tv") play({ ...local.now, episode: local.now.episode + 1 }); });
+    const epToggle = btn("Episodes", "sc-btn", () => {
+      local.epsOpen = !local.epsOpen;
+      epToggle.classList.toggle("on", local.epsOpen);
+      renderEpisodes();
+    });
+    epToggle.hidden = true;
     const openSrc = btn("Open source ↗", "sc-btn", () => { if (iframe) window.open(iframe.src, "_blank", "noopener"); });
     const copyLink = btn("Copy link", "sc-btn gold", async () => {
       try { await navigator.clipboard.writeText(location.href); copyLink.textContent = "Copied"; }
@@ -481,16 +482,13 @@
     });
     const close = btn("✕", "sc-btn", stop);
     close.title = "Close player";
-    bar.append(title, seasonSel, prevEp, nextEp, openSrc, copyLink, close);
+    bar.append(title, seasonSel, prevEp, nextEp, epToggle, openSrc, copyLink, close);
     stage.append(bar);
     const epStrip = el("div", "sc-eps");
     epStrip.hidden = true;
     stage.append(epStrip);
-    const about = el("div", "sc-about");
-    about.hidden = true;
-    stage.append(about);
     page.append(stage);
-    Object.assign(refs, { stage, frame, nowTitle, nowMeta, seasonSel, prevEp, nextEp, about, epStrip });
+    Object.assign(refs, { stage, frame, nowTitle, nowMeta, seasonSel, prevEp, nextEp, epToggle, epStrip });
 
     // Continue watching
     const continueSec = el("section", "sc-section");
@@ -583,6 +581,7 @@
       loadShelf();
     },
     unmount() {
+      document.body.classList.remove("screen-on");
       window.removeEventListener("message", onMessage);
       clearTimeout(searchTimer);
       seq += 1;

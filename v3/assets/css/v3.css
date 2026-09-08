@@ -1977,6 +1977,22 @@ body.is-rasputin .mtitle-text{
   .sc-about{grid-template-columns:84px 1fr}.sc-about img{width:84px}
 }
 @media (prefers-reduced-motion:reduce){.sc-skel{animation:none}}
+
+/* Playing: the video is the page. Heading, search, shelves and credit
+   step aside; the frame drops its ratio and fills what the shell leaves,
+   exactly as the event player does. Close (✕) brings the shelves back. */
+body.screen-on .view{display:flex;flex-direction:column;height:calc(100vh - var(--nav-h));padding:10px 12px 10px;overflow:hidden}
+body.screen-on .screen{display:flex;flex-direction:column;flex:1;min-height:0}
+body.screen-on .screen .viewhead,body.screen-on .sc-section,body.screen-on .sc-credit{display:none}
+body.screen-on .sc-stage{display:flex;flex-direction:column;flex:1;min-height:0;margin:0}
+body.screen-on .sc-frame{aspect-ratio:auto;flex:1;min-height:0}
+body.screen-on .sc-bar{padding:8px 10px}
+body.screen-on .sc-eps{flex:0 0 auto}
+.sc-btn.on{border-color:rgba(232,191,53,.45);background:var(--gold-dim);color:var(--gold)}
+@media (max-width:900px){
+  body.screen-on .view{height:auto;overflow:visible;padding-bottom:40px}
+  body.screen-on .sc-frame{aspect-ratio:16/9;flex:0 0 auto}
+}
 .sc-credit{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:34px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted-2);font-size:.76rem}
 .sc-credit img{height:12px;width:auto;flex:0 0 auto}
 .sc-credit p{margin:0}
