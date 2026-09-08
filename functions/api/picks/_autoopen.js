@@ -44,11 +44,15 @@ function median(values) {
 }
 
 async function fetchOdds(apiKey) {
+  // The whole season comes back otherwise — the same credit, ten times
+  // the payload, and nothing beyond this week is worth showing.
+  const horizon = new Date(Date.now() + 8 * 24 * 3600 * 1000).toISOString().replace(/\.\d{3}Z$/, "Z");
   const query = new URLSearchParams({
     apiKey,
     regions: "us",
     markets: "h2h",
-    oddsFormat: "american"
+    oddsFormat: "american",
+    commenceTimeTo: horizon
   });
   const response = await fetch(`${ODDS_API}/${SPORT_KEY}/odds/?${query}`);
   if (!response.ok) {

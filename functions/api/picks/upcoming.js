@@ -28,9 +28,10 @@ export async function onRequestGet(context) {
   }
 
   const now = Date.now();
+  const horizon = now + 8 * 24 * 3600 * 1000;
   const future = games.filter((g) => {
     const at = new Date(g.commence).getTime();
-    return Number.isFinite(at) && at > now;
+    return Number.isFinite(at) && at > now && at <= horizon;
   });
 
   // A game that already has a market belongs in the open list, not here.
