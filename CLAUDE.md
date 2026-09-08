@@ -23,6 +23,8 @@
 >
 > Routes on the new shell: `/`, `/?view=multiview`, `/?view=picks`
 > (`&tab=mypicks|leaderboard|history|ledger`), `/?view=music`,
+> `/?view=screen` (movies/TV: vidy.st player keyed by TMDB id, catalog
+> via `functions/api/screen/*` behind `TMDB_API_KEY`; `v3-screen.js`),
 > `/?view=watch&event=<id>`, `/?view=watch&url=<url>`, `/?view=admin`,
 > and `/g/<slug>` for a game page.
 >

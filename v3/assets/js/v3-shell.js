@@ -49,7 +49,7 @@
   // had a chance to register. An unknown name still falls back.
   // "game" is the /g/<slug> page chat links to. It is a route, not a nav
   // item: the only way in is a link.
-  const ROUTES = ["events", "multiview", "picks", "music", "watch", "admin", "game"];
+  const ROUTES = ["events", "multiview", "picks", "music", "screen", "watch", "admin", "game"];
 
   /* ------------------------------------------------------------ legacy URLs
 
