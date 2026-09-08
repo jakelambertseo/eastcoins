@@ -528,6 +528,10 @@
     // reaction — does not throw you back to page one mid-browse.
     let historyPage = 0;
     const HISTORY_PER_PAGE = 25;
+    // What was playing last time we painted. A history entry is only
+    // completed when a song leaves, so a change here is the one signal
+    // that there is something new to fetch.
+    let lastCurrentId = null;
     let tab = "queue";
     let searchResults = [];
     let searching = false;
@@ -609,7 +613,12 @@
         const url = new URL(`/history/${encodeURIComponent(ROOM)}`, BASE);
         const response = await fetch(url.href);
         const payload = await response.json();
-        history = Array.isArray(payload?.history) ? payload.history.slice().reverse() : [];
+        // Newest first by when it actually PLAYED, falling back to the
+        // request for entries written before the room stamped that.
+        const when = (row) => Number(row?.playedAt || row?.requestedAt || 0);
+        history = Array.isArray(payload?.history)
+          ? payload.history.slice().sort((a, b) => when(b) - when(a))
+          : [];
         // Comes back on the same request, already ordered by count.
         requesters = Array.isArray(payload?.userStats) ? payload.userStats : [];
       } catch {
@@ -951,7 +960,9 @@
         const meta = el("div", "mq-meta");
         meta.append(el("strong", null, entry.title || "Untitled"));
         meta.append(el("small", null,
-          `${entry.requestedBy || "chat"} · ${timeAgo(entry.requestedAt)}`));
+          entry.playedAt
+            ? `${entry.requestedBy || "chat"} · played ${timeAgo(entry.playedAt)}`
+            : `${entry.requestedBy || "chat"} · added ${timeAgo(entry.requestedAt)}`));
         row.append(meta);
 
         const again = el("button", "watchbtn mq-again", "Play again");
@@ -1200,6 +1211,15 @@
 
       refs.stagewrap.classList.toggle("is-playing", Boolean(state?.current));
       refs.stagewrap.classList.toggle("is-hot", isRasputin(state));
+
+      // History was fetched once on mount and never again, so anything
+      // that played or was skipped after you opened the page simply never
+      // appeared — and Top Requesters and Ratings quietly froze with it.
+      const currentId = state?.current?.id || null;
+      if (currentId !== lastCurrentId) {
+        lastCurrentId = currentId;
+        loadHistory();
+      }
 
       renderReactions(state);
       renderSide(state);

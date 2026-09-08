@@ -572,7 +572,11 @@ export class MusicRoom extends DurableObject {
       requestedBy: this.safeName(entry.requestedBy),
       requestedByAvatar: this.safeAvatarUrl(entry.requestedByAvatar),
       requestedByLogin: String(entry.requestedByLogin || "").slice(0, 64),
-      requestedAt: Number(entry.requestedAt) || Date.now()
+      requestedAt: Number(entry.requestedAt) || Date.now(),
+      // Stamped when the song leaves, however it leaves — finished,
+      // skipped, or voted off. Entries written before this existed have
+      // none, and are ordered by request time as they always were.
+      playedAt: Number(entry.playedAt) || null
     };
   }
 
@@ -1555,6 +1559,14 @@ export class MusicRoom extends DurableObject {
     const outgoing = this.state.current;
     // Scored on the way out, when its reactions are final.
     this.rateFinishedSong(outgoing);
+    // And stamped, so History can be ordered by what actually played
+    // rather than by what was asked for. A song skipped after sitting in
+    // the queue was requested long before it left, and ordering by the
+    // request buried it under everything queued since.
+    if (outgoing?.id) {
+      const entry = this.history.find((row) => row.id === outgoing.id);
+      if (entry) entry.playedAt = Date.now();
+    }
 
     this.state.current = this.state.queue.shift() || null;
     this.state.startedAt = this.state.current ? Date.now() : null;
