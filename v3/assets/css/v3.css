@@ -172,22 +172,22 @@ body.chat-hidden .chatrail{display:none}
   background:var(--panel);
   display:flex;flex-direction:column;
 }
-/* No header strip above the chat — Twitch's own embed already says whose
-   channel it is, so the label was a duplicate eating vertical space. The
-   close control floats over the top-right corner instead. */
+/* The close control gets a row of its own rather than floating over the
+   chat.
+   Twitch runs an anti-clickjacking check on the embed and disables the
+   message box for the broadcaster and mods the moment it detects ANY
+   element covering the iframe — even a 24px button in a corner. Mods
+   being unable to type is a hard failure; 26px of rail is not. The
+   "Twitch · zwades" label stays gone, so this is a bare strip. */
 .chatrail-head{
-  position:absolute;top:8px;right:10px;z-index:5;
-  display:flex;align-items:center;
+  flex:0 0 auto;
+  display:flex;align-items:center;justify-content:flex-end;
+  height:26px;padding:0 8px;
+  border-bottom:1px solid var(--line);
+  background:var(--panel-2);
 }
 .chatrail-head #chatClose{
-  width:24px;height:24px;font-size:.66rem;
-  background:rgba(12,10,9,.78);border-color:rgba(255,255,255,.16);
-  backdrop-filter:blur(4px);opacity:0;transition:opacity .16s ease;
-}
-.chatrail:hover .chatrail-head #chatClose,
-.chatrail-head #chatClose:focus-visible{opacity:1}
-@media (prefers-reduced-motion:reduce){
-  .chatrail-head #chatClose{transition:none}
+  width:22px;height:22px;font-size:.62rem;
 }
 .chatrail iframe{flex:1;width:100%;border:0;background:var(--panel)}
 .chat-placeholder{
