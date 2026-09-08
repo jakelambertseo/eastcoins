@@ -63,10 +63,13 @@
   // Views the old shell had that this one does not. They still exist as
   // standalone pages, so the link keeps its meaning rather than being
   // quietly swallowed.
+  // Extensionless: Pages canonicalises away the .html with a 308, and
+  // sending someone through a redirect to reach a redirect is a hop for
+  // nothing.
   const LEGACY_PAGES = {
-    games: "/games.html",
-    streams: "/favorites.html",
-    sicko: "/picks-kalshi-test.html#prop-of-week"
+    games: "/games",
+    streams: "/favorites",
+    sicko: "/picks-kalshi-test#prop-of-week"
   };
 
   function normalizeLegacyUrl() {
