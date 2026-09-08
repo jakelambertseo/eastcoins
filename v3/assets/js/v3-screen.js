@@ -534,6 +534,22 @@
     page.append(shelf);
     Object.assign(refs, { filters, shelfTitle, shelfNote, grid, more });
 
+    // TMDB's terms ask for the logo and this exact wording.
+    const credit = el("footer", "sc-credit");
+    const logo = el("img");
+    logo.src = "/v3/assets/img/tmdb.svg";
+    logo.alt = "TMDB";
+    logo.width = 92;
+    logo.height = 12;
+    const creditLink = el("a", null, "TMDB");
+    creditLink.href = "https://www.themoviedb.org/";
+    creditLink.target = "_blank";
+    creditLink.rel = "noopener";
+    const line = el("p");
+    line.append("Titles, artwork and episode data from ", creditLink, ". This product uses the TMDB API but is not endorsed or certified by TMDB.");
+    credit.append(logo, line);
+    page.append(credit);
+
     root.append(page);
   }
 

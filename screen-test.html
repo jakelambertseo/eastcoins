@@ -103,6 +103,8 @@
   .card .prog i{display:block;height:100%;background:var(--gold)}
   .empty-note{border:1px dashed var(--line-2);border-radius:var(--radius);padding:26px;text-align:center;color:var(--muted-2);font-size:.86rem}
 
+  .credit{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:34px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted-2);font-size:.76rem}
+  .credit img{height:12px;width:auto}.credit p{margin:0}.credit a{color:var(--muted);font-weight:600;text-decoration:none}
   @media (max-width:760px){.bar .title{flex:1 1 100%}}
   @media (max-width:640px){
     .topnav{gap:10px;padding:0 12px}.brand span{display:none}.navlink{display:none}
@@ -160,6 +162,11 @@
     <h2>Shows <small>featured</small></h2>
     <div class="row" id="showsRow"></div>
   </section>
+
+  <footer class="credit">
+    <img src="/v3/assets/img/tmdb.svg" alt="TMDB" width="92" height="12">
+    <p>Titles, artwork and episode data from <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+  </footer>
 </main>
 
 <script>
