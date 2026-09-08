@@ -22,7 +22,28 @@ import {
 
 const SPORTS = new Set(["baseball", "american-football", "basketball", "hockey"]);
 
+/**
+ * Nothing here may reach the operator as an HTML error page. An
+ * unhandled throw in a Pages function returns Cloudflare's 500 page,
+ * which the admin UI can only report as "the endpoint threw" — true,
+ * useless, and two debugging cycles wide. The message and stack go
+ * back as JSON instead; this endpoint is admin-only, so the detail is
+ * going to someone entitled to see it.
+ */
 export async function onRequestPost(context) {
+  try {
+    return await handleOpenMarket(context);
+  } catch (error) {
+    const detail = String(error?.message || error || "unknown");
+    console.error("open-market threw:", detail, error?.stack || "");
+    return fail("SERVER_ERROR", `The endpoint threw: ${detail}`, 500, {
+      where: String(error?.stack || "").split("
+").slice(0, 4).join(" | ")
+    });
+  }
+}
+
+async function handleOpenMarket(context) {
   const db = context.env.PICKS_DB;
   if (!db) return fail("DB_UNAVAILABLE", "Picks database is not connected.", 503);
 
