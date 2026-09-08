@@ -7,8 +7,12 @@
      · GET only — $(customapi) cannot POST
      · plain text out, never JSON — the body IS the chat message
      · 400 bytes max — StreamElements silently truncates past that
-     · status < 400 always for anything a viewer caused, because a
-       4xx/5xx body gets rendered into chat raw
+     · status 200 for EVERYTHING, including refusals. Observed
+       behaviour, contradicting the docs: StreamElements renders its
+       own "unable to make request" for a non-2xx and discards the
+       body. A misconfigured command then looks identical to a
+       network fault, which cost real debugging time. Answering 200
+       with the reason puts it in chat where it can be read.
 
    Trust model, stated plainly: there is no way to verify a request
    actually came from StreamElements. $(customapi) sends no custom
@@ -60,15 +64,20 @@ export function botGate(context) {
 
   // Fail closed. An unset key must not mean "no key required".
   if (!expected) {
-    return { ok: false, response: say("Picks chat commands aren't configured yet.", 403) };
+    return { ok: false, response: say("Picks chat commands aren't configured yet.") };
   }
   if (!given || !safeEqual(given, expected)) {
-    return { ok: false, response: say("Picks bot key rejected.", 403) };
+    return { ok: false, response: say("Picks bot key rejected — check the key in this command.") };
   }
 
   const login = String(url.searchParams.get("user") || "").trim().toLowerCase();
   if (!/^[a-z0-9_]{2,25}$/.test(login)) {
-    return { ok: false, response: say("Couldn't tell who sent that.", 403) };
+    // Nearly always the command using the wrong sender variable, so the
+    // message names the fix rather than describing the symptom.
+    return {
+      ok: false,
+      response: say("Couldn't tell who sent that — this command needs user=$(sender.name)")
+    };
   }
 
   return { ok: true, login, args: String(url.searchParams.get("args") || "").trim() };
