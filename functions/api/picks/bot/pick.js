@@ -14,7 +14,7 @@
 
 import { placeWager } from "../_wager.js";
 import {
-  say, botGate, findUser, openMarkets, matchTeam, formatLine, shortTeam
+  say, botGate, findOrCreateUser, openMarkets, matchTeam, formatLine, shortTeam
 } from "./_bot.js";
 
 /** "50 bills" or "bills 50" — the integer is the stake, the rest the team. */
@@ -42,8 +42,9 @@ export async function onRequestGet(context) {
     return say(`${who} usage: !pick <amount> <team> — e.g. !pick 50 Bills`);
   }
 
-  const user = await findUser(db, gate.login);
+  const user = await findOrCreateUser(db, gate);
   if (!user) {
+    // Only reachable when the command was set up without id=$(sender.twitchid).
     return say(`${who} log in once at eastcoin.vip to link your ZCoins, then !pick works.`);
   }
 

@@ -35,6 +35,15 @@ import {
 } from "./_lib.js";
 
 const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports";
+
+// A Cloudflare fetch sends no User-Agent by default, and ESPN's site API
+// is known to answer UA-less datacenter requests with an error page or an
+// empty body. Every developer machine sends one, which is exactly how a
+// grader can pass locally and refuse in production.
+const ESPN_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (compatible; EastCoinPicks/1.0; +https://eastcoin.vip)",
+  "Accept": "application/json"
+};
 const LEAGUE_PATHS = {
   baseball: ["baseball/mlb"],
   "american-football": ["football/nfl", "football/college-football"],
@@ -92,15 +101,26 @@ async function boardFor(cache, path, date) {
   return cache.get(key);
 }
 
+/**
+ * One league's board for one day. Never throws; a failure comes back as
+ * an empty board WITH the status that produced it, so a run that graded
+ * nothing can say whether ESPN refused, timed out, or simply had no
+ * matching game — three very different problems that used to share one
+ * message.
+ */
 async function fetchScoreboard(path, date) {
+  const query = date ? `?dates=${encodeURIComponent(date)}` : "";
   try {
-    const query = date ? `?dates=${encodeURIComponent(date)}` : "";
-    const response = await fetch(`${ESPN_BASE}/${path}/scoreboard${query}`);
-    if (!response.ok) return [];
+    const response = await fetch(`${ESPN_BASE}/${path}/scoreboard${query}`, { headers: ESPN_HEADERS });
+    if (!response.ok) {
+      console.error(`ESPN ${path} ${date}: HTTP ${response.status}`);
+      return { events: [], status: response.status };
+    }
     const payload = await response.json();
-    return Array.isArray(payload?.events) ? payload.events : [];
-  } catch {
-    return [];
+    return { events: Array.isArray(payload?.events) ? payload.events : [], status: 200 };
+  } catch (error) {
+    console.error(`ESPN ${path} ${date} threw`, error);
+    return { events: [], status: 0 };
   }
 }
 
@@ -119,10 +139,17 @@ async function findResult(market, boards) {
   // No date means no safe lookup — refuse rather than fall back to
   // today's board, which is exactly the wrong-game case.
   const date = espnDate(market.starts_at);
-  if (!date) return null;
+  if (!date) return { skip: "no-date", detail: String(market.starts_at) };
+
+  let seen = 0;
+  const statuses = [];
 
   for (const path of paths) {
-    for (const event of await boardFor(boards, path, date)) {
+    const board = await boardFor(boards, path, date);
+    statuses.push(`${path}=${board.status}`);
+    seen += board.events.length;
+
+    for (const event of board.events) {
       const competition = event?.competitions?.[0];
       const competitors = competition?.competitors || [];
       if (competitors.length !== 2) continue;
@@ -140,7 +167,9 @@ async function findResult(market, boards) {
       if (!straight && !flipped) continue;
 
       const status = event?.status?.type || {};
-      if (!status.completed || status.state !== "post") return null;
+      if (!status.completed || status.state !== "post") {
+        return { skip: "not-final", detail: `${status.state || "?"} — ${status.detail || status.name || ""}` };
+      }
 
       // A postponed or cancelled game can carry state "post".
       const name = String(status.name || "").toUpperCase();
@@ -151,7 +180,9 @@ async function findResult(market, boards) {
 
       const homeScore = Number(espnHome.score);
       const awayScore = Number(espnAway.score);
-      if (!Number.isInteger(homeScore) || !Number.isInteger(awayScore)) return null;
+      if (!Number.isInteger(homeScore) || !Number.isInteger(awayScore)) {
+        return { skip: "no-score", detail: `${espnAway.score}-${espnHome.score}` };
+      }
 
       // Our market's "home" is whichever side matched our home name.
       const ourHome = straight ? homeScore : awayScore;
@@ -169,7 +200,10 @@ async function findResult(market, boards) {
       };
     }
   }
-  return null;
+
+  // Say which of the two very different "nothing to grade" cases this is.
+  if (!seen) return { skip: "no-board", detail: statuses.join(", ") };
+  return { skip: "no-match", detail: `wanted ${wantAway} @ ${wantHome}; ${seen} event(s) on ${date}` };
 }
 
 /* ------------------------------------------------------------ payouts */
@@ -245,7 +279,14 @@ async function payPick(env, db, pick, market, outcome) {
 
 async function settleMarket(env, db, market, boards) {
   const result = await findResult(market, boards);
-  if (!result) return { id: market.id, action: "skipped", reason: "no clear final" };
+  if (!result || result.skip) {
+    return {
+      id: market.id,
+      action: "skipped",
+      reason: result?.skip || "no clear final",
+      detail: result?.detail || ""
+    };
+  }
 
   const outcome = result.verdict;   // 'away' | 'home' | 'VOID'
 

@@ -80,7 +80,54 @@ export function botGate(context) {
     };
   }
 
-  return { ok: true, login, args: String(url.searchParams.get("args") || "").trim() };
+  const twitchId = String(url.searchParams.get("id") || "").trim();
+  const displayName = String(url.searchParams.get("name") || "").trim().slice(0, 64);
+
+  return {
+    ok: true,
+    login,
+    // Only ever a numeric Twitch id; anything else is treated as absent.
+    twitchId: /^\d{1,20}$/.test(twitchId) ? twitchId : "",
+    displayName,
+    args: String(url.searchParams.get("args") || "").trim()
+  };
+}
+
+/**
+ * The account for a Twitch login, created on the spot if the command
+ * carried a Twitch id and none exists yet.
+ *
+ * A site login is not actually required to bet: the ZCoins live in
+ * StreamElements keyed by login, and the only thing the site needed was
+ * a users row to hang the pick on. When the command sends
+ * $(sender.twitchid) that row can be made right here — typing !pick IS
+ * the consent, and the id comes from StreamElements, not from the
+ * message text.
+ *
+ * Without an id it falls back to the old behaviour and returns null, so
+ * an older command definition still gets a clear "log in once" reply
+ * rather than a broken one.
+ */
+export async function findOrCreateUser(db, { login, twitchId, displayName }) {
+  const existing = await findUser(db, login);
+  if (existing || !twitchId) return existing;
+
+  // ON CONFLICT covers the race where two commands arrive together, and
+  // also the case where the id exists under an old login (a rename):
+  // the row is refreshed rather than duplicated.
+  await db
+    .prepare(
+      `INSERT INTO users (twitch_id, twitch_login, display_name, created_at, updated_at)
+       VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+       ON CONFLICT(twitch_id) DO UPDATE SET
+         twitch_login = excluded.twitch_login,
+         display_name = excluded.display_name,
+         updated_at = CURRENT_TIMESTAMP`
+    )
+    .bind(twitchId, login, displayName || login)
+    .run();
+
+  return findUser(db, login);
 }
 
 /** The EastCoin account for a Twitch login, or null if they've never logged in. */
