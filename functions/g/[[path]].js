@@ -302,10 +302,11 @@ export async function onRequestGet(context) {
 
   const market = await loadMarket(db, path);
   if (!market) {
-    // A static file under /g/ (the original mockup at /g/example) still
-    // serves; only a path that is neither a game nor a file is a miss.
-    const asset = await context.next();
-    return asset.status === 404 ? html(notFound(path), 404) : asset;
+    // A game-shaped path that names no game is a miss. Anything else is
+    // handed to the static files (the original mockup at /g/example);
+    // Pages answers an unknown one with the shell, which is fine.
+    if (parseSlug(path) || /^mkt_/.test(path)) return html(notFound(path), 404);
+    return context.next();
   }
 
   const [picks, ops] = await Promise.all([loadPicks(db, market.id), loadOps(db, market.id)]);
