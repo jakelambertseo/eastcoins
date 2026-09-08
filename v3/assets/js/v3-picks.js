@@ -582,8 +582,10 @@
     if (Number.isNaN(d.getTime())) return "Unknown day";
     const today = new Date();
     const yesterday = new Date(today.getTime() - 864e5);
+    const tomorrow = new Date(today.getTime() + 864e5);
     if (d.toDateString() === today.toDateString()) return "Today";
     if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
+    if (d.toDateString() === tomorrow.toDateString()) return "Tomorrow";
     return d.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" });
   }
 
@@ -598,7 +600,11 @@
 
   function ticketsView() {
     const wrap = document.createDocumentFragment();
-    const picks = local.myPicks.slice().sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+    // Grouped by the day the game is played, latest day first — so what
+    // is still to come sits on top and what is done reads down from
+    // today. Within a day, by kickoff.
+    const gameTime = (p) => String(p.market?.startsAt || p.createdAt || "");
+    const picks = local.myPicks.slice().sort((a, b) => gameTime(b).localeCompare(gameTime(a)));
 
     if (!local.authed) {
       wrap.append(emptyNote("Log in to see your picks", "Your picks and payouts show here once you're logged in with Twitch."));
@@ -609,8 +615,25 @@
       return wrap;
     }
 
-    const grid = el("div", "ticketgrid");
+    let grid = null;
+    let lastDay = "";
     for (const p of picks) {
+      const day = dayLabel(gameTime(p));
+      if (day !== lastDay) {
+        lastDay = day;
+        const inDay = picks.filter((x) => dayLabel(gameTime(x)) === day);
+        const settledNet = inDay.filter((x) => x.status === "WON" || x.status === "LOST").reduce((n, x) => n + Number(x.profit || 0), 0);
+        const open = inDay.filter((x) => x.status === "ACTIVE").length;
+        const header = el("div", "historyday");
+        header.append(el("strong", null, day));
+        const right = el("span", `nums ${settledNet > 0 ? "up" : settledNet < 0 ? "down" : ""}`);
+        if (open && open === inDay.length) right.textContent = `${open} open`;
+        else right.append(zc(settledNet, { sign: true }), document.createTextNode(open ? ` · ${open} open` : ""));
+        header.append(right);
+        wrap.append(header);
+        grid = el("div", "ticketgrid");
+        wrap.append(grid);
+      }
       const status = { ACTIVE: "pending", WON: "won", LOST: "lost", REFUNDED: "refunded" }[p.status] || "pending";
       const card = el("article", `pickticket ${status}`);
 
@@ -648,7 +671,6 @@
       card.append(head, grid3, el("div", "pickticket-foot", foot));
       grid.append(card);
     }
-    wrap.append(grid);
     return wrap;
   }
 

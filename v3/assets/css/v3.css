@@ -1797,6 +1797,9 @@ body.watch-on .playerframe{
 .historyday strong{font-family:var(--display);font-weight:700;font-size:.92rem;letter-spacing:-.01em}
 .historyday span{font-weight:800;font-size:.82rem;color:var(--muted)}
 .historyday span.up{color:var(--green)} .historyday span.down{color:var(--red)}
+.historyday span .zc-amount{gap:4px}
+.ticketgrid+.historyday{margin-top:18px}
+.ticketgrid{margin-bottom:4px}
 
 /* ---------------------------------------------------------------- catJAM, the full treatment
    Only while a !rasputin block is playing. */
