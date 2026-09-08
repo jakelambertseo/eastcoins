@@ -417,6 +417,21 @@
     return img;
   }
 
+  /**
+   * The video id in whatever was typed, or "" if it looks like a search.
+   *
+   * Covers every youtube.com / youtu.be / shorts shape through the shared
+   * parser, plus a bare id pasted on its own — which the parser does not
+   * claim, since in isolation eleven characters could be anything.
+   */
+  function pastedVideoId(raw) {
+    const text = String(raw || "").trim();
+    if (!text) return "";
+    const parsed = window.EastcoinYouTube?.extractVideo?.(text)?.id || "";
+    if (parsed) return parsed;
+    return /^[A-Za-z0-9_-]{11}$/.test(text) ? text : "";
+  }
+
   function timeAgo(timestamp) {
     const seconds = Math.max(0, Math.floor((Date.now() - Number(timestamp || 0)) / 1000));
     if (seconds < 60) return "just now";
@@ -467,7 +482,7 @@
 
       // A pasted link never needs the search API — pull the id straight
       // out of it and queue it, which also works when search has no key.
-      const pasted = window.EastcoinYouTube?.extractVideo?.(raw)?.id || "";
+      const pasted = pastedVideoId(raw);
       if (pasted) {
         addVideo(pasted);
         searchResults = [];
@@ -556,7 +571,7 @@
 
         // A pasted link resolves locally, so it never waits on the timer
         // and never spends a search.
-        if (window.EastcoinYouTube?.extractVideo?.(trimmed)?.id) {
+        if (pastedVideoId(trimmed)) {
           searchDebounce = window.setTimeout(() => runSearch(trimmed), 150);
           return;
         }
@@ -850,6 +865,29 @@
       root.append(shellEl);
     }
 
+    /**
+   * Who is currently voting to skip.
+   *
+   * The room only names people it has verified through Twitch, so the
+   * count and the list can disagree — anyone logged out is real but
+   * anonymous. Saying "and 2 others" is honest about that rather than
+   * quietly under-reporting.
+   */
+    function skipVoterTip(state) {
+      const total = Number(state?.skipVotes || 0);
+      if (!total) return "Nobody has voted to skip yet";
+
+      const named = (state?.skipVoterNames || []).filter(Boolean);
+      const others = Math.max(0, total - named.length);
+
+      if (!named.length) {
+        return `${total} vote${total === 1 ? "" : "s"} to skip, nobody logged in`;
+      }
+      const list = named.join(", ");
+      if (!others) return `Voted to skip: ${list}`;
+      return `Voted to skip: ${list} and ${others} other${others === 1 ? "" : "s"}`;
+    }
+
     function renderSide(state) {
       const side = refs.side;
       if (!side) return;
@@ -873,6 +911,7 @@
 
         const vote = el("button", "watchbtn", `Vote skip (${state.skipVotes}/${state.skipThreshold})`);
         vote.type = "button";
+        vote.title = skipVoterTip(state);
         vote.addEventListener("click", () => send({ type: "skip-vote" }));
         actions.append(vote);
 

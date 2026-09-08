@@ -998,6 +998,26 @@ export class MusicRoom extends DurableObject {
     return true;
   }
 
+  /**
+   * Who has voted to skip, by name.
+   *
+   * Verified Twitch logins only, the same rule the listener roster uses.
+   * A guest's name is whatever their client claimed, and putting an
+   * unverified string next to "voted to skip" would let anyone appear to
+   * have done it. skipVotes still counts everyone, so the caller can say
+   * how many are unaccounted for.
+   */
+  skipVoterNames() {
+    const names = [];
+    for (const session of this.sessions.values()) {
+      if (!session.verifiedLogin) continue;
+      if (!this.state.skipVoters.includes(session.clientId)) continue;
+      names.push(this.safeName(session.name));
+      if (names.length >= 20) break;
+    }
+    return names;
+  }
+
   listenerNames() {
     const seenLogins = new Set();
     const names = [];
@@ -1020,6 +1040,7 @@ export class MusicRoom extends DurableObject {
       listeners,
       listenerNames: this.listenerNames(),
       skipVotes: this.state.skipVoters.length,
+      skipVoterNames: this.skipVoterNames(),
       skipThreshold: skipThresholdFor(listeners),
       notice: this.state.notice || null
     };
