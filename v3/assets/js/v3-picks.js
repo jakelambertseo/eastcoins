@@ -28,6 +28,10 @@
     wallet: null,
     ticket: null,
     myPicks: [],
+    leaderboard: [],
+    communityLedger: [],
+    season: null,
+    login: "",
     config: {},
     authed: false
   };
@@ -68,6 +72,10 @@
 
       local.markets = Array.isArray(payload.markets) ? payload.markets : [];
       local.myPicks = Array.isArray(payload.myPicks) ? payload.myPicks : [];
+      local.leaderboard = Array.isArray(payload.leaderboard) ? payload.leaderboard : [];
+      local.communityLedger = Array.isArray(payload.communityLedger) ? payload.communityLedger : [];
+      local.season = payload.season || null;
+      local.login = String(payload.session?.user?.login || "").toLowerCase();
       local.wallet = payload.session?.wallet || null;
       local.authed = Boolean(payload.session?.authenticated);
       local.config = payload.config || {};
@@ -103,45 +111,6 @@
       return { ok: false, message: "Couldn't reach the server — nothing was charged." };
     }
   }
-
-  /* ---------------------------------------------------------- demo rows */
-
-  const DEMO_TICKETS = [
-    { team: "49ers", opp: "Rams", code: "SF", stake: 100, line: -150, status: "pending", foot: "Kicks off 4:25 PM · line locked when the market opened" },
-    { team: "Chiefs", opp: "Broncos", code: "KC", stake: 40, line: -220, status: "pending", foot: "Kicks off Mon 7:15 PM · line locked when the market opened" },
-    { team: "Ravens", opp: "Bengals", code: "BAL", stake: 60, line: 130, status: "won", foot: "Ravens 24–17 · paid 9 min after full time" },
-    { team: "Packers", opp: "Vikings", code: "GB", stake: 80, line: -105, status: "won", foot: "Packers 31–28 · paid 14 min after full time" },
-    { team: "Cowboys", opp: "Eagles", code: "DAL", stake: 25, line: -110, status: "lost", foot: "Eagles 20–13 · stake lost" },
-    { team: "Ortega", opp: "Volkanovski", code: "UFC", stake: 30, line: 0, status: "refunded", foot: "Bout scratched at weigh-in · full stake returned" }
-  ];
-
-  const DEMO_LEADERS = [
-    { rank: 1, name: "heartlarva", note: "Longest streak · 7", profit: 412, record: "22–14" },
-    { rank: 2, name: "charleskellybirdlaw", note: "EastCoin Picks", profit: 327, record: "19–12" },
-    { rank: 3, name: "jimmytomato", note: "You", profit: 312, record: "14–9", me: true },
-    { rank: 4, name: "zwades", note: "EastCoin Picks", profit: 180, record: "16–15" },
-    { rank: 5, name: "andyreidisapawg", note: "EastCoin Picks", profit: 96, record: "11–10" },
-    { rank: 6, name: "bootypaper", note: "EastCoin Picks", profit: -45, record: "8–13" },
-    { rank: 7, name: "psilocyboone", note: "Backs the dog every time", profit: -118, record: "6–15" }
-  ];
-
-  const DEMO_HISTORY = [
-    { type: "wager", title: "Pick locked · 49ers −150", detail: "49ers vs Rams · NFL · returns 167 if it lands", amount: -100, when: "Today, 3:55 PM" },
-    { type: "wager", title: "Pick locked · Chiefs −220", detail: "Chiefs vs Broncos · NFL · returns 59 if it lands", amount: -40, when: "Today, 3:51 PM" },
-    { type: "payout", title: "Won · Packers −105", detail: "Packers 31–28 Vikings · settled from final score", amount: 157, when: "Yesterday, 10:41 PM" },
-    { type: "wager", title: "Pick locked · Packers −105", detail: "Packers vs Vikings · NFL", amount: -80, when: "Yesterday, 7:32 PM" },
-    { type: "payout", title: "Won · Ravens +130", detail: "Ravens 24–17 Bengals · settled from final score", amount: 138, when: "Sun, 7:48 PM" },
-    { type: "refund", title: "Refunded · Ortega vs Volkanovski", detail: "Bout scratched at weigh-in · no action", amount: 30, when: "Sat, 11:02 PM" }
-  ];
-
-  const DEMO_LEDGER = [
-    { user: "heartlarva", pick: "49ers", opp: "Rams", league: "NFL", stake: 100, net: null, status: "pending", when: "3:58 PM" },
-    { user: "jimmytomato", pick: "49ers", opp: "Rams", league: "NFL", stake: 100, net: null, status: "pending", when: "3:55 PM", me: true },
-    { user: "psilocyboone", pick: "Rams", opp: "49ers", league: "NFL", stake: 60, net: null, status: "pending", when: "3:52 PM" },
-    { user: "charleskellybirdlaw", pick: "Ravens", opp: "Bengals", league: "NFL", stake: 80, net: 104, status: "won", when: "Sun, 7:48 PM" },
-    { user: "zwades", pick: "Bengals", opp: "Ravens", league: "NFL", stake: 50, net: -50, status: "lost", when: "Sun, 7:48 PM" },
-    { user: "bootypaper", pick: "Ortega", opp: "Volkanovski", league: "UFC", stake: 30, net: 0, status: "refunded", when: "Sat, 11:02 PM" }
-  ];
 
   /* ---------------------------------------------------------- helpers */
 
@@ -484,42 +453,69 @@
 
   /* ---------------------------------------------------------- demo views */
 
-  function demoBadge() {
-    const strip = el("div", "demo-strip");
-    strip.append(el("b", null, "Example"), el("span", null,
-      "Demo data — real picks appear here once wagering is switched on."));
-    return strip;
+  /* ---------------------------------------------------------- real views
+
+     Every tab reads what bootstrap returns. Nothing here is invented:
+     an empty tab says so, and says when it will stop being empty. */
+
+  function emptyNote(strong, text) {
+    const box = el("div", "empty");
+    box.append(el("strong", null, strong), el("p", null, text));
+    return box;
+  }
+
+  function sideName(pick, side) {
+    const s = side || pick.selection;
+    return s === "home" ? teamName(pick.market?.home) : teamName(pick.market?.away);
+  }
+
+  function oppName(pick) {
+    return pick.selection === "home" ? teamName(pick.market?.away) : teamName(pick.market?.home);
+  }
+
+  function whenLabel(iso) {
+    const raw = iso && !/[TZ]/.test(iso) ? iso.replace(" ", "T") + "Z" : iso;
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return "";
+    const today = new Date().toDateString() === d.toDateString();
+    const time = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    return today ? `Today, ${time}` : `${d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}, ${time}`;
   }
 
   function ticketsView() {
     const wrap = document.createDocumentFragment();
-    wrap.append(demoBadge());
-    const grid = el("div", "ticketgrid");
+    const picks = local.myPicks.slice().sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
 
-    for (const t of DEMO_TICKETS) {
-      const card = el("article", `pickticket ${t.status}`);
+    if (!local.authed) {
+      wrap.append(emptyNote("Log in to see your picks", "Your picks and payouts show here once you're logged in with Twitch."));
+      return wrap;
+    }
+    if (!picks.length) {
+      wrap.append(emptyNote("No picks yet", "Anything you lock in — from here or with !pick in chat — shows up here with what happened to it."));
+      return wrap;
+    }
+
+    const grid = el("div", "ticketgrid");
+    for (const p of picks) {
+      const status = { ACTIVE: "pending", WON: "won", LOST: "lost", REFUNDED: "refunded" }[p.status] || "pending";
+      const card = el("article", `pickticket ${status}`);
 
       const head = el("div", "pickticket-head");
       const teamWrap = el("div", "pickticket-team");
-      teamWrap.append(el("span", "pickticket-crest", t.code));
+      teamWrap.append(el("span", "pickticket-crest", initials(sideName(p))));
       const names = el("span");
-      names.append(el("strong", null, t.team), el("small", null, `vs ${t.opp}`));
+      names.append(el("strong", null, sideName(p)), el("small", null, `vs ${oppName(p)}`));
       teamWrap.append(names);
-      head.append(teamWrap, el("span", "pickticket-status", t.status));
+      head.append(teamWrap, el("span", "pickticket-status", status));
 
       const grid3 = el("div", "pickticket-grid");
-      const ret =
-        t.status === "won" ? totalReturn(t.stake, t.line)
-          : t.status === "lost" ? 0
-            : t.status === "refunded" ? t.stake
-              : totalReturn(t.stake, t.line);
-
+      const line = Number(p.oddsLocked ?? p.odds ?? 0);
+      const ret = status === "won" ? Number(p.payout) : status === "lost" ? 0
+        : status === "refunded" ? Number(p.wager) : totalReturn(p.wager, line);
       const cells = [
-        ["Wager", zc(t.stake), ""],
-        [t.status === "pending" ? "Locked odds" : "Final",
-          el("span", "nums", t.line ? formatLine(t.line) : "No action"), ""],
-        [t.status === "pending" ? "Potential" : t.status === "won" ? "Payout"
-          : t.status === "refunded" ? "Refund" : "Return", zc(ret), "return"]
+        ["Wager", zc(p.wager)],
+        [status === "pending" ? "Locked odds" : "Final", el("span", "nums", line ? formatLine(line) : "—")],
+        [status === "pending" ? "Potential" : status === "won" ? "Payout" : status === "refunded" ? "Refund" : "Return", zc(ret)]
       ];
       cells.forEach(([k, v], i) => {
         const cell = el("div", `pickticket-stat${i === 2 ? " return" : ""}`);
@@ -530,7 +526,12 @@
         grid3.append(cell);
       });
 
-      card.append(head, grid3, el("div", "pickticket-foot", t.foot));
+      const foot = status === "pending"
+        ? `${p.market?.state === "OPEN" ? "Kicks off" : "In play since"} ${whenLabel(p.market?.startsAt)} · line locked when the market opened`
+        : status === "won" ? `Won · paid ${whenLabel(p.settledAt)}`
+          : status === "lost" ? `Lost · settled ${whenLabel(p.settledAt)}`
+            : `Refunded · ${whenLabel(p.settledAt)}`;
+      card.append(head, grid3, el("div", "pickticket-foot", foot));
       grid.append(card);
     }
     wrap.append(grid);
@@ -539,26 +540,29 @@
 
   function leaderboardView() {
     const wrap = document.createDocumentFragment();
-    wrap.append(demoBadge());
-    const card = el("div", "tablecard");
+    const rows = local.leaderboard;
 
+    if (!rows.length) {
+      wrap.append(emptyNote("No standings yet", "The board fills in as games settle. First NFL markets open 30 minutes before each kick-off."));
+      return wrap;
+    }
+
+    const card = el("div", "tablecard");
     const head = el("div", "trow thead");
-    ["Rank", "User", "Picks profit", "Record"].forEach((h, i) => {
-      const c = el("span", i > 1 ? "right" : null, h);
-      head.append(c);
-    });
+    ["Rank", "User", "Picks profit", "Record"].forEach((label, i) => head.append(el("span", i > 1 ? "right" : null, label)));
     card.append(head);
 
-    for (const row of DEMO_LEADERS) {
-      const line = el("div", `trow${row.me ? " me" : ""}`);
+    for (const row of rows) {
+      const me = local.login && row.user?.login === local.login;
+      const line = el("div", `trow${me ? " me" : ""}`);
       line.append(el("span", "trank", `#${row.rank}`));
 
       const user = el("div", "tuser");
-      user.append(el("span", "tavatar", initials(row.name)));
+      user.append(el("span", "tavatar", initials(row.user?.displayName || row.user?.login)));
       const copy = el("span");
       copy.append(
-        el("strong", null, row.rank === 1 ? `${row.name} 👑` : row.name),
-        el("small", null, row.note)
+        el("strong", null, row.rank === 1 ? `${row.user?.displayName} 👑` : row.user?.displayName),
+        el("small", null, me ? "You" : row.accuracy !== null ? `${row.accuracy}% right` : "")
       );
       user.append(copy);
       line.append(user);
@@ -574,11 +578,41 @@
 
   function historyView() {
     const wrap = document.createDocumentFragment();
-    wrap.append(demoBadge());
-    const list = el("div", "historylist");
-    const icons = { wager: "↗", payout: "✓", refund: "↩" };
 
-    for (const row of DEMO_HISTORY) {
+    if (!local.authed) {
+      wrap.append(emptyNote("Log in to see your history", "Every stake taken and every payout returned shows here."));
+      return wrap;
+    }
+
+    // Built from the picks themselves: a stake goes out when a pick locks,
+    // and something comes back when it settles. That is the whole story
+    // and it needs no second source to tell it.
+    const entries = [];
+    for (const p of local.myPicks) {
+      const line = Number(p.oddsLocked ?? p.odds ?? 0);
+      const game = `${sideName(p)} vs ${oppName(p)}${p.market?.league ? " · " + p.market.league : ""}`;
+      entries.push({
+        type: "wager", at: p.createdAt, amount: -Number(p.wager),
+        title: `Pick locked · ${sideName(p)} ${formatLine(line)}`,
+        detail: `${game} · returns ${totalReturn(p.wager, line)} if it lands`
+      });
+      if (p.status === "WON") entries.push({ type: "payout", at: p.settledAt, amount: Number(p.payout),
+        title: `Won · ${sideName(p)} ${formatLine(line)}`, detail: `${game} · settled from the final score` });
+      if (p.status === "LOST") entries.push({ type: "loss", at: p.settledAt, amount: 0,
+        title: `Lost · ${sideName(p)} ${formatLine(line)}`, detail: `${game} · stake gone` });
+      if (p.status === "REFUNDED") entries.push({ type: "refund", at: p.settledAt, amount: Number(p.wager),
+        title: `Refunded · ${sideName(p)} vs ${oppName(p)}`, detail: "No action · full stake returned" });
+    }
+    entries.sort((a, b) => String(b.at).localeCompare(String(a.at)));
+
+    if (!entries.length) {
+      wrap.append(emptyNote("Nothing yet", "Lock a pick and it lands here, then again when it settles."));
+      return wrap;
+    }
+
+    const list = el("div", "historylist");
+    const icons = { wager: "↗", payout: "✓", loss: "✕", refund: "↩" };
+    for (const row of entries) {
       const item = el("article", `historyrow ${row.type}`);
       item.append(el("span", "historyicon", icons[row.type] || "•"));
       const copy = el("span", "historycopy");
@@ -586,7 +620,7 @@
       const amount = el("span", "historyamount");
       const strong = el("strong");
       strong.append(zc(row.amount, { sign: true }));
-      amount.append(strong, el("small", null, row.when));
+      amount.append(strong, el("small", null, whenLabel(row.at)));
       item.append(copy, amount);
       list.append(item);
     }
@@ -596,39 +630,48 @@
 
   function ledgerView() {
     const wrap = document.createDocumentFragment();
-    wrap.append(demoBadge());
-    const card = el("div", "tablecard ledger");
+    const rows = local.communityLedger;
 
-    for (const row of DEMO_LEDGER) {
-      const line = el("div", `trow ledgerrow ${row.status}${row.me ? " me" : ""}`);
+    if (!rows.length) {
+      wrap.append(emptyNote("No picks yet", "Every pick anyone makes shows here — who, which side, how much, and what came of it."));
+      return wrap;
+    }
+
+    const card = el("div", "tablecard ledger");
+    for (const row of rows) {
+      const status = { ACTIVE: "pending", WON: "won", LOST: "lost", REFUNDED: "refunded" }[row.status] || "pending";
+      const me = local.login && row.user?.login === local.login;
+      const line = el("div", `trow ledgerrow ${status}${me ? " me" : ""}`);
 
       const user = el("div", "tuser");
-      user.append(el("span", "tavatar", initials(row.user)));
+      user.append(el("span", "tavatar", initials(row.user?.displayName || row.user?.login)));
       const copy = el("span");
-      copy.append(el("strong", null, row.user), el("small", null, `@${row.user}`));
+      copy.append(el("strong", null, row.user?.displayName || row.user?.login), el("small", null, `@${row.user?.login}`));
       user.append(copy);
 
       const pick = el("div", "tpick");
-      pick.append(el("strong", null, row.pick), el("small", null, `vs ${row.opp} · ${row.league}`));
+      pick.append(el("strong", null, sideName(row)), el("small", null, `vs ${oppName(row)}${row.market?.league ? " · " + row.market.league : ""}`));
 
       const stake = el("div", "tstat right");
       stake.append(el("span", null, "Wager"));
       const sv = el("strong");
-      sv.append(zc(row.stake));
+      sv.append(zc(row.wager));
       stake.append(sv);
 
-      const net = el("div", `tstat right ${row.net > 0 ? "up" : row.net < 0 ? "down" : ""}`);
-      net.append(el("span", null, row.net === null ? "Net" : "Net"));
+      const settled = status !== "pending";
+      const net = settled ? Number(row.profit) : null;
+      const netEl = el("div", `tstat right ${net > 0 ? "up" : net < 0 ? "down" : ""}`);
+      netEl.append(el("span", null, "Net"));
       const nv = el("strong");
-      if (row.net === null) nv.textContent = "Open";
-      else nv.append(zc(row.net, { sign: true }));
-      net.append(nv);
+      if (net === null) nv.textContent = "Open";
+      else nv.append(zc(net, { sign: true }));
+      netEl.append(nv);
 
       const result = el("div", "tresult right");
-      const label = { pending: "Bet open", won: "Won", lost: "Lost", refunded: "Refund" }[row.status];
-      result.append(el("span", "tstatus", label), el("small", null, row.when));
+      const label = { pending: "Bet open", won: "Won", lost: "Lost", refunded: "Refund" }[status];
+      result.append(el("span", "tstatus", label), el("small", null, whenLabel(settled ? row.settledAt : row.createdAt)));
 
-      line.append(user, pick, stake, net, result);
+      line.append(user, pick, stake, netEl, result);
       card.append(line);
     }
     wrap.append(card);
@@ -648,12 +691,22 @@
   function summaryStrip() {
     const strip = el("div", "summarystrip");
     const balance = Number(local.wallet?.balance);
+    const season = local.season || {};
+    const settled = Number(season.wins || 0) + Number(season.losses || 0);
+    const year = season.name || season.id || "Season";
+
     const cards = [
       ["ZCoins wallet", Number.isFinite(balance) ? balance.toLocaleString() : "—",
         local.wallet?.connected ? "Live from StreamElements" : "Log in with Twitch", true],
-      ["2026 Picks profit", "+312", "Wagers vs settled returns"],
-      ["Record", "14–9", "61% of settled picks"],
-      ["Picks rank", "#3 of 24", "Ranked by Picks profit"]
+      [`${year} Picks profit`,
+        local.authed ? `${season.profit > 0 ? "+" : season.profit < 0 ? "\u2212" : ""}${Math.abs(Number(season.profit || 0)).toLocaleString()}` : "—",
+        settled ? "Wagers vs settled returns" : "Nothing settled yet"],
+      ["Record",
+        local.authed ? `${season.wins || 0}\u2013${season.losses || 0}` : "—",
+        settled ? `${season.accuracy}% of settled picks` : "First game decides it"],
+      ["Picks rank",
+        local.authed && season.rank ? `#${season.rank} of ${season.players}` : "—",
+        season.rank ? "Ranked by Picks profit" : "Unranked until a pick settles"]
     ];
     for (const [k, v, note, wallet] of cards) {
       const card = el("article", `summarycard${wallet ? " wallet" : ""}`);

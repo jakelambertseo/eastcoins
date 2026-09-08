@@ -443,6 +443,7 @@ async function getMyPicks(
            p.final_multiplier,
            p.payout,
            p.profit,
+           p.odds_locked,
            p.created_at,
            p.settled_at,
            m.sport,
@@ -501,6 +502,8 @@ async function getMyPicks(
         Number(
           row.profit || 0
         ),
+      oddsLocked:
+        row.odds_locked == null ? null : Number(row.odds_locked),
       createdAt:
         row.created_at,
       settledAt:
@@ -570,158 +573,70 @@ async function getSeason(
   db,
   userId
 ) {
-  const season =
-    await activeSeason(db);
+  const season = await activeSeason(db);
+  if (!season) return null;
 
-  if (!season) {
-    return {
-      id: null,
-      name: null,
-      wins: 0,
-      losses: 0,
-      profit: 0,
-      accuracy: null,
-      rank: null,
-      rankTitle: ""
-    };
-  }
-
-  if (!userId) {
-    return {
-      id: season.id,
-      name: season.name,
-      wins: 0,
-      losses: 0,
-      profit: 0,
-      accuracy: null,
-      rank: null,
-      rankTitle: ""
-    };
-  }
-
-  const stats =
-    await db
-      .prepare(
-        `SELECT
-           wins,
-           losses,
-           picks_profit
-         FROM user_season_stats
-         WHERE
-           user_id = ?
-           AND season_id = ?
-         LIMIT 1`
-      )
-      .bind(
-        userId,
-        season.id
-      )
-      .first();
-
-  const wins =
-    Number(
-      stats?.wins || 0
-    );
-
-  const losses =
-    Number(
-      stats?.losses || 0
-    );
+  // The signed-in person's line in the same standings the leaderboard
+  // shows, so the two can never disagree.
+  const rows = await getLeaderboard(db);
+  const mine = userId ? rows.find((r) => r.user.id === String(userId)) : null;
 
   return {
-    id: season.id,
-    name: season.name,
-    wins,
-    losses,
-    profit:
-      Number(
-        stats?.picks_profit ||
-        0
-      ),
-    accuracy:
-      wins + losses
-        ? Math.round(
-            (
-              wins /
-              (wins + losses)
-            ) * 100
-          )
-        : null,
-    rank: null,
-    rankTitle: ""
+    id: String(season.id),
+    name: String(season.name || season.id),
+    wins: mine ? mine.wins : 0,
+    losses: mine ? mine.losses : 0,
+    profit: mine ? mine.profit : 0,
+    accuracy: mine ? mine.accuracy : null,
+    rank: mine ? mine.rank : null,
+    rankTitle: mine ? `#${mine.rank} of ${rows.length}` : "",
+    players: rows.length
   };
 }
 
 async function getLeaderboard(db) {
-  const season =
-    await activeSeason(db);
-
+  // Standings come straight from settled picks. user_season_stats was
+  // meant to hold this but nothing ever wrote it, so every leaderboard
+  // and every record read zero no matter what had been won.
+  const season = await activeSeason(db);
   if (!season) return [];
-
-  const result =
-    await db
-      .prepare(
-        `SELECT
-           u.twitch_id,
-           u.twitch_login,
-           u.display_name,
-           u.avatar_url,
-           s.wins,
-           s.losses,
-           s.picks_profit
-         FROM user_season_stats s
-         JOIN users u
-           ON u.twitch_id = s.user_id
-         WHERE s.season_id = ?
-         ORDER BY
-           s.picks_profit DESC,
-           s.wins DESC,
-           u.twitch_login ASC
-         LIMIT 100`
-      )
-      .bind(season.id)
-      .all();
-
-  return (
-    result.results || []
-  ).map(
-    (row, index) => ({
-      rank:
-        index + 1,
-      profit:
-        Number(
-          row.picks_profit ||
-          0
-        ),
-      wins:
-        Number(
-          row.wins || 0
-        ),
-      losses:
-        Number(
-          row.losses || 0
-        ),
+  const result = await db.prepare(`SELECT p.user_id,
+            u.twitch_login, u.display_name, u.avatar_url,
+            SUM(CASE WHEN p.status = 'WON'  THEN 1 ELSE 0 END) AS wins,
+            SUM(CASE WHEN p.status = 'LOST' THEN 1 ELSE 0 END) AS losses,
+            SUM(CASE WHEN p.status IN ('WON','LOST') THEN p.profit ELSE 0 END) AS profit
+       FROM picks p
+       JOIN users u   ON u.twitch_id = p.user_id
+       JOIN markets m ON m.id = p.market_id
+      WHERE m.season_id = ?
+        AND p.status IN ('WON','LOST')
+      GROUP BY p.user_id
+      ORDER BY profit DESC, wins DESC, u.twitch_login ASC
+      LIMIT 100`).bind(season.id).all();
+  return (result.results || []).map((row, index) => {
+    const wins = Number(row.wins || 0);
+    const losses = Number(row.losses || 0);
+    const profit = Number(row.profit || 0);
+    return {
+      rank: index + 1,
+      profit,
+      wins,
+      losses,
+      record: `${wins}\u2013${losses}`,
+      accuracy: wins + losses ? Math.round(100 * wins / (wins + losses)) : null,
       user: {
-        id:
-          String(
-            row.twitch_id
-          ),
-        login:
-          String(
-            row.twitch_login
-          ),
-        displayName:
-          String(
-            row.display_name
-          ),
-        profileImageUrl:
-          String(
-            row.avatar_url ||
-            ""
-          )
-      }
-    })
-  );
+        id: String(row.user_id),
+        login: String(row.twitch_login),
+        displayName: String(row.display_name || row.twitch_login),
+        profileImageUrl: String(row.avatar_url || "")
+      },
+      // Older readers of this payload.
+      twitchId: String(row.user_id),
+      twitchLogin: String(row.twitch_login),
+      displayName: String(row.display_name || row.twitch_login),
+      avatarUrl: String(row.avatar_url || "")
+    };
+  });
 }
 
 function pickedName(row) {

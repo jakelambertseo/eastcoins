@@ -18,7 +18,9 @@
    twice cannot pay twice.
    ============================================================ */
 
-import { composeClosed, composeSettled } from "./_announce.js";
+import { composeOpen, composeClosed, composeSettled } from "./_announce.js";
+import { autoOpenMarkets } from "./_autoopen.js";
+import { slugFor, etDate } from "./_slug.js";
 import {
   ADMIN_ALLOWLIST,
   getSessionUser,
@@ -336,6 +338,9 @@ async function settleMarket(env, db, market, boards) {
     winnerName: outcome === "VOID"
       ? null
       : outcome === "home" ? market.home_name : market.away_name,
+    // For the link in chat: one game gets its page, a slate gets the day.
+    slug: slugFor(market),
+    day: etDate(market.starts_at),
     awayScore: result.ourAway ?? null,
     homeScore: result.ourHome ?? null,
     ...summary
@@ -374,6 +379,22 @@ export async function onRequestPost(context) {
   }
   if (!walletWritesEnabled(context.env)) {
     return fail("WALLET_NOT_CONFIGURED", "ZCoin transfers aren't configured.", 503);
+  }
+
+  // Before locking or settling anything: open whatever is due. Same tick,
+  // same schedule, nothing extra to deploy. Idempotent, so an admin
+  // pressing Run settlement by hand cannot double-open a game.
+  let opened = [];
+  try {
+    opened = await autoOpenMarkets(context.env, db);
+  } catch (error) {
+    // Never let the opener take settlement down with it: a payout that
+    // is due matters more than a market that is not open yet.
+    console.error("auto-open threw", error);
+  }
+  if (opened.length) {
+    const said = await sayInChat(context.env, composeOpen(opened));
+    if (!said.ok) console.error(`Picks: couldn't announce ${opened.length} auto-opened market(s): ${said.error}`);
   }
 
   // A market past its start time is no longer open. wagers.js already
@@ -465,6 +486,7 @@ export async function onRequestPost(context) {
     ok: true,
     by: auth.by,
     announced: settledMessage || null,
+    opened: opened.map((m) => `${m.away_name} at ${m.home_name}`),
     locked: Number(locked?.meta?.changes || 0),
     closed: closingRows.map((m) => `${m.away_name} at ${m.home_name}`),
     examined: results.length,

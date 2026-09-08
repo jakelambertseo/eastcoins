@@ -55,6 +55,23 @@
 > the money path — shared by the website and the chat command so the two
 > cannot disagree. `PICKS_OPEN_WAGERING=1` opens betting beyond the
 > allowlist.
+>
+> **Settlement grades from The Odds API scores, not ESPN** — ESPN's site
+> API returns 403 to Cloudflare's IP range. `settle.js` also runs
+> `_autoopen.js` every tick: NFL games due within 30 minutes get a market
+> with the median h2h line and one slate-wide chat message. The schedule
+> is cached six hours; a price is fetched only when a game is due, so
+> section 9.5's quota concern is handled by design rather than by a cap.
+>
+> **Every market has a page** at `/g/<away>-<home>-<YYYYMMDD>` (also
+> `/g/<YYYYMMDD>` for a day and `/g/mkt_…` by id), rendered on the server
+> by `functions/g/[[path]].js` from D1. `_slug.js` is the one place the
+> name rule lives; chat links and the page must keep agreeing. `g/example.html`
+> is the original static mockup, kept for the explainer only.
+>
+> **Every bot line leads with `Zcoin`** (the 7TV emote code) via `BADGE` in
+> `bot/_bot.js`; the leaderboard and season line aggregate from `picks`
+> because `user_season_stats` is never written.
 
 > **Purpose:** This file is the authoritative coding-agent handoff for the current EastCoin production site. Read it before making changes.
 >

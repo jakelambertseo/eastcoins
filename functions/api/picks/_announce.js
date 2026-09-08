@@ -8,6 +8,8 @@
    kickoffs produce one line, not ten.
    ============================================================ */
 
+import { BADGE } from "./bot/_bot.js";
+
 const SPORT_EMOJI = {
   "american-football": "\u{1F3C8}",
   baseball: "\u{26BE}",
@@ -47,11 +49,11 @@ export function composeOpen(markets) {
       `${m.home_name} ${formatLine(m.home_odds_locked)}`
     );
     const closes = markets.length === 1 ? ` \u00b7 closes ${timeOf(markets[0].starts_at)}` : "";
-    return `${lead}Betting open \u2014 ${each.join(" \u00b7 ")}${closes} \u00b7 !pick <amount> <team>`;
+    return `${BADGE} ${lead}Betting open \u2014 ${each.join(" \u00b7 ")}${closes} \u00b7 !pick <amount> <team>`;
   }
 
   return (
-    `${lead}${markets.length} games open for picks \u2014 !odds <team> for a line, ` +
+    `${BADGE} ${lead}${markets.length} games open for picks \u2014 !odds <team> for a line, ` +
     `!pick <amount> <team> to bet`
   );
 }
@@ -74,10 +76,10 @@ export function composeClosed(markets, totals = {}) {
 
   if (markets.length <= 2) {
     const each = markets.map((m) => `${m.away_name} at ${m.home_name}`);
-    return `${lead}Betting closed \u2014 ${each.join(" \u00b7 ")}${riding}. Good luck.`;
+    return `${BADGE} ${lead}Betting closed \u2014 ${each.join(" \u00b7 ")}${riding}. Good luck.`;
   }
 
-  return `${lead}Betting closed on ${markets.length} games${riding}. !mypicks for yours.`;
+  return `${BADGE} ${lead}Betting closed on ${markets.length} games${riding}. !mypicks for yours.`;
 }
 
 /**
@@ -106,19 +108,23 @@ export function composeSettled(entries) {
   if (done.length === 1) {
     const e = done[0];
     if (e.outcome === "VOID") {
-      return `${lead}${e.away} at ${e.home} voided — ` +
-        `${e.refunded || 0} stake${e.refunded === 1 ? "" : "s"} refunded.${trouble}`;
+      const vlink = e.slug ? ` · eastcoin.vip/g/${e.slug}` : "";
+      return `${BADGE} ${lead}${e.away} at ${e.home} voided — ` +
+        `${e.refunded || 0} stake${e.refunded === 1 ? "" : "s"} refunded${vlink}.${trouble}`;
     }
     const score = Number.isFinite(e.awayScore) && Number.isFinite(e.homeScore)
       ? ` ${Math.max(e.awayScore, e.homeScore)}-${Math.min(e.awayScore, e.homeScore)}` : "";
     const payout = won
       ? `${won} winner${won === 1 ? "" : "s"}, ${paid.toLocaleString()} ZC paid`
       : "no winners";
-    return `${lead}${e.winnerName} win${score} — ${payout}.${trouble} !record for yours.`;
+    const link = e.slug ? ` · eastcoin.vip/g/${e.slug}` : "";
+    return `${BADGE} ${lead}${e.winnerName} win${score} — ${payout}${link}.${trouble} !record for yours.`;
   }
 
+  const day = done.find((e) => e.day)?.day || "";
+  const link = day ? ` · eastcoin.vip/g/${day}` : "";
   return (
-    `${lead}${done.length} games settled · ${won} winner${won === 1 ? "" : "s"}, ` +
-    `${paid.toLocaleString()} ZC paid.${trouble} !record for yours.`
+    `${BADGE} ${lead}${done.length} games settled · ${won} winner${won === 1 ? "" : "s"}, ` +
+    `${paid.toLocaleString()} ZC paid${link}.${trouble} !record for yours.`
   );
 }

@@ -30,8 +30,14 @@
 import { safeEqual } from "../_lib.js";
 
 /** Plain-text chat reply. Truncated to StreamElements' own limit. */
+/* The ZCoin emote, by its chat code. 7TV renders the word; everyone
+   else sees the word, which still reads fine. Every line the bot posts
+   starts with it so Picks traffic stands out from the rest of chat. */
+export const BADGE = "Zcoin";
+
 export function say(message, status = 200) {
-  const body = String(message || "").replace(/\s+/g, " ").trim();
+  const text = String(message || "").replace(/\s+/g, " ").trim();
+  const body = text ? `${BADGE} ${text}` : "";
   const bytes = new TextEncoder().encode(body);
 
   // Trim to 400 BYTES, not characters — an emoji is four of them, and
