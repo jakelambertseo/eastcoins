@@ -27,8 +27,18 @@ export async function onRequestGet(context) {
   const team = /^(all|open|list|games|-)$/i.test(gate.args) ? "" : gate.args;
   if (!team) {
     const n = markets.length;
+    // A short slate fits in one line, so say the lines outright. Times
+    // ride along when there is room for them; a longer slate is a count.
+    if (n <= 4) {
+      const withTime = n <= 2;
+      const each = markets.map((m) =>
+        `${shortTeam(m.away_name)} ${formatLine(m.away_odds_locked)} at ` +
+        `${shortTeam(m.home_name)} ${formatLine(m.home_odds_locked)}${withTime ? timeOf(m.starts_at) : ""}`
+      );
+      return say(`${n === 1 ? "Open" : `${n} open`} — ${each.join(" · ")} · !pick <amount> <team>`);
+    }
     return say(
-      `${n} game${n === 1 ? "" : "s"} open for picks — !odds <team> for a line, ` +
+      `${n} games open for picks — !odds <team> for a line, ` +
       `!pick <amount> <team> to bet.`
     );
   }
@@ -42,15 +52,17 @@ export async function onRequestGet(context) {
   }
 
   const m = found.market;
-  const when = new Date(m.starts_at);
-  const at = Number.isNaN(when.getTime())
-    ? ""
-    : ` · ${when.toLocaleTimeString("en-US", {
-        hour: "numeric", minute: "2-digit", timeZone: "America/Chicago"
-      })} CT`;
-
   return say(
     `${shortTeam(m.away_name)} ${formatLine(m.away_odds_locked)} at ` +
-    `${shortTeam(m.home_name)} ${formatLine(m.home_odds_locked)}${at} · !pick <amount> <team>`
+    `${shortTeam(m.home_name)} ${formatLine(m.home_odds_locked)}${timeOf(m.starts_at)} · !pick <amount> <team>`
   );
+}
+
+/** " · 5:35 PM CT", or nothing when the time is unreadable. */
+function timeOf(startsAt) {
+  const when = new Date(startsAt);
+  if (Number.isNaN(when.getTime())) return "";
+  return ` · ${when.toLocaleTimeString("en-US", {
+    hour: "numeric", minute: "2-digit", timeZone: "America/Chicago"
+  })} CT`;
 }
