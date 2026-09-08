@@ -26,21 +26,17 @@
   ];
   const SORTS = [["", "Default order"], ["popular", "Most popular"], ["rating", "Highest rated"], ["date", "Newest first"]];
 
+  const freshShelf = () => ({ list: "trending", genre: "", sort: "", page: 1, pages: 1, items: [], loading: false, seq: 0 });
+
   const local = {
-    kind: "movie",          // movie | tv
-    list: "trending",
-    genre: "",
-    sort: "",
-    page: 1,
-    pages: 1,
-    items: [],
+    // Two shelves on the page, one per kind, each with its own filters.
+    shelves: { movie: freshShelf(), tv: freshShelf() },
     genres: { movie: [], tv: [] },
     query: "",
     results: null,
     now: null,              // what is playing
     details: null,
     episodes: [],
-    loading: false,
     epsOpen: false,
     hasKey: true
   };
@@ -103,25 +99,29 @@
   function writeUrl() {
     const url = new URL(location.href);
     if (url.searchParams.get("view") !== "screen") return;
-    for (const k of ["t", "id", "s", "e", "kind", "list", "genre", "sort"]) url.searchParams.delete(k);
+    for (const k of ["t", "id", "s", "e", "kind", "list", "genre", "sort", "mlist", "mgenre", "msort", "tlist", "tgenre", "tsort"]) url.searchParams.delete(k);
     if (local.now) {
       url.searchParams.set("t", local.now.type);
       url.searchParams.set("id", String(local.now.id));
       if (local.now.type === "tv") { url.searchParams.set("s", String(local.now.season)); url.searchParams.set("e", String(local.now.episode)); }
     }
-    if (local.kind !== "movie") url.searchParams.set("kind", local.kind);
-    if (local.list !== "trending") url.searchParams.set("list", local.list);
-    if (local.genre) url.searchParams.set("genre", local.genre);
-    if (local.sort) url.searchParams.set("sort", local.sort);
+    for (const [kind, prefix] of [["movie", "m"], ["tv", "t"]]) {
+      const sh = local.shelves[kind];
+      if (sh.list !== "trending") url.searchParams.set(`${prefix}list`, sh.list);
+      if (sh.genre) url.searchParams.set(`${prefix}genre`, sh.genre);
+      if (sh.sort) url.searchParams.set(`${prefix}sort`, sh.sort);
+    }
     history.replaceState(history.state, "", url.pathname + url.search + url.hash);
   }
 
   function readUrl() {
     const p = new URL(location.href).searchParams;
-    local.kind = p.get("kind") === "tv" ? "tv" : "movie";
-    local.list = LISTS.some(([k]) => k === p.get("list")) ? p.get("list") : "trending";
-    local.genre = String(p.get("genre") || "").replace(/[^\d]/g, "");
-    local.sort = SORTS.some(([k]) => k === p.get("sort")) ? p.get("sort") : "";
+    for (const [kind, prefix] of [["movie", "m"], ["tv", "t"]]) {
+      const sh = local.shelves[kind];
+      sh.list = LISTS.some(([k]) => k === p.get(`${prefix}list`)) ? p.get(`${prefix}list`) : "trending";
+      sh.genre = String(p.get(`${prefix}genre`) || "").replace(/[^\d]/g, "");
+      sh.sort = SORTS.some(([k]) => k === p.get(`${prefix}sort`)) ? p.get(`${prefix}sort`) : "";
+    }
     const t = p.get("t");
     const id = Number(p.get("id"));
     if ((t === "movie" || t === "tv") && Number.isInteger(id) && id > 0) {
@@ -292,31 +292,33 @@
 
   /* ---------------------------------------------------------- shelves */
 
-  async function loadShelf({ append = false } = {}) {
+  async function loadShelf(kind, { append = false } = {}) {
     if (!local.hasKey) return;
-    const mine = ++seq;
-    local.loading = true;
-    renderShelfHead();
-    if (!append) { local.page = 1; refs.grid.replaceChildren(); refs.grid.append(skeletons()); }
+    const sh = local.shelves[kind];
+    const r = refs.shelf[kind];
+    const mine = ++sh.seq;
+    sh.loading = true;
+    renderShelfHead(kind);
+    if (!append) { sh.page = 1; r.grid.replaceChildren(); r.grid.append(skeletons()); }
 
-    const q = new URLSearchParams({ type: local.kind, list: local.list, page: String(local.page) });
-    if (local.genre) q.set("genre", local.genre);
-    if (local.sort) q.set("sort", local.sort);
+    const q = new URLSearchParams({ type: kind, list: sh.list, page: String(sh.page) });
+    if (sh.genre) q.set("genre", sh.genre);
+    if (sh.sort) q.set("sort", sh.sort);
     const payload = await getJson(`/api/screen/browse?${q}`);
-    if (mine !== seq) return;
-    local.loading = false;
+    if (mine !== sh.seq || !root.isConnected) return;
+    sh.loading = false;
 
     if (!payload?.ok) {
-      refs.grid.replaceChildren(emptyNote("Couldn't load that shelf", payload?.code === "NO_TMDB_KEY" ? "The server has no TMDB key." : "TMDB didn't answer. Try again in a moment."));
-      refs.more.hidden = true;
+      r.grid.replaceChildren(emptyNote("Couldn't load that shelf", payload?.code === "NO_TMDB_KEY" ? "The server has no TMDB key." : "TMDB didn't answer. Try again in a moment."));
+      r.more.hidden = true;
       return;
     }
-    local.pages = payload.pages;
-    if (!append) { refs.grid.replaceChildren(); local.items = []; }
-    for (const item of payload.results) { local.items.push(item); refs.grid.append(card(item)); }
-    if (!local.items.length) refs.grid.append(emptyNote("Nothing here", "Try another genre or list."));
-    refs.more.hidden = local.page >= local.pages;
-    renderShelfHead();
+    sh.pages = payload.pages;
+    if (!append) { r.grid.replaceChildren(); sh.items = []; }
+    for (const item of payload.results) { sh.items.push(item); r.grid.append(card(item)); }
+    if (!sh.items.length) r.grid.append(emptyNote("Nothing here", "Try another genre or list."));
+    r.more.hidden = sh.page >= sh.pages;
+    renderShelfHead(kind);
   }
 
   function skeletons() {
@@ -331,80 +333,84 @@
     return box;
   }
 
-  function renderShelfHead() {
-    const listName = (LISTS.find(([k]) => k === local.list) || LISTS[0])[1];
-    const genreName = local.genres[local.kind].find((g) => String(g.id) === local.genre)?.name;
-    const sortName = SORTS.find(([k]) => k === local.sort)?.[1];
-    refs.shelfTitle.textContent = genreName ? `${genreName} ${local.kind === "tv" ? "shows" : "movies"}` : `${listName} ${local.kind === "tv" ? "shows" : "movies"}`;
-    refs.shelfNote.textContent = local.sort && sortName ? sortName.toLowerCase() : local.loading ? "loading…" : `${local.items.length} title${local.items.length === 1 ? "" : "s"}`;
+  function renderShelfHead(kind) {
+    const sh = local.shelves[kind];
+    const r = refs.shelf[kind];
+    const listName = (LISTS.find(([k]) => k === sh.list) || LISTS[0])[1];
+    const genreName = local.genres[kind].find((g) => String(g.id) === sh.genre)?.name;
+    const sortName = SORTS.find(([k]) => k === sh.sort)?.[1];
+    r.title.textContent = genreName ? `${genreName} · ${listName.toLowerCase()}` : listName;
+    r.note.textContent = sh.sort && sortName ? sortName.toLowerCase() : sh.loading ? "loading…" : `${sh.items.length} title${sh.items.length === 1 ? "" : "s"}`;
   }
 
-  function renderFilters() {
-    refs.filters.replaceChildren();
+  function renderFilters(kind) {
+    const sh = local.shelves[kind];
+    const r = refs.shelf[kind];
+    r.filters.replaceChildren();
 
-    const kinds = el("div", "sc-seg");
-    for (const [k, label] of [["movie", "Movies"], ["tv", "Shows"]]) {
-      const b = btn(label, `sc-seg-btn${local.kind === k ? " on" : ""}`, () => {
-        if (local.kind === k) return;
-        local.kind = k;
-        local.genre = "";
-        renderFilters();
-        writeUrl();
-        loadShelf();
-      });
-      kinds.append(b);
-    }
-    refs.filters.append(kinds);
+    const apply = () => { renderFilters(kind); writeUrl(); loadShelf(kind); };
 
     const lists = el("div", "sc-chips");
     for (const [k, label] of LISTS) {
-      lists.append(btn(label, `sc-chip${local.list === k && !local.genre && !local.sort ? " on" : ""}`, () => {
-        local.list = k;
-        local.genre = "";
-        local.sort = "";
-        renderFilters();
-        writeUrl();
-        loadShelf();
+      lists.append(btn(label, `sc-chip${sh.list === k ? " on" : ""}`, () => {
+        if (sh.list === k) return;
+        sh.list = k;
+        apply();
       }));
     }
-    refs.filters.append(lists);
+    r.filters.append(lists);
 
     const genre = el("select", "sc-select");
-    genre.setAttribute("aria-label", "Genre");
+    genre.setAttribute("aria-label", `${kind === "tv" ? "Show" : "Movie"} genre`);
     const any = el("option", null, "All genres");
     any.value = "";
     genre.append(any);
-    for (const g of local.genres[local.kind]) {
+    for (const g of local.genres[kind]) {
       const o = el("option", null, g.name);
       o.value = String(g.id);
-      if (String(g.id) === local.genre) o.selected = true;
+      if (String(g.id) === sh.genre) o.selected = true;
       genre.append(o);
     }
-    genre.addEventListener("change", () => {
-      local.genre = genre.value;
-      renderFilters();
-      writeUrl();
-      loadShelf();
-    });
+    genre.addEventListener("change", () => { sh.genre = genre.value; apply(); });
 
     const sort = el("select", "sc-select");
     sort.setAttribute("aria-label", "Sort");
     for (const [k, label] of SORTS) {
       const o = el("option", null, label);
       o.value = k;
-      if (k === local.sort) o.selected = true;
+      if (k === sh.sort) o.selected = true;
       sort.append(o);
     }
-    sort.addEventListener("change", () => {
-      local.sort = sort.value;
-      renderFilters();
-      writeUrl();
-      loadShelf();
-    });
+    sort.addEventListener("change", () => { sh.sort = sort.value; apply(); });
 
     const selects = el("div", "sc-selects");
     selects.append(genre, sort);
-    refs.filters.append(selects);
+    r.filters.append(selects);
+  }
+
+  function buildShelf(kind, page) {
+    const section = el("section", "sc-section sc-shelf");
+    section.dataset.kind = kind;
+    section.append(el("h2", "sc-shelf-title", kind === "tv" ? "TV Shows" : "Movies"));
+    const filters = el("div", "sc-filters");
+    section.append(filters);
+    const sub = el("h3", "sc-shelf-sub");
+    const title = el("span");
+    const note = el("small");
+    sub.append(title, note);
+    section.append(sub);
+    const grid = el("div", "sc-grid");
+    section.append(grid);
+    const more = btn("Load more", "sc-btn sc-more", () => {
+      const sh = local.shelves[kind];
+      if (sh.loading || sh.page >= sh.pages) return;
+      sh.page += 1;
+      loadShelf(kind, { append: true });
+    });
+    more.hidden = true;
+    section.append(more);
+    page.append(section);
+    refs.shelf[kind] = { filters, title, note, grid, more };
   }
 
   /* ---------------------------------------------------------- search */
@@ -474,7 +480,6 @@
       renderEpisodes();
     });
     epToggle.hidden = true;
-    const openSrc = btn("Open source ↗", "sc-btn", () => { if (iframe) window.open(iframe.src, "_blank", "noopener"); });
     const copyLink = btn("Copy link", "sc-btn gold", async () => {
       try { await navigator.clipboard.writeText(location.href); copyLink.textContent = "Copied"; }
       catch { copyLink.textContent = "Couldn't copy"; }
@@ -482,7 +487,7 @@
     });
     const close = btn("✕", "sc-btn", stop);
     close.title = "Close player";
-    bar.append(title, seasonSel, prevEp, nextEp, epToggle, openSrc, copyLink, close);
+    bar.append(title, seasonSel, prevEp, nextEp, epToggle, copyLink, close);
     stage.append(bar);
     const epStrip = el("div", "sc-eps");
     epStrip.hidden = true;
@@ -511,26 +516,10 @@
     page.append(resultsSec);
     Object.assign(refs, { resultsSec, resultsNote, resultsRow });
 
-    // Shelves
-    const shelf = el("section", "sc-section");
-    const filters = el("div", "sc-filters");
-    shelf.append(filters);
-    const sh = el("h2");
-    const shelfTitle = el("span");
-    const shelfNote = el("small");
-    sh.append(shelfTitle, shelfNote);
-    shelf.append(sh);
-    const grid = el("div", "sc-grid");
-    shelf.append(grid);
-    const more = btn("Load more", "sc-btn sc-more", () => {
-      if (local.loading || local.page >= local.pages) return;
-      local.page += 1;
-      loadShelf({ append: true });
-    });
-    more.hidden = true;
-    shelf.append(more);
-    page.append(shelf);
-    Object.assign(refs, { filters, shelfTitle, shelfNote, grid, more });
+    // Shelves: Movies, then TV Shows, each with its own filters.
+    refs.shelf = {};
+    buildShelf("movie", page);
+    buildShelf("tv", page);
 
     // TMDB's terms ask for the logo and this exact wording.
     const credit = el("footer", "sc-credit");
@@ -561,7 +550,8 @@
       window.addEventListener("message", onMessage);
 
       const wanted = readUrl();
-      renderFilters();
+      renderFilters("movie");
+      renderFilters("tv");
       renderContinue();
       if (wanted) play(wanted);
 
@@ -573,12 +563,15 @@
         if (payload?.ok) local.genres[kind] = payload.genres;
       }
       if (!root.isConnected) return;
-      renderFilters();
+      renderFilters("movie");
+      renderFilters("tv");
       if (!local.hasKey) {
-        refs.grid.replaceChildren(emptyNote("Screening Room isn't configured", "The server needs a TMDB key (TMDB_API_KEY) for the catalog."));
+        refs.shelf.movie.grid.replaceChildren(emptyNote("Screening Room isn't configured", "The server needs a TMDB key (TMDB_API_KEY) for the catalog."));
+        refs.shelf.tv.grid.replaceChildren();
         return;
       }
-      loadShelf();
+      loadShelf("movie");
+      loadShelf("tv");
     },
     unmount() {
       document.body.classList.remove("screen-on");
