@@ -1581,3 +1581,18 @@ body.watch-on .playerframe{
   .reactbtn.is-popped{animation:none}
   .react-bit{display:none}
 }
+
+/* Requester ratings */
+.elo-head{
+  margin:10px 0 2px;padding:0 2px;
+  color:var(--muted-2);font-size:.63rem;font-weight:800;
+  letter-spacing:.12em;text-transform:uppercase;
+}
+.elo-head:first-child{margin-top:0}
+.elo-row{align-items:center}
+.elo-score{
+  flex:0 0 auto;font-family:var(--display);font-weight:800;font-size:.92rem;
+  font-variant-numeric:tabular-nums;
+}
+.elo-score.up{color:var(--gold)}
+.elo-score.down{color:var(--muted-2)}

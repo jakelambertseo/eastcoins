@@ -8,6 +8,25 @@ const MAX_QUEUE = 14;
 /* The reactions a song can carry. Fixed server-side: a client that could
    invent a kind could grow the stored state without limit. */
 const REACTION_KINDS = ["up", "fire", "trash", "del"];
+
+/* Requester rating.
+
+   Elo-style rather than actual Elo: there is no opponent, so each song is
+   scored against what the room's ratings say should have been expected of
+   the person who queued it. The effect is the one people know from
+   ranked play — a good song from someone already rated highly moves them
+   very little, and the same song from someone at the bottom moves them a
+   lot.
+
+   Weights: a fire is worth two thumbs up, and a delete costs two bins.
+   Reacting to your own request is ignored entirely. */
+const ELO_START = 1000;
+const ELO_WEIGHTS = { up: 1, fire: 2, trash: 1, del: 2 };
+const ELO_POSITIVE = new Set(["up", "fire"]);
+
+function eloExpected(rating, average) {
+  return 1 / (1 + Math.pow(10, (average - rating) / 400));
+}
 const REQUEST_LIMIT = 25;
 const REQUEST_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const MAX_VIDEO_SECONDS = 600;
@@ -480,6 +499,10 @@ export class MusicRoom extends DurableObject {
       requestedBy: this.safeName(item.requestedBy),
       requestedByAvatar: this.safeAvatarUrl(item.requestedByAvatar),
       addedAt: Number(item.addedAt) || Date.now(),
+      // Needed to credit the rating when the song finishes, and to ignore
+      // the requester's own reactions. Both are stripped before broadcast.
+      requestedByLogin: String(item.requestedByLogin || "").slice(0, 64),
+      requestedByClient: String(item.requestedByClient || "").slice(0, 80),
       // clientId -> display name (empty for anyone not verified). Kept
       // through storage round-trips; a field missing from this allowlist
       // is silently dropped on every restart, which is a very quiet way
@@ -560,15 +583,93 @@ export class MusicRoom extends DurableObject {
       login: safeLogin,
       displayName: this.safeName(entry.displayName),
       avatar: this.safeAvatarUrl(entry.avatar),
-      count: Math.max(0, Number(entry.count) || 0)
+      count: Math.max(0, Number(entry.count) || 0),
+      rating: Math.round(Number(entry.rating) || ELO_START),
+      rated: Math.max(0, Number(entry.rated) || 0),
+      up: Math.max(0, Number(entry.up) || 0),
+      fire: Math.max(0, Number(entry.fire) || 0),
+      trash: Math.max(0, Number(entry.trash) || 0),
+      del: Math.max(0, Number(entry.del) || 0)
     };
+  }
+
+  /** The room's mean rating — what a song is scored against. */
+  averageRating() {
+    const rated = [...this.userStats.values()].filter((entry) => entry.rated > 0);
+    if (!rated.length) return ELO_START;
+    return rated.reduce((sum, entry) => sum + (Number(entry.rating) || ELO_START), 0) / rated.length;
+  }
+
+  /**
+   * Scores a song that has just finished and moves its requester's rating.
+   *
+   * A song nobody reacted to changes nothing. Silence is not a verdict,
+   * and treating it as one would drag everybody toward the mean for
+   * playing at a quiet hour.
+   */
+  rateFinishedSong(item) {
+    const login = String(item?.requestedByLogin || "");
+    if (!login) return;
+
+    const reactors = item.reactors || {};
+    const self = String(item.requestedByClient || "");
+
+    let positive = 0;
+    let negative = 0;
+    const tally = { up: 0, fire: 0, trash: 0, del: 0 };
+
+    for (const kind of REACTION_KINDS) {
+      for (const [clientId, name] of Object.entries(reactors[kind] || {})) {
+        // Voting up your own request should not be a strategy.
+        //
+        // The client id catches it for anything queued from the site. A
+        // song requested from chat has no client id attached, so the
+        // verified display name is checked too — both sides of that
+        // comparison only ever come from a Twitch-verified session.
+        if (self && clientId === self) continue;
+        if (name && item.requestedBy && name === item.requestedBy) continue;
+        tally[kind] += 1;
+        if (ELO_POSITIVE.has(kind)) positive += ELO_WEIGHTS[kind];
+        else negative += ELO_WEIGHTS[kind];
+      }
+    }
+
+    const total = positive + negative;
+    if (!total) return;
+
+    const stats = this.userStats.get(login) || this.sanitizeUserStat(login, {
+      displayName: item.requestedBy,
+      avatar: item.requestedByAvatar
+    });
+    if (!stats) return;
+
+    const rating = Number(stats.rating) || ELO_START;
+    const expected = eloExpected(rating, this.averageRating());
+    const actual = positive / total;
+
+    // More reactions means more confidence, so the move is bigger — but
+    // capped, or one busy song would swamp everything before it.
+    const k = Math.min(32, 10 + 3 * total);
+
+    stats.rating = Math.round(rating + k * (actual - expected));
+    stats.rated += 1;
+    for (const kind of REACTION_KINDS) stats[kind] += tally[kind];
+
+    this.userStats.set(login, stats);
+    console.log(
+      `Rating: ${login} ${rating} -> ${stats.rating} ` +
+      `(+${positive}/-${negative} on "${item.title}")`
+    );
   }
 
   // Shared by a normal "add" request and the StreamElements chat-request
   // sync below — both just need the current/queue placement and history/stat
   // bookkeeping, they only differ in where the item and its verified
   // requester came from.
-  enqueueItem(item, login) {
+  enqueueItem(item, login, clientId = "") {
+    item.requestedByLogin = String(login || "");
+    item.requestedByClient = String(clientId || "");
+
     if (!this.state.current) {
       this.state.current = item;
       this.state.startedAt = Date.now();
@@ -1134,10 +1235,24 @@ export class MusicRoom extends DurableObject {
     return names;
   }
 
+  /**
+   * The playing song as clients should see it.
+   *
+   * reactors is keyed by client id, and the login and client id of whoever
+   * queued it are bookkeeping. None of that belongs in a broadcast that
+   * every listener receives — the counts and verified names already go
+   * out separately as `reactions`.
+   */
+  publicCurrent() {
+    if (!this.state.current) return null;
+    const { reactors, requestedByLogin, requestedByClient, ...rest } = this.state.current;
+    return rest;
+  }
+
   publicState() {
     const listeners = this.distinctListeners();
     return {
-      current: this.state.current,
+      current: this.publicCurrent(),
       queue: this.state.queue,
       startedAt: this.state.startedAt,
       revision: this.state.revision,
@@ -1283,7 +1398,7 @@ export class MusicRoom extends DurableObject {
         reactors: {}
       };
 
-      this.enqueueItem(item, auth.login);
+      this.enqueueItem(item, auth.login, session.clientId);
       await Promise.all([this.persistAndBroadcast(), this.persistHistoryAndStats()]);
       return;
     }
@@ -1385,6 +1500,8 @@ export class MusicRoom extends DurableObject {
   // by every connected client.
   advance(notice = null) {
     const outgoing = this.state.current;
+    // Scored on the way out, when its reactions are final.
+    this.rateFinishedSong(outgoing);
 
     this.state.current = this.state.queue.shift() || null;
     this.state.startedAt = this.state.current ? Date.now() : null;

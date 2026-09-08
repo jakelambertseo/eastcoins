@@ -852,6 +852,66 @@
       return wrap;
     }
 
+    /**
+     * Highest and lowest rated requesters.
+     *
+     * Only people with a song actually scored appear. Everyone starts at
+     * 1000 and stays there until the room reacts to something of theirs,
+     * so listing the unrated would be a wall of ties that says nothing.
+     */
+    function ratingsList() {
+      const wrap = el("div", "mq");
+
+      const rated = requesters
+        .filter((entry) => Number(entry.rated) > 0)
+        .sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
+
+      if (!rated.length) {
+        wrap.append(el("p", "mq-empty",
+          "No ratings yet. React to a song and its requester gets scored when it finishes."));
+        return wrap;
+      }
+
+      const row = (entry, place) => {
+        const line = el("div", "mq-row elo-row");
+        line.append(el("span", "mq-n", String(place)));
+
+        if (entry.avatar) {
+          const img = document.createElement("img");
+          img.className = "mtop-av";
+          img.src = entry.avatar;
+          img.alt = "";
+          img.loading = "lazy";
+          line.append(img);
+        }
+
+        const meta = el("div", "mq-meta");
+        meta.append(el("strong", null, entry.displayName || entry.login || "someone"));
+        const good = Number(entry.up || 0) + Number(entry.fire || 0);
+        const bad = Number(entry.trash || 0) + Number(entry.del || 0);
+        meta.append(el("small", null,
+          `${entry.rated} rated \u00b7 ${good} good, ${bad} bad`));
+        line.append(meta);
+
+        const score = el("span", "elo-score", String(Math.round(Number(entry.rating) || 1000)));
+        score.classList.add(Number(entry.rating) >= 1000 ? "up" : "down");
+        line.append(score);
+        return line;
+      };
+
+      wrap.append(el("p", "elo-head", "Highest"));
+      rated.slice(0, 5).forEach((entry, i) => wrap.append(row(entry, i + 1)));
+
+      // Only worth a bottom list once it would not just repeat the top.
+      if (rated.length > 5) {
+        wrap.append(el("p", "elo-head", "Lowest"));
+        const bottom = rated.slice(-5).reverse();
+        bottom.forEach((entry) => wrap.append(row(entry, rated.indexOf(entry) + 1)));
+      }
+
+      return wrap;
+    }
+
     function historyList() {
       const wrap = el("div", "mq");
       if (!history.length) {
@@ -1053,18 +1113,23 @@
       side.append(requestersPanel());
 
       const tabs = el("div", "mtabs");
-      for (const [key, label] of [["queue", "Up next"], ["history", "History"]]) {
+      for (const [key, label] of [["queue", "Up next"], ["history", "History"], ["elo", "Ratings"]]) {
         const btn = el("button", `mtab${tab === key ? " active" : ""}`, label);
         btn.type = "button";
         btn.addEventListener("click", () => {
           tab = key;
-          if (key === "history" && !history.length) loadHistory();
+          // Both come back on the same request, so either tab warms both.
+          if ((key === "history" || key === "elo") && !history.length) loadHistory();
           renderSide(conn.state);
         });
         tabs.append(btn);
       }
       side.append(tabs);
-      side.append(tab === "queue" ? queueList(state) : historyList());
+      side.append(
+        tab === "queue" ? queueList(state)
+          : tab === "elo" ? ratingsList()
+            : historyList()
+      );
     }
 
     function paint(state) {
