@@ -574,19 +574,6 @@
     const ECV3 = window.ECV3;
     if (!ECV3) return window.setTimeout(boot, 30);
     ECV3.register("events", view);
-
-
-
-    ECV3.register("music", {
-      mount(container, api) {
-        container.append(
-          api.stub("Music Room", "Arriving after the core views.", [
-            "Shared queue synced from StreamElements",
-            "Skip reasons shown in the room, as they now are on the live site"
-          ])
-        );
-      }
-    });
   }
 
   boot();

@@ -98,6 +98,9 @@ img{max-width:100%}
   color:var(--muted-2);font-weight:700;font-size:.85rem;
   transition:color .14s ease,background .14s ease,border-color .14s ease;
 }
+.nav-ico{width:15px;height:15px;flex:0 0 auto;opacity:.85}
+.nav-link[aria-current="page"] .nav-ico,
+.nav-link:hover .nav-ico{opacity:1}
 .nav-link:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(232,191,53,.2)}
 .nav-link[aria-current="page"]{
   border-color:rgba(232,191,53,.3);color:var(--gold);background:var(--gold-dim);
@@ -1280,3 +1283,92 @@ body.watch-on .playerframe{
 }
 .gameday-close:hover{color:var(--gold);border-color:rgba(232,191,53,.4)}
 .watchgd:hover{color:var(--gold)}
+
+/* ============================================================
+   THE GREEN ROOM — dock and full view
+   ============================================================ */
+.mhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.mtitle{
+  display:flex;align-items:center;gap:9px;margin:0;
+  font-family:var(--display);font-weight:800;font-size:1.5rem;letter-spacing:-.02em;
+}
+.mtitle-emote{width:30px;height:30px;object-fit:contain}
+.mlisteners{color:var(--muted-2);font-size:.8rem;font-weight:700}
+
+.mshell{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start}
+.mstage{
+  position:relative;aspect-ratio:16/9;width:100%;overflow:hidden;
+  border:1px solid var(--line);border-radius:var(--radius);background:#000;
+}
+.mstage iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.mside{display:flex;flex-direction:column;gap:10px;min-width:0}
+.mnow{
+  display:flex;flex-direction:column;gap:3px;padding:12px 14px;
+  border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);
+}
+.mnow-k,.mq-k{
+  color:var(--muted-2);font-size:.63rem;font-weight:800;
+  letter-spacing:.12em;text-transform:uppercase;
+}
+.mnow-v{font-family:var(--display);font-weight:700;font-size:1rem;line-height:1.3}
+.mnow small{color:var(--muted-2);font-size:.76rem}
+.mq{display:flex;flex-direction:column;gap:1px;background:var(--line);border-radius:var(--radius);overflow:hidden}
+.mq-row{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--panel)}
+.mq-n{color:var(--muted-2);font-size:.72rem;font-weight:800;min-width:14px}
+.mq-meta{display:flex;flex-direction:column;min-width:0;flex:1}
+.mq-meta strong{font-size:.85rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mq-meta small{color:var(--muted-2);font-size:.7rem}
+.mq-tag{
+  flex:0 0 auto;padding:2px 7px;border-radius:999px;font-size:.58rem;font-weight:800;
+  letter-spacing:.1em;background:var(--gold-dim);color:var(--gold);
+}
+.mq-empty{margin:0;padding:14px;color:var(--muted-2);font-size:.8rem;background:var(--panel);border-radius:var(--radius)}
+
+/* Dock — follows you around the rest of V3. */
+.musicdock{
+  position:fixed;right:16px;bottom:16px;z-index:60;width:min(340px,calc(100vw - 32px));
+  border:1px solid var(--line-2);border-radius:12px;overflow:hidden;
+  background:var(--panel);box-shadow:var(--shadow);
+}
+.musicdock-head{
+  display:flex;align-items:center;gap:8px;width:100%;
+  padding:9px 12px;background:var(--panel-2);text-align:left;
+}
+.musicdock-dot{
+  width:7px;height:7px;border-radius:50%;flex:0 0 auto;
+  background:var(--gold);box-shadow:0 0 0 3px var(--gold-dim);
+}
+.musicdock-title{
+  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:.78rem;font-weight:700;color:var(--text);
+}
+.musicdock-stage{position:relative;aspect-ratio:16/9;width:100%;background:#000;overflow:hidden}
+.musicdock-stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.musicdock-foot{display:flex;gap:7px;padding:8px}
+.musicdock-btn{
+  flex:1;height:28px;border-radius:8px;
+  border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);
+  font-family:var(--display);font-weight:700;font-size:.76rem;
+}
+.musicdock-btn:hover{background:var(--gold-dim);color:var(--gold)}
+
+/* catJAM — only while a !rasputin block is playing. */
+.is-jamming{box-shadow:inset 0 0 0 2px rgba(232,191,53,.55)}
+.jam-cat{
+  position:absolute;bottom:-40px;width:44px;height:44px;
+  pointer-events:none;z-index:2;
+  animation:jamrise linear forwards;
+}
+@keyframes jamrise{
+  0%{transform:translate(0,0) rotate(-8deg);opacity:0}
+  12%{opacity:1}
+  100%{transform:translate(var(--drift,0),-120%) rotate(8deg);opacity:0}
+}
+@media (prefers-reduced-motion:reduce){
+  .jam-cat{display:none}
+}
+
+@media (max-width:900px){
+  .mshell{grid-template-columns:1fr}
+  .musicdock{right:10px;bottom:10px;width:calc(100vw - 20px)}
+}

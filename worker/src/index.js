@@ -545,6 +545,37 @@ export class MusicRoom extends DurableObject {
   // drops them into the shared EastCoin queue, so chat doesn't need to also
   // use the site's search bar. Runs on a self-rearming alarm (see alarm()
   // below) rather than trusting any client to trigger it.
+  /**
+   * Removes an entry from StreamElements' own request queue.
+   *
+   * This is what stops that queue growing forever. StreamElements only
+   * clears a request when ITS player finishes it, and its player never
+   * runs — the songs play here instead. So every "!sr" ever typed just
+   * accumulates on their side until someone clears it by hand.
+   *
+   * Needs STREAMELEMENTS_JWT as a Worker secret (separate from the Pages
+   * one). Without it this is a no-op and the old behaviour stands, so it
+   * is safe to ship ahead of the token.
+   */
+  async deleteStreamElementsEntry(channelId, seId) {
+    const jwt = String(this.env.STREAMELEMENTS_JWT || "").trim();
+    if (!jwt || !channelId || !seId) return false;
+
+    try {
+      const response = await fetch(
+        `https://api.streamelements.com/kappa/v2/songrequest/${encodeURIComponent(channelId)}/queue/${encodeURIComponent(seId)}`,
+        { method: "DELETE", headers: { Authorization: `Bearer ${jwt}` } }
+      );
+      // 404 means it is already gone, which is the state we wanted.
+      if (response.ok || response.status === 404) return true;
+      console.error(`StreamElements queue delete failed ${response.status} for ${seId}`);
+      return false;
+    } catch (error) {
+      console.error("StreamElements queue delete threw", error);
+      return false;
+    }
+  }
+
   async pollStreamElements() {
     const channelId = String(this.env.STREAMELEMENTS_CHANNEL_ID || "").trim();
     if (!channelId) return;
@@ -569,7 +600,18 @@ export class MusicRoom extends DurableObject {
       const queueFull = this.state.queue.length >= MAX_QUEUE && this.state.current;
       const tooLong = Number.isFinite(durationSeconds) && durationSeconds > MAX_VIDEO_SECONDS;
 
-      if (!/^[A-Za-z0-9_-]{11}$/.test(videoId) || !login || alreadyQueued || queueFull || tooLong) {
+      // Anything we have finished with leaves their queue. A request we
+      // are only DEFERRING does not: when the room queue is full the
+      // entry is still wanted, and deleting it would silently bin
+      // somebody's song. Everything else — imported below, or refused
+      // here for good — is resolved and can go.
+      if (!/^[A-Za-z0-9_-]{11}$/.test(videoId) || !login || alreadyQueued || tooLong) {
+        this.ctx.waitUntil(this.deleteStreamElementsEntry(channelId, seId));
+        continue;
+      }
+      if (queueFull) {
+        // Left in place on purpose, and un-seen so the next poll retries it.
+        this.seenStreamElementsIds.delete(seId);
         continue;
       }
 
@@ -584,6 +626,8 @@ export class MusicRoom extends DurableObject {
       };
 
       this.enqueueItem(item, login);
+      // It is ours now; their copy is redundant.
+      this.ctx.waitUntil(this.deleteStreamElementsEntry(channelId, seId));
       changed = true;
     }
 
