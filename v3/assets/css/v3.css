@@ -1713,67 +1713,44 @@ body.watch-on .playerframe{
 }
 
 /* ---------------------------------------------------------------- season leader
-   Purple: the one colour the rest of Picks never uses, so the crown is
-   unmistakable at a glance. */
+   Same panel language as the rest of Picks — dark, a burgundy wash, gold
+   for the numbers — with the crown as the one thing that moves. */
 .leaderwidget{
-  position:relative;overflow:hidden;isolation:isolate;
+  position:relative;overflow:hidden;
   display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:16px;
-  margin:0 0 14px;padding:16px 20px;border-radius:14px;
-  border:1px solid rgba(165,107,255,.55);
-  background:
-    radial-gradient(120% 160% at 0% 0%,rgba(165,107,255,.42),transparent 55%),
-    radial-gradient(90% 120% at 100% 100%,rgba(232,191,53,.22),transparent 50%),
-    linear-gradient(120deg,#2a1650,#160c2c 55%,#1b0f33);
-  box-shadow:0 0 0 1px rgba(165,107,255,.18) inset,0 14px 40px rgba(120,60,255,.28),0 0 32px rgba(165,107,255,.28);
-  animation:lwpulse 3.2s ease-in-out infinite;
+  margin:0 0 22px;padding:16px 20px;border-radius:var(--radius);
+  border:1px solid rgba(232,191,53,.22);
+  background:linear-gradient(120deg,rgba(142,18,49,.28),transparent 55%),var(--panel);
+  box-shadow:0 0 0 1px rgba(255,255,255,.03) inset;
 }
-.leaderwidget.empty{
-  grid-template-columns:auto minmax(0,1fr);
-  border-color:rgba(165,107,255,.28);box-shadow:none;animation:none;
-  background:linear-gradient(120deg,#1d1330,#160c2c);
-}
-.lw-shine{
-  position:absolute;inset:0;z-index:0;pointer-events:none;
-  background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.14) 45%,rgba(255,255,255,.3) 50%,rgba(255,255,255,.14) 55%,transparent 70%);
-  transform:translateX(-120%);
-  animation:lwshine 4.5s ease-in-out infinite;
-}
-.leaderwidget.empty .lw-shine{display:none}
-.leaderwidget>*:not(.lw-shine){position:relative;z-index:1}
-.lw-crown{font-size:2rem;line-height:1;filter:drop-shadow(0 0 10px rgba(232,191,53,.8));animation:lwbob 2.2s ease-in-out infinite}
+.leaderwidget.empty{grid-template-columns:auto minmax(0,1fr);border-color:var(--line-2)}
+.lw-shine{display:none}
+.lw-crown{font-size:2rem;line-height:1;filter:drop-shadow(0 0 8px rgba(232,191,53,.55));animation:lwbob 2.2s ease-in-out infinite}
 .lw-avatar{
-  width:50px;height:50px;border-radius:50%;display:grid;place-items:center;
-  background:linear-gradient(140deg,#a56bff,#5b2bd6);color:#fff;
+  width:48px;height:48px;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(150deg,#8e1231,#4a0a1c);color:var(--gold);
   font-family:var(--display);font-weight:800;font-size:1rem;
-  box-shadow:0 0 0 3px rgba(232,191,53,.9),0 0 22px rgba(165,107,255,.7);
+  box-shadow:0 0 0 2px rgba(232,191,53,.55);
 }
 .lw-copy{min-width:0}
-.lw-kicker{display:block;color:#d9c4ff;font-size:.66rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.lw-kicker{display:block;color:var(--gold);font-size:.66rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
 .lw-name{
-  display:block;margin-top:2px;font-family:var(--display);font-weight:800;font-size:1.5rem;letter-spacing:-.02em;line-height:1.1;
-  color:#fff;text-shadow:0 0 18px rgba(165,107,255,.6);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  display:block;margin-top:2px;font-family:var(--display);font-weight:800;font-size:1.45rem;letter-spacing:-.02em;line-height:1.1;
+  color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
-.lw-note{display:block;margin-top:3px;color:#c7b6ea;font-size:.78rem}
-.lw-stats{display:flex;gap:18px}
-.lw-stat>span{display:block;color:#b9a5e6;font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.lw-note{display:block;margin-top:3px;color:var(--muted-2);font-size:.78rem}
+.lw-stats{display:flex;gap:22px}
+.lw-stat>span{display:block;color:var(--muted-2);font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.lw-stat strong{display:block;margin-top:3px;font-family:var(--display);font-weight:800;font-size:1.3rem;letter-spacing:-.02em;color:var(--gold)}
 .lw-stat strong .zc-amount{gap:7px}
 .lw-stat strong .zcoin-mark{width:20px;height:20px}
-.lw-stat strong{display:block;margin-top:3px;font-family:var(--display);font-weight:800;font-size:1.35rem;letter-spacing:-.02em;color:#ffd86b;text-shadow:0 0 14px rgba(232,191,53,.55)}
-.lw-stat strong .up{color:#ffd86b}
-@keyframes lwpulse{
-  0%,100%{box-shadow:0 0 0 1px rgba(165,107,255,.18) inset,0 14px 40px rgba(120,60,255,.28),0 0 24px rgba(165,107,255,.25)}
-  50%{box-shadow:0 0 0 1px rgba(165,107,255,.35) inset,0 14px 44px rgba(120,60,255,.4),0 0 44px rgba(165,107,255,.5)}
-}
-@keyframes lwshine{0%,55%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
 @keyframes lwbob{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-4px) rotate(6deg)}}
 @media (max-width:640px){
   .leaderwidget{grid-template-columns:auto minmax(0,1fr);gap:12px}
   .lw-avatar{display:none}
   .lw-stats{grid-column:1 / -1;gap:22px}
 }
-@media (prefers-reduced-motion:reduce){
-  .leaderwidget,.lw-shine,.lw-crown{animation:none}
-}
+@media (prefers-reduced-motion:reduce){.lw-crown{animation:none}}
 
 /* Sortable leaderboard headers */
 .trow.thead .tsort{
