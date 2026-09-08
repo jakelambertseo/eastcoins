@@ -18,7 +18,7 @@
    twice cannot pay twice.
    ============================================================ */
 
-import { composeClosed } from "./_announce.js";
+import { composeClosed, composeSettled } from "./_announce.js";
 import {
   ADMIN_ALLOWLIST,
   getSessionUser,
@@ -292,7 +292,20 @@ async function settleMarket(env, db, market, boards) {
     .bind(finalState, outcome === "VOID" ? null : outcome, market.id)
     .run();
 
-  return { id: market.id, action: finalState.toLowerCase(), outcome, ...summary };
+  return {
+    id: market.id,
+    action: finalState.toLowerCase(),
+    outcome,
+    sport: market.sport,
+    away: market.away_name,
+    home: market.home_name,
+    winnerName: outcome === "VOID"
+      ? null
+      : outcome === "home" ? market.home_name : market.away_name,
+    awayScore: result.ourAway ?? null,
+    homeScore: result.ourHome ?? null,
+    ...summary
+  };
 }
 
 /* ------------------------------------------------------------ entry */
@@ -403,9 +416,21 @@ export async function onRequestPost(context) {
     results.push(await settleMarket(context.env, db, market, boards));
   }
 
+  // Same guarantee as the closing message: a market settles once, then
+  // drops out of the candidate set, so this cannot repeat on the next
+  // tick.
+  const settledMessage = composeSettled(results);
+  if (settledMessage) {
+    const said = await sayInChat(context.env, settledMessage);
+    if (!said.ok) {
+      console.error(`Picks: couldn't announce settlement: ${said.error}`);
+    }
+  }
+
   return json({
     ok: true,
     by: auth.by,
+    announced: settledMessage || null,
     locked: Number(locked?.meta?.changes || 0),
     closed: closingRows.map((m) => `${m.away_name} at ${m.home_name}`),
     examined: results.length,

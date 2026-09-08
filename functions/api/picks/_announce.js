@@ -79,3 +79,46 @@ export function composeClosed(markets, totals = {}) {
 
   return `${lead}Betting closed on ${markets.length} games${riding}. !mypicks for yours.`;
 }
+
+/**
+ * "Here is what happened" — posted automatically after the scheduled
+ * run settles something. Safe on every tick for the same reason as the
+ * closing message: a market settles once and then leaves the candidate
+ * set, so the next run has nothing to say.
+ *
+ * Takes what actually moved, not what was expected to: these numbers
+ * come back from the payout loop, so a failed transfer is never
+ * reported as money paid.
+ */
+export function composeSettled(entries) {
+  const done = (entries || []).filter((e) => e && e.action !== "skipped");
+  if (!done.length) return "";
+
+  const lead = badgeFor(done);
+  const won = done.reduce((n, e) => n + Number(e.won || 0), 0);
+  const paid = done.reduce((n, e) => n + Number(e.paid || 0), 0);
+  const failed = done.reduce((n, e) => n + Number(e.failed || 0), 0);
+
+  // A failed payout is said out loud. Someone is owed money and the
+  // worst outcome is that only a log knows.
+  const trouble = failed ? ` ⚠ ${failed} payout${failed === 1 ? "" : "s"} failed` : "";
+
+  if (done.length === 1) {
+    const e = done[0];
+    if (e.outcome === "VOID") {
+      return `${lead}${e.away} at ${e.home} voided — ` +
+        `${e.refunded || 0} stake${e.refunded === 1 ? "" : "s"} refunded.${trouble}`;
+    }
+    const score = Number.isFinite(e.awayScore) && Number.isFinite(e.homeScore)
+      ? ` ${Math.max(e.awayScore, e.homeScore)}-${Math.min(e.awayScore, e.homeScore)}` : "";
+    const payout = won
+      ? `${won} winner${won === 1 ? "" : "s"}, ${paid.toLocaleString()} ZC paid`
+      : "no winners";
+    return `${lead}${e.winnerName} win${score} — ${payout}.${trouble} !record for yours.`;
+  }
+
+  return (
+    `${lead}${done.length} games settled · ${won} winner${won === 1 ? "" : "s"}, ` +
+    `${paid.toLocaleString()} ZC paid.${trouble} !record for yours.`
+  );
+}
