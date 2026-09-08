@@ -9,13 +9,14 @@
 
    The video is the page. There is no heading — you already know
    what you clicked — and the frame takes every pixel the shell
-   is not using. Controls sit in a bar above it that folds away
+   is not using. Controls sit in a bar under it that folds away
    to a single chevron.
 
-   One rule shapes the DOM here: the iframe is built once and
-   only ever has its src reassigned. Rebuilding it restarts the
-   stream, so anything that is not a deliberate server change —
-   folding the bar, copying a link — must not touch it.
+   One rule shapes the DOM here: the stream iframe is built once
+   and only ever has its src reassigned. Rebuilding it restarts
+   the stream, so anything that is not a deliberate server change
+   — folding the bar, copying a link, opening Gameday — must not
+   touch it.
    ============================================================ */
 (() => {
   "use strict";
@@ -30,14 +31,19 @@
     error: "",
     reason: "",
     custom: "",
-    hidden: false
+    hidden: false,
+    game: null
   };
 
   // Built once per mount, then mutated.
-  const dom = { wrap: null, bar: null, peek: null, frame: null, iframe: null, select: null };
+  const dom = {
+    wrap: null, bar: null, peek: null, frame: null,
+    iframe: null, select: null, gd: null, gdFrame: null
+  };
 
   let root = null;
   let shell = null;
+  let messageHandler = null;
 
   function readPref() {
     try {
@@ -121,6 +127,45 @@
     if (dom.peek) dom.peek.hidden = !hidden;
   }
 
+  /* ---------------------------------------------------------- gameday */
+
+  function openGameday() {
+    if (!local.game || !dom.gd || !dom.gdFrame) return;
+    dom.gdFrame.src = window.ECV3Gameday.gamedayUrl(local.game);
+    dom.gd.hidden = false;
+  }
+
+  function closeGameday() {
+    if (!dom.gd || !dom.gdFrame) return;
+    dom.gd.hidden = true;
+    // Blanked rather than left loaded: Gameday polls MLB, and a hidden
+    // panel quietly doing that behind the video is waste nobody can see.
+    dom.gdFrame.src = "about:blank";
+  }
+
+  function buildGameday() {
+    const panel = el("div", "gameday");
+    panel.hidden = true;
+    panel.setAttribute("aria-label", "MLB Gameday");
+
+    const close = el("button", "gameday-close", "✕");
+    close.type = "button";
+    close.setAttribute("aria-label", "Close Gameday");
+    close.addEventListener("click", closeGameday);
+
+    const iframe = document.createElement("iframe");
+    iframe.className = "gameday-frame";
+    iframe.title = "EastCoin MLB Gameday";
+    iframe.src = "about:blank";
+    iframe.allow = "fullscreen";
+    iframe.referrerPolicy = "strict-origin-when-cross-origin";
+
+    panel.append(close, iframe);
+    dom.gd = panel;
+    dom.gdFrame = iframe;
+    return panel;
+  }
+
   /* ---------------------------------------------------------- controls */
 
   function syncServers() {
@@ -192,6 +237,17 @@
     });
     bar.append(copy);
 
+    // Only when the event resolved to a real MLB game. A button that
+    // opens the wrong game is worse than no button, so the resolver
+    // refuses anything it can't match on both teams.
+    if (local.game) {
+      const gd = el("button", "watchbtn watchgd", "⚾ Gameday");
+      gd.type = "button";
+      gd.title = `Live MLB Gameday for ${local.game.away} at ${local.game.home}`;
+      gd.addEventListener("click", openGameday);
+      bar.append(gd);
+    }
+
     bar.append(el("span", "watchbar-spacer"));
 
     const back = el("button", "watchbtn", "← Events");
@@ -199,7 +255,7 @@
     back.addEventListener("click", () => shell.go("events"));
     bar.append(back);
 
-    const fold = el("button", "watchbtn watchfold", "⌃ Hide");
+    const fold = el("button", "watchbtn watchfold", "⌄ Hide");
     fold.type = "button";
     fold.title = "Hide these controls";
     fold.addEventListener("click", () => setHidden(true));
@@ -215,18 +271,6 @@
 
     const wrap = el("div", "watchwrap");
 
-    const bar = buildBar();
-    bar.hidden = local.hidden;
-
-    // Floats over the video rather than occupying a row, so a folded bar
-    // gives its full height to the picture.
-    const peek = el("button", "watchpeek", "⌄");
-    peek.type = "button";
-    peek.title = "Show controls";
-    peek.setAttribute("aria-label", "Show player controls");
-    peek.hidden = !local.hidden;
-    peek.addEventListener("click", () => setHidden(false));
-
     const frame = el("div", "playerframe");
     const iframe = document.createElement("iframe");
     iframe.title = local.match?.title || "Stream";
@@ -234,9 +278,21 @@
     iframe.allowFullscreen = true;
     iframe.referrerPolicy = "no-referrer";
     iframe.src = currentSrc();
-    frame.append(iframe);
+    frame.append(iframe, buildGameday());
 
-    wrap.append(bar, peek, frame);
+    const bar = buildBar();
+    bar.hidden = local.hidden;
+
+    // Floats over the video rather than occupying a row, so a folded bar
+    // gives its full height to the picture.
+    const peek = el("button", "watchpeek", "⌃");
+    peek.type = "button";
+    peek.title = "Show controls";
+    peek.setAttribute("aria-label", "Show player controls");
+    peek.hidden = !local.hidden;
+    peek.addEventListener("click", () => setHidden(false));
+
+    wrap.append(frame, bar, peek);
     root.append(wrap);
 
     Object.assign(dom, { wrap, bar, peek, frame, iframe });
@@ -288,6 +344,17 @@
 
       document.body.classList.add("watch-on");
 
+      // Gameday closes itself from inside the frame. Same-origin only:
+      // the panel loads our own page, so anything from elsewhere is not
+      // it and gets ignored.
+      if (!messageHandler) {
+        messageHandler = (event) => {
+          if (event.origin !== location.origin) return;
+          if (event.data?.type === "eastcoin:mlb-gameday-close") closeGameday();
+        };
+        window.addEventListener("message", messageHandler);
+      }
+
       const search = params();
       const custom = search.get("url") || "";
       const eventId = search.get("event") || "";
@@ -298,6 +365,7 @@
       local.active = 0;
       local.error = "";
       local.reason = "";
+      local.game = null;
       local.hidden = readPref();
 
       if (custom) {
@@ -330,17 +398,30 @@
         return;
       }
 
-      const outcome = await loadStreams(local.match);
+      // Both at once, and painted once at the end: resolving Gameday
+      // after the first paint would mean rebuilding the bar, and the
+      // bar and the stream iframe share a parent.
+      const [outcome, game] = await Promise.all([
+        loadStreams(local.match),
+        window.ECV3Gameday?.resolve(local.match).catch(() => null) ?? null
+      ]);
+
       local.streams = outcome.streams;
       local.reason = outcome.reason;
+      local.game = game;
       local.loading = false;
       if (root.isConnected) paint();
     },
 
     unmount() {
       document.body.classList.remove("watch-on");
+      if (messageHandler) {
+        window.removeEventListener("message", messageHandler);
+        messageHandler = null;
+      }
       Object.assign(dom, {
-        wrap: null, bar: null, peek: null, frame: null, iframe: null, select: null
+        wrap: null, bar: null, peek: null, frame: null,
+        iframe: null, select: null, gd: null, gdFrame: null
       });
     }
   };
