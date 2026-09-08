@@ -20,6 +20,7 @@
     chatRail: document.getElementById("chatRail"),
     chatFrame: document.getElementById("twitchChat"),
     chatPlaceholder: document.getElementById("chatPlaceholder"),
+    chatReload: document.getElementById("chatReload"),
     chatToggle: document.getElementById("chatToggle"),
     chatClose: document.getElementById("chatClose"),
     chatPopout: document.getElementById("chatPopout"),
@@ -188,15 +189,94 @@
      its connection, so re-showing costs nothing and never reloads. */
 
   let chatMounted = false;
+  let chatMountedAt = 0;
+  let chatHiddenSince = 0;
+  let chatWatchdog = 0;
+
+  /* ------------------------------------------------------- chat lifetime
+
+     The embed was mounted once and then left alone for the life of the
+     tab, and hiding it was CSS only — so a session open all evening kept
+     one Twitch document growing the entire time.
+
+     That is survivable for a viewer and it is not for a moderator.
+     Twitch renders moderation controls on EVERY message for mods, loads
+     the AutoMod queue, subscribes to moderation events, and runs a
+     periodic check for whether the embed is being covered — none of
+     which a normal viewer pays for. Same chat, several times the memory,
+     and under Fission it is twitch.tv's own content process that gets
+     killed, which is why nothing ever appeared in about:crashes.
+
+     So the fix is to stop letting it live that long. Nothing here
+     touches route changes: navigating between views still leaves chat
+     completely alone, which is the invariant that matters. */
+
+  // Closed this long and it is genuinely not being read; drop it.
+  const CHAT_UNLOAD_AFTER_HIDDEN_MS = 10 * 60 * 1000;
+  // Old enough to recycle at the next moment nobody is looking.
+  const CHAT_SOFT_MAX_AGE_MS = 45 * 60 * 1000;
+  // Old enough to recycle even if they are, because losing scrollback
+  // once beats losing the tab.
+  const CHAT_HARD_MAX_AGE_MS = 3 * 60 * 60 * 1000;
+
+  function chatAge() {
+    return chatMountedAt ? Date.now() - chatMountedAt : 0;
+  }
+
+  /** True while they are actually typing in it — never interrupt that. */
+  function chatHasFocus() {
+    return document.activeElement === els.chatFrame;
+  }
+
+  function unmountChat() {
+    if (!chatMounted) return;
+    chatMounted = false;
+    chatMountedAt = 0;
+    // about:blank rather than removing the node: the element, its place
+    // in the layout and every listener stay put, and only the Twitch
+    // document goes.
+    els.chatFrame.src = "about:blank";
+  }
+
+  function recycleChat() {
+    if (!chatMounted) return;
+    els.chatFrame.src = els.chatFrame.dataset.src;
+    chatMountedAt = Date.now();
+  }
+
+  function chatWatchdogTick() {
+    if (!chatMounted) return;
+
+    const hidden = document.body.classList.contains("chat-hidden");
+    if (hidden) {
+      if (chatHiddenSince && Date.now() - chatHiddenSince > CHAT_UNLOAD_AFTER_HIDDEN_MS) {
+        unmountChat();
+      }
+      return;
+    }
+
+    const age = chatAge();
+    if (age < CHAT_SOFT_MAX_AGE_MS) return;
+
+    // Backgrounded tab: the ideal moment, since nobody loses their place.
+    if (document.hidden) return recycleChat();
+
+    if (age > CHAT_HARD_MAX_AGE_MS && !chatHasFocus()) recycleChat();
+  }
 
   function mountChat() {
     if (chatMounted) return;
     chatMounted = true;
+    chatMountedAt = Date.now();
     els.chatFrame.src = els.chatFrame.dataset.src;
     els.chatFrame.hidden = false;
     // .chat-placeholder sets display:grid, which beats [hidden]'s UA
     // display:none — so remove it outright rather than hiding it.
-    els.chatPlaceholder.remove();
+    els.chatPlaceholder?.remove();
+
+    if (!chatWatchdog) {
+      chatWatchdog = window.setInterval(chatWatchdogTick, 60000);
+    }
   }
 
   function chatVisible() {
@@ -217,6 +297,7 @@
     } catch {
       /* private mode — the preference simply doesn't persist */
     }
+    chatHiddenSince = visible ? 0 : Date.now();
     if (visible) mountChat();
   }
 
@@ -358,6 +439,17 @@
 
   els.chatToggle.addEventListener("click", () => setChatVisible(document.body.classList.contains("chat-hidden")));
   els.chatClose.addEventListener("click", () => setChatVisible(false));
+
+  // For when it has gone sluggish and they would rather not wait for the
+  // watchdog. Also the honest answer to "chat is being weird".
+  els.chatReload?.addEventListener("click", () => {
+    if (chatMounted) recycleChat();
+    else mountChat();
+  });
+
+  // A tab coming back after a long time away is the cheapest possible
+  // moment to have replaced the document, so check on the way in and out.
+  document.addEventListener("visibilitychange", chatWatchdogTick);
 
   // Real Twitch in its own window rather than the embed.
   //

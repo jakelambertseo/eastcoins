@@ -190,9 +190,11 @@ body.chat-hidden .chatrail{display:none}
   background:var(--panel-2);
 }
 .chatrail-head #chatClose,
-.chatrail-head #chatPopout{
+.chatrail-head #chatPopout,
+.chatrail-head #chatReload{
   width:22px;height:22px;font-size:.62rem;
 }
+.chatrail-head #chatReload{font-size:.78rem}
 .chatrail-head{gap:5px}
 .chatrail-head #chatPopout{font-size:.72rem}
 .chatrail iframe{flex:1;width:100%;border:0;background:var(--panel)}
