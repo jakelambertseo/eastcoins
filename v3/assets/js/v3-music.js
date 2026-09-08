@@ -182,7 +182,7 @@
     return ytReady;
   }
 
-  const player = { instance: null, host: null, videoId: "", itemId: "" };
+  const player = { instance: null, host: null, shield: null, videoId: "", itemId: "" };
 
   function readVolume() {
     try {
@@ -236,10 +236,18 @@
 
     // controls:0 hides the bar but a click on the video still toggles
     // playback, so the frame gets a transparent cover.
+    //
+    // It is only up WHILE PLAYING. Browsers refuse to autoplay audio
+    // until the person has interacted with the page, so the room opens
+    // showing YouTube's play button and needs exactly one real click to
+    // start — and a cover that is always on eats it, leaving a video that
+    // cannot be started at all.
     const shield = document.createElement("div");
     shield.className = "mstage-shield";
     shield.title = "Playback is shared - use the volume slider";
+    shield.hidden = true;
     host.append(shield);
+    player.shield = shield;
 
     player.host = host;
     player.videoId = current.videoId;
@@ -279,7 +287,18 @@
           } catch {}
         },
         onStateChange: (event) => {
-          if (event.data === window.YT.PlayerState.ENDED) reportEnded("ended");
+          const YTS = window.YT.PlayerState;
+          // Cover it once it is actually playing; lift it any other time
+          // so the person can start, or restart, what they are watching.
+          if (player.shield) player.shield.hidden = event.data !== YTS.PLAYING;
+
+          if (event.data === YTS.PLAYING) {
+            // They have just pressed play, which may be long after the
+            // room moved on. Land them where everyone else is rather than
+            // waiting up to five seconds for the drift check.
+            correctDrift();
+          }
+          if (event.data === YTS.ENDED) reportEnded("ended");
         },
         onError: () => reportEnded("player-error")
       }
@@ -345,6 +364,7 @@
     try { player.instance?.destroy?.(); } catch {}
     player.instance = null;
     player.host = null;
+    player.shield = null;
     player.videoId = "";
     player.itemId = "";
   }
