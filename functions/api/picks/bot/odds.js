@@ -21,7 +21,10 @@ export async function onRequestGet(context) {
   const markets = await openMarkets(db);
   if (!markets.length) return say("No games are open for picks right now.");
 
-  const team = gate.args;
+  // StreamElements goes quiet when a nested $(queryescape $(1:)) has
+  // nothing inside it, so the command passes a fallback word instead —
+  // $(1:|all) — and "all" means the same as no team at all.
+  const team = /^(all|open|list|games|-)$/i.test(gate.args) ? "" : gate.args;
   if (!team) {
     const n = markets.length;
     return say(
