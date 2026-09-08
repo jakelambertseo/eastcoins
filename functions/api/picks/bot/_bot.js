@@ -95,7 +95,10 @@ export function botGate(context) {
     // Only ever a numeric Twitch id; anything else is treated as absent.
     twitchId: /^\d{1,20}$/.test(twitchId) ? twitchId : "",
     displayName,
-    args: String(url.searchParams.get("args") || "").trim()
+    // StreamElements posts nothing when a nested $(queryescape $(1:)) is
+    // empty, so commands send "$(queryescape . $(1:))": a dot that is
+    // always there, then whatever was typed. The dot is dropped here.
+    args: String(url.searchParams.get("args") || "").trim().replace(/^\.(\s+|$)/, "").trim()
   };
 }
 
