@@ -229,6 +229,8 @@ async function getMarkets(db) {
            m.total_pool_locked,
            m.away_multiplier_locked,
            m.home_multiplier_locked,
+           m.away_odds_locked,
+           m.home_odds_locked,
            COALESCE(
              pools.away_pool,
              0
@@ -366,6 +368,20 @@ async function getMarkets(db) {
       },
       startsAt:
         row.starts_at,
+      awayOdds:
+        row.away_odds_locked ==
+        null
+          ? null
+          : Number(
+              row.away_odds_locked
+            ),
+      homeOdds:
+        row.home_odds_locked ==
+        null
+          ? null
+          : Number(
+              row.home_odds_locked
+            ),
       state:
         String(
           row.state || "OPEN"

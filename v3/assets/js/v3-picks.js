@@ -26,7 +26,10 @@
     loaded: false,
     failed: false,
     wallet: null,
-    ticket: null
+    ticket: null,
+    myPicks: [],
+    config: {},
+    authed: false
   };
 
   let root = null;
@@ -64,11 +67,40 @@
       if (!payload?.ok) throw new Error("bootstrap");
 
       local.markets = Array.isArray(payload.markets) ? payload.markets : [];
+      local.myPicks = Array.isArray(payload.myPicks) ? payload.myPicks : [];
       local.wallet = payload.session?.wallet || null;
+      local.authed = Boolean(payload.session?.authenticated);
+      local.config = payload.config || {};
       local.loaded = true;
+      local.failed = false;
     } catch {
       local.failed = true;
       local.loaded = true;
+    }
+  }
+
+  /**
+   * Places a real wager. The server is the authority on every check
+   * here — this only reports what it decided. Its refusal messages are
+   * written for the person reading them, so they are shown as-is rather
+   * than remapped into something vaguer.
+   */
+  async function placePick(market, side, stake) {
+    try {
+      const response = await fetch("/api/picks/wagers", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ marketId: market.id, selection: side, wager: stake })
+      });
+      const payload = await response.json().catch(() => null);
+      if (payload?.ok) return payload;
+      return {
+        ok: false,
+        message: payload?.message || `Couldn't place that pick (${response.status}).`
+      };
+    } catch {
+      return { ok: false, message: "Couldn't reach the server — nothing was charged." };
     }
   }
 
@@ -146,18 +178,49 @@
 
   /* ---------------------------------------------------------- markets */
 
+  // bootstrap sends {name, badge}; tolerate a bare string too.
+  function teamName(value) {
+    if (value && typeof value === "object") return String(value.name || "");
+    return String(value || "");
+  }
+
+  function startLabel(iso) {
+    const when = new Date(iso);
+    if (Number.isNaN(when.getTime())) return "";
+    const time = when.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    return when.toDateString() === new Date().toDateString()
+      ? `Today ${time}`
+      : `${when.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })} ${time}`;
+  }
+
   function marketCard(market) {
     const card = el("article", "market");
+
+    const away = teamName(market.away);
+    const home = teamName(market.home);
+    const mine = local.myPicks.find((p) => p.marketId === market.id) || null;
+
+    const priced =
+      Number.isFinite(Number(market.awayOdds)) && Number(market.awayOdds) !== 0 &&
+      Number.isFinite(Number(market.homeOdds)) && Number(market.homeOdds) !== 0;
+    const started =
+      Boolean(market.startsAt) && new Date(market.startsAt).getTime() <= Date.now();
+
+    // Every one of these is re-checked by the server. Mirroring them here
+    // is only so a button is never offered that would be refused.
+    const canBet =
+      local.authed && local.config.wageringEnabled !== false &&
+      priced && !started && market.state === "OPEN" && !mine;
 
     const head = el("div", "market-head");
     head.append(
       el("span", "market-league", market.league || market.sport || "Market"),
-      el("span", "market-time", market.startLabel || market.commenceLabel || "")
+      el("span", "market-time", startLabel(market.startsAt))
     );
 
     const sides = el("div", "market-sides");
     for (const side of ["away", "home"]) {
-      const name = side === "away" ? market.away : market.home;
+      const name = side === "away" ? away : home;
       const line = side === "away" ? market.awayOdds : market.homeOdds;
       const btn = el("button", "side");
       btn.type = "button";
@@ -168,11 +231,34 @@
       pays.append(document.createTextNode("10 pays "), zc(totalReturn(10, line)));
 
       btn.append(label, price, pays);
-      btn.addEventListener("click", () => openTicket(market, side, name, line));
+      if (mine && mine.selection === side) btn.classList.add("is-mine");
+
+      if (canBet) {
+        btn.addEventListener("click", () => openTicket(market, side, name, line));
+      } else {
+        btn.disabled = true;
+      }
       sides.append(btn);
     }
 
     card.append(head, sides);
+
+    // A dead button with no explanation reads as a bug. Say which it is.
+    const reason = mine
+      ? `Your pick: ${Number(mine.wager).toLocaleString()} on ${mine.selection === "away" ? away : home}.`
+      : !priced
+        ? "No price on this market yet."
+        : started || market.state !== "OPEN"
+          ? "Betting is closed on this game."
+          : !local.authed
+            ? "Log in with Twitch to make a pick."
+            : local.config.wageringEnabled === false
+              ? (local.config.inWagerTest
+                  ? "ZCoin transfers aren't switched on for this server yet."
+                  : "Picks is in limited testing and isn't open to everyone yet.")
+              : "";
+    if (reason) card.append(el("p", "market-foot", reason));
+
     return card;
   }
 
@@ -238,15 +324,59 @@
     panel.setAttribute("aria-label", `Lock pick on ${team}`);
 
     const head = el("header", "ticket-head");
-    head.append(el("strong", null, "Lock your pick"));
+    const heading = el("strong", null, "Lock your pick");
+    head.append(heading);
     const close = el("button", "iconbtn", "✕");
     close.type = "button";
     close.setAttribute("aria-label", "Close");
-    close.addEventListener("click", () => {
+    close.addEventListener("click", () => dismiss());
+    head.append(close);
+
+    function dismiss() {
       local.ticket = null;
       renderTicket();
-    });
-    head.append(close);
+    }
+
+    function show(body) {
+      panel.append(head, ...body);
+      backdrop.append(panel);
+      backdrop.addEventListener("click", (event) => {
+        if (event.target === backdrop) dismiss();
+      });
+      document.body.append(backdrop);
+    }
+
+    // Already placed: show what was actually taken, from the server's
+    // own reply rather than from what the form hoped for.
+    if (local.ticket.receipt) {
+      const r = local.ticket.receipt;
+      heading.textContent = "Pick locked";
+
+      const done = el("div", "ticket-done");
+      const rows = [
+        ["Pick", `${Number(r.wager).toLocaleString()} on ${r.team}`],
+        ["Locked price", formatLine(r.odds)],
+        ["Returns if it wins", Number(r.returnsIfWon).toLocaleString()],
+        ["ZCoins left", local.ticket.balance == null
+          ? "—" : Number(local.ticket.balance).toLocaleString()]
+      ];
+      for (const [k, v] of rows) {
+        const row = el("div", "ticket-row");
+        row.append(el("span", "ticket-row-k", k), el("span", "ticket-row-v", v));
+        done.append(row);
+      }
+      done.append(el("p", "ticket-hint",
+        "Your price is locked at what you saw. It settles on its own once the game is final."));
+
+      const ok = el("button", "btn primary", "Done");
+      ok.type = "button";
+      ok.style.height = "38px";
+      ok.addEventListener("click", dismiss);
+
+      show([done, ok]);
+      ok.focus();
+      return;
+    }
 
     const pick = el("div", "ticket-pick");
     pick.append(
@@ -309,27 +439,37 @@
     confirm.type = "button";
     confirm.style.height = "38px";
 
-    confirm.addEventListener("click", () => {
-      // The wager endpoint is still safety-locked, so this must not
-      // pretend a pick was placed.
-      hint.textContent =
-        "Wagering isn't switched on yet — this would place the pick once it is.";
-      hint.classList.add("is-error");
+    confirm.addEventListener("click", async () => {
+      const stake = Math.max(0, Math.floor(Number(input.value) || 0));
+
       confirm.disabled = true;
+      input.disabled = true;
+      confirm.textContent = "Placing…";
+      hint.classList.remove("is-error");
+      hint.textContent = "Taking your stake and locking the price…";
+
+      const result = await placePick(local.ticket.market, local.ticket.side, stake);
+
+      if (result.ok) {
+        // Re-read from the server so the wallet and the card's
+        // "your pick" state come from the record, not from optimism.
+        local.ticket = { ...local.ticket, receipt: result.pick, balance: result.balance };
+        await loadMarkets();
+        renderTicket();
+        paint();
+        return;
+      }
+
+      confirm.disabled = false;
+      input.disabled = false;
+      confirm.textContent = "Lock it in";
+      hint.textContent = result.message;
+      hint.classList.add("is-error");
     });
 
     input.addEventListener("input", refresh);
 
-    panel.append(head, pick, field, summary, hint, confirm);
-    backdrop.append(panel);
-    backdrop.addEventListener("click", (event) => {
-      if (event.target === backdrop) {
-        local.ticket = null;
-        renderTicket();
-      }
-    });
-
-    document.body.append(backdrop);
+    show([pick, field, summary, hint, confirm]);
     refresh();
     input.focus();
     input.select();
