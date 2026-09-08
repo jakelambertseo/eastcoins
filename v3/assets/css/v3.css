@@ -1856,3 +1856,33 @@ body.is-rasputin .mtitle-text{
   .jam-cat{display:none}
   body.is-rasputin .mstagewrap .mstage-glow,body.is-rasputin .mtitle-text{animation:none}
 }
+
+/* ---------------------------------------------------------------- team logos
+   Every crest draws its initials first; the logo covers them once it
+   has loaded, so nothing ever flashes empty. */
+.side-crest,.ticket-crest,.pickticket-crest,.tpick-crest,.gp-crest{position:relative;overflow:hidden}
+.side-crest img,.ticket-crest img,.pickticket-crest img,.tpick-crest img,.gp-crest img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:12%;
+  opacity:0;transition:opacity .2s ease;
+}
+.has-logo img{opacity:1}
+.has-logo{color:transparent;background:var(--panel-2)}
+.gp-team.won .gp-crest.has-logo{background:var(--green-dim)}
+.side-crest{
+  width:34px;height:34px;flex:0 0 auto;border-radius:9px;display:grid;place-items:center;
+  border:1px solid var(--line-2);background:var(--panel-2);
+  color:var(--muted);font-family:var(--display);font-weight:700;font-size:.62rem;
+}
+.ticket-team{display:inline-flex;align-items:center;gap:9px}
+.ticket-crest{
+  width:30px;height:30px;flex:0 0 auto;border-radius:8px;display:grid;place-items:center;
+  border:1px solid rgba(232,191,53,.3);background:var(--panel);
+  color:var(--muted);font-family:var(--display);font-weight:700;font-size:.58rem;
+}
+.tpick{display:flex;align-items:center;gap:10px;min-width:0}
+.tpick>span{min-width:0}
+.tpick-crest{
+  width:32px;height:32px;flex:0 0 auto;border-radius:8px;display:grid;place-items:center;
+  border:1px solid var(--line-2);background:var(--panel-2);
+  color:var(--muted);font-family:var(--display);font-weight:700;font-size:.6rem;
+}

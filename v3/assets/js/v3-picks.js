@@ -122,6 +122,11 @@
     return node;
   }
 
+  function crest(market, name, className) {
+    if (window.ECLogos) return window.ECLogos.crest(market?.sport, market?.league, name, className);
+    return el("span", className, initials(name));
+  }
+
   function initials(name) {
     return String(name || "?")
       .split(/\s+/)
@@ -200,7 +205,7 @@
       const pays = el("span", "side-pays");
       pays.append(document.createTextNode("10 pays "), zc(totalReturn(10, line)));
 
-      btn.append(label, price, pays);
+      btn.append(crest(market, name, "side-crest"), label, price, pays);
       if (mine && mine.selection === side) btn.classList.add("is-mine");
 
       if (canBet) {
@@ -357,7 +362,11 @@
 
     const pick = el("div", "ticket-pick");
     pick.append(
-      el("span", "ticket-team", team),
+      (() => {
+        const t = el("span", "ticket-team");
+        t.append(crest(local.ticket.market, team, "ticket-crest"), document.createTextNode(team));
+        return t;
+      })(),
       el("span", "ticket-line nums", formatLine(line))
     );
 
@@ -514,7 +523,7 @@
 
       const head = el("div", "pickticket-head");
       const teamWrap = el("div", "pickticket-team");
-      teamWrap.append(el("span", "pickticket-crest", initials(sideName(p))));
+      teamWrap.append(crest(p.market, sideName(p), "pickticket-crest"));
       const names = el("span");
       names.append(el("strong", null, sideName(p)), el("small", null, `vs ${oppName(p)}`));
       teamWrap.append(names);
@@ -710,7 +719,9 @@
       user.append(copy);
 
       const pick = el("div", "tpick");
-      pick.append(el("strong", null, sideName(row)), el("small", null, `vs ${oppName(row)}${row.market?.league ? " · " + row.market.league : ""}`));
+      const pickCopy = el("span");
+      pickCopy.append(el("strong", null, sideName(row)), el("small", null, `vs ${oppName(row)}${row.market?.league ? " · " + row.market.league : ""}`));
+      pick.append(crest(row.market, sideName(row), "tpick-crest"), pickCopy);
 
       const stake = el("div", "tstat right");
       stake.append(el("span", null, "Wager"));

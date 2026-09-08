@@ -113,7 +113,10 @@
     const teams = el("div", "gp-teams");
     const teamCell = (side, key) => {
       const cell = el("div", `gp-team${winner === key ? " won" : ""}`);
-      cell.append(el("div", "gp-crest", initials(side.name)), el("div", "gp-name", side.name), el("div", "gp-line", formatLine(side.line)));
+      const crest = window.ECLogos
+        ? window.ECLogos.crest(m.sport, m.league, side.name, "gp-crest")
+        : el("span", "gp-crest", initials(side.name));
+      cell.append(crest, el("div", "gp-name", side.name), el("div", "gp-line", formatLine(side.line)));
       return cell;
     };
     const score = el("div", "gp-score");
