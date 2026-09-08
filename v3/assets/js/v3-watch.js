@@ -7,12 +7,20 @@
    does (shell -> player.html -> provider), which is what made
    the old first-paint flash necessary.
 
-   Two entry points:
-     ?view=watch&event=<id>   an EastCoin event
-     ?view=watch&url=<url>    a pasted embed URL
+   The video is the page. There is no heading — you already know
+   what you clicked — and the frame takes every pixel the shell
+   is not using. Controls sit in a bar above it that folds away
+   to a single chevron.
+
+   One rule shapes the DOM here: the iframe is built once and
+   only ever has its src reassigned. Rebuilding it restarts the
+   stream, so anything that is not a deliberate server change —
+   folding the bar, copying a link — must not touch it.
    ============================================================ */
 (() => {
   "use strict";
+
+  const CONTROLS_KEY = "ec_v3_watch_controls";
 
   const local = {
     match: null,
@@ -21,11 +29,31 @@
     loading: false,
     error: "",
     reason: "",
-    custom: ""
+    custom: "",
+    hidden: false
   };
+
+  // Built once per mount, then mutated.
+  const dom = { wrap: null, bar: null, peek: null, frame: null, iframe: null, select: null };
 
   let root = null;
   let shell = null;
+
+  function readPref() {
+    try {
+      return window.localStorage.getItem(CONTROLS_KEY) === "hidden";
+    } catch {
+      return false;
+    }
+  }
+
+  function writePref(hidden) {
+    try {
+      window.localStorage.setItem(CONTROLS_KEY, hidden ? "hidden" : "shown");
+    } catch {
+      /* private windows and blocked storage are fine; the default holds */
+    }
+  }
 
   /* ---------------------------------------------------------- data */
 
@@ -62,133 +90,193 @@
     }
   }
 
-  /* ---------------------------------------------------------- render */
+  /* ---------------------------------------------------------- helpers */
 
-  function frame(url, title) {
-    const wrap = document.createElement("div");
-    wrap.className = "playerframe";
-    const iframe = document.createElement("iframe");
-    iframe.src = url;
-    iframe.title = title || "Stream";
-    iframe.allow = "autoplay; fullscreen; encrypted-media; picture-in-picture";
-    iframe.allowFullscreen = true;
-    iframe.referrerPolicy = "no-referrer";
-    wrap.append(iframe);
-    return wrap;
+  function currentSrc() {
+    if (local.custom) return local.custom;
+    return local.streams[local.active]?.embedUrl || "";
   }
 
-  function serverBar() {
-    const bar = document.createElement("div");
-    bar.className = "serverbar";
+  function shareLink() {
+    const url = new URL("/v3/", location.origin);
+    url.searchParams.set("view", "watch");
+    if (local.custom) url.searchParams.set("url", local.custom);
+    else if (local.match?.id) url.searchParams.set("event", local.match.id);
+    return url.href;
+  }
 
-    const label = document.createElement("span");
-    label.className = "serverbar-label";
-    label.textContent = local.streams.length
-      ? `${local.streams.length} server${local.streams.length === 1 ? "" : "s"}`
-      : "No servers";
-    bar.append(label);
+  function el(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
 
+  function setHidden(hidden) {
+    local.hidden = hidden;
+    writePref(hidden);
+    // Attribute flips only — the iframe is never touched, so folding the
+    // bar cannot restart the stream.
+    if (dom.bar) dom.bar.hidden = hidden;
+    if (dom.peek) dom.peek.hidden = !hidden;
+  }
+
+  /* ---------------------------------------------------------- controls */
+
+  function syncServers() {
+    if (!dom.select) return;
+    dom.select.replaceChildren();
+
+    if (!local.streams.length) {
+      const option = document.createElement("option");
+      option.textContent = "No servers";
+      dom.select.append(option);
+      dom.select.disabled = true;
+      return;
+    }
+
+    dom.select.disabled = local.streams.length < 2;
     local.streams.forEach((_, index) => {
-      const btn = document.createElement("button");
-      btn.className = "chip";
-      btn.type = "button";
-      btn.setAttribute("aria-pressed", String(index === local.active));
-      btn.textContent = `Server ${index + 1}`;
-      btn.addEventListener("click", () => {
-        local.active = index;
-        paint();
-      });
-      bar.append(btn);
+      const option = document.createElement("option");
+      option.value = String(index);
+      option.textContent = `Server ${index + 1}`;
+      if (index === local.active) option.selected = true;
+      dom.select.append(option);
     });
+  }
 
-    const spacer = document.createElement("span");
-    spacer.className = "filters-spacer";
-    bar.append(spacer);
+  function buildBar() {
+    const bar = el("div", "watchbar");
 
-    const back = document.createElement("button");
-    back.className = "btn";
+    // Server selector. A dropdown rather than a row of chips: a provider
+    // with nine feeds would otherwise wrap the bar onto a second line and
+    // eat the video space this view exists to protect.
+    if (!local.custom) {
+      const select = document.createElement("select");
+      select.className = "watchsel";
+      select.setAttribute("aria-label", "Stream server");
+      select.addEventListener("change", () => {
+        local.active = Number(select.value) || 0;
+        // Deliberate reload: a new server is a new stream.
+        if (dom.iframe) dom.iframe.src = currentSrc();
+      });
+      dom.select = select;
+      bar.append(select);
+      syncServers();
+    }
+
+    const source = el("button", "watchbtn", "Open source");
+    source.type = "button";
+    source.title = "Open this stream in a new tab";
+    source.addEventListener("click", () => {
+      const src = currentSrc();
+      if (src) window.open(src, "_blank", "noopener,noreferrer");
+    });
+    bar.append(source);
+
+    const copy = el("button", "watchbtn", "Copy link");
+    copy.type = "button";
+    copy.title = "Copy a link back to this stream";
+    copy.addEventListener("click", async () => {
+      const link = shareLink();
+      try {
+        await navigator.clipboard.writeText(link);
+        copy.textContent = "Copied";
+      } catch {
+        // Clipboard access is refused in plenty of ordinary situations;
+        // say so rather than appearing to have worked.
+        copy.textContent = "Press Ctrl+C";
+        window.prompt("Copy this link", link);
+      }
+      window.setTimeout(() => { copy.textContent = "Copy link"; }, 1600);
+    });
+    bar.append(copy);
+
+    bar.append(el("span", "watchbar-spacer"));
+
+    const back = el("button", "watchbtn", "← Events");
     back.type = "button";
-    back.style.flex = "0 0 auto";
-    back.style.padding = "0 15px";
-    back.textContent = "← All events";
     back.addEventListener("click", () => shell.go("events"));
     bar.append(back);
+
+    const fold = el("button", "watchbtn watchfold", "⌃ Hide");
+    fold.type = "button";
+    fold.title = "Hide these controls";
+    fold.addEventListener("click", () => setHidden(true));
+    bar.append(fold);
 
     return bar;
   }
 
-  function paint() {
+  /* ---------------------------------------------------------- render */
+
+  function buildShell() {
     root.replaceChildren();
 
-    const head = document.createElement("div");
-    head.className = "viewhead";
-    const wrap = document.createElement("div");
-    const h1 = document.createElement("h1");
-    h1.textContent = local.custom
-      ? "Custom stream"
-      : local.match?.title || (local.loading ? "Loading…" : "Watch");
-    wrap.append(h1);
-    head.append(wrap);
-    root.append(head);
+    const wrap = el("div", "watchwrap");
 
-    if (local.custom) {
-      root.append(frame(local.custom, "Custom stream"));
-      const note = document.createElement("p");
-      note.className = "filters-note";
-      note.style.marginTop = "10px";
-      note.textContent =
-        "Pasted embed. Some sites refuse to load inside another page — that's their setting, not something EastCoin can override.";
-      root.append(note);
+    const bar = buildBar();
+    bar.hidden = local.hidden;
 
-      const back = document.createElement("button");
-      back.className = "btn";
-      back.type = "button";
-      back.style.cssText = "flex:0 0 auto;padding:0 15px;margin-top:12px";
-      back.textContent = "← All events";
-      back.addEventListener("click", () => shell.go("events"));
-      root.append(back);
+    // Floats over the video rather than occupying a row, so a folded bar
+    // gives its full height to the picture.
+    const peek = el("button", "watchpeek", "⌄");
+    peek.type = "button";
+    peek.title = "Show controls";
+    peek.setAttribute("aria-label", "Show player controls");
+    peek.hidden = !local.hidden;
+    peek.addEventListener("click", () => setHidden(false));
+
+    const frame = el("div", "playerframe");
+    const iframe = document.createElement("iframe");
+    iframe.title = local.match?.title || "Stream";
+    iframe.allow = "autoplay; fullscreen; encrypted-media; picture-in-picture";
+    iframe.allowFullscreen = true;
+    iframe.referrerPolicy = "no-referrer";
+    iframe.src = currentSrc();
+    frame.append(iframe);
+
+    wrap.append(bar, peek, frame);
+    root.append(wrap);
+
+    Object.assign(dom, { wrap, bar, peek, frame, iframe });
+  }
+
+  function paintMessage(kind) {
+    root.replaceChildren();
+    const wrap = el("div", "watchwrap");
+
+    if (kind === "loading") {
+      wrap.append(el("div", "playerframe shimmer"));
+      root.append(wrap);
       return;
     }
 
-    if (local.loading) {
-      const skel = document.createElement("div");
-      skel.className = "playerframe shimmer";
-      root.append(skel);
-      return;
-    }
-
+    const box = el("div", "empty");
     if (local.error) {
-      const strip = document.createElement("div");
-      strip.className = "notice-strip";
-      strip.textContent = local.error;
-      root.append(strip);
-      const back = document.createElement("button");
-      back.className = "btn";
-      back.type = "button";
-      back.style.cssText = "flex:0 0 auto;padding:0 15px";
-      back.textContent = "← All events";
-      back.addEventListener("click", () => shell.go("events"));
-      root.append(back);
-      return;
-    }
-
-    const stream = local.streams[local.active];
-    if (stream) {
-      root.append(frame(stream.embedUrl, local.match?.title));
-      root.append(serverBar());
+      box.append(el("strong", null, "Can't open that"), el("p", null, local.error));
     } else {
-      const empty = document.createElement("div");
-      empty.className = "empty";
-      const strong = document.createElement("strong");
-      strong.textContent = "No playable stream yet";
-      const p = document.createElement("p");
-      p.textContent =
-        local.reason ||
-        "Providers usually publish a feed close to kickoff. Try again in a few minutes.";
-      empty.append(strong, p);
-      root.append(empty);
-      root.append(serverBar());
+      box.append(
+        el("strong", null, "No playable stream yet"),
+        el("p", null, local.reason ||
+          "Providers usually publish a feed close to kickoff. Try again in a few minutes.")
+      );
     }
+    const back = el("button", "btn", "← All events");
+    back.type = "button";
+    back.style.cssText = "flex:0 0 auto;padding:0 15px;margin-top:12px";
+    back.addEventListener("click", () => shell.go("events"));
+    box.append(back);
+
+    wrap.append(box);
+    root.append(wrap);
+  }
+
+  function paint() {
+    if (local.loading) return paintMessage("loading");
+    if (local.error) return paintMessage("error");
+    if (!currentSrc()) return paintMessage("empty");
+    buildShell();
   }
 
   /* ---------------------------------------------------------- view */
@@ -197,6 +285,8 @@
     async mount(container, api) {
       root = container;
       shell = api;
+
+      document.body.classList.add("watch-on");
 
       const search = params();
       const custom = search.get("url") || "";
@@ -208,6 +298,7 @@
       local.active = 0;
       local.error = "";
       local.reason = "";
+      local.hidden = readPref();
 
       if (custom) {
         // Only ever hand an https URL to an iframe.
@@ -244,6 +335,13 @@
       local.reason = outcome.reason;
       local.loading = false;
       if (root.isConnected) paint();
+    },
+
+    unmount() {
+      document.body.classList.remove("watch-on");
+      Object.assign(dom, {
+        wrap: null, bar: null, peek: null, frame: null, iframe: null, select: null
+      });
     }
   };
 
