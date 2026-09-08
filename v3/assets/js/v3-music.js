@@ -48,6 +48,8 @@
     socket: null,
     state: null,
     token: null,
+    tokenExpiresAt: 0,
+    tokenTimer: 0,
     login: "",
     attempts: 0,
     clientId: "",
@@ -93,16 +95,57 @@
       const payload = await response.json();
       if (payload?.ok && payload.authenticated) {
         conn.token = payload.token || null;
+        conn.tokenExpiresAt = Number(payload.expiresAt) || 0;
         conn.login = String(payload.login || "").toLowerCase();
       } else {
         conn.token = null;
+        conn.tokenExpiresAt = 0;
         conn.login = "";
       }
     } catch {
       conn.token = null;
+      conn.tokenExpiresAt = 0;
       conn.login = "";
     }
     return conn.token;
+  }
+
+  /**
+   * These tokens last fifteen minutes.
+   *
+   * An expired one is still a non-empty string, so "do we have a token"
+   * is not the same question as "will the room accept it" — and a page
+   * left open past the quarter hour was cheerfully sending a dead token
+   * and being told to log in.
+   *
+   * A minute of headroom, because the room checks the expiry when the
+   * message lands and one that dies in flight is refused exactly like
+   * one long gone.
+   */
+  function tokenIsFresh() {
+    return Boolean(conn.token) && conn.tokenExpiresAt - Date.now() > 60000;
+  }
+
+  async function ensureToken() {
+    if (tokenIsFresh()) return conn.token;
+    await fetchToken();
+    // Re-announce: the room derives the verified login from the token it
+    // was given at identity time, so a refresh it never hears about
+    // leaves it holding the old one.
+    if (conn.token) {
+      send({ type: "identity", name: "", avatar: "", token: conn.token });
+    }
+    scheduleTokenRefresh();
+    return conn.token;
+  }
+
+  function scheduleTokenRefresh() {
+    window.clearTimeout(conn.tokenTimer);
+    if (!conn.tokenExpiresAt) return;
+    // Renew a minute early rather than on expiry, so nothing is ever sent
+    // during the gap.
+    const wait = Math.max(30000, conn.tokenExpiresAt - Date.now() - 60000);
+    conn.tokenTimer = window.setTimeout(() => { ensureToken(); }, wait);
   }
 
   function canForceSkip() {
@@ -129,6 +172,7 @@
       conn.attempts = 0;
       await fetchToken();
       send({ type: "identity", name: "", avatar: "", token: conn.token });
+      scheduleTokenRefresh();
       emit();
     });
 
@@ -157,6 +201,8 @@
   }
 
   function disconnect() {
+    window.clearTimeout(conn.tokenTimer);
+    conn.tokenTimer = 0;
     const socket = conn.socket;
     conn.socket = null;
     try { socket?.close(); } catch {}
@@ -548,9 +594,10 @@
 
     async function addVideo(videoId, title) {
       // The room verifies the token carried BY THIS MESSAGE, not the one
-      // presented at identity time. Sending an add without it fails as
-      // "you need to be logged in" no matter how logged in you are.
-      if (!conn.token) await fetchToken();
+      // presented at identity time. Sending an add without it — or with a
+      // stale one — fails as "you need to be logged in" no matter how
+      // logged in you are.
+      await ensureToken();
       if (!conn.token) {
         setNotice("Log in with Twitch to add songs.", true);
         return;
