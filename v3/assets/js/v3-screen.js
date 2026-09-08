@@ -486,9 +486,10 @@
       catch { copyLink.textContent = "Couldn't copy"; }
       setTimeout(() => { copyLink.textContent = "Copy link"; }, 1600);
     });
+    const back = btn("← Back to Movies & Shows", "sc-btn sc-back", stop);
     const close = btn("✕", "sc-btn", stop);
     close.title = "Close player";
-    bar.append(title, seasonSel, prevEp, nextEp, epToggle, copyLink, close);
+    bar.append(back, title, seasonSel, prevEp, nextEp, epToggle, copyLink, close);
     stage.append(bar);
     const epStrip = el("div", "sc-eps");
     epStrip.hidden = true;
