@@ -66,9 +66,30 @@
       const response = await fetch(url, {
         method: "POST",
         headers: body ? { "Content-Type": "application/json" } : {},
-        body: body ? JSON.stringify(body) : undefined
+        body: body ? JSON.stringify(body) : undefined,
+        credentials: "include"
       });
-      payload = await response.json();
+
+      // Read as text first. An HTML body here means the request never
+      // reached the function — a redeploy in flight, an auth redirect,
+      // or a 500 page — and reporting "unexpected token <" tells the
+      // operator nothing about which. The status code does.
+      const raw = await response.text();
+      try {
+        payload = JSON.parse(raw);
+      } catch {
+        const kind = raw.trimStart().startsWith("<") ? "an HTML page" : "a non-JSON body";
+        payload = {
+          ok: false,
+          message:
+            `Server returned ${response.status} with ${kind}. ` +
+            (response.status === 200
+              ? "The site is probably mid-deploy — wait a moment and try again."
+              : response.status === 500
+                ? "The endpoint threw. Check the Pages function logs."
+                : "Try again; if it persists the route may not be deployed.")
+        };
+      }
     } catch (error) {
       payload = { ok: false, message: String(error?.message || "Request failed") };
     }
