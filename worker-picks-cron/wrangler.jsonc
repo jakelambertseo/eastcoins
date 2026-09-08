@@ -3,6 +3,7 @@
   "name": "eastcoin-picks-cron",
   "main": "src/index.js",
   "compatibility_date": "2026-08-21",
+  "workers_dev": true,
 
   // Every 10 minutes. Games end at unpredictable times, and settlement
   // is idempotent, so running often costs little: with nothing to grade
