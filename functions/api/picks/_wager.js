@@ -59,13 +59,15 @@ export async function placeWager(env, db, user, { marketId, selection, wager }) 
 
   const id = String(marketId || "").trim();
   const side = String(selection || "").trim().toLowerCase();
-  const amount = Math.floor(Number(wager));
+  // "all" is the whole balance — resolved once the balance is known.
+  const allIn = String(wager).trim().toLowerCase() === "all";
+  let amount = allIn ? 0 : Math.floor(Number(wager));
 
   if (!id) return deny("BAD_REQUEST", "Missing marketId.");
   if (side !== "away" && side !== "home") {
     return deny("BAD_REQUEST", "Selection must be 'away' or 'home'.");
   }
-  if (!Number.isFinite(amount) || amount < MIN_WAGER) {
+  if (!allIn && (!Number.isFinite(amount) || amount < MIN_WAGER)) {
     return deny("BAD_WAGER", `Minimum stake is ${MIN_WAGER} ZCoin.`);
   }
 
@@ -111,6 +113,12 @@ export async function placeWager(env, db, user, { marketId, selection, wager }) 
   const balance = await readBalance(env, user.login);
   if (balance === null) {
     return deny("BALANCE_UNAVAILABLE", "Couldn't read your ZCoin balance.", 503);
+  }
+  if (allIn) {
+    amount = Math.floor(balance);
+    if (amount < MIN_WAGER) {
+      return deny("INSUFFICIENT_FUNDS", "You don't have any ZCoins to bet.", 409, { balance });
+    }
   }
   if (amount > balance) {
     return deny(

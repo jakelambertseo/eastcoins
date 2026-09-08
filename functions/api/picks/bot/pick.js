@@ -17,13 +17,23 @@ import {
   say, botGate, findOrCreateUser, openMarkets, matchTeam, formatLine, shortTeam
 } from "./_bot.js";
 
-/** "50 bills" or "bills 50" — the integer is the stake, the rest the team. */
+/**
+ * "50 bills" or "bills 50" — the integer is the stake, the rest the team.
+ * "all bills" (or max / everything / allin) stakes the whole balance.
+ */
+const ALL_IN = /^(all|max|everything|all-?in)$/i;
+
 export function parseArgs(args) {
   const parts = String(args || "").trim().split(/\s+/).filter(Boolean);
-  const at = parts.findIndex((p) => /^\d+$/.test(p));
+  let at = parts.findIndex((p) => /^\d+$/.test(p));
+  let amount = at === -1 ? null : Number(parts[at]);
+  if (at === -1) {
+    at = parts.findIndex((p) => ALL_IN.test(p));
+    if (at !== -1) amount = "all";
+  }
   if (at === -1) return { amount: null, team: parts.join(" ") };
   return {
-    amount: Number(parts[at]),
+    amount,
     team: parts.slice(0, at).concat(parts.slice(at + 1)).join(" ")
   };
 }
@@ -39,7 +49,7 @@ export async function onRequestGet(context) {
   const { amount, team } = parseArgs(gate.args);
 
   if (!amount || !team) {
-    return say(`${who} usage: !pick <amount> <team> — e.g. !pick 50 Bills`);
+    return say(`${who} usage: !pick <amount> <team> — e.g. !pick 50 Bills, or !pick all Bills`);
   }
 
   const user = await findOrCreateUser(db, gate);
@@ -78,8 +88,9 @@ export async function onRequestGet(context) {
 
   const p = result.pick;
   const balance = result.balance == null ? "" : ` Balance: ${Number(result.balance).toLocaleString()}`;
+  const allIn = amount === "all" ? " — ALL IN" : "";
   return say(
-    `${who} locked ${p.wager.toLocaleString()} on ${shortTeam(p.team)} ${formatLine(p.odds)} ` +
+    `${who} locked ${p.wager.toLocaleString()} on ${shortTeam(p.team)} ${formatLine(p.odds)}${allIn} ` +
     `→ ${p.returnsIfWon.toLocaleString()} back if they win.${balance}`
   );
 }

@@ -95,12 +95,10 @@ export function botGate(context) {
     // Only ever a numeric Twitch id; anything else is treated as absent.
     twitchId: /^\d{1,20}$/.test(twitchId) ? twitchId : "",
     displayName,
-    // StreamElements posts nothing when a nested $(queryescape $(1:)) is
-    // empty, so commands send "$(queryescape all $(1:))": a word that is
-    // always there, then whatever was typed. (Not a dot — SE reads
-    // "queryescape ." as a property accessor and refuses to parse.)
-    // The leading word is dropped here.
-    args: String(url.searchParams.get("args") || "").trim().replace(/^all(\s+|$)/i, "").trim()
+    // !odds sends $(1|all) so a bare command still reaches us; a lone
+    // "all" means "no argument". Only the bare word — "all rockies" is a
+    // real request (bet everything on the Rockies) and passes through.
+    args: String(url.searchParams.get("args") || "").trim().replace(/^all$/i, "")
   };
 }
 
