@@ -73,13 +73,25 @@ export async function onRequestPost(context) {
   const providerEventId = String(body?.eventId || "").trim() ||
     `manual:${sport}:${away}-vs-${home}:${start.toISOString().slice(0, 10)}`;
 
+  // Only a market that is still in play blocks the id. A closed or
+  // settled one is finished business, and refusing to reuse its id
+  // forces the team name to be misspelled just to get a new market on
+  // the same fixture — which then breaks settlement matching.
   const existing = await db
-    .prepare(`SELECT id, state FROM markets WHERE provider = 'manual' AND provider_event_id = ? LIMIT 1`)
+    .prepare(
+      `SELECT id, state
+         FROM markets
+        WHERE provider = 'manual'
+          AND provider_event_id = ?
+          AND state NOT IN ('VOID', 'SETTLED')
+        LIMIT 1`
+    )
     .bind(providerEventId)
     .first();
   if (existing) {
-    return fail("ALREADY_OPEN", `That market already exists (${existing.id}, ${existing.state}).`, 409,
-      { marketId: existing.id });
+    return fail("ALREADY_OPEN",
+      `That market already exists (${existing.id}, ${existing.state}). Close it first to reuse the fixture.`,
+      409, { marketId: existing.id });
   }
 
   const marketId = newId("mkt");
