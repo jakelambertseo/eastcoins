@@ -439,11 +439,9 @@
     let searchResults = [];
     let searching = false;
     let searchNote = "";
-    // Held outside the DOM because paint() rebuilds the whole view on every
-    // state broadcast - someone joining the room would otherwise wipe what
-    // you were halfway through typing.
+    // The field keeps its own value; this mirrors it so a remount restores
+    // what was typed.
     let searchQuery = "";
-    let searchFocused = false;
 
     /* ---------------------------------------------------- add + search */
 
@@ -474,14 +472,14 @@
         addVideo(pasted);
         searchResults = [];
         searchNote = "";
-        renderSearch();
+        renderResults();
         return;
       }
 
       if (!BASE) return;
       searching = true;
       searchNote = "";
-      renderSearch();
+      renderResults();
 
       try {
         const url = new URL("/search", BASE);
@@ -502,7 +500,7 @@
         searchNote = "Couldn't reach search. You can still paste a link.";
       }
       searching = false;
-      renderSearch();
+      renderResults();
     }
 
     async function loadHistory() {
@@ -523,7 +521,23 @@
 
     /* ---------------------------------------------------- panels */
 
-    function searchPanel() {
+    /* ------------------------------------------------- search
+
+       The input is created once and kept. Results replace only their own
+       container, never the field — rebuilding an input while somebody is
+       typing into it loses the caret, and with autocomplete firing on
+       every keystroke that would be constant.
+
+       Debounced at 400ms with a three-character floor because each miss
+       is a real YouTube Data API search, which is 100 quota units. The
+       room caches repeats, so a backspace over a query already sent is
+       free, but a fresh one is not. */
+
+    const SEARCH_DEBOUNCE_MS = 400;
+    const SEARCH_MIN_CHARS = 3;
+    let searchDebounce = 0;
+
+    function buildSearchField() {
       const box = el("div", "msearch");
 
       const input = document.createElement("input");
@@ -531,86 +545,112 @@
       input.type = "search";
       input.placeholder = "Search YouTube, or paste a link";
       input.setAttribute("aria-label", "Search YouTube or paste a link");
+      input.setAttribute("autocomplete", "off");
       input.value = searchQuery;
-      input.addEventListener("input", () => { searchQuery = input.value; });
-      input.addEventListener("focus", () => { searchFocused = true; });
-      input.addEventListener("blur", () => { searchFocused = false; });
-      input.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") runSearch(input.value);
-        if (event.key === "Escape") {
+
+      input.addEventListener("input", () => {
+        searchQuery = input.value;
+        window.clearTimeout(searchDebounce);
+
+        const trimmed = searchQuery.trim();
+
+        // A pasted link resolves locally, so it never waits on the timer
+        // and never spends a search.
+        if (window.EastcoinYouTube?.extractVideo?.(trimmed)?.id) {
+          searchDebounce = window.setTimeout(() => runSearch(trimmed), 150);
+          return;
+        }
+
+        if (trimmed.length < SEARCH_MIN_CHARS) {
           searchResults = [];
           searchNote = "";
-          renderSearch();
+          renderResults();
+          return;
+        }
+        searchDebounce = window.setTimeout(() => runSearch(trimmed), SEARCH_DEBOUNCE_MS);
+      });
+
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          window.clearTimeout(searchDebounce);
+          runSearch(input.value);
+        }
+        if (event.key === "Escape") {
+          window.clearTimeout(searchDebounce);
+          searchResults = [];
+          searchNote = "";
+          renderResults();
         }
       });
-      // Restored after a repaint so the caret does not jump to the start.
-      if (searchFocused) {
-        window.requestAnimationFrame(() => {
-          if (!input.isConnected) return;
-          input.focus();
-          const end = input.value.length;
-          try { input.setSelectionRange(end, end); } catch {}
-        });
+
+      refs.searchInput = input;
+      box.append(input);
+
+      refs.searchSpinner = el("span", "msearch-icon", "\u2315");
+      box.append(refs.searchSpinner);
+
+      return box;
+    }
+
+    function renderResults() {
+      const slot = refs.resultsSlot;
+      if (!slot) return;
+      slot.replaceChildren();
+
+      if (refs.searchSpinner) {
+        refs.searchSpinner.classList.toggle("is-busy", searching);
       }
 
-      const go = el("button", "watchbtn", searching ? "Searching…" : "Search");
-      go.type = "button";
-      go.disabled = searching;
-      go.addEventListener("click", () => runSearch(input.value));
+      if (searchNote) {
+        slot.append(el("p", "mq-empty", searchNote));
+        return;
+      }
+      if (!searchResults.length) return;
 
-      box.append(input, go);
+      const panel = el("div", "mresults");
 
-      const wrap = el("div", "msearchwrap");
-      wrap.append(box);
+      const head = el("div", "mresults-head");
+      head.append(el("span", "mq-k", `${searchResults.length} results - pick one to queue`));
+      const clear = el("button", "mresults-clear", "\u2715");
+      clear.type = "button";
+      clear.setAttribute("aria-label", "Clear results");
+      clear.addEventListener("click", () => {
+        searchResults = [];
+        searchNote = "";
+        renderResults();
+      });
+      head.append(clear);
+      panel.append(head);
 
-      if (searchNote) wrap.append(el("p", "mq-empty", searchNote));
+      const list = el("div", "mresults-list");
+      for (const result of searchResults.slice(0, 10)) {
+        const videoId = result.videoId || result.id;
+        const row = el("button", "mresult");
+        row.type = "button";
 
-      if (searchResults.length) {
-        const panel = el("div", "mresults");
+        // Prefer the id-derived thumbnail: the API returns the 120px
+        // "default" size, which looks soft at the size this row uses.
+        const art = thumb(videoId, "mresult-thumb");
+        if (art) row.append(art);
 
-        const head = el("div", "mresults-head");
-        head.append(el("span", "mq-k", `${searchResults.length} results - pick one to queue`));
-        const clear = el("button", "mresults-clear", "\u2715");
-        clear.type = "button";
-        clear.setAttribute("aria-label", "Clear results");
-        clear.addEventListener("click", () => {
+        const meta = el("div", "mresult-meta");
+        meta.append(el("strong", null, result.title || "Untitled"));
+        if (result.channelTitle) meta.append(el("small", null, result.channelTitle));
+        row.append(meta);
+        row.append(el("span", "mresult-add", "+ Add"));
+
+        row.addEventListener("click", () => {
+          addVideo(videoId);
           searchResults = [];
           searchNote = "";
-          renderSearch();
+          searchQuery = "";
+          if (refs.searchInput) refs.searchInput.value = "";
+          renderResults();
         });
-        head.append(clear);
-        panel.append(head);
-
-        const list = el("div", "mresults-list");
-        for (const result of searchResults.slice(0, 10)) {
-          const videoId = result.videoId || result.id;
-          const row = el("button", "mresult");
-          row.type = "button";
-
-          // Prefer the id-derived thumbnail: the API returns the 120px
-          // "default" size, which looks soft at the size this row uses.
-          const art = thumb(videoId, "mresult-thumb");
-          if (art) row.append(art);
-
-          const meta = el("div", "mresult-meta");
-          meta.append(el("strong", null, result.title || "Untitled"));
-          if (result.channelTitle) meta.append(el("small", null, result.channelTitle));
-          row.append(meta);
-          row.append(el("span", "mresult-add", "+ Queue"));
-
-          row.addEventListener("click", () => {
-            addVideo(videoId);
-            searchResults = [];
-            searchQuery = "";
-            renderSearch();
-          });
-          list.append(row);
-        }
-        panel.append(list);
-        wrap.append(panel);
+        list.append(row);
       }
-
-      return wrap;
+      panel.append(list);
+      slot.append(panel);
     }
 
     function volumePanel() {
@@ -801,8 +841,8 @@
 
       // Volume is built once so dragging the slider is never interrupted
       // by somebody else joining the room.
-      refs.searchSlot = el("div", "mslot");
-      left.append(refs.stagewrap, volumePanel(), refs.searchSlot);
+      refs.resultsSlot = el("div", "mslot");
+      left.append(refs.stagewrap, volumePanel(), buildSearchField(), refs.resultsSlot);
       shellEl.append(left);
 
       refs.side = el("div", "mside");
@@ -866,14 +906,9 @@
       side.append(tab === "queue" ? queueList(state) : historyList());
     }
 
-    function renderSearch() {
-      if (!refs.searchSlot) return;
-      refs.searchSlot.replaceChildren(searchPanel());
-    }
-
     function paint(state) {
       if (!root) return;
-      if (!refs.side && !refs.stagewrap) build();
+      if (!refs.side && !refs.stagewrap) { build(); renderResults(); }
       if (!BASE) return;
 
       refs.listeners.textContent = state
@@ -884,7 +919,6 @@
       refs.stagewrap.classList.toggle("is-hot", isRasputin(state));
 
       renderSide(state);
-      renderSearch();
 
       if (state?.current) mountPlayer(stage, state);
       else destroyPlayer();

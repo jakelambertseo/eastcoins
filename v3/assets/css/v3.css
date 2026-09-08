@@ -1372,13 +1372,28 @@ body.watch-on .playerframe{
 .mnotice.is-error{color:var(--red)}
 
 .msearchwrap{display:flex;flex-direction:column;gap:8px}
-.msearch{display:flex;gap:7px}
+.msearch{position:relative;display:flex;align-items:center}
 .msearch-input{
   flex:1;min-width:0;height:34px;padding:0 12px;border-radius:9px;
   border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);
   font-size:.86rem;
 }
+.msearch-input{padding-right:34px}
 .msearch-input::placeholder{color:var(--muted-2)}
+/* Sits inside the field. Spins only while a request is actually out, so
+   the field never looks busy when it is just waiting on the debounce. */
+.msearch-icon{
+  position:absolute;right:11px;pointer-events:none;
+  color:var(--muted-2);font-size:.95rem;line-height:1;
+}
+.msearch-icon.is-busy{
+  color:var(--gold);
+  animation:searchspin .9s linear infinite;
+}
+@keyframes searchspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){
+  .msearch-icon.is-busy{animation:none}
+}
 /* Results sit directly under the input, framed in gold so they read as
    something waiting on a decision rather than more page furniture. */
 .mresults{
