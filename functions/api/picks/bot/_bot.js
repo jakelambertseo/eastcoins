@@ -117,9 +117,9 @@ export function botGate(context) {
  * an older command definition still gets a clear "log in once" reply
  * rather than a broken one.
  */
-export async function findOrCreateUser(db, { login, twitchId, displayName }) {
+export async function findOrCreateUser(db, { login, twitchId, displayName }, env = null) {
   const existing = await findUser(db, login);
-  if (existing || !twitchId) return existing;
+  if (existing || !twitchId) return env ? backfillAvatar(env, db, existing) : existing;
 
   // ON CONFLICT covers the race where two commands arrive together, and
   // also the case where the id exists under an old login (a rename):
@@ -136,14 +136,15 @@ export async function findOrCreateUser(db, { login, twitchId, displayName }) {
     .bind(twitchId, login, displayName || login)
     .run();
 
-  return findUser(db, login);
+  const created = await findUser(db, login);
+  return env ? backfillAvatar(env, db, created) : created;
 }
 
 /** The EastCoin account for a Twitch login, or null if they've never logged in. */
 export async function findUser(db, login) {
   const row = await db
     .prepare(
-      `SELECT twitch_id, twitch_login, display_name
+      `SELECT twitch_id, twitch_login, display_name, avatar_url
          FROM users
         WHERE twitch_login = ? COLLATE NOCASE
         LIMIT 1`
@@ -155,8 +156,55 @@ export async function findUser(db, login) {
   return {
     id: String(row.twitch_id),
     login: String(row.twitch_login).toLowerCase(),
-    displayName: String(row.display_name || row.twitch_login)
+    displayName: String(row.display_name || row.twitch_login),
+    avatarUrl: String(row.avatar_url || "")
   };
+}
+
+/* ---------------------------------------------------------- avatars
+
+   Someone who only ever uses chat never goes through the Twitch login,
+   so the site would show them as initials forever. Their profile picture
+   is public, so it is fetched once with an app token — one Helix call
+   per new person, none afterwards. Any failure just leaves the initials. */
+
+async function twitchAppToken(env) {
+  const id = String(env.TWITCH_CLIENT_ID || "").trim();
+  const secret = String(env.TWITCH_CLIENT_SECRET || "").trim();
+  if (!id || !secret) return "";
+  const response = await fetch("https://id.twitch.tv/oauth2/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ client_id: id, client_secret: secret, grant_type: "client_credentials" })
+  });
+  const payload = await response.json().catch(() => null);
+  return response.ok ? String(payload?.access_token || "") : "";
+}
+
+export async function fetchTwitchAvatar(env, twitchId) {
+  try {
+    const token = await twitchAppToken(env);
+    if (!token) return "";
+    const response = await fetch(`https://api.twitch.tv/helix/users?id=${encodeURIComponent(twitchId)}`, {
+      headers: { Authorization: `Bearer ${token}`, "Client-Id": String(env.TWITCH_CLIENT_ID || "").trim() }
+    });
+    const payload = await response.json().catch(() => null);
+    return response.ok ? String(payload?.data?.[0]?.profile_image_url || "") : "";
+  } catch {
+    return "";
+  }
+}
+
+async function backfillAvatar(env, db, user) {
+  if (!user || user.avatarUrl || !/^\d{1,20}$/.test(user.id)) return user;
+  const avatar = await fetchTwitchAvatar(env, user.id);
+  if (!avatar) return user;
+  await db
+    .prepare(`UPDATE users SET avatar_url = ?, updated_at = CURRENT_TIMESTAMP WHERE twitch_id = ? AND (avatar_url IS NULL OR avatar_url = '')`)
+    .bind(avatar, user.id)
+    .run()
+    .catch(() => {});
+  return { ...user, avatarUrl: avatar };
 }
 
 export async function openMarkets(db) {

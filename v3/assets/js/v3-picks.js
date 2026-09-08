@@ -136,6 +136,22 @@
     return node;
   }
 
+  /** A person: their Twitch picture when we have it, initials until then. */
+  function avatar(user, className) {
+    const name = user?.displayName || user?.login || "?";
+    const box = el("span", className, initials(name));
+    const src = String(user?.profileImageUrl || user?.avatar || "");
+    if (!src) return box;
+    const img = document.createElement("img");
+    img.alt = "";
+    img.decoding = "async";
+    img.addEventListener("load", () => box.classList.add("has-logo"));
+    img.addEventListener("error", () => img.remove());
+    img.src = src;
+    box.append(img);
+    return box;
+  }
+
   function crest(market, name, className) {
     if (window.ECLogos) return window.ECLogos.crest(market?.sport, market?.league, name, className);
     return el("span", className, initials(name));
@@ -727,7 +743,7 @@
       line.append(el("span", "trank", `#${row.rank}`));
 
       const user = el("div", "tuser");
-      user.append(el("span", "tavatar", initials(row.user?.displayName || row.user?.login)));
+      user.append(avatar(row.user, "tavatar"));
       const copy = el("span");
       copy.append(
         el("strong", null, row.rank === 1 ? `${row.user?.displayName} 👑` : row.user?.displayName),
@@ -828,7 +844,7 @@
       const line = el("div", `trow ledgerrow ${status}${me ? " me" : ""}`);
 
       const user = el("div", "tuser");
-      user.append(el("span", "tavatar", initials(row.user?.displayName || row.user?.login)));
+      user.append(avatar(row.user, "tavatar"));
       const copy = el("span");
       copy.append(el("strong", null, row.user?.displayName || row.user?.login), el("small", null, `@${row.user?.login}`));
       user.append(copy);
@@ -918,7 +934,7 @@
       el("strong", "nums", lead === null ? "no #2 yet" : `${lead > 0 ? "+" : ""}${lead.toLocaleString()}`));
     stats.append(profit, gap);
 
-    const av = el("span", "lw-avatar", initials(top.user?.displayName || top.user?.login));
+    const av = avatar(top.user, "lw-avatar");
     box.append(crown, av, copy, stats);
     return box;
   }

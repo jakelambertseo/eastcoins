@@ -52,7 +52,7 @@ export async function onRequestGet(context) {
     return say(`${who} usage: !pick <amount> <team> — e.g. !pick 50 Bills, or !pick all Bills`);
   }
 
-  const user = await findOrCreateUser(db, gate);
+  const user = await findOrCreateUser(db, gate, context.env);
   if (!user) {
     // Only reachable when the command was set up without id=$(sender.twitchid).
     return say(`${who} log in once at eastcoin.vip to link your ZCoins, then !pick works.`);
