@@ -524,6 +524,10 @@
     let stage = null;
     let history = [];
     let requesters = [];
+    // Kept across repaints so a state broadcast — anyone joining, any
+    // reaction — does not throw you back to page one mid-browse.
+    let historyPage = 0;
+    const HISTORY_PER_PAGE = 25;
     let tab = "queue";
     let searchResults = [];
     let searching = false;
@@ -933,7 +937,14 @@
         wrap.append(el("p", "mq-empty", "Nothing has played yet."));
         return wrap;
       }
-      for (const entry of history.slice(0, 40)) {
+
+      const pages = Math.max(1, Math.ceil(history.length / HISTORY_PER_PAGE));
+      // Clamped rather than trusted: the room trims history as it grows,
+      // so the page you were on can stop existing under you.
+      historyPage = Math.min(Math.max(0, historyPage), pages - 1);
+
+      const start = historyPage * HISTORY_PER_PAGE;
+      for (const entry of history.slice(start, start + HISTORY_PER_PAGE)) {
         const row = el("div", "mq-row");
         const art = thumb(entry.videoId, "mq-thumb");
         if (art) row.append(art);
@@ -950,6 +961,30 @@
 
         wrap.append(row);
       }
+
+      if (pages > 1) {
+        const pager = el("div", "mpager");
+
+        const step = (label, delta, disabled) => {
+          const btn = el("button", "mpager-btn", label);
+          btn.type = "button";
+          btn.disabled = disabled;
+          btn.addEventListener("click", () => {
+            historyPage += delta;
+            // Only the list is redrawn, so the player is never touched.
+            renderSide(conn.state);
+          });
+          return btn;
+        };
+
+        pager.append(step("\u2039", -1, historyPage === 0));
+        pager.append(el("span", "mpager-at",
+          `${start + 1}\u2013${Math.min(start + HISTORY_PER_PAGE, history.length)} of ${history.length}`));
+        pager.append(step("\u203a", 1, historyPage >= pages - 1));
+
+        wrap.append(pager);
+      }
+
       return wrap;
     }
 

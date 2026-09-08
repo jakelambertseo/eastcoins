@@ -1608,3 +1608,21 @@ body.watch-on .playerframe{
 .mq-row:hover .mq-drop{opacity:1}
 .mq-drop:hover{color:var(--red);border-color:rgba(216,74,74,.4)}
 .mq-drop:focus-visible{opacity:1}
+
+/* History pager. Sits inside the list so it scrolls with it rather than
+   floating over the last row. */
+.mpager{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:8px 10px;background:var(--panel-2);
+}
+.mpager-btn{
+  flex:0 0 auto;width:26px;height:24px;border-radius:7px;
+  border:1px solid var(--line-2);background:var(--panel);color:var(--text);
+  font-size:.82rem;line-height:1;
+}
+.mpager-btn:hover:not(:disabled){background:var(--gold-dim);color:var(--gold);border-color:rgba(232,191,53,.4)}
+.mpager-btn:disabled{opacity:.35}
+.mpager-at{
+  color:var(--muted-2);font-size:.72rem;font-weight:700;
+  font-variant-numeric:tabular-nums;
+}
