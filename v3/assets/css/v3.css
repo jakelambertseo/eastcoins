@@ -1755,7 +1755,9 @@ body.watch-on .playerframe{
 }
 .lw-note{display:block;margin-top:3px;color:#c7b6ea;font-size:.78rem}
 .lw-stats{display:flex;gap:18px}
-.lw-stat span{display:block;color:#b9a5e6;font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.lw-stat>span{display:block;color:#b9a5e6;font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.lw-stat strong .zc-amount{gap:7px}
+.lw-stat strong .zcoin-mark{width:20px;height:20px}
 .lw-stat strong{display:block;margin-top:3px;font-family:var(--display);font-weight:800;font-size:1.35rem;letter-spacing:-.02em;color:#ffd86b;text-shadow:0 0 14px rgba(232,191,53,.55)}
 .lw-stat strong .up{color:#ffd86b}
 @keyframes lwpulse{
