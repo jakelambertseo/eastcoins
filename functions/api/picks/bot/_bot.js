@@ -23,6 +23,8 @@
    mean anything.
    ============================================================ */
 
+import { safeEqual } from "../_lib.js";
+
 /** Plain-text chat reply. Truncated to StreamElements' own limit. */
 export function say(message, status = 200) {
   const body = String(message || "").replace(/\s+/g, " ").trim();
@@ -45,13 +47,6 @@ export function say(message, status = 200) {
       "X-Content-Type-Options": "nosniff"
     }
   });
-}
-
-function safeEqual(a, b) {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i += 1) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return diff === 0;
 }
 
 /**

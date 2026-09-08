@@ -240,6 +240,20 @@ export async function finishOperation(db, id, status, { balanceAfter = null, err
     .run();
 }
 
+/**
+ * Constant-time string compare, for anything that gates on a secret.
+ * A plain === leaks the length of the matching prefix through timing;
+ * it is a thin channel, but a free one to close.
+ */
+export function safeEqual(a, b) {
+  const x = String(a || "");
+  const y = String(b || "");
+  if (x.length !== y.length) return false;
+  let diff = 0;
+  for (let i = 0; i < x.length; i += 1) diff |= x.charCodeAt(i) ^ y.charCodeAt(i);
+  return diff === 0;
+}
+
 export function newId(prefix) {
   return `${prefix}_${crypto.randomUUID()}`;
 }

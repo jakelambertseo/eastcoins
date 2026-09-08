@@ -21,6 +21,7 @@
 import {
   ADMIN_ALLOWLIST,
   getSessionUser,
+  safeEqual,
   moveBalance,
   walletWritesEnabled,
   beginOperation,
@@ -57,6 +58,11 @@ function nickname(value) {
   return parts[parts.length - 1];
 }
 
+async function boardFor(cache, path) {
+  if (!cache.has(path)) cache.set(path, await fetchScoreboard(path));
+  return cache.get(path);
+}
+
 async function fetchScoreboard(path) {
   try {
     const response = await fetch(`${ESPN_BASE}/${path}/scoreboard`);
@@ -72,7 +78,7 @@ async function fetchScoreboard(path) {
  * Returns a verdict for a market, or null when the feed doesn't
  * clearly say. Null always means "leave it alone and look again".
  */
-async function findResult(market) {
+async function findResult(market, boards) {
   const paths = LEAGUE_PATHS[String(market.sport || "").toLowerCase()] || [];
   if (!paths.length) return null;
 
@@ -81,7 +87,7 @@ async function findResult(market) {
   if (!wantAway || !wantHome) return null;
 
   for (const path of paths) {
-    for (const event of await fetchScoreboard(path)) {
+    for (const event of await boardFor(boards, path)) {
       const competition = event?.competitions?.[0];
       const competitors = competition?.competitors || [];
       if (competitors.length !== 2) continue;
@@ -202,8 +208,8 @@ async function payPick(env, db, pick, market, outcome) {
   return { paid: amount, status };
 }
 
-async function settleMarket(env, db, market) {
-  const result = await findResult(market);
+async function settleMarket(env, db, market, boards) {
+  const result = await findResult(market, boards);
   if (!result) return { id: market.id, action: "skipped", reason: "no clear final" };
 
   const outcome = result.verdict;   // 'away' | 'home' | 'VOID'
@@ -256,17 +262,50 @@ async function settleMarket(env, db, market) {
 
 /* ------------------------------------------------------------ entry */
 
+/**
+ * Two ways in, because settlement has two legitimate callers: an admin
+ * pressing the button, and the scheduled Worker that runs it when
+ * nobody is watching. The Worker has no cookie, so it presents a shared
+ * key in a header instead.
+ *
+ * Fails closed: an unset PICKS_CRON_KEY means no key is accepted, not
+ * that any key will do.
+ */
+async function authorize(context, db) {
+  const user = await getSessionUser(db, context.request);
+  if (user && ADMIN_ALLOWLIST.has(user.login)) return { ok: true, by: user.login };
+
+  const expected = String(context.env.PICKS_CRON_KEY || "").trim();
+  const given = String(context.request.headers.get("X-Picks-Cron-Key") || "").trim();
+  if (expected && given && safeEqual(given, expected)) return { ok: true, by: "cron" };
+
+  return { ok: false };
+}
+
 export async function onRequestPost(context) {
   const db = context.env.PICKS_DB;
   if (!db) return fail("DB_UNAVAILABLE", "Picks database is not connected.", 503);
 
-  const user = await getSessionUser(db, context.request);
-  if (!user || !ADMIN_ALLOWLIST.has(user.login)) {
+  const auth = await authorize(context, db);
+  if (!auth.ok) {
     return fail("NOT_ADMIN", "Only Picks admins can run settlement.", 403);
   }
   if (!walletWritesEnabled(context.env)) {
     return fail("WALLET_NOT_CONFIGURED", "ZCoin transfers aren't configured.", 503);
   }
+
+  // A market past its start time is no longer open. wagers.js already
+  // refuses late picks, but leaving the state stale makes both the admin
+  // page and the site claim betting is live when it is not. Doing it here
+  // means the same schedule that settles also closes.
+  const locked = await db
+    .prepare(
+      `UPDATE markets
+          SET state = 'LOCKED', updated_at = CURRENT_TIMESTAMP
+        WHERE state = 'OPEN'
+          AND datetime(starts_at) <= datetime('now')`
+    )
+    .run();
 
   // Anything past its start time and not yet finished is a candidate.
   const markets = await db
@@ -280,12 +319,22 @@ export async function onRequestPost(context) {
     )
     .all();
 
+  // Shared across every market in this run, so a ten-game slate costs
+  // one scoreboard request per league rather than ten.
+  const boards = new Map();
+
   const results = [];
   for (const market of markets.results || []) {
-    results.push(await settleMarket(context.env, db, market));
+    results.push(await settleMarket(context.env, db, market, boards));
   }
 
-  return json({ ok: true, examined: results.length, results });
+  return json({
+    ok: true,
+    by: auth.by,
+    locked: Number(locked?.meta?.changes || 0),
+    examined: results.length,
+    results
+  });
 }
 
 export async function onRequestGet() {

@@ -248,7 +248,9 @@
                 .map((r) => `${r.outcome === "VOID" ? "Voided" : `Won by ${r.outcome}`} — ${r.won || 0} won, ${r.lost || 0} lost, ${r.refunded || 0} refunded, ${r.paid || 0} ZCoins paid${r.failed ? `, ${r.failed} FAILED` : ""}`)
                 .join(" · ")
             }
-          : { tone: "note", text: `Examined ${result.examined} market(s); none had a clear final yet.` };
+          : { tone: "note", text:
+              `Examined ${result.examined} market(s); none had a clear final yet.` +
+              (result.locked ? ` Closed betting on ${result.locked}.` : "") };
       }
       await load();
       paint();

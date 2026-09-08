@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "eastcoin-picks-cron",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-21",
+
+  // Every 10 minutes. Games end at unpredictable times, and settlement
+  // is idempotent, so running often costs little: with nothing to grade
+  // it is one D1 query and no outbound requests at all.
+  "triggers": {
+    "crons": ["*/10 * * * *"]
+  },
+
+  "vars": {
+    "SETTLE_URL": "https://eastcoin.vip/api/picks/settle"
+  }
+
+  // PICKS_CRON_KEY is a secret, set with:
+  //   npx wrangler secret put PICKS_CRON_KEY
+  // The same value must exist as a Pages environment variable so
+  // /api/picks/settle recognises the caller.
+}
