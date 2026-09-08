@@ -1498,15 +1498,33 @@ export class MusicRoom extends DurableObject {
     }
 
     if (message.type === "force-skip") {
+      if (!this.state.current) return;
+
       // The login comes from the verified token the room derived on
       // identity, never from anything the client sent in this message.
       const login = String(session.verifiedLogin || "").toLowerCase();
-      if (!FORCE_SKIP_LOGINS.has(login)) {
-        return this.sendError(ws, "Only room mods can skip without a vote.");
+      if (!login) {
+        return this.sendError(ws, "Log in with Twitch to skip.");
       }
-      if (!this.state.current) return;
 
-      console.log(`Force skip by ${login}: "${this.state.current.title}"`);
+      const isMod = FORCE_SKIP_LOGINS.has(login);
+      // Your own song is yours to pull. The vote exists to protect the
+      // room from a song somebody ELSE chose, so it has nothing to say
+      // about you taking back your own.
+      const isOwner =
+        login === String(this.state.current.requestedByLogin || "").toLowerCase();
+
+      if (!isMod && !isOwner) {
+        return this.sendError(ws, "You can only skip your own song without a vote.");
+      }
+
+      // A !rasputin block is attributed to whoever triggered it, so owning
+      // it must not be a way out of it. Mods can still override.
+      if (isOwner && !isMod && this.state.current.unskippable) {
+        return this.sendError(ws, "This one can't be skipped 🎉");
+      }
+
+      console.log(`Force skip by ${login}${isMod ? " (mod)" : " (own song)"}: "${this.state.current.title}"`);
       this.advance({ kind: "chat-skip", actor: this.safeName(session.name || login) });
       await this.persistAndBroadcast();
       return;

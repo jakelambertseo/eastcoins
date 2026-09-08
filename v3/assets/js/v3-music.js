@@ -1112,12 +1112,19 @@
         });
         actions.append(vote);
 
-        // Shown only to the room mods. The server re-checks the verified
-        // login on every force-skip, so this is presentation, not a gate.
-        if (canForceSkip()) {
-          const force = el("button", "watchbtn mforce", "Skip now");
+        // Mods, or whoever queued what is playing. The server re-checks
+        // the verified login on every skip, so this is presentation only.
+        const ownsCurrent = conn.login &&
+          String(state.current.requestedByLogin || "").toLowerCase() === conn.login;
+        const canPull = canForceSkip() || (ownsCurrent && !state.current.unskippable);
+
+        if (canPull) {
+          const mine = ownsCurrent && !canForceSkip();
+          const force = el("button", "watchbtn mforce", mine ? "Skip mine" : "Skip now");
           force.type = "button";
-          force.title = "Skip immediately, without a vote";
+          force.title = mine
+            ? "Take your own song off, no vote needed"
+            : "Skip immediately, without a vote";
           force.addEventListener("click", () => send({ type: "force-skip" }));
           actions.append(force);
         }
