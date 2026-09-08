@@ -1,29 +1,30 @@
 /* ============================================================
    EastCoin V3 — The Green Room
 
-   One module, three jobs:
+   The room lives at /v3/?view=music and nowhere else. There is
+   deliberately no floating dock: anything fixed to a corner sits
+   over the Twitch chat iframe, and Twitch disables the message
+   box for the broadcaster and moderators the moment it detects
+   something covering it. A player that costs the mods their chat
+   is not worth having.
 
-     · a single connection to the shared room Worker
-     · the full room view at /v3/?view=music
-     · a small dock that follows you around the rest of V3
-
-   Only one of those two surfaces holds a player at a time. The
-   room is position-synced — every client seeks to (now - startedAt)
-   — so handing playback from the dock to the view is a reload that
-   lands in the same place, and that is far simpler than trying to
-   move a live iframe between parents (which reloads it anyway).
-
-   The room only advances when a client says a song ENDED. There is
-   no server-side timer on song length, so a player that cannot
-   report that would quietly stall the queue for everybody. That is
-   why this uses the real YouTube IFrame API rather than a plain
-   embed with an autoplay parameter.
+   The room only advances when a client reports a song ENDED —
+   there is no server-side timer on song length — so this uses the
+   real YouTube IFrame API rather than a plain autoplay embed. A
+   player that could not report that would quietly stall the queue
+   for everybody.
    ============================================================ */
 (() => {
   "use strict";
 
   const CATJAM = "https://cdn.7tv.app/emote/01KWJNR4DE37RDZ816WYAYDG3K/3x.webp";
-  const DOCK_KEY = "ec_v3_music_dock";
+  const ROOM_EMOTE = "https://cdn.7tv.app/emote/01KSPAJV30RAHACSE3E173FS46/3x.webp";
+  const VOLUME_KEY = "ec_v3_music_volume";
+
+  // Mirrors the room's own list. Cosmetic only — the server re-checks the
+  // verified login on every force-skip, so revealing the button proves
+  // nothing and grants nothing.
+  const MODS = new Set(["zwades", "andyreidisapawg", "bootypaper"]);
 
   const config = window.EASTCOIN_MUSIC_CONFIG || {};
   const ROOM = String(config.room || "main");
@@ -35,6 +36,7 @@
     socket: null,
     state: null,
     token: null,
+    login: "",
     attempts: 0,
     clientId: "",
     listeners: new Set()
@@ -42,9 +44,7 @@
 
   function clientId() {
     if (conn.clientId) return conn.clientId;
-    try {
-      conn.clientId = window.localStorage.getItem("ec_v3_music_client") || "";
-    } catch { /* blocked storage just means a new id each visit */ }
+    try { conn.clientId = window.localStorage.getItem("ec_v3_music_client") || ""; } catch {}
     if (!conn.clientId) {
       conn.clientId = (crypto.randomUUID?.() || String(Math.random())).slice(0, 36);
       try { window.localStorage.setItem("ec_v3_music_client", conn.clientId); } catch {}
@@ -79,15 +79,22 @@
         cache: "no-store"
       });
       const payload = await response.json();
-      conn.token = payload?.ok && payload.authenticated ? payload.token : null;
+      if (payload?.ok && payload.authenticated) {
+        conn.token = payload.token || null;
+        conn.login = String(payload.login || "").toLowerCase();
+      } else {
+        conn.token = null;
+        conn.login = "";
+      }
     } catch {
       conn.token = null;
+      conn.login = "";
     }
     return conn.token;
   }
 
-  function sendIdentity() {
-    send({ type: "identity", name: "", avatar: "", token: conn.token });
+  function canForceSkip() {
+    return MODS.has(conn.login);
   }
 
   function connect() {
@@ -103,17 +110,14 @@
     }
 
     let socket;
-    try {
-      socket = new WebSocket(url.href);
-    } catch {
-      return;
-    }
+    try { socket = new WebSocket(url.href); } catch { return; }
     conn.socket = socket;
 
     socket.addEventListener("open", async () => {
       conn.attempts = 0;
       await fetchToken();
-      sendIdentity();
+      send({ type: "identity", name: "", avatar: "", token: conn.token });
+      emit();
     });
 
     socket.addEventListener("message", (event) => {
@@ -123,18 +127,27 @@
         conn.state = payload.state;
         emit();
       }
+      if (payload?.type === "error" && payload.message) {
+        setNotice(String(payload.message), true);
+      }
     });
 
     const drop = () => {
       if (conn.socket !== socket) return;
       conn.socket = null;
-      // Backing off matters: the room stops its own polling alarm when
-      // empty, so a tight reconnect loop from many tabs is real load.
+      // Backing off matters: the room stops its polling alarm when empty,
+      // so a tight reconnect loop across many tabs is real load.
       const delay = Math.min(30000, 1000 * 2 ** Math.min(conn.attempts++, 5));
       window.setTimeout(connect, delay);
     };
     socket.addEventListener("close", drop);
     socket.addEventListener("error", drop);
+  }
+
+  function disconnect() {
+    const socket = conn.socket;
+    conn.socket = null;
+    try { socket?.close(); } catch {}
   }
 
   /* ============================================================ player */
@@ -157,7 +170,25 @@
     return ytReady;
   }
 
-  const player = { instance: null, host: null, videoId: "", itemId: "" };
+  const player = { instance: null, videoId: "", itemId: "" };
+
+  function readVolume() {
+    try {
+      const stored = Number(window.localStorage.getItem(VOLUME_KEY));
+      return Number.isFinite(stored) && stored >= 0 && stored <= 100 ? stored : 60;
+    } catch {
+      return 60;
+    }
+  }
+
+  function writeVolume(value) {
+    try { window.localStorage.setItem(VOLUME_KEY, String(value)); } catch {}
+  }
+
+  function setVolume(value) {
+    writeVolume(value);
+    try { player.instance?.setVolume?.(value); } catch {}
+  }
 
   function elapsedSeconds(state) {
     if (!state?.startedAt) return 0;
@@ -166,7 +197,7 @@
 
   function reportEnded(reason) {
     // Guarded server-side against a stale id, so several tabs reporting
-    // the same song is harmless — only the first one advances anything.
+    // the same song is harmless — only the first advances anything.
     if (player.itemId) send({ type: "ended", currentId: player.itemId, reason });
   }
 
@@ -177,8 +208,9 @@
     const YT = await loadYouTubeApi();
     if (!host.isConnected) return;
 
-    // Same song, same surface: leave it alone rather than restarting it.
-    if (player.instance && player.host === host && player.videoId === current.videoId) {
+    // Same song: leave it playing rather than restarting it on every
+    // state broadcast (a listener joining sends one).
+    if (player.instance && player.videoId === current.videoId) {
       player.itemId = current.id;
       return;
     }
@@ -187,7 +219,6 @@
     const slot = document.createElement("div");
     host.replaceChildren(slot);
 
-    player.host = host;
     player.videoId = current.videoId;
     player.itemId = current.id;
 
@@ -202,7 +233,10 @@
       },
       events: {
         onReady: (event) => {
-          try { event.target.playVideo(); } catch {}
+          try {
+            event.target.setVolume(readVolume());
+            event.target.playVideo();
+          } catch {}
         },
         onStateChange: (event) => {
           if (event.data === window.YT.PlayerState.ENDED) reportEnded("ended");
@@ -215,7 +249,6 @@
   function destroyPlayer() {
     try { player.instance?.destroy?.(); } catch {}
     player.instance = null;
-    player.host = null;
     player.videoId = "";
     player.itemId = "";
   }
@@ -265,84 +298,26 @@
     return node;
   }
 
-  function nowPlayingLine(state) {
-    const current = state?.current;
-    if (!current) return "Nothing playing";
-    return current.requestedBy ? `${current.title} — ${current.requestedBy}` : current.title;
+  let noticeEl = null;
+  let noticeTimer = 0;
+
+  function setNotice(text, isError) {
+    if (!noticeEl) return;
+    noticeEl.textContent = text;
+    noticeEl.classList.toggle("is-error", Boolean(isError));
+    noticeEl.hidden = !text;
+    window.clearTimeout(noticeTimer);
+    if (text) noticeTimer = window.setTimeout(() => { noticeEl.hidden = true; }, 5000);
   }
 
-  /* ============================================================ dock */
-
-  const dock = { root: null, body: null, stage: null, open: false, unsub: null };
-
-  function dockPref() {
-    try { return window.localStorage.getItem(DOCK_KEY) !== "closed"; } catch { return true; }
-  }
-
-  function setDockOpen(open) {
-    dock.open = open;
-    try { window.localStorage.setItem(DOCK_KEY, open ? "open" : "closed"); } catch {}
-    if (dock.body) dock.body.hidden = !open;
-    dock.root?.classList.toggle("is-open", open);
-    if (!open) {
-      destroyPlayer();
-      stopJam(dock.stage);
-    } else if (conn.state && !document.body.classList.contains("music-view")) {
-      mountPlayer(dock.stage, conn.state);
-    }
-  }
-
-  function buildDock() {
-    if (dock.root || !BASE) return;
-
-    const root = el("aside", "musicdock");
-    root.id = "ecv3MusicDock";
-    root.hidden = true;
-
-    const head = el("button", "musicdock-head");
-    head.type = "button";
-    head.title = "The Green Room";
-    const label = el("span", "musicdock-title", "Nothing playing");
-    head.append(el("span", "musicdock-dot"), label);
-    head.addEventListener("click", () => setDockOpen(!dock.open));
-
-    const body = el("div", "musicdock-body");
-    const stage = el("div", "musicdock-stage");
-    body.append(stage);
-
-    const foot = el("div", "musicdock-foot");
-    const openFull = el("button", "musicdock-btn", "Open room");
-    openFull.type = "button";
-    openFull.addEventListener("click", () => window.ECV3?.go?.("music"));
-    foot.append(openFull);
-    body.append(foot);
-
-    root.append(head, body);
-    document.body.append(root);
-
-    Object.assign(dock, { root, body, stage, open: dockPref() });
-    body.hidden = !dock.open;
-    root.classList.toggle("is-open", dock.open);
-
-    dock.unsub = subscribe((state) => {
-      const playing = Boolean(state?.current);
-      root.hidden = !playing;
-      label.textContent = playing ? nowPlayingLine(state) : "Nothing playing";
-
-      // The music view owns playback while it is open.
-      if (document.body.classList.contains("music-view")) {
-        stopJam(stage);
-        return;
-      }
-
-      // !rasputin is an event, not background music: it opens the dock
-      // for anyone who had it folded away, wherever they are on the site.
-      if (isRasputin(state) && !dock.open) setDockOpen(true);
-
-      if (playing && dock.open) mountPlayer(stage, state);
-      if (isRasputin(state) && dock.open) startJam(stage);
-      else stopJam(stage);
-    });
+  function timeAgo(timestamp) {
+    const seconds = Math.max(0, Math.floor((Date.now() - Number(timestamp || 0)) / 1000));
+    if (seconds < 60) return "just now";
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return `${Math.floor(hours / 24)}d ago`;
   }
 
   /* ============================================================ view */
@@ -351,12 +326,190 @@
     let root = null;
     let unsub = null;
     let stage = null;
+    let history = [];
+    let tab = "queue";
+    let searchResults = [];
+    let searching = false;
+    let searchNote = "";
+
+    /* ---------------------------------------------------- add + search */
+
+    function addVideo(videoId) {
+      if (!conn.token) {
+        setNotice("Log in with Twitch to add songs.", true);
+        return;
+      }
+      if (send({ type: "add", videoId })) setNotice("Added to the queue.");
+      else setNotice("Not connected to the room.", true);
+    }
+
+    async function runSearch(query) {
+      const raw = String(query || "").trim();
+      if (!raw) return;
+
+      // A pasted link never needs the search API — pull the id straight
+      // out of it and queue it, which also works when search has no key.
+      const pasted = window.EastcoinYouTube?.extractVideo?.(raw)?.id || "";
+      if (pasted) {
+        addVideo(pasted);
+        searchResults = [];
+        searchNote = "";
+        paint(conn.state);
+        return;
+      }
+
+      if (!BASE) return;
+      searching = true;
+      searchNote = "";
+      paint(conn.state);
+
+      try {
+        const url = new URL("/search", BASE);
+        url.searchParams.set("q", raw);
+        const response = await fetch(url.href);
+        const payload = await response.json();
+        if (payload?.ok) {
+          searchResults = payload.results || [];
+          searchNote = searchResults.length ? "" : "Nothing found for that.";
+        } else {
+          searchResults = [];
+          // Pass the room's own explanation through — "search is not
+          // configured" is a very different problem from "search failed".
+          searchNote = payload?.message || "Search didn't work.";
+        }
+      } catch {
+        searchResults = [];
+        searchNote = "Couldn't reach search. You can still paste a link.";
+      }
+      searching = false;
+      paint(conn.state);
+    }
+
+    async function loadHistory() {
+      if (!BASE) return;
+      try {
+        const url = new URL(`/history/${encodeURIComponent(ROOM)}`, BASE);
+        const response = await fetch(url.href);
+        const payload = await response.json();
+        history = Array.isArray(payload?.history) ? payload.history.slice().reverse() : [];
+      } catch {
+        history = [];
+      }
+      if (root?.isConnected) paint(conn.state);
+    }
+
+    /* ---------------------------------------------------- panels */
+
+    function searchPanel() {
+      const box = el("div", "msearch");
+
+      const input = document.createElement("input");
+      input.className = "msearch-input";
+      input.type = "search";
+      input.placeholder = "Search YouTube, or paste a link";
+      input.setAttribute("aria-label", "Search YouTube or paste a link");
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") runSearch(input.value);
+      });
+
+      const go = el("button", "watchbtn", searching ? "Searching…" : "Add");
+      go.type = "button";
+      go.disabled = searching;
+      go.addEventListener("click", () => runSearch(input.value));
+
+      box.append(input, go);
+
+      const wrap = el("div", "msearchwrap");
+      wrap.append(box);
+
+      if (searchNote) wrap.append(el("p", "mq-empty", searchNote));
+
+      if (searchResults.length) {
+        const list = el("div", "mresults");
+        for (const result of searchResults.slice(0, 8)) {
+          const row = el("button", "mresult");
+          row.type = "button";
+          if (result.thumbnail) {
+            const img = document.createElement("img");
+            img.src = result.thumbnail;
+            img.alt = "";
+            img.loading = "lazy";
+            row.append(img);
+          }
+          const meta = el("div", "mresult-meta");
+          meta.append(el("strong", null, result.title || "Untitled"));
+          if (result.channelTitle) meta.append(el("small", null, result.channelTitle));
+          row.append(meta);
+          row.addEventListener("click", () => {
+            addVideo(result.videoId || result.id);
+            searchResults = [];
+            paint(conn.state);
+          });
+          list.append(row);
+        }
+        wrap.append(list);
+      }
+
+      return wrap;
+    }
+
+    function volumePanel() {
+      const box = el("div", "mvol");
+      box.append(el("span", "mvol-k", "Volume"));
+
+      const slider = document.createElement("input");
+      slider.type = "range";
+      slider.className = "mvol-range";
+      slider.min = "0";
+      slider.max = "100";
+      slider.step = "1";
+      slider.value = String(readVolume());
+      slider.setAttribute("aria-label", "Playback volume");
+
+      const readout = el("span", "mvol-v", `${slider.value}`);
+      slider.addEventListener("input", () => {
+        readout.textContent = slider.value;
+        setVolume(Number(slider.value));
+      });
+
+      box.append(slider, readout);
+      return box;
+    }
+
+    function listenersPanel(state) {
+      const box = el("div", "mwho");
+      const names = state?.listenerNames || [];
+      const total = Number(state?.listeners || 0);
+
+      const head = el("div", "mwho-head");
+      head.append(el("span", "mq-k", "In the room"));
+      head.append(el("span", "mwho-count", `${total}`));
+      box.append(head);
+
+      if (!names.length) {
+        // The roster only ever shows verified Twitch logins, so a room of
+        // logged-out listeners is a real count with an empty list.
+        box.append(el("p", "mwho-none", total
+          ? `${total} listening, none logged in with Twitch.`
+          : "Nobody here yet."));
+        return box;
+      }
+
+      const list = el("div", "mwho-list");
+      for (const name of names) list.append(el("span", "mwho-chip", name));
+      box.append(list);
+
+      if (total > names.length) {
+        box.append(el("p", "mwho-none", `+${total - names.length} not logged in`));
+      }
+      return box;
+    }
 
     function queueList(state) {
       const wrap = el("div", "mq");
       const items = state?.queue || [];
       if (!items.length) {
-        wrap.append(el("p", "mq-empty", "Nothing queued. Add something, or ask in chat with !sr."));
+        wrap.append(el("p", "mq-empty", "Nothing queued. Search above, or ask in chat with !sr."));
         return wrap;
       }
       items.forEach((item, index) => {
@@ -372,6 +525,32 @@
       return wrap;
     }
 
+    function historyList() {
+      const wrap = el("div", "mq");
+      if (!history.length) {
+        wrap.append(el("p", "mq-empty", "Nothing has played yet."));
+        return wrap;
+      }
+      for (const entry of history.slice(0, 40)) {
+        const row = el("div", "mq-row");
+        const meta = el("div", "mq-meta");
+        meta.append(el("strong", null, entry.title || "Untitled"));
+        meta.append(el("small", null,
+          `${entry.requestedBy || "chat"} · ${timeAgo(entry.requestedAt)}`));
+        row.append(meta);
+
+        const again = el("button", "watchbtn mq-again", "Play again");
+        again.type = "button";
+        again.addEventListener("click", () => addVideo(entry.videoId));
+        row.append(again);
+
+        wrap.append(row);
+      }
+      return wrap;
+    }
+
+    /* ---------------------------------------------------- paint */
+
     function paint(state) {
       if (!root) return;
       root.replaceChildren();
@@ -380,17 +559,18 @@
       const title = el("h1", "mtitle");
       const emote = document.createElement("img");
       emote.className = "mtitle-emote";
-      emote.src = "https://cdn.7tv.app/emote/01KSPAJV30RAHACSE3E173FS46/3x.webp";
+      emote.src = ROOM_EMOTE;
       emote.alt = "";
       title.append(emote, document.createTextNode("The Green Room"));
       head.append(title);
-
-      const who = el("span", "mlisteners");
-      who.textContent = state
+      head.append(el("span", "mlisteners", state
         ? `${state.listeners} listening`
-        : (BASE ? "Connecting…" : "Room not configured");
-      head.append(who);
+        : (BASE ? "Connecting…" : "Room not configured")));
       root.append(head);
+
+      noticeEl = el("p", "mnotice");
+      noticeEl.hidden = true;
+      root.append(noticeEl);
 
       if (!BASE) {
         root.append(el("p", "mq-empty", "No room server is configured for this build."));
@@ -399,8 +579,10 @@
 
       const shellEl = el("div", "mshell");
 
+      const left = el("div", "mleft");
       stage = el("div", "mstage");
-      shellEl.append(stage);
+      left.append(stage, volumePanel(), searchPanel());
+      shellEl.append(left);
 
       const side = el("div", "mside");
 
@@ -413,14 +595,41 @@
       side.append(now);
 
       if (state?.current) {
-        const skip = el("button", "watchbtn", `Vote skip (${state.skipVotes}/${state.skipThreshold})`);
-        skip.type = "button";
-        skip.addEventListener("click", () => send({ type: "skip-vote" }));
-        side.append(skip);
+        const actions = el("div", "mactions");
+
+        const vote = el("button", "watchbtn", `Vote skip (${state.skipVotes}/${state.skipThreshold})`);
+        vote.type = "button";
+        vote.addEventListener("click", () => send({ type: "skip-vote" }));
+        actions.append(vote);
+
+        // Shown only to the room mods. The server re-checks the verified
+        // login on every force-skip, so this is presentation, not a gate.
+        if (canForceSkip()) {
+          const force = el("button", "watchbtn mforce", "Skip now");
+          force.type = "button";
+          force.title = "Skip immediately, without a vote";
+          force.addEventListener("click", () => send({ type: "force-skip" }));
+          actions.append(force);
+        }
+
+        side.append(actions);
       }
 
-      side.append(el("span", "mq-k", "Up next"));
-      side.append(queueList(state));
+      side.append(listenersPanel(state));
+
+      const tabs = el("div", "mtabs");
+      for (const [key, label] of [["queue", "Up next"], ["history", "History"]]) {
+        const btn = el("button", `mtab${tab === key ? " active" : ""}`, label);
+        btn.type = "button";
+        btn.addEventListener("click", () => {
+          tab = key;
+          if (key === "history" && !history.length) loadHistory();
+          paint(conn.state);
+        });
+        tabs.append(btn);
+      }
+      side.append(tabs);
+      side.append(tab === "queue" ? queueList(state) : historyList());
 
       shellEl.append(side);
       root.append(shellEl);
@@ -433,26 +642,23 @@
       async mount(container) {
         root = container;
         document.body.classList.add("music-view");
-        // The dock steps aside; two players would fight over the same song.
-        destroyPlayer();
-        if (dock.root) dock.root.hidden = true;
         connect();
         paint(conn.state);
         unsub = subscribe(paint);
+        loadHistory();
       },
       unmount() {
         document.body.classList.remove("music-view");
         stopJam(stage);
         destroyPlayer();
+        // Leaving the room stops counting you as a listener, which keeps
+        // the skip threshold honest for the people still here.
+        disconnect();
         unsub?.();
         unsub = null;
         root = null;
         stage = null;
-        // Hand playback back to the dock, if it is meant to be showing.
-        if (dock.root && conn.state?.current) {
-          dock.root.hidden = false;
-          if (dock.open) mountPlayer(dock.stage, conn.state);
-        }
+        noticeEl = null;
       }
     };
   })();
@@ -462,12 +668,6 @@
   function boot() {
     if (!window.ECV3) return window.setTimeout(boot, 30);
     window.ECV3.register("music", view);
-    buildDock();
-    // Connect once something is listening for it, not on every page load
-    // of every view — the room stops polling when nobody is connected.
-    window.requestIdleCallback
-      ? window.requestIdleCallback(connect, { timeout: 3000 })
-      : window.setTimeout(connect, 1200);
   }
   boot();
 

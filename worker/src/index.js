@@ -21,6 +21,11 @@ const RASPUTIN_ALLOWED_LOGINS = new Set(["andyreidisapawg", "zwades"]);
 // same moment. Keep this list in step with who SE will accept the command
 // from, or the two queues drift apart.
 const QUEUE_CLEAR_ALLOWED_LOGINS = new Set(["zwades", "andyreidisapawg", "bootypaper"]);
+
+/* Who can skip a song outright, without a vote. Everyone else still has
+   the vote — this is an addition to it, not a replacement, so a room
+   with none of these three present can still move past a bad song. */
+const FORCE_SKIP_LOGINS = new Set(["zwades", "andyreidisapawg", "bootypaper"]);
 const QUEUE_CLEAR_COOLDOWN_MS = 3000;
 // A fixed, hand-picked block — not resolved through search at request time —
 // so "!rasputin" always queues exactly this, the same way, every time.
@@ -1071,6 +1076,21 @@ export class MusicRoom extends DurableObject {
         this.state.revision += 1;
       }
 
+      await this.persistAndBroadcast();
+      return;
+    }
+
+    if (message.type === "force-skip") {
+      // The login comes from the verified token the room derived on
+      // identity, never from anything the client sent in this message.
+      const login = String(session.verifiedLogin || "").toLowerCase();
+      if (!FORCE_SKIP_LOGINS.has(login)) {
+        return this.sendError(ws, "Only room mods can skip without a vote.");
+      }
+      if (!this.state.current) return;
+
+      console.log(`Force skip by ${login}: "${this.state.current.title}"`);
+      this.advance({ kind: "chat-skip", actor: this.safeName(session.name || login) });
       await this.persistAndBroadcast();
       return;
     }

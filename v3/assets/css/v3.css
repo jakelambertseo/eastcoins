@@ -1324,34 +1324,6 @@ body.watch-on .playerframe{
 }
 .mq-empty{margin:0;padding:14px;color:var(--muted-2);font-size:.8rem;background:var(--panel);border-radius:var(--radius)}
 
-/* Dock — follows you around the rest of V3. */
-.musicdock{
-  position:fixed;right:16px;bottom:16px;z-index:60;width:min(340px,calc(100vw - 32px));
-  border:1px solid var(--line-2);border-radius:12px;overflow:hidden;
-  background:var(--panel);box-shadow:var(--shadow);
-}
-.musicdock-head{
-  display:flex;align-items:center;gap:8px;width:100%;
-  padding:9px 12px;background:var(--panel-2);text-align:left;
-}
-.musicdock-dot{
-  width:7px;height:7px;border-radius:50%;flex:0 0 auto;
-  background:var(--gold);box-shadow:0 0 0 3px var(--gold-dim);
-}
-.musicdock-title{
-  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  font-size:.78rem;font-weight:700;color:var(--text);
-}
-.musicdock-stage{position:relative;aspect-ratio:16/9;width:100%;background:#000;overflow:hidden}
-.musicdock-stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-.musicdock-foot{display:flex;gap:7px;padding:8px}
-.musicdock-btn{
-  flex:1;height:28px;border-radius:8px;
-  border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);
-  font-family:var(--display);font-weight:700;font-size:.76rem;
-}
-.musicdock-btn:hover{background:var(--gold-dim);color:var(--gold)}
-
 /* catJAM — only while a !rasputin block is playing. */
 .is-jamming{box-shadow:inset 0 0 0 2px rgba(232,191,53,.55)}
 .jam-cat{
@@ -1370,5 +1342,71 @@ body.watch-on .playerframe{
 
 @media (max-width:900px){
   .mshell{grid-template-columns:1fr}
-  .musicdock{right:10px;bottom:10px;width:calc(100vw - 20px)}
 }
+
+/* Green Room — search, volume, roster, history */
+.mleft{display:flex;flex-direction:column;gap:10px;min-width:0}
+.mnotice{
+  margin:0 0 10px;padding:9px 12px;border-radius:9px;
+  background:var(--panel-2);color:var(--muted);font-size:.8rem;
+}
+.mnotice.is-error{color:var(--red)}
+
+.msearchwrap{display:flex;flex-direction:column;gap:8px}
+.msearch{display:flex;gap:7px}
+.msearch-input{
+  flex:1;min-width:0;height:34px;padding:0 12px;border-radius:9px;
+  border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);
+  font-size:.86rem;
+}
+.msearch-input::placeholder{color:var(--muted-2)}
+.mresults{display:flex;flex-direction:column;gap:1px;background:var(--line);border-radius:var(--radius);overflow:hidden}
+.mresult{
+  display:flex;align-items:center;gap:10px;padding:8px 10px;
+  background:var(--panel);text-align:left;width:100%;
+}
+.mresult:hover{background:var(--panel-2)}
+.mresult img{width:74px;height:42px;object-fit:cover;border-radius:6px;flex:0 0 auto}
+.mresult-meta{display:flex;flex-direction:column;min-width:0}
+.mresult-meta strong{font-size:.83rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mresult-meta small{color:var(--muted-2);font-size:.72rem}
+
+.mvol{
+  display:flex;align-items:center;gap:10px;padding:8px 12px;
+  border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);
+}
+.mvol-k{
+  color:var(--muted-2);font-size:.63rem;font-weight:800;
+  letter-spacing:.12em;text-transform:uppercase;flex:0 0 auto;
+}
+.mvol-range{flex:1;min-width:0;accent-color:var(--gold)}
+.mvol-v{
+  flex:0 0 auto;min-width:24px;text-align:right;
+  font-family:var(--display);font-weight:800;font-size:.82rem;color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+
+.mactions{display:flex;gap:7px;flex-wrap:wrap}
+.mforce{border-color:rgba(232,191,53,.4);color:var(--gold)}
+
+.mwho{
+  padding:11px 13px;border:1px solid var(--line);
+  border-radius:var(--radius);background:var(--panel);
+}
+.mwho-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.mwho-count{font-family:var(--display);font-weight:800;font-size:.9rem;color:var(--gold)}
+.mwho-list{display:flex;flex-wrap:wrap;gap:5px}
+.mwho-chip{
+  padding:3px 9px;border-radius:999px;background:var(--panel-2);
+  border:1px solid var(--line-2);font-size:.74rem;font-weight:700;
+}
+.mwho-none{margin:0;color:var(--muted-2);font-size:.76rem}
+
+.mtabs{display:flex;gap:6px}
+.mtab{
+  flex:1;height:28px;border-radius:8px;
+  border:1px solid var(--line-2);background:var(--panel-2);color:var(--muted-2);
+  font-family:var(--display);font-weight:700;font-size:.76rem;
+}
+.mtab.active{background:var(--gold-dim);border-color:rgba(232,191,53,.35);color:var(--gold)}
+.mq-again{height:26px;padding:0 9px;font-size:.72rem;flex:0 0 auto}
