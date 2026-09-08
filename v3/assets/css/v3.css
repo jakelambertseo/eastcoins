@@ -1313,9 +1313,15 @@ body.watch-on .playerframe{
 .mstage iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .mside{display:flex;flex-direction:column;gap:10px;min-width:0}
 .mnow{
-  display:flex;flex-direction:column;gap:3px;padding:12px 14px;
+  display:flex;align-items:center;gap:11px;padding:11px 13px;
   border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);
 }
+.mnow-thumb{
+  width:78px;height:44px;flex:0 0 auto;object-fit:cover;
+  border-radius:7px;background:#000;
+}
+.mnow-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.mnow-text .mnow-v{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mnow-k,.mq-k{
   color:var(--muted-2);font-size:.63rem;font-weight:800;
   letter-spacing:.12em;text-transform:uppercase;
@@ -1370,16 +1376,52 @@ body.watch-on .playerframe{
   font-size:.86rem;
 }
 .msearch-input::placeholder{color:var(--muted-2)}
-.mresults{display:flex;flex-direction:column;gap:1px;background:var(--line);border-radius:var(--radius);overflow:hidden}
+/* Results sit directly under the input, framed in gold so they read as
+   something waiting on a decision rather than more page furniture. */
+.mresults{
+  border:1px solid rgba(232,191,53,.32);border-radius:var(--radius);
+  background:var(--panel);overflow:hidden;
+}
+.mresults-head{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:8px 11px;background:var(--gold-dim);
+  border-bottom:1px solid rgba(232,191,53,.22);
+}
+.mresults-clear{
+  width:22px;height:22px;border-radius:6px;flex:0 0 auto;
+  border:1px solid var(--line-2);background:var(--panel);
+  color:var(--muted-2);font-size:.62rem;line-height:1;
+}
+.mresults-clear:hover{color:var(--gold)}
+.mresults-list{
+  display:flex;flex-direction:column;gap:1px;background:var(--line);
+  max-height:340px;overflow-y:auto;
+}
 .mresult{
   display:flex;align-items:center;gap:10px;padding:8px 10px;
   background:var(--panel);text-align:left;width:100%;
 }
-.mresult:hover{background:var(--panel-2)}
-.mresult img{width:74px;height:42px;object-fit:cover;border-radius:6px;flex:0 0 auto}
-.mresult-meta{display:flex;flex-direction:column;min-width:0}
+.mresult:hover{background:var(--gold-dim)}
+.mresult-thumb{
+  width:86px;height:48px;object-fit:cover;border-radius:6px;
+  flex:0 0 auto;background:#000;
+}
+.mresult-meta{display:flex;flex-direction:column;min-width:0;flex:1}
 .mresult-meta strong{font-size:.83rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mresult-meta small{color:var(--muted-2);font-size:.72rem}
+.mresult-add{
+  flex:0 0 auto;padding:3px 9px;border-radius:999px;
+  background:var(--panel-2);color:var(--muted-2);
+  font-size:.66rem;font-weight:800;letter-spacing:.04em;
+}
+.mresult:hover .mresult-add{background:var(--gold);color:var(--ink)}
+
+/* Queue and history rows carry art too, so a title you half-remember is
+   recognisable before you have finished reading it. */
+.mq-thumb{
+  width:62px;height:35px;flex:0 0 auto;object-fit:cover;
+  border-radius:5px;background:#000;
+}
 
 .mvol{
   display:flex;align-items:center;gap:10px;padding:8px 12px;

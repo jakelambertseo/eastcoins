@@ -311,6 +311,28 @@
     if (text) noticeTimer = window.setTimeout(() => { noticeEl.hidden = true; }, 5000);
   }
 
+  /**
+   * YouTube's thumbnail for a video id. Derived rather than fetched: the
+   * room's queue entries carry no thumbnail field, and this needs neither
+   * a request nor an API key.
+   */
+  function thumbUrl(videoId) {
+    return /^[A-Za-z0-9_-]{11}$/.test(String(videoId || ""))
+      ? `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`
+      : "";
+  }
+
+  function thumb(videoId, className) {
+    const url = thumbUrl(videoId);
+    if (!url) return null;
+    const img = document.createElement("img");
+    img.className = className;
+    img.src = url;
+    img.alt = "";
+    img.loading = "lazy";
+    return img;
+  }
+
   function timeAgo(timestamp) {
     const seconds = Math.max(0, Math.floor((Date.now() - Number(timestamp || 0)) / 1000));
     if (seconds < 60) return "just now";
@@ -333,6 +355,11 @@
     let searchResults = [];
     let searching = false;
     let searchNote = "";
+    // Held outside the DOM because paint() rebuilds the whole view on every
+    // state broadcast - someone joining the room would otherwise wipe what
+    // you were halfway through typing.
+    let searchQuery = "";
+    let searchFocused = false;
 
     /* ---------------------------------------------------- add + search */
 
@@ -413,11 +440,29 @@
       input.type = "search";
       input.placeholder = "Search YouTube, or paste a link";
       input.setAttribute("aria-label", "Search YouTube or paste a link");
+      input.value = searchQuery;
+      input.addEventListener("input", () => { searchQuery = input.value; });
+      input.addEventListener("focus", () => { searchFocused = true; });
+      input.addEventListener("blur", () => { searchFocused = false; });
       input.addEventListener("keydown", (event) => {
         if (event.key === "Enter") runSearch(input.value);
+        if (event.key === "Escape") {
+          searchResults = [];
+          searchNote = "";
+          paint(conn.state);
+        }
       });
+      // Restored after a repaint so the caret does not jump to the start.
+      if (searchFocused) {
+        window.requestAnimationFrame(() => {
+          if (!input.isConnected) return;
+          input.focus();
+          const end = input.value.length;
+          try { input.setSelectionRange(end, end); } catch {}
+        });
+      }
 
-      const go = el("button", "watchbtn", searching ? "Searching…" : "Add");
+      const go = el("button", "watchbtn", searching ? "Searching…" : "Search");
       go.type = "button";
       go.disabled = searching;
       go.addEventListener("click", () => runSearch(input.value));
@@ -430,29 +475,48 @@
       if (searchNote) wrap.append(el("p", "mq-empty", searchNote));
 
       if (searchResults.length) {
-        const list = el("div", "mresults");
-        for (const result of searchResults.slice(0, 8)) {
+        const panel = el("div", "mresults");
+
+        const head = el("div", "mresults-head");
+        head.append(el("span", "mq-k", `${searchResults.length} results - pick one to queue`));
+        const clear = el("button", "mresults-clear", "\u2715");
+        clear.type = "button";
+        clear.setAttribute("aria-label", "Clear results");
+        clear.addEventListener("click", () => {
+          searchResults = [];
+          searchNote = "";
+          paint(conn.state);
+        });
+        head.append(clear);
+        panel.append(head);
+
+        const list = el("div", "mresults-list");
+        for (const result of searchResults.slice(0, 10)) {
+          const videoId = result.videoId || result.id;
           const row = el("button", "mresult");
           row.type = "button";
-          if (result.thumbnail) {
-            const img = document.createElement("img");
-            img.src = result.thumbnail;
-            img.alt = "";
-            img.loading = "lazy";
-            row.append(img);
-          }
+
+          // Prefer the id-derived thumbnail: the API returns the 120px
+          // "default" size, which looks soft at the size this row uses.
+          const art = thumb(videoId, "mresult-thumb");
+          if (art) row.append(art);
+
           const meta = el("div", "mresult-meta");
           meta.append(el("strong", null, result.title || "Untitled"));
           if (result.channelTitle) meta.append(el("small", null, result.channelTitle));
           row.append(meta);
+          row.append(el("span", "mresult-add", "+ Queue"));
+
           row.addEventListener("click", () => {
-            addVideo(result.videoId || result.id);
+            addVideo(videoId);
             searchResults = [];
+            searchQuery = "";
             paint(conn.state);
           });
           list.append(row);
         }
-        wrap.append(list);
+        panel.append(list);
+        wrap.append(panel);
       }
 
       return wrap;
@@ -549,6 +613,8 @@
       items.forEach((item, index) => {
         const row = el("div", "mq-row");
         row.append(el("span", "mq-n", String(index + 1)));
+        const art = thumb(item.videoId, "mq-thumb");
+        if (art) row.append(art);
         const meta = el("div", "mq-meta");
         meta.append(el("strong", null, item.title || "Untitled"));
         meta.append(el("small", null, item.requestedBy ? `added by ${item.requestedBy}` : "added from chat"));
@@ -567,6 +633,8 @@
       }
       for (const entry of history.slice(0, 40)) {
         const row = el("div", "mq-row");
+        const art = thumb(entry.videoId, "mq-thumb");
+        if (art) row.append(art);
         const meta = el("div", "mq-meta");
         meta.append(el("strong", null, entry.title || "Untitled"));
         meta.append(el("small", null,
@@ -635,11 +703,16 @@
       const side = el("div", "mside");
 
       const now = el("div", "mnow");
-      now.append(el("span", "mnow-k", "Now playing"));
-      now.append(el("strong", "mnow-v", state?.current?.title || "Nothing playing"));
+      const nowArt = state?.current ? thumb(state.current.videoId, "mnow-thumb") : null;
+      if (nowArt) now.append(nowArt);
+
+      const nowText = el("div", "mnow-text");
+      nowText.append(el("span", "mnow-k", "Now playing"));
+      nowText.append(el("strong", "mnow-v", state?.current?.title || "Nothing playing"));
       if (state?.current?.requestedBy) {
-        now.append(el("small", null, `added by ${state.current.requestedBy}`));
+        nowText.append(el("small", null, `added by ${state.current.requestedBy}`));
       }
+      now.append(nowText);
       side.append(now);
 
       if (state?.current) {
