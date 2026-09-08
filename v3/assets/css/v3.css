@@ -1289,10 +1289,20 @@ body.watch-on .playerframe{
    ============================================================ */
 .mhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .mtitle{
-  display:flex;align-items:center;gap:9px;margin:0;
-  font-family:var(--display);font-weight:800;font-size:1.5rem;letter-spacing:-.02em;
+  display:flex;align-items:center;gap:10px;margin:0;
+  font-family:var(--display);font-weight:800;font-size:1.65rem;letter-spacing:-.025em;
 }
-.mtitle-emote{width:30px;height:30px;object-fit:contain}
+/* Green through to the site's gold, so it reads as its own room without
+   leaving the palette. background-clip needs a transparent fill, and the
+   colour underneath is the fallback wherever that is unsupported. */
+.mtitle-text{
+  color:#7ad06a;
+  background:linear-gradient(96deg,#8fe07a 0%,#57c46b 42%,var(--gold) 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+  text-shadow:0 0 26px rgba(122,208,106,.22);
+}
+.mtitle-emote{width:32px;height:32px;object-fit:contain;flex:0 0 auto}
 .mlisteners{color:var(--muted-2);font-size:.8rem;font-weight:700}
 
 .mshell{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start}
@@ -1410,3 +1420,54 @@ body.watch-on .playerframe{
 }
 .mtab.active{background:var(--gold-dim);border-color:rgba(232,191,53,.35);color:var(--gold)}
 .mq-again{height:26px;padding:0 9px;font-size:.72rem;flex:0 0 auto}
+
+/* The stage glow. Not a visualiser — a YouTube frame is cross-origin and
+   its audio cannot be read — so this is a steady pulse while something
+   plays, lifting during a !rasputin block. */
+.mstagewrap{position:relative;isolation:isolate}
+.mstage-glow{
+  position:absolute;inset:-3px;z-index:0;border-radius:calc(var(--radius) + 3px);
+  background:linear-gradient(115deg,#57c46b,var(--gold),#8fe07a,#57c46b);
+  background-size:300% 300%;
+  opacity:0;filter:blur(9px);
+  transition:opacity .5s ease;
+  pointer-events:none;
+}
+.mstagewrap.is-playing .mstage-glow{
+  opacity:.4;
+  animation:beat 2.4s ease-in-out infinite, drift 9s linear infinite;
+}
+.mstagewrap.is-hot .mstage-glow{
+  opacity:.72;
+  animation:beat 1.15s ease-in-out infinite, drift 4s linear infinite;
+}
+.mstagewrap .mstage{position:relative;z-index:1}
+@keyframes beat{
+  0%,100%{transform:scale(1);filter:blur(9px)}
+  50%{transform:scale(1.012);filter:blur(15px)}
+}
+@keyframes drift{
+  0%{background-position:0% 50%}
+  100%{background-position:300% 50%}
+}
+@media (prefers-reduced-motion:reduce){
+  .mstagewrap.is-playing .mstage-glow,
+  .mstagewrap.is-hot .mstage-glow{animation:none}
+}
+
+/* Top requesters */
+.mtop{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+.mtop-row{display:flex;align-items:center;gap:8px}
+.mtop-n{
+  width:15px;flex:0 0 auto;color:var(--muted-2);
+  font-family:var(--display);font-weight:800;font-size:.72rem;
+}
+.mtop-av{width:20px;height:20px;border-radius:50%;object-fit:cover;flex:0 0 auto}
+.mtop-name{
+  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:.79rem;font-weight:700;
+}
+.mtop-c{
+  flex:0 0 auto;font-family:var(--display);font-weight:800;font-size:.79rem;
+  color:var(--gold);font-variant-numeric:tabular-nums;
+}

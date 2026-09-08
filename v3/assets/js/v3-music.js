@@ -18,7 +18,8 @@
   "use strict";
 
   const CATJAM = "https://cdn.7tv.app/emote/01KWJNR4DE37RDZ816WYAYDG3K/3x.webp";
-  const ROOM_EMOTE = "https://cdn.7tv.app/emote/01KSPAJV30RAHACSE3E173FS46/3x.webp";
+  const ROOM_EMOTE = "https://cdn.7tv.app/emote/01FAEEN908000D3SP26B2JBAC1/2x.webp";
+  const JAMGIE = "https://cdn.7tv.app/emote/01KKEGKRN9HP64BX2ERWRWWJ3G/2x.webp";
   const VOLUME_KEY = "ec_v3_music_volume";
 
   // Mirrors the room's own list. Cosmetic only — the server re-checks the
@@ -327,6 +328,7 @@
     let unsub = null;
     let stage = null;
     let history = [];
+    let requesters = [];
     let tab = "queue";
     let searchResults = [];
     let searching = false;
@@ -392,8 +394,11 @@
         const response = await fetch(url.href);
         const payload = await response.json();
         history = Array.isArray(payload?.history) ? payload.history.slice().reverse() : [];
+        // Comes back on the same request, already ordered by count.
+        requesters = Array.isArray(payload?.userStats) ? payload.userStats : [];
       } catch {
         history = [];
+        requesters = [];
       }
       if (root?.isConnected) paint(conn.state);
     }
@@ -473,6 +478,35 @@
       });
 
       box.append(slider, readout);
+      return box;
+    }
+
+    function requestersPanel() {
+      const box = el("div", "mwho");
+      box.append(el("span", "mq-k", "Top requesters"));
+
+      if (!requesters.length) {
+        box.append(el("p", "mwho-none", "Nobody has queued anything yet."));
+        return box;
+      }
+
+      const list = el("div", "mtop");
+      requesters.slice(0, 5).forEach((entry, index) => {
+        const row = el("div", "mtop-row");
+        row.append(el("span", "mtop-n", `${index + 1}`));
+        if (entry.avatar) {
+          const img = document.createElement("img");
+          img.className = "mtop-av";
+          img.src = entry.avatar;
+          img.alt = "";
+          img.loading = "lazy";
+          row.append(img);
+        }
+        row.append(el("span", "mtop-name", entry.displayName || entry.login || "someone"));
+        row.append(el("span", "mtop-c", String(entry.count || 0)));
+        list.append(row);
+      });
+      box.append(list);
       return box;
     }
 
@@ -561,7 +595,11 @@
       emote.className = "mtitle-emote";
       emote.src = ROOM_EMOTE;
       emote.alt = "";
-      title.append(emote, document.createTextNode("The Green Room"));
+      const jamgie = document.createElement("img");
+      jamgie.className = "mtitle-emote";
+      jamgie.src = JAMGIE;
+      jamgie.alt = "";
+      title.append(emote, el("span", "mtitle-text", "The Green Room"), jamgie);
       head.append(title);
       head.append(el("span", "mlisteners", state
         ? `${state.listeners} listening`
@@ -580,8 +618,18 @@
       const shellEl = el("div", "mshell");
 
       const left = el("div", "mleft");
+
+      // The glow cannot follow the actual audio — the YouTube frame is
+      // cross-origin and its waveform is not readable — so it is a steady
+      // pulse that runs while something is playing and lifts during a
+      // !rasputin block. Honest decoration rather than a fake visualiser.
+      const stagewrap = el("div", "mstagewrap");
       stage = el("div", "mstage");
-      left.append(stage, volumePanel(), searchPanel());
+      stagewrap.append(el("span", "mstage-glow"), stage);
+      if (state?.current) stagewrap.classList.add("is-playing");
+      if (isRasputin(state)) stagewrap.classList.add("is-hot");
+
+      left.append(stagewrap, volumePanel(), searchPanel());
       shellEl.append(left);
 
       const side = el("div", "mside");
@@ -616,6 +664,7 @@
       }
 
       side.append(listenersPanel(state));
+      side.append(requestersPanel());
 
       const tabs = el("div", "mtabs");
       for (const [key, label] of [["queue", "Up next"], ["history", "History"]]) {
