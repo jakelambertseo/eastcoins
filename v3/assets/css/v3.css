@@ -1886,3 +1886,20 @@ body.is-rasputin .mtitle-text{
   border:1px solid var(--line-2);background:var(--panel-2);
   color:var(--muted);font-family:var(--display);font-weight:700;font-size:.6rem;
 }
+
+/* ---------------------------------------------------------------- upcoming
+   Games that exist but cannot be bet on yet. Same card as an open market,
+   dimmed, with the sides as plain boxes rather than buttons. */
+.upcoming{margin-top:26px}
+.upcoming-head{margin-bottom:12px}
+.upcoming-head h2{font-family:var(--display);font-weight:700;font-size:1.15rem;letter-spacing:-.02em;margin:0 0 3px}
+.upcoming-head p{margin:0;color:var(--muted-2);font-size:.84rem}
+.upcoming-day{
+  margin:14px 0 8px;color:var(--muted);font-size:.68rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;
+}
+.upcoming-day:first-of-type{margin-top:4px}
+.market.upcoming{opacity:.86}
+.market.upcoming .market-league{color:var(--muted)}
+.side.preview{cursor:default}
+.side.preview:hover{background:var(--panel)}
+.side.preview .side-line{color:var(--muted)}

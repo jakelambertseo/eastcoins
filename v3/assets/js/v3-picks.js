@@ -29,6 +29,8 @@
     ticket: null,
     myPicks: [],
     leaderboard: [],
+    upcoming: [],
+    upcomingAt: null,
     sort: { key: "profit", dir: "desc" },
     communityLedger: [],
     season: null,
@@ -63,6 +65,18 @@
   }
 
   /* ---------------------------------------------------------- data */
+
+  async function loadUpcoming() {
+    try {
+      const response = await fetch("/api/picks/upcoming");
+      if (!response.ok) return;
+      const payload = await response.json();
+      local.upcoming = Array.isArray(payload?.games) ? payload.games : [];
+      local.upcomingAt = payload?.fetchedAt || null;
+    } catch {
+      /* the list is a preview; the page is fine without it */
+    }
+  }
 
   async function loadMarkets() {
     try {
@@ -237,6 +251,81 @@
     return card;
   }
 
+  function dayHeading(iso) {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    const today = new Date();
+    const tomorrow = new Date(today.getTime() + 864e5);
+    const label = d.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" });
+    if (d.toDateString() === today.toDateString()) return `Today · ${label}`;
+    if (d.toDateString() === tomorrow.toDateString()) return `Tomorrow · ${label}`;
+    return label;
+  }
+
+  function upcomingCard(game) {
+    const card = el("article", "market upcoming");
+    const opensAt = new Date(new Date(game.startsAt).getTime() - 30 * 60 * 1000);
+
+    const head = el("div", "market-head");
+    head.append(
+      el("span", "market-league", game.league || game.sport || "Upcoming"),
+      el("span", "market-time", startLabel(game.startsAt))
+    );
+
+    const sides = el("div", "market-sides");
+    for (const side of ["away", "home"]) {
+      const name = side === "away" ? game.away : game.home;
+      const line = side === "away" ? game.awayLine : game.homeLine;
+      const box = el("div", "side preview");
+      box.append(
+        crest(game, name, "side-crest"),
+        el("span", "side-team", name),
+        el("span", "side-line nums", line ? formatLine(line) : "—")
+      );
+      const pays = el("span", "side-pays");
+      if (line) pays.append(document.createTextNode("10 pays "), zc(totalReturn(10, line)));
+      else pays.textContent = "No line yet";
+      box.append(pays);
+      sides.append(box);
+    }
+
+    const opens = Number.isNaN(opensAt.getTime()) ? "" : opensAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    card.append(head, sides, el("p", "market-foot",
+      `Opens for picks ${opens ? "at " + opens : "30 minutes before kickoff"} · line locks then, and may move until it does.`));
+    return card;
+  }
+
+  function upcomingSection() {
+    const games = local.upcoming;
+    if (!games.length) return null;
+
+    const section = el("section", "upcoming");
+    const head = el("div", "upcoming-head");
+    const copy = el("div");
+    copy.append(el("h2", null, "Upcoming"));
+    const stamp = local.upcomingAt ? new Date(local.upcomingAt) : null;
+    const asOf = stamp && !Number.isNaN(stamp.getTime())
+      ? ` · lines as of ${stamp.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+      : "";
+    copy.append(el("p", null, `${games.length} game${games.length === 1 ? "" : "s"} on the way — each opens for picks 30 minutes before kickoff${asOf}.`));
+    head.append(copy);
+    section.append(head);
+
+    let lastDay = "";
+    let list = null;
+    for (const game of games) {
+      const day = dayHeading(game.startsAt);
+      if (day !== lastDay) {
+        lastDay = day;
+        section.append(el("h3", "upcoming-day", day));
+        list = el("div", "marketlist");
+        section.append(list);
+      }
+      list.append(upcomingCard(game));
+    }
+    return section;
+  }
+
   function marketsView() {
     const wrap = document.createDocumentFragment();
 
@@ -271,15 +360,19 @@
         el("p", null,
           local.failed
             ? "The Picks catalog didn't answer. This is usually temporary."
-            : "Markets open around 30 minutes before kickoff. Check back closer to game time.")
+            : local.upcoming.length
+              ? "The next games are listed below. Each opens 30 minutes before kickoff."
+              : "Markets open around 30 minutes before kickoff. Check back closer to game time.")
       );
       wrap.append(empty);
-      return wrap;
+    } else {
+      const list = el("div", "marketlist");
+      for (const market of openNow) list.append(marketCard(market));
+      wrap.append(list);
     }
 
-    const list = el("div", "marketlist");
-    for (const market of openNow) list.append(marketCard(market));
-    wrap.append(list);
+    const upcoming = upcomingSection();
+    if (upcoming) wrap.append(upcoming);
     return wrap;
   }
 
@@ -877,6 +970,8 @@
       paint();
       if (!local.loaded) {
         await loadMarkets();
+        if (root.isConnected) paint();
+        await loadUpcoming();
         if (root.isConnected) paint();
       }
     }

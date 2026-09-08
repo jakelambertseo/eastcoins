@@ -10,8 +10,10 @@
    Quota is the design constraint. The Odds API bills per request,
    so:
 
-     · the SCHEDULE (which games, when) is fetched once and cached
-       for six hours — it does not change
+     · the SCHEDULE (which games, when, and where the line is now)
+       is fetched once and cached for thirty minutes — the Picks
+       page's Upcoming list reads the same copy, so looking costs
+       nothing extra
      · a FRESH price is fetched only when a game is actually due,
        so the locked line is current rather than hours old
      · nothing is fetched at all on a tick with no game due
@@ -26,10 +28,13 @@ const ODDS_API = "https://api.the-odds-api.com/v4/sports";
 const SPORT_KEY = "americanfootball_nfl";
 
 const OPEN_LEAD_MS = 30 * 60 * 1000;
-const SCHEDULE_TTL_S = 6 * 60 * 60;
+// One credit per refresh; at most 48 a day, and only while someone is
+// looking or a game is near.
+const SCHEDULE_TTL_S = 30 * 60;
 
 // One quiet, stable key so every colo shares the same cached schedule.
-const SCHEDULE_CACHE_URL = "https://eastcoin-picks.internal/schedule/" + SPORT_KEY;
+// v2: the entry carries lines and a timestamp; the old shape must not be read.
+const SCHEDULE_CACHE_URL = "https://eastcoin-picks.internal/schedule-v2/" + SPORT_KEY;
 
 function median(values) {
   if (!values.length) return null;
@@ -77,20 +82,36 @@ async function schedule(apiKey) {
   if (hit) return hit.json();
 
   const games = await fetchOdds(apiKey);
-  if (!games) return [];
+  if (!games) return { games: [], fetchedAt: null };
 
-  // Only what a later tick needs to decide whether to ask for a price.
-  const slim = games.map((g) => ({
-    id: String(g.id || ""),
-    commence: String(g.commence_time || ""),
-    away: String(g.away_team || ""),
-    home: String(g.home_team || "")
-  })).filter((g) => g.id && g.commence);
+  // What a later tick needs to decide whether to ask for a price, plus
+  // where the line is now for the Upcoming list. The line that gets
+  // LOCKED is never this one — a fresh price is fetched at open time.
+  const slim = games.map((g) => {
+    const line = consensus(g);
+    return {
+      id: String(g.id || ""),
+      commence: String(g.commence_time || ""),
+      away: String(g.away_team || ""),
+      home: String(g.home_team || ""),
+      awayLine: line.away,
+      homeLine: line.home,
+      books: line.books
+    };
+  }).filter((g) => g.id && g.commence);
 
-  await cache.put(key, new Response(JSON.stringify(slim), {
+  const payload = { games: slim, fetchedAt: new Date().toISOString() };
+  await cache.put(key, new Response(JSON.stringify(payload), {
     headers: { "Cache-Control": `max-age=${SCHEDULE_TTL_S}`, "Content-Type": "application/json" }
   }));
-  return slim;
+  return payload;
+}
+
+/** The cached schedule with current lines, for the Picks page. */
+export async function upcomingGames(env) {
+  const apiKey = String(env.ODDS_API_KEY || "").trim();
+  if (!apiKey) return { games: [], fetchedAt: null };
+  return schedule(apiKey);
 }
 
 /**
@@ -106,7 +127,7 @@ export async function autoOpenMarkets(env, db) {
   if (!season) return [];
 
   const now = Date.now();
-  const due = (await schedule(apiKey)).filter((g) => {
+  const due = (await schedule(apiKey)).games.filter((g) => {
     const at = new Date(g.commence).getTime();
     return Number.isFinite(at) && at > now && at - now <= OPEN_LEAD_MS;
   });

@@ -60,8 +60,11 @@
 > API returns 403 to Cloudflare's IP range. `settle.js` also runs
 > `_autoopen.js` every tick: NFL games due within 30 minutes get a market
 > with the median h2h line and one slate-wide chat message. The schedule
-> is cached six hours; a price is fetched only when a game is due, so
-> section 9.5's quota concern is handled by design rather than by a cap.
+> is cached 30 minutes (one credit per refresh, shared with the Picks
+> page's Upcoming list via `/api/picks/upcoming`); a fresh price is
+> fetched only when a game is due, so section 9.5's quota concern is
+> handled by design rather than by a cap. The Odds API plan is 20,000
+> credits/month — comfortable, still not to be spent casually.
 >
 > **Every market has a page** at `/g/<away>-<home>-<YYYYMMDD>` (also
 > `/g/<YYYYMMDD>` for a day and `/g/mkt_…` by id). `functions/g/[[path]].js`
