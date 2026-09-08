@@ -8,6 +8,13 @@ const MAX_HISTORY = 300;
 const MAX_USER_STATS = 500;
 const SE_POLL_INTERVAL_MS = 20 * 1000;
 const MAX_SE_SEEN_IDS = 500;
+
+/* How many requests StreamElements' own queue is allowed to hold.
+   Deleting every entry the moment it was imported kept that queue at
+   zero, which stopped it filling but also left chat with nothing to look
+   at on the mediarequest page. This keeps a visible backlog and trims
+   from the front once it is reached, so it can never run away again. */
+const MAX_SE_QUEUE = 14;
 const TWITCH_IRC_SKIP_COOLDOWN_MS = 5000;
 const RASPUTIN_COOLDOWN_MS = 60 * 1000;
 const RASPUTIN_ALLOWED_LOGINS = new Set(["andyreidisapawg", "zwades"]);
@@ -553,10 +560,11 @@ export class MusicRoom extends DurableObject {
   /**
    * Removes an entry from StreamElements' own request queue.
    *
-   * This is what stops that queue growing forever. StreamElements only
-   * clears a request when ITS player finishes it, and its player never
-   * runs — the songs play here instead. So every "!sr" ever typed just
-   * accumulates on their side until someone clears it by hand.
+   * StreamElements only clears a request when ITS player finishes it,
+   * and its player never runs — the songs play here instead. So every
+   * "!sr" ever typed accumulates on their side until something removes
+   * it. Used for two things: binning entries this room refused outright,
+   * and holding the queue at MAX_SE_QUEUE so it stays readable.
    *
    * Needs STREAMELEMENTS_JWT as a Worker secret (separate from the Pages
    * one). Without it this is a no-op and the old behaviour stands, so it
@@ -579,6 +587,36 @@ export class MusicRoom extends DurableObject {
       console.error("StreamElements queue delete threw", error);
       return false;
     }
+  }
+
+  /**
+   * Holds StreamElements' queue at MAX_SE_QUEUE by deleting from the front.
+   *
+   * Entries the room has already taken go first. They can never play from
+   * there — the room owns them now — so they are the cheapest thing to
+   * lose. A request still waiting to be imported is only dropped if
+   * clearing every inert one still is not enough.
+   */
+  async trimStreamElementsQueue(channelId, queue) {
+    const overflow = queue.length - MAX_SE_QUEUE;
+    if (overflow <= 0) return 0;
+
+    const ids = queue.map((entry) => String(entry?._id || "")).filter(Boolean);
+    const taken = ids.filter((id) => this.seenStreamElementsIds.has(id));
+    const pending = ids.filter((id) => !this.seenStreamElementsIds.has(id));
+
+    // Both lists keep the queue's own order, so this always removes the
+    // oldest of whichever group it is drawing from.
+    const doomed = [...taken, ...pending].slice(0, overflow);
+
+    let removed = 0;
+    for (const id of doomed) {
+      if (await this.deleteStreamElementsEntry(channelId, id)) removed += 1;
+    }
+    if (removed) {
+      console.log(`StreamElements queue trimmed: removed ${removed} to hold ${MAX_SE_QUEUE}`);
+    }
+    return removed;
   }
 
   async pollStreamElements() {
@@ -631,10 +669,15 @@ export class MusicRoom extends DurableObject {
       };
 
       this.enqueueItem(item, login);
-      // It is ours now; their copy is redundant.
-      this.ctx.waitUntil(this.deleteStreamElementsEntry(channelId, seId));
+      // Their copy stays: it is what makes the mediarequest page show a
+      // backlog. It cannot be imported twice — seenStreamElementsIds has
+      // it now — so it is inert, and the cap below is what removes it.
       changed = true;
     }
+
+    // Runs every poll, not just when something was imported: the queue
+    // can pass the cap through requests this room refused as well.
+    await this.trimStreamElementsQueue(channelId, queue);
 
     if (this.seenStreamElementsIds.size > MAX_SE_SEEN_IDS) {
       // A Set preserves insertion order, so slicing from the front drops
