@@ -220,9 +220,17 @@
     const slot = document.createElement("div");
     host.replaceChildren(slot);
 
+    // controls:0 hides the bar but a click on the video still toggles
+    // playback, so the frame gets a transparent cover.
+    const shield = document.createElement("div");
+    shield.className = "mstage-shield";
+    shield.title = "Playback is shared - use the volume slider";
+    host.append(shield);
+
     player.videoId = current.videoId;
     player.itemId = current.id;
 
+    startDriftWatch();
     player.instance = new YT.Player(slot, {
       videoId: current.videoId,
       playerVars: {
@@ -230,7 +238,15 @@
         start: elapsedSeconds(state),
         rel: 0,
         modestbranding: 1,
-        playsinline: 1
+        playsinline: 1,
+        // No transport controls. This is a shared room playing one
+        // timeline for everybody: pausing or scrubbing only desynchronises
+        // the person who did it, and they then hear something different
+        // from everyone else with no way to tell. Volume stays local and
+        // lives on our own slider.
+        controls: 0,
+        disablekb: 1,
+        fs: 0
       },
       events: {
         onReady: (event) => {
@@ -247,7 +263,49 @@
     });
   }
 
+  /**
+   * Nudges a drifting player back onto the room's timeline.
+   *
+   * Buffering, a slow start, or a tab throttled in the background all
+   * pull a client out of step. Correcting only past a few seconds keeps
+   * this from fighting ordinary jitter, and only while actually playing,
+   * since seeking mid-buffer just makes it worse.
+   */
+  function correctDrift() {
+    const instance = player.instance;
+    const state = conn.state;
+    if (!instance || !state?.current) return;
+
+    let actual;
+    let playing;
+    try {
+      actual = instance.getCurrentTime?.();
+      playing = instance.getPlayerState?.() === window.YT?.PlayerState?.PLAYING;
+    } catch {
+      return;
+    }
+    if (!playing || !Number.isFinite(actual)) return;
+
+    const expected = elapsedSeconds(state);
+    if (Math.abs(actual - expected) > 3) {
+      try { instance.seekTo(expected, true); } catch {}
+    }
+  }
+
+  let driftTimer = 0;
+
+  function startDriftWatch() {
+    if (driftTimer) return;
+    driftTimer = window.setInterval(correctDrift, 5000);
+  }
+
+  function stopDriftWatch() {
+    window.clearInterval(driftTimer);
+    driftTimer = 0;
+  }
+
   function destroyPlayer() {
+    stopDriftWatch();
     try { player.instance?.destroy?.(); } catch {}
     player.instance = null;
     player.videoId = "";
@@ -363,13 +421,20 @@
 
     /* ---------------------------------------------------- add + search */
 
-    function addVideo(videoId) {
+    async function addVideo(videoId) {
+      // The room verifies the token carried BY THIS MESSAGE, not the one
+      // presented at identity time. Sending an add without it fails as
+      // "you need to be logged in" no matter how logged in you are.
+      if (!conn.token) await fetchToken();
       if (!conn.token) {
         setNotice("Log in with Twitch to add songs.", true);
         return;
       }
-      if (send({ type: "add", videoId })) setNotice("Added to the queue.");
-      else setNotice("Not connected to the room.", true);
+      if (send({ type: "add", videoId, token: conn.token })) {
+        setNotice("Added to the queue.");
+      } else {
+        setNotice("Not connected to the room.", true);
+      }
     }
 
     async function runSearch(query) {
