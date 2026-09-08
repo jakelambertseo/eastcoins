@@ -974,6 +974,7 @@
       }
       btn.addEventListener("click", () => {
         local.tab = key;
+        writeTabToUrl(key);
         paint();
       });
       tabs.append(btn);
@@ -984,11 +985,34 @@
     root.append(active[2]());
   }
 
+  /* ---------------------------------------------------------- tab links
+     /?view=picks&tab=history is a link someone can paste. The tab is
+     read from the URL on the way in and written back on every click,
+     with replaceState so the back button still leaves the page rather
+     than walking through every tab that was looked at. */
+
+  const TAB_ALIASES = { picks: "mypicks", my: "mypicks", "my-picks": "mypicks", leaders: "leaderboard", board: "leaderboard", community: "ledger" };
+
+  function readTabFromUrl() {
+    const raw = String(new URL(location.href).searchParams.get("tab") || "").toLowerCase();
+    const key = TAB_ALIASES[raw] || raw;
+    return TABS.some(([k]) => k === key) ? key : null;
+  }
+
+  function writeTabToUrl(key) {
+    const url = new URL(location.href);
+    if (url.searchParams.get("view") !== "picks") return;
+    if (key === "markets") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", key);
+    history.replaceState(history.state, "", url.pathname + url.search + url.hash);
+  }
+
   const view = {
     async mount(container, api) {
       root = container;
       shell = api;
       local.wallet = api.state.session?.wallet || local.wallet;
+      local.tab = readTabFromUrl() || local.tab;
       paint();
       if (!local.loaded) {
         await loadMarkets();

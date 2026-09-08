@@ -21,9 +21,10 @@
 > | The old V2 shell | `v2-shell.html`, served at `/v2-shell` — kept for rollback |
 > | `/v3/` | forwards to `/`, carrying query and hash |
 >
-> Routes on the new shell: `/`, `/?view=multiview`, `/?view=picks`,
-> `/?view=music`, `/?view=watch&event=<id>`, `/?view=watch&url=<url>`,
-> `/?view=admin`.
+> Routes on the new shell: `/`, `/?view=multiview`, `/?view=picks`
+> (`&tab=mypicks|leaderboard|history|ledger`), `/?view=music`,
+> `/?view=watch&event=<id>`, `/?view=watch&url=<url>`, `/?view=admin`,
+> and `/g/<slug>` for a game page.
 >
 > **Old links still work.** `v3-shell.js` rewrites `?event=`, `?watch=`,
 > and the `games` / `streams` / `sicko` view names on load, and
