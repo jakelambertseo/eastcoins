@@ -1993,6 +1993,12 @@ body.screen-on .sc-frame{aspect-ratio:auto;flex:1;min-height:0}
 body.screen-on .sc-bar{padding:8px 10px}
 body.screen-on .sc-eps{flex:0 0 auto}
 .sc-btn.on{border-color:rgba(232,191,53,.45);background:var(--gold-dim);color:var(--gold)}
+.sc-peek{
+  position:absolute;bottom:8px;right:8px;z-index:3;width:30px;height:26px;border-radius:8px;
+  border:1px solid var(--line-2);background:rgba(12,10,9,.78);color:var(--muted);font:inherit;font-size:.9rem;line-height:1;
+  backdrop-filter:blur(4px);cursor:pointer;
+}
+.sc-peek:hover{color:var(--gold);border-color:rgba(232,191,53,.4)}
 .sc-back{color:var(--muted);white-space:nowrap}
 .sc-back:hover{color:var(--text)}
 @media (max-width:760px){.sc-back{order:-1;flex:1 1 100%;justify-content:flex-start;border:0;background:none;padding:0;height:auto}}

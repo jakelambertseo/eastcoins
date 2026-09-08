@@ -38,6 +38,7 @@
     details: null,
     episodes: [],
     epsOpen: false,
+    barHidden: false,
     hasKey: true
   };
 
@@ -96,7 +97,7 @@
     renderContinue();
   }
 
-  function writeUrl() {
+  function writeUrl({ push = false } = {}) {
     const url = new URL(location.href);
     if (url.searchParams.get("view") !== "screen") return;
     for (const k of ["t", "id", "s", "e", "kind", "list", "genre", "sort", "mlist", "mgenre", "msort", "tlist", "tgenre", "tsort"]) url.searchParams.delete(k);
@@ -111,7 +112,11 @@
       if (sh.genre) url.searchParams.set(`${prefix}genre`, sh.genre);
       if (sh.sort) url.searchParams.set(`${prefix}sort`, sh.sort);
     }
-    history.replaceState(history.state, "", url.pathname + url.search + url.hash);
+    const next = url.pathname + url.search + url.hash;
+    // Opening the player is one history entry, so Back returns to the
+    // shelves; moving between episodes replaces it rather than stacking.
+    if (push) history.pushState({ view: "screen", play: true }, "", next);
+    else history.replaceState(history.state, "", next);
   }
 
   function readUrl() {
@@ -145,6 +150,7 @@
   }
 
   function play(item, { resume = 0 } = {}) {
+    const wasPlaying = Boolean(local.now);
     local.now = { ...item };
     if (item.type === "tv") {
       local.now.season = item.season || 1;
@@ -174,8 +180,9 @@
     refs.seasonSel.hidden = local.now.type !== "tv";
     refs.epToggle.hidden = local.now.type !== "tv";
     if (local.now.type !== "tv") refs.epStrip.hidden = true;
+    setBarHidden(false);
 
-    writeUrl();
+    writeUrl({ push: !wasPlaying && !history.state?.play });
     window.scrollTo(0, 0);
     loadDetails();
   }
@@ -187,8 +194,21 @@
     refs.stage.hidden = true;
     refs.stage.classList.remove("is-playing");
     document.body.classList.remove("screen-on");
-    writeUrl();
+    // If opening the player made a history entry, closing it goes back
+    // through it, so Back and Close agree. Otherwise just fix the URL.
+    if (history.state?.play) history.back();
+    else writeUrl();
     renderContinue();
+  }
+
+  // The bar under the video folds away to a chevron, like the event
+  // player's controls; the video keeps playing.
+  function setBarHidden(hidden) {
+    local.barHidden = hidden;
+    refs.bar.hidden = hidden;
+    refs.peek.hidden = !hidden;
+    if (hidden) refs.epStrip.hidden = true;
+    else renderEpisodes();
   }
 
   async function loadDetails() {
@@ -237,8 +257,8 @@
       b.addEventListener("click", () => play({ ...item, episode: ep.number }));
       refs.epStrip.append(b);
     }
-    refs.epStrip.hidden = !local.epsOpen;
-    if (local.epsOpen) refs.epStrip.querySelector(".sc-ep.on")?.scrollIntoView({ inline: "center", block: "nearest" });
+    refs.epStrip.hidden = !local.epsOpen || local.barHidden;
+    if (local.epsOpen && !local.barHidden) refs.epStrip.querySelector(".sc-ep.on")?.scrollIntoView({ inline: "center", block: "nearest" });
   }
 
   function onMessage(event) {
@@ -487,15 +507,19 @@
       setTimeout(() => { copyLink.textContent = "Copy link"; }, 1600);
     });
     const back = btn("← Back to Movies & Shows", "sc-btn sc-back", stop);
-    const close = btn("✕", "sc-btn", stop);
-    close.title = "Close player";
+    const close = btn("✕", "sc-btn", () => setBarHidden(true));
+    close.title = "Hide controls";
     bar.append(back, title, seasonSel, prevEp, nextEp, epToggle, copyLink, close);
     stage.append(bar);
+    const peek = btn("⌃", "sc-peek", () => setBarHidden(false));
+    peek.title = "Show controls";
+    peek.hidden = true;
+    frame.append(peek);
     const epStrip = el("div", "sc-eps");
     epStrip.hidden = true;
     stage.append(epStrip);
     page.append(stage);
-    Object.assign(refs, { stage, frame, nowTitle, nowMeta, seasonSel, prevEp, nextEp, epToggle, epStrip });
+    Object.assign(refs, { stage, frame, bar, peek, nowTitle, nowMeta, seasonSel, prevEp, nextEp, epToggle, epStrip });
 
     // Continue watching
     const continueSec = el("section", "sc-section");
@@ -548,6 +572,13 @@
     async mount(container, api) {
       root = container;
       shell = api;
+      // The shell re-mounts this view on Back/Forward without unmounting
+      // it first, so start clean every time.
+      document.body.classList.remove("screen-on");
+      window.removeEventListener("message", onMessage);
+      if (iframe) iframe.remove();
+      iframe = null;
+      local.now = null;
       build();
       window.addEventListener("message", onMessage);
 
