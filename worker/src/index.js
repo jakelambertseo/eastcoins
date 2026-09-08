@@ -186,22 +186,6 @@ async function searchYouTube(query, apiKey) {
 // a simple majority (strictly more than half) rather than a fixed vote
 // count, so a packed room doesn't get stuck needing the same 3 votes a
 // nearly-empty one does: 3 listeners -> 2 votes, 4 -> 3, 6 -> 4, and so on.
-function noticeChatText(notice) {
-  const title = notice.title ? `"${notice.title}"` : "that one";
-  switch (notice.kind) {
-    case "chat-skip":
-      return `\u23ed ${notice.actor} skipped ${title}`;
-    case "vote-skip":
-      return `\u23ed Skipped ${title} \u2014 ${notice.votes} of ${notice.listeners} listening voted`;
-    case "error":
-      return `\u26a0 Couldn't play ${title} \u2014 the video is unavailable. Skipped.`;
-    case "safety-net":
-      return `\u26a0 ${title} stopped responding and was skipped`;
-    default:
-      return "";
-  }
-}
-
 function skipThresholdFor(listeners) {
   const count = Math.max(1, Number(listeners) || 1);
   if (count <= 2) return count;
@@ -1084,46 +1068,6 @@ export class MusicRoom extends DurableObject {
           ...notice
         }
       : null;
-
-    if (this.state.notice) {
-      this.ctx.waitUntil(this.announceNotice(this.state.notice));
-    }
-  }
-
-  // Mirrors the same explanation into Twitch chat. Chat can already skip a
-  // song without the site showing why; this closes the other half, so a skip
-  // that happens on the site is visible to chat too. Silently does nothing
-  // until STREAMELEMENTS_JWT is set, so it is safe to ship ahead of the token.
-  async announceNotice(notice) {
-    const jwt = String(this.env.STREAMELEMENTS_JWT || "").trim();
-    const channelId = String(this.env.STREAMELEMENTS_CHANNEL_ID || "").trim();
-    if (!jwt || !channelId) return;
-
-    const message = noticeChatText(notice);
-    if (!message) return;
-
-    try {
-      const response = await fetch(
-        `https://api.streamelements.com/kappa/v2/bot/${encodeURIComponent(channelId)}/say`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${jwt}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ message })
-        }
-      );
-      if (!response.ok) {
-        // Loud on purpose: a revoked or rotated token fails silently
-        // otherwise, and the room just quietly stops talking to chat.
-        console.error(
-          `StreamElements say failed (${response.status}) — check STREAMELEMENTS_JWT`
-        );
-      }
-    } catch (error) {
-      console.error("StreamElements say threw", error);
-    }
   }
 
   async persistAndBroadcast() {
