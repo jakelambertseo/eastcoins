@@ -459,7 +459,7 @@
 
     const head = el("div", "viewhead");
     const copy = el("div");
-    copy.append(el("h1", null, "Screening Room"), el("p", null, "Movies and shows. Pick something; it plays right here, with chat alongside."));
+    copy.append(el("h1", null, "Movies & TV"), el("p", null, "Pick something; it plays right here, with chat alongside."));
     head.append(copy);
     // Not "search" — that name is the function the input calls.
     const searchBox = el("div", "sc-search");
@@ -506,7 +506,7 @@
       catch { copyLink.textContent = "Couldn't copy"; }
       setTimeout(() => { copyLink.textContent = "Copy link"; }, 1600);
     });
-    const back = btn("← Back to Movies & Shows", "sc-btn sc-back", stop);
+    const back = btn("← Back to Movies & TV", "sc-btn sc-back", stop);
     const close = btn("✕", "sc-btn", () => setBarHidden(true));
     close.title = "Hide controls";
     bar.append(back, title, seasonSel, prevEp, nextEp, epToggle, copyLink, close);
