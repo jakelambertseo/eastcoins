@@ -104,7 +104,7 @@
   }
 
   function shareLink() {
-    const url = new URL("/v3/", location.origin);
+    const url = new URL("/", location.origin);
     url.searchParams.set("view", "watch");
     if (local.custom) url.searchParams.set("url", local.custom);
     else if (local.match?.id) url.searchParams.set("event", local.match.id);

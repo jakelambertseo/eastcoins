@@ -249,7 +249,7 @@
       solo.type = "button";
       solo.addEventListener("click", () => {
         history.pushState({ view: "watch" }, "",
-          `/v3/?view=watch&event=${encodeURIComponent(panel.match.id)}`);
+          `/?view=watch&event=${encodeURIComponent(panel.match.id)}`);
         shell.go("watch", { push: false });
       });
 
@@ -578,7 +578,7 @@
     const share = el("button", "chip", "Share");
     share.type = "button";
     share.addEventListener("click", async () => {
-      const url = `${location.origin}/v3/?view=multiview&m=${encodeShare()}`;
+      const url = `${location.origin}/?view=multiview&m=${encodeShare()}`;
       try {
         await navigator.clipboard.writeText(url);
         share.textContent = "Link copied";

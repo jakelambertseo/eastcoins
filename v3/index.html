@@ -2,91 +2,21 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
-<title>EastCoin V3</title>
-<link href="/assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://streamed.st">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;700;800&display=swap">
-<link rel="stylesheet" href="/v3/assets/css/v3.css?v=30">
+<meta name="robots" content="noindex,nofollow">
+<title>EastCoin</title>
+<link rel="canonical" href="https://eastcoin.vip/">
+<script>
+  /* V3 is the site now. Anything still pointing at /v3/ carries its
+     query and hash across to the root, so a bookmarked view or a shared
+     MultiView layout keeps working. replace() rather than assign() so
+     Back does not bounce straight back here. */
+  (function () {
+    var to = "/" + window.location.search + window.location.hash;
+    window.location.replace(to);
+  })();
+</script>
 </head>
 <body>
-
-<button class="navpeek" id="navPeek" type="button" aria-label="Show navigation">
-  <span class="navpeek-bars" aria-hidden="true"><i></i><i></i><i></i></span> Menu
-</button>
-
-<header class="topnav">
-  <a class="brand" href="/v3/" data-route="events">
-    <span class="brand-mark"><img src="/assets/eastcoins-logo.webp" alt="" width="30" height="30"></span> EastCoin
-  </a>
-
-  <nav class="nav-links" aria-label="Main">
-    <a class="nav-link" href="/v3/?view=events"    data-route="events"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg><span>Events</span></a>
-    <a class="nav-link" href="/v3/?view=multiview" data-route="multiview"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>MultiView</span></a>
-    <a class="nav-link" href="/v3/?view=picks"     data-route="picks"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 6 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2 2 2 0 0 0 0-6z"/><path d="M13 7v3M13 14v3"/></svg><span>Picks</span></a>
-    <a class="nav-link" href="/v3/?view=music"     data-route="music"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="15.5" r="2.5"/><path d="M9 17.5V6l11-2v9.5"/></svg><span>Music</span></a>
-    <a class="nav-link" href="/v3/?view=admin"     data-route="admin" id="navAdmin" hidden><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="1.9"/><circle cx="15" cy="12" r="1.9"/><circle cx="8" cy="17" r="1.9"/></svg><span>Admin</span></a>
-  </nav>
-
-  <div class="nav-right">
-    <div class="navsearch">
-      <span aria-hidden="true">🔍</span>
-      <input id="navSearch" type="search" placeholder="Search or embed" aria-label="Search events, or paste a stream link to embed" autocomplete="off">
-    </div>
-    <a class="wallet-chip" id="walletChip" href="/v3/?view=picks" data-route="picks" title="Your ZCoins — open Picks" hidden><img class="zcoin-mark" src="/v3/assets/img/zcoin.webp" alt="" width="17" height="17"><span id="walletValue">—</span></a>
-    <a class="login-btn" id="loginBtn" href="/api/picks/auth/twitch/start?returnTo=%2Fv3%2F">Log in</a>
-    <button class="iconbtn on" id="chatToggle" type="button" aria-pressed="true" title="Toggle Twitch chat">💬</button>
-    <div class="menuwrap">
-      <button class="iconbtn" id="settingsBtn" type="button" aria-haspopup="true" aria-expanded="false" title="Settings">⚙</button>
-      <div class="menu" id="settingsMenu" role="menu" hidden>
-        <p class="menu-title">Layout</p>
-        <button class="menu-item" type="button" role="menuitemcheckbox" data-toggle="chat"><span>Twitch chat</span><span class="switch" data-on="1"></span></button>
-        <button class="menu-item" type="button" role="menuitemcheckbox" data-toggle="topnav"><span>Top navigation</span><span class="switch" data-on="1"></span></button>
-        <p class="menu-title">Events</p>
-        <button class="menu-item" type="button" role="menuitemcheckbox" data-toggle="art"><span>Event artwork</span><span class="switch" data-on="1"></span></button>
-        <button class="menu-item" type="button" role="menuitemcheckbox" data-toggle="scores"><span>Live scores</span><span class="switch" data-on="1"></span></button>
-        <p class="menu-note">Saved on this device only.</p>
-      </div>
-    </div>
-  </div>
-</header>
-
-<div class="shell">
-  <main class="view" id="view" tabindex="-1"></main>
-
-  <aside class="chatrail" id="chatRail" aria-label="Twitch chat">
-    <div class="chatrail-head">
-      <button class="iconbtn" id="chatPopout" type="button" title="Open chat in a separate window" aria-label="Open Twitch chat in a separate window">⧉</button>
-      <button class="iconbtn" id="chatClose" type="button" title="Hide chat" aria-label="Hide Twitch chat">✕</button>
-    </div>
-    <div class="chat-placeholder" id="chatPlaceholder">
-      Chat loads as soon as you interact with the page, so it never slows the first paint.
-    </div>
-    <iframe
-      id="twitchChat"
-      title="zwades Twitch chat"
-      src="about:blank"
-      data-src="https://www.twitch.tv/embed/zwades/chat?parent=eastcoins.pages.dev&amp;parent=eastcoin.vip&amp;parent=www.eastcoin.vip&amp;parent=localhost&amp;parent=127.0.0.1&amp;darkpopout"
-      referrerpolicy="strict-origin-when-cross-origin"
-      hidden></iframe>
-  </aside>
-</div>
-
-<script defer src="/assets/eastcoins-ppv-api.js"></script>
-<script defer src="/assets/eastcoins-streamed-api.js"></script>
-<script defer src="/v3/assets/js/v3-sports.js?v=5"></script>
-<script defer src="/v3/assets/js/v3-shell.js?v=32"></script>
-<script defer src="/v3/assets/js/v3-scores.js?v=5"></script>
-<script defer src="/v3/assets/js/v3-events.js?v=20"></script>
-<script defer src="/v3/assets/js/v3-gameday.js?v=18"></script>
-<script defer src="/v3/assets/js/v3-watch.js?v=17"></script>
-<script defer src="/assets/eastcoins-youtube.js?v=2"></script>
-<script defer src="/assets/eastcoins-music-config.js?v=2"></script>
-<script defer src="/v3/assets/js/v3-music.js?v=30"></script>
-<script defer src="/v3/assets/js/v3-picks.js?v=14"></script>
-<script defer src="/v3/assets/js/v3-multiview.js?v=31"></script>
-<script defer src="/v3/assets/js/v3-admin.js?v=15"></script>
+<p>EastCoin has moved to <a href="/">eastcoin.vip</a>.</p>
 </body>
 </html>

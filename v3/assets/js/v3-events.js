@@ -163,7 +163,7 @@
     const el = document.createElement("article");
     el.className = "eventcard";
 
-    const href = `/v3/?view=watch&event=${encodeURIComponent(match.id)}`;
+    const href = `/?view=watch&event=${encodeURIComponent(match.id)}`;
     const openMatch = (event) => {
       if (event.metaKey || event.ctrlKey || event.shiftKey) return;
       event.preventDefault();
@@ -385,7 +385,7 @@
   function picksBanner() {
     const banner = document.createElement("a");
     banner.className = "picksbanner";
-    banner.href = "/v3/?view=picks";
+    banner.href = "/?view=picks";
     banner.addEventListener("click", (event) => {
       if (event.metaKey || event.ctrlKey || event.shiftKey) return;
       event.preventDefault();

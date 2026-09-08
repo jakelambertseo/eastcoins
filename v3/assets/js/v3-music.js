@@ -1,7 +1,7 @@
 /* ============================================================
    EastCoin V3 — The Green Room
 
-   The room lives at /v3/?view=music and nowhere else. There is
+   The room lives at /?view=music and nowhere else. There is
    deliberately no floating dock: anything fixed to a corner sits
    over the Twitch chat iframe, and Twitch disables the message
    box for the broadcaster and moderators the moment it detects
@@ -20,6 +20,7 @@
   const CATJAM = "https://cdn.7tv.app/emote/01KWJNR4DE37RDZ816WYAYDG3K/3x.webp";
   const ROOM_EMOTE = "https://cdn.7tv.app/emote/01FAEEN908000D3SP26B2JBAC1/2x.webp";
   const JAMGIE = "https://cdn.7tv.app/emote/01GAJBNT780004XAVG6P7AZAK2/4x.webp";
+  const JAMGIE2 = "https://cdn.7tv.app/emote/01KXKXKF3D20SSJAGPWQY9YYA7/4x.webp";
   const VOLUME_KEY = "ec_v3_music_volume";
 
   // Order and labels are ours; the kinds themselves are fixed server-side,
@@ -886,7 +887,11 @@
       jamgie.className = "mtitle-emote";
       jamgie.src = JAMGIE;
       jamgie.alt = "";
-      title.append(emote, el("span", "mtitle-text", "The Green Room"), jamgie);
+      const jamgie2 = document.createElement("img");
+      jamgie2.className = "mtitle-emote";
+      jamgie2.src = JAMGIE2;
+      jamgie2.alt = "";
+      title.append(emote, el("span", "mtitle-text", "The Green Room"), jamgie, jamgie2);
       refs.listeners = el("span", "mlisteners", BASE ? "Connecting\u2026" : "Room not configured");
       head.append(title, refs.listeners);
       root.append(head);

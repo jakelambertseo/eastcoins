@@ -1,5 +1,61 @@
 # CLAUDE.md — EastCoin Current Production Handoff
 
+> ## ⚠️ READ THIS FIRST — the production shell changed on 2026-09-08
+>
+> **The root of `eastcoin.vip` is no longer the V2 shell.** It is now the
+> rebuilt shell, whose source is `index.html` at the repository root
+> (copied from `v3/index.html`) with its assets under `/v3/assets/`.
+>
+> **Most of the document below describes the V2 shell that used to be at the
+> root.** It is kept because the V2 files still exist and still serve the
+> pages the new shell does not have — Games, Favorites, Quick Bet, the
+> mini-games — but wherever it says "the root shell", read that as the OLD
+> root shell unless this box says otherwise.
+>
+> ### What is true now
+>
+> | Thing | Where it is |
+> |---|---|
+> | Production shell | `index.html` (root) — the rebuilt one |
+> | Its scripts/styles | `/v3/assets/js/*`, `/v3/assets/css/v3.css` |
+> | The old V2 shell | `v2-shell.html`, served at `/v2-shell` — kept for rollback |
+> | `/v3/` | forwards to `/`, carrying query and hash |
+>
+> Routes on the new shell: `/`, `/?view=multiview`, `/?view=picks`,
+> `/?view=music`, `/?view=watch&event=<id>`, `/?view=watch&url=<url>`,
+> `/?view=admin`.
+>
+> **Old links still work.** `v3-shell.js` rewrites `?event=`, `?watch=`,
+> and the `games` / `streams` / `sicko` view names on load, and
+> `v3-multiview.js` decodes MultiView share tokens made by the V2 shell.
+> Do not remove either without a reason — every link ever pasted in chat
+> is one of those shapes.
+>
+> ### Rolling back
+>
+> Restore `index.html` from `v2-shell.html` and revert `v3/index.html` to
+> the shell copy. Nothing else moved: the V2 assets under `/v2/assets/`
+> and every standalone page were left untouched precisely so this stays a
+> one-file decision.
+>
+> ### What the new shell does NOT have yet
+>
+> Deliberately deferred, not lost — the V2 pages still serve them:
+> Quick Bet, Continue watching / Recent, the Quick Launch tiles, Games,
+> Favorites, and the Categories dropdown (the new Events page groups by
+> sport instead). MultiView also has no "Paste URL" panel type, so a V2
+> share layout containing one restores short and says so.
+>
+> ### Picks is live and moves real ZCoins
+>
+> Section 9.9 below is out of date: `functions/api/picks/wagers.js` no
+> longer refuses. Wagers debit StreamElements for real, settlement grades
+> from ESPN and pays out on a schedule via the `eastcoin-picks-cron`
+> Worker, and `functions/api/picks/_wager.js` is the single authority for
+> the money path — shared by the website and the chat command so the two
+> cannot disagree. `PICKS_OPEN_WAGERING=1` opens betting beyond the
+> allowlist.
+
 > **Purpose:** This file is the authoritative coding-agent handoff for the current EastCoin production site. Read it before making changes.
 >
 > **Repository:** `jakelambertseo/eastcoins`

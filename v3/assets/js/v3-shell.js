@@ -128,7 +128,7 @@
     state.route = name;
 
     if (push) {
-      const url = name === "events" ? "/v3/" : `/v3/?view=${name}`;
+      const url = name === "events" ? "/" : `/?view=${name}`;
       history.pushState({ view: name }, "", url);
     }
     render();
@@ -321,7 +321,7 @@
 
       if (user?.login) {
         els.loginBtn.textContent = user.displayName || user.login;
-        els.loginBtn.href = "/v3/?view=picks";
+        els.loginBtn.href = "/?view=picks";
 
         // Cosmetic only: the server re-checks on every admin endpoint,
         // so revealing this link in devtools grants nothing.
@@ -411,7 +411,7 @@
     window.clearTimeout(searchTimer);
     els.search.value = "";
     state.search = "";
-    history.pushState({ view: "watch" }, "", `/v3/?view=watch&url=${encodeURIComponent(url)}`);
+    history.pushState({ view: "watch" }, "", `/?view=watch&url=${encodeURIComponent(url)}`);
     state.route = "watch";
     render();
   });

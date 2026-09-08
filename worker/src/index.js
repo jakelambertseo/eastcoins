@@ -1071,7 +1071,9 @@ export class MusicRoom extends DurableObject {
     const names = [];
     for (const session of this.sessions.values()) {
       if (!session.verifiedLogin) continue;
-      if (!this.state.skipVoters.includes(session.clientId)) continue;
+      // The list holds voterKey(session), not a bare client id. Matching
+      // the wrong shape found nobody, so every vote read as anonymous.
+      if (!this.state.skipVoters.includes(this.voterKey(session))) continue;
       names.push(this.safeName(session.name));
       if (names.length >= 20) break;
     }
