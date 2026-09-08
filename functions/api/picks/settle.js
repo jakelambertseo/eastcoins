@@ -1,8 +1,8 @@
 /* ============================================================
    EastCoin Picks — settlement
 
-   Settlement is automatic from the scores feed, but deliberately
-   timid. It only acts when the feed is unambiguous:
+   Settlement is automatic from The Odds API's scores feed, but
+   deliberately timid. It only acts when the feed is unambiguous:
 
      · the event is explicitly completed
      · both scores are present integers
@@ -34,22 +34,40 @@ import {
   fail
 } from "./_lib.js";
 
-const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports";
+const ODDS_API = "https://api.the-odds-api.com/v4/sports";
 
-// A Cloudflare fetch sends no User-Agent by default, and ESPN's site API
-// is known to answer UA-less datacenter requests with an error page or an
-// empty body. Every developer machine sends one, which is exactly how a
-// grader can pass locally and refuse in production.
-const ESPN_HEADERS = {
-  "User-Agent": "Mozilla/5.0 (compatible; EastCoinPicks/1.0; +https://eastcoin.vip)",
-  "Accept": "application/json"
+/* Why not ESPN.
+
+   ESPN's site API answers every request from Cloudflare's address range
+   with HTTP 403 — verified per league, User-Agent or not. It works from a
+   laptop and from a browser, which is exactly how a grader can pass every
+   local test and never once succeed in production. The Odds API is built
+   to be called from servers, and the site already holds a key for it. */
+
+// Which Odds API sports a market can live under. Football is two: a market
+// names its teams but not its league, so the NFL feed is tried first and
+// college only if nothing there matched.
+const ODDS_SPORTS = {
+  baseball: ["baseball_mlb"],
+  "american-football": ["americanfootball_nfl", "americanfootball_ncaaf"],
+  basketball: ["basketball_nba"],
+  hockey: ["icehockey_nhl"]
 };
-const LEAGUE_PATHS = {
-  baseball: ["baseball/mlb"],
-  "american-football": ["football/nfl", "football/college-football"],
-  basketball: ["basketball/nba"],
-  hockey: ["hockey/nhl"]
-};
+
+// Nothing is looked up until this long after kick-off. No game is final
+// sooner, and every look-up spends quota.
+const MIN_AGE_MS = 2 * 60 * 60 * 1000;
+
+// And nothing is looked up past this. The feed only reaches back three
+// days, so an older market can never be graded from it — polling would
+// just spend quota forever on a game that was postponed or never matched.
+// It stays visible on the admin page, where Close refunds it.
+const MAX_AGE_MS = 3 * 24 * 60 * 60 * 1000;
+
+// The same two teams play on consecutive nights. A game only counts as
+// this market's fixture if it started within this much of the market's
+// own start time.
+const SAME_FIXTURE_MS = 12 * 60 * 60 * 1000;
 
 /* ------------------------------------------------------------ matching */
 
@@ -70,118 +88,100 @@ function nickname(value) {
 }
 
 /**
- * ESPN's scoreboard day, for a market's start time.
- *
- * This is load-bearing. Without a date, /scoreboard returns whatever
- * ESPN calls "today", and team names alone do not identify a game: the
- * same two teams play a series on consecutive nights. A market left
- * ungraded overnight would then match the NEXT night's meeting and
- * settle on the wrong score — paying real ZCoins to whoever that other
- * game happened to favour.
- *
- * ESPN buckets a game by its US Eastern calendar date, so a 10pm ET
- * start belongs to that day rather than the following UTC one.
+ * One sport's recent results. Never throws; a failure comes back as an
+ * empty list WITH the status that produced it, so a run that graded
+ * nothing can say whether the API refused, the key is missing, or there
+ * simply was no matching game — three very different problems.
  */
-function espnDate(startsAt) {
-  const when = new Date(startsAt);
-  if (Number.isNaN(when.getTime())) return "";
-  // en-CA formats as YYYY-MM-DD, which is one substitution from ESPN's
-  // YYYYMMDD and avoids assembling the parts by hand.
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  }).format(when).replace(/-/g, "");
+async function fetchScores(env, sportKey, daysFrom) {
+  const apiKey = String(env.ODDS_API_KEY || "").trim();
+  if (!apiKey) return { games: [], status: 0, note: "no ODDS_API_KEY" };
+
+  const query = new URLSearchParams({ apiKey, daysFrom: String(daysFrom) });
+  try {
+    const response = await fetch(`${ODDS_API}/${encodeURIComponent(sportKey)}/scores/?${query}`);
+    if (!response.ok) {
+      console.error(`Odds API scores ${sportKey}: HTTP ${response.status}`);
+      return { games: [], status: response.status };
+    }
+    const payload = await response.json();
+    return {
+      games: Array.isArray(payload) ? payload : [],
+      status: 200,
+      remaining: response.headers.get("x-requests-remaining")
+    };
+  } catch (error) {
+    console.error(`Odds API scores ${sportKey} threw`, error);
+    return { games: [], status: 0 };
+  }
 }
 
-async function boardFor(cache, path, date) {
-  const key = `${path}:${date}`;
-  if (!cache.has(key)) cache.set(key, await fetchScoreboard(path, date));
+// One request per sport per RUN, however many markets share it.
+async function scoresFor(cache, env, sportKey, daysFrom) {
+  const key = `${sportKey}:${daysFrom}`;
+  if (!cache.has(key)) cache.set(key, await fetchScores(env, sportKey, daysFrom));
   return cache.get(key);
 }
 
 /**
- * One league's board for one day. Never throws; a failure comes back as
- * an empty board WITH the status that produced it, so a run that graded
- * nothing can say whether ESPN refused, timed out, or simply had no
- * matching game — three very different problems that used to share one
- * message.
+ * Returns a verdict for a market, or { skip, detail } when the feed does
+ * not clearly say. A skip always means "leave it alone and look again" —
+ * except "stale", which means stop looking.
  */
-async function fetchScoreboard(path, date) {
-  const query = date ? `?dates=${encodeURIComponent(date)}` : "";
-  try {
-    const response = await fetch(`${ESPN_BASE}/${path}/scoreboard${query}`, { headers: ESPN_HEADERS });
-    if (!response.ok) {
-      console.error(`ESPN ${path} ${date}: HTTP ${response.status}`);
-      return { events: [], status: response.status };
-    }
-    const payload = await response.json();
-    return { events: Array.isArray(payload?.events) ? payload.events : [], status: 200 };
-  } catch (error) {
-    console.error(`ESPN ${path} ${date} threw`, error);
-    return { events: [], status: 0 };
-  }
-}
-
-/**
- * Returns a verdict for a market, or null when the feed doesn't
- * clearly say. Null always means "leave it alone and look again".
- */
-async function findResult(market, boards) {
-  const paths = LEAGUE_PATHS[String(market.sport || "").toLowerCase()] || [];
-  if (!paths.length) return null;
+async function findResult(env, market, boards) {
+  const keys = ODDS_SPORTS[String(market.sport || "").toLowerCase()] || [];
+  if (!keys.length) return { skip: "no-sport", detail: String(market.sport) };
 
   const wantAway = nickname(market.away_name);
   const wantHome = nickname(market.home_name);
-  if (!wantAway || !wantHome) return null;
+  if (!wantAway || !wantHome) return { skip: "no-names" };
 
-  // No date means no safe lookup — refuse rather than fall back to
-  // today's board, which is exactly the wrong-game case.
-  const date = espnDate(market.starts_at);
-  if (!date) return { skip: "no-date", detail: String(market.starts_at) };
+  const started = new Date(market.starts_at).getTime();
+  if (!Number.isFinite(started)) return { skip: "no-date", detail: String(market.starts_at) };
+
+  const age = Date.now() - started;
+  if (age < MIN_AGE_MS) return { skip: "too-early", detail: `${Math.round(age / 60000)}m since start` };
+  if (age > MAX_AGE_MS) return { skip: "stale", detail: "older than the feed reaches; close it from the admin page" };
+
+  // Reach back only as far as this market needs. 1 day is one credit,
+  // more is two, and most games are graded the same night they finish.
+  const daysFrom = Math.min(3, Math.max(1, Math.ceil(age / 86400000) + 1));
 
   let seen = 0;
   const statuses = [];
 
-  for (const path of paths) {
-    const board = await boardFor(boards, path, date);
-    statuses.push(`${path}=${board.status}`);
-    seen += board.events.length;
+  for (const sportKey of keys) {
+    const board = await scoresFor(boards, env, sportKey, daysFrom);
+    statuses.push(`${sportKey}=${board.status}${board.note ? ` (${board.note})` : ""}`);
+    seen += board.games.length;
 
-    for (const event of board.events) {
-      const competition = event?.competitions?.[0];
-      const competitors = competition?.competitors || [];
-      if (competitors.length !== 2) continue;
-
-      const espnHome = competitors.find((c) => c.homeAway === "home");
-      const espnAway = competitors.find((c) => c.homeAway === "away");
-      if (!espnHome?.team || !espnAway?.team) continue;
-
-      const gotHome = nickname(espnHome.team.displayName);
-      const gotAway = nickname(espnAway.team.displayName);
+    for (const game of board.games) {
+      const gotAway = nickname(game.away_team);
+      const gotHome = nickname(game.home_team);
 
       // Both sides must match, in either orientation.
       const straight = gotAway === wantAway && gotHome === wantHome;
       const flipped = gotAway === wantHome && gotHome === wantAway;
       if (!straight && !flipped) continue;
 
-      const status = event?.status?.type || {};
-      if (!status.completed || status.state !== "post") {
-        return { skip: "not-final", detail: `${status.state || "?"} — ${status.detail || status.name || ""}` };
+      // Right teams, wrong night: keep looking.
+      const when = new Date(game.commence_time).getTime();
+      if (Number.isFinite(when) && Math.abs(when - started) > SAME_FIXTURE_MS) continue;
+
+      if (!game.completed) {
+        return { skip: "not-final", detail: `in progress, commenced ${game.commence_time}` };
       }
 
-      // A postponed or cancelled game can carry state "post".
-      const name = String(status.name || "").toUpperCase();
-      if (name.includes("POSTPONED") || name.includes("CANCELED") ||
-          name.includes("CANCELLED") || name.includes("SUSPENDED")) {
-        return { verdict: "VOID", detail: status.detail || name };
-      }
-
-      const homeScore = Number(espnHome.score);
-      const awayScore = Number(espnAway.score);
-      if (!Number.isInteger(homeScore) || !Number.isInteger(awayScore)) {
-        return { skip: "no-score", detail: `${espnAway.score}-${espnHome.score}` };
+      const scores = Array.isArray(game.scores) ? game.scores : [];
+      const scoreOf = (teamName) => {
+        const want = nickname(teamName);
+        const row = scores.find((entry) => nickname(entry?.name) === want);
+        return Number(row?.score);
+      };
+      const awayScore = scoreOf(game.away_team);
+      const homeScore = scoreOf(game.home_team);
+      if (!Number.isInteger(awayScore) || !Number.isInteger(homeScore)) {
+        return { skip: "no-score", detail: JSON.stringify(scores).slice(0, 140) };
       }
 
       // Our market's "home" is whichever side matched our home name.
@@ -189,21 +189,14 @@ async function findResult(market, boards) {
       const ourAway = straight ? awayScore : homeScore;
 
       if (ourHome === ourAway) {
-        return { verdict: "VOID", detail: `Tied ${ourAway}–${ourHome}`, ourAway, ourHome };
+        return { verdict: "VOID", detail: `Tied ${ourAway}\u2013${ourHome}`, ourAway, ourHome };
       }
-
-      return {
-        verdict: ourHome > ourAway ? "home" : "away",
-        detail: status.detail || "Final",
-        ourAway,
-        ourHome
-      };
+      return { verdict: ourHome > ourAway ? "home" : "away", detail: "Final", ourAway, ourHome };
     }
   }
 
-  // Say which of the two very different "nothing to grade" cases this is.
   if (!seen) return { skip: "no-board", detail: statuses.join(", ") };
-  return { skip: "no-match", detail: `wanted ${wantAway} @ ${wantHome}; ${seen} event(s) on ${date}` };
+  return { skip: "no-match", detail: `wanted ${wantAway} @ ${wantHome}; ${seen} game(s), daysFrom=${daysFrom}` };
 }
 
 /* ------------------------------------------------------------ payouts */
@@ -278,7 +271,7 @@ async function payPick(env, db, pick, market, outcome) {
 }
 
 async function settleMarket(env, db, market, boards) {
-  const result = await findResult(market, boards);
+  const result = await findResult(env, market, boards);
   if (!result || result.skip) {
     return {
       id: market.id,
@@ -293,7 +286,7 @@ async function settleMarket(env, db, market, boards) {
   await db
     .prepare(
       `UPDATE markets
-          SET state = 'SETTLING', settlement_source = 'espn',
+          SET state = 'SETTLING', settlement_source = 'odds-api',
               settlement_detail = ?, final_away_score = ?, final_home_score = ?,
               updated_at = CURRENT_TIMESTAMP
         WHERE id = ?`
