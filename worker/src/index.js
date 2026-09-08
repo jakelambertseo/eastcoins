@@ -1,6 +1,9 @@
 import { DurableObject } from "cloudflare:workers";
 
-const MAX_QUEUE = 25;
+/* One cap for both queues. The StreamElements queue is kept as a mirror
+   of this one, so a separate limit there would only mean the two could
+   never actually agree. 14 is the number asked for. */
+const MAX_QUEUE = 14;
 const REQUEST_LIMIT = 25;
 const REQUEST_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const MAX_VIDEO_SECONDS = 600;
@@ -9,12 +12,7 @@ const MAX_USER_STATS = 500;
 const SE_POLL_INTERVAL_MS = 20 * 1000;
 const MAX_SE_SEEN_IDS = 500;
 
-/* How many requests StreamElements' own queue is allowed to hold.
-   Deleting every entry the moment it was imported kept that queue at
-   zero, which stopped it filling but also left chat with nothing to look
-   at on the mediarequest page. This keeps a visible backlog and trims
-   from the front once it is reached, so it can never run away again. */
-const MAX_SE_QUEUE = 14;
+
 const TWITCH_IRC_SKIP_COOLDOWN_MS = 5000;
 const RASPUTIN_COOLDOWN_MS = 60 * 1000;
 const RASPUTIN_ALLOWED_LOGINS = new Set(["andyreidisapawg", "zwades"]);
@@ -564,7 +562,7 @@ export class MusicRoom extends DurableObject {
    * and its player never runs — the songs play here instead. So every
    * "!sr" ever typed accumulates on their side until something removes
    * it. Used for two things: binning entries this room refused outright,
-   * and holding the queue at MAX_SE_QUEUE so it stays readable.
+   * and clearing anything the room's own queue no longer holds.
    *
    * Needs STREAMELEMENTS_JWT as a Worker secret (separate from the Pages
    * one). Without it this is a no-op and the old behaviour stands, so it
@@ -590,33 +588,101 @@ export class MusicRoom extends DurableObject {
   }
 
   /**
-   * Holds StreamElements' queue at MAX_SE_QUEUE by deleting from the front.
+   * Puts a song into StreamElements' own request queue.
    *
-   * Entries the room has already taken go first. They can never play from
-   * there — the room owns them now — so they are the cheapest thing to
-   * lose. A request still waiting to be imported is only dropped if
-   * clearing every inert one still is not enough.
+   * The other half of the mirror. Without it the two queues can only ever
+   * agree about songs that arrived through chat — anything added from the
+   * site would exist here and nowhere else.
+   *
+   * Returns the created entry's id when StreamElements gives one back, so
+   * the import loop can be told to ignore it. Without that id the entry
+   * is still safe, just handled a poll later by the reconcile pass.
    */
-  async trimStreamElementsQueue(channelId, queue) {
-    const overflow = queue.length - MAX_SE_QUEUE;
-    if (overflow <= 0) return 0;
+  async addStreamElementsEntry(channelId, videoId) {
+    const jwt = String(this.env.STREAMELEMENTS_JWT || "").trim();
+    if (!jwt || !channelId || !videoId) return null;
 
-    const ids = queue.map((entry) => String(entry?._id || "")).filter(Boolean);
-    const taken = ids.filter((id) => this.seenStreamElementsIds.has(id));
-    const pending = ids.filter((id) => !this.seenStreamElementsIds.has(id));
+    try {
+      const response = await fetch(
+        `https://api.streamelements.com/kappa/v2/songrequest/${encodeURIComponent(channelId)}/queue`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${jwt}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ video: `https://www.youtube.com/watch?v=${videoId}` })
+        }
+      );
 
-    // Both lists keep the queue's own order, so this always removes the
-    // oldest of whichever group it is drawing from.
-    const doomed = [...taken, ...pending].slice(0, overflow);
+      if (!response.ok) {
+        const body = await response.text().catch(() => "");
+        // Loud, and with the body: the accepted request shape is not
+        // documented anywhere we can check, so if this is wrong the log
+        // is the only thing that will say so.
+        console.error(
+          `StreamElements queue add failed ${response.status} for ${videoId}: ${body.slice(0, 300)}`
+        );
+        return null;
+      }
+
+      const payload = await response.json().catch(() => null);
+      return String(payload?._id || payload?.id || "") || null;
+    } catch (error) {
+      console.error("StreamElements queue add threw", error);
+      return null;
+    }
+  }
+
+  /**
+   * Makes StreamElements' queue equal this room's queue.
+   *
+   * The room is the source of truth: it is where songs are actually
+   * played, skipped and voted on. Their queue is a view of it.
+   *
+   * The currently playing song is deliberately not mirrored. Both systems
+   * treat "playing" as separate from "queued", so putting it in their
+   * queue would show it twice.
+   */
+  async syncStreamElementsQueue(channelId) {
+    const jwt = String(this.env.STREAMELEMENTS_JWT || "").trim();
+    if (!jwt || !channelId) return;
+
+    const remote = await fetchStreamElementsQueue(channelId);
+    const wanted = this.state.queue.map((item) => String(item.videoId));
+    const wantedSet = new Set(wanted);
+
+    // Group by video, keeping their order, so duplicates are visible.
+    const byVideo = new Map();
+    for (const entry of remote) {
+      const videoId = String(entry?.videoId || "");
+      const id = String(entry?._id || "");
+      if (!videoId || !id) continue;
+      if (!byVideo.has(videoId)) byVideo.set(videoId, []);
+      byVideo.get(videoId).push(id);
+    }
 
     let removed = 0;
-    for (const id of doomed) {
-      if (await this.deleteStreamElementsEntry(channelId, id)) removed += 1;
+    for (const [videoId, ids] of byVideo) {
+      // Keep one copy of anything the room still wants; delete the rest,
+      // and delete everything the room no longer has at all.
+      const keep = wantedSet.has(videoId) ? 1 : 0;
+      if (keep) this.seenStreamElementsIds.add(ids[0]);
+      for (const id of ids.slice(keep)) {
+        if (await this.deleteStreamElementsEntry(channelId, id)) removed += 1;
+      }
     }
-    if (removed) {
-      console.log(`StreamElements queue trimmed: removed ${removed} to hold ${MAX_SE_QUEUE}`);
+
+    let added = 0;
+    for (const videoId of wanted) {
+      if (byVideo.has(videoId)) continue;
+      const id = await this.addStreamElementsEntry(channelId, videoId);
+      if (id) this.seenStreamElementsIds.add(id);
+      if (id !== null) added += 1;
     }
-    return removed;
+
+    if (removed || added) {
+      console.log(
+        `StreamElements queue synced: +${added} -${removed}, now mirroring ${wanted.length}`
+      );
+    }
   }
 
   async pollStreamElements() {
@@ -624,8 +690,10 @@ export class MusicRoom extends DurableObject {
     if (!channelId) return;
 
     const queue = await fetchStreamElementsQueue(channelId);
-    if (!queue.length) return;
 
+    // No early return on an empty queue. Empty is exactly when the room
+    // most likely has songs their side is missing, and returning here
+    // would skip the sync that pushes them.
     let changed = false;
 
     for (const entry of queue) {
@@ -643,12 +711,16 @@ export class MusicRoom extends DurableObject {
       const queueFull = this.state.queue.length >= MAX_QUEUE && this.state.current;
       const tooLong = Number.isFinite(durationSeconds) && durationSeconds > MAX_VIDEO_SECONDS;
 
-      // Anything we have finished with leaves their queue. A request we
-      // are only DEFERRING does not: when the room queue is full the
-      // entry is still wanted, and deleting it would silently bin
-      // somebody's song. Everything else — imported below, or refused
-      // here for good — is resolved and can go.
-      if (!/^[A-Za-z0-9_-]{11}$/.test(videoId) || !login || alreadyQueued || tooLong) {
+      // Checked FIRST, and never deleted here. An entry whose video the
+      // room already holds is usually one this room put there itself, to
+      // mirror its own queue. Deleting it would undo the mirror on every
+      // poll and then re-add it on the next — a delete/add loop against
+      // their API. The reconcile pass owns that decision instead.
+      if (alreadyQueued) continue;
+
+      // Genuine refusals still go: they can never be played from either
+      // queue, so leaving them would just occupy a slot.
+      if (!/^[A-Za-z0-9_-]{11}$/.test(videoId) || !login || tooLong) {
         this.ctx.waitUntil(this.deleteStreamElementsEntry(channelId, seId));
         continue;
       }
@@ -675,10 +747,6 @@ export class MusicRoom extends DurableObject {
       changed = true;
     }
 
-    // Runs every poll, not just when something was imported: the queue
-    // can pass the cap through requests this room refused as well.
-    await this.trimStreamElementsQueue(channelId, queue);
-
     if (this.seenStreamElementsIds.size > MAX_SE_SEEN_IDS) {
       // A Set preserves insertion order, so slicing from the front drops
       // the oldest entries first.
@@ -689,6 +757,10 @@ export class MusicRoom extends DurableObject {
     if (changed) {
       await Promise.all([this.persistAndBroadcast(), this.persistHistoryAndStats()]);
     }
+
+    // After importing, not before: a chat request should reach the room
+    // first, so the mirror is drawn from a queue that already contains it.
+    await this.syncStreamElementsQueue(channelId);
   }
 
   // Arms the polling alarm (which also double-checks the Twitch IRC
