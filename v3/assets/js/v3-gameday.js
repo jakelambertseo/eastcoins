@@ -218,9 +218,14 @@
     return best;
   }
 
-  /** The same-origin Gameday page, pointed at a resolved game. */
+  /**
+   * The same-origin Gameday page, pointed at a resolved game.
+   *
+   * Extensionless: Pages canonicalises /mlb-gameday.html to this with a
+   * 308, and an iframe would follow it every single time the panel opens.
+   */
   function gamedayUrl(game) {
-    const url = new URL("/mlb-gameday.html", location.origin);
+    const url = new URL("/mlb-gameday", location.origin);
     url.searchParams.set("embed", "1");
     url.searchParams.set("gamePk", String(game.gamePk));
     url.searchParams.set("date", game.date);
