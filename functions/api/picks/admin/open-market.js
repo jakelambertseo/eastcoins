@@ -101,11 +101,12 @@ async function handleOpenMarket(context) {
       `SELECT id, state
          FROM markets
         WHERE provider = 'manual'
-          AND (provider_event_id = ? OR provider_event_id LIKE ?)
+          AND (provider_event_id = ?
+               OR substr(provider_event_id, 1, ?) = ?)
           AND state NOT IN ('VOID', 'SETTLED')
         LIMIT 1`
     )
-    .bind(base, `${base}#%`)
+    .bind(base, base.length + 1, base + "#")
     .first();
   if (existing) {
     return fail("ALREADY_OPEN",
@@ -117,14 +118,21 @@ async function handleOpenMarket(context) {
   // to reuse a fixture is not enough — the row still needs an id of its
   // own. Suffix it rather than reaching for a random one, so the id stays
   // readable and a genuine accidental double still collides.
+  //
+  // Matched with substr() rather than LIKE: D1 caps LIKE pattern length
+  // far below stock SQLite, and a fixture id is already past it, which
+  // fails as "pattern too complex" rather than as no match. Comparing
+  // base + "#" as an exact prefix also avoids "Team B" matching a
+  // fixture for "Team BB".
   const priorCount = await db
     .prepare(
       `SELECT COUNT(*) AS n
          FROM markets
         WHERE provider = 'manual'
-          AND (provider_event_id = ? OR provider_event_id LIKE ?)`
+          AND (provider_event_id = ?
+               OR substr(provider_event_id, 1, ?) = ?)`
     )
-    .bind(base, `${base}#%`)
+    .bind(base, base.length + 1, base + "#")
     .first();
 
   const prior = Number(priorCount?.n || 0);
