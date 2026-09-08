@@ -110,8 +110,20 @@ export async function onRequestGet(context) {
 
     const token = await signMusicToken(payload, secret);
 
+    // login and displayName ride alongside the token, not only inside it.
+    // The client needs to know who it is to decide which rows it may
+    // remove and whether to offer a skip — and it cannot read the token,
+    // which is signed for the room to verify, not for the page to parse.
+    // Neither field is secret: both are already public on Twitch.
     return Response.json(
-      { ok: true, authenticated: true, token, expiresAt: payload.exp },
+      {
+        ok: true,
+        authenticated: true,
+        token,
+        expiresAt: payload.exp,
+        login: user.login,
+        displayName: user.displayName
+      },
       { headers: { "Cache-Control": "no-store" } }
     );
   } catch (error) {
