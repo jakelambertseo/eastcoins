@@ -441,7 +441,8 @@
     const copy = el("div");
     copy.append(el("h1", null, "Screening Room"), el("p", null, "Movies and shows. Pick something; it plays right here, with chat alongside."));
     head.append(copy);
-    const search = el("div", "sc-search");
+    // Not "search" — that name is the function the input calls.
+    const searchBox = el("div", "sc-search");
     const input = el("input");
     input.type = "search";
     input.placeholder = "Search movies and shows";
@@ -454,8 +455,8 @@
       if (q.length < 2) { refs.resultsSec.hidden = true; seq += 1; return; }
       searchTimer = setTimeout(() => search(q), 350);
     });
-    search.append(input);
-    head.append(search);
+    searchBox.append(input);
+    head.append(searchBox);
     page.append(head);
 
     // Player
