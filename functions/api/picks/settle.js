@@ -58,14 +58,42 @@ function nickname(value) {
   return parts[parts.length - 1];
 }
 
-async function boardFor(cache, path) {
-  if (!cache.has(path)) cache.set(path, await fetchScoreboard(path));
-  return cache.get(path);
+/**
+ * ESPN's scoreboard day, for a market's start time.
+ *
+ * This is load-bearing. Without a date, /scoreboard returns whatever
+ * ESPN calls "today", and team names alone do not identify a game: the
+ * same two teams play a series on consecutive nights. A market left
+ * ungraded overnight would then match the NEXT night's meeting and
+ * settle on the wrong score — paying real ZCoins to whoever that other
+ * game happened to favour.
+ *
+ * ESPN buckets a game by its US Eastern calendar date, so a 10pm ET
+ * start belongs to that day rather than the following UTC one.
+ */
+function espnDate(startsAt) {
+  const when = new Date(startsAt);
+  if (Number.isNaN(when.getTime())) return "";
+  // en-CA formats as YYYY-MM-DD, which is one substitution from ESPN's
+  // YYYYMMDD and avoids assembling the parts by hand.
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(when).replace(/-/g, "");
 }
 
-async function fetchScoreboard(path) {
+async function boardFor(cache, path, date) {
+  const key = `${path}:${date}`;
+  if (!cache.has(key)) cache.set(key, await fetchScoreboard(path, date));
+  return cache.get(key);
+}
+
+async function fetchScoreboard(path, date) {
   try {
-    const response = await fetch(`${ESPN_BASE}/${path}/scoreboard`);
+    const query = date ? `?dates=${encodeURIComponent(date)}` : "";
+    const response = await fetch(`${ESPN_BASE}/${path}/scoreboard${query}`);
     if (!response.ok) return [];
     const payload = await response.json();
     return Array.isArray(payload?.events) ? payload.events : [];
@@ -86,8 +114,13 @@ async function findResult(market, boards) {
   const wantHome = nickname(market.home_name);
   if (!wantAway || !wantHome) return null;
 
+  // No date means no safe lookup — refuse rather than fall back to
+  // today's board, which is exactly the wrong-game case.
+  const date = espnDate(market.starts_at);
+  if (!date) return null;
+
   for (const path of paths) {
-    for (const event of await boardFor(boards, path)) {
+    for (const event of await boardFor(boards, path, date)) {
       const competition = event?.competitions?.[0];
       const competitors = competition?.competitors || [];
       if (competitors.length !== 2) continue;
