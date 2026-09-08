@@ -93,7 +93,6 @@
 
     const img = document.createElement("img");
     img.alt = "";
-    img.loading = "lazy";
     img.decoding = "async";
     img.addEventListener("load", () => box.classList.add("has-logo"));
     img.addEventListener("error", () => img.remove());
