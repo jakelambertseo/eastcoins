@@ -1236,24 +1236,32 @@ export class MusicRoom extends DurableObject {
   }
 
   /**
-   * The playing song as clients should see it.
+   * A song as clients should see it.
    *
-   * reactors is keyed by client id, and the login and client id of whoever
-   * queued it are bookkeeping. None of that belongs in a broadcast that
-   * every listener receives — the counts and verified names already go
-   * out separately as `reactions`.
+   * reactors is keyed by client id and the requester's client id is
+   * bookkeeping; neither belongs in a broadcast every listener receives.
+   * The counts and verified names already go out separately as
+   * `reactions`.
+   *
+   * requestedByLogin DOES go out. It is a public Twitch username, no more
+   * revealing than the display name shown beside it, and the client needs
+   * it to know which rows in the queue are its own to remove.
    */
-  publicCurrent() {
-    if (!this.state.current) return null;
-    const { reactors, requestedByLogin, requestedByClient, ...rest } = this.state.current;
+  publicItem(item) {
+    if (!item) return null;
+    const { reactors, requestedByClient, ...rest } = item;
     return rest;
+  }
+
+  publicCurrent() {
+    return this.publicItem(this.state.current);
   }
 
   publicState() {
     const listeners = this.distinctListeners();
     return {
       current: this.publicCurrent(),
-      queue: this.state.queue,
+      queue: this.state.queue.map((item) => this.publicItem(item)),
       startedAt: this.state.startedAt,
       revision: this.state.revision,
       listeners,
@@ -1458,6 +1466,33 @@ export class MusicRoom extends DurableObject {
         this.state.revision += 1;
       }
 
+      await this.persistAndBroadcast();
+      return;
+    }
+
+    if (message.type === "remove") {
+      const id = String(message.itemId || "");
+      const index = this.state.queue.findIndex((item) => item.id === id);
+      // Already gone, or it started playing while the click was in
+      // flight. Nothing to say — the next broadcast shows the truth.
+      if (index === -1) return;
+
+      const login = String(session.verifiedLogin || "").toLowerCase();
+      if (!login) {
+        return this.sendError(ws, "Log in with Twitch to manage the queue.");
+      }
+
+      const owner = String(this.state.queue[index].requestedByLogin || "").toLowerCase();
+      // Only what you added, unless you run the room. Deliberately says
+      // nothing about the current song: taking that away is a skip, and
+      // a skip is a vote everybody gets.
+      if (login !== owner && !FORCE_SKIP_LOGINS.has(login)) {
+        return this.sendError(ws, "You can only remove songs you added.");
+      }
+
+      const [removed] = this.state.queue.splice(index, 1);
+      console.log(`Queue: ${login} removed "${removed.title}"`);
+      this.state.revision += 1;
       await this.persistAndBroadcast();
       return;
     }

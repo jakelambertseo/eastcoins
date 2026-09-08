@@ -847,6 +847,21 @@
         meta.append(el("small", null, item.requestedBy ? `added by ${item.requestedBy}` : "added from chat"));
         row.append(meta);
         if (item.special === "rasputin") row.append(el("span", "mq-tag", "RASPUTIN"));
+
+        // Your own rows, plus everything if you run the room. The server
+        // re-checks on every removal, so showing the button is only ever
+        // about not offering one that would be refused.
+        const mine = conn.login &&
+          String(item.requestedByLogin || "").toLowerCase() === conn.login;
+        if (mine || canForceSkip()) {
+          const drop = el("button", "mq-drop", "\u2715");
+          drop.type = "button";
+          drop.title = mine ? "Remove your song" : `Remove ${item.requestedBy}'s song`;
+          drop.setAttribute("aria-label", drop.title);
+          drop.addEventListener("click", () => send({ type: "remove", itemId: item.id }));
+          row.append(drop);
+        }
+
         wrap.append(row);
       });
       return wrap;
