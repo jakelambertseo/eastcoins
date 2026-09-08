@@ -147,19 +147,31 @@ function parseIso8601Duration(value) {
 // Returns null (rather than blocking requests) when YOUTUBE_API_KEY isn't
 // configured yet, or when the lookup itself fails — the length limit is
 // best-effort, not a hard dependency for the room to function.
-async function fetchVideoDurationSeconds(videoId, apiKey) {
-  if (!apiKey) return null;
+/**
+ * Duration and title in one lookup.
+ *
+ * videos.list costs one quota unit whatever parts are asked for, so the
+ * title rides along with the duration check that already happens on
+ * every add — free, and it means a client that sends no title still gets
+ * a real one rather than a blank row in the queue.
+ */
+async function fetchVideoDetails(videoId, apiKey) {
+  if (!apiKey) return { durationSeconds: null, title: "" };
 
   try {
-    const url = `https://www.googleapis.com/youtube/v3/videos?id=${encodeURIComponent(videoId)}&part=contentDetails&key=${apiKey}`;
+    const url = `https://www.googleapis.com/youtube/v3/videos?id=${encodeURIComponent(videoId)}&part=contentDetails,snippet&key=${apiKey}`;
     const response = await fetch(url);
-    if (!response.ok) return null;
+    if (!response.ok) return { durationSeconds: null, title: "" };
 
     const data = await response.json();
-    const iso = data?.items?.[0]?.contentDetails?.duration;
-    return iso ? parseIso8601Duration(iso) : null;
+    const item = data?.items?.[0];
+    const iso = item?.contentDetails?.duration;
+    return {
+      durationSeconds: iso ? parseIso8601Duration(iso) : null,
+      title: String(item?.snippet?.title || "")
+    };
   } catch {
-    return null;
+    return { durationSeconds: null, title: "" };
   }
 }
 
@@ -1234,7 +1246,8 @@ export class MusicRoom extends DurableObject {
         return this.sendError(ws, `Queue is limited to ${MAX_QUEUE} songs.`);
       }
 
-      const durationSeconds = await fetchVideoDurationSeconds(videoId, this.env.YOUTUBE_API_KEY);
+      const details = await fetchVideoDetails(videoId, this.env.YOUTUBE_API_KEY);
+      const durationSeconds = details.durationSeconds;
       if (durationSeconds !== null && durationSeconds > MAX_VIDEO_SECONDS) {
         return this.sendError(
           ws,
@@ -1261,7 +1274,9 @@ export class MusicRoom extends DurableObject {
       const item = {
         id: crypto.randomUUID(),
         videoId,
-        title: this.safeTitle(message.title),
+        // Whatever the client knew, else what YouTube says. Something
+        // added without either used to sit in the queue as "Untitled".
+        title: this.safeTitle(message.title || details.title),
         requestedBy: this.safeName(auth.displayName || auth.login),
         requestedByAvatar: this.safeAvatarUrl(auth.avatar),
         addedAt: Date.now(),

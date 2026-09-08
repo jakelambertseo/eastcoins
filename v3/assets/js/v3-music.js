@@ -538,7 +538,7 @@
 
     /* ---------------------------------------------------- add + search */
 
-    async function addVideo(videoId) {
+    async function addVideo(videoId, title) {
       // The room verifies the token carried BY THIS MESSAGE, not the one
       // presented at identity time. Sending an add without it fails as
       // "you need to be logged in" no matter how logged in you are.
@@ -547,7 +547,10 @@
         setNotice("Log in with Twitch to add songs.", true);
         return;
       }
-      if (send({ type: "add", videoId, token: conn.token })) {
+      // Send the title when it is already known — a search result carries
+      // one — so the room does not have to look up what we can just tell
+      // it. It falls back to its own lookup when this is empty.
+      if (send({ type: "add", videoId, title: title || "", token: conn.token })) {
         setNotice("Added to the queue.");
       } else {
         setNotice("Not connected to the room.", true);
@@ -733,7 +736,7 @@
         row.append(el("span", "mresult-add", "+ Add"));
 
         row.addEventListener("click", () => {
-          addVideo(videoId);
+          addVideo(videoId, result.title || "");
           searchResults = [];
           searchNote = "";
           searchQuery = "";
@@ -867,7 +870,7 @@
 
         const again = el("button", "watchbtn mq-again", "Play again");
         again.type = "button";
-        again.addEventListener("click", () => addVideo(entry.videoId));
+        again.addEventListener("click", () => addVideo(entry.videoId, entry.title || ""));
         row.append(again);
 
         wrap.append(row);
