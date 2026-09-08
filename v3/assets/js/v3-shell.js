@@ -48,6 +48,65 @@
   // had a chance to register. An unknown name still falls back.
   const ROUTES = ["events", "multiview", "picks", "music", "watch", "admin"];
 
+  /* ------------------------------------------------------------ legacy URLs
+
+     Every link anyone has already pasted into chat was produced by the
+     older shell, and most of them do not name a view at all. Rewriting
+     them here means an old link opens the thing it always opened,
+     instead of dropping the person on the events page wondering what
+     happened.
+
+     Done with replaceState rather than a redirect so the address bar
+     ends up canonical without costing a round trip or a history entry
+     the back button would then have to fight through. */
+
+  // Views the old shell had that this one does not. They still exist as
+  // standalone pages, so the link keeps its meaning rather than being
+  // quietly swallowed.
+  const LEGACY_PAGES = {
+    games: "/games.html",
+    streams: "/favorites.html",
+    sicko: "/picks-kalshi-test.html#prop-of-week"
+  };
+
+  function normalizeLegacyUrl() {
+    const url = new URL(location.href);
+    const params = url.searchParams;
+    const view = params.get("view");
+
+    if (view && LEGACY_PAGES[view]) {
+      location.replace(LEGACY_PAGES[view]);
+      return true;   // navigating away; stop booting
+    }
+
+    let changed = false;
+
+    // /?watch=<url> — a pasted embed
+    const watch = params.get("watch");
+    if (watch) {
+      params.set("view", "watch");
+      params.set("url", watch);
+      params.delete("watch");
+      changed = true;
+    }
+
+    // /?event=<id> — what the old player's Copy Link produced, and by far
+    // the most shared shape. source and stream rode along with it; they
+    // are dropped rather than half-honoured, since this player picks its
+    // own server and pretending otherwise would be worse than not saying.
+    if (!params.get("view") && params.get("event")) {
+      params.set("view", "watch");
+      params.delete("source");
+      params.delete("stream");
+      changed = true;
+    }
+
+    if (changed) {
+      history.replaceState(null, "", url.pathname + url.search + url.hash);
+    }
+    return false;
+  }
+
   function routeFromUrl() {
     const view = new URL(location.href).searchParams.get("view");
     return ROUTES.includes(view) ? view : "events";
@@ -367,6 +426,11 @@
   });
 
   window.ECV3 = { register, go, state, stub };
+
+  // Before anything reads the URL: an old-shaped link is rewritten to
+  // its V3 equivalent, and one pointing at a view that only exists as a
+  // standalone page navigates away instead of booting.
+  if (normalizeLegacyUrl()) return;
 
   state.route = routeFromUrl();
   loadPrefs();

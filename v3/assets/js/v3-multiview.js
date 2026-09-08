@@ -80,16 +80,61 @@
       .replace(/=+$/, "");
   }
 
+  function fromBase64Url(value) {
+    const padded = String(value || "").replace(/-/g, "+").replace(/_/g, "/");
+    // The old encoder stripped "=" padding; atob wants it back.
+    return atob(padded + "=".repeat((4 - (padded.length % 4)) % 4));
+  }
+
+  /**
+   * A share token from the previous shell.
+   *
+   * Shaped "2.<layout>.<col>.<row>.<slot>.<slot>…", where a slot is "_"
+   * for empty, "e<base64url id>" for an event, or "u<base64url url>" for
+   * a pasted link.
+   *
+   * Pasted-link panels cannot be carried over: this MultiView holds
+   * events only. They are counted rather than dropped in silence, so the
+   * person opening the link is told the layout came back short instead of
+   * assuming somebody shared it that way.
+   */
+  function decodeLegacyShare(token) {
+    const parts = String(token || "").split(".");
+    if (parts.length < 5 || parts[0] !== "2") return null;
+
+    const count = Number(parts[1]);
+    if (![2, 3, 4].includes(count)) return null;
+
+    let dropped = 0;
+    const ids = parts.slice(4).slice(0, MAX_PANELS).map((slot) => {
+      if (!slot || slot === "_") return null;
+      const kind = slot[0];
+      const data = slot.slice(1);
+      if (!data) return null;
+      if (kind === "e") {
+        try { return fromBase64Url(data) || null; } catch { return null; }
+      }
+      if (kind === "u") dropped += 1;
+      return null;
+    });
+
+    if (!ids.some(Boolean)) return null;
+    return { count, x: clamp(Number(parts[2])), y: clamp(Number(parts[3])), ids, dropped };
+  }
+
   function decodeShare(token) {
+    // A dotted token is from the old shell; this one's is plain base64.
+    if (String(token || "").includes(".")) return decodeLegacyShare(token);
+
     try {
-      const padded = token.replace(/-/g, "+").replace(/_/g, "/");
-      const json = decodeURIComponent(escape(atob(padded)));
+      const json = decodeURIComponent(escape(fromBase64Url(token)));
       const raw = JSON.parse(json);
       return {
         count: raw.c >= 2 && raw.c <= MAX_PANELS ? raw.c : 4,
         x: clamp(raw.x),
         y: clamp(raw.y),
-        ids: Array.isArray(raw.i) ? raw.i : []
+        ids: Array.isArray(raw.i) ? raw.i : [],
+        dropped: 0
       };
     } catch {
       return null;
@@ -621,6 +666,20 @@
       }
 
       dom.head = buildHead();
+
+      // A shared layout from the old shell could hold pasted links, which
+      // this MultiView has no panel type for. Say so: a layout that comes
+      // back one short looks like the sender got it wrong otherwise.
+      if (decoded?.dropped) {
+        const n = decoded.dropped;
+        const strip = el("div", "notice-strip");
+        strip.textContent =
+          n + " panel" + (n === 1 ? " was" : "s were") +
+          " a pasted link, which this MultiView can’t restore — " +
+          "add " + (n === 1 ? "it" : "them") + " again from the picker.";
+        root.append(strip);
+      }
+
       dom.grid = el("div", "mv-grid");
       dom.cells = [];
       for (let i = 0; i < MAX_PANELS; i += 1) {
