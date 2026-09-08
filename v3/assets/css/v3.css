@@ -1461,6 +1461,8 @@ body.watch-on .playerframe{
 
 .mactions{display:flex;gap:7px;flex-wrap:wrap}
 .mforce{border-color:rgba(232,191,53,.4);color:var(--gold)}
+/* Your own vote, so pressing it is not a guess about whether it landed. */
+.mvoted{background:var(--gold-dim);border-color:rgba(232,191,53,.45);color:var(--gold)}
 
 .mwho{
   padding:11px 13px;border:1px solid var(--line);

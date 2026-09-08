@@ -510,6 +510,10 @@
     // The field keeps its own value; this mirrors it so a remount restores
     // what was typed.
     let searchQuery = "";
+    // Which song this browser has voted to skip. The room knows too, but
+    // it broadcasts one shared state to everybody and cannot say in it
+    // which of them is you.
+    let votedFor = "";
 
     /* ---------------------------------------------------- add + search */
 
@@ -994,7 +998,15 @@
         const vote = el("button", "watchbtn", `Vote skip (${state.skipVotes}/${state.skipThreshold})`);
         vote.type = "button";
         vote.title = skipVoterTip(state);
-        vote.addEventListener("click", () => send({ type: "skip-vote" }));
+        if (votedFor === state.current.id) vote.classList.add("mvoted");
+        vote.addEventListener("click", () => {
+          // currentId is required. Without it the room drops the vote on
+          // its very first line, silently, which is exactly what made
+          // this look like it was not counting.
+          if (!send({ type: "skip-vote", currentId: state.current.id })) return;
+          votedFor = votedFor === state.current.id ? "" : state.current.id;
+          renderSide(conn.state);
+        });
         actions.append(vote);
 
         // Shown only to the room mods. The server re-checks the verified

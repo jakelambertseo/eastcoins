@@ -242,10 +242,17 @@ function publicReactions(reactors) {
   return out;
 }
 
+/**
+ * Votes needed to skip: half the room, rounded up.
+ *
+ * With two or fewer people it stays unanimous. Half of two is one, and
+ * letting one of a pair skip whatever the other put on is not a vote, it
+ * is just a skip button.
+ */
 function skipThresholdFor(listeners) {
   const count = Math.max(1, Number(listeners) || 1);
   if (count <= 2) return count;
-  return Math.floor(count / 2) + 1;
+  return Math.ceil(count / 2);
 }
 
 // StreamElements' own "!sr" media-request queue for a channel, read from its
@@ -504,7 +511,10 @@ export class MusicRoom extends DurableObject {
       startedAt: current ? (Number(input.startedAt) || Date.now()) : null,
       revision: Number(input.revision) || 0,
       skipVoters: current && Array.isArray(input.skipVoters)
-        ? input.skipVoters.map(String).slice(0, 100)
+        // Only the prefixed form survives a reload. A bare client id is
+        // from the previous scheme and can never be matched or cleared
+        // by anyone, so it would sit there inflating the count forever.
+        ? input.skipVoters.map(String).filter((v) => /^(user|client):/.test(v)).slice(0, 100)
         : []
     };
   }
@@ -1068,6 +1078,36 @@ export class MusicRoom extends DurableObject {
     return names;
   }
 
+  /**
+   * People in the room, not open sockets.
+   *
+   * Someone with the room in two tabs is two sessions and one listener.
+   * Counting sockets inflated the skip threshold with every extra tab,
+   * which made a vote progressively harder to reach the more devices the
+   * same handful of people had open.
+   */
+  distinctListeners() {
+    const seen = new Set();
+    for (const session of this.sessions.values()) {
+      seen.add(this.voterKey(session));
+    }
+    return Math.max(1, seen.size);
+  }
+
+  /**
+   * How one person is identified for a vote.
+   *
+   * A verified Twitch login where there is one, so a second tab, a second
+   * browser or cleared storage cannot buy another vote. Guests fall back
+   * to the client id they carry, which is the best that can be done
+   * without asking them to log in.
+   */
+  voterKey(session) {
+    return session?.verifiedLogin
+      ? `user:${session.verifiedLogin}`
+      : `client:${session?.clientId || ""}`;
+  }
+
   listenerNames() {
     const seenLogins = new Set();
     const names = [];
@@ -1081,7 +1121,7 @@ export class MusicRoom extends DurableObject {
   }
 
   publicState() {
-    const listeners = Math.max(1, this.sessions.size);
+    const listeners = this.distinctListeners();
     return {
       current: this.state.current,
       queue: this.state.queue,
@@ -1263,19 +1303,24 @@ export class MusicRoom extends DurableObject {
         return this.sendError(ws, "This one can't be skipped 🎉");
       }
 
-      if (!this.state.skipVoters.includes(session.clientId)) {
-        this.state.skipVoters.push(session.clientId);
-      }
+      // Keyed on the person, so a second tab cannot vote again. Pressing
+      // it a second time takes the vote back rather than doing nothing,
+      // which is also what makes a stuck vote recoverable.
+      const key = this.voterKey(session);
+      const at = this.state.skipVoters.indexOf(key);
+      if (at === -1) this.state.skipVoters.push(key);
+      else this.state.skipVoters.splice(at, 1);
 
-      const threshold = skipThresholdFor(this.sessions.size);
+      const listeners = this.distinctListeners();
+      const threshold = skipThresholdFor(listeners);
       if (this.state.skipVoters.length >= threshold) {
         console.log(
-          `Skip vote: threshold reached (${this.state.skipVoters.length}/${threshold} of ${this.sessions.size} listeners) — skipping "${this.state.current.title}"`
+          `Skip vote: threshold reached (${this.state.skipVoters.length}/${threshold} of ${listeners} listeners) — skipping "${this.state.current.title}"`
         );
         this.advance({
           kind: "vote-skip",
           votes: this.state.skipVoters.length,
-          listeners: this.sessions.size
+          listeners
         });
       } else {
         this.state.revision += 1;
