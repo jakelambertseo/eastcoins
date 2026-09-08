@@ -70,23 +70,24 @@ export async function onRequestPost(context) {
     return fail("NO_SEASON", "No active season. Apply migration 0002 to seed one.", 409);
   }
 
-  const providerEventId = String(body?.eventId || "").trim() ||
+  const override = String(body?.eventId || "").trim();
+  const base = override ||
     `manual:${sport}:${away}-vs-${home}:${start.toISOString().slice(0, 10)}`;
 
-  // Only a market that is still in play blocks the id. A closed or
-  // settled one is finished business, and refusing to reuse its id
-  // forces the team name to be misspelled just to get a new market on
-  // the same fixture — which then breaks settlement matching.
+  // Only a market still in play blocks the fixture. A closed or settled
+  // one is finished business, and refusing to reuse it forces the team
+  // name to be misspelled just to get a second market on the same game
+  // — which then breaks settlement matching.
   const existing = await db
     .prepare(
       `SELECT id, state
          FROM markets
         WHERE provider = 'manual'
-          AND provider_event_id = ?
+          AND (provider_event_id = ? OR provider_event_id LIKE ?)
           AND state NOT IN ('VOID', 'SETTLED')
         LIMIT 1`
     )
-    .bind(providerEventId)
+    .bind(base, `${base}#%`)
     .first();
   if (existing) {
     return fail("ALREADY_OPEN",
@@ -94,19 +95,50 @@ export async function onRequestPost(context) {
       409, { marketId: existing.id });
   }
 
+  // markets carries UNIQUE (provider, provider_event_id), so permission
+  // to reuse a fixture is not enough — the row still needs an id of its
+  // own. Suffix it rather than reaching for a random one, so the id stays
+  // readable and a genuine accidental double still collides.
+  const priorCount = await db
+    .prepare(
+      `SELECT COUNT(*) AS n
+         FROM markets
+        WHERE provider = 'manual'
+          AND (provider_event_id = ? OR provider_event_id LIKE ?)`
+    )
+    .bind(base, `${base}#%`)
+    .first();
+
+  const prior = Number(priorCount?.n || 0);
+  const providerEventId = override || (prior ? `${base}#${prior + 1}` : base);
+
   const marketId = newId("mkt");
 
-  await db
-    .prepare(
-      `INSERT INTO markets
-         (id, provider, provider_event_id, season_id, sport, league,
-          away_name, home_name, starts_at, state,
-          away_odds_locked, home_odds_locked, odds_locked_at)
-       VALUES (?, 'manual', ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?, CURRENT_TIMESTAMP)`
-    )
-    .bind(marketId, providerEventId, String(season.id), sport, league,
-          away, home, start.toISOString(), awayOdds, homeOdds)
-    .run();
+  try {
+    await db
+      .prepare(
+        `INSERT INTO markets
+           (id, provider, provider_event_id, season_id, sport, league,
+            away_name, home_name, starts_at, state,
+            away_odds_locked, home_odds_locked, odds_locked_at)
+         VALUES (?, 'manual', ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?, CURRENT_TIMESTAMP)`
+      )
+      .bind(marketId, providerEventId, String(season.id), sport, league,
+            away, home, start.toISOString(), awayOdds, homeOdds)
+      .run();
+  } catch (error) {
+    // Any database refusal is a readable answer, not a 500 HTML page
+    // that surfaces to the operator as a JSON parse error.
+    const detail = String(error?.message || "");
+    console.error("open-market insert failed", detail);
+    return fail(
+      "INSERT_FAILED",
+      detail.includes("UNIQUE")
+        ? "A market with that fixture id already exists. Close the existing one first."
+        : `The market couldn't be created: ${detail.slice(0, 160)}`,
+      409
+    );
+  }
 
   return json({
     ok: true,
