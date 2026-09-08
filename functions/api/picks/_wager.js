@@ -13,6 +13,7 @@
 
 import {
   WAGER_ALLOWLIST,
+  wageringOpenToAll,
   MIN_WAGER,
   readBalance,
   moveBalance,
@@ -46,9 +47,10 @@ export async function placeWager(env, db, user, { marketId, selection, wager }) 
     ok: false, code, message, status, ...extra
   });
 
-  // The test is limited to named logins. Everyone else is told plainly
-  // rather than hitting a confusing failure further down.
-  if (!WAGER_ALLOWLIST.has(user.login)) {
+  // Open to the channel, or limited to named logins. Whoever is shut
+  // out is told plainly rather than hitting a confusing failure further
+  // down.
+  if (!wageringOpenToAll(env) && !WAGER_ALLOWLIST.has(user.login)) {
     return deny("NOT_IN_TEST", "Picks is in limited testing and isn't open to everyone yet.", 403);
   }
   if (!walletWritesEnabled(env)) {

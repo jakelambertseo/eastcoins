@@ -1,4 +1,4 @@
-import { WAGER_ALLOWLIST } from "./_lib.js";
+import { WAGER_ALLOWLIST, wageringOpenToAll } from "./_lib.js";
 
 const SESSION_COOKIE = "__Host-ec_session";
 
@@ -1151,10 +1151,15 @@ export async function onRequestGet(
             Boolean(
               String(context.env.STREAMELEMENTS_JWT || "").trim() &&
               user &&
-              WAGER_ALLOWLIST.has(String(user.login || "").toLowerCase())
+              (wageringOpenToAll(context.env) ||
+                WAGER_ALLOWLIST.has(String(user.login || "").toLowerCase()))
             ),
           inWagerTest:
-            Boolean(user && WAGER_ALLOWLIST.has(String(user.login || "").toLowerCase())),
+            Boolean(
+              user &&
+              (wageringOpenToAll(context.env) ||
+                WAGER_ALLOWLIST.has(String(user.login || "").toLowerCase()))
+            ),
           walletConnected:
             wallet.connected,
           minWager: WAGER_MIN,

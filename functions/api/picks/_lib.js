@@ -27,6 +27,18 @@ export const ADMIN_ALLOWLIST = new Set([
 
 export const MIN_WAGER = 1;
 
+/**
+ * Whether anyone may wager, or only WAGER_ALLOWLIST.
+ *
+ * A switch rather than deleting the allowlist, so "betting is open to
+ * the whole channel" is an explicit, visible state that can be turned
+ * off again without a code change. Defaults to restricted: an unset or
+ * malformed value must never mean "open".
+ */
+export function wageringOpenToAll(env) {
+  return String(env?.PICKS_OPEN_WAGERING || "").trim() === "1";
+}
+
 const SE_API = "https://api.streamelements.com/kappa/v2";
 const SE_TIMEOUT_MS = 6000;
 
