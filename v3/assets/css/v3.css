@@ -1362,6 +1362,9 @@ body.watch-on .playerframe{
 
 /* Green Room — search, volume, roster, history */
 .mleft{display:flex;flex-direction:column;gap:10px;min-width:0}
+/* A slot whose contents get replaced. It must never be an ancestor of the
+   player: replacing a node that holds the iframe kills playback. */
+.mslot{display:flex;flex-direction:column;gap:10px;min-width:0}
 .mnotice{
   margin:0 0 10px;padding:9px 12px;border-radius:9px;
   background:var(--panel-2);color:var(--muted);font-size:.8rem;

@@ -19,7 +19,7 @@
 
   const CATJAM = "https://cdn.7tv.app/emote/01KWJNR4DE37RDZ816WYAYDG3K/3x.webp";
   const ROOM_EMOTE = "https://cdn.7tv.app/emote/01FAEEN908000D3SP26B2JBAC1/2x.webp";
-  const JAMGIE = "https://cdn.7tv.app/emote/01KKEGKRN9HP64BX2ERWRWWJ3G/2x.webp";
+  const JAMGIE = "https://cdn.7tv.app/emote/01GAJBNT780004XAVG6P7AZAK2/4x.webp";
   const VOLUME_KEY = "ec_v3_music_volume";
 
   // Mirrors the room's own list. Cosmetic only — the server re-checks the
@@ -171,7 +171,7 @@
     return ytReady;
   }
 
-  const player = { instance: null, videoId: "", itemId: "" };
+  const player = { instance: null, host: null, videoId: "", itemId: "" };
 
   function readVolume() {
     try {
@@ -209,9 +209,12 @@
     const YT = await loadYouTubeApi();
     if (!host.isConnected) return;
 
-    // Same song: leave it playing rather than restarting it on every
-    // state broadcast (a listener joining sends one).
-    if (player.instance && player.videoId === current.videoId) {
+    // Same song AND still living in this exact element: leave it playing
+    // rather than restarting it on every state broadcast (a listener
+    // joining sends one). The host check matters — without it, a rebuilt
+    // stage leaves this returning early while the iframe it is guarding
+    // has already been removed from the document, which is a black box.
+    if (player.instance && player.host === host && player.videoId === current.videoId) {
       player.itemId = current.id;
       return;
     }
@@ -227,6 +230,7 @@
     shield.title = "Playback is shared - use the volume slider";
     host.append(shield);
 
+    player.host = host;
     player.videoId = current.videoId;
     player.itemId = current.id;
 
@@ -252,6 +256,14 @@
         onReady: (event) => {
           try {
             event.target.setVolume(readVolume());
+
+            // Same stale-room case as correctDrift, caught at the point
+            // the duration first becomes knowable.
+            const duration = Number(event.target.getDuration?.()) || 0;
+            if (duration > 0 && elapsedSeconds(conn.state) >= duration - 1) {
+              reportEnded("overran");
+              return;
+            }
             event.target.playVideo();
           } catch {}
         },
@@ -287,8 +299,21 @@
     if (!playing || !Number.isFinite(actual)) return;
 
     const expected = elapsedSeconds(state);
+    let duration = 0;
+    try { duration = Number(instance.getDuration?.()) || 0; } catch {}
+
+    // The room only advances when a client reports ENDED, so a song left
+    // current with nobody connected keeps accumulating elapsed time. The
+    // next person to arrive would otherwise be told to seek past the end
+    // and just get a black frame. Report it finished instead.
+    if (duration > 0 && expected >= duration - 1) {
+      reportEnded("overran");
+      return;
+    }
+
     if (Math.abs(actual - expected) > 3) {
-      try { instance.seekTo(expected, true); } catch {}
+      const target = duration > 0 ? Math.min(expected, duration - 1) : expected;
+      try { instance.seekTo(Math.max(0, target), true); } catch {}
     }
   }
 
@@ -308,6 +333,7 @@
     stopDriftWatch();
     try { player.instance?.destroy?.(); } catch {}
     player.instance = null;
+    player.host = null;
     player.videoId = "";
     player.itemId = "";
   }
@@ -448,14 +474,14 @@
         addVideo(pasted);
         searchResults = [];
         searchNote = "";
-        paint(conn.state);
+        renderSearch();
         return;
       }
 
       if (!BASE) return;
       searching = true;
       searchNote = "";
-      paint(conn.state);
+      renderSearch();
 
       try {
         const url = new URL("/search", BASE);
@@ -476,7 +502,7 @@
         searchNote = "Couldn't reach search. You can still paste a link.";
       }
       searching = false;
-      paint(conn.state);
+      renderSearch();
     }
 
     async function loadHistory() {
@@ -492,7 +518,7 @@
         history = [];
         requesters = [];
       }
-      if (root?.isConnected) paint(conn.state);
+      if (root?.isConnected) renderSide(conn.state);
     }
 
     /* ---------------------------------------------------- panels */
@@ -514,7 +540,7 @@
         if (event.key === "Escape") {
           searchResults = [];
           searchNote = "";
-          paint(conn.state);
+          renderSearch();
         }
       });
       // Restored after a repaint so the caret does not jump to the start.
@@ -550,7 +576,7 @@
         clear.addEventListener("click", () => {
           searchResults = [];
           searchNote = "";
-          paint(conn.state);
+          renderSearch();
         });
         head.append(clear);
         panel.append(head);
@@ -576,7 +602,7 @@
             addVideo(videoId);
             searchResults = [];
             searchQuery = "";
-            paint(conn.state);
+            renderSearch();
           });
           list.append(row);
         }
@@ -718,8 +744,24 @@
 
     /* ---------------------------------------------------- paint */
 
-    function paint(state) {
-      if (!root) return;
+    /* ------------------------------------------------------ structure
+
+       Built once, then only the changing parts are replaced.
+
+       This used to rebuild the whole view on every state broadcast,
+       which tore the stage — and the playing iframe inside it — out of
+       the document. mountPlayer then saw the same video id, assumed the
+       player was fine, and returned without remounting. The result was a
+       black box, appearing at what looked like random moments but was
+       actually any time somebody joined, left, voted or reacted.
+
+       So the stage and everything above it in the tree are created once
+       and never touched again. Only slots that cannot contain the player
+       get replaced. */
+
+    const refs = {};
+
+    function build() {
       root.replaceChildren();
 
       const head = el("div", "mhead");
@@ -733,10 +775,8 @@
       jamgie.src = JAMGIE;
       jamgie.alt = "";
       title.append(emote, el("span", "mtitle-text", "The Green Room"), jamgie);
-      head.append(title);
-      head.append(el("span", "mlisteners", state
-        ? `${state.listeners} listening`
-        : (BASE ? "Connecting…" : "Room not configured")));
+      refs.listeners = el("span", "mlisteners", BASE ? "Connecting\u2026" : "Room not configured");
+      head.append(title, refs.listeners);
       root.append(head);
 
       noticeEl = el("p", "mnotice");
@@ -749,23 +789,31 @@
       }
 
       const shellEl = el("div", "mshell");
-
       const left = el("div", "mleft");
 
       // The glow cannot follow the actual audio — the YouTube frame is
       // cross-origin and its waveform is not readable — so it is a steady
       // pulse that runs while something is playing and lifts during a
       // !rasputin block. Honest decoration rather than a fake visualiser.
-      const stagewrap = el("div", "mstagewrap");
+      refs.stagewrap = el("div", "mstagewrap");
       stage = el("div", "mstage");
-      stagewrap.append(el("span", "mstage-glow"), stage);
-      if (state?.current) stagewrap.classList.add("is-playing");
-      if (isRasputin(state)) stagewrap.classList.add("is-hot");
+      refs.stagewrap.append(el("span", "mstage-glow"), stage);
 
-      left.append(stagewrap, volumePanel(), searchPanel());
+      // Volume is built once so dragging the slider is never interrupted
+      // by somebody else joining the room.
+      refs.searchSlot = el("div", "mslot");
+      left.append(refs.stagewrap, volumePanel(), refs.searchSlot);
       shellEl.append(left);
 
-      const side = el("div", "mside");
+      refs.side = el("div", "mside");
+      shellEl.append(refs.side);
+      root.append(shellEl);
+    }
+
+    function renderSide(state) {
+      const side = refs.side;
+      if (!side) return;
+      side.replaceChildren();
 
       const now = el("div", "mnow");
       const nowArt = state?.current ? thumb(state.current.videoId, "mnow-thumb") : null;
@@ -797,7 +845,6 @@
           force.addEventListener("click", () => send({ type: "force-skip" }));
           actions.append(force);
         }
-
         side.append(actions);
       }
 
@@ -811,23 +858,45 @@
         btn.addEventListener("click", () => {
           tab = key;
           if (key === "history" && !history.length) loadHistory();
-          paint(conn.state);
+          renderSide(conn.state);
         });
         tabs.append(btn);
       }
       side.append(tabs);
       side.append(tab === "queue" ? queueList(state) : historyList());
+    }
 
-      shellEl.append(side);
-      root.append(shellEl);
+    function renderSearch() {
+      if (!refs.searchSlot) return;
+      refs.searchSlot.replaceChildren(searchPanel());
+    }
+
+    function paint(state) {
+      if (!root) return;
+      if (!refs.side && !refs.stagewrap) build();
+      if (!BASE) return;
+
+      refs.listeners.textContent = state
+        ? `${state.listeners} listening`
+        : "Connecting\u2026";
+
+      refs.stagewrap.classList.toggle("is-playing", Boolean(state?.current));
+      refs.stagewrap.classList.toggle("is-hot", isRasputin(state));
+
+      renderSide(state);
+      renderSearch();
 
       if (state?.current) mountPlayer(stage, state);
+      else destroyPlayer();
+
       if (isRasputin(state)) startJam(stage); else stopJam(stage);
     }
 
     return {
       async mount(container) {
         root = container;
+        refs.side = null;
+        refs.stagewrap = null;
         document.body.classList.add("music-view");
         connect();
         paint(conn.state);
