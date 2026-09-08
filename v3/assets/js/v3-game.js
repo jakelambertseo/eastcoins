@@ -322,7 +322,10 @@
     }
 
     if (payload.kind === "day") {
-      document.title = `Picks — ${payload.day} — EastCoin`;
+      const d = payload.day;
+      const pretty = new Date(Date.UTC(+d.slice(0, 4), +d.slice(4, 6) - 1, +d.slice(6, 8), 17))
+        .toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+      document.title = `Picks — ${pretty} — EastCoin`;
       root.replaceChildren(dayPage(payload));
     } else {
       const m = payload.market;

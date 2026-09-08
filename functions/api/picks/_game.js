@@ -19,15 +19,18 @@ export async function loadMarket(db, path) {
   if (!bounds) return null;
 
   const rows = await db
-    .prepare(`SELECT * FROM markets WHERE datetime(starts_at) BETWEEN datetime(?) AND datetime(?) ORDER BY starts_at`)
+    .prepare(
+      `SELECT m.*, (SELECT COUNT(*) FROM picks p WHERE p.market_id = m.id) AS pick_count
+         FROM markets m
+        WHERE datetime(m.starts_at) BETWEEN datetime(?) AND datetime(?)
+        ORDER BY m.starts_at`
+    )
     .bind(bounds.from, bounds.to)
     .all();
 
   const hits = (rows.results || []).filter((m) => slugFor(m) === path);
   if (!hits.length) return null;
-  // Two markets for one fixture (a reopened one): prefer the settled one.
-  hits.sort((a, b) => (b.state === "SETTLED") - (a.state === "SETTLED"));
-  return hits[0];
+  return preferred(hits);
 }
 
 export async function loadPicks(db, marketId) {
@@ -58,6 +61,16 @@ export async function loadOps(db, marketId) {
   return out;
 }
 
+// Two markets for one fixture (a reopened one, or a test that was voided
+// and run again): the one that settled with picks on it is the game.
+function preferred(markets) {
+  return markets.slice().sort((a, b) =>
+    ((b.state === "SETTLED") - (a.state === "SETTLED")) ||
+    (Number(b.pick_count || 0) - Number(a.pick_count || 0)) ||
+    String(b.created_at || "").localeCompare(String(a.created_at || ""))
+  )[0];
+}
+
 export async function loadDay(db, day) {
   const bounds = dayBounds(day);
   if (!bounds) return [];
@@ -70,7 +83,14 @@ export async function loadDay(db, day) {
     )
     .bind(bounds.from, bounds.to)
     .all();
-  return rows.results || [];
+
+  // One row per game, however many markets the night produced for it.
+  const bySlug = new Map();
+  for (const m of rows.results || []) {
+    const slug = slugFor(m);
+    bySlug.set(slug, preferred([...(bySlug.get(slug) ? [bySlug.get(slug)] : []), m]));
+  }
+  return [...bySlug.values()].sort((a, b) => String(a.starts_at).localeCompare(String(b.starts_at)));
 }
 
 // D1 writes CURRENT_TIMESTAMP as "YYYY-MM-DD HH:MM:SS" in UTC with no zone
