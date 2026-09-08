@@ -22,6 +22,16 @@
   const JAMGIE = "https://cdn.7tv.app/emote/01GAJBNT780004XAVG6P7AZAK2/4x.webp";
   const VOLUME_KEY = "ec_v3_music_volume";
 
+  // Order and labels are ours; the kinds themselves are fixed server-side,
+  // because a client able to invent one could grow the stored state
+  // without limit.
+  const REACTIONS = [
+    { kind: "up",    emoji: "\u{1F44D}", label: "Nice" },
+    { kind: "fire",  emoji: "\u{1F525}", label: "Banger" },
+    { kind: "trash", emoji: "\u{1F5D1}\uFE0F", label: "Bin it" },
+    { kind: "del",   emoji: "\u274C", label: "Delete this" }
+  ];
+
   // Mirrors the room's own list. Cosmetic only — the server re-checks the
   // verified login on every force-skip, so revealing the button proves
   // nothing and grants nothing.
@@ -368,6 +378,49 @@
 
     spawn();
     jamTimer = window.setInterval(spawn, 620);
+  }
+
+  /**
+   * A burst of the emoji that was just pressed.
+   *
+   * Anchored to the button rather than the stage so it reads as a
+   * response to the click. Purely decorative, and skipped entirely under
+   * prefers-reduced-motion.
+   */
+  function burst(button, emoji) {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+
+    for (let i = 0; i < 7; i += 1) {
+      const bit = el("span", "react-bit", emoji);
+      bit.style.setProperty("--dx", `${Math.random() * 96 - 48}px`);
+      bit.style.setProperty("--dy", `${-46 - Math.random() * 46}px`);
+      bit.style.setProperty("--rot", `${Math.random() * 90 - 45}deg`);
+      bit.style.animationDelay = `${i * 26}ms`;
+      button.append(bit);
+      window.setTimeout(() => bit.remove(), 1200 + i * 26);
+    }
+
+    button.classList.remove("is-popped");
+    // Reading offsetWidth forces the class removal to take effect before
+    // it is added again, so a second click actually replays the pop.
+    void button.offsetWidth;
+    button.classList.add("is-popped");
+    window.setTimeout(() => button.classList.remove("is-popped"), 400);
+  }
+
+  function reactionTip(entry, label) {
+    const count = Number(entry?.count || 0);
+    if (!count) return `${label} — nobody yet`;
+
+    const names = (entry?.names || []).filter(Boolean);
+    const others = Math.max(0, count - names.length);
+
+    if (!names.length) {
+      return `${label} — ${count}, nobody logged in`;
+    }
+    const list = names.join(", ");
+    if (!others) return `${label} — ${list}`;
+    return `${label} — ${list} and ${others} other${others === 1 ? "" : "s"}`;
   }
 
   function isRasputin(state) {
@@ -856,8 +909,9 @@
 
       // Volume is built once so dragging the slider is never interrupted
       // by somebody else joining the room.
+      refs.reactSlot = el("div", "reactbar");
       refs.resultsSlot = el("div", "mslot");
-      left.append(refs.stagewrap, volumePanel(), buildSearchField(), refs.resultsSlot);
+      left.append(refs.stagewrap, refs.reactSlot, volumePanel(), buildSearchField(), refs.resultsSlot);
       shellEl.append(left);
 
       refs.side = el("div", "mside");
@@ -886,6 +940,34 @@
       const list = named.join(", ");
       if (!others) return `Voted to skip: ${list}`;
       return `Voted to skip: ${list} and ${others} other${others === 1 ? "" : "s"}`;
+    }
+
+    function renderReactions(state) {
+      const slot = refs.reactSlot;
+      if (!slot) return;
+      slot.replaceChildren();
+      if (!state?.current) return;
+
+      const all = state.reactions || {};
+      for (const { kind, emoji, label } of REACTIONS) {
+        const entry = all[kind] || { count: 0, names: [] };
+        const btn = el("button", "reactbtn");
+        btn.type = "button";
+        btn.title = reactionTip(entry, label);
+        btn.setAttribute("aria-label", reactionTip(entry, label));
+
+        btn.append(el("span", "reactbtn-emoji", emoji));
+        if (entry.count) btn.append(el("span", "reactbtn-n", String(entry.count)));
+
+        btn.addEventListener("click", () => {
+          // currentId is required: the room refuses a reaction aimed at a
+          // song that has already changed, which is what stops a late
+          // click landing on whatever happens to be playing now.
+          send({ type: "react", kind, currentId: state.current.id });
+          burst(btn, emoji);
+        });
+        slot.append(btn);
+      }
     }
 
     function renderSide(state) {
@@ -957,6 +1039,7 @@
       refs.stagewrap.classList.toggle("is-playing", Boolean(state?.current));
       refs.stagewrap.classList.toggle("is-hot", isRasputin(state));
 
+      renderReactions(state);
       renderSide(state);
 
       if (state?.current) mountPlayer(stage, state);

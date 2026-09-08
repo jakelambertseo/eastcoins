@@ -4,6 +4,10 @@ import { DurableObject } from "cloudflare:workers";
    of this one, so a separate limit there would only mean the two could
    never actually agree. 14 is the number asked for. */
 const MAX_QUEUE = 14;
+
+/* The reactions a song can carry. Fixed server-side: a client that could
+   invent a kind could grow the stored state without limit. */
+const REACTION_KINDS = ["up", "fire", "trash", "del"];
 const REQUEST_LIMIT = 25;
 const REQUEST_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const MAX_VIDEO_SECONDS = 600;
@@ -196,6 +200,48 @@ async function searchYouTube(query, apiKey) {
 // a simple majority (strictly more than half) rather than a fixed vote
 // count, so a packed room doesn't get stuck needing the same 3 votes a
 // nearly-empty one does: 3 listeners -> 2 votes, 4 -> 3, 6 -> 4, and so on.
+/** Normalises stored reactions, dropping unknown kinds and over-long names. */
+function sanitizeReactors(value) {
+  const out = {};
+  for (const kind of REACTION_KINDS) {
+    const entries = value && typeof value === "object" ? value[kind] : null;
+    if (!entries || typeof entries !== "object") continue;
+    const clean = {};
+    let count = 0;
+    for (const [clientId, name] of Object.entries(entries)) {
+      if (count >= 200) break;
+      const id = String(clientId).slice(0, 80);
+      if (!id) continue;
+      clean[id] = String(name || "").slice(0, 40);
+      count += 1;
+    }
+    if (count) out[kind] = clean;
+  }
+  return out;
+}
+
+/**
+ * The public shape: counts and verified names, never client ids.
+ *
+ * Only names the room verified through Twitch. A guest's name is whatever
+ * their client claimed, so attributing a reaction to one would let anyone
+ * appear to have left it. The count still includes everybody.
+ */
+function publicReactions(reactors) {
+  const out = {};
+  for (const kind of REACTION_KINDS) {
+    const entries = reactors?.[kind] || {};
+    const names = [];
+    let total = 0;
+    for (const name of Object.values(entries)) {
+      total += 1;
+      if (name && names.length < 20) names.push(name);
+    }
+    out[kind] = { count: total, names };
+  }
+  return out;
+}
+
 function skipThresholdFor(listeners) {
   const count = Math.max(1, Number(listeners) || 1);
   if (count <= 2) return count;
@@ -415,7 +461,11 @@ export class MusicRoom extends DurableObject {
       requestedBy: this.safeName(item.requestedBy),
       requestedByAvatar: this.safeAvatarUrl(item.requestedByAvatar),
       addedAt: Number(item.addedAt) || Date.now(),
-      reactions: Math.max(0, Number(item.reactions) || 0),
+      // clientId -> display name (empty for anyone not verified). Kept
+      // through storage round-trips; a field missing from this allowlist
+      // is silently dropped on every restart, which is a very quiet way
+      // to lose data.
+      reactors: sanitizeReactors(item.reactors),
       // Both only ever set by the server itself (the !rasputin block) — kept
       // through storage round-trips so a DO restart mid-block doesn't quietly
       // turn a "can't skip this" song into a skippable one.
@@ -737,7 +787,7 @@ export class MusicRoom extends DurableObject {
         requestedBy: this.safeName(login),
         requestedByAvatar: "",
         addedAt: Date.now(),
-        reactions: 0
+        reactors: {}
       };
 
       this.enqueueItem(item, login);
@@ -944,7 +994,7 @@ export class MusicRoom extends DurableObject {
       requestedBy: this.safeName(login),
       requestedByAvatar: "",
       addedAt: Date.now(),
-      reactions: 0,
+      reactors: {},
       special: "rasputin",
       unskippable: true
     }));
@@ -1039,6 +1089,7 @@ export class MusicRoom extends DurableObject {
       revision: this.state.revision,
       listeners,
       listenerNames: this.listenerNames(),
+      reactions: publicReactions(this.state.current?.reactors),
       skipVotes: this.state.skipVoters.length,
       skipVoterNames: this.skipVoterNames(),
       skipThreshold: skipThresholdFor(listeners),
@@ -1172,7 +1223,7 @@ export class MusicRoom extends DurableObject {
         requestedBy: this.safeName(auth.displayName || auth.login),
         requestedByAvatar: this.safeAvatarUrl(auth.avatar),
         addedAt: Date.now(),
-        reactions: 0
+        reactors: {}
       };
 
       this.enqueueItem(item, auth.login);
@@ -1182,7 +1233,25 @@ export class MusicRoom extends DurableObject {
 
     if (message.type === "react") {
       if (!this.state.current || String(message.currentId || "") !== this.state.current.id) return;
-      this.state.current.reactions = (Number(this.state.current.reactions) || 0) + 1;
+
+      const kind = String(message.kind || "");
+      if (!REACTION_KINDS.includes(kind)) return;
+
+      if (!this.state.current.reactors) this.state.current.reactors = {};
+      const bucket = this.state.current.reactors[kind] || {};
+
+      // Toggling rather than counting up. One person holding the button
+      // could otherwise run the number to whatever they liked, and there
+      // would be no way to take a reaction back.
+      if (bucket[session.clientId] !== undefined) {
+        delete bucket[session.clientId];
+      } else {
+        bucket[session.clientId] = session.verifiedLogin ? this.safeName(session.name) : "";
+      }
+
+      if (Object.keys(bucket).length) this.state.current.reactors[kind] = bucket;
+      else delete this.state.current.reactors[kind];
+
       this.state.revision += 1;
       await this.persistAndBroadcast();
       return;
