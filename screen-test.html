@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<title>EastCoin | Screening Room (test)</title>
+<link href="/assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --ink:#0c0a09;--panel:#161311;--panel-2:#1e1a17;--panel-3:#241f1b;
+    --line:rgba(255,255,255,.1);--line-2:rgba(255,255,255,.16);
+    --text:#f4ede5;--muted:#aca298;--muted-2:#7d746a;
+    --gold:#e8bf35;--gold-dim:rgba(232,191,53,.13);--burg:#8e1231;--red:#ff6b85;
+    --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;--body:"Figtree","Segoe UI",system-ui,sans-serif;
+    --radius:13px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--ink);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  .nums{font-variant-numeric:tabular-nums}
+  button{font:inherit;color:inherit;cursor:pointer}
+
+  /* ------------------------------------------------------------ top */
+  .topnav{
+    position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:18px;
+    height:58px;padding:0 18px;border-bottom:1px solid var(--line);
+    background:rgba(12,10,9,.92);backdrop-filter:blur(10px);
+  }
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:-.01em;text-decoration:none}
+  .brand img{width:30px;height:30px;border-radius:8px}
+  .brand small{margin-left:4px;padding:3px 8px;border-radius:999px;border:1px solid var(--line-2);color:var(--muted);font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+  .search{flex:1;max-width:520px;margin-left:auto;position:relative}
+  .search input{
+    width:100%;height:38px;padding:0 14px 0 38px;border-radius:999px;border:1px solid var(--line-2);
+    background:var(--panel-2);color:var(--text);font:inherit;outline:none;
+  }
+  .search input:focus{border-color:rgba(232,191,53,.5)}
+  .search::before{content:"🔍";position:absolute;left:13px;top:9px;font-size:.9rem;opacity:.8}
+  .navlink{color:var(--muted);text-decoration:none;font-size:.9rem;font-weight:600}
+  .navlink:hover{color:var(--text)}
+
+  .wrap{max-width:1240px;margin:0 auto;padding:22px 18px 70px}
+  h1{font-family:var(--display);font-weight:800;font-size:1.7rem;letter-spacing:-.02em;margin:0 0 4px}
+  .sub{margin:0 0 18px;color:var(--muted-2);font-size:.9rem;max-width:70ch}
+  h2{font-family:var(--display);font-weight:700;font-size:1.1rem;letter-spacing:-.02em;margin:26px 0 10px;display:flex;align-items:baseline;gap:10px}
+  h2 small{color:var(--muted-2);font-size:.78rem;font-weight:600}
+
+  .notice{
+    border:1px solid rgba(232,191,53,.3);background:var(--gold-dim);border-radius:var(--radius);
+    padding:12px 16px;font-size:.86rem;color:var(--text);margin:0 0 16px;
+  }
+  .notice code{color:var(--gold)}
+  [hidden]{display:none!important}
+
+  /* ------------------------------------------------------------ player */
+  .stage{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);overflow:hidden;margin-bottom:6px}
+  .frame{position:relative;aspect-ratio:16/9;width:100%;background:#000}
+  .frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .frame .empty{
+    position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--muted-2);
+    background:radial-gradient(60% 60% at 50% 40%,rgba(142,18,49,.25),transparent 70%),#000;
+  }
+  .frame .empty strong{display:block;font-family:var(--display);font-size:1.3rem;color:var(--text);margin-bottom:6px}
+  .frame .empty img{width:64px;height:64px;border-radius:14px;margin-bottom:12px}
+  .bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--line);background:var(--panel-2)}
+  .bar .title{min-width:0;flex:1}
+  .bar .title strong{display:block;font-family:var(--display);font-weight:700;font-size:1.05rem;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar .title span{display:block;color:var(--muted-2);font-size:.78rem}
+  .btn{height:34px;padding:0 13px;border-radius:9px;border:1px solid var(--line-2);background:var(--panel);font-weight:700;font-size:.82rem;display:inline-flex;align-items:center;gap:7px}
+  .btn:hover{background:var(--panel-3)}
+  .btn.gold{border-color:rgba(232,191,53,.4);background:var(--gold-dim);color:var(--gold)}
+  select.btn{padding-right:28px;appearance:auto}
+  .ep-strip{display:flex;gap:8px;overflow-x:auto;padding:10px 16px 14px;border-top:1px solid var(--line);scrollbar-width:thin}
+  .ep{flex:0 0 190px;border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden;text-align:left;padding:0}
+  .ep:hover{border-color:var(--line-2)}
+  .ep.on{border-color:rgba(232,191,53,.55);box-shadow:0 0 0 1px rgba(232,191,53,.3) inset}
+  .ep .still{aspect-ratio:16/9;background:var(--panel-3);display:block;width:100%;object-fit:cover}
+  .ep .meta{padding:8px 10px}
+  .ep .meta b{display:block;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ep .meta small{color:var(--muted-2);font-size:.7rem}
+  .about{display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;padding:16px;border-top:1px solid var(--line)}
+  .about img{width:120px;border-radius:10px;border:1px solid var(--line)}
+  .about p{margin:6px 0 0;color:var(--muted);font-size:.88rem;line-height:1.55}
+  .about .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .about .tags span{padding:3px 9px;border-radius:999px;border:1px solid var(--line-2);color:var(--muted);font-size:.7rem;font-weight:700}
+
+  /* ------------------------------------------------------------ grids */
+  .row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .card{
+    position:relative;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden;
+    text-align:left;padding:0;transition:transform .14s ease,border-color .14s ease;
+  }
+  .card:hover{transform:translateY(-2px);border-color:rgba(232,191,53,.4)}
+  .card .poster{aspect-ratio:2/3;width:100%;display:block;object-fit:cover;background:var(--panel-3)}
+  .card .ph{aspect-ratio:2/3;display:grid;place-items:center;background:linear-gradient(160deg,#2a1119,#160c0f);color:var(--muted-2);font-family:var(--display);font-weight:800;font-size:1.6rem}
+  .card .cap{padding:9px 11px 11px}
+  .card .cap b{display:block;font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card .cap small{color:var(--muted-2);font-size:.72rem}
+  .card .kind{position:absolute;top:8px;left:8px;padding:2px 7px;border-radius:999px;background:rgba(0,0,0,.65);color:var(--gold);font-size:.6rem;font-weight:800;letter-spacing:.1em}
+  .card .prog{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.12)}
+  .card .prog i{display:block;height:100%;background:var(--gold)}
+  .empty-note{border:1px dashed var(--line-2);border-radius:var(--radius);padding:26px;text-align:center;color:var(--muted-2);font-size:.86rem}
+
+  @media (max-width:640px){
+    .topnav{gap:10px;padding:0 12px}.brand span{display:none}.navlink{display:none}
+    .about{grid-template-columns:90px 1fr}.about img{width:90px}
+  }
+</style>
+</head>
+<body>
+
+<header class="topnav">
+  <a class="brand" href="/"><img src="/assets/eastcoins-logo.webp" alt=""><span>EastCoin</span><small>Screening Room · test</small></a>
+  <div class="search"><input id="q" type="search" placeholder="Search movies and shows" autocomplete="off" aria-label="Search movies and shows"></div>
+  <a class="navlink" href="/">← Back to EastCoin</a>
+</header>
+
+<main class="wrap">
+  <h1>Screening Room</h1>
+  <p class="sub">Movies and TV, played through an embedded player keyed by TMDB. This is a test page: the player is vidy.st, the catalog is TMDB, and EastCoin keeps the chrome, the search and your continue-watching list.</p>
+
+  <div class="notice" id="keyNote" hidden>
+    Search and artwork need a TMDB key on the server (<code>TMDB_API_KEY</code>, free). Until then the featured titles below still play — they just have no posters.
+  </div>
+
+  <section class="stage" id="stage">
+    <div class="frame" id="frame">
+      <div class="empty" id="frameEmpty"><div><img src="/assets/eastcoins-logo.webp" alt=""><strong>Pick something</strong>Search above, or choose a title below.</div></div>
+    </div>
+    <div class="bar" id="bar" hidden>
+      <div class="title"><strong id="nowTitle">—</strong><span id="nowMeta"></span></div>
+      <select class="btn" id="seasonSel" hidden aria-label="Season"></select>
+      <button class="btn" id="prevEp" type="button" hidden>‹ Prev</button>
+      <button class="btn" id="nextEp" type="button" hidden>Next ›</button>
+      <button class="btn" id="openSrc" type="button">Open source ↗</button>
+      <button class="btn gold" id="copyLink" type="button">Copy link</button>
+    </div>
+    <div class="ep-strip" id="epStrip" hidden></div>
+    <div class="about" id="about" hidden></div>
+  </section>
+
+  <section id="continueSec" hidden>
+    <h2>Continue watching <small>saved on this device</small></h2>
+    <div class="row" id="continueRow"></div>
+  </section>
+
+  <section id="resultsSec" hidden>
+    <h2>Results <small id="resultsNote"></small></h2>
+    <div class="row" id="resultsRow"></div>
+  </section>
+
+  <section>
+    <h2>Movies <small>featured</small></h2>
+    <div class="row" id="moviesRow"></div>
+  </section>
+  <section>
+    <h2>Shows <small>featured</small></h2>
+    <div class="row" id="showsRow"></div>
+  </section>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  const PLAYER = "https://www.vidy.st";
+  const ACCENT = "e8bf35";
+  const STORE = "eastcoinScreenProgressV1";
+
+  // Hand-picked TMDB ids. Artwork and overviews come from the server once
+  // a TMDB key is configured; without one these still play.
+  const FEATURED = {
+    movie: [
+      [27205, "Inception", 2010], [155, "The Dark Knight", 2008], [157336, "Interstellar", 2014],
+      [603, "The Matrix", 1999], [680, "Pulp Fiction", 1994], [550, "Fight Club", 1999],
+      [238, "The Godfather", 1972], [278, "The Shawshank Redemption", 1994], [13, "Forrest Gump", 1994],
+      [19995, "Avatar", 2009], [315162, "Puss in Boots: The Last Wish", 2022], [569094, "Spider-Man: Across the Spider-Verse", 2023]
+    ],
+    tv: [
+      [1396, "Breaking Bad", 2008], [1399, "Game of Thrones", 2011], [66732, "Stranger Things", 2016],
+      [2316, "The Office", 2005], [1398, "The Sopranos", 1999], [1668, "Friends", 1994],
+      [1438, "The Wire", 2002], [456, "The Simpsons", 1989], [94997, "House of the Dragon", 2022],
+      [60625, "Rick and Morty", 2013], [1408, "House", 2004], [4614, "NCIS", 2003]
+    ]
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    q: $("q"), keyNote: $("keyNote"), frame: $("frame"), frameEmpty: $("frameEmpty"), bar: $("bar"),
+    nowTitle: $("nowTitle"), nowMeta: $("nowMeta"), seasonSel: $("seasonSel"), prevEp: $("prevEp"), nextEp: $("nextEp"),
+    openSrc: $("openSrc"), copyLink: $("copyLink"), epStrip: $("epStrip"), about: $("about"),
+    continueSec: $("continueSec"), continueRow: $("continueRow"), resultsSec: $("resultsSec"), resultsRow: $("resultsRow"),
+    resultsNote: $("resultsNote"), moviesRow: $("moviesRow"), showsRow: $("showsRow")
+  };
+
+  const state = { now: null, iframe: null, details: null, episodes: [], hasKey: true };
+
+  function el(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  /* ---------------------------------------------------------- progress */
+
+  function loadProgress() {
+    try { return JSON.parse(localStorage.getItem(STORE) || "{}"); } catch { return {}; }
+  }
+  function saveProgress(map) {
+    try { localStorage.setItem(STORE, JSON.stringify(map)); } catch { /* private mode */ }
+  }
+  function keyFor(item) { return `${item.type}:${item.id}`; }
+
+  function remember(item, current, duration) {
+    if (!item || !Number.isFinite(current) || !Number.isFinite(duration) || duration < 60) return;
+    const map = loadProgress();
+    const done = current / duration > 0.95;
+    map[keyFor(item)] = {
+      type: item.type, id: item.id, title: item.title, year: item.year || "", poster: item.poster || "",
+      season: item.season || null, episode: item.episode || null,
+      // A finished episode remembers the next one; a finished film is dropped.
+      seconds: done ? 0 : Math.floor(current), duration: Math.floor(duration),
+      at: Date.now()
+    };
+    if (done && item.type === "movie") delete map[keyFor(item)];
+    saveProgress(map);
+    renderContinue();
+  }
+
+  /* ---------------------------------------------------------- player */
+
+  function embedUrl(item, resume) {
+    const p = new URLSearchParams({ color: ACCENT });
+    if (resume > 0) p.set("progress", String(resume));
+    if (item.type === "tv") {
+      p.set("nextEpisode", "true");
+      p.set("episodeSelector", "true");
+      p.set("autoplayNextEpisode", "true");
+      return `${PLAYER}/tv/${item.id}/${item.season || 1}/${item.episode || 1}?${p}`;
+    }
+    return `${PLAYER}/movie/${item.id}?${p}`;
+  }
+
+  function play(item, { resume = 0 } = {}) {
+    state.now = { ...item };
+    if (item.type === "tv") {
+      state.now.season = item.season || 1;
+      state.now.episode = item.episode || 1;
+    }
+
+    const saved = loadProgress()[keyFor(state.now)];
+    const from = resume || (saved && saved.season === (state.now.season || null) && saved.episode === (state.now.episode || null) ? saved.seconds : 0);
+
+    if (state.iframe) state.iframe.remove();
+    const iframe = document.createElement("iframe");
+    iframe.allow = "autoplay; fullscreen; picture-in-picture; encrypted-media";
+    iframe.allowFullscreen = true;
+    iframe.referrerPolicy = "origin";
+    iframe.src = embedUrl(state.now, from);
+    els.frame.append(iframe);
+    state.iframe = iframe;
+    els.frameEmpty.hidden = true;
+
+    els.bar.hidden = false;
+    els.nowTitle.textContent = state.now.title;
+    els.nowMeta.textContent = state.now.type === "tv"
+      ? `S${state.now.season} · E${state.now.episode}${state.now.year ? " · " + state.now.year : ""}`
+      : state.now.year || "";
+    els.prevEp.hidden = els.nextEp.hidden = state.now.type !== "tv";
+    els.seasonSel.hidden = state.now.type !== "tv";
+
+    const url = new URL(location.href);
+    url.searchParams.set("t", state.now.type);
+    url.searchParams.set("id", String(state.now.id));
+    if (state.now.type === "tv") { url.searchParams.set("s", String(state.now.season)); url.searchParams.set("e", String(state.now.episode)); }
+    else { url.searchParams.delete("s"); url.searchParams.delete("e"); }
+    history.replaceState(null, "", url.pathname + url.search);
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    loadDetails();
+  }
+
+  async function loadDetails() {
+    const item = state.now;
+    if (!item) return;
+    els.about.hidden = true;
+    els.epStrip.hidden = true;
+    if (!state.hasKey) return;
+
+    const q = new URLSearchParams({ type: item.type, id: String(item.id) });
+    if (item.type === "tv") q.set("season", String(item.season));
+    let payload = null;
+    try { payload = await (await fetch(`/api/screen/title?${q}`)).json(); } catch { payload = null; }
+    if (!payload?.ok || state.now !== item) return;
+
+    const t = payload.title;
+    state.details = t;
+    if (t.poster && !item.poster) item.poster = t.poster;
+    if (t.year && !item.year) item.year = t.year;
+
+    els.about.replaceChildren();
+    if (t.poster) { const img = el("img"); img.src = t.poster; img.alt = ""; els.about.append(img); }
+    const copy = el("div");
+    const h = el("strong", null, t.title + (t.year ? ` (${t.year})` : ""));
+    h.style.fontFamily = "var(--display)";
+    copy.append(h);
+    if (t.tagline) copy.append(el("p", null, t.tagline));
+    if (t.overview) copy.append(el("p", null, t.overview));
+    const tags = el("div", "tags");
+    for (const g of t.genres || []) tags.append(el("span", null, g));
+    if (t.runtime) tags.append(el("span", null, `${t.runtime} min`));
+    if (t.rating) tags.append(el("span", null, `★ ${t.rating}`));
+    copy.append(tags);
+    els.about.append(copy);
+    els.about.hidden = false;
+
+    if (item.type === "tv") {
+      els.seasonSel.replaceChildren();
+      for (const s of t.seasons || []) {
+        const o = el("option", null, `${s.name || "Season " + s.number} · ${s.episodes} ep`);
+        o.value = String(s.number);
+        if (s.number === item.season) o.selected = true;
+        els.seasonSel.append(o);
+      }
+      state.episodes = payload.season?.episodes || [];
+      renderEpisodes();
+    }
+  }
+
+  function renderEpisodes() {
+    const item = state.now;
+    els.epStrip.replaceChildren();
+    if (!item || item.type !== "tv" || !state.episodes.length) { els.epStrip.hidden = true; return; }
+    for (const ep of state.episodes) {
+      const b = el("button", `ep${ep.number === item.episode ? " on" : ""}`);
+      b.type = "button";
+      if (ep.still) { const img = el("img", "still"); img.src = ep.still; img.alt = ""; img.loading = "lazy"; b.append(img); }
+      else b.append(el("div", "still"));
+      const meta = el("div", "meta");
+      meta.append(el("b", null, `${ep.number}. ${ep.name || "Episode " + ep.number}`), el("small", null, ep.runtime ? `${ep.runtime} min` : ep.aired || ""));
+      b.append(meta);
+      b.addEventListener("click", () => play({ ...item, episode: ep.number }));
+      els.epStrip.append(b);
+    }
+    els.epStrip.hidden = false;
+    els.epStrip.querySelector(".ep.on")?.scrollIntoView({ inline: "center", block: "nearest" });
+  }
+
+  els.seasonSel.addEventListener("change", () => {
+    if (state.now?.type === "tv") play({ ...state.now, season: Number(els.seasonSel.value), episode: 1 });
+  });
+  els.prevEp.addEventListener("click", () => {
+    if (state.now?.type === "tv" && state.now.episode > 1) play({ ...state.now, episode: state.now.episode - 1 });
+  });
+  els.nextEp.addEventListener("click", () => {
+    if (state.now?.type === "tv") play({ ...state.now, episode: state.now.episode + 1 });
+  });
+  els.openSrc.addEventListener("click", () => { if (state.iframe) window.open(state.iframe.src, "_blank", "noopener"); });
+  els.copyLink.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(location.href); els.copyLink.textContent = "Copied"; }
+    catch { els.copyLink.textContent = location.href; }
+    setTimeout(() => { els.copyLink.textContent = "Copy link"; }, 1600);
+  });
+
+  // The player reports playback to the parent; that is the whole basis
+  // of continue-watching, so it is the one message listened for.
+  window.addEventListener("message", (event) => {
+    if (!/vidy\.st$/.test(new URL(event.origin).hostname || "")) return;
+    let data = event.data;
+    if (typeof data === "string") { try { data = JSON.parse(data); } catch { return; } }
+    if (!data || data.type !== "PLAYER_EVENT") return;
+    const d = data.data || data;
+    const ev = d.event || d.name;
+    if (ev === "timeupdate" || ev === "pause" || ev === "ended") {
+      remember(state.now, Number(d.currentTime), Number(d.duration));
+    }
+  });
+
+  /* ---------------------------------------------------------- cards */
+
+  function card(item, progress) {
+    const b = el("button", "card");
+    b.type = "button";
+    if (item.poster) { const img = el("img", "poster"); img.src = item.poster; img.alt = ""; img.loading = "lazy"; b.append(img); }
+    else b.append(el("div", "ph", (item.title || "?").split(" ").map((w) => w[0]).join("").slice(0, 3).toUpperCase()));
+    b.append(el("span", "kind", item.type === "tv" ? "SHOW" : "MOVIE"));
+    const cap = el("div", "cap");
+    cap.append(el("b", null, item.title));
+    cap.append(el("small", null, progress
+      ? `S${progress.season} · E${progress.episode}`.replace("Snull · Enull", "Resume") + ` · ${Math.round(100 * progress.seconds / progress.duration)}%`
+      : item.year || ""));
+    b.append(cap);
+    if (progress) {
+      const bar = el("div", "prog");
+      const i = el("i");
+      i.style.width = `${Math.round(100 * progress.seconds / progress.duration)}%`;
+      bar.append(i);
+      b.append(bar);
+    }
+    b.addEventListener("click", () => play(progress ? { ...item, season: progress.season, episode: progress.episode } : item, { resume: progress ? progress.seconds : 0 }));
+    return b;
+  }
+
+  function renderContinue() {
+    const map = loadProgress();
+    const items = Object.values(map).filter((p) => p.seconds > 30).sort((a, b) => b.at - a.at).slice(0, 12);
+    els.continueRow.replaceChildren();
+    for (const p of items) els.continueRow.append(card(p, p));
+    els.continueSec.hidden = !items.length;
+  }
+
+  async function renderFeatured() {
+    for (const [type, row] of [["movie", els.moviesRow], ["tv", els.showsRow]]) {
+      row.replaceChildren();
+      for (const [id, title, year] of FEATURED[type]) row.append(card({ id, type, title, year: String(year) }));
+    }
+    if (!state.hasKey) return;
+    // Posters, a few at a time, once the page is up.
+    for (const type of ["movie", "tv"]) {
+      const row = type === "movie" ? els.moviesRow : els.showsRow;
+      await Promise.all(FEATURED[type].map(async ([id, title, year], i) => {
+        try {
+          const p = await (await fetch(`/api/screen/title?type=${type}&id=${id}`)).json();
+          if (!p?.ok) return;
+          const fresh = card({ ...p.title, title: p.title.title || title, year: p.title.year || String(year) });
+          row.children[i]?.replaceWith(fresh);
+        } catch { /* keep the placeholder */ }
+      }));
+    }
+  }
+
+  /* ---------------------------------------------------------- search */
+
+  let searchTimer = 0;
+  let searchSeq = 0;
+  els.q.addEventListener("input", () => {
+    clearTimeout(searchTimer);
+    const q = els.q.value.trim();
+    if (q.length < 2) { els.resultsSec.hidden = true; return; }
+    searchTimer = setTimeout(() => search(q), 350);
+  });
+
+  async function search(q) {
+    const seq = ++searchSeq;
+    let payload = null;
+    try { payload = await (await fetch(`/api/screen/search?q=${encodeURIComponent(q)}`)).json(); } catch { payload = null; }
+    if (seq !== searchSeq) return;
+    els.resultsRow.replaceChildren();
+    if (!payload?.ok) {
+      state.hasKey = payload?.code !== "NO_TMDB_KEY" && state.hasKey;
+      els.keyNote.hidden = state.hasKey;
+      els.resultsNote.textContent = state.hasKey ? "search didn't answer" : "needs a TMDB key";
+      els.resultsSec.hidden = false;
+      return;
+    }
+    els.resultsNote.textContent = `${payload.results.length} for “${q}”`;
+    for (const r of payload.results) els.resultsRow.append(card(r));
+    if (!payload.results.length) els.resultsRow.append(el("div", "empty-note", "Nothing by that name."));
+    els.resultsSec.hidden = false;
+  }
+
+  /* ---------------------------------------------------------- boot */
+
+  (async () => {
+    // Is there a TMDB key? One cheap probe decides how the page renders.
+    try {
+      const probe = await (await fetch("/api/screen/title?type=movie&id=550")).json();
+      state.hasKey = probe?.code !== "NO_TMDB_KEY";
+    } catch { state.hasKey = false; }
+    els.keyNote.hidden = state.hasKey;
+
+    renderContinue();
+    renderFeatured();
+
+    const url = new URL(location.href);
+    const t = url.searchParams.get("t");
+    const id = Number(url.searchParams.get("id"));
+    if ((t === "movie" || t === "tv") && Number.isInteger(id) && id > 0) {
+      const known = FEATURED[t].find(([fid]) => fid === id);
+      play({ type: t, id, title: known ? known[1] : `${t === "tv" ? "Show" : "Movie"} #${id}`, year: known ? String(known[2]) : "",
+        season: Number(url.searchParams.get("s")) || 1, episode: Number(url.searchParams.get("e")) || 1 });
+    }
+  })();
+})();
+</script>
+</body>
+</html>
