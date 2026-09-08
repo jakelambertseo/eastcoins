@@ -64,10 +64,12 @@
 > section 9.5's quota concern is handled by design rather than by a cap.
 >
 > **Every market has a page** at `/g/<away>-<home>-<YYYYMMDD>` (also
-> `/g/<YYYYMMDD>` for a day and `/g/mkt_…` by id), rendered on the server
-> by `functions/g/[[path]].js` from D1. `_slug.js` is the one place the
-> name rule lives; chat links and the page must keep agreeing. `g/example.html`
-> is the original static mockup, kept for the explainer only.
+> `/g/<YYYYMMDD>` for a day and `/g/mkt_…` by id). `functions/g/[[path]].js`
+> serves the shell with the game's `<title>`/OG tags; the shell's `game`
+> route (`v3-game.js`, not in the nav) renders from `/api/picks/game?g=`;
+> `_game.js` holds the reads. `_slug.js` is the one place the name rule
+> lives; chat links and the page must keep agreeing. `g/example.html` is
+> the original static mockup, kept for the explainer only.
 >
 > **Every bot line leads with `Zcoin`** (the 7TV emote code) via `BADGE` in
 > `bot/_bot.js`; the leaderboard and season line aggregate from `picks`

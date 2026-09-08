@@ -47,7 +47,9 @@
   // modules load after the shell, so checking registration here would
   // send every deep link (?view=picks) back to Events before its module
   // had a chance to register. An unknown name still falls back.
-  const ROUTES = ["events", "multiview", "picks", "music", "watch", "admin"];
+  // "game" is the /g/<slug> page chat links to. It is a route, not a nav
+  // item: the only way in is a link.
+  const ROUTES = ["events", "multiview", "picks", "music", "watch", "admin", "game"];
 
   /* ------------------------------------------------------------ legacy URLs
 
@@ -112,6 +114,7 @@
   }
 
   function routeFromUrl() {
+    if (/^\/g\/./i.test(location.pathname)) return "game";
     const view = new URL(location.href).searchParams.get("view");
     return ROUTES.includes(view) ? view : "events";
   }
@@ -128,7 +131,9 @@
     if (!ROUTES.includes(name)) name = "events";
     state.route = name;
 
-    if (push) {
+    // The game view owns its own URL (/g/<slug>); every other view is
+    // reached by name.
+    if (push && name !== "game") {
       const url = name === "events" ? "/" : `/?view=${name}`;
       history.pushState({ view: name }, "", url);
     }
@@ -139,7 +144,9 @@
     const view = views[state.route];
 
     for (const link of els.navLinks) {
-      const on = link.dataset.route === state.route;
+      // A game page is a Picks page as far as the nav is concerned.
+      const on = link.dataset.route === state.route ||
+        (state.route === "game" && link.dataset.route === "picks");
       if (link.classList.contains("nav-link")) {
         link.toggleAttribute("aria-current", on);
         if (on) link.setAttribute("aria-current", "page");
