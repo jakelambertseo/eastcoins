@@ -54,7 +54,7 @@ export async function onRequestGet(context) {
 
   const found = matchTeam(markets, team);
   if (!found) {
-    return say(`${who} no open game for "${team}". ${markets.length} open — eastcoin.vip/picks`);
+    return say(`${who} no open game for "${team}". ${markets.length} open — try !odds`);
   }
   if (found.ambiguous) {
     return say(`${who} "${team}" matches ${found.ambiguous.join(" and ")}. Be more specific.`);

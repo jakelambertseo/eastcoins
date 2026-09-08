@@ -18,9 +18,11 @@
    twice cannot pay twice.
    ============================================================ */
 
+import { composeClosed } from "./_announce.js";
 import {
   ADMIN_ALLOWLIST,
   getSessionUser,
+  sayInChat,
   safeEqual,
   moveBalance,
   walletWritesEnabled,
@@ -331,6 +333,35 @@ export async function onRequestPost(context) {
   // refuses late picks, but leaving the state stale makes both the admin
   // page and the site claim betting is live when it is not. Doing it here
   // means the same schedule that settles also closes.
+  //
+  // Read the set BEFORE the update so chat can be told which games shut,
+  // and so the count is what actually changed rather than what happens to
+  // match a second later.
+  const closing = await db
+    .prepare(
+      `SELECT id, sport, away_name, home_name
+         FROM markets
+        WHERE state = 'OPEN'
+          AND datetime(starts_at) <= datetime('now')`
+    )
+    .all();
+
+  const closingRows = closing.results || [];
+  let riding = { picks: 0, staked: 0 };
+
+  if (closingRows.length) {
+    const marks = closingRows.map(() => "?").join(",");
+    const totals = await db
+      .prepare(
+        `SELECT COUNT(*) AS picks, COALESCE(SUM(wager), 0) AS staked
+           FROM picks
+          WHERE status = 'ACTIVE' AND market_id IN (${marks})`
+      )
+      .bind(...closingRows.map((m) => m.id))
+      .first();
+    riding = { picks: Number(totals?.picks || 0), staked: Number(totals?.staked || 0) };
+  }
+
   const locked = await db
     .prepare(
       `UPDATE markets
@@ -339,6 +370,17 @@ export async function onRequestPost(context) {
           AND datetime(starts_at) <= datetime('now')`
     )
     .run();
+
+  // Safe to run every tick: a market crosses OPEN -> LOCKED exactly once,
+  // so the next run finds nothing to announce. One message regardless of
+  // how many closed at the same moment.
+  if (closingRows.length) {
+    const message = composeClosed(closingRows, riding);
+    const said = await sayInChat(context.env, message);
+    if (!said.ok) {
+      console.error(`Picks: couldn't announce ${closingRows.length} closing market(s): ${said.error}`);
+    }
+  }
 
   // Anything past its start time and not yet finished is a candidate.
   const markets = await db
@@ -365,6 +407,7 @@ export async function onRequestPost(context) {
     ok: true,
     by: auth.by,
     locked: Number(locked?.meta?.changes || 0),
+    closed: closingRows.map((m) => `${m.away_name} at ${m.home_name}`),
     examined: results.length,
     results
   });

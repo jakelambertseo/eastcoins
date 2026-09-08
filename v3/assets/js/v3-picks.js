@@ -282,7 +282,14 @@
       return wrap;
     }
 
-    if (local.failed || !local.markets.length) {
+    // The Markets tab is for placing picks, so it lists only what can
+    // actually be picked. A game already under way belongs in My Picks,
+    // not here looking like an option with the button greyed out.
+    const openNow = local.markets.filter((m) =>
+      m.state === "OPEN" &&
+      (!m.startsAt || new Date(m.startsAt).getTime() > Date.now()));
+
+    if (local.failed || !openNow.length) {
       const empty = el("div", "empty");
       empty.append(
         el("strong", null, local.failed ? "Couldn't load markets" : "No open markets"),
@@ -296,7 +303,7 @@
     }
 
     const list = el("div", "marketlist");
-    for (const market of local.markets) list.append(marketCard(market));
+    for (const market of openNow) list.append(marketCard(market));
     wrap.append(list);
     return wrap;
   }

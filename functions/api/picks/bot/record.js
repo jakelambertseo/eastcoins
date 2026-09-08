@@ -17,7 +17,7 @@ export async function onRequestGet(context) {
 
   const who = `@${gate.login}`;
   const user = await findUser(db, gate.login);
-  if (!user) return say(`${who} no picks on record yet — eastcoin.vip/picks`);
+  if (!user) return say(`${who} no picks on record yet. !odds to see what's open.`);
 
   const row = await db
     .prepare(

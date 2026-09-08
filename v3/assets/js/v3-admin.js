@@ -324,6 +324,34 @@
       if (market.needsAttention) {
         top.append(el("span", "adm-tag bad", `${market.needsAttention} stuck`));
       }
+
+      // Closing refunds, so the confirm says what it will cost rather
+      // than asking "are you sure" about an unnamed amount.
+      if (market.state !== "SETTLED" && market.state !== "VOID") {
+        const close = el("button", "iconbtn", "Close");
+        close.type = "button";
+        close.title = "Void this market and refund every pick";
+        close.disabled = local.busy;
+        close.addEventListener("click", async () => {
+          const staked = market.totals.away.staked + market.totals.home.staked;
+          const cost = market.totals.picks
+            ? `${market.totals.picks} pick(s) will be refunded ${staked} ZCoins.`
+            : "It has no picks on it.";
+          if (!window.confirm(`Close ${market.away} at ${market.home}?
+
+${cost}`)) return;
+
+          const result = await post_("/api/picks/admin/void-market", { marketId: market.id });
+          local.message = result.ok
+            ? { tone: "good", text: `Closed ${market.away} at ${market.home}` +
+                (result.refunded ? ` — ${result.refunded} pick(s) refunded.` : ".") }
+            : { tone: "bad", text: result.message || "Couldn't close that market." };
+          await load();
+          paint();
+        });
+        top.append(close);
+      }
+
       row.append(top);
 
       const meta = el("p", "adm-note");

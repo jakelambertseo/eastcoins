@@ -16,6 +16,7 @@
    viewers, and it should never be a surprise what it said.
    ============================================================ */
 
+import { composeOpen as compose } from "../_announce.js";
 import {
   ADMIN_ALLOWLIST,
   getSessionUser,
@@ -23,52 +24,6 @@ import {
   json,
   fail
 } from "../_lib.js";
-
-const SPORT_EMOJI = {
-  "american-football": "\u{1F3C8}",
-  baseball: "\u{26BE}",
-  basketball: "\u{1F3C0}",
-  hockey: "\u{1F3D2}"
-};
-
-function formatLine(value) {
-  const line = Number(value);
-  if (!Number.isFinite(line) || line === 0) return "";
-  return line > 0 ? `+${line}` : String(line);
-}
-
-function closesAt(startsAt) {
-  const when = new Date(startsAt);
-  if (Number.isNaN(when.getTime())) return "";
-  return when.toLocaleTimeString("en-US", {
-    hour: "numeric", minute: "2-digit", timeZone: "America/Chicago"
-  }) + " CT";
-}
-
-/** One message for any number of markets. */
-export function compose(markets) {
-  if (!markets.length) return "";
-
-  // Only badge the message when every market is the same sport;
-  // a mixed slate gets no emoji rather than a misleading one.
-  const sports = new Set(markets.map((m) => m.sport));
-  const badge = sports.size === 1 ? SPORT_EMOJI[[...sports][0]] || "" : "";
-  const lead = badge ? `${badge} ` : "";
-
-  if (markets.length <= 2) {
-    const each = markets.map((m) =>
-      `${m.away_name} ${formatLine(m.away_odds_locked)} at ` +
-      `${m.home_name} ${formatLine(m.home_odds_locked)}`
-    );
-    const closes = markets.length === 1 ? ` · closes ${closesAt(markets[0].starts_at)}` : "";
-    return `${lead}Betting open — ${each.join(" · ")}${closes} · !pick <amount> <team>`;
-  }
-
-  return (
-    `${lead}${markets.length} games open for picks — !odds <team> for a line, ` +
-    `!pick <amount> <team> to bet · eastcoin.vip/picks`
-  );
-}
 
 async function openMarkets(db) {
   const result = await db

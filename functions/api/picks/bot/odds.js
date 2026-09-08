@@ -26,13 +26,13 @@ export async function onRequestGet(context) {
     const n = markets.length;
     return say(
       `${n} game${n === 1 ? "" : "s"} open for picks — !odds <team> for a line, ` +
-      `!pick <amount> <team> to bet. eastcoin.vip/picks`
+      `!pick <amount> <team> to bet.`
     );
   }
 
   const found = matchTeam(markets, team);
   if (!found) {
-    return say(`No open game for "${team}". ${markets.length} open — eastcoin.vip/picks`);
+    return say(`No open game for "${team}". ${markets.length} open — try !odds`);
   }
   if (found.ambiguous) {
     return say(`"${team}" matches ${found.ambiguous.join(" and ")}. Be more specific.`);
