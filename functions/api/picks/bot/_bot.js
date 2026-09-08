@@ -96,9 +96,11 @@ export function botGate(context) {
     twitchId: /^\d{1,20}$/.test(twitchId) ? twitchId : "",
     displayName,
     // StreamElements posts nothing when a nested $(queryescape $(1:)) is
-    // empty, so commands send "$(queryescape . $(1:))": a dot that is
-    // always there, then whatever was typed. The dot is dropped here.
-    args: String(url.searchParams.get("args") || "").trim().replace(/^\.(\s+|$)/, "").trim()
+    // empty, so commands send "$(queryescape all $(1:))": a word that is
+    // always there, then whatever was typed. (Not a dot — SE reads
+    // "queryescape ." as a property accessor and refuses to parse.)
+    // The leading word is dropped here.
+    args: String(url.searchParams.get("args") || "").trim().replace(/^all(\s+|$)/i, "").trim()
   };
 }
 
