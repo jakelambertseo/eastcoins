@@ -375,10 +375,35 @@
     const channel = /twitch\.tv\/embed\/([^/?]+)\/chat/.exec(src)?.[1] || "zwades";
 
     const url = "https://www.twitch.tv/popout/" + encodeURIComponent(channel) + "/chat?popout=";
-    const opened = window.open(url, "ecChat_" + channel, "width=420,height=760,noopener");
-    // Popup blockers are common and silent; a new tab beats a button that
-    // appears to do nothing.
-    if (!opened) window.open(url, "_blank", "noopener,noreferrer");
+
+    // Deliberately WITHOUT noopener in the features string. That flag
+    // makes window.open return null even when the window opened fine, so
+    // there is no way left to tell success from a blocked popup — which
+    // meant the fallback below fired every single time and every click
+    // opened two windows.
+    let opened = null;
+    try {
+      opened = window.open(url, "ecChat_" + channel, "width=420,height=760");
+    } catch {
+      opened = null;
+    }
+
+    if (opened) {
+      // Sever the back-reference by hand instead. Cross-origin will
+      // usually refuse this, which is fine — it is belt and braces on a
+      // window we are deliberately sending to Twitch.
+      try { opened.opener = null; } catch {}
+      opened.focus?.();
+    } else {
+      // Popup blockers are common and silent; a tab beats a button that
+      // appears to do nothing.
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+
+    // Two chats side by side is just noise, and the embedded one is the
+    // copy with Twitch's restrictions on it. Hiding it also gives the
+    // width back to whatever is being watched.
+    setChatVisible(false);
   });
 
 
