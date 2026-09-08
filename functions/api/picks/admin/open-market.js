@@ -36,10 +36,7 @@ export async function onRequestPost(context) {
   } catch (error) {
     const detail = String(error?.message || error || "unknown");
     console.error("open-market threw:", detail, error?.stack || "");
-    return fail("SERVER_ERROR", `The endpoint threw: ${detail}`, 500, {
-      where: String(error?.stack || "").split("
-").slice(0, 4).join(" | ")
-    });
+    return fail("SERVER_ERROR", "The endpoint threw: " + detail, 500);
   }
 }
 
