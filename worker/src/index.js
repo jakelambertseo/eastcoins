@@ -60,11 +60,12 @@ const FORCE_SKIP_LOGINS = new Set(["zwades", "andyreidisapawg", "bootypaper"]);
 const QUEUE_CLEAR_COOLDOWN_MS = 3000;
 // A fixed, hand-picked block — not resolved through search at request time —
 // so "!rasputin" always queues exactly this, the same way, every time.
+// Plays top to bottom; Rasputin is the closer.
 const RASPUTIN_BLOCK = [
-  { videoId: "Nl_Eo2QzqU4", title: "Boney M. - Rasputin (Official Audio)" },
-  { videoId: "FYGTT7YhywA", title: "Boney M. - Daddy Cool (Sopot Festival 1979)" },
+  { videoId: "flDt8TC6Fok", title: "Don Diablo - Momentum | Official Music Video" },
   { videoId: "ZaI2IlHwmgQ", title: "The Black Eyed Peas - Pump It (Official Music Video)" },
-  { videoId: "flDt8TC6Fok", title: "Don Diablo - Momentum | Official Music Video" }
+  { videoId: "FYGTT7YhywA", title: "Boney M. - Daddy Cool (Sopot Festival 1979)" },
+  { videoId: "Nl_Eo2QzqU4", title: "Boney M. - Rasputin (Official Audio)" }
 ];
 const DEFAULT_ALLOWED_ORIGINS = new Set([
   "https://eastcoin.vip",
