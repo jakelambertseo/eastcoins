@@ -196,6 +196,45 @@ export async function moveBalance(env, login, delta) {
   }
 }
 
+/**
+ * Posts one message to Twitch chat as the StreamElements bot.
+ *
+ * This is the only thing in the codebase that talks to chat, and it is
+ * called from exactly one place: an admin pressing a button. Anything
+ * that posts on a timer or as a side effect of another action should
+ * be added deliberately, not by widening this.
+ */
+export async function sayInChat(env, message) {
+  const channel = seChannel(env);
+  const jwt = String(env.STREAMELEMENTS_JWT || "").trim();
+  const text = String(message || "").replace(/\s+/g, " ").trim();
+
+  if (!jwt || !channel) return { ok: false, error: "NOT_CONFIGURED" };
+  if (!text) return { ok: false, error: "EMPTY" };
+
+  try {
+    const response = await seFetch(
+      `${SE_API}/bot/${encodeURIComponent(channel)}/say`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${jwt}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text })
+      }
+    );
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      // Loud: a rotated token otherwise looks like a quiet chat.
+      console.error(`StreamElements say failed ${response.status}: ${body.slice(0, 200)}`);
+      return { ok: false, error: `SE_${response.status}` };
+    }
+    return { ok: true };
+  } catch (error) {
+    console.error("StreamElements say threw", error);
+    return { ok: false, error: "SE_NETWORK" };
+  }
+}
+
 /* ------------------------------------------------------------ ledger
 
    wallet_operations is written BEFORE the money moves and confirmed

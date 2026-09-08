@@ -1192,3 +1192,11 @@ body.nav-hidden .navpeek{display:inline-flex}
 }
 .adm-message.good{border-color:rgba(77,219,139,.4);background:var(--green-dim);color:#b6f1c4}
 .adm-message.bad{border-color:rgba(255,107,133,.4);background:var(--red-dim);color:#ffc9d2}
+
+/* the exact text that would go to chat, shown before it is sent */
+.adm-say{
+  margin:0 0 12px;padding:12px 14px;border-radius:10px;
+  border:1px solid rgba(232,191,53,.28);background:var(--gold-dim);
+  color:var(--text);font-family:var(--display);font-size:.95rem;
+  line-height:1.5;white-space:pre-wrap;word-break:break-word;
+}

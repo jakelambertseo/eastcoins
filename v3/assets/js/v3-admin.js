@@ -15,7 +15,7 @@
 (() => {
   "use strict";
 
-  const local = { health: null, markets: [], busy: false, message: null };
+  const local = { health: null, markets: [], busy: false, message: null, announce: null };
   let root = null;
   let shell = null;
 
@@ -47,16 +47,18 @@
   /* ---------------------------------------------------------- data */
 
   async function load() {
-    const [health, markets] = await Promise.all([
+    const [health, markets, announce] = await Promise.all([
       fetch("/api/picks/wallet-health").then((r) => r.json()).catch(() => null),
-      fetch("/api/picks/admin/markets").then((r) => r.json()).catch(() => null)
+      fetch("/api/picks/admin/markets").then((r) => r.json()).catch(() => null),
+      fetch("/api/picks/admin/announce").then((r) => r.json()).catch(() => null)
     ]);
+    local.announce = announce?.ok ? announce : null;
     local.health = health;
     local.markets = markets?.ok ? markets.markets : [];
     local.forbidden = markets && !markets.ok && markets.code === "NOT_ADMIN";
   }
 
-  async function post(url, body) {
+  async function post_(url, body) {
     local.busy = true;
     paint();
     let payload = null;
@@ -210,7 +212,7 @@
         startsAt
       };
 
-      const result = await post("/api/picks/admin/open-market", body);
+      const result = await post_("/api/picks/admin/open-market", body);
       local.message = result.ok
         ? { tone: "good", text: `Market open: ${body.away} ${formatLine(body.awayOdds)} at ${body.home} ${formatLine(body.homeOdds)}.` }
         : { tone: "bad", text: result.message || "Couldn't open that market." };
@@ -220,6 +222,56 @@
 
     actions.append(submit);
     card.append(actions);
+    return card;
+  }
+
+  /* ---------------------------------------------------------- announce
+
+     Posting to chat is the only thing here that reaches people who
+     aren't looking at this page, so it shows the exact message first
+     and never sends without a press. */
+
+  function announceCard() {
+    const card = el("div", "adm-card");
+    card.append(el("h2", "adm-h", "Announce in chat"));
+
+    const a = local.announce;
+    if (!a) {
+      card.append(el("p", "adm-note", "Couldn't work out what would be posted."));
+      return card;
+    }
+
+    if (!a.canPost) {
+      card.append(el("p", "adm-note",
+        "Nothing is open, so there's nothing to announce. Open a market first."));
+      return card;
+    }
+
+    card.append(el("p", "adm-note",
+      "One message however many markets are open — named while that stays short, " +
+      "counted once it doesn't. This posts to real chat."));
+
+    const quote = el("pre", "adm-say");
+    quote.textContent = a.message;
+    card.append(quote);
+
+    const foot = el("div", "adm-actions");
+    foot.append(el("span", "adm-note", `${a.length} characters · ${a.open} market(s)`));
+
+    const post = el("button", "btn primary", "Post to chat");
+    post.type = "button";
+    post.style.cssText = "flex:0 0 auto;padding:0 20px;height:38px";
+    post.disabled = local.busy;
+    post.addEventListener("click", async () => {
+      const result = await post_("/api/picks/admin/announce");
+      local.message = result.ok
+        ? { tone: "good", text: `Posted to chat: ${result.posted}` }
+        : { tone: "bad", text: result.message || "Couldn't post that." };
+      await load();
+      paint();
+    });
+    foot.append(post);
+    card.append(foot);
     return card;
   }
 
@@ -236,7 +288,7 @@
     settle.style.cssText = "flex:0 0 auto;padding:0 16px;height:34px";
     settle.disabled = local.busy;
     settle.addEventListener("click", async () => {
-      const result = await post("/api/picks/settle");
+      const result = await post_("/api/picks/settle");
       if (!result.ok) {
         local.message = { tone: "bad", text: result.message || "Settlement failed." };
       } else {
@@ -336,7 +388,7 @@
       root.append(strip);
     }
 
-    root.append(healthCard(), openForm(), marketsCard());
+    root.append(healthCard(), openForm(), announceCard(), marketsCard());
   }
 
   const view = {
