@@ -29,6 +29,7 @@
     ticket: null,
     myPicks: [],
     leaderboard: [],
+    sort: { key: "profit", dir: "desc" },
     communityLedger: [],
     season: null,
     login: "",
@@ -473,6 +474,17 @@
     return pick.selection === "home" ? teamName(pick.market?.away) : teamName(pick.market?.home);
   }
 
+  function dayLabel(iso) {
+    const raw = iso && !/[TZ]/.test(iso) ? iso.replace(" ", "T") + "Z" : iso;
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return "Unknown day";
+    const today = new Date();
+    const yesterday = new Date(today.getTime() - 864e5);
+    if (d.toDateString() === today.toDateString()) return "Today";
+    if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
+    return d.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" });
+  }
+
   function whenLabel(iso) {
     const raw = iso && !/[TZ]/.test(iso) ? iso.replace(" ", "T") + "Z" : iso;
     const d = new Date(raw);
@@ -538,6 +550,26 @@
     return wrap;
   }
 
+  const LEADER_COLUMNS = [
+    ["rank", "Rank", (r) => r.rank, "asc"],
+    ["user", "User", (r) => String(r.user?.displayName || r.user?.login || "").toLowerCase(), "asc"],
+    ["profit", "Picks profit", (r) => r.profit, "desc"],
+    ["record", "Record", (r) => r.wins * 1000 - r.losses, "desc"]
+  ];
+
+  function sortedLeaders() {
+    const col = LEADER_COLUMNS.find(([key]) => key === local.sort.key) || LEADER_COLUMNS[2];
+    const value = col[2];
+    const dir = local.sort.dir === "asc" ? 1 : -1;
+    return local.leaderboard.slice().sort((a, b) => {
+      const va = value(a);
+      const vb = value(b);
+      if (va < vb) return -1 * dir;
+      if (va > vb) return 1 * dir;
+      return a.rank - b.rank;   // ties keep season order
+    });
+  }
+
   function leaderboardView() {
     const wrap = document.createDocumentFragment();
     const rows = local.leaderboard;
@@ -549,12 +581,25 @@
 
     const card = el("div", "tablecard");
     const head = el("div", "trow thead");
-    ["Rank", "User", "Picks profit", "Record"].forEach((label, i) => head.append(el("span", i > 1 ? "right" : null, label)));
+    for (const [key, label, , natural] of LEADER_COLUMNS) {
+      const on = local.sort.key === key;
+      const btn = el("button", `tsort${on ? " on " + local.sort.dir : ""}${key === "profit" || key === "record" ? " right" : ""}`);
+      btn.type = "button";
+      btn.append(el("span", null, label), el("i", "tsort-arrow", on ? (local.sort.dir === "asc" ? "▲" : "▼") : "⇅"));
+      btn.setAttribute("aria-sort", on ? (local.sort.dir === "asc" ? "ascending" : "descending") : "none");
+      btn.title = `Sort by ${label.toLowerCase()}`;
+      btn.addEventListener("click", () => {
+        // First click sorts the way the column reads best; the second flips it.
+        local.sort = on ? { key, dir: local.sort.dir === "asc" ? "desc" : "asc" } : { key, dir: natural };
+        paint();
+      });
+      head.append(btn);
+    }
     card.append(head);
 
-    for (const row of rows) {
+    for (const row of sortedLeaders()) {
       const me = local.login && row.user?.login === local.login;
-      const line = el("div", `trow${me ? " me" : ""}`);
+      const line = el("div", `trow${me ? " me" : ""}${row.rank === 1 ? " first" : ""}`);
       line.append(el("span", "trank", `#${row.rank}`));
 
       const user = el("div", "tuser");
@@ -612,7 +657,22 @@
 
     const list = el("div", "historylist");
     const icons = { wager: "↗", payout: "✓", loss: "✕", refund: "↩" };
+    let lastDay = "";
     for (const row of entries) {
+      // A header each time the calendar day changes, newest day first.
+      const day = dayLabel(row.at);
+      if (day !== lastDay) {
+        lastDay = day;
+        const net = entries
+          .filter((e) => dayLabel(e.at) === day)
+          .reduce((n, e) => n + e.amount, 0);
+        const header = el("div", "historyday");
+        header.append(el("strong", null, day));
+        const sum = el("span", `nums ${net > 0 ? "up" : net < 0 ? "down" : ""}`);
+        sum.append(zc(net, { sign: true }));
+        header.append(sum);
+        list.append(header);
+      }
       const item = el("article", `historyrow ${row.type}`);
       item.append(el("span", "historyicon", icons[row.type] || "•"));
       const copy = el("span", "historycopy");
@@ -688,6 +748,53 @@
     ["ledger", "Community Ledger", ledgerView]
   ];
 
+  /**
+   * The season leader, up top where nobody can miss it. Purple on purpose:
+   * gold is the wallet, green is a win, red is a loss — the crown gets a
+   * colour nothing else on the page uses.
+   */
+  function leaderWidget() {
+    const top = local.leaderboard[0] || null;
+    const box = el("section", `leaderwidget${top ? "" : " empty"}`);
+    box.setAttribute("aria-label", "Season leader");
+    box.append(el("span", "lw-shine"));
+
+    const crown = el("span", "lw-crown", "👑");
+    const copy = el("div", "lw-copy");
+    const season = local.season?.name || "Season";
+
+    if (!top) {
+      copy.append(el("span", "lw-kicker", `${season} leader`),
+        el("strong", "lw-name", "The crown is up for grabs"),
+        el("small", "lw-note", "First settled pick takes it. Markets open 30 minutes before kick-off."));
+      box.append(crown, copy);
+      return box;
+    }
+
+    const me = local.login && top.user?.login === local.login;
+    copy.append(
+      el("span", "lw-kicker", `${season} leader`),
+      el("strong", "lw-name", top.user?.displayName || top.user?.login),
+      el("small", "lw-note", me ? "That's you. Keep it." : `${top.record} · ${top.accuracy}% right`)
+    );
+
+    const stats = el("div", "lw-stats");
+    const profit = el("div", "lw-stat");
+    profit.append(el("span", null, "Picks profit"));
+    const big = el("strong", "nums");
+    big.append(zc(top.profit, { sign: true }));
+    profit.append(big);
+    const lead = local.leaderboard[1] ? top.profit - local.leaderboard[1].profit : null;
+    const gap = el("div", "lw-stat");
+    gap.append(el("span", null, lead === null ? "Chasing" : "Lead"),
+      el("strong", "nums", lead === null ? "nobody yet" : `${lead > 0 ? "+" : ""}${lead.toLocaleString()}`));
+    stats.append(profit, gap);
+
+    const av = el("span", "lw-avatar", initials(top.user?.displayName || top.user?.login));
+    box.append(crown, av, copy, stats);
+    return box;
+  }
+
   function summaryStrip() {
     const strip = el("div", "summarystrip");
     const balance = Number(local.wallet?.balance);
@@ -725,6 +832,7 @@
     head.append(wrap);
     root.append(head);
 
+    root.append(leaderWidget());
     root.append(summaryStrip());
 
     const tabs = el("nav", "viewtabs");

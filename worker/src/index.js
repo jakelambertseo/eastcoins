@@ -38,7 +38,10 @@ const MAX_SE_SEEN_IDS = 500;
 
 const TWITCH_IRC_SKIP_COOLDOWN_MS = 5000;
 const RASPUTIN_COOLDOWN_MS = 60 * 1000;
-const RASPUTIN_ALLOWED_LOGINS = new Set(["andyreidisapawg", "zwades"]);
+// The same three people who can force-skip. bootypaper was missing, so
+// the command was being read from chat and silently dropped as
+// unauthorised — it "did nothing" while working exactly as written.
+const RASPUTIN_ALLOWED_LOGINS = new Set(["andyreidisapawg", "zwades", "bootypaper"]);
 
 // "!srclear" (and its StreamElements alias "!mrclear") is a StreamElements
 // command — SE clears its own media request queue when a moderator types it.

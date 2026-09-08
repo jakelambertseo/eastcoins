@@ -492,13 +492,56 @@
     window.clearInterval(jamTimer);
     jamTimer = 0;
     surface?.classList.remove("is-jamming");
-    surface?.querySelectorAll(".jam-cat").forEach((node) => node.remove());
+    surface?.querySelectorAll(".jam-cat, .jam-floor, .jam-banner, .jam-flash").forEach((node) => node.remove());
+    document.body.classList.remove("is-rasputin");
   }
 
+  /**
+   * The full catJAM treatment for a !rasputin block: a row of cats
+   * bouncing along the bottom of the stage, more cats floating up
+   * through it, a banner sliding across the top, a colour wash on the
+   * frame and the page, and a flash on the way in. All of it is CSS
+   * animation on decorative nodes — nothing here touches playback.
+   */
   function startJam(surface) {
     if (!surface || jamTimer) return;
     surface.classList.add("is-jamming");
+    document.body.classList.add("is-rasputin");
 
+    // The flash on the way in.
+    const flash = document.createElement("div");
+    flash.className = "jam-flash";
+    surface.append(flash);
+    window.setTimeout(() => flash.remove(), 1400);
+
+    // The banner.
+    const banner = document.createElement("div");
+    banner.className = "jam-banner";
+    const strip = document.createElement("div");
+    strip.className = "jam-banner-strip";
+    for (let i = 0; i < 6; i += 1) {
+      const cat = document.createElement("img");
+      cat.src = CATJAM;
+      cat.alt = "";
+      strip.append(cat, el("span", null, "RASPUTIN"));
+    }
+    banner.append(strip);
+    surface.append(banner);
+
+    // The floor: a dozen cats bouncing out of phase with each other.
+    const floor = document.createElement("div");
+    floor.className = "jam-floor";
+    for (let i = 0; i < 12; i += 1) {
+      const cat = document.createElement("img");
+      cat.src = CATJAM;
+      cat.alt = "";
+      cat.style.animationDelay = `${(i % 4) * -0.16}s`;
+      cat.style.animationDuration = `${0.56 + (i % 3) * 0.08}s`;
+      floor.append(cat);
+    }
+    surface.append(floor);
+
+    // And the risers.
     const spawn = () => {
       if (!surface.isConnected) return stopJam(surface);
       const cat = document.createElement("img");
@@ -506,14 +549,15 @@
       cat.src = CATJAM;
       cat.alt = "";
       cat.style.left = `${Math.random() * 88 + 2}%`;
-      cat.style.animationDuration = `${2.6 + Math.random() * 1.8}s`;
-      cat.style.setProperty("--drift", `${Math.random() * 60 - 30}px`);
+      cat.style.animationDuration = `${2.2 + Math.random() * 1.8}s`;
+      cat.style.setProperty("--drift", `${Math.random() * 80 - 40}px`);
+      cat.style.setProperty("--size", `${36 + Math.random() * 32}px`);
       surface.append(cat);
-      window.setTimeout(() => cat.remove(), 4600);
+      window.setTimeout(() => cat.remove(), 4200);
     };
 
     spawn();
-    jamTimer = window.setInterval(spawn, 620);
+    jamTimer = window.setInterval(spawn, 420);
   }
 
   /**
