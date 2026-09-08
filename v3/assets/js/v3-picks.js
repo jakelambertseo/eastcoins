@@ -786,8 +786,10 @@
     profit.append(big);
     const lead = local.leaderboard[1] ? top.profit - local.leaderboard[1].profit : null;
     const gap = el("div", "lw-stat");
-    gap.append(el("span", null, lead === null ? "Chasing" : "Lead"),
-      el("strong", "nums", lead === null ? "nobody yet" : `${lead > 0 ? "+" : ""}${lead.toLocaleString()}`));
+    // How far ahead of #2 they are — or, with nobody else on the board
+    // yet, say so rather than show a lead over no one.
+    gap.append(el("span", null, "Lead over #2"),
+      el("strong", "nums", lead === null ? "no #2 yet" : `${lead > 0 ? "+" : ""}${lead.toLocaleString()}`));
     stats.append(profit, gap);
 
     const av = el("span", "lw-avatar", initials(top.user?.displayName || top.user?.login));
