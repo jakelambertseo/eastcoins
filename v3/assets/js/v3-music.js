@@ -245,7 +245,59 @@
 
   function setVolume(value) {
     writeVolume(value);
-    try { player.instance?.setVolume?.(value); } catch {}
+    applyAudioOwnership();
+  }
+
+  /* ---------------------------------------------------------- audio lock
+
+     Two tabs on the room means the same song playing twice, a second or
+     two apart, which sounds like a fault rather than a feature. Whichever
+     tab last had real focus owns audible sound; the others drop their
+     player to zero.
+
+     Volume, not mute: the visitor's own volume choice is never touched,
+     so ownership coming back is instant and silent. And the forced zero
+     is never written to storage — persisting it would rewrite the volume
+     they actually chose. */
+
+  const AUDIO_LOCK_CHANNEL = "eastcoin-music-audio-lock";
+  const audioId = (crypto.randomUUID?.() || String(Math.random())).slice(0, 36);
+  let audioChannel = null;
+  let isAudioOwner = true;
+
+  function applyAudioOwnership() {
+    try { player.instance?.setVolume?.(isAudioOwner ? readVolume() : 0); } catch {}
+  }
+
+  function initAudioLock() {
+    if (audioChannel || typeof BroadcastChannel === "undefined") return;
+
+    try {
+      audioChannel = new BroadcastChannel(AUDIO_LOCK_CHANNEL);
+    } catch {
+      return;
+    }
+
+    audioChannel.addEventListener("message", (event) => {
+      if (event.data?.type === "claim" && event.data.id !== audioId) {
+        isAudioOwner = false;
+        applyAudioOwnership();
+      }
+    });
+
+    const claim = () => {
+      isAudioOwner = true;
+      applyAudioOwnership();
+      try { audioChannel.postMessage({ type: "claim", id: audioId }); } catch {}
+    };
+
+    window.addEventListener("focus", claim);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") claim();
+    });
+
+    if (document.hasFocus()) claim();
+    else isAudioOwner = false;
   }
 
   function elapsedSeconds(state) {
@@ -320,7 +372,7 @@
       events: {
         onReady: (event) => {
           try {
-            event.target.setVolume(readVolume());
+            event.target.setVolume(isAudioOwner ? readVolume() : 0);
 
             // Same stale-room case as correctDrift, caught at the point
             // the duration first becomes knowable.
@@ -331,6 +383,12 @@
             }
             event.target.playVideo();
           } catch {}
+        },
+        onAutoplayBlocked: () => {
+          // Not an error. The browser is waiting for a real click, and the
+          // cover is already down so YouTube's own play button is live —
+          // this just says so rather than leaving a still frame.
+          setNotice("Press play to join the room \u2014 your browser blocked autoplay.");
         },
         onStateChange: (event) => {
           const YTS = window.YT.PlayerState;
@@ -365,14 +423,25 @@
     if (!instance || !state?.current) return;
 
     let actual;
-    let playing;
+    let playerState;
     try {
       actual = instance.getCurrentTime?.();
-      playing = instance.getPlayerState?.() === window.YT?.PlayerState?.PLAYING;
+      playerState = instance.getPlayerState?.();
     } catch {
       return;
     }
-    if (!playing || !Number.isFinite(actual)) return;
+
+    // A video that finished without its ENDED event reaching us — or whose
+    // report never reached the room — leaves the whole room parked on a
+    // song nobody is playing. Nothing else notices, because the room only
+    // ever advances when a client tells it to.
+    if (playerState === window.YT?.PlayerState?.ENDED) {
+      reportEnded("safety-net");
+      return;
+    }
+
+    if (playerState !== window.YT?.PlayerState?.PLAYING) return;
+    if (!Number.isFinite(actual)) return;
 
     const expected = elapsedSeconds(state);
     let duration = 0;
@@ -1283,6 +1352,7 @@
         refs.side = null;
         refs.stagewrap = null;
         document.body.classList.add("music-view");
+        initAudioLock();
         connect();
         paint(conn.state);
         unsub = subscribe(paint);
