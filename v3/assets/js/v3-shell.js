@@ -22,6 +22,7 @@
     chatPlaceholder: document.getElementById("chatPlaceholder"),
     chatToggle: document.getElementById("chatToggle"),
     chatClose: document.getElementById("chatClose"),
+    chatPopout: document.getElementById("chatPopout"),
     loginBtn: document.getElementById("loginBtn"),
     walletChip: document.getElementById("walletChip"),
     walletValue: document.getElementById("walletValue"),
@@ -295,6 +296,29 @@
 
   els.chatToggle.addEventListener("click", () => setChatVisible(document.body.classList.contains("chat-hidden")));
   els.chatClose.addEventListener("click", () => setChatVisible(false));
+
+  // Real Twitch in its own window rather than the embed.
+  //
+  // Worth having for whoever chats most. The embedded chat makes Twitch
+  // ask for confirmation before the first message of every page load, and
+  // disables the box outright for mods and the broadcaster if anything
+  // overlaps it. Neither protection applies on twitch.tv itself, and
+  // neither is something this site can switch off — they exist precisely
+  // so an embedding page cannot.
+  els.chatPopout?.addEventListener("click", () => {
+    const frame = document.getElementById("twitchChat");
+    // Read the channel off the embed rather than repeating it here, so
+    // there stays exactly one place it is written down.
+    const src = frame?.dataset?.src || frame?.src || "";
+    const channel = /twitch\.tv\/embed\/([^/?]+)\/chat/.exec(src)?.[1] || "zwades";
+
+    const url = "https://www.twitch.tv/popout/" + encodeURIComponent(channel) + "/chat?popout=";
+    const opened = window.open(url, "ecChat_" + channel, "width=420,height=760,noopener");
+    // Popup blockers are common and silent; a new tab beats a button that
+    // appears to do nothing.
+    if (!opened) window.open(url, "_blank", "noopener,noreferrer");
+  });
+
 
   function looksLikeUrl(value) {
     return /^(https?:\/\/|www\.)\S+$/i.test(value) || /^[a-z0-9-]+\.[a-z]{2,}\/\S+$/i.test(value);

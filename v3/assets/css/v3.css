@@ -189,9 +189,12 @@ body.chat-hidden .chatrail{display:none}
   border-bottom:1px solid var(--line);
   background:var(--panel-2);
 }
-.chatrail-head #chatClose{
+.chatrail-head #chatClose,
+.chatrail-head #chatPopout{
   width:22px;height:22px;font-size:.62rem;
 }
+.chatrail-head{gap:5px}
+.chatrail-head #chatPopout{font-size:.72rem}
 .chatrail iframe{flex:1;width:100%;border:0;background:var(--panel)}
 .chat-placeholder{
   flex:1;display:grid;place-items:center;padding:24px;text-align:center;
