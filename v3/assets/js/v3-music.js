@@ -1349,6 +1349,7 @@
       // Volume is built once so dragging the slider is never interrupted
       // by somebody else joining the room.
       refs.reactSlot = el("div", "reactbar");
+      refs.reactBtns = null;   // a fresh build gets a fresh bar
       refs.resultsSlot = el("div", "mslot");
       left.append(refs.stagewrap, refs.progress, refs.reactSlot, volumePanel(), buildSearchField(), refs.resultsSlot);
       shellEl.append(left);
