@@ -409,8 +409,12 @@
       const wallet = state.session?.wallet;
 
       if (user?.login) {
+        // Signed in, the button is your name and goes to your profile.
+        // Routed by the same ulink handler every other name uses.
         els.loginBtn.textContent = user.displayName || user.login;
-        els.loginBtn.href = "/?view=picks";
+        els.loginBtn.href = `/u/${encodeURIComponent(String(user.login).toLowerCase())}`;
+        els.loginBtn.classList.add("ulink");
+        els.loginBtn.title = "Your profile";
 
         // The Admin link stays out of the nav now that testing is done;
         // admins reach it at /?view=admin. The server re-checks every
