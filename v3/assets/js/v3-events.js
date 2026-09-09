@@ -519,6 +519,17 @@
     head.append(titleWrap);
     root.append(head);
 
+    // One scrolling line of what just happened, from the activity feed.
+    const ticker = document.createElement("section");
+    ticker.className = "ticker";
+    root.append(ticker);
+    const mountTicker = (tries = 0) => {
+      if (!ticker.isConnected) return;
+      if (window.ECActivity) window.ECActivity.mountTicker(ticker);
+      else if (tries < 100) window.setTimeout(() => mountTicker(tries + 1), 50);
+    };
+    mountTicker();
+
     // Two columns up top: the Picks banner, and everyone on the site
     // right now (guests counted) — Who's here.
     const top = document.createElement("div");

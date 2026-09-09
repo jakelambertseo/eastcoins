@@ -2571,3 +2571,36 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .av-meta .glink{color:inherit;text-decoration:none}
 .av-when{flex:0 0 auto;color:var(--muted-2);font-size:.72rem;font-weight:700;white-space:nowrap}
 .av-row.is-sk{min-height:58px}
+
+/* ---------------------------------------------------------------- activity ticker (home page) */
+.ticker{
+  display:flex;align-items:center;gap:0;height:36px;margin:0 0 12px;overflow:hidden;
+  border:1px solid var(--line);border-radius:10px;background:var(--panel);
+}
+.tk-label{
+  flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:100%;padding:0 12px;
+  border-right:1px solid var(--line);background:var(--panel-2);color:var(--red);text-decoration:none;
+  font-size:.62rem;font-weight:800;letter-spacing:.14em;
+}
+.tk-label::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--red);box-shadow:0 0 8px rgba(255,107,133,.7);animation:tkblink 1.6s ease-in-out infinite}
+.tk-label:hover{color:var(--text)}
+.tk-viewport{flex:1;min-width:0;height:100%;overflow:hidden;position:relative}
+.tk-track{display:flex;height:100%;width:max-content;animation:tkscroll var(--tk-duration,40s) linear infinite}
+.ticker:hover .tk-track{animation-play-state:paused}
+.ticker.still .tk-track{animation:none}
+.tk-row{display:flex;align-items:center;height:100%;padding-right:36px}
+.tk-item{display:inline-flex;align-items:center;gap:6px;padding:0 18px;white-space:nowrap;font-size:.8rem;color:var(--muted);border-right:1px solid var(--line)}
+.tk-item:last-child{border-right:0}
+.tk-ico{font-size:.85rem}
+.tk-item .ulink{color:var(--text);font-weight:700;text-decoration:none}
+.tk-item .glink{color:var(--gold);font-weight:700;text-decoration:none}
+.tk-item .ulink:hover,.tk-item .glink:hover{text-decoration:underline}
+.tk-item b{color:var(--text);font-weight:700}
+.tk-ago{color:var(--muted-2);font-size:.68rem;font-weight:700;margin-left:2px}
+@keyframes tkscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes tkblink{0%,100%{opacity:1}50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){
+  .tk-track{animation:none}
+  .tk-viewport{overflow-x:auto;scrollbar-width:thin}
+  .tk-label::before{animation:none}
+}

@@ -209,6 +209,79 @@
     root.replaceChildren(head(payload.items.length), list);
   }
 
+  /* ---------------------------------------------------------- ticker
+
+     The same feed as one scrolling line for the home page: short
+     phrases, newest first, looping. Pauses under the pointer, and
+     reads as a plain scrolling row for anyone who prefers reduced
+     motion. Refreshes every 60 seconds while the row is on screen. */
+
+  function shortItem(item) {
+    const m = item.market;
+    const span = el("span", `tk-item ${item.type}`);
+    span.append(el("span", "tk-ico", ICON[item.type] || "·"));
+    const who = () => { const a = el("a", "ulink", item.who?.displayName || item.who?.login || "someone"); a.href = `/u/${encodeURIComponent(String(item.who?.login || "").toLowerCase())}`; return a; };
+    const game = (text) => { const a = el("a", "glink", text); a.href = `/g/${m.slug}`; return a; };
+    switch (item.type) {
+      case "pick": span.append(who(), document.createTextNode(" backed "), game(`${nick(item.team)} ${line(item.line)}`), document.createTextNode(` for ${item.wager} ZC`)); break;
+      case "won": span.append(who(), document.createTextNode(" cashed "), game(`${nick(item.team)} ${line(item.line)}`), document.createTextNode(` +${item.profit} ZC`)); break;
+      case "lost": span.append(who(), document.createTextNode(` lost ${item.wager} ZC on `), game(nick(item.team))); break;
+      case "refunded": span.append(who(), document.createTextNode(" refunded on "), game(nick(item.team))); break;
+      case "open": span.append(document.createTextNode("Picks open · "), game(`${nick(m.away)} ${line(m.awayLine)} at ${nick(m.home)} ${line(m.homeLine)}`)); break;
+      case "final": {
+        const score = item.awayScore !== null && item.homeScore !== null && Number.isFinite(Number(item.awayScore)) ? ` ${item.awayScore}–${item.homeScore}` : "";
+        span.append(document.createTextNode("Final · "), game(`${nick(m.away)} at ${nick(m.home)}${score}`));
+        break;
+      }
+      case "void": span.append(document.createTextNode("Voided · "), game(`${nick(m.away)} at ${nick(m.home)}`)); break;
+      case "joined": span.append(who(), document.createTextNode(" joined")); break;
+      case "song": span.append(who(), document.createTextNode(" played "), el("b", null, item.title.length > 40 ? item.title.slice(0, 38) + "…" : item.title)); break;
+      default: return null;
+    }
+    span.append(el("span", "tk-ago", ago(item.at)));
+    return span;
+  }
+
+  let tickerTimer = 0;
+  async function mountTicker(container, { limit = 30 } = {}) {
+    window.clearInterval(tickerTimer);
+    container.classList.add("ticker");
+    container.setAttribute("aria-label", "Latest activity");
+    const label = el("a", "tk-label", "LIVE");
+    label.href = "/?view=activity";
+    label.title = "See all activity";
+    const viewport = el("div", "tk-viewport");
+    const track = el("div", "tk-track");
+    viewport.append(track);
+    container.replaceChildren(label, viewport);
+
+    const fill = async () => {
+      if (!container.isConnected) { window.clearInterval(tickerTimer); return; }
+      let payload = null;
+      try { payload = await fetch("/api/picks/activity", { credentials: "include" }).then((r) => r.json()); } catch { payload = null; }
+      if (!container.isConnected) return;
+      const items = (payload?.items || []).slice(0, limit).map(shortItem).filter(Boolean);
+      track.replaceChildren();
+      if (!items.length) { track.append(el("span", "tk-item", "Quiet for now — the first pick lands here.")); container.classList.add("still"); return; }
+      // Two copies of the row make the loop seamless: when the first
+      // scrolls off, the second is exactly where the first began.
+      const rowA = el("div", "tk-row");
+      for (const it of items) rowA.append(it);
+      const rowB = rowA.cloneNode(true);
+      rowB.setAttribute("aria-hidden", "true");
+      track.append(rowA, rowB);
+      // Speed is constant in pixels per second, so a longer row simply
+      // takes longer to pass rather than racing by.
+      const width = rowA.scrollWidth;
+      container.classList.toggle("still", width <= viewport.clientWidth);
+      track.style.setProperty("--tk-duration", `${Math.max(20, Math.round(width / 55))}s`);
+    };
+    await fill();
+    tickerTimer = window.setInterval(() => { if (!document.hidden) fill(); }, 60 * 1000);
+  }
+
+  window.ECActivity = Object.freeze({ mountTicker });
+
   const view = {
     mount(container, api) {
       root = container;
