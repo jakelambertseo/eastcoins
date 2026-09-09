@@ -637,7 +637,8 @@
 
     // And the big one: the emoji floats up over the video, so a reaction
     // is something the whole room can see happen, not just a counter.
-    const surface = stage;
+    // burst() lives outside the view closure, so find the stage by class.
+    const surface = document.querySelector(".mstage");
     if (!surface) return;
     for (let i = 0; i < 3; i += 1) {
       const big = el("span", "react-float", emoji);
