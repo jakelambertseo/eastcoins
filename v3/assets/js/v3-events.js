@@ -318,6 +318,19 @@
     // ESPN is authoritative about state; the schedule-derived guess isn't.
     if (flag) setFlag(flag, score.state === "post" ? "final" : "live");
 
+    // A finished game drops below everything still going. The schedule
+    // still calls it live, so it was painted among the live ones; once
+    // the score says Final it moves to the back of its group. Order
+    // within the finals is whatever order the scores came back in.
+    if (score.state === "post") {
+      const cardEl = mount.closest(".eventcard");
+      const grid = cardEl?.parentElement;
+      if (cardEl && grid) {
+        cardEl.classList.add("is-final");
+        grid.append(cardEl);
+      }
+    }
+
     const rows = titleEl.querySelectorAll(".teamrow");
     const line = document.createElement("span");
     line.className = "ec-score-state";
