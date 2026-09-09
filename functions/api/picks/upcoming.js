@@ -54,11 +54,12 @@ export async function onRequestGet(context) {
       .sort((a, b) => a.commence.localeCompare(b.commence))
       .map((g) => ({
         id: g.id,
-        sport: "american-football",
-        league: "NFL",
+        sport: g.sport || "american-football",
+        league: g.league || "NFL",
         away: g.away,
         home: g.home,
         startsAt: g.commence,
+        opensAt: g.opensAt || null,
         awayLine: g.awayLine,
         homeLine: g.homeLine,
         books: g.books

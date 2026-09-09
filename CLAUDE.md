@@ -95,7 +95,11 @@
 > **Settlement grades from The Odds API scores, not ESPN** — ESPN's site
 > API returns 403 to Cloudflare's IP range. `settle.js` also runs
 > `_autoopen.js` every tick: NFL games due within an hour get a market
-> with the median h2h line and one slate-wide chat message, then
+> with the median h2h line and one slate-wide chat message; **MLB opens
+> every day at 4 PM Central** (that evening's games and the next day's
+> day games, `SPORTS` in `_autoopen.js`) and is **quiet in chat** —
+> `quietInChat(sport)` keeps open/countdown/closed/settled lines to NFL,
+> while the site, `!pick`/`!odds` replies and Discord carry MLB. Then
 > `_reminders.js` posts "Closing in X minutes" at 30/10/5 (once per market
 > per threshold, one line per threshold per tick). The cron runs every 5
 > minutes. The schedule

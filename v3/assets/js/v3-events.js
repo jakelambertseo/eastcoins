@@ -672,7 +672,7 @@
 
       const soon = upcoming.find((g) => same(g.away, g.home));
       if (soon) {
-        const opens = new Date(new Date(soon.startsAt).getTime() - 60 * 60 * 1000);
+        const opens = new Date(soon.opensAt || new Date(soon.startsAt).getTime() - 60 * 60 * 1000);
         strip.replaceChildren();
         const coin = document.createElement("img");
         coin.className = "zcoin-mark";

@@ -26,21 +26,29 @@ export async function onRequestGet(context) {
   // $(1:|all) — and "all" means the same as no team at all.
   const team = /^(all|open|list|games|-)$/i.test(gate.args) ? "" : gate.args;
   if (!team) {
-    const n = markets.length;
-    // A short slate fits in one line, so say the lines outright. Times
-    // ride along when there is room for them; a longer slate is a count.
-    if (n <= 4) {
-      const withTime = n <= 2;
-      const each = markets.map((m) =>
+    // A count per league. NFL is the headline: with fewer than four
+    // games open its lines are said outright (times when there are
+    // two or fewer); anything bigger, and every other league, is a
+    // number and a pointer.
+    const nfl = markets.filter((m) => String(m.league || "").toUpperCase() === "NFL");
+    const parts = [];
+    if (nfl.length && nfl.length < 4) {
+      const withTime = nfl.length <= 2;
+      parts.push(`NFL: ` + nfl.map((m) =>
         `${shortTeam(m.away_name)} ${formatLine(m.away_odds_locked)} at ` +
         `${shortTeam(m.home_name)} ${formatLine(m.home_odds_locked)}${withTime ? timeOf(m.starts_at) : ""}`
-      );
-      return say(`${n === 1 ? "Open" : `${n} open`} — ${each.join(" · ")} · !pick <amount> <team>`);
+      ).join(" · "));
+    } else if (nfl.length) {
+      parts.push(`NFL: ${nfl.length} open`);
     }
-    return say(
-      `${n} games open for picks — !odds <team> for a line, ` +
-      `!pick <amount> <team> to bet.`
-    );
+    const counts = new Map();
+    for (const m of markets) {
+      const league = String(m.league || m.sport || "Other").toUpperCase();
+      if (league === "NFL") continue;
+      counts.set(league, (counts.get(league) || 0) + 1);
+    }
+    for (const [league, n] of counts) parts.push(`${league}: ${n} open`);
+    return say(`${parts.join(" · ")} · !odds <team> for a line · !pick <amount> <team>`);
   }
 
   const found = matchTeam(markets, team);

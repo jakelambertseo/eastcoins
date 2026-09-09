@@ -365,7 +365,9 @@
 
   function upcomingCard(game) {
     const card = el("article", "market upcoming");
-    const opensAt = new Date(new Date(game.startsAt).getTime() - 60 * 60 * 1000);
+    // The server says when each game opens (NFL an hour out, MLB at the
+    // 4 PM Central slot); the hour-before rule is only the fallback.
+    const opensAt = new Date(game.opensAt || new Date(game.startsAt).getTime() - 60 * 60 * 1000);
 
     const head = el("div", "market-head");
     head.append(
@@ -408,7 +410,7 @@
     const asOf = stamp && !Number.isNaN(stamp.getTime())
       ? ` · lines as of ${stamp.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
       : "";
-    copy.append(el("p", null, `${games.length} game${games.length === 1 ? "" : "s"} on the way — each opens for picks an hour before kickoff${asOf}.`));
+    copy.append(el("p", null, `${games.length} game${games.length === 1 ? "" : "s"} on the way — NFL opens an hour before kickoff, MLB every day at 4 PM CT${asOf}.`));
     head.append(copy);
     section.append(head);
 

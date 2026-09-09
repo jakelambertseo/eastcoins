@@ -20,7 +20,7 @@
 
 import { composeOpen, composeClosed, composeSettled, composeClosingSoon } from "./_announce.js";
 import { dueReminders, markSent } from "./_reminders.js";
-import { autoOpenMarkets } from "./_autoopen.js";
+import { autoOpenMarkets, quietInChat } from "./_autoopen.js";
 import { slugFor, etDate } from "./_slug.js";
 import { noteStatus } from "./_ops.js";
 import { discordEnabled, postDiscord, openedEmbed, settledEmbed } from "./_discord.js";
@@ -415,11 +415,13 @@ export async function onRequestPost(context) {
     // is due matters more than a market that is not open yet.
     console.error("auto-open threw", error);
   }
-  if (opened.length) {
-    const said = await sayInChat(context.env, composeOpen(opened));
-    if (!said.ok) console.error(`Picks: couldn't announce ${opened.length} auto-opened market(s): ${said.error}`);
-    if (discordEnabled(context.env)) await postDiscord(context.env, openedEmbed(opened)).catch(() => {});
+  // Chat hears only the loud sports (NFL). Discord hears everything.
+  const loudOpened = opened.filter((m) => !quietInChat(m.sport));
+  if (loudOpened.length) {
+    const said = await sayInChat(context.env, composeOpen(loudOpened));
+    if (!said.ok) console.error(`Picks: couldn't announce ${loudOpened.length} auto-opened market(s): ${said.error}`);
   }
+  if (opened.length && discordEnabled(context.env)) await postDiscord(context.env, openedEmbed(opened)).catch(() => {});
 
   // The countdown: 30, 10 and 5 minutes before kick-off, once each.
   // A market opened this very tick is skipped for this tick so "open"
@@ -428,7 +430,7 @@ export async function onRequestPost(context) {
   try {
     const justOpened = new Set(opened.map((m) => m.id));
     for (const group of await dueReminders(db)) {
-      const markets = group.markets.filter((m) => !justOpened.has(m.id));
+      const markets = group.markets.filter((m) => !justOpened.has(m.id) && !quietInChat(m.sport));
       if (!markets.length) { await markSent(db, group); continue; }
       const said = await sayInChat(context.env, composeClosingSoon(markets, group.minutes));
       if (!said.ok) { console.error(`Picks: couldn't post the ${group.threshold}-minute reminder: ${said.error}`); continue; }
@@ -456,7 +458,8 @@ export async function onRequestPost(context) {
     )
     .all();
 
-  const closingRows = closing.results || [];
+  // Only the loud sports get a closing line; the totals are theirs too.
+  const closingRows = (closing.results || []).filter((m) => !quietInChat(m.sport));
   let riding = { picks: 0, staked: 0 };
 
   if (closingRows.length) {
@@ -516,7 +519,7 @@ export async function onRequestPost(context) {
   // Same guarantee as the closing message: a market settles once, then
   // drops out of the candidate set, so this cannot repeat on the next
   // tick.
-  const settledMessage = composeSettled(results);
+  const settledMessage = composeSettled(results.filter((r) => !quietInChat(r.sport)));
   if (settledMessage) {
     const said = await sayInChat(context.env, settledMessage);
     if (!said.ok) {
