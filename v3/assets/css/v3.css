@@ -2151,6 +2151,11 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .cf-room{display:flex;flex-wrap:wrap;gap:6px}
 .cf-chipuser{display:inline-flex;align-items:center;gap:7px;padding:4px 10px 4px 4px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-2);font-size:.8rem;font-weight:700}
 .cf-chipuser.ulink,.cf-chipuser.ulink:hover{border-bottom-color:var(--line-2)}
+.cf-title-emote{width:32px;height:32px;object-fit:contain;vertical-align:-7px;margin-left:8px}
+.cf-tag{display:inline-block;margin-right:8px;padding:2px 7px;border-radius:6px;font-family:var(--body);font-size:.6rem;font-weight:800;letter-spacing:.12em;vertical-align:2px}
+.cf-tag.win{background:var(--green-dim);color:var(--green);border:1px solid rgba(77,219,139,.35)}
+.cf-tag.loss{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,107,133,.3)}
+.cf-res{display:inline-flex;align-items:center;justify-content:flex-end;min-width:44px}
 .cf-list.tall{max-height:520px}
 .cf-ledger{margin-top:14px}
 .cf-ledger-round{display:flex;align-items:center;gap:10px;margin:8px 2px 2px;padding-bottom:4px;border-bottom:1px solid var(--line)}

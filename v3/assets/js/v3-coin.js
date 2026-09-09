@@ -162,7 +162,15 @@
 
     const head = el("div", "viewhead");
     const copy = el("div");
-    copy.append(el("h1", null, "Coin Flip"), el("p", null, "One coin for the whole room. Thirty seconds to get in, then it flips. Heads or tails pays 2× — no edge, no house."));
+    const h1 = el("h1", null, "Coin Flip");
+    const emote = document.createElement("img");
+    emote.className = "cf-title-emote";
+    emote.src = "https://cdn.betterttv.net/emote/6928e7173a375a69ca4d0d47/2x.webp";
+    emote.alt = "";
+    emote.width = 32;
+    emote.height = 32;
+    h1.append(emote);
+    copy.append(h1, el("p", null, "One coin for the whole room. Thirty seconds to get in, then it flips. Heads or tails pays 2× — no edge, no house."));
     head.append(copy);
     refs.status = el("span", "cf-status", "Connecting…");
     head.append(refs.status);
@@ -272,8 +280,8 @@
     row.append(who);
     const res = el("span", "cf-res nums");
     if (showResult) {
-      if (b.status === "WON") { res.classList.add("up"); res.append(zc(b.profit, { sign: true })); }
-      else if (b.status === "LOST") { res.classList.add("down"); res.append(zc(-b.wager, { sign: true })); }
+      if (b.status === "WON") { res.classList.add("up"); res.append(el("span", "cf-tag win", "WIN"), zc(b.profit, { sign: true })); }
+      else if (b.status === "LOST") { res.classList.add("down"); res.append(el("span", "cf-tag loss", "LOSS"), zc(-b.wager, { sign: true })); }
       else res.textContent = "…";
     } else {
       res.textContent = b.side === "heads" ? "H" : "T";
