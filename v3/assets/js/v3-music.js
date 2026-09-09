@@ -1074,7 +1074,15 @@
         }
 
         const meta = el("div", "mq-meta");
-        meta.append(el("strong", null, entry.displayName || entry.login || "someone"));
+        const nameEl = el("strong");
+        if (entry.login) {
+          const a = el("a", "ulink", entry.displayName || entry.login);
+          a.href = `/u/${encodeURIComponent(String(entry.login).toLowerCase())}`;
+          nameEl.append(a);
+        } else {
+          nameEl.textContent = entry.displayName || "someone";
+        }
+        meta.append(nameEl);
         const good = Number(entry.up || 0) + Number(entry.fire || 0);
         const bad = Number(entry.trash || 0) + Number(entry.del || 0);
         const songs = Number(entry.rated || 0);

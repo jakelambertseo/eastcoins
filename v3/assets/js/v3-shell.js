@@ -49,7 +49,7 @@
   // had a chance to register. An unknown name still falls back.
   // "game" is the /g/<slug> page chat links to. It is a route, not a nav
   // item: the only way in is a link.
-  const ROUTES = ["events", "multiview", "picks", "music", "screen", "watch", "admin", "game"];
+  const ROUTES = ["events", "multiview", "picks", "music", "screen", "watch", "admin", "game", "profile"];
 
   /* ------------------------------------------------------------ legacy URLs
 
@@ -115,6 +115,7 @@
 
   function routeFromUrl() {
     if (/^\/g\/./i.test(location.pathname)) return "game";
+    if (/^\/u\/./i.test(location.pathname)) return "profile";
     const view = new URL(location.href).searchParams.get("view");
     return ROUTES.includes(view) ? view : "events";
   }
@@ -133,7 +134,7 @@
 
     // The game view owns its own URL (/g/<slug>); every other view is
     // reached by name.
-    if (push && name !== "game") {
+    if (push && name !== "game" && name !== "profile") {
       const url = name === "events" ? "/" : `/?view=${name}`;
       history.pushState({ view: name }, "", url);
     }
@@ -146,7 +147,7 @@
     for (const link of els.navLinks) {
       // A game page is a Picks page as far as the nav is concerned.
       const on = link.dataset.route === state.route ||
-        (state.route === "game" && link.dataset.route === "picks");
+        ((state.route === "game" || state.route === "profile") && link.dataset.route === "picks");
       if (link.classList.contains("nav-link")) {
         link.toggleAttribute("aria-current", on);
         if (on) link.setAttribute("aria-current", "page");
@@ -435,6 +436,19 @@
       go(name);
     });
   }
+
+  // Names link to profiles from every view. Handled once here so no
+  // view has to know how the profile route works.
+  document.addEventListener("click", (event) => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+    const a = event.target.closest("a.ulink");
+    if (!a) return;
+    const href = a.getAttribute("href") || "";
+    if (!href.startsWith("/u/")) return;
+    event.preventDefault();
+    history.pushState({ view: "profile" }, "", href);
+    go("profile", { push: false });
+  });
 
   window.addEventListener("popstate", () => {
     state.route = routeFromUrl();

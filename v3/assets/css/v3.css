@@ -2011,3 +2011,41 @@ body.screen-on .sc-eps{flex:0 0 auto}
 .sc-credit p{margin:0}
 .sc-credit a{color:var(--muted);font-weight:600;text-decoration:none}
 .sc-credit a:hover{color:var(--text)}
+
+/* ---------------------------------------------------------------- profiles
+   /u/<login>. Names everywhere link here; the page reuses the game
+   page's row and highlight styles so a pick looks the same wherever
+   it is shown. */
+a.ulink{color:inherit;text-decoration:none;border-bottom:1px solid transparent;transition:border-color .12s ease,color .12s ease}
+a.ulink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
+.profile{max-width:820px}
+.pf-head{display:flex;align-items:center;gap:18px;margin-bottom:18px}
+.pf-avatar{
+  position:relative;overflow:hidden;width:72px;height:72px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(150deg,#8e1231,#4a0a1c);color:var(--gold);font-family:var(--display);font-weight:800;font-size:1.3rem;
+  box-shadow:0 0 0 3px rgba(232,191,53,.45);
+}
+.pf-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .2s ease}
+.pf-avatar.has-logo{color:transparent}.pf-avatar.has-logo img{opacity:1}
+.pf-copy{min-width:0}
+.pf-copy h1{margin:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pf-copy p{margin:4px 0 0;color:var(--muted-2);font-size:.86rem}
+.pf-badges{display:inline-flex;gap:6px;flex-wrap:wrap}
+.pf-badge{
+  padding:3px 9px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-2);
+  color:var(--muted);font-family:var(--body);font-size:.66rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+}
+.pf-badge.crown{border-color:rgba(232,191,53,.45);background:var(--gold-dim);color:var(--gold)}
+.pf-badge.hot{border-color:rgba(255,107,133,.35);background:var(--red-dim);color:var(--red)}
+.pf-badge.cold{border-color:rgba(143,195,215,.3);background:rgba(143,195,215,.08);color:#8fc3d7}
+.pf-badge.dj{border-color:rgba(165,107,255,.4);background:rgba(165,107,255,.12);color:#c9b3ff}
+.pf-section{margin-top:24px}
+.pf-section h2{font-family:var(--display);font-weight:700;font-size:1.1rem;letter-spacing:-.02em;margin:0 0 10px;display:flex;align-items:baseline;gap:10px}
+.pf-section h2 small{color:var(--muted-2);font-size:.76rem;font-weight:600}
+.pf-sub{margin:14px 0 6px;color:var(--muted-2);font-size:.68rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase}
+.pf-songs{margin:0;padding-left:18px;color:var(--muted);font-size:.86rem;line-height:1.7}
+.profile .gp-hls{margin-top:14px}
+.profile .gp-hl.link{color:inherit;text-decoration:none}
+.profile .gp-hl.link:hover{border-color:var(--line-2)}
+.profile .gp-row .tpick-crest{margin-right:2px}
+@media (max-width:640px){.pf-head{gap:12px}.pf-avatar{width:56px;height:56px}}

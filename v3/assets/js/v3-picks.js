@@ -136,6 +136,13 @@
     return node;
   }
 
+  /** A person's name, linking to their profile. */
+  function nameLink(user, text) {
+    const a = el("a", "ulink", text != null ? text : (user?.displayName || user?.login || ""));
+    a.href = `/u/${encodeURIComponent(String(user?.login || "").toLowerCase())}`;
+    return a;
+  }
+
   /** A person: their Twitch picture when we have it, initials until then. */
   function avatar(user, className) {
     const name = user?.displayName || user?.login || "?";
@@ -745,10 +752,9 @@
       const user = el("div", "tuser");
       user.append(avatar(row.user, "tavatar"));
       const copy = el("span");
-      copy.append(
-        el("strong", null, row.rank === 1 ? `${row.user?.displayName} 👑` : row.user?.displayName),
-        el("small", null, me ? "You" : row.accuracy !== null ? `${row.accuracy}% right` : "")
-      );
+      const strong = el("strong");
+      strong.append(nameLink(row.user, row.rank === 1 ? `${row.user?.displayName} 👑` : row.user?.displayName));
+      copy.append(strong, el("small", null, me ? "You" : row.accuracy !== null ? `${row.accuracy}% right` : ""));
       user.append(copy);
       line.append(user);
 
@@ -846,7 +852,9 @@
       const user = el("div", "tuser");
       user.append(avatar(row.user, "tavatar"));
       const copy = el("span");
-      copy.append(el("strong", null, row.user?.displayName || row.user?.login), el("small", null, `@${row.user?.login}`));
+      const strong = el("strong");
+      strong.append(nameLink(row.user));
+      copy.append(strong, el("small", null, `@${row.user?.login}`));
       user.append(copy);
 
       const pick = el("div", "tpick");
@@ -916,7 +924,7 @@
     const me = local.login && top.user?.login === local.login;
     copy.append(
       el("span", "lw-kicker", `${season} leader`),
-      el("strong", "lw-name", top.user?.displayName || top.user?.login),
+      (() => { const n = el("strong", "lw-name"); n.append(nameLink(top.user)); return n; })(),
       el("small", "lw-note", me ? "That's you. Keep it." : `${top.record} · ${top.accuracy}% right`)
     );
 

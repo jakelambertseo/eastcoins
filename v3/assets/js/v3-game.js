@@ -194,7 +194,10 @@
       }
 
       const who = el("div", "gp-who");
-      who.append(el("b", null, p.user.displayName), el("span", null, `${sideOf(p).name} @ ${formatLine(p.line)}`));
+      const name = el("b");
+      const ul = link(`/u/${encodeURIComponent(p.user.login)}`, "ulink", p.user.displayName);
+      name.append(ul);
+      who.append(name, el("span", null, `${sideOf(p).name} @ ${formatLine(p.line)}`));
 
       const stake = el("div", "gp-stake");
       stake.append(el("b", "nums", String(p.wager)), document.createTextNode("staked"));
@@ -344,6 +347,7 @@
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
     const a = event.target.closest("a");
     if (!a || !root.contains(a)) return;
+    if (a.classList.contains("ulink")) return;   // the shell routes these
     if (a.dataset.picks) {
       event.preventDefault();
       shell.go("picks");

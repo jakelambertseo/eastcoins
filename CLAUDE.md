@@ -26,7 +26,10 @@
 > `/?view=screen` (nav label "Movies & TV": vidy.st player keyed by TMDB id, catalog
 > via `functions/api/screen/*` behind `TMDB_API_KEY`; `v3-screen.js`),
 > `/?view=watch&event=<id>`, `/?view=watch&url=<url>`, `/?view=admin`,
-> and `/g/<slug>` for a game page.
+> `/g/<slug>` for a game page, and `/u/<login>` for a profile
+> (`functions/u/[[path]].js` serves the shell with title/OG; `v3-profile.js`
+> renders from `/api/picks/profile?login=`; names carry class `ulink` and
+> the shell routes their clicks).
 >
 > **Old links still work.** `v3-shell.js` rewrites `?event=`, `?watch=`,
 > and the `games` / `streams` / `sicko` view names on load, and
