@@ -966,12 +966,18 @@
           img.loading = "lazy";
           row.append(img);
         }
-        row.append(el("span", "mtop-name", entry.displayName || entry.login || "someone"));
+        row.append(profileLink(entry.login || entry.displayName, entry.displayName || entry.login || "someone", "mtop-name"));
         row.append(el("span", "mtop-c", String(entry.count || 0)));
         list.append(row);
       });
       box.append(list);
       return box;
+    }
+
+    function profileLink(login, text, className) {
+      const a = el("a", `ulink${className ? " " + className : ""}`, text);
+      a.href = `/u/${encodeURIComponent(String(login || text || "").toLowerCase())}`;
+      return a;
     }
 
     function listenersPanel(state) {
@@ -994,7 +1000,7 @@
       }
 
       const list = el("div", "mwho-list");
-      for (const name of names) list.append(el("span", "mwho-chip", name));
+      for (const name of names) list.append(profileLink(name, name, "mwho-chip"));
       box.append(list);
 
       if (total > names.length) {
