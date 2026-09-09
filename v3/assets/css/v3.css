@@ -1538,6 +1538,15 @@ body.watch-on .playerframe{
 }
 
 /* Reactions — under the video, one row. */
+/* Read-only progress under the stage. No pointer events: it cannot seek. */
+.mprog{display:flex;align-items:center;gap:10px;margin:-4px 2px 2px;pointer-events:none;user-select:none}
+.mprog-track{flex:1;height:5px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden}
+.mprog-fill{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#57c46b,var(--gold));transition:width .9s linear}
+.mprog-t{flex:0 0 auto;min-width:36px;color:var(--muted-2);font-size:.72rem;font-weight:700}
+.mprog-t:last-child{text-align:right}
+.mprog.is-unknown .mprog-track{background:repeating-linear-gradient(90deg,rgba(255,255,255,.1) 0 6px,transparent 6px 12px)}
+body.is-rasputin .mprog-fill{background:linear-gradient(90deg,#ff3d81,#ffd23f,#4ddb8b,#4dc3ff,#a56bff)}
+@media (prefers-reduced-motion:reduce){.mprog-fill{transition:none}}
 .reactbar{display:flex;gap:7px;flex-wrap:wrap}
 .reactbtn{
   position:relative;display:flex;align-items:center;gap:6px;

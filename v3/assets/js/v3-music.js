@@ -462,6 +462,52 @@
     }
   }
 
+  /* ------------------------------------------------------------ progress
+     Once a second: where the player actually is, over how long the video
+     is. With no player yet (or paused for the audio lock) it falls back
+     to the room's own clock so the bar still moves. */
+  let progressTimer = 0;
+
+  function mmss(seconds) {
+    const s = Math.max(0, Math.floor(Number(seconds) || 0));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  }
+
+  function tickProgress() {
+    const state = conn.state;
+    const bar = refs.progress;
+    if (!bar) return;
+    if (!state?.current) { bar.hidden = true; return; }
+
+    let now = elapsedSeconds(state);
+    let duration = 0;
+    try {
+      const instance = player.instance;
+      const t = Number(instance?.getCurrentTime?.());
+      const d = Number(instance?.getDuration?.());
+      if (Number.isFinite(t) && t > 0) now = t;
+      if (Number.isFinite(d) && d > 0) duration = d;
+    } catch { /* player not ready; the room clock will do */ }
+
+    bar.hidden = false;
+    refs.progressNow.textContent = mmss(now);
+    refs.progressEnd.textContent = duration ? mmss(duration) : "";
+    const pct = duration ? Math.max(0, Math.min(100, (100 * now) / duration)) : 0;
+    refs.progressFill.style.width = `${pct}%`;
+    bar.classList.toggle("is-unknown", !duration);
+  }
+
+  function startProgressTicker() {
+    if (progressTimer) return;
+    tickProgress();
+    progressTimer = window.setInterval(tickProgress, 1000);
+  }
+
+  function stopProgressTicker() {
+    window.clearInterval(progressTimer);
+    progressTimer = 0;
+  }
+
   let driftTimer = 0;
 
   function startDriftWatch() {
@@ -1242,11 +1288,25 @@
       stage = el("div", "mstage");
       refs.stagewrap.append(el("span", "mstage-glow"), stage);
 
+      // Progress, read-only. It shows where the shared timeline is; it
+      // cannot move it, because one person seeking would only put them
+      // out of step with everyone else in the room.
+      refs.progress = el("div", "mprog");
+      refs.progress.setAttribute("aria-hidden", "true");
+      refs.progressFill = el("i", "mprog-fill");
+      const track = el("div", "mprog-track");
+      track.append(refs.progressFill);
+      refs.progressNow = el("span", "mprog-t nums", "0:00");
+      refs.progressEnd = el("span", "mprog-t nums", "");
+      refs.progress.append(refs.progressNow, track, refs.progressEnd);
+      refs.progress.hidden = true;
+      startProgressTicker();
+
       // Volume is built once so dragging the slider is never interrupted
       // by somebody else joining the room.
       refs.reactSlot = el("div", "reactbar");
       refs.resultsSlot = el("div", "mslot");
-      left.append(refs.stagewrap, refs.reactSlot, volumePanel(), buildSearchField(), refs.resultsSlot);
+      left.append(refs.stagewrap, refs.progress, refs.reactSlot, volumePanel(), buildSearchField(), refs.resultsSlot);
       shellEl.append(left);
 
       refs.side = el("div", "mside");
@@ -1426,6 +1486,7 @@
       },
       unmount() {
         document.body.classList.remove("music-view");
+        stopProgressTicker();
         stopJam(stage);
         destroyPlayer();
         // Leaving the room stops counting you as a listener, which keeps
