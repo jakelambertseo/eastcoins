@@ -295,7 +295,7 @@
 
   function upcomingCard(game) {
     const card = el("article", "market upcoming");
-    const opensAt = new Date(new Date(game.startsAt).getTime() - 30 * 60 * 1000);
+    const opensAt = new Date(new Date(game.startsAt).getTime() - 60 * 60 * 1000);
 
     const head = el("div", "market-head");
     head.append(
@@ -322,7 +322,7 @@
 
     const opens = Number.isNaN(opensAt.getTime()) ? "" : opensAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
     card.append(head, sides, el("p", "market-foot",
-      `Opens for picks ${opens ? "at " + opens : "30 minutes before kickoff"} · line locks then, and may move until it does.`));
+      `Opens for picks ${opens ? "at " + opens : "an hour before kickoff"} · line locks then, and may move until it does.`));
     return card;
   }
 
@@ -338,7 +338,7 @@
     const asOf = stamp && !Number.isNaN(stamp.getTime())
       ? ` · lines as of ${stamp.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
       : "";
-    copy.append(el("p", null, `${games.length} game${games.length === 1 ? "" : "s"} on the way — each opens for picks 30 minutes before kickoff${asOf}.`));
+    copy.append(el("p", null, `${games.length} game${games.length === 1 ? "" : "s"} on the way — each opens for picks an hour before kickoff${asOf}.`));
     head.append(copy);
     section.append(head);
 
@@ -392,8 +392,8 @@
           local.failed
             ? "The Picks catalog didn't answer. This is usually temporary."
             : local.upcoming.length
-              ? "The next games are listed below. Each opens 30 minutes before kickoff."
-              : "Markets open around 30 minutes before kickoff. Check back closer to game time.")
+              ? "The next games are listed below. Each opens an hour before kickoff."
+              : "Markets open an hour before kickoff. Check back closer to game time.")
       );
       wrap.append(empty);
     } else {
@@ -732,7 +732,7 @@
     const rows = local.leaderboard;
 
     if (!rows.length) {
-      wrap.append(emptyNote("No standings yet", "The board fills in as games settle. First NFL markets open 30 minutes before each kick-off."));
+      wrap.append(emptyNote("No standings yet", "The board fills in as games settle. NFL markets open an hour before each kick-off."));
       return wrap;
     }
 
@@ -934,7 +934,7 @@
     if (!top) {
       copy.append(el("span", "lw-kicker", `${season} leader`),
         el("strong", "lw-name", "The crown is up for grabs"),
-        el("small", "lw-note", "First settled pick takes it. Markets open 30 minutes before kick-off."));
+        el("small", "lw-note", "First settled pick takes it. Markets open an hour before kick-off."));
       box.append(crown, copy);
       return box;
     }

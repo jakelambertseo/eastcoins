@@ -82,8 +82,11 @@
 >
 > **Settlement grades from The Odds API scores, not ESPN** — ESPN's site
 > API returns 403 to Cloudflare's IP range. `settle.js` also runs
-> `_autoopen.js` every tick: NFL games due within 30 minutes get a market
-> with the median h2h line and one slate-wide chat message. The schedule
+> `_autoopen.js` every tick: NFL games due within an hour get a market
+> with the median h2h line and one slate-wide chat message, then
+> `_reminders.js` posts "Closing in X minutes" at 30/10/5 (once per market
+> per threshold, one line per threshold per tick). The cron runs every 5
+> minutes. The schedule
 > is cached 30 minutes (one credit per refresh, shared with the Picks
 > page's Upcoming list via `/api/picks/upcoming`); a fresh price is
 > fetched only when a game is due, so section 9.5's quota concern is
