@@ -98,7 +98,15 @@ export function botGate(context) {
     // !odds sends $(1|all) so a bare command still reaches us; a lone
     // "all" means "no argument". Only the bare word — "all rockies" is a
     // real request (bet everything on the Rockies) and passes through.
-    args: String(url.searchParams.get("args") || "").trim().replace(/^all$/i, "")
+    // Two StreamElements fallbacks both mean "no argument": a literal
+    // `all` from $(1|all), and the sender's own name from $(touser),
+    // which hands back the caller's login when nothing was typed.
+    args: (() => {
+      const raw = String(url.searchParams.get("args") || "").trim();
+      if (/^all$/i.test(raw)) return "";
+      if (raw.toLowerCase() === login || raw.toLowerCase() === "@" + login) return "";
+      return raw;
+    })()
   };
 }
 
