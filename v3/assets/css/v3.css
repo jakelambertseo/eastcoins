@@ -1838,6 +1838,9 @@ body.is-rasputin .mprog-fill{background:linear-gradient(90deg,#ff3d81,#ffd23f,#4
   color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer;
 }
 .trow.thead .tsort.right{justify-content:flex-end}
+/* the standings carry two record columns, NFL and MLB */
+.tablecard.standings .trow{min-width:700px;grid-template-columns:62px minmax(0,1fr) 140px 100px 100px}
+.trecord.dim{color:var(--muted-2)}
 .trow.thead .tsort:hover{color:var(--text)}
 .trow.thead .tsort.on{color:var(--gold)}
 .tsort-arrow{font-style:normal;font-size:.7rem;opacity:.55}

@@ -84,9 +84,10 @@ export function pickEmbed({ user, market, pick }) {
     color: COLOR.gold,
     author: { name: `${user.displayName || user.login} locked a pick`, url: `${SITE}/u/${encodeURIComponent(user.login)}` },
     description: `**${pick.team} ${line(pick.odds)}** vs ${opp}\n` +
-      `Stake **${zc(pick.wager)}** · pays **${zc(pick.returnsIfWon)}** if it lands${pick.allIn ? " · 🎰 ALL IN" : ""}`,
+      `Stake **${zc(pick.wager)}** · pays **${zc(pick.returnsIfWon)}** if it lands${pick.allIn ? " · 🎰 ALL IN" : ""}\n` +
+      `${SITE}/g/${slug}`,
     thumbnail: logoFor(market.sport, pick.team) ? { url: logoFor(market.sport, pick.team) } : undefined,
-    footer: { text: `${market.away_name} at ${market.home_name} · eastcoin.vip/g/${slug}` },
+    footer: { text: `${market.away_name} at ${market.home_name}` },
     timestamp: new Date().toISOString()
   };
 }
@@ -101,7 +102,7 @@ export function openedEmbed(markets) {
     color: COLOR.blue,
     title: markets.length === 1 ? "Picks are open" : `Picks are open on ${markets.length} games`,
     url: `${SITE}/?view=picks`,
-    description: rows.join("\n") + "\n\n`!pick <amount> <team>` in chat, or eastcoin.vip/?view=picks",
+    description: rows.join("\n") + `\n\n\`!pick <amount> <team>\` in chat, or ${SITE}/?view=picks`,
     footer: { text: "Lines are locked at open — everyone gets the same price." },
     timestamp: new Date().toISOString()
   };
@@ -129,7 +130,7 @@ export function settledEmbed(entry) {
     color: voided ? COLOR.grey : entry.won ? COLOR.green : COLOR.red,
     title,
     url: `${SITE}/g/${entry.slug}`,
-    description: `${summary}${lines.length ? "\n\n" + lines.join("\n") : "\n\nNobody had a pick on this one."}`,
+    description: `${summary}${lines.length ? "\n\n" + lines.join("\n") : "\n\nNobody had a pick on this one."}\n\n${SITE}/g/${entry.slug}`,
     thumbnail: !voided && logoFor(entry.sport, entry.winnerName) ? { url: logoFor(entry.sport, entry.winnerName) } : undefined,
     footer: { text: entry.failed ? `⚠ ${entry.failed} payout(s) failed — being retried` : "Settled automatically from the final score" },
     timestamp: new Date().toISOString()

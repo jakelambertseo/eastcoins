@@ -615,6 +615,23 @@ async function getLeaderboard(db) {
       GROUP BY p.user_id
       ORDER BY profit DESC, wins DESC, u.twitch_login ASC
       LIMIT 100`).bind(season.id).all();
+
+  // The same standings split by league, so the board can show an NFL
+  // record and an MLB record side by side.
+  const byLeague = await db.prepare(`SELECT p.user_id, UPPER(COALESCE(m.league, '')) AS league,
+            SUM(CASE WHEN p.status = 'WON'  THEN 1 ELSE 0 END) AS wins,
+            SUM(CASE WHEN p.status = 'LOST' THEN 1 ELSE 0 END) AS losses,
+            SUM(CASE WHEN p.status IN ('WON','LOST') THEN p.profit ELSE 0 END) AS profit
+       FROM picks p JOIN markets m ON m.id = p.market_id
+      WHERE m.season_id = ? AND p.status IN ('WON','LOST')
+      GROUP BY p.user_id, league`).bind(season.id).all().catch(() => ({ results: [] }));
+  const records = new Map();
+  for (const r of byLeague.results || []) {
+    const per = records.get(String(r.user_id)) || {};
+    per[String(r.league || "OTHER")] = { wins: Number(r.wins || 0), losses: Number(r.losses || 0), profit: Number(r.profit || 0) };
+    records.set(String(r.user_id), per);
+  }
+
   return (result.results || []).map((row, index) => {
     const wins = Number(row.wins || 0);
     const losses = Number(row.losses || 0);
@@ -625,6 +642,7 @@ async function getLeaderboard(db) {
       wins,
       losses,
       record: `${wins}\u2013${losses}`,
+      records: records.get(String(row.user_id)) || {},
       accuracy: wins + losses ? Math.round(100 * wins / (wins + losses)) : null,
       user: {
         id: String(row.user_id),

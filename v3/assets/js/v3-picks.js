@@ -169,7 +169,7 @@
   }
 
   function skelRows(count, ledger) {
-    const card = el("div", `tablecard${ledger ? " ledger" : ""}`);
+    const card = el("div", `tablecard${ledger ? " ledger" : " standings"}`);
     card.setAttribute("aria-busy", "true");
     for (let i = 0; i < count; i += 1) {
       const row = el("div", "trow is-sk");
@@ -182,6 +182,7 @@
       a.style.justifySelf = "end";
       b.style.justifySelf = "end";
       row.append(sk(26, 12), user, a, b);
+      if (!ledger) { const c = sk(52, 12); c.style.justifySelf = "end"; row.append(c); }
       card.append(row);
     }
     return card;
@@ -842,12 +843,16 @@
     return wrap;
   }
 
+  const recordOf = (r, league) => r.records?.[league] || null;
+  const recordScore = (r, league) => { const x = recordOf(r, league); return x ? x.wins * 1000 - x.losses : -1e9; };
   const LEADER_COLUMNS = [
     ["rank", "Rank", (r) => r.rank, "asc"],
     ["user", "User", (r) => String(r.user?.displayName || r.user?.login || "").toLowerCase(), "asc"],
     ["profit", "Picks profit", (r) => r.profit, "desc"],
-    ["record", "Record", (r) => r.wins * 1000 - r.losses, "desc"]
+    ["nfl", "NFL record", (r) => recordScore(r, "NFL"), "desc"],
+    ["mlb", "MLB record", (r) => recordScore(r, "MLB"), "desc"]
   ];
+  const RIGHT_COLUMNS = new Set(["profit", "nfl", "mlb"]);
 
   function sortedLeaders() {
     const col = LEADER_COLUMNS.find(([key]) => key === local.sort.key) || LEADER_COLUMNS[2];
@@ -875,11 +880,11 @@
       return wrap;
     }
 
-    const card = el("div", "tablecard");
+    const card = el("div", "tablecard standings");
     const head = el("div", "trow thead");
     for (const [key, label, , natural] of LEADER_COLUMNS) {
       const on = local.sort.key === key;
-      const btn = el("button", `tsort${on ? " on " + local.sort.dir : ""}${key === "profit" || key === "record" ? " right" : ""}`);
+      const btn = el("button", `tsort${on ? " on " + local.sort.dir : ""}${RIGHT_COLUMNS.has(key) ? " right" : ""}`);
       btn.type = "button";
       btn.append(el("span", null, label), el("i", "tsort-arrow", on ? (local.sort.dir === "asc" ? "▲" : "▼") : "⇅"));
       btn.setAttribute("aria-sort", on ? (local.sort.dir === "asc" ? "ascending" : "descending") : "none");
@@ -909,7 +914,13 @@
 
       const profit = el("span", `tprofit right ${row.profit < 0 ? "down" : "up"}`);
       profit.append(zc(row.profit, { sign: true }));
-      line.append(profit, el("span", "trecord right nums", row.record));
+      const rec = (league) => {
+        const x = recordOf(row, league);
+        const cell = el("span", `trecord right nums${x ? "" : " dim"}`, x ? `${x.wins}\u2013${x.losses}` : "\u2014");
+        if (x) cell.title = `${league}: ${x.profit > 0 ? "+" : ""}${x.profit} ZC`;
+        return cell;
+      };
+      line.append(profit, rec("NFL"), rec("MLB"));
       card.append(line);
     }
     wrap.append(card);
