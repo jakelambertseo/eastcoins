@@ -595,5 +595,7 @@
   applyPrefs();
   armChatLoad();
   render();
-  loadSession();
+  // Views that draw differently for the person logged in (their own
+  // profile) wait on this rather than racing the first session read.
+  window.ECV3.sessionReady = loadSession();
 })();

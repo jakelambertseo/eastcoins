@@ -501,9 +501,12 @@
     root.replaceChildren(skeletonPage());
     if (!login) { root.replaceChildren(notice("No profile here", "Profiles live at eastcoin.vip/u/<twitch name>.")); return; }
 
+    // The session is read in parallel with everything else on a cold
+    // load; wait for it so "is this my page" is answered before drawing.
     const [payload, music] = await Promise.all([
       fetch(`/api/picks/profile?login=${encodeURIComponent(login)}`).then((r) => r.json()).catch(() => null),
-      musicFor(login)
+      musicFor(login),
+      Promise.resolve(window.ECV3?.sessionReady).catch(() => null)
     ]);
     if (mine !== token || !root.isConnected) return;
 
