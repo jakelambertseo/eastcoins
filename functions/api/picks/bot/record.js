@@ -7,6 +7,7 @@
    ============================================================ */
 
 import { say, botGate, findUser } from "./_bot.js";
+import { badgesFor, streakOf } from "../_badges.js";
 
 export async function onRequestGet(context) {
   const gate = botGate(context);
@@ -46,10 +47,24 @@ export async function onRequestGet(context) {
     return say(`${who} nothing settled yet · ${active} pick${active === 1 ? "" : "s"} riding.`);
   }
 
+  // The streak, in the order things were decided, and any badges.
+  const order = await db
+    .prepare(`SELECT status FROM picks WHERE user_id = ? AND status IN ('WON','LOST') ORDER BY datetime(settled_at) ASC`)
+    .bind(user.id)
+    .all();
+  const { current } = streakOf((order.results || []).map((r) => r.status));
+  const streak = current >= 3 ? ` · 🔥 W${current}` : current <= -3 ? ` · 🧊 L${Math.abs(current)}` : current ? ` · ${current > 0 ? "W" : "L"}${Math.abs(current)}` : "";
+
+  let marks = "";
+  try {
+    const { byLogin } = await badgesFor(context.env, db);
+    marks = (byLogin[user.login] || []).filter((b) => b.key !== "hot" && b.key !== "cold").map((b) => b.emoji).join("");
+  } catch { /* badges are decoration; the record still goes out */ }
+
   const sign = net > 0 ? "+" : net < 0 ? "\u2212" : "";
   return say(
-    `${who} ${won}-${lost}${voided ? ` (${voided} void)` : ""} · ` +
-    `${sign}${Math.abs(net).toLocaleString()} ZC` +
+    `${who}${marks ? " " + marks : ""} ${won}-${lost}${voided ? ` (${voided} void)` : ""} · ` +
+    `${sign}${Math.abs(net).toLocaleString()} ZC${streak}` +
     `${active ? ` · ${active} riding` : ""}`
   );
 }

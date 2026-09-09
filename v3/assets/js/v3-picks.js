@@ -143,6 +143,14 @@
     return a;
   }
 
+  /** A name with its badges after it. */
+  function nameWithBadges(user, text) {
+    const wrap = el("span", "namewrap");
+    wrap.append(nameLink(user, text));
+    window.ECBadges?.decorate(wrap, user?.login);
+    return wrap;
+  }
+
   /** A person: their Twitch picture when we have it, initials until then. */
   function avatar(user, className) {
     const name = user?.displayName || user?.login || "?";
@@ -753,7 +761,7 @@
       user.append(avatar(row.user, "tavatar"));
       const copy = el("span");
       const strong = el("strong");
-      strong.append(nameLink(row.user, row.rank === 1 ? `${row.user?.displayName} 👑` : row.user?.displayName));
+      strong.append(nameWithBadges(row.user, row.user?.displayName));
       copy.append(strong, el("small", null, me ? "You" : row.accuracy !== null ? `${row.accuracy}% right` : ""));
       user.append(copy);
       line.append(user);
@@ -853,7 +861,7 @@
       user.append(avatar(row.user, "tavatar"));
       const copy = el("span");
       const strong = el("strong");
-      strong.append(nameLink(row.user));
+      strong.append(nameWithBadges(row.user));
       copy.append(strong, el("small", null, `@${row.user?.login}`));
       user.append(copy);
 
@@ -924,7 +932,7 @@
     const me = local.login && top.user?.login === local.login;
     copy.append(
       el("span", "lw-kicker", `${season} leader`),
-      (() => { const n = el("strong", "lw-name"); n.append(nameLink(top.user)); return n; })(),
+      (() => { const n = el("strong", "lw-name"); n.append(nameWithBadges(top.user)); return n; })(),
       el("small", "lw-note", me ? "That's you. Keep it." : `${top.record} · ${top.accuracy}% right`)
     );
 

@@ -10,6 +10,7 @@
 
 import { slugFor } from "./_slug.js";
 import { utc } from "./_game.js";
+import { badgesFor } from "./_badges.js";
 
 const json = (body, status = 200) => Response.json(body, {
   status,
@@ -121,8 +122,12 @@ export async function onRequestGet(context) {
     rank = at === -1 ? null : at + 1;
   }
 
+  let badges = [];
+  try { badges = (await badgesFor(context.env, db)).byLogin[login] || []; } catch { badges = []; }
+
   return json({
     ok: true,
+    badges,
     user: {
       id: String(user.twitch_id),
       login: String(user.twitch_login).toLowerCase(),

@@ -29,7 +29,10 @@
 > `/g/<slug>` for a game page, and `/u/<login>` for a profile
 > (`functions/u/[[path]].js` serves the shell with title/OG; `v3-profile.js`
 > renders from `/api/picks/profile?login=`; names carry class `ulink` and
-> the shell routes their clicks).
+> the shell routes their clicks). Badges (👑🔥🧊💀🎵) are computed for
+> everyone at once in `_badges.js` (cached 60s; 🎵 reads the music worker's
+> `/history/main`), served by `/api/picks/badges`, and drawn next to names
+> by `v3-badges.js`'s `ECBadges.decorate(node, login)`.
 >
 > **Old links still work.** `v3-shell.js` rewrites `?event=`, `?watch=`,
 > and the `games` / `streams` / `sicko` view names on load, and

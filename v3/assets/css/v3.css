@@ -2053,3 +2053,12 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .profile .gp-hl.link:hover{border-color:var(--line-2)}
 .profile .gp-row .tpick-crest{margin-right:2px}
 @media (max-width:640px){.pf-head{gap:12px}.pf-avatar{width:56px;height:56px}}
+
+/* ---------------------------------------------------------------- badges
+   Emoji after a name, anywhere a name appears; hover for the meaning. */
+.namewrap{display:inline}
+.badges{display:inline-flex;gap:3px;margin-left:6px;vertical-align:baseline;white-space:nowrap}
+.badges.compact .badge{font-size:.9em;line-height:1;cursor:default}
+.mtop-name .badges,.mq-meta .badges{margin-left:5px}
+.gp-who b .badges{margin-left:5px}
+.lw-name .badges .badge{font-size:.75em}

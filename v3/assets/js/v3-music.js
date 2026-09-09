@@ -966,7 +966,10 @@
           img.loading = "lazy";
           row.append(img);
         }
-        row.append(profileLink(entry.login || entry.displayName, entry.displayName || entry.login || "someone", "mtop-name"));
+        const who = el("span", "mtop-name");
+        who.append(profileLink(entry.login || entry.displayName, entry.displayName || entry.login || "someone"));
+        window.ECBadges?.decorate(who, entry.login || entry.displayName);
+        row.append(who);
         row.append(el("span", "mtop-c", String(entry.count || 0)));
         list.append(row);
       });
@@ -1085,6 +1088,7 @@
           const a = el("a", "ulink", entry.displayName || entry.login);
           a.href = `/u/${encodeURIComponent(String(entry.login).toLowerCase())}`;
           nameEl.append(a);
+          window.ECBadges?.decorate(nameEl, entry.login);
         } else {
           nameEl.textContent = entry.displayName || "someone";
         }

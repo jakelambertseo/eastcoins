@@ -197,6 +197,7 @@
       const name = el("b");
       const ul = link(`/u/${encodeURIComponent(p.user.login)}`, "ulink", p.user.displayName);
       name.append(ul);
+      window.ECBadges?.decorate(name, p.user.login);
       who.append(name, el("span", null, `${sideOf(p).name} @ ${formatLine(p.line)}`));
 
       const stake = el("div", "gp-stake");

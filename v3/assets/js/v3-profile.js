@@ -167,11 +167,10 @@
     head.append(avatar(u, "pf-avatar"));
     const copy = el("div", "pf-copy");
     const name = el("h1", null, u.displayName);
+    // Badges come from the same server answer every other name uses,
+    // so the profile can never disagree with the leaderboard.
     const badges = el("span", "pf-badges");
-    if (k.rank === 1) badges.append(el("span", "pf-badge crown", "👑 Season leader"));
-    if (k.streak.current >= 3) badges.append(el("span", "pf-badge hot", `🔥 ${k.streak.current} in a row`));
-    if (k.streak.current <= -3) badges.append(el("span", "pf-badge cold", `🧊 ${Math.abs(k.streak.current)} straight`));
-    if (music && music.rating >= 1050) badges.append(el("span", "pf-badge dj", `🎧 ${music.rating} ELO`));
+    for (const b of data.badges || []) badges.append(el("span", `pf-badge ${b.key}`, `${b.emoji} ${b.label}`));
     name.append(badges);
     copy.append(name);
     const sub = el("p", null,
