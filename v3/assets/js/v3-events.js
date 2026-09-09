@@ -680,7 +680,9 @@
         coin.alt = "";
         coin.width = 14;
         coin.height = 14;
-        strip.append(coin, document.createTextNode(`Picks open ${opens.toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })} · ${nick(soon.away).toUpperCase()} ${line(soon.awayLine)} · ${nick(soon.home).toUpperCase()} ${line(soon.homeLine)}`));
+        const text = document.createElement("span");
+        text.textContent = `Picks open ${opens.toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })} · ${nick(soon.away).toUpperCase()} ${line(soon.awayLine)} · ${nick(soon.home).toUpperCase()} ${line(soon.homeLine)}`;
+        strip.append(coin, text);
         strip.classList.add("soon");
         strip.hidden = false;
       }
