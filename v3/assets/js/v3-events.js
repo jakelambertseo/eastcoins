@@ -122,7 +122,7 @@
 
   /* ---------------------------------------------------------- render */
 
-  function crest(team) {
+  function crest(team, nfl) {
     const API = window.EastcoinStreamedAPI;
     const el = document.createElement("span");
     el.className = "crest";
@@ -135,7 +135,7 @@
 
     // NFL clubs fall back to the league's own logo when the provider
     // has no badge for them.
-    const url = (team?.badge && API?.badgeUrl ? API.badgeUrl(team.badge) : "") || nflLogo(team) || "";
+    const url = (nfl ? nflLogo(team) : "") || (team?.badge && API?.badgeUrl ? API.badgeUrl(team.badge) : "") || "";
     if (url) {
       const img = document.createElement("img");
       img.alt = "";
@@ -315,7 +315,9 @@
     const badge = document.createElement("span");
     badge.className = "teamlogo";
     const API = window.EastcoinStreamedAPI;
-    const url = (team?.badge && API?.badgeUrl ? API.badgeUrl(team.badge) : "") || (nfl ? nflLogo(team) : "") || "";
+    // The provider hands every NFL club the same league badge, so for
+    // NFL the club's own logo comes first and the badge is the fallback.
+    const url = (nfl ? nflLogo(team) : "") || (team?.badge && API?.badgeUrl ? API.badgeUrl(team.badge) : "") || "";
     if (url) {
       const img = document.createElement("img");
       img.alt = "";
@@ -396,12 +398,13 @@
     wrap.className = "fallback";
     const home = match?.teams?.home;
     const away = match?.teams?.away;
+    const nfl = isNfl(match);
     if (home || away) {
-      wrap.append(crest(home));
+      wrap.append(crest(home, nfl));
       const vs = document.createElement("span");
       vs.className = "vs";
       vs.textContent = "VS";
-      wrap.append(vs, crest(away));
+      wrap.append(vs, crest(away, nfl));
     } else {
       const vs = document.createElement("span");
       vs.className = "vs";
