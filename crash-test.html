@@ -203,7 +203,8 @@
   /* ---------------------------------------------------------- helpers */
 
   const fmt = (n) => Number(n).toLocaleString();
-  const mult = (t) => Math.pow(Math.E, 0.00006 * t * t * 0.5 + 0.0009 * t);   // gentle then steep, ms in
+  // The standard crash curve: 1.82× at 10s, 3.3× at 20s, 11× at 40s. Milliseconds in.
+  const mult = (t) => Math.exp(0.00006 * t);
   function toast(text, ms = 1800) {
     els.toast.textContent = text;
     els.toast.classList.add("show");
@@ -324,7 +325,7 @@
     const W = els.graph.width, H = els.graph.height;
     ctx.clearRect(0, 0, W, H);
     const pad = 40;
-    const maxT = Math.max(4000, t * 1.15);
+    const maxT = Math.max(8000, t * 1.15);
     const maxM = Math.max(2, m * 1.15);
     const x = (tt) => pad + (tt / maxT) * (W - pad * 2);
     const y = (mm) => H - pad - ((mm - 1) / (maxM - 1)) * (H - pad * 2);
