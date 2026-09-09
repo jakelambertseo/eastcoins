@@ -58,7 +58,7 @@ export async function onRequestGet(context) {
   let marks = "";
   try {
     const { byLogin } = await badgesFor(context.env, db);
-    marks = (byLogin[user.login] || []).filter((b) => b.key !== "hot" && b.key !== "cold").map((b) => b.emoji).join("");
+    marks = (byLogin[user.login] || []).filter((b) => b.key !== "hot" && b.key !== "cold" && b.key !== "fire").map((b) => b.emoji).join("");
   } catch { /* badges are decoration; the record still goes out */ }
 
   const sign = net > 0 ? "+" : net < 0 ? "\u2212" : "";
