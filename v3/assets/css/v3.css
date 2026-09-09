@@ -636,6 +636,9 @@ a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
 }
 .summarycard.wallet strong{color:#b6f1c4}
 .summarycard small{display:block;margin-top:4px;color:var(--muted-2);font-size:.72rem}
+/* An amount inside the big figure is not a label: keep the figure's size. */
+.summarycard strong .zc-amount{display:inline-flex;font-size:inherit;font-weight:inherit;letter-spacing:inherit;text-transform:none;color:inherit;margin:0;gap:7px}
+.summarycard strong .zcoin-mark{width:20px;height:20px}
 
 .viewtabs{
   display:flex;align-items:center;gap:5px;flex-wrap:wrap;
