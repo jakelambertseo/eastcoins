@@ -139,7 +139,7 @@
     if (url) {
       const img = document.createElement("img");
       img.alt = "";
-      img.loading = "lazy";
+      img.loading = nfl ? "eager" : "lazy";   // club logos are the card; do not make them wait
       img.addEventListener("load", () => el.classList.add("has-badge"));
       img.addEventListener("error", () => img.remove());
       img.src = url;
@@ -321,7 +321,7 @@
     if (url) {
       const img = document.createElement("img");
       img.alt = "";
-      img.loading = "lazy";
+      img.loading = nfl ? "eager" : "lazy";
       img.addEventListener("load", () => badge.classList.add("has-badge"));
       img.addEventListener("error", () => img.remove());
       img.src = url;
