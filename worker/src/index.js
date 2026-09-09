@@ -445,6 +445,7 @@ export class MusicRoom extends DurableObject {
     this.connectingIrc = false;
     this.lastChatSkipAt = 0;
     this.lastRasputinAt = 0;
+    this.statsDirty = false;
     this.lastQueueClearAt = 0;
 
     this.ctx.getWebSockets().forEach((ws) => {
@@ -1563,6 +1564,7 @@ export class MusicRoom extends DurableObject {
     const outgoing = this.state.current;
     // Scored on the way out, when its reactions are final.
     this.rateFinishedSong(outgoing);
+    if (outgoing) this.statsDirty = true;
     // And stamped, so History can be ordered by what actually played
     // rather than by what was asked for. A song skipped after sitting in
     // the queue was requested long before it left, and ordering by the
@@ -1589,6 +1591,15 @@ export class MusicRoom extends DurableObject {
 
   async persistAndBroadcast() {
     await this.ctx.storage.put("music-state", this.state);
+    // A song that just finished moved its requester's rating and stamped
+    // history, in memory only. Every skip and every natural end came
+    // through here without writing those, so a quiet spell or an eviction
+    // between songs silently dropped the rating. Write them when they
+    // changed; nothing extra on the reaction-and-volume traffic.
+    if (this.statsDirty) {
+      this.statsDirty = false;
+      await this.persistHistoryAndStats();
+    }
     this.broadcastState();
   }
 
