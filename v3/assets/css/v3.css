@@ -2057,6 +2057,11 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 /* ---------------------------------------------------------------- badges
    Emoji after a name, anywhere a name appears; hover for the meaning. */
 .namewrap{display:inline}
+/* Game links: a ticket is a whole card; in the ledger it is the team name. */
+a.pickticket{display:block;color:inherit;text-decoration:none}
+a.pickticket:hover{border-color:rgba(232,191,53,.45)}
+a.glink{color:inherit;text-decoration:none;border-bottom:1px solid transparent}
+a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .badges{display:inline-flex;gap:3px;margin-left:6px;vertical-align:baseline;white-space:nowrap}
 .badges.compact .badge{font-size:.9em;line-height:1;cursor:default}
 .mtop-name .badges,.mq-meta .badges{margin-left:5px}

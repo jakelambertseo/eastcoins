@@ -666,7 +666,9 @@
         wrap.append(grid);
       }
       const status = { ACTIVE: "pending", WON: "won", LOST: "lost", REFUNDED: "refunded" }[p.status] || "pending";
-      const card = el("article", `pickticket ${status}`);
+      // The whole ticket is a link to the game's page.
+      const card = el("a", `pickticket ${status}${p.market?.slug ? " glink" : ""}`);
+      if (p.market?.slug) card.href = `/g/${p.market.slug}`;
 
       const head = el("div", "pickticket-head");
       const teamWrap = el("div", "pickticket-team");
@@ -867,7 +869,15 @@
 
       const pick = el("div", "tpick");
       const pickCopy = el("span");
-      pickCopy.append(el("strong", null, sideName(row)), el("small", null, `vs ${oppName(row)}${row.market?.league ? " · " + row.market.league : ""}`));
+      const teamEl = el("strong");
+      if (row.market?.slug) {
+        const g = el("a", "glink", sideName(row));
+        g.href = `/g/${row.market.slug}`;
+        teamEl.append(g);
+      } else {
+        teamEl.textContent = sideName(row);
+      }
+      pickCopy.append(teamEl, el("small", null, `vs ${oppName(row)}${row.market?.league ? " · " + row.market.league : ""}`));
       pick.append(crest(row.market, sideName(row), "tpick-crest"), pickCopy);
 
       const stake = el("div", "tstat right");

@@ -1,4 +1,5 @@
 import { WAGER_ALLOWLIST, wageringOpenToAll } from "./_lib.js";
+import { slugFor } from "./_slug.js";
 
 const SESSION_COOKIE = "__Host-ec_session";
 
@@ -513,6 +514,7 @@ async function getMyPicks(
           String(
             row.market_id
           ),
+        slug: slugFor(row),
         sport:
           String(
             row.sport || ""
@@ -914,6 +916,7 @@ async function getCommunityLedger(
           String(
             row.market_id
           ),
+        slug: slugFor(row),
         sport:
           String(
             row.sport || ""

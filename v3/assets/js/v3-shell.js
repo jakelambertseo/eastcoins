@@ -445,13 +445,14 @@
   // view has to know how the profile route works.
   document.addEventListener("click", (event) => {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
-    const a = event.target.closest("a.ulink");
+    const a = event.target.closest("a.ulink, a.glink");
     if (!a) return;
     const href = a.getAttribute("href") || "";
-    if (!href.startsWith("/u/")) return;
+    const target = href.startsWith("/u/") ? "profile" : href.startsWith("/g/") ? "game" : "";
+    if (!target) return;
     event.preventDefault();
-    history.pushState({ view: "profile" }, "", href);
-    go("profile", { push: false });
+    history.pushState({ view: target }, "", href);
+    go(target, { push: false });
   });
 
   window.addEventListener("popstate", () => {
