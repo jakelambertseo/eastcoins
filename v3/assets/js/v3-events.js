@@ -489,13 +489,16 @@
     const top = document.createElement("div");
     top.className = "homegrid";
     top.append(picksBanner());
+    let strip = null;
     if (window.ECPresence) {
-      const strip = document.createElement("section");
+      strip = document.createElement("section");
       strip.className = "whoshere";
       top.append(strip);
-      window.ECPresence.mountStrip(strip);
     }
     root.append(top);
+    // Mounted once it is in the page: the strip checks it is still
+    // attached before each refresh.
+    if (strip) window.ECPresence.mountStrip(strip);
 
     if (!local.loaded && !local.failed) {
       root.append(skeletonGrid());

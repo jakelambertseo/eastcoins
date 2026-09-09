@@ -126,9 +126,11 @@
   function mountStrip(container) {
     window.clearInterval(stripTimer);
     const refresh = async () => {
+      const data = await fetchRoom();
       if (!container.isConnected) { window.clearInterval(stripTimer); return; }
-      draw(container, await fetchRoom());
+      draw(container, data);
     };
+    draw(container, null);   // the frame first, so it never sits empty
     refresh();
     stripTimer = window.setInterval(refresh, 20 * 1000);
   }
