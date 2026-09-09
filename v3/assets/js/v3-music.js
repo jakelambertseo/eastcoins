@@ -749,7 +749,7 @@
     // Kept across repaints so a state broadcast — anyone joining, any
     // reaction — does not throw you back to page one mid-browse.
     let historyPage = 0;
-    const HISTORY_PER_PAGE = 25;
+    const HISTORY_PER_PAGE = 5;
     // What was playing last time we painted. A history entry is only
     // completed when a song leaves, so a change here is the one signal
     // that there is something new to fetch.
