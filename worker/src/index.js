@@ -376,6 +376,16 @@ export default {
       return stub.fetch(request);
     }
 
+    // Plain text for chat: "!song" in StreamElements is a $(customapi …)
+    // pointed here. SE sends no Origin header and takes at most 400
+    // bytes, so this route has no origin check and answers one short line.
+    if (url.pathname === "/now" || url.pathname.startsWith("/now/")) {
+      if (request.method !== "GET") return new Response("Expected GET", { status: 405 });
+      const roomName = decodeURIComponent(url.pathname.slice("/now/".length)) || "main";
+      const stub = env.MUSIC_ROOM.getByName(roomName);
+      return stub.fetch(new Request(new URL("/now", request.url), request));
+    }
+
     // Plain JSON GET — powers the full /music page's historical request log
     // and per-user totals without bloating every live WebSocket broadcast.
     if (url.pathname.startsWith("/history/")) {
@@ -1266,6 +1276,32 @@ export class MusicRoom extends DurableObject {
     return this.publicItem(this.state.current);
   }
 
+  /** One line for chat: what is playing, who asked for it, what is next. */
+  nowPlayingLine() {
+    const now = this.state.current;
+    if (!now) return "Nothing playing in the Green Room right now. !sr <song> to queue one.";
+
+    const mmss = (secs) => {
+      const s = Math.max(0, Math.floor(Number(secs) || 0));
+      return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+    };
+    const elapsed = this.state.startedAt ? mmss((Date.now() - this.state.startedAt) / 1000) : "";
+    const length = Number(now.duration) > 0 ? mmss(now.duration) : "";
+    const time = elapsed && length ? ` · ${elapsed} / ${length}` : elapsed ? ` · ${elapsed} in` : "";
+    const by = now.requestedBy ? ` (requested by ${now.requestedBy})` : "";
+    const next = this.state.queue[0];
+    const upNext = next ? ` · Up next: ${next.title}` : ` · Queue empty — !sr <song>`;
+
+    // 400 bytes is StreamElements' hard cap; trim the title, never the rest.
+    let line = `🎵 Now playing: ${now.title}${by}${time}${upNext}`;
+    const size = (t) => new TextEncoder().encode(t).length;
+    if (size(line) > 380) {
+      const room = 380 - size(`🎵 Now playing: …${by}${time}${upNext}`);
+      line = `🎵 Now playing: ${String(now.title).slice(0, Math.max(12, room))}…${by}${time}${upNext}`;
+    }
+    return line;
+  }
+
   publicState() {
     const listeners = this.distinctListeners();
     return {
@@ -1285,6 +1321,13 @@ export class MusicRoom extends DurableObject {
 
   async fetch(request) {
     const url = new URL(request.url);
+
+    if (url.pathname === "/now") {
+      return new Response(this.nowPlayingLine(), {
+        status: 200,
+        headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }
+      });
+    }
 
     if (url.pathname.startsWith("/history/")) {
       return json(
