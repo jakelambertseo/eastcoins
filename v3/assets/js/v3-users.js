@@ -116,7 +116,7 @@
 
   function headerRow() {
     const h = el("div", "urow thead");
-    for (const [label, cls] of [["#", ""], ["User", ""], ["Points", "right"], ["Record", "right"], ["Titles", ""], ["Favourite team", ""], ["Music ELO", ""]]) {
+    for (const [label, cls] of [["#", ""], ["User", ""], ["Points", "right"], ["NFL", "right"], ["MLB", "right"], ["Titles", ""], ["Favourite team", ""], ["Music ELO", ""]]) {
       h.append(el("span", cls, label));
     }
     return h;
@@ -134,7 +134,8 @@
       user.append(sk(36, 36, "tile"), lines);
       const a = sk(60, 12); a.style.justifySelf = "end";
       const b = sk(44, 12); b.style.justifySelf = "end";
-      row.append(sk(22, 12), user, a, b, sk(90, 18, "tile"), sk(140, 12), sk(70, 18, "tile"));
+      const c = sk(44, 12); c.style.justifySelf = "end";
+      row.append(sk(22, 12), user, a, b, c, sk(90, 18, "tile"), sk(140, 12), sk(70, 18, "tile"));
       card.append(row);
     }
     return card;
@@ -156,10 +157,13 @@
     points.append(zc(u.picks.profit, { sign: true }));
     line.append(points);
 
-    const record = el("span", "right nums us-record");
-    record.textContent = u.picks.total ? `${u.picks.wins}–${u.picks.losses}` : "—";
-    if (u.picks.open) record.append(el("small", null, ` · ${u.picks.open} open`));
-    line.append(record);
+    // One record per league; a dash where nothing has settled there.
+    for (const league of ["NFL", "MLB"]) {
+      const r = u.picks.records?.[league];
+      const cell = el("span", `right nums us-record${r ? "" : " us-none"}`, r ? `${r.wins}–${r.losses}` : "—");
+      if (r) cell.title = `${league}: ${r.profit > 0 ? "+" : ""}${r.profit} ZC`;
+      line.append(cell);
+    }
 
     const titles = el("span", "us-titles");
     if (u.badges.length) {

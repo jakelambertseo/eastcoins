@@ -2468,8 +2468,8 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .us-back{flex:0 0 auto;height:34px;padding:0 14px;text-decoration:none}
 .tablecard.users{margin-top:4px}
 .urow{
-  min-width:960px;display:grid;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line);
-  grid-template-columns:44px minmax(200px,1.2fr) 96px 110px minmax(150px,1fr) minmax(190px,1fr) 140px;
+  min-width:1010px;display:grid;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line);
+  grid-template-columns:44px minmax(200px,1.2fr) 96px 72px 72px minmax(150px,1fr) minmax(190px,1fr) 140px;
 }
 .urow:last-child{border-bottom:0}
 .urow.thead{

@@ -37,6 +37,26 @@ export async function onRequestGet(context) {
   let badges = {};
   try { badges = (await badgesFor(context.env, db)).byLogin || {}; } catch { badges = {}; }
 
+  // The same record per league, for the NFL / MLB split.
+  const byLeague = await db
+    .prepare(
+      `SELECT p.user_id, UPPER(COALESCE(m.league, '')) AS league,
+              SUM(CASE WHEN p.status = 'WON'  THEN 1 ELSE 0 END) AS wins,
+              SUM(CASE WHEN p.status = 'LOST' THEN 1 ELSE 0 END) AS losses,
+              SUM(CASE WHEN p.status IN ('WON','LOST') THEN p.profit ELSE 0 END) AS profit
+         FROM picks p JOIN markets m ON m.id = p.market_id
+        WHERE p.status IN ('WON','LOST')
+        GROUP BY p.user_id, league`
+    )
+    .all()
+    .catch(() => ({ results: [] }));
+  const records = new Map();
+  for (const r of byLeague.results || []) {
+    const per = records.get(String(r.user_id)) || {};
+    per[String(r.league || "OTHER")] = { wins: Number(r.wins || 0), losses: Number(r.losses || 0), profit: Number(r.profit || 0) };
+    records.set(String(r.user_id), per);
+  }
+
   const users = (rows.results || []).map((r) => {
     const login = String(r.twitch_login).toLowerCase();
     return {
@@ -50,7 +70,8 @@ export async function onRequestGet(context) {
         wins: Number(r.wins || 0),
         losses: Number(r.losses || 0),
         open: Number(r.open || 0),
-        profit: Number(r.profit || 0)
+        profit: Number(r.profit || 0),
+        records: records.get(String(r.twitch_id)) || {}
       },
       favourite: findTeam(r.favourite_league, r.favourite_team),
       badges: badges[login] || []
