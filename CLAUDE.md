@@ -57,6 +57,12 @@
 > publishes `queueLimit` only); `loadHistory()` diffs
 > ratings between fetches to show `.elo-delta` chips.
 >
+> **Floating player** — nav button `#musicDock` toggles `window.ECMusicDock`
+> (in `v3-music.js`): a fixed `.mdock` that hosts the same YouTube player
+> and socket on non-music routes; the music view tears it down on mount and
+> `unmount()` hands playback back to it instead of disconnecting. Remembered
+> in `localStorage` `ec_v3_music_dock`.
+>
 > **Casino** — `/?view=flip` (nav link present but hidden) is Coin Flip;
 > `/?view=casino` is reserved for the casino home page:
 > `functions/api/coin/` (`_coin.js` clock/fairness/settlement, `state.js`

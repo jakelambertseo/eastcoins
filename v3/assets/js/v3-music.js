@@ -737,6 +737,156 @@
     return `${Math.floor(hours / 24)}d ago`;
   }
 
+  /* ============================================================ dock
+
+     The floating player. Toggled from the 🎵 button in the nav, it keeps
+     the room playing on every other page: same socket, same YouTube
+     player, same volume — only the host element changes. While the
+     Green Room page itself is open the dock steps aside and the page
+     owns playback; leave the page and, if the dock is on, it takes over
+     without a gap the room would notice. */
+
+  const DOCK_KEY = "ec_v3_music_dock";
+  const dock = { el: null, stage: null, title: null, titleText: null, by: null, unsub: null, min: false };
+  let dockWanted = false;
+  try { dockWanted = localStorage.getItem(DOCK_KEY) === "1"; } catch { /* private mode */ }
+  let pageMounted = false;
+
+  function dockButton() { return document.getElementById("musicDock"); }
+  function syncDockButton() {
+    const b = dockButton();
+    if (!b) return;
+    b.classList.toggle("on", dockWanted);
+    b.setAttribute("aria-pressed", String(dockWanted));
+    b.title = dockWanted ? "Floating player is on — click to turn it off" : "Keep the Green Room playing on every page";
+  }
+
+  function buildDock() {
+    const box = el("aside", "mdock");
+    box.setAttribute("aria-label", "Green Room player");
+
+    const head = el("div", "mdock-head");
+    const open = el("a", "mdock-open", "Green Room");
+    open.href = "/?view=music";
+    open.addEventListener("click", (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+      event.preventDefault();
+      history.pushState({ view: "music" }, "", "/?view=music");
+      window.ECV3?.go("music", { push: false });
+    });
+    const minBtn = el("button", "mdock-btn", "\u2013");
+    minBtn.type = "button";
+    minBtn.title = "Minimise";
+    minBtn.addEventListener("click", () => {
+      dock.min = !dock.min;
+      box.classList.toggle("min", dock.min);
+      minBtn.textContent = dock.min ? "\u25a1" : "\u2013";
+      minBtn.title = dock.min ? "Expand" : "Minimise";
+    });
+    const closeBtn = el("button", "mdock-btn", "\u2715");
+    closeBtn.type = "button";
+    closeBtn.title = "Close and stop playing";
+    closeBtn.addEventListener("click", () => closeDock());
+    const live = el("span", "mdock-live");
+    head.append(live, open, el("span", "mdock-spacer"), minBtn, closeBtn);
+    box.append(head);
+
+    dock.stage = el("div", "mdock-stage");
+    box.append(dock.stage);
+
+    const body = el("div", "mdock-body");
+    dock.title = el("strong", "mnow-v mdock-title");
+    dock.titleText = el("span", "mnow-v-text", "Nothing playing");
+    dock.title.append(dock.titleText);
+    dock.by = el("small", "mdock-by");
+    body.append(dock.title, dock.by);
+
+    // Progress, driven by the same ticker as the page.
+    const bar = el("div", "mprog mdock-prog");
+    bar.setAttribute("aria-hidden", "true");
+    const fill = el("i", "mprog-fill");
+    const track = el("div", "mprog-track");
+    track.append(fill);
+    const now = el("span", "mprog-t nums", "0:00");
+    const end = el("span", "mprog-t nums", "");
+    bar.append(now, track, end);
+    body.append(bar);
+    dock.prog = { bar, fill, now, end };
+
+    const vol = el("label", "mdock-vol");
+    vol.append(el("span", null, "\u{1F50A}"));
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.min = "0";
+    slider.max = "100";
+    slider.step = "1";
+    slider.value = String(readVolume());
+    slider.setAttribute("aria-label", "Playback volume");
+    slider.addEventListener("input", () => setVolume(Number(slider.value)));
+    vol.append(slider);
+    body.append(vol);
+    box.append(body);
+
+    document.body.append(box);
+    dock.el = box;
+  }
+
+  function paintDock(state) {
+    if (!dock.el) return;
+    const current = state?.current;
+    dock.el.classList.toggle("is-playing", Boolean(current));
+    dock.titleText.textContent = current?.title || (state ? "Nothing playing" : "Connecting\u2026");
+    dock.title.classList.remove("is-long");
+    requestAnimationFrame(() => {
+      if (!dock.title?.isConnected) return;
+      const gap = dock.titleText.scrollWidth - dock.title.clientWidth;
+      if (gap > 4) {
+        dock.title.classList.add("is-long");
+        dock.title.style.setProperty("--scroll", `-${gap + 12}px`);
+        dock.title.style.setProperty("--scroll-s", `${Math.max(6, Math.round(gap / 22) + 4)}s`);
+      }
+    });
+    dock.by.textContent = current?.requestedBy ? `requested by ${current.requestedBy}` : (state ? `${Number(state.listeners || 0)} listening` : "");
+    if (current) mountPlayer(dock.stage, state); else destroyPlayer();
+  }
+
+  function teardownDock() {
+    if (!dock.el) return;
+    dock.unsub?.();
+    dock.unsub = null;
+    if (player.host === dock.stage) destroyPlayer();
+    if (prog === dock.prog) { stopProgressTicker(); prog = null; }
+    dock.el.remove();
+    dock.el = null;
+    dock.stage = null;
+  }
+
+  /** Puts the dock up or takes it down, from what is wanted and where we are. */
+  function syncDock() {
+    syncDockButton();
+    const show = dockWanted && !pageMounted;
+    if (!show) {
+      teardownDock();
+      // Nobody is listening from this tab any more: leave the room so the
+      // count and the skip threshold stay honest.
+      if (!pageMounted) disconnect();
+      return;
+    }
+    if (!dock.el) buildDock();
+    initAudioLock();
+    connect();
+    prog = dock.prog;
+    startProgressTicker();
+    if (!dock.unsub) dock.unsub = subscribe(paintDock);
+    paintDock(conn.state);
+  }
+
+  function openDock() { dockWanted = true; try { localStorage.setItem(DOCK_KEY, "1"); } catch {} syncDock(); }
+  function closeDock() { dockWanted = false; try { localStorage.removeItem(DOCK_KEY); } catch {} syncDock(); }
+  function toggleDock() { if (dockWanted) closeDock(); else openDock(); }
+
+  window.ECMusicDock = Object.freeze({ open: openDock, close: closeDock, toggle: toggleDock, isOpen: () => dockWanted });
+
   /* ============================================================ view */
 
   const view = (() => {
@@ -1713,6 +1863,10 @@
         refs.side = null;
         refs.stagewrap = null;
         refs.room = null;
+        pageMounted = true;
+        // The page owns playback while it is open; the dock steps aside.
+        teardownDock();
+        syncDockButton();
         document.body.classList.add("music-view");
         initAudioLock();
         connect();
@@ -1725,14 +1879,16 @@
         stopProgressTicker();
         stopJam(stage);
         destroyPlayer();
-        // Leaving the room stops counting you as a listener, which keeps
-        // the skip threshold honest for the people still here.
-        disconnect();
         unsub?.();
         unsub = null;
         root = null;
         stage = null;
         noticeEl = null;
+        pageMounted = false;
+        // With the dock on, the room keeps playing from the corner and
+        // you stay counted as a listener. Otherwise leaving the page
+        // leaves the room, which keeps the skip threshold honest.
+        if (dockWanted) syncDock(); else disconnect();
       }
     };
   })();
@@ -1742,6 +1898,15 @@
   function boot() {
     if (!window.ECV3) return window.setTimeout(boot, 30);
     window.ECV3.register("music", view);
+    const b = dockButton();
+    if (b && !b.dataset.wired) {
+      b.dataset.wired = "1";
+      b.addEventListener("click", toggleDock);
+    }
+    syncDockButton();
+    // Remembered from last time: a page that is not the Green Room gets
+    // the dock straight away. The Green Room itself mounts its own player.
+    if (dockWanted && window.ECV3.state?.route !== "music") syncDock();
   }
   boot();
 
