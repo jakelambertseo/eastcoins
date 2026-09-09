@@ -1087,14 +1087,17 @@
         return line;
       };
 
+      const top = rated.slice(0, 5);
       wrap.append(el("p", "elo-head", "Highest"));
-      rated.slice(0, 5).forEach((entry, i) => wrap.append(row(entry, i + 1)));
+      top.forEach((entry, i) => wrap.append(row(entry, i + 1)));
 
-      // Only worth a bottom list once it would not just repeat the top.
-      if (rated.length > 5) {
+      // The bottom list is whoever is left below the top five, so nobody
+      // appears in both. With six rated people that is one row; with
+      // fewer than six there is no bottom list at all.
+      const rest = rated.slice(top.length);
+      if (rest.length) {
         wrap.append(el("p", "elo-head", "Lowest"));
-        const bottom = rated.slice(-5).reverse();
-        bottom.forEach((entry) => wrap.append(row(entry, rated.indexOf(entry) + 1)));
+        rest.slice(-5).reverse().forEach((entry) => wrap.append(row(entry, rated.indexOf(entry) + 1)));
       }
 
       return wrap;
@@ -1341,7 +1344,7 @@
       side.append(requestersPanel());
 
       const tabs = el("div", "mtabs");
-      for (const [key, label] of [["queue", "Up next"], ["history", "History"], ["elo", "Ratings"]]) {
+      for (const [key, label] of [["queue", "Up next"], ["history", "History"], ["elo", "Music ELO"]]) {
         const btn = el("button", `mtab${tab === key ? " active" : ""}`, label);
         btn.type = "button";
         btn.addEventListener("click", () => {
