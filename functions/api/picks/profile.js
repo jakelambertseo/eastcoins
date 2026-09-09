@@ -12,6 +12,7 @@ import { slugFor } from "./_slug.js";
 import { utc } from "./_game.js";
 import { badgesFor } from "./_badges.js";
 import { ensureSchema as ensureCoinSchema } from "../coin/_coin.js";
+import { findTeam, ensureFavouriteColumns } from "./_teams.js";
 
 const json = (body, status = 200) => Response.json(body, {
   status,
@@ -24,8 +25,9 @@ export async function onRequestGet(context) {
   if (!db) return json({ ok: false, code: "NO_DB" }, 503);
   if (!/^[a-z0-9_]{2,25}$/.test(login)) return json({ ok: false, code: "BAD_LOGIN" }, 400);
 
+  await ensureFavouriteColumns(db);
   const user = await db
-    .prepare(`SELECT twitch_id, twitch_login, display_name, avatar_url, created_at FROM users WHERE twitch_login = ? COLLATE NOCASE LIMIT 1`)
+    .prepare(`SELECT twitch_id, twitch_login, display_name, avatar_url, created_at, favourite_league, favourite_team FROM users WHERE twitch_login = ? COLLATE NOCASE LIMIT 1`)
     .bind(login)
     .first();
   if (!user) return json({ ok: false, code: "NOT_FOUND", message: "Nobody by that name has made a pick yet." }, 404);
@@ -94,13 +96,6 @@ export async function onRequestGet(context) {
   const won = settled.filter((p) => p.status === "WON").sort((a, b) => b.profit - a.profit);
   const lost = settled.filter((p) => p.status === "LOST").sort((a, b) => a.profit - b.profit);
 
-  // Favourite team: whoever they have backed most.
-  const teams = new Map();
-  for (const p of picks) {
-    const t = p.selection === "home" ? p.home_name : p.away_name;
-    teams.set(t, (teams.get(t) || 0) + 1);
-  }
-  const favourite = [...teams.entries()].sort((a, b) => b[1] - a[1])[0] || null;
 
   // Rank among everyone with a settled pick this season, by profit.
   let rank = null;
@@ -174,7 +169,9 @@ export async function onRequestGet(context) {
       login: String(user.twitch_login).toLowerCase(),
       displayName: String(user.display_name || user.twitch_login),
       avatar: String(user.avatar_url || ""),
-      since: utc(user.created_at)
+      since: utc(user.created_at),
+      // Their own choice, made on the profile page — not inferred from picks.
+      favourite: findTeam(user.favourite_league, user.favourite_team)
     },
     season: season ? { id: String(season.id), name: String(season.name || season.id) } : null,
     picks: {
@@ -186,7 +183,6 @@ export async function onRequestGet(context) {
       streak: { current, bestWin, worstLoss },
       biggestWin: won[0] ? pickView(won[0]) : null,
       worstBeat: lost[0] ? pickView(lost[0]) : null,
-      favourite: favourite ? { team: favourite[0], count: favourite[1] } : null,
       recent: picks.slice(0, 12).map(pickView)
     }
   });

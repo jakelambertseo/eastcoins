@@ -32,7 +32,10 @@
 > the shell routes their clicks). Badges (👑🔥🧊💀🎵) are computed for
 > everyone at once in `_badges.js` (cached 60s; 🎵 reads the music worker's
 > `/history/main`), served by `/api/picks/badges`, and drawn next to names
-> by `v3-badges.js`'s `ECBadges.decorate(node, login)`.
+> by `v3-badges.js`'s `ECBadges.decorate(node, login)`. A profile's
+> **favourite team** is the user's own choice (`users.favourite_league` /
+> `favourite_team`, ESPN abbreviations from `_teams.js`), read and set at
+> `/api/picks/favourite`; the picker is inline on the owner's profile.
 >
 > **Casino** — `/?view=flip` (nav link present but hidden) is Coin Flip;
 > `/?view=casino` is reserved for the casino home page:

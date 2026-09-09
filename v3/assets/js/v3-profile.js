@@ -185,9 +185,9 @@
     name.append(badges);
     copy.append(name);
     const sub = el("p", null,
-      `@${u.login}${u.since ? " · with EastCoin since " + when(u.since, { month: "short", year: "numeric" }) : ""}` +
-      (k.favourite ? ` · rides with the ${window.ECLogos ? window.ECLogos.nickname(k.favourite.team).replace(/\b\w/g, (c) => c.toUpperCase()) : k.favourite.team}` : ""));
+      `@${u.login}${u.since ? " · with EastCoin since " + when(u.since, { month: "short", year: "numeric" }) : ""}`);
     copy.append(sub);
+    copy.append(teamChip(u));
     head.append(copy);
     wrap.append(head);
 
@@ -308,6 +308,137 @@
     if (SHOW_FLIP) foot.append(link("/?view=flip", "gp-back", "Coin Flip"));
     wrap.append(foot);
     return wrap;
+  }
+
+  /* ---------------------------------------------------------- favourite team
+
+     Their club, chosen on their own page. Everyone sees the logo and
+     the name; the owner also gets a way to pick or change it. The
+     list comes from the server so the page and the save endpoint
+     can never disagree about what counts as a team. */
+
+  function isMine(u) {
+    const me = String(shell?.state?.session?.user?.login || "").toLowerCase();
+    return Boolean(me) && me === String(u?.login || "").toLowerCase();
+  }
+
+  function teamCrest(team, className) {
+    const box = el("span", className, team ? team.name.split(" ").pop().slice(0, 3).toUpperCase() : "?");
+    if (!team?.logo) return box;
+    const img = document.createElement("img");
+    img.alt = "";
+    img.decoding = "async";
+    img.addEventListener("load", () => box.classList.add("has-logo"));
+    img.addEventListener("error", () => img.remove());
+    img.src = team.logo;
+    box.append(img);
+    return box;
+  }
+
+  function teamChip(u) {
+    const wrap = el("div", "pf-teamwrap");
+    const mine = isMine(u);
+    const fav = u.favourite;
+    if (!fav && !mine) return wrap;
+
+    const row = el("div", "pf-team");
+    if (fav) {
+      row.append(teamCrest(fav, "pf-team-crest"));
+      const copy = el("div");
+      copy.append(el("b", null, fav.name), el("small", null, `${fav.leagueLabel} · favourite team`));
+      row.append(copy);
+    } else {
+      row.append(el("small", "pf-team-none", "No favourite team yet."));
+    }
+    if (mine) {
+      const btn = el("button", "btn pf-team-btn", fav ? "Change" : "Pick your team");
+      btn.type = "button";
+      btn.addEventListener("click", () => openTeamPicker(wrap, u));
+      row.append(btn);
+    }
+    wrap.append(row);
+    return wrap;
+  }
+
+  async function openTeamPicker(wrap, u) {
+    if (wrap.querySelector(".pf-teampick")) return;
+    const panel = el("form", "pf-teampick");
+    panel.append(el("small", "pf-teampick-note", "Loading teams…"));
+    wrap.append(panel);
+
+    let payload = null;
+    try {
+      payload = await fetch("/api/picks/favourite", { credentials: "include" }).then((r) => r.json());
+    } catch { payload = null; }
+    if (!payload?.ok) {
+      panel.replaceChildren(el("small", "pf-teampick-note", "Couldn't load the team list. Try again in a moment."));
+      return;
+    }
+
+    const current = payload.mine || u.favourite || null;
+    const leagueSel = document.createElement("select");
+    leagueSel.className = "sc-select";
+    leagueSel.setAttribute("aria-label", "League");
+    for (const l of payload.catalog) {
+      const o = document.createElement("option");
+      o.value = l.key;
+      o.textContent = l.label;
+      leagueSel.append(o);
+    }
+    const teamSel = document.createElement("select");
+    teamSel.className = "sc-select";
+    teamSel.setAttribute("aria-label", "Team");
+    const fillTeams = () => {
+      teamSel.replaceChildren();
+      const l = payload.catalog.find((x) => x.key === leagueSel.value);
+      for (const t of l?.teams || []) {
+        const o = document.createElement("option");
+        o.value = t.abbr;
+        o.textContent = t.name;
+        teamSel.append(o);
+      }
+    };
+    leagueSel.value = current?.league || payload.catalog[0]?.key || "nfl";
+    fillTeams();
+    if (current?.abbr) teamSel.value = current.abbr;
+    leagueSel.addEventListener("change", fillTeams);
+
+    const save = el("button", "btn primary", "Save");
+    save.type = "submit";
+    const cancel = el("button", "btn", "Cancel");
+    cancel.type = "button";
+    cancel.addEventListener("click", () => panel.remove());
+    const note = el("small", "pf-teampick-note");
+
+    panel.replaceChildren(leagueSel, teamSel, save);
+    if (current) {
+      const clear = el("button", "btn pf-team-clear", "Remove");
+      clear.type = "button";
+      clear.addEventListener("click", () => submit({ clear: true }));
+      panel.append(clear);
+    }
+    panel.append(cancel, note);
+
+    const submit = async (body) => {
+      note.textContent = "Saving…";
+      save.disabled = true;
+      try {
+        const r = await fetch("/api/picks/favourite", {
+          method: "POST", credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        }).then((x) => x.json());
+        if (!r?.ok) throw new Error(r?.message || "Couldn't save.");
+        load();   // the page redraws with the new club
+      } catch (error) {
+        note.textContent = error.message || "Couldn't save.";
+        save.disabled = false;
+      }
+    };
+    panel.addEventListener("submit", (event) => {
+      event.preventDefault();
+      submit({ league: leagueSel.value, team: teamSel.value });
+    });
   }
 
   /* The profile in outline while it loads: the avatar and name, four

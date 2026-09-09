@@ -2395,3 +2395,30 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .trow.is-sk{min-height:57px}
 .gp-row.is-sk{border-left-color:var(--line-2)}
 @media (prefers-reduced-motion:reduce){.sk::after{animation:none}}
+
+/* ---------------------------------------------------------------- favourite team
+   The club someone picked for themselves, under their name: logo on a
+   white tile so every crest reads on the dark ground, the name, the
+   league. The owner gets the picker inline, nothing modal. */
+.pf-teamwrap{margin-top:10px}
+.pf-team{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.pf-team-crest{
+  position:relative;width:44px;height:44px;flex:0 0 auto;border-radius:12px;overflow:hidden;
+  display:grid;place-items:center;background:#fff;border:1px solid rgba(255,255,255,.45);
+  color:#1a1405;font-family:var(--display);font-weight:800;font-size:.72rem;
+  box-shadow:0 4px 12px rgba(0,0,0,.4);
+}
+.pf-team-crest img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:4px;opacity:0;transition:opacity .2s ease}
+.pf-team-crest.has-logo{color:transparent}.pf-team-crest.has-logo img{opacity:1}
+.pf-team b{display:block;font-family:var(--display);font-weight:700;font-size:1rem;letter-spacing:-.01em;line-height:1.15}
+.pf-team small{display:block;margin-top:2px;color:var(--muted-2);font-size:.74rem}
+.pf-team .pf-team-none{margin:0}
+.pf-team .btn{flex:0 0 auto;height:30px;padding:0 12px;font-size:.74rem}
+.pf-teampick{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding:10px 12px;
+  border:1px solid var(--line);border-radius:11px;background:var(--panel);
+}
+.pf-teampick .btn{flex:0 0 auto;height:32px;padding:0 14px}
+.pf-teampick .pf-team-clear{border-color:rgba(255,107,133,.3);color:var(--red)}
+.pf-teampick-note{color:var(--muted-2);font-size:.76rem;flex-basis:100%}
+.pf-teampick-note:empty{display:none}
