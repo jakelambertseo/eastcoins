@@ -12,7 +12,7 @@
   const BEAT_MS = 30 * 1000;
   const KEY = "eastcoinPresenceClient";
   const PLACES = {
-    events: "on Sports", watch: "watching a game", multiview: "in MultiView", picks: "on Picks",
+    events: "browsing Sports", watch: "watching a game", multiview: "in MultiView", picks: "on Picks",
     music: "in the Green Room", screen: "in Movies & TV", flip: "at the coin flip", game: "on a game page",
     profile: "reading profiles", admin: "in admin", dashboard: "on the dashboard"
   };
@@ -31,16 +31,28 @@
   }
 
   let lastWhere = "";
-  async function beat(where) {
+  let lastDetail = "";
+  // Hidden tabs still beat: someone with the Green Room in a background
+  // tab is still in the Green Room.
+  async function beat(where, detail) {
+    if (where && where !== lastWhere) lastDetail = "";
     lastWhere = where || lastWhere || "events";
-    if (document.hidden) return;
+    if (detail !== undefined) lastDetail = String(detail || "");
     try {
       await fetch("/api/presence", {
         method: "POST", credentials: "include", keepalive: true,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ client: clientId(), where: lastWhere })
+        body: JSON.stringify({ client: clientId(), where: lastWhere, detail: lastDetail })
       });
     } catch { /* next beat */ }
+  }
+
+  /** "watching Mariners vs Rangers", "looking at Reds at Dodgers", or the plain place. */
+  function placeLabel(p) {
+    const d = String(p.detail || "").trim();
+    if (p.where === "watch" && d) return "watching " + d;
+    if (p.where === "game" && d) return "looking at " + d;
+    return PLACES[p.where] || "around";
   }
 
   window.setInterval(() => beat(), BEAT_MS);
@@ -91,10 +103,10 @@
       for (const p of data.people) {
         const chip = el("a", "wh-chip ulink");
         chip.href = `/u/${encodeURIComponent(p.login)}`;
-        chip.title = `${p.displayName} · ${PLACES[p.where] || "around"}`;
+        chip.title = `${p.displayName} · ${placeLabel(p)}`;
         chip.append(avatar(p));
         const copy = el("span", "wh-copy");
-        copy.append(el("b", null, p.displayName), el("small", null, PLACES[p.where] || "around"));
+        copy.append(el("b", null, p.displayName), el("small", null, placeLabel(p)));
         chip.append(copy);
         window.ECBadges?.decorate(chip.querySelector("b"), p.login);
         list.append(chip);

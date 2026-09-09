@@ -338,6 +338,7 @@
       const m = payload.market;
       const score = m.state === "SETTLED" && Number.isInteger(m.away.score) ? ` ${m.away.score}–${m.home.score}` : "";
       document.title = `${m.away.name} at ${m.home.name}${score} — EastCoin Picks`;
+      window.ECPresence?.beat("game", `${m.away.name} at ${m.home.name}`);
       root.replaceChildren(gamePage(payload));
     }
   }

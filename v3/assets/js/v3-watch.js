@@ -424,6 +424,8 @@
       local.streams = outcome.streams;
       local.reason = outcome.reason;
       local.game = game;
+      // Who's here can name the game rather than just "watching".
+      window.ECPresence?.beat("watch", local.match?.title || "");
       // A shared link names the server it was copied from (1-based);
       // the old shell's ?stream= is honoured the same way.
       const wanted = Number(params().get("server") || params().get("stream") || 0);

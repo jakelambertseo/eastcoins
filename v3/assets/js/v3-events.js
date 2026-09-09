@@ -484,15 +484,18 @@
     head.append(titleWrap);
     root.append(head);
 
-    // Who's here: everyone on the site right now, guests counted.
+    // Two columns up top: the Picks banner, and everyone on the site
+    // right now (guests counted) — Who's here.
+    const top = document.createElement("div");
+    top.className = "homegrid";
+    top.append(picksBanner());
     if (window.ECPresence) {
       const strip = document.createElement("section");
       strip.className = "whoshere";
-      root.append(strip);
+      top.append(strip);
       window.ECPresence.mountStrip(strip);
     }
-
-    root.append(picksBanner());
+    root.append(top);
 
     if (!local.loaded && !local.failed) {
       root.append(skeletonGrid());

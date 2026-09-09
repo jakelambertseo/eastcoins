@@ -26,6 +26,8 @@ async function ensure(db) {
     )`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_site_presence_seen ON site_presence (seen_at)`)
   ]);
+  // Added after the table first shipped; harmless when already there.
+  await db.prepare(`ALTER TABLE site_presence ADD COLUMN detail TEXT`).run().catch(() => {});
   ready = true;
 }
 
@@ -40,14 +42,15 @@ export async function onRequestPost(context) {
   try { body = await context.request.json(); } catch { body = {}; }
   const client = String(body.client || "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64);
   const place = String(body.where || "").replace(/[^a-z-]/g, "").slice(0, 24);
+  const detail = String(body.detail || "").replace(/[<>]/g, "").trim().slice(0, 80);
   if (!client) return json({ ok: false, code: "NO_CLIENT" }, 400);
 
   const user = await getSessionUser(db, context.request);
   const now = Date.now();
   await db
-    .prepare(`INSERT INTO site_presence (client_id, user_id, place, seen_at) VALUES (?, ?, ?, ?)
-              ON CONFLICT(client_id) DO UPDATE SET user_id = excluded.user_id, place = excluded.place, seen_at = excluded.seen_at`)
-    .bind(client, user ? user.id : null, place, now)
+    .prepare(`INSERT INTO site_presence (client_id, user_id, place, detail, seen_at) VALUES (?, ?, ?, ?, ?)
+              ON CONFLICT(client_id) DO UPDATE SET user_id = excluded.user_id, place = excluded.place, detail = excluded.detail, seen_at = excluded.seen_at`)
+    .bind(client, user ? user.id : null, place, detail, now)
     .run();
 
   // Housekeeping on the way: anything an hour stale is gone.
@@ -65,7 +68,7 @@ export async function onRequestGet(context) {
   const since = Date.now() - WINDOW_MS;
   const rows = await db
     .prepare(
-      `SELECT p.client_id, p.user_id, p.place, p.seen_at, u.twitch_login, u.display_name, u.avatar_url
+      `SELECT p.client_id, p.user_id, p.place, p.detail, p.seen_at, u.twitch_login, u.display_name, u.avatar_url
          FROM site_presence p LEFT JOIN users u ON u.twitch_id = p.user_id
         WHERE p.seen_at >= ?
         ORDER BY p.seen_at DESC`
@@ -86,7 +89,8 @@ export async function onRequestGet(context) {
           login: String(r.twitch_login).toLowerCase(),
           displayName: String(r.display_name || r.twitch_login),
           avatar: String(r.avatar_url || ""),
-          where: place
+          where: place,
+          detail: String(r.detail || "")
         });
         where[place] = (where[place] || 0) + 1;
       }
