@@ -45,6 +45,9 @@
 > `/?view=users` (`v3-users.js`, no nav link — linked from profiles) lists
 > everyone from `/api/picks/users` with Picks profit/record, badges, favourite
 > team, and Music ELO read client-side from the worker's `/history/main`.
+> `/?view=activity` (`v3-activity.js`, no nav link yet) is the sitewide
+> feed from `/api/picks/activity`: picks locked/settled, markets opened,
+> finals, new users, songs played — merged newest-first, polled every 30s.
 >
 > **Casino** — `/?view=flip` (nav link present but hidden) is Coin Flip;
 > `/?view=casino` is reserved for the casino home page:
