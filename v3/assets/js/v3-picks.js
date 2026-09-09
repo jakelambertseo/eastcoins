@@ -360,11 +360,6 @@
   function marketsView() {
     const wrap = document.createDocumentFragment();
 
-    const note = el("p", "picks-note");
-    note.textContent =
-      "Prices are sportsbook moneylines, fixed when the market opens — everyone gets the same line. " +
-      "Payouts show what a stake returns if that side wins; a losing pick returns nothing.";
-    wrap.append(note);
 
     if (!local.loaded) {
       const grid = el("div", "marketlist");
@@ -1017,8 +1012,7 @@
     leaderBlock.setAttribute("aria-label", "Season leader");
     const lbHead = el("div", "leaderblock-head");
     const lbCopy = el("div");
-    lbCopy.append(el("h2", null, "Season leader"),
-      el("p", null, "Most Picks profit this season. Settled picks only — the crown changes hands as games finish."));
+    lbCopy.append(el("h2", null, "Season leader"));
     lbHead.append(lbCopy, el("span", "lb-season", local.season?.name || "Season"));
     leaderBlock.append(lbHead, leaderWidget());
     root.append(leaderBlock);
