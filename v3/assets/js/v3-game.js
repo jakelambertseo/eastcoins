@@ -292,6 +292,58 @@
     return foot;
   }
 
+  /* The page in outline while the ledger is read: the board with two
+     crests and a score, then a handful of pick rows. Same boxes, same
+     sizes, so nothing moves when the real thing lands. */
+  function skeletonPage() {
+    const sk = (w, h, cls) => {
+      const b = el("span", `sk${cls ? " " + cls : ""}`);
+      b.style.width = typeof w === "number" ? `${w}px` : w;
+      b.style.height = `${h}px`;
+      return b;
+    };
+    const page = el("section", "gamepage");
+    page.setAttribute("aria-busy", "true");
+    const head = el("div", "viewhead");
+    const copy = el("div", "sk-lines");
+    copy.append(sk(280, 22), sk(200, 10));
+    head.append(copy, sk(96, 26, "tile"));
+    page.append(head);
+
+    const board = el("div", "gp-board");
+    const teams = el("div", "gp-teams");
+    const cell = (right) => {
+      const c = el("div", "gp-team sk-lines");
+      if (right) c.style.alignItems = "flex-end";
+      c.append(sk(52, 52, "tile"), sk(110, 12), sk(44, 9));
+      return c;
+    };
+    const score = el("div", "gp-score");
+    score.append(sk(34, 40), sk(18, 12), sk(34, 40));
+    teams.append(cell(false), score, cell(true));
+    board.append(teams);
+    page.append(board);
+
+    const split = el("div", "gp-split sk-lines");
+    split.append(sk("100%", 10), sk("100%", 8, "tile"), sk("50%", 9));
+    page.append(split);
+
+    page.append(sk(120, 14));
+    const rows = el("div", "gp-rows");
+    rows.style.marginTop = "10px";
+    for (let i = 0; i < 4; i += 1) {
+      const row = el("div", "gp-row is-sk");
+      const who = el("div", "gp-who sk-lines");
+      who.append(sk(120 + (i % 3) * 30, 11), sk(90, 8));
+      const stake = el("div", "gp-stake sk-right");
+      stake.append(sk(48, 11), sk(60, 8));
+      row.append(sk(34, 34, "circle"), who, stake);
+      rows.append(row);
+    }
+    page.append(rows);
+    return page;
+  }
+
   function notice(title, body) {
     const page = el("section", "gamepage");
     const box = el("div", "gp-notice");
@@ -306,7 +358,7 @@
   async function load() {
     const key = pathKey();
     const mine = ++token;
-    root.replaceChildren(notice("Loading…", "Reading the ledger."));
+    root.replaceChildren(skeletonPage());
 
     if (!key) {
       root.replaceChildren(notice("No game here", "The link in chat is the reliable way in."));

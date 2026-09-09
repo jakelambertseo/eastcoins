@@ -2371,3 +2371,27 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .ec-picks-link{display:inline-flex;align-items:center;gap:5px;color:inherit;text-decoration:none}
 .ec-picks-link:hover{color:var(--gold)}
 .ec-picks .zcoin-mark{width:14px;height:14px;vertical-align:-2px;margin-right:4px}
+
+/* ---------------------------------------------------------------- skeleton rows
+   While Picks, a game page or a profile is fetching, the page is drawn
+   in the shape of what is coming — grey blocks where the avatar, name
+   and numbers will be — so the layout holds still and the data lands
+   in place. `.sk` is one block; the shimmer says "loading" without a
+   word of text. */
+.sk{display:block;position:relative;overflow:hidden;background:var(--panel-3);border-radius:6px;flex:0 0 auto}
+.sk::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent);
+  animation:shimmer 1.4s infinite;
+}
+.sk.circle{border-radius:50%}
+.sk.tile{border-radius:10px}
+.sk-lines{display:flex;flex-direction:column;gap:7px;min-width:0;flex:1}
+.sk-right{display:flex;flex-direction:column;gap:7px;align-items:flex-end}
+[aria-busy="true"] .btn,[aria-busy="true"] a{pointer-events:none}
+/* the shapes each surface takes while it loads */
+.leaderwidget.is-sk{grid-template-columns:auto auto minmax(0,1fr) auto}
+.summarycard.is-sk{min-height:86px}
+.trow.is-sk{min-height:57px}
+.gp-row.is-sk{border-left-color:var(--line-2)}
+@media (prefers-reduced-motion:reduce){.sk::after{animation:none}}

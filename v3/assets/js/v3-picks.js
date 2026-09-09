@@ -129,6 +129,76 @@
 
   /* ---------------------------------------------------------- helpers */
 
+  /* ---------------------------------------------------------- skeletons
+     Grey blocks in the shape of the real thing while the first fetch
+     is out. Each one mirrors the layout it stands in for, so the page
+     does not move when the data arrives. */
+
+  function sk(width, height, cls) {
+    const b = el("span", `sk${cls ? " " + cls : ""}`);
+    b.style.width = typeof width === "number" ? `${width}px` : width;
+    b.style.height = `${height}px`;
+    return b;
+  }
+
+  function skelLeader() {
+    const box = el("section", "leaderwidget is-sk");
+    box.setAttribute("aria-busy", "true");
+    const copy = el("div", "lw-copy sk-lines");
+    copy.append(sk(110, 8), sk(190, 22), sk(120, 9));
+    const stats = el("div", "lw-stats");
+    for (let i = 0; i < 2; i += 1) {
+      const st = el("div", "lw-stat sk-lines");
+      st.append(sk(64, 8), sk(70, 20));
+      stats.append(st);
+    }
+    box.append(sk(30, 30, "circle"), sk(48, 48, "circle"), copy, stats);
+    return box;
+  }
+
+  function skelSummary() {
+    const strip = el("div", "summarystrip");
+    strip.setAttribute("aria-busy", "true");
+    for (let i = 0; i < 4; i += 1) {
+      const card = el("article", `summarycard is-sk sk-lines${i === 0 ? " wallet" : ""}`);
+      card.append(sk(84, 8), sk(70, 22), sk(120, 8));
+      strip.append(card);
+    }
+    return strip;
+  }
+
+  function skelRows(count, ledger) {
+    const card = el("div", `tablecard${ledger ? " ledger" : ""}`);
+    card.setAttribute("aria-busy", "true");
+    for (let i = 0; i < count; i += 1) {
+      const row = el("div", "trow is-sk");
+      const user = el("div", "tuser");
+      const lines = el("span", "sk-lines");
+      lines.append(sk(120 + (i % 3) * 30, 11), sk(80, 8));
+      user.append(sk(36, 36, "tile"), lines);
+      const a = sk(64, 12);
+      const b = sk(52, 12);
+      a.style.justifySelf = "end";
+      b.style.justifySelf = "end";
+      row.append(sk(26, 12), user, a, b);
+      card.append(row);
+    }
+    return card;
+  }
+
+  function skelTickets(count) {
+    const grid = el("div", "ticketgrid");
+    grid.setAttribute("aria-busy", "true");
+    for (let i = 0; i < count; i += 1) {
+      const t = el("div", "skel");
+      const lines = el("div", "lines");
+      lines.append(sk("60%", 12), sk("40%", 9), sk("100%", 31));
+      t.append(lines);
+      grid.append(t);
+    }
+    return grid;
+  }
+
   function el(tag, className, text) {
     const node = document.createElement(tag);
     if (className) node.className = className;
@@ -636,6 +706,10 @@
       wrap.append(emptyNote("Log in to see your picks", "Your picks and payouts show here once you're logged in with Twitch."));
       return wrap;
     }
+    if (!local.loaded) {
+      wrap.append(skelTickets(3));
+      return wrap;
+    }
     if (!picks.length) {
       wrap.append(emptyNote("No picks yet", "Anything you lock in — from here or with !pick in chat — shows up here with what happened to it."));
       return wrap;
@@ -726,6 +800,10 @@
     const wrap = document.createDocumentFragment();
     const rows = local.leaderboard;
 
+    if (!local.loaded) {
+      wrap.append(skelRows(6));
+      return wrap;
+    }
     if (!rows.length) {
       wrap.append(emptyNote("No standings yet", "The board fills in as games settle. NFL markets open an hour before each kick-off."));
       return wrap;
@@ -777,6 +855,10 @@
 
     if (!local.authed) {
       wrap.append(emptyNote("Log in to see your history", "Every stake taken and every payout returned shows here."));
+      return wrap;
+    }
+    if (!local.loaded) {
+      wrap.append(skelRows(5, true));
       return wrap;
     }
 
@@ -843,6 +925,10 @@
     const wrap = document.createDocumentFragment();
     const rows = local.communityLedger;
 
+    if (!local.loaded) {
+      wrap.append(skelRows(8, true));
+      return wrap;
+    }
     if (!rows.length) {
       wrap.append(emptyNote("No picks yet", "Every pick anyone makes shows here — who, which side, how much, and what came of it."));
       return wrap;
@@ -1014,9 +1100,9 @@
     const lbCopy = el("div");
     lbCopy.append(el("h2", null, "Season leader"));
     lbHead.append(lbCopy, el("span", "lb-season", local.season?.name || "Season"));
-    leaderBlock.append(lbHead, leaderWidget());
+    leaderBlock.append(lbHead, local.loaded ? leaderWidget() : skelLeader());
     root.append(leaderBlock);
-    root.append(summaryStrip());
+    root.append(local.loaded ? summaryStrip() : skelSummary());
 
     const tabs = el("nav", "viewtabs");
     tabs.setAttribute("aria-label", "Picks views");

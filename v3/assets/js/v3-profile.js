@@ -310,6 +310,49 @@
     return wrap;
   }
 
+  /* The profile in outline while it loads: the avatar and name, four
+     stat cards, then recent picks — the same shapes the page takes. */
+  function skeletonPage() {
+    const sk = (w, h, cls) => {
+      const b = el("span", `sk${cls ? " " + cls : ""}`);
+      b.style.width = typeof w === "number" ? `${w}px` : w;
+      b.style.height = `${h}px`;
+      return b;
+    };
+    const wrap = el("section", "profile");
+    wrap.setAttribute("aria-busy", "true");
+    const head = el("div", "pf-head");
+    const copy = el("div", "pf-copy sk-lines");
+    copy.append(sk(220, 24), sk(260, 10));
+    head.append(sk(72, 72, "circle"), copy);
+    wrap.append(head);
+
+    const strip = el("div", "summarystrip");
+    for (let i = 0; i < 4; i += 1) {
+      const card = el("article", "summarycard is-sk sk-lines");
+      card.append(sk(84, 8), sk(70, 22), sk(120, 8));
+      strip.append(card);
+    }
+    wrap.append(strip);
+
+    const section = el("section", "pf-section");
+    section.append(sk(130, 16));
+    const rows = el("div", "gp-rows");
+    rows.style.marginTop = "12px";
+    for (let i = 0; i < 4; i += 1) {
+      const row = el("div", "gp-row is-sk");
+      const who = el("div", "gp-who sk-lines");
+      who.append(sk(150 + (i % 3) * 30, 11), sk(100, 8));
+      const stake = el("div", "gp-stake sk-right");
+      stake.append(sk(48, 11), sk(60, 8));
+      row.append(sk(34, 34, "tile"), who, stake);
+      rows.append(row);
+    }
+    section.append(rows);
+    wrap.append(section);
+    return wrap;
+  }
+
   function notice(strong, text) {
     const wrap = el("section", "profile");
     const box = el("div", "gp-notice");
@@ -324,7 +367,7 @@
   async function load() {
     const login = loginFromPath();
     const mine = ++token;
-    root.replaceChildren(notice("Loading…", "Reading the ledger."));
+    root.replaceChildren(skeletonPage());
     if (!login) { root.replaceChildren(notice("No profile here", "Profiles live at eastcoin.vip/u/<twitch name>.")); return; }
 
     const [payload, music] = await Promise.all([
