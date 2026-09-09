@@ -214,6 +214,13 @@
     // Music
     const ms = el("section", "pf-section");
     const mh = el("h2", null, "In the Green Room");
+    const jamgie = document.createElement("img");
+    jamgie.className = "pf-emote";
+    jamgie.src = "https://cdn.7tv.app/emote/01GAJBNT780004XAVG6P7AZAK2/4x.webp";
+    jamgie.alt = "";
+    jamgie.width = 26;
+    jamgie.height = 26;
+    mh.append(jamgie);
     ms.append(mh);
     if (!music) {
       ms.append(emptyNote("No requests yet", "Songs they queue in the Green Room, and how the room rated them, show here."));
