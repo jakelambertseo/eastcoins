@@ -452,13 +452,8 @@
       (!m.startsAt || new Date(m.startsAt).getTime() > Date.now()));
 
     // One sport at a time, when there is more than one to choose from.
-    const leagueOf = (x) => String(x.league || x.sport || "other").toLowerCase();
-    const counts = new Map();
-    for (const m of allOpen) counts.set(leagueOf(m), (counts.get(leagueOf(m)) || 0) + 1);
-    for (const g of local.upcoming) if (!counts.has(leagueOf(g))) counts.set(leagueOf(g), 0);
-    const leagues = [...counts.keys()].sort((a, b) => (a === "nfl" ? -1 : b === "nfl" ? 1 : a.localeCompare(b)));
-    if (local.sport !== "all" && !leagues.includes(local.sport)) local.sport = "all";
-    if (leagues.length > 1) wrap.append(sportFilter(leagues, counts, allOpen.length));
+    const { leagues, counts } = leagueCounts(allOpen.map(leagueOf), local.upcoming.map(leagueOf));
+    if (leagues.length > 1) wrap.append(sportFilter(leagues, counts, allOpen.length, "MLB opens at 4 PM CT · NFL an hour before kickoff"));
 
     const openNow = local.sport === "all" ? allOpen : allOpen.filter((m) => leagueOf(m) === local.sport);
 
@@ -485,8 +480,24 @@
     return wrap;
   }
 
-  /** The sport dropdown above the market list; the choice rides in the URL. */
-  function sportFilter(leagues, counts, total) {
+  /* ---------------------------------------------------------- sport filter
+     Shared by Markets, History and the Community Ledger. The choice
+     is one value for all three and rides in the URL as &sport=. */
+
+  const leagueOf = (x) => String(x?.league || x?.market?.league || x?.sport || x?.market?.sport || "other").toLowerCase();
+
+  /** Leagues present, NFL first, with how many of `present` each has. */
+  function leagueCounts(present, alsoKnown = []) {
+    const counts = new Map();
+    for (const k of present) counts.set(k, (counts.get(k) || 0) + 1);
+    for (const k of alsoKnown) if (!counts.has(k)) counts.set(k, 0);
+    const leagues = [...counts.keys()].sort((a, b) => (a === "nfl" ? -1 : b === "nfl" ? 1 : a.localeCompare(b)));
+    if (local.sport !== "all" && !leagues.includes(local.sport)) local.sport = "all";
+    return { leagues, counts };
+  }
+
+  /** The sport dropdown; `note` is the line of copy beside it, if any. */
+  function sportFilter(leagues, counts, total, note) {
     const bar = el("div", "mkt-tools");
     const label = el("label", "mkt-tools-k", "Sport");
     label.htmlFor = "v3SportFilter";
@@ -510,6 +521,7 @@
       paint();
     });
     bar.append(label, sel);
+    if (note) bar.append(el("span", "mkt-tools-note", note));
     return bar;
   }
 
@@ -919,8 +931,12 @@
     // Built from the picks themselves: a stake goes out when a pick locks,
     // and something comes back when it settles. That is the whole story
     // and it needs no second source to tell it.
+    const hl = leagueCounts(local.myPicks.map(leagueOf));
+    if (hl.leagues.length > 1) wrap.append(sportFilter(hl.leagues, hl.counts, local.myPicks.length));
+    const shownPicks = local.sport === "all" ? local.myPicks : local.myPicks.filter((p) => leagueOf(p) === local.sport);
+
     const entries = [];
-    for (const p of local.myPicks) {
+    for (const p of shownPicks) {
       const line = Number(p.oddsLocked ?? p.odds ?? 0);
       const game = `${sideName(p)} vs ${oppName(p)}${p.market?.league ? " · " + p.market.league : ""}`;
       entries.push({
@@ -977,12 +993,15 @@
 
   function ledgerView() {
     const wrap = document.createDocumentFragment();
-    const rows = local.communityLedger;
 
     if (!local.loaded) {
       wrap.append(skelRows(8, true));
       return wrap;
     }
+    const ll = leagueCounts(local.communityLedger.map(leagueOf));
+    if (ll.leagues.length > 1) wrap.append(sportFilter(ll.leagues, ll.counts, local.communityLedger.length));
+    const rows = local.sport === "all" ? local.communityLedger : local.communityLedger.filter((r) => leagueOf(r) === local.sport);
+
     if (!rows.length) {
       wrap.append(emptyNote("No picks yet", "Every pick anyone makes shows here — who, which side, how much, and what came of it."));
       return wrap;
