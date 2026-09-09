@@ -105,9 +105,7 @@ img{max-width:100%}
 .nav-link[aria-current="page"]{
   border-color:rgba(232,191,53,.3);color:var(--gold);background:var(--gold-dim);
 }
-/* Picks is the thing to try: a standing border and a HOT tag. */
-.nav-link.nav-hot{border-color:rgba(232,191,53,.45);color:var(--text)}
-.nav-link.nav-hot:hover,.nav-link.nav-hot[aria-current="page"]{border-color:rgba(232,191,53,.7);color:var(--gold)}
+/* Picks is the thing to try: a HOT tag, otherwise styled like its neighbours. */
 .nav-tag{
   margin-left:2px;padding:2px 6px;border-radius:6px;
   background:linear-gradient(120deg,#ff5a3c,#d31d4d);color:#fff;
