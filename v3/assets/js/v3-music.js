@@ -1066,7 +1066,29 @@
       }
 
       const list = el("div", "mwho-list");
-      for (const name of names) list.append(profileLink(name, name, "mwho-chip"));
+      // Pictures come with the roster once the worker sends them; until
+      // then (or for anyone the roster lacks) the requester list, which
+      // already carries avatars, fills in by name.
+      const profiles = Array.isArray(state?.listenerProfiles) ? state.listenerProfiles : [];
+      const byName = new Map();
+      for (const r of requesters) if (r.displayName) byName.set(String(r.displayName).toLowerCase(), r.avatar);
+      for (const p of profiles) if (p.name) byName.set(String(p.name).toLowerCase(), p.avatar || byName.get(String(p.name).toLowerCase()));
+      for (const name of names) {
+        const login = profiles.find((p) => p.name === name)?.login || name;
+        const chip = profileLink(login, "", "mwho-chip");
+        const avatar = byName.get(String(name).toLowerCase());
+        const av = el("span", "mwho-av", String(name).slice(0, 1).toUpperCase());
+        if (avatar) {
+          const img = document.createElement("img");
+          img.alt = "";
+          img.addEventListener("load", () => av.classList.add("has-logo"));
+          img.addEventListener("error", () => img.remove());
+          img.src = avatar;
+          av.append(img);
+        }
+        chip.append(av, document.createTextNode(name));
+        list.append(chip);
+      }
       box.append(list);
 
       if (total > names.length) {

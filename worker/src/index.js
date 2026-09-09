@@ -1243,15 +1243,24 @@ export class MusicRoom extends DurableObject {
   }
 
   listenerNames() {
+    return this.listenerProfiles().map((p) => p.name);
+  }
+
+  /** The roster with pictures: what the "In the room" chips are drawn from. */
+  listenerProfiles() {
     const seenLogins = new Set();
-    const names = [];
+    const people = [];
     for (const session of this.sessions.values()) {
       if (!session.verifiedLogin || seenLogins.has(session.verifiedLogin)) continue;
       seenLogins.add(session.verifiedLogin);
-      names.push(this.safeName(session.name));
-      if (names.length >= 40) break;
+      people.push({
+        name: this.safeName(session.name),
+        login: String(session.verifiedLogin).toLowerCase(),
+        avatar: this.safeAvatarUrl(session.avatar)
+      });
+      if (people.length >= 40) break;
     }
-    return names;
+    return people;
   }
 
   /**
@@ -1311,6 +1320,7 @@ export class MusicRoom extends DurableObject {
       revision: this.state.revision,
       listeners,
       listenerNames: this.listenerNames(),
+      listenerProfiles: this.listenerProfiles(),
       reactions: publicReactions(this.state.current?.reactors),
       skipVotes: this.state.skipVoters.length,
       skipVoterNames: this.skipVoterNames(),

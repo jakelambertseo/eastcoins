@@ -2087,6 +2087,13 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .login-btn.ulink,.login-btn.ulink:hover{color:#fff;border-bottom-color:transparent}
 /* Chips are pills too. */
 .mwho-chip.ulink,.mwho-chip.ulink:hover{border-bottom-color:transparent}
+.mwho-chip{display:inline-flex;align-items:center;gap:6px;padding-left:4px}
+.mwho-av{
+  position:relative;overflow:hidden;width:20px;height:20px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(150deg,#8e1231,#4a0a1c);color:var(--gold);font-size:.58rem;font-weight:800;
+}
+.mwho-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .2s ease}
+.mwho-av.has-logo{color:transparent}.mwho-av.has-logo img{opacity:1}
 .profile{max-width:820px}
 .pf-head{display:flex;align-items:center;gap:18px;margin-bottom:18px}
 .pf-avatar{
