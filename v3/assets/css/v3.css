@@ -2604,3 +2604,86 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
   .tk-viewport{overflow-x:auto;scrollbar-width:thin}
   .tk-label::before{animation:none}
 }
+
+/* ---------------------------------------------------------------- Green Room, simplified
+   Three things: the stage (with what is playing written on it), one
+   control bar, and one rail of three tabs. The room lives in the header. */
+.mshell{grid-template-columns:minmax(0,1.55fr) minmax(320px,1fr);gap:16px}
+@media (max-width:980px){.mshell{grid-template-columns:1fr}}
+.room-slot{display:flex;align-items:center;gap:10px}
+.room{display:flex;align-items:center;gap:10px}
+.room-pile{display:flex}
+.room-av{
+  position:relative;overflow:hidden;width:28px;height:28px;border-radius:50%;border:2px solid var(--ink);margin-left:-8px;
+  background:var(--panel-3);display:grid;place-items:center;color:var(--muted);font-size:.64rem;font-weight:800;
+}
+.room-av:first-child{margin-left:0}
+.room-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .2s ease}
+.room-av.has-logo{color:transparent}.room-av.has-logo img{opacity:1}
+.room-av.more{color:var(--text);font-size:.6rem}
+.room-count{color:var(--muted);font-size:.84rem;font-weight:700}
+.room-count b{color:var(--text)}
+.room-btn{height:30px;padding:0 11px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-size:.76rem;font-weight:700;cursor:pointer}
+.room-btn:hover,.room-btn.on{color:var(--gold);border-color:rgba(232,191,53,.4);background:var(--gold-dim)}
+.room-list-wrap{margin:-4px 0 12px}
+.room-list{display:flex;flex-wrap:wrap;gap:5px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:var(--panel)}
+
+/* the stage carries the now-playing overlay and the progress edge */
+.mstagewrap .mstage{border-radius:var(--radius)}
+.mnow-ov{
+  position:absolute;left:0;right:0;bottom:0;z-index:3;pointer-events:none;
+  display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;
+  padding:26px 16px 14px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.86) 60%);
+  border-radius:0 0 var(--radius) var(--radius);
+}
+.mnow-ov a{pointer-events:auto}
+.mnow-ov-art{width:44px;height:44px;border-radius:9px;object-fit:cover;background:var(--panel-3);display:block}
+.mnow-ov-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.mnow-ov .mnow-k{color:var(--gold)}
+.mnow-ov .mnow-v{font-size:1.05rem;letter-spacing:-.015em;color:#fff}
+.mnow-ov-by{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:.76rem}
+.mnow-ov-by .ulink{color:var(--text);font-weight:700}
+.mnow-ov-by .elo-tier{font-size:.58rem;padding:2px 7px}
+.mnow-ov-time{color:var(--muted);font-size:.78rem;font-weight:700;white-space:nowrap;align-self:end;padding-bottom:2px}
+.mstagewrap .mprog{position:absolute;left:0;right:0;bottom:0;z-index:4;margin:0;padding:0;height:4px;border-radius:0 0 var(--radius) var(--radius);overflow:hidden;background:rgba(255,255,255,.14)}
+.mstagewrap .mprog .mprog-track{height:4px;background:none;border-radius:0}
+.mstagewrap .mprog .mprog-fill{height:4px;border-radius:0}
+.mstagewrap .mprog.is-unknown .mprog-fill{width:0}
+
+/* one control bar */
+.mbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 11px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.mbar .reactbar{gap:6px}
+.mbar .reactbar .reactbtn:nth-child(3){margin-left:6px}
+.mbar .mactions{gap:6px}
+.mbar-spacer{flex:1}
+.mbar .mvol{margin:0;padding:0;border:0;background:none;min-width:150px}
+.mskip{border-color:rgba(255,107,133,.35);color:var(--red);background:var(--red-dim);font-weight:800}
+.mskip.mvoted{background:rgba(255,107,133,.22)}
+
+/* the request box and its hint */
+.mleft .msearch-input{height:44px;font-size:.95rem}
+.mhint{margin:0;color:var(--muted-2);font-size:.76rem}
+.mhint b{color:var(--muted)}
+.mhint-you{padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted);font-weight:700}
+.mhint-you.full{border-color:rgba(255,107,133,.35);color:var(--red);background:var(--red-dim)}
+
+/* the rail */
+.mside.rail{gap:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);overflow:hidden}
+.mside.rail .mtabs{gap:0;border-bottom:1px solid var(--line);background:var(--panel-2)}
+.mside.rail .mtab{height:42px;border:0;border-radius:0;background:none;border-bottom:2px solid transparent;font-size:.8rem;color:var(--muted-2)}
+.mside.rail .mtab.active{background:none;color:var(--gold);border-bottom-color:var(--gold)}
+.mside.rail .mq{border-radius:0;background:none;gap:0}
+.mside.rail .mq-row{border-bottom:1px solid var(--line);border-radius:0;background:none}
+.mside.rail .mq-row:last-child{border-bottom:0}
+.mside.rail .mq-row.mine{background:linear-gradient(90deg,var(--gold-dim),transparent 60%)}
+.mside.rail .mq-empty{background:none}
+.mside.rail .elo-head{padding:10px 12px 4px}
+.mside.rail .mpager{padding:10px}
+.mq-you{margin-left:6px;color:var(--gold);font-size:.6rem;font-weight:800;letter-spacing:.1em}
+.mq-eta{flex:0 0 auto;color:var(--muted);font-size:.7rem;font-weight:700;white-space:nowrap}
+.mseg{display:flex;gap:4px;padding:10px 12px 4px}
+.mseg-btn{height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:none;color:var(--muted);font:inherit;font-size:.72rem;font-weight:800;cursor:pointer}
+.mseg-btn.on{border-color:rgba(232,191,53,.4);background:var(--gold-dim);color:var(--gold)}
+.elo-delta{flex:0 0 auto;font-size:.68rem;font-weight:800;padding:1px 6px;border-radius:999px}
+.elo-delta.up{color:var(--green);background:var(--green-dim)}
+.elo-delta.down{color:var(--red);background:var(--red-dim)}

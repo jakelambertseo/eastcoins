@@ -49,6 +49,14 @@
 > feed from `/api/picks/activity`: picks locked/settled, markets opened,
 > finals, new users, songs played — merged newest-first, polled every 30s.
 >
+> **Green Room layout** (`v3-music.js` `build()`): ticker → header (title +
+> room pile, "See who" roster) → stage with `.mnow-ov` overlay and the
+> progress edge → `.mbar` (reactions, skip, volume) → search + `.mhint`
+> (queue N of 14 · you N of 3) → rail with tabs Up next / History /
+> Rankings (ELO | Most requests). The worker enforces `MAX_PER_USER = 3`
+> and publishes `queueLimit`/`perUserLimit`; `loadHistory()` diffs
+> ratings between fetches to show `.elo-delta` chips.
+>
 > **Casino** — `/?view=flip` (nav link present but hidden) is Coin Flip;
 > `/?view=casino` is reserved for the casino home page:
 > `functions/api/coin/` (`_coin.js` clock/fairness/settlement, `state.js`

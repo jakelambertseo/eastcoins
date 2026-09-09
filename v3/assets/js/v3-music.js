@@ -761,6 +761,12 @@
     // The field keeps its own value; this mirrors it so a remount restores
     // what was typed.
     let searchQuery = "";
+    // Ratings as of the last history fetch, so the next one can say who
+    // moved and by how much — the "+3" that makes a rating feel earned.
+    let lastRatings = new Map();
+    let eloDeltas = new Map();
+    let rankSeg = "elo";     // Rankings tab: "elo" | "requests"
+    let roomOpen = false;    // the "See who" list under the header
     // Which song this browser has voted to skip. The room knows too, but
     // it broadcasts one shared state to everybody and cannot say in it
     // which of them is you.
@@ -844,11 +850,27 @@
           : [];
         // Comes back on the same request, already ordered by count.
         requesters = Array.isArray(payload?.userStats) ? payload.userStats : [];
+        // Who moved since last time. Only meaningful once there is a
+        // "last time": the first fetch just records where everyone is.
+        const next = new Map(requesters.map((r) => [String(r.login || "").toLowerCase(), Math.round(Number(r.rating) || 1000)]));
+        if (lastRatings.size) {
+          const moved = new Map();
+          for (const [login, rating] of next) {
+            const before = lastRatings.get(login);
+            if (before !== undefined && rating !== before) moved.set(login, rating - before);
+          }
+          if (moved.size) {
+            eloDeltas = moved;
+            const mine = conn.login ? moved.get(conn.login) : undefined;
+            if (mine) setNotice(`Your last song: ${mine > 0 ? "+" : ""}${mine} ELO`, mine < 0);
+          }
+        }
+        lastRatings = next;
       } catch {
         history = [];
         requesters = [];
       }
-      if (root?.isConnected) renderSide(conn.state);
+      if (root?.isConnected) { renderSide(conn.state); renderNow(conn.state); renderHead(conn.state); }
     }
 
     /* ---------------------------------------------------- panels */
@@ -1008,67 +1030,58 @@
       return box;
     }
 
-    function requestersPanel() {
-      const box = el("div", "mwho");
-      box.append(el("span", "mq-k", "Top requesters"));
-
-      if (!requesters.length) {
-        box.append(el("p", "mwho-none", "Nobody has queued anything yet."));
-        return box;
-      }
-
-      const list = el("div", "mtop");
-      requesters.slice(0, 5).forEach((entry, index) => {
-        const row = el("div", "mtop-row");
-        row.append(el("span", "mtop-n", `${index + 1}`));
-        if (entry.avatar) {
-          const img = document.createElement("img");
-          img.className = "mtop-av";
-          img.src = entry.avatar;
-          img.alt = "";
-          img.loading = "lazy";
-          row.append(img);
-        }
-        const who = el("span", "mtop-name");
-        who.append(profileLink(entry.login || entry.displayName, entry.displayName || entry.login || "someone"));
-        window.ECBadges?.decorate(who, entry.login || entry.displayName);
-        row.append(who);
-        row.append(el("span", "mtop-c", String(entry.count || 0)));
-        list.append(row);
-      });
-      box.append(list);
-      return box;
-    }
-
     function profileLink(login, text, className) {
       const a = el("a", `ulink${className ? " " + className : ""}`, text);
       a.href = `/u/${encodeURIComponent(String(login || text || "").toLowerCase())}`;
       return a;
     }
 
-    function listenersPanel(state) {
-      const box = el("div", "mwho");
+    /** A stacked pile of faces and a count, for the header. */
+    function roomSummary(state) {
+      const box = el("div", "room");
       const names = state?.listenerNames || [];
       const total = Number(state?.listeners || 0);
-
-      const head = el("div", "mwho-head");
-      head.append(el("span", "mq-k", "In the room"));
-      head.append(el("span", "mwho-count", `${total}`));
-      box.append(head);
-
-      if (!names.length) {
-        // The roster only ever shows verified Twitch logins, so a room of
-        // logged-out listeners is a real count with an empty list.
-        box.append(el("p", "mwho-none", total
-          ? `${total} listening, none logged in with Twitch.`
-          : "Nobody here yet."));
-        return box;
+      const profiles = Array.isArray(state?.listenerProfiles) ? state.listenerProfiles : [];
+      const avatarFor = (name) => {
+        const p = profiles.find((x) => x.name === name);
+        if (p?.avatar) return p.avatar;
+        const r = requesters.find((x) => String(x.displayName || "").toLowerCase() === String(name).toLowerCase());
+        return r?.avatar || "";
+      };
+      const pile = el("div", "room-pile");
+      for (const name of names.slice(0, 5)) {
+        const av = el("span", "room-av", String(name).slice(0, 1).toUpperCase());
+        const src = avatarFor(name);
+        if (src) {
+          const img = document.createElement("img");
+          img.alt = "";
+          img.addEventListener("load", () => av.classList.add("has-logo"));
+          img.addEventListener("error", () => img.remove());
+          img.src = src;
+          av.append(img);
+        }
+        av.title = name;
+        pile.append(av);
       }
+      if (total > Math.min(names.length, 5)) pile.append(el("span", "room-av more", `+${total - Math.min(names.length, 5)}`));
+      box.append(pile);
+      const count = el("span", "room-count");
+      count.append(el("b", null, String(total)), document.createTextNode(total === 1 ? " listening" : " listening"));
+      box.append(count);
+      if (names.length) {
+        const btn = el("button", `room-btn${roomOpen ? " on" : ""}`, roomOpen ? "Hide" : "See who");
+        btn.type = "button";
+        btn.addEventListener("click", () => { roomOpen = !roomOpen; renderHead(conn.state); });
+        box.append(btn);
+      }
+      return box;
+    }
 
-      const list = el("div", "mwho-list");
-      // Pictures come with the roster once the worker sends them; until
-      // then (or for anyone the roster lacks) the requester list, which
-      // already carries avatars, fills in by name.
+    /** The full roster, shown under the header on request. */
+    function roomList(state) {
+      const names = state?.listenerNames || [];
+      const total = Number(state?.listeners || 0);
+      const list = el("div", "room-list");
       const profiles = Array.isArray(state?.listenerProfiles) ? state.listenerProfiles : [];
       const byName = new Map();
       for (const r of requesters) if (r.displayName) byName.set(String(r.displayName).toLowerCase(), r.avatar);
@@ -1087,14 +1100,19 @@
           av.append(img);
         }
         chip.append(av, document.createTextNode(name));
+        window.ECBadges?.decorate(chip, login);
         list.append(chip);
       }
-      box.append(list);
+      if (total > names.length) list.append(el("span", "mwho-none", `+${total - names.length} not logged in`));
+      return list;
+    }
 
-      if (total > names.length) {
-        box.append(el("p", "mwho-none", `+${total - names.length} not logged in`));
-      }
-      return box;
+    function renderHead(state) {
+      if (!refs.room) return;
+      refs.room.replaceChildren(roomSummary(state));
+      refs.roomList.replaceChildren();
+      refs.roomList.hidden = !roomOpen;
+      if (roomOpen) refs.roomList.append(roomList(state));
     }
 
     function queueList(state) {
@@ -1104,22 +1122,35 @@
         wrap.append(el("p", "mq-empty", "Nothing queued. Search above, or ask in chat with !sr."));
         return wrap;
       }
+      // When each song will start: what is left of the current one, then
+      // every song ahead of it. Unknown lengths simply leave the ETA off.
+      let ahead = state?.current && Number(state.current.duration) > 0
+        ? Math.max(0, Number(state.current.duration) - elapsedSeconds(state))
+        : null;
       items.forEach((item, index) => {
-        const row = el("div", "mq-row");
+        const mine = conn.login &&
+          String(item.requestedByLogin || "").toLowerCase() === conn.login;
+        const row = el("div", `mq-row${mine ? " mine" : ""}`);
         row.append(el("span", "mq-n", String(index + 1)));
         const art = thumb(item.videoId, "mq-thumb");
         if (art) row.append(art);
         const meta = el("div", "mq-meta");
-        meta.append(el("strong", null, item.title || "Untitled"));
+        const title = el("strong", null, item.title || "Untitled");
+        if (mine) title.append(el("span", "mq-you", "YOU"));
+        meta.append(title);
         meta.append(el("small", null, item.requestedBy ? `added by ${item.requestedBy}` : "added from chat"));
         row.append(meta);
         if (item.special === "rasputin") row.append(el("span", "mq-tag", "RASPUTIN"));
+        if (ahead !== null) {
+          const mins = Math.round(ahead / 60);
+          row.append(el("span", "mq-eta", mins < 1 ? "next" : `in ${mins} min`));
+          ahead += Number(item.duration) > 0 ? Number(item.duration) : 0;
+          if (!(Number(item.duration) > 0)) ahead = null;
+        }
 
         // Your own rows, plus everything if you run the room. The server
         // re-checks on every removal, so showing the button is only ever
         // about not offering one that would be refused.
-        const mine = conn.login &&
-          String(item.requestedByLogin || "").toLowerCase() === conn.login;
         if (mine || canForceSkip()) {
           const drop = el("button", "mq-drop", "\u2715");
           drop.type = "button";
@@ -1213,6 +1244,12 @@
         score.classList.add(Number(entry.rating) >= 1000 ? "up" : "down");
         const tierEl = el("span", `elo-tier ${tier.key}`, tier.label);
         line.append(tierEl, score);
+        const delta = eloDeltas.get(String(entry.login || "").toLowerCase());
+        if (delta) {
+          const d = el("span", `elo-delta ${delta > 0 ? "up" : "down"}`, `${delta > 0 ? "▲" : "▼"}${Math.abs(delta)}`);
+          d.title = `${delta > 0 ? "+" : ""}${delta} since their last song`;
+          line.append(d);
+        }
         return line;
       };
 
@@ -1230,6 +1267,39 @@
         rest.slice(-5).forEach((entry) => wrap.append(row(entry, rated.indexOf(entry) + 1)));
       }
 
+      return wrap;
+    }
+
+    /** Everyone by how many songs they have queued, for the Rankings tab. */
+    function requestsList() {
+      const wrap = el("div", "mq");
+      if (!requesters.length) {
+        wrap.append(el("p", "mq-empty", "Nobody has queued anything yet."));
+        return wrap;
+      }
+      const sorted = requesters.slice().sort((a, b) => Number(b.count || 0) - Number(a.count || 0)).slice(0, 10);
+      sorted.forEach((entry, index) => {
+        const line = el("div", "mq-row elo-row");
+        line.append(el("span", "mq-n", String(index + 1)));
+        if (entry.avatar) {
+          const img = document.createElement("img");
+          img.className = "mtop-av";
+          img.src = entry.avatar;
+          img.alt = "";
+          img.loading = "lazy";
+          line.append(img);
+        }
+        const meta = el("div", "mq-meta");
+        const nameEl = el("strong");
+        nameEl.append(profileLink(entry.login || entry.displayName, entry.displayName || entry.login || "someone"));
+        window.ECBadges?.decorate(nameEl, entry.login || entry.displayName);
+        meta.append(nameEl);
+        const rated = Number(entry.rated || 0);
+        meta.append(el("small", "elo-counts", rated ? `🎵 ${rated} rated · ELO ${Math.round(Number(entry.rating) || 1000)}` : "unrated"));
+        line.append(meta);
+        line.append(el("span", "elo-score", `${Number(entry.count || 0)} songs`));
+        wrap.append(line);
+      });
       return wrap;
     }
 
@@ -1252,10 +1322,15 @@
         if (art) row.append(art);
         const meta = el("div", "mq-meta");
         meta.append(el("strong", null, entry.title || "Untitled"));
-        meta.append(el("small", null,
+        const sub = el("small", null,
           entry.playedAt
             ? `${entry.requestedBy || "chat"} · played ${timeAgo(entry.playedAt)}`
-            : `${entry.requestedBy || "chat"} · added ${timeAgo(entry.requestedAt)}`));
+            : `${entry.requestedBy || "chat"} · added ${timeAgo(entry.requestedAt)}`);
+        const delta = eloDeltas.get(String(entry.requestedByLogin || "").toLowerCase());
+        if (delta && history.indexOf(entry) === 0) {
+          sub.append(document.createTextNode(" · "), el("span", `elo-delta ${delta > 0 ? "up" : "down"}`, `${delta > 0 ? "▲" : "▼"}${Math.abs(delta)} ELO`));
+        }
+        meta.append(sub);
         row.append(meta);
 
         const again = el("button", "watchbtn mq-again", "Play again");
@@ -1314,6 +1389,18 @@
     function build() {
       root.replaceChildren();
 
+      // The same live ticker the Sports page carries, above the title.
+      const ticker = document.createElement("section");
+      ticker.className = "ticker";
+      root.append(ticker);
+      const mountTicker = (tries = 0) => {
+        if (!ticker.isConnected) return;
+        if (window.ECActivity) window.ECActivity.mountTicker(ticker);
+        else if (tries < 100) window.setTimeout(() => mountTicker(tries + 1), 50);
+      };
+      mountTicker();
+
+      // Header: the title on the left, the room on the right.
       const head = el("div", "mhead");
       const title = el("h1", "mtitle");
       const emote = document.createElement("img");
@@ -1329,20 +1416,14 @@
       jamgie2.src = JAMGIE2;
       jamgie2.alt = "";
       title.append(emote, el("span", "mtitle-text", "The Green Room"), jamgie, jamgie2);
+      refs.room = el("div", "room-slot");
       refs.listeners = el("span", "mlisteners", BASE ? "Connecting\u2026" : "Room not configured");
-      // The same live ticker the Sports page carries, above the title.
-      const ticker = document.createElement("section");
-      ticker.className = "ticker";
-      root.append(ticker);
-      const mountTicker = (tries = 0) => {
-        if (!ticker.isConnected) return;
-        if (window.ECActivity) window.ECActivity.mountTicker(ticker);
-        else if (tries < 100) window.setTimeout(() => mountTicker(tries + 1), 50);
-      };
-      mountTicker();
-
-      head.append(title, refs.listeners);
+      refs.room.append(refs.listeners);
+      head.append(title, refs.room);
       root.append(head);
+      refs.roomList = el("div", "room-list-wrap");
+      refs.roomList.hidden = true;
+      root.append(refs.roomList);
 
       noticeEl = el("p", "mnotice");
       noticeEl.hidden = true;
@@ -1356,17 +1437,20 @@
       const shellEl = el("div", "mshell");
       const left = el("div", "mleft");
 
-      // The glow cannot follow the actual audio — the YouTube frame is
-      // cross-origin and its waveform is not readable — so it is a steady
-      // pulse that runs while something is playing and lifts during a
-      // !rasputin block. Honest decoration rather than a fake visualiser.
+      // The stage, with what is playing written on it. The glow cannot
+      // follow the actual audio — the YouTube frame is cross-origin — so
+      // it is a steady pulse while something plays, lifted for !rasputin.
       refs.stagewrap = el("div", "mstagewrap");
       stage = el("div", "mstage");
       refs.stagewrap.append(el("span", "mstage-glow"), stage);
 
-      // Progress, read-only. It shows where the shared timeline is; it
-      // cannot move it, because one person seeking would only put them
-      // out of step with everyone else in the room.
+      // Now playing, over the bottom of the video.
+      refs.now = el("div", "mnow-ov");
+      refs.now.hidden = true;
+      refs.stagewrap.append(refs.now);
+
+      // Progress along the stage's bottom edge, read-only: it shows where
+      // the shared timeline is and cannot move it.
       refs.progress = el("div", "mprog");
       refs.progress.setAttribute("aria-hidden", "true");
       refs.progressFill = el("i", "mprog-fill");
@@ -1374,23 +1458,128 @@
       track.append(refs.progressFill);
       refs.progressNow = el("span", "mprog-t nums", "0:00");
       refs.progressEnd = el("span", "mprog-t nums", "");
-      refs.progress.append(refs.progressNow, track, refs.progressEnd);
+      refs.progress.append(track);
       refs.progress.hidden = true;
-      // The ticker lives outside this closure, so hand it the pieces.
+      refs.stagewrap.append(refs.progress);
       prog = { bar: refs.progress, fill: refs.progressFill, now: refs.progressNow, end: refs.progressEnd };
       startProgressTicker();
 
-      // Volume is built once so dragging the slider is never interrupted
-      // by somebody else joining the room.
+      // One control bar: reactions, skip, volume.
+      const bar = el("div", "mbar");
       refs.reactSlot = el("div", "reactbar");
       refs.reactBtns = null;   // a fresh build gets a fresh bar
+      refs.actions = el("div", "mactions");
+      bar.append(refs.reactSlot, refs.actions, el("span", "mbar-spacer"), volumePanel());
+      refs.bar = bar;
+
+      // One request box, with the queue rules under it.
       refs.resultsSlot = el("div", "mslot");
-      left.append(refs.stagewrap, refs.progress, refs.reactSlot, volumePanel(), buildSearchField(), refs.resultsSlot);
+      refs.hint = el("p", "mhint");
+      left.append(refs.stagewrap, bar, buildSearchField(), refs.resultsSlot, refs.hint);
       shellEl.append(left);
 
-      refs.side = el("div", "mside");
+      // One rail: three tabs.
+      refs.side = el("aside", "mside rail");
       shellEl.append(refs.side);
       root.append(shellEl);
+    }
+
+    /** Now playing, written on the stage. */
+    function renderNow(state) {
+      const box = refs.now;
+      if (!box) return;
+      const current = state?.current;
+      box.hidden = !current;
+      if (!current) return;
+      box.replaceChildren();
+      const art = thumb(current.videoId, "mnow-ov-art");
+      if (art) box.append(art); else box.append(el("span", "mnow-ov-art"));
+      const text = el("div", "mnow-ov-text");
+      text.append(el("span", "mnow-k", "Now playing"));
+      const title = el("strong", "mnow-v");
+      const titleText = el("span", "mnow-v-text", current.title || "Untitled");
+      title.append(titleText);
+      text.append(title);
+      requestAnimationFrame(() => {
+        if (!title.isConnected) return;
+        const gap = titleText.scrollWidth - title.clientWidth;
+        if (gap > 4) {
+          title.classList.add("is-long");
+          title.style.setProperty("--scroll", `-${gap + 12}px`);
+          title.style.setProperty("--scroll-s", `${Math.max(6, Math.round(gap / 22) + 4)}s`);
+        }
+      });
+      if (current.requestedBy) {
+        const by = el("small", "mnow-ov-by");
+        by.append(document.createTextNode("requested by "), profileLink(current.requestedByLogin || current.requestedBy, current.requestedBy));
+        const login = String(current.requestedByLogin || "").toLowerCase();
+        const stats = requesters.find((r) => String(r.login || "").toLowerCase() === login);
+        if (stats && Number(stats.rated) > 0) {
+          const rated = requesters.filter((r) => Number(r.rated) > 0).sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
+          const tier = eloTier(stats.rating, rated[0]?.login === stats.login, rated.length > 1 && rated[rated.length - 1]?.login === stats.login);
+          by.append(el("span", `elo-tier ${tier.key}`, `${tier.label} · ${Math.round(Number(stats.rating) || 1000)}`));
+        }
+        text.append(by);
+      }
+      box.append(text);
+      const time = el("span", "mnow-ov-time nums");
+      time.append(refs.progressNow, document.createTextNode(" / "), refs.progressEnd);
+      box.append(time);
+    }
+
+    /** Skip vote and force skip, in the control bar. */
+    function renderActions(state) {
+      const slot = refs.actions;
+      if (!slot) return;
+      slot.replaceChildren();
+      if (!state?.current) return;
+
+      const vote = el("button", "watchbtn mskip", `Skip · ${state.skipVotes} / ${state.skipThreshold}`);
+      vote.type = "button";
+      vote.title = skipVoterTip(state);
+      if (votedFor === state.current.id) vote.classList.add("mvoted");
+      vote.addEventListener("click", () => {
+        // currentId is required. Without it the room drops the vote on
+        // its very first line, silently.
+        if (!send({ type: "skip-vote", currentId: state.current.id })) return;
+        votedFor = votedFor === state.current.id ? "" : state.current.id;
+        renderActions(conn.state);
+      });
+      slot.append(vote);
+
+      // Mods, or whoever queued what is playing. The server re-checks the
+      // verified login on every skip, so this is presentation only.
+      const ownsCurrent = conn.login &&
+        String(state.current.requestedByLogin || "").toLowerCase() === conn.login;
+      const canPull = canForceSkip() || (ownsCurrent && !state.current.unskippable);
+      if (canPull) {
+        const mine = ownsCurrent && !canForceSkip();
+        const force = el("button", "watchbtn mforce", mine ? "Skip mine" : "Skip now");
+        force.type = "button";
+        force.title = mine ? "Take your own song off, no vote needed" : "Skip immediately, without a vote";
+        force.addEventListener("click", () => send({ type: "force-skip" }));
+        slot.append(force);
+      }
+    }
+
+    /** The line under the request box: chat command, your share of the queue. */
+    function renderHint(state) {
+      const h = refs.hint;
+      if (!h) return;
+      h.replaceChildren();
+      const limit = Number(state?.queueLimit) || 14;
+      const per = Number(state?.perUserLimit) || 3;
+      const queued = (state?.queue || []).length;
+      h.append(el("b", null, "!song"), document.createTextNode(" in chat shows what's on"));
+      h.append(document.createTextNode(` · queue ${queued} of ${limit}`));
+      if (conn.login) {
+        const mine = (state?.queue || []).filter((i) => String(i.requestedByLogin || "").toLowerCase() === conn.login).length;
+        const you = el("span", `mhint-you${mine >= per ? " full" : ""}`, `you: ${mine} of ${per}`);
+        you.title = mine >= per ? "One of yours has to play before you can add another" : `Up to ${per} songs waiting at once`;
+        h.append(document.createTextNode(" · "), you);
+      } else {
+        h.append(document.createTextNode(` · log in with Twitch to add songs (${per} at a time)`));
+      }
     }
 
     /**
@@ -1472,74 +1661,9 @@
       if (!side) return;
       side.replaceChildren();
 
-      const now = el("div", "mnow");
-      const nowArt = state?.current ? thumb(state.current.videoId, "mnow-thumb") : null;
-      if (nowArt) now.append(nowArt);
-
-      const nowText = el("div", "mnow-text");
-      nowText.append(el("span", "mnow-k", "Now playing"));
-      // A long title scrolls rather than truncating: the text sits in an
-      // inner span, and once it is on the page we measure it — if it
-      // overflows, the span slides back and forth across the gap.
-      const title = el("strong", "mnow-v");
-      const titleText = el("span", "mnow-v-text", state?.current?.title || "Nothing playing");
-      title.append(titleText);
-      nowText.append(title);
-      requestAnimationFrame(() => {
-        if (!title.isConnected) return;
-        const gap = titleText.scrollWidth - title.clientWidth;
-        if (gap > 4) {
-          title.classList.add("is-long");
-          title.style.setProperty("--scroll", `-${gap + 12}px`);
-          title.style.setProperty("--scroll-s", `${Math.max(6, Math.round(gap / 22) + 4)}s`);
-        }
-      });
-      if (state?.current?.requestedBy) {
-        nowText.append(el("small", null, `added by ${state.current.requestedBy}`));
-      }
-      now.append(nowText);
-      side.append(now);
-
-      if (state?.current) {
-        const actions = el("div", "mactions");
-
-        const vote = el("button", "watchbtn", `Vote skip (${state.skipVotes}/${state.skipThreshold})`);
-        vote.type = "button";
-        vote.title = skipVoterTip(state);
-        if (votedFor === state.current.id) vote.classList.add("mvoted");
-        vote.addEventListener("click", () => {
-          // currentId is required. Without it the room drops the vote on
-          // its very first line, silently, which is exactly what made
-          // this look like it was not counting.
-          if (!send({ type: "skip-vote", currentId: state.current.id })) return;
-          votedFor = votedFor === state.current.id ? "" : state.current.id;
-          renderSide(conn.state);
-        });
-        actions.append(vote);
-
-        // Mods, or whoever queued what is playing. The server re-checks
-        // the verified login on every skip, so this is presentation only.
-        const ownsCurrent = conn.login &&
-          String(state.current.requestedByLogin || "").toLowerCase() === conn.login;
-        const canPull = canForceSkip() || (ownsCurrent && !state.current.unskippable);
-
-        if (canPull) {
-          const mine = ownsCurrent && !canForceSkip();
-          const force = el("button", "watchbtn mforce", mine ? "Skip mine" : "Skip now");
-          force.type = "button";
-          force.title = mine
-            ? "Take your own song off, no vote needed"
-            : "Skip immediately, without a vote";
-          force.addEventListener("click", () => send({ type: "force-skip" }));
-          actions.append(force);
-        }
-        side.append(actions);
-      }
-
-      side.append(listenersPanel(state));
-
+      const queued = (state?.queue || []).length;
       const tabs = el("div", "mtabs");
-      for (const [key, label] of [["queue", "Up next"], ["history", "History"], ["elo", "Music ELO"]]) {
+      for (const [key, label] of [["queue", queued ? `Up next · ${queued}` : "Up next"], ["history", "History"], ["elo", "Rankings"]]) {
         const btn = el("button", `mtab${tab === key ? " active" : ""}`, label);
         btn.type = "button";
         btn.addEventListener("click", () => {
@@ -1551,12 +1675,20 @@
         tabs.append(btn);
       }
       side.append(tabs);
-      side.append(
-        tab === "queue" ? queueList(state)
-          : tab === "elo" ? ratingsList()
-            : historyList()
-      );
-      side.append(requestersPanel());
+
+      if (tab === "elo") {
+        const seg = el("div", "mseg");
+        for (const [key, label] of [["elo", "Music ELO"], ["requests", "Most requests"]]) {
+          const b = el("button", `mseg-btn${rankSeg === key ? " on" : ""}`, label);
+          b.type = "button";
+          b.addEventListener("click", () => { rankSeg = key; renderSide(conn.state); });
+          seg.append(b);
+        }
+        side.append(seg);
+        side.append(rankSeg === "elo" ? ratingsList() : requestsList());
+      } else {
+        side.append(tab === "queue" ? queueList(state) : historyList());
+      }
     }
 
     function paint(state) {
@@ -1564,9 +1696,7 @@
       if (!refs.side && !refs.stagewrap) { build(); renderResults(); }
       if (!BASE) return;
 
-      refs.listeners.textContent = state
-        ? `${state.listeners} listening`
-        : "Connecting\u2026";
+      if (!state) refs.listeners.textContent = "Connecting\u2026";
 
       refs.stagewrap.classList.toggle("is-playing", Boolean(state?.current));
       refs.stagewrap.classList.toggle("is-hot", isRasputin(state));
@@ -1580,7 +1710,12 @@
         loadHistory();
       }
 
+      renderHead(state);
+      renderNow(state);
       renderReactions(state);
+      renderActions(state);
+      if (refs.bar) refs.bar.hidden = !state?.current;
+      renderHint(state);
       renderSide(state);
 
       if (state?.current) mountPlayer(stage, state);
@@ -1594,6 +1729,7 @@
         root = container;
         refs.side = null;
         refs.stagewrap = null;
+        refs.room = null;
         document.body.classList.add("music-view");
         initAudioLock();
         connect();
