@@ -1594,9 +1594,27 @@ body.is-rasputin .mprog-fill{background:linear-gradient(90deg,#ff3d81,#ffd23f,#4
     transform:translate(calc(-50% + var(--dx,0)),var(--dy,-60px)) scale(.85) rotate(var(--rot,0));
   }
 }
+/* The count ticking up gets a little jump of its own. */
+.reactbtn-n.bump{animation:reactbump .4s cubic-bezier(.34,1.56,.64,1)}
+@keyframes reactbump{0%{transform:scale(1)}45%{transform:scale(1.5)}100%{transform:scale(1)}}
+.reactbtn.has-count{border-color:rgba(232,191,53,.3)}
+/* The big emoji rising over the video. */
+.react-float{
+  position:absolute;bottom:14%;z-index:4;pointer-events:none;line-height:1;
+  filter:drop-shadow(0 4px 14px rgba(0,0,0,.6));
+  animation:reactrise 2.1s cubic-bezier(.2,.7,.3,1) forwards;
+}
+@keyframes reactrise{
+  0%{opacity:0;transform:translate(0,20px) scale(.5)}
+  12%{opacity:1;transform:translate(0,0) scale(1.25)}
+  30%{transform:translate(calc(var(--drift,0) * .3),-18%) scale(1)}
+  100%{opacity:0;transform:translate(var(--drift,0),-110%) scale(.9) rotate(8deg)}
+}
 @media (prefers-reduced-motion:reduce){
   .reactbtn.is-popped{animation:none}
   .react-bit{display:none}
+  .react-float{display:none}
+  .reactbtn-n.bump{animation:none}
 }
 
 /* Requester ratings */

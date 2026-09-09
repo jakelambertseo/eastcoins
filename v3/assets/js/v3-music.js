@@ -634,6 +634,20 @@
     void button.offsetWidth;
     button.classList.add("is-popped");
     window.setTimeout(() => button.classList.remove("is-popped"), 400);
+
+    // And the big one: the emoji floats up over the video, so a reaction
+    // is something the whole room can see happen, not just a counter.
+    const surface = stage;
+    if (!surface) return;
+    for (let i = 0; i < 3; i += 1) {
+      const big = el("span", "react-float", emoji);
+      big.style.left = `${18 + Math.random() * 64}%`;
+      big.style.setProperty("--drift", `${Math.random() * 80 - 40}px`);
+      big.style.animationDelay = `${i * 140}ms`;
+      big.style.fontSize = `${2.2 + Math.random() * 1.4}rem`;
+      surface.append(big);
+      window.setTimeout(() => big.remove(), 2200 + i * 140);
+    }
   }
 
   function reactionTip(entry, label) {
@@ -1370,28 +1384,51 @@
     function renderReactions(state) {
       const slot = refs.reactSlot;
       if (!slot) return;
-      slot.replaceChildren();
+      slot.hidden = !state?.current;
       if (!state?.current) return;
 
+      // Built once. Every broadcast used to rebuild the bar, which threw
+      // away the button — and the burst on it — about 100ms after a
+      // click, so a reaction flashed and vanished. Now only the counts
+      // and the tooltips change.
+      if (!refs.reactBtns) {
+        refs.reactBtns = {};
+        for (const { kind, emoji, label } of REACTIONS) {
+          const btn = el("button", "reactbtn");
+          btn.type = "button";
+          btn.dataset.kind = kind;
+          btn.append(el("span", "reactbtn-emoji", emoji));
+          const n = el("span", "reactbtn-n");
+          n.hidden = true;
+          btn.append(n);
+          btn.addEventListener("click", () => {
+            // currentId is required: the room refuses a reaction aimed at
+            // a song that has already changed, which is what stops a late
+            // click landing on whatever happens to be playing now.
+            const current = conn.state?.current;
+            if (!current) return;
+            send({ type: "react", kind, currentId: current.id });
+            burst(btn, emoji);
+          });
+          refs.reactBtns[kind] = { btn, n, label };
+          slot.append(btn);
+        }
+      }
+
       const all = state.reactions || {};
-      for (const { kind, emoji, label } of REACTIONS) {
+      for (const { kind } of REACTIONS) {
+        const { btn, n, label } = refs.reactBtns[kind];
         const entry = all[kind] || { count: 0, names: [] };
-        const btn = el("button", "reactbtn");
-        btn.type = "button";
-        btn.title = reactionTip(entry, label);
-        btn.setAttribute("aria-label", reactionTip(entry, label));
-
-        btn.append(el("span", "reactbtn-emoji", emoji));
-        if (entry.count) btn.append(el("span", "reactbtn-n", String(entry.count)));
-
-        btn.addEventListener("click", () => {
-          // currentId is required: the room refuses a reaction aimed at a
-          // song that has already changed, which is what stops a late
-          // click landing on whatever happens to be playing now.
-          send({ type: "react", kind, currentId: state.current.id });
-          burst(btn, emoji);
-        });
-        slot.append(btn);
+        const tip = reactionTip(entry, label);
+        btn.title = tip;
+        btn.setAttribute("aria-label", tip);
+        const count = Number(entry.count || 0);
+        if (count !== Number(n.textContent || 0)) {
+          n.textContent = count ? String(count) : "";
+          n.hidden = !count;
+          if (count) { n.classList.remove("bump"); void n.offsetWidth; n.classList.add("bump"); }
+        }
+        btn.classList.toggle("has-count", count > 0);
       }
     }
 
