@@ -2490,3 +2490,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .us-team small{display:block;color:var(--muted-2);font-size:.7rem}
 .us-elo{display:flex;align-items:center;gap:8px}
 .us-elo b{font-weight:800;font-size:.9rem}
+
+/* Markets tab: the sport dropdown */
+.mkt-tools{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.mkt-tools-k{color:var(--muted-2);font-size:.64rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}

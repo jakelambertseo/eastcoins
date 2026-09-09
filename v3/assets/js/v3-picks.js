@@ -32,6 +32,7 @@
     upcoming: [],
     upcomingAt: null,
     sort: { key: "profit", dir: "desc" },
+    sport: "all",   // Markets tab filter: "all" or a league key like "mlb"
     communityLedger: [],
     season: null,
     login: "",
@@ -398,8 +399,7 @@
     return card;
   }
 
-  function upcomingSection() {
-    const games = local.upcoming;
+  function upcomingSection(games = local.upcoming) {
     if (!games.length) return null;
 
     const section = el("section", "upcoming");
@@ -447,9 +447,20 @@
     // The Markets tab is for placing picks, so it lists only what can
     // actually be picked. A game already under way belongs in My Picks,
     // not here looking like an option with the button greyed out.
-    const openNow = local.markets.filter((m) =>
+    const allOpen = local.markets.filter((m) =>
       m.state === "OPEN" &&
       (!m.startsAt || new Date(m.startsAt).getTime() > Date.now()));
+
+    // One sport at a time, when there is more than one to choose from.
+    const leagueOf = (x) => String(x.league || x.sport || "other").toLowerCase();
+    const counts = new Map();
+    for (const m of allOpen) counts.set(leagueOf(m), (counts.get(leagueOf(m)) || 0) + 1);
+    for (const g of local.upcoming) if (!counts.has(leagueOf(g))) counts.set(leagueOf(g), 0);
+    const leagues = [...counts.keys()].sort((a, b) => (a === "nfl" ? -1 : b === "nfl" ? 1 : a.localeCompare(b)));
+    if (local.sport !== "all" && !leagues.includes(local.sport)) local.sport = "all";
+    if (leagues.length > 1) wrap.append(sportFilter(leagues, counts, allOpen.length));
+
+    const openNow = local.sport === "all" ? allOpen : allOpen.filter((m) => leagueOf(m) === local.sport);
 
     if (local.failed || !openNow.length) {
       const empty = el("div", "empty");
@@ -469,9 +480,50 @@
       wrap.append(list);
     }
 
-    const upcoming = upcomingSection();
+    const upcoming = upcomingSection(local.sport === "all" ? local.upcoming : local.upcoming.filter((g) => leagueOf(g) === local.sport));
     if (upcoming) wrap.append(upcoming);
     return wrap;
+  }
+
+  /** The sport dropdown above the market list; the choice rides in the URL. */
+  function sportFilter(leagues, counts, total) {
+    const bar = el("div", "mkt-tools");
+    const label = el("label", "mkt-tools-k", "Sport");
+    label.htmlFor = "v3SportFilter";
+    const sel = document.createElement("select");
+    sel.id = "v3SportFilter";
+    sel.className = "sc-select";
+    const all = document.createElement("option");
+    all.value = "all";
+    all.textContent = `All sports (${total})`;
+    sel.append(all);
+    for (const key of leagues) {
+      const o = document.createElement("option");
+      o.value = key;
+      o.textContent = `${key.toUpperCase()} (${counts.get(key) || 0})`;
+      sel.append(o);
+    }
+    sel.value = local.sport;
+    sel.addEventListener("change", () => {
+      local.sport = sel.value;
+      writeSportToUrl(local.sport);
+      paint();
+    });
+    bar.append(label, sel);
+    return bar;
+  }
+
+  function readSportFromUrl() {
+    const raw = String(new URL(location.href).searchParams.get("sport") || "").toLowerCase();
+    return /^[a-z]{2,12}$/.test(raw) ? raw : "all";
+  }
+
+  function writeSportToUrl(key) {
+    const url = new URL(location.href);
+    if (url.searchParams.get("view") !== "picks") return;
+    if (key === "all") url.searchParams.delete("sport");
+    else url.searchParams.set("sport", key);
+    history.replaceState(history.state, "", url.pathname + url.search + url.hash);
   }
 
   /* ---------------------------------------------------------- ticket */
@@ -1156,6 +1208,7 @@
       shell = api;
       local.wallet = api.state.session?.wallet || local.wallet;
       local.tab = readTabFromUrl() || local.tab;
+      local.sport = readSportFromUrl();
       paint();
       if (!local.loaded) {
         await loadMarkets();
