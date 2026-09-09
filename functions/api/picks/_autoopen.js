@@ -8,8 +8,10 @@
            one message for the whole slate.
 
      MLB   every day at 4:00 PM Central the next day's worth of
-           games open at once — tonight's, and tomorrow's day games
-           — with lines locked then. Quiet in chat: no open line,
+           games become eligible — tonight's, and tomorrow's day
+           games — but at most FIVE are open at any one time, the
+           earliest first; as one locks at first pitch the next in
+           line opens on the following tick. Quiet in chat: no open line,
            no countdown, no closing or settlement line. The site,
            the game pages, the bot's replies and Discord carry it.
 
@@ -32,7 +34,7 @@ const TZ = "America/Chicago";
 
 export const SPORTS = [
   { key: "americanfootball_nfl", sport: "american-football", league: "NFL", open: "lead", leadMs: HOUR, horizonMs: 8 * DAY, quiet: false },
-  { key: "baseball_mlb", sport: "baseball", league: "MLB", open: "daily", openHourCT: 16, horizonMs: 30 * HOUR, quiet: true }
+  { key: "baseball_mlb", sport: "baseball", league: "MLB", open: "daily", openHourCT: 16, horizonMs: 30 * HOUR, quiet: true, maxOpen: 5 }
 ];
 
 /** Sports whose markets run without a word in Twitch chat. */
@@ -204,8 +206,20 @@ export async function autoOpenMarkets(env, db) {
       .bind(...due.map((g) => g.id))
       .all();
     const have = new Set((existing.results || []).map((r) => String(r.provider_event_id)));
-    const missing = due.filter((g) => !have.has(g.id));
+    let missing = due.filter((g) => !have.has(g.id)).sort((a, b) => a.commence.localeCompare(b.commence));
     if (!missing.length) continue;
+
+    // A cap on how many of this sport are open at once: the earliest
+    // games first, the rest wait for a slot to free up as one locks.
+    if (cfg.maxOpen) {
+      const openNow = await db
+        .prepare(`SELECT COUNT(*) AS n FROM markets WHERE sport = ? AND state = 'OPEN' AND datetime(starts_at) > datetime('now')`)
+        .bind(cfg.sport)
+        .first();
+      const room = cfg.maxOpen - Number(openNow?.n || 0);
+      if (room <= 0) continue;
+      missing = missing.slice(0, room);
+    }
 
     // A fresh price now, not the one cached with the schedule hours ago:
     // this is the line everyone will be held to.

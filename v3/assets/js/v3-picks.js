@@ -453,7 +453,7 @@
 
     // One sport at a time, when there is more than one to choose from.
     const { leagues, counts } = leagueCounts(allOpen.map(leagueOf), local.upcoming.map(leagueOf));
-    if (leagues.length > 1) wrap.append(sportFilter(leagues, counts, allOpen.length, "MLB opens at 4 PM CT · NFL an hour before kickoff"));
+    if (leagues.length > 1) wrap.append(sportFilter(leagues, counts, allOpen.length, "MLB opens at 4 PM CT, 5 games at a time · NFL an hour before kickoff"));
 
     const openNow = local.sport === "all" ? allOpen : allOpen.filter((m) => leagueOf(m) === local.sport);
 

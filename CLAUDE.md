@@ -97,7 +97,8 @@
 > `_autoopen.js` every tick: NFL games due within an hour get a market
 > with the median h2h line and one slate-wide chat message; **MLB opens
 > every day at 4 PM Central** (that evening's games and the next day's
-> day games, `SPORTS` in `_autoopen.js`) and is **quiet in chat** —
+> day games, `SPORTS` in `_autoopen.js`), **at most 5 open at a time**
+> (`maxOpen`; earliest first, the next opens when one locks) and is **quiet in chat** —
 > `quietInChat(sport)` keeps open/countdown/closed/settled lines to NFL,
 > while the site, `!pick`/`!odds` replies and Discord carry MLB. Then
 > `_reminders.js` posts "Closing in X minutes" at 30/10/5 (once per market
