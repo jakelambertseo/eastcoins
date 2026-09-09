@@ -1591,13 +1591,17 @@ body.is-rasputin .mprog-fill{background:linear-gradient(90deg,#ff3d81,#ffd23f,#4
 }
 
 /* Requester ratings */
+/* The headings sit inside the .mq list, whose background is the 1px rule
+   colour — so each heading is its own panel-coloured block with room to
+   breathe, not a bare line of text on the seam. */
 .elo-head{
-  display:flex;align-items:center;gap:10px;margin:14px 0 6px;padding:0 2px;
-  color:var(--muted);font-size:.66rem;font-weight:800;
+  display:flex;align-items:center;gap:10px;margin:0;padding:14px 12px 8px;
+  background:var(--panel);color:var(--muted);font-size:.66rem;font-weight:800;
   letter-spacing:.12em;text-transform:uppercase;
 }
 .elo-head::after{content:"";flex:1;height:1px;background:var(--line)}
-.elo-head:first-child{margin-top:0}
+.elo-row .mq-meta small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.elo-head:first-child{padding-top:12px}
 .elo-row{align-items:center}
 .elo-score{
   flex:0 0 auto;font-family:var(--display);font-weight:800;font-size:.92rem;
