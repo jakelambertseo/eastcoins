@@ -1164,8 +1164,12 @@
         const good = Number(entry.up || 0) + Number(entry.fire || 0);
         const bad = Number(entry.trash || 0) + Number(entry.del || 0);
         const songs = Number(entry.rated || 0);
-        meta.append(el("small", null,
-          `${songs} song${songs === 1 ? "" : "s"} rated \u00b7 ${good} good reaction${good === 1 ? "" : "s"}, ${bad} bad`));
+        // Emoji instead of words so the line never has to truncate:
+        // 🎵 songs rated · 👍 good reactions · 👎 bad.
+        const meta2 = el("small", "elo-counts");
+        meta2.title = `${songs} song${songs === 1 ? "" : "s"} rated · ${good} good reaction${good === 1 ? "" : "s"}, ${bad} bad`;
+        meta2.textContent = `🎵 ${songs} · 👍 ${good} · 👎 ${bad}`;
+        meta.append(meta2);
         line.append(meta);
 
         const score = el("span", "elo-score", String(Math.round(Number(entry.rating) || 1000)));

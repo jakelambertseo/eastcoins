@@ -1601,6 +1601,7 @@ body.is-rasputin .mprog-fill{background:linear-gradient(90deg,#ff3d81,#ffd23f,#4
 }
 .elo-head::after{content:"";flex:1;height:1px;background:var(--line)}
 .elo-row .mq-meta small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.elo-counts{letter-spacing:.02em;cursor:default}
 .elo-head:first-child{padding-top:12px}
 .elo-row{align-items:center}
 .elo-score{
