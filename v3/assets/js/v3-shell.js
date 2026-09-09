@@ -411,12 +411,9 @@
         els.loginBtn.textContent = user.displayName || user.login;
         els.loginBtn.href = "/?view=picks";
 
-        // Cosmetic only: the server re-checks on every admin endpoint,
-        // so revealing this link in devtools grants nothing.
-        const ADMINS = ["zwades", "bootypaper", "andyreidisapawg"];
-        if (ADMINS.includes(String(user.login).toLowerCase())) {
-          els.navAdmin.hidden = false;
-        }
+        // The Admin link stays out of the nav now that testing is done;
+        // admins reach it at /?view=admin. The server re-checks every
+        // admin endpoint regardless.
       }
       if (wallet?.connected && Number.isFinite(Number(wallet.balance))) {
         els.walletValue.textContent = Number(wallet.balance).toLocaleString();
