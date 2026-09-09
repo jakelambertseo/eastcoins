@@ -11,6 +11,7 @@
 import { slugFor } from "./_slug.js";
 import { utc } from "./_game.js";
 import { badgesFor } from "./_badges.js";
+import { ensureSchema as ensureCoinSchema } from "../coin/_coin.js";
 
 const json = (body, status = 200) => Response.json(body, {
   status,
@@ -125,9 +126,49 @@ export async function onRequestGet(context) {
   let badges = [];
   try { badges = (await badgesFor(context.env, db)).byLogin[login] || []; } catch { badges = []; }
 
+  // Coin Flip: record, net, streak, and the last few flips.
+  let flip = null;
+  try {
+    await ensureCoinSchema(db);
+    const rows = await db
+      .prepare(
+        `SELECT b.round_no, b.side, b.wager, b.status, b.payout, r.result, r.settled_at
+           FROM coin_bets b JOIN coin_rounds r ON r.no = b.round_no
+          WHERE b.user_id = ? AND b.status IN ('WON','LOST')
+          ORDER BY b.round_no DESC LIMIT 200`
+      )
+      .bind(String(user.twitch_id))
+      .all();
+    const flips = (rows.results || []).map((f) => ({
+      round: Number(f.round_no), side: f.side, result: f.result, wager: Number(f.wager), status: f.status,
+      profit: f.status === "WON" ? Number(f.payout) - Number(f.wager) : -Number(f.wager),
+      settledAt: f.settled_at ? String(f.settled_at).replace(" ", "T") + "Z" : null
+    }));
+    if (flips.length) {
+      const wins = flips.filter((f) => f.status === "WON").length;
+      let streak = 0;
+      for (const f of flips) {   // newest first
+        const w = f.status === "WON";
+        if (streak === 0) streak = w ? 1 : -1;
+        else if ((streak > 0) === w) streak += w ? 1 : -1;
+        else break;
+      }
+      flip = {
+        total: flips.length, wins, losses: flips.length - wins,
+        net: flips.reduce((n, f) => n + f.profit, 0),
+        staked: flips.reduce((n, f) => n + f.wager, 0),
+        biggestWin: Math.max(0, ...flips.filter((f) => f.status === "WON").map((f) => f.profit)),
+        streak,
+        heads: flips.filter((f) => f.side === "heads").length,
+        recent: flips.slice(0, 8)
+      };
+    }
+  } catch { flip = null; }
+
   return json({
     ok: true,
     badges,
+    flip,
     user: {
       id: String(user.twitch_id),
       login: String(user.twitch_login).toLowerCase(),

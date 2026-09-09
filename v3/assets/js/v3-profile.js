@@ -241,8 +241,52 @@
     }
     wrap.append(ms);
 
+    // Coin Flip
+    const fs = el("section", "pf-section");
+    const fh = el("h2", null, "Coin Flip");
+    const flipEmote = document.createElement("img");
+    flipEmote.className = "pf-emote";
+    flipEmote.src = "https://cdn.betterttv.net/emote/6928e7173a375a69ca4d0d47/2x.webp";
+    flipEmote.alt = "";
+    flipEmote.width = 26;
+    flipEmote.height = 26;
+    fh.append(flipEmote);
+    fs.append(fh);
+    const f = data.flip;
+    if (!f) {
+      const note = emptyNote("No flips yet", "Heads or tails at the coin flip — wins, losses and streaks show here.");
+      const go = link("/?view=flip", "gp-back", "Go flip a coin →");
+      go.dataset.route = "flip";
+      note.append(go);
+      fs.append(note);
+    } else {
+      const fstrip = el("div", "summarystrip");
+      fstrip.append(
+        stat("Record", `${f.wins}–${f.losses}`, `${f.total} flip${f.total === 1 ? "" : "s"} · ${Math.round(100 * f.heads / f.total)}% called heads`),
+        stat("Net", zc(f.net, { sign: true }), `${f.staked.toLocaleString()} staked`, f.net > 0 ? "wallet" : ""),
+        stat("Biggest win", zc(f.biggestWin, { sign: true }), "single flip"),
+        stat("Streak", f.streak > 0 ? `W${f.streak}` : `L${Math.abs(f.streak)}`, f.streak > 0 ? "wins in a row" : "losses in a row")
+      );
+      fs.append(fstrip);
+      const rows = el("div", "gp-rows");
+      for (const r of f.recent) {
+        const row = el("div", `gp-row ${r.status === "WON" ? "won" : "lost"}`);
+        const who = el("div", "gp-who");
+        who.append(el("b", null, `${r.side[0].toUpperCase() + r.side.slice(1)} · it landed ${r.result}`),
+          el("span", null, `Round #${r.round}${r.settledAt ? " · " + when(r.settledAt, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : ""}`));
+        const stake = el("div", "gp-stake");
+        stake.append(el("b", "nums", String(r.wager)), document.createTextNode("staked"));
+        const payout = el("div", `gp-payout nums ${r.status === "WON" ? "up" : "down"}`);
+        payout.append(el("span", `cf-tag ${r.status === "WON" ? "win" : "loss"}`, r.status === "WON" ? "WIN" : "LOSS"), document.createTextNode(r.status === "WON" ? `+${r.profit}` : `−${r.wager}`));
+        row.append(who, stake, payout);
+        rows.append(row);
+      }
+      fs.append(el("h3", "pf-sub", "Latest flips"), rows);
+    }
+    wrap.append(fs);
+
     const foot = el("div", "gp-links");
-    foot.append(link("/?view=picks&tab=leaderboard", "gp-back", "Leaderboard"), link("/?view=picks&tab=ledger", "gp-back", "Community Ledger"));
+    foot.append(link("/?view=picks&tab=leaderboard", "gp-back", "Leaderboard"), link("/?view=picks&tab=ledger", "gp-back", "Community Ledger"), link("/?view=flip", "gp-back", "Coin Flip"));
     wrap.append(foot);
     return wrap;
   }
@@ -293,6 +337,10 @@
       event.preventDefault();
       history.pushState({ view: "picks" }, "", href);
       shell.go("picks", { push: false });
+    } else if (href.startsWith("/?view=flip")) {
+      event.preventDefault();
+      history.pushState({ view: "flip" }, "", href);
+      shell.go("flip", { push: false });
     }
   }
 
