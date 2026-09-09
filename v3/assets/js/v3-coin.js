@@ -41,6 +41,56 @@
   const fmt = (n) => Number(n || 0).toLocaleString();
   const serverNow = () => Date.now() + offset;
 
+  /** An amount with the ZCoin mark in front of it. */
+  function zc(value, { sign = false } = {}) {
+    const wrap = el("span", "zc-amount nums");
+    const img = document.createElement("img");
+    img.className = "zcoin-mark";
+    img.src = "/v3/assets/img/zcoin.webp";
+    img.alt = "ZCoins";
+    img.width = 15;
+    img.height = 15;
+    const n = Number(value) || 0;
+    const prefix = sign && n > 0 ? "+" : sign && n < 0 ? "−" : "";
+    wrap.append(img, document.createTextNode(`${prefix}${Math.abs(n).toLocaleString()}`));
+    return wrap;
+  }
+
+  /** Text, with every [[n]] turned into a ZCoin amount. */
+  function withCoins(node, text) {
+    node.replaceChildren();
+    const parts = String(text).split(/\[\[(-?\d[\d,]*)\]\]/);
+    parts.forEach((part, i) => {
+      if (i % 2 === 0) { if (part) node.append(document.createTextNode(part)); }
+      else node.append(zc(Number(part.replace(/,/g, ""))));
+    });
+    return node;
+  }
+
+  let announcedFor = -1;
+  function announce(bet, result) {
+    const won = bet.status === "WON";
+    const pop = refs.pop;
+    pop.replaceChildren();
+    pop.className = `cf-pop show ${won ? "win" : "lose"}`;
+    pop.append(el("span", "cf-pop-k", won ? "You won" : "You lost"));
+    const big = el("strong");
+    big.append(zc(won ? bet.profit : bet.wager));
+    pop.append(big);
+    pop.append(el("small", null, `It landed ${result}. ${won ? `${fmt(bet.payout)} back on ${fmt(bet.wager)}.` : "Next flip in a moment."}`));
+    clearTimeout(announce.t);
+    announce.t = setTimeout(() => { pop.className = "cf-pop"; }, 5000);
+  }
+
+  let history = null;
+  async function loadHistory() {
+    try {
+      const response = await fetch("/api/coin/history", { credentials: "include" });
+      const payload = await response.json();
+      if (payload?.ok) { history = payload; renderHistory(); }
+    } catch { /* the ledger is a record; the game is fine without it for a poll */ }
+  }
+
   function avatar(user, className) {
     const box = el("span", className, String(user?.displayName || user?.login || "?").replace(/[^a-z0-9]/gi, "").slice(0, 2).toUpperCase() || "?");
     if (user?.avatar) {
@@ -195,6 +245,17 @@
     grid.append(side_);
     page.append(grid);
 
+    // Ledger: every flip anyone has taken, newest first
+    const ledger = el("section", "cf-card cf-ledger");
+    const lgh = el("h2", null, "Ledger");
+    refs.ledgerNote = el("small");
+    lgh.append(refs.ledgerNote);
+    refs.ledgerList = el("div", "cf-list tall");
+    ledger.append(lgh, refs.ledgerList);
+    page.append(ledger);
+
+    refs.pop = el("div", "cf-pop");
+    page.append(refs.pop);
     refs.toast = el("div", "cf-toast");
     page.append(refs.toast);
     root.append(page);
@@ -205,12 +266,14 @@
     row.append(avatar(b.user, "cf-av"));
     const who = el("div", "cf-who");
     who.append(nameLink(b.user));
-    who.append(el("small", null, `${b.side} · ${fmt(b.wager)} ZC`));
+    const sub = el("small");
+    sub.append(document.createTextNode(`${b.side} · `), zc(b.wager));
+    who.append(sub);
     row.append(who);
     const res = el("span", "cf-res nums");
     if (showResult) {
-      if (b.status === "WON") { res.classList.add("up"); res.textContent = `+${fmt(b.profit)}`; }
-      else if (b.status === "LOST") { res.classList.add("down"); res.textContent = `−${fmt(b.wager)}`; }
+      if (b.status === "WON") { res.classList.add("up"); res.append(zc(b.profit, { sign: true })); }
+      else if (b.status === "LOST") { res.classList.add("down"); res.append(zc(-b.wager, { sign: true })); }
       else res.textContent = "…";
     } else {
       res.textContent = b.side === "heads" ? "H" : "T";
@@ -232,6 +295,7 @@
   }
 
   let lastSig = "";
+  let historyFor = -1;
 
   function renderClock() {
     const r = data.round;
@@ -266,13 +330,50 @@
     refs.stakeInput.disabled = Boolean(mine) || !inBets;
     if (!data.me) { refs.lock.textContent = "Log in to play"; refs.betNote.textContent = "Log in with Twitch — the button up top — and your ZCoins come with you."; }
     else if (!data.config.canBet) { refs.lock.textContent = "Casino paused"; refs.betNote.textContent = "ZCoin transfers aren't switched on right now."; }
-    else if (mine) { refs.lock.textContent = `You're in: ${fmt(mine.wager)} on ${mine.side}`; refs.betNote.textContent = inBets ? `Wins ${fmt(mine.wager * 2)} back if it lands ${mine.side}.` : mine.status === "WON" ? `It landed ${r.result} — you won ${fmt(mine.profit)}.` : mine.status === "LOST" ? `It landed ${r.result}. Next one.` : "Settling…"; }
+    else if (mine) {
+      withCoins(refs.lock, `You're in: [[${mine.wager}]] on ${mine.side}`);
+      if (inBets) withCoins(refs.betNote, `Wins [[${mine.wager * 2}]] back if it lands ${mine.side}.`);
+      else if (mine.status === "WON") withCoins(refs.betNote, `It landed ${r.result} — you won [[${mine.profit}]].`);
+      else if (mine.status === "LOST") withCoins(refs.betNote, `It landed ${r.result} — you lost [[${mine.wager}]].`);
+      else refs.betNote.textContent = "Settling…";
+      // The big moment, once per round, the first time we see it decided.
+      if (!inBets && (mine.status === "WON" || mine.status === "LOST") && announcedFor !== r.no) {
+        announcedFor = r.no;
+        announce(mine, r.result);
+        loadHistory();
+      }
+    }
     else if (!inBets) { refs.lock.textContent = "Next round soon"; refs.betNote.textContent = "Bets open again when the clock hits zero."; }
-    else { refs.lock.textContent = `Lock in ${fmt(stake)} on ${side}`; refs.betNote.textContent = `Wins ${fmt(stake * 2)} back if it lands ${side}.`; }
+    else { withCoins(refs.lock, `Lock in [[${stake}]] on ${side}`); withCoins(refs.betNote, `Wins [[${stake * 2}]] back if it lands ${side}.`); }
 
     const used = data.me?.betsThisHour;
-    refs.limits.textContent = `Max bet ${data.config.maxBet} ZCoins · up to ${data.config.maxPerHour} bets an hour` +
-      (Number.isFinite(used) ? ` · you've used ${used} of ${data.config.maxPerHour}` : "");
+    withCoins(refs.limits, `Max bet [[${data.config.maxBet}]] · up to ${data.config.maxPerHour} bets an hour` +
+      (Number.isFinite(used) ? ` · you've used ${used} of ${data.config.maxPerHour}` : ""));
+  }
+
+  function renderHistory() {
+    if (!refs.ledgerList || !history) return;
+    const list = refs.ledgerList;
+    list.replaceChildren();
+    const me = history.me;
+    if (me && (me.wins || me.losses)) {
+      const note = el("span");
+      note.append(document.createTextNode(`you: ${me.wins}–${me.losses} · `), zc(me.net, { sign: true }));
+      refs.ledgerNote.replaceChildren(note);
+    } else {
+      refs.ledgerNote.textContent = history.entries.length ? `${history.entries.length} recent` : "";
+    }
+    if (!history.entries.length) { list.append(el("p", "cf-empty", "No flips settled yet. The first one writes the first line.")); return; }
+    let lastRound = null;
+    for (const e of history.entries) {
+      if (e.round !== lastRound) {
+        lastRound = e.round;
+        const head = el("div", "cf-ledger-round");
+        head.append(el("span", `cf-ledger-result ${e.result}`, e.result), el("small", null, `Round #${e.round}${e.settledAt ? " · " + new Date(e.settledAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : ""}`));
+        list.append(head);
+      }
+      list.append(betRow({ ...e, payout: e.wager * 2 }, true));
+    }
   }
 
   function renderLists() {
@@ -280,16 +381,19 @@
     const now = serverNow();
     const inBets = now < r.flipsAt;
     const bets = data.bets || [];
-    refs.thisCount.textContent = bets.length ? `${bets.length} in · ${fmt(bets.reduce((n, b) => n + b.wager, 0))} ZC` : "nobody yet";
+    if (bets.length) { const c = el("span"); c.append(document.createTextNode(`${bets.length} in · `), zc(bets.reduce((n, b) => n + b.wager, 0))); refs.thisCount.replaceChildren(c); }
+    else refs.thisCount.textContent = "nobody yet";
     refs.thisList.replaceChildren();
     if (!bets.length) refs.thisList.append(el("p", "cf-empty", inBets ? "Be the first in." : "Nobody bet this round."));
     for (const b of bets) refs.thisList.append(betRow(b, !inBets && Boolean(r.result)));
+
+    if (r.result && !inBets && historyFor !== r.no) { historyFor = r.no; loadHistory(); }
 
     const last = data.last;
     refs.lastList.replaceChildren();
     if (last?.result) {
       const paid = last.bets.filter((b) => b.status === "WON").reduce((n, b) => n + b.payout, 0);
-      refs.lastNote.textContent = `${last.result} · ${last.bets.length} in · ${fmt(paid)} paid`;
+      const ln = el("span"); ln.append(document.createTextNode(`${last.result} · ${last.bets.length} in · `), zc(paid), document.createTextNode(" paid")); refs.lastNote.replaceChildren(ln);
       for (const b of last.bets) refs.lastList.append(betRow(b, true));
       if (!last.bets.length) refs.lastList.append(el("p", "cf-empty", "Nobody bet that round."));
       refs.fair.textContent = `Round #${last.no} · hash ${last.hash.slice(0, 6)}… published before bets · seed ${last.seed.slice(0, 6)}… revealed after · sha256(seed) = hash`;
@@ -319,6 +423,7 @@
       shell = api;
       build();
       poll();
+      loadHistory();
       pollTimer = window.setInterval(poll, POLL_MS);
       tickTimer = window.setInterval(render, 250);
     },
@@ -328,6 +433,9 @@
       pollTimer = tickTimer = 0;
       data = null;
       lastSig = "";
+      history = null;
+      historyFor = -1;
+      announcedFor = -1;
       refs = {};
     }
   };
