@@ -50,8 +50,10 @@
     if (!node || !key) return;
     const apply = (m) => {
       const list = m[key] || [];
+      // Views decorate names before attaching them to the page, so a
+      // detached node is the normal case, not a reason to skip.
       node.querySelector(":scope > .badges")?.remove();
-      if (list.length && node.isConnected) node.append(render(list, !full));
+      if (list.length) node.append(render(list, !full));
     };
     if (map && Date.now() - fetchedAt < TTL_MS) apply(map);
     else load().then(apply);
