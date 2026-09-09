@@ -5,9 +5,9 @@
    on a server timer, so every viewer and every request agrees on
    which round it is without anything having to stay awake:
 
-     round n   opens at   n * 50s
-               flips at   n * 50s + 30s     (30s of betting)
-               ends at    n * 50s + 50s     (20s to look at the result)
+     round n   opens at   n * 30s
+               flips at   n * 30s + 15s     (15s of betting)
+               ends at    n * 30s + 30s     (15s to look at the result)
 
    Heads pays 2×, tails pays 2×, no edge. The result of a round is
    fixed the moment the round row is created — a random seed whose
@@ -21,8 +21,8 @@
 
 import { moveBalance, beginOperation, finishOperation, newId } from "../picks/_lib.js";
 
-export const CYCLE_MS = 50 * 1000;
-export const BET_MS = 30 * 1000;
+export const CYCLE_MS = 30 * 1000;
+export const BET_MS = 15 * 1000;
 export const MAX_BET = 20;
 export const MAX_BETS_PER_HOUR = 10;
 export const MIN_BET = 1;

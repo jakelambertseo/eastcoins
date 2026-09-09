@@ -110,12 +110,20 @@
       if (!response.ok) return null;
       const payload = await response.json();
       const stats = (payload.userStats || []).find((s) => String(s.login || "").toLowerCase() === login) || null;
+      // Rank 1 is whoever is top of the rated list, same rule as the Music ELO tab.
+      const ratedAll = (payload.userStats || []).filter((s) => Number(s.rated) > 0).sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
+      const isTop = Boolean(stats) && Number(stats.rated) > 0 && ratedAll[0]?.login === stats.login;
+      const r = stats ? Number(stats.rating) || 1000 : 1000;
+      const tier = !stats || !Number(stats.rated) ? null
+        : isTop ? { key: "rank1", label: "Rank 1" }
+          : r >= 1015 ? { key: "gold", label: "Gold" } : r >= 1000 ? { key: "silver", label: "Silver" } : { key: "bronze", label: "Bronze" };
       const mine = (payload.history || []).filter((h) => String(h.requestedByLogin || "").toLowerCase() === login);
       const titles = new Map();
       for (const h of mine) titles.set(h.title, (titles.get(h.title) || 0) + 1);
       const top = [...titles.entries()].sort((a, b) => b[1] - a[1])[0] || null;
       if (!stats && !mine.length) return null;
       return {
+        tier,
         rating: stats ? Math.round(Number(stats.rating) || 1000) : null,
         rated: stats ? Number(stats.rated || 0) : 0,
         good: stats ? Number(stats.up || 0) + Number(stats.fire || 0) : 0,
@@ -227,7 +235,12 @@
     } else {
       const mstrip = el("div", "summarystrip");
       mstrip.append(
-        stat("Music ELO", music.rating != null ? String(music.rating) : "1000", music.rated ? `${music.rated} song${music.rated === 1 ? "" : "s"} rated` : "Nothing rated yet", music.rating >= 1000 ? "wallet" : ""),
+        (() => {
+          const value = el("span", "pf-elo");
+          if (music.tier) value.append(el("span", `elo-tier ${music.tier.key}`, music.tier.label));
+          value.append(document.createTextNode(music.rating != null ? String(music.rating) : "1000"));
+          return stat("Music ELO", value, music.rated ? `${music.rated} song${music.rated === 1 ? "" : "s"} rated` : "Unranked until a song is rated", music.rating >= 1000 ? "wallet" : "");
+        })(),
         stat("Reactions", `${music.good} good`, `${music.bad} bad`),
         stat("Requests", String(music.requests), music.top ? `Most played: ${music.top.title}${music.top.times > 1 ? " ×" + music.top.times : ""}` : "")
       );

@@ -38,7 +38,7 @@
 > `/?view=casino` is reserved for the casino home page:
 > `functions/api/coin/` (`_coin.js` clock/fairness/settlement, `state.js`
 > poll, `bet.js`), tables created on first use (`coin_rounds`, `coin_bets`,
-> `coin_presence`), rounds on a 50s wall clock (30s bets + 20s result),
+> `coin_presence`), rounds on a 30s wall clock (15s bets + 15s result),
 > max 20 ZC, 2× payout, same wallet ops as Picks. Client `v3-coin.js` polls
 > `/api/coin/state` every 1.5s; the first poll after a flip settles it.
 >

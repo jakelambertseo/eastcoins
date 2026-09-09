@@ -1602,6 +1602,18 @@ body.is-rasputin .mprog-fill{background:linear-gradient(90deg,#ff3d81,#ffd23f,#4
   flex:0 0 auto;font-family:var(--display);font-weight:800;font-size:.92rem;
   font-variant-numeric:tabular-nums;
 }
+/* Tiers, esports style: Rank 1, then Gold / Silver / Bronze by rating. */
+.elo-tier{
+  flex:0 0 auto;padding:3px 8px;border-radius:999px;border:1px solid var(--line-2);
+  font-family:var(--body);font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+}
+.elo-tier.rank1{border-color:rgba(232,191,53,.7);background:linear-gradient(120deg,rgba(232,191,53,.28),rgba(232,191,53,.08));color:var(--gold);box-shadow:0 0 14px rgba(232,191,53,.25)}
+.elo-tier.gold{border-color:rgba(232,191,53,.45);background:var(--gold-dim);color:var(--gold)}
+.elo-tier.silver{border-color:rgba(216,210,196,.45);background:rgba(216,210,196,.1);color:#d8d2c4}
+.elo-tier.bronze{border-color:rgba(205,127,50,.5);background:rgba(205,127,50,.12);color:#d49a5a}
+.elo-row.tier-rank1{border-color:rgba(232,191,53,.3)}
+.pf-elo{display:inline-flex;align-items:center;gap:9px}
+.summarycard strong .elo-tier{font-size:.58rem;vertical-align:middle}
 .elo-score.up{color:var(--gold)}
 .elo-score.down{color:var(--muted-2)}
 

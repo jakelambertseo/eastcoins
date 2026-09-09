@@ -3,8 +3,8 @@
 
      /?view=flip   ("casino" is kept for the casino home page)
 
-   One coin for the whole room. Thirty seconds of bets, a flip,
-   twenty seconds to see who won, again. The server owns the clock
+   One coin for the whole room. Fifteen seconds of bets, a flip,
+   fifteen seconds to see who won, again. The server owns the clock
    and the result; this page polls it, counts down locally, and
    draws the coin landing the way the server said it did.
    ============================================================ */
@@ -170,7 +170,7 @@
     emote.width = 32;
     emote.height = 32;
     h1.append(emote);
-    copy.append(h1, el("p", null, "One coin for the whole room. Thirty seconds to get in, then it flips. Heads or tails pays 2× — no edge, no house."));
+    copy.append(h1, el("p", null, "One coin for the whole room. Fifteen seconds to get in, then it flips. Heads or tails pays 2× — no edge, no house."));
     head.append(copy);
     refs.status = el("span", "cf-status", "Connecting…");
     head.append(refs.status);

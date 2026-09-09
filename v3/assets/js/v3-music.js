@@ -1104,6 +1104,20 @@
      * 1000 and stays there until the room reacts to something of theirs,
      * so listing the unrated would be a wall of ties that says nothing.
      */
+
+  /**
+   * Esports-style tiers from the rating. Rank 1 is whoever is on top;
+   * Gold is well above the 1000 everyone starts at, Silver is at or
+   * above it, Bronze is below — the room has turned on your songs.
+   */
+  function eloTier(rating, isTop) {
+    if (isTop) return { key: "rank1", label: "Rank 1" };
+    const r = Number(rating) || 1000;
+    if (r >= 1015) return { key: "gold", label: "Gold" };
+    if (r >= 1000) return { key: "silver", label: "Silver" };
+    return { key: "bronze", label: "Bronze" };
+  }
+
     function ratingsList() {
       const wrap = el("div", "mq");
 
@@ -1117,9 +1131,12 @@
         return wrap;
       }
 
+      const topLogin = rated[0]?.login;
       const row = (entry, place) => {
         const line = el("div", "mq-row elo-row");
         line.append(el("span", "mq-n", String(place)));
+        const tier = eloTier(entry.rating, entry.login === topLogin);
+        line.classList.add(`tier-${tier.key}`);
 
         if (entry.avatar) {
           const img = document.createElement("img");
@@ -1150,7 +1167,8 @@
 
         const score = el("span", "elo-score", String(Math.round(Number(entry.rating) || 1000)));
         score.classList.add(Number(entry.rating) >= 1000 ? "up" : "down");
-        line.append(score);
+        const tierEl = el("span", `elo-tier ${tier.key}`, tier.label);
+        line.append(tierEl, score);
         return line;
       };
 
