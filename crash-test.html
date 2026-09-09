@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<title>EastCoin | Crash (simulation)</title>
+<link href="/assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --ink:#0c0a09;--panel:#161311;--panel-2:#1e1a17;--panel-3:#241f1b;
+    --line:rgba(255,255,255,.1);--line-2:rgba(255,255,255,.16);
+    --text:#f4ede5;--muted:#aca298;--muted-2:#7d746a;
+    --gold:#e8bf35;--gold-dim:rgba(232,191,53,.13);--green:#4ddb8b;--green-dim:rgba(77,219,139,.11);
+    --red:#ff6b85;--red-dim:rgba(255,107,133,.1);--purple:#a56bff;
+    --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;--body:"Figtree","Segoe UI",system-ui,sans-serif;
+    --radius:13px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--ink);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .nums{font-variant-numeric:tabular-nums}
+  button{font:inherit;color:inherit;cursor:pointer}
+  button:disabled{opacity:.45;cursor:default}
+
+  .topnav{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:18px;height:58px;padding:0 18px;border-bottom:1px solid var(--line);background:rgba(12,10,9,.92);backdrop-filter:blur(10px)}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:-.01em}
+  .brand img{width:30px;height:30px;border-radius:8px}
+  .brand small{margin-left:4px;padding:3px 8px;border-radius:999px;border:1px solid var(--line-2);color:var(--muted);font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+  .back{color:var(--muted);font-weight:600;font-size:.88rem}
+  .wallet{margin-left:auto;display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 13px;border-radius:9px;border:1px solid rgba(77,219,139,.3);background:var(--green-dim);font-weight:800;font-size:.86rem}
+  .wallet img{width:17px;height:17px}
+
+  .wrap{max-width:1240px;margin:0 auto;padding:18px 18px 60px}
+  .mock{border:1px dashed rgba(232,191,53,.4);background:var(--gold-dim);border-radius:var(--radius);padding:10px 14px;font-size:.82rem;margin-bottom:14px}
+  .mock b{color:var(--gold)}
+
+  .layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr);gap:14px;align-items:start}
+
+  /* stage */
+  .stage{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);overflow:hidden}
+  .stage canvas{display:block;width:100%;height:auto;background:
+    linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px) 0 0/100% 40px,
+    linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px) 0 0/60px 100%,
+    radial-gradient(80% 90% at 50% 100%,rgba(142,18,49,.25),transparent 70%),#0e0b0a}
+  .multi{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+  .multi strong{display:block;font-family:var(--display);font-weight:800;font-size:5rem;letter-spacing:-.05em;line-height:1;text-shadow:0 0 30px rgba(232,191,53,.35)}
+  .multi small{display:block;margin-top:4px;color:var(--muted);font-size:.8rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+  .stage.busted .multi strong{color:var(--red);text-shadow:0 0 30px rgba(255,107,133,.5)}
+  .stage.waiting .multi strong{color:var(--muted);font-size:3.2rem}
+  .stage.running .multi strong{color:var(--gold)}
+  .bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line);background:var(--panel-2);flex-wrap:wrap}
+  .pill{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel);font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .pill.on{border-color:rgba(77,219,139,.4);background:var(--green-dim);color:var(--green)}
+  .pill.on::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;animation:blink 1.2s infinite}
+  @keyframes blink{50%{opacity:.3}}
+  .hist{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+  .hist span{padding:4px 9px;border-radius:7px;font-family:var(--display);font-weight:800;font-size:.8rem;border:1px solid var(--line)}
+  .hist .lo{color:var(--red);background:var(--red-dim)} .hist .mid{color:var(--text);background:var(--panel)} .hist .hi{color:var(--green);background:var(--green-dim)}
+  .fair{padding:8px 14px 10px;border-top:1px solid var(--line);font-size:.74rem;color:var(--muted-2)}
+  .fair code{color:var(--gold)}
+
+  /* bet panel */
+  .card{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:14px 16px;margin-bottom:12px}
+  .card h2{font-family:var(--display);font-weight:700;font-size:1.05rem;letter-spacing:-.02em;margin:0 0 10px;display:flex;justify-content:space-between;align-items:baseline}
+  .card h2 small{color:var(--muted-2);font-size:.74rem;font-weight:600}
+  .field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+  .field label{color:var(--muted-2);font-size:.64rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase}
+  .inrow{display:flex;gap:6px}
+  .field input{flex:1;height:40px;padding:0 12px;border-radius:9px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);font:inherit;font-weight:800;font-size:1rem;outline:none;min-width:0}
+  .field input:focus{border-color:rgba(232,191,53,.5)}
+  .chip{height:40px;padding:0 10px;border-radius:9px;border:1px solid var(--line-2);background:var(--panel);font-weight:800;font-size:.78rem}
+  .chip:hover{background:var(--panel-3)}
+  .big{width:100%;height:50px;border-radius:11px;border:1px solid rgba(232,191,53,.5);background:var(--gold);color:#1a1405;font-family:var(--display);font-weight:800;font-size:1.05rem;letter-spacing:-.01em;transition:filter .12s ease}
+  .big:hover{filter:brightness(1.06)}
+  .big.cash{background:var(--green);border-color:rgba(77,219,139,.6)}
+  .big.wait{background:var(--panel-2);color:var(--muted);border-color:var(--line-2)}
+  .note{margin:8px 0 0;color:var(--muted-2);font-size:.76rem;line-height:1.5}
+  .note b{color:var(--text)}
+
+  /* players */
+  .players{display:flex;flex-direction:column;gap:6px;max-height:380px;overflow:auto;scrollbar-width:thin}
+  .pl{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--muted-2)}
+  .pl.in{border-left-color:var(--gold)} .pl.out{border-left-color:var(--green)} .pl.bust{border-left-color:var(--red);opacity:.75}
+  .pl.me{background:linear-gradient(90deg,var(--gold-dim),var(--panel-2) 60%)}
+  .av{width:28px;height:28px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;background:linear-gradient(150deg,#8e1231,#4a0a1c);color:var(--gold);font-weight:800;font-size:.66rem}
+  .pl .who{flex:1;min-width:0;font-size:.84rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pl .stake{color:var(--muted-2);font-size:.76rem}
+  .pl .res{font-family:var(--display);font-weight:800;font-size:.92rem;min-width:70px;text-align:right}
+  .pl.out .res{color:var(--green)} .pl.bust .res{color:var(--red)} .pl.in .res{color:var(--gold)}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);padding:10px 16px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line-2);font-weight:700;font-size:.9rem;box-shadow:0 12px 30px rgba(0,0,0,.5);opacity:0;transition:opacity .2s ease;pointer-events:none}
+  .toast.show{opacity:1}
+  @media (max-width:900px){.layout{grid-template-columns:1fr}.multi strong{font-size:3.4rem}}
+</style>
+</head>
+<body>
+
+<header class="topnav">
+  <a class="brand" href="/"><img src="/assets/eastcoins-logo.webp" alt=""><span>EastCoin</span><small>Crash · simulation</small></a>
+  <a class="back" href="/casino-test">← Casino</a>
+  <span class="wallet"><img src="/v3/assets/img/zcoin.webp" alt=""><span class="nums" id="wallet">1,000</span></span>
+</header>
+
+<main class="wrap">
+  <div class="mock"><b>Simulation.</b> A fake 1,000-ZCoin balance and fake players, but the game is real: the rocket, the bust point, the cash-out timing and the fairness proof all work exactly as the live version would. Place a bet during the countdown, then cash out before it busts — or set an auto cash-out and let it ride.</div>
+
+  <div class="layout">
+    <section class="stage waiting" id="stage">
+      <canvas id="graph" width="1200" height="600"></canvas>
+      <div class="multi"><strong id="multi" class="nums">Next round</strong><small id="sub">Bets open · 10s</small></div>
+      <div class="bar">
+        <span class="pill on" id="pill">Bets open</span>
+        <span class="pill" id="inpill">0 in · 0 ZC</span>
+        <div class="hist" id="hist"></div>
+      </div>
+      <div class="fair" id="fair">Round #1 · hash <code id="hash">…</code> published before bets · seed revealed after the bust</div>
+    </section>
+
+    <aside>
+      <div class="card">
+        <h2>Your bet <small>min 1 · max 25% of balance</small></h2>
+        <div class="field">
+          <label for="stake">Stake</label>
+          <div class="inrow">
+            <input id="stake" type="number" min="1" step="1" value="50" inputmode="numeric">
+            <button class="chip" type="button" data-set="10">10</button>
+            <button class="chip" type="button" data-set="50">50</button>
+            <button class="chip" type="button" data-mul="2">×2</button>
+            <button class="chip" type="button" data-max="1">Max</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="auto">Auto cash-out at (× — blank for manual)</label>
+          <div class="inrow">
+            <input id="auto" type="number" min="1.01" step="0.01" placeholder="e.g. 2.00" inputmode="decimal">
+            <button class="chip" type="button" data-auto="1.5">1.5×</button>
+            <button class="chip" type="button" data-auto="2">2×</button>
+            <button class="chip" type="button" data-auto="5">5×</button>
+          </div>
+        </div>
+        <button class="big" id="action" type="button">Place bet</button>
+        <p class="note" id="hint">Bets lock when the rocket launches. In chat this is <b>!crash 50</b> — or <b>!crash 50 2x</b> to auto cash out at 2×.</p>
+      </div>
+
+      <div class="card">
+        <h2>This round <small id="pcount">0 players</small></h2>
+        <div class="players" id="players"></div>
+      </div>
+
+      <div class="card">
+        <h2>How the number is picked <small>provably fair</small></h2>
+        <p class="note" style="margin:0">The bust point comes from a seed the server commits to (its hash is shown) <b>before</b> bets open. Bust = <b>max(1, 0.97 ÷ U)</b> where U is uniform from the seed — so 3% of rounds bust at 1.00× and the house edge is 3%. After the round the seed is revealed; hash it yourself and it matches.</p>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  const EDGE = 0.03;
+  const BET_SECONDS = 10;
+  const BUST_HOLD_MS = 3200;
+  const BOTS = [
+    ["KnownSpade", "KS"], ["heartlarva", "HL"], ["jimmytomato", "JT"], ["Zwades", "ZW"], ["AndyReidisaPAWG", "AR"],
+    ["dookiebetts800", "DB"], ["ChildishArbino", "CA"], ["THEMaccathiel", "TM"], ["helloitscare", "HC"], ["aallldEEEEz", "AZ"]
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    stage: $("stage"), graph: $("graph"), multi: $("multi"), sub: $("sub"), pill: $("pill"), inpill: $("inpill"),
+    hist: $("hist"), fair: $("fair"), hash: $("hash"), wallet: $("wallet"), stake: $("stake"), auto: $("auto"),
+    action: $("action"), hint: $("hint"), players: $("players"), pcount: $("pcount"), toast: $("toast")
+  };
+  const ctx = els.graph.getContext("2d");
+
+  const me = { name: "You", balance: 1000, bet: null };
+  const state = { round: 0, phase: "bet", startedAt: 0, bust: 1, seed: "", hash: "", players: [], history: [], betEndsAt: 0 };
+
+  /* ---------------------------------------------------------- fair */
+
+  async function sha256(text) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+    return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+  function randomSeed() {
+    const a = new Uint8Array(16);
+    crypto.getRandomValues(a);
+    return [...a].map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+  // The bust point from the seed's hash: uniform in (0,1), then max(1, (1-edge)/U).
+  async function bustFrom(seed) {
+    const h = await sha256(seed + ":bust");
+    const u = (parseInt(h.slice(0, 13), 16) + 1) / (2 ** 52 + 1);
+    return Math.max(1, Math.floor(((1 - EDGE) / u) * 100) / 100);
+  }
+  const short = (h) => `${h.slice(0, 4)}…${h.slice(-4)}`;
+
+  /* ---------------------------------------------------------- helpers */
+
+  const fmt = (n) => Number(n).toLocaleString();
+  const mult = (t) => Math.pow(Math.E, 0.00006 * t * t * 0.5 + 0.0009 * t);   // gentle then steep, ms in
+  function toast(text, ms = 1800) {
+    els.toast.textContent = text;
+    els.toast.classList.add("show");
+    clearTimeout(toast.t);
+    toast.t = setTimeout(() => els.toast.classList.remove("show"), ms);
+  }
+  function setWallet() { els.wallet.textContent = fmt(me.balance); }
+  function maxStake() { return Math.max(1, Math.floor(me.balance * 0.25)); }
+
+  /* ---------------------------------------------------------- rounds */
+
+  async function newRound() {
+    state.round += 1;
+    state.phase = "bet";
+    state.seed = randomSeed();
+    state.hash = await sha256(state.seed);
+    state.bust = await bustFrom(state.seed);
+    state.players = [];
+    state.betEndsAt = Date.now() + BET_SECONDS * 1000;
+    me.bet = null;
+
+    els.stage.className = "stage waiting";
+    els.multi.textContent = "Next round";
+    els.pill.className = "pill on";
+    els.pill.textContent = "Bets open";
+    els.hash.textContent = short(state.hash);
+    els.fair.innerHTML = `Round #${state.round} · hash <code>${short(state.hash)}</code> published before bets · seed revealed after the bust`;
+    drawGraph(1, 0, false);
+
+    // Bots wander in during the window.
+    const joining = BOTS.slice().sort(() => Math.random() - 0.5).slice(0, 4 + Math.floor(Math.random() * 5));
+    joining.forEach((b, i) => setTimeout(() => {
+      if (state.phase !== "bet") return;
+      const stake = [10, 20, 25, 50, 50, 75, 100, 150, 200, 500][Math.floor(Math.random() * 10)];
+      // Bots have a target; some are greedy, some are cowards.
+      const target = Math.random() < 0.25 ? null : Math.round((1.2 + Math.random() * Math.random() * 6) * 100) / 100;
+      state.players.push({ name: b[0], av: b[1], stake, target, status: "in", out: null, bot: true });
+      renderPlayers();
+    }, 400 + i * (BET_SECONDS * 900 / joining.length)));
+
+    renderBet();
+    renderPlayers();
+  }
+
+  function launch() {
+    state.phase = "run";
+    state.startedAt = performance.now();
+    els.stage.className = "stage running";
+    els.pill.className = "pill on";
+    els.pill.textContent = "Flying";
+    els.sub.textContent = "cash out before it busts";
+    renderBet();
+    requestAnimationFrame(tick);
+  }
+
+  function tick() {
+    if (state.phase !== "run") return;
+    const t = performance.now() - state.startedAt;
+    const m = mult(t);
+    if (m >= state.bust) return bust();
+
+    els.multi.textContent = `${m.toFixed(2)}×`;
+    drawGraph(m, t, true);
+
+    // Auto cash-outs, bots and mine.
+    for (const p of state.players) {
+      if (p.status === "in" && p.target && m >= p.target) cashOut(p, p.target);
+    }
+    if (me.bet && me.bet.status === "in" && me.bet.target && m >= me.bet.target) cashOut(me.bet, me.bet.target);
+    requestAnimationFrame(tick);
+  }
+
+  function cashOut(p, at) {
+    p.status = "out";
+    p.out = at;
+    if (p === me.bet) {
+      const won = Math.floor(p.stake * at);
+      me.balance += won;
+      setWallet();
+      toast(`Cashed out at ${at.toFixed(2)}× · +${fmt(won - p.stake)}`);
+      renderBet();
+    }
+    renderPlayers();
+  }
+
+  function bust() {
+    state.phase = "bust";
+    els.stage.className = "stage busted";
+    els.multi.textContent = `${state.bust.toFixed(2)}×`;
+    els.sub.textContent = "BUSTED";
+    els.pill.className = "pill";
+    els.pill.textContent = "Busted";
+    drawGraph(state.bust, performance.now() - state.startedAt, false);
+    for (const p of state.players) if (p.status === "in") p.status = "bust";
+    if (me.bet && me.bet.status === "in") { me.bet.status = "bust"; toast(`Busted at ${state.bust.toFixed(2)}× · −${fmt(me.bet.stake)}`, 2400); }
+
+    state.history.unshift(state.bust);
+    state.history = state.history.slice(0, 12);
+    els.hist.innerHTML = state.history.map((b) => `<span class="${b < 1.5 ? "lo" : b < 3 ? "mid" : "hi"}">${b.toFixed(2)}×</span>`).join("");
+    els.fair.innerHTML = `Round #${state.round} · hash <code>${short(state.hash)}</code> · seed <code>${short(state.seed)}</code> · sha256(seed) = hash ✓ · bust ${state.bust.toFixed(2)}×`;
+
+    renderPlayers();
+    renderBet();
+    setTimeout(newRound, BUST_HOLD_MS);
+  }
+
+  // Countdown / launch.
+  setInterval(() => {
+    if (state.phase !== "bet") return;
+    const left = Math.max(0, Math.ceil((state.betEndsAt - Date.now()) / 1000));
+    els.sub.textContent = `Bets open · ${left}s`;
+    if (left <= 0) launch();
+  }, 200);
+
+  /* ---------------------------------------------------------- graph */
+
+  function drawGraph(m, t, live) {
+    const W = els.graph.width, H = els.graph.height;
+    ctx.clearRect(0, 0, W, H);
+    const pad = 40;
+    const maxT = Math.max(4000, t * 1.15);
+    const maxM = Math.max(2, m * 1.15);
+    const x = (tt) => pad + (tt / maxT) * (W - pad * 2);
+    const y = (mm) => H - pad - ((mm - 1) / (maxM - 1)) * (H - pad * 2);
+
+    // Gridlines for whole multipliers.
+    ctx.font = "700 20px Figtree, system-ui, sans-serif";
+    ctx.fillStyle = "rgba(255,255,255,.28)";
+    ctx.strokeStyle = "rgba(255,255,255,.06)";
+    for (let g = 1; g <= maxM; g += maxM > 8 ? 2 : 1) {
+      ctx.beginPath(); ctx.moveTo(pad, y(g)); ctx.lineTo(W - pad, y(g)); ctx.stroke();
+      ctx.fillText(`${g}×`, 6, y(g) + 7);
+    }
+
+    if (t <= 0) return;
+    ctx.beginPath();
+    ctx.moveTo(x(0), y(1));
+    for (let tt = 0; tt <= t; tt += Math.max(8, t / 400)) ctx.lineTo(x(tt), y(Math.min(mult(tt), m)));
+    ctx.lineTo(x(t), y(m));
+    ctx.lineWidth = 6;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = live ? "#e8bf35" : "#ff6b85";
+    ctx.shadowColor = live ? "rgba(232,191,53,.6)" : "rgba(255,107,133,.6)";
+    ctx.shadowBlur = 18;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Fill under the curve.
+    ctx.lineTo(x(t), y(1)); ctx.lineTo(x(0), y(1)); ctx.closePath();
+    ctx.fillStyle = live ? "rgba(232,191,53,.08)" : "rgba(255,107,133,.08)";
+    ctx.fill();
+
+    // Cash-out markers.
+    const marks = state.players.filter((p) => p.status === "out").concat(me.bet && me.bet.status === "out" ? [me.bet] : []);
+    for (const p of marks) {
+      // find t for the multiplier (invert numerically)
+      let lo = 0, hi = t;
+      for (let i = 0; i < 30; i += 1) { const mid = (lo + hi) / 2; if (mult(mid) < p.out) lo = mid; else hi = mid; }
+      ctx.beginPath(); ctx.arc(x(lo), y(p.out), 7, 0, Math.PI * 2);
+      ctx.fillStyle = p === me.bet ? "#e8bf35" : "#4ddb8b"; ctx.fill();
+    }
+
+    // The rocket.
+    ctx.font = "34px system-ui";
+    ctx.fillText(live ? "🚀" : "💥", x(t) - 10, y(m) - 8);
+  }
+
+  /* ---------------------------------------------------------- render */
+
+  function renderPlayers() {
+    const all = (me.bet ? [me.bet] : []).concat(state.players);
+    const inCount = all.filter((p) => p.status !== "bust").length;
+    els.inpill.textContent = `${all.length} in · ${fmt(all.reduce((n, p) => n + p.stake, 0))} ZC`;
+    els.pcount.textContent = `${all.length} player${all.length === 1 ? "" : "s"}`;
+    els.players.replaceChildren();
+    for (const p of all) {
+      const row = document.createElement("div");
+      row.className = `pl ${p.status}${p === me.bet ? " me" : ""}`;
+      const av = document.createElement("span"); av.className = "av"; av.textContent = p.av;
+      const who = document.createElement("span"); who.className = "who"; who.textContent = p.name;
+      const stake = document.createElement("span"); stake.className = "stake nums"; stake.textContent = `${fmt(p.stake)} in`;
+      const res = document.createElement("span"); res.className = "res nums";
+      res.textContent = p.status === "out" ? `${p.out.toFixed(2)}× · +${fmt(Math.floor(p.stake * p.out) - p.stake)}`
+        : p.status === "bust" ? `−${fmt(p.stake)}`
+          : p.target ? `auto ${p.target.toFixed(2)}×` : "riding";
+      row.append(av, who, stake, res);
+      els.players.append(row);
+    }
+    void inCount;
+  }
+
+  function renderBet() {
+    const b = me.bet;
+    els.stake.max = String(maxStake());
+    if (state.phase === "bet") {
+      if (b) { els.action.className = "big wait"; els.action.textContent = `Bet placed · ${fmt(b.stake)}${b.target ? ` · auto ${b.target}×` : ""}`; els.action.disabled = false; els.action.dataset.mode = "cancel"; els.hint.innerHTML = "Click again to cancel before launch."; }
+      else { els.action.className = "big"; els.action.textContent = "Place bet"; els.action.disabled = false; els.action.dataset.mode = "bet"; els.hint.innerHTML = "Bets lock when the rocket launches. In chat this is <b>!crash 50</b> — or <b>!crash 50 2x</b> to auto cash out at 2×."; }
+    } else if (state.phase === "run") {
+      if (b && b.status === "in") { els.action.className = "big cash"; els.action.textContent = "CASH OUT"; els.action.disabled = false; els.action.dataset.mode = "cash"; els.hint.innerHTML = "In chat: <b>!cashout</b>. The moment you press is the multiplier you get."; }
+      else { els.action.className = "big wait"; els.action.textContent = b ? `Cashed out · ${b.out.toFixed(2)}×` : "Round in progress"; els.action.disabled = true; els.hint.innerHTML = "Next round opens right after the bust."; }
+    } else {
+      els.action.className = "big wait"; els.action.textContent = b ? (b.status === "out" ? `You got out at ${b.out.toFixed(2)}×` : "Busted") : "Busted"; els.action.disabled = true;
+    }
+  }
+
+  els.action.addEventListener("click", () => {
+    const mode = els.action.dataset.mode;
+    if (state.phase === "bet" && mode === "bet") {
+      const stake = Math.floor(Number(els.stake.value));
+      if (!Number.isFinite(stake) || stake < 1) return toast("Minimum stake is 1");
+      if (stake > maxStake()) return toast(`Max stake is ${fmt(maxStake())} (25% of balance)`);
+      const target = Number(els.auto.value) >= 1.01 ? Math.round(Number(els.auto.value) * 100) / 100 : null;
+      me.bet = { name: "You", av: "ME", stake, target, status: "in", out: null };
+      me.balance -= stake; setWallet();
+      renderBet(); renderPlayers();
+    } else if (state.phase === "bet" && mode === "cancel") {
+      me.balance += me.bet.stake; me.bet = null; setWallet(); renderBet(); renderPlayers();
+    } else if (state.phase === "run" && mode === "cash" && me.bet?.status === "in") {
+      const m = mult(performance.now() - state.startedAt);
+      cashOut(me.bet, Math.floor(m * 100) / 100);
+    }
+  });
+  for (const chip of document.querySelectorAll(".chip")) {
+    chip.addEventListener("click", () => {
+      if (chip.dataset.set) els.stake.value = chip.dataset.set;
+      if (chip.dataset.mul) els.stake.value = String(Math.min(maxStake(), Math.floor(Number(els.stake.value) || 1) * 2));
+      if (chip.dataset.max) els.stake.value = String(maxStake());
+      if (chip.dataset.auto) els.auto.value = chip.dataset.auto;
+    });
+  }
+
+  setWallet();
+  newRound();
+})();
+</script>
+</body>
+</html>
