@@ -1612,8 +1612,10 @@ body.is-rasputin .mprog-fill{background:linear-gradient(90deg,#ff3d81,#ffd23f,#4
 .elo-tier.silver{border-color:rgba(216,210,196,.45);background:rgba(216,210,196,.1);color:#d8d2c4}
 .elo-tier.bronze{border-color:rgba(205,127,50,.5);background:rgba(205,127,50,.12);color:#d49a5a}
 .elo-row.tier-rank1{border-color:rgba(232,191,53,.3)}
-.pf-elo{display:inline-flex;align-items:center;gap:9px}
-.summarycard strong .elo-tier{font-size:.58rem;vertical-align:middle}
+/* Inside a stat card the label rule (.summarycard span) would turn these
+   into block labels; restate them as the inline pill and figure they are. */
+.summarycard strong .pf-elo{display:inline-flex;align-items:center;gap:9px;font-size:inherit;font-weight:inherit;letter-spacing:inherit;text-transform:none;color:inherit;margin:0}
+.summarycard strong .elo-tier{display:inline-block;margin:0;font-size:.58rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;line-height:1.4;vertical-align:middle}
 .elo-score.up{color:var(--gold)}
 .elo-score.down{color:var(--muted-2)}
 

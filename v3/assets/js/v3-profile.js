@@ -257,7 +257,9 @@
     }
     wrap.append(ms);
 
-    // Coin Flip
+    // Coin Flip — built but not shown until the casino gets the go-ahead.
+    // Flip SHOW_FLIP to bring the section (and the footer link) back.
+    const SHOW_FLIP = false;
     const fs = el("section", "pf-section");
     const fh = el("h2", null, "Coin Flip");
     const flipEmote = document.createElement("img");
@@ -299,10 +301,11 @@
       }
       fs.append(el("h3", "pf-sub", "Latest flips"), rows);
     }
-    wrap.append(fs);
+    if (SHOW_FLIP) wrap.append(fs);
 
     const foot = el("div", "gp-links");
-    foot.append(link("/?view=picks&tab=leaderboard", "gp-back", "Leaderboard"), link("/?view=picks&tab=ledger", "gp-back", "Community Ledger"), link("/?view=flip", "gp-back", "Coin Flip"));
+    foot.append(link("/?view=picks&tab=leaderboard", "gp-back", "Leaderboard"), link("/?view=picks&tab=ledger", "gp-back", "Community Ledger"));
+    if (SHOW_FLIP) foot.append(link("/?view=flip", "gp-back", "Coin Flip"));
     wrap.append(foot);
     return wrap;
   }
