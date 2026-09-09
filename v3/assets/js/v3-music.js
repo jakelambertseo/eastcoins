@@ -1118,7 +1118,7 @@
       const wrap = el("div", "mq");
       const items = state?.queue || [];
       if (!items.length) {
-        wrap.append(el("p", "mq-empty", "Nothing queued. Search above, or ask in chat with !sr."));
+        wrap.append(el("p", "mq-empty", "Nothing queued. Use the search box under the video to add a song, or !sr in chat."));
         return wrap;
       }
       // When each song will start: what is left of the current one, then
