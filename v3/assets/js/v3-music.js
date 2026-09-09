@@ -467,6 +467,7 @@
      is. With no player yet (or paused for the audio lock) it falls back
      to the room's own clock so the bar still moves. */
   let progressTimer = 0;
+  let prog = null;   // { bar, fill, now, end } — set when the stage is built
 
   function mmss(seconds) {
     const s = Math.max(0, Math.floor(Number(seconds) || 0));
@@ -475,7 +476,7 @@
 
   function tickProgress() {
     const state = conn.state;
-    const bar = refs.progress;
+    const bar = prog?.bar;
     if (!bar) return;
     if (!state?.current) { bar.hidden = true; return; }
 
@@ -490,10 +491,10 @@
     } catch { /* player not ready; the room clock will do */ }
 
     bar.hidden = false;
-    refs.progressNow.textContent = mmss(now);
-    refs.progressEnd.textContent = duration ? mmss(duration) : "";
+    prog.now.textContent = mmss(now);
+    prog.end.textContent = duration ? mmss(duration) : "";
     const pct = duration ? Math.max(0, Math.min(100, (100 * now) / duration)) : 0;
-    refs.progressFill.style.width = `${pct}%`;
+    prog.fill.style.width = `${pct}%`;
     bar.classList.toggle("is-unknown", !duration);
   }
 
@@ -506,6 +507,7 @@
   function stopProgressTicker() {
     window.clearInterval(progressTimer);
     progressTimer = 0;
+    prog = null;
   }
 
   let driftTimer = 0;
@@ -1300,6 +1302,8 @@
       refs.progressEnd = el("span", "mprog-t nums", "");
       refs.progress.append(refs.progressNow, track, refs.progressEnd);
       refs.progress.hidden = true;
+      // The ticker lives outside this closure, so hand it the pieces.
+      prog = { bar: refs.progress, fill: refs.progressFill, now: refs.progressNow, end: refs.progressEnd };
       startProgressTicker();
 
       // Volume is built once so dragging the slider is never interrupted
