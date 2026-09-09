@@ -107,8 +107,22 @@
     const url = new URL("/", location.origin);
     url.searchParams.set("view", "watch");
     if (local.custom) url.searchParams.set("url", local.custom);
-    else if (local.match?.id) url.searchParams.set("event", local.match.id);
+    else if (local.match?.id) {
+      url.searchParams.set("event", local.match.id);
+      // The server they are actually on, 1-based like the dropdown says.
+      // Server 1 is the default, so it is left off to keep links short.
+      if (local.active > 0) url.searchParams.set("server", String(local.active + 1));
+    }
     return url.href;
+  }
+
+  // Keeps the address bar honest as servers change, so copying it by
+  // hand works as well as the button does.
+  function rememberServer() {
+    const url = new URL(location.href);
+    if (local.active > 0) url.searchParams.set("server", String(local.active + 1));
+    else url.searchParams.delete("server");
+    history.replaceState(history.state, "", url.pathname + url.search + url.hash);
   }
 
   function el(tag, className, text) {
@@ -202,6 +216,7 @@
       select.setAttribute("aria-label", "Stream server");
       select.addEventListener("change", () => {
         local.active = Number(select.value) || 0;
+        rememberServer();
         // Deliberate reload: a new server is a new stream.
         if (dom.iframe) dom.iframe.src = currentSrc();
       });
@@ -409,6 +424,10 @@
       local.streams = outcome.streams;
       local.reason = outcome.reason;
       local.game = game;
+      // A shared link names the server it was copied from (1-based);
+      // the old shell's ?stream= is honoured the same way.
+      const wanted = Number(params().get("server") || params().get("stream") || 0);
+      if (wanted >= 1 && wanted <= local.streams.length) local.active = wanted - 1;
       local.loading = false;
       if (root.isConnected) paint();
     },

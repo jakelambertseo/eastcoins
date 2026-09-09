@@ -103,7 +103,10 @@
     if (!params.get("view") && params.get("event")) {
       params.set("view", "watch");
       params.delete("source");
+      // The old player's stream number is this player's server number.
+      const stream = params.get("stream");
       params.delete("stream");
+      if (stream && !params.get("server")) params.set("server", stream);
       changed = true;
     }
 
