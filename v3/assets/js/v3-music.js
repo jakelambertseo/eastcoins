@@ -1330,6 +1330,17 @@
       jamgie2.alt = "";
       title.append(emote, el("span", "mtitle-text", "The Green Room"), jamgie, jamgie2);
       refs.listeners = el("span", "mlisteners", BASE ? "Connecting\u2026" : "Room not configured");
+      // The same live ticker the Sports page carries, above the title.
+      const ticker = document.createElement("section");
+      ticker.className = "ticker";
+      root.append(ticker);
+      const mountTicker = (tries = 0) => {
+        if (!ticker.isConnected) return;
+        if (window.ECActivity) window.ECActivity.mountTicker(ticker);
+        else if (tries < 100) window.setTimeout(() => mountTicker(tries + 1), 50);
+      };
+      mountTicker();
+
       head.append(title, refs.listeners);
       root.append(head);
 
