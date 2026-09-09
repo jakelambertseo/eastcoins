@@ -355,7 +355,7 @@
     logo.src = "/assets/eastcoins-logo.webp";
     logo.alt = "";
     box.append(logo, el("h2", null, "Movies & TV is for members"),
-      el("p", null, "Log in with Twitch to browse the catalog and watch. Your Twitch name is all it takes — no password ever reaches EastCoin."));
+      el("p", null, "Log in with Twitch to browse the catalog and watch."));
     const a = el("a", "login-btn", "Log in with Twitch");
     a.href = "/api/picks/auth/twitch/start?returnTo=" + encodeURIComponent("/?view=screen");
     box.append(a);
