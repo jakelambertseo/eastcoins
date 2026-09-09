@@ -133,7 +133,9 @@
     label.textContent = initials(team?.name);
     el.append(label);
 
-    const url = team?.badge && API?.badgeUrl ? API.badgeUrl(team.badge) : "";
+    // NFL clubs fall back to the league's own logo when the provider
+    // has no badge for them.
+    const url = (team?.badge && API?.badgeUrl ? API.badgeUrl(team.badge) : "") || nflLogo(team) || "";
     if (url) {
       const img = document.createElement("img");
       img.alt = "";
@@ -162,6 +164,13 @@
 
     const el = document.createElement("article");
     el.className = "eventcard";
+    // NFL games get the full treatment: turf, the shield, real logos,
+    // and the Picks line when a market is open.
+    const nfl = isNfl(match);
+    if (nfl) {
+      el.classList.add("nfl");
+      el.dataset.nfl = "1";
+    }
 
     const href = `/?view=watch&event=${encodeURIComponent(match.id)}`;
     const openMatch = (event) => {
@@ -206,6 +215,12 @@
     flag.className = "ec-flag";
     setFlag(flag, flagStateFor(match));
     poster.append(flag);
+    if (nfl) {
+      const shield = document.createElement("span");
+      shield.className = "ec-league";
+      shield.textContent = "NFL";
+      poster.append(shield);
+    }
     el.append(poster);
 
     // body --------------------------------------------------
@@ -220,7 +235,7 @@
     if (home?.name && away?.name) {
       // One row per team, each with its own crest, so the matchup reads
       // at a glance instead of as one long run-on string.
-      title.append(teamRow(home), teamRow(away));
+      title.append(teamRow(home, nfl), teamRow(away, nfl));
       title.classList.add("is-matchup");
     } else {
       title.textContent = match?.title || "Untitled event";
@@ -256,6 +271,14 @@
     actions.append(watch);
     el.append(actions);
 
+    if (nfl) {
+      const strip = document.createElement("div");
+      strip.className = "ec-picks";
+      strip.hidden = true;
+      el.append(strip);
+      pendingPicks.push({ match, strip });
+    }
+
     return el;
   }
 
@@ -276,14 +299,23 @@
     flag.hidden = !state;
   }
 
-  function teamRow(team) {
+  function isNfl(match) {
+    return sportKey(match) === "american-football" && Sports.footballRank(match) === 0;
+  }
+
+  /** The league's own logo for an NFL club, when the provider has none. */
+  function nflLogo(team) {
+    return window.ECLogos ? window.ECLogos.url("american-football", "NFL", team?.name) : null;
+  }
+
+  function teamRow(team, nfl) {
     const row = document.createElement("span");
     row.className = "teamrow";
 
     const badge = document.createElement("span");
     badge.className = "teamlogo";
     const API = window.EastcoinStreamedAPI;
-    const url = team?.badge && API?.badgeUrl ? API.badgeUrl(team.badge) : "";
+    const url = (team?.badge && API?.badgeUrl ? API.badgeUrl(team.badge) : "") || (nfl ? nflLogo(team) : "") || "";
     if (url) {
       const img = document.createElement("img");
       img.alt = "";
@@ -552,6 +584,7 @@
     }
 
     const ordered = Sports.grouped(visible);
+    pendingPicks = [];
 
     for (const [key, list] of ordered) {
       const group = document.createElement("section");
@@ -575,6 +608,72 @@
 
       group.append(gh, grid);
       root.append(group);
+    }
+
+    if (pendingPicks.length) decoratePicks(pendingPicks);
+  }
+
+  /* ---------------------------------------------------------- NFL picks
+
+     One fetch for the open markets and one for what is coming, then
+     every NFL card gets a line: the locked odds with a way in, or when
+     it opens. Nothing here blocks the page; the cards paint first. */
+
+  let pendingPicks = [];
+
+  async function decoratePicks(cards) {
+    const nick = (name) => (window.ECLogos ? window.ECLogos.nickname(name) : String(name || "").toLowerCase().split(" ").pop());
+    const line = (v) => { const n = Number(v); return !Number.isFinite(n) || n === 0 ? "—" : n > 0 ? `+${n}` : `−${Math.abs(n)}`; };
+    let open = [];
+    let upcoming = [];
+    try {
+      const [boot, up] = await Promise.all([
+        fetch("/api/picks/bootstrap", { credentials: "include" }).then((r) => r.json()).catch(() => null),
+        fetch("/api/picks/upcoming").then((r) => r.json()).catch(() => null)
+      ]);
+      open = (boot?.markets || []).filter((m) => m.state === "OPEN");
+      upcoming = up?.games || [];
+    } catch { return; }
+
+    for (const { match, strip } of cards) {
+      if (!strip.isConnected) continue;
+      const a = nick(match?.teams?.away?.name);
+      const h = nick(match?.teams?.home?.name);
+      const same = (x, y) => (nick(x) === a && nick(y) === h) || (nick(x) === h && nick(y) === a);
+
+      const market = open.find((m) => same(m.away?.name || m.away, m.home?.name || m.home));
+      if (market) {
+        const awayName = market.away?.name || market.away;
+        const homeName = market.home?.name || market.home;
+        strip.replaceChildren();
+        const link = document.createElement("a");
+        link.className = "ec-picks-link";
+        link.href = "/?view=picks";
+        link.addEventListener("click", (event) => {
+          if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+          event.preventDefault();
+          history.pushState({ view: "picks" }, "", "/?view=picks");
+          shell.go("picks", { push: false });
+        });
+        const coin = document.createElement("img");
+        coin.className = "zcoin-mark";
+        coin.src = "/v3/assets/img/zcoin.webp";
+        coin.alt = "";
+        coin.width = 14;
+        coin.height = 14;
+        link.append(coin, document.createTextNode(` Picks open · ${nick(awayName).toUpperCase()} ${line(market.awayOdds)} · ${nick(homeName).toUpperCase()} ${line(market.homeOdds)} · Bet →`));
+        strip.append(link);
+        strip.hidden = false;
+        continue;
+      }
+
+      const soon = upcoming.find((g) => same(g.away, g.home));
+      if (soon) {
+        const opens = new Date(new Date(soon.startsAt).getTime() - 60 * 60 * 1000);
+        strip.textContent = `Picks open ${opens.toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })} · ${nick(soon.away).toUpperCase()} ${line(soon.awayLine)} · ${nick(soon.home).toUpperCase()} ${line(soon.homeLine)}`;
+        strip.classList.add("soon");
+        strip.hidden = false;
+      }
     }
   }
 
