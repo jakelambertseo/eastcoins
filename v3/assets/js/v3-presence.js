@@ -36,7 +36,10 @@
   // tab is still in the Green Room.
   async function beat(where, detail) {
     if (where && where !== lastWhere) lastDetail = "";
-    lastWhere = where || lastWhere || "events";
+    // With no route given, ask the shell where this tab actually is —
+    // the first paint happens before this script is ready, and a Music
+    // tab must not spend its first minute reported as Sports.
+    lastWhere = where || lastWhere || window.ECV3?.state?.route || "events";
     if (detail !== undefined) lastDetail = String(detail || "");
     try {
       await fetch("/api/presence", {
@@ -57,6 +60,8 @@
 
   window.setInterval(() => beat(), BEAT_MS);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) beat(); });
+  // First beat as soon as this script is up, from the shell's route.
+  beat();
 
   /* ---------------------------------------------------------- the strip */
 
