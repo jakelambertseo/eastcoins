@@ -190,6 +190,7 @@
     copy.append(teamChip(u));
     head.append(copy);
     wrap.append(head);
+    wrap.append(profileNav());
 
     // Stats
     const strip = el("div", "summarystrip");
@@ -213,6 +214,7 @@
 
     // Recent picks
     const recent = el("section", "pf-section");
+    recent.id = "pf-picks";
     const rh = el("h2", null, "Recent picks");
     rh.append(el("small", null, k.open ? `${k.open} open` : ""));
     recent.append(rh);
@@ -224,6 +226,7 @@
 
     // Music
     const ms = el("section", "pf-section");
+    ms.id = "pf-music";
     const mh = el("h2", null, "In the Green Room");
     const jamgie = document.createElement("img");
     jamgie.className = "pf-emote";
@@ -308,6 +311,39 @@
     if (SHOW_FLIP) foot.append(link("/?view=flip", "gp-back", "Coin Flip"));
     wrap.append(foot);
     return wrap;
+  }
+
+  /* ---------------------------------------------------------- sub nav
+
+     One row under the name: jumps to the sections on this page on
+     the left, the way back to the rest of the site on the right.
+     Every link stays inside the shell, so the chat never reloads. */
+
+  function profileNav() {
+    const nav = el("nav", "pf-nav");
+    nav.setAttribute("aria-label", "Profile sections");
+
+    const here = el("div", "pf-nav-group");
+    here.append(el("span", "pf-nav-k", "On this page"));
+    for (const [target, label] of [["pf-picks", "Picks"], ["pf-music", "Green Room"]]) {
+      const b = el("button", "pf-nav-jump", label);
+      b.type = "button";
+      b.addEventListener("click", () => {
+        document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      here.append(b);
+    }
+
+    const away = el("div", "pf-nav-group");
+    away.append(el("span", "pf-nav-k", "Go to"));
+    away.append(
+      link("/?view=picks", "pf-nav-link", "← Picks"),
+      link("/?view=picks&tab=leaderboard", "pf-nav-link", "Leaderboard"),
+      link("/?view=picks&tab=ledger", "pf-nav-link", "Community Ledger"),
+      link("/?view=music", "pf-nav-link", "Music")
+    );
+    nav.append(here, away);
+    return nav;
   }
 
   /* ---------------------------------------------------------- favourite team
@@ -537,6 +573,10 @@
       event.preventDefault();
       history.pushState({ view: "flip" }, "", href);
       shell.go("flip", { push: false });
+    } else if (href.startsWith("/?view=music")) {
+      event.preventDefault();
+      history.pushState({ view: "music" }, "", href);
+      shell.go("music", { push: false });
     }
   }
 
