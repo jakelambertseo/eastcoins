@@ -105,6 +105,17 @@ img{max-width:100%}
 .nav-link[aria-current="page"]{
   border-color:rgba(232,191,53,.3);color:var(--gold);background:var(--gold-dim);
 }
+/* Picks is the thing to try: a standing border and a HOT tag. */
+.nav-link.nav-hot{border-color:rgba(232,191,53,.45);color:var(--text)}
+.nav-link.nav-hot:hover,.nav-link.nav-hot[aria-current="page"]{border-color:rgba(232,191,53,.7);color:var(--gold)}
+.nav-tag{
+  margin-left:2px;padding:2px 6px;border-radius:6px;
+  background:linear-gradient(120deg,#ff5a3c,#d31d4d);color:#fff;
+  font-size:.56rem;font-weight:900;letter-spacing:.12em;line-height:1;
+  box-shadow:0 0 12px rgba(255,90,60,.45);animation:navhot 2.4s ease-in-out infinite;
+}
+@keyframes navhot{0%,100%{box-shadow:0 0 8px rgba(255,90,60,.35)}50%{box-shadow:0 0 16px rgba(255,90,60,.7)}}
+@media (prefers-reduced-motion:reduce){.nav-tag{animation:none}}
 .nav-badge{
   display:inline-flex;align-items:center;justify-content:center;
   min-width:19px;height:19px;padding:0 6px;border-radius:999px;
