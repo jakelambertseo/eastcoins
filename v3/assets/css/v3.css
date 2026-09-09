@@ -2428,7 +2428,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
    the site on the right. Same pill language as the Picks tabs. */
 .pf-nav{
   display:flex;align-items:center;justify-content:space-between;gap:8px 18px;flex-wrap:wrap;
-  margin:16px 0 18px;padding:7px 10px;border:1px solid var(--line);border-radius:11px;background:var(--panel-2);
+  margin:0 0 18px;padding:7px 10px;border:1px solid var(--line);border-radius:11px;background:var(--panel-2);
 }
 .pf-nav-group{display:flex;align-items:center;gap:3px;flex-wrap:wrap}
 .pf-nav-k{margin-right:6px;color:var(--muted-2);font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}

@@ -172,6 +172,7 @@
     const u = data.user;
     const k = data.picks;
     const wrap = el("section", "profile");
+    wrap.append(profileNav());
 
     // Head
     const head = el("div", "pf-head");
@@ -190,7 +191,6 @@
     copy.append(teamChip(u));
     head.append(copy);
     wrap.append(head);
-    wrap.append(profileNav());
 
     // Stats
     const strip = el("div", "summarystrip");
