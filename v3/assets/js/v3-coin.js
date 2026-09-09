@@ -125,10 +125,17 @@
     refs.phase = el("div", "cf-phase", "");
     refs.coinWrap = el("div", "cf-coinwrap");
     refs.coin = el("div", "cf-coin");
+    // A real quarter, both sides (US Mint images, public domain).
     const heads = el("div", "cf-face heads");
-    heads.append(el("span", null, "H"));
+    const headsImg = document.createElement("img");
+    headsImg.src = "/v3/assets/img/quarter-heads.jpg";
+    headsImg.alt = "Heads";
+    heads.append(headsImg);
     const tails = el("div", "cf-face tails");
-    tails.append(el("span", null, "T"));
+    const tailsImg = document.createElement("img");
+    tailsImg.src = "/v3/assets/img/quarter-tails.jpg";
+    tailsImg.alt = "Tails";
+    tails.append(tailsImg);
     refs.coin.append(heads, tails);
     refs.coinWrap.append(refs.coin);
     refs.clock = el("div", "cf-clock nums", "—");
@@ -155,7 +162,8 @@
     stakeRow.append(refs.stakeInput, chips);
     refs.lock = btn("Lock it in", "cf-lock", placeBet);
     refs.betNote = el("p", "cf-note", "");
-    bet.append(sides, stakeRow, refs.lock, refs.betNote);
+    refs.limits = el("p", "cf-limits", "");
+    bet.append(sides, stakeRow, refs.lock, refs.betNote, refs.limits);
     stage.append(bet);
     grid.append(stage);
 
@@ -214,6 +222,18 @@
 
   function render() {
     if (!data || !refs.coin) return;
+    renderClock();
+    // Rebuilding the lists on every tick re-created every avatar image,
+    // which flickered. They change only when a poll brings new data.
+    const sig = JSON.stringify([data.bets, data.last, data.room, data.me?.bet, data.round.result]);
+    if (sig === lastSig) return;
+    lastSig = sig;
+    renderLists();
+  }
+
+  let lastSig = "";
+
+  function renderClock() {
     const r = data.round;
     const now = serverNow();
     const inBets = now < r.flipsAt;
@@ -248,9 +268,17 @@
     else if (!data.config.canBet) { refs.lock.textContent = "Casino paused"; refs.betNote.textContent = "ZCoin transfers aren't switched on right now."; }
     else if (mine) { refs.lock.textContent = `You're in: ${fmt(mine.wager)} on ${mine.side}`; refs.betNote.textContent = inBets ? `Wins ${fmt(mine.wager * 2)} back if it lands ${mine.side}.` : mine.status === "WON" ? `It landed ${r.result} — you won ${fmt(mine.profit)}.` : mine.status === "LOST" ? `It landed ${r.result}. Next one.` : "Settling…"; }
     else if (!inBets) { refs.lock.textContent = "Next round soon"; refs.betNote.textContent = "Bets open again when the clock hits zero."; }
-    else { refs.lock.textContent = `Lock in ${fmt(stake)} on ${side}`; refs.betNote.textContent = `Max ${data.config.maxBet} a round. Wins ${fmt(stake * 2)} back.`; }
+    else { refs.lock.textContent = `Lock in ${fmt(stake)} on ${side}`; refs.betNote.textContent = `Wins ${fmt(stake * 2)} back if it lands ${side}.`; }
 
-    // Lists
+    const used = data.me?.betsThisHour;
+    refs.limits.textContent = `Max bet ${data.config.maxBet} ZCoins · up to ${data.config.maxPerHour} bets an hour` +
+      (Number.isFinite(used) ? ` · you've used ${used} of ${data.config.maxPerHour}` : "");
+  }
+
+  function renderLists() {
+    const r = data.round;
+    const now = serverNow();
+    const inBets = now < r.flipsAt;
     const bets = data.bets || [];
     refs.thisCount.textContent = bets.length ? `${bets.length} in · ${fmt(bets.reduce((n, b) => n + b.wager, 0))} ZC` : "nobody yet";
     refs.thisList.replaceChildren();
@@ -299,6 +327,7 @@
       window.clearInterval(tickTimer);
       pollTimer = tickTimer = 0;
       data = null;
+      lastSig = "";
       refs = {};
     }
   };

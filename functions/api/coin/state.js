@@ -4,7 +4,7 @@
    the clock, so the first poll after a flip is what pays the winners. */
 
 import { getSessionUser, walletWritesEnabled } from "../picks/_lib.js";
-import { ensureSchema, roundAt, ensureRound, settleRound, betsFor, roomFor, touchPresence, MAX_BET, MIN_BET, BET_MS, CYCLE_MS } from "./_coin.js";
+import { ensureSchema, roundAt, ensureRound, settleRound, betsFor, roomFor, touchPresence, betsLastHour, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR, BET_MS, CYCLE_MS } from "./_coin.js";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
@@ -37,7 +37,7 @@ export async function onRequestGet(context) {
   return json({
     ok: true,
     now,
-    config: { maxBet: MAX_BET, minBet: MIN_BET, betSeconds: BET_MS / 1000, cycleSeconds: CYCLE_MS / 1000,
+    config: { maxBet: MAX_BET, minBet: MIN_BET, maxPerHour: MAX_BETS_PER_HOUR, betSeconds: BET_MS / 1000, cycleSeconds: CYCLE_MS / 1000,
       canBet: Boolean(user) && walletWritesEnabled(context.env) },
     round: {
       no: round.no,
@@ -53,6 +53,6 @@ export async function onRequestGet(context) {
     bets,
     last: prevRow ? { no: prevRow.no, result: prevRow.result, hash: prevRow.hash, seed: prevRow.seed, bets: last } : null,
     room,
-    me: user ? { id: user.id, login: user.login, displayName: user.displayName, bet: mine } : null
+    me: user ? { id: user.id, login: user.login, displayName: user.displayName, bet: mine, betsThisHour: await betsLastHour(db, user.id) } : null
   });
 }

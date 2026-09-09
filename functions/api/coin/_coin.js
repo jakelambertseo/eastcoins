@@ -24,6 +24,7 @@ import { moveBalance, beginOperation, finishOperation, newId } from "../picks/_l
 export const CYCLE_MS = 50 * 1000;
 export const BET_MS = 30 * 1000;
 export const MAX_BET = 20;
+export const MAX_BETS_PER_HOUR = 10;
 export const MIN_BET = 1;
 export const ROOM_WINDOW_MS = 60 * 1000;
 
@@ -208,6 +209,15 @@ export async function roomFor(db, now = Date.now()) {
     id: String(r.twitch_id), login: String(r.twitch_login).toLowerCase(),
     displayName: String(r.display_name || r.twitch_login), avatar: String(r.avatar_url || "")
   }));
+}
+
+/** Bets this person has placed in the last hour, for the rate limit. */
+export async function betsLastHour(db, userId) {
+  const row = await db
+    .prepare(`SELECT COUNT(*) AS n FROM coin_bets WHERE user_id = ? AND datetime(created_at) >= datetime('now', '-1 hour')`)
+    .bind(userId)
+    .first();
+  return Number(row?.n || 0);
 }
 
 export async function touchPresence(db, userId, now = Date.now()) {

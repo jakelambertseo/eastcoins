@@ -4,7 +4,7 @@
    leaves the wallet now; a win comes back as 2× when the round flips. */
 
 import { getSessionUser, walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOperation, newId, json, fail } from "../picks/_lib.js";
-import { ensureSchema, roundAt, ensureRound, MAX_BET, MIN_BET } from "./_coin.js";
+import { ensureSchema, roundAt, ensureRound, betsLastHour, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "./_coin.js";
 
 export async function onRequestPost(context) {
   const db = context.env.PICKS_DB;
@@ -33,6 +33,10 @@ export async function onRequestPost(context) {
 
   const already = await db.prepare(`SELECT id FROM coin_bets WHERE round_no = ? AND user_id = ?`).bind(round.no, user.id).first();
   if (already) return fail("ALREADY_IN", "You're already in this round.", 409);
+
+  // Ten a rolling hour. Enough to play along, not enough to grind.
+  const recent = await betsLastHour(db, user.id);
+  if (recent >= MAX_BETS_PER_HOUR) return fail("RATE_LIMIT", `That's ${MAX_BETS_PER_HOUR} bets this hour — the limit. Back in a bit.`, 429);
 
   const balance = await readBalance(context.env, user.login);
   if (balance === null) return fail("BALANCE_UNAVAILABLE", "Couldn't read your ZCoin balance.", 503);
