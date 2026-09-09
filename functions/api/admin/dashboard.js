@@ -127,6 +127,7 @@ export async function onRequestGet(context) {
     presence: presence ? { tabs: Number(presence.tabs || 0), people: Number(presence.people || 0), guests: Number(presence.guests || 0) } : null,
     music: music,
     tmdb: tmdbProbe,
-    chat: { seJwt: Boolean(String(env.STREAMELEMENTS_JWT || "").trim()), botKey: Boolean(String(env.PICKS_BOT_KEY || "").trim()), cronKey: Boolean(String(env.PICKS_CRON_KEY || "").trim()), openWagering: String(env.PICKS_OPEN_WAGERING || "") === "1" }
+    chat: { seJwt: Boolean(String(env.STREAMELEMENTS_JWT || "").trim()), botKey: Boolean(String(env.PICKS_BOT_KEY || "").trim()), cronKey: Boolean(String(env.PICKS_CRON_KEY || "").trim()), openWagering: String(env.PICKS_OPEN_WAGERING || "") === "1" },
+    discord: { configured: /^https:\/\/(canary\.|ptb\.)?discord(app)?\.com\/api\/webhooks\//.test(String(env.DISCORD_LEDGER_WEBHOOK || "").trim()) }
   });
 }

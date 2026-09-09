@@ -114,6 +114,23 @@
       ["Cron key", d.chat.cronKey ? "set" : "MISSING"]
     ]));
 
+    // Discord ledger mirror, with a way to post a sample
+    const testBtn = el("button", "db-btn", "Post test card");
+    testBtn.type = "button";
+    testBtn.disabled = !d.discord?.configured;
+    testBtn.addEventListener("click", async () => {
+      testBtn.disabled = true;
+      testBtn.textContent = "Posting…";
+      let r = null;
+      try { r = await (await fetch("/api/admin/discord-test", { method: "POST", credentials: "include" })).json(); } catch { r = null; }
+      testBtn.textContent = r?.ok ? "Posted ✓" : `Failed${r?.error ? " · " + r.error : ""}`;
+      setTimeout(() => { testBtn.textContent = "Post test card"; testBtn.disabled = false; }, 4000);
+    });
+    grid.append(card("Discord ledger", d.discord?.configured ? "ok" : "warn", [
+      ["Webhook", d.discord?.configured ? "set" : "not set"],
+      ["Sample", testBtn]
+    ]));
+
     // People
     grid.append(card("People", "ok", [
       ["Online now", d.presence ? `${d.presence.people} logged in · ${d.presence.guests} guests · ${d.presence.tabs} tabs` : "—"],
