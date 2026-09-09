@@ -38,6 +38,9 @@
 > **favourite team** is the user's own choice (`users.favourite_league` /
 > `favourite_team`, ESPN abbreviations from `_teams.js`), read and set at
 > `/api/picks/favourite`; the picker is inline on the owner's profile.
+> `/?view=users` (`v3-users.js`, no nav link — linked from profiles) lists
+> everyone from `/api/picks/users` with Picks profit/record, badges, favourite
+> team, and Music ELO read client-side from the worker's `/history/main`.
 >
 > **Casino** — `/?view=flip` (nav link present but hidden) is Coin Flip;
 > `/?view=casino` is reserved for the casino home page:

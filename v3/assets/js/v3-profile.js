@@ -321,28 +321,11 @@
 
   function profileNav() {
     const nav = el("nav", "pf-nav");
-    nav.setAttribute("aria-label", "Profile sections");
-
-    const here = el("div", "pf-nav-group");
-    here.append(el("span", "pf-nav-k", "On this page"));
-    for (const [target, label] of [["pf-picks", "Picks"], ["pf-music", "Green Room"]]) {
-      const b = el("button", "pf-nav-jump", label);
-      b.type = "button";
-      b.addEventListener("click", () => {
-        document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-      here.append(b);
-    }
-
-    const away = el("div", "pf-nav-group");
-    away.append(el("span", "pf-nav-k", "Go to"));
-    away.append(
-      link("/?view=picks", "pf-nav-link", "← Picks"),
-      link("/?view=picks&tab=leaderboard", "pf-nav-link", "Leaderboard"),
-      link("/?view=picks&tab=ledger", "pf-nav-link", "Community Ledger"),
-      link("/?view=music", "pf-nav-link", "Music")
+    nav.setAttribute("aria-label", "Profile links");
+    nav.append(
+      link("/?view=users", "pf-nav-link", "All Users"),
+      link("/?view=picks", "pf-nav-link", "← Back to Picks")
     );
-    nav.append(here, away);
     return nav;
   }
 
@@ -577,6 +560,10 @@
       event.preventDefault();
       history.pushState({ view: "music" }, "", href);
       shell.go("music", { push: false });
+    } else if (href.startsWith("/?view=users")) {
+      event.preventDefault();
+      history.pushState({ view: "users" }, "", href);
+      shell.go("users", { push: false });
     }
   }
 
