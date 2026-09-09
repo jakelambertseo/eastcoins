@@ -94,7 +94,12 @@
     const img = document.createElement("img");
     img.alt = "";
     img.decoding = "async";
-    img.addEventListener("load", () => box.classList.add("has-logo"));
+    img.addEventListener("load", () => {
+      box.classList.add("has-logo");
+      // The initials are the fallback only; once the logo is up they go,
+      // whatever colour the crest class would otherwise give them.
+      box.style.color = "transparent";
+    });
     img.addEventListener("error", () => img.remove());
     img.src = src;
     box.append(img);

@@ -1926,7 +1926,8 @@ body.is-rasputin .mtitle-text{
   opacity:0;transition:opacity .2s ease;
 }
 .has-logo img{opacity:1}
-.has-logo{color:transparent;background:var(--panel-2)}
+/* Doubled so it outranks every crest class that sets its own colour, whatever order they load in. */
+.has-logo.has-logo{color:transparent;background:var(--panel-2)}
 .gp-team.won .gp-crest.has-logo{background:var(--green-dim)}
 .side-crest{
   width:34px;height:34px;flex:0 0 auto;border-radius:9px;display:grid;place-items:center;
