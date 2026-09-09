@@ -42,6 +42,13 @@
 > max 20 ZC, 2× payout, same wallet ops as Picks. Client `v3-coin.js` polls
 > `/api/coin/state` every 1.5s; the first poll after a flip settles it.
 >
+> **Presence** — every tab POSTs `/api/presence` (`v3-presence.js`, 30s
+> heartbeat + on route change) into `site_presence`; the Sports page's
+> "Who's here" strip reads GET `/api/presence`. **Dashboard** —
+> `/?view=dashboard` (`v3-dashboard.js`, hidden nav link) reads
+> `/api/admin/dashboard`, gated to login `bootypaper` only; settlement
+> leaves `ops_status` notes (`_ops.js`: `settle:last`, `odds:quota`).
+>
 > **Old links still work.** `v3-shell.js` rewrites `?event=`, `?watch=`,
 > and the `games` / `streams` / `sicko` view names on load, and
 > `v3-multiview.js` decodes MultiView share tokens made by the V2 shell.

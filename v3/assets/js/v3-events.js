@@ -484,6 +484,14 @@
     head.append(titleWrap);
     root.append(head);
 
+    // Who's here: everyone on the site right now, guests counted.
+    if (window.ECPresence) {
+      const strip = document.createElement("section");
+      strip.className = "whoshere";
+      root.append(strip);
+      window.ECPresence.mountStrip(strip);
+    }
+
     root.append(picksBanner());
 
     if (!local.loaded && !local.failed) {

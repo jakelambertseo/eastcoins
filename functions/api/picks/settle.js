@@ -21,6 +21,8 @@
 import { composeOpen, composeClosed, composeSettled } from "./_announce.js";
 import { autoOpenMarkets } from "./_autoopen.js";
 import { slugFor, etDate } from "./_slug.js";
+import { noteStatus } from "./_ops.js";
+import { lastOddsQuota } from "./_autoopen.js";
 import {
   ADMIN_ALLOWLIST,
   getSessionUser,
@@ -95,6 +97,10 @@ function nickname(value) {
  * nothing can say whether the API refused, the key is missing, or there
  * simply was no matching game — three very different problems.
  */
+// The Odds API reports quota on every response; the dashboard reads the
+// latest one from the status notes settlement leaves behind.
+let lastScoresQuota = null;
+
 async function fetchScores(env, sportKey, daysFrom) {
   const apiKey = String(env.ODDS_API_KEY || "").trim();
   if (!apiKey) return { games: [], status: 0, note: "no ODDS_API_KEY" };
@@ -107,6 +113,11 @@ async function fetchScores(env, sportKey, daysFrom) {
       return { games: [], status: response.status };
     }
     const payload = await response.json();
+    lastScoresQuota = {
+      used: Number(response.headers.get("x-requests-used")),
+      remaining: Number(response.headers.get("x-requests-remaining")),
+      last: `scores ${sportKey}`
+    };
     return {
       games: Array.isArray(payload) ? payload : [],
       status: 200,
@@ -481,6 +492,18 @@ export async function onRequestPost(context) {
       console.error(`Picks: couldn't announce settlement: ${said.error}`);
     }
   }
+
+  // Leave a note for the dashboard: when this ran, what it did, and the
+  // latest Odds API quota seen on the way.
+  const settledCount = results.filter((r) => r.action === "settled").length;
+  const failedPayouts = results.reduce((n, r) => n + Number(r.failed || 0), 0);
+  await noteStatus(db, "settle:last", {
+    by: auth.by,
+    summary: `${opened.length} opened · ${Number(locked?.meta?.changes || 0)} locked · ${closingRows.length} closed · ${settledCount} settled` +
+      `${failedPayouts ? ` · ${failedPayouts} payout(s) FAILED` : ""}`
+  });
+  const quota = lastScoresQuota || lastOddsQuota();
+  if (quota && (Number.isFinite(quota.used) || Number.isFinite(quota.remaining))) await noteStatus(db, "odds:quota", quota);
 
   return json({
     ok: true,

@@ -43,6 +43,10 @@ function median(values) {
   return sorted.length % 2 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
 }
 
+// The latest quota headers seen, for the settlement pass to note.
+let lastQuota = null;
+export function lastOddsQuota() { return lastQuota; }
+
 async function fetchOdds(apiKey) {
   // The whole season comes back otherwise — the same credit, ten times
   // the payload, and nothing beyond this week is worth showing.
@@ -55,6 +59,11 @@ async function fetchOdds(apiKey) {
     commenceTimeTo: horizon
   });
   const response = await fetch(`${ODDS_API}/${SPORT_KEY}/odds/?${query}`);
+  lastQuota = {
+    used: Number(response.headers.get("x-requests-used")),
+    remaining: Number(response.headers.get("x-requests-remaining")),
+    last: `odds ${SPORT_KEY}`
+  };
   if (!response.ok) {
     console.error(`Odds API odds ${SPORT_KEY}: HTTP ${response.status}`);
     return null;
