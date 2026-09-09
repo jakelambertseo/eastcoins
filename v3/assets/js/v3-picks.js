@@ -932,8 +932,8 @@
     const season = local.season?.name || "Season";
 
     if (!top) {
-      copy.append(el("span", "lw-kicker", `${season} leader`),
-        el("strong", "lw-name", "The crown is up for grabs"),
+      copy.append(el("span", "lw-kicker", "Up for grabs"),
+        el("strong", "lw-name", "Nobody wears the crown yet"),
         el("small", "lw-note", "First settled pick takes it. Markets open an hour before kick-off."));
       box.append(crown, copy);
       return box;
@@ -941,7 +941,7 @@
 
     const me = local.login && top.user?.login === local.login;
     copy.append(
-      el("span", "lw-kicker", `${season} leader`),
+      el("span", "lw-kicker", "Wearing the crown"),
       (() => { const n = el("strong", "lw-name"); n.append(nameWithBadges(top.user)); return n; })(),
       el("small", "lw-note", me ? "That's you. Keep it." : `${top.record} · ${top.accuracy}% right`)
     );
@@ -973,7 +973,7 @@
     const year = season.name || season.id || "Season";
 
     const cards = [
-      ["ZCoins wallet", Number.isFinite(balance) ? balance.toLocaleString() : "—",
+      ["My ZCoins wallet", Number.isFinite(balance) ? balance.toLocaleString() : "—",
         local.wallet?.connected ? "Live from StreamElements" : "Log in with Twitch", true],
       [`${year} Picks profit`,
         local.authed ? `${season.profit > 0 ? "+" : season.profit < 0 ? "\u2212" : ""}${Math.abs(Number(season.profit || 0)).toLocaleString()}` : "—",
@@ -988,6 +988,15 @@
     for (const [k, v, note, wallet] of cards) {
       const card = el("article", `summarycard${wallet ? " wallet" : ""}`);
       card.append(el("span", null, k), el("strong", "nums", v), el("small", null, note));
+      if (wallet) {
+        const coin = document.createElement("img");
+        coin.className = "zc-full";
+        coin.src = "/v3/assets/img/zcoin.webp";
+        coin.alt = "";
+        coin.width = 64;
+        coin.height = 64;
+        card.append(coin);
+      }
       strip.append(card);
     }
     return strip;
@@ -1002,7 +1011,17 @@
     head.append(wrap);
     root.append(head);
 
-    root.append(leaderWidget());
+    // The season leader in a block of its own, with a heading, so the
+    // page splits cleanly: leader, then your numbers, then the tabs.
+    const leaderBlock = el("section", "leaderblock");
+    leaderBlock.setAttribute("aria-label", "Season leader");
+    const lbHead = el("div", "leaderblock-head");
+    const lbCopy = el("div");
+    lbCopy.append(el("h2", null, "Season leader"),
+      el("p", null, "Most Picks profit this season. Settled picks only — the crown changes hands as games finish."));
+    lbHead.append(lbCopy, el("span", "lb-season", local.season?.name || "Season"));
+    leaderBlock.append(lbHead, leaderWidget());
+    root.append(leaderBlock);
     root.append(summaryStrip());
 
     const tabs = el("nav", "viewtabs");

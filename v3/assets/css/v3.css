@@ -644,6 +644,11 @@ a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
   font-size:1.36rem;letter-spacing:-.02em;line-height:1.15;
 }
 .summarycard.wallet strong{color:#b6f1c4}
+.summarycard.wallet{position:relative;padding-right:92px}
+.summarycard.wallet .zc-full{
+  position:absolute;right:14px;top:50%;width:64px;height:64px;transform:translateY(-50%);
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.45));pointer-events:none;
+}
 .summarycard small{display:block;margin-top:4px;color:var(--muted-2);font-size:.72rem}
 /* An amount inside the big figure is not a label: keep the figure's size. */
 .summarycard strong .zc-amount{display:inline-flex;font-size:inherit;font-weight:inherit;letter-spacing:inherit;text-transform:none;color:inherit;margin:0;gap:7px}
@@ -1779,11 +1784,21 @@ body.is-rasputin .mprog-fill{background:linear-gradient(90deg,#ff3d81,#ffd23f,#4
 
 /* ---------------------------------------------------------------- season leader
    Same panel language as the rest of Picks — dark, a burgundy wash, gold
-   for the numbers — with the crown as the one thing that moves. */
+   for the numbers — with the crown as the one thing that moves. The
+   widget sits inside its own headed block so it reads as a section of
+   its own rather than a stray banner above the wallet cards. */
+.leaderblock{
+  margin:0 0 22px;padding:14px 16px 16px;border-radius:var(--radius);
+  border:1px solid var(--line);background:var(--panel-2);
+}
+.leaderblock-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.leaderblock-head h2{margin:0 0 3px;font-family:var(--display);font-weight:700;font-size:1.15rem;letter-spacing:-.02em}
+.leaderblock-head p{margin:0;color:var(--muted-2);font-size:.84rem}
+.leaderblock-head .lb-season{color:var(--gold);font-size:.66rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
 .leaderwidget{
   position:relative;overflow:hidden;
   display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:16px;
-  margin:0 0 22px;padding:16px 20px;border-radius:var(--radius);
+  margin:0;padding:16px 20px;border-radius:12px;
   border:1px solid rgba(232,191,53,.22);
   background:linear-gradient(120deg,rgba(142,18,49,.28),transparent 55%),var(--panel);
   box-shadow:0 0 0 1px rgba(255,255,255,.03) inset;
@@ -2313,9 +2328,12 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
   content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;transform:translateX(-50%);
   background:rgba(255,255,255,.14);pointer-events:none;
 }
-.eventcard.nfl .ec-poster .fallback{gap:18px}
+/* The flag and the shield own the top row; the crests sit under it and
+   shrink with the poster so nothing overlaps at any card width. */
+.eventcard.nfl .ec-poster .fallback{gap:18px;padding:34px 12px 12px}
 .eventcard.nfl .ec-poster .fallback .crest{
-  width:64px;height:64px;border-radius:16px;border-color:rgba(255,255,255,.18);
+  width:clamp(36px,38%,64px);height:auto;max-height:100%;aspect-ratio:1;
+  border-radius:16px;border-color:rgba(255,255,255,.18);
   background:rgba(12,10,9,.55);box-shadow:0 8px 22px rgba(0,0,0,.45);
 }
 /* The turf and crests are the fallback. When the provider's own poster
