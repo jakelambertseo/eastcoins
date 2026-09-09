@@ -2130,6 +2130,14 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .pf-badge.hot{border-color:rgba(255,107,133,.35);background:var(--red-dim);color:var(--red)}
 .pf-badge.cold{border-color:rgba(143,195,215,.3);background:rgba(143,195,215,.08);color:#8fc3d7}
 .pf-badge.dj{border-color:rgba(165,107,255,.4);background:rgba(165,107,255,.12);color:#c9b3ff}
+.pf-badge.music,.pf-badge.regular,.pf-badge.pleaser{border-color:rgba(165,107,255,.4);background:rgba(165,107,255,.12);color:#c9b3ff}
+.pf-badge.champion,.pf-badge.sharp{border-color:rgba(232,191,53,.55);background:linear-gradient(120deg,rgba(232,191,53,.24),rgba(232,191,53,.08));color:var(--gold)}
+.pf-badge.fire{border-color:rgba(255,107,133,.55);background:linear-gradient(120deg,rgba(255,107,133,.28),rgba(255,107,133,.08));color:#ffb3c0}
+.pf-badge.whale,.pf-badge.shark{border-color:rgba(143,195,215,.4);background:rgba(143,195,215,.1);color:#8fc3d7}
+.pf-badge.chalk{border-color:rgba(216,210,196,.4);background:rgba(216,210,196,.09);color:#d8d2c4}
+.pf-badge.allin,.pf-badge.comeback{border-color:rgba(77,219,139,.4);background:var(--green-dim);color:var(--green)}
+.pf-badge.broke,.pf-badge.trash,.pf-badge.skull{border-color:rgba(255,107,133,.3);background:var(--red-dim);color:var(--red)}
+.pf-badge.resident,.pf-badge.frontrow{border-color:rgba(205,127,50,.45);background:rgba(205,127,50,.1);color:#d49a5a}
 .pf-section{margin-top:24px}
 .pf-section h2{font-family:var(--display);font-weight:700;font-size:1.1rem;letter-spacing:-.02em;margin:0 0 10px;display:flex;align-items:baseline;gap:10px}
 .pf-section h2 small{color:var(--muted-2);font-size:.76rem;font-weight:600}

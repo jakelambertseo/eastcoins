@@ -32,9 +32,13 @@
 > (`functions/u/[[path]].js` serves the shell with title/OG; `v3-profile.js`
 > renders from `/api/picks/profile?login=`; names carry class `ulink` and
 > the shell routes their clicks). Badges (👑🔥🧊💀🎵) are computed for
-> everyone at once in `_badges.js` (cached 60s; 🎵 reads the music worker's
-> `/history/main`), served by `/api/picks/badges`, and drawn next to names
-> by `v3-badges.js`'s `ECBadges.decorate(node, login)`. A profile's
+> everyone at once in `_badges.js` (cached 60s; the header comment there
+> lists all nineteen titles and their rules; 🎵🎸👍🗑️ read the music
+> worker's `/history/main`, 🏠🪑 read `user_days` which `presence.js` fills
+> one row per person per Chicago day, 🎰 needs `picks.all_in` which
+> `_wager.js` sets, 💸 checks the live StreamElements balance for anyone a
+> debit ever left at zero), served by `/api/picks/badges`, and drawn next
+> to names by `v3-badges.js`'s `ECBadges.decorate(node, login)`. A profile's
 > **favourite team** is the user's own choice (`users.favourite_league` /
 > `favourite_team`, ESPN abbreviations from `_teams.js`), read and set at
 > `/api/picks/favourite`; the picker is inline on the owner's profile.

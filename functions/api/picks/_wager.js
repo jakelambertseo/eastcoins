@@ -11,6 +11,7 @@
    for both.
    ============================================================ */
 
+import { ensureBadgeExtras } from "./_badges.js";
 import {
   WAGER_ALLOWLIST,
   wageringOpenToAll,
@@ -161,13 +162,14 @@ export async function placeWager(env, db, user, { marketId, selection, wager }) 
   /* -------------------------------------------------- record the pick */
 
   try {
+    await ensureBadgeExtras(db);
     await db
       .prepare(
         `INSERT INTO picks
-           (id, market_id, user_id, selection, wager, status, odds_locked)
-         VALUES (?, ?, ?, ?, ?, 'ACTIVE', ?)`
+           (id, market_id, user_id, selection, wager, status, odds_locked, all_in)
+         VALUES (?, ?, ?, ?, ?, 'ACTIVE', ?, ?)`
       )
-      .bind(pickId, id, user.id, side, amount, Number(odds))
+      .bind(pickId, id, user.id, side, amount, Number(odds), allIn ? 1 : 0)
       .run();
   } catch (error) {
     // Charged but not recorded — unwind immediately.

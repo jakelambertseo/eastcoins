@@ -11,6 +11,7 @@
    ============================================================ */
 
 import { getSessionUser } from "./picks/_lib.js";
+import { ensureBadgeExtras } from "./picks/_badges.js";
 
 const WINDOW_MS = 75 * 1000;
 let ready = false;
@@ -52,6 +53,16 @@ export async function onRequestPost(context) {
               ON CONFLICT(client_id) DO UPDATE SET user_id = excluded.user_id, place = excluded.place, detail = excluded.detail, seen_at = excluded.seen_at`)
     .bind(client, user ? user.id : null, place, detail, now)
     .run();
+
+  // One row per person per Chicago day, first beat wins — this is what
+  // 🏠 Resident and 🪑 Front row are read from.
+  if (user) {
+    try {
+      await ensureBadgeExtras(db);
+      const day = new Date(now).toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+      await db.prepare(`INSERT OR IGNORE INTO user_days (user_id, day, first_seen) VALUES (?, ?, ?)`).bind(user.id, day, now).run();
+    } catch { /* the badge pass tolerates a missing day */ }
+  }
 
   // Housekeeping on the way: anything an hour stale is gone.
   if (Math.random() < 0.05) {
