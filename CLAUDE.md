@@ -24,7 +24,9 @@
 > Routes on the new shell: `/`, `/?view=multiview`, `/?view=picks`
 > (`&tab=mypicks|leaderboard|history|ledger`), `/?view=music`,
 > `/?view=screen` (nav label "Movies & TV": vidy.st player keyed by TMDB id, catalog
-> via `functions/api/screen/*` behind `TMDB_API_KEY`; `v3-screen.js`),
+> via `functions/api/screen/*` behind `TMDB_API_KEY`; `v3-screen.js`; **members
+> only** — `_gate.js` returns 401 without a Twitch session and the view shows a
+> login prompt instead of the shelves),
 > `/?view=watch&event=<id>`, `/?view=watch&url=<url>`, `/?view=admin`,
 > `/g/<slug>` for a game page, and `/u/<login>` for a profile
 > (`functions/u/[[path]].js` serves the shell with title/OG; `v3-profile.js`

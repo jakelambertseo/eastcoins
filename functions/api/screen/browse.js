@@ -7,6 +7,7 @@
    the only endpoint that takes both. */
 
 import { tmdb, json, slim } from "./_tmdb.js";
+import { requireLogin } from "./_gate.js";
 
 const LISTS = {
   movie: { trending: "/trending/movie/week", popular: "/movie/popular", top: "/movie/top_rated", new: "/movie/now_playing", upcoming: "/movie/upcoming" },
@@ -19,6 +20,8 @@ const SORTS = {
 };
 
 export async function onRequestGet(context) {
+  const gate = await requireLogin(context);
+  if (gate.denied) return gate.denied;
   const url = new URL(context.request.url);
   const type = url.searchParams.get("type") === "tv" ? "tv" : "movie";
   const list = String(url.searchParams.get("list") || "trending").toLowerCase();

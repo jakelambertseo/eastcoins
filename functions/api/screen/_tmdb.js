@@ -33,7 +33,7 @@ export async function tmdb(env, path, params = {}) {
 
 export const json = (body, status = 200, maxAge = 300) => Response.json(body, {
   status,
-  headers: { "Cache-Control": status === 200 ? `public, max-age=${maxAge}` : "no-store" }
+  headers: { "Cache-Control": status === 200 ? `private, max-age=${maxAge}` : "no-store" }
 });
 
 /** One shape for a movie or a show, whichever endpoint it came from. */

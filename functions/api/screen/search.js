@@ -1,8 +1,11 @@
 /* GET /api/screen/search?q=<text>  — movies and shows matching. */
 
 import { tmdb, json, slim } from "./_tmdb.js";
+import { requireLogin } from "./_gate.js";
 
 export async function onRequestGet(context) {
+  const gate = await requireLogin(context);
+  if (gate.denied) return gate.denied;
   const q = String(new URL(context.request.url).searchParams.get("q") || "").trim().slice(0, 80);
   if (q.length < 2) return json({ ok: true, results: [] });
 

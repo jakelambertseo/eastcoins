@@ -347,6 +347,21 @@
     return frag;
   }
 
+  /** What a visitor sees: why, and the one button that fixes it. */
+  function loginGate() {
+    const box = el("section", "sc-gate");
+    const logo = document.createElement("img");
+    logo.className = "sc-gate-logo";
+    logo.src = "/assets/eastcoins-logo.webp";
+    logo.alt = "";
+    box.append(logo, el("h2", null, "Movies & TV is for members"),
+      el("p", null, "Log in with Twitch to browse the catalog and watch. Your Twitch name is all it takes — no password ever reaches EastCoin."));
+    const a = el("a", "login-btn", "Log in with Twitch");
+    a.href = "/api/picks/auth/twitch/start?returnTo=" + encodeURIComponent("/?view=screen");
+    box.append(a);
+    return box;
+  }
+
   function emptyNote(strong, text) {
     const box = el("div", "empty");
     box.append(el("strong", null, strong), el("p", null, text));
@@ -579,6 +594,16 @@
       if (iframe) iframe.remove();
       iframe = null;
       local.now = null;
+
+      // Members only. Wait for the session read rather than racing it,
+      // then show the door instead of the shelves for anyone logged out.
+      await Promise.resolve(window.ECV3?.sessionReady).catch(() => null);
+      if (!root.isConnected) return;
+      if (!shell?.state?.session?.user?.login) {
+        root.replaceChildren(loginGate());
+        return;
+      }
+
       build();
       window.addEventListener("message", onMessage);
 

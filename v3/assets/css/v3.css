@@ -2440,3 +2440,14 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .pf-nav-jump:hover,.pf-nav-link:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(232,191,53,.3)}
 .pf-section{scroll-margin-top:84px}
 @media (max-width:640px){.pf-nav{justify-content:flex-start}}
+
+/* ---------------------------------------------------------------- Movies & TV gate
+   The door for anyone not logged in: why, and the one button. */
+.sc-gate{
+  max-width:460px;margin:48px auto 0;padding:34px 24px 30px;text-align:center;
+  border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);
+}
+.sc-gate-logo{display:block;width:52px;height:52px;margin:0 auto 14px}
+.sc-gate h2{margin:0 0 8px;font-family:var(--display);font-weight:800;font-size:1.25rem;letter-spacing:-.02em}
+.sc-gate p{margin:0 0 18px;color:var(--muted-2);font-size:.88rem;line-height:1.5}
+.sc-gate .login-btn{height:40px;padding:0 18px;font-size:.9rem}

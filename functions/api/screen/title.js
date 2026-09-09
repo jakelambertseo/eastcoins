@@ -4,8 +4,11 @@
    the episode list for one season when asked. */
 
 import { tmdb, json, slim, IMG } from "./_tmdb.js";
+import { requireLogin } from "./_gate.js";
 
 export async function onRequestGet(context) {
+  const gate = await requireLogin(context);
+  if (gate.denied) return gate.denied;
   const url = new URL(context.request.url);
   const type = url.searchParams.get("type") === "tv" ? "tv" : "movie";
   const id = Number(url.searchParams.get("id"));
