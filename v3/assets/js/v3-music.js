@@ -848,12 +848,16 @@
     });
     dock.by.textContent = current?.requestedBy ? `requested by ${current.requestedBy}` : (state ? `${Number(state.listeners || 0)} listening` : "");
     if (current) mountPlayer(dock.stage, state); else destroyPlayer();
+    // The full !rasputin treatment, scaled to the corner.
+    dock.el.classList.toggle("is-hot", isRasputin(state));
+    if (isRasputin(state)) startJam(dock.stage); else stopJam(dock.stage);
   }
 
   function teardownDock() {
     if (!dock.el) return;
     dock.unsub?.();
     dock.unsub = null;
+    stopJam(dock.stage);
     if (player.host === dock.stage) destroyPlayer();
     if (prog === dock.prog) { stopProgressTicker(); prog = null; }
     dock.el.remove();
