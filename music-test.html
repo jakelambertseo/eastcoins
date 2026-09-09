@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>EastCoin | Green Room (simplified mockup)</title>
+<link href="/assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --ink:#0c0a09;--panel:#161311;--panel-2:#1e1a17;--panel-3:#241f1b;
+    --line:rgba(255,255,255,.1);--line-2:rgba(255,255,255,.16);
+    --text:#f4ede5;--muted:#aca298;--muted-2:#7d746a;
+    --gold:#e8bf35;--gold-dim:rgba(232,191,53,.13);--green:#4ddb8b;--green-dim:rgba(77,219,139,.11);
+    --red:#ff6b85;--red-dim:rgba(255,107,133,.1);--purple:#a56bff;--burg:#8e1231;
+    --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;--body:"Figtree","Segoe UI",system-ui,sans-serif;
+    --radius:13px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--ink);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;color:inherit;cursor:pointer}
+  .nums{font-variant-numeric:tabular-nums}
+
+  /* ---- shell chrome (stand-in for the real nav) */
+  .topnav{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:18px;height:58px;padding:0 18px;border-bottom:1px solid var(--line);background:rgba(12,10,9,.92);backdrop-filter:blur(10px)}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:-.01em}
+  .brand img{width:30px;height:30px;border-radius:8px}
+  .brand small{margin-left:4px;padding:3px 8px;border-radius:999px;border:1px solid var(--line-2);color:var(--muted);font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+  .navlinks{display:flex;gap:4px;margin-left:8px}
+  .navlink{padding:8px 12px;border-radius:9px;color:var(--muted);font-weight:700;font-size:.86rem}
+  .navlink.on{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(232,191,53,.35)}
+  .page{max-width:1240px;margin:0 auto;padding:16px 18px 60px}
+
+  /* ---- ticker (as shipped) */
+  .ticker{display:flex;align-items:center;height:34px;margin:0 0 14px;overflow:hidden;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+  .tk-label{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:100%;padding:0 12px;border-right:1px solid var(--line);background:var(--panel-2);color:var(--red);font-size:.62rem;font-weight:800;letter-spacing:.14em}
+  .tk-label::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--red)}
+  .tk-viewport{flex:1;min-width:0;overflow:hidden;white-space:nowrap;color:var(--muted);font-size:.78rem;padding:0 14px}
+  .tk-viewport b{color:var(--text)} .tk-viewport i{font-style:normal;color:var(--gold);font-weight:700}
+
+  /* ---- header: title + room, one line */
+  .gr-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px;flex-wrap:wrap}
+  .gr-title{display:flex;align-items:center;gap:10px;margin:0;font-family:var(--display);font-weight:800;font-size:1.5rem;letter-spacing:-.025em}
+  .gr-title img{width:28px;height:28px}
+  .room{display:flex;align-items:center;gap:10px}
+  .room-pile{display:flex}
+  .room-pile img,.room-pile span{width:28px;height:28px;border-radius:50%;border:2px solid var(--ink);margin-left:-8px;background:var(--panel-3);display:grid;place-items:center;font-size:.66rem;font-weight:800;color:var(--muted)}
+  .room-pile img:first-child,.room-pile span:first-child{margin-left:0}
+  .room-count{color:var(--muted);font-size:.84rem;font-weight:700}
+  .room-count b{color:var(--text)}
+  .room-btn{height:32px;padding:0 12px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-size:.78rem;font-weight:700}
+
+  /* ---- layout */
+  .gr{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,1fr);gap:16px;align-items:start}
+  @media (max-width:980px){.gr{grid-template-columns:1fr}}
+
+  /* ---- stage with the now-playing overlay */
+  .stage{position:relative;border-radius:var(--radius);overflow:hidden;background:#000;border:1px solid var(--line);aspect-ratio:16/9;box-shadow:0 0 60px rgba(165,18,47,.25)}
+  .stage .video{position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,#3b2b15,#0b0a09 70%);display:grid;place-items:center;color:var(--muted-2);font-family:var(--display);font-weight:800;font-size:1.2rem}
+  .now{position:absolute;left:0;right:0;bottom:0;padding:14px 16px 12px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.85) 55%);display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center}
+  .now-av{width:44px;height:44px;border-radius:10px;background:var(--panel-3);display:grid;place-items:center;font-weight:800;color:var(--muted);overflow:hidden}
+  .now-av img{width:100%;height:100%;object-fit:cover}
+  .now-k{display:block;color:var(--gold);font-size:.62rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+  .now-t{display:block;font-family:var(--display);font-weight:800;font-size:1.08rem;letter-spacing:-.015em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .now-by{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:.78rem;margin-top:2px}
+  .now-by b{color:var(--text)}
+  .tier{padding:2px 7px;border-radius:999px;border:1px solid rgba(232,191,53,.45);background:var(--gold-dim);color:var(--gold);font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+  .tier.silver{border-color:rgba(216,210,196,.45);background:rgba(216,210,196,.1);color:#d8d2c4}
+  .tier.bronze{border-color:rgba(205,127,50,.5);background:rgba(205,127,50,.12);color:#d49a5a}
+  .tier.rank1{box-shadow:0 0 12px rgba(232,191,53,.35)}
+  .now-time{color:var(--muted);font-size:.78rem;font-weight:700}
+  .prog{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,255,255,.14)}
+  .prog i{display:block;height:100%;width:38%;background:var(--gold)}
+
+  /* ---- one control bar under the stage */
+  .bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+  .react{display:flex;gap:6px}
+  .react button{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel-2);font-size:1rem}
+  .react button b{font-size:.78rem;color:var(--muted)}
+  .react button.on{border-color:rgba(232,191,53,.5);background:var(--gold-dim)}
+  .react .sep{width:1px;background:var(--line);margin:4px 2px}
+  .skip{height:38px;padding:0 13px;border-radius:10px;border:1px solid rgba(255,107,133,.35);background:var(--red-dim);color:var(--red);font-weight:800;font-size:.8rem}
+  .spacer{flex:1}
+  .vol{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.8rem;font-weight:700}
+  .vol input{width:110px;accent-color:var(--gold)}
+
+  /* ---- the request box, the one big input */
+  .req{display:flex;gap:8px;margin-top:10px}
+  .req input{flex:1;height:44px;padding:0 14px 0 40px;border-radius:12px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);font:inherit;font-size:.95rem;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23aca298' stroke-width='2'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='m11 11 3.5 3.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:14px center}
+  .req input::placeholder{color:var(--muted-2)}
+  .req button{height:44px;padding:0 16px;border-radius:12px;border:1px solid rgba(232,191,53,.4);background:var(--gold-dim);color:var(--gold);font-weight:800}
+  .hint{margin:8px 2px 0;color:var(--muted-2);font-size:.76rem}
+  .hint b{color:var(--muted)}
+
+  /* ---- right rail: one panel, three tabs */
+  .rail{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);overflow:hidden}
+  .tabs{display:flex;border-bottom:1px solid var(--line);background:var(--panel-2)}
+  .tab{flex:1;height:42px;border:0;background:none;color:var(--muted-2);font-weight:800;font-size:.8rem;letter-spacing:.02em;border-bottom:2px solid transparent}
+  .tab.on{color:var(--gold);border-bottom-color:var(--gold)}
+  .tab small{margin-left:5px;color:var(--muted-2);font-weight:700}
+  .pane{display:none;padding:6px 0}
+  .pane.on{display:block}
+  .row{display:grid;grid-template-columns:28px 40px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:0}
+  .row .n{color:var(--muted-2);font-weight:800;font-size:.78rem}
+  .row .thumb{width:40px;height:40px;border-radius:8px;background:var(--panel-3);object-fit:cover}
+  .row .t{font-weight:700;font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .s{color:var(--muted-2);font-size:.72rem;margin-top:2px;display:flex;align-items:center;gap:6px}
+  .row .s img{width:14px;height:14px;border-radius:50%}
+  .row .eta{color:var(--muted);font-size:.72rem;font-weight:700;white-space:nowrap}
+  .row .del{width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:none;color:var(--muted-2);font-size:.8rem}
+  .row.mine{background:linear-gradient(90deg,var(--gold-dim),transparent 60%)}
+  .row .you{color:var(--gold);font-size:.62rem;font-weight:800;letter-spacing:.1em;margin-left:4px}
+  .rank .row{grid-template-columns:28px 32px minmax(0,1fr) auto auto}
+  .rank .av{width:32px;height:32px;border-radius:50%;background:var(--panel-3);display:grid;place-items:center;font-size:.7rem;font-weight:800;color:var(--muted)}
+  .rank .rating{font-family:var(--display);font-weight:800;font-size:.95rem}
+  .rank .reqs{color:var(--muted-2);font-size:.72rem;font-weight:700;min-width:54px;text-align:right}
+  .seg{display:flex;gap:4px;padding:10px 14px 4px}
+  .seg button{height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:none;color:var(--muted);font-size:.72rem;font-weight:800}
+  .seg button.on{border-color:rgba(232,191,53,.4);background:var(--gold-dim);color:var(--gold)}
+  .pager{display:flex;justify-content:center;gap:8px;padding:10px;color:var(--muted-2);font-size:.74rem;font-weight:700}
+  .pager button{height:26px;padding:0 9px;border-radius:7px;border:1px solid var(--line);background:none;color:var(--muted);font-size:.72rem;font-weight:800}
+
+  /* ---- explainer under the mock */
+  .notes{max-width:1240px;margin:34px auto 0;padding:0 18px;color:var(--muted);font-size:.9rem;line-height:1.6}
+  .notes h2{font-family:var(--display);font-size:1.1rem;color:var(--text);margin:22px 0 8px}
+  .notes ul{margin:0;padding-left:18px}
+  .notes li{margin:4px 0}
+  .notes b{color:var(--text)}
+  .callout{display:inline-block;padding:2px 7px;border-radius:6px;background:var(--gold-dim);color:var(--gold);font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;vertical-align:1px;margin-right:6px}
+</style>
+</head>
+<body>
+<nav class="topnav">
+  <a class="brand" href="/"><img src="/assets/eastcoins-logo.webp" alt="">EastCoin <small>mockup</small></a>
+  <div class="navlinks">
+    <a class="navlink" href="/">Sports</a><a class="navlink on" href="#">Music</a><a class="navlink" href="#">Movies &amp; TV</a><a class="navlink" href="#">MultiView</a><a class="navlink" href="#">Picks</a>
+  </div>
+</nav>
+
+<main class="page">
+  <section class="ticker"><span class="tk-label">LIVE</span><div class="tk-viewport">🎵 <b>knownspade</b> played <i>Creed – Higher</i> · 🪙 <b>BootyPaper</b> backed <i>Rays +105</i> for 5 ZC · 🏁 Final · <i>Reds at Dodgers 3–5</i> · 👋 <b>Calvinthesneak</b> joined</div></section>
+
+  <header class="gr-head">
+    <h1 class="gr-title"><img src="https://cdn.7tv.app/emote/01GAJBNT780004XAVG6P7AZAK2/4x.webp" alt="">The Green Room</h1>
+    <div class="room" title="In the room">
+      <div class="room-pile"><span>B</span><span>K</span><span>A</span><span>D</span><span>+2</span></div>
+      <span class="room-count"><b>6</b> listening</span>
+      <button class="room-btn" type="button">See who</button>
+    </div>
+  </header>
+
+  <div class="gr">
+    <div>
+      <div class="stage">
+        <div class="video">▶ video</div>
+        <div class="now">
+          <div class="now-av">SU</div>
+          <div>
+            <span class="now-k">Now playing</span>
+            <span class="now-t">Shut Up (Album Version) — blink-182</span>
+            <span class="now-by">requested by <b>BootyPaper</b> <span class="tier silver">Silver · 1010</span></span>
+          </div>
+          <span class="now-time nums">1:24 / 3:20</span>
+        </div>
+        <div class="prog"><i></i></div>
+      </div>
+
+      <div class="bar">
+        <div class="react">
+          <button type="button" class="on">👍 <b>3</b></button>
+          <button type="button">🔥 <b>1</b></button>
+          <span class="sep"></span>
+          <button type="button">🗑️ <b>0</b></button>
+          <button type="button">✖ <b>0</b></button>
+        </div>
+        <button class="skip" type="button">Skip · 2 / 5</button>
+        <span class="spacer"></span>
+        <label class="vol">🔊 <input type="range" min="0" max="100" value="60"></label>
+      </div>
+
+      <form class="req" onsubmit="return false">
+        <input type="text" placeholder="Add a song — search YouTube or paste a link">
+        <button type="submit">Add</button>
+      </form>
+      <p class="hint"><b>!song</b> in chat shows what's on · <b>!rasputin</b> for mods · your songs are marked <span class="callout" style="margin:0 2px">You</span> in the queue and can be pulled with ✕</p>
+    </div>
+
+    <aside class="rail">
+      <div class="tabs">
+        <button class="tab on" data-pane="queue" type="button">Up next <small>4</small></button>
+        <button class="tab" data-pane="history" type="button">History</button>
+        <button class="tab" data-pane="rank" type="button">Rankings</button>
+      </div>
+
+      <div class="pane on" id="pane-queue">
+        <div class="row"><span class="n">1</span><span class="thumb"></span><div><div class="t">Creed – Higher (Official Video)</div><div class="s">knownspade</div></div><span class="eta">in 2 min</span></div>
+        <div class="row mine"><span class="n">2</span><span class="thumb"></span><div><div class="t">Nickelback – Photograph <span class="you">YOU</span></div><div class="s">bootypaper</div></div><button class="del" type="button" title="Remove">✕</button></div>
+        <div class="row"><span class="n">3</span><span class="thumb"></span><div><div class="t">Korn – Got The Life</div><div class="s">aallldeeeez</div></div><span class="eta">in 10 min</span></div>
+        <div class="row"><span class="n">4</span><span class="thumb"></span><div><div class="t">Rob Zombie – Superbeast</div><div class="s">jimmytomato</div></div><span class="eta">in 14 min</span></div>
+      </div>
+
+      <div class="pane" id="pane-history">
+        <div class="row"><span class="n">·</span><span class="thumb"></span><div><div class="t">Feeling Whitney</div><div class="s">bootypaper · 👍 2 🔥 1</div></div><span class="eta">4m ago</span></div>
+        <div class="row"><span class="n">·</span><span class="thumb"></span><div><div class="t">Young Thug – Wyclef Jean</div><div class="s">bootypaper · 👍 1</div></div><span class="eta">8m ago</span></div>
+        <div class="row"><span class="n">·</span><span class="thumb"></span><div><div class="t">Thundercat – She Knows Too Much</div><div class="s">heartlarva · 🗑️ 1</div></div><span class="eta">12m ago</span></div>
+        <div class="row"><span class="n">·</span><span class="thumb"></span><div><div class="t">Brown Sugar</div><div class="s">knownspade · 👍 3 🔥 2</div></div><span class="eta">16m ago</span></div>
+        <div class="row"><span class="n">·</span><span class="thumb"></span><div><div class="t">Rasputin</div><div class="s">bootypaper · 🔥 4</div></div><span class="eta">21m ago</span></div>
+        <div class="pager"><button type="button">‹</button><span>1 / 12</span><button type="button">›</button></div>
+      </div>
+
+      <div class="pane rank" id="pane-rank">
+        <div class="seg"><button class="on" type="button">Music ELO</button><button type="button">Most requests</button></div>
+        <div class="row"><span class="n">1</span><span class="av">K</span><div><div class="t">KnownSpade <span class="tier rank1">Rank 1</span></div><div class="s">37 rated · 👍 37 · 👎 0</div></div><span class="rating nums">1144</span><span class="reqs">152 songs</span></div>
+        <div class="row"><span class="n">2</span><span class="av">J</span><div><div class="t">jimmytomato <span class="tier">Gold</span></div><div class="s">12 rated</div></div><span class="rating nums">1058</span><span class="reqs">120 songs</span></div>
+        <div class="row"><span class="n">3</span><span class="av">H</span><div><div class="t">heartlarva <span class="tier">Gold</span></div><div class="s">9 rated</div></div><span class="rating nums">1033</span><span class="reqs">121 songs</span></div>
+        <div class="row"><span class="n">4</span><span class="av">A</span><div><div class="t">aallldeeeez <span class="tier">Gold</span></div><div class="s">6 rated</div></div><span class="rating nums">1030</span><span class="reqs">100 songs</span></div>
+        <div class="row mine"><span class="n">5</span><span class="av">B</span><div><div class="t">BootyPaper <span class="tier silver">Silver</span></div><div class="s">11 rated</div></div><span class="rating nums">1010</span><span class="reqs">96 songs</span></div>
+        <div class="row"><span class="n">6</span><span class="av">Z</span><div><div class="t">Zwades <span class="tier bronze">Bronze</span></div><div class="s">3 rated</div></div><span class="rating nums">998</span><span class="reqs">41 songs</span></div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<section class="notes">
+  <h2>What moved, and why</h2>
+  <ul>
+    <li><b>"Now playing" lives on the video.</b> Title, requester and their tier sit in an overlay at the bottom of the stage, with the progress bar as the stage's bottom edge. The separate Now Playing card goes away.</li>
+    <li><b>One control bar.</b> Reactions (good on the left, bad on the right, a divider between), Skip vote and volume in a single row under the stage instead of three places.</li>
+    <li><b>One request box.</b> The search field becomes the page's one big input, with a hint line for the chat commands beneath it. Results drop down from it.</li>
+    <li><b>"In the room" folds into the header.</b> A stacked pile of avatars and a count next to the title, with See who for the full list. It no longer takes a panel.</li>
+    <li><b>One rail, three tabs.</b> Up next, History, Rankings. Top Requesters merges into Rankings as a second sort, so ELO and request counts sit on the same rows rather than in two blocks.</li>
+    <li><b>Queue rows say when.</b> An ETA per song ("in 10 min") and a YOU tag on your own requests, with a ✕ to pull them.</li>
+  </ul>
+  <h2>Small things worth adding while we're in there</h2>
+  <ul>
+    <li>Keyboard: <b>space</b> nothing (video owns it), <b>1–4</b> react, <b>S</b> skip vote, <b>/</b> focus the request box.</li>
+    <li>After you rate, a tiny <b>+3 / −2</b> next to the requester's rating so ELO feels earned.</li>
+    <li>A <b>"now playing" chip in the nav</b> on other pages, so leaving the Green Room doesn't mean losing track of the song.</li>
+    <li>Queue cap per person shown inline ("2 of 3 in queue") instead of an error after the fact.</li>
+  </ul>
+</section>
+
+<script>
+  document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x === t));
+    document.querySelectorAll(".pane").forEach((p) => p.classList.toggle("on", p.id === "pane-" + t.dataset.pane));
+  }));
+  document.querySelectorAll(".react button").forEach((b) => b.addEventListener("click", () => {
+    const on = b.classList.toggle("on");
+    const n = b.querySelector("b"); n.textContent = String(Number(n.textContent) + (on ? 1 : -1));
+  }));
+  document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll(".seg button").forEach((x) => x.classList.toggle("on", x === b));
+  }));
+  // a slow fake progress so the stage feels alive
+  let p = 38; setInterval(() => { p = (p + 0.15) % 100; document.querySelector(".prog i").style.width = p + "%"; }, 500);
+</script>
+</body>
+</html>
