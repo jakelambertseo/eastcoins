@@ -59,6 +59,23 @@ export function composeOpen(markets) {
 }
 
 /**
+ * "Closing in X minutes" — the countdown after a market opens. One
+ * line per threshold per tick, however many games share it.
+ */
+export function composeClosingSoon(markets, minutes) {
+  if (!markets.length) return "";
+  const lead = badgeFor(markets);
+  const when = `Closing in ${minutes} minute${minutes === 1 ? "" : "s"}`;
+  if (markets.length <= 2) {
+    const each = markets.map((m) =>
+      `${m.away_name} ${formatLine(m.away_odds_locked)} at ${m.home_name} ${formatLine(m.home_odds_locked)}`
+    );
+    return `${BADGE} ${lead}${when} \u2014 ${each.join(" \u00b7 ")} \u00b7 !pick <amount> <team>`;
+  }
+  return `${BADGE} ${lead}${when} on ${markets.length} games \u00b7 !odds <team> for a line \u00b7 !pick <amount> <team>`;
+}
+
+/**
  * "Betting is closed" — posted automatically when the scheduled run
  * locks markets at their start time. Safe to fire on every run
  * because a market only crosses OPEN -> LOCKED once, so there is

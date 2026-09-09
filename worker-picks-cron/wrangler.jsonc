@@ -9,7 +9,7 @@
   // is idempotent, so running often costs little: with nothing to grade
   // it is one D1 query and no outbound requests at all.
   "triggers": {
-    "crons": ["*/10 * * * *"]
+    "crons": ["*/5 * * * *"]
   },
 
   "vars": {

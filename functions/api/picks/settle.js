@@ -18,7 +18,8 @@
    twice cannot pay twice.
    ============================================================ */
 
-import { composeOpen, composeClosed, composeSettled } from "./_announce.js";
+import { composeOpen, composeClosed, composeSettled, composeClosingSoon } from "./_announce.js";
+import { dueReminders, markSent } from "./_reminders.js";
 import { autoOpenMarkets } from "./_autoopen.js";
 import { slugFor, etDate } from "./_slug.js";
 import { noteStatus } from "./_ops.js";
@@ -408,6 +409,24 @@ export async function onRequestPost(context) {
     if (!said.ok) console.error(`Picks: couldn't announce ${opened.length} auto-opened market(s): ${said.error}`);
   }
 
+  // The countdown: 30, 10 and 5 minutes before kick-off, once each.
+  // A market opened this very tick is skipped for this tick so "open"
+  // and "closing in 58 minutes" do not land back to back.
+  const reminded = [];
+  try {
+    const justOpened = new Set(opened.map((m) => m.id));
+    for (const group of await dueReminders(db)) {
+      const markets = group.markets.filter((m) => !justOpened.has(m.id));
+      if (!markets.length) { await markSent(db, group); continue; }
+      const said = await sayInChat(context.env, composeClosingSoon(markets, group.minutes));
+      if (!said.ok) { console.error(`Picks: couldn't post the ${group.threshold}-minute reminder: ${said.error}`); continue; }
+      await markSent(db, group);
+      reminded.push(`${group.threshold}m: ${markets.length}`);
+    }
+  } catch (error) {
+    console.error("reminders threw", error);
+  }
+
   // A market past its start time is no longer open. wagers.js already
   // refuses late picks, but leaving the state stale makes both the admin
   // page and the site claim betting is live when it is not. Doing it here
@@ -499,7 +518,7 @@ export async function onRequestPost(context) {
   const failedPayouts = results.reduce((n, r) => n + Number(r.failed || 0), 0);
   await noteStatus(db, "settle:last", {
     by: auth.by,
-    summary: `${opened.length} opened · ${Number(locked?.meta?.changes || 0)} locked · ${closingRows.length} closed · ${settledCount} settled` +
+    summary: `${opened.length} opened · ${reminded.length ? reminded.join(", ") + " reminded · " : ""}${Number(locked?.meta?.changes || 0)} locked · ${closingRows.length} closed · ${settledCount} settled` +
       `${failedPayouts ? ` · ${failedPayouts} payout(s) FAILED` : ""}`
   });
   const quota = lastScoresQuota || lastOddsQuota();
@@ -510,6 +529,7 @@ export async function onRequestPost(context) {
     by: auth.by,
     announced: settledMessage || null,
     opened: opened.map((m) => `${m.away_name} at ${m.home_name}`),
+    reminded,
     locked: Number(locked?.meta?.changes || 0),
     closed: closingRows.map((m) => `${m.away_name} at ${m.home_name}`),
     examined: results.length,

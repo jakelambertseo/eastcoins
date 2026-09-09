@@ -1,8 +1,8 @@
 /* ============================================================
    EastCoin Picks — open the day's NFL markets by themselves
 
-   Thirty minutes before each kick-off, every NFL game gets a
-   market with its consensus line locked, and chat is told once —
+   An hour before each kick-off, every NFL game gets a market with
+   its consensus line locked, and chat is told once —
    one message for the whole slate, however many games share a
    window. Runs inside the scheduled settlement pass so nothing
    new has to be deployed or remembered.
@@ -27,7 +27,7 @@ import { newId } from "./_lib.js";
 const ODDS_API = "https://api.the-odds-api.com/v4/sports";
 const SPORT_KEY = "americanfootball_nfl";
 
-const OPEN_LEAD_MS = 30 * 60 * 1000;
+const OPEN_LEAD_MS = 60 * 60 * 1000;
 // One credit per refresh; at most 48 a day, and only while someone is
 // looking or a game is near.
 const SCHEDULE_TTL_S = 30 * 60;
