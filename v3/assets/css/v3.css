@@ -1592,10 +1592,11 @@ body.is-rasputin .mprog-fill{background:linear-gradient(90deg,#ff3d81,#ffd23f,#4
 
 /* Requester ratings */
 .elo-head{
-  margin:10px 0 2px;padding:0 2px;
-  color:var(--muted-2);font-size:.63rem;font-weight:800;
+  display:flex;align-items:center;gap:10px;margin:14px 0 6px;padding:0 2px;
+  color:var(--muted);font-size:.66rem;font-weight:800;
   letter-spacing:.12em;text-transform:uppercase;
 }
+.elo-head::after{content:"";flex:1;height:1px;background:var(--line)}
 .elo-head:first-child{margin-top:0}
 .elo-row{align-items:center}
 .elo-score{

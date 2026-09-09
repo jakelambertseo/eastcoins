@@ -1176,7 +1176,7 @@
       };
 
       const top = rated.slice(0, 5);
-      wrap.append(el("p", "elo-head", "Highest"));
+      wrap.append(el("p", "elo-head", "Highest rated"));
       top.forEach((entry, i) => wrap.append(row(entry, i + 1)));
 
       // The bottom list is whoever is left below the top five, so nobody
@@ -1184,8 +1184,9 @@
       // fewer than six there is no bottom list at all.
       const rest = rated.slice(top.length);
       if (rest.length) {
-        wrap.append(el("p", "elo-head", "Lowest"));
-        rest.slice(-5).reverse().forEach((entry) => wrap.append(row(entry, rated.indexOf(entry) + 1)));
+        // Read top-down like the list above it: 6, 7, 8 — last place last.
+        wrap.append(el("p", "elo-head", "Lowest rated"));
+        rest.slice(-5).forEach((entry) => wrap.append(row(entry, rated.indexOf(entry) + 1)));
       }
 
       return wrap;
