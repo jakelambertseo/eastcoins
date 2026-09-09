@@ -4,7 +4,6 @@ import { DurableObject } from "cloudflare:workers";
    of this one, so a separate limit there would only mean the two could
    never actually agree. 14 is the number asked for. */
 const MAX_QUEUE = 14;
-const MAX_PER_USER = 3;   // songs one person may have waiting at once
 
 /* The reactions a song can carry. Fixed server-side: a client that could
    invent a kind could grow the stored state without limit. */
@@ -1327,7 +1326,6 @@ export class MusicRoom extends DurableObject {
       skipVoterNames: this.skipVoterNames(),
       skipThreshold: skipThresholdFor(listeners),
       queueLimit: MAX_QUEUE,
-      perUserLimit: MAX_PER_USER,
       notice: this.state.notice || null
     };
   }
@@ -1432,16 +1430,6 @@ export class MusicRoom extends DurableObject {
 
       if (this.state.queue.length >= MAX_QUEUE && this.state.current) {
         return this.sendError(ws, `Queue is limited to ${MAX_QUEUE} songs.`);
-      }
-
-      // A fair share of the queue per person; the page shows "N of 3"
-      // beside the request box so this is never a surprise.
-      const requesterLogin = String(auth.login || "").toLowerCase();
-      const alreadyMine = requesterLogin
-        ? this.state.queue.filter((item) => String(item.requestedByLogin || "").toLowerCase() === requesterLogin).length
-        : 0;
-      if (alreadyMine >= MAX_PER_USER) {
-        return this.sendError(ws, `You already have ${MAX_PER_USER} songs waiting — one has to play before you add another.`);
       }
 
       const details = await fetchVideoDetails(videoId, this.env.YOUTUBE_API_KEY);

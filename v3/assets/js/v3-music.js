@@ -18,7 +18,6 @@
   "use strict";
 
   const CATJAM = "https://cdn.7tv.app/emote/01KWJNR4DE37RDZ816WYAYDG3K/3x.webp";
-  const ROOM_EMOTE = "https://cdn.7tv.app/emote/01FAEEN908000D3SP26B2JBAC1/2x.webp";
   const JAMGIE = "https://cdn.7tv.app/emote/01GAJBNT780004XAVG6P7AZAK2/4x.webp";
   const JAMGIE2 = "https://cdn.7tv.app/emote/01KXKXKF3D20SSJAGPWQY9YYA7/4x.webp";
   const VOLUME_KEY = "ec_v3_music_volume";
@@ -1403,10 +1402,6 @@
       // Header: the title on the left, the room on the right.
       const head = el("div", "mhead");
       const title = el("h1", "mtitle");
-      const emote = document.createElement("img");
-      emote.className = "mtitle-emote";
-      emote.src = ROOM_EMOTE;
-      emote.alt = "";
       const jamgie = document.createElement("img");
       jamgie.className = "mtitle-emote";
       jamgie.src = JAMGIE;
@@ -1415,7 +1410,7 @@
       jamgie2.className = "mtitle-emote";
       jamgie2.src = JAMGIE2;
       jamgie2.alt = "";
-      title.append(emote, el("span", "mtitle-text", "The Green Room"), jamgie, jamgie2);
+      title.append(el("span", "mtitle-text", "The Green Room"), jamgie, jamgie2);
       refs.room = el("div", "room-slot");
       refs.listeners = el("span", "mlisteners", BASE ? "Connecting\u2026" : "Room not configured");
       refs.room.append(refs.listeners);
@@ -1512,13 +1507,6 @@
       if (current.requestedBy) {
         const by = el("small", "mnow-ov-by");
         by.append(document.createTextNode("requested by "), profileLink(current.requestedByLogin || current.requestedBy, current.requestedBy));
-        const login = String(current.requestedByLogin || "").toLowerCase();
-        const stats = requesters.find((r) => String(r.login || "").toLowerCase() === login);
-        if (stats && Number(stats.rated) > 0) {
-          const rated = requesters.filter((r) => Number(r.rated) > 0).sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
-          const tier = eloTier(stats.rating, rated[0]?.login === stats.login, rated.length > 1 && rated[rated.length - 1]?.login === stats.login);
-          by.append(el("span", `elo-tier ${tier.key}`, `${tier.label} · ${Math.round(Number(stats.rating) || 1000)}`));
-        }
         text.append(by);
       }
       box.append(text);
@@ -1562,23 +1550,20 @@
       }
     }
 
-    /** The line under the request box: chat command, your share of the queue. */
+    /** The line under the request box: chat command, how full the queue is. */
     function renderHint(state) {
       const h = refs.hint;
       if (!h) return;
       h.replaceChildren();
       const limit = Number(state?.queueLimit) || 14;
-      const per = Number(state?.perUserLimit) || 3;
       const queued = (state?.queue || []).length;
       h.append(el("b", null, "!song"), document.createTextNode(" in chat shows what's on"));
       h.append(document.createTextNode(` · queue ${queued} of ${limit}`));
       if (conn.login) {
         const mine = (state?.queue || []).filter((i) => String(i.requestedByLogin || "").toLowerCase() === conn.login).length;
-        const you = el("span", `mhint-you${mine >= per ? " full" : ""}`, `you: ${mine} of ${per}`);
-        you.title = mine >= per ? "One of yours has to play before you can add another" : `Up to ${per} songs waiting at once`;
-        h.append(document.createTextNode(" · "), you);
+        if (mine) h.append(document.createTextNode(` · ${mine} of them yours`));
       } else {
-        h.append(document.createTextNode(` · log in with Twitch to add songs (${per} at a time)`));
+        h.append(document.createTextNode(" · log in with Twitch to add songs"));
       }
     }
 

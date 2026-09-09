@@ -52,9 +52,9 @@
 > **Green Room layout** (`v3-music.js` `build()`): ticker → header (title +
 > room pile, "See who" roster) → stage with `.mnow-ov` overlay and the
 > progress edge → `.mbar` (reactions, skip, volume) → search + `.mhint`
-> (queue N of 14 · you N of 3) → rail with tabs Up next / History /
-> Rankings (ELO | Most requests). The worker enforces `MAX_PER_USER = 3`
-> and publishes `queueLimit`/`perUserLimit`; `loadHistory()` diffs
+> (queue N of 14) → rail with tabs Up next / History /
+> Rankings (ELO | Most requests). No per-person queue cap (the worker
+> publishes `queueLimit` only); `loadHistory()` diffs
 > ratings between fetches to show `.elo-delta` chips.
 >
 > **Casino** — `/?view=flip` (nav link present but hidden) is Coin Flip;

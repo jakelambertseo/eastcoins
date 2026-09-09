@@ -1317,13 +1317,7 @@ body.watch-on .playerframe{
 /* Green through to the site's gold, so it reads as its own room without
    leaving the palette. background-clip needs a transparent fill, and the
    colour underneath is the fallback wherever that is unsupported. */
-.mtitle-text{
-  color:#7ad06a;
-  background:linear-gradient(96deg,#8fe07a 0%,#57c46b 42%,var(--gold) 100%);
-  -webkit-background-clip:text;background-clip:text;
-  -webkit-text-fill-color:transparent;
-  text-shadow:0 0 26px rgba(122,208,106,.22);
-}
+.mtitle-text{color:var(--text)}
 .mtitle-emote{width:32px;height:32px;object-fit:contain;flex:0 0 auto}
 .mlisteners{color:var(--muted-2);font-size:.8rem;font-weight:700}
 
