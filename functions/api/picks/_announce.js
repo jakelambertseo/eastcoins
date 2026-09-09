@@ -76,7 +76,7 @@ export function composeClosed(markets, totals = {}) {
 
   if (markets.length <= 2) {
     const each = markets.map((m) => `${m.away_name} at ${m.home_name}`);
-    return `${BADGE} ${lead}Betting closed \u2014 ${each.join(" \u00b7 ")}${riding}. Good luck.`;
+    return `${BADGE} ${lead}Betting closed \u2014 ${each.join(" \u00b7 ")}${riding}.`;
   }
 
   return `${BADGE} ${lead}Betting closed on ${markets.length} games${riding}. !mypicks for yours.`;
