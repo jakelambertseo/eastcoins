@@ -1445,7 +1445,22 @@
 
       const nowText = el("div", "mnow-text");
       nowText.append(el("span", "mnow-k", "Now playing"));
-      nowText.append(el("strong", "mnow-v", state?.current?.title || "Nothing playing"));
+      // A long title scrolls rather than truncating: the text sits in an
+      // inner span, and once it is on the page we measure it — if it
+      // overflows, the span slides back and forth across the gap.
+      const title = el("strong", "mnow-v");
+      const titleText = el("span", "mnow-v-text", state?.current?.title || "Nothing playing");
+      title.append(titleText);
+      nowText.append(title);
+      requestAnimationFrame(() => {
+        if (!title.isConnected) return;
+        const gap = titleText.scrollWidth - title.clientWidth;
+        if (gap > 4) {
+          title.classList.add("is-long");
+          title.style.setProperty("--scroll", `-${gap + 12}px`);
+          title.style.setProperty("--scroll-s", `${Math.max(6, Math.round(gap / 22) + 4)}s`);
+        }
+      });
       if (state?.current?.requestedBy) {
         nowText.append(el("small", null, `added by ${state.current.requestedBy}`));
       }
@@ -1489,7 +1504,6 @@
       }
 
       side.append(listenersPanel(state));
-      side.append(requestersPanel());
 
       const tabs = el("div", "mtabs");
       for (const [key, label] of [["queue", "Up next"], ["history", "History"], ["elo", "Music ELO"]]) {
@@ -1509,6 +1523,7 @@
           : tab === "elo" ? ratingsList()
             : historyList()
       );
+      side.append(requestersPanel());
     }
 
     function paint(state) {

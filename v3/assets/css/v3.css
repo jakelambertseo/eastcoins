@@ -1338,7 +1338,13 @@ body.watch-on .playerframe{
   border-radius:7px;background:#000;
 }
 .mnow-text{display:flex;flex-direction:column;gap:2px;min-width:0}
-.mnow-text .mnow-v{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mnow-text .mnow-v{overflow:hidden;white-space:nowrap}
+.mnow-v-text{display:inline-block;will-change:transform}
+/* Slides to the end and back, pausing at each side, only when it overflows. */
+.mnow-v.is-long .mnow-v-text{animation:mnowscroll var(--scroll-s,8s) ease-in-out infinite}
+.mnow-v.is-long{mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 22px),transparent);-webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 22px),transparent)}
+@keyframes mnowscroll{0%,12%{transform:translateX(0)}50%,62%{transform:translateX(var(--scroll,0))}100%{transform:translateX(0)}}
+@media (prefers-reduced-motion:reduce){.mnow-v.is-long .mnow-v-text{animation:none}.mnow-text .mnow-v{text-overflow:ellipsis}}
 .mnow-k,.mq-k{
   color:var(--muted-2);font-size:.63rem;font-weight:800;
   letter-spacing:.12em;text-transform:uppercase;
