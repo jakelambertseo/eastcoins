@@ -1110,8 +1110,10 @@
    * Gold is well above the 1000 everyone starts at, Silver is at or
    * above it, Bronze is below — the room has turned on your songs.
    */
-  function eloTier(rating, isTop) {
+  function eloTier(rating, isTop, isLast) {
     if (isTop) return { key: "rank1", label: "Rank 1" };
+    // Somebody is always at the bottom, and the bottom is always Bronze.
+    if (isLast) return { key: "bronze", label: "Bronze" };
     const r = Number(rating) || 1000;
     if (r >= 1015) return { key: "gold", label: "Gold" };
     if (r >= 1000) return { key: "silver", label: "Silver" };
@@ -1132,10 +1134,11 @@
       }
 
       const topLogin = rated[0]?.login;
+      const lastLogin = rated.length > 1 ? rated[rated.length - 1]?.login : null;
       const row = (entry, place) => {
         const line = el("div", "mq-row elo-row");
         line.append(el("span", "mq-n", String(place)));
-        const tier = eloTier(entry.rating, entry.login === topLogin);
+        const tier = eloTier(entry.rating, entry.login === topLogin, entry.login === lastLogin);
         line.classList.add(`tier-${tier.key}`);
 
         if (entry.avatar) {

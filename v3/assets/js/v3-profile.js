@@ -113,10 +113,13 @@
       // Rank 1 is whoever is top of the rated list, same rule as the Music ELO tab.
       const ratedAll = (payload.userStats || []).filter((s) => Number(s.rated) > 0).sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
       const isTop = Boolean(stats) && Number(stats.rated) > 0 && ratedAll[0]?.login === stats.login;
+      // Last place is always Bronze, same as the Music ELO tab.
+      const isLast = Boolean(stats) && Number(stats.rated) > 0 && ratedAll.length > 1 && ratedAll[ratedAll.length - 1]?.login === stats.login;
       const r = stats ? Number(stats.rating) || 1000 : 1000;
       const tier = !stats || !Number(stats.rated) ? null
         : isTop ? { key: "rank1", label: "Rank 1" }
-          : r >= 1015 ? { key: "gold", label: "Gold" } : r >= 1000 ? { key: "silver", label: "Silver" } : { key: "bronze", label: "Bronze" };
+          : isLast ? { key: "bronze", label: "Bronze" }
+            : r >= 1015 ? { key: "gold", label: "Gold" } : r >= 1000 ? { key: "silver", label: "Silver" } : { key: "bronze", label: "Bronze" };
       const mine = (payload.history || []).filter((h) => String(h.requestedByLogin || "").toLowerCase() === login);
       const titles = new Map();
       for (const h of mine) titles.set(h.title, (titles.get(h.title) || 0) + 1);
