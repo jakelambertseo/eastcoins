@@ -489,16 +489,19 @@
     const top = document.createElement("div");
     top.className = "homegrid";
     top.append(picksBanner());
-    let strip = null;
-    if (window.ECPresence) {
-      strip = document.createElement("section");
-      strip.className = "whoshere";
-      top.append(strip);
-    }
+    const strip = document.createElement("section");
+    strip.className = "whoshere";
+    top.append(strip);
     root.append(top);
-    // Mounted once it is in the page: the strip checks it is still
-    // attached before each refresh.
-    if (strip) window.ECPresence.mountStrip(strip);
+    // Mounted once it is in the page. The presence module loads with
+    // the shell, but a paint from cache can still beat it, so wait for
+    // it rather than skipping the strip.
+    const mountStrip = (tries = 0) => {
+      if (!strip.isConnected) return;
+      if (window.ECPresence) window.ECPresence.mountStrip(strip);
+      else if (tries < 100) window.setTimeout(() => mountStrip(tries + 1), 50);
+    };
+    mountStrip();
 
     if (!local.loaded && !local.failed) {
       root.append(skeletonGrid());
