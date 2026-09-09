@@ -2262,17 +2262,19 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .wh-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:9px}
 .wh-k{color:var(--muted-2);font-size:.64rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
 .wh-count{color:var(--green);font-size:.74rem;font-weight:800}
-.wh-list{display:flex;gap:8px;flex-wrap:wrap}
-.wh-chip{display:inline-flex;align-items:center;gap:8px;padding:4px 11px 4px 4px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-2);text-decoration:none;color:inherit}
+.wh-list{display:flex;gap:6px;flex-wrap:wrap}
+/* One line each: picture, name, a glyph for where they are. Hover says
+   the rest. Twenty people is a tidy block, not a wall. */
+.wh-chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 9px 0 3px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-2);text-decoration:none;color:inherit;font-size:.78rem;font-weight:700;max-width:100%}
+.wh-chip b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
 .wh-chip.ulink:hover{border-bottom-color:var(--line-2);border-color:rgba(232,191,53,.4)}
 .wh-chip.guests{opacity:.8}
-.wh-av{position:relative;overflow:hidden;width:28px;height:28px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:linear-gradient(150deg,#8e1231,#4a0a1c);color:var(--gold);font-size:.66rem;font-weight:800}
-.wh-av.ghost{background:var(--panel-3);color:var(--muted);font-size:.8rem}
+.wh-chip.more{cursor:pointer;color:var(--gold);font:inherit;font-size:.76rem;font-weight:800;padding:0 11px}
+.wh-where{font-size:.72rem;line-height:1;opacity:.85}
+.wh-av{position:relative;overflow:hidden;width:22px;height:22px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:linear-gradient(150deg,#8e1231,#4a0a1c);color:var(--gold);font-size:.56rem;font-weight:800}
+.wh-av.ghost{background:var(--panel-3);color:var(--muted);font-size:.7rem}
 .wh-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .2s ease}
 .wh-av.has-logo{color:transparent}.wh-av.has-logo img{opacity:1}
-.wh-copy{display:flex;flex-direction:column;line-height:1.15}
-.wh-copy b{font-size:.82rem}
-.wh-copy small{color:var(--muted-2);font-size:.66rem}
 .wh-empty{color:var(--muted-2);font-size:.82rem}
 
 /* ---------------------------------------------------------------- dashboard */

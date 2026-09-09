@@ -50,6 +50,13 @@
     } catch { /* next beat */ }
   }
 
+  // One glyph per place, so a chip can say where someone is in one line.
+  const ICONS = {
+    events: "🏈", watch: "📺", multiview: "🔲", picks: "🪙", music: "🎵", screen: "🎬", flip: "🪙",
+    game: "🪙", profile: "👤", admin: "🛠", dashboard: "🛠"
+  };
+  const SHOW_MAX = 14;
+
   /** "watching Mariners vs Rangers", "looking at Reds at Dodgers", or the plain place. */
   function placeLabel(p) {
     const d = String(p.detail || "").trim();
@@ -105,21 +112,32 @@
 
     const list = el("div", "wh-list");
     if (data) {
-      for (const p of data.people) {
+      // People doing something specific first (watching, listening),
+      // browsers after; so the interesting chips are the visible ones.
+      const rank = (p) => (p.where === "watch" ? 0 : p.where === "music" ? 1 : p.where === "flip" ? 2 : p.where === "picks" ? 3 : 5);
+      const people = data.people.slice().sort((a, b) => rank(a) - rank(b) || a.displayName.localeCompare(b.displayName));
+      const chipFor = (p) => {
         const chip = el("a", "wh-chip ulink");
         chip.href = `/u/${encodeURIComponent(p.login)}`;
         chip.title = `${p.displayName} · ${placeLabel(p)}`;
         chip.append(avatar(p));
-        const copy = el("span", "wh-copy");
-        copy.append(el("b", null, p.displayName), el("small", null, placeLabel(p)));
-        chip.append(copy);
-        window.ECBadges?.decorate(chip.querySelector("b"), p.login);
-        list.append(chip);
+        const name = el("b", null, p.displayName);
+        chip.append(name, el("span", "wh-where", ICONS[p.where] || "·"));
+        window.ECBadges?.decorate(name, p.login);
+        return chip;
+      };
+      const shown = container.dataset.expanded === "1" ? people : people.slice(0, SHOW_MAX);
+      for (const p of shown) list.append(chipFor(p));
+      if (people.length > shown.length) {
+        const more = el("button", "wh-chip more", `+${people.length - shown.length} more`);
+        more.type = "button";
+        more.addEventListener("click", () => { container.dataset.expanded = "1"; draw(container, data); });
+        list.append(more);
       }
       if (data.guests) {
         const g = el("span", "wh-chip guests");
-        g.append(el("span", "wh-av ghost", "👤"), el("span", "wh-copy"));
-        g.lastChild.append(el("b", null, `${data.guests} guest${data.guests === 1 ? "" : "s"}`), el("small", null, "not logged in"));
+        g.title = "Not logged in";
+        g.append(el("span", "wh-av ghost", "👤"), el("b", null, `${data.guests} guest${data.guests === 1 ? "" : "s"}`));
         list.append(g);
       }
     }
