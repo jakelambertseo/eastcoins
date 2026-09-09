@@ -113,6 +113,12 @@
 > lives; chat links and the page must keep agreeing. `g/example.html` is
 > the original static mockup, kept for the explainer only.
 >
+> **Discord mirror of the ledger** — `_discord.js` posts embeds to the
+> webhook in `DISCORD_LEDGER_WEBHOOK` (Pages env var; unset = no-op): a
+> card when a pick locks (`_wager.js`), one for the slate when markets
+> auto-open, and one per settled game with every pick and its result
+> (`settle.js`). Public ledger data only, never balances.
+>
 > **Every bot line leads with `Zcoin`** (the 7TV emote code) via `BADGE` in
 > `bot/_bot.js`; the leaderboard and season line aggregate from `picks`
 > because `user_season_stats` is never written.

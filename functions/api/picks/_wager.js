@@ -12,6 +12,7 @@
    ============================================================ */
 
 import { ensureBadgeExtras } from "./_badges.js";
+import { discordEnabled, postDiscord, pickEmbed } from "./_discord.js";
 import {
   WAGER_ALLOWLIST,
   wageringOpenToAll,
@@ -209,18 +210,23 @@ export async function placeWager(env, db, user, { marketId, selection, wager }) 
 
   await finishOperation(db, opId, "CONFIRMED", { balanceAfter: debit.balance });
 
-  return {
-    ok: true,
-    pick: {
-      id: pickId,
-      marketId: id,
-      selection: side,
-      team: side === "away" ? market.away_name : market.home_name,
-      opponent: side === "away" ? market.home_name : market.away_name,
-      wager: amount,
-      odds: Number(odds),
-      returnsIfWon: totalReturn(amount, odds)
-    },
-    balance: debit.balance
+  const pick = {
+    id: pickId,
+    marketId: id,
+    selection: side,
+    team: side === "away" ? market.away_name : market.home_name,
+    opponent: side === "away" ? market.home_name : market.away_name,
+    wager: amount,
+    odds: Number(odds),
+    returnsIfWon: totalReturn(amount, odds),
+    allIn
   };
+
+  // The ledger's Discord mirror. The money has already moved and been
+  // recorded; this is decoration and must never fail the pick.
+  if (discordEnabled(env)) {
+    await postDiscord(env, pickEmbed({ user, market, pick })).catch(() => {});
+  }
+
+  return { ok: true, pick, balance: debit.balance };
 }

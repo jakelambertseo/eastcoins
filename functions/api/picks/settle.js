@@ -23,6 +23,7 @@ import { dueReminders, markSent } from "./_reminders.js";
 import { autoOpenMarkets } from "./_autoopen.js";
 import { slugFor, etDate } from "./_slug.js";
 import { noteStatus } from "./_ops.js";
+import { discordEnabled, postDiscord, openedEmbed, settledEmbed } from "./_discord.js";
 import { lastOddsQuota } from "./_autoopen.js";
 import {
   ADMIN_ALLOWLIST,
@@ -310,7 +311,7 @@ async function settleMarket(env, db, market, boards) {
 
   const picks = await db
     .prepare(
-      `SELECT p.id, p.user_id, p.selection, p.wager, p.odds_locked, u.twitch_login
+      `SELECT p.id, p.user_id, p.selection, p.wager, p.odds_locked, u.twitch_login, u.display_name
          FROM picks p
          JOIN users u ON u.twitch_id = p.user_id
         WHERE p.market_id = ? AND p.status = 'ACTIVE'`
@@ -318,13 +319,23 @@ async function settleMarket(env, db, market, boards) {
     .bind(market.id)
     .all();
 
-  const summary = { won: 0, lost: 0, refunded: 0, failed: 0, paid: 0 };
+  const summary = { won: 0, lost: 0, refunded: 0, failed: 0, paid: 0, lines: [] };
   for (const pick of picks.results || []) {
     const out = await payPick(env, db, pick, market, outcome);
     if (out.status === "WON") { summary.won += 1; summary.paid += out.paid; }
     else if (out.status === "LOST") summary.lost += 1;
     else if (out.status === "REFUNDED") { summary.refunded += 1; summary.paid += out.paid; }
     else if (out.status === "FAILED") summary.failed += 1;
+    // One line per pick for the Discord card — the public ledger, no balances.
+    summary.lines.push({
+      name: String(pick.display_name || pick.twitch_login || ""),
+      login: String(pick.twitch_login || "").toLowerCase(),
+      team: pick.selection === "home" ? market.home_name : market.away_name,
+      odds: Number(pick.odds_locked),
+      wager: Number(pick.wager),
+      status: out.status,
+      profit: out.status === "WON" ? Number(out.paid) - Number(pick.wager) : out.status === "LOST" ? -Number(pick.wager) : 0
+    });
   }
 
   // A market with a failed payout stays in SETTLING so it is retried
@@ -407,6 +418,7 @@ export async function onRequestPost(context) {
   if (opened.length) {
     const said = await sayInChat(context.env, composeOpen(opened));
     if (!said.ok) console.error(`Picks: couldn't announce ${opened.length} auto-opened market(s): ${said.error}`);
+    if (discordEnabled(context.env)) await postDiscord(context.env, openedEmbed(opened)).catch(() => {});
   }
 
   // The countdown: 30, 10 and 5 minutes before kick-off, once each.
@@ -510,6 +522,11 @@ export async function onRequestPost(context) {
     if (!said.ok) {
       console.error(`Picks: couldn't announce settlement: ${said.error}`);
     }
+  }
+  // Discord gets one card per game that settled, in the same tick.
+  if (discordEnabled(context.env)) {
+    const cards = results.map(settledEmbed).filter(Boolean);
+    if (cards.length) await postDiscord(context.env, cards).catch(() => {});
   }
 
   // Leave a note for the dashboard: when this ran, what it did, and the
