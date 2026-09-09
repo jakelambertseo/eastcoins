@@ -1223,7 +1223,6 @@
           const a = el("a", "ulink", entry.displayName || entry.login);
           a.href = `/u/${encodeURIComponent(String(entry.login).toLowerCase())}`;
           nameEl.append(a);
-          window.ECBadges?.decorate(nameEl, entry.login);
         } else {
           nameEl.textContent = entry.displayName || "someone";
         }
@@ -1291,7 +1290,6 @@
         const meta = el("div", "mq-meta");
         const nameEl = el("strong");
         nameEl.append(profileLink(entry.login || entry.displayName, entry.displayName || entry.login || "someone"));
-        window.ECBadges?.decorate(nameEl, entry.login || entry.displayName);
         meta.append(nameEl);
         const rated = Number(entry.rated || 0);
         meta.append(el("small", "elo-counts", rated ? `🎵 ${rated} rated · ELO ${Math.round(Number(entry.rating) || 1000)}` : "unrated"));
