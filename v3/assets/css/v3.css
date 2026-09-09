@@ -2687,3 +2687,16 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .elo-delta{flex:0 0 auto;font-size:.68rem;font-weight:800;padding:1px 6px;border-radius:999px}
 .elo-delta.up{color:var(--green);background:var(--green-dim)}
 .elo-delta.down{color:var(--red);background:var(--red-dim)}
+
+/* Green Room on a phone: the room wraps under the title, the overlay
+   stacks, and the time sits on its own line instead of over the pill. */
+@media (max-width:640px){
+  .mhead{flex-wrap:wrap}
+  .room-slot{flex-wrap:wrap}
+  .mnow-ov{grid-template-columns:40px minmax(0,1fr);padding:22px 12px 12px;gap:10px}
+  .mnow-ov-art{width:40px;height:40px}
+  .mnow-ov .mnow-v{font-size:.95rem}
+  .mnow-ov-by{flex-wrap:wrap;row-gap:3px}
+  .mnow-ov-time{grid-column:2;align-self:start;padding:0;font-size:.72rem}
+  .mbar .mvol{min-width:0;flex:1 1 100%}
+}
