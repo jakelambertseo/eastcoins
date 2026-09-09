@@ -1,7 +1,7 @@
 /* ============================================================
    EastCoin V3 — Casino: Coin Flip
 
-     /?view=casino
+     /?view=flip   ("casino" is kept for the casino home page)
 
    One coin for the whole room. Thirty seconds of bets, a flip,
    twenty seconds to see who won, again. The server owns the clock
@@ -450,7 +450,7 @@
 
   function boot() {
     if (!window.ECV3) return window.setTimeout(boot, 30);
-    window.ECV3.register("casino", view);
+    window.ECV3.register("flip", view);
   }
   boot();
 })();

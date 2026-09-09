@@ -34,7 +34,8 @@
 > `/history/main`), served by `/api/picks/badges`, and drawn next to names
 > by `v3-badges.js`'s `ECBadges.decorate(node, login)`.
 >
-> **Casino** — `/?view=casino` (nav link present but hidden) is Coin Flip:
+> **Casino** — `/?view=flip` (nav link present but hidden) is Coin Flip;
+> `/?view=casino` is reserved for the casino home page:
 > `functions/api/coin/` (`_coin.js` clock/fairness/settlement, `state.js`
 > poll, `bet.js`), tables created on first use (`coin_rounds`, `coin_bets`,
 > `coin_presence`), rounds on a 50s wall clock (30s bets + 20s result),
