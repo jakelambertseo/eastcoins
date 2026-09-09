@@ -73,6 +73,139 @@
 
   /* ---------------------------------------------------------- one game */
 
+  /* ---------------------------------------------------------- bet here
+
+     The same money path as the Picks page — POST /api/picks/wagers,
+     which is the one authority the site and the chat bot share — so
+     a pick made from a game page can never differ from one made
+     anywhere else. */
+
+  function decimalFrom(american) {
+    const line = Number(american);
+    if (!Number.isFinite(line) || line === 0) return 1;
+    return line < 0 ? 1 + 100 / Math.abs(line) : 1 + line / 100;
+  }
+  function totalReturn(stake, american) {
+    const amount = Math.max(0, Math.floor(Number(stake) || 0));
+    if (!amount) return 0;
+    return Math.max(amount, Math.ceil(amount * decimalFrom(american)));
+  }
+  function coin(n, sign) {
+    const wrap = el("span", "zc-amount nums");
+    const img = document.createElement("img");
+    img.className = "zcoin-mark";
+    img.src = "/v3/assets/img/zcoin.webp";
+    img.alt = "";
+    img.width = 14;
+    img.height = 14;
+    wrap.append(img, document.createTextNode(`${sign && n > 0 ? "+" : ""}${Number(n || 0).toLocaleString()}`));
+    return wrap;
+  }
+
+  function betPanel(data) {
+    const m = data.market;
+    const me = String(shell?.state?.session?.user?.login || "").toLowerCase();
+    const box = el("section", "gp-bet");
+    box.setAttribute("aria-label", "Make a pick");
+    const h = el("h3", null, "Make your pick");
+    box.append(h);
+
+    if (!me) {
+      const p = el("p", "gp-bet-copy", "Log in with Twitch to back a side on this game.");
+      const a = el("a", "login-btn", "Log in with Twitch");
+      a.href = "/api/picks/auth/twitch/start?returnTo=" + encodeURIComponent(location.pathname);
+      box.append(p, a);
+      return box;
+    }
+
+    const mine = (data.picks || []).find((p) => String(p.user?.login || "").toLowerCase() === me);
+    if (mine) {
+      const side = mine.selection === "home" ? m.home : m.away;
+      const line = el("p", "gp-bet-mine");
+      line.append(el("b", null, `${side.name} ${formatLine(mine.line)}`), document.createTextNode(" · "),
+        coin(mine.wager), document.createTextNode(" staked · returns "), coin(mine.potential), document.createTextNode(" if it lands"));
+      box.append(line, el("p", "gp-bet-copy", "One pick per game — this one is locked in."));
+      return box;
+    }
+
+    const wallet = Number(shell?.state?.session?.wallet?.balance);
+    let selection = null;
+
+    const sides = el("div", "gp-bet-sides");
+    const buttons = {};
+    for (const key of ["away", "home"]) {
+      const side = m[key];
+      const b = el("button", "gp-bet-side");
+      b.type = "button";
+      b.append(el("span", "gp-bet-team", side.name), el("span", "gp-bet-line", formatLine(side.line)));
+      b.addEventListener("click", () => { selection = key; refresh(); });
+      buttons[key] = b;
+      sides.append(b);
+    }
+    box.append(sides);
+
+    const form = el("form", "gp-bet-form");
+    const label = el("label", "ticket-label", "Stake");
+    label.htmlFor = "gpStake";
+    const input = document.createElement("input");
+    input.id = "gpStake";
+    input.type = "number";
+    input.min = "1";
+    input.step = "1";
+    input.inputMode = "numeric";
+    input.value = String(Math.min(10, Number.isFinite(wallet) && wallet >= 1 ? wallet : 10));
+    if (Number.isFinite(wallet)) input.max = String(Math.max(1, Math.floor(wallet)));
+    const preview = el("span", "gp-bet-preview");
+    const lock = el("button", "btn primary gp-bet-lock", "Lock pick");
+    lock.type = "submit";
+    const note = el("p", "gp-bet-note");
+    form.append(label, input, preview, lock);
+    box.append(form, note);
+    box.append(el("p", "gp-bet-copy", Number.isFinite(wallet) ? `Wallet: ${wallet.toLocaleString()} ZC · one pick per game, the line is locked.` : "One pick per game, the line is locked."));
+
+    const refresh = () => {
+      for (const key of ["away", "home"]) buttons[key].classList.toggle("on", selection === key);
+      const stake = Math.floor(Number(input.value) || 0);
+      if (!selection) { preview.textContent = "Choose a side"; lock.disabled = true; return; }
+      const line = m[selection].line;
+      preview.replaceChildren(document.createTextNode("Returns "), coin(totalReturn(stake, line)), document.createTextNode(" if it lands"));
+      lock.disabled = !(stake >= 1);
+    };
+    input.addEventListener("input", refresh);
+    refresh();
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!selection) return;
+      const stake = Math.floor(Number(input.value) || 0);
+      if (stake < 1) { note.textContent = "Minimum stake is 1 ZCoin."; return; }
+      lock.disabled = true;
+      lock.textContent = "Locking…";
+      note.textContent = "";
+      let payload = null;
+      try {
+        payload = await fetch("/api/picks/wagers", {
+          method: "POST", credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ marketId: m.id, selection, wager: stake })
+        }).then((r) => r.json());
+      } catch { payload = null; }
+      if (!payload?.ok) {
+        note.textContent = payload?.message || "That didn't go through. Try again.";
+        lock.disabled = false;
+        lock.textContent = "Lock pick";
+        return;
+      }
+      if (Number.isFinite(Number(payload.balance))) {
+        window.ECV3?.setWallet?.(Number(payload.balance));
+        if (shell?.state?.session?.wallet) shell.state.session.wallet.balance = Number(payload.balance);
+      }
+      load();   // the page redraws with the pick in the ledger
+    });
+
+    return box;
+  }
+
   function gamePage(data) {
     const m = data.market;
     const picks = data.picks || [];
@@ -135,6 +268,11 @@
       board.append(el("div", "gp-tag void", `Voided · every stake refunded${m.settlementDetail ? " · " + m.settlementDetail : ""}`));
     }
     page.append(board);
+
+    // Betting, right here: the Discord card and the chat link both land
+    // on this page, so the pick should not be one more click away.
+    const open = m.state === "OPEN" && new Date(m.startsAt).getTime() > Date.now();
+    if (open) page.append(betPanel(data));
 
     // Highlights
     if (settled && picks.length) {
@@ -367,7 +505,10 @@
 
     let payload = null;
     try {
-      const response = await fetch(`/api/picks/game?g=${encodeURIComponent(key)}`, { credentials: "include" });
+      const [response] = await Promise.all([
+        fetch(`/api/picks/game?g=${encodeURIComponent(key)}`, { credentials: "include" }),
+        Promise.resolve(window.ECV3?.sessionReady).catch(() => null)
+      ]);
       payload = await response.json();
     } catch {
       payload = null;

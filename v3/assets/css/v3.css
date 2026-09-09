@@ -2504,3 +2504,34 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .recsplit-row{display:flex;align-items:baseline;gap:8px}
 .recsplit-row small{width:34px;color:var(--muted-2);font-family:var(--body);font-size:.62rem;font-weight:800;letter-spacing:.1em}
 .recsplit-row.dim{color:var(--muted-2)}
+
+/* ---------------------------------------------------------------- bet on the game page */
+.gp-bet{margin:0 0 14px;padding:14px 16px 12px;border:1px solid rgba(232,191,53,.3);border-radius:var(--radius);background:linear-gradient(140deg,var(--gold-dim),transparent 60%),var(--panel)}
+.gp-bet h3{margin:0 0 10px;font-family:var(--display);font-weight:800;font-size:.95rem;letter-spacing:-.01em}
+.gp-bet-sides{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.gp-bet-side{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:46px;padding:0 13px;
+  border:1px solid var(--line-2);border-radius:10px;background:var(--panel-2);color:var(--text);font:inherit;cursor:pointer;text-align:left;
+  transition:border-color .14s ease,background .14s ease;
+}
+.gp-bet-side:hover{border-color:rgba(232,191,53,.45)}
+.gp-bet-side.on{border-color:var(--gold);background:var(--gold-dim);box-shadow:0 0 0 1px rgba(232,191,53,.35) inset}
+.gp-bet-team{font-family:var(--display);font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gp-bet-line{font-family:var(--display);font-weight:800;color:var(--gold)}
+.gp-bet-form{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.gp-bet-form input{
+  width:96px;height:38px;padding:0 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);
+  font-family:var(--display);font-weight:700;font-size:1rem;font-variant-numeric:tabular-nums;
+}
+.gp-bet-preview{flex:1;min-width:150px;color:var(--muted);font-size:.84rem;font-weight:700}
+.gp-bet-preview .zc-amount{color:var(--green)}
+.gp-bet-lock{flex:0 0 auto;height:38px;padding:0 16px}
+.gp-bet-lock:disabled{opacity:.5;cursor:default}
+.gp-bet-note{margin:8px 0 0;color:var(--red);font-size:.8rem;font-weight:700}
+.gp-bet-note:empty{display:none}
+.gp-bet-copy{margin:8px 0 0;color:var(--muted-2);font-size:.78rem}
+.gp-bet .login-btn{margin-top:4px}
+.gp-bet-mine{margin:0;font-size:.92rem}
+.gp-bet-mine b{font-family:var(--display);font-weight:800}
+.gp-bet-mine .zc-amount{color:var(--gold);font-weight:800}
+@media (max-width:460px){.gp-bet-sides{grid-template-columns:1fr}}
