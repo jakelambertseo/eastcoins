@@ -34,6 +34,13 @@
 > `/history/main`), served by `/api/picks/badges`, and drawn next to names
 > by `v3-badges.js`'s `ECBadges.decorate(node, login)`.
 >
+> **Casino** — `/?view=casino` (nav link present but hidden) is Coin Flip:
+> `functions/api/coin/` (`_coin.js` clock/fairness/settlement, `state.js`
+> poll, `bet.js`), tables created on first use (`coin_rounds`, `coin_bets`,
+> `coin_presence`), rounds on a 50s wall clock (30s bets + 20s result),
+> max 20 ZC, 2× payout, same wallet ops as Picks. Client `v3-coin.js` polls
+> `/api/coin/state` every 1.5s; the first poll after a flip settles it.
+>
 > **Old links still work.** `v3-shell.js` rewrites `?event=`, `?watch=`,
 > and the `games` / `streams` / `sicko` view names on load, and
 > `v3-multiview.js` decodes MultiView share tokens made by the V2 shell.
