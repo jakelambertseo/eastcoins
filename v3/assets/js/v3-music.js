@@ -1077,8 +1077,9 @@
         meta.append(el("strong", null, entry.displayName || entry.login || "someone"));
         const good = Number(entry.up || 0) + Number(entry.fire || 0);
         const bad = Number(entry.trash || 0) + Number(entry.del || 0);
+        const songs = Number(entry.rated || 0);
         meta.append(el("small", null,
-          `${entry.rated} rated \u00b7 ${good} good, ${bad} bad`));
+          `${songs} song${songs === 1 ? "" : "s"} rated \u00b7 ${good} good reaction${good === 1 ? "" : "s"}, ${bad} bad`));
         line.append(meta);
 
         const score = el("span", "elo-score", String(Math.round(Number(entry.rating) || 1000)));
