@@ -2316,11 +2316,16 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .eventcard.nfl .ec-poster .fallback{gap:18px}
 .eventcard.nfl .ec-poster .fallback .crest{
   width:64px;height:64px;border-radius:16px;border-color:rgba(255,255,255,.18);
-  background:rgba(12,10,9,.55);box-shadow:0 8px 22px rgba(0,0,0,.45);z-index:1;
+  background:rgba(12,10,9,.55);box-shadow:0 8px 22px rgba(0,0,0,.45);
 }
+/* The turf and crests are the fallback. When the provider's own poster
+   has loaded it carries the logos itself, so the crests step aside
+   rather than sitting on top of it. */
+.eventcard.nfl .ec-poster:has(img.in) .fallback{opacity:0;transition:opacity .28s ease}
+.eventcard.nfl .ec-poster:has(img.in)::after{opacity:0}
 .eventcard.nfl .ec-poster .fallback .crest img{padding:7px}
 .eventcard.nfl .ec-poster .fallback .vs{
-  z-index:1;padding:4px 9px;border-radius:999px;background:rgba(12,10,9,.75);
+  padding:4px 9px;border-radius:999px;background:rgba(12,10,9,.75);
   color:var(--gold);font-size:.66rem;letter-spacing:.14em;
 }
 .ec-league{
@@ -2342,4 +2347,4 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .ec-picks.soon{border-color:var(--line-2);background:var(--panel-2);color:var(--muted)}
 .ec-picks-link{display:inline-flex;align-items:center;gap:5px;color:inherit;text-decoration:none}
 .ec-picks-link:hover{color:var(--gold)}
-.ec-picks .zcoin-mark{width:14px;height:14px}
+.ec-picks .zcoin-mark{width:14px;height:14px;vertical-align:-2px;margin-right:4px}

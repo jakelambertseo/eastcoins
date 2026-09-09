@@ -673,7 +673,14 @@
       const soon = upcoming.find((g) => same(g.away, g.home));
       if (soon) {
         const opens = new Date(new Date(soon.startsAt).getTime() - 60 * 60 * 1000);
-        strip.textContent = `Picks open ${opens.toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })} · ${nick(soon.away).toUpperCase()} ${line(soon.awayLine)} · ${nick(soon.home).toUpperCase()} ${line(soon.homeLine)}`;
+        strip.replaceChildren();
+        const coin = document.createElement("img");
+        coin.className = "zcoin-mark";
+        coin.src = "/v3/assets/img/zcoin.webp";
+        coin.alt = "";
+        coin.width = 14;
+        coin.height = 14;
+        strip.append(coin, document.createTextNode(`Picks open ${opens.toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })} · ${nick(soon.away).toUpperCase()} ${line(soon.awayLine)} · ${nick(soon.home).toUpperCase()} ${line(soon.homeLine)}`));
         strip.classList.add("soon");
         strip.hidden = false;
       }
