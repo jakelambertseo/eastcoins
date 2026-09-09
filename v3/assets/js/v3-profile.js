@@ -83,6 +83,19 @@
     return el("span", className, String(name || "?").slice(0, 3).toUpperCase());
   }
 
+  /** "NFL 1–0" over "MLB 3–1" — a dash for a league with nothing settled. */
+  function recordSplit(records) {
+    const box = el("span", "recsplit");
+    for (const league of ["NFL", "MLB"]) {
+      const r = records?.[league];
+      const row = el("span", `recsplit-row${r ? "" : " dim"}`);
+      row.append(el("small", null, league), document.createTextNode(r ? `${r.wins}–${r.losses}` : "—"));
+      if (r) row.title = `${league}: ${r.profit > 0 ? "+" : ""}${r.profit} ZC`;
+      box.append(row);
+    }
+    return box;
+  }
+
   function stat(label, value, note, className) {
     const card = el("article", `summarycard${className ? " " + className : ""}`);
     card.append(el("span", null, label));
@@ -196,7 +209,7 @@
     const strip = el("div", "summarystrip");
     const seasonName = data.season?.name || "Season";
     strip.append(
-      stat("Record", `${k.wins}–${k.losses}`, k.accuracy !== null ? `${k.accuracy}% of settled picks` : "Nothing settled yet"),
+      stat("Record", recordSplit(k.records), k.accuracy !== null ? `${k.accuracy}% of settled picks` : "Nothing settled yet"),
       stat(`${seasonName} profit`, zc(k.profit, { sign: true }), `${k.staked.toLocaleString()} staked across ${k.total} pick${k.total === 1 ? "" : "s"}`, k.profit > 0 ? "wallet" : ""),
       stat("Picks rank", k.rank ? `#${k.rank} of ${k.players}` : "—", k.rank ? "Ranked by Picks profit" : "Settle a pick to be ranked"),
       stat("Streak", k.streak.current > 0 ? `W${k.streak.current}` : k.streak.current < 0 ? `L${Math.abs(k.streak.current)}` : "—",

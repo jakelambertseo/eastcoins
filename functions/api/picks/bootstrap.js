@@ -590,6 +590,7 @@ async function getSeason(
     losses: mine ? mine.losses : 0,
     profit: mine ? mine.profit : 0,
     accuracy: mine ? mine.accuracy : null,
+    records: mine ? mine.records : {},
     rank: mine ? mine.rank : null,
     rankTitle: mine ? `#${mine.rank} of ${rows.length}` : "",
     players: rows.length

@@ -51,6 +51,14 @@ export async function onRequestGet(context) {
   const settled = picks.filter((p) => p.status === "WON" || p.status === "LOST");
   const wins = settled.filter((p) => p.status === "WON").length;
   const losses = settled.length - wins;
+  // The same record per league, for the NFL / MLB split on the card.
+  const records = {};
+  for (const p of settled) {
+    const key = String(p.league || "OTHER").toUpperCase();
+    const r = records[key] || (records[key] = { wins: 0, losses: 0, profit: 0 });
+    if (p.status === "WON") r.wins += 1; else r.losses += 1;
+    r.profit += Number(p.profit || 0);
+  }
   const profit = settled.reduce((n, p) => n + Number(p.profit || 0), 0);
   const staked = picks.filter((p) => p.status !== "REFUNDED").reduce((n, p) => n + Number(p.wager), 0);
 
@@ -177,7 +185,7 @@ export async function onRequestGet(context) {
     picks: {
       total: picks.length,
       open: picks.filter((p) => p.status === "ACTIVE").length,
-      wins, losses, profit, staked,
+      wins, losses, profit, staked, records,
       accuracy: settled.length ? Math.round(100 * wins / settled.length) : null,
       rank, players,
       streak: { current, bestWin, worstLoss },

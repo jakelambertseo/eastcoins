@@ -1130,6 +1130,19 @@
     return box;
   }
 
+  /** "NFL 1–0" over "MLB 3–1" — a dash for a league with nothing settled. */
+  function recordSplit(records) {
+    const box = el("span", "recsplit");
+    for (const league of ["NFL", "MLB"]) {
+      const r = records?.[league];
+      const row = el("span", `recsplit-row${r ? "" : " dim"}`);
+      row.append(el("small", null, league), document.createTextNode(r ? `${r.wins}\u2013${r.losses}` : "\u2014"));
+      if (r) row.title = `${league}: ${r.profit > 0 ? "+" : ""}${r.profit} ZC`;
+      box.append(row);
+    }
+    return box;
+  }
+
   function summaryStrip() {
     const strip = el("div", "summarystrip");
     const balance = Number(local.wallet?.balance);
@@ -1144,7 +1157,7 @@
         local.authed ? `${season.profit > 0 ? "+" : season.profit < 0 ? "\u2212" : ""}${Math.abs(Number(season.profit || 0)).toLocaleString()}` : "—",
         settled ? "Wagers vs settled returns" : "Nothing settled yet"],
       ["Record",
-        local.authed ? `${season.wins || 0}\u2013${season.losses || 0}` : "—",
+        local.authed ? recordSplit(season.records) : "—",
         settled ? `${season.accuracy}% of settled picks` : "First game decides it"],
       ["Picks rank",
         local.authed && season.rank ? `#${season.rank} of ${season.players}` : "—",
@@ -1152,7 +1165,9 @@
     ];
     for (const [k, v, note, wallet] of cards) {
       const card = el("article", `summarycard${wallet ? " wallet" : ""}`);
-      card.append(el("span", null, k), el("strong", "nums", v), el("small", null, note));
+      const strong = el("strong", "nums");
+      if (v instanceof Node) strong.append(v); else strong.textContent = v;
+      card.append(el("span", null, k), strong, el("small", null, note));
       if (wallet) {
         const coin = document.createElement("img");
         coin.className = "zc-full";
