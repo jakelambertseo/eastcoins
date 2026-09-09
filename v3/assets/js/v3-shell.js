@@ -573,7 +573,16 @@
     }, 220);
   });
 
-  window.ECV3 = { register, go, state, stub };
+  /** Views that move ZCoins can keep the nav honest without a reload. */
+  function setWallet(balance) {
+    const n = Number(balance);
+    if (!Number.isFinite(n)) return;
+    els.walletValue.textContent = n.toLocaleString();
+    els.walletChip.hidden = false;
+    if (state.session?.wallet) state.session.wallet.balance = n;
+  }
+
+  window.ECV3 = { register, go, state, stub, setWallet, refreshSession: loadSession };
 
   // Before anything reads the URL: an old-shaped link is rewritten to
   // its V3 equivalent, and one pointing at a view that only exists as a

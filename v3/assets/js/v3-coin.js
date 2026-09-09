@@ -146,6 +146,8 @@
       const payload = await response.json().catch(() => null);
       if (!payload?.ok) { toast(payload?.message || "That didn't go through.", true); return; }
       toast(`${fmt(stake)} on ${side} — locked in.`);
+      // The stake just left the wallet; say so in the nav right away.
+      if (payload.balance != null) window.ECV3?.setWallet?.(payload.balance);
       await poll();
     } finally {
       busy = false;
@@ -349,6 +351,9 @@
         announcedFor = r.no;
         announce(mine, r.result);
         loadHistory();
+        // A win just landed in the wallet (or a loss did not come back);
+        // re-read the balance so the nav matches.
+        window.ECV3?.refreshSession?.();
       }
     }
     else if (!inBets) { refs.lock.textContent = "Next round soon"; refs.betNote.textContent = "Bets open again when the clock hits zero."; }
