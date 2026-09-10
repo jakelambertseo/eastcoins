@@ -788,7 +788,10 @@
     closeBtn.title = "Close and stop playing";
     closeBtn.addEventListener("click", () => closeDock());
     const live = el("span", "mdock-live");
-    head.append(live, open, el("span", "mdock-spacer"), minBtn, closeBtn);
+    // The title rides in the header too, for when the dock is a bar:
+    // minimised, or on a page with a stream where it must stay small.
+    dock.headTitle = el("span", "mdock-head-title", "");
+    head.append(live, open, dock.headTitle, el("span", "mdock-spacer"), minBtn, closeBtn);
     box.append(head);
 
     dock.stage = el("div", "mdock-stage");
@@ -828,6 +831,7 @@
     box.append(body);
 
     document.body.append(box);
+    document.body.classList.add("has-dock");
     dock.el = box;
   }
 
@@ -836,6 +840,7 @@
     const current = state?.current;
     dock.el.classList.toggle("is-playing", Boolean(current));
     dock.titleText.textContent = current?.title || (state ? "Nothing playing" : "Connecting\u2026");
+    if (dock.headTitle) dock.headTitle.textContent = current?.title ? `· ${current.title}` : "";
     dock.title.classList.remove("is-long");
     requestAnimationFrame(() => {
       if (!dock.title?.isConnected) return;
@@ -861,6 +866,7 @@
     if (player.host === dock.stage) destroyPlayer();
     if (prog === dock.prog) { stopProgressTicker(); prog = null; }
     dock.el.remove();
+    document.body.classList.remove("has-dock");
     dock.el = null;
     dock.stage = null;
   }
