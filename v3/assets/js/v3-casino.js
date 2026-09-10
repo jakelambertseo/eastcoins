@@ -19,6 +19,8 @@
   let offset = 0;
   let pollTimer = 0;
   let tickTimer = 0;
+  let lowerTab = "results";
+  let boardPage = 1;
 
   const GAMES = {
     flip: { title: "Coin Flip", icon: "🪙", blurb: "Heads or tails, 2×. One coin for the whole room, every 30 seconds.", route: "flip" },
@@ -40,6 +42,7 @@
       data = payload;
       renderTiles();
       renderBoard();
+      renderMe();
     } catch { /* keep the last picture */ }
   }
 
@@ -56,9 +59,13 @@
     emote.alt = "";
     emote.width = 32; emote.height = 32;
     h1.append(emote);
-    copy.append(h1, K.el("p", null, "ZCoins only. Every result is drawn from a seed whose hash you see before you bet, and the seed is revealed after — anyone can check it."));
+    copy.append(h1);
     head.append(copy);
     page.append(head);
+
+    // Your own numbers, once the poll says who you are.
+    refs.me = K.el("div", "cas-me");
+    page.append(refs.me);
 
     refs.tiles = K.el("div", "cas-tiles");
     for (const [key, g] of Object.entries(GAMES)) {
@@ -87,15 +94,24 @@
     }
     page.append(refs.tiles);
 
+    // Below the tiles: Recent results and House rules as two tabs.
+    const tabs = K.el("nav", "pf-tabs cas-tabs");
+    const panels = {};
+    for (const [key, label] of [["results", "Recent results"], ["rules", "House rules"]]) {
+      const btn = K.el("button", `pf-tab${key === lowerTab ? " on" : ""}`, label);
+      btn.type = "button";
+      btn.addEventListener("click", () => { lowerTab = key; for (const x of tabs.children) x.classList.toggle("on", x === btn); for (const [k2, pn] of Object.entries(panels)) pn.hidden = k2 !== key; });
+      tabs.append(btn);
+      panels[key] = K.el("div", "cas-panel");
+      panels[key].hidden = key !== lowerTab;
+    }
+    page.append(tabs);
     const lower = K.el("div", "cas-lower");
     const board = K.el("section", "cf-card");
-    const bh = K.el("h2", null, "Recent results");
-    bh.append(K.el("small", null, "every game, wins and losses"));
-    refs.board = K.el("div", "cf-list");
-    board.append(bh, refs.board);
+    refs.board = K.el("div", "cf-list paged");
+    board.append(refs.board);
 
     const rules = K.el("section", "cf-card cas-rules");
-    rules.append(K.el("h2", null, "House rules"));
     const ul = K.el("ul");
     for (const t of [
       "20 ZCoins a bet, at most. Ten bets an hour per game, and nobody takes more than 300 ZC out of the casino in any hour.",
@@ -104,10 +120,51 @@
       "Results come from a random seed made when the round is created. Its hash is shown while bets are open; the seed is revealed after, so anyone can check.",
       "Wins land in your StreamElements wallet the moment the round settles — the same wallet Picks uses."
     ]) ul.append(K.el("li", null, t));
+    ul.append(K.el("li", null, "Every result comes from a seed whose hash is shown before bets and revealed after — Verify this round on any game page shows both."));
     rules.append(ul);
-    lower.append(board, rules);
+    panels.results.append(board);
+    panels.rules.append(rules);
+    lower.append(panels.results, panels.rules);
     page.append(lower);
     root.append(page);
+  }
+
+  /** The strip: wallet, casino net, record, and where you stand against the hour's cap. */
+  function renderMe() {
+    if (!refs.me) return;
+    const me = data?.me;
+    refs.me.replaceChildren();
+    if (!me) {
+      if (data && !data.me && !window.ECV3?.state?.session?.user) {
+        const card = K.el("div", "pf-card picks-login");
+        const copy = K.el("div");
+        copy.append(K.el("b", null, "Log in with Twitch to play"), K.el("span", null, "Your ZCoins from chat come with you. 20 a bet, ten an hour per game."));
+        const go = K.el("a", "login-btn", "Log in with Twitch");
+        go.href = "/api/picks/auth/twitch/start?returnTo=" + encodeURIComponent("/?view=casino");
+        card.append(copy, go);
+        refs.me.append(card);
+      }
+      return;
+    }
+    const balance = Number(window.ECV3?.state?.session?.wallet?.balance);
+    const strip = K.el("div", "summarystrip four");
+    const cards = [
+      ["My ZCoins wallet", Number.isFinite(balance) ? balance.toLocaleString() : "—", "Live from StreamElements", "wallet"],
+      ["Casino net", `${me.net > 0 ? "+" : me.net < 0 ? "−" : ""}${Math.abs(me.net).toLocaleString()}`, me.wins + me.losses ? `${me.wins + me.losses} bet${me.wins + me.losses === 1 ? "" : "s"} settled` : "Nothing settled yet", me.net > 0 ? "up" : me.net < 0 ? "down" : ""],
+      ["Record", `${me.wins}–${me.losses}`, me.wins + me.losses ? `${Math.round(100 * me.wins / (me.wins + me.losses))}% of settled bets` : "First bet decides it", ""],
+      ["This hour", `${me.hourNet > 0 ? "+" : me.hourNet < 0 ? "−" : ""}${Math.abs(me.hourNet).toLocaleString()}`, me.hourNet >= me.hourCap ? "At the cap — back next hour" : `Winnings cap ${me.hourCap.toLocaleString()} an hour`, me.hourNet >= me.hourCap ? "down" : ""]
+    ];
+    for (const [k, v, note, tone] of cards) {
+      const card = K.el("article", `summarycard${tone ? " " + tone : ""}`);
+      card.append(K.el("span", null, k), K.el("strong", "nums", v), K.el("small", null, note));
+      if (tone === "wallet") {
+        const coin = document.createElement("img");
+        coin.className = "zc-full"; coin.src = "/v3/assets/img/zcoin.webp"; coin.alt = ""; coin.width = 64; coin.height = 64;
+        card.append(coin);
+      }
+      strip.append(card);
+    }
+    refs.me.append(strip);
   }
 
   function renderTiles() {
@@ -165,7 +222,8 @@
     if (!data || !refs.board) return;
     refs.board.replaceChildren();
     if (!data.board.length) { refs.board.append(K.el("p", "cf-empty", "Nothing settled yet. The first result goes here.")); return; }
-    for (const w of data.board) {
+    const pg = K.pageOf(data.board, boardPage, 10);
+    for (const w of pg.slice) {
       const won = w.status === "WON";
       const row = K.el("div", `cf-row ${won ? "won" : "lost"}`);
       row.append(K.avatar(w.user, "cf-av"));
@@ -181,6 +239,7 @@
       row.append(res);
       refs.board.append(row);
     }
+    refs.board.append(K.pager(pg, (n) => { boardPage = n; renderBoard(); }, "results"));
   }
 
   const view = {

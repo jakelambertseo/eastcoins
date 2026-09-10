@@ -93,6 +93,7 @@
   }
 
   let history = null;
+  let ledgerPage = 1;
   async function loadHistory() {
     try {
       const response = await fetch("/api/coin/history", { credentials: "include" });
@@ -254,7 +255,9 @@
     refs.lastNote = el("small");
     lh.append(refs.lastNote);
     refs.lastList = el("div", "cf-list");
-    refs.fair = el("p", "cf-fair", "");
+    const verify = window.ECCasino?.verifyBox ? window.ECCasino.verifyBox("Verify this flip") : null;
+    refs.fair = verify ? verify.node : el("p", "cf-fair", "");
+    refs.fairBody = verify ? verify.body : refs.fair;
     lastRound.append(lh, refs.lastList, refs.fair);
 
     const room = el("section", "cf-card");
@@ -273,7 +276,7 @@
     const lgh = el("h2", null, "Ledger");
     refs.ledgerNote = el("small");
     lgh.append(refs.ledgerNote);
-    refs.ledgerList = el("div", "cf-list tall");
+    refs.ledgerList = el("div", "cf-list paged");
     ledger.append(lgh, refs.ledgerList);
     page.append(ledger);
 
@@ -391,7 +394,8 @@
     }
     if (!history.entries.length) { list.append(el("p", "cf-empty", "No flips settled yet. The first one writes the first line.")); return; }
     let lastRound = null;
-    for (const e of history.entries) {
+    const pg = window.ECCasino.pageOf(history.entries, ledgerPage, 10);
+    for (const e of pg.slice) {
       if (e.round !== lastRound) {
         lastRound = e.round;
         const head = el("div", "cf-ledger-round");
@@ -400,6 +404,7 @@
       }
       list.append(betRow({ ...e, payout: e.wager * 2 }, true));
     }
+    list.append(window.ECCasino.pager(pg, (n) => { ledgerPage = n; renderHistory(); }, "bets"));
   }
 
   function renderLists() {
@@ -422,11 +427,12 @@
       const ln = el("span"); ln.append(document.createTextNode(`${last.result} · ${last.bets.length} in · `), zc(paid), document.createTextNode(" paid")); refs.lastNote.replaceChildren(ln);
       for (const b of last.bets) refs.lastList.append(betRow(b, true));
       if (!last.bets.length) refs.lastList.append(el("p", "cf-empty", "Nobody bet that round."));
-      refs.fair.textContent = `Round #${last.no} · hash ${last.hash.slice(0, 6)}… published before bets · seed ${last.seed.slice(0, 6)}… revealed after · sha256(seed) = hash`;
+      refs.fair.hidden = false;
+      refs.fairBody.textContent = `round      #${last.no}\nhash       ${last.hash}   (shown before bets opened)\nseed       ${last.seed}   (revealed after)\ncheck      sha256(seed) = hash · heads if the first byte is even`;
     } else {
       refs.lastNote.textContent = "";
       refs.lastList.append(el("p", "cf-empty", "First flip coming up."));
-      refs.fair.textContent = "";
+      refs.fair.hidden = true;
     }
 
     const room = data.room || [];

@@ -21,6 +21,7 @@
   let busy = false;
   let toast = () => {};
   let pop = () => {};
+  let ledgerPage = 1;
   let lastLiveId = null;
 
   const fmt = K.fmt;
@@ -159,9 +160,11 @@
     yh.append(refs.youNote);
     refs.youList = K.el("div", "hl-stats");
     you.append(yh, refs.youList);
-    const fair = K.el("section", "cf-card");
-    fair.append(K.el("h2", null, "Fair play"));
-    refs.fair = K.el("p", "cf-fair", "");
+    const fair = K.el("section", "cf-card cf-card-verify");
+    const verify = K.verifyBox("Verify this deck");
+    refs.fair = verify.node;
+    refs.fairBody = verify.body;
+    refs.fairCard = fair;
     fair.append(refs.fair);
     const room = K.el("section", "cf-card");
     const rh = K.el("h2", null, "At the table");
@@ -177,7 +180,7 @@
     const lgh = K.el("h2", null, "Recent runs");
     refs.ledgerNote = K.el("small");
     lgh.append(refs.ledgerNote);
-    refs.ledgerList = K.el("div", "cf-list tall");
+    refs.ledgerList = K.el("div", "cf-list paged");
     ledger.append(lgh, refs.ledgerList);
     page.append(ledger);
 
@@ -269,12 +272,14 @@
       refs.youNote.textContent = "";
       refs.youList.append(K.el("p", "cf-empty", "Log in to keep a record."));
     }
+    refs.fairCard.hidden = !shown;
     if (shown) {
-      refs.fair.textContent = shown.seed
-        ? `Deck hash ${shown.hash.slice(0, 8)}… · seed ${shown.seed.slice(0, 8)}… revealed · card i = 1 + (sha256(seed:i) mod 13)`
-        : `Deck hash ${shown.hash.slice(0, 8)}… published at the deal · seed revealed when the run ends`;
+      refs.fair.hidden = false;
+      refs.fairBody.textContent = shown.seed
+        ? `deck hash  ${shown.hash}   (shown at the deal)\nseed       ${shown.seed}   (revealed when the run ended)\ncheck      sha256(seed) = hash · card i = 1 + (sha256(seed:i) mod 13)`
+        : `deck hash  ${shown.hash}   (shown at the deal)\nseed       revealed when the run ends`;
     } else {
-      refs.fair.textContent = "Every deck's hash is shown before the first call and its seed after the run, so any card can be checked.";
+      refs.fair.hidden = true;
     }
     const room = data.room || [];
     refs.roomCount.textContent = String(room.length);
@@ -291,7 +296,8 @@
     refs.ledgerList.replaceChildren();
     refs.ledgerNote.textContent = data.ledger.length ? `${data.ledger.length} recent` : "";
     if (!data.ledger.length) refs.ledgerList.append(K.el("p", "cf-empty", "No runs finished yet."));
-    for (const e of data.ledger) {
+    const pg = K.pageOf(data.ledger, ledgerPage, 10);
+    for (const e of pg.slice) {
       const row = K.el("div", `cf-row ${e.status === "CASHED" ? "won" : "lost"}${data.me && e.user.id === data.me.id ? " me" : ""}`);
       row.append(K.avatar(e.user, "cf-av"));
       const who = K.el("div", "cf-who");
@@ -305,6 +311,7 @@
       row.append(res);
       refs.ledgerList.append(row);
     }
+    refs.ledgerList.append(K.pager(pg, (n) => { ledgerPage = n; render(); }, "runs"));
   }
 
   const view = {

@@ -85,6 +85,13 @@
 > the 4 PM slate opens (`composeSlateOpen`, keyed `slateopen:<sport>:<day>`
 > in `ops_status`); refills through the evening stay silent.
 >
+> **Casino layout**: the floor is title → `.cas-me` strip (`/api/casino/home`
+> `me`: wallet, casino net, record, this hour vs cap; a login card when
+> signed out) → tiles → `.pf-tabs.cas-tabs` Recent results (paged) / House
+> rules. Game pages keep stage + side column; the fairness line is a
+> `<details class="cf-verify">` with the full hash and seed, and every
+> ledger is paged with `ECCasino.pager/pageOf`.
+>
 > **Casino** — `/?view=casino` is the floor (`v3-casino.js`, reads
 > `/api/casino/home`; the nav's Casino link points here). Games:
 > Coin Flip `/?view=flip`, Wheel `/?view=wheel`, Horse Race `/?view=race`

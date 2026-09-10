@@ -101,6 +101,36 @@
     return a;
   }
 
+  /** The same pager the profile and Picks use, for a list that is all here already. */
+  function pager(info, onGo, what = "rows") {
+    if (info.pages <= 1) return document.createDocumentFragment();
+    const box = el("div", "mpager pf-pager cf-pager");
+    const prev = el("button", "mpager-btn", "‹");
+    const next = el("button", "mpager-btn", "›");
+    prev.type = next.type = "button";
+    prev.disabled = info.at <= 1;
+    next.disabled = info.at >= info.pages;
+    prev.addEventListener("click", () => onGo(info.at - 1));
+    next.addEventListener("click", () => onGo(info.at + 1));
+    box.append(prev, el("span", "mpager-at", `Page ${info.at} of ${info.pages} · ${info.total} ${what}`), next);
+    return box;
+  }
+  function pageOf(items, at, size) {
+    const pages = Math.max(1, Math.ceil(items.length / size));
+    const page = Math.min(pages, Math.max(1, at || 1));
+    return { slice: items.slice((page - 1) * size, page * size), at: page, pages, total: items.length };
+  }
+
+  /** "Verify this round": the full hash and seed behind a disclosure, not a truncated line. */
+  function verifyBox(title = "Verify this round") {
+    const d = el("details", "cf-verify");
+    d.append(el("summary", null, title));
+    const body = el("pre", "cf-verify-body", "");
+    d.append(body);
+    d.hidden = true;
+    return { node: d, body };
+  }
+
   function makeToast(host) {
     const node = el("div", "cf-toast");
     host.append(node);
@@ -154,6 +184,7 @@
     let historyFor = -1;
     let lastSig = "";
     let history = null;
+    let ledgerPage = 1;
     let stake = 10;
     let pick = null;
     let busy = false;
@@ -270,7 +301,9 @@
       refs.lastNote = el("small");
       lh.append(refs.lastNote);
       refs.lastList = el("div", "cf-list");
-      refs.fair = el("p", "cf-fair", "");
+      const verify = verifyBox();
+      refs.fair = verify.node;
+      refs.fairBody = verify.body;
       lastRound.append(lh, refs.lastList, refs.fair);
       const room = el("section", "cf-card");
       const rh = el("h2", null, "In the room");
@@ -286,7 +319,7 @@
       const lgh = el("h2", null, "Ledger");
       refs.ledgerNote = el("small");
       lgh.append(refs.ledgerNote);
-      refs.ledgerList = el("div", "cf-list tall");
+      refs.ledgerList = el("div", "cf-list paged");
       ledger.append(lgh, refs.ledgerList);
       page.append(ledger);
 
@@ -417,7 +450,8 @@
       }
       if (!history.entries.length) { list.append(el("p", "cf-empty", "Nothing settled yet. The first round writes the first line.")); return; }
       let lastRound = null;
-      for (const e of history.entries) {
+      const pg = pageOf(history.entries, ledgerPage, 10);
+      for (const e of pg.slice) {
         if (e.round !== lastRound) {
           lastRound = e.round;
           const head = el("div", "cf-ledger-round");
@@ -427,6 +461,7 @@
         }
         list.append(betRow(e, true, config));
       }
+      list.append(pager(pg, (n) => { ledgerPage = n; renderHistory(); }, "bets"));
     }
 
     function renderLists() {
@@ -451,11 +486,12 @@
         const ln = el("span"); ln.append(document.createTextNode(`${spec.describe(last.result, config)} · ${last.bets.length} in · `), zc(paid), document.createTextNode(" paid")); refs.lastNote.replaceChildren(ln);
         for (const b of last.bets) refs.lastList.append(betRow(b, true, config));
         if (!last.bets.length) refs.lastList.append(el("p", "cf-empty", "Nobody bet that round."));
-        refs.fair.textContent = `Round #${last.no} · hash ${last.hash.slice(0, 6)}… published before bets · seed ${last.seed.slice(0, 6)}… revealed after · sha256(seed) = hash`;
+        refs.fair.hidden = false;
+        refs.fairBody.textContent = `round      #${last.no}\nhash       ${last.hash}   (shown before bets opened)\nseed       ${last.seed}   (revealed after)\ncheck      sha256(seed) = hash · result from sha256(seed:${spec.key})`;
       } else {
         refs.lastNote.textContent = "";
         refs.lastList.append(el("p", "cf-empty", "First round coming up."));
-        refs.fair.textContent = "";
+        refs.fair.hidden = true;
       }
 
       const room = data.room || [];
@@ -492,5 +528,5 @@
     };
   }
 
-  window.ECCasino = Object.freeze({ el, btn, zc, withCoins, plain, avatar, nameLink, casinoLink, makeToast, makePop, sharedGame, fmt });
+  window.ECCasino = Object.freeze({ el, btn, zc, withCoins, plain, avatar, nameLink, casinoLink, makeToast, makePop, sharedGame, fmt, pager, pageOf, verifyBox });
 })();

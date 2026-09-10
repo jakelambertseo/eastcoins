@@ -2370,6 +2370,24 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .cf-res.up{color:var(--green)} .cf-res.down{color:var(--red)} .cf-res.pick{color:var(--muted)}
 .cf-empty{margin:0;color:var(--muted-2);font-size:.8rem}
 .cf-fair{margin:9px 0 0;color:var(--muted-2);font-size:.7rem;line-height:1.5}
+/* Verify this round: the hashes behind a disclosure, full length, copyable. */
+.cf-verify{margin:10px 0 0;border-top:1px solid var(--line);padding-top:8px}
+.cf-verify summary{cursor:pointer;color:var(--muted-2);font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;list-style:none;display:flex;align-items:center;gap:6px}
+.cf-verify summary::-webkit-details-marker{display:none}
+.cf-verify summary::before{content:"▸";font-size:.8rem;transition:transform .15s}
+.cf-verify[open] summary::before{transform:rotate(90deg)}
+.cf-verify summary:hover{color:var(--gold)}
+.cf-verify-body{margin:8px 0 0;padding:9px 11px;border-radius:8px;background:var(--ink);border:1px solid var(--line);color:var(--muted);font-size:.68rem;line-height:1.6;white-space:pre-wrap;word-break:break-all;user-select:all}
+.cf-card-verify{padding-top:6px}
+.cf-list.paged{max-height:none;overflow:visible}
+.cf-pager{margin-top:10px}
+.cas-me{margin-bottom:16px}
+.cas-me .summarystrip{margin-bottom:0}
+.summarystrip.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+.cas-tabs{margin-bottom:14px}
+.cas-lower.cas-lower{display:block}
+.cas-panel[hidden]{display:none}
+@media (max-width:760px){.summarystrip.four{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .cf-room{display:flex;flex-wrap:wrap;gap:6px}
 .cf-chipuser{display:inline-flex;align-items:center;gap:7px;padding:4px 10px 4px 4px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-2);font-size:.8rem;font-weight:700}
 .cf-chipuser.ulink,.cf-chipuser.ulink:hover{border-bottom-color:var(--line-2)}

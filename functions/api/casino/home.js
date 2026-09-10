@@ -5,8 +5,9 @@
    game, for the board. Public; a session adds nothing here. */
 
 import { ensureSchema as ensureCoin, roundAt as coinRoundAt, CYCLE_MS as COIN_CYCLE, BET_MS as COIN_BET } from "../coin/_coin.js";
-import { GAMES, ensureSchema, roundAt, ROOM_WINDOW_MS } from "./_engine.js";
+import { GAMES, ensureSchema, roundAt, ROOM_WINDOW_MS, hourlyNet, HOUR_WIN_CAP } from "./_engine.js";
 import { ensureHilo } from "./hilo/_hilo.js";
+import { getSessionUser } from "../picks/_lib.js";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 const parse = (t) => { try { return t ? JSON.parse(t) : null; } catch { return null; } };
@@ -83,5 +84,29 @@ export async function onRequestGet(context) {
     .sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0))
     .slice(0, 20);
 
-  return json({ ok: true, now, games, board });
+  // Signed in: their own casino numbers for the strip at the top.
+  let me = null;
+  try {
+    const user = await getSessionUser(db, context.request);
+    if (user) {
+      const uid = String(user.id);
+      const q = async (sql) => { try { return await db.prepare(sql).bind(uid).first(); } catch { return null; } };
+      const [coin, shared, hilo, hourNet] = await Promise.all([
+        q(`SELECT SUM(status = 'WON') AS w, SUM(status = 'LOST') AS l, COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - wager WHEN status = 'LOST' THEN -wager ELSE 0 END), 0) AS net FROM coin_bets WHERE user_id = ?`),
+        q(`SELECT SUM(status = 'WON') AS w, SUM(status = 'LOST') AS l, COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - wager WHEN status = 'LOST' THEN -wager ELSE 0 END), 0) AS net FROM casino_bets WHERE user_id = ?`),
+        q(`SELECT SUM(status = 'CASHED') AS w, SUM(status = 'BUST') AS l, COALESCE(SUM(CASE WHEN status = 'CASHED' THEN payout - stake WHEN status = 'BUST' THEN -stake ELSE 0 END), 0) AS net FROM hilo_games WHERE user_id = ?`),
+        hourlyNet(db, uid)
+      ]);
+      const n = (x) => Number(x || 0);
+      me = {
+        login: user.login, displayName: user.displayName,
+        wins: n(coin?.w) + n(shared?.w) + n(hilo?.w),
+        losses: n(coin?.l) + n(shared?.l) + n(hilo?.l),
+        net: n(coin?.net) + n(shared?.net) + n(hilo?.net),
+        hourNet: n(hourNet), hourCap: HOUR_WIN_CAP
+      };
+    }
+  } catch { me = null; }
+
+  return json({ ok: true, now, games, board, me });
 }
