@@ -356,9 +356,9 @@
     const stake = el("div", "gp-stake");
     stake.append(el("b", "nums", String(p.wager)), document.createTextNode("staked"));
     const payout = el("div", "gp-payout nums");
-    if (p.status === "WON") { payout.classList.add("up"); payout.append(`+${p.profit}`, el("small", null, `returned ${p.payout}`)); }
-    else if (p.status === "LOST") { payout.classList.add("down"); payout.append(`−${p.wager}`, el("small", null, "returned 0")); }
-    else if (p.status === "REFUNDED") payout.append("0", el("small", null, "refunded"));
+    if (p.status === "WON") { payout.classList.add("up"); payout.append(el("span", "cf-tag win", "WIN"), `+${p.profit}`, el("small", null, `returned ${p.payout}`)); }
+    else if (p.status === "LOST") { payout.classList.add("down"); payout.append(el("span", "cf-tag loss", "LOSS"), `−${p.wager}`, el("small", null, "returned 0")); }
+    else if (p.status === "REFUNDED") payout.append(el("span", "cf-tag", "VOID"), "0", el("small", null, "refunded"));
     else { payout.classList.add("muted"); payout.append("open", el("small", null, p.market.state === "LOCKED" ? "in play" : "not started")); }
     row.append(who, stake, payout);
     return row;
