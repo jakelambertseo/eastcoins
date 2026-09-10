@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>EastCoin | Add Server (mockup)</title>
+<link href="/assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --ink:#0c0a09;--panel:#161311;--panel-2:#1e1a17;--panel-3:#241f1b;
+    --line:rgba(255,255,255,.1);--line-2:rgba(255,255,255,.16);
+    --text:#f4ede5;--muted:#aca298;--muted-2:#7d746a;
+    --gold:#e8bf35;--gold-dim:rgba(232,191,53,.13);--green:#4ddb8b;--green-dim:rgba(77,219,139,.11);
+    --red:#ff6b85;--red-dim:rgba(255,107,133,.1);--purple:#a56bff;--blue:#8fc3d7;
+    --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;--body:"Figtree","Segoe UI",system-ui,sans-serif;
+    --radius:13px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--ink);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;color:inherit;cursor:pointer}
+  .topnav{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:18px;height:58px;padding:0 18px;border-bottom:1px solid var(--line);background:rgba(12,10,9,.92);backdrop-filter:blur(10px)}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:-.01em}
+  .brand img{width:30px;height:30px;border-radius:8px}
+  .brand small{margin-left:4px;padding:3px 8px;border-radius:999px;border:1px solid var(--line-2);color:var(--muted);font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+  .navlinks{display:flex;gap:4px;margin-left:8px}
+  .navlink{padding:8px 12px;border-radius:9px;color:var(--muted);font-weight:700;font-size:.86rem}
+  .navlink.on{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(232,191,53,.35)}
+
+  .page{max-width:1240px;margin:0 auto;padding:14px 18px 60px}
+  .frame{position:relative;aspect-ratio:16/9;max-height:62vh;border:1px solid var(--line);border-radius:var(--radius);background:radial-gradient(circle at 50% 40%,#22201d,#0b0a09 70%);display:grid;place-items:center;color:var(--muted-2);font-family:var(--display);font-weight:800;font-size:1.2rem}
+  .frame .tag{position:absolute;top:12px;left:12px;padding:4px 9px;border-radius:999px;background:rgba(12,10,9,.82);border:1px solid rgba(255,107,133,.5);color:#ffb3c0;font-size:.62rem;font-weight:800;letter-spacing:.08em}
+
+  /* the bar, as shipped */
+  .watchbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:7px 8px;margin-top:8px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+  .btn{display:inline-flex;align-items:center;gap:6px;height:33px;padding:0 12px;border-radius:9px;border:1px solid var(--line);background:var(--panel-2);color:var(--muted);font-size:.79rem;font-weight:800}
+  .btn:hover{color:var(--text);border-color:var(--line-2)}
+  .btn.gold{border-color:rgba(232,191,53,.4);color:var(--gold);background:var(--gold-dim)}
+  .sel{height:33px;padding:0 30px 0 12px;border-radius:9px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);font:inherit;font-size:.8rem;font-weight:700;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23aca298' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center}
+  .spacer{flex:1}
+  .flag{height:33px;width:33px;padding:0;justify-content:center;border-color:transparent;background:none;color:var(--muted-2)}
+  .flag:hover{color:var(--red);border-color:rgba(255,107,133,.3);background:var(--red-dim)}
+  .who{color:var(--muted-2);font-size:.74rem;font-weight:700;padding:0 6px}
+  .who b{color:var(--muted)}
+
+  /* the popover */
+  .anchor{position:relative}
+  .pop{position:absolute;bottom:calc(100% + 10px);left:0;width:400px;max-width:calc(100vw - 40px);padding:14px 14px 12px;border:1px solid var(--line-2);border-radius:12px;background:var(--panel);box-shadow:0 18px 50px rgba(0,0,0,.6);z-index:5}
+  .pop h3{margin:0 0 4px;font-family:var(--display);font-weight:800;font-size:1rem;letter-spacing:-.01em}
+  .pop p{margin:0 0 10px;color:var(--muted-2);font-size:.78rem;line-height:1.45}
+  .pop input{width:100%;height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);font:inherit;font-size:.9rem}
+  .pop input::placeholder{color:var(--muted-2)}
+  .row{display:flex;align-items:center;gap:8px;margin-top:10px}
+  .hosts{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+  .hosts span{padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted-2);font-size:.66rem;font-weight:700}
+  .check{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 10px;border-radius:9px;background:var(--green-dim);border:1px solid rgba(77,219,139,.3);color:var(--green);font-size:.78rem;font-weight:700}
+  .check.bad{background:var(--red-dim);border-color:rgba(255,107,133,.3);color:var(--red)}
+  .pop .btn.primary{border-color:rgba(232,191,53,.45);background:var(--gold-dim);color:var(--gold)}
+  .pop .btn:disabled{opacity:.5;cursor:default}
+
+  /* the dropdown, open */
+  .menu{position:absolute;bottom:calc(100% + 8px);left:0;min-width:240px;padding:6px;border:1px solid var(--line-2);border-radius:11px;background:var(--panel);box-shadow:0 18px 50px rgba(0,0,0,.6);z-index:5}
+  .item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;font-size:.82rem;font-weight:700;color:var(--muted)}
+  .item:hover{background:var(--panel-2);color:var(--text)}
+  .item.on{color:var(--gold);background:var(--gold-dim)}
+  .item small{margin-left:auto;color:var(--muted-2);font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+  .item .dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+  .item .dot.off{background:var(--muted-2)}
+  .sep{height:1px;margin:5px 4px;background:var(--line)}
+  .menu .item.add{color:var(--gold)}
+
+  .demo{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:34px}
+  @media (max-width:900px){.demo{grid-template-columns:1fr}}
+  .demo h2{font-family:var(--display);font-weight:800;font-size:1.05rem;margin:0 0 10px}
+  .demo .stage{position:relative;padding:120px 0 0}
+  .notes{max-width:1240px;margin:34px auto 0;padding:0 18px;color:var(--muted);font-size:.9rem;line-height:1.6}
+  .notes h2{font-family:var(--display);font-size:1.1rem;color:var(--text);margin:22px 0 8px}
+  .notes ul{margin:0;padding-left:18px}
+  .notes li{margin:4px 0}
+  .notes b{color:var(--text)}
+  code{font-family:ui-monospace,Consolas,monospace;font-size:.82em;padding:1px 5px;border-radius:5px;background:var(--panel-2)}
+</style>
+</head>
+<body>
+<nav class="topnav">
+  <a class="brand" href="/"><img src="/assets/eastcoins-logo.webp" alt="">EastCoin <small>mockup</small></a>
+  <div class="navlinks"><a class="navlink on" href="#">Sports</a><a class="navlink" href="#">Music</a><a class="navlink" href="#">Movies &amp; TV</a><a class="navlink" href="#">MultiView</a><a class="navlink" href="#">Picks</a></div>
+</nav>
+
+<main class="page">
+  <div class="frame"><span class="tag">LIVE</span>Seattle Seahawks at New England Patriots · stream</div>
+
+  <!-- 1. The bar with the button, as a trusted user sees it -->
+  <div class="watchbar">
+    <div class="anchor">
+      <select class="sel" aria-label="Server"><option>Server 1</option><option>Server 2</option><option>Server 3</option><option selected>Server 4 · community</option></select>
+    </div>
+    <div class="anchor" id="addAnchor">
+      <button class="btn gold" id="addBtn" type="button">+ Add server</button>
+      <div class="pop" id="pop" hidden>
+        <h3>Add a server to this game</h3>
+        <p>Paste the stream's embed link. It shows for everyone as the next Server number, with your name on it. Trusted hosts only.</p>
+        <input id="url" type="url" placeholder="https://embedsports.top/…" autocomplete="off">
+        <div class="hosts"><span>streamed.st</span><span>ppv.st</span><span>embedsports.top</span><span>topembed.pw</span><span>+ your list</span></div>
+        <div class="check" id="check" hidden></div>
+        <div class="row">
+          <button class="btn primary" id="submit" type="button" disabled>Add as Server 5</button>
+          <button class="btn" id="cancel" type="button">Cancel</button>
+          <span class="who">3 of 5 today</span>
+        </div>
+      </div>
+    </div>
+    <span class="who">Server 4 · added by <b>BootyPaper</b> · 2 watching</span>
+    <button class="btn flag" type="button" title="Report: not working">⚑</button>
+    <span class="spacer"></span>
+    <button class="btn" type="button">Open source</button>
+    <button class="btn" type="button">Copy link</button>
+    <button class="btn" type="button">← Events</button>
+    <button class="btn" type="button">Hide</button>
+  </div>
+
+  <div class="demo">
+    <div>
+      <h2>The dropdown, open</h2>
+      <div class="stage">
+        <div class="anchor" style="display:inline-block">
+          <div class="menu">
+            <div class="item"><span class="dot"></span>Server 1</div>
+            <div class="item"><span class="dot"></span>Server 2</div>
+            <div class="item"><span class="dot off"></span>Server 3 <small>slow</small></div>
+            <div class="sep"></div>
+            <div class="item on"><span class="dot"></span>Server 4 <small>community · BootyPaper</small></div>
+            <div class="item"><span class="dot"></span>Server 5 <small>community · Zwades</small></div>
+            <div class="sep"></div>
+            <div class="item add">+ Add server</div>
+          </div>
+          <select class="sel" aria-label="Server"><option>Server 4 · community</option></select>
+        </div>
+      </div>
+      <p class="notes" style="padding:0;margin:12px 0 0;font-size:.82rem">Site servers first, community servers under a divider with who added them. Everyone gets the same numbering, so "try Server 5" means the same thing in chat for everyone. The add entry lives in the menu too, for people who look there first.</p>
+    </div>
+    <div>
+      <h2>What a mod sees on a reported server</h2>
+      <div class="watchbar" style="margin:0">
+        <select class="sel" aria-label="Server"><option>Server 5 · community</option></select>
+        <span class="who">added by <b>Zwades</b> · <span style="color:var(--red)">2 reports</span> · hidden for others</span>
+        <span class="spacer"></span>
+        <button class="btn" type="button">Restore</button>
+        <button class="btn" type="button" style="border-color:rgba(255,107,133,.35);color:var(--red)">Remove</button>
+      </div>
+      <p class="notes" style="padding:0;margin:12px 0 0;font-size:.82rem">Two reports from different people hide a server automatically. Mods still see it with the count, and can restore or remove it. Removing three of someone's servers in a month pulls their Trusted flag until you give it back.</p>
+    </div>
+  </div>
+</main>
+
+<section class="notes">
+  <h2>Rules of the road</h2>
+  <ul>
+    <li><b>Who:</b> mods, and anyone you mark Trusted on the dashboard. Others don't see the button.</li>
+    <li><b>What:</b> <code>https://</code> only, host on the allowlist, one URL per server, no duplicates for the same game. The check runs before the button enables, so a bad link never gets a "submit and see".</li>
+    <li><b>Where it lives:</b> one table, <code>event_servers</code>: event id, URL, who, when, reports, state. Read by the watch page and MultiView alongside the provider's own servers.</li>
+    <li><b>Limits:</b> 5 adds per person per day. Servers expire when the event ends, so the table never grows past the day.</li>
+    <li><b>Visibility:</b> the add and any removal show in the Activity feed and on the adder's profile ("Servers added: 12"). A 🛰️ title for the top contributor of the month would fit the existing set.</li>
+    <li><b>The frame:</b> community servers load in the same player iframe with the same sandbox flags as provider streams; the allowlist is what keeps that safe, not the iframe.</li>
+  </ul>
+  <h2>Open questions for you</h2>
+  <ul>
+    <li>The allowlist: start with the hosts the event feed already uses, plus which others?</li>
+    <li>Trusted by hand only, or also automatically after, say, 20 settled picks and no reports?</li>
+    <li>Should a community server ever outrank a site server in the dropdown, for instance when the site's are all reported slow?</li>
+  </ul>
+</section>
+
+<script>
+  const HOSTS = ["streamed.st","ppv.st","embedsports.top","topembed.pw"];
+  const pop = document.getElementById("pop"), btn = document.getElementById("addBtn"), url = document.getElementById("url"), check = document.getElementById("check"), submit = document.getElementById("submit");
+  btn.addEventListener("click", () => { pop.hidden = !pop.hidden; if (!pop.hidden) url.focus(); });
+  document.getElementById("cancel").addEventListener("click", () => { pop.hidden = true; });
+  url.addEventListener("input", () => {
+    const v = url.value.trim();
+    if (!v) { check.hidden = true; submit.disabled = true; return; }
+    let ok = false, why = "";
+    try { const u = new URL(v); if (u.protocol !== "https:") why = "Needs to be an https:// link."; else if (!HOSTS.some(h => u.hostname === h || u.hostname.endsWith("." + h))) why = `${u.hostname} isn't on the trusted list.`; else ok = true; }
+    catch { why = "That isn't a link."; }
+    check.hidden = false; check.classList.toggle("bad", !ok);
+    check.textContent = ok ? "✓ Trusted host · will show as Server 5" : "✕ " + why;
+    submit.disabled = !ok;
+  });
+  submit.addEventListener("click", () => { check.textContent = "✓ Added — Server 5 is live for everyone"; submit.disabled = true; setTimeout(() => { pop.hidden = true; }, 900); });
+</script>
+</body>
+</html>
