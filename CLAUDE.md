@@ -116,8 +116,9 @@
 > every day at 4 PM Central** (that evening's games and the next day's
 > day games, `SPORTS` in `_autoopen.js`), **at most 5 open at a time**
 > (`maxOpen`; earliest first, the next opens when one locks) and is **quiet in chat** —
-> `quietInChat(sport)` keeps open/countdown/closed/settled lines to NFL,
-> while the site, `!pick`/`!odds` replies and Discord carry MLB. Then
+> `quietInChat(sport)` keeps open/countdown/closed lines to NFL; MLB
+> finals still get one chat line per settled game (`settle.js`), and the
+> site, `!pick`/`!odds` replies and Discord carry the rest. Then
 > `_reminders.js` posts "Closing in X minutes" at 30/10/5 (once per market
 > per threshold, one line per threshold per tick). The cron runs every 5
 > minutes. The schedule

@@ -526,6 +526,15 @@ export async function onRequestPost(context) {
       console.error(`Picks: couldn't announce settlement: ${said.error}`);
     }
   }
+  // The quiet sports (MLB) still get their finals in chat — one line per
+  // game with the score, winners and payout, and nothing else all day.
+  for (const r of results) {
+    if (!quietInChat(r.sport) || r.action === "skipped") continue;
+    const line = composeSettled([r]);
+    if (!line) continue;
+    const said = await sayInChat(context.env, line);
+    if (!said.ok) console.error(`Picks: couldn't announce ${r.away} at ${r.home} final: ${said.error}`);
+  }
   // Discord gets one card per game that settled, in the same tick.
   if (discordEnabled(context.env)) {
     const cards = results.map(settledEmbed).filter(Boolean);
