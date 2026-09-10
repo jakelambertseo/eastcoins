@@ -83,17 +83,11 @@ export async function onRequestGet(context) {
 
   for (const u of users.results || []) items.push({ type: "joined", at: utc(u.created_at), who: person(u) });
 
-  // Score changes in games people have picks on, from the last twelve hours.
-  const scores = await db.prepare(
-    `SELECT s.market_id, s.away, s.home, s.at, m.sport, m.league, m.away_name, m.home_name, m.starts_at, m.state
-       FROM market_scores s JOIN markets m ON m.id = s.market_id
-      WHERE datetime(s.at) >= datetime('now', '-12 hours')
-      ORDER BY datetime(s.at) DESC LIMIT 40`
-  ).all().catch(() => ({ results: [] }));
-  for (const s of scores.results || []) {
-    const market = { slug: slugFor(s), league: String(s.league || ""), sport: String(s.sport || ""), away: s.away_name, home: s.home_name, startsAt: s.starts_at };
-    items.push({ type: "score", at: utc(s.at), market, awayScore: Number(s.away), homeScore: Number(s.home), live: s.state === "LOCKED" });
-  }
+  // Score changes are deliberately NOT in the feed: a game scoring six
+  // times buries everything else. settle.js still tracks them into
+  // market_scores and the game page shows the live score; only the
+  // final lands here. Re-enable by reading market_scores again — the
+  // client still knows how to draw a "score" item.
 
   for (const h of music) items.push({ type: "song", at: new Date(h.playedAt).toISOString(), who: { login: h.login, displayName: h.login, avatar: "" }, title: h.title });
 
