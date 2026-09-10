@@ -161,6 +161,28 @@ img{max-width:100%}
   font-weight:800;font-size:.84rem;
 }
 .login-btn:hover{filter:brightness(1.08)}
+/* Signed in, the name and the wallet share one pill: avatar + name on
+   the left goes to the profile, the coin count on the right to Picks. */
+.me-pill{display:inline-flex;align-items:center;flex:0 0 auto}
+.me-pill.on{
+  height:36px;border:1px solid var(--line);border-radius:999px;background:var(--panel);overflow:hidden
+}
+.me-pill.on .login-btn{
+  height:34px;padding:0 10px 0 4px;border-radius:0;background:none;color:var(--text);gap:7px
+}
+.me-pill.on .login-btn:hover{filter:none;background:var(--panel-2)}
+.me-av{
+  position:relative;overflow:hidden;width:26px;height:26px;flex:0 0 auto;border-radius:50%;
+  display:grid;place-items:center;background:linear-gradient(150deg,#8e1231,#4a0a1c);
+  color:var(--gold);font-size:.62rem;font-weight:800
+}
+.me-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .2s ease}
+.me-av.has-logo{color:transparent}.me-av.has-logo img{opacity:1}
+.me-name{max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.me-pill.on .wallet-chip{
+  height:34px;padding:0 12px 0 10px;border:0;border-left:1px solid var(--line);border-radius:0
+}
+.me-pill.on a.wallet-chip:hover{border-color:var(--line);filter:brightness(1.1)}
 
 /* ============================================================
    SHELL — nav on top, view in the middle, chat pinned right.
@@ -437,6 +459,8 @@ body.chat-hidden .chatrail{display:none}
 }
 @media (max-width:1100px){
   .topnav{gap:10px}
+  .me-name{display:none}
+  .me-pill.on .login-btn{padding:0 6px 0 4px}
 }
 @media (max-width:980px){
   /* The chat rail goes off-canvas here. A fixed element parked at

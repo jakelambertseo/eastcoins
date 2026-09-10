@@ -417,10 +417,26 @@
       if (user?.login) {
         // Signed in, the button is your name and goes to your profile.
         // Routed by the same ulink handler every other name uses.
-        els.loginBtn.textContent = user.displayName || user.login;
+        els.loginBtn.replaceChildren();
+        const face = document.createElement("span");
+        face.className = "me-av";
+        face.textContent = String(user.displayName || user.login).slice(0, 1).toUpperCase();
+        if (user.profileImageUrl) {
+          const img = document.createElement("img");
+          img.alt = "";
+          img.addEventListener("load", () => face.classList.add("has-logo"));
+          img.addEventListener("error", () => img.remove());
+          img.src = user.profileImageUrl;
+          face.append(img);
+        }
+        const name = document.createElement("span");
+        name.className = "me-name";
+        name.textContent = user.displayName || user.login;
+        els.loginBtn.append(face, name);
         els.loginBtn.href = `/u/${encodeURIComponent(String(user.login).toLowerCase())}`;
         els.loginBtn.classList.add("ulink");
         els.loginBtn.title = "Your profile";
+        document.getElementById("mePill")?.classList.add("on");
 
         // The Admin link stays out of the nav now that testing is done;
         // admins reach it at /?view=admin. The server re-checks every
