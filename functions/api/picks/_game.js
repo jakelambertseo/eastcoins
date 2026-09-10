@@ -63,9 +63,13 @@ export async function loadOps(db, marketId) {
 
 // Two markets for one fixture (a reopened one, or a test that was voided
 // and run again): the one that settled with picks on it is the game.
+// Settled first, then anything live, then whatever was voided — a
+// test market someone closed by hand must never stand in for the real
+// game that opens later under the same name.
+const RANK = { SETTLED: 3, SETTLING: 2, LOCKED: 2, OPEN: 2, VOID: 0, CANCELLED: 0 };
 function preferred(markets) {
   return markets.slice().sort((a, b) =>
-    ((b.state === "SETTLED") - (a.state === "SETTLED")) ||
+    ((RANK[b.state] ?? 1) - (RANK[a.state] ?? 1)) ||
     (Number(b.pick_count || 0) - Number(a.pick_count || 0)) ||
     String(b.created_at || "").localeCompare(String(a.created_at || ""))
   )[0];
