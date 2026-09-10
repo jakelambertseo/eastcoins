@@ -531,11 +531,11 @@ body.chat-hidden .chatrail{display:none}
 .brand:hover .brand-mark{box-shadow:0 0 0 1px rgba(232,191,53,.45), 0 6px 18px var(--red-glow)}
 
 /* a low crimson wash under the nav ties it to the logo */
+/* The nav is the same near-black as the mockups: no burgundy wash,
+   a plain hairline underneath. The brand mark carries the red. */
 .topnav{
-  background:
-    linear-gradient(180deg,rgba(165,18,47,.16),transparent 92%),
-    rgba(12,10,9,.92);
-  border-bottom-color:rgba(165,18,47,.26);
+  background:rgba(12,10,9,.92);
+  border-bottom-color:var(--line);
 }
 
 /* live state reads red, matching the mark */
