@@ -11,9 +11,9 @@
 import { getSessionUser, walletWritesEnabled, readBalance } from "../picks/_lib.js";
 import { readStatus } from "../picks/_ops.js";
 import { tmdb } from "../screen/_tmdb.js";
+import { musicRoomUrl } from "../_config.js";
 
 const DASHBOARD_LOGINS = new Set(["bootypaper"]);
-const DEFAULT_MUSIC_ROOM = "https://eastcoin-music-room.jake-7f5.workers.dev";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
@@ -65,7 +65,7 @@ export async function onRequestGet(context) {
     ).bind(todayStart, todayStart, now - 60000).first().catch(() => null),
     db.prepare(`SELECT COUNT(*) AS tabs, COUNT(DISTINCT user_id) AS people, SUM(CASE WHEN user_id IS NULL THEN 1 ELSE 0 END) AS guests FROM site_presence WHERE seen_at >= ?`).bind(now - 75000).first().catch(() => null),
     timed(async () => {
-      const base = String(env.MUSIC_ROOM_URL || DEFAULT_MUSIC_ROOM).replace(/\/$/, "");
+      const base = musicRoomUrl(env);
       const r = await fetch(`${base}/health`);
       const payload = await r.json().catch(() => null);
       return { status: r.status, service: payload?.service || null };

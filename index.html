@@ -80,18 +80,22 @@
   </aside>
 </div>
 
+<!-- The configuration service: reads /api/config and applies the chat
+     channel and Green Room settings. Must come before the shell and
+     the music config, both of which wait on it. -->
+<script defer src="/assets/eastcoins-config.js?v=1"></script>
 <script defer src="/assets/eastcoins-ppv-api.js"></script>
 <script defer src="/assets/eastcoins-streamed-api.js"></script>
 <script defer src="/v3/assets/js/v3-sports.js?v=6"></script>
-<script defer src="/v3/assets/js/v3-shell.js?v=62"></script>
+<script defer src="/v3/assets/js/v3-shell.js?v=63"></script>
 <script defer src="/v3/assets/js/v3-presence.js?v=10"></script>
 <script defer src="/v3/assets/js/v3-scores.js?v=5"></script>
 <script defer src="/v3/assets/js/v3-events.js?v=33"></script>
 <script defer src="/v3/assets/js/v3-gameday.js?v=18"></script>
 <script defer src="/v3/assets/js/v3-watch.js?v=20"></script>
 <script defer src="/assets/eastcoins-youtube.js?v=2"></script>
-<script defer src="/assets/eastcoins-music-config.js?v=2"></script>
-<script defer src="/v3/assets/js/v3-music.js?v=69"></script>
+<script defer src="/assets/eastcoins-music-config.js?v=3"></script>
+<script defer src="/v3/assets/js/v3-music.js?v=70"></script>
 <script defer src="/v3/assets/js/v3-logos.js?v=3"></script>
 <script defer src="/v3/assets/js/v3-badges.js?v=2"></script>
 <script defer src="/v3/assets/js/v3-picks.js?v=48"></script>

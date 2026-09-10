@@ -2529,6 +2529,25 @@
     pick and casino bet over time. Your own profile can flip it to your
     actual balance; everyone else sees the net only.
 </p>
+<article class="timeline-entry">
+<div class="timeline-date">
+<time datetime="2026-09-10">September 10, 2026</time>
+</div>
+<h2>The chat channel and the Green Room are configuration now</h2>
+<p>
+    Which Twitch chat the rail embeds, and which Green Room Worker the site
+    talks to, are read from the deployment rather than written into the page.
+    Set <code>TWITCH_CHAT_CHANNEL</code> or <code>MUSIC_ROOM_URL</code> on the
+    Pages project and the site follows; set neither and nothing changes —
+    zwades' chat and the production room, exactly as before.
+</p>
+<p>
+    A new <code>/api/config</code> answers both questions, and the three
+    places that each kept their own copy of the room address now ask it
+    instead. The chat embed also lists whatever host is serving the page,
+    so it works on a preview deployment and in local development without
+    anyone maintaining a list of hostnames.
+</p>
 </article>
 </section>
 </main>
