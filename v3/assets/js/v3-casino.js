@@ -22,8 +22,8 @@
 
   const GAMES = {
     flip: { title: "Coin Flip", icon: "🪙", blurb: "Heads or tails, 2×. One coin for the whole room, every 30 seconds.", route: "flip" },
-    wheel: { title: "Wheel", icon: "🎡", blurb: "Red or black 2×, the gold slice 24×. One spin a minute.", route: "wheel" },
-    race: { title: "Horse Race", icon: "🐎", blurb: "Four runners from 2.4× to 9.6×. They're off every minute.", route: "race" },
+    wheel: { title: "Wheel", icon: "🎡", blurb: "Red or black 2×, the gold sliver 8×. One spin a minute.", route: "wheel" },
+    race: { title: "Horse Race", icon: "🐎", blurb: "Four runners from 2× to 14×. They're off every minute.", route: "race" },
     hilo: { title: "Higher or Lower", icon: "🃏", blurb: "Your own deck. Every right call multiplies the stake; cash out any time.", route: "hilo" }
   };
 
@@ -87,8 +87,8 @@
 
     const lower = K.el("div", "cas-lower");
     const board = K.el("section", "cf-card");
-    const bh = K.el("h2", null, "Biggest wins");
-    bh.append(K.el("small", null, "last 24 hours"));
+    const bh = K.el("h2", null, "Recent results");
+    bh.append(K.el("small", null, "every game, wins and losses"));
     refs.board = K.el("div", "cf-list");
     board.append(bh, refs.board);
 
@@ -96,7 +96,8 @@
     rules.append(K.el("h2", null, "House rules"));
     const ul = K.el("ul");
     for (const t of [
-      "20 ZCoins a bet, at most. Ten bets an hour per game.",
+      "20 ZCoins a bet, at most. Ten bets an hour per game, and nobody takes more than 300 ZC out of the casino in any hour.",
+      "A game only runs while someone is in its room — with nobody there, nothing is drawn.",
       "One bet per person per round. Bets close before anything is drawn.",
       "Results come from a random seed made when the round is created. Its hash is shown while bets are open; the seed is revealed after, so anyone can check.",
       "Wins land in your StreamElements wallet the moment the round settles — the same wallet Picks uses.",
@@ -114,7 +115,13 @@
     for (const g of data.games) {
       const r = refs[`tile_${g.key}`];
       if (!r) continue;
-      if (g.round) {
+      if (g.round && !g.room && !g.inRound) {
+        // Nobody there: the clock is not running for anyone.
+        r.phase.textContent = "Waiting for a player";
+        r.phase.className = "cas-phase";
+        r.clock.textContent = "";
+        r.inRound.textContent = "opens when someone sits down";
+      } else if (g.round) {
         const inBets = now < g.round.closesAt;
         const left = Math.max(0, Math.ceil(((inBets ? g.round.closesAt : g.round.endsAt) - now) / 1000));
         r.phase.textContent = inBets ? "Bets open" : g.key === "race" ? "Running" : g.key === "wheel" ? "Spinning" : "Result";
@@ -136,18 +143,20 @@
   function renderBoard() {
     if (!data || !refs.board) return;
     refs.board.replaceChildren();
-    if (!data.board.length) { refs.board.append(K.el("p", "cf-empty", "No wins in the last day. First one goes here.")); return; }
+    if (!data.board.length) { refs.board.append(K.el("p", "cf-empty", "Nothing settled yet. The first result goes here.")); return; }
     for (const w of data.board) {
-      const row = K.el("div", "cf-row won");
+      const won = w.status === "WON";
+      const row = K.el("div", `cf-row ${won ? "won" : "lost"}`);
       row.append(K.avatar(w.user, "cf-av"));
       const who = K.el("div", "cf-who");
       who.append(K.nameLink(w.user));
       const sub = K.el("small");
-      sub.append(document.createTextNode(`${GAMES[w.game]?.title || w.game} · ${w.pick} · `), K.zc(w.wager));
+      sub.append(document.createTextNode(`${GAMES[w.game]?.title || w.game} · ${w.pick} · `), K.zc(w.wager),
+        document.createTextNode(w.at ? ` · ${new Date(w.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : ""));
       who.append(sub);
       row.append(who);
-      const res = K.el("span", "cf-res nums up");
-      res.append(K.zc(w.profit, { sign: true }));
+      const res = K.el("span", `cf-res nums ${won ? "up" : "down"}`);
+      res.append(K.el("span", `cf-tag ${won ? "win" : "loss"}`, won ? "WIN" : "LOSS"), K.zc(w.profit, { sign: true }));
       row.append(res);
       refs.board.append(row);
     }

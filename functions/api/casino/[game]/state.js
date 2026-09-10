@@ -3,7 +3,7 @@
    poll after a round closes is what pays the winners. */
 
 import { getSessionUser, walletWritesEnabled } from "../../picks/_lib.js";
-import { gameFor, ensureSchema, roundAt, ensureRound, settleRound, betsFor, roomFor, touchPresence, betsLastHour, publicConfig } from "../_engine.js";
+import { gameFor, ensureSchema, roundAt, ensureRound, settleRound, betsFor, roomFor, touchPresence, betsLastHour, hourlyNet, publicConfig } from "../_engine.js";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 const parse = (t) => { try { return t ? JSON.parse(t) : null; } catch { return null; } };
@@ -46,6 +46,6 @@ export async function onRequestGet(context) {
     bets,
     last: prevRow ? { no: prevRow.no, result: parse(prevRow.result), hash: prevRow.hash, seed: prevRow.seed, bets: last } : null,
     room,
-    me: user ? { id: user.id, login: user.login, displayName: user.displayName, bet: mine, betsThisHour: await betsLastHour(db, game, user.id) } : null
+    me: user ? { id: user.id, login: user.login, displayName: user.displayName, bet: mine, betsThisHour: await betsLastHour(db, game, user.id), hourNet: await hourlyNet(db, user.id) } : null
   });
 }

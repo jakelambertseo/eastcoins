@@ -2,7 +2,7 @@
    recent runs, and the room's recent runs (the public ledger). */
 
 import { getSessionUser, walletWritesEnabled } from "../../picks/_lib.js";
-import { ensureSchema, touchPresence, roomFor } from "../_engine.js";
+import { ensureSchema, touchPresence, roomFor, hourlyNet, HOUR_WIN_CAP } from "../_engine.js";
 import { ensureHilo, liveGameFor, gamesLastHour, publicGame, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR, MAX_MULTIPLIER, MAX_STEPS, EDGE_RETURN } from "./_hilo.js";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
@@ -57,6 +57,7 @@ export async function onRequestGet(context) {
     me = {
       id: user.id, login: user.login, displayName: user.displayName,
       gamesThisHour: await gamesLastHour(db, user.id),
+      hourNet: await hourlyNet(db, user.id),
       wins: Number(t?.wins || 0), busts: Number(t?.busts || 0), net: Number(t?.net || 0), best: Number(t?.best || 0)
     };
   }
@@ -64,7 +65,7 @@ export async function onRequestGet(context) {
   return json({
     ok: true,
     now,
-    config: { maxBet: MAX_BET, minBet: MIN_BET, maxPerHour: MAX_BETS_PER_HOUR, maxMultiplier: MAX_MULTIPLIER, maxSteps: MAX_STEPS, edgeReturn: EDGE_RETURN, canBet: Boolean(user) && walletWritesEnabled(context.env) },
+    config: { maxBet: MAX_BET, minBet: MIN_BET, maxPerHour: MAX_BETS_PER_HOUR, maxMultiplier: MAX_MULTIPLIER, maxSteps: MAX_STEPS, edgeReturn: EDGE_RETURN, hourCap: HOUR_WIN_CAP, canBet: Boolean(user) && walletWritesEnabled(context.env) },
     live: live ? publicGame(live) : null,
     ledger,
     room: await roomFor(db, HILO, now),

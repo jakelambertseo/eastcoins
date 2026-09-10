@@ -3,16 +3,15 @@
 
      /?view=wheel
 
-   Twenty-five slices: twelve red, twelve black, one gold. Forty
+   Twenty-four red and black slices and one slim gold sliver. Forty
    seconds of bets, a four-second spin, the rest of the minute to
-   look at where it landed. Red and black pay 2×, gold pays 24×.
+   look at where it landed. Red and black pay 2×, gold pays 8×.
    The server owns the clock and the slice; this page spins to it.
    ============================================================ */
 (() => {
   "use strict";
 
   const K = window.ECCasino;
-  const SLICE_DEG = 360 / 25;
   const COLORS = { red: "#d31d4d", black: "#2a2420", gold: "#e8bf35" };
   const LABEL = { red: "Red", black: "Black", gold: "Gold" };
 
@@ -35,9 +34,9 @@
 
   /** Paint the slices once the config says what they are. */
   function paintSlices(refs, config) {
-    if (refs.wheelPainted || !config?.slices) return;
+    if (refs.wheelPainted || !config?.segments) return;
     refs.wheelPainted = true;
-    const stops = config.slices.map((c, i) => `${COLORS[c]} ${i * SLICE_DEG}deg ${(i + 1) * SLICE_DEG}deg`);
+    const stops = config.segments.map((s) => `${COLORS[s.color]} ${s.from}deg ${s.to}deg`);
     refs.wheelInner.style.background = `conic-gradient(${stops.join(",")})`;
   }
 
@@ -60,8 +59,9 @@
       inner.style.transition = "none";
       inner.style.transform = current === "none" ? "rotate(0deg)" : current;
       void inner.offsetWidth;
-      const center = (round.result.slice + 0.5) * SLICE_DEG;
-      const target = 5 * 360 + (360 - center);
+      // The server drew an angle from the top; turning the wheel by the
+      // rest of the circle puts that point under the pointer.
+      const target = 5 * 360 + (360 - Number(round.result.angle || 0));
       // Late to the round: land on the slice at once instead of a full spin.
       const elapsed = Math.max(0, now - round.closesAt);
       const remaining = Math.max(0, 4000 - elapsed);
@@ -73,7 +73,7 @@
   const view = K.sharedGame({
     key: "wheel",
     title: "Wheel",
-    intro: "Twenty-five slices, one spin a minute. Red or black pays 2×, the single gold slice pays 24×. Forty seconds to get in.",
+    intro: "One spin a minute. Red or black pays 2×; the slim gold sliver pays 8×. Forty seconds to get in.",
     running: "Spinning…",
     revealMs: 4200,
     buildStage,

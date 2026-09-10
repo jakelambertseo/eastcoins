@@ -243,13 +243,15 @@
       K.withCoins(refs.cash, live.step < 1 ? "Cash out after one right call" : `Cash out [[${live.potential}]]`);
       refs.note.textContent = `Ties lose. Run ends at ×${config.maxMultiplier} or ${config.maxSteps} calls.`;
     } else {
-      refs.deal.disabled = busy || !config.canBet;
+      const capped = Number.isFinite(data.me?.hourNet) && data.me.hourNet >= config.hourCap;
+      refs.deal.disabled = busy || !config.canBet || capped;
       if (!data.me) { refs.deal.textContent = "Log in to play"; refs.note.textContent = "Log in with Twitch — the button up top — and your ZCoins come with you."; }
       else if (!config.canBet) { refs.deal.textContent = "Casino paused"; refs.note.textContent = "ZCoin transfers aren't switched on right now."; }
+      else if (capped) { K.withCoins(refs.deal, `Up [[${data.me.hourNet}]] this hour — the cap`); refs.note.textContent = "The tables reopen for you as the hour rolls on."; }
       else { K.withCoins(refs.deal, `Deal for [[${stake}]]`); refs.note.textContent = "First card is free to look at; the stake rides on your calls."; }
     }
     const used = data.me?.gamesThisHour;
-    K.withCoins(refs.limits, `Max stake [[${config.maxBet}]] · up to ${config.maxPerHour} runs an hour` + (Number.isFinite(used) ? ` · you've used ${used} of ${config.maxPerHour}` : ""));
+    K.withCoins(refs.limits, `Max stake [[${config.maxBet}]] · ${config.maxPerHour} runs an hour · winnings cap [[${config.hourCap}]] an hour` + (Number.isFinite(used) ? ` · you've used ${used} of ${config.maxPerHour}` : ""));
 
     // Side column
     refs.youList.replaceChildren();

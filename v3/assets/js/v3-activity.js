@@ -91,12 +91,19 @@
       : el("span", "av-crest", String(teamName || "?").slice(0, 3).toUpperCase());
   }
 
-  const ICON = { pick: "🪙", won: "✅", lost: "❌", refunded: "↩️", open: "🏟️", final: "🏁", void: "🚫", joined: "👋", song: "🎵" };
+  const ICON = { pick: "🪙", won: "✅", lost: "❌", refunded: "↩️", open: "🏟️", final: "🏁", void: "🚫", joined: "👋", song: "🎵", casino: "🎰" };
+  const CASINO_ICON = { flip: "🪙", wheel: "🎡", race: "🐎", hilo: "🃏" };
+  function casinoLink(item) {
+    const a = el("a", "glink", item.gameName);
+    a.href = `/?view=${item.game}`;
+    return a;
+  }
 
   function row(item) {
     const r = el("article", `av-row ${item.type}`);
     const lead = el("span", "av-lead");
-    if (item.who && item.type !== "song") lead.append(avatar(item.who));
+    if (item.type === "casino") lead.append(el("span", `av-av ghost ${item.status === "WON" ? "good" : "bad"}`, CASINO_ICON[item.game] || "🎰"));
+    else if (item.who && item.type !== "song") lead.append(avatar(item.who));
     else if (item.market && (item.type === "open" || item.type === "final" || item.type === "void")) lead.append(crest(item.market, item.winner || item.market.home));
     else lead.append(el("span", "av-av ghost", ICON[item.type] || "·"));
     r.append(lead);
@@ -148,6 +155,11 @@
       case "song":
         text.append(name(item.who), document.createTextNode(" played "), el("b", null, item.title));
         meta.textContent = "Green Room";
+        break;
+      case "casino":
+        text.append(name(item.who), document.createTextNode(item.status === "WON" ? " won " : " lost "), coin(Math.abs(item.profit)),
+          document.createTextNode(" on the "), casinoLink(item));
+        meta.textContent = `${CASINO_ICON[item.game] || "🎰"} ${item.pick} · ${item.wager} ZC staked`;
         break;
       default:
         text.textContent = item.type;
@@ -236,6 +248,7 @@
       case "void": span.append(document.createTextNode("Voided · "), game(`${nick(m.away)} at ${nick(m.home)}`)); break;
       case "joined": span.append(who(), document.createTextNode(" joined")); break;
       case "song": span.append(who(), document.createTextNode(" played "), el("b", null, item.title.length > 40 ? item.title.slice(0, 38) + "…" : item.title)); break;
+      case "casino": span.append(who(), document.createTextNode(item.status === "WON" ? ` won ${Math.abs(item.profit)} ZC on the ` : ` lost ${Math.abs(item.profit)} ZC on the `), casinoLink(item)); break;
       default: return null;
     }
     span.append(el("span", "tk-ago", ago(item.at)));

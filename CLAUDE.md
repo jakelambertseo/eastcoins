@@ -72,7 +72,14 @@
 > `v3-casino-kit.js`'s `sharedGame(spec)`), and Higher or Lower
 > `/?view=hilo` (per-player, `functions/api/casino/hilo/*`, table
 > `hilo_games`, committed deck, 4% edge per call, ×50 / 12-card cap).
-> Shared limits: 20 ZC a bet, 10 an hour per game. Coin Flip itself is
+> Shared limits: 20 ZC a bet, 10 an hour per game, and `HOUR_WIN_CAP`
+> (300 ZC net in any rolling hour across every game, `capCheck` in
+> `_engine.js`, enforced by every bet/deal endpoint including the coin's).
+> Wheel: 24 red/black slices + one 15-degree gold sliver at 8x, outcome is an
+> angle. Race: whole-number payouts 2/3/7/14, odds normalised from them.
+> Casino results also flow into `/api/picks/activity` (type `casino`),
+> the ticker, and the profile's Casino section (`profile.casino`). The
+> floor's board lists recent wins and losses. Coin Flip itself is
 > still the original:
 > `functions/api/coin/` (`_coin.js` clock/fairness/settlement, `state.js`
 > poll, `bet.js`), tables created on first use (`coin_rounds`, `coin_bets`,

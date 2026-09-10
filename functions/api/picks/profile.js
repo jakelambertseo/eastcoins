@@ -129,49 +129,49 @@ export async function onRequestGet(context) {
   let badges = [];
   try { badges = (await badgesFor(context.env, db)).byLogin[login] || []; } catch { badges = []; }
 
-  // Coin Flip: record, net, streak, and the last few flips.
-  let flip = null;
+  // Casino: every game's record for this person, and their latest results.
+  let casino = null;
   try {
     await ensureCoinSchema(db);
-    const rows = await db
-      .prepare(
-        `SELECT b.round_no, b.side, b.wager, b.status, b.payout, r.result, r.settled_at
-           FROM coin_bets b JOIN coin_rounds r ON r.no = b.round_no
-          WHERE b.user_id = ? AND b.status IN ('WON','LOST')
-          ORDER BY b.round_no DESC LIMIT 200`
-      )
-      .bind(String(user.twitch_id))
-      .all();
-    const flips = (rows.results || []).map((f) => ({
-      round: Number(f.round_no), side: f.side, result: f.result, wager: Number(f.wager), status: f.status,
-      profit: f.status === "WON" ? Number(f.payout) - Number(f.wager) : -Number(f.wager),
-      settledAt: f.settled_at ? String(f.settled_at).replace(" ", "T") + "Z" : null
-    }));
-    if (flips.length) {
-      const wins = flips.filter((f) => f.status === "WON").length;
-      let streak = 0;
-      for (const f of flips) {   // newest first
-        const w = f.status === "WON";
-        if (streak === 0) streak = w ? 1 : -1;
-        else if ((streak > 0) === w) streak += w ? 1 : -1;
-        else break;
+    const uid = String(user.twitch_id);
+    const [coin, shared, hilo] = await Promise.all([
+      db.prepare(`SELECT 'flip' AS game, b.status, b.payout - b.wager AS profit, b.wager, b.side AS pick, r.settled_at AS at, r.result
+                    FROM coin_bets b JOIN coin_rounds r ON r.no = b.round_no WHERE b.user_id = ? AND b.status IN ('WON','LOST') ORDER BY b.round_no DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
+      db.prepare(`SELECT b.game, b.status, b.payout - b.wager AS profit, b.wager, b.pick, r.settled_at AS at, r.result
+                    FROM casino_bets b JOIN casino_rounds r ON r.game = b.game AND r.no = b.round_no WHERE b.user_id = ? AND b.status IN ('WON','LOST') ORDER BY b.round_no DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
+      db.prepare(`SELECT 'hilo' AS game, CASE WHEN status = 'CASHED' THEN 'WON' ELSE 'LOST' END AS status, CASE WHEN status = 'CASHED' THEN payout - stake ELSE -stake END AS profit,
+                         stake AS wager, ('×' || ROUND(multiplier, 2)) AS pick, updated_at AS at, NULL AS result
+                    FROM hilo_games WHERE user_id = ? AND status IN ('CASHED','BUST') ORDER BY datetime(updated_at) DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] }))
+    ]);
+    const all = [...(coin.results || []), ...(shared.results || []), ...(hilo.results || [])]
+      .map((r) => ({ game: String(r.game), status: r.status, profit: Number(r.profit), wager: Number(r.wager), pick: String(r.pick), at: r.at ? String(r.at).replace(" ", "T") + "Z" : null }))
+      .sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
+    if (all.length) {
+      const perGame = {};
+      for (const r of all) {
+        const g = perGame[r.game] || (perGame[r.game] = { plays: 0, wins: 0, losses: 0, net: 0, staked: 0 });
+        g.plays += 1; if (r.status === "WON") g.wins += 1; else g.losses += 1; g.net += r.profit; g.staked += r.wager;
       }
-      flip = {
-        total: flips.length, wins, losses: flips.length - wins,
-        net: flips.reduce((n, f) => n + f.profit, 0),
-        staked: flips.reduce((n, f) => n + f.wager, 0),
-        biggestWin: Math.max(0, ...flips.filter((f) => f.status === "WON").map((f) => f.profit)),
-        streak,
-        heads: flips.filter((f) => f.side === "heads").length,
-        recent: flips.slice(0, 8)
+      const wins = all.filter((r) => r.status === "WON").length;
+      const fav = Object.entries(perGame).sort((a, b) => b[1].plays - a[1].plays)[0];
+      casino = {
+        total: all.length, wins, losses: all.length - wins,
+        net: all.reduce((n, r) => n + r.profit, 0),
+        staked: all.reduce((n, r) => n + r.wager, 0),
+        biggestWin: Math.max(0, ...all.filter((r) => r.status === "WON").map((r) => r.profit)),
+        favourite: fav ? { game: fav[0], plays: fav[1].plays } : null,
+        games: perGame,
+        recent: all.slice(0, 10)
       };
     }
-  } catch { flip = null; }
+  } catch { casino = null; }
+  const flip = casino;   // older readers of this payload
 
   return json({
     ok: true,
     badges,
     flip,
+    casino,
     user: {
       id: String(user.twitch_id),
       login: String(user.twitch_login).toLowerCase(),

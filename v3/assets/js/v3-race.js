@@ -6,7 +6,7 @@
    Four runners at different odds, one race a minute. Forty seconds
    of bets, then the horses run for about twelve seconds and the
    winner the server already drew crosses first. Gold Rush is the
-   favourite at 2.4×, Longshot pays 9.6×. Every price returns the
+   favourite at 2×, Longshot pays 14×. Every price returns about the
    same 96% over time.
    ============================================================ */
 (() => {
@@ -125,7 +125,7 @@
   const view = K.sharedGame({
     key: "race",
     title: "Horse Race",
-    intro: "Four runners, one race a minute. Gold Rush is the favourite at 2.4×, Longshot pays 9.6×. Forty seconds to pick your horse.",
+    intro: "Four runners, one race a minute. Gold Rush is the favourite at 2×, Longshot pays 14×. Forty seconds to pick your horse.",
     running: "They're off!",
     revealMs: RACE_MS + 300,
     buildStage,

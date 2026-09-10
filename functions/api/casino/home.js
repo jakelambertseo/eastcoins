@@ -50,26 +50,28 @@ export async function onRequestGet(context) {
   ]);
   games.push({ key: "hilo", name: "Higher or Lower", route: "hilo", round: null, inRound: Number(hiloLive?.n || 0), staked: 0, room: Number(hiloRoom?.n || 0) });
 
-  // The board: biggest wins in the last day, across every game.
-  const [coinWins, casinoWins, hiloWins] = await Promise.all([
-    db.prepare(`SELECT 'flip' AS game, b.payout - b.wager AS profit, b.wager, b.side AS pick, b.created_at AS at, u.twitch_login, u.display_name, u.avatar_url
-                  FROM coin_bets b JOIN users u ON u.twitch_id = b.user_id
-                 WHERE b.status = 'WON' AND datetime(b.created_at) >= datetime('now', '-1 day') ORDER BY profit DESC LIMIT 5`).all().catch(() => ({ results: [] })),
-    db.prepare(`SELECT b.game, b.payout - b.wager AS profit, b.wager, b.pick, b.created_at AS at, u.twitch_login, u.display_name, u.avatar_url
-                  FROM casino_bets b JOIN users u ON u.twitch_id = b.user_id
-                 WHERE b.status = 'WON' AND datetime(b.created_at) >= datetime('now', '-1 day') ORDER BY profit DESC LIMIT 5`).all().catch(() => ({ results: [] })),
-    db.prepare(`SELECT 'hilo' AS game, g.payout - g.stake AS profit, g.stake AS wager, ('×' || ROUND(g.multiplier, 2)) AS pick, g.updated_at AS at, u.twitch_login, u.display_name, u.avatar_url
+  // The board: the most recent results across every game, wins and
+  // losses alike — the casino's own ledger, for anyone to read.
+  const [coinRes, casinoRes, hiloRes] = await Promise.all([
+    db.prepare(`SELECT 'flip' AS game, b.status, b.payout - b.wager AS profit, b.wager, b.side AS pick, r.settled_at AS at, u.twitch_login, u.display_name, u.avatar_url
+                  FROM coin_bets b JOIN coin_rounds r ON r.no = b.round_no JOIN users u ON u.twitch_id = b.user_id
+                 WHERE b.status IN ('WON','LOST') ORDER BY b.round_no DESC LIMIT 15`).all().catch(() => ({ results: [] })),
+    db.prepare(`SELECT b.game, b.status, b.payout - b.wager AS profit, b.wager, b.pick, r.settled_at AS at, u.twitch_login, u.display_name, u.avatar_url
+                  FROM casino_bets b JOIN casino_rounds r ON r.game = b.game AND r.no = b.round_no JOIN users u ON u.twitch_id = b.user_id
+                 WHERE b.status IN ('WON','LOST') ORDER BY b.round_no DESC LIMIT 15`).all().catch(() => ({ results: [] })),
+    db.prepare(`SELECT 'hilo' AS game, CASE WHEN g.status = 'CASHED' THEN 'WON' ELSE 'LOST' END AS status, CASE WHEN g.status = 'CASHED' THEN g.payout - g.stake ELSE -g.stake END AS profit,
+                       g.stake AS wager, ('×' || ROUND(g.multiplier, 2)) AS pick, g.updated_at AS at, u.twitch_login, u.display_name, u.avatar_url
                   FROM hilo_games g JOIN users u ON u.twitch_id = g.user_id
-                 WHERE g.status = 'CASHED' AND datetime(g.updated_at) >= datetime('now', '-1 day') ORDER BY profit DESC LIMIT 5`).all().catch(() => ({ results: [] }))
+                 WHERE g.status IN ('CASHED','BUST') ORDER BY datetime(g.updated_at) DESC LIMIT 15`).all().catch(() => ({ results: [] }))
   ]);
-  const board = [...(coinWins.results || []), ...(casinoWins.results || []), ...(hiloWins.results || [])]
+  const board = [...(coinRes.results || []), ...(casinoRes.results || []), ...(hiloRes.results || [])]
     .map((r) => ({
-      game: r.game, profit: Number(r.profit), wager: Number(r.wager), pick: String(r.pick),
-      at: String(r.at).replace(" ", "T") + "Z",
+      game: r.game, status: r.status, profit: Number(r.profit), wager: Number(r.wager), pick: String(r.pick),
+      at: r.at ? String(r.at).replace(" ", "T") + "Z" : null,
       user: { login: String(r.twitch_login).toLowerCase(), displayName: String(r.display_name || r.twitch_login), avatar: String(r.avatar_url || "") }
     }))
-    .sort((a, b) => b.profit - a.profit)
-    .slice(0, 8);
+    .sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0))
+    .slice(0, 20);
 
   return json({ ok: true, now, games, board });
 }

@@ -4,7 +4,7 @@
    game per person; ten starts an hour; 1 to 20 ZC. */
 
 import { getSessionUser, walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOperation, newId, json, fail } from "../../picks/_lib.js";
-import { ensureSchema, touchPresence, GAMES } from "../_engine.js";
+import { ensureSchema, touchPresence, capCheck } from "../_engine.js";
 import { ensureHilo, cardAt, liveGameFor, gamesLastHour, publicGame, randomSeed, sha256, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "./_hilo.js";
 
 const HILO = { key: "hilo" };
@@ -27,6 +27,8 @@ export async function onRequestPost(context) {
 
   if (await liveGameFor(db, user.id)) return fail("GAME_LIVE", "You already have a run going — cash out or bust first.", 409);
   if ((await gamesLastHour(db, user.id)) >= MAX_BETS_PER_HOUR) return fail("RATE_LIMIT", `That's ${MAX_BETS_PER_HOUR} games this hour — the limit. Back in a bit.`, 429);
+  const cap = await capCheck(db, user.id);
+  if (cap.blocked) return fail("WIN_CAP", `You're up ${cap.net.toLocaleString()} ZC this hour — that's the cap. The tables reopen for you as the hour rolls on.`, 429);
 
   const balance = await readBalance(context.env, user.login);
   if (balance === null) return fail("BALANCE_UNAVAILABLE", "Couldn't read your ZCoin balance.", 503);

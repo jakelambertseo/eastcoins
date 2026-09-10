@@ -5,7 +5,7 @@
    the round settles. Same money path and limits as the coin flip. */
 
 import { getSessionUser, walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOperation, newId, json, fail } from "../../picks/_lib.js";
-import { gameFor, ensureSchema, roundAt, ensureRound, betsLastHour, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
+import { gameFor, ensureSchema, roundAt, ensureRound, betsLastHour, capCheck, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
 
 export async function onRequestPost(context) {
   const db = context.env.PICKS_DB;
@@ -38,6 +38,8 @@ export async function onRequestPost(context) {
 
   const recent = await betsLastHour(db, game, user.id);
   if (recent >= MAX_BETS_PER_HOUR) return fail("RATE_LIMIT", `That's ${MAX_BETS_PER_HOUR} bets this hour — the limit. Back in a bit.`, 429);
+  const cap = await capCheck(db, user.id);
+  if (cap.blocked) return fail("WIN_CAP", `You're up ${cap.net.toLocaleString()} ZC this hour — that's the cap. The tables reopen for you as the hour rolls on.`, 429);
 
   const balance = await readBalance(context.env, user.login);
   if (balance === null) return fail("BALANCE_UNAVAILABLE", "Couldn't read your ZCoin balance.", 503);

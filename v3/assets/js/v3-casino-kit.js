@@ -322,10 +322,16 @@
       if (!data || !refs.stageBox) return;
       buildPicks(data.config);
       renderClock();
-      const sig = JSON.stringify([data.bets, data.last, data.room, data.me?.bet, data.round.result]);
+      const revealed = isRevealed(data.round);
+      const sig = JSON.stringify([data.bets, data.last, data.room, data.me?.bet, data.round.result, revealed]);
       if (sig === lastSig) return;
       lastSig = sig;
       renderLists();
+    }
+
+    /** The result counts as known once the stage has had time to show it. */
+    function isRevealed(r) {
+      return Boolean(r.result) && serverNow() >= r.closesAt + (spec.revealMs || 0);
     }
 
     function renderClock() {
@@ -337,10 +343,11 @@
       const freshResult = Boolean(r.result) && !inBets && shownResultFor !== r.no;
       if (freshResult) shownResultFor = r.no;
       if (inBets) shownResultFor = -1;
+      const revealed = isRevealed(r);
 
       refs.status.textContent = `Round #${r.no}`;
-      refs.phase.textContent = inBets ? "Bets open" : r.result ? spec.describe(r.result, config) : spec.running || "Running…";
-      refs.phase.className = `cf-phase${inBets ? " open" : r.result ? " done" : ""}`;
+      refs.phase.textContent = inBets ? "Bets open" : revealed ? spec.describe(r.result, config) : spec.running || "Running…";
+      refs.phase.className = `cf-phase${inBets ? " open" : revealed ? " done" : ""}`;
       refs.clock.textContent = `${left}s`;
       refs.clockNote.textContent = inBets ? "until bets close" : "until the next round";
 
@@ -351,7 +358,8 @@
         b.classList.toggle("on", pick === p);
         b.disabled = Boolean(mine) || !inBets;
       }
-      const canBet = config.canBet && inBets && !mine && !busy;
+      const capped = Number.isFinite(data.me?.hourNet) && data.me.hourNet >= config.hourCap;
+      const canBet = config.canBet && inBets && !mine && !busy && !capped;
       refs.lock.disabled = !canBet;
       refs.stakeInput.disabled = Boolean(mine) || !inBets;
       const pays = (p, w) => Math.floor(w * (config.payout[p] || 0));
@@ -359,27 +367,25 @@
       else if (!config.canBet) { refs.lock.textContent = "Casino paused"; refs.betNote.textContent = "ZCoin transfers aren't switched on right now."; }
       else if (mine) {
         withCoins(refs.lock, `You're in: [[${mine.wager}]] on ${spec.pickLabel(mine.pick, config)}`);
-        if (inBets) withCoins(refs.betNote, `Pays [[${pays(mine.pick, mine.wager)}]] if it comes in.`);
+        if (!revealed) withCoins(refs.betNote, `Pays [[${pays(mine.pick, mine.wager)}]] if it comes in.`);
         else if (mine.status === "WON") withCoins(refs.betNote, `${spec.describe(r.result, config)} — you won [[${mine.profit}]].`);
         else if (mine.status === "LOST") withCoins(refs.betNote, `${spec.describe(r.result, config)} — you lost [[${mine.wager}]].`);
         else refs.betNote.textContent = "Settling…";
-        if (!inBets && (mine.status === "WON" || mine.status === "LOST") && announcedFor !== r.no) {
+        // The big moment, once the stage has shown it and not before.
+        if (revealed && (mine.status === "WON" || mine.status === "LOST") && announcedFor !== r.no) {
           announcedFor = r.no;
-          // Let the stage finish its reveal before the popup lands on it.
-          const delay = spec.revealMs || 0;
-          setTimeout(() => {
-            pop({ won: mine.status === "WON", amount: mine.status === "WON" ? mine.profit : mine.wager,
-              detail: `${spec.describe(r.result, config)}. ${mine.status === "WON" ? `${fmt(mine.payout)} back on ${fmt(mine.wager)}.` : "Next round in a moment."}` });
-            loadHistory();
-            window.ECV3?.refreshSession?.();
-          }, delay);
+          pop({ won: mine.status === "WON", amount: mine.status === "WON" ? mine.profit : mine.wager,
+            detail: `${spec.describe(r.result, config)}. ${mine.status === "WON" ? `${fmt(mine.payout)} back on ${fmt(mine.wager)}.` : "Next round in a moment."}` });
+          loadHistory();
+          window.ECV3?.refreshSession?.();
         }
       }
+      else if (capped) { withCoins(refs.lock, `Up [[${data.me.hourNet}]] this hour — the cap`); refs.betNote.textContent = "The tables reopen for you as the hour rolls on."; }
       else if (!inBets) { refs.lock.textContent = "Next round soon"; refs.betNote.textContent = "Bets open again when the clock hits zero."; }
       else { withCoins(refs.lock, `Lock in [[${stake}]] on ${spec.pickLabel(pick, config)}`); withCoins(refs.betNote, `Pays [[${pays(pick, stake)}]] if it comes in.`); }
 
       const used = data.me?.betsThisHour;
-      withCoins(refs.limits, `Max bet [[${config.maxBet}]] · up to ${config.maxPerHour} bets an hour` +
+      withCoins(refs.limits, `Max bet [[${config.maxBet}]] · ${config.maxPerHour} bets an hour · winnings cap [[${config.hourCap}]] an hour` +
         (Number.isFinite(used) ? ` · you've used ${used} of ${config.maxPerHour}` : ""));
     }
 
@@ -416,13 +422,14 @@
       const now = serverNow();
       const inBets = now < r.closesAt;
       const bets = data.bets || [];
+      const revealed = isRevealed(r);
       if (bets.length) { const c = el("span"); c.append(document.createTextNode(`${bets.length} in · `), zc(bets.reduce((n, b) => n + b.wager, 0))); refs.thisCount.replaceChildren(c); }
       else refs.thisCount.textContent = "nobody yet";
       refs.thisList.replaceChildren();
       if (!bets.length) refs.thisList.append(el("p", "cf-empty", inBets ? "Be the first in." : "Nobody bet this round."));
-      for (const b of bets) refs.thisList.append(betRow(b, !inBets && Boolean(r.result), config));
+      for (const b of bets) refs.thisList.append(betRow(b, revealed, config));
 
-      if (r.result && !inBets && historyFor !== r.no) { historyFor = r.no; loadHistory(); }
+      if (revealed && historyFor !== r.no) { historyFor = r.no; loadHistory(); }
 
       const last = data.last;
       refs.lastList.replaceChildren();

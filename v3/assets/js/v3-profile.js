@@ -273,55 +273,56 @@
     }
     wrap.append(ms);
 
-    // Coin Flip — built but not shown until the casino gets the go-ahead.
-    // Flip SHOW_FLIP to bring the section (and the footer link) back.
-    const SHOW_FLIP = false;
-    const fs = el("section", "pf-section");
-    const fh = el("h2", null, "Coin Flip");
-    const flipEmote = document.createElement("img");
-    flipEmote.className = "pf-emote";
-    flipEmote.src = "https://cdn.betterttv.net/emote/6928e7173a375a69ca4d0d47/2x.webp";
-    flipEmote.alt = "";
-    flipEmote.width = 26;
-    flipEmote.height = 26;
-    fh.append(flipEmote);
-    fs.append(fh);
-    const f = data.flip;
-    if (!f) {
-      const note = emptyNote("No flips yet", "Heads or tails at the coin flip — wins, losses and streaks show here.");
-      const go = link("/?view=flip", "gp-back", "Go flip a coin →");
-      go.dataset.route = "flip";
+    // Casino: every game's record, and the latest results.
+    const GAME_NAME = { flip: "Coin Flip", wheel: "Wheel", race: "Horse Race", hilo: "Higher or Lower" };
+    const GAME_ICON = { flip: "🪙", wheel: "🎡", race: "🐎", hilo: "🃏" };
+    const cs = el("section", "pf-section");
+    cs.id = "pf-casino";
+    const ch = el("h2", null, "Casino");
+    const casinoEmote = document.createElement("img");
+    casinoEmote.className = "pf-emote";
+    casinoEmote.src = "https://cdn.betterttv.net/emote/6928e7173a375a69ca4d0d47/2x.webp";
+    casinoEmote.alt = "";
+    casinoEmote.width = 26;
+    casinoEmote.height = 26;
+    ch.append(casinoEmote);
+    cs.append(ch);
+    const c = data.casino;
+    if (!c) {
+      const note = emptyNote("No casino results yet", "Coin Flip, the Wheel, the Horse Race and Higher or Lower — wins and losses show here.");
+      const go = link("/?view=casino", "gp-back", "Go to the casino →");
       note.append(go);
-      fs.append(note);
+      cs.append(note);
     } else {
-      const fstrip = el("div", "summarystrip");
-      fstrip.append(
-        stat("Record", `${f.wins}–${f.losses}`, `${f.total} flip${f.total === 1 ? "" : "s"} · ${Math.round(100 * f.heads / f.total)}% called heads`),
-        stat("Net", zc(f.net, { sign: true }), `${f.staked.toLocaleString()} staked`, f.net > 0 ? "wallet" : ""),
-        stat("Biggest win", zc(f.biggestWin, { sign: true }), "single flip"),
-        stat("Streak", f.streak > 0 ? `W${f.streak}` : `L${Math.abs(f.streak)}`, f.streak > 0 ? "wins in a row" : "losses in a row")
+      const cstrip = el("div", "summarystrip");
+      cstrip.append(
+        stat("Record", `${c.wins}–${c.losses}`, `${c.total} play${c.total === 1 ? "" : "s"} · ${c.staked.toLocaleString()} staked`),
+        stat("Net", zc(c.net, { sign: true }), c.net > 0 ? "up on the house" : c.net < 0 ? "down to the house" : "dead even", c.net > 0 ? "wallet" : ""),
+        stat("Biggest win", zc(c.biggestWin, { sign: true }), "single bet"),
+        stat("Favourite", c.favourite ? `${GAME_ICON[c.favourite.game] || ""} ${GAME_NAME[c.favourite.game] || c.favourite.game}` : "—", c.favourite ? `${c.favourite.plays} play${c.favourite.plays === 1 ? "" : "s"}` : "")
       );
-      fs.append(fstrip);
+      cs.append(cstrip);
       const rows = el("div", "gp-rows");
-      for (const r of f.recent) {
-        const row = el("div", `gp-row ${r.status === "WON" ? "won" : "lost"}`);
+      for (const r of c.recent) {
+        const won = r.status === "WON";
+        const row = el("div", `gp-row ${won ? "won" : "lost"}`);
         const who = el("div", "gp-who");
-        who.append(el("b", null, `${r.side[0].toUpperCase() + r.side.slice(1)} · it landed ${r.result}`),
-          el("span", null, `Round #${r.round}${r.settledAt ? " · " + when(r.settledAt, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : ""}`));
+        who.append(el("b", null, `${GAME_ICON[r.game] || "🎰"} ${GAME_NAME[r.game] || r.game} · ${r.pick}`),
+          el("span", null, r.at ? when(r.at, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : ""));
         const stake = el("div", "gp-stake");
         stake.append(el("b", "nums", String(r.wager)), document.createTextNode("staked"));
-        const payout = el("div", `gp-payout nums ${r.status === "WON" ? "up" : "down"}`);
-        payout.append(el("span", `cf-tag ${r.status === "WON" ? "win" : "loss"}`, r.status === "WON" ? "WIN" : "LOSS"), document.createTextNode(r.status === "WON" ? `+${r.profit}` : `−${r.wager}`));
+        const payout = el("div", `gp-payout nums ${won ? "up" : "down"}`);
+        payout.append(el("span", `cf-tag ${won ? "win" : "loss"}`, won ? "WIN" : "LOSS"), document.createTextNode(won ? `+${r.profit}` : `−${r.wager}`));
         row.append(who, stake, payout);
         rows.append(row);
       }
-      fs.append(el("h3", "pf-sub", "Latest flips"), rows);
+      cs.append(el("h3", "pf-sub", "Latest results"), rows);
     }
-    if (SHOW_FLIP) wrap.append(fs);
+    wrap.append(cs);
 
     const foot = el("div", "gp-links");
     foot.append(link("/?view=picks&tab=leaderboard", "gp-back", "Leaderboard"), link("/?view=picks&tab=ledger", "gp-back", "Community Ledger"));
-    if (SHOW_FLIP) foot.append(link("/?view=flip", "gp-back", "Coin Flip"));
+    foot.append(link("/?view=casino", "gp-back", "Casino"));
     wrap.append(foot);
     return wrap;
   }

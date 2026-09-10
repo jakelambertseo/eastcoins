@@ -32,19 +32,33 @@ export const ROOM_WINDOW_MS = 60 * 1000;
 
 /* ---------------------------------------------------------- games */
 
-// 25 slices: 12 red, 12 black, 1 gold. Red and black pay 2×, gold 24×.
-// Every pick returns 0.96 of what is staked over time: a 4% edge.
-const WHEEL_SLICES = [];
-for (let i = 0; i < 24; i += 1) WHEEL_SLICES.push(i % 2 === 0 ? "red" : "black");
-WHEEL_SLICES.push("gold");
+// The wheel: 24 slices alternating red and black share 345 degrees, and
+// one slim gold sliver takes the last 15. Red and black pay 2×; gold 8×.
+// Red/black return 0.958 of the stake over time; gold, by design, far
+// less — it is the long shot people chase, not the smart bet.
+const GOLD_DEG = 15;
+const WHEEL = (() => {
+  const segments = [];
+  const each = (360 - GOLD_DEG) / 24;
+  let at = 0;
+  for (let i = 0; i < 24; i += 1) { segments.push({ color: i % 2 === 0 ? "red" : "black", from: at, to: at + each }); at += each; }
+  segments.push({ color: "gold", from: at, to: 360 });
+  return segments;
+})();
 
-// Four runners, each priced so that probability × payout = 0.96.
+// Four runners with whole-number payouts. Their odds are the fair odds
+// for those payouts scaled to sum to one, which leaves about a 4.5%
+// edge on every horse: p = (1/pays) / 1.0476.
 const RUNNERS = [
-  { key: "gold", name: "Gold Rush", p: 0.40, pays: 2.4, color: "#e8bf35" },
-  { key: "burgundy", name: "Burgundy", p: 0.30, pays: 3.2, color: "#8e1231" },
-  { key: "midnight", name: "Midnight", p: 0.20, pays: 4.8, color: "#8fc3d7" },
-  { key: "longshot", name: "Longshot", p: 0.10, pays: 9.6, color: "#4ddb8b" }
-];
+  { key: "gold", name: "Gold Rush", pays: 2, color: "#e8bf35" },
+  { key: "burgundy", name: "Burgundy", pays: 3, color: "#8e1231" },
+  { key: "midnight", name: "Midnight", pays: 7, color: "#8fc3d7" },
+  { key: "longshot", name: "Longshot", pays: 14, color: "#4ddb8b" }
+].map((r, _, all) => ({ ...r, p: (1 / r.pays) / all.reduce((n, x) => n + 1 / x.pays, 0) }));
+
+// Nobody takes more than this out of the casino in any rolling hour.
+// Past it, new bets and deals are refused until the hour rolls on.
+export const HOUR_WIN_CAP = 300;
 
 export const GAMES = {
   wheel: {
@@ -53,13 +67,15 @@ export const GAMES = {
     cycleMs: 60 * 1000,
     betMs: 40 * 1000,
     picks: ["red", "black", "gold"],
-    payout: { red: 2, black: 2, gold: 24 },
-    slices: WHEEL_SLICES,
-    /** The slice index the wheel stops on, from the seed alone. */
+    payout: { red: 2, black: 2, gold: 8 },
+    segments: WHEEL,
+    /** Where the pointer lands, in degrees from the top, from the seed alone. */
     async outcome(seed) {
       const h = await sha256(`${seed}:wheel`);
-      const idx = parseInt(h.slice(0, 8), 16) % WHEEL_SLICES.length;
-      return { slice: idx, color: WHEEL_SLICES[idx] };
+      const angle = (parseInt(h.slice(0, 8), 16) / 0x100000000) * 360;
+      const idx = WHEEL.findIndex((s) => angle >= s.from && angle < s.to);
+      const slice = idx === -1 ? WHEEL.length - 1 : idx;
+      return { slice, color: WHEEL[slice].color, angle: Math.round(angle * 100) / 100 };
     },
     wins: (pick, result) => pick === result.color,
     describe: (result) => result.color
@@ -285,8 +301,28 @@ export function publicConfig(game, canBet) {
     maxBet: MAX_BET, minBet: MIN_BET, maxPerHour: MAX_BETS_PER_HOUR,
     betSeconds: game.betMs / 1000, cycleSeconds: game.cycleMs / 1000,
     picks: game.picks, payout: game.payout,
-    slices: game.slices || undefined,
-    runners: game.runners ? game.runners.map((r) => ({ key: r.key, name: r.name, pays: r.pays, p: r.p, color: r.color })) : undefined,
+    segments: game.segments || undefined,
+    runners: game.runners ? game.runners.map((r) => ({ key: r.key, name: r.name, pays: r.pays, p: Math.round(r.p * 1000) / 1000, color: r.color })) : undefined,
+    hourCap: HOUR_WIN_CAP,
     canBet
   };
+}
+
+/* ---------------------------------------------------------- the hourly cap */
+
+/** Net won or lost across every casino game in the last hour. */
+export async function hourlyNet(db, userId) {
+  const q = async (sql) => {
+    try { const r = await db.prepare(sql).bind(userId).first(); return Number(r?.net || 0); } catch { return 0; }
+  };
+  const coin = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - wager WHEN status = 'LOST' THEN -wager ELSE 0 END), 0) AS net FROM coin_bets WHERE user_id = ? AND datetime(created_at) >= datetime('now', '-1 hour')`);
+  const shared = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - wager WHEN status = 'LOST' THEN -wager ELSE 0 END), 0) AS net FROM casino_bets WHERE user_id = ? AND datetime(created_at) >= datetime('now', '-1 hour')`);
+  const hilo = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'CASHED' THEN payout - stake WHEN status = 'BUST' THEN -stake ELSE 0 END), 0) AS net FROM hilo_games WHERE user_id = ? AND datetime(updated_at) >= datetime('now', '-1 hour')`);
+  return coin + shared + hilo;
+}
+
+/** Whether this person may place another bet, and where they stand. */
+export async function capCheck(db, userId) {
+  const net = await hourlyNet(db, userId);
+  return { net, cap: HOUR_WIN_CAP, blocked: net >= HOUR_WIN_CAP };
 }
