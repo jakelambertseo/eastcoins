@@ -1332,12 +1332,27 @@ body.watch-on .view{
   white-space:nowrap;transition:background .14s ease,border-color .14s ease;
 }
 .watchbtn:hover{background:var(--gold-dim);border-color:rgba(232,191,53,.4);color:var(--gold)}
+/* The server switch is the fix for a dead stream, so it does not look
+   like the neutral buttons beside it: gold, and it pulses for a few
+   seconds when a stream loads. Disabled (one server) it goes quiet. */
 .watchsel{
   flex:0 0 auto;height:30px;padding:0 8px;border-radius:8px;
-  border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);
-  font-family:var(--display);font-weight:700;font-size:.8rem;
+  border:1px solid rgba(232,191,53,.5);background:var(--gold-dim);color:var(--gold);
+  font-family:var(--display);font-weight:800;font-size:.8rem;cursor:pointer;
+  transition:background .14s ease,border-color .14s ease;
 }
-.watchsel:disabled{opacity:.55}
+.watchsel:hover{background:rgba(232,191,53,.22);border-color:var(--gold)}
+.watchsel option{background:var(--panel-2);color:var(--text)}
+.watchsel:disabled{
+  opacity:.55;cursor:default;
+  border-color:var(--line-2);background:var(--panel-2);color:var(--text);
+}
+.watchsel.nudge{animation:selnudge 1.15s ease-in-out 4}
+@keyframes selnudge{
+  0%,100%{box-shadow:0 0 0 0 rgba(232,191,53,0)}
+  50%{box-shadow:0 0 0 5px rgba(232,191,53,.3)}
+}
+@media (prefers-reduced-motion:reduce){.watchsel.nudge{animation:none}}
 
 /* Folded state. Absolute so the bar row collapses entirely and the
    video claims the height, rather than leaving a gap where it was. */
