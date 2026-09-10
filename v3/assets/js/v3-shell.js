@@ -144,6 +144,14 @@
     render();
   }
 
+  const TITLES = {
+    events: "EastCoin — Sports", music: "The Green Room — EastCoin", screen: "Movies & TV — EastCoin",
+    multiview: "MultiView — EastCoin", picks: "Picks — EastCoin", casino: "Casino — EastCoin",
+    flip: "Coin Flip — EastCoin Casino", wheel: "Wheel — EastCoin Casino", race: "Horse Race — EastCoin Casino",
+    hilo: "Higher or Lower — EastCoin Casino", users: "All Users — EastCoin", activity: "Activity — EastCoin",
+    dashboard: "Dashboard — EastCoin", admin: "Admin — EastCoin", watch: "Watching — EastCoin"
+  };
+
   function render() {
     const view = views[state.route];
 
@@ -168,6 +176,9 @@
     els.view.dataset.rendered = "1";
     // Tell the room where this tab is now.
     window.ECPresence?.beat(state.route);
+    // A title per section; views with a name of their own (a profile,
+    // a game page) set a better one once they know it.
+    document.title = TITLES[state.route] || "EastCoin";
 
     if (!view) {
       els.view.append(stub("Not built yet", "This view arrives in a later phase."));
