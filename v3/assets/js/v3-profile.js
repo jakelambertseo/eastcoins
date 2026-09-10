@@ -219,7 +219,7 @@
     const section = el("section", "pf-section");
     section.id = "pf-bankroll";
     const h = el("h2", null, "Bankroll");
-    h.append(el("small", null, `${b.ops} wallet moves since ${when(b.first, { month: "short", day: "numeric" })}`));
+    h.append(el("small", null, `${b.ops} wallet moves since ${when(b.first, { month: "short", day: "numeric" })} · picks and casino · an open pick counts as out until it settles`));
     section.append(h);
 
     let mode = "net";
