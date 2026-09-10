@@ -20,35 +20,45 @@ export async function onRequestGet(context) {
 
   // Coin flip: its own tables.
   const coinRound = coinRoundAt(now);
-  const [coinIn, coinRoom] = await Promise.all([
+  const person = (r) => ({ login: String(r.twitch_login).toLowerCase(), displayName: String(r.display_name || r.twitch_login), avatar: String(r.avatar_url || "") });
+  const people = async (table, game) => {
+    const rows = await db.prepare(`SELECT u.twitch_login, u.display_name, u.avatar_url FROM ${table} p JOIN users u ON u.twitch_id = p.user_id
+                                    WHERE ${game ? "p.game = ? AND " : ""}p.seen_at >= ? ORDER BY p.seen_at DESC LIMIT 12`).bind(...(game ? [game, since] : [since])).all().catch(() => ({ results: [] }));
+    return (rows.results || []).map(person);
+  };
+  const [coinIn, coinRoom, coinPeople] = await Promise.all([
     db.prepare(`SELECT COUNT(*) AS n, COALESCE(SUM(wager), 0) AS staked FROM coin_bets WHERE round_no = ?`).bind(coinRound.no).first(),
-    db.prepare(`SELECT COUNT(*) AS n FROM coin_presence WHERE seen_at >= ?`).bind(since).first()
+    db.prepare(`SELECT COUNT(*) AS n FROM coin_presence WHERE seen_at >= ?`).bind(since).first(),
+    people("coin_presence", null)
   ]);
 
   const games = [{
     key: "flip", name: "Coin Flip", route: "flip",
     round: { no: coinRound.no, phase: coinRound.phase, closesAt: coinRound.flipsAt, endsAt: coinRound.endsAt, cycleSeconds: COIN_CYCLE / 1000, betSeconds: COIN_BET / 1000 },
-    inRound: Number(coinIn?.n || 0), staked: Number(coinIn?.staked || 0), room: Number(coinRoom?.n || 0)
+    inRound: Number(coinIn?.n || 0), staked: Number(coinIn?.staked || 0), room: Number(coinRoom?.n || 0), people: coinPeople
   }];
 
   for (const g of Object.values(GAMES)) {
+    if (g.paused) continue;   // pulled from the floor for now
     const r = roundAt(g, now);
-    const [inRound, room] = await Promise.all([
+    const [inRound, room, who] = await Promise.all([
       db.prepare(`SELECT COUNT(*) AS n, COALESCE(SUM(wager), 0) AS staked FROM casino_bets WHERE game = ? AND round_no = ?`).bind(g.key, r.no).first(),
-      db.prepare(`SELECT COUNT(*) AS n FROM casino_presence WHERE game = ? AND seen_at >= ?`).bind(g.key, since).first()
+      db.prepare(`SELECT COUNT(*) AS n FROM casino_presence WHERE game = ? AND seen_at >= ?`).bind(g.key, since).first(),
+      people("casino_presence", g.key)
     ]);
     games.push({
       key: g.key, name: g.name, route: g.key,
       round: { no: r.no, phase: r.phase, closesAt: r.closesAt, endsAt: r.endsAt, cycleSeconds: g.cycleMs / 1000, betSeconds: g.betMs / 1000 },
-      inRound: Number(inRound?.n || 0), staked: Number(inRound?.staked || 0), room: Number(room?.n || 0)
+      inRound: Number(inRound?.n || 0), staked: Number(inRound?.staked || 0), room: Number(room?.n || 0), people: who
     });
   }
 
-  const [hiloLive, hiloRoom] = await Promise.all([
+  const [hiloLive, hiloRoom, hiloPeople] = await Promise.all([
     db.prepare(`SELECT COUNT(*) AS n FROM hilo_games WHERE status = 'LIVE' AND datetime(updated_at) >= datetime('now', '-10 minutes')`).first(),
-    db.prepare(`SELECT COUNT(*) AS n FROM casino_presence WHERE game = 'hilo' AND seen_at >= ?`).bind(since).first()
+    db.prepare(`SELECT COUNT(*) AS n FROM casino_presence WHERE game = 'hilo' AND seen_at >= ?`).bind(since).first(),
+    people("casino_presence", "hilo")
   ]);
-  games.push({ key: "hilo", name: "Higher or Lower", route: "hilo", round: null, inRound: Number(hiloLive?.n || 0), staked: 0, room: Number(hiloRoom?.n || 0) });
+  games.push({ key: "hilo", name: "Higher or Lower", route: "hilo", round: null, inRound: Number(hiloLive?.n || 0), staked: 0, room: Number(hiloRoom?.n || 0), people: hiloPeople });
 
   // The board: the most recent results across every game, wins and
   // losses alike — the casino's own ledger, for anyone to read.

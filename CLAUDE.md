@@ -76,7 +76,11 @@
 > (300 ZC net in any rolling hour across every game, `capCheck` in
 > `_engine.js`, enforced by every bet/deal endpoint including the coin's).
 > Wheel: 24 red/black slices + one 15-degree gold sliver at 8x, outcome is an
-> angle. Race: whole-number payouts 2/3/7/14, odds normalised from them.
+> angle. Race: whole-number payouts 2/3/7/14, odds normalised from them —
+> **currently `paused: true`** in `GAMES` (bets refused, off the floor,
+> page says closed; flip the flag to bring it back). Floor tiles list
+> who is in each room (`people` from `/api/casino/home`, Who's-here chips).
+> The nav search is a magnifier that expands (`#navSearchBox.open`, `/` opens it).
 > Casino results also flow into `/api/picks/activity` (type `casino`),
 > the ticker, and the profile's Casino section (`profile.casino`). The
 > floor's board lists recent wins and losses. Coin Flip itself is

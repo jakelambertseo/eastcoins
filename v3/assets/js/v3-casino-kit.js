@@ -363,7 +363,8 @@
       refs.lock.disabled = !canBet;
       refs.stakeInput.disabled = Boolean(mine) || !inBets;
       const pays = (p, w) => Math.floor(w * (config.payout[p] || 0));
-      if (!data.me) { refs.lock.textContent = "Log in to play"; refs.betNote.textContent = "Log in with Twitch — the button up top — and your ZCoins come with you."; }
+      if (config.paused) { refs.lock.textContent = `${config.name} is closed for now`; refs.betNote.textContent = "It's in the shop. Back on the floor once it's been tuned up — the other games are open."; }
+      else if (!data.me) { refs.lock.textContent = "Log in to play"; refs.betNote.textContent = "Log in with Twitch — the button up top — and your ZCoins come with you."; }
       else if (!config.canBet) { refs.lock.textContent = "Casino paused"; refs.betNote.textContent = "ZCoin transfers aren't switched on right now."; }
       else if (mine) {
         withCoins(refs.lock, `You're in: [[${mine.wager}]] on ${spec.pickLabel(mine.pick, config)}`);

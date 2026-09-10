@@ -124,7 +124,6 @@
         chip.append(avatar(p));
         const name = el("b", null, p.displayName);
         chip.append(name, el("span", "wh-where", ICONS[p.where] || "·"));
-        window.ECBadges?.decorate(name, p.login);
         return chip;
       };
       const shown = container.dataset.expanded === "1" ? people : people.slice(0, SHOW_MAX);

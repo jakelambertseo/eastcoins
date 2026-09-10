@@ -546,6 +546,33 @@
 
   let searchTimer = 0;
 
+  // The magnifier opens the box; the box closes again once it is
+  // empty and nobody is typing in it.
+  const searchBox = document.getElementById("navSearchBox");
+  const searchBtn = document.getElementById("navSearchBtn");
+  function openSearch() {
+    searchBox?.classList.add("open");
+    window.setTimeout(() => els.search.focus(), 30);
+  }
+  function closeSearchIfEmpty() {
+    if (!els.search.value.trim()) searchBox?.classList.remove("open");
+  }
+  searchBtn?.addEventListener("click", () => {
+    if (searchBox?.classList.contains("open")) { els.search.value = ""; state.search = ""; searchBox.classList.remove("open"); views.events?.onSearch?.(""); }
+    else openSearch();
+  });
+  els.search.addEventListener("blur", () => window.setTimeout(closeSearchIfEmpty, 120));
+  els.search.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") { els.search.value = ""; state.search = ""; els.search.blur(); searchBox?.classList.remove("open"); views.events?.onSearch?.(""); }
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey) return;
+    const t = event.target;
+    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+    event.preventDefault();
+    openSearch();
+  });
+
   // A pasted link is an instruction to watch it, not a search term.
   els.search.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;

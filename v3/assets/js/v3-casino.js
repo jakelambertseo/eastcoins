@@ -23,7 +23,7 @@
   const GAMES = {
     flip: { title: "Coin Flip", icon: "🪙", blurb: "Heads or tails, 2×. One coin for the whole room, every 30 seconds.", route: "flip" },
     wheel: { title: "Wheel", icon: "🎡", blurb: "Red or black 2×, the gold sliver 8×. One spin a minute.", route: "wheel" },
-    race: { title: "Horse Race", icon: "🐎", blurb: "Four runners from 2× to 14×. They're off every minute.", route: "race" },
+    race: { title: "Horse Race", icon: "🐎", blurb: "Four runners from 2× to 14×. They're off every minute.", route: "race", hidden: true },
     hilo: { title: "Higher or Lower", icon: "🃏", blurb: "Your own deck. Every right call multiplies the stake; cash out any time.", route: "hilo" }
   };
 
@@ -56,12 +56,13 @@
     emote.alt = "";
     emote.width = 32; emote.height = 32;
     h1.append(emote);
-    copy.append(h1, K.el("p", null, "ZCoins only. Every result is drawn from a seed whose hash you see before you bet, and every game pays back the same 96% over time — except the coin, which pays the full 100%."));
+    copy.append(h1, K.el("p", null, "ZCoins only. Every result is drawn from a seed whose hash you see before you bet, and the seed is revealed after — anyone can check it."));
     head.append(copy);
     page.append(head);
 
     refs.tiles = K.el("div", "cas-tiles");
     for (const [key, g] of Object.entries(GAMES)) {
+      if (g.hidden) continue;
       const tile = K.el("a", `cas-tile cas-${key}`);
       tile.href = `/?view=${g.route}`;
       tile.addEventListener("click", (event) => {
@@ -79,8 +80,9 @@
       const inRound = K.el("span", null, "");
       const room = K.el("span", null, "");
       meta.append(inRound, room);
-      tile.append(top, K.el("p", "cas-blurb", g.blurb), status, meta, K.el("span", "cas-play", "Play →"));
-      refs[`tile_${key}`] = { tile, clock, phase, inRound, room };
+      const people = K.el("div", "cas-people wh-list");
+      tile.append(top, K.el("p", "cas-blurb", g.blurb), status, meta, people, K.el("span", "cas-play", "Play →"));
+      refs[`tile_${key}`] = { tile, clock, phase, inRound, room, people, peopleSig: "" };
       refs.tiles.append(tile);
     }
     page.append(refs.tiles);
@@ -100,8 +102,7 @@
       "A game only runs while someone is in its room — with nobody there, nothing is drawn.",
       "One bet per person per round. Bets close before anything is drawn.",
       "Results come from a random seed made when the round is created. Its hash is shown while bets are open; the seed is revealed after, so anyone can check.",
-      "Wins land in your StreamElements wallet the moment the round settles — the same wallet Picks uses.",
-      "The house edge is 4% on the Wheel, the Race and Higher or Lower. The Coin Flip has none."
+      "Wins land in your StreamElements wallet the moment the round settles — the same wallet Picks uses."
     ]) ul.append(K.el("li", null, t));
     rules.append(ul);
     lower.append(board, rules);
@@ -137,7 +138,27 @@
         r.inRound.textContent = "your own deck";
       }
       r.room.textContent = `${g.room} in the room`;
+      renderPeople(r, g.people || []);
     }
+  }
+
+  /** The room's people as the same chips the Sports page's Who's here uses. */
+  function renderPeople(r, people) {
+    const sig = people.map((p) => p.login).join(",");
+    if (sig === r.peopleSig) return;
+    r.peopleSig = sig;
+    r.people.replaceChildren();
+    const shown = people.slice(0, 4);
+    for (const p of shown) {
+      const chip = K.el("a", "wh-chip ulink");
+      chip.href = `/u/${encodeURIComponent(p.login)}`;
+      chip.title = p.displayName;
+      chip.addEventListener("click", (event) => event.stopPropagation());
+      chip.append(K.avatar(p, "wh-av"), K.el("b", null, p.displayName));
+      r.people.append(chip);
+    }
+    if (people.length > shown.length) r.people.append(K.el("span", "wh-chip guests", `+${people.length - shown.length} more`));
+    r.people.hidden = !people.length;
   }
 
   function renderBoard() {

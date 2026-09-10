@@ -172,10 +172,14 @@
     emote.width = 32;
     emote.height = 32;
     h1.append(emote);
-    copy.append(h1, el("p", null, "One coin for the whole room. Fifteen seconds to get in, then it flips. Heads or tails pays 2× — no edge, no house."));
+    copy.append(h1, el("p", null, "One coin for the whole room. Fifteen seconds to get in, then it flips. Heads or tails pays 2×."));
     head.append(copy);
+    const right = el("div", "cas-headright");
     refs.status = el("span", "cf-status", "Connecting…");
-    head.append(refs.status);
+    right.append(refs.status);
+    if (window.ECCasino) right.append(window.ECCasino.casinoLink());
+    else { const back = el("a", "btn cas-back", "← Casino"); back.href = "/?view=casino"; right.append(back); }
+    head.append(right);
     page.append(head);
 
     const grid = el("div", "cf-grid");

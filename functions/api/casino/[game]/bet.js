@@ -11,6 +11,7 @@ export async function onRequestPost(context) {
   const db = context.env.PICKS_DB;
   if (!db) return fail("NO_DB", "Casino is offline right now.", 503);
   const game = gameFor(context.params.game);
+  if (game?.paused) return fail("PAUSED", `${game.name} is closed for now.`, 409);
   if (!game) return fail("NO_SUCH_GAME", "No such game.", 404);
   await ensureSchema(db);
 

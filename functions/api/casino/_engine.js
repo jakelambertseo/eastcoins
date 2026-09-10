@@ -82,6 +82,8 @@ export const GAMES = {
   },
   race: {
     key: "race",
+    // In the stable while the animation and pacing get another look.
+    paused: true,
     name: "Horse Race",
     cycleMs: 60 * 1000,
     betMs: 40 * 1000,
@@ -304,7 +306,8 @@ export function publicConfig(game, canBet) {
     segments: game.segments || undefined,
     runners: game.runners ? game.runners.map((r) => ({ key: r.key, name: r.name, pays: r.pays, p: Math.round(r.p * 1000) / 1000, color: r.color })) : undefined,
     hourCap: HOUR_WIN_CAP,
-    canBet
+    paused: Boolean(game.paused),
+    canBet: canBet && !game.paused
   };
 }
 
