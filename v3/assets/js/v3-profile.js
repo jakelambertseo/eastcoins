@@ -201,6 +201,142 @@
     return rows;
   }
 
+  /* ---------------------------------------------------------- bankroll */
+
+  const SVG = "http://www.w3.org/2000/svg";
+  function svgEl(tag, attrs = {}) {
+    const n = document.createElementNS(SVG, tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+    return n;
+  }
+
+  /**
+   * A line of the running net (or, for the owner, the balance) from
+   * every wallet operation. Plain SVG, no library: a path, an area, a
+   * zero line, and a tooltip that follows the pointer.
+   */
+  function bankrollSection(b) {
+    const section = el("section", "pf-section");
+    section.id = "pf-bankroll";
+    const h = el("h2", null, "Bankroll");
+    h.append(el("small", null, `${b.ops} wallet moves since ${when(b.first, { month: "short", day: "numeric" })}`));
+    section.append(h);
+
+    let mode = "net";
+    const card = el("div", "bk-card");
+    const top = el("div", "bk-top");
+    const stats = el("div", "bk-stats");
+    top.append(stats);
+    if (b.owner && b.points.some((p) => Number.isFinite(p.bal))) {
+      const seg = el("div", "mseg bk-seg");
+      const mk = (key, label) => {
+        const btn = el("button", `mseg-btn${mode === key ? " on" : ""}`, label);
+        btn.type = "button";
+        btn.addEventListener("click", () => { mode = key; for (const x of seg.children) x.classList.toggle("on", x === btn); draw(); });
+        return btn;
+      };
+      seg.append(mk("net", "Net"), mk("bal", "Balance"));
+      top.append(seg);
+    }
+    card.append(top);
+    const wrapSvg = el("div", "bk-chart");
+    const W = 640, H = 200, PAD = { l: 44, r: 14, t: 14, b: 26 };
+    const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, class: "bk-svg", role: "img", "aria-label": "Bankroll over time" });
+    wrapSvg.append(svg);
+    const tip = el("div", "bk-tip");
+    tip.hidden = true;
+    wrapSvg.append(tip);
+    card.append(wrapSvg);
+    section.append(card);
+
+    function series() {
+      return b.points.map((p) => ({ t: new Date(p.t).getTime(), v: mode === "bal" ? p.bal : p.net, k: p.k }))
+        .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.v));
+    }
+
+    function draw() {
+      svg.replaceChildren();
+      const pts = series();
+      if (pts.length < 2) return;
+      const t0 = pts[0].t, t1 = pts[pts.length - 1].t || t0 + 1;
+      const vs = pts.map((p) => p.v);
+      let lo = Math.min(0, ...vs), hi = Math.max(0, ...vs);
+      if (mode === "bal") { lo = Math.min(...vs); hi = Math.max(...vs); }
+      if (hi === lo) { hi += 1; lo -= 1; }
+      const padV = (hi - lo) * 0.08;
+      lo -= padV; hi += padV;
+      const x = (t) => PAD.l + ((t - t0) / Math.max(1, t1 - t0)) * (W - PAD.l - PAD.r);
+      const y = (v) => PAD.t + (1 - (v - lo) / (hi - lo)) * (H - PAD.t - PAD.b);
+      const last = pts[pts.length - 1].v;
+      const tone = mode === "bal" ? "gold" : last > 0 ? "good" : last < 0 ? "bad" : "flat";
+      svg.setAttribute("data-tone", tone);
+
+      // Grid: four horizontal lines with labels.
+      for (let i = 0; i <= 3; i += 1) {
+        const v = lo + ((hi - lo) * i) / 3;
+        const yy = y(v);
+        svg.append(svgEl("line", { x1: PAD.l, x2: W - PAD.r, y1: yy, y2: yy, class: "bk-grid" }));
+        const label = svgEl("text", { x: PAD.l - 6, y: yy + 4, class: "bk-lbl", "text-anchor": "end" });
+        label.textContent = Math.round(v).toLocaleString();
+        svg.append(label);
+      }
+      // The zero line, when it is in view.
+      if (lo < 0 && hi > 0) svg.append(svgEl("line", { x1: PAD.l, x2: W - PAD.r, y1: y(0), y2: y(0), class: "bk-zero" }));
+
+      // Stepped line: a balance holds until the next operation moves it.
+      let d = `M${x(pts[0].t).toFixed(1)},${y(pts[0].v).toFixed(1)}`;
+      for (let i = 1; i < pts.length; i += 1) d += ` H${x(pts[i].t).toFixed(1)} V${y(pts[i].v).toFixed(1)}`;
+      const base = y(mode === "bal" ? lo : Math.max(lo, Math.min(hi, 0)));
+      svg.append(svgEl("path", { d: `${d} V${base.toFixed(1)} H${x(pts[0].t).toFixed(1)} Z`, class: "bk-area" }));
+      svg.append(svgEl("path", { d, class: "bk-line" }));
+      // The last point, marked.
+      svg.append(svgEl("circle", { cx: x(pts[pts.length - 1].t), cy: y(last), r: 4, class: "bk-dot" }));
+
+      // Dates along the bottom: first, middle, last.
+      const fmtD = (t) => new Date(t).toLocaleDateString([], { month: "short", day: "numeric" });
+      for (const [t, anchor] of [[t0, "start"], [(t0 + t1) / 2, "middle"], [t1, "end"]]) {
+        const label = svgEl("text", { x: x(t), y: H - 8, class: "bk-lbl", "text-anchor": anchor });
+        label.textContent = fmtD(t);
+        svg.append(label);
+      }
+
+      // Stats under the toggle.
+      stats.replaceChildren();
+      const st = (label, value, cls) => {
+        const box = el("div", `bk-stat${cls ? " " + cls : ""}`);
+        box.append(el("span", null, label), el("b", "nums", value));
+        return box;
+      };
+      if (mode === "bal") {
+        stats.append(st("Balance now", last.toLocaleString()), st("High", Math.max(...vs).toLocaleString()), st("Low", Math.min(...vs).toLocaleString()));
+      } else {
+        const sign = (n) => (n > 0 ? `+${n.toLocaleString()}` : n.toLocaleString());
+        stats.append(st("Net", sign(last), last > 0 ? "up" : last < 0 ? "down" : ""), st("Peak", sign(b.peak), b.peak > 0 ? "up" : ""), st("Low", sign(b.trough), b.trough < 0 ? "down" : ""));
+      }
+
+      // Tooltip follows the pointer to the nearest point.
+      const hover = svgEl("line", { x1: 0, x2: 0, y1: PAD.t, y2: H - PAD.b, class: "bk-hover" });
+      hover.setAttribute("visibility", "hidden");
+      svg.append(hover);
+      svg.onmousemove = (event) => {
+        const rect = svg.getBoundingClientRect();
+        const px = ((event.clientX - rect.left) / rect.width) * W;
+        let best = pts[0], bd = Infinity;
+        for (const p of pts) { const dd = Math.abs(x(p.t) - px); if (dd < bd) { bd = dd; best = p; } }
+        hover.setAttribute("x1", x(best.t)); hover.setAttribute("x2", x(best.t));
+        hover.setAttribute("visibility", "visible");
+        const kind = { WAGER_DEBIT: "bet placed", PAYOUT_CREDIT: "paid out", REFUND_CREDIT: "refunded" }[best.k] || best.k;
+        tip.textContent = `${when(new Date(best.t).toISOString(), { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · ${kind} · ${mode === "bal" ? "" : best.v > 0 ? "+" : ""}${best.v.toLocaleString()}`;
+        tip.hidden = false;
+        const left = ((x(best.t) / W) * rect.width);
+        tip.style.left = `${Math.min(rect.width - 8, Math.max(8, left))}px`;
+      };
+      svg.onmouseleave = () => { hover.setAttribute("visibility", "hidden"); tip.hidden = true; };
+    }
+    draw();
+    return section;
+  }
+
   function pickRow(p) {
     const status = { ACTIVE: "open", WON: "won", LOST: "lost", REFUNDED: "refund" }[p.status] || "open";
     const row = link(`/g/${p.market.slug}`, `gp-row ${status} link`);
@@ -270,6 +406,9 @@
       if (k.worstBeat) hls.append(highlight("bad", "Worst beat", k.worstBeat, `−${k.worstBeat.wager}`, `${k.worstBeat.team} ${formatLine(k.worstBeat.line)} vs ${k.worstBeat.opponent}`));
       wrap.append(hls);
     }
+
+    // Bankroll: net from every EastCoin operation, drawn over time.
+    if (data.bankroll?.points?.length > 1) wrap.append(bankrollSection(data.bankroll));
 
     // Recent picks
     const recent = el("section", "pf-section");

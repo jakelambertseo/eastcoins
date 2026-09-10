@@ -2217,6 +2217,34 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .pf-section h2{align-items:center}
 .pf-emote{width:26px;height:26px;object-fit:contain;flex:0 0 auto;margin-left:2px}
 .pf-pager{margin-top:8px;border:1px solid var(--line);border-radius:10px}
+/* bankroll chart ------------------------------------------ */
+.bk-card{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:12px 14px 8px}
+.bk-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.bk-stats{display:flex;gap:18px;flex-wrap:wrap}
+.bk-stat{display:flex;flex-direction:column;gap:2px}
+.bk-stat span{color:var(--muted-2);font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.bk-stat b{font-family:var(--display);font-weight:800;font-size:1.15rem;letter-spacing:-.02em}
+.bk-stat.up b{color:var(--green)} .bk-stat.down b{color:var(--red)}
+.bk-seg{margin-left:auto}
+.bk-chart{position:relative}
+.bk-svg{display:block;width:100%;height:auto;overflow:visible}
+.bk-grid{stroke:var(--line);stroke-width:1}
+.bk-zero{stroke:var(--muted-2);stroke-width:1;stroke-dasharray:3 4}
+.bk-lbl{fill:var(--muted-2);font-family:var(--body);font-size:10px;font-weight:700}
+.bk-line{fill:none;stroke-width:2;stroke-linejoin:round;stroke:var(--muted)}
+.bk-area{fill:rgba(255,255,255,.05)}
+.bk-dot{fill:var(--muted);stroke:var(--panel);stroke-width:2}
+.bk-svg[data-tone="good"] .bk-line,.bk-svg[data-tone="good"] .bk-dot{stroke:var(--green);fill:var(--green)}
+.bk-svg[data-tone="good"] .bk-line{fill:none}
+.bk-svg[data-tone="good"] .bk-area{fill:rgba(77,219,139,.12)}
+.bk-svg[data-tone="bad"] .bk-line,.bk-svg[data-tone="bad"] .bk-dot{stroke:var(--red);fill:var(--red)}
+.bk-svg[data-tone="bad"] .bk-line{fill:none}
+.bk-svg[data-tone="bad"] .bk-area{fill:rgba(255,107,133,.12)}
+.bk-svg[data-tone="gold"] .bk-line,.bk-svg[data-tone="gold"] .bk-dot{stroke:var(--gold);fill:var(--gold)}
+.bk-svg[data-tone="gold"] .bk-line{fill:none}
+.bk-svg[data-tone="gold"] .bk-area{fill:rgba(232,191,53,.12)}
+.bk-hover{stroke:var(--line-2);stroke-width:1}
+.bk-tip{position:absolute;top:6px;transform:translateX(-50%);padding:4px 9px;border-radius:7px;background:var(--panel-3);border:1px solid var(--line-2);color:var(--text);font-size:.72rem;font-weight:700;white-space:nowrap;pointer-events:none}
 .pf-sub{margin:14px 0 6px;color:var(--muted-2);font-size:.68rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase}
 .pf-songs{margin:0;padding-left:18px;color:var(--muted);font-size:.86rem;line-height:1.7}
 .profile .gp-payout .cf-tag{margin-right:6px;vertical-align:3px}

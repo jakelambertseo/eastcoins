@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>First-visit tour — test</title>
+<link href="/assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;700;800&display=swap">
+<link rel="stylesheet" href="/v3/assets/css/v3.css?v=130">
+<style>
+  /* ---- test page scaffolding ---- */
+  body{background:var(--ink)}
+  .shell{display:block}
+  .demo-note{margin:0 0 14px;padding:10px 14px;border:1px dashed rgba(232,191,53,.4);border-radius:10px;background:rgba(232,191,53,.06);color:var(--muted);font-size:.82rem}
+  .demo-note b{color:var(--gold)}
+  .demo-note button{margin-left:10px;height:28px;padding:0 10px;border-radius:7px;border:1px solid rgba(232,191,53,.5);background:rgba(232,191,53,.12);color:var(--gold);font-weight:800;font-size:.76rem;cursor:pointer}
+  .demo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+  .demo-card{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);overflow:hidden}
+  .demo-card .art{aspect-ratio:16/9;background:linear-gradient(140deg,#1e1a17,#0c0a09);display:grid;place-items:center;color:var(--muted-2);font-family:var(--display);font-weight:800;font-size:1.3rem}
+  .demo-card .body{padding:10px 12px}
+  .demo-card h3{margin:0 0 2px;font-size:.95rem}
+  .demo-card p{margin:0;color:var(--muted-2);font-size:.76rem}
+  .demo-banner{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:var(--radius);border:1px solid rgba(232,191,53,.28);background:linear-gradient(120deg,rgba(232,191,53,.12),transparent 60%),var(--panel);margin:0 0 16px}
+  .demo-banner img{width:38px;height:38px}
+  .demo-banner b{display:block}
+  .demo-banner span{color:var(--muted);font-size:.82rem}
+
+  /* ---- the tour ---- */
+  .tour-veil{position:fixed;inset:0;z-index:120;pointer-events:none}
+  .tour-hole{
+    position:fixed;z-index:121;border-radius:12px;pointer-events:none;
+    box-shadow:0 0 0 9999px rgba(6,4,4,.78),0 0 0 3px rgba(232,191,53,.7),0 0 30px rgba(232,191,53,.35);
+    transition:top .28s cubic-bezier(.2,.8,.2,1),left .28s cubic-bezier(.2,.8,.2,1),width .28s cubic-bezier(.2,.8,.2,1),height .28s cubic-bezier(.2,.8,.2,1),border-radius .28s
+  }
+  .tour-hole.center{box-shadow:0 0 0 9999px rgba(6,4,4,.82)}
+  .tour-card{
+    position:fixed;z-index:122;width:min(360px,calc(100vw - 24px));padding:18px 18px 14px;border-radius:16px;
+    background:var(--panel-2);border:1px solid var(--line-2);box-shadow:0 30px 80px rgba(0,0,0,.7);
+    transition:top .28s cubic-bezier(.2,.8,.2,1),left .28s cubic-bezier(.2,.8,.2,1),transform .28s
+  }
+  .tour-card::before{
+    content:"";position:absolute;width:14px;height:14px;background:var(--panel-2);border-left:1px solid var(--line-2);border-top:1px solid var(--line-2);
+    transform:rotate(45deg);top:-8px;left:var(--arrow-x,40px)
+  }
+  .tour-card.noarrow::before{display:none}
+  .tour-step{color:var(--gold);font-size:.62rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;margin:0 0 6px}
+  .tour-card h2{margin:0 0 6px;font-family:var(--display);font-weight:800;font-size:1.25rem;letter-spacing:-.02em}
+  .tour-card h2 img{width:26px;height:26px;vertical-align:-6px;margin-left:6px}
+  .tour-card p{margin:0 0 14px;color:var(--muted);font-size:.88rem;line-height:1.5}
+  .tour-card p b{color:var(--text)}
+  .tour-foot{display:flex;align-items:center;gap:10px}
+  .tour-dots{display:flex;gap:5px;margin-right:auto}
+  .tour-dots i{width:6px;height:6px;border-radius:50%;background:var(--line-2)}
+  .tour-dots i.on{background:var(--gold);width:16px;border-radius:3px}
+  .tour-btn{height:34px;padding:0 14px;border-radius:9px;border:1px solid var(--line-2);background:var(--panel);color:var(--muted);font-weight:800;font-size:.82rem;cursor:pointer}
+  .tour-btn.primary{background:var(--gold);border-color:var(--gold);color:#1a1405}
+  .tour-btn:hover{filter:brightness(1.08)}
+  .tour-again{display:flex;align-items:center;gap:7px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);color:var(--muted-2);font-size:.74rem}
+  .tour-again input{accent-color:var(--gold)}
+  .tour-card.final{text-align:center;width:min(440px,calc(100vw - 24px));padding:26px 24px 20px}
+  .tour-card.final .tour-foot{justify-content:center}
+  .tour-card.final .tour-dots{margin:0 0 14px;justify-content:center}
+  .tour-big{width:72px;height:72px;margin:0 auto 10px;display:block}
+  @media (prefers-reduced-motion:reduce){.tour-hole,.tour-card{transition:none}}
+</style>
+</head>
+<body>
+
+<header class="topnav">
+  <a class="brand" href="#" data-route="events">
+    <span class="brand-mark"><img src="/assets/eastcoins-logo.webp" alt="" width="30" height="30"></span> EastCoin
+  </a>
+
+  <nav class="nav-links" aria-label="Main">
+    <a class="nav-link" href="#"    data-route="events" aria-current="page"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 19.5c-2-2 .5-9.5 4.5-13.5S17.5 2.5 19.5 4.5s-.5 9.5-4.5 13.5-8.5 3.5-10.5 1.5z"/><path d="M8.5 15.5l7-7M10 12.5l1.5 1.5M12 10.5l1.5 1.5M14 8.5l1.5 1.5"/></svg><span>Sports</span></a>
+    <a class="nav-link" href="#"     data-route="music"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="15.5" r="2.5"/><path d="M9 17.5V6l11-2v9.5"/></svg><span>Music</span></a>
+    <a class="nav-link" href="#"    data-route="screen"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M8 5v4M16 5v4M8 15l3 2-3 2z"/></svg><span>Movies &amp; TV</span></a>
+    <a class="nav-link" href="#" data-route="multiview"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>MultiView</span></a>
+    <a class="nav-link nav-hot" href="#"     data-route="picks"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 6 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2 2 2 0 0 0 0-6z"/><path d="M13 7v3M13 14v3"/></svg><span>Picks</span><span class="nav-tag">HOT</span></a>
+    <a class="nav-link" href="#"    data-route="casino"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h3.75a1.75 1.75 0 0 1 0 3.5H9.5m0 0h4.25a1.75 1.75 0 0 1 0 3.5H9.5"/></svg><span>Casino</span></a>
+    <a class="nav-link" href="#" data-route="dashboard" hidden><span>Dashboard</span></a>
+    <a class="nav-link" href="#"     data-route="admin" id="navAdmin" hidden><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="1.9"/><circle cx="15" cy="12" r="1.9"/><circle cx="8" cy="17" r="1.9"/></svg><span>Admin</span></a>
+  </nav>
+
+  <div class="nav-right">
+    <div class="navsearch" id="navSearchBox">
+      <button class="navsearch-btn" id="navSearchBtn" type="button" aria-label="Search events, or paste a stream link" title="Search or embed">🔍</button>
+      <input id="navSearch" type="search" placeholder="Search or embed" aria-label="Search events, or paste a stream link to embed" autocomplete="off">
+    </div>
+    <div class="me-pill on" id="mePill">
+      <a class="login-btn ulink" id="loginBtn" href="#"><span class="me-av has-logo"><img src="https://static-cdn.jtvnw.net/jtv_user_pictures/e2117ecf-d4c9-4a9a-a030-e1e6a8e6393b-profile_image-300x300.png" alt=""></span><span class="me-name">BootyPaper</span></a>
+      <a class="wallet-chip" id="walletChip" href="#" data-route="picks" title="Your ZCoins — open Picks"><img class="zcoin-mark" src="/v3/assets/img/zcoin.webp" alt="" width="17" height="17"><span id="walletValue">596</span></a>
+    </div>
+    <div class="menuwrap">
+      <button class="iconbtn dots" id="settingsBtn" type="button" aria-haspopup="true" aria-expanded="false" title="Chat, music and settings" aria-label="Menu">⋯</button>
+      <div class="menu" id="settingsMenu" role="menu" hidden>
+        <button class="menu-item" type="button" role="menuitemcheckbox" data-toggle="chat"><span>💬&nbsp; Twitch chat</span><span class="switch" data-on="1"></span></button>
+        <button class="menu-item" type="button" role="menuitemcheckbox" id="musicDock" aria-pressed="false" title="Keep the Green Room playing on every page"><span>🎵&nbsp; Floating music player</span><span class="switch" data-on="0"></span></button>
+        <p class="menu-title">Layout</p>
+        <button class="menu-item" type="button" role="menuitemcheckbox" data-toggle="topnav"><span>Top navigation</span><span class="switch" data-on="1"></span></button>
+        <p class="menu-title">Events</p>
+        <button class="menu-item" type="button" role="menuitemcheckbox" data-toggle="art"><span>Event artwork</span><span class="switch" data-on="1"></span></button>
+        <button class="menu-item" type="button" role="menuitemcheckbox" data-toggle="scores"><span>Live scores</span><span class="switch" data-on="1"></span></button>
+        <p class="menu-note">Saved on this device only.</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+<main class="view" id="view">
+  <div class="demo-note"><b>Test page.</b> This is the first-visit tour as a new member would see it the first time they log in. It runs once, then never again unless they ask.
+    <button type="button" id="replay">Replay tour</button>
+    <button type="button" id="forget">Forget I've seen it</button>
+  </div>
+
+  <div class="viewhead"><div><h1>Events</h1></div></div>
+  <section class="ticker" style="height:34px;border:1px solid var(--line);border-radius:10px;background:var(--panel);margin:0 0 14px;display:flex;align-items:center;padding:0 12px;color:var(--muted-2);font-size:.8rem">📊 Live · Astros up 1–0 on the Phillies &nbsp;·&nbsp; 🎡 BootyPaper won 1 ZC on the Wheel &nbsp;·&nbsp; 🪙 dookiebetts800 locked Rangers +110</section>
+
+  <div class="demo-banner" id="picksBanner">
+    <img src="/v3/assets/img/zcoin.webp" alt="">
+    <div><b>Picks are now live</b><span>Back a team with your ZCoins and see where you land on the leaderboard.</span></div>
+  </div>
+
+  <div class="demo-grid">
+    <article class="demo-card"><div class="art">LAR at SF</div><div class="body"><h3>Rams at 49ers</h3><p>NFL · 7:15 PM</p></div></article>
+    <article class="demo-card"><div class="art">TEX at SEA</div><div class="body"><h3>Rangers at Mariners</h3><p>MLB · 3:10 PM</p></div></article>
+    <article class="demo-card"><div class="art">HOU at PHI</div><div class="body"><h3>Astros at Phillies</h3><p>MLB · Live</p></div></article>
+    <article class="demo-card"><div class="art">TB at ATL</div><div class="body"><h3>Rays at Braves</h3><p>MLB · Live</p></div></article>
+  </div>
+</main>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const KEY = "ec_v3_tour_seen";
+  const zc = "/v3/assets/img/zcoin.webp";
+  // Each step points at something real on the page. The copy is the
+  // whole pitch in three lines; nobody reads a fourth.
+  const STEPS = [
+    { target: "#mePill", title: "Your ZCoins wallet", html:
+      "The same coins you earn in chat. <b>Everything on the site runs on them</b> — picks, the casino, and what you win comes straight back here.",
+      coin: true },
+    { target: '.nav-link[data-route="picks"]', title: "Picks", html:
+      "Real sportsbook lines on <b>NFL and MLB</b>, one pick per game. Lock it here or type <b>!pick 10 rangers</b> in chat. Wins pay out the moment the game goes final." },
+    { target: '.nav-link[data-route="casino"]', title: "Casino", html:
+      "Coin flip, the Wheel, Higher or Lower. <b>20 ZC a bet, ten an hour</b>, every result drawn from a seed you can check afterwards." },
+    { target: "#picksBanner", title: "Tonight's slate", html:
+      "Markets open <b>an hour before kickoff</b> for NFL and at <b>4 PM Central</b> for MLB. The ticker up top is what everyone else is doing right now." },
+    { target: "#settingsBtn", title: "Chat, music, settings", html:
+      "Twitch chat on or off, the floating Green Room player, and how the site looks — all behind the dots." },
+    { final: true, title: "You're set", html:
+      "Your first pick puts you on the leaderboard. Ask in chat if anything's unclear — someone always answers." }
+  ];
+
+  let at = 0, veil, hole, card;
+  const seen = () => { try { return localStorage.getItem(KEY) === "1"; } catch { return false; } };
+  const mark = (v) => { try { v ? localStorage.setItem(KEY, "1") : localStorage.removeItem(KEY); } catch {} };
+
+  function build() {
+    veil = document.createElement("div"); veil.className = "tour-veil";
+    hole = document.createElement("div"); hole.className = "tour-hole";
+    card = document.createElement("div"); card.className = "tour-card";
+    document.body.append(veil, hole, card);
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, { passive: true });
+  }
+  function teardown(done) {
+    if (done) mark(true);
+    document.removeEventListener("keydown", onKey);
+    window.removeEventListener("resize", place);
+    window.removeEventListener("scroll", place);
+    veil?.remove(); hole?.remove(); card?.remove();
+    veil = hole = card = null;
+  }
+  function onKey(e) {
+    if (e.key === "Escape") teardown(true);
+    if (e.key === "ArrowRight" || e.key === "Enter") next();
+    if (e.key === "ArrowLeft") { at = Math.max(0, at - 1); render(); }
+  }
+  function next() { if (at >= STEPS.length - 1) teardown(true); else { at += 1; render(); } }
+
+  function render() {
+    const s = STEPS[at];
+    card.className = "tour-card" + (s.final ? " final noarrow" : "");
+    card.replaceChildren();
+    const dots = document.createElement("div"); dots.className = "tour-dots";
+    STEPS.forEach((_, i) => { const d = document.createElement("i"); if (i === at) d.className = "on"; dots.append(d); });
+    if (s.final) {
+      const big = document.createElement("img"); big.className = "tour-big"; big.src = zc; big.alt = "";
+      card.append(big, dots);
+    } else {
+      const step = document.createElement("p"); step.className = "tour-step"; step.textContent = `Step ${at + 1} of ${STEPS.length - 1}`;
+      card.append(step);
+    }
+    const h = document.createElement("h2"); h.textContent = s.title;
+    if (s.coin) { const i = document.createElement("img"); i.src = zc; i.alt = ""; h.append(i); }
+    const p = document.createElement("p"); p.innerHTML = s.html;
+    card.append(h, p);
+    const foot = document.createElement("div"); foot.className = "tour-foot";
+    if (!s.final) foot.append(dots);
+    const skip = document.createElement("button"); skip.className = "tour-btn"; skip.type = "button";
+    skip.textContent = s.final ? "Show me again next time" : "Skip tour";
+    skip.addEventListener("click", () => { if (s.final) { mark(false); teardown(false); } else teardown(true); });
+    const go = document.createElement("button"); go.className = "tour-btn primary"; go.type = "button";
+    go.textContent = s.final ? "Let's go" : at === STEPS.length - 2 ? "Finish" : "Next";
+    go.addEventListener("click", next);
+    foot.append(skip, go);
+    card.append(foot);
+    place();
+  }
+
+  function place() {
+    if (!card) return;
+    const s = STEPS[at];
+    const vw = window.innerWidth, vh = window.innerHeight;
+    if (s.final) {
+      hole.className = "tour-hole center";
+      Object.assign(hole.style, { top: `${vh / 2}px`, left: `${vw / 2}px`, width: "0px", height: "0px", borderRadius: "999px" });
+      const r = card.getBoundingClientRect();
+      Object.assign(card.style, { top: `${Math.max(12, vh / 2 - r.height / 2)}px`, left: `${Math.max(12, vw / 2 - r.width / 2)}px` });
+      return;
+    }
+    const target = document.querySelector(s.target);
+    if (!target) { next(); return; }
+    const t = target.getBoundingClientRect();
+    const pad = 6;
+    hole.className = "tour-hole";
+    Object.assign(hole.style, { top: `${t.top - pad}px`, left: `${t.left - pad}px`, width: `${t.width + pad * 2}px`, height: `${t.height + pad * 2}px`, borderRadius: `${Math.min(14, t.height / 2 + pad)}px` });
+    const r = card.getBoundingClientRect();
+    let left = t.left + t.width / 2 - r.width / 2;
+    left = Math.max(12, Math.min(vw - r.width - 12, left));
+    const top = Math.min(vh - r.height - 12, t.bottom + pad + 14);
+    Object.assign(card.style, { top: `${top}px`, left: `${left}px` });
+    card.style.setProperty("--arrow-x", `${Math.max(16, Math.min(r.width - 30, t.left + t.width / 2 - left - 7))}px`);
+  }
+
+  function start() { if (card) teardown(false); at = 0; build(); render(); }
+
+  document.getElementById("replay").addEventListener("click", start);
+  document.getElementById("forget").addEventListener("click", () => { mark(false); alert("Forgotten — reload the page and the tour runs again on its own."); });
+  // On the real site: run once, the first time a session loads with a user.
+  if (!seen()) window.setTimeout(start, 600);
+})();
+</script>
+</body>
+</html>

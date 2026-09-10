@@ -11,6 +11,7 @@
 import { slugFor } from "./_slug.js";
 import { utc } from "./_game.js";
 import { badgesFor } from "./_badges.js";
+import { getSessionUser } from "./_lib.js";
 import { ensureSchema as ensureCoinSchema } from "../coin/_coin.js";
 import { findTeam, ensureFavouriteColumns } from "./_teams.js";
 
@@ -179,6 +180,39 @@ export async function onRequestGet(context) {
     }
   } catch { casino = null; }
   if (list === "casino") return json({ ok: true, list: "casino", page: 1, pageSize: PAGE, total: 0, pages: 1, items: [] });
+
+  // Bankroll: every confirmed wallet operation EastCoin made for this
+  // person (picks and casino), as a running net. Balances stay private
+  // — the Community Ledger rule — so only the owner's own view carries
+  // the balance after each operation.
+  let bankroll = null;
+  try {
+    const ops = await db
+      .prepare(`SELECT type, amount, balance_after, COALESCE(confirmed_at, created_at) AS at
+                  FROM wallet_operations WHERE user_id = ? AND status = 'CONFIRMED'
+                 ORDER BY datetime(COALESCE(confirmed_at, created_at)) ASC, rowid ASC LIMIT 3000`)
+      .bind(String(user.twitch_id)).all();
+    const rows = ops.results || [];
+    if (rows.length) {
+      const viewer = await getSessionUser(db, context.request).catch(() => null);
+      const owner = Boolean(viewer && String(viewer.id) === String(user.twitch_id));
+      let net = 0;
+      const pts = [];
+      for (const r of rows) {
+        net += Number(r.amount || 0);
+        const p = { t: utc(String(r.at)), net, k: String(r.type || "") };
+        if (owner && Number.isFinite(Number(r.balance_after))) p.bal = Number(r.balance_after);
+        pts.push(p);
+      }
+      const step = Math.ceil(pts.length / 400);
+      const sampled = step > 1 ? pts.filter((_, i) => i % step === 0 || i === pts.length - 1) : pts;
+      bankroll = {
+        owner, ops: rows.length, net,
+        peak: Math.max(...pts.map((p) => p.net)), trough: Math.min(...pts.map((p) => p.net)),
+        first: pts[0].t, last: pts[pts.length - 1].t, points: sampled
+      };
+    }
+  } catch { bankroll = null; }
   const flip = casino;   // older readers of this payload
 
   return json({
@@ -207,6 +241,7 @@ export async function onRequestGet(context) {
       worstBeat: lost[0] ? pickView(lost[0]) : null,
       pageSize: PAGE,
       recent: picks.slice(0, PAGE).map(pickView)
-    }
-  });
+    },
+    bankroll
+  }, 200, { "Cache-Control": "private, max-age=15" });
 }
