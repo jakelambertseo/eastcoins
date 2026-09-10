@@ -308,6 +308,7 @@
     const head = el("div", "market-head");
     head.append(
       el("span", "market-league", market.league || market.sport || "Market"),
+      el("span", "market-tag open", "Open for betting"),
       el("span", "market-time", startLabel(market.startsAt))
     );
 
@@ -379,6 +380,7 @@
     const head = el("div", "market-head");
     head.append(
       el("span", "market-league", game.league || game.sport || "Upcoming"),
+      el("span", "market-tag soon", "Upcoming"),
       el("span", "market-time", startLabel(game.startsAt))
     );
 
@@ -453,17 +455,19 @@
     head.append(copy);
     section.append(head);
 
-    let lastDay = "";
-    let list = null;
-    for (const game of games) {
+    // Days, then kickoff slots inside each — the same shape as the open slate.
+    const days = new Map();
+    for (const game of games.slice().sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt))) {
       const day = dayHeading(game.startsAt);
-      if (day !== lastDay) {
-        lastDay = day;
-        section.append(el("h3", "upcoming-day", day));
-        list = el("div", "marketlist");
-        section.append(list);
-      }
-      list.append(upcomingCard(game));
+      if (!days.has(day)) days.set(day, []);
+      days.get(day).push(game);
+    }
+    section.classList.add("slate");
+    for (const [day, list] of days) {
+      const dh = el("h3", "upcoming-day", day);
+      dh.append(el("small", null, ` · ${list.length} game${list.length === 1 ? "" : "s"}`));
+      section.append(dh);
+      appendSlots(section, list, upcomingCard, (start) => `betting closes at ${start}`);
     }
     return section;
   }
@@ -596,29 +600,41 @@
     }
     box.append(head);
 
-    // Kickoff slots within the day: games within the same half hour share a header.
+    appendSlots(box, todays, marketCard, (start) => `picks close at ${start}`);
+    return box;
+  }
+
+  /** The word each sport uses for its start. */
+  function startWord(list) {
+    const leagues = new Set(list.map((m) => String(m.league || "").toUpperCase()));
+    return leagues.size === 1
+      ? ({ MLB: "first pitch", NFL: "kickoff", CFB: "kickoff", NBA: "tip-off", NHL: "puck drop" }[[...leagues][0]] || "game time")
+      : "game time";
+  }
+
+  /**
+   * Kickoff slots: games within the same half hour share a header with
+   * the time, then their cards in a grid. Used for the open slate and
+   * for Upcoming alike, so the two read the same.
+   */
+  function appendSlots(box, games, cardFor, noteFor) {
+    const at = (g) => new Date(g.startsAt).getTime();
     const slots = new Map();
-    for (const m of todays) {
-      const t = startOf(m);
+    for (const g of games.slice().sort((a, b) => at(a) - at(b))) {
+      const t = at(g);
       const key = Number.isFinite(t) ? Math.floor(t / (30 * 60 * 1000)) : "tbd";
       if (!slots.has(key)) slots.set(key, []);
-      slots.get(key).push(m);
+      slots.get(key).push(g);
     }
     for (const [key, list] of slots) {
       const head = el("div", "slothead");
       head.append(el("strong", null, key === "tbd" ? "Time TBD" : slotLabel(list)));
-      // The right word for the sport: first pitch, kickoff, tip-off, puck drop.
-      const leagues = new Set(list.map((m) => String(m.league || "").toUpperCase()));
-      const start = leagues.size === 1
-        ? ({ MLB: "first pitch", NFL: "kickoff", CFB: "kickoff", NBA: "tip-off", NHL: "puck drop" }[[...leagues][0]] || "game time")
-        : "game time";
-      head.append(el("span", null, `${list.length} game${list.length === 1 ? "" : "s"} · picks close at ${start}`));
+      head.append(el("span", null, `${list.length} game${list.length === 1 ? "" : "s"} · ${noteFor(startWord(list))}`));
       box.append(head);
       const grid = el("div", "marketlist");
-      for (const m of list) grid.append(marketCard(m));
+      for (const g of list) grid.append(cardFor(g));
       box.append(grid);
     }
-    return box;
   }
 
   /** The sport dropdown; `note` is the line of copy beside it, if any. */

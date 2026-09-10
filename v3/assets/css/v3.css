@@ -1953,10 +1953,19 @@ section.upcoming{margin-top:26px}   /* not .ec-flag.upcoming on the event cards 
 .upcoming-head h2{font-family:var(--display);font-weight:700;font-size:1.15rem;letter-spacing:-.02em;margin:0 0 3px}
 .upcoming-head p{margin:0;color:var(--muted-2);font-size:.84rem}
 .upcoming-day{
-  margin:14px 0 8px;color:var(--muted);font-size:.68rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;
+  margin:22px 0 4px;font-family:var(--display);font-weight:800;font-size:1.05rem;letter-spacing:-.015em;color:var(--text);
 }
+.upcoming-day small{color:var(--muted-2);font-family:var(--body);font-size:.76rem;font-weight:700}
 .upcoming-day:first-of-type{margin-top:4px}
-.market.upcoming{opacity:.86}
+.upcoming-day+.slothead{margin-top:6px}
+.market.upcoming{opacity:.92}
+/* status tags on the card heads */
+.market-tag{
+  padding:3px 8px;border-radius:999px;font-size:.6rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;
+}
+.market-tag.open{border:1px solid rgba(77,219,139,.4);background:var(--green-dim);color:var(--green)}
+.market-tag.soon{border:1px solid rgba(232,191,53,.45);background:var(--gold-dim);color:var(--gold)}
+.market-head .market-tag{margin-right:auto;margin-left:2px}
 .market.upcoming .market-league{color:var(--muted)}
 .side.preview{cursor:default}
 .side.preview:hover{background:var(--panel)}
