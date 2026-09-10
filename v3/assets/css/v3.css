@@ -2704,7 +2704,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .mdock-head{display:flex;align-items:center;gap:8px;height:36px;padding:0 8px 0 12px;background:var(--panel-2);border-bottom:1px solid var(--line)}
 .mdock-live{width:7px;height:7px;border-radius:50%;background:var(--muted-2);flex:0 0 auto}
 .mdock.is-playing .mdock-live{background:var(--green);box-shadow:0 0 8px rgba(77,219,139,.7)}
-.mdock-open{color:var(--text);font-family:var(--display);font-weight:800;font-size:.84rem;text-decoration:none;letter-spacing:-.01em}
+.mdock-open{color:var(--text);font-family:var(--display);font-weight:800;font-size:.84rem;text-decoration:none;letter-spacing:-.01em;white-space:nowrap;flex:0 0 auto}
 .mdock-open:hover{color:var(--gold)}
 .mdock-spacer{flex:1}
 .mdock-btn{width:26px;height:26px;border-radius:7px;border:1px solid transparent;background:none;color:var(--muted);font:inherit;font-size:.8rem;font-weight:800;cursor:pointer}
