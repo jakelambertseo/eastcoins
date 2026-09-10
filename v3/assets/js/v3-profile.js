@@ -511,7 +511,7 @@
 
     // ---- Casino
     const cs = panels.casino;
-    cs.append(sectionHead("Casino", "", "https://cdn.betterttv.net/emote/6928e7173a375a69ca4d0d47/2x.webp"));
+    cs.append(sectionHead("Casino", "", "https://cdn.betterttv.net/emote/68e8507220472aa979f64123/2x.webp"));
     if (!c) {
       const note = emptyNote("No casino results yet", "Coin Flip, the Wheel and Higher or Lower — wins and losses show here.");
       note.append(link("/?view=casino", "gp-back", "Go to the casino →"));

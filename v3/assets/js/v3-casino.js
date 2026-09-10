@@ -55,7 +55,7 @@
     const h1 = K.el("h1", null, "Casino");
     const emote = document.createElement("img");
     emote.className = "cf-title-emote";
-    emote.src = "https://cdn.betterttv.net/emote/6928e7173a375a69ca4d0d47/2x.webp";
+    emote.src = "https://cdn.betterttv.net/emote/68e8507220472aa979f64123/2x.webp";
     emote.alt = "";
     emote.width = 32; emote.height = 32;
     h1.append(emote);
@@ -67,6 +67,9 @@
     refs.me = K.el("div", "cas-me");
     page.append(refs.me);
 
+    const gamesHead = K.el("div", "cas-games-head");
+    gamesHead.append(K.el("h2", null, "Casino games"), K.el("span", null, "20 ZC a bet · ten an hour per game"));
+    page.append(gamesHead);
     refs.tiles = K.el("div", "cas-tiles");
     for (const [key, g] of Object.entries(GAMES)) {
       if (g.hidden) continue;
