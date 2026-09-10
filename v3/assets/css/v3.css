@@ -2657,6 +2657,9 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .picks-me .pf-q.wallet b{font-size:1.6rem}
 .picks-me .pf-q.wallet .zc-full{position:absolute;right:14px;top:50%;width:56px;height:56px;transform:translateY(-50%);filter:drop-shadow(0 6px 14px rgba(0,0,0,.45));pointer-events:none}
 .picks-me .pf-q:not(.wallet){padding:12px 0}
+.picks-me .pf-q.profit{text-align:right;padding-right:14px}
+.picks-me .pf-q.up b,.picks-me .pf-q.up b .zc-amount{color:var(--green)}
+.picks-me .pf-q.down b,.picks-me .pf-q.down b .zc-amount{color:var(--red)}
 .pf-q.wallet b{color:#b6f1c4}
 .pf-q b .zc-amount{gap:6px} .pf-q b .zcoin-mark{width:18px;height:18px}
 .picks-login{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;padding:16px 18px;border-color:rgba(145,70,255,.35)}

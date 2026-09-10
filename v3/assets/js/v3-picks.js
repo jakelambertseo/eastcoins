@@ -1314,7 +1314,7 @@
     walletTile.append(big);
     row.append(
       walletTile,
-      quick(`${season.name || season.id || "Season"} profit`, zc(profit, { sign: true }), settled ? `${settled} settled` : "nothing settled yet", profit > 0 ? "up" : profit < 0 ? "down" : ""),
+      quick(`${season.name || season.id || "Season"} profit`, zc(profit, { sign: true }), settled ? `${settled} game${settled === 1 ? "" : "s"} settled` : "nothing settled yet", `profit ${profit > 0 ? "up" : profit < 0 ? "down" : ""}`),
       quick("Record", `${Number(season.wins || 0)}–${Number(season.losses || 0)}`, recordNoteOf(season.records) || (settled ? `${season.accuracy}% right` : "first game decides it")),
       quick("Rank", season.rank ? `#${season.rank} of ${season.players}` : "—", season.rank ? "by Picks profit" : "unranked until a pick settles"),
       quick("Open", String(local.myPicks.filter((x) => x.status === "ACTIVE").length), "picks in play")
