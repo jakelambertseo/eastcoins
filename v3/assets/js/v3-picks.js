@@ -33,6 +33,7 @@
     upcomingAt: null,
     sort: { key: "profit", dir: "desc" },
     sport: "all",   // Markets tab filter: "all" or a league key like "mlb"
+    page: { mypicks: 1, history: 1, leaderboard: 1, ledger: 1 },   // one page per list
     day: "",        // Markets tab: which day's slate is showing (a toDateString key)
     communityLedger: [],
     season: null,
@@ -647,6 +648,7 @@
       btn.append(el("small", null, String(n)));
       btn.addEventListener("click", () => {
         local.sport = key;
+        resetPages();
         writeSportToUrl(local.sport);
         paint();
       });
@@ -675,6 +677,41 @@
     if (key === "all") url.searchParams.delete("sport");
     else url.searchParams.set("sport", key);
     history.replaceState(history.state, "", url.pathname + url.search + url.hash);
+  }
+
+  /* ---------------------------------------------------------- paging
+
+     Every long list shows one page at a time with the same pager the
+     profile uses. The page number lives in local.page per list and
+     goes back to 1 whenever the sport switch or a sort changes. */
+
+  const PAGE_SIZE = { mypicks: 12, history: 12, leaderboard: 10, ledger: 12 };
+
+  function paged(key, items) {
+    const size = PAGE_SIZE[key] || 10;
+    const pages = Math.max(1, Math.ceil(items.length / size));
+    const at = Math.min(pages, Math.max(1, Number(local.page[key]) || 1));
+    local.page[key] = at;
+    return { slice: items.slice((at - 1) * size, at * size), at, pages, total: items.length };
+  }
+
+  function pagerFor(key, info, what = "total") {
+    if (info.pages <= 1) return document.createDocumentFragment();
+    const pager = el("div", "mpager pf-pager picks-pager");
+    const prev = el("button", "mpager-btn", "‹");
+    const next = el("button", "mpager-btn", "›");
+    prev.type = next.type = "button";
+    prev.disabled = info.at <= 1;
+    next.disabled = info.at >= info.pages;
+    const go = (n) => { local.page[key] = n; paint(); root.querySelector(".picks-tabs")?.scrollIntoView({ block: "start", behavior: "smooth" }); };
+    prev.addEventListener("click", () => go(info.at - 1));
+    next.addEventListener("click", () => go(info.at + 1));
+    pager.append(prev, el("span", "mpager-at", `Page ${info.at} of ${info.pages} · ${info.total} ${what}`), next);
+    return pager;
+  }
+
+  function resetPages() {
+    for (const key of Object.keys(local.page)) local.page[key] = 1;
   }
 
   /* ---------------------------------------------------------- ticket */
@@ -920,9 +957,10 @@
       return wrap;
     }
 
+    const pg = paged("mypicks", picks);
     let grid = null;
     let lastDay = "";
-    for (const p of picks) {
+    for (const p of pg.slice) {
       const day = dayLabel(gameTime(p));
       if (day !== lastDay) {
         lastDay = day;
@@ -978,6 +1016,7 @@
       card.append(head, grid3, el("div", "pickticket-foot", foot));
       grid.append(card);
     }
+    wrap.append(pagerFor("mypicks", pg, "picks"));
     return wrap;
   }
 
@@ -1030,13 +1069,15 @@
       btn.addEventListener("click", () => {
         // First click sorts the way the column reads best; the second flips it.
         local.sort = on ? { key, dir: local.sort.dir === "asc" ? "desc" : "asc" } : { key, dir: natural };
+        local.page.leaderboard = 1;
         paint();
       });
       head.append(btn);
     }
     card.append(head);
 
-    for (const row of sortedLeaders()) {
+    const lpg = paged("leaderboard", sortedLeaders());
+    for (const row of lpg.slice) {
       const me = local.login && row.user?.login === local.login;
       const line = el("div", `trow${me ? " me" : ""}${row.rank === 1 ? " first" : ""}`);
       line.append(el("span", "trank", `#${row.rank}`));
@@ -1061,7 +1102,7 @@
       line.append(profit, rec("NFL"), rec("MLB"));
       card.append(line);
     }
-    wrap.append(card);
+    wrap.append(card, pagerFor("leaderboard", lpg, "players"));
     return wrap;
   }
 
@@ -1109,8 +1150,9 @@
 
     const list = el("div", "historylist");
     const icons = { wager: "↗", payout: "✓", loss: "✕", refund: "↩" };
+    const hpg = paged("history", entries);
     let lastDay = "";
-    for (const row of entries) {
+    for (const row of hpg.slice) {
       // A header each time the calendar day changes, newest day first.
       const day = dayLabel(row.at);
       if (day !== lastDay) {
@@ -1136,7 +1178,7 @@
       item.append(copy, amount);
       list.append(item);
     }
-    wrap.append(list);
+    wrap.append(list, pagerFor("history", hpg, "entries"));
     return wrap;
   }
 
@@ -1157,7 +1199,8 @@
     }
 
     const card = el("div", "tablecard ledger");
-    for (const row of rows) {
+    const gpg = paged("ledger", rows);
+    for (const row of gpg.slice) {
       const status = { ACTIVE: "pending", WON: "won", LOST: "lost", REFUNDED: "refunded" }[row.status] || "pending";
       const me = local.login && row.user?.login === local.login;
       const line = el("div", `trow ledgerrow ${status}${me ? " me" : ""}`);
@@ -1205,7 +1248,7 @@
       line.append(user, pick, stake, netEl, result);
       card.append(line);
     }
-    wrap.append(card);
+    wrap.append(card, pagerFor("ledger", gpg, "picks"));
     return wrap;
   }
 

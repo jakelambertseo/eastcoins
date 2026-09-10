@@ -2242,6 +2242,7 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .pf-section h2{align-items:center}
 .pf-emote{width:26px;height:26px;object-fit:contain;flex:0 0 auto;margin-left:2px}
 .pf-pager{margin-top:8px;border:1px solid var(--line);border-radius:10px}
+.picks-pager{margin-top:14px}
 /* bankroll chart ------------------------------------------ */
 .bk-card{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:12px 14px 8px}
 .bk-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px}
