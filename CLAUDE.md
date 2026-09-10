@@ -136,6 +136,14 @@
 > lives; chat links and the page must keep agreeing. `g/example.html` is
 > the original static mockup, kept for the explainer only.
 >
+> **Daily recap** — `/api/admin/recap` (cron key or owner) posts one
+> Discord card with every person whose picks settled the previous
+> Central day: record and net, best to worst, plus day totals. The cron
+> Worker fires it at `50 13,14 * * *` UTC and the endpoint posts only when
+> it is 8 AM Central (`?force=1` from the dashboard bypasses that, `?dry=1`
+> returns the card without posting); `recap:sent:<day>` in `ops_status`
+> makes it once per day.
+>
 > **Nightly backup** — the picks cron Worker has a second trigger
 > (`0 9 * * *` UTC) that POSTs `/api/admin/backup` with the cron key; the
 > function dumps every table to gzipped JSON in the R2 bucket bound as

@@ -99,11 +99,37 @@ async function runBackup(env) {
   return { ok: true, payload };
 }
 
+/** The daily Discord recap; the endpoint decides whether it is 8 AM Central. */
+async function runRecap(env) {
+  const url = String(env.RECAP_URL || "").trim();
+  const key = String(env.PICKS_CRON_KEY || "").trim();
+  if (!url || !key) {
+    console.error("picks-cron: RECAP_URL or PICKS_CRON_KEY missing — no recap");
+    return { ok: false, error: "not_configured" };
+  }
+  let response;
+  try {
+    response = await fetch(url, { method: "POST", headers: { "X-Picks-Cron-Key": key } });
+  } catch (error) {
+    console.error("picks-cron: recap request threw", error);
+    return { ok: false, error: "unreachable" };
+  }
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.ok) {
+    console.error(`picks-cron: recap refused (${response.status})`, payload?.code || "", payload?.message || "");
+    return { ok: false, status: response.status, payload };
+  }
+  if (payload.skipped) console.log(`picks-cron: recap skipped — ${payload.skipped}`);
+  else console.log(`picks-cron: recap posted for ${payload.day} — ${payload.people} players, ${payload.settled} picks`);
+  return { ok: true, payload };
+}
+
 export default {
   async scheduled(event, env, ctx) {
     // Which schedule fired decides the job; the settlement one is the
     // default so a new trigger can never silently skip payouts.
     if (event.cron === "0 9 * * *") ctx.waitUntil(runBackup(env));
+    else if (event.cron === "50 13,14 * * *") ctx.waitUntil(runRecap(env));
     else ctx.waitUntil(runSettlement(env, "cron"));
   },
 
@@ -122,8 +148,9 @@ export default {
       return new Response("Not authorized", { status: 403 });
     }
 
-    // ?job=backup runs the nightly backup by hand, with the same key.
-    const result = url.searchParams.get("job") === "backup" ? await runBackup(env) : await runSettlement(env, "manual");
+    // ?job=backup or ?job=recap runs those by hand, with the same key.
+    const job = url.searchParams.get("job");
+    const result = job === "backup" ? await runBackup(env) : job === "recap" ? await runRecap(env) : await runSettlement(env, "manual");
     return Response.json(result, { status: result.ok ? 200 : 502 });
   }
 };

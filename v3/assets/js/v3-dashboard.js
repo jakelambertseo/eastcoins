@@ -148,9 +148,22 @@
       testBtn.textContent = r?.ok ? "Posted ✓" : `Failed${r?.error ? " · " + r.error : ""}`;
       setTimeout(() => { testBtn.textContent = "Post test card"; testBtn.disabled = false; }, 4000);
     });
+    const recapBtn = el("button", "db-btn", "Post yesterday's recap");
+    recapBtn.type = "button";
+    recapBtn.disabled = !d.discord?.configured;
+    recapBtn.addEventListener("click", async () => {
+      recapBtn.disabled = true;
+      recapBtn.textContent = "Posting…";
+      let r = null;
+      try { r = await (await fetch("/api/admin/recap?force=1", { method: "POST", credentials: "include" })).json(); } catch { r = null; }
+      recapBtn.textContent = r?.ok ? `Posted ✓ ${r.day} · ${r.people} players` : `Failed${r?.code ? " · " + r.code : ""}`;
+      setTimeout(() => { recapBtn.textContent = "Post yesterday's recap"; recapBtn.disabled = false; }, 5000);
+    });
     grid.append(card("Discord ledger", d.discord?.configured ? "ok" : "warn", [
       ["Webhook", d.discord?.configured ? "set" : "not set"],
-      ["Sample", testBtn]
+      ["Sample", testBtn],
+      ["Daily recap", "8:50 AM CT, yesterday's picks"],
+      ["Now", recapBtn]
     ]));
 
     // People

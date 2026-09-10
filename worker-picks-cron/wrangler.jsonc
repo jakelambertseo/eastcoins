@@ -11,13 +11,16 @@
   // Two schedules: settlement every 5 minutes, and the database backup
   // once a day at 09:00 UTC (4 AM Central in summer, 3 AM in winter —
   // either way, hours after the last game and before anything opens).
+  // Plus the daily recap at 8:50 AM Central: 13:50 UTC in summer, 14:50
+  // in winter — both fire, the endpoint keeps the one that is 8 AM local.
   "triggers": {
-    "crons": ["*/5 * * * *", "0 9 * * *"]
+    "crons": ["*/5 * * * *", "0 9 * * *", "50 13,14 * * *"]
   },
 
   "vars": {
     "SETTLE_URL": "https://eastcoin.vip/api/picks/settle",
-    "BACKUP_URL": "https://eastcoin.vip/api/admin/backup"
+    "BACKUP_URL": "https://eastcoin.vip/api/admin/backup",
+    "RECAP_URL": "https://eastcoin.vip/api/admin/recap"
   }
 
   // PICKS_CRON_KEY is a secret, set with:
