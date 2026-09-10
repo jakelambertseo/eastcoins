@@ -318,7 +318,11 @@
       const btn = el("button", "side");
       btn.type = "button";
 
-      const label = el("span", "side-team", name || "TBC");
+      // Full name where there is room, the club's nickname where there
+      // is not — CSS picks, by the card's width, so nothing ever truncates.
+      const label = el("span", "side-team");
+      const short = window.ECLogos ? window.ECLogos.nickname(name).replace(/\w/g, (c) => c.toUpperCase()) : String(name || "").split(" ").pop();
+      label.append(el("span", "side-team-full", name || "TBC"), el("span", "side-team-short", short || name || "TBC"));
       const price = el("span", "side-line nums", formatLine(line));
       const pays = el("span", "side-pays");
       pays.append(document.createTextNode("10 pays "), zc(totalReturn(10, line)));

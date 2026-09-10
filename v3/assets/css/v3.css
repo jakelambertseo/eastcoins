@@ -2753,6 +2753,12 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .slothead strong{font-family:var(--display);font-weight:800;font-size:1rem;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
 .slothead span{color:var(--muted-2);font-size:.76rem;font-weight:700}
 .slate .marketlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:11px}
-/* Two cards across means narrower buttons: a long club name wraps to a
-   second line rather than losing its ending. */
-.slate .side-team{white-space:normal;line-height:1.15}
+/* A side button shows the full club name when the card is wide enough
+   and the nickname when it is not, so a name is never cut short. */
+.market{container-type:inline-size}
+.side-team{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.15}
+.side-team-short{display:none}
+@container (max-width:560px){
+  .side-team-full{display:none}
+  .side-team-short{display:inline}
+}
