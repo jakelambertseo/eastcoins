@@ -41,7 +41,7 @@
     refs.wheelInner.style.background = `conic-gradient(${stops.join(",")})`;
   }
 
-  function renderStage(refs, { round, config, inBets, freshResult }) {
+  function renderStage(refs, { round, config, inBets, freshResult, now }) {
     paintSlices(refs, config);
     const inner = refs.wheelInner;
     if (inBets) {
@@ -62,7 +62,10 @@
       void inner.offsetWidth;
       const center = (round.result.slice + 0.5) * SLICE_DEG;
       const target = 5 * 360 + (360 - center);
-      inner.style.transition = "transform 4s cubic-bezier(.12,.8,.2,1)";
+      // Late to the round: land on the slice at once instead of a full spin.
+      const elapsed = Math.max(0, now - round.closesAt);
+      const remaining = Math.max(0, 4000 - elapsed);
+      inner.style.transition = remaining ? `transform ${remaining}ms cubic-bezier(.12,.8,.2,1)` : "none";
       inner.style.transform = `rotate(${target}deg)`;
     }
   }
