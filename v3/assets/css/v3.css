@@ -464,6 +464,13 @@ body.chat-hidden .chatrail{display:none}
   .me-name{display:none}
   .me-pill.on .login-btn{padding:0 6px 0 4px}
 }
+@media (min-width:981px){
+  body.chat-open .menu{right:calc(var(--chat-w) - 4px)}
+  body.chat-open .menu::before{
+    content:"";position:absolute;top:10px;right:-9px;width:0;height:0;
+    border:9px solid transparent;border-right:0;border-left-color:var(--line-2)
+  }
+}
 @media (max-width:980px){
   /* The chat rail goes off-canvas here. A fixed element parked at
      translateX(100%) still counts toward scrollWidth, so contain it
@@ -539,6 +546,9 @@ body.chat-hidden .chatrail{display:none}
 .menuwrap{position:relative}
 .menu{
   position:absolute;top:calc(100% + 8px);right:0;z-index:70;
+  /* Twitch's embed flags itself "obscured" if anything ever covers it,
+     and keeps the error until the chat reloads. With the rail open the
+     menu therefore opens just to the left of the rail, never over it. */
   width:246px;padding:8px;
   border:1px solid var(--line-2);border-radius:12px;
   background:var(--panel-2);box-shadow:var(--shadow);
