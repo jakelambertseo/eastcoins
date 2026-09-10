@@ -117,7 +117,6 @@
   function nameLink(user) {
     const a = el("a", "ulink", user?.displayName || user?.login || "someone");
     a.href = `/u/${encodeURIComponent(String(user?.login || "").toLowerCase())}`;
-    window.ECBadges?.decorate(a, user?.login);
     return a;
   }
 
