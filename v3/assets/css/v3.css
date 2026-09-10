@@ -2622,27 +2622,40 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 /* Markets tab: the sport dropdown */
 /* Picks header: one pill for the leader, one card for you, tabs with tools. */
 .picks-head{align-items:center}
+.picks-title{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .leaderpill{
-  display:inline-flex;align-items:center;gap:9px;height:38px;padding:0 12px 0 10px;border-radius:999px;
+  display:inline-flex;align-items:center;gap:11px;height:52px;padding:0 16px 0 12px;border-radius:999px;
   border:1px solid rgba(232,191,53,.35);background:linear-gradient(120deg,rgba(232,191,53,.14),transparent 70%),var(--panel);
   color:inherit;text-decoration:none;max-width:100%
 }
 .leaderpill:hover{border-color:var(--gold)}
 .leaderpill.empty{border-color:var(--line-2);background:var(--panel)}
-.lp-crown{font-size:1rem;line-height:1;filter:drop-shadow(0 0 6px rgba(232,191,53,.5))}
-.lp-av{position:relative;overflow:hidden;width:24px;height:24px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:linear-gradient(150deg,#8e1231,#4a0a1c);color:var(--gold);font-size:.58rem;font-weight:800}
+.lp-crown{font-size:1.35rem;line-height:1;filter:drop-shadow(0 0 6px rgba(232,191,53,.5))}
+.lp-kicker{display:block;color:var(--gold);font-size:.58rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;line-height:1.1;margin-bottom:2px}
+.lp-line{display:inline-flex;align-items:baseline;gap:9px}
+.lp-av{position:relative;overflow:hidden;width:34px;height:34px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:linear-gradient(150deg,#8e1231,#4a0a1c);color:var(--gold);font-size:.58rem;font-weight:800}
 .lp-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .2s ease}
 .lp-av.has-logo{color:transparent}.lp-av.has-logo img{opacity:1}
-.lp-copy{display:inline-flex;align-items:baseline;gap:8px;min-width:0}
-.lp-copy b{font-family:var(--display);font-weight:800;font-size:.95rem;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
-.lp-profit{color:var(--gold);font-weight:800;font-size:.86rem}
-.lp-profit .zcoin-mark{width:13px;height:13px}
+.lp-copy{display:block;min-width:0;line-height:1.15}
+.lp-copy b{font-family:var(--display);font-weight:800;font-size:1.15rem;letter-spacing:-.015em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.lp-profit{color:var(--gold);font-weight:800;font-size:1rem}
+.lp-profit .zcoin-mark{width:15px;height:15px}
 .lp-k{font-weight:800;font-size:.84rem;color:var(--muted)}
 .lp-note{color:var(--muted-2);font-size:.72rem;font-weight:700;padding-left:8px;border-left:1px solid var(--line)}
 .leaderpill.is-sk{gap:10px}
 .picks-me{margin-bottom:16px;padding:14px 18px}
 .picks-me .pf-quick{border-top:0;padding-top:0;margin-top:0}
 .pf-quick.five{grid-template-columns:repeat(5,minmax(0,1fr))}
+.picks-me .pf-q.wallet{
+  position:relative;padding:12px 70px 12px 14px;border-radius:12px;
+  border:1px solid rgba(77,219,139,.32);
+  background:linear-gradient(140deg,rgba(77,219,139,.18),transparent 62%),var(--panel-2);
+  box-shadow:0 0 0 3px rgba(77,219,139,.06)
+}
+.picks-me .pf-q.wallet span{color:#8fd9a6}
+.picks-me .pf-q.wallet b{font-size:1.6rem}
+.picks-me .pf-q.wallet .zc-full{position:absolute;right:10px;top:50%;width:56px;height:56px;transform:translateY(-50%);filter:drop-shadow(0 6px 14px rgba(0,0,0,.45));pointer-events:none}
+.picks-me .pf-q:not(.wallet){padding:12px 0}
 .pf-q.wallet b{color:#b6f1c4}
 .pf-q b .zc-amount{gap:6px} .pf-q b .zcoin-mark{width:18px;height:18px}
 .picks-login{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;padding:16px 18px;border-color:rgba(145,70,255,.35)}

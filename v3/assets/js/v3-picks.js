@@ -1243,15 +1243,20 @@
     });
     pill.append(el("span", "lp-crown", "👑"));
     if (!top) {
-      pill.append(el("span", "lp-k", "Crown up for grabs"));
+      const copy0 = el("span", "lp-copy");
+      copy0.append(el("span", "lp-kicker", "Season leader"), el("b", null, "Crown up for grabs"));
+      pill.append(copy0);
       return pill;
     }
     pill.append(avatar(top.user, "lp-av"));
     const copy = el("span", "lp-copy");
-    copy.append(el("b", null, top.user?.displayName || top.user?.login || "—"));
+    copy.append(el("span", "lp-kicker", "Season leader"));
+    const line = el("span", "lp-line");
+    line.append(el("b", null, top.user?.displayName || top.user?.login || "—"));
     const profit = el("span", "lp-profit");
     profit.append(zc(top.profit, { sign: true }));
-    copy.append(profit);
+    line.append(profit);
+    copy.append(line);
     pill.append(copy);
     const me = local.authed && local.season?.rank ? `you're #${local.season.rank}` : "leads";
     pill.append(el("small", "lp-note", me));
@@ -1300,8 +1305,15 @@
     coin.alt = "";
     coin.width = 18; coin.height = 18;
     wallet.append(coin, document.createTextNode(Number.isFinite(balance) ? balance.toLocaleString() : "—"));
+    const walletTile = quick("My wallet", wallet, local.wallet?.connected ? "live from StreamElements" : "not connected", "wallet");
+    const big = document.createElement("img");
+    big.className = "zc-full";
+    big.src = "/v3/assets/img/zcoin.webp";
+    big.alt = "";
+    big.width = 56; big.height = 56;
+    walletTile.append(big);
     row.append(
-      quick("My wallet", wallet, local.wallet?.connected ? "live from StreamElements" : "not connected", "wallet"),
+      walletTile,
       quick(`${season.name || season.id || "Season"} profit`, zc(profit, { sign: true }), settled ? `${settled} settled` : "nothing settled yet", profit > 0 ? "up" : profit < 0 ? "down" : ""),
       quick("Record", `${Number(season.wins || 0)}–${Number(season.losses || 0)}`, recordNoteOf(season.records) || (settled ? `${season.accuracy}% right` : "first game decides it")),
       quick("Rank", season.rank ? `#${season.rank} of ${season.players}` : "—", season.rank ? "by Picks profit" : "unranked until a pick settles"),
@@ -1351,9 +1363,11 @@
 
     const head = el("div", "viewhead picks-head");
     const wrap = el("div");
-    wrap.append(el("h1", null, "Picks"));
+    const titleRow = el("div", "picks-title");
+    titleRow.append(el("h1", null, "Picks"), local.loaded ? leaderPill() : skelPill());
+    wrap.append(titleRow);
     wrap.append(el("p", null, `${local.season?.name || "Season"} · NFL opens an hour before kickoff · MLB at 4 PM CT, five games at a time`));
-    head.append(wrap, local.loaded ? leaderPill() : skelPill());
+    head.append(wrap);
     root.append(head);
     root.append(local.loaded ? myCard() : skelMyCard());
 
