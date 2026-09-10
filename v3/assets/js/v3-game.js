@@ -254,10 +254,12 @@
     };
     const score = el("div", "gp-score");
     const hasScore = (settled || voided) && Number.isInteger(m.away.score) && Number.isInteger(m.home.score);
+    const inPlay = !hasScore && m.live && Number.isInteger(m.live.away) && Number.isInteger(m.live.home);
+    if (inPlay) score.classList.add("live");
     score.append(
-      el("b", `nums${winner === "away" ? " win" : ""}`, hasScore ? String(m.away.score) : "–"),
-      el("i", null, hasScore ? "–" : "at"),
-      el("b", `nums${winner === "home" ? " win" : ""}`, hasScore ? String(m.home.score) : "–")
+      el("b", `nums${winner === "away" ? " win" : ""}`, hasScore ? String(m.away.score) : inPlay ? String(m.live.away) : "–"),
+      el("i", null, hasScore ? "–" : inPlay ? "live" : "at"),
+      el("b", `nums${winner === "home" ? " win" : ""}`, hasScore ? String(m.home.score) : inPlay ? String(m.live.home) : "–")
     );
     teams.append(teamCell(m.away, "away"), score, teamCell(m.home, "home"));
     board.append(teams);

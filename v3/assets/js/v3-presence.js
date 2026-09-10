@@ -33,22 +33,32 @@
 
   let lastWhere = "";
   let lastDetail = "";
+  let lastRef = "";
   // Hidden tabs still beat: someone with the Green Room in a background
   // tab is still in the Green Room.
-  async function beat(where, detail) {
-    if (where && where !== lastWhere) lastDetail = "";
+  async function beat(where, detail, ref) {
+    if (where && where !== lastWhere) { lastDetail = ""; lastRef = ""; }
     // With no route given, ask the shell where this tab actually is —
     // the first paint happens before this script is ready, and a Music
     // tab must not spend its first minute reported as Sports.
     lastWhere = where || lastWhere || window.ECV3?.state?.route || "events";
     if (detail !== undefined) lastDetail = String(detail || "");
+    if (ref !== undefined) lastRef = String(ref || "");
     try {
       await fetch("/api/presence", {
         method: "POST", credentials: "include", keepalive: true,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ client: clientId(), where: lastWhere, detail: lastDetail })
+        body: JSON.stringify({ client: clientId(), where: lastWhere, detail: lastDetail, ref: lastRef })
       });
     } catch { /* next beat */ }
+  }
+
+  // The latest room picture, for anything that wants to draw from it
+  // (the Sports cards count viewers per event from `watching`).
+  let latest = null;
+  function publish(data) {
+    latest = data;
+    document.dispatchEvent(new CustomEvent("ec-presence", { detail: data }));
   }
 
   // One glyph per place, so a chip can say where someone is in one line.
@@ -97,7 +107,9 @@
     try {
       const r = await fetch("/api/presence", { credentials: "include" });
       const payload = await r.json();
-      return payload?.ok ? payload : null;
+      const data = payload?.ok ? payload : null;
+      if (data) publish(data);
+      return data;
     } catch {
       return null;
     }
@@ -158,5 +170,5 @@
     stripTimer = window.setInterval(refresh, 20 * 1000);
   }
 
-  window.ECPresence = Object.freeze({ beat, mountStrip });
+  window.ECPresence = Object.freeze({ beat, mountStrip, latest: () => latest });
 })();

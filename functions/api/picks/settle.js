@@ -107,7 +107,10 @@ async function fetchScores(env, sportKey, daysFrom) {
   const apiKey = String(env.ODDS_API_KEY || "").trim();
   if (!apiKey) return { games: [], status: 0, note: "no ODDS_API_KEY" };
 
-  const query = new URLSearchParams({ apiKey, daysFrom: String(daysFrom) });
+  // Without daysFrom the feed answers with live and upcoming games only,
+  // for one credit instead of two — exactly what a live look-up needs.
+  const query = new URLSearchParams({ apiKey });
+  if (daysFrom) query.set("daysFrom", String(daysFrom));
   try {
     const response = await fetch(`${ODDS_API}/${encodeURIComponent(sportKey)}/scores/?${query}`);
     if (!response.ok) {
@@ -129,6 +132,89 @@ async function fetchScores(env, sportKey, daysFrom) {
     console.error(`Odds API scores ${sportKey} threw`, error);
     return { games: [], status: 0 };
   }
+}
+
+/* ---------------------------------------------------------- live scores
+
+   While a game with picks on it is in play, the same feed says the score
+   so far. One credit per league per tick, only while such a game is on,
+   and every change is kept in market_scores for the ticker and the feed. */
+
+const LIVE_MAX_AGE_MS = 5 * 60 * 60 * 1000;
+let liveReady = false;
+
+async function ensureLive(db) {
+  if (liveReady) return;
+  await db.prepare(`CREATE TABLE IF NOT EXISTS market_scores (
+    market_id TEXT NOT NULL, away INTEGER NOT NULL, home INTEGER NOT NULL, at TEXT NOT NULL,
+    PRIMARY KEY (market_id, at))`).run();
+  for (const col of ["live_away_score INTEGER", "live_home_score INTEGER", "live_updated_at TEXT"]) {
+    await db.prepare(`ALTER TABLE markets ADD COLUMN ${col}`).run().catch(() => {});
+  }
+  liveReady = true;
+}
+
+/** The feed's game for this market, if it is on the board. */
+function boardGameFor(board, market) {
+  const wantAway = nickname(market.away_name);
+  const wantHome = nickname(market.home_name);
+  const started = new Date(market.starts_at).getTime();
+  for (const game of board.games) {
+    const gotAway = nickname(game.away_team);
+    const gotHome = nickname(game.home_team);
+    const straight = gotAway === wantAway && gotHome === wantHome;
+    const flipped = gotAway === wantHome && gotHome === wantAway;
+    if (!straight && !flipped) continue;
+    const when = new Date(game.commence_time).getTime();
+    if (Number.isFinite(when) && Number.isFinite(started) && Math.abs(when - started) > SAME_FIXTURE_MS) continue;
+    return { game, straight };
+  }
+  return null;
+}
+
+async function trackLiveScores(env, db, boards) {
+  await ensureLive(db);
+  const rows = await db
+    .prepare(
+      `SELECT m.id, m.sport, m.away_name, m.home_name, m.starts_at, m.live_away_score, m.live_home_score
+         FROM markets m
+        WHERE m.state = 'LOCKED'
+          AND datetime(m.starts_at) <= datetime('now')
+          AND datetime(m.starts_at) >= datetime('now', '-5 hours')
+          AND EXISTS (SELECT 1 FROM picks p WHERE p.market_id = m.id AND p.status = 'ACTIVE')
+        ORDER BY m.starts_at ASC
+        LIMIT 20`
+    )
+    .all()
+    .catch(() => ({ results: [] }));
+  const live = rows.results || [];
+  const changed = [];
+  for (const market of live) {
+    const keys = ODDS_SPORTS[String(market.sport || "").toLowerCase()] || [];
+    for (const sportKey of keys) {
+      const board = await scoresFor(boards, env, sportKey, 0);
+      const hit = boardGameFor(board, market);
+      if (!hit) continue;
+      const { game, straight } = hit;
+      if (game.completed) break;   // settlement's job now
+      const scores = Array.isArray(game.scores) ? game.scores : [];
+      const scoreOf = (teamName) => Number(scores.find((e) => nickname(e?.name) === nickname(teamName))?.score);
+      const awayScore = scoreOf(game.away_team);
+      const homeScore = scoreOf(game.home_team);
+      if (!Number.isInteger(awayScore) || !Number.isInteger(homeScore)) break;
+      const ourAway = straight ? awayScore : homeScore;
+      const ourHome = straight ? homeScore : awayScore;
+      if (ourAway === Number(market.live_away_score) && ourHome === Number(market.live_home_score)) break;
+      const at = new Date().toISOString();
+      await db.batch([
+        db.prepare(`UPDATE markets SET live_away_score = ?, live_home_score = ?, live_updated_at = ? WHERE id = ?`).bind(ourAway, ourHome, at, market.id),
+        db.prepare(`INSERT OR IGNORE INTO market_scores (market_id, away, home, at) VALUES (?, ?, ?, ?)`).bind(market.id, ourAway, ourHome, at)
+      ]).catch(() => {});
+      changed.push(`${market.away_name} ${ourAway}–${ourHome} ${market.home_name}`);
+      break;
+    }
+  }
+  return { watched: live.length, changed };
 }
 
 // One request per sport per RUN, however many markets share it.
@@ -541,6 +627,10 @@ export async function onRequestPost(context) {
     if (cards.length) await postDiscord(context.env, cards).catch(() => {});
   }
 
+  // Games in play with picks on them: keep the score current.
+  let liveNote = { watched: 0, changed: [] };
+  try { liveNote = await trackLiveScores(context.env, db, boards); } catch (error) { console.error("Picks: live scores threw", error); }
+
   // Leave a note for the dashboard: when this ran, what it did, and the
   // latest Odds API quota seen on the way.
   const settledCount = results.filter((r) => r.action === "settled").length;
@@ -548,7 +638,7 @@ export async function onRequestPost(context) {
   await noteStatus(db, "settle:last", {
     by: auth.by,
     summary: `${opened.length} opened · ${reminded.length ? reminded.join(", ") + " reminded · " : ""}${Number(locked?.meta?.changes || 0)} locked · ${closingRows.length} closed · ${settledCount} settled` +
-      `${failedPayouts ? ` · ${failedPayouts} payout(s) FAILED` : ""}`
+      `${failedPayouts ? ` · ${failedPayouts} payout(s) FAILED` : ""}${liveNote.watched ? ` · ${liveNote.watched} live` : ""}`
   });
   const quota = lastScoresQuota || lastOddsQuota();
   if (quota && (Number.isFinite(quota.used) || Number.isFinite(quota.remaining))) await noteStatus(db, "odds:quota", quota);

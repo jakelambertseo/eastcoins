@@ -29,6 +29,7 @@ async function ensure(db) {
   ]);
   // Added after the table first shipped; harmless when already there.
   await db.prepare(`ALTER TABLE site_presence ADD COLUMN detail TEXT`).run().catch(() => {});
+  await db.prepare(`ALTER TABLE site_presence ADD COLUMN ref TEXT`).run().catch(() => {});
   ready = true;
 }
 
@@ -44,14 +45,17 @@ export async function onRequestPost(context) {
   const client = String(body.client || "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64);
   const place = String(body.where || "").replace(/[^a-z-]/g, "").slice(0, 24);
   const detail = String(body.detail || "").replace(/[<>]/g, "").trim().slice(0, 80);
+  // What exactly they are on — an event id for a watch page — so the
+  // Sports page can count viewers per card.
+  const ref = String(body.ref || "").replace(/[^a-zA-Z0-9_:.-]/g, "").slice(0, 80);
   if (!client) return json({ ok: false, code: "NO_CLIENT" }, 400);
 
   const user = await getSessionUser(db, context.request);
   const now = Date.now();
   await db
-    .prepare(`INSERT INTO site_presence (client_id, user_id, place, detail, seen_at) VALUES (?, ?, ?, ?, ?)
-              ON CONFLICT(client_id) DO UPDATE SET user_id = excluded.user_id, place = excluded.place, detail = excluded.detail, seen_at = excluded.seen_at`)
-    .bind(client, user ? user.id : null, place, detail, now)
+    .prepare(`INSERT INTO site_presence (client_id, user_id, place, detail, ref, seen_at) VALUES (?, ?, ?, ?, ?, ?)
+              ON CONFLICT(client_id) DO UPDATE SET user_id = excluded.user_id, place = excluded.place, detail = excluded.detail, ref = excluded.ref, seen_at = excluded.seen_at`)
+    .bind(client, user ? user.id : null, place, detail, ref, now)
     .run();
 
   // One row per person per Chicago day, first beat wins — this is what
@@ -79,7 +83,7 @@ export async function onRequestGet(context) {
   const since = Date.now() - WINDOW_MS;
   const rows = await db
     .prepare(
-      `SELECT p.client_id, p.user_id, p.place, p.detail, p.seen_at, u.twitch_login, u.display_name, u.avatar_url
+      `SELECT p.client_id, p.user_id, p.place, p.detail, p.ref, p.seen_at, u.twitch_login, u.display_name, u.avatar_url
          FROM site_presence p LEFT JOIN users u ON u.twitch_id = p.user_id
         WHERE p.seen_at >= ?
         ORDER BY p.seen_at DESC`
@@ -92,8 +96,11 @@ export async function onRequestGet(context) {
   const people = new Map();
   let guests = 0;
   const where = {};
+  // Viewers per event: everyone on a watch page, counted once each.
+  const watching = {};
   for (const r of rows.results || []) {
     const place = String(r.place || "");
+    const ref = String(r.ref || "");
     if (r.user_id && r.twitch_login) {
       if (!people.has(r.user_id)) {
         people.set(r.user_id, {
@@ -101,15 +108,18 @@ export async function onRequestGet(context) {
           displayName: String(r.display_name || r.twitch_login),
           avatar: String(r.avatar_url || ""),
           where: place,
-          detail: String(r.detail || "")
+          detail: String(r.detail || ""),
+          ref
         });
         where[place] = (where[place] || 0) + 1;
+        if (place === "watch" && ref) watching[ref] = (watching[ref] || 0) + 1;
       }
     } else {
       guests += 1;
       where[place] = (where[place] || 0) + 1;
+      if (place === "watch" && ref) watching[ref] = (watching[ref] || 0) + 1;
     }
   }
 
-  return json({ ok: true, people: [...people.values()], guests, total: people.size + guests, where });
+  return json({ ok: true, people: [...people.values()], guests, total: people.size + guests, where, watching });
 }

@@ -118,7 +118,10 @@ export function marketPayload(m) {
     winner: m.winner || null,
     away: { name: String(m.away_name), line: intOrNull(m.away_odds_locked), score: intOrNull(m.final_away_score) },
     home: { name: String(m.home_name), line: intOrNull(m.home_odds_locked), score: intOrNull(m.final_home_score) },
-    picks: m.pick_count == null ? undefined : Number(m.pick_count)
+    picks: m.pick_count == null ? undefined : Number(m.pick_count),
+    live: m.state === "LOCKED" && Number.isInteger(intOrNull(m.live_away_score)) && Number.isInteger(intOrNull(m.live_home_score))
+      ? { away: intOrNull(m.live_away_score), home: intOrNull(m.live_home_score), at: utc(m.live_updated_at) }
+      : null
   };
 }
 

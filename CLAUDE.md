@@ -99,7 +99,17 @@
 >
 > **Presence** — every tab POSTs `/api/presence` (`v3-presence.js`, 30s
 > heartbeat + on route change) into `site_presence`; the Sports page's
-> "Who's here" strip reads GET `/api/presence`. **Dashboard** —
+> "Who's here" strip reads GET `/api/presence`. A watch tab also sends
+> `ref` (the event id); GET returns `watching: {eventId: n}` and the strip's
+> poll dispatches `ec-presence` on `document`, which `v3-events.js` uses
+> for the "👀 n watching" pill on each card.
+>
+> **Live scores** — `settle.js` `trackLiveScores()` runs every tick: for
+> LOCKED markets under 5h old with active picks it reads the Odds API live
+> board (no `daysFrom`, one credit per league per tick), writes
+> `markets.live_*` and appends changes to `market_scores`; `activity.js`
+> emits them as `score` items (ticker + feed), `_game.js` exposes `live`
+> for the game page. **Dashboard** —
 > `/?view=dashboard` (`v3-dashboard.js`, hidden nav link) reads
 > `/api/admin/dashboard`, gated to login `bootypaper` only; settlement
 > leaves `ops_status` notes (`_ops.js`: `settle:last`, `odds:quota`).

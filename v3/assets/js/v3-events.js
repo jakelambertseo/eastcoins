@@ -215,6 +215,13 @@
     flag.className = "ec-flag";
     setFlag(flag, flagStateFor(match));
     poster.append(flag);
+    // Who's watching this one right now, from the presence feed.
+    el.dataset.eventId = String(match.id || "");
+    const eyes = document.createElement("span");
+    eyes.className = "ec-watching";
+    eyes.hidden = true;
+    poster.append(eyes);
+    paintWatching(el, watchingNow[String(match.id || "")] || 0);
     if (nfl) {
       const shield = document.createElement("span");
       shield.className = "ec-league";
@@ -285,6 +292,21 @@
   // "Upcoming" is only true of something that hasn't started. Once a
   // start time is in the past the card must not claim otherwise — which
   // is how a game could end up tagged Upcoming and Final at once.
+  // Viewer counts per event id, refreshed by the Who's here strip's poll.
+  let watchingNow = {};
+  function paintWatching(cardEl, n) {
+    const eyes = cardEl.querySelector(".ec-watching");
+    if (!eyes) return;
+    eyes.hidden = !n;
+    eyes.textContent = n ? `👀 ${n} watching` : "";
+  }
+  document.addEventListener("ec-presence", (event) => {
+    watchingNow = event.detail?.watching || {};
+    for (const cardEl of document.querySelectorAll(".eventcard[data-event-id]")) {
+      paintWatching(cardEl, watchingNow[cardEl.dataset.eventId] || 0);
+    }
+  });
+
   function flagStateFor(match) {
     if (isLive(match)) return "live";
     const start = Number(match?.date) || 0;

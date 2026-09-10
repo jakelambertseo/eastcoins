@@ -91,7 +91,14 @@
       : el("span", "av-crest", String(teamName || "?").slice(0, 3).toUpperCase());
   }
 
-  const ICON = { pick: "🪙", won: "✅", lost: "❌", refunded: "↩️", open: "🏟️", final: "🏁", void: "🚫", joined: "👋", song: "🎵", casino: "🎰" };
+  const ICON = { pick: "🪙", won: "✅", lost: "❌", refunded: "↩️", open: "🏟️", final: "🏁", void: "🚫", joined: "👋", song: "🎵", casino: "🎰", score: "📊" };
+  /** "Rangers up 3–1 on the Mariners", "Rangers and Mariners level at 2". */
+  function scoreLine(item) {
+    const m = item.market;
+    const a = Number(item.awayScore), h = Number(item.homeScore);
+    if (a === h) return `${nick(m.away)} and ${nick(m.home)} level at ${a}`;
+    return a > h ? `${nick(m.away)} up ${a}–${h} on the ${nick(m.home)}` : `${nick(m.home)} up ${h}–${a} on the ${nick(m.away)}`;
+  }
   const CASINO_ICON = { flip: "🪙", wheel: "🎡", race: "🐎", hilo: "🃏" };
   function casinoLink(item) {
     const a = el("a", "glink", item.gameName);
@@ -161,6 +168,12 @@
           document.createTextNode(" on the "), casinoLink(item));
         meta.textContent = `${CASINO_ICON[item.game] || "🎰"} ${item.pick} · ${item.wager} ZC staked`;
         break;
+      case "score": {
+        const m = item.market;
+        text.append(el("b", null, item.live ? "Live" : "Score"), document.createTextNode(" · "), gameLink(m, scoreLine(item)));
+        meta.textContent = `${m.league || ""} · ${nick(m.away)} at ${nick(m.home)}`;
+        break;
+      }
       default:
         text.textContent = item.type;
     }
@@ -249,6 +262,7 @@
       case "joined": span.append(who(), document.createTextNode(" joined")); break;
       case "song": span.append(who(), document.createTextNode(" played "), el("b", null, item.title.length > 40 ? item.title.slice(0, 38) + "…" : item.title)); break;
       case "casino": span.append(who(), document.createTextNode(item.status === "WON" ? ` won ${Math.abs(item.profit)} ZC on the ` : ` lost ${Math.abs(item.profit)} ZC on the `), casinoLink(item)); break;
+      case "score": span.append(document.createTextNode(item.live ? "Live · " : "Score · "), game(scoreLine(item))); break;
       default: return null;
     }
     span.append(el("span", "tk-ago", ago(item.at)));

@@ -337,6 +337,13 @@ body.chat-hidden .chatrail{display:none}
 .ec-poster .fallback .crest.has-badge span{opacity:0}
 .ec-poster .fallback .vs{color:var(--muted-2);font-size:.7rem;font-weight:800}
 
+.ec-watching{
+  position:absolute;left:9px;bottom:9px;z-index:2;padding:3px 8px;border-radius:999px;
+  background:rgba(8,6,6,.72);border:1px solid rgba(255,255,255,.14);color:#fff;
+  font-size:.66rem;font-weight:800;letter-spacing:.02em;backdrop-filter:blur(4px)
+}
+.gp-score.live i{color:var(--green);font-style:normal;font-size:.62rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.av-row.score{border-left-color:var(--green)}
 .ec-flag{
   position:absolute;top:9px;left:9px;
   display:inline-flex;align-items:center;gap:6px;
