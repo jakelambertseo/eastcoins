@@ -46,8 +46,21 @@
     return wrap;
   }
 
+  /** Plain words on a node, only touching it when they change. */
+  function plain(node, text) {
+    if (node.dataset.wc === "t:" + text) return node;
+    node.dataset.wc = "t:" + text;
+    node.textContent = text;
+    return node;
+  }
+
   /** Text with every [[n]] turned into a ZCoin amount. */
   function withCoins(node, text) {
+    // Same words as last time: leave the nodes alone. Rebuilding a
+    // button's children every tick makes Chrome drop the click whose
+    // mousedown landed on a node that is gone by mouseup.
+    if (node.dataset.wc === String(text)) return node;
+    node.dataset.wc = String(text);
     node.replaceChildren();
     const parts = String(text).split(/\[\[(-?\d[\d,]*)\]\]/);
     parts.forEach((part, i) => {
@@ -363,9 +376,9 @@
       refs.lock.disabled = !canBet;
       refs.stakeInput.disabled = Boolean(mine) || !inBets;
       const pays = (p, w) => Math.floor(w * (config.payout[p] || 0));
-      if (config.paused) { refs.lock.textContent = `${config.name} is closed for now`; refs.betNote.textContent = "It's in the shop. Back on the floor once it's been tuned up — the other games are open."; }
-      else if (!data.me) { refs.lock.textContent = "Log in to play"; refs.betNote.textContent = "Log in with Twitch — the button up top — and your ZCoins come with you."; }
-      else if (!config.canBet) { refs.lock.textContent = "Casino paused"; refs.betNote.textContent = "ZCoin transfers aren't switched on right now."; }
+      if (config.paused) { plain(refs.lock, `${config.name} is closed for now`); refs.betNote.textContent = "It's in the shop. Back on the floor once it's been tuned up — the other games are open."; }
+      else if (!data.me) { plain(refs.lock, "Log in to play"); refs.betNote.textContent = "Log in with Twitch — the button up top — and your ZCoins come with you."; }
+      else if (!config.canBet) { plain(refs.lock, "Casino paused"); refs.betNote.textContent = "ZCoin transfers aren't switched on right now."; }
       else if (mine) {
         withCoins(refs.lock, `You're in: [[${mine.wager}]] on ${spec.pickLabel(mine.pick, config)}`);
         if (!revealed) withCoins(refs.betNote, `Pays [[${pays(mine.pick, mine.wager)}]] if it comes in.`);
@@ -382,7 +395,7 @@
         }
       }
       else if (capped) { withCoins(refs.lock, `Up [[${data.me.hourNet}]] this hour — the cap`); refs.betNote.textContent = "The tables reopen for you as the hour rolls on."; }
-      else if (!inBets) { refs.lock.textContent = "Next round soon"; refs.betNote.textContent = "Bets open again when the clock hits zero."; }
+      else if (!inBets) { plain(refs.lock, "Next round soon"); refs.betNote.textContent = "Bets open again when the clock hits zero."; }
       else { withCoins(refs.lock, `Lock in [[${stake}]] on ${spec.pickLabel(pick, config)}`); withCoins(refs.betNote, `Pays [[${pays(pick, stake)}]] if it comes in.`); }
 
       const used = data.me?.betsThisHour;
@@ -480,5 +493,5 @@
     };
   }
 
-  window.ECCasino = Object.freeze({ el, btn, zc, withCoins, avatar, nameLink, casinoLink, makeToast, makePop, sharedGame, fmt });
+  window.ECCasino = Object.freeze({ el, btn, zc, withCoins, plain, avatar, nameLink, casinoLink, makeToast, makePop, sharedGame, fmt });
 })();

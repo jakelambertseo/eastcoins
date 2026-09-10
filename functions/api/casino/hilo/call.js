@@ -7,7 +7,7 @@
 
 import { getSessionUser, json, fail } from "../../picks/_lib.js";
 import { ensureSchema } from "../_engine.js";
-import { ensureHilo, cardAt, oddsFrom, publicGame, cashOut, MAX_MULTIPLIER, MAX_STEPS } from "./_hilo.js";
+import { ensureHilo, cardAt, oddsFrom, publicGame, cashOut, MAX_MULTIPLIER, MAX_STEPS, RANKS, SUITS } from "./_hilo.js";
 
 export async function onRequestPost(context) {
   const db = context.env.PICKS_DB;
@@ -35,7 +35,8 @@ export async function onRequestPost(context) {
   const price = odds[call];
   if (!price) return fail("IMPOSSIBLE_CALL", call === "higher" ? "Nothing beats a king." : "Nothing sits under an ace.");
 
-  const next = await cardAt(g.seed, cards.length);
+  const drawn = await cardAt(g.seed, cards.length);
+  const next = { rank: drawn.rank, label: RANKS[drawn.rank - 1], suit: SUITS[drawn.suit] };
   const won = call === "higher" ? next.rank > current.rank : next.rank < current.rank;
   const newCards = [...cards, next];
   const newCalls = [...calls, { call, price, won }];

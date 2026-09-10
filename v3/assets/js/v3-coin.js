@@ -57,7 +57,17 @@
   }
 
   /** Text, with every [[n]] turned into a ZCoin amount. */
+  function plain(node, text) {
+    if (node.dataset.wc === "t:" + text) return node;
+    node.dataset.wc = "t:" + text;
+    node.textContent = text;
+    return node;
+  }
   function withCoins(node, text) {
+    // Same words as last time: leave the nodes alone, so a click on the
+    // button never lands on a child that was replaced mid-press.
+    if (node.dataset.wc === String(text)) return node;
+    node.dataset.wc = String(text);
     node.replaceChildren();
     const parts = String(text).split(/\[\[(-?\d[\d,]*)\]\]/);
     parts.forEach((part, i) => {
@@ -342,8 +352,8 @@
     refs.lock.disabled = !canBet;
     refs.headsBtn.disabled = refs.tailsBtn.disabled = Boolean(mine) || !inBets;
     refs.stakeInput.disabled = Boolean(mine) || !inBets;
-    if (!data.me) { refs.lock.textContent = "Log in to play"; refs.betNote.textContent = "Log in with Twitch — the button up top — and your ZCoins come with you."; }
-    else if (!data.config.canBet) { refs.lock.textContent = "Casino paused"; refs.betNote.textContent = "ZCoin transfers aren't switched on right now."; }
+    if (!data.me) { plain(refs.lock, "Log in to play"); refs.betNote.textContent = "Log in with Twitch — the button up top — and your ZCoins come with you."; }
+    else if (!data.config.canBet) { plain(refs.lock, "Casino paused"); refs.betNote.textContent = "ZCoin transfers aren't switched on right now."; }
     else if (mine) {
       withCoins(refs.lock, `You're in: [[${mine.wager}]] on ${mine.side}`);
       if (inBets) withCoins(refs.betNote, `Wins [[${mine.wager * 2}]] back if it lands ${mine.side}.`);
@@ -360,7 +370,7 @@
         window.ECV3?.refreshSession?.();
       }
     }
-    else if (!inBets) { refs.lock.textContent = "Next round soon"; refs.betNote.textContent = "Bets open again when the clock hits zero."; }
+    else if (!inBets) { plain(refs.lock, "Next round soon"); refs.betNote.textContent = "Bets open again when the clock hits zero."; }
     else { withCoins(refs.lock, `Lock in [[${stake}]] on ${side}`); withCoins(refs.betNote, `Wins [[${stake * 2}]] back if it lands ${side}.`); }
 
     const used = data.me?.betsThisHour;

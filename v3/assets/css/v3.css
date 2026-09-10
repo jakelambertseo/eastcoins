@@ -2242,6 +2242,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .cf-chips{display:flex;gap:6px}
 .cf-chip{height:42px;padding:0 13px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel);font:inherit;font-weight:800;font-size:.84rem;color:var(--text);cursor:pointer}
 .cf-chip:hover{background:var(--panel-3)}
+.cf-lock > *,.kpick > *,.cf-chip > *,.hl-call > *{pointer-events:none}
 .cf-lock{height:50px;border-radius:12px;border:1px solid rgba(232,191,53,.5);background:var(--gold);color:#1a1405;font-family:var(--display);font-weight:800;font-size:1.05rem;cursor:pointer;transition:filter .12s ease}
 .cf-lock:hover:not(:disabled){filter:brightness(1.06)}
 .cf-lock:disabled{background:var(--panel-2);color:var(--muted);border-color:var(--line-2);cursor:default}

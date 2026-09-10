@@ -94,7 +94,9 @@
     } finally { busy = false; render(); }
   }
 
-  const cardText = (c) => `${c.label || c.rank}${c.suit || ""}`;
+  const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+  const SUITS = ["♠", "♥", "♦", "♣"];
+  const cardText = (c) => `${c.label || RANKS[Number(c.rank) - 1] || c.rank}${typeof c.suit === "number" ? SUITS[c.suit] || "" : c.suit || ""}`;
   function flipIn(card) {
     if (!refs.bigCard) return;
     refs.bigCard.classList.remove("flip");
@@ -235,8 +237,12 @@
     refs.deal.hidden = inRun;
     if (inRun) {
       const o = live.odds || {};
-      refs.higherBtn.replaceChildren(K.el("b", null, "Higher"), K.el("small", null, o.higher ? `×${o.higher}` : "—"));
-      refs.lowerBtn.replaceChildren(K.el("b", null, "Lower"), K.el("small", null, o.lower ? `×${o.lower}` : "—"));
+      const oddsSig = `${o.higher}|${o.lower}`;
+      if (refs.oddsSig !== oddsSig) {
+        refs.oddsSig = oddsSig;
+        refs.higherBtn.replaceChildren(K.el("b", null, "Higher"), K.el("small", null, o.higher ? `×${o.higher}` : "—"));
+        refs.lowerBtn.replaceChildren(K.el("b", null, "Lower"), K.el("small", null, o.lower ? `×${o.lower}` : "—"));
+      }
       refs.higherBtn.disabled = busy || !o.higher;
       refs.lowerBtn.disabled = busy || !o.lower;
       refs.cash.disabled = busy || live.step < 1;
@@ -245,8 +251,8 @@
     } else {
       const capped = Number.isFinite(data.me?.hourNet) && data.me.hourNet >= config.hourCap;
       refs.deal.disabled = busy || !config.canBet || capped;
-      if (!data.me) { refs.deal.textContent = "Log in to play"; refs.note.textContent = "Log in with Twitch — the button up top — and your ZCoins come with you."; }
-      else if (!config.canBet) { refs.deal.textContent = "Casino paused"; refs.note.textContent = "ZCoin transfers aren't switched on right now."; }
+      if (!data.me) { K.plain(refs.deal, "Log in to play"); refs.note.textContent = "Log in with Twitch — the button up top — and your ZCoins come with you."; }
+      else if (!config.canBet) { K.plain(refs.deal, "Casino paused"); refs.note.textContent = "ZCoin transfers aren't switched on right now."; }
       else if (capped) { K.withCoins(refs.deal, `Up [[${data.me.hourNet}]] this hour — the cap`); refs.note.textContent = "The tables reopen for you as the hour rolls on."; }
       else { K.withCoins(refs.deal, `Deal for [[${stake}]]`); refs.note.textContent = "First card is free to look at; the stake rides on your calls."; }
     }
