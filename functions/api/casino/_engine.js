@@ -33,7 +33,7 @@ export const ROOM_WINDOW_MS = 60 * 1000;
 /* ---------------------------------------------------------- games */
 
 // The wheel: 24 slices alternating red and black share 345 degrees, and
-// one slim gold sliver takes the last 15. Red and black pay 2×; gold 8×.
+// one slim gold sliver takes the last 15. Red and black pay 2×; gold 20×.
 // Red/black return 0.958 of the stake over time; gold, by design, far
 // less — it is the long shot people chase, not the smart bet.
 const GOLD_DEG = 15;
@@ -67,7 +67,7 @@ export const GAMES = {
     cycleMs: 60 * 1000,
     betMs: 40 * 1000,
     picks: ["red", "black", "gold"],
-    payout: { red: 2, black: 2, gold: 8 },
+    payout: { red: 2, black: 2, gold: 20 },
     segments: WHEEL,
     /** Where the pointer lands, in degrees from the top, from the seed alone. */
     async outcome(seed) {

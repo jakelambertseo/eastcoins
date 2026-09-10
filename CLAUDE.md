@@ -75,7 +75,7 @@
 > Shared limits: 20 ZC a bet, 10 an hour per game, and `HOUR_WIN_CAP`
 > (300 ZC net in any rolling hour across every game, `capCheck` in
 > `_engine.js`, enforced by every bet/deal endpoint including the coin's).
-> Wheel: 24 red/black slices + one 15-degree gold sliver at 8x, outcome is an
+> Wheel: 24 red/black slices + one 15-degree gold sliver at 20x (returns ~83%), outcome is an
 > angle. Race: whole-number payouts 2/3/7/14, odds normalised from them —
 > **currently `paused: true`** in `GAMES` (bets refused, off the floor,
 > page says closed; flip the flag to bring it back). Floor tiles list
