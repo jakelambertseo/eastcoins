@@ -49,16 +49,48 @@
     return ((h >>> 0) % 10000) / 10000;
   }
 
+  /** An ease-out curve with a bit of a late kick, so runners surge in the stretch. */
+  function ease(t, kick) {
+    const x = Math.min(1, Math.max(0, t));
+    return 1 - Math.pow(1 - x, 2 + kick * 1.5);
+  }
+
+  /**
+   * The race is driven by the clock, not by CSS transitions: every frame
+   * places each runner from how long the race has been running. That
+   * makes a late arrival land on the finish at once, keeps every viewer
+   * in step, and survives a tab going to the background.
+   */
+  function frame(refs) {
+    const race = refs.raceRun;
+    if (!race || !refs.raceTrack?.isConnected) return;
+    const width = refs.raceTrack.clientWidth - 150;
+    const elapsed = Date.now() - race.startedAt;
+    let allDone = true;
+    for (const [key, runner] of Object.entries(refs.raceLanes)) {
+      const r = race.runners[key];
+      const t = elapsed / r.duration;
+      const x = ease(t, r.kick) * width;
+      runner.style.left = `${Math.max(0, x)}px`;
+      if (t < 1) allDone = false;
+      if (key === race.winner && t >= 1 && !runner.classList.contains("won")) {
+        runner.classList.add("won");
+        refs.raceTrack.classList.add("done");
+      }
+    }
+    if (!allDone) refs.raceFrame = requestAnimationFrame(() => frame(refs));
+  }
+
   function renderStage(refs, { round, config, inBets, freshResult, now }) {
     buildLanes(refs, config);
     if (!refs.raceBuilt) return;
     if (inBets) {
       if (refs.raceRound !== round.no) {
         refs.raceRound = round.no;
-        clearTimeout(refs.raceTimer);
+        cancelAnimationFrame(refs.raceFrame);
+        refs.raceRun = null;
         for (const runner of Object.values(refs.raceLanes)) {
-          runner.style.transition = "none";
-          runner.style.left = "0%";
+          runner.style.left = "0px";
           runner.classList.remove("won", "ran");
           runner.classList.add("idle");
         }
@@ -67,31 +99,22 @@
       return;
     }
     if (freshResult && round.result) {
-      // Arriving late — the race already ran while this tab was elsewhere —
-      // shows the finish rather than replaying from the gate.
-      const elapsed = Math.max(0, now - round.closesAt);
-      const late = elapsed >= RACE_MS;
-      refs.raceTrack.classList.add("running");
       const seed = String(round.seed || round.hash || round.no);
-      for (const [key, runner] of Object.entries(refs.raceLanes)) {
-        runner.classList.remove("idle");
-        runner.classList.add("ran");
+      const runners = {};
+      for (const key of Object.keys(refs.raceLanes)) {
         const isWinner = key === round.result.winner;
-        // The winner arrives on time; the rest arrive between half a second
-        // and four seconds later, each on their own curve.
+        // The winner arrives on time; the rest between half a second and
+        // four seconds later, each with its own stretch.
         const lag = isWinner ? 0 : 500 + unit(seed + key) * 3500;
-        const wobble = 0.25 + unit(key + seed) * 0.5;
-        const remaining = Math.max(0, RACE_MS + lag - elapsed);
-        runner.style.transition = late ? "none" : `left ${remaining}ms cubic-bezier(${wobble.toFixed(2)},.05,.35,1)`;
-        void runner.offsetWidth;
-        // The nose ends just past the finish line, whatever the track's width.
-        runner.style.left = "calc(100% - 150px)";
-        if (isWinner) {
-          clearTimeout(refs.raceTimer);
-          const mark = () => { runner.classList.add("won"); refs.raceTrack.classList.add("done"); };
-          if (late) mark(); else refs.raceTimer = setTimeout(mark, Math.max(0, RACE_MS - elapsed));
-        }
+        runners[key] = { duration: RACE_MS + lag, kick: unit(key + seed) };
+        refs.raceLanes[key].classList.remove("idle");
+        refs.raceLanes[key].classList.add("ran");
       }
+      // Started when bets closed, wherever this tab was at the time.
+      refs.raceRun = { startedAt: Date.now() - Math.max(0, now - round.closesAt), winner: round.result.winner, runners };
+      refs.raceTrack.classList.add("running");
+      cancelAnimationFrame(refs.raceFrame);
+      frame(refs);
     }
   }
 
