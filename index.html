@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://streamed.st">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;700;800&display=swap">
-<link rel="stylesheet" href="/v3/assets/css/v3.css?v=126">
+<link rel="stylesheet" href="/v3/assets/css/v3.css?v=127">
 </head>
 <body>
 
@@ -42,13 +42,12 @@
       <a class="login-btn" id="loginBtn" href="/api/picks/auth/twitch/start?returnTo=%2Fv3%2F">Log in</a>
       <a class="wallet-chip" id="walletChip" href="/?view=picks" data-route="picks" title="Your ZCoins — open Picks" hidden><img class="zcoin-mark" src="/v3/assets/img/zcoin.webp" alt="" width="17" height="17"><span id="walletValue">—</span></a>
     </div>
-    <button class="iconbtn on" id="chatToggle" type="button" aria-pressed="true" title="Toggle Twitch chat">💬</button>
-    <button class="iconbtn" id="musicDock" type="button" aria-pressed="false" title="Keep the Green Room playing on every page">🎵</button>
     <div class="menuwrap">
-      <button class="iconbtn" id="settingsBtn" type="button" aria-haspopup="true" aria-expanded="false" title="Settings">⚙</button>
+      <button class="iconbtn dots" id="settingsBtn" type="button" aria-haspopup="true" aria-expanded="false" title="Chat, music and settings" aria-label="Menu">⋯</button>
       <div class="menu" id="settingsMenu" role="menu" hidden>
+        <button class="menu-item" type="button" role="menuitemcheckbox" data-toggle="chat"><span>💬&nbsp; Twitch chat</span><span class="switch" data-on="1"></span></button>
+        <button class="menu-item" type="button" role="menuitemcheckbox" id="musicDock" aria-pressed="false" title="Keep the Green Room playing on every page"><span>🎵&nbsp; Floating music player</span><span class="switch" data-on="0"></span></button>
         <p class="menu-title">Layout</p>
-        <button class="menu-item" type="button" role="menuitemcheckbox" data-toggle="chat"><span>Twitch chat</span><span class="switch" data-on="1"></span></button>
         <button class="menu-item" type="button" role="menuitemcheckbox" data-toggle="topnav"><span>Top navigation</span><span class="switch" data-on="1"></span></button>
         <p class="menu-title">Events</p>
         <button class="menu-item" type="button" role="menuitemcheckbox" data-toggle="art"><span>Event artwork</span><span class="switch" data-on="1"></span></button>
@@ -84,7 +83,7 @@
 <script defer src="/assets/eastcoins-ppv-api.js"></script>
 <script defer src="/assets/eastcoins-streamed-api.js"></script>
 <script defer src="/v3/assets/js/v3-sports.js?v=6"></script>
-<script defer src="/v3/assets/js/v3-shell.js?v=60"></script>
+<script defer src="/v3/assets/js/v3-shell.js?v=61"></script>
 <script defer src="/v3/assets/js/v3-presence.js?v=9"></script>
 <script defer src="/v3/assets/js/v3-scores.js?v=5"></script>
 <script defer src="/v3/assets/js/v3-events.js?v=32"></script>
@@ -92,7 +91,7 @@
 <script defer src="/v3/assets/js/v3-watch.js?v=19"></script>
 <script defer src="/assets/eastcoins-youtube.js?v=2"></script>
 <script defer src="/assets/eastcoins-music-config.js?v=2"></script>
-<script defer src="/v3/assets/js/v3-music.js?v=68"></script>
+<script defer src="/v3/assets/js/v3-music.js?v=69"></script>
 <script defer src="/v3/assets/js/v3-logos.js?v=3"></script>
 <script defer src="/v3/assets/js/v3-badges.js?v=2"></script>
 <script defer src="/v3/assets/js/v3-picks.js?v=41"></script>

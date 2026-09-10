@@ -57,7 +57,13 @@
 > publishes `queueLimit` only); `loadHistory()` diffs
 > ratings between fetches to show `.elo-delta` chips.
 >
-> **Floating player** — nav button `#musicDock` toggles `window.ECMusicDock`
+> **Top-right nav** — search magnifier, the profile pill (`#mePill`: avatar +
+> name → profile, coin count → Picks), and one `⋯` button (`#settingsBtn`)
+> whose menu holds the Twitch chat switch, the floating-player switch
+> (`#musicDock`, still the id `v3-music.js` looks for) and the layout/event
+> preferences. There is no `#chatToggle` any more; the shell guards it.
+>
+> **Floating player** — menu switch `#musicDock` toggles `window.ECMusicDock`
 > (in `v3-music.js`): a fixed `.mdock` that hosts the same YouTube player
 > and socket on non-music routes; the music view tears it down on mount and
 > `unmount()` hands playback back to it instead of disconnecting. Remembered

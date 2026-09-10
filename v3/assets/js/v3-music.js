@@ -758,6 +758,9 @@
     if (!b) return;
     b.classList.toggle("on", dockWanted);
     b.setAttribute("aria-pressed", String(dockWanted));
+    b.setAttribute("aria-checked", String(dockWanted));
+    const sw = b.querySelector(".switch");
+    if (sw) sw.dataset.on = dockWanted ? "1" : "0";
     b.title = dockWanted ? "Floating player is on — click to turn it off" : "Keep the Green Room playing on every page";
   }
 

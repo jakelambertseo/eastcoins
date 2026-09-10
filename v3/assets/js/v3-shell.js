@@ -304,8 +304,8 @@
   function setChatVisible(visible) {
     document.body.classList.toggle("chat-hidden", !visible);
     document.body.classList.toggle("chat-open", visible);
-    els.chatToggle.setAttribute("aria-pressed", String(visible));
-    els.chatToggle.classList.toggle("on", visible);
+    els.chatToggle?.setAttribute("aria-pressed", String(visible));
+    els.chatToggle?.classList.toggle("on", visible);
     try {
       localStorage.setItem(CHAT_PREF_KEY, visible ? "1" : "0");
     } catch {
@@ -482,8 +482,9 @@
     render();
   });
 
-  els.chatToggle.addEventListener("click", () => setChatVisible(document.body.classList.contains("chat-hidden")));
-  els.chatClose.addEventListener("click", () => setChatVisible(false));
+  els.chatToggle?.addEventListener("click", () => setChatVisible(document.body.classList.contains("chat-hidden")));
+  // The rail's own close button must leave the menu's switch telling the truth.
+  els.chatClose.addEventListener("click", () => { setChatVisible(false); prefs.chat = false; savePrefs(); applyPrefs(); });
 
   // For when it has gone sluggish and they would rather not wait for the
   // watchdog. Also the honest answer to "chat is being weird".
