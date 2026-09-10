@@ -558,7 +558,12 @@
     for (const [key, list] of slots) {
       const head = el("div", "slothead");
       head.append(el("strong", null, key === "tbd" ? "Time TBD" : slotLabel(list)));
-      head.append(el("span", null, `${list.length} game${list.length === 1 ? "" : "s"} · picks close at kickoff`));
+      // The right word for the sport: first pitch, kickoff, tip-off, puck drop.
+      const leagues = new Set(list.map((m) => String(m.league || "").toUpperCase()));
+      const start = leagues.size === 1
+        ? ({ MLB: "first pitch", NFL: "kickoff", CFB: "kickoff", NBA: "tip-off", NHL: "puck drop" }[[...leagues][0]] || "game time")
+        : "game time";
+      head.append(el("span", null, `${list.length} game${list.length === 1 ? "" : "s"} · picks close at ${start}`));
       box.append(head);
       const grid = el("div", "marketlist");
       for (const m of list) grid.append(marketCard(m));
