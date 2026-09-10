@@ -14,7 +14,8 @@
   const PLACES = {
     events: "browsing Sports", watch: "watching a game", multiview: "in MultiView", picks: "on Picks",
     music: "in the Green Room", screen: "in Movies & TV", flip: "at the coin flip", game: "on a game page",
-    profile: "reading profiles", admin: "in admin", dashboard: "on the dashboard", users: "browsing All Users", activity: "reading the feed"
+    profile: "reading profiles", admin: "in admin", dashboard: "on the dashboard", users: "browsing All Users", activity: "reading the feed",
+    casino: "on the casino floor", wheel: "at the Wheel", race: "at the Horse Race", hilo: "playing Higher or Lower"
   };
 
   function clientId() {
@@ -53,7 +54,7 @@
   // One glyph per place, so a chip can say where someone is in one line.
   const ICONS = {
     events: "🏈", watch: "📺", multiview: "🔲", picks: "🪙", music: "🎵", screen: "🎬", flip: "🪙",
-    game: "🪙", profile: "👤", admin: "🛠", dashboard: "🛠", users: "👥", activity: "📰"
+    game: "🪙", profile: "👤", admin: "🛠", dashboard: "🛠", users: "👥", activity: "📰", casino: "🎰", wheel: "🎡", race: "🐎", hilo: "🃏"
   };
   const SHOW_MAX = 14;
 

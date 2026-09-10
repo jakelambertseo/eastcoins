@@ -63,8 +63,17 @@
 > `unmount()` hands playback back to it instead of disconnecting. Remembered
 > in `localStorage` `ec_v3_music_dock`.
 >
-> **Casino** — `/?view=flip` (nav link present but hidden) is Coin Flip;
-> `/?view=casino` is reserved for the casino home page:
+> **Casino** — `/?view=casino` is the floor (`v3-casino.js`, reads
+> `/api/casino/home`; the nav's Casino link points here). Games:
+> Coin Flip `/?view=flip`, Wheel `/?view=wheel`, Horse Race `/?view=race`
+> (shared-round games on `functions/api/casino/_engine.js` — `GAMES`
+> config, tables `casino_rounds` / `casino_bets` / `casino_presence`,
+> endpoints `/api/casino/<game>/{state,bet,history}`; clients built on
+> `v3-casino-kit.js`'s `sharedGame(spec)`), and Higher or Lower
+> `/?view=hilo` (per-player, `functions/api/casino/hilo/*`, table
+> `hilo_games`, committed deck, 4% edge per call, ×50 / 12-card cap).
+> Shared limits: 20 ZC a bet, 10 an hour per game. Coin Flip itself is
+> still the original:
 > `functions/api/coin/` (`_coin.js` clock/fairness/settlement, `state.js`
 > poll, `bet.js`), tables created on first use (`coin_rounds`, `coin_bets`,
 > `coin_presence`), rounds on a 30s wall clock (15s bets + 15s result),

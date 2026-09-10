@@ -49,7 +49,7 @@
   // had a chance to register. An unknown name still falls back.
   // "game" is the /g/<slug> page chat links to. It is a route, not a nav
   // item: the only way in is a link.
-  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity"];
+  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo"];
 
   /* ------------------------------------------------------------ legacy URLs
 
@@ -150,7 +150,8 @@
     for (const link of els.navLinks) {
       // A game page is a Picks page as far as the nav is concerned.
       const on = link.dataset.route === state.route ||
-        ((state.route === "game" || state.route === "profile") && link.dataset.route === "picks");
+        ((state.route === "game" || state.route === "profile") && link.dataset.route === "picks") ||
+        (["flip", "wheel", "race", "hilo"].includes(state.route) && link.dataset.route === "casino");
       if (link.classList.contains("nav-link")) {
         link.toggleAttribute("aria-current", on);
         if (on) link.setAttribute("aria-current", "page");
