@@ -33,6 +33,7 @@
     upcomingAt: null,
     sort: { key: "profit", dir: "desc" },
     sport: "all",   // Markets tab filter: "all" or a league key like "mlb"
+    day: "",        // Markets tab: which day's slate is showing (a toDateString key)
     communityLedger: [],
     season: null,
     login: "",
@@ -471,9 +472,7 @@
       );
       wrap.append(empty);
     } else {
-      const list = el("div", "marketlist");
-      for (const market of openNow) list.append(marketCard(market));
-      wrap.append(list);
+      wrap.append(slateByDay(openNow));
     }
 
     const upcoming = upcomingSection(local.sport === "all" ? local.upcoming : local.upcoming.filter((g) => leagueOf(g) === local.sport));
@@ -495,6 +494,77 @@
     const leagues = [...counts.keys()].sort((a, b) => (a === "nfl" ? -1 : b === "nfl" ? 1 : a.localeCompare(b)));
     if (local.sport !== "all" && !leagues.includes(local.sport)) local.sport = "all";
     return { leagues, counts };
+  }
+
+  /* ---------------------------------------------------------- the slate
+
+     Open markets by day, then by kickoff. "Tonight" and "Tomorrow" are
+     pills; under the chosen day each kickoff slot (games starting
+     within the same half hour) gets a header with its time, and the
+     cards sit in a grid rather than one long column. */
+
+  const startOf = (m) => new Date(m.startsAt).getTime();
+
+  function dayTabLabel(key, first) {
+    const d = new Date(first);
+    const today = new Date();
+    const tomorrow = new Date(today.getTime() + 864e5);
+    if (d.toDateString() === today.toDateString()) return d.getHours() >= 17 ? "Tonight" : "Today";
+    if (d.toDateString() === tomorrow.toDateString()) return "Tomorrow";
+    return d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+  }
+
+  function slotLabel(markets) {
+    const fmt = (t) => new Date(t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    const times = [...new Set(markets.map(startOf))].sort((a, b) => a - b);
+    return times.length > 1 ? `${fmt(times[0])} – ${fmt(times[times.length - 1])}` : fmt(times[0]);
+  }
+
+  function slateByDay(markets) {
+    const box = el("div", "slate");
+    const sorted = markets.slice().sort((a, b) => startOf(a) - startOf(b));
+
+    // Days, in order of first kickoff.
+    const days = new Map();
+    for (const m of sorted) {
+      const key = Number.isFinite(startOf(m)) ? new Date(m.startsAt).toDateString() : "unknown";
+      if (!days.has(key)) days.set(key, []);
+      days.get(key).push(m);
+    }
+    if (!days.has(local.day)) local.day = days.keys().next().value;
+
+    if (days.size > 1) {
+      const tabs = el("div", "daytabs");
+      tabs.setAttribute("aria-label", "Which day");
+      for (const [key, list] of days) {
+        const b = el("button", `daytab${key === local.day ? " on" : ""}`);
+        b.type = "button";
+        b.append(document.createTextNode(dayTabLabel(key, list[0].startsAt)), el("small", null, String(list.length)));
+        b.addEventListener("click", () => { local.day = key; paint(); });
+        tabs.append(b);
+      }
+      box.append(tabs);
+    }
+
+    // Kickoff slots within the day: games within the same half hour share a header.
+    const todays = days.get(local.day) || [];
+    const slots = new Map();
+    for (const m of todays) {
+      const t = startOf(m);
+      const key = Number.isFinite(t) ? Math.floor(t / (30 * 60 * 1000)) : "tbd";
+      if (!slots.has(key)) slots.set(key, []);
+      slots.get(key).push(m);
+    }
+    for (const [key, list] of slots) {
+      const head = el("div", "slothead");
+      head.append(el("strong", null, key === "tbd" ? "Time TBD" : slotLabel(list)));
+      head.append(el("span", null, `${list.length} game${list.length === 1 ? "" : "s"} · picks close at kickoff`));
+      box.append(head);
+      const grid = el("div", "marketlist");
+      for (const m of list) grid.append(marketCard(m));
+      box.append(grid);
+    }
+    return box;
   }
 
   /** The sport dropdown; `note` is the line of copy beside it, if any. */

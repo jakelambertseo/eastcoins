@@ -2736,3 +2736,20 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .mdock-head-title{display:none;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:.78rem;font-weight:700}
 .mdock.min .mdock-head-title{display:block}
 .mdock.min{width:300px}
+
+/* ---------------------------------------------------------------- the slate: days, then kickoff slots */
+.daytabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
+.daytab{
+  display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 13px;border-radius:9px;
+  border:1px solid var(--line);background:var(--panel);color:var(--muted);font:inherit;font-size:.82rem;font-weight:800;cursor:pointer;
+  transition:color .14s ease,background .14s ease,border-color .14s ease;
+}
+.daytab small{padding:1px 7px;border-radius:999px;background:var(--panel-3);color:var(--muted-2);font-size:.68rem;font-weight:800}
+.daytab:hover{color:var(--text);border-color:var(--line-2)}
+.daytab.on{color:var(--gold);border-color:rgba(232,191,53,.4);background:var(--gold-dim)}
+.daytab.on small{background:rgba(232,191,53,.2);color:var(--gold)}
+.slothead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:16px 2px 8px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+.slothead:first-child,.daytabs+.slothead{margin-top:0}
+.slothead strong{font-family:var(--display);font-weight:800;font-size:1rem;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.slothead span{color:var(--muted-2);font-size:.76rem;font-weight:700}
+.slate .marketlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:11px}
