@@ -1366,7 +1366,6 @@
     const titleRow = el("div", "picks-title");
     titleRow.append(el("h1", null, "Picks"), local.loaded ? leaderPill() : skelPill());
     wrap.append(titleRow);
-    wrap.append(el("p", null, `${local.season?.name || "Season"} · NFL opens an hour before kickoff · MLB at 4 PM CT, five games at a time`));
     head.append(wrap);
     root.append(head);
     root.append(local.loaded ? myCard() : skelMyCard());
