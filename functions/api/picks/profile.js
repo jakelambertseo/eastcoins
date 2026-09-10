@@ -21,7 +21,12 @@ const json = (body, status = 200) => Response.json(body, {
 
 export async function onRequestGet(context) {
   const db = context.env.PICKS_DB;
-  const login = String(new URL(context.request.url).searchParams.get("login") || "").trim().toLowerCase();
+  const params = new URL(context.request.url).searchParams;
+  const login = String(params.get("login") || "").trim().toLowerCase();
+  // ?list=picks|casino&page=N returns one page of that list and nothing else.
+  const list = String(params.get("list") || "");
+  const page = Math.max(1, Math.min(1000, parseInt(params.get("page") || "1", 10) || 1));
+  const PAGE = 10;
   if (!db) return json({ ok: false, code: "NO_DB" }, 503);
   if (!/^[a-z0-9_]{2,25}$/.test(login)) return json({ ok: false, code: "BAD_LOGIN" }, 400);
 
@@ -34,18 +39,48 @@ export async function onRequestGet(context) {
 
   const season = await db.prepare(`SELECT id, name FROM seasons WHERE active = 1 LIMIT 1`).first();
 
-  const rows = await db
-    .prepare(
-      `SELECT p.id, p.selection, p.wager, p.odds_locked, p.status, p.payout, p.profit, p.created_at, p.settled_at,
+  const pickView = (p) => ({
+    id: String(p.id),
+    selection: String(p.selection),
+    team: p.selection === "home" ? p.home_name : p.away_name,
+    opponent: p.selection === "home" ? p.away_name : p.home_name,
+    wager: Number(p.wager),
+    line: Number.isInteger(p.odds_locked) ? p.odds_locked : null,
+    status: String(p.status),
+    payout: Number(p.payout || 0),
+    profit: Number(p.profit || 0),
+    createdAt: utc(p.created_at),
+    settledAt: utc(p.settled_at),
+    market: {
+      id: String(p.market_id),
+      slug: slugFor(p),
+      sport: String(p.sport || ""),
+      league: String(p.league || ""),
+      away: String(p.away_name),
+      home: String(p.home_name),
+      startsAt: p.starts_at,
+      state: String(p.state || ""),
+      awayScore: Number.isInteger(p.final_away_score) ? p.final_away_score : null,
+      homeScore: Number.isInteger(p.final_home_score) ? p.final_home_score : null,
+      winner: p.winner || null
+    }
+  });
+
+  const PICK_SQL = `SELECT p.id, p.selection, p.wager, p.odds_locked, p.status, p.payout, p.profit, p.created_at, p.settled_at,
               m.id AS market_id, m.sport, m.league, m.away_name, m.home_name, m.starts_at, m.state,
               m.final_away_score, m.final_home_score, m.winner
          FROM picks p JOIN markets m ON m.id = p.market_id
         WHERE p.user_id = ? AND p.status IN ('ACTIVE','WON','LOST','REFUNDED')
-        ORDER BY datetime(m.starts_at) DESC, datetime(p.created_at) DESC
-        LIMIT 500`
-    )
-    .bind(String(user.twitch_id))
-    .all();
+        ORDER BY datetime(m.starts_at) DESC, datetime(p.created_at) DESC`;
+  if (list === "picks") {
+    const [count, slice] = await Promise.all([
+      db.prepare(`SELECT COUNT(*) AS n FROM picks WHERE user_id = ? AND status IN ('ACTIVE','WON','LOST','REFUNDED')`).bind(String(user.twitch_id)).first(),
+      db.prepare(`${PICK_SQL} LIMIT ? OFFSET ?`).bind(String(user.twitch_id), PAGE, (page - 1) * PAGE).all()
+    ]);
+    const total = Number(count?.n || 0);
+    return json({ ok: true, list: "picks", page, pageSize: PAGE, total, pages: Math.max(1, Math.ceil(total / PAGE)), items: (slice.results || []).map(pickView) }, 200, { "Cache-Control": "private, max-age=15" });
+  }
+  const rows = await db.prepare(`${PICK_SQL} LIMIT 500`).bind(String(user.twitch_id)).all();
   const picks = rows.results || [];
 
   const settled = picks.filter((p) => p.status === "WON" || p.status === "LOST");
@@ -74,32 +109,6 @@ export async function onRequestGet(context) {
     if (current < worstLoss) worstLoss = current;
   }
 
-  const pickView = (p) => ({
-    id: String(p.id),
-    selection: String(p.selection),
-    team: p.selection === "home" ? p.home_name : p.away_name,
-    opponent: p.selection === "home" ? p.away_name : p.home_name,
-    wager: Number(p.wager),
-    line: Number.isInteger(p.odds_locked) ? p.odds_locked : null,
-    status: String(p.status),
-    payout: Number(p.payout || 0),
-    profit: Number(p.profit || 0),
-    createdAt: utc(p.created_at),
-    settledAt: utc(p.settled_at),
-    market: {
-      id: String(p.market_id),
-      slug: slugFor(p),
-      sport: String(p.sport || ""),
-      league: String(p.league || ""),
-      away: String(p.away_name),
-      home: String(p.home_name),
-      startsAt: p.starts_at,
-      state: String(p.state || ""),
-      awayScore: Number.isInteger(p.final_away_score) ? p.final_away_score : null,
-      homeScore: Number.isInteger(p.final_home_score) ? p.final_home_score : null,
-      winner: p.winner || null
-    }
-  });
 
   const won = settled.filter((p) => p.status === "WON").sort((a, b) => b.profit - a.profit);
   const lost = settled.filter((p) => p.status === "LOST").sort((a, b) => a.profit - b.profit);
@@ -146,6 +155,9 @@ export async function onRequestGet(context) {
     const all = [...(coin.results || []), ...(shared.results || []), ...(hilo.results || [])]
       .map((r) => ({ game: String(r.game), status: r.status, profit: Number(r.profit), wager: Number(r.wager), pick: String(r.pick), at: r.at ? String(r.at).replace(" ", "T") + "Z" : null }))
       .sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
+    if (list === "casino") {
+      return json({ ok: true, list: "casino", page, pageSize: PAGE, total: all.length, pages: Math.max(1, Math.ceil(all.length / PAGE)), items: all.slice((page - 1) * PAGE, page * PAGE) }, 200, { "Cache-Control": "private, max-age=15" });
+    }
     if (all.length) {
       const perGame = {};
       for (const r of all) {
@@ -161,10 +173,12 @@ export async function onRequestGet(context) {
         biggestWin: Math.max(0, ...all.filter((r) => r.status === "WON").map((r) => r.profit)),
         favourite: fav ? { game: fav[0], plays: fav[1].plays } : null,
         games: perGame,
-        recent: all.slice(0, 10)
+        pageSize: PAGE,
+        recent: all.slice(0, PAGE)
       };
     }
   } catch { casino = null; }
+  if (list === "casino") return json({ ok: true, list: "casino", page: 1, pageSize: PAGE, total: 0, pages: 1, items: [] });
   const flip = casino;   // older readers of this payload
 
   return json({
@@ -191,7 +205,8 @@ export async function onRequestGet(context) {
       streak: { current, bestWin, worstLoss },
       biggestWin: won[0] ? pickView(won[0]) : null,
       worstBeat: lost[0] ? pickView(lost[0]) : null,
-      recent: picks.slice(0, 12).map(pickView)
+      pageSize: PAGE,
+      recent: picks.slice(0, PAGE).map(pickView)
     }
   });
 }

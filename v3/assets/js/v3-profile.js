@@ -155,6 +155,52 @@
 
   /* ---------------------------------------------------------- page */
 
+  /**
+   * A paged list: the first page comes with the profile, later pages
+   * are fetched on demand from ?list=<kind>&page=N and kept.
+   */
+  function pagedRows(rows, { login, kind, first, total, pageSize, rowFor, emptyNode }) {
+    const pages = Math.max(1, Math.ceil((total || 0) / (pageSize || 10)));
+    const cache = { 1: first };
+    let at = 1;
+    let loading = false;
+    const pager = el("div", "mpager pf-pager");
+    const prev = el("button", "mpager-btn", "‹");
+    const next = el("button", "mpager-btn", "›");
+    prev.type = next.type = "button";
+    const label = el("span", "mpager-at", "");
+    pager.append(prev, label, next);
+    pager.hidden = pages <= 1;
+
+    function paint(items) {
+      rows.replaceChildren();
+      if (!items.length) rows.append(emptyNode());
+      for (const it of items) rows.append(rowFor(it));
+      label.textContent = `Page ${at} of ${pages} · ${total} total`;
+      prev.disabled = at <= 1 || loading;
+      next.disabled = at >= pages || loading;
+      rows.append(pager);
+    }
+    async function goTo(n) {
+      if (n < 1 || n > pages || loading) return;
+      at = n;
+      if (cache[n]) { paint(cache[n]); return; }
+      loading = true;
+      prev.disabled = next.disabled = true;
+      label.textContent = "Loading…";
+      try {
+        const payload = await fetch(`/api/picks/profile?login=${encodeURIComponent(login)}&list=${kind}&page=${n}`).then((r) => r.json()).catch(() => null);
+        cache[n] = payload?.ok ? payload.items || [] : [];
+      } finally { loading = false; }
+      paint(cache[n]);
+      rows.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+    prev.addEventListener("click", () => goTo(at - 1));
+    next.addEventListener("click", () => goTo(at + 1));
+    paint(first);
+    return rows;
+  }
+
   function pickRow(p) {
     const status = { ACTIVE: "open", WON: "won", LOST: "lost", REFUNDED: "refund" }[p.status] || "open";
     const row = link(`/g/${p.market.slug}`, `gp-row ${status} link`);
@@ -232,8 +278,10 @@
     rh.append(el("small", null, k.open ? `${k.open} open` : ""));
     recent.append(rh);
     const rows = el("div", "gp-rows");
-    if (!k.recent.length) rows.append(emptyNote("No picks yet", "Anything they lock in — from the site or with !pick in chat — shows here."));
-    for (const p of k.recent) rows.append(pickRow(p));
+    pagedRows(rows, {
+      login: data.user.login, kind: "picks", first: k.recent, total: k.total, pageSize: k.pageSize || 10, rowFor: pickRow,
+      emptyNode: () => emptyNote("No picks yet", "Anything they lock in — from the site or with !pick in chat — shows here.")
+    });
     recent.append(rows);
     wrap.append(recent);
 
@@ -302,8 +350,7 @@
         stat("Favourite", c.favourite ? `${GAME_ICON[c.favourite.game] || ""} ${GAME_NAME[c.favourite.game] || c.favourite.game}` : "—", c.favourite ? `${c.favourite.plays} play${c.favourite.plays === 1 ? "" : "s"}` : "")
       );
       cs.append(cstrip);
-      const rows = el("div", "gp-rows");
-      for (const r of c.recent) {
+      const casinoRow = (r) => {
         const won = r.status === "WON";
         const row = el("div", `gp-row ${won ? "won" : "lost"}`);
         const who = el("div", "gp-who");
@@ -314,8 +361,13 @@
         const payout = el("div", `gp-payout nums ${won ? "up" : "down"}`);
         payout.append(el("span", `cf-tag ${won ? "win" : "loss"}`, won ? "WIN" : "LOSS"), document.createTextNode(won ? `+${r.profit}` : `−${r.wager}`));
         row.append(who, stake, payout);
-        rows.append(row);
-      }
+        return row;
+      };
+      const rows = el("div", "gp-rows");
+      pagedRows(rows, {
+        login: data.user.login, kind: "casino", first: c.recent, total: c.total, pageSize: c.pageSize || 10, rowFor: casinoRow,
+        emptyNode: () => emptyNote("No results yet", "")
+      });
       cs.append(el("h3", "pf-sub", "Latest results"), rows);
     }
     wrap.append(cs);
