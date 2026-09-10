@@ -164,9 +164,7 @@ img{max-width:100%}
   font-weight:800;font-size:.84rem;
 }
 .login-btn:hover{background:var(--purple-hover);filter:none}
-.tw-glitch{width:15px;height:15px;flex:0 0 auto}
-.login-btn{gap:7px}
-.login-btn .lb-with{margin-left:-2px}
+.login-btn{gap:5px}
 /* On a narrow bar the button keeps the mark and "Login". */
 @media (max-width:900px){.topnav .lb-with{display:none}}
 /* Signed in, the name and the wallet share one pill: avatar + name on
