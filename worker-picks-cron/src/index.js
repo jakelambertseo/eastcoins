@@ -70,9 +70,41 @@ async function runSettlement(env, trigger) {
   return { ok: true, payload };
 }
 
+/**
+ * The nightly backup: one POST, the Pages function does the work and
+ * writes to R2. Same key as settlement; nothing else to configure here.
+ */
+async function runBackup(env) {
+  const url = String(env.BACKUP_URL || "").trim();
+  const key = String(env.PICKS_CRON_KEY || "").trim();
+  if (!url || !key) {
+    console.error("picks-cron: BACKUP_URL or PICKS_CRON_KEY missing — not backing up");
+    return { ok: false, error: "not_configured" };
+  }
+  let response;
+  try {
+    response = await fetch(url, { method: "POST", headers: { "X-Picks-Cron-Key": key } });
+  } catch (error) {
+    console.error("picks-cron: backup request threw", error);
+    return { ok: false, error: "unreachable" };
+  }
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.ok) {
+    // Loud, for the same reason settlement is: a missing bucket binding
+    // otherwise looks like a night that simply had nothing to back up.
+    console.error(`picks-cron: backup refused (${response.status})`, payload?.code || "", payload?.message || "");
+    return { ok: false, status: response.status, payload };
+  }
+  console.log(`picks-cron: backup ${payload.key} — ${payload.tables} tables, ${payload.rows} rows, ${payload.bytes} bytes, pruned ${payload.pruned}`);
+  return { ok: true, payload };
+}
+
 export default {
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(runSettlement(env, "cron"));
+    // Which schedule fired decides the job; the settlement one is the
+    // default so a new trigger can never silently skip payouts.
+    if (event.cron === "0 9 * * *") ctx.waitUntil(runBackup(env));
+    else ctx.waitUntil(runSettlement(env, "cron"));
   },
 
   // A manual kick, so the Worker-to-Pages link can be proven without
@@ -90,7 +122,8 @@ export default {
       return new Response("Not authorized", { status: 403 });
     }
 
-    const result = await runSettlement(env, "manual");
+    // ?job=backup runs the nightly backup by hand, with the same key.
+    const result = url.searchParams.get("job") === "backup" ? await runBackup(env) : await runSettlement(env, "manual");
     return Response.json(result, { status: result.ok ? 200 : 502 });
   }
 };

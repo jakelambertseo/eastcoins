@@ -39,7 +39,7 @@ export async function onRequestGet(context) {
   const todayStart = new Date(new Date().toLocaleDateString("en-US", { timeZone: "America/Chicago" })).toISOString();
 
   const [status, ops, reconcile, markets, picks, users, coin, presence, music, tmdbProbe, wallet] = await Promise.all([
-    readStatus(db, ["settle:last", "odds:quota", "autoopen:last"]),
+    readStatus(db, ["settle:last", "odds:quota", "autoopen:last", "backup:last"]),
     db.prepare(`SELECT status, COUNT(*) AS n FROM wallet_operations GROUP BY status`).all(),
     db.prepare(
       `SELECT o.id, o.type, o.amount, o.status, o.last_error, o.created_at, u.twitch_login
@@ -128,6 +128,19 @@ export async function onRequestGet(context) {
     music: music,
     tmdb: tmdbProbe,
     chat: { seJwt: Boolean(String(env.STREAMELEMENTS_JWT || "").trim()), botKey: Boolean(String(env.PICKS_BOT_KEY || "").trim()), cronKey: Boolean(String(env.PICKS_CRON_KEY || "").trim()), openWagering: String(env.PICKS_OPEN_WAGERING || "") === "1" },
+    backup: (() => {
+      const last = status["backup:last"] || null;
+      const v = last ? last.value : null;
+      return {
+        bound: Boolean(env.BACKUPS),
+        last: v ? v.at : null,
+        ageHours: v ? Math.round((now - new Date(v.at).getTime()) / 3600000) : null,
+        bytes: v ? Number(v.bytes || 0) : null,
+        tables: v ? Number(v.tables || 0) : null,
+        rows: v ? Number(v.rows || 0) : null,
+        by: v ? v.by : null
+      };
+    })(),
     discord: { configured: /^https:\/\/(canary\.|ptb\.)?discord(app)?\.com\/api\/webhooks\//.test(String(env.DISCORD_LEDGER_WEBHOOK || "").trim()) }
   });
 }

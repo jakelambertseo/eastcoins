@@ -8,12 +8,16 @@
   // Every 10 minutes. Games end at unpredictable times, and settlement
   // is idempotent, so running often costs little: with nothing to grade
   // it is one D1 query and no outbound requests at all.
+  // Two schedules: settlement every 5 minutes, and the database backup
+  // once a day at 09:00 UTC (4 AM Central in summer, 3 AM in winter —
+  // either way, hours after the last game and before anything opens).
   "triggers": {
-    "crons": ["*/5 * * * *"]
+    "crons": ["*/5 * * * *", "0 9 * * *"]
   },
 
   "vars": {
-    "SETTLE_URL": "https://eastcoin.vip/api/picks/settle"
+    "SETTLE_URL": "https://eastcoin.vip/api/picks/settle",
+    "BACKUP_URL": "https://eastcoin.vip/api/admin/backup"
   }
 
   // PICKS_CRON_KEY is a secret, set with:

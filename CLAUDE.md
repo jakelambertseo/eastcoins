@@ -136,6 +136,15 @@
 > lives; chat links and the page must keep agreeing. `g/example.html` is
 > the original static mockup, kept for the explainer only.
 >
+> **Nightly backup** — the picks cron Worker has a second trigger
+> (`0 9 * * *` UTC) that POSTs `/api/admin/backup` with the cron key; the
+> function dumps every table to gzipped JSON in the R2 bucket bound as
+> `BACKUPS` (`d1/eastcoin-picks/<stamp>.json.gz` + `latest.json.gz`,
+> pruned after 30 days) and notes `backup:last` for the dashboard's
+> "Database backup" card (which also has a Back up now button).
+> `tools/d1-restore-from-backup.mjs` turns a backup into SQL for
+> `wrangler d1 execute`. D1 Time Travel (30 days) is the first resort.
+>
 > **Discord mirror of the ledger** — `_discord.js` posts embeds to the
 > webhook in `DISCORD_LEDGER_WEBHOOK` (Pages env var; unset = no-op): a
 > card when a pick locks (`_wager.js`), one for the slate when markets

@@ -114,6 +114,28 @@
       ["Cron key", d.chat.cronKey ? "set" : "MISSING"]
     ]));
 
+    // Nightly database backup to R2, with a way to run one now
+    const bk = d.backup || {};
+    const bkBtn = el("button", "db-btn", "Back up now");
+    bkBtn.type = "button";
+    bkBtn.disabled = !bk.bound;
+    bkBtn.addEventListener("click", async () => {
+      bkBtn.disabled = true;
+      bkBtn.textContent = "Backing up…";
+      let r = null;
+      try { r = await (await fetch("/api/admin/backup", { method: "POST", credentials: "include" })).json(); } catch { r = null; }
+      bkBtn.textContent = r?.ok ? `Done · ${Math.round(r.bytes / 1024)} KB` : `Failed${r?.code ? " · " + r.code : ""}`;
+      setTimeout(() => { bkBtn.textContent = "Back up now"; bkBtn.disabled = false; }, 5000);
+    });
+    const bkState = !bk.bound ? "bad" : bk.ageHours === null ? "warn" : bk.ageHours > 30 ? "bad" : "ok";
+    grid.append(card("Database backup", bkState, [
+      ["R2 bucket", bk.bound ? "bound" : "NOT BOUND — add BACKUPS"],
+      ["Last backup", bk.last ? `${ago(bk.last)}${bk.ageHours !== null ? ` (${bk.ageHours} h)` : ""} · ${bk.by || ""}` : "never"],
+      ["Size", bk.bytes ? `${Math.round(bk.bytes / 1024)} KB · ${bk.tables} tables · ${fmt(bk.rows)} rows` : "—"],
+      ["Expected", "nightly at 4 AM CT"],
+      ["Run", bkBtn]
+    ]));
+
     // Discord ledger mirror, with a way to post a sample
     const testBtn = el("button", "db-btn", "Post test card");
     testBtn.type = "button";
