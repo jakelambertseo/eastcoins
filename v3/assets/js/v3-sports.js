@@ -31,11 +31,16 @@
   // no league field, so the only signal is the teams. The 32 NFL clubs and
   // the nine CFL clubs are enumerable; everything left over is college,
   // which is far too large to list, so it is inferred as neither.
+  // Full club names, not nicknames: a Division II "Raiders" or "Rams"
+  // must not be filed as the NFL. The provider names NFL clubs in full.
   const NFL_TEAMS = new Set([
-    "cardinals", "falcons", "ravens", "bills", "panthers", "bears", "bengals", "browns",
-    "cowboys", "broncos", "lions", "packers", "texans", "colts", "jaguars", "chiefs",
-    "raiders", "chargers", "rams", "dolphins", "vikings", "patriots", "saints", "giants",
-    "jets", "eagles", "steelers", "49ers", "seahawks", "buccaneers", "titans", "commanders"
+    "arizona cardinals", "atlanta falcons", "baltimore ravens", "buffalo bills", "carolina panthers",
+    "chicago bears", "cincinnati bengals", "cleveland browns", "dallas cowboys", "denver broncos",
+    "detroit lions", "green bay packers", "houston texans", "indianapolis colts", "jacksonville jaguars",
+    "kansas city chiefs", "las vegas raiders", "los angeles chargers", "los angeles rams", "miami dolphins",
+    "minnesota vikings", "new england patriots", "new orleans saints", "new york giants", "new york jets",
+    "philadelphia eagles", "pittsburgh steelers", "san francisco 49ers", "seattle seahawks",
+    "tampa bay buccaneers", "tennessee titans", "washington commanders"
   ]);
   const CFL_TEAMS = new Set([
     "argonauts", "tiger-cats", "alouettes", "redblacks", "blue bombers", "roughriders",

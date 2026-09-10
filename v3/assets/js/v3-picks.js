@@ -399,10 +399,43 @@
       sides.append(box);
     }
 
-    const opens = Number.isNaN(opensAt.getTime()) ? "" : opensAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-    card.append(head, sides, el("p", "market-foot",
-      `Opens for picks ${opens ? "at " + opens : "an hour before kickoff"} · line locks then, and may move until it does.`));
+    // "Betting opens in 4 hours, 38 minutes" — kept current by a ticker
+    // while the tab is open, so it never reads stale.
+    const foot = el("p", "market-foot");
+    const when = el("b", "opens-in");
+    if (!Number.isNaN(opensAt.getTime())) when.dataset.opensAt = String(opensAt.getTime());
+    when.textContent = opensInText(opensAt.getTime());
+    foot.append(when, document.createTextNode(" · line locks when it opens, and may move until then."));
+    card.append(head, sides, foot);
     return card;
+  }
+
+  /** "Betting opens in 4 hours, 38 minutes", or the wait for a free slot once the time has passed. */
+  function opensInText(at) {
+    if (!Number.isFinite(at)) return "Betting opens an hour before kickoff";
+    const ms = at - Date.now();
+    if (ms <= 0) return "Betting opens when a slot frees up";
+    const mins = Math.round(ms / 60000);
+    if (mins < 1) return "Betting opens any minute";
+    if (mins < 60) return `Betting opens in ${mins} minute${mins === 1 ? "" : "s"}`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (h >= 24) {
+      const d = Math.floor(h / 24);
+      const hh = h % 24;
+      return `Betting opens in ${d} day${d === 1 ? "" : "s"}${hh ? `, ${hh} hour${hh === 1 ? "" : "s"}` : ""}`;
+    }
+    return `Betting opens in ${h} hour${h === 1 ? "" : "s"}${m ? `, ${m} minute${m === 1 ? "" : "s"}` : ""}`;
+  }
+
+  let opensTimer = 0;
+  function startOpensTicker() {
+    window.clearInterval(opensTimer);
+    opensTimer = window.setInterval(() => {
+      const nodes = root ? root.querySelectorAll(".opens-in[data-opens-at]") : [];
+      if (!nodes.length) { window.clearInterval(opensTimer); return; }
+      for (const n of nodes) n.textContent = opensInText(Number(n.dataset.opensAt));
+    }, 30 * 1000);
   }
 
   function upcomingSection(games = local.upcoming) {
@@ -478,6 +511,7 @@
     } else {
       wrap.append(slateByDay(openNow));
     }
+    startOpensTicker();
 
     const upcoming = upcomingSection(local.sport === "all" ? local.upcoming : local.upcoming.filter((g) => leagueOf(g) === local.sport));
     if (upcoming) wrap.append(upcoming);
@@ -537,6 +571,17 @@
     }
     if (!days.has(local.day)) local.day = days.keys().next().value;
 
+    // The head, in the same voice as Upcoming: the day, how many are
+    // open, and — when there is more than one day — the pills to switch.
+    const todays = days.get(local.day) || [];
+    const head = el("div", "upcoming-head slate-head");
+    const copy = el("div");
+    copy.append(el("h2", null, dayTabLabel(local.day, todays[0]?.startsAt)));
+    const leaguesOpen = [...new Set(todays.map((m) => String(m.league || "").toUpperCase()))];
+    const closeWord = { MLB: "first pitch", NFL: "kickoff", CFB: "kickoff", NBA: "tip-off", NHL: "puck drop" };
+    const closes = leaguesOpen.map((l) => `${l} at ${closeWord[l] || "game time"}`).join(", ");
+    copy.append(el("p", null, `${todays.length} game${todays.length === 1 ? "" : "s"} open for picks · closes ${closes || "at game time"}.`));
+    head.append(copy);
     if (days.size > 1) {
       const tabs = el("div", "daytabs");
       tabs.setAttribute("aria-label", "Which day");
@@ -547,11 +592,11 @@
         b.addEventListener("click", () => { local.day = key; paint(); });
         tabs.append(b);
       }
-      box.append(tabs);
+      head.append(tabs);
     }
+    box.append(head);
 
     // Kickoff slots within the day: games within the same half hour share a header.
-    const todays = days.get(local.day) || [];
     const slots = new Map();
     for (const m of todays) {
       const t = startOf(m);
