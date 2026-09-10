@@ -311,7 +311,14 @@
         stats.append(st("Balance now", last.toLocaleString()), st("High", Math.max(...vs).toLocaleString()), st("Low", Math.min(...vs).toLocaleString()));
       } else {
         const sign = (n) => (n > 0 ? `+${n.toLocaleString()}` : n.toLocaleString());
-        stats.append(st("Net", sign(last), last > 0 ? "up" : last < 0 ? "down" : ""), st("Peak", sign(b.peak), b.peak > 0 ? "up" : ""), st("Low", sign(b.trough), b.trough < 0 ? "down" : ""));
+        const tone = (n) => (n > 0 ? "up" : n < 0 ? "down" : "");
+        stats.append(
+          st("Net", sign(last), tone(last)),
+          st("Picks", sign(Number(b.picksNet || 0)), tone(Number(b.picksNet || 0))),
+          st("Casino", sign(Number(b.casinoNet || 0)), tone(Number(b.casinoNet || 0))),
+          st("Peak", sign(b.peak), tone(b.peak)),
+          st("Low", sign(b.trough), tone(b.trough))
+        );
       }
 
       // Tooltip follows the pointer to the nearest point.

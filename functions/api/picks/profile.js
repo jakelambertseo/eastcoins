@@ -188,7 +188,7 @@ export async function onRequestGet(context) {
   let bankroll = null;
   try {
     const ops = await db
-      .prepare(`SELECT type, amount, balance_after, COALESCE(confirmed_at, created_at) AS at
+      .prepare(`SELECT type, amount, balance_after, market_id, COALESCE(confirmed_at, created_at) AS at
                   FROM wallet_operations WHERE user_id = ? AND status = 'CONFIRMED'
                  ORDER BY datetime(COALESCE(confirmed_at, created_at)) ASC, rowid ASC LIMIT 3000`)
       .bind(String(user.twitch_id)).all();
@@ -196,10 +196,12 @@ export async function onRequestGet(context) {
     if (rows.length) {
       const viewer = await getSessionUser(db, context.request).catch(() => null);
       const owner = Boolean(viewer && String(viewer.id) === String(user.twitch_id));
-      let net = 0;
+      let net = 0, picksNet = 0, casinoNet = 0;
       const pts = [];
       for (const r of rows) {
         net += Number(r.amount || 0);
+        // A move with a market behind it is a pick; the rest is the casino.
+        if (r.market_id) picksNet += Number(r.amount || 0); else casinoNet += Number(r.amount || 0);
         const p = { t: utc(String(r.at)), net, k: String(r.type || "") };
         if (owner && Number.isFinite(Number(r.balance_after))) p.bal = Number(r.balance_after);
         pts.push(p);
@@ -207,7 +209,7 @@ export async function onRequestGet(context) {
       const step = Math.ceil(pts.length / 400);
       const sampled = step > 1 ? pts.filter((_, i) => i % step === 0 || i === pts.length - 1) : pts;
       bankroll = {
-        owner, ops: rows.length, net,
+        owner, ops: rows.length, net, picksNet, casinoNet,
         peak: Math.max(...pts.map((p) => p.net)), trough: Math.min(...pts.map((p) => p.net)),
         first: pts[0].t, last: pts[pts.length - 1].t, points: sampled
       };
