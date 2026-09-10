@@ -262,7 +262,7 @@
       case "joined": span.append(who(), document.createTextNode(" joined")); break;
       case "song": span.append(who(), document.createTextNode(" played "), el("b", null, item.title.length > 40 ? item.title.slice(0, 38) + "…" : item.title)); break;
       case "casino": span.append(who(), document.createTextNode(item.status === "WON" ? ` won ${Math.abs(item.profit)} ZC on the ` : ` lost ${Math.abs(item.profit)} ZC on the `), casinoLink(item)); break;
-      case "score": span.append(document.createTextNode(item.live ? "Live · " : "Score · "), game(scoreLine(item))); break;
+      case "score": return null;   // scores stay in the feed and on game pages; off the ticker for now
       default: return null;
     }
     span.append(el("span", "tk-ago", ago(item.at)));
