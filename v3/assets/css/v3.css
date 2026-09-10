@@ -2732,12 +2732,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .mdock-stage .jam-banner-strip{font-size:.6rem}
 .mdock.is-hot{border-color:rgba(255,210,63,.6);box-shadow:0 18px 50px rgba(0,0,0,.6),0 0 24px rgba(255,210,63,.3)}
 @media (prefers-reduced-motion:reduce){.mdock-stage.is-jamming{animation:none}}
-/* On a page with a stream (watch, MultiView) the dock is a bar only and
-   the page leaves it a band at the bottom — Twitch's player refuses to run
-   when anything sits on top of it, and it means it. */
+/* Minimised, the title rides in the header bar. */
 .mdock-head-title{display:none;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:.78rem;font-weight:700}
-.mdock.min .mdock-head-title,body.watch-on .mdock .mdock-head-title,body.mv-on .mdock .mdock-head-title{display:block}
+.mdock.min .mdock-head-title{display:block}
 .mdock.min{width:300px}
-body.watch-on .mdock .mdock-stage,body.watch-on .mdock .mdock-body,body.mv-on .mdock .mdock-stage,body.mv-on .mdock .mdock-body{display:none}
-body.watch-on .mdock,body.mv-on .mdock{width:320px}
-body.watch-on.has-dock .view,body.mv-on.has-dock .view{padding-bottom:62px}
