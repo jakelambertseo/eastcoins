@@ -509,8 +509,8 @@
           local.failed
             ? "The Picks catalog didn't answer. This is usually temporary."
             : local.upcoming.length
-              ? "The next games are listed below. Each opens an hour before kickoff."
-              : "Markets open an hour before kickoff. Check back closer to game time.")
+              ? "The next games are listed below. NFL opens an hour before kickoff; MLB opens every day at 4 PM CT."
+              : "NFL opens an hour before kickoff; MLB opens every day at 4 PM CT. Check back closer to game time.")
       );
       wrap.append(empty);
     } else {
