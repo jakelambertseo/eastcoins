@@ -61,7 +61,7 @@
    * makes a late arrival land on the finish at once, keeps every viewer
    * in step, and survives a tab going to the background.
    */
-  function frame(refs) {
+  function frame(refs, schedule = true) {
     const race = refs.raceRun;
     if (!race || !refs.raceTrack?.isConnected) return;
     const width = refs.raceTrack.clientWidth - 150;
@@ -78,7 +78,7 @@
         refs.raceTrack.classList.add("done");
       }
     }
-    if (!allDone) refs.raceFrame = requestAnimationFrame(() => frame(refs));
+    if (!allDone && schedule) refs.raceFrame = requestAnimationFrame(() => frame(refs));
   }
 
   function renderStage(refs, { round, config, inBets, freshResult, now }) {
@@ -115,6 +115,10 @@
       refs.raceTrack.classList.add("running");
       cancelAnimationFrame(refs.raceFrame);
       frame(refs);
+    } else if (refs.raceRun) {
+      // The page's own tick, so a tab in the background — where animation
+      // frames pause — still catches up to the clock.
+      frame(refs, false);
     }
   }
 
