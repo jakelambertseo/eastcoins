@@ -496,7 +496,7 @@
 
     // One sport at a time, when there is more than one to choose from.
     const { leagues, counts } = leagueCounts(allOpen.map(leagueOf), local.upcoming.map(leagueOf));
-    if (leagues.length > 1) wrap.append(sportFilter(leagues, counts, allOpen.length, "MLB opens at 4 PM CT, 5 games at a time · NFL an hour before kickoff"));
+    if (leagues.length > 1) mountTools(sportFilter(leagues, counts, allOpen.length));
 
     const openNow = local.sport === "all" ? allOpen : allOpen.filter((m) => leagueOf(m) === local.sport);
 
@@ -638,32 +638,30 @@
   }
 
   /** The sport dropdown; `note` is the line of copy beside it, if any. */
-  function sportFilter(leagues, counts, total, note) {
-    const bar = el("div", "mkt-tools");
-    const label = el("label", "mkt-tools-k", "Sport");
-    label.htmlFor = "v3SportFilter";
-    const sel = document.createElement("select");
-    sel.id = "v3SportFilter";
-    sel.className = "sc-select";
-    const all = document.createElement("option");
-    all.value = "all";
-    all.textContent = `All sports (${total})`;
-    sel.append(all);
-    for (const key of leagues) {
-      const o = document.createElement("option");
-      o.value = key;
-      o.textContent = `${key.toUpperCase()} (${counts.get(key) || 0})`;
-      sel.append(o);
-    }
-    sel.value = local.sport;
-    sel.addEventListener("change", () => {
-      local.sport = sel.value;
-      writeSportToUrl(local.sport);
-      paint();
-    });
-    bar.append(label, sel);
-    if (note) bar.append(el("span", "mkt-tools-note", note));
-    return bar;
+  function sportFilter(leagues, counts, total) {
+    const seg = el("div", "sportseg");
+    seg.setAttribute("aria-label", "Sport");
+    const mk = (key, label, n) => {
+      const btn = el("button", `sportseg-btn${local.sport === key ? " on" : ""}`, label);
+      btn.type = "button";
+      btn.append(el("small", null, String(n)));
+      btn.addEventListener("click", () => {
+        local.sport = key;
+        writeSportToUrl(local.sport);
+        paint();
+      });
+      return btn;
+    };
+    seg.append(mk("all", "All", total));
+    for (const key of leagues) seg.append(mk(key, key.toUpperCase(), counts.get(key) || 0));
+    return seg;
+  }
+
+  /** The tab bar's right-hand slot, so a tab's tools sit on the tab row. */
+  function mountTools(node) {
+    if (local.toolsSlot?.isConnected) local.toolsSlot.append(node);
+    else if (local.toolsSlot) local.toolsSlot.append(node);
+    return document.createDocumentFragment();
   }
 
   function readSportFromUrl() {
@@ -1083,7 +1081,7 @@
     // and something comes back when it settles. That is the whole story
     // and it needs no second source to tell it.
     const hl = leagueCounts(local.myPicks.map(leagueOf));
-    if (hl.leagues.length > 1) wrap.append(sportFilter(hl.leagues, hl.counts, local.myPicks.length));
+    if (hl.leagues.length > 1) mountTools(sportFilter(hl.leagues, hl.counts, local.myPicks.length));
     const shownPicks = local.sport === "all" ? local.myPicks : local.myPicks.filter((p) => leagueOf(p) === local.sport);
 
     const entries = [];
@@ -1150,7 +1148,7 @@
       return wrap;
     }
     const ll = leagueCounts(local.communityLedger.map(leagueOf));
-    if (ll.leagues.length > 1) wrap.append(sportFilter(ll.leagues, ll.counts, local.communityLedger.length));
+    if (ll.leagues.length > 1) mountTools(sportFilter(ll.leagues, ll.counts, local.communityLedger.length));
     const rows = local.sport === "all" ? local.communityLedger : local.communityLedger.filter((r) => leagueOf(r) === local.sport);
 
     if (!rows.length) {
@@ -1226,48 +1224,113 @@
    * gold is the wallet, green is a win, red is a loss — the crown gets a
    * colour nothing else on the page uses.
    */
-  function leaderWidget() {
+  /* ---------------------------------------------------------- header
+
+     The season leader is one pill on the title row; your own numbers
+     are one card under it. The tabs follow. Nothing else sits above
+     the first market. */
+
+  function leaderPill() {
     const top = local.leaderboard[0] || null;
-    const box = el("section", `leaderwidget${top ? "" : " empty"}`);
-    box.setAttribute("aria-label", "Season leader");
-    box.append(el("span", "lw-shine"));
-
-    const crown = el("span", "lw-crown", "👑");
-    const copy = el("div", "lw-copy");
-    const season = local.season?.name || "Season";
-
+    const pill = el("a", `leaderpill${top ? "" : " empty"}`);
+    pill.href = "/?view=picks&tab=leaderboard";
+    pill.addEventListener("click", (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+      event.preventDefault();
+      local.tab = "leaderboard";
+      writeTabToUrl("leaderboard");
+      paint();
+    });
+    pill.append(el("span", "lp-crown", "👑"));
     if (!top) {
-      copy.append(el("span", "lw-kicker", "Up for grabs"),
-        el("strong", "lw-name", "Nobody wears the crown yet"),
-        el("small", "lw-note", "First settled pick takes it. Markets open an hour before kick-off."));
-      box.append(crown, copy);
-      return box;
+      pill.append(el("span", "lp-k", "Crown up for grabs"));
+      return pill;
     }
+    pill.append(avatar(top.user, "lp-av"));
+    const copy = el("span", "lp-copy");
+    copy.append(el("b", null, top.user?.displayName || top.user?.login || "—"));
+    const profit = el("span", "lp-profit");
+    profit.append(zc(top.profit, { sign: true }));
+    copy.append(profit);
+    pill.append(copy);
+    const me = local.authed && local.season?.rank ? `you're #${local.season.rank}` : "leads";
+    pill.append(el("small", "lp-note", me));
+    pill.title = `${top.user?.displayName || ""} leads the season · ${top.record} · ${top.accuracy}% right`;
+    return pill;
+  }
 
-    const me = local.login && top.user?.login === local.login;
-    copy.append(
-      el("span", "lw-kicker", "Wearing the crown"),
-      (() => { const n = el("strong", "lw-name"); n.append(nameWithBadges(top.user)); return n; })(),
-      el("small", "lw-note", me ? "That's you. Keep it." : `${top.record} · ${top.accuracy}% right`)
-    );
+  function skelPill() {
+    const pill = el("span", "leaderpill is-sk");
+    pill.setAttribute("aria-busy", "true");
+    pill.append(sk(22, 22, "circle"), sk(90, 12), sk(50, 12));
+    return pill;
+  }
 
-    const stats = el("div", "lw-stats");
-    const profit = el("div", "lw-stat");
-    profit.append(el("span", null, "Picks profit"));
-    const big = el("strong", "nums");
-    big.append(zc(top.profit, { sign: true }));
-    profit.append(big);
-    const lead = local.leaderboard[1] ? top.profit - local.leaderboard[1].profit : null;
-    const gap = el("div", "lw-stat");
-    // How far ahead of #2 they are — or, with nobody else on the board
-    // yet, say so rather than show a lead over no one.
-    gap.append(el("span", null, "Lead over #2"),
-      el("strong", "nums", lead === null ? "no #2 yet" : `${lead > 0 ? "+" : ""}${lead.toLocaleString()}`));
-    stats.append(profit, gap);
-
-    const av = avatar(top.user, "lw-avatar");
-    box.append(crown, av, copy, stats);
+  function quick(label, value, note, tone) {
+    const box = el("div", `pf-q${tone ? " " + tone : ""}`);
+    box.append(el("span", null, label));
+    const big = el("b", "nums");
+    if (value instanceof Node) big.append(value); else big.textContent = value;
+    box.append(big);
+    if (note) box.append(el("small", null, note));
     return box;
+  }
+
+  function myCard() {
+    if (!local.authed) {
+      const card = el("div", "pf-card picks-login");
+      const copy = el("div");
+      copy.append(el("b", null, "Log in with Twitch to make picks"),
+        el("span", null, "Your ZCoins from chat come with you. One pick per game, wins pay out at the final."));
+      const go = el("a", "login-btn", "Log in with Twitch");
+      go.href = "/api/picks/auth/twitch/start?returnTo=" + encodeURIComponent("/?view=picks");
+      card.append(copy, go);
+      return card;
+    }
+    const balance = Number(local.wallet?.balance);
+    const season = local.season || {};
+    const settled = Number(season.wins || 0) + Number(season.losses || 0);
+    const profit = Number(season.profit || 0);
+    const card = el("div", "pf-card picks-me");
+    const row = el("div", "pf-quick five");
+    const wallet = el("span", "zc-amount nums");
+    const coin = document.createElement("img");
+    coin.className = "zcoin-mark";
+    coin.src = "/v3/assets/img/zcoin.webp";
+    coin.alt = "";
+    coin.width = 18; coin.height = 18;
+    wallet.append(coin, document.createTextNode(Number.isFinite(balance) ? balance.toLocaleString() : "—"));
+    row.append(
+      quick("My wallet", wallet, local.wallet?.connected ? "live from StreamElements" : "not connected", "wallet"),
+      quick(`${season.name || season.id || "Season"} profit`, zc(profit, { sign: true }), settled ? `${settled} settled` : "nothing settled yet", profit > 0 ? "up" : profit < 0 ? "down" : ""),
+      quick("Record", `${Number(season.wins || 0)}–${Number(season.losses || 0)}`, recordNoteOf(season.records) || (settled ? `${season.accuracy}% right` : "first game decides it")),
+      quick("Rank", season.rank ? `#${season.rank} of ${season.players}` : "—", season.rank ? "by Picks profit" : "unranked until a pick settles"),
+      quick("Open", String(local.myPicks.filter((x) => x.status === "ACTIVE").length), "picks in play")
+    );
+    card.append(row);
+    return card;
+  }
+
+  function recordNoteOf(records) {
+    const parts = [];
+    for (const league of ["NFL", "MLB"]) {
+      const r = records?.[league];
+      if (r && (r.wins || r.losses)) parts.push(`${league} ${r.wins}–${r.losses}`);
+    }
+    return parts.join(" · ");
+  }
+
+  function skelMyCard() {
+    const card = el("div", "pf-card picks-me is-sk");
+    card.setAttribute("aria-busy", "true");
+    const row = el("div", "pf-quick five");
+    for (let i = 0; i < 5; i += 1) {
+      const q = el("div", "pf-q sk-lines");
+      q.append(sk(60, 8), sk(70, 22), sk(90, 8));
+      row.append(q);
+    }
+    card.append(row);
+    return card;
   }
 
   /** "NFL 1–0" over "MLB 3–1" — a dash for a league with nothing settled. */
@@ -1283,73 +1346,29 @@
     return box;
   }
 
-  function summaryStrip() {
-    const strip = el("div", "summarystrip");
-    const balance = Number(local.wallet?.balance);
-    const season = local.season || {};
-    const settled = Number(season.wins || 0) + Number(season.losses || 0);
-    const year = season.name || season.id || "Season";
-
-    const cards = [
-      ["My ZCoins wallet", Number.isFinite(balance) ? balance.toLocaleString() : "—",
-        local.wallet?.connected ? "Live from StreamElements" : "Log in with Twitch", true],
-      [`${year} Picks profit`,
-        local.authed ? `${season.profit > 0 ? "+" : season.profit < 0 ? "\u2212" : ""}${Math.abs(Number(season.profit || 0)).toLocaleString()}` : "—",
-        settled ? "Wagers vs settled returns" : "Nothing settled yet"],
-      ["Record",
-        local.authed ? recordSplit(season.records) : "—",
-        settled ? `${season.accuracy}% of settled picks` : "First game decides it"],
-      ["Picks rank",
-        local.authed && season.rank ? `#${season.rank} of ${season.players}` : "—",
-        season.rank ? "Ranked by Picks profit" : "Unranked until a pick settles"]
-    ];
-    for (const [k, v, note, wallet] of cards) {
-      const card = el("article", `summarycard${wallet ? " wallet" : ""}`);
-      const strong = el("strong", "nums");
-      if (v instanceof Node) strong.append(v); else strong.textContent = v;
-      card.append(el("span", null, k), strong, el("small", null, note));
-      if (wallet) {
-        const coin = document.createElement("img");
-        coin.className = "zc-full";
-        coin.src = "/v3/assets/img/zcoin.webp";
-        coin.alt = "";
-        coin.width = 64;
-        coin.height = 64;
-        card.append(coin);
-      }
-      strip.append(card);
-    }
-    return strip;
-  }
-
   function paint() {
     root.replaceChildren();
 
-    const head = el("div", "viewhead");
+    const head = el("div", "viewhead picks-head");
     const wrap = el("div");
     wrap.append(el("h1", null, "Picks"));
-    head.append(wrap);
+    wrap.append(el("p", null, `${local.season?.name || "Season"} · NFL opens an hour before kickoff · MLB at 4 PM CT, five games at a time`));
+    head.append(wrap, local.loaded ? leaderPill() : skelPill());
     root.append(head);
+    root.append(local.loaded ? myCard() : skelMyCard());
 
-    // The season leader in a block of its own, with a heading, so the
-    // page splits cleanly: leader, then your numbers, then the tabs.
-    const leaderBlock = el("section", "leaderblock");
-    leaderBlock.setAttribute("aria-label", "Season leader");
-    const lbHead = el("div", "leaderblock-head");
-    const lbCopy = el("div");
-    lbCopy.append(el("h2", null, "Season leader"));
-    lbHead.append(lbCopy, el("span", "lb-season", local.season?.name || "Season"));
-    leaderBlock.append(lbHead, local.loaded ? leaderWidget() : skelLeader());
-    root.append(leaderBlock);
-    root.append(local.loaded ? summaryStrip() : skelSummary());
-
-    const tabs = el("nav", "viewtabs");
+    // Tabs, with a count where one helps, and a slot on the right for
+    // the tab's own tools (the sport switch) so nothing else stacks up.
+    const openCount = local.markets.filter((m) => m.state === "OPEN" && (!m.startsAt || new Date(m.startsAt).getTime() > Date.now())).length;
+    const counts = { markets: openCount, mypicks: local.myPicks.filter((x) => x.status === "ACTIVE").length };
+    const tabs = el("nav", "pf-tabs picks-tabs");
     tabs.setAttribute("aria-label", "Picks views");
     for (const [key, label] of TABS) {
-      const btn = el("button", "viewtab", label);
+      const btn = el("button", "pf-tab", label);
       btn.type = "button";
+      if (local.loaded && counts[key]) btn.append(el("i", null, String(counts[key])));
       if (key === local.tab) {
-        btn.classList.add("active");
+        btn.classList.add("on");
         btn.setAttribute("aria-current", "page");
       }
       btn.addEventListener("click", () => {
@@ -1359,6 +1378,8 @@
       });
       tabs.append(btn);
     }
+    local.toolsSlot = el("span", "tabs-tools");
+    tabs.append(local.toolsSlot);
     root.append(tabs);
 
     const active = TABS.find(([k]) => k === local.tab);

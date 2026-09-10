@@ -69,6 +69,13 @@
 > `unmount()` hands playback back to it instead of disconnecting. Remembered
 > in `localStorage` `ec_v3_music_dock`.
 >
+> **Picks layout** (`v3-picks.js` `paint()`): title row with the season
+> rule and a `.leaderpill` (season leader → Leaderboard tab) → `.picks-me`
+> card (`.pf-quick.five`: wallet, profit, record, rank, open) or a
+> `.picks-login` card → `.pf-tabs.picks-tabs` with counts and a
+> `.tabs-tools` slot where `sportFilter()` (segmented All/NFL/MLB) is
+> mounted by the Markets, History and Ledger views via `mountTools()`.
+>
 > **Profile layout** (`v3-profile.js` `page()`): mini nav → `.pf-card.pf-head`
 > (avatar, name+badges, team, `.pf-quick` four numbers) → `.pf-tabs`
 > Overview (bankroll, highlights, glance cards) / Picks / Casino / Music;
