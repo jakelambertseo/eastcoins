@@ -716,6 +716,10 @@ a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
   filter:drop-shadow(0 6px 14px rgba(0,0,0,.45));pointer-events:none;
 }
 .summarycard small{display:block;margin-top:4px;color:var(--muted-2);font-size:.72rem}
+.summarystrip.five{grid-template-columns:repeat(5,minmax(0,1fr))}
+.summarycard.up strong{color:var(--green)} .summarycard.down strong{color:var(--red)}
+@media (max-width:900px){.summarystrip.five{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:560px){.summarystrip.five{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* An amount inside the big figure is not a label: keep the figure's size. */
 .summarycard strong .zc-amount{display:inline-flex;font-size:inherit;font-weight:inherit;letter-spacing:inherit;text-transform:none;color:inherit;margin:0;gap:7px}
 .summarycard strong .zcoin-mark{width:20px;height:20px}

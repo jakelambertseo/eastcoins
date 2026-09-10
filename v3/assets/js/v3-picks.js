@@ -1335,35 +1335,40 @@
       card.append(copy, go);
       return card;
     }
+    // The summary cards: one figure each, a label above, a note below.
     const balance = Number(local.wallet?.balance);
     const season = local.season || {};
     const settled = Number(season.wins || 0) + Number(season.losses || 0);
     const profit = Number(season.profit || 0);
-    const card = el("div", "pf-card picks-me");
-    const row = el("div", "pf-quick five");
-    const wallet = el("span", "zc-amount nums");
-    const coin = document.createElement("img");
-    coin.className = "zcoin-mark";
-    coin.src = "/v3/assets/img/zcoin.webp";
-    coin.alt = "";
-    coin.width = 18; coin.height = 18;
-    wallet.append(coin, document.createTextNode(Number.isFinite(balance) ? balance.toLocaleString() : "—"));
-    const walletTile = quick("My wallet", wallet, local.wallet?.connected ? "live from StreamElements" : "not connected", "wallet");
-    const big = document.createElement("img");
-    big.className = "zc-full";
-    big.src = "/v3/assets/img/zcoin.webp";
-    big.alt = "";
-    big.width = 56; big.height = 56;
-    walletTile.append(big);
-    row.append(
-      walletTile,
-      quick(`${season.name || season.id || "Season"} profit`, zc(profit, { sign: true }), settled ? `${settled} game${settled === 1 ? "" : "s"} settled` : "nothing settled yet", `profit ${profit > 0 ? "up" : profit < 0 ? "down" : ""}`),
-      quick("Record", `${Number(season.wins || 0)}–${Number(season.losses || 0)}`, recordNoteOf(season.records) || (settled ? `${season.accuracy}% right` : "first game decides it")),
-      quick("Rank", season.rank ? `#${season.rank} of ${season.players}` : "—", season.rank ? "by Picks profit" : "unranked until a pick settles"),
-      quick("Open", String(local.myPicks.filter((x) => x.status === "ACTIVE").length), "picks in play")
-    );
-    card.append(row);
-    return card;
+    const open = local.myPicks.filter((x) => x.status === "ACTIVE").length;
+    const strip = el("div", "summarystrip five");
+    const cards = [
+      ["My ZCoins wallet", Number.isFinite(balance) ? balance.toLocaleString() : "—",
+        local.wallet?.connected ? "Live from StreamElements" : "Not connected", "wallet"],
+      [`${season.name || season.id || "Season"} Picks profit`,
+        `${profit > 0 ? "+" : profit < 0 ? "−" : ""}${Math.abs(profit).toLocaleString()}`,
+        settled ? `${settled} game${settled === 1 ? "" : "s"} settled` : "Nothing settled yet", profit > 0 ? "up" : profit < 0 ? "down" : ""],
+      ["Record", `${Number(season.wins || 0)}–${Number(season.losses || 0)}`,
+        recordNoteOf(season.records) || (settled ? `${season.accuracy}% of settled picks` : "First game decides it"), ""],
+      ["Picks rank", season.rank ? `#${season.rank} of ${season.players}` : "—",
+        season.rank ? "Ranked by Picks profit" : "Unranked until a pick settles", ""],
+      ["Open picks", String(open), open ? "In play or waiting on kickoff" : "Nothing riding right now", ""]
+    ];
+    for (const [k, v, note, tone] of cards) {
+      const card = el("article", `summarycard${tone ? " " + tone : ""}`);
+      card.append(el("span", null, k), el("strong", "nums", v), el("small", null, note));
+      if (tone === "wallet") {
+        const coin = document.createElement("img");
+        coin.className = "zc-full";
+        coin.src = "/v3/assets/img/zcoin.webp";
+        coin.alt = "";
+        coin.width = 64;
+        coin.height = 64;
+        card.append(coin);
+      }
+      strip.append(card);
+    }
+    return strip;
   }
 
   function recordNoteOf(records) {
@@ -1376,16 +1381,14 @@
   }
 
   function skelMyCard() {
-    const card = el("div", "pf-card picks-me is-sk");
-    card.setAttribute("aria-busy", "true");
-    const row = el("div", "pf-quick five");
+    const strip = el("div", "summarystrip five");
+    strip.setAttribute("aria-busy", "true");
     for (let i = 0; i < 5; i += 1) {
-      const q = el("div", "pf-q sk-lines");
-      q.append(sk(60, 8), sk(70, 22), sk(90, 8));
-      row.append(q);
+      const card = el("article", `summarycard is-sk sk-lines${i === 0 ? " wallet" : ""}`);
+      card.append(sk(84, 8), sk(70, 22), sk(120, 8));
+      strip.append(card);
     }
-    card.append(row);
-    return card;
+    return strip;
   }
 
   /** "NFL 1–0" over "MLB 3–1" — a dash for a league with nothing settled. */
