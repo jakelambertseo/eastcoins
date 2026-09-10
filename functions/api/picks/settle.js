@@ -18,11 +18,11 @@
    twice cannot pay twice.
    ============================================================ */
 
-import { composeOpen, composeClosed, composeSettled, composeClosingSoon } from "./_announce.js";
+import { composeOpen, composeClosed, composeSettled, composeClosingSoon, composeSlateOpen } from "./_announce.js";
 import { dueReminders, markSent } from "./_reminders.js";
 import { autoOpenMarkets, quietInChat } from "./_autoopen.js";
 import { slugFor, etDate } from "./_slug.js";
-import { noteStatus } from "./_ops.js";
+import { noteStatus, readStatus } from "./_ops.js";
 import { discordEnabled, postDiscord, openedEmbed, settledEmbed } from "./_discord.js";
 import { lastOddsQuota } from "./_autoopen.js";
 import {
@@ -506,6 +506,20 @@ export async function onRequestPost(context) {
   if (loudOpened.length) {
     const said = await sayInChat(context.env, composeOpen(loudOpened));
     if (!said.ok) console.error(`Picks: couldn't announce ${loudOpened.length} auto-opened market(s): ${said.error}`);
+  }
+  // The quiet sports (MLB) get exactly one line a day, when the 4 PM
+  // slate opens. The refills as games lock through the evening stay
+  // silent, and !odds carries the prices.
+  const quietOpened = opened.filter((m) => quietInChat(m.sport));
+  if (quietOpened.length) {
+    const day = new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+    const key = `slateopen:${quietOpened[0].sport}:${day}`;
+    const already = await readStatus(db, [key]).catch(() => ({}));
+    if (!already[key]) {
+      const said = await sayInChat(context.env, composeSlateOpen(quietOpened));
+      if (said.ok) await noteStatus(db, key, { at: new Date().toISOString(), games: quietOpened.length }).catch(() => {});
+      else console.error(`Picks: couldn't announce the ${quietOpened[0].sport} slate: ${said.error}`);
+    }
   }
   if (opened.length && discordEnabled(context.env)) await postDiscord(context.env, openedEmbed(opened)).catch(() => {});
 

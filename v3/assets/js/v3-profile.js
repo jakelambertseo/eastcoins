@@ -370,122 +370,151 @@
     return box;
   }
 
+  /* ---------------------------------------------------------- page
+
+     One header card — who they are and the four numbers that matter —
+     then tabs: Overview (bankroll and highlights), Picks, Casino,
+     Music. The tab is in the hash, so /u/name#casino opens there. */
+
+  const TABS = [["overview", "Overview"], ["picks", "Picks"], ["casino", "Casino"], ["music", "Music"]];
+  const GAME_NAME = { flip: "Coin Flip", wheel: "Wheel", race: "Horse Race", hilo: "Higher or Lower" };
+  const GAME_ICON = { flip: "🪙", wheel: "🎡", race: "🐎", hilo: "🃏" };
+
+  function quickStat(label, value, note, tone) {
+    const box = el("div", `pf-q${tone ? " " + tone : ""}`);
+    box.append(el("span", null, label));
+    const big = el("b", "nums");
+    if (value instanceof Node) big.append(value); else big.textContent = value;
+    box.append(big);
+    if (note) box.append(el("small", null, note));
+    return box;
+  }
+
+  function recordNote(records) {
+    const parts = [];
+    for (const [league, r] of Object.entries(records || {})) if (r && (r.wins || r.losses)) parts.push(`${league} ${r.wins}–${r.losses}`);
+    return parts.join(" · ");
+  }
+
+  function emoteImg(src) {
+    const img = document.createElement("img");
+    img.className = "pf-emote";
+    img.src = src;
+    img.alt = "";
+    img.width = 26;
+    img.height = 26;
+    return img;
+  }
+
+  function sectionHead(title, small, emote) {
+    const h = el("h2", null, title);
+    if (small) h.append(el("small", null, small));
+    if (emote) h.append(emoteImg(emote));
+    return h;
+  }
+
   function page(data, music) {
     const u = data.user;
     const k = data.picks;
+    const c = data.casino;
     const wrap = el("section", "profile");
     wrap.append(profileNav());
 
-    // Head
-    const head = el("div", "pf-head");
+    // ---- the header card
+    const head = el("div", "pf-card pf-head");
     head.append(avatar(u, "pf-avatar"));
     const copy = el("div", "pf-copy");
     const name = el("h1", null, u.displayName);
-    // Badges come from the same server answer every other name uses,
-    // so the profile can never disagree with the leaderboard.
     const badges = el("span", "pf-badges");
     for (const b of data.badges || []) badges.append(el("span", `pf-badge ${b.key}`, `${b.emoji} ${b.label}`));
     name.append(badges);
     copy.append(name);
-    const sub = el("p", null,
-      `@${u.login}${u.since ? " · with EastCoin since " + when(u.since, { month: "short", year: "numeric" }) : ""}`);
-    copy.append(sub);
+    copy.append(el("p", null, `@${u.login}${u.since ? " · with EastCoin since " + when(u.since, { month: "short", year: "numeric" }) : ""}`));
     copy.append(teamChip(u));
     head.append(copy);
+
+    const seasonName = data.season?.name || "Season";
+    const quick = el("div", "pf-quick");
+    quick.append(
+      quickStat("Record", `${k.wins}–${k.losses}`, recordNote(k.records) || (k.accuracy !== null ? `${k.accuracy}% of settled picks` : "Nothing settled yet")),
+      quickStat(`${seasonName} profit`, zc(k.profit, { sign: true }), `${k.staked.toLocaleString()} staked · ${k.total} pick${k.total === 1 ? "" : "s"}`, k.profit > 0 ? "up" : k.profit < 0 ? "down" : ""),
+      quickStat("Picks rank", k.rank ? `#${k.rank} of ${k.players}` : "—", k.rank ? "by Picks profit" : "settle a pick to rank"),
+      quickStat("Streak", k.streak.current > 0 ? `W${k.streak.current}` : k.streak.current < 0 ? `L${Math.abs(k.streak.current)}` : "—",
+        k.streak.bestWin ? `best run ${k.streak.bestWin}` : "no settled picks", k.streak.current > 0 ? "up" : k.streak.current < 0 ? "down" : "")
+    );
+    head.append(quick);
     wrap.append(head);
 
-    // Stats
-    const strip = el("div", "summarystrip");
-    const seasonName = data.season?.name || "Season";
-    strip.append(
-      stat("Record", recordSplit(k.records), k.accuracy !== null ? `${k.accuracy}% of settled picks` : "Nothing settled yet"),
-      stat(`${seasonName} profit`, zc(k.profit, { sign: true }), `${k.staked.toLocaleString()} staked across ${k.total} pick${k.total === 1 ? "" : "s"}`, k.profit > 0 ? "wallet" : ""),
-      stat("Picks rank", k.rank ? `#${k.rank} of ${k.players}` : "—", k.rank ? "Ranked by Picks profit" : "Settle a pick to be ranked"),
-      stat("Streak", k.streak.current > 0 ? `W${k.streak.current}` : k.streak.current < 0 ? `L${Math.abs(k.streak.current)}` : "—",
-        k.streak.bestWin ? `Best run: ${k.streak.bestWin} straight` : "No settled picks yet")
-    );
-    wrap.append(strip);
+    // ---- the tabs
+    const bar = el("nav", "pf-tabs");
+    bar.setAttribute("aria-label", "Profile sections");
+    const panels = {};
+    const counts = { picks: k.total, casino: c?.total || 0, music: music?.requests || 0 };
+    const buttons = {};
+    for (const [key, label] of TABS) {
+      const btn = el("button", "pf-tab", label);
+      btn.type = "button";
+      if (counts[key]) btn.append(el("i", null, String(counts[key])));
+      btn.addEventListener("click", () => select(key, true));
+      bar.append(btn);
+      buttons[key] = btn;
+      const panel = el("div", "pf-panel");
+      panel.id = `pf-${key}`;
+      panel.hidden = true;
+      panels[key] = panel;
+    }
+    wrap.append(bar);
 
-    // Best and worst
+    // ---- Overview: the bankroll, the highlights, and a glance at each tab
+    const ov = panels.overview;
+    if (data.bankroll?.points?.length > 1) ov.append(bankrollSection(data.bankroll));
     if (k.biggestWin || k.worstBeat) {
       const hls = el("div", "gp-hls");
       if (k.biggestWin) hls.append(highlight("good", "Biggest win", k.biggestWin, `+${k.biggestWin.profit}`, `${k.biggestWin.team} ${formatLine(k.biggestWin.line)} · ${k.biggestWin.wager} staked`));
       if (k.worstBeat) hls.append(highlight("bad", "Worst beat", k.worstBeat, `−${k.worstBeat.wager}`, `${k.worstBeat.team} ${formatLine(k.worstBeat.line)} vs ${k.worstBeat.opponent}`));
-      wrap.append(hls);
+      ov.append(hls);
     }
+    const glance = el("div", "pf-glance");
+    const glanceCard = (key, icon, title, big, small) => {
+      const card = el("button", "pf-glance-card");
+      card.type = "button";
+      card.append(el("span", "pf-glance-k", `${icon} ${title}`), el("b", "nums", big), el("small", null, small), el("em", null, "Open →"));
+      card.addEventListener("click", () => select(key, true));
+      return card;
+    };
+    glance.append(
+      glanceCard("picks", "🪙", "Picks", `${k.wins}–${k.losses}`, k.open ? `${k.open} open right now` : `${k.total} pick${k.total === 1 ? "" : "s"} all season`),
+      glanceCard("casino", "🎰", "Casino", c ? `${c.net > 0 ? "+" : ""}${c.net.toLocaleString()}` : "—", c ? `${c.wins}–${c.losses} across ${c.total} play${c.total === 1 ? "" : "s"}` : "no results yet"),
+      glanceCard("music", "🎵", "Green Room", music ? String(music.rating ?? 1000) : "—", music ? `ELO · ${music.requests} request${music.requests === 1 ? "" : "s"}` : "no requests yet")
+    );
+    ov.append(glance);
+    const foot = el("div", "gp-links");
+    foot.append(link("/?view=picks&tab=leaderboard", "gp-back", "Leaderboard"), link("/?view=picks&tab=ledger", "gp-back", "Community Ledger"), link("/?view=casino", "gp-back", "Casino floor"));
+    ov.append(foot);
 
-    // Bankroll: net from every EastCoin operation, drawn over time.
-    if (data.bankroll?.points?.length > 1) wrap.append(bankrollSection(data.bankroll));
-
-    // Recent picks
-    const recent = el("section", "pf-section");
-    recent.id = "pf-picks";
-    const rh = el("h2", null, "Recent picks");
-    rh.append(el("small", null, k.open ? `${k.open} open` : ""));
-    recent.append(rh);
-    const rows = el("div", "gp-rows");
-    pagedRows(rows, {
-      login: data.user.login, kind: "picks", first: k.recent, total: k.total, pageSize: k.pageSize || 10, rowFor: pickRow,
+    // ---- Picks
+    const pk = panels.picks;
+    pk.append(sectionHead("Picks", k.open ? `${k.open} open` : ""));
+    const pstrip = el("div", "summarystrip");
+    pstrip.append(
+      stat("Record", recordSplit(k.records), k.accuracy !== null ? `${k.accuracy}% of settled picks` : "Nothing settled yet"),
+      stat("Staked", k.staked.toLocaleString(), `across ${k.total} pick${k.total === 1 ? "" : "s"}`),
+      stat("Best run", k.streak.bestWin ? `${k.streak.bestWin} straight` : "—", k.streak.worstLoss ? `worst: ${k.streak.worstLoss} in a row` : "")
+    );
+    pk.append(pstrip);
+    const prow = el("div", "gp-rows");
+    pagedRows(prow, {
+      login: u.login, kind: "picks", first: k.recent, total: k.total, pageSize: k.pageSize || 10, rowFor: pickRow,
       emptyNode: () => emptyNote("No picks yet", "Anything they lock in — from the site or with !pick in chat — shows here.")
     });
-    recent.append(rows);
-    wrap.append(recent);
+    pk.append(el("h3", "pf-sub", "Every pick, newest first"), prow);
 
-    // Music
-    const ms = el("section", "pf-section");
-    ms.id = "pf-music";
-    const mh = el("h2", null, "In the Green Room");
-    const jamgie = document.createElement("img");
-    jamgie.className = "pf-emote";
-    jamgie.src = "https://cdn.7tv.app/emote/01GAJBNT780004XAVG6P7AZAK2/4x.webp";
-    jamgie.alt = "";
-    jamgie.width = 26;
-    jamgie.height = 26;
-    mh.append(jamgie);
-    ms.append(mh);
-    if (!music) {
-      ms.append(emptyNote("No requests yet", "Songs they queue in the Green Room, and how the room rated them, show here."));
-    } else {
-      const mstrip = el("div", "summarystrip");
-      mstrip.append(
-        (() => {
-          const value = el("span", "pf-elo");
-          if (music.tier) value.append(el("span", `elo-tier ${music.tier.key}`, music.tier.label));
-          value.append(document.createTextNode(music.rating != null ? String(music.rating) : "1000"));
-          return stat("Music ELO", value, music.rated ? `${music.rated} song${music.rated === 1 ? "" : "s"} rated` : "Unranked until a song is rated", music.rating >= 1000 ? "wallet" : "");
-        })(),
-        stat("Reactions", `${music.good} good`, `${music.bad} bad`),
-        stat("Requests", String(music.requests), music.top ? `Most played: ${music.top.title}${music.top.times > 1 ? " ×" + music.top.times : ""}` : "")
-      );
-      ms.append(mstrip);
-      if (music.latest.length) {
-        const list = el("ul", "pf-songs");
-        for (const t of music.latest) list.append(el("li", null, t));
-        const lh = el("h3", "pf-sub", "Latest requests");
-        ms.append(lh, list);
-      }
-    }
-    wrap.append(ms);
-
-    // Casino: every game's record, and the latest results.
-    const GAME_NAME = { flip: "Coin Flip", wheel: "Wheel", race: "Horse Race", hilo: "Higher or Lower" };
-    const GAME_ICON = { flip: "🪙", wheel: "🎡", race: "🐎", hilo: "🃏" };
-    const cs = el("section", "pf-section");
-    cs.id = "pf-casino";
-    const ch = el("h2", null, "Casino");
-    const casinoEmote = document.createElement("img");
-    casinoEmote.className = "pf-emote";
-    casinoEmote.src = "https://cdn.betterttv.net/emote/6928e7173a375a69ca4d0d47/2x.webp";
-    casinoEmote.alt = "";
-    casinoEmote.width = 26;
-    casinoEmote.height = 26;
-    ch.append(casinoEmote);
-    cs.append(ch);
-    const c = data.casino;
+    // ---- Casino
+    const cs = panels.casino;
+    cs.append(sectionHead("Casino", "", "https://cdn.betterttv.net/emote/6928e7173a375a69ca4d0d47/2x.webp"));
     if (!c) {
-      const note = emptyNote("No casino results yet", "Coin Flip, the Wheel, the Horse Race and Higher or Lower — wins and losses show here.");
-      const go = link("/?view=casino", "gp-back", "Go to the casino →");
-      note.append(go);
+      const note = emptyNote("No casino results yet", "Coin Flip, the Wheel and Higher or Lower — wins and losses show here.");
+      note.append(link("/?view=casino", "gp-back", "Go to the casino →"));
       cs.append(note);
     } else {
       const cstrip = el("div", "summarystrip");
@@ -509,19 +538,57 @@
         row.append(who, stake, payout);
         return row;
       };
-      const rows = el("div", "gp-rows");
-      pagedRows(rows, {
-        login: data.user.login, kind: "casino", first: c.recent, total: c.total, pageSize: c.pageSize || 10, rowFor: casinoRow,
+      const crow = el("div", "gp-rows");
+      pagedRows(crow, {
+        login: u.login, kind: "casino", first: c.recent, total: c.total, pageSize: c.pageSize || 10, rowFor: casinoRow,
         emptyNode: () => emptyNote("No results yet", "")
       });
-      cs.append(el("h3", "pf-sub", "Latest results"), rows);
+      cs.append(el("h3", "pf-sub", "Latest results"), crow);
     }
-    wrap.append(cs);
 
-    const foot = el("div", "gp-links");
-    foot.append(link("/?view=picks&tab=leaderboard", "gp-back", "Leaderboard"), link("/?view=picks&tab=ledger", "gp-back", "Community Ledger"));
-    foot.append(link("/?view=casino", "gp-back", "Casino"));
-    wrap.append(foot);
+    // ---- Music
+    const ms = panels.music;
+    ms.append(sectionHead("In the Green Room", "", "https://cdn.7tv.app/emote/01GAJBNT780004XAVG6P7AZAK2/4x.webp"));
+    if (!music) {
+      ms.append(emptyNote("No requests yet", "Songs they queue in the Green Room, and how the room rated them, show here."));
+    } else {
+      const mstrip = el("div", "summarystrip");
+      mstrip.append(
+        (() => {
+          const value = el("span", "pf-elo");
+          if (music.tier) value.append(el("span", `elo-tier ${music.tier.key}`, music.tier.label));
+          value.append(document.createTextNode(music.rating != null ? String(music.rating) : "1000"));
+          return stat("Music ELO", value, music.rated ? `${music.rated} song${music.rated === 1 ? "" : "s"} rated` : "Unranked until a song is rated", music.rating >= 1000 ? "wallet" : "");
+        })(),
+        stat("Reactions", `${music.good} good`, `${music.bad} bad`),
+        stat("Requests", String(music.requests), music.top ? `Most played: ${music.top.title}${music.top.times > 1 ? " ×" + music.top.times : ""}` : "")
+      );
+      ms.append(mstrip);
+      if (music.latest.length) {
+        const list = el("ul", "pf-songs");
+        for (const t of music.latest) list.append(el("li", null, t));
+        ms.append(el("h3", "pf-sub", "Latest requests"), list);
+      }
+    }
+
+    for (const key of Object.keys(panels)) wrap.append(panels[key]);
+
+    // ---- selection, remembered in the hash
+    function select(key, push) {
+      if (!panels[key]) key = "overview";
+      for (const [k2, panel] of Object.entries(panels)) {
+        panel.hidden = k2 !== key;
+        buttons[k2].classList.toggle("on", k2 === key);
+        buttons[k2].setAttribute("aria-selected", String(k2 === key));
+      }
+      if (push) {
+        const url = new URL(location.href);
+        url.hash = key === "overview" ? "" : key;
+        history.replaceState(history.state, "", url.pathname + url.search + url.hash);
+      }
+    }
+    const wanted = String(location.hash || "").replace(/^#(pf-)?/, "");
+    select(panels[wanted] ? wanted : "overview", false);
     return wrap;
   }
 

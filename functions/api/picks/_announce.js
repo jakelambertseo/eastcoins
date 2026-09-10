@@ -58,6 +58,27 @@ export function composeOpen(markets) {
   );
 }
 
+/** "Red Sox", "Rangers": the club, for a line that has to fit. */
+function club(name) {
+  const parts = String(name || "").trim().split(/\s+/);
+  const tail2 = parts.slice(-2).join(" ");
+  if (/^(Red Sox|White Sox|Blue Jays)$/i.test(tail2)) return tail2;
+  return parts[parts.length - 1] || String(name || "");
+}
+
+/**
+ * The quiet sports' one line a day: the slate is open. Games and first
+ * pitch times, no prices — !odds has those, and chat stays readable.
+ */
+export function composeSlateOpen(markets) {
+  if (!markets.length) return "";
+  const league = String(markets[0].league || "").toUpperCase() || "Picks";
+  const sorted = [...markets].sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
+  const games = sorted.map((m) => `${club(m.away_name)} at ${club(m.home_name)} ${timeOf(m.starts_at)}`);
+  const list = games.length <= 6 ? games.join(" \u00b7 ") : `${games.slice(0, 5).join(" \u00b7 ")} and ${games.length - 5} more`;
+  return `${BADGE} ${league} is open \u2014 ${games.length} game${games.length === 1 ? "" : "s"} tonight: ${list} \u00b7 !odds <team> for a line \u00b7 !pick <amount> <team>`;
+}
+
 /**
  * "Closing in X minutes" — the countdown after a market opens. One
  * line per threshold per tick, however many games share it.

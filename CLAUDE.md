@@ -69,6 +69,15 @@
 > `unmount()` hands playback back to it instead of disconnecting. Remembered
 > in `localStorage` `ec_v3_music_dock`.
 >
+> **Profile layout** (`v3-profile.js` `page()`): mini nav → `.pf-card.pf-head`
+> (avatar, name+badges, team, `.pf-quick` four numbers) → `.pf-tabs`
+> Overview (bankroll, highlights, glance cards) / Picks / Casino / Music;
+> the tab lives in the hash (`/u/name#casino`).
+>
+> **MLB slate line** — quiet sports still get one chat line a day when
+> the 4 PM slate opens (`composeSlateOpen`, keyed `slateopen:<sport>:<day>`
+> in `ops_status`); refills through the evening stay silent.
+>
 > **Casino** — `/?view=casino` is the floor (`v3-casino.js`, reads
 > `/api/casino/home`; the nav's Casino link points here). Games:
 > Coin Flip `/?view=flip`, Wheel `/?view=wheel`, Horse Race `/?view=race`
