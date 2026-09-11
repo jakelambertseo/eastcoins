@@ -13,7 +13,7 @@
 /* ============================================================
    SPOOKY SEASON
 
-   The whole palette is eight declarations. Because every accent in
+   The whole palette is eleven declarations. Because every accent in
    v3.css now reads rgba(var(--gold-rgb), a) rather than a literal,
    restating three numbers repaints every border, glow, tab, chip and
    button on the site.
@@ -29,6 +29,12 @@ body.spooky{
   --gold-rgb:255,140,26;      /* pumpkin, was 232,191,53 */
   --brand-rgb:124,58,237;     /* witch purple, was 165,18,47 */
   --burg-rgb:91,33,182;
+  /* A property built from another property resolves once, where it is
+     declared, so the two that derive from --gold-rgb are restated here
+     or they would keep the value :root worked out. */
+  --gold:rgb(var(--gold-rgb));
+  --gold-dim:rgba(var(--gold-rgb),.13);
+  --burg:rgb(var(--burg-rgb));
   --ink:#0a0710;
   --panel:#14101c;
   --panel-2:#1b1626;
