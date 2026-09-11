@@ -3007,11 +3007,10 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
    and the nickname when it is not, so a name is never cut short. */
 .market{container-type:inline-size}
 .side-team{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.15}
+/* Full team names on every open card, wrapping to a second line when
+   long, the same as the Upcoming cards. (The nickname swap on narrow
+   cards is gone; the short span stays hidden.) */
 .side-team-short{display:none}
-@container (max-width:560px){
-  .side-team-full{display:none}
-  .side-team-short{display:inline}
-}
 
 /* ================================================================ Casino */
 .cas-headright{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
