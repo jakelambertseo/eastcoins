@@ -84,8 +84,8 @@ img{max-width:100%}
   display:flex;align-items:center;gap:18px;
   padding:0 16px;
   border-bottom:1px solid var(--line);
-  background:rgba(12,10,9,.92);
-  backdrop-filter:blur(10px);
+  background:rgba(12,10,9,.97);
+  /* no backdrop-filter: a sticky blur re-renders on every scroll frame */
 }
 .brand{
   display:flex;align-items:center;gap:9px;flex:0 0 auto;
@@ -116,10 +116,10 @@ img{max-width:100%}
   margin-left:2px;padding:2px 6px;border-radius:6px;
   background:linear-gradient(120deg,#ff5a3c,#d31d4d);color:#fff;
   font-size:.56rem;font-weight:900;letter-spacing:.12em;line-height:1;
-  box-shadow:0 0 12px rgba(255,90,60,.45);animation:navhot 2.4s ease-in-out infinite;
+  box-shadow:0 0 12px rgba(255,90,60,.45);
+  /* No glow animation: animating box-shadow repaints the sticky nav every
+     frame, on every page, and hover on the rest of the page pays for it. */
 }
-@keyframes navhot{0%,100%{box-shadow:0 0 8px rgba(255,90,60,.35)}50%{box-shadow:0 0 16px rgba(255,90,60,.7)}}
-@media (prefers-reduced-motion:reduce){.nav-tag{animation:none}}
 .nav-badge{
   display:inline-flex;align-items:center;justify-content:center;
   min-width:19px;height:19px;padding:0 6px;border-radius:999px;
@@ -306,6 +306,7 @@ body.chat-hidden .chatrail{display:none}
   border:1px solid var(--line);border-radius:var(--radius);
   background:var(--panel);overflow:hidden;
   transition:border-color .16s ease,transform .16s ease;
+  content-visibility:auto;contain-intrinsic-size:auto 320px;
 }
 .eventcard:hover{border-color:var(--line-2);transform:translateY(-2px)}
 .eventcard:focus-within{border-color:rgba(var(--gold-rgb),.4)}
@@ -348,8 +349,8 @@ body.chat-hidden .chatrail{display:none}
 
 .ec-watching{
   position:absolute;left:9px;bottom:9px;z-index:2;padding:3px 8px;border-radius:999px;
-  background:rgba(8,6,6,.72);border:1px solid rgba(255,255,255,.14);color:#fff;
-  font-size:.66rem;font-weight:800;letter-spacing:.02em;backdrop-filter:blur(4px)
+  background:rgba(8,6,6,.86);border:1px solid rgba(255,255,255,.14);color:#fff;
+  font-size:.66rem;font-weight:800;letter-spacing:.02em
 }
 .gp-score.live i{color:var(--green);font-style:normal;font-size:.62rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
 .av-row.score{border-left-color:var(--green)}
@@ -358,7 +359,9 @@ body.chat-hidden .chatrail{display:none}
   display:inline-flex;align-items:center;gap:6px;
   padding:4px 9px;border-radius:999px;
   font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
-  background:rgba(12,10,9,.82);backdrop-filter:blur(4px);
+  background:rgba(12,10,9,.9);
+  /* Dozens of these sit on the grid; a backdrop blur on each is a
+     separate GPU layer that re-renders whenever anything moves. */
 }
 .ec-flag.live{border:1px solid rgba(255,107,133,.5);color:#ffb3c0}
 .ec-flag.live::before{
