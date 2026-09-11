@@ -47,6 +47,7 @@
       linear-gradient(160deg,var(--panel-3),#120f0e);
     color:var(--muted-2);font-family:var(--display);font-weight:800;font-size:1.4rem
   }
+  .tile .back img{width:40px;height:40px;object-fit:contain;opacity:.8}
   .tile.down .front{transform:rotateY(-180deg)}
   .tile.down .back{transform:rotateY(0)}
   .tile:hover:not(.down) .front{border-color:rgba(var(--gold-rgb),.45);box-shadow:0 6px 20px rgba(0,0,0,.45)}
@@ -73,9 +74,14 @@
   .mystery .qm{font-family:var(--display);font-weight:800;font-size:2.6rem;color:var(--gold);line-height:1.1}
   .mystery.revealed .qm{font-size:1.15rem}
   .mystery .lbl{color:var(--muted-2);font-size:.68rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;margin-top:6px}
-  .pot{display:flex;align-items:baseline;gap:6px;justify-content:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+  .pot{display:flex;align-items:center;gap:6px;justify-content:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
   .pot b{font-family:var(--display);font-size:1.5rem;color:var(--green)}
   .pot span{color:var(--muted-2);font-size:.72rem;font-weight:700}
+  .pot .zcoin-mark{width:21px;height:21px}
+  .gw-card h2 .zcoin-mark{width:14px;height:14px;display:inline-block;vertical-align:-2px}
+  .rules .zcoin-mark,.result .zcoin-mark{width:14px;height:14px;display:inline-block;vertical-align:-2px}
+  .result .zc-amount{font-size:1.05rem}
+  .result .zc-amount .zcoin-mark{width:17px;height:17px}
   .meter{height:5px;border-radius:3px;background:var(--panel-3);overflow:hidden;margin-top:8px}
   .meter i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--green));transition:width .3s}
 
@@ -123,7 +129,7 @@
     </div>
 
     <div class="gw-card" style="margin-top:var(--gap)">
-      <h2>Ask a question <small>each one costs 2 ZC of the payout</small></h2>
+      <h2>Ask a question <small>each one costs 2 <img class="zcoin-mark" src="/v3/assets/img/zcoin.webp" alt="ZC"> of the payout</small></h2>
       <div id="questions"></div>
     </div>
   </div>
@@ -132,7 +138,7 @@
     <div class="mystery" id="mystery">
       <div class="qm">?</div>
       <div class="lbl">Today's mystery player</div>
-      <div class="pot"><b id="pot">20</b><span>ZC if you get it</span></div>
+      <div class="pot"><img class="zcoin-mark" src="/v3/assets/img/zcoin.webp" alt=""><b id="pot">50</b><span>ZC if you get it</span></div>
       <div class="meter"><i id="meter" style="width:100%"></i></div>
     </div>
 
@@ -153,7 +159,7 @@
         <li>Everyone gets the same board and the same mystery player each day.</li>
         <li>Questions are answered honestly about the mystery player.</li>
         <li>Players the answer rules out flip on their own; flip the rest by hand if you like.</li>
-        <li>Payout starts at 20 ZC and drops 2 ZC a question. A wrong guess pays nothing.</li>
+        <li>Payout starts at 50 <img class="zcoin-mark" src="/v3/assets/img/zcoin.webp" alt="ZC"> and drops 2 a question. A wrong guess pays nothing.</li>
         <li>Head-to-head against someone in chat comes later.</li>
       </ul>
     </div>
@@ -214,7 +220,7 @@
     { g: "Career",   q: "Is their number under 20?",        f: (p) => p.num < 20 }
   ];
 
-  const START_POT = 20;
+  const START_POT = 50;
   const COST = 2;
 
   const el = (tag, cls, text) => {
@@ -224,6 +230,16 @@
     return node;
   };
   const $ = (id) => document.getElementById(id);
+
+  /** An amount with the ZCoin mark beside it, the way Picks writes one. */
+  const zc = (text) => {
+    const wrap = el("span", "zc-amount");
+    const mark = el("img", "zcoin-mark");
+    mark.src = "/v3/assets/img/zcoin.webp";
+    mark.alt = "ZC";
+    wrap.append(document.createTextNode(text), mark);
+    return wrap;
+  };
 
   let state = null;
 
@@ -260,7 +276,12 @@
       img.src = logo(p.l, p.t);
       img.alt = "";
       front.append(img, el("span", "nm", p.n), el("span", "ps", p.p + " · " + p.t));
-      tile.append(front, el("div", "face back", "EC"));
+      const back = el("div", "face back");
+      const mark = el("img");
+      mark.src = "/assets/eastcoins-logo.webp";
+      mark.alt = "";
+      back.append(mark);
+      tile.append(front, back);
       tile.addEventListener("click", () => onTile(i, tile));
       board.append(tile);
     });
@@ -371,7 +392,9 @@
     m.querySelector(".lbl").textContent = state.secret.p + " · " + state.secret.t + " · " + state.secret.l;
 
     const box = el("div", "result " + (won ? "win" : "lose"));
-    box.append(el("b", null, won ? "Got them. +" + pot() + " ZC" : "Not them. +0 ZC"));
+    const head = el("b");
+    head.append(document.createTextNode(won ? "Got them. " : "Not them. "), zc(won ? "+" + pot() : "+0"));
+    box.append(head);
     box.append(el("span", null, won
       ? state.asked.length + " question" + (state.asked.length === 1 ? "" : "s") + " asked. New board tomorrow."
       : "You picked " + picked.n + ". It was " + state.secret.n + "."));
