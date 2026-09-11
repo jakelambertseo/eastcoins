@@ -154,6 +154,14 @@
 > Do not remove either without a reason — every link ever pasted in chat
 > is one of those shapes.
 >
+> **Old standalone pages redirect** — `functions/_legacy.js` plus
+> `functions/{picks,music,multiview,events,login}.js` send `/picks`, `/music`,
+> `/multiview`, `/events`, `/login` (and their `.html` forms, which Cloudflare
+> forwards) to the current pages with a 302, carrying the query. Requests
+> with `?ecV2Embedded=1` fall through to the old file so the V2 rollback
+> shell still works. `/games` and `/favorites` are NOT redirected: the new
+> shell has no Games or Other Streams page and sends people to those files.
+>
 > ### Rolling back
 >
 > Restore `index.html` from `v2-shell.html` and revert `v3/index.html` to
