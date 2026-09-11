@@ -3206,6 +3206,9 @@ body:not(.spooky) .spookystrip{display:none}
 .spooky-layer .bat svg{display:block;animation:batflap .42s ease-in-out infinite alternate}
 @keyframes batflap{from{transform:scaleY(1)}to{transform:scaleY(.72)}}
 @keyframes batdrift{from{transform:translateX(-60px)}to{transform:translateX(100vw)}}
+/* Nothing moves over a stream: the bats sit out the watch page. The
+   cobwebs and fog are still, so they stay. */
+body.spooky.full[data-route="watch"] .spooky-layer .bat{display:none}
 .spooky-layer .fog{position:absolute;left:0;right:0;bottom:0;height:120px;background:linear-gradient(to top,rgba(124,58,237,.16),transparent)}
 
 /* The season strip at the top of the Sports page. */
