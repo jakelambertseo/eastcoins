@@ -107,7 +107,11 @@
   // assets/eastcoins-youtube.js; with that module missing this falls back to
   // the stricter policy, which is how the site behaved before.
   function setStreamSrc(iframe, url) {
-    iframe.referrerPolicy = window.EastcoinYouTube?.framePolicy(url) || "no-referrer";
+    // Checked as a function, not with ?. — a browser holding an older
+    // cached copy of the module has the object but not this method, and
+    // `obj?.missing(x)` still throws. That blanked the whole watch view.
+    const policy = window.EastcoinYouTube?.framePolicy;
+    iframe.referrerPolicy = (typeof policy === "function" ? policy(url) : "") || "no-referrer";
     iframe.src = url;
   }
 
