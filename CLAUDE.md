@@ -240,6 +240,14 @@
 > Every `!odds` reply ends with the Picks link and "GAMBA"; `withLink()`
 > trims the text before it so say()'s 400-byte cut never eats the link.
 >
+> **Pasted YouTube links play** — YouTube refuses framing from its normal
+> pages, so `youtubeEmbed()` in `v3-shell.js` (shared as
+> `window.ECEmbed.youtube`) rewrites `watch?v=`, `youtu.be/`, `/live/`,
+> `/shorts/` to `youtube.com/embed/ID` (keeping `t=` as `start=`), and
+> `/channel/UC…/live` to `embed/live_stream?channel=`. Embed URLs, `@handle`
+> pages and other sites pass through. Used by nav search, the watch view's
+> `?url=`, and MultiView's paste and restored `url:` panels.
+>
 > **Provider copies are folded** — streamed.st's "golf" source relists
 > games (MLB, fights) as bare entries with numeric ids (`1150`), no art,
 > dated two hours before the start, so they read LIVE early. The full

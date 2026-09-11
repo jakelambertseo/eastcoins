@@ -633,11 +633,47 @@
     try {
       const parsed = new URL(value);
       if (parsed.protocol !== "https:") return "";
-      return parsed.href;
+      return youtubeEmbed(parsed.href);
     } catch {
       return "";
     }
   }
+
+  /* YouTube refuses to be framed from its normal pages (watch, youtu.be,
+     /live/, /shorts/), but its /embed/ player is made for exactly that.
+     A pasted YouTube link becomes the embed URL; an embed URL, or any
+     other site, passes through untouched. A channel's /live page becomes
+     the channel's live_stream embed when the link carries the UC... id;
+     an @handle can't be resolved from the browser, so it passes through.
+     Shared as window.ECEmbed so the watch view and MultiView agree. */
+  function youtubeEmbed(href) {
+    let u;
+    try { u = new URL(href); } catch { return href; }
+    const host = u.hostname.toLowerCase().replace(/^(www|m|music)\./, "");
+    const parts = u.pathname.split("/").filter(Boolean);
+    let id = "";
+    if (host === "youtu.be") {
+      id = parts[0] || "";
+    } else if (host === "youtube.com") {
+      if (parts[0] === "embed") return href;
+      if (parts[0] === "watch") id = u.searchParams.get("v") || "";
+      else if (["live", "shorts", "v", "e"].includes(parts[0])) id = parts[1] || "";
+      else if (parts[0] === "channel" && /^UC[A-Za-z0-9_-]{22}$/.test(parts[1] || "") && parts[2] === "live") {
+        return `https://www.youtube.com/embed/live_stream?channel=${parts[1]}`;
+      }
+    } else {
+      return href;
+    }
+    if (!/^[A-Za-z0-9_-]{11}$/.test(id)) return href;
+    const out = new URL(`https://www.youtube.com/embed/${id}`);
+    // Keep a timestamp: t=90, t=90s or t=1m30s.
+    const t = String(u.searchParams.get("t") || u.searchParams.get("start") || "");
+    const hms = t.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s?)?$/);
+    const start = hms ? (Number(hms[1] || 0) * 3600 + Number(hms[2] || 0) * 60 + Number(hms[3] || 0)) : 0;
+    if (start) out.searchParams.set("start", String(start));
+    return out.href;
+  }
+  window.ECEmbed = Object.freeze({ youtube: youtubeEmbed });
 
   let searchTimer = 0;
 

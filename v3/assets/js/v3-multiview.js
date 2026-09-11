@@ -456,9 +456,10 @@
       if (event.key !== "Enter") return;
       if (!/^https:\/\/\S+$/i.test(local.search)) return;
       const index = local.picking;
+      const pasted = window.ECEmbed?.youtube?.(local.search) || local.search;
       local.panels[index] = {
-        match: { id: `url:${local.search}`, title: "Custom stream" },
-        streams: [{ embedUrl: local.search }],
+        match: { id: `url:${pasted}`, title: "Custom stream" },
+        streams: [{ embedUrl: pasted }],
         active: 0,
         loading: false,
         reason: ""
@@ -707,7 +708,7 @@
           const url = String(id).slice(4);
           local.panels[index] = {
             match: { id, title: "Custom stream" },
-            streams: [{ embedUrl: url }],
+            streams: [{ embedUrl: window.ECEmbed?.youtube?.(url) || url }],
             active: 0, loading: false, reason: ""
           };
           updatePanel(index);
