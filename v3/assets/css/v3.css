@@ -2267,6 +2267,10 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .pf-section{margin-top:24px}
 .pf-section h2{font-family:var(--display);font-weight:700;font-size:1.1rem;letter-spacing:-.02em;margin:0 0 10px;display:flex;align-items:baseline;gap:10px}
 .pf-section h2 small{color:var(--muted-2);font-size:.76rem;font-weight:600}
+/* The profile's tab panels use the same section heading: title, then
+   its small note with room between them. */
+.pf-panel > h2{font-family:var(--display);font-weight:700;font-size:1.1rem;letter-spacing:-.02em;margin:0 0 10px;display:flex;align-items:center;gap:10px}
+.pf-panel > h2 small{color:var(--muted-2);font-size:.76rem;font-weight:600}
 .pf-section h2{align-items:center}
 .pf-emote{width:26px;height:26px;object-fit:contain;flex:0 0 auto;margin-left:2px}
 .pf-pager{margin-top:8px;border:1px solid var(--line);border-radius:10px}
