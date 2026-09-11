@@ -462,6 +462,7 @@ export async function applyVerdict(env, db, market, result, source) {
     outcome,
     source,
     sport: market.sport,
+    league: market.league || null,
     away: market.away_name,
     home: market.home_name,
     winnerName: outcome === "VOID"
@@ -618,7 +619,7 @@ export async function onRequestPost(context) {
   // Anything past its start time and not yet finished is a candidate.
   const markets = await db
     .prepare(
-      `SELECT id, sport, away_name, home_name, starts_at, state
+      `SELECT id, sport, league, away_name, home_name, starts_at, state
          FROM markets
         WHERE state IN ('OPEN', 'LOCKED', 'SETTLING')
           AND datetime(starts_at) < datetime('now')

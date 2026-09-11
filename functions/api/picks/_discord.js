@@ -16,6 +16,7 @@
 import { slugFor } from "./_slug.js";
 import { LEAGUES } from "./_teams.js";
 import { isFight, versus } from "./_fights.js";
+import { cfbLogo, isCollegeLeague } from "./_cfb.js";
 
 const COLOR = { gold: 0xe8bf35, green: 0x4ddb8b, red: 0xff6b85, grey: 0x8a8580, blue: 0x8fc3d7 };
 const SITE = "https://eastcoin.vip";
@@ -32,7 +33,10 @@ const when = (iso) => {
 };
 
 /** A club's logo from its full name, for the thumbnail; null when unknown. */
-export function logoFor(sport, name) {
+export function logoFor(sport, name, league) {
+  // College teams have their own table: matching them against the NFL by
+  // nickname would give Boston College the Philadelphia Eagles' logo.
+  if (isCollegeLeague(league)) return cfbLogo(name);
   const key = String(sport || "").toLowerCase();
   const leagueKey = key.includes("football") ? "nfl" : key.includes("baseball") ? "mlb" : key.includes("basketball") ? "nba" : key.includes("hockey") ? "nhl" : null;
   const wanted = String(name || "").toLowerCase();
@@ -87,7 +91,7 @@ export function pickEmbed({ user, market, pick }) {
     description: `**${pick.team} ${line(pick.odds)}** vs ${opp}\n` +
       `Stake **${zc(pick.wager)}** · pays **${zc(pick.returnsIfWon)}** if it lands${pick.allIn ? " · 🎰 ALL IN" : ""}\n` +
       `${SITE}/g/${slug}`,
-    thumbnail: logoFor(market.sport, pick.team) ? { url: logoFor(market.sport, pick.team) } : undefined,
+    thumbnail: logoFor(market.sport, pick.team, market.league) ? { url: logoFor(market.sport, pick.team, market.league) } : undefined,
     footer: { text: `${market.away_name} ${versus(market.sport)} ${market.home_name}` },
     timestamp: new Date().toISOString()
   };
@@ -135,7 +139,7 @@ export function settledEmbed(entry) {
     title,
     url: `${SITE}/g/${entry.slug}`,
     description: `${summary}${lines.length ? "\n\n" + lines.join("\n") : "\n\nNobody had a pick on this one."}\n\n${SITE}/g/${entry.slug}`,
-    thumbnail: !voided && logoFor(entry.sport, entry.winnerName) ? { url: logoFor(entry.sport, entry.winnerName) } : undefined,
+    thumbnail: !voided && logoFor(entry.sport, entry.winnerName, entry.league) ? { url: logoFor(entry.sport, entry.winnerName, entry.league) } : undefined,
     footer: { text: entry.failed ? `⚠ ${entry.failed} payout(s) failed — being retried` : (entry.source === "admin-result" ? "Settled by an admin" : "Settled automatically from the final score") },
     timestamp: new Date().toISOString()
   };

@@ -240,6 +240,16 @@
 > Every `!odds` reply ends with the Picks link and "GAMBA"; `withLink()`
 > trims the text before it so say()'s 400-byte cut never eats the link.
 >
+> **College football logos** — `v3/assets/js/v3-cfb-teams.js` (browser,
+> `window.EC_CFB_TEAMS`) and `functions/api/picks/_cfb.js` (server) hold
+> the same name -> ESPN id table, generated from ESPN's college team list
+> (761 teams). `ECLogos.url(sport, "CFB", name)` resolves them to
+> `teamlogos/ncaa/500/<id>.png`, so Picks cards, game pages and profiles
+> show crests for a market with league `CFB`. Title-only college games on
+> the Sports page get a crest pair when both names are known schools
+> (`collegePair()` in `v3-events.js`). Discord's `logoFor()` takes the
+> league and uses the college table for CFB, never NFL nickname matching.
+>
 > **Daily recap** — `/api/admin/recap` (cron key or owner) posts one
 > Discord card with every person whose picks settled the previous
 > Central day: record and net, best to worst, plus day totals. The cron

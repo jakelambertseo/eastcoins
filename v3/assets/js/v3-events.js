@@ -122,7 +122,7 @@
 
   /* ---------------------------------------------------------- render */
 
-  function crest(team, nfl) {
+  function crest(team, nfl, cfb) {
     const API = window.EastcoinStreamedAPI;
     const el = document.createElement("span");
     el.className = "crest";
@@ -135,7 +135,7 @@
 
     // NFL clubs fall back to the league's own logo when the provider
     // has no badge for them.
-    const url = (nfl ? nflLogo(team) : "") || (team?.badge && API?.badgeUrl ? API.badgeUrl(team.badge) : "") || "";
+    const url = (nfl ? nflLogo(team) : "") || (cfb ? cfbLogo(team) : "") || (team?.badge && API?.badgeUrl ? API.badgeUrl(team.badge) : "") || "";
     if (url) {
       const img = document.createElement("img");
       img.alt = "";
@@ -167,6 +167,7 @@
     // NFL games get the full treatment: turf, the shield, real logos,
     // and the Picks line when a market is open.
     const nfl = isNfl(match);
+    const cfb = isCollege(match);
     if (nfl) {
       el.classList.add("nfl");
       el.dataset.nfl = "1";
@@ -242,7 +243,7 @@
     if (home?.name && away?.name) {
       // One row per team, each with its own crest, so the matchup reads
       // at a glance instead of as one long run-on string.
-      title.append(teamRow(home, nfl), teamRow(away, nfl));
+      title.append(teamRow(home, nfl, cfb), teamRow(away, nfl, cfb));
       title.classList.add("is-matchup");
     } else {
       title.textContent = match?.title || "Untitled event";
@@ -325,12 +326,39 @@
     return sportKey(match) === "american-football" && Sports.footballRank(match) === 0;
   }
 
+  /** College football: American football that isn't the NFL. */
+  function isCollege(match) {
+    return sportKey(match) === "american-football" && !isNfl(match);
+  }
+
+  /** ESPN's logo for a college team, when the name is one ESPN knows. */
+  function cfbLogo(team) {
+    return window.ECLogos ? window.ECLogos.url("american-football", "CFB", team?.name) : null;
+  }
+
+  /**
+   * College games often arrive as a title only ("Missouri Tigers at
+   * Kansas Jayhawks"). Both sides, when both are schools ESPN knows;
+   * otherwise null, so a random title never grows two initials.
+   */
+  function collegePair(title) {
+    const t = String(title || "");
+    const at = t.split(/\s+at\s+/i);
+    const vs = t.split(/\s+(?:vs\.?|v)\s+/i);
+    let home, away;
+    if (at.length === 2) { away = at[0]; home = at[1]; }
+    else if (vs.length === 2) { home = vs[0]; away = vs[1]; }
+    else return null;
+    const known = (n) => window.ECLogos?.collegeId?.(n);
+    return known(home) && known(away) ? { home: { name: home.trim() }, away: { name: away.trim() } } : null;
+  }
+
   /** The league's own logo for an NFL club, when the provider has none. */
   function nflLogo(team) {
     return window.ECLogos ? window.ECLogos.url("american-football", "NFL", team?.name) : null;
   }
 
-  function teamRow(team, nfl) {
+  function teamRow(team, nfl, cfb) {
     const row = document.createElement("span");
     row.className = "teamrow";
 
@@ -339,7 +367,7 @@
     const API = window.EastcoinStreamedAPI;
     // The provider hands every NFL club the same league badge, so for
     // NFL the club's own logo comes first and the badge is the fallback.
-    const url = (nfl ? nflLogo(team) : "") || (team?.badge && API?.badgeUrl ? API.badgeUrl(team.badge) : "") || "";
+    const url = (nfl ? nflLogo(team) : "") || (cfb ? cfbLogo(team) : "") || (team?.badge && API?.badgeUrl ? API.badgeUrl(team.badge) : "") || "";
     if (url) {
       const img = document.createElement("img");
       img.alt = "";
@@ -421,12 +449,20 @@
     const home = match?.teams?.home;
     const away = match?.teams?.away;
     const nfl = isNfl(match);
+    const cfb = isCollege(match);
     if (home || away) {
-      wrap.append(crest(home, nfl));
+      wrap.append(crest(home, nfl, cfb));
       const vs = document.createElement("span");
       vs.className = "vs";
       vs.textContent = "VS";
-      wrap.append(vs, crest(away, nfl));
+      wrap.append(vs, crest(away, nfl, cfb));
+    } else if (cfb && collegePair(match?.title)) {
+      const pair = collegePair(match.title);
+      wrap.append(crest(pair.home, false, true));
+      const vs = document.createElement("span");
+      vs.className = "vs";
+      vs.textContent = "VS";
+      wrap.append(vs, crest(pair.away, false, true));
     } else {
       const vs = document.createElement("span");
       vs.className = "vs";
