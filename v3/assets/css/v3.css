@@ -3159,3 +3159,84 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 @media (max-width:860px){.cas-lower{grid-template-columns:1fr}}
 .cas-rules ul{margin:0;padding-left:18px;color:var(--muted);font-size:.86rem;line-height:1.55}
 .cas-rules li{margin:4px 0}
+
+
+/* ============================================================
+   SPOOKY SEASON — October, switched on by v3-shell.js
+
+   body.spooky        the palette: pumpkin for gold, witch purple for
+                      the brand red, the near-black pulled toward violet
+   body.spooky.full   plus the dressing in .spooky-layer: cobwebs,
+                      bats and fog, a lit mark, a burning Live flag
+
+   The layer never covers the Twitch chat (its "obscured" check fires
+   on anything painted over the embed) and stays off pages with a
+   video on them. Green and red keep their meaning.
+   ============================================================ */
+body.spooky{
+  --gold-rgb:255,140,26;
+  --brand-rgb:124,58,237;
+  --burg-rgb:91,33,182;
+  /* derived tokens resolve where they are declared, so restate them */
+  --gold:rgb(var(--gold-rgb));
+  --gold-dim:rgba(var(--gold-rgb),.13);
+  --burg:rgb(var(--burg-rgb));
+  --ink:#0a0710;
+  --panel:#14101c;
+  --panel-2:#1b1626;
+  --panel-3:#221c2f;
+  --line-2:rgba(255,180,90,.2);
+}
+html:has(body.spooky){background:#0a0710}
+
+body.spooky.full .brand-mark{filter:drop-shadow(0 0 7px rgba(255,140,26,.75))}
+body.spooky.full .topnav{background:linear-gradient(180deg,rgba(124,58,237,.14),transparent 92%),rgba(10,7,16,.93)}
+body.spooky.full .ec-flag.live{box-shadow:0 0 14px rgba(255,140,26,.55)}
+
+.spooky-layer{position:fixed;top:var(--nav-h);left:0;right:0;bottom:0;z-index:1;pointer-events:none;overflow:hidden;display:none}
+body.spooky.full .spooky-layer{display:block}
+@media (min-width:981px){body.spooky.full.chat-open .spooky-layer{right:var(--chat-w)}}
+body[data-route="watch"] .spooky-layer,body[data-route="multiview"] .spooky-layer,body[data-route="screen"] .spooky-layer{display:none}
+.spooky-layer .web{position:absolute;top:0;width:190px;height:190px;opacity:.16;color:#d8d2c4}
+.spooky-layer .web.left{left:0}
+.spooky-layer .web.right{right:0;transform:scaleX(-1)}
+.spooky-layer .bat{position:absolute;left:0;color:#120e1a;opacity:.55;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7));animation:batdrift linear infinite}
+.spooky-layer .bat svg{display:block;animation:batflap .42s ease-in-out infinite alternate}
+@keyframes batflap{from{transform:scaleY(1)}to{transform:scaleY(.72)}}
+@keyframes batdrift{from{transform:translateX(-60px)}to{transform:translateX(100vw)}}
+.spooky-layer .fog{position:absolute;left:0;right:0;bottom:0;height:120px;background:linear-gradient(to top,rgba(124,58,237,.16),transparent)}
+
+/* The season strip at the top of the Sports page. */
+.spookystrip{
+  display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:9px 10px 9px 14px;
+  border:1px solid rgba(255,140,26,.35);border-radius:var(--radius);
+  background:linear-gradient(120deg,rgba(255,140,26,.14),rgba(124,58,237,.12) 70%),var(--panel);
+  font-size:.86rem;
+}
+.spookystrip b{font-family:var(--display);font-weight:800}
+.spookystrip span{color:var(--muted)}
+.spookystrip .pump{font-size:1.15rem;line-height:1}
+.spookystrip button{margin-left:auto;width:26px;height:26px;border:0;border-radius:7px;background:none;color:var(--muted-2);cursor:pointer;font-size:.9rem}
+.spookystrip button:hover{background:var(--panel-3);color:var(--text)}
+
+/* October emoji, placed around the site. */
+body.spooky .brand::after{content:"🎃";margin-left:5px;font-size:.9em}
+body.spooky #view .viewhead h1::after{content:" 🎃";font-size:.8em}
+body.spooky[data-route="picks"] #view .viewhead h1::after{content:" 👻"}
+body.spooky[data-route="casino"] #view .viewhead h1::after,
+body.spooky[data-route="flip"] #view .viewhead h1::after,
+body.spooky[data-route="wheel"] #view .viewhead h1::after,
+body.spooky[data-route="hilo"] #view .viewhead h1::after{content:" 🦇"}
+body.spooky[data-route="music"] #view h1::after{content:" 🕸️";font-size:.8em}
+body.spooky .wh-k::after{content:" 👻"}
+body.spooky .wh-empty::before{content:"👻 "}
+body.spooky .picksbanner-tag::before{content:"🎃 "}
+body.spooky .sportgroup-head h2::after{content:" 🦇";font-size:.85em}
+body.spooky .cas-games-head h2::after{content:" 🕯️"}
+body.spooky .lp-kicker::after{content:" 🧛"}
+body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
+
+@media (prefers-reduced-motion:reduce){
+  .spooky-layer .bat{display:none}
+  .spooky-layer .bat svg{animation:none}
+}

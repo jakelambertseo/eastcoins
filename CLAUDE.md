@@ -69,6 +69,15 @@
 > `unmount()` hands playback back to it instead of disconnecting. Remembered
 > in `localStorage` `ec_v3_music_dock`.
 >
+> **October theme** — `applySeason()` in `v3-shell.js` sets `body.spooky.full`
+> for October (Chicago time) and adds `.spooky-layer` (webs, bats, fog);
+> `SPOOKY SEASON` at the end of `v3.css` holds the palette (it restates the
+> `--*-rgb` accent tokens), the dressing and the emoji. The layer stops at
+> the chat rail (Twitch's obscured check) and hides on watch/multiview/screen
+> via `body[data-route]`. Preview with `?spooky=1`, force off `?spooky=0`,
+> back to the date with `?spooky=auto`. The Sports page shows a dismissible
+> `.spookystrip`.
+>
 > **Picks layout** (`v3-picks.js` `paint()`): title row with the season
 > rule and a `.leaderpill` (season leader → Leaderboard tab) → `.picks-me`
 > card (`.pf-quick.five`: wallet, profit, record, rank, open) or a
