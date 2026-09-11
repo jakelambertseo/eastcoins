@@ -250,6 +250,11 @@
 > (`collegePair()` in `v3-events.js`). Discord's `logoFor()` takes the
 > league and uses the college table for CFB, never NFL nickname matching.
 >
+> **`!record` shows the season rank** — "Ranked #20/25", from
+> `seasonRank()` in `bot/record.js`, which orders exactly like
+> `getLeaderboard()` in `bootstrap.js` (profit, wins, login). Change one,
+> change both. No rank is shown until a pick settles in the active season.
+>
 > **Daily recap** — `/api/admin/recap` (cron key or owner) posts one
 > Discord card with every person whose picks settled the previous
 > Central day: record and net, best to worst, plus day totals. The cron
