@@ -154,24 +154,34 @@
 
   /* ---------------------------------------------------------- the season
 
-     October in Central time puts the site in its Halloween clothes:
-     the palette plus the dressing (see SPOOKY SEASON in v3.css). It
-     arrives and leaves on its own. ?spooky=1 previews it on this
-     browser, ?spooky=0 keeps it off, ?spooky=auto goes back to the date. */
+     The Halloween clothes (SPOOKY SEASON in v3.css). Until someone
+     chooses, the date decides: on through October in Central time,
+     off the rest of the year. The Spooky theme switch in the ⋯ menu
+     records a choice on this browser. ?spooky=1 / 0 do the same from a
+     link; ?spooky=auto clears the choice and hands it back to the date. */
+
+  const SPOOKY_KEY = "ec_spooky";
+
+  function spookyChoice() {
+    try { return localStorage.getItem(SPOOKY_KEY) || "auto"; } catch { return "auto"; }
+  }
+
+  function spookyByDate() {
+    return new Date().toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "numeric" }) === "10";
+  }
 
   function applySeason() {
-    const KEY = "ec_spooky";
-    let pref = "auto";
-    try {
-      const asked = new URL(location.href).searchParams.get("spooky");
-      if (asked === "1" || asked === "0") localStorage.setItem(KEY, asked);
-      if (asked === "auto") localStorage.removeItem(KEY);
-      pref = localStorage.getItem(KEY) || "auto";
-    } catch { /* private mode: the date decides */ }
-    const month = new Date().toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "numeric" });
-    const on = pref === "1" || (pref === "auto" && month === "10");
+    const pref = spookyChoice();
+    const on = pref === "1" || (pref === "auto" && spookyByDate());
     document.body.classList.toggle("spooky", on);
     document.body.classList.toggle("full", on);
+
+    const sw = document.getElementById("spookyToggle");
+    if (sw) {
+      sw.setAttribute("aria-checked", String(on));
+      const knob = sw.querySelector(".switch");
+      if (knob) knob.dataset.on = on ? "1" : "0";
+    }
     if (!on || document.querySelector(".spooky-layer")) return;
 
     const layer = document.createElement("div");
@@ -189,7 +199,22 @@
       `<div class="fog"></div>`;
     document.body.append(layer);
   }
+
+  // A link can set the choice before the first paint.
+  try {
+    const asked = new URL(location.href).searchParams.get("spooky");
+    if (asked === "1" || asked === "0") localStorage.setItem(SPOOKY_KEY, asked);
+    if (asked === "auto") localStorage.removeItem(SPOOKY_KEY);
+  } catch { /* private mode: the date decides */ }
   applySeason();
+
+  document.getElementById("spookyToggle")?.addEventListener("click", () => {
+    const on = !document.body.classList.contains("spooky");
+    try { localStorage.setItem(SPOOKY_KEY, on ? "1" : "0"); } catch { /* this visit only */ }
+    applySeason();
+    // The Sports page's season strip is drawn with the page; redraw it.
+    if (state.route === "events") views.events?.onPrefs?.(prefs);
+  });
 
   function render() {
     const view = views[state.route];

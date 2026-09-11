@@ -73,9 +73,10 @@
 > for October (Chicago time) and adds `.spooky-layer` (webs, bats, fog);
 > `SPOOKY SEASON` at the end of `v3.css` holds the palette (it restates the
 > `--*-rgb` accent tokens), the dressing and the emoji. The layer stops at
-> the chat rail (Twitch's obscured check) and hides on watch/multiview/screen
-> via `body[data-route]`. Preview with `?spooky=1`, force off `?spooky=0`,
-> back to the date with `?spooky=auto`. The Sports page shows a dismissible
+> the chat rail (Twitch's obscured check) and runs on every page. The ⋯ menu
+> has a Spooky theme switch (`#spookyToggle`) that records a choice in
+> `localStorage` `ec_spooky`; with no choice the date decides. Links:
+> `?spooky=1`, `?spooky=0`, `?spooky=auto` (clears the choice). The Sports page shows a dismissible
 > `.spookystrip`.
 >
 > **Picks layout** (`v3-picks.js` `paint()`): title row with the season
