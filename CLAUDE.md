@@ -257,6 +257,17 @@
 > missing); the Sports page and the MultiView picker use it, and
 > `v3-watch.js` `findMatch()` opens the full game for an old copy's link.
 >
+> **College sides are named by school, never mascot** — college mascots
+> collide with the pros, so `!pick 10 tigers` must never be able to mean
+> both Missouri and Detroit. `schoolOf()` in `_cfb.js` (longest leading
+> part ESPN knows as a school, so "Duke Blue Devils" -> "duke") drives
+> `matchTeam()` in `bot/_bot.js`: a CFB side matches its school or full
+> name only, and a bare college mascot returns `{ needSchool }`, which
+> `!pick`/`!odds` answer with "say the school". `shortTeam(name, league)`
+> and Discord's `label()` print the school for CFB. Any market row a
+> name or logo is drawn from must therefore SELECT `league` — `_wager.js`
+> did not, which is why a Missouri pick showed the Detroit Tigers crest.
+>
 > **College football logos** — `v3/assets/js/v3-cfb-teams.js` (browser,
 > `window.EC_CFB_TEAMS`) and `functions/api/picks/_cfb.js` (server) hold
 > the same name -> ESPN id table, generated from ESPN's college team list

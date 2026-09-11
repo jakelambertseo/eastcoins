@@ -77,7 +77,10 @@ export async function placeWager(env, db, user, { marketId, selection, wager }) 
 
   const market = await db
     .prepare(
-      `SELECT id, state, starts_at, away_name, home_name,
+      // sport and league ride along for the Discord card: without the
+      // league, logoFor() nickname-matches "Missouri Tigers" across every
+      // league and lands on the Detroit Tigers.
+      `SELECT id, state, starts_at, away_name, home_name, sport, league,
               away_odds_locked, home_odds_locked
          FROM markets
         WHERE id = ?

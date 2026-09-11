@@ -27,3 +27,21 @@ export function cfbLogo(name) {
 export function isCollegeLeague(league) {
   return /^(cfb|ncaaf)$/i.test(String(league || "").trim());
 }
+
+/**
+ * The school half of a college name: "Missouri Tigers" -> "missouri".
+ *
+ * College mascots collide with the pros (Tigers, Cardinals, Bulldogs),
+ * so chat and Discord name a college side by its school. The longest
+ * leading part ESPN knows as a school wins, because the mascot is not
+ * always one word ("Duke Blue Devils"). A school ESPN doesn't list
+ * falls back to dropping the last word.
+ */
+export function schoolOf(name) {
+  const tokens = String(name || "").trim().split(/\s+/).filter(Boolean);
+  if (tokens.length < 2) return tokens.join(" ").toLowerCase();
+  for (let take = tokens.length - 1; take >= 1; take -= 1) {
+    if (cfbTeamId(tokens.slice(0, take).join(" "))) return tokens.slice(0, take).join(" ").toLowerCase();
+  }
+  return tokens.slice(0, -1).join(" ").toLowerCase();
+}

@@ -53,8 +53,8 @@ export async function onRequestGet(context) {
     if (nfl.length && nfl.length < 4) {
       const withTime = nfl.length <= 2;
       parts.push(`NFL: ` + nfl.map((m) =>
-        `${shortTeam(m.away_name)} ${formatLine(m.away_odds_locked)} ${versus(m.sport)} ` +
-        `${shortTeam(m.home_name)} ${formatLine(m.home_odds_locked)}${withTime ? timeOf(m.starts_at) : ""}`
+        `${shortTeam(m.away_name, m.league)} ${formatLine(m.away_odds_locked)} ${versus(m.sport)} ` +
+        `${shortTeam(m.home_name, m.league)} ${formatLine(m.home_odds_locked)}${withTime ? timeOf(m.starts_at) : ""}`
       ).join(" · "));
     } else if (nfl.length) {
       parts.push(`NFL: ${nfl.length} open`);
@@ -73,14 +73,19 @@ export async function onRequestGet(context) {
   if (!found) {
     return say(withLink(`No open game for "${team}". ${markets.length} open — try !odds`));
   }
+  if (found.needSchool) {
+    // College mascots collide with the pros, so name the school.
+    const school = shortTeam(found.needSchool[0], "CFB").toLowerCase();
+    return say(withLink(`"${team}" is a college mascot — say the school: !odds ${school}`));
+  }
   if (found.ambiguous) {
     return say(withLink(`"${team}" matches ${found.ambiguous.join(" and ")}. Be more specific.`));
   }
 
   const m = found.market;
   return say(withLink(
-    `${shortTeam(m.away_name)} ${formatLine(m.away_odds_locked)} ${versus(m.sport)} ` +
-    `${shortTeam(m.home_name)} ${formatLine(m.home_odds_locked)}${timeOf(m.starts_at)} · !pick <amount> <team>`
+    `${shortTeam(m.away_name, m.league)} ${formatLine(m.away_odds_locked)} ${versus(m.sport)} ` +
+    `${shortTeam(m.home_name, m.league)} ${formatLine(m.home_odds_locked)}${timeOf(m.starts_at)} · !pick <amount> <team>`
   ));
 }
 

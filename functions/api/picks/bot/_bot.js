@@ -28,6 +28,7 @@
    ============================================================ */
 
 import { safeEqual } from "../_lib.js";
+import { isCollegeLeague, schoolOf } from "../_cfb.js";
 
 /** Plain-text chat reply. Truncated to StreamElements' own limit. */
 /* The ZCoin emote, by its chat code. 7TV renders the word; everyone
@@ -244,6 +245,16 @@ function words(value) {
     .filter(Boolean);
 }
 
+/**
+ * The school half of a college name: "Missouri Tigers" -> "missouri".
+ *
+ * College mascots collide with the pros — Tigers, Bulldogs, Cardinals,
+ * Jayhawks aside — so a college side is named by its school in chat and
+ * never by its mascot alone. "!pick 10 tigers" must not be able to mean
+ * both Missouri and Detroit.
+ */
+export { schoolOf };
+
 /** Same rule settlement uses, so a name that picks also grades. */
 export function nickname(value) {
   const parts = words(value);
@@ -268,11 +279,16 @@ export function matchTeam(markets, query) {
   if (!want) return null;
 
   const hits = [];
+  const mascotOnly = [];
   for (const market of markets) {
     for (const side of ["away", "home"]) {
       const name = side === "away" ? market.away_name : market.home_name;
       const full = words(name).join(" ");
       const nick = nickname(name);
+      // A college side answers to its school, not its mascot.
+      const college = isCollegeLeague(market.league);
+      const short = college ? words(schoolOf(name)).join(" ") : nick;
+      const parts = college ? words(short) : words(name);
 
       // Prefix tiers need three characters. Without that floor, "a"
       // silently resolves to the Athletics and bets someone's ZCoins on
@@ -281,15 +297,18 @@ export function matchTeam(markets, query) {
 
       let score = 0;
       if (full === want) score = 4;
-      else if (nick === want) score = 3;
-      else if (loose && (full.startsWith(want) || nick.startsWith(want))) score = 2;
-      else if (loose && words(name).some((w) => w.startsWith(want))) score = 1;
+      else if (short === want) score = 3;
+      else if (loose && (full.startsWith(want) || short.startsWith(want))) score = 2;
+      else if (loose && parts.some((w) => w.startsWith(want))) score = 1;
 
       if (score) hits.push({ market, side, score, name });
+      // Remember a college mascot typed on its own, so the reply can
+      // name the school instead of a blank "no open game".
+      else if (college && (nick === want || (loose && nick.startsWith(want)))) mascotOnly.push(name);
     }
   }
 
-  if (!hits.length) return null;
+  if (!hits.length) return mascotOnly.length ? { needSchool: mascotOnly } : null;
 
   const best = Math.max(...hits.map((h) => h.score));
   const top = hits.filter((h) => h.score === best);
@@ -306,7 +325,8 @@ export function formatLine(value) {
   return line > 0 ? `+${line}` : String(line);
 }
 
-export function shortTeam(name) {
-  const nick = nickname(name);
-  return nick ? nick.replace(/\b\w/g, (c) => c.toUpperCase()) : String(name || "");
+/** The name chat uses: a club's nickname, but a college's school. */
+export function shortTeam(name, league) {
+  const short = isCollegeLeague(league) ? schoolOf(name) : nickname(name);
+  return short ? short.replace(/\b\w/g, (c) => c.toUpperCase()) : String(name || "");
 }

@@ -16,7 +16,7 @@
 import { slugFor } from "./_slug.js";
 import { LEAGUES } from "./_teams.js";
 import { isFight, versus } from "./_fights.js";
-import { cfbLogo, isCollegeLeague } from "./_cfb.js";
+import { cfbLogo, isCollegeLeague, schoolOf } from "./_cfb.js";
 
 const COLOR = { gold: 0xe8bf35, green: 0x4ddb8b, red: 0xff6b85, grey: 0x8a8580, blue: 0x8fc3d7 };
 const SITE = "https://eastcoin.vip";
@@ -26,6 +26,10 @@ const TIMEOUT_MS = 4000;
 const line = (v) => { const n = Number(v); return !Number.isFinite(n) || n === 0 ? "—" : n > 0 ? `+${n}` : `−${Math.abs(n)}`; };
 const zc = (n) => `${Number(n || 0).toLocaleString()} ZC`;
 const nick = (name) => String(name || "").trim().split(" ").pop();
+/* A club by its nickname, a college by its school: "Tigers" means the
+   Detroit ones, and Missouri's card should not read the same. */
+const title = (s) => s.replace(/\b\w/g, (c) => c.toUpperCase());
+const label = (name, league) => (isCollegeLeague(league) ? title(schoolOf(name)) : nick(name));
 const when = (iso) => {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
@@ -101,7 +105,7 @@ export function pickEmbed({ user, market, pick }) {
 export function openedEmbed(markets) {
   if (!markets?.length) return null;
   const rows = markets.map((m) =>
-    `**${nick(m.away_name)} ${line(m.away_odds_locked)}** ${versus(m.sport)} **${nick(m.home_name)} ${line(m.home_odds_locked)}** · closes ${when(m.starts_at)}`
+    `**${label(m.away_name, m.league)} ${line(m.away_odds_locked)}** ${versus(m.sport)} **${label(m.home_name, m.league)} ${line(m.home_odds_locked)}** · closes ${when(m.starts_at)}`
   );
   return {
     color: COLOR.blue,
@@ -128,7 +132,7 @@ export function settledEmbed(entry) {
   const lines = (entry.lines || []).map((p) => {
     const mark = p.status === "WON" ? "✅" : p.status === "LOST" ? "❌" : p.status === "REFUNDED" ? "↩️" : "⚠️";
     const net = p.status === "WON" ? `+${zc(p.profit)}` : p.status === "LOST" ? `−${zc(p.wager)}` : p.status === "REFUNDED" ? "refunded" : "payout pending";
-    return `${mark} **${p.name}** · ${nick(p.team)} ${line(p.odds)} · ${zc(p.wager)} → **${net}**`;
+    return `${mark} **${p.name}** · ${label(p.team, entry.league)} ${line(p.odds)} · ${zc(p.wager)} → **${net}**`;
   });
   const total = (entry.won || 0) + (entry.lost || 0) + (entry.refunded || 0);
   const summary = voided
