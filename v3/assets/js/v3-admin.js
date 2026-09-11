@@ -44,6 +44,17 @@
     return node;
   }
 
+  // "+102", "102", "-122" and a typographic "−122" all mean what they say.
+  // The line boxes are plain text on purpose: a number box silently empties
+  // "+102" in some browsers (Firefox), which sent a blank line and got the
+  // open refused with no visible reason.
+  function parseLine(raw) {
+    const s = String(raw || "").trim().replace(/[\u2212\u2013\u2014]/g, "-").replace(/\s+/g, "");
+    if (!/^[+-]?\d{3,5}$/.test(s)) return NaN;
+    const n = parseInt(s, 10);
+    return Math.abs(n) >= 100 ? n : NaN;
+  }
+
   // Fights have no scores feed: the result is entered here by hand.
   const isFightSport = (sport) => sport === "boxing" || sport === "mma";
   const vsOf = (m) => (isFightSport(m.sport) ? "vs" : "at");
@@ -181,8 +192,8 @@
     field("league", "League label", { placeholder: "MLB", value: "MLB" });
     field("away", "Away team", { placeholder: "Cincinnati Reds" });
     field("home", "Home team", { placeholder: "Los Angeles Dodgers" });
-    field("awayOdds", "Away line", { type: "number", placeholder: "150", step: "1" });
-    field("homeOdds", "Home line", { type: "number", placeholder: "-175", step: "1" });
+    field("awayOdds", "Away line", { placeholder: "+150" });
+    field("homeOdds", "Home line", { placeholder: "-175" });
     field("startsAt", "Starts at (local)", { type: "datetime-local" });
 
     // Picking a sport fills in its usual league label, unless one was typed.
@@ -195,13 +206,29 @@
       fields.home.placeholder = fight ? "Conor Benn" : "Los Angeles Dodgers";
     });
 
+    // Every action on this page redraws the whole page, which used to wipe
+    // the form, so a refused open looked like nothing happened. What was
+    // typed is kept until a market actually opens.
+    const DRAFT_KEYS = ["sport", "league", "away", "home", "awayOdds", "homeOdds", "startsAt"];
+    if (local.draft) {
+      for (const k of DRAFT_KEYS) if (local.draft[k] !== undefined) fields[k].value = local.draft[k];
+      const fightNow = isFightSport(fields.sport.value);
+      fields.away.placeholder = fightNow ? "Ryan Garcia" : "Cincinnati Reds";
+      fields.home.placeholder = fightNow ? "Conor Benn" : "Los Angeles Dodgers";
+    }
+    const saveDraft = () => { local.draft = Object.fromEntries(DRAFT_KEYS.map((k) => [k, fields[k].value])); };
+    for (const k of DRAFT_KEYS) {
+      fields[k].addEventListener("input", saveDraft);
+      fields[k].addEventListener("change", saveDraft);
+    }
+
     card.append(grid);
 
     // Preview — the whole reason this form exists rather than a console.
     const preview = el("div", "adm-preview");
     function refresh() {
-      const away = Number(fields.awayOdds.value);
-      const home = Number(fields.homeOdds.value);
+      const away = parseLine(fields.awayOdds.value);
+      const home = parseLine(fields.homeOdds.value);
       preview.replaceChildren();
 
       if (!Number.isFinite(away) || !Number.isFinite(home) || !away || !home) {
@@ -244,21 +271,46 @@
         league: fields.league.value.trim(),
         away: fields.away.value.trim(),
         home: fields.home.value.trim(),
-        awayOdds: Number(fields.awayOdds.value),
-        homeOdds: Number(fields.homeOdds.value),
+        awayOdds: parseLine(fields.awayOdds.value),
+        homeOdds: parseLine(fields.homeOdds.value),
         startsAt
       };
+      saveDraft();
+
+      // Say what is wrong here, rather than sending it and losing the answer.
+      const problems = [];
+      if (!body.away || !body.home) problems.push("Enter both names.");
+      if (!Number.isFinite(body.awayOdds) || !Number.isFinite(body.homeOdds)) {
+        problems.push("Lines must be American odds, like +102 or -122.");
+      }
+      if (!startsAt) problems.push("Pick a start time.");
+      else if (new Date(startsAt).getTime() <= Date.now()) problems.push("That start time has already passed.");
+      if (problems.length) {
+        local.formMsg = { tone: "bad", text: problems.join(" ") };
+        paint();
+        return;
+      }
 
       const result = await post_("/api/picks/admin/open-market", body);
-      local.message = result.ok
-        ? { tone: "good", text: `Market open: ${body.away} ${formatLine(body.awayOdds)} at ${body.home} ${formatLine(body.homeOdds)}.` }
-        : { tone: "bad", text: result.message || "Couldn't open that market." };
+      const joiner = isFightSport(body.sport) ? "vs" : "at";
+      if (result.ok) {
+        local.formMsg = { tone: "good", text: `Market open: ${body.away} ${formatLine(body.awayOdds)} ${joiner} ${body.home} ${formatLine(body.homeOdds)}. Betting is live now.` };
+        local.draft = null;
+      } else {
+        local.formMsg = { tone: "bad", text: result.message || "Couldn't open that market." };
+      }
       await load();
       paint();
     });
 
     actions.append(submit);
     card.append(actions);
+    // The answer to the last press, where the eye already is.
+    if (local.formMsg) {
+      const note = el("div", `adm-message ${local.formMsg.tone}`, local.formMsg.text);
+      note.style.marginTop = "10px";
+      card.append(note);
+    }
     return card;
   }
 
@@ -500,6 +552,7 @@ ${cost}`)) return;
       root = container;
       shell = api;
       local.message = null;
+      local.formMsg = null;
       paint();
       await load();
       if (container.isConnected) paint();
