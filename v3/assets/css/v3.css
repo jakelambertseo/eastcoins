@@ -3196,7 +3196,8 @@ body.spooky.full .ec-flag.live{box-shadow:0 0 14px rgba(255,140,26,.55)}
 .spooky-layer{position:fixed;top:var(--nav-h);left:0;right:0;bottom:0;z-index:1;pointer-events:none;overflow:hidden;display:none}
 body.spooky.full .spooky-layer{display:block}
 @media (min-width:981px){body.spooky.full.chat-open .spooky-layer{right:var(--chat-w)}}
-body[data-route="watch"] .spooky-layer,body[data-route="multiview"] .spooky-layer,body[data-route="screen"] .spooky-layer{display:none}
+/* as specific as the rule that shows it, so it wins on the video pages */
+body.spooky.full[data-route="watch"] .spooky-layer,body.spooky.full[data-route="multiview"] .spooky-layer,body.spooky.full[data-route="screen"] .spooky-layer{display:none}
 .spooky-layer .web{position:absolute;top:0;width:190px;height:190px;opacity:.16;color:#d8d2c4}
 .spooky-layer .web.left{left:0}
 .spooky-layer .web.right{right:0;transform:scaleX(-1)}
