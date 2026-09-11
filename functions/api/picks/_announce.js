@@ -10,6 +10,7 @@
 
 import { BADGE } from "./bot/_bot.js";
 import { isFight, versus } from "./_fights.js";
+import { whenCT } from "./_when.js";
 
 const SPORT_EMOJI = {
   "american-football": "\u{1F3C8}",
@@ -33,12 +34,9 @@ function formatLine(value) {
   return line > 0 ? `+${line}` : String(line);
 }
 
+/** "6:30 PM CT", "tomorrow at 6:30 PM CT", or "Sat, Sep 19 at 10:00 PM CT". */
 function timeOf(startsAt) {
-  const when = new Date(startsAt);
-  if (Number.isNaN(when.getTime())) return "";
-  return when.toLocaleTimeString("en-US", {
-    hour: "numeric", minute: "2-digit", timeZone: "America/Chicago"
-  }) + " CT";
+  return whenCT(startsAt);
 }
 
 /** "Betting is open" — posted by an admin pressing the button. */

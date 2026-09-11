@@ -234,6 +234,12 @@
 > time (up to 200 from `/api/picks/admin/markets`), and each action's
 > result is shown under its own market row.
 >
+> **Chat times say the day** — `_when.js` `whenCT()` is the one formatter
+> for chat: "6:30 PM CT" today, "tomorrow at 6:30 PM CT", else
+> "Sat, Sep 19 at 10:00 PM CT". Used by `_announce.js` and `bot/odds.js`.
+> Every `!odds` reply ends with the Picks link and "GAMBA"; `withLink()`
+> trims the text before it so say()'s 400-byte cut never eats the link.
+>
 > **Daily recap** — `/api/admin/recap` (cron key or owner) posts one
 > Discord card with every person whose picks settled the previous
 > Central day: record and net, best to worst, plus day totals. The cron
