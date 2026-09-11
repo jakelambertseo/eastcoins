@@ -224,6 +224,16 @@
 > 'admin-result'`, and posts the chat line and Discord card. Team games
 > are refused there. Fights read "A vs B" in chat, Discord and the game page.
 >
+> **Announcing one market** — each open, not-yet-started market on the
+> admin page has an Announce button: it previews via
+> `GET /api/picks/admin/announce?marketId=`, then POSTs `{ marketId }`,
+> which posts `composeOpen([market])` in chat and `openedEmbed([market])`
+> to Discord and notes `announce:<id>` in `ops_status` (shown as
+> "announced N min ago"). Without a marketId the endpoint still announces
+> every open market in chat only. The admin market list pages ten at a
+> time (up to 200 from `/api/picks/admin/markets`), and each action's
+> result is shown under its own market row.
+>
 > **Daily recap** — `/api/admin/recap` (cron key or owner) posts one
 > Discord card with every person whose picks settled the previous
 > Central day: record and net, best to worst, plus day totals. The cron

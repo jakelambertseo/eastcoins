@@ -14,6 +14,7 @@ import {
   json,
   fail
 } from "../_lib.js";
+import { readStatus } from "../_ops.js";
 
 export async function onRequestGet(context) {
   const db = context.env.PICKS_DB;
@@ -31,7 +32,7 @@ export async function onRequestGet(context) {
               settlement_detail, final_away_score, final_home_score
          FROM markets
         ORDER BY starts_at DESC
-        LIMIT 50`
+        LIMIT 200`
     )
     .all();
 
@@ -56,6 +57,13 @@ export async function onRequestGet(context) {
     .all();
 
   const stuckBy = new Map((stuck.results || []).map((r) => [r.market_id, Number(r.n)]));
+
+  // When each market was last announced from the admin page.
+  const ids = (markets.results || []).map((m) => m.id);
+  let announced = {};
+  if (ids.length) {
+    try { announced = await readStatus(db, ids.map((id) => `announce:${id}`)); } catch { announced = {}; }
+  }
   const picksBy = new Map();
   for (const pick of picks.results || []) {
     if (!picksBy.has(pick.market_id)) picksBy.set(pick.market_id, []);
@@ -95,6 +103,7 @@ export async function onRequestGet(context) {
           : `${market.final_away_score}–${market.final_home_score}`,
       totals: { away: side("away"), home: side("home"), picks: list.length },
       needsAttention: stuckBy.get(market.id) || 0,
+      lastAnnounced: announced[`announce:${market.id}`]?.value?.at || null,
       bettors: list.map((p) => ({
         login: p.twitch_login,
         selection: p.selection,

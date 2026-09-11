@@ -55,6 +55,16 @@
     return Math.abs(n) >= 100 ? n : NaN;
   }
 
+  /** "12 min ago", for when a market was last announced. */
+  function ago(iso) {
+    const ms = Date.now() - new Date(iso).getTime();
+    if (!Number.isFinite(ms) || ms < 60000) return "just now";
+    const m = Math.round(ms / 60000);
+    if (m < 60) return `${m} min ago`;
+    const h = Math.round(m / 60);
+    return h < 24 ? `${h} hr ago` : `${Math.round(h / 24)} day${Math.round(h / 24) === 1 ? "" : "s"} ago`;
+  }
+
   // Fights have no scores feed: the result is entered here by hand.
   const isFightSport = (sport) => sport === "boxing" || sport === "mma";
   const vsOf = (m) => (isFightSport(m.sport) ? "vs" : "at");
@@ -368,6 +378,7 @@
 
   function marketsCard() {
     const card = el("div", "adm-card");
+    card.id = "admMarkets";
 
     const head = el("div", "adm-cardhead");
     head.append(el("h2", "adm-h", "Markets"));
@@ -393,18 +404,30 @@
               `Examined ${result.examined} market(s); none had a clear final yet.` +
               (result.locked ? ` Closed betting on ${result.locked}.` : "") };
       }
+      if (local.message) local.message.at = "markets";
       await load();
       paint();
     });
     head.append(settle);
-    card.append(head);
+    if (local.message?.at === "markets") {
+      card.append(head);
+      card.append(el("div", `adm-message ${local.message.tone}`, local.message.text));
+      head.dataset.placed = "1";
+    }
+    if (!head.dataset.placed) card.append(head);
 
     if (!local.markets.length) {
       card.append(el("p", "adm-note", "No markets yet. Open one above."));
       return card;
     }
 
-    for (const market of local.markets) {
+    // Ten a page, like every other list on the site.
+    const PER = 10;
+    const pages = Math.max(1, Math.ceil(local.markets.length / PER));
+    local.marketPage = Math.min(pages, Math.max(1, local.marketPage || 1));
+    const shown = local.markets.slice((local.marketPage - 1) * PER, local.marketPage * PER);
+
+    for (const market of shown) {
       const row = el("div", `adm-market ${market.state.toLowerCase()}`);
 
       const top = el("div", "adm-market-top");
@@ -435,13 +458,51 @@ ${cost}`)) return;
             ? { tone: "good", text: `Closed ${market.away} at ${market.home}` +
                 (result.refunded ? ` — ${result.refunded} pick(s) refunded.` : ".") }
             : { tone: "bad", text: result.message || "Couldn't close that market." };
+          local.message.id = market.id;
           await load();
           paint();
         });
         top.append(close);
       }
 
+      // Announce one market in chat and on Discord: for the one-off
+      // events (CFB, fights) the site opens by hand and never announces.
+      if (market.state === "OPEN" && new Date(market.startsAt).getTime() > Date.now()) {
+        const say = el("button", "iconbtn", "Announce");
+        say.type = "button";
+        say.title = "Post this market in Twitch chat and on Discord";
+        say.disabled = local.busy;
+        say.addEventListener("click", async () => {
+          let preview = null;
+          try {
+            preview = await fetch(`/api/picks/admin/announce?marketId=${encodeURIComponent(market.id)}`, { credentials: "include" })
+              .then((r) => r.json());
+          } catch { preview = null; }
+          if (!preview?.ok) {
+            local.message = { tone: "bad", text: preview?.message || "Couldn't prepare the announcement.", id: market.id };
+            paint();
+            return;
+          }
+          const where = preview.discord ? "Twitch chat and on Discord" : "Twitch chat";
+          const again = market.lastAnnounced ? `\n\nThis market was already announced ${ago(market.lastAnnounced)}.` : "";
+          if (!window.confirm(`Post this in ${where}?\n\n${preview.message}${again}`)) return;
+          const result = await post_("/api/picks/admin/announce", { marketId: market.id });
+          local.message = result.ok
+            ? { tone: result.partial ? "note" : "good", text: result.summary || "Announced." }
+            : { tone: "bad", text: result.message || "Couldn't announce that market." };
+          local.message.id = market.id;
+          await load();
+          paint();
+        });
+        const firstButton = top.querySelector("button");
+        if (firstButton) top.insertBefore(say, firstButton);
+        else top.append(say);
+      }
+
       row.append(top);
+      if (local.message?.id === market.id) {
+        row.append(el("div", `adm-message ${local.message.tone}`, local.message.text));
+      }
 
       // Fights: once the first bell has gone, the result is entered
       // here. Payouts use the same code as automatic settlement.
@@ -469,6 +530,7 @@ ${cost}`)) return;
               ? { tone: "good", text: `Settled ${market.away} vs ${market.home}: ${label}` +
                   (result.won ? `. ${result.won} winner(s), ${result.paid} ZC paid.` : result.refunded ? `. ${result.refunded} pick(s) refunded.` : ".") }
               : { tone: "bad", text: result.message || "Couldn't settle that fight." };
+            local.message.id = market.id;
             await load();
             paint();
           });
@@ -489,7 +551,8 @@ ${cost}`)) return;
         `${Number.isNaN(when.getTime()) ? market.startsAt : when.toLocaleString()} · ` +
         `${market.totals.picks} pick${market.totals.picks === 1 ? "" : "s"}` +
         (market.finalScore ? ` · final ${market.finalScore}` : "") +
-        (market.winner ? ` · ${market.winner} won` : "");
+        (market.winner ? ` · ${market.winner} won` : "") +
+        (market.lastAnnounced ? ` · announced ${ago(market.lastAnnounced)}` : "");
       row.append(meta);
 
       if (market.totals.picks) {
@@ -513,6 +576,25 @@ ${cost}`)) return;
       }
 
       card.append(row);
+    }
+
+    if (pages > 1) {
+      const pager = el("div", "mpager pf-pager");
+      pager.style.marginTop = "12px";
+      const prev = el("button", "mpager-btn", "‹");
+      const next = el("button", "mpager-btn", "›");
+      prev.type = next.type = "button";
+      prev.disabled = local.marketPage <= 1;
+      next.disabled = local.marketPage >= pages;
+      const go = (n) => {
+        local.marketPage = n;
+        paint();
+        document.getElementById("admMarkets")?.scrollIntoView({ block: "start" });
+      };
+      prev.addEventListener("click", () => go(local.marketPage - 1));
+      next.addEventListener("click", () => go(local.marketPage + 1));
+      pager.append(prev, el("span", "mpager-at", `Page ${local.marketPage} of ${pages} · ${local.markets.length} markets`), next);
+      card.append(pager);
     }
     return card;
   }
@@ -538,7 +620,7 @@ ${cost}`)) return;
       return;
     }
 
-    if (local.message) {
+    if (local.message && !local.message.id && !local.message.at) {
       const strip = el("div", `adm-message ${local.message.tone}`);
       strip.textContent = local.message.text;
       root.append(strip);

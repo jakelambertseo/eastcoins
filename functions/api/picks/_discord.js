@@ -97,13 +97,16 @@ export function pickEmbed({ user, market, pick }) {
 export function openedEmbed(markets) {
   if (!markets?.length) return null;
   const rows = markets.map((m) =>
-    `**${nick(m.away_name)} ${line(m.away_odds_locked)}** at **${nick(m.home_name)} ${line(m.home_odds_locked)}** · closes ${when(m.starts_at)}`
+    `**${nick(m.away_name)} ${line(m.away_odds_locked)}** ${versus(m.sport)} **${nick(m.home_name)} ${line(m.home_odds_locked)}** · closes ${when(m.starts_at)}`
   );
   return {
     color: COLOR.blue,
-    title: markets.length === 1 ? "Picks are open" : `Picks are open on ${markets.length} games`,
-    url: `${SITE}/?view=picks`,
-    description: rows.join("\n") + `\n\n\`!pick <amount> <team>\` in chat, or ${SITE}/?view=picks`,
+    // One market gets its own page; a slate gets the Picks page.
+    title: markets.length === 1
+      ? `Picks are open: ${markets[0].away_name} ${versus(markets[0].sport)} ${markets[0].home_name}`
+      : `Picks are open on ${markets.length} games`,
+    url: markets.length === 1 ? `${SITE}/g/${slugFor(markets[0])}` : `${SITE}/?view=picks`,
+    description: rows.join("\n") + `\n\n\`!pick <amount> <team>\` in chat, or ${markets.length === 1 ? `${SITE}/g/${slugFor(markets[0])}` : `${SITE}/?view=picks`}`,
     footer: { text: "Lines are locked at open — everyone gets the same price." },
     timestamp: new Date().toISOString()
   };
