@@ -539,7 +539,7 @@
     if (document.body.classList.contains("spooky") && !stripGone) {
       const strip = document.createElement("div");
       strip.className = "spookystrip";
-      strip.innerHTML = '<span class="pump">🎃</span><b>Spooky season</b><span>EastCoin is dressed up for October. Same site, darker corners.</span>';
+      strip.innerHTML = '<span class="pump">🎃</span><b>Spooky season</b><span>EastCoin is dressed up for Halloween. Same site, darker corners.</span>';
       const close = document.createElement("button");
       close.type = "button";
       close.setAttribute("aria-label", "Hide");
