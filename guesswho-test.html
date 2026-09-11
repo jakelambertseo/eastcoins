@@ -259,7 +259,6 @@
       const img = el("img");
       img.src = logo(p.l, p.t);
       img.alt = "";
-      img.loading = "lazy";
       front.append(img, el("span", "nm", p.n), el("span", "ps", p.p + " · " + p.t));
       tile.append(front, el("div", "face back", "EC"));
       tile.addEventListener("click", () => onTile(i, tile));
