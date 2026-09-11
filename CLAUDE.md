@@ -69,6 +69,17 @@
 > `unmount()` hands playback back to it instead of disconnecting. Remembered
 > in `localStorage` `ec_v3_music_dock`.
 >
+> **October theme** — `applySeason()` in `v3-shell.js` sets `body.spooky.full`
+> for October (Chicago time) and adds `.spooky-layer` (webs, bats, fog);
+> `SPOOKY SEASON` at the end of `v3.css` holds the palette (it restates the
+> `--*-rgb` accent tokens), the dressing and the emoji. The layer stops at
+> the chat rail (Twitch's obscured check) and runs on every page, except that
+> the bats (its only animation) are hidden on the watch route. The ⋯ menu
+> has a Spooky theme switch (`#spookyToggle`) that records a choice in
+> `localStorage` `ec_spooky`; with no choice the date decides. Links:
+> `?spooky=1`, `?spooky=0`, `?spooky=auto` (clears the choice). The Sports page shows a dismissible
+> `.spookystrip`.
+>
 > **Picks layout** (`v3-picks.js` `paint()`): title row with the season
 > rule and a `.leaderpill` (season leader → Leaderboard tab) → `.picks-me`
 > card (`.pf-quick.five`: wallet, profit, record, rank, open) or a
@@ -142,6 +153,14 @@
 > `v3-multiview.js` decodes MultiView share tokens made by the V2 shell.
 > Do not remove either without a reason — every link ever pasted in chat
 > is one of those shapes.
+>
+> **Old standalone pages redirect** — `functions/_legacy.js` plus
+> `functions/{picks,music,multiview,events,login}.js` send `/picks`, `/music`,
+> `/multiview`, `/events`, `/login` (and their `.html` forms, which Cloudflare
+> forwards) to the current pages with a 302, carrying the query. Requests
+> with `?ecV2Embedded=1` fall through to the old file so the V2 rollback
+> shell still works. `/games` and `/favorites` are NOT redirected: the new
+> shell has no Games or Other Streams page and sends people to those files.
 >
 > ### Rolling back
 >

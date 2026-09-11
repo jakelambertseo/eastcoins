@@ -532,6 +532,23 @@
   function paint() {
     root.replaceChildren();
 
+    // October: one dismissible line saying the site is dressed up.
+    const STRIP_KEY = "ec_spooky_strip_" + new Date().getFullYear();
+    let stripGone = false;
+    try { stripGone = localStorage.getItem(STRIP_KEY) === "1"; } catch { /* shown */ }
+    if (document.body.classList.contains("spooky") && !stripGone) {
+      const strip = document.createElement("div");
+      strip.className = "spookystrip";
+      strip.innerHTML = '<span class="pump">🎃</span><b>Spooky season</b><span>EastCoin is dressed up for Halloween. Same site, darker corners.</span>';
+      const close = document.createElement("button");
+      close.type = "button";
+      close.setAttribute("aria-label", "Hide");
+      close.textContent = "✕";
+      close.addEventListener("click", () => { try { localStorage.setItem(STRIP_KEY, "1"); } catch { /* fine */ } strip.remove(); });
+      strip.append(close);
+      root.append(strip);
+    }
+
     const head = document.createElement("div");
     head.className = "viewhead";
     const titleWrap = document.createElement("div");

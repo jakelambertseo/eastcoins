@@ -21,15 +21,20 @@
   --muted-2:#7d746a;
 
   /* accents */
-  --gold:#e8bf35;
-  --gold-dim:rgba(232,191,53,.13);
+  /* Accents carry an -rgb companion so a seasonal theme can restate
+     one number and every border, glow and tint follows. */
+  --gold-rgb:232,191,53;
+  --gold:rgb(var(--gold-rgb));
+  --gold-dim:rgba(var(--gold-rgb),.13);
   --green:#4ddb8b;
   --green-dim:rgba(77,219,139,.11);
   --red:#ff6b85;
   --red-dim:rgba(255,107,133,.1);
   --purple:#9146ff;        /* Twitch's own brand purple */
   --purple-hover:#a970ff;
-  --burg:#8e1231;
+  --burg-rgb:142,18,49;
+  --burg:rgb(var(--burg-rgb));
+  --brand-rgb:165,18,47;
 
   --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
   --body:"Figtree","Segoe UI",system-ui,sans-serif;
@@ -79,8 +84,8 @@ img{max-width:100%}
   display:flex;align-items:center;gap:18px;
   padding:0 16px;
   border-bottom:1px solid var(--line);
-  background:rgba(12,10,9,.92);
-  backdrop-filter:blur(10px);
+  background:rgba(12,10,9,.97);
+  /* no backdrop-filter: a sticky blur re-renders on every scroll frame */
 }
 .brand{
   display:flex;align-items:center;gap:9px;flex:0 0 auto;
@@ -102,19 +107,19 @@ img{max-width:100%}
 .nav-ico{width:15px;height:15px;flex:0 0 auto;opacity:.85}
 .nav-link[aria-current="page"] .nav-ico,
 .nav-link:hover .nav-ico{opacity:1}
-.nav-link:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(232,191,53,.2)}
+.nav-link:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(var(--gold-rgb),.2)}
 .nav-link[aria-current="page"]{
-  border-color:rgba(232,191,53,.3);color:var(--gold);background:var(--gold-dim);
+  border-color:rgba(var(--gold-rgb),.3);color:var(--gold);background:var(--gold-dim);
 }
 /* Picks is the thing to try: a HOT tag, otherwise styled like its neighbours. */
 .nav-tag{
   margin-left:2px;padding:2px 6px;border-radius:6px;
   background:linear-gradient(120deg,#ff5a3c,#d31d4d);color:#fff;
   font-size:.56rem;font-weight:900;letter-spacing:.12em;line-height:1;
-  box-shadow:0 0 12px rgba(255,90,60,.45);animation:navhot 2.4s ease-in-out infinite;
+  box-shadow:0 0 12px rgba(255,90,60,.45);
+  /* No glow animation: animating box-shadow repaints the sticky nav every
+     frame, on every page, and hover on the rest of the page pays for it. */
 }
-@keyframes navhot{0%,100%{box-shadow:0 0 8px rgba(255,90,60,.35)}50%{box-shadow:0 0 16px rgba(255,90,60,.7)}}
-@media (prefers-reduced-motion:reduce){.nav-tag{animation:none}}
 .nav-badge{
   display:inline-flex;align-items:center;justify-content:center;
   min-width:19px;height:19px;padding:0 6px;border-radius:999px;
@@ -148,8 +153,8 @@ img{max-width:100%}
   color:var(--muted);font-size:.9rem;
   transition:color .14s ease,border-color .14s ease;
 }
-.iconbtn:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(232,191,53,.3)}
-.iconbtn.on{border-color:rgba(232,191,53,.3);color:var(--gold);background:var(--gold-dim)}
+.iconbtn:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(var(--gold-rgb),.3)}
+.iconbtn.on{border-color:rgba(var(--gold-rgb),.3);color:var(--gold);background:var(--gold-dim)}
 .iconbtn.dots{font-size:1.25rem;line-height:1;padding-bottom:6px;color:var(--text)}
 .menu-item.on{color:var(--text)}
 .wallet-chip{
@@ -265,7 +270,7 @@ body.chat-hidden .chatrail{display:none}
 }
 .chip:hover{color:var(--text);border-color:var(--line-2)}
 .chip[aria-pressed="true"]{
-  border-color:rgba(232,191,53,.32);color:var(--gold);background:var(--gold-dim);
+  border-color:rgba(var(--gold-rgb),.32);color:var(--gold);background:var(--gold-dim);
 }
 .chip .dot{
   display:inline-block;width:6px;height:6px;border-radius:50%;
@@ -301,9 +306,10 @@ body.chat-hidden .chatrail{display:none}
   border:1px solid var(--line);border-radius:var(--radius);
   background:var(--panel);overflow:hidden;
   transition:border-color .16s ease,transform .16s ease;
+  content-visibility:auto;contain-intrinsic-size:auto 320px;
 }
 .eventcard:hover{border-color:var(--line-2);transform:translateY(-2px)}
-.eventcard:focus-within{border-color:rgba(232,191,53,.4)}
+.eventcard:focus-within{border-color:rgba(var(--gold-rgb),.4)}
 @media (prefers-reduced-motion:reduce){
   .eventcard,.eventcard:hover{transition:none;transform:none}
 }
@@ -343,8 +349,8 @@ body.chat-hidden .chatrail{display:none}
 
 .ec-watching{
   position:absolute;left:9px;bottom:9px;z-index:2;padding:3px 8px;border-radius:999px;
-  background:rgba(8,6,6,.72);border:1px solid rgba(255,255,255,.14);color:#fff;
-  font-size:.66rem;font-weight:800;letter-spacing:.02em;backdrop-filter:blur(4px)
+  background:rgba(8,6,6,.86);border:1px solid rgba(255,255,255,.14);color:#fff;
+  font-size:.66rem;font-weight:800;letter-spacing:.02em
 }
 .gp-score.live i{color:var(--green);font-style:normal;font-size:.62rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
 .av-row.score{border-left-color:var(--green)}
@@ -353,7 +359,9 @@ body.chat-hidden .chatrail{display:none}
   display:inline-flex;align-items:center;gap:6px;
   padding:4px 9px;border-radius:999px;
   font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
-  background:rgba(12,10,9,.82);backdrop-filter:blur(4px);
+  background:rgba(12,10,9,.9);
+  /* Dozens of these sit on the grid; a backdrop blur on each is a
+     separate GPU layer that re-renders whenever anything moves. */
 }
 .ec-flag.live{border:1px solid rgba(255,107,133,.5);color:#ffb3c0}
 .ec-flag.live::before{
@@ -362,10 +370,10 @@ body.chat-hidden .chatrail{display:none}
 }
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 @media (prefers-reduced-motion:reduce){.ec-flag.live::before{animation:none}}
-.ec-flag.soon{border:1px solid rgba(232,191,53,.55);color:#1a1408;background:var(--gold)}
+.ec-flag.soon{border:1px solid rgba(var(--gold-rgb),.55);color:#1a1408;background:var(--gold)}
 /* Upcoming is the quiet end of the same gold, so "soon" still reads as
    the more urgent of the two rather than looking identical. */
-.ec-flag.upcoming{border:1px solid rgba(232,191,53,.36);color:var(--gold)}
+.ec-flag.upcoming{border:1px solid rgba(var(--gold-rgb),.36);color:var(--gold)}
 .ec-flag.final{border:1px solid var(--line-2);color:var(--muted)}
 
 .ec-body{padding:11px 13px 0;flex:1;min-width:0}
@@ -389,9 +397,9 @@ body.chat-hidden .chatrail{display:none}
 }
 .btn:hover{color:var(--text);border-color:var(--line-2)}
 .btn.primary{
-  border-color:rgba(232,191,53,.32);color:var(--gold);background:var(--gold-dim);
+  border-color:rgba(var(--gold-rgb),.32);color:var(--gold);background:var(--gold-dim);
 }
-.btn.primary:hover{background:rgba(232,191,53,.2);color:var(--gold)}
+.btn.primary:hover{background:rgba(var(--gold-rgb),.2);color:var(--gold)}
 .btn.ghost{flex:0 0 auto;width:36px;padding:0}
 
 /* ============================================================
@@ -521,7 +529,7 @@ body.chat-hidden .chatrail{display:none}
 :root{
   --red-brand:#a5122f;
   --red-brand-2:#d31d4d;
-  --red-glow:rgba(165,18,47,.42);
+  --red-glow:rgba(var(--brand-rgb),.42);
 }
 
 /* brand ---------------------------------------------------- */
@@ -529,10 +537,10 @@ body.chat-hidden .chatrail{display:none}
   background:none;
   padding:0;
   overflow:hidden;
-  box-shadow:0 0 0 1px rgba(232,191,53,.25), 0 4px 14px var(--red-glow);
+  box-shadow:0 0 0 1px rgba(var(--gold-rgb),.25), 0 4px 14px var(--red-glow);
 }
 .brand-mark img{width:100%;height:100%;object-fit:contain;display:block}
-.brand:hover .brand-mark{box-shadow:0 0 0 1px rgba(232,191,53,.45), 0 6px 18px var(--red-glow)}
+.brand:hover .brand-mark{box-shadow:0 0 0 1px rgba(var(--gold-rgb),.45), 0 6px 18px var(--red-glow)}
 
 /* a low crimson wash under the nav ties it to the logo */
 /* The nav is the same near-black as the mockups: no burgundy wash,
@@ -550,7 +558,7 @@ body.chat-hidden .chatrail{display:none}
   color:#ffd0da;
 }
 .sportgroup-head .rule{
-  background:linear-gradient(90deg,rgba(165,18,47,.34),var(--line) 40%);
+  background:linear-gradient(90deg,rgba(var(--brand-rgb),.34),var(--line) 40%);
 }
 
 /* settings menu -------------------------------------------- */
@@ -582,7 +590,7 @@ body.chat-hidden .chatrail{display:none}
   content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;
   background:var(--muted-2);transition:transform .16s ease,background .16s ease;
 }
-.switch[data-on="1"]{background:var(--gold-dim);border-color:rgba(232,191,53,.42)}
+.switch[data-on="1"]{background:var(--gold-dim);border-color:rgba(var(--gold-rgb),.42)}
 .switch[data-on="1"]::after{transform:translateX(14px);background:var(--gold)}
 .menu-note{margin:8px 9px 4px;color:var(--muted-2);font-size:.7rem}
 @media (prefers-reduced-motion:reduce){
@@ -598,10 +606,10 @@ a.wallet-chip:hover{border-color:rgba(77,219,139,.45);filter:brightness(1.06)}
 .picksbanner{
   display:flex;align-items:center;gap:12px;flex-wrap:wrap;
   margin-bottom:18px;padding:12px 16px;border-radius:12px;
-  border:1px solid rgba(165,18,47,.42);
+  border:1px solid rgba(var(--brand-rgb),.42);
   background:
-    linear-gradient(135deg,rgba(165,18,47,.28),transparent 62%),
-    linear-gradient(200deg,rgba(232,191,53,.12),transparent 55%),
+    linear-gradient(135deg,rgba(var(--brand-rgb),.28),transparent 62%),
+    linear-gradient(200deg,rgba(var(--gold-rgb),.12),transparent 55%),
     var(--panel);
   color:var(--text);font-size:.9rem;
   transition:border-color .16s ease,transform .16s ease;
@@ -738,7 +746,7 @@ a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
   transition:color .14s ease,background .14s ease,border-color .14s ease;
 }
 .viewtab:hover{color:var(--gold);background:var(--gold-dim)}
-.viewtab.active{border-color:rgba(232,191,53,.3);color:var(--gold);background:var(--gold-dim)}
+.viewtab.active{border-color:rgba(var(--gold-rgb),.3);color:var(--gold);background:var(--gold-dim)}
 
 .zc-amount{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .zc-amount .zcoin-mark{width:15px;height:15px}
@@ -799,7 +807,7 @@ a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
 .ticket-pick{
   display:flex;align-items:center;justify-content:space-between;gap:12px;
   padding:13px 15px;border-radius:11px;
-  border:1px solid rgba(232,191,53,.28);background:var(--gold-dim);margin-bottom:14px;
+  border:1px solid rgba(var(--gold-rgb),.28);background:var(--gold-dim);margin-bottom:14px;
 }
 .ticket-team{font-family:var(--display);font-weight:700;font-size:1.06rem}
 .ticket-line{font-family:var(--display);font-weight:800;font-size:1.14rem;color:var(--gold)}
@@ -837,17 +845,17 @@ a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
 .demo-strip{
   display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;
   padding:10px 14px;border-radius:11px;
-  border:1px solid rgba(232,191,53,.28);
+  border:1px solid rgba(var(--gold-rgb),.28);
   background:linear-gradient(140deg,var(--gold-dim),transparent 68%),var(--panel);
   color:var(--muted);font-size:.82rem;
 }
 .demo-strip b{
-  flex:0 0 auto;padding:3px 9px;border-radius:999px;border:1px solid rgba(232,191,53,.34);
+  flex:0 0 auto;padding:3px 9px;border-radius:999px;border:1px solid rgba(var(--gold-rgb),.34);
   color:var(--gold);font-size:.6rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;
 }
 .ticketgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:11px}
 .pickticket{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);overflow:hidden}
-.pickticket.pending{border-color:rgba(232,191,53,.24)}
+.pickticket.pending{border-color:rgba(var(--gold-rgb),.24)}
 .pickticket.won{border-color:rgba(77,219,139,.26)}
 .pickticket.lost{border-color:rgba(255,107,133,.22)}
 .pickticket-head{
@@ -864,7 +872,7 @@ a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
 .pickticket-team small{display:block;margin-top:1px;color:var(--muted-2);font-size:.76rem}
 .pickticket-status{
   flex:0 0 auto;padding:4px 9px;border-radius:999px;
-  border:1px solid rgba(232,191,53,.28);background:var(--gold-dim);color:var(--gold);
+  border:1px solid rgba(var(--gold-rgb),.28);background:var(--gold-dim);color:var(--gold);
   font-size:.6rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
 }
 .pickticket.won .pickticket-status{border-color:rgba(77,219,139,.34);color:var(--green);background:var(--green-dim)}
@@ -927,7 +935,7 @@ a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
 .tstatus{
   display:inline-flex;align-items:center;justify-content:center;min-width:66px;
   padding:5px 9px;border-radius:999px;
-  border:1px solid rgba(232,191,53,.28);background:var(--gold-dim);color:var(--gold);
+  border:1px solid rgba(var(--gold-rgb),.28);background:var(--gold-dim);color:var(--gold);
   font-size:.62rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
 }
 .ledgerrow.won .tstatus{border-color:rgba(77,219,139,.34);color:var(--green);background:var(--green-dim)}
@@ -947,7 +955,7 @@ a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
   border:1px solid var(--line-2);border-radius:11px;background:var(--panel-2);
   color:var(--muted);font-size:1rem;font-weight:700;
 }
-.historyrow.wager .historyicon{border-color:rgba(232,191,53,.28);color:var(--gold);background:var(--gold-dim)}
+.historyrow.wager .historyicon{border-color:rgba(var(--gold-rgb),.28);color:var(--gold);background:var(--gold-dim)}
 .historyrow.payout .historyicon{border-color:rgba(77,219,139,.3);color:var(--green);background:var(--green-dim)}
 .historyrow.refund .historyicon{border-color:rgba(143,195,215,.28);color:#8fc3d7;background:rgba(143,195,215,.07)}
 .historycopy{min-width:0}
@@ -1082,7 +1090,7 @@ body.mv-on .mv-head{flex:0 0 auto;margin-bottom:10px}
   font-family:var(--body);font-size:.68rem;font-weight:800;cursor:pointer;
   transition:color .14s ease,border-color .14s ease,background .14s ease;
 }
-.mv-select select:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(232,191,53,.3)}
+.mv-select select:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(var(--gold-rgb),.3)}
 .mv-select::after{
   content:"▾";position:absolute;right:8px;top:50%;transform:translateY(-50%);
   pointer-events:none;color:var(--muted-2);font-size:.6rem;
@@ -1096,7 +1104,7 @@ body.mv-bare .mv-head{display:none}
 .mv-restore{
   position:fixed;right:calc(var(--chat-w) + 18px);bottom:18px;z-index:40;
   display:none;height:32px;padding:0 14px;border-radius:999px;
-  border:1px solid rgba(232,191,53,.34);background:rgba(12,10,9,.9);
+  border:1px solid rgba(var(--gold-rgb),.34);background:rgba(12,10,9,.9);
   color:var(--gold);font-size:.76rem;font-weight:800;backdrop-filter:blur(6px);
 }
 body.mv-bare .mv-restore{display:inline-flex;align-items:center}
@@ -1113,7 +1121,7 @@ body.mv-bare.chat-hidden .mv-restore{right:18px}
   font-size:.94rem;outline:none;
 }
 .picker-search::placeholder{color:var(--muted-2)}
-.picker-search:focus{border-color:rgba(232,191,53,.45);background:var(--panel-3)}
+.picker-search:focus{border-color:rgba(var(--gold-rgb),.45);background:var(--panel-3)}
 
 .picker-group{
   position:sticky;top:0;z-index:2;
@@ -1127,7 +1135,7 @@ body.mv-bare.chat-hidden .mv-restore{right:18px}
   padding:9px 12px;border-radius:9px;border:1px solid transparent;text-align:left;
   transition:background .14s ease,border-color .14s ease;
 }
-.picker-row:hover{background:var(--gold-dim);border-color:rgba(232,191,53,.24)}
+.picker-row:hover{background:var(--gold-dim);border-color:rgba(var(--gold-rgb),.24)}
 .picker-teams{min-width:0;display:flex;flex-direction:column;gap:4px}
 .picker-team{display:flex;align-items:center;gap:9px;min-width:0}
 .picker-team > span:last-child{
@@ -1173,8 +1181,8 @@ body.mv-bare.chat-hidden .mv-restore{right:18px}
   color:var(--muted-2);font-family:var(--body);font-size:.68rem;font-weight:800;
   transition:color .14s ease,background .14s ease,border-color .14s ease;
 }
-.mv-chip:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(232,191,53,.3)}
-.mv-chip[aria-pressed="true"]{border-color:rgba(232,191,53,.34);color:var(--gold);background:var(--gold-dim)}
+.mv-chip:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(var(--gold-rgb),.3)}
+.mv-chip[aria-pressed="true"]{border-color:rgba(var(--gold-rgb),.34);color:var(--gold);background:var(--gold-dim)}
 .mv-empty-num{
   font-family:var(--display);font-weight:800;font-size:1.6rem;color:var(--muted-2);opacity:.5;
 }
@@ -1189,7 +1197,7 @@ body.nav-hidden .topnav{display:none}
 .navpeek{
   position:fixed;top:12px;left:12px;z-index:80;
   display:none;align-items:center;gap:8px;height:36px;padding:0 13px;
-  border:1px solid rgba(232,191,53,.34);border-radius:10px;
+  border:1px solid rgba(var(--gold-rgb),.34);border-radius:10px;
   background:rgba(12,10,9,.92);backdrop-filter:blur(6px);
   color:var(--gold);font-size:.82rem;font-weight:800;
   box-shadow:0 6px 18px rgba(0,0,0,.5);
@@ -1255,11 +1263,11 @@ body.nav-hidden .navpeek{display:inline-flex}
   border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);
   font-size:.9rem;outline:none;
 }
-.adm-field input:focus,.adm-field select:focus{border-color:rgba(232,191,53,.45)}
+.adm-field input:focus,.adm-field select:focus{border-color:rgba(var(--gold-rgb),.45)}
 
 .adm-preview{
   margin-top:14px;padding:12px 14px;border-radius:11px;
-  border:1px solid rgba(232,191,53,.24);background:var(--gold-dim);
+  border:1px solid rgba(var(--gold-rgb),.24);background:var(--gold-dim);
 }
 .adm-preview-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:4px 0}
 .adm-preview-row strong{flex:1;min-width:120px;font-size:.92rem}
@@ -1295,7 +1303,7 @@ body.nav-hidden .navpeek{display:inline-flex}
 /* the exact text that would go to chat, shown before it is sent */
 .adm-say{
   margin:0 0 12px;padding:12px 14px;border-radius:10px;
-  border:1px solid rgba(232,191,53,.28);background:var(--gold-dim);
+  border:1px solid rgba(var(--gold-rgb),.28);background:var(--gold-dim);
   color:var(--text);font-family:var(--display);font-size:.95rem;
   line-height:1.5;white-space:pre-wrap;word-break:break-word;
 }
@@ -1331,13 +1339,28 @@ body.watch-on .view{
   font-family:var(--display);font-weight:700;font-size:.8rem;
   white-space:nowrap;transition:background .14s ease,border-color .14s ease;
 }
-.watchbtn:hover{background:var(--gold-dim);border-color:rgba(232,191,53,.4);color:var(--gold)}
+.watchbtn:hover{background:var(--gold-dim);border-color:rgba(var(--gold-rgb),.4);color:var(--gold)}
+/* The server switch is the fix for a dead stream, so it does not look
+   like the neutral buttons beside it: gold, and it pulses for a few
+   seconds when a stream loads. Disabled (one server) it goes quiet. */
 .watchsel{
   flex:0 0 auto;height:30px;padding:0 8px;border-radius:8px;
-  border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);
-  font-family:var(--display);font-weight:700;font-size:.8rem;
+  border:1px solid rgba(var(--gold-rgb),.5);background:var(--gold-dim);color:var(--gold);
+  font-family:var(--display);font-weight:800;font-size:.8rem;cursor:pointer;
+  transition:background .14s ease,border-color .14s ease;
 }
-.watchsel:disabled{opacity:.55}
+.watchsel:hover{background:rgba(var(--gold-rgb),.22);border-color:var(--gold)}
+.watchsel option{background:var(--panel-2);color:var(--text)}
+.watchsel:disabled{
+  opacity:.55;cursor:default;
+  border-color:var(--line-2);background:var(--panel-2);color:var(--text);
+}
+.watchsel.nudge{animation:selnudge 1.15s ease-in-out 4}
+@keyframes selnudge{
+  0%,100%{box-shadow:0 0 0 0 rgba(var(--gold-rgb),0)}
+  50%{box-shadow:0 0 0 5px rgba(var(--gold-rgb),.3)}
+}
+@media (prefers-reduced-motion:reduce){.watchsel.nudge{animation:none}}
 
 /* Folded state. Absolute so the bar row collapses entirely and the
    video claims the height, rather than leaving a gap where it was. */
@@ -1348,7 +1371,7 @@ body.watch-on .view{
   color:var(--muted);font-size:.9rem;line-height:1;
   backdrop-filter:blur(4px);
 }
-.watchpeek:hover{color:var(--gold);border-color:rgba(232,191,53,.4)}
+.watchpeek:hover{color:var(--gold);border-color:rgba(var(--gold-rgb),.4)}
 
 /* The frame drops its 16/9 ratio here and simply fills what is left;
    a letterboxed provider is better than dead space below the video. */
@@ -1377,7 +1400,7 @@ body.watch-on .playerframe{
   color:var(--muted);font-size:.9rem;line-height:1;
   backdrop-filter:blur(4px);
 }
-.gameday-close:hover{color:var(--gold);border-color:rgba(232,191,53,.4)}
+.gameday-close:hover{color:var(--gold);border-color:rgba(var(--gold-rgb),.4)}
 .watchgd:hover{color:var(--gold)}
 
 /* ============================================================
@@ -1487,13 +1510,13 @@ body.watch-on .playerframe{
 /* Results sit directly under the input, framed in gold so they read as
    something waiting on a decision rather than more page furniture. */
 .mresults{
-  border:1px solid rgba(232,191,53,.32);border-radius:var(--radius);
+  border:1px solid rgba(var(--gold-rgb),.32);border-radius:var(--radius);
   background:var(--panel);overflow:hidden;
 }
 .mresults-head{
   display:flex;align-items:center;justify-content:space-between;gap:8px;
   padding:8px 11px;background:var(--gold-dim);
-  border-bottom:1px solid rgba(232,191,53,.22);
+  border-bottom:1px solid rgba(var(--gold-rgb),.22);
 }
 .mresults-clear{
   width:22px;height:22px;border-radius:6px;flex:0 0 auto;
@@ -1547,9 +1570,9 @@ body.watch-on .playerframe{
 }
 
 .mactions{display:flex;gap:7px;flex-wrap:wrap}
-.mforce{border-color:rgba(232,191,53,.4);color:var(--gold)}
+.mforce{border-color:rgba(var(--gold-rgb),.4);color:var(--gold)}
 /* Your own vote, so pressing it is not a guess about whether it landed. */
-.mvoted{background:var(--gold-dim);border-color:rgba(232,191,53,.45);color:var(--gold)}
+.mvoted{background:var(--gold-dim);border-color:rgba(var(--gold-rgb),.45);color:var(--gold)}
 
 .mwho{
   padding:11px 13px;border:1px solid var(--line);
@@ -1570,7 +1593,7 @@ body.watch-on .playerframe{
   border:1px solid var(--line-2);background:var(--panel-2);color:var(--muted-2);
   font-family:var(--display);font-weight:700;font-size:.76rem;
 }
-.mtab.active{background:var(--gold-dim);border-color:rgba(232,191,53,.35);color:var(--gold)}
+.mtab.active{background:var(--gold-dim);border-color:rgba(var(--gold-rgb),.35);color:var(--gold)}
 .mq-again{height:26px;padding:0 9px;font-size:.72rem;flex:0 0 auto}
 
 /* The stage glow. Not a visualiser — a YouTube frame is cross-origin and
@@ -1645,7 +1668,7 @@ body.is-rasputin .mprog-fill{background:linear-gradient(90deg,#ff3d81,#ffd23f,#4
   border:1px solid var(--line-2);background:var(--panel);
   transition:background .14s ease,border-color .14s ease,transform .14s ease;
 }
-.reactbtn:hover{background:var(--gold-dim);border-color:rgba(232,191,53,.38)}
+.reactbtn:hover{background:var(--gold-dim);border-color:rgba(var(--gold-rgb),.38)}
 .reactbtn-emoji{font-size:1.02rem;line-height:1}
 .reactbtn-n{
   font-family:var(--display);font-weight:800;font-size:.8rem;
@@ -1676,7 +1699,7 @@ body.is-rasputin .mprog-fill{background:linear-gradient(90deg,#ff3d81,#ffd23f,#4
 /* The count ticking up gets a little jump of its own. */
 .reactbtn-n.bump{animation:reactbump .4s cubic-bezier(.34,1.56,.64,1)}
 @keyframes reactbump{0%{transform:scale(1)}45%{transform:scale(1.5)}100%{transform:scale(1)}}
-.reactbtn.has-count{border-color:rgba(232,191,53,.3)}
+.reactbtn.has-count{border-color:rgba(var(--gold-rgb),.3)}
 /* The big emoji rising over the video. */
 .react-float{
   position:absolute;bottom:14%;z-index:4;pointer-events:none;line-height:1;
@@ -1719,11 +1742,11 @@ body.is-rasputin .mprog-fill{background:linear-gradient(90deg,#ff3d81,#ffd23f,#4
   flex:0 0 auto;padding:3px 8px;border-radius:999px;border:1px solid var(--line-2);
   font-family:var(--body);font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
 }
-.elo-tier.rank1{border-color:rgba(232,191,53,.7);background:linear-gradient(120deg,rgba(232,191,53,.28),rgba(232,191,53,.08));color:var(--gold);box-shadow:0 0 14px rgba(232,191,53,.25)}
-.elo-tier.gold{border-color:rgba(232,191,53,.45);background:var(--gold-dim);color:var(--gold)}
+.elo-tier.rank1{border-color:rgba(var(--gold-rgb),.7);background:linear-gradient(120deg,rgba(var(--gold-rgb),.28),rgba(var(--gold-rgb),.08));color:var(--gold);box-shadow:0 0 14px rgba(var(--gold-rgb),.25)}
+.elo-tier.gold{border-color:rgba(var(--gold-rgb),.45);background:var(--gold-dim);color:var(--gold)}
 .elo-tier.silver{border-color:rgba(216,210,196,.45);background:rgba(216,210,196,.1);color:#d8d2c4}
 .elo-tier.bronze{border-color:rgba(205,127,50,.5);background:rgba(205,127,50,.12);color:#d49a5a}
-.elo-row.tier-rank1{border-color:rgba(232,191,53,.3)}
+.elo-row.tier-rank1{border-color:rgba(var(--gold-rgb),.3)}
 /* Inside a stat card the label rule (.summarycard span) would turn these
    into block labels; restate them as the inline pill and figure they are. */
 .summarycard strong .pf-elo{display:inline-flex;align-items:center;gap:9px;font-size:inherit;font-weight:inherit;letter-spacing:inherit;text-transform:none;color:inherit;margin:0}
@@ -1754,7 +1777,7 @@ body.is-rasputin .mprog-fill{background:linear-gradient(90deg,#ff3d81,#ffd23f,#4
   border:1px solid var(--line-2);background:var(--panel);color:var(--text);
   font-size:.82rem;line-height:1;
 }
-.mpager-btn:hover:not(:disabled){background:var(--gold-dim);color:var(--gold);border-color:rgba(232,191,53,.4)}
+.mpager-btn:hover:not(:disabled){background:var(--gold-dim);color:var(--gold);border-color:rgba(var(--gold-rgb),.4)}
 .mpager-btn:disabled{opacity:.35}
 .mpager-at{
   color:var(--muted-2);font-size:.72rem;font-weight:700;
@@ -1775,8 +1798,8 @@ body.is-rasputin .mprog-fill{background:linear-gradient(90deg,#ff3d81,#ffd23f,#4
 }
 .gp-pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
 .gp-pill.settled{border-color:rgba(77,219,139,.35);background:var(--green-dim);color:var(--green)}
-.gp-pill.open{border-color:rgba(232,191,53,.35);background:var(--gold-dim);color:var(--gold)}
-.gp-pill.locked{border-color:rgba(232,191,53,.2);color:var(--gold)}
+.gp-pill.open{border-color:rgba(var(--gold-rgb),.35);background:var(--gold-dim);color:var(--gold)}
+.gp-pill.locked{border-color:rgba(var(--gold-rgb),.2);color:var(--gold)}
 .gp-board{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);overflow:hidden;margin:6px 0 12px}
 .gp-teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:22px 18px}
 .gp-team{display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center}
@@ -1867,18 +1890,18 @@ body.is-rasputin .mprog-fill{background:linear-gradient(90deg,#ff3d81,#ffd23f,#4
   position:relative;overflow:hidden;
   display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:16px;
   margin:0;padding:16px 20px;border-radius:12px;
-  border:1px solid rgba(232,191,53,.22);
-  background:linear-gradient(120deg,rgba(142,18,49,.28),transparent 55%),var(--panel);
+  border:1px solid rgba(var(--gold-rgb),.22);
+  background:linear-gradient(120deg,rgba(var(--burg-rgb),.28),transparent 55%),var(--panel);
   box-shadow:0 0 0 1px rgba(255,255,255,.03) inset;
 }
 .leaderwidget.empty{grid-template-columns:auto minmax(0,1fr);border-color:var(--line-2)}
 .lw-shine{display:none}
-.lw-crown{font-size:2rem;line-height:1;filter:drop-shadow(0 0 8px rgba(232,191,53,.55));animation:lwbob 2.2s ease-in-out infinite}
+.lw-crown{font-size:2rem;line-height:1;filter:drop-shadow(0 0 8px rgba(var(--gold-rgb),.55));animation:lwbob 2.2s ease-in-out infinite}
 .lw-avatar{
   width:48px;height:48px;border-radius:50%;display:grid;place-items:center;
   background:linear-gradient(150deg,#8e1231,#4a0a1c);color:var(--gold);
   font-family:var(--display);font-weight:800;font-size:1rem;
-  box-shadow:0 0 0 2px rgba(232,191,53,.55);
+  box-shadow:0 0 0 2px rgba(var(--gold-rgb),.55);
 }
 .lw-copy{min-width:0}
 .lw-kicker{display:block;color:var(--gold);font-size:.66rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
@@ -2008,7 +2031,7 @@ body.is-rasputin .mtitle-text{
 .ticket-team{display:inline-flex;align-items:center;gap:9px}
 .ticket-crest{
   width:30px;height:30px;flex:0 0 auto;border-radius:8px;display:grid;place-items:center;
-  border:1px solid rgba(232,191,53,.3);background:var(--panel);
+  border:1px solid rgba(var(--gold-rgb),.3);background:var(--panel);
   color:var(--muted);font-family:var(--display);font-weight:700;font-size:.58rem;
 }
 .tpick{display:flex;align-items:center;gap:10px;min-width:0}
@@ -2038,7 +2061,7 @@ section.upcoming{margin-top:26px}   /* not .ec-flag.upcoming on the event cards 
   padding:3px 8px;border-radius:999px;font-size:.6rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;
 }
 .market-tag.open{border:1px solid rgba(77,219,139,.4);background:var(--green-dim);color:var(--green)}
-.market-tag.soon{border:1px solid rgba(232,191,53,.45);background:var(--gold-dim);color:var(--gold)}
+.market-tag.soon{border:1px solid rgba(var(--gold-rgb),.45);background:var(--gold-dim);color:var(--gold)}
 .market-head .market-tag{margin-right:auto;margin-left:2px}
 .market.upcoming .market-league{color:var(--muted)}
 .side.preview{cursor:default}
@@ -2062,7 +2085,7 @@ section.upcoming{margin-top:26px}   /* not .ec-flag.upcoming on the event cards 
   width:100%;height:40px;padding:0 14px 0 38px;border-radius:999px;border:1px solid var(--line-2);
   background:var(--panel-2);color:var(--text);font:inherit;outline:none;
 }
-.sc-search input:focus{border-color:rgba(232,191,53,.5)}
+.sc-search input:focus{border-color:rgba(var(--gold-rgb),.5)}
 .sc-section{margin-top:22px}
 .sc-section h2{font-family:var(--display);font-weight:700;font-size:1.1rem;letter-spacing:-.02em;margin:0 0 10px;display:flex;align-items:baseline;gap:10px}
 .sc-section h2 small{color:var(--muted-2);font-size:.78rem;font-weight:600}
@@ -2079,7 +2102,7 @@ section.upcoming{margin-top:26px}   /* not .ec-flag.upcoming on the event cards 
   font:inherit;font-weight:700;font-size:.82rem;color:var(--text);display:inline-flex;align-items:center;gap:7px;cursor:pointer;
 }
 .sc-btn:hover{background:var(--panel-3)}
-.sc-btn.gold{border-color:rgba(232,191,53,.4);background:var(--gold-dim);color:var(--gold)}
+.sc-btn.gold{border-color:rgba(var(--gold-rgb),.4);background:var(--gold-dim);color:var(--gold)}
 .sc-select{
   height:34px;padding:0 28px 0 12px;border-radius:9px;border:1px solid var(--line-2);background:var(--panel);
   color:var(--text);font:inherit;font-weight:700;font-size:.82rem;cursor:pointer;
@@ -2087,7 +2110,7 @@ section.upcoming{margin-top:26px}   /* not .ec-flag.upcoming on the event cards 
 .sc-eps{display:flex;gap:8px;overflow-x:auto;padding:10px 14px 14px;border-top:1px solid var(--line);scrollbar-width:thin}
 .sc-ep{flex:0 0 190px;border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden;text-align:left;padding:0;cursor:pointer;color:inherit;font:inherit}
 .sc-ep:hover{border-color:var(--line-2)}
-.sc-ep.on{border-color:rgba(232,191,53,.55);box-shadow:0 0 0 1px rgba(232,191,53,.3) inset}
+.sc-ep.on{border-color:rgba(var(--gold-rgb),.55);box-shadow:0 0 0 1px rgba(var(--gold-rgb),.3) inset}
 .sc-still{aspect-ratio:16/9;background:var(--panel-3);display:block;width:100%;object-fit:cover}
 .sc-ep-meta{padding:8px 10px}
 .sc-ep-meta b{display:block;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -2114,7 +2137,7 @@ section.upcoming{margin-top:26px}   /* not .ec-flag.upcoming on the event cards 
   color:var(--muted);font:inherit;font-weight:700;font-size:.8rem;cursor:pointer;
 }
 .sc-chip:hover{color:var(--text)}
-.sc-chip.on{border-color:rgba(232,191,53,.45);background:var(--gold-dim);color:var(--gold)}
+.sc-chip.on{border-color:rgba(var(--gold-rgb),.45);background:var(--gold-dim);color:var(--gold)}
 .sc-selects{display:flex;gap:8px;margin-left:auto}
 
 .sc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
@@ -2123,7 +2146,7 @@ section.upcoming{margin-top:26px}   /* not .ec-flag.upcoming on the event cards 
   text-align:left;padding:0;cursor:pointer;color:inherit;font:inherit;
   transition:transform .14s ease,border-color .14s ease;
 }
-.sc-card:hover{transform:translateY(-2px);border-color:rgba(232,191,53,.4)}
+.sc-card:hover{transform:translateY(-2px);border-color:rgba(var(--gold-rgb),.4)}
 .sc-poster{aspect-ratio:2/3;width:100%;display:block;object-fit:cover;background:var(--panel-3)}
 .sc-ph{aspect-ratio:2/3;display:grid;place-items:center;background:linear-gradient(160deg,#2a1119,#160c0f);color:var(--muted-2);font-family:var(--display);font-weight:800;font-size:1.5rem}
 .sc-cap{padding:9px 11px 11px}
@@ -2153,13 +2176,13 @@ body.screen-on .sc-stage{display:flex;flex-direction:column;flex:1;min-height:0;
 body.screen-on .sc-frame{aspect-ratio:auto;flex:1;min-height:0}
 body.screen-on .sc-bar{padding:8px 10px}
 body.screen-on .sc-eps{flex:0 0 auto}
-.sc-btn.on{border-color:rgba(232,191,53,.45);background:var(--gold-dim);color:var(--gold)}
+.sc-btn.on{border-color:rgba(var(--gold-rgb),.45);background:var(--gold-dim);color:var(--gold)}
 .sc-peek{
   position:absolute;bottom:8px;right:8px;z-index:3;width:30px;height:26px;border-radius:8px;
   border:1px solid var(--line-2);background:rgba(12,10,9,.78);color:var(--muted);font:inherit;font-size:.9rem;line-height:1;
   backdrop-filter:blur(4px);cursor:pointer;
 }
-.sc-peek:hover{color:var(--gold);border-color:rgba(232,191,53,.4)}
+.sc-peek:hover{color:var(--gold);border-color:rgba(var(--gold-rgb),.4)}
 .sc-back{color:var(--muted);white-space:nowrap}
 .sc-back:hover{color:var(--text)}
 @media (max-width:760px){.sc-back{order:-1;flex:1 1 100%;justify-content:flex-start;border:0;background:none;padding:0;height:auto}}
@@ -2178,7 +2201,7 @@ body.screen-on .sc-eps{flex:0 0 auto}
    page's row and highlight styles so a pick looks the same wherever
    it is shown. */
 a.ulink{color:inherit;text-decoration:none;border-bottom:1px solid transparent;transition:border-color .12s ease,color .12s ease}
-a.ulink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
+a.ulink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 /* The nav name is a pill button, not inline text: keep its own colours. */
 .login-btn.ulink,.login-btn.ulink:hover{color:#fff;border-bottom-color:transparent}
 /* Chips are pills too. */
@@ -2210,7 +2233,7 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .pf-panel .pf-section + *{margin-top:16px}
 .pf-glance{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:16px 0 0}
 .pf-glance-card{text-align:left;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px 16px;color:inherit;font:inherit;cursor:pointer;transition:border-color .14s ease}
-.pf-glance-card:hover{border-color:rgba(232,191,53,.4)}
+.pf-glance-card:hover{border-color:rgba(var(--gold-rgb),.4)}
 .pf-glance-k{display:block;font-size:.66rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted-2);margin-bottom:6px}
 .pf-glance-card b{display:block;font-family:var(--display);font-weight:800;font-size:1.25rem;letter-spacing:-.02em}
 .pf-glance-card small{display:block;color:var(--muted);font-size:.8rem;margin-top:2px}
@@ -2220,7 +2243,7 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .pf-avatar{
   position:relative;overflow:hidden;width:72px;height:72px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;
   background:linear-gradient(150deg,#8e1231,#4a0a1c);color:var(--gold);font-family:var(--display);font-weight:800;font-size:1.3rem;
-  box-shadow:0 0 0 3px rgba(232,191,53,.45);
+  box-shadow:0 0 0 3px rgba(var(--gold-rgb),.45);
 }
 .pf-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .2s ease}
 .pf-avatar.has-logo{color:transparent}.pf-avatar.has-logo img{opacity:1}
@@ -2232,12 +2255,12 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
   padding:3px 9px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-2);
   color:var(--muted);font-family:var(--body);font-size:.66rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
 }
-.pf-badge.crown{border-color:rgba(232,191,53,.45);background:var(--gold-dim);color:var(--gold)}
+.pf-badge.crown{border-color:rgba(var(--gold-rgb),.45);background:var(--gold-dim);color:var(--gold)}
 .pf-badge.hot{border-color:rgba(255,107,133,.35);background:var(--red-dim);color:var(--red)}
 .pf-badge.cold{border-color:rgba(143,195,215,.3);background:rgba(143,195,215,.08);color:#8fc3d7}
 .pf-badge.dj{border-color:rgba(165,107,255,.4);background:rgba(165,107,255,.12);color:#c9b3ff}
 .pf-badge.music,.pf-badge.regular,.pf-badge.pleaser{border-color:rgba(165,107,255,.4);background:rgba(165,107,255,.12);color:#c9b3ff}
-.pf-badge.champion,.pf-badge.sharp{border-color:rgba(232,191,53,.55);background:linear-gradient(120deg,rgba(232,191,53,.24),rgba(232,191,53,.08));color:var(--gold)}
+.pf-badge.champion,.pf-badge.sharp{border-color:rgba(var(--gold-rgb),.55);background:linear-gradient(120deg,rgba(var(--gold-rgb),.24),rgba(var(--gold-rgb),.08));color:var(--gold)}
 .pf-badge.fire{border-color:rgba(255,107,133,.55);background:linear-gradient(120deg,rgba(255,107,133,.28),rgba(255,107,133,.08));color:#ffb3c0}
 .pf-badge.whale,.pf-badge.shark{border-color:rgba(143,195,215,.4);background:rgba(143,195,215,.1);color:#8fc3d7}
 .pf-badge.chalk{border-color:rgba(216,210,196,.4);background:rgba(216,210,196,.09);color:#d8d2c4}
@@ -2247,6 +2270,10 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .pf-section{margin-top:24px}
 .pf-section h2{font-family:var(--display);font-weight:700;font-size:1.1rem;letter-spacing:-.02em;margin:0 0 10px;display:flex;align-items:baseline;gap:10px}
 .pf-section h2 small{color:var(--muted-2);font-size:.76rem;font-weight:600}
+/* The profile's tab panels use the same section heading: title, then
+   its small note with room between them. */
+.pf-panel > h2{font-family:var(--display);font-weight:700;font-size:1.1rem;letter-spacing:-.02em;margin:0 0 10px;display:flex;align-items:center;gap:10px}
+.pf-panel > h2 small{color:var(--muted-2);font-size:.76rem;font-weight:600}
 .pf-section h2{align-items:center}
 .pf-emote{width:26px;height:26px;object-fit:contain;flex:0 0 auto;margin-left:2px}
 .pf-pager{margin-top:8px;border:1px solid var(--line);border-radius:10px}
@@ -2276,7 +2303,7 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .bk-svg[data-tone="bad"] .bk-area{fill:rgba(255,107,133,.12)}
 .bk-svg[data-tone="gold"] .bk-line,.bk-svg[data-tone="gold"] .bk-dot{stroke:var(--gold);fill:var(--gold)}
 .bk-svg[data-tone="gold"] .bk-line{fill:none}
-.bk-svg[data-tone="gold"] .bk-area{fill:rgba(232,191,53,.12)}
+.bk-svg[data-tone="gold"] .bk-area{fill:rgba(var(--gold-rgb),.12)}
 .bk-hover{stroke:var(--line-2);stroke-width:1}
 .bk-tip{position:absolute;top:6px;transform:translateX(-50%);padding:4px 9px;border-radius:7px;background:var(--panel-3);border:1px solid var(--line-2);color:var(--text);font-size:.72rem;font-weight:700;white-space:nowrap;pointer-events:none}
 .pf-sub{margin:14px 0 6px;color:var(--muted-2);font-size:.68rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase}
@@ -2295,9 +2322,9 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .namewrap{display:inline}
 /* Game links: a ticket is a whole card; in the ledger it is the team name. */
 a.pickticket{display:block;color:inherit;text-decoration:none}
-a.pickticket:hover{border-color:rgba(232,191,53,.45)}
+a.pickticket:hover{border-color:rgba(var(--gold-rgb),.45)}
 a.glink{color:inherit;text-decoration:none;border-bottom:1px solid transparent}
-a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
+a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .badges{display:inline-flex;gap:3px;margin-left:6px;vertical-align:baseline;white-space:nowrap}
 .badges.compact .badge{font-size:.9em;line-height:1;cursor:default}
 .mtop-name .badges,.mq-meta .badges{margin-left:5px}
@@ -2312,7 +2339,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .cf-stage{
   position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;padding:26px 20px 20px;
   border:1px solid var(--line);border-radius:var(--radius);
-  background:radial-gradient(70% 80% at 50% 0%,rgba(142,18,49,.3),transparent 60%),var(--panel);
+  background:radial-gradient(70% 80% at 50% 0%,rgba(var(--burg-rgb),.3),transparent 60%),var(--panel);
 }
 .cf-phase{font-family:var(--display);font-weight:800;font-size:.8rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
 .cf-phase.open{color:var(--green)}
@@ -2340,17 +2367,17 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .cf-bet{width:100%;max-width:420px;margin-top:14px;display:flex;flex-direction:column;gap:10px}
 .cf-sides{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .cf-side{height:46px;border-radius:11px;border:1px solid var(--line-2);background:var(--panel-2);font-family:var(--display);font-weight:800;font-size:1.05rem;color:var(--muted);cursor:pointer}
-.cf-side.heads.on{border-color:rgba(232,191,53,.6);background:var(--gold-dim);color:var(--gold)}
+.cf-side.heads.on{border-color:rgba(var(--gold-rgb),.6);background:var(--gold-dim);color:var(--gold)}
 .cf-side.tails.on{border-color:rgba(216,210,196,.6);background:rgba(216,210,196,.12);color:#e6e0d2}
 .cf-side:disabled{opacity:.5;cursor:default}
 .cf-stakerow{display:flex;gap:8px}
 .cf-stake{flex:1;height:42px;padding:0 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);font:inherit;font-weight:800;font-size:1.05rem;outline:none;min-width:0}
-.cf-stake:focus{border-color:rgba(232,191,53,.5)}
+.cf-stake:focus{border-color:rgba(var(--gold-rgb),.5)}
 .cf-chips{display:flex;gap:6px}
 .cf-chip{height:42px;padding:0 13px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel);font:inherit;font-weight:800;font-size:.84rem;color:var(--text);cursor:pointer}
 .cf-chip:hover{background:var(--panel-3)}
 .cf-lock > *,.kpick > *,.cf-chip > *,.hl-call > *{pointer-events:none}
-.cf-lock{height:50px;border-radius:12px;border:1px solid rgba(232,191,53,.5);background:var(--gold);color:#1a1405;font-family:var(--display);font-weight:800;font-size:1.05rem;cursor:pointer;transition:filter .12s ease}
+.cf-lock{height:50px;border-radius:12px;border:1px solid rgba(var(--gold-rgb),.5);background:var(--gold);color:#1a1405;font-family:var(--display);font-weight:800;font-size:1.05rem;cursor:pointer;transition:filter .12s ease}
 .cf-lock:hover:not(:disabled){filter:brightness(1.06)}
 .cf-lock:disabled{background:var(--panel-2);color:var(--muted);border-color:var(--line-2);cursor:default}
 .cf-note{margin:0;text-align:center;color:var(--muted-2);font-size:.78rem;min-height:1.2em}
@@ -2446,7 +2473,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
    the rest. Twenty people is a tidy block, not a wall. */
 .wh-chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 9px 0 3px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-2);text-decoration:none;color:inherit;font-size:.78rem;font-weight:700;max-width:100%}
 .wh-chip b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
-.wh-chip.ulink:hover{border-bottom-color:var(--line-2);border-color:rgba(232,191,53,.4)}
+.wh-chip.ulink:hover{border-bottom-color:var(--line-2);border-color:rgba(var(--gold-rgb),.4)}
 .wh-chip.guests{opacity:.8}
 .wh-chip.more{cursor:pointer;color:var(--gold);font:inherit;font-size:.76rem;font-weight:800;padding:0 11px}
 .wh-where{font-size:.72rem;line-height:1;opacity:.85}
@@ -2463,13 +2490,13 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .db-card h2{display:flex;align-items:center;gap:9px;margin:0 0 9px;font-family:var(--display);font-weight:700;font-size:1rem;letter-spacing:-.01em}
 .db-dot{width:10px;height:10px;border-radius:50%;background:var(--muted-2);box-shadow:0 0 0 3px rgba(255,255,255,.05)}
 .db-card.ok .db-dot{background:var(--green);box-shadow:0 0 10px rgba(77,219,139,.6)}
-.db-card.warn .db-dot{background:var(--gold);box-shadow:0 0 10px rgba(232,191,53,.6)}
+.db-card.warn .db-dot{background:var(--gold);box-shadow:0 0 10px rgba(var(--gold-rgb),.6)}
 .db-card.bad .db-dot{background:var(--red);box-shadow:0 0 10px rgba(255,107,133,.6)}
-.db-card.bad{border-color:rgba(255,107,133,.4)} .db-card.warn{border-color:rgba(232,191,53,.35)}
+.db-card.bad{border-color:rgba(255,107,133,.4)} .db-card.warn{border-color:rgba(var(--gold-rgb),.35)}
 .db-row{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-top:1px solid var(--line);font-size:.82rem}
 .db-row span{color:var(--muted-2)} .db-row strong{text-align:right;font-weight:700}
-.db-btn{height:28px;padding:0 11px;border-radius:8px;border:1px solid rgba(232,191,53,.35);background:var(--gold-dim);color:var(--gold);font:inherit;font-size:.76rem;font-weight:800;cursor:pointer}
-.db-btn:hover{background:rgba(232,191,53,.2)} .db-btn:disabled{opacity:.5;cursor:default}
+.db-btn{height:28px;padding:0 11px;border-radius:8px;border:1px solid rgba(var(--gold-rgb),.35);background:var(--gold-dim);color:var(--gold);font:inherit;font-size:.76rem;font-weight:800;cursor:pointer}
+.db-btn:hover{background:rgba(var(--gold-rgb),.2)} .db-btn:disabled{opacity:.5;cursor:default}
 .db-attn{margin-top:18px}
 .db-attn h2{font-family:var(--display);font-weight:700;font-size:1rem;margin:0 0 8px}
 .db-list{display:flex;flex-direction:column;gap:6px}
@@ -2482,8 +2509,8 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 /* ---------------------------------------------------------------- NFL cards
    The league's own look: turf under the crests, yard lines, the shield in
    the corner, real club logos, and the Picks line when a market is open. */
-.eventcard.nfl{border-color:rgba(232,191,53,.28);box-shadow:0 0 0 1px rgba(232,191,53,.06) inset,0 10px 30px rgba(0,0,0,.35)}
-.eventcard.nfl:hover{border-color:rgba(232,191,53,.55);box-shadow:0 0 0 1px rgba(232,191,53,.12) inset,0 14px 34px rgba(0,0,0,.45),0 0 24px rgba(232,191,53,.12)}
+.eventcard.nfl{border-color:rgba(var(--gold-rgb),.28);box-shadow:0 0 0 1px rgba(var(--gold-rgb),.06) inset,0 10px 30px rgba(0,0,0,.35)}
+.eventcard.nfl:hover{border-color:rgba(var(--gold-rgb),.55);box-shadow:0 0 0 1px rgba(var(--gold-rgb),.12) inset,0 14px 34px rgba(0,0,0,.45),0 0 24px rgba(var(--gold-rgb),.12)}
 .eventcard.nfl .ec-poster{
   background:
     repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 2px,transparent 2px 10%),
@@ -2525,11 +2552,11 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .eventcard.nfl .teamlogo img{padding:3px;object-fit:contain}
 .eventcard.nfl .teamlogo span{color:#1a1405}
 .eventcard.nfl .ec-actions .btn.primary{
-  background:linear-gradient(120deg,#e8bf35,#d4a92a);color:#1a1405;border-color:rgba(232,191,53,.7);
+  background:linear-gradient(120deg,var(--gold),#d4a92a);color:#1a1405;border-color:rgba(var(--gold-rgb),.7);
 }
 .ec-picks{
   margin:0 13px 12px;padding:8px 11px;border-radius:9px;
-  border:1px solid rgba(232,191,53,.3);background:var(--gold-dim);
+  border:1px solid rgba(var(--gold-rgb),.3);background:var(--gold-dim);
   color:var(--text);font-size:.74rem;font-weight:700;letter-spacing:.02em;
 }
 .ec-picks.soon{display:flex;align-items:flex-start;gap:6px;border-color:var(--line-2);background:var(--panel-2);color:var(--muted)}
@@ -2599,7 +2626,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
   text-decoration:none;cursor:pointer;transition:color .14s ease,background .14s ease,border-color .14s ease;
 }
 .pf-nav-link{border-color:var(--line);background:var(--panel-2)}
-.pf-nav-jump:hover,.pf-nav-link:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(232,191,53,.3)}
+.pf-nav-jump:hover,.pf-nav-link:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(var(--gold-rgb),.3)}
 .pf-section{scroll-margin-top:84px}
 @media (max-width:640px){.pf-nav{justify-content:flex-start}}
 
@@ -2653,12 +2680,12 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .picks-head{margin-bottom:22px}
 .leaderpill{
   display:inline-flex;align-items:center;gap:11px;height:52px;padding:0 16px 0 12px;border-radius:999px;
-  border:1px solid rgba(232,191,53,.35);background:linear-gradient(120deg,rgba(232,191,53,.14),transparent 70%),var(--panel);
+  border:1px solid rgba(var(--gold-rgb),.35);background:linear-gradient(120deg,rgba(var(--gold-rgb),.14),transparent 70%),var(--panel);
   color:inherit;text-decoration:none;max-width:100%
 }
 .leaderpill:hover{border-color:var(--gold)}
 .leaderpill.empty{border-color:var(--line-2);background:var(--panel)}
-.lp-crown{font-size:1.35rem;line-height:1;filter:drop-shadow(0 0 6px rgba(232,191,53,.5))}
+.lp-crown{font-size:1.35rem;line-height:1;filter:drop-shadow(0 0 6px rgba(var(--gold-rgb),.5))}
 .lp-kicker{display:block;color:var(--gold);font-size:.58rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;line-height:1.1;margin-bottom:2px}
 .lp-line{display:inline-flex;align-items:baseline;gap:9px}
 .lp-av{position:relative;overflow:hidden;width:34px;height:34px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:linear-gradient(150deg,#8e1231,#4a0a1c);color:var(--gold);font-size:.58rem;font-weight:800}
@@ -2701,7 +2728,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .sportseg-btn small{padding:0 6px;border-radius:999px;background:var(--panel-3);color:var(--muted-2);font-size:.64rem;font-weight:800}
 .sportseg-btn:hover{color:var(--text)}
 .sportseg-btn.on{background:var(--gold-dim);color:var(--gold)}
-.sportseg-btn.on small{background:rgba(232,191,53,.2);color:var(--gold)}
+.sportseg-btn.on small{background:rgba(var(--gold-rgb),.2);color:var(--gold)}
 @media (max-width:760px){
   .pf-quick.five{grid-template-columns:repeat(3,minmax(0,1fr))}
   .tabs-tools{margin-left:0;flex-basis:100%;padding:6px 0 8px}
@@ -2718,7 +2745,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .recsplit-row.dim{color:var(--muted-2)}
 
 /* ---------------------------------------------------------------- bet on the game page */
-.gp-bet{margin:0 0 14px;padding:14px 16px 12px;border:1px solid rgba(232,191,53,.3);border-radius:var(--radius);background:linear-gradient(140deg,var(--gold-dim),transparent 60%),var(--panel)}
+.gp-bet{margin:0 0 14px;padding:14px 16px 12px;border:1px solid rgba(var(--gold-rgb),.3);border-radius:var(--radius);background:linear-gradient(140deg,var(--gold-dim),transparent 60%),var(--panel)}
 .gp-bet h3{margin:0 0 10px;font-family:var(--display);font-weight:800;font-size:.95rem;letter-spacing:-.01em}
 .gp-bet-sides{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .gp-bet-side{
@@ -2726,8 +2753,8 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
   border:1px solid var(--line-2);border-radius:10px;background:var(--panel-2);color:var(--text);font:inherit;cursor:pointer;text-align:left;
   transition:border-color .14s ease,background .14s ease;
 }
-.gp-bet-side:hover{border-color:rgba(232,191,53,.45)}
-.gp-bet-side.on{border-color:var(--gold);background:var(--gold-dim);box-shadow:0 0 0 1px rgba(232,191,53,.35) inset}
+.gp-bet-side:hover{border-color:rgba(var(--gold-rgb),.45)}
+.gp-bet-side.on{border-color:var(--gold);background:var(--gold-dim);box-shadow:0 0 0 1px rgba(var(--gold-rgb),.35) inset}
 .gp-bet-team{font-family:var(--display);font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gp-bet-line{font-family:var(--display);font-weight:800;color:var(--gold)}
 .gp-bet-form{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -2838,7 +2865,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .room-count{color:var(--muted);font-size:.84rem;font-weight:700}
 .room-count b{color:var(--text)}
 .room-btn{height:30px;padding:0 11px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-size:.76rem;font-weight:700;cursor:pointer}
-.room-btn:hover,.room-btn.on{color:var(--gold);border-color:rgba(232,191,53,.4);background:var(--gold-dim)}
+.room-btn:hover,.room-btn.on{color:var(--gold);border-color:rgba(var(--gold-rgb),.4);background:var(--gold-dim)}
 .room-list-wrap{margin:-4px 0 12px}
 .room-list{display:flex;flex-wrap:wrap;gap:5px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:var(--panel)}
 
@@ -2897,7 +2924,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .mq-eta{flex:0 0 auto;color:var(--muted);font-size:.7rem;font-weight:700;white-space:nowrap}
 .mseg{display:flex;gap:4px;padding:10px 12px 4px}
 .mseg-btn{height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:none;color:var(--muted);font:inherit;font-size:.72rem;font-weight:800;cursor:pointer}
-.mseg-btn.on{border-color:rgba(232,191,53,.4);background:var(--gold-dim);color:var(--gold)}
+.mseg-btn.on{border-color:rgba(var(--gold-rgb),.4);background:var(--gold-dim);color:var(--gold)}
 .elo-delta{flex:0 0 auto;font-size:.68rem;font-weight:800;padding:1px 6px;border-radius:999px}
 .elo-delta.up{color:var(--green);background:var(--green-dim)}
 .elo-delta.down{color:var(--red);background:var(--red-dim)}
@@ -2919,7 +2946,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .mdock{
   position:fixed;left:16px;bottom:16px;z-index:60;width:320px;max-width:calc(100vw - 32px);
   border:1px solid var(--line-2);border-radius:14px;background:var(--panel);overflow:hidden;
-  box-shadow:0 18px 50px rgba(0,0,0,.6),0 0 0 1px rgba(232,191,53,.08) inset;
+  box-shadow:0 18px 50px rgba(0,0,0,.6),0 0 0 1px rgba(var(--gold-rgb),.08) inset;
 }
 .mdock-head{display:flex;align-items:center;gap:8px;height:36px;padding:0 8px 0 12px;background:var(--panel-2);border-bottom:1px solid var(--line)}
 .mdock-live{width:7px;height:7px;border-radius:50%;background:var(--muted-2);flex:0 0 auto}
@@ -2928,7 +2955,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .mdock-open:hover{color:var(--gold)}
 .mdock-spacer{flex:1}
 .mdock-btn{width:26px;height:26px;border-radius:7px;border:1px solid transparent;background:none;color:var(--muted);font:inherit;font-size:.8rem;font-weight:800;cursor:pointer}
-.mdock-btn:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(232,191,53,.3)}
+.mdock-btn:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(var(--gold-rgb),.3)}
 .mdock-stage{position:relative;aspect-ratio:16/9;background:#000}
 .mdock-stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .mdock-body{padding:9px 12px 10px}
@@ -2969,8 +2996,8 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 }
 .daytab small{padding:1px 7px;border-radius:999px;background:var(--panel-3);color:var(--muted-2);font-size:.68rem;font-weight:800}
 .daytab:hover{color:var(--text);border-color:var(--line-2)}
-.daytab.on{color:var(--gold);border-color:rgba(232,191,53,.4);background:var(--gold-dim)}
-.daytab.on small{background:rgba(232,191,53,.2);color:var(--gold)}
+.daytab.on{color:var(--gold);border-color:rgba(var(--gold-rgb),.4);background:var(--gold-dim)}
+.daytab.on small{background:rgba(var(--gold-rgb),.2);color:var(--gold)}
 .slothead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:16px 2px 8px;padding-bottom:5px;border-bottom:1px solid var(--line)}
 .slothead:first-child,.daytabs+.slothead,.slate-head+.slothead{margin-top:0}
 .slothead strong{font-family:var(--display);font-weight:800;font-size:1rem;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
@@ -2989,9 +3016,9 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 /* ================================================================ Casino */
 .cas-headright{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .cas-back{height:32px;padding:0 13px;text-decoration:none;flex:0 0 auto;
-  border:1px solid rgba(232,191,53,.6);background:rgba(232,191,53,.1);color:var(--gold);
-  font-weight:800;box-shadow:0 0 0 3px rgba(232,191,53,.08)}
-.cas-back:hover{background:rgba(232,191,53,.2);border-color:var(--gold);color:var(--gold)}
+  border:1px solid rgba(var(--gold-rgb),.6);background:rgba(var(--gold-rgb),.1);color:var(--gold);
+  font-weight:800;box-shadow:0 0 0 3px rgba(var(--gold-rgb),.08)}
+.cas-back:hover{background:rgba(var(--gold-rgb),.2);border-color:var(--gold);color:var(--gold)}
 .cf-phase.done{color:var(--gold)} .cf-phase.bad{color:var(--red)}
 
 /* pick buttons (Wheel, Race) */
@@ -3007,9 +3034,9 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .kpick.on{color:var(--text)}
 .kpick.red.on{border-color:rgba(211,29,77,.7);background:rgba(211,29,77,.18)} .kpick.red .kpick-pays{color:#ff8fa8}
 .kpick.black.on{border-color:rgba(216,210,196,.55);background:rgba(216,210,196,.12)}
-.kpick.gold.on{border-color:rgba(232,191,53,.7);background:var(--gold-dim);color:var(--gold)} .kpick.gold .kpick-pays{color:var(--gold)}
-.kpick.runner-gold.on{border-color:rgba(232,191,53,.7);background:var(--gold-dim)}
-.kpick.runner-burgundy.on{border-color:rgba(142,18,49,.9);background:rgba(142,18,49,.28)}
+.kpick.gold.on{border-color:rgba(var(--gold-rgb),.7);background:var(--gold-dim);color:var(--gold)} .kpick.gold .kpick-pays{color:var(--gold)}
+.kpick.runner-gold.on{border-color:rgba(var(--gold-rgb),.7);background:var(--gold-dim)}
+.kpick.runner-burgundy.on{border-color:rgba(var(--burg-rgb),.9);background:rgba(var(--burg-rgb),.28)}
 .kpick.runner-midnight.on{border-color:rgba(143,195,215,.6);background:rgba(143,195,215,.14)}
 .kpick.runner-longshot.on{border-color:rgba(77,219,139,.6);background:var(--green-dim)}
 .cf-row.pick-red{border-left-color:#d31d4d} .cf-row.pick-black{border-left-color:#d8d2c4} .cf-row.pick-gold{border-left-color:var(--gold)}
@@ -3024,13 +3051,13 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
   border-left:12px solid transparent;border-right:12px solid transparent;border-top:22px solid var(--gold);
   filter:drop-shadow(0 3px 6px rgba(0,0,0,.6));
 }
-.wheel{position:relative;width:100%;height:100%;border-radius:50%;padding:6px;background:linear-gradient(160deg,#3a3028,#171310);box-shadow:0 14px 40px rgba(0,0,0,.6),0 0 0 1px rgba(232,191,53,.25)}
+.wheel{position:relative;width:100%;height:100%;border-radius:50%;padding:6px;background:linear-gradient(160deg,#3a3028,#171310);box-shadow:0 14px 40px rgba(0,0,0,.6),0 0 0 1px rgba(var(--gold-rgb),.25)}
 .wheel-inner{width:100%;height:100%;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(0,0,0,.6),inset 0 0 40px rgba(0,0,0,.5);will-change:transform}
 .wheel-inner.spin{animation:wheelidle 9s linear infinite}
 @keyframes wheelidle{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .wheel-hub{
   position:absolute;left:50%;top:50%;z-index:2;width:22%;height:22%;transform:translate(-50%,-50%);border-radius:50%;
-  background:radial-gradient(circle at 35% 35%,#2b241f,#120f0d);box-shadow:0 0 0 3px rgba(232,191,53,.6),0 6px 16px rgba(0,0,0,.6);display:grid;place-items:center;
+  background:radial-gradient(circle at 35% 35%,#2b241f,#120f0d);box-shadow:0 0 0 3px rgba(var(--gold-rgb),.6),0 6px 16px rgba(0,0,0,.6);display:grid;place-items:center;
 }
 .wheel-hub img{width:64%;height:64%;object-fit:contain}
 @media (prefers-reduced-motion:reduce){.wheel-inner.spin{animation:none}.wheel-inner{transition:none!important}}
@@ -3095,7 +3122,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .cas-games-head span{color:var(--muted-2);font-size:.76rem;font-weight:700}
 /* The game cards: each with its own colour, a lit icon, and a solid Play. */
 .cas-tile{
-  --accent:var(--gold);--accent-rgb:232,191,53;
+  --accent:var(--gold);--accent-rgb:var(--gold-rgb);
   position:relative;display:flex;flex-direction:column;gap:9px;padding:18px 18px 16px;
   border:1px solid rgba(var(--accent-rgb),.32);border-radius:var(--radius);
   background:
@@ -3106,7 +3133,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 }
 .cas-tile::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;border-radius:var(--radius) var(--radius) 0 0;background:linear-gradient(90deg,rgba(var(--accent-rgb),.9),rgba(var(--accent-rgb),.15))}
 .cas-tile:hover{border-color:rgba(var(--accent-rgb),.7);transform:translateY(-3px);box-shadow:0 18px 40px rgba(0,0,0,.5),0 0 30px rgba(var(--accent-rgb),.14)}
-.cas-tile.cas-flip{--accent:var(--gold);--accent-rgb:232,191,53}
+.cas-tile.cas-flip{--accent:var(--gold);--accent-rgb:var(--gold-rgb)}
 .cas-tile.cas-wheel{--accent:#d31d4d;--accent-rgb:211,29,77}
 .cas-tile.cas-hilo{--accent:#8fc3d7;--accent-rgb:143,195,215}
 .cas-tile-top{display:flex;align-items:center;gap:12px}
@@ -3129,9 +3156,95 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(232,191,53,.5)}
 .cas-people .wh-chip{height:26px;font-size:.74rem}
 .cas-people .wh-chip b{max-width:110px}
 .cas-meta .zc-amount{gap:4px} .cas-meta .zcoin-mark{width:13px;height:13px}
-.cas-play{align-self:flex-start;margin-top:2px;padding:6px 12px;border-radius:9px;border:1px solid rgba(232,191,53,.4);background:var(--gold-dim);color:var(--gold);font-size:.78rem;font-weight:800}
+.cas-play{align-self:flex-start;margin-top:2px;padding:6px 12px;border-radius:9px;border:1px solid rgba(var(--gold-rgb),.4);background:var(--gold-dim);color:var(--gold);font-size:.78rem;font-weight:800}
 .cas-tile.cas-wheel .cas-icon{filter:drop-shadow(0 0 8px rgba(211,29,77,.45))}
 .cas-lower{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,1fr);gap:14px;align-items:start}
 @media (max-width:860px){.cas-lower{grid-template-columns:1fr}}
 .cas-rules ul{margin:0;padding-left:18px;color:var(--muted);font-size:.86rem;line-height:1.55}
 .cas-rules li{margin:4px 0}
+
+
+/* ============================================================
+   SPOOKY SEASON — October, switched on by v3-shell.js
+
+   body.spooky        the palette: pumpkin for gold, witch purple for
+                      the brand red, the near-black pulled toward violet
+   body.spooky.full   plus the dressing in .spooky-layer: cobwebs,
+                      bats and fog, a lit mark, a burning Live flag
+
+   The layer never covers the Twitch chat (its "obscured" check fires
+   on anything painted over the embed) and stays off pages with a
+   video on them. Green and red keep their meaning.
+   ============================================================ */
+body.spooky{
+  --gold-rgb:255,140,26;
+  --brand-rgb:124,58,237;
+  --burg-rgb:91,33,182;
+  /* derived tokens resolve where they are declared, so restate them */
+  --gold:rgb(var(--gold-rgb));
+  --gold-dim:rgba(var(--gold-rgb),.13);
+  --burg:rgb(var(--burg-rgb));
+  --ink:#0a0710;
+  --panel:#14101c;
+  --panel-2:#1b1626;
+  --panel-3:#221c2f;
+  --line-2:rgba(255,180,90,.2);
+}
+html:has(body.spooky){background:#0a0710}
+
+body.spooky.full .brand-mark{filter:drop-shadow(0 0 7px rgba(255,140,26,.75))}
+body.spooky.full .topnav{background:linear-gradient(180deg,rgba(124,58,237,.14),transparent 92%),rgba(10,7,16,.93)}
+body.spooky.full .ec-flag.live{box-shadow:0 0 14px rgba(255,140,26,.55)}
+
+.spooky-layer{position:fixed;top:var(--nav-h);left:0;right:0;bottom:0;z-index:1;pointer-events:none;overflow:hidden;display:none}
+body.spooky.full .spooky-layer{display:block}
+@media (min-width:981px){body.spooky.full.chat-open .spooky-layer{right:var(--chat-w)}}
+/* On every page, video pages included: neither the watch view nor
+   MultiView embeds Twitch, and the layer already stops at the chat. */
+body:not(.spooky) .spookystrip{display:none}
+.spooky-layer .web{position:absolute;top:0;width:190px;height:190px;opacity:.16;color:#d8d2c4}
+.spooky-layer .web.left{left:0}
+.spooky-layer .web.right{right:0;transform:scaleX(-1)}
+.spooky-layer .bat{position:absolute;left:0;color:#120e1a;opacity:.55;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7));animation:batdrift linear infinite}
+.spooky-layer .bat svg{display:block;animation:batflap .42s ease-in-out infinite alternate}
+@keyframes batflap{from{transform:scaleY(1)}to{transform:scaleY(.72)}}
+@keyframes batdrift{from{transform:translateX(-60px)}to{transform:translateX(100vw)}}
+/* Nothing moves over a stream: the bats sit out the watch page. The
+   cobwebs and fog are still, so they stay. */
+body.spooky.full[data-route="watch"] .spooky-layer .bat{display:none}
+.spooky-layer .fog{position:absolute;left:0;right:0;bottom:0;height:120px;background:linear-gradient(to top,rgba(124,58,237,.16),transparent)}
+
+/* The season strip at the top of the Sports page. */
+.spookystrip{
+  display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:9px 10px 9px 14px;
+  border:1px solid rgba(255,140,26,.35);border-radius:var(--radius);
+  background:linear-gradient(120deg,rgba(255,140,26,.14),rgba(124,58,237,.12) 70%),var(--panel);
+  font-size:.86rem;
+}
+.spookystrip b{font-family:var(--display);font-weight:800}
+.spookystrip span{color:var(--muted)}
+.spookystrip .pump{font-size:1.15rem;line-height:1}
+.spookystrip button{margin-left:auto;width:26px;height:26px;border:0;border-radius:7px;background:none;color:var(--muted-2);cursor:pointer;font-size:.9rem}
+.spookystrip button:hover{background:var(--panel-3);color:var(--text)}
+
+/* October emoji, placed around the site. */
+body.spooky .brand::after{content:"🎃";margin-left:5px;font-size:.9em}
+body.spooky #view .viewhead h1::after{content:" 🎃";font-size:.8em}
+body.spooky[data-route="picks"] #view .viewhead h1::after{content:" 👻"}
+body.spooky[data-route="casino"] #view .viewhead h1::after,
+body.spooky[data-route="flip"] #view .viewhead h1::after,
+body.spooky[data-route="wheel"] #view .viewhead h1::after,
+body.spooky[data-route="hilo"] #view .viewhead h1::after{content:" 🦇"}
+body.spooky[data-route="music"] #view h1::after{content:" 🕸️";font-size:.8em}
+body.spooky .wh-k::after{content:" 👻"}
+body.spooky .wh-empty::before{content:"👻 "}
+body.spooky .picksbanner-tag::before{content:"🎃 "}
+body.spooky .sportgroup-head h2::after{content:" 🦇";font-size:.85em}
+body.spooky .cas-games-head h2::after{content:" 🕯️"}
+body.spooky .lp-kicker::after{content:" 🧛"}
+body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
+
+@media (prefers-reduced-motion:reduce){
+  .spooky-layer .bat{display:none}
+  .spooky-layer .bat svg{animation:none}
+}

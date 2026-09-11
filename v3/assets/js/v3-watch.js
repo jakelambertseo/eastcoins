@@ -194,14 +194,23 @@
       return;
     }
 
-    dom.select.disabled = local.streams.length < 2;
+    // "Server 1 of 4" rather than "Server 1": the closed control has to
+    // say that there is something else to try, because that is the whole
+    // reason someone looks for it.
+    const many = local.streams.length > 1;
+    dom.select.disabled = !many;
     local.streams.forEach((_, index) => {
       const option = document.createElement("option");
       option.value = String(index);
-      option.textContent = `Server ${index + 1}`;
+      option.textContent = many ? `Server ${index + 1} of ${local.streams.length}` : "Server 1";
       if (index === local.active) option.selected = true;
       dom.select.append(option);
     });
+    dom.select.title = many
+      ? `Stream not working? Switch between ${local.streams.length} servers.`
+      : "Only one server for this event.";
+    // A few pulses when a stream first arrives, then it settles down.
+    dom.select.classList.toggle("nudge", many);
   }
 
   function buildBar() {
@@ -214,6 +223,9 @@
       const select = document.createElement("select");
       select.className = "watchsel";
       select.setAttribute("aria-label", "Stream server");
+      // Switching is the fix for a dead stream, so stop pulsing once
+      // they have found it.
+      select.addEventListener("pointerenter", () => select.classList.remove("nudge"), { once: true });
       select.addEventListener("change", () => {
         local.active = Number(select.value) || 0;
         rememberServer();

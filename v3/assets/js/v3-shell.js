@@ -152,6 +152,70 @@
     dashboard: "Dashboard — EastCoin", admin: "Admin — EastCoin", watch: "Watching — EastCoin"
   };
 
+  /* ---------------------------------------------------------- the season
+
+     The Halloween clothes (SPOOKY SEASON in v3.css). Until someone
+     chooses, the date decides: on through October in Central time,
+     off the rest of the year. The Spooky theme switch in the ⋯ menu
+     records a choice on this browser. ?spooky=1 / 0 do the same from a
+     link; ?spooky=auto clears the choice and hands it back to the date. */
+
+  const SPOOKY_KEY = "ec_spooky";
+
+  function spookyChoice() {
+    try { return localStorage.getItem(SPOOKY_KEY) || "auto"; } catch { return "auto"; }
+  }
+
+  function spookyByDate() {
+    return new Date().toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "numeric" }) === "10";
+  }
+
+  function applySeason() {
+    const pref = spookyChoice();
+    const on = pref === "1" || (pref === "auto" && spookyByDate());
+    document.body.classList.toggle("spooky", on);
+    document.body.classList.toggle("full", on);
+
+    const sw = document.getElementById("spookyToggle");
+    if (sw) {
+      sw.setAttribute("aria-checked", String(on));
+      const knob = sw.querySelector(".switch");
+      if (knob) knob.dataset.on = on ? "1" : "0";
+    }
+    if (!on || document.querySelector(".spooky-layer")) return;
+
+    const layer = document.createElement("div");
+    layer.className = "spooky-layer";
+    layer.setAttribute("aria-hidden", "true");
+    const web = (side) =>
+      `<svg class="web ${side}" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.1">` +
+      `<path d="M0 0 L200 200M0 0 L200 120M0 0 L200 60M0 0 L120 200M0 0 L60 200M0 0 L170 170"/>` +
+      `<path d="M34 0 A34 34 0 0 1 0 34M62 0 A62 62 0 0 1 0 62M96 0 A96 96 0 0 1 0 96M132 0 A132 132 0 0 1 0 132M172 0 A172 172 0 0 1 0 172"/></svg>`;
+    const bat = (top, secs, delay, size) =>
+      `<span class="bat" style="top:${top}%;animation-duration:${secs}s;animation-delay:-${delay}s;font-size:${size}px">` +
+      `<svg width="1em" height="1em" viewBox="0 0 64 32" fill="currentColor"><path d="M32 6c2 0 3 2 3 4 3-5 8-8 13-8-2 3-2 6-1 8 4-3 9-4 14-3-5 2-8 6-9 11-2-2-5-2-7 0-3 2-5 5-6 9-2-3-4-5-7-5s-5 2-7 5c-1-4-3-7-6-9-2-2-5-2-7 0-1-5-4-9-9-11 5-1 10 0 14 3 1-2 1-5-1-8 5 0 10 3 13 8 0-2 1-4 3-4z"/></svg></span>`;
+    layer.innerHTML = web("left") + web("right") +
+      bat(10, 46, 0, 26) + bat(30, 62, 18, 18) + bat(55, 54, 34, 22) + bat(74, 70, 9, 15) +
+      `<div class="fog"></div>`;
+    document.body.append(layer);
+  }
+
+  // A link can set the choice before the first paint.
+  try {
+    const asked = new URL(location.href).searchParams.get("spooky");
+    if (asked === "1" || asked === "0") localStorage.setItem(SPOOKY_KEY, asked);
+    if (asked === "auto") localStorage.removeItem(SPOOKY_KEY);
+  } catch { /* private mode: the date decides */ }
+  applySeason();
+
+  document.getElementById("spookyToggle")?.addEventListener("click", () => {
+    const on = !document.body.classList.contains("spooky");
+    try { localStorage.setItem(SPOOKY_KEY, on ? "1" : "0"); } catch { /* this visit only */ }
+    applySeason();
+    // The Sports page's season strip is drawn with the page; redraw it.
+    if (state.route === "events") views.events?.onPrefs?.(prefs);
+  });
+
   function render() {
     const view = views[state.route];
 
@@ -174,6 +238,9 @@
 
     els.view.replaceChildren();
     els.view.dataset.rendered = "1";
+    // Lets the stylesheet vary by page (the season's emoji, and keeping
+    // the October dressing off pages with a video on them).
+    document.body.dataset.route = state.route || "events";
     // Tell the room where this tab is now.
     window.ECPresence?.beat(state.route);
     // A title per section; views with a name of their own (a profile,
