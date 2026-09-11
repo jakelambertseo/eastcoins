@@ -3296,3 +3296,7 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
 .db-mini td.num .zc-amount{justify-content:flex-end}
 .db-mini td.empty{color:var(--muted-2);font-style:italic;text-align:center}
 .db-casino{margin:12px 0 0;padding-top:10px;border-top:1px solid var(--line);color:var(--muted-2);font-size:.8rem;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+
+/* Owner-only links at the foot of the ⋯ menu (Admin, Dashboard, Activity). */
+.menu-link{text-decoration:none;color:var(--muted);justify-content:flex-start}
+.menu-link:hover{color:var(--gold);background:var(--gold-dim)}

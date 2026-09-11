@@ -159,15 +159,55 @@
       (b.people || []).map((p) => [p.login, fmt(p.bets), fmt(p.staked), zcs(p.net)])));
     wrap.append(tables);
 
-    if (b.casino) {
-      const c = b.casino;
-      const line = el("p", "db-casino");
-      line.append(document.createTextNode(`Casino, for comparison: ${fmt(c.bets)} bets · ${fmt(c.staked)} bet · house `));
-      line.append(zcs(c.houseNet));
-      line.append(document.createTextNode(c.staked ? ` (${Math.round((c.houseNet / c.staked) * 1000) / 10}%)` : ""));
-      wrap.append(line);
+    return wrap;
+  }
+
+  /* The casino's side, read the same way: stake minus payout on decided
+     bets. A bet still live counts as neither win nor loss. */
+  function casinoBlock(c) {
+    const wrap = el("section", "db-book");
+    const head = el("div", "db-book-head");
+    head.append(el("h2", null, "The casino"), el("span", null, "Coin Flip, Wheel, Horse Race and Higher or Lower"));
+    wrap.append(head);
+
+    const stats = el("div", "db-stats");
+    stats.append(
+      stat("Bets settled", fmt(c.bets), `${fmt(c.players)} players${c.live ? ` · ${fmt(c.live)} live now` : ""}`),
+      stat("Amount bet", fmt(c.staked), `${fmt(c.paidOut)} paid back`),
+      stat("House take", zcs(c.houseNet), c.holdPct === null ? "nothing settled yet" : `${c.holdPct}% hold`, c.houseNet >= 0 ? "good" : "bad")
+    );
+    wrap.append(stats);
+
+    if ((c.days || []).length) {
+      const chart = el("div", "db-chart");
+      const peak = Math.max(1, ...c.days.map((d) => Math.abs(d.houseNet)));
+      for (const day of c.days) {
+        const col = el("div", "db-col");
+        col.title = `${day.day}: house ${signed(day.houseNet)} ZC · ${day.bets} bets · ${fmt(day.staked)} staked`;
+        const up = el("div", "db-up");
+        const down = el("div", "db-down");
+        const size = `${Math.round((Math.abs(day.houseNet) / peak) * 100)}%`;
+        if (day.houseNet >= 0) up.style.height = size; else down.style.height = size;
+        col.append(up, el("i"), down, el("span", null, day.day.slice(5).replace("-", "/")));
+        chart.append(col);
+      }
+      const chartWrap = el("div", "db-chartwrap");
+      chartWrap.append(el("h3", null, "House take by day"), chart);
+      wrap.append(chartWrap);
     }
 
+    const tables = el("div", "db-tables");
+    tables.append(miniTable("By game", ["Game", "Bets", "Bet", "House", "Hold"],
+      (c.games || []).map((g) => [
+        g.name,
+        fmt(g.bets),
+        fmt(g.staked),
+        zcs(g.houseNet),
+        g.holdPct === null ? "—" : `${g.holdPct}%`
+      ])));
+    tables.append(miniTable("Biggest single win", ["Game", "Win", "Players", "Live"],
+      (c.games || []).map((g) => [g.name, fmt(g.biggestWin), fmt(g.players), g.live ? fmt(g.live) : "—"])));
+    wrap.append(tables);
     return wrap;
   }
 
@@ -181,6 +221,7 @@
 
     // The book first: it's the thing worth opening the page for.
     if (d.book) wrap.append(bookBlock(d.book));
+    if (d.casinoBook) wrap.append(casinoBlock(d.casinoBook));
 
     const grid = el("div", "db-grid");
 

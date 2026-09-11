@@ -519,6 +519,7 @@
         // The Admin link stays out of the nav now that testing is done;
         // admins reach it at /?view=admin. The server re-checks every
         // admin endpoint regardless.
+        ownerMenu(user.login);
       }
       if (wallet?.connected && Number.isFinite(Number(wallet.balance))) {
         els.walletValue.textContent = Number(wallet.balance).toLocaleString();
@@ -526,6 +527,47 @@
       }
     } catch {
       /* signed out or offline: the nav just stays in its logged-out state */
+    }
+  }
+
+  /* ------------------------------------------------------ owner menu
+
+     Admin, Dashboard and Activity have no nav link on purpose. For the
+     one person who uses them they sit at the bottom of the ⋯ menu.
+     Cosmetic only: every one of those endpoints checks the session
+     itself, so pasting the URL gets a stranger no further than this. */
+
+  const OWNER_LOGIN = "bootypaper";
+  const OWNER_LINKS = [
+    ["admin", "/?view=admin", "🛠", "Admin"],
+    ["dashboard", "/?view=dashboard", "📊", "Dashboard"],
+    ["activity", "/?view=activity", "📰", "Activity"]
+  ];
+
+  function ownerMenu(login) {
+    if (String(login || "").toLowerCase() !== OWNER_LOGIN) return;
+    const menu = els.settingsMenu;
+    if (!menu || menu.querySelector(".menu-owner")) return;
+
+    const title = document.createElement("p");
+    title.className = "menu-title menu-owner";
+    title.textContent = "Yours";
+    const note = menu.querySelector(".menu-note");
+    menu.insertBefore(title, note);
+
+    for (const [route, href, icon, label] of OWNER_LINKS) {
+      const link = document.createElement("a");
+      link.className = "menu-item menu-link";
+      link.href = href;
+      link.setAttribute("role", "menuitem");
+      link.textContent = `${icon}  ${label}`;
+      link.addEventListener("click", (event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+        event.preventDefault();
+        setMenuOpen(false);
+        go(route);
+      });
+      menu.insertBefore(link, note);
     }
   }
 

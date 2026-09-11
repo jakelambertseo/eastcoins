@@ -148,6 +148,19 @@
 > so it can never disagree with the ledger or a profile; open picks are
 > exposure, never profit.
 >
+> **The casino's book** — under the picks book, `casinoBook()` in the
+> same endpoint (payload `casinoBook`, drawn by `casinoBlock()`) folds
+> `casino_bets` (wheel, race), `coin_bets` and `hilo_games` into one
+> shape: bets, players, stake, paid out, take and hold overall and per
+> game, biggest single win, how many are live, and a 14-day take chart.
+> Decided rows only (WON/LOST/BUST/CASHED); anything live counts as
+> neither.
+>
+> **Owner links in the ⋯ menu** — `ownerMenu()` in `v3-shell.js` appends
+> Admin, Dashboard and Activity under a "Yours" heading once the session
+> says the login is `bootypaper`. Cosmetic only: each of those endpoints
+> checks the session itself.
+>
 > **Live scores** — `settle.js` `trackLiveScores()` runs every tick: for
 > LOCKED markets under 5h old with active picks it reads the Odds API live
 > board (no `daysFrom`, one credit per league per tick), writes

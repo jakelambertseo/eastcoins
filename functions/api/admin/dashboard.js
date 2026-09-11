@@ -163,6 +163,108 @@ async function bookOf(db) {
   };
 }
 
+/* ------------------------------------------------------------ the casino
+
+   Three tables hold the games: casino_bets (wheel, race), coin_bets
+   (the coin flip, which predates the shared engine) and hilo_games.
+   They are read into one shape so the page can treat them alike. The
+   house's take is stake minus payout on decided bets only; a bet still
+   live counts as neither. */
+
+const GAME_NAMES = { wheel: "Wheel", race: "Horse Race", flip: "Coin Flip", hilo: "Higher or Lower" };
+
+async function casinoBook(db) {
+  const [shared, coin, hilo, everyone, recent] = await Promise.all([
+    db.prepare(
+      `SELECT game, status, COUNT(*) AS n, COUNT(DISTINCT user_id) AS players,
+              SUM(wager) AS staked, SUM(COALESCE(payout, 0)) AS paid,
+              MAX(COALESCE(payout, 0) - wager) AS best
+         FROM casino_bets GROUP BY game, status`
+    ).all(),
+    db.prepare(
+      `SELECT status, COUNT(*) AS n, COUNT(DISTINCT user_id) AS players,
+              SUM(wager) AS staked, SUM(COALESCE(payout, 0)) AS paid,
+              MAX(COALESCE(payout, 0) - wager) AS best
+         FROM coin_bets GROUP BY status`
+    ).all(),
+    db.prepare(
+      `SELECT status, COUNT(*) AS n, COUNT(DISTINCT user_id) AS players,
+              SUM(stake) AS staked, SUM(COALESCE(payout, 0)) AS paid,
+              MAX(COALESCE(payout, 0) - stake) AS best
+         FROM hilo_games GROUP BY status`
+    ).all(),
+    db.prepare(
+      `SELECT COUNT(DISTINCT user_id) AS n FROM (
+         SELECT user_id FROM casino_bets UNION
+         SELECT user_id FROM coin_bets UNION
+         SELECT user_id FROM hilo_games)`
+    ).first(),
+    db.prepare(
+      `SELECT created_at, staked, paid FROM (
+         SELECT created_at, wager AS staked, COALESCE(payout, 0) AS paid FROM casino_bets WHERE status IN ('WON','LOST')
+         UNION ALL
+         SELECT created_at, wager, COALESCE(payout, 0) FROM coin_bets WHERE status IN ('WON','LOST')
+         UNION ALL
+         SELECT created_at, stake, COALESCE(payout, 0) FROM hilo_games WHERE status IN ('BUST','CASHED'))
+        WHERE datetime(created_at) >= datetime('now', '-21 days')`
+    ).all().catch(() => ({ results: [] }))
+  ]);
+
+  // Anything not decided yet is "in play", whatever each table calls it.
+  const DECIDED = new Set(["WON", "LOST", "BUST", "CASHED"]);
+  const games = new Map();
+  const add = (key, row) => {
+    const g = games.get(key) || { game: key, name: GAME_NAMES[key] || key, bets: 0, players: 0, staked: 0, paidOut: 0, live: 0, biggestWin: 0 };
+    if (DECIDED.has(String(row.status))) {
+      g.bets += num(row.n);
+      g.staked += num(row.staked);
+      g.paidOut += num(row.paid);
+      g.biggestWin = Math.max(g.biggestWin, num(row.best));
+    } else {
+      g.live += num(row.n);
+    }
+    g.players = Math.max(g.players, num(row.players));
+    games.set(key, g);
+  };
+
+  for (const r of shared.results || []) add(String(r.game || "other"), r);
+  for (const r of coin.results || []) add("flip", r);
+  for (const r of hilo.results || []) add("hilo", r);
+
+  const list = [...games.values()].map((g) => ({
+    ...g,
+    houseNet: g.staked - g.paidOut,
+    holdPct: g.staked ? Math.round(((g.staked - g.paidOut) / g.staked) * 1000) / 10 : null
+  })).sort((a, b) => b.staked - a.staked);
+
+  const staked = list.reduce((s, g) => s + g.staked, 0);
+  const paidOut = list.reduce((s, g) => s + g.paidOut, 0);
+
+  // The house's take by Chicago day, same shape the picks chart uses.
+  const days = new Map();
+  for (const r of recent.results || []) {
+    const key = dayKey(r.created_at);
+    if (!key) continue;
+    if (!days.has(key)) days.set(key, { day: key, bets: 0, staked: 0, houseNet: 0 });
+    const d = days.get(key);
+    d.bets += 1;
+    d.staked += num(r.staked);
+    d.houseNet += num(r.staked) - num(r.paid);
+  }
+
+  return {
+    bets: list.reduce((s, g) => s + g.bets, 0),
+    players: num(everyone?.n),
+    staked,
+    paidOut,
+    houseNet: staked - paidOut,
+    holdPct: staked ? Math.round(((staked - paidOut) / staked) * 1000) / 10 : null,
+    live: list.reduce((s, g) => s + g.live, 0),
+    games: list,
+    days: [...days.values()].sort((a, b) => a.day.localeCompare(b.day)).slice(-14)
+  };
+}
+
 async function timed(fn) {
   const t0 = Date.now();
   try {
@@ -184,7 +286,7 @@ export async function onRequestGet(context) {
   const now = Date.now();
   const todayStart = new Date(new Date().toLocaleDateString("en-US", { timeZone: "America/Chicago" })).toISOString();
 
-  const [status, ops, reconcile, markets, picks, users, coin, presence, music, tmdbProbe, wallet, book] = await Promise.all([
+  const [status, ops, reconcile, markets, picks, users, coin, presence, music, tmdbProbe, wallet, book, casinoStats] = await Promise.all([
     readStatus(db, ["settle:last", "odds:quota", "autoopen:last", "backup:last"]),
     db.prepare(`SELECT status, COUNT(*) AS n FROM wallet_operations GROUP BY status`).all(),
     db.prepare(
@@ -224,7 +326,8 @@ export async function onRequestGet(context) {
       const balance = await readBalance(env, user.login);
       return { readable: balance !== null, balance, writes: walletWritesEnabled(env) };
     }),
-    bookOf(db).catch(() => null)
+    bookOf(db).catch(() => null),
+    casinoBook(db).catch(() => null)
   ]);
 
   const settleLast = status["settle:last"] || null;
@@ -270,6 +373,7 @@ export async function onRequestGet(context) {
       riding: Number(picks?.riding || 0)
     },
     book,
+    casinoBook: casinoStats,
     users: { total: Number(users?.total || 0), today: Number(users?.today || 0) },
     coin: coin ? { betsToday: Number(coin.bets_today || 0), roundsToday: Number(coin.rounds_today || 0), inRoom: Number(coin.in_room || 0) } : null,
     presence: presence ? { tabs: Number(presence.tabs || 0), people: Number(presence.people || 0), guests: Number(presence.guests || 0) } : null,
