@@ -11,59 +11,43 @@
 <style>
 
 /* ============================================================
-   SPOOKY SEASON — everything below is the whole theme.
+   SPOOKY SEASON
 
-   Two levels, both switched by one class on <body>:
+   The whole palette is eight declarations. Because every accent in
+   v3.css now reads rgba(var(--gold-rgb), a) rather than a literal,
+   restating three numbers repaints every border, glow, tab, chip and
+   button on the site.
 
-     .spooky        the palette. Gold becomes pumpkin, the burgundy
-                    becomes a deep purple, the near-black warms toward
-                    violet. Eleven custom properties, nothing else.
+     .spooky        the palette, and nothing else
+     .spooky.full   the palette plus the dressing: cobwebs, bats, fog,
+                    a lit brand mark and a burning Live flag
 
-     .spooky.full   the palette plus the dressing: cobwebs in the top
-                    corners, a few bats drifting, fog along the bottom,
-                    a lit brand mark and a glowing Live flag.
-
-   Nothing here touches layout, so it can go live and come off again
-   by adding and removing one class in the shell.
+   No layout is touched, so it goes on and comes off with one class.
    ============================================================ */
 
 body.spooky{
-  /* surfaces, pulled a few degrees toward violet */
+  --gold-rgb:255,140,26;      /* pumpkin, was 232,191,53 */
+  --brand-rgb:124,58,237;     /* witch purple, was 165,18,47 */
+  --burg-rgb:91,33,182;
   --ink:#0a0710;
   --panel:#14101c;
   --panel-2:#1b1626;
   --panel-3:#221c2f;
-  --line:rgba(255,255,255,.1);
   --line-2:rgba(255,180,90,.2);
-
-  /* the accent: pumpkin instead of gold */
-  --gold:#ff8c1a;
-  --gold-dim:rgba(255,140,26,.14);
-
-  /* the brand red becomes witch purple */
-  --burg:#5b21b6;
-  --red-brand:#5b21b6;
-  --red-brand-2:#7c3aed;
-  --red-glow:rgba(124,58,237,.45);
-
-  /* win and loss stay green and red: money has to stay readable */
+  /* green and red are untouched: money has to stay readable */
 }
 
-/* The mark gets lit from inside, like a carved pumpkin. */
-body.spooky.full .brand-mark{
-  filter:drop-shadow(0 0 7px rgba(255,140,26,.75));
-}
+/* ---- the dressing, only in .full ---- */
+
+/* The mark lit from inside, like a carved pumpkin. */
+body.spooky.full .brand-mark{filter:drop-shadow(0 0 7px rgba(255,140,26,.75))}
 body.spooky.full .topnav{
   background:linear-gradient(180deg,rgba(124,58,237,.14),transparent 92%),rgba(10,7,16,.93);
-  border-bottom-color:rgba(255,140,26,.22);
 }
+/* Live is the thing worth clicking, so it burns. */
+body.spooky.full .ec-flag.live{box-shadow:0 0 14px rgba(255,140,26,.55)}
 
-/* Live is the thing you want people to click, so it burns. */
-body.spooky.full .ec-flag.live{
-  box-shadow:0 0 14px rgba(255,140,26,.55);
-}
-
-/* Cobwebs, one in each top corner, behind everything. */
+/* Cobwebs in the top corners, behind everything. */
 body.spooky.full .web{
   position:fixed;top:var(--nav-h);width:190px;height:190px;z-index:1;
   pointer-events:none;opacity:.16;color:#d8d2c4;
@@ -72,26 +56,21 @@ body.spooky.full .web.left{left:0}
 body.spooky.full .web.right{right:0;transform:scaleX(-1)}
 body:not(.spooky) .web,body.spooky:not(.full) .web{display:none}
 
-/* A few bats, drifting slowly across and back. Low enough to read as
-   texture rather than decoration that demands attention. */
+/* A few bats drifting across. Low enough to read as texture. */
 body.spooky.full .bat{
-  position:fixed;z-index:1;pointer-events:none;color:#1b1626;
-  opacity:.5;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6));
+  position:fixed;z-index:1;pointer-events:none;color:#120e1a;
+  opacity:.55;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7));
   animation:batdrift linear infinite;
 }
 body:not(.spooky) .bat,body.spooky:not(.full) .bat{display:none}
 .bat svg{display:block;animation:batflap .42s ease-in-out infinite alternate}
 @keyframes batflap{from{transform:scaleY(1)}to{transform:scaleY(.72)}}
-@keyframes batdrift{
-  from{transform:translateX(-14vw)}
-  to{transform:translateX(114vw)}
-}
+@keyframes batdrift{from{transform:translateX(-14vw)}to{transform:translateX(114vw)}}
 
 /* Fog along the bottom of the window. */
 body.spooky.full::after{
   content:"";position:fixed;left:0;right:0;bottom:0;height:120px;z-index:2;
-  pointer-events:none;
-  background:linear-gradient(to top,rgba(124,58,237,.16),transparent);
+  pointer-events:none;background:linear-gradient(to top,rgba(124,58,237,.16),transparent);
 }
 
 /* The season strip, above the page title. */
