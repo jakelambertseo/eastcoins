@@ -15,6 +15,7 @@
 
 import { slugFor } from "./_slug.js";
 import { LEAGUES } from "./_teams.js";
+import { isFight, versus } from "./_fights.js";
 
 const COLOR = { gold: 0xe8bf35, green: 0x4ddb8b, red: 0xff6b85, grey: 0x8a8580, blue: 0x8fc3d7 };
 const SITE = "https://eastcoin.vip";
@@ -87,7 +88,7 @@ export function pickEmbed({ user, market, pick }) {
       `Stake **${zc(pick.wager)}** · pays **${zc(pick.returnsIfWon)}** if it lands${pick.allIn ? " · 🎰 ALL IN" : ""}\n` +
       `${SITE}/g/${slug}`,
     thumbnail: logoFor(market.sport, pick.team) ? { url: logoFor(market.sport, pick.team) } : undefined,
-    footer: { text: `${market.away_name} at ${market.home_name}` },
+    footer: { text: `${market.away_name} ${versus(market.sport)} ${market.home_name}` },
     timestamp: new Date().toISOString()
   };
 }
@@ -115,8 +116,8 @@ export function settledEmbed(entry) {
   const hasScore = Number.isFinite(entry.awayScore) && Number.isFinite(entry.homeScore);
   const score = hasScore ? ` ${entry.awayScore}–${entry.homeScore}` : "";
   const title = voided
-    ? `Voided: ${entry.away} at ${entry.home}`
-    : `Final: ${entry.away} at ${entry.home}${score}`;
+    ? `${isFight(entry.sport) ? "Draw" : "Voided"}: ${entry.away} ${versus(entry.sport)} ${entry.home}`
+    : `Final: ${entry.away} ${versus(entry.sport)} ${entry.home}${score}`;
   const lines = (entry.lines || []).map((p) => {
     const mark = p.status === "WON" ? "✅" : p.status === "LOST" ? "❌" : p.status === "REFUNDED" ? "↩️" : "⚠️";
     const net = p.status === "WON" ? `+${zc(p.profit)}` : p.status === "LOST" ? `−${zc(p.wager)}` : p.status === "REFUNDED" ? "refunded" : "payout pending";
@@ -125,14 +126,14 @@ export function settledEmbed(entry) {
   const total = (entry.won || 0) + (entry.lost || 0) + (entry.refunded || 0);
   const summary = voided
     ? `${entry.refunded || 0} stake${entry.refunded === 1 ? "" : "s"} refunded`
-    : `**${entry.winnerName}** win · ${entry.won || 0} of ${total} picks cashed · ${zc(entry.paid)} paid out`;
+    : `**${entry.winnerName}** ${isFight(entry.sport) ? "wins" : "win"} · ${entry.won || 0} of ${total} picks cashed · ${zc(entry.paid)} paid out`;
   return {
     color: voided ? COLOR.grey : entry.won ? COLOR.green : COLOR.red,
     title,
     url: `${SITE}/g/${entry.slug}`,
     description: `${summary}${lines.length ? "\n\n" + lines.join("\n") : "\n\nNobody had a pick on this one."}\n\n${SITE}/g/${entry.slug}`,
     thumbnail: !voided && logoFor(entry.sport, entry.winnerName) ? { url: logoFor(entry.sport, entry.winnerName) } : undefined,
-    footer: { text: entry.failed ? `⚠ ${entry.failed} payout(s) failed — being retried` : "Settled automatically from the final score" },
+    footer: { text: entry.failed ? `⚠ ${entry.failed} payout(s) failed — being retried` : (entry.source === "admin-result" ? "Settled by an admin" : "Settled automatically from the final score") },
     timestamp: new Date().toISOString()
   };
 }

@@ -214,6 +214,16 @@
 > lives; chat links and the page must keep agreeing. `g/example.html` is
 > the original static mockup, kept for the explainer only.
 >
+> **Fights (boxing, MMA)** — `_fights.js` holds `MANUAL_SPORTS`. Fight
+> markets open from the admin form like any other (sport `boxing` or
+> `mma`), lock at the start time, and are excluded from the scheduled
+> settlement loop (no scores feed). Once started, the admin page shows
+> "A won / B won / Draw, refund all"; `admin/settle-market.js` pays out
+> through `applyVerdict` in `settle.js` (the same path and per-pick
+> idempotency as automatic settlement), records `settlement_source =
+> 'admin-result'`, and posts the chat line and Discord card. Team games
+> are refused there. Fights read "A vs B" in chat, Discord and the game page.
+>
 > **Daily recap** — `/api/admin/recap` (cron key or owner) posts one
 > Discord card with every person whose picks settled the previous
 > Central day: record and net, best to worst, plus day totals. The cron

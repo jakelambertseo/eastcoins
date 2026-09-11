@@ -3248,3 +3248,7 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
   .spooky-layer .bat{display:none}
   .spooky-layer .bat svg{animation:none}
 }
+
+/* Admin: the result row under a fight that has started. */
+.adm-settle{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 4px}
+.adm-settle .btn{height:32px;padding:0 12px;flex:0 0 auto}

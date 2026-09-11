@@ -44,6 +44,10 @@
     return node;
   }
 
+  // Fights have no scores feed: the result is entered here by hand.
+  const isFightSport = (sport) => sport === "boxing" || sport === "mma";
+  const vsOf = (m) => (isFightSport(m.sport) ? "vs" : "at");
+
   /* ---------------------------------------------------------- data */
 
   async function load() {
@@ -169,7 +173,9 @@
         ["baseball", "Baseball (MLB)"],
         ["american-football", "Football (NFL / CFB)"],
         ["basketball", "Basketball (NBA)"],
-        ["hockey", "Hockey (NHL)"]
+        ["hockey", "Hockey (NHL)"],
+        ["boxing", "Boxing (settled by hand)"],
+        ["mma", "MMA / UFC (settled by hand)"]
       ]
     });
     field("league", "League label", { placeholder: "MLB", value: "MLB" });
@@ -178,6 +184,16 @@
     field("awayOdds", "Away line", { type: "number", placeholder: "150", step: "1" });
     field("homeOdds", "Home line", { type: "number", placeholder: "-175", step: "1" });
     field("startsAt", "Starts at (local)", { type: "datetime-local" });
+
+    // Picking a sport fills in its usual league label, unless one was typed.
+    const LEAGUE_FOR = { baseball: "MLB", "american-football": "NFL", basketball: "NBA", hockey: "NHL", boxing: "Boxing", mma: "UFC" };
+    fields.sport.addEventListener("change", () => {
+      const now = fields.league.value.trim();
+      if (!now || Object.values(LEAGUE_FOR).includes(now) || now === "CFB") fields.league.value = LEAGUE_FOR[fields.sport.value] || "";
+      const fight = isFightSport(fields.sport.value);
+      fields.away.placeholder = fight ? "Ryan Garcia" : "Cincinnati Reds";
+      fields.home.placeholder = fight ? "Conor Benn" : "Los Angeles Dodgers";
+    });
 
     card.append(grid);
 
@@ -340,7 +356,7 @@
       const row = el("div", `adm-market ${market.state.toLowerCase()}`);
 
       const top = el("div", "adm-market-top");
-      top.append(el("strong", null, `${market.away} at ${market.home}`));
+      top.append(el("strong", null, `${market.away} ${vsOf(market)} ${market.home}`));
       top.append(el("span", "adm-tag", market.state));
       if (market.needsAttention) {
         top.append(el("span", "adm-tag bad", `${market.needsAttention} stuck`));
@@ -374,6 +390,45 @@ ${cost}`)) return;
       }
 
       row.append(top);
+
+      // Fights: once the first bell has gone, the result is entered
+      // here. Payouts use the same code as automatic settlement.
+      const started = new Date(market.startsAt).getTime() <= Date.now();
+      if (isFightSport(market.sport) && started && market.state !== "SETTLED" && market.state !== "VOID") {
+        const bar = el("div", "adm-settle");
+        bar.append(el("span", "adm-note", "Result:"));
+        const choice = (label, winner, primary) => {
+          const b = el("button", `btn${primary ? " primary" : ""}`, label);
+          b.type = "button";
+          b.disabled = local.busy;
+          b.addEventListener("click", async () => {
+            const staked = market.totals.away.staked + market.totals.home.staked;
+            const side = winner === "draw" ? null : market.totals[winner];
+            const name = winner === "away" ? market.away : market.home;
+            const cost = winner === "draw"
+              ? `Every pick is refunded: ${staked} ZCoins back across ${market.totals.picks} pick(s).`
+              : `${side.picks} pick(s) on ${name} are paid ${side.exposure} ZCoins. ${market.totals.picks - side.picks} pick(s) lose.`;
+            const note = window.prompt(
+              `Settle ${market.away} vs ${market.home}: ${label}?\n\n${cost}\n\n` +
+              `Optional note for the result, e.g. "KO, round 6". Cancel to go back.`, "");
+            if (note === null) return;
+            const result = await post_("/api/picks/admin/settle-market", { marketId: market.id, winner, note });
+            local.message = result.ok
+              ? { tone: "good", text: `Settled ${market.away} vs ${market.home}: ${label}` +
+                  (result.won ? `. ${result.won} winner(s), ${result.paid} ZC paid.` : result.refunded ? `. ${result.refunded} pick(s) refunded.` : ".") }
+              : { tone: "bad", text: result.message || "Couldn't settle that fight." };
+            await load();
+            paint();
+          });
+          return b;
+        };
+        bar.append(
+          choice(`${market.away} won`, "away", true),
+          choice(`${market.home} won`, "home", true),
+          choice("Draw, refund all", "draw", false)
+        );
+        row.append(bar);
+      }
 
       const meta = el("p", "adm-note");
       const when = new Date(market.startsAt);

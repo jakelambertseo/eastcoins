@@ -9,12 +9,15 @@
    ============================================================ */
 
 import { BADGE } from "./bot/_bot.js";
+import { isFight, versus } from "./_fights.js";
 
 const SPORT_EMOJI = {
   "american-football": "\u{1F3C8}",
   baseball: "\u{26BE}",
   basketball: "\u{1F3C0}",
-  hockey: "\u{1F3D2}"
+  hockey: "\u{1F3D2}",
+  boxing: "\u{1F94A}",
+  mma: "\u{1F94B}"
 };
 
 /** Badge only when every market agrees; a mixed slate gets none. */
@@ -45,7 +48,7 @@ export function composeOpen(markets) {
 
   if (markets.length <= 2) {
     const each = markets.map((m) =>
-      `${m.away_name} ${formatLine(m.away_odds_locked)} at ` +
+      `${m.away_name} ${formatLine(m.away_odds_locked)} ${versus(m.sport)} ` +
       `${m.home_name} ${formatLine(m.home_odds_locked)}`
     );
     const closes = markets.length === 1 ? ` \u00b7 closes ${timeOf(markets[0].starts_at)}` : "";
@@ -89,7 +92,7 @@ export function composeClosingSoon(markets, minutes) {
   const when = `Closing in ${minutes} minute${minutes === 1 ? "" : "s"}`;
   if (markets.length <= 2) {
     const each = markets.map((m) =>
-      `${m.away_name} ${formatLine(m.away_odds_locked)} at ${m.home_name} ${formatLine(m.home_odds_locked)}`
+      `${m.away_name} ${formatLine(m.away_odds_locked)} ${versus(m.sport)} ${m.home_name} ${formatLine(m.home_odds_locked)}`
     );
     return `${BADGE} ${lead}${when} \u2014 ${each.join(" \u00b7 ")} \u00b7 !pick <amount> <team>`;
   }
@@ -113,7 +116,7 @@ export function composeClosed(markets, totals = {}) {
     : "";
 
   if (markets.length <= 2) {
-    const each = markets.map((m) => `${m.away_name} at ${m.home_name}`);
+    const each = markets.map((m) => `${m.away_name} ${versus(m.sport)} ${m.home_name}`);
     return `${BADGE} ${lead}Betting closed \u2014 ${each.join(" \u00b7 ")}${riding}.`;
   }
 
@@ -147,7 +150,7 @@ export function composeSettled(entries) {
     const e = done[0];
     if (e.outcome === "VOID") {
       const vlink = e.slug ? ` · eastcoin.vip/g/${e.slug}` : "";
-      return `${BADGE} ${lead}${e.away} at ${e.home} voided — ` +
+      return `${BADGE} ${lead}${e.away} ${versus(e.sport)} ${e.home} ${isFight(e.sport) ? "ended in a draw" : "voided"} — ` +
         `${e.refunded || 0} stake${e.refunded === 1 ? "" : "s"} refunded${vlink}.${trouble}`;
     }
     const score = Number.isFinite(e.awayScore) && Number.isFinite(e.homeScore)
@@ -156,7 +159,7 @@ export function composeSettled(entries) {
       ? `${won} winner${won === 1 ? "" : "s"}, ${paid.toLocaleString()} ZC paid`
       : "no winners";
     const link = e.slug ? ` · eastcoin.vip/g/${e.slug}` : "";
-    return `${BADGE} ${lead}${e.winnerName} win${score} — ${payout}${link}.${trouble} !record for yours.`;
+    return `${BADGE} ${lead}${e.winnerName} ${isFight(e.sport) ? "wins" : "win"}${score} — ${payout}${link}.${trouble} !record for yours.`;
   }
 
   const day = done.find((e) => e.day)?.day || "";
