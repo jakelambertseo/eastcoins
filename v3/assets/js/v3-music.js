@@ -37,9 +37,14 @@
   // nothing and grants nothing.
   const MODS = new Set(["zwades", "andyreidisapawg", "bootypaper"]);
 
-  const config = window.EASTCOIN_MUSIC_CONFIG || {};
-  const ROOM = String(config.room || "main");
-  const BASE = String(config.websocketUrl || "").trim();
+  /* Read on every use, not captured once at load: the configuration
+     service fills EASTCOIN_MUSIC_CONFIG in from /api/config, and this
+     file is parsed before that answer arrives. A const here would pin
+     whatever was true a few milliseconds too early — which, before the
+     service existed, was simply the hardcoded production Worker. */
+  const musicConfig = () => window.EASTCOIN_MUSIC_CONFIG || {};
+  const room = () => String(musicConfig().room || "main");
+  const base = () => String(musicConfig().websocketUrl || "").trim();
 
   /* ============================================================ connection */
 
@@ -151,12 +156,35 @@
     return MODS.has(conn.login);
   }
 
+  /* The room URL arrives with the configuration service, and this file is
+     parsed before it answers — so an early connect (a dock remembered
+     from last time, or the Green Room opened directly) can find nothing
+     configured. Waiting for the answer rather than giving up is the
+     difference between "connects a moment later" and "never connects
+     this page load". Guarded so a dozen callers queue one retry, and a
+     no-op once the answer is in. */
+  let awaitingConfig = false;
+  function retryWhenConfigured() {
+    if (awaitingConfig || !window.ECConfig?.ready) return;
+    awaitingConfig = true;
+    window.ECConfig.ready.then(() => {
+      awaitingConfig = false;
+      if (!base()) return;
+      connect();
+      // Anything already drawn said the room was unconfigured. It is not
+      // any more, and the repaint is what replaces that message without
+      // waiting for the socket to say something first.
+      emit();
+    });
+  }
+
   function connect() {
-    if (!BASE || conn.socket) return;
+    if (conn.socket) return;
+    if (!base()) return retryWhenConfigured();
 
     let url;
     try {
-      url = new URL(`/room/${encodeURIComponent(ROOM)}`, BASE);
+      url = new URL(`/room/${encodeURIComponent(room())}`, base());
       url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
       url.searchParams.set("client", clientId());
     } catch {
@@ -971,13 +999,13 @@
         return;
       }
 
-      if (!BASE) return;
+      if (!base()) return;
       searching = true;
       searchNote = "";
       renderResults();
 
       try {
-        const url = new URL("/search", BASE);
+        const url = new URL("/search", base());
         url.searchParams.set("q", raw);
         const response = await fetch(url.href);
         const payload = await response.json();
@@ -999,9 +1027,9 @@
     }
 
     async function loadHistory() {
-      if (!BASE) return;
+      if (!base()) return;
       try {
-        const url = new URL(`/history/${encodeURIComponent(ROOM)}`, BASE);
+        const url = new URL(`/history/${encodeURIComponent(room())}`, base());
         const response = await fetch(url.href);
         const payload = await response.json();
         // Newest first by when it actually PLAYED, falling back to the
@@ -1573,7 +1601,7 @@
       jamgie2.alt = "";
       title.append(el("span", "mtitle-text", "The Green Room"), jamgie, jamgie2);
       refs.room = el("div", "room-slot");
-      refs.listeners = el("span", "mlisteners", BASE ? "Connecting\u2026" : "Room not configured");
+      refs.listeners = el("span", "mlisteners", base() ? "Connecting\u2026" : "Room not configured");
       refs.room.append(refs.listeners);
       head.append(title, refs.room);
       root.append(head);
@@ -1585,7 +1613,7 @@
       noticeEl.hidden = true;
       root.append(noticeEl);
 
-      if (!BASE) {
+      if (!base()) {
         root.append(el("p", "mq-empty", "No room server is configured for this build."));
         return;
       }
@@ -1840,7 +1868,7 @@
     function paint(state) {
       if (!root) return;
       if (!refs.side && !refs.stagewrap) { build(); renderResults(); }
-      if (!BASE) return;
+      if (!base()) return;
 
       if (!state) refs.listeners.textContent = "Connecting\u2026";
 

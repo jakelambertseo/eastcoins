@@ -360,11 +360,27 @@
     if (chatMounted) return;
     chatMounted = true;
     chatMountedAt = Date.now();
-    els.chatFrame.src = els.chatFrame.dataset.src;
     els.chatFrame.hidden = false;
     // .chat-placeholder sets display:grid, which beats [hidden]'s UA
     // display:none — so remove it outright rather than hiding it.
     els.chatPlaceholder?.remove();
+
+    // Which channel is a deployment's choice now (TWITCH_CHAT_CHANNEL,
+    // via /api/config), and eastcoins-config.js writes the answer into
+    // data-src. Loading what the HTML shipped with and swapping on
+    // arrival would mount one channel's chat only to throw it away, so
+    // wait for the answer instead — a same-origin fetch that has been in
+    // flight since the first script on the page. It resolves even when it
+    // fails, in which case data-src is what the HTML said and chat mounts
+    // exactly as it always did.
+    const load = () => {
+      // Hidden again while we waited: unmountChat() already had its say.
+      if (!chatMounted) return;
+      els.chatFrame.src = els.chatFrame.dataset.src;
+      chatMountedAt = Date.now();
+    };
+    if (window.ECConfig?.ready) window.ECConfig.ready.then(load);
+    else load();
 
     if (!chatWatchdog) {
       chatWatchdog = window.setInterval(chatWatchdogTick, 60000);

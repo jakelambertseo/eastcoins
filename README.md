@@ -1,5 +1,7 @@
 # EastCoin Music Player
 
+> Setting up the whole site to run locally? See **[DEVELOPMENT.md](DEVELOPMENT.md)**.
+
 A shell-owned YouTube jukebox that floats beside the persistent Twitch chat, on the V2 shell (`index.html`). Opened from the ♫ button in the top nav, next to Settings — reachable from Events, the watch view, and MultiView/Picks alike, and stays mounted (and playing) across all of them the same way the persistent Twitch chat does.
 
 ## What it does
@@ -17,7 +19,8 @@ A shell-owned YouTube jukebox that floats beside the persistent Twitch chat, on 
 ```
 assets/eastcoins-music-player.js    — dock UI, local queue, YouTube IFrame API, WebSocket client
 assets/eastcoins-music-player.css   — styled against v2/assets/css/tokens.css (V2 dark/burgundy/gold)
-assets/eastcoins-music-config.js    — websocketUrl / room config, plus the ?music=on share-link opener
+assets/eastcoins-config.js          — reads /api/config: chat channel, Green Room URL and room
+assets/eastcoins-music-config.js    — the ?music=on share-link opener
 worker/                             — optional Cloudflare Worker + Durable Object for shared mode
 ```
 
@@ -44,13 +47,10 @@ Wrangler will print a URL like:
 https://eastcoin-music-room.<your-workers-subdomain>.workers.dev
 ```
 
-Then edit `assets/eastcoins-music-config.js` and set:
-
-```js
-websocketUrl: "https://eastcoin-music-room.<your-workers-subdomain>.workers.dev",
-```
-
-The client converts that to `wss://` automatically and connects to `/room/main`. Commit and push the change like any other edit — no script needed.
+Then set `MUSIC_ROOM_URL` to that URL on the Pages project — or in `.env` when
+running locally. The browser reads it from `/api/config`, so no source file needs
+editing; the defaults live in `functions/api/_config.js`. The client converts the
+URL to `wss://` automatically and connects to `/room/main`.
 
 ### Verify the Worker
 

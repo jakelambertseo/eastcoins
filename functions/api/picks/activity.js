@@ -16,9 +16,9 @@
 
 import { slugFor } from "./_slug.js";
 import { utc } from "./_game.js";
+import { musicRoomUrl } from "../_config.js";
 
 const LIMIT = 80;
-const DEFAULT_MUSIC_ROOM = "https://eastcoin-music-room.jake-7f5.workers.dev";
 
 const person = (r) => ({
   login: String(r.twitch_login || "").toLowerCase(),
@@ -125,7 +125,7 @@ async function casinoResults(db) {
 }
 
 async function musicHistory(env) {
-  const base = String(env.MUSIC_ROOM_URL || DEFAULT_MUSIC_ROOM).trim().replace(/\/$/, "");
+  const base = musicRoomUrl(env);
   if (!base) return [];
   try {
     const r = await fetch(`${base}/history/main`, { cf: { cacheTtl: 60, cacheEverything: true } });

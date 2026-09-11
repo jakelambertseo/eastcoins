@@ -1,15 +1,18 @@
 /* EastCoin Music shared-room configuration.
-   Leave websocketUrl blank for local/single-browser mode.
-   After deploying the included Cloudflare Worker, set this to the Worker URL.
-   Example: https://eastcoin-music-room.<your-subdomain>.workers.dev
+
+   The Worker URL and room name are no longer written here. They come
+   from the configuration service — /api/config, applied by
+   /assets/eastcoins-config.js, which must load before this file — so
+   that pointing the site at a local Worker is the MUSIC_ROOM_URL
+   environment variable rather than an edit to this line. Defaults live
+   in functions/api/_config.js.
+
+   The object is created here regardless, because the music code reads
+   it whether or not the service has answered yet. Empty means "no room
+   configured", which the Green Room already knows how to draw. Anything
+   set on it before this runs is kept: an explicit value is a decision.
 */
-window.EASTCOIN_MUSIC_CONFIG = Object.assign(
-  {
-    websocketUrl: "https://eastcoin-music-room.jake-7f5.workers.dev",
-    room: "main"
-  },
-  window.EASTCOIN_MUSIC_CONFIG || {}
-);
+window.EASTCOIN_MUSIC_CONFIG = window.EASTCOIN_MUSIC_CONFIG || {};
 
 /*
   Shared-link music modifier.
