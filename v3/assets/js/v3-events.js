@@ -60,7 +60,9 @@
         seen.set(match.id, match);
       }
 
-      local.matches = [...seen.values()];
+      // Different ids can still be the same game: drop the provider's
+      // bare, early-dated copies (see withoutCopies in v3-sports.js).
+      local.matches = Sports.withoutCopies ? Sports.withoutCopies([...seen.values()]) : [...seen.values()];
       local.loaded = true;
       // Only a genuine provider failure counts as failed. An empty but
       // successful response is "nothing on today", which is a normal state.

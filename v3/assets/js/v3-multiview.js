@@ -158,7 +158,8 @@
     for (const match of [...unwrap(live), ...unwrap(today)]) {
       if (match?.id && !seen.has(match.id)) seen.set(match.id, match);
     }
-    local.catalog = [...seen.values()];
+    const Sports = window.ECV3Sports;
+    local.catalog = Sports?.withoutCopies ? Sports.withoutCopies([...seen.values()]) : [...seen.values()];
     local.catalogLoaded = true;
   }
 

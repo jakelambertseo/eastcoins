@@ -113,6 +113,55 @@
       .map(([key, list]) => [key, sortWithin(key, list)]);
   }
 
+  /* streamed.st sometimes lists one game twice: the full entry (art,
+     badges, every server) and a bare copy from a single stream source
+     ("golf" for MLB), dated two hours before first pitch and with no art.
+     isLive() goes by the date, so the copy read LIVE while the real card
+     said SOON. A match is a copy when a fuller match carries every stream
+     it has AND is the same game — same teams, or, when either side has no
+     team names, a start within three hours. A 24/7 channel shared by two
+     different games is therefore never folded. */
+  const THREE_HOURS = 3 * 60 * 60 * 1000;
+  const sourceKey = (s) => `${String(s?.source || "").toLowerCase()}:${String(s?.id ?? "")}`;
+  const teamKey = (m) => {
+    const names = [m?.teams?.home?.name, m?.teams?.away?.name]
+      .map((n) => String(n || "").toLowerCase().replace(/[^a-z0-9]/g, ""))
+      .filter(Boolean);
+    return names.length === 2 ? names.sort().join("|") : "";
+  };
+  const richness = (m) =>
+    (m?.sources?.length || 0) * 4 + (m?.poster ? 2 : 0) + (m?.teams?.home?.badge ? 1 : 0);
+  // Strict, so two copies can never each drop the other.
+  const fuller = (a, b) =>
+    richness(a) > richness(b) || (richness(a) === richness(b) && String(a.id) < String(b.id));
+
+  function sameGame(a, b) {
+    const ta = teamKey(a);
+    const tb = teamKey(b);
+    if (ta && tb) return ta === tb;
+    const da = Number(a?.date) || 0;
+    const db = Number(b?.date) || 0;
+    return Boolean(da && db && Math.abs(da - db) <= THREE_HOURS);
+  }
+
+  /** The fuller listing of the same game that carries all of match's streams, or null. */
+  function fullerCopy(match, matches) {
+    const keys = (match?.sources || []).map(sourceKey);
+    if (!keys.length) return null;
+    for (const other of matches) {
+      if (!other || other === match || other.id === match.id || !fuller(other, match)) continue;
+      const has = new Set((other.sources || []).map(sourceKey));
+      if (keys.every((k) => has.has(k)) && sameGame(match, other)) return other;
+    }
+    return null;
+  }
+
+  /** The list without bare copies of games already listed in full. */
+  function withoutCopies(matches) {
+    const list = matches.filter(Boolean);
+    return list.filter((m) => !fullerCopy(m, list));
+  }
+
   window.ECV3Sports = Object.freeze({
     SPORT_LABELS,
     SPORT_ORDER,
@@ -122,6 +171,8 @@
     groupRank,
     isLive,
     sortWithin,
-    grouped
+    grouped,
+    fullerCopy,
+    withoutCopies
   });
 })();

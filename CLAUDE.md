@@ -240,6 +240,15 @@
 > Every `!odds` reply ends with the Picks link and "GAMBA"; `withLink()`
 > trims the text before it so say()'s 400-byte cut never eats the link.
 >
+> **Provider copies are folded** — streamed.st's "golf" source relists
+> games (MLB, fights) as bare entries with numeric ids (`1150`), no art,
+> dated two hours before the start, so they read LIVE early. The full
+> listing already carries that stream. `ECV3Sports.withoutCopies()` (in
+> `v3-sports.js`) drops a match whose every stream a fuller match of the
+> same game carries (same teams, or starts within 3h when names are
+> missing); the Sports page and the MultiView picker use it, and
+> `v3-watch.js` `findMatch()` opens the full game for an old copy's link.
+>
 > **College football logos** — `v3/assets/js/v3-cfb-teams.js` (browser,
 > `window.EC_CFB_TEAMS`) and `functions/api/picks/_cfb.js` (server) hold
 > the same name -> ESPN id table, generated from ESPN's college team list

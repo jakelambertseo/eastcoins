@@ -75,7 +75,11 @@
       API.getLive().catch(() => null),
       API.getToday().catch(() => null)
     ]);
-    return [...unwrap(live), ...unwrap(today)].find((m) => m?.id === id) || null;
+    const all = [...unwrap(live), ...unwrap(today)];
+    const found = all.find((m) => m?.id === id) || null;
+    // A link to the provider's bare copy of a game (one server, no art)
+    // opens the full listing instead, which carries that server and the rest.
+    return (found && window.ECV3Sports?.fullerCopy?.(found, all)) || found;
   }
 
   // getStreams takes the MATCH, not (source, id) — it walks match.sources
