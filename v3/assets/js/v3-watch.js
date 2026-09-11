@@ -102,6 +102,15 @@
 
   /* ---------------------------------------------------------- helpers */
 
+  // Every stream frame is loaded through here so the referrer policy can
+  // never drift from the source it was chosen for. The rule itself lives in
+  // assets/eastcoins-youtube.js; with that module missing this falls back to
+  // the stricter policy, which is how the site behaved before.
+  function setStreamSrc(iframe, url) {
+    iframe.referrerPolicy = window.EastcoinYouTube?.framePolicy(url) || "no-referrer";
+    iframe.src = url;
+  }
+
   function currentSrc() {
     if (local.custom) return local.custom;
     return local.streams[local.active]?.embedUrl || "";
@@ -234,7 +243,7 @@
         local.active = Number(select.value) || 0;
         rememberServer();
         // Deliberate reload: a new server is a new stream.
-        if (dom.iframe) dom.iframe.src = currentSrc();
+        if (dom.iframe) setStreamSrc(dom.iframe, currentSrc());
       });
       dom.select = select;
       bar.append(select);
@@ -307,8 +316,7 @@
     iframe.title = local.match?.title || "Stream";
     iframe.allow = "autoplay; fullscreen; encrypted-media; picture-in-picture";
     iframe.allowFullscreen = true;
-    iframe.referrerPolicy = "no-referrer";
-    iframe.src = currentSrc();
+    setStreamSrc(iframe, currentSrc());
     frame.append(iframe, buildGameday());
 
     const bar = buildBar();
@@ -404,8 +412,7 @@
         try {
           const parsed = new URL(custom);
           if (parsed.protocol !== "https:") throw new Error("insecure");
-          // A YouTube page link (shared before search rewrote them) still plays.
-          local.custom = window.ECEmbed?.youtube?.(parsed.href) || parsed.href;
+          local.custom = parsed.href;
         } catch {
           local.error = "That doesn't look like a valid https link.";
         }

@@ -19,6 +19,15 @@
   const MIN_SPLIT = 18;
   const MAX_SPLIT = 82;
 
+  // Same rule as the watch view: providers get no-referrer, YouTube's own
+  // embeds get a policy that sends the origin, because YouTube answers a
+  // refererless frame with "error 153" instead of the video. The shared
+  // module assets/eastcoins-youtube.js decides which is which.
+  function setStreamSrc(iframe, url) {
+    iframe.referrerPolicy = window.EastcoinYouTube?.framePolicy(url) || "no-referrer";
+    iframe.src = url;
+  }
+
   const local = {
     count: 4,
     x: 50,               // vertical split, %
@@ -300,18 +309,17 @@
 
     if (existing && existing.parentElement) {
       existing.dataset.src = stream.embedUrl;
-      existing.src = stream.embedUrl;
+      setStreamSrc(existing, stream.embedUrl);
       return;
     }
 
     const frame = el("div", "mv-frame");
     const iframe = document.createElement("iframe");
     iframe.dataset.src = stream.embedUrl;
-    iframe.src = stream.embedUrl;
     iframe.title = panel.match?.title || `Panel ${index + 1}`;
     iframe.allow = "autoplay; fullscreen; encrypted-media; picture-in-picture";
     iframe.allowFullscreen = true;
-    iframe.referrerPolicy = "no-referrer";
+    setStreamSrc(iframe, stream.embedUrl);
     frame.append(iframe);
     body.replaceChildren(frame);
   }
@@ -456,10 +464,9 @@
       if (event.key !== "Enter") return;
       if (!/^https:\/\/\S+$/i.test(local.search)) return;
       const index = local.picking;
-      const pasted = window.ECEmbed?.youtube?.(local.search) || local.search;
       local.panels[index] = {
-        match: { id: `url:${pasted}`, title: "Custom stream" },
-        streams: [{ embedUrl: pasted }],
+        match: { id: `url:${local.search}`, title: "Custom stream" },
+        streams: [{ embedUrl: local.search }],
         active: 0,
         loading: false,
         reason: ""
@@ -708,7 +715,7 @@
           const url = String(id).slice(4);
           local.panels[index] = {
             match: { id, title: "Custom stream" },
-            streams: [{ embedUrl: window.ECEmbed?.youtube?.(url) || url }],
+            streams: [{ embedUrl: url }],
             active: 0, loading: false, reason: ""
           };
           updatePanel(index);

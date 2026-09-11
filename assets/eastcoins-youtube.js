@@ -70,6 +70,31 @@
     return `https://www.youtube-nocookie.com/embed/${video.id}${params.length ? `?${params.join("&")}` : ""}`;
   }
 
+  // YouTube's player refuses to configure itself when the frame reaches it
+  // with no Referer: since late 2025 it answers "Video player configuration
+  // error / error 153" instead of playing. EastCoin frames third-party
+  // streams with referrerpolicy="no-referrer" so a provider cannot see who
+  // sent the viewer, and that is what breaks YouTube. Its own embeds are the
+  // exception: they get the site's normal policy, which sends the origin
+  // (https://eastcoin.vip) and never the full path.
+  const YOUTUBE_HOSTS = new Set(["youtube.com", "youtu.be", "youtube-nocookie.com"]);
+
+  function isYouTube(raw) {
+    try {
+      const host = new URL(String(raw || "")).hostname
+        .replace(/^www\.|^m\.|^music\./, "")
+        .toLowerCase();
+      return YOUTUBE_HOSTS.has(host);
+    } catch {
+      return false;
+    }
+  }
+
+  // The referrerpolicy a stream iframe should carry for this URL.
+  function framePolicy(raw) {
+    return isYouTube(raw) ? "strict-origin-when-cross-origin" : "no-referrer";
+  }
+
   function watchUrl(video) {
     const url = new URL(`https://www.youtube.com/watch?v=${video.id}`);
     if (video.start) url.searchParams.set("t", `${video.start}s`);
@@ -84,6 +109,8 @@
   window.EastcoinYouTube = Object.freeze({
     extractVideo,
     buildEmbedUrl,
+    isYouTube,
+    framePolicy,
     watchUrl,
     toEmbedUrl
   });
