@@ -412,7 +412,8 @@
         try {
           const parsed = new URL(custom);
           if (parsed.protocol !== "https:") throw new Error("insecure");
-          local.custom = parsed.href;
+          // A YouTube page link (shared before search rewrote them) still plays.
+          local.custom = window.ECEmbed?.youtube?.(parsed.href) || parsed.href;
         } catch {
           local.error = "That doesn't look like a valid https link.";
         }
