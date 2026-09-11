@@ -138,6 +138,16 @@
 > poll dispatches `ec-presence` on `document`, which `v3-events.js` uses
 > for the "👀 n watching" pill on each card.
 >
+> **The book** — the dashboard opens with the house's side of Picks,
+> built by `bookOf()` in `functions/api/admin/dashboard.js` (payload key
+> `book`, drawn by `bookBlock()` in `v3-dashboard.js`): bets, stake,
+> house take and hold, paid out, players' record, open exposure priced
+> with `totalReturn`, today/7/14-day windows, a 14-day bar of the take by
+> Chicago day, per-league and top-bettor tables, and a casino comparison
+> line. The house's take is defined as minus the players' settled profit,
+> so it can never disagree with the ledger or a profile; open picks are
+> exposure, never profit.
+>
 > **Live scores** — `settle.js` `trackLiveScores()` runs every tick: for
 > LOCKED markets under 5h old with active picks it reads the Odds API live
 > board (no `daysFrom`, one credit per league per tick), writes

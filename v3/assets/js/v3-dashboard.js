@@ -43,6 +43,134 @@
     return c;
   }
 
+  /* ---------------------------------------------------------- the book
+
+     The house's side of Picks. Money still riding is shown apart from
+     the take, because an open pick is a liability, not a profit. */
+
+  const signed = (n) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${fmt(Math.abs(n))}`;
+  const zcs = (n) => {
+    const span = el("span", "zc-amount");
+    const mark = el("img", "zcoin-mark");
+    mark.src = "/v3/assets/img/zcoin.webp";
+    mark.alt = "ZC";
+    span.append(document.createTextNode(signed(n)), mark);
+    return span;
+  };
+
+  function stat(label, value, sub, tone) {
+    const box = el("div", `db-stat${tone ? ` ${tone}` : ""}`);
+    box.append(el("span", "db-stat-k", label));
+    const b = el("b");
+    if (value instanceof Node) b.append(value); else b.textContent = value;
+    box.append(b);
+    if (sub) box.append(el("span", "db-stat-s", sub));
+    return box;
+  }
+
+  function miniTable(title, head, rows) {
+    const box = el("div", "db-mini");
+    box.append(el("h3", null, title));
+    const table = el("table");
+    const tr = el("tr");
+    head.forEach((h, i) => tr.append(el("th", i ? "num" : null, h)));
+    const thead = el("thead");
+    thead.append(tr);
+    table.append(thead);
+    const body = el("tbody");
+    if (!rows.length) {
+      const empty = el("tr");
+      const td = el("td", "empty");
+      td.colSpan = head.length;
+      td.textContent = "Nothing yet.";
+      empty.append(td);
+      body.append(empty);
+    }
+    for (const cells of rows) {
+      const line = el("tr");
+      cells.forEach((c, i) => {
+        const td = el("td", i ? "num" : null);
+        if (c instanceof Node) td.append(c); else td.textContent = c;
+        line.append(td);
+      });
+      body.append(line);
+    }
+    table.append(body);
+    box.append(table);
+    return box;
+  }
+
+  function bookBlock(b) {
+    const wrap = el("section", "db-book");
+    const head = el("div", "db-book-head");
+    head.append(el("h2", null, "The book"), el("span", null, "Picks, all time · the house's take is exactly what players lost"));
+    wrap.append(head);
+
+    const stats = el("div", "db-stats");
+    stats.append(
+      stat("Bets taken", fmt(b.bets), `${fmt(b.bettors)} people · ${fmt(b.active)} still riding`),
+      stat("Amount bet", fmt(b.staked), `avg ${fmt(b.avgBet)} · biggest ${fmt(b.biggestBet)}`),
+      stat("House take", zcs(b.houseNet), b.holdPct === null ? "nothing settled yet" : `${b.holdPct}% of ${fmt(b.settledStaked)} settled`, b.houseNet >= 0 ? "good" : "bad"),
+      stat("Paid out", fmt(b.paidOut), `${fmt(b.won)} winning picks`),
+      stat("Players' record", `${fmt(b.won)}–${fmt(b.lost)}`, `${fmt(b.voided)} refunded`),
+      stat("On the hook", fmt(b.exposure), `if every open pick wins · ${fmt(b.riding)} staked`)
+    );
+    wrap.append(stats);
+
+    const windows = el("div", "db-windows");
+    [["Today", b.today], ["Last 7 days", b.week], ["Last 14 days", b.fortnight]].forEach(([label, w]) => {
+      const cell = el("div", "db-window");
+      cell.append(el("span", "db-stat-k", label));
+      const line = el("div", "db-window-row");
+      line.append(el("span", null, `${fmt(w.bets)} bets`), el("span", null, `${fmt(w.staked)} bet`));
+      const net = el("b", w.houseNet >= 0 ? "good" : "bad");
+      net.append(zcs(w.houseNet));
+      line.append(net);
+      cell.append(line);
+      windows.append(cell);
+    });
+    wrap.append(windows);
+
+    // Fourteen days of the house's take, in Chicago days.
+    const days = b.days || [];
+    if (days.length) {
+      const chart = el("div", "db-chart");
+      const peak = Math.max(1, ...days.map((d) => Math.abs(d.houseNet)));
+      for (const day of days) {
+        const col = el("div", "db-col");
+        col.title = `${day.day}: house ${signed(day.houseNet)} ZC · ${day.bets} bets · ${fmt(day.staked)} staked`;
+        const up = el("div", "db-up");
+        const down = el("div", "db-down");
+        const size = `${Math.round((Math.abs(day.houseNet) / peak) * 100)}%`;
+        if (day.houseNet >= 0) up.style.height = size; else down.style.height = size;
+        col.append(up, el("i"), down);
+        col.append(el("span", null, day.day.slice(5).replace("-", "/")));
+        chart.append(col);
+      }
+      const chartWrap = el("div", "db-chartwrap");
+      chartWrap.append(el("h3", null, "House take by day"), chart);
+      wrap.append(chartWrap);
+    }
+
+    const tables = el("div", "db-tables");
+    tables.append(miniTable("By league", ["League", "Bets", "Bet", "House"],
+      (b.leagues || []).map((l) => [l.league, fmt(l.bets), fmt(l.staked), zcs(l.houseNet)])));
+    tables.append(miniTable("Biggest bettors", ["Who", "Bets", "Bet", "Their net"],
+      (b.people || []).map((p) => [p.login, fmt(p.bets), fmt(p.staked), zcs(p.net)])));
+    wrap.append(tables);
+
+    if (b.casino) {
+      const c = b.casino;
+      const line = el("p", "db-casino");
+      line.append(document.createTextNode(`Casino, for comparison: ${fmt(c.bets)} bets · ${fmt(c.staked)} bet · house `));
+      line.append(zcs(c.houseNet));
+      line.append(document.createTextNode(c.staked ? ` (${Math.round((c.houseNet / c.staked) * 1000) / 10}%)` : ""));
+      wrap.append(line);
+    }
+
+    return wrap;
+  }
+
   function page(d) {
     const wrap = el("section", "dashboard");
     const head = el("div", "viewhead");
@@ -50,6 +178,9 @@
     copy.append(el("h1", null, "Dashboard"), el("p", null, `As of ${new Date(d.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} · refreshes every minute`));
     head.append(copy);
     wrap.append(head);
+
+    // The book first: it's the thing worth opening the page for.
+    if (d.book) wrap.append(bookBlock(d.book));
 
     const grid = el("div", "db-grid");
 
