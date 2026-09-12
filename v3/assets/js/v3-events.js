@@ -570,7 +570,18 @@
     return bar;
   }
 
+  // Rebuilding the page empties it for an instant, and the browser
+  // clamps the scroll to the top and leaves it there. Every caller —
+  // View more, a filter chip, the poll — wants the page to stay put, so
+  // the position is taken before the rebuild and restored after, in the
+  // same task, before anything is drawn.
   function paint() {
+    const scrollY = window.scrollY;
+    paintNow();
+    window.scrollTo(0, scrollY);
+  }
+
+  function paintNow() {
     root.replaceChildren();
 
     // October: one dismissible line saying the site is dressed up.
@@ -683,6 +694,7 @@
     for (const [key, list] of ordered) {
       const group = document.createElement("section");
       group.className = "sportgroup";
+      group.dataset.sport = key;
 
       const gh = document.createElement("div");
       gh.className = "sportgroup-head";
@@ -724,6 +736,14 @@
   const MIN_PAGE = 6;          // one column on a phone still gets a handful
   const shownBy = new Map();
 
+  // Just under the sticky nav, so the heading is the first thing seen.
+  function scrollToGroup(key) {
+    const head = root.querySelector(`.sportgroup[data-sport="${key}"] .sportgroup-head`);
+    if (!head) return;
+    const top = head.getBoundingClientRect().top + window.scrollY - 72;
+    window.scrollTo({ top: Math.max(0, top) });
+  }
+
   function moreRow(key, total, limit, page) {
     const row = document.createElement("div");
     row.className = "evmore";
@@ -746,7 +766,7 @@
       less.type = "button";
       less.className = "evmore-less";
       less.textContent = "Show fewer";
-      less.addEventListener("click", () => { shownBy.delete(key); paint(); });
+      less.addEventListener("click", () => { shownBy.delete(key); paint(); scrollToGroup(key); });
       row.append(less);
     }
     return row;
