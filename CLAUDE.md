@@ -131,6 +131,20 @@
 > max 20 ZC, 2× payout, same wallet ops as Picks. Client `v3-coin.js` polls
 > `/api/coin/state` every 1.5s; the first poll after a flip settles it.
 >
+> **Mines** — `/?view=mines` (`v3-mines.js`, `functions/api/casino/mines/*`,
+> table `mines_games`). Per-player like Hi-Lo: 25 tiles, 1–10 bombs, the
+> board committed as `sha256(seed)` before the first tile and the bombs
+> derived from the seed alone (Fisher–Yates over 0..24, each swap from
+> `sha256(seed:shuffle:i)`). Each safe tile pays `C(25,k)/C(S,k)` less the
+> same 4% edge Hi-Lo takes; cash out after any safe tile. **×50 is the hard
+> ceiling** — `multiplierFor()` and `cashOut()` both clamp, so the page can
+> never quote more than the payout honours, and `MAX_MINES` is 10 because
+> past that the ladder leaps (20 bombs goes ×4.8, ×28.8, ×220.8) and one
+> board could pay thousands the hourly cap cannot claw back. Winnings count
+> toward `HOUR_WIN_CAP` via `hourlyNet()`, which had to learn about
+> `mines_games` — any new casino game must be added there or it escapes the
+> cap. Results flow to the floor, the activity feed and profiles.
+>
 > **Presence** — every tab POSTs `/api/presence` (`v3-presence.js`, 30s
 > heartbeat + on route change) into `site_presence`; the Sports page's
 > "Who's here" strip reads GET `/api/presence`. A watch tab also sends

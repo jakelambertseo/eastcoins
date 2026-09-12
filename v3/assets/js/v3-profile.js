@@ -377,8 +377,8 @@
      Music. The tab is in the hash, so /u/name#casino opens there. */
 
   const TABS = [["overview", "Overview"], ["picks", "Picks"], ["casino", "Casino"], ["music", "Music"]];
-  const GAME_NAME = { flip: "Coin Flip", wheel: "Wheel", race: "Horse Race", hilo: "Higher or Lower" };
-  const GAME_ICON = { flip: "🪙", wheel: "🎡", race: "🐎", hilo: "🃏" };
+  const GAME_NAME = { flip: "Coin Flip", wheel: "Wheel", race: "Horse Race", hilo: "Higher or Lower", mines: "Mines" };
+  const GAME_ICON = { flip: "🪙", wheel: "🎡", race: "🐎", hilo: "🃏", mines: "💣" };
 
   function quickStat(label, value, note, tone) {
     const box = el("div", `pf-q${tone ? " " + tone : ""}`);

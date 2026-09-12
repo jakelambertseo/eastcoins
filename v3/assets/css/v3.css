@@ -3313,3 +3313,65 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
 .adm-rowbtn:disabled{opacity:.45;cursor:not-allowed}
 /* First action pushes the group to the right edge of the row. */
 .adm-market-top .adm-rowbtn:first-of-type{margin-left:auto}
+
+/* ============================================================
+   Casino — Mines
+
+   Twenty-five tiles. A covered tile is a button; uncovering it
+   either shows a gem or blows the board up. Everything else on
+   the page is the shared casino furniture (.cf-*).
+   ============================================================ */
+.mn-board{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:8px;
+  width:min(420px,100%);margin:6px auto 2px;
+}
+.mn-tile{
+  aspect-ratio:1;display:grid;place-items:center;
+  border:1px solid var(--line-2);border-radius:11px;
+  background:linear-gradient(160deg,var(--panel-3),var(--panel-2));
+  font-size:1.45rem;line-height:1;cursor:pointer;
+  transition:transform .12s ease,border-color .14s ease,background .2s ease,box-shadow .14s ease;
+}
+.mn-tile:hover:not(:disabled){transform:translateY(-2px);border-color:rgba(var(--gold-rgb),.5);box-shadow:0 8px 22px rgba(0,0,0,.45)}
+.mn-tile:disabled{cursor:default}
+.mn-tile.safe{
+  border-color:rgba(77,219,139,.45);background:var(--green-dim);
+  animation:mn-pop .22s ease-out;
+}
+.mn-tile.bomb{border-color:rgba(255,107,133,.35);background:var(--red-dim);opacity:.75}
+.mn-tile.bomb.hit{opacity:1;border-color:var(--red);box-shadow:0 0 0 2px rgba(255,107,133,.35),0 10px 30px rgba(255,107,133,.2)}
+.mn-tile.done:not(.safe):not(.bomb){opacity:.45}
+@keyframes mn-pop{from{transform:scale(.82)}to{transform:scale(1)}}
+.mn-tile.shake{animation:mn-shake .32s ease-in-out}
+@keyframes mn-shake{
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-5px)} 40%{transform:translateX(5px)}
+  60%{transform:translateX(-3px)} 80%{transform:translateX(3px)}
+}
+@media (prefers-reduced-motion:reduce){
+  .mn-tile,.mn-tile.safe,.mn-tile.shake{animation:none;transition:none}
+}
+
+/* Bomb-count picker, shown only before a board starts. */
+.mn-minesrow{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:center;margin-bottom:9px}
+.mn-label{color:var(--muted-2);font-size:.68rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.mn-mine{
+  min-width:38px;height:32px;padding:0 10px;border-radius:9px;
+  border:1px solid var(--line);background:var(--panel-2);
+  color:var(--muted);font-weight:800;font-size:.85rem;cursor:pointer;
+}
+.mn-mine:hover{color:var(--text);border-color:var(--line-2)}
+.mn-mine.on{border-color:rgba(var(--gold-rgb),.45);background:var(--gold-dim);color:var(--gold)}
+.mn-hint{color:var(--muted-2);font-size:.74rem;margin-left:2px}
+
+/* The ladder in the side column. */
+.mn-ladder{display:flex;flex-direction:column;gap:2px}
+.mn-rung{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:5px 8px;border-radius:7px;color:var(--muted);font-size:.8rem;
+}
+.mn-rung strong{font-family:var(--display);font-size:.92rem;color:var(--text)}
+.mn-rung.at{background:var(--green-dim);color:var(--green)}
+.mn-rung.at strong{color:var(--green)}
+.mn-rung.next{background:var(--gold-dim)}
+.mn-rung.next strong{color:var(--gold)}
