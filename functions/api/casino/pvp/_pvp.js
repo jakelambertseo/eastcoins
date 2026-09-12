@@ -60,7 +60,7 @@ const STUCK_MS = 2 * 60 * 1000;
 // The practice page at /pvp-test runs the same client against an engine
 // in the browser, where no ZCoin can move. Flip to false to reopen.
 export const GAMES = {
-  roulette: { key: "roulette", name: "Russian Roulette", paused: true },
+  roulette: { key: "roulette", name: "Russian Roulette", paused: false },
   standing: { key: "standing", name: "Last One Standing", paused: true }
 };
 export const gameFor = (key) => GAMES[String(key || "").toLowerCase()] || null;

@@ -3637,7 +3637,8 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
 .cf-phase.bad{color:var(--red)}
 
 /* Russian Roulette */
-.rr-ring{position:relative;width:min(320px,86vw);height:min(320px,86vw)}
+.pv-arena.roulette{min-height:480px;padding:22px 0 72px}
+.rr-ring{position:relative;width:min(400px,90vw);height:min(400px,90vw)}
 .rr-seat{position:absolute;width:66px;margin:-38px 0 0 -33px;text-align:center;transition:opacity .3s ease,transform .3s ease}
 .rr-av{width:42px;height:42px;margin:0 auto 5px;border-radius:50%;display:grid;place-items:center;overflow:hidden;position:relative;background:linear-gradient(150deg,#8e1231,#4a0a1c);color:var(--gold);font-family:var(--display);font-weight:800;font-size:.95rem;border:2px solid var(--panel);transition:box-shadow .2s ease,transform .2s ease}
 .rr-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}

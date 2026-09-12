@@ -208,8 +208,9 @@
 > revealed, and the animation is playback. `pvp_entries` is in
 > `hourlyNet()`, the floor, the activity feed, profiles and the dashboard's
 > book; a refund is neither a win nor a loss anywhere. No chat, no bot:
-> the tables live on the site only, by request. **Both are `paused: true`
-> in `GAMES` since 2026-09-12 evening**: off the floor, `join.js` refuses
+> the tables live on the site only, by request. **Roulette is live again
+> (2026-09-12 night, with the drawn cylinder); Standing is still `paused: true`
+> in `GAMES`**: off the floor, `join.js` refuses
 > with PAUSED before touching anything, the pages read "Closed for now",
 > and the floor still calls `settleDue` so an in-flight lobby resolves.
 > Work continues on **`/pvp-test`**, which loads the REAL `v3-pvp.js`
