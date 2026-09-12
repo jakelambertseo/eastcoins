@@ -226,6 +226,33 @@
 > Decided rows only (WON/LOST/BUST/CASHED); anything live counts as
 > neither.
 >
+> **D1 reads are the budget that actually binds (2026-09-12)** — the free
+> plan allows 5 million rows READ a day and the site spent them by about
+> 1:30 PM on a Saturday, which 500s login, presence and the whole casino
+> until midnight UTC. Two rules follow. **One: every hour/day filter must
+> compare the bare column**, `created_at >= datetime('now', '-1 hour')`, never
+> `datetime(created_at) >= …` — wrapping the column stops SQLite using any
+> index on it and turns the query into a full scan. **Two: any column a hot
+> path filters on needs an index**; `coin_bets` had one on `round_no` and
+> none on `user_id`, so `hourlyNet()` in `_engine.js` — which every casino
+> state poll calls, and the shared games poll every 1.5s — read the whole
+> table every time. Polling is the multiplier: a hidden tab now stops
+> polling (per-player games, the floor, the Who's here strip) or drops to a
+> fifth of the rate (the coin and the wheel, whose polls are what settle a
+> finished round and pay people, so they must never stop). Before adding a
+> poll or a per-hour aggregate, work out its rows/day.
+>
+> **The admin page** (`v3-admin.js`) carries the same head/strip/tabs shape:
+> six numbers from the markets already loaded, then Markets / Open a market
+> / Announce / Wallet, markets ten to a page. An action's result selects the
+> tab it belongs to, so a message never lands on a hidden panel. The
+> **dashboard** (`v3-dashboard.js`) leads with total users, total bets, each
+> side's take, open exposure and who is here, then Overview / Picks book /
+> Casino / Health; the Health tab's badge is counted off the built cards
+> (`.db-card.bad, .db-card.warn`) so a new card is included automatically.
+> Long lists page client-side via `pagedTable`/`pagedList`, keyed so the
+> one-minute refresh keeps the reader's page.
+>
 > **Admin links in the ⋯ menu** — `ownerMenu()` in `v3-shell.js` appends
 > Admin, Dashboard and Activity under a "Yours" heading for the logins in
 > its `ADMIN_LOGINS` set, which mirrors `ADMIN_ALLOWLIST` in
