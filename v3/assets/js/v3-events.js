@@ -695,13 +695,58 @@
 
       const grid = document.createElement("div");
       grid.className = "eventgrid";
-      for (const match of list) grid.append(card(match));
-
       group.append(gh, grid);
       root.append(group);
+
+      // A sport shows a few rows, then a "View more" button adds the same
+      // again. A row is however many columns the grid has at this width,
+      // measured now that it is in the page — eighty college games on a
+      // Saturday should not be eighty cards.
+      const cols = Math.max(1, String(getComputedStyle(grid).gridTemplateColumns || "").split(" ").filter(Boolean).length);
+      const page = Math.max(MIN_PAGE, cols * ROWS_PER_PAGE);
+      const limit = Math.min(list.length, Math.max(shownBy.get(key) || 0, page));
+      for (const match of list.slice(0, limit)) grid.append(card(match));
+      if (list.length > limit || limit > page) group.append(moreRow(key, list.length, limit, page));
     }
 
     if (pendingPicks.length) decoratePicks(pendingPicks);
+  }
+
+  /* ---------------------------------------------------------- view more
+
+     How many cards each sport is showing, by sport key, so a repaint
+     (a poll, a filter) keeps what someone has already opened. */
+
+  const ROWS_PER_PAGE = 4;
+  const MIN_PAGE = 6;          // one column on a phone still gets a handful
+  const shownBy = new Map();
+
+  function moreRow(key, total, limit, page) {
+    const row = document.createElement("div");
+    row.className = "evmore";
+    // The label carries its emoji; the button reads better without it.
+    const name = String(SPORT_LABELS[key] || SPORT_LABELS.other).replace(/^\S+\s+/, "");
+    if (total > limit) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "evmore-btn";
+      btn.append(document.createTextNode(`View more ${name} events`));
+      const left = document.createElement("span");
+      left.className = "evmore-left";
+      left.textContent = `${total - limit} more`;
+      btn.append(left);
+      btn.addEventListener("click", () => { shownBy.set(key, limit + page); paint(); });
+      row.append(btn);
+    }
+    if (limit > page) {
+      const less = document.createElement("button");
+      less.type = "button";
+      less.className = "evmore-less";
+      less.textContent = "Show fewer";
+      less.addEventListener("click", () => { shownBy.delete(key); paint(); });
+      row.append(less);
+    }
+    return row;
   }
 
   /* ---------------------------------------------------------- NFL picks

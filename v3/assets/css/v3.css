@@ -301,6 +301,17 @@ body.chat-hidden .chatrail{display:none}
   grid-template-columns:repeat(auto-fill,minmax(232px,1fr));
   gap:var(--gap);
 }
+/* Under a capped sport: the way to see the rest, and the way back. */
+.evmore{display:flex;align-items:center;justify-content:center;gap:14px;margin:12px 0 2px}
+.evmore-btn{
+  display:inline-flex;align-items:center;gap:10px;height:38px;padding:0 16px;border-radius:10px;
+  border:1px solid rgba(var(--gold-rgb),.35);background:var(--gold-dim);
+  color:var(--gold);font:inherit;font-weight:800;font-size:.84rem;cursor:pointer;
+}
+.evmore-btn:hover{background:rgba(var(--gold-rgb),.2);border-color:rgba(var(--gold-rgb),.55)}
+.evmore-left{padding:2px 8px;border-radius:999px;background:rgba(var(--gold-rgb),.16);font-size:.7rem;font-weight:800}
+.evmore-less{background:none;border:0;padding:0;color:var(--muted-2);font:inherit;font-size:.8rem;font-weight:700;cursor:pointer}
+.evmore-less:hover{color:var(--text)}
 .eventcard{
   position:relative;display:flex;flex-direction:column;
   border:1px solid var(--line);border-radius:var(--radius);
