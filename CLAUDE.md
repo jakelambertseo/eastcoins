@@ -258,6 +258,37 @@
 > Long lists page client-side via `pagedTable`/`pagedList`, keyed so the
 > one-minute refresh keeps the reader's page.
 >
+> **Pretty URLs, Movies & TV only (2026-09-12)** — `/movie/inception`,
+> `/tv/lost`, `/tv/lost-s1`, `/tv/lost-s1-ep1`. Served by
+> `functions/movie/[[path]].js` and `functions/tv/[[path]].js`, which do
+> what `/g/` does: the ordinary shell plus a real `<title>` and preview
+> tags. The rest of the site is still `?view=`; this was scoped to the
+> catalog on purpose.
+>
+> **No TMDB id in the path**, so a name has to be searched for:
+> `/api/screen/resolve` takes an exact slug match first, then the most
+> popular among them, then a second search with the hyphens left in
+> (TMDB tokenises `wall-e` and `wall e` differently), then a title that
+> starts with what was asked for — and **otherwise nothing**. Taking
+> TMDB's first result made `/movie/wall-e` open "East of Wall", and
+> confidently opening the wrong film is worse than a miss: a miss drops
+> the person into a search for the same words. Known edge: a few titles
+> never surface from their own slug (WALL·E is one, because "wall e"
+> matches hundreds of things), and the search fallback is the answer.
+>
+> **The name rule is `functions/api/screen/_slug.js`, mirrored inside
+> `v3-screen.js`** — change one, change the other. The mirror exists
+> because the page has to WRITE the URLs the server reads, and a link
+> that works when clicked but not when copied is worse than no pretty
+> URL. A scratch test lifts the client's copy out of the file and runs
+> both over the same awkward names. **A trailing number is always part
+> of the name**, never an id or a year — that is what an id-in-the-tail
+> scheme gets wrong about Ocean's 11 — and `-ep3` with no `-s2` in
+> front of it is treated as a name rather than guessing season 1.
+> Shelf filters stay on `?view=screen`: they are browse state and do
+> not belong on a link to one title. Old `?view=screen&t=&id=&s=&e=`
+> links still work and still share.
+>
 > **Banning an account (2026-09-12)** — the All Users page gives admins a
 > Ban button in each row (`/api/picks/admin/ban`, table `user_bans`,
 > helpers in `_bans.js`). A ban is the FULL block, chosen deliberately:

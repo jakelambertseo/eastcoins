@@ -283,6 +283,16 @@
       local.now.season = item.season || 1;
       local.now.episode = item.episode || 1;
     }
+    // Keep the name the server put in <title>. The shell titles per
+    // route, which is right until one title is open and then reads as a
+    // page that forgot what it is showing.
+    if (local.now.title) {
+      const where = local.now.type === "tv" && local.now.season
+        ? ` — S${local.now.season}${local.now.episode ? ` E${local.now.episode}` : ""}`
+        : "";
+      document.title = `${local.now.title}${where} — EastCoin`;
+    }
+
     const saved = loadProgress()[keyFor(local.now)];
     const from = resume || (saved && saved.season === (local.now.season || null) && saved.episode === (local.now.episode || null) ? saved.seconds : 0);
 
@@ -321,6 +331,7 @@
     refs.stage.hidden = true;
     refs.stage.classList.remove("is-playing");
     document.body.classList.remove("screen-on");
+    document.title = "Movies & TV — EastCoin";
     // If opening the player made a history entry, closing it goes back
     // through it, so Back and Close agree. Otherwise just fix the URL.
     if (history.state?.play) history.back();
