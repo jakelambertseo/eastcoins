@@ -177,6 +177,33 @@
 > toward `HOUR_WIN_CAP` via `hourlyNet()`; every new casino game must be
 > added there or it escapes the cap.
 >
+> **The PvP tables (2026-09-12)** — Russian Roulette `/?view=roulette` and
+> Last One Standing `/?view=standing`, one client (`v3-pvp.js`, a `table(spec)`
+> factory registered twice) over one server module
+> (`functions/api/casino/pvp/*`, tables `pvp_rounds` and `pvp_entries`).
+> **Nobody picks a player count**: the first join opens a lobby and a
+> 60-second clock; whoever is in at zero plays; one person alone is
+> refunded and the table clears. **The buy-in is fixed at 20** — no amount
+> is read from the body. Roulette: one chamber per player, doubled until at
+> least six (`chambersFor`), so every seat pulls the same number of times
+> and is on exactly 1 in N; one live round in a cylinder that empties
+> completely means exactly one loser, whose 20 is split among the
+> survivors (`STAKE + floor(STAKE/(N-1))` each; the rounding remainder is
+> the house's only take). Standing: Fisher–Yates over the seats from the
+> seed, last left takes `20 × N`, house takes nothing. **Settlement is
+> triggered by whoever asks** — a state poll, a join, or the casino floor,
+> which polls widest — and is claimed with a conditional UPDATE to
+> `SETTLING` so two pollers cannot both pay; a round stuck in SETTLING for
+> two minutes is assumed crashed and re-claimed, which is safe because
+> every payout is idempotent per entry (`CASINO:PVP:PAY:<entryId>`). At
+> most one LOBBY per game, enforced by a partial unique index, so two
+> people sitting down in the same instant share a table. The page never
+> decides anything: the result arrives settled and paid with its seed
+> revealed, and the animation is playback. `pvp_entries` is in
+> `hourlyNet()`, the floor, the activity feed, profiles and the dashboard's
+> book; a refund is neither a win nor a loss anywhere. No chat, no bot:
+> the tables live on the site only, by request.
+>
 > **The casino is near-fair on purpose (2026-09-11)** — every game
 > returns ~98–99% (Hi-Lo and Mines `EDGE_RETURN = 0.99`; Plinko's table
 > 98.6%; Wheel red/black 98.3%; Coin Flip was always exactly fair at 2×).

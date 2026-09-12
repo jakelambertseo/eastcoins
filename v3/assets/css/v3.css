@@ -3623,3 +3623,49 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
 
 .cas-ticker{margin:0 0 var(--gap)}
 .pf-quick-casino{margin-top:10px;padding-top:12px;border-top:1px dashed var(--line)}
+
+
+/* ============================================================
+   Casino — the PvP tables (Russian Roulette, Last One Standing)
+   A lobby with a clock over the arena; the arena is either a ring
+   of seats round a cylinder or a floor of tiles that get knocked out.
+   ============================================================ */
+.pv-count{text-align:center;font-family:var(--display);font-weight:800;font-size:2.4rem;letter-spacing:-.03em;line-height:1;margin:2px 0 10px;color:var(--gold)}
+.pv-arena{position:relative;min-height:330px;border-radius:var(--radius);border:1px solid var(--line);background:radial-gradient(circle at 50% 45%,#221d1a,#100d0c 72%);display:grid;place-items:center;margin-bottom:12px}
+.cf-phase.bad{color:var(--red)}
+
+/* Russian Roulette */
+.rr-ring{position:relative;width:min(320px,86vw);height:min(320px,86vw)}
+.rr-seat{position:absolute;width:66px;margin:-38px 0 0 -33px;text-align:center;transition:opacity .3s ease,transform .3s ease}
+.rr-av{width:42px;height:42px;margin:0 auto 5px;border-radius:50%;display:grid;place-items:center;overflow:hidden;position:relative;background:linear-gradient(150deg,#8e1231,#4a0a1c);color:var(--gold);font-family:var(--display);font-weight:800;font-size:.95rem;border:2px solid var(--panel);transition:box-shadow .2s ease,transform .2s ease}
+.rr-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.rr-seat b{display:block;font-size:.7rem;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rr-seat.me b{color:var(--gold)}
+.rr-seat.up .rr-av{box-shadow:0 0 0 3px rgba(var(--gold-rgb),.55);transform:scale(1.1)}
+.rr-seat.safe{opacity:.45}
+.rr-seat.dead .rr-av{background:linear-gradient(150deg,#5a1622,#2a0a10);box-shadow:0 0 0 3px rgba(255,107,133,.7)}
+.rr-seat.dead b{color:var(--red);text-decoration:line-through}
+.rr-empty{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap}
+.rr-gun{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.rr-cyl{display:flex;gap:5px;justify-content:center;margin-bottom:8px;flex-wrap:wrap;max-width:150px}
+.rr-ch{width:14px;height:14px;border-radius:50%;border:2px solid var(--line-2);background:var(--panel-2);transition:all .2s ease}
+.rr-ch.spent{background:var(--panel-3);border-color:rgba(255,255,255,.07);opacity:.5}
+.rr-ch.live{background:var(--red);border-color:var(--red);box-shadow:0 0 12px rgba(255,107,133,.8)}
+.rr-word{font-family:var(--display);font-weight:800;font-size:1.4rem;min-height:30px;letter-spacing:-.01em}
+.rr-word.bang{color:var(--red)}
+.rr-word.click{color:var(--muted)}
+.rr-odds{color:var(--muted-2);font-size:.74rem;font-weight:700;min-height:16px}
+
+/* Last One Standing */
+.ls-floor{width:100%;padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:9px;align-self:start}
+.ls-floor .cf-empty{grid-column:1/-1;text-align:center;padding:40px 0}
+.ls-p{position:relative;padding:11px 6px 9px;border-radius:11px;border:1px solid var(--line);background:var(--panel-2);text-align:center;transition:all .35s ease}
+.ls-av{width:34px;height:34px;margin:0 auto 6px;border-radius:50%;display:grid;place-items:center;overflow:hidden;position:relative;background:linear-gradient(150deg,#8e1231,#4a0a1c);color:var(--gold);font-family:var(--display);font-weight:800;font-size:.82rem}
+.ls-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ls-p b{display:block;font-size:.72rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ls-p.me{border-color:rgba(var(--gold-rgb),.45);background:var(--gold-dim)}
+.ls-p.gone{opacity:.26;filter:grayscale(1);transform:scale(.93)}
+.ls-p.gone b{text-decoration:line-through;color:var(--muted-2)}
+.ls-rank{position:absolute;top:5px;right:7px;color:var(--red);font-size:.62rem;font-weight:800}
+.ls-p.hit{border-color:var(--red);box-shadow:0 0 0 3px rgba(255,107,133,.28)}
+.ls-p.winner{opacity:1;filter:none;transform:scale(1.04);border-color:var(--green);background:var(--green-dim);box-shadow:0 0 0 3px rgba(77,219,139,.25)}

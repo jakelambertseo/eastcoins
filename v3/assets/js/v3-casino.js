@@ -28,7 +28,9 @@
     race: { title: "Horse Race", icon: "🐎", blurb: "Four runners from 2× to 14×. They're off every minute.", route: "race", hidden: true },
     hilo: { title: "Higher or Lower", icon: "🃏", blurb: "Your own deck. Every right call multiplies the stake; cash out any time.", route: "hilo" },
     mines: { title: "Mines", icon: "💣", blurb: "Twenty-five tiles, a few of them bombs. Every safe one pays more; cash out before you find one.", route: "mines" },
-    plinko: { title: "Plinko", icon: "🎯", blurb: "Drop a ball through the pegs. Every bucket but the middle pays; the edges pay 25×.", route: "plinko" }
+    plinko: { title: "Plinko", icon: "🎯", blurb: "Drop a ball through the pegs. Every bucket but the middle pays; the edges pay 25×.", route: "plinko" },
+    roulette: { title: "Russian Roulette", icon: "🔫", blurb: "Everyone puts in 20. One live round. Whoever it fires on pays the rest.", route: "roulette" },
+    standing: { title: "Last One Standing", icon: "🏆", blurb: "Everyone puts in 20. One knocked out at a time; the last one takes the lot.", route: "standing" }
   };
 
   function go(route) {
@@ -203,6 +205,21 @@
         r.inRound.replaceChildren();
         if (g.inRound) { r.inRound.append(document.createTextNode(`${g.inRound} in · `), K.zc(g.staked)); }
         else r.inRound.textContent = "nobody in yet";
+      } else if (g.pvp) {
+        // A PvP table: a lobby with a clock, or nothing until someone sits.
+        if (g.lobby) {
+          const left = Math.max(0, Math.ceil((g.lobby.startsAt - now) / 1000));
+          r.phase.textContent = left > 0 ? "Lobby open" : "Playing";
+          r.phase.className = "cas-phase open";
+          r.clock.textContent = left > 0 ? `${left}s` : "";
+          r.inRound.replaceChildren();
+          r.inRound.append(document.createTextNode(`${g.lobby.players} in · `), K.zc(g.lobby.pot));
+        } else {
+          r.phase.textContent = "Sit down to open a table";
+          r.phase.className = "cas-phase";
+          r.clock.textContent = "";
+          r.inRound.textContent = "20 a seat · starts 60s after the first";
+        }
       } else {
         r.phase.textContent = g.inRound ? `${g.inRound} run${g.inRound === 1 ? "" : "s"} live` : "Deal any time";
         r.phase.className = `cas-phase${g.inRound ? " open" : ""}`;

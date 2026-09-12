@@ -144,7 +144,7 @@ export async function onRequestGet(context) {
   try {
     await ensureCoinSchema(db);
     const uid = String(user.twitch_id);
-    const [coin, shared, hilo, mines, plinko] = await Promise.all([
+    const [coin, shared, hilo, mines, plinko, pvp] = await Promise.all([
       db.prepare(`SELECT 'flip' AS game, b.status, b.payout - b.wager AS profit, b.wager, b.side AS pick, r.settled_at AS at, r.result
                     FROM coin_bets b JOIN coin_rounds r ON r.no = b.round_no WHERE b.user_id = ? AND b.status IN ('WON','LOST') ORDER BY b.round_no DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
       db.prepare(`SELECT b.game, b.status, b.payout - b.wager AS profit, b.wager, b.pick, r.settled_at AS at, r.result
@@ -157,9 +157,13 @@ export async function onRequestGet(context) {
                     FROM mines_games WHERE user_id = ? AND status IN ('CASHED','BUST') ORDER BY datetime(updated_at) DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
       db.prepare(`SELECT 'plinko' AS game, CASE WHEN payout > stake THEN 'WON' ELSE 'LOST' END AS status, payout - stake AS profit,
                          stake AS wager, ('x' || ROUND(multiplier, 2)) AS pick, created_at AS at, NULL AS result
-                    FROM plinko_drops WHERE user_id = ? ORDER BY datetime(created_at) DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] }))
+                    FROM plinko_drops WHERE user_id = ? ORDER BY datetime(created_at) DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
+      db.prepare(`SELECT e.game, e.status, e.payout - e.stake AS profit, e.stake AS wager, (r.players || ' at the table') AS pick,
+                         datetime(r.settled_at / 1000, 'unixepoch') AS at, NULL AS result
+                    FROM pvp_entries e JOIN pvp_rounds r ON r.id = e.round_id
+                   WHERE e.user_id = ? AND e.status IN ('WON','LOST') ORDER BY r.settled_at DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] }))
     ]);
-    const all = [...(coin.results || []), ...(shared.results || []), ...(hilo.results || []), ...(mines.results || []), ...(plinko.results || [])]
+    const all = [...(coin.results || []), ...(shared.results || []), ...(hilo.results || []), ...(mines.results || []), ...(plinko.results || []), ...(pvp.results || [])]
       .map((r) => ({ game: String(r.game), status: r.status, profit: Number(r.profit), wager: Number(r.wager), pick: String(r.pick), at: r.at ? String(r.at).replace(" ", "T") + "Z" : null }))
       .sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
     if (list === "casino") {

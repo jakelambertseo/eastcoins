@@ -9,6 +9,7 @@ import { GAMES, ensureSchema, roundAt, ROOM_WINDOW_MS, hourlyNet, HOUR_WIN_CAP }
 import { ensureHilo } from "./hilo/_hilo.js";
 import { ensureMines } from "./mines/_mines.js";
 import { ensurePlinko } from "./plinko/_plinko.js";
+import { ensurePvp, settleDue as settlePvp, GAMES as PVP, lobbyFor as pvpLobby, entriesFor as pvpEntries, STAKE as PVP_STAKE } from "./pvp/_pvp.js";
 import { getSessionUser } from "../picks/_lib.js";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
@@ -17,7 +18,7 @@ const parse = (t) => { try { return t ? JSON.parse(t) : null; } catch { return n
 export async function onRequestGet(context) {
   const db = context.env.PICKS_DB;
   if (!db) return json({ ok: false, code: "NO_DB" }, 503);
-  await Promise.all([ensureCoin(db), ensureSchema(db), ensureHilo(db), ensureMines(db), ensurePlinko(db)]);
+  await Promise.all([ensureCoin(db), ensureSchema(db), ensureHilo(db), ensureMines(db), ensurePlinko(db), ensurePvp(db)]);
   const now = Date.now();
   const since = now - ROOM_WINDOW_MS;
 
@@ -76,9 +77,27 @@ export async function onRequestGet(context) {
   ]);
   games.push({ key: "plinko", name: "Plinko", route: "plinko", round: null, inRound: 0, staked: 0, room: Number(plinkoRoom?.n || 0), people: plinkoPeople });
 
+  // The PvP tables. The floor is polled far more widely than either
+  // table's own page, so settling here is what pays a round whose
+  // players all wandered off before the clock ran out.
+  for (const g of Object.values(PVP)) {
+    await settlePvp(context.env, db, g, now).catch(() => {});
+    const [lobby, room, who] = await Promise.all([
+      pvpLobby(db, g).catch(() => null),
+      db.prepare(`SELECT COUNT(*) AS n FROM casino_presence WHERE game = ? AND seen_at >= ?`).bind(g.key, since).first().catch(() => null),
+      people("casino_presence", g.key)
+    ]);
+    const seats = lobby ? await pvpEntries(db, lobby.id).catch(() => []) : [];
+    games.push({
+      key: g.key, name: g.name, route: g.key, pvp: true, round: null,
+      lobby: lobby ? { startsAt: Number(lobby.starts_at), players: seats.length, pot: PVP_STAKE * seats.length } : null,
+      inRound: seats.length, staked: PVP_STAKE * seats.length, room: Number(room?.n || 0), people: who
+    });
+  }
+
   // The board: the most recent results across every game, wins and
   // losses alike — the casino's own ledger, for anyone to read.
-  const [coinRes, casinoRes, hiloRes, minesRes, plinkoRes] = await Promise.all([
+  const [coinRes, casinoRes, hiloRes, minesRes, plinkoRes, pvpRes] = await Promise.all([
     db.prepare(`SELECT 'flip' AS game, b.status, b.payout - b.wager AS profit, b.wager, b.side AS pick, r.settled_at AS at, u.twitch_login, u.display_name, u.avatar_url
                   FROM coin_bets b JOIN coin_rounds r ON r.no = b.round_no JOIN users u ON u.twitch_id = b.user_id
                  WHERE b.status IN ('WON','LOST') ORDER BY b.round_no DESC LIMIT 15`).all().catch(() => ({ results: [] })),
@@ -96,9 +115,13 @@ export async function onRequestGet(context) {
     db.prepare(`SELECT 'plinko' AS game, CASE WHEN d.payout > d.stake THEN 'WON' ELSE 'LOST' END AS status, d.payout - d.stake AS profit,
                        d.stake AS wager, ('x' || ROUND(d.multiplier, 2)) AS pick, d.created_at AS at, u.twitch_login, u.display_name, u.avatar_url
                   FROM plinko_drops d JOIN users u ON u.twitch_id = d.user_id
-                 ORDER BY datetime(d.created_at) DESC LIMIT 15`).all().catch(() => ({ results: [] }))
+                 ORDER BY datetime(d.created_at) DESC LIMIT 15`).all().catch(() => ({ results: [] })),
+    db.prepare(`SELECT e.game, e.status, e.payout - e.stake AS profit, e.stake AS wager, (r.players || ' at the table') AS pick,
+                       datetime(r.settled_at / 1000, 'unixepoch') AS at, u.twitch_login, u.display_name, u.avatar_url
+                  FROM pvp_entries e JOIN pvp_rounds r ON r.id = e.round_id JOIN users u ON u.twitch_id = e.user_id
+                 WHERE e.status IN ('WON','LOST') ORDER BY r.settled_at DESC LIMIT 15`).all().catch(() => ({ results: [] }))
   ]);
-  const board = [...(coinRes.results || []), ...(casinoRes.results || []), ...(hiloRes.results || []), ...(minesRes.results || []), ...(plinkoRes.results || [])]
+  const board = [...(coinRes.results || []), ...(casinoRes.results || []), ...(hiloRes.results || []), ...(minesRes.results || []), ...(plinkoRes.results || []), ...(pvpRes.results || [])]
     .map((r) => ({
       game: r.game, status: r.status, profit: Number(r.profit), wager: Number(r.wager), pick: String(r.pick),
       at: r.at ? String(r.at).replace(" ", "T") + "Z" : null,
@@ -114,20 +137,21 @@ export async function onRequestGet(context) {
     if (user) {
       const uid = String(user.id);
       const q = async (sql) => { try { return await db.prepare(sql).bind(uid).first(); } catch { return null; } };
-      const [coin, shared, hilo, mines, plinko, hourNet] = await Promise.all([
+      const [coin, shared, hilo, mines, plinko, pvp, hourNet] = await Promise.all([
         q(`SELECT SUM(status = 'WON') AS w, SUM(status = 'LOST') AS l, COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - wager WHEN status = 'LOST' THEN -wager ELSE 0 END), 0) AS net FROM coin_bets WHERE user_id = ?`),
         q(`SELECT SUM(status = 'WON') AS w, SUM(status = 'LOST') AS l, COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - wager WHEN status = 'LOST' THEN -wager ELSE 0 END), 0) AS net FROM casino_bets WHERE user_id = ?`),
         q(`SELECT SUM(status = 'CASHED') AS w, SUM(status = 'BUST') AS l, COALESCE(SUM(CASE WHEN status = 'CASHED' THEN payout - stake WHEN status = 'BUST' THEN -stake ELSE 0 END), 0) AS net FROM hilo_games WHERE user_id = ?`),
         q(`SELECT SUM(status = 'CASHED') AS w, SUM(status = 'BUST') AS l, COALESCE(SUM(CASE WHEN status = 'CASHED' THEN payout - stake WHEN status = 'BUST' THEN -stake ELSE 0 END), 0) AS net FROM mines_games WHERE user_id = ?`),
         q(`SELECT SUM(payout > stake) AS w, SUM(payout <= stake) AS l, COALESCE(SUM(payout - stake), 0) AS net FROM plinko_drops WHERE user_id = ?`),
+        q(`SELECT SUM(status = 'WON') AS w, SUM(status = 'LOST') AS l, COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - stake WHEN status = 'LOST' THEN -stake ELSE 0 END), 0) AS net FROM pvp_entries WHERE user_id = ?`),
         hourlyNet(db, uid)
       ]);
       const n = (x) => Number(x || 0);
       me = {
         login: user.login, displayName: user.displayName,
-        wins: n(coin?.w) + n(shared?.w) + n(hilo?.w) + n(mines?.w) + n(plinko?.w),
-        losses: n(coin?.l) + n(shared?.l) + n(hilo?.l) + n(mines?.l) + n(plinko?.l),
-        net: n(coin?.net) + n(shared?.net) + n(hilo?.net) + n(mines?.net) + n(plinko?.net),
+        wins: n(coin?.w) + n(shared?.w) + n(hilo?.w) + n(mines?.w) + n(plinko?.w) + n(pvp?.w),
+        losses: n(coin?.l) + n(shared?.l) + n(hilo?.l) + n(mines?.l) + n(plinko?.l) + n(pvp?.l),
+        net: n(coin?.net) + n(shared?.net) + n(hilo?.net) + n(mines?.net) + n(plinko?.net) + n(pvp?.net),
         hourNet: n(hourNet), hourCap: HOUR_WIN_CAP
       };
     }

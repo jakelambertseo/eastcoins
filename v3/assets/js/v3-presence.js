@@ -15,7 +15,8 @@
     events: "browsing Sports", watch: "watching a game", multiview: "in MultiView", picks: "on Picks",
     music: "in the Green Room", screen: "in Movies & TV", flip: "at the coin flip", game: "on a game page",
     profile: "reading profiles", admin: "in admin", dashboard: "on the dashboard", users: "browsing All Users", activity: "reading the feed",
-    casino: "on the casino floor", wheel: "at the Wheel", race: "at the Horse Race", hilo: "playing Higher or Lower"
+    casino: "on the casino floor", wheel: "at the Wheel", race: "at the Horse Race", hilo: "playing Higher or Lower",
+    mines: "playing Mines", plinko: "playing Plinko", roulette: "at Russian Roulette", standing: "at Last One Standing"
   };
 
   function clientId() {
@@ -64,7 +65,8 @@
   // One glyph per place, so a chip can say where someone is in one line.
   const ICONS = {
     events: "🏈", watch: "📺", multiview: "🔲", picks: "🪙", music: "🎵", screen: "🎬", flip: "🪙",
-    game: "🪙", profile: "👤", admin: "🛠", dashboard: "🛠", users: "👥", activity: "📰", casino: "🎰", wheel: "🎡", race: "🐎", hilo: "🃏"
+    game: "🪙", profile: "👤", admin: "🛠", dashboard: "🛠", users: "👥", activity: "📰", casino: "🎰", wheel: "🎡", race: "🐎", hilo: "🃏",
+    mines: "💣", plinko: "🎯", roulette: "🔫", standing: "🏆"
   };
 
   /** "watching Mariners vs Rangers", "looking at Reds at Dodgers", or the plain place. */
