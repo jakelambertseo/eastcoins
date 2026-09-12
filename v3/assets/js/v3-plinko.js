@@ -30,6 +30,7 @@
 
   async function poll() {
     if (dropping) return;                 // never redraw mid-flight
+    if (document.hidden) return;          // nobody is looking; the board only moves on a drop
     try {
       const payload = await fetch("/api/casino/plinko/state", { credentials: "include" }).then((r) => r.json());
       if (!payload?.ok) throw new Error(payload?.code || "state");

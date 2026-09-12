@@ -219,7 +219,11 @@
     const serverNow = () => Date.now() + offset;
     const api = (path) => `/api/casino/${spec.key}/${path}`;
 
+    // As with the coin: a hidden tab polls at a fifth of the rate rather
+    // than stopping, because a poll is what settles a finished round.
+    let idleTick = 0;
     async function poll() {
+      if (document.hidden && (idleTick = (idleTick + 1) % 5) !== 0) return;
       try {
         const response = await fetch(api("state"), { credentials: "include" });
         const payload = await response.json();

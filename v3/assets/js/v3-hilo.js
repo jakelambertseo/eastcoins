@@ -27,6 +27,8 @@
   const fmt = K.fmt;
 
   async function poll() {
+    // A hidden tab is not being watched, and the deck only moves when the player calls.
+    if (document.hidden) return;
     try {
       const payload = await fetch("/api/casino/hilo/state", { credentials: "include" }).then((r) => r.json());
       if (!payload?.ok) throw new Error(payload?.code || "state");

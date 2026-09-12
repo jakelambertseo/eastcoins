@@ -231,6 +231,10 @@
   function mountStrip(container) {
     window.clearInterval(stripTimer);
     const refresh = async () => {
+      // The heartbeat still beats for a hidden tab — someone with the
+      // Green Room in the background IS in the Green Room — but nobody
+      // needs the strip redrawn while they are not looking at it.
+      if (document.hidden) return;
       const data = await fetchRoom();
       if (!container.isConnected) { window.clearInterval(stripTimer); return; }
       draw(container, data);

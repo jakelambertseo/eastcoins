@@ -130,7 +130,12 @@
 
   /* ---------------------------------------------------------- data */
 
+  // Hidden tabs still poll, at a fifth of the rate. Stopping outright
+  // would be wrong here: the first poll after a flip is what settles the
+  // round and pays people, and that cannot wait for someone to look.
+  let idleTick = 0;
   async function poll() {
+    if (document.hidden && (idleTick = (idleTick + 1) % 5) !== 0) return;
     try {
       const response = await fetch("/api/coin/state", { credentials: "include" });
       const payload = await response.json();
