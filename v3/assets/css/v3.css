@@ -2519,6 +2519,35 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .wh-empty{color:var(--muted-2);font-size:.82rem}
 
 /* ---------------------------------------------------------------- dashboard */
+/* The dashboard's headline strip, tabs and list paging. The strip is the
+   profile's .pf-quick with six cells instead of four, so it drops to
+   three and then two rather than squeezing six onto one line. */
+.db-quick{grid-template-columns:repeat(6,minmax(0,1fr))}
+@media (max-width:1100px){.db-quick{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:620px){.db-quick{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.db-tabs{margin-bottom:14px}
+/* A tab carrying a count of things wrong says so in amber. */
+.pf-tab.warn i{background:var(--gold-dim);color:var(--gold);border-color:rgba(var(--gold-rgb),.4)}
+.dashboard .pf-panel{display:flex;flex-direction:column;gap:14px}
+
+/* "3 / 7" beside a list's heading, and the pager under it. */
+.db-of{margin-left:8px;color:var(--muted-2);font-size:.72rem;font-weight:700}
+.db-pager{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px}
+.db-pagecount{color:var(--muted-2);font-size:.72rem;font-weight:700}
+.db-pagebtn{
+  height:27px;padding:0 10px;border-radius:8px;
+  border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);
+  font-family:var(--display);font-weight:700;font-size:.74rem;white-space:nowrap;
+}
+.db-pagebtn:hover:not(:disabled){background:var(--gold-dim);border-color:rgba(var(--gold-rgb),.4);color:var(--gold)}
+.db-pagebtn:disabled{opacity:.4;cursor:default}
+
+/* Today / 7 / 14 for one side of the house, on the Overview tab. */
+.db-winblock{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:13px 15px}
+.db-winblock h3{margin:0 0 10px;font-family:var(--display);font-weight:700;font-size:.94rem}
+.db-winblock .db-windows{margin:0}
+
+
 .dashboard{max-width:1100px}
 .db-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
 .db-card{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:13px 15px}
