@@ -137,9 +137,10 @@
 > derived from the seed alone (Fisher–Yates over 0..24, each swap from
 > `sha256(seed:shuffle:i)`). Each safe tile pays `C(25,k)/C(S,k)` less the
 > same 1% edge Hi-Lo takes; cash out after any safe tile. The run
-> auto-cashes at `topRung()` — the last rung still **under** the ×50
-> ceiling (3 bombs: 17 tiles ×39.43; 10 bombs: 6 tiles ×33.97) — rather
-> than clamping a higher rung down to ×50, which would have been a hidden
+> auto-cashes at `topRung()` — the last rung still **under** the ×25
+> ceiling (3 bombs: 15 tiles ×18.98; 10 bombs: 5 tiles ×17.52; max
+> 379 on a 20 ZC stake; the ceiling was ×50 until 2026-09-12) — rather
+> than clamping a higher rung down to the ceiling, which would have been a hidden
 > second cut: pushing a ten-bomb board to the end would have returned 67%
 > instead of 96%. `MAX_MINES` is 10 because
 > past that the ladder leaps (20 bombs goes ×4.8, ×28.8, ×220.8) and one
