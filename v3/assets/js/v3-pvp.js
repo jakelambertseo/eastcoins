@@ -393,7 +393,13 @@
       const chambers = result?.chambers || (n ? n * Math.max(1, Math.ceil(6 / n)) : 6);
       for (let c = 0; c < chambers; c += 1) {
         const ch = K.el("i", "rr-ch");
-        if (settled && result) ch.classList.add(c === result.live ? "live" : c < result.live ? "spent" : "");
+        // Chambers after the live one were never pulled and get no class.
+        // classList.add("") throws, and it did: every render after a
+        // finished round died here, which read as "Reconnecting…".
+        if (settled && result) {
+          const cls = c === result.live ? "live" : c < result.live ? "spent" : "";
+          if (cls) ch.classList.add(cls);
+        }
         cyl.append(ch);
       }
       const word = K.el("div", "rr-word", settled ? "BANG" : n ? "Loaded" : "");
@@ -446,7 +452,7 @@
 
   const standing = {
     key: "standing",
-    title: "Last One Standing",
+    title: "Last One Standing - PVP",
     blurb: "Everyone puts in 20. One player is knocked out every couple of seconds until one is left, and they take the lot.",
     joinedLine: "The clock's running.",
     paysTitle: "What the winner takes",

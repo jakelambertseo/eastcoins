@@ -178,7 +178,7 @@
     multiview: "MultiView — EastCoin", picks: "Picks — EastCoin", casino: "Casino — EastCoin",
     flip: "Coin Flip — EastCoin Casino", wheel: "Wheel — EastCoin Casino", race: "Horse Race — EastCoin Casino",
     hilo: "Higher or Lower — EastCoin Casino", mines: "Mines — EastCoin Casino", plinko: "Plinko — EastCoin Casino", users: "All Users — EastCoin", activity: "Activity — EastCoin",
-    roulette: "Russian Roulette - PVP — EastCoin Casino", standing: "Last One Standing — EastCoin Casino",
+    roulette: "Russian Roulette - PVP — EastCoin Casino", standing: "Last One Standing - PVP — EastCoin Casino",
     dashboard: "Dashboard — EastCoin", admin: "Admin — EastCoin", watch: "Watching — EastCoin"
   };
 

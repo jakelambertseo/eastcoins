@@ -30,7 +30,7 @@
     mines: { title: "Mines", icon: "💣", blurb: "Twenty-five tiles, a few of them bombs. Every safe one pays more; cash out before you find one.", route: "mines" },
     plinko: { title: "Plinko", icon: "🎯", blurb: "Drop a ball through the pegs. Every bucket but the middle pays; the edges pay 25×.", route: "plinko" },
     roulette: { title: "Russian Roulette - PVP", iconUrl: "https://cdn.7tv.app/emote/01G1FDHE4R0005G1MWWMPGSX71/1x.webp", icon: "🔫", blurb: "Everyone puts in 20. One live round. Whoever it fires on pays the rest.", route: "roulette" },
-    standing: { title: "Last One Standing", icon: "🏆", blurb: "Everyone puts in 20. One knocked out at a time; the last one takes the lot.", route: "standing" }
+    standing: { title: "Last One Standing - PVP", icon: "🏆", blurb: "Everyone puts in 20. One knocked out at a time; the last one takes the lot.", route: "standing" }
   };
 
   // Polls the moment the tab comes back into view; see the note in
