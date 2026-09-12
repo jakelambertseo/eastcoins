@@ -42,6 +42,7 @@
     let pop = () => {};
     let polledPastZero = false;     // one immediate poll when the clock ends
     let onVis = null;               // polls the moment the tab comes back
+    let arenaFresh = false;         // the animation just drew the final state; skip one redraw
 
     const serverNow = () => Date.now() + offset;
     const myLogin = () => String(data?.me?.login || "");
@@ -81,6 +82,10 @@
       try {
         render();                   // the arena gets the seats before anything moves
         await spec.animate(last, refs, { wait, me: myLogin() });
+        // The animation ends on exactly what the settled draw would show,
+        // so the next render leaves the arena alone rather than rebuilding
+        // it — rebuilding was the flash at the end of every round.
+        arenaFresh = true;
         announce(last);
       } finally {
         playing = false;
@@ -214,13 +219,17 @@
 
       refs.status.textContent = playing ? "Playing…" : lobby ? "Lobby open" : "Ready";
 
-      if (!playing) {
+      if (playing) {
+        /* the animation owns the arena */
+      } else if (arenaFresh) {
+        arenaFresh = false;
+      } else {
         if (lobby) {
           refs.phase.textContent = lobby.youIn ? "You're in — waiting for the clock" : `${lobby.players.length} at the table`;
           refs.phase.className = "cf-phase open";
           spec.drawSeats(lobby.players, refs.arena, { me, lobby: true });
         } else if (last?.status === "SETTLED") {
-          refs.phase.textContent = spec.resultLine(last);
+          refs.phase.textContent = spec.resultLine(last, me);
           refs.phase.className = `cf-phase ${last.players.find((p) => p.login === me)?.payout > last.stake ? "open" : ""}`;
           spec.drawSeats(last.players, refs.arena, { me, result: last.result, settled: true });
         } else {
@@ -235,7 +244,8 @@
       const capped = Number.isFinite(data.me?.hourNet) && data.me.hourNet >= config.hourCap;
       const full = lobby && lobby.players.length >= config.maxPlayers;
       refs.join.disabled = busy || playing || !config.canBet || capped || Boolean(lobby?.youIn) || Boolean(full);
-      if (!data.me) { K.plain(refs.join, "Log in to play"); refs.note.textContent = "Log in with Twitch — the button up top — and your ZCoins come with you."; }
+      if (playing) { K.plain(refs.join, "Playing…"); refs.note.textContent = "The table is playing out. The next one opens the moment it's done."; }
+      else if (!data.me) { K.plain(refs.join, "Log in to play"); refs.note.textContent = "Log in with Twitch — the button up top — and your ZCoins come with you."; }
       else if (!config.canBet) { K.plain(refs.join, "Casino paused"); refs.note.textContent = "ZCoin transfers aren't switched on right now."; }
       else if (capped) { K.withCoins(refs.join, `Up [[${data.me.hourNet}]] this hour — the cap`); refs.note.textContent = "The tables reopen for you as the hour rolls on."; }
       else if (lobby?.youIn) { K.plain(refs.join, "You're in"); refs.note.textContent = spec.waitingLine(lobby); }
@@ -351,6 +361,14 @@
     };
   }
 
+  /** The winner's banner over the arena: a trophy, a name, the pot. */
+  function banner(arena, text, amount) {
+    arena.querySelector(".pv-banner")?.remove();
+    const b = K.el("div", "pv-banner");
+    b.append(K.el("span", "pv-banner-trophy", "🏆"), document.createTextNode(text), K.zc(amount));
+    arena.append(b);
+  }
+
   /** "A", "A and B", "A, B and C" — as profile links, in a fragment. */
   function names(list) {
     const frag = document.createDocumentFragment();
@@ -369,107 +387,164 @@
     return s;
   }
 
+  // A result's rounds. Rounds settled before 2026-09-12 stopped at the
+  // first shot and carry {chambers, live, loser}; they read as one round.
+  const stagesOf = (r, n) => Array.isArray(r?.stages) ? r.stages
+    : (r && Number.isInteger(r.loser) ? [{ players: n, chambers: r.chambers, live: r.live, shot: r.loser }] : []);
+  const winnerOf = (r, n) => {
+    if (Number.isInteger(r?.winner)) return r.winner;
+    const st = stagesOf(r, n);
+    return st.length === 1 && n === 2 ? 1 - st[0].shot : null;
+  };
+
   const roulette = {
     key: "roulette",
     title: "Russian Roulette - PVP",
     iconUrl: "https://cdn.7tv.app/emote/01G1FDHE4R0005G1MWWMPGSX71/1x.webp",
-    blurb: "Everyone puts in 20. One live round. Whoever it fires on loses their stake, and everyone still standing splits it.",
+    blurb: "Everyone puts in 20. Pull until someone gets it, reload, go again. The last one standing takes the lot.",
     joinedLine: "The clock's running.",
-    paysTitle: "What survivors win",
-    verifyRule: "live chamber = sha256(seed:roulette) mod chambers · chamber c is pulled by seat c mod players",
-    // "BootyPaper got shot and lost 20 — Zwades won 20" (or "… won 6 each").
-    ledgerFace: (h) => (h.seats || []).find((s) => s.status === "LOST"),
+    paysTitle: "What the winner takes",
+    verifyRule: "round k: live = sha256(seed:roulette:k) mod chambers · chamber c is pulled by the c-th seat still in, wrapping · last left wins",
+    payCell: (t) => `${t.pot} · 1 in ${t.chance}${t.chambers ? ` · ${t.chambers} chambers` : ""}`,
+    openLine: (l) => `${l.players.length} in so far, ${l.pot} in the pot. Sit and it's ${l.pot + 20} to the last one standing.`,
+    waitingLine: (l) => `${l.players.length} at the table, ${l.pot} in the pot. You're on 1 in ${l.players.length}.`,
+    resultLine: (r, me) => { const w = r.players[winnerOf(r.result, r.players.length)]; return w ? (w.login === me ? `You survive — takes ${r.pot}` : `${w.displayName} survived — takes ${r.pot}`) : `Table played — ${r.pot} paid`; },
+    wonHeadline: () => "Last one standing",
+    lostLine: (r, mine) => {
+      const k = stagesOf(r.result, r.players.length).findIndex((s) => s.shot === mine.seat);
+      return `You got shot in round ${k + 1}. ${r.stake} ZC gone.`;
+    },
+    verifyLine: (r) => stagesOf(r.result, r.players.length).map((s, k) => `r${k + 1}: ${s.chambers}ch live ${s.live} seat ${s.shot} shot`).join(" · ") + ` · seat ${winnerOf(r.result, r.players.length)} won`,
+    ledgerFace: (h) => (h.seats || []).find((s) => s.status === "WON"),
+    // "Zwades won 40 — BootyPaper and Andy got shot and lost 20 each".
     sentence(h) {
       const frag = document.createDocumentFragment();
-      const loser = (h.seats || []).find((s) => s.status === "LOST");
-      const winners = (h.seats || []).filter((s) => s.status === "WON");
-      if (!loser) { frag.append(document.createTextNode("Table played")); return frag; }
-      frag.append(K.nameLink(loser), document.createTextNode(" got shot and lost "), K.zc(loser.stake));
-      if (winners.length) {
-        frag.append(document.createTextNode(" — "), names(winners), document.createTextNode(" won "), K.zc(winners[0].payout - winners[0].stake));
-        if (winners.length > 1) frag.append(document.createTextNode(" each"));
+      const winner = (h.seats || []).find((s) => s.status === "WON");
+      const shot = (h.seats || []).filter((s) => s.status === "LOST");
+      if (!winner) { frag.append(document.createTextNode("Table played")); return frag; }
+      frag.append(K.nameLink(winner), document.createTextNode(" won "), K.zc(winner.payout - winner.stake));
+      if (shot.length) {
+        frag.append(document.createTextNode(" — "), names(shot), document.createTextNode(" got shot and lost "), K.zc(shot[0].stake));
+        if (shot.length > 1) frag.append(document.createTextNode(" each"));
       }
       return frag;
     },
-    payCell: (t) => `+${t.win} · ${t.pullsEach} pull${t.pullsEach === 1 ? "" : "s"} each`,
-    openLine: (l) => `${l.players.length} in so far. Everyone's on exactly 1 in ${Math.max(2, l.players.length + 1)} once you sit.`,
-    waitingLine: (l) => `${l.players.length} at the table. With ${l.players.length} it's 1 in ${l.players.length} and +${Math.floor(20 / Math.max(1, l.players.length - 1))} if you walk away.`,
-    resultLine: (r) => { const loser = r.players[r.result.loser]; return `${loser ? loser.displayName : "Someone"} got it — ${r.players.length} at the table`; },
-    wonHeadline: (r, mine) => `Survived`,
-    lostLine: (r) => `It was you. ${r.stake} ZC gone; the other ${r.players.length - 1} split it.`,
-    verifyLine: (r) => `chambers ${r.result.chambers} · live ${r.result.live} · seat ${r.result.loser} lost`,
 
     drawSeats(players, arena, { me, result, settled }) {
       arena.replaceChildren();
       const ring = K.el("div", "rr-ring");
       const n = players.length;
+      const stages = settled ? stagesOf(result, n) : [];
+      const winner = settled ? winnerOf(result, n) : null;
       players.forEach((p, i) => {
         const s = seatNode(p, me);
         const a = (i / Math.max(1, n)) * Math.PI * 2 - Math.PI / 2;
         s.style.left = `${50 + Math.cos(a) * 40}%`;
         s.style.top = `${50 + Math.sin(a) * 40}%`;
-        if (settled && result && i === result.loser) s.classList.add("dead");
-        else if (settled) s.classList.add("safe");
+        if (settled && winner !== null) s.classList.add(i === winner ? "winner" : "dead");
         ring.append(s);
       });
       if (!n) ring.append(K.el("p", "cf-empty rr-empty", "Sit down to open the table."));
       const gun = K.el("div", "rr-gun");
       const cyl = K.el("div", "rr-cyl");
-      const chambers = result?.chambers || (n ? n * Math.max(1, Math.ceil(6 / n)) : 6);
+      // Idle: a cylinder sized for the table. Settled: the last round's,
+      // as it was left, spent up to the live one.
+      const lastStage = stages[stages.length - 1];
+      const chambers = lastStage ? lastStage.chambers : (n ? n * Math.max(1, Math.ceil(6 / n)) : 6);
       for (let c = 0; c < chambers; c += 1) {
         const ch = K.el("i", "rr-ch");
-        // Chambers after the live one were never pulled and get no class.
-        // classList.add("") throws, and it did: every render after a
-        // finished round died here, which read as "Reconnecting…".
-        if (settled && result) {
-          const cls = c === result.live ? "live" : c < result.live ? "spent" : "";
+        if (lastStage) {
+          const cls = c === lastStage.live ? "live" : c < lastStage.live ? "spent" : "";
           if (cls) ch.classList.add(cls);
         }
         cyl.append(ch);
       }
-      const word = K.el("div", "rr-word", settled ? "BANG" : n ? "Loaded" : "");
-      if (settled) word.classList.add("bang");
+      const word = K.el("div", "rr-word", n && !settled ? "Loaded" : "");
       gun.append(cyl, word, K.el("div", "rr-odds", ""));
       ring.append(gun);
       arena.append(ring);
+      if (settled && winner !== null && players[winner]) {
+        const w = players[winner];
+        banner(arena, `${w.login === me ? "You take" : `${w.displayName} takes`} `, 20 * n);
+      }
     },
 
     async animate(round, refs, { wait, me }) {
-      const r = round.result;
       const n = round.players.length;
+      const stages = stagesOf(round.result, n);
+      const nameOf = (i) => (round.players[i]?.login === me ? "You" : round.players[i]?.displayName || "Someone");
+      const verb = (i, third, second) => (round.players[i]?.login === me ? second : third);
       roulette.drawSeats(round.players, refs.arena, { me });
-      refs.phase.className = "cf-phase open";
-      refs.phase.textContent = "Spinning the cylinder…";
       const seats = [...refs.arena.querySelectorAll(".rr-seat")];
-      const chs = [...refs.arena.querySelectorAll(".rr-ch")];
+      const cyl = refs.arena.querySelector(".rr-cyl");
       const word = refs.arena.querySelector(".rr-word");
       const odds = refs.arena.querySelector(".rr-odds");
-      await wait(900);
-      for (let c = 0; c < r.chambers; c += 1) {
-        const who = c % n;
-        seats.forEach((s) => s.classList.remove("up"));
-        seats[who]?.classList.add("up");
-        refs.phase.textContent = `${round.players[who]?.login === me ? "You pull" : `${round.players[who]?.displayName} pulls`}…`;
-        odds.textContent = `1 chamber in ${r.chambers - c} is live`;
-        word.textContent = "";
-        word.className = "rr-word";
-        await wait(760);
-        if (c === r.live) {
-          chs[c].className = "rr-ch live";
-          word.textContent = "BANG";
-          word.className = "rr-word bang";
+      let remaining = round.players.map((_, i) => i);
+
+      refs.phase.className = "cf-phase open";
+      refs.phase.textContent = "Spinning the cylinder…";
+      await wait(800);
+
+      for (let k = 0; k < stages.length; k += 1) {
+        const st = stages[k];
+        // Reload for whoever is left. Said out loud between rounds so a
+        // second BANG reads as a new round, not the same one twice.
+        cyl.replaceChildren();
+        for (let c = 0; c < st.chambers; c += 1) cyl.append(K.el("i", "rr-ch"));
+        const chs = [...cyl.children];
+        if (k > 0) {
+          word.textContent = "Reload";
+          word.className = "rr-word reload";
+          refs.phase.className = "cf-phase open";
+          refs.phase.textContent = `${remaining.length} left — reloading…`;
           odds.textContent = "";
-          seats[who]?.classList.remove("up");
-          seats[who]?.classList.add("dead");
-          seats.forEach((s, i) => { if (i !== who) s.classList.add("safe"); });
-          await wait(1200);
-          return;
+          await wait(1000);
         }
-        chs[c].className = "rr-ch spent";
-        word.textContent = "click";
-        word.className = "rr-word click";
-        await wait(340);
+        for (let c = 0; c < st.chambers; c += 1) {
+          // The live chamber goes to the seat the server recorded as shot.
+          // Equal to the arithmetic for a real round, but the record is the
+          // authority: the page must never contradict what was paid.
+          const who = c === st.live && Number.isInteger(st.shot) ? st.shot : remaining[c % remaining.length];
+          seats.forEach((s) => s.classList.remove("up"));
+          seats[who]?.classList.add("up");
+          refs.phase.textContent = `${nameOf(who)} ${verb(who, "pulls", "pull")}…`;
+          odds.textContent = `1 chamber in ${st.chambers - c} is live`;
+          word.textContent = "";
+          word.className = "rr-word";
+          await wait(700);
+          if (c === st.live) {
+            chs[c].className = "rr-ch live";
+            word.textContent = "BANG";
+            word.className = "rr-word bang";
+            odds.textContent = "";
+            seats[who]?.classList.remove("up");
+            seats[who]?.classList.add("dead");
+            refs.phase.className = "cf-phase bad";
+            refs.phase.textContent = `${nameOf(who)} ${verb(who, "is", "are")} out`;
+            remaining = remaining.filter((s) => s !== who);
+            await wait(1100);
+            break;
+          }
+          chs[c].className = "rr-ch spent";
+          word.textContent = "click";
+          word.className = "rr-word click";
+          await wait(320);
+        }
       }
+
+      // The last one standing. Everyone else is already marked; the
+      // winner is lit, the banner drops in, and the room gets confetti.
+      const w = Number.isInteger(winnerOf(round.result, n)) ? winnerOf(round.result, n) : remaining[0];
+      seats.forEach((s, i) => { s.classList.remove("up"); if (i !== w) s.classList.add("dead"); });
+      seats[w]?.classList.remove("dead");
+      seats[w]?.classList.add("winner");
+      word.textContent = "";
+      word.className = "rr-word";
+      banner(refs.arena, `${nameOf(w)} ${verb(w, "takes", "take")} `, round.pot);
+      refs.phase.className = "cf-phase open";
+      refs.phase.textContent = `${nameOf(w)} ${verb(w, "survives", "survive")} — takes ${round.pot}`;
+      K.burst?.();
+      await wait(1800);
     }
   };
 
@@ -499,7 +574,7 @@
     payCell: (t) => `${t.pot} · 1 in ${t.chance}`,
     openLine: (l) => `${l.players.length} in so far, ${l.pot} in the pot. Sit and it's ${l.pot + 20} to one person.`,
     waitingLine: (l) => `${l.players.length} at the table, ${l.pot} in the pot. You're on 1 in ${l.players.length}.`,
-    resultLine: (r) => { const w = r.players[r.result.winner]; return `${w ? w.displayName : "Someone"} took ${r.pot} — last of ${r.players.length}`; },
+    resultLine: (r, me) => { const w = r.players[r.result.winner]; return w ? (w.login === me ? `You take ${r.pot} — last of ${r.players.length}` : `${w.displayName} took ${r.pot} — last of ${r.players.length}`) : `Table played — ${r.pot} paid`; },
     wonHeadline: (r) => `Last one standing`,
     lostLine: (r, mine) => { const place = r.result.order.indexOf(mine.seat); return `Knocked out ${place === 0 ? "first" : `${r.players.length - place}${ordinal(r.players.length - place)}`} of ${r.players.length}.`; },
     verifyLine: (r) => `order ${r.result.order.join(",")} · seat ${r.result.winner} won`,
@@ -518,6 +593,10 @@
       });
       if (!players.length) floor.append(K.el("p", "cf-empty", "Sit down to open the table."));
       arena.append(floor);
+      if (settled && result && players[result.winner]) {
+        const w = players[result.winner];
+        banner(arena, `${w.login === me ? "You take" : `${w.displayName} takes`} `, 20 * players.length);
+      }
     },
 
     async animate(round, refs, { wait, me }) {
@@ -547,7 +626,9 @@
       w?.classList.add("winner");
       refs.phase.className = "cf-phase open";
       refs.phase.textContent = `${round.players[r.winner]?.login === me ? "You take" : `${round.players[r.winner]?.displayName} takes`} ${round.pot}`;
-      await wait(1200);
+      banner(refs.arena, `${round.players[r.winner]?.login === me ? "You take" : `${round.players[r.winner]?.displayName} takes`} `, round.pot);
+      K.burst?.();
+      await wait(1800);
     }
   };
 

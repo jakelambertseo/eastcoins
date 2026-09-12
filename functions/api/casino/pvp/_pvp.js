@@ -1,10 +1,17 @@
 /* ============================================================
    EastCoin Casino — the two player-versus-player tables
 
-     roulette   Russian Roulette: one live round, one loser, the
-                rest split their stake.
+     roulette   Russian Roulette: pull until someone gets it, reload
+                for whoever is left, go again — the last one standing
+                takes the whole pot.
      standing   Last One Standing: one player knocked out at a
                 time, the last one takes the whole pot.
+
+   Both pay the same way: the winner takes every buy-in on the table
+   and the house takes nothing. Three players at 20 is 60 to one
+   person. (Roulette originally stopped at the first shot and split
+   that one stake among the survivors; changed on 2026-09-12 by
+   request so that a win is a win.)
 
    Both work the same way. Nobody picks a player count. The first
    person to sit down opens a lobby and starts a sixty-second clock;
@@ -19,12 +26,13 @@
    Nothing about the outcome waits for anyone's browser, so closing
    the tab changes nothing.
 
-   Russian Roulette past two players: the cylinder gets one chamber
-   per player, doubled up until there are at least six, so every
-   seat pulls the same number of times and every seat is on exactly
-   1 in N. A fixed six-chamber cylinder breaks the moment five people
-   sit down. One live round in a cylinder that empties completely
-   means there is always exactly one loser.
+   Russian Roulette past two players: each round the cylinder gets
+   one chamber per player still in, doubled up until there are at
+   least six, so every seat pulls the same number of times and every
+   seat is on exactly 1 in M for that round. One live round in a
+   cylinder that empties completely means every round shoots exactly
+   one person; N players is N-1 rounds. By symmetry every seat starts
+   on exactly 1 in N to be the last one standing.
 
    Settlement is triggered by whoever asks — a state poll, a join, or
    the casino floor — and is claimed with a conditional UPDATE so two
@@ -109,11 +117,23 @@ export const chambersFor = (n) => n * Math.max(1, Math.ceil(6 / n));
 export async function outcomeFor(game, seed, seats) {
   const n = seats.length;
   if (game.key === "roulette") {
-    const chambers = chambersFor(n);
-    const h = await sha256(`${seed}:roulette`);
-    const live = parseInt(h.slice(0, 8), 16) % chambers;
-    // Chamber c is pulled by seat c mod n, round the table.
-    return { chambers, live, loser: live % n };
+    // Elimination to one. Each round, everyone still in pulls in seat
+    // order round a cylinder sized for that many; chamber c is pulled
+    // by the c-th remaining seat, wrapping. Whoever gets the live one
+    // is out, the cylinder is reloaded from the next hash, and it goes
+    // again until one is left.
+    let remaining = seats.map((_, i) => i);
+    const stages = [];
+    for (let k = 0; remaining.length > 1; k += 1) {
+      const m = remaining.length;
+      const chambers = chambersFor(m);
+      const h = await sha256(`${seed}:roulette:${k}`);
+      const live = parseInt(h.slice(0, 8), 16) % chambers;
+      const shot = remaining[live % m];
+      stages.push({ players: m, chambers, live, shot });
+      remaining = remaining.filter((s) => s !== shot);
+    }
+    return { stages, order: stages.map((s) => s.shot), winner: remaining[0] };
   }
   // Last One Standing: Fisher–Yates over the seats, each swap from its
   // own hash. The order IS the elimination order; the last one is the winner.
@@ -130,18 +150,10 @@ export async function outcomeFor(game, seed, seats) {
 
 /**
  * What each seat is paid back, by seat index. 0 means the stake is gone.
- *
- * Roulette: the loser's stake is split between the survivors; the
- * rounding remainder stays with the house. Standing: the winner takes
- * the whole pot and the house takes nothing.
+ * Both games: the winner takes every buy-in, the house takes nothing.
  */
 export function payoutsFor(game, outcome, n) {
   const pay = new Array(n).fill(0);
-  if (game.key === "roulette") {
-    const share = STAKE + Math.floor(STAKE / (n - 1));
-    for (let i = 0; i < n; i += 1) if (i !== outcome.loser) pay[i] = share;
-    return pay;
-  }
   pay[outcome.winner] = STAKE * n;
   return pay;
 }

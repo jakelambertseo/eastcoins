@@ -97,9 +97,9 @@ export async function onRequestGet(context) {
   // the maths itself and disagreeing with the server.
   const table = [];
   for (let n = MIN_PLAYERS; n <= MAX_PLAYERS; n += 1) {
-    table.push(game.key === "roulette"
-      ? { players: n, chambers: chambersFor(n), pullsEach: chambersFor(n) / n, win: Math.floor(STAKE / (n - 1)), lose: STAKE }
-      : { players: n, pot: STAKE * n, chance: n });
+    // Both games pay the winner the whole pot; roulette also says how big
+    // the first cylinder is, since that is what the table looks like.
+    table.push({ players: n, pot: STAKE * n, chance: n, chambers: game.key === "roulette" ? chambersFor(n) : undefined });
   }
 
   return json({

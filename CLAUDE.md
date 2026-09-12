@@ -184,13 +184,19 @@
 > **Nobody picks a player count**: the first join opens a lobby and a
 > 60-second clock; whoever is in at zero plays; one person alone is
 > refunded and the table clears. **The buy-in is fixed at 20** — no amount
-> is read from the body. Roulette: one chamber per player, doubled until at
-> least six (`chambersFor`), so every seat pulls the same number of times
-> and is on exactly 1 in N; one live round in a cylinder that empties
-> completely means exactly one loser, whose 20 is split among the
-> survivors (`STAKE + floor(STAKE/(N-1))` each; the rounding remainder is
-> the house's only take). Standing: Fisher–Yates over the seats from the
-> seed, last left takes `20 × N`, house takes nothing. **Settlement is
+> is read from the body. **Both tables pay the winner every buy-in on the
+> table and the house takes nothing** (three at 20 is 60 to one person).
+> Roulette is elimination to one: each round the cylinder gets one chamber
+> per player still in, doubled until at least six (`chambersFor`), the
+> live one comes from `sha256(seed:roulette:k)`, chamber c is pulled by
+> the c-th remaining seat wrapping, whoever gets it is out, reload, again;
+> N players is N−1 rounds and every seat starts on exactly 1 in N. The
+> result is `{stages:[{players,chambers,live,shot}], order, winner}`.
+> (Until 2026-09-12 evening it stopped at the first shot and split that
+> one stake among survivors, storing `{chambers,live,loser}`; `v3-pvp.js`
+> `stagesOf()`/`winnerOf()` still read that shape, so the one such round
+> in D1 draws correctly.) Standing: Fisher–Yates over the seats from the
+> seed, last left takes `20 × N`. **Settlement is
 > triggered by whoever asks** — a state poll, a join, or the casino floor,
 > which polls widest — and is claimed with a conditional UPDATE to
 > `SETTLING` so two pollers cannot both pay; a round stuck in SETTLING for
