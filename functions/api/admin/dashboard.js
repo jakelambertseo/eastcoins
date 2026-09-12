@@ -8,11 +8,13 @@
    in chat.
    ============================================================ */
 
-import { getSessionUser, walletWritesEnabled, readBalance, totalReturn } from "../picks/_lib.js";
+import { getSessionUser, walletWritesEnabled, readBalance, totalReturn, ADMIN_ALLOWLIST } from "../picks/_lib.js";
 import { readStatus } from "../picks/_ops.js";
 import { tmdb } from "../screen/_tmdb.js";
 
-const DASHBOARD_LOGINS = new Set(["bootypaper"]);
+// Same three people the Picks admin page trusts. One list, so "admin"
+// cannot mean different things on different screens.
+const DASHBOARD_LOGINS = ADMIN_ALLOWLIST;
 const DEFAULT_MUSIC_ROOM = "https://eastcoin-music-room.jake-7f5.workers.dev";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });

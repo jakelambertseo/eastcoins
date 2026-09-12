@@ -530,14 +530,16 @@
     }
   }
 
-  /* ------------------------------------------------------ owner menu
+  /* ------------------------------------------------------ admin menu
 
      Admin, Dashboard and Activity have no nav link on purpose. For the
-     one person who uses them they sit at the bottom of the ⋯ menu.
+     people who use them they sit at the bottom of the ⋯ menu.
      Cosmetic only: every one of those endpoints checks the session
-     itself, so pasting the URL gets a stranger no further than this. */
+     itself, so pasting the URL gets a stranger no further than this.
+     The list mirrors ADMIN_ALLOWLIST in functions/api/picks/_lib.js —
+     change one, change the other. */
 
-  const OWNER_LOGIN = "bootypaper";
+  const ADMIN_LOGINS = new Set(["bootypaper", "zwades", "andyreidisapawg"]);
   const OWNER_LINKS = [
     ["admin", "/?view=admin", "🛠", "Admin"],
     ["dashboard", "/?view=dashboard", "📊", "Dashboard"],
@@ -545,7 +547,7 @@
   ];
 
   function ownerMenu(login) {
-    if (String(login || "").toLowerCase() !== OWNER_LOGIN) return;
+    if (!ADMIN_LOGINS.has(String(login || "").toLowerCase())) return;
     const menu = els.settingsMenu;
     if (!menu || menu.querySelector(".menu-owner")) return;
 

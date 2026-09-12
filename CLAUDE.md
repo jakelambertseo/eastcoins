@@ -156,10 +156,14 @@
 > Decided rows only (WON/LOST/BUST/CASHED); anything live counts as
 > neither.
 >
-> **Owner links in the ⋯ menu** — `ownerMenu()` in `v3-shell.js` appends
-> Admin, Dashboard and Activity under a "Yours" heading once the session
-> says the login is `bootypaper`. Cosmetic only: each of those endpoints
-> checks the session itself.
+> **Admin links in the ⋯ menu** — `ownerMenu()` in `v3-shell.js` appends
+> Admin, Dashboard and Activity under a "Yours" heading for the logins in
+> its `ADMIN_LOGINS` set, which mirrors `ADMIN_ALLOWLIST` in
+> `picks/_lib.js` (`bootypaper`, `zwades`, `andyreidisapawg`) — change one,
+> change the other. Cosmetic only: each endpoint checks the session
+> itself, and `admin/dashboard.js`, `admin/backup.js` and `admin/recap.js`
+> now read that one allowlist rather than keeping their own owner lists,
+> so "admin" means the same thing on every screen.
 >
 > **Live scores** — `settle.js` `trackLiveScores()` runs every tick: for
 > LOCKED markets under 5h old with active picks it reads the Odds API live

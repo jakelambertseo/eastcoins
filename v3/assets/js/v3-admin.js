@@ -440,7 +440,7 @@
       // Closing refunds, so the confirm says what it will cost rather
       // than asking "are you sure" about an unnamed amount.
       if (market.state !== "SETTLED" && market.state !== "VOID") {
-        const close = el("button", "iconbtn", "Close");
+        const close = el("button", "adm-rowbtn", "Close");
         close.type = "button";
         close.title = "Void this market and refund every pick";
         close.disabled = local.busy;
@@ -468,7 +468,7 @@ ${cost}`)) return;
       // Announce one market in chat and on Discord: for the one-off
       // events (CFB, fights) the site opens by hand and never announces.
       if (market.state === "OPEN" && new Date(market.startsAt).getTime() > Date.now()) {
-        const say = el("button", "iconbtn", "Announce");
+        const say = el("button", "adm-rowbtn", "Announce");
         say.type = "button";
         say.title = "Post this market in Twitch chat and on Discord";
         say.disabled = local.busy;

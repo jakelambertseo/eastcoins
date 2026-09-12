@@ -20,10 +20,10 @@
    copy that lives outside Cloudflare's database entirely.
    ============================================================ */
 
-import { getSessionUser, json, fail, safeEqual } from "../picks/_lib.js";
+import { getSessionUser, json, fail, safeEqual, ADMIN_ALLOWLIST } from "../picks/_lib.js";
 import { noteStatus, readStatus } from "../picks/_ops.js";
 
-const OWNERS = new Set(["bootypaper"]);
+const OWNERS = ADMIN_ALLOWLIST;
 const PREFIX = "d1/eastcoin-picks/";
 const KEEP_DAYS = 30;
 const PAGE = 2000;

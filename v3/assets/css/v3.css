@@ -3300,3 +3300,16 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
 /* Owner-only links at the foot of the ⋯ menu (Admin, Dashboard, Activity). */
 .menu-link{text-decoration:none;color:var(--muted);justify-content:flex-start}
 .menu-link:hover{color:var(--gold);background:var(--gold-dim)}
+
+/* Admin market rows: Announce / Close. These were .iconbtn, a fixed
+   36px square built for one glyph, so the words were clipped. */
+.adm-rowbtn{
+  height:30px;padding:0 11px;flex:0 0 auto;white-space:nowrap;
+  border:1px solid var(--line);border-radius:8px;background:var(--panel-2);
+  color:var(--muted);font-size:.78rem;font-weight:700;cursor:pointer;
+  transition:color .14s ease,border-color .14s ease,background .14s ease;
+}
+.adm-rowbtn:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(var(--gold-rgb),.3)}
+.adm-rowbtn:disabled{opacity:.45;cursor:not-allowed}
+/* First action pushes the group to the right edge of the row. */
+.adm-market-top .adm-rowbtn:first-of-type{margin-left:auto}
