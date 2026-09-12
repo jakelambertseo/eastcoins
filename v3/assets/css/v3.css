@@ -3388,28 +3388,37 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
    neighbouring buckets, and one horizontal half-step of the ball. They
    have to be the same number or the ball misses the pegs it is meant to
    bounce off. v3-plinko.js reads it back out of the computed style, so
-   changing it here is enough. */
-.pk-board{position:relative;width:min(420px,100%);margin:10px auto 6px;padding:6px 0;--pk-pitch:26px}
+   changing it here is enough.
+
+   It scales with the viewport because nine buckets at a fixed 26px left
+   the board a narrow strip in a wide column, and "x0.75" did not fit the
+   label. The clamp keeps it readable on a phone and stops it sprawling
+   on a big monitor. */
+.pk-board{
+  position:relative;margin:12px auto 8px;padding:6px 0;
+  --pk-pitch:clamp(28px, 6.4vw, 46px);
+  width:calc(var(--pk-pitch) * 9);
+}
 .pk-pegs{display:flex;flex-direction:column;align-items:center;gap:0}
-.pk-row{display:flex;justify-content:center;gap:calc(var(--pk-pitch) - 6px);height:var(--pk-pitch);align-items:center}
+.pk-row{display:flex;justify-content:center;gap:calc(var(--pk-pitch) - 7px);height:var(--pk-pitch);align-items:center}
 .pk-peg{
-  width:6px;height:6px;border-radius:50%;
-  background:rgba(255,255,255,.28);box-shadow:0 0 6px rgba(255,255,255,.08);
+  width:7px;height:7px;border-radius:50%;
+  background:rgba(255,255,255,.3);box-shadow:0 0 7px rgba(255,255,255,.09);
 }
 .pk-ball{
-  position:absolute;left:50%;top:4px;width:16px;height:16px;margin-left:-8px;border-radius:50%;
+  position:absolute;left:50%;top:4px;width:18px;height:18px;margin-left:-9px;border-radius:50%;
   background:radial-gradient(circle at 35% 30%,#fff,var(--gold) 60%,#8a6c12);
   box-shadow:0 0 14px rgba(var(--gold-rgb),.6);
   transition:transform .11s linear;z-index:2;
 }
 .pk-ball.landed{transition:transform .16s cubic-bezier(.3,1.6,.5,1)}
 
-.pk-buckets{display:flex;justify-content:center;gap:2px;margin:2px auto 0;--pk-pitch:26px}
+.pk-buckets{display:flex;justify-content:center;gap:3px;margin:4px auto 0;--pk-pitch:clamp(28px, 6.4vw, 46px)}
 .pk-bucket{
-  flex:0 0 calc(var(--pk-pitch) - 2px);width:calc(var(--pk-pitch) - 2px);
-  padding:7px 1px;border-radius:8px;text-align:center;
+  flex:0 0 calc(var(--pk-pitch) - 3px);width:calc(var(--pk-pitch) - 3px);
+  padding:9px 1px;border-radius:9px;text-align:center;
   border:1px solid var(--line);background:var(--panel-2);
-  color:var(--muted);font-size:.62rem;font-weight:800;
+  color:var(--muted);font-size:clamp(.56rem, 1.35vw, .78rem);font-weight:800;
   transition:transform .18s ease,background .18s ease,color .18s ease,border-color .18s ease;
 }
 .pk-bucket.mid{color:var(--text);border-color:var(--line-2)}
@@ -3422,8 +3431,8 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
 @media (prefers-reduced-motion:reduce){
   .pk-ball,.pk-bucket{transition:none}
 }
-/* Narrow screens shrink the whole board by shrinking the one number. */
-@media (max-width:420px){
-  .pk-board,.pk-buckets{--pk-pitch:21px}
-  .pk-bucket{font-size:.55rem}
+/* The clamp handles the sizing; this only stops the labels crowding on
+   the smallest phones, where "x0.75" is the widest thing on the row. */
+@media (max-width:380px){
+  .pk-bucket{padding:7px 0;letter-spacing:-.02em}
 }
