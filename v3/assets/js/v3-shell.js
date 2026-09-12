@@ -146,6 +146,8 @@
   function routeFromUrl() {
     if (/^\/g\/./i.test(location.pathname)) return "game";
     if (/^\/u\/./i.test(location.pathname)) return "profile";
+    // /movie/inception and /tv/lost-s1-ep1 are the Movies & TV view.
+    if (/^\/(movie|tv)\/./i.test(location.pathname)) return "screen";
     const view = new URL(location.href).searchParams.get("view");
     return ROUTES.includes(view) ? view : "events";
   }

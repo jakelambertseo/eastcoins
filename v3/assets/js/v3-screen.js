@@ -47,6 +47,61 @@
   let refs = {};
   let iframe = null;
   let searchTimer = 0;
+
+  /* ------------------------------------------------------- the name rule
+
+     A mirror of functions/api/screen/_slug.js — change one, change the
+     other. The server owns the rule because it also serves /movie/ and
+     /tv/; this copy exists because the page has to WRITE the same URLs
+     the server reads, and a link that only works when clicked is worse
+     than no pretty URL at all. */
+
+  // NFKD pulls accents off a letter but leaves the letters that are not
+  // an accented anything, so æ, ø, ß, ł and đ would each become a hyphen
+  // and "Æon Flux" would slug to "on-flux". Spell them out first.
+  const LIGATURES = [[/æ/gi, "ae"], [/œ/gi, "oe"], [/ø/gi, "o"], [/ß/g, "ss"], [/ł/gi, "l"], [/đ|ð/gi, "d"], [/þ/gi, "th"]];
+
+  function slugify(name) {
+    let text = String(name || "");
+    for (const [rx, to] of LIGATURES) text = text.replace(rx, to);
+    return text
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/['\u2019]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 120);
+  }
+
+  const moviePath = (title) => (slugify(title) ? `/movie/${slugify(title)}` : "");
+
+  function tvPath(name, season, episode) {
+    const slug = slugify(name);
+    if (!slug) return "";
+    const s = Number(season);
+    const e = Number(episode);
+    if (!Number.isInteger(s) || s <= 0) return `/tv/${slug}`;
+    if (!Number.isInteger(e) || e <= 0) return `/tv/${slug}-s${s}`;
+    return `/tv/${slug}-s${s}-ep${e}`;
+  }
+
+  /** Season and episode come off the END, in that order, or not at all. */
+  function parseTvSlug(raw) {
+    let rest = slugify(raw);
+    if (!rest) return null;
+    let season = null;
+    let episode = null;
+    const ep = rest.match(/^(.*)-ep(\d{1,3})$/);
+    if (ep) { rest = ep[1]; episode = Number(ep[2]); }
+    const se = rest.match(/^(.*)-s(\d{1,3})$/);
+    if (se) { rest = se[1]; season = Number(se[2]); }
+    // An episode with no season in front of it is half a reference, so
+    // the whole thing is treated as a name rather than guessing season 1.
+    if (episode !== null && season === null) return { slug: slugify(raw), season: null, episode: null };
+    if (!rest) return null;
+    return { slug: rest, season, episode };
+  }
   let seq = 0;
 
   /* ---------------------------------------------------------- helpers */
@@ -98,21 +153,35 @@
   }
 
   function writeUrl({ push = false } = {}) {
-    const url = new URL(location.href);
-    if (url.searchParams.get("view") !== "screen") return;
-    for (const k of ["t", "id", "s", "e", "kind", "list", "genre", "sort", "mlist", "mgenre", "msort", "tlist", "tgenre", "tsort"]) url.searchParams.delete(k);
-    if (local.now) {
-      url.searchParams.set("t", local.now.type);
-      url.searchParams.set("id", String(local.now.id));
-      if (local.now.type === "tv") { url.searchParams.set("s", String(local.now.season)); url.searchParams.set("e", String(local.now.episode)); }
+    let next = "";
+
+    // Something open, and we know what it is called: the pretty path.
+    // Shelf filters are browse state and have no business on a link to
+    // one title, so they are left off deliberately.
+    if (local.now?.title) {
+      next = local.now.type === "tv"
+        ? tvPath(local.now.title, local.now.season, local.now.episode)
+        : moviePath(local.now.title);
     }
-    for (const [kind, prefix] of [["movie", "m"], ["tv", "t"]]) {
-      const sh = local.shelves[kind];
-      if (sh.list !== "trending") url.searchParams.set(`${prefix}list`, sh.list);
-      if (sh.genre) url.searchParams.set(`${prefix}genre`, sh.genre);
-      if (sh.sort) url.searchParams.set(`${prefix}sort`, sh.sort);
+
+    if (!next) {
+      const url = new URL("/", location.origin);
+      url.searchParams.set("view", "screen");
+      // No name to slug — an old ?t=&id= link, or a title TMDB gave us
+      // nothing for. The id form still works and still shares.
+      if (local.now) {
+        url.searchParams.set("t", local.now.type);
+        url.searchParams.set("id", String(local.now.id));
+        if (local.now.type === "tv") { url.searchParams.set("s", String(local.now.season)); url.searchParams.set("e", String(local.now.episode)); }
+      }
+      for (const [kind, prefix] of [["movie", "m"], ["tv", "t"]]) {
+        const sh = local.shelves[kind];
+        if (sh.list !== "trending") url.searchParams.set(`${prefix}list`, sh.list);
+        if (sh.genre) url.searchParams.set(`${prefix}genre`, sh.genre);
+        if (sh.sort) url.searchParams.set(`${prefix}sort`, sh.sort);
+      }
+      next = url.pathname + url.search;
     }
-    const next = url.pathname + url.search + url.hash;
     // Opening the player is one history entry, so Back returns to the
     // shelves; moving between episodes replaces it rather than stacking.
     if (push) history.pushState({ view: "screen", play: true }, "", next);
@@ -121,6 +190,26 @@
 
   function readUrl() {
     const p = new URL(location.href).searchParams;
+
+    // A pretty path wins over anything in the query string. The name in
+    // it is not an id, so this only says WHAT was asked for; mount()
+    // has the server turn it into one.
+    const movie = location.pathname.match(/^\/movie\/([^/]+)\/?$/i);
+    const tv = location.pathname.match(/^\/tv\/([^/]+)\/?$/i);
+    if (movie || tv) {
+      for (const [kind, prefix] of [["movie", "m"], ["tv", "t"]]) {
+        const sh = local.shelves[kind];
+        sh.list = "trending";
+        sh.genre = "";
+        sh.sort = "";
+      }
+      if (movie) {
+        const slug = slugify(decodeURIComponent(movie[1]));
+        return slug ? { pending: true, type: "movie", slug } : null;
+      }
+      const parsed = parseTvSlug(decodeURIComponent(tv[1]));
+      return parsed ? { pending: true, type: "tv", ...parsed } : null;
+    }
     for (const [kind, prefix] of [["movie", "m"], ["tv", "t"]]) {
       const sh = local.shelves[kind];
       sh.list = LISTS.some(([k]) => k === p.get(`${prefix}list`)) ? p.get(`${prefix}list`) : "trending";
@@ -147,6 +236,44 @@
       return `${PLAYER}/tv/${item.id}/${item.season || 1}/${item.episode || 1}?${p}`;
     }
     return `${PLAYER}/movie/${item.id}?${p}`;
+  }
+
+  /**
+   * Turns the name in a pretty URL into something playable.
+   *
+   * Nothing found is not an error page: the person typed or was sent a
+   * name, so they are dropped into a search for exactly that, which is
+   * what they would have done next anyway.
+   */
+  async function resolvePending(want) {
+    const q = new URLSearchParams({ type: want.type, slug: want.slug });
+    if (want.season) q.set("season", String(want.season));
+    if (want.episode) q.set("episode", String(want.episode));
+    const payload = await getJson(`/api/screen/resolve?${q}`);
+    if (!root.isConnected) return;
+
+    if (!payload?.ok) {
+      const phrase = String(want.slug || "").replace(/-+/g, " ").trim();
+      history.replaceState(history.state, "", `/?view=screen`);
+      if (phrase && refs.searchInput) {
+        refs.searchInput.value = phrase;
+        search(phrase);
+      }
+      return;
+    }
+
+    // play() writes the URL again from the name the server returned, so
+    // a near miss straightens itself out: /movie/inceptionn becomes
+    // /movie/inception without anyone noticing.
+    play({
+      type: payload.type,
+      id: payload.id,
+      title: payload.name,
+      poster: payload.item?.poster || "",
+      year: payload.item?.year || "",
+      season: want.season || 1,
+      episode: want.episode || 1
+    });
   }
 
   function play(item, { resume = 0 } = {}) {
@@ -490,6 +617,9 @@
       if (q.length < 2) { refs.resultsSec.hidden = true; seq += 1; return; }
       searchTimer = setTimeout(() => search(q), 350);
     });
+    // Kept so a /movie/<name> that resolves to nothing can drop the
+    // person into a search for the name they actually asked for.
+    refs.searchInput = input;
     searchBox.append(input);
     head.append(searchBox);
     page.append(head);
@@ -611,7 +741,8 @@
       renderFilters("movie");
       renderFilters("tv");
       renderContinue();
-      if (wanted) play(wanted);
+      if (wanted?.pending) resolvePending(wanted);
+      else if (wanted) play(wanted);
 
       // Genres once per kind, then the shelf.
       for (const kind of ["movie", "tv"]) {
