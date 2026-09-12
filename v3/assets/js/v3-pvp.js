@@ -295,15 +295,18 @@
       refs.ledgerList.replaceChildren();
       if (!items.length) refs.ledgerList.append(K.el("p", "cf-empty", "No tables have played yet."));
       for (const h of pg.slice) {
-        const line = K.el("div", `cf-row ${h.status === "VOID" ? "" : "won"}`);
-        const who = K.el("span", "cf-row-who");
-        if (h.who) { who.append(K.avatar(h.who, "cf-av small"), K.nameLink(h.who)); }
-        else who.textContent = h.status === "VOID" ? "Nobody showed" : "—";
-        const what = K.el("span", "cf-row-what", h.status === "VOID" ? "refunded" : spec.ledgerWord);
-        const amt = K.el("span", "cf-row-amt");
-        amt.append(h.status === "VOID" ? document.createTextNode("—") : K.zc(spec.ledgerAmount(h), { sign: true }));
-        const when = K.el("span", "cf-row-when", `${h.players} player${h.players === 1 ? "" : "s"} · ${h.at ? new Date(h.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : ""}`);
-        line.append(who, what, amt, when);
+        // The same row every other ledger uses: a face, then a name line
+        // with a small line under it. The name line here is a sentence.
+        const seats = h.seats || [];
+        const mine = seats.some((s) => s.login === me);
+        const line = K.el("div", `cf-row pv${mine ? " me" : ""}`);
+        const face = spec.ledgerFace(h) || seats[0];
+        if (face) line.append(K.avatar(face, "cf-av"));
+        const who = K.el("div", "cf-who");
+        who.append(h.status === "VOID" ? document.createTextNode("Only one at the table — refunded") : spec.sentence(h));
+        const sub = K.el("small", null, `${h.players} player${h.players === 1 ? "" : "s"} · ${h.at ? new Date(h.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : ""}`);
+        who.append(sub);
+        line.append(who);
         refs.ledgerList.append(line);
       }
       refs.ledgerList.append(K.pager(pg, (n) => { ledgerPage = n; render(); }, "tables"));
@@ -348,6 +351,16 @@
     };
   }
 
+  /** "A", "A and B", "A, B and C" — as profile links, in a fragment. */
+  function names(list) {
+    const frag = document.createDocumentFragment();
+    list.forEach((p, i) => {
+      if (i > 0) frag.append(document.createTextNode(i === list.length - 1 ? " and " : ", "));
+      frag.append(K.nameLink(p));
+    });
+    return frag;
+  }
+
   /* -------------------------------------------- Russian Roulette */
 
   function seatNode(p, me) {
@@ -363,9 +376,21 @@
     blurb: "Everyone puts in 20. One live round. Whoever it fires on loses their stake, and everyone still standing splits it.",
     joinedLine: "The clock's running.",
     paysTitle: "What survivors win",
-    ledgerWord: "got it",
     verifyRule: "live chamber = sha256(seed:roulette) mod chambers · chamber c is pulled by seat c mod players",
-    ledgerAmount: (h) => -20,
+    // "BootyPaper got shot and lost 20 — Zwades won 20" (or "… won 6 each").
+    ledgerFace: (h) => (h.seats || []).find((s) => s.status === "LOST"),
+    sentence(h) {
+      const frag = document.createDocumentFragment();
+      const loser = (h.seats || []).find((s) => s.status === "LOST");
+      const winners = (h.seats || []).filter((s) => s.status === "WON");
+      if (!loser) { frag.append(document.createTextNode("Table played")); return frag; }
+      frag.append(K.nameLink(loser), document.createTextNode(" got shot and lost "), K.zc(loser.stake));
+      if (winners.length) {
+        frag.append(document.createTextNode(" — "), names(winners), document.createTextNode(" won "), K.zc(winners[0].payout - winners[0].stake));
+        if (winners.length > 1) frag.append(document.createTextNode(" each"));
+      }
+      return frag;
+    },
     payCell: (t) => `+${t.win} · ${t.pullsEach} pull${t.pullsEach === 1 ? "" : "s"} each`,
     openLine: (l) => `${l.players.length} in so far. Everyone's on exactly 1 in ${Math.max(2, l.players.length + 1)} once you sit.`,
     waitingLine: (l) => `${l.players.length} at the table. With ${l.players.length} it's 1 in ${l.players.length} and +${Math.floor(20 / Math.max(1, l.players.length - 1))} if you walk away.`,
@@ -456,9 +481,21 @@
     blurb: "Everyone puts in 20. One player is knocked out every couple of seconds until one is left, and they take the lot.",
     joinedLine: "The clock's running.",
     paysTitle: "What the winner takes",
-    ledgerWord: "took the pot",
     verifyRule: "elimination order = Fisher–Yates over the seats, swap i from sha256(seed:shuffle:i) · last left wins",
-    ledgerAmount: (h) => h.pot - 20,
+    // "Zwades won 80 — BootyPaper, Milo and Pax lost 20 each".
+    ledgerFace: (h) => (h.seats || []).find((s) => s.status === "WON"),
+    sentence(h) {
+      const frag = document.createDocumentFragment();
+      const winner = (h.seats || []).find((s) => s.status === "WON");
+      const losers = (h.seats || []).filter((s) => s.status === "LOST");
+      if (!winner) { frag.append(document.createTextNode("Table played")); return frag; }
+      frag.append(K.nameLink(winner), document.createTextNode(" won "), K.zc(winner.payout - winner.stake));
+      if (losers.length) {
+        frag.append(document.createTextNode(" — "), names(losers), document.createTextNode(" lost "), K.zc(losers[0].stake));
+        if (losers.length > 1) frag.append(document.createTextNode(" each"));
+      }
+      return frag;
+    },
     payCell: (t) => `${t.pot} · 1 in ${t.chance}`,
     openLine: (l) => `${l.players.length} in so far, ${l.pot} in the pot. Sit and it's ${l.pot + 20} to one person.`,
     waitingLine: (l) => `${l.players.length} at the table, ${l.pot} in the pot. You're on 1 in ${l.players.length}.`,

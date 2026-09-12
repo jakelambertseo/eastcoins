@@ -3626,6 +3626,13 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
 /* The emote beside a PvP title, on the page and on its floor tile. */
 .pv-title-img{width:1.15em;height:1.15em;margin-left:.35em;vertical-align:-.18em;object-fit:contain}
 .cas-icon img{width:1.35em;height:1.35em;object-fit:contain;vertical-align:middle}
+/* A PvP ledger row is a sentence, so it may wrap; the names in it are
+   links and the amounts are coin marks, inline with the words. */
+.cf-row.pv{border-left-color:var(--muted-2)}
+.cf-row.pv .cf-who{white-space:normal;line-height:1.4;min-width:0}
+.cf-row.pv .cf-who a{font-weight:700}
+.cf-row.pv .cf-who .zc-amount{display:inline-flex;vertical-align:-.1em}
+.cf-row.pv .cf-who small{display:block;margin-top:2px}
 .pv-arena{position:relative;min-height:330px;border-radius:var(--radius);border:1px solid var(--line);background:radial-gradient(circle at 50% 45%,#221d1a,#100d0c 72%);display:grid;place-items:center;margin-bottom:12px}
 .cf-phase.bad{color:var(--red)}
 

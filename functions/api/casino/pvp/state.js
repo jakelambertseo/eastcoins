@@ -41,30 +41,47 @@ export async function onRequestGet(context) {
     .first();
   const last = lastRow ? publicRound(lastRow, await entriesFor(db, lastRow.id), { revealSeed: true, viewerId: user?.id }) : null;
 
-  // One row per finished round, with the one person the round was
-  // really about: the loser at roulette, the winner at last standing.
-  const notable = game.key === "roulette" ? "LOST" : "WON";
+  // One row per finished round, carrying everyone who sat at it, so the
+  // ledger can say who got shot and who got paid rather than one name.
   const hist = await db
     .prepare(
-      `SELECT r.id, r.status, r.settled_at, r.players, r.pot, u.twitch_login, u.display_name, u.avatar_url
-         FROM pvp_rounds r
-         LEFT JOIN pvp_entries e ON e.round_id = r.id AND e.status = ?
-         LEFT JOIN users u ON u.twitch_id = e.user_id
-        WHERE r.game = ? AND r.status IN ('SETTLED', 'VOID')
-        ORDER BY r.settled_at DESC LIMIT 30`
+      `SELECT id, status, settled_at, players, pot FROM pvp_rounds
+        WHERE game = ? AND status IN ('SETTLED', 'VOID')
+        ORDER BY settled_at DESC LIMIT 30`
     )
-    .bind(notable, game.key)
+    .bind(game.key)
     .all()
     .catch(() => ({ results: [] }));
-  const history = (hist.results || []).map((r) => ({
+  const rounds = hist.results || [];
+  const seatsByRound = new Map();
+  if (rounds.length) {
+    const marks = rounds.map(() => "?").join(",");
+    const seats = await db
+      .prepare(
+        `SELECT e.round_id, e.seat, e.status, e.stake, e.payout, u.twitch_login, u.display_name, u.avatar_url
+           FROM pvp_entries e JOIN users u ON u.twitch_id = e.user_id
+          WHERE e.round_id IN (${marks})
+          ORDER BY e.seat ASC`
+      )
+      .bind(...rounds.map((r) => r.id))
+      .all()
+      .catch(() => ({ results: [] }));
+    for (const s of seats.results || []) {
+      const list = seatsByRound.get(s.round_id) || [];
+      list.push({
+        login: String(s.twitch_login).toLowerCase(), displayName: String(s.display_name || s.twitch_login), avatar: String(s.avatar_url || ""),
+        seat: Number(s.seat), status: s.status, stake: Number(s.stake), payout: Number(s.payout || 0)
+      });
+      seatsByRound.set(s.round_id, list);
+    }
+  }
+  const history = rounds.map((r) => ({
     id: r.id,
     status: r.status,
     at: r.settled_at ? Number(r.settled_at) : null,
     players: Number(r.players || 0),
     pot: Number(r.pot || 0),
-    who: r.twitch_login
-      ? { login: String(r.twitch_login).toLowerCase(), displayName: String(r.display_name || r.twitch_login), avatar: String(r.avatar_url || "") }
-      : null
+    seats: seatsByRound.get(r.id) || []
   }));
 
   let me = null;
