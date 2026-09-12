@@ -73,6 +73,50 @@
     return fixed === -1 ? 100 : fixed;
   }
 
+  /* ---------------------------------------------------------- what is shown at all
+
+     Two cuts, both about the community as it is today (2026-09-12):
+
+       · whole sports nobody here watches are hidden — soccer, motorsport,
+         rugby, cricket. Take a key out of HIDDEN_SPORTS to bring one back.
+       · college football is Division I only. A Saturday listed hundreds
+         of D2/D3 games and buried the ones people wanted. A college game
+         stays if either side is an FBS or FCS school (EC_CFB_TEAMS.d1).
+         A football listing whose sides do not resolve to ANY college —
+         a channel like "NFL Network", a title we cannot read — is left
+         alone, because hiding it would hide things that are not D2/D3.
+
+     keep() is applied where matches are loaded (the Sports page, the
+     MultiView picker) so every count agrees, and again in grouped() so
+     nothing can slip past. */
+
+  const HIDDEN_SPORTS = new Set(["football", "motor-sports", "rugby", "cricket"]);
+
+  let d1Set = null;
+  function divisionOne() {
+    if (!d1Set && Array.isArray(window.EC_CFB_TEAMS?.d1)) d1Set = new Set(window.EC_CFB_TEAMS.d1);
+    return d1Set;
+  }
+
+  // Both sides' names, from the team fields or, failing that, the title.
+  function sideNames(match) {
+    const named = [match?.teams?.home?.name, match?.teams?.away?.name].filter(Boolean);
+    if (named.length) return named;
+    return String(match?.title || "").split(/\s+(?:at|vs\.?|v)\s+/i).map((s) => s.trim()).filter(Boolean).slice(0, 2);
+  }
+
+  function keep(match) {
+    const key = sportKey(match);
+    if (HIDDEN_SPORTS.has(key)) return false;
+    if (key !== "american-football" || footballRank(match) !== 1) return true;
+    const resolve = window.ECLogos?.collegeId;
+    const d1 = divisionOne();
+    if (typeof resolve !== "function" || !d1) return true;   // no table yet: show everything
+    const ids = sideNames(match).map((n) => resolve(n)).filter(Boolean);
+    if (!ids.length) return true;                            // not a college matchup we can read
+    return ids.some((id) => d1.has(id));
+  }
+
   function isLive(match) {
     const start = Number(match?.date) || 0;
     if (!start) return Boolean(match?.popular && match?.sources?.length);
@@ -95,7 +139,7 @@
   /** Returns [[key, sortedMatches], ...] in the canonical running order. */
   function grouped(matches) {
     const groups = new Map();
-    for (const match of matches) {
+    for (const match of matches.filter(keep)) {
       const key = sportKey(match);
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(match);
@@ -173,6 +217,8 @@
     sortWithin,
     grouped,
     fullerCopy,
-    withoutCopies
+    withoutCopies,
+    keep,
+    HIDDEN_SPORTS
   });
 })();

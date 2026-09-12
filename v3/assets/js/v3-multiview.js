@@ -19,15 +19,6 @@
   const MIN_SPLIT = 18;
   const MAX_SPLIT = 82;
 
-  // Same rule as the watch view: providers get no-referrer, YouTube's own
-  // embeds get a policy that sends the origin, because YouTube answers a
-  // refererless frame with "error 153" instead of the video. The shared
-  // module assets/eastcoins-youtube.js decides which is which.
-  function setStreamSrc(iframe, url) {
-    iframe.referrerPolicy = window.EastcoinYouTube?.framePolicy(url) || "no-referrer";
-    iframe.src = url;
-  }
-
   const local = {
     count: 4,
     x: 50,               // vertical split, %
@@ -168,7 +159,8 @@
       if (match?.id && !seen.has(match.id)) seen.set(match.id, match);
     }
     const Sports = window.ECV3Sports;
-    local.catalog = Sports?.withoutCopies ? Sports.withoutCopies([...seen.values()]) : [...seen.values()];
+    const all = Sports?.withoutCopies ? Sports.withoutCopies([...seen.values()]) : [...seen.values()];
+    local.catalog = Sports?.keep ? all.filter(Sports.keep) : all;
     local.catalogLoaded = true;
   }
 
@@ -309,17 +301,18 @@
 
     if (existing && existing.parentElement) {
       existing.dataset.src = stream.embedUrl;
-      setStreamSrc(existing, stream.embedUrl);
+      existing.src = stream.embedUrl;
       return;
     }
 
     const frame = el("div", "mv-frame");
     const iframe = document.createElement("iframe");
     iframe.dataset.src = stream.embedUrl;
+    iframe.src = stream.embedUrl;
     iframe.title = panel.match?.title || `Panel ${index + 1}`;
     iframe.allow = "autoplay; fullscreen; encrypted-media; picture-in-picture";
     iframe.allowFullscreen = true;
-    setStreamSrc(iframe, stream.embedUrl);
+    iframe.referrerPolicy = "no-referrer";
     frame.append(iframe);
     body.replaceChildren(frame);
   }

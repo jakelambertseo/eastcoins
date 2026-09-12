@@ -62,7 +62,10 @@
 
       // Different ids can still be the same game: drop the provider's
       // bare, early-dated copies (see withoutCopies in v3-sports.js).
-      local.matches = Sports.withoutCopies ? Sports.withoutCopies([...seen.values()]) : [...seen.values()];
+      const all = Sports.withoutCopies ? Sports.withoutCopies([...seen.values()]) : [...seen.values()];
+      // Hidden sports and D2/D3 college games go here, before anything
+      // counts them (the All/Live chips read local.matches).
+      local.matches = Sports.keep ? all.filter(Sports.keep) : all;
       local.loaded = true;
       // Only a genuine provider failure counts as failed. An empty but
       // successful response is "nothing on today", which is a normal state.

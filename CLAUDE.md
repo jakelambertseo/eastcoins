@@ -347,6 +347,16 @@
 > name or logo is drawn from must therefore SELECT `league` — `_wager.js`
 > did not, which is why a Missouri pick showed the Detroit Tigers crest.
 >
+> **What the Sports page hides (2026-09-12)** — `keep()` in `v3-sports.js`
+> drops whole sports nobody in the community watches (`HIDDEN_SPORTS`:
+> soccer, motorsport, rugby, cricket — remove a key to bring one back) and
+> limits college football to **Division I**: a college game stays only if
+> a side resolves to an id in `EC_CFB_TEAMS.d1` (266 FBS+FCS ids from
+> ESPN's standings feed, groups 80 and 81). A football listing whose sides
+> resolve to no college at all ("NFL Network", unreadable titles) is left
+> alone. Applied where matches load (Sports page, MultiView picker) so the
+> chip counts agree, and again inside `grouped()`.
+>
 > **College football logos** — `v3/assets/js/v3-cfb-teams.js` (browser,
 > `window.EC_CFB_TEAMS`) and `functions/api/picks/_cfb.js` (server) hold
 > the same name -> ESPN id table, generated from ESPN's college team list
