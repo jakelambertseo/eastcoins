@@ -75,7 +75,11 @@
       API.getLive().catch(() => null),
       API.getToday().catch(() => null)
     ]);
-    return [...unwrap(live), ...unwrap(today)].find((m) => m?.id === id) || null;
+    const all = [...unwrap(live), ...unwrap(today)];
+    const found = all.find((m) => m?.id === id) || null;
+    // A link to the provider's bare copy of a game (one server, no art)
+    // opens the full listing instead, which carries that server and the rest.
+    return (found && window.ECV3Sports?.fullerCopy?.(found, all)) || found;
   }
 
   // getStreams takes the MATCH, not (source, id) — it walks match.sources
@@ -97,6 +101,19 @@
   }
 
   /* ---------------------------------------------------------- helpers */
+
+  // Every stream frame is loaded through here so the referrer policy can
+  // never drift from the source it was chosen for. The rule itself lives in
+  // assets/eastcoins-youtube.js; with that module missing this falls back to
+  // the stricter policy, which is how the site behaved before.
+  function setStreamSrc(iframe, url) {
+    // Checked as a function, not with ?. — a browser holding an older
+    // cached copy of the module has the object but not this method, and
+    // `obj?.missing(x)` still throws. That blanked the whole watch view.
+    const policy = window.EastcoinYouTube?.framePolicy;
+    iframe.referrerPolicy = (typeof policy === "function" ? policy(url) : "") || "no-referrer";
+    iframe.src = url;
+  }
 
   function currentSrc() {
     if (local.custom) return local.custom;
@@ -230,7 +247,7 @@
         local.active = Number(select.value) || 0;
         rememberServer();
         // Deliberate reload: a new server is a new stream.
-        if (dom.iframe) dom.iframe.src = currentSrc();
+        if (dom.iframe) setStreamSrc(dom.iframe, currentSrc());
       });
       dom.select = select;
       bar.append(select);
@@ -303,8 +320,7 @@
     iframe.title = local.match?.title || "Stream";
     iframe.allow = "autoplay; fullscreen; encrypted-media; picture-in-picture";
     iframe.allowFullscreen = true;
-    iframe.referrerPolicy = "no-referrer";
-    iframe.src = currentSrc();
+    setStreamSrc(iframe, currentSrc());
     frame.append(iframe, buildGameday());
 
     const bar = buildBar();
@@ -400,7 +416,8 @@
         try {
           const parsed = new URL(custom);
           if (parsed.protocol !== "https:") throw new Error("insecure");
-          local.custom = parsed.href;
+          // A YouTube page link (shared before search rewrote them) still plays.
+          local.custom = window.ECEmbed?.youtube?.(parsed.href) || parsed.href;
         } catch {
           local.error = "That doesn't look like a valid https link.";
         }

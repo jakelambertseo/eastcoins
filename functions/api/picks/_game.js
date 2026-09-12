@@ -1,3 +1,4 @@
+import { versus } from "./_fights.js";
 /* ============================================================
    EastCoin Picks — one game, read back from the ledger
 
@@ -150,5 +151,5 @@ export function pickPayload(p) {
 export function titleFor(m) {
   const score = m.state === "SETTLED" && Number.isInteger(m.final_away_score)
     ? ` ${m.final_away_score}–${m.final_home_score}` : "";
-  return `${m.away_name} at ${m.home_name}${score} — EastCoin Picks`;
+  return `${m.away_name} ${versus(m.sport)} ${m.home_name}${score} — EastCoin Picks`;
 }

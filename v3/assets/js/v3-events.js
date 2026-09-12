@@ -60,7 +60,12 @@
         seen.set(match.id, match);
       }
 
-      local.matches = [...seen.values()];
+      // Different ids can still be the same game: drop the provider's
+      // bare, early-dated copies (see withoutCopies in v3-sports.js).
+      const all = Sports.withoutCopies ? Sports.withoutCopies([...seen.values()]) : [...seen.values()];
+      // Hidden sports and D2/D3 college games go here, before anything
+      // counts them (the All/Live chips read local.matches).
+      local.matches = Sports.keep ? all.filter(Sports.keep) : all;
       local.loaded = true;
       // Only a genuine provider failure counts as failed. An empty but
       // successful response is "nothing on today", which is a normal state.
@@ -122,7 +127,7 @@
 
   /* ---------------------------------------------------------- render */
 
-  function crest(team, nfl) {
+  function crest(team, nfl, cfb) {
     const API = window.EastcoinStreamedAPI;
     const el = document.createElement("span");
     el.className = "crest";
@@ -135,7 +140,7 @@
 
     // NFL clubs fall back to the league's own logo when the provider
     // has no badge for them.
-    const url = (nfl ? nflLogo(team) : "") || (team?.badge && API?.badgeUrl ? API.badgeUrl(team.badge) : "") || "";
+    const url = (nfl ? nflLogo(team) : "") || (cfb ? cfbLogo(team) : "") || (team?.badge && API?.badgeUrl ? API.badgeUrl(team.badge) : "") || "";
     if (url) {
       const img = document.createElement("img");
       img.alt = "";
@@ -167,6 +172,7 @@
     // NFL games get the full treatment: turf, the shield, real logos,
     // and the Picks line when a market is open.
     const nfl = isNfl(match);
+    const cfb = isCollege(match);
     if (nfl) {
       el.classList.add("nfl");
       el.dataset.nfl = "1";
@@ -242,7 +248,7 @@
     if (home?.name && away?.name) {
       // One row per team, each with its own crest, so the matchup reads
       // at a glance instead of as one long run-on string.
-      title.append(teamRow(home, nfl), teamRow(away, nfl));
+      title.append(teamRow(home, nfl, cfb), teamRow(away, nfl, cfb));
       title.classList.add("is-matchup");
     } else {
       title.textContent = match?.title || "Untitled event";
@@ -325,12 +331,39 @@
     return sportKey(match) === "american-football" && Sports.footballRank(match) === 0;
   }
 
+  /** College football: American football that isn't the NFL. */
+  function isCollege(match) {
+    return sportKey(match) === "american-football" && !isNfl(match);
+  }
+
+  /** ESPN's logo for a college team, when the name is one ESPN knows. */
+  function cfbLogo(team) {
+    return window.ECLogos ? window.ECLogos.url("american-football", "CFB", team?.name) : null;
+  }
+
+  /**
+   * College games often arrive as a title only ("Missouri Tigers at
+   * Kansas Jayhawks"). Both sides, when both are schools ESPN knows;
+   * otherwise null, so a random title never grows two initials.
+   */
+  function collegePair(title) {
+    const t = String(title || "");
+    const at = t.split(/\s+at\s+/i);
+    const vs = t.split(/\s+(?:vs\.?|v)\s+/i);
+    let home, away;
+    if (at.length === 2) { away = at[0]; home = at[1]; }
+    else if (vs.length === 2) { home = vs[0]; away = vs[1]; }
+    else return null;
+    const known = (n) => window.ECLogos?.collegeId?.(n);
+    return known(home) && known(away) ? { home: { name: home.trim() }, away: { name: away.trim() } } : null;
+  }
+
   /** The league's own logo for an NFL club, when the provider has none. */
   function nflLogo(team) {
     return window.ECLogos ? window.ECLogos.url("american-football", "NFL", team?.name) : null;
   }
 
-  function teamRow(team, nfl) {
+  function teamRow(team, nfl, cfb) {
     const row = document.createElement("span");
     row.className = "teamrow";
 
@@ -339,7 +372,7 @@
     const API = window.EastcoinStreamedAPI;
     // The provider hands every NFL club the same league badge, so for
     // NFL the club's own logo comes first and the badge is the fallback.
-    const url = (nfl ? nflLogo(team) : "") || (team?.badge && API?.badgeUrl ? API.badgeUrl(team.badge) : "") || "";
+    const url = (nfl ? nflLogo(team) : "") || (cfb ? cfbLogo(team) : "") || (team?.badge && API?.badgeUrl ? API.badgeUrl(team.badge) : "") || "";
     if (url) {
       const img = document.createElement("img");
       img.alt = "";
@@ -421,12 +454,20 @@
     const home = match?.teams?.home;
     const away = match?.teams?.away;
     const nfl = isNfl(match);
+    const cfb = isCollege(match);
     if (home || away) {
-      wrap.append(crest(home, nfl));
+      wrap.append(crest(home, nfl, cfb));
       const vs = document.createElement("span");
       vs.className = "vs";
       vs.textContent = "VS";
-      wrap.append(vs, crest(away, nfl));
+      wrap.append(vs, crest(away, nfl, cfb));
+    } else if (cfb && collegePair(match?.title)) {
+      const pair = collegePair(match.title);
+      wrap.append(crest(pair.home, false, true));
+      const vs = document.createElement("span");
+      vs.className = "vs";
+      vs.textContent = "VS";
+      wrap.append(vs, crest(pair.away, false, true));
     } else {
       const vs = document.createElement("span");
       vs.className = "vs";
@@ -529,7 +570,18 @@
     return bar;
   }
 
+  // Rebuilding the page empties it for an instant, and the browser
+  // clamps the scroll to the top and leaves it there. Every caller —
+  // View more, a filter chip, the poll — wants the page to stay put, so
+  // the position is taken before the rebuild and restored after, in the
+  // same task, before anything is drawn.
   function paint() {
+    const scrollY = window.scrollY;
+    paintNow();
+    window.scrollTo(0, scrollY);
+  }
+
+  function paintNow() {
     root.replaceChildren();
 
     // October: one dismissible line saying the site is dressed up.
@@ -642,6 +694,7 @@
     for (const [key, list] of ordered) {
       const group = document.createElement("section");
       group.className = "sportgroup";
+      group.dataset.sport = key;
 
       const gh = document.createElement("div");
       gh.className = "sportgroup-head";
@@ -657,13 +710,66 @@
 
       const grid = document.createElement("div");
       grid.className = "eventgrid";
-      for (const match of list) grid.append(card(match));
-
       group.append(gh, grid);
       root.append(group);
+
+      // A sport shows a few rows, then a "View more" button adds the same
+      // again. A row is however many columns the grid has at this width,
+      // measured now that it is in the page — eighty college games on a
+      // Saturday should not be eighty cards.
+      const cols = Math.max(1, String(getComputedStyle(grid).gridTemplateColumns || "").split(" ").filter(Boolean).length);
+      const page = Math.max(MIN_PAGE, cols * ROWS_PER_PAGE);
+      const limit = Math.min(list.length, Math.max(shownBy.get(key) || 0, page));
+      for (const match of list.slice(0, limit)) grid.append(card(match));
+      if (list.length > limit || limit > page) group.append(moreRow(key, list.length, limit, page));
     }
 
     if (pendingPicks.length) decoratePicks(pendingPicks);
+  }
+
+  /* ---------------------------------------------------------- view more
+
+     How many cards each sport is showing, by sport key, so a repaint
+     (a poll, a filter) keeps what someone has already opened. */
+
+  const ROWS_PER_PAGE = 4;
+  const MIN_PAGE = 6;          // one column on a phone still gets a handful
+  const shownBy = new Map();
+
+  // Just under the sticky nav, so the heading is the first thing seen.
+  function scrollToGroup(key) {
+    const head = root.querySelector(`.sportgroup[data-sport="${key}"] .sportgroup-head`);
+    if (!head) return;
+    const top = head.getBoundingClientRect().top + window.scrollY - 72;
+    window.scrollTo({ top: Math.max(0, top) });
+  }
+
+  function moreRow(key, total, limit, page) {
+    const row = document.createElement("div");
+    row.className = "evmore";
+    // The label carries its emoji; the button reads better without it.
+    const name = String(SPORT_LABELS[key] || SPORT_LABELS.other).replace(/^\S+\s+/, "");
+    if (total > limit) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "evmore-btn";
+      btn.append(document.createTextNode(`View more ${name} events`));
+      const left = document.createElement("span");
+      left.className = "evmore-left";
+      left.textContent = `${total - limit} more`;
+      btn.append(left);
+      btn.addEventListener("click", () => { shownBy.set(key, limit + page); paint(); });
+      row.append(btn);
+    }
+    if (limit > page) {
+      const less = document.createElement("button");
+      less.type = "button";
+      less.className = "evmore-less";
+      less.textContent = "Show fewer";
+      less.addEventListener("click", () => { shownBy.delete(key); paint(); scrollToGroup(key); });
+      row.append(less);
+    }
+    return row;
   }
 
   /* ---------------------------------------------------------- NFL picks

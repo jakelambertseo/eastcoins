@@ -25,6 +25,7 @@ import { slugFor, etDate } from "./_slug.js";
 import { noteStatus, readStatus } from "./_ops.js";
 import { discordEnabled, postDiscord, openedEmbed, settledEmbed } from "./_discord.js";
 import { lastOddsQuota } from "./_autoopen.js";
+import { MANUAL_SPORTS } from "./_fights.js";
 import {
   ADMIN_ALLOWLIST,
   getSessionUser,
@@ -59,6 +60,10 @@ const ODDS_SPORTS = {
   basketball: ["basketball_nba"],
   hockey: ["icehockey_nhl"]
 };
+
+// Fights (boxing, MMA) have no scores feed and are settled by hand from
+// the admin page, so the scheduled run never picks them up. See _fights.js.
+const FIGHT_SQL = [...MANUAL_SPORTS].map((s) => `'${s}'`).join(", ");
 
 // Nothing is looked up until this long after kick-off. No game is final
 // sooner, and every look-up spends quota.
@@ -381,18 +386,32 @@ async function settleMarket(env, db, market, boards) {
       detail: result?.detail || ""
     };
   }
+  return applyVerdict(env, db, market, result, "odds-api");
+}
 
+/**
+ * Pays a market out on a known result: 'away', 'home' or 'VOID'.
+ * Shared by the scheduled run (result from the scores feed) and the
+ * admin's hand settlement of fights (admin/settle-market.js), so there
+ * is one payout path and one idempotency rule: every pick's payout is
+ * keyed on the pick, so it happens at most once however often this runs.
+ *
+ * The result is recorded on the market before any money moves, so a
+ * settle that stops part-way can be retried with the same result.
+ */
+export async function applyVerdict(env, db, market, result, source) {
   const outcome = result.verdict;   // 'away' | 'home' | 'VOID'
 
   await db
     .prepare(
       `UPDATE markets
-          SET state = 'SETTLING', settlement_source = 'odds-api',
+          SET state = 'SETTLING', settlement_source = ?,
               settlement_detail = ?, final_away_score = ?, final_home_score = ?,
-              updated_at = CURRENT_TIMESTAMP
+              winner = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?`
     )
-    .bind(result.detail || null, result.ourAway ?? null, result.ourHome ?? null, market.id)
+    .bind(source, result.detail || null, result.ourAway ?? null, result.ourHome ?? null,
+      outcome === "VOID" ? null : outcome, market.id)
     .run();
 
   const picks = await db
@@ -441,7 +460,9 @@ async function settleMarket(env, db, market, boards) {
     id: market.id,
     action: finalState.toLowerCase(),
     outcome,
+    source,
     sport: market.sport,
+    league: market.league || null,
     away: market.away_name,
     home: market.home_name,
     winnerName: outcome === "VOID"
@@ -598,10 +619,11 @@ export async function onRequestPost(context) {
   // Anything past its start time and not yet finished is a candidate.
   const markets = await db
     .prepare(
-      `SELECT id, sport, away_name, home_name, starts_at, state
+      `SELECT id, sport, league, away_name, home_name, starts_at, state
          FROM markets
         WHERE state IN ('OPEN', 'LOCKED', 'SETTLING')
           AND datetime(starts_at) < datetime('now')
+          AND sport NOT IN (${FIGHT_SQL})
         ORDER BY starts_at ASC
         LIMIT 20`
     )

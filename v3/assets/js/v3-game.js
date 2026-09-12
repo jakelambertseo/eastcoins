@@ -13,6 +13,9 @@
 (() => {
   "use strict";
 
+  // A fight is "Garcia vs Benn"; a game is "Reds at Dodgers".
+  const vsWord = (m) => (["boxing", "mma"].includes(String(m?.sport || "").toLowerCase()) ? "vs" : "at");
+
   let root = null;
   let shell = null;
   let previousTitle = "";
@@ -232,7 +235,7 @@
     // Head: league, kick-off, state pill
     const head = el("div", "viewhead");
     const headCopy = el("div");
-    headCopy.append(el("h1", null, `${m.away.name} at ${m.home.name}`));
+    headCopy.append(el("h1", null, `${m.away.name} ${vsWord(m)} ${m.home.name}`));
     headCopy.append(el("p", "gp-sub",
       `${m.league || m.sport} · ${when(m.startsAt, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`));
     head.append(headCopy);
@@ -258,7 +261,7 @@
     if (inPlay) score.classList.add("live");
     score.append(
       el("b", `nums${winner === "away" ? " win" : ""}`, hasScore ? String(m.away.score) : inPlay ? String(m.live.away) : "–"),
-      el("i", null, hasScore ? "–" : inPlay ? "live" : "at"),
+      el("i", null, hasScore ? "–" : inPlay ? "live" : vsWord(m)),
       el("b", `nums${winner === "home" ? " win" : ""}`, hasScore ? String(m.home.score) : inPlay ? String(m.live.home) : "–")
     );
     teams.append(teamCell(m.away, "away"), score, teamCell(m.home, "home"));
@@ -371,7 +374,9 @@
         d.append(el("dt", null, k), el("dd", null, v));
         dl.append(d);
       };
-      item("Graded from", m.settlementSource === "admin" ? "Closed by an admin" : "The Odds API · final score");
+      item("Graded from", m.settlementSource === "admin" ? "Closed by an admin"
+        : m.settlementSource === "admin-result" ? `Settled by an admin${m.settlementDetail ? " · " + m.settlementDetail : ""}`
+        : "The Odds API · final score");
       if (m.settledAt) item("Settled at", when(m.settledAt, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }));
       item("Total staked", `${totalStaked} ZCoins`);
       item("Paid out", `${paidOut} ZCoins`);
@@ -408,7 +413,7 @@
       const row = link(`/g/${m.slug}`, `gp-row ${cls} link`);
       const who = el("div", "gp-who");
       who.append(
-        el("b", null, `${m.away.name} at ${m.home.name}`),
+        el("b", null, `${m.away.name} ${vsWord(m)} ${m.home.name}`),
         el("span", null, `${when(m.startsAt, { hour: "numeric", minute: "2-digit" })} · ${plural(m.picks || 0, "pick")}`)
       );
       const result = m.state === "SETTLED" && Number.isInteger(m.away.score)
@@ -531,8 +536,8 @@
     } else {
       const m = payload.market;
       const score = m.state === "SETTLED" && Number.isInteger(m.away.score) ? ` ${m.away.score}–${m.home.score}` : "";
-      document.title = `${m.away.name} at ${m.home.name}${score} — EastCoin Picks`;
-      window.ECPresence?.beat("game", `${m.away.name} at ${m.home.name}`);
+      document.title = `${m.away.name} ${vsWord(m)} ${m.home.name}${score} — EastCoin Picks`;
+      window.ECPresence?.beat("game", `${m.away.name} ${vsWord(m)} ${m.home.name}`);
       root.replaceChildren(gamePage(payload));
     }
   }

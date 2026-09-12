@@ -70,6 +70,11 @@ export async function onRequestGet(context) {
   if (found.ambiguous) {
     return say(`${who} "${team}" matches ${found.ambiguous.join(" and ")}. Be more specific.`);
   }
+  if (found.needSchool) {
+    // College mascots collide with the pros, so name the school.
+    const schools = found.needSchool.map((n) => shortTeam(n, "CFB"));
+    return say(`${who} "${team}" is a college mascot — say the school: !pick ${amount} ${schools[0].toLowerCase()}`);
+  }
 
   const result = await placeWager(context.env, db, user, {
     marketId: found.market.id,
@@ -80,7 +85,7 @@ export async function onRequestGet(context) {
   if (!result.ok) {
     if (result.code === "ALREADY_PICKED") {
       const m = found.market;
-      return say(`${who} you already have a pick on ${shortTeam(m.away_name)} at ${shortTeam(m.home_name)}.`);
+      return say(`${who} you already have a pick on ${shortTeam(m.away_name, m.league)} at ${shortTeam(m.home_name, m.league)}.`);
     }
     // placeWager's messages are already written for a person to read.
     return say(`${who} ${result.message}`);
@@ -90,7 +95,7 @@ export async function onRequestGet(context) {
   const balance = result.balance == null ? "" : ` Balance: ${Number(result.balance).toLocaleString()}`;
   const allIn = amount === "all" ? " — ALL IN" : "";
   return say(
-    `${who} locked ${p.wager.toLocaleString()} on ${shortTeam(p.team)} ${formatLine(p.odds)}${allIn} ` +
+    `${who} locked ${p.wager.toLocaleString()} on ${shortTeam(p.team, found.market.league)} ${formatLine(p.odds)}${allIn} ` +
     `→ ${p.returnsIfWon.toLocaleString()} back if they win.${balance}`
   );
 }

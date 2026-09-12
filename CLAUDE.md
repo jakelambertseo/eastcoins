@@ -111,12 +111,12 @@
 > endpoints `/api/casino/<game>/{state,bet,history}`; clients built on
 > `v3-casino-kit.js`'s `sharedGame(spec)`), and Higher or Lower
 > `/?view=hilo` (per-player, `functions/api/casino/hilo/*`, table
-> `hilo_games`, committed deck, 4% edge per call, ×50 / 12-card cap).
+> `hilo_games`, committed deck, 1% edge per call, ×50 / 12-card cap).
 > Shared limits: 20 ZC a bet, 10 an hour per game, and `HOUR_WIN_CAP`
 > (300 ZC net in any rolling hour across every game, `capCheck` in
 > `_engine.js`, enforced by every bet/deal endpoint including the coin's).
-> Wheel: 24 red/black slices + one 15-degree gold sliver at 20x (returns ~83%), outcome is an
-> angle. Race: whole-number payouts 2/3/7/14, odds normalised from them —
+> Wheel: 24 red/black slices + one 6-degree gold sliver at 40x, outcome is an
+> angle (red/black return 98.3%; gold is the 1-in-60 long shot at ~67%). Race: whole-number payouts 2/3/7/14, odds normalised from them —
 > **currently `paused: true`** in `GAMES` (bets refused, off the floor,
 > page says closed; flip the flag to bring it back). Floor tiles list
 > who is in each room (`people` from `/api/casino/home`, Who's-here chips).
@@ -131,12 +131,92 @@
 > max 20 ZC, 2× payout, same wallet ops as Picks. Client `v3-coin.js` polls
 > `/api/coin/state` every 1.5s; the first poll after a flip settles it.
 >
+> **Mines** — `/?view=mines` (`v3-mines.js`, `functions/api/casino/mines/*`,
+> table `mines_games`). Per-player like Hi-Lo: 25 tiles, 1–10 bombs, the
+> board committed as `sha256(seed)` before the first tile and the bombs
+> derived from the seed alone (Fisher–Yates over 0..24, each swap from
+> `sha256(seed:shuffle:i)`). Each safe tile pays `C(25,k)/C(S,k)` less the
+> same 1% edge Hi-Lo takes; cash out after any safe tile. The run
+> auto-cashes at `topRung()` — the last rung still **under** the ×25
+> ceiling (3 bombs: 15 tiles ×18.98; 10 bombs: 5 tiles ×17.52; max
+> 379 on a 20 ZC stake; the ceiling was ×50 until 2026-09-12) — rather
+> than clamping a higher rung down to the ceiling, which would have been a hidden
+> second cut: pushing a ten-bomb board to the end would have returned 67%
+> instead of 96%. `MAX_MINES` is 10 because
+> past that the ladder leaps (20 bombs goes ×4.8, ×28.8, ×220.8) and one
+> board could pay thousands the hourly cap cannot claw back. Winnings count
+> toward `HOUR_WIN_CAP` via `hourlyNet()`, which had to learn about
+> `mines_games` — any new casino game must be added there or it escapes the
+> cap. Results flow to the floor, the activity feed and profiles.
+>
+> **Plinko** — `/?view=plinko` (`v3-plinko.js`, `functions/api/casino/plinko/*`,
+> tables `plinko_drops` and `plinko_commits`). A ball falls through 8 peg
+> rows into 9 buckets paying `4 · 1.8 · 1.3 · 1.15 · 0.2 · 1.15 · 1.3 ·
+> 1.8 · 4` — a 98.6% return where every bucket but the middle pays, so
+> 73% of drops come back ahead. Step i goes right
+> when `sha256(seed:i)` is odd, so the path is a pure function of the seed.
+> **Fairness works differently here**: a drop has no decisions in it, so
+> instead of committing at the start of play each player holds a committed
+> seed for their NEXT drop (`plinko_commits`, hash shown on the page,
+> revealed with the result, rotated immediately), which stops the house
+> picking a seed after seeing the stake. Max is ×4 on purpose — 80 ZC on
+> the 20 ZC maximum, well under the hourly cap, because a ball nobody can
+> influence should not be the biggest win on the site. Winnings count
+> toward `HOUR_WIN_CAP` via `hourlyNet()`; every new casino game must be
+> added there or it escapes the cap.
+>
+> **The casino is near-fair on purpose (2026-09-11)** — every game
+> returns ~98–99% (Hi-Lo and Mines `EDGE_RETURN = 0.99`; Plinko's table
+> 98.6%; Wheel red/black 98.3%; Coin Flip was always exactly fair at 2×).
+> The old 4% edge earned the house ~30 ZC a day and made players feel they
+> never won, so they drifted to Picks. Payout shapes favour FREQUENT wins
+> over big ones. Do not push the return past 100%: with the 300/hour cap
+> only blocking new bets, a positive player edge prints thousands of
+> ZCoins a day and devalues Picks. **Louder wins** — `makePop` takes
+> `big`, adds `.cf-pop.big` and fires `burst()` confetti (also for any
+> 30+ ZC profit); `makeToast(text, "near")` is the gold near-miss toast.
+> `sharedGame` specs may add `bigWin(result, mine, config)` and
+> `nearMiss(result, mine, config)` (the Wheel uses both); Hi-Lo, Mines and
+> Plinko call near-miss toasts themselves. **The tables' ticker** — the
+> casino floor mounts `ECActivity.mountTicker(el, { types: ["casino"],
+> label, href, empty })`, the same ticker filtered to casino items.
+> **Profiles** get a second `.pf-quick.pf-quick-casino` strip (profit,
+> record, biggest win, favourite game) under the season strip, from
+> `profile.casino`.
+>
 > **Presence** — every tab POSTs `/api/presence` (`v3-presence.js`, 30s
 > heartbeat + on route change) into `site_presence`; the Sports page's
 > "Who's here" strip reads GET `/api/presence`. A watch tab also sends
 > `ref` (the event id); GET returns `watching: {eventId: n}` and the strip's
 > poll dispatches `ec-presence` on `document`, which `v3-events.js` uses
 > for the "👀 n watching" pill on each card.
+>
+> **The book** — the dashboard opens with the house's side of Picks,
+> built by `bookOf()` in `functions/api/admin/dashboard.js` (payload key
+> `book`, drawn by `bookBlock()` in `v3-dashboard.js`): bets, stake,
+> house take and hold, paid out, players' record, open exposure priced
+> with `totalReturn`, today/7/14-day windows, a 14-day bar of the take by
+> Chicago day, per-league and top-bettor tables, and a casino comparison
+> line. The house's take is defined as minus the players' settled profit,
+> so it can never disagree with the ledger or a profile; open picks are
+> exposure, never profit.
+>
+> **The casino's book** — under the picks book, `casinoBook()` in the
+> same endpoint (payload `casinoBook`, drawn by `casinoBlock()`) folds
+> `casino_bets` (wheel, race), `coin_bets` and `hilo_games` into one
+> shape: bets, players, stake, paid out, take and hold overall and per
+> game, biggest single win, how many are live, and a 14-day take chart.
+> Decided rows only (WON/LOST/BUST/CASHED); anything live counts as
+> neither.
+>
+> **Admin links in the ⋯ menu** — `ownerMenu()` in `v3-shell.js` appends
+> Admin, Dashboard and Activity under a "Yours" heading for the logins in
+> its `ADMIN_LOGINS` set, which mirrors `ADMIN_ALLOWLIST` in
+> `picks/_lib.js` (`bootypaper`, `zwades`, `andyreidisapawg`) — change one,
+> change the other. Cosmetic only: each endpoint checks the session
+> itself, and `admin/dashboard.js`, `admin/backup.js` and `admin/recap.js`
+> now read that one allowlist rather than keeping their own owner lists,
+> so "admin" means the same thing on every screen.
 >
 > **Live scores** — `settle.js` `trackLiveScores()` runs every tick: for
 > LOCKED markets under 5h old with active picks it reads the Odds API live
@@ -213,6 +293,88 @@
 > `_game.js` holds the reads. `_slug.js` is the one place the name rule
 > lives; chat links and the page must keep agreeing. `g/example.html` is
 > the original static mockup, kept for the explainer only.
+>
+> **Fights (boxing, MMA)** — `_fights.js` holds `MANUAL_SPORTS`. Fight
+> markets open from the admin form like any other (sport `boxing` or
+> `mma`), lock at the start time, and are excluded from the scheduled
+> settlement loop (no scores feed). Once started, the admin page shows
+> "A won / B won / Draw, refund all"; `admin/settle-market.js` pays out
+> through `applyVerdict` in `settle.js` (the same path and per-pick
+> idempotency as automatic settlement), records `settlement_source =
+> 'admin-result'`, and posts the chat line and Discord card. Team games
+> are refused there. Fights read "A vs B" in chat, Discord and the game page.
+>
+> **Announcing one market** — each open, not-yet-started market on the
+> admin page has an Announce button: it previews via
+> `GET /api/picks/admin/announce?marketId=`, then POSTs `{ marketId }`,
+> which posts `composeOpen([market])` in chat and `openedEmbed([market])`
+> to Discord and notes `announce:<id>` in `ops_status` (shown as
+> "announced N min ago"). Without a marketId the endpoint still announces
+> every open market in chat only. The admin market list pages ten at a
+> time (up to 200 from `/api/picks/admin/markets`), and each action's
+> result is shown under its own market row.
+>
+> **Chat times say the day** — `_when.js` `whenCT()` is the one formatter
+> for chat: "6:30 PM CT" today, "tomorrow at 6:30 PM CT", else
+> "Sat, Sep 19 at 10:00 PM CT". Used by `_announce.js` and `bot/odds.js`.
+> Every `!odds` reply ends with the Picks link and "GAMBA"; `withLink()`
+> trims the text before it so say()'s 400-byte cut never eats the link.
+>
+> **Pasted YouTube links play** — YouTube refuses framing from its normal
+> pages, so `youtubeEmbed()` in `v3-shell.js` (shared as
+> `window.ECEmbed.youtube`) rewrites `watch?v=`, `youtu.be/`, `/live/`,
+> `/shorts/` to `youtube.com/embed/ID` (keeping `t=` as `start=`), and
+> `/channel/UC…/live` to `embed/live_stream?channel=`. Embed URLs, `@handle`
+> pages and other sites pass through. Used by nav search, the watch view's
+> `?url=`, and MultiView's paste and restored `url:` panels.
+>
+> **Provider copies are folded** — streamed.st's "golf" source relists
+> games (MLB, fights) as bare entries with numeric ids (`1150`), no art,
+> dated two hours before the start, so they read LIVE early. The full
+> listing already carries that stream. `ECV3Sports.withoutCopies()` (in
+> `v3-sports.js`) drops a match whose every stream a fuller match of the
+> same game carries (same teams, or starts within 3h when names are
+> missing); the Sports page and the MultiView picker use it, and
+> `v3-watch.js` `findMatch()` opens the full game for an old copy's link.
+>
+> **College sides are named by school, never mascot** — college mascots
+> collide with the pros, so `!pick 10 tigers` must never be able to mean
+> both Missouri and Detroit. `schoolOf()` in `_cfb.js` (longest leading
+> part ESPN knows as a school, so "Duke Blue Devils" -> "duke") drives
+> `matchTeam()` in `bot/_bot.js`: a CFB side matches its school or full
+> name only, and a bare college mascot returns `{ needSchool }`, which
+> `!pick`/`!odds` answer with "say the school". `shortTeam(name, league)`
+> and Discord's `label()` print the school for CFB. Any market row a
+> name or logo is drawn from must therefore SELECT `league` — `_wager.js`
+> did not, which is why a Missouri pick showed the Detroit Tigers crest.
+>
+> **What the Sports page hides (2026-09-12)** — `keep()` in `v3-sports.js`
+> drops whole sports nobody in the community watches (`HIDDEN_SPORTS`:
+> soccer, motorsport, rugby, cricket — remove a key to bring one back) and
+> limits college football to **Division I**: a college game stays only if
+> a side resolves to an id in `EC_CFB_TEAMS.d1` (266 FBS+FCS ids from
+> ESPN's standings feed, groups 80 and 81). A two-team matchup whose sides
+> resolve to no college at all is hidden (in practice D3 under the
+> provider's spellings); a single-title listing ("NFL Network") stays.
+> `EC_CFB_TEAMS.a` holds provider-spelling aliases ("Southern Methodist",
+> "California-Davis", "Liu", "Albany") that `collegeId()` consults last —
+> add one there when a real Division I school gets hidden. Applied where matches load (Sports page, MultiView picker) so the
+> chip counts agree, and again inside `grouped()`.
+>
+> **College football logos** — `v3/assets/js/v3-cfb-teams.js` (browser,
+> `window.EC_CFB_TEAMS`) and `functions/api/picks/_cfb.js` (server) hold
+> the same name -> ESPN id table, generated from ESPN's college team list
+> (761 teams). `ECLogos.url(sport, "CFB", name)` resolves them to
+> `teamlogos/ncaa/500/<id>.png`, so Picks cards, game pages and profiles
+> show crests for a market with league `CFB`. Title-only college games on
+> the Sports page get a crest pair when both names are known schools
+> (`collegePair()` in `v3-events.js`). Discord's `logoFor()` takes the
+> league and uses the college table for CFB, never NFL nickname matching.
+>
+> **`!record` shows the season rank** — "Ranked #20/25", from
+> `seasonRank()` in `bot/record.js`, which orders exactly like
+> `getLeaderboard()` in `bootstrap.js` (profit, wins, login). Change one,
+> change both. No rank is shown until a pick settles in the active season.
 >
 > **Daily recap** — `/api/admin/recap` (cron key or owner) posts one
 > Discord card with every person whose picks settled the previous

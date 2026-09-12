@@ -14,9 +14,17 @@
    GET previews the exact text without sending. POST sends it. The
    preview exists because this is the only thing that speaks to real
    viewers, and it should never be a surprise what it said.
+
+   With a marketId (?marketId= on GET, { marketId } on POST) it
+   announces that one market instead, in chat and on Discord: for the
+   one-off events the site opens by hand (CFB, fights), which nothing
+   else announces. Each single announce is noted as announce:<id> in
+   ops_status so the admin page can say when it last went out.
    ============================================================ */
 
 import { composeOpen as compose } from "../_announce.js";
+import { discordEnabled, postDiscord, openedEmbed } from "../_discord.js";
+import { noteStatus } from "../_ops.js";
 import {
   ADMIN_ALLOWLIST,
   getSessionUser,
@@ -40,6 +48,25 @@ async function openMarkets(db) {
   return result.results || [];
 }
 
+async function oneMarket(db, id) {
+  return db
+    .prepare(
+      `SELECT id, sport, league, away_name, home_name, starts_at, state,
+              away_odds_locked, home_odds_locked
+         FROM markets WHERE id = ? LIMIT 1`
+    )
+    .bind(id)
+    .first();
+}
+
+/** Why this market can't be announced, or null when it can. */
+function problemWith(market) {
+  if (!market) return "That market doesn't exist.";
+  if (market.state !== "OPEN") return `That market is ${String(market.state).toLowerCase()}, so there's nothing to announce.`;
+  if (new Date(market.starts_at).getTime() <= Date.now()) return "That game has already started, so betting is closed.";
+  return null;
+}
+
 async function gate(context) {
   const db = context.env.PICKS_DB;
   if (!db) return { error: fail("DB_UNAVAILABLE", "Picks database is not connected.", 503) };
@@ -55,6 +82,22 @@ async function gate(context) {
 export async function onRequestGet(context) {
   const { db, error } = await gate(context);
   if (error) return error;
+
+  const marketId = String(new URL(context.request.url).searchParams.get("marketId") || "").trim();
+  if (marketId) {
+    const market = await oneMarket(db, marketId);
+    const problem = problemWith(market);
+    if (problem) return fail("NOT_ANNOUNCEABLE", problem, 409);
+    const message = compose([market]);
+    return json({
+      ok: true,
+      open: 1,
+      message,
+      length: message.length,
+      canPost: true,
+      discord: discordEnabled(context.env)
+    });
+  }
 
   const markets = await openMarkets(db);
   const message = compose(markets);
@@ -72,6 +115,11 @@ export async function onRequestGet(context) {
 export async function onRequestPost(context) {
   const { db, user, error } = await gate(context);
   if (error) return error;
+
+  let body = {};
+  try { body = await context.request.json(); } catch { body = {}; }
+  const marketId = String(body?.marketId || "").trim();
+  if (marketId) return announceOne(context, db, user, marketId);
 
   const markets = await openMarkets(db);
   if (!markets.length) {
@@ -93,4 +141,49 @@ export async function onRequestPost(context) {
 
   console.log(`Picks: ${user.login} announced ${markets.length} market(s) in chat`);
   return json({ ok: true, posted: message, open: markets.length });
+}
+
+/** One market, in chat and on Discord. */
+async function announceOne(context, db, user, marketId) {
+  const market = await oneMarket(db, marketId);
+  const problem = problemWith(market);
+  if (problem) return fail("NOT_ANNOUNCEABLE", problem, 409);
+
+  const message = compose([market]);
+  const chat = await sayInChat(context.env, message);
+
+  const discordOn = discordEnabled(context.env);
+  let discord = { ok: false, error: "NOT_CONFIGURED" };
+  if (discordOn) {
+    discord = await postDiscord(context.env, openedEmbed([market])).catch((e) => ({ ok: false, error: String(e?.message || e) }));
+  }
+  const chatOk = Boolean(chat?.ok);
+  const discordOk = Boolean(discord?.ok);
+
+  if (!chatOk && !discordOk) {
+    const why = chat?.error === "NOT_CONFIGURED"
+      ? "The StreamElements token isn't configured"
+      : `StreamElements refused it (${chat?.error || "unknown"})`;
+    return fail("SAY_FAILED", `${why}${discordOn ? `, and Discord failed too (${discord?.error || "unknown"})` : ""}. Nothing was posted.`, 502);
+  }
+
+  await noteStatus(db, `announce:${market.id}`, {
+    at: new Date().toISOString(), by: user.login, chat: chatOk, discord: discordOk
+  }).catch(() => {});
+
+  const summary = chatOk && discordOk
+    ? "Announced in Twitch chat and on Discord."
+    : chatOk
+      ? (discordOn ? `Announced in Twitch chat. Discord failed (${discord?.error || "unknown"}).` : "Announced in Twitch chat. Discord isn't set up.")
+      : `Posted on Discord only. StreamElements refused the chat line (${chat?.error || "unknown"}).`;
+
+  console.log(`Picks: ${user.login} announced ${market.id} (chat ${chatOk}, discord ${discordOk})`);
+  return json({
+    ok: true,
+    posted: message,
+    chat: { ok: chatOk, error: chat?.error || null },
+    discord: { enabled: discordOn, ok: discordOk, error: discordOk ? null : discord?.error || null },
+    partial: !(chatOk && (discordOk || !discordOn)),
+    summary
+  });
 }

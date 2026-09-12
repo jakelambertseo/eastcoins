@@ -20,7 +20,9 @@ import {
   fail
 } from "../_lib.js";
 
-const SPORTS = new Set(["baseball", "american-football", "basketball", "hockey"]);
+// boxing and mma are fights: no scores feed, settled by hand on the
+// admin page (admin/settle-market.js). Either fighter can go in either slot.
+const SPORTS = new Set(["baseball", "american-football", "basketball", "hockey", "boxing", "mma"]);
 
 /**
  * Nothing here may reach the operator as an HTML error page. An

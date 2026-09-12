@@ -301,6 +301,17 @@ body.chat-hidden .chatrail{display:none}
   grid-template-columns:repeat(auto-fill,minmax(232px,1fr));
   gap:var(--gap);
 }
+/* Under a capped sport: the way to see the rest, and the way back. */
+.evmore{display:flex;align-items:center;justify-content:center;gap:14px;margin:12px 0 2px}
+.evmore-btn{
+  display:inline-flex;align-items:center;gap:10px;height:38px;padding:0 16px;border-radius:10px;
+  border:1px solid rgba(var(--gold-rgb),.35);background:var(--gold-dim);
+  color:var(--gold);font:inherit;font-weight:800;font-size:.84rem;cursor:pointer;
+}
+.evmore-btn:hover{background:rgba(var(--gold-rgb),.2);border-color:rgba(var(--gold-rgb),.55)}
+.evmore-left{padding:2px 8px;border-radius:999px;background:rgba(var(--gold-rgb),.16);font-size:.7rem;font-weight:800}
+.evmore-less{background:none;border:0;padding:0;color:var(--muted-2);font:inherit;font-size:.8rem;font-weight:700;cursor:pointer}
+.evmore-less:hover{color:var(--text)}
 .eventcard{
   position:relative;display:flex;flex-direction:column;
   border:1px solid var(--line);border-radius:var(--radius);
@@ -2469,6 +2480,16 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .wh-k{color:var(--muted-2);font-size:.64rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
 .wh-count{color:var(--green);font-size:.74rem;font-weight:800}
 .wh-list{display:flex;gap:6px;flex-wrap:wrap}
+/* Two rows of chips (28px each, 6px gap) until "View all" opens it, so
+   the strip stays a strip as the room fills up. */
+.wh-list.clamp{max-height:62px;overflow:hidden}
+.wh-k{margin-right:auto}
+.wh-toggle{
+  height:22px;padding:0 9px;border-radius:999px;
+  border:1px solid rgba(var(--gold-rgb),.35);background:var(--gold-dim);
+  color:var(--gold);font:inherit;font-size:.7rem;font-weight:800;cursor:pointer;white-space:nowrap;
+}
+.wh-toggle:hover{background:rgba(var(--gold-rgb),.2)}
 /* One line each: picture, name, a glyph for where they are. Hover says
    the rest. Twenty people is a tidy block, not a wall. */
 .wh-chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 9px 0 3px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-2);text-decoration:none;color:inherit;font-size:.78rem;font-weight:700;max-width:100%}
@@ -3007,11 +3028,10 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
    and the nickname when it is not, so a name is never cut short. */
 .market{container-type:inline-size}
 .side-team{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.15}
+/* Full team names on every open card, wrapping to a second line when
+   long, the same as the Upcoming cards. (The nickname swap on narrow
+   cards is gone; the short span stays hidden.) */
 .side-team-short{display:none}
-@container (max-width:560px){
-  .side-team-full{display:none}
-  .side-team-short{display:inline}
-}
 
 /* ================================================================ Casino */
 .cas-headright{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -3248,3 +3268,229 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
   .spooky-layer .bat{display:none}
   .spooky-layer .bat svg{animation:none}
 }
+
+/* Admin: the result row under a fight that has started. */
+.adm-settle{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 4px}
+.adm-settle .btn{height:32px;padding:0 12px;flex:0 0 auto}
+
+/* ============================================================
+   Dashboard — the book
+
+   The house's side of Picks, above the health cards. Green is the
+   house ahead, red behind, the same way every other number on the
+   site reads.
+   ============================================================ */
+.db-book{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:15px;margin:0 0 var(--gap)}
+.db-book-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.db-book-head h2{margin:0;font-family:var(--display);font-weight:800;font-size:1.15rem;letter-spacing:-.01em}
+.db-book-head span{color:var(--muted-2);font-size:.78rem}
+.db-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.db-stat{border:1px solid var(--line);border-radius:11px;background:var(--panel-2);padding:10px 12px}
+.db-stat-k{display:block;color:var(--muted-2);font-size:.64rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.db-stat b{display:block;margin:3px 0 2px;font-family:var(--display);font-weight:800;font-size:1.5rem;letter-spacing:-.02em}
+.db-stat-s{display:block;color:var(--muted-2);font-size:.72rem}
+.db-stat.good b{color:var(--green)} .db-stat.bad b{color:var(--red)}
+.db-stat b .zcoin-mark{width:18px;height:18px}
+
+.db-windows{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:10px}
+.db-window{border:1px solid var(--line);border-radius:11px;background:var(--panel-2);padding:9px 12px}
+.db-window-row{display:flex;align-items:baseline;gap:10px;margin-top:4px;color:var(--muted);font-size:.8rem}
+.db-window-row b{margin-left:auto;font-size:.95rem}
+.db-window-row b.good{color:var(--green)} .db-window-row b.bad{color:var(--red)}
+
+.db-chartwrap{margin-top:14px}
+.db-chartwrap h3,.db-mini h3{margin:0 0 8px;font-family:var(--display);font-weight:700;font-size:.86rem;color:var(--muted)}
+.db-chart{display:flex;align-items:stretch;gap:5px;height:132px;overflow-x:auto}
+.db-col{flex:1 1 0;min-width:26px;display:flex;flex-direction:column;align-items:center}
+.db-col .db-up,.db-col .db-down{width:100%;border-radius:4px 4px 0 0;min-height:2px}
+.db-col .db-up{margin-top:auto;background:linear-gradient(180deg,var(--green),rgba(77,219,139,.35))}
+.db-col .db-down{background:linear-gradient(180deg,rgba(255,107,133,.35),var(--red));border-radius:0 0 4px 4px}
+.db-col i{display:block;width:100%;height:1px;background:var(--line-2);flex:0 0 auto}
+.db-col span{margin-top:5px;color:var(--muted-2);font-size:.6rem;white-space:nowrap}
+
+.db-tables{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:14px}
+.db-mini table{width:100%;border-collapse:collapse;font-size:.8rem}
+.db-mini th{text-align:left;color:var(--muted-2);font-size:.63rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:0 0 6px;border-bottom:1px solid var(--line)}
+.db-mini td{padding:6px 0;border-bottom:1px solid var(--line);color:var(--muted)}
+.db-mini tr:last-child td{border-bottom:0}
+.db-mini .num{text-align:right}
+.db-mini td.num .zc-amount{justify-content:flex-end}
+.db-mini td.empty{color:var(--muted-2);font-style:italic;text-align:center}
+.db-casino{margin:12px 0 0;padding-top:10px;border-top:1px solid var(--line);color:var(--muted-2);font-size:.8rem;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+
+/* Owner-only links at the foot of the ⋯ menu (Admin, Dashboard, Activity). */
+.menu-link{text-decoration:none;color:var(--muted);justify-content:flex-start}
+.menu-link:hover{color:var(--gold);background:var(--gold-dim)}
+
+/* Admin market rows: Announce / Close. These were .iconbtn, a fixed
+   36px square built for one glyph, so the words were clipped. */
+.adm-rowbtn{
+  height:30px;padding:0 11px;flex:0 0 auto;white-space:nowrap;
+  border:1px solid var(--line);border-radius:8px;background:var(--panel-2);
+  color:var(--muted);font-size:.78rem;font-weight:700;cursor:pointer;
+  transition:color .14s ease,border-color .14s ease,background .14s ease;
+}
+.adm-rowbtn:hover{color:var(--gold);background:var(--gold-dim);border-color:rgba(var(--gold-rgb),.3)}
+.adm-rowbtn:disabled{opacity:.45;cursor:not-allowed}
+/* First action pushes the group to the right edge of the row. */
+.adm-market-top .adm-rowbtn:first-of-type{margin-left:auto}
+
+/* ============================================================
+   Casino — Mines
+
+   Twenty-five tiles. A covered tile is a button; uncovering it
+   either shows a gem or blows the board up. Everything else on
+   the page is the shared casino furniture (.cf-*).
+   ============================================================ */
+.mn-board{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:8px;
+  width:min(420px,100%);margin:6px auto 2px;
+}
+.mn-tile{
+  aspect-ratio:1;display:grid;place-items:center;
+  border:1px solid var(--line-2);border-radius:11px;
+  background:linear-gradient(160deg,var(--panel-3),var(--panel-2));
+  font-size:1.45rem;line-height:1;cursor:pointer;
+  transition:transform .12s ease,border-color .14s ease,background .2s ease,box-shadow .14s ease;
+}
+.mn-tile:hover:not(:disabled){transform:translateY(-2px);border-color:rgba(var(--gold-rgb),.5);box-shadow:0 8px 22px rgba(0,0,0,.45)}
+.mn-tile:disabled{cursor:default}
+.mn-tile.safe{
+  border-color:rgba(77,219,139,.45);background:var(--green-dim);
+  animation:mn-pop .22s ease-out;
+}
+.mn-tile.bomb{border-color:rgba(255,107,133,.35);background:var(--red-dim);opacity:.75}
+.mn-tile.bomb.hit{opacity:1;border-color:var(--red);box-shadow:0 0 0 2px rgba(255,107,133,.35),0 10px 30px rgba(255,107,133,.2)}
+.mn-tile.done:not(.safe):not(.bomb){opacity:.45}
+@keyframes mn-pop{from{transform:scale(.82)}to{transform:scale(1)}}
+.mn-tile.shake{animation:mn-shake .32s ease-in-out}
+@keyframes mn-shake{
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-5px)} 40%{transform:translateX(5px)}
+  60%{transform:translateX(-3px)} 80%{transform:translateX(3px)}
+}
+@media (prefers-reduced-motion:reduce){
+  .mn-tile,.mn-tile.safe,.mn-tile.shake{animation:none;transition:none}
+}
+
+/* Bomb-count picker, shown only before a board starts. */
+.mn-minesrow{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:center;margin-bottom:9px}
+.mn-label{color:var(--muted-2);font-size:.68rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.mn-mine{
+  min-width:38px;height:32px;padding:0 10px;border-radius:9px;
+  border:1px solid var(--line);background:var(--panel-2);
+  color:var(--muted);font-weight:800;font-size:.85rem;cursor:pointer;
+}
+.mn-mine:hover{color:var(--text);border-color:var(--line-2)}
+.mn-mine.on{border-color:rgba(var(--gold-rgb),.45);background:var(--gold-dim);color:var(--gold)}
+.mn-hint{color:var(--muted-2);font-size:.74rem;margin-left:2px}
+
+/* The ladder in the side column. */
+.mn-ladder{display:flex;flex-direction:column;gap:2px;max-height:280px;overflow-y:auto}
+.mn-rung{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:5px 8px;border-radius:7px;color:var(--muted);font-size:.8rem;
+}
+.mn-rung strong{font-family:var(--display);font-size:.92rem;color:var(--text)}
+.mn-rung.at{background:var(--green-dim);color:var(--green)}
+.mn-rung.at strong{color:var(--green)}
+.mn-rung.next{background:var(--gold-dim)}
+.mn-rung.next strong{color:var(--gold)}
+
+
+/* ============================================================
+   Casino — Plinko
+
+   Eight rows of pegs over nine buckets. The ball is one element
+   moved by transform: 26px is one half-slot across and one row
+   down, which is what the peg grid is built on.
+   ============================================================ */
+/* --pk-pitch is the distance between neighbouring pegs, between
+   neighbouring buckets, and one horizontal half-step of the ball. They
+   have to be the same number or the ball misses the pegs it is meant to
+   bounce off. v3-plinko.js reads it back out of the computed style, so
+   changing it here is enough.
+
+   It scales with the viewport because nine buckets at a fixed 26px left
+   the board a narrow strip in a wide column, and "x0.75" did not fit the
+   label. The clamp keeps it readable on a phone and stops it sprawling
+   on a big monitor. */
+.pk-board{
+  position:relative;margin:12px auto 8px;padding:6px 0;
+  --pk-pitch:clamp(28px, 6.4vw, 46px);
+  width:calc(var(--pk-pitch) * 9);
+}
+.pk-pegs{display:flex;flex-direction:column;align-items:center;gap:0}
+.pk-row{display:flex;justify-content:center;gap:calc(var(--pk-pitch) - 7px);height:var(--pk-pitch);align-items:center}
+.pk-peg{
+  width:7px;height:7px;border-radius:50%;
+  background:rgba(255,255,255,.3);box-shadow:0 0 7px rgba(255,255,255,.09);
+}
+.pk-ball{
+  position:absolute;left:50%;top:4px;width:18px;height:18px;margin-left:-9px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff,var(--gold) 60%,#8a6c12);
+  box-shadow:0 0 14px rgba(var(--gold-rgb),.6);
+  transition:transform .11s linear;z-index:2;
+}
+.pk-ball.landed{transition:transform .16s cubic-bezier(.3,1.6,.5,1)}
+
+.pk-buckets{display:flex;justify-content:center;gap:3px;margin:4px auto 0;--pk-pitch:clamp(28px, 6.4vw, 46px)}
+.pk-bucket{
+  flex:0 0 calc(var(--pk-pitch) - 3px);width:calc(var(--pk-pitch) - 3px);
+  padding:9px 1px;border-radius:9px;text-align:center;
+  border:1px solid var(--line);background:var(--panel-2);
+  color:var(--muted);font-size:clamp(.56rem, 1.35vw, .78rem);font-weight:800;
+  transition:transform .18s ease,background .18s ease,color .18s ease,border-color .18s ease;
+}
+.pk-bucket.mid{color:var(--text);border-color:var(--line-2)}
+.pk-bucket.big{color:var(--gold);border-color:rgba(var(--gold-rgb),.45);background:var(--gold-dim)}
+.pk-bucket.hit{
+  transform:translateY(-3px);
+  border-color:var(--green);background:var(--green-dim);color:var(--green);
+}
+.pk-bucket.big.hit{border-color:var(--gold);background:rgba(var(--gold-rgb),.22);color:var(--gold)}
+@media (prefers-reduced-motion:reduce){
+  .pk-ball,.pk-bucket{transition:none}
+}
+/* The clamp handles the sizing; this only stops the labels crowding on
+   the smallest phones, where "x0.75" is the widest thing on the row. */
+@media (max-width:380px){
+  .pk-bucket{padding:7px 0;letter-spacing:-.02em}
+}
+
+
+/* ============================================================
+   Casino — louder wins, near misses, the tables' ticker, and the
+   casino strip on profiles
+   ============================================================ */
+.cf-pop.big{border-width:2px}
+.cf-pop.show.big{transform:translate(-50%,-50%) scale(1.08)}
+.cf-pop.big.win{
+  border-color:rgba(var(--gold-rgb),.75);
+  background:linear-gradient(160deg,rgba(var(--gold-rgb),.22),rgba(77,219,139,.1) 55%,transparent 80%),var(--panel);
+  box-shadow:0 30px 80px rgba(0,0,0,.65),0 0 110px rgba(var(--gold-rgb),.35);
+  animation:cf-bigpop .5s cubic-bezier(.2,1.4,.4,1)
+}
+.cf-pop.big.win .cf-pop-k{color:var(--gold);letter-spacing:.2em}
+.cf-pop.big.win strong{font-size:3.3rem;text-shadow:0 0 30px rgba(var(--gold-rgb),.45)}
+@keyframes cf-bigpop{0%{transform:translate(-50%,-50%) scale(.6)}60%{transform:translate(-50%,-50%) scale(1.14)}100%{transform:translate(-50%,-50%) scale(1.08)}}
+
+.cf-burst{position:fixed;left:50%;top:50%;z-index:41;width:0;height:0;pointer-events:none}
+.cf-burst i{
+  position:absolute;left:0;top:0;width:8px;height:13px;border-radius:2px;background:var(--c);
+  opacity:0;transform:translate(-50%,-50%);
+  animation:cf-confetti 1.4s cubic-bezier(.15,.8,.3,1) forwards;
+}
+@keyframes cf-confetti{
+  0%{opacity:1;transform:translate(-50%,-50%) rotate(0)}
+  70%{opacity:1}
+  100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy) + 120px)) rotate(var(--rot))}
+}
+.cf-toast.near{border-color:rgba(var(--gold-rgb),.6);color:var(--gold);font-family:var(--display)}
+@media (prefers-reduced-motion:reduce){
+  .cf-burst{display:none}
+  .cf-pop.big.win{animation:none}
+}
+
+.cas-ticker{margin:0 0 var(--gap)}
+.pf-quick-casino{margin-top:10px;padding-top:12px;border-top:1px dashed var(--line)}

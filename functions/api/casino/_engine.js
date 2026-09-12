@@ -32,11 +32,12 @@ export const ROOM_WINDOW_MS = 60 * 1000;
 
 /* ---------------------------------------------------------- games */
 
-// The wheel: 24 slices alternating red and black share 345 degrees, and
-// one slim gold sliver takes the last 15. Red and black pay 2×; gold 20×.
-// Red/black return 0.958 of the stake over time; gold, by design, far
-// less — it is the long shot people chase, not the smart bet.
-const GOLD_DEG = 15;
+// The wheel: 24 slices alternating red and black share 354 degrees, and
+// one slim gold sliver takes the last 6. Red and black pay 2×; gold 40×.
+// Red/black return 0.983 of the stake over time — near fair, on purpose:
+// the casino is meant to be fun to come back to, not a drain. Gold is the
+// long shot (1 in 60) and returns 0.67; nobody is told it is smart.
+const GOLD_DEG = 6;
 const WHEEL = (() => {
   const segments = [];
   const each = (360 - GOLD_DEG) / 24;
@@ -67,7 +68,7 @@ export const GAMES = {
     cycleMs: 60 * 1000,
     betMs: 40 * 1000,
     picks: ["red", "black", "gold"],
-    payout: { red: 2, black: 2, gold: 20 },
+    payout: { red: 2, black: 2, gold: 40 },
     segments: WHEEL,
     /** Where the pointer lands, in degrees from the top, from the seed alone. */
     async outcome(seed) {
@@ -321,7 +322,9 @@ export async function hourlyNet(db, userId) {
   const coin = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - wager WHEN status = 'LOST' THEN -wager ELSE 0 END), 0) AS net FROM coin_bets WHERE user_id = ? AND datetime(created_at) >= datetime('now', '-1 hour')`);
   const shared = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - wager WHEN status = 'LOST' THEN -wager ELSE 0 END), 0) AS net FROM casino_bets WHERE user_id = ? AND datetime(created_at) >= datetime('now', '-1 hour')`);
   const hilo = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'CASHED' THEN payout - stake WHEN status = 'BUST' THEN -stake ELSE 0 END), 0) AS net FROM hilo_games WHERE user_id = ? AND datetime(updated_at) >= datetime('now', '-1 hour')`);
-  return coin + shared + hilo;
+  const mines = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'CASHED' THEN payout - stake WHEN status = 'BUST' THEN -stake ELSE 0 END), 0) AS net FROM mines_games WHERE user_id = ? AND datetime(updated_at) >= datetime('now', '-1 hour')`);
+  const plinko = await q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM plinko_drops WHERE user_id = ? AND datetime(created_at) >= datetime('now', '-1 hour')`);
+  return coin + shared + hilo + mines + plinko;
 }
 
 /** Whether this person may place another bet, and where they stand. */

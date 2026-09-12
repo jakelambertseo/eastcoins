@@ -1,0 +1,110 @@
+# Internal files → the homepage
+#
+# Pages serves every file in the repo root, so docs, scripts, SQL and
+# worker source kept here for the people working on the site were
+# readable by anyone. These rules send those paths to / instead.
+#
+# Cloudflare applies _redirects even when a file exists at the path,
+# which is what makes this work. They do NOT apply to Function routes,
+# so /CLAUDE.md and /README.md are handled by functions/CLAUDE.md.js
+# and functions/README.md.js (404), not here.
+#
+# Adding a new doc, script or patch at the root? Add its path below.
+# Splats are only used for whole folders (the one place Cloudflare
+# documents them); root files are listed by name.
+#
+# 302, not 301, so this stays undoable by editing this file.
+
+# ---- Folders that are not part of the site ----
+/tools/*              /  302
+/scripts/*            /  302
+/migrations/*         /  302
+/worker/*             /  302
+/worker-picks-cron/*  /  302
+/dlstreams-worker/*   /  302
+/replacement/*        /  302
+
+# ---- Config and stray files ----
+/.gitignore                        /  302
+/wrangler.picks-migrations.jsonc   /  302
+/check_2.js                        /  302
+/node                              /  302
+/tatus                             /  302
+
+# ---- Patches and installer scripts ----
+/eastcoin-iteration-44-moneyline.patch                 /  302
+/eastcoin-iteration-45-picks-market-focus.patch        /  302
+/eastcoin-iteration-47-football-multiview-servers.patch  /  302
+/eastcoin-multiview-nav.patch                          /  302
+/eastcoin-ppv-production.patch                         /  302
+/restore-pre-dlstreams.cmd                             /  302
+/APPLY-ITERATION-37.cmd                                /  302
+/APPLY-ITERATION-38.cmd                                /  302
+/APPLY-ITERATION-39.cmd                                /  302
+/APPLY-ITERATION-40.cmd                                /  302
+/APPLY-ITERATION-41.cmd                                /  302
+
+# ---- Docs ----
+/DEPLOY-COMMANDS.txt                      /  302
+/DLSTREAMS-PROTOTYPE.md                   /  302
+/HALFTIME-JAMS-TEST.md                    /  302
+/HOTFIX-README.txt                        /  302
+/MLB-GAMEDAY-PRODUCTION-README.txt        /  302
+/PERSISTENT-SHELL-SETUP.md                /  302
+/PROVIDER-LOADER-REPAIR.txt               /  302
+/SHELL-LOADER-FIX.txt                     /  302
+/UI-FREEZE-FIX.txt                        /  302
+/README.txt                               /  302
+/README-PICKS.txt                         /  302
+/README-PICKS-KALSHI-TEST.txt             /  302
+/README-PICKS-KALSHI-V2.txt               /  302
+/README-PICKS-ODDS-TEST.txt               /  302
+/README-PICKS-ODDS-V2.txt                 /  302
+/README-ROLLBACK.txt                      /  302
+/README-STABLE-RESTORE.txt                /  302
+/README-STEP-2.txt                        /  302
+/README-STEP-3.txt                        /  302
+/README-STEP-4.txt                        /  302
+/README-STEP-5.txt                        /  302
+/README-STEP-6.txt                        /  302
+/README-EASTCOIN-V2-FUNCTIONAL.txt        /  302
+/README-EASTCOIN-ITERATION-42.txt         /  302
+/README-EASTCOIN-ITERATION-43.txt         /  302
+/README-EASTCOIN-ITERATION-44.txt         /  302
+/README-EASTCOIN-LAUNCH-ITERATION-40.txt  /  302
+/README-EASTCOIN-LAUNCH-ITERATION-41.txt  /  302
+/README-EASTCOIN-V2-ITERATION-4.txt       /  302
+/README-EASTCOIN-V2-ITERATION-5.txt       /  302
+/README-EASTCOIN-V2-ITERATION-6.txt       /  302
+/README-EASTCOIN-V2-ITERATION-7.txt       /  302
+/README-EASTCOIN-V2-ITERATION-8.txt       /  302
+/README-EASTCOIN-V2-ITERATION-9.txt       /  302
+/README-EASTCOIN-V2-ITERATION-10.txt      /  302
+/README-EASTCOIN-V2-ITERATION-11.txt      /  302
+/README-EASTCOIN-V2-ITERATION-12.txt      /  302
+/README-EASTCOIN-V2-ITERATION-13.txt      /  302
+/README-EASTCOIN-V2-ITERATION-15.txt      /  302
+/README-EASTCOIN-V2-ITERATION-16.txt      /  302
+/README-EASTCOIN-V2-ITERATION-17.txt      /  302
+/README-EASTCOIN-V2-ITERATION-18.txt      /  302
+/README-EASTCOIN-V2-ITERATION-19.txt      /  302
+/README-EASTCOIN-V2-ITERATION-20.txt      /  302
+/README-EASTCOIN-V2-ITERATION-21.txt      /  302
+/README-EASTCOIN-V2-ITERATION-22.txt      /  302
+/README-EASTCOIN-V2-ITERATION-23.txt      /  302
+/README-EASTCOIN-V2-ITERATION-24.txt      /  302
+/README-EASTCOIN-V2-ITERATION-25.txt      /  302
+/README-EASTCOIN-V2-ITERATION-26.txt      /  302
+/README-EASTCOIN-V2-ITERATION-27.txt      /  302
+/README-EASTCOIN-V2-ITERATION-28.txt      /  302
+/README-EASTCOIN-V2-ITERATION-29.txt      /  302
+/README-EASTCOIN-V2-ITERATION-30.txt      /  302
+/README-EASTCOIN-V2-ITERATION-31.txt      /  302
+/README-EASTCOIN-V2-ITERATION-32.txt      /  302
+/README-EASTCOIN-V2-ITERATION-33.txt      /  302
+/README-EASTCOIN-V2-ITERATION-34.txt      /  302
+/README-EASTCOIN-V2-ITERATION-35.txt      /  302
+/README-EASTCOIN-V2-ITERATION-36.txt      /  302
+/README-EASTCOIN-V2-ITERATION-37.txt      /  302
+/README-EASTCOIN-V2-ITERATION-38.txt      /  302
+/README-EASTCOIN-V2-ITERATION-39.txt      /  302

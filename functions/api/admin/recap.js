@@ -14,11 +14,11 @@
      ?dry=1            build it and return it, post nothing
    ============================================================ */
 
-import { getSessionUser, json, fail, safeEqual } from "../picks/_lib.js";
+import { getSessionUser, json, fail, safeEqual, ADMIN_ALLOWLIST } from "../picks/_lib.js";
 import { noteStatus, readStatus } from "../picks/_ops.js";
 import { discordEnabled, postDiscord } from "../picks/_discord.js";
 
-const OWNERS = new Set(["bootypaper"]);
+const OWNERS = ADMIN_ALLOWLIST;
 const TZ = "America/Chicago";
 const HOUR = 3600 * 1000;
 const SITE = "https://eastcoin.vip";

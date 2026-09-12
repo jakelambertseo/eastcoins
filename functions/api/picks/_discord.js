@@ -15,6 +15,8 @@
 
 import { slugFor } from "./_slug.js";
 import { LEAGUES } from "./_teams.js";
+import { isFight, versus } from "./_fights.js";
+import { cfbLogo, isCollegeLeague, schoolOf } from "./_cfb.js";
 
 const COLOR = { gold: 0xe8bf35, green: 0x4ddb8b, red: 0xff6b85, grey: 0x8a8580, blue: 0x8fc3d7 };
 const SITE = "https://eastcoin.vip";
@@ -24,6 +26,10 @@ const TIMEOUT_MS = 4000;
 const line = (v) => { const n = Number(v); return !Number.isFinite(n) || n === 0 ? "—" : n > 0 ? `+${n}` : `−${Math.abs(n)}`; };
 const zc = (n) => `${Number(n || 0).toLocaleString()} ZC`;
 const nick = (name) => String(name || "").trim().split(" ").pop();
+/* A club by its nickname, a college by its school: "Tigers" means the
+   Detroit ones, and Missouri's card should not read the same. */
+const title = (s) => s.replace(/\b\w/g, (c) => c.toUpperCase());
+const label = (name, league) => (isCollegeLeague(league) ? title(schoolOf(name)) : nick(name));
 const when = (iso) => {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
@@ -31,7 +37,10 @@ const when = (iso) => {
 };
 
 /** A club's logo from its full name, for the thumbnail; null when unknown. */
-export function logoFor(sport, name) {
+export function logoFor(sport, name, league) {
+  // College teams have their own table: matching them against the NFL by
+  // nickname would give Boston College the Philadelphia Eagles' logo.
+  if (isCollegeLeague(league)) return cfbLogo(name);
   const key = String(sport || "").toLowerCase();
   const leagueKey = key.includes("football") ? "nfl" : key.includes("baseball") ? "mlb" : key.includes("basketball") ? "nba" : key.includes("hockey") ? "nhl" : null;
   const wanted = String(name || "").toLowerCase();
@@ -86,8 +95,8 @@ export function pickEmbed({ user, market, pick }) {
     description: `**${pick.team} ${line(pick.odds)}** vs ${opp}\n` +
       `Stake **${zc(pick.wager)}** · pays **${zc(pick.returnsIfWon)}** if it lands${pick.allIn ? " · 🎰 ALL IN" : ""}\n` +
       `${SITE}/g/${slug}`,
-    thumbnail: logoFor(market.sport, pick.team) ? { url: logoFor(market.sport, pick.team) } : undefined,
-    footer: { text: `${market.away_name} at ${market.home_name}` },
+    thumbnail: logoFor(market.sport, pick.team, market.league) ? { url: logoFor(market.sport, pick.team, market.league) } : undefined,
+    footer: { text: `${market.away_name} ${versus(market.sport)} ${market.home_name}` },
     timestamp: new Date().toISOString()
   };
 }
@@ -96,13 +105,16 @@ export function pickEmbed({ user, market, pick }) {
 export function openedEmbed(markets) {
   if (!markets?.length) return null;
   const rows = markets.map((m) =>
-    `**${nick(m.away_name)} ${line(m.away_odds_locked)}** at **${nick(m.home_name)} ${line(m.home_odds_locked)}** · closes ${when(m.starts_at)}`
+    `**${label(m.away_name, m.league)} ${line(m.away_odds_locked)}** ${versus(m.sport)} **${label(m.home_name, m.league)} ${line(m.home_odds_locked)}** · closes ${when(m.starts_at)}`
   );
   return {
     color: COLOR.blue,
-    title: markets.length === 1 ? "Picks are open" : `Picks are open on ${markets.length} games`,
-    url: `${SITE}/?view=picks`,
-    description: rows.join("\n") + `\n\n\`!pick <amount> <team>\` in chat, or ${SITE}/?view=picks`,
+    // One market gets its own page; a slate gets the Picks page.
+    title: markets.length === 1
+      ? `Picks are open: ${markets[0].away_name} ${versus(markets[0].sport)} ${markets[0].home_name}`
+      : `Picks are open on ${markets.length} games`,
+    url: markets.length === 1 ? `${SITE}/g/${slugFor(markets[0])}` : `${SITE}/?view=picks`,
+    description: rows.join("\n") + `\n\n\`!pick <amount> <team>\` in chat, or ${markets.length === 1 ? `${SITE}/g/${slugFor(markets[0])}` : `${SITE}/?view=picks`}`,
     footer: { text: "Lines are locked at open — everyone gets the same price." },
     timestamp: new Date().toISOString()
   };
@@ -115,24 +127,24 @@ export function settledEmbed(entry) {
   const hasScore = Number.isFinite(entry.awayScore) && Number.isFinite(entry.homeScore);
   const score = hasScore ? ` ${entry.awayScore}–${entry.homeScore}` : "";
   const title = voided
-    ? `Voided: ${entry.away} at ${entry.home}`
-    : `Final: ${entry.away} at ${entry.home}${score}`;
+    ? `${isFight(entry.sport) ? "Draw" : "Voided"}: ${entry.away} ${versus(entry.sport)} ${entry.home}`
+    : `Final: ${entry.away} ${versus(entry.sport)} ${entry.home}${score}`;
   const lines = (entry.lines || []).map((p) => {
     const mark = p.status === "WON" ? "✅" : p.status === "LOST" ? "❌" : p.status === "REFUNDED" ? "↩️" : "⚠️";
     const net = p.status === "WON" ? `+${zc(p.profit)}` : p.status === "LOST" ? `−${zc(p.wager)}` : p.status === "REFUNDED" ? "refunded" : "payout pending";
-    return `${mark} **${p.name}** · ${nick(p.team)} ${line(p.odds)} · ${zc(p.wager)} → **${net}**`;
+    return `${mark} **${p.name}** · ${label(p.team, entry.league)} ${line(p.odds)} · ${zc(p.wager)} → **${net}**`;
   });
   const total = (entry.won || 0) + (entry.lost || 0) + (entry.refunded || 0);
   const summary = voided
     ? `${entry.refunded || 0} stake${entry.refunded === 1 ? "" : "s"} refunded`
-    : `**${entry.winnerName}** win · ${entry.won || 0} of ${total} picks cashed · ${zc(entry.paid)} paid out`;
+    : `**${entry.winnerName}** ${isFight(entry.sport) ? "wins" : "win"} · ${entry.won || 0} of ${total} picks cashed · ${zc(entry.paid)} paid out`;
   return {
     color: voided ? COLOR.grey : entry.won ? COLOR.green : COLOR.red,
     title,
     url: `${SITE}/g/${entry.slug}`,
     description: `${summary}${lines.length ? "\n\n" + lines.join("\n") : "\n\nNobody had a pick on this one."}\n\n${SITE}/g/${entry.slug}`,
-    thumbnail: !voided && logoFor(entry.sport, entry.winnerName) ? { url: logoFor(entry.sport, entry.winnerName) } : undefined,
-    footer: { text: entry.failed ? `⚠ ${entry.failed} payout(s) failed — being retried` : "Settled automatically from the final score" },
+    thumbnail: !voided && logoFor(entry.sport, entry.winnerName, entry.league) ? { url: logoFor(entry.sport, entry.winnerName, entry.league) } : undefined,
+    footer: { text: entry.failed ? `⚠ ${entry.failed} payout(s) failed — being retried` : (entry.source === "admin-result" ? "Settled by an admin" : "Settled automatically from the final score") },
     timestamp: new Date().toISOString()
   };
 }

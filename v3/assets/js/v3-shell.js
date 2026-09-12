@@ -49,7 +49,7 @@
   // had a chance to register. An unknown name still falls back.
   // "game" is the /g/<slug> page chat links to. It is a route, not a nav
   // item: the only way in is a link.
-  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo"];
+  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko"];
 
   /* ------------------------------------------------------------ legacy URLs
 
@@ -148,7 +148,7 @@
     events: "EastCoin — Sports", music: "The Green Room — EastCoin", screen: "Movies & TV — EastCoin",
     multiview: "MultiView — EastCoin", picks: "Picks — EastCoin", casino: "Casino — EastCoin",
     flip: "Coin Flip — EastCoin Casino", wheel: "Wheel — EastCoin Casino", race: "Horse Race — EastCoin Casino",
-    hilo: "Higher or Lower — EastCoin Casino", users: "All Users — EastCoin", activity: "Activity — EastCoin",
+    hilo: "Higher or Lower — EastCoin Casino", mines: "Mines — EastCoin Casino", plinko: "Plinko — EastCoin Casino", users: "All Users — EastCoin", activity: "Activity — EastCoin",
     dashboard: "Dashboard — EastCoin", admin: "Admin — EastCoin", watch: "Watching — EastCoin"
   };
 
@@ -360,10 +360,20 @@
     if (chatMounted) return;
     chatMounted = true;
     chatMountedAt = Date.now();
-    els.chatFrame.hidden = false;
+    // The frame stays display:none while Twitch loads and the placeholder
+    // holds the rail; the two swap in the same instant once the frame has
+    // loaded (or after five seconds regardless, so a slow embed cannot
+    // leave "Loading chat…" over a working chat). Never both in the column
+    // at once — a visible frame beside a flex:1 placeholder was shoved to
+    // the bottom half of the rail until the placeholder went — and never
+    // one OVER the other: Twitch disables the message box for mods the
+    // moment anything covers the iframe.
     // .chat-placeholder sets display:grid, which beats [hidden]'s UA
-    // display:none — so remove it outright rather than hiding it.
-    els.chatPlaceholder?.remove();
+    // display:none — so it is removed outright rather than hidden.
+    const reveal = () => {
+      els.chatFrame.hidden = false;
+      els.chatPlaceholder?.remove();
+    };
 
     // Which channel is a deployment's choice now (TWITCH_CHAT_CHANNEL,
     // via /api/config), and eastcoins-config.js writes the answer into
@@ -373,11 +383,15 @@
     // flight since the first script on the page. It resolves even when it
     // fails, in which case data-src is what the HTML said and chat mounts
     // exactly as it always did.
+    // The swap is armed here, not at mount, for the same reason: the five
+    // seconds are meant to measure a slow embed, not a slow /api/config.
     const load = () => {
       // Hidden again while we waited: unmountChat() already had its say.
       if (!chatMounted) return;
       els.chatFrame.src = els.chatFrame.dataset.src;
       chatMountedAt = Date.now();
+      els.chatFrame.addEventListener("load", reveal, { once: true });
+      window.setTimeout(reveal, 5000);
     };
     if (window.ECConfig?.ready) window.ECConfig.ready.then(load);
     else load();
@@ -535,6 +549,7 @@
         // The Admin link stays out of the nav now that testing is done;
         // admins reach it at /?view=admin. The server re-checks every
         // admin endpoint regardless.
+        ownerMenu(user.login);
       }
       if (wallet?.connected && Number.isFinite(Number(wallet.balance))) {
         els.walletValue.textContent = Number(wallet.balance).toLocaleString();
@@ -542,6 +557,49 @@
       }
     } catch {
       /* signed out or offline: the nav just stays in its logged-out state */
+    }
+  }
+
+  /* ------------------------------------------------------ admin menu
+
+     Admin, Dashboard and Activity have no nav link on purpose. For the
+     people who use them they sit at the bottom of the ⋯ menu.
+     Cosmetic only: every one of those endpoints checks the session
+     itself, so pasting the URL gets a stranger no further than this.
+     The list mirrors ADMIN_ALLOWLIST in functions/api/picks/_lib.js —
+     change one, change the other. */
+
+  const ADMIN_LOGINS = new Set(["bootypaper", "zwades", "andyreidisapawg"]);
+  const OWNER_LINKS = [
+    ["admin", "/?view=admin", "🛠", "Admin"],
+    ["dashboard", "/?view=dashboard", "📊", "Dashboard"],
+    ["activity", "/?view=activity", "📰", "Activity"]
+  ];
+
+  function ownerMenu(login) {
+    if (!ADMIN_LOGINS.has(String(login || "").toLowerCase())) return;
+    const menu = els.settingsMenu;
+    if (!menu || menu.querySelector(".menu-owner")) return;
+
+    const title = document.createElement("p");
+    title.className = "menu-title menu-owner";
+    title.textContent = "Yours";
+    const note = menu.querySelector(".menu-note");
+    menu.insertBefore(title, note);
+
+    for (const [route, href, icon, label] of OWNER_LINKS) {
+      const link = document.createElement("a");
+      link.className = "menu-item menu-link";
+      link.href = href;
+      link.setAttribute("role", "menuitem");
+      link.textContent = `${icon}  ${label}`;
+      link.addEventListener("click", (event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+        event.preventDefault();
+        setMenuOpen(false);
+        go(route);
+      });
+      menu.insertBefore(link, note);
     }
   }
 
@@ -649,11 +707,47 @@
     try {
       const parsed = new URL(value);
       if (parsed.protocol !== "https:") return "";
-      return parsed.href;
+      return youtubeEmbed(parsed.href);
     } catch {
       return "";
     }
   }
+
+  /* YouTube refuses to be framed from its normal pages (watch, youtu.be,
+     /live/, /shorts/), but its /embed/ player is made for exactly that.
+     A pasted YouTube link becomes the embed URL; an embed URL, or any
+     other site, passes through untouched. A channel's /live page becomes
+     the channel's live_stream embed when the link carries the UC... id;
+     an @handle can't be resolved from the browser, so it passes through.
+     Shared as window.ECEmbed so the watch view and MultiView agree. */
+  function youtubeEmbed(href) {
+    let u;
+    try { u = new URL(href); } catch { return href; }
+    const host = u.hostname.toLowerCase().replace(/^(www|m|music)\./, "");
+    const parts = u.pathname.split("/").filter(Boolean);
+    let id = "";
+    if (host === "youtu.be") {
+      id = parts[0] || "";
+    } else if (host === "youtube.com") {
+      if (parts[0] === "embed") return href;
+      if (parts[0] === "watch") id = u.searchParams.get("v") || "";
+      else if (["live", "shorts", "v", "e"].includes(parts[0])) id = parts[1] || "";
+      else if (parts[0] === "channel" && /^UC[A-Za-z0-9_-]{22}$/.test(parts[1] || "") && parts[2] === "live") {
+        return `https://www.youtube.com/embed/live_stream?channel=${parts[1]}`;
+      }
+    } else {
+      return href;
+    }
+    if (!/^[A-Za-z0-9_-]{11}$/.test(id)) return href;
+    const out = new URL(`https://www.youtube.com/embed/${id}`);
+    // Keep a timestamp: t=90, t=90s or t=1m30s.
+    const t = String(u.searchParams.get("t") || u.searchParams.get("start") || "");
+    const hms = t.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s?)?$/);
+    const start = hms ? (Number(hms[1] || 0) * 3600 + Number(hms[2] || 0) * 60 + Number(hms[3] || 0)) : 0;
+    if (start) out.searchParams.set("start", String(start));
+    return out.href;
+  }
+  window.ECEmbed = Object.freeze({ youtube: youtubeEmbed });
 
   let searchTimer = 0;
 

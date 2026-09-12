@@ -59,7 +59,7 @@
   function leagueFor(sport, league) {
     const s = String(sport || "").toLowerCase();
     const l = String(league || "").toUpperCase();
-    if (s === "american-football" || l === "NFL") return l === "CFB" || l === "NCAAF" ? null : "nfl";
+    if (s === "american-football" || l === "NFL") return l === "CFB" || l === "NCAAF" ? "cfb" : "nfl";
     if (s === "baseball" || l === "MLB") return "mlb";
     if (s === "basketball" || l === "NBA") return "nba";
     if (s === "hockey" || l === "NHL") return "nhl";
@@ -68,10 +68,25 @@
 
   const TABLES = { nfl: NFL, mlb: MLB, nba: NBA, nhl: NHL };
 
+  // College teams are keyed by ESPN's numeric id, from v3-cfb-teams.js.
+  const normCollege = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+    .replace(/[&'\u2019]/g, "").replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+  function collegeId(name) {
+    const t = window.EC_CFB_TEAMS;
+    if (!t) return null;
+    const key = normCollege(name);
+    // Full name, then place alone, then the provider's own spellings.
+    return t.f[key] || t.l[key] || (t.a && t.a[key]) || null;
+  }
+
   /** The logo URL for a team, or null when there is none to show. */
   function url(sport, league, name) {
     const key = leagueFor(sport, league);
     if (!key) return null;
+    if (key === "cfb") {
+      const id = collegeId(name);
+      return id ? `${CDN}/ncaa/500/${id}.png` : null;
+    }
     const abbr = TABLES[key][nickname(name)];
     return abbr ? `${CDN}/${key}/500/${abbr}.png` : null;
   }
@@ -106,5 +121,5 @@
     return box;
   }
 
-  window.ECLogos = { url, crest, initials, nickname };
+  window.ECLogos = { url, crest, initials, nickname, collegeId };
 })();

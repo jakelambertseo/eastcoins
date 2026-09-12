@@ -583,7 +583,7 @@
     const copy = el("div");
     copy.append(el("h2", null, dayTabLabel(local.day, todays[0]?.startsAt)));
     const leaguesOpen = [...new Set(todays.map((m) => String(m.league || "").toUpperCase()))];
-    const closeWord = { MLB: "first pitch", NFL: "kickoff", CFB: "kickoff", NBA: "tip-off", NHL: "puck drop" };
+    const closeWord = { MLB: "first pitch", NFL: "kickoff", CFB: "kickoff", NBA: "tip-off", NHL: "puck drop", BOXING: "first bell", UFC: "first bell", MMA: "first bell" };
     const closes = leaguesOpen.map((l) => `${l} at ${closeWord[l] || "game time"}`).join(", ");
     copy.append(el("p", null, `${todays.length} game${todays.length === 1 ? "" : "s"} open for picks · closes ${closes || "at game time"}.`));
     head.append(copy);
@@ -609,7 +609,7 @@
   function startWord(list) {
     const leagues = new Set(list.map((m) => String(m.league || "").toUpperCase()));
     return leagues.size === 1
-      ? ({ MLB: "first pitch", NFL: "kickoff", CFB: "kickoff", NBA: "tip-off", NHL: "puck drop" }[[...leagues][0]] || "game time")
+      ? ({ MLB: "first pitch", NFL: "kickoff", CFB: "kickoff", NBA: "tip-off", NHL: "puck drop", BOXING: "first bell", UFC: "first bell", MMA: "first bell" }[[...leagues][0]] || "game time")
       : "game time";
   }
 

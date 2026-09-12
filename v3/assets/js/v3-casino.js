@@ -24,9 +24,11 @@
 
   const GAMES = {
     flip: { title: "Coin Flip", icon: "🪙", blurb: "Heads or tails, 2×. One coin for the whole room, every 30 seconds.", route: "flip" },
-    wheel: { title: "Wheel", icon: "🎡", blurb: "Red or black 2×, the gold sliver 20×. One spin a minute.", route: "wheel" },
+    wheel: { title: "Wheel", icon: "🎡", blurb: "Red or black 2×, the gold sliver 40×. One spin a minute.", route: "wheel" },
     race: { title: "Horse Race", icon: "🐎", blurb: "Four runners from 2× to 14×. They're off every minute.", route: "race", hidden: true },
-    hilo: { title: "Higher or Lower", icon: "🃏", blurb: "Your own deck. Every right call multiplies the stake; cash out any time.", route: "hilo" }
+    hilo: { title: "Higher or Lower", icon: "🃏", blurb: "Your own deck. Every right call multiplies the stake; cash out any time.", route: "hilo" },
+    mines: { title: "Mines", icon: "💣", blurb: "Twenty-five tiles, a few of them bombs. Every safe one pays more; cash out before you find one.", route: "mines" },
+    plinko: { title: "Plinko", icon: "🎯", blurb: "Drop a ball through the pegs. Every bucket but the middle pays; the edges pay 4×.", route: "plinko" }
   };
 
   function go(route) {
@@ -64,6 +66,15 @@
     page.append(head);
 
     // Your own numbers, once the poll says who you are.
+    // The tables' own ticker: casino wins and losses, nothing else.
+    const ticker = K.el("section", "ticker cas-ticker");
+    page.append(ticker);
+    window.setTimeout(() => {
+      if (ticker.isConnected && window.ECActivity) {
+        window.ECActivity.mountTicker(ticker, { types: ["casino"], label: "TABLES", href: "/?view=activity", empty: "Quiet for now — the first spin lands here." });
+      }
+    }, 0);
+
     refs.me = K.el("div", "cas-me");
     page.append(refs.me);
 

@@ -377,8 +377,8 @@
      Music. The tab is in the hash, so /u/name#casino opens there. */
 
   const TABS = [["overview", "Overview"], ["picks", "Picks"], ["casino", "Casino"], ["music", "Music"]];
-  const GAME_NAME = { flip: "Coin Flip", wheel: "Wheel", race: "Horse Race", hilo: "Higher or Lower" };
-  const GAME_ICON = { flip: "🪙", wheel: "🎡", race: "🐎", hilo: "🃏" };
+  const GAME_NAME = { flip: "Coin Flip", wheel: "Wheel", race: "Horse Race", hilo: "Higher or Lower", mines: "Mines", plinko: "Plinko" };
+  const GAME_ICON = { flip: "🪙", wheel: "🎡", race: "🐎", hilo: "🃏", mines: "💣", plinko: "🎯" };
 
   function quickStat(label, value, note, tone) {
     const box = el("div", `pf-q${tone ? " " + tone : ""}`);
@@ -443,6 +443,19 @@
         k.streak.bestWin ? `best run ${k.streak.bestWin}` : "no settled picks", k.streak.current > 0 ? "up" : k.streak.current < 0 ? "down" : "")
     );
     head.append(quick);
+
+    // The casino's numbers, in the same shape as the season strip above.
+    if (c && c.total) {
+      const cq = el("div", "pf-quick pf-quick-casino");
+      const favName = c.favourite ? (GAME_NAME[c.favourite.game] || c.favourite.game) : null;
+      cq.append(
+        quickStat("Casino profit", zc(c.net, { sign: true }), `${c.staked.toLocaleString()} staked · ${c.total} play${c.total === 1 ? "" : "s"}`, c.net > 0 ? "up" : c.net < 0 ? "down" : ""),
+        quickStat("Casino record", `${c.wins}–${c.losses}`, `${Math.round((100 * c.wins) / c.total)}% of plays won`),
+        quickStat("Biggest win", c.biggestWin ? zc(c.biggestWin, { sign: true }) : "—", c.biggestWin ? "in one play" : "none yet", c.biggestWin ? "up" : ""),
+        quickStat("Favourite game", favName || "—", c.favourite ? `${c.favourite.plays} play${c.favourite.plays === 1 ? "" : "s"}` : "")
+      );
+      head.append(cq);
+    }
     wrap.append(head);
 
     // ---- the tabs
