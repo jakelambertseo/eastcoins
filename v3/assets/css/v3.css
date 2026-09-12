@@ -1408,7 +1408,10 @@ body.watch-on .view{
 .watchadd input:focus{outline:none;border-color:rgba(var(--gold-rgb),.55);background:var(--panel-3)}
 .watchadd-note{margin:7px 0 0;font-size:.76rem;font-weight:700}
 .watchadd-note.bad{color:var(--red)}
-.watchadd-row{display:flex;justify-content:flex-end;gap:7px;margin-top:10px}
+.watchadd-row{display:flex;align-items:center;gap:7px;margin-top:10px}
+.watchadd-gap{flex:1 1 auto}
+.watchadd-forget{border-color:rgba(255,107,133,.35);color:var(--red)}
+.watchadd-forget:hover{background:rgba(255,107,133,.12);border-color:var(--red);color:var(--red)}
 .watchadd-go{border-color:rgba(var(--gold-rgb),.5);background:var(--gold-dim);color:var(--gold)}
 @media (max-width:760px){
   /* The bar wraps to two rows down here, so the panel sits higher. */

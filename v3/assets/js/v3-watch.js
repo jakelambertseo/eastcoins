@@ -46,7 +46,7 @@
   // Built once per mount, then mutated.
   const dom = {
     wrap: null, bar: null, peek: null, frame: null,
-    iframe: null, select: null, gd: null, gdFrame: null, add: null
+    iframe: null, select: null, gd: null, gdFrame: null, add: null, addForget: null
   };
 
   let root = null;
@@ -190,6 +190,20 @@
     if (dom.iframe) setStreamSrc(dom.iframe, currentSrc());
   }
 
+  /** Drops the pasted server being watched and falls back to Server 1. */
+  function forgetOwnServer() {
+    const gone = local.streams[local.active];
+    if (!gone?.mine) return;
+    local.streams.splice(local.active, 1);
+    local.active = 0;
+    if (local.match?.id) {
+      writeMine(local.match.id, readMine(local.match.id).filter((u) => u !== gone.embedUrl));
+    }
+    syncServers();
+    rememberServer();
+    if (dom.iframe) setStreamSrc(dom.iframe, currentSrc());
+  }
+
   function closeAddForm() {
     if (dom.add) dom.add.hidden = true;
   }
@@ -215,6 +229,13 @@
       box.append(note);
 
       const row = el("div", "watchadd-row");
+      // Only offered while one of yours is the stream playing. A link that
+      // turns out to be dead would otherwise sit in the dropdown for good,
+      // since these are remembered between visits.
+      const forget = el("button", "watchbtn watchadd-forget", "Remove this one");
+      forget.type = "button";
+      forget.addEventListener("click", () => { forgetOwnServer(); closeAddForm(); });
+      dom.addForget = forget;
       const cancel = el("button", "watchbtn", "Cancel");
       cancel.type = "button";
       cancel.addEventListener("click", closeAddForm);
@@ -244,11 +265,12 @@
       // contradict what is now in the box.
       input.addEventListener("input", () => { note.hidden = true; });
 
-      row.append(cancel, go);
+      row.append(forget, el("span", "watchadd-gap"), cancel, go);
       box.append(row);
       dom.add = box;
       dom.wrap.append(box);
     }
+    if (dom.addForget) dom.addForget.hidden = !local.streams[local.active]?.mine;
     dom.add.hidden = false;
     dom.add.querySelector("input")?.focus();
   }
@@ -530,7 +552,7 @@
     wrap.append(frame, bar, peek);
     root.append(wrap);
 
-    Object.assign(dom, { wrap, bar, peek, frame, iframe, add: null });
+    Object.assign(dom, { wrap, bar, peek, frame, iframe, add: null, addForget: null });
   }
 
   function paintMessage(kind) {
@@ -666,7 +688,7 @@
       }
       Object.assign(dom, {
         wrap: null, bar: null, peek: null, frame: null,
-        iframe: null, select: null, gd: null, gdFrame: null, add: null
+        iframe: null, select: null, gd: null, gdFrame: null, add: null, addForget: null
       });
     }
   };
