@@ -68,7 +68,8 @@
     }
     // The buckets beside the edges are one bounce from the top prize.
     const b = Number(payload.drop.bucket);
-    if (b === 1 || b === 7) window.setTimeout(() => toast(`One peg from ×${top}!`, "near"), 1200);
+    const edge = Number(data?.config?.buckets || 13) - 1;
+    if (b === 1 || b === edge - 1) window.setTimeout(() => toast(`One peg from ×${top}!`, "near"), 1200);
     await poll();
   }
 
@@ -164,14 +165,12 @@
     const stage = K.el("section", "cf-stage");
     refs.phase = K.el("div", "cf-phase", "");
 
-    // The pegs, then the buckets under them.
+    // The pegs, then the buckets under them. Both are drawn from the
+    // server's own numbers when the first state lands, so the board can
+    // never disagree with the table the ball is being paid from.
     const board = K.el("div", "pk-board");
     const pegs = K.el("div", "pk-pegs");
-    for (let row = 0; row < 8; row += 1) {
-      const line = K.el("div", "pk-row");
-      for (let i = 0; i <= row + 1; i += 1) line.append(K.el("i", "pk-peg"));
-      pegs.append(line);
-    }
+    refs.pegs = pegs;
     refs.ball = K.el("div", "pk-ball");
     refs.ball.hidden = true;
     board.append(pegs, refs.ball);
@@ -246,12 +245,27 @@
     root.append(page);
   }
 
+  /** One row of pegs per row the server drops through: row n holds n+2. */
+  function paintPegs(rows) {
+    if (refs.paintedRows === rows || !refs.pegs) return;
+    refs.paintedRows = rows;
+    refs.pegs.replaceChildren();
+    for (let row = 0; row < rows; row += 1) {
+      const line = K.el("div", "pk-row");
+      for (let i = 0; i <= row + 1; i += 1) line.append(K.el("i", "pk-peg"));
+      refs.pegs.append(line);
+    }
+  }
+
   function paintBuckets(payouts) {
-    if (refs.paintedBuckets) return;
-    refs.paintedBuckets = true;
+    if (refs.paintedBuckets === payouts.length) return;
+    refs.paintedBuckets = payouts.length;
     refs.bucketRow.replaceChildren();
+    // The board is as wide as the bucket row; CSS multiplies one pitch
+    // by this rather than hard-coding a count that would go stale.
+    refs.board?.style.setProperty("--pk-cols", String(payouts.length));
     refs.buckets = payouts.map((m) => {
-      const b = K.el("div", `pk-bucket${m >= 6 ? " big" : m >= 1.4 ? " mid" : ""}`, `×${m}`);
+      const b = K.el("div", `pk-bucket${m >= 4 ? " big" : m > 1 ? " mid" : ""}`, `×${m}`);
       refs.bucketRow.append(b);
       return b;
     });
@@ -260,6 +274,7 @@
   function render() {
     if (!data || !refs.board) return;
     const config = data.config;
+    paintPegs(config.rows);
     paintBuckets(config.payouts);
 
     refs.status.textContent = dropping ? "Dropping…" : "Ready";
@@ -284,7 +299,11 @@
     else if (capped) { K.withCoins(refs.drop, `Up [[${data.me.hourNet}]] this hour — the cap`); refs.note.textContent = "The tables reopen for you as the hour rolls on."; }
     else {
       K.withCoins(refs.drop, `Drop for [[${stake}]]`);
-      refs.note.textContent = `Every bucket but the middle pays. The ×${config.maxMultiplier} edges land about once in 128 drops.`;
+      // How rare the top prize is comes from the odds table, because it
+      // moves every time the number of rows does.
+      const edgeChance = 2 * Number(config.odds?.[0]?.chance || 0);
+      const oneIn = edgeChance ? Math.round(1 / edgeChance) : 0;
+      refs.note.textContent = `Every bucket but the middle pays. The ×${config.maxMultiplier} edges land about once in ${oneIn} drops.`;
     }
     const used = data.me?.dropsThisHour;
     K.withCoins(refs.limits, `Max stake [[${config.maxBet}]] · ${config.maxPerHour} drops an hour · winnings cap [[${config.hourCap}]] an hour` + (Number.isFinite(used) ? ` · you've used ${used} of ${config.maxPerHour}` : ""));

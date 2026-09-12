@@ -150,18 +150,28 @@
 > cap. Results flow to the floor, the activity feed and profiles.
 >
 > **Plinko** — `/?view=plinko` (`v3-plinko.js`, `functions/api/casino/plinko/*`,
-> tables `plinko_drops` and `plinko_commits`). A ball falls through 8 peg
-> rows into 9 buckets paying `4 · 1.8 · 1.3 · 1.15 · 0.2 · 1.15 · 1.3 ·
-> 1.8 · 4` — a 98.6% return where every bucket but the middle pays, so
-> 73% of drops come back ahead. Step i goes right
+> tables `plinko_drops` and `plinko_commits`). A ball falls through 12 peg
+> rows into 13 buckets paying `25 · 4 · 2 · 1.4 · 1.1 · 1.05 · 0.3 · 1.05
+> · 1.1 · 1.4 · 2 · 4 · 25` — a 99.0% return where every bucket but the
+> middle pays, so 77% of drops come back ahead. Step i goes right
 > when `sha256(seed:i)` is odd, so the path is a pure function of the seed.
 > **Fairness works differently here**: a drop has no decisions in it, so
 > instead of committing at the start of play each player holds a committed
 > seed for their NEXT drop (`plinko_commits`, hash shown on the page,
 > revealed with the result, rotated immediately), which stops the house
-> picking a seed after seeing the stake. Max is ×4 on purpose — 80 ZC on
-> the 20 ZC maximum, well under the hourly cap, because a ball nobody can
-> influence should not be the biggest win on the site. Winnings count
+> picking a seed after seeing the stake.
+> **The row count is what buys the top prize** (2026-09-12, was 8 rows
+> paying ×4): ×25 edges on an 8-row board return 129%, because an 8-row
+> edge lands 1 in 256. Paying for it there meant pushing the middle
+> buckets under the stake and cutting the share of drops that come back
+> ahead from 73% to 7%. Every added row halves the edge's chance, so at
+> 12 rows an edge is 1 in 4096, the top prize lands about once in 2048
+> drops, and every other bucket can stay above the stake. ×25 pays 500 on
+> the 20 ZC maximum, the ceiling Mines came down to the same day. To
+> re-tune, change `ROWS` and `PAYOUTS` in `_plinko.js` only — the client
+> draws the pegs and the board width from `config.rows`/`config.payouts`,
+> and the odds column and the "once in N drops" line come from
+> `oddsTable()`. Never let the return past 100%. Winnings count
 > toward `HOUR_WIN_CAP` via `hourlyNet()`; every new casino game must be
 > added there or it escapes the cap.
 >

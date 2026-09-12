@@ -3415,8 +3415,8 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
 /* ============================================================
    Casino — Plinko
 
-   Eight rows of pegs over nine buckets. The ball is one element
-   moved by transform: 26px is one half-slot across and one row
+   Twelve rows of pegs over thirteen buckets. The ball is one element
+   moved by transform: one pitch is one half-slot across and one row
    down, which is what the peg grid is built on.
    ============================================================ */
 /* --pk-pitch is the distance between neighbouring pegs, between
@@ -3425,14 +3425,19 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
    bounce off. v3-plinko.js reads it back out of the computed style, so
    changing it here is enough.
 
-   It scales with the viewport because nine buckets at a fixed 26px left
-   the board a narrow strip in a wide column, and "x0.75" did not fit the
-   label. The clamp keeps it readable on a phone and stops it sprawling
-   on a big monitor. */
+   It scales with the viewport because the board would otherwise be a
+   narrow strip in a wide column, and the widest label has to fit. The
+   clamp keeps it readable on a phone and stops it sprawling on a big
+   monitor; it tightened when the board went from nine buckets to
+   thirteen, which is four more slots to fit in the same width.
+
+   It is declared once, on the page, because the pegs and the buckets
+   are siblings and MUST use the same number. */
+.casino-plinko{--pk-pitch:clamp(23px, 4.6vw, 36px)}
 .pk-board{
   position:relative;margin:12px auto 8px;padding:6px 0;
-  --pk-pitch:clamp(28px, 6.4vw, 46px);
-  width:calc(var(--pk-pitch) * 9);
+  /* As wide as the bucket row; the count is set by v3-plinko.js. */
+  width:calc(var(--pk-pitch) * var(--pk-cols, 13));
 }
 .pk-pegs{display:flex;flex-direction:column;align-items:center;gap:0}
 .pk-row{display:flex;justify-content:center;gap:calc(var(--pk-pitch) - 7px);height:var(--pk-pitch);align-items:center}
@@ -3441,19 +3446,23 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
   background:rgba(255,255,255,.3);box-shadow:0 0 7px rgba(255,255,255,.09);
 }
 .pk-ball{
-  position:absolute;left:50%;top:4px;width:18px;height:18px;margin-left:-9px;border-radius:50%;
+  /* Sized off the pitch: a fixed 18px ball nearly filled a slot once the
+     board grew to thirteen of them. */
+  --pk-ball:clamp(11px, calc(var(--pk-pitch) * .5), 18px);
+  position:absolute;left:50%;top:4px;border-radius:50%;
+  width:var(--pk-ball);height:var(--pk-ball);margin-left:calc(var(--pk-ball) / -2);
   background:radial-gradient(circle at 35% 30%,#fff,var(--gold) 60%,#8a6c12);
   box-shadow:0 0 14px rgba(var(--gold-rgb),.6);
   transition:transform .11s linear;z-index:2;
 }
 .pk-ball.landed{transition:transform .16s cubic-bezier(.3,1.6,.5,1)}
 
-.pk-buckets{display:flex;justify-content:center;gap:3px;margin:4px auto 0;--pk-pitch:clamp(28px, 6.4vw, 46px)}
+.pk-buckets{display:flex;justify-content:center;gap:3px;margin:4px auto 0}
 .pk-bucket{
   flex:0 0 calc(var(--pk-pitch) - 3px);width:calc(var(--pk-pitch) - 3px);
   padding:9px 1px;border-radius:9px;text-align:center;
   border:1px solid var(--line);background:var(--panel-2);
-  color:var(--muted);font-size:clamp(.56rem, 1.35vw, .78rem);font-weight:800;
+  color:var(--muted);font-size:clamp(.46rem, 1.05vw, .72rem);font-weight:800;letter-spacing:-.02em;
   transition:transform .18s ease,background .18s ease,color .18s ease,border-color .18s ease;
 }
 .pk-bucket.mid{color:var(--text);border-color:var(--line-2)}
@@ -3467,9 +3476,9 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
   .pk-ball,.pk-bucket{transition:none}
 }
 /* The clamp handles the sizing; this only stops the labels crowding on
-   the smallest phones, where "x0.75" is the widest thing on the row. */
+   the smallest phones, where "x1.05" is the widest thing on the row. */
 @media (max-width:380px){
-  .pk-bucket{padding:7px 0;letter-spacing:-.02em}
+  .pk-bucket{padding:7px 0;letter-spacing:-.03em}
 }
 
 
