@@ -1387,6 +1387,34 @@ body.watch-on .view{
 .wwho-count{color:var(--muted);font-size:.78rem;font-weight:700;white-space:nowrap}
 @media (max-width:760px){.wwho-count{display:none}}
 
+/* "Embed your own server" — the last entry in the server dropdown opens
+   this. Anchored just above the bar and over the video, so it costs the
+   picture no height and closes the moment it is done. */
+.watchadd{
+  position:absolute;left:8px;bottom:58px;z-index:4;
+  width:min(420px, calc(100% - 16px));
+  padding:13px 14px;border-radius:var(--radius);
+  border:1px solid rgba(var(--gold-rgb),.35);background:var(--panel);
+  box-shadow:0 18px 40px rgba(0,0,0,.55);
+}
+.watchadd h3{margin:0 0 3px;font-family:var(--display);font-weight:800;font-size:.98rem;letter-spacing:-.01em}
+.watchadd > p{margin:0 0 9px;color:var(--muted-2);font-size:.78rem;line-height:1.35}
+.watchadd input{
+  width:100%;height:34px;padding:0 10px;border-radius:8px;
+  border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);
+  font:inherit;font-size:.82rem;
+}
+.watchadd input::placeholder{color:var(--muted-2)}
+.watchadd input:focus{outline:none;border-color:rgba(var(--gold-rgb),.55);background:var(--panel-3)}
+.watchadd-note{margin:7px 0 0;font-size:.76rem;font-weight:700}
+.watchadd-note.bad{color:var(--red)}
+.watchadd-row{display:flex;justify-content:flex-end;gap:7px;margin-top:10px}
+.watchadd-go{border-color:rgba(var(--gold-rgb),.5);background:var(--gold-dim);color:var(--gold)}
+@media (max-width:760px){
+  /* The bar wraps to two rows down here, so the panel sits higher. */
+  .watchadd{bottom:auto;top:8px;left:8px}
+}
+
 /* Folded state. Absolute so the bar row collapses entirely and the
    video claims the height, rather than leaving a gap where it was. */
 .watchpeek{
