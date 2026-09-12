@@ -226,21 +226,26 @@
 > Decided rows only (WON/LOST/BUST/CASHED); anything live counts as
 > neither.
 >
-> **D1 reads are the budget that actually binds (2026-09-12)** — the free
-> plan allows 5 million rows READ a day and the site spent them by about
-> 1:30 PM on a Saturday, which 500s login, presence and the whole casino
-> until midnight UTC. Two rules follow. **One: every hour/day filter must
-> compare the bare column**, `created_at >= datetime('now', '-1 hour')`, never
-> `datetime(created_at) >= …` — wrapping the column stops SQLite using any
-> index on it and turns the query into a full scan. **Two: any column a hot
-> path filters on needs an index**; `coin_bets` had one on `round_no` and
-> none on `user_id`, so `hourlyNet()` in `_engine.js` — which every casino
-> state poll calls, and the shared games poll every 1.5s — read the whole
-> table every time. Polling is the multiplier: a hidden tab now stops
-> polling (per-player games, the floor, the Who's here strip) or drops to a
-> fifth of the rate (the coin and the wheel, whose polls are what settle a
-> finished round and pay people, so they must never stop). Before adding a
-> poll or a per-hour aggregate, work out its rows/day.
+> **D1 reads are the budget that binds, and POLL RATE is what spends them**
+> (2026-09-12) — the free plan allows 5 million rows read a day and the site
+> spent them by about 1:30 PM on a Saturday, 500ing login, presence and the
+> whole casino. The account is on Workers Paid now (25 billion rows/month),
+> but the shape of the problem is worth keeping. **Every table here is tiny**
+> — the biggest is `wallet_operations` at a few hundred rows — so no single
+> query is expensive and query tuning is NOT where the budget goes. What
+> spends it is frequency: one casino tab polls the shared games every 1.5
+> seconds, which is 57,600 requests a day, each running six to ten queries.
+> One tab left open for a day is millions of rows. **So: before adding a
+> poll, work out its requests/day × queries × rows and say the number out
+> loud.** A hidden tab now stops polling (per-player games, the casino floor,
+> the Who's here strip) or drops to a fifth rate (the coin and the wheel,
+> whose polls are what settle a finished round and pay people, so they must
+> never stop entirely). Two secondary rules, cheap and still right: any
+> column a hot path filters on wants an index (`coin_bets` had one on
+> `round_no` and none on `user_id`), and an hour/day filter must compare the
+> **bare column** — `created_at >= datetime('now', '-1 hour')`, never
+> `datetime(created_at) >= …`, because wrapping the column stops SQLite
+> using an index on it at all.
 >
 > **The admin page** (`v3-admin.js`) carries the same head/strip/tabs shape:
 > six numbers from the markets already loaded, then Markets / Open a market
