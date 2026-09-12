@@ -1,9 +1,9 @@
 /* ============================================================
    EastCoin Casino — Plinko
 
-   A ball falls through eight rows of pegs, going left or right at
-   each one, and lands in one of nine buckets. Which way it goes at
-   row i is fixed by the seed alone:
+   A ball falls through twelve rows of pegs, going left or right at
+   each one, and lands in one of thirteen buckets. Which way it goes
+   at row i is fixed by the seed alone:
 
      right if sha256(seed + ":" + i) is odd, otherwise left
 
@@ -17,26 +17,36 @@
    revealed with the result, and a fresh one is committed at once.
    The house therefore cannot pick a seed after seeing the stake.
 
-   The nine buckets pay
+   The thirteen buckets pay
 
-     x4  x1.8  x1.3  x1.15  x0.2  x1.15  x1.3  x1.8  x4
+     x25  x4  x2  x1.4  x1.1  x1.05  x0.3  x1.05  x1.1  x1.4  x2  x4  x25
 
-   which returns 98.6% — near fair, like the rest of the casino.
+   which returns 99.0% — near fair, like the rest of the casino.
    The shape is chosen so wins are FREQUENT: every bucket but the
-   middle one pays more than the stake, so 73% of drops come
-   back ahead, and the middle (1 in 4) is where the house's small cut
-   lives. The edges are 1 in 256 each, so the top prize lands about
-   once in 128 drops. x4 is deliberately low: on the 20 ZC maximum it
-   pays 80, because a ball nobody can influence should not produce the
-   biggest win on the site.
+   middle one pays more than the stake, so 77% of drops come back
+   ahead, and the middle (1 in 4.4) is where the house's small cut
+   lives.
+
+   TWELVE rows, not eight, and that is the whole trick (2026-09-12).
+   The ask was a x25 edge and a x4 beside it. Bolted onto the old
+   eight-row board that returns 129% — the house pays 29p on every
+   pound played — because an eight-row edge lands 1 in 256, which is
+   far too often to carry x25. Paying for it there meant cutting the
+   middle buckets under the stake and dropping the share of drops that
+   come back ahead from 73% to 7%, which is the opposite of what this
+   game is for. Every row added halves the edge's chance: at twelve
+   rows an edge is 1 in 4096, the top prize lands about once in 2048
+   drops, and x25 costs little enough that every other bucket can stay
+   above the stake. x25 on the 20 ZC maximum pays 500, the same
+   ceiling Mines was brought down to on the same day.
    ============================================================ */
 
 import { moveBalance, beginOperation, finishOperation, newId } from "../../picks/_lib.js";
 import { sha256, randomSeed, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
 
-export const ROWS = 8;
+export const ROWS = 12;
 export const BUCKETS = ROWS + 1;
-export const PAYOUTS = [4, 1.8, 1.3, 1.15, 0.2, 1.15, 1.3, 1.8, 4];
+export const PAYOUTS = [25, 4, 2, 1.4, 1.1, 1.05, 0.3, 1.05, 1.1, 1.4, 2, 4, 25];
 export const MAX_MULTIPLIER = Math.max(...PAYOUTS);
 
 let ready = false;
@@ -135,7 +145,7 @@ export function publicDrop(d) {
 }
 
 export async function dropsLastHour(db, userId) {
-  const row = await db.prepare(`SELECT COUNT(*) AS n FROM plinko_drops WHERE user_id = ? AND datetime(created_at) >= datetime('now', '-1 hour')`).bind(userId).first();
+  const row = await db.prepare(`SELECT COUNT(*) AS n FROM plinko_drops WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`).bind(userId).first();
   return Number(row?.n || 0);
 }
 

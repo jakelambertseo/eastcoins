@@ -68,7 +68,8 @@ export async function ensureMines(db) {
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`),
-    db.prepare(`CREATE INDEX IF NOT EXISTS idx_mines_user ON mines_games (user_id, created_at)`)
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_mines_user ON mines_games (user_id, created_at)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_mines_live ON mines_games (status, updated_at)`)
   ]);
   ready = true;
 }
@@ -168,7 +169,7 @@ export async function liveGameFor(db, userId) {
 }
 
 export async function gamesLastHour(db, userId) {
-  const row = await db.prepare(`SELECT COUNT(*) AS n FROM mines_games WHERE user_id = ? AND datetime(created_at) >= datetime('now', '-1 hour')`).bind(userId).first();
+  const row = await db.prepare(`SELECT COUNT(*) AS n FROM mines_games WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`).bind(userId).first();
   return Number(row?.n || 0);
 }
 

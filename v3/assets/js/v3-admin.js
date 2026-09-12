@@ -122,6 +122,53 @@
     return payload;
   }
 
+  /* ------------------------------------------------------- the headline */
+
+  /**
+   * Six numbers off the markets already in hand — no extra request. The
+   * money-wide figures (users, both sides' take) live on the Dashboard,
+   * which runs the queries for them; this is the state of the book the
+   * operator is about to act on.
+   */
+  function summaryStrip() {
+    const markets = local.markets || [];
+    const by = (state) => markets.filter((m) => m.state === state);
+    const open = by("OPEN");
+    const locked = by("LOCKED");
+    const live = [...open, ...locked];
+    const picksRiding = live.reduce((s, m) => s + Number(m.totals?.picks || 0), 0);
+    const staked = live.reduce((s, m) => s + Number(m.totals?.away?.staked || 0) + Number(m.totals?.home?.staked || 0), 0);
+    const exposure = live.reduce((s, m) => s + Number(m.totals?.away?.exposure || 0) + Number(m.totals?.home?.exposure || 0), 0);
+    const stuck = markets.reduce((s, m) => s + Number(m.needsAttention || 0), 0);
+    const next = open
+      .map((m) => new Date(m.startsAt).getTime())
+      .filter((t) => Number.isFinite(t) && t > Date.now())
+      .sort((a, b) => a - b)[0];
+    const fights = live.filter((m) => isFightSport(m.sport) && new Date(m.startsAt).getTime() <= Date.now()).length;
+
+    const q = (label, value, note, tone) => {
+      const box = el("div", `pf-q${tone ? " " + tone : ""}`);
+      box.append(el("span", null, label));
+      box.append(el("b", "nums", String(value)));
+      if (note) box.append(el("small", null, note));
+      return box;
+    };
+    const strip = el("div", "pf-quick adm-quick");
+    strip.append(
+      q("Taking bets", open.length, next ? `next locks ${new Date(next).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })}` : "nothing due"),
+      q("In play", locked.length, fights ? `${fights} fight${fights === 1 ? "" : "s"} to settle by hand` : "closed, awaiting a final", fights ? "down" : ""),
+      q("Picks riding", picksRiding, `${staked.toLocaleString()} ZC staked`),
+      q("On the hook", exposure.toLocaleString(), "if every open pick wins"),
+      q("Settled", by("SETTLED").length, `${by("VOID").length} voided`),
+      // Stuck operations lead when there are any: a red "Ready" beside
+      // "2 stuck" reads as a contradiction.
+      q("Wallet", stuck ? `${stuck} stuck` : (local.health?.ok ? "Ready" : "Down"),
+        stuck ? "operations need reconciling" : (local.health?.ok ? "transfers enabled" : (local.health?.message || "").slice(0, 40)),
+        local.health?.ok && !stuck ? "up" : "down")
+    );
+    return strip;
+  }
+
   /* ---------------------------------------------------------- health */
 
   function healthCard() {
@@ -608,9 +655,9 @@ ${cost}`)) return;
     const wrap = el("div");
     wrap.append(el("h1", null, "Picks admin"));
     head.append(wrap);
-    root.append(head);
 
     if (local.forbidden) {
+      root.append(head);
       const empty = el("div", "empty");
       empty.append(
         el("strong", null, "Admins only"),
@@ -620,13 +667,63 @@ ${cost}`)) return;
       return;
     }
 
+    head.append(summaryStrip());
+    root.append(head);
+
     if (local.message && !local.message.id && !local.message.at) {
       const strip = el("div", `adm-message ${local.message.tone}`);
       strip.textContent = local.message.text;
       root.append(strip);
     }
 
-    root.append(healthCard(), openForm(), announceCard(), marketsCard());
+    // Four jobs, four tabs — the same head/strip/tabs shape the Dashboard,
+    // Picks and the profiles use. Markets leads because it is the one the
+    // page is opened for; the form was pushing it below the fold.
+    const TABS = [
+      ["markets", "Markets", (local.markets || []).length],
+      ["open", "Open a market", 0],
+      ["announce", "Announce", local.announce?.open || 0],
+      ["health", "Wallet", 0]
+    ];
+    const bar = el("nav", "pf-tabs adm-tabs");
+    bar.setAttribute("aria-label", "Admin sections");
+    const panels = {};
+    const buttons = {};
+    for (const [key, label, count] of TABS) {
+      const btn = el("button", "pf-tab", label);
+      btn.type = "button";
+      btn.setAttribute("role", "tab");
+      if (count) btn.append(el("i", null, String(count)));
+      btn.addEventListener("click", () => select(key));
+      bar.append(btn);
+      buttons[key] = btn;
+      const panel = el("div", "pf-panel adm-panel");
+      panel.hidden = true;
+      panels[key] = panel;
+    }
+    function select(key) {
+      if (!panels[key]) key = "markets";
+      local.tab = key;
+      for (const [k2, panel] of Object.entries(panels)) {
+        panel.hidden = k2 !== key;
+        buttons[k2].classList.toggle("on", k2 === key);
+        buttons[k2].setAttribute("aria-selected", String(k2 === key));
+      }
+    }
+    root.append(bar);
+
+    panels.markets.append(marketsCard());
+    panels.open.append(openForm());
+    panels.announce.append(announceCard());
+    panels.health.append(healthCard());
+    for (const [key] of TABS) root.append(panels[key]);
+
+    // A message about something that lives on another tab would otherwise
+    // be posted to a panel nobody is looking at.
+    const wanted = local.message?.at === "markets" || local.message?.id ? "markets"
+      : local.message?.at === "announce" ? "announce"
+        : local.formMsg ? "open" : null;
+    select(wanted || local.tab || "markets");
   }
 
   const view = {

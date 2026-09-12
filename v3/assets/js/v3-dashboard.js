@@ -3,9 +3,12 @@
 
      /?view=dashboard   (one person)
 
-   Is everything fine? The cron, the Odds API credits, the wallet,
-   the music worker, TMDB, who's around, what's riding. Green,
-   amber, red. Refreshes itself every minute.
+   The headline first — users, bets, what each side of the house took,
+   what is still riding, who is here — then four tabs: Overview, the
+   Picks book, the Casino, and Health (the cron, Odds API credits, the
+   wallet, the music worker, TMDB, keys, backups; green, amber, red).
+   Refreshes itself every minute, keeping the open tab and every list's
+   page where the reader left them.
    ============================================================ */
 (() => {
   "use strict";
@@ -26,6 +29,37 @@
     const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
     return m < 1 ? "just now" : m < 60 ? `${m} min ago` : `${Math.round(m / 60)} h ago`;
   };
+
+  // The open tab and each list's page, kept across the one-minute
+  // refresh: a repaint must not yank the page out from under whoever is
+  // reading it.
+  const ui = { tab: "", pages: new Map() };
+
+  /** The same headline stat the profile and Picks pages use. */
+  function quickStat(label, value, note, tone) {
+    const box = el("div", `pf-q${tone ? " " + tone : ""}`);
+    box.append(el("span", null, label));
+    const big = el("b", "nums");
+    if (value instanceof Node) big.append(value); else big.textContent = value;
+    box.append(big);
+    if (note) box.append(el("small", null, note));
+    return box;
+  }
+
+  /** Chicago day keys, so windows line up with the server's day chart. */
+  const dayKeyBack = (n) => {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    return d.toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+  };
+  function windowOf(days, since) {
+    const rows = (days || []).filter((r) => r.day >= since);
+    return {
+      bets: rows.reduce((s, r) => s + Number(r.bets || 0), 0),
+      staked: rows.reduce((s, r) => s + Number(r.staked || 0), 0),
+      houseNet: rows.reduce((s, r) => s + Number(r.houseNet || 0), 0)
+    };
+  }
 
   function card(title, state, lines) {
     const c = el("article", `db-card ${state}`);
@@ -71,6 +105,77 @@
   function miniTable(title, head, rows) {
     const box = el("div", "db-mini");
     box.append(el("h3", null, title));
+    box.append(tableOf(head, rows));
+    return box;
+  }
+
+  /**
+   * The same table, a page at a time. `key` is what the page number is
+   * remembered under, so the minute refresh lands the reader back on the
+   * page they were on rather than on page one.
+   */
+  function pagedTable(key, title, head, rows, perPage = 8) {
+    const pages = Math.max(1, Math.ceil(rows.length / perPage));
+    const box = el("div", "db-mini");
+    const draw = () => {
+      const at = Math.min(Math.max(1, ui.pages.get(key) || 1), pages);
+      ui.pages.set(key, at);
+      box.replaceChildren();
+      const h = el("h3", null, title);
+      if (pages > 1) h.append(el("small", "db-of", `${at} / ${pages}`));
+      box.append(h, tableOf(head, rows.slice((at - 1) * perPage, at * perPage)));
+      if (pages > 1) {
+        const nav = el("div", "db-pager");
+        const step = (label, to, dead) => {
+          const b = el("button", "db-pagebtn", label);
+          b.type = "button";
+          b.disabled = dead;
+          b.addEventListener("click", () => { ui.pages.set(key, to); draw(); });
+          return b;
+        };
+        nav.append(step("‹ Prev", at - 1, at <= 1),
+          el("span", "db-pagecount", `${fmt(rows.length)} row${rows.length === 1 ? "" : "s"}`),
+          step("Next ›", at + 1, at >= pages));
+        box.append(nav);
+      }
+    };
+    draw();
+    return box;
+  }
+
+  /** pagedTable's paging, for rows that are nodes rather than cells. */
+  function pagedList(key, title, nodes, perPage = 8) {
+    const pages = Math.max(1, Math.ceil(nodes.length / perPage));
+    const box = el("section", "db-attn");
+    const draw = () => {
+      const at = Math.min(Math.max(1, ui.pages.get(key) || 1), pages);
+      ui.pages.set(key, at);
+      box.replaceChildren();
+      const h = el("h2", null, title);
+      if (pages > 1) h.append(el("small", "db-of", `${at} / ${pages}`));
+      const list = el("div", "db-list");
+      nodes.slice((at - 1) * perPage, at * perPage).forEach((n) => list.append(n));
+      box.append(h, list);
+      if (pages > 1) {
+        const nav = el("div", "db-pager");
+        const step = (label, to, dead) => {
+          const b = el("button", "db-pagebtn", label);
+          b.type = "button";
+          b.disabled = dead;
+          b.addEventListener("click", () => { ui.pages.set(key, to); draw(); });
+          return b;
+        };
+        nav.append(step("‹ Prev", at - 1, at <= 1),
+          el("span", "db-pagecount", `${fmt(nodes.length)} row${nodes.length === 1 ? "" : "s"}`),
+          step("Next ›", at + 1, at >= pages));
+        box.append(nav);
+      }
+    };
+    draw();
+    return box;
+  }
+
+  function tableOf(head, rows) {
     const table = el("table");
     const tr = el("tr");
     head.forEach((h, i) => tr.append(el("th", i ? "num" : null, h)));
@@ -96,8 +201,7 @@
       body.append(line);
     }
     table.append(body);
-    box.append(table);
-    return box;
+    return table;
   }
 
   function bookBlock(b) {
@@ -116,20 +220,6 @@
       stat("On the hook", fmt(b.exposure), `if every open pick wins · ${fmt(b.riding)} staked`)
     );
     wrap.append(stats);
-
-    const windows = el("div", "db-windows");
-    [["Today", b.today], ["Last 7 days", b.week], ["Last 14 days", b.fortnight]].forEach(([label, w]) => {
-      const cell = el("div", "db-window");
-      cell.append(el("span", "db-stat-k", label));
-      const line = el("div", "db-window-row");
-      line.append(el("span", null, `${fmt(w.bets)} bets`), el("span", null, `${fmt(w.staked)} bet`));
-      const net = el("b", w.houseNet >= 0 ? "good" : "bad");
-      net.append(zcs(w.houseNet));
-      line.append(net);
-      cell.append(line);
-      windows.append(cell);
-    });
-    wrap.append(windows);
 
     // Fourteen days of the house's take, in Chicago days.
     const days = b.days || [];
@@ -153,13 +243,33 @@
     }
 
     const tables = el("div", "db-tables");
-    tables.append(miniTable("By league", ["League", "Bets", "Bet", "House"],
+    tables.append(pagedTable("leagues", "By league", ["League", "Bets", "Bet", "House"],
       (b.leagues || []).map((l) => [l.league, fmt(l.bets), fmt(l.staked), zcs(l.houseNet)])));
-    tables.append(miniTable("Biggest bettors", ["Who", "Bets", "Bet", "Their net"],
+    tables.append(pagedTable("bettors", "Biggest bettors", ["Who", "Bets", "Bet", "Their net"],
       (b.people || []).map((p) => [p.login, fmt(p.bets), fmt(p.staked), zcs(p.net)])));
     wrap.append(tables);
 
     return wrap;
+  }
+
+  /** Today / 7 / 14 days, the same three cells for either side of the house. */
+  function windowsRow(title, cells) {
+    const box = el("section", "db-winblock");
+    box.append(el("h3", null, title));
+    const windows = el("div", "db-windows");
+    for (const [label, w] of cells) {
+      const cell = el("div", "db-window");
+      cell.append(el("span", "db-stat-k", label));
+      const line = el("div", "db-window-row");
+      line.append(el("span", null, `${fmt(w.bets)} bets`), el("span", null, `${fmt(w.staked)} bet`));
+      const net = el("b", w.houseNet >= 0 ? "good" : "bad");
+      net.append(zcs(w.houseNet));
+      line.append(net);
+      cell.append(line);
+      windows.append(cell);
+    }
+    box.append(windows);
+    return box;
   }
 
   /* The casino's side, read the same way: stake minus payout on decided
@@ -167,7 +277,7 @@
   function casinoBlock(c) {
     const wrap = el("section", "db-book");
     const head = el("div", "db-book-head");
-    head.append(el("h2", null, "The casino"), el("span", null, "Coin Flip, Wheel, Horse Race and Higher or Lower"));
+    head.append(el("h2", null, "The casino"), el("span", null, "Coin Flip, Wheel, Horse Race, Higher or Lower, Mines and Plinko"));
     wrap.append(head);
 
     const stats = el("div", "db-stats");
@@ -197,16 +307,16 @@
     }
 
     const tables = el("div", "db-tables");
-    tables.append(miniTable("By game", ["Game", "Bets", "Bet", "House", "Hold"],
+    tables.append(pagedTable("cgames", "By game", ["Game", "Bets", "Bet", "House", "Hold"],
       (c.games || []).map((g) => [
         g.name,
         fmt(g.bets),
         fmt(g.staked),
         zcs(g.houseNet),
         g.holdPct === null ? "—" : `${g.holdPct}%`
-      ])));
-    tables.append(miniTable("Biggest single win", ["Game", "Win", "Players", "Live"],
-      (c.games || []).map((g) => [g.name, fmt(g.biggestWin), fmt(g.players), g.live ? fmt(g.live) : "—"])));
+      ]), 6));
+    tables.append(pagedTable("cwins", "Biggest single win", ["Game", "Win", "Players", "Live"],
+      (c.games || []).map((g) => [g.name, fmt(g.biggestWin), fmt(g.players), g.live ? fmt(g.live) : "—"]), 6));
     wrap.append(tables);
     return wrap;
   }
@@ -217,11 +327,100 @@
     const copy = el("div");
     copy.append(el("h1", null, "Dashboard"), el("p", null, `As of ${new Date(d.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} · refreshes every minute`));
     head.append(copy);
+
+    // ---- the headline: what the page is opened to find out
+    const b = d.book;
+    const c = d.casinoBook;
+    const online = d.presence ? d.presence.people + d.presence.guests : null;
+    const quick = el("div", "pf-quick db-quick");
+    quick.append(
+      quickStat("Total users", fmt(d.users.total),
+        d.users.today ? `${fmt(d.users.today)} joined today` : "none joined today"),
+      quickStat("Total bets", fmt((b?.bets || 0) + (c?.bets || 0)),
+        `${fmt(b?.bets || 0)} picks · ${fmt(c?.bets || 0)} casino`),
+      quickStat("Picks take", b ? zcs(b.houseNet) : "—",
+        b ? (b.holdPct === null ? "nothing settled yet" : `${b.holdPct}% hold · ${fmt(b.staked)} bet`) : "",
+        b ? (b.houseNet >= 0 ? "up" : "down") : ""),
+      quickStat("Casino take", c ? zcs(c.houseNet) : "—",
+        c ? (c.holdPct === null ? "nothing settled yet" : `${c.holdPct}% hold · ${fmt(c.staked)} bet`) : "",
+        c ? (c.houseNet >= 0 ? "up" : "down") : ""),
+      quickStat("On the hook", b ? fmt(b.exposure) : "—",
+        b ? `${fmt(b.active)} open pick${b.active === 1 ? "" : "s"} · ${fmt(b.riding)} staked` : ""),
+      quickStat("Here now", online === null ? "—" : fmt(online),
+        d.presence ? `${fmt(d.presence.people)} logged in · ${fmt(d.presence.guests)} guest${d.presence.guests === 1 ? "" : "s"}` : "")
+    );
+    head.append(quick);
     wrap.append(head);
 
-    // The book first: it's the thing worth opening the page for.
-    if (d.book) wrap.append(bookBlock(d.book));
-    if (d.casinoBook) wrap.append(casinoBlock(d.casinoBook));
+    // ---- the tabs, the same shape Picks and the profiles use
+    const TABS = [["overview", "Overview"], ["picks", "Picks book"], ["casino", "Casino"], ["health", "Health"]];
+    const bar = el("nav", "pf-tabs db-tabs");
+    bar.setAttribute("aria-label", "Dashboard sections");
+    const panels = {};
+    const buttons = {};
+    for (const [key, label] of TABS) {
+      const btn = el("button", "pf-tab", label);
+      btn.type = "button";
+      btn.setAttribute("role", "tab");
+      btn.addEventListener("click", () => select(key, true));
+      bar.append(btn);
+      buttons[key] = btn;
+      const panel = el("div", "pf-panel");
+      panel.hidden = true;
+      panels[key] = panel;
+    }
+    function select(key, push) {
+      if (!panels[key]) key = "overview";
+      ui.tab = key;
+      for (const [k2, panel] of Object.entries(panels)) {
+        panel.hidden = k2 !== key;
+        buttons[k2].classList.toggle("on", k2 === key);
+        buttons[k2].setAttribute("aria-selected", String(k2 === key));
+      }
+      if (push) {
+        const url = new URL(location.href);
+        url.hash = key === "overview" ? "" : key;
+        history.replaceState(history.state, "", url.pathname + url.search + url.hash);
+      }
+    }
+    wrap.append(bar);
+
+    // ---- Overview: how both sides of the house are doing lately
+    if (b) {
+      panels.overview.append(windowsRow("Picks", [
+        ["Today", b.today], ["Last 7 days", b.week], ["Last 14 days", b.fortnight]
+      ]));
+    }
+    if (c) {
+      panels.overview.append(windowsRow("Casino", [
+        ["Today", windowOf(c.days, dayKeyBack(0))],
+        ["Last 7 days", windowOf(c.days, dayKeyBack(6))],
+        ["Last 14 days", windowOf(c.days, dayKeyBack(13))]
+      ]));
+    }
+    const glance = el("div", "pf-glance");
+    const glanceCard = (key, icon, title, big, small) => {
+      const g = el("button", "pf-glance-card");
+      g.type = "button";
+      g.append(el("span", "pf-glance-k", `${icon} ${title}`));
+      const strong = el("b", "nums");
+      if (big instanceof Node) strong.append(big); else strong.textContent = big;
+      g.append(strong, el("small", null, small), el("em", null, "Open →"));
+      g.addEventListener("click", () => select(key, true));
+      return g;
+    };
+    glance.append(
+      glanceCard("picks", "🪙", "Picks book", b ? zcs(b.houseNet) : "—",
+        b ? `${fmt(b.bets)} bets from ${fmt(b.bettors)} people` : "no data"),
+      glanceCard("casino", "🎰", "Casino", c ? zcs(c.houseNet) : "—",
+        c ? `${fmt(c.bets)} plays from ${fmt(c.players)} players` : "no data"),
+      glanceCard("health", "🩺", "Health", "—", "cron, keys, wallet, backups")
+    );
+    panels.overview.append(glance);
+
+    // ---- the two books
+    if (b) panels.picks.append(bookBlock(b));
+    if (c) panels.casino.append(casinoBlock(c));
 
     const grid = el("div", "db-grid");
 
@@ -345,25 +544,35 @@
       ["Coin flip", d.coin ? `${d.coin.roundsToday} rounds · ${d.coin.betsToday} bets today · ${d.coin.inRoom} in room` : "—"]
     ]));
 
-    wrap.append(grid);
+    panels.health.append(grid);
 
-    // Wallet attention list
+    // Wallet attention list, newest first and a page at a time.
     if (attention.length) {
-      const sec = el("section", "db-attn");
-      sec.append(el("h2", null, "Wallet operations needing attention"));
-      const list = el("div", "db-list");
-      for (const a of attention) {
-        const row = el("div", `db-attn-row ${a.status.toLowerCase()}`);
-        row.append(
-          el("b", null, a.status),
-          el("span", null, `${a.login || "?"} · ${a.type} · ${a.amount > 0 ? "+" : ""}${a.amount}`),
-          el("small", null, `${new Date(a.at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}${a.error ? " · " + a.error : ""}`)
-        );
-        list.append(row);
-      }
-      sec.append(list);
-      wrap.append(sec);
+      panels.health.append(pagedList("attention", "Wallet operations needing attention",
+        attention.map((a) => {
+          const row = el("div", `db-attn-row ${a.status.toLowerCase()}`);
+          row.append(
+            el("b", null, a.status),
+            el("span", null, `${a.login || "?"} · ${a.type} · ${a.amount > 0 ? "+" : ""}${a.amount}`),
+            el("small", null, `${new Date(a.at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}${a.error ? " · " + a.error : ""}`)
+          );
+          return row;
+        })));
     }
+
+    // Counted off the built cards rather than tracked by hand, so a new
+    // card is included in the badge without anyone remembering to.
+    const problems = grid.querySelectorAll(".db-card.bad, .db-card.warn").length;
+    if (problems) {
+      buttons.health.append(el("i", null, String(problems)));
+      buttons.health.classList.add("warn");
+    }
+    const overviewHealth = glance.querySelector(".pf-glance-card:last-child b");
+    if (overviewHealth) overviewHealth.textContent = problems ? `${problems} to look at` : "All green";
+
+    for (const [key] of TABS) wrap.append(panels[key]);
+    // The refresh keeps whichever tab was open; a fresh load reads the hash.
+    select(ui.tab || location.hash.replace("#", "") || "overview", false);
     return wrap;
   }
 

@@ -54,6 +54,9 @@ export async function ensureSchema(db) {
       UNIQUE (round_no, user_id)
     )`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_coin_bets_round ON coin_bets (round_no)`),
+    // Without this, hourlyNet() read every row of coin_bets on every
+    // casino state poll — the single biggest source of D1 row reads.
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_coin_bets_user ON coin_bets (user_id, created_at)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS coin_presence (
       user_id TEXT PRIMARY KEY,
       seen_at INTEGER NOT NULL
@@ -214,7 +217,7 @@ export async function roomFor(db, now = Date.now()) {
 /** Bets this person has placed in the last hour, for the rate limit. */
 export async function betsLastHour(db, userId) {
   const row = await db
-    .prepare(`SELECT COUNT(*) AS n FROM coin_bets WHERE user_id = ? AND datetime(created_at) >= datetime('now', '-1 hour')`)
+    .prepare(`SELECT COUNT(*) AS n FROM coin_bets WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`)
     .bind(userId)
     .first();
   return Number(row?.n || 0);

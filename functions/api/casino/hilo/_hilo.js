@@ -50,7 +50,10 @@ export async function ensureHilo(db) {
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`),
-    db.prepare(`CREATE INDEX IF NOT EXISTS idx_hilo_user ON hilo_games (user_id, created_at)`)
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_hilo_user ON hilo_games (user_id, created_at)`),
+    // The floor counts live games every five seconds; without this that
+    // is a full scan each time.
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_hilo_live ON hilo_games (status, updated_at)`)
   ]);
   ready = true;
 }
@@ -98,7 +101,7 @@ export async function liveGameFor(db, userId) {
 }
 
 export async function gamesLastHour(db, userId) {
-  const row = await db.prepare(`SELECT COUNT(*) AS n FROM hilo_games WHERE user_id = ? AND datetime(created_at) >= datetime('now', '-1 hour')`).bind(userId).first();
+  const row = await db.prepare(`SELECT COUNT(*) AS n FROM hilo_games WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`).bind(userId).first();
   return Number(row?.n || 0);
 }
 

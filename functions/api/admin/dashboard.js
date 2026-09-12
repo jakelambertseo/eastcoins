@@ -54,13 +54,13 @@ async function bookOf(db) {
               SUM(CASE WHEN p.status IN ('WON','LOST') THEN p.wager ELSE 0 END) AS settled_staked,
               SUM(CASE WHEN p.status IN ('WON','LOST') THEN p.profit ELSE 0 END) AS player_net
          FROM picks p JOIN markets m ON m.id = p.market_id
-        GROUP BY league ORDER BY bets DESC LIMIT 8`
+        GROUP BY league ORDER BY bets DESC LIMIT 25`
     ).all(),
     db.prepare(
       `SELECT u.twitch_login AS login, COUNT(*) AS bets, SUM(p.wager) AS staked,
               SUM(CASE WHEN p.status IN ('WON','LOST') THEN p.profit ELSE 0 END) AS net
          FROM picks p JOIN users u ON u.twitch_id = p.user_id
-        GROUP BY p.user_id ORDER BY staked DESC LIMIT 8`
+        GROUP BY p.user_id ORDER BY staked DESC LIMIT 50`
     ).all(),
     // Liability on what is still riding, priced the same way the ticket was.
     db.prepare(`SELECT wager, odds_locked FROM picks WHERE status = 'ACTIVE'`).all(),
@@ -173,10 +173,10 @@ async function bookOf(db) {
    house's take is stake minus payout on decided bets only; a bet still
    live counts as neither. */
 
-const GAME_NAMES = { wheel: "Wheel", race: "Horse Race", flip: "Coin Flip", hilo: "Higher or Lower" };
+const GAME_NAMES = { wheel: "Wheel", race: "Horse Race", flip: "Coin Flip", hilo: "Higher or Lower", mines: "Mines", plinko: "Plinko" };
 
 async function casinoBook(db) {
-  const [shared, coin, hilo, everyone, recent] = await Promise.all([
+  const [shared, coin, hilo, mines, plinko, everyone, recent] = await Promise.all([
     db.prepare(
       `SELECT game, status, COUNT(*) AS n, COUNT(DISTINCT user_id) AS players,
               SUM(wager) AS staked, SUM(COALESCE(payout, 0)) AS paid,
@@ -196,10 +196,26 @@ async function casinoBook(db) {
          FROM hilo_games GROUP BY status`
     ).all(),
     db.prepare(
+      `SELECT status, COUNT(*) AS n, COUNT(DISTINCT user_id) AS players,
+              SUM(stake) AS staked, SUM(COALESCE(payout, 0)) AS paid,
+              MAX(COALESCE(payout, 0) - stake) AS best
+         FROM mines_games GROUP BY status`
+    ).all().catch(() => ({ results: [] })),
+    // Plinko keeps no status: a drop is decided the moment it lands, so
+    // it is one already-decided group rather than several.
+    db.prepare(
+      `SELECT 'CASHED' AS status, COUNT(*) AS n, COUNT(DISTINCT user_id) AS players,
+              SUM(stake) AS staked, SUM(COALESCE(payout, 0)) AS paid,
+              MAX(COALESCE(payout, 0) - stake) AS best
+         FROM plinko_drops`
+    ).all().catch(() => ({ results: [] })),
+    db.prepare(
       `SELECT COUNT(DISTINCT user_id) AS n FROM (
          SELECT user_id FROM casino_bets UNION
          SELECT user_id FROM coin_bets UNION
-         SELECT user_id FROM hilo_games)`
+         SELECT user_id FROM hilo_games UNION
+         SELECT user_id FROM mines_games UNION
+         SELECT user_id FROM plinko_drops)`
     ).first(),
     db.prepare(
       `SELECT created_at, staked, paid FROM (
@@ -207,7 +223,11 @@ async function casinoBook(db) {
          UNION ALL
          SELECT created_at, wager, COALESCE(payout, 0) FROM coin_bets WHERE status IN ('WON','LOST')
          UNION ALL
-         SELECT created_at, stake, COALESCE(payout, 0) FROM hilo_games WHERE status IN ('BUST','CASHED'))
+         SELECT created_at, stake, COALESCE(payout, 0) FROM hilo_games WHERE status IN ('BUST','CASHED')
+         UNION ALL
+         SELECT created_at, stake, COALESCE(payout, 0) FROM mines_games WHERE status IN ('BUST','CASHED')
+         UNION ALL
+         SELECT created_at, stake, COALESCE(payout, 0) FROM plinko_drops)
         WHERE datetime(created_at) >= datetime('now', '-21 days')`
     ).all().catch(() => ({ results: [] }))
   ]);
@@ -232,6 +252,8 @@ async function casinoBook(db) {
   for (const r of shared.results || []) add(String(r.game || "other"), r);
   for (const r of coin.results || []) add("flip", r);
   for (const r of hilo.results || []) add("hilo", r);
+  for (const r of mines.results || []) add("mines", r);
+  for (const r of plinko.results || []) if (num(r.n)) add("plinko", r);
 
   const list = [...games.values()].map((g) => ({
     ...g,
@@ -295,7 +317,7 @@ export async function onRequestGet(context) {
       `SELECT o.id, o.type, o.amount, o.status, o.last_error, o.created_at, u.twitch_login
          FROM wallet_operations o LEFT JOIN users u ON u.twitch_id = o.user_id
         WHERE o.status IN ('NEEDS_RECONCILIATION','FAILED','PENDING')
-        ORDER BY datetime(o.created_at) DESC LIMIT 12`
+        ORDER BY datetime(o.created_at) DESC LIMIT 60`
     ).all(),
     db.prepare(
       `SELECT state, COUNT(*) AS n, MIN(CASE WHEN state = 'OPEN' THEN starts_at END) AS next_start
@@ -309,7 +331,7 @@ export async function onRequestGet(context) {
     ).bind(todayStart).first(),
     db.prepare(`SELECT COUNT(*) AS total, SUM(CASE WHEN datetime(created_at) >= datetime(?) THEN 1 ELSE 0 END) AS today FROM users`).bind(todayStart).first(),
     db.prepare(
-      `SELECT (SELECT COUNT(*) FROM coin_bets WHERE datetime(created_at) >= datetime(?)) AS bets_today,
+      `SELECT (SELECT COUNT(*) FROM coin_bets WHERE created_at >= datetime(?)) AS bets_today,
               (SELECT COUNT(*) FROM coin_rounds WHERE result IS NOT NULL AND datetime(settled_at) >= datetime(?)) AS rounds_today,
               (SELECT COUNT(*) FROM coin_presence WHERE seen_at >= ?) AS in_room`
     ).bind(todayStart, todayStart, now - 60000).first().catch(() => null),

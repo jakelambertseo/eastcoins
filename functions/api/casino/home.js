@@ -57,14 +57,14 @@ export async function onRequestGet(context) {
   }
 
   const [hiloLive, hiloRoom, hiloPeople] = await Promise.all([
-    db.prepare(`SELECT COUNT(*) AS n FROM hilo_games WHERE status = 'LIVE' AND datetime(updated_at) >= datetime('now', '-10 minutes')`).first(),
+    db.prepare(`SELECT COUNT(*) AS n FROM hilo_games WHERE status = 'LIVE' AND updated_at >= datetime('now', '-10 minutes')`).first(),
     db.prepare(`SELECT COUNT(*) AS n FROM casino_presence WHERE game = 'hilo' AND seen_at >= ?`).bind(since).first(),
     people("casino_presence", "hilo")
   ]);
   games.push({ key: "hilo", name: "Higher or Lower", route: "hilo", round: null, inRound: Number(hiloLive?.n || 0), staked: 0, room: Number(hiloRoom?.n || 0), people: hiloPeople });
 
   const [minesLive, minesRoom, minesPeople] = await Promise.all([
-    db.prepare(`SELECT COUNT(*) AS n FROM mines_games WHERE status = 'LIVE' AND datetime(updated_at) >= datetime('now', '-10 minutes')`).first().catch(() => null),
+    db.prepare(`SELECT COUNT(*) AS n FROM mines_games WHERE status = 'LIVE' AND updated_at >= datetime('now', '-10 minutes')`).first().catch(() => null),
     db.prepare(`SELECT COUNT(*) AS n FROM casino_presence WHERE game = 'mines' AND seen_at >= ?`).bind(since).first().catch(() => null),
     people("casino_presence", "mines")
   ]);

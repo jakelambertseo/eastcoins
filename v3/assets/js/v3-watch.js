@@ -230,6 +230,14 @@
     dom.select.classList.toggle("nudge", many);
   }
 
+  // The pile keeps its own timer and the bar is rebuilt whenever the
+  // view repaints, so the previous one has to be stopped by hand.
+  let stopWho = null;
+  function stopWatchers() {
+    if (stopWho) stopWho();
+    stopWho = null;
+  }
+
   function buildBar() {
     const bar = el("div", "watchbar");
 
@@ -293,6 +301,17 @@
     }
 
     bar.append(el("span", "watchbar-spacer"));
+
+    // Who else is on this event, the way the Green Room shows who is
+    // listening. Only for a real event: a pasted URL carries no id for
+    // anyone else's heartbeat to match.
+    stopWatchers();
+    if (local.match?.id) {
+      const who = el("div", "wwho");
+      who.hidden = true;
+      bar.append(who);
+      stopWho = window.ECPresence?.mountWatchers?.(who, local.match.id) || null;
+    }
 
     const back = el("button", "watchbtn", "← Events");
     back.type = "button";
@@ -465,6 +484,7 @@
 
     unmount() {
       document.body.classList.remove("watch-on");
+      stopWatchers();
       if (messageHandler) {
         window.removeEventListener("message", messageHandler);
         messageHandler = null;
