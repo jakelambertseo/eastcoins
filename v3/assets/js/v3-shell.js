@@ -362,9 +362,14 @@
     chatMountedAt = Date.now();
     els.chatFrame.src = els.chatFrame.dataset.src;
     els.chatFrame.hidden = false;
+    // The placeholder covers the second or two Twitch takes to paint, and
+    // goes when the frame has loaded — or after a few seconds regardless,
+    // so a slow embed cannot leave "Loading chat…" over a working chat.
     // .chat-placeholder sets display:grid, which beats [hidden]'s UA
-    // display:none — so remove it outright rather than hiding it.
-    els.chatPlaceholder?.remove();
+    // display:none — so it is removed outright rather than hidden.
+    const dropPlaceholder = () => els.chatPlaceholder?.remove();
+    els.chatFrame.addEventListener("load", dropPlaceholder, { once: true });
+    window.setTimeout(dropPlaceholder, 5000);
 
     if (!chatWatchdog) {
       chatWatchdog = window.setInterval(chatWatchdogTick, 60000);
