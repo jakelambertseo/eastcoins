@@ -75,7 +75,8 @@
     const t = window.EC_CFB_TEAMS;
     if (!t) return null;
     const key = normCollege(name);
-    return t.f[key] || t.l[key] || null;
+    // Full name, then place alone, then the provider's own spellings.
+    return t.f[key] || t.l[key] || (t.a && t.a[key]) || null;
   }
 
   /** The logo URL for a team, or null when there is none to show. */

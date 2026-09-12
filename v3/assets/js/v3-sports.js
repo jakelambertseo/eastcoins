@@ -82,9 +82,12 @@
        · college football is Division I only. A Saturday listed hundreds
          of D2/D3 games and buried the ones people wanted. A college game
          stays if either side is an FBS or FCS school (EC_CFB_TEAMS.d1).
-         A football listing whose sides do not resolve to ANY college —
-         a channel like "NFL Network", a title we cannot read — is left
-         alone, because hiding it would hide things that are not D2/D3.
+         A two-team matchup whose sides resolve to NO college is hidden
+         too: on the first Saturday there were thirteen of those and
+         eleven were D3 under spellings ESPN does not use. The two that
+         were real D1 games got aliases in EC_CFB_TEAMS.a — add one there
+         when a real school is caught. A single-title listing ("NFL
+         Network", "NFL RedZone") is a channel, not a matchup, and stays.
 
      keep() is applied where matches are loaded (the Sports page, the
      MultiView picker) so every count agrees, and again in grouped() so
@@ -112,8 +115,9 @@
     const resolve = window.ECLogos?.collegeId;
     const d1 = divisionOne();
     if (typeof resolve !== "function" || !d1) return true;   // no table yet: show everything
-    const ids = sideNames(match).map((n) => resolve(n)).filter(Boolean);
-    if (!ids.length) return true;                            // not a college matchup we can read
+    const sides = sideNames(match);
+    const ids = sides.map((n) => resolve(n)).filter(Boolean);
+    if (!ids.length) return sides.length < 2;                // a channel stays; two unknown teams do not
     return ids.some((id) => d1.has(id));
   }
 

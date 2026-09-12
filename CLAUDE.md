@@ -352,9 +352,12 @@
 > soccer, motorsport, rugby, cricket — remove a key to bring one back) and
 > limits college football to **Division I**: a college game stays only if
 > a side resolves to an id in `EC_CFB_TEAMS.d1` (266 FBS+FCS ids from
-> ESPN's standings feed, groups 80 and 81). A football listing whose sides
-> resolve to no college at all ("NFL Network", unreadable titles) is left
-> alone. Applied where matches load (Sports page, MultiView picker) so the
+> ESPN's standings feed, groups 80 and 81). A two-team matchup whose sides
+> resolve to no college at all is hidden (in practice D3 under the
+> provider's spellings); a single-title listing ("NFL Network") stays.
+> `EC_CFB_TEAMS.a` holds provider-spelling aliases ("Southern Methodist",
+> "California-Davis", "Liu", "Albany") that `collegeId()` consults last —
+> add one there when a real Division I school gets hidden. Applied where matches load (Sports page, MultiView picker) so the
 > chip counts agree, and again inside `grouped()`.
 >
 > **College football logos** — `v3/assets/js/v3-cfb-teams.js` (browser,
