@@ -2469,6 +2469,16 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .wh-k{color:var(--muted-2);font-size:.64rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
 .wh-count{color:var(--green);font-size:.74rem;font-weight:800}
 .wh-list{display:flex;gap:6px;flex-wrap:wrap}
+/* Two rows of chips (28px each, 6px gap) until "View all" opens it, so
+   the strip stays a strip as the room fills up. */
+.wh-list.clamp{max-height:62px;overflow:hidden}
+.wh-k{margin-right:auto}
+.wh-toggle{
+  height:22px;padding:0 9px;border-radius:999px;
+  border:1px solid rgba(var(--gold-rgb),.35);background:var(--gold-dim);
+  color:var(--gold);font:inherit;font-size:.7rem;font-weight:800;cursor:pointer;white-space:nowrap;
+}
+.wh-toggle:hover{background:rgba(var(--gold-rgb),.2)}
 /* One line each: picture, name, a glyph for where they are. Hover says
    the rest. Twenty people is a tidy block, not a wall. */
 .wh-chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 9px 0 3px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-2);text-decoration:none;color:inherit;font-size:.78rem;font-weight:700;max-width:100%}

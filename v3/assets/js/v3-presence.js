@@ -66,7 +66,6 @@
     events: "🏈", watch: "📺", multiview: "🔲", picks: "🪙", music: "🎵", screen: "🎬", flip: "🪙",
     game: "🪙", profile: "👤", admin: "🛠", dashboard: "🛠", users: "👥", activity: "📰", casino: "🎰", wheel: "🎡", race: "🐎", hilo: "🃏"
   };
-  const SHOW_MAX = 14;
 
   /** "watching Mariners vs Rangers", "looking at Reds at Dodgers", or the plain place. */
   function placeLabel(p) {
@@ -123,7 +122,13 @@
     head.append(el("span", "wh-count", total ? `${total} online` : "just you"));
     container.append(head);
 
-    const list = el("div", "wh-list");
+    // Two rows by default, however many people are in. The list keeps
+    // everyone (chips are cheap); CSS clamps it, and a toggle in the
+    // head opens it when — and only when — there is more to see. The
+    // choice lives on the container so a 20-second refresh keeps it.
+    const expanded = container.dataset.expanded === "1";
+    const list = el("div", `wh-list${expanded ? "" : " clamp"}`);
+    let headcount = 0;
     if (data) {
       // People doing something specific first (watching, listening),
       // browsers after; so the interesting chips are the visible ones.
@@ -138,14 +143,8 @@
         chip.append(name, el("span", "wh-where", ICONS[p.where] || "·"));
         return chip;
       };
-      const shown = container.dataset.expanded === "1" ? people : people.slice(0, SHOW_MAX);
-      for (const p of shown) list.append(chipFor(p));
-      if (people.length > shown.length) {
-        const more = el("button", "wh-chip more", `+${people.length - shown.length} more`);
-        more.type = "button";
-        more.addEventListener("click", () => { container.dataset.expanded = "1"; draw(container, data); });
-        list.append(more);
-      }
+      for (const p of people) list.append(chipFor(p));
+      headcount = people.length + (data.guests ? 1 : 0);
       if (data.guests) {
         const g = el("span", "wh-chip guests");
         g.title = "Not logged in";
@@ -155,6 +154,20 @@
     }
     if (!list.children.length) list.append(el("span", "wh-empty", "Nobody else around right now."));
     container.append(list);
+
+    // Measured after it is in the page: the toggle only appears when the
+    // clamp is hiding something, or when it is open and can be closed.
+    const overflowing = list.scrollHeight > list.clientHeight + 1;
+    if (data && headcount && (expanded || overflowing)) {
+      const toggle = el("button", "wh-toggle", expanded ? "Show less" : `View all ${headcount}`);
+      toggle.type = "button";
+      toggle.setAttribute("aria-expanded", String(expanded));
+      toggle.addEventListener("click", () => {
+        container.dataset.expanded = expanded ? "0" : "1";
+        draw(container, data);
+      });
+      head.append(toggle);
+    }
   }
 
   let stripTimer = 0;
