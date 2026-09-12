@@ -356,7 +356,7 @@
 > **Admin links in the ⋯ menu** — `ownerMenu()` in `v3-shell.js` appends
 > Admin, Dashboard and Activity under a "Yours" heading for the logins in
 > its `ADMIN_LOGINS` set, which mirrors `ADMIN_ALLOWLIST` in
-> `picks/_lib.js` (`bootypaper`, `zwades`, `andyreidisapawg`) — change one,
+> `picks/_lib.js` (`bootypaper`, `zwades`, `andyreidisapawg`, `heartlarva`) — change one,
 > change the other. Cosmetic only: each endpoint checks the session
 > itself, and `admin/dashboard.js`, `admin/backup.js` and `admin/recap.js`
 > now read that one allowlist rather than keeping their own owner lists,

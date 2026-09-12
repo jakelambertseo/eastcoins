@@ -24,7 +24,8 @@ import { isBanned } from "./_bans.js";
 export const ADMIN_ALLOWLIST = new Set([
   "zwades",
   "bootypaper",
-  "andyreidisapawg"
+  "andyreidisapawg",
+  "heartlarva"
 ]);
 
 export const MIN_WAGER = 1;

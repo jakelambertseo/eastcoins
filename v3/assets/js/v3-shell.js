@@ -579,7 +579,7 @@
      The list mirrors ADMIN_ALLOWLIST in functions/api/picks/_lib.js —
      change one, change the other. */
 
-  const ADMIN_LOGINS = new Set(["bootypaper", "zwades", "andyreidisapawg"]);
+  const ADMIN_LOGINS = new Set(["bootypaper", "zwades", "andyreidisapawg", "heartlarva"]);
   const OWNER_LINKS = [
     ["admin", "/?view=admin", "🛠", "Admin"],
     ["dashboard", "/?view=dashboard", "📊", "Dashboard"],
