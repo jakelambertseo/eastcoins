@@ -58,7 +58,8 @@
         schedule();
         await maybePlayback();
         render();
-      } catch {
+      } catch (error) {
+        console.warn(`pvp ${spec.key}:`, error);
         if (refs.status) refs.status.textContent = "Reconnecting…";
       }
     }
@@ -73,7 +74,9 @@
     /** A round that finished since we last looked gets played back. */
     async function maybePlayback() {
       const last = data?.last;
-      if (!last) return;
+      // An empty table with no history still counts as seen, so the first
+      // round it ever plays is played back rather than shown settled.
+      if (!last) { if (shownRoundId === null) shownRoundId = "none"; return; }
       if (shownRoundId === null) { shownRoundId = last.id; return; }   // first paint: just show it
       if (last.id === shownRoundId) return;
       shownRoundId = last.id;
@@ -398,6 +401,70 @@
     return st.length === 1 && n === 2 ? 1 - st[0].shot : null;
   };
 
+  /* The cylinder. Chambers sit on a ring inside a rotating disc; the
+     hammer is a fixed mark at the top, and turning the disc brings one
+     chamber under it. --a places a chamber, --d sizes it (tighter with
+     more chambers: a 22-chamber round still fits the same disc). */
+  const CYL_R = 44;
+  function loadCylinder(cyl, chambers, stage) {
+    cyl.replaceChildren();
+    const d = Math.max(9, Math.min(16, Math.floor((2 * Math.PI * CYL_R) / (chambers * 1.45))));
+    cyl.style.setProperty("--d", `${d}px`);
+    for (let c = 0; c < chambers; c += 1) {
+      const ch = K.el("i", "rr-ch");
+      ch.style.setProperty("--a", `${(c * 360) / chambers}deg`);
+      if (stage) {
+        if (c === stage.live) ch.classList.add("live");
+        else if (c < stage.live) ch.classList.add("spent");
+      }
+      cyl.append(ch);
+    }
+    cyl.dataset.chambers = String(chambers);
+    // Settled: left as the round ended, the bullet under the hammer.
+    cyl.classList.remove("spin");
+    cyl.style.transition = "none";
+    turnTo(cyl, stage ? stage.live : 0, false);
+    void cyl.offsetWidth;
+    cyl.style.transition = "";
+  }
+  // Bring chamber c under the hammer, always turning the same way. A spin
+  // adds two full turns first so it reads as a spin, not a nudge.
+  function turnTo(cyl, c, spin) {
+    const chambers = Number(cyl.dataset.chambers || 6);
+    const cur = Number(cyl.dataset.angle || 0);
+    const want = -((c * 360) / chambers);
+    let target = want;
+    while (target > cur - (spin ? 720 : 0)) target -= 360;
+    if (!spin && target < cur - 360) target += 360;
+    cyl.classList.toggle("spin", spin);
+    cyl.style.transform = `rotate(${target}deg)`;
+    cyl.dataset.angle = String(target);
+  }
+
+  /* Last One Standing picks its victim the way a wheel does: the light
+     runs round everyone still in, fast, and slows until it stops on the
+     one going out. The stop is fixed by the server's order; only the
+     start of the run is random, so the run always ends where it must. */
+  async function spinTo(nodes, alive, who, ms, wait) {
+    const L = alive.length;
+    const end = alive.indexOf(who);
+    if (end < 0 || L < 2) return;
+    const start = Math.floor(Math.random() * L);
+    const steps = (((end - start) % L) + L) % L + L * (L > 6 ? 1 : 2);
+    const delays = [];
+    for (let i = 0; i <= steps; i += 1) { const x = i / steps; delays.push(50 + x * x * x * 320); }
+    const scale = ms / delays.reduce((a, b) => a + b, 0);
+    let last = null;
+    for (let i = 0; i <= steps; i += 1) {
+      last?.classList.remove("pick");
+      last = nodes[alive[(start + i) % L]];
+      last?.classList.add("pick");
+      await wait(delays[i] * scale);
+    }
+    await wait(260);
+    last?.classList.remove("pick");
+  }
+
   const roulette = {
     key: "roulette",
     title: "Russian Roulette - PVP",
@@ -447,21 +514,16 @@
       });
       if (!n) ring.append(K.el("p", "cf-empty rr-empty", "Sit down to open the table."));
       const gun = K.el("div", "rr-gun");
+      const wrap = K.el("div", "rr-cylwrap");
       const cyl = K.el("div", "rr-cyl");
       // Idle: a cylinder sized for the table. Settled: the last round's,
       // as it was left, spent up to the live one.
       const lastStage = stages[stages.length - 1];
       const chambers = lastStage ? lastStage.chambers : (n ? n * Math.max(1, Math.ceil(6 / n)) : 6);
-      for (let c = 0; c < chambers; c += 1) {
-        const ch = K.el("i", "rr-ch");
-        if (lastStage) {
-          const cls = c === lastStage.live ? "live" : c < lastStage.live ? "spent" : "";
-          if (cls) ch.classList.add(cls);
-        }
-        cyl.append(ch);
-      }
+      loadCylinder(cyl, chambers, lastStage || null);
       const word = K.el("div", "rr-word", n && !settled ? "Loaded" : "");
-      gun.append(cyl, word, K.el("div", "rr-odds", ""));
+      wrap.append(K.el("div", "rr-hammer"), cyl, word);
+      gun.append(wrap, K.el("div", "rr-odds", n && !settled ? `${chambers} chambers · 1 live` : ""));
       ring.append(gun);
       arena.append(ring);
       if (settled && winner !== null && players[winner]) {
@@ -477,30 +539,26 @@
       const verb = (i, third, second) => (round.players[i]?.login === me ? second : third);
       roulette.drawSeats(round.players, refs.arena, { me });
       const seats = [...refs.arena.querySelectorAll(".rr-seat")];
+      const gun = refs.arena.querySelector(".rr-gun");
       const cyl = refs.arena.querySelector(".rr-cyl");
       const word = refs.arena.querySelector(".rr-word");
       const odds = refs.arena.querySelector(".rr-odds");
       let remaining = round.players.map((_, i) => i);
 
-      refs.phase.className = "cf-phase open";
-      refs.phase.textContent = "Spinning the cylinder…";
-      await wait(800);
-
       for (let k = 0; k < stages.length; k += 1) {
         const st = stages[k];
-        // Reload for whoever is left. Said out loud between rounds so a
-        // second BANG reads as a new round, not the same one twice.
-        cyl.replaceChildren();
-        for (let c = 0; c < st.chambers; c += 1) cyl.append(K.el("i", "rr-ch"));
+        // Load for whoever is left, then spin. Said out loud between
+        // rounds so a second BANG reads as a new round, not the same one.
+        loadCylinder(cyl, st.chambers, null);
         const chs = [...cyl.children];
-        if (k > 0) {
-          word.textContent = "Reload";
-          word.className = "rr-word reload";
-          refs.phase.className = "cf-phase open";
-          refs.phase.textContent = `${remaining.length} left — reloading…`;
-          odds.textContent = "";
-          await wait(1000);
-        }
+        word.textContent = k > 0 ? "Reload" : "";
+        word.className = k > 0 ? "rr-word reload" : "rr-word";
+        refs.phase.className = "cf-phase open";
+        refs.phase.textContent = k > 0 ? `${remaining.length} left — reloading…` : "Spinning the cylinder…";
+        odds.textContent = `${st.chambers} chambers · 1 live`;
+        if (k > 0) await wait(700);
+        turnTo(cyl, 0, true);
+        await wait(1000);
         for (let c = 0; c < st.chambers; c += 1) {
           // The live chamber goes to the seat the server recorded as shot.
           // Equal to the arithmetic for a real round, but the record is the
@@ -508,13 +566,17 @@
           const who = c === st.live && Number.isInteger(st.shot) ? st.shot : remaining[c % remaining.length];
           seats.forEach((s) => s.classList.remove("up"));
           seats[who]?.classList.add("up");
+          chs.forEach((ch) => ch.classList.remove("under"));
+          chs[c].classList.add("under");
+          turnTo(cyl, c, false);
           refs.phase.textContent = `${nameOf(who)} ${verb(who, "pulls", "pull")}…`;
-          odds.textContent = `1 chamber in ${st.chambers - c} is live`;
+          odds.textContent = `${st.chambers - c} chamber${st.chambers - c === 1 ? "" : "s"} left · 1 live`;
           word.textContent = "";
           word.className = "rr-word";
           await wait(700);
           if (c === st.live) {
-            chs[c].className = "rr-ch live";
+            chs[c].className = "rr-ch live under";
+            gun.classList.add("bang");
             word.textContent = "BANG";
             word.className = "rr-word bang";
             odds.textContent = "";
@@ -524,9 +586,10 @@
             refs.phase.textContent = `${nameOf(who)} ${verb(who, "is", "are")} out`;
             remaining = remaining.filter((s) => s !== who);
             await wait(1100);
+            gun.classList.remove("bang");
             break;
           }
-          chs[c].className = "rr-ch spent";
+          chs[c].className = "rr-ch spent under";
           word.textContent = "click";
           word.className = "rr-word click";
           await wait(320);
@@ -610,9 +673,15 @@
       await wait(900);
       // Faster with a big table, so twelve players is not forty seconds.
       const gap = n > 8 ? 900 : n > 4 ? 1300 : 1700;
+      const spinMs = n > 8 ? 800 : 1200;
+      let alive = round.players.map((_, i) => i);
       for (let k = 0; k < n - 1; k += 1) {
         const who = r.order[k];
         const node = nodes[who];
+        refs.phase.className = "cf-phase open";
+        refs.phase.textContent = `${alive.length} left — spinning…`;
+        await spinTo(nodes, alive, who, spinMs, wait);
+        alive = alive.filter((i) => i !== who);
         node?.classList.add("hit");
         refs.phase.className = "cf-phase bad";
         refs.phase.textContent = `${round.players[who]?.login === me ? "You're" : `${round.players[who]?.displayName} is`} out — ${n - k - 1} left`;
