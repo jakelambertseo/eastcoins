@@ -148,6 +148,21 @@
 > `mines_games` — any new casino game must be added there or it escapes the
 > cap. Results flow to the floor, the activity feed and profiles.
 >
+> **Plinko** — `/?view=plinko` (`v3-plinko.js`, `functions/api/casino/plinko/*`,
+> tables `plinko_drops` and `plinko_commits`). A ball falls through 8 peg
+> rows into 9 buckets paying `6 · 2.5 · 1.4 · 0.75 · 0.45 · 0.75 · 1.4 ·
+> 2.5 · 6` — a 96% return, the same 4% edge as the rest. Step i goes right
+> when `sha256(seed:i)` is odd, so the path is a pure function of the seed.
+> **Fairness works differently here**: a drop has no decisions in it, so
+> instead of committing at the start of play each player holds a committed
+> seed for their NEXT drop (`plinko_commits`, hash shown on the page,
+> revealed with the result, rotated immediately), which stops the house
+> picking a seed after seeing the stake. Max is ×6 on purpose — 120 ZC on
+> the 20 ZC maximum, well under the hourly cap, because a ball nobody can
+> influence should not be the biggest win on the site. Winnings count
+> toward `HOUR_WIN_CAP` via `hourlyNet()`; every new casino game must be
+> added there or it escapes the cap.
+>
 > **Presence** — every tab POSTs `/api/presence` (`v3-presence.js`, 30s
 > heartbeat + on route change) into `site_presence`; the Sports page's
 > "Who's here" strip reads GET `/api/presence`. A watch tab also sends

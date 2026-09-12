@@ -99,7 +99,7 @@
     if (a === h) return `${nick(m.away)} and ${nick(m.home)} level at ${a}`;
     return a > h ? `${nick(m.away)} up ${a}–${h} on the ${nick(m.home)}` : `${nick(m.home)} up ${h}–${a} on the ${nick(m.away)}`;
   }
-  const CASINO_ICON = { flip: "🪙", wheel: "🎡", race: "🐎", hilo: "🃏", mines: "💣" };
+  const CASINO_ICON = { flip: "🪙", wheel: "🎡", race: "🐎", hilo: "🃏", mines: "💣", plinko: "🎯" };
   function casinoLink(item) {
     const a = el("a", "glink", item.gameName);
     a.href = `/?view=${item.game}`;

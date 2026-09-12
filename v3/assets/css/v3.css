@@ -3375,3 +3375,47 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
 .mn-rung.at strong{color:var(--green)}
 .mn-rung.next{background:var(--gold-dim)}
 .mn-rung.next strong{color:var(--gold)}
+
+
+/* ============================================================
+   Casino — Plinko
+
+   Eight rows of pegs over nine buckets. The ball is one element
+   moved by transform: 26px is one half-slot across and one row
+   down, which is what the peg grid is built on.
+   ============================================================ */
+.pk-board{position:relative;width:min(420px,100%);margin:10px auto 6px;padding:6px 0}
+.pk-pegs{display:flex;flex-direction:column;align-items:center;gap:0}
+.pk-row{display:flex;justify-content:center;gap:14px;height:26px;align-items:center}
+.pk-peg{
+  width:6px;height:6px;border-radius:50%;
+  background:rgba(255,255,255,.28);box-shadow:0 0 6px rgba(255,255,255,.08);
+}
+.pk-ball{
+  position:absolute;left:50%;top:4px;width:16px;height:16px;margin-left:-8px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff,var(--gold) 60%,#8a6c12);
+  box-shadow:0 0 14px rgba(var(--gold-rgb),.6);
+  transition:transform .11s linear;z-index:2;
+}
+.pk-ball.landed{transition:transform .16s cubic-bezier(.3,1.6,.5,1)}
+
+.pk-buckets{display:flex;justify-content:center;gap:3px;width:min(420px,100%);margin:2px auto 0}
+.pk-bucket{
+  flex:1 1 0;min-width:0;padding:7px 2px;border-radius:8px;text-align:center;
+  border:1px solid var(--line);background:var(--panel-2);
+  color:var(--muted);font-size:.68rem;font-weight:800;
+  transition:transform .18s ease,background .18s ease,color .18s ease,border-color .18s ease;
+}
+.pk-bucket.mid{color:var(--text);border-color:var(--line-2)}
+.pk-bucket.big{color:var(--gold);border-color:rgba(var(--gold-rgb),.45);background:var(--gold-dim)}
+.pk-bucket.hit{
+  transform:translateY(-3px);
+  border-color:var(--green);background:var(--green-dim);color:var(--green);
+}
+.pk-bucket.big.hit{border-color:var(--gold);background:rgba(var(--gold-rgb),.22);color:var(--gold)}
+@media (prefers-reduced-motion:reduce){
+  .pk-ball,.pk-bucket{transition:none}
+}
+@media (max-width:520px){
+  .pk-bucket{font-size:.6rem;padding:6px 1px}
+}

@@ -322,7 +322,8 @@ export async function hourlyNet(db, userId) {
   const shared = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - wager WHEN status = 'LOST' THEN -wager ELSE 0 END), 0) AS net FROM casino_bets WHERE user_id = ? AND datetime(created_at) >= datetime('now', '-1 hour')`);
   const hilo = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'CASHED' THEN payout - stake WHEN status = 'BUST' THEN -stake ELSE 0 END), 0) AS net FROM hilo_games WHERE user_id = ? AND datetime(updated_at) >= datetime('now', '-1 hour')`);
   const mines = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'CASHED' THEN payout - stake WHEN status = 'BUST' THEN -stake ELSE 0 END), 0) AS net FROM mines_games WHERE user_id = ? AND datetime(updated_at) >= datetime('now', '-1 hour')`);
-  return coin + shared + hilo + mines;
+  const plinko = await q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM plinko_drops WHERE user_id = ? AND datetime(created_at) >= datetime('now', '-1 hour')`);
+  return coin + shared + hilo + mines + plinko;
 }
 
 /** Whether this person may place another bet, and where they stand. */
