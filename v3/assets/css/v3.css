@@ -2557,6 +2557,11 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .adm-tabs{margin-bottom:14px}
 .adm-panel{display:flex;flex-direction:column;gap:14px}
 
+/* The admin links in the ⋯ menu open a new tab, and say so. */
+.menu-out{display:flex;align-items:center;gap:8px}
+.menu-out i{margin-left:auto;font-style:normal;color:var(--muted-2);font-size:.78rem}
+.menu-out:hover i{color:var(--gold)}
+
 /* ---------------------------------------------------------------- dashboard */
 /* The dashboard's headline strip, tabs and list paging. The strip is the
    profile's .pf-quick with six cells instead of four, so it drops to

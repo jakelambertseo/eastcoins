@@ -569,18 +569,26 @@
     const note = menu.querySelector(".menu-note");
     menu.insertBefore(title, note);
 
-    for (const [route, href, icon, label] of OWNER_LINKS) {
+    for (const [, href, icon, label] of OWNER_LINKS) {
       const link = document.createElement("a");
-      link.className = "menu-item menu-link";
+      link.className = "menu-item menu-link menu-out";
       link.href = href;
+      // A new tab rather than this one. These are the pages you keep open
+      // beside the stream, and routing in place cost you whatever you were
+      // watching every time you glanced at the book. noopener because the
+      // page being opened has no business reaching back into this one.
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.title = `${label} — opens in a new tab`;
       link.setAttribute("role", "menuitem");
-      link.textContent = `${icon}  ${label}`;
-      link.addEventListener("click", (event) => {
-        if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
-        event.preventDefault();
-        setMenuOpen(false);
-        go(route);
-      });
+      link.append(document.createTextNode(`${icon}  ${label}`));
+      const out = document.createElement("i");
+      out.textContent = "↗";
+      link.append(out);
+      // No preventDefault: the browser does the opening, so ctrl-click and
+      // middle-click keep behaving the way they do everywhere else. All
+      // this has to do is put the menu away.
+      link.addEventListener("click", () => setMenuOpen(false));
       menu.insertBefore(link, note);
     }
   }
