@@ -111,12 +111,12 @@
 > endpoints `/api/casino/<game>/{state,bet,history}`; clients built on
 > `v3-casino-kit.js`'s `sharedGame(spec)`), and Higher or Lower
 > `/?view=hilo` (per-player, `functions/api/casino/hilo/*`, table
-> `hilo_games`, committed deck, 4% edge per call, ×50 / 12-card cap).
+> `hilo_games`, committed deck, 1% edge per call, ×50 / 12-card cap).
 > Shared limits: 20 ZC a bet, 10 an hour per game, and `HOUR_WIN_CAP`
 > (300 ZC net in any rolling hour across every game, `capCheck` in
 > `_engine.js`, enforced by every bet/deal endpoint including the coin's).
-> Wheel: 24 red/black slices + one 15-degree gold sliver at 20x (returns ~83%), outcome is an
-> angle. Race: whole-number payouts 2/3/7/14, odds normalised from them —
+> Wheel: 24 red/black slices + one 6-degree gold sliver at 40x, outcome is an
+> angle (red/black return 98.3%; gold is the 1-in-60 long shot at ~67%). Race: whole-number payouts 2/3/7/14, odds normalised from them —
 > **currently `paused: true`** in `GAMES` (bets refused, off the floor,
 > page says closed; flip the flag to bring it back). Floor tiles list
 > who is in each room (`people` from `/api/casino/home`, Who's-here chips).
@@ -136,7 +136,7 @@
 > board committed as `sha256(seed)` before the first tile and the bombs
 > derived from the seed alone (Fisher–Yates over 0..24, each swap from
 > `sha256(seed:shuffle:i)`). Each safe tile pays `C(25,k)/C(S,k)` less the
-> same 4% edge Hi-Lo takes; cash out after any safe tile. The run
+> same 1% edge Hi-Lo takes; cash out after any safe tile. The run
 > auto-cashes at `topRung()` — the last rung still **under** the ×50
 > ceiling (3 bombs: 17 tiles ×39.43; 10 bombs: 6 tiles ×33.97) — rather
 > than clamping a higher rung down to ×50, which would have been a hidden
@@ -150,18 +150,38 @@
 >
 > **Plinko** — `/?view=plinko` (`v3-plinko.js`, `functions/api/casino/plinko/*`,
 > tables `plinko_drops` and `plinko_commits`). A ball falls through 8 peg
-> rows into 9 buckets paying `6 · 2.5 · 1.4 · 0.75 · 0.45 · 0.75 · 1.4 ·
-> 2.5 · 6` — a 96% return, the same 4% edge as the rest. Step i goes right
+> rows into 9 buckets paying `4 · 1.8 · 1.3 · 1.15 · 0.2 · 1.15 · 1.3 ·
+> 1.8 · 4` — a 98.6% return where every bucket but the middle pays, so
+> 73% of drops come back ahead. Step i goes right
 > when `sha256(seed:i)` is odd, so the path is a pure function of the seed.
 > **Fairness works differently here**: a drop has no decisions in it, so
 > instead of committing at the start of play each player holds a committed
 > seed for their NEXT drop (`plinko_commits`, hash shown on the page,
 > revealed with the result, rotated immediately), which stops the house
-> picking a seed after seeing the stake. Max is ×6 on purpose — 120 ZC on
+> picking a seed after seeing the stake. Max is ×4 on purpose — 80 ZC on
 > the 20 ZC maximum, well under the hourly cap, because a ball nobody can
 > influence should not be the biggest win on the site. Winnings count
 > toward `HOUR_WIN_CAP` via `hourlyNet()`; every new casino game must be
 > added there or it escapes the cap.
+>
+> **The casino is near-fair on purpose (2026-09-11)** — every game
+> returns ~98–99% (Hi-Lo and Mines `EDGE_RETURN = 0.99`; Plinko's table
+> 98.6%; Wheel red/black 98.3%; Coin Flip was always exactly fair at 2×).
+> The old 4% edge earned the house ~30 ZC a day and made players feel they
+> never won, so they drifted to Picks. Payout shapes favour FREQUENT wins
+> over big ones. Do not push the return past 100%: with the 300/hour cap
+> only blocking new bets, a positive player edge prints thousands of
+> ZCoins a day and devalues Picks. **Louder wins** — `makePop` takes
+> `big`, adds `.cf-pop.big` and fires `burst()` confetti (also for any
+> 30+ ZC profit); `makeToast(text, "near")` is the gold near-miss toast.
+> `sharedGame` specs may add `bigWin(result, mine, config)` and
+> `nearMiss(result, mine, config)` (the Wheel uses both); Hi-Lo, Mines and
+> Plinko call near-miss toasts themselves. **The tables' ticker** — the
+> casino floor mounts `ECActivity.mountTicker(el, { types: ["casino"],
+> label, href, empty })`, the same ticker filtered to casino items.
+> **Profiles** get a second `.pf-quick.pf-quick-casino` strip (profit,
+> record, biggest win, favourite game) under the season strip, from
+> `profile.casino`.
 >
 > **Presence** — every tab POSTs `/api/presence` (`v3-presence.js`, 30s
 > heartbeat + on route change) into `site_presence`; the Sports page's

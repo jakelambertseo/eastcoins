@@ -135,21 +135,47 @@
     const node = el("div", "cf-toast");
     host.append(node);
     let t = 0;
-    return (text, bad) => {
+    return (text, tone) => {
       node.textContent = text;
-      node.className = `cf-toast show${bad ? " bad" : ""}`;
+      // tone: true or "bad" for a loss, "near" for a near miss, else plain.
+      const cls = tone === "near" ? " near" : tone ? " bad" : "";
+      node.className = `cf-toast show${cls}`;
       clearTimeout(t);
       t = setTimeout(() => { node.className = "cf-toast"; }, 2600);
     };
+  }
+
+  /** A burst of confetti from the middle of the screen. Plain DOM, no library. */
+  function burst() {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const host = el("div", "cf-burst");
+    const colors = ["var(--gold)", "var(--green)", "#fff", "var(--red)", "#8fc3d7"];
+    for (let i = 0; i < 44; i += 1) {
+      const p = el("i");
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 120 + Math.random() * 240;
+      p.style.setProperty("--dx", `${Math.round(Math.cos(angle) * dist)}px`);
+      p.style.setProperty("--dy", `${Math.round(Math.sin(angle) * dist - 90)}px`);
+      p.style.setProperty("--rot", `${Math.round(Math.random() * 720 - 360)}deg`);
+      p.style.setProperty("--c", colors[i % colors.length]);
+      p.style.animationDelay = `${Math.round(Math.random() * 140)}ms`;
+      host.append(p);
+    }
+    document.body.append(host);
+    window.setTimeout(() => host.remove(), 1700);
   }
 
   function makePop(host) {
     const node = el("div", "cf-pop");
     host.append(node);
     let t = 0;
-    return ({ won, amount, headline, detail }) => {
+    return ({ won, amount, headline, detail, big: bigWin }) => {
       node.replaceChildren();
-      node.className = `cf-pop show ${won ? "win" : "lose"}`;
+      // The loud version for a big win: larger card, gold, confetti.
+      // Callers say when a win is big; a 30 ZC profit counts regardless.
+      const loud = Boolean(won && (bigWin || Number(amount) >= 30));
+      node.className = `cf-pop show ${won ? "win" : "lose"}${loud ? " big" : ""}`;
+      if (loud) burst();
       node.append(el("span", "cf-pop-k", headline || (won ? "You won" : "You lost")));
       const big = el("strong");
       big.append(zc(amount));
@@ -421,7 +447,11 @@
         if (revealed && (mine.status === "WON" || mine.status === "LOST") && announcedFor !== r.no) {
           announcedFor = r.no;
           pop({ won: mine.status === "WON", amount: mine.status === "WON" ? mine.profit : mine.wager,
+            big: mine.status === "WON" && spec.bigWin ? Boolean(spec.bigWin(r.result, mine, config)) : false,
             detail: `${spec.describe(r.result, config)}. ${mine.status === "WON" ? `${fmt(mine.payout)} back on ${fmt(mine.wager)}.` : "Next round in a moment."}` });
+          // A loss that only just missed gets said out loud, a beat later.
+          const near = mine.status === "LOST" && spec.nearMiss ? spec.nearMiss(r.result, mine, config) : null;
+          if (near) window.setTimeout(() => toast(near, "near"), 900);
           loadHistory();
           window.ECV3?.refreshSession?.();
         }
@@ -528,5 +558,5 @@
     };
   }
 
-  window.ECCasino = Object.freeze({ el, btn, zc, withCoins, plain, avatar, nameLink, casinoLink, makeToast, makePop, sharedGame, fmt, pager, pageOf, verifyBox });
+  window.ECCasino = Object.freeze({ el, btn, zc, withCoins, plain, avatar, nameLink, casinoLink, makeToast, makePop, burst, sharedGame, fmt, pager, pageOf, verifyBox });
 })();

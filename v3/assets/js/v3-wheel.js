@@ -5,7 +5,7 @@
 
    Twenty-four red and black slices and one slim gold sliver. Forty
    seconds of bets, a four-second spin, the rest of the minute to
-   look at where it landed. Red and black pay 2×, gold pays 20×.
+   look at where it landed. Red and black pay 2×, gold pays 40×.
    The server owns the clock and the slice; this page spins to it.
    ============================================================ */
 (() => {
@@ -73,7 +73,7 @@
   const view = K.sharedGame({
     key: "wheel",
     title: "Wheel",
-    intro: "One spin a minute. Red or black pays 2×; the slim gold sliver pays 20×. Forty seconds to get in.",
+    intro: "One spin a minute. Red or black pays 2×; the slim gold sliver pays 40×. Forty seconds to get in.",
     running: "Spinning…",
     revealMs: 4200,
     buildStage,
@@ -81,7 +81,18 @@
     pickButton: (pick, config) => ({ label: LABEL[pick] || pick, className: pick, pays: config.payout[pick] }),
     pickLabel: (pick) => LABEL[pick] || pick,
     describe: (result) => `${LABEL[result.color] || result.color}!`,
-    resultClass: (result) => result?.color || ""
+    resultClass: (result) => result?.color || "",
+    bigWin: (result) => result.color === "gold",
+    // How close the pointer came to a slice of the colour they backed.
+    nearMiss: (result, mine, config) => {
+      const angle = Number(result.angle || 0);
+      const circ = (a, b) => Math.min(Math.abs(a - b), 360 - Math.abs(a - b));
+      const segs = (config.segments || []).filter((s) => s.color === mine.pick);
+      let best = 999;
+      for (const s of segs) best = Math.min(best, circ(angle, s.from), circ(angle, s.to));
+      if (mine.pick === "gold") return best <= 12 ? `A hair from gold — ${best.toFixed(1)}° off.` : null;
+      return best <= 2.5 ? `That close — ${best.toFixed(1)}° from ${LABEL[mine.pick] || mine.pick}.` : null;
+    }
   });
 
   function boot() {

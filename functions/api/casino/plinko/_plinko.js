@@ -19,14 +19,16 @@
 
    The nine buckets pay
 
-     x6  x2.5  x1.4  x0.75  x0.45  x0.75  x1.4  x2.5  x6
+     x4  x1.8  x1.3  x1.15  x0.2  x1.15  x1.3  x1.8  x4
 
-   which returns 96% — the same 4% edge the other games take. The
-   middle is the likeliest landing by far (1 in 4) and the edges are
-   1 in 256 each, so the top prize lands about once in 128 drops.
-   x6 is deliberately low: on the 20 ZC maximum it pays 120, well
-   under the hourly cap, because a ball nobody can influence should
-   not produce the biggest win on the site.
+   which returns 98.6% — near fair, like the rest of the casino.
+   The shape is chosen so wins are FREQUENT: every bucket but the
+   middle one pays more than the stake, so 73% of drops come
+   back ahead, and the middle (1 in 4) is where the house's small cut
+   lives. The edges are 1 in 256 each, so the top prize lands about
+   once in 128 drops. x4 is deliberately low: on the 20 ZC maximum it
+   pays 80, because a ball nobody can influence should not produce the
+   biggest win on the site.
    ============================================================ */
 
 import { moveBalance, beginOperation, finishOperation, newId } from "../../picks/_lib.js";
@@ -34,7 +36,7 @@ import { sha256, randomSeed, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_eng
 
 export const ROWS = 8;
 export const BUCKETS = ROWS + 1;
-export const PAYOUTS = [6, 2.5, 1.4, 0.75, 0.45, 0.75, 1.4, 2.5, 6];
+export const PAYOUTS = [4, 1.8, 1.3, 1.15, 0.2, 1.15, 1.3, 1.8, 4];
 export const MAX_MULTIPLIER = Math.max(...PAYOUTS);
 
 let ready = false;

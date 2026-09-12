@@ -62,6 +62,7 @@
     if (busy || !data?.live) return;
     busy = true; render();
     try {
+      const before = data.live.cards[data.live.cards.length - 1];
       const payload = await post("call", { id: data.live.id, call: which });
       if (!payload?.ok) { toast(payload?.message || "That didn't go through.", true); await poll(); return; }
       data.live = payload.game.status === "LIVE" ? payload.game : null;
@@ -69,10 +70,14 @@
       flipIn(payload.card);
       if (payload.outcome === "bust") {
         pop({ won: false, amount: payload.game.stake, headline: "Bust", detail: `${cardText(payload.card)} — ${which} was wrong. Next deal when you're ready.` });
+        // Say how close it was: a tie, or one rank either side.
+        const diff = before ? Math.abs(Number(payload.card.rank) - Number(before.rank)) : 99;
+        if (diff === 0) window.setTimeout(() => toast("A tie — the one card that beats you either way.", "near"), 900);
+        else if (diff === 1) window.setTimeout(() => toast("One rank off. Brutal.", "near"), 900);
         window.ECV3?.refreshSession?.();
         await poll();
       } else if (payload.autoCashed) {
-        pop({ won: true, amount: payload.payout - payload.game.stake, headline: "Maxed out", detail: `×${payload.game.multiplier} — ${fmt(payload.payout)} back on ${fmt(payload.game.stake)}.` });
+        pop({ won: true, big: true, amount: payload.payout - payload.game.stake, headline: "Maxed out", detail: `×${payload.game.multiplier} — ${fmt(payload.payout)} back on ${fmt(payload.game.stake)}.` });
         if (payload.balance != null) window.ECV3?.setWallet?.(payload.balance);
         await poll();
       } else {
@@ -88,7 +93,7 @@
       const payload = await post("cashout", { id: data.live.id });
       if (!payload?.ok) { toast(payload?.message || "That didn't go through.", true); await poll(); return; }
       if (payload.balance != null) window.ECV3?.setWallet?.(payload.balance);
-      pop({ won: true, amount: payload.payout - payload.game.stake, headline: "Cashed out", detail: `×${payload.game.multiplier} — ${fmt(payload.payout)} back on ${fmt(payload.game.stake)}.` });
+      pop({ won: true, big: Number(payload.game.multiplier) >= 3, amount: payload.payout - payload.game.stake, headline: "Cashed out", detail: `×${payload.game.multiplier} — ${fmt(payload.payout)} back on ${fmt(payload.game.stake)}.` });
       data.live = null;
       refs.lastGame = payload.game;
       await poll();

@@ -19,14 +19,14 @@
 
      C(25,k) / C(S,k)
 
-   and the house keeps 4% of it, the same edge Higher or Lower
-   takes. Three bombs: one tile ×1.09, five tiles ×1.94, ten ×4.85.
+   and the house keeps 1% of it, the same near-fair edge Higher or
+   Lower takes. Three bombs: one tile ×1.13, five tiles ×2, ten ×5.
    Cash out any time after the first safe tile. A bomb ends the run
    and the stake is gone. The run pays out on its own once every safe
    tile is uncovered, or at the last rung still under the ×50 ceiling —
    it stops below the ceiling rather than being clamped down to it, so
-   the 4% edge holds wherever someone chooses to stop. Three bombs run
-   out of road at 17 tiles (×39.43), ten bombs at 6 (×33.97).
+   the 1% edge holds wherever someone chooses to stop. Three bombs run
+   out of road at 17 tiles (×40.66), ten bombs at 6 (×35.03).
 
    One live game per person; stake and per-hour limits are the
    casino's, and winnings count toward the same hourly cap.
@@ -36,7 +36,7 @@ import { moveBalance, beginOperation, finishOperation, newId } from "../../picks
 import { sha256, randomSeed, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
 
 export const TILES = 25;
-export const EDGE_RETURN = 0.96;
+export const EDGE_RETURN = 0.99;
 export const MAX_MULTIPLIER = 50;
 export const MIN_MINES = 1;
 // Ten is the ceiling on purpose. Past it the ladder leaps instead of
@@ -90,7 +90,7 @@ export async function bombsFor(seed, mines) {
  * Fair odds are C(25,k)/C(S,k) — the chance of surviving k picks
  * inverted — multiplied out one tile at a time so nothing overflows.
  * The edge is taken once, off the whole price, so cashing out early
- * and cashing out late cost the same 4%.
+ * and cashing out late cost the same 1%.
  */
 export function multiplierFor(mines, picks) {
   const safe = TILES - mines;
@@ -107,9 +107,9 @@ export function multiplierFor(mines, picks) {
  *
  * The run auto-cashes here rather than one rung further. Clamping a
  * higher rung down to ×50 instead would have been a hidden second cut —
- * pushing to the end of a ten-bomb board would return 67% rather than
- * the 96% every other cash-out pays. Stopping below the ceiling keeps
- * the edge at 4% wherever someone chooses to stop.
+ * pushing to the end of a ten-bomb board would return far less than
+ * the 99% every other cash-out pays. Stopping below the ceiling keeps
+ * the edge at 1% wherever someone chooses to stop.
  */
 export function topRung(mines) {
   const safe = TILES - mines;

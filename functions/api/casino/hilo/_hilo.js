@@ -11,11 +11,12 @@
    is revealed when the game ends so anyone can check the run.
 
    Each correct call multiplies the stake. Ties lose. The price of
-   a call is 0.96 / probability, so every call carries the same 4%
-   edge whatever the card:
+   a call is 0.99 / probability, so every call carries the same 1%
+   edge whatever the card — near fair on purpose, so the casino is
+   somewhere people come back to rather than somewhere they bleed:
 
-     from a 3, "higher" wins 10 times in 13 → ×1.25
-     from a 10, "higher" wins 3 times in 13 → ×4.16
+     from a 3, "higher" wins 10 times in 13 → ×1.29
+     from a 10, "higher" wins 3 times in 13 → ×4.29
 
    Cash out any time after the first correct call. The run ends at
    ×50 or 12 cards, whichever comes first. One live game per person;
@@ -25,7 +26,7 @@
 import { moveBalance, beginOperation, finishOperation, newId } from "../../picks/_lib.js";
 import { sha256, randomSeed, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
 
-export const EDGE_RETURN = 0.96;
+export const EDGE_RETURN = 0.99;
 export const MAX_MULTIPLIER = 50;
 export const MAX_STEPS = 12;
 export const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];

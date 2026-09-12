@@ -60,11 +60,15 @@
     if (data) { data.last = payload.drop; data.nextHash = payload.nextHash; }
 
     const profit = payload.drop.profit;
+    const top = Number(data?.config?.maxMultiplier || 0);
     if (profit > 0) {
-      pop({ won: true, amount: profit, headline: `×${payload.drop.multiplier}`, detail: `${fmt(payload.drop.payout)} back on ${fmt(payload.drop.stake)}.` });
+      pop({ won: true, big: Number(payload.drop.multiplier) >= top, amount: profit, headline: `×${payload.drop.multiplier}`, detail: `${fmt(payload.drop.payout)} back on ${fmt(payload.drop.stake)}.` });
     } else {
       toast(`×${payload.drop.multiplier} — ${fmt(payload.drop.payout)} back on ${fmt(payload.drop.stake)}.`, profit < 0);
     }
+    // The buckets beside the edges are one bounce from the top prize.
+    const b = Number(payload.drop.bucket);
+    if (b === 1 || b === 7) window.setTimeout(() => toast(`One peg from ×${top}!`, "near"), 1200);
     await poll();
   }
 
@@ -148,7 +152,7 @@
     const head = K.el("div", "viewhead");
     const copy = K.el("div");
     copy.append(K.el("h1", null, "Plinko"),
-      K.el("p", null, "Drop a ball through the pegs. It bounces left or right at each one, and pays whatever bucket it lands in — the edges pay most, the middle keeps most of it."));
+      K.el("p", null, "Drop a ball through the pegs. It bounces left or right at each one and pays whatever bucket it lands in. Every bucket but the middle one pays more than you put in; the edges pay most."));
     head.append(copy);
     const right = K.el("div", "cas-headright");
     refs.status = K.el("span", "cf-status", "Connecting…");
@@ -280,7 +284,7 @@
     else if (capped) { K.withCoins(refs.drop, `Up [[${data.me.hourNet}]] this hour — the cap`); refs.note.textContent = "The tables reopen for you as the hour rolls on."; }
     else {
       K.withCoins(refs.drop, `Drop for [[${stake}]]`);
-      refs.note.textContent = `The middle bucket is the likeliest by far. The ×${config.maxMultiplier} edges land about once in 128 drops.`;
+      refs.note.textContent = `Every bucket but the middle pays. The ×${config.maxMultiplier} edges land about once in 128 drops.`;
     }
     const used = data.me?.dropsThisHour;
     K.withCoins(refs.limits, `Max stake [[${config.maxBet}]] · ${config.maxPerHour} drops an hour · winnings cap [[${config.hourCap}]] an hour` + (Number.isFinite(used) ? ` · you've used ${used} of ${config.maxPerHour}` : ""));

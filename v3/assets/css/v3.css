@@ -3436,3 +3436,40 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
 @media (max-width:380px){
   .pk-bucket{padding:7px 0;letter-spacing:-.02em}
 }
+
+
+/* ============================================================
+   Casino — louder wins, near misses, the tables' ticker, and the
+   casino strip on profiles
+   ============================================================ */
+.cf-pop.big{border-width:2px}
+.cf-pop.show.big{transform:translate(-50%,-50%) scale(1.08)}
+.cf-pop.big.win{
+  border-color:rgba(var(--gold-rgb),.75);
+  background:linear-gradient(160deg,rgba(var(--gold-rgb),.22),rgba(77,219,139,.1) 55%,transparent 80%),var(--panel);
+  box-shadow:0 30px 80px rgba(0,0,0,.65),0 0 110px rgba(var(--gold-rgb),.35);
+  animation:cf-bigpop .5s cubic-bezier(.2,1.4,.4,1)
+}
+.cf-pop.big.win .cf-pop-k{color:var(--gold);letter-spacing:.2em}
+.cf-pop.big.win strong{font-size:3.3rem;text-shadow:0 0 30px rgba(var(--gold-rgb),.45)}
+@keyframes cf-bigpop{0%{transform:translate(-50%,-50%) scale(.6)}60%{transform:translate(-50%,-50%) scale(1.14)}100%{transform:translate(-50%,-50%) scale(1.08)}}
+
+.cf-burst{position:fixed;left:50%;top:50%;z-index:41;width:0;height:0;pointer-events:none}
+.cf-burst i{
+  position:absolute;left:0;top:0;width:8px;height:13px;border-radius:2px;background:var(--c);
+  opacity:0;transform:translate(-50%,-50%);
+  animation:cf-confetti 1.4s cubic-bezier(.15,.8,.3,1) forwards;
+}
+@keyframes cf-confetti{
+  0%{opacity:1;transform:translate(-50%,-50%) rotate(0)}
+  70%{opacity:1}
+  100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy) + 120px)) rotate(var(--rot))}
+}
+.cf-toast.near{border-color:rgba(var(--gold-rgb),.6);color:var(--gold);font-family:var(--display)}
+@media (prefers-reduced-motion:reduce){
+  .cf-burst{display:none}
+  .cf-pop.big.win{animation:none}
+}
+
+.cas-ticker{margin:0 0 var(--gap)}
+.pf-quick-casino{margin-top:10px;padding-top:12px;border-top:1px dashed var(--line)}

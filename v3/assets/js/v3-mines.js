@@ -64,6 +64,7 @@
     if (data.live.picks.includes(tile)) return;
     busy = true; render();
     try {
+      const wouldBe = data.live.next;   // what this tile was worth, if safe
       const payload = await post("pick", { id: data.live.id, tile });
       if (!payload?.ok) { toast(payload?.message || "That didn't go through.", true); await poll(); return; }
       const game = payload.game;
@@ -73,11 +74,12 @@
       if (payload.outcome === "bomb") {
         boom(tile);
         pop({ won: false, amount: game.stake, headline: "Bomb", detail: `${game.picks.length - 1} safe before it. Board's over.` });
+        if (wouldBe && game.picks.length > 1) window.setTimeout(() => toast(`That tile would have made it ×${wouldBe}.`, "near"), 900);
         window.ECV3?.refreshSession?.();
         await poll();
       } else if (payload.autoCashed) {
         const headline = payload.cleared ? "Board cleared" : "Maxed out";
-        pop({ won: true, amount: payload.payout - game.stake, headline, detail: `×${game.multiplier} — ${fmt(payload.payout)} back on ${fmt(game.stake)}.` });
+        pop({ won: true, big: true, amount: payload.payout - game.stake, headline, detail: `×${game.multiplier} — ${fmt(payload.payout)} back on ${fmt(game.stake)}.` });
         if (payload.balance != null) window.ECV3?.setWallet?.(payload.balance);
         await poll();
       } else {
@@ -93,7 +95,7 @@
       const payload = await post("cashout", { id: data.live.id });
       if (!payload?.ok) { toast(payload?.message || "That didn't go through.", true); await poll(); return; }
       if (payload.balance != null) window.ECV3?.setWallet?.(payload.balance);
-      pop({ won: true, amount: payload.payout - payload.game.stake, headline: "Cashed out", detail: `×${payload.game.multiplier} — ${fmt(payload.payout)} back on ${fmt(payload.game.stake)}.` });
+      pop({ won: true, big: Number(payload.game.multiplier) >= 3, amount: payload.payout - payload.game.stake, headline: "Cashed out", detail: `×${payload.game.multiplier} — ${fmt(payload.payout)} back on ${fmt(payload.game.stake)}.` });
       data.live = null;
       refs.lastGame = payload.game;
       await poll();
