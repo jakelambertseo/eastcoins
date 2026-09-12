@@ -175,9 +175,20 @@ export async function entriesFor(db, roundId) {
   }));
 }
 
+/**
+ * Seats taken this hour, for the ten-an-hour limit. A seat that was
+ * refunded because nobody else sat down was never a bet, so it does not
+ * count — otherwise opening an empty table twice would cost the same as
+ * playing twice. Seats still waiting in a lobby DO count: that money is
+ * committed.
+ */
 export async function joinsLastHour(db, game, userId) {
   const row = await db
-    .prepare(`SELECT COUNT(*) AS n FROM pvp_entries WHERE game = ? AND user_id = ? AND created_at >= datetime('now', '-1 hour')`)
+    .prepare(
+      `SELECT COUNT(*) AS n FROM pvp_entries
+        WHERE game = ? AND user_id = ? AND status <> 'REFUNDED'
+          AND created_at >= datetime('now', '-1 hour')`
+    )
     .bind(game.key, userId)
     .first();
   return Number(row?.n || 0);
