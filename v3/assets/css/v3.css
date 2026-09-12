@@ -2771,11 +2771,11 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
   grid-template-columns:44px minmax(200px,1.2fr) 96px 72px 72px minmax(150px,1fr) minmax(190px,1fr) 140px;
 }
 .urow:last-child{border-bottom:0}
-/* Admins see one more column: who can still get in. Only they are sent
-   the ban state at all, so the column simply is not there for anyone
-   else and the grid keeps its original eight tracks. */
-.urow.mod{min-width:1110px;grid-template-columns:44px minmax(200px,1.2fr) 96px 72px 72px minmax(150px,1fr) minmax(190px,1fr) 140px 96px}
-.us-mod{display:flex;justify-content:flex-end}
+/* The ban control rides in the name cell, so the grid keeps its eight
+   tracks and nobody has to scroll a wide table sideways to moderate. */
+.us-who{display:flex;align-items:center;gap:9px;min-width:0}
+.us-who .tuser{min-width:0;flex:0 1 auto}
+.us-mod{flex:0 0 auto}
 .us-ban{
   height:26px;padding:0 10px;border-radius:7px;
   border:1px solid var(--line-2);background:var(--panel-2);color:var(--muted);

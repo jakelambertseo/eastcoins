@@ -120,11 +120,10 @@
   const isAdmin = () => Boolean(viewer?.admin);
 
   function headerRow() {
-    const h = el("div", `urow thead${isAdmin() ? " mod" : ""}`);
+    const h = el("div", "urow thead");
     for (const [label, cls] of [["#", ""], ["User", ""], ["Points", "right"], ["NFL", "right"], ["MLB", "right"], ["Titles", ""], ["Favourite team", ""], ["Music ELO", ""]]) {
       h.append(el("span", cls, label));
     }
-    if (isAdmin()) h.append(el("span", "us-mod", "Access"));
     return h;
   }
 
@@ -218,7 +217,7 @@
   }
 
   function row(u, rank, music, me) {
-    const line = el("div", `urow${me ? " me" : ""}${rank === 1 && u.picks.profit > 0 ? " first" : ""}${isAdmin() ? " mod" : ""}${u.banned ? " banned" : ""}`);
+    const line = el("div", `urow${me ? " me" : ""}${rank === 1 && u.picks.profit > 0 ? " first" : ""}${u.banned ? " banned" : ""}`);
     line.append(el("span", "trank", `#${rank}`));
 
     const user = el("a", "tuser ulink");
@@ -227,7 +226,13 @@
     const copy = el("span");
     copy.append(el("strong", null, u.displayName), el("small", null, `@${u.login}`));
     user.append(copy);
-    line.append(user);
+    // Beside the name rather than in a column of its own: a column would
+    // sit past the right edge of a table that already scrolls sideways,
+    // so reaching it meant scrolling to moderate someone.
+    const who = el("span", "us-who");
+    who.append(user);
+    if (isAdmin()) who.append(banCell(u));
+    line.append(who);
 
     const points = el("span", "right");
     points.append(zc(u.picks.profit, { sign: true }));
@@ -274,7 +279,6 @@
       elo.append(el("span", "us-none", "—"));
     }
     line.append(elo);
-    if (isAdmin()) line.append(banCell(u));
     return line;
   }
 
