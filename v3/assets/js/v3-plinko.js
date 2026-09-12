@@ -80,13 +80,17 @@
       const rows = data?.config?.rows || 8;
       let right = 0;
 
-      // One number for both axes, read from the CSS so the ball, the pegs
-      // and the buckets can never drift apart.
-      const pitch = parseFloat(getComputedStyle(board).getPropertyValue("--pk-pitch")) || 26;
+      // Measured, not read from the CSS: --pk-pitch is a clamp() and an
+      // unregistered custom property hands back its raw text, so parsing
+      // it gives NaN and the ball would fall back to a stale number while
+      // the board sat at another size. The bucket row and a peg row are
+      // laid out from the same pitch, so measuring them is exact.
+      const across = measure(refs.buckets, "left") || 26;
+      const down = board.querySelector(".pk-row")?.getBoundingClientRect().height || across;
       const place = (row, rights) => {
         // Centre of the row, shifted half a slot per step taken.
         const slot = rights - row / 2;
-        ball.style.transform = `translate(${slot * pitch}px, ${row * pitch}px)`;
+        ball.style.transform = `translate(${slot * across}px, ${row * down}px)`;
       };
 
       ball.hidden = false;
@@ -109,6 +113,14 @@
       };
       window.setTimeout(step, 60);
     });
+  }
+
+  /** Distance between the first two of a row of elements, or 0. */
+  function measure(nodes, edge) {
+    if (!nodes || nodes.length < 2) return 0;
+    const a = nodes[0].getBoundingClientRect()[edge];
+    const b = nodes[1].getBoundingClientRect()[edge];
+    return Math.abs(b - a);
   }
 
   function highlight(bucket) {
