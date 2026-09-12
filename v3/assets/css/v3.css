@@ -2518,6 +2518,14 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .wh-av.has-logo{color:transparent}.wh-av.has-logo img{opacity:1}
 .wh-empty{color:var(--muted-2);font-size:.82rem}
 
+
+/* The admin page's headline strip and tabs, same parts as the Dashboard. */
+.adm-quick{grid-template-columns:repeat(6,minmax(0,1fr))}
+@media (max-width:1100px){.adm-quick{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:620px){.adm-quick{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.adm-tabs{margin-bottom:14px}
+.adm-panel{display:flex;flex-direction:column;gap:14px}
+
 /* ---------------------------------------------------------------- dashboard */
 /* The dashboard's headline strip, tabs and list paging. The strip is the
    profile's .pf-quick with six cells instead of four, so it drops to

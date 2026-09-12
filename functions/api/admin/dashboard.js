@@ -331,7 +331,7 @@ export async function onRequestGet(context) {
     ).bind(todayStart).first(),
     db.prepare(`SELECT COUNT(*) AS total, SUM(CASE WHEN datetime(created_at) >= datetime(?) THEN 1 ELSE 0 END) AS today FROM users`).bind(todayStart).first(),
     db.prepare(
-      `SELECT (SELECT COUNT(*) FROM coin_bets WHERE datetime(created_at) >= datetime(?)) AS bets_today,
+      `SELECT (SELECT COUNT(*) FROM coin_bets WHERE created_at >= datetime(?)) AS bets_today,
               (SELECT COUNT(*) FROM coin_rounds WHERE result IS NOT NULL AND datetime(settled_at) >= datetime(?)) AS rounds_today,
               (SELECT COUNT(*) FROM coin_presence WHERE seen_at >= ?) AS in_room`
     ).bind(todayStart, todayStart, now - 60000).first().catch(() => null),

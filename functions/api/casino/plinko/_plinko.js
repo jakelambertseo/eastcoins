@@ -145,7 +145,7 @@ export function publicDrop(d) {
 }
 
 export async function dropsLastHour(db, userId) {
-  const row = await db.prepare(`SELECT COUNT(*) AS n FROM plinko_drops WHERE user_id = ? AND datetime(created_at) >= datetime('now', '-1 hour')`).bind(userId).first();
+  const row = await db.prepare(`SELECT COUNT(*) AS n FROM plinko_drops WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`).bind(userId).first();
   return Number(row?.n || 0);
 }
 
