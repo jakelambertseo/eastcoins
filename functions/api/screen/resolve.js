@@ -12,9 +12,17 @@
      2. Among exact matches, the most popular. Remakes share a
         name and the one people mean is almost always the one
         people watch.
-     3. Failing any exact match, TMDB's own first result, which is
-        already relevance-ranked, so a near-miss or a typo still
-        lands somewhere sensible rather than on an error.
+     3. Nothing exact? Search again with the hyphens left in. TMDB
+        tokenises "wall-e" and "wall e" differently and only one of
+        them finds WALL·E.
+     4. Still nothing exact, but something whose name starts with
+        what was asked for (or the other way round) — that catches a
+        title carrying a subtitle we did not know about.
+     5. Otherwise NOTHING. Deliberately: taking TMDB's first result
+        turned /movie/wall-e into "East of Wall", and confidently
+        opening the wrong film is worse than admitting the miss.
+        The client turns a miss into a search for the same words,
+        which puts the person one click from what they wanted.
 
    Also returns the canonical path for whatever it found, so the
    client can correct the address bar when someone arrives on a
@@ -38,30 +46,52 @@ export async function resolveSlug(env, type, slug) {
   if (!wanted) return null;
 
   const kind = type === "tv" ? "tv" : "movie";
-  const r = await tmdb(env, `/search/${kind}`, {
-    query: phrase(wanted),
-    include_adult: "false",
-    language: "en-US"
-  });
-  if (!r.ok) return null;
-
-  const results = Array.isArray(r.payload?.results) ? r.payload.results : [];
-  if (!results.length) return null;
-
   const nameOf = (x) => (kind === "tv" ? x.name || x.original_name : x.title || x.original_title) || "";
-  const exact = results.filter((x) => slugify(nameOf(x)) === wanted);
-  const pool = exact.length ? exact : results;
-  const best = pool.reduce((a, b) => (Number(b.popularity || 0) > Number(a.popularity || 0) ? b : a), pool[0]);
+  const popular = (list) => list.reduce((a, b) => (Number(b.popularity || 0) > Number(a.popularity || 0) ? b : a), list[0]);
+
+  const ask = async (query) => {
+    const r = await tmdb(env, `/search/${kind}`, { query, include_adult: "false", language: "en-US" });
+    return r.ok && Array.isArray(r.payload?.results) ? r.payload.results : [];
+  };
+
+  // Spaces first, because that is what most names look like written out.
+  let seen = await ask(phrase(wanted));
+  let exact = seen.filter((x) => slugify(nameOf(x)) === wanted);
+
+  // Then hyphens, which is a different query as far as TMDB is concerned
+  // and is the one that finds WALL·E.
+  if (!exact.length) {
+    const second = await ask(wanted);
+    if (second.length) {
+      seen = seen.concat(second);
+      exact = seen.filter((x) => slugify(nameOf(x)) === wanted);
+    }
+  }
+
+  let best = exact.length ? popular(exact) : null;
+
+  // No exact name, but something that begins with it — a title with a
+  // subtitle we did not know about — is still almost certainly it.
+  if (!best) {
+    const close = seen.filter((x) => {
+      const slug = slugify(nameOf(x));
+      return slug && (slug.startsWith(`${wanted}-`) || wanted.startsWith(`${slug}-`));
+    });
+    if (close.length) best = popular(close);
+  }
+
+  // Nothing close enough. Saying so beats opening the wrong film.
   if (!best?.id) return null;
+  const isExact = slugify(nameOf(best)) === wanted;
 
   return {
     id: Number(best.id),
     type: kind,
     name: nameOf(best),
     slug: slugify(nameOf(best)),
-    // True when the URL named this exactly; false means we guessed and
-    // the caller should straighten the address bar.
-    exact: exact.length > 0,
+    // True when the URL named this exactly; false means it was close
+    // and the caller should straighten the address bar.
+    exact: isExact,
     item: slim(best, kind)
   };
 }
