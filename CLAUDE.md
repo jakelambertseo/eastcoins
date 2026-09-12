@@ -258,6 +258,26 @@
 > Long lists page client-side via `pagedTable`/`pagedList`, keyed so the
 > one-minute refresh keeps the reader's page.
 >
+> **Banning an account (2026-09-12)** — the All Users page gives admins a
+> Ban button in each row (`/api/picks/admin/ban`, table `user_bans`,
+> helpers in `_bans.js`). A ban is the FULL block, chosen deliberately:
+> `getSessionUser()` returns null for a banned id, so every signed-in
+> feature refuses at once without any of them needing to know bans exist,
+> and the Twitch callback turns a fresh sign-in away with `?auth=banned`,
+> which the shell shows as one dismissible line. Three rules that must not
+> drift: **admins cannot be banned and nobody can ban themselves** —
+> admins are who lift bans, so either would make a state the site cannot
+> be talked out of through its own screens; **a reason is required**, and
+> the row keeps who, when and why, with a lift marking the row rather than
+> deleting it so "has this person been banned before" stays answerable;
+> and **`isBanned()` fails OPEN** — a broken lookup means "not banned",
+> because one bad query signing out the entire site is far worse than one
+> ban not landing. A ban takes nothing: ZCoins live in StreamElements and
+> are untouched, and picks already locked still settle and still pay,
+> because they were paid for before the ban and the book has to balance.
+> Who is banned is sent only to admins, and nothing is posted to chat,
+> Discord or the activity feed — a ban is not an announcement.
+>
 > **Admin links in the ⋯ menu** — `ownerMenu()` in `v3-shell.js` appends
 > Admin, Dashboard and Activity under a "Yours" heading for the logins in
 > its `ADMIN_LOGINS` set, which mirrors `ADMIN_ALLOWLIST` in

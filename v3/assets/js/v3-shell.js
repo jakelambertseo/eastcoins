@@ -110,10 +110,37 @@
       changed = true;
     }
 
+    // The Twitch callback sends ?auth=banned back when a banned account
+    // tries to sign in. Without this it fails silently and they just
+    // press Login again, so say it once, plainly, and drop the param.
+    if (params.get("auth") === "banned") {
+      authBanned();
+      params.delete("auth");
+      changed = true;
+    }
+
     if (changed) {
       history.replaceState(null, "", url.pathname + url.search + url.hash);
     }
     return false;
+  }
+
+  /** One line, dismissible, no detail. A ban is not an announcement. */
+  function authBanned() {
+    const bar = document.createElement("div");
+    bar.className = "authnote";
+    const text = document.createElement("span");
+    text.textContent = "This account can't sign in to EastCoin.";
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "authnote-x";
+    close.setAttribute("aria-label", "Dismiss");
+    close.textContent = "\u00d7";
+    close.addEventListener("click", () => bar.remove());
+    bar.append(text, close);
+    document.addEventListener("DOMContentLoaded", () => document.body.append(bar));
+    if (document.readyState !== "loading") document.body.append(bar);
+    window.setTimeout(() => bar.remove(), 12000);
   }
 
   function routeFromUrl() {

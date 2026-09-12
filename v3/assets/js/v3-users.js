@@ -114,12 +114,88 @@
     return wrap;
   }
 
+  // Set from the payload on every load: the server decides who is an
+  // admin, not the browser, and non-admins are never told who is banned.
+  let viewer = null;
+  const isAdmin = () => Boolean(viewer?.admin);
+
   function headerRow() {
-    const h = el("div", "urow thead");
+    const h = el("div", `urow thead${isAdmin() ? " mod" : ""}`);
     for (const [label, cls] of [["#", ""], ["User", ""], ["Points", "right"], ["NFL", "right"], ["MLB", "right"], ["Titles", ""], ["Favourite team", ""], ["Music ELO", ""]]) {
       h.append(el("span", cls, label));
     }
+    if (isAdmin()) h.append(el("span", "us-mod", "Access"));
     return h;
+  }
+
+  /**
+   * Ban or lift, from the row. Admins only, and the server checks that
+   * again — this button being drawn is a convenience, never the
+   * permission itself.
+   */
+  async function toggleBan(u, button) {
+    const banning = !u.banned;
+    let reason = "";
+    if (banning) {
+      // A ban is the full block, so say so plainly before it happens
+      // rather than after. Cancel on the prompt is a clean way out.
+      reason = window.prompt(
+        `Ban ${u.displayName}?\n\n` +
+        "They are signed out everywhere and cannot sign back in. Picks " +
+        "already locked still settle and pay, and their ZCoins are not " +
+        "touched.\n\nReason (admins only ever see this):",
+        ""
+      );
+      if (reason === null) return;
+      if (!reason.trim()) { window.alert("A reason is needed. Nothing was changed."); return; }
+    } else if (!window.confirm(`Lift the ban on ${u.displayName}? They will be able to sign in again.`)) {
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = banning ? "Banning…" : "Lifting…";
+    let payload = null;
+    try {
+      payload = await fetch("/api/picks/admin/ban", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ login: u.login, banned: banning, reason })
+      }).then((r) => r.json());
+    } catch {
+      payload = null;
+    }
+
+    if (!payload?.ok) {
+      window.alert(payload?.message || "That didn't go through. Nothing was changed.");
+      button.disabled = false;
+      paint();
+      return;
+    }
+    // Straight from the server's answer rather than from what was asked
+    // for, so the row can never claim a state the database disagrees with.
+    u.banned = Boolean(payload.ban?.banned);
+    paint();
+  }
+
+  function banCell(u) {
+    const cell = el("span", "us-mod");
+    if (u.admin) {
+      // Admins are the people who can lift a ban. Letting one be banned
+      // makes a state the site cannot be talked out of.
+      const tag = el("span", "us-none", "Admin");
+      tag.title = "Admins can't be banned";
+      cell.append(tag);
+      return cell;
+    }
+    const button = el("button", `us-ban${u.banned ? " on" : ""}`, u.banned ? "Banned" : "Ban");
+    button.type = "button";
+    button.title = u.banned
+      ? `${u.displayName} is banned — click to lift it`
+      : `Ban ${u.displayName} from signing in`;
+    button.addEventListener("click", () => toggleBan(u, button));
+    cell.append(button);
+    return cell;
   }
 
   function skeleton(count) {
@@ -142,7 +218,7 @@
   }
 
   function row(u, rank, music, me) {
-    const line = el("div", `urow${me ? " me" : ""}${rank === 1 && u.picks.profit > 0 ? " first" : ""}`);
+    const line = el("div", `urow${me ? " me" : ""}${rank === 1 && u.picks.profit > 0 ? " first" : ""}${isAdmin() ? " mod" : ""}${u.banned ? " banned" : ""}`);
     line.append(el("span", "trank", `#${rank}`));
 
     const user = el("a", "tuser ulink");
@@ -198,6 +274,7 @@
       elo.append(el("span", "us-none", "—"));
     }
     line.append(elo);
+    if (isAdmin()) line.append(banCell(u));
     return line;
   }
 
@@ -212,6 +289,15 @@
       card.append(empty);
     }
     return card;
+  }
+
+  // The last list fetched, so a ban can redraw without asking again.
+  let users = [];
+  let musicMap = new Map();
+
+  function paint() {
+    if (!root?.isConnected) return;
+    root.replaceChildren(head(users.length), table(users, musicMap));
   }
 
   async function load() {
@@ -231,7 +317,10 @@
       root.replaceChildren(head(null), note);
       return;
     }
-    root.replaceChildren(head(payload.users.length), table(payload.users, music));
+    viewer = payload.viewer || null;
+    users = payload.users;
+    musicMap = music;
+    paint();
     // Badges next to names are the same ones the table shows, so no
     // second decoration pass is needed here.
   }

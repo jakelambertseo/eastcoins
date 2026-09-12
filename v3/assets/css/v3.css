@@ -2749,6 +2749,18 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .sc-gate p{margin:0 0 18px;color:var(--muted-2);font-size:.88rem;line-height:1.5}
 .sc-gate .login-btn{height:40px;padding:0 18px;font-size:.9rem}
 
+/* Told once, quietly, when a banned account tries to sign in. */
+.authnote{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:60;
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px 10px 14px;border-radius:11px;
+  border:1px solid rgba(255,107,133,.45);background:var(--panel);
+  color:var(--text);font-size:.84rem;font-weight:600;
+  box-shadow:0 16px 36px rgba(0,0,0,.5);
+}
+.authnote-x{background:none;border:0;color:var(--muted-2);font-size:1rem;line-height:1;cursor:pointer}
+.authnote-x:hover{color:var(--text)}
+
 /* ---------------------------------------------------------------- All Users
    One wide table; the same row language as the leaderboard with three
    more columns. Scrolls sideways inside its card on narrow screens. */
@@ -2759,6 +2771,27 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
   grid-template-columns:44px minmax(200px,1.2fr) 96px 72px 72px minmax(150px,1fr) minmax(190px,1fr) 140px;
 }
 .urow:last-child{border-bottom:0}
+/* Admins see one more column: who can still get in. Only they are sent
+   the ban state at all, so the column simply is not there for anyone
+   else and the grid keeps its original eight tracks. */
+.urow.mod{min-width:1110px;grid-template-columns:44px minmax(200px,1.2fr) 96px 72px 72px minmax(150px,1fr) minmax(190px,1fr) 140px 96px}
+.us-mod{display:flex;justify-content:flex-end}
+.us-ban{
+  height:26px;padding:0 10px;border-radius:7px;
+  border:1px solid var(--line-2);background:var(--panel-2);color:var(--muted);
+  font-family:var(--display);font-weight:700;font-size:.74rem;white-space:nowrap;cursor:pointer;
+  transition:background .14s ease,border-color .14s ease,color .14s ease;
+}
+.us-ban:hover:not(:disabled){border-color:rgba(255,107,133,.55);background:rgba(255,107,133,.12);color:var(--red)}
+/* Already banned: the button is the state as much as the control, so it
+   reads as on rather than as an invitation. */
+.us-ban.on{border-color:rgba(255,107,133,.5);background:rgba(255,107,133,.16);color:var(--red)}
+.us-ban.on:hover:not(:disabled){border-color:var(--green);background:var(--green-dim);color:var(--green)}
+.us-ban:disabled{opacity:.55;cursor:default}
+/* The row itself goes quiet, so a banned account is obvious while
+   scanning rather than only when you reach the last column. */
+.urow.banned{opacity:.55}
+.urow.banned .tuser strong{text-decoration:line-through}
 .urow.thead{
   min-height:40px;padding:0 16px;background:var(--panel-2);color:var(--muted-2);
   font-size:.64rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;

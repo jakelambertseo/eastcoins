@@ -19,6 +19,8 @@ export const WAGER_ALLOWLIST = new Set([
 ]);
 
 /* Logins allowed to open, void and settle markets. */
+import { isBanned } from "./_bans.js";
+
 export const ADMIN_ALLOWLIST = new Set([
   "zwades",
   "bootypaper",
@@ -117,6 +119,14 @@ export async function getSessionUser(db, request) {
     .first();
 
   if (!row) return null;
+
+  // A banned account cannot hold a session. Returning null here is what
+  // makes the ban total: every endpoint on the site already treats null
+  // as signed out, so picks, the casino, the wallet, favourites and the
+  // profile all refuse without any of them needing to know bans exist.
+  // isBanned fails open by design — see _bans.js for why.
+  if (await isBanned(db, row.twitch_id)) return null;
+
   return {
     id: String(row.twitch_id),
     login: String(row.twitch_login).toLowerCase(),
