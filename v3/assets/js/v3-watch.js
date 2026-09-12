@@ -171,7 +171,7 @@
     // fails silently in the frame. A real host is letters, digits, dots
     // and hyphens, with at least one dot inside it.
     const host = parsed.hostname;
-    if (!/^[a-z0-9-]+(.[a-z0-9-]+)+$/i.test(host)) {
+    if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(host)) {
       return { error: "That doesn't look like a link." };
     }
     if (host === location.hostname) return { error: "That's a link back to EastCoin." };
