@@ -189,7 +189,14 @@
 > "Who's here" strip reads GET `/api/presence`. A watch tab also sends
 > `ref` (the event id); GET returns `watching: {eventId: n}` and the strip's
 > poll dispatches `ec-presence` on `document`, which `v3-events.js` uses
-> for the "👀 n watching" pill on each card.
+> for the "👀 n watching" pill on each card. The watch page's control
+> bar carries the same idea as the Green Room's room pile:
+> `ECPresence.mountWatchers(el, eventId)` draws overlapping faces and
+> "n watching" beside "← Events" (`.wwho` in `v3.css`), filtering
+> `people` to `where === "watch"` with a matching `ref` and taking the
+> total from `watching` so guests are counted but faceless. It returns a
+> stop function because `buildBar()` runs again on every repaint; a
+> pasted `?url=` stream has no id and gets no pile.
 >
 > **The book** — the dashboard opens with the house's side of Picks,
 > built by `bookOf()` in `functions/api/admin/dashboard.js` (payload key

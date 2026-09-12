@@ -1373,6 +1373,20 @@ body.watch-on .view{
 }
 @media (prefers-reduced-motion:reduce){.watchsel.nudge{animation:none}}
 
+
+/* Who's watching — the Green Room's pile of faces, in the player bar.
+   Sits beside "← Events" and disappears entirely when nobody else is
+   here, so a quiet stream keeps the whole bar for its controls. */
+.wwho{display:flex;align-items:center;gap:8px;margin-right:2px;min-width:0}
+.wwho-pile{display:flex;align-items:center}
+.wwho-face{display:block;border-radius:50%;margin-left:-7px;line-height:0;text-decoration:none;transition:transform .12s ease}
+.wwho-face:first-child{margin-left:0}
+.wwho-face .wh-av{width:24px;height:24px;border:2px solid var(--panel);font-size:.58rem}
+.wwho-face.more .wh-av{background:var(--panel-3);color:var(--text);font-size:.56rem}
+.wwho-face:hover{transform:translateY(-2px)}
+.wwho-count{color:var(--muted);font-size:.78rem;font-weight:700;white-space:nowrap}
+@media (max-width:760px){.wwho-count{display:none}}
+
 /* Folded state. Absolute so the bar row collapses entirely and the
    video claims the height, rather than leaving a gap where it was. */
 .watchpeek{

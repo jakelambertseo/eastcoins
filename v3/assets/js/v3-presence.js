@@ -170,6 +170,63 @@
     }
   }
 
+
+  /* ------------------------------------------------ who's watching */
+
+  // The same idea as the Green Room's pile of faces, for one event:
+  // everyone whose tab says it is on THIS watch page. The count comes
+  // from `watching`, which counts people who aren't logged in too, so
+  // the faces can be fewer than the number — the rest become "+N".
+  const FACES = 5;
+
+  function drawWatchers(container, data, ref) {
+    const id = String(ref || "");
+    const people = (data?.people || []).filter((x) => x.where === "watch" && String(x.ref || "") === id);
+    const total = Number(data?.watching?.[id] || people.length);
+    container.replaceChildren();
+    // Nothing to say when the room is empty: the bar is tight enough
+    // that an empty label would only be clutter.
+    container.hidden = !total;
+    if (!total) return;
+
+    const pile = el("span", "wwho-pile");
+    for (const person of people.slice(0, FACES)) {
+      const face = el("a", "wwho-face ulink");
+      face.href = `/u/${encodeURIComponent(person.login)}`;
+      face.title = `${person.displayName} · watching this`;
+      face.append(avatar(person));
+      pile.append(face);
+    }
+    const rest = total - Math.min(people.length, FACES);
+    if (rest > 0) {
+      const more = el("span", "wwho-face more");
+      more.title = people.length > FACES ? "More people watching" : "Watching, not logged in";
+      more.append(el("span", "wh-av", `+${rest}`));
+      pile.append(more);
+    }
+    container.append(pile, el("span", "wwho-count", `${total} watching`));
+  }
+
+  /**
+   * Draws who is on this event's watch page and keeps it fresh.
+   * Hands back a stop function: the watch view rebuilds its bar, so
+   * the caller has to be able to put the old timer down.
+   */
+  function mountWatchers(container, ref) {
+    let timer = 0;
+    const refresh = async () => {
+      const data = await fetchRoom();
+      if (!container.isConnected) { window.clearInterval(timer); return; }
+      drawWatchers(container, data, ref);
+    };
+    // Whatever the last poll saw, drawn at once — a bar that fills in
+    // twenty seconds late reads as broken.
+    drawWatchers(container, latest, ref);
+    refresh();
+    timer = window.setInterval(refresh, 20 * 1000);
+    return () => window.clearInterval(timer);
+  }
+
   let stripTimer = 0;
   function mountStrip(container) {
     window.clearInterval(stripTimer);
@@ -183,5 +240,5 @@
     stripTimer = window.setInterval(refresh, 20 * 1000);
   }
 
-  window.ECPresence = Object.freeze({ beat, mountStrip, latest: () => latest });
+  window.ECPresence = Object.freeze({ beat, mountStrip, mountWatchers, latest: () => latest });
 })();
