@@ -11,7 +11,13 @@
 (() => {
   "use strict";
 
-  const POLL_MS = 1500;
+  // 3s, halved on 2026-09-12. This was the busiest page on the site: a tab
+  // left open at 1.5s is 57,600 requests a day, and that is what exhausted
+  // D1's daily read allowance. The countdown is unaffected — tickTimer
+  // redraws it every 250ms off a server-corrected local clock — so all this
+  // changes is how soon a flip's result and other people's bets appear,
+  // inside a 15-second result window.
+  const POLL_MS = 3000;
   let root = null;
   let shell = null;
   let refs = {};

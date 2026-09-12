@@ -16,7 +16,9 @@
 (() => {
   "use strict";
 
-  const POLL_MS = 1500;
+  // 3s, halved on 2026-09-12 for the same reason as the coin: see the note
+  // there. The round clock is drawn by tickTimer at 250ms, not by this.
+  const POLL_MS = 3000;
 
   function el(tag, className, text) {
     const node = document.createElement(tag);
