@@ -309,12 +309,13 @@
       refs.youList.append(K.el("p", "cf-empty", "Log in to keep a record."));
     }
 
-    // The ladder for the bomb count in play
-    const ladder = data.ladder || [];
-    refs.paysNote.textContent = `${(live ? live.mines : mines)} bomb${(live ? live.mines : mines) === 1 ? "" : "s"}`;
+    // The ladder for the board in play, or for whatever the picker is on.
+    const shownMines = live ? live.mines : mines;
+    const ladder = (data.ladders && data.ladders[shownMines]) || data.ladder || [];
+    refs.paysNote.textContent = `${shownMines} bomb${shownMines === 1 ? "" : "s"}`;
     refs.paysList.replaceChildren();
     const at = live ? live.picks.length : 0;
-    for (const step of ladder.slice(0, 12)) {
+    for (const step of ladder) {
       const r = K.el("div", `mn-rung${step.picks === at ? " at" : ""}${step.picks === at + 1 ? " next" : ""}`);
       r.append(K.el("span", null, `${step.picks} safe`), K.el("strong", null, `×${step.multiplier}`));
       refs.paysList.append(r);

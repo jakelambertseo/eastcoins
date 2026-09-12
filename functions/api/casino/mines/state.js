@@ -63,9 +63,15 @@ export async function onRequestGet(context) {
     };
   }
 
-  // What one tile pays at each bomb count, for the picker.
+  // What one tile pays at each bomb count, for the picker, and the whole
+  // ladder for each — the page has to redraw when someone changes the
+  // count BEFORE a board exists, so one ladder is not enough.
   const firstStep = {};
-  for (let m = MIN_MINES; m <= MAX_MINES; m += 1) firstStep[m] = multiplierFor(m, 1);
+  const ladders = {};
+  for (let m = MIN_MINES; m <= MAX_MINES; m += 1) {
+    firstStep[m] = multiplierFor(m, 1);
+    ladders[m] = ladderFor(m);
+  }
 
   return json({
     ok: true,
@@ -77,6 +83,8 @@ export async function onRequestGet(context) {
       firstStep,
       canBet: Boolean(user) && walletWritesEnabled(context.env)
     },
+    ladders,
+    // Kept for older clients that read a single ladder.
     ladder: live ? ladderFor(Number(live.mines)) : ladderFor(DEFAULT_MINES),
     live: live ? publicGame(live) : null,
     ledger,

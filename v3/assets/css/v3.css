@@ -3365,7 +3365,7 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
 .mn-hint{color:var(--muted-2);font-size:.74rem;margin-left:2px}
 
 /* The ladder in the side column. */
-.mn-ladder{display:flex;flex-direction:column;gap:2px}
+.mn-ladder{display:flex;flex-direction:column;gap:2px;max-height:280px;overflow-y:auto}
 .mn-rung{
   display:flex;align-items:center;justify-content:space-between;gap:10px;
   padding:5px 8px;border-radius:7px;color:var(--muted);font-size:.8rem;
