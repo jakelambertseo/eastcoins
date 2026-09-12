@@ -33,6 +33,10 @@
     standing: { title: "Last One Standing", icon: "🏆", blurb: "Everyone puts in 20. One knocked out at a time; the last one takes the lot.", route: "standing" }
   };
 
+  // Polls the moment the tab comes back into view; see the note in
+  // v3-pvp.js. The floor carries the PvP tables' lobby clocks now.
+  let onVis = null;
+
   function go(route) {
     history.pushState({ view: route }, "", `/?view=${route}`);
     window.ECV3?.go(route, { push: false });
@@ -282,10 +286,14 @@
       build();
       poll();
       pollTimer = window.setInterval(poll, POLL_MS);
+      onVis = () => { if (!document.hidden) poll(); };
+      document.addEventListener("visibilitychange", onVis);
       tickTimer = window.setInterval(renderTiles, 500);
     },
     unmount() {
       window.clearInterval(pollTimer);
+      if (onVis) document.removeEventListener("visibilitychange", onVis);
+      onVis = null;
       window.clearInterval(tickTimer);
       data = null; refs = {};
       document.title = "EastCoin";

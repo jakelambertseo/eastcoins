@@ -41,6 +41,7 @@
     let toast = () => {};
     let pop = () => {};
     let polledPastZero = false;     // one immediate poll when the clock ends
+    let onVis = null;               // polls the moment the tab comes back
 
     const serverNow = () => Date.now() + offset;
     const myLogin = () => String(data?.me?.login || "");
@@ -320,11 +321,18 @@
         poll();
         schedule();
         tickTimer = window.setInterval(tick, 250);
+        // A tab that comes back into view gets its state now, not on the
+        // next tick: with a sixty-second clock on screen, six seconds of
+        // stale page reads as broken.
+        onVis = () => { if (!document.hidden && !busy) poll(); };
+        document.addEventListener("visibilitychange", onVis);
       },
       unmount() {
         window.clearInterval(pollTimer);
         window.clearInterval(tickTimer);
         pollTimer = tickTimer = 0;
+        if (onVis) document.removeEventListener("visibilitychange", onVis);
+        onVis = null;
         data = null; refs = {}; playing = false;
         document.title = "EastCoin";
       }
