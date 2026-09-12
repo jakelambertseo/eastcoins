@@ -208,7 +208,16 @@
 > revealed, and the animation is playback. `pvp_entries` is in
 > `hourlyNet()`, the floor, the activity feed, profiles and the dashboard's
 > book; a refund is neither a win nor a loss anywhere. No chat, no bot:
-> the tables live on the site only, by request.
+> the tables live on the site only, by request. **Both are `paused: true`
+> in `GAMES` since 2026-09-12 evening**: off the floor, `join.js` refuses
+> with PAUSED before touching anything, the pages read "Closed for now",
+> and the floor still calls `settleDue` so an in-flight lobby resolves.
+> Work continues on **`/pvp-test`**, which loads the REAL `v3-pvp.js`
+> against `pvp-sandbox.js`, an engine in the page that seats bots, runs
+> the clock and settles with ports of `chambersFor`/`outcomeFor`/
+> `payoutsFor` — a scratch test runs both over the same seeds — and
+> intercepts every `/api/` call, so no ZCoin can move there. Flip
+> `paused` to reopen; the practice page needs nothing changed.
 >
 > **The casino is near-fair on purpose (2026-09-11)** — every game
 > returns ~98–99% (Hi-Lo and Mines `EDGE_RETURN = 0.99`; Plinko's table

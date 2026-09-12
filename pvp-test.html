@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>EastCoin | PvP practice</title>
+<link href="/assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
+<script>document.write('<link rel="stylesheet" href="/v3/assets/css/v3.css?pt=' + Date.now() + '">');</script>
+<style>
+  /* Only the practice bar is styled here; the table below it is the
+     casino's own page, drawn by the casino's own script. */
+  body{margin:0;background:var(--ink,#0c0a09);color:var(--text,#f4ede5)}
+  .pt-bar{position:sticky;top:0;z-index:30;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;
+    border-bottom:1px solid rgba(255,255,255,.1);background:rgba(12,10,9,.94);backdrop-filter:blur(10px)}
+  .pt-badge{padding:4px 10px;border-radius:999px;border:1px solid rgba(255,107,133,.55);color:#ffb3c0;font-size:.64rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+  .pt-group{display:flex;align-items:center;gap:5px;padding-left:10px;border-left:1px solid rgba(255,255,255,.1)}
+  .pt-group span{color:var(--muted-2,#7d746a);font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-right:2px}
+  .pt-btn{height:30px;padding:0 11px;border-radius:8px;border:1px solid rgba(255,255,255,.16);background:#1e1a17;color:#aca298;font:inherit;font-size:.78rem;font-weight:800;cursor:pointer;white-space:nowrap}
+  .pt-btn:hover{color:#f4ede5;border-color:rgba(255,255,255,.28)}
+  .pt-btn.on{color:#e8bf35;border-color:rgba(232,191,53,.45);background:rgba(232,191,53,.13)}
+  .pt-btn.go{color:#4ddb8b;border-color:rgba(77,219,139,.4)}
+  .pt-btn.danger{color:#ff6b85;border-color:rgba(255,107,133,.4)}
+  .pt-in{width:56px;height:30px;padding:0 8px;border-radius:8px;border:1px solid rgba(255,255,255,.16);background:#1e1a17;color:#f4ede5;font:inherit;font-size:.8rem;font-weight:800;text-align:center}
+  .pt-status{margin-left:auto;color:#aca298;font-size:.78rem;font-weight:700;white-space:nowrap}
+  .pt-status b{color:#e8bf35}
+  .view{max-width:1100px;margin:0 auto;padding:18px}
+  @media(max-width:760px){.pt-status{margin-left:0;width:100%}}
+</style>
+</head>
+<body>
+
+<div class="pt-bar">
+  <span class="pt-badge">Practice · no ZCoins</span>
+  <div class="pt-group">
+    <span>Table</span>
+    <button class="pt-btn on" data-game="roulette" type="button">Roulette</button>
+    <button class="pt-btn" data-game="standing" type="button">Last One Standing</button>
+  </div>
+  <div class="pt-group">
+    <span>Clock</span>
+    <input class="pt-in" id="secs" type="number" min="3" max="600" value="60" aria-label="Lobby seconds">
+    <button class="pt-btn" data-secs="10" type="button">10s</button>
+    <button class="pt-btn" data-secs="30" type="button">30s</button>
+    <button class="pt-btn" data-secs="60" type="button">60s</button>
+  </div>
+  <div class="pt-group">
+    <span>Bots</span>
+    <button class="pt-btn" data-bots="1" type="button">+1</button>
+    <button class="pt-btn" data-bots="3" type="button">+3</button>
+    <button class="pt-btn" data-bots="8" type="button">+8</button>
+  </div>
+  <div class="pt-group">
+    <button class="pt-btn go" id="startNow" type="button">Start now</button>
+    <button class="pt-btn danger" id="reset" type="button">Reset table</button>
+  </div>
+  <div class="pt-status" id="status">Loading…</div>
+</div>
+
+<div class="view" id="root"></div>
+
+<script>
+  // The casino's script looks for the shell and the kit. Give it just
+  // enough shell to mount; the kit is the real one.
+  const views = {};
+  window.ECV3 = {
+    register(name, view) { views[name] = view; },
+    setWallet() {},
+    go() {},
+    state: { session: { user: { login: "you" } } }
+  };
+  window.ECBadges = { decorate() {} };
+  window.ECPresence = { beat() {} };
+</script>
+<script src="/pvp-sandbox.js"></script>
+<script>
+  // Every request the table page makes is answered here. Nothing reaches
+  // the site's API, so nothing can reach a wallet.
+  const realFetch = window.fetch.bind(window);
+  window.fetch = async (input, init) => {
+    const url = String(input);
+    if (url.includes("/api/casino/pvp/state")) {
+      const game = new URL(url, location.origin).searchParams.get("game");
+      return { ok: true, json: async () => PvpSandbox.statePayload(game) };
+    }
+    if (url.includes("/api/casino/pvp/join")) {
+      return { ok: true, json: async () => PvpSandbox.joinPayload() };
+    }
+    if (url.includes("/api/")) {
+      // Belt and braces: the table page asks for nothing else, but if it
+      // ever did, it must not get through from a practice page.
+      return { ok: false, json: async () => ({ ok: false, code: "PRACTICE" }) };
+    }
+    return realFetch(input, init);
+  };
+</script>
+<script src="/v3/assets/js/v3-casino-kit.js?v=9"></script>
+<script>
+  const root = document.getElementById("root");
+  const status = document.getElementById("status");
+  let current = null;
+
+  function mount(game) {
+    if (current) { views[current].unmount(); root.replaceChildren(); }
+    PvpSandbox.setGame(game);
+    current = game;
+    views[game].mount(root);
+    document.querySelectorAll("[data-game]").forEach((b) => b.classList.toggle("on", b.dataset.game === game));
+    document.title = `EastCoin | PvP practice — ${PvpSandbox.NAMES[game]}`;
+  }
+
+  function tick() {
+    const s = PvpSandbox.state;
+    if (s.lobby) {
+      const left = Math.max(0, Math.ceil((s.lobby.startsAt - Date.now()) / 1000));
+      status.innerHTML = `<b>${s.lobby.players.length}</b> seated · starts in <b>${left}s</b>`;
+    } else if (s.last) {
+      status.innerHTML = `Last table: <b>${s.last.status === "VOID" ? "refunded" : s.last.players.find((p) => p.status === "WON")?.displayName + " won " + (20 * s.last.players.length)}</b> · sit or add bots for another`;
+    } else {
+      status.textContent = "Empty table · add bots, or sit down yourself";
+    }
+  }
+
+  document.querySelectorAll("[data-game]").forEach((b) => b.addEventListener("click", () => mount(b.dataset.game)));
+  document.querySelectorAll("[data-secs]").forEach((b) => b.addEventListener("click", () => { document.getElementById("secs").value = b.dataset.secs; PvpSandbox.setLobbySeconds(b.dataset.secs); }));
+  document.getElementById("secs").addEventListener("change", (e) => PvpSandbox.setLobbySeconds(e.target.value));
+  document.querySelectorAll("[data-bots]").forEach((b) => b.addEventListener("click", () => PvpSandbox.addBots(Number(b.dataset.bots))));
+  document.getElementById("startNow").addEventListener("click", () => PvpSandbox.startNow());
+  document.getElementById("reset").addEventListener("click", () => { PvpSandbox.reset(); if (current) mount(current); });
+
+  const script = document.createElement("script");
+  script.src = "/v3/assets/js/v3-pvp.js?pt=" + Date.now();
+  script.onload = () => {
+    const wait = () => (views.roulette && views.standing ? mount("roulette") : setTimeout(wait, 40));
+    wait();
+    setInterval(tick, 500);
+  };
+  document.head.append(script);
+</script>
+</body>
+</html>

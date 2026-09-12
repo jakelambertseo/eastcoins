@@ -233,7 +233,7 @@
           refs.phase.className = `cf-phase ${last.players.find((p) => p.login === me)?.payout > last.stake ? "open" : ""}`;
           spec.drawSeats(last.players, refs.arena, { me, result: last.result, settled: true });
         } else {
-          refs.phase.textContent = "Nobody at the table";
+          refs.phase.textContent = config.paused ? "Closed for now" : "Nobody at the table";
           refs.phase.className = "cf-phase";
           spec.drawSeats([], refs.arena, { me });
         }
@@ -243,8 +243,9 @@
       // Controls
       const capped = Number.isFinite(data.me?.hourNet) && data.me.hourNet >= config.hourCap;
       const full = lobby && lobby.players.length >= config.maxPlayers;
-      refs.join.disabled = busy || playing || !config.canBet || capped || Boolean(lobby?.youIn) || Boolean(full);
+      refs.join.disabled = busy || playing || !config.canBet || capped || Boolean(lobby?.youIn) || Boolean(full) || Boolean(config.paused);
       if (playing) { K.plain(refs.join, "Playing…"); refs.note.textContent = "The table is playing out. The next one opens the moment it's done."; }
+      else if (config.paused) { K.plain(refs.join, "Closed for now"); refs.note.textContent = "This table is off the floor while it's being worked on. Try it on the practice page at eastcoin.vip/pvp-test — no ZCoins change hands there."; }
       else if (!data.me) { K.plain(refs.join, "Log in to play"); refs.note.textContent = "Log in with Twitch — the button up top — and your ZCoins come with you."; }
       else if (!config.canBet) { K.plain(refs.join, "Casino paused"); refs.note.textContent = "ZCoin transfers aren't switched on right now."; }
       else if (capped) { K.withCoins(refs.join, `Up [[${data.me.hourNet}]] this hour — the cap`); refs.note.textContent = "The tables reopen for you as the hour rolls on."; }

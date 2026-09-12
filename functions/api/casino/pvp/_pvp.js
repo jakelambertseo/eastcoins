@@ -56,9 +56,12 @@ export const MAX_PLAYERS = 12;
 // is safe; it just has to be longer than any honest settlement.
 const STUCK_MS = 2 * 60 * 1000;
 
+// paused: off the floor and refusing buy-ins while the game is worked on.
+// The practice page at /pvp-test runs the same client against an engine
+// in the browser, where no ZCoin can move. Flip to false to reopen.
 export const GAMES = {
-  roulette: { key: "roulette", name: "Russian Roulette" },
-  standing: { key: "standing", name: "Last One Standing" }
+  roulette: { key: "roulette", name: "Russian Roulette", paused: true },
+  standing: { key: "standing", name: "Last One Standing", paused: true }
 };
 export const gameFor = (key) => GAMES[String(key || "").toLowerCase()] || null;
 

@@ -22,6 +22,11 @@ export async function onRequestPost(context) {
   try { body = await context.request.json(); } catch { body = {}; }
   const game = gameFor(body.game);
   if (!game) return fail("BAD_GAME", "Which table?");
+  // Refused before anything is touched, so a paused table cannot take a
+  // buy-in from anyone, however they reached the page.
+  if (game.paused) {
+    return fail("PAUSED", "This table is closed while it's being worked on. Practice it at eastcoin.vip/pvp-test — no ZCoins change hands there.", 409);
+  }
 
   const now = Date.now();
   await touchPresence(db, game, user.id, now);

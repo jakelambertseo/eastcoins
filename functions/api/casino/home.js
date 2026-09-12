@@ -81,7 +81,10 @@ export async function onRequestGet(context) {
   // table's own page, so settling here is what pays a round whose
   // players all wandered off before the clock ran out.
   for (const g of Object.values(PVP)) {
+    // Settle first, THEN skip a paused game: a lobby that was open when
+    // the pause landed still has to play out or refund.
     await settlePvp(context.env, db, g, now).catch(() => {});
+    if (g.paused) continue;
     const [lobby, room, who] = await Promise.all([
       pvpLobby(db, g).catch(() => null),
       db.prepare(`SELECT COUNT(*) AS n FROM casino_presence WHERE game = ? AND seen_at >= ?`).bind(g.key, since).first().catch(() => null),

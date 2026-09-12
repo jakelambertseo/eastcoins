@@ -111,6 +111,7 @@ export async function onRequestGet(context) {
       stake: STAKE, lobbySeconds: LOBBY_MS / 1000, minPlayers: MIN_PLAYERS, maxPlayers: MAX_PLAYERS,
       maxPerHour: MAX_BETS_PER_HOUR, hourCap: HOUR_WIN_CAP,
       canBet: Boolean(user) && walletWritesEnabled(context.env),
+      paused: Boolean(game.paused),
       table
     },
     lobby,
