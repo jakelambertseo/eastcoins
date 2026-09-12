@@ -14,6 +14,7 @@
   const K = window.ECCasino;
   const POLL_MS = 6000;
   const STEP_MS = 110;          // one peg row
+  const BALL_TOP = 4;           // matches .pk-ball top in v3.css
   let root = null;
   let refs = {};
   let data = null;
@@ -97,10 +98,22 @@
       ball.classList.remove("landed");
       place(0, 0);
 
+      // The last hop is into the bucket itself, measured rather than
+      // assumed: eight peg rows leave the ball a row short of the slots,
+      // which reads as the ball stopping early.
+      const intoBucket = () => {
+        const top = refs.bucketRow?.getBoundingClientRect().top;
+        const from = board.getBoundingClientRect().top + BALL_TOP;
+        const slot = right - rows / 2;
+        const y = Number.isFinite(top) ? top - from + 6 : rows * down;
+        ball.classList.add("landed");
+        ball.style.transform = `translate(${slot * across}px, ${y}px)`;
+      };
+
       let i = 0;
       const step = () => {
         if (i >= rows) {
-          ball.classList.add("landed");
+          intoBucket();
           highlight(drop.bucket);
           dropping = false;
           window.setTimeout(() => { render(); resolve(); }, 420);
