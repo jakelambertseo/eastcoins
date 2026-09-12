@@ -361,15 +361,22 @@
     chatMounted = true;
     chatMountedAt = Date.now();
     els.chatFrame.src = els.chatFrame.dataset.src;
-    els.chatFrame.hidden = false;
-    // The placeholder covers the second or two Twitch takes to paint, and
-    // goes when the frame has loaded — or after a few seconds regardless,
-    // so a slow embed cannot leave "Loading chat…" over a working chat.
+    // The frame stays display:none while Twitch loads and the placeholder
+    // holds the rail; the two swap in the same instant once the frame has
+    // loaded (or after five seconds regardless, so a slow embed cannot
+    // leave "Loading chat…" over a working chat). Never both in the column
+    // at once — a visible frame beside a flex:1 placeholder was shoved to
+    // the bottom half of the rail until the placeholder went — and never
+    // one OVER the other: Twitch disables the message box for mods the
+    // moment anything covers the iframe.
     // .chat-placeholder sets display:grid, which beats [hidden]'s UA
     // display:none — so it is removed outright rather than hidden.
-    const dropPlaceholder = () => els.chatPlaceholder?.remove();
-    els.chatFrame.addEventListener("load", dropPlaceholder, { once: true });
-    window.setTimeout(dropPlaceholder, 5000);
+    const reveal = () => {
+      els.chatFrame.hidden = false;
+      els.chatPlaceholder?.remove();
+    };
+    els.chatFrame.addEventListener("load", reveal, { once: true });
+    window.setTimeout(reveal, 5000);
 
     if (!chatWatchdog) {
       chatWatchdog = window.setInterval(chatWatchdogTick, 60000);
