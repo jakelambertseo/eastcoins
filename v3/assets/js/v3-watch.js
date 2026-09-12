@@ -166,7 +166,15 @@
       return { error: "That doesn't look like a link." };
     }
     if (parsed.protocol !== "https:") return { error: "Only https:// links can be embedded." };
-    if (parsed.hostname === location.hostname) return { error: "That's a link back to EastCoin." };
+    // new URL() is happy with a host that could never resolve: typing a
+    // few words gives "https://not%20a%20link/", which parses, loads, and
+    // fails silently in the frame. A real host is letters, digits, dots
+    // and hyphens, with at least one dot inside it.
+    const host = parsed.hostname;
+    if (!/^[a-z0-9-]+(.[a-z0-9-]+)+$/i.test(host)) {
+      return { error: "That doesn't look like a link." };
+    }
+    if (host === location.hostname) return { error: "That's a link back to EastCoin." };
     return { url: window.ECEmbed?.youtube?.(parsed.href) || parsed.href };
   }
 
