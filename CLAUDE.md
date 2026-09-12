@@ -136,9 +136,12 @@
 > board committed as `sha256(seed)` before the first tile and the bombs
 > derived from the seed alone (Fisher–Yates over 0..24, each swap from
 > `sha256(seed:shuffle:i)`). Each safe tile pays `C(25,k)/C(S,k)` less the
-> same 4% edge Hi-Lo takes; cash out after any safe tile. **×50 is the hard
-> ceiling** — `multiplierFor()` and `cashOut()` both clamp, so the page can
-> never quote more than the payout honours, and `MAX_MINES` is 10 because
+> same 4% edge Hi-Lo takes; cash out after any safe tile. The run
+> auto-cashes at `topRung()` — the last rung still **under** the ×50
+> ceiling (3 bombs: 17 tiles ×39.43; 10 bombs: 6 tiles ×33.97) — rather
+> than clamping a higher rung down to ×50, which would have been a hidden
+> second cut: pushing a ten-bomb board to the end would have returned 67%
+> instead of 96%. `MAX_MINES` is 10 because
 > past that the ladder leaps (20 bombs goes ×4.8, ×28.8, ×220.8) and one
 > board could pay thousands the hourly cap cannot claw back. Winnings count
 > toward `HOUR_WIN_CAP` via `hourlyNet()`, which had to learn about

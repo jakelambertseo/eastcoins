@@ -4,12 +4,12 @@
    multiplier; a bomb ends the run and the stake is gone. The board
    was fixed by the seed before the first tile was touched.
 
-   Clearing every safe tile, or reaching the ×50 ceiling, pays out
-   on the spot. */
+   Clearing every safe tile, or reaching the last rung under the ×50
+   ceiling, pays out on the spot. */
 
 import { getSessionUser, json, fail } from "../../picks/_lib.js";
 import { ensureSchema } from "../_engine.js";
-import { ensureMines, bombsFor, multiplierFor, publicGame, cashOut, TILES, MAX_MULTIPLIER } from "./_mines.js";
+import { ensureMines, bombsFor, multiplierFor, topRung, publicGame, cashOut, TILES } from "./_mines.js";
 
 export async function onRequestPost(context) {
   const db = context.env.PICKS_DB;
@@ -55,8 +55,10 @@ export async function onRequestPost(context) {
     .run();
   if (!r.meta?.changes) return fail("RACE", "That tile was already turned — refresh.", 409);
 
+  // Out of road: either every safe tile is uncovered, or the next rung
+  // would pass the ceiling. Either way this run pays out here.
   const cleared = newPicks.length >= TILES - Number(g.mines);
-  if (cleared || multiplier >= MAX_MULTIPLIER) {
+  if (cleared || newPicks.length >= topRung(Number(g.mines))) {
     const fresh = await db.prepare(`SELECT * FROM mines_games WHERE id = ?`).bind(id).first();
     const paid = await cashOut(context.env, db, fresh, user.login);
     const done = await db.prepare(`SELECT * FROM mines_games WHERE id = ?`).bind(id).first();

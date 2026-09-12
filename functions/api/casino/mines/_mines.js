@@ -22,9 +22,11 @@
    and the house keeps 4% of it, the same edge Higher or Lower
    takes. Three bombs: one tile ×1.09, five tiles ×1.94, ten ×4.85.
    Cash out any time after the first safe tile. A bomb ends the run
-   and the stake is gone. The run also pays out on its own at ×50
-   or when every safe tile is uncovered, and ×50 is the most any board
-   can pay however high the ladder would otherwise read.
+   and the stake is gone. The run pays out on its own once every safe
+   tile is uncovered, or at the last rung still under the ×50 ceiling —
+   it stops below the ceiling rather than being clamped down to it, so
+   the 4% edge holds wherever someone chooses to stop. Three bombs run
+   out of road at 17 tiles (×39.43), ten bombs at 6 (×33.97).
 
    One live game per person; stake and per-hour limits are the
    casino's, and winnings count toward the same hourly cap.
@@ -96,20 +98,33 @@ export function multiplierFor(mines, picks) {
   if (picks > safe) return null;
   let fair = 1;
   for (let i = 0; i < picks; i += 1) fair *= (TILES - i) / (safe - i);
-  // Never quote above the ceiling: the page must not promise a price
-  // the payout will not honour.
-  return Math.min(MAX_MULTIPLIER, Math.round(EDGE_RETURN * fair * 100) / 100);
+  return Math.round(EDGE_RETURN * fair * 100) / 100;
+}
+
+/**
+ * The last tile a board can pay for: the highest rung still at or under
+ * the ×50 ceiling.
+ *
+ * The run auto-cashes here rather than one rung further. Clamping a
+ * higher rung down to ×50 instead would have been a hidden second cut —
+ * pushing to the end of a ten-bomb board would return 67% rather than
+ * the 96% every other cash-out pays. Stopping below the ceiling keeps
+ * the edge at 4% wherever someone chooses to stop.
+ */
+export function topRung(mines) {
+  const safe = TILES - mines;
+  let last = 1;
+  for (let k = 1; k <= safe; k += 1) {
+    if (multiplierFor(mines, k) > MAX_MULTIPLIER) break;
+    last = k;
+  }
+  return last;
 }
 
 /** The whole ladder for a bomb count, so the page can show what's ahead. */
 export function ladderFor(mines) {
-  const safe = TILES - mines;
   const out = [];
-  for (let k = 1; k <= safe; k += 1) {
-    const m = multiplierFor(mines, k);
-    out.push({ picks: k, multiplier: m });
-    if (m >= MAX_MULTIPLIER) break;
-  }
+  for (let k = 1; k <= topRung(mines); k += 1) out.push({ picks: k, multiplier: multiplierFor(mines, k) });
   return out;
 }
 
@@ -119,7 +134,8 @@ export function publicGame(g, { bombs = null } = {}) {
   const picks = parse(g.picks, []);
   const over = g.status !== "LIVE";
   const multiplier = Number(g.multiplier);
-  const next = over ? null : multiplierFor(Number(g.mines), picks.length + 1);
+  // Nothing is quoted past the last rung the board can pay for.
+  const next = over || picks.length >= topRung(Number(g.mines)) ? null : multiplierFor(Number(g.mines), picks.length + 1);
   return {
     id: g.id,
     status: g.status,
@@ -154,8 +170,8 @@ export async function gamesLastHour(db, userId) {
 
 /** Pays out a run. Idempotent per game: the operation key is the game id. */
 export async function cashOut(env, db, g, login) {
-  // Clamped again here so a stored multiplier can never pay above the
-  // ceiling, whatever wrote it.
+  // A stored multiplier can never legitimately pass the ceiling — the run
+  // auto-cashes below it — but clamp anyway so a bad write cannot overpay.
   const payout = Math.floor(Number(g.stake) * Math.min(MAX_MULTIPLIER, Number(g.multiplier)));
   const opId = newId("op");
   const begun = await beginOperation(db, {
