@@ -3384,9 +3384,14 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
    moved by transform: 26px is one half-slot across and one row
    down, which is what the peg grid is built on.
    ============================================================ */
-.pk-board{position:relative;width:min(420px,100%);margin:10px auto 6px;padding:6px 0}
+/* --pk-pitch is the distance between neighbouring pegs, between
+   neighbouring buckets, and one horizontal half-step of the ball. They
+   have to be the same number or the ball misses the pegs it is meant to
+   bounce off. v3-plinko.js reads it back out of the computed style, so
+   changing it here is enough. */
+.pk-board{position:relative;width:min(420px,100%);margin:10px auto 6px;padding:6px 0;--pk-pitch:26px}
 .pk-pegs{display:flex;flex-direction:column;align-items:center;gap:0}
-.pk-row{display:flex;justify-content:center;gap:14px;height:26px;align-items:center}
+.pk-row{display:flex;justify-content:center;gap:calc(var(--pk-pitch) - 6px);height:var(--pk-pitch);align-items:center}
 .pk-peg{
   width:6px;height:6px;border-radius:50%;
   background:rgba(255,255,255,.28);box-shadow:0 0 6px rgba(255,255,255,.08);
@@ -3399,11 +3404,12 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
 }
 .pk-ball.landed{transition:transform .16s cubic-bezier(.3,1.6,.5,1)}
 
-.pk-buckets{display:flex;justify-content:center;gap:3px;width:min(420px,100%);margin:2px auto 0}
+.pk-buckets{display:flex;justify-content:center;gap:2px;margin:2px auto 0;--pk-pitch:26px}
 .pk-bucket{
-  flex:1 1 0;min-width:0;padding:7px 2px;border-radius:8px;text-align:center;
+  flex:0 0 calc(var(--pk-pitch) - 2px);width:calc(var(--pk-pitch) - 2px);
+  padding:7px 1px;border-radius:8px;text-align:center;
   border:1px solid var(--line);background:var(--panel-2);
-  color:var(--muted);font-size:.68rem;font-weight:800;
+  color:var(--muted);font-size:.62rem;font-weight:800;
   transition:transform .18s ease,background .18s ease,color .18s ease,border-color .18s ease;
 }
 .pk-bucket.mid{color:var(--text);border-color:var(--line-2)}
@@ -3416,6 +3422,8 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
 @media (prefers-reduced-motion:reduce){
   .pk-ball,.pk-bucket{transition:none}
 }
-@media (max-width:520px){
-  .pk-bucket{font-size:.6rem;padding:6px 1px}
+/* Narrow screens shrink the whole board by shrinking the one number. */
+@media (max-width:420px){
+  .pk-board,.pk-buckets{--pk-pitch:21px}
+  .pk-bucket{font-size:.55rem}
 }

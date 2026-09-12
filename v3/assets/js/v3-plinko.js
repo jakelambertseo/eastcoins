@@ -80,10 +80,13 @@
       const rows = data?.config?.rows || 8;
       let right = 0;
 
+      // One number for both axes, read from the CSS so the ball, the pegs
+      // and the buckets can never drift apart.
+      const pitch = parseFloat(getComputedStyle(board).getPropertyValue("--pk-pitch")) || 26;
       const place = (row, rights) => {
         // Centre of the row, shifted half a slot per step taken.
-        const slot = (rights - row / 2);
-        ball.style.transform = `translate(${slot * 26}px, ${row * 26}px)`;
+        const slot = rights - row / 2;
+        ball.style.transform = `translate(${slot * pitch}px, ${row * pitch}px)`;
       };
 
       ball.hidden = false;
