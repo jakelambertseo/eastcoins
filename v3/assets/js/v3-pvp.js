@@ -126,7 +126,16 @@
 
       const head = K.el("div", "viewhead");
       const copy = K.el("div");
-      copy.append(K.el("h1", null, spec.title), K.el("p", null, spec.blurb));
+      const h1 = K.el("h1", null, spec.title);
+      if (spec.iconUrl) {
+        const img = document.createElement("img");
+        img.className = "pv-title-img";
+        img.src = spec.iconUrl;
+        img.alt = "";
+        img.decoding = "async";
+        h1.append(img);
+      }
+      copy.append(h1, K.el("p", null, spec.blurb));
       head.append(copy);
       const right = K.el("div", "cas-headright");
       refs.status = K.el("span", "cf-status", "Connecting…");
@@ -349,7 +358,8 @@
 
   const roulette = {
     key: "roulette",
-    title: "Russian Roulette",
+    title: "Russian Roulette - PVP",
+    iconUrl: "https://cdn.7tv.app/emote/01G1FDHE4R0005G1MWWMPGSX71/1x.webp",
     blurb: "Everyone puts in 20. One live round. Whoever it fires on loses their stake, and everyone still standing splits it.",
     joinedLine: "The clock's running.",
     paysTitle: "What survivors win",

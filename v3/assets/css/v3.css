@@ -3345,13 +3345,8 @@ body:not(.spooky) .spookystrip{display:none}
 .spooky-layer .web{position:absolute;top:0;width:190px;height:190px;opacity:.16;color:#d8d2c4}
 .spooky-layer .web.left{left:0}
 .spooky-layer .web.right{right:0;transform:scaleX(-1)}
-.spooky-layer .bat{position:absolute;left:0;color:#120e1a;opacity:.55;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7));animation:batdrift linear infinite}
-.spooky-layer .bat svg{display:block;animation:batflap .42s ease-in-out infinite alternate}
-@keyframes batflap{from{transform:scaleY(1)}to{transform:scaleY(.72)}}
-@keyframes batdrift{from{transform:translateX(-60px)}to{transform:translateX(100vw)}}
-/* Nothing moves over a stream: the bats sit out the watch page. The
-   cobwebs and fog are still, so they stay. */
-body.spooky.full[data-route="watch"] .spooky-layer .bat{display:none}
+/* The bats and their two keyframes were removed on 2026-09-12; the
+   layer is webs and fog, neither of which moves. */
 .spooky-layer .fog{position:absolute;left:0;right:0;bottom:0;height:120px;background:linear-gradient(to top,rgba(124,58,237,.16),transparent)}
 
 /* The season strip at the top of the Sports page. */
@@ -3384,10 +3379,7 @@ body.spooky .cas-games-head h2::after{content:" 🕯️"}
 body.spooky .lp-kicker::after{content:" 🧛"}
 body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
 
-@media (prefers-reduced-motion:reduce){
-  .spooky-layer .bat{display:none}
-  .spooky-layer .bat svg{animation:none}
-}
+/* (the reduced-motion rule for the bats went with them) */
 
 /* Admin: the result row under a fight that has started. */
 .adm-settle{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 4px}
@@ -3631,6 +3623,9 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
    of seats round a cylinder or a floor of tiles that get knocked out.
    ============================================================ */
 .pv-count{text-align:center;font-family:var(--display);font-weight:800;font-size:2.4rem;letter-spacing:-.03em;line-height:1;margin:2px 0 10px;color:var(--gold)}
+/* The emote beside a PvP title, on the page and on its floor tile. */
+.pv-title-img{width:1.15em;height:1.15em;margin-left:.35em;vertical-align:-.18em;object-fit:contain}
+.cas-icon img{width:1.35em;height:1.35em;object-fit:contain;vertical-align:middle}
 .pv-arena{position:relative;min-height:330px;border-radius:var(--radius);border:1px solid var(--line);background:radial-gradient(circle at 50% 45%,#221d1a,#100d0c 72%);display:grid;place-items:center;margin-bottom:12px}
 .cf-phase.bad{color:var(--red)}
 

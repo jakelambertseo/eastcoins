@@ -70,11 +70,11 @@
 > in `localStorage` `ec_v3_music_dock`.
 >
 > **October theme** — `applySeason()` in `v3-shell.js` sets `body.spooky.full`
-> for October (Chicago time) and adds `.spooky-layer` (webs, bats, fog);
+> for October (Chicago time) and adds `.spooky-layer` (webs and fog; the
 > `SPOOKY SEASON` at the end of `v3.css` holds the palette (it restates the
 > `--*-rgb` accent tokens), the dressing and the emoji. The layer stops at
-> the chat rail (Twitch's obscured check) and runs on every page, except that
-> the bats (its only animation) are hidden on the watch route. The ⋯ menu
+> the chat rail (Twitch's obscured check) and runs on every page; nothing in
+> it moves any more. The ⋯ menu
 > has a Spooky theme switch (`#spookyToggle`) that records a choice in
 > `localStorage` `ec_spooky`; with no choice the date decides. Links:
 > `?spooky=1`, `?spooky=0`, `?spooky=auto` (clears the choice). The Sports page shows a dismissible

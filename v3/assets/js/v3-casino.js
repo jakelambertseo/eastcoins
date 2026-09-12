@@ -29,7 +29,7 @@
     hilo: { title: "Higher or Lower", icon: "🃏", blurb: "Your own deck. Every right call multiplies the stake; cash out any time.", route: "hilo" },
     mines: { title: "Mines", icon: "💣", blurb: "Twenty-five tiles, a few of them bombs. Every safe one pays more; cash out before you find one.", route: "mines" },
     plinko: { title: "Plinko", icon: "🎯", blurb: "Drop a ball through the pegs. Every bucket but the middle pays; the edges pay 25×.", route: "plinko" },
-    roulette: { title: "Russian Roulette", icon: "🔫", blurb: "Everyone puts in 20. One live round. Whoever it fires on pays the rest.", route: "roulette" },
+    roulette: { title: "Russian Roulette - PVP", iconUrl: "https://cdn.7tv.app/emote/01G1FDHE4R0005G1MWWMPGSX71/1x.webp", icon: "🔫", blurb: "Everyone puts in 20. One live round. Whoever it fires on pays the rest.", route: "roulette" },
     standing: { title: "Last One Standing", icon: "🏆", blurb: "Everyone puts in 20. One knocked out at a time; the last one takes the lot.", route: "standing" }
   };
 
@@ -99,7 +99,19 @@
         go(g.route);
       });
       const top = K.el("div", "cas-tile-top");
-      top.append(K.el("span", "cas-icon", g.icon), K.el("h2", null, g.title));
+      // An image where a game has one (the 7TV emote on Russian Roulette),
+      // the emoji otherwise. The emoji stays as the alt so a failed load
+      // still reads.
+      const icon = K.el("span", "cas-icon", g.iconUrl ? "" : g.icon);
+      if (g.iconUrl) {
+        const img = document.createElement("img");
+        img.src = g.iconUrl;
+        img.alt = g.icon || "";
+        img.loading = "lazy";
+        img.decoding = "async";
+        icon.append(img);
+      }
+      top.append(icon, K.el("h2", null, g.title));
       const status = K.el("div", "cas-status");
       const clock = K.el("span", "cas-clock nums", "—");
       const phase = K.el("span", "cas-phase", "");
