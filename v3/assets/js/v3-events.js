@@ -306,13 +306,20 @@
     eyes.hidden = !n;
     eyes.textContent = n ? `👀 ${n} watching` : "";
   }
+  // Every view mounts into the same container, so root stays connected
+  // after the person has moved on to a stream. Anything that paints from
+  // a background event must check the route, not the node: a presence
+  // tick once rebuilt the Events grid over the player, which read as
+  // "the site sent me back to the homepage".
+  const showing = () => shell?.state?.route === "events" && Boolean(root?.isConnected);
   document.addEventListener("ec-presence", (event) => {
     const next = event.detail?.watching || {};
     // The counts are a sort key, so a change in them can change the
     // order. Repaint then (scroll is kept); otherwise just the pills.
     const reorder = JSON.stringify(next) !== JSON.stringify(watchingNow);
     watchingNow = next;
-    if (reorder && root?.isConnected && local.loaded) { paint(); return; }
+    if (!showing()) return;
+    if (reorder && local.loaded) { paint(); return; }
     for (const cardEl of document.querySelectorAll(".eventcard[data-event-id]")) {
       paintWatching(cardEl, watchingNow[cardEl.dataset.eventId] || 0);
     }
@@ -860,7 +867,7 @@
       paint();
       if (!local.loaded) {
         await load();
-        if (root.isConnected) paint();
+        if (showing()) paint();
       }
     },
     onSearch(term) {
