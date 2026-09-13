@@ -187,7 +187,18 @@ export async function autoOpenMarkets(env, db) {
   const now = Date.now();
   const opened = [];
 
+  // A sport can be paused by hand: ops_status "autoopen:pause:<sport>"
+  // holding {"until": ISO}. Nothing opens for it until then; whatever is
+  // already open is left alone. Set from the shell with wrangler, e.g.
+  //   INSERT OR REPLACE INTO ops_status (key, value) VALUES
+  //   ('autoopen:pause:baseball', '{"until":"2026-09-14T05:00:00Z","why":"NFL Sunday"}')
+  const pauses = await readStatus(db, SPORTS.map((c) => `autoopen:pause:${c.sport}`)).catch(() => ({}));
+
   for (const cfg of SPORTS) {
+    const pause = pauses[`autoopen:pause:${cfg.sport}`]?.value;
+    const pausedUntil = pause?.until ? new Date(pause.until).getTime() : 0;
+    if (pausedUntil > now) continue;
+
     let games = [];
     try { games = (await schedule(apiKey, cfg)).games; } catch (error) { console.error(`schedule ${cfg.key}`, error); continue; }
 

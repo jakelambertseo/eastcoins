@@ -464,6 +464,16 @@
 > handled by design rather than by a cap. The Odds API plan is 20,000
 > credits/month — comfortable, still not to be spent casually.
 >
+> **Pausing auto-open for a sport (2026-09-13)** — `_autoopen.js` reads
+> `ops_status` `autoopen:pause:<sport>` (`baseball`, `american-football`)
+> holding `{"until": ISO}` and opens nothing for that sport until then;
+> markets already open are left alone. Set it with wrangler:
+> `INSERT OR REPLACE INTO ops_status (key, value) VALUES
+> ('autoopen:pause:baseball', '{"until":"…Z","why":"…"}')`; delete the row
+> or let `until` pass to resume. Used on NFL Sunday to keep the MLB slate
+> off Picks: the five empty markets were closed (state VOID, no refunds
+> needed) and baseball paused until midnight Central.
+>
 > **Every market has a page** at `/g/<away>-<home>-<YYYYMMDD>` (also
 > `/g/<YYYYMMDD>` for a day and `/g/mkt_…` by id). `functions/g/[[path]].js`
 > serves the shell with the game's `<title>`/OG tags; the shell's `game`
