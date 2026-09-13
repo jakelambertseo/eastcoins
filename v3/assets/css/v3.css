@@ -4224,3 +4224,19 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
 .pickticket-score-side.mine span{color:var(--gold);font-weight:800}
 .pickticket-score i{color:var(--muted-2);font-style:normal}
 .pickticket-score .ec-score-state{margin-left:auto;white-space:nowrap}
+/* the pot on the floor: louder than a card */
+.cas-pot .pot{padding:20px 22px 18px;border:2px solid rgba(var(--gold-rgb),.7);border-radius:16px;background:radial-gradient(ellipse at 10% 40%,rgba(var(--gold-rgb),.22),transparent 55%),linear-gradient(100deg,rgba(var(--gold-rgb),.10),transparent 60%),var(--panel);box-shadow:0 0 0 1px rgba(var(--gold-rgb),.25),0 0 34px rgba(var(--gold-rgb),.22),0 18px 44px rgba(0,0,0,.45);animation:potglow 3s ease-in-out infinite}
+@keyframes potglow{50%{box-shadow:0 0 0 1px rgba(var(--gold-rgb),.35),0 0 54px rgba(var(--gold-rgb),.38),0 18px 44px rgba(0,0,0,.45)}}
+.cas-pot .pot::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 0 40%,rgba(255,255,255,.07) 48%,transparent 56% 100%);background-size:240% 100%;animation:potsheen 6s ease-in-out infinite}
+@keyframes potsheen{0%,25%{background-position:120% 0}75%,100%{background-position:-120% 0}}
+.cas-pot .pot-k{font-size:.8rem;color:var(--gold)}
+.cas-pot .pot-k::before{content:"🏆";font-size:1.15rem;margin-right:2px}
+.cas-pot .pot-k .pot-sub{color:var(--muted)}
+.cas-pot .pot-amt{margin:8px 0 12px}
+.cas-pot .pot-amt b{font-size:3.2rem;text-shadow:0 0 30px rgba(var(--gold-rgb),.5)}
+.cas-pot .pot-amt span{font-size:.95rem;color:var(--text)}
+.cas-pot .pot-meter{height:18px;border-width:2px}
+.cas-pot .pot-you{font-size:.9rem;margin-top:10px}
+.cas-pot .pot-you b{font-size:1.15rem}
+.cas-pot .pot-paid{font-size:1.2rem;font-family:var(--display);font-weight:800}
+@media (prefers-reduced-motion:reduce){.cas-pot .pot{animation:none}.cas-pot .pot::after{animation:none;background:none}}
