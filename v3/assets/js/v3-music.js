@@ -1560,11 +1560,12 @@
       ["ipod", "iPod"],
       ["jumbotron", "Jumbotron"],
       ["void", "Super Ultra Dark Mode"],
-      ["minimal", "Super Ultra Minimal"]
+      ["minimal", "Super Ultra Minimal"],
+      ["trip", "I'm Fucked Up Bro"]
     ];
     const SKIN_KEY = "ec_music_skin";
-    const SKIN_FONTS = "https://fonts.googleapis.com/css2?family=VT323&family=Silkscreen&family=Righteous&family=Orbitron:wght@600;800&display=swap";
-    const NEEDS_FONTS = new Set(["winamp", "gameboy", "jukebox", "jumbotron"]);
+    const SKIN_FONTS = "https://fonts.googleapis.com/css2?family=VT323&family=Silkscreen&family=Righteous&family=Orbitron:wght@600;800&family=Rubik+Wet+Paint&display=swap";
+    const NEEDS_FONTS = new Set(["winamp", "gameboy", "jukebox", "jumbotron", "trip"]);
     let skin = (() => {
       try { const s = localStorage.getItem(SKIN_KEY) || ""; return SKINS.some(([k]) => k === s) ? s : ""; } catch { return ""; }
     })();

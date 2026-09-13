@@ -60,7 +60,10 @@
 > **Green Room skins (2026-09-12)** — a `Skin ·` chip in the music
 > page's header (next to See who; deliberately NOT in the ⋯ menu) picks
 > one of: Green Room (default), Winamp, Game Boy, Jukebox, iPod,
-> Jumbotron, Super Ultra Dark Mode, Super Ultra Minimal. `SKINS` in `v3-music.js`; the
+> Jumbotron, Super Ultra Dark Mode, Super Ultra Minimal, I'm Fucked Up Bro
+> (`trip`: the maximalist one — hue-cycling, wobble, melting stage, a
+> ≤2 Hz screen flicker; everything stops under `prefers-reduced-motion`).
+> `SKINS` in `v3-music.js`; the
 > choice is `localStorage` `ec_music_skin`; `applySkin()` sets
 > `[data-skin]` on the view root and `body[data-music-skin]`, cleared on
 > unmount. Every skin is one CSS block in the `GREEN ROOM SKINS` section
