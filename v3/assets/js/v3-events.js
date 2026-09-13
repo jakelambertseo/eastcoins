@@ -307,7 +307,12 @@
     eyes.textContent = n ? `👀 ${n} watching` : "";
   }
   document.addEventListener("ec-presence", (event) => {
-    watchingNow = event.detail?.watching || {};
+    const next = event.detail?.watching || {};
+    // The counts are a sort key, so a change in them can change the
+    // order. Repaint then (scroll is kept); otherwise just the pills.
+    const reorder = JSON.stringify(next) !== JSON.stringify(watchingNow);
+    watchingNow = next;
+    if (reorder && root?.isConnected && local.loaded) { paint(); return; }
     for (const cardEl of document.querySelectorAll(".eventcard[data-event-id]")) {
       paintWatching(cardEl, watchingNow[cardEl.dataset.eventId] || 0);
     }
@@ -688,7 +693,7 @@
       return;
     }
 
-    const ordered = Sports.grouped(visible);
+    const ordered = Sports.grouped(visible, watchingNow);
     pendingPicks = [];
 
     for (const [key, list] of ordered) {
