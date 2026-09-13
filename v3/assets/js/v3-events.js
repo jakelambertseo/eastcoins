@@ -65,7 +65,12 @@
       const all = Sports.withoutCopies ? Sports.withoutCopies([...seen.values()]) : [...seen.values()];
       // Hidden sports and D2/D3 college games go here, before anything
       // counts them (the All/Live chips read local.matches).
-      local.matches = Sports.keep ? all.filter(Sports.keep) : all;
+      const kept = Sports.keep ? all.filter(Sports.keep) : all;
+      // NFL Sunday: football only. Everything else is still there on
+      // Picks; this is just what the cards show.
+      const football = nflSundayNow() ? kept.filter(isNflSunday) : [];
+      local.nflSunday = football.length > 0;
+      local.matches = local.nflSunday ? football : kept;
       local.loaded = true;
       // Only a genuine provider failure counts as failed. An empty but
       // successful response is "nothing on today", which is a normal state.
@@ -343,6 +348,20 @@
     return sportKey(match) === "american-football" && Sports.footballRank(match) === 0;
   }
 
+  /* NFL Sunday — Sundays from September through January, Chicago time,
+     the Sports page shows football only: any listing naming an NFL
+     team (whatever category the provider filed it under), RedZone, and
+     the NFL Network feed. If a Sunday turns up nothing that fits, the
+     page shows everything as usual. ?allsports=1 shows everything on
+     any day, for a look. */
+  const NFL_MONTHS = new Set([9, 10, 11, 12, 1]);
+  function nflSundayNow() {
+    try { if (new URL(location.href).searchParams.get("allsports") === "1") return false; } catch { /* fine */ }
+    const ct = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" }));
+    return ct.getDay() === 0 && NFL_MONTHS.has(ct.getMonth() + 1);
+  }
+  const isNflSunday = (m) => Sports.footballRank(m) === 0 || isRedZone(m) || /^ppv-nfl-/.test(String(m?.id || "")) || /nfl/i.test(String(m?.title || ""));
+
   /** College football: American football that isn't the NFL. */
   function isCollege(match) {
     return sportKey(match) === "american-football" && !isNfl(match);
@@ -576,7 +595,7 @@
 
     const note = document.createElement("span");
     note.className = "filters-note";
-    note.textContent = local.search ? `Filtered by “${local.search}”` : "Live and today";
+    note.textContent = local.search ? `Filtered by “${local.search}”` : local.nflSunday ? "NFL Sunday · football only" : "Live and today";
 
     bar.append(spacer, note);
     return bar;

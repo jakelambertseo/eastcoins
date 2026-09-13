@@ -526,6 +526,16 @@
 > name or logo is drawn from must therefore SELECT `league` — `_wager.js`
 > did not, which is why a Missouri pick showed the Detroit Tigers crest.
 >
+> **NFL Sunday (2026-09-13)** — on Sundays September–January (Chicago
+> time) the Sports page shows football only: `nflSundayNow()` +
+> `isNflSunday()` in `v3-events.js` keep any listing naming an NFL team
+> (`footballRank === 0`, whatever category the provider filed it under),
+> RedZone, `ppv-nfl-*` feeds and titles with "NFL"; everything else is
+> dropped at load, so the All/Live chips agree, and the filter-bar note
+> reads "NFL Sunday · football only". A Sunday with nothing that fits
+> shows the usual page. `?allsports=1` shows everything for a look. Picks
+> is untouched — baseball markets still open there.
+>
 > **RedZone Sunday (2026-09-13)** — when the provider lists NFL RedZone
 > (`isRedZone`: title "NFL RedZone" or id `ppv-nfl-red-zone`), the Sports
 > page puts `redZoneHero()` above the groups — a full-width banner with
