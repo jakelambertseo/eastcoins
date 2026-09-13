@@ -823,7 +823,6 @@
     // on the page; the interval lets go once it isn't.
     const start = Number(match?.date) || 0;
     const tick = () => {
-      if (!hero.isConnected) { window.clearInterval(timer); return; }
       const live = isLive(match);
       hero.classList.toggle("live", live);
       if (live) when.textContent = "LIVE";
@@ -840,7 +839,9 @@
       const n = watchingNow[String(match.id || "")] || 0;
       eyes.textContent = n ? `👀 ${n} watching now` : "";
     };
-    const timer = window.setInterval(tick, 30000);
+    // The first tick runs before the hero is in the page, so only the
+    // interval checks for it having left.
+    const timer = window.setInterval(() => { if (!hero.isConnected) window.clearInterval(timer); else tick(); }, 30000);
     tick();
     return hero;
   }
