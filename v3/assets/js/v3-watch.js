@@ -110,6 +110,24 @@
 
   /* ---------------------------------------------------------- helpers */
 
+  /* Preferred servers for particular events, matched by the provider's
+     source and stream number rather than by URL or position, since the
+     golf source's ids carry the date and the list's order changes with
+     the day. A preferred stream that is present moves to Server 1; the
+     rest keep their order. RedZone: the golf source's second stream. */
+  const PREFERRED_SERVERS = {
+    "ppv-nfl-red-zone": [{ source: "golf", streamNo: 2 }]
+  };
+  function preferOrder(match, streams) {
+    const prefs = PREFERRED_SERVERS[String(match?.id || "")];
+    if (!prefs || !Array.isArray(streams)) return streams;
+    const rank = (s) => {
+      const i = prefs.findIndex((p) => String(s?.source || "").toLowerCase() === p.source && Number(s?.streamNo) === p.streamNo);
+      return i === -1 ? prefs.length : i;
+    };
+    return [...streams].sort((a, b) => rank(a) - rank(b));
+  }
+
   // Every stream frame is loaded through here so the referrer policy can
   // never drift from the source it was chosen for. The rule itself lives in
   // assets/eastcoins-youtube.js; with that module missing this falls back to
@@ -664,7 +682,7 @@
         window.ECV3Gameday?.resolve(local.match).catch(() => null) ?? null
       ]);
 
-      local.streams = outcome.streams;
+      local.streams = preferOrder(local.match, outcome.streams);
       // Anything this viewer pasted for this event last time, back on the end.
       for (const url of readMine(local.match.id)) local.streams.push({ embedUrl: url, mine: true });
       local.reason = outcome.reason;
