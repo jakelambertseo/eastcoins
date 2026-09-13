@@ -133,6 +133,26 @@
     return { node: d, body };
   }
 
+  /** "Check this seed" under a verify block: opens /?view=verify with the
+      seed and hash filled in. null hides it (no seed revealed yet). */
+  function verifyLink(node, params) {
+    if (!node) return;
+    let a = node.querySelector(".cf-verify-link");
+    if (!params) { if (a) a.hidden = true; return; }
+    if (!a) {
+      a = el("a", "cf-verify-link", "Check this seed →");
+      a.addEventListener("click", (event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+        event.preventDefault();
+        history.pushState({ view: "verify" }, "", a.getAttribute("href"));
+        window.ECV3?.go("verify", { push: false });
+      });
+      node.append(a);
+    }
+    a.href = "/?view=verify&" + new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== "")));
+    a.hidden = false;
+  }
+
   function makeToast(host) {
     const node = el("div", "cf-toast");
     host.append(node);
@@ -524,6 +544,7 @@
         if (!last.bets.length) refs.lastList.append(el("p", "cf-empty", "Nobody bet that round."));
         refs.fair.hidden = false;
         refs.fairBody.textContent = `round      #${last.no}\nhash       ${last.hash}   (shown before bets opened)\nseed       ${last.seed}   (revealed after)\ncheck      sha256(seed) = hash · result from sha256(seed:${spec.key})`;
+        verifyLink(refs.fair, last.seed ? { game: spec.key, seed: last.seed, hash: last.hash } : null);
       } else {
         refs.lastNote.textContent = "";
         refs.lastList.append(el("p", "cf-empty", "First round coming up."));
@@ -564,5 +585,5 @@
     };
   }
 
-  window.ECCasino = Object.freeze({ el, btn, zc, withCoins, plain, avatar, nameLink, casinoLink, makeToast, makePop, burst, sharedGame, fmt, pager, pageOf, verifyBox });
+  window.ECCasino = Object.freeze({ el, btn, zc, withCoins, plain, avatar, nameLink, casinoLink, makeToast, makePop, burst, sharedGame, fmt, pager, pageOf, verifyBox, verifyLink });
 })();

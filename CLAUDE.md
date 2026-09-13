@@ -116,6 +116,18 @@
 > the 4 PM slate opens (`composeSlateOpen`, keyed `slateopen:<sport>:<day>`
 > in `ops_status`); refills through the evening stay silent.
 >
+> **Check a seed (2026-09-13)** — `/?view=verify` (`v3-verify.js`) over
+> `GET /api/casino/verify?game=&seed=[&hash=&mines=&players=]`, which is
+> pure maths with no session or database: it hashes the seed and replays
+> the result with the games' OWN functions (`cardAt`, `bombsFor`,
+> `pathFor`, the shared `outcome()`s, `resultOf`, `outcomeFor`), so the
+> page shows the deck Higher or Lower dealt, the bombs, the path, the
+> angle, the coin, a table's rounds. The page also hashes the seed in the
+> browser with `crypto.subtle` and compares, so the match does not rest
+> on the server's word. `K.verifyLink(node, params)` puts "Check this
+> seed →" under every game's verify block, deep-linking here with the
+> seed and hash filled in; the floor's House rules link to it too.
+>
 > **Casino layout**: the floor is title → `.cas-me` strip (`/api/casino/home`
 > `me`: wallet, casino net, record, this hour vs cap; a login card when
 > signed out) → tiles → `.pf-tabs.cas-tabs` Recent results (paged) / House

@@ -289,6 +289,7 @@
       }
       lines.push(`check              sha256(seed) = hash · ${spec.verifyRule}`);
       refs.fairBody.textContent = lines.join("\n");
+      K.verifyLink(refs.fair, last?.seed ? { game: spec.key, seed: last.seed, hash: last.hash, players: last.players.length } : null);
 
       // Room
       const room = data.room || [];

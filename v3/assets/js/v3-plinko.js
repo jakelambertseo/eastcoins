@@ -338,6 +338,7 @@
       last ? `last path       ${last.path}  ->  bucket ${last.bucket}  ×${last.multiplier}` : "",
       "check           sha256(seed) = hash · step i goes right when sha256(seed:i) is odd"
     ].filter(Boolean).join("\n");
+    K.verifyLink(refs.fair, last?.seed ? { game: "plinko", seed: last.seed, hash: last.hash } : null);
 
     // Room
     const room = data.room || [];

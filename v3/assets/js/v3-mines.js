@@ -332,6 +332,7 @@
       refs.fairBody.textContent = shown.seed
         ? `board hash  ${shown.hash}   (shown at the start)\nseed        ${shown.seed}   (revealed when the board ended)\nbombs       ${(shown.bombs || []).join(", ")}\ncheck       sha256(seed) = hash · bombs = first ${shown.mines} of 0..24 shuffled by sha256(seed:shuffle:i)`
         : `board hash  ${shown.hash}   (shown at the start)\nseed        revealed when the board ends`;
+      K.verifyLink(refs.fair, shown.seed ? { game: "mines", seed: shown.seed, hash: shown.hash, mines: shown.mines } : null);
     } else {
       refs.fair.hidden = true;
     }

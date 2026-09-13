@@ -285,6 +285,7 @@
       refs.fairBody.textContent = shown.seed
         ? `deck hash  ${shown.hash}   (shown at the deal)\nseed       ${shown.seed}   (revealed when the run ended)\ncheck      sha256(seed) = hash · card i = 1 + (sha256(seed:i) mod 13)`
         : `deck hash  ${shown.hash}   (shown at the deal)\nseed       revealed when the run ends`;
+      K.verifyLink(refs.fair, shown.seed ? { game: "hilo", seed: shown.seed, hash: shown.hash } : null);
     } else {
       refs.fair.hidden = true;
     }

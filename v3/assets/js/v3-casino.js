@@ -153,7 +153,21 @@
       "Results come from a random seed made when the round is created. Its hash is shown while bets are open; the seed is revealed after, so anyone can check.",
       "Wins land in your StreamElements wallet the moment the round settles — the same wallet Picks uses."
     ]) ul.append(K.el("li", null, t));
-    ul.append(K.el("li", null, "Every result comes from a seed whose hash is shown before bets and revealed after — Verify this round on any game page shows both."));
+    const check = K.el("li");
+    const checkLink = K.el("a", "cas-rules-link", "Check a seed");
+    checkLink.href = "/?view=verify";
+    checkLink.addEventListener("click", (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+      event.preventDefault();
+      history.pushState({ view: "verify" }, "", "/?view=verify");
+      window.ECV3?.go("verify", { push: false });
+    });
+    check.append(
+      document.createTextNode("Every result comes from a seed whose hash is shown before bets and revealed after — Verify this round on any game page shows both, and "),
+      checkLink,
+      document.createTextNode(" replays any seed: the deck you were dealt, where the bombs were, the path, the angle.")
+    );
+    ul.append(check);
     rules.append(ul);
     panels.results.append(board);
     panels.rules.append(rules);
