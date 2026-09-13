@@ -4217,3 +4217,10 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
 .vf-range.won{border-color:var(--gold);background:var(--gold-dim)}
 .vf-range.won b{color:var(--gold)}
 @media (prefers-reduced-motion:reduce){.pot-dot,.pot-meter i::after{animation:none}.pot-hit{transition:none}}
+/* live score on a My Picks ticket */
+.pickticket-score{display:flex;align-items:center;gap:10px;padding:9px 14px;border-top:1px solid var(--line);background:var(--panel)}
+.pickticket-score-side{display:flex;align-items:baseline;gap:6px;color:var(--muted);font-size:.8rem;min-width:0}
+.pickticket-score-side b{font-family:var(--display);font-weight:800;font-size:1.15rem;color:var(--text)}
+.pickticket-score-side.mine span{color:var(--gold);font-weight:800}
+.pickticket-score i{color:var(--muted-2);font-style:normal}
+.pickticket-score .ec-score-state{margin-left:auto;white-space:nowrap}

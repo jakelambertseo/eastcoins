@@ -927,6 +927,37 @@
     return d.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" });
   }
 
+  /* Live score and game clock on a ticket, from the same ESPN board the
+     Sports cards read (ECV3Scores). Only games around now are looked up;
+     a game ESPN doesn't have, or one that hasn't started, shows nothing
+     extra. Scores follow the market's own home/away, and the side the
+     pick is on is lit. */
+  async function attachTicketScore(p, card, footEl, status) {
+    if (!window.ECV3Scores || !p.market?.home?.name || !p.market?.away?.name) return;
+    const start = new Date(gameTime(p)).getTime();
+    if (!Number.isFinite(start) || Date.now() - start > 30 * 3600000 || start - Date.now() > 6 * 3600000) return;
+    let score = null;
+    try {
+      score = await window.ECV3Scores.forMatch({ teams: { home: { name: p.market.home.name }, away: { name: p.market.away.name } } });
+    } catch { return; }
+    if (!score || score.state === "pre" || !card.isConnected) return;
+    let line = card.querySelector(".pickticket-score");
+    if (!line) { line = el("div", "pickticket-score"); card.insertBefore(line, footEl); }
+    line.replaceChildren();
+    const cap = (s) => String(s || "").replace(/w/g, (c) => c.toUpperCase());
+    const nick = (name) => cap(window.ECV3Scores.nickname(name)) || name;
+    const mineHome = p.selection === "home";
+    const side = (team, name, mine) => {
+      const s = el("span", `pickticket-score-side${mine ? " mine" : ""}`);
+      s.append(el("b", "nums", team?.score ?? "–"), el("span", null, name));
+      return s;
+    };
+    // Away, then home, as a scoreboard reads.
+    line.append(side(score.away, nick(p.market.away.name), !mineHome), el("i", null, "–"), side(score.home, nick(p.market.home.name), mineHome));
+    line.append(el("span", `ec-score-state${score.state === "in" ? " in" : ""}`, score.state === "post" ? "Final" : score.detail || "Live"));
+    if (status === "pending" && score.state === "in" && footEl) footEl.textContent = `In play · ${score.detail || "live"} · line locked when the market opened`;
+  }
+
   function whenLabel(iso) {
     const raw = iso && !/[TZ]/.test(iso) ? iso.replace(" ", "T") + "Z" : iso;
     const d = new Date(raw);
@@ -1013,9 +1044,21 @@
         : status === "won" ? `Won · paid ${whenLabel(p.settledAt)}`
           : status === "lost" ? `Lost · settled ${whenLabel(p.settledAt)}`
             : `Refunded · ${whenLabel(p.settledAt)}`;
-      card.append(head, grid3, el("div", "pickticket-foot", foot));
+      const footEl = el("div", "pickticket-foot", foot);
+      card.append(head, grid3, footEl);
+      // The score, the same way the Sports cards carry it: additive, from
+      // ESPN's board, only once the game is on.
+      card.__rescore = () => attachTicketScore(p, card, footEl, status);
+      card.__rescore();
       grid.append(card);
     }
+    // Kept current while the list is on the page; the scores module
+    // refreshes its board every 45 seconds, so this only redraws.
+    const rescore = window.setInterval(() => {
+      if (!wrap.isConnected) { window.clearInterval(rescore); return; }
+      if (document.hidden) return;
+      wrap.querySelectorAll(".pickticket").forEach((c) => c.__rescore?.());
+    }, 30000);
     wrap.append(pagerFor("mypicks", pg, "picks"));
     return wrap;
   }
