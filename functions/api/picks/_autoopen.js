@@ -26,6 +26,7 @@
    ============================================================ */
 
 import { newId } from "./_lib.js";
+import { readStatus } from "./_ops.js";
 
 const ODDS_API = "https://api.the-odds-api.com/v4/sports";
 const HOUR = 3600 * 1000;
