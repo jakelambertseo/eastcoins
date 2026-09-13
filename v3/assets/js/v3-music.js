@@ -1589,7 +1589,8 @@
       const key = SKIN_ALIASES[String(raw).toLowerCase().replace(/[^a-z0-9]/g, "")];
       url.searchParams.delete("theme");
       url.searchParams.delete("skin");
-      history.replaceState(history.state, "", url.pathname + url.search + url.hash);
+      // window. on purpose: `history` in this module is the History tab's list.
+      window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
       return key === undefined ? null : key;
     }
     function loadSkinFonts() {
