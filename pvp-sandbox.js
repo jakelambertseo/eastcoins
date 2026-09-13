@@ -153,7 +153,7 @@
     await settleDue(now);
     return {
       ok: true, now, game: state.game, name: NAMES[state.game],
-      config: { stake: STAKE, lobbySeconds: state.lobbySeconds, minPlayers: MIN_PLAYERS, maxPlayers: MAX_PLAYERS, maxPerHour: 10, hourCap: 300, canBet: true, paused: false, practice: true, table: table() },
+      config: { stake: STAKE, lobbySeconds: state.lobbySeconds, minPlayers: MIN_PLAYERS, maxPlayers: MAX_PLAYERS, maxPerHour: 10, hourCap: 750, canBet: true, paused: false, practice: true, table: table() },
       lobby: pub(state.lobby),
       last: pub(state.last, { reveal: true }),
       history: state.history.map((r) => ({ id: r.id, status: r.status, at: r.settledAt, players: r.players.length, pot: r.status === "VOID" ? 0 : STAKE * r.players.length, seats: r.players.map((p) => ({ ...p })) })),

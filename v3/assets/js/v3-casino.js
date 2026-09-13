@@ -147,7 +147,7 @@
     const rules = K.el("section", "cf-card cas-rules");
     const ul = K.el("ul");
     for (const t of [
-      "20 ZCoins a bet, at most. Ten bets an hour per game, and nobody takes more than 300 ZC out of the casino in any hour.",
+      "20 ZCoins a bet, at most. Ten bets an hour per game, and nobody takes more than 750 ZC out of the casino in any hour.",
       "A game only runs while someone is in its room — with nobody there, nothing is drawn.",
       "One bet per person per round. Bets close before anything is drawn.",
       "Results come from a random seed made when the round is created. Its hash is shown while bets are open; the seed is revealed after, so anyone can check.",

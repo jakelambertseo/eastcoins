@@ -59,7 +59,7 @@ const RUNNERS = [
 
 // Nobody takes more than this out of the casino in any rolling hour.
 // Past it, new bets and deals are refused until the hour rolls on.
-export const HOUR_WIN_CAP = 300;
+export const HOUR_WIN_CAP = 750;
 
 export const GAMES = {
   wheel: {

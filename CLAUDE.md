@@ -133,7 +133,7 @@
 > `/?view=hilo` (per-player, `functions/api/casino/hilo/*`, table
 > `hilo_games`, committed deck, 1% edge per call, ×50 / 12-card cap).
 > Shared limits: 20 ZC a bet, 10 an hour per game, and `HOUR_WIN_CAP`
-> (300 ZC net in any rolling hour across every game, `capCheck` in
+> (750 ZC net in any rolling hour across every game — 300 until 2026-09-13, `capCheck` in
 > `_engine.js`, enforced by every bet/deal endpoint including the coin's).
 > Wheel: 24 red/black slices + one 6-degree gold sliver at 40x, outcome is an
 > angle (red/black return 98.3%; gold is the 1-in-60 long shot at ~67%). Race: whole-number payouts 2/3/7/14, odds normalised from them —
@@ -246,7 +246,7 @@
 > 98.6%; Wheel red/black 98.3%; Coin Flip was always exactly fair at 2×).
 > The old 4% edge earned the house ~30 ZC a day and made players feel they
 > never won, so they drifted to Picks. Payout shapes favour FREQUENT wins
-> over big ones. Do not push the return past 100%: with the 300/hour cap
+> over big ones. Do not push the return past 100%: with the 750/hour cap
 > only blocking new bets, a positive player edge prints thousands of
 > ZCoins a day and devalues Picks. **Louder wins** — `makePop` takes
 > `big`, adds `.cf-pop.big` and fires `burst()` confetti (also for any
