@@ -95,6 +95,13 @@ export async function onRequestGet(context) {
   const GAME_NAME = { flip: "Coin Flip", wheel: "Wheel", race: "Horse Race", hilo: "Higher or Lower", mines: "Mines", plinko: "Plinko", roulette: "Russian Roulette", standing: "Last One Standing" };
   const casino = await casinoResults(db);
   for (const c of casino) items.push({ type: "casino", at: c.at, who: c.who, game: c.game, gameName: GAME_NAME[c.game] || c.game, pick: c.pick, wager: c.wager, profit: c.profit, status: c.status });
+  // The Daily Pot's hits.
+  const pots = await db.prepare(
+    `SELECT p.day, p.amount, p.paid_at, p.total_stake, u.twitch_login, u.display_name, u.avatar_url
+       FROM casino_pots p JOIN users u ON u.twitch_id = p.winner_user_id
+      WHERE p.status = 'PAID' ORDER BY p.day DESC LIMIT 10`
+  ).all().catch(() => ({ results: [] }));
+  for (const p of pots.results || []) items.push({ type: "pot", at: String(p.paid_at).replace(" ", "T") + "Z", who: { login: String(p.twitch_login || "").toLowerCase(), displayName: String(p.display_name || p.twitch_login || ""), avatar: String(p.avatar_url || "") }, amount: Number(p.amount), day: p.day, total: Number(p.total_stake) });
 
   const feed = items
     .filter((i) => i.at && !Number.isNaN(new Date(i.at).getTime()))

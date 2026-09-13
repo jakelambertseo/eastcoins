@@ -78,12 +78,17 @@
     page.append(ticker);
     window.setTimeout(() => {
       if (ticker.isConnected && window.ECActivity) {
-        window.ECActivity.mountTicker(ticker, { types: ["casino"], label: "TABLES", href: "/?view=activity", empty: "Quiet for now — the first spin lands here." });
+        window.ECActivity.mountTicker(ticker, { types: ["casino", "pot"], label: "TABLES", href: "/?view=activity", empty: "Quiet for now — the first spin lands here." });
       }
     }, 0);
 
     refs.me = K.el("div", "cas-me");
     page.append(refs.me);
+
+    // The Daily Pot, above the games.
+    const potSlot = K.el("div", "cas-pot");
+    page.append(potSlot);
+    window.ECPot?.mount(potSlot);
 
     const gamesHead = K.el("div", "cas-games-head");
     gamesHead.append(K.el("h2", null, "Casino games"), K.el("span", null, "20 ZC a bet · ten an hour per game"));
@@ -153,6 +158,7 @@
       "Results come from a random seed made when the round is created. Its hash is shown while bets are open; the seed is revealed after, so anyone can check.",
       "Wins land in your StreamElements wallet the moment the round settles — the same wallet Picks uses."
     ]) ul.append(K.el("li", null, t));
+    ul.append(K.el("li", null, "The Daily Pot: 100 ZC from the house, every day, paid on a bet at a moment nobody can predict. A hidden line is set in the day's play (between 300 and 2,500 ZC staked, sealed by hash at midnight); the bet that crosses it pays the pot to one player drawn from everyone who played that day, by stake. After 11 PM Central the next bet pays it. A day nobody plays rolls into the next. It's the house's money, so it sits outside the hourly cap."));
     const check = K.el("li");
     const checkLink = K.el("a", "cas-rules-link", "Check a seed");
     checkLink.href = "/?view=verify";

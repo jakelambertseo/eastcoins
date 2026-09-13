@@ -91,7 +91,7 @@
       : el("span", "av-crest", String(teamName || "?").slice(0, 3).toUpperCase());
   }
 
-  const ICON = { pick: "🪙", won: "✅", lost: "❌", refunded: "↩️", open: "🏟️", final: "🏁", void: "🚫", joined: "👋", song: "🎵", casino: "🎰", score: "📊" };
+  const ICON = { pick: "🪙", won: "✅", lost: "❌", refunded: "↩️", open: "🏟️", final: "🏁", void: "🚫", joined: "👋", song: "🎵", casino: "🎰", score: "📊", pot: "🏆" };
   /** "Rangers up 3–1 on the Mariners", "Rangers and Mariners level at 2". */
   function scoreLine(item) {
     const m = item.market;
@@ -167,6 +167,10 @@
         text.append(name(item.who), document.createTextNode(item.status === "WON" ? " won " : " lost "), coin(Math.abs(item.profit)),
           document.createTextNode(" on the "), casinoLink(item));
         meta.textContent = `${CASINO_ICON[item.game] || "🎰"} ${item.pick} · ${item.wager} ZC staked`;
+        break;
+      case "pot":
+        text.append(name(item.who), document.createTextNode(" hit the Daily Pot for "), coin(item.amount));
+        meta.textContent = `🏆 drawn by stake from ${Number(item.total || 0).toLocaleString()} ZC of play`;
         break;
       case "score": {
         const m = item.market;
@@ -262,6 +266,7 @@
       case "joined": span.append(who(), document.createTextNode(" joined")); break;
       case "song": span.append(who(), document.createTextNode(" played "), el("b", null, item.title.length > 40 ? item.title.slice(0, 38) + "…" : item.title)); break;
       case "casino": span.append(who(), document.createTextNode(item.status === "WON" ? ` won ${Math.abs(item.profit)} ZC on the ` : ` lost ${Math.abs(item.profit)} ZC on the `), casinoLink(item)); break;
+      case "pot": span.append(document.createTextNode("🏆 "), who(), document.createTextNode(` hit the Daily Pot for ${item.amount} ZC`)); break;
       case "score": return null;   // scores stay in the feed and on game pages; off the ticker for now
       default: return null;
     }

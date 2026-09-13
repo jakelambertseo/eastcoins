@@ -195,6 +195,7 @@
       room.append(rh, refs.roomList);
 
       col.append(hour, pays, fair, room);
+      window.ECPot?.mount(col, { compact: true });
       grid.append(col);
       page.append(grid);
 

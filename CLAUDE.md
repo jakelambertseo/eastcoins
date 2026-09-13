@@ -116,6 +116,28 @@
 > the 4 PM slate opens (`composeSlateOpen`, keyed `slateopen:<sport>:<day>`
 > in `ops_status`); refills through the evening stay silent.
 >
+> **The Daily Pot (2026-09-13)** — 100 ZC from the house, once a day, paid
+> on a bet at a moment nobody can predict. `functions/api/casino/_pot.js`:
+> one `casino_pots` row per Chicago day (seed, hash, hidden `trigger_at` =
+> 300..2,500 ZC of the day's stakes from `sha256(seed:trigger)`, amount =
+> 100 + any rolled-over day). `settlePot()` runs after the stake lands in
+> every bet endpoint (hilo/start, mines/start, plinko/drop, coin/bet,
+> [game]/bet, pvp/join): if the day's stakes across all six tables have
+> crossed the trigger — or it is 11 PM Central or later — it claims the
+> row (OPEN→SETTLING), draws `sha256(seed:draw) mod total` over ranges
+> laid out by stake in user-id order, credits the winner idempotently
+> (`CASINO:POT:PAY:<day>`), and marks PAID with the shares stored. A day
+> with no play rolls its amount forward. `GET /api/casino/pot` is the page
+> read (never the trigger while open; `?day=` returns a paid pot's seed,
+> ranges and draw). `v3-pot.js` `ECPot.mount(el, {compact})` draws the
+> meter (the day's play toward the ceiling) on the floor and at the top of
+> every game's side column, polling every 15 s, and drops the hit banner
+> with confetti when a poll sees today's pot flip to PAID. Hits appear in
+> the activity feed and ticker as type `pot`; the check page has "The
+> Daily Pot" by day. It is the house's money — outside `HOUR_WIN_CAP`, in
+> no bet table, so `hourlyNet()` and the books never see it. Exactly 100
+> ZC of inflation a day, by construction.
+>
 > **Check a seed (2026-09-13)** — `/?view=verify` (`v3-verify.js`) over
 > `GET /api/casino/verify?game=&seed=[&hash=&mines=&players=]`, which is
 > pure maths with no session or database: it hashes the seed and replays

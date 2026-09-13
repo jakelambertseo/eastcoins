@@ -16,6 +16,7 @@ import { bombsFor, MIN_MINES, MAX_MINES, DEFAULT_MINES, TILES } from "./mines/_m
 import { pathFor, bucketOf, multiplierFor, ROWS } from "./plinko/_plinko.js";
 import { resultOf } from "../coin/_coin.js";
 import { GAMES as PVP, outcomeFor, chambersFor, MIN_PLAYERS, MAX_PLAYERS } from "./pvp/_pvp.js";
+import { triggerFor, drawFor, TRIGGER_MIN, TRIGGER_MAX } from "./_pot.js";
 
 const clampInt = (v, lo, hi, dflt) => {
   const n = Number.parseInt(String(v ?? ""), 10);
@@ -85,5 +86,16 @@ export async function onRequestGet({ request }) {
     });
   }
 
-  return fail("BAD_GAME", "game must be one of: hilo, mines, plinko, wheel, race, flip, roulette, standing");
+  if (game === "pot") {
+    // The hidden line and, given the day's total stakes, the draw.
+    const total = clampInt(q.get("total"), 0, 100000000, 0);
+    return json({
+      ...base, name: "The Daily Pot",
+      trigger: await triggerFor(seed), floor: TRIGGER_MIN, ceiling: TRIGGER_MAX,
+      total: total || null, draw: total ? await drawFor(seed, total) : null,
+      rule: `trigger = ${TRIGGER_MIN} + (sha256(seed:trigger) mod ${TRIGGER_MAX - TRIGGER_MIN + 1}); draw = sha256(seed:draw) mod total stake; the draw lands in one player's range, ranges laid out by stake in user-id order`
+    });
+  }
+
+  return fail("BAD_GAME", "game must be one of: hilo, mines, plinko, wheel, race, flip, roulette, standing, pot");
 }

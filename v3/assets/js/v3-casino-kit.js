@@ -364,6 +364,7 @@
       refs.roomList = el("div", "cf-room");
       room.append(rh, refs.roomList);
       col.append(thisRound, lastRound, room);
+      window.ECPot?.mount(col, { compact: true });
       grid.append(col);
       page.append(grid);
 

@@ -5,6 +5,7 @@
    the round settles. Same money path and limits as the coin flip. */
 
 import { getSessionUser, walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOperation, newId, json, fail } from "../../picks/_lib.js";
+import { settlePot } from "../_pot.js";
 import { gameFor, ensureSchema, roundAt, ensureRound, betsLastHour, capCheck, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
 
 export async function onRequestPost(context) {
@@ -82,5 +83,8 @@ export async function onRequestPost(context) {
   }
 
   await finishOperation(db, opId, "CONFIRMED", { balanceAfter: debit.balance });
+  // The Daily Pot pays on a bet: this one may be the one that crosses
+  // its line. Never lets the bet fail; the next bet tries again.
+  await settlePot(context.env, db).catch(() => {});
   return json({ ok: true, game: game.key, round: round.no, pick, wager, balance: debit.balance });
 }

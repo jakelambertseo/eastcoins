@@ -17,7 +17,8 @@
 
   const GAMES = [
     ["hilo", "Higher or Lower"], ["mines", "Mines"], ["plinko", "Plinko"],
-    ["wheel", "Wheel"], ["flip", "Coin Flip"], ["roulette", "Russian Roulette"], ["standing", "Last One Standing"], ["race", "Horse Race"]
+    ["wheel", "Wheel"], ["flip", "Coin Flip"], ["roulette", "Russian Roulette"], ["standing", "Last One Standing"], ["race", "Horse Race"],
+    ["pot", "The Daily Pot"]
   ];
 
   function el(tag, cls, text) {
@@ -65,6 +66,13 @@
     refs.players.type = "number"; refs.players.min = "2"; refs.players.max = "12"; refs.players.value = "2";
     refs.playersWrap = labelled("Players", refs.players);
     row1.append(refs.playersWrap);
+
+    // The pot: pick the day; the seed and hash come from the paid pot.
+    refs.day = el("input", "vf-input vf-short");
+    refs.day.type = "date";
+    refs.day.style.width = "150px";
+    refs.dayWrap = labelled("Day", refs.day);
+    row1.append(refs.dayWrap);
     form.append(row1);
 
     refs.seed = el("input", "vf-input");
@@ -115,6 +123,10 @@
     const g = refs.game.value;
     refs.minesWrap.hidden = g !== "mines";
     refs.playersWrap.hidden = !(g === "roulette" || g === "standing");
+    refs.dayWrap.hidden = g !== "pot";
+    refs.seed.disabled = g === "pot";
+    refs.hash.disabled = g === "pot";
+    refs.seed.placeholder = g === "pot" ? "filled in from the day's pot" : "the seed revealed after the round";
   }
 
   function fillFromUrl() {
@@ -124,14 +136,58 @@
     if (q.get("seed")) refs.seed.value = q.get("seed");
     if (q.get("hash")) refs.hash.value = q.get("hash");
     const clamp = (v, lo, hi) => String(Math.min(hi, Math.max(lo, Number.parseInt(v, 10) || lo)));
+    if (q.get("day")) refs.day.value = q.get("day");
     if (q.get("mines")) refs.mines.value = clamp(q.get("mines"), 1, 10);
     if (q.get("players")) refs.players.value = clamp(q.get("players"), 2, 12);
     syncExtras();
-    return Boolean(q.get("seed"));
+    return Boolean(q.get("seed")) || game === "pot";
+  }
+
+  /* The pot is checked by day: the paid pot's seed, total and shares
+     come from /api/casino/pot?day=, the trigger and draw are replayed
+     by /api/casino/verify, and the hash is checked here. */
+  async function runPot() {
+    refs.go.disabled = true;
+    refs.note.textContent = "Checking…";
+    let day = refs.day.value;
+    if (!day) {
+      const cur = await fetch("/api/casino/pot").then((r) => r.json()).catch(() => null);
+      day = cur?.pot?.status === "PAID" ? cur.pot.day : cur?.pot?.last?.day || "";
+      if (day) refs.day.value = day;
+    }
+    const pot = day ? await fetch(`/api/casino/pot?day=${encodeURIComponent(day)}`).then((r) => r.json()).catch(() => null) : null;
+    refs.go.disabled = false;
+    refs.note.textContent = "";
+    refs.out.hidden = false;
+    if (!pot?.ok) { refs.out.replaceChildren(el("p", "cf-empty", pot?.message || "No pot to check for that day yet.")); return; }
+    if (pot.status !== "PAID") {
+      refs.out.replaceChildren(el("p", "cf-empty", `The pot for ${day} hasn't paid yet — its hash is ${pot.hash}. The seed is revealed when it pays.`));
+      refs.seed.value = ""; refs.hash.value = pot.hash;
+      return;
+    }
+    refs.seed.value = pot.seed; refs.hash.value = pot.hash;
+    const [local, d] = await Promise.all([
+      sha256Hex(pot.seed).catch(() => null),
+      fetch(`/api/casino/verify?game=pot&seed=${encodeURIComponent(pot.seed)}&hash=${pot.hash}&total=${pot.total}`).then((r) => r.json()).catch(() => null)
+    ]);
+    if (!d?.ok) { refs.out.replaceChildren(el("p", "cf-empty", "Couldn't replay that pot. Try again.")); return; }
+    render(d, local, pot.hash);
+    const out = refs.out;
+    out.append(el("p", "vf-note", `The line was at ${d.trigger.toLocaleString()} ZC of play (somewhere in ${d.floor}–${d.ceiling.toLocaleString()}). The day reached ${pot.total.toLocaleString()} and the draw came out at ${pot.draw.toLocaleString()}, which lands in ${pot.winner?.displayName || "the winner"}'s range.`));
+    const grid = el("div", "vf-ranges");
+    for (const r of pot.ranges) {
+      const cell = el("div", `vf-range${r.from <= pot.draw && pot.draw <= r.to ? " won" : ""}`);
+      cell.append(el("b", null, r.displayName || r.login || "someone"), el("span", null, `${r.from.toLocaleString()}–${r.to.toLocaleString()} · ${r.pct}%`));
+      grid.append(cell);
+    }
+    out.append(grid);
+    out.append(el("div", "vf-big", `${pot.winner?.displayName || "Someone"} took ${pot.amount} ZC`));
+    history.replaceState(history.state, "", `/?view=verify&game=pot&day=${encodeURIComponent(day)}`);
   }
 
   async function run() {
     const game = refs.game.value;
+    if (game === "pot") return runPot();
     const seed = refs.seed.value.trim();
     const claimed = refs.hash.value.trim().toLowerCase();
     if (!seed) { refs.note.textContent = "Paste the seed first."; refs.seed.focus(); return; }
@@ -232,6 +288,8 @@
       }
       out.append(list);
       out.append(el("div", "vf-big", `Seat ${d.result.winner} survives`));
+    } else if (d.game === "pot") {
+      // the runner adds the ranges after this
     } else if (d.game === "standing") {
       out.append(el("p", "vf-note", `${d.players} players. Seats are numbered in the order people sat down, 0 first. Knocked out in this order:`));
       out.append(el("p", "vf-order", d.result.order.slice(0, -1).map((s) => `seat ${s}`).join(" → ")));

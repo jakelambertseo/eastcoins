@@ -4,6 +4,7 @@
    leaves the wallet now; a win comes back as 2× when the round flips. */
 
 import { getSessionUser, walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOperation, newId, json, fail } from "../picks/_lib.js";
+import { settlePot } from "../casino/_pot.js";
 import { ensureSchema, roundAt, ensureRound, betsLastHour, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "./_coin.js";
 import { ensureSchema as ensureCasino, capCheck } from "../casino/_engine.js";
 
@@ -82,5 +83,8 @@ export async function onRequestPost(context) {
   }
 
   await finishOperation(db, opId, "CONFIRMED", { balanceAfter: debit.balance });
+  // The Daily Pot pays on a bet: this one may be the one that crosses
+  // its line. Never lets the bet fail; the next bet tries again.
+  await settlePot(context.env, db).catch(() => {});
   return json({ ok: true, round: round.no, side, wager, balance: debit.balance });
 }

@@ -4,6 +4,7 @@
    game per person; ten starts an hour; 1 to 20 ZC. */
 
 import { getSessionUser, walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOperation, newId, json, fail } from "../../picks/_lib.js";
+import { settlePot } from "../_pot.js";
 import { ensureSchema, touchPresence, capCheck } from "../_engine.js";
 import { ensureHilo, cardAt, liveGameFor, gamesLastHour, publicGame, randomSeed, sha256, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "./_hilo.js";
 
@@ -74,6 +75,9 @@ export async function onRequestPost(context) {
   }
 
   await finishOperation(db, opId, "CONFIRMED", { balanceAfter: debit.balance });
+  // The Daily Pot pays on a bet: this one may be the one that crosses
+  // its line. Never lets the bet fail; the next bet tries again.
+  await settlePot(context.env, db).catch(() => {});
   await touchPresence(db, HILO, user.id);
   const game = await db.prepare(`SELECT * FROM hilo_games WHERE id = ?`).bind(id).first();
   return json({ ok: true, game: publicGame(game), balance: debit.balance });

@@ -4169,3 +4169,51 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
   .rz-cta:hover{transform:none}
 }
 .sundaynote{margin:6px 0 30px;padding:14px 18px;border-radius:var(--radius);border:1px dashed var(--line-2);background:var(--panel);color:var(--muted);font-size:.9rem;text-align:center}
+
+/* ============================================================
+   THE DAILY POT
+   ============================================================ */
+.cas-pot{margin-bottom:16px}
+.pot{position:relative;overflow:hidden;border-color:rgba(var(--gold-rgb),.4);background:linear-gradient(100deg,rgba(var(--gold-rgb),.10),transparent 60%),var(--panel)}
+.pot::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 0% 50%,rgba(var(--gold-rgb),.14),transparent 55%)}
+.pot>*{position:relative}
+.pot-k{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-family:var(--display);font-weight:800;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2)}
+.pot-k .pot-sub{text-transform:none;letter-spacing:.02em;font-family:var(--body);font-weight:700;color:var(--muted-2)}
+.pot-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 10px rgba(var(--gold-rgb),.8);animation:potpulse 2.2s ease-in-out infinite}
+.pot-dot.off{background:var(--muted-2);box-shadow:none;animation:none}
+@keyframes potpulse{50%{opacity:.4}}
+.pot-amt{display:flex;align-items:baseline;gap:10px;margin:4px 0 8px}
+.pot-amt b{font-family:var(--display);font-weight:800;font-size:2.2rem;letter-spacing:-.03em;line-height:1;color:var(--gold);text-shadow:0 0 22px rgba(var(--gold-rgb),.35)}
+.pot-amt span{color:var(--muted);font-size:.86rem}
+.pot-meter{position:relative;height:12px;border-radius:999px;background:var(--panel-3);border:1px solid var(--line);overflow:hidden}
+.pot-meter i{position:absolute;inset:0;width:0;border-radius:999px;background:linear-gradient(90deg,#8a6a1c,var(--gold) 70%,#fff2b8);box-shadow:0 0 16px rgba(var(--gold-rgb),.6);transition:width .8s ease}
+.pot-meter i::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.14) 0 8px,transparent 8px 16px);animation:potstripes 1.4s linear infinite}
+@keyframes potstripes{to{background-position:32px 0}}
+.pot-meter em{position:absolute;top:-4px;bottom:-4px;width:2px;background:rgba(255,255,255,.3)}
+.pot-you{margin-top:8px;font-size:.82rem;color:var(--muted)}
+.pot-you b{color:var(--gold);font-family:var(--display);font-size:1rem}
+.pot-you small{color:var(--muted-2)}
+.pot-foot{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:.74rem;color:var(--muted-2)}
+.pot-foot b{color:var(--muted)}
+.pot-how{color:var(--gold);font-weight:800;text-decoration:none;margin-left:auto}
+.pot-how:hover{text-decoration:underline}
+.pot-paid{margin-top:6px;font-size:.95rem;color:var(--text)}
+.pot-paid .ulink{font-weight:800}
+.pot-note{margin:6px 0 0;color:var(--muted-2);font-size:.78rem}
+.pot.compact .pot-amt{margin:2px 0 6px}
+.pot.compact .pot-amt b{font-size:1.5rem}
+.pot.compact .pot-meter{height:8px}
+.pot.compact .pot-you{font-size:.76rem;margin-top:6px}
+.pot-hit{position:fixed;left:50%;top:84px;z-index:120;transform:translateX(-50%) translateY(-20px);opacity:0;min-width:min(520px,92vw);padding:18px 44px 16px 22px;border-radius:16px;border:1px solid rgba(var(--gold-rgb),.7);background:radial-gradient(ellipse at 50% 0%,rgba(var(--gold-rgb),.3),transparent 60%),#171311;box-shadow:0 24px 60px rgba(0,0,0,.6),0 0 40px rgba(var(--gold-rgb),.25);text-align:center;transition:transform .35s cubic-bezier(.3,1.5,.5,1),opacity .35s ease}
+.pot-hit.show{transform:translateX(-50%) translateY(0);opacity:1}
+.pot-hit-k{font-family:var(--display);font-weight:800;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.pot-hit-h{font-family:var(--display);font-weight:800;font-size:1.6rem;letter-spacing:-.03em;margin:4px 0 2px}
+.pot-hit-h b{color:var(--gold)}
+.pot-hit p{margin:0;color:var(--muted);font-size:.86rem}
+.pot-hit-x{position:absolute;right:10px;top:10px;width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:none;color:var(--muted);font:inherit;cursor:pointer}
+.vf-ranges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-top:10px}
+.vf-range{padding:8px 10px;border-radius:9px;border:1px solid var(--line-2);background:var(--panel-2);font-size:.74rem;color:var(--muted)}
+.vf-range b{display:block;color:var(--text);font-size:.84rem}
+.vf-range.won{border-color:var(--gold);background:var(--gold-dim)}
+.vf-range.won b{color:var(--gold)}
+@media (prefers-reduced-motion:reduce){.pot-dot,.pot-meter i::after{animation:none}.pot-hit{transition:none}}
