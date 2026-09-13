@@ -765,7 +765,7 @@
     if (local.nflSunday && !local.search) {
       const line = document.createElement("p");
       line.className = "sundaynote";
-      line.append("🏈 It's NFL Sunday — football only on here today. Everything else is back tomorrow, and Picks still has the day's baseball.");
+      line.append("🏈 It's NFL Sunday, football only on here today. Sybau. Baseball and other shit will be back tomorrow");
       root.append(line);
     }
 
