@@ -1,5 +1,5 @@
 /* ============================================================
-   The Daily Pot, on the page.
+   The Daily Jackpot, on the page.
 
    ECPot.mount(container, { compact })  — draws the pot and keeps it
    current: the amount, a bar of the day's play toward the ceiling
@@ -31,7 +31,7 @@
   function skeleton(box, compact) {
     box.replaceChildren();
     const head = el("div", "pot-k");
-    head.append(el("span", "pot-dot"), el("span", null, "Today's pot"));
+    head.append(el("span", "pot-dot"), el("span", null, "Today's Jackpot"));
     box.append(head);
     const amt = el("div", "pot-amt");
     amt.append(el("b", "nums", "100"), el("span", null, compact ? "ZC" : "ZC · counting the day's play…"));
@@ -44,12 +44,12 @@
 
   function draw(box, pot, compact) {
     box.replaceChildren();
-    if (!pot) { box.append(el("p", "cf-empty", "The pot is out of reach for a moment.")); return; }
+    if (!pot) { box.append(el("p", "cf-empty", "The Jackpot is out of reach for a moment.")); return; }
     const paid = pot.status === "PAID";
     const pct = Math.max(0, Math.min(100, Math.round((pot.play / pot.ceiling) * 100)));
 
     const head = el("div", "pot-k");
-    head.append(el("span", `pot-dot${paid ? " off" : ""}`), el("span", null, paid ? "Today's pot went" : "Today's pot"));
+    head.append(el("span", `pot-dot${paid ? " off" : ""}`), el("span", null, paid ? "Today's Jackpot went" : "Today's Jackpot"));
     if (!paid) head.append(el("span", "pot-sub", `· must hit by ${nums(pot.ceiling)} of play`));
     box.append(head);
 
@@ -58,7 +58,7 @@
       const who = K()?.nameLink ? K().nameLink({ login: pot.winner.login, displayName: pot.last?.login === pot.winner.login ? pot.last.displayName : pot.winner.login }) : el("b", null, pot.winner.login);
       w.append(who, document.createTextNode(" took "), K()?.zc ? K().zc(pot.amount) : el("b", null, `${nums(pot.amount)} ZC`), document.createTextNode(` at ${new Date(pot.paidAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`));
       box.append(w);
-      box.append(el("p", "pot-note", "Tomorrow's opens at midnight Central."));
+      box.append(el("p", "pot-note", "Tomorrow's Jackpot opens at midnight Central."));
       return;
     }
 
@@ -100,11 +100,11 @@
 
   function hit(pot) {
     const banner = el("div", "pot-hit");
-    banner.append(el("div", "pot-hit-k", "The pot hit"));
+    banner.append(el("div", "pot-hit-k", "JACKPOT"));
     const h = el("div", "pot-hit-h");
     h.append(el("b", null, pot.winner?.login || "someone"), document.createTextNode(" takes "), el("b", "nums", `${nums(pot.amount)} ZC`));
     banner.append(h);
-    banner.append(el("p", null, `Drawn from ${nums(pot.players)} players by stake. Tomorrow's pot opens at midnight Central.`));
+    banner.append(el("p", null, `Drawn from ${nums(pot.players)} players by stake. Tomorrow's Jackpot opens at midnight Central.`));
     const x = el("button", "pot-hit-x", "✕"); x.type = "button"; x.addEventListener("click", () => banner.remove());
     banner.append(x);
     document.body.append(banner);

@@ -18,7 +18,7 @@
   const GAMES = [
     ["hilo", "Higher or Lower"], ["mines", "Mines"], ["plinko", "Plinko"],
     ["wheel", "Wheel"], ["flip", "Coin Flip"], ["roulette", "Russian Roulette"], ["standing", "Last One Standing"], ["race", "Horse Race"],
-    ["pot", "The Daily Pot"]
+    ["pot", "The Daily Jackpot"]
   ];
 
   function el(tag, cls, text) {
@@ -159,9 +159,9 @@
     refs.go.disabled = false;
     refs.note.textContent = "";
     refs.out.hidden = false;
-    if (!pot?.ok) { refs.out.replaceChildren(el("p", "cf-empty", pot?.message || "No pot to check for that day yet.")); return; }
+    if (!pot?.ok) { refs.out.replaceChildren(el("p", "cf-empty", pot?.message || "No Jackpot to check for that day yet.")); return; }
     if (pot.status !== "PAID") {
-      refs.out.replaceChildren(el("p", "cf-empty", `The pot for ${day} hasn't paid yet — its hash is ${pot.hash}. The seed is revealed when it pays.`));
+      refs.out.replaceChildren(el("p", "cf-empty", `The Jackpot for ${day} hasn't paid yet — its hash is ${pot.hash}. The seed is revealed when it pays.`));
       refs.seed.value = ""; refs.hash.value = pot.hash;
       return;
     }
@@ -170,7 +170,7 @@
       sha256Hex(pot.seed).catch(() => null),
       fetch(`/api/casino/verify?game=pot&seed=${encodeURIComponent(pot.seed)}&hash=${pot.hash}&total=${pot.total}`).then((r) => r.json()).catch(() => null)
     ]);
-    if (!d?.ok) { refs.out.replaceChildren(el("p", "cf-empty", "Couldn't replay that pot. Try again.")); return; }
+    if (!d?.ok) { refs.out.replaceChildren(el("p", "cf-empty", "Couldn't replay that Jackpot. Try again.")); return; }
     render(d, local, pot.hash);
     const out = refs.out;
     out.append(el("p", "vf-note", `The line was at ${d.trigger.toLocaleString()} ZC of play (somewhere in ${d.floor}–${d.ceiling.toLocaleString()}). The day reached ${pot.total.toLocaleString()} and the draw came out at ${pot.draw.toLocaleString()}, which lands in ${pot.winner?.displayName || "the winner"}'s range.`));

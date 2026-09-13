@@ -90,7 +90,7 @@ export async function onRequestGet({ request }) {
     // The hidden line and, given the day's total stakes, the draw.
     const total = clampInt(q.get("total"), 0, 100000000, 0);
     return json({
-      ...base, name: "The Daily Pot",
+      ...base, name: "The Daily Jackpot",
       trigger: await triggerFor(seed), floor: TRIGGER_MIN, ceiling: TRIGGER_MAX,
       total: total || null, draw: total ? await drawFor(seed, total) : null,
       rule: `trigger = ${TRIGGER_MIN} + (sha256(seed:trigger) mod ${TRIGGER_MAX - TRIGGER_MIN + 1}); draw = sha256(seed:draw) mod total stake; the draw lands in one player's range, ranges laid out by stake in user-id order`
