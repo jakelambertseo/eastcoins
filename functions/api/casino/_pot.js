@@ -108,6 +108,22 @@ export async function dayStakes(db, day) {
   return by;
 }
 
+/** One person's stakes for the day — what the pot page needs for "your share". */
+export async function viewerStake(db, day, userId) {
+  const { start, end } = dayBounds(day);
+  const a = stamp(start), b = stamp(end), u = String(userId);
+  const q = (sql) => db.prepare(sql).bind(u, a, b).first().then((r) => Number(r?.s || 0)).catch(() => 0);
+  const parts = await Promise.all([
+    q(`SELECT SUM(wager) AS s FROM casino_bets WHERE user_id = ? AND created_at >= ? AND created_at < ?`),
+    q(`SELECT SUM(wager) AS s FROM coin_bets WHERE user_id = ? AND created_at >= ? AND created_at < ?`),
+    q(`SELECT SUM(stake) AS s FROM hilo_games WHERE user_id = ? AND created_at >= ? AND created_at < ?`),
+    q(`SELECT SUM(stake) AS s FROM mines_games WHERE user_id = ? AND created_at >= ? AND created_at < ?`),
+    q(`SELECT SUM(stake) AS s FROM plinko_drops WHERE user_id = ? AND created_at >= ? AND created_at < ?`),
+    q(`SELECT SUM(stake) AS s FROM pvp_entries WHERE user_id = ? AND created_at >= ? AND created_at < ? AND status <> 'REFUNDED'`)
+  ]);
+  return parts.reduce((n, v) => n + v, 0);
+}
+
 /* ---------------- the pot row ---------------- */
 
 export async function potFor(db, now = Date.now()) {
@@ -205,15 +221,20 @@ export async function settlePot(env, db, now = Date.now()) {
 /* ---------------- what the page sees ---------------- */
 
 export async function publicPot(db, now = Date.now(), viewerId = null) {
+  // The reads don't depend on each other, so they go out together: the
+  // pot row, the day's stakes, and the last winner. One round trip's
+  // worth of latency instead of three.
+  const t0 = Date.now();
   await ensurePot(db);
-  const pot = await potFor(db, now);
-  const stakes = await dayStakes(db, pot.day);
+  const day = chicagoDay(now);
+  const [pot, stakes, last] = await Promise.all([
+    potFor(db, now),
+    dayStakes(db, day),
+    db.prepare(`SELECT p.day, p.amount, p.paid_at, p.winner_login, u.display_name, u.avatar_url FROM casino_pots p LEFT JOIN users u ON u.twitch_id = p.winner_user_id WHERE p.status = 'PAID' ORDER BY p.day DESC LIMIT 1`).first().catch(() => null)
+  ]);
   let total = 0;
   for (const v of stakes.values()) total += v;
   const yours = viewerId ? Number(stakes.get(String(viewerId)) || 0) : 0;
-  const last = await db
-    .prepare(`SELECT p.day, p.amount, p.paid_at, p.winner_login, u.display_name, u.avatar_url FROM casino_pots p LEFT JOIN users u ON u.twitch_id = p.winner_user_id WHERE p.status = 'PAID' ORDER BY p.day DESC LIMIT 1`)
-    .first().catch(() => null);
   const paid = pot.status === "PAID";
   return {
     day: pot.day,
@@ -225,12 +246,13 @@ export async function publicPot(db, now = Date.now(), viewerId = null) {
     ceiling: TRIGGER_MAX,
     floor: TRIGGER_MIN,
     lateHour: LATE_HOUR,
-    play: total,                                   // the day's stakes so far
+    play: total,
     players: stakes.size,
     yours,
     share: total > 0 && yours > 0 ? Math.round((yours / total) * 1000) / 10 : 0,
     paidAt: paid ? String(pot.paid_at).replace(" ", "T") + "Z" : null,
     winner: paid ? { login: pot.winner_login, total: Number(pot.total_stake), draw: Number(pot.draw) } : null,
-    last: last ? { day: last.day, amount: Number(last.amount), login: last.winner_login, displayName: String(last.display_name || last.winner_login), avatar: String(last.avatar_url || ""), at: String(last.paid_at).replace(" ", "T") + "Z" } : null
+    last: last ? { day: last.day, amount: Number(last.amount), login: last.winner_login, displayName: String(last.display_name || last.winner_login), avatar: String(last.avatar_url || ""), at: String(last.paid_at).replace(" ", "T") + "Z" } : null,
+    ms: Date.now() - t0
   };
 }

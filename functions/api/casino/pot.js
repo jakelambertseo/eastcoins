@@ -8,7 +8,7 @@
    which every bet endpoint calls. */
 
 import { json, fail, getSessionUser } from "../picks/_lib.js";
-import { ensurePot, publicPot, rangesFor, winnerOf } from "./_pot.js";
+import { ensurePot, publicPot, rangesFor, winnerOf, viewerStake } from "./_pot.js";
 
 export async function onRequestGet(context) {
   const db = context.env.PICKS_DB;
@@ -39,7 +39,16 @@ export async function onRequestGet(context) {
     });
   }
 
-  const user = await getSessionUser(db, context.request);
-  const pot = await publicPot(db, Date.now(), user ? user.id : null);
-  return json({ ok: true, now: Date.now(), pot });
+  // Who's asking and what the pot looks like are independent reads;
+  // the viewer's own share is filled in from the same stakes map after.
+  const t0 = Date.now();
+  const [user, base] = await Promise.all([getSessionUser(db, context.request), publicPot(db, Date.now(), null)]);
+  let pot = base;
+  if (user) {
+    // yours/share without a second stakes read: recompute from a cheap
+    // per-user sum only if the viewer played today.
+    const mine = await viewerStake(db, base.day, user.id);
+    pot = { ...base, yours: mine, share: base.play > 0 && mine > 0 ? Math.round((mine / base.play) * 1000) / 10 : 0 };
+  }
+  return json({ ok: true, now: Date.now(), pot, timing: { totalMs: Date.now() - t0, potMs: base.ms } });
 }
