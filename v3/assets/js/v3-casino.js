@@ -85,7 +85,7 @@
     refs.me = K.el("div", "cas-me");
     page.append(refs.me);
 
-    // The Daily Pot, above the games.
+    // The Daily Jackpot, above the games.
     const potSlot = K.el("div", "cas-pot");
     page.append(potSlot);
     window.ECPot?.mount(potSlot);
