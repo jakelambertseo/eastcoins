@@ -4118,3 +4118,52 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
 .vf-order{margin:0;color:var(--text);font-weight:700;font-size:.9rem}
 .vf-how h2{margin:0 0 8px}
 .vf-how ul{margin:0;padding-left:18px;color:var(--muted);font-size:.86rem;line-height:1.6}
+
+/* ============================================================
+   REDZONE SUNDAY — the hero at the top of the Sports page
+   ============================================================ */
+.rz-hero{position:relative;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(260px,.85fr);gap:0;min-height:230px;margin:0 0 22px;border:1px solid rgba(214,31,49,.45);border-radius:var(--radius);overflow:hidden;isolation:isolate;
+  background:
+    linear-gradient(100deg,rgba(12,10,9,.92) 0 55%,rgba(12,10,9,.35) 100%),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.055) 0 2px,transparent 2px 90px),
+    radial-gradient(ellipse at 0% 50%,rgba(214,31,49,.35),transparent 60%),
+    linear-gradient(180deg,#141a12,#0b0d0a);
+  background-size:auto,1800px 100%,auto,auto;
+  animation:rzyards 16s linear infinite;
+  box-shadow:0 18px 44px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.03)}
+@keyframes rzyards{to{background-position:0 0,1800px 0,0 0,0 0}}
+.rz-hero::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 12% 50%,rgba(214,31,49,.28),transparent 55%);animation:rzpulse 4.5s ease-in-out infinite}
+@keyframes rzpulse{50%{opacity:.45}}
+.rz-hero::after{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;z-index:2;background:linear-gradient(180deg,#ff3b4f,#b3121f)}
+.rz-text{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;gap:10px;padding:26px 28px 24px 30px;min-width:0}
+.rz-mark{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-family:var(--display);font-weight:800;font-size:.86rem;letter-spacing:.14em;text-transform:uppercase;color:#ff6b7a}
+.rz-lamp{width:10px;height:10px;border-radius:50%;background:#6a2a30;flex:0 0 auto;box-shadow:0 0 0 2px rgba(255,59,79,.15)}
+.rz-hero.live .rz-lamp{background:#ff3b4f;box-shadow:0 0 0 3px rgba(255,59,79,.25),0 0 14px rgba(255,59,79,.9);animation:rzlamp 1.3s ease-in-out infinite}
+@keyframes rzlamp{50%{opacity:.45}}
+.rz-when{color:var(--muted);letter-spacing:.06em;text-transform:none;font-weight:700}
+.rz-when:empty{display:none}
+.rz-when::before{content:"·";margin-right:10px;color:var(--muted-2)}
+.rz-hero.live .rz-when{color:#ff3b4f;letter-spacing:.14em;text-transform:uppercase}
+.rz-h{margin:0;font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,3.4vw,2.6rem);line-height:1.02;letter-spacing:-.03em;text-wrap:balance;
+  background:linear-gradient(100deg,#fff 0 40%,#ffd2d7 48%,#fff 56% 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rzsheen 9s ease-in-out infinite}
+@keyframes rzsheen{0%,20%{background-position:120% 0}60%,100%{background-position:-120% 0}}
+.rz-p{margin:0;color:var(--muted);font-size:.95rem;line-height:1.5;max-width:52ch}
+.rz-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:6px}
+.rz-cta{display:inline-flex;align-items:center;height:42px;padding:0 20px;border-radius:11px;background:linear-gradient(180deg,#ff3b4f,#c8142a);color:#fff;font-family:var(--display);font-weight:800;font-size:.95rem;letter-spacing:.01em;text-decoration:none;box-shadow:0 8px 22px rgba(214,31,49,.35),inset 0 1px 0 rgba(255,255,255,.25);transition:transform .14s ease,box-shadow .14s ease}
+.rz-cta:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(214,31,49,.5),inset 0 1px 0 rgba(255,255,255,.3)}
+.rz-eyes{color:var(--muted);font-size:.82rem;font-weight:700}
+.rz-art{position:relative;display:block;min-height:180px;background:#0b0d0a}
+.rz-art::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,#0c0a09 0,rgba(12,10,9,.55) 22%,transparent 60%),linear-gradient(0deg,rgba(12,10,9,.5),transparent 40%)}
+.rz-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;transition:opacity .4s ease;filter:saturate(1.1)}
+.rz-art img.in{opacity:1}
+@media (max-width:760px){
+  .rz-hero{grid-template-columns:1fr;min-height:0}
+  .rz-art{order:-1;min-height:150px;aspect-ratio:16/7}
+  .rz-art::before{background:linear-gradient(180deg,rgba(12,10,9,.1),#0c0a09)}
+  .rz-text{padding:16px 18px 20px 22px}
+}
+@media (prefers-reduced-motion:reduce){
+  .rz-hero,.rz-hero::before,.rz-h,.rz-hero.live .rz-lamp{animation:none}
+  .rz-h{background-position:0 0}
+  .rz-cta:hover{transform:none}
+}

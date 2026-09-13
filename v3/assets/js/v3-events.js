@@ -700,7 +700,13 @@
       return;
     }
 
-    const ordered = Sports.grouped(visible, watchingNow);
+    // RedZone gets the top of the page to itself on the days it is
+    // listed: one wide banner instead of a card, unless someone is
+    // searching, when it is just another result.
+    const zone = local.search ? null : visible.find(isRedZone) || null;
+    if (zone) root.append(redZoneHero(zone));
+
+    const ordered = Sports.grouped(zone ? visible.filter((m) => m !== zone) : visible, watchingNow);
     pendingPicks = [];
 
     for (const [key, list] of ordered) {
@@ -737,6 +743,106 @@
     }
 
     if (pendingPicks.length) decoratePicks(pendingPicks);
+  }
+
+  /* ---------------------------------------------------------- redzone
+
+     NFL RedZone is a single-title listing from the provider (no teams,
+     one poster). On the Sundays it appears it is the one thing most of
+     the room came for, so it takes a whole row at the top. */
+
+  const isRedZone = (m) => /\bnfl\b.*red\s*zone|red\s*zone.*\bnfl\b/i.test(String(m?.title || "")) || /^ppv-nfl-red-zone/.test(String(m?.id || ""));
+
+  function redZoneHero(match) {
+    const API = window.EastcoinStreamedAPI;
+    const href = `/?view=watch&event=${encodeURIComponent(match.id)}`;
+    const open = (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+      event.preventDefault();
+      history.pushState({ view: "watch" }, "", href);
+      shell.go("watch", { push: false });
+    };
+
+    const hero = document.createElement("section");
+    hero.className = "rz-hero";
+    hero.dataset.eventId = String(match.id || "");
+
+    const text = document.createElement("div");
+    text.className = "rz-text";
+
+    const mark = document.createElement("div");
+    mark.className = "rz-mark";
+    const lamp = document.createElement("span");
+    lamp.className = "rz-lamp";
+    const markText = document.createElement("span");
+    markText.textContent = "NFL RedZone";
+    const when = document.createElement("span");
+    when.className = "rz-when";
+    mark.append(lamp, markText, when);
+
+    const h = document.createElement("h2");
+    h.className = "rz-h";
+    h.textContent = "Football season is finally here.";
+
+    const p = document.createElement("p");
+    p.className = "rz-p";
+    p.textContent = "Every touchdown from every game, all Sunday, on one stream. Grab a seat, the room's already filling up.";
+
+    const row = document.createElement("div");
+    row.className = "rz-row";
+    const cta = document.createElement("a");
+    cta.className = "rz-cta";
+    cta.href = href;
+    cta.textContent = "Watch RedZone →";
+    cta.addEventListener("click", open);
+    const eyes = document.createElement("span");
+    eyes.className = "rz-eyes";
+    row.append(cta, eyes);
+
+    text.append(mark, h, p, row);
+
+    const art = document.createElement("a");
+    art.className = "rz-art";
+    art.href = href;
+    art.setAttribute("aria-label", "Watch NFL RedZone");
+    art.addEventListener("click", open);
+    const posterUrl = match?.poster && API?.posterUrl ? API.posterUrl(match.poster) : "";
+    if (posterUrl) {
+      const img = document.createElement("img");
+      img.alt = "";
+      img.decoding = "async";
+      img.addEventListener("load", () => img.classList.add("in"));
+      img.addEventListener("error", () => img.remove());
+      img.src = posterUrl;
+      art.append(img);
+    }
+
+    hero.append(text, art);
+
+    // Kickoff or LIVE, and who's here, kept current while the hero is
+    // on the page; the interval lets go once it isn't.
+    const start = Number(match?.date) || 0;
+    const tick = () => {
+      if (!hero.isConnected) { window.clearInterval(timer); return; }
+      const live = isLive(match);
+      hero.classList.toggle("live", live);
+      if (live) when.textContent = "LIVE";
+      else if (!start) when.textContent = "";
+      else {
+        const ms = start - Date.now();
+        const today = new Date(start).toDateString() === new Date().toDateString();
+        const clock = new Date(start).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" }) + " CT";
+        if (ms <= 0) when.textContent = "Kicking off";
+        else if (ms < 60 * 60000) when.textContent = `Kicks off in ${Math.max(1, Math.round(ms / 60000))} min · ${clock}`;
+        else if (today) when.textContent = `Kicks off today · ${clock}`;
+        else when.textContent = `Kicks off ${new Date(start).toLocaleDateString("en-US", { weekday: "long", timeZone: "America/Chicago" })} · ${clock}`;
+      }
+      const n = watchingNow[String(match.id || "")] || 0;
+      eyes.textContent = n ? `👀 ${n} watching now` : "";
+    };
+    const timer = window.setInterval(tick, 30000);
+    tick();
+    return hero;
   }
 
   /* ---------------------------------------------------------- view more

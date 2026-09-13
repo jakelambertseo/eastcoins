@@ -526,6 +526,16 @@
 > name or logo is drawn from must therefore SELECT `league` — `_wager.js`
 > did not, which is why a Missouri pick showed the Detroit Tigers crest.
 >
+> **RedZone Sunday (2026-09-13)** — when the provider lists NFL RedZone
+> (`isRedZone`: title "NFL RedZone" or id `ppv-nfl-red-zone`), the Sports
+> page puts `redZoneHero()` above the groups — a full-width banner with
+> "Football season is finally here.", kickoff-or-LIVE, who's watching,
+> and one button into the watch view — and drops its small card from the
+> grid; a search shows the card again. Styles are `.rz-*` in `v3.css`:
+> slow yard-line drift, a soft red pulse, a sheen on the headline, all
+> off under reduced motion. Nothing is special-cased by date, so it
+> appears every Sunday the listing does.
+>
 > **What the Sports page hides (2026-09-12)** — `keep()` in `v3-sports.js`
 > drops whole sports nobody in the community watches (`HIDDEN_SPORTS`:
 > soccer, motorsport, rugby, cricket — remove a key to bring one back) and
