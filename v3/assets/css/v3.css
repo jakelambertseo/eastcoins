@@ -3276,6 +3276,12 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .cas-tile.cas-flip{--accent:var(--gold);--accent-rgb:var(--gold-rgb)}
 .cas-tile.cas-wheel{--accent:#d31d4d;--accent-rgb:211,29,77}
 .cas-tile.cas-hilo{--accent:#8fc3d7;--accent-rgb:143,195,215}
+.cas-tile.cas-mines{--accent:#b48cff;--accent-rgb:180,140,255}
+.cas-tile.cas-plinko{--accent:#ff9a3d;--accent-rgb:255,154,61}
+.cas-tile.cas-roulette{--accent:#c2261c;--accent-rgb:194,38,28}
+.cas-tile.cas-roulette .cas-play{color:#fff}
+.cas-tile.cas-standing{--accent:#4ddb8b;--accent-rgb:77,219,139}
+.cas-tile.cas-race{--accent:#e0a458;--accent-rgb:224,164,88}
 .cas-tile-top{display:flex;align-items:center;gap:12px}
 .cas-icon{
   width:46px;height:46px;flex:0 0 auto;display:grid;place-items:center;border-radius:12px;
