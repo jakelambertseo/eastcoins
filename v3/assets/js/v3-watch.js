@@ -386,6 +386,26 @@
 
   /* ---------------------------------------------------------- controls */
 
+  // The server a tab is on, as presence records it: the provider's source
+  // and stream number. A pasted URL is nobody's business and sends nothing.
+  const srvKey = (s) => (!s || s.mine ? "" : `${String(s.source || "").toLowerCase()}/${s.streamNo ?? ""}`);
+  function beatServer() {
+    window.ECPresence?.beat("watch", local.match?.title || "", local.match?.id || "", srvKey(local.streams[local.active]));
+  }
+  // "Server 3 of 8 · 4 watching", from the presence poll's per-server
+  // counts for this event. Labels keep their base text so a count can
+  // change without rebuilding the list.
+  function paintServerCounts() {
+    if (!dom.select) return;
+    const counts = local.serverCounts || {};
+    for (const option of dom.select.options) {
+      const base = option.dataset.base;
+      if (!base) continue;
+      const n = Number(counts[option.dataset.srv || ""] || 0);
+      option.textContent = n ? `${base} · ${n} watching` : base;
+    }
+  }
+
   function syncServers() {
     if (!dom.select) return;
     dom.select.replaceChildren();
@@ -406,10 +426,13 @@
         option.textContent = mine > 1 ? `Your server ${seen}` : "Your server";
       } else {
         option.textContent = count > 1 ? `Server ${index + 1} of ${count}` : "Server 1";
+        option.dataset.base = option.textContent;
+        option.dataset.srv = srvKey(stream);
       }
       if (index === local.active) option.selected = true;
       dom.select.append(option);
     });
+    paintServerCounts();
 
     if (!local.streams.length) {
       const none = document.createElement("option");
@@ -467,6 +490,7 @@
         if (select.value === "none") return;
         local.active = Number(select.value) || 0;
         rememberServer();
+        beatServer();
         // Deliberate reload: a new server is a new stream.
         if (dom.iframe) setStreamSrc(dom.iframe, currentSrc());
       });
@@ -523,7 +547,10 @@
       const who = el("div", "wwho");
       who.hidden = true;
       bar.append(who);
-      stopWho = window.ECPresence?.mountWatchers?.(who, local.match.id) || null;
+      stopWho = window.ECPresence?.mountWatchers?.(who, local.match.id, (data) => {
+        local.serverCounts = data?.servers?.[String(local.match?.id || "")] || {};
+        paintServerCounts();
+      }) || null;
     }
 
     const back = el("button", "watchbtn", "← Events");
@@ -687,12 +714,13 @@
       for (const url of readMine(local.match.id)) local.streams.push({ embedUrl: url, mine: true });
       local.reason = outcome.reason;
       local.game = game;
-      // Who's here can name the game rather than just "watching".
-      window.ECPresence?.beat("watch", local.match?.title || "", local.match?.id || "");
       // A shared link names the server it was copied from (1-based);
       // the old shell's ?stream= is honoured the same way.
       const wanted = Number(params().get("server") || params().get("stream") || 0);
       if (wanted >= 1 && wanted <= local.streams.length) local.active = wanted - 1;
+      // Who's here can name the game rather than just "watching", and
+      // presence learns which server this tab landed on.
+      beatServer();
       local.loading = false;
       if (root.isConnected) paint();
     },

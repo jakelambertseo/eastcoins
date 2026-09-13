@@ -282,7 +282,12 @@
 > `ECPresence.mountWatchers(el, eventId)` draws overlapping faces and
 > "n watching" beside "← Events" (`.wwho` in `v3.css`), filtering
 > `people` to `where === "watch"` with a matching `ref` and taking the
-> total from `watching` so guests are counted but faceless. It returns a
+> total from `watching` so guests are counted but faceless. **Viewers
+> per server (2026-09-13)**: a watch tab's beat also carries `srv` — the
+> provider's source and stream number, "golf/2" — stored in
+> `site_presence.srv`; GET returns `servers: {eventId: {srv: n}}`, and
+> `v3-watch.js` reads it through `mountWatchers`'s third argument to label
+> the dropdown "Server 3 of 8 · 4 watching". Pasted URLs send no `srv`. It returns a
 > stop function because `buildBar()` runs again on every repaint; a
 > pasted `?url=` stream has no id and gets no pile.
 >

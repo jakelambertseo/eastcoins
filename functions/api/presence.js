@@ -30,6 +30,9 @@ async function ensure(db) {
   // Added after the table first shipped; harmless when already there.
   await db.prepare(`ALTER TABLE site_presence ADD COLUMN detail TEXT`).run().catch(() => {});
   await db.prepare(`ALTER TABLE site_presence ADD COLUMN ref TEXT`).run().catch(() => {});
+  // Which server a watch tab is on ("golf/2": the provider's source and
+  // stream number), so the dropdown can say how many are on each.
+  await db.prepare(`ALTER TABLE site_presence ADD COLUMN srv TEXT`).run().catch(() => {});
   ready = true;
 }
 
@@ -48,14 +51,15 @@ export async function onRequestPost(context) {
   // What exactly they are on — an event id for a watch page — so the
   // Sports page can count viewers per card.
   const ref = String(body.ref || "").replace(/[^a-zA-Z0-9_:.-]/g, "").slice(0, 80);
+  const srv = String(body.srv || "").replace(/[^a-zA-Z0-9_:.\/-]/g, "").slice(0, 40);
   if (!client) return json({ ok: false, code: "NO_CLIENT" }, 400);
 
   const user = await getSessionUser(db, context.request);
   const now = Date.now();
   await db
-    .prepare(`INSERT INTO site_presence (client_id, user_id, place, detail, ref, seen_at) VALUES (?, ?, ?, ?, ?, ?)
-              ON CONFLICT(client_id) DO UPDATE SET user_id = excluded.user_id, place = excluded.place, detail = excluded.detail, ref = excluded.ref, seen_at = excluded.seen_at`)
-    .bind(client, user ? user.id : null, place, detail, ref, now)
+    .prepare(`INSERT INTO site_presence (client_id, user_id, place, detail, ref, srv, seen_at) VALUES (?, ?, ?, ?, ?, ?, ?)
+              ON CONFLICT(client_id) DO UPDATE SET user_id = excluded.user_id, place = excluded.place, detail = excluded.detail, ref = excluded.ref, srv = excluded.srv, seen_at = excluded.seen_at`)
+    .bind(client, user ? user.id : null, place, detail, ref, srv, now)
     .run();
 
   // One row per person per Chicago day, first beat wins — this is what
@@ -83,7 +87,7 @@ export async function onRequestGet(context) {
   const since = Date.now() - WINDOW_MS;
   const rows = await db
     .prepare(
-      `SELECT p.client_id, p.user_id, p.place, p.detail, p.ref, p.seen_at, u.twitch_login, u.display_name, u.avatar_url
+      `SELECT p.client_id, p.user_id, p.place, p.detail, p.ref, p.srv, p.seen_at, u.twitch_login, u.display_name, u.avatar_url
          FROM site_presence p LEFT JOIN users u ON u.twitch_id = p.user_id
         WHERE p.seen_at >= ?
         ORDER BY p.seen_at DESC`
@@ -98,9 +102,17 @@ export async function onRequestGet(context) {
   const where = {};
   // Viewers per event: everyone on a watch page, counted once each.
   const watching = {};
+  // And per server within an event: servers[eventId][srv] = n.
+  const servers = {};
+  const onServer = (ref, srv) => {
+    if (!ref || !srv) return;
+    if (!servers[ref]) servers[ref] = {};
+    servers[ref][srv] = (servers[ref][srv] || 0) + 1;
+  };
   for (const r of rows.results || []) {
     const place = String(r.place || "");
     const ref = String(r.ref || "");
+    const srv = String(r.srv || "");
     if (r.user_id && r.twitch_login) {
       if (!people.has(r.user_id)) {
         people.set(r.user_id, {
@@ -112,14 +124,14 @@ export async function onRequestGet(context) {
           ref
         });
         where[place] = (where[place] || 0) + 1;
-        if (place === "watch" && ref) watching[ref] = (watching[ref] || 0) + 1;
+        if (place === "watch" && ref) { watching[ref] = (watching[ref] || 0) + 1; onServer(ref, srv); }
       }
     } else {
       guests += 1;
       where[place] = (where[place] || 0) + 1;
-      if (place === "watch" && ref) watching[ref] = (watching[ref] || 0) + 1;
+      if (place === "watch" && ref) { watching[ref] = (watching[ref] || 0) + 1; onServer(ref, srv); }
     }
   }
 
-  return json({ ok: true, people: [...people.values()], guests, total: people.size + guests, where, watching });
+  return json({ ok: true, people: [...people.values()], guests, total: people.size + guests, where, watching, servers });
 }

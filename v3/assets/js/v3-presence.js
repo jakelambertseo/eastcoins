@@ -37,8 +37,10 @@
   let lastRef = "";
   // Hidden tabs still beat: someone with the Green Room in a background
   // tab is still in the Green Room.
-  async function beat(where, detail, ref) {
-    if (where && where !== lastWhere) { lastDetail = ""; lastRef = ""; }
+  let lastSrv = "";
+  async function beat(where, detail, ref, srv) {
+    if (where && where !== lastWhere) { lastDetail = ""; lastRef = ""; lastSrv = ""; }
+    if (srv !== undefined) lastSrv = String(srv || "");
     // With no route given, ask the shell where this tab actually is —
     // the first paint happens before this script is ready, and a Music
     // tab must not spend its first minute reported as Sports.
@@ -49,7 +51,7 @@
       await fetch("/api/presence", {
         method: "POST", credentials: "include", keepalive: true,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ client: clientId(), where: lastWhere, detail: lastDetail, ref: lastRef })
+        body: JSON.stringify({ client: clientId(), where: lastWhere, detail: lastDetail, ref: lastRef, srv: lastSrv })
       });
     } catch { /* next beat */ }
   }
@@ -214,16 +216,18 @@
    * Hands back a stop function: the watch view rebuilds its bar, so
    * the caller has to be able to put the old timer down.
    */
-  function mountWatchers(container, ref) {
+  function mountWatchers(container, ref, onData) {
     let timer = 0;
     const refresh = async () => {
       const data = await fetchRoom();
       if (!container.isConnected) { window.clearInterval(timer); return; }
       drawWatchers(container, data, ref);
+      onData?.(data);
     };
     // Whatever the last poll saw, drawn at once — a bar that fills in
     // twenty seconds late reads as broken.
     drawWatchers(container, latest, ref);
+    if (latest) onData?.(latest);
     refresh();
     timer = window.setInterval(refresh, 20 * 1000);
     return () => window.clearInterval(timer);
