@@ -123,8 +123,9 @@
     if (GAMES.some(([k]) => k === game)) refs.game.value = game;
     if (q.get("seed")) refs.seed.value = q.get("seed");
     if (q.get("hash")) refs.hash.value = q.get("hash");
-    if (q.get("mines")) refs.mines.value = q.get("mines");
-    if (q.get("players")) refs.players.value = q.get("players");
+    const clamp = (v, lo, hi) => String(Math.min(hi, Math.max(lo, Number.parseInt(v, 10) || lo)));
+    if (q.get("mines")) refs.mines.value = clamp(q.get("mines"), 1, 10);
+    if (q.get("players")) refs.players.value = clamp(q.get("players"), 2, 12);
     syncExtras();
     return Boolean(q.get("seed"));
   }

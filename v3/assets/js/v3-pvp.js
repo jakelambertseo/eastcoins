@@ -289,7 +289,9 @@
       }
       lines.push(`check              sha256(seed) = hash · ${spec.verifyRule}`);
       refs.fairBody.textContent = lines.join("\n");
-      K.verifyLink(refs.fair, last?.seed ? { game: spec.key, seed: last.seed, hash: last.hash, players: last.players.length } : null);
+      // Only a round that played has a result to check; a refunded table
+      // of one has a seed but nothing it decided.
+      K.verifyLink(refs.fair, last?.seed && last.status === "SETTLED" ? { game: spec.key, seed: last.seed, hash: last.hash, players: last.players.length } : null);
 
       // Room
       const room = data.room || [];
