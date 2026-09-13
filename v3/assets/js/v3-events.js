@@ -787,6 +787,13 @@
     const p = document.createElement("p");
     p.className = "rz-p";
     p.textContent = "Every touchdown from every game, all Sunday, on one stream.";
+    const emote = document.createElement("img");
+    emote.className = "rz-emote";
+    emote.src = "https://cdn.betterttv.net/emote/6556e8cee047f20d72a4b449/2x.webp";
+    emote.alt = "";
+    emote.decoding = "async";
+    emote.addEventListener("error", () => emote.remove());
+    p.append(" ", emote);
 
     const row = document.createElement("div");
     row.className = "rz-row";
