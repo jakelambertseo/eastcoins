@@ -529,7 +529,7 @@
 > **RedZone Sunday (2026-09-13)** — when the provider lists NFL RedZone
 > (`isRedZone`: title "NFL RedZone" or id `ppv-nfl-red-zone`), the Sports
 > page puts `redZoneHero()` above the groups — a full-width banner with
-> "Football season is finally here.", kickoff-or-LIVE, who's watching,
+> "Football season is here.", kickoff-or-LIVE, who's watching,
 > and one button into the watch view — and drops its small card from the
 > grid; a search shows the card again. Styles are `.rz-*` in `v3.css`:
 > slow yard-line drift, a soft red pulse, a sheen on the headline, all

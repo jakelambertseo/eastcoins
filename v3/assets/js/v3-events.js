@@ -782,7 +782,7 @@
 
     const h = document.createElement("h2");
     h.className = "rz-h";
-    h.textContent = "Football season is finally here.";
+    h.textContent = "Football season is here.";
 
     const p = document.createElement("p");
     p.className = "rz-p";
