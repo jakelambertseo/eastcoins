@@ -21,6 +21,27 @@
 
   const seen = new Map();   // day -> status last drawn, per page load
 
+  // The last payload this browser saw, so a page paints the pot before
+  // its own fetch comes back; a cold Worker can take a second or two.
+  const CACHE_KEY = "ec_pot_last";
+  const cached = () => { try { const v = JSON.parse(sessionStorage.getItem(CACHE_KEY) || "null"); return v && Date.now() - v.at < 10 * 60000 ? v.pot : null; } catch { return null; } };
+  const remember = (pot) => { try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), pot })); } catch { /* fine */ } };
+
+  // The frame, drawn at once, so the card is never an empty bar.
+  function skeleton(box, compact) {
+    box.replaceChildren();
+    const head = el("div", "pot-k");
+    head.append(el("span", "pot-dot"), el("span", null, "Today's pot"));
+    box.append(head);
+    const amt = el("div", "pot-amt");
+    amt.append(el("b", "nums", "100"), el("span", null, compact ? "ZC" : "ZC · counting the day's play…"));
+    box.append(amt);
+    const meter = el("div", "pot-meter");
+    meter.append(el("i"));
+    box.append(meter);
+    box.append(el("div", "pot-you", compact ? "Loading…" : "Loading the day's play…"));
+  }
+
   function draw(box, pot, compact) {
     box.replaceChildren();
     if (!pot) { box.append(el("p", "cf-empty", "The pot is out of reach for a moment.")); return; }
@@ -95,6 +116,8 @@
   function mount(container, { compact = false } = {}) {
     const box = el("section", `cf-card pot${compact ? " compact" : ""}`);
     container.append(box);
+    const last = cached();
+    if (last) draw(box, last, compact); else skeleton(box, compact);
     let timer = 0;
     const tick = async () => {
       if (!box.isConnected) { window.clearInterval(timer); return; }
@@ -103,13 +126,14 @@
       try { data = await fetch("/api/casino/pot", { credentials: "include" }).then((r) => r.json()); } catch { data = null; }
       const pot = data?.ok ? data.pot : null;
       if (pot) {
+        remember(pot);
         const before = seen.get(pot.day);
         seen.set(pot.day, pot.status);
         // Only a change seen by this page gets the banner, and only if
         // it just happened — not a pot that paid hours before it opened.
         if (before && before !== "PAID" && pot.status === "PAID" && pot.paidAt && Date.now() - new Date(pot.paidAt).getTime() < RECENT_MS && !document.querySelector(".pot-hit")) hit(pot);
       }
-      draw(box, pot, compact);
+      if (pot || box.querySelector(".pot-you")?.textContent !== "Loading the day's play…") draw(box, pot, compact);
     };
     tick();
     timer = window.setInterval(tick, POLL_MS);
