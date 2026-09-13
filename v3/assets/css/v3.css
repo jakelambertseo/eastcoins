@@ -3930,3 +3930,59 @@ body[data-music-skin="void"] .ticker{opacity:.35}
 [data-skin="void"] .mside.rail .mq-row.mine{background:rgba(255,255,255,.03)}
 
 @media (prefers-reduced-motion:reduce){[data-skin="jukebox"] .mshell::before,[data-skin="jumbotron"] .mlisteners::before{animation:none}}
+
+/* ---------- Super Ultra Minimal: nothing but the words and the video.
+   No panels, no borders, no art, no emotes; hairlines and type. ---------- */
+[data-skin="minimal"] .mtitle{font-family:var(--body);font-weight:500;font-size:1rem;letter-spacing:.02em}
+[data-skin="minimal"] .mtitle-text{color:var(--muted)}
+[data-skin="minimal"] .mtitle-emote{display:none}
+[data-skin="minimal"] .mlisteners,[data-skin="minimal"] .room-btn,[data-skin="minimal"] .mskin-btn{background:none;border:0;border-radius:0;padding:0;height:auto;color:var(--muted-2);font-size:.74rem;font-weight:500;letter-spacing:.02em}
+[data-skin="minimal"] .room-btn:hover,[data-skin="minimal"] .mskin-btn:hover{color:var(--text)}
+[data-skin="minimal"] .mhead{margin-bottom:22px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.08)}
+[data-skin="minimal"] .mshell{gap:28px}
+[data-skin="minimal"] .mstagewrap .mstage{border:0;border-radius:0}
+[data-skin="minimal"] .mnow-ov{position:static;background:none;padding:14px 0 0;border-radius:0;grid-template-columns:minmax(0,1fr) auto;gap:16px;pointer-events:auto}
+[data-skin="minimal"] .mnow-ov-art{display:none}
+[data-skin="minimal"] .mnow-ov .mnow-k{display:none}
+[data-skin="minimal"] .mnow-ov .mnow-v{font-family:var(--body);font-weight:500;font-size:1rem;letter-spacing:-.005em;color:var(--text)}
+[data-skin="minimal"] .mnow-ov-by,[data-skin="minimal"] .mnow-ov-by .ulink{color:var(--muted-2);font-weight:400;font-size:.76rem}
+[data-skin="minimal"] .mnow-ov-time{color:var(--muted-2);font-weight:400;font-size:.76rem;padding:0}
+[data-skin="minimal"] .mprog{margin:6px 0 0}
+[data-skin="minimal"] .mprog-track{height:1px;border-radius:0;background:rgba(255,255,255,.12)}
+[data-skin="minimal"] .mprog-fill{height:1px;border-radius:0;background:var(--text)}
+[data-skin="minimal"] .mbar{background:none;border:0;border-radius:0;padding:14px 0 0;gap:18px}
+[data-skin="minimal"] .reactbtn,[data-skin="minimal"] .watchbtn,[data-skin="minimal"] .mskip,[data-skin="minimal"] .mseg-btn,[data-skin="minimal"] .mpager-btn{background:none;border:0;border-radius:0;padding:0;height:auto;color:var(--muted);font-family:var(--body);font-weight:500;font-size:.8rem;box-shadow:none}
+[data-skin="minimal"] .reactbtn:hover,[data-skin="minimal"] .watchbtn:hover,[data-skin="minimal"] .mskip:hover{background:none;color:var(--text)}
+[data-skin="minimal"] .reactbtn-emoji{font-size:.9rem;filter:grayscale(1);opacity:.8}
+[data-skin="minimal"] .reactbtn-n{font-family:var(--body);font-weight:500;color:var(--muted)}
+[data-skin="minimal"] .mbar .reactbar .reactbtn:nth-child(3){margin-left:0}
+[data-skin="minimal"] .mskip{color:var(--muted)}
+[data-skin="minimal"] .mskip.mvoted{color:var(--text);text-decoration:underline;text-underline-offset:3px}
+[data-skin="minimal"] .mbar .mvol{min-width:120px}
+[data-skin="minimal"] .mvol-k{display:none}
+[data-skin="minimal"] .mvol-v{font-family:var(--body);font-weight:400;font-size:.76rem;color:var(--muted-2)}
+[data-skin="minimal"] .mvol-range{accent-color:#8a8a8a}
+[data-skin="minimal"] .msearch-input{background:none;border:0;border-bottom:1px solid rgba(255,255,255,.12);border-radius:0;padding:0 0 6px;height:auto;font-size:.86rem}
+[data-skin="minimal"] .msearch-input:focus{outline:0;border-bottom-color:var(--text)}
+[data-skin="minimal"] .msearch-input::placeholder{color:var(--muted-2)}
+[data-skin="minimal"] .msearch-icon{display:none}
+[data-skin="minimal"] .mhint,[data-skin="minimal"] .mhint b{color:var(--muted-2);font-weight:400;font-size:.72rem}
+[data-skin="minimal"] .mhint-you{border:0;padding:0}
+[data-skin="minimal"] .mside.rail{background:none;border:0;border-radius:0}
+[data-skin="minimal"] .mside.rail .mtabs{background:none;border-bottom:1px solid rgba(255,255,255,.08);gap:18px}
+[data-skin="minimal"] .mside.rail .mtab{flex:0 0 auto;height:auto;padding:0 0 10px;font-family:var(--body);font-weight:500;font-size:.8rem;color:var(--muted-2);border-bottom:1px solid transparent;margin-bottom:-1px}
+[data-skin="minimal"] .mside.rail .mtab.active{color:var(--text);border-bottom-color:var(--text)}
+[data-skin="minimal"] .mside.rail .mq-row{padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);gap:12px}
+[data-skin="minimal"] .mq-thumb,[data-skin="minimal"] .mtop-av{display:none}
+[data-skin="minimal"] .mq-n{color:var(--muted-2);font-weight:400;font-size:.72rem}
+[data-skin="minimal"] .mq-meta strong{font-weight:500;font-size:.84rem}
+[data-skin="minimal"] .mq-meta small,[data-skin="minimal"] .mq-empty,[data-skin="minimal"] .elo-head,[data-skin="minimal"] .mq-eta{color:var(--muted-2);font-weight:400}
+[data-skin="minimal"] .mq-empty{background:none;padding:14px 0}
+[data-skin="minimal"] .mside.rail .mq-row.mine{background:none}
+[data-skin="minimal"] .mside.rail .mq-row.mine .mq-meta strong{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--muted-2)}
+[data-skin="minimal"] .mq-drop{background:none;border:0;color:var(--muted-2)}
+[data-skin="minimal"] .mq-tag,[data-skin="minimal"] .mq-you{background:none;border:0;color:var(--muted-2);padding:0}
+[data-skin="minimal"] .mseg{padding:10px 0 4px;gap:14px}
+[data-skin="minimal"] .mseg-btn.on{color:var(--text);text-decoration:underline;text-underline-offset:3px}
+[data-skin="minimal"] .mside.rail .mpager{padding:10px 0}
+[data-skin="minimal"] .elo-head::after{background:rgba(255,255,255,.06)}

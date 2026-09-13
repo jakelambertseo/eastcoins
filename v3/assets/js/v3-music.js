@@ -1559,7 +1559,8 @@
       ["jukebox", "Jukebox"],
       ["ipod", "iPod"],
       ["jumbotron", "Jumbotron"],
-      ["void", "Super Ultra Dark Mode"]
+      ["void", "Super Ultra Dark Mode"],
+      ["minimal", "Super Ultra Minimal"]
     ];
     const SKIN_KEY = "ec_music_skin";
     const SKIN_FONTS = "https://fonts.googleapis.com/css2?family=VT323&family=Silkscreen&family=Righteous&family=Orbitron:wght@600;800&display=swap";
