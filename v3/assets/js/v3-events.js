@@ -786,7 +786,7 @@
 
     const p = document.createElement("p");
     p.className = "rz-p";
-    p.textContent = "Every touchdown from every game, all Sunday, on one stream. Grab a seat, the room's already filling up.";
+    p.textContent = "Every touchdown from every game, all Sunday, on one stream.";
 
     const row = document.createElement("div");
     row.className = "rz-row";
