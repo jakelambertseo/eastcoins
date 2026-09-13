@@ -4169,4 +4169,3 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
   .rz-cta:hover{transform:none}
 }
 .sundaynote{margin:6px 0 30px;padding:14px 18px;border-radius:var(--radius);border:1px dashed var(--line-2);background:var(--panel);color:var(--muted);font-size:.9rem;text-align:center}
-.sundaynote + .ticker{margin-top:4px}

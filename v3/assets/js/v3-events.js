@@ -761,18 +761,12 @@
       if (list.length > limit || limit > page) group.append(moreRow(key, list.length, limit, page));
     }
 
-    if (local.nflSunday) {
-      // Under the last group: why the page is short.
-      if (!local.search) {
-        const line = document.createElement("p");
-        line.className = "sundaynote";
-        line.append("🏈 It's NFL Sunday — football only on here today. Everything else is back tomorrow, and Picks still has the day's baseball.");
-        root.append(line);
-      }
-      // The ticker and the top row (Picks, Who's here) go under the games
-      // so RedZone and the slate come first. Moving the nodes keeps what
-      // is already mounted in them.
-      root.append(ticker, top);
+    // Under the last group on an NFL Sunday: why the page is short.
+    if (local.nflSunday && !local.search) {
+      const line = document.createElement("p");
+      line.className = "sundaynote";
+      line.append("🏈 It's NFL Sunday — football only on here today. Everything else is back tomorrow, and Picks still has the day's baseball.");
+      root.append(line);
     }
 
     if (pendingPicks.length) decoratePicks(pendingPicks);
