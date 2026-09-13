@@ -534,6 +534,12 @@
     iframe.title = local.match?.title || "Stream";
     iframe.allow = "autoplay; fullscreen; encrypted-media; picture-in-picture";
     iframe.allowFullscreen = true;
+    // The provider page runs inside this frame and, unsandboxed, could
+    // move the top window: one host frame-busts to document.referrer,
+    // which with our referrer policy is the EastCoin homepage. Scripts,
+    // same-origin, forms and popups stay as they were; top navigation
+    // does not. Twitch and YouTube embeds play under exactly this.
+    iframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation");
     setStreamSrc(iframe, currentSrc());
     frame.append(iframe, buildGameday());
 
