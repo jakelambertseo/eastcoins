@@ -1570,6 +1570,28 @@
       try { const s = localStorage.getItem(SKIN_KEY) || ""; return SKINS.some(([k]) => k === s) ? s : ""; } catch { return ""; }
     })();
     let skinBox = null;
+    // ?view=music&theme=<name> picks a skin from a link and keeps it, like
+    // ?spooky= does. Names are forgiving: case, spaces and punctuation are
+    // dropped, and each skin has a few spellings. The param is then taken
+    // off the URL so a later pick from the chip isn't undone by a reload.
+    const SKIN_ALIASES = {
+      greenroom: "", default: "", off: "", none: "",
+      winamp: "winamp", gameboy: "gameboy", jukebox: "jukebox", ipod: "ipod", jumbotron: "jumbotron",
+      void: "void", dark: "void", superultradark: "void", superultradarkmode: "void",
+      minimal: "minimal", superultraminimal: "minimal",
+      trip: "trip", imgone: "trip", fuckedup: "trip", imfuckedupbro: "trip", imfuckedup: "trip", mushroom: "trip"
+    };
+    function skinFromUrl() {
+      let url;
+      try { url = new URL(location.href); } catch { return null; }
+      const raw = url.searchParams.get("theme") ?? url.searchParams.get("skin");
+      if (raw === null) return null;
+      const key = SKIN_ALIASES[String(raw).toLowerCase().replace(/[^a-z0-9]/g, "")];
+      url.searchParams.delete("theme");
+      url.searchParams.delete("skin");
+      history.replaceState(history.state, "", url.pathname + url.search + url.hash);
+      return key === undefined ? null : key;
+    }
     function loadSkinFonts() {
       if (document.getElementById("mskin-fonts")) return;
       const link = document.createElement("link");
@@ -1942,6 +1964,11 @@
     return {
       async mount(container) {
         root = container;
+        const linked = skinFromUrl();
+        if (linked !== null) {
+          skin = linked;
+          try { localStorage.setItem(SKIN_KEY, skin); } catch { /* the choice just won't stick */ }
+        }
         applySkin(skin);
         refs.side = null;
         refs.stagewrap = null;

@@ -64,7 +64,11 @@
 > (`trip`: the maximalist one — hue-cycling, wobble, melting stage, a
 > ≤2 Hz screen flicker; everything stops under `prefers-reduced-motion`).
 > `SKINS` in `v3-music.js`; the
-> choice is `localStorage` `ec_music_skin`; `applySkin()` sets
+> choice is `localStorage` `ec_music_skin`; a link can set it —
+> `?view=music&theme=<name>` (`SKIN_ALIASES`: `winamp`, `gameboy`,
+> `jukebox`, `ipod`, `jumbotron`, `void`/`dark`, `minimal`, `trip`/`imgone`,
+> `greenroom`/`off` for the default) — which is kept and then stripped
+> from the URL; `applySkin()` sets
 > `[data-skin]` on the view root and `body[data-music-skin]`, cleared on
 > unmount. Every skin is one CSS block in the `GREEN ROOM SKINS` section
 > at the end of `v3.css` — same DOM, no behaviour change — and the retro
