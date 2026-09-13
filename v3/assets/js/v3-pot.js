@@ -119,12 +119,23 @@
     const last = cached();
     if (last) draw(box, last, compact); else skeleton(box, compact);
     let timer = 0;
+    let misses = 0;
     const tick = async () => {
       if (!box.isConnected) { window.clearInterval(timer); return; }
       if (document.hidden) return;
       let data = null;
-      try { data = await fetch("/api/casino/pot", { credentials: "include" }).then((r) => r.json()); } catch { data = null; }
+      try {
+        // A hard cap on the wait: a stuck request must not hold the card.
+        const ctl = new AbortController();
+        const cap = window.setTimeout(() => ctl.abort(), 6000);
+        data = await fetch("/api/casino/pot", { credentials: "include", signal: ctl.signal }).then((r) => r.json());
+        window.clearTimeout(cap);
+      } catch { data = null; }
       const pot = data?.ok ? data.pot : null;
+      // A miss on the way in gets a quick second and third try rather
+      // than the next poll fifteen seconds out.
+      if (!pot && misses < 3) { misses += 1; window.setTimeout(tick, 1500 * misses); }
+      if (pot) misses = 0;
       if (pot) {
         remember(pot);
         const before = seen.get(pot.day);
