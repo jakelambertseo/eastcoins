@@ -49,6 +49,9 @@ import { sha256, randomSeed, MAX_BETS_PER_HOUR } from "../_engine.js";
 
 export const STAKE = 20;
 export const LOBBY_MS = 60 * 1000;
+// A game may run a shorter clock (lobbyMs in GAMES); this is the one
+// place the choice is read, so the page, the floor and the lobby agree.
+export const lobbyMsFor = (game) => game?.lobbyMs ?? LOBBY_MS;
 export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 12;
 // A round stuck in SETTLING this long is assumed to have crashed
@@ -60,7 +63,7 @@ const STUCK_MS = 2 * 60 * 1000;
 // The practice page at /pvp-test runs the same client against an engine
 // in the browser, where no ZCoin can move. Flip to false to reopen.
 export const GAMES = {
-  roulette: { key: "roulette", name: "Russian Roulette", paused: false },
+  roulette: { key: "roulette", name: "Russian Roulette", paused: false, lobbyMs: 30 * 1000 },
   standing: { key: "standing", name: "Last One Standing", paused: true }
 };
 export const gameFor = (key) => GAMES[String(key || "").toLowerCase()] || null;
@@ -240,7 +243,7 @@ export async function openLobby(db, game, now = Date.now()) {
   try {
     await db
       .prepare(`INSERT INTO pvp_rounds (id, game, seed, hash, status, opens_at, starts_at) VALUES (?, ?, ?, ?, 'LOBBY', ?, ?)`)
-      .bind(newId("pr"), game.key, seed, hash, now, now + LOBBY_MS)
+      .bind(newId("pr"), game.key, seed, hash, now, now + lobbyMsFor(game))
       .run();
   } catch {
     /* the unique index says a lobby already exists — use that one */

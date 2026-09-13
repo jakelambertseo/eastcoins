@@ -103,6 +103,7 @@
   function mount(game) {
     if (current) { views[current].unmount(); root.replaceChildren(); }
     PvpSandbox.setGame(game);
+    document.getElementById("secs").value = PvpSandbox.state.lobbySeconds;
     current = game;
     views[game].mount(root);
     document.querySelectorAll("[data-game]").forEach((b) => b.classList.toggle("on", b.dataset.game === game));

@@ -80,7 +80,7 @@
 
   const state = {
     game: "roulette",
-    lobbySeconds: 60,
+    lobbySeconds: 30,
     me: { login: "you", displayName: "You", avatar: "" },
     lobby: null,
     last: null,
@@ -200,6 +200,8 @@
     if (!NAMES[game]) return;
     if (game !== state.game) reset();
     state.game = game;
+    // The live clocks: roulette runs 30 seconds, standing 60.
+    state.lobbySeconds = game === "roulette" ? 30 : 60;
   }
 
   function setLobbySeconds(s) {

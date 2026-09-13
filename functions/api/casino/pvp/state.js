@@ -12,7 +12,7 @@
 
 import { getSessionUser, walletWritesEnabled } from "../../picks/_lib.js";
 import { ensureSchema, touchPresence, roomFor, hourlyNet, HOUR_WIN_CAP, MAX_BETS_PER_HOUR } from "../_engine.js";
-import { ensurePvp, gameFor, settleDue, lobbyFor, entriesFor, publicRound, joinsLastHour, STAKE, LOBBY_MS, MIN_PLAYERS, MAX_PLAYERS, chambersFor } from "./_pvp.js";
+import { ensurePvp, gameFor, settleDue, lobbyFor, entriesFor, publicRound, joinsLastHour, STAKE, lobbyMsFor, MIN_PLAYERS, MAX_PLAYERS, chambersFor } from "./_pvp.js";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
@@ -108,7 +108,7 @@ export async function onRequestGet(context) {
     game: game.key,
     name: game.name,
     config: {
-      stake: STAKE, lobbySeconds: LOBBY_MS / 1000, minPlayers: MIN_PLAYERS, maxPlayers: MAX_PLAYERS,
+      stake: STAKE, lobbySeconds: lobbyMsFor(game) / 1000, minPlayers: MIN_PLAYERS, maxPlayers: MAX_PLAYERS,
       maxPerHour: MAX_BETS_PER_HOUR, hourCap: HOUR_WIN_CAP,
       canBet: Boolean(user) && walletWritesEnabled(context.env),
       paused: Boolean(game.paused),

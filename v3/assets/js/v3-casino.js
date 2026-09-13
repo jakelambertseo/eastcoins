@@ -234,7 +234,7 @@
           r.phase.textContent = "Sit down to open a table";
           r.phase.className = "cas-phase";
           r.clock.textContent = "";
-          r.inRound.textContent = "20 a seat · starts 60s after the first";
+          r.inRound.textContent = `20 a seat · starts ${g.lobbySeconds || 60}s after the first`;
         }
       } else {
         r.phase.textContent = g.inRound ? `${g.inRound} run${g.inRound === 1 ? "" : "s"} live` : "Deal any time";

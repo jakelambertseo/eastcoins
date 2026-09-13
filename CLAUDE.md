@@ -182,7 +182,8 @@
 > factory registered twice) over one server module
 > (`functions/api/casino/pvp/*`, tables `pvp_rounds` and `pvp_entries`).
 > **Nobody picks a player count**: the first join opens a lobby and a
-> 60-second clock; whoever is in at zero plays; one person alone is
+> clock — 60 seconds, or `lobbyMs` in `GAMES` (roulette runs 30, since
+> 2026-09-12 night) — and whoever is in at zero plays; one person alone is
 > refunded and the table clears. **The buy-in is fixed at 20** — no amount
 > is read from the body. **Both tables pay the winner every buy-in on the
 > table and the house takes nothing** (three at 20 is 60 to one person).

@@ -9,7 +9,7 @@ import { GAMES, ensureSchema, roundAt, ROOM_WINDOW_MS, hourlyNet, HOUR_WIN_CAP }
 import { ensureHilo } from "./hilo/_hilo.js";
 import { ensureMines } from "./mines/_mines.js";
 import { ensurePlinko } from "./plinko/_plinko.js";
-import { ensurePvp, settleDue as settlePvp, GAMES as PVP, lobbyFor as pvpLobby, entriesFor as pvpEntries, STAKE as PVP_STAKE } from "./pvp/_pvp.js";
+import { ensurePvp, settleDue as settlePvp, GAMES as PVP, lobbyFor as pvpLobby, entriesFor as pvpEntries, STAKE as PVP_STAKE, lobbyMsFor as pvpLobbyMs } from "./pvp/_pvp.js";
 import { getSessionUser } from "../picks/_lib.js";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
@@ -94,6 +94,7 @@ export async function onRequestGet(context) {
     games.push({
       key: g.key, name: g.name, route: g.key, pvp: true, round: null,
       lobby: lobby ? { startsAt: Number(lobby.starts_at), players: seats.length, pot: PVP_STAKE * seats.length } : null,
+      lobbySeconds: pvpLobbyMs(g) / 1000,
       inRound: seats.length, staked: PVP_STAKE * seats.length, room: Number(room?.n || 0), people: who
     });
   }
