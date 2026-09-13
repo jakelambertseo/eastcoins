@@ -57,6 +57,19 @@
 > publishes `queueLimit` only); `loadHistory()` diffs
 > ratings between fetches to show `.elo-delta` chips.
 >
+> **Green Room skins (2026-09-12)** — a `Skin ·` chip in the music
+> page's header (next to See who; deliberately NOT in the ⋯ menu) picks
+> one of: Green Room (default), Winamp, Game Boy, Jukebox, iPod,
+> Jumbotron, Super Ultra Dark Mode. `SKINS` in `v3-music.js`; the
+> choice is `localStorage` `ec_music_skin`; `applySkin()` sets
+> `[data-skin]` on the view root and `body[data-music-skin]`, cleared on
+> unmount. Every skin is one CSS block in the `GREEN ROOM SKINS` section
+> at the end of `v3.css` — same DOM, no behaviour change — and the retro
+> faces (VT323, Silkscreen, Righteous, Orbitron) are one Google Fonts
+> link injected the first time a skin needing them is chosen. "Super
+> Ultra Dark Mode" is the only one that restyles the page around the
+> room (it overrides the palette tokens on `body`).
+>
 > **Top-right nav** — search magnifier, the profile pill (`#mePill`: avatar +
 > name → profile, coin count → Picks), and one `⋯` button (`#settingsBtn`)
 > whose menu holds the Twitch chat switch, the floating-player switch

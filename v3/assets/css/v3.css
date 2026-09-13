@@ -3704,3 +3704,229 @@ body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
 @keyframes pvpop{from{transform:translateX(-50%) scale(.6);opacity:0}to{transform:translateX(-50%) scale(1);opacity:1}}
 @keyframes pvglow{from{filter:brightness(1)}to{filter:brightness(1.3)}}
 @media (prefers-reduced-motion:reduce){.rr-seat.winner .rr-av,.ls-p.winner,.pv-banner,.rr-gun.bang .rr-cyl{animation:none}.rr-cyl,.rr-cyl.spin{transition:none}}
+
+/* ============================================================
+   GREEN ROOM SKINS — picked on the music page, kept per device
+   (localStorage ec_music_skin). Each skin is one block over the
+   same layout: [data-skin] sits on the music view's root, and
+   body[data-music-skin] lets one skin reach the page itself.
+   Nothing here changes what the player does.
+   ============================================================ */
+.mhead-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.mskin{position:relative}
+.mskin-btn{height:30px;padding:0 11px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--muted);font:inherit;font-size:.76rem;font-weight:800;cursor:pointer;white-space:nowrap}
+.mskin-btn:hover{color:var(--gold);border-color:rgba(var(--gold-rgb),.4)}
+.mskin-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:210px;display:flex;flex-direction:column;gap:1px;padding:6px;border-radius:12px;border:1px solid var(--line-2);background:var(--panel);box-shadow:0 16px 40px rgba(0,0,0,.55)}
+.mskin-item{text-align:left;height:34px;padding:0 12px;border:0;border-radius:8px;background:none;color:var(--text);font:inherit;font-size:.84rem;font-weight:700;cursor:pointer}
+.mskin-item:hover{background:var(--panel-2)}
+.mskin-item.on{color:var(--gold);background:var(--gold-dim)}
+[data-skin] .mstage-glow{display:none}
+
+/* ---------- Winamp: charcoal bevels, green LED, Playlist Editor ---------- */
+[data-skin="winamp"]{--wa-face:#3b3b4a;--wa-dark:#14141c;--wa-hi:#7b7b93;--wa-led:#00ff41;--wa-led-dim:#00a82b;--wa-gold:#e5d67a}
+[data-skin="winamp"] .mtitle{font-family:"Silkscreen",monospace;font-size:.95rem;letter-spacing:.18em;text-transform:uppercase}
+[data-skin="winamp"] .mtitle-text{color:var(--wa-gold);text-shadow:0 1px 0 #000}
+[data-skin="winamp"] .mlisteners,[data-skin="winamp"] .room-btn,[data-skin="winamp"] .mskin-btn{font-family:"Silkscreen",monospace;font-size:.58rem;color:#c9d6c0;background:#1f1f28;border:1px solid var(--wa-dark);border-radius:2px;padding:4px 8px;height:auto}
+[data-skin="winamp"] .mshell{padding:10px;background:var(--wa-face);border:2px solid var(--wa-dark);border-radius:0;box-shadow:inset 1px 1px 0 var(--wa-hi),inset -1px -1px 0 var(--wa-dark)}
+[data-skin="winamp"] .mstagewrap .mstage{border-radius:0;border:2px solid var(--wa-dark);box-shadow:inset 1px 1px 0 var(--wa-hi)}
+[data-skin="winamp"] .mnow-ov{background:#000;padding:8px 10px;border-top:2px solid var(--wa-dark);border-radius:0;grid-template-columns:minmax(0,1fr) auto}
+[data-skin="winamp"] .mnow-ov-art{display:none}
+[data-skin="winamp"] .mnow-ov .mnow-k{color:var(--wa-led);font-family:"VT323",monospace;font-size:.85rem;letter-spacing:.1em}
+[data-skin="winamp"] .mnow-ov .mnow-v{font-family:"VT323",monospace;font-weight:400;font-size:1.3rem;color:var(--wa-led);text-shadow:0 0 6px rgba(0,255,65,.7)}
+[data-skin="winamp"] .mnow-ov-by,[data-skin="winamp"] .mnow-ov-by .ulink,[data-skin="winamp"] .mnow-ov-time{color:var(--wa-led);font-family:"VT323",monospace;font-size:1rem;font-weight:400}
+[data-skin="winamp"] .mprog-track{border-radius:0;height:7px;background:#1a1a22;border:1px solid var(--wa-dark)}
+[data-skin="winamp"] .mprog-fill{border-radius:0;background:repeating-linear-gradient(90deg,var(--wa-led) 0 3px,transparent 3px 5px)}
+[data-skin="winamp"] .mbar{border-radius:0;background:#2a2a35;border:1px solid var(--wa-dark);box-shadow:inset 1px 1px 0 #6b6b83}
+[data-skin="winamp"] .reactbtn,[data-skin="winamp"] .watchbtn,[data-skin="winamp"] .mskip,[data-skin="winamp"] .mseg-btn,[data-skin="winamp"] .mpager-btn{border-radius:2px;background:linear-gradient(#5a5a70,#33333f);border:1px solid var(--wa-dark);box-shadow:inset 1px 1px 0 #8a8aa3;color:var(--wa-gold);font-family:"Silkscreen",monospace;font-size:.58rem}
+[data-skin="winamp"] .reactbtn-n{color:var(--wa-led);font-family:"VT323",monospace;font-size:1.05rem}
+[data-skin="winamp"] .mvol-k,[data-skin="winamp"] .mvol-v{font-family:"Silkscreen",monospace;font-size:.52rem;color:#c9d6c0}
+[data-skin="winamp"] .mvol-range{accent-color:var(--wa-led)}
+[data-skin="winamp"] .msearch-input{border-radius:0;background:#000;border:2px solid var(--wa-dark);color:var(--wa-led);font-family:"VT323",monospace;font-size:1.15rem}
+[data-skin="winamp"] .msearch-input::placeholder{color:var(--wa-led-dim)}
+[data-skin="winamp"] .mhint,[data-skin="winamp"] .mhint b{font-family:"VT323",monospace;font-size:1rem;color:#c9d6c0}
+[data-skin="winamp"] .mside.rail{border-radius:0;background:#000;border:2px solid var(--wa-dark);box-shadow:inset 1px 1px 0 var(--wa-hi)}
+[data-skin="winamp"] .mside.rail .mtabs{background:linear-gradient(#5a5a70,#33333f);border-bottom:1px solid var(--wa-dark);padding:3px 4px;gap:3px}
+[data-skin="winamp"] .mside.rail .mtab{height:26px;font-family:"Silkscreen",monospace;font-size:.55rem;letter-spacing:.06em;color:#c9d6c0;border-bottom:0}
+[data-skin="winamp"] .mside.rail .mtab.active{color:var(--wa-gold);background:#1f1f28;border:1px solid var(--wa-dark)}
+[data-skin="winamp"] .mside.rail .mq-row{border-bottom:0;padding:3px 10px}
+[data-skin="winamp"] .mq-thumb{display:none}
+[data-skin="winamp"] .mq-n,[data-skin="winamp"] .mq-meta strong,[data-skin="winamp"] .mq-meta small,[data-skin="winamp"] .mq-empty,[data-skin="winamp"] .mq-eta,[data-skin="winamp"] .elo-head{font-family:"VT323",monospace;font-weight:400;color:var(--wa-led)}
+[data-skin="winamp"] .mq-meta strong{font-size:1.15rem}
+[data-skin="winamp"] .mq-meta small,[data-skin="winamp"] .mq-n{font-size:1rem;color:var(--wa-led-dim)}
+[data-skin="winamp"] .mside.rail .mq-row.mine{background:#0b3a17}
+
+/* ---------- Game Boy: grey handheld, four-green dot matrix ---------- */
+[data-skin="gameboy"]{--gb-shell:#c4bebb;--gb-edge:#8d8683;--gb-bezel:#5a5a5a;--gb-0:#0f380f;--gb-1:#306230;--gb-2:#8bac0f;--gb-3:#9bbc0f;--gb-a:#8a1c5e}
+[data-skin="gameboy"] .mtitle{font-family:"Silkscreen",monospace;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase}
+[data-skin="gameboy"] .mtitle-text{color:#8b8cf0}
+[data-skin="gameboy"] .mshell{padding:14px 14px 22px;background:var(--gb-shell);border:3px solid var(--gb-edge);border-radius:14px 14px 40px 14px;box-shadow:inset 0 -6px 0 #a39c99,0 12px 28px rgba(0,0,0,.5);color:#2b2b2b}
+[data-skin="gameboy"] .mstagewrap .mstage{border:10px solid var(--gb-bezel);border-radius:8px 8px 34px 8px;box-shadow:inset 0 0 0 2px var(--gb-3);background:var(--gb-2)}
+[data-skin="gameboy"] .mnow-ov{background:var(--gb-3);padding:8px 10px;border-top:3px solid var(--gb-1);border-radius:0 0 22px 0}
+[data-skin="gameboy"] .mnow-ov-art{border-radius:0;filter:grayscale(1) contrast(1.4) sepia(1) hue-rotate(50deg) saturate(2)}
+[data-skin="gameboy"] .mnow-ov .mnow-k,[data-skin="gameboy"] .mnow-ov-by,[data-skin="gameboy"] .mnow-ov-by .ulink,[data-skin="gameboy"] .mnow-ov-time{color:var(--gb-0);font-family:"Silkscreen",monospace;font-size:.55rem;font-weight:400}
+[data-skin="gameboy"] .mnow-ov .mnow-v{color:var(--gb-0);font-family:"Silkscreen",monospace;font-weight:400;font-size:.8rem}
+[data-skin="gameboy"] .mprog-track{background:var(--gb-1);height:6px;border-radius:0}
+[data-skin="gameboy"] .mprog-fill{background:var(--gb-0);border-radius:0}
+[data-skin="gameboy"] .mprog-t{color:#2b2b2b}
+[data-skin="gameboy"] .mbar{background:#b1aaa7;border:0;border-radius:12px;box-shadow:inset 0 2px 0 #cfc9c6,inset 0 -2px 0 #948d8a}
+[data-skin="gameboy"] .reactbtn{background:var(--gb-a);border:0;color:#fff;border-radius:50%;width:38px;height:38px;padding:0;justify-content:center;box-shadow:inset 0 -3px 0 #5e1240,0 2px 0 #6f6866}
+[data-skin="gameboy"] .reactbtn-n{position:absolute;top:-8px;right:-6px;background:#2b2b2b;color:var(--gb-3);font-family:"Silkscreen",monospace;font-size:.5rem;padding:1px 5px;border-radius:999px}
+[data-skin="gameboy"] .watchbtn,[data-skin="gameboy"] .mskip{background:#4a4a4a;border:0;color:var(--gb-shell);border-radius:999px;font-family:"Silkscreen",monospace;font-size:.52rem;box-shadow:inset 0 -2px 0 #222}
+[data-skin="gameboy"] .mvol-k,[data-skin="gameboy"] .mvol-v{color:#2b2b2b;font-family:"Silkscreen",monospace;font-size:.5rem}
+[data-skin="gameboy"] .mvol-range{accent-color:#4a4a4a}
+[data-skin="gameboy"] .msearch-input{background:var(--gb-3);border:3px solid var(--gb-bezel);border-radius:6px;color:var(--gb-0);font-family:"Silkscreen",monospace;font-size:.62rem}
+[data-skin="gameboy"] .msearch-input::placeholder{color:var(--gb-1)}
+[data-skin="gameboy"] .msearch-icon{color:var(--gb-0)}
+[data-skin="gameboy"] .mhint,[data-skin="gameboy"] .mhint b{color:#2b2b2b;font-family:"Silkscreen",monospace;font-size:.5rem}
+[data-skin="gameboy"] .mside.rail{background:var(--gb-3);border:6px solid var(--gb-bezel);border-radius:8px;color:var(--gb-0)}
+[data-skin="gameboy"] .mside.rail .mtabs{background:var(--gb-2);border-bottom:2px solid var(--gb-1)}
+[data-skin="gameboy"] .mside.rail .mtab{font-family:"Silkscreen",monospace;font-size:.5rem;color:var(--gb-1);border-bottom:0}
+[data-skin="gameboy"] .mside.rail .mtab.active{color:var(--gb-3);background:var(--gb-0)}
+[data-skin="gameboy"] .mside.rail .mq-row{border-bottom:2px solid var(--gb-2);color:var(--gb-0)}
+[data-skin="gameboy"] .mq-thumb{filter:grayscale(1) contrast(1.4) sepia(1) hue-rotate(50deg) saturate(2);border-radius:0}
+[data-skin="gameboy"] .mq-n,[data-skin="gameboy"] .mq-meta strong,[data-skin="gameboy"] .mq-meta small,[data-skin="gameboy"] .mq-empty,[data-skin="gameboy"] .mq-eta,[data-skin="gameboy"] .elo-head,[data-skin="gameboy"] .mseg-btn,[data-skin="gameboy"] .mpager-btn{font-family:"Silkscreen",monospace;font-weight:400;color:var(--gb-0)}
+[data-skin="gameboy"] .mq-meta strong{font-size:.62rem}
+[data-skin="gameboy"] .mq-meta small,[data-skin="gameboy"] .mq-n{font-size:.5rem;color:var(--gb-1)}
+[data-skin="gameboy"] .mside.rail .mq-row.mine{background:var(--gb-2)}
+[data-skin="gameboy"] .mseg-btn,[data-skin="gameboy"] .mpager-btn{border-color:var(--gb-1);background:none}
+[data-skin="gameboy"] .mseg-btn.on{background:var(--gb-0);color:var(--gb-3)}
+
+/* ---------- Jukebox: walnut, brass, neon tubes ---------- */
+[data-skin="jukebox"]{--jb-wood:#2b1409;--jb-deep:#160a05;--jb-brass:#e9b871;--jb-brass-2:#c98a3a;--jb-trim:#3a1d0c;--jb-pink:#ff2fb0;--jb-cyan:#39e6ff;--jb-amber:#ffe08a;--jb-text:#ffd9a8}
+[data-skin="jukebox"] .mtitle{font-family:"Righteous",var(--display);font-weight:400;letter-spacing:.06em}
+[data-skin="jukebox"] .mtitle-text{color:var(--jb-amber);text-shadow:0 0 10px #ff9a3d,0 0 22px var(--jb-pink)}
+[data-skin="jukebox"] .mlisteners,[data-skin="jukebox"] .room-btn,[data-skin="jukebox"] .mskin-btn{color:var(--jb-cyan);border-color:rgba(57,230,255,.55);background:var(--jb-deep);text-shadow:0 0 8px var(--jb-cyan)}
+[data-skin="jukebox"] .mshell{position:relative;padding:18px 14px 14px;background:radial-gradient(ellipse at 50% 0,#6b3a1e,var(--jb-wood) 60%,var(--jb-deep));border:4px solid var(--jb-brass-2);border-radius:60px 60px 16px 16px;box-shadow:inset 0 0 0 3px var(--jb-trim),inset 0 0 0 5px var(--jb-brass),0 0 40px rgba(255,47,176,.22);color:var(--jb-text)}
+[data-skin="jukebox"] .mshell::before{content:"";position:absolute;left:8px;right:8px;top:6px;height:5px;border-radius:999px;background:linear-gradient(90deg,var(--jb-pink),var(--jb-cyan),var(--jb-pink),var(--jb-cyan));filter:blur(1px);box-shadow:0 0 14px var(--jb-pink),0 0 22px var(--jb-cyan);animation:jbtube 3s linear infinite;background-size:200% 100%}
+@keyframes jbtube{to{background-position:200% 0}}
+[data-skin="jukebox"] .mstagewrap .mstage{border:3px solid var(--jb-brass);border-radius:40px 40px 10px 10px;box-shadow:0 0 0 2px var(--jb-trim),0 0 24px rgba(255,47,176,.35)}
+[data-skin="jukebox"] .mnow-ov{border-radius:0 0 8px 8px}
+[data-skin="jukebox"] .mnow-ov-art{border-radius:50%;border:2px solid var(--jb-brass)}
+[data-skin="jukebox"] .mnow-ov .mnow-k{color:var(--jb-cyan);text-shadow:0 0 8px var(--jb-cyan)}
+[data-skin="jukebox"] .mnow-ov .mnow-v{font-family:"Righteous",var(--display);font-weight:400;color:var(--jb-amber);text-shadow:0 0 8px #ff9a3d}
+[data-skin="jukebox"] .mnow-ov-by,[data-skin="jukebox"] .mnow-ov-by .ulink,[data-skin="jukebox"] .mnow-ov-time{color:var(--jb-text)}
+[data-skin="jukebox"] .mprog-track{background:var(--jb-trim)}
+[data-skin="jukebox"] .mprog-fill{background:linear-gradient(90deg,var(--jb-pink),var(--jb-cyan));box-shadow:0 0 10px var(--jb-pink)}
+[data-skin="jukebox"] .mprog-t{color:var(--jb-brass)}
+[data-skin="jukebox"] .mbar{background:#1c0d06;border:2px solid var(--jb-brass);border-radius:999px;box-shadow:inset 0 0 0 2px var(--jb-trim)}
+[data-skin="jukebox"] .reactbtn{background:var(--jb-trim);border:1px solid var(--jb-brass-2);color:var(--jb-amber)}
+[data-skin="jukebox"] .reactbtn-n{color:var(--jb-cyan);text-shadow:0 0 6px var(--jb-cyan)}
+[data-skin="jukebox"] .watchbtn{background:var(--jb-trim);border-color:var(--jb-brass-2);color:var(--jb-amber);border-radius:999px}
+[data-skin="jukebox"] .mskip{background:var(--jb-pink);color:var(--jb-deep);border-color:var(--jb-pink);box-shadow:0 0 12px var(--jb-pink);border-radius:999px}
+[data-skin="jukebox"] .mvol-k,[data-skin="jukebox"] .mvol-v{color:var(--jb-cyan);text-shadow:0 0 6px var(--jb-cyan)}
+[data-skin="jukebox"] .mvol-range{accent-color:var(--jb-brass)}
+[data-skin="jukebox"] .msearch-input{background:#1c0d06;border:2px solid var(--jb-brass);color:var(--jb-text);border-radius:999px}
+[data-skin="jukebox"] .msearch-input::placeholder{color:var(--jb-brass-2)}
+[data-skin="jukebox"] .msearch-icon{color:var(--jb-brass)}
+[data-skin="jukebox"] .mhint,[data-skin="jukebox"] .mhint b{color:var(--jb-brass-2)}
+[data-skin="jukebox"] .mside.rail{background:#1c0d06;border:2px solid var(--jb-brass);border-radius:12px;box-shadow:inset 0 0 0 2px var(--jb-trim);color:var(--jb-text)}
+[data-skin="jukebox"] .mside.rail .mtabs{background:var(--jb-trim);border-bottom:1px solid var(--jb-brass-2)}
+[data-skin="jukebox"] .mside.rail .mtab{color:var(--jb-brass-2);font-family:"Righteous",var(--display);font-weight:400}
+[data-skin="jukebox"] .mside.rail .mtab.active{color:var(--jb-amber);border-bottom-color:var(--jb-amber);text-shadow:0 0 8px #ff9a3d}
+[data-skin="jukebox"] .mside.rail .mq-row{border-bottom:1px solid var(--jb-trim);color:var(--jb-text)}
+[data-skin="jukebox"] .mq-n{font-family:"Righteous",var(--display);color:var(--jb-cyan);text-shadow:0 0 6px var(--jb-cyan);font-size:.8rem}
+[data-skin="jukebox"] .mq-thumb{border-radius:50%;border:1px solid var(--jb-brass-2)}
+[data-skin="jukebox"] .mq-meta small,[data-skin="jukebox"] .mq-empty,[data-skin="jukebox"] .elo-head{color:var(--jb-brass-2)}
+[data-skin="jukebox"] .mside.rail .mq-row.mine{background:rgba(255,47,176,.12)}
+[data-skin="jukebox"] .mseg-btn,[data-skin="jukebox"] .mpager-btn{border-color:var(--jb-brass-2);color:var(--jb-text)}
+[data-skin="jukebox"] .mseg-btn.on{background:var(--jb-trim);color:var(--jb-amber)}
+
+/* ---------- iPod: white shell, click wheel, blue menu highlight ---------- */
+[data-skin="ipod"]{--ip-edge:#c9c9c9;--ip-text:#1c1c1e;--ip-blue1:#6fa8ff;--ip-blue2:#1f5fd6;--ip-font:"Helvetica Neue",Helvetica,Arial,sans-serif}
+[data-skin="ipod"] .mtitle{font-family:var(--ip-font);font-weight:700;letter-spacing:-.03em}
+[data-skin="ipod"] .mshell{padding:16px 16px 22px;background:linear-gradient(#fafafa,#e4e4e4);border:1px solid var(--ip-edge);border-radius:24px;box-shadow:inset 0 1px 0 #fff,0 14px 34px rgba(0,0,0,.45);color:var(--ip-text);font-family:var(--ip-font)}
+[data-skin="ipod"] .mstagewrap .mstage{border-radius:10px;border:3px solid #2b2b2b;box-shadow:0 0 0 1px #777}
+[data-skin="ipod"] .mnow-ov{background:linear-gradient(#e7effc,#bfd1f3);padding:8px 10px;border-top:1px solid #8aa7dc;border-radius:0 0 7px 7px}
+[data-skin="ipod"] .mnow-ov-art{border-radius:3px}
+[data-skin="ipod"] .mnow-ov .mnow-k{color:#3b5a98}
+[data-skin="ipod"] .mnow-ov .mnow-v{color:var(--ip-text);font-family:var(--ip-font);font-weight:700}
+[data-skin="ipod"] .mnow-ov-by,[data-skin="ipod"] .mnow-ov-by .ulink,[data-skin="ipod"] .mnow-ov-time{color:#3b4a66}
+[data-skin="ipod"] .mprog-track{background:#c5d3ee;height:6px}
+[data-skin="ipod"] .mprog-fill{background:linear-gradient(90deg,var(--ip-blue1),var(--ip-blue2))}
+[data-skin="ipod"] .mprog-t{color:#555}
+[data-skin="ipod"] .mbar{border-radius:999px;background:linear-gradient(#f7f7f7,#dcdcdc);border:1px solid var(--ip-edge);box-shadow:inset 0 1px 0 #fff,inset 0 -2px 0 #c4c4c4}
+[data-skin="ipod"] .reactbtn,[data-skin="ipod"] .watchbtn,[data-skin="ipod"] .mseg-btn,[data-skin="ipod"] .mpager-btn{background:#fff;border:1px solid var(--ip-edge);color:var(--ip-text);font-family:var(--ip-font);font-weight:700}
+[data-skin="ipod"] .reactbtn:hover,[data-skin="ipod"] .watchbtn:hover{background:#f0f4fd;border-color:var(--ip-blue1);color:var(--ip-blue2)}
+[data-skin="ipod"] .reactbtn-n{color:var(--ip-blue2)}
+[data-skin="ipod"] .mskip{background:linear-gradient(#fff,#e2e2e2);color:var(--ip-text);border-color:#b5b5b5;border-radius:999px}
+[data-skin="ipod"] .mvol-k,[data-skin="ipod"] .mvol-v{color:#555}
+[data-skin="ipod"] .mvol-range{accent-color:var(--ip-blue2)}
+[data-skin="ipod"] .msearch-input{background:#fff;border:1px solid var(--ip-edge);color:var(--ip-text);border-radius:8px;font-family:var(--ip-font)}
+[data-skin="ipod"] .msearch-input::placeholder{color:#8a8a8a}
+[data-skin="ipod"] .msearch-icon{color:#555}
+[data-skin="ipod"] .mhint,[data-skin="ipod"] .mhint b{color:#555}
+[data-skin="ipod"] .mhint-you{color:#555;border-color:#bbb}
+[data-skin="ipod"] .mside.rail{background:#fff;border:3px solid #2b2b2b;border-radius:10px;box-shadow:0 0 0 1px #777;color:var(--ip-text)}
+[data-skin="ipod"] .mside.rail .mtabs{background:linear-gradient(#f4f4f4,#d9d9d9);border-bottom:1px solid #bdbdbd}
+[data-skin="ipod"] .mside.rail .mtab{color:#555;font-family:var(--ip-font);font-weight:700}
+[data-skin="ipod"] .mside.rail .mtab.active{color:var(--ip-text);border-bottom-color:var(--ip-blue2)}
+[data-skin="ipod"] .mside.rail .mq-row{border-bottom:1px solid #e6e6e6;color:var(--ip-text)}
+[data-skin="ipod"] .mside.rail .mq-row .ulink{color:var(--ip-blue2)}
+[data-skin="ipod"] .mside.rail .mq-row.mine{background:linear-gradient(var(--ip-blue1),var(--ip-blue2));color:#fff}
+[data-skin="ipod"] .mside.rail .mq-row.mine .mq-meta small,[data-skin="ipod"] .mside.rail .mq-row.mine .mq-n,[data-skin="ipod"] .mside.rail .mq-row.mine .ulink{color:#e6eefc}
+[data-skin="ipod"] .mq-n{color:#8a8a8a}
+[data-skin="ipod"] .mq-meta small,[data-skin="ipod"] .mq-empty,[data-skin="ipod"] .elo-head,[data-skin="ipod"] .mq-eta{color:#666}
+[data-skin="ipod"] .mseg-btn.on{background:var(--ip-blue2);color:#fff;border-color:var(--ip-blue2)}
+[data-skin="ipod"] .mq-drop{color:#666;border-color:#ccc;background:#fff}
+
+/* ---------- Jumbotron: amber LEDs on black, a red LIVE lamp ---------- */
+[data-skin="jumbotron"]{--jt-amber:#ffb028;--jt-red:#ff3b3b;--jt-frame:#2a2d33;--jt-frame-2:#45494f;--jt-panel:#15171b;--jt-font:"Orbitron",var(--display)}
+[data-skin="jumbotron"] .mtitle{font-family:var(--jt-font);font-weight:800;font-size:1.05rem;letter-spacing:.14em;text-transform:uppercase}
+[data-skin="jumbotron"] .mtitle-text{color:var(--jt-amber);text-shadow:0 0 8px rgba(255,176,40,.8)}
+[data-skin="jumbotron"] .mlisteners{color:var(--jt-red);font-family:var(--jt-font);text-shadow:0 0 6px var(--jt-red);letter-spacing:.08em;font-size:.7rem}
+[data-skin="jumbotron"] .mlisteners::before{content:"● ";animation:jtlamp 1.4s ease-in-out infinite}
+@keyframes jtlamp{50%{opacity:.35}}
+[data-skin="jumbotron"] .room-btn,[data-skin="jumbotron"] .mskin-btn{font-family:var(--jt-font);font-size:.6rem;letter-spacing:.06em;color:var(--jt-amber);background:#000;border-color:var(--jt-frame-2);border-radius:3px}
+[data-skin="jumbotron"] .mshell{padding:12px;background:#0b0c0f;border:6px solid var(--jt-frame);border-radius:8px;box-shadow:inset 0 0 0 2px var(--jt-frame-2),0 16px 36px rgba(0,0,0,.6);color:var(--jt-amber)}
+[data-skin="jumbotron"] .mstagewrap .mstage{border:2px solid var(--jt-frame);border-radius:4px}
+[data-skin="jumbotron"] .mstagewrap::after{content:"";position:absolute;inset:0;z-index:2;background:radial-gradient(circle,transparent 0 .8px,rgba(0,0,0,.45) 1px) 0 0/3px 3px;pointer-events:none;border-radius:4px}
+[data-skin="jumbotron"] .mnow-ov{z-index:3;background:#000;padding:8px 12px;border-top:2px solid var(--jt-frame);border-radius:0;grid-template-columns:minmax(0,1fr) auto}
+[data-skin="jumbotron"] .mnow-ov-art{display:none}
+[data-skin="jumbotron"] .mnow-ov .mnow-k{color:var(--jt-red);text-shadow:0 0 6px var(--jt-red);letter-spacing:.2em}
+[data-skin="jumbotron"] .mnow-ov .mnow-k::before{content:"● "}
+[data-skin="jumbotron"] .mnow-ov .mnow-v{font-family:var(--jt-font);font-weight:800;font-size:.95rem;color:var(--jt-amber);text-shadow:0 0 8px rgba(255,176,40,.8);text-transform:uppercase}
+[data-skin="jumbotron"] .mnow-ov-by,[data-skin="jumbotron"] .mnow-ov-by .ulink,[data-skin="jumbotron"] .mnow-ov-time{color:var(--jt-amber);font-family:var(--jt-font);font-size:.68rem;letter-spacing:.06em}
+[data-skin="jumbotron"] .mprog-track{background:var(--jt-panel);height:6px;border-radius:0}
+[data-skin="jumbotron"] .mprog-fill{border-radius:0;background:repeating-linear-gradient(90deg,var(--jt-amber) 0 4px,var(--jt-panel) 4px 6px)}
+[data-skin="jumbotron"] .mprog-t{color:var(--jt-amber);font-family:var(--jt-font)}
+[data-skin="jumbotron"] .mbar{background:var(--jt-panel);border:1px solid var(--jt-frame);border-radius:4px}
+[data-skin="jumbotron"] .reactbtn,[data-skin="jumbotron"] .watchbtn,[data-skin="jumbotron"] .mseg-btn,[data-skin="jumbotron"] .mpager-btn{background:#000;border:1px solid var(--jt-frame-2);color:var(--jt-amber);border-radius:3px;font-family:var(--jt-font);font-size:.6rem;letter-spacing:.04em}
+[data-skin="jumbotron"] .reactbtn-n{color:var(--jt-amber);font-family:var(--jt-font)}
+[data-skin="jumbotron"] .mskip{background:var(--jt-amber);color:#0b0c0f;border-color:var(--jt-amber);border-radius:3px}
+[data-skin="jumbotron"] .mvol-k,[data-skin="jumbotron"] .mvol-v{color:var(--jt-amber);font-family:var(--jt-font);font-size:.55rem}
+[data-skin="jumbotron"] .mvol-range{accent-color:var(--jt-amber)}
+[data-skin="jumbotron"] .msearch-input{background:#000;border:1px solid var(--jt-frame);color:var(--jt-amber);font-family:var(--jt-font);font-size:.72rem;letter-spacing:.06em;border-radius:4px}
+[data-skin="jumbotron"] .msearch-input::placeholder{color:#6a5a2a}
+[data-skin="jumbotron"] .msearch-icon{color:var(--jt-amber)}
+[data-skin="jumbotron"] .mhint,[data-skin="jumbotron"] .mhint b{color:#8a8f99}
+[data-skin="jumbotron"] .mside.rail{background:#000;border:1px solid var(--jt-frame);border-radius:4px;color:var(--jt-amber)}
+[data-skin="jumbotron"] .mside.rail .mtabs{background:var(--jt-panel);border-bottom:1px solid var(--jt-frame)}
+[data-skin="jumbotron"] .mside.rail .mtab{font-family:var(--jt-font);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#8a8f99;border-bottom:0}
+[data-skin="jumbotron"] .mside.rail .mtab.active{color:var(--jt-amber);background:#000;text-shadow:0 0 6px rgba(255,176,40,.8)}
+[data-skin="jumbotron"] .mside.rail .mq-row{border-bottom:1px solid var(--jt-panel)}
+[data-skin="jumbotron"] .mq-n{font-family:var(--jt-font);color:var(--jt-red);text-shadow:0 0 6px var(--jt-red);font-size:.8rem}
+[data-skin="jumbotron"] .mq-thumb{border-radius:2px;filter:saturate(.6)}
+[data-skin="jumbotron"] .mq-meta strong{font-family:var(--jt-font);font-size:.72rem;text-transform:uppercase;color:var(--jt-amber);letter-spacing:.03em}
+[data-skin="jumbotron"] .mq-meta small,[data-skin="jumbotron"] .mq-empty,[data-skin="jumbotron"] .elo-head,[data-skin="jumbotron"] .mq-eta{color:#8a8f99}
+[data-skin="jumbotron"] .mside.rail .mq-row.mine{background:var(--jt-panel)}
+[data-skin="jumbotron"] .mseg-btn.on{background:var(--jt-amber);color:#0b0c0f}
+
+/* ---------- Super Ultra Dark Mode: the page goes to black, the video is
+   the only light. body-level so the shell around the room dims too. ---------- */
+body[data-music-skin="void"]{--panel:#000;--panel-2:#050505;--panel-3:#0a0a0a;--line:rgba(255,255,255,.05);--line-2:rgba(255,255,255,.08);--text:#8a8a8a;--muted:#5a5a5a;--muted-2:#3e3e3e;--gold:#6a6a6a;--gold-rgb:106,106,106;--gold-dim:rgba(255,255,255,.04);--red:#7a4a4a;--red-dim:rgba(255,255,255,.04);--green:#5a6a5a;background:#000 !important}
+body[data-music-skin="void"] .ticker{opacity:.35}
+[data-skin="void"] .mtitle-text{color:#5a5a5a}
+[data-skin="void"] .mtitle-emote{filter:grayscale(1) brightness(.45)}
+[data-skin="void"] .mstagewrap .mstage{border-color:#111}
+[data-skin="void"] .mnow-ov{background:linear-gradient(180deg,transparent,#000 70%)}
+[data-skin="void"] .mnow-ov .mnow-v{color:#bdbdbd}
+[data-skin="void"] .mnow-ov .mnow-k{color:#5a5a5a}
+[data-skin="void"] .mprog-track{background:#111}
+[data-skin="void"] .mprog-fill{background:#4a4a4a}
+[data-skin="void"] .mbar,[data-skin="void"] .mside.rail,[data-skin="void"] .msearch-input,[data-skin="void"] .reactbtn,[data-skin="void"] .watchbtn,[data-skin="void"] .mtab{background:#000;border-color:rgba(255,255,255,.06)}
+[data-skin="void"] .mskip{color:#8a8a8a;background:#000}
+[data-skin="void"] .mvol-range{accent-color:#4a4a4a}
+[data-skin="void"] .mq-thumb,[data-skin="void"] .mnow-ov-art,[data-skin="void"] .mtop-av{filter:grayscale(1) brightness(.6)}
+[data-skin="void"] .mside.rail .mq-row.mine{background:rgba(255,255,255,.03)}
+
+@media (prefers-reduced-motion:reduce){[data-skin="jukebox"] .mshell::before,[data-skin="jumbotron"] .mlisteners::before{animation:none}}
