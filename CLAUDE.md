@@ -472,7 +472,7 @@
 > ('autoopen:pause:baseball', '{"until":"…Z","why":"…"}')`; delete the row
 > or let `until` pass to resume. Used on NFL Sunday to keep the MLB slate
 > off Picks: the five empty markets were closed (state VOID, no refunds
-> needed) and baseball paused until midnight Central.
+> needed) and baseball paused through Monday night (until Tuesday 00:00 Central), so Tuesday's 4 PM slate is the first MLB back.
 >
 > **Every market has a page** at `/g/<away>-<home>-<YYYYMMDD>` (also
 > `/g/<YYYYMMDD>` for a day and `/g/mkt_…` by id). `functions/g/[[path]].js`
@@ -536,8 +536,9 @@
 > name or logo is drawn from must therefore SELECT `league` — `_wager.js`
 > did not, which is why a Missouri pick showed the Detroit Tigers crest.
 >
-> **NFL Sunday (2026-09-13)** — on Sundays September–January (Chicago
-> time) the Sports page shows football only: `nflSundayNow()` +
+> **NFL Sunday (2026-09-13)** — on Sundays AND Mondays September–January
+> (Chicago time; the community is ~95% NFL, and Monday night is a game
+> night) the Sports page shows football only: `nflSundayNow()` +
 > `isNflSunday()` in `v3-events.js` keep any listing naming an NFL team
 > (`footballRank === 0`, whatever category the provider filed it under),
 > RedZone, `ppv-nfl-*` feeds and titles with "NFL"; everything else is

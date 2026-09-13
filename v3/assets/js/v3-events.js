@@ -358,8 +358,10 @@
   function nflSundayNow() {
     try { if (new URL(location.href).searchParams.get("allsports") === "1") return false; } catch { /* fine */ }
     const ct = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" }));
-    return ct.getDay() === 0 && NFL_MONTHS.has(ct.getMonth() + 1);
+    // Sunday and Monday night: the two days the room is here for.
+    return (ct.getDay() === 0 || ct.getDay() === 1) && NFL_MONTHS.has(ct.getMonth() + 1);
   }
+  const nflDayIsMonday = () => new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" })).getDay() === 1;
   const isNflSunday = (m) => Sports.footballRank(m) === 0 || isRedZone(m) || /^ppv-nfl-/.test(String(m?.id || "")) || /nfl/i.test(String(m?.title || ""));
 
   /** College football: American football that isn't the NFL. */
@@ -595,7 +597,7 @@
 
     const note = document.createElement("span");
     note.className = "filters-note";
-    note.textContent = local.search ? `Filtered by “${local.search}”` : local.nflSunday ? "NFL Sunday · football only" : "Live and today";
+    note.textContent = local.search ? `Filtered by “${local.search}”` : local.nflSunday ? (nflDayIsMonday() ? "Monday Night Football · football only" : "NFL Sunday · football only") : "Live and today";
 
     bar.append(spacer, note);
     return bar;
@@ -765,7 +767,9 @@
     if (local.nflSunday && !local.search) {
       const line = document.createElement("p");
       line.className = "sundaynote";
-      line.append("🏈 It's NFL Sunday, football only on here today. Sybau. Baseball and other shit will be back tomorrow");
+      line.append(nflDayIsMonday()
+        ? "🏈 It's Monday Night Football, football only on here today. Sybau. Baseball and other shit will be back tomorrow"
+        : "🏈 It's NFL Sunday, football only on here today. Sybau. Baseball and other shit will be back tomorrow");
       root.append(line);
     }
 
