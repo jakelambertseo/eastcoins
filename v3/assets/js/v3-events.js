@@ -829,15 +829,21 @@
     // Kickoff or LIVE, and who's here, kept current while the hero is
     // on the page; the interval lets go once it isn't.
     const start = Number(match?.date) || 0;
+    // Kickoff time in the listing's own words, "11:55am CT".
+    const clockOf = (ms) => new Date(ms).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" }).replace(" ", "").toLowerCase() + " CT";
     const tick = () => {
       const live = isLive(match);
       hero.classList.toggle("live", live);
+      // Before kickoff the headline and the button both say so; once it's
+      // on they drop the hedge.
+      h.textContent = live ? "Football season is here." : "Football season is almost here.";
+      cta.textContent = live || !start ? "Watch RedZone →" : `Watch RedZone at ${clockOf(start)}`;
       if (live) when.textContent = "LIVE";
       else if (!start) when.textContent = "";
       else {
         const ms = start - Date.now();
         const today = new Date(start).toDateString() === new Date().toDateString();
-        const clock = new Date(start).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" }) + " CT";
+        const clock = clockOf(start);
         if (ms <= 0) when.textContent = "Kicking off";
         else if (ms < 60 * 60000) when.textContent = `Kicks off in ${Math.max(1, Math.round(ms / 60000))} min · ${clock}`;
         else if (today) when.textContent = `Kicks off today · ${clock}`;
