@@ -665,6 +665,18 @@
 > returns the card without posting); `recap:sent:<day>` in `ops_status`
 > makes it once per day.
 >
+> **Weekly roundup** — `/api/admin/weekly` (cron key or admin) posts
+> one Discord card for the seven days ending now: winner and loser of
+> the week (best and worst net), the biggest single win and the biggest
+> single loss (largest stake lost) with links to their game pages, then
+> every bettor's record, net, staked and best pick, ranked, capped at 25
+> lines. The cron Worker fires it at `5 21,22 * * 1` UTC and the
+> endpoint posts only when it is Monday 4 PM Central (`?force=1` from
+> the dashboard bypasses that, `?dry=1` builds without posting,
+> `?days=N` widens the window); `weekly:sent:<Monday>` in `ops_status`
+> makes it once a week. The dashboard's Discord card has Preview week
+> (dry run shown inline) and Post weekly roundup.
+>
 > **Nightly backup** — the picks cron Worker has a second trigger
 > (`0 9 * * *` UTC) that POSTs `/api/admin/backup` with the cron key; the
 > function dumps every table to gzipped JSON in the R2 bucket bound as

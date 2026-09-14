@@ -530,11 +530,45 @@
       recapBtn.textContent = r?.ok ? `Posted ✓ ${r.day} · ${r.people} players` : `Failed${r?.code ? " · " + r.code : ""}`;
       setTimeout(() => { recapBtn.textContent = "Post yesterday's recap"; recapBtn.disabled = false; }, 5000);
     });
+    // The Monday roundup: preview it here without posting, or post it now.
+    const weekPrev = el("button", "db-btn", "Preview week");
+    weekPrev.type = "button";
+    const weekBtn = el("button", "db-btn", "Post weekly roundup");
+    weekBtn.type = "button";
+    weekBtn.disabled = !d.discord?.configured;
+    const weekOut = el("pre", "db-pre");
+    weekOut.hidden = true;
+    weekPrev.addEventListener("click", async () => {
+      weekPrev.disabled = true;
+      let r = null;
+      try { r = await (await fetch("/api/admin/weekly?dry=1", { method: "POST", credentials: "include" })).json(); } catch { r = null; }
+      weekOut.hidden = false;
+      weekOut.textContent = r?.ok ? `${r.embed.title}
+
+${r.embed.description}
+
+— ${r.embed.footer?.text || ""}` : `Couldn't build it${r?.message ? " · " + r.message : ""}`;
+      weekPrev.disabled = false;
+    });
+    weekBtn.addEventListener("click", async () => {
+      if (!window.confirm("Post the weekly roundup to Discord now? It goes out on its own every Monday at 4:05 PM CT.")) return;
+      weekBtn.disabled = true;
+      weekBtn.textContent = "Posting…";
+      let r = null;
+      try { r = await (await fetch("/api/admin/weekly?force=1", { method: "POST", credentials: "include" })).json(); } catch { r = null; }
+      weekBtn.textContent = r?.ok ? `Posted ✓ ${r.people} bettors` : `Failed${r?.code ? " · " + r.code : ""}`;
+      setTimeout(() => { weekBtn.textContent = "Post weekly roundup"; weekBtn.disabled = false; }, 5000);
+    });
+    const weekRow = el("span", "db-btnrow");
+    weekRow.append(weekPrev, weekBtn);
     grid.append(card("Discord ledger", d.discord?.configured ? "ok" : "warn", [
       ["Webhook", d.discord?.configured ? "set" : "not set"],
       ["Sample", testBtn],
       ["Daily recap", "8:50 AM CT, yesterday's picks"],
-      ["Now", recapBtn]
+      ["Now", recapBtn],
+      ["Weekly roundup", "Mon 4:05 PM CT, the last 7 days"],
+      ["Now", weekRow],
+      ["", weekOut]
     ]));
 
     // People

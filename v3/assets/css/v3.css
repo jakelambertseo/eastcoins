@@ -4398,3 +4398,8 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
 .notif-toast .notif-ico{width:30px;height:30px;font-size:.95rem}
 .notif-toast-t b{font-weight:700}
 @media (max-width:520px){.notif-panel{width:auto}}
+
+/* Dashboard: the weekly roundup's two buttons and its preview box */
+.db-btnrow{display:inline-flex;gap:6px;flex-wrap:wrap}
+.db-pre{margin:6px 0 0;max-width:100%;white-space:pre-wrap;word-break:break-word;font:.74rem/1.45 ui-monospace,Menlo,Consolas,monospace;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:10px 12px;max-height:340px;overflow:auto}
+.db-row strong .db-pre{font-weight:400}
