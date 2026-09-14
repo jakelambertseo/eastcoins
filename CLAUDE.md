@@ -670,7 +670,9 @@
 > the week (best and worst net), the biggest single win and the biggest
 > single loss (largest stake lost) with links to their game pages, then
 > every bettor's record, net, staked and best pick, ranked, capped at 25
-> lines. The cron Worker fires it at `5 21,22 * * 1` UTC and the
+> lines. The cron Worker fires it at `6 21,22 * * 1` UTC (4:06 PM —
+> never a minute the five-minute settlement trigger owns: on 2026-09-14
+> a `:05` firing delivered only the settlement event) and the
 > endpoint posts only when it is Monday 4 PM Central (`?force=1` from
 > the dashboard bypasses that, `?dry=1` builds without posting,
 > `?days=N` widens the window); `weekly:sent:<Monday>` in `ops_status`

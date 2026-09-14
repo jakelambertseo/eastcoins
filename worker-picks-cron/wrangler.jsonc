@@ -13,11 +13,14 @@
   // either way, hours after the last game and before anything opens).
   // Plus the daily recap at 8:50 AM Central: 13:50 UTC in summer, 14:50
   // in winter — both fire, the endpoint keeps the one that is 8 AM local.
-  // And the weekly roundup on Mondays at 4:05 PM Central: 21:05 UTC in
-  // summer, 22:05 in winter — same trick, the endpoint keeps the one
-  // that is really Monday 4 PM local.
+  // And the weekly roundup on Mondays at 4:06 PM Central: 21:06 UTC in
+  // summer, 22:06 in winter — same trick, the endpoint keeps the one
+  // that is really Monday 4 PM local. NOT :05 — a minute the five-minute
+  // settlement trigger also owns: on 2026-09-14 the 21:05 firing
+  // delivered only the settlement event and the roundup never ran, so
+  // the two schedules must never share a minute.
   "triggers": {
-    "crons": ["*/5 * * * *", "0 9 * * *", "50 13,14 * * *", "5 21,22 * * 1"]
+    "crons": ["*/5 * * * *", "0 9 * * *", "50 13,14 * * *", "6 21,22 * * 1"]
   },
 
   "vars": {

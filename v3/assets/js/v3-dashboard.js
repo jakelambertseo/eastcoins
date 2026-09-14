@@ -566,7 +566,7 @@ ${r.embed.description}
       ["Sample", testBtn],
       ["Daily recap", "8:50 AM CT, yesterday's picks"],
       ["Now", recapBtn],
-      ["Weekly roundup", "Mon 4:05 PM CT, the last 7 days"],
+      ["Weekly roundup", "Mon 4:06 PM CT, the last 7 days"],
       ["Now", weekRow],
       ["", weekOut]
     ]));

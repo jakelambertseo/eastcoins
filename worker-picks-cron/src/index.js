@@ -155,7 +155,7 @@ export default {
     // default so a new trigger can never silently skip payouts.
     if (event.cron === "0 9 * * *") ctx.waitUntil(runBackup(env));
     else if (event.cron === "50 13,14 * * *") ctx.waitUntil(runRecap(env));
-    else if (event.cron === "5 21,22 * * 1") ctx.waitUntil(runWeekly(env));
+    else if (event.cron === "6 21,22 * * 1") ctx.waitUntil(runWeekly(env));
     else ctx.waitUntil(runSettlement(env, "cron"));
   },
 
