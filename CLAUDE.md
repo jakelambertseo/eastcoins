@@ -325,12 +325,13 @@
 > everyone down (Hi-Lo alone was at 87%: its 1% edge is PER CALL, so a
 > six-call run gave up 6%, and every payout was floored to the coin,
 > which took 2–7% more off small stakes). Now: every payout is
-> `Math.round`ed; Hi-Lo `EDGE_RETURN = 1.003` per call (one call
-> ≈100%, six ≈102%; the ×50 ceiling still trims 12-call chains); Mines
-> `EDGE_RETURN = 1.02`; Plinko's inner buckets 1.5 / 0.4 (102.3% on 20,
+> `Math.round`ed; Hi-Lo `EDGE_RETURN = 1.006` per call (one call
+> ≈100.5%, six ≈104%; the ×50 ceiling still trims 12-call chains); Mines
+> `EDGE_RETURN = 1.04`; Plinko's inner buckets 1.5 / 0.4 (102.3% on 20,
 > 104% on 10); Wheel red/black 2.05 and gold 60 (100.8% / 103% / gold
 > exactly fair); Coin Flip 2.04 (`COIN_PAYS`: 41 on 20, 31 on 15, 20 on
-> 10). Expected inflation at ~5,000 ZC/day of play is ~100 ZC/day, the
+> 10). Blend ≈103–104%; expected inflation at ~5,000 ZC/day of play is
+> ~175 ZC/day, the
 > same order as the Jackpot, and `HOUR_WIN_CAP` (750) plus the 20 ZC /
 > ten-an-hour limits bound anyone farming it (~36 ZC/hour expected at
 > full tilt). The previous paragraph's warning still applies above

@@ -27,9 +27,9 @@ import { moveBalance, beginOperation, finishOperation, newId } from "../../picks
 import { sha256, randomSeed, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
 
 // 2026-09-14: the players' side. Per call, so a six-call run returns about
-// 102% and a single call about 100%; the x50 ceiling is what trims long
+// 104% and a single call about 100.5%; the x50 ceiling is what trims long
 // chains, not the price. Was 0.99, which compounded to 87% in practice.
-export const EDGE_RETURN = 1.003;
+export const EDGE_RETURN = 1.006;
 export const MAX_MULTIPLIER = 50;
 export const MAX_STEPS = 12;
 export const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];

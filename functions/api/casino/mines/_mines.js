@@ -38,8 +38,8 @@ import { moveBalance, beginOperation, finishOperation, newId } from "../../picks
 import { sha256, randomSeed, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
 
 export const TILES = 25;
-// 2026-09-14: the players' side — every board returns about 102%.
-export const EDGE_RETURN = 1.02;
+// 2026-09-14: the players' side — every board returns about 104%.
+export const EDGE_RETURN = 1.04;
 // x125, raised from x25 on 2026-09-12 (which had itself come down from x50
 // the same day) because Mines was asked for a real jackpot: about 2,500 on
 // the 20 ZC maximum. The ladder is chunky — each extra tile roughly doubles
@@ -102,7 +102,7 @@ export async function bombsFor(seed, mines) {
  * Fair odds are C(25,k)/C(S,k) — the chance of surviving k picks
  * inverted — multiplied out one tile at a time so nothing overflows.
  * The edge is taken once, off the whole price, so cashing out early
- * and cashing out late carry the same 2% in the player's favour.
+ * and cashing out late carry the same 4% in the player's favour.
  */
 export function multiplierFor(mines, picks) {
   const safe = TILES - mines;
