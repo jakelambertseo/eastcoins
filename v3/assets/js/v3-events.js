@@ -768,7 +768,7 @@
       const line = document.createElement("p");
       line.className = "sundaynote";
       line.append(nflDayIsMonday()
-        ? "🏈 It's Monday Night Football, football only on here today. Sybau. Baseball and other shit will be back tomorrow"
+        ? "🏈 It's Monday Night Football, football only on here today. No bets open except for football."
         : "🏈 It's NFL Sunday, football only on here today. Sybau. Baseball and other shit will be back tomorrow");
       root.append(line);
     }
