@@ -136,6 +136,15 @@
     ledger.href = "/?view=picks&tab=history";
     ledger.addEventListener("click", (e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); history.pushState({ view: "picks" }, "", ledger.getAttribute("href")); window.ECV3?.go("picks", { push: false }); setOpen(false); });
     tools.append(ledger);
+    // Your own profile, right under the ledger: the panel is the one
+    // place in the nav that is about you rather than the site.
+    const login = String(data?.login || window.ECV3?.state?.session?.user?.login || "").toLowerCase();
+    if (login) {
+      const me = el("a", "notif-lnk ulink", "View my profile →");
+      me.href = `/u/${encodeURIComponent(login)}`;
+      me.addEventListener("click", () => setOpen(false));
+      tools.append(me);
+    }
     head.append(tools);
     panel.append(head);
 

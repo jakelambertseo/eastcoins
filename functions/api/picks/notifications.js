@@ -183,6 +183,7 @@ export async function onRequestGet(context) {
     ok: true,
     since: new Date(since).toISOString(),
     firstLook: seenAt === null,
+    login: user.login,
     unread: items.filter((i) => i.unread).length,
     items
   });
