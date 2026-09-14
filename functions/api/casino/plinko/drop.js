@@ -56,7 +56,7 @@ export async function onRequestPost(context) {
   const path = await pathFor(commit.seed);
   const bucket = bucketOf(path);
   const multiplier = multiplierFor(bucket);
-  const payout = Math.floor(stake * multiplier);
+  const payout = Math.round(stake * multiplier);
 
   try {
     await db

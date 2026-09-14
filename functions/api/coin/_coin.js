@@ -21,6 +21,8 @@
 
 import { moveBalance, beginOperation, finishOperation, newId } from "../picks/_lib.js";
 
+export const COIN_PAYS = 2.04;
+
 export const CYCLE_MS = 30 * 1000;
 export const BET_MS = 15 * 1000;
 export const MAX_BET = 20;
@@ -149,7 +151,9 @@ export async function settleRound(env, db, no, now = Date.now()) {
       await db.prepare(`UPDATE coin_bets SET status = 'LOST', payout = 0 WHERE id = ? AND status = 'ACTIVE'`).bind(b.id).run();
       continue;
     }
-    const payout = Number(b.wager) * 2;
+    // 2026-09-14: a hair over double — 41 on 20, 31 on 15 — so the flip
+    // returns about 102% at the usual stakes instead of exactly even.
+    const payout = Math.round(Number(b.wager) * COIN_PAYS);
     const opId = newId("op");
     const begun = await beginOperation(db, {
       id: opId,

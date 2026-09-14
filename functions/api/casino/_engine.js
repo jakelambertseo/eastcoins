@@ -33,10 +33,9 @@ export const ROOM_WINDOW_MS = 60 * 1000;
 /* ---------------------------------------------------------- games */
 
 // The wheel: 24 slices alternating red and black share 354 degrees, and
-// one slim gold sliver takes the last 6. Red and black pay 2×; gold 40×.
-// Red/black return 0.983 of the stake over time — near fair, on purpose:
-// the casino is meant to be fun to come back to, not a drain. Gold is the
-// long shot (1 in 60) and returns 0.67; nobody is told it is smart.
+// one slim gold sliver takes the last 6. Red and black pay 2.05×; gold 60×.
+// Red/black return just over the stake (2026-09-14, the players' side);
+// gold is the 1-in-60 long shot and returns exactly the stake over time.
 const GOLD_DEG = 6;
 const WHEEL = (() => {
   const segments = [];
@@ -68,7 +67,10 @@ export const GAMES = {
     cycleMs: 60 * 1000,
     betMs: 40 * 1000,
     picks: ["red", "black", "gold"],
-    payout: { red: 2, black: 2, gold: 40 },
+    // 2026-09-14: the players' side. 2.05 on red/black returns 100.8% on a
+    // 20 ZC bet and 103% on 10 (payouts rounded to the coin); gold at 60 is
+    // exactly fair. Was 2 / 40 for 98.3% and 67%.
+    payout: { red: 2.05, black: 2.05, gold: 60 },
     segments: WHEEL,
     /** Where the pointer lands, in degrees from the top, from the seed alone. */
     async outcome(seed) {
@@ -222,7 +224,7 @@ export async function settleRound(env, db, game, no, now = Date.now()) {
       await db.prepare(`UPDATE casino_bets SET status = 'LOST', payout = 0 WHERE id = ? AND status = 'ACTIVE'`).bind(b.id).run();
       continue;
     }
-    const payout = Math.floor(Number(b.wager) * Number(game.payout[b.pick] || 0));
+    const payout = Math.round(Number(b.wager) * Number(game.payout[b.pick] || 0));
     const opId = newId("op");
     const begun = await beginOperation(db, {
       id: opId,

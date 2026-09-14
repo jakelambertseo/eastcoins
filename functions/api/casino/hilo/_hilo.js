@@ -26,7 +26,10 @@
 import { moveBalance, beginOperation, finishOperation, newId } from "../../picks/_lib.js";
 import { sha256, randomSeed, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
 
-export const EDGE_RETURN = 0.99;
+// 2026-09-14: the players' side. Per call, so a six-call run returns about
+// 102% and a single call about 100%; the x50 ceiling is what trims long
+// chains, not the price. Was 0.99, which compounded to 87% in practice.
+export const EDGE_RETURN = 1.003;
 export const MAX_MULTIPLIER = 50;
 export const MAX_STEPS = 12;
 export const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
@@ -84,7 +87,7 @@ export function publicGame(g, { revealSeed = false } = {}) {
     stake: Number(g.stake),
     multiplier: Number(g.multiplier),
     payout: Number(g.payout || 0),
-    potential: Math.floor(Number(g.stake) * Number(g.multiplier)),
+    potential: Math.round(Number(g.stake) * Number(g.multiplier)),
     step: calls.length,
     cards: cards.map((c) => ({ rank: c.rank, label: RANKS[c.rank - 1], suit: SUITS[c.suit] })),
     calls,
@@ -107,7 +110,8 @@ export async function gamesLastHour(db, userId) {
 
 /** Pays out a run. Idempotent per game: the operation key is the game id. */
 export async function cashOut(env, db, g, login) {
-  const payout = Math.floor(Number(g.stake) * Number(g.multiplier));
+  // Rounded, not floored: flooring took 2-7% off small stakes on its own.
+  const payout = Math.round(Number(g.stake) * Number(g.multiplier));
   const opId = newId("op");
   const begun = await beginOperation(db, {
     id: opId, idempotencyKey: `CASINO:HILO:PAY:${g.id}`, userId: g.user_id,
