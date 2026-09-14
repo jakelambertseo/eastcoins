@@ -4403,3 +4403,6 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
 .db-btnrow{display:inline-flex;gap:6px;flex-wrap:wrap}
 .db-pre{margin:6px 0 0;max-width:100%;white-space:pre-wrap;word-break:break-word;font:.74rem/1.45 ui-monospace,Menlo,Consolas,monospace;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:10px 12px;max-height:340px;overflow:auto}
 .db-row strong .db-pre{font-weight:400}
+
+/* Picks, on football days: the one-line notice above the slate */
+.sundaynote.picks-note{margin:0 0 16px;padding:11px 16px;font-size:.86rem;border-color:rgba(var(--gold-rgb),.35);color:var(--muted)}

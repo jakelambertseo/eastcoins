@@ -487,6 +487,12 @@
     return section;
   }
 
+  const NFL_MONTHS = new Set([9, 10, 11, 12, 1]);
+  function nflDayNow() {
+    const ct = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" }));
+    return (ct.getDay() === 0 || ct.getDay() === 1) && NFL_MONTHS.has(ct.getMonth() + 1);
+  }
+
   function marketsView() {
     const wrap = document.createDocumentFragment();
 
@@ -515,6 +521,11 @@
 
     const openNow = local.sport === "all" ? allOpen : allOpen.filter((m) => leagueOf(m) === local.sport);
 
+    // Football days: the same rule the Sports page keeps (Sunday and
+    // Monday, September to January, Chicago time) — say up front that
+    // nothing else takes bets, so an empty baseball tab is not a bug.
+    if (nflDayNow()) wrap.append(el("p", "sundaynote picks-note", "🏈 No betting on baseball or anything else except for football on Sundays and Mondays."));
+
     if (local.failed || !openNow.length) {
       const empty = el("div", "empty");
       empty.append(
@@ -523,8 +534,8 @@
           local.failed
             ? "The Picks catalog didn't answer. This is usually temporary."
             : local.upcoming.length
-              ? "The next games are listed below. NFL opens an hour before kickoff; MLB opens every day at 4 PM CT."
-              : "NFL opens an hour before kickoff; MLB opens every day at 4 PM CT. Check back closer to game time.")
+              ? (nflDayNow() ? "The next games are listed below. NFL opens an hour before kickoff." : "The next games are listed below. NFL opens an hour before kickoff; MLB opens every day at 4 PM CT.")
+              : (nflDayNow() ? "NFL opens an hour before kickoff. Check back closer to game time." : "NFL opens an hour before kickoff; MLB opens every day at 4 PM CT. Check back closer to game time."))
       );
       wrap.append(empty);
     } else {
