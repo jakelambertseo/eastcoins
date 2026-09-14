@@ -162,6 +162,27 @@
 > (`.market.prop`, `.propmark`), tickets, the ledger, the admin row, the
 > feed and the game page all follow. The Sports-filter chip reads "Props".
 >
+> **The bell (2026-09-14)** — a notifications button in the nav
+> (`#notifBtn`, between search and the profile pill) with a red count,
+> and a panel under it: what happened to YOU since you last looked.
+> `functions/api/picks/notifications.js` builds the rows from tables
+> the site already writes — your picks' `settled_at` (won / lost /
+> refunded, props say the call), `casino_pots.paid_at` (you or
+> whoever hit the Jackpot), `markets.odds_locked_at` for your
+> favourite team, `ops_status` `announce:<id>` notes, and new badges
+> (computed, so `users.notif_badges` remembers the keys already shown).
+> `users.notif_seen_at` is the only other state: GET marks rows after
+> it unread (a first look shows three days), POST `{seen:true}` stamps
+> it and the badge set. No inbox table, so it can never disagree with
+> the ledger. `v3-notify.js` polls every 90 s while the tab is
+> visible (~960 requests a day per tab, five indexed queries plus the
+> cached badge computation), opens the panel as a fixed element placed
+> by hand so it never covers the Twitch rail, marks seen on open and
+> clears the count on close, and drops a toast when something new
+> lands while the page is open. Styles are `.notif-*` at the end of
+> `v3.css`. Not in the bell on purpose: other people's picks, songs,
+> casino spins, "closing soon" — the ticker and Activity carry those.
+>
 > **Check a seed (2026-09-13)** — `/?view=verify` (`v3-verify.js`) over
 > `GET /api/casino/verify?game=&seed=[&hash=&mines=&players=]`, which is
 > pure maths with no session or database: it hashes the seed and replays
