@@ -19,10 +19,13 @@ import {
   json,
   fail
 } from "../_lib.js";
+import { PROP_SPORT, PROP_LEAGUE, YES, NO, cleanQuestion, ensureQuestionColumn } from "../_props.js";
 
 // boxing and mma are fights: no scores feed, settled by hand on the
 // admin page (admin/settle-market.js). Either fighter can go in either slot.
-const SPORTS = new Set(["baseball", "american-football", "basketball", "hockey", "boxing", "mma"]);
+const SPORTS = new Set(["baseball", "american-football", "basketball", "hockey", "boxing", "mma", PROP_SPORT]);
+// A prop's default price: -110 a side, unless the form says otherwise.
+const PROP_LINE = -110;
 
 /**
  * Nothing here may reach the operator as an HTML error page. An
@@ -59,16 +62,22 @@ async function handleOpenMarket(context) {
   }
 
   const sport = String(body?.sport || "").trim().toLowerCase();
-  const league = String(body?.league || "").trim() || null;
-  const away = String(body?.away || "").trim();
-  const home = String(body?.home || "").trim();
-  const awayOdds = Math.trunc(Number(body?.awayOdds));
-  const homeOdds = Math.trunc(Number(body?.homeOdds));
+  const prop = sport === PROP_SPORT;
+  // A prop is Yes (away) or No (home) on a question; the lines are
+  // whatever was typed, -110 a side if nothing was.
+  const question = prop ? cleanQuestion(body?.question) : null;
+  const league = prop ? PROP_LEAGUE : String(body?.league || "").trim() || null;
+  const away = prop ? YES : String(body?.away || "").trim();
+  const home = prop ? NO : String(body?.home || "").trim();
+  const blank = (v) => v === undefined || v === null || v === "";
+  const awayOdds = Math.trunc(Number(prop && blank(body?.awayOdds) ? PROP_LINE : body?.awayOdds));
+  const homeOdds = Math.trunc(Number(prop && blank(body?.homeOdds) ? PROP_LINE : body?.homeOdds));
   const startsAt = String(body?.startsAt || "").trim();
 
   if (!SPORTS.has(sport)) {
     return fail("BAD_SPORT", `sport must be one of: ${[...SPORTS].join(", ")}`);
   }
+  if (prop && question.length < 6) return fail("BAD_QUESTION", "Type the prop as a question, e.g. “Will Mahomes throw for 300 yards?”");
   if (!away || !home) return fail("BAD_TEAMS", "Both away and home names are required.");
   if (!Number.isInteger(awayOdds) || awayOdds === 0 ||
       !Number.isInteger(homeOdds) || homeOdds === 0) {
@@ -91,8 +100,11 @@ async function handleOpenMarket(context) {
   }
 
   const override = String(body?.eventId || "").trim();
+  const fixture = prop
+    ? question.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60)
+    : `${away}-vs-${home}`;
   const base = override ||
-    `manual:${sport}:${away}-vs-${home}:${start.toISOString().slice(0, 10)}`;
+    `manual:${sport}:${fixture}:${start.toISOString().slice(0, 10)}`;
 
   // Only a market still in play blocks the fixture. A closed or settled
   // one is finished business, and refusing to reuse it forces the team
@@ -141,6 +153,7 @@ async function handleOpenMarket(context) {
   const providerEventId = override || (prior ? `${base}#${prior + 1}` : base);
 
   const marketId = newId("mkt");
+  if (prop) await ensureQuestionColumn(db);
 
   try {
     await db
@@ -148,11 +161,11 @@ async function handleOpenMarket(context) {
         `INSERT INTO markets
            (id, provider, provider_event_id, season_id, sport, league,
             away_name, home_name, starts_at, state,
-            away_odds_locked, home_odds_locked, odds_locked_at)
-         VALUES (?, 'manual', ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?, CURRENT_TIMESTAMP)`
+            away_odds_locked, home_odds_locked, odds_locked_at, question)
+         VALUES (?, 'manual', ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?, CURRENT_TIMESTAMP, ?)`
       )
       .bind(marketId, providerEventId, String(season.id), sport, league,
-            away, home, start.toISOString(), awayOdds, homeOdds)
+            away, home, start.toISOString(), awayOdds, homeOdds, question)
       .run();
   } catch (error) {
     // Any database refusal is a readable answer, not a 500 HTML page
@@ -174,6 +187,7 @@ async function handleOpenMarket(context) {
       id: marketId,
       sport,
       league,
+      question,
       away,
       home,
       startsAt: start.toISOString(),

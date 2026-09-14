@@ -10,6 +10,7 @@
 
 import { BADGE } from "./bot/_bot.js";
 import { isFight, versus } from "./_fights.js";
+import { isProp, matchup, shortQuestion } from "./_props.js";
 import { whenCT } from "./_when.js";
 
 const SPORT_EMOJI = {
@@ -18,8 +19,22 @@ const SPORT_EMOJI = {
   basketball: "\u{1F3C0}",
   hockey: "\u{1F3D2}",
   boxing: "\u{1F94A}",
-  mma: "\u{1F94B}"
+  mma: "\u{1F94B}",
+  prop: "\u{1F3AF}"
 };
+
+/** "Rangers +150 at Mariners -170", or for a prop the question and both prices. */
+function priced(m) {
+  if (isProp(m.sport)) {
+    return `"${shortQuestion(m.question)}" Yes ${formatLine(m.away_odds_locked)} / No ${formatLine(m.home_odds_locked)}`;
+  }
+  return `${m.away_name} ${formatLine(m.away_odds_locked)} ${versus(m.sport)} ${m.home_name} ${formatLine(m.home_odds_locked)}`;
+}
+
+/** The usage hint: teams for games, yes/no when every market is a prop. */
+function howToPick(markets) {
+  return markets.every((m) => isProp(m.sport)) ? "!pick <amount> yes" : "!pick <amount> <team>";
+}
 
 /** Badge only when every market agrees; a mixed slate gets none. */
 function badgeFor(markets) {
@@ -45,12 +60,10 @@ export function composeOpen(markets) {
   const lead = badgeFor(markets);
 
   if (markets.length <= 2) {
-    const each = markets.map((m) =>
-      `${m.away_name} ${formatLine(m.away_odds_locked)} ${versus(m.sport)} ` +
-      `${m.home_name} ${formatLine(m.home_odds_locked)}`
-    );
+    const each = markets.map(priced);
     const closes = markets.length === 1 ? ` \u00b7 closes ${timeOf(markets[0].starts_at)}` : "";
-    return `${BADGE} ${lead}Betting open \u2014 ${each.join(" \u00b7 ")}${closes} \u00b7 !pick <amount> <team>`;
+    const what = markets.length === 1 && isProp(markets[0].sport) ? "Prop bet" : "Betting open";
+    return `${BADGE} ${lead}${what} \u2014 ${each.join(" \u00b7 ")}${closes} \u00b7 ${howToPick(markets)}`;
   }
 
   return (
@@ -89,10 +102,8 @@ export function composeClosingSoon(markets, minutes) {
   const lead = badgeFor(markets);
   const when = `Closing in ${minutes} minute${minutes === 1 ? "" : "s"}`;
   if (markets.length <= 2) {
-    const each = markets.map((m) =>
-      `${m.away_name} ${formatLine(m.away_odds_locked)} ${versus(m.sport)} ${m.home_name} ${formatLine(m.home_odds_locked)}`
-    );
-    return `${BADGE} ${lead}${when} \u2014 ${each.join(" \u00b7 ")} \u00b7 !pick <amount> <team>`;
+    const each = markets.map(priced);
+    return `${BADGE} ${lead}${when} \u2014 ${each.join(" \u00b7 ")} \u00b7 ${howToPick(markets)}`;
   }
   return `${BADGE} ${lead}${when} on ${markets.length} games \u00b7 !odds <team> for a line \u00b7 !pick <amount> <team>`;
 }
@@ -114,7 +125,7 @@ export function composeClosed(markets, totals = {}) {
     : "";
 
   if (markets.length <= 2) {
-    const each = markets.map((m) => `${m.away_name} ${versus(m.sport)} ${m.home_name}`);
+    const each = markets.map((m) => (isProp(m.sport) ? `"${shortQuestion(m.question)}"` : matchup(m)));
     return `${BADGE} ${lead}Betting closed \u2014 ${each.join(" \u00b7 ")}${riding}.`;
   }
 
@@ -148,8 +159,16 @@ export function composeSettled(entries) {
     const e = done[0];
     if (e.outcome === "VOID") {
       const vlink = e.slug ? ` · eastcoin.vip/g/${e.slug}` : "";
-      return `${BADGE} ${lead}${e.away} ${versus(e.sport)} ${e.home} ${isFight(e.sport) ? "ended in a draw" : "voided"} — ` +
+      const name = isProp(e.sport) ? `"${shortQuestion(e.question)}"` : `${e.away} ${versus(e.sport)} ${e.home}`;
+      return `${BADGE} ${lead}${name} ${isFight(e.sport) ? "ended in a draw" : "voided"} — ` +
         `${e.refunded || 0} stake${e.refunded === 1 ? "" : "s"} refunded${vlink}.${trouble}`;
+    }
+    if (isProp(e.sport)) {
+      const payout = won
+        ? `${won} winner${won === 1 ? "" : "s"}, ${paid.toLocaleString()} ZC paid`
+        : "no winners";
+      const link = e.slug ? ` · eastcoin.vip/g/${e.slug}` : "";
+      return `${BADGE} ${lead}"${shortQuestion(e.question)}" — ${String(e.winnerName).toUpperCase()} — ${payout}${link}.${trouble} !record for yours.`;
     }
     const score = Number.isFinite(e.awayScore) && Number.isFinite(e.homeScore)
       ? ` ${Math.max(e.awayScore, e.homeScore)}-${Math.min(e.awayScore, e.homeScore)}` : "";

@@ -27,7 +27,7 @@ export async function onRequestGet(context) {
 
   const markets = await db
     .prepare(
-      `SELECT id, sport, league, away_name, home_name, starts_at, state,
+      `SELECT id, sport, league, away_name, home_name, question, starts_at, state,
               away_odds_locked, home_odds_locked, winner,
               settlement_detail, final_away_score, final_home_score
          FROM markets
@@ -89,6 +89,7 @@ export async function onRequestGet(context) {
       id: market.id,
       sport: market.sport,
       league: market.league,
+      question: market.question || null,
       away: market.away_name,
       home: market.home_name,
       startsAt: market.starts_at,

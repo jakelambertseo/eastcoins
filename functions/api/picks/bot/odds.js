@@ -15,6 +15,7 @@ import {
 } from "./_bot.js";
 import { whenCT } from "../_when.js";
 import { versus } from "../_fights.js";
+import { isProp, shortQuestion } from "../_props.js";
 
 const LINK_TAIL = "https://eastcoin.vip/?view=picks to view all open games. GAMBA";
 
@@ -65,7 +66,17 @@ export async function onRequestGet(context) {
       if (league === "NFL") continue;
       counts.set(league, (counts.get(league) || 0) + 1);
     }
-    for (const [league, n] of counts) parts.push(`${league}: ${n} open`);
+    for (const [league, n] of counts) {
+      if (league === "PROP") {
+        // A prop is one line: the question is the whole point of it.
+        const props = markets.filter((m) => isProp(m.sport));
+        parts.push(props.length === 1
+          ? `Prop: "${shortQuestion(props[0].question, 50)}" Yes ${formatLine(props[0].away_odds_locked)} / No ${formatLine(props[0].home_odds_locked)} · !pick <amount> yes`
+          : `Props: ${n} open · !odds yes`);
+        continue;
+      }
+      parts.push(`${league}: ${n} open`);
+    }
     return say(withLink(`${parts.join(" · ")} · !odds <team> for a line · !pick <amount> <team>`));
   }
 
@@ -79,10 +90,16 @@ export async function onRequestGet(context) {
     return say(withLink(`"${team}" is a college mascot — say the school: !odds ${school}`));
   }
   if (found.ambiguous) {
+    if (found.prop) return say(withLink(`Props open: ${found.ambiguous.join(" · ")} — !odds yes <word> for one`));
     return say(withLink(`"${team}" matches ${found.ambiguous.join(" and ")}. Be more specific.`));
   }
 
   const m = found.market;
+  if (isProp(m.sport)) {
+    return say(withLink(
+      `"${m.question}" Yes ${formatLine(m.away_odds_locked)} / No ${formatLine(m.home_odds_locked)}${timeOf(m.starts_at)} · !pick <amount> yes`
+    ));
+  }
   return say(withLink(
     `${shortTeam(m.away_name, m.league)} ${formatLine(m.away_odds_locked)} ${versus(m.sport)} ` +
     `${shortTeam(m.home_name, m.league)} ${formatLine(m.home_odds_locked)}${timeOf(m.starts_at)} · !pick <amount> <team>`

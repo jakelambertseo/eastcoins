@@ -32,7 +32,7 @@ async function ensure(db) {
 export async function dueReminders(db, now = Date.now()) {
   await ensure(db);
   const rows = await db
-    .prepare(`SELECT id, sport, league, away_name, home_name, away_odds_locked, home_odds_locked, starts_at FROM markets WHERE state = 'OPEN' AND datetime(starts_at) > datetime('now')`)
+    .prepare(`SELECT id, sport, league, away_name, home_name, question, away_odds_locked, home_odds_locked, starts_at FROM markets WHERE state = 'OPEN' AND datetime(starts_at) > datetime('now')`)
     .all();
   const open = rows.results || [];
   if (!open.length) return [];

@@ -79,6 +79,10 @@
   }
 
   function crest(market, name, className) {
+    if (String(market?.sport || "").toLowerCase() === "prop") {
+      const yes = String(name).toLowerCase() !== "no";
+      return el("span", `${className} propmark ${yes ? "yes" : "no"}`, yes ? "✓" : "✗");
+    }
     if (window.ECLogos) return window.ECLogos.crest(market?.sport, market?.league, name, className);
     return el("span", className, String(name || "?").slice(0, 3).toUpperCase());
   }
@@ -351,7 +355,9 @@
     const who = el("div", "gp-who");
     who.append(
       el("b", null, `${p.team} ${formatLine(p.line)}`),
-      el("span", null, `vs ${p.opponent}${p.market.league ? " · " + p.market.league : ""} · ${when(p.market.startsAt, { month: "short", day: "numeric" })}`)
+      el("span", null, String(p.market.sport || "").toLowerCase() === "prop"
+        ? `${p.market.question || "Prop bet"} · ${when(p.market.startsAt, { month: "short", day: "numeric" })}`
+        : `vs ${p.opponent}${p.market.league ? " · " + p.market.league : ""} · ${when(p.market.startsAt, { month: "short", day: "numeric" })}`)
     );
     const stake = el("div", "gp-stake");
     stake.append(el("b", "nums", String(p.wager)), document.createTextNode("staked"));

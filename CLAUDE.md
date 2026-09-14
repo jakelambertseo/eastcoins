@@ -138,6 +138,30 @@
 > no bet table, so `hourlyNet()` and the books never see it. Exactly 100
 > ZC of inflation a day, by construction.
 >
+> **Prop bets (2026-09-13)** — "Will Mahomes throw for 300?" as a
+> market. The admin page's **Add a prop** tab takes a question, a Yes
+> line and a No line (any American odds, -110 both ways by default) and
+> a close time; `admin/open-market.js` stores it with sport `prop`,
+> league `PROP`, away `Yes`, home `No`, and the question in
+> `markets.question` (migration 0003, also added on the fly by
+> `ensureQuestionColumn`). Everything downstream is unchanged — wagers,
+> the ledger, profiles, the book — because a prop IS a market; what
+> differs is naming and colour, and `_props.js` (`isProp`, `matchup`,
+> `sideLabel`, `shortQuestion`) is the one place that knows. `prop` is
+> in `MANUAL_SPORTS`, so the scheduled run never grades it: an admin
+> calls it from the Markets row (Yes ✓ / No ✗ / Void) through
+> `settle-market.js`, which for a prop is allowed BEFORE the close
+> (applyVerdict flips it to SETTLING first, so nothing can land after
+> the call). A prop's `/g/` page is `/g/<market id>` (`slugFor` returns
+> the id — "yes-no-<day>" would collide). Chat: `!pick 10 yes`, `!pick
+> 10 no`, and with two props open a word from the question picks which
+> (`matchProp` in `bot/_bot.js`); `!odds yes` prints the question and
+> both prices. Announce works from the row or straight from the form.
+> On the site, props are **violet** (`--prop` in `v3.css`): the Picks
+> card carries the question with ✓/✗ marks instead of crests
+> (`.market.prop`, `.propmark`), tickets, the ledger, the admin row, the
+> feed and the game page all follow. The Sports-filter chip reads "Props".
+>
 > **Check a seed (2026-09-13)** — `/?view=verify` (`v3-verify.js`) over
 > `GET /api/casino/verify?game=&seed=[&hash=&mines=&players=]`, which is
 > pure maths with no session or database: it hashes the seed and replays

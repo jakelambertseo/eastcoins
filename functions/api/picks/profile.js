@@ -59,6 +59,7 @@ export async function onRequestGet(context) {
       league: String(p.league || ""),
       away: String(p.away_name),
       home: String(p.home_name),
+      question: p.question || null,
       startsAt: p.starts_at,
       state: String(p.state || ""),
       awayScore: Number.isInteger(p.final_away_score) ? p.final_away_score : null,
@@ -68,7 +69,7 @@ export async function onRequestGet(context) {
   });
 
   const PICK_SQL = `SELECT p.id, p.selection, p.wager, p.odds_locked, p.status, p.payout, p.profit, p.created_at, p.settled_at,
-              m.id AS market_id, m.sport, m.league, m.away_name, m.home_name, m.starts_at, m.state,
+              m.id AS market_id, m.sport, m.league, m.away_name, m.home_name, m.question, m.starts_at, m.state,
               m.final_away_score, m.final_home_score, m.winner
          FROM picks p JOIN markets m ON m.id = p.market_id
         WHERE p.user_id = ? AND p.status IN ('ACTIVE','WON','LOST','REFUNDED')

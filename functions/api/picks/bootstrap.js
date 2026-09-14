@@ -220,6 +220,7 @@ async function getMarkets(db) {
            m.sport,
            m.league,
            m.away_name,
+           m.question,
            m.away_badge,
            m.home_name,
            m.home_badge,
@@ -343,6 +344,7 @@ async function getMarkets(db) {
         String(row.sport || ""),
       league:
         String(row.league || ""),
+      question: row.question ? String(row.question) : null,
       away: {
         name:
           String(
@@ -450,6 +452,7 @@ async function getMyPicks(
            m.sport,
            m.league,
            m.away_name,
+           m.question,
            m.away_badge,
            m.home_name,
            m.home_badge,
@@ -523,6 +526,7 @@ async function getMyPicks(
           String(
             row.league || ""
           ),
+        question: row.question ? String(row.question) : null,
         away: {
           name:
             String(
@@ -846,6 +850,7 @@ async function getCommunityLedger(
            m.sport,
            m.league,
            m.away_name,
+           m.question,
            m.away_badge,
            m.home_name,
            m.home_badge,
@@ -944,6 +949,7 @@ async function getCommunityLedger(
           String(
             row.league || ""
           ),
+        question: row.question ? String(row.question) : null,
         away: {
           name:
             String(

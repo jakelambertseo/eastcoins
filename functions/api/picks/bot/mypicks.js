@@ -7,6 +7,7 @@
    ============================================================ */
 
 import { say, botGate, findUser, formatLine, shortTeam } from "./_bot.js";
+import { isProp, shortQuestion } from "../_props.js";
 
 export async function onRequestGet(context) {
   const gate = botGate(context);
@@ -22,7 +23,7 @@ export async function onRequestGet(context) {
   const rows = await db
     .prepare(
       `SELECT p.selection, p.wager, p.odds_locked,
-              m.away_name, m.home_name, m.league
+              m.away_name, m.home_name, m.league, m.sport, m.question
          FROM picks p
          JOIN markets m ON m.id = p.market_id
         WHERE p.user_id = ? AND p.status = 'ACTIVE'
@@ -37,6 +38,7 @@ export async function onRequestGet(context) {
   const staked = picks.reduce((sum, p) => sum + Number(p.wager || 0), 0);
   const named = picks.slice(0, 4).map((p) => {
     const team = p.selection === "away" ? p.away_name : p.home_name;
+    if (isProp(p.sport)) return `${Number(p.wager).toLocaleString()} ${String(team).toUpperCase()} on "${shortQuestion(p.question, 30)}" ${formatLine(p.odds_locked)}`;
     return `${Number(p.wager).toLocaleString()} ${shortTeam(team, p.league)} ${formatLine(p.odds_locked)}`;
   });
   const rest = picks.length - named.length;

@@ -15,6 +15,13 @@
 
   // A fight is "Garcia vs Benn"; a game is "Reds at Dodgers".
   const vsWord = (m) => (["boxing", "mma"].includes(String(m?.sport || "").toLowerCase()) ? "vs" : "at");
+  // A prop is Yes / No on a question; its page reads the question.
+  const isProp = (m) => String(m?.sport || "").toLowerCase() === "prop";
+  const titleOf = (m) => (isProp(m) ? String(m.question || "Prop bet") : `${m.away.name} ${vsWord(m)} ${m.home.name}`);
+  const propMark = (name, className) => {
+    const yes = String(name).toLowerCase() !== "no";
+    return el("span", `${className} propmark ${yes ? "yes" : "no"}`, yes ? "✓" : "✗");
+  };
 
   let root = null;
   let shell = null;
@@ -235,9 +242,10 @@
     // Head: league, kick-off, state pill
     const head = el("div", "viewhead");
     const headCopy = el("div");
-    headCopy.append(el("h1", null, `${m.away.name} ${vsWord(m)} ${m.home.name}`));
+    if (isProp(m)) page.classList.add("prop");
+    headCopy.append(el("h1", null, titleOf(m)));
     headCopy.append(el("p", "gp-sub",
-      `${m.league || m.sport} · ${when(m.startsAt, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`));
+      `${isProp(m) ? "Prop bet · closes" : m.league || m.sport + " ·"} ${when(m.startsAt, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`));
     head.append(headCopy);
     const pill = el("span", `gp-pill ${settled ? "settled" : voided ? "void" : m.state === "LOCKED" ? "locked" : "open"}`,
       settled ? "Settled" : voided ? "Voided" : m.state === "LOCKED" ? "Betting closed" : "Betting open");
@@ -249,9 +257,11 @@
     const teams = el("div", "gp-teams");
     const teamCell = (side, key) => {
       const cell = el("div", `gp-team${winner === key ? " won" : ""}`);
-      const crest = window.ECLogos
-        ? window.ECLogos.crest(m.sport, m.league, side.name, "gp-crest")
-        : el("span", "gp-crest", initials(side.name));
+      const crest = isProp(m)
+        ? propMark(side.name, "gp-crest")
+        : window.ECLogos
+          ? window.ECLogos.crest(m.sport, m.league, side.name, "gp-crest")
+          : el("span", "gp-crest", initials(side.name));
       cell.append(crest, el("div", "gp-name", side.name), el("div", "gp-line", formatLine(side.line)));
       return cell;
     };
@@ -259,7 +269,8 @@
     const hasScore = (settled || voided) && Number.isInteger(m.away.score) && Number.isInteger(m.home.score);
     const inPlay = !hasScore && m.live && Number.isInteger(m.live.away) && Number.isInteger(m.live.home);
     if (inPlay) score.classList.add("live");
-    score.append(
+    if (isProp(m)) score.append(el("i", null, "or"));
+    else score.append(
       el("b", `nums${winner === "away" ? " win" : ""}`, hasScore ? String(m.away.score) : inPlay ? String(m.live.away) : "–"),
       el("i", null, hasScore ? "–" : inPlay ? "live" : vsWord(m)),
       el("b", `nums${winner === "home" ? " win" : ""}`, hasScore ? String(m.home.score) : inPlay ? String(m.live.home) : "–")
@@ -268,7 +279,7 @@
     board.append(teams);
     if (settled && winName) {
       const detail = m.settlementDetail && m.settlementDetail !== "Final" ? ` · ${m.settlementDetail}` : "";
-      board.append(el("div", "gp-tag", `${winName} win${detail}`));
+      board.append(el("div", "gp-tag", isProp(m) ? `${winName.toUpperCase()} — that's the call${detail}` : `${winName} win${detail}`));
     } else if (voided) {
       board.append(el("div", "gp-tag void", `Voided · every stake refunded${m.settlementDetail ? " · " + m.settlementDetail : ""}`));
     }
@@ -314,7 +325,7 @@
 
     // Rows
     page.append(el("h2", "gp-h2", "Every pick"));
-    const openNote = m.state === "OPEN" ? " Betting is still open." : m.state === "LOCKED" ? " Betting is closed for kick-off." : "";
+    const openNote = m.state === "OPEN" ? " Betting is still open." : m.state === "LOCKED" ? (isProp(m) ? " Betting is closed; waiting on the call." : " Betting is closed for kick-off.") : "";
     page.append(el("p", "gp-sub",
       `Everyone gets the same line — it was locked at ${formatLine(m.away.line)} / ${formatLine(m.home.line)} when the market opened, and never moved after that.${openNote}`));
 
@@ -413,12 +424,14 @@
       const row = link(`/g/${m.slug}`, `gp-row ${cls} link`);
       const who = el("div", "gp-who");
       who.append(
-        el("b", null, `${m.away.name} ${vsWord(m)} ${m.home.name}`),
+        el("b", null, titleOf(m)),
         el("span", null, `${when(m.startsAt, { hour: "numeric", minute: "2-digit" })} · ${plural(m.picks || 0, "pick")}`)
       );
-      const result = m.state === "SETTLED" && Number.isInteger(m.away.score)
-        ? `${m.away.score}–${m.home.score}`
-        : m.state === "VOID" ? "voided" : m.state === "LOCKED" ? "in play" : "open";
+      const result = m.state === "SETTLED" && isProp(m)
+        ? (m.winner === "home" ? "No" : "Yes")
+        : m.state === "SETTLED" && Number.isInteger(m.away.score)
+          ? `${m.away.score}–${m.home.score}`
+          : m.state === "VOID" ? "voided" : m.state === "LOCKED" ? (isProp(m) ? "closed" : "in play") : "open";
       row.append(who, el("div", "gp-payout nums", result));
       rows.append(row);
     }
@@ -536,8 +549,8 @@
     } else {
       const m = payload.market;
       const score = m.state === "SETTLED" && Number.isInteger(m.away.score) ? ` ${m.away.score}–${m.home.score}` : "";
-      document.title = `${m.away.name} ${vsWord(m)} ${m.home.name}${score} — EastCoin Picks`;
-      window.ECPresence?.beat("game", `${m.away.name} ${vsWord(m)} ${m.home.name}`);
+      document.title = `${titleOf(m)}${isProp(m) ? "" : score} — EastCoin Picks`;
+      window.ECPresence?.beat("game", titleOf(m));
       root.replaceChildren(gamePage(payload));
     }
   }

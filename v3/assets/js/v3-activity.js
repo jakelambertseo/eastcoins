@@ -79,13 +79,19 @@
     return wrap;
   }
 
+  const isProp = (m) => String(m?.sport || "").toLowerCase() === "prop";
+  const shortQ = (m, max = 48) => { const q = String(m?.question || "Prop bet"); return q.length <= max ? q : q.slice(0, max - 1).trimEnd() + "…"; };
+  /** "Yes +150 · Will Mahomes…" for a prop, the club's nickname for a game. */
+  const pickName = (item) => (isProp(item.market) ? `${String(item.team).toUpperCase()} ${line(item.line)} · ${shortQ(item.market)}` : `${nick(item.team)} ${line(item.line)}`);
+
   function gameLink(market, text) {
-    const a = el("a", "glink", text != null ? text : `${nick(market.away)} at ${nick(market.home)}`);
+    const a = el("a", "glink", text != null ? text : isProp(market) ? shortQ(market, 70) : `${nick(market.away)} at ${nick(market.home)}`);
     a.href = `/g/${market.slug}`;
     return a;
   }
 
   function crest(market, teamName) {
+    if (isProp(market)) { const yes = String(teamName).toLowerCase() !== "no"; return el("span", `av-crest propmark ${yes ? "yes" : "no"}`, yes ? "✓" : "✗"); }
     return window.ECLogos
       ? window.ECLogos.crest(market.sport, market.league, teamName, "av-crest")
       : el("span", "av-crest", String(teamName || "?").slice(0, 3).toUpperCase());
@@ -122,31 +128,38 @@
 
     switch (item.type) {
       case "pick":
-        text.append(name(item.who), document.createTextNode(" backed "), el("b", null, `${nick(item.team)} ${line(item.line)}`),
-          document.createTextNode(" for "), coin(item.wager), document.createTextNode(" · "), gameLink(m));
-        meta.append(document.createTextNode(`${m.league || ""} · `), gameLink(m, `${nick(item.team)} vs ${nick(item.opponent)}`));
+        text.append(name(item.who), document.createTextNode(" backed "), el("b", null, pickName(item)),
+          document.createTextNode(" for "), coin(item.wager), ...(isProp(m) ? [] : [document.createTextNode(" · "), gameLink(m)]));
+        meta.append(document.createTextNode(`${isProp(m) ? "Prop" : m.league || ""} · `), gameLink(m, isProp(m) ? undefined : `${nick(item.team)} vs ${nick(item.opponent)}`));
         break;
       case "won":
-        text.append(name(item.who), document.createTextNode(" cashed "), el("b", null, `${nick(item.team)} ${line(item.line)}`),
+        text.append(name(item.who), document.createTextNode(" cashed "), el("b", null, pickName(item)),
           document.createTextNode(" · "), coin(item.wager), document.createTextNode(" → "), coin(item.profit, true));
         meta.append(gameLink(m));
         break;
       case "lost":
         text.append(name(item.who), document.createTextNode(" lost "), coin(item.wager), document.createTextNode(" on "),
-          el("b", null, `${nick(item.team)} ${line(item.line)}`));
+          el("b", null, pickName(item)));
         meta.append(gameLink(m));
         break;
       case "refunded":
         text.append(name(item.who), document.createTextNode(" got "), coin(item.wager), document.createTextNode(" back — "), gameLink(m), document.createTextNode(" was voided"));
         break;
       case "open":
-        text.append(el("b", null, "Picks open"), document.createTextNode(" · "),
-          gameLink(m, `${nick(m.away)} ${line(m.awayLine)} at ${nick(m.home)} ${line(m.homeLine)}`));
-        meta.textContent = `${m.league || ""} · first pitch ${new Date(m.startsAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+        text.append(el("b", null, isProp(m) ? "Prop bet" : "Picks open"), document.createTextNode(" · "),
+          gameLink(m, isProp(m) ? `${shortQ(m, 70)} Yes ${line(m.awayLine)} / No ${line(m.homeLine)}` : `${nick(m.away)} ${line(m.awayLine)} at ${nick(m.home)} ${line(m.homeLine)}`));
+        meta.textContent = isProp(m)
+          ? `Prop · closes ${new Date(m.startsAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+          : `${m.league || ""} · first pitch ${new Date(m.startsAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
         break;
       case "final": {
         const score = Number.isFinite(Number(item.awayScore)) && Number.isFinite(Number(item.homeScore)) && item.awayScore !== null
           ? ` ${item.awayScore}–${item.homeScore}` : "";
+        if (isProp(m)) {
+          text.append(el("b", null, "Called"), document.createTextNode(" · "), gameLink(m), document.createTextNode(item.winner ? ` · ${String(item.winner).toUpperCase()}` : ""));
+          meta.textContent = "Prop · settled, picks paid";
+          break;
+        }
         text.append(el("b", null, "Final"), document.createTextNode(" · "), gameLink(m, `${nick(m.away)} at ${nick(m.home)}${score}`),
           document.createTextNode(item.winner ? ` · ${nick(item.winner)} win` : ""));
         meta.textContent = `${m.league || ""} · settled, picks paid`;
@@ -252,17 +265,18 @@
     const who = () => { const a = el("a", "ulink", item.who?.displayName || item.who?.login || "someone"); a.href = `/u/${encodeURIComponent(String(item.who?.login || "").toLowerCase())}`; return a; };
     const game = (text) => { const a = el("a", "glink", text); a.href = `/g/${m.slug}`; return a; };
     switch (item.type) {
-      case "pick": span.append(who(), document.createTextNode(" backed "), game(`${nick(item.team)} ${line(item.line)}`), document.createTextNode(` for ${item.wager} ZC`)); break;
-      case "won": span.append(who(), document.createTextNode(" cashed "), game(`${nick(item.team)} ${line(item.line)}`), document.createTextNode(` +${item.profit} ZC`)); break;
-      case "lost": span.append(who(), document.createTextNode(` lost ${item.wager} ZC on `), game(nick(item.team))); break;
-      case "refunded": span.append(who(), document.createTextNode(" refunded on "), game(nick(item.team))); break;
-      case "open": span.append(document.createTextNode("Picks open · "), game(`${nick(m.away)} ${line(m.awayLine)} at ${nick(m.home)} ${line(m.homeLine)}`)); break;
+      case "pick": span.append(who(), document.createTextNode(" backed "), game(pickName(item)), document.createTextNode(` for ${item.wager} ZC`)); break;
+      case "won": span.append(who(), document.createTextNode(" cashed "), game(pickName(item)), document.createTextNode(` +${item.profit} ZC`)); break;
+      case "lost": span.append(who(), document.createTextNode(` lost ${item.wager} ZC on `), game(isProp(m) ? pickName(item) : nick(item.team))); break;
+      case "refunded": span.append(who(), document.createTextNode(" refunded on "), game(isProp(m) ? shortQ(m) : nick(item.team))); break;
+      case "open": span.append(document.createTextNode(isProp(m) ? "🎯 Prop bet · " : "Picks open · "), game(isProp(m) ? `${shortQ(m)} Yes ${line(m.awayLine)} / No ${line(m.homeLine)}` : `${nick(m.away)} ${line(m.awayLine)} at ${nick(m.home)} ${line(m.homeLine)}`)); break;
       case "final": {
+        if (isProp(m)) { span.append(document.createTextNode("🎯 Called · "), game(`${shortQ(m)} — ${String(item.winner || "").toUpperCase()}`)); break; }
         const score = item.awayScore !== null && item.homeScore !== null && Number.isFinite(Number(item.awayScore)) ? ` ${item.awayScore}–${item.homeScore}` : "";
         span.append(document.createTextNode("Final · "), game(`${nick(m.away)} at ${nick(m.home)}${score}`));
         break;
       }
-      case "void": span.append(document.createTextNode("Voided · "), game(`${nick(m.away)} at ${nick(m.home)}`)); break;
+      case "void": span.append(document.createTextNode("Voided · "), game(isProp(m) ? shortQ(m) : `${nick(m.away)} at ${nick(m.home)}`)); break;
       case "joined": span.append(who(), document.createTextNode(" joined")); break;
       case "song": span.append(who(), document.createTextNode(" played "), el("b", null, item.title.length > 40 ? item.title.slice(0, 38) + "…" : item.title)); break;
       case "casino": span.append(who(), document.createTextNode(item.status === "WON" ? ` won ${Math.abs(item.profit)} ZC on the ` : ` lost ${Math.abs(item.profit)} ZC on the `), casinoLink(item)); break;
