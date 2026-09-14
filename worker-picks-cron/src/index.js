@@ -124,12 +124,38 @@ async function runRecap(env) {
   return { ok: true, payload };
 }
 
+/** The Monday roundup; the endpoint decides whether it is Monday 4 PM Central. */
+async function runWeekly(env) {
+  const url = String(env.WEEKLY_URL || "").trim();
+  const key = String(env.PICKS_CRON_KEY || "").trim();
+  if (!url || !key) {
+    console.error("picks-cron: WEEKLY_URL or PICKS_CRON_KEY missing — no roundup");
+    return { ok: false, error: "not_configured" };
+  }
+  let response;
+  try {
+    response = await fetch(url, { method: "POST", headers: { "X-Picks-Cron-Key": key } });
+  } catch (error) {
+    console.error("picks-cron: weekly request threw", error);
+    return { ok: false, error: "unreachable" };
+  }
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.ok) {
+    console.error(`picks-cron: weekly refused (${response.status})`, payload?.code || "", payload?.message || "");
+    return { ok: false, status: response.status, payload };
+  }
+  if (payload.skipped) console.log(`picks-cron: weekly skipped — ${payload.skipped}`);
+  else console.log(`picks-cron: weekly posted for ${payload.week} — ${payload.people} bettors, ${payload.settled} picks`);
+  return { ok: true, payload };
+}
+
 export default {
   async scheduled(event, env, ctx) {
     // Which schedule fired decides the job; the settlement one is the
     // default so a new trigger can never silently skip payouts.
     if (event.cron === "0 9 * * *") ctx.waitUntil(runBackup(env));
     else if (event.cron === "50 13,14 * * *") ctx.waitUntil(runRecap(env));
+    else if (event.cron === "6 21,22 * * 1") ctx.waitUntil(runWeekly(env));
     else ctx.waitUntil(runSettlement(env, "cron"));
   },
 
@@ -148,9 +174,9 @@ export default {
       return new Response("Not authorized", { status: 403 });
     }
 
-    // ?job=backup or ?job=recap runs those by hand, with the same key.
+    // ?job=backup, ?job=recap or ?job=weekly runs those by hand, with the same key.
     const job = url.searchParams.get("job");
-    const result = job === "backup" ? await runBackup(env) : job === "recap" ? await runRecap(env) : await runSettlement(env, "manual");
+    const result = job === "backup" ? await runBackup(env) : job === "recap" ? await runRecap(env) : job === "weekly" ? await runWeekly(env) : await runSettlement(env, "manual");
     return Response.json(result, { status: result.ok ? 200 : 502 });
   }
 };

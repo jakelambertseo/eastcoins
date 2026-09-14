@@ -173,10 +173,10 @@ async function bookOf(db) {
    house's take is stake minus payout on decided bets only; a bet still
    live counts as neither. */
 
-const GAME_NAMES = { wheel: "Wheel", race: "Horse Race", flip: "Coin Flip", hilo: "Higher or Lower", mines: "Mines", plinko: "Plinko" };
+const GAME_NAMES = { wheel: "Wheel", race: "Horse Race", flip: "Coin Flip", hilo: "Higher or Lower", mines: "Mines", plinko: "Plinko", roulette: "Russian Roulette", standing: "Last One Standing" };
 
 async function casinoBook(db) {
-  const [shared, coin, hilo, mines, plinko, everyone, recent] = await Promise.all([
+  const [shared, coin, hilo, mines, plinko, pvp, everyoneByTable, recentByTable] = await Promise.all([
     db.prepare(
       `SELECT game, status, COUNT(*) AS n, COUNT(DISTINCT user_id) AS players,
               SUM(wager) AS staked, SUM(COALESCE(payout, 0)) AS paid,
@@ -209,28 +209,31 @@ async function casinoBook(db) {
               MAX(COALESCE(payout, 0) - stake) AS best
          FROM plinko_drops`
     ).all().catch(() => ({ results: [] })),
+    // The PvP tables, one group per game. Refunds are neither win nor
+    // loss and are left out by the DECIDED filter below.
     db.prepare(
-      `SELECT COUNT(DISTINCT user_id) AS n FROM (
-         SELECT user_id FROM casino_bets UNION
-         SELECT user_id FROM coin_bets UNION
-         SELECT user_id FROM hilo_games UNION
-         SELECT user_id FROM mines_games UNION
-         SELECT user_id FROM plinko_drops)`
-    ).first(),
-    db.prepare(
-      `SELECT created_at, staked, paid FROM (
-         SELECT created_at, wager AS staked, COALESCE(payout, 0) AS paid FROM casino_bets WHERE status IN ('WON','LOST')
-         UNION ALL
-         SELECT created_at, wager, COALESCE(payout, 0) FROM coin_bets WHERE status IN ('WON','LOST')
-         UNION ALL
-         SELECT created_at, stake, COALESCE(payout, 0) FROM hilo_games WHERE status IN ('BUST','CASHED')
-         UNION ALL
-         SELECT created_at, stake, COALESCE(payout, 0) FROM mines_games WHERE status IN ('BUST','CASHED')
-         UNION ALL
-         SELECT created_at, stake, COALESCE(payout, 0) FROM plinko_drops)
-        WHERE datetime(created_at) >= datetime('now', '-21 days')`
-    ).all().catch(() => ({ results: [] }))
+      `SELECT game, status, COUNT(*) AS n, COUNT(DISTINCT user_id) AS players,
+              SUM(stake) AS staked, SUM(COALESCE(payout, 0)) AS paid,
+              MAX(COALESCE(payout, 0) - stake) AS best
+         FROM pvp_entries GROUP BY game, status`
+    ).all().catch(() => ({ results: [] })),
+    // D1 refuses a compound SELECT with this many terms ("too many terms
+    // in compound SELECT"), so each table is asked on its own and the
+    // players are folded together below. Same for the 21-day chart.
+    Promise.all(["casino_bets", "coin_bets", "hilo_games", "mines_games", "plinko_drops", "pvp_entries"].map((table) =>
+      db.prepare(`SELECT DISTINCT user_id FROM ${table}`).all().catch(() => ({ results: [] }))
+    )),
+    Promise.all([
+      `SELECT created_at, wager AS staked, COALESCE(payout, 0) AS paid FROM casino_bets WHERE status IN ('WON','LOST') AND created_at >= datetime('now', '-21 days')`,
+      `SELECT created_at, wager AS staked, COALESCE(payout, 0) AS paid FROM coin_bets WHERE status IN ('WON','LOST') AND created_at >= datetime('now', '-21 days')`,
+      `SELECT created_at, stake AS staked, COALESCE(payout, 0) AS paid FROM hilo_games WHERE status IN ('BUST','CASHED') AND created_at >= datetime('now', '-21 days')`,
+      `SELECT created_at, stake AS staked, COALESCE(payout, 0) AS paid FROM mines_games WHERE status IN ('BUST','CASHED') AND created_at >= datetime('now', '-21 days')`,
+      `SELECT created_at, stake AS staked, COALESCE(payout, 0) AS paid FROM plinko_drops WHERE created_at >= datetime('now', '-21 days')`,
+      `SELECT created_at, stake AS staked, COALESCE(payout, 0) AS paid FROM pvp_entries WHERE status IN ('WON','LOST') AND created_at >= datetime('now', '-21 days')`
+    ].map((sql) => db.prepare(sql).all().catch(() => ({ results: [] }))))
   ]);
+  const everyone = { n: new Set(everyoneByTable.flatMap((r) => (r.results || []).map((x) => String(x.user_id)))).size };
+  const recent = { results: recentByTable.flatMap((r) => r.results || []) };
 
   // Anything not decided yet is "in play", whatever each table calls it.
   const DECIDED = new Set(["WON", "LOST", "BUST", "CASHED"]);
@@ -254,6 +257,7 @@ async function casinoBook(db) {
   for (const r of hilo.results || []) add("hilo", r);
   for (const r of mines.results || []) add("mines", r);
   for (const r of plinko.results || []) if (num(r.n)) add("plinko", r);
+  for (const r of pvp.results || []) add(String(r.game || "pvp"), r);
 
   const list = [...games.values()].map((g) => ({
     ...g,

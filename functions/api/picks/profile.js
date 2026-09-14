@@ -59,6 +59,7 @@ export async function onRequestGet(context) {
       league: String(p.league || ""),
       away: String(p.away_name),
       home: String(p.home_name),
+      question: p.question || null,
       startsAt: p.starts_at,
       state: String(p.state || ""),
       awayScore: Number.isInteger(p.final_away_score) ? p.final_away_score : null,
@@ -68,7 +69,7 @@ export async function onRequestGet(context) {
   });
 
   const PICK_SQL = `SELECT p.id, p.selection, p.wager, p.odds_locked, p.status, p.payout, p.profit, p.created_at, p.settled_at,
-              m.id AS market_id, m.sport, m.league, m.away_name, m.home_name, m.starts_at, m.state,
+              m.id AS market_id, m.sport, m.league, m.away_name, m.home_name, m.question, m.starts_at, m.state,
               m.final_away_score, m.final_home_score, m.winner
          FROM picks p JOIN markets m ON m.id = p.market_id
         WHERE p.user_id = ? AND p.status IN ('ACTIVE','WON','LOST','REFUNDED')
@@ -144,7 +145,7 @@ export async function onRequestGet(context) {
   try {
     await ensureCoinSchema(db);
     const uid = String(user.twitch_id);
-    const [coin, shared, hilo, mines, plinko] = await Promise.all([
+    const [coin, shared, hilo, mines, plinko, pvp] = await Promise.all([
       db.prepare(`SELECT 'flip' AS game, b.status, b.payout - b.wager AS profit, b.wager, b.side AS pick, r.settled_at AS at, r.result
                     FROM coin_bets b JOIN coin_rounds r ON r.no = b.round_no WHERE b.user_id = ? AND b.status IN ('WON','LOST') ORDER BY b.round_no DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
       db.prepare(`SELECT b.game, b.status, b.payout - b.wager AS profit, b.wager, b.pick, r.settled_at AS at, r.result
@@ -157,9 +158,13 @@ export async function onRequestGet(context) {
                     FROM mines_games WHERE user_id = ? AND status IN ('CASHED','BUST') ORDER BY datetime(updated_at) DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
       db.prepare(`SELECT 'plinko' AS game, CASE WHEN payout > stake THEN 'WON' ELSE 'LOST' END AS status, payout - stake AS profit,
                          stake AS wager, ('x' || ROUND(multiplier, 2)) AS pick, created_at AS at, NULL AS result
-                    FROM plinko_drops WHERE user_id = ? ORDER BY datetime(created_at) DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] }))
+                    FROM plinko_drops WHERE user_id = ? ORDER BY datetime(created_at) DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
+      db.prepare(`SELECT e.game, e.status, e.payout - e.stake AS profit, e.stake AS wager, (r.players || ' at the table') AS pick,
+                         datetime(r.settled_at / 1000, 'unixepoch') AS at, NULL AS result
+                    FROM pvp_entries e JOIN pvp_rounds r ON r.id = e.round_id
+                   WHERE e.user_id = ? AND e.status IN ('WON','LOST') ORDER BY r.settled_at DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] }))
     ]);
-    const all = [...(coin.results || []), ...(shared.results || []), ...(hilo.results || []), ...(mines.results || []), ...(plinko.results || [])]
+    const all = [...(coin.results || []), ...(shared.results || []), ...(hilo.results || []), ...(mines.results || []), ...(plinko.results || []), ...(pvp.results || [])]
       .map((r) => ({ game: String(r.game), status: r.status, profit: Number(r.profit), wager: Number(r.wager), pick: String(r.pick), at: r.at ? String(r.at).replace(" ", "T") + "Z" : null }))
       .sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
     if (list === "casino") {

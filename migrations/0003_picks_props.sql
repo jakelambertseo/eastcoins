@@ -1,0 +1,11 @@
+-- EastCoin Picks
+-- Migration 0003: prop bets
+--
+-- A prop is a market with sport 'prop': the question is the fixture,
+-- the sides are Yes (away) and No (home), and it is settled by hand
+-- from the admin page like a fight. Everything else about a market —
+-- the locked lines, the picks, the payouts — is unchanged, which is
+-- the point: the wallet path never learns props exist.
+--
+-- Purely additive and safe on a live database.
+ALTER TABLE markets ADD COLUMN question TEXT;

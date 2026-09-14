@@ -57,6 +57,26 @@
 > publishes `queueLimit` only); `loadHistory()` diffs
 > ratings between fetches to show `.elo-delta` chips.
 >
+> **Green Room skins (2026-09-12)** — a `Skin ·` chip in the music
+> page's header (next to See who; deliberately NOT in the ⋯ menu) picks
+> one of: Green Room (default), Winamp, Game Boy, Jukebox, iPod,
+> Jumbotron, Super Ultra Dark Mode, Super Ultra Minimal, I'm Fucked Up Bro
+> (`trip`: the maximalist one — hue-cycling, wobble, melting stage, a
+> ≤2 Hz screen flicker; everything stops under `prefers-reduced-motion`).
+> `SKINS` in `v3-music.js`; the
+> choice is `localStorage` `ec_music_skin`; a link can set it —
+> `?view=music&theme=<name>` (`SKIN_ALIASES`: `winamp`, `gameboy`,
+> `jukebox`, `ipod`, `jumbotron`, `void`/`dark`, `minimal`, `trip`/`imgone`,
+> `greenroom`/`off` for the default) — which is kept and then stripped
+> from the URL; `applySkin()` sets
+> `[data-skin]` on the view root and `body[data-music-skin]`, cleared on
+> unmount. Every skin is one CSS block in the `GREEN ROOM SKINS` section
+> at the end of `v3.css` — same DOM, no behaviour change — and the retro
+> faces (VT323, Silkscreen, Righteous, Orbitron) are one Google Fonts
+> link injected the first time a skin needing them is chosen. "Super
+> Ultra Dark Mode" is the only one that restyles the page around the
+> room (it overrides the palette tokens on `body`).
+>
 > **Top-right nav** — search magnifier, the profile pill (`#mePill`: avatar +
 > name → profile, coin count → Picks), and one `⋯` button (`#settingsBtn`)
 > whose menu holds the Twitch chat switch, the floating-player switch
@@ -70,11 +90,11 @@
 > in `localStorage` `ec_v3_music_dock`.
 >
 > **October theme** — `applySeason()` in `v3-shell.js` sets `body.spooky.full`
-> for October (Chicago time) and adds `.spooky-layer` (webs, bats, fog);
+> for October (Chicago time) and adds `.spooky-layer` (webs and fog; the
 > `SPOOKY SEASON` at the end of `v3.css` holds the palette (it restates the
 > `--*-rgb` accent tokens), the dressing and the emoji. The layer stops at
-> the chat rail (Twitch's obscured check) and runs on every page, except that
-> the bats (its only animation) are hidden on the watch route. The ⋯ menu
+> the chat rail (Twitch's obscured check) and runs on every page; nothing in
+> it moves any more. The ⋯ menu
 > has a Spooky theme switch (`#spookyToggle`) that records a choice in
 > `localStorage` `ec_spooky`; with no choice the date decides. Links:
 > `?spooky=1`, `?spooky=0`, `?spooky=auto` (clears the choice). The Sports page shows a dismissible
@@ -96,6 +116,85 @@
 > the 4 PM slate opens (`composeSlateOpen`, keyed `slateopen:<sport>:<day>`
 > in `ops_status`); refills through the evening stay silent.
 >
+> **The Daily Pot (2026-09-13)** — 100 ZC from the house, once a day, paid
+> on a bet at a moment nobody can predict. `functions/api/casino/_pot.js`:
+> one `casino_pots` row per Chicago day (seed, hash, hidden `trigger_at` =
+> 300..2,500 ZC of the day's stakes from `sha256(seed:trigger)`, amount =
+> 100 + any rolled-over day). `settlePot()` runs after the stake lands in
+> every bet endpoint (hilo/start, mines/start, plinko/drop, coin/bet,
+> [game]/bet, pvp/join): if the day's stakes across all six tables have
+> crossed the trigger — or it is 11 PM Central or later — it claims the
+> row (OPEN→SETTLING), draws `sha256(seed:draw) mod total` over ranges
+> laid out by stake in user-id order, credits the winner idempotently
+> (`CASINO:POT:PAY:<day>`), and marks PAID with the shares stored. A day
+> with no play rolls its amount forward. `GET /api/casino/pot` is the page
+> read (never the trigger while open; `?day=` returns a paid pot's seed,
+> ranges and draw). `v3-pot.js` `ECPot.mount(el, {compact})` draws the
+> meter (the day's play toward the ceiling) on the floor and at the top of
+> every game's side column, polling every 15 s, and drops the hit banner
+> with confetti when a poll sees today's pot flip to PAID. Hits appear in
+> the activity feed and ticker as type `pot`; the check page has "The
+> Daily Pot" by day. It is the house's money — outside `HOUR_WIN_CAP`, in
+> no bet table, so `hourlyNet()` and the books never see it. Exactly 100
+> ZC of inflation a day, by construction.
+>
+> **Prop bets (2026-09-13)** — "Will Mahomes throw for 300?" as a
+> market. The admin page's **Add a prop** tab takes a question, a Yes
+> line and a No line (any American odds, -110 both ways by default) and
+> a close time; `admin/open-market.js` stores it with sport `prop`,
+> league `PROP`, away `Yes`, home `No`, and the question in
+> `markets.question` (migration 0003, also added on the fly by
+> `ensureQuestionColumn`). Everything downstream is unchanged — wagers,
+> the ledger, profiles, the book — because a prop IS a market; what
+> differs is naming and colour, and `_props.js` (`isProp`, `matchup`,
+> `sideLabel`, `shortQuestion`) is the one place that knows. `prop` is
+> in `MANUAL_SPORTS`, so the scheduled run never grades it: an admin
+> calls it from the Markets row (Yes ✓ / No ✗ / Void) through
+> `settle-market.js`, which for a prop is allowed BEFORE the close
+> (applyVerdict flips it to SETTLING first, so nothing can land after
+> the call). A prop's `/g/` page is `/g/<market id>` (`slugFor` returns
+> the id — "yes-no-<day>" would collide). Chat: `!pick 10 yes`, `!pick
+> 10 no`, and with two props open a word from the question picks which
+> (`matchProp` in `bot/_bot.js`); `!odds yes` prints the question and
+> both prices. Announce works from the row or straight from the form.
+> On the site, props are **violet** (`--prop` in `v3.css`): the Picks
+> card carries the question with ✓/✗ marks instead of crests
+> (`.market.prop`, `.propmark`), tickets, the ledger, the admin row, the
+> feed and the game page all follow. The Sports-filter chip reads "Props".
+>
+> **The bell (2026-09-14)** — a notifications button in the nav
+> (`#notifBtn`, between search and the profile pill) with a red count,
+> and a panel under it: what happened to YOU since you last looked.
+> `functions/api/picks/notifications.js` builds the rows from tables
+> the site already writes — your picks' `settled_at` (won / lost /
+> refunded, props say the call), `casino_pots.paid_at` (you or
+> whoever hit the Jackpot), `markets.odds_locked_at` for your
+> favourite team, `ops_status` `announce:<id>` notes, and new badges
+> (computed, so `users.notif_badges` remembers the keys already shown).
+> `users.notif_seen_at` is the only other state: GET marks rows after
+> it unread (a first look shows three days), POST `{seen:true}` stamps
+> it and the badge set. No inbox table, so it can never disagree with
+> the ledger. `v3-notify.js` polls every 90 s while the tab is
+> visible (~960 requests a day per tab, five indexed queries plus the
+> cached badge computation), opens the panel as a fixed element placed
+> by hand so it never covers the Twitch rail, marks seen on open and
+> clears the count on close, and drops a toast when something new
+> lands while the page is open. Styles are `.notif-*` at the end of
+> `v3.css`. Not in the bell on purpose: other people's picks, songs,
+> casino spins, "closing soon" — the ticker and Activity carry those.
+>
+> **Check a seed (2026-09-13)** — `/?view=verify` (`v3-verify.js`) over
+> `GET /api/casino/verify?game=&seed=[&hash=&mines=&players=]`, which is
+> pure maths with no session or database: it hashes the seed and replays
+> the result with the games' OWN functions (`cardAt`, `bombsFor`,
+> `pathFor`, the shared `outcome()`s, `resultOf`, `outcomeFor`), so the
+> page shows the deck Higher or Lower dealt, the bombs, the path, the
+> angle, the coin, a table's rounds. The page also hashes the seed in the
+> browser with `crypto.subtle` and compares, so the match does not rest
+> on the server's word. `K.verifyLink(node, params)` puts "Check this
+> seed →" under every game's verify block, deep-linking here with the
+> seed and hash filled in; the floor's House rules link to it too.
+>
 > **Casino layout**: the floor is title → `.cas-me` strip (`/api/casino/home`
 > `me`: wallet, casino net, record, this hour vs cap; a login card when
 > signed out) → tiles → `.pf-tabs.cas-tabs` Recent results (paged) / House
@@ -113,7 +212,7 @@
 > `/?view=hilo` (per-player, `functions/api/casino/hilo/*`, table
 > `hilo_games`, committed deck, 1% edge per call, ×50 / 12-card cap).
 > Shared limits: 20 ZC a bet, 10 an hour per game, and `HOUR_WIN_CAP`
-> (300 ZC net in any rolling hour across every game, `capCheck` in
+> (750 ZC net in any rolling hour across every game — 300 until 2026-09-13, `capCheck` in
 > `_engine.js`, enforced by every bet/deal endpoint including the coin's).
 > Wheel: 24 red/black slices + one 6-degree gold sliver at 40x, outcome is an
 > angle (red/black return 98.3%; gold is the 1-in-60 long shot at ~67%). Race: whole-number payouts 2/3/7/14, odds normalised from them —
@@ -137,9 +236,11 @@
 > derived from the seed alone (Fisher–Yates over 0..24, each swap from
 > `sha256(seed:shuffle:i)`). Each safe tile pays `C(25,k)/C(S,k)` less the
 > same 1% edge Hi-Lo takes; cash out after any safe tile. The run
-> auto-cashes at `topRung()` — the last rung still **under** the ×25
-> ceiling (3 bombs: 15 tiles ×18.98; 10 bombs: 5 tiles ×17.52; max
-> 379 on a 20 ZC stake; the ceiling was ×50 until 2026-09-12) — rather
+> auto-cashes at `topRung()` — the last rung still **under** the ×125
+> ceiling (3 bombs: 19 tiles ×113.85; 10 bombs: 7 tiles ×73.95; best board
+> 2,277 on a 20 ZC stake, 1 in 115; the ceiling was ×50, then ×25, then
+> ×125 on 2026-09-12 when a real jackpot was wanted — the ladder roughly
+> doubles per tile so the prize cannot be dialled in exactly) — rather
 > than clamping a higher rung down to the ceiling, which would have been a hidden
 > second cut: pushing a ten-bomb board to the end would have returned 67%
 > instead of 96%. `MAX_MINES` is 10 because
@@ -175,12 +276,56 @@
 > toward `HOUR_WIN_CAP` via `hourlyNet()`; every new casino game must be
 > added there or it escapes the cap.
 >
+> **The PvP tables (2026-09-12)** — Russian Roulette `/?view=roulette` and
+> Last One Standing `/?view=standing`, one client (`v3-pvp.js`, a `table(spec)`
+> factory registered twice) over one server module
+> (`functions/api/casino/pvp/*`, tables `pvp_rounds` and `pvp_entries`).
+> **Nobody picks a player count**: the first join opens a lobby and a
+> clock — 60 seconds, or `lobbyMs` in `GAMES` (roulette runs 30, since
+> 2026-09-12 night) — and whoever is in at zero plays; one person alone is
+> refunded and the table clears. **The buy-in is fixed at 20** — no amount
+> is read from the body. **Both tables pay the winner every buy-in on the
+> table and the house takes nothing** (three at 20 is 60 to one person).
+> Roulette is elimination to one: each round the cylinder gets one chamber
+> per player still in, doubled until at least six (`chambersFor`), the
+> live one comes from `sha256(seed:roulette:k)`, chamber c is pulled by
+> the c-th remaining seat wrapping, whoever gets it is out, reload, again;
+> N players is N−1 rounds and every seat starts on exactly 1 in N. The
+> result is `{stages:[{players,chambers,live,shot}], order, winner}`.
+> (Until 2026-09-12 evening it stopped at the first shot and split that
+> one stake among survivors, storing `{chambers,live,loser}`; `v3-pvp.js`
+> `stagesOf()`/`winnerOf()` still read that shape, so the one such round
+> in D1 draws correctly.) Standing: Fisher–Yates over the seats from the
+> seed, last left takes `20 × N`. **Settlement is
+> triggered by whoever asks** — a state poll, a join, or the casino floor,
+> which polls widest — and is claimed with a conditional UPDATE to
+> `SETTLING` so two pollers cannot both pay; a round stuck in SETTLING for
+> two minutes is assumed crashed and re-claimed, which is safe because
+> every payout is idempotent per entry (`CASINO:PVP:PAY:<entryId>`). At
+> most one LOBBY per game, enforced by a partial unique index, so two
+> people sitting down in the same instant share a table. The page never
+> decides anything: the result arrives settled and paid with its seed
+> revealed, and the animation is playback. `pvp_entries` is in
+> `hourlyNet()`, the floor, the activity feed, profiles and the dashboard's
+> book; a refund is neither a win nor a loss anywhere. No chat, no bot:
+> the tables live on the site only, by request. **Roulette is live again
+> (2026-09-12 night, with the drawn cylinder); Standing is still `paused: true`
+> in `GAMES`**: off the floor, `join.js` refuses
+> with PAUSED before touching anything, the pages read "Closed for now",
+> and the floor still calls `settleDue` so an in-flight lobby resolves.
+> Work continues on **`/pvp-test`**, which loads the REAL `v3-pvp.js`
+> against `pvp-sandbox.js`, an engine in the page that seats bots, runs
+> the clock and settles with ports of `chambersFor`/`outcomeFor`/
+> `payoutsFor` — a scratch test runs both over the same seeds — and
+> intercepts every `/api/` call, so no ZCoin can move there. Flip
+> `paused` to reopen; the practice page needs nothing changed.
+>
 > **The casino is near-fair on purpose (2026-09-11)** — every game
 > returns ~98–99% (Hi-Lo and Mines `EDGE_RETURN = 0.99`; Plinko's table
 > 98.6%; Wheel red/black 98.3%; Coin Flip was always exactly fair at 2×).
 > The old 4% edge earned the house ~30 ZC a day and made players feel they
 > never won, so they drifted to Picks. Payout shapes favour FREQUENT wins
-> over big ones. Do not push the return past 100%: with the 300/hour cap
+> over big ones. Do not push the return past 100%: with the 750/hour cap
 > only blocking new bets, a positive player edge prints thousands of
 > ZCoins a day and devalues Picks. **Louder wins** — `makePop` takes
 > `big`, adds `.cf-pop.big` and fires `burst()` confetti (also for any
@@ -204,7 +349,12 @@
 > `ECPresence.mountWatchers(el, eventId)` draws overlapping faces and
 > "n watching" beside "← Events" (`.wwho` in `v3.css`), filtering
 > `people` to `where === "watch"` with a matching `ref` and taking the
-> total from `watching` so guests are counted but faceless. It returns a
+> total from `watching` so guests are counted but faceless. **Viewers
+> per server (2026-09-13)**: a watch tab's beat also carries `srv` — the
+> provider's source and stream number, "golf/2" — stored in
+> `site_presence.srv`; GET returns `servers: {eventId: {srv: n}}`, and
+> `v3-watch.js` reads it through `mountWatchers`'s third argument to label
+> the dropdown "Server 3 of 8 · 4 watching". Pasted URLs send no `srv`. It returns a
 > stop function because `buildBar()` runs again on every repaint; a
 > pasted `?url=` stream has no id and gets no pile.
 >
@@ -226,10 +376,93 @@
 > Decided rows only (WON/LOST/BUST/CASHED); anything live counts as
 > neither.
 >
+> **D1 reads are the budget that binds, and POLL RATE is what spends them**
+> (2026-09-12) — the free plan allows 5 million rows read a day and the site
+> spent them by about 1:30 PM on a Saturday, 500ing login, presence and the
+> whole casino. The account is on Workers Paid now (25 billion rows/month),
+> but the shape of the problem is worth keeping. **Every table here is tiny**
+> — the biggest is `wallet_operations` at a few hundred rows — so no single
+> query is expensive and query tuning is NOT where the budget goes. What
+> spends it is frequency: one casino tab polls the shared games every 1.5
+> seconds, which is 57,600 requests a day, each running six to ten queries.
+> One tab left open for a day is millions of rows. **So: before adding a
+> poll, work out its requests/day × queries × rows and say the number out
+> loud.** A hidden tab now stops polling (per-player games, the casino floor,
+> the Who's here strip) or drops to a fifth rate (the coin and the wheel,
+> whose polls are what settle a finished round and pay people, so they must
+> never stop entirely). Two secondary rules, cheap and still right: any
+> column a hot path filters on wants an index (`coin_bets` had one on
+> `round_no` and none on `user_id`), and an hour/day filter must compare the
+> **bare column** — `created_at >= datetime('now', '-1 hour')`, never
+> `datetime(created_at) >= …`, because wrapping the column stops SQLite
+> using an index on it at all.
+>
+> **The admin page** (`v3-admin.js`) carries the same head/strip/tabs shape:
+> six numbers from the markets already loaded, then Markets / Open a market
+> / Announce / Wallet, markets ten to a page. An action's result selects the
+> tab it belongs to, so a message never lands on a hidden panel. The
+> **dashboard** (`v3-dashboard.js`) leads with total users, total bets, each
+> side's take, open exposure and who is here, then Overview / Picks book /
+> Casino / Health; the Health tab's badge is counted off the built cards
+> (`.db-card.bad, .db-card.warn`) so a new card is included automatically.
+> Long lists page client-side via `pagedTable`/`pagedList`, keyed so the
+> one-minute refresh keeps the reader's page.
+>
+> **Pretty URLs, Movies & TV only (2026-09-12)** — `/movie/inception`,
+> `/tv/lost`, `/tv/lost-s1`, `/tv/lost-s1-ep1`. Served by
+> `functions/movie/[[path]].js` and `functions/tv/[[path]].js`, which do
+> what `/g/` does: the ordinary shell plus a real `<title>` and preview
+> tags. The rest of the site is still `?view=`; this was scoped to the
+> catalog on purpose.
+>
+> **No TMDB id in the path**, so a name has to be searched for:
+> `/api/screen/resolve` takes an exact slug match first, then the most
+> popular among them, then a second search with the hyphens left in
+> (TMDB tokenises `wall-e` and `wall e` differently), then a title that
+> starts with what was asked for — and **otherwise nothing**. Taking
+> TMDB's first result made `/movie/wall-e` open "East of Wall", and
+> confidently opening the wrong film is worse than a miss: a miss drops
+> the person into a search for the same words. Known edge: a few titles
+> never surface from their own slug (WALL·E is one, because "wall e"
+> matches hundreds of things), and the search fallback is the answer.
+>
+> **The name rule is `functions/api/screen/_slug.js`, mirrored inside
+> `v3-screen.js`** — change one, change the other. The mirror exists
+> because the page has to WRITE the URLs the server reads, and a link
+> that works when clicked but not when copied is worse than no pretty
+> URL. A scratch test lifts the client's copy out of the file and runs
+> both over the same awkward names. **A trailing number is always part
+> of the name**, never an id or a year — that is what an id-in-the-tail
+> scheme gets wrong about Ocean's 11 — and `-ep3` with no `-s2` in
+> front of it is treated as a name rather than guessing season 1.
+> Shelf filters stay on `?view=screen`: they are browse state and do
+> not belong on a link to one title. Old `?view=screen&t=&id=&s=&e=`
+> links still work and still share.
+>
+> **Banning an account (2026-09-12)** — the All Users page gives admins a
+> Ban button in each row (`/api/picks/admin/ban`, table `user_bans`,
+> helpers in `_bans.js`). A ban is the FULL block, chosen deliberately:
+> `getSessionUser()` returns null for a banned id, so every signed-in
+> feature refuses at once without any of them needing to know bans exist,
+> and the Twitch callback turns a fresh sign-in away with `?auth=banned`,
+> which the shell shows as one dismissible line. Three rules that must not
+> drift: **admins cannot be banned and nobody can ban themselves** —
+> admins are who lift bans, so either would make a state the site cannot
+> be talked out of through its own screens; **a reason is required**, and
+> the row keeps who, when and why, with a lift marking the row rather than
+> deleting it so "has this person been banned before" stays answerable;
+> and **`isBanned()` fails OPEN** — a broken lookup means "not banned",
+> because one bad query signing out the entire site is far worse than one
+> ban not landing. A ban takes nothing: ZCoins live in StreamElements and
+> are untouched, and picks already locked still settle and still pay,
+> because they were paid for before the ban and the book has to balance.
+> Who is banned is sent only to admins, and nothing is posted to chat,
+> Discord or the activity feed — a ban is not an announcement.
+>
 > **Admin links in the ⋯ menu** — `ownerMenu()` in `v3-shell.js` appends
 > Admin, Dashboard and Activity under a "Yours" heading for the logins in
 > its `ADMIN_LOGINS` set, which mirrors `ADMIN_ALLOWLIST` in
-> `picks/_lib.js` (`bootypaper`, `zwades`, `andyreidisapawg`) — change one,
+> `picks/_lib.js` (`bootypaper`, `zwades`, `andyreidisapawg`, `heartlarva`) — change one,
 > change the other. Cosmetic only: each endpoint checks the session
 > itself, and `admin/dashboard.js`, `admin/backup.js` and `admin/recap.js`
 > now read that one allowlist rather than keeping their own owner lists,
@@ -303,6 +536,16 @@
 > handled by design rather than by a cap. The Odds API plan is 20,000
 > credits/month — comfortable, still not to be spent casually.
 >
+> **Pausing auto-open for a sport (2026-09-13)** — `_autoopen.js` reads
+> `ops_status` `autoopen:pause:<sport>` (`baseball`, `american-football`)
+> holding `{"until": ISO}` and opens nothing for that sport until then;
+> markets already open are left alone. Set it with wrangler:
+> `INSERT OR REPLACE INTO ops_status (key, value) VALUES
+> ('autoopen:pause:baseball', '{"until":"…Z","why":"…"}')`; delete the row
+> or let `until` pass to resume. Used on NFL Sunday to keep the MLB slate
+> off Picks: the five empty markets were closed (state VOID, no refunds
+> needed) and baseball paused through Monday night (until Tuesday 00:00 Central), so Tuesday's 4 PM slate is the first MLB back.
+>
 > **Every market has a page** at `/g/<away>-<home>-<YYYYMMDD>` (also
 > `/g/<YYYYMMDD>` for a day and `/g/mkt_…` by id). `functions/g/[[path]].js`
 > serves the shell with the game's `<title>`/OG tags; the shell's `game`
@@ -365,6 +608,27 @@
 > name or logo is drawn from must therefore SELECT `league` — `_wager.js`
 > did not, which is why a Missouri pick showed the Detroit Tigers crest.
 >
+> **NFL Sunday (2026-09-13)** — on Sundays AND Mondays September–January
+> (Chicago time; the community is ~95% NFL, and Monday night is a game
+> night) the Sports page shows football only: `nflSundayNow()` +
+> `isNflSunday()` in `v3-events.js` keep any listing naming an NFL team
+> (`footballRank === 0`, whatever category the provider filed it under),
+> RedZone, `ppv-nfl-*` feeds and titles with "NFL"; everything else is
+> dropped at load, so the All/Live chips agree, and the filter-bar note
+> reads "NFL Sunday · football only". A Sunday with nothing that fits
+> shows the usual page. `?allsports=1` shows everything for a look. Picks
+> is untouched — baseball markets still open there.
+>
+> **RedZone Sunday (2026-09-13)** — when the provider lists NFL RedZone
+> (`isRedZone`: title "NFL RedZone" or id `ppv-nfl-red-zone`), the Sports
+> page puts `redZoneHero()` above the groups — a full-width banner with
+> "Football season is here.", kickoff-or-LIVE, who's watching,
+> and one button into the watch view — and drops its small card from the
+> grid; a search shows the card again. Styles are `.rz-*` in `v3.css`:
+> slow yard-line drift, a soft red pulse, a sheen on the headline, all
+> off under reduced motion. Nothing is special-cased by date, so it
+> appears every Sunday the listing does.
+>
 > **What the Sports page hides (2026-09-12)** — `keep()` in `v3-sports.js`
 > drops whole sports nobody in the community watches (`HIDDEN_SPORTS`:
 > soccer, motorsport, rugby, cricket — remove a key to bring one back) and
@@ -400,6 +664,20 @@
 > it is 8 AM Central (`?force=1` from the dashboard bypasses that, `?dry=1`
 > returns the card without posting); `recap:sent:<day>` in `ops_status`
 > makes it once per day.
+>
+> **Weekly roundup** — `/api/admin/weekly` (cron key or admin) posts
+> one Discord card for the seven days ending now: winner and loser of
+> the week (best and worst net), the biggest single win and the biggest
+> single loss (largest stake lost) with links to their game pages, then
+> every bettor's record, net, staked and best pick, ranked, capped at 25
+> lines. The cron Worker fires it at `6 21,22 * * 1` UTC (4:06 PM —
+> never a minute the five-minute settlement trigger owns: on 2026-09-14
+> a `:05` firing delivered only the settlement event) and the
+> endpoint posts only when it is Monday 4 PM Central (`?force=1` from
+> the dashboard bypasses that, `?dry=1` builds without posting,
+> `?days=N` widens the window); `weekly:sent:<Monday>` in `ops_status`
+> makes it once a week. The dashboard's Discord card has Preview week
+> (dry run shown inline) and Post weekly roundup.
 >
 > **Nightly backup** — the picks cron Worker has a second trigger
 > (`0 9 * * *` UTC) that POSTs `/api/admin/backup` with the cron key; the

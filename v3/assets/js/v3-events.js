@@ -65,7 +65,12 @@
       const all = Sports.withoutCopies ? Sports.withoutCopies([...seen.values()]) : [...seen.values()];
       // Hidden sports and D2/D3 college games go here, before anything
       // counts them (the All/Live chips read local.matches).
-      local.matches = Sports.keep ? all.filter(Sports.keep) : all;
+      const kept = Sports.keep ? all.filter(Sports.keep) : all;
+      // NFL Sunday: football only. Everything else is still there on
+      // Picks; this is just what the cards show.
+      const football = nflSundayNow() ? kept.filter(isNflSunday) : [];
+      local.nflSunday = football.length > 0;
+      local.matches = local.nflSunday ? football : kept;
       local.loaded = true;
       // Only a genuine provider failure counts as failed. An empty but
       // successful response is "nothing on today", which is a normal state.
@@ -306,8 +311,20 @@
     eyes.hidden = !n;
     eyes.textContent = n ? `👀 ${n} watching` : "";
   }
+  // Every view mounts into the same container, so root stays connected
+  // after the person has moved on to a stream. Anything that paints from
+  // a background event must check the route, not the node: a presence
+  // tick once rebuilt the Events grid over the player, which read as
+  // "the site sent me back to the homepage".
+  const showing = () => shell?.state?.route === "events" && Boolean(root?.isConnected);
   document.addEventListener("ec-presence", (event) => {
-    watchingNow = event.detail?.watching || {};
+    const next = event.detail?.watching || {};
+    // The counts are a sort key, so a change in them can change the
+    // order. Repaint then (scroll is kept); otherwise just the pills.
+    const reorder = JSON.stringify(next) !== JSON.stringify(watchingNow);
+    watchingNow = next;
+    if (!showing()) return;
+    if (reorder && local.loaded) { paint(); return; }
     for (const cardEl of document.querySelectorAll(".eventcard[data-event-id]")) {
       paintWatching(cardEl, watchingNow[cardEl.dataset.eventId] || 0);
     }
@@ -330,6 +347,22 @@
   function isNfl(match) {
     return sportKey(match) === "american-football" && Sports.footballRank(match) === 0;
   }
+
+  /* NFL Sunday — Sundays from September through January, Chicago time,
+     the Sports page shows football only: any listing naming an NFL
+     team (whatever category the provider filed it under), RedZone, and
+     the NFL Network feed. If a Sunday turns up nothing that fits, the
+     page shows everything as usual. ?allsports=1 shows everything on
+     any day, for a look. */
+  const NFL_MONTHS = new Set([9, 10, 11, 12, 1]);
+  function nflSundayNow() {
+    try { if (new URL(location.href).searchParams.get("allsports") === "1") return false; } catch { /* fine */ }
+    const ct = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" }));
+    // Sunday and Monday night: the two days the room is here for.
+    return (ct.getDay() === 0 || ct.getDay() === 1) && NFL_MONTHS.has(ct.getMonth() + 1);
+  }
+  const nflDayIsMonday = () => new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" })).getDay() === 1;
+  const isNflSunday = (m) => Sports.footballRank(m) === 0 || isRedZone(m) || /^ppv-nfl-/.test(String(m?.id || "")) || /nfl/i.test(String(m?.title || ""));
 
   /** College football: American football that isn't the NFL. */
   function isCollege(match) {
@@ -564,7 +597,7 @@
 
     const note = document.createElement("span");
     note.className = "filters-note";
-    note.textContent = local.search ? `Filtered by “${local.search}”` : "Live and today";
+    note.textContent = local.search ? `Filtered by “${local.search}”` : local.nflSunday ? (nflDayIsMonday() ? "Monday Night Football · football only" : "NFL Sunday · football only") : "Live and today";
 
     bar.append(spacer, note);
     return bar;
@@ -688,7 +721,13 @@
       return;
     }
 
-    const ordered = Sports.grouped(visible);
+    // RedZone gets the top of the page to itself on the days it is
+    // listed: one wide banner instead of a card, unless someone is
+    // searching, when it is just another result.
+    const zone = local.search ? null : visible.find(isRedZone) || null;
+    if (zone) root.append(redZoneHero(zone));
+
+    const ordered = Sports.grouped(zone ? visible.filter((m) => m !== zone) : visible, watchingNow);
     pendingPicks = [];
 
     for (const [key, list] of ordered) {
@@ -724,7 +763,131 @@
       if (list.length > limit || limit > page) group.append(moreRow(key, list.length, limit, page));
     }
 
+    // Under the last group on an NFL Sunday: why the page is short.
+    if (local.nflSunday && !local.search) {
+      const line = document.createElement("p");
+      line.className = "sundaynote";
+      line.append(nflDayIsMonday()
+        ? "🏈 It's Monday Night Football, football only on here today. Sybau. Baseball and other shit will be back tomorrow"
+        : "🏈 It's NFL Sunday, football only on here today. Sybau. Baseball and other shit will be back tomorrow");
+      root.append(line);
+    }
+
     if (pendingPicks.length) decoratePicks(pendingPicks);
+  }
+
+  /* ---------------------------------------------------------- redzone
+
+     NFL RedZone is a single-title listing from the provider (no teams,
+     one poster). On the Sundays it appears it is the one thing most of
+     the room came for, so it takes a whole row at the top. */
+
+  const isRedZone = (m) => /\bnfl\b.*red\s*zone|red\s*zone.*\bnfl\b/i.test(String(m?.title || "")) || /^ppv-nfl-red-zone/.test(String(m?.id || ""));
+
+  function redZoneHero(match) {
+    const API = window.EastcoinStreamedAPI;
+    const href = `/?view=watch&event=${encodeURIComponent(match.id)}`;
+    const open = (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+      event.preventDefault();
+      history.pushState({ view: "watch" }, "", href);
+      shell.go("watch", { push: false });
+    };
+
+    const hero = document.createElement("section");
+    hero.className = "rz-hero";
+    hero.dataset.eventId = String(match.id || "");
+
+    const text = document.createElement("div");
+    text.className = "rz-text";
+
+    const mark = document.createElement("div");
+    mark.className = "rz-mark";
+    const lamp = document.createElement("span");
+    lamp.className = "rz-lamp";
+    const markText = document.createElement("span");
+    markText.textContent = "NFL RedZone";
+    const when = document.createElement("span");
+    when.className = "rz-when";
+    mark.append(lamp, markText, when);
+
+    const h = document.createElement("h2");
+    h.className = "rz-h";
+    h.textContent = "Football season is here.";
+
+    const p = document.createElement("p");
+    p.className = "rz-p";
+    p.textContent = "Every touchdown from every game, all Sunday, on one stream.";
+    const emote = document.createElement("img");
+    emote.className = "rz-emote";
+    emote.src = "https://cdn.betterttv.net/emote/6556e8cee047f20d72a4b449/2x.webp";
+    emote.alt = "";
+    emote.decoding = "async";
+    emote.addEventListener("error", () => emote.remove());
+    p.append(" ", emote);
+
+    const row = document.createElement("div");
+    row.className = "rz-row";
+    const cta = document.createElement("a");
+    cta.className = "rz-cta";
+    cta.href = href;
+    cta.textContent = "Watch RedZone →";
+    cta.addEventListener("click", open);
+    const eyes = document.createElement("span");
+    eyes.className = "rz-eyes";
+    row.append(cta, eyes);
+
+    text.append(mark, h, p, row);
+
+    const art = document.createElement("a");
+    art.className = "rz-art";
+    art.href = href;
+    art.setAttribute("aria-label", "Watch NFL RedZone");
+    art.addEventListener("click", open);
+    const posterUrl = match?.poster && API?.posterUrl ? API.posterUrl(match.poster) : "";
+    if (posterUrl) {
+      const img = document.createElement("img");
+      img.alt = "";
+      img.decoding = "async";
+      img.addEventListener("load", () => img.classList.add("in"));
+      img.addEventListener("error", () => img.remove());
+      img.src = posterUrl;
+      art.append(img);
+    }
+
+    hero.append(text, art);
+
+    // Kickoff or LIVE, and who's here, kept current while the hero is
+    // on the page; the interval lets go once it isn't.
+    const start = Number(match?.date) || 0;
+    // Kickoff time in the listing's own words, "11:55am CT".
+    const clockOf = (ms) => new Date(ms).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" }).replace(" ", "").toLowerCase() + " CT";
+    const tick = () => {
+      const live = isLive(match);
+      hero.classList.toggle("live", live);
+      // Before kickoff the headline and the button both say so; once it's
+      // on they drop the hedge.
+      h.textContent = live ? "Football season is here." : "Football season is almost here.";
+      cta.textContent = live || !start ? "Watch RedZone →" : `Watch RedZone at ${clockOf(start)}`;
+      if (live) when.textContent = "LIVE";
+      else if (!start) when.textContent = "";
+      else {
+        const ms = start - Date.now();
+        const today = new Date(start).toDateString() === new Date().toDateString();
+        const clock = clockOf(start);
+        if (ms <= 0) when.textContent = "Kicking off";
+        else if (ms < 60 * 60000) when.textContent = `Kicks off in ${Math.max(1, Math.round(ms / 60000))} min · ${clock}`;
+        else if (today) when.textContent = `Kicks off today · ${clock}`;
+        else when.textContent = `Kicks off ${new Date(start).toLocaleDateString("en-US", { weekday: "long", timeZone: "America/Chicago" })} · ${clock}`;
+      }
+      const n = watchingNow[String(match.id || "")] || 0;
+      eyes.textContent = n ? `👀 ${n} watching now` : "";
+    };
+    // The first tick runs before the hero is in the page, so only the
+    // interval checks for it having left.
+    const timer = window.setInterval(() => { if (!hero.isConnected) window.clearInterval(timer); else tick(); }, 30000);
+    tick();
+    return hero;
   }
 
   /* ---------------------------------------------------------- view more
@@ -855,7 +1018,7 @@
       paint();
       if (!local.loaded) {
         await load();
-        if (root.isConnected) paint();
+        if (showing()) paint();
       }
     },
     onSearch(term) {

@@ -7,7 +7,8 @@
    Green Room worker, which already publishes it. Read-only.
    ============================================================ */
 
-import { json } from "./_lib.js";
+import { json, getSessionUser, ADMIN_ALLOWLIST } from "./_lib.js";
+import { bannedIds } from "./_bans.js";
 import { badgesFor } from "./_badges.js";
 import { findTeam, ensureFavouriteColumns } from "./_teams.js";
 import { utc } from "./_game.js";
@@ -57,6 +58,13 @@ export async function onRequestGet(context) {
     records.set(String(r.user_id), per);
   }
 
+  // Who is banned is admin-only information. Showing it to everyone
+  // would turn a moderation record into a public mark, which is not what
+  // a ban is for. Non-admins get the same list they always got.
+  const viewer = await getSessionUser(db, context.request);
+  const admin = Boolean(viewer && ADMIN_ALLOWLIST.has(viewer.login));
+  const bans = admin ? await bannedIds(db) : new Set();
+
   const users = (rows.results || []).map((r) => {
     const login = String(r.twitch_login).toLowerCase();
     return {
@@ -74,9 +82,17 @@ export async function onRequestGet(context) {
         records: records.get(String(r.twitch_id)) || {}
       },
       favourite: findTeam(r.favourite_league, r.favourite_team),
-      badges: badges[login] || []
+      badges: badges[login] || [],
+      // Present only for admins; undefined for everyone else.
+      banned: admin ? bans.has(String(r.twitch_id)) : undefined,
+      admin: ADMIN_ALLOWLIST.has(login)
     };
   });
 
-  return json({ ok: true, users, count: users.length });
+  return json({
+    ok: true,
+    users,
+    count: users.length,
+    viewer: viewer ? { login: viewer.login, admin } : null
+  });
 }

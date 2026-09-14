@@ -49,7 +49,7 @@
   // had a chance to register. An unknown name still falls back.
   // "game" is the /g/<slug> page chat links to. It is a route, not a nav
   // item: the only way in is a link.
-  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko"];
+  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "roulette", "standing", "verify"];
 
   /* ------------------------------------------------------------ legacy URLs
 
@@ -110,15 +110,44 @@
       changed = true;
     }
 
+    // The Twitch callback sends ?auth=banned back when a banned account
+    // tries to sign in. Without this it fails silently and they just
+    // press Login again, so say it once, plainly, and drop the param.
+    if (params.get("auth") === "banned") {
+      authBanned();
+      params.delete("auth");
+      changed = true;
+    }
+
     if (changed) {
       history.replaceState(null, "", url.pathname + url.search + url.hash);
     }
     return false;
   }
 
+  /** One line, dismissible, no detail. A ban is not an announcement. */
+  function authBanned() {
+    const bar = document.createElement("div");
+    bar.className = "authnote";
+    const text = document.createElement("span");
+    text.textContent = "This account can't sign in to EastCoin.";
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "authnote-x";
+    close.setAttribute("aria-label", "Dismiss");
+    close.textContent = "\u00d7";
+    close.addEventListener("click", () => bar.remove());
+    bar.append(text, close);
+    document.addEventListener("DOMContentLoaded", () => document.body.append(bar));
+    if (document.readyState !== "loading") document.body.append(bar);
+    window.setTimeout(() => bar.remove(), 12000);
+  }
+
   function routeFromUrl() {
     if (/^\/g\/./i.test(location.pathname)) return "game";
     if (/^\/u\/./i.test(location.pathname)) return "profile";
+    // /movie/inception and /tv/lost-s1-ep1 are the Movies & TV view.
+    if (/^\/(movie|tv)\/./i.test(location.pathname)) return "screen";
     const view = new URL(location.href).searchParams.get("view");
     return ROUTES.includes(view) ? view : "events";
   }
@@ -149,6 +178,7 @@
     multiview: "MultiView — EastCoin", picks: "Picks — EastCoin", casino: "Casino — EastCoin",
     flip: "Coin Flip — EastCoin Casino", wheel: "Wheel — EastCoin Casino", race: "Horse Race — EastCoin Casino",
     hilo: "Higher or Lower — EastCoin Casino", mines: "Mines — EastCoin Casino", plinko: "Plinko — EastCoin Casino", users: "All Users — EastCoin", activity: "Activity — EastCoin",
+    roulette: "Russian Roulette - PVP — EastCoin Casino", standing: "Last One Standing - PVP — EastCoin Casino", verify: "Check a seed — EastCoin Casino",
     dashboard: "Dashboard — EastCoin", admin: "Admin — EastCoin", watch: "Watching — EastCoin"
   };
 
@@ -191,12 +221,10 @@
       `<svg class="web ${side}" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.1">` +
       `<path d="M0 0 L200 200M0 0 L200 120M0 0 L200 60M0 0 L120 200M0 0 L60 200M0 0 L170 170"/>` +
       `<path d="M34 0 A34 34 0 0 1 0 34M62 0 A62 62 0 0 1 0 62M96 0 A96 96 0 0 1 0 96M132 0 A132 132 0 0 1 0 132M172 0 A172 172 0 0 1 0 172"/></svg>`;
-    const bat = (top, secs, delay, size) =>
-      `<span class="bat" style="top:${top}%;animation-duration:${secs}s;animation-delay:-${delay}s;font-size:${size}px">` +
-      `<svg width="1em" height="1em" viewBox="0 0 64 32" fill="currentColor"><path d="M32 6c2 0 3 2 3 4 3-5 8-8 13-8-2 3-2 6-1 8 4-3 9-4 14-3-5 2-8 6-9 11-2-2-5-2-7 0-3 2-5 5-6 9-2-3-4-5-7-5s-5 2-7 5c-1-4-3-7-6-9-2-2-5-2-7 0-1-5-4-9-9-11 5-1 10 0 14 3 1-2 1-5-1-8 5 0 10 3 13 8 0-2 1-4 3-4z"/></svg></span>`;
-    layer.innerHTML = web("left") + web("right") +
-      bat(10, 46, 0, 26) + bat(30, 62, 18, 18) + bat(55, 54, 34, 22) + bat(74, 70, 9, 15) +
-      `<div class="fog"></div>`;
+    // Webs and fog only. The drifting bats were removed on 2026-09-12 by
+    // request; nothing in the layer moves now, so the watch-route
+    // exception for them is gone too.
+    layer.innerHTML = web("left") + web("right") + `<div class="fog"></div>`;
     document.body.append(layer);
   }
 
@@ -569,7 +597,7 @@
      The list mirrors ADMIN_ALLOWLIST in functions/api/picks/_lib.js —
      change one, change the other. */
 
-  const ADMIN_LOGINS = new Set(["bootypaper", "zwades", "andyreidisapawg"]);
+  const ADMIN_LOGINS = new Set(["bootypaper", "zwades", "andyreidisapawg", "heartlarva"]);
   const OWNER_LINKS = [
     ["admin", "/?view=admin", "🛠", "Admin"],
     ["dashboard", "/?view=dashboard", "📊", "Dashboard"],
@@ -587,18 +615,26 @@
     const note = menu.querySelector(".menu-note");
     menu.insertBefore(title, note);
 
-    for (const [route, href, icon, label] of OWNER_LINKS) {
+    for (const [, href, icon, label] of OWNER_LINKS) {
       const link = document.createElement("a");
-      link.className = "menu-item menu-link";
+      link.className = "menu-item menu-link menu-out";
       link.href = href;
+      // A new tab rather than this one. These are the pages you keep open
+      // beside the stream, and routing in place cost you whatever you were
+      // watching every time you glanced at the book. noopener because the
+      // page being opened has no business reaching back into this one.
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.title = `${label} — opens in a new tab`;
       link.setAttribute("role", "menuitem");
-      link.textContent = `${icon}  ${label}`;
-      link.addEventListener("click", (event) => {
-        if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
-        event.preventDefault();
-        setMenuOpen(false);
-        go(route);
-      });
+      link.append(document.createTextNode(`${icon}  ${label}`));
+      const out = document.createElement("i");
+      out.textContent = "↗";
+      link.append(out);
+      // No preventDefault: the browser does the opening, so ctrl-click and
+      // middle-click keep behaving the way they do everywhere else. All
+      // this has to do is put the menu away.
+      link.addEventListener("click", () => setMenuOpen(false));
       menu.insertBefore(link, note);
     }
   }

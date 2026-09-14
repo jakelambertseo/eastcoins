@@ -241,7 +241,18 @@
     return box;
   }
 
+  /* A prop is a Yes / No market on a question (sport "prop"). It rides
+     every path a game does; only how it is named and coloured differs. */
+  const isProp = (m) => String(m?.sport || "").toLowerCase() === "prop";
+  const questionOf = (m) => String(m?.question || "Prop bet");
+  /** A ✓ or ✗ where a crest would go, for a Yes / No side. */
+  function propMark(name, className) {
+    const yes = String(name).toLowerCase() !== "no";
+    return el("span", `${className} propmark ${yes ? "yes" : "no"}`, yes ? "✓" : "✗");
+  }
+
   function crest(market, name, className) {
+    if (isProp(market)) return propMark(name, className);
     if (window.ECLogos) return window.ECLogos.crest(market?.sport, market?.league, name, className);
     return el("span", className, initials(name));
   }
@@ -288,7 +299,7 @@
   }
 
   function marketCard(market) {
-    const card = el("article", "market");
+    const card = el("article", `market${isProp(market) ? " prop" : ""}`);
 
     const away = teamName(market.away);
     const home = teamName(market.home);
@@ -308,9 +319,9 @@
 
     const head = el("div", "market-head");
     head.append(
-      el("span", "market-league", market.league || market.sport || "Market"),
+      el("span", "market-league", isProp(market) ? "Prop bet" : market.league || market.sport || "Market"),
       el("span", "market-tag open", "Open for betting"),
-      el("span", "market-time", startLabel(market.startsAt))
+      el("span", "market-time", `${isProp(market) ? "Closes " : ""}${startLabel(market.startsAt)}`)
     );
 
     const sides = el("div", "market-sides");
@@ -340,7 +351,10 @@
       sides.append(btn);
     }
 
-    card.append(head, sides);
+    card.append(head);
+    // The question is the whole card for a prop; the sides are just Yes and No.
+    if (isProp(market)) card.append(el("p", "market-q", questionOf(market)));
+    card.append(sides);
 
     // A dead button with no explanation reads as a bug. Say which it is.
     const reason = mine
@@ -348,7 +362,7 @@
       : !priced
         ? "No price on this market yet."
         : started || market.state !== "OPEN"
-          ? "Betting is closed on this game."
+          ? `Betting is closed on this ${isProp(market) ? "prop" : "game"}.`
           : !local.authed
             ? "Log in with Twitch to make a pick."
             : local.config.wageringEnabled === false
@@ -583,9 +597,10 @@
     const copy = el("div");
     copy.append(el("h2", null, dayTabLabel(local.day, todays[0]?.startsAt)));
     const leaguesOpen = [...new Set(todays.map((m) => String(m.league || "").toUpperCase()))];
-    const closeWord = { MLB: "first pitch", NFL: "kickoff", CFB: "kickoff", NBA: "tip-off", NHL: "puck drop", BOXING: "first bell", UFC: "first bell", MMA: "first bell" };
-    const closes = leaguesOpen.map((l) => `${l} at ${closeWord[l] || "game time"}`).join(", ");
-    copy.append(el("p", null, `${todays.length} game${todays.length === 1 ? "" : "s"} open for picks · closes ${closes || "at game time"}.`));
+    const closeWord = { MLB: "first pitch", NFL: "kickoff", CFB: "kickoff", NBA: "tip-off", NHL: "puck drop", BOXING: "first bell", UFC: "first bell", MMA: "first bell", PROP: "its close time" };
+    const closes = leaguesOpen.map((l) => (l === "PROP" ? "props at their close time" : `${l} at ${closeWord[l] || "game time"}`)).join(", ");
+    const propsOnly = todays.length && todays.every(isProp);
+    copy.append(el("p", null, `${todays.length} ${propsOnly ? "prop" : "game"}${todays.length === 1 ? "" : "s"} open for picks · closes ${closes || "at game time"}.`));
     head.append(copy);
     if (days.size > 1) {
       const tabs = el("div", "daytabs");
@@ -609,7 +624,7 @@
   function startWord(list) {
     const leagues = new Set(list.map((m) => String(m.league || "").toUpperCase()));
     return leagues.size === 1
-      ? ({ MLB: "first pitch", NFL: "kickoff", CFB: "kickoff", NBA: "tip-off", NHL: "puck drop", BOXING: "first bell", UFC: "first bell", MMA: "first bell" }[[...leagues][0]] || "game time")
+      ? ({ MLB: "first pitch", NFL: "kickoff", CFB: "kickoff", NBA: "tip-off", NHL: "puck drop", BOXING: "first bell", UFC: "first bell", MMA: "first bell", PROP: "the close time" }[[...leagues][0]] || "game time")
       : "game time";
   }
 
@@ -630,7 +645,8 @@
     for (const [key, list] of slots) {
       const head = el("div", "slothead");
       head.append(el("strong", null, key === "tbd" ? "Time TBD" : slotLabel(list)));
-      head.append(el("span", null, `${list.length} game${list.length === 1 ? "" : "s"} · ${noteFor(startWord(list))}`));
+      const noun = list.every(isProp) ? "prop" : "game";
+      head.append(el("span", null, `${list.length} ${noun}${list.length === 1 ? "" : "s"} · ${noteFor(startWord(list))}`));
       box.append(head);
       const grid = el("div", "marketlist");
       for (const g of list) grid.append(cardFor(g));
@@ -655,7 +671,8 @@
       return btn;
     };
     seg.append(mk("all", "All", total));
-    for (const key of leagues) seg.append(mk(key, key.toUpperCase(), counts.get(key) || 0));
+    const LABEL = { prop: "Props" };
+    for (const key of leagues) seg.append(mk(key, LABEL[key] || key.toUpperCase(), counts.get(key) || 0));
     return seg;
   }
 
@@ -779,7 +796,9 @@
         done.append(row);
       }
       done.append(el("p", "ticket-hint",
-        "Your price is locked at what you saw. It settles on its own once the game is final."));
+        isProp(local.ticket.market)
+          ? "Your price is locked at what you saw. It pays when the call is made."
+          : "Your price is locked at what you saw. It settles on its own once the game is final."));
 
       const ok = el("button", "btn primary", "Done");
       ok.type = "button";
@@ -800,6 +819,8 @@
       })(),
       el("span", "ticket-line nums", formatLine(line))
     );
+
+    const question = isProp(local.ticket.market) ? el("p", "ticket-q", questionOf(local.ticket.market)) : null;
 
     const field = el("div", "ticket-field");
     const label = el("label", "ticket-label", "Stake");
@@ -886,7 +907,7 @@
 
     input.addEventListener("input", refresh);
 
-    show([pick, field, summary, hint, confirm]);
+    show([pick, ...(question ? [question] : []), field, summary, hint, confirm]);
     refresh();
     input.focus();
     input.select();
@@ -925,6 +946,37 @@
     if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
     if (d.toDateString() === tomorrow.toDateString()) return "Tomorrow";
     return d.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" });
+  }
+
+  /* Live score and game clock on a ticket, from the same ESPN board the
+     Sports cards read (ECV3Scores). Only games around now are looked up;
+     a game ESPN doesn't have, or one that hasn't started, shows nothing
+     extra. Scores follow the market's own home/away, and the side the
+     pick is on is lit. */
+  async function attachTicketScore(p, card, footEl, status) {
+    if (!window.ECV3Scores || isProp(p.market) || !p.market?.home?.name || !p.market?.away?.name) return;
+    const start = new Date(gameTime(p)).getTime();
+    if (!Number.isFinite(start) || Date.now() - start > 30 * 3600000 || start - Date.now() > 6 * 3600000) return;
+    let score = null;
+    try {
+      score = await window.ECV3Scores.forMatch({ teams: { home: { name: p.market.home.name }, away: { name: p.market.away.name } } });
+    } catch { return; }
+    if (!score || score.state === "pre" || !card.isConnected) return;
+    let line = card.querySelector(".pickticket-score");
+    if (!line) { line = el("div", "pickticket-score"); card.insertBefore(line, footEl); }
+    line.replaceChildren();
+    const cap = (s) => String(s || "").replace(/w/g, (c) => c.toUpperCase());
+    const nick = (name) => cap(window.ECV3Scores.nickname(name)) || name;
+    const mineHome = p.selection === "home";
+    const side = (team, name, mine) => {
+      const s = el("span", `pickticket-score-side${mine ? " mine" : ""}`);
+      s.append(el("b", "nums", team?.score ?? "–"), el("span", null, name));
+      return s;
+    };
+    // Away, then home, as a scoreboard reads.
+    line.append(side(score.away, nick(p.market.away.name), !mineHome), el("i", null, "–"), side(score.home, nick(p.market.home.name), mineHome));
+    line.append(el("span", `ec-score-state${score.state === "in" ? " in" : ""}`, score.state === "post" ? "Final" : score.detail || "Live"));
+    if (status === "pending" && score.state === "in" && footEl) footEl.textContent = `In play · ${score.detail || "live"} · line locked when the market opened`;
   }
 
   function whenLabel(iso) {
@@ -979,14 +1031,14 @@
       }
       const status = { ACTIVE: "pending", WON: "won", LOST: "lost", REFUNDED: "refunded" }[p.status] || "pending";
       // The whole ticket is a link to the game's page.
-      const card = el("a", `pickticket ${status}${p.market?.slug ? " glink" : ""}`);
+      const card = el("a", `pickticket ${status}${p.market?.slug ? " glink" : ""}${isProp(p.market) ? " prop" : ""}`);
       if (p.market?.slug) card.href = `/g/${p.market.slug}`;
 
       const head = el("div", "pickticket-head");
       const teamWrap = el("div", "pickticket-team");
       teamWrap.append(crest(p.market, sideName(p), "pickticket-crest"));
       const names = el("span");
-      names.append(el("strong", null, sideName(p)), el("small", null, `vs ${oppName(p)}`));
+      names.append(el("strong", null, sideName(p)), el("small", null, isProp(p.market) ? questionOf(p.market) : `vs ${oppName(p)}`));
       teamWrap.append(names);
       head.append(teamWrap, el("span", "pickticket-status", status));
 
@@ -1009,13 +1061,27 @@
       });
 
       const foot = status === "pending"
-        ? `${p.market?.state === "OPEN" ? "Kicks off" : "In play since"} ${whenLabel(p.market?.startsAt)} · line locked when the market opened`
+        ? (isProp(p.market)
+          ? `${p.market?.state === "OPEN" ? "Closes" : "Closed"} ${whenLabel(p.market?.startsAt)} · pays when the call is made`
+          : `${p.market?.state === "OPEN" ? "Kicks off" : "In play since"} ${whenLabel(p.market?.startsAt)} · line locked when the market opened`)
         : status === "won" ? `Won · paid ${whenLabel(p.settledAt)}`
           : status === "lost" ? `Lost · settled ${whenLabel(p.settledAt)}`
             : `Refunded · ${whenLabel(p.settledAt)}`;
-      card.append(head, grid3, el("div", "pickticket-foot", foot));
+      const footEl = el("div", "pickticket-foot", foot);
+      card.append(head, grid3, footEl);
+      // The score, the same way the Sports cards carry it: additive, from
+      // ESPN's board, only once the game is on.
+      card.__rescore = () => attachTicketScore(p, card, footEl, status);
+      card.__rescore();
       grid.append(card);
     }
+    // Kept current while the list is on the page; the scores module
+    // refreshes its board every 45 seconds, so this only redraws.
+    const rescore = window.setInterval(() => {
+      if (!wrap.isConnected) { window.clearInterval(rescore); return; }
+      if (document.hidden) return;
+      wrap.querySelectorAll(".pickticket").forEach((c) => c.__rescore?.());
+    }, 30000);
     wrap.append(pagerFor("mypicks", pg, "picks"));
     return wrap;
   }
@@ -1128,7 +1194,7 @@
     const entries = [];
     for (const p of shownPicks) {
       const line = Number(p.oddsLocked ?? p.odds ?? 0);
-      const game = `${sideName(p)} vs ${oppName(p)}${p.market?.league ? " · " + p.market.league : ""}`;
+      const game = isProp(p.market) ? `Prop · ${questionOf(p.market)}` : `${sideName(p)} vs ${oppName(p)}${p.market?.league ? " · " + p.market.league : ""}`;
       entries.push({
         type: "wager", at: p.createdAt, amount: -Number(p.wager),
         title: `Pick locked · ${sideName(p)} ${formatLine(line)}`,
@@ -1139,7 +1205,7 @@
       if (p.status === "LOST") entries.push({ type: "loss", at: p.settledAt, amount: 0,
         title: `Lost · ${sideName(p)} ${formatLine(line)}`, detail: `${game} · stake gone` });
       if (p.status === "REFUNDED") entries.push({ type: "refund", at: p.settledAt, amount: Number(p.wager),
-        title: `Refunded · ${sideName(p)} vs ${oppName(p)}`, detail: "No action · full stake returned" });
+        title: `Refunded · ${sideName(p)}${isProp(p.market) ? "" : " vs " + oppName(p)}`, detail: isProp(p.market) ? `${game} · voided, full stake returned` : "No action · full stake returned" });
     }
     entries.sort((a, b) => String(b.at).localeCompare(String(a.at)));
 
@@ -1203,7 +1269,7 @@
     for (const row of gpg.slice) {
       const status = { ACTIVE: "pending", WON: "won", LOST: "lost", REFUNDED: "refunded" }[row.status] || "pending";
       const me = local.login && row.user?.login === local.login;
-      const line = el("div", `trow ledgerrow ${status}${me ? " me" : ""}`);
+      const line = el("div", `trow ledgerrow ${status}${me ? " me" : ""}${isProp(row.market) ? " prop" : ""}`);
 
       const user = el("div", "tuser");
       user.append(avatar(row.user, "tavatar"));
@@ -1223,7 +1289,7 @@
       } else {
         teamEl.textContent = sideName(row);
       }
-      pickCopy.append(teamEl, el("small", null, `vs ${oppName(row)}${row.market?.league ? " · " + row.market.league : ""}`));
+      pickCopy.append(teamEl, el("small", null, isProp(row.market) ? questionOf(row.market) : `vs ${oppName(row)}${row.market?.league ? " · " + row.market.league : ""}`));
       pick.append(crest(row.market, sideName(row), "tpick-crest"), pickCopy);
 
       const stake = el("div", "tstat right");

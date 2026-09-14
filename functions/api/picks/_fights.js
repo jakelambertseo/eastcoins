@@ -11,9 +11,17 @@
    A draw refunds every pick, the same as a tied game.
    ============================================================ */
 
-export const MANUAL_SPORTS = new Set(["boxing", "mma"]);
+// Everything settled by hand: fights, and prop bets (see _props.js),
+// which have no feed either. The scheduled run skips all of these.
+export const MANUAL_SPORTS = new Set(["boxing", "mma", "prop"]);
+const FIGHTS = new Set(["boxing", "mma"]);
 
 export function isFight(sport) {
+  return FIGHTS.has(String(sport || "").toLowerCase());
+}
+
+/** Settled from the admin page rather than a scores feed. */
+export function isManual(sport) {
   return MANUAL_SPORTS.has(String(sport || "").toLowerCase());
 }
 

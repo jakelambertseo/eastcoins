@@ -1,4 +1,5 @@
 import { versus } from "./_fights.js";
+import { isProp } from "./_props.js";
 /* ============================================================
    EastCoin Picks — one game, read back from the ledger
 
@@ -111,6 +112,7 @@ export function marketPayload(m) {
     day: etDate(m.starts_at),
     sport: String(m.sport || ""),
     league: String(m.league || ""),
+    question: m.question ? String(m.question) : null,
     state: String(m.state || ""),
     startsAt: m.starts_at,
     settledAt: utc(m.settled_at),
@@ -151,5 +153,6 @@ export function pickPayload(p) {
 export function titleFor(m) {
   const score = m.state === "SETTLED" && Number.isInteger(m.final_away_score)
     ? ` ${m.final_away_score}–${m.final_home_score}` : "";
+  if (isProp(m.sport)) return `${m.question || "Prop bet"} — EastCoin Picks`;
   return `${m.away_name} ${versus(m.sport)} ${m.home_name}${score} — EastCoin Picks`;
 }

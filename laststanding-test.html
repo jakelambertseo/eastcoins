@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>EastCoin | Last One Standing (mockup)</title>
+<link href="/assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --ink:#0c0a09;--panel:#161311;--panel-2:#1e1a17;--panel-3:#241f1b;
+    --line:rgba(255,255,255,.1);--line-2:rgba(255,255,255,.16);
+    --text:#f4ede5;--muted:#aca298;--muted-2:#7d746a;
+    --gold:#e8bf35;--gold-dim:rgba(232,191,53,.13);--green:#4ddb8b;--green-dim:rgba(77,219,139,.11);
+    --red:#ff6b85;--red-dim:rgba(255,107,133,.1);--purple:#a56bff;
+    --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;--body:"Figtree","Segoe UI",system-ui,sans-serif;
+    --radius:13px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--ink);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+
+  .topnav{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;height:58px;padding:0 18px;border-bottom:1px solid var(--line);background:rgba(12,10,9,.92);backdrop-filter:blur(10px)}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800}
+  .brand b{font-family:var(--display)}
+  .tagm{padding:3px 8px;border-radius:999px;border:1px solid rgba(255,107,133,.5);color:#ffb3c0;font-size:.6rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+
+  .page{max-width:1060px;margin:0 auto;padding:22px 18px 70px}
+  h1{font-family:var(--display);font-weight:800;font-size:1.9rem;letter-spacing:-.02em;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 20px;font-size:.9rem}
+
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start}
+  @media(max-width:880px){.grid{grid-template-columns:1fr}}
+  .card{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:16px}
+  .card h2{font-family:var(--display);font-weight:800;font-size:1rem;margin:0 0 12px;display:flex;justify-content:space-between;align-items:center}
+  .card h2 small{color:var(--muted-2);font-size:.72rem;font-weight:700}
+
+  /* the pot headline */
+  .pot{text-align:center;padding:14px 0 16px;border-radius:var(--radius);background:radial-gradient(circle at 50% 0%,rgba(232,191,53,.14),transparent 70%)}
+  .pot b{display:block;font-family:var(--display);font-weight:800;font-size:2.5rem;letter-spacing:-.03em;line-height:1}
+  .pot span{display:block;margin-top:4px;color:var(--muted-2);font-size:.74rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+  .phase{text-align:center;font-family:var(--display);font-weight:800;font-size:1.05rem;min-height:26px;margin:4px 0 12px}
+  .phase.out{color:var(--red)}
+  .phase.won{color:var(--green)}
+
+  /* the floor */
+  .floor{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:9px}
+  .p{position:relative;padding:11px 6px 9px;border-radius:11px;border:1px solid var(--line);background:var(--panel-2);text-align:center;transition:all .35s ease}
+  .p .av{width:34px;height:34px;margin:0 auto 6px;border-radius:50%;display:grid;place-items:center;
+    background:linear-gradient(150deg,#8e1231,#4a0a1c);color:var(--gold);font-family:var(--display);font-weight:800;font-size:.82rem}
+  .p b{display:block;font-size:.72rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .p.me{border-color:rgba(232,191,53,.45);background:var(--gold-dim)}
+  .p.gone{opacity:.26;filter:grayscale(1);transform:scale(.93)}
+  .p.gone b{text-decoration:line-through;color:var(--muted-2)}
+  .p.gone .rank{position:absolute;top:5px;right:7px;color:var(--red);font-size:.62rem;font-weight:800}
+  .p.hit{border-color:var(--red);box-shadow:0 0 0 3px rgba(255,107,133,.28)}
+  .p.winner{opacity:1;filter:none;transform:scale(1.04);border-color:var(--green);background:var(--green-dim);box-shadow:0 0 0 3px rgba(77,219,139,.25)}
+
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .row:last-of-type{border-bottom:0}
+  .row span{color:var(--muted);font-size:.82rem}
+  .row strong{font-family:var(--display);font-weight:800}
+  .step{display:flex;align-items:center;gap:6px}
+  .step button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--muted);font-weight:800;line-height:1}
+  .step button:hover{color:var(--gold);border-color:rgba(232,191,53,.4)}
+  .step b{min-width:34px;text-align:center;font-family:var(--display);font-weight:800}
+  .go{width:100%;height:42px;margin-top:14px;border-radius:10px;border:1px solid rgba(232,191,53,.45);background:var(--gold-dim);color:var(--gold);font-family:var(--display);font-weight:800;font-size:.95rem}
+  .go:hover{background:rgba(232,191,53,.22)}
+  .go:disabled{opacity:.45;cursor:default}
+  .hint{color:var(--muted-2);font-size:.74rem;margin:9px 0 0;line-height:1.45}
+
+  .log{margin-top:12px;max-height:132px;overflow:auto;border:1px solid var(--line);border-radius:11px;background:var(--panel-2);padding:8px 11px}
+  .log div{color:var(--muted);font-size:.79rem;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.045)}
+  .log div:last-child{border-bottom:0}
+  .log b{color:var(--text)}
+  .log .w{color:var(--green)}
+
+  .notes{max-width:1060px;margin:26px auto 0;padding:0 18px}
+  .notes h2{font-family:var(--display);font-size:1.05rem;margin:24px 0 8px}
+  .notes ul{margin:0;padding-left:18px;color:var(--muted);line-height:1.62;font-size:.88rem}
+  .notes li{margin-bottom:7px}
+  .notes b{color:var(--text)}
+  code{background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:.84em}
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="brand"><b>EastCoin</b></div>
+  <span class="tagm">Mockup</span>
+</div>
+
+<div class="page">
+  <h1>Last One Standing</h1>
+  <p class="sub">Everyone buys in for the same amount. One player is knocked out every few seconds until one is left, and they take the lot.</p>
+
+  <div class="grid">
+    <div class="card">
+      <h2>The floor <small id="leftLabel">— waiting —</small></h2>
+      <div class="pot"><b id="potV">0</b><span id="potNote">pot</span></div>
+      <div class="phase" id="phase">Press start</div>
+      <div class="floor" id="floor"></div>
+      <div class="log" id="log"></div>
+    </div>
+
+    <div class="card">
+      <h2>Set it up</h2>
+      <div class="row">
+        <span>Buy-in</span>
+        <div class="step"><button data-stake="-1">−</button><b id="stakeV">10</b><button data-stake="1">+</button></div>
+      </div>
+      <div class="row">
+        <span>Players</span>
+        <div class="step"><button data-players="-1">−</button><b id="playersV">12</b><button data-players="1">+</button></div>
+      </div>
+      <div class="row">
+        <span>Seconds between</span>
+        <div class="step"><button data-speed="-1">−</button><b id="speedV">1.4</b><button data-speed="1">+</button></div>
+      </div>
+      <div class="row"><span>Pot</span><strong id="rowPot">120 ZC</strong></div>
+      <div class="row"><span>Your chance</span><strong id="chanceV">1 in 12</strong></div>
+      <div class="row"><span>Winner takes</span><strong id="takeV">120 ZC</strong></div>
+      <div class="row"><span>Runs for</span><strong id="lenV">15s</strong></div>
+      <button class="go" id="go">Start the round</button>
+      <p class="hint">Every player has exactly the same chance. The order is drawn before the first knockout, so the countdown is playback rather than a live draw.</p>
+    </div>
+  </div>
+</div>
+
+<div class="notes">
+  <h2>How it works</h2>
+  <ul>
+    <li><b>One buy-in, one winner, no decisions.</b> Nobody plays anything — you sit down and watch. That is the point: it is ninety seconds of pure spectacle you can fire off whenever the room is quiet, and it needs nothing from anyone except turning up.</li>
+    <li><b>Everyone's odds are the same, whatever the size.</b> Twelve players means a 1 in 12 shot at twelve buy-ins. The whole elimination order is drawn from the committed seed before the first knockout, so nothing is decided while people watch.</li>
+    <li><b>Finishing order is worth showing even though it pays nothing.</b> Going out first is funny, going out second is agony, and both are better than a result that just names a winner.</li>
+    <li><b>It scales the opposite way to Russian Roulette.</b> That game is a small steady win with a rare hit; this is a rare big win and a steady drip of losses. Having both means the casino covers both moods.</li>
+  </ul>
+
+  <h2>Rules of the road</h2>
+  <ul>
+    <li><b>On the site only.</b> A lobby on the casino floor with a join countdown. No chat commands and no bot announcements.</li>
+    <li><b>Buy-ins are taken on joining</b>, so the pot on screen is real money and nobody can back out once the round starts.</li>
+    <li><b>Minimum three players</b>, or it is a coin flip with a longer animation. If the countdown ends short, everyone is refunded and the lobby reopens.</li>
+    <li><b>Closing the tab changes nothing.</b> The order is already decided and the payout runs server-side, so you can win one while you are on the Sports page.</li>
+    <li><b>Winnings count toward the hourly cap</b>, which means this table has to be added to <code>hourlyNet()</code> or it escapes the cap entirely. A twelve-player round at 20 each pays 240, well past the 300 an hour ceiling on its own.</li>
+  </ul>
+
+  <h2>Open questions for you</h2>
+  <ul>
+    <li>Does the house take a cut of the pot, or does the winner take all of it?</li>
+    <li>Should rounds run on a schedule, say every fifteen minutes while people are around, or only when somebody opens a lobby?</li>
+    <li>Is there a cap on the table size? Twenty players at 20 each is a 400 ZC payout to one person.</li>
+  </ul>
+</div>
+
+<script>
+  const NAMES = ["You","Rook","Vance","Milo","Juno","Pax","Wren","Odie","Brill","Case","Dov","Esk","Fen","Gull","Hob","Ivo","Jab","Kit","Lark","Mo"];
+  let stake = 10, players = 12, speed = 1.4, running = false;
+  const $ = (id) => document.getElementById(id);
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  function layout() {
+    const floor = $("floor");
+    floor.innerHTML = "";
+    for (let i = 0; i < players; i++) {
+      const p = document.createElement("div");
+      p.className = "p" + (i === 0 ? " me" : "");
+      p.id = "p" + i;
+      p.innerHTML = '<span class="rank"></span><div class="av">' + NAMES[i][0] + '</div><b>' + NAMES[i] + '</b>';
+      floor.append(p);
+    }
+    $("log").innerHTML = "";
+    $("phase").className = "phase";
+    $("phase").textContent = "Press start";
+    $("leftLabel").textContent = "— waiting —";
+  }
+
+  function figures() {
+    const pot = stake * players;
+    $("stakeV").textContent = stake;
+    $("playersV").textContent = players;
+    $("speedV").textContent = speed.toFixed(1);
+    $("potV").textContent = pot;
+    $("potNote").textContent = players + " players × " + stake + " ZC";
+    $("rowPot").textContent = pot + " ZC";
+    $("chanceV").textContent = "1 in " + players;
+    $("takeV").textContent = pot + " ZC";
+    $("lenV").textContent = Math.round((players - 1) * speed) + "s";
+  }
+
+  function say(html, cls) {
+    const line = document.createElement("div");
+    if (cls) line.className = cls;
+    line.innerHTML = html;
+    $("log").prepend(line);
+  }
+
+  async function run() {
+    if (running) return;
+    running = true;
+    $("go").disabled = true;
+    layout();
+    figures();
+
+    // The whole order is drawn up front, the way the real one would be.
+    const order = [...Array(players).keys()];
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+
+    $("phase").textContent = "Round starting…";
+    await wait(900);
+
+    for (let k = 0; k < players - 1; k++) {
+      const who = order[k];
+      const left = players - k - 1;
+      const place = players - k;
+      $("p" + who).classList.add("hit");
+      $("phase").className = "phase out";
+      $("phase").textContent = NAMES[who] + " is out";
+      $("leftLabel").textContent = left + " left";
+      await wait(speed * 620);
+      $("p" + who).classList.remove("hit");
+      $("p" + who).classList.add("gone");
+      $("p" + who).querySelector(".rank").textContent = place + (place === players ? "" : "");
+      say("<b>" + NAMES[who] + "</b> knocked out — " + place + (place === 2 ? "nd" : place === 3 ? "rd" : "th") + " place, " + left + " left");
+      await wait(speed * 380);
+    }
+
+    const winner = order[players - 1];
+    $("p" + winner).classList.add("winner");
+    $("phase").className = "phase won";
+    $("phase").textContent = NAMES[winner] + " takes " + (stake * players) + " ZC";
+    say("<b>" + NAMES[winner] + "</b> is the last one standing and takes the whole " + (stake * players) + " ZC pot.", "w");
+
+    running = false;
+    $("go").disabled = false;
+    $("go").textContent = "Run it again";
+  }
+
+  document.querySelectorAll("[data-stake]").forEach((b) => b.addEventListener("click", () => {
+    if (running) return;
+    stake = Math.max(5, Math.min(20, stake + Number(b.dataset.stake) * 5));
+    figures();
+  }));
+  document.querySelectorAll("[data-players]").forEach((b) => b.addEventListener("click", () => {
+    if (running) return;
+    players = Math.max(3, Math.min(20, players + Number(b.dataset.players)));
+    figures(); layout();
+  }));
+  document.querySelectorAll("[data-speed]").forEach((b) => b.addEventListener("click", () => {
+    if (running) return;
+    speed = Math.max(0.6, Math.min(3, Math.round((speed + Number(b.dataset.speed) * 0.4) * 10) / 10));
+    figures();
+  }));
+  $("go").addEventListener("click", run);
+
+  layout(); figures();
+</script>
+</body>
+</html>

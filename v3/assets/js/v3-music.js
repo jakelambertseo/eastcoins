@@ -1574,6 +1574,96 @@
 
     const refs = {};
 
+    /* ---------------- skins ----------------
+       Picked on the page, kept per device. A skin is one CSS block in
+       v3.css over the same layout: [data-skin] on the view's root, and
+       body[data-music-skin] so one of them can take the page to black.
+       Nothing about playback changes. The retro faces come from Google
+       Fonts and are fetched the first time a skin that uses them is on. */
+    const SKINS = [
+      ["", "Green Room"],
+      ["winamp", "Winamp"],
+      ["gameboy", "Game Boy"],
+      ["jukebox", "Jukebox"],
+      ["ipod", "iPod"],
+      ["jumbotron", "Jumbotron"],
+      ["void", "Super Ultra Dark Mode"],
+      ["minimal", "Super Ultra Minimal"],
+      ["trip", "I'm Fucked Up Bro"]
+    ];
+    const SKIN_KEY = "ec_music_skin";
+    const SKIN_FONTS = "https://fonts.googleapis.com/css2?family=VT323&family=Silkscreen&family=Righteous&family=Orbitron:wght@600;800&family=Rubik+Wet+Paint&display=swap";
+    const NEEDS_FONTS = new Set(["winamp", "gameboy", "jukebox", "jumbotron", "trip"]);
+    let skin = (() => {
+      try { const s = localStorage.getItem(SKIN_KEY) || ""; return SKINS.some(([k]) => k === s) ? s : ""; } catch { return ""; }
+    })();
+    let skinBox = null;
+    // ?view=music&theme=<name> picks a skin from a link and keeps it, like
+    // ?spooky= does. Names are forgiving: case, spaces and punctuation are
+    // dropped, and each skin has a few spellings. The param is then taken
+    // off the URL so a later pick from the chip isn't undone by a reload.
+    const SKIN_ALIASES = {
+      greenroom: "", default: "", off: "", none: "",
+      winamp: "winamp", gameboy: "gameboy", jukebox: "jukebox", ipod: "ipod", jumbotron: "jumbotron",
+      void: "void", dark: "void", superultradark: "void", superultradarkmode: "void",
+      minimal: "minimal", superultraminimal: "minimal",
+      trip: "trip", imgone: "trip", fuckedup: "trip", imfuckedupbro: "trip", imfuckedup: "trip", mushroom: "trip"
+    };
+    function skinFromUrl() {
+      let url;
+      try { url = new URL(location.href); } catch { return null; }
+      const raw = url.searchParams.get("theme") ?? url.searchParams.get("skin");
+      if (raw === null) return null;
+      const key = SKIN_ALIASES[String(raw).toLowerCase().replace(/[^a-z0-9]/g, "")];
+      url.searchParams.delete("theme");
+      url.searchParams.delete("skin");
+      // window. on purpose: `history` in this module is the History tab's list.
+      window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+      return key === undefined ? null : key;
+    }
+    function loadSkinFonts() {
+      if (document.getElementById("mskin-fonts")) return;
+      const link = document.createElement("link");
+      link.id = "mskin-fonts";
+      link.rel = "stylesheet";
+      link.href = SKIN_FONTS;
+      document.head.append(link);
+    }
+    function applySkin(key) {
+      if (root) { if (key) root.dataset.skin = key; else delete root.dataset.skin; }
+      if (key) document.body.dataset.musicSkin = key; else delete document.body.dataset.musicSkin;
+      if (NEEDS_FONTS.has(key)) loadSkinFonts();
+    }
+    function skinPicker() {
+      const box = el("div", "mskin");
+      const btn = el("button", "mskin-btn");
+      btn.type = "button";
+      const label = () => `Skin · ${SKINS.find(([k]) => k === skin)?.[1] || "Green Room"} \u25BE`;
+      btn.textContent = label();
+      const menu = el("div", "mskin-menu");
+      menu.hidden = true;
+      for (const [key, name] of SKINS) {
+        const item = el("button", `mskin-item${key === skin ? " on" : ""}`, name);
+        item.type = "button";
+        item.addEventListener("click", () => {
+          skin = key;
+          try { localStorage.setItem(SKIN_KEY, key); } catch { /* the choice just won't stick */ }
+          applySkin(skin);
+          btn.textContent = label();
+          menu.querySelectorAll(".mskin-item").forEach((b) => b.classList.toggle("on", b === item));
+          menu.hidden = true;
+        });
+        menu.append(item);
+      }
+      btn.addEventListener("click", () => { menu.hidden = !menu.hidden; });
+      box.append(btn, menu);
+      skinBox = box;
+      return box;
+    }
+    document.addEventListener("click", (event) => {
+      if (skinBox && skinBox.isConnected && !skinBox.contains(event.target)) skinBox.querySelector(".mskin-menu").hidden = true;
+    });
+
     function build() {
       root.replaceChildren();
 
@@ -1603,7 +1693,9 @@
       refs.room = el("div", "room-slot");
       refs.listeners = el("span", "mlisteners", base() ? "Connecting\u2026" : "Room not configured");
       refs.room.append(refs.listeners);
-      head.append(title, refs.room);
+      const right = el("div", "mhead-right");
+      right.append(skinPicker(), refs.room);
+      head.append(title, right);
       root.append(head);
       refs.roomList = el("div", "room-list-wrap");
       refs.roomList.hidden = true;
@@ -1901,6 +1993,12 @@
     return {
       async mount(container) {
         root = container;
+        const linked = skinFromUrl();
+        if (linked !== null) {
+          skin = linked;
+          try { localStorage.setItem(SKIN_KEY, skin); } catch { /* the choice just won't stick */ }
+        }
+        applySkin(skin);
         refs.side = null;
         refs.stagewrap = null;
         refs.room = null;
@@ -1916,6 +2014,7 @@
         loadHistory();
       },
       unmount() {
+        applySkin("");
         document.body.classList.remove("music-view");
         stopProgressTicker();
         stopJam(stage);

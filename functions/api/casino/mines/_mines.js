@@ -23,10 +23,12 @@
    Lower takes. Three bombs: one tile ×1.13, five tiles ×2, ten ×5.
    Cash out any time after the first safe tile. A bomb ends the run
    and the stake is gone. The run pays out on its own once every safe
-   tile is uncovered, or at the last rung still under the ×25 ceiling —
+   tile is uncovered, or at the last rung still under the ×125 ceiling —
    it stops below the ceiling rather than being clamped down to it, so
    the 1% edge holds wherever someone chooses to stop. Three bombs run
-   out of road at 15 tiles (×18.98), ten bombs at 5 (×17.52).
+   out of road at 19 tiles (×113.85), ten bombs at 7 (×73.95); the biggest
+   board pays 2,277 on a 20 ZC stake, about once in 115 runs
+   that go the distance.
 
    One live game per person; stake and per-hour limits are the
    casino's, and winnings count toward the same hourly cap.
@@ -37,11 +39,15 @@ import { sha256, randomSeed, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_eng
 
 export const TILES = 25;
 export const EDGE_RETURN = 0.99;
-// x25, down from x50 on 2026-09-12: a single 3-bomb board could pay 813
-// on a 20 ZC stake, and one swing that size was more than the house wanted
-// from a game that returns 99% either way. The return is unchanged; only
-// the top of each ladder moves.
-export const MAX_MULTIPLIER = 25;
+// x125, raised from x25 on 2026-09-12 (which had itself come down from x50
+// the same day) because Mines was asked for a real jackpot: about 2,500 on
+// the 20 ZC maximum. The ladder is chunky — each extra tile roughly doubles
+// the payout — so the ceiling and the prize are not the same number and
+// cannot be dialled in exactly. x125 lands the best board at 2,277; the next
+// rung up would be 3,328, which overshoots. Nothing about the ODDS changes:
+// every rung still returns 99%, because the run stops below the ceiling
+// rather than being clamped to it.
+export const MAX_MULTIPLIER = 125;
 export const MIN_MINES = 1;
 // Ten is the ceiling on purpose. Past it the ladder leaps instead of
 // climbing — twenty bombs goes ×4.8, ×28.8, ×220.8 — and one 20 ZC
@@ -108,7 +114,7 @@ export function multiplierFor(mines, picks) {
 
 /**
  * The last tile a board can pay for: the highest rung still at or under
- * the ×25 ceiling.
+ * the ×125 ceiling.
  *
  * The run auto-cashes here rather than one rung further. Clamping a
  * higher rung down to the ceiling instead would have been a hidden second cut —

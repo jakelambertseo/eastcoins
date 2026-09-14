@@ -42,6 +42,9 @@ export function etDate(startsAt) {
 }
 
 export function slugFor(market) {
+  // "yes-no-20260913" would collide across every prop of a day; a
+  // prop's page is by id, which /g/ already resolves.
+  if (String(market?.sport || "").toLowerCase() === "prop") return String(market?.id || market?.market_id || "");
   const away = nick(market?.away_name ?? market?.away).replace(/\s+/g, "-");
   const home = nick(market?.home_name ?? market?.home).replace(/\s+/g, "-");
   const day = etDate(market?.starts_at ?? market?.startsAt);

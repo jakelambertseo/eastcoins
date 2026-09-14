@@ -1,3 +1,5 @@
+import { isBanned } from "../../_bans.js";
+
 const STATE_COOKIE = "__Host-ec_oauth_state";
 const RETURN_COOKIE = "__Host-ec_oauth_return";
 const SESSION_COOKIE = "__Host-ec_session";
@@ -393,6 +395,17 @@ export async function onRequestGet(context) {
         context.env,
         tokenPayload.access_token
       );
+
+    // Turned away at the door. Checked before the upsert so a banned
+    // account cannot even refresh its display name, and before the
+    // session so no cookie is ever handed out.
+    if (await isBanned(db, twitchUser.id)) {
+      return redirectWithStatus(
+        returnTo,
+        "banned",
+        cleanupHeaders
+      );
+    }
 
     await upsertUser(
       db,

@@ -16,7 +16,9 @@
 (() => {
   "use strict";
 
-  const POLL_MS = 1500;
+  // 3s, halved on 2026-09-12 for the same reason as the coin: see the note
+  // there. The round clock is drawn by tickTimer at 250ms, not by this.
+  const POLL_MS = 3000;
 
   function el(tag, className, text) {
     const node = document.createElement(tag);
@@ -131,6 +133,26 @@
     return { node: d, body };
   }
 
+  /** "Check this seed" under a verify block: opens /?view=verify with the
+      seed and hash filled in. null hides it (no seed revealed yet). */
+  function verifyLink(node, params) {
+    if (!node) return;
+    let a = node.querySelector(".cf-verify-link");
+    if (!params) { if (a) a.hidden = true; return; }
+    if (!a) {
+      a = el("a", "cf-verify-link", "Check this seed →");
+      a.addEventListener("click", (event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+        event.preventDefault();
+        history.pushState({ view: "verify" }, "", a.getAttribute("href"));
+        window.ECV3?.go("verify", { push: false });
+      });
+      node.append(a);
+    }
+    a.href = "/?view=verify&" + new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== "")));
+    a.hidden = false;
+  }
+
   function makeToast(host) {
     const node = el("div", "cf-toast");
     host.append(node);
@@ -219,7 +241,11 @@
     const serverNow = () => Date.now() + offset;
     const api = (path) => `/api/casino/${spec.key}/${path}`;
 
+    // As with the coin: a hidden tab polls at a fifth of the rate rather
+    // than stopping, because a poll is what settles a finished round.
+    let idleTick = 0;
     async function poll() {
+      if (document.hidden && (idleTick = (idleTick + 1) % 5) !== 0) return;
       try {
         const response = await fetch(api("state"), { credentials: "include" });
         const payload = await response.json();
@@ -338,6 +364,7 @@
       refs.roomList = el("div", "cf-room");
       room.append(rh, refs.roomList);
       col.append(thisRound, lastRound, room);
+      window.ECPot?.mount(col, { compact: true });
       grid.append(col);
       page.append(grid);
 
@@ -518,6 +545,7 @@
         if (!last.bets.length) refs.lastList.append(el("p", "cf-empty", "Nobody bet that round."));
         refs.fair.hidden = false;
         refs.fairBody.textContent = `round      #${last.no}\nhash       ${last.hash}   (shown before bets opened)\nseed       ${last.seed}   (revealed after)\ncheck      sha256(seed) = hash · result from sha256(seed:${spec.key})`;
+        verifyLink(refs.fair, last.seed ? { game: spec.key, seed: last.seed, hash: last.hash } : null);
       } else {
         refs.lastNote.textContent = "";
         refs.lastList.append(el("p", "cf-empty", "First round coming up."));
@@ -558,5 +586,5 @@
     };
   }
 
-  window.ECCasino = Object.freeze({ el, btn, zc, withCoins, plain, avatar, nameLink, casinoLink, makeToast, makePop, burst, sharedGame, fmt, pager, pageOf, verifyBox });
+  window.ECCasino = Object.freeze({ el, btn, zc, withCoins, plain, avatar, nameLink, casinoLink, makeToast, makePop, burst, sharedGame, fmt, pager, pageOf, verifyBox, verifyLink });
 })();

@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>EastCoin | Russian Roulette (mockup)</title>
+<link href="/assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --ink:#0c0a09;--panel:#161311;--panel-2:#1e1a17;--panel-3:#241f1b;
+    --line:rgba(255,255,255,.1);--line-2:rgba(255,255,255,.16);
+    --text:#f4ede5;--muted:#aca298;--muted-2:#7d746a;
+    --gold:#e8bf35;--gold-dim:rgba(232,191,53,.13);--green:#4ddb8b;--green-dim:rgba(77,219,139,.11);
+    --red:#ff6b85;--red-dim:rgba(255,107,133,.1);--purple:#a56bff;
+    --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;--body:"Figtree","Segoe UI",system-ui,sans-serif;
+    --radius:13px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--ink);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+
+  .topnav{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;height:58px;padding:0 18px;border-bottom:1px solid var(--line);background:rgba(12,10,9,.92);backdrop-filter:blur(10px)}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:-.01em}
+  .brand b{font-family:var(--display)}
+  .tagm{padding:3px 8px;border-radius:999px;border:1px solid rgba(255,107,133,.5);color:#ffb3c0;font-size:.6rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+
+  .page{max-width:1060px;margin:0 auto;padding:22px 18px 70px}
+  h1{font-family:var(--display);font-weight:800;font-size:1.9rem;letter-spacing:-.02em;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 20px;font-size:.9rem}
+
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start}
+  @media(max-width:880px){.grid{grid-template-columns:1fr}}
+  .card{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:16px}
+  .card h2{font-family:var(--display);font-weight:800;font-size:1rem;margin:0 0 12px;display:flex;justify-content:space-between;align-items:center}
+  .card h2 small{color:var(--muted-2);font-size:.72rem;font-weight:700}
+
+  /* the table */
+  .table{position:relative;min-height:330px;display:grid;place-items:center;border-radius:var(--radius);
+    background:radial-gradient(circle at 50% 45%,#221d1a,#100d0c 72%);border:1px solid var(--line)}
+  .seats{position:relative;width:300px;height:300px}
+  .seat{position:absolute;width:64px;height:74px;margin:-37px 0 0 -32px;text-align:center;transition:opacity .3s ease,transform .3s ease}
+  .av{width:42px;height:42px;margin:0 auto 5px;border-radius:50%;display:grid;place-items:center;
+    background:linear-gradient(150deg,#8e1231,#4a0a1c);color:var(--gold);font-family:var(--display);font-weight:800;font-size:.95rem;
+    border:2px solid var(--panel);transition:box-shadow .2s ease,transform .2s ease}
+  .seat b{display:block;font-size:.7rem;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .seat.up .av{box-shadow:0 0 0 3px rgba(232,191,53,.55);transform:scale(1.1)}
+  .seat.up b{color:var(--gold)}
+  .seat.out{opacity:.3}
+  .seat.dead .av{background:linear-gradient(150deg,#5a1622,#2a0a10);box-shadow:0 0 0 3px rgba(255,107,133,.7)}
+  .seat.dead b{color:var(--red);text-decoration:line-through}
+
+  .gun{position:absolute;inset:auto;display:grid;place-items:center;text-align:center}
+  .cyl{display:flex;gap:5px;justify-content:center;margin-bottom:9px}
+  .ch{width:15px;height:15px;border-radius:50%;border:2px solid var(--line-2);background:var(--panel-2);transition:all .2s ease}
+  .ch.spent{background:var(--panel-3);border-color:rgba(255,255,255,.07);opacity:.5}
+  .ch.live{background:var(--red);border-color:var(--red);box-shadow:0 0 12px rgba(255,107,133,.8)}
+  .phase{font-family:var(--display);font-weight:800;font-size:1.5rem;letter-spacing:-.01em;min-height:34px}
+  .phase.bang{color:var(--red)}
+  .phase.click{color:var(--muted)}
+  .odds{color:var(--muted-2);font-size:.78rem;font-weight:700;margin-top:3px;min-height:18px}
+
+  /* controls */
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .row:last-of-type{border-bottom:0}
+  .row span{color:var(--muted);font-size:.82rem}
+  .row strong{font-family:var(--display);font-weight:800}
+  .step{display:flex;align-items:center;gap:6px}
+  .step button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--muted);font-weight:800;line-height:1}
+  .step button:hover{color:var(--gold);border-color:rgba(232,191,53,.4)}
+  .step b{min-width:30px;text-align:center;font-family:var(--display);font-weight:800}
+  .go{width:100%;height:42px;margin-top:14px;border-radius:10px;border:1px solid rgba(232,191,53,.45);background:var(--gold-dim);color:var(--gold);font-family:var(--display);font-weight:800;font-size:.95rem}
+  .go:hover{background:rgba(232,191,53,.22)}
+  .go:disabled{opacity:.45;cursor:default}
+  .hint{color:var(--muted-2);font-size:.74rem;margin:9px 0 0;line-height:1.45}
+
+  .result{margin-top:12px;padding:12px 14px;border-radius:11px;border:1px solid var(--line);background:var(--panel-2);font-size:.84rem;line-height:1.5}
+  .result.lose{border-color:rgba(255,107,133,.4);background:var(--red-dim)}
+  .result.win{border-color:rgba(77,219,139,.35);background:var(--green-dim)}
+  .result b{font-family:var(--display)}
+
+  .notes{max-width:1060px;margin:26px auto 0;padding:0 18px}
+  .notes h2{font-family:var(--display);font-size:1.05rem;margin:24px 0 8px}
+  .notes ul{margin:0;padding-left:18px;color:var(--muted);line-height:1.62;font-size:.88rem}
+  .notes li{margin-bottom:7px}
+  .notes b{color:var(--text)}
+  code{background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:.84em}
+  table.t{width:100%;border-collapse:collapse;margin-top:10px;font-size:.84rem}
+  table.t th,table.t td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:right}
+  table.t th:first-child,table.t td:first-child{text-align:left}
+  table.t th{color:var(--muted-2);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em}
+  table.t td{color:var(--muted)}
+  table.t td:first-child{color:var(--text);font-weight:700}
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="brand"><b>EastCoin</b></div>
+  <span class="tagm">Mockup</span>
+</div>
+
+<div class="page">
+  <h1>Russian Roulette</h1>
+  <p class="sub">Everyone antes the same. One live round. The player it fires on loses their stake, and everyone still standing splits it.</p>
+
+  <div class="grid">
+    <div class="card">
+      <h2>The table <small id="potLabel">pot 0 ZC</small></h2>
+      <div class="table">
+        <div class="seats" id="seats"></div>
+        <div class="gun">
+          <div class="cyl" id="cyl"></div>
+          <div class="phase" id="phase">Ready</div>
+          <div class="odds" id="odds"></div>
+        </div>
+      </div>
+      <div id="result"></div>
+    </div>
+
+    <div class="card">
+      <h2>Set it up</h2>
+      <div class="row">
+        <span>Ante each</span>
+        <div class="step">
+          <button data-stake="-1">−</button><b id="stakeV">20</b><button data-stake="1">+</button>
+        </div>
+      </div>
+      <div class="row">
+        <span>Players</span>
+        <div class="step">
+          <button data-players="-1">−</button><b id="playersV">4</b><button data-players="1">+</button>
+        </div>
+      </div>
+      <div class="row"><span>Chambers</span><strong id="chV">8</strong></div>
+      <div class="row"><span>Pulls each</span><strong id="pullsV">2</strong></div>
+      <div class="row"><span>Your risk</span><strong id="riskV">1 in 4</strong></div>
+      <div class="row"><span>If you survive</span><strong id="winV">+6 ZC</strong></div>
+      <div class="row"><span>If it fires on you</span><strong id="loseV">−20 ZC</strong></div>
+      <button class="go" id="go">Spin the cylinder</button>
+      <p class="hint" id="hint"></p>
+    </div>
+  </div>
+</div>
+
+<div class="notes">
+  <h2>How it works with more than two players</h2>
+  <ul>
+    <li><b>Chambers scale with the table, so everyone's odds are identical.</b> The cylinder gets one chamber per player, doubled up to keep at least six, and each player pulls the same number of times. Four players means eight chambers and two pulls each. Nobody's seat is worse than anybody else's, which is the thing a fixed six-chamber cylinder gets wrong the moment five people sit down.</li>
+    <li><b>There is always exactly one loser.</b> One live round in a cylinder that gets fully emptied means the gun has to go off before the last pull. No draws, no refunds, no round where nothing happens.</li>
+    <li><b>The shape of the bet inverts as the table grows.</b> Heads-up it is a straight coin flip for the other person's ante. At six players you are risking your whole stake to win a fifth of one, so it becomes small frequent wins and a rare painful loss — the opposite of every house game on the site, which is exactly why it is worth having.</li>
+    <li><b>The tension is real and it is mathematically honest.</b> Each pull the odds visibly climb for whoever is next, because the empty chambers are gone. Everyone still went in at the same 1-in-N, which is what makes it fair while feeling like it is not.</li>
+  </ul>
+
+  <h2>What each table size costs and pays</h2>
+  <table class="t" id="payTable">
+    <thead><tr><th>Players</th><th>Chambers</th><th>Pulls each</th><th>Chance it's you</th><th>Win</th><th>Lose</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>Rules of the road</h2>
+  <ul>
+    <li><b>On the site only.</b> No chat commands, no bot announcements. A lobby on the casino floor, you sit down, it runs there.</li>
+    <li><b>The outcome is settled before the first pull</b>, from a seed whose hash is shown beforehand, same as every other game here. The clicking is playback, not a live draw.</li>
+    <li><b>Antes are taken when you sit down</b>, not when the gun fires, so nobody can leave once the table is full.</li>
+    <li><b>A seat empties if you leave before it starts.</b> Once it starts, closing the tab changes nothing — the result is already decided and the payout runs server-side.</li>
+    <li><b>Winnings count toward the hourly cap</b>, which means the new table has to be added to <code>hourlyNet()</code> or it escapes the cap entirely.</li>
+  </ul>
+
+  <h2>Open questions for you</h2>
+  <ul>
+    <li>Minimum table size to start: two, or hold out for three so it is not just a coin flip with extra steps?</li>
+    <li>Does the house take a cut of the loser's ante, or is this purely player to player?</li>
+    <li>Should a table wait for a full house, or start on a countdown with whoever has sat down?</li>
+  </ul>
+</div>
+
+<script>
+  const NAMES = ["You", "Rook", "Vance", "Milo", "Juno", "Pax", "Wren", "Odie"];
+  let stake = 20, players = 4, running = false;
+
+  // One chamber per player, doubled up until there are at least six, so every
+  // seat gets the same number of pulls and therefore the same odds.
+  const chambersFor = (n) => n * Math.max(1, Math.ceil(6 / n));
+
+  const $ = (id) => document.getElementById(id);
+
+  function layout() {
+    const seats = $("seats");
+    seats.innerHTML = "";
+    for (let i = 0; i < players; i++) {
+      const angle = (i / players) * Math.PI * 2 - Math.PI / 2;
+      const seat = document.createElement("div");
+      seat.className = "seat";
+      seat.id = "seat" + i;
+      seat.style.left = (150 + Math.cos(angle) * 122) + "px";
+      seat.style.top = (150 + Math.sin(angle) * 122) + "px";
+      seat.innerHTML = '<div class="av">' + NAMES[i][0] + '</div><b>' + NAMES[i] + '</b>';
+      seats.append(seat);
+    }
+    const cyl = $("cyl");
+    cyl.innerHTML = "";
+    for (let c = 0; c < chambersFor(players); c++) {
+      const ch = document.createElement("i");
+      ch.className = "ch";
+      ch.id = "ch" + c;
+      cyl.append(ch);
+    }
+  }
+
+  function figures() {
+    const ch = chambersFor(players);
+    const pulls = ch / players;
+    const win = Math.floor(stake / (players - 1));
+    $("stakeV").textContent = stake;
+    $("playersV").textContent = players;
+    $("chV").textContent = ch;
+    $("pullsV").textContent = pulls;
+    $("riskV").textContent = "1 in " + players;
+    $("winV").textContent = "+" + win + " ZC";
+    $("loseV").textContent = "−" + stake + " ZC";
+    $("potLabel").textContent = "pot " + (stake * players) + " ZC";
+    $("hint").textContent = "The loser's " + stake + " ZC is split between the " + (players - 1) +
+      " survivor" + (players === 2 ? "" : "s") + ", so each takes " + win + ".";
+  }
+
+  function payTable() {
+    const body = document.querySelector("#payTable tbody");
+    body.innerHTML = "";
+    for (let n = 2; n <= 8; n++) {
+      const ch = chambersFor(n);
+      const tr = document.createElement("tr");
+      tr.innerHTML = "<td>" + n + "</td><td>" + ch + "</td><td>" + (ch / n) + "</td>" +
+        "<td>1 in " + n + "</td><td>+" + Math.floor(20 / (n - 1)) + "</td><td>−20</td>";
+      body.append(tr);
+    }
+  }
+
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  async function run() {
+    if (running) return;
+    running = true;
+    $("go").disabled = true;
+    $("result").innerHTML = "";
+    layout();
+
+    const ch = chambersFor(players);
+    const live = Math.floor(Math.random() * ch);   // decided up front, like the real thing would be
+    $("phase").className = "phase";
+    $("phase").textContent = "Spinning…";
+    $("odds").textContent = "";
+    await wait(900);
+
+    for (let c = 0; c < ch; c++) {
+      const who = c % players;
+      document.querySelectorAll(".seat").forEach((s) => s.classList.remove("up"));
+      $("seat" + who).classList.add("up");
+      $("phase").className = "phase";
+      $("phase").textContent = NAMES[who] + " pulls…";
+      $("odds").textContent = "1 chamber in " + (ch - c) + " is live";
+      await wait(780);
+
+      if (c === live) {
+        $("ch" + c).className = "ch live";
+        $("phase").className = "phase bang";
+        $("phase").textContent = "BANG";
+        $("odds").textContent = "";
+        $("seat" + who).classList.remove("up");
+        $("seat" + who).classList.add("dead");
+        document.querySelectorAll(".seat:not(.dead)").forEach((s) => s.classList.add("out"));
+        const win = Math.floor(stake / (players - 1));
+        const box = document.createElement("div");
+        box.className = "result " + (who === 0 ? "lose" : "win");
+        box.innerHTML = who === 0
+          ? "<b>It was you.</b> You lose your " + stake + " ZC. The other " + (players - 1) +
+            " split it, " + win + " ZC each."
+          : "<b>" + NAMES[who] + " got it.</b> Their " + stake + " ZC is split between the " +
+            (players - 1) + " of you still standing. You take <b>+" + win + " ZC</b>.";
+        $("result").append(box);
+        break;
+      }
+
+      $("ch" + c).className = "ch spent";
+      $("phase").className = "phase click";
+      $("phase").textContent = "click";
+      await wait(360);
+    }
+
+    running = false;
+    $("go").disabled = false;
+    $("go").textContent = "Play again";
+  }
+
+  document.querySelectorAll("[data-stake]").forEach((b) => b.addEventListener("click", () => {
+    stake = Math.max(5, Math.min(20, stake + Number(b.dataset.stake) * 5));
+    figures();
+  }));
+  document.querySelectorAll("[data-players]").forEach((b) => b.addEventListener("click", () => {
+    if (running) return;
+    players = Math.max(2, Math.min(8, players + Number(b.dataset.players)));
+    figures(); layout();
+  }));
+  $("go").addEventListener("click", run);
+
+  layout(); figures(); payTable();
+</script>
+</body>
+</html>

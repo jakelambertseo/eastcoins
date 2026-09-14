@@ -22,6 +22,14 @@
   "use strict";
 
   const CONTROLS_KEY = "ec_v3_watch_controls";
+  // Servers the viewer pasted themselves, kept per event so a refresh
+  // doesn't cost them the link they went and found.
+  const MINE_KEY = "ec_v3_watch_mine";
+  const MINE_PER_EVENT = 3;
+  const MINE_EVENTS = 20;
+  // The dropdown's last entry. A string nothing else uses, so it can never
+  // collide with a stream index.
+  const ADD_VALUE = "ec-add-your-own";
 
   const local = {
     match: null,
@@ -38,7 +46,7 @@
   // Built once per mount, then mutated.
   const dom = {
     wrap: null, bar: null, peek: null, frame: null,
-    iframe: null, select: null, gd: null, gdFrame: null
+    iframe: null, select: null, gd: null, gdFrame: null, add: null, addForget: null
   };
 
   let root = null;
@@ -102,6 +110,24 @@
 
   /* ---------------------------------------------------------- helpers */
 
+  /* Preferred servers for particular events, matched by the provider's
+     source and stream number rather than by URL or position, since the
+     golf source's ids carry the date and the list's order changes with
+     the day. A preferred stream that is present moves to Server 1; the
+     rest keep their order. RedZone: the golf source's second stream. */
+  const PREFERRED_SERVERS = {
+    "ppv-nfl-red-zone": [{ source: "golf", streamNo: 2 }]
+  };
+  function preferOrder(match, streams) {
+    const prefs = PREFERRED_SERVERS[String(match?.id || "")];
+    if (!prefs || !Array.isArray(streams)) return streams;
+    const rank = (s) => {
+      const i = prefs.findIndex((p) => String(s?.source || "").toLowerCase() === p.source && Number(s?.streamNo) === p.streamNo);
+      return i === -1 ? prefs.length : i;
+    };
+    return [...streams].sort((a, b) => rank(a) - rank(b));
+  }
+
   // Every stream frame is loaded through here so the referrer policy can
   // never drift from the source it was chosen for. The rule itself lives in
   // assets/eastcoins-youtube.js; with that module missing this falls back to
@@ -115,6 +141,158 @@
     iframe.src = url;
   }
 
+  /* ------------------------------------------------- your own servers */
+
+  function readMineAll() {
+    try { return JSON.parse(window.localStorage.getItem(MINE_KEY)) || {}; } catch { return {}; }
+  }
+
+  function readMine(eventId) {
+    const all = readMineAll();
+    const list = all[String(eventId)];
+    return Array.isArray(list) ? list.filter((u) => typeof u === "string").slice(0, MINE_PER_EVENT) : [];
+  }
+
+  function writeMine(eventId, urls) {
+    try {
+      const all = readMineAll();
+      if (urls.length) all[String(eventId)] = urls.slice(-MINE_PER_EVENT);
+      else delete all[String(eventId)];
+      // Events finish; without a cap this would grow for the life of the
+      // browser. Oldest keys go first — insertion order is good enough.
+      const keys = Object.keys(all);
+      for (const key of keys.slice(0, Math.max(0, keys.length - MINE_EVENTS))) delete all[key];
+      window.localStorage.setItem(MINE_KEY, JSON.stringify(all));
+    } catch {
+      /* a private window just means it lasts for this visit */
+    }
+  }
+
+  /**
+   * What someone pasted, turned into something an iframe will play, or a
+   * reason it can't be. The YouTube rewrite is the same one the nav search
+   * uses, so an ordinary watch?v= page works rather than being refused by
+   * YouTube's framing rules.
+   */
+  function embedFor(raw) {
+    const text = String(raw || "").trim();
+    if (!text) return { error: "Paste a link first." };
+    let parsed;
+    try {
+      parsed = new URL(/^[a-z]+:\/\//i.test(text) ? text : "https://" + text);
+    } catch {
+      return { error: "That doesn't look like a link." };
+    }
+    if (parsed.protocol !== "https:") return { error: "Only https:// links can be embedded." };
+    // new URL() is happy with a host that could never resolve: typing a
+    // few words gives "https://not%20a%20link/", which parses, loads, and
+    // fails silently in the frame. A real host is letters, digits, dots
+    // and hyphens, with at least one dot inside it.
+    const host = parsed.hostname;
+    if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(host)) {
+      return { error: "That doesn't look like a link." };
+    }
+    if (host === location.hostname) return { error: "That's a link back to EastCoin." };
+    return { url: window.ECEmbed?.youtube?.(parsed.href) || parsed.href };
+  }
+
+  /** Adds a pasted server, switches to it, and remembers it for this event. */
+  function addOwnServer(url) {
+    local.streams.push({ embedUrl: url, mine: true });
+    local.active = local.streams.length - 1;
+    if (local.match?.id) {
+      writeMine(local.match.id, [...readMine(local.match.id).filter((u) => u !== url), url]);
+    }
+    syncServers();
+    rememberServer();
+    if (dom.iframe) setStreamSrc(dom.iframe, currentSrc());
+  }
+
+  /** Drops the pasted server being watched and falls back to Server 1. */
+  function forgetOwnServer() {
+    const gone = local.streams[local.active];
+    if (!gone?.mine) return;
+    local.streams.splice(local.active, 1);
+    local.active = 0;
+    if (local.match?.id) {
+      writeMine(local.match.id, readMine(local.match.id).filter((u) => u !== gone.embedUrl));
+    }
+    syncServers();
+    rememberServer();
+    if (dom.iframe) setStreamSrc(dom.iframe, currentSrc());
+  }
+
+  function closeAddForm() {
+    if (dom.add) dom.add.hidden = true;
+  }
+
+  /** The little "Embed your own server" panel, above the bar. */
+  function openAddForm() {
+    if (!dom.wrap) return;
+    if (!dom.add) {
+      const box = el("div", "watchadd");
+      box.append(el("h3", null, "Embed your own server"));
+      box.append(el("p", null, "Paste a link to a stream and it plays here. Yours only — nobody else on this event sees it."));
+
+      const input = document.createElement("input");
+      input.type = "url";
+      input.placeholder = "https://…";
+      input.autocomplete = "off";
+      input.spellcheck = false;
+      input.setAttribute("aria-label", "Link to embed");
+      box.append(input);
+
+      const note = el("p", "watchadd-note", "");
+      note.hidden = true;
+      box.append(note);
+
+      const row = el("div", "watchadd-row");
+      // Only offered while one of yours is the stream playing. A link that
+      // turns out to be dead would otherwise sit in the dropdown for good,
+      // since these are remembered between visits.
+      const forget = el("button", "watchbtn watchadd-forget", "Remove this one");
+      forget.type = "button";
+      forget.addEventListener("click", () => { forgetOwnServer(); closeAddForm(); });
+      dom.addForget = forget;
+      const cancel = el("button", "watchbtn", "Cancel");
+      cancel.type = "button";
+      cancel.addEventListener("click", closeAddForm);
+      const go = el("button", "watchbtn watchadd-go", "Embed");
+      go.type = "button";
+
+      const submit = () => {
+        const result = embedFor(input.value);
+        if (result.error) {
+          note.hidden = false;
+          note.className = "watchadd-note bad";
+          note.textContent = result.error;
+          input.focus();
+          return;
+        }
+        addOwnServer(result.url);
+        input.value = "";
+        note.hidden = true;
+        closeAddForm();
+      };
+      go.addEventListener("click", submit);
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") { event.preventDefault(); submit(); }
+        if (event.key === "Escape") closeAddForm();
+      });
+      // Typing again clears the last complaint rather than leaving it to
+      // contradict what is now in the box.
+      input.addEventListener("input", () => { note.hidden = true; });
+
+      row.append(forget, el("span", "watchadd-gap"), cancel, go);
+      box.append(row);
+      dom.add = box;
+      dom.wrap.append(box);
+    }
+    if (dom.addForget) dom.addForget.hidden = !local.streams[local.active]?.mine;
+    dom.add.hidden = false;
+    dom.add.querySelector("input")?.focus();
+  }
+
   function currentSrc() {
     if (local.custom) return local.custom;
     return local.streams[local.active]?.embedUrl || "";
@@ -123,7 +301,11 @@
   function shareLink() {
     const url = new URL("/", location.origin);
     url.searchParams.set("view", "watch");
-    if (local.custom) url.searchParams.set("url", local.custom);
+    // A server the viewer pasted exists only in this browser, so "server 7"
+    // would mean nothing to whoever opens the link. Share the stream itself.
+    const own = local.streams[local.active];
+    if (!local.custom && own?.mine) url.searchParams.set("url", own.embedUrl);
+    else if (local.custom) url.searchParams.set("url", local.custom);
     else if (local.match?.id) {
       url.searchParams.set("event", local.match.id);
       // The server they are actually on, 1-based like the dropdown says.
@@ -137,7 +319,10 @@
   // hand works as well as the button does.
   function rememberServer() {
     const url = new URL(location.href);
-    if (local.active > 0) url.searchParams.set("server", String(local.active + 1));
+    // Same reason as shareLink: a pasted server has no number anyone else
+    // could follow, so the address bar keeps quiet about it.
+    if (local.streams[local.active]?.mine) url.searchParams.delete("server");
+    else if (local.active > 0) url.searchParams.set("server", String(local.active + 1));
     else url.searchParams.delete("server");
     history.replaceState(history.state, "", url.pathname + url.search + url.hash);
   }
@@ -152,6 +337,8 @@
   function setHidden(hidden) {
     local.hidden = hidden;
     writePref(hidden);
+    // The form is anchored to the bar; folding the bar takes it too.
+    if (hidden) closeAddForm();
     // Attribute flips only — the iframe is never touched, so folding the
     // bar cannot restart the stream.
     if (dom.bar) dom.bar.hidden = hidden;
@@ -199,35 +386,75 @@
 
   /* ---------------------------------------------------------- controls */
 
+  // The server a tab is on, as presence records it: the provider's source
+  // and stream number. A pasted URL is nobody's business and sends nothing.
+  const srvKey = (s) => (!s || s.mine ? "" : `${String(s.source || "").toLowerCase()}/${s.streamNo ?? ""}`);
+  function beatServer() {
+    window.ECPresence?.beat("watch", local.match?.title || "", local.match?.id || "", srvKey(local.streams[local.active]));
+  }
+  // "Server 3 of 8 · 4 watching", from the presence poll's per-server
+  // counts for this event. Labels keep their base text so a count can
+  // change without rebuilding the list.
+  function paintServerCounts() {
+    if (!dom.select) return;
+    const counts = local.serverCounts || {};
+    for (const option of dom.select.options) {
+      const base = option.dataset.base;
+      if (!base) continue;
+      const n = Number(counts[option.dataset.srv || ""] || 0);
+      option.textContent = n ? `${base} · ${n} watching` : base;
+    }
+  }
+
   function syncServers() {
     if (!dom.select) return;
     dom.select.replaceChildren();
 
-    if (!local.streams.length) {
-      const option = document.createElement("option");
-      option.textContent = "No servers";
-      dom.select.append(option);
-      dom.select.disabled = true;
-      return;
-    }
-
     // "Server 1 of 4" rather than "Server 1": the closed control has to
     // say that there is something else to try, because that is the whole
-    // reason someone looks for it.
-    const many = local.streams.length > 1;
-    dom.select.disabled = !many;
-    local.streams.forEach((_, index) => {
+    // reason someone looks for it. Anything the viewer pasted is counted
+    // separately and named "Your server" — calling it "Server 7 of 7"
+    // would claim a number no other viewer's list agrees with.
+    const mine = local.streams.filter((s) => s.mine).length;
+    const count = local.streams.length - mine;
+    let seen = 0;
+    local.streams.forEach((stream, index) => {
       const option = document.createElement("option");
       option.value = String(index);
-      option.textContent = many ? `Server ${index + 1} of ${local.streams.length}` : "Server 1";
+      if (stream.mine) {
+        seen += 1;
+        option.textContent = mine > 1 ? `Your server ${seen}` : "Your server";
+      } else {
+        option.textContent = count > 1 ? `Server ${index + 1} of ${count}` : "Server 1";
+        option.dataset.base = option.textContent;
+        option.dataset.srv = srvKey(stream);
+      }
       if (index === local.active) option.selected = true;
       dom.select.append(option);
     });
-    dom.select.title = many
-      ? `Stream not working? Switch between ${local.streams.length} servers.`
-      : "Only one server for this event.";
+    paintServerCounts();
+
+    if (!local.streams.length) {
+      const none = document.createElement("option");
+      none.value = "none";
+      none.textContent = "No servers";
+      none.selected = true;
+      dom.select.append(none);
+    }
+
+    // Always last. The control is never disabled any more: one dead server
+    // and no way to paste a working one is exactly the case this exists for.
+    const add = document.createElement("option");
+    add.value = ADD_VALUE;
+    add.textContent = "+ Add Your Own";
+    dom.select.append(add);
+
+    dom.select.disabled = false;
+    dom.select.title = count > 1
+      ? `Stream not working? Switch between ${count} servers, or paste your own.`
+      : "Stream not working? Paste your own server.";
     // A few pulses when a stream first arrives, then it settles down.
-    dom.select.classList.toggle("nudge", many);
+    dom.select.classList.toggle("nudge", count > 1);
   }
 
   // The pile keeps its own timer and the bar is rebuilt whenever the
@@ -252,8 +479,18 @@
       // they have found it.
       select.addEventListener("pointerenter", () => select.classList.remove("nudge"), { once: true });
       select.addEventListener("change", () => {
+        if (select.value === ADD_VALUE) {
+          // Opening the form is not a change of server. Put the dropdown
+          // back where it was, or it would sit reading "Add Your Own"
+          // while the old stream carried on playing underneath.
+          select.value = String(local.active);
+          openAddForm();
+          return;
+        }
+        if (select.value === "none") return;
         local.active = Number(select.value) || 0;
         rememberServer();
+        beatServer();
         // Deliberate reload: a new server is a new stream.
         if (dom.iframe) setStreamSrc(dom.iframe, currentSrc());
       });
@@ -310,7 +547,10 @@
       const who = el("div", "wwho");
       who.hidden = true;
       bar.append(who);
-      stopWho = window.ECPresence?.mountWatchers?.(who, local.match.id) || null;
+      stopWho = window.ECPresence?.mountWatchers?.(who, local.match.id, (data) => {
+        local.serverCounts = data?.servers?.[String(local.match?.id || "")] || {};
+        paintServerCounts();
+      }) || null;
     }
 
     const back = el("button", "watchbtn", "← Events");
@@ -357,7 +597,7 @@
     wrap.append(frame, bar, peek);
     root.append(wrap);
 
-    Object.assign(dom, { wrap, bar, peek, frame, iframe });
+    Object.assign(dom, { wrap, bar, peek, frame, iframe, add: null, addForget: null });
   }
 
   function paintMessage(kind) {
@@ -469,15 +709,18 @@
         window.ECV3Gameday?.resolve(local.match).catch(() => null) ?? null
       ]);
 
-      local.streams = outcome.streams;
+      local.streams = preferOrder(local.match, outcome.streams);
+      // Anything this viewer pasted for this event last time, back on the end.
+      for (const url of readMine(local.match.id)) local.streams.push({ embedUrl: url, mine: true });
       local.reason = outcome.reason;
       local.game = game;
-      // Who's here can name the game rather than just "watching".
-      window.ECPresence?.beat("watch", local.match?.title || "", local.match?.id || "");
       // A shared link names the server it was copied from (1-based);
       // the old shell's ?stream= is honoured the same way.
       const wanted = Number(params().get("server") || params().get("stream") || 0);
       if (wanted >= 1 && wanted <= local.streams.length) local.active = wanted - 1;
+      // Who's here can name the game rather than just "watching", and
+      // presence learns which server this tab landed on.
+      beatServer();
       local.loading = false;
       if (root.isConnected) paint();
     },
@@ -491,7 +734,7 @@
       }
       Object.assign(dom, {
         wrap: null, bar: null, peek: null, frame: null,
-        iframe: null, select: null, gd: null, gdFrame: null
+        iframe: null, select: null, gd: null, gdFrame: null, add: null, addForget: null
       });
     }
   };

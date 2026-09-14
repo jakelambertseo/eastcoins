@@ -36,7 +36,7 @@ import {
 async function openMarkets(db) {
   const result = await db
     .prepare(
-      `SELECT id, sport, league, away_name, home_name, starts_at,
+      `SELECT id, sport, league, away_name, home_name, question, starts_at,
               away_odds_locked, home_odds_locked
          FROM markets
         WHERE state = 'OPEN'
@@ -51,7 +51,7 @@ async function openMarkets(db) {
 async function oneMarket(db, id) {
   return db
     .prepare(
-      `SELECT id, sport, league, away_name, home_name, starts_at, state,
+      `SELECT id, sport, league, away_name, home_name, question, starts_at, state,
               away_odds_locked, home_odds_locked
          FROM markets WHERE id = ? LIMIT 1`
     )

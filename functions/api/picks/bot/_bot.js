@@ -29,6 +29,7 @@
 
 import { safeEqual } from "../_lib.js";
 import { isCollegeLeague, schoolOf } from "../_cfb.js";
+import { isProp, shortQuestion } from "../_props.js";
 
 /** Plain-text chat reply. Truncated to StreamElements' own limit. */
 /* The ZCoin emote, by its chat code. 7TV renders the word; everyone
@@ -219,7 +220,7 @@ async function backfillAvatar(env, db, user) {
 export async function openMarkets(db) {
   const result = await db
     .prepare(
-      `SELECT id, sport, league, away_name, home_name, starts_at, state,
+      `SELECT id, sport, league, away_name, home_name, question, starts_at, state,
               away_odds_locked, home_odds_locked
          FROM markets
         WHERE state = 'OPEN'
@@ -278,9 +279,16 @@ export function matchTeam(markets, query) {
   const want = words(query).join(" ");
   if (!want) return null;
 
+  // Props answer to "yes" or "no", with any further words picking WHICH
+  // prop by its question: "!pick 10 yes mahomes". One open prop needs
+  // no extra word; two do, and the reply says so rather than guessing.
+  const propHit = matchProp(markets, words(query));
+  if (propHit) return propHit;
+
   const hits = [];
   const mascotOnly = [];
   for (const market of markets) {
+    if (isProp(market.sport)) continue;
     for (const side of ["away", "home"]) {
       const name = side === "away" ? market.away_name : market.home_name;
       const full = words(name).join(" ");
@@ -317,6 +325,23 @@ export function matchTeam(markets, query) {
   // games is not — say so instead of picking one.
   if (top.length > 1) return { ambiguous: top.map((h) => h.name) };
   return { market: top[0].market, side: top[0].side };
+}
+
+function matchProp(markets, w) {
+  const props = markets.filter((m) => isProp(m.sport));
+  if (!props.length || !w.length) return null;
+  const side = w[0] === "yes" || w[0] === "y" ? "away" : w[0] === "no" || w[0] === "n" ? "home" : null;
+  if (!side) return null;
+  const rest = w.slice(1);
+  const hits = [];
+  for (const market of props) {
+    const qw = words(market.question);
+    const fits = rest.every((r) => qw.some((q) => q.startsWith(r)));
+    if (fits) hits.push({ market, side, specific: rest.length > 0 });
+  }
+  if (hits.length === 1) return { market: hits[0].market, side: hits[0].side };
+  if (!hits.length) return rest.length ? { ambiguous: props.map((m) => `"${shortQuestion(m.question, 40)}"`), prop: true } : null;
+  return { ambiguous: hits.map((h) => `"${shortQuestion(h.market.question, 40)}"`), prop: true };
 }
 
 export function formatLine(value) {

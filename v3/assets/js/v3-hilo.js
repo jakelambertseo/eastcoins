@@ -27,6 +27,8 @@
   const fmt = K.fmt;
 
   async function poll() {
+    // A hidden tab is not being watched, and the deck only moves when the player calls.
+    if (document.hidden) return;
     try {
       const payload = await fetch("/api/casino/hilo/state", { credentials: "include" }).then((r) => r.json());
       if (!payload?.ok) throw new Error(payload?.code || "state");
@@ -178,6 +180,7 @@
     refs.roomList = K.el("div", "cf-room");
     room.append(rh, refs.roomList);
     col.append(you, fair, room);
+    window.ECPot?.mount(col, { compact: true });
     grid.append(col);
     page.append(grid);
 
@@ -283,6 +286,7 @@
       refs.fairBody.textContent = shown.seed
         ? `deck hash  ${shown.hash}   (shown at the deal)\nseed       ${shown.seed}   (revealed when the run ended)\ncheck      sha256(seed) = hash · card i = 1 + (sha256(seed:i) mod 13)`
         : `deck hash  ${shown.hash}   (shown at the deal)\nseed       revealed when the run ends`;
+      K.verifyLink(refs.fair, shown.seed ? { game: "hilo", seed: shown.seed, hash: shown.hash } : null);
     } else {
       refs.fair.hidden = true;
     }

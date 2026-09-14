@@ -15,7 +15,8 @@
     events: "browsing Sports", watch: "watching a game", multiview: "in MultiView", picks: "on Picks",
     music: "in the Green Room", screen: "in Movies & TV", flip: "at the coin flip", game: "on a game page",
     profile: "reading profiles", admin: "in admin", dashboard: "on the dashboard", users: "browsing All Users", activity: "reading the feed",
-    casino: "on the casino floor", wheel: "at the Wheel", race: "at the Horse Race", hilo: "playing Higher or Lower"
+    casino: "on the casino floor", wheel: "at the Wheel", race: "at the Horse Race", hilo: "playing Higher or Lower",
+    mines: "playing Mines", plinko: "playing Plinko", roulette: "at Russian Roulette", standing: "at Last One Standing"
   };
 
   function clientId() {
@@ -36,8 +37,10 @@
   let lastRef = "";
   // Hidden tabs still beat: someone with the Green Room in a background
   // tab is still in the Green Room.
-  async function beat(where, detail, ref) {
-    if (where && where !== lastWhere) { lastDetail = ""; lastRef = ""; }
+  let lastSrv = "";
+  async function beat(where, detail, ref, srv) {
+    if (where && where !== lastWhere) { lastDetail = ""; lastRef = ""; lastSrv = ""; }
+    if (srv !== undefined) lastSrv = String(srv || "");
     // With no route given, ask the shell where this tab actually is —
     // the first paint happens before this script is ready, and a Music
     // tab must not spend its first minute reported as Sports.
@@ -48,7 +51,7 @@
       await fetch("/api/presence", {
         method: "POST", credentials: "include", keepalive: true,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ client: clientId(), where: lastWhere, detail: lastDetail, ref: lastRef })
+        body: JSON.stringify({ client: clientId(), where: lastWhere, detail: lastDetail, ref: lastRef, srv: lastSrv })
       });
     } catch { /* next beat */ }
   }
@@ -64,7 +67,8 @@
   // One glyph per place, so a chip can say where someone is in one line.
   const ICONS = {
     events: "🏈", watch: "📺", multiview: "🔲", picks: "🪙", music: "🎵", screen: "🎬", flip: "🪙",
-    game: "🪙", profile: "👤", admin: "🛠", dashboard: "🛠", users: "👥", activity: "📰", casino: "🎰", wheel: "🎡", race: "🐎", hilo: "🃏"
+    game: "🪙", profile: "👤", admin: "🛠", dashboard: "🛠", users: "👥", activity: "📰", casino: "🎰", wheel: "🎡", race: "🐎", hilo: "🃏",
+    mines: "💣", plinko: "🎯", roulette: "🔫", standing: "🏆"
   };
 
   /** "watching Mariners vs Rangers", "looking at Reds at Dodgers", or the plain place. */
@@ -212,16 +216,18 @@
    * Hands back a stop function: the watch view rebuilds its bar, so
    * the caller has to be able to put the old timer down.
    */
-  function mountWatchers(container, ref) {
+  function mountWatchers(container, ref, onData) {
     let timer = 0;
     const refresh = async () => {
       const data = await fetchRoom();
       if (!container.isConnected) { window.clearInterval(timer); return; }
       drawWatchers(container, data, ref);
+      onData?.(data);
     };
     // Whatever the last poll saw, drawn at once — a bar that fills in
     // twenty seconds late reads as broken.
     drawWatchers(container, latest, ref);
+    if (latest) onData?.(latest);
     refresh();
     timer = window.setInterval(refresh, 20 * 1000);
     return () => window.clearInterval(timer);
@@ -231,6 +237,10 @@
   function mountStrip(container) {
     window.clearInterval(stripTimer);
     const refresh = async () => {
+      // The heartbeat still beats for a hidden tab — someone with the
+      // Green Room in the background IS in the Green Room — but nobody
+      // needs the strip redrawn while they are not looking at it.
+      if (document.hidden) return;
       const data = await fetchRoom();
       if (!container.isConnected) { window.clearInterval(stripTimer); return; }
       draw(container, data);

@@ -28,8 +28,14 @@
     race: { title: "Horse Race", icon: "🐎", blurb: "Four runners from 2× to 14×. They're off every minute.", route: "race", hidden: true },
     hilo: { title: "Higher or Lower", icon: "🃏", blurb: "Your own deck. Every right call multiplies the stake; cash out any time.", route: "hilo" },
     mines: { title: "Mines", icon: "💣", blurb: "Twenty-five tiles, a few of them bombs. Every safe one pays more; cash out before you find one.", route: "mines" },
-    plinko: { title: "Plinko", icon: "🎯", blurb: "Drop a ball through the pegs. Every bucket but the middle pays; the edges pay 25×.", route: "plinko" }
+    plinko: { title: "Plinko", icon: "🎯", blurb: "Drop a ball through the pegs. Every bucket but the middle pays; the edges pay 25×.", route: "plinko" },
+    roulette: { title: "Russian Roulette - PVP", iconUrl: "https://cdn.7tv.app/emote/01G1FDHE4R0005G1MWWMPGSX71/1x.webp", icon: "🔫", blurb: "Everyone puts in 20. One live round. Whoever it fires on pays the rest.", route: "roulette" },
+    standing: { title: "Last One Standing - PVP", icon: "🏆", blurb: "Everyone puts in 20. One knocked out at a time; the last one takes the lot.", route: "standing", hidden: true }
   };
+
+  // Polls the moment the tab comes back into view; see the note in
+  // v3-pvp.js. The floor carries the PvP tables' lobby clocks now.
+  let onVis = null;
 
   function go(route) {
     history.pushState({ view: route }, "", `/?view=${route}`);
@@ -37,6 +43,7 @@
   }
 
   async function poll() {
+    if (document.hidden) return;          // the floor is a display; it can wait
     try {
       const payload = await fetch("/api/casino/home", { credentials: "include" }).then((r) => r.json());
       if (!payload?.ok) throw new Error("home");
@@ -71,12 +78,17 @@
     page.append(ticker);
     window.setTimeout(() => {
       if (ticker.isConnected && window.ECActivity) {
-        window.ECActivity.mountTicker(ticker, { types: ["casino"], label: "TABLES", href: "/?view=activity", empty: "Quiet for now — the first spin lands here." });
+        window.ECActivity.mountTicker(ticker, { types: ["casino", "pot"], label: "TABLES", href: "/?view=activity", empty: "Quiet for now — the first spin lands here." });
       }
     }, 0);
 
     refs.me = K.el("div", "cas-me");
     page.append(refs.me);
+
+    // The Daily Jackpot, above the games.
+    const potSlot = K.el("div", "cas-pot");
+    page.append(potSlot);
+    window.ECPot?.mount(potSlot);
 
     const gamesHead = K.el("div", "cas-games-head");
     gamesHead.append(K.el("h2", null, "Casino games"), K.el("span", null, "20 ZC a bet · ten an hour per game"));
@@ -92,7 +104,19 @@
         go(g.route);
       });
       const top = K.el("div", "cas-tile-top");
-      top.append(K.el("span", "cas-icon", g.icon), K.el("h2", null, g.title));
+      // An image where a game has one (the 7TV emote on Russian Roulette),
+      // the emoji otherwise. The emoji stays as the alt so a failed load
+      // still reads.
+      const icon = K.el("span", "cas-icon", g.iconUrl ? "" : g.icon);
+      if (g.iconUrl) {
+        const img = document.createElement("img");
+        img.src = g.iconUrl;
+        img.alt = g.icon || "";
+        img.loading = "lazy";
+        img.decoding = "async";
+        icon.append(img);
+      }
+      top.append(icon, K.el("h2", null, g.title));
       const status = K.el("div", "cas-status");
       const clock = K.el("span", "cas-clock nums", "—");
       const phase = K.el("span", "cas-phase", "");
@@ -128,13 +152,28 @@
     const rules = K.el("section", "cf-card cas-rules");
     const ul = K.el("ul");
     for (const t of [
-      "20 ZCoins a bet, at most. Ten bets an hour per game, and nobody takes more than 300 ZC out of the casino in any hour.",
+      "20 ZCoins a bet, at most. Ten bets an hour per game, and nobody takes more than 750 ZC out of the casino in any hour.",
       "A game only runs while someone is in its room — with nobody there, nothing is drawn.",
       "One bet per person per round. Bets close before anything is drawn.",
       "Results come from a random seed made when the round is created. Its hash is shown while bets are open; the seed is revealed after, so anyone can check.",
       "Wins land in your StreamElements wallet the moment the round settles — the same wallet Picks uses."
     ]) ul.append(K.el("li", null, t));
-    ul.append(K.el("li", null, "Every result comes from a seed whose hash is shown before bets and revealed after — Verify this round on any game page shows both."));
+    ul.append(K.el("li", null, "The Daily Jackpot: 100 ZC from the house, every day, paid on a bet at a moment nobody can predict. A hidden line is set in the day's play (between 300 and 2,500 ZC staked, sealed by hash at midnight); the bet that crosses it pays the Jackpot to one player drawn from everyone who played that day, by stake. After 11 PM Central the next bet pays it. A day nobody plays rolls into the next. It's the house's money, so it sits outside the hourly cap."));
+    const check = K.el("li");
+    const checkLink = K.el("a", "cas-rules-link", "Check a seed");
+    checkLink.href = "/?view=verify";
+    checkLink.addEventListener("click", (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+      event.preventDefault();
+      history.pushState({ view: "verify" }, "", "/?view=verify");
+      window.ECV3?.go("verify", { push: false });
+    });
+    check.append(
+      document.createTextNode("Every result comes from a seed whose hash is shown before bets and revealed after — Verify this round on any game page shows both, and "),
+      checkLink,
+      document.createTextNode(" replays any seed: the deck you were dealt, where the bombs were, the path, the angle.")
+    );
+    ul.append(check);
     rules.append(ul);
     panels.results.append(board);
     panels.rules.append(rules);
@@ -202,6 +241,21 @@
         r.inRound.replaceChildren();
         if (g.inRound) { r.inRound.append(document.createTextNode(`${g.inRound} in · `), K.zc(g.staked)); }
         else r.inRound.textContent = "nobody in yet";
+      } else if (g.pvp) {
+        // A PvP table: a lobby with a clock, or nothing until someone sits.
+        if (g.lobby) {
+          const left = Math.max(0, Math.ceil((g.lobby.startsAt - now) / 1000));
+          r.phase.textContent = left > 0 ? "Lobby open" : "Playing";
+          r.phase.className = "cas-phase open";
+          r.clock.textContent = left > 0 ? `${left}s` : "";
+          r.inRound.replaceChildren();
+          r.inRound.append(document.createTextNode(`${g.lobby.players} in · `), K.zc(g.lobby.pot));
+        } else {
+          r.phase.textContent = "Sit down to open a table";
+          r.phase.className = "cas-phase";
+          r.clock.textContent = "";
+          r.inRound.textContent = `20 a seat · starts ${g.lobbySeconds || 60}s after the first`;
+        }
       } else {
         r.phase.textContent = g.inRound ? `${g.inRound} run${g.inRound === 1 ? "" : "s"} live` : "Deal any time";
         r.phase.className = `cas-phase${g.inRound ? " open" : ""}`;
@@ -264,10 +318,14 @@
       build();
       poll();
       pollTimer = window.setInterval(poll, POLL_MS);
+      onVis = () => { if (!document.hidden) poll(); };
+      document.addEventListener("visibilitychange", onVis);
       tickTimer = window.setInterval(renderTiles, 500);
     },
     unmount() {
       window.clearInterval(pollTimer);
+      if (onVis) document.removeEventListener("visibilitychange", onVis);
+      onVis = null;
       window.clearInterval(tickTimer);
       data = null; refs = {};
       document.title = "EastCoin";

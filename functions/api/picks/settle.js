@@ -465,6 +465,7 @@ export async function applyVerdict(env, db, market, result, source) {
     league: market.league || null,
     away: market.away_name,
     home: market.home_name,
+    question: market.question || null,
     winnerName: outcome === "VOID"
       ? null
       : outcome === "home" ? market.home_name : market.away_name,
@@ -572,7 +573,7 @@ export async function onRequestPost(context) {
   // match a second later.
   const closing = await db
     .prepare(
-      `SELECT id, sport, away_name, home_name
+      `SELECT id, sport, away_name, home_name, question
          FROM markets
         WHERE state = 'OPEN'
           AND datetime(starts_at) <= datetime('now')`

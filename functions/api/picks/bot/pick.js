@@ -16,6 +16,7 @@ import { placeWager } from "../_wager.js";
 import {
   say, botGate, findOrCreateUser, openMarkets, matchTeam, formatLine, shortTeam
 } from "./_bot.js";
+import { isProp, shortQuestion } from "../_props.js";
 
 /**
  * "50 bills" or "bills 50" — the integer is the stake, the rest the team.
@@ -68,6 +69,7 @@ export async function onRequestGet(context) {
     return say(`${who} no open game for "${team}". ${markets.length} open — try !odds`);
   }
   if (found.ambiguous) {
+    if (found.prop) return say(`${who} which prop? ${found.ambiguous.join(" or ")} — add a word from it: !pick ${amount} yes <word>`);
     return say(`${who} "${team}" matches ${found.ambiguous.join(" and ")}. Be more specific.`);
   }
   if (found.needSchool) {
@@ -85,6 +87,7 @@ export async function onRequestGet(context) {
   if (!result.ok) {
     if (result.code === "ALREADY_PICKED") {
       const m = found.market;
+      if (isProp(m.sport)) return say(`${who} you already have a pick on "${shortQuestion(m.question, 50)}".`);
       return say(`${who} you already have a pick on ${shortTeam(m.away_name, m.league)} at ${shortTeam(m.home_name, m.league)}.`);
     }
     // placeWager's messages are already written for a person to read.
@@ -94,6 +97,12 @@ export async function onRequestGet(context) {
   const p = result.pick;
   const balance = result.balance == null ? "" : ` Balance: ${Number(result.balance).toLocaleString()}`;
   const allIn = amount === "all" ? " — ALL IN" : "";
+  if (isProp(found.market.sport)) {
+    return say(
+      `${who} locked ${p.wager.toLocaleString()} on ${String(p.team).toUpperCase()} ${formatLine(p.odds)}${allIn} — "${shortQuestion(found.market.question, 50)}" ` +
+      `→ ${p.returnsIfWon.toLocaleString()} back if it lands.${balance}`
+    );
+  }
   return say(
     `${who} locked ${p.wager.toLocaleString()} on ${shortTeam(p.team, found.market.league)} ${formatLine(p.odds)}${allIn} ` +
     `→ ${p.returnsIfWon.toLocaleString()} back if they win.${balance}`

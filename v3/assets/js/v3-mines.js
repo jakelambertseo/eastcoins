@@ -27,6 +27,8 @@
   const fmt = K.fmt;
 
   async function poll() {
+    // A hidden tab is not being watched, and the board only moves when the player picks.
+    if (document.hidden) return;
     try {
       const payload = await fetch("/api/casino/mines/state", { credentials: "include" }).then((r) => r.json());
       if (!payload?.ok) throw new Error(payload?.code || "state");
@@ -207,6 +209,7 @@
     room.append(rh, refs.roomList);
 
     col.append(you, pays, fair, room);
+    window.ECPot?.mount(col, { compact: true });
     grid.append(col);
     page.append(grid);
 
@@ -330,6 +333,7 @@
       refs.fairBody.textContent = shown.seed
         ? `board hash  ${shown.hash}   (shown at the start)\nseed        ${shown.seed}   (revealed when the board ended)\nbombs       ${(shown.bombs || []).join(", ")}\ncheck       sha256(seed) = hash · bombs = first ${shown.mines} of 0..24 shuffled by sha256(seed:shuffle:i)`
         : `board hash  ${shown.hash}   (shown at the start)\nseed        revealed when the board ends`;
+      K.verifyLink(refs.fair, shown.seed ? { game: "mines", seed: shown.seed, hash: shown.hash, mines: shown.mines } : null);
     } else {
       refs.fair.hidden = true;
     }

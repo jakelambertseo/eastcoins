@@ -22,7 +22,8 @@ import { ADMIN_ALLOWLIST, getSessionUser, sayInChat, walletWritesEnabled, json, 
 import { applyVerdict } from "../settle.js";
 import { composeSettled } from "../_announce.js";
 import { discordEnabled, postDiscord, settledEmbed } from "../_discord.js";
-import { isFight } from "../_fights.js";
+import { isManual } from "../_fights.js";
+import { isProp, matchup, sideLabel } from "../_props.js";
 
 export async function onRequestPost(context) {
   try {
@@ -59,18 +60,21 @@ async function handle(context) {
   }
 
   const market = await db
-    .prepare(`SELECT id, sport, league, away_name, home_name, starts_at, state, winner FROM markets WHERE id = ? LIMIT 1`)
+    .prepare(`SELECT id, sport, league, away_name, home_name, question, starts_at, state, winner FROM markets WHERE id = ? LIMIT 1`)
     .bind(marketId)
     .first();
   if (!market) return fail("NO_MARKET", "That market doesn't exist.", 404);
 
-  if (!isFight(market.sport)) {
-    return fail("NOT_A_FIGHT", "Only boxing and MMA markets are settled by hand. Team games settle from the scores feed.", 409);
+  if (!isManual(market.sport)) {
+    return fail("NOT_A_FIGHT", "Only fights and props are settled by hand. Team games settle from the scores feed.", 409);
   }
   if (market.state === "SETTLED" || market.state === "VOID") {
     return fail("ALREADY_FINISHED", `That market is already ${market.state}.`, 409);
   }
-  if (new Date(market.starts_at).getTime() > Date.now()) {
+  // A prop can be called the moment the answer is known, close time or
+  // not: applyVerdict moves it to SETTLING first, so no pick can land
+  // after the call. A fight still waits for the first bell.
+  if (!isProp(market.sport) && new Date(market.starts_at).getTime() > Date.now()) {
     return fail("NOT_STARTED", "The fight hasn't started yet. Betting closes at the first bell; settle it after that.", 409);
   }
 
@@ -98,9 +102,9 @@ async function handle(context) {
     return fail("WALLET_NOT_CONFIGURED", "There are picks to pay but ZCoin transfers aren't configured. Nothing was changed.", 503);
   }
 
-  const winnerName = outcome === "home" ? market.home_name : outcome === "away" ? market.away_name : null;
+  const winnerName = outcome === "VOID" ? null : sideLabel(market, outcome);
   const detail = outcome === "VOID"
-    ? `Draw${note ? " · " + note : ""}`
+    ? `${isProp(market.sport) ? "Voided" : "Draw"}${note ? " · " + note : ""}`
     : `${winnerName}${note ? " · " + note : ""}`;
 
   const result = await applyVerdict(
@@ -113,7 +117,7 @@ async function handle(context) {
   const line = composeSettled([result]);
   if (line) {
     const said = await sayInChat(context.env, line);
-    if (!said.ok) console.error(`Picks: couldn't announce ${market.away_name} vs ${market.home_name}: ${said.error}`);
+    if (!said.ok) console.error(`Picks: couldn't announce ${matchup(market)}: ${said.error}`);
   }
   if (discordEnabled(context.env)) {
     const card = settledEmbed(result);
@@ -133,7 +137,7 @@ async function handle(context) {
   }
   return json({
     ok: true,
-    market: { id: marketId, away: market.away_name, home: market.home_name },
+    market: { id: marketId, away: market.away_name, home: market.home_name, question: market.question || null },
     outcome,
     ...counts
   });

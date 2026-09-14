@@ -128,20 +128,30 @@
     return now >= start && now - start < 4 * 60 * 60 * 1000;
   }
 
-  function sortWithin(key, list) {
+  /* Inside a sport: whatever people here are watching comes first (the
+     presence feed's counts by event id, when the caller has them), then
+     the league order, then live before upcoming, then the provider's
+     popular flag, then start time. */
+  function sortWithin(key, list, watching = {}) {
+    const eyes = (m) => Number(watching[String(m?.id ?? "")]) || 0;
+    const hot = (m) => Number(Boolean(m?.popular));
     return [...list].sort((a, b) => {
+      const eyesDelta = eyes(b) - eyes(a);
+      if (eyesDelta) return eyesDelta;
       if (key === "american-football") {
         const leagueDelta = footballRank(a) - footballRank(b);
         if (leagueDelta) return leagueDelta;
       }
       const liveDelta = Number(isLive(b)) - Number(isLive(a));
       if (liveDelta) return liveDelta;
+      const hotDelta = hot(b) - hot(a);
+      if (hotDelta) return hotDelta;
       return (Number(a.date) || 0) - (Number(b.date) || 0);
     });
   }
 
   /** Returns [[key, sortedMatches], ...] in the canonical running order. */
-  function grouped(matches) {
+  function grouped(matches, watching = {}) {
     const groups = new Map();
     for (const match of matches.filter(keep)) {
       const key = sportKey(match);
@@ -158,7 +168,7 @@
         if (aLive !== bLive) return bLive - aLive;
         return b[1].length - a[1].length;
       })
-      .map(([key, list]) => [key, sortWithin(key, list)]);
+      .map(([key, list]) => [key, sortWithin(key, list, watching)]);
   }
 
   /* streamed.st sometimes lists one game twice: the full entry (art,

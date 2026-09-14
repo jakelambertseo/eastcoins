@@ -30,6 +30,7 @@
 
   async function poll() {
     if (dropping) return;                 // never redraw mid-flight
+    if (document.hidden) return;          // nobody is looking; the board only moves on a drop
     try {
       const payload = await fetch("/api/casino/plinko/state", { credentials: "include" }).then((r) => r.json());
       if (!payload?.ok) throw new Error(payload?.code || "state");
@@ -229,6 +230,7 @@
     room.append(rh, refs.roomList);
 
     col.append(you, pays, fair, room);
+    window.ECPot?.mount(col, { compact: true });
     grid.append(col);
     page.append(grid);
 
@@ -337,6 +339,7 @@
       last ? `last path       ${last.path}  ->  bucket ${last.bucket}  ×${last.multiplier}` : "",
       "check           sha256(seed) = hash · step i goes right when sha256(seed:i) is odd"
     ].filter(Boolean).join("\n");
+    K.verifyLink(refs.fair, last?.seed ? { game: "plinko", seed: last.seed, hash: last.hash } : null);
 
     // Room
     const room = data.room || [];
