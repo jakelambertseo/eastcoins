@@ -4197,7 +4197,9 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
 .pot-foot b{color:var(--muted)}
 .pot-how{color:var(--gold);font-weight:800;text-decoration:none;margin-left:auto}
 .pot-how:hover{text-decoration:underline}
-.pot-paid{margin-top:6px;font-size:.95rem;color:var(--text)}
+.pot-paid{margin-top:6px;font-size:.95rem;color:var(--text);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pot-av{width:34px;height:34px;font-size:.7rem;border:2px solid rgba(var(--gold-rgb),.6);box-shadow:0 0 12px rgba(var(--gold-rgb),.25)}
+.pot-hit-av{width:52px;height:52px;margin:2px auto 8px;font-size:.9rem;border:2px solid var(--gold);box-shadow:0 0 18px rgba(var(--gold-rgb),.45)}
 .pot-paid .ulink{font-weight:800}
 .pot-note{margin:6px 0 0;color:var(--muted-2);font-size:.78rem}
 .pot.compact .pot-amt{margin:2px 0 6px}

@@ -55,7 +55,9 @@
 
     if (paid && pot.winner) {
       const w = el("div", "pot-paid");
-      const who = K()?.nameLink ? K().nameLink({ login: pot.winner.login, displayName: pot.last?.login === pot.winner.login ? pot.last.displayName : pot.winner.login }) : el("b", null, pot.winner.login);
+      const person = { login: pot.winner.login, displayName: pot.winner.displayName || (pot.last?.login === pot.winner.login ? pot.last.displayName : pot.winner.login), avatar: pot.winner.avatar || (pot.last?.login === pot.winner.login ? pot.last.avatar : "") };
+      const who = K()?.nameLink ? K().nameLink(person) : el("b", null, person.displayName);
+      if (K()?.avatar) w.append(K().avatar(person, "cf-av pot-av"));
       w.append(who, document.createTextNode(" took "), K()?.zc ? K().zc(pot.amount) : el("b", null, `${nums(pot.amount)} ZC`), document.createTextNode(` at ${new Date(pot.paidAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`));
       box.append(w);
       box.append(el("p", "pot-note", "Tomorrow's Jackpot opens at midnight Central."));
@@ -102,7 +104,8 @@
     const banner = el("div", "pot-hit");
     banner.append(el("div", "pot-hit-k", "JACKPOT"));
     const h = el("div", "pot-hit-h");
-    h.append(el("b", null, pot.winner?.login || "someone"), document.createTextNode(" takes "), el("b", "nums", `${nums(pot.amount)} ZC`));
+    if (K()?.avatar) banner.append(K().avatar({ login: pot.winner?.login, displayName: pot.winner?.displayName, avatar: pot.winner?.avatar }, "cf-av pot-hit-av"));
+    h.append(el("b", null, pot.winner?.displayName || pot.winner?.login || "someone"), document.createTextNode(" takes "), el("b", "nums", `${nums(pot.amount)} ZC`));
     banner.append(h);
     banner.append(el("p", null, `Drawn from ${nums(pot.players)} players by stake. Tomorrow's Jackpot opens at midnight Central.`));
     const x = el("button", "pot-hit-x", "✕"); x.type = "button"; x.addEventListener("click", () => banner.remove());

@@ -251,7 +251,9 @@ export async function publicPot(db, now = Date.now(), viewerId = null) {
     yours,
     share: total > 0 && yours > 0 ? Math.round((yours / total) * 1000) / 10 : 0,
     paidAt: paid ? String(pot.paid_at).replace(" ", "T") + "Z" : null,
-    winner: paid ? { login: pot.winner_login, total: Number(pot.total_stake), draw: Number(pot.draw) } : null,
+    // The face and name come from the same row the last-winner read
+    // fetched: when today's pot has paid, today IS the last winner.
+    winner: paid ? { login: pot.winner_login, displayName: String(last?.day === pot.day && last?.display_name ? last.display_name : pot.winner_login), avatar: String(last?.day === pot.day ? last?.avatar_url || "" : ""), total: Number(pot.total_stake), draw: Number(pot.draw) } : null,
     last: last ? { day: last.day, amount: Number(last.amount), login: last.winner_login, displayName: String(last.display_name || last.winner_login), avatar: String(last.avatar_url || ""), at: String(last.paid_at).replace(" ", "T") + "Z" } : null,
     ms: Date.now() - t0
   };
