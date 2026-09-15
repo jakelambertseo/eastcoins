@@ -103,21 +103,28 @@
     head.append(refs.me);
     page.append(head);
 
-    refs.tiles = K.el("div", "cas-tiles");
+    /* Portrait colour panels with the name on the art and the live
+       line under it, the way a casino lobby usually reads. The blurb
+       and who is in the room moved to the card's title, so the face
+       carries the game and its state and nothing else. These are
+       `cas-card`, not `cas-tile`: the Game Room still uses `cas-tile`
+       and is not part of this. */
+    refs.tiles = K.el("div", "cas-cards");
     for (const [key, g] of Object.entries(GAMES)) {
       if (g.hidden) continue;
-      const tile = K.el("a", `cas-tile cas-${key}`);
+      const tile = K.el("a", `cas-card cas-${key}`);
       tile.href = `/?view=${g.route}`;
       tile.addEventListener("click", (event) => {
         if (event.metaKey || event.ctrlKey || event.shiftKey) return;
         event.preventDefault();
         go(g.route);
       });
-      const top = K.el("div", "cas-tile-top");
-      // An image where a game has one (the 7TV emote on Russian Roulette),
-      // the emoji otherwise. The emoji stays as the alt so a failed load
-      // still reads.
-      const icon = K.el("span", "cas-icon", g.iconUrl ? "" : g.icon);
+
+      const art = K.el("div", "cas-card-art");
+      // An image where a game has one (the 7TV emote on Russian
+      // Roulette), the emoji otherwise. The emoji stays as the alt so a
+      // failed load still reads.
+      const icon = K.el("span", "cas-card-ico", g.iconUrl ? "" : g.icon);
       if (g.iconUrl) {
         const img = document.createElement("img");
         img.src = g.iconUrl;
@@ -126,18 +133,19 @@
         img.decoding = "async";
         icon.append(img);
       }
-      top.append(icon, K.el("h2", null, g.title));
-      const status = K.el("div", "cas-status");
-      const clock = K.el("span", "cas-clock nums", "—");
-      const phase = K.el("span", "cas-phase", "");
-      status.append(phase, clock);
-      const meta = K.el("div", "cas-meta");
-      const inRound = K.el("span", null, "");
-      const room = K.el("span", null, "");
-      meta.append(inRound, room);
-      const people = K.el("div", "cas-people wh-list");
-      tile.append(top, K.el("p", "cas-blurb", g.blurb), status, meta, people, K.el("span", "cas-play", "Play →"));
-      refs[`tile_${key}`] = { tile, clock, phase, inRound, room, people, peopleSig: "" };
+      const name = K.el("div", "cas-card-name");
+      name.append(K.el("b", null, g.title), K.el("small", null, "EastCoin original"));
+      art.append(icon, name);
+
+      const live = K.el("div", "cas-card-live");
+      const dot = K.el("i", "cas-card-dot");
+      const phase = K.el("span", "cas-card-phase", "");
+      const clock = K.el("b", "cas-card-clock nums", "");
+      const room = K.el("span", "cas-card-room", "");
+      live.append(dot, phase, clock, room);
+
+      tile.append(art, live);
+      refs[`tile_${key}`] = { tile, clock, phase, room, blurb: g.blurb, peopleSig: "" };
       refs.tiles.append(tile);
     }
     page.append(refs.tiles);
@@ -236,64 +244,47 @@
     for (const g of data.games) {
       const r = refs[`tile_${g.key}`];
       if (!r) continue;
+      let phase = "";
+      let clock = "";
+      let hot = false;
+
       if (g.round && !g.room && !g.inRound) {
-        // Nobody there: the clock is not running for anyone.
-        r.phase.textContent = "Waiting for a player";
-        r.phase.className = "cas-phase";
-        r.clock.textContent = "";
-        r.inRound.textContent = "opens when someone sits down";
+        phase = "Waiting for a player";              // the clock runs for nobody
       } else if (g.round) {
         const inBets = now < g.round.closesAt;
         const left = Math.max(0, Math.ceil(((inBets ? g.round.closesAt : g.round.endsAt) - now) / 1000));
-        r.phase.textContent = inBets ? "Bets open" : g.key === "race" ? "Running" : g.key === "wheel" ? "Spinning" : "Result";
-        r.phase.className = `cas-phase${inBets ? " open" : ""}`;
-        r.clock.textContent = `${left}s`;
-        r.inRound.replaceChildren();
-        if (g.inRound) { r.inRound.append(document.createTextNode(`${g.inRound} in · `), K.zc(g.staked)); }
-        else r.inRound.textContent = "nobody in yet";
+        phase = inBets ? "Bets open" : g.key === "race" ? "Running" : g.key === "wheel" ? "Spinning" : "Result";
+        clock = `${left}s`;
+        hot = inBets;
       } else if (g.pvp) {
-        // A PvP table: a lobby with a clock, or nothing until someone sits.
         if (g.lobby) {
           const left = Math.max(0, Math.ceil((g.lobby.startsAt - now) / 1000));
-          r.phase.textContent = left > 0 ? "Lobby open" : "Playing";
-          r.phase.className = "cas-phase open";
-          r.clock.textContent = left > 0 ? `${left}s` : "";
-          r.inRound.replaceChildren();
-          r.inRound.append(document.createTextNode(`${g.lobby.players} in · `), K.zc(g.lobby.pot));
+          phase = left > 0 ? "Lobby open" : "Playing";
+          clock = left > 0 ? `${left}s` : "";
+          hot = true;
         } else {
-          r.phase.textContent = "Sit down to open a table";
-          r.phase.className = "cas-phase";
-          r.clock.textContent = "";
-          r.inRound.textContent = `20 a seat · starts ${g.lobbySeconds || 60}s after the first`;
+          phase = "Sit down to open a table";
         }
       } else {
-        r.phase.textContent = g.inRound ? `${g.inRound} run${g.inRound === 1 ? "" : "s"} live` : "Deal any time";
-        r.phase.className = `cas-phase${g.inRound ? " open" : ""}`;
-        r.clock.textContent = "";
-        r.inRound.textContent = "your own deck";
+        phase = g.inRound ? `${g.inRound} run${g.inRound === 1 ? "" : "s"} live` : "Deal any time";
+        hot = Boolean(g.inRound);
       }
-      r.room.textContent = `${g.room} in the room`;
-      renderPeople(r, g.people || []);
-    }
-  }
 
-  /** The room's people as the same chips the Sports page's Who's here uses. */
-  function renderPeople(r, people) {
-    const sig = people.map((p) => p.login).join(",");
-    if (sig === r.peopleSig) return;
-    r.peopleSig = sig;
-    r.people.replaceChildren();
-    const shown = people.slice(0, 4);
-    for (const p of shown) {
-      const chip = K.el("a", "wh-chip ulink");
-      chip.href = `/u/${encodeURIComponent(p.login)}`;
-      chip.title = p.displayName;
-      chip.addEventListener("click", (event) => event.stopPropagation());
-      chip.append(K.avatar(p, "wh-av"), K.el("b", null, p.displayName));
-      r.people.append(chip);
+      r.phase.textContent = phase;
+      r.clock.textContent = clock;
+      const seats = g.pvp && g.lobby ? g.lobby.players : g.room;
+      r.room.textContent = seats ? `${seats} in` : "";
+      r.tile.classList.toggle("hot", hot);
+
+      // The blurb and who is in the room live here rather than on the
+      // face of the card, so nothing was lost by quieting it down.
+      const names = (g.people || []).map((x) => x.displayName || x.login).filter(Boolean);
+      const sig = names.join(",");
+      if (sig !== r.peopleSig) {
+        r.peopleSig = sig;
+        r.tile.title = names.length ? `${r.blurb}\n\nIn the room: ${names.join(", ")}` : r.blurb;
+      }
     }
-    if (people.length > shown.length) r.people.append(K.el("span", "wh-chip guests", `+${people.length - shown.length} more`));
-    r.people.hidden = !people.length;
   }
 
   function renderBoard() {
