@@ -3261,7 +3261,11 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
    these. Every panel is one accent plus a fixed scrim, so the name is
    legible on a pale hue and a dark one alike and a new game needs one
    colour, not a hand-tuned pair. */
-.cas-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:12px;margin-bottom:16px}
+/* Four to a row, counted rather than fitted: auto-fill packed as many
+   as the width allowed, which put seven on a desktop and made each one
+   a thumbnail. The max-width stops a very wide screen from inflating
+   four cards to the size of posters. */
+.cas-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px;max-width:1080px}
 .cas-card{display:flex;flex-direction:column;gap:7px;text-decoration:none;color:inherit;min-width:0}
 .cas-card-art{
   position:relative;aspect-ratio:3/4;border-radius:11px;overflow:hidden;
@@ -3327,10 +3331,10 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .cas-card.cas-race{--card-rgb:170,116,48}
 .cas-card{--card-rgb:90,90,104}
 @media (prefers-reduced-motion:reduce){.cas-card-art{transition:none}.cas-card:hover .cas-card-art{transform:none}}
-@media (max-width:520px){
-  .cas-cards{grid-template-columns:repeat(auto-fill,minmax(126px,1fr));gap:10px}
+@media (max-width:980px){.cas-cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:620px){
+  .cas-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .cas-card-ico{font-size:2.6rem}
-  .cas-card-name b{font-size:.88rem}
 }
 
 .cas-ledger-head{

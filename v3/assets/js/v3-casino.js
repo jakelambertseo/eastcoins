@@ -143,7 +143,7 @@
       pic.className = "cas-card-img";
       pic.src = `/v3/assets/img/casino/${key}.webp`;
       pic.alt = "";
-      pic.width = 420; pic.height = 560;
+      pic.width = 540; pic.height = 720;
       pic.decoding = "async";
       pic.addEventListener("error", () => { pic.remove(); art.classList.add("no-art"); });
       const icon = K.el("span", "cas-card-ico", g.icon || "");
