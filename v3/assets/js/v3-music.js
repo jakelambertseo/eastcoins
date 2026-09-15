@@ -1601,7 +1601,15 @@
       link.href = SKIN_FONTS;
       document.head.append(link);
     }
+    // The skins' stylesheet (about 8 KB) belongs to this page alone.
+    function needSkinsCss() {
+      if (document.getElementById("css-skins")) return;
+      const link = document.createElement("link");
+      link.id = "css-skins"; link.rel = "stylesheet"; link.href = "/v3/assets/css/v3-skins.css?v=1";
+      document.head.append(link);
+    }
     function applySkin(key) {
+      needSkinsCss();
       if (root) { if (key) root.dataset.skin = key; else delete root.dataset.skin; }
       if (key) document.body.dataset.musicSkin = key; else delete document.body.dataset.musicSkin;
       if (NEEDS_FONTS.has(key)) loadSkinFonts();

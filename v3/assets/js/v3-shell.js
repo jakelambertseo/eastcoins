@@ -51,6 +51,75 @@
   // item: the only way in is a link.
   const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre"];
 
+  /* ------------------------------------------------------ loading views
+
+     Until 2026-09-16 all 45 scripts loaded on every page — 284 KB
+     compressed — and, because a deferred script cannot run until every
+     deferred script before it has, the casino (around position 30)
+     waited on the Green Room, the admin page and the Game Room before
+     it could register. Now only the shell and its chrome are eager;
+     each route names the files it needs, dependencies first, and they
+     are injected the first time that route is opened. Views already
+     boot with a retry that tolerates registering late, so none of them
+     changed. The versioned URLs come from the inert tags in index.html,
+     so bump.mjs keeps working and a file loads once per page. */
+  const LOGOS = ["v3-cfb-teams.js", "v3-logos.js"];
+  const SPORTS = ["eastcoins-ppv-api.js", "eastcoins-streamed-api.js", ...LOGOS, "v3-sports.js"];
+  const KIT = ["v3-casino-kit.js", "v3-pot.js"];
+  const GROUPS = {
+    events: [...SPORTS, "v3-scores.js", "v3-activity.js", "v3-pickbox.js", "v3-tonight.js", "v3-events.js"],
+    multiview: [...SPORTS, "v3-multiview.js"],
+    watch: [...SPORTS, "v3-gameday.js", "eastcoins-youtube.js", "v3-watch.js"],
+    picks: [...LOGOS, "v3-scores.js", "v3-pickbox.js", "v3-picks.js"],
+    game: [...LOGOS, "v3-pickbox.js", "v3-game.js"],
+    profile: [...LOGOS, "v3-profile.js"],
+    users: ["v3-users.js"],
+    activity: [...LOGOS, "v3-activity.js"],
+    music: ["eastcoins-music-config.js", "eastcoins-youtube.js", "v3-activity.js", "v3-music.js"],
+    screen: ["v3-screen.js"],
+    admin: ["v3-admin.js"],
+    dashboard: ["v3-dashboard.js"],
+    verify: ["v3-verify.js"],
+    casino: [...KIT, "v3-activity.js", "v3-casino.js"],
+    flip: [...KIT, "v3-coin.js"], wheel: [...KIT, "v3-wheel.js"], race: [...KIT, "v3-race.js"],
+    hilo: [...KIT, "v3-hilo.js"], mines: [...KIT, "v3-mines.js"], plinko: [...KIT, "v3-plinko.js"], scratch: [...KIT, "v3-scratch.js"],
+    roulette: [...KIT, "v3-pvp.js"], standing: [...KIT, "v3-pvp.js"],
+    games: [...KIT, "v3-games.js"], helmet: [...KIT, ...LOGOS, "v3-helmet.js"], fg: [...KIT, "v3-fg.js"], simon: [...KIT, "v3-simon.js"], centre: [...KIT, "v3-centre.js"]
+  };
+  const lazySrc = new Map();
+  for (const t of document.querySelectorAll("script[data-lazy]")) {
+    const src = t.getAttribute("src") || "";
+    lazySrc.set(src.split("/").pop().split("?")[0], src);
+  }
+  const loads = new Map();              // file -> promise, so a file loads once
+  function loadOne(name) {
+    if (loads.has(name)) return loads.get(name);
+    const src = lazySrc.get(name);
+    const p = !src ? Promise.resolve() : new Promise((done) => {
+      const el = document.createElement("script");
+      el.src = src;
+      el.async = false;                 // keeps insertion order among these
+      el.onload = done;
+      el.onerror = done;                // a missing file must not wedge the route
+      document.head.append(el);
+    });
+    loads.set(name, p);
+    return p;
+  }
+  const pending = new Set();
+  function ensure(route) {
+    const files = GROUPS[route];
+    if (!files || views[route] || pending.has(route)) return;
+    pending.add(route);
+    Promise.all(files.map(loadOne)).then(() => {
+      pending.delete(route);
+      // The view registers itself when its script runs; if it has not
+      // (a 404, say) and this is still the page, say so rather than
+      // leaving the empty space.
+      if (!views[route] && state.route === route) render();
+    });
+  }
+
   /* ------------------------------------------------------------ legacy URLs
 
      Every link anyone has already pasted into chat was produced by the
@@ -204,11 +273,22 @@
     return new Date().toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "numeric" }) === "10";
   }
 
+  /* A stylesheet the page needs only sometimes, linked once. The October
+     theme and the Green Room skins left v3.css on 2026-09-16 so the nine
+     skins and a month's dressing stop shipping to every page all year. */
+  function needCss(id, href) {
+    if (document.getElementById(id)) return;
+    const link = document.createElement("link");
+    link.id = id; link.rel = "stylesheet"; link.href = href;
+    document.head.append(link);
+  }
+
   function applySeason() {
     const pref = spookyChoice();
     const on = pref === "1" || (pref === "auto" && spookyByDate());
     document.body.classList.toggle("spooky", on);
     document.body.classList.toggle("full", on);
+    if (on) needCss("css-spooky", "/v3/assets/css/v3-spooky.css?v=1");
 
     const sw = document.getElementById("spookyToggle");
     if (sw) {
@@ -250,6 +330,7 @@
 
   function render() {
     const view = views[state.route];
+    if (!view) ensure(state.route);
 
     for (const link of els.navLinks) {
       // A game page is a Picks page as far as the nav is concerned.
@@ -280,7 +361,14 @@
     document.title = TITLES[state.route] || "EastCoin";
 
     if (!view) {
-      els.view.append(stub("Not built yet", "This view arrives in a later phase."));
+      if (GROUPS[state.route] && pending.has(state.route)) {
+        // Its script is on the way; hold the space rather than flash a title.
+        const hold = document.createElement("div");
+        hold.className = "view-loading";
+        els.view.append(hold);
+      } else {
+        els.view.append(stub("Not built yet", "This view arrives in a later phase."));
+      }
       return;
     }
     view.mount(els.view, { state, go, stub });
@@ -628,6 +716,9 @@
   /* ---------------------------------------------------------- wiring */
 
   for (const link of els.navLinks) {
+    // Start fetching a page's script when the pointer reaches its link,
+    // so the click usually finds it already there.
+    link.addEventListener("mouseenter", () => { if (link.dataset.route) ensure(link.dataset.route); }, { passive: true });
     link.addEventListener("click", (event) => {
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
       const name = link.dataset.route;
@@ -856,6 +947,9 @@
 
   state.route = routeFromUrl();
   loadPrefs();
+  // The floating player lives in the Green Room's script; if it is
+  // switched on it must be there on every page, not only after a visit.
+  try { if (localStorage.getItem("ec_v3_music_dock") === "1") ensure("music"); } catch { /* private mode */ }
   setChatVisible(prefs.chat);
   applyPrefs();
   armChatLoad();
