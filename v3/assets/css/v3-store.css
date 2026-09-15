@@ -118,3 +118,15 @@
 .st-msg-link{margin-left:4px;font-weight:800;color:inherit;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
 .st-msg-link:hover{color:#fff}
 .st-msg-link:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
+
+/* ---- the All / Owned filter (2026-09-15) */
+.st-filter{display:inline-flex;align-self:flex-start;gap:4px;padding:4px;border-radius:12px;border:1px solid var(--line);background:var(--panel)}
+.st-filter-btn{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:9px;border:0;background:none;color:var(--muted);font:inherit;font-size:.84rem;font-weight:700;cursor:pointer}
+.st-filter-btn em{font-style:normal;font-size:.72rem;padding:1px 7px;border-radius:999px;background:var(--panel-3);color:var(--muted-2)}
+.st-filter-btn:hover{color:var(--text)}
+.st-filter-btn.on{background:var(--gold-dim);color:var(--gold)}
+.st-filter-btn.on em{background:rgba(var(--gold-rgb),.2);color:var(--gold)}
+.st-filter-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.st-empty{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:22px;border:1px dashed var(--line-2);border-radius:14px;background:var(--panel)}
+.st-empty b{font-family:var(--display);font-size:1.15rem}
+.st-empty p{margin:0;color:var(--muted);font-size:.88rem}

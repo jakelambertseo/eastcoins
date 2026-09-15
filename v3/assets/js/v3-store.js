@@ -13,7 +13,7 @@
    accepts an id, league and name and builds the photo URL itself.
    ============================================================ */
 (() => {
-  const CSS = "/v3/assets/css/v3-store.css?v=6";
+  const CSS = "/v3/assets/css/v3-store.css?v=7";
   const ESPN_SEARCH = "https://site.web.api.espn.com/apis/common/v3/search";
   const PLAYER_LEAGUES = new Set(["nfl", "mlb", "nba"]);
 
@@ -23,7 +23,8 @@
   let searchSeq = 0;
   const S = {
     cat: null, profile: null, hover: null, hoverPlayer: null, confirm: null, busy: false, msg: null,
-    titleDraft: null, messageDraft: null, playerQ: "", playerResults: [], playerNote: ""
+    titleDraft: null, messageDraft: null, playerQ: "", playerResults: [], playerNote: "",
+    view: "all"   // "all" | "owned": the shelves' filter
   };
 
   function el(tag, className, text) {
@@ -339,6 +340,20 @@
     const layout = el("div", "st-layout");
     layout.append(preview());
     const shelves = el("div", "st-shelves");
+    // All items, or only what you own — for switching looks without
+    // scrolling the whole catalogue.
+    const ownedCount = S.cat.items.filter((i) => owns(i.id)).length;
+    const bar = el("div", "st-filter");
+    bar.setAttribute("role", "group");
+    bar.setAttribute("aria-label", "Show items");
+    for (const [key, label, n] of [["all", "All items", S.cat.items.length], ["owned", "Owned", ownedCount]]) {
+      const b = btn("", `st-filter-btn${S.view === key ? " on" : ""}`, () => { S.view = key; S.confirm = null; paint(); });
+      b.setAttribute("aria-pressed", String(S.view === key));
+      b.append(document.createTextNode(label), el("em", "nums", String(n)));
+      bar.append(b);
+    }
+    shelves.append(bar);
+
     if (S.msg) {
       const note = el("p", `st-msg ${S.msg.tone}`, S.msg.text);
       // After something goes on, send them to see it where it lives.
@@ -349,8 +364,16 @@
       }
       shelves.append(note);
     }
+    if (S.view === "owned" && !ownedCount) {
+      const empty = el("div", "st-empty");
+      empty.append(el("b", null, "You don't own anything yet."), el("p", null, "Everything you buy or claim shows up here, ready to switch on and off."));
+      const free = S.cat.items.find((i) => i.price === 0 && !owns(i.id));
+      if (free) empty.append(btn(`Claim ${free.name} free →`, "st-btn gold", () => { S.view = "all"; buy(free); }));
+      else empty.append(btn("Browse all items", "st-btn gold", () => { S.view = "all"; paint(); }));
+      shelves.append(empty);
+    }
     for (const [slot, label] of Object.entries(S.cat.slots)) {
-      const items = S.cat.items.filter((i) => i.slot === slot);
+      const items = S.cat.items.filter((i) => i.slot === slot && (S.view !== "owned" || owns(i.id)));
       if (!items.length) continue;
       const sec = el("section", "st-shelf");
       const h = el("h2", null, label);
@@ -396,7 +419,7 @@
     mount(container) {
       root = container;
       needCss();
-      Object.assign(S, { hover: null, hoverPlayer: null, confirm: null, busy: false, msg: null, titleDraft: null, messageDraft: null, playerQ: "", playerResults: [], playerNote: "" });
+      Object.assign(S, { hover: null, hoverPlayer: null, confirm: null, busy: false, msg: null, titleDraft: null, messageDraft: null, playerQ: "", playerResults: [], playerNote: "", view: "all" });
       load();
     },
     unmount() { token += 1; clearTimeout(searchTimer); root = null; }
