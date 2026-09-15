@@ -4425,6 +4425,7 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
   color:var(--gold);white-space:nowrap;
 }
 .tc-case-label i{font-style:normal;font-size:.5rem;opacity:.7}
+.tc-hint{margin:8px 0 0;text-align:center;font-size:.68rem;color:var(--muted-2)}
 
 .tc{
   position:relative;width:100%;aspect-ratio:2.5/3.5;

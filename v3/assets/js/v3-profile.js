@@ -593,7 +593,12 @@
     const cardCase = el("div", "tc-case");
     const label = el("div", "tc-case-label");
     label.append(el("i", null, "◆"), el("span", null, "EastCoin Trading Card"), el("i", null, "◆"));
-    cardCase.append(label, tradingCard(data));
+    const card = tradingCard(data);
+    const hint = el("p", "tc-hint", "Click to turn card over.");
+    card.addEventListener("click", () => {
+      hint.textContent = card.classList.contains("turned") ? "Click to turn card back." : "Click to turn card over.";
+    });
+    cardCase.append(label, card, hint);
     head.append(cardCase);
     const copy = el("div", "pf-copy");
     const name = el("h1", null, u.displayName);
