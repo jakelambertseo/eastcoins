@@ -622,6 +622,74 @@
 > Decided rows only (WON/LOST/BUST/CASHED); anything live counts as
 > neither.
 >
+> **Page speed (2026-09-16)** — seven changes from an overnight audit,
+> all measured on the live site. Cold JS per route went from **284 KB
+> on every page** to: home 82, picks 65, music 56, profile 53, casino
+> 50, a casino game 42, Game Room 39 (compressed). Bootstrap 159 → 20 KB
+> raw. Fonts 95 → 79 KB, no Google request at load. Core CSS 63 → 54 KB.
+>
+> **Scripts load per route.** `index.html` has FIVE eager scripts
+> (shell, presence, notify, gold, badges); every other `<script>` is an
+> inert tag — `type="text/plain" data-lazy src="…?v=N"` — that the shell
+> reads for the versioned URL and injects the first time a route needs
+> it. `GROUPS` in `v3-shell.js` names each route's files, dependencies
+> first (`LOGOS`, `SPORTS`, `KIT` are the shared sets). **Adding a view
+> means an inert tag in index.html and a GROUPS entry; nothing else.**
+> Views keep their `boot()` retry, so they tolerate registering late; a
+> nav link prefetches on hover; the Green Room's script is forced eager
+> when the floating player is on (`ec_v3_music_dock === "1"`), because
+> `ECMusicDock` lives in it. `bump.mjs` still finds the inert tags.
+> `.view-loading` holds the space while a script is on the way.
+>
+> **Assets are held for a year.** `_headers` marks `/v3/assets/{js,css,
+> fonts,img/casino}/*` `max-age=31536000, immutable`; the `?v=` bump is
+> the invalidation. Unversioned images stay at a day; `index.html` is
+> `no-store`. Pages MERGES directives from every rule that matches a
+> path rather than replacing, which is why a card image shows both
+> `immutable` and a `stale-while-revalidate`. **The hazard this creates:
+> a request for a brand-new asset that races the deployment gets the
+> SPA fallback (the shell, as text/html), and the edge then keeps that
+> under the asset's URL for a year.** It happened to `v3-skins.css?v=1`
+> the night this shipped. So: after a deploy that adds a file, confirm
+> the ORIGIN serves it with a cache-busted fetch (`?v=N&probe=random`
+> returning the right content-type) before anything touches the real
+> URL; and if a real URL is ever poisoned, bump its version — nothing
+> here can purge the edge.
+>
+> **Fonts are self-hosted**: `/v3/assets/fonts/fonts.css` plus two
+> latin woff2 files, preloaded from the head, built from Google's own
+> `@font-face` CSS and then instanced to the axes the site uses
+> (Bricolage wght 700–800 with opsz kept, 75 → 60 KB; Figtree 400–800)
+> with fontTools' `instancer`. The subsetter's glyph pass fails on these
+> files after instancing (a lazy `gvar` lookup), so instance only. The
+> Green Room's retro faces still come from Google on demand.
+>
+> **Avatars**: `ECAvatar.small()` / `.medium()` in the shell swap
+> Twitch's `-300x300.` suffix for `70x70` / `150x150`. Every small render
+> uses `small`; the profile card's `tc-photo` (drawn ~176px) keeps the
+> original. New avatar code should go through it.
+>
+> **Bootstrap carries only ACTIVE ledger rows** (`getCommunityLedger(db,
+> {activeOnly:true})`), which is what the Tonight strip needs; the full
+> 200 are `/api/picks/ledger` (`public, max-age=20`), fetched by the
+> Ledger tab on open and not shrunk back by a refresh.
+>
+> **The casino floor is two endpoints.** `/api/casino/home` is public,
+> holds no viewer data, and is shared at the edge (`max-age=3,
+> stale-while-revalidate=5`), so N tabs polling every 5 s cost the
+> origin one call every few seconds; settlement still runs there.
+> `/api/casino/me` is the viewer's block, `no-store`, polled every 15 s
+> and on tab return. The per-game play counters were NOT folded into
+> GROUP BY queries: the paused games are already skipped and every
+> remaining counter is a single-table query, so there was nothing to
+> fold.
+>
+> **The Green Room skins and the October theme are their own files**
+> (`v3-skins.css`, linked by `applySkin()`; `v3-spooky.css`, linked by
+> `applySeason()` when the season is on). Their `?v=` lives in those JS
+> strings, not in index.html — bump it there when either sheet changes.
+> The per-view CSS split beyond that is still open.
+
 > **D1 reads are the budget that binds, and POLL RATE is what spends them**
 > (2026-09-12) — the free plan allows 5 million rows read a day and the site
 > spent them by about 1:30 PM on a Saturday, 500ing login, presence and the
