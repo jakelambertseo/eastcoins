@@ -292,22 +292,45 @@
 > seed →" under every game's verify block, deep-linking here with the
 > seed and hash filled in; the floor's House rules link to it too.
 >
-> **Casino layout (reordered 2026-09-16)**: the floor **opens on the
-> games**. Head (title, the limits line as the subtitle, and
-> `.cas-headme` holding either the `.cas-mebar` or a login button)
-> → `.cas-tiles` → `.cas-pot` → ticker → `.pf-tabs.cas-tabs` Recent
-> results (paged) / House rules. It had grown the other way about: the
-> ticker, a four-card `.cas-me` summary strip and the Jackpot meter all
-> sat above the tiles, so the games began 528px down a 595px viewport
-> and a laptop opened the casino on everything except a game. People
-> come here to play and mostly click a tile straight away, so anything
-> that is not a game now reads as a footnote under them; the tiles
-> start at 156px. The four `me` numbers (wallet, casino net, record,
-> this hour vs cap, all from `/api/casino/home`) are unchanged, just
-> drawn small in one header bar — the wallet is in the nav pill too, so
-> none of them earned a band of their own. **Anything added to this
-> page goes below the tiles** unless it is a game. Game pages keep
-> stage + side column; the fairness line is a
+> **Casino layout (rebuilt 2026-09-16)**: the floor **opens on the
+> games** and is one screen. Head → `.cas-cards` → the `.cas-ledger-head`
+> fold. It had grown the other way about: a ticker, a four-card
+> `.cas-me` summary strip and the Jackpot meter all sat above the
+> tiles, so the games began 528px down a 595px viewport and a laptop
+> opened the casino on everything except a game. People come here to
+> play and mostly click a card straight away, so **anything added to
+> this page goes below the cards unless it is a game**.
+>
+> The head carries the title, the limits line as the subtitle, and
+> `.cas-headme` → `.cas-mebar`, one pill holding the Jackpot cell
+> (ECPot's, see below) then wallet ("My (coin) Wallet", the only money
+> figure so the only one wearing the coin), net, record and this hour
+> vs cap. **The bar is built once and renderMe() only writes its
+> numbers**: it used to be replaced every five-second poll, which would
+> tear the Jackpot's poller down and stand a new one up at three times
+> its rate. Signed out, the stat cells hide and a login button shows.
+>
+> `.cas-card` is the game card: a portrait colour panel (`--card-rgb`,
+> one value a game) with the art, the name across the bottom, a live
+> line under the panel (phase, countdown, who is in) and, signed in,
+> **how many plays are left this hour**. That limit is TEN PER GAME,
+> not ten across the floor, so it is a number per card; `home.js` counts
+> it with each game's OWN limiter helper (`betsLastHour`,
+> `gamesLastHour`, `dropsLastHour`, `cardsLastHour`, `joinsLastHour`)
+> rather than a query written for the display, so the card and the bet
+> endpoint cannot drift apart — keep it that way. The blurb and who is
+> in the room moved to the card's `title`. **`.cas-card` is the casino's
+> alone; the Game Room still draws `.cas-tile`**, so its accents and
+> layout are separate.
+>
+> The ledger (Recent results paged / House rules) is a **fold that
+> starts closed** — `.cas-ledger-head` is a button, `.cas-ledger-body`
+> is hidden — because it is reference, not a reason anyone opened the
+> casino. Closed the page is ~900px; open, ~1,580. The Jackpot no
+> longer has a card here: `ECPot.mount(el, {pill:true})` draws it as the
+> bar's first cell with the detail on hover, keeping one poll, one
+> cache and the same hit banner. Game pages keep stage + side column
+> and still use `{compact:true}`; the fairness line is a
 > `<details class="cf-verify">` with the full hash and seed, and every
 > ledger is paged with `ECCasino.pager/pageOf`.
 >
