@@ -3,16 +3,28 @@
 
    Cosmetics for the trading card and profile, bought with ZCoins
    (/api/store, /api/store/buy, /api/store/equip). The preview on the
-   left is the REAL profile card — v3-profile.js hands out its
-   tradingCard() — drawn with whatever you have on, and with an item
-   swapped in while you hover it, so what you see is what you get.
+   left is drawn with the profile's OWN pieces — v3-profile.js hands
+   out tradingCard(), nameSpan() and playerChip() — wearing whatever
+   you have on, with an item swapped in while you hover it, so what you
+   see here is what your profile shows.
+
+   The favourite player is chosen from ESPN's player search, fetched
+   by the browser (ESPN refuses Cloudflare's servers); the server only
+   accepts an id, league and name and builds the photo URL itself.
    ============================================================ */
 (() => {
-  const CSS = "/v3/assets/css/v3-store.css?v=1";
+  const CSS = "/v3/assets/css/v3-store.css?v=2";
+  const ESPN_SEARCH = "https://site.web.api.espn.com/apis/common/v3/search";
+  const PLAYER_LEAGUES = new Set(["nfl", "mlb", "nba"]);
 
   let root = null;
   let token = 0;
-  const S = { cat: null, profile: null, hover: null, confirm: null, busy: false, msg: null, titleDraft: null };
+  let searchTimer = 0;
+  let searchSeq = 0;
+  const S = {
+    cat: null, profile: null, hover: null, hoverPlayer: null, confirm: null, busy: false, msg: null,
+    titleDraft: null, messageDraft: null, playerQ: "", playerResults: [], playerNote: ""
+  };
 
   function el(tag, className, text) {
     const node = document.createElement(tag);
@@ -39,46 +51,77 @@
     wrap.append(img, document.createTextNode(Number(n || 0).toLocaleString()));
     return wrap;
   }
-  const mine = () => S.cat?.mine || { owned: [], equipped: {}, titleText: "" };
+  const mine = () => S.cat?.mine || { owned: [], equipped: {}, titleText: "", messageText: "", player: null };
   const owns = (id) => mine().owned.includes(id);
   const itemOf = (id) => S.cat.items.find((i) => i.id === id);
+  const suffix = (id, slot) => String(id || "").slice(slot.length + 1);
 
   /* ---------------------------------------------------------- preview */
 
+  function titleFor(id, custom) {
+    const it = itemOf(id);
+    if (!it) return null;
+    return it.id === "title-custom" ? (custom || null) : (it.text || it.name);
+  }
+
+  /** What the preview wears: what's on, with the hovered item swapped in. */
   function cosmetics() {
     const m = mine();
+    const e = m.equipped;
     const c = {
-      finish: m.equipped.finish, name: m.equipped.name, banner: m.equipped.banner, label: m.equipped.label,
-      title: m.equipped.title && m.titleText ? m.titleText : null
+      finish: e.finish, name: e.name, namefx: e.namefx, banner: e.banner, background: e.background, team: e.team, label: e.label,
+      title: e.title ? titleFor(e.title, m.titleText) : null,
+      message: e.message ? m.messageText || null : null,
+      player: e.player ? m.player : null
     };
-    if (S.hover) {
-      const it = itemOf(S.hover);
-      if (it) c[it.slot] = it.slot === "title" ? (S.titleDraft || m.titleText || "Your title here") : it.id;
+    const it = S.hover ? itemOf(S.hover) : null;
+    if (it) {
+      if (it.slot === "title") c.title = it.id === "title-custom" ? (S.titleDraft || m.titleText || "Your title here") : titleFor(it.id);
+      else if (it.slot === "message") c.message = S.messageDraft || m.messageText || "Your message shows here on your profile.";
+      else if (it.slot === "player") c.player = S.hoverPlayer || m.player || { name: "Your favourite player", position: "", team: "", headshot: "" };
+      else c[it.slot] = it.id;
     }
     return c;
   }
 
   function preview() {
-    const box = el("aside", "st-preview");
     const c = cosmetics();
-    const stage = el("div", `st-stage${c.banner ? ` pf-banner pf-banner-${c.banner.slice(7)}` : ""}`);
     const p = S.profile;
-    if (p && window.ECProfileCard?.tradingCard) {
+    const card = window.ECProfileCard;
+    const box = el("aside", `st-preview${c.background ? ` pbg pbg-${suffix(c.background, "background")}` : ""}`);
+
+    const stage = el("div", `st-stage${c.banner ? ` pf-banner pf-banner-${suffix(c.banner, "banner")}` : ""}`);
+    if (p && card?.tradingCard) {
       const cardCase = el("div", "tc-case");
       const label = el("div", `tc-case-label${c.label ? " foil" : ""}`);
       label.append(el("i", null, "◆"), el("span", null, "EastCoin Trading Card"), el("i", null, "◆"));
-      cardCase.append(label, window.ECProfileCard.tradingCard({ ...p, cosmetics: c }));
+      cardCase.append(label, card.tradingCard({ ...p, cosmetics: c }));
       stage.append(cardCase);
     } else {
       stage.append(el("p", "st-note", "Your card preview couldn't load."));
     }
-    const name = el("p", "st-name");
-    name.append(el("span", `pf-name${c.name ? " nm-" + c.name.slice(5) : ""}`, p?.user?.displayName || S.cat?.login || "You"));
-    box.append(stage, name);
-    const tier = p && window.ECProfileCard?.tierOf ? window.ECProfileCard.tierOf(p.picks) : "base";
+    box.append(stage);
+
+    // A slice of the profile header: name, message, team, player.
+    const mini = el("div", "st-mini");
+    const displayName = p?.user?.displayName || S.cat?.login || "You";
+    const h = el("p", "st-name");
+    h.append(card?.nameSpan ? card.nameSpan(displayName, c) : el("span", "pf-name", displayName));
+    mini.append(h);
+    if (c.message) mini.append(el("p", "pf-msg", c.message));
+    const fav = p?.user?.favourite;
+    const team = el("div", `pf-team st-team${c.team ? " tfx-" + suffix(c.team, "team") : ""}`);
+    const tcopy = el("div");
+    tcopy.append(el("b", null, fav?.name || "Your favourite team"), el("small", null, fav ? `${fav.leagueLabel} · favourite team` : "pick one on your profile"));
+    team.append(tcopy);
+    mini.append(team);
+    if (c.player && card?.playerChip) mini.append(card.playerChip(c.player));
+    box.append(mini);
+
+    const tier = p && card?.tierOf ? card.tierOf(p.picks) : "base";
     box.append(el("p", "st-note", tier !== "base"
-      ? `You've earned the ${tier} finish on the Picks ladder. It shows over any bought finish — the others appear if you drop back.`
-      : S.hover ? "Previewing. Move away to see what you have on." : "This is your card as everyone sees it. Hover an item to try it on."));
+      ? `You've earned the ${tier} finish on the Picks ladder. It shows over any bought finish.`
+      : S.hover ? "Previewing. Move away to see what you have on." : "This is how everyone sees you. Hover an item to try it on."));
     return box;
   }
 
@@ -105,44 +148,104 @@
     if (r?.ok) {
       S.cat.mine = r.mine;
       if (Number.isFinite(Number(r.balance))) { S.cat.balance = Number(r.balance); window.ECV3?.setWallet?.(r.balance); }
-      S.msg = { tone: "good", text: item.slot === "title" ? `Bought ${item.name}. Write your title below to put it on your card.` : `Bought ${item.name}. It's on your profile now.` };
+      const setup = ["title-custom", "message-custom", "player-pick"].includes(item.id);
+      S.msg = { tone: "good", text: setup ? `Bought ${item.name}. Set it up below to put it on your profile.` : `Bought ${item.name}. It's on your profile now.` };
     } else {
       S.msg = { tone: "bad", text: r?.message || "That didn't go through. Nothing was charged." };
     }
     paint();
   }
 
-  async function equip(item, on, text) {
-    const r = await post("/api/store/equip", { slot: item.slot, item: on ? item.id : null, text });
+  async function equip(item, on, extra = {}) {
+    const r = await post("/api/store/equip", { slot: item.slot, item: on ? item.id : null, ...extra });
     if (r?.ok) {
       S.cat.mine = r.mine;
       S.msg = { tone: "good", text: on ? `${item.name} is on.` : `${item.name} is off.` };
       if (item.slot === "title") S.titleDraft = null;
+      if (item.slot === "message") S.messageDraft = null;
+      if (item.slot === "player") { S.hoverPlayer = null; S.playerResults = []; S.playerQ = ""; }
     } else {
       S.msg = { tone: "bad", text: r?.message || "Couldn't change that." };
     }
     paint();
   }
 
+  /* ---------------------------------------------------------- player search */
+
+  function searchPlayers(q) {
+    clearTimeout(searchTimer);
+    S.playerQ = q;
+    if (q.trim().length < 3) { S.playerResults = []; S.playerNote = q.trim() ? "Keep typing…" : ""; renderPlayerResults(); return; }
+    searchTimer = setTimeout(async () => {
+      const seq = ++searchSeq;
+      S.playerNote = "Searching ESPN…"; renderPlayerResults();
+      let items = [];
+      try {
+        const j = await fetch(`${ESPN_SEARCH}?query=${encodeURIComponent(q.trim())}&limit=15&type=player`).then((r) => r.json());
+        items = (j.items || [])
+          .filter((i) => PLAYER_LEAGUES.has(String(i.league)) && i.headshot?.href && /^\d+$/.test(String(i.id)))
+          .slice(0, 8)
+          .map((i) => ({
+            id: String(i.id), league: String(i.league), name: String(i.displayName || "").trim(),
+            team: String(i.teamRelationships?.[0]?.displayName || ""), position: String(i.position?.abbreviation || ""),
+            headshot: `https://a.espncdn.com/i/headshots/${i.league}/players/full/${i.id}.png`
+          }));
+      } catch { items = null; }
+      if (seq !== searchSeq) return;
+      S.playerResults = items || [];
+      S.playerNote = items === null ? "ESPN's search didn't answer. Try again." : items.length ? "" : "No NFL, MLB or NBA players with a photo match that.";
+      renderPlayerResults();
+    }, 350);
+  }
+
+  function renderPlayerResults() {
+    const list = root?.querySelector(".st-player-results");
+    if (!list) return;
+    list.replaceChildren();
+    if (S.playerNote) list.append(el("p", "st-note left", S.playerNote));
+    const item = itemOf("player-pick");
+    for (const pl of S.playerResults) {
+      const b = el("button", "st-player-row");
+      b.type = "button";
+      const img = document.createElement("img");
+      img.src = pl.headshot; img.alt = ""; img.loading = "lazy";
+      img.addEventListener("error", () => img.remove());
+      const copy = el("span");
+      copy.append(el("b", null, pl.name), el("small", null, [pl.position, pl.team, pl.league.toUpperCase()].filter(Boolean).join(" · ")));
+      b.append(img, copy);
+      b.addEventListener("mouseenter", () => { S.hover = "player-pick"; S.hoverPlayer = pl; repaintPreview(); });
+      b.addEventListener("click", () => equip(item, true, { player: pl }));
+      list.append(b);
+    }
+  }
+
   /* ---------------------------------------------------------- shelves */
+
+  function swatch(item, owned, on) {
+    const sw = el("div", `st-swatch sw-${item.id}${item.slot === "background" ? ` pbg pbg-${suffix(item.id, "background")}` : ""}`);
+    if (item.slot === "name") sw.append(el("b", `pf-name nm-${suffix(item.id, "name")}`, "Aa"));
+    if (item.slot === "namefx") { const s = el("b", `pf-name nf-${suffix(item.id, "namefx")}`, "Aa"); s.dataset.text = "Aa"; sw.append(s); }
+    if (item.slot === "title") sw.append(el("b", "st-sw-title", item.id === "title-custom" ? "“ ”" : item.text || item.name));
+    if (item.slot === "message") sw.append(el("b", "st-sw-title", "“Hi, chat.”"));
+    if (item.slot === "team") { const t = el("div", `pf-team tfx-${suffix(item.id, "team")}`); const c = el("div"); c.append(el("b", null, "Your Team")); t.append(c); sw.append(t); }
+    if (item.slot === "player") sw.append(el("b", "st-sw-title", "👤"));
+    if (item.slot === "label") sw.append(el("span", "tc-case-label foil", "◆ EastCoin ◆"));
+    if (on) sw.append(el("span", "st-badge", "ON"));
+    else if (owned) sw.append(el("span", "st-badge dim", "OWNED"));
+    return sw;
+  }
 
   function tile(item) {
     const m = mine();
     const owned = owns(item.id);
     const on = m.equipped[item.slot] === item.id;
-    const t = el("article", `st-item${owned ? " owned" : ""}${on ? " on" : ""}`);
+    const wide = owned && ["title-custom", "message-custom", "player-pick"].includes(item.id);
+    const t = el("article", `st-item${owned ? " owned" : ""}${on ? " on" : ""}${wide ? " wide" : ""}`);
     t.addEventListener("mouseenter", () => { S.hover = item.id; repaintPreview(); });
-    t.addEventListener("mouseleave", () => { if (S.hover === item.id) { S.hover = null; repaintPreview(); } });
+    t.addEventListener("mouseleave", () => { if (S.hover === item.id) { S.hover = null; S.hoverPlayer = null; repaintPreview(); } });
     t.addEventListener("focusin", () => { S.hover = item.id; repaintPreview(); });
 
-    const sw = el("div", `st-swatch sw-${item.id}`);
-    if (item.slot === "name") sw.append(el("b", `nm-${item.id.slice(5)}`, "Aa"));
-    if (item.slot === "title") sw.append(el("b", null, "“ ”"));
-    if (item.slot === "label") sw.append(el("span", "tc-case-label foil", "◆ EastCoin ◆"));
-    if (on) sw.append(el("span", "st-badge", "ON"));
-    else if (owned) sw.append(el("span", "st-badge dim", "OWNED"));
-    t.append(sw);
-
+    t.append(swatch(item, owned, on));
     const body = el("div", "st-body");
     body.append(el("h3", null, item.name), el("p", null, item.blurb));
     t.append(body);
@@ -162,18 +265,37 @@
         b.disabled = S.busy || short;
         foot.append(b);
       }
-    } else if (item.slot === "title") {
+    } else if (item.id === "title-custom" || item.id === "message-custom") {
+      const isTitle = item.id === "title-custom";
       const form = el("div", "st-title");
       const input = el("input");
-      input.type = "text"; input.maxLength = 24; input.id = "st-title-input";
-      input.placeholder = "Up to 24 characters";
-      input.value = S.titleDraft ?? m.titleText ?? "";
-      input.addEventListener("input", () => { S.titleDraft = input.value; S.hover = item.id; repaintPreview(); });
-      const save = btn(on ? "Update" : "Put on card", "st-btn gold", () => equip(item, true, input.value));
+      input.type = "text"; input.id = isTitle ? "st-title-input" : "st-message-input";
+      input.maxLength = isTitle ? 24 : 100;
+      input.placeholder = isTitle ? "Up to 24 characters" : "Up to 100 characters — no links";
+      input.value = (isTitle ? S.titleDraft ?? m.titleText : S.messageDraft ?? m.messageText) || "";
+      input.addEventListener("input", () => {
+        if (isTitle) S.titleDraft = input.value; else S.messageDraft = input.value;
+        S.hover = item.id; repaintPreview();
+      });
+      const save = btn(on ? "Update" : "Put on profile", "st-btn gold", () => equip(item, true, { text: input.value }));
       save.disabled = S.busy;
       form.append(input, save);
       if (on) form.append(btn("Remove", "st-btn", () => equip(item, false)));
       foot.append(form);
+    } else if (item.id === "player-pick") {
+      const box = el("div", "st-player");
+      if (m.player && on && window.ECProfileCard?.playerChip) {
+        const cur = el("div", "st-player-current");
+        cur.append(window.ECProfileCard.playerChip(m.player), btn("Remove", "st-btn", () => equip(item, false)));
+        box.append(cur);
+      }
+      const input = el("input");
+      input.type = "search"; input.id = "st-player-input"; input.autocomplete = "off";
+      input.placeholder = on ? "Search to change player" : "Search NFL, MLB or NBA players";
+      input.value = S.playerQ;
+      input.addEventListener("input", () => searchPlayers(input.value));
+      box.append(input, el("div", "st-player-results"));
+      foot.append(box);
     } else {
       foot.append(el("span", "st-owned", on ? "On your profile" : "Owned"));
       const b = btn(on ? "Switch off" : "Switch on", `st-btn${on ? "" : " gold"}`, () => equip(item, !on));
@@ -185,7 +307,7 @@
   }
 
   function paint() {
-    if (!root) return;
+    if (!root || !S.cat) return;
     const page = el("section", "st");
     const head = el("div", "viewhead st-head");
     const copy = el("div");
@@ -205,6 +327,7 @@
       const sec = el("section", "st-shelf");
       const h = el("h2", null, label);
       if (slot === "finish") h.append(el("small", null, "earned gold and silver always show first"));
+      if (slot === "title") h.append(el("small", null, "one at a time, under your name on the card"));
       sec.append(h);
       const grid = el("div", "st-grid");
       for (const it of items) grid.append(tile(it));
@@ -215,8 +338,13 @@
     page.append(layout);
 
     const focusId = document.activeElement?.id;
+    const caret = document.activeElement?.selectionStart;
     root.replaceChildren(page);
-    if (focusId) document.getElementById(focusId)?.focus();
+    if (focusId) {
+      const f = document.getElementById(focusId);
+      if (f) { f.focus(); try { if (caret != null) f.setSelectionRange(caret, caret); } catch { /* search inputs */ } }
+    }
+    renderPlayerResults();
   }
 
   async function load() {
@@ -240,10 +368,10 @@
     mount(container) {
       root = container;
       needCss();
-      Object.assign(S, { hover: null, confirm: null, busy: false, msg: null, titleDraft: null });
+      Object.assign(S, { hover: null, hoverPlayer: null, confirm: null, busy: false, msg: null, titleDraft: null, messageDraft: null, playerQ: "", playerResults: [], playerNote: "" });
       load();
     },
-    unmount() { token += 1; root = null; }
+    unmount() { token += 1; clearTimeout(searchTimer); root = null; }
   };
 
   function boot() {

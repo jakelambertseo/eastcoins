@@ -6,7 +6,7 @@
    away; a custom title waits until its text is set. */
 
 import { getSessionUser, walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOperation, newId, json, fail } from "../picks/_lib.js";
-import { ensureStore, itemById, mineFor } from "./_store.js";
+import { ensureStore, itemById, mineFor, NEEDS_INPUT } from "./_store.js";
 
 export async function onRequestPost(context) {
   const db = context.env.PICKS_DB;
@@ -66,8 +66,9 @@ export async function onRequestPost(context) {
 
   await finishOperation(db, opId, "CONFIRMED", { balanceAfter: debit.balance });
 
-  // Switch it on. The slot name comes from the catalogue, never the request.
-  if (item.slot !== "title") {
+  // Switch it on, unless it needs something typed or chosen first. The
+  // slot name comes from the catalogue, never the request.
+  if (!NEEDS_INPUT.has(item.id)) {
     await db
       .prepare(`INSERT INTO user_cosmetics (user_id, ${item.slot}, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT (user_id) DO UPDATE SET ${item.slot} = excluded.${item.slot}, updated_at = CURRENT_TIMESTAMP`)

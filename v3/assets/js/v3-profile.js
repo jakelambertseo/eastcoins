@@ -589,11 +589,12 @@
     const u = data.user;
     const k = data.picks;
     const c = data.casino;
-    const wrap = el("section", "profile");
+    // Store cosmetics they have switched on (null for most people).
+    const look = data.cosmetics || {};
+    const wrap = el("section", `profile${look.background ? ` pbg pbg-${look.background.replace(/^background-/, "")}` : ""}`);
     wrap.append(profileNav(data));
 
     // ---- the header card
-    const look = data.cosmetics || {};
     const head = el("div", `pf-card pf-head has-tcard${look.banner ? ` pf-banner pf-banner-${look.banner.replace(/^banner-/, "")}` : ""}`);
     // The card sits in a case, like a graded card, with its own label.
     const cardCase = el("div", "tc-case");
@@ -609,7 +610,7 @@
     const copy = el("div", "pf-copy");
     const name = el("h1");
     // The name is its own span so a bought name colour never tints the badges beside it.
-    name.append(el("span", `pf-name${look.name ? " nm-" + look.name.replace(/^name-/, "") : ""}`, u.displayName));
+    name.append(nameSpan(u.displayName, look));
     const badges = el("span", "pf-badges");
     for (const b of data.badges || []) {
       const pill = el("span", `pf-badge ${b.key}`, `${b.emoji} ${String(b.label).split("—")[0].trim()}`);
@@ -619,7 +620,9 @@
     name.append(badges);
     copy.append(name);
     copy.append(el("p", null, `@${u.login}${u.since ? " · with EastCoin since " + when(u.since, { month: "short", year: "numeric" }) : ""}`));
-    copy.append(teamChip(u));
+    if (look.message) copy.append(el("p", "pf-msg", look.message));
+    copy.append(teamChip(u, look));
+    if (look.player) copy.append(playerChip(look.player));
     head.append(copy);
 
     /* Beside the card: the three tab launchers, so the space next to a
@@ -845,13 +848,43 @@
     return box;
   }
 
-  function teamChip(u) {
+  /* ---------------------------------------------------------- store looks */
+
+  /** The profile name, wearing a bought colour and effect. data-text feeds the effects' overlays. */
+  function nameSpan(text, look = {}) {
+    const cls = ["pf-name"];
+    if (look.name) cls.push("nm-" + look.name.replace(/^name-/, ""));
+    if (look.namefx) cls.push("nf-" + look.namefx.replace(/^namefx-/, ""));
+    const span = el("span", cls.join(" "), text);
+    span.dataset.text = text;
+    return span;
+  }
+
+  /** A favourite player from the store: ESPN headshot, name, position and team. */
+  function playerChip(p) {
+    const chip = el("div", "pf-player");
+    const shot = el("span", "pf-player-shot", String(p.name || "?").split(" ").map((w) => w[0]).join("").slice(0, 2));
+    if (p.headshot) {
+      const img = document.createElement("img");
+      img.alt = ""; img.decoding = "async"; img.loading = "lazy";
+      img.addEventListener("load", () => shot.classList.add("has-logo"));
+      img.addEventListener("error", () => img.remove());
+      img.src = p.headshot;
+      shot.append(img);
+    }
+    const copy = el("div");
+    copy.append(el("b", null, p.name), el("small", null, [p.position, p.team].filter(Boolean).join(" · ") + " · favourite player"));
+    chip.append(shot, copy);
+    return chip;
+  }
+
+  function teamChip(u, look = {}) {
     const wrap = el("div", "pf-teamwrap");
     const mine = isMine(u);
     const fav = u.favourite;
     if (!fav && !mine) return wrap;
 
-    const row = el("div", "pf-team");
+    const row = el("div", `pf-team${fav && look.team ? " tfx-" + look.team.replace(/^team-/, "") : ""}`);
     if (fav) {
       row.append(teamCrest(fav, "pf-team-crest"));
       const copy = el("div");
@@ -1083,7 +1116,7 @@
 
   // The store draws its preview with this same card, so what someone
   // tries on there is exactly what their profile will show.
-  window.ECProfileCard = { tradingCard, tierOf };
+  window.ECProfileCard = { tradingCard, tierOf, nameSpan, playerChip };
 
   function boot() {
     if (!window.ECV3) return window.setTimeout(boot, 30);

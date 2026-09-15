@@ -4696,3 +4696,79 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 .tc-case-label.foil{background:linear-gradient(110deg,#6b4a09,#f0c24a 30%,#fff3c4 45%,#d49b1d 60%,#6b4a09);background-size:250% 100%;color:#2a1a02;border-color:rgba(255,230,150,.7);animation:tcfoil 5s ease-in-out infinite}
 .tc-case-label.foil i{opacity:1}
 @media (prefers-reduced-motion:reduce){.tc-skin-holo .tc-inner::after,.tc-skin-chrome .tc-inner::after,.pf-banner-matrix::before,.tc-case-label.foil{animation:none}}
+
+/* ---- store cosmetics, round two (2026-09-15): name effects, team
+   effects, profile backgrounds, the profile message and the
+   favourite-player chip. Same rules as above: all on the profile. */
+
+/* name effects stack with a name colour */
+.pf-name.nf-shine,.pf-name.nf-glitch{position:relative;display:inline-block}
+.pf-name.nf-shine::after{content:attr(data-text);position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.95) 50%,transparent 65%);background-size:250% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;animation:nfshine 3.2s ease-in-out infinite}
+@keyframes nfshine{0%{background-position:150% 0}60%,100%{background-position:-60% 0}}
+.pf-name.nf-glitch::before,.pf-name.nf-glitch::after{content:attr(data-text);position:absolute;inset:0;pointer-events:none;background:none;-webkit-background-clip:border-box;background-clip:border-box}
+.pf-name.nf-glitch::before{color:#ff2e63;clip-path:inset(0 0 55% 0);animation:nfglitch 2.6s steps(2) infinite;mix-blend-mode:screen}
+.pf-name.nf-glitch::after{color:#08f7fe;clip-path:inset(50% 0 0 0);animation:nfglitch 2.6s steps(2) infinite reverse;mix-blend-mode:screen}
+@keyframes nfglitch{0%,86%,100%{transform:translate(0,0);opacity:0}88%{transform:translate(-3px,1px);opacity:1}92%{transform:translate(3px,-1px);opacity:1}96%{transform:translate(-1px,0);opacity:1}}
+.pf-name.nf-rainbow{animation:nfrainbow 6s linear infinite}
+.pf-name.nf-rainbow:not(.nm-gold):not(.nm-ember):not(.nm-ice){color:#ff6b6b}
+@keyframes nfrainbow{to{filter:hue-rotate(360deg)}}
+.pf-name.nf-pulse{animation:nfpulse 2.4s ease-in-out infinite}
+@keyframes nfpulse{0%,100%{filter:drop-shadow(0 0 0 rgba(255,255,255,0))}50%{filter:drop-shadow(0 0 10px rgba(255,236,170,.85))}}
+
+/* the profile message */
+.pf-msg{margin:6px 0 0;padding:7px 11px;border-left:3px solid rgba(var(--gold-rgb),.6);border-radius:0 9px 9px 0;background:rgba(255,255,255,.04);color:var(--text);font-size:.9rem;font-style:italic;max-width:60ch}
+
+/* team name effects */
+.pf-team.tfx-glow b{color:#fff;text-shadow:0 0 10px rgba(var(--gold-rgb),.9),0 0 22px rgba(var(--gold-rgb),.45)}
+.pf-team.tfx-gold{padding:6px 12px 6px 8px;border-radius:10px;background:linear-gradient(110deg,#6b4a09,#e9b93f 30%,#fff0c0 45%,#c98f18 62%,#6b4a09);background-size:220% 100%;box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 4px 14px rgba(0,0,0,.35);animation:tcfoil 6s ease-in-out infinite}
+.pf-team.tfx-gold b{color:#2a1a02;text-shadow:0 1px 0 rgba(255,255,255,.45)}
+.pf-team.tfx-gold small{color:#4a3208}
+.pf-team.tfx-flame b{background:linear-gradient(0deg,#ff3d00,#ff9100 45%,#ffe57f);background-size:100% 200%;-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 6px rgba(255,120,0,.55));animation:tfflame 1.6s ease-in-out infinite alternate}
+@keyframes tfflame{to{background-position:0 100%}}
+
+/* the favourite-player chip */
+.pf-player{display:flex;align-items:center;gap:11px;margin-top:10px}
+.pf-player-shot{position:relative;width:46px;height:46px;border-radius:50%;overflow:hidden;flex:0 0 auto;display:grid;place-items:center;background:var(--panel-3);border:2px solid rgba(var(--gold-rgb),.45);color:var(--muted);font-weight:800;font-size:.8rem}
+.pf-player-shot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 15%;transform:scale(1.35);transform-origin:50% 25%;opacity:0;transition:opacity .2s ease}
+.pf-player-shot.has-logo{color:transparent}
+.pf-player-shot.has-logo img{opacity:1}
+.pf-player b{display:block;font-family:var(--display);font-weight:700;font-size:1rem;letter-spacing:-.01em;line-height:1.15}
+.pf-player small{display:block;margin-top:2px;color:var(--muted-2);font-size:.74rem}
+
+/* profile backgrounds: painted behind the whole profile, inside the page */
+.pbg{position:relative;isolation:isolate}
+.pbg::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:var(--radius,16px);pointer-events:none}
+.profile.pbg{padding:14px;border-radius:var(--radius,16px)}
+.pbg-gridiron::before{background:
+  repeating-linear-gradient(90deg,transparent 0 58px,rgba(255,255,255,.07) 58px 61px),
+  repeating-linear-gradient(90deg,rgba(0,0,0,.08) 0 30px,transparent 30px 60px),
+  linear-gradient(180deg,#1d4a2b,#12301c 60%,#0c1f12)}
+.pbg-starfield::before{background:
+  radial-gradient(1px 1px at 12% 22%,#fff,transparent),radial-gradient(1px 1px at 38% 70%,#fff,transparent),
+  radial-gradient(1.5px 1.5px at 64% 30%,#fff,transparent),radial-gradient(1px 1px at 82% 62%,#fff,transparent),
+  radial-gradient(1px 1px at 22% 84%,#cfe3ff,transparent),radial-gradient(1.5px 1.5px at 90% 14%,#fff,transparent),
+  radial-gradient(ellipse at 70% 20%,rgba(92,70,200,.35),transparent 55%),
+  radial-gradient(ellipse at 20% 80%,rgba(20,120,200,.25),transparent 55%),#070814;
+  background-size:240px 240px,300px 300px,260px 260px,320px 320px,280px 280px,360px 360px,auto,auto,auto;
+  animation:pbgstars 60s linear infinite}
+@keyframes pbgstars{to{background-position:240px 120px,-300px 150px,260px -130px,-320px 160px,280px 140px,-360px -180px,0 0,0 0,0 0}}
+.pbg-carbon::before{background:
+  linear-gradient(27deg,#151515 5px,transparent 5px) 0 5px,
+  linear-gradient(207deg,#151515 5px,transparent 5px) 10px 0,
+  linear-gradient(27deg,#222 5px,transparent 5px) 0 10px,
+  linear-gradient(207deg,#222 5px,transparent 5px) 10px 5px,
+  linear-gradient(90deg,#1b1b1b 10px,transparent 10px),
+  linear-gradient(#1d1d1d 25%,#1a1a1a 25%,#1a1a1a 50%,transparent 50%,transparent 75%,#242424 75%,#242424);
+  background-color:#131313;background-size:20px 20px}
+.pbg-velvet::before{background:
+  radial-gradient(ellipse at 50% 0%,rgba(255,80,110,.35),transparent 55%),
+  repeating-linear-gradient(95deg,rgba(0,0,0,.18) 0 3px,transparent 3px 7px),
+  linear-gradient(180deg,#5a0b1f,#2c0510 70%,#1a030a)}
+.profile.pbg .pf-card{background:rgba(18,19,24,.86)}
+
+@media (prefers-reduced-motion:reduce){
+  .pf-name.nf-shine::after,.pf-name.nf-glitch::before,.pf-name.nf-glitch::after,.pf-name.nf-rainbow,.pf-name.nf-pulse,
+  .pf-team.tfx-gold,.pf-team.tfx-flame b,.pbg-starfield::before{animation:none}
+}
