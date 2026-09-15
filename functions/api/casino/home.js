@@ -4,13 +4,13 @@
    and who's in the room. Plus the biggest recent wins across every
    game, for the board. Public; a session adds nothing here. */
 
-import { ensureSchema as ensureCoin, roundAt as coinRoundAt, CYCLE_MS as COIN_CYCLE, BET_MS as COIN_BET } from "../coin/_coin.js";
-import { GAMES, ensureSchema, roundAt, ROOM_WINDOW_MS, hourlyNet, HOUR_WIN_CAP } from "./_engine.js";
-import { ensureHilo } from "./hilo/_hilo.js";
-import { ensureMines } from "./mines/_mines.js";
-import { ensurePlinko } from "./plinko/_plinko.js";
-import { ensureScratch } from "./scratch/_scratch.js";
-import { ensurePvp, settleDue as settlePvp, GAMES as PVP, lobbyFor as pvpLobby, entriesFor as pvpEntries, STAKE as PVP_STAKE, lobbyMsFor as pvpLobbyMs } from "./pvp/_pvp.js";
+import { ensureSchema as ensureCoin, roundAt as coinRoundAt, CYCLE_MS as COIN_CYCLE, BET_MS as COIN_BET, betsLastHour as coinPlays } from "../coin/_coin.js";
+import { GAMES, ensureSchema, roundAt, ROOM_WINDOW_MS, hourlyNet, HOUR_WIN_CAP, betsLastHour as sharedPlays, MAX_BETS_PER_HOUR } from "./_engine.js";
+import { ensureHilo, gamesLastHour as hiloPlays } from "./hilo/_hilo.js";
+import { ensureMines, gamesLastHour as minesPlays } from "./mines/_mines.js";
+import { ensurePlinko, dropsLastHour as plinkoPlays } from "./plinko/_plinko.js";
+import { ensureScratch, cardsLastHour as scratchPlays } from "./scratch/_scratch.js";
+import { ensurePvp, settleDue as settlePvp, GAMES as PVP, lobbyFor as pvpLobby, entriesFor as pvpEntries, STAKE as PVP_STAKE, lobbyMsFor as pvpLobbyMs, joinsLastHour as pvpPlays } from "./pvp/_pvp.js";
 import { getSessionUser } from "../picks/_lib.js";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
@@ -163,13 +163,34 @@ export async function onRequestGet(context) {
         q(`SELECT SUM(payout > stake) AS w, SUM(payout <= stake) AS l, COALESCE(SUM(payout - stake), 0) AS net FROM scratch_cards WHERE user_id = ?`),
         hourlyNet(db, uid)
       ]);
+
+      /* How many plays are left in each game this hour. The limit is
+         TEN PER GAME, not ten across the floor, so this is a number per
+         game and the floor prints it under each card. Every count comes
+         from that game's OWN limiter helper rather than a query written
+         here, so what the card promises and what the bet endpoint
+         enforces cannot drift apart. */
+      const counters = [
+        ["flip", () => coinPlays(db, uid)],
+        ...Object.values(GAMES).filter((g) => !g.paused).map((g) => [g.key, () => sharedPlays(db, g, uid)]),
+        ["hilo", () => hiloPlays(db, uid)],
+        ["mines", () => minesPlays(db, uid)],
+        ["plinko", () => plinkoPlays(db, uid)],
+        ["scratch", () => scratchPlays(db, uid)],
+        ...Object.values(PVP).filter((g) => !g.paused).map((g) => [g.key, () => pvpPlays(db, g.key, uid)])
+      ];
+      const counted = await Promise.all(counters.map(([, run]) => run().catch(() => 0)));
+      const played = {};
+      counters.forEach(([key], i) => { played[key] = Number(counted[i] || 0); });
+
       const n = (x) => Number(x || 0);
       me = {
         login: user.login, displayName: user.displayName,
         wins: n(coin?.w) + n(shared?.w) + n(hilo?.w) + n(mines?.w) + n(plinko?.w) + n(pvp?.w) + n(scratch?.w),
         losses: n(coin?.l) + n(shared?.l) + n(hilo?.l) + n(mines?.l) + n(plinko?.l) + n(pvp?.l) + n(scratch?.l),
         net: n(coin?.net) + n(shared?.net) + n(hilo?.net) + n(mines?.net) + n(plinko?.net) + n(pvp?.net) + n(scratch?.net),
-        hourNet: n(hourNet), hourCap: HOUR_WIN_CAP
+        hourNet: n(hourNet), hourCap: HOUR_WIN_CAP,
+        playsCap: MAX_BETS_PER_HOUR, played
       };
     }
   } catch { me = null; }

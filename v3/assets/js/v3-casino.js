@@ -158,8 +158,12 @@
       const room = K.el("span", "cas-card-room", "");
       live.append(dot, phase, clock, room);
 
-      tile.append(art, live);
-      refs[`tile_${key}`] = { tile, clock, phase, room, blurb: g.blurb, peopleSig: "" };
+      // Plays left this hour, in this game. Signed out it stays hidden.
+      const plays = K.el("div", "cas-card-plays");
+      plays.hidden = true;
+
+      tile.append(art, live, plays);
+      refs[`tile_${key}`] = { tile, clock, phase, room, plays, blurb: g.blurb, peopleSig: "" };
       refs.tiles.append(tile);
     }
     page.append(refs.tiles);
@@ -167,8 +171,15 @@
     /* The Jackpot rides in the header bar now and the tables' ticker is
        gone: it repeated what the ledger below already says, in a strip
        nobody reads while deciding what to play. */
-    const ledgerHead = K.el("div", "cas-ledger-head");
-    ledgerHead.append(K.el("h2", null, "Casino ledger"), K.el("span", null, "Every settled bet, newest first"));
+    /* The ledger folds away and starts closed. It is the longest thing
+       on the page and it is reference, not a reason anyone opened the
+       casino — so it costs a line until it is asked for. */
+    const ledgerHead = K.el("button", "cas-ledger-head");
+    ledgerHead.type = "button";
+    ledgerHead.setAttribute("aria-expanded", "false");
+    const ledgerTitle = K.el("h2", null, "Casino ledger");
+    ledgerTitle.append(K.el("i", "cas-fold-mark"));
+    ledgerHead.append(ledgerTitle, K.el("span", null, "Every settled bet, newest first"));
     page.append(ledgerHead);
 
     // Recent results and House rules as two tabs.
@@ -182,7 +193,16 @@
       panels[key] = K.el("div", "cas-panel");
       panels[key].hidden = key !== lowerTab;
     }
-    page.append(tabs);
+    const ledgerBody = K.el("div", "cas-ledger-body");
+    ledgerBody.hidden = true;
+    ledgerHead.addEventListener("click", () => {
+      const open = ledgerBody.hidden;
+      ledgerBody.hidden = !open;
+      ledgerHead.setAttribute("aria-expanded", String(open));
+      ledgerHead.classList.toggle("open", open);
+    });
+    ledgerBody.append(tabs);
+    page.append(ledgerBody);
     const lower = K.el("div", "cas-lower");
     const board = K.el("section", "cf-card");
     refs.board = K.el("div", "cf-list paged");
@@ -217,7 +237,7 @@
     panels.results.append(board);
     panels.rules.append(rules);
     lower.append(panels.results, panels.rules);
-    page.append(lower);
+    ledgerBody.append(lower);
     root.append(page);
   }
 
@@ -286,6 +306,17 @@
 
       r.phase.textContent = phase;
       r.clock.textContent = clock;
+
+      const cap = Number(data.me?.playsCap || 0);
+      if (cap && data.me?.played) {
+        const left = Math.max(0, cap - Number(data.me.played[g.key] || 0));
+        r.plays.hidden = false;
+        r.plays.textContent = `${left}/${cap} plays left this hour`;
+        r.plays.classList.toggle("out", left === 0);
+        r.plays.title = left ? "" : `That's ${cap} this hour in this game — the limit. Back next hour.`;
+      } else {
+        r.plays.hidden = true;
+      }
       const seats = g.pvp && g.lobby ? g.lobby.players : g.room;
       r.room.textContent = seats ? `${seats} in` : "";
       r.tile.classList.toggle("hot", hot);

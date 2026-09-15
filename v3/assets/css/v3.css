@@ -3301,6 +3301,9 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .cas-card-clock:empty{display:none}
 .cas-card-room{margin-left:auto;flex:0 0 auto;color:var(--muted-2)}
 .cas-card-room:empty{display:none}
+.cas-card-plays{font-size:.68rem;font-weight:700;color:var(--muted-2);margin-top:-2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cas-card-plays.out{color:var(--red)}
+.cas-card-plays[hidden]{display:none}
 
 /* One colour a game. Deeper than the page accents on purpose: these
    are full panels behind white type, not a 3px edge on a dark card. */
@@ -3321,7 +3324,20 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
   .cas-card-name b{font-size:.88rem}
 }
 
-.cas-ledger-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:26px 0 10px;padding-top:18px;border-top:1px solid var(--line)}
+.cas-ledger-head{
+  display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  width:100%;margin:26px 0 10px;padding:18px 0 0;border:0;border-top:1px solid var(--line);
+  background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;
+}
+.cas-ledger-head:hover h2{color:var(--gold)}
+.cas-fold-mark{
+  display:inline-block;width:.5em;height:.5em;margin-left:.5em;vertical-align:.12em;
+  border-right:2px solid currentColor;border-bottom:2px solid currentColor;
+  transform:rotate(45deg);transform-origin:60% 60%;transition:transform .16s ease;
+}
+.cas-ledger-head.open .cas-fold-mark{transform:rotate(-135deg)}
+.cas-ledger-body[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.cas-fold-mark{transition:none}}
 .cas-ledger-head h2{margin:0;font-family:var(--display);font-weight:800;font-size:1.2rem;letter-spacing:-.02em}
 .cas-ledger-head span{color:var(--muted-2);font-size:.76rem;font-weight:700}
 
