@@ -343,9 +343,10 @@
 > tear the Jackpot's poller down and stand a new one up at three times
 > its rate. Signed out, the stat cells hide and a login button shows.
 >
-> `.cas-card` is the game card: a portrait colour panel (`--card-rgb`,
-> one value a game) with the art, the name across the bottom, a live
-> line under the panel (phase, countdown, who is in) and, signed in,
+> `.cas-card` is the game card: a portrait panel carrying **painted art**
+> (`/v3/assets/img/casino/<key>.webp`, 420x560, ~25 KB each, 200 KB for
+> all seven) with the name across the bottom, a live line under the
+> panel (phase, countdown, who is in) and, signed in,
 > **how many plays are left this hour**. That limit is TEN PER GAME,
 > not ten across the floor, so it is a number per card; `home.js` counts
 > it with each game's OWN limiter helper (`betsLastHour`,
@@ -355,6 +356,23 @@
 > in the room moved to the card's `title`. **`.cas-card` is the casino's
 > alone; the Game Room still draws `.cas-tile`**, so its accents and
 > layout are separate.
+>
+> **The art (2026-09-16)** — built from 1.7 MB PNG uploads by
+> `scratchpad/build-cards.mjs` (sharp). Two crops matter. The black
+> frame is removed so the art fills the panel rather than sitting in a
+> second border; and the game's name, which was baked across the bottom
+> of every upload, is cropped OFF — the page already draws that same
+> nameplate, and as real text it stays sharp at any size, reads to a
+> screen reader and needs no new image when a game is renamed. Finding
+> that title band is fussier than it looks: the scan is limited to the
+> bottom 28% AND the left 60%, because Plinko's payout numbers and
+> Scratch-Off's silver panel are just as bright, sit mid-card, and take
+> a third of the art off those two otherwise. Each is then cover-cropped
+> to 3:4 at build time so the browser never fetches a pixel the layout
+> crops. `--card-rgb` survives as the **loading state** behind the
+> image, and the emoji returns via an `error` handler if the art ever
+> 404s, so a card is never a hole. Adding a game means adding one
+> `<key>.webp` and one `--card-rgb`.
 >
 > The ledger (Recent results paged / House rules) is a **fold that
 > starts closed** — `.cas-ledger-head` is a button, `.cas-ledger-body`
