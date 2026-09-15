@@ -8,7 +8,7 @@
 import { getSessionUser, walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOperation, newId, json, fail } from "../../picks/_lib.js";
 import { settlePot } from "../_pot.js";
 import { ensureSchema, touchPresence, capCheck } from "../_engine.js";
-import { ensureScratch, commitFor, rotateCommit, outcomeFor, gridFor, publicCard, cardsLastHour, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "./_scratch.js";
+import { ensureScratch, commitFor, rotateCommit, outcomeFor, gridFor, publicCard, cardsLastHour, edgeFor, RETURN, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "./_scratch.js";
 
 const SCRATCH = { key: "scratch" };
 
