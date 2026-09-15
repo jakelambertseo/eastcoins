@@ -86,6 +86,37 @@
     roulette: [...KIT, "v3-pvp.js"], standing: [...KIT, "v3-pvp.js"],
     games: [...KIT, "v3-games.js"], helmet: [...KIT, ...LOGOS, "v3-helmet.js"], fg: [...KIT, "v3-fg.js"], simon: [...KIT, "v3-simon.js"], centre: [...KIT, "v3-centre.js"]
   };
+  /* ------------------------------------------------------ members only
+
+     The same door Movies & TV has had since it opened: a visitor who is
+     not logged in with Twitch sees why and the one button that fixes it,
+     instead of the page. Checked here, before a route's scripts are even
+     fetched, so a visitor at the door downloads none of the code behind
+     it. Every casino room is listed, not only the floor, because a link
+     to a game page is as direct a way in as the floor is. Movies & TV
+     keeps its own check inside its view. */
+  const MEMBERS_ONLY = {
+    multiview: ["MultiView is for members", "Log in with Twitch to watch several streams at once."],
+    picks: ["Picks is for members", "Log in with Twitch to make picks and follow the ledger."],
+    casino: ["The casino is for members", "Log in with Twitch to play with your ZCoins."]
+  };
+  for (const room of ["flip", "wheel", "race", "hilo", "mines", "plinko", "scratch", "roulette", "standing"]) MEMBERS_ONLY[room] = MEMBERS_ONLY.casino;
+
+  function memberGate(route) {
+    const [title, line] = MEMBERS_ONLY[route];
+    const box = document.createElement("section");
+    box.className = "sc-gate";
+    const logo = document.createElement("img");
+    logo.className = "sc-gate-logo"; logo.src = "/assets/eastcoins-logo.webp"; logo.alt = "";
+    const h = document.createElement("h2"); h.textContent = title;
+    const p = document.createElement("p"); p.textContent = line;
+    const a = document.createElement("a");
+    a.className = "login-btn"; a.textContent = "Log in with Twitch";
+    a.href = "/api/picks/auth/twitch/start?returnTo=" + encodeURIComponent(location.pathname + location.search);
+    box.append(logo, h, p, a);
+    return box;
+  }
+
   const lazySrc = new Map();
   for (const t of document.querySelectorAll("script[data-lazy]")) {
     const src = t.getAttribute("src") || "";
@@ -329,6 +360,27 @@
   });
 
   function render() {
+    // A members-only route is decided before its scripts are fetched.
+    // Until the session read lands, hold the space rather than guess.
+    const gated = Object.prototype.hasOwnProperty.call(MEMBERS_ONLY, state.route);
+    const sessionKnown = state.session !== null;
+    if (gated && !sessionKnown) {
+      if (currentView) { currentView.unmount?.(); currentView = null; }
+      els.view.replaceChildren();
+      const hold = document.createElement("div"); hold.className = "view-loading"; els.view.append(hold);
+      document.body.dataset.route = state.route;
+      const at = state.route;
+      Promise.resolve(window.ECV3?.sessionReady).catch(() => null).then(() => { if (state.route === at) render(); });
+      return;
+    }
+    if (gated && !state.session?.user?.login) {
+      if (currentView) { currentView.unmount?.(); currentView = null; }
+      els.view.replaceChildren();
+      document.body.dataset.route = state.route;
+      document.title = TITLES[state.route] || "EastCoin";
+      els.view.append(memberGate(state.route));
+      return;
+    }
     const view = views[state.route];
     if (!view) ensure(state.route);
 
