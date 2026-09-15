@@ -4388,7 +4388,7 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
 .notif-empty.small{padding:18px 20px}
 .notif-empty b{display:block;font-family:var(--display);color:var(--text);font-size:1.02rem;margin-bottom:4px}
 .notif-toast{
-  position:fixed;bottom:18px;right:16px;z-index:71;display:flex;align-items:center;gap:10px;
+  position:fixed;bottom:18px;left:16px;z-index:71;display:flex;align-items:center;gap:10px;
   max-width:min(380px,calc(100vw - 32px));padding:9px 14px 9px 9px;border-radius:12px;
   border:1px solid rgba(var(--gold-rgb),.35);background:var(--panel);color:var(--text);
   box-shadow:0 14px 34px rgba(0,0,0,.55);cursor:pointer;font-size:.86rem;

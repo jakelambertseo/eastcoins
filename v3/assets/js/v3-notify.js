@@ -223,8 +223,8 @@
     if (Number.isFinite(Number(item.amount)) && item.amount !== null) copy.append(document.createTextNode(" · "), amount(Number(item.amount), item.amountWord));
     t.append(copy);
     t.addEventListener("click", () => { t.remove(); setOpen(true); });
-    const chatOpen = document.body.classList.contains("chat-open") && !document.body.classList.contains("chat-hidden") && window.innerWidth >= 981;
-    t.style.right = chatOpen ? `calc(var(--chat-w) + 16px)` : "16px";
+    // Bottom LEFT, always: the Twitch rail is on the right and flags
+    // itself obscured by anything that ever covers it.
     document.body.append(t);
     window.setTimeout(() => t.classList.add("show"), 20);
     window.setTimeout(() => { t.classList.remove("show"); window.setTimeout(() => t.remove(), 300); }, TOAST_MS);
