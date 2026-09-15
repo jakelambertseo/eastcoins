@@ -288,7 +288,7 @@
     const on = pref === "1" || (pref === "auto" && spookyByDate());
     document.body.classList.toggle("spooky", on);
     document.body.classList.toggle("full", on);
-    if (on) needCss("css-spooky", "/v3/assets/css/v3-spooky.css?v=1");
+    if (on) needCss("css-spooky", "/v3/assets/css/v3-spooky.css?v=2");
 
     const sw = document.getElementById("spookyToggle");
     if (sw) {

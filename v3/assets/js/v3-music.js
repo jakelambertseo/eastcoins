@@ -1605,7 +1605,7 @@
     function needSkinsCss() {
       if (document.getElementById("css-skins")) return;
       const link = document.createElement("link");
-      link.id = "css-skins"; link.rel = "stylesheet"; link.href = "/v3/assets/css/v3-skins.css?v=1";
+      link.id = "css-skins"; link.rel = "stylesheet"; link.href = "/v3/assets/css/v3-skins.css?v=2";
       document.head.append(link);
     }
     function applySkin(key) {
