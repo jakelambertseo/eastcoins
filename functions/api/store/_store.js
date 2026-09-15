@@ -49,12 +49,12 @@ export const ITEMS = [
   // Replaced Neon on 2026-09-15 (nobody had bought it). Deliberately a
   // metallic gold panel, not the crimson-and-gold of the EARNED #1 card,
   // and the tier tag still shows what was actually earned.
-  { id: "finish-gold", slot: "finish", name: "Gold", price: 500, chase: true, blurb: "The whole card in polished gold. A legendary item." },
+  { id: "finish-gold", slot: "finish", name: "Gold", price: 500, chase: true, blurb: "The whole card in polished gold. A Legendary item." },
   // Free as a promo (2026-09-15). A price of 0 never touches the wallet —
   // buy.js records ownership without a wallet operation.
   { id: "finish-chrome", slot: "finish", name: "Chrome", price: 0, promo: "Free", blurb: "Brushed metal from edge to edge. Free for a limited time." },
 
-  { id: "name-gold", slot: "name", name: "Gold", price: 500, chase: true, blurb: "Your name in gold on your card and profile. A chase item." },
+  { id: "name-gold", slot: "name", name: "Gold", price: 500, chase: true, blurb: "Your name in gold on your card and profile. A Legendary item." },
   { id: "name-ice", slot: "name", name: "Ice", price: 99, blurb: "Your name in frosted blue." },
   { id: "name-ember", slot: "name", name: "Ember", price: 150, blurb: "Your name glowing hot orange." },
 
@@ -83,12 +83,12 @@ export const ITEMS = [
   { id: "banner-retro", slot: "banner", name: "Retro sunset", price: 200, blurb: "An '80s sunset grid behind your profile." },
 
   { id: "team-glow", slot: "team", name: "Team glow", price: 99, blurb: "Your favourite team glows on your profile." },
-  { id: "team-gold", slot: "team", name: "Gold plate", price: 500, chase: true, blurb: "Your team on an engraved gold nameplate. A chase item." },
+  { id: "team-gold", slot: "team", name: "Gold plate", price: 500, chase: true, blurb: "Your team on an engraved gold nameplate. A Legendary item." },
   { id: "team-flame", slot: "team", name: "On fire", price: 250, blurb: "Your team's name burns hot." },
 
   { id: "player-pick", slot: "player", name: "Favourite player", price: 250, blurb: "Pick any NFL, MLB or NBA player — their ESPN photo goes on your profile. Change them any time." },
 
-  { id: "label-foil", slot: "label", name: "Gold foil label", price: 500, chase: true, blurb: "Turns “EastCoin Trading Card” into shimmering gold foil. A chase item." }
+  { id: "label-foil", slot: "label", name: "Gold foil label", price: 500, chase: true, blurb: "Turns “EastCoin Trading Card” into shimmering gold foil. A Legendary item." }
 ];
 
 // Chase items: the gold ones, priced high and marked in the store as the ones to chase.
