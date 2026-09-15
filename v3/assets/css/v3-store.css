@@ -111,3 +111,10 @@
 .st-profile-link:hover{border-color:rgba(var(--gold-rgb),.5)}
 .st-profile-link:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.st-item.chase{animation:none}}
+
+/* ---- promo items and the after-purchase link (2026-09-15) */
+.st-ribbon.promo{background:linear-gradient(180deg,#7dffb4,#2fbf71);color:#04260f}
+.st-free{font-family:var(--display);font-weight:800;font-size:1rem;color:#7dffb4;letter-spacing:.02em}
+.st-msg-link{margin-left:4px;font-weight:800;color:inherit;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.st-msg-link:hover{color:#fff}
+.st-msg-link:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}

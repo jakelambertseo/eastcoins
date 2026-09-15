@@ -24,6 +24,31 @@ export async function onRequestPost(context) {
   const owned = await db.prepare(`SELECT 1 FROM store_purchases WHERE user_id = ? AND item = ? AND status = 'OWNED'`).bind(user.id, item.id).first();
   if (owned) return fail("ALREADY_OWNED", `You already own ${item.name}.`, 409);
 
+  // A free (promo) item moves no ZCoins, so there is no wallet operation:
+  // wallet_operations only accepts a debit below zero. Owning it once is
+  // still enforced by the unique op_key and the owned-once index.
+  if (item.price === 0) {
+    const prior = await db.prepare(`SELECT COUNT(*) AS n FROM store_purchases WHERE user_id = ? AND item = ?`).bind(user.id, item.id).first();
+    try {
+      await db
+        .prepare(`INSERT INTO store_purchases (id, user_id, item, price, status, op_key) VALUES (?, ?, ?, 0, 'OWNED', ?)`)
+        .bind(newId("sp"), user.id, item.id, `STORE:FREE:${user.id}:${item.id}:${Number(prior?.n || 0)}`)
+        .run();
+    } catch {
+      return fail("ALREADY_OWNED", `You already have ${item.name}.`, 409);
+    }
+    if (!NEEDS_INPUT.has(item.id)) {
+      await db
+        .prepare(`INSERT INTO user_cosmetics (user_id, ${item.slot}, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)
+                  ON CONFLICT (user_id) DO UPDATE SET ${item.slot} = excluded.${item.slot}, updated_at = CURRENT_TIMESTAMP`)
+        .bind(user.id, item.id)
+        .run()
+        .catch(() => {});
+    }
+    console.log(`Store: ${user.login} claimed free ${item.id}`);
+    return json({ ok: true, item: item.id, free: true, balance: null, mine: await mineFor(db, user.id) });
+  }
+
   const balance = await readBalance(context.env, user.login);
   if (balance === null) return fail("BALANCE_UNAVAILABLE", "Couldn't read your ZCoin balance.", 503);
   if (item.price > balance) return fail("INSUFFICIENT_FUNDS", `${item.name} is ${item.price.toLocaleString()} ZC and you have ${balance.toLocaleString()}.`, 409);

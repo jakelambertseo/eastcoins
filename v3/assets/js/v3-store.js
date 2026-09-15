@@ -13,7 +13,7 @@
    accepts an id, league and name and builds the photo URL itself.
    ============================================================ */
 (() => {
-  const CSS = "/v3/assets/css/v3-store.css?v=5";
+  const CSS = "/v3/assets/css/v3-store.css?v=6";
   const ESPN_SEARCH = "https://site.web.api.espn.com/apis/common/v3/search";
   const PLAYER_LEAGUES = new Set(["nfl", "mlb", "nba"]);
 
@@ -149,7 +149,10 @@
       S.cat.mine = r.mine;
       if (Number.isFinite(Number(r.balance))) { S.cat.balance = Number(r.balance); window.ECV3?.setWallet?.(r.balance); }
       const setup = ["title-custom", "message-custom", "player-pick"].includes(item.id);
-      S.msg = { tone: "good", text: setup ? `Bought ${item.name}. Set it up below to put it on your profile.` : `Bought ${item.name}. It's on your profile now.` };
+      const got = r.free ? "Claimed" : "Bought";
+      S.msg = setup
+        ? { tone: "good", text: `${got} ${item.name}. Set it up below to put it on your profile.` }
+        : { tone: "good", text: `${got} ${item.name}. Effect applied!`, profileLink: true };
     } else {
       S.msg = { tone: "bad", text: r?.message || "That didn't go through. Nothing was charged." };
     }
@@ -160,7 +163,9 @@
     const r = await post("/api/store/equip", { slot: item.slot, item: on ? item.id : null, ...extra });
     if (r?.ok) {
       S.cat.mine = r.mine;
-      S.msg = { tone: "good", text: on ? `${item.name} is on.` : `${item.name} is off.` };
+      S.msg = on
+        ? { tone: "good", text: `${item.name} is on. Effect applied!`, profileLink: true }
+        : { tone: "good", text: `${item.name} is off.` };
       if (item.slot === "title") S.titleDraft = null;
       if (item.slot === "message") S.messageDraft = null;
       if (item.slot === "player") { S.hoverPlayer = null; S.playerResults = []; S.playerQ = ""; }
@@ -242,6 +247,7 @@
     const wide = owned && ["title-custom", "message-custom", "player-pick"].includes(item.id);
     const t = el("article", `st-item${owned ? " owned" : ""}${on ? " on" : ""}${wide ? " wide" : ""}${item.chase ? " chase" : ""}`);
     if (item.chase) t.append(el("span", "st-ribbon", "Legendary"));
+    else if (item.promo) t.append(el("span", "st-ribbon promo", item.promo));
     t.addEventListener("mouseenter", () => { S.hover = item.id; repaintPreview(); });
     t.addEventListener("mouseleave", () => { if (S.hover === item.id) { S.hover = null; S.hoverPlayer = null; repaintPreview(); } });
     t.addEventListener("focusin", () => { S.hover = item.id; repaintPreview(); });
@@ -253,7 +259,13 @@
 
     const foot = el("div", "st-foot");
     const balance = Number(S.cat.balance);
-    if (!owned) {
+    if (!owned && item.price === 0) {
+      // Promo: nothing to confirm, no ZCoins move.
+      foot.append(el("span", "st-free", "Free"));
+      const claim = btn("Claim free", "st-btn gold", () => { S.msg = null; buy(item); });
+      claim.disabled = S.busy;
+      foot.append(claim);
+    } else if (!owned) {
       foot.append(coins(item.price));
       if (S.confirm === item.id) {
         const ask = el("div", "st-confirm");
@@ -327,7 +339,16 @@
     const layout = el("div", "st-layout");
     layout.append(preview());
     const shelves = el("div", "st-shelves");
-    if (S.msg) shelves.append(el("p", `st-msg ${S.msg.tone}`, S.msg.text));
+    if (S.msg) {
+      const note = el("p", `st-msg ${S.msg.tone}`, S.msg.text);
+      // After something goes on, send them to see it where it lives.
+      if (S.msg.profileLink && S.cat.login) {
+        const go = el("a", "st-msg-link ulink", "View your profile now →");
+        go.href = `/u/${encodeURIComponent(S.cat.login)}`;
+        note.append(" ", go);
+      }
+      shelves.append(note);
+    }
     for (const [slot, label] of Object.entries(S.cat.slots)) {
       const items = S.cat.items.filter((i) => i.slot === slot);
       if (!items.length) continue;

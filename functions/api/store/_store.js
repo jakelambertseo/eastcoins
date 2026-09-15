@@ -50,7 +50,9 @@ export const ITEMS = [
   // metallic gold panel, not the crimson-and-gold of the EARNED #1 card,
   // and the tier tag still shows what was actually earned.
   { id: "finish-gold", slot: "finish", name: "Gold", price: 500, chase: true, blurb: "The whole card in polished gold. A legendary item." },
-  { id: "finish-chrome", slot: "finish", name: "Chrome", price: 500, blurb: "Brushed metal from edge to edge." },
+  // Free as a promo (2026-09-15). A price of 0 never touches the wallet —
+  // buy.js records ownership without a wallet operation.
+  { id: "finish-chrome", slot: "finish", name: "Chrome", price: 0, promo: "Free", blurb: "Brushed metal from edge to edge. Free for a limited time." },
 
   { id: "name-gold", slot: "name", name: "Gold", price: 500, chase: true, blurb: "Your name in gold on your card and profile. A chase item." },
   { id: "name-ice", slot: "name", name: "Ice", price: 150, blurb: "Your name in frosted blue." },
