@@ -4848,7 +4848,7 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
   gap:14px 22px;
 }
 .pf-head.has-tcard .pf-copy{grid-area:copy;align-self:start}
-.pf-head.has-tcard .pf-glance{grid-area:glance;align-self:end;margin:0}
+.pf-head.has-tcard .pf-glance{grid-area:glance;align-self:end;margin:0;grid-template-columns:repeat(2,minmax(0,1fr))}
 .pf-head.has-tcard .tc{grid-area:card;align-self:start}
 
 .tc{
@@ -5008,5 +5008,5 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
   .pf-head.has-tcard .tc{max-width:250px}
   .pf-head.has-tcard .pf-copy{justify-items:center;text-align:center;width:100%}
   .pf-head.has-tcard .pf-copy h1{justify-content:center}
-  .pf-head.has-tcard .pf-glance{width:100%}
+  .pf-head.has-tcard .pf-glance{width:100%;grid-template-columns:minmax(0,1fr)}
 }

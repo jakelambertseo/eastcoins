@@ -109,8 +109,19 @@
 >
 > **Profile layout** (`v3-profile.js` `page()`): mini nav →
 > `.pf-card.pf-head.has-tcard` → `.pf-tabs` Overview (bankroll,
-> highlights, glance cards) / Picks / Casino / Music; the tab lives in
-> the hash (`/u/name#casino`).
+> highlights) / Picks / Casino / Music; the tab lives in the hash
+> (`/u/name#casino`). **The header is the card plus identity plus two
+> launchers, and nothing numeric beyond that** (tidied 2026-09-16): the
+> card carries record, profit, staked and rank; beside it sit the name,
+> the badges (short, full label on hover), the handle and join date,
+> the team chip, and the Picks and Casino launchers that used to open
+> the Overview. The two `.pf-quick` summary strips that sat there were
+> the clutter — the casino one was the Casino tab's own strip repeated
+> — and are gone; the one figure only they carried, the current
+> streak, is now the "Right now" stat on the Picks strip. The Green
+> Room launcher was dropped rather than squeezed in as a third: it
+> wrapped onto its own row and left a hole under both columns. Music
+> keeps its tab.
 >
 > **The profile card (2026-09-16)** — the header leads with a
 > **trading card** (`tradingCard()`, `.tc*` in `v3.css`): real 2.5×3.5
@@ -353,7 +364,12 @@
 > `gamesLastHour`, `dropsLastHour`, `cardsLastHour`, `joinsLastHour`)
 > rather than a query written for the display, so the card and the bet
 > endpoint cannot drift apart — keep it that way. The blurb and who is
-> in the room moved to the card's `title`. **`.cas-card` is the casino's
+> in the room moved to the card's `title`; who is in the room is ALSO
+> a pile of small faces (`.cas-card-who`, `K.avatar` as `cf-av
+> cas-face`, up to four) at the right of the live line with the count
+> after it. That line is redrawn twice a second for the countdown, so
+> the pile is rebuilt only when the roster's login list changes —
+> keep it behind that `peopleSig` check. **`.cas-card` is the casino's
 > alone; the Game Room still draws `.cas-tile`**, so its accents and
 > layout are separate.
 >

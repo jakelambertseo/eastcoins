@@ -602,9 +602,10 @@
     };
     glance.append(
       glanceCard("picks", "🪙", "Picks", `${k.wins}–${k.losses}`, k.open ? `${k.open} open right now` : `${k.total} pick${k.total === 1 ? "" : "s"} all season`),
-      glanceCard("casino", "🎰", "Casino", c ? `${c.net > 0 ? "+" : ""}${c.net.toLocaleString()}` : "—", c ? `${c.wins}–${c.losses} across ${c.total} play${c.total === 1 ? "" : "s"}` : "no results yet"),
-      glanceCard("music", "🎵", "Green Room", music ? String(music.rating ?? 1000) : "—", music ? `ELO · ${music.requests} request${music.requests === 1 ? "" : "s"}` : "no requests yet")
+      glanceCard("casino", "🎰", "Casino", c ? `${c.net > 0 ? "+" : ""}${c.net.toLocaleString()}` : "—", c ? `${c.wins}–${c.losses} across ${c.total} play${c.total === 1 ? "" : "s"}` : "no results yet")
     );
+    // Two launchers, not three: a third wrapped onto its own row beside
+    // the card and left a hole. The Green Room keeps its tab.
     head.append(glance);
     wrap.append(head);
 
