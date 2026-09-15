@@ -651,8 +651,11 @@ export async function onRequestPost(context) {
   }
   // The quiet sports (MLB) still get their finals in chat — one line per
   // game with the score, winners and payout, and nothing else all day.
+  // Only for a game somebody picked (2026-09-15): a final nobody had a
+  // stake in is just noise. A failed payout is a pick, so it is still said.
   for (const r of results) {
     if (!quietInChat(r.sport) || r.action === "skipped") continue;
+    if (!(r.lines?.length)) continue;
     const line = composeSettled([r]);
     if (!line) continue;
     const said = await sayInChat(context.env, line);

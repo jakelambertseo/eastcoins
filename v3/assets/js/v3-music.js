@@ -695,6 +695,21 @@
    * room's queue entries carry no thumbnail field, and this needs neither
    * a request nor an API key.
    */
+  /* "Save to your YouTube": opens the song on YouTube in a new tab,
+     where Save is the button under the video. YouTube has no link that
+     opens its playlist picker directly, and adding to someone's playlist
+     from here would need a Google sign-in with YouTube access — so this
+     is the one-click-away version, on purpose. */
+  function saveLink(videoId, className, label) {
+    if (!/^[A-Za-z0-9_-]{11}$/.test(String(videoId || ""))) return null;
+    const a = el("a", className, label);
+    a.href = `https://www.youtube.com/watch?v=${videoId}`;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.title = "Opens on YouTube — press Save under the video to add it to a playlist";
+    return a;
+  }
+
   function thumbUrl(videoId) {
     return /^[A-Za-z0-9_-]{11}$/.test(String(videoId || ""))
       ? `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`
@@ -1496,6 +1511,8 @@
         const again = el("button", "watchbtn mq-again", "Play again");
         again.type = "button";
         again.addEventListener("click", () => addVideo(entry.videoId, entry.title || ""));
+        const save = saveLink(entry.videoId, "watchbtn mq-again msave", "Save ↗");
+        if (save) row.append(save);
         row.append(again);
 
         wrap.append(row);
@@ -1770,6 +1787,8 @@
         by.append(document.createTextNode("requested by "), profileLink(current.requestedByLogin || current.requestedBy, current.requestedBy));
         text.append(by);
       }
+      const save = saveLink(current.videoId, "msave msave-now", "Save to your YouTube ↗");
+      if (save) text.append(save);
       box.append(text);
       const time = el("span", "mnow-ov-time nums");
       time.append(refs.progressNow, document.createTextNode(" / "), refs.progressEnd);

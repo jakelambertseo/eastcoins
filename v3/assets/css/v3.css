@@ -4609,3 +4609,10 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 .pf-movie .sc-cap small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:620px){.sc-rate{align-items:flex-start}.sc-rate-picks button{width:36px;height:36px}}
 @media (prefers-reduced-motion:reduce){.sc-rate-picks button{transition:none}.sc-rate-picks button:hover{transform:none}}
+
+/* Green Room: "Save to your YouTube" (2026-09-15) — on the now-playing
+   overlay and beside Play again in History. Opens the song on YouTube. */
+.msave{text-decoration:none;display:inline-flex;align-items:center;white-space:nowrap}
+.mnow-ov .msave-now{align-self:flex-start;margin-top:4px;padding:3px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.45);color:#fff;font-size:.68rem;font-weight:800;letter-spacing:.02em}
+.mnow-ov .msave-now:hover{border-color:#ff3b3b;background:rgba(255,0,0,.22)}
+.mnow-ov .msave-now:focus-visible,.mq-row .msave:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
