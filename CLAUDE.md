@@ -565,7 +565,9 @@
 > leaves `ops_status` notes (`_ops.js`: `settle:last`, `odds:quota`).
 >
 > **Old links still work.** `v3-shell.js` rewrites `?event=`, `?watch=`,
-> and the `games` / `streams` / `sicko` view names on load, and
+> and the `streams` / `sicko` view names on load (`games` was one of
+> them until 2026-09-16, when the Game Room took that name; the old
+> mini-games page is still served at `/games`), and
 > `v3-multiview.js` decodes MultiView share tokens made by the V2 shell.
 > Do not remove either without a reason — every link ever pasted in chat
 > is one of those shapes.

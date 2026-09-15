@@ -69,8 +69,10 @@
   // Extensionless: Pages canonicalises away the .html with a 308, and
   // sending someone through a redirect to reach a redirect is a hop for
   // nothing.
+  // "games" is NOT here any more (2026-09-16): the Game Room took that
+  // name, so ?view=games is a real route now. The old mini-games page is
+  // still a page and still lives at /games for anyone who has that link.
   const LEGACY_PAGES = {
-    games: "/games",
     streams: "/favorites",
     sicko: "/picks-kalshi-test#prop-of-week"
   };
