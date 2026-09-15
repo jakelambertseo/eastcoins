@@ -60,7 +60,15 @@
     root.replaceChildren();
     refs = {};
     const page = K.el("section", "casino");
-    const head = K.el("div", "viewhead");
+
+    /* People come here to play, so the games are the first thing on the
+       page and everything else is a footnote under them. Until
+       2026-09-16 the tiles started 528px down a 595px viewport — a
+       laptop opened the floor on the ticker, the wallet strip and the
+       Jackpot meter, and not one game. The limits line moved into the
+       subtitle and the wallet numbers into one bar in the header, so
+       the head costs a row rather than a screen. */
+    const head = K.el("div", "viewhead cas-head");
     const copy = K.el("div");
     const h1 = K.el("h1", null, "Casino");
     const emote = document.createElement("img");
@@ -69,31 +77,12 @@
     emote.alt = "";
     emote.width = 32; emote.height = 32;
     h1.append(emote);
-    copy.append(h1);
+    copy.append(h1, K.el("p", null, "20 ZC a bet · ten an hour per game · 750 an hour out"));
     head.append(copy);
+    refs.me = K.el("div", "cas-headme");
+    head.append(refs.me);
     page.append(head);
 
-    // Your own numbers, once the poll says who you are.
-    // The tables' own ticker: casino wins and losses, nothing else.
-    const ticker = K.el("section", "ticker cas-ticker");
-    page.append(ticker);
-    window.setTimeout(() => {
-      if (ticker.isConnected && window.ECActivity) {
-        window.ECActivity.mountTicker(ticker, { types: ["casino", "pot"], label: "TABLES", href: "/?view=activity", empty: "Quiet for now — the first spin lands here." });
-      }
-    }, 0);
-
-    refs.me = K.el("div", "cas-me");
-    page.append(refs.me);
-
-    // The Daily Jackpot, above the games.
-    const potSlot = K.el("div", "cas-pot");
-    page.append(potSlot);
-    window.ECPot?.mount(potSlot);
-
-    const gamesHead = K.el("div", "cas-games-head");
-    gamesHead.append(K.el("h2", null, "Casino games"), K.el("span", null, "20 ZC a bet · ten an hour per game"));
-    page.append(gamesHead);
     refs.tiles = K.el("div", "cas-tiles");
     for (const [key, g] of Object.entries(GAMES)) {
       if (g.hidden) continue;
@@ -133,7 +122,21 @@
     }
     page.append(refs.tiles);
 
-    // Below the tiles: Recent results and House rules as two tabs.
+    // Under the games, in the order someone would want them: what the
+    // house is giving away today, then what the room is doing.
+    const potSlot = K.el("div", "cas-pot");
+    page.append(potSlot);
+    window.ECPot?.mount(potSlot);
+
+    const ticker = K.el("section", "ticker cas-ticker");
+    page.append(ticker);
+    window.setTimeout(() => {
+      if (ticker.isConnected && window.ECActivity) {
+        window.ECActivity.mountTicker(ticker, { types: ["casino", "pot"], label: "TABLES", href: "/?view=activity", empty: "Quiet for now — the first spin lands here." });
+      }
+    }, 0);
+
+    // Below that: Recent results and House rules as two tabs.
     const tabs = K.el("nav", "pf-tabs cas-tabs");
     const panels = {};
     for (const [key, label] of [["results", "Recent results"], ["rules", "House rules"]]) {
@@ -183,42 +186,41 @@
     root.append(page);
   }
 
-  /** The strip: wallet, casino net, record, and where you stand against the hour's cap. */
+  /** Wallet, net, record and the hour's cap — one bar in the header.
+      These were four summary cards taking 83px above the games; the
+      same four numbers read fine small, and the wallet is in the nav
+      pill as well, so none of it earned a band of its own. */
   function renderMe() {
     if (!refs.me) return;
     const me = data?.me;
     refs.me.replaceChildren();
     if (!me) {
       if (data && !data.me && !window.ECV3?.state?.session?.user) {
-        const card = K.el("div", "pf-card picks-login");
-        const copy = K.el("div");
-        copy.append(K.el("b", null, "Log in with Twitch to play"), K.el("span", null, "Your ZCoins from chat come with you. 20 a bet, ten an hour per game."));
-        const go = K.el("a", "login-btn", "Log in with Twitch");
+        const go = K.el("a", "login-btn", "Log in with Twitch to play");
         go.href = "/api/picks/auth/twitch/start?returnTo=" + encodeURIComponent("/?view=casino");
-        card.append(copy, go);
-        refs.me.append(card);
+        refs.me.append(go);
       }
       return;
     }
     const balance = Number(window.ECV3?.state?.session?.wallet?.balance);
-    const strip = K.el("div", "summarystrip four");
-    const cards = [
-      ["My ZCoins wallet", Number.isFinite(balance) ? balance.toLocaleString() : "—", "Live from StreamElements", "wallet"],
-      ["Casino net", `${me.net > 0 ? "+" : me.net < 0 ? "−" : ""}${Math.abs(me.net).toLocaleString()}`, me.wins + me.losses ? `${me.wins + me.losses} bet${me.wins + me.losses === 1 ? "" : "s"} settled` : "Nothing settled yet", me.net > 0 ? "up" : me.net < 0 ? "down" : ""],
-      ["Record", `${me.wins}–${me.losses}`, me.wins + me.losses ? `${Math.round(100 * me.wins / (me.wins + me.losses))}% of settled bets` : "First bet decides it", ""],
-      ["This hour", `${me.hourNet > 0 ? "+" : me.hourNet < 0 ? "−" : ""}${Math.abs(me.hourNet).toLocaleString()}`, me.hourNet >= me.hourCap ? "At the cap — back next hour" : `Winnings cap ${me.hourCap.toLocaleString()} an hour`, me.hourNet >= me.hourCap ? "down" : ""]
-    ];
-    for (const [k, v, note, tone] of cards) {
-      const card = K.el("article", `summarycard${tone ? " " + tone : ""}`);
-      card.append(K.el("span", null, k), K.el("strong", "nums", v), K.el("small", null, note));
-      if (tone === "wallet") {
-        const coin = document.createElement("img");
-        coin.className = "zc-full"; coin.src = "/v3/assets/img/zcoin.webp"; coin.alt = ""; coin.width = 64; coin.height = 64;
-        card.append(coin);
-      }
-      strip.append(card);
-    }
-    refs.me.append(strip);
+    const bar = K.el("div", "cas-mebar");
+    const settled = me.wins + me.losses;
+    const sign = (n) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n).toLocaleString()}`;
+    const stat = (label, value, tone, tail) => {
+      const cell = K.el("span");
+      cell.append(K.el("small", null, label));
+      const b = K.el("b", `nums${tone ? " " + tone : ""}`, value);
+      if (tail) b.append(K.el("i", null, tail));
+      cell.append(b);
+      return cell;
+    };
+    bar.append(
+      stat("Wallet", Number.isFinite(balance) ? balance.toLocaleString() : "—"),
+      stat("Net", sign(me.net), me.net > 0 ? "up" : me.net < 0 ? "down" : ""),
+      stat("Record", settled ? `${me.wins}–${me.losses}` : "—"),
+      stat("This hour", sign(me.hourNet), me.hourNet >= me.hourCap ? "down" : "", ` / ${me.hourCap.toLocaleString()}`)
+    );
+    refs.me.append(bar);
   }
 
   function renderTiles() {

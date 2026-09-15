@@ -2468,8 +2468,6 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .cf-card-verify{padding-top:6px}
 .cf-list.paged{max-height:none;overflow:visible}
 .cf-pager{margin-top:10px}
-.cas-me{margin-bottom:16px}
-.cas-me .summarystrip{margin-bottom:0}
 .summarystrip.four{grid-template-columns:repeat(4,minmax(0,1fr))}
 .cas-tabs{margin-bottom:14px}
 .cas-lower.cas-lower{display:block}
@@ -3257,9 +3255,26 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 
 /* the floor */
 .cas-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-bottom:16px}
-.cas-games-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:4px 0 10px}
-.cas-games-head h2{margin:0;font-family:var(--display);font-weight:800;font-size:1.2rem;letter-spacing:-.02em}
-.cas-games-head span{color:var(--muted-2);font-size:.76rem;font-weight:700}
+
+/* The floor's header. The four numbers that used to be a band of
+   summary cards above the games ride here instead, so the games start
+   a row down the page rather than a screen down it. */
+.cas-head{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.cas-headme{margin-left:auto;display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.cas-mebar{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+.cas-mebar>span{display:flex;flex-direction:column;gap:1px;padding:7px 15px;border-left:1px solid var(--line);min-width:0}
+.cas-mebar>span:first-child{border-left:0}
+.cas-mebar small{color:var(--muted-2);font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.cas-mebar b{font-family:var(--display);font-weight:800;font-size:.98rem;line-height:1.15;white-space:nowrap}
+.cas-mebar b.up{color:var(--gr)}
+.cas-mebar b.down{color:var(--red)}
+.cas-mebar b i{font-style:normal;color:var(--muted-2);font-size:.76rem;font-weight:700}
+@media (max-width:760px){
+  .cas-headme{margin-left:0;width:100%}
+  .cas-mebar{width:100%}
+  .cas-mebar>span{flex:1;align-items:center;padding:6px 6px}
+  .cas-mebar small{font-size:.55rem;letter-spacing:.06em}
+}
 /* The game cards: each with its own colour, a lit icon, and a solid Play. */
 .cas-tile{
   --accent:var(--gold);--accent-rgb:var(--gold-rgb);
@@ -3381,7 +3396,6 @@ body.spooky .wh-k::after{content:" 👻"}
 body.spooky .wh-empty::before{content:"👻 "}
 body.spooky .picksbanner-tag::before{content:"🎃 "}
 body.spooky .sportgroup-head h2::after{content:" 🦇";font-size:.85em}
-body.spooky .cas-games-head h2::after{content:" 🕯️"}
 body.spooky .lp-kicker::after{content:" 🧛"}
 body.spooky .pf-tabs .pf-tab.on::after{content:" 🍬";font-size:.85em}
 
@@ -4173,7 +4187,7 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
 /* ============================================================
    THE DAILY POT
    ============================================================ */
-.cas-pot{margin-bottom:16px}
+.cas-pot{margin:18px 0 16px}
 .pot{position:relative;overflow:hidden;border-color:rgba(var(--gold-rgb),.4);background:linear-gradient(100deg,rgba(var(--gold-rgb),.10),transparent 60%),var(--panel)}
 .pot::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 0% 50%,rgba(var(--gold-rgb),.14),transparent 55%)}
 .pot>*{position:relative}
