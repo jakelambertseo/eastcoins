@@ -5,8 +5,9 @@
    ZCoin; the Game Room is played for titles. */
 
 import { getSessionUser, json, fail } from "../picks/_lib.js";
-import { ensureGames, GAMES, chicagoDay, board, recordFor, myScore, champions } from "./_games.js";
+import { ensureGames, GAMES, chicagoDay, board, recordFor, myScore, champions, seedFor } from "./_games.js";
 import { ensureHelmet, parseGuesses, MAX_GUESSES } from "./helmet/_helmet.js";
+import { ensureGold, goldState, winnerFor } from "./gold/_gold.js";
 
 export async function onRequestGet(context) {
   const db = context.env.PICKS_DB;
@@ -14,8 +15,12 @@ export async function onRequestGet(context) {
   await ensureGames(db);
   await ensureHelmet(db).catch(() => {});
 
-  const day = chicagoDay(Date.now());
+  const now = Date.now();
+  const day = chicagoDay(now);
   const user = await getSessionUser(db, context.request);
+  await ensureGold(db).catch(() => {});
+  const goldSeed = await seedFor(db, "gold", day).catch(() => null);
+  const goldWinner = goldSeed ? await winnerFor(db, day) : null;
 
   const games = [];
   for (const g of Object.values(GAMES)) {
@@ -33,6 +38,13 @@ export async function onRequestGet(context) {
       entry.state = play?.done ? (play.solved ? `Got it in ${guesses.length}` : "Missed it") : guesses.length ? `${MAX_GUESSES - guesses.length} guesses left` : null;
     }
     if (g.key === "fg" && mine) entry.state = `Best today ${Number(mine.score)}`;
+    if (g.key === "simon" && mine) entry.state = `Best today ${Number(mine.score)} rounds`;
+    if (g.key === "centre" && mine) entry.state = `Best today ${Number(mine.score)}`;
+    if (g.key === "gold") {
+      entry.open = Boolean(goldSeed && (await goldState(db, day, goldSeed, now)));
+      entry.winner = goldWinner;
+      entry.state = goldWinner ? `${goldWinner.user.displayName} took it` : entry.open ? "It's up right now" : "Still to come";
+    }
     games.push(entry);
   }
 

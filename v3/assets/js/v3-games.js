@@ -45,7 +45,7 @@
     const head = el("div", "viewhead");
     const copy = el("div");
     copy.append(el("h1", null, "Game Room"),
-      el("p", null, "Quick games for titles, not ZCoins. A new crest every day at midnight Central; the kicking is open all hours."));
+      el("p", null, "Quick games for titles, not ZCoins. The crest is a new one every day at midnight Central, the rest are open all hours, and the gold button turns up when it feels like it."));
     head.append(copy);
     refs.status = el("span", "cf-status", "Loading…");
     head.append(refs.status);
@@ -74,9 +74,13 @@
   }
 
   function tile(g) {
-    const a = el("a", `cas-tile gr-tile gr-${g.key}`);
-    a.href = `/?view=${g.route}`;
-    a.addEventListener("click", (e) => { if (e.metaKey || e.ctrlKey || e.shiftKey) return; e.preventDefault(); go(g.route); });
+    // The Gold Button has no page of its own: it comes to you.
+    const playable = Boolean(g.route);
+    const a = el(playable ? "a" : "div", `cas-tile gr-tile gr-${g.key}${g.open ? " is-open" : ""}`);
+    if (playable) {
+      a.href = `/?view=${g.route}`;
+      a.addEventListener("click", (e) => { if (e.metaKey || e.ctrlKey || e.shiftKey) return; e.preventDefault(); go(g.route); });
+    }
 
     const top = el("div", "cas-tile-top");
     top.append(el("span", "cas-ico", g.icon));
@@ -90,7 +94,7 @@
     const foot = el("div", "gr-tile-foot");
     if (g.state) foot.append(el("span", `gr-state${g.played ? " done" : ""}`, g.state));
     else if (g.daily) foot.append(el("span", "gr-state new", "Not played yet"));
-    const top1 = g.board?.[0];
+    const top1 = g.key === "gold" ? null : g.board?.[0];
     if (top1) {
       const lead = el("span", "gr-lead");
       lead.append(document.createTextNode("Leader "), el("b", null, top1.user.displayName), document.createTextNode(` · ${top1.score}`));
@@ -99,8 +103,20 @@
     a.append(foot);
 
     if (g.record?.streak > 1) a.append(el("span", "gr-streak", `🔥 ${g.record.streak} days`));
-    a.append(el("span", "cas-play", "Play →"));
+    a.append(el("span", "cas-play", playable ? "Play →"
+      : g.open ? "It's up — look bottom left"
+        : g.winner ? `Taken by ${g.winner.user.displayName}`
+          : "Watch for it"));
     return a;
+  }
+
+  /** Each game counts something different; say which. */
+  function scoreWords(key, row) {
+    if (key === "helmet") return row.detail?.solved ? `${row.detail.guesses}${row.detail.guesses === 1 ? " guess" : " guesses"}` : "missed";
+    if (key === "simon") return `${row.score} round${row.score === 1 ? "" : "s"}`;
+    if (key === "centre") return `${row.score} points`;
+    if (key === "gold") return row.detail?.tookMs ? `${(row.detail.tookMs / 1000).toFixed(1)}s` : "took it";
+    return `${row.score} made${row.detail?.longest ? ` · ${row.detail.longest}yd` : ""}`;
   }
 
   function render() {
@@ -121,11 +137,7 @@
         line.append(el("span", "gr-rank", `${row.rank}`));
         line.append(K.avatar(row.user, "cf-av small"));
         line.append(K.nameLink(row.user));
-        const score = el("span", "gr-score nums");
-        score.textContent = g.key === "helmet"
-          ? (row.detail?.solved ? `${row.detail.guesses}${row.detail.guesses === 1 ? " guess" : " guesses"}` : "missed")
-          : `${row.score} made${row.detail?.longest ? ` · ${row.detail.longest}yd` : ""}`;
-        line.append(score);
+        line.append(el("span", "gr-score nums", scoreWords(g.key, row)));
         col.append(line);
       }
       refs.boards.append(col);

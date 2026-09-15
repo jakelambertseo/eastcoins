@@ -23,7 +23,10 @@ import { chicagoDay } from "../casino/_pot.js";
 
 export const GAMES = {
   helmet: { key: "helmet", name: "Helmet Zoom", daily: true, route: "helmet", icon: "🪖", blurb: "One NFL crest, zoomed past recognition. Six guesses, and it pulls back with every wrong one." },
-  fg: { key: "fg", name: "Field Goal", daily: false, route: "fg", icon: "🏈", blurb: "Power, then aim, into the wind. Every kick is five yards further; one miss ends the run." }
+  simon: { key: "simon", name: "Simon", daily: false, route: "simon", icon: "🟩", blurb: "Four pads, a sequence that grows by one every round. Repeat it back until you can't." },
+  fg: { key: "fg", name: "Field Goal", daily: false, route: "fg", icon: "🏈", blurb: "Power, then aim, into the wind. Every kick is five yards further; one miss ends the run." },
+  centre: { key: "centre", name: "Dead Centre", daily: false, route: "centre", icon: "🎯", blurb: "Stop the bar in the middle, five times. Two hundred a go, and a quick sweep is worth more." },
+  gold: { key: "gold", name: "The Gold Button", daily: true, route: null, icon: "🟡", blurb: "Once a day, at a moment nobody knows, it appears on every page for two minutes. First press takes the day." }
 };
 
 export { chicagoDay };
@@ -53,6 +56,15 @@ export async function ensureGames(db) {
       PRIMARY KEY (game, day)
     )`)
   ]);
+  // One row per person per game per day: this is what makes a daily
+  // puzzle once and once only, and what keeps a skill game's best of
+  // the day a single row to update. On its own and forgiving on
+  // purpose — a table that somehow already held a duplicate would
+  // otherwise take the whole Game Room down with it, and a missing
+  // index is a much smaller problem than that.
+  await db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_game_scores_once ON game_scores (game, user_id, day)`).run().catch((error) => {
+    console.error("games: couldn't add the one-a-day index", error?.message || error);
+  });
   ready = true;
 }
 

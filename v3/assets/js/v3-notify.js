@@ -58,6 +58,9 @@
       if (fresh) toast(fresh);
     }
     lastUnread = payload.unread;
+    // The Gold Button's window comes down this pipe because this is the
+    // one request every open tab already makes. v3-gold.js draws it.
+    document.dispatchEvent(new CustomEvent("ec-gold", { detail: payload.gold || null }));
   }
 
   async function markSeen() {

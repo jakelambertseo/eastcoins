@@ -29,6 +29,8 @@ import { isProp, matchup, sideLabel, shortQuestion } from "./_props.js";
 import { findTeam, ensureFavouriteColumns } from "./_teams.js";
 import { badgesFor } from "./_badges.js";
 import { ensureOps } from "./_ops.js";
+import { ensureGames, seedFor, chicagoDay as gameDay } from "../games/_games.js";
+import { ensureGold, goldState } from "../games/gold/_gold.js";
 
 const DAYS_BACK = 14;
 const FIRST_LOOK_DAYS = 3;      // a brand-new bell shows three days, not fourteen
@@ -201,11 +203,22 @@ export async function onRequestGet(context) {
     .sort((a, b) => new Date(b.at) - new Date(a.at))
     .slice(0, LIMIT);
 
+  // The Gold Button's window rides along here rather than polling of
+  // its own: this is the only thing every open tab already asks for.
+  let gold = null;
+  try {
+    await ensureGames(db);
+    await ensureGold(db);
+    const gday = gameDay(Date.now());
+    gold = await goldState(db, gday, await seedFor(db, "gold", gday));
+  } catch { gold = null; }
+
   return json({
     ok: true,
     since: new Date(since).toISOString(),
     firstLook: seenAt === null,
     login: user.login,
+    gold,
     unread: items.filter((i) => i.unread).length,
     items
   });
