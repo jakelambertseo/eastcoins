@@ -49,7 +49,7 @@
   // had a chance to register. An unknown name still falls back.
   // "game" is the /g/<slug> page chat links to. It is a route, not a nav
   // item: the only way in is a link.
-  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre"];
+  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre", "wrapped"];
 
   /* ------------------------------------------------------ loading views
 
@@ -73,6 +73,7 @@
     picks: [...LOGOS, "v3-scores.js", "v3-pickbox.js", "v3-picks.js"],
     game: [...LOGOS, "v3-pickbox.js", "v3-game.js"],
     profile: [...LOGOS, "v3-profile.js"],
+    wrapped: [...LOGOS, "v3-wrapped.js"],
     users: ["v3-users.js"],
     activity: [...LOGOS, "v3-activity.js"],
     music: ["eastcoins-music-config.js", "eastcoins-youtube.js", "v3-activity.js", "v3-music.js"],
@@ -248,6 +249,8 @@
   function routeFromUrl() {
     if (/^\/g\/./i.test(location.pathname)) return "game";
     if (/^\/u\/./i.test(location.pathname)) return "profile";
+    // /wrapped/<login>, and a bare /wrapped that opens your own.
+    if (/^\/wrapped(\/|$)/i.test(location.pathname)) return "wrapped";
     // /movie/inception and /tv/lost-s1-ep1 are the Movies & TV view.
     if (/^\/(movie|tv)\/./i.test(location.pathname)) return "screen";
     const view = new URL(location.href).searchParams.get("view");
@@ -268,7 +271,7 @@
 
     // The game view owns its own URL (/g/<slug>); every other view is
     // reached by name.
-    if (push && name !== "game" && name !== "profile") {
+    if (push && name !== "game" && name !== "profile" && name !== "wrapped") {
       const url = name === "events" ? "/" : `/?view=${name}`;
       history.pushState({ view: name }, "", url);
     }
@@ -276,6 +279,7 @@
   }
 
   const TITLES = {
+    wrapped: "EastCoin Wrapped",
     events: "EastCoin — Sports", music: "The Green Room — EastCoin", screen: "Movies & TV — EastCoin",
     multiview: "MultiView — EastCoin", picks: "Picks — EastCoin", casino: "Casino — EastCoin",
     flip: "Coin Flip — EastCoin Casino", wheel: "Wheel — EastCoin Casino", race: "Horse Race — EastCoin Casino",
@@ -787,7 +791,7 @@
     const a = event.target.closest("a.ulink, a.glink");
     if (!a) return;
     const href = a.getAttribute("href") || "";
-    const target = href.startsWith("/u/") ? "profile" : href.startsWith("/g/") ? "game" : "";
+    const target = href.startsWith("/u/") ? "profile" : href.startsWith("/g/") ? "game" : href.startsWith("/wrapped") ? "wrapped" : "";
     if (!target) return;
     event.preventDefault();
     history.pushState({ view: target }, "", href);

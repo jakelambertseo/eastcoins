@@ -14,6 +14,7 @@ import { badgesFor } from "./_badges.js";
 import { getSessionUser } from "./_lib.js";
 import { ensureSchema as ensureCoinSchema } from "../coin/_coin.js";
 import { findTeam, ensureFavouriteColumns } from "./_teams.js";
+import { isOpen as wrappedIsOpen } from "./_wrapped.js";
 
 const json = (body, status = 200) => Response.json(body, {
   status,
@@ -263,6 +264,8 @@ export async function onRequestGet(context) {
     flip,
     casino,
     movies,
+    // EastCoin Wrapped has dropped: the profile links to it.
+    wrappedOpen: wrappedIsOpen(context.env),
     user: {
       id: String(user.twitch_id),
       login: String(user.twitch_login).toLowerCase(),

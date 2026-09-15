@@ -585,7 +585,7 @@
     const k = data.picks;
     const c = data.casino;
     const wrap = el("section", "profile");
-    wrap.append(profileNav());
+    wrap.append(profileNav(data));
 
     // ---- the header card
     const head = el("div", "pf-card pf-head has-tcard");
@@ -790,13 +790,15 @@
      the left, the way back to the rest of the site on the right.
      Every link stays inside the shell, so the chat never reloads. */
 
-  function profileNav() {
+  function profileNav(data = null) {
     const nav = el("nav", "pf-nav");
     nav.setAttribute("aria-label", "Profile links");
     nav.append(
       link("/?view=users", "pf-nav-link", "All Users"),
       link("/?view=picks", "pf-nav-link", "← Back to Picks")
     );
+    // Once EastCoin Wrapped has dropped, every profile links to its season.
+    if (data?.wrappedOpen && data.user?.login) nav.append(link(`/wrapped/${encodeURIComponent(data.user.login)}`, "pf-nav-link", "🎁 Wrapped"));
     return nav;
   }
 
@@ -1027,6 +1029,10 @@
       event.preventDefault();
       history.pushState({ view: "flip" }, "", href);
       shell.go("flip", { push: false });
+    } else if (href.startsWith("/wrapped/")) {
+      event.preventDefault();
+      history.pushState({ view: "wrapped" }, "", href);
+      shell.go("wrapped", { push: false });
     } else if (href.startsWith("/?view=screen")) {
       event.preventDefault();
       history.pushState({ view: "screen" }, "", href);
