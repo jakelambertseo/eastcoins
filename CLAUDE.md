@@ -583,7 +583,11 @@
 > per threshold, one line per threshold per tick). The cron runs every 5
 > minutes. The schedule
 > is cached 30 minutes (one credit per refresh, shared with the Picks
-> page's Upcoming list via `/api/picks/upcoming`); a fresh price is
+> page's Upcoming list via `/api/picks/upcoming`; since 2026-09-15 a
+> paused sport, or a daily sport outside its opening hours — MLB before
+> 3 PM or after 1 AM Central — is served from a 12-hour shadow copy
+> instead of refetched, `refreshWorthIt` in `_autoopen.js`; and live
+> score tracking runs every other tick, `live:last` in `ops_status`); a fresh price is
 > fetched only when a game is due, so section 9.5's quota concern is
 > handled by design rather than by a cap. The Odds API plan is 20,000
 > credits/month — comfortable, still not to be spent casually.

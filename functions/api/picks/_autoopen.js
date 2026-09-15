@@ -48,6 +48,26 @@ export function quietInChat(sport) {
 const SCHEDULE_TTL_S = 30 * 60;
 // v3: entries carry sport, league and the open time.
 const cacheUrl = (cfg) => `https://eastcoin-picks.internal/schedule-v3/${cfg.key}`;
+// A second, longer-lived copy of the last fetch, served whenever a
+// refresh would buy nothing: a paused sport, or a daily sport outside
+// the hours it can open. Twelve hours covers a whole off-window.
+const shadowUrl = (cfg) => `https://eastcoin-picks.internal/schedule-v3-long/${cfg.key}`;
+const SHADOW_TTL_S = 12 * 60 * 60;
+
+/**
+ * Whether spending a credit on this sport's schedule right now can
+ * change anything. NFL opens an hour before any kickoff, so always.
+ * A daily sport only opens at its hour — MLB at 4 PM Central — and
+ * refills through the evening, so from an hour before that until 1 AM
+ * is the only stretch a fresh copy matters; the rest of the day the
+ * shadow copy is as good.
+ */
+export function refreshWorthIt(cfg, now = Date.now()) {
+  if (cfg.open !== "daily" || !Number.isFinite(cfg.openHourCT)) return true;
+  const ct = new Date(new Date(now).toLocaleString("en-US", { timeZone: "America/Chicago" }));
+  const h = ct.getHours();
+  return h >= cfg.openHourCT - 1 || h < 1;
+}
 
 function median(values) {
   if (!values.length) return null;
@@ -124,11 +144,19 @@ function consensus(game) {
   return { away: median(away), home: median(home), books: away.length };
 }
 
-async function schedule(apiKey, cfg) {
+async function schedule(apiKey, cfg, { allowFetch = true } = {}) {
   const cache = caches.default;
   const key = new Request(cacheUrl(cfg));
   const hit = await cache.match(key);
   if (hit) return hit.json();
+
+  // No credit spent when it could not change what opens: hand back the
+  // last copy, or nothing at all, and say so.
+  if (!allowFetch || !refreshWorthIt(cfg)) {
+    const shadow = await cache.match(new Request(shadowUrl(cfg))).catch(() => null);
+    if (shadow) return { ...(await shadow.json()), shadow: true };
+    return { games: [], fetchedAt: null, shadow: true };
+  }
 
   const games = await fetchOdds(apiKey, cfg);
   if (!games) return { games: [], fetchedAt: null };
@@ -154,9 +182,13 @@ async function schedule(apiKey, cfg) {
   }).filter((g) => g.id && g.commence);
 
   const payload = { games: slim, fetchedAt: new Date().toISOString() };
-  await cache.put(key, new Response(JSON.stringify(payload), {
+  const body = JSON.stringify(payload);
+  await cache.put(key, new Response(body, {
     headers: { "Cache-Control": `max-age=${SCHEDULE_TTL_S}`, "Content-Type": "application/json" }
   }));
+  await cache.put(new Request(shadowUrl(cfg)), new Response(body, {
+    headers: { "Cache-Control": `max-age=${SHADOW_TTL_S}`, "Content-Type": "application/json" }
+  })).catch(() => {});
   return payload;
 }
 
@@ -164,7 +196,15 @@ async function schedule(apiKey, cfg) {
 export async function upcomingGames(env) {
   const apiKey = String(env.ODDS_API_KEY || "").trim();
   if (!apiKey) return { games: [], fetchedAt: null };
-  const all = await Promise.all(SPORTS.map((cfg) => schedule(apiKey, cfg).catch(() => ({ games: [], fetchedAt: null }))));
+  // A paused sport is served from its shadow copy, never a fresh fetch.
+  let pauses = {};
+  try { if (env.PICKS_DB) pauses = await readStatus(env.PICKS_DB, SPORTS.map((c) => `autoopen:pause:${c.sport}`)); } catch { pauses = {}; }
+  const now = Date.now();
+  const all = await Promise.all(SPORTS.map((cfg) => {
+    const until = pauses[`autoopen:pause:${cfg.sport}`]?.value?.until;
+    const paused = until ? new Date(until).getTime() > now : false;
+    return schedule(apiKey, cfg, { allowFetch: !paused }).catch(() => ({ games: [], fetchedAt: null }));
+  }));
   return {
     games: all.flatMap((s) => s.games),
     fetchedAt: all.map((s) => s.fetchedAt).filter(Boolean).sort().pop() || null

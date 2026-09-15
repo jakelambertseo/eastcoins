@@ -664,9 +664,18 @@ export async function onRequestPost(context) {
     if (cards.length) await postDiscord(context.env, cards).catch(() => {});
   }
 
-  // Games in play with picks on them: keep the score current.
+  // Games in play with picks on them: keep the score current — every
+  // other tick (ten minutes, not five): the score line on a ticket can
+  // wait five minutes, and it halves the credits a game night spends.
   let liveNote = { watched: 0, changed: [] };
-  try { liveNote = await trackLiveScores(context.env, db, boards); } catch (error) { console.error("Picks: live scores threw", error); }
+  try {
+    const last = (await readStatus(db, ["live:last"]).catch(() => ({})))["live:last"]?.value?.at;
+    const due = !last || Date.now() - new Date(last).getTime() >= 9.5 * 60 * 1000;
+    if (due) {
+      liveNote = await trackLiveScores(context.env, db, boards);
+      if (liveNote.watched) await noteStatus(db, "live:last", { at: new Date().toISOString(), watched: liveNote.watched });
+    } else liveNote = { watched: 0, changed: [], skipped: "off-tick" };
+  } catch (error) { console.error("Picks: live scores threw", error); }
 
   // Leave a note for the dashboard: when this ran, what it did, and the
   // latest Odds API quota seen on the way.
