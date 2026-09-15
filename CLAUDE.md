@@ -107,10 +107,43 @@
 > `.tabs-tools` slot where `sportFilter()` (segmented All/NFL/MLB) is
 > mounted by the Markets, History and Ledger views via `mountTools()`.
 >
-> **Profile layout** (`v3-profile.js` `page()`): mini nav → `.pf-card.pf-head`
-> (avatar, name+badges, team, `.pf-quick` four numbers) → `.pf-tabs`
-> Overview (bankroll, highlights, glance cards) / Picks / Casino / Music;
-> the tab lives in the hash (`/u/name#casino`).
+> **Profile layout** (`v3-profile.js` `page()`): mini nav →
+> `.pf-card.pf-head.has-tcard` → `.pf-tabs` Overview (bankroll,
+> highlights, glance cards) / Picks / Casino / Music; the tab lives in
+> the hash (`/u/name#casino`).
+>
+> **The profile card (2026-09-16)** — the header leads with a
+> **trading card** (`tradingCard()`, `.tc*` in `v3.css`): real 2.5×3.5
+> proportions, a bone border, the photo on a coloured panel, the name
+> across the bottom, and the **league table on the back** — click
+> turns it over. It replaced the plain `.pf-avatar`; the name, badges,
+> team chip and the two `.pf-quick` strips sit beside it in a
+> `238px 1fr` grid and stack under it below 760px. Every figure was
+> already in `/api/picks/profile`, so nothing new is tracked.
+>
+> **The finish comes off the season ladder** (`tierOf()`): gold at
+> rank 1, silver in the top five or at 80%+ accuracy, base otherwise
+> — so the card changes when someone climbs rather than being a
+> picture of a page. Gold and silver get a foil sweep; only gold gets
+> the lit rank flash. The line under the name is their loudest badge,
+> falling back to accuracy when they have none.
+>
+> Two things that are deliberate. **No team crest and no fallback mark
+> behind the photo**: most of the site has not set a favourite team and
+> a placeholder badge read as a broken image rather than a design.
+> And `avatar()` returns a SPAN holding the initials with the `<img>`
+> as a CHILD — so the circle goes on the wrapper and the image is
+> absolutely positioned inside it, the shape `.cf-av` uses. Styling the
+> wrapper as though it were the image is what made the first build
+> render a square photo.
+>
+> **It is not live.** `v3-profile.js` has no poll at all: the page
+> fetches once on mount, so a card showing #1 keeps showing #1 until
+> the profile is opened again. Rank itself is recomputed server-side on
+> every request and settlement runs on the 5-minute cron, so the number
+> is right within about five minutes of a game ending — for anyone who
+> loads the page after that. Read the poll-rate note above before
+> adding a refresh here.
 >
 > **MLB slate line** — quiet sports still get one chat line a day when
 > the 4 PM slate opens (`composeSlateOpen`, keyed `slateopen:<sport>:<day>`
