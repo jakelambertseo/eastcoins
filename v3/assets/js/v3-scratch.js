@@ -328,9 +328,6 @@
       r.append(K.el("span", "sc-psym", `${sym(p.key)}${sym(p.key)}${sym(p.key)}`), K.el("span", "sc-pname", p.name), K.el("strong", null, `×${p.multiplier}`), K.el("small", null, chance));
       refs.paysList.append(r);
     }
-    const sum = K.el("div", "sc-psum");
-    sum.append(K.el("span", null, "Return to the room"), K.el("b", null, `${config.returnPct}%`));
-    refs.paysList.append(sum);
 
     // Fairness: the NEXT card's hash, plus the last one revealed.
     refs.fair.hidden = false;
