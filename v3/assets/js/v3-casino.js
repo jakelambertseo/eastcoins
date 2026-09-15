@@ -13,6 +13,10 @@
 
   const K = window.ECCasino;
   const POLL_MS = 5000;
+  /* The card art is served with an hour of cache and no version in its
+     own path, so a redrawn card would take up to an hour to appear.
+     Bump this whenever an image in /v3/assets/img/casino/ changes. */
+  const ART_V = 2;
   let root = null;
   let refs = {};
   let data = null;
@@ -141,7 +145,7 @@
          the emoji comes back if it never does. */
       const pic = document.createElement("img");
       pic.className = "cas-card-img";
-      pic.src = `/v3/assets/img/casino/${key}.webp`;
+      pic.src = `/v3/assets/img/casino/${key}.webp?v=${ART_V}`;
       pic.alt = "";
       pic.width = 540; pic.height = 720;
       pic.decoding = "async";
