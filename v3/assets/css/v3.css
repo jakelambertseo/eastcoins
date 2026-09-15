@@ -4487,7 +4487,7 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
 .tonight-stake{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0}
 .tonight-stake input{width:90px;height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);font:inherit;font-size:1rem;outline:none}
 .tonight-stake input:focus{border-color:rgba(var(--prop-rgb),.6)}
-.tonight-stake .btn{height:40px;padding:0 16px;display:inline-flex;align-items:center;gap:6px}
+.tonight-stake .btn{flex:0 0 auto;width:auto;height:40px;padding:0 16px;display:inline-flex;align-items:center;gap:6px}
 .tonight-note{margin:0;color:var(--muted-2);font-size:.8rem}
 .tonight-note.bad{color:var(--red)}
 .tonight-you{display:flex;align-items:center;gap:5px;flex-wrap:wrap;color:var(--muted);font-size:.9rem}
