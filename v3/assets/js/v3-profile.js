@@ -621,6 +621,12 @@
     copy.append(name);
     copy.append(el("p", null, `@${u.login}${u.since ? " · with EastCoin since " + when(u.since, { month: "short", year: "numeric" }) : ""}`));
     if (look.message) copy.append(el("p", "pf-msg", look.message));
+    // Only on your own page: the way into the store's looks.
+    if (isMine(u)) {
+      const custom = link("/?view=store", "pf-customize");
+      custom.append(document.createTextNode("🎨 Customize my profile"), el("span", "nav-tag", "NEW"));
+      copy.append(custom);
+    }
     copy.append(teamChip(u, look));
     if (look.player) copy.append(playerChip(look.player));
     head.append(copy);
@@ -1080,6 +1086,10 @@
       event.preventDefault();
       history.pushState({ view: "flip" }, "", href);
       shell.go("flip", { push: false });
+    } else if (href.startsWith("/?view=store")) {
+      event.preventDefault();
+      history.pushState({ view: "store" }, "", href);
+      shell.go("store", { push: false });
     } else if (href.startsWith("/wrapped/")) {
       event.preventDefault();
       history.pushState({ view: "wrapped" }, "", href);
