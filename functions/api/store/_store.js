@@ -55,7 +55,7 @@ export const ITEMS = [
   { id: "finish-chrome", slot: "finish", name: "Chrome", price: 0, promo: "Free", blurb: "Brushed metal from edge to edge. Free for a limited time." },
 
   { id: "name-gold", slot: "name", name: "Gold", price: 500, chase: true, blurb: "Your name in gold on your card and profile. A chase item." },
-  { id: "name-ice", slot: "name", name: "Ice", price: 150, blurb: "Your name in frosted blue." },
+  { id: "name-ice", slot: "name", name: "Ice", price: 99, blurb: "Your name in frosted blue." },
   { id: "name-ember", slot: "name", name: "Ember", price: 150, blurb: "Your name glowing hot orange." },
 
   { id: "namefx-shine", slot: "namefx", name: "Shine", price: 250, blurb: "A light sweeps across your profile name every few seconds." },
@@ -67,7 +67,7 @@ export const ITEMS = [
   { id: "title-hater", slot: "title", name: "Certified Hater", text: "Certified Hater", price: 150, blurb: "Fades everyone. Proudly." },
   { id: "title-parlay", slot: "title", name: "Parlay Prince", text: "Parlay Prince", price: 150, blurb: "Never met a long shot they didn't like." },
   { id: "title-underdog", slot: "title", name: "Underdog King", text: "Underdog King", price: 150, blurb: "Plus money or nothing." },
-  { id: "title-degen", slot: "title", name: "Professional Degen", text: "Professional Degen", price: 150, blurb: "It's not gambling if you're good at it." },
+  { id: "title-degen", slot: "title", name: "Professional Degen", text: "Professional Degen", price: 99, blurb: "It's not gambling if you're good at it." },
   { id: "title-legend", slot: "title", name: "Chat Legend", text: "Chat Legend", price: 200, blurb: "Everybody knows the name." },
   { id: "title-custom", slot: "title", name: "Custom title", price: 300, blurb: "Write your own, up to 24 characters." },
 
@@ -82,7 +82,7 @@ export const ITEMS = [
   { id: "banner-matrix", slot: "banner", name: "Matrix", price: 200, blurb: "Green code raining behind your profile." },
   { id: "banner-retro", slot: "banner", name: "Retro sunset", price: 200, blurb: "An '80s sunset grid behind your profile." },
 
-  { id: "team-glow", slot: "team", name: "Team glow", price: 150, blurb: "Your favourite team glows on your profile." },
+  { id: "team-glow", slot: "team", name: "Team glow", price: 99, blurb: "Your favourite team glows on your profile." },
   { id: "team-gold", slot: "team", name: "Gold plate", price: 500, chase: true, blurb: "Your team on an engraved gold nameplate. A chase item." },
   { id: "team-flame", slot: "team", name: "On fire", price: 250, blurb: "Your team's name burns hot." },
 
