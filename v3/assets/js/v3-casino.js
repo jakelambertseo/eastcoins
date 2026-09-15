@@ -91,7 +91,21 @@
     for (const [key, label] of [["wallet", "Wallet"], ["net", "Net"], ["record", "Record"], ["hour", "This hour"]]) {
       const cell = K.el("span");
       const value = K.el("b", "nums", "—");
-      cell.append(K.el("small", null, label), value);
+      const tag = K.el("small");
+      if (key === "wallet") {
+        // The wallet is the one number here that is money rather than a
+        // score, so it wears the coin.
+        const coin = document.createElement("img");
+        coin.className = "zcoin-mark";
+        coin.src = "/v3/assets/img/zcoin.webp";
+        coin.alt = "";
+        coin.width = 12; coin.height = 12;
+        coin.loading = "lazy"; coin.decoding = "async";
+        tag.append(document.createTextNode("My "), coin, document.createTextNode(" Wallet"));
+      } else {
+        tag.textContent = label;
+      }
+      cell.append(tag, value);
       cell.hidden = true;
       refs.stats[key] = { cell, value };
       refs.mebar.append(cell);

@@ -3339,6 +3339,8 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .cas-mebar b.down{color:var(--red)}
 .cas-mebar b i{font-style:normal;color:var(--muted-2);font-size:.76rem;font-weight:700}
 .cas-mebar>span[hidden]{display:none}
+.cas-mebar small{display:flex;align-items:center;gap:0}
+.cas-mebar small .zcoin-mark{width:11px;height:11px;margin:0 3px;flex:0 0 auto}
 /* The Jackpot sits at the head of the bar, in gold, because it is the
    one number on it that is not the reader's own. */
 .cas-jack{display:flex;flex-direction:column;gap:1px;padding:7px 15px;border-left:0;background:linear-gradient(180deg,rgba(var(--gold-rgb),.16),transparent);cursor:help}
