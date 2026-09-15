@@ -4684,6 +4684,43 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
   @keyframes goldpulse{0%,100%{box-shadow:0 5px 0 #8e7320,0 0 18px rgba(var(--gold-rgb),.45)}50%{box-shadow:0 5px 0 #8e7320,0 0 36px rgba(var(--gold-rgb),.85)}}
 }
 
+/* Twitch disables the message box for mods and the broadcaster the
+   moment ANY element covers its iframe, so nothing may sit over the
+   rail. Above 980px the rail is a right-hand COLUMN and a bottom-left
+   button is nowhere near it. Below that it becomes a fixed drawer over
+   the right of the screen — and it is OPEN BY DEFAULT, so this is the
+   ordinary phone case, not an edge one: the full-width button lands
+   squarely on it (272px of overlap at 430px, z-index 73 over the
+   rail's 55). So it collapses to a disc in the strip the drawer
+   leaves, sized from the drawer's OWN expression rather than a guessed
+   breakpoint, which is what makes an overlap impossible at any width
+   instead of merely unlikely at the ones that were measured. */
+@media (max-width:980px){
+  body.chat-open .goldbtn{
+    left:6px;right:auto;
+    width:calc(100vw - min(360px,86vw) - 12px);
+    min-width:0;max-width:56px;
+    padding:5px;gap:0;justify-content:center;
+  }
+  body.chat-open .goldbtn .goldbtn-copy{display:none}
+  body.chat-open .goldbtn .goldbtn-mark{margin:0 auto;font-size:1.3rem}
+  body.chat-open .goldbtn-hit{
+    width:100%;height:auto;aspect-ratio:1;
+    padding:0;border-radius:50%;font-size:0;letter-spacing:0;
+  }
+  body.chat-open .goldbtn-hit::after{content:"GO";font-size:.78rem;letter-spacing:.04em}
+  /* A toast only repeats what the bell already counts, so it waits for
+     the drawer to close rather than shrinking to nothing. Same corner,
+     same rail, same failure. */
+  body.chat-open .notif-toast{display:none}
+}
+
+/* The floating music player owns this exact corner (bottom-left, 320px
+   by ~260, and full-width under 640px), so the button goes to the top
+   when a dock is up rather than landing on it. The rule above still
+   governs the width, so moving it cannot walk it back onto the rail. */
+body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
+
 /* the room's gold card */
 .gr-tile.gr-gold{--accent:var(--gold);--accent-rgb:var(--gold-rgb)}
 .gr-tile.gr-gold.is-open{border-color:var(--gold);box-shadow:0 0 0 1px rgba(var(--gold-rgb),.4),0 0 34px rgba(var(--gold-rgb),.28)}
