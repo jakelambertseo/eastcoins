@@ -151,11 +151,15 @@ async function schedule(apiKey, cfg, { allowFetch = true } = {}) {
   if (hit) return hit.json();
 
   // No credit spent when it could not change what opens: hand back the
-  // last copy, or nothing at all, and say so.
+  // last copy. Outside the opening hours that holds only while a copy
+  // exists — a sport coming off a pause has none, and serving nothing
+  // left MLB off the Upcoming list all morning (2026-09-15), so one
+  // fetch refills the shadow for the next twelve hours. A paused sport
+  // still never fetches.
   if (!allowFetch || !refreshWorthIt(cfg)) {
     const shadow = await cache.match(new Request(shadowUrl(cfg))).catch(() => null);
     if (shadow) return { ...(await shadow.json()), shadow: true };
-    return { games: [], fetchedAt: null, shadow: true };
+    if (!allowFetch) return { games: [], fetchedAt: null, shadow: true };
   }
 
   const games = await fetchOdds(apiKey, cfg);
