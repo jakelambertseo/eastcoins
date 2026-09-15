@@ -231,7 +231,10 @@
       box.append(cta);
     }
 
-    load();
+    // The Sports page builds its top block before attaching it, so the
+    // first read waits a tick — a load that ran now would find the strip
+    // not yet in the document and stop for good.
+    window.setTimeout(load, 0);
     timer = window.setInterval(load, POLL_MS);
     return () => window.clearInterval(timer);
   }
