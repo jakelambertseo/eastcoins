@@ -191,7 +191,13 @@
 > `game_days` (the day's seed, made on first request so an answer
 > cannot be derived from the date), `board`, `recordFor` with a day
 > streak, and `champions` for who has taken the most days in 30.
-> `/api/games/home` is the room. Two games:
+> One row per person per game per day is a UNIQUE INDEX on
+> `(game, user_id, day)` — a random primary key never collided, so the
+> daily rule was not actually enforced; it is added on its own and
+> forgiving, because a table that somehow already held a duplicate
+> would otherwise take the whole room down with it.
+> `/api/games/home` is the room. The nav link is **hidden** while the
+> room is iterated on. Five games:
 >
 > **Helmet Zoom** `/?view=helmet` (`v3-helmet.js`,
 > `games/helmet/*`, table `helmet_plays`) — one NFL crest a day,
@@ -216,6 +222,47 @@
 > read from the clock at the moment of the click, never from the last
 > painted frame, so a throttled tab cannot judge a kick on a number
 > nobody saw.
+>
+> **Simon (2026-09-16)** `/?view=simon` (`v3-simon.js`,
+> `games/simon/*`, table `simon_runs`) — four pads, one more every
+> round, score is rounds CLEARED and `saveScore({keepBest:true})`
+> keeps the day's best. The sequence is a pure function of the run's
+> seed (`sequenceFor`) and is handed out **one round at a time**, so
+> the page is never told more than it is about to show and there is
+> nothing to read ahead. `step.js` grades the answer against the
+> server's copy; a wrong pad ends the run there rather than at the end
+> of the round. The straightest game in the room.
+>
+> **Dead Centre (2026-09-16)** `/?view=centre` (`v3-centre.js`,
+> `games/centre/*`, table `centre_runs`) — a bar sweeps, stop it in
+> the middle, five goes. `speedsFor` picks the sweep speeds from the
+> seed and `replay()` scores the set server-side, so a good run cannot
+> be copied into a later one. `pointsFor(stop, speed) = max(0,
+> round((200 - error*2000) * (0.85 + speed*0.3)))`, so a **quick sweep
+> is worth more than a slow one** and a perfect set beats 1,000 — do
+> not write "out of 1,000" in copy. Like Field Goal, `barAt()` reads
+> the bar from `performance.now()` at the moment of the press, never
+> from the last painted frame.
+>
+> **The Gold Button (2026-09-16)** (`v3-gold.js`, `games/gold/*`,
+> table `gold_claims`) — once a day, at a moment nobody knows
+> (`triggerFor` from the day's seed, always between 10:00 and 22:30
+> Central), it appears **on every page** for two minutes; first press
+> takes the day, scored `120` for instant down to `1` on the bell.
+> **It has no page and it does not poll**: the bell already asks
+> `/api/picks/notifications` every 45 seconds, that answer now carries
+> `gold`, and `v3-notify.js` dispatches it as an `ec-gold` DOM event
+> which `v3-gold.js` only listens for and draws. That is why the
+> window is two minutes rather than thirty seconds — one poll has to
+> be certain to catch it. Any future "it appears everywhere" feature
+> should ride that request the same way rather than adding a poll.
+> The winner is atomic: `gold_claims.day` is the PRIMARY KEY and the
+> claim is `INSERT OR IGNORE`, so two presses in the same instant
+> cannot both win. It sits **bottom LEFT** for the same reason the
+> bell's toasts do — anything over the Twitch rail on the right makes
+> it flag itself obscured and stops chat. `/api/games/gold/state` says
+> whether it is up and who took it, and **never when it is due**; its
+> Game Room card is a `div`, not a link.
 >
 > **Check a seed (2026-09-13)** — `/?view=verify` (`v3-verify.js`) over
 > `GET /api/casino/verify?game=&seed=[&hash=&mines=&players=]`, which is
