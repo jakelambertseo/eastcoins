@@ -60,6 +60,37 @@ const RUNNERS = [
 // Past it, new bets and deals are refused until the hour rolls on.
 export const HOUR_WIN_CAP = 750;
 
+/* ------------------------------------------------------------- the edge
+
+   Every play draws its own return between 96% and 104%, uniformly, from
+   that play's seed. Nothing here is a fixed house edge and no game is a
+   better bet than any other: the expected return everywhere is the mean
+   of the band, 100%, and where a given play lands is decided by the same
+   committed seed that decides the cards, the bombs and the angle.
+
+   That is the point. A fixed rate per game — Coin Flip at 96%, Mines at
+   104% — is an edge a player can find and farm, and one of them did:
+   191 of the Mines boards ever played were one person's. A per-play draw
+   cannot be shopped for, because the seed is sealed behind its hash
+   before the stake is taken and only revealed once the play is over.
+
+   Games that keep a `multiplier` column bake the drawn edge into it, so
+   the number shown, the number recorded and the number paid are the same
+   number. The rest apply it where the payout is computed. */
+export const EDGE_MIN = 0.96;
+export const EDGE_MAX = 1.04;
+
+export async function edgeFor(seed) {
+  const h = await sha256(`${seed}:edge`);
+  const r = parseInt(h.slice(0, 8), 16) / 0x100000000;
+  return Math.round((EDGE_MIN + r * (EDGE_MAX - EDGE_MIN)) * 10000) / 10000;
+}
+
+/** Adds a column that older rows predate. Safe to call on every request. */
+export async function ensureColumn(db, table, column, decl) {
+  await db.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${decl}`).run().catch(() => {});
+}
+
 export const GAMES = {
   wheel: {
     key: "wheel",
@@ -67,12 +98,11 @@ export const GAMES = {
     cycleMs: 60 * 1000,
     betMs: 40 * 1000,
     picks: ["red", "black", "gold"],
-    // 2026-09-16: the tight end of the spread. A colour is 12 of 24 slices
-    // across 354 degrees, so 1.97 returns 96.9%; gold is the 6-degree
-    // sliver, 1 in 60, and 58 returns 96.7%. The Wheel is one of the two
-    // fastest, most mindless games here, which is why it carries an edge
-    // while Mines pays 104% for the decisions it asks for.
-    payout: { red: 1.97, black: 1.97, gold: 58 },
+    // These are the FAIR prices: a colour is 12 of 24 slices across 354
+    // degrees, so 360/177; gold is the 6-degree sliver, 1 in 60. The
+    // play's own edge is multiplied in when it settles, so what a spin
+    // actually pays lands between 96% and 104% of these.
+    payout: { red: 360 / 177, black: 360 / 177, gold: 60 },
     segments: WHEEL,
     /** Where the pointer lands, in degrees from the top, from the seed alone. */
     async outcome(seed) {
@@ -226,7 +256,8 @@ export async function settleRound(env, db, game, no, now = Date.now()) {
       await db.prepare(`UPDATE casino_bets SET status = 'LOST', payout = 0 WHERE id = ? AND status = 'ACTIVE'`).bind(b.id).run();
       continue;
     }
-    const payout = Math.round(Number(b.wager) * Number(game.payout[b.pick] || 0));
+    const edge = await edgeFor(round.seed);
+    const payout = Math.round(Number(b.wager) * Number(game.payout[b.pick] || 0) * edge);
     const opId = newId("op");
     const begun = await beginOperation(db, {
       id: opId,

@@ -19,9 +19,12 @@
    a retried settlement cannot pay twice.
    ============================================================ */
 
+import { edgeFor } from "../casino/_engine.js";
 import { moveBalance, beginOperation, finishOperation, newId } from "../picks/_lib.js";
 
-export const COIN_PAYS = 1.92;
+// The fair price of a fair coin. The round's own edge is multiplied in
+// when it settles, so a flip pays between 1.92 and 2.08.
+export const COIN_PAYS = 2;
 
 export const CYCLE_MS = 30 * 1000;
 export const BET_MS = 15 * 1000;
@@ -146,14 +149,13 @@ export async function settleRound(env, db, no, now = Date.now()) {
     .bind(no)
     .all();
 
+  const edge = await edgeFor(round.seed);
   for (const b of bets.results || []) {
     if (b.side !== result) {
       await db.prepare(`UPDATE coin_bets SET status = 'LOST', payout = 0 WHERE id = ? AND status = 'ACTIVE'`).bind(b.id).run();
       continue;
     }
-    // 2026-09-14: a hair over double — 41 on 20, 31 on 15 — so the flip
-    // returns about 102% at the usual stakes instead of exactly even.
-    const payout = Math.round(Number(b.wager) * COIN_PAYS);
+    const payout = Math.round(Number(b.wager) * COIN_PAYS * edge);
     const opId = newId("op");
     const begun = await beginOperation(db, {
       id: opId,

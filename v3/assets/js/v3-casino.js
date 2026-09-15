@@ -27,8 +27,8 @@
   let boardPage = 1;
 
   const GAMES = {
-    flip: { title: "Coin Flip", icon: "🪙", blurb: "Heads or tails, just over 2×. One coin for the whole room, every 30 seconds.", route: "flip" },
-    wheel: { title: "Wheel", icon: "🎡", blurb: "Red or black 1.97×, the gold sliver 58×. One spin a minute.", route: "wheel" },
+    flip: { title: "Coin Flip", icon: "🪙", blurb: "Heads or tails, about 2×. One coin for the whole room, every 30 seconds.", route: "flip" },
+    wheel: { title: "Wheel", icon: "🎡", blurb: "Red or black about 2.03×, the gold sliver about 60×. One spin a minute.", route: "wheel" },
     race: { title: "Horse Race", icon: "🐎", blurb: "Four runners from 2× to 14×. They're off every minute.", route: "race", hidden: true },
     hilo: { title: "Higher or Lower", icon: "🃏", blurb: "Your own deck. Every right call multiplies the stake; cash out any time.", route: "hilo" },
     mines: { title: "Mines", icon: "💣", blurb: "Twenty-five tiles, a few of them bombs. Every safe one pays more; cash out before you find one.", route: "mines" },

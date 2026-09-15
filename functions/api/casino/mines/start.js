@@ -6,7 +6,7 @@
 import { getSessionUser, walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOperation, newId, json, fail } from "../../picks/_lib.js";
 import { settlePot } from "../_pot.js";
 import { ensureSchema, touchPresence, capCheck } from "../_engine.js";
-import { ensureMines, liveGameFor, gamesLastHour, publicGame, randomSeed, sha256, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR, MIN_MINES, MAX_MINES, DEFAULT_MINES } from "./_mines.js";
+import { ensureMines, liveGameFor, gamesLastHour, publicGame, randomSeed, sha256, edgeFor, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR, MIN_MINES, MAX_MINES, DEFAULT_MINES } from "./_mines.js";
 
 const MINES = { key: "mines" };
 
@@ -59,8 +59,8 @@ export async function onRequestPost(context) {
 
   try {
     await db
-      .prepare(`INSERT INTO mines_games (id, user_id, seed, hash, stake, mines) VALUES (?, ?, ?, ?, ?, ?)`)
-      .bind(id, user.id, seed, hash, stake, mines)
+      .prepare(`INSERT INTO mines_games (id, user_id, seed, hash, stake, mines, edge) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+      .bind(id, user.id, seed, hash, stake, mines, await edgeFor(seed))
       .run();
   } catch (error) {
     const refund = await moveBalance(context.env, user.login, stake);

@@ -28,7 +28,7 @@
    maximum, under Mines' x125 ceiling.
    ============================================================ */
 
-import { sha256, randomSeed, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
+import { sha256, randomSeed, edgeFor, ensureColumn, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
 
 // Rarest first, so the walk below meets the big prizes on the small
 // slice of u they own and everything else falls through to "no match".
@@ -44,7 +44,10 @@ export const PRIZES = [
 export const SYMBOLS = PRIZES.map((p) => p.key);
 export const CELLS = 9;
 export const MAX_MULTIPLIER = Math.max(...PRIZES.map((p) => p.x));
-export const RETURN = PRIZES.reduce((n, p) => n + p.p * p.x, 0);        // 1.035
+// What the prize table returns on its own, before the play's edge. The
+// prices are divided through by this so the table keeps its shape and a
+// card still returns exactly its drawn edge.
+export const RETURN = PRIZES.reduce((n, p) => n + p.p * p.x, 0);
 export const WIN_CHANCE = PRIZES.reduce((n, p) => n + p.p, 0);           // 0.434
 
 let ready = false;
@@ -71,6 +74,7 @@ export async function ensureScratch(db) {
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`)
   ]);
+  await ensureColumn(db, "scratch_cards", "edge", "REAL NOT NULL DEFAULT 1");
   ready = true;
 }
 
@@ -179,4 +183,4 @@ export async function cardsLastHour(db, userId) {
   return Number(row?.n || 0);
 }
 
-export { MAX_BET, MIN_BET, MAX_BETS_PER_HOUR, randomSeed, sha256 };
+export { MAX_BET, MIN_BET, MAX_BETS_PER_HOUR, randomSeed, sha256, edgeFor };

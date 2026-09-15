@@ -56,13 +56,16 @@ export async function onRequestPost(context) {
 
   const prize = await outcomeFor(commit.seed);
   const grid = await gridFor(commit.seed, prize);
-  const multiplier = prize ? prize.x : 0;
-  const payout = prize ? Math.round(stake * prize.x) : 0;
+  // The prize table keeps its shape; the prices are divided through by
+  // what it returns on its own so the card pays exactly its drawn edge.
+  const edge = await edgeFor(commit.seed);
+  const multiplier = prize ? Math.round((prize.x * edge / RETURN) * 10000) / 10000 : 0;
+  const payout = prize ? Math.round(stake * multiplier) : 0;
 
   try {
     await db
-      .prepare(`INSERT INTO scratch_cards (id, user_id, seed, hash, stake, prize, multiplier, grid, payout) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .bind(id, user.id, commit.seed, commit.hash, stake, prize ? prize.key : null, multiplier, JSON.stringify(grid), payout)
+      .prepare(`INSERT INTO scratch_cards (id, user_id, seed, hash, stake, prize, multiplier, grid, payout, edge) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(id, user.id, commit.seed, commit.hash, stake, prize ? prize.key : null, multiplier, JSON.stringify(grid), payout, edge)
       .run();
   } catch (error) {
     const refund = await moveBalance(context.env, user.login, stake);

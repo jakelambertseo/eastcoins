@@ -35,11 +35,15 @@
    ============================================================ */
 
 import { moveBalance, beginOperation, finishOperation, newId } from "../../picks/_lib.js";
-import { sha256, randomSeed, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
+import { sha256, randomSeed, edgeFor, ensureColumn, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
 
 export const TILES = 25;
 // 2026-09-14: the players' side — every board returns about 104%.
-export const EDGE_RETURN = 1.04;
+// Each rung is priced FAIRLY. The board's edge is drawn once from its
+// seed and multiplied in by multiplierFor, so every rung on a given
+// board carries the same drawn return and cashing early or late is
+// worth the same, as it always was.
+export const EDGE_RETURN = 1;
 // x125, raised from x25 on 2026-09-12 (which had itself come down from x50
 // the same day) because Mines was asked for a real jackpot: about 2,500 on
 // the 20 ZC maximum. The ladder is chunky — each extra tile roughly doubles
@@ -82,6 +86,7 @@ export async function ensureMines(db) {
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_mines_user ON mines_games (user_id, created_at)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_mines_live ON mines_games (status, updated_at)`)
   ]);
+  await ensureColumn(db, "mines_games", "edge", "REAL NOT NULL DEFAULT 1");
   ready = true;
 }
 
@@ -108,13 +113,13 @@ export async function bombsFor(seed, mines) {
  * The edge is taken once, off the whole price, so cashing out early
  * and cashing out late carry the same 4% in the player's favour.
  */
-export function multiplierFor(mines, picks) {
+export function multiplierFor(mines, picks, edge = 1) {
   const safe = TILES - mines;
   if (picks <= 0) return 1;
   if (picks > safe) return null;
   let fair = 1;
   for (let i = 0; i < picks; i += 1) fair *= (TILES - i) / (safe - i);
-  return Math.round(EDGE_RETURN * fair * 100) / 100;
+  return Math.round(EDGE_RETURN * edge * fair * 100) / 100;
 }
 
 /**
@@ -127,20 +132,20 @@ export function multiplierFor(mines, picks) {
  * the 99% every other cash-out pays. Stopping below the ceiling keeps
  * the edge at 1% wherever someone chooses to stop.
  */
-export function topRung(mines) {
+export function topRung(mines, edge = 1) {
   const safe = TILES - mines;
   let last = 1;
   for (let k = 1; k <= safe; k += 1) {
-    if (multiplierFor(mines, k) > MAX_MULTIPLIER) break;
+    if (multiplierFor(mines, k, edge) > MAX_MULTIPLIER) break;
     last = k;
   }
   return last;
 }
 
 /** The whole ladder for a bomb count, so the page can show what's ahead. */
-export function ladderFor(mines) {
+export function ladderFor(mines, edge = 1) {
   const out = [];
-  for (let k = 1; k <= topRung(mines); k += 1) out.push({ picks: k, multiplier: multiplierFor(mines, k) });
+  for (let k = 1; k <= topRung(mines, edge); k += 1) out.push({ picks: k, multiplier: multiplierFor(mines, k, edge) });
   return out;
 }
 
@@ -151,7 +156,8 @@ export function publicGame(g, { bombs = null } = {}) {
   const over = g.status !== "LIVE";
   const multiplier = Number(g.multiplier);
   // Nothing is quoted past the last rung the board can pay for.
-  const next = over || picks.length >= topRung(Number(g.mines)) ? null : multiplierFor(Number(g.mines), picks.length + 1);
+  const edge = Number(g.edge || 1);
+  const next = over || picks.length >= topRung(Number(g.mines), edge) ? null : multiplierFor(Number(g.mines), picks.length + 1, edge);
   return {
     id: g.id,
     status: g.status,
@@ -205,4 +211,4 @@ export async function cashOut(env, db, g, login) {
   return { ok: true, payout, balance: credit.balance };
 }
 
-export { MAX_BET, MIN_BET, MAX_BETS_PER_HOUR, randomSeed, sha256 };
+export { MAX_BET, MIN_BET, MAX_BETS_PER_HOUR, randomSeed, sha256, edgeFor };

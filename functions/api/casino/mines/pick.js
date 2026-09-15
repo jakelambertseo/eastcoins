@@ -47,7 +47,8 @@ export async function onRequestPost(context) {
   }
 
   const newPicks = [...picks, tile];
-  const multiplier = multiplierFor(Number(g.mines), newPicks.length);
+  const edge = Number(g.edge || 1);
+  const multiplier = multiplierFor(Number(g.mines), newPicks.length, edge);
   // Guarded on the old picks so a double-tap cannot count twice.
   const r = await db
     .prepare(`UPDATE mines_games SET picks = ?, multiplier = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'LIVE' AND picks = ?`)
@@ -58,7 +59,7 @@ export async function onRequestPost(context) {
   // Out of road: either every safe tile is uncovered, or the next rung
   // would pass the ceiling. Either way this run pays out here.
   const cleared = newPicks.length >= TILES - Number(g.mines);
-  if (cleared || newPicks.length >= topRung(Number(g.mines))) {
+  if (cleared || newPicks.length >= topRung(Number(g.mines), edge)) {
     const fresh = await db.prepare(`SELECT * FROM mines_games WHERE id = ?`).bind(id).first();
     const paid = await cashOut(context.env, db, fresh, user.login);
     const done = await db.prepare(`SELECT * FROM mines_games WHERE id = ?`).bind(id).first();
