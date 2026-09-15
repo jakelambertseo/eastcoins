@@ -163,7 +163,7 @@
       plays.hidden = true;
 
       tile.append(art, live, plays);
-      refs[`tile_${key}`] = { tile, clock, phase, room, plays, blurb: g.blurb, peopleSig: "" };
+      refs[`tile_${key}`] = { tile, clock, phase, room, plays, name: g.title, blurb: g.blurb, peopleSig: "" };
       refs.tiles.append(tile);
     }
     page.append(refs.tiles);
@@ -311,9 +311,13 @@
       if (cap && data.me?.played) {
         const left = Math.max(0, cap - Number(data.me.played[g.key] || 0));
         r.plays.hidden = false;
-        r.plays.textContent = `${left}/${cap} plays left this hour`;
+        // Short on purpose: the long form ran to the exact width of a
+        // card, so any narrower column would have clipped it.
+        r.plays.textContent = `${left}/${cap} plays left`;
         r.plays.classList.toggle("out", left === 0);
-        r.plays.title = left ? "" : `That's ${cap} this hour in this game — the limit. Back next hour.`;
+        r.plays.title = left
+          ? `${left} of ${cap} plays left this hour in ${r.name}. The limit is ten per game, not ten across the floor.`
+          : `That's ${cap} this hour in this game — the limit. Back next hour.`;
       } else {
         r.plays.hidden = true;
       }
