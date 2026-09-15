@@ -36,6 +36,8 @@
     page: { mypicks: 1, history: 1, leaderboard: 1, ledger: 1 },   // one page per list
     day: "",        // Markets tab: which day's slate is showing (a toDateString key)
     communityLedger: [],
+    ledgerFull: false,            // the full history is fetched only when the tab opens
+    ledgerLoading: false,
     season: null,
     login: "",
     config: {},
@@ -91,7 +93,9 @@
       local.markets = Array.isArray(payload.markets) ? payload.markets : [];
       local.myPicks = Array.isArray(payload.myPicks) ? payload.myPicks : [];
       local.leaderboard = Array.isArray(payload.leaderboard) ? payload.leaderboard : [];
-      local.communityLedger = Array.isArray(payload.communityLedger) ? payload.communityLedger : [];
+      // Bootstrap now carries only the ACTIVE rows; once the tab has
+      // fetched the full history, a refresh must not shrink it back.
+      if (!local.ledgerFull) local.communityLedger = Array.isArray(payload.communityLedger) ? payload.communityLedger : [];
       local.season = payload.season || null;
       local.login = String(payload.session?.user?.login || "").toLowerCase();
       local.wallet = payload.session?.wallet || null;
@@ -1272,11 +1276,22 @@
       wrap.append(skelRows(8, true));
       return wrap;
     }
+    // The full ledger arrives on first open; until then the open picks
+    // bootstrap already carried are shown, so the tab is never blank.
+    if (!local.ledgerFull && !local.ledgerLoading) {
+      local.ledgerLoading = true;
+      fetch("/api/picks/ledger", { credentials: "include" })
+        .then((r) => r.json())
+        .then((p) => { if (Array.isArray(p?.ledger)) { local.communityLedger = p.ledger; local.ledgerFull = true; } })
+        .catch(() => { /* the open rows stay up */ })
+        .finally(() => { local.ledgerLoading = false; if (local.tab === "ledger") paint(); });
+    }
     const ll = leagueCounts(local.communityLedger.map(leagueOf));
     if (ll.leagues.length > 1) mountTools(sportFilter(ll.leagues, ll.counts, local.communityLedger.length));
     const rows = local.sport === "all" ? local.communityLedger : local.communityLedger.filter((r) => leagueOf(r) === local.sport);
 
     if (!rows.length) {
+      if (!local.ledgerFull) { wrap.append(skelRows(8, true)); return wrap; }
       wrap.append(emptyNote("No picks yet", "Every pick anyone makes shows here — who, which side, how much, and what came of it."));
       return wrap;
     }

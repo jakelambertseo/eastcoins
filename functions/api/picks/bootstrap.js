@@ -826,8 +826,15 @@ async function getPersonalHistory(
     .slice(0, 150);
 }
 
-async function getCommunityLedger(
-  db
+/* The public ledger. Bootstrap asks for the ACTIVE rows only — the
+   handful of open picks the Tonight strip needs to say how chat is
+   split — and /api/picks/ledger serves the full 200 for the Ledger
+   tab. Until 2026-09-16 every bootstrap carried all 200: 150 KB of a
+   159 KB payload, on every page, refetched by the home page each
+   minute, for a tab most visitors never open. */
+export async function getCommunityLedger(
+  db,
+  { activeOnly = false } = {}
 ) {
   const result =
     await db
@@ -861,12 +868,9 @@ async function getCommunityLedger(
            ON u.twitch_id = p.user_id
          JOIN markets m
            ON m.id = p.market_id
-         WHERE p.status IN (
-           'ACTIVE',
-           'WON',
-           'LOST',
-           'REFUNDED'
-         )
+         ${activeOnly
+           ? "WHERE p.status = 'ACTIVE'"
+           : "WHERE p.status IN ('ACTIVE', 'WON', 'LOST', 'REFUNDED')"}
          ORDER BY
            datetime(
              COALESCE(
@@ -1041,7 +1045,8 @@ export async function onRequestGet(
           user?.id || null
         ),
         getCommunityLedger(
-          db
+          db,
+          { activeOnly: true }
         )
       ]);
 
