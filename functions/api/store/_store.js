@@ -46,7 +46,10 @@ export const NEEDS_INPUT = new Set(["title-custom", "message-custom", "player-pi
 
 export const ITEMS = [
   { id: "finish-holo", slot: "finish", name: "Holo", price: 400, blurb: "A rainbow sheen that slides across the card." },
-  { id: "finish-neon", slot: "finish", name: "Neon", price: 350, blurb: "A dark card with an electric glowing edge." },
+  // Replaced Neon on 2026-09-15 (nobody had bought it). Deliberately a
+  // metallic gold panel, not the crimson-and-gold of the EARNED #1 card,
+  // and the tier tag still shows what was actually earned.
+  { id: "finish-gold", slot: "finish", name: "Gold", price: 500, chase: true, blurb: "The whole card in polished gold. A legendary item." },
   { id: "finish-chrome", slot: "finish", name: "Chrome", price: 500, blurb: "Brushed metal from edge to edge." },
 
   { id: "name-gold", slot: "name", name: "Gold", price: 500, chase: true, blurb: "Your name in gold on your card and profile. A chase item." },

@@ -54,7 +54,8 @@
 
 /* swatches: a small picture of each look */
 .sw-finish-holo{background:linear-gradient(120deg,#ff2fa0,#22e6ff 30%,#ffe14a 55%,#8c52ff 80%,#ff2fa0);background-size:250% 250%;animation:tcholo 7s linear infinite}
-.sw-finish-neon{background:#08090f;box-shadow:inset 0 0 0 2px #22f1ff,inset 0 0 26px rgba(34,241,255,.5)}
+.sw-finish-gold{background:linear-gradient(115deg,#6b4a09,#e9b93f 30%,#fff3c4 45%,#d49b1d 60%,#6b4a09);background-size:250% 100%;animation:tcfoil 5s ease-in-out infinite;box-shadow:inset 0 0 0 2px rgba(255,236,170,.8)}
+@media (prefers-reduced-motion:reduce){.sw-finish-gold{animation:none}}
 .sw-finish-chrome{background:repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 2px,transparent 2px 4px),linear-gradient(115deg,#5c6068,#e7eaee 45%,#7b8089 60%,#2d3036)}
 .sw-name-gold,.sw-name-ice,.sw-name-ember,.sw-title-custom{background:linear-gradient(160deg,#1e1f26,#121318)}
 .sw-title-custom b{color:var(--muted);font-size:2.6rem}

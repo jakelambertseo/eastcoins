@@ -13,7 +13,7 @@
    accepts an id, league and name and builds the photo URL itself.
    ============================================================ */
 (() => {
-  const CSS = "/v3/assets/css/v3-store.css?v=4";
+  const CSS = "/v3/assets/css/v3-store.css?v=5";
   const ESPN_SEARCH = "https://site.web.api.espn.com/apis/common/v3/search";
   const PLAYER_LEAGUES = new Set(["nfl", "mlb", "nba"]);
 

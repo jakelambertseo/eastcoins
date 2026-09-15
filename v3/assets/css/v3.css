@@ -4658,9 +4658,17 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
   background-size:300% 300%;animation:tcholo 7s linear infinite;
 }
 @keyframes tcholo{to{background-position:300% 0}}
-.tc-skin-neon{--tc-a:16,18,28;--tc-b:6,7,12}
-.tc-skin-neon .tc-inner{box-shadow:inset 0 0 0 2px #22f1ff,inset 0 0 22px rgba(34,241,255,.5)}
-.tc-skin-neon .tc-pip{background:#22f1ff;box-shadow:0 0 8px #22f1ff}
+/* Gold (legendary, bought): polished metal edge to edge. Kept apart from
+   the EARNED #1 card, which is crimson with a gold tier tag. */
+.tc-skin-gold{--tc-a:212,160,48;--tc-b:112,76,12}
+.tc-skin-gold .tc-inner{box-shadow:inset 0 0 0 2px rgba(255,236,170,.85),inset 0 0 26px rgba(255,210,90,.35)}
+.tc-skin-gold .tc-inner::after{
+  content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
+  background:linear-gradient(115deg,transparent 0 36%,rgba(255,255,255,.55) 47%,rgba(255,240,190,.35) 53%,transparent 62% 100%);
+  background-size:260% 100%;animation:tcfoil 4.5s ease-in-out infinite;
+}
+.tc-skin-gold .tc-pip{background:#fff1b8;box-shadow:0 0 8px rgba(255,220,120,.9)}
+@media (prefers-reduced-motion:reduce){.tc-skin-gold .tc-inner::after{animation:none}}
 .tc-skin-chrome{--tc-a:128,134,144;--tc-b:40,43,50}
 .tc-skin-chrome .tc-inner::after{
   content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:overlay;
