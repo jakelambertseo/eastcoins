@@ -289,7 +289,7 @@
   }
 
   let tickerTimer = 0;
-  async function mountTicker(container, { limit = 30, types = null, label: labelText = "LIVE", href = "/?view=activity", empty = "Quiet for now — the first pick lands here." } = {}) {
+  async function mountTicker(container, { limit = 30, types = null, keep = null, label: labelText = "LIVE", href = "/?view=activity", empty = "Quiet for now — the first pick lands here." } = {}) {
     window.clearInterval(tickerTimer);
     container.classList.add("ticker");
     container.setAttribute("aria-label", "Latest activity");
@@ -306,8 +306,12 @@
       let payload = null;
       try { payload = await fetch("/api/picks/activity", { credentials: "include" }).then((r) => r.json()); } catch { payload = null; }
       if (!container.isConnected) return;
-      // types: keep only these item types — the casino floor wants wins and losses from the tables and nothing else.
-      const items = (payload?.items || []).filter((i) => !types || types.includes(i.type)).slice(0, limit).map(shortItem).filter(Boolean);
+      // types keeps whole item types; keep is a finer cut inside them —
+      // the casino floor wants the tables' wins and nothing else.
+      const items = (payload?.items || [])
+        .filter((i) => !types || types.includes(i.type))
+        .filter((i) => !keep || keep(i))
+        .slice(0, limit).map(shortItem).filter(Boolean);
       track.replaceChildren();
       if (!items.length) { track.append(el("span", "tk-item", empty)); container.classList.add("still"); return; }
       // Two copies of the row make the loop seamless: when the first

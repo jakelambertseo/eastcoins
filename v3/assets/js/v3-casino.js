@@ -65,6 +65,23 @@
     refs = {};
     const page = K.el("section", "casino");
 
+    /* The tables' wins, and only wins, as the first thing on the page
+       above the title. A win is profit above zero rather than a status
+       word, because the tables do not share a vocabulary (WON, CASHED,
+       and the drop games with no status at all). */
+    const ticker = K.el("section", "ticker cas-ticker");
+    page.append(ticker);
+    window.setTimeout(() => {
+      if (ticker.isConnected && window.ECActivity) {
+        window.ECActivity.mountTicker(ticker, {
+          types: ["casino", "pot"],
+          keep: (i) => i.type === "pot" || Number(i.profit) > 0,
+          label: "WINS", href: "/?view=activity",
+          empty: "Quiet for now — the first win lands here."
+        });
+      }
+    }, 0);
+
     /* People come here to play, so the games are the first thing on the
        page and everything else is a footnote under them. Until
        2026-09-16 the tiles started 528px down a 595px viewport — a

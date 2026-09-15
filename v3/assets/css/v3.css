@@ -3342,6 +3342,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
   .cas-card-ico{font-size:2.6rem}
 }
 
+.cas-ticker{margin:0 0 14px}
 .cas-ledger-head{
   display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;
   width:100%;margin:26px 0 10px;padding:18px 0 0;border:0;border-top:1px solid var(--line);
