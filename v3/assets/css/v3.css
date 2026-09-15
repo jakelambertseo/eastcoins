@@ -4806,3 +4806,174 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 .gr-tile.gr-gold.is-open{border-color:var(--gold);box-shadow:0 0 0 1px rgba(var(--gold-rgb),.4),0 0 34px rgba(var(--gold-rgb),.28)}
 .gr-tile.gr-simon{--accent:#4ddb8b;--accent-rgb:77,219,139}
 .gr-tile.gr-centre{--accent:#ff9a3d;--accent-rgb:255,154,61}
+
+/* ============================================================
+   THE PROFILE CARD
+
+   The profile header drawn as a physical trading card: real
+   2.5x3.5 proportions, a bone border, the photo on a coloured
+   panel, the name across the bottom and the league table on the
+   back. Click turns it over.
+
+   The finish comes off the season ladder (tierOf() in
+   v3-profile.js), so the card changes when someone climbs.
+
+   No crest and no fallback mark behind the photo, on purpose: most
+   of the site has not set a favourite team, and a placeholder badge
+   read as a broken image rather than a design.
+   ============================================================ */
+.pf-head.has-tcard{
+  display:grid;
+  grid-template-columns:238px minmax(0,1fr);
+  grid-template-areas:"card copy" "card quick" "card casino";
+  align-content:start;
+  gap:14px 22px;
+}
+.pf-head.has-tcard .pf-copy{grid-area:copy;align-self:center}
+.pf-head.has-tcard .pf-quick{grid-area:quick}
+.pf-head.has-tcard .pf-quick-casino{grid-area:casino}
+.pf-head.has-tcard .tc{grid-area:card}
+
+.tc{
+  position:relative;width:100%;aspect-ratio:2.5/3.5;
+  perspective:1500px;
+  background:none;border:0;padding:0;margin:0;
+  font:inherit;color:inherit;text-align:left;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.tc:focus-visible{outline:2px solid var(--gold);outline-offset:5px;border-radius:14px}
+.tc-flip{
+  position:relative;width:100%;height:100%;
+  transform-style:preserve-3d;
+  transition:transform .6s cubic-bezier(.2,.8,.25,1);
+}
+.tc.turned .tc-flip{transform:rotateY(180deg)}
+.tc-face{
+  position:absolute;inset:0;border-radius:12px;overflow:hidden;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  background:#efe9dc;                      /* the bone border */
+  padding:6px;
+  box-shadow:0 14px 34px rgba(0,0,0,.55);
+}
+.tc-back{transform:rotateY(180deg)}
+
+/* one colour a tier, so the finish reads before the numbers do */
+.tc{--tc-a:58,60,70;--tc-b:16,17,21}
+.tc-gold{--tc-a:124,13,30;--tc-b:32,8,14}
+.tc-silver{--tc-a:38,72,104;--tc-b:14,22,34}
+
+.tc-inner{
+  position:relative;height:100%;border-radius:7px;overflow:hidden;
+  display:flex;flex-direction:column;
+  background:
+    radial-gradient(ellipse at 50% 6%,rgba(255,255,255,.16),transparent 55%),
+    linear-gradient(170deg,rgb(var(--tc-a)) 0%,rgb(var(--tc-b)) 74%,#0c0c10 100%);
+}
+.tc-inner::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(115deg,rgba(255,255,255,.05) 0 2px,transparent 2px 13px);
+}
+.tc-series{
+  position:relative;display:flex;align-items:center;justify-content:space-between;gap:6px;
+  padding:7px 9px 0;
+  font-size:.46rem;font-weight:800;letter-spacing:.15em;text-transform:uppercase;
+  color:rgba(255,255,255,.72);
+}
+.tc-tier{
+  padding:2px 6px;border-radius:999px;letter-spacing:.13em;
+  background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.26);
+}
+.tc-gold .tc-tier{background:linear-gradient(180deg,#ffd75e,var(--gold));color:#2a1e02;border-color:rgba(255,255,255,.6)}
+.tc-silver .tc-tier{background:linear-gradient(180deg,#e9edf2,#a9b2bf);color:#1b1f26;border-color:rgba(255,255,255,.6)}
+
+.tc-rank{
+  position:absolute;left:7px;top:26px;z-index:3;
+  min-width:31px;padding:4px 5px 5px;border-radius:5px;text-align:center;line-height:1;
+  background:linear-gradient(180deg,rgba(0,0,0,.74),rgba(0,0,0,.52));
+  border:1px solid rgba(255,255,255,.24);
+}
+.tc-rank b{display:block;font-family:var(--display);font-weight:800;font-size:.95rem;color:#fff}
+.tc-rank small{display:block;font-size:.4rem;font-weight:800;letter-spacing:.1em;color:rgba(255,255,255,.7);margin-top:2px}
+.tc-gold .tc-rank{border-color:rgba(var(--gold-rgb),.85);box-shadow:0 0 14px rgba(var(--gold-rgb),.4)}
+.tc-gold .tc-rank b{color:#ffd75e}
+
+.tc-shot{position:relative;flex:1;min-height:0;display:flex;align-items:flex-end;justify-content:center;padding-top:5px}
+.tc-photo{
+  width:74%;aspect-ratio:1;object-fit:cover;border-radius:50%;
+  border:3px solid rgba(255,255,255,.9);
+  box-shadow:0 12px 26px rgba(0,0,0,.5);
+  background:#0d0d10;
+}
+.tc-plate{position:relative;z-index:2;padding:8px 9px 10px;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.74) 45%)}
+.tc-name{
+  display:block;font-family:var(--display);font-weight:800;
+  font-size:1.14rem;line-height:1;letter-spacing:-.03em;color:#fff;text-transform:uppercase;
+  text-shadow:0 2px 12px rgba(0,0,0,.7);overflow-wrap:break-word;
+}
+.tc-pos{
+  display:flex;align-items:center;gap:5px;margin-top:5px;
+  font-size:.51rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(255,255,255,.78);
+}
+.tc-pip{width:5px;height:5px;border-radius:50%;background:var(--gold);flex:0 0 auto}
+.tc-line{display:flex;gap:9px;margin-top:7px;padding-top:6px;border-top:1px solid rgba(255,255,255,.2)}
+.tc-line div{min-width:0}
+.tc-line span{display:block;font-size:.42rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.tc-line b{display:block;font-family:var(--display);font-weight:800;font-size:.8rem;color:#fff;font-variant-numeric:tabular-nums;margin-top:1px}
+.tc-line b.up{color:#7dffb4}
+.tc-line b.down{color:#ff9aab}
+
+/* the foil, earned rather than decorative */
+.tc-gold .tc-inner::after,.tc-silver .tc-inner::after{
+  content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
+  background:linear-gradient(115deg,transparent 0 38%,rgba(255,255,255,.32) 47%,rgba(255,214,102,.26) 52%,transparent 60% 100%);
+  background-size:260% 100%;
+  animation:tcfoil 5.5s ease-in-out infinite;
+}
+.tc-silver .tc-inner::after{background-image:linear-gradient(115deg,transparent 0 40%,rgba(255,255,255,.28) 49%,transparent 58% 100%)}
+@keyframes tcfoil{0%,18%{background-position:135% 0}72%,100%{background-position:-135% 0}}
+
+/* --- back --- */
+.tc-binner{
+  height:100%;border-radius:7px;overflow:hidden;padding:9px 10px 8px;
+  display:flex;flex-direction:column;
+  background:linear-gradient(175deg,#1b1c22,#101116);
+}
+.tc-bhead{display:flex;align-items:center;gap:7px;padding-bottom:7px;border-bottom:2px solid var(--red)}
+.tc-bav{width:30px;height:30px;border-radius:5px;object-fit:cover;flex:0 0 auto;background:#000}
+.tc-bhead div{min-width:0;flex:1}
+.tc-bhead b{display:block;font-family:var(--display);font-weight:800;font-size:.84rem;letter-spacing:-.02em;line-height:1.1;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tc-bhead small{display:block;font-size:.46rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tc-no{flex:0 0 auto;font-family:var(--display);font-weight:800;font-size:.68rem;color:var(--gold);font-variant-numeric:tabular-nums}
+.tc-btitle{font-size:.43rem;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--muted-2);margin:8px 0 3px}
+.tc-binner table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.tc-binner th{text-align:right;font-size:.4rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted-2);padding:0 0 3px;border-bottom:1px solid var(--line)}
+.tc-binner th:first-child{text-align:left}
+.tc-binner td{text-align:right;font-size:.55rem;font-weight:700;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.tc-binner td:first-child{text-align:left;font-weight:800}
+.tc-binner tr.tot td{border-bottom:0;border-top:1.5px solid var(--line);padding-top:3px;color:var(--text)}
+.tc-binner td.up{color:var(--gr)}
+.tc-binner td.down{color:var(--red)}
+.tc-chips{display:flex;flex-wrap:wrap;gap:3px}
+.tc-chip{
+  display:inline-flex;align-items:center;gap:3px;padding:2px 5px;border-radius:999px;
+  background:var(--gold-dim);border:1px solid rgba(var(--gold-rgb),.3);
+  font-size:.44rem;font-weight:800;color:var(--gold);white-space:nowrap;
+}
+.tc-empty{margin:8px 0 0;font-size:.55rem;color:var(--muted-2);line-height:1.4}
+.tc-fine{margin:auto 0 0;padding-top:6px;font-size:.38rem;line-height:1.35;color:#4e4e59}
+
+@media (prefers-reduced-motion:reduce){
+  .tc-flip{transition:none}
+  .tc-gold .tc-inner::after,.tc-silver .tc-inner::after{animation:none;background-position:-135% 0}
+}
+@media (max-width:760px){
+  .pf-head.has-tcard{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-areas:"card" "copy" "quick" "casino";
+    justify-items:center;
+  }
+  .pf-head.has-tcard .tc{max-width:250px}
+  .pf-head.has-tcard .pf-copy{justify-items:center;text-align:center;width:100%}
+  .pf-head.has-tcard .pf-quick,.pf-head.has-tcard .pf-quick-casino{width:100%}
+}

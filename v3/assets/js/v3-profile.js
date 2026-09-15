@@ -383,6 +383,7 @@
      Music. The tab is in the hash, so /u/name#casino opens there. */
 
   const TABS = [["overview", "Overview"], ["picks", "Picks"], ["casino", "Casino"], ["music", "Music"]];
+  const LEAGUE_NAME = { NFL: "NFL", MLB: "MLB", CFB: "CFB", UFC: "UFC", BOXING: "Boxing", PROP: "Prop", NBA: "NBA", NHL: "NHL" };
   const GAME_NAME = { flip: "Coin Flip", wheel: "Wheel", race: "Horse Race", hilo: "Higher or Lower", mines: "Mines", plinko: "Plinko", scratch: "Scratch-Off" };
   const GAME_ICON = { flip: "🪙", wheel: "🎡", race: "🐎", hilo: "🃏", mines: "💣", plinko: "🎯", scratch: "🎟️" };
 
@@ -419,6 +420,149 @@
     return h;
   }
 
+  /* ------------------------------------------------------------ the card
+
+     The profile header as a physical trading card: the photo on a
+     coloured panel, the name across the bottom of it, and the league
+     table on the back. Every figure already comes back from
+     /api/picks/profile — nothing new is tracked for it.
+
+     The FINISH is the point. It comes off the season ladder, so the
+     card changes when someone climbs rather than being a picture of a
+     page. Deliberately no team crest and no fallback mark behind the
+     photo: half the site has not picked a team, and a placeholder
+     badge on those cards read as a missing image rather than a design.
+
+     It is not live. The page fetches once on mount and never polls, so
+     a card showing #1 keeps showing #1 until the profile is opened
+     again. See the note in CLAUDE.md before changing that — a poll
+     here is not free. */
+  function tierOf(k) {
+    if (k.rank === 1) return "gold";
+    if ((k.rank && k.rank <= 5) || (k.accuracy !== null && k.accuracy >= 80)) return "silver";
+    return "base";
+  }
+
+  /** The one line under the name: their loudest badge, else the record. */
+  function billing(data) {
+    const first = (data.badges || [])[0];
+    if (first) return String(first.label).split("\u2014")[0].trim();
+    const k = data.picks;
+    if (!k.total) return "No picks settled";
+    return k.accuracy !== null ? `${k.accuracy}% right` : "Picks";
+  }
+
+  function tradingCard(data) {
+    const u = data.user;
+    const k = data.picks;
+    const tier = tierOf(k);
+
+    const card = el("button", `tc tc-${tier}`);
+    card.type = "button";
+    card.setAttribute("aria-pressed", "false");
+    card.title = "Turn the card over";
+    const flip = el("div", "tc-flip");
+
+    // ---- front
+    const front = el("div", "tc-face tc-front");
+    const fi = el("div", "tc-inner");
+    const series = el("div", "tc-series");
+    series.append(el("span", null, `EastCoin \u00b7 ${data.season?.name || "Season"}`), el("span", "tc-tier", tier));
+    fi.append(series);
+
+    if (k.rank) {
+      const rank = el("div", "tc-rank");
+      rank.append(el("b", null, String(k.rank)), el("small", null, `of ${k.players}`));
+      fi.append(rank);
+    }
+
+    const shot = el("div", "tc-shot");
+    shot.append(avatar(u, "tc-photo"));
+    fi.append(shot);
+
+    const plate = el("div", "tc-plate");
+    plate.append(el("b", "tc-name", u.displayName));
+    const pos = el("span", "tc-pos");
+    pos.append(el("i", "tc-pip"), document.createTextNode(billing(data)));
+    plate.append(pos);
+    const line = el("div", "tc-line");
+    const cell = (label, value, tone) => {
+      const d = el("div");
+      d.append(el("span", null, label), el("b", tone ? tone : null, value));
+      return d;
+    };
+    line.append(
+      cell("Record", `${k.wins}\u2013${k.losses}`),
+      cell("Profit", `${k.profit > 0 ? "+" : k.profit < 0 ? "\u2212" : ""}${Math.abs(k.profit).toLocaleString()}`, k.profit > 0 ? "up" : k.profit < 0 ? "down" : ""),
+      cell("Staked", k.staked.toLocaleString())
+    );
+    plate.append(line);
+    fi.append(plate);
+    front.append(fi);
+
+    // ---- back: the league table, the way a real card back reads
+    const back = el("div", "tc-face tc-back");
+    const bi = el("div", "tc-binner");
+    const bh = el("div", "tc-bhead");
+    bh.append(avatar(u, "tc-bav"));
+    const who = el("div");
+    who.append(el("b", null, u.displayName), el("small", null, `@${u.login}${u.since ? " \u00b7 since " + when(u.since, { month: "short", year: "numeric" }) : ""}`));
+    bh.append(who);
+    if (k.rank) bh.append(el("span", "tc-no", `#${String(k.rank).padStart(2, "0")}`));
+    bi.append(bh);
+
+    const rows = Object.entries(k.records || {})
+      .map(([lg, r]) => ({ lg, ...r }))
+      .sort((a, b) => (b.wins + b.losses) - (a.wins + a.losses))
+      .slice(0, 6);
+    if (rows.length) {
+      bi.append(el("div", "tc-btitle", `By league \u00b7 ${data.season?.name || ""}`.trim()));
+      const table = el("table");
+      const thead = el("thead");
+      const hr = el("tr");
+      for (const [h, cls] of [["Lg", ""], ["W", ""], ["L", ""], ["Profit", ""]]) hr.append(el("th", cls, h));
+      thead.append(hr);
+      table.append(thead);
+      const tbody = el("tbody");
+      for (const r of rows) {
+        const tr = el("tr");
+        tr.append(el("td", null, LEAGUE_NAME[r.lg] || r.lg), el("td", null, String(r.wins)), el("td", null, String(r.losses)),
+          el("td", r.profit > 0 ? "up" : r.profit < 0 ? "down" : null, `${r.profit > 0 ? "+" : r.profit < 0 ? "\u2212" : ""}${Math.abs(r.profit).toLocaleString()}`));
+        tbody.append(tr);
+      }
+      const tot = el("tr", "tot");
+      tot.append(el("td", null, "Total"), el("td", null, String(k.wins)), el("td", null, String(k.losses)),
+        el("td", k.profit > 0 ? "up" : k.profit < 0 ? "down" : null, `${k.profit > 0 ? "+" : k.profit < 0 ? "\u2212" : ""}${Math.abs(k.profit).toLocaleString()}`));
+      tbody.append(tot);
+      table.append(tbody);
+      bi.append(table);
+    } else {
+      bi.append(el("p", "tc-empty", "No settled picks yet. The table fills in as they land."));
+    }
+
+    if ((data.badges || []).length) {
+      bi.append(el("div", "tc-btitle", "Honours"));
+      const chips = el("div", "tc-chips");
+      for (const b of data.badges.slice(0, 5)) chips.append(el("span", "tc-chip", `${b.emoji} ${String(b.label).split("\u2014")[0].trim()}`));
+      bi.append(chips);
+    }
+
+    const fine = [];
+    if (data.casino?.total) fine.push(`Casino ${data.casino.wins}\u2013${data.casino.losses}, net ${data.casino.net > 0 ? "+" : ""}${data.casino.net.toLocaleString()}.`);
+    if (k.streak?.bestWin) fine.push(`Best run ${k.streak.bestWin}.`);
+    fine.push("EastCoin Picks.");
+    bi.append(el("p", "tc-fine", fine.join(" ")));
+    back.append(bi);
+
+    flip.append(front, back);
+    card.append(flip);
+    card.addEventListener("click", () => {
+      const on = card.classList.toggle("turned");
+      card.setAttribute("aria-pressed", String(on));
+    });
+    return card;
+  }
+
   function page(data, music) {
     const u = data.user;
     const k = data.picks;
@@ -427,8 +571,8 @@
     wrap.append(profileNav());
 
     // ---- the header card
-    const head = el("div", "pf-card pf-head");
-    head.append(avatar(u, "pf-avatar"));
+    const head = el("div", "pf-card pf-head has-tcard");
+    head.append(tradingCard(data));
     const copy = el("div", "pf-copy");
     const name = el("h1", null, u.displayName);
     const badges = el("span", "pf-badges");
