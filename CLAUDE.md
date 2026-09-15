@@ -549,40 +549,50 @@
 > intercepts every `/api/` call, so no ZCoin can move there. Flip
 > `paused` to reopen; the practice page needs nothing changed.
 >
-> **The edge is spread from 96% to 104% (2026-09-16)** — the buff below
-> put every game between 100% and 104%, which blended to 102.1% and
-> handed the room about 179 ZC a day. Nothing was broken about it: a
-> return is an EXPECTED value, not a promise, and players lost
-> constantly underneath it — the room ran 96% across the day after the
-> Mines ceiling landed. But a casino where no GAME has an edge reads
-> wrong, so the edge now varies by game instead of sitting uniformly on
-> the players' side:
+> **The rule is the band, and it is drawn per PLAY: 96-104%.** There is
+> no requirement that the room comes out ahead, no prohibition on a
+> house edge, and no per-GAME rate — all three were assumed at some
+> point and all three were wrong. `edgeFor(seed)` in `_engine.js`:
+> `0.96 + (sha256(seed:edge)[0..8] / 2^32) * 0.08`, uniform, mean
+> exactly 1.00.
 >
-> | Game | Return | How |
-> |---|---|---|
-> | Coin Flip | 96.0% | `COIN_PAYS` 1.92, was 2.04 |
-> | Wheel | 96.9% | 1.97 a colour, 58 on gold; was 2.05 / 60 |
-> | Hi-Lo | 96.5-99.7% | `EDGE_RETURN` 0.997 per call, was 1.006 |
-> | Plinko | 100.1% | middle bucket 0.4 to 0.3, the rest untouched |
-> | Scratch-Off | 101.0% | the money-back Coin prize 22% to 19.5% |
-> | Mines | 104.0% | unchanged |
-> | PvP | 100.0% | unchanged, zero-sum between players |
+> **No game is a better bet than another**, which is the whole point: a
+> fixed rate per game is an edge a player can find and farm, and one
+> already had — 191 of every Mines board ever played were one person's,
+> because Mines was the game sitting at 104%. A per-play draw cannot be
+> shopped for: the seed is sealed behind its committed hash before the
+> stake is taken and revealed only once the play is over.
 >
-> **The shape is deliberate: the faster and more mindless the game, the
-> tighter it is.** Coin Flip and the Wheel are two clicks and pure luck,
-> so they carry the edge; Mines asks for a decision on every tile and
-> pays 104% for it; Hi-Lo's edge is PER CALL, so a long chain now costs
-> where it used to earn. Blended at recent volumes that is **100.5%**,
-> down from 102.1% — the casino roughly stops printing without going
-> back to the flat 4% house edge that drove people to Picks. Plinko's
-> change was picked to keep the property named below: every bucket but
-> the middle still pays, so 77% of drops come back ahead. Do not push
-> **The rule is the band: every game returns 96-104% per play.** There
-> is no requirement that the room comes out ahead and no prohibition on
-> a house edge — both were assumed at different points and both were
-> wrong. A game may sit anywhere in the band; what it may not do is
-> leave it. Everything below this line is the history of how that was
-> got wrong twice, kept because the reasons still matter.
+> It rides the fairness model already here rather than sitting beside
+> it — same seed, same commit-reveal — and `/api/casino/verify` returns
+> `edge` and `edgeRule` for every game, with Mines, Plinko and
+> Scratch-Off showing the drawn price beside the nominal one.
+>
+> Each game keeps its own shape and is divided through by what that
+> shape returns on its own, so the board, the ladder and the prize
+> table all still look as they did:
+>
+> | Game | How the draw is applied |
+> |---|---|
+> | Coin Flip, Wheel | quote FAIR prices (2, and 360/177 and 60); the round's edge multiplies in at settle |
+> | Hi-Lo | priced fairly per call (`EDGE_RETURN = 1`), the run's edge applied once — a long chain no longer compounds a per-call shave |
+> | Mines | `multiplierFor(mines, picks, edge)`, so every rung carries the board's edge and cashing early or late is still worth the same |
+> | Plinko | `PAYOUTS[b] * edge / TABLE_RETURN` |
+> | Scratch-Off | `prize.x * edge / RETURN` |
+> | PvP | **untouched** — zero-sum between players, there is no house side to take an edge from |
+>
+> `hilo_games`, `mines_games`, `plinko_drops` and `scratch_cards` each
+> gained an `edge` column (added by `ensureColumn` on the ensure path,
+> forgiving so an existing column cannot break the request), so the
+> number shown, recorded and paid is one number. **Do not reintroduce a
+> per-game rate.** If a game needs to feel different, change its payout
+> SHAPE — how often it pays and how big — not its return.
+>
+> Verified against the live modules: the draw is uniform across the
+> band, mean 1.00006 over 40,000 seeds, and every game measures 100.00%
+> expected with each play inside 96-104%. Everything below this line is
+> the history of getting it wrong three times, kept because the reasons
+> still matter.
 >
 > **The overcorrection (2026-09-14, since superseded)** — after four
 > days at 99.0% with almost everyone down, every game was pushed onto
