@@ -7,7 +7,7 @@
    query string — no session, no database — and the seed's hash comes
    back too, so it can be held against the one shown before play.
 
-   Games: hilo, mines, plinko, wheel, race, flip, roulette, standing. */
+   Games: hilo, mines, plinko, scratch, wheel, race, flip, roulette, standing. */
 
 import { json, fail } from "../picks/_lib.js";
 import { sha256, GAMES as SHARED } from "./_engine.js";
@@ -17,6 +17,7 @@ import { pathFor, bucketOf, multiplierFor, ROWS } from "./plinko/_plinko.js";
 import { resultOf } from "../coin/_coin.js";
 import { GAMES as PVP, outcomeFor, chambersFor, MIN_PLAYERS, MAX_PLAYERS } from "./pvp/_pvp.js";
 import { triggerFor, drawFor, TRIGGER_MIN, TRIGGER_MAX } from "./_pot.js";
+import { outcomeFor as scratchOutcome, gridFor as scratchGrid, PRIZES as SCRATCH_PRIZES } from "./scratch/_scratch.js";
 
 const clampInt = (v, lo, hi, dflt) => {
   const n = Number.parseInt(String(v ?? ""), 10);
@@ -86,6 +87,16 @@ export async function onRequestGet({ request }) {
     });
   }
 
+  if (game === "scratch") {
+    const prize = await scratchOutcome(seed);
+    const grid = await scratchGrid(seed, prize);
+    return json({
+      ...base, name: "Scratch-Off", grid, prize: prize ? { key: prize.key, name: prize.name, multiplier: prize.x } : null,
+      table: SCRATCH_PRIZES.map((p) => ({ key: p.key, name: p.name, multiplier: p.x, chance: p.p })),
+      rule: "u = sha256(seed:scratch) as a fraction; walked down the prize table rarest first, the prize whose slice u falls in wins (none past 43.4%); the nine cells then come from sha256(seed:cell:i)"
+    });
+  }
+
   if (game === "pot") {
     // The hidden line and, given the day's total stakes, the draw.
     const total = clampInt(q.get("total"), 0, 100000000, 0);
@@ -97,5 +108,5 @@ export async function onRequestGet({ request }) {
     });
   }
 
-  return fail("BAD_GAME", "game must be one of: hilo, mines, plinko, wheel, race, flip, roulette, standing, pot");
+  return fail("BAD_GAME", "game must be one of: hilo, mines, plinko, scratch, wheel, race, flip, roulette, standing, pot");
 }

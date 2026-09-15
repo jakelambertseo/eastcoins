@@ -97,6 +97,7 @@ export async function dayStakes(db, day) {
     q(`SELECT user_id, SUM(stake) AS s FROM hilo_games WHERE created_at >= ? AND created_at < ? GROUP BY user_id`),
     q(`SELECT user_id, SUM(stake) AS s FROM mines_games WHERE created_at >= ? AND created_at < ? GROUP BY user_id`),
     q(`SELECT user_id, SUM(stake) AS s FROM plinko_drops WHERE created_at >= ? AND created_at < ? GROUP BY user_id`),
+    q(`SELECT user_id, SUM(stake) AS s FROM scratch_cards WHERE created_at >= ? AND created_at < ? GROUP BY user_id`),
     q(`SELECT user_id, SUM(stake) AS s FROM pvp_entries WHERE created_at >= ? AND created_at < ? AND status <> 'REFUNDED' GROUP BY user_id`)
   ]);
   const by = new Map();
@@ -119,6 +120,7 @@ export async function viewerStake(db, day, userId) {
     q(`SELECT SUM(stake) AS s FROM hilo_games WHERE user_id = ? AND created_at >= ? AND created_at < ?`),
     q(`SELECT SUM(stake) AS s FROM mines_games WHERE user_id = ? AND created_at >= ? AND created_at < ?`),
     q(`SELECT SUM(stake) AS s FROM plinko_drops WHERE user_id = ? AND created_at >= ? AND created_at < ?`),
+    q(`SELECT SUM(stake) AS s FROM scratch_cards WHERE user_id = ? AND created_at >= ? AND created_at < ?`),
     q(`SELECT SUM(stake) AS s FROM pvp_entries WHERE user_id = ? AND created_at >= ? AND created_at < ? AND status <> 'REFUNDED'`)
   ]);
   return parts.reduce((n, v) => n + v, 0);

@@ -276,6 +276,23 @@
 > toward `HOUR_WIN_CAP` via `hourlyNet()`; every new casino game must be
 > added there or it escapes the cap.
 >
+> **Scratch-Off (2026-09-14)** — `/?view=scratch` (`v3-scratch.js`,
+> `functions/api/casino/scratch/*`, tables `scratch_cards` and
+> `scratch_commits`). Nine cells under a foil (a canvas the pointer
+> erases; 60% scratched clears the rest, "Reveal all" skips it); three
+> of a kind pays that symbol's price. `PRIZES` in `_scratch.js`, rarest
+> first: crown ×100 (0.1%), diamond ×25 (0.3%), fire ×10 (1%), clover ×5
+> (3%), target ×3 (5%), football ×2 (12%), coin ×1 (22%) — 103.5%
+> return, 43.4% of cards win something, top prize 2,000 on a 20 ZC card.
+> The card is DECIDED AND PAID at `buy`, like a Plinko drop; scratching
+> is the reveal. Fairness is Plinko's commit-per-card: the outcome is
+> `sha256(seed:scratch)` as a fraction walked down the table, then the
+> grid is laid out to match it (`gridFor`: exactly three of the winner
+> on a win, nothing three times on a loss, shuffled by
+> `sha256(seed:cell:i)`), so a card never lies and a two-crown near-miss
+> is real. In `hourlyNet()`, the Jackpot's `dayStakes()`, the floor, the
+> feed, profiles, the dashboard's book and the check page (`game=scratch`).
+>
 > **The PvP tables (2026-09-12)** — Russian Roulette `/?view=roulette` and
 > Last One Standing `/?view=standing`, one client (`v3-pvp.js`, a `table(spec)`
 > factory registered twice) over one server module

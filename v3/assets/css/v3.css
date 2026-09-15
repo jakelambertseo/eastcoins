@@ -4406,3 +4406,49 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
 
 /* Picks, on football days: the one-line notice above the slate */
 .sundaynote.picks-note{margin:0 0 16px;padding:11px 16px;font-size:.86rem;border-color:rgba(var(--gold-rgb),.35);color:var(--muted)}
+
+/* ============================================================
+   SCRATCH-OFF — a card under a foil (v3-scratch.js). The foil is a
+   canvas the pointer erases; the cells sit under it.
+   ============================================================ */
+.cas-tile.cas-scratch{--accent:#d7cfc4;--accent-rgb:215,207,196}
+.sc-ticket{
+  position:relative;margin:6px auto 0;width:min(100%,400px);
+  border-radius:18px;background:linear-gradient(160deg,#2a2018,#171310);
+  border:1px solid rgba(var(--gold-rgb),.35);
+  box-shadow:0 20px 50px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.04);
+  padding:14px;display:flex;flex-direction:column;gap:10px;
+}
+.sc-top{display:flex;justify-content:space-between;align-items:center}
+.sc-top b{font-family:var(--display);font-weight:800;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase;color:var(--gold)}
+.sc-top span{color:var(--muted-2);font-size:.7rem;font-variant-numeric:tabular-nums}
+.sc-grid{position:relative;aspect-ratio:1/1;border-radius:12px;background:#0f0d0b;border:1px solid var(--line-2);overflow:hidden;touch-action:none;user-select:none}
+.sc-cells{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:6px;padding:8px}
+.sc-cell{display:grid;place-items:center;border-radius:10px;background:var(--panel-2);border:1px solid var(--line);position:relative;transition:box-shadow .2s ease,background .2s ease}
+.sc-sym{font-size:clamp(1.5rem,6.5vw,2.3rem);line-height:1}
+.sc-cell small{position:absolute;right:6px;bottom:4px;font-size:.6rem;font-weight:800;color:var(--muted-2);font-variant-numeric:tabular-nums}
+.sc-cell.win{background:rgba(var(--gold-rgb),.16);border-color:rgba(var(--gold-rgb),.6);box-shadow:0 0 18px rgba(var(--gold-rgb),.35)}
+.sc-foil{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;border-radius:12px;opacity:1;transition:opacity .35s ease}
+.sc-foil.gone{opacity:0;pointer-events:none}
+.sc-ticket.idle .sc-grid::after{content:"Buy a card to scratch";position:absolute;inset:0;display:grid;place-items:center;color:var(--muted-2);font-size:.9rem;font-weight:700;pointer-events:none}
+.sc-foot{display:flex;justify-content:space-between;align-items:center;font-size:.74rem;color:var(--muted-2)}
+.sc-foot b{color:var(--text)}
+.sc-pop{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);opacity:0;pointer-events:none;text-align:center;transition:transform .3s cubic-bezier(.3,1.6,.5,1),opacity .25s ease}
+.sc-pop.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.sc-pop b{display:block;font-family:var(--display);font-weight:800;font-size:2.4rem;letter-spacing:-.04em;color:var(--gold);text-shadow:0 0 30px rgba(var(--gold-rgb),.6)}
+.sc-pop.lose b{color:var(--muted);text-shadow:none;font-size:1.5rem}
+.sc-pop span{display:inline-block;color:var(--text);font-weight:700;background:rgba(12,10,9,.85);padding:4px 10px;border-radius:8px;margin-top:4px}
+.sc-reveal{margin-top:8px}
+.sc-prizes{display:flex;flex-direction:column}
+.sc-prow{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:.84rem}
+.sc-prow:first-child{border-top:0}
+.sc-prow.at{background:linear-gradient(90deg,var(--gold-dim),transparent 70%)}
+.sc-psym{font-size:1.05rem;letter-spacing:-.05em}
+.sc-pname{color:var(--muted)}
+.sc-prow strong{font-family:var(--display);font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+.sc-prow small{color:var(--muted-2);font-size:.72rem;font-variant-numeric:tabular-nums;text-align:right;min-width:62px}
+.sc-psum{display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--line-2);font-size:.8rem;color:var(--muted)}
+.sc-psum b{color:var(--green)}
+.vf-grid.vf-scratch{grid-template-columns:repeat(3,minmax(0,1fr));max-width:280px}
+.vf-grid.vf-scratch .vf-tile{font-size:1.5rem;aspect-ratio:1}
+.vf-grid.vf-scratch .vf-tile.win{border-color:rgba(var(--gold-rgb),.6);background:var(--gold-dim)}

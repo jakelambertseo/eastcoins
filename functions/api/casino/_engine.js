@@ -328,7 +328,8 @@ export async function hourlyNet(db, userId) {
   const plinko = await q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM plinko_drops WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
   // The PvP tables. A refund is neither a win nor a loss.
   const pvp = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - stake WHEN status = 'LOST' THEN -stake ELSE 0 END), 0) AS net FROM pvp_entries WHERE user_id = ? AND updated_at >= datetime('now', '-1 hour')`);
-  return coin + shared + hilo + mines + plinko + pvp;
+  const scratch = await q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM scratch_cards WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
+  return coin + shared + hilo + mines + plinko + pvp + scratch;
 }
 
 /** Whether this person may place another bet, and where they stand. */

@@ -92,7 +92,7 @@ export async function onRequestGet(context) {
   for (const h of music) items.push({ type: "song", at: new Date(h.playedAt).toISOString(), who: { login: h.login, displayName: h.login, avatar: "" }, title: h.title });
 
   // The casino's results: every settled bet, win or loss.
-  const GAME_NAME = { flip: "Coin Flip", wheel: "Wheel", race: "Horse Race", hilo: "Higher or Lower", mines: "Mines", plinko: "Plinko", roulette: "Russian Roulette", standing: "Last One Standing" };
+  const GAME_NAME = { flip: "Coin Flip", wheel: "Wheel", race: "Horse Race", hilo: "Higher or Lower", mines: "Mines", plinko: "Plinko", scratch: "Scratch-Off", roulette: "Russian Roulette", standing: "Last One Standing" };
   const casino = await casinoResults(db);
   for (const c of casino) items.push({ type: "casino", at: c.at, who: c.who, game: c.game, gameName: GAME_NAME[c.game] || c.game, pick: c.pick, wager: c.wager, profit: c.profit, status: c.status });
   // The Daily Pot's hits.
@@ -116,7 +116,7 @@ export async function onRequestGet(context) {
 async function casinoResults(db) {
   const person = (r) => ({ login: String(r.twitch_login || "").toLowerCase(), displayName: String(r.display_name || r.twitch_login || ""), avatar: String(r.avatar_url || "") });
   const shape = (r) => ({ game: String(r.game), status: r.status, profit: Number(r.profit), wager: Number(r.wager), pick: String(r.pick), at: r.at ? String(r.at).replace(" ", "T") + "Z" : null, who: person(r) });
-  const [coin, shared, hilo, mines, plinko, pvp] = await Promise.all([
+  const [coin, shared, hilo, mines, plinko, pvp, scratch] = await Promise.all([
     db.prepare(`SELECT 'flip' AS game, b.status, b.payout - b.wager AS profit, b.wager, b.side AS pick, r.settled_at AS at, u.twitch_login, u.display_name, u.avatar_url
                   FROM coin_bets b JOIN coin_rounds r ON r.no = b.round_no JOIN users u ON u.twitch_id = b.user_id
                  WHERE b.status IN ('WON','LOST') ORDER BY b.round_no DESC LIMIT 25`).all().catch(() => ({ results: [] })),
@@ -138,9 +138,13 @@ async function casinoResults(db) {
     db.prepare(`SELECT e.game, e.status, e.payout - e.stake AS profit, e.stake AS wager, (r.players || ' at the table') AS pick,
                        datetime(r.settled_at / 1000, 'unixepoch') AS at, u.twitch_login, u.display_name, u.avatar_url
                   FROM pvp_entries e JOIN pvp_rounds r ON r.id = e.round_id JOIN users u ON u.twitch_id = e.user_id
-                 WHERE e.status IN ('WON','LOST') ORDER BY r.settled_at DESC LIMIT 25`).all().catch(() => ({ results: [] }))
+                 WHERE e.status IN ('WON','LOST') ORDER BY r.settled_at DESC LIMIT 25`).all().catch(() => ({ results: [] })),
+    db.prepare(`SELECT 'scratch' AS game, CASE WHEN c.payout > c.stake THEN 'WON' ELSE 'LOST' END AS status, c.payout - c.stake AS profit,
+                       c.stake AS wager, CASE WHEN c.prize IS NULL THEN 'no match' ELSE (c.prize || ' x3') END AS pick, c.created_at AS at, u.twitch_login, u.display_name, u.avatar_url
+                  FROM scratch_cards c JOIN users u ON u.twitch_id = c.user_id
+                 ORDER BY datetime(c.created_at) DESC LIMIT 25`).all().catch(() => ({ results: [] }))
   ]);
-  return [...(coin.results || []), ...(shared.results || []), ...(hilo.results || []), ...(mines.results || []), ...(plinko.results || []), ...(pvp.results || [])].map(shape).filter((x) => x.at);
+  return [...(coin.results || []), ...(shared.results || []), ...(hilo.results || []), ...(mines.results || []), ...(plinko.results || []), ...(pvp.results || []), ...(scratch.results || [])].map(shape).filter((x) => x.at);
 }
 
 async function musicHistory(env) {
