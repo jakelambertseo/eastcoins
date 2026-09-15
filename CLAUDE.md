@@ -622,6 +622,28 @@
 > Decided rows only (WON/LOST/BUST/CASHED); anything live counts as
 > neither.
 >
+> **Members only (2026-09-16)** — MultiView, Picks and the casino (the
+> floor AND every room: flip, wheel, race, hilo, mines, plinko, scratch,
+> roulette, standing) show the same door Movies & TV has: a visitor
+> without a Twitch session sees the `.sc-gate` card and a login button
+> that returns them to the page they asked for. It is decided in
+> `v3-shell.js` `render()` — `MEMBERS_ONLY` — BEFORE `ensure()` fetches a
+> route's scripts, so a visitor at the door downloads none of the code
+> behind it; until `sessionReady` resolves the space is held with
+> `.view-loading` rather than guessed. Movies & TV keeps its own check
+> inside its view. To gate another route, add it to `MEMBERS_ONLY`.
+>
+> On the server, `screen/_gate.js` `requireLogin(context, message)` is
+> the one gate; the Picks ledger now stands behind it and is `no-store`
+> (a cached 200 would be handed to the next visitor at the door). **The
+> public reads stay public on purpose**: `/api/picks/bootstrap` carries
+> the session the shell needs on every page and the slate the home
+> strip shows to everyone; `/api/casino/home` is what lets the edge
+> absorb the floor's polling and holds nothing the activity feed does
+> not already show; bets and plays already require a login. Gating
+> those would break the home page or undo the edge cache, so anything
+> that should be private beyond the page itself needs its own decision.
+>
 > **Page speed (2026-09-16)** — seven changes from an overnight audit,
 > all measured on the live site. Cold JS per route went from **284 KB
 > on every page** to: home 82, picks 65, music 56, profile 53, casino
