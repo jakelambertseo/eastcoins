@@ -28,7 +28,7 @@
 
   const GAMES = {
     flip: { title: "Coin Flip", icon: "🪙", blurb: "Heads or tails, just over 2×. One coin for the whole room, every 30 seconds.", route: "flip" },
-    wheel: { title: "Wheel", icon: "🎡", blurb: "Red or black 2.05×, the gold sliver 60×. One spin a minute.", route: "wheel" },
+    wheel: { title: "Wheel", icon: "🎡", blurb: "Red or black 1.97×, the gold sliver 58×. One spin a minute.", route: "wheel" },
     race: { title: "Horse Race", icon: "🐎", blurb: "Four runners from 2× to 14×. They're off every minute.", route: "race", hidden: true },
     hilo: { title: "Higher or Lower", icon: "🃏", blurb: "Your own deck. Every right call multiplies the stake; cash out any time.", route: "hilo" },
     mines: { title: "Mines", icon: "💣", blurb: "Twenty-five tiles, a few of them bombs. Every safe one pays more; cash out before you find one.", route: "mines" },
@@ -89,19 +89,17 @@
     refs = {};
     const page = K.el("section", "casino");
 
-    /* The tables' wins, and only wins, as the first thing on the page
-       above the title. A win is profit above zero rather than a status
-       word, because the tables do not share a vocabulary (WON, CASHED,
-       and the drop games with no status at all). */
+    /* The tables, wins and losses both, as the first thing on the page
+       above the title. It ran wins-only for a day; a casino that only
+       ever reports winning is not telling the room anything. */
     const ticker = K.el("section", "ticker cas-ticker");
     page.append(ticker);
     window.setTimeout(() => {
       if (ticker.isConnected && window.ECActivity) {
         window.ECActivity.mountTicker(ticker, {
           types: ["casino", "pot"],
-          keep: (i) => i.type === "pot" || Number(i.profit) > 0,
-          label: "WINS", href: "/?view=activity",
-          empty: "Quiet for now — the first win lands here."
+          label: "TABLES", href: "/?view=activity",
+          empty: "Quiet for now — the first spin lands here."
         });
       }
     }, 0);

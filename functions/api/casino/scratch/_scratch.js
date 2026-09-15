@@ -39,7 +39,7 @@ export const PRIZES = [
   { key: "clover", name: "Clover", x: 5, p: 0.03 },
   { key: "target", name: "Target", x: 3, p: 0.05 },
   { key: "football", name: "Football", x: 2, p: 0.12 },
-  { key: "coin", name: "Coin", x: 1, p: 0.22 }
+  { key: "coin", name: "Coin", x: 1, p: 0.195 }
 ];
 export const SYMBOLS = PRIZES.map((p) => p.key);
 export const CELLS = 9;

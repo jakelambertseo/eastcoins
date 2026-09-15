@@ -48,7 +48,7 @@ export const ROWS = 12;
 export const BUCKETS = ROWS + 1;
 // 2026-09-14: the players' side — 102.3% on a 20 ZC drop, 104% on 10
 // (payouts rounded to the coin). Was 1.4 / 0.3 in the inner buckets for 99%.
-export const PAYOUTS = [25, 4, 2, 1.5, 1.1, 1.05, 0.4, 1.05, 1.1, 1.5, 2, 4, 25];
+export const PAYOUTS = [25, 4, 2, 1.5, 1.1, 1.05, 0.3, 1.05, 1.1, 1.5, 2, 4, 25];
 export const MAX_MULTIPLIER = Math.max(...PAYOUTS);
 
 let ready = false;

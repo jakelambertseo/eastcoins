@@ -193,7 +193,7 @@
     emote.width = 32;
     emote.height = 32;
     h1.append(emote);
-    copy.append(h1, el("p", null, "One coin for the whole room. Fifteen seconds to get in, then it flips. Heads or tails pays just over 2× — 41 on a 20."));
+    copy.append(h1, el("p", null, "One coin for the whole room. Fifteen seconds to get in, then it flips. Heads or tails pays 1.92× — 38 on a 20."));
     head.append(copy);
     const right = el("div", "cas-headright");
     refs.status = el("span", "cf-status", "Connecting…");

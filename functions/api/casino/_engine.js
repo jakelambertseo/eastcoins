@@ -67,10 +67,12 @@ export const GAMES = {
     cycleMs: 60 * 1000,
     betMs: 40 * 1000,
     picks: ["red", "black", "gold"],
-    // 2026-09-14: the players' side. 2.05 on red/black returns 100.8% on a
-    // 20 ZC bet and 103% on 10 (payouts rounded to the coin); gold at 60 is
-    // exactly fair. Was 2 / 40 for 98.3% and 67%.
-    payout: { red: 2.05, black: 2.05, gold: 60 },
+    // 2026-09-16: the tight end of the spread. A colour is 12 of 24 slices
+    // across 354 degrees, so 1.97 returns 96.9%; gold is the 6-degree
+    // sliver, 1 in 60, and 58 returns 96.7%. The Wheel is one of the two
+    // fastest, most mindless games here, which is why it carries an edge
+    // while Mines pays 104% for the decisions it asks for.
+    payout: { red: 1.97, black: 1.97, gold: 58 },
     segments: WHEEL,
     /** Where the pointer lands, in degrees from the top, from the seed alone. */
     async outcome(seed) {

@@ -9,7 +9,7 @@
                flips at   n * 30s + 15s     (15s of betting)
                ends at    n * 30s + 30s     (15s to look at the result)
 
-   Heads pays 2×, tails pays 2×, no edge. The result of a round is
+   Heads and tails pay the same. The result of a round is
    fixed the moment the round row is created — a random seed whose
    hash is shown while bets are open and revealed after the flip —
    so nothing decided after the bets are in can change it.
@@ -21,7 +21,7 @@
 
 import { moveBalance, beginOperation, finishOperation, newId } from "../picks/_lib.js";
 
-export const COIN_PAYS = 2.04;
+export const COIN_PAYS = 1.92;
 
 export const CYCLE_MS = 30 * 1000;
 export const BET_MS = 15 * 1000;
