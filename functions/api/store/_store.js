@@ -49,7 +49,7 @@ export const ITEMS = [
   { id: "finish-neon", slot: "finish", name: "Neon", price: 350, blurb: "A dark card with an electric glowing edge." },
   { id: "finish-chrome", slot: "finish", name: "Chrome", price: 500, blurb: "Brushed metal from edge to edge." },
 
-  { id: "name-gold", slot: "name", name: "Gold", price: 150, blurb: "Your name in gold on your card and profile." },
+  { id: "name-gold", slot: "name", name: "Gold", price: 500, chase: true, blurb: "Your name in gold on your card and profile. A chase item." },
   { id: "name-ice", slot: "name", name: "Ice", price: 150, blurb: "Your name in frosted blue." },
   { id: "name-ember", slot: "name", name: "Ember", price: 150, blurb: "Your name glowing hot orange." },
 
@@ -78,14 +78,15 @@ export const ITEMS = [
   { id: "banner-retro", slot: "banner", name: "Retro sunset", price: 200, blurb: "An '80s sunset grid behind your profile." },
 
   { id: "team-glow", slot: "team", name: "Team glow", price: 150, blurb: "Your favourite team glows on your profile." },
-  { id: "team-gold", slot: "team", name: "Gold plate", price: 200, blurb: "Your team on an engraved gold nameplate." },
+  { id: "team-gold", slot: "team", name: "Gold plate", price: 500, chase: true, blurb: "Your team on an engraved gold nameplate. A chase item." },
   { id: "team-flame", slot: "team", name: "On fire", price: 250, blurb: "Your team's name burns hot." },
 
   { id: "player-pick", slot: "player", name: "Favourite player", price: 250, blurb: "Pick any NFL, MLB or NBA player — their ESPN photo goes on your profile. Change them any time." },
 
-  { id: "label-foil", slot: "label", name: "Foil label", price: 100, blurb: "Turns “EastCoin Trading Card” into shimmering gold foil." }
+  { id: "label-foil", slot: "label", name: "Gold foil label", price: 500, chase: true, blurb: "Turns “EastCoin Trading Card” into shimmering gold foil. A chase item." }
 ];
 
+// Chase items: the gold ones, priced high and marked in the store as the ones to chase.
 export const itemById = (id) => ITEMS.find((i) => i.id === id) || null;
 
 let ready = false;

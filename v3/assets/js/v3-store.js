@@ -13,7 +13,7 @@
    accepts an id, league and name and builds the photo URL itself.
    ============================================================ */
 (() => {
-  const CSS = "/v3/assets/css/v3-store.css?v=2";
+  const CSS = "/v3/assets/css/v3-store.css?v=3";
   const ESPN_SEARCH = "https://site.web.api.espn.com/apis/common/v3/search";
   const PLAYER_LEAGUES = new Set(["nfl", "mlb", "nba"]);
 
@@ -240,7 +240,8 @@
     const owned = owns(item.id);
     const on = m.equipped[item.slot] === item.id;
     const wide = owned && ["title-custom", "message-custom", "player-pick"].includes(item.id);
-    const t = el("article", `st-item${owned ? " owned" : ""}${on ? " on" : ""}${wide ? " wide" : ""}`);
+    const t = el("article", `st-item${owned ? " owned" : ""}${on ? " on" : ""}${wide ? " wide" : ""}${item.chase ? " chase" : ""}`);
+    if (item.chase) t.append(el("span", "st-ribbon", "Chase"));
     t.addEventListener("mouseenter", () => { S.hover = item.id; repaintPreview(); });
     t.addEventListener("mouseleave", () => { if (S.hover === item.id) { S.hover = null; S.hoverPlayer = null; repaintPreview(); } });
     t.addEventListener("focusin", () => { S.hover = item.id; repaintPreview(); });
@@ -314,7 +315,13 @@
     copy.append(el("h1", null, "EastCoin Store"), el("p", null, "Spend ZCoins on your trading card and profile. Everything here is cosmetic and yours to keep."));
     const wallet = el("div", "st-wallet");
     wallet.append(el("span", null, "My wallet"), coins(S.cat.balance ?? 0));
-    head.append(copy, wallet);
+    // Plenty of people don't know where their profile lives; the store is
+    // where they'll want to see what they bought.
+    const side = el("div", "st-headside");
+    const me = el("a", "st-profile-link ulink", "View my profile →");
+    me.href = `/u/${encodeURIComponent(S.cat.login)}`;
+    side.append(me, wallet);
+    head.append(copy, side);
     page.append(head);
 
     const layout = el("div", "st-layout");

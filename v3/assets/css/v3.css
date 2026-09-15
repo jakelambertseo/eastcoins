@@ -98,10 +98,11 @@ img{max-width:100%}
 }
 .nav-links{display:flex;align-items:center;gap:3px;flex:1 1 auto;min-width:0}
 .nav-link{
-  display:inline-flex;align-items:center;gap:7px;
-  height:36px;padding:0 13px;border-radius:9px;
-  border:1px solid transparent;
-  color:var(--muted-2);font-weight:700;font-size:.85rem;
+  display:inline-flex;align-items:center;gap:5px;
+  height:36px;padding:0 11px;border-radius:9px;
+  border:1px solid transparent;white-space:nowrap;
+  /* Text only since 2026-09-15 (the icons went to make room for Store). */
+  color:var(--muted-2);font-weight:700;font-size:.8rem;
   transition:color .14s ease,background .14s ease,border-color .14s ease;
 }
 .nav-ico{width:15px;height:15px;flex:0 0 auto;opacity:.85}
@@ -479,14 +480,12 @@ body.chat-hidden .chatrail{display:none}
 @media (max-width:1180px){
   :root{--chat-w:300px}
 }
-/* A narrower window drops the labels off the section links (icons and
-   tooltips remain, the current page keeps its label) and trims the
-   search box, so the bar never wraps before the phone layout does. */
+/* A narrower window tightens the section links (they are text only, so
+   the labels always stay) and trims the search box, so the bar never
+   wraps before the phone layout does. */
 @media (max-width:1320px){
-  .nav-link:not([aria-current="page"]) span{display:none}
-  .nav-link:not([aria-current="page"]) .nav-tag{display:none}
-  .nav-link:not([aria-current="page"]){padding:0 10px}
-  .nav-link .nav-ico{width:17px;height:17px}
+  .nav-link{padding:0 8px;font-size:.76rem}
+  .nav-link .nav-tag{display:none}
   .navsearch.open{width:190px}
 }
 @media (max-width:1100px){
