@@ -384,7 +384,22 @@
      then tabs: Overview (bankroll and highlights), Picks, Casino,
      Music. The tab is in the hash, so /u/name#casino opens there. */
 
-  const TABS = [["overview", "Overview"], ["picks", "Picks"], ["casino", "Casino"], ["music", "Music"]];
+  const TABS = [["overview", "Overview"], ["picks", "Picks"], ["casino", "Casino"], ["music", "Music"], ["movies", "Movies"]];
+
+  /* A tomato score as the row of tomatoes it is; zero is the splat. */
+  const tomatoes = (n) => (n > 0 ? "🍅".repeat(n) : "🤢");
+
+  function movieCard(r) {
+    const a = link(`/?view=screen&t=${r.type}&id=${r.id}`, `sc-card pf-movie ${r.score >= 3 ? "fresh" : "rotten"}`);
+    a.title = `${r.title}: ${r.score} / 5`;
+    if (r.poster) { const img = el("img", "sc-poster"); img.src = r.poster; img.alt = ""; img.loading = "lazy"; a.append(img); }
+    else a.append(el("div", "sc-ph", (r.title || "?").split(" ").map((w) => w[0]).join("").slice(0, 3).toUpperCase()));
+    a.append(el("span", "sc-kind", r.type === "tv" ? "SHOW" : "MOVIE"), el("span", "pf-tomato nums", `${r.score >= 3 ? "🍅" : "🤢"} ${r.score}`));
+    const cap = el("div", "sc-cap");
+    cap.append(el("b", null, r.title), el("small", null, `${tomatoes(r.score)}${r.year ? " · " + r.year : ""}`));
+    a.append(cap);
+    return a;
+  }
   const LEAGUE_NAME = { NFL: "NFL", MLB: "MLB", CFB: "CFB", UFC: "UFC", BOXING: "Boxing", PROP: "Prop", NBA: "NBA", NHL: "NHL" };
   const GAME_NAME = { flip: "Coin Flip", wheel: "Wheel", race: "Horse Race", hilo: "Higher or Lower", mines: "Mines", plinko: "Plinko", scratch: "Scratch-Off" };
   const GAME_ICON = { flip: "🪙", wheel: "🎡", race: "🐎", hilo: "🃏", mines: "💣", plinko: "🎯", scratch: "🎟️" };
@@ -615,7 +630,7 @@
     const bar = el("nav", "pf-tabs");
     bar.setAttribute("aria-label", "Profile sections");
     const panels = {};
-    const counts = { picks: k.total, casino: c?.total || 0, music: music?.requests || 0 };
+    const counts = { picks: k.total, casino: c?.total || 0, music: music?.requests || 0, movies: data.movies?.total || 0 };
     const buttons = {};
     for (const [key, label] of TABS) {
       const btn = el("button", "pf-tab", label);
@@ -723,6 +738,29 @@
         for (const t of music.latest) list.append(el("li", null, t));
         ms.append(el("h3", "pf-sub", "Latest requests"), list);
       }
+    }
+
+    // ---- Movies: their tomato scores from Movies & TV
+    const mv = panels.movies;
+    const m = data.movies;
+    mv.append(sectionHead("Movies & TV", m ? `${m.total} rated` : ""));
+    if (!m) {
+      const note = emptyNote("No scores yet", "Movies and shows they rate out of five tomatoes in Movies & TV show here.");
+      if (isMine(u)) note.append(link("/?view=screen", "gp-back", "Rate something →"));
+      mv.append(note);
+    } else {
+      const freshPct = Math.round(100 * m.fresh / m.total);
+      const mstrip = el("div", "summarystrip four");
+      mstrip.append(
+        stat("Rated", String(m.total), `movie${m.total === 1 ? "" : "s"} and shows`),
+        stat("Average", `${m.avg} / 5`, tomatoes(Math.round(m.avg))),
+        stat("Fresh", `${freshPct}%`, `${m.fresh} fresh · ${m.rotten} rotten`),
+        stat("Latest", m.recent[0].title, `${m.recent[0].score} / 5`)
+      );
+      mv.append(mstrip);
+      const grid = el("div", "sc-grid pf-movies");
+      for (const r of m.recent) grid.append(movieCard(r));
+      mv.append(el("h3", "pf-sub", m.total > m.recent.length ? `Latest ${m.recent.length} of ${m.total}` : "Every score, newest first"), grid);
     }
 
     for (const key of Object.keys(panels)) wrap.append(panels[key]);
@@ -989,6 +1027,10 @@
       event.preventDefault();
       history.pushState({ view: "flip" }, "", href);
       shell.go("flip", { push: false });
+    } else if (href.startsWith("/?view=screen")) {
+      event.preventDefault();
+      history.pushState({ view: "screen" }, "", href);
+      shell.go("screen", { push: false });
     } else if (href.startsWith("/?view=music")) {
       event.preventDefault();
       history.pushState({ view: "music" }, "", href);

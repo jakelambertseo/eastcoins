@@ -4571,3 +4571,41 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 
 /* Held while a route's script is on its way; no text, just the room. */
 .view-loading{min-height:50vh}
+
+/* ============================================================
+   TOMATO SCORES (2026-09-15) — the strip under the Movies & TV
+   player (.sc-rate) and the profile's Movies tab (.pf-movie).
+   Tomato red and splat green are the subject's own colours, kept
+   apart from the site's win/loss green and red.
+   ============================================================ */
+.sc-rate{--tomato:#fa4a2a;--splat:#8fcf5c;display:flex;align-items:center;justify-content:space-between;gap:10px 20px;flex-wrap:wrap;padding:9px 14px;border-top:1px solid var(--line);background:var(--panel)}
+.sc-rate-mine{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;min-width:0}
+.sc-rate-k{font-size:.62rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted-2)}
+.sc-rate-picks{display:inline-flex;align-items:center;gap:1px}
+.sc-rate-picks button{width:32px;height:32px;display:grid;place-items:center;padding:0;border:0;border-radius:8px;background:transparent;font-size:1.2rem;line-height:1;cursor:pointer;filter:grayscale(1);opacity:.32;transition:opacity .12s ease,filter .12s ease,transform .12s ease}
+.sc-rate-picks button:hover{transform:scale(1.14)}
+.sc-rate-picks button:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.sc-rate-picks .sc-splat{margin-right:6px}
+.sc-rate-picks .on{filter:none;opacity:1}
+.sc-rate-picks:hover .sc-tom{filter:grayscale(1);opacity:.32}
+.sc-rate-picks:hover .sc-tom.hov{filter:none;opacity:1}
+.sc-rate-picks.saving{pointer-events:none;opacity:.6}
+.sc-rate-note{color:var(--muted-2);font-size:.74rem}
+.sc-rate-note.err{color:var(--red)}
+.sc-rate-chat{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sc-rate-chat>small{color:var(--muted-2);font-size:.78rem}
+.sc-rate-meter{padding:4px 10px;border-radius:999px;font-family:var(--display);font-weight:800;font-size:.95rem;font-variant-numeric:tabular-nums;border:1px solid}
+.sc-rate-meter.fresh{color:var(--tomato);border-color:rgba(250,74,42,.45);background:rgba(250,74,42,.12)}
+.sc-rate-meter.rotten{color:var(--splat);border-color:rgba(143,207,92,.4);background:rgba(143,207,92,.1)}
+.sc-rate-sum b{display:block;font-size:.82rem}
+.sc-rate-sum small{color:var(--muted-2);font-size:.72rem}
+.sc-rate-faces{display:inline-flex;padding-left:6px}
+.sc-rate-face{position:relative;width:26px;height:26px;margin-left:-6px;border-radius:50%;border:2px solid var(--panel);background:var(--panel-3);display:grid;place-items:center;font-size:.7rem;font-weight:800;color:var(--muted);text-decoration:none}
+.sc-rate-face img{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover}
+.sc-rate-face i{position:absolute;right:-5px;bottom:-5px;z-index:1;min-width:14px;height:14px;padding:0 3px;border-radius:7px;background:var(--panel-2);border:1px solid var(--line-2);font-style:normal;font-size:.55rem;font-weight:800;line-height:12px;text-align:center;color:var(--text)}
+.pf-movie{display:block;text-decoration:none}
+.pf-tomato{position:absolute;top:8px;right:8px;padding:2px 7px;border-radius:999px;background:rgba(0,0,0,.72);font-size:.7rem;font-weight:800;color:#ff8a70}
+.pf-movie.rotten .pf-tomato{color:#a8e07e}
+.pf-movie .sc-cap small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:620px){.sc-rate{align-items:flex-start}.sc-rate-picks button{width:36px;height:36px}}
+@media (prefers-reduced-motion:reduce){.sc-rate-picks button{transition:none}.sc-rate-picks button:hover{transform:none}}

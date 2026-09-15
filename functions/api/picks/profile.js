@@ -231,11 +231,38 @@ export async function onRequestGet(context) {
   } catch { bankroll = null; }
   const flip = casino;   // older readers of this payload
 
+  // Tomato scores from Movies & TV (screen/ratings.js). The table is
+  // made on the first rating, so a missing one simply means none yet.
+  let movies = null;
+  try {
+    const uid = String(user.twitch_id);
+    const [agg, rows] = await Promise.all([
+      db.prepare(`SELECT COUNT(*) AS n, AVG(score) AS avg, SUM(CASE WHEN score >= 3 THEN 1 ELSE 0 END) AS fresh
+                    FROM title_ratings WHERE user_id = ?`).bind(uid).first(),
+      db.prepare(`SELECT type, tmdb_id, score, title, poster, year, updated_at
+                    FROM title_ratings WHERE user_id = ? ORDER BY updated_at DESC LIMIT 60`).bind(uid).all()
+    ]);
+    const total = Number(agg?.n || 0);
+    if (total) {
+      movies = {
+        total,
+        avg: Math.round(Number(agg.avg) * 10) / 10,
+        fresh: Number(agg.fresh || 0),
+        rotten: total - Number(agg.fresh || 0),
+        recent: (rows.results || []).map((r) => ({
+          type: String(r.type), id: Number(r.tmdb_id), score: Number(r.score),
+          title: String(r.title), poster: String(r.poster || ""), year: String(r.year || ""), at: utc(r.updated_at)
+        }))
+      };
+    }
+  } catch { movies = null; }
+
   return json({
     ok: true,
     badges,
     flip,
     casino,
+    movies,
     user: {
       id: String(user.twitch_id),
       login: String(user.twitch_login).toLowerCase(),

@@ -349,6 +349,7 @@
     writeUrl({ push: !wasPlaying && !history.state?.play });
     window.scrollTo(0, 0);
     loadDetails();
+    loadRating();
     // A host who moves to another episode takes the room with them.
     if (local.room?.isHost) hostBeat({ force: true, item: true });
     renderRoom();
@@ -362,6 +363,7 @@
     local.now = null;
     refs.stage.hidden = true;
     refs.stage.classList.remove("is-playing");
+    if (refs.rate) refs.rate.hidden = true;
     document.body.classList.remove("screen-on");
     document.title = "Movies & TV — EastCoin";
     // If opening the player made a history entry, closing it goes back
@@ -377,8 +379,113 @@
     local.barHidden = hidden;
     refs.bar.hidden = hidden;
     refs.peek.hidden = !hidden;
+    if (refs.rate) refs.rate.hidden = hidden || !local.now;
     if (hidden) refs.epStrip.hidden = true;
     else renderEpisodes();
+  }
+
+  /* ---------------------------------------------------------- tomatoes
+
+     0 to 5 tomatoes per title, per person (/api/screen/ratings). 3 and
+     up is fresh; chat's meter reads FRESH at 60% fresh, the Rotten
+     Tomatoes line. Read once when a title opens — moving between
+     episodes of the same show does not ask again — and never polled. */
+
+  async function loadRating() {
+    const item = local.now;
+    if (!item) return;
+    const key = keyFor(item);
+    if (local.rating?.key === key && !local.rating.failed) { renderRating(); return; }
+    local.rating = { key, loading: true };
+    renderRating();
+    const r = await getJson(`/api/screen/ratings?type=${item.type}&id=${item.id}`);
+    if (!local.now || keyFor(local.now) !== key) return;
+    local.rating = r?.ok ? { key, ...r } : { key, failed: true };
+    renderRating();
+  }
+
+  async function rateTitle(score) {
+    const item = local.now;
+    if (!item || local.rating?.saving) return;
+    const key = keyFor(item);
+    const before = local.rating;
+    local.rating = { ...before, mine: score, saving: true, error: "" };
+    renderRating();
+    let r = null;
+    try {
+      r = await fetch("/api/screen/ratings", {
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: item.type, id: item.id, score })
+      }).then((x) => x.json());
+    } catch { r = null; }
+    if (!local.now || keyFor(local.now) !== key) return;
+    local.rating = r?.ok ? { key, ...r } : { ...before, saving: false, error: r?.message || "Couldn't save that score. Try again." };
+    renderRating();
+  }
+
+  function renderRating() {
+    const box = refs.rate;
+    if (!box) return;
+    box.hidden = !local.now || local.barHidden;
+    const s = local.rating || {};
+    box.replaceChildren();
+
+    const mine = el("div", "sc-rate-mine");
+    mine.append(el("span", "sc-rate-k", local.now?.type === "tv" ? "Rate the show" : "Your score"));
+    const picks = el("div", `sc-rate-picks${s.saving ? " saving" : ""}`);
+    picks.setAttribute("aria-label", "Your score, 0 to 5 tomatoes");
+    const splat = btn("🤢", `sc-splat${s.mine === 0 ? " on" : ""}`, () => rateTitle(s.mine === 0 ? null : 0));
+    splat.title = "0 tomatoes";
+    splat.setAttribute("aria-label", "0 tomatoes");
+    splat.setAttribute("aria-pressed", String(s.mine === 0));
+    picks.append(splat);
+    const toms = [];
+    for (let i = 1; i <= 5; i += 1) {
+      const b = btn("🍅", `sc-tom${s.mine >= i ? " on" : ""}`, () => rateTitle(s.mine === i ? null : i));
+      b.title = `${i} of 5`;
+      b.setAttribute("aria-label", `${i} tomato${i === 1 ? "" : "es"}`);
+      b.setAttribute("aria-pressed", String(s.mine === i));
+      b.addEventListener("mouseenter", () => toms.forEach((t, j) => t.classList.toggle("hov", j < i)));
+      toms.push(b);
+      picks.append(b);
+    }
+    picks.addEventListener("mouseleave", () => toms.forEach((t) => t.classList.remove("hov")));
+    mine.append(picks, el("small", `sc-rate-note${s.error ? " err" : ""}`, s.error
+      ? s.error
+      : s.mine == null ? "Tap to score it · tap again to take it back" : `${s.mine} / 5 · ${s.mine >= 3 ? "fresh" : "rotten"}`));
+    box.append(mine);
+
+    const chat = el("div", "sc-rate-chat");
+    if (s.loading) chat.append(el("small", null, "Loading chat's score…"));
+    else if (s.failed) chat.append(el("small", null, "Chat's score didn't load."));
+    else if (!s.count) chat.append(el("small", null, "Nobody has rated this yet — be the first."));
+    else {
+      const fresh = s.freshPct >= 60;
+      chat.append(el("span", `sc-rate-meter ${fresh ? "fresh" : "rotten"}`, `${fresh ? "🍅" : "🤢"} ${s.freshPct}%`));
+      const sum = el("div", "sc-rate-sum");
+      sum.append(el("b", null, "Chat's score"), el("small", null, `${s.avg} / 5 from ${s.count} ${s.count === 1 ? "person" : "people"}`));
+      chat.append(sum);
+      const faces = el("div", "sc-rate-faces");
+      for (const p of (s.people || []).slice(0, 6)) {
+        const a = el("a", "sc-rate-face ulink");
+        a.href = `/u/${encodeURIComponent(p.login)}`;
+        a.title = `${p.name}: ${p.score} / 5`;
+        if (p.avatar) {
+          const img = el("img");
+          const small = window.ECAvatar?.small?.(p.avatar);
+          img.src = typeof small === "string" && small ? small : p.avatar;
+          img.alt = "";
+          img.loading = "lazy";
+          a.append(img);
+        } else {
+          a.append(document.createTextNode((p.name || "?").slice(0, 1).toUpperCase()));
+        }
+        a.append(el("i", null, String(p.score)));
+        faces.append(a);
+      }
+      chat.append(faces);
+    }
+    box.append(chat);
   }
 
   async function loadDetails() {
@@ -897,6 +1004,11 @@
     close.title = "Hide controls";
     bar.append(back, title, seasonSel, prevEp, nextEp, epToggle, together, copyLink, close);
     stage.append(bar);
+    // Tomato scores: yours, and chat's. A show is rated as a whole.
+    const rateBox = el("div", "sc-rate");
+    rateBox.hidden = true;
+    stage.append(rateBox);
+    refs.rate = rateBox;
     const roomBar = el("div", "sc-room");
     roomBar.hidden = true;
     stage.append(roomBar);
