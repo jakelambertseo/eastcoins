@@ -1374,7 +1374,7 @@
         if (entry.avatar) {
           const img = document.createElement("img");
           img.className = "mtop-av";
-          img.src = entry.avatar;
+          img.src = window.ECAvatar ? window.ECAvatar.small(entry.avatar) : entry.avatar;
           img.alt = "";
           img.loading = "lazy";
           line.append(img);
@@ -1445,7 +1445,7 @@
         if (entry.avatar) {
           const img = document.createElement("img");
           img.className = "mtop-av";
-          img.src = entry.avatar;
+          img.src = window.ECAvatar ? window.ECAvatar.small(entry.avatar) : entry.avatar;
           img.alt = "";
           img.loading = "lazy";
           line.append(img);

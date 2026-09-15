@@ -233,7 +233,8 @@
   function avatar(user, className) {
     const name = user?.displayName || user?.login || "?";
     const box = el("span", className, initials(name));
-    const src = String(user?.profileImageUrl || user?.avatar || "");
+    const raw = String(user?.profileImageUrl || user?.avatar || "");
+    const src = window.ECAvatar ? window.ECAvatar.small(raw) : raw;
     if (!src) return box;
     const img = document.createElement("img");
     img.alt = "";

@@ -283,7 +283,7 @@
       let av;
       if (p.user.avatar) {
         av = el("img", "gp-av");
-        av.src = p.user.avatar;
+        av.src = window.ECAvatar ? window.ECAvatar.small(p.user.avatar) : p.user.avatar;
         av.alt = "";
         av.loading = "lazy";
       } else {

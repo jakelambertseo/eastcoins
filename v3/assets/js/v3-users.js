@@ -50,7 +50,7 @@
       img.loading = "lazy";
       img.addEventListener("load", () => box.classList.add("has-logo"));
       img.addEventListener("error", () => img.remove());
-      img.src = u.avatar;
+      img.src = window.ECAvatar ? window.ECAvatar.small(u.avatar) : u.avatar;
       box.append(img);
     }
     return box;

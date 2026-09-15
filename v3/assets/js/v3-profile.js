@@ -66,7 +66,9 @@
   function avatar(user, className) {
     const name = user?.displayName || user?.login || "?";
     const box = el("span", className, name.replace(/[^a-z0-9]/gi, "").slice(0, 2).toUpperCase() || "?");
-    const src = String(user?.avatar || user?.profileImageUrl || "");
+    const raw = String(user?.avatar || user?.profileImageUrl || "");
+    // The card's photo is drawn at ~176px and keeps the full picture.
+    const src = className === "tc-photo" || !window.ECAvatar ? raw : window.ECAvatar.small(raw);
     if (!src) return box;
     const img = document.createElement("img");
     img.alt = "";

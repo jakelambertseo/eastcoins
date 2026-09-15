@@ -47,13 +47,37 @@
     window.ECV3?.go(route, { push: false });
   }
 
+  /* Two calls. The floor itself is public and shared at the edge, so
+     polling it every five seconds costs the origin almost nothing. The
+     viewer's own numbers are private and cost a dozen queries, so they
+     are asked for every fifteen seconds and whenever the tab comes back.
+     Nothing on them changes faster than that on the floor: plays happen
+     on the game pages. */
+  const ME_MS = 15000;
+  let me = null;
+  let meAt = 0;
+
+  async function pollMe() {
+    await window.ECV3?.sessionReady;      // never guess "signed out" before the session read lands
+    if (!window.ECV3?.state?.session?.user) { me = null; return; }
+    if (Date.now() - meAt < ME_MS) return;
+    meAt = Date.now();
+    try {
+      const p = await fetch("/api/casino/me", { credentials: "include" }).then((r) => r.json());
+      if (p?.ok) me = p.me || null;
+    } catch { /* keep the last numbers */ }
+  }
+
   async function poll() {
     if (document.hidden) return;          // the floor is a display; it can wait
     try {
-      const payload = await fetch("/api/casino/home", { credentials: "include" }).then((r) => r.json());
+      const [payload] = await Promise.all([
+        fetch("/api/casino/home").then((r) => r.json()),
+        pollMe()
+      ]);
       if (!payload?.ok) throw new Error("home");
       offset = payload.now - Date.now();
-      data = payload;
+      data = { ...payload, me };
       renderTiles();
       renderBoard();
       renderMe();
@@ -400,7 +424,7 @@
       build();
       poll();
       pollTimer = window.setInterval(poll, POLL_MS);
-      onVis = () => { if (!document.hidden) poll(); };
+      onVis = () => { if (!document.hidden) { meAt = 0; poll(); } };
       document.addEventListener("visibilitychange", onVis);
       tickTimer = window.setInterval(renderTiles, 500);
     },

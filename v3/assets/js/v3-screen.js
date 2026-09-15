@@ -583,7 +583,7 @@
       const a = el("a", "cf-av small sc-face ulink", String(u.displayName || u.login || "?").slice(0, 2).toUpperCase());
       a.href = `/u/${encodeURIComponent(u.login)}`;
       a.title = u.displayName || u.login;
-      if (u.avatar) { const img = el("img"); img.alt = ""; img.src = u.avatar; img.addEventListener("load", () => a.classList.add("has-logo")); img.addEventListener("error", () => img.remove()); a.append(img); }
+      if (u.avatar) { const img = el("img"); img.alt = ""; img.src = window.ECAvatar ? window.ECAvatar.small(u.avatar) : u.avatar; img.addEventListener("load", () => a.classList.add("has-logo")); img.addEventListener("error", () => img.remove()); a.append(img); }
       pile.append(a);
     }
     return pile;

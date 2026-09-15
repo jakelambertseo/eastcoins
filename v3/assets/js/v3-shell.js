@@ -837,6 +837,16 @@
     if (state.session?.wallet) state.session.wallet.balance = n;
   }
 
+  /* Twitch keeps one profile picture and serves it at several sizes by
+     suffix. The site stores the 300x300 URL (30-80 KB a face) and draws
+     it at 18-72px in a dozen places, so every small render asks for the
+     70x70 instead: the same picture at about a tenth of the bytes. The
+     profile card's big photo is the one place that keeps the original. */
+  window.ECAvatar = Object.freeze({
+    small: (url) => String(url || "").replace(/-profile_image-300x300\./, "-profile_image-70x70."),
+    medium: (url) => String(url || "").replace(/-profile_image-300x300\./, "-profile_image-150x150.")
+  });
+
   window.ECV3 = { register, go, state, stub, setWallet, refreshSession: loadSession };
 
   // Before anything reads the URL: an old-shaped link is rewritten to
