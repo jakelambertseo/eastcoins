@@ -225,7 +225,7 @@ export async function openMarkets(db) {
          FROM markets
         WHERE state = 'OPEN'
           AND datetime(starts_at) > datetime('now')
-        ORDER BY datetime(starts_at) ASC
+        ORDER BY datetime(starts_at) ASC, datetime(created_at) ASC, id ASC
         LIMIT 50`
     )
     .all();
