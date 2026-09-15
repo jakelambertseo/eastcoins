@@ -173,6 +173,8 @@
         const chip = el("a", "tonight-chip glink");
         chip.href = `/g/${m.slug || m.id || ""}`;
         const label = isProp(m) ? `${p.selection === "home" ? "NO" : "YES"} ${line(p.oddsLocked)}` : `${nick(side)} ${line(p.oddsLocked)}`;
+        // What kind of pick it is, so a YES and a team read apart at a glance.
+        chip.append(el("span", `tonight-kind ${isProp(m) ? "prop" : "odds"}`, isProp(m) ? "Prop" : "Odds"));
         chip.append(el("b", null, label));
         const sub = el("small", null, isProp(m) ? String(m.question || "").slice(0, 40) : `vs ${nick(opp)} · ${m.state === "OPEN" ? `${when(m.startsAt)}` : "in play"}`);
         chip.append(sub);

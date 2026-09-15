@@ -4504,3 +4504,7 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
 .tonight-score{font-weight:800;color:var(--muted)}
 .tonight-score.in{color:var(--green)}
 @media (max-width:520px){.tonight-sides{grid-template-columns:1fr}}
+.tonight-chip{position:relative;padding-right:52px}
+.tonight-kind{position:absolute;top:7px;right:8px;font-size:.56rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:999px;border:1px solid var(--line-2);color:var(--muted-2)}
+.tonight-kind.prop{border-color:rgba(var(--prop-rgb),.5);color:var(--prop);background:rgba(var(--prop-rgb),.12)}
+.tonight-kind.odds{border-color:rgba(var(--gold-rgb),.4);color:var(--gold);background:var(--gold-dim)}
