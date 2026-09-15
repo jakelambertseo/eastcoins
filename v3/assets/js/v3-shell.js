@@ -49,7 +49,7 @@
   // had a chance to register. An unknown name still falls back.
   // "game" is the /g/<slug> page chat links to. It is a route, not a nav
   // item: the only way in is a link.
-  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre", "wrapped"];
+  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre", "wrapped", "highlights"];
 
   /* ------------------------------------------------------ loading views
 
@@ -74,6 +74,7 @@
     game: [...LOGOS, "v3-pickbox.js", "v3-game.js"],
     profile: [...LOGOS, "v3-profile.js"],
     wrapped: [...LOGOS, "v3-wrapped.js"],
+    highlights: ["v3-highlights.js"],
     users: ["v3-users.js"],
     activity: [...LOGOS, "v3-activity.js"],
     music: ["eastcoins-music-config.js", "eastcoins-youtube.js", "v3-activity.js", "v3-music.js"],
@@ -280,6 +281,7 @@
 
   const TITLES = {
     wrapped: "EastCoin Wrapped",
+    highlights: "Highlights — EastCoin",
     events: "EastCoin — Sports", music: "The Green Room — EastCoin", screen: "Movies & TV — EastCoin",
     multiview: "MultiView — EastCoin", picks: "Picks — EastCoin", casino: "Casino — EastCoin",
     flip: "Coin Flip — EastCoin Casino", wheel: "Wheel — EastCoin Casino", race: "Horse Race — EastCoin Casino",
