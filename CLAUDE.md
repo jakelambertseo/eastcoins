@@ -444,6 +444,22 @@
 > Long lists page client-side via `pagedTable`/`pagedList`, keyed so the
 > one-minute refresh keeps the reader's page.
 >
+> **Watch rooms (2026-09-15)** — Movies & TV, "Watch together" in the
+> player bar. `functions/api/screen/room.js` (table `watch_rooms`):
+> the host's tab writes its clock (position, playing, the episode)
+> every ~5 s and at once on play/pause/seek, from the vidy.st events
+> the page already reads; guests poll every 5 s. **vidy.st cannot be
+> driven from outside** — it only emits events — so a guest is kept in
+> step by reloading the embed (`reloadEmbed`) at the host's projected
+> position when they drift past 8 s, and loaded PAUSED there
+> (`autoplay=false`) when the host pauses; never twice within 12 s.
+> Close enough for a film, not frame-locked, and the bar says so. Who
+> is in a room comes from `site_presence` rows with ref `room:<id>`.
+> The room rides on the URL as `?room=<id>` on either link form; a
+> "Watch rooms" shelf on the page lists live rooms (`?list=1`). A host
+> whose beat stops for two minutes is stale (guests keep their own
+> clock); leaving the player ends (host) or leaves (guest) the room.
+>
 > **Pretty URLs, Movies & TV only (2026-09-12)** — `/movie/inception`,
 > `/tv/lost`, `/tv/lost-s1`, `/tv/lost-s1-ep1`. Served by
 > `functions/movie/[[path]].js` and `functions/tv/[[path]].js`, which do

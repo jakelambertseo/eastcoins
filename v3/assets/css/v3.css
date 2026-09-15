@@ -4515,3 +4515,22 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
 .ticket-chip.on,.ticket-chip:hover{border-color:rgba(var(--gold-rgb),.45);color:var(--gold);background:var(--gold-dim)}
 .ticket-field{flex-wrap:wrap}
 .ticket-team .propmark{width:30px;height:30px;font-size:.95rem}
+
+/* ============================================================
+   WATCH ROOMS — Movies & TV, one host's clock (v3-screen.js)
+   ============================================================ */
+.sc-room{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 14px;border-top:1px solid var(--line);background:linear-gradient(90deg,var(--gold-dim),transparent 60%),var(--panel)}
+.sc-room-tag{padding:3px 9px;border-radius:999px;border:1px solid rgba(var(--gold-rgb),.45);background:var(--gold-dim);color:var(--gold);font-size:.6rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase}
+.sc-room-who{font-weight:700;font-size:.86rem}
+.sc-room-note{color:var(--muted);font-size:.8rem;flex:1;min-width:160px}
+.sc-room .sc-btn{height:30px;padding:0 11px;font-size:.78rem}
+.sc-room-people{display:inline-flex}
+.sc-face{margin-left:-6px;border:2px solid var(--panel);text-decoration:none}
+.sc-face:first-child{margin-left:0}
+.sc-room-toast{margin:0;padding:7px 14px;border-top:1px solid var(--line);background:var(--panel-2);color:var(--muted);font-size:.8rem}
+.sc-hostpaused{position:absolute;inset:0;z-index:2;display:grid;place-items:center;align-content:center;gap:4px;background:rgba(12,10,9,.78);color:var(--text);text-align:center;pointer-events:none}
+.sc-hostpaused-k{font-size:2rem}
+.sc-hostpaused b{font-family:var(--display);font-size:1.1rem}
+.sc-hostpaused small{color:var(--muted);font-size:.8rem}
+.sc-live{background:var(--gold);color:#1a1409}
+.sc-roomcard .sc-cap small{color:var(--gold)}
