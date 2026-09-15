@@ -358,8 +358,12 @@
   function nflSundayNow() {
     try { if (new URL(location.href).searchParams.get("allsports") === "1") return false; } catch { /* fine */ }
     const ct = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" }));
-    // Sunday and Monday night: the two days the room is here for.
-    return (ct.getDay() === 0 || ct.getDay() === 1) && NFL_MONTHS.has(ct.getMonth() + 1);
+    // Sunday all day, and Monday until the night game is done — 10:30 PM
+    // Central, when Monday Night Football is over and the room wants its
+    // baseball back. Nothing else needs a football-only screen after that.
+    if (!NFL_MONTHS.has(ct.getMonth() + 1)) return false;
+    if (ct.getDay() === 0) return true;
+    return ct.getDay() === 1 && ct.getHours() * 60 + ct.getMinutes() < 22 * 60 + 30;
   }
   const nflDayIsMonday = () => new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" })).getDay() === 1;
   const isNflSunday = (m) => Sports.footballRank(m) === 0 || isRedZone(m) || /^ppv-nfl-/.test(String(m?.id || "")) || /nfl/i.test(String(m?.title || ""));

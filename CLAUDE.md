@@ -644,9 +644,9 @@
 > name or logo is drawn from must therefore SELECT `league` — `_wager.js`
 > did not, which is why a Missouri pick showed the Detroit Tigers crest.
 >
-> **NFL Sunday (2026-09-13)** — on Sundays AND Mondays September–January
-> (Chicago time; the community is ~95% NFL, and Monday night is a game
-> night) the Sports page shows football only: `nflSundayNow()` +
+> **NFL Sunday (2026-09-13)** — on Sundays, and Mondays until 10:30 PM
+> Central (when the night game is over), September–January (Chicago
+> time; the community is ~95% NFL) the Sports page shows football only: `nflSundayNow()` +
 > `isNflSunday()` in `v3-events.js` keep any listing naming an NFL team
 > (`footballRank === 0`, whatever category the provider filed it under),
 > RedZone, `ppv-nfl-*` feeds and titles with "NFL"; everything else is
