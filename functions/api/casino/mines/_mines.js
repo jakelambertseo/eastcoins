@@ -48,7 +48,11 @@ export const EDGE_RETURN = 1.04;
 // rung up would be 3,328, which overshoots. Nothing about the ODDS changes:
 // every rung still returns 99%, because the run stops below the ceiling
 // rather than being clamped to it.
-export const MAX_MULTIPLIER = 125;
+// x30 since 2026-09-14 night: x125 paid 1,554 and 777 on ten-bomb boards
+// inside two hours, more than the hourly cap can ever claw back. At x30
+// the best board is 570 on a 20 ZC stake (3 bombs, 16 tiles) — under the
+// 750 cap — and a ten-bomb run stops at 5 tiles for 368.
+export const MAX_MULTIPLIER = 30;
 export const MIN_MINES = 1;
 // Ten is the ceiling on purpose. Past it the ladder leaps instead of
 // climbing — twenty bombs goes ×4.8, ×28.8, ×220.8 — and one 20 ZC

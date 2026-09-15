@@ -236,8 +236,10 @@
 > derived from the seed alone (Fisher–Yates over 0..24, each swap from
 > `sha256(seed:shuffle:i)`). Each safe tile pays `C(25,k)/C(S,k)` less the
 > same 1% edge Hi-Lo takes; cash out after any safe tile. The run
-> auto-cashes at `topRung()` — the last rung still **under** the ×125
-> ceiling (3 bombs: 19 tiles ×113.85; 10 bombs: 7 tiles ×73.95; best board
+> auto-cashes at `topRung()` — the last rung still **under** the ×30
+> ceiling (×125 until 2026-09-14 night, when one player took 1,554 and
+> 777 on ten-bomb boards in two hours; ×30 makes the best board 570 on
+> 20 ZC, under the hourly cap) (3 bombs: 19 tiles ×113.85; 10 bombs: 7 tiles ×73.95; best board
 > 2,277 on a 20 ZC stake, 1 in 115; the ceiling was ×50, then ×25, then
 > ×125 on 2026-09-12 when a real jackpot was wanted — the ladder roughly
 > doubles per tile so the prize cannot be dialled in exactly) — rather
