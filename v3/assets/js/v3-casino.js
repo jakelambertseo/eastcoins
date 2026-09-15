@@ -159,15 +159,20 @@
       const dot = K.el("i", "cas-card-dot");
       const phase = K.el("span", "cas-card-phase", "");
       const clock = K.el("b", "cas-card-clock nums", "");
+      // Who is in the room, as a pile of small faces with the count after
+      // it. Only rebuilt when the roster changes: this runs twice a second.
+      const right = K.el("span", "cas-card-right");
+      const who = K.el("span", "cas-card-who");
       const room = K.el("span", "cas-card-room", "");
-      live.append(dot, phase, clock, room);
+      right.append(who, room);
+      live.append(dot, phase, clock, right);
 
       // Plays left this hour, in this game. Signed out it stays hidden.
       const plays = K.el("div", "cas-card-plays");
       plays.hidden = true;
 
       tile.append(art, live, plays);
-      refs[`tile_${key}`] = { tile, clock, phase, room, plays, name: g.title, blurb: g.blurb, peopleSig: "" };
+      refs[`tile_${key}`] = { tile, clock, phase, room, who, plays, name: g.title, blurb: g.blurb, peopleSig: "" };
       refs.tiles.append(tile);
     }
     page.append(refs.tiles);
@@ -326,7 +331,7 @@
         r.plays.hidden = true;
       }
       const seats = g.pvp && g.lobby ? g.lobby.players : g.room;
-      r.room.textContent = seats ? `${seats} in` : "";
+      r.room.textContent = seats ? String(seats) : "";
       r.tile.classList.toggle("hot", hot);
 
       // The blurb and who is in the room live here rather than on the
@@ -335,6 +340,12 @@
       const sig = names.join(",");
       if (sig !== r.peopleSig) {
         r.peopleSig = sig;
+        r.who.replaceChildren();
+        for (const person of (g.people || []).slice(0, 4)) {
+          const face = K.avatar(person, "cf-av cas-face");
+          face.title = person.displayName || person.login;
+          r.who.append(face);
+        }
         r.tile.title = names.length ? `${r.blurb}\n\nIn the room: ${names.join(", ")}` : r.blurb;
       }
     }

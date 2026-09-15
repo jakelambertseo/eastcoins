@@ -3312,7 +3312,12 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .cas-card-phase{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .cas-card-clock{font-family:var(--display);font-weight:800;color:var(--gold);flex:0 0 auto}
 .cas-card-clock:empty{display:none}
-.cas-card-room{margin-left:auto;flex:0 0 auto;color:var(--muted-2)}
+.cas-card-right{margin-left:auto;display:inline-flex;align-items:center;gap:5px;flex:0 0 auto}
+.cas-card-who{display:inline-flex;align-items:center}
+.cas-card-who:empty{display:none}
+.cas-card-who .cas-face{width:18px;height:18px;font-size:.46rem;margin-left:-6px;border:2px solid var(--ink);box-sizing:content-box}
+.cas-card-who .cas-face:first-child{margin-left:0}
+.cas-card-room{flex:0 0 auto;color:var(--muted-2)}
 .cas-card-room:empty{display:none}
 .cas-card-plays{font-size:.68rem;font-weight:700;color:var(--muted-2);margin-top:-2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cas-card-plays.out{color:var(--red)}
@@ -4838,14 +4843,13 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 .pf-head.has-tcard{
   display:grid;
   grid-template-columns:238px minmax(0,1fr);
-  grid-template-areas:"card copy" "card quick" "card casino";
-  align-content:start;
+  grid-template-rows:1fr auto;
+  grid-template-areas:"card copy" "card glance";
   gap:14px 22px;
 }
-.pf-head.has-tcard .pf-copy{grid-area:copy;align-self:center}
-.pf-head.has-tcard .pf-quick{grid-area:quick}
-.pf-head.has-tcard .pf-quick-casino{grid-area:casino}
-.pf-head.has-tcard .tc{grid-area:card}
+.pf-head.has-tcard .pf-copy{grid-area:copy;align-self:start}
+.pf-head.has-tcard .pf-glance{grid-area:glance;align-self:end;margin:0}
+.pf-head.has-tcard .tc{grid-area:card;align-self:start}
 
 .tc{
   position:relative;width:100%;aspect-ratio:2.5/3.5;
@@ -4997,10 +5001,12 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 @media (max-width:760px){
   .pf-head.has-tcard{
     grid-template-columns:minmax(0,1fr);
-    grid-template-areas:"card" "copy" "quick" "casino";
+    grid-template-rows:auto;
+    grid-template-areas:"card" "copy" "glance";
     justify-items:center;
   }
   .pf-head.has-tcard .tc{max-width:250px}
   .pf-head.has-tcard .pf-copy{justify-items:center;text-align:center;width:100%}
-  .pf-head.has-tcard .pf-quick,.pf-head.has-tcard .pf-quick-casino{width:100%}
+  .pf-head.has-tcard .pf-copy h1{justify-content:center}
+  .pf-head.has-tcard .pf-glance{width:100%}
 }

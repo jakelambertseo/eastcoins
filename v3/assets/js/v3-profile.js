@@ -576,36 +576,36 @@
     const copy = el("div", "pf-copy");
     const name = el("h1", null, u.displayName);
     const badges = el("span", "pf-badges");
-    for (const b of data.badges || []) badges.append(el("span", `pf-badge ${b.key}`, `${b.emoji} ${b.label}`));
+    for (const b of data.badges || []) {
+      const pill = el("span", `pf-badge ${b.key}`, `${b.emoji} ${String(b.label).split("—")[0].trim()}`);
+      pill.title = b.label;
+      badges.append(pill);
+    }
     name.append(badges);
     copy.append(name);
     copy.append(el("p", null, `@${u.login}${u.since ? " · with EastCoin since " + when(u.since, { month: "short", year: "numeric" }) : ""}`));
     copy.append(teamChip(u));
     head.append(copy);
 
-    const seasonName = data.season?.name || "Season";
-    const quick = el("div", "pf-quick");
-    quick.append(
-      quickStat("Record", `${k.wins}–${k.losses}`, recordNote(k.records) || (k.accuracy !== null ? `${k.accuracy}% of settled picks` : "Nothing settled yet")),
-      quickStat(`${seasonName} profit`, zc(k.profit, { sign: true }), `${k.staked.toLocaleString()} staked · ${k.total} pick${k.total === 1 ? "" : "s"}`, k.profit > 0 ? "up" : k.profit < 0 ? "down" : ""),
-      quickStat("Picks rank", k.rank ? `#${k.rank} of ${k.players}` : "—", k.rank ? "by Picks profit" : "settle a pick to rank"),
-      quickStat("Streak", k.streak.current > 0 ? `W${k.streak.current}` : k.streak.current < 0 ? `L${Math.abs(k.streak.current)}` : "—",
-        k.streak.bestWin ? `best run ${k.streak.bestWin}` : "no settled picks", k.streak.current > 0 ? "up" : k.streak.current < 0 ? "down" : "")
+    /* Beside the card: the three tab launchers, so the space next to a
+       333px card carries where to go rather than eight numbers the card
+       and the tabs already show. The two summary strips that used to
+       sit here were the header's clutter; the casino one was the
+       Casino tab's own strip, repeated. */
+    const glance = el("div", "pf-glance");
+    const glanceCard = (key, icon, title, big, small) => {
+      const card = el("button", "pf-glance-card");
+      card.type = "button";
+      card.append(el("span", "pf-glance-k", `${icon} ${title}`), el("b", "nums", big), el("small", null, small), el("em", null, "Open →"));
+      card.addEventListener("click", () => select(key, true));
+      return card;
+    };
+    glance.append(
+      glanceCard("picks", "🪙", "Picks", `${k.wins}–${k.losses}`, k.open ? `${k.open} open right now` : `${k.total} pick${k.total === 1 ? "" : "s"} all season`),
+      glanceCard("casino", "🎰", "Casino", c ? `${c.net > 0 ? "+" : ""}${c.net.toLocaleString()}` : "—", c ? `${c.wins}–${c.losses} across ${c.total} play${c.total === 1 ? "" : "s"}` : "no results yet"),
+      glanceCard("music", "🎵", "Green Room", music ? String(music.rating ?? 1000) : "—", music ? `ELO · ${music.requests} request${music.requests === 1 ? "" : "s"}` : "no requests yet")
     );
-    head.append(quick);
-
-    // The casino's numbers, in the same shape as the season strip above.
-    if (c && c.total) {
-      const cq = el("div", "pf-quick pf-quick-casino");
-      const favName = c.favourite ? (GAME_NAME[c.favourite.game] || c.favourite.game) : null;
-      cq.append(
-        quickStat("Casino profit", zc(c.net, { sign: true }), `${c.staked.toLocaleString()} staked · ${c.total} play${c.total === 1 ? "" : "s"}`, c.net > 0 ? "up" : c.net < 0 ? "down" : ""),
-        quickStat("Casino record", `${c.wins}–${c.losses}`, `${Math.round((100 * c.wins) / c.total)}% of plays won`),
-        quickStat("Biggest win", c.biggestWin ? zc(c.biggestWin, { sign: true }) : "—", c.biggestWin ? "in one play" : "none yet", c.biggestWin ? "up" : ""),
-        quickStat("Favourite game", favName || "—", c.favourite ? `${c.favourite.plays} play${c.favourite.plays === 1 ? "" : "s"}` : "")
-      );
-      head.append(cq);
-    }
+    head.append(glance);
     wrap.append(head);
 
     // ---- the tabs
@@ -637,20 +637,6 @@
       if (k.worstBeat) hls.append(highlight("bad", "Worst beat", k.worstBeat, `−${k.worstBeat.wager}`, `${k.worstBeat.team} ${formatLine(k.worstBeat.line)} vs ${k.worstBeat.opponent}`));
       ov.append(hls);
     }
-    const glance = el("div", "pf-glance");
-    const glanceCard = (key, icon, title, big, small) => {
-      const card = el("button", "pf-glance-card");
-      card.type = "button";
-      card.append(el("span", "pf-glance-k", `${icon} ${title}`), el("b", "nums", big), el("small", null, small), el("em", null, "Open →"));
-      card.addEventListener("click", () => select(key, true));
-      return card;
-    };
-    glance.append(
-      glanceCard("picks", "🪙", "Picks", `${k.wins}–${k.losses}`, k.open ? `${k.open} open right now` : `${k.total} pick${k.total === 1 ? "" : "s"} all season`),
-      glanceCard("casino", "🎰", "Casino", c ? `${c.net > 0 ? "+" : ""}${c.net.toLocaleString()}` : "—", c ? `${c.wins}–${c.losses} across ${c.total} play${c.total === 1 ? "" : "s"}` : "no results yet"),
-      glanceCard("music", "🎵", "Green Room", music ? String(music.rating ?? 1000) : "—", music ? `ELO · ${music.requests} request${music.requests === 1 ? "" : "s"}` : "no requests yet")
-    );
-    ov.append(glance);
     const foot = el("div", "gp-links");
     foot.append(link("/?view=picks&tab=leaderboard", "gp-back", "Leaderboard"), link("/?view=picks&tab=ledger", "gp-back", "Community Ledger"), link("/?view=casino", "gp-back", "Casino floor"));
     ov.append(foot);
@@ -662,7 +648,9 @@
     pstrip.append(
       stat("Record", recordSplit(k.records), k.accuracy !== null ? `${k.accuracy}% of settled picks` : "Nothing settled yet"),
       stat("Staked", k.staked.toLocaleString(), `across ${k.total} pick${k.total === 1 ? "" : "s"}`),
-      stat("Best run", k.streak.bestWin ? `${k.streak.bestWin} straight` : "—", k.streak.worstLoss ? `worst: ${k.streak.worstLoss} in a row` : "")
+      stat("Best run", k.streak.bestWin ? `${k.streak.bestWin} straight` : "—", k.streak.worstLoss ? `worst: ${k.streak.worstLoss} in a row` : ""),
+      stat("Right now", k.streak.current > 0 ? `W${k.streak.current}` : k.streak.current < 0 ? `L${Math.abs(k.streak.current)}` : "—",
+        k.streak.current > 0 ? "on a run" : k.streak.current < 0 ? "on a slide" : "nothing settled yet", k.streak.current > 0 ? "up" : k.streak.current < 0 ? "down" : "")
     );
     pk.append(pstrip);
     const prow = el("div", "gp-rows");
