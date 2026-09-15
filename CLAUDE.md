@@ -549,6 +549,36 @@
 > intercepts every `/api/` call, so no ZCoin can move there. Flip
 > `paused` to reopen; the practice page needs nothing changed.
 >
+> **The edge is spread from 96% to 104% (2026-09-16)** — the buff below
+> put every game between 100% and 104%, which blended to 102.1% and
+> handed the room about 179 ZC a day. Nothing was broken about it: a
+> return is an EXPECTED value, not a promise, and players lost
+> constantly underneath it — the room ran 96% across the day after the
+> Mines ceiling landed. But a casino where no GAME has an edge reads
+> wrong, so the edge now varies by game instead of sitting uniformly on
+> the players' side:
+>
+> | Game | Return | How |
+> |---|---|---|
+> | Coin Flip | 96.0% | `COIN_PAYS` 1.92, was 2.04 |
+> | Wheel | 96.9% | 1.97 a colour, 58 on gold; was 2.05 / 60 |
+> | Hi-Lo | 96.5-99.7% | `EDGE_RETURN` 0.997 per call, was 1.006 |
+> | Plinko | 100.1% | middle bucket 0.4 to 0.3, the rest untouched |
+> | Scratch-Off | 101.0% | the money-back Coin prize 22% to 19.5% |
+> | Mines | 104.0% | unchanged |
+> | PvP | 100.0% | unchanged, zero-sum between players |
+>
+> **The shape is deliberate: the faster and more mindless the game, the
+> tighter it is.** Coin Flip and the Wheel are two clicks and pure luck,
+> so they carry the edge; Mines asks for a decision on every tile and
+> pays 104% for it; Hi-Lo's edge is PER CALL, so a long chain now costs
+> where it used to earn. Blended at recent volumes that is **100.5%**,
+> down from 102.1% — the casino roughly stops printing without going
+> back to the flat 4% house edge that drove people to Picks. Plinko's
+> change was picked to keep the property named below: every bucket but
+> the middle still pays, so 77% of drops come back ahead. Do not push
+> the blend past ~104%, and do not take a single game below 96%.
+>
 > **The casino pays the players (2026-09-14)** — asked for a 1–4%
 > return to the room after four days at 99.0% overall with almost
 > everyone down (Hi-Lo alone was at 87%: its 1% edge is PER CALL, so a
@@ -580,7 +610,12 @@
 > `nearMiss(result, mine, config)` (the Wheel uses both); Hi-Lo, Mines and
 > Plinko call near-miss toasts themselves. **The tables' ticker** — the
 > casino floor mounts `ECActivity.mountTicker(el, { types: ["casino"],
-> label, href, empty })`, the same ticker filtered to casino items.
+> label, href, empty })`, the same ticker filtered to casino items. It
+> carries **wins and losses**: it ran wins-only for a day in September
+> 2026 and was put back, because a casino that only ever reports
+> winning is not telling the room anything. `mountTicker` also takes a
+> `keep` predicate for cutting inside a type, which is what that
+> wins-only run used.
 > **Profiles** get a second `.pf-quick.pf-quick-casino` strip (profit,
 > record, biggest win, favourite game) under the season strip, from
 > `profile.casino`.
