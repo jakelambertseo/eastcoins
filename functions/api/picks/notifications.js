@@ -148,15 +148,18 @@ async function announces(db, from) {
  * It shows unread to anyone who has not looked since, and toasts on
  * every open tab within a poll.
  */
-async function notices(db, from) {
+async function notices(db, from, user) {
   await ensureOps(db);
   const rows = await db.prepare(
     `SELECT key, value, updated_at FROM ops_status WHERE key LIKE 'notice:%' AND updated_at >= ? ORDER BY updated_at DESC LIMIT 5`
   ).bind(from).all().catch(() => ({ results: [] }));
+  // "{me}" in a notice's link is the reader: /u/{me} opens each person's
+  // OWN profile, filled in here per request (2026-09-15).
+  const me = encodeURIComponent(String(user?.login || "").toLowerCase());
   return (rows.results || []).map((r) => {
     let v = {}; try { v = JSON.parse(r.value) || {}; } catch { v = {}; }
     if (!v.title) return null;
-    return { type: "notice", icon: v.icon || "📣", tone: "gold", at: utc(r.updated_at), href: String(v.href || "/"),
+    return { type: "notice", icon: v.icon || "📣", tone: "gold", at: utc(r.updated_at), href: String(v.href || "/").replace(/\{me\}/g, me),
       strong: String(v.title).slice(0, 80), text: "", sub: String(v.text || "").slice(0, 160) };
   }).filter(Boolean);
 }
@@ -195,7 +198,7 @@ export async function onRequestGet(context) {
 
   const [picks, pots, team, said, badges, told] = await Promise.all([
     settledPicks(db, user, from), jackpots(db, user, from), teamOpened(db, user, from), announces(db, from),
-    newBadges(context.env, db, user, remembered), notices(db, from)
+    newBadges(context.env, db, user, remembered), notices(db, from, user)
   ]);
   const items = [...picks, ...pots, ...team, ...said, ...badges.items, ...told]
     .filter((i) => i.at && !Number.isNaN(new Date(i.at).getTime()))

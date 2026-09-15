@@ -637,6 +637,11 @@
       tag: "select",
       options: [
         ["/?view=screen", "Movies & TV"],
+        // {me} becomes each reader's own login when the bell is built.
+        ["/u/{me}", "Their own profile"],
+        ["/u/{me}#picks", "Their own profile · Picks"],
+        ["/u/{me}#casino", "Their own profile · Casino"],
+        ["/u/{me}#movies", "Their own profile · Movies"],
         ["/?view=picks", "Picks"],
         ["/?view=casino", "Casino"],
         ["/?view=music", "Green Room"],
