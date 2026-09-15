@@ -121,7 +121,7 @@ export async function onRequestGet(context) {
   const db = context.env.PICKS_DB;
   if (!db) return fail("NO_DB", "Rooms are offline.", 503);
   const gate = await requireLogin(context);
-  if (gate instanceof Response) return gate;
+  if (gate.denied) return gate.denied;
   await ensureRooms(db);
   const now = Date.now();
   const url = new URL(context.request.url);
