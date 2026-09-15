@@ -31,6 +31,10 @@ const REQUEST_LIMIT = 25;
 const REQUEST_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const MAX_VIDEO_SECONDS = 600;
 const MAX_HISTORY = 300;
+// The skip log (2026-09-15): songs that left early and why. A natural
+// end and the client's safety net are not skips, so they are not here.
+const MAX_SKIPS = 40;
+const SKIP_KINDS = new Set(["vote-skip", "chat-skip", "error"]);
 const MAX_USER_STATS = 500;
 const SE_POLL_INTERVAL_MS = 20 * 1000;
 const MAX_SE_SEEN_IDS = 500;
@@ -446,6 +450,7 @@ export class MusicRoom extends DurableObject {
     this.sessions = new Map();
     this.state = this.emptyState();
     this.history = [];
+    this.skips = [];
     this.userStats = new Map();
     // In-memory only (not persisted to storage) — a DO restart resets everyone's
     // hourly count, which is an acceptable tradeoff for a small friend-group room.
@@ -476,6 +481,11 @@ export class MusicRoom extends DurableObject {
       const storedHistory = await this.ctx.storage.get("music-history");
       if (Array.isArray(storedHistory)) {
         this.history = storedHistory.map((entry) => this.sanitizeHistoryEntry(entry)).filter(Boolean).slice(-MAX_HISTORY);
+      }
+
+      const storedSkips = await this.ctx.storage.get("music-skips");
+      if (Array.isArray(storedSkips)) {
+        this.skips = storedSkips.map((entry) => this.sanitizeSkip(entry)).filter(Boolean).slice(0, MAX_SKIPS);
       }
 
       const storedStats = await this.ctx.storage.get("music-user-stats");
@@ -592,6 +602,27 @@ export class MusicRoom extends DurableObject {
       // skipped, or voted off. Entries written before this existed have
       // none, and are ordered by request time as they always were.
       playedAt: Number(entry.playedAt) || null
+    };
+  }
+
+  sanitizeSkip(entry) {
+    if (!entry || typeof entry !== "object") return null;
+    const videoId = String(entry.videoId || "").trim();
+    const kind = String(entry.kind || "");
+    if (!/^[A-Za-z0-9_-]{11}$/.test(videoId) || !SKIP_KINDS.has(kind)) return null;
+    return {
+      id: String(entry.id || crypto.randomUUID()),
+      videoId,
+      title: this.safeTitle(entry.title),
+      requestedBy: this.safeName(entry.requestedBy),
+      requestedByLogin: String(entry.requestedByLogin || "").slice(0, 64),
+      kind,
+      how: ["mod", "own", "chat"].includes(entry.how) ? entry.how : "",
+      actor: entry.actor ? this.safeName(entry.actor) : "",
+      votes: Math.max(0, Number(entry.votes) || 0),
+      listeners: Math.max(0, Number(entry.listeners) || 0),
+      playedMs: Math.max(0, Number(entry.playedMs) || 0),
+      at: Number(entry.at) || Date.now()
     };
   }
 
@@ -740,6 +771,7 @@ export class MusicRoom extends DurableObject {
 
   async persistHistoryAndStats() {
     await this.ctx.storage.put("music-history", this.history);
+    await this.ctx.storage.put("music-skips", this.skips);
     await this.ctx.storage.put("music-user-stats", Object.fromEntries(this.userStats));
   }
 
@@ -1106,7 +1138,7 @@ export class MusicRoom extends DurableObject {
     this.lastChatSkipAt = now;
 
     console.log(`Twitch IRC: skipping "${this.state.current.title}" (requested by ${login})`);
-    this.advance({ kind: "chat-skip", actor: this.safeName(login) });
+    this.advance({ kind: "chat-skip", how: "chat", actor: this.safeName(login) });
     await this.persistAndBroadcast();
   }
 
@@ -1342,7 +1374,7 @@ export class MusicRoom extends DurableObject {
 
     if (url.pathname.startsWith("/history/")) {
       return json(
-        { history: this.history, userStats: this.userStatsList() },
+        { history: this.history, skips: this.skips, userStats: this.userStatsList() },
         200,
         corsHeaders(request, this.env)
       );
@@ -1588,7 +1620,7 @@ export class MusicRoom extends DurableObject {
       }
 
       console.log(`Force skip by ${login}${isMod ? " (mod)" : " (own song)"}: "${this.state.current.title}"`);
-      this.advance({ kind: "chat-skip", actor: this.safeName(session.name || login) });
+      this.advance({ kind: "chat-skip", how: isMod ? "mod" : "own", actor: this.safeName(session.name || login) });
       await this.persistAndBroadcast();
       return;
     }
@@ -1626,6 +1658,21 @@ export class MusicRoom extends DurableObject {
     if (outgoing?.id) {
       const entry = this.history.find((row) => row.id === outgoing.id);
       if (entry) entry.playedAt = Date.now();
+    }
+    // Anything that left early goes in the skip log, newest first, with
+    // who and why — persisted with history (statsDirty is already set).
+    if (outgoing?.videoId && notice && SKIP_KINDS.has(notice.kind)) {
+      const skip = this.sanitizeSkip({
+        ...notice,
+        id: outgoing.id,
+        videoId: outgoing.videoId,
+        title: outgoing.title,
+        requestedBy: outgoing.requestedBy,
+        requestedByLogin: outgoing.requestedByLogin,
+        playedMs: this.state.startedAt ? Date.now() - this.state.startedAt : 0,
+        at: Date.now()
+      });
+      if (skip) this.skips = [skip, ...this.skips].slice(0, MAX_SKIPS);
     }
 
     this.state.current = this.state.queue.shift() || null;

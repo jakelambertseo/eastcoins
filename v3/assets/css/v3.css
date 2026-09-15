@@ -4616,3 +4616,13 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 .mnow-ov .msave-now{align-self:flex-start;margin-top:4px;padding:3px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.45);color:#fff;font-size:.68rem;font-weight:800;letter-spacing:.02em}
 .mnow-ov .msave-now:hover{border-color:#ff3b3b;background:rgba(255,0,0,.22)}
 .mnow-ov .msave-now:focus-visible,.mq-row .msave:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+/* Green Room: the Skipped tab (2026-09-15) — why a song left early. */
+.mskip-why{display:flex;align-items:center;gap:6px;flex-wrap:wrap;color:var(--muted)}
+.mskip-tag{flex:0 0 auto;padding:1px 7px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);font-size:.58rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+.mskip-tag.vote{border-color:rgba(var(--gold-rgb),.45);background:var(--gold-dim);color:var(--gold)}
+.mskip-tag.mod{border-color:rgba(255,107,133,.45);color:#ff8ea3}
+.mskip-tag.error{color:var(--muted);border-style:dashed}
+.mskip-tag.chat{border-color:rgba(145,70,255,.5);color:#bf94ff}
+/* Four tabs now share the rail's width. */
+.mside.rail .mtab{font-size:.74rem;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

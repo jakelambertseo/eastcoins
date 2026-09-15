@@ -922,6 +922,7 @@
     let unsub = null;
     let stage = null;
     let history = [];
+    let skips = [];
     let requesters = [];
     // Kept across repaints so a state broadcast — anyone joining, any
     // reaction — does not throw you back to page one mid-browse.
@@ -1027,6 +1028,8 @@
           : [];
         // Comes back on the same request, already ordered by count.
         requesters = Array.isArray(payload?.userStats) ? payload.userStats : [];
+        // Newest first from the room; absent on a room older than the log.
+        skips = Array.isArray(payload?.skips) ? payload.skips : [];
         // Who moved since last time. Only meaningful once there is a
         // "last time": the first fetch just records where everyone is.
         const next = new Map(requesters.map((r) => [String(r.login || "").toLowerCase(), Math.round(Number(r.rating) || 1000)]));
@@ -1475,6 +1478,52 @@
         line.append(el("span", "elo-score", `${Number(entry.count || 0)} songs`));
         wrap.append(line);
       });
+      return wrap;
+    }
+
+    /* The skip log: what left early and why, newest first, from the
+       room's own record (the worker's `skips`, 40 kept). A song that
+       simply finished is History's, not this. */
+    function skipReason(s) {
+      if (s.kind === "vote-skip") {
+        return { tag: "Voted off", cls: "vote", why: s.votes ? `${s.votes} vote${s.votes === 1 ? "" : "s"}${s.listeners ? ` of ${s.listeners} listening` : ""}` : "the room voted" };
+      }
+      if (s.kind === "error") return { tag: "Wouldn't play", cls: "error", why: "YouTube refused to play it here" };
+      const who = s.actor || "someone";
+      if (s.how === "mod") return { tag: "Mod skip", cls: "mod", why: `skipped by ${who}` };
+      if (s.how === "own") return { tag: "Own song", cls: "own", why: `${who} skipped their own request` };
+      if (s.how === "chat") return { tag: "!skip", cls: "chat", why: `${who} typed !skip in chat` };
+      return { tag: "Skipped", cls: "mod", why: `skipped by ${who}` };
+    }
+
+    function skipsList() {
+      const wrap = el("div", "mq");
+      if (!skips.length) {
+        wrap.append(el("p", "mq-empty", "Nothing has been skipped yet. Songs voted off, skipped or unplayable show here with the reason."));
+        return wrap;
+      }
+      const clock = (ms) => {
+        const t = Math.max(0, Math.round(Number(ms || 0) / 1000));
+        return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
+      };
+      for (const s of skips.slice(0, 25)) {
+        const r = skipReason(s);
+        const row = el("div", "mq-row mskiprow");
+        const art = thumb(s.videoId, "mq-thumb");
+        if (art) row.append(art);
+        const meta = el("div", "mq-meta");
+        const title = el("strong", null, s.title || "Untitled");
+        meta.append(title);
+        const line = el("small", "mskip-why");
+        line.append(el("span", `mskip-tag ${r.cls}`, r.tag), document.createTextNode(` ${r.why}`));
+        meta.append(line);
+        meta.append(el("small", null,
+          `${s.requestedBy || "chat"}'s request · ${s.playedMs ? `after ${clock(s.playedMs)} · ` : ""}${timeAgo(s.at)}`));
+        row.append(meta);
+        const save = saveLink(s.videoId, "watchbtn mq-again msave", "Save ↗");
+        if (save) row.append(save);
+        wrap.append(row);
+      }
       return wrap;
     }
 
@@ -1928,13 +1977,13 @@
 
       const queued = (state?.queue || []).length;
       const tabs = el("div", "mtabs");
-      for (const [key, label] of [["queue", queued ? `Up next · ${queued}` : "Up next"], ["history", "History"], ["elo", "Rankings"]]) {
+      for (const [key, label] of [["queue", queued ? `Up next · ${queued}` : "Up next"], ["history", "History"], ["skips", "Skipped"], ["elo", "Rankings"]]) {
         const btn = el("button", `mtab${tab === key ? " active" : ""}`, label);
         btn.type = "button";
         btn.addEventListener("click", () => {
           tab = key;
-          // Both come back on the same request, so either tab warms both.
-          if ((key === "history" || key === "elo") && !history.length) loadHistory();
+          // All three come back on the same request, so any tab warms them.
+          if (key !== "queue" && !history.length) loadHistory();
           renderSide(conn.state);
         });
         tabs.append(btn);
@@ -1952,7 +2001,7 @@
         side.append(seg);
         side.append(rankSeg === "elo" ? ratingsList() : requestsList());
       } else {
-        side.append(tab === "queue" ? queueList(state) : historyList());
+        side.append(tab === "queue" ? queueList(state) : tab === "skips" ? skipsList() : historyList());
       }
     }
 
