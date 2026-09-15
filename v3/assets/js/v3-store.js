@@ -13,7 +13,7 @@
    accepts an id, league and name and builds the photo URL itself.
    ============================================================ */
 (() => {
-  const CSS = "/v3/assets/css/v3-store.css?v=3";
+  const CSS = "/v3/assets/css/v3-store.css?v=4";
   const ESPN_SEARCH = "https://site.web.api.espn.com/apis/common/v3/search";
   const PLAYER_LEAGUES = new Set(["nfl", "mlb", "nba"]);
 
@@ -241,7 +241,7 @@
     const on = m.equipped[item.slot] === item.id;
     const wide = owned && ["title-custom", "message-custom", "player-pick"].includes(item.id);
     const t = el("article", `st-item${owned ? " owned" : ""}${on ? " on" : ""}${wide ? " wide" : ""}${item.chase ? " chase" : ""}`);
-    if (item.chase) t.append(el("span", "st-ribbon", "Chase"));
+    if (item.chase) t.append(el("span", "st-ribbon", "Legendary"));
     t.addEventListener("mouseenter", () => { S.hover = item.id; repaintPreview(); });
     t.addEventListener("mouseleave", () => { if (S.hover === item.id) { S.hover = null; S.hoverPlayer = null; repaintPreview(); } });
     t.addEventListener("focusin", () => { S.hover = item.id; repaintPreview(); });

@@ -98,8 +98,10 @@
 .st-item.chase .st-swatch{background-color:#1a1406;box-shadow:inset 0 -40px 60px -40px rgba(var(--gold-rgb),.35)}
 .st-item.chase .st-body h3{color:#ffd978}
 @keyframes stchase{0%,100%{background-position:0 0,0 0}50%{background-position:0 0,100% 0}}
-.st-ribbon{position:absolute;top:10px;left:-30px;z-index:2;width:110px;padding:3px 0;transform:rotate(-38deg);text-align:center;
-  background:linear-gradient(180deg,#ffe28a,#e0a82a);color:#2a1a02;font-size:.58rem;font-weight:900;letter-spacing:.16em;text-transform:uppercase;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+/* The ribbon's centre sits on the corner, so roughly 84px of it shows
+   inside the card; "LEGENDARY" at this size is about 58px wide. */
+.st-ribbon{position:absolute;top:20px;left:-47px;z-index:2;width:160px;padding:3px 0;transform:rotate(-38deg);text-align:center;
+  background:linear-gradient(180deg,#ffe28a,#e0a82a);color:#2a1a02;font-size:.56rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;box-shadow:0 2px 8px rgba(0,0,0,.35);white-space:nowrap}
 .st-item.chase .st-badge{top:auto;bottom:8px}
 
 /* header: profile link beside the wallet */
