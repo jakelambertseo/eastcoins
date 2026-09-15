@@ -137,6 +137,28 @@ async function announces(db, from) {
   }).filter(Boolean);
 }
 
+/**
+ * Site-wide notices — a new feature, a heads-up — for everyone at once.
+ * One ops_status row per notice, key "notice:<slug>", value
+ * { title, text, href }. Post one with wrangler:
+ *   INSERT INTO ops_status (key, value) VALUES ('notice:watch-rooms',
+ *     '{"title":"…","text":"…","href":"/?view=screen"}')
+ * It shows unread to anyone who has not looked since, and toasts on
+ * every open tab within a poll.
+ */
+async function notices(db, from) {
+  await ensureOps(db);
+  const rows = await db.prepare(
+    `SELECT key, value, updated_at FROM ops_status WHERE key LIKE 'notice:%' AND updated_at >= ? ORDER BY updated_at DESC LIMIT 5`
+  ).bind(from).all().catch(() => ({ results: [] }));
+  return (rows.results || []).map((r) => {
+    let v = {}; try { v = JSON.parse(r.value) || {}; } catch { v = {}; }
+    if (!v.title) return null;
+    return { type: "notice", icon: v.icon || "📣", tone: "gold", at: utc(r.updated_at), href: String(v.href || "/"),
+      strong: String(v.title).slice(0, 80), text: "", sub: String(v.text || "").slice(0, 160) };
+  }).filter(Boolean);
+}
+
 /** Badges are computed, never stored; a new one is one not in the remembered set. */
 async function newBadges(env, db, user, remembered) {
   let all = null;
@@ -169,11 +191,11 @@ export async function onRequestGet(context) {
   const since = seenAt ?? Date.now() - FIRST_LOOK_DAYS * 86400000;
   const from = stamp(floor);
 
-  const [picks, pots, team, said, badges] = await Promise.all([
+  const [picks, pots, team, said, badges, told] = await Promise.all([
     settledPicks(db, user, from), jackpots(db, user, from), teamOpened(db, user, from), announces(db, from),
-    newBadges(context.env, db, user, remembered)
+    newBadges(context.env, db, user, remembered), notices(db, from)
   ]);
-  const items = [...picks, ...pots, ...team, ...said, ...badges.items]
+  const items = [...picks, ...pots, ...team, ...said, ...badges.items, ...told]
     .filter((i) => i.at && !Number.isNaN(new Date(i.at).getTime()))
     .map((i) => ({ ...i, unread: i.fresh || new Date(i.at).getTime() > since }))
     .sort((a, b) => new Date(b.at) - new Date(a.at))
