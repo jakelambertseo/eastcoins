@@ -333,6 +333,13 @@ function matchProp(markets, w) {
   const side = w[0] === "yes" || w[0] === "y" ? "away" : w[0] === "no" || w[0] === "n" ? "home" : null;
   if (!side) return null;
   const rest = w.slice(1);
+  // Props are numbered in the order they close (openMarkets sorts by
+  // start), so "!pick 50 yes 2" is the second one — easier in chat than
+  // a word from the question, which still works too.
+  if (rest.length === 1 && /^\d+$/.test(rest[0])) {
+    const n = Number(rest[0]);
+    if (n >= 1 && n <= props.length) return { market: props[n - 1], side };
+  }
   const hits = [];
   for (const market of props) {
     const qw = words(market.question);
@@ -340,8 +347,9 @@ function matchProp(markets, w) {
     if (fits) hits.push({ market, side, specific: rest.length > 0 });
   }
   if (hits.length === 1) return { market: hits[0].market, side: hits[0].side };
-  if (!hits.length) return rest.length ? { ambiguous: props.map((m) => `"${shortQuestion(m.question, 40)}"`), prop: true } : null;
-  return { ambiguous: hits.map((h) => `"${shortQuestion(h.market.question, 40)}"`), prop: true };
+  const list = (ms) => ms.map((m) => `${props.indexOf(m) + 1}) "${shortQuestion(m.question, 36)}"`);
+  if (!hits.length) return rest.length ? { ambiguous: list(props), prop: true } : null;
+  return { ambiguous: list(hits.map((h) => h.market)), prop: true };
 }
 
 export function formatLine(value) {
