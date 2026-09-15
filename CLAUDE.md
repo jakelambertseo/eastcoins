@@ -260,7 +260,23 @@
 > claim is `INSERT OR IGNORE`, so two presses in the same instant
 > cannot both win. It sits **bottom LEFT** for the same reason the
 > bell's toasts do — anything over the Twitch rail on the right makes
-> it flag itself obscured and stops chat. `/api/games/gold/state` says
+> it flag itself obscured and stops chat. **Bottom left is only safe
+> above 980px**, where the rail is a right-hand column: below that the
+> rail is a fixed drawer over the right of the screen and it is OPEN BY
+> DEFAULT, so a phone is the ordinary case, not an edge one (measured
+> at 430px the full button lay across 272px of the rail at z-index 73
+> against its 55). Under 980px with `body.chat-open` the button
+> collapses to a disc in the strip the drawer leaves, and the notif
+> toast, same corner and same bug, simply waits. The disc's width is
+> `calc(100vw - min(360px,86vw) - 12px)` — the drawer's OWN expression,
+> so an overlap is impossible at any viewport rather than merely absent
+> at the widths someone checked. The guarantee runs the safe way round:
+> the only rule that makes the rail visible under 980px requires
+> `body.chat-open`, which is exactly the condition the collapse keys
+> on, so the rail can never be up without the collapse being active.
+> Anything new that parks itself in that corner needs the same pair of
+> rules — the floating music player is already there, so the button
+> moves to the top when a dock is up. `/api/games/gold/state` says
 > whether it is up and who took it, and **never when it is due**; its
 > Game Room card is a `div`, not a link.
 >
