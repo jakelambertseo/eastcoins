@@ -4534,3 +4534,10 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
 .sc-hostpaused small{color:var(--muted);font-size:.8rem}
 .sc-live{background:var(--gold);color:#1a1409}
 .sc-roomcard .sc-cap small{color:var(--gold)}
+
+/* Admin: the notice box's preview and what is already posted */
+.adm-subh{margin-top:18px!important;font-size:.95rem!important}
+.adm-noticepreview{border-color:var(--line-2);background:var(--panel-2);padding:0;overflow:hidden}
+.adm-noticerow{border-top:0;cursor:default}
+.adm-noticerow:hover{background:linear-gradient(90deg,rgba(var(--gold-rgb),.08),transparent 55%)}
+.adm-noticelive .adm-market-top strong{font-size:.95rem}

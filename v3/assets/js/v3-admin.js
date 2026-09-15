@@ -82,11 +82,13 @@
   /* ---------------------------------------------------------- data */
 
   async function load() {
-    const [health, markets, announce] = await Promise.all([
+    const [health, markets, announce, notices] = await Promise.all([
       fetch("/api/picks/wallet-health").then((r) => r.json()).catch(() => null),
       fetch("/api/picks/admin/markets").then((r) => r.json()).catch(() => null),
-      fetch("/api/picks/admin/announce").then((r) => r.json()).catch(() => null)
+      fetch("/api/picks/admin/announce").then((r) => r.json()).catch(() => null),
+      fetch("/api/picks/admin/notice").then((r) => r.json()).catch(() => null)
     ]);
+    local.notices = notices?.ok ? notices.notices : local.notices || [];
     local.announce = announce?.ok ? announce : null;
     local.health = health;
     local.markets = markets?.ok ? markets.markets : [];
@@ -596,6 +598,138 @@
     return card;
   }
 
+  /* ---------------------------------------------------------- notices
+
+     One line into everyone's bell. On-site only: nothing is sent to
+     chat or Discord, so this can never surprise a stream. Reposting
+     the same title updates that notice and makes it unread again. */
+
+  function noticeCard() {
+    const card = el("div", "adm-card");
+    card.append(el("h2", "adm-h", "Post a notice"));
+    card.append(el("p", "adm-note",
+      "Lands in everyone's bell as an unread item, and toasts within a minute on any tab that is open. " +
+      "Nothing goes to chat or Discord. Reposting the same title replaces that notice and makes it new again."));
+
+    const grid = el("div", "adm-grid adm-propgrid");
+    const fields = {};
+    const field = (key, label, attrs = {}) => {
+      const wrap = el("label", `adm-field${attrs.wide ? " wide" : ""}`);
+      wrap.append(el("span", null, label));
+      const input = document.createElement(attrs.tag === "select" ? "select" : "input");
+      if (attrs.tag === "select") {
+        for (const [value, text] of attrs.options) { const o = document.createElement("option"); o.value = value; o.textContent = text; input.append(o); }
+      } else {
+        input.type = "text";
+        if (attrs.placeholder) input.placeholder = attrs.placeholder;
+        if (attrs.maxLength) input.maxLength = attrs.maxLength;
+      }
+      if (attrs.value) input.value = attrs.value;
+      wrap.append(input);
+      fields[key] = input;
+      grid.append(wrap);
+      return input;
+    };
+    field("title", "Title", { placeholder: "Watch rooms are here", maxLength: 80, wide: true });
+    field("text", "The line under it", { placeholder: "Movies & TV: press Watch together and everyone follows your player.", maxLength: 200, wide: true });
+    field("icon", "Icon", { placeholder: "📣", maxLength: 4, value: "📣" });
+    field("href", "Opens", {
+      tag: "select",
+      options: [
+        ["/?view=screen", "Movies & TV"],
+        ["/?view=picks", "Picks"],
+        ["/?view=casino", "Casino"],
+        ["/?view=music", "Green Room"],
+        ["/", "Sports"],
+        ["/?view=activity", "Activity"]
+      ]
+    });
+    card.append(grid);
+
+    const NOTICE_KEYS = ["title", "text", "icon", "href"];
+    if (local.noticeDraft) for (const k of NOTICE_KEYS) if (local.noticeDraft[k] !== undefined) fields[k].value = local.noticeDraft[k];
+    const saveDraft = () => { local.noticeDraft = Object.fromEntries(NOTICE_KEYS.map((k) => [k, fields[k].value])); };
+
+    // Exactly how the row will read in the bell.
+    const preview = el("div", "adm-preview adm-noticepreview");
+    function refresh() {
+      preview.replaceChildren();
+      const row = el("div", "notif-row unread adm-noticerow");
+      row.append(el("span", "notif-ico gold", fields.icon.value || "📣"));
+      const t = el("span", "notif-t");
+      const head = el("span");
+      head.append(el("b", null, fields.title.value || "Your title here"));
+      t.append(head);
+      t.append(el("small", null, fields.text.value || "And the line underneath it."));
+      row.append(t, el("span", "notif-at", "now"));
+      preview.append(row);
+    }
+    for (const k of NOTICE_KEYS) { fields[k].addEventListener("input", () => { saveDraft(); refresh(); }); fields[k].addEventListener("change", () => { saveDraft(); refresh(); }); }
+    refresh();
+    card.append(preview);
+
+    const actions = el("div", "adm-actions");
+    const post = el("button", "btn primary", "Post to everyone");
+    post.type = "button";
+    post.style.cssText = "flex:0 0 auto;padding:0 20px;height:38px";
+    post.disabled = local.busy;
+    post.addEventListener("click", async () => {
+      const body = { title: fields.title.value.trim(), text: fields.text.value.trim(), icon: fields.icon.value.trim(), href: fields.href.value };
+      saveDraft();
+      if (body.title.length < 4 || body.text.length < 4) {
+        local.noticeMsg = { tone: "bad", text: "A notice needs a title and a line under it." };
+        paint();
+        return;
+      }
+      if (!window.confirm(`Post this to everyone's notifications?\n\n${body.icon} ${body.title}\n${body.text}`)) return;
+      const result = await post_("/api/picks/admin/notice", body);
+      if (result.ok) {
+        local.noticeMsg = { tone: "good", text: `Posted. Everyone sees it in the bell; open tabs toast it within a minute.` };
+        local.noticeDraft = null;
+        local.notices = result.notices || local.notices;
+      } else {
+        local.noticeMsg = { tone: "bad", text: result.message || "Couldn't post that." };
+      }
+      paint();
+    });
+    actions.append(post);
+    card.append(actions);
+
+    if (local.noticeMsg) {
+      const note = el("div", `adm-message ${local.noticeMsg.tone}`, local.noticeMsg.text);
+      note.style.marginTop = "10px";
+      card.append(note);
+    }
+
+    // What is already out there, and the way to pull one.
+    const live = local.notices || [];
+    if (live.length) {
+      card.append(el("h3", "adm-h adm-subh", "Posted"));
+      for (const n of live) {
+        const row = el("div", "adm-market adm-noticelive");
+        const top = el("div", "adm-market-top");
+        top.append(el("strong", null, `${n.icon} ${n.title}`));
+        top.append(el("span", `adm-tag${n.live ? "" : " "}`, n.live ? "IN THE BELL" : "EXPIRED"));
+        const pull = el("button", "adm-rowbtn", "Pull");
+        pull.type = "button";
+        pull.title = "Remove it from everyone's notifications";
+        pull.disabled = local.busy;
+        pull.addEventListener("click", async () => {
+          if (!window.confirm(`Pull "${n.title}"? It disappears from everyone's bell.`)) return;
+          const result = await post_("/api/picks/admin/notice", { action: "remove", key: n.key });
+          local.noticeMsg = result.ok ? { tone: "good", text: `Pulled “${n.title}”.` } : { tone: "bad", text: result.message || "Couldn't pull it." };
+          if (result.ok) local.notices = result.notices || [];
+          paint();
+        });
+        top.append(pull);
+        row.append(top);
+        row.append(el("p", "adm-note", `${n.text} · ${n.by ? n.by + " · " : ""}${ago(n.at)}`));
+        card.append(row);
+      }
+    }
+    return card;
+  }
+
   /* ---------------------------------------------------------- markets */
 
   function marketsCard() {
@@ -895,13 +1029,14 @@ ${cost}`)) return;
     panels.open.append(openForm());
     panels.prop.append(propForm());
     panels.announce.append(announceCard());
+    panels.announce.append(noticeCard());
     panels.health.append(healthCard());
     for (const [key] of TABS) root.append(panels[key]);
 
     // A message about something that lives on another tab would otherwise
     // be posted to a panel nobody is looking at.
     const wanted = local.message?.at === "markets" || local.message?.id ? "markets"
-      : local.message?.at === "announce" ? "announce"
+      : local.message?.at === "announce" || local.noticeMsg ? "announce"
         : local.formMsg ? "open" : local.propMsg ? "prop" : null;
     select(wanted || local.tab || "markets");
   }
@@ -913,6 +1048,7 @@ ${cost}`)) return;
       local.message = null;
       local.formMsg = null;
       local.propMsg = null;
+      local.noticeMsg = null;
       paint();
       await load();
       if (container.isConnected) paint();

@@ -620,6 +620,17 @@
 > 'admin-result'`, and posts the chat line and Discord card. Team games
 > are refused there. Fights read "A vs B" in chat, Discord and the game page.
 >
+> **Site-wide notices (2026-09-15)** — the admin page's Announce tab
+> has a **Post a notice** box: a title, a line, an icon and which page
+> it opens. It writes an `ops_status` row keyed `notice:<slug>`
+> (`admin/notice.js`), which `/api/picks/notifications` folds into the
+> bell, so it lands unread for everyone who has not looked since and
+> toasts on any open tab within a poll. Nothing goes to chat or
+> Discord — a notice is on-site only, so posting one can never be a
+> surprise in someone's stream. Reposting the same title replaces that
+> notice and makes it unread again; Pull removes it from every bell.
+> The bell only carries notices from the last fortnight.
+>
 > **Announcing one market** — each open, not-yet-started market on the
 > admin page has an Announce button: it previews via
 > `GET /api/picks/admin/announce?marketId=`, then POSTs `{ marketId }`,
