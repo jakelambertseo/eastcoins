@@ -49,7 +49,7 @@
   // had a chance to register. An unknown name still falls back.
   // "game" is the /g/<slug> page chat links to. It is a route, not a nav
   // item: the only way in is a link.
-  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre", "wrapped", "highlights"];
+  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre", "wrapped", "highlights", "store"];
 
   /* ------------------------------------------------------ loading views
 
@@ -75,6 +75,8 @@
     profile: [...LOGOS, "v3-profile.js"],
     wrapped: [...LOGOS, "v3-wrapped.js"],
     highlights: ["v3-highlights.js"],
+    // The store's preview is the real profile card, so it loads the profile script too.
+    store: [...LOGOS, "v3-profile.js", "v3-store.js"],
     users: ["v3-users.js"],
     activity: [...LOGOS, "v3-activity.js"],
     music: ["eastcoins-music-config.js", "eastcoins-youtube.js", "v3-activity.js", "v3-music.js"],
@@ -100,7 +102,8 @@
   const MEMBERS_ONLY = {
     multiview: ["MultiView is for members", "Log in with Twitch to watch several streams at once."],
     picks: ["Picks is for members", "Log in with Twitch to make picks and follow the ledger."],
-    casino: ["The casino is for members", "Log in with Twitch to play with your ZCoins."]
+    casino: ["The casino is for members", "Log in with Twitch to play with your ZCoins."],
+    store: ["The store is for members", "Log in with Twitch to spend your ZCoins on your card and profile."]
   };
   for (const room of ["flip", "wheel", "race", "hilo", "mines", "plinko", "scratch", "roulette", "standing"]) MEMBERS_ONLY[room] = MEMBERS_ONLY.casino;
 
@@ -282,6 +285,7 @@
   const TITLES = {
     wrapped: "EastCoin Wrapped",
     highlights: "Highlights — EastCoin",
+    store: "Store — EastCoin",
     events: "EastCoin — Sports", music: "The Green Room — EastCoin", screen: "Movies & TV — EastCoin",
     multiview: "MultiView — EastCoin", picks: "Picks — EastCoin", casino: "Casino — EastCoin",
     flip: "Coin Flip — EastCoin Casino", wheel: "Wheel — EastCoin Casino", race: "Horse Race — EastCoin Casino",

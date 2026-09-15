@@ -105,6 +105,8 @@ async function teamOpened(db, user, from) {
   const rows = await db.prepare(
     `SELECT id, sport, league, away_name, home_name, starts_at, odds_locked_at, state, away_odds_locked, home_odds_locked
        FROM markets WHERE odds_locked_at >= ? AND (away_name = ? OR home_name = ?)
+        -- Baseball opens a slate every afternoon; it stays out of the bell (2026-09-15).
+        AND sport <> 'baseball'
       ORDER BY odds_locked_at DESC LIMIT 3`
   ).bind(from, team.name, team.name).all().catch(() => ({ results: [] }));
   return (rows.results || []).map((m) => {
@@ -130,7 +132,8 @@ async function announces(db, from) {
   const by = new Map((markets.results || []).map((m) => [m.id, m]));
   return list.map((r) => {
     const m = by.get(r.key.slice("announce:".length));
-    if (!m) return null;
+    // Baseball markets opening never go in the bell, announced or not.
+    if (!m || String(m.sport) === "baseball") return null;
     let v = {}; try { v = JSON.parse(r.value) || {}; } catch { v = {}; }
     const prop = isProp(m.sport);
     return { type: "announce", icon: prop ? "🎯" : "📣", tone: prop ? "prop" : "", at: utc(r.updated_at), href: `/g/${slugFor(m)}`,

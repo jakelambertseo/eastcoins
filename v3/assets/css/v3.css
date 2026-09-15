@@ -4644,3 +4644,55 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 .mskip-tag.chat{border-color:rgba(145,70,255,.5);color:#bf94ff}
 /* Four tabs now share the rail's width. */
 .mside.rail .mtab{font-size:.74rem;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ============================================================
+   STORE COSMETICS (2026-09-15) — bought with ZCoins in /?view=store.
+   Finishes only apply to a base card (earned gold/silver win), name
+   colours sit on .pf-name and .tc-name, banners paint behind the
+   profile header, and the foil label restyles the case's label.
+   ============================================================ */
+.pf-name{display:inline}
+.tc-skin-holo{--tc-a:58,42,98;--tc-b:16,18,44}
+.tc-skin-holo .tc-inner::after{
+  content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:.5;
+  background:linear-gradient(120deg,rgba(255,47,160,.45),rgba(34,230,255,.4) 25%,rgba(255,225,74,.36) 50%,rgba(140,82,255,.42) 75%,rgba(255,47,160,.45));
+  background-size:300% 300%;animation:tcholo 7s linear infinite;
+}
+@keyframes tcholo{to{background-position:300% 0}}
+.tc-skin-neon{--tc-a:16,18,28;--tc-b:6,7,12}
+.tc-skin-neon .tc-inner{box-shadow:inset 0 0 0 2px #22f1ff,inset 0 0 22px rgba(34,241,255,.5)}
+.tc-skin-neon .tc-pip{background:#22f1ff;box-shadow:0 0 8px #22f1ff}
+.tc-skin-chrome{--tc-a:128,134,144;--tc-b:40,43,50}
+.tc-skin-chrome .tc-inner::after{
+  content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:overlay;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.08) 0 2px,transparent 2px 4px),linear-gradient(115deg,transparent 30%,rgba(255,255,255,.55) 48%,transparent 62%);
+  background-size:auto,250% 100%;animation:tcfoil 6s ease-in-out infinite;
+}
+
+/* name colours (after the finishes, so a colour wins on any card) */
+.tc-name.nm-gold,.pf-name.nm-gold,.st-swatch .nm-gold,.st-name .nm-gold{background:linear-gradient(180deg,#fff1b8,#f0b429 58%,#b8801a);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none}
+.tc-name.nm-ice,.pf-name.nm-ice,.st-swatch .nm-ice,.st-name .nm-ice{color:#c9efff;text-shadow:0 0 12px rgba(120,210,255,.6)}
+.tc-name.nm-ember,.pf-name.nm-ember,.st-swatch .nm-ember,.st-name .nm-ember{background:linear-gradient(180deg,#ffe08a,#ff6a2b 58%,#c2261a);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none}
+
+/* banners behind the profile header (and the store's preview stage) */
+.pf-banner{position:relative;overflow:hidden}
+.pf-banner::before{content:"";position:absolute;left:0;right:0;top:0;height:180px;pointer-events:none;opacity:.6;
+  -webkit-mask-image:linear-gradient(180deg,#000 30%,transparent);mask-image:linear-gradient(180deg,#000 30%,transparent)}
+.pf-head.pf-banner > *{position:relative;z-index:1}
+.pf-banner-stadium::before{background:
+  radial-gradient(ellipse 22% 90% at 12% -20%,rgba(255,252,220,.55),transparent 70%),
+  radial-gradient(ellipse 22% 90% at 88% -20%,rgba(255,252,220,.55),transparent 70%),
+  linear-gradient(180deg,#1f4a33,transparent)}
+.pf-banner-matrix::before{background:
+  repeating-linear-gradient(90deg,rgba(0,255,102,.2) 0 2px,transparent 2px 16px),
+  repeating-linear-gradient(180deg,rgba(0,255,102,.12) 0 6px,transparent 6px 14px),
+  linear-gradient(180deg,rgba(0,70,28,.8),transparent);animation:bnmatrix 6s linear infinite}
+@keyframes bnmatrix{to{background-position:0 0,0 140px,0 0}}
+.pf-banner-retro::before{background:
+  repeating-linear-gradient(90deg,rgba(255,120,200,.28) 0 1px,transparent 1px 28px),
+  linear-gradient(180deg,#2b0f45 0%,#ff4f8b 55%,#ffb347 80%,transparent 100%)}
+
+/* the foil case label */
+.tc-case-label.foil{background:linear-gradient(110deg,#6b4a09,#f0c24a 30%,#fff3c4 45%,#d49b1d 60%,#6b4a09);background-size:250% 100%;color:#2a1a02;border-color:rgba(255,230,150,.7);animation:tcfoil 5s ease-in-out infinite}
+.tc-case-label.foil i{opacity:1}
+@media (prefers-reduced-motion:reduce){.tc-skin-holo .tc-inner::after,.tc-skin-chrome .tc-inner::after,.pf-banner-matrix::before,.tc-case-label.foil{animation:none}}

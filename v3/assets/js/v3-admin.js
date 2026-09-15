@@ -82,12 +82,14 @@
   /* ---------------------------------------------------------- data */
 
   async function load() {
-    const [health, markets, announce, notices] = await Promise.all([
+    const [health, markets, announce, notices, reconcile] = await Promise.all([
       fetch("/api/picks/wallet-health").then((r) => r.json()).catch(() => null),
       fetch("/api/picks/admin/markets").then((r) => r.json()).catch(() => null),
       fetch("/api/picks/admin/announce").then((r) => r.json()).catch(() => null),
-      fetch("/api/picks/admin/notice").then((r) => r.json()).catch(() => null)
+      fetch("/api/picks/admin/notice").then((r) => r.json()).catch(() => null),
+      fetch("/api/picks/admin/reconcile").then((r) => r.json()).catch(() => null)
     ]);
+    local.stuckOps = reconcile?.ok ? reconcile.operations : local.stuckOps || [];
     local.notices = notices?.ok ? notices.notices : local.notices || [];
     local.announce = announce?.ok ? announce : null;
     local.health = health;
@@ -208,6 +210,62 @@
         ? `Token belongs to ${h.channel.name || h.channel.tokenBelongsTo} — the channel being written to.`
         : `Token belongs to ${h.channel.tokenBelongsTo}, but ${h.channel.configured} is configured. Nothing will be written.`;
       card.append(detail);
+    }
+    return card;
+  }
+
+  /* ---------------------------------------------------------- stuck charges
+
+     ZCoin operations that never finished (/api/picks/admin/reconcile).
+     A casino stake that was taken but whose game was never created can
+     be refunded here, once: the refund's own idempotency key makes a
+     second press a no-op. Anything else is listed to check by hand. */
+
+  function stuckCard() {
+    const card = el("div", "adm-card");
+    card.append(el("h2", "adm-h", "Stuck ZCoin charges"));
+    const ops = local.stuckOps || [];
+    if (!ops.length) {
+      card.append(el("p", "adm-note", "Nothing stuck. Every ZCoin operation finished."));
+      return card;
+    }
+    card.append(el("p", "adm-note", "Charges that started and never finished. Refund returns the coins and records it, and can only happen once per charge."));
+    for (const op of ops) {
+      const row = el("div", "adm-market");
+      const top = el("div", "adm-market-top");
+      const who = el("div");
+      who.append(
+        el("strong", null, `${op.login || op.userId} · ${op.amount > 0 ? "+" : ""}${op.amount} ZC`),
+        el("small", null, `${op.what} · ${op.status} · ${new Date(op.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`)
+      );
+      top.append(who);
+      if (op.refundable) {
+        const b = el("button", "btn primary", `Refund ${Math.abs(op.amount)} ZC`);
+        b.type = "button";
+        b.disabled = local.busy;
+        b.addEventListener("click", async () => {
+          if (!window.confirm(`Refund ${Math.abs(op.amount)} ZC to ${op.login}?`)) return;
+          b.disabled = true;
+          b.textContent = "Refunding…";
+          let r = null;
+          try {
+            r = await fetch("/api/picks/admin/reconcile", {
+              method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ opId: op.id })
+            }).then((x) => x.json());
+          } catch { r = null; }
+          const note = el("p", `adm-message ${r?.ok ? "good" : "bad"}`, r?.ok ? r.message : (r?.message || "That didn't go through."));
+          row.append(note);
+          if (r?.ok) { b.textContent = "Refunded"; local.stuckOps = r.operations || []; }
+          else { b.disabled = false; b.textContent = `Refund ${Math.abs(op.amount)} ZC`; }
+        });
+        top.append(b);
+      } else {
+        top.append(el("span", "adm-tag bad", "check by hand"));
+      }
+      row.append(top);
+      if (op.why) row.append(el("small", "adm-note", op.why));
+      card.append(row);
     }
     return card;
   }
@@ -1036,6 +1094,7 @@ ${cost}`)) return;
     panels.announce.append(announceCard());
     panels.announce.append(noticeCard());
     panels.health.append(healthCard());
+    panels.health.append(stuckCard());
     for (const [key] of TABS) root.append(panels[key]);
 
     // A message about something that lives on another tab would otherwise

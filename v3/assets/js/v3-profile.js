@@ -322,6 +322,7 @@
           st("Net", sign(last), tone(last)),
           st("Picks", sign(Number(b.picksNet || 0)), tone(Number(b.picksNet || 0))),
           st("Casino", sign(Number(b.casinoNet || 0)), tone(Number(b.casinoNet || 0))),
+          ...(Number(b.storeNet || 0) ? [st("Store", sign(Number(b.storeNet)), tone(Number(b.storeNet)))] : []),
           st("Peak", sign(b.peak), tone(b.peak)),
           st("Low", sign(b.trough), tone(b.trough))
         );
@@ -474,7 +475,11 @@
     const k = data.picks;
     const tier = tierOf(k);
 
-    const card = el("button", `tc tc-${tier}`);
+    // Store cosmetics. An EARNED gold or silver finish always shows over a
+    // bought one, so a store look can never pass for a ladder finish.
+    const cos = data.cosmetics || {};
+    const skin = tier === "base" && cos.finish ? ` tc-skin-${cos.finish.replace(/^finish-/, "")}` : "";
+    const card = el("button", `tc tc-${tier}${skin}`);
     card.type = "button";
     card.setAttribute("aria-pressed", "false");
     card.title = "Turn the card over";
@@ -498,9 +503,9 @@
     fi.append(shot);
 
     const plate = el("div", "tc-plate");
-    plate.append(el("b", "tc-name", u.displayName));
+    plate.append(el("b", `tc-name${cos.name ? " nm-" + cos.name.replace(/^name-/, "") : ""}`, u.displayName));
     const pos = el("span", "tc-pos");
-    pos.append(el("i", "tc-pip"), document.createTextNode(billing(data)));
+    pos.append(el("i", "tc-pip"), document.createTextNode(cos.title || billing(data)));
     plate.append(pos);
     const line = el("div", "tc-line");
     const cell = (label, value, tone) => {
@@ -588,10 +593,11 @@
     wrap.append(profileNav(data));
 
     // ---- the header card
-    const head = el("div", "pf-card pf-head has-tcard");
+    const look = data.cosmetics || {};
+    const head = el("div", `pf-card pf-head has-tcard${look.banner ? ` pf-banner pf-banner-${look.banner.replace(/^banner-/, "")}` : ""}`);
     // The card sits in a case, like a graded card, with its own label.
     const cardCase = el("div", "tc-case");
-    const label = el("div", "tc-case-label");
+    const label = el("div", `tc-case-label${look.label ? " foil" : ""}`);
     label.append(el("i", null, "◆"), el("span", null, "EastCoin Trading Card"), el("i", null, "◆"));
     const card = tradingCard(data);
     const hint = el("p", "tc-hint", "Click to turn card over.");
@@ -601,7 +607,9 @@
     cardCase.append(label, card, hint);
     head.append(cardCase);
     const copy = el("div", "pf-copy");
-    const name = el("h1", null, u.displayName);
+    const name = el("h1");
+    // The name is its own span so a bought name colour never tints the badges beside it.
+    name.append(el("span", `pf-name${look.name ? " nm-" + look.name.replace(/^name-/, "") : ""}`, u.displayName));
     const badges = el("span", "pf-badges");
     for (const b of data.badges || []) {
       const pill = el("span", `pf-badge ${b.key}`, `${b.emoji} ${String(b.label).split("—")[0].trim()}`);
@@ -1072,6 +1080,10 @@
       document.title = previousTitle || "EastCoin";
     }
   };
+
+  // The store draws its preview with this same card, so what someone
+  // tries on there is exactly what their profile will show.
+  window.ECProfileCard = { tradingCard, tierOf };
 
   function boot() {
     if (!window.ECV3) return window.setTimeout(boot, 30);
