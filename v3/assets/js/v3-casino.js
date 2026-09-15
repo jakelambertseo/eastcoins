@@ -135,21 +135,21 @@
       });
 
       const art = K.el("div", "cas-card-art");
-      // An image where a game has one (the 7TV emote on Russian
-      // Roulette), the emoji otherwise. The emoji stays as the alt so a
-      // failed load still reads.
-      const icon = K.el("span", "cas-card-ico", g.iconUrl ? "" : g.icon);
-      if (g.iconUrl) {
-        const img = document.createElement("img");
-        img.src = g.iconUrl;
-        img.alt = g.icon || "";
-        img.loading = "lazy";
-        img.decoding = "async";
-        icon.append(img);
-      }
+      /* The painted art for this game. Every card is eager: all seven
+         are above the fold, so lazy-loading them only buys a flash of
+         empty panel. The accent behind it shows until it arrives, and
+         the emoji comes back if it never does. */
+      const pic = document.createElement("img");
+      pic.className = "cas-card-img";
+      pic.src = `/v3/assets/img/casino/${key}.webp`;
+      pic.alt = "";
+      pic.width = 420; pic.height = 560;
+      pic.decoding = "async";
+      pic.addEventListener("error", () => { pic.remove(); art.classList.add("no-art"); });
+      const icon = K.el("span", "cas-card-ico", g.icon || "");
       const name = K.el("div", "cas-card-name");
       name.append(K.el("b", null, g.title), K.el("small", null, "EastCoin original"));
-      art.append(icon, name);
+      art.append(pic, icon, name);
 
       const live = K.el("div", "cas-card-live");
       const dot = K.el("i", "cas-card-dot");
