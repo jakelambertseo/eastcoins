@@ -49,7 +49,7 @@
   // had a chance to register. An unknown name still falls back.
   // "game" is the /g/<slug> page chat links to. It is a route, not a nav
   // item: the only way in is a link.
-  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "roulette", "standing", "verify"];
+  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "roulette", "standing", "verify", "games", "helmet", "fg"];
 
   /* ------------------------------------------------------------ legacy URLs
 
@@ -179,6 +179,7 @@
     flip: "Coin Flip — EastCoin Casino", wheel: "Wheel — EastCoin Casino", race: "Horse Race — EastCoin Casino",
     hilo: "Higher or Lower — EastCoin Casino", mines: "Mines — EastCoin Casino", plinko: "Plinko — EastCoin Casino", scratch: "Scratch-Off — EastCoin Casino", users: "All Users — EastCoin", activity: "Activity — EastCoin",
     roulette: "Russian Roulette - PVP — EastCoin Casino", standing: "Last One Standing - PVP — EastCoin Casino", verify: "Check a seed — EastCoin Casino",
+    games: "Game Room — EastCoin", helmet: "Helmet Zoom — EastCoin", fg: "Field Goal — EastCoin",
     dashboard: "Dashboard — EastCoin", admin: "Admin — EastCoin", watch: "Watching — EastCoin"
   };
 

@@ -183,6 +183,40 @@
 > `v3.css`. Not in the bell on purpose: other people's picks, songs,
 > casino spins, "closing soon" — the ticker and Activity carry those.
 >
+> **The Game Room (2026-09-16)** — `/?view=games`, a nav link of its
+> own. Small games played for TITLES, never ZCoins: keeping coins out
+> is what lets them be quick and daft, and it is why a browser game is
+> allowed here at all. `functions/api/games/_games.js` holds the frame
+> — `game_scores` (one row per person per game per Chicago day),
+> `game_days` (the day's seed, made on first request so an answer
+> cannot be derived from the date), `board`, `recordFor` with a day
+> streak, and `champions` for who has taken the most days in 30.
+> `/api/games/home` is the room. Two games:
+>
+> **Helmet Zoom** `/?view=helmet` (`v3-helmet.js`,
+> `games/helmet/*`, table `helmet_plays`) — one NFL crest a day,
+> cropped by `ZOOMS` from ×15 down to ×1.7, six guesses, scored 6
+> down to 1 and 0 for a miss. **The page never learns the club**: it
+> draws onto a canvas from `/api/games/helmet/img`, which is keyed on
+> the DAY, and `guess.js` grades. Conference after three wrong,
+> division after four. `matchTeam` takes abbreviation, nickname, city
+> or full name and ASKS which when a city is shared (New York, Los
+> Angeles) rather than guessing. Honest limit: the crest is still an
+> image the network tab can show, which is another reason it pays
+> titles.
+>
+> **Field Goal** `/?view=fg` (`v3-fg.js`, `games/fg/*`, table
+> `fg_runs`) — power meter, then aim, into a wind the SERVER picks
+> from the run's seed. Every kick is five yards further (from 20) and
+> one miss ends it. The page shows the result at once, then hands in
+> every stop and `replay()` judges the lot, so a score always matches
+> the run. Perfect play is 11 makes to 70 yards; ignoring the wind is
+> about 8. **The maths is mirrored in `_fg.js` and `v3-fg.js`** —
+> change one, change the other; the scratch test runs both. Meters are
+> read from the clock at the moment of the click, never from the last
+> painted frame, so a throttled tab cannot judge a kick on a number
+> nobody saw.
+>
 > **Check a seed (2026-09-13)** — `/?view=verify` (`v3-verify.js`) over
 > `GET /api/casino/verify?game=&seed=[&hash=&mines=&players=]`, which is
 > pure maths with no session or database: it hashes the seed and replays
