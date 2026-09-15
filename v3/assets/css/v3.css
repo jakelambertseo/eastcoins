@@ -4400,14 +4400,31 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
    ============================================================ */
 .pf-head.has-tcard{
   display:grid;
-  grid-template-columns:238px minmax(0,1fr);
+  grid-template-columns:262px minmax(0,1fr);
   grid-template-rows:1fr auto;
   grid-template-areas:"card copy" "card glance";
   gap:14px 22px;
 }
 .pf-head.has-tcard .pf-copy{grid-area:copy;align-self:start}
 .pf-head.has-tcard .pf-glance{grid-area:glance;align-self:end;margin:0;grid-template-columns:repeat(2,minmax(0,1fr))}
-.pf-head.has-tcard .tc{grid-area:card;align-self:start}
+.pf-head.has-tcard .tc-case{grid-area:card;align-self:start}
+
+/* The case: a clear holder with a label strip, like a graded card. */
+.tc-case{
+  position:relative;padding:8px 10px 11px;border-radius:18px;
+  background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.015) 45%,rgba(255,255,255,.05));
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 14px 34px rgba(0,0,0,.35);
+}
+.tc-case-label{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  margin:0 0 8px;padding:5px 8px;border-radius:9px;
+  background:linear-gradient(180deg,#1b1c22,#111217);
+  border:1px solid rgba(var(--gold-rgb),.35);
+  font-family:var(--display);font-weight:800;font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--gold);white-space:nowrap;
+}
+.tc-case-label i{font-style:normal;font-size:.5rem;opacity:.7}
 
 .tc{
   position:relative;width:100%;aspect-ratio:2.5/3.5;
@@ -4563,7 +4580,7 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
     grid-template-areas:"card" "copy" "glance";
     justify-items:center;
   }
-  .pf-head.has-tcard .tc{max-width:250px}
+  .pf-head.has-tcard .tc-case{width:100%;max-width:272px}
   .pf-head.has-tcard .pf-copy{justify-items:center;text-align:center;width:100%}
   .pf-head.has-tcard .pf-copy h1{justify-content:center}
   .pf-head.has-tcard .pf-glance{width:100%;grid-template-columns:minmax(0,1fr)}

@@ -589,7 +589,12 @@
 
     // ---- the header card
     const head = el("div", "pf-card pf-head has-tcard");
-    head.append(tradingCard(data));
+    // The card sits in a case, like a graded card, with its own label.
+    const cardCase = el("div", "tc-case");
+    const label = el("div", "tc-case-label");
+    label.append(el("i", null, "◆"), el("span", null, "EastCoin Trading Card"), el("i", null, "◆"));
+    cardCase.append(label, tradingCard(data));
+    head.append(cardCase);
     const copy = el("div", "pf-copy");
     const name = el("h1", null, u.displayName);
     const badges = el("span", "pf-badges");
