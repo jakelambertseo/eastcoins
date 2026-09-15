@@ -344,7 +344,7 @@
 > its rate. Signed out, the stat cells hide and a login button shows.
 >
 > `.cas-card` is the game card: a portrait panel carrying **painted art**
-> (`/v3/assets/img/casino/<key>.webp`, 420x560, ~25 KB each, 200 KB for
+> (`/v3/assets/img/casino/<key>.webp`, 540x720, ~35 KB each, 249 KB for
 > all seven) with the name across the bottom, a live line under the
 > panel (phase, countdown, who is in) and, signed in,
 > **how many plays are left this hour**. That limit is TEN PER GAME,
@@ -373,6 +373,17 @@
 > image, and the emoji returns via an `error` handler if the art ever
 > 404s, so a card is never a hole. Adding a game means adding one
 > `<key>.webp` and one `--card-rgb`.
+>
+> Two things about that art are easy to get wrong later. The images
+> are served with an hour of cache and carry no version in their path,
+> so **`ART_V` in `v3-casino.js` must be bumped whenever an image
+> changes** or the edge keeps handing out the old one; a regenerated
+> set looked unchanged in production until that was added. And the
+> grid **counts** its columns (`repeat(4, …)`, 3 under 980px, 2 under
+> 620px, with a `max-width:1080px`) rather than fitting them: an
+> `auto-fill` track packed seven across a desktop and left each card a
+> thumbnail. Card width therefore drives the art size — four across is
+> about 260px, which is why the source is 540 wide.
 >
 > The ledger (Recent results paged / House rules) is a **fold that
 > starts closed** — `.cas-ledger-head` is a button, `.cas-ledger-body`
