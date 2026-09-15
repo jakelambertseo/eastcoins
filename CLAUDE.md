@@ -292,10 +292,22 @@
 > seed →" under every game's verify block, deep-linking here with the
 > seed and hash filled in; the floor's House rules link to it too.
 >
-> **Casino layout**: the floor is title → `.cas-me` strip (`/api/casino/home`
-> `me`: wallet, casino net, record, this hour vs cap; a login card when
-> signed out) → tiles → `.pf-tabs.cas-tabs` Recent results (paged) / House
-> rules. Game pages keep stage + side column; the fairness line is a
+> **Casino layout (reordered 2026-09-16)**: the floor **opens on the
+> games**. Head (title, the limits line as the subtitle, and
+> `.cas-headme` holding either the `.cas-mebar` or a login button)
+> → `.cas-tiles` → `.cas-pot` → ticker → `.pf-tabs.cas-tabs` Recent
+> results (paged) / House rules. It had grown the other way about: the
+> ticker, a four-card `.cas-me` summary strip and the Jackpot meter all
+> sat above the tiles, so the games began 528px down a 595px viewport
+> and a laptop opened the casino on everything except a game. People
+> come here to play and mostly click a tile straight away, so anything
+> that is not a game now reads as a footnote under them; the tiles
+> start at 156px. The four `me` numbers (wallet, casino net, record,
+> this hour vs cap, all from `/api/casino/home`) are unchanged, just
+> drawn small in one header bar — the wallet is in the nav pill too, so
+> none of them earned a band of their own. **Anything added to this
+> page goes below the tiles** unless it is a game. Game pages keep
+> stage + side column; the fairness line is a
 > `<details class="cf-verify">` with the full hash and seed, and every
 > ledger is paged with `ECCasino.pager/pageOf`.
 >
