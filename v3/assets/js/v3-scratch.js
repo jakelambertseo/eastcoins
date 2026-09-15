@@ -75,13 +75,13 @@
   function dealCard(c) {
     refs.cells.replaceChildren();
     for (const k of c.grid) {
-      const cell = K.el("div", "sc-cell");
-      cell.append(K.el("span", "sc-sym", sym(k)));
+      const cell = K.el("div", "scr-cell");
+      cell.append(K.el("span", "scr-sym", sym(k)));
       const p = (data?.config?.prizes || []).find((x) => x.key === k);
       if (p) cell.append(K.el("small", null, `×${p.multiplier}`));
       refs.cells.append(cell);
     }
-    refs.pop.className = "sc-pop";
+    refs.pop.className = "scr-pop";
     refs.pop.replaceChildren();
     refs.ticket.classList.remove("idle");
     refs.cardNo.textContent = `#${String(c.id).slice(-6)}`;
@@ -140,13 +140,13 @@
     refs.scratched.textContent = "Scratched";
     if (c.prize) {
       [...refs.cells.children].forEach((cell) => { if (cell.firstChild.textContent === sym(c.prize)) cell.classList.add("win"); });
-      refs.pop.className = "sc-pop show";
+      refs.pop.className = "scr-pop show";
       refs.pop.append(K.el("b", null, `×${c.multiplier}`), K.el("span", null, `${sym(c.prize)}${sym(c.prize)}${sym(c.prize)} · ${fmt(c.payout)} ZC`));
       const top = Number(data?.config?.maxMultiplier || 0);
       pop({ won: true, big: c.multiplier >= 25 || c.profit >= 100, amount: c.profit, headline: `${c.prizeName} × 3`, detail: `×${c.multiplier} — ${fmt(c.payout)} back on ${fmt(c.stake)}.` });
       if (c.multiplier >= top) K.burst?.();
     } else {
-      refs.pop.className = "sc-pop show lose";
+      refs.pop.className = "scr-pop show lose";
       refs.pop.append(K.el("b", null, "No match"), K.el("span", null, `−${fmt(c.stake)} ZC`));
       // A pair of the big ones is a real near-miss: the grid never lies.
       const counts = {}; for (const k of c.grid) counts[k] = (counts[k] || 0) + 1;
@@ -180,19 +180,19 @@
     const stage = K.el("section", "cf-stage");
     refs.phase = K.el("div", "cf-phase", "");
 
-    const ticket = K.el("div", "sc-ticket idle");
-    const top = K.el("div", "sc-top");
+    const ticket = K.el("div", "scr-ticket idle");
+    const top = K.el("div", "scr-top");
     refs.cardNo = K.el("span", null, "card");
     top.append(K.el("b", null, "EastCoin Scratch"), refs.cardNo);
-    const gridBox = K.el("div", "sc-grid");
-    refs.cells = K.el("div", "sc-cells");
+    const gridBox = K.el("div", "scr-grid");
+    refs.cells = K.el("div", "scr-cells");
     refs.foil = document.createElement("canvas");
-    refs.foil.className = "sc-foil gone";
+    refs.foil.className = "scr-foil gone";
     refs.foil.setAttribute("aria-label", "Scratch here");
-    refs.pop = K.el("div", "sc-pop");
+    refs.pop = K.el("div", "scr-pop");
     gridBox.append(refs.cells, refs.foil, refs.pop);
     refs.grid = gridBox;
-    const foot = K.el("div", "sc-foot");
+    const foot = K.el("div", "scr-foot");
     refs.stakeLabel = K.el("b", null, "");
     refs.scratched = K.el("span", null, "");
     const fl = K.el("span"); fl.append(document.createTextNode("Match 3 · "), refs.stakeLabel);
@@ -220,7 +220,7 @@
     refs.stakeRow = stakeRow;
 
     refs.buy = K.btn("Buy a card", "cf-lock", buy);
-    refs.reveal = K.btn("Reveal all", "cf-cash sc-reveal", finish);
+    refs.reveal = K.btn("Reveal all", "cf-cash scr-reveal", finish);
     refs.note = K.el("p", "cf-note", "");
     refs.limits = K.el("p", "cf-limits", "");
     bet.append(stakeRow, refs.buy, refs.reveal, refs.note, refs.limits);
@@ -240,7 +240,7 @@
     const ph = K.el("h2", null, "Prizes");
     refs.paysNote = K.el("small", null, "match 3");
     ph.append(refs.paysNote);
-    refs.paysList = K.el("div", "sc-prizes");
+    refs.paysList = K.el("div", "scr-prizes");
     pays.append(ph, refs.paysList);
 
     const fair = K.el("section", "cf-card cf-card-verify");
@@ -323,9 +323,9 @@
     // Prize table
     refs.paysList.replaceChildren();
     for (const p of config.prizes || []) {
-      const r = K.el("div", `sc-prow${last && last.prize === p.key ? " at" : ""}`);
+      const r = K.el("div", `scr-prow${last && last.prize === p.key ? " at" : ""}`);
       const chance = p.chance >= 0.01 ? `${Math.round(p.chance * 100)}%` : `1 in ${Math.round(1 / p.chance).toLocaleString()}`;
-      r.append(K.el("span", "sc-psym", `${sym(p.key)}${sym(p.key)}${sym(p.key)}`), K.el("span", "sc-pname", p.name), K.el("strong", null, `×${p.multiplier}`), K.el("small", null, chance));
+      r.append(K.el("span", "scr-psym", `${sym(p.key)}${sym(p.key)}${sym(p.key)}`), K.el("span", "scr-pname", p.name), K.el("strong", null, `×${p.multiplier}`), K.el("small", null, chance));
       refs.paysList.append(r);
     }
 
