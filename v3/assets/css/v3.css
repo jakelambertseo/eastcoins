@@ -4452,3 +4452,55 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
 .vf-grid.vf-scratch{grid-template-columns:repeat(3,minmax(0,1fr));max-width:280px}
 .vf-grid.vf-scratch .vf-tile{font-size:1.5rem;aspect-ratio:1}
 .vf-grid.vf-scratch .vf-tile.win{border-color:rgba(var(--gold-rgb),.6);background:var(--gold-dim)}
+
+/* ============================================================
+   TONIGHT ON PICKS — the strip under the Sports ticker (v3-tonight.js).
+   Wears .picksbanner's frame; a prop turns it violet.
+   ============================================================ */
+.tonight-slot{display:block}
+.tonight{cursor:default;align-items:center}
+.tonight:hover{transform:none;border-color:rgba(var(--brand-rgb),.42)}
+.tonight-tag{background:var(--burg)}
+.tonight-tag.prop{background:rgba(var(--prop-rgb),.22);color:var(--prop);border:1px solid rgba(var(--prop-rgb),.5)}
+.tonight-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%}
+.tonight-when{color:var(--muted-2);font-size:.78rem}
+.tonight-more{margin-left:auto;color:var(--gold);font-weight:800;font-size:.8rem;text-decoration:none}
+.tonight.prop{
+  flex-direction:column;align-items:stretch;gap:10px;
+  border-color:rgba(var(--prop-rgb),.5);
+  background:linear-gradient(135deg,rgba(var(--prop-rgb),.18),transparent 60%),var(--panel);
+}
+.tonight.prop:hover{border-color:rgba(var(--prop-rgb),.5)}
+.tonight-q{margin:0;font-family:var(--display);font-weight:700;font-size:1.15rem;letter-spacing:-.012em;line-height:1.25;color:var(--text)}
+.tonight-sides{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:520px}
+.tonight-side{
+  display:flex;align-items:center;gap:10px;height:44px;padding:0 14px;border-radius:11px;
+  border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);font:inherit;cursor:pointer;
+  transition:border-color .14s ease,background .14s ease;
+}
+.tonight-side:hover{border-color:rgba(var(--prop-rgb),.5)}
+.tonight-side.on{border-color:var(--prop);background:rgba(var(--prop-rgb),.14);box-shadow:inset 0 0 0 1px rgba(var(--prop-rgb),.5)}
+.tonight-side b{font-family:var(--display);font-weight:800;font-size:1rem}
+.tonight-mark{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-weight:800;border:1px solid rgba(var(--prop-rgb),.45);background:rgba(var(--prop-rgb),.12);color:var(--prop)}
+.tonight-side:last-child .tonight-mark{color:var(--muted);border-color:var(--line-2);background:var(--panel)}
+.tonight-line{margin-left:auto;font-family:var(--display);font-weight:800;color:var(--prop)}
+.tonight-stake{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0}
+.tonight-stake input{width:90px;height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);font:inherit;font-size:1rem;outline:none}
+.tonight-stake input:focus{border-color:rgba(var(--prop-rgb),.6)}
+.tonight-stake .btn{height:40px;padding:0 16px;display:inline-flex;align-items:center;gap:6px}
+.tonight-note{margin:0;color:var(--muted-2);font-size:.8rem}
+.tonight-note.bad{color:var(--red)}
+.tonight-you{display:flex;align-items:center;gap:5px;flex-wrap:wrap;color:var(--muted);font-size:.9rem}
+.tonight-you b{color:var(--prop)}
+.tonight.yours{border-color:rgba(var(--gold-rgb),.35)}
+.tonight-chips{display:flex;gap:8px;flex-wrap:wrap;flex:1;min-width:200px;align-items:center}
+.tonight-chip{
+  display:flex;flex-direction:column;gap:1px;padding:7px 11px;border-radius:10px;
+  border:1px solid var(--line-2);background:var(--panel-2);text-decoration:none;color:inherit;min-width:120px;
+}
+.tonight-chip:hover{border-color:rgba(var(--gold-rgb),.45)}
+.tonight-chip b{font-family:var(--display);font-weight:800;font-size:.92rem}
+.tonight-chip small{color:var(--muted-2);font-size:.72rem}
+.tonight-score{font-weight:800;color:var(--muted)}
+.tonight-score.in{color:var(--green)}
+@media (max-width:520px){.tonight-sides{grid-template-columns:1fr}}

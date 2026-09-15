@@ -655,6 +655,17 @@
 > shows the usual page. `?allsports=1` shows everything for a look. Picks
 > is untouched — baseball markets still open there.
 >
+> **Tonight on Picks (2026-09-15)** — the strip under the Sports
+> ticker (`v3-tonight.js`, mounted by `picksBanner()` in `v3-events.js`;
+> the old "Picks are now live" card is its fallback). Reads
+> `/api/picks/bootstrap` every 60 s while visible and shows, in order:
+> an open PROP (question, Yes/No with lines, a stake box that POSTs
+> `/api/picks/wagers` right there; more props link to Picks), else
+> your open picks with the live score from `ECV3Scores`, else the
+> slate (games open, first close, how chat is split on it from the
+> ledger), else what opens next from `/api/picks/upcoming`. Styles
+> `.tonight-*` wear `.picksbanner`'s frame; a prop turns it violet.
+>
 > **RedZone Sunday (2026-09-13)** — when the provider lists NFL RedZone
 > (`isRedZone`: title "NFL RedZone" or id `ppv-nfl-red-zone`), the Sports
 > page puts `redZoneHero()` above the groups — a full-width banner with

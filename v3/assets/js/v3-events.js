@@ -526,7 +526,17 @@
     return grid;
   }
 
+  // "Tonight on Picks": what is on the table right now, from
+  // v3-tonight.js — an open prop with a stake box, your picks with the
+  // score, tonight's slate, or what opens next. The old onboarding
+  // card below is the fallback if that module never loaded.
   function picksBanner() {
+    if (window.ECTonight) {
+      const slot = document.createElement("div");
+      slot.className = "tonight-slot";
+      window.ECTonight.mount(slot, shell);
+      return slot;
+    }
     const banner = document.createElement("a");
     banner.className = "picksbanner";
     banner.href = "/?view=picks";
