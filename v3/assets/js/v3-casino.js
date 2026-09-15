@@ -120,7 +120,7 @@
     emote.alt = "";
     emote.width = 32; emote.height = 32;
     h1.append(emote);
-    copy.append(h1, K.el("p", null, "20 ZC a bet · ten an hour per game · 750 an hour out"));
+    copy.append(h1, K.el("p", null, "20 ZC a bet · ten an hour per game · 400 an hour out"));
     head.append(copy);
 
     /* The bar is built once and only its numbers change afterwards.
@@ -259,7 +259,7 @@
     const rules = K.el("section", "cf-card cas-rules");
     const ul = K.el("ul");
     for (const t of [
-      "20 ZCoins a bet, at most. Ten bets an hour per game, and nobody takes more than 750 ZC out of the casino in any hour.",
+      "20 ZCoins a bet, at most. Ten bets an hour per game, and once you are 400 ZC up in any hour, new bets wait for the hour to roll on.",
       "A game only runs while someone is in its room — with nobody there, nothing is drawn.",
       "One bet per person per round. Bets close before anything is drawn.",
       "Results come from a random seed made when the round is created. Its hash is shown while bets are open; the seed is revealed after, so anyone can check.",

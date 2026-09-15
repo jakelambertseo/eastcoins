@@ -422,7 +422,7 @@
 > `/?view=hilo` (per-player, `functions/api/casino/hilo/*`, table
 > `hilo_games`, committed deck, 1% edge per call, ×50 / 12-card cap).
 > Shared limits: 20 ZC a bet, 10 an hour per game, and `HOUR_WIN_CAP`
-> (750 ZC net in any rolling hour across every game — 300 until 2026-09-13, `capCheck` in
+> (400 ZC net in any rolling hour across every game — 750 until 2026-09-16 and 300 until 2026-09-13; it blocks new bets and never trims a win already paid, `capCheck` in
 > `_engine.js`, enforced by every bet/deal endpoint including the coin's).
 > Wheel: 24 red/black slices + one 6-degree gold sliver at 40x, outcome is an
 > angle (red/black return 98.3%; gold is the 1-in-60 long shot at ~67%). Race: whole-number payouts 2/3/7/14, odds normalised from them —
@@ -604,7 +604,7 @@
 > quietly taking 2–7% off small stakes on top of the stated edge; and
 > Hi-Lo's edge is applied PER CALL, so its per-play return depends on
 > how far the chain runs and a small per-call number moves a lot over
-> six calls. `HOUR_WIN_CAP` (750) plus the 20 ZC and ten-an-hour limits
+> six calls. `HOUR_WIN_CAP` (400) plus the 20 ZC and ten-an-hour limits
 > are what bound anyone farming whichever game sits at the top of the
 > band.
 >

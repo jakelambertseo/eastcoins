@@ -58,7 +58,10 @@ const RUNNERS = [
 
 // Nobody takes more than this out of the casino in any rolling hour.
 // Past it, new bets and deals are refused until the hour rolls on.
-export const HOUR_WIN_CAP = 750;
+// 400 since 2026-09-16 (750 before, 300 before that). It blocks NEW bets
+// once someone is up this much in a rolling hour; it never trims a payout
+// already won, so a single big win can still land above it.
+export const HOUR_WIN_CAP = 400;
 
 /* ------------------------------------------------------------- the edge
 
