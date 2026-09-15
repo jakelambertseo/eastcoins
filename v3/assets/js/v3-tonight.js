@@ -112,7 +112,11 @@
         const b = el("button", `tonight-side${pending?.side === key ? " on" : ""}`);
         b.type = "button";
         b.append(el("span", "tonight-mark", key === "away" ? "✓" : "✗"), el("b", null, label), el("span", "tonight-line nums", line(odds)));
-        b.addEventListener("click", () => { pending = pending?.side === key ? null : { market: m, side: key, odds, stake: pending?.stake || 10 }; paint(); });
+        b.addEventListener("click", () => {
+          if (!data.session?.authenticated) return;
+          if (window.ECPickBox) window.ECPickBox.open({ market: m, side: key, onPlaced: () => load() });
+          else { history.pushState({ view: "picks" }, "", "/?view=picks"); shell?.go?.("picks", { push: false }); }
+        });
         sides.append(b);
       }
       box.append(sides);
@@ -121,40 +125,7 @@
         box.append(el("p", "tonight-note", "Log in with Twitch to pick a side."));
         return;
       }
-      if (pending && pending.market.id === m.id) {
-        const row = el("form", "tonight-stake");
-        const input = el("input", "nums"); input.type = "number"; input.min = "1"; input.step = "1"; input.value = String(pending.stake); input.inputMode = "numeric"; input.setAttribute("aria-label", "Stake");
-        const lock = el("button", "btn primary", ""); lock.type = "submit";
-        const note = el("span", "tonight-note");
-        const refresh = () => {
-          const s = Math.max(0, Math.floor(Number(input.value) || 0)); pending.stake = s;
-          lock.replaceChildren(document.createTextNode(`Lock ${pending.side === "away" ? "YES" : "NO"} for `), zc(s));
-          note.replaceChildren(document.createTextNode("Returns "), zc(totalReturn(s, pending.odds)), document.createTextNode(" if it lands"));
-          lock.disabled = s < 1;
-        };
-        input.addEventListener("input", refresh);
-        row.append(input, lock, note);
-        row.addEventListener("submit", async (e) => {
-          e.preventDefault();
-          lock.disabled = true; lock.textContent = "Locking…";
-          let r = null;
-          try { r = await fetch("/api/picks/wagers", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ marketId: m.id, selection: pending.side, wager: pending.stake }) }).then((x) => x.json()); } catch { r = null; }
-          if (r?.ok) {
-            if (Number.isFinite(Number(r.balance))) window.ECV3?.setWallet?.(Number(r.balance));
-            pending = null;
-            await load();
-            return;
-          }
-          note.textContent = r?.message || "That didn't go through.";
-          note.classList.add("bad");
-          lock.disabled = false; refresh();
-        });
-        box.append(row);
-        refresh();
-        window.setTimeout(() => { input.focus(); input.select(); }, 0);
-      } else {
-        box.append(el("p", "tonight-note", `Yes ${line(m.awayOdds)} · No ${line(m.homeOdds)} · pick a side to stake it here.`));
-      }
+      box.append(el("p", "tonight-note", `Yes ${line(m.awayOdds)} · No ${line(m.homeOdds)} · pick a side to stake it.`));
     }
 
     /* ---------------------------------------------------- your picks */

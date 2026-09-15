@@ -655,6 +655,19 @@
 > shows the usual page. `?allsports=1` shows everything for a look. Picks
 > is untouched — baseball markets still open there.
 >
+> **One pick box (2026-09-15)** — `v3-pickbox.js` (`ECPickBox.open({
+> market, side, onPlaced })`) is the only place a pick is placed from
+> the site: the Picks card, the game page's Yes/No or team buttons and
+> the Tonight strip all open it. Same stake field with 10 / 25 / 50 /
+> All-in chips, same three-line summary, same receipt, prop-aware
+> (question line, "pays when the call is made"). It POSTs
+> `/api/picks/wagers`, updates the wallet chip and refreshes the bell.
+> The old ticket code in `v3-picks.js` is the fallback if the module is
+> missing. **Colour rule (same day):** gold is money (the wallet chip
+> went from green to gold), violet is props, semantic green/red are
+> results only, and a game's accent lives on its floor tile, not its
+> page; the blue that marked refunds is gone (neutral now).
+>
 > **Tonight on Picks (2026-09-15)** — the strip under the Sports
 > ticker (`v3-tonight.js`, mounted by `picksBanner()` in `v3-events.js`;
 > the old "Picks are now live" card is its fallback). Reads

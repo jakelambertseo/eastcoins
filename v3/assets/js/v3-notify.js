@@ -18,7 +18,7 @@
 (() => {
   "use strict";
 
-  const POLL_MS = 90 * 1000;
+  const POLL_MS = 45 * 1000;      // 45 s: a settled pick or a jackpot toasts while it still matters (~1,900 reads a day per tab)
   const TOAST_MS = 7000;
   const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined && text !== null) n.textContent = String(text); return n; };
 

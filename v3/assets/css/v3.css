@@ -159,9 +159,9 @@ img{max-width:100%}
 .menu-item.on{color:var(--text)}
 .wallet-chip{
   display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 12px;
-  border:1px solid rgba(77,219,139,.24);border-radius:9px;
-  background:linear-gradient(140deg,var(--green-dim),transparent 62%),var(--panel);
-  color:#b6f1c4;font-weight:800;font-size:.84rem;
+  border:1px solid rgba(var(--gold-rgb),.3);border-radius:9px;
+  background:linear-gradient(140deg,var(--gold-dim),transparent 62%),var(--panel);
+  color:var(--gold);font-weight:800;font-size:.84rem;
 }
 .login-btn{
   display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;
@@ -888,7 +888,7 @@ a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
 }
 .pickticket.won .pickticket-status{border-color:rgba(77,219,139,.34);color:var(--green);background:var(--green-dim)}
 .pickticket.lost .pickticket-status{border-color:rgba(255,107,133,.3);color:var(--red);background:var(--red-dim)}
-.pickticket.refunded .pickticket-status{border-color:rgba(143,195,215,.28);color:#8fc3d7;background:rgba(143,195,215,.07)}
+.pickticket.refunded .pickticket-status{border-color:var(--line-2);color:var(--muted);background:var(--panel-2)}
 .pickticket-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
 .pickticket-stat{padding:11px 14px;border-right:1px solid var(--line)}
 .pickticket-stat:last-child{border-right:0}
@@ -951,7 +951,7 @@ a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
 }
 .ledgerrow.won .tstatus{border-color:rgba(77,219,139,.34);color:var(--green);background:var(--green-dim)}
 .ledgerrow.lost .tstatus{border-color:rgba(255,107,133,.3);color:var(--red);background:var(--red-dim)}
-.ledgerrow.refunded .tstatus{border-color:rgba(143,195,215,.28);color:#8fc3d7;background:rgba(143,195,215,.07)}
+.ledgerrow.refunded .tstatus{border-color:var(--line-2);color:var(--muted);background:var(--panel-2)}
 .tresult small{display:block;margin-top:5px;color:var(--muted-2);font-size:.74rem}
 
 /* history */
@@ -968,7 +968,7 @@ a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
 }
 .historyrow.wager .historyicon{border-color:rgba(var(--gold-rgb),.28);color:var(--gold);background:var(--gold-dim)}
 .historyrow.payout .historyicon{border-color:rgba(77,219,139,.3);color:var(--green);background:var(--green-dim)}
-.historyrow.refund .historyicon{border-color:rgba(143,195,215,.28);color:#8fc3d7;background:rgba(143,195,215,.07)}
+.historyrow.refund .historyicon{border-color:var(--line-2);color:var(--muted);background:var(--panel-2)}
 .historycopy{min-width:0}
 .historycopy strong{display:block;font-size:.95rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .historycopy small{display:block;margin-top:2px;color:var(--muted-2);font-size:.8rem}
@@ -976,7 +976,7 @@ a.ec-poster:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
 .historyamount strong{display:block;font-family:var(--display);font-weight:700;font-size:1.02rem}
 .historyrow.wager .historyamount strong{color:var(--gold)}
 .historyrow.payout .historyamount strong{color:var(--green)}
-.historyrow.refund .historyamount strong{color:#8fc3d7}
+.historyrow.refund .historyamount strong{color:var(--muted)}
 .historyamount small{display:block;margin-top:2px;color:var(--muted-2);font-size:.74rem}
 
 .picker{
@@ -1301,7 +1301,7 @@ body.nav-hidden .navpeek{display:inline-flex}
 }
 .adm-bettor.won{border-color:rgba(77,219,139,.34);color:var(--green);background:var(--green-dim)}
 .adm-bettor.lost{border-color:rgba(255,107,133,.3);color:var(--red);background:var(--red-dim)}
-.adm-bettor.refunded{border-color:rgba(143,195,215,.28);color:#8fc3d7}
+.adm-bettor.refunded{border-color:var(--line-2);color:var(--muted)}
 
 .adm-message{
   padding:12px 16px;border-radius:11px;margin-bottom:14px;
@@ -2923,7 +2923,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
   border-radius:11px;background:var(--panel);
 }
 .av-row.pick{border-left-color:var(--gold)} .av-row.won{border-left-color:var(--green)} .av-row.lost{border-left-color:var(--red)}
-.av-row.open{border-left-color:#8fc3d7} .av-row.final{border-left-color:var(--muted)} .av-row.joined{border-left-color:#c9b3ff}
+.av-row.open{border-left-color:var(--gold)} .av-row.final{border-left-color:var(--muted)} .av-row.joined{border-left-color:#c9b3ff}
 .av-row.song{border-left-color:rgba(165,107,255,.7)}
 .av-lead{flex:0 0 auto}
 .av-av{
@@ -4375,7 +4375,7 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
 .notif-ico.loss{border-color:rgba(255,107,133,.35);background:var(--red-dim)}
 .notif-ico.gold{border-color:rgba(var(--gold-rgb),.45);background:var(--gold-dim)}
 .notif-ico.prop{border-color:rgba(var(--prop-rgb),.45);background:rgba(var(--prop-rgb),.12)}
-.notif-ico.open{border-color:rgba(143,195,215,.35);background:rgba(143,195,215,.08)}
+.notif-ico.open{border-color:rgba(var(--gold-rgb),.3);background:var(--gold-dim)}
 .notif-t{font-size:.88rem;line-height:1.35;min-width:0}
 .notif-t>span{display:block}
 .notif-t b{font-weight:700}
@@ -4460,7 +4460,7 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
 .tonight-slot{display:block}
 .tonight{cursor:default;align-items:center}
 .tonight:hover{transform:none;border-color:rgba(var(--brand-rgb),.42)}
-.tonight-tag{background:var(--burg)}
+.tonight-tag{background:var(--panel-3);color:var(--muted);border:1px solid var(--line-2)}
 .tonight-tag.prop{background:rgba(var(--prop-rgb),.22);color:var(--prop);border:1px solid rgba(var(--prop-rgb),.5)}
 .tonight-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%}
 .tonight-when{color:var(--muted-2);font-size:.78rem}
@@ -4508,3 +4508,10 @@ body[data-music-skin="trip"]::after{content:"";position:fixed;top:var(--nav-h);l
 .tonight-kind{position:absolute;top:7px;right:8px;font-size:.56rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:999px;border:1px solid var(--line-2);color:var(--muted-2)}
 .tonight-kind.prop{border-color:rgba(var(--prop-rgb),.5);color:var(--prop);background:rgba(var(--prop-rgb),.12)}
 .tonight-kind.odds{border-color:rgba(var(--gold-rgb),.4);color:var(--gold);background:var(--gold-dim)}
+
+/* the pick box's stake chips */
+.ticket-chips{display:flex;gap:6px;margin-left:auto}
+.ticket-chip{height:30px;padding:0 11px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--muted);font:inherit;font-size:.78rem;font-weight:800;cursor:pointer}
+.ticket-chip.on,.ticket-chip:hover{border-color:rgba(var(--gold-rgb),.45);color:var(--gold);background:var(--gold-dim)}
+.ticket-field{flex-wrap:wrap}
+.ticket-team .propmark{width:30px;height:30px;font-size:.95rem}

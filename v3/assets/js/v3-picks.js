@@ -745,6 +745,12 @@
   /* ---------------------------------------------------------- ticket */
 
   function openTicket(market, side, team, line) {
+    // The one pick box every page shares (v3-pickbox.js); the ticket
+    // below is only the fallback if that module never loaded.
+    if (window.ECPickBox) {
+      window.ECPickBox.open({ market, side, onPlaced: async () => { await loadMarkets(); if (root?.isConnected) paint(); } });
+      return;
+    }
     local.ticket = { market, side, team, line, stake: 10 };
     renderTicket();
   }
