@@ -4552,6 +4552,9 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
   color:rgba(255,255,255,.78);
 }
 .tc-pip{width:5px;height:5px;border-radius:50%;background:var(--gold);flex:0 0 auto}
+.tc-crest{position:relative;width:15px;height:15px;flex:0 0 auto;display:grid;place-items:center;font-size:.42rem;font-weight:800;color:rgba(255,255,255,.7)}
+.tc-crest img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
+.tc-crest.has-logo{color:transparent}
 .tc-line{display:flex;gap:9px;margin-top:7px;padding-top:6px;border-top:1px solid rgba(255,255,255,.2)}
 .tc-line div{min-width:0}
 .tc-line span{display:block;font-size:.42rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:rgba(255,255,255,.6)}

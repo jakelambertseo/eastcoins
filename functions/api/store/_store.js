@@ -26,6 +26,8 @@
    can never pass for an earned one.
    ============================================================ */
 
+import { findTeam } from "../picks/_teams.js";
+
 // Order here is the order of the store's shelves. Each key is also a
 // column in user_cosmetics — keep them plain lowercase words.
 export const SLOTS = {
@@ -122,7 +124,7 @@ export async function ensureStore(db) {
   ]);
   // Columns added after the first release. Each is forgiving: "duplicate
   // column" on every request after the first is expected and ignored.
-  for (const col of ["namefx", "message", "message_text", "background", "team", "player", "player_json"]) {
+  for (const col of ["namefx", "message", "message_text", "background", "team", "player", "player_json", "title_crest"]) {
     await db.prepare(`ALTER TABLE user_cosmetics ADD COLUMN ${col} TEXT`).run().catch(() => {});
   }
   // Its own statement and forgiving, so an odd existing row can never
@@ -138,6 +140,12 @@ export async function ownedItems(db, userId) {
 
 function parsePlayer(raw) {
   try { const p = JSON.parse(raw || "null"); return p && p.id && p.name ? p : null; } catch { return null; }
+}
+
+/** "mlb:lad" -> the same team shape the favourite chip draws. */
+function crestFor(raw) {
+  const [league, abbr] = String(raw || "").split(":");
+  return league && abbr ? findTeam(league, abbr) : null;
 }
 
 /** The title text an equipped title item shows: a preset's own, or the custom text. */
@@ -166,6 +174,11 @@ export async function cosmeticsFor(db, userId) {
       team: keep(row.team, "team"),
       label: keep(row.label, "label"),
       title: keep(row.title, "title") ? titleTextFor(row.title, row.title_text) : null,
+      // A title can wear a club crest in place of its gold pip. There is
+      // no way to buy one: it is set by hand, as a gift, and the value is
+      // "<league>:<abbr>" read through the favourite team's own table, so
+      // a crest here can only ever be a real club.
+      titleCrest: keep(row.title, "title") ? crestFor(row.title_crest) : null,
       message: keep(row.message, "message") && row.message_text ? String(row.message_text) : null,
       player: keep(row.player, "player") ? parsePlayer(row.player_json) : null
     };

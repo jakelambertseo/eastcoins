@@ -505,7 +505,9 @@
     const plate = el("div", "tc-plate");
     plate.append(el("b", `tc-name${cos.name ? " nm-" + cos.name.replace(/^name-/, "") : ""}`, u.displayName));
     const pos = el("span", "tc-pos");
-    pos.append(el("i", "tc-pip"), document.createTextNode(cos.title || billing(data)));
+    // A gifted title can wear its club's crest where the pip goes.
+    pos.append(cos.titleCrest ? teamCrest(cos.titleCrest, "tc-crest") : el("i", "tc-pip"),
+      document.createTextNode(cos.title || billing(data)));
     plate.append(pos);
     const line = el("div", "tc-line");
     const cell = (label, value, tone) => {
