@@ -118,18 +118,19 @@ export async function onRequestGet(context) {
     db.prepare(`SELECT 'hilo' AS game, CASE WHEN g.status = 'CASHED' THEN 'WON' ELSE 'LOST' END AS status, CASE WHEN g.status = 'CASHED' THEN g.payout - g.stake ELSE -g.stake END AS profit,
                        g.stake AS wager, ('×' || ROUND(g.multiplier, 2)) AS pick, g.updated_at AS at, u.twitch_login, u.display_name, u.avatar_url
                   FROM hilo_games g JOIN users u ON u.twitch_id = g.user_id
-                 WHERE g.status IN ('CASHED','BUST') ORDER BY g.updated_at DESC LIMIT 15`).all().catch(() => ({ results: [] })),
+                 WHERE +g.status IN ('CASHED','BUST') ORDER BY g.updated_at DESC LIMIT 15`).all().catch(() => ({ results: [] })),
     db.prepare(`SELECT 'mines' AS game, CASE WHEN g.status = 'CASHED' THEN 'WON' ELSE 'LOST' END AS status, CASE WHEN g.status = 'CASHED' THEN g.payout - g.stake ELSE -g.stake END AS profit,
                        g.stake AS wager, ('×' || ROUND(g.multiplier, 2)) AS pick, g.updated_at AS at, u.twitch_login, u.display_name, u.avatar_url
                   FROM mines_games g JOIN users u ON u.twitch_id = g.user_id
-                 WHERE g.status IN ('CASHED','BUST') ORDER BY g.updated_at DESC LIMIT 15`).all().catch(() => ({ results: [] })),
+                 WHERE +g.status IN ('CASHED','BUST') ORDER BY g.updated_at DESC LIMIT 15`).all().catch(() => ({ results: [] })),
     db.prepare(`SELECT 'plinko' AS game, CASE WHEN d.payout > d.stake THEN 'WON' ELSE 'LOST' END AS status, d.payout - d.stake AS profit,
                        d.stake AS wager, ('x' || ROUND(d.multiplier, 2)) AS pick, d.created_at AS at, u.twitch_login, u.display_name, u.avatar_url
                   FROM plinko_drops d JOIN users u ON u.twitch_id = d.user_id
                  ORDER BY d.created_at DESC LIMIT 15`).all().catch(() => ({ results: [] })),
     db.prepare(`SELECT e.game, e.status, e.payout - e.stake AS profit, e.stake AS wager, (r.players || ' at the table') AS pick,
                        datetime(r.settled_at / 1000, 'unixepoch') AS at, u.twitch_login, u.display_name, u.avatar_url
-                  FROM pvp_entries e JOIN pvp_rounds r ON r.id = e.round_id JOIN users u ON u.twitch_id = e.user_id
+                  FROM (SELECT id, players, settled_at FROM pvp_rounds WHERE settled_at IS NOT NULL ORDER BY settled_at DESC LIMIT 15) r
+                  JOIN pvp_entries e ON e.round_id = r.id JOIN users u ON u.twitch_id = e.user_id
                  WHERE e.status IN ('WON','LOST') ORDER BY r.settled_at DESC LIMIT 15`).all().catch(() => ({ results: [] })),
     db.prepare(`SELECT 'scratch' AS game, CASE WHEN c.payout > c.stake THEN 'WON' ELSE 'LOST' END AS status, c.payout - c.stake AS profit,
                        c.stake AS wager, CASE WHEN c.prize IS NULL THEN 'no match' ELSE (c.prize || ' ×3') END AS pick, c.created_at AS at, u.twitch_login, u.display_name, u.avatar_url

@@ -77,7 +77,7 @@
     const base = String(config.websocketUrl || "").trim();
     if (!base) return new Map();
     try {
-      const r = await fetch(`${base}/history/${encodeURIComponent(config.room || "main")}`);
+      const r = await fetch(`${base}/history/${encodeURIComponent(config.room || "main")}?limit=0`);
       if (!r.ok) return new Map();
       const payload = await r.json();
       const stats = (payload.userStats || []).map((s) => ({ ...s, login: String(s.login || "").toLowerCase() }));

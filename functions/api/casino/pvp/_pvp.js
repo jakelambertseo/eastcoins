@@ -87,6 +87,8 @@ export async function ensurePvp(db) {
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_pvp_rounds_due ON pvp_rounds (game, status, starts_at)`),
+    // The floor's and the feed's "last N tables" walk, newest first.
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_pvp_rounds_settled ON pvp_rounds (settled_at)`),
     // At most one open lobby per game. A second INSERT fails and the
     // caller re-reads, which is how two people sitting down in the same
     // instant end up at the same table instead of two.

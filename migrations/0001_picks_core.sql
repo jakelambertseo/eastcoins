@@ -361,3 +361,11 @@ CREATE INDEX idx_user_season_stats_leaderboard
     picks_profit DESC,
     wins DESC
   );
+
+
+-- Added 2026-09-16: the 💸 badge asks which accounts a confirmed debit
+-- ever left at zero. Without this it scanned every wallet operation,
+-- thousands of times a day; with it, one seek per user.
+CREATE INDEX IF NOT EXISTS idx_wallet_zeroed
+  ON wallet_operations (user_id)
+  WHERE balance_after = 0 AND type = 'WAGER_DEBIT' AND status = 'CONFIRMED';

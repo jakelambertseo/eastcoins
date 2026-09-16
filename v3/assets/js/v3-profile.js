@@ -125,7 +125,7 @@
     const base = String(config.websocketUrl || "").trim();
     if (!base) return null;
     try {
-      const response = await fetch(`${base}/history/${encodeURIComponent(config.room || "main")}`);
+      const response = await fetch(`${base}/history/${encodeURIComponent(config.room || "main")}?limit=60`);
       if (!response.ok) return null;
       const payload = await response.json();
       const stats = (payload.userStats || []).find((s) => String(s.login || "").toLowerCase() === login) || null;
