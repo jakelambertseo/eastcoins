@@ -273,7 +273,17 @@
     const line = K.el("span", "grd-poor-line");
     line.append(document.createTextNode(`(<${cfg().brokeLine} `), coin, document.createTextNode(")"));
     poor.append(K.el("b", null, "Only for poors!"), line);
-    copy.append(K.el("h1", null, "The Grind"), poor,
+    // The emote beside the title, sized and placed like the casino floor's.
+    const h1 = K.el("h1", null, "The Grind");
+    const emote = document.createElement("img");
+    emote.className = "cf-title-emote";
+    emote.src = "https://cdn.betterttv.net/emote/63fab670d67ca5b27401fc0e/2x.webp";
+    emote.alt = "";
+    emote.width = 32; emote.height = 32;
+    // A dead CDN link must not leave a broken-image box beside the title.
+    emote.addEventListener("error", () => emote.remove());
+    h1.append(emote);
+    copy.append(h1, poor,
       K.el("p", null, `Broke? Pick up a shift. Clock in for ${DEFAULT_JOBS.clicks.pay} ZC, or sort chips for ${DEFAULT_JOBS.sort.pay} if you can stand it. One shift of each an hour, for anyone under ${cfg().brokeLine} — a way back to the tables, not a job.`));
     head.append(copy);
     const right = K.el("div", "cas-headright");
