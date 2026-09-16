@@ -10,13 +10,20 @@
    So every card was decided before the first call, and the seed
    is revealed when the game ends so anyone can check the run.
 
-   Each correct call multiplies the stake. Ties lose. The price of
-   a call is 0.99 / probability, so every call carries the same 1%
-   edge whatever the card — near fair on purpose, so the casino is
-   somewhere people come back to rather than somewhere they bleed:
+   Each correct call multiplies the stake. A TIE IS A PUSH (since
+   2026-09-16; it lost before): the run carries on at the same
+   multiplier from the tied card. So a call is priced on the cards
+   that can settle it — the twelve that are not a tie — and is fair:
 
-     from a 3, "higher" wins 10 times in 13 → ×1.29
-     from a 10, "higher" wins 3 times in 13 → ×4.29
+     from a 3, "higher" wins 10 of the 12 → ×1.20
+     from a 10, "higher" wins 3 of the 12 → ×4
+     win 10/13 × 1.2 + tie 1/13 × 1 = 1.00
+
+   The return is unchanged at 100% (before the run's own edge); what
+   changes is the shape — a bust is a wrong call, never a coincidence,
+   and the prices are round numbers. From an ace "higher" cannot lose
+   and so pays ×1: it deals the next card and nothing else, and it does
+   not count as the right call that unlocks a cash-out (rightsOf).
 
    Cash out any time after the first correct call. The run ends at
    ×50 or 12 cards, whichever comes first. One live game per person;
@@ -72,12 +79,21 @@ export async function cardAt(seed, i) {
   return { rank: 1 + (parseInt(h.slice(0, 8), 16) % 13), suit: parseInt(h.slice(8, 10), 16) % 4 };
 }
 
-/** The price of each call from a rank; null where it cannot win. */
+/**
+ * The price of each call from a rank; null where it cannot win. A tie
+ * pushes, so the chances are out of the twelve cards that are not one.
+ * pTie is the chance of a push on either call.
+ */
 export function oddsFrom(rank) {
-  const pHigher = (13 - rank) / 13;
-  const pLower = (rank - 1) / 13;
+  const pHigher = (13 - rank) / 12;
+  const pLower = (rank - 1) / 12;
   const price = (p) => (p > 0 ? Math.round((EDGE_RETURN / p) * 100) / 100 : null);
-  return { higher: price(pHigher), lower: price(pLower), pHigher, pLower };
+  return { higher: price(pHigher), lower: price(pLower), pHigher, pLower, pTie: 1 / 13 };
+}
+
+/** Right calls that moved the multiplier — a push, or a ×1 call from an ace or a king, is not one. */
+export function rightsOf(calls) {
+  return (calls || []).filter((c) => c && c.won && Number(c.price) > 1).length;
 }
 
 const parse = (t, fallback) => { try { return JSON.parse(t); } catch { return fallback; } };
@@ -94,6 +110,8 @@ export function publicGame(g, { revealSeed = false } = {}) {
     payout: Number(g.payout || 0),
     potential: Math.round(Number(g.stake) * Number(g.multiplier) * Number(g.edge || 1)),
     step: calls.length,
+    rights: rightsOf(calls),
+    pushes: calls.filter((c) => c && c.push).length,
     cards: cards.map((c) => ({ rank: c.rank, label: RANKS[c.rank - 1], suit: SUITS[c.suit] })),
     calls,
     odds: g.status === "LIVE" && current ? oddsFrom(current.rank) : null,

@@ -1,9 +1,10 @@
 /* POST /api/casino/hilo/call  { id, call: "higher"|"lower" }
 
    Reveals the next card of a live run. A correct call multiplies
-   the stake by the price of that call; a wrong one (ties included)
-   busts the run. Hitting ×50 or the twelfth card cashes out on the
-   spot. The card was fixed by the seed before the run began. */
+   the stake by the price of that call, a tie pushes (same multiplier,
+   the run carries on from the tied card), and a wrong call busts it.
+   Hitting ×50 or the twelfth card cashes out on the spot. The card was
+   fixed by the seed before the run began. */
 
 import { getSessionUser, json, fail } from "../../picks/_lib.js";
 import { ensureSchema } from "../_engine.js";
@@ -37,9 +38,28 @@ export async function onRequestPost(context) {
 
   const drawn = await cardAt(g.seed, cards.length);
   const next = { rank: drawn.rank, label: RANKS[drawn.rank - 1], suit: SUITS[drawn.suit] };
-  const won = call === "higher" ? next.rank > current.rank : next.rank < current.rank;
+  const push = next.rank === current.rank;
+  const won = !push && (call === "higher" ? next.rank > current.rank : next.rank < current.rank);
   const newCards = [...cards, next];
-  const newCalls = [...calls, { call, price, won }];
+  const newCalls = [...calls, push ? { call, price, won: false, push: true } : { call, price, won }];
+
+  if (push) {
+    // A tie: nothing is won or lost. The card is dealt, the multiplier
+    // stays, and it still counts toward the twelve-card limit.
+    const r = await db
+      .prepare(`UPDATE hilo_games SET cards = ?, calls = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'LIVE' AND cards = ?`)
+      .bind(JSON.stringify(newCards), JSON.stringify(newCalls), id, g.cards)
+      .run();
+    if (!r.meta?.changes) return fail("RACE", "That call was already made — refresh.", 409);
+    if (newCalls.length >= MAX_STEPS) {
+      const fresh = await db.prepare(`SELECT * FROM hilo_games WHERE id = ?`).bind(id).first();
+      const paid = await cashOut(context.env, db, fresh, user.login);
+      const done = await db.prepare(`SELECT * FROM hilo_games WHERE id = ?`).bind(id).first();
+      return json({ ok: true, outcome: "push", card: next, autoCashed: paid.ok, payout: paid.payout || 0, balance: paid.balance ?? null, game: publicGame(done) });
+    }
+    const live = await db.prepare(`SELECT * FROM hilo_games WHERE id = ?`).bind(id).first();
+    return json({ ok: true, outcome: "push", card: next, game: publicGame(live) });
+  }
 
   if (!won) {
     // The lock: only a LIVE row can be busted, once.
