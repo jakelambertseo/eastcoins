@@ -4617,7 +4617,7 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
     grid-template-areas:"card" "copy" "band";
     justify-items:center;
   }
-  .pf-head.has-tcard .tc-case{width:100%;max-width:272px}
+  .pf-head.has-tcard .tc-case{width:100%;max-width:240px}
   .pf-head.has-tcard .pf-copy{align-items:center;text-align:center;width:100%}
   .pf-head.has-tcard .pf-trend{margin-top:16px}
   .pf-head.has-tcard .pf-copy h1{justify-content:center}
