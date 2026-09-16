@@ -1255,7 +1255,7 @@
     const wrap = el("section", "profile");
     const box = el("div", "gp-notice");
     const img = el("img", "gp-logo");
-    img.src = "/assets/eastcoins-logo.webp";
+    img.src = "/assets/eastcoins-logo.webp?v=2";
     img.alt = "";
     box.append(img, el("strong", null, strong), el("p", null, text));
     wrap.append(box);

@@ -24,7 +24,7 @@ export async function onRequestGet(context) {
 
   let title = "Movies & TV — EastCoin";
   let description = "Watch together on EastCoin.";
-  let image = "https://eastcoin.vip/assets/eastcoins-logo.webp";
+  let image = "https://eastcoin.vip/assets/eastcoin-og.png";
 
   const found = await resolveSlug(env, "tv", parsed.slug).catch(() => null);
   if (found) {

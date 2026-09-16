@@ -115,7 +115,7 @@
     const box = document.createElement("section");
     box.className = "sc-gate";
     const logo = document.createElement("img");
-    logo.className = "sc-gate-logo"; logo.src = "/assets/eastcoins-logo.webp"; logo.alt = "";
+    logo.className = "sc-gate-logo"; logo.src = "/assets/eastcoins-logo.webp?v=2"; logo.alt = "";
     const h = document.createElement("h2"); h.textContent = title;
     const p = document.createElement("p"); p.textContent = line;
     const a = document.createElement("a");
