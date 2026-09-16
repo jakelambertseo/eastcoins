@@ -45,7 +45,7 @@ export const SLOTS = {
 export const NEEDS_INPUT = new Set(["title-custom", "message-custom", "player-pick"]);
 
 export const ITEMS = [
-  { id: "finish-holo", slot: "finish", name: "Holo", price: 400, blurb: "A rainbow sheen that slides across the card." },
+  { id: "finish-holo", slot: "finish", name: "Holo", price: 75, blurb: "A rainbow sheen that slides across the card." },
   // Replaced Neon on 2026-09-15 (nobody had bought it). Deliberately a
   // metallic gold panel, not the crimson-and-gold of the EARNED #1 card,
   // and the tier tag still shows what was actually earned.
@@ -55,38 +55,38 @@ export const ITEMS = [
   { id: "finish-chrome", slot: "finish", name: "Chrome", price: 0, promo: "Free", blurb: "Brushed metal from edge to edge. Free for a limited time." },
 
   { id: "name-gold", slot: "name", name: "Gold", price: 500, chase: true, blurb: "Your name in gold on your card and profile. A Legendary item." },
-  { id: "name-ice", slot: "name", name: "Ice", price: 99, blurb: "Your name in frosted blue." },
-  { id: "name-ember", slot: "name", name: "Ember", price: 150, blurb: "Your name glowing hot orange." },
+  { id: "name-ice", slot: "name", name: "Ice", price: 75, blurb: "Your name in frosted blue." },
+  { id: "name-ember", slot: "name", name: "Ember", price: 75, blurb: "Your name glowing hot orange." },
 
-  { id: "namefx-shine", slot: "namefx", name: "Shine", price: 250, blurb: "A light sweeps across your profile name every few seconds." },
-  { id: "namefx-glitch", slot: "namefx", name: "Glitch", price: 300, blurb: "Your name jitters with a red and cyan glitch." },
-  { id: "namefx-rainbow", slot: "namefx", name: "Rainbow", price: 350, blurb: "Your name slowly cycles through every colour." },
-  { id: "namefx-pulse", slot: "namefx", name: "Pulse", price: 200, blurb: "A soft glow breathes around your name." },
+  { id: "namefx-shine", slot: "namefx", name: "Shine", price: 75, blurb: "A light sweeps across your profile name every few seconds." },
+  { id: "namefx-glitch", slot: "namefx", name: "Glitch", price: 75, blurb: "Your name jitters with a red and cyan glitch." },
+  { id: "namefx-rainbow", slot: "namefx", name: "Rainbow", price: 75, blurb: "Your name slowly cycles through every colour." },
+  { id: "namefx-pulse", slot: "namefx", name: "Pulse", price: 75, blurb: "A soft glow breathes around your name." },
 
-  { id: "title-oracle", slot: "title", name: "The Oracle", text: "The Oracle", price: 150, blurb: "For the one who saw it coming." },
-  { id: "title-hater", slot: "title", name: "Certified Hater", text: "Certified Hater", price: 150, blurb: "Fades everyone. Proudly." },
-  { id: "title-parlay", slot: "title", name: "Parlay Prince", text: "Parlay Prince", price: 150, blurb: "Never met a long shot they didn't like." },
-  { id: "title-underdog", slot: "title", name: "Underdog King", text: "Underdog King", price: 150, blurb: "Plus money or nothing." },
-  { id: "title-degen", slot: "title", name: "Professional Degen", text: "Professional Degen", price: 99, blurb: "It's not gambling if you're good at it." },
-  { id: "title-legend", slot: "title", name: "Chat Legend", text: "Chat Legend", price: 200, blurb: "Everybody knows the name." },
-  { id: "title-custom", slot: "title", name: "Custom title", price: 300, blurb: "Write your own, up to 24 characters." },
+  { id: "title-oracle", slot: "title", name: "The Oracle", text: "The Oracle", price: 75, blurb: "For the one who saw it coming." },
+  { id: "title-hater", slot: "title", name: "Certified Hater", text: "Certified Hater", price: 75, blurb: "Fades everyone. Proudly." },
+  { id: "title-parlay", slot: "title", name: "Parlay Prince", text: "Parlay Prince", price: 75, blurb: "Never met a long shot they didn't like." },
+  { id: "title-underdog", slot: "title", name: "Underdog King", text: "Underdog King", price: 75, blurb: "Plus money or nothing." },
+  { id: "title-degen", slot: "title", name: "Professional Degen", text: "Professional Degen", price: 75, blurb: "It's not gambling if you're good at it." },
+  { id: "title-legend", slot: "title", name: "Chat Legend", text: "Chat Legend", price: 75, blurb: "Everybody knows the name." },
+  { id: "title-custom", slot: "title", name: "Custom title", price: 75, blurb: "Write your own, up to 24 characters." },
 
-  { id: "message-custom", slot: "message", name: "Profile message", price: 200, blurb: "A short line of your own on your profile, up to 100 characters." },
+  { id: "message-custom", slot: "message", name: "Profile message", price: 75, blurb: "A short line of your own on your profile, up to 100 characters." },
 
-  { id: "background-gridiron", slot: "background", name: "Gridiron", price: 300, blurb: "Yard lines and turf behind your whole profile." },
-  { id: "background-starfield", slot: "background", name: "Starfield", price: 300, blurb: "Deep space and slow-drifting stars." },
-  { id: "background-carbon", slot: "background", name: "Carbon", price: 250, blurb: "Woven carbon fibre, like a race car." },
-  { id: "background-velvet", slot: "background", name: "Velvet", price: 250, blurb: "Deep red velvet with a VIP glow." },
+  { id: "background-gridiron", slot: "background", name: "Gridiron", price: 75, blurb: "Yard lines and turf behind your whole profile." },
+  { id: "background-starfield", slot: "background", name: "Starfield", price: 75, blurb: "Deep space and slow-drifting stars." },
+  { id: "background-carbon", slot: "background", name: "Carbon", price: 75, blurb: "Woven carbon fibre, like a race car." },
+  { id: "background-velvet", slot: "background", name: "Velvet", price: 75, blurb: "Deep red velvet with a VIP glow." },
 
-  { id: "banner-stadium", slot: "banner", name: "Stadium lights", price: 200, blurb: "Floodlights over the top of your profile." },
-  { id: "banner-matrix", slot: "banner", name: "Matrix", price: 200, blurb: "Green code raining behind your profile." },
-  { id: "banner-retro", slot: "banner", name: "Retro sunset", price: 200, blurb: "An '80s sunset grid behind your profile." },
+  { id: "banner-stadium", slot: "banner", name: "Stadium lights", price: 75, blurb: "Floodlights over the top of your profile." },
+  { id: "banner-matrix", slot: "banner", name: "Matrix", price: 75, blurb: "Green code raining behind your profile." },
+  { id: "banner-retro", slot: "banner", name: "Retro sunset", price: 75, blurb: "An '80s sunset grid behind your profile." },
 
-  { id: "team-glow", slot: "team", name: "Team glow", price: 99, blurb: "Your favourite team glows on your profile." },
+  { id: "team-glow", slot: "team", name: "Team glow", price: 75, blurb: "Your favourite team glows on your profile." },
   { id: "team-gold", slot: "team", name: "Gold plate", price: 500, chase: true, blurb: "Your team on an engraved gold nameplate. A Legendary item." },
-  { id: "team-flame", slot: "team", name: "On fire", price: 250, blurb: "Your team's name burns hot." },
+  { id: "team-flame", slot: "team", name: "On fire", price: 75, blurb: "Your team's name burns hot." },
 
-  { id: "player-pick", slot: "player", name: "Favourite player", price: 250, blurb: "Pick any NFL, MLB or NBA player — their ESPN photo goes on your profile. Change them any time." },
+  { id: "player-pick", slot: "player", name: "Favourite player", price: 75, blurb: "Pick any NFL, MLB or NBA player — their ESPN photo goes on your profile. Change them any time." },
 
   { id: "label-foil", slot: "label", name: "Gold foil label", price: 500, chase: true, blurb: "Turns “EastCoin Trading Card” into shimmering gold foil. A Legendary item." }
 ];
