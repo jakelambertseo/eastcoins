@@ -84,7 +84,9 @@ export async function ensureMines(db) {
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_mines_user ON mines_games (user_id, created_at)`),
-    db.prepare(`CREATE INDEX IF NOT EXISTS idx_mines_live ON mines_games (status, updated_at)`)
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_mines_live ON mines_games (status, updated_at)`),
+    // The floor's and the feed's "last N" reads, newest first.
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_mines_recent ON mines_games (updated_at)`)
   ]);
   await ensureColumn(db, "mines_games", "edge", "REAL NOT NULL DEFAULT 1");
   ready = true;

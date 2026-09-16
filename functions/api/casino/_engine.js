@@ -175,6 +175,7 @@ export async function ensureSchema(db) {
     )`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_casino_bets_round ON casino_bets (game, round_no)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_casino_bets_user ON casino_bets (user_id, created_at)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_casino_bets_created ON casino_bets (created_at)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS casino_presence (
       game TEXT NOT NULL,
       user_id TEXT NOT NULL,

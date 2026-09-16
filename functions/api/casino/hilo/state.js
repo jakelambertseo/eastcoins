@@ -26,7 +26,7 @@ export async function onRequestGet(context) {
               u.twitch_id, u.twitch_login, u.display_name, u.avatar_url
          FROM hilo_games g JOIN users u ON u.twitch_id = g.user_id
         WHERE g.status IN ('CASHED','BUST')
-        ORDER BY datetime(g.updated_at) DESC LIMIT 40`
+        ORDER BY g.updated_at DESC LIMIT 40`
     )
     .all();
   const ledger = (recent.results || []).map((r) => ({

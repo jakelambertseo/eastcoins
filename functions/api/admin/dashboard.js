@@ -330,7 +330,7 @@ export async function onRequestGet(context) {
       `SELECT o.id, o.type, o.amount, o.status, o.last_error, o.created_at, u.twitch_login
          FROM wallet_operations o LEFT JOIN users u ON u.twitch_id = o.user_id
         WHERE o.status IN ('NEEDS_RECONCILIATION','FAILED','PENDING')
-        ORDER BY datetime(o.created_at) DESC LIMIT 60`
+        ORDER BY o.created_at DESC LIMIT 60`
     ).all(),
     db.prepare(
       `SELECT state, COUNT(*) AS n, MIN(CASE WHEN state = 'OPEN' THEN starts_at END) AS next_start

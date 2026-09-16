@@ -59,7 +59,8 @@ export async function ensureHilo(db) {
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_hilo_user ON hilo_games (user_id, created_at)`),
     // The floor counts live games every five seconds; without this that
     // is a full scan each time.
-    db.prepare(`CREATE INDEX IF NOT EXISTS idx_hilo_live ON hilo_games (status, updated_at)`)
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_hilo_live ON hilo_games (status, updated_at)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_hilo_recent ON hilo_games (updated_at)`)
   ]);
   await ensureColumn(db, "hilo_games", "edge", "REAL NOT NULL DEFAULT 1");
   ready = true;

@@ -28,7 +28,7 @@ export async function onRequestGet(context) {
       `SELECT d.id, d.stake, d.bucket, d.multiplier, d.payout, d.created_at,
               u.twitch_id, u.twitch_login, u.display_name, u.avatar_url
          FROM plinko_drops d JOIN users u ON u.twitch_id = d.user_id
-        ORDER BY datetime(d.created_at) DESC LIMIT 40`
+        ORDER BY d.created_at DESC LIMIT 40`
     )
     .all();
   const ledger = (recent.results || []).map((r) => ({
@@ -65,7 +65,7 @@ export async function onRequestGet(context) {
       dropsThisHour: await dropsLastHour(db, user.id),
       hourNet: await hourlyNet(db, user.id)
     };
-    const lastRow = await db.prepare(`SELECT * FROM plinko_drops WHERE user_id = ? ORDER BY datetime(created_at) DESC LIMIT 1`).bind(user.id).first();
+    const lastRow = await db.prepare(`SELECT * FROM plinko_drops WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`).bind(user.id).first();
     last = lastRow ? publicDrop(lastRow) : null;
   }
 

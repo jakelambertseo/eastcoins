@@ -62,6 +62,7 @@ export async function ensureSchema(db) {
     // Without this, hourlyNet() read every row of coin_bets on every
     // casino state poll — the single biggest source of D1 row reads.
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_coin_bets_user ON coin_bets (user_id, created_at)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_coin_bets_created ON coin_bets (created_at)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS coin_presence (
       user_id TEXT PRIMARY KEY,
       seen_at INTEGER NOT NULL

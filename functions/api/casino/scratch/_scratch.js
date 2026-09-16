@@ -67,6 +67,7 @@ export async function ensureScratch(db) {
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_scratch_user ON scratch_cards (user_id, created_at)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_scratch_recent ON scratch_cards (created_at)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS scratch_commits (
       user_id TEXT PRIMARY KEY,
       seed TEXT NOT NULL,

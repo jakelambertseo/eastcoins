@@ -28,7 +28,7 @@ export async function onRequestGet(context) {
       `SELECT c.id, c.stake, c.prize, c.multiplier, c.payout, c.created_at,
               u.twitch_id, u.twitch_login, u.display_name, u.avatar_url
          FROM scratch_cards c JOIN users u ON u.twitch_id = c.user_id
-        ORDER BY datetime(c.created_at) DESC LIMIT 40`
+        ORDER BY c.created_at DESC LIMIT 40`
     )
     .all();
   const ledger = (recent.results || []).map((r) => ({
@@ -66,7 +66,7 @@ export async function onRequestGet(context) {
       cardsThisHour: await cardsLastHour(db, user.id),
       hourNet: await hourlyNet(db, user.id)
     };
-    const lastRow = await db.prepare(`SELECT * FROM scratch_cards WHERE user_id = ? ORDER BY datetime(created_at) DESC LIMIT 1`).bind(user.id).first();
+    const lastRow = await db.prepare(`SELECT * FROM scratch_cards WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`).bind(user.id).first();
     last = lastRow ? publicCard(lastRow) : null;
   }
 

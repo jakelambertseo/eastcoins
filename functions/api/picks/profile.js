@@ -75,7 +75,7 @@ export async function onRequestGet(context) {
               m.final_away_score, m.final_home_score, m.winner
          FROM picks p JOIN markets m ON m.id = p.market_id
         WHERE p.user_id = ? AND p.status IN ('ACTIVE','WON','LOST','REFUNDED')
-        ORDER BY datetime(m.starts_at) DESC, datetime(p.created_at) DESC`;
+        ORDER BY m.starts_at DESC, p.created_at DESC`;
   if (list === "picks") {
     const [count, slice] = await Promise.all([
       db.prepare(`SELECT COUNT(*) AS n FROM picks WHERE user_id = ? AND status IN ('ACTIVE','WON','LOST','REFUNDED')`).bind(String(user.twitch_id)).first(),
@@ -156,20 +156,20 @@ export async function onRequestGet(context) {
                     FROM casino_bets b JOIN casino_rounds r ON r.game = b.game AND r.no = b.round_no WHERE b.user_id = ? AND b.status IN ('WON','LOST') ORDER BY b.round_no DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
       db.prepare(`SELECT 'hilo' AS game, CASE WHEN status = 'CASHED' THEN 'WON' ELSE 'LOST' END AS status, CASE WHEN status = 'CASHED' THEN payout - stake ELSE -stake END AS profit,
                          stake AS wager, ('×' || ROUND(multiplier, 2)) AS pick, updated_at AS at, NULL AS result
-                    FROM hilo_games WHERE user_id = ? AND status IN ('CASHED','BUST') ORDER BY datetime(updated_at) DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
+                    FROM hilo_games WHERE user_id = ? AND status IN ('CASHED','BUST') ORDER BY updated_at DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
       db.prepare(`SELECT 'mines' AS game, CASE WHEN status = 'CASHED' THEN 'WON' ELSE 'LOST' END AS status, CASE WHEN status = 'CASHED' THEN payout - stake ELSE -stake END AS profit,
                          stake AS wager, ('×' || ROUND(multiplier, 2)) AS pick, updated_at AS at, NULL AS result
-                    FROM mines_games WHERE user_id = ? AND status IN ('CASHED','BUST') ORDER BY datetime(updated_at) DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
+                    FROM mines_games WHERE user_id = ? AND status IN ('CASHED','BUST') ORDER BY updated_at DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
       db.prepare(`SELECT 'plinko' AS game, CASE WHEN payout > stake THEN 'WON' ELSE 'LOST' END AS status, payout - stake AS profit,
                          stake AS wager, ('x' || ROUND(multiplier, 2)) AS pick, created_at AS at, NULL AS result
-                    FROM plinko_drops WHERE user_id = ? ORDER BY datetime(created_at) DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
+                    FROM plinko_drops WHERE user_id = ? ORDER BY created_at DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
       db.prepare(`SELECT e.game, e.status, e.payout - e.stake AS profit, e.stake AS wager, (r.players || ' at the table') AS pick,
                          datetime(r.settled_at / 1000, 'unixepoch') AS at, NULL AS result
                     FROM pvp_entries e JOIN pvp_rounds r ON r.id = e.round_id
                    WHERE e.user_id = ? AND e.status IN ('WON','LOST') ORDER BY r.settled_at DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
       db.prepare(`SELECT 'scratch' AS game, CASE WHEN payout > stake THEN 'WON' ELSE 'LOST' END AS status, payout - stake AS profit,
                          stake AS wager, CASE WHEN prize IS NULL THEN 'no match' ELSE (prize || ' ×3') END AS pick, created_at AS at, NULL AS result
-                    FROM scratch_cards WHERE user_id = ? ORDER BY datetime(created_at) DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] }))
+                    FROM scratch_cards WHERE user_id = ? ORDER BY created_at DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] }))
     ]);
     const all = [...(coin.results || []), ...(shared.results || []), ...(hilo.results || []), ...(mines.results || []), ...(plinko.results || []), ...(pvp.results || []), ...(scratch.results || [])]
       .map((r) => ({ game: String(r.game), status: r.status, profit: Number(r.profit), wager: Number(r.wager), pick: String(r.pick), at: r.at ? String(r.at).replace(" ", "T") + "Z" : null }))

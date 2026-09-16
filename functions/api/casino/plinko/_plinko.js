@@ -77,6 +77,7 @@ export async function ensurePlinko(db) {
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_plinko_user ON plinko_drops (user_id, created_at)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_plinko_recent ON plinko_drops (created_at)`),
     // One committed seed per player, waiting to be used by their next drop.
     db.prepare(`CREATE TABLE IF NOT EXISTS plinko_commits (
       user_id TEXT PRIMARY KEY,
