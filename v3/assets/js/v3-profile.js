@@ -749,25 +749,41 @@
     if (look.player) copy.append(playerChip(look.player));
     head.append(copy);
 
-    /* Beside the card: the three tab launchers, so the space next to a
-       333px card carries where to go rather than eight numbers the card
-       and the tabs already show. The two summary strips that used to
-       sit here were the header's clutter; the casino one was the
-       Casino tab's own strip, repeated. */
-    const glance = el("div", "pf-glance");
-    const glanceCard = (key, icon, title, big, small) => {
-      const card = el("button", "pf-glance-card");
-      card.type = "button";
-      card.append(el("span", "pf-glance-k", `${icon} ${title}`), el("b", "nums", big), el("small", null, small), el("em", null, "Open →"));
-      card.addEventListener("click", () => select(key, true));
-      return card;
+    /* Beside the card: the season's headline numbers, the way a player
+       page carries them under the name — value first, then the label.
+       Six is the most that fits next to a 262px card without a cell
+       falling to one figure per row; the rest of the box score is the
+       Overview's own stat sheet. The two launcher cards that used to
+       sit here are now the small links under it. */
+    const glance = el("div", "pf-glance stats");
+    const keys = el("div", "pf-keys");
+    const keyCell = (value, label, note, cls) => {
+      const cell = el("div", "pf-key");
+      cell.append(el("b", cls ? `nums ${cls}` : "nums", value), el("span", null, label));
+      if (note) cell.append(el("small", null, note));
+      keys.append(cell);
     };
-    glance.append(
-      glanceCard("picks", "🪙", "Picks", `${k.wins}–${k.losses}`, k.open ? `${k.open} open right now` : `${k.total} pick${k.total === 1 ? "" : "s"} all season`),
-      glanceCard("casino", "🎰", "Casino", c ? `${c.net > 0 ? "+" : ""}${c.net.toLocaleString()}` : "—", c ? `${c.wins}–${c.losses} across ${c.total} play${c.total === 1 ? "" : "s"}` : "no results yet")
-    );
-    // Two launchers, not three: a third wrapped onto its own row beside
-    // the card and left a hole. The Green Room keeps its tab.
+    const settledAll = k.wins + k.losses;
+    keyCell(k.rank ? `#${k.rank}` : "—", "Rank", k.rank ? `of ${k.players}` : "unranked", k.rank === 1 ? "gold" : "");
+    keyCell(`${k.wins}–${k.losses}`, "Record", k.open ? `${k.open} open` : `${k.total} all season`);
+    keyCell(pct3(k.wins, settledAll), "Win %", `${k.total} picks`);
+    keyCell(plusMinus(k.profit), "Profit", `${k.staked.toLocaleString()} staked`, tone(k.profit));
+    if (c?.total) keyCell(plusMinus(c.net), "Casino", `${c.total} play${c.total === 1 ? "" : "s"}`, tone(c.net));
+    keyCell(k.streak.current > 0 ? `W${k.streak.current}` : k.streak.current < 0 ? `L${Math.abs(k.streak.current)}` : "—", "Streak", k.streak.bestWin ? `best W${k.streak.bestWin}` : "", tone(k.streak.current));
+    glance.append(keys);
+
+    // The launchers stay, as links rather than cards: two boxes of
+    // numbers beside a stat rail said the same thing twice.
+    const jump = el("div", "pf-jump");
+    const jumpTo = (key, text) => {
+      const b = el("button", "pf-jumplink", text);
+      b.type = "button";
+      b.addEventListener("click", () => select(key, true));
+      jump.append(b);
+    };
+    jumpTo("picks", "Every pick →");
+    if (c?.total) jumpTo("casino", "Casino results →");
+    glance.append(jump);
     head.append(glance);
     wrap.append(head);
 

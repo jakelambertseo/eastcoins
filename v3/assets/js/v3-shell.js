@@ -72,12 +72,15 @@
     watch: [...SPORTS, "v3-gameday.js", "eastcoins-youtube.js", "v3-watch.js"],
     picks: [...LOGOS, "v3-scores.js", "v3-pickbox.js", "v3-picks.js"],
     game: [...LOGOS, "v3-pickbox.js", "v3-game.js"],
-    profile: [...LOGOS, "v3-profile.js"],
+    // The Music tab and the users list read the room worker directly, so
+    // they need its config — without it the fetch has no base URL and
+    // the tab silently reads as "no Green Room data".
+    profile: [...LOGOS, "eastcoins-music-config.js", "v3-profile.js"],
     wrapped: [...LOGOS, "v3-wrapped.js"],
     highlights: ["v3-highlights.js"],
     // The store's preview is the real profile card, so it loads the profile script too.
     store: [...LOGOS, "v3-profile.js", "v3-store.js"],
-    users: ["v3-users.js"],
+    users: ["eastcoins-music-config.js", "v3-users.js"],
     activity: [...LOGOS, "v3-activity.js"],
     music: ["eastcoins-music-config.js", "eastcoins-youtube.js", "v3-activity.js", "v3-music.js"],
     screen: ["v3-screen.js"],
