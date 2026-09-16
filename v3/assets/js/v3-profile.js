@@ -646,7 +646,10 @@
     const cls = tone(last);
     const box = el("div", "pf-trend");
     const head = el("div", "pf-trend-head");
-    head.append(el("span", null, `Net since ${when(b.first, { month: "short", day: "numeric" })}`), el("b", `nums ${cls}`, plusMinus(last)));
+    // The figure wears the coin, like every other money number here.
+    const figure = el("b", cls);
+    figure.append(zc(last, { sign: true }));
+    head.append(el("span", null, `Net since ${when(b.first, { month: "short", day: "numeric" })}`), figure);
     box.append(head);
 
     const W = 600, H = 78, PAD = 5;

@@ -2312,6 +2312,8 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .pf-trend-head b{font-family:var(--display);font-weight:800;font-size:.98rem;font-variant-numeric:tabular-nums}
 .pf-trend-head b.up{color:var(--green)}
 .pf-trend-head b.down{color:var(--red)}
+.pf-trend-head b .zc-amount{font-size:inherit;font-weight:inherit;gap:5px}
+.pf-trend-head b .zcoin-mark{width:14px;height:14px}
 .pf-spark{display:block;width:100%;height:auto}
 .pf-spark .zero{stroke:var(--line-2);stroke-width:1;stroke-dasharray:3 5}
 .pf-spark path.line{fill:none;stroke:var(--muted-2);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
