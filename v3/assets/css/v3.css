@@ -4430,7 +4430,7 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
    ============================================================ */
 .pf-head.has-tcard{
   display:grid;
-  grid-template-columns:262px minmax(0,1fr);
+  grid-template-columns:300px minmax(0,1fr);
   grid-template-rows:1fr auto;
   grid-template-areas:"card copy" "card band";
   gap:14px 22px;
@@ -4461,7 +4461,6 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
   color:var(--gold);white-space:nowrap;
 }
 .tc-case-label i{font-style:normal;font-size:.5rem;opacity:.7}
-.tc-hint{margin:8px 0 0;text-align:center;font-size:.68rem;color:var(--muted-2)}
 
 .tc{
   position:relative;width:100%;aspect-ratio:2.5/3.5;
