@@ -2337,6 +2337,8 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .pf-spark path.fill.up{fill:var(--green)}
 .pf-spark path.fill.down{fill:var(--red)}
 
+.pf-views{color:var(--muted-2);font-variant-numeric:tabular-nums}
+
 /* The form guide — the last ten, newest first. */
 .pf-form{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:14px}
 .pf-form-k{font-size:.57rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted-2)}

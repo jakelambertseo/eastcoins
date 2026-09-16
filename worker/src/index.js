@@ -1373,8 +1373,14 @@ export class MusicRoom extends DurableObject {
     }
 
     if (url.pathname.startsWith("/history/")) {
+      // No ?limit= at all means the whole list — and Number(null) is 0,
+      // which handed back an empty history instead.
+      const asked = url.searchParams.get("limit");
+      const want = asked === null || asked.trim() === "" ? NaN : Number(asked);
+      const limit = Number.isFinite(want) && want >= 0 ? Math.min(want, MAX_HISTORY) : MAX_HISTORY;
       return json(
-        { history: this.history, skips: this.skips, userStats: this.userStatsList() },
+        // slice(-0) is the whole array, so zero is its own case.
+        { history: limit <= 0 ? [] : limit >= this.history.length ? this.history : this.history.slice(-limit), skips: this.skips, userStats: this.userStatsList() },
         200,
         corsHeaders(request, this.env)
       );

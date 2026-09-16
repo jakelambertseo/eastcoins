@@ -16,6 +16,7 @@ import { ensureSchema as ensureCoinSchema } from "../coin/_coin.js";
 import { findTeam, ensureFavouriteColumns } from "./_teams.js";
 import { isOpen as wrappedIsOpen } from "./_wrapped.js";
 import { cosmeticsFor } from "../store/_store.js";
+import { countView, ensureViews } from "./_views.js";
 
 const json = (body, status = 200) => Response.json(body, {
   status,
@@ -33,9 +34,9 @@ export async function onRequestGet(context) {
   if (!db) return json({ ok: false, code: "NO_DB" }, 503);
   if (!/^[a-z0-9_]{2,25}$/.test(login)) return json({ ok: false, code: "BAD_LOGIN" }, 400);
 
-  await ensureFavouriteColumns(db);
+  await Promise.all([ensureFavouriteColumns(db), ensureViews(db)]);
   const user = await db
-    .prepare(`SELECT twitch_id, twitch_login, display_name, avatar_url, created_at, favourite_league, favourite_team FROM users WHERE twitch_login = ? COLLATE NOCASE LIMIT 1`)
+    .prepare(`SELECT twitch_id, twitch_login, display_name, avatar_url, created_at, favourite_league, favourite_team, profile_views FROM users WHERE twitch_login = ? COLLATE NOCASE LIMIT 1`)
     .bind(login)
     .first();
   if (!user) return json({ ok: false, code: "NOT_FOUND", message: "Nobody by that name has made a pick yet." }, 404);
@@ -203,6 +204,7 @@ export async function onRequestGet(context) {
   // person (picks and casino), as a running net. Balances stay private
   // — the Community Ledger rule — so only the owner's own view carries
   // the balance after each operation.
+  const viewer = await getSessionUser(db, context.request).catch(() => null);
   let bankroll = null;
   try {
     const ops = await db
@@ -212,7 +214,6 @@ export async function onRequestGet(context) {
       .bind(String(user.twitch_id)).all();
     const rows = ops.results || [];
     if (rows.length) {
-      const viewer = await getSessionUser(db, context.request).catch(() => null);
       const owner = Boolean(viewer && String(viewer.id) === String(user.twitch_id));
       let net = 0, picksNet = 0, casinoNet = 0, storeNet = 0;
       const pts = [];
@@ -265,6 +266,9 @@ export async function onRequestGet(context) {
     }
   } catch { movies = null; }
 
+  const counting = countView(db, context.request, login, viewer && { twitch_id: viewer.id, twitch_login: viewer.login });
+  if (context.waitUntil) context.waitUntil(counting); else await counting;
+
   return json({
     ok: true,
     badges,
@@ -281,6 +285,8 @@ export async function onRequestGet(context) {
       displayName: String(user.display_name || user.twitch_login),
       avatar: String(user.avatar_url || ""),
       since: utc(user.created_at),
+      // Counted below; this is the figure as it stood when the page was asked for.
+      views: Number(user.profile_views || 0),
       // Their own choice, made on the profile page — not inferred from picks.
       favourite: findTeam(user.favourite_league, user.favourite_team)
     },

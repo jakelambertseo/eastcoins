@@ -834,7 +834,16 @@
     }
     name.append(badges);
     copy.append(name);
-    copy.append(el("p", null, `@${u.login}${u.since ? " · with EastCoin since " + when(u.since, { month: "short", year: "numeric" }) : ""}`));
+    const meta = el("p", null, `@${u.login}${u.since ? " · with EastCoin since " + when(u.since, { month: "short", year: "numeric" }) : ""}`);
+    // One per person per day, never your own — so the number means
+    // people rather than refreshes. It is the figure as the page was
+    // asked for, so your own visit shows up the next time you look.
+    if (u.views > 0) {
+      const views = el("span", "pf-views", `${u.views.toLocaleString()} profile view${u.views === 1 ? "" : "s"}`);
+      views.title = "Counted once per person per day";
+      meta.append(document.createTextNode(" · "), views);
+    }
+    copy.append(meta);
     if (look.message) copy.append(el("p", "pf-msg", look.message));
     copy.append(teamChip(u, look));
     if (look.player) copy.append(playerChip(look.player));
