@@ -928,6 +928,10 @@
     // reaction — does not throw you back to page one mid-browse.
     let historyPage = 0;
     const HISTORY_PER_PAGE = 5;
+    // The Skipped tab pages the same way, five at a time, and keeps its
+    // own place for the same reason.
+    let skipsPage = 0;
+    const SKIPS_PER_PAGE = 5;
     // What was playing last time we painted. A history entry is only
     // completed when a song leaves, so a change here is the one signal
     // that there is something new to fetch.
@@ -1506,7 +1510,11 @@
         const t = Math.max(0, Math.round(Number(ms || 0) / 1000));
         return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
       };
-      for (const s of skips.slice(0, 25)) {
+      const pages = Math.max(1, Math.ceil(skips.length / SKIPS_PER_PAGE));
+      // Clamped: the room keeps the newest 40, so a page can vanish.
+      skipsPage = Math.min(Math.max(0, skipsPage), pages - 1);
+      const start = skipsPage * SKIPS_PER_PAGE;
+      for (const s of skips.slice(start, start + SKIPS_PER_PAGE)) {
         const r = skipReason(s);
         const row = el("div", "mq-row mskiprow");
         const art = thumb(s.videoId, "mq-thumb");
@@ -1523,6 +1531,24 @@
         const save = saveLink(s.videoId, "watchbtn mq-again msave", "Save ↗");
         if (save) row.append(save);
         wrap.append(row);
+      }
+      if (pages > 1) {
+        const pager = el("div", "mpager");
+        const step = (label, delta, disabled) => {
+          const btn = el("button", "mpager-btn", label);
+          btn.type = "button";
+          btn.disabled = disabled;
+          btn.addEventListener("click", () => {
+            skipsPage += delta;
+            renderSide(conn.state);
+          });
+          return btn;
+        };
+        pager.append(step("‹", -1, skipsPage === 0));
+        pager.append(el("span", "mpager-at",
+          `${start + 1}–${Math.min(start + SKIPS_PER_PAGE, skips.length)} of ${skips.length}`));
+        pager.append(step("›", 1, skipsPage >= pages - 1));
+        wrap.append(pager);
       }
       return wrap;
     }
