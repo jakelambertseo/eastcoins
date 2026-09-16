@@ -506,8 +506,15 @@
     plate.append(el("b", `tc-name${cos.name ? " nm-" + cos.name.replace(/^name-/, "") : ""}`, u.displayName));
     const pos = el("span", "tc-pos");
     // A gifted title can wear its club's crest where the pip goes.
-    pos.append(cos.titleCrest ? teamCrest(cos.titleCrest, "tc-crest") : el("i", "tc-pip"),
-      document.createTextNode(cos.title || billing(data)));
+    let mark = el("i", "tc-pip");
+    if (cos.titleCrest) {
+      mark = teamCrest(cos.titleCrest, "tc-crest");
+      // Decoration on this line: the crest box holds the abbreviation as
+      // its fallback, and a reader would otherwise say "DOD" mid-title.
+      mark.setAttribute("aria-hidden", "true");
+      mark.title = cos.titleCrest.name;
+    }
+    pos.append(mark, document.createTextNode(cos.title || billing(data)));
     plate.append(pos);
     const line = el("div", "tc-line");
     const cell = (label, value, tone) => {
