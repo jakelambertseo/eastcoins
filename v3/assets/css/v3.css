@@ -4866,6 +4866,9 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 .pfs-head{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin:0 0 10px}
 .pfs-head h2{margin:0;font-family:var(--display);font-weight:800;font-size:1.02rem;letter-spacing:.02em;text-transform:uppercase}
 .pfs-open{padding:2px 9px;border-radius:999px;font-size:.66rem;font-weight:800;letter-spacing:.06em;border:1px solid var(--line);color:var(--muted-2)}
+/* In the Casino tab the box score sits between the summary strip and the
+   results list, so it needs air below as well as above. */
+.pfs-casino{margin-bottom:18px}
 .pfs-sub{margin:18px 0 8px;font-size:.62rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted-2)}
 .pfs-tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
 .pfs-table{width:100%;min-width:540px;border-collapse:collapse;font-size:.85rem;font-variant-numeric:tabular-nums}
