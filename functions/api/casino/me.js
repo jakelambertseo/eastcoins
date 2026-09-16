@@ -14,7 +14,7 @@ import { gamesLastHour as minesPlays } from "./mines/_mines.js";
 import { dropsLastHour as plinkoPlays } from "./plinko/_plinko.js";
 import { cardsLastHour as scratchPlays } from "./scratch/_scratch.js";
 import { GAMES as PVP, joinsLastHour as pvpPlays } from "./pvp/_pvp.js";
-import { ensureGrind, nextShiftAt, workingShift } from "./grind/_grind.js";
+import { ensureGrind, nextShiftAt, workingShift, JOBS as GRIND_JOBS } from "./grind/_grind.js";
 import { getSessionUser } from "../picks/_lib.js";
 
 export async function onRequestGet(context) {
@@ -71,8 +71,13 @@ export async function onRequestGet(context) {
       // resting until an hour after the last one.
       try {
         await ensureGrind(db);
-        const [next, working] = await Promise.all([nextShiftAt(db, uid), workingShift(db, uid)]);
-        me.grind = { nextShiftAt: next ? new Date(next).toISOString() : null, working: Boolean(working) };
+        const jobs = {};
+        await Promise.all(Object.keys(GRIND_JOBS).map(async (k) => {
+          const [next, working] = await Promise.all([nextShiftAt(db, uid, k), workingShift(db, uid, k)]);
+          jobs[k] = { nextShiftAt: next ? new Date(next).toISOString() : null, working: Boolean(working) };
+        }));
+        // Top-level fields are the first job, for a floor page from before the second.
+        me.grind = { nextShiftAt: jobs.clicks.nextShiftAt, working: Object.values(jobs).some((j) => j.working), jobs };
       } catch { me.grind = null; }
     }
   } catch { me = null; }

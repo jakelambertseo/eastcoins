@@ -1,13 +1,14 @@
-/* POST /api/casino/grind/start
+/* POST /api/casino/grind/start  { job: "clicks" | "sort" }
 
-   Clocks in. Refused signed out, when the wallet is not configured,
-   inside the hour after the caller's last shift, and when they are not
-   under the broke line (read live from StreamElements). A shift already
-   being worked is handed back rather than doubled. Nothing is charged. */
+   Clocks in for a job. Refused signed out, when the wallet is not
+   configured, inside the hour after the caller's last shift AT THAT JOB,
+   and when they are not under the broke line (read live from
+   StreamElements). A shift already being worked at that job is handed
+   back rather than doubled. Nothing is charged. */
 
 import { getSessionUser, walletWritesEnabled, readBalance, newId, json, fail } from "../../picks/_lib.js";
-import { ensureSchema, touchPresence } from "../_engine.js";
-import { ensureGrind, workingShift, nextShiftAt, publicShift, BROKE_LINE } from "./_grind.js";
+import { ensureSchema, touchPresence, randomSeed } from "../_engine.js";
+import { ensureGrind, workingShift, nextShiftAt, publicShift, jobOf, BROKE_LINE } from "./_grind.js";
 
 const GRIND = { key: "grind" };
 
@@ -21,14 +22,19 @@ export async function onRequestPost(context) {
   if (!user) return fail("NOT_LOGGED_IN", "Log in with Twitch to work a shift.", 401);
   if (!walletWritesEnabled(context.env)) return fail("WALLET_NOT_CONFIGURED", "ZCoin transfers aren't configured.", 503);
 
-  const existing = await workingShift(db, user.id);
-  if (existing) return json({ ok: true, shift: publicShift(existing) });
+  let body = {};
+  try { body = await context.request.json(); } catch { body = {}; }
+  const job = jobOf(body.job);
+  if (!job) return fail("BAD_JOB", "No such job.");
+
+  const existing = await workingShift(db, user.id, job.key);
+  if (existing) return json({ ok: true, shift: await publicShift(existing) });
 
   const now = Date.now();
-  const next = await nextShiftAt(db, user.id, now);
+  const next = await nextShiftAt(db, user.id, job.key, now);
   if (next) {
     const mins = Math.ceil((next - now) / 60000);
-    return fail("COOLDOWN", `One shift an hour — your next one opens in ${mins} minute${mins === 1 ? "" : "s"}.`, 429);
+    return fail("COOLDOWN", `One ${job.name} shift an hour — your next one opens in ${mins} minute${mins === 1 ? "" : "s"}.`, 429);
   }
 
   const balance = await readBalance(context.env, user.login);
@@ -39,14 +45,14 @@ export async function onRequestPost(context) {
 
   const id = newId("gr");
   try {
-    await db.prepare(`INSERT INTO grind_shifts (id, user_id, balance_at_start, last_click_ms) VALUES (?, ?, ?, ?)`)
-      .bind(id, user.id, balance, now).run();
+    await db.prepare(`INSERT INTO grind_shifts (id, user_id, job, seed, balance_at_start, last_click_ms) VALUES (?, ?, ?, ?, ?, ?)`)
+      .bind(id, user.id, job.key, job.key === "sort" ? randomSeed() : null, balance, now).run();
   } catch {
     // Two "clock in" presses at once: the unique index let one through.
-    const again = await workingShift(db, user.id);
-    if (again) return json({ ok: true, shift: publicShift(again) });
+    const again = await workingShift(db, user.id, job.key);
+    if (again) return json({ ok: true, shift: await publicShift(again) });
     return fail("START_FAILED", "Couldn't clock you in. Try again.", 500);
   }
   await touchPresence(db, GRIND, user.id, now);
-  return json({ ok: true, shift: publicShift(await workingShift(db, user.id)), balance });
+  return json({ ok: true, shift: await publicShift(await workingShift(db, user.id, job.key)), balance });
 }
