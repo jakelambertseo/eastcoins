@@ -813,6 +813,20 @@
     // The name is its own span so a bought name colour never tints the badges beside it.
     name.append(nameSpan(u.displayName, look));
     const badges = el("span", "pf-badges");
+    /* A title is worn beside the name as well as on the card, first in
+       the row — but never dressed as an earned badge: it keeps the
+       plain pill, because the earned ones carry the colour. */
+    if (look.title) {
+      const pill = el("span", "pf-badge pf-badge-title");
+      if (look.titleCrest) {
+        const mark = teamCrest(look.titleCrest, "pf-badge-crest");
+        mark.setAttribute("aria-hidden", "true");
+        pill.append(mark);
+      }
+      pill.append(document.createTextNode(look.title));
+      pill.title = look.titleCrest ? `${look.title} · ${look.titleCrest.name}` : look.title;
+      badges.append(pill);
+    }
     for (const b of data.badges || []) {
       const pill = el("span", `pf-badge ${b.key}`, `${b.emoji} ${String(b.label).split("—")[0].trim()}`);
       pill.title = b.label;
