@@ -4891,7 +4891,7 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
    hundredth time: it squashes on every press and throws a "+1" off,
    and the bar under it fills toward payday.
 ------------------------------------------------------------------ */
-.cas-card.cas-grind{--card-rgb:120,98,62}
+.cas-card.cas-grind{--card-rgb:44,122,38}
 .grd-stage{display:flex;flex-direction:column;gap:14px}
 .grd-shop{align-self:stretch;width:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:22px;padding:26px 16px 22px;border:1px solid var(--line);border-radius:var(--radius);
   background:radial-gradient(120% 90% at 50% 0%,rgba(var(--gold-rgb),.10),transparent 60%),var(--panel)}

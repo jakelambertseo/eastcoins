@@ -16,7 +16,7 @@
   /* The card art is served with an hour of cache and no version in its
      own path, so a redrawn card would take up to an hour to appear.
      Bump this whenever an image in /v3/assets/img/casino/ changes. */
-  const ART_V = 2;
+  const ART_V = 3;
   let root = null;
   let refs = {};
   let data = null;
