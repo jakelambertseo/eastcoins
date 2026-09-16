@@ -2303,6 +2303,24 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .pf-bandcell b.gold{color:var(--gold)}
 .pf-bandcell span{display:block;margin-top:5px;font-size:.57rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted-2)}
 
+/* The trend line: the season's net, no axes. It carries margin-top
+   auto inside the identity column, so it takes whatever height the
+   card leaves rather than a gap taking it. */
+.pf-trend{margin-top:auto;padding-top:14px;width:100%}
+.pf-trend-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:2px}
+.pf-trend-head span{font-size:.57rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted-2)}
+.pf-trend-head b{font-family:var(--display);font-weight:800;font-size:.98rem;font-variant-numeric:tabular-nums}
+.pf-trend-head b.up{color:var(--green)}
+.pf-trend-head b.down{color:var(--red)}
+.pf-spark{display:block;width:100%;height:auto}
+.pf-spark .zero{stroke:var(--line-2);stroke-width:1;stroke-dasharray:3 5}
+.pf-spark path.line{fill:none;stroke:var(--muted-2);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.pf-spark path.line.up{stroke:var(--green)}
+.pf-spark path.line.down{stroke:var(--red)}
+.pf-spark path.fill{stroke:none;fill:var(--muted-2);opacity:.13}
+.pf-spark path.fill.up{fill:var(--green)}
+.pf-spark path.fill.down{fill:var(--red)}
+
 /* The form guide — the last ten, newest first. */
 .pf-form{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:14px}
 .pf-form-k{font-size:.57rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted-2)}
@@ -4417,7 +4435,10 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
   grid-template-areas:"card copy" "card band";
   gap:14px 22px;
 }
-.pf-head.has-tcard .pf-copy{grid-area:copy;align-self:start}
+/* The identity column fills its row, so the trend line can stretch
+   into whatever the card leaves and the band lands on the card's
+   own baseline. */
+.pf-head.has-tcard .pf-copy{grid-area:copy;align-self:stretch;display:flex;flex-direction:column;min-height:0}
 /* Bottom of the column, level with the foot of the card: the strip is
    the header's baseline, the way a player page sets its stats under
    the name rather than beside it. */
@@ -4597,7 +4618,8 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
     justify-items:center;
   }
   .pf-head.has-tcard .tc-case{width:100%;max-width:272px}
-  .pf-head.has-tcard .pf-copy{justify-items:center;text-align:center;width:100%}
+  .pf-head.has-tcard .pf-copy{align-items:center;text-align:center;width:100%}
+  .pf-head.has-tcard .pf-trend{margin-top:16px}
   .pf-head.has-tcard .pf-copy h1{justify-content:center}
   .pf-head.has-tcard .pf-band{width:100%}
   .pf-head.has-tcard .pf-form{justify-content:center}

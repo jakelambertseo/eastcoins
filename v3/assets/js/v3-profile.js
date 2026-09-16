@@ -631,6 +631,46 @@
   }
 
   /**
+   * The season's net as a sparkline, under the identity: the shape of
+   * it, which no single figure carries. The Overview keeps the full
+   * chart with its axes, tooltip and balance toggle — this is the
+   * trend line a player page runs under the name, and it is what
+   * fills the column beside a card three times the height of a name.
+   */
+  function trendBlock(b) {
+    const pts = (b?.points || [])
+      .map((p) => ({ t: new Date(p.t).getTime(), v: Number(p.net) }))
+      .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.v));
+    if (pts.length < 3) return null;
+    const last = pts[pts.length - 1].v;
+    const cls = tone(last);
+    const box = el("div", "pf-trend");
+    const head = el("div", "pf-trend-head");
+    head.append(el("span", null, `Net since ${when(b.first, { month: "short", day: "numeric" })}`), el("b", `nums ${cls}`, plusMinus(last)));
+    box.append(head);
+
+    const W = 600, H = 78, PAD = 5;
+    const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, class: "pf-spark", role: "img", "aria-label": `Net ZCoins over the season, ending ${plusMinus(last)}` });
+    const t0 = pts[0].t;
+    const t1 = pts[pts.length - 1].t || t0 + 1;
+    const vs = pts.map((p) => p.v);
+    const lo = Math.min(0, ...vs);
+    const hi = Math.max(0, ...vs);
+    const x = (t) => ((t - t0) / Math.max(1, t1 - t0)) * W;
+    const y = (v) => H - PAD - ((v - lo) / Math.max(1, hi - lo)) * (H - PAD * 2);
+    const line = pts.map((p, i) => `${i ? "L" : "M"}${x(p.t).toFixed(1)} ${y(p.v).toFixed(1)}`).join(" ");
+    // The area closes on the zero line, so a losing season fills downward.
+    const zero = y(0);
+    svg.append(
+      svgEl("path", { class: `fill ${cls}`, d: `${line} L${W} ${zero.toFixed(1)} L0 ${zero.toFixed(1)} Z` }),
+      svgEl("line", { class: "zero", x1: 0, x2: W, y1: zero.toFixed(1), y2: zero.toFixed(1) }),
+      svgEl("path", { class: `line ${cls}`, d: line })
+    );
+    box.append(svg);
+    return box;
+  }
+
+  /**
    * The last ten picks as a form guide, newest first — W, L, or a dot
    * for one still open. Nothing else on the page says how the season
    * has been going lately rather than overall.
@@ -786,6 +826,8 @@
     // page, and it is what fills the column beside a tall card.
     const form = formStrip(k.recent);
     if (form) copy.append(form);
+    const trend = trendBlock(data.bankroll);
+    if (trend) copy.append(trend);
     head.append(copy);
 
     head.append(statBand(data));
