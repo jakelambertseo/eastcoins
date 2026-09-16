@@ -597,14 +597,58 @@
   const roiOf = (profit, staked) => (staked ? `${profit > 0 ? "+" : profit < 0 ? "−" : ""}${Math.abs((100 * profit) / staked).toFixed(1)}%` : "—");
   const tone = (n) => (n > 0 ? "up" : n < 0 ? "down" : "");
 
-  function statBar(cells) {
-    const bar = el("div", "pfs-bar");
-    for (const [label, value, cls] of cells) {
-      const box = el("div", "pfs-cell");
-      box.append(el("span", null, label), el("b", `nums${cls ? " " + cls : ""}`, value));
-      bar.append(box);
+  /**
+   * The header's stat band: the season at a glance, value over label,
+   * across the foot of the header card. Six figures and no more —
+   * it is the summary, and the splits below are the detail. Every
+   * number here is the headline of something the page shows in full
+   * further down, which is why the cells are not links.
+   */
+  function statBand(data) {
+    const k = data.picks;
+    const c = data.casino;
+    const band = el("div", "pf-band");
+    band.append(el("h2", null, `${data.season?.name || "Season"} at a glance`));
+    const row = el("div", "pf-band-row");
+    const cell = (value, label, { suffix, cls, note } = {}) => {
+      const box = el("div", "pf-bandcell");
+      const b = el("b", cls ? `nums ${cls}` : "nums", value);
+      if (suffix) b.append(el("i", null, suffix));
+      box.append(b, el("span", null, label));
+      if (note) box.title = note;
+      row.append(box);
+    };
+    const settledAll = k.wins + k.losses;
+    cell(k.rank ? `#${k.rank}` : "—", "Rank", { suffix: k.rank ? `/${k.players}` : "", cls: k.rank === 1 ? "gold" : "" });
+    cell(`${k.wins}–${k.losses}`, "Record", { note: k.open ? `${k.open} still open` : `${k.total} picks this season` });
+    cell(pct3(k.wins, settledAll), "Win %", { note: `${settledAll} settled` });
+    cell(plusMinus(k.profit), "Picks", { cls: tone(k.profit), note: `${k.staked.toLocaleString()} staked` });
+    if (c?.total) cell(plusMinus(c.net), "Casino", { cls: tone(c.net), note: `${c.total} plays` });
+    cell(k.streak.current > 0 ? `W${k.streak.current}` : k.streak.current < 0 ? `L${Math.abs(k.streak.current)}` : "—", "Streak",
+      { cls: tone(k.streak.current), note: k.streak.bestWin ? `best run W${k.streak.bestWin}` : "" });
+    band.append(row);
+    return band;
+  }
+
+  /**
+   * The last ten picks as a form guide, newest first — W, L, or a dot
+   * for one still open. Nothing else on the page says how the season
+   * has been going lately rather than overall.
+   */
+  function formStrip(recent) {
+    const picks = (recent || []).filter((p) => p.status !== "REFUNDED").slice(0, 10);
+    if (!picks.length) return null;
+    const box = el("div", "pf-form");
+    box.append(el("span", "pf-form-k", "Form"));
+    const row = el("div", "pf-form-row");
+    for (const p of picks) {
+      const key = p.status === "WON" ? "w" : p.status === "LOST" ? "l" : "o";
+      const pip = el("span", `pf-pip ${key}`, key === "w" ? "W" : key === "l" ? "L" : "·");
+      pip.title = `${p.team} vs ${p.opponent} · ${p.status === "ACTIVE" ? "open" : plusMinus(p.profit)}`;
+      row.append(pip);
     }
-    return bar;
+    box.append(row, el("small", null, "newest first"));
+    return box;
   }
 
   /** cols: header strings. rows/total: arrays of [value, className]. */
@@ -634,24 +678,15 @@
     const c = data.casino;
     const box = el("section", "pf-section pfs");
     const head = el("div", "pfs-head");
-    head.append(el("h2", null, `${data.season?.name || "Season"} · Picks`));
-    if (k.rank) head.append(el("span", "pfs-rank", `#${k.rank} of ${k.players}`));
+    head.append(el("h2", null, `${data.season?.name || "Season"} splits`));
     if (k.open) head.append(el("span", "pfs-open", `${k.open} open`));
     box.append(head);
+    /* No stat bar here any more: it was the header band's ten figures
+       over again, one screen apart. The tables' TOTAL rows carry the
+       season line, so the summary is said once at the top and the
+       detail once here. */
 
     const settled = k.wins + k.losses;
-    box.append(statBar([
-      ["GP", String(settled)],
-      ["W", String(k.wins)],
-      ["L", String(k.losses)],
-      ["PCT", pct3(k.wins, settled)],
-      ["STAKED", k.staked.toLocaleString()],
-      ["PROFIT", plusMinus(k.profit), tone(k.profit)],
-      ["ROI", roiOf(k.profit, k.staked), tone(k.profit)],
-      ["AVG", settled ? Math.round(k.staked / Math.max(1, k.total)).toLocaleString() : "—"],
-      ["STRK", k.streak.current > 0 ? `W${k.streak.current}` : k.streak.current < 0 ? `L${Math.abs(k.streak.current)}` : "—", tone(k.streak.current)],
-      ["LONG", k.streak.bestWin ? `W${k.streak.bestWin}` : "—"]
-    ]));
 
     const leagues = Object.entries(k.records || {})
       .map(([lg, r]) => ({ lg, staked: 0, ...r }))
@@ -747,35 +782,13 @@
     }
     copy.append(teamChip(u, look));
     if (look.player) copy.append(playerChip(look.player));
+    // The form guide is the one thing here that is nowhere else on the
+    // page, and it is what fills the column beside a tall card.
+    const form = formStrip(k.recent);
+    if (form) copy.append(form);
     head.append(copy);
 
-    /* The season's headline numbers as a band across the FOOT of the
-       header, under the card and the name both — value first, then the
-       label, the way a player page carries them. It ran up the right
-       column at first, where the card is far taller than the name and
-       the team chip, so a hole opened between them; full width it has
-       no column to be short of, and the six cells get 160px each. The
-       rest of the box score is the Overview's own stat sheet. */
-    const glance = el("div", "pf-statband");
-    glance.append(el("h2", null, `${data.season?.name || "Season"} stats`));
-    const keys = el("div", "pf-keys");
-    const keyCell = (value, label, note, cls) => {
-      const cell = el("div", "pf-key");
-      cell.append(el("b", cls ? `nums ${cls}` : "nums", value), el("span", null, label));
-      if (note) cell.append(el("small", null, note));
-      keys.append(cell);
-    };
-    const settledAll = k.wins + k.losses;
-    keyCell(k.rank ? `#${k.rank}` : "—", "Rank", k.rank ? `of ${k.players}` : "unranked", k.rank === 1 ? "gold" : "");
-    keyCell(`${k.wins}–${k.losses}`, "Record", k.open ? `${k.open} open` : `${k.total} all season`);
-    keyCell(pct3(k.wins, settledAll), "Win %", `${k.total} picks`);
-    keyCell(plusMinus(k.profit), "Profit", `${k.staked.toLocaleString()} staked`, tone(k.profit));
-    if (c?.total) keyCell(plusMinus(c.net), "Casino", `${c.total} play${c.total === 1 ? "" : "s"}`, tone(c.net));
-    keyCell(k.streak.current > 0 ? `W${k.streak.current}` : k.streak.current < 0 ? `L${Math.abs(k.streak.current)}` : "—", "Streak", k.streak.bestWin ? `best W${k.streak.bestWin}` : "", tone(k.streak.current));
-    glance.append(keys);
-    // No launchers under it: the tabs are right below the header and
-    // say the same thing.
-    head.append(glance);
+    head.append(statBand(data));
     wrap.append(head);
 
     // ---- the tabs

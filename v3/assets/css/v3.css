@@ -2287,17 +2287,30 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
    card, value first and the label under it, the way a player page
    carries them. Hairlines between cells, no boxes — the card is the
    only framed thing in the header. */
-.pf-statband{margin:16px 0 0}
-.pf-statband h2{margin:0 0 7px;font-family:var(--display);font-weight:800;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2)}
-.pf-keys{display:flex;flex-wrap:wrap;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.pf-key{flex:1 1 auto;padding:11px 14px 10px;border-right:1px solid var(--line);min-width:0}
-.pf-key:last-child{border-right:0}
-.pf-key b{display:block;font-family:var(--display);font-weight:800;font-size:1.42rem;line-height:1.05;letter-spacing:-.02em;white-space:nowrap;font-variant-numeric:tabular-nums}
-.pf-key b.up{color:var(--green)}
-.pf-key b.down{color:var(--red)}
-.pf-key b.gold{color:var(--gold)}
-.pf-key span{display:block;margin-top:3px;font-size:.58rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted-2)}
-.pf-key small{display:block;margin-top:2px;font-size:.7rem;color:var(--muted-2)}
+/* The season at a glance: a scoreboard strip along the foot of the
+   identity column, level with the bottom of the card. Cells are equal
+   and CENTRED — left-aligned in stretched cells left a ragged edge of
+   trailing space in every one of them. */
+.pf-band{padding-top:12px;border-top:1px solid var(--line)}
+.pf-band h2{margin:0 0 9px;font-family:var(--display);font-weight:800;font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted-2)}
+.pf-band-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr))}
+.pf-bandcell{padding:2px 8px;border-right:1px solid var(--line);text-align:center;min-width:0}
+.pf-bandcell:last-child{border-right:0}
+.pf-bandcell b{display:block;font-family:var(--display);font-weight:800;font-size:1.44rem;line-height:1.06;letter-spacing:-.02em;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pf-bandcell b i{font-style:normal;font-size:.6em;font-weight:700;color:var(--muted-2)}
+.pf-bandcell b.up{color:var(--green)}
+.pf-bandcell b.down{color:var(--red)}
+.pf-bandcell b.gold{color:var(--gold)}
+.pf-bandcell span{display:block;margin-top:5px;font-size:.57rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted-2)}
+
+/* The form guide — the last ten, newest first. */
+.pf-form{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:14px}
+.pf-form-k{font-size:.57rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted-2)}
+.pf-form-row{display:flex;gap:4px}
+.pf-form small{color:var(--muted-2);font-size:.68rem}
+.pf-pip{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:.67rem;font-weight:800;border:1px solid var(--line);background:var(--panel-2);color:var(--muted-2)}
+.pf-pip.w{color:var(--green);border-color:rgba(77,219,139,.4);background:var(--green-dim)}
+.pf-pip.l{color:var(--red);border-color:rgba(255,107,133,.38);background:var(--red-dim)}
 
 .pf-panel .gp-hls{margin-top:16px}
 @media (max-width:640px){.pf-quick{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -4400,13 +4413,15 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 .pf-head.has-tcard{
   display:grid;
   grid-template-columns:262px minmax(0,1fr);
-  grid-template-areas:"card copy" "band band";
-  gap:6px 22px;
+  grid-template-rows:1fr auto;
+  grid-template-areas:"card copy" "card band";
+  gap:14px 22px;
 }
-/* Centred against the card: the name and the chip are half the card's
-   height, so top-aligning them left a hole under the identity. */
-.pf-head.has-tcard .pf-copy{grid-area:copy;align-self:center}
-.pf-head.has-tcard .pf-statband{grid-area:band}
+.pf-head.has-tcard .pf-copy{grid-area:copy;align-self:start}
+/* Bottom of the column, level with the foot of the card: the strip is
+   the header's baseline, the way a player page sets its stats under
+   the name rather than beside it. */
+.pf-head.has-tcard .pf-band{grid-area:band;align-self:end}
 .pf-head.has-tcard .tc-case{grid-area:card;align-self:start}
 
 /* The case: a clear holder with a label strip, like a graded card. */
@@ -4584,7 +4599,8 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
   .pf-head.has-tcard .tc-case{width:100%;max-width:272px}
   .pf-head.has-tcard .pf-copy{justify-items:center;text-align:center;width:100%}
   .pf-head.has-tcard .pf-copy h1{justify-content:center}
-  .pf-head.has-tcard .pf-statband{width:100%}
+  .pf-head.has-tcard .pf-band{width:100%}
+  .pf-head.has-tcard .pf-form{justify-content:center}
 }
 
 /* Held while a route's script is on its way; no text, just the room. */
@@ -4789,22 +4805,14 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 @media (max-width:760px){.pf-customize{align-self:center}}
 
 /* ------------------------------------------------------------------
-   PROFILE STAT LINES — the Overview reads like a player page: a season
-   bar, then splits by league and by casino game with a total row.
+   PROFILE SPLITS — the Overview reads like the back of a card:
+   splits by league and by casino game, each with a total row. The
+   season summary itself is the header band, said once.
    Numbers are tabular so the columns line up like a box score.
 ------------------------------------------------------------------ */
 .pfs-head{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin:0 0 10px}
 .pfs-head h2{margin:0;font-family:var(--display);font-weight:800;font-size:1.02rem;letter-spacing:.02em;text-transform:uppercase}
-.pfs-rank,.pfs-open{padding:2px 9px;border-radius:999px;font-size:.66rem;font-weight:800;letter-spacing:.06em}
-.pfs-rank{border:1px solid rgba(var(--gold-rgb),.42);background:var(--gold-dim);color:var(--gold)}
-.pfs-open{border:1px solid var(--line);color:var(--muted-2)}
-.pfs-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(78px,1fr));border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}
-.pfs-cell{padding:11px 13px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:4px;min-width:0}
-.pfs-cell:last-child{border-right:0}
-.pfs-cell span{font-size:.57rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted-2)}
-.pfs-cell b{font-family:var(--display);font-weight:800;font-size:1.22rem;line-height:1;font-variant-numeric:tabular-nums}
-.pfs-cell b.up{color:var(--green)}
-.pfs-cell b.down{color:var(--red)}
+.pfs-open{padding:2px 9px;border-radius:999px;font-size:.66rem;font-weight:800;letter-spacing:.06em;border:1px solid var(--line);color:var(--muted-2)}
 .pfs-sub{margin:18px 0 8px;font-size:.62rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted-2)}
 .pfs-tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
 .pfs-table{width:100%;min-width:540px;border-collapse:collapse;font-size:.85rem;font-variant-numeric:tabular-nums}
@@ -4817,6 +4825,7 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 .pfs-table td.down{color:var(--red)}
 .pfs-table tr.tot td{border-top:2px solid var(--line-2);font-weight:800;background:rgba(255,255,255,.025)}
 @media (max-width:620px){
-  .pfs-cell{padding:9px 11px}
-  .pfs-cell b{font-size:1.06rem}
+  .pf-band-row{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:12px}
+  .pf-bandcell:nth-child(3n){border-right:0}
+  .pf-bandcell b{font-size:1.24rem}
 }
