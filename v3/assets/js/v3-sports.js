@@ -95,6 +95,10 @@
 
   const HIDDEN_SPORTS = new Set(["football", "motor-sports", "rugby", "cricket"]);
 
+  // 24/7 cartoon channels the provider lists beside the games (2026-09-16).
+  // Matched on the title, so a new one of these needs its name added here.
+  const HIDDEN_CHANNELS = /^\s*24\s*\/\s*7\s+(?:south\s*park|cows|family\s*guy|sponge\s*bob|the\s+simpsons|simpsons)\b/i;
+
   let d1Set = null;
   function divisionOne() {
     if (!d1Set && Array.isArray(window.EC_CFB_TEAMS?.d1)) d1Set = new Set(window.EC_CFB_TEAMS.d1);
@@ -111,6 +115,7 @@
   function keep(match) {
     const key = sportKey(match);
     if (HIDDEN_SPORTS.has(key)) return false;
+    if (HIDDEN_CHANNELS.test(String(match?.title || ""))) return false;
     if (key !== "american-football" || footballRank(match) !== 1) return true;
     const resolve = window.ECLogos?.collegeId;
     const d1 = divisionOne();
