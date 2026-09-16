@@ -402,8 +402,8 @@
     return a;
   }
   const LEAGUE_NAME = { NFL: "NFL", MLB: "MLB", CFB: "CFB", UFC: "UFC", BOXING: "Boxing", PROP: "Prop", NBA: "NBA", NHL: "NHL" };
-  const GAME_NAME = { flip: "Coin Flip", wheel: "Wheel", race: "Horse Race", hilo: "Higher or Lower", mines: "Mines", plinko: "Plinko", scratch: "Scratch-Off" };
-  const GAME_ICON = { flip: "🪙", wheel: "🎡", race: "🐎", hilo: "🃏", mines: "💣", plinko: "🎯", scratch: "🎟️" };
+  const GAME_NAME = { flip: "Coin Flip", wheel: "Wheel", race: "Horse Race", hilo: "Higher or Lower", mines: "Mines", plinko: "Plinko", scratch: "Scratch-Off", roulette: "Russian Roulette", standing: "Last One Standing" };
+  const GAME_ICON = { flip: "🪙", wheel: "🎡", race: "🐎", hilo: "🃏", mines: "💣", plinko: "🎯", scratch: "🎟️", roulette: "🔫", standing: "🏁" };
 
   function quickStat(label, value, note, tone) {
     const box = el("div", `pf-q${tone ? " " + tone : ""}`);
