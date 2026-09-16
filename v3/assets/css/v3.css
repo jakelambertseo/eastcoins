@@ -2287,6 +2287,20 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
    card, value first and the label under it, the way a player page
    carries them. Hairlines between cells, no boxes — the card is the
    only framed thing in the header. */
+/* Jump cards — three tiles that open a tab, each with a label, a
+   figure, a line of detail and "Open →". The PROFILE header used to
+   carry a pair of these and no longer does, but the DASHBOARD's
+   Overview still ends with three: deleting these rules with the
+   profile's rebuild left that row as raw inline text. It is the
+   dashboard's block now. */
+.pf-glance{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:16px 0 0}
+.pf-glance-card{text-align:left;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px 16px;color:inherit;font:inherit;cursor:pointer;transition:border-color .14s ease}
+.pf-glance-card:hover{border-color:rgba(var(--gold-rgb),.4)}
+.pf-glance-k{display:block;font-size:.66rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted-2);margin-bottom:6px}
+.pf-glance-card b{display:block;font-family:var(--display);font-weight:800;font-size:1.25rem;letter-spacing:-.02em}
+.pf-glance-card small{display:block;color:var(--muted);font-size:.8rem;margin-top:2px}
+.pf-glance-card em{display:block;font-style:normal;color:var(--gold);font-size:.74rem;font-weight:800;margin-top:8px}
+
 /* The season at a glance: a scoreboard strip along the foot of the
    identity column, level with the bottom of the card. Cells are equal
    and CENTRED — left-aligned in stretched cells left a ragged edge of
