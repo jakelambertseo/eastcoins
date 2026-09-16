@@ -1167,7 +1167,6 @@ body.mv-bare.chat-hidden .mv-restore{right:18px}
   font-size:.6rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
 }
 
-
 /* ------------------------------------------------------------
    Panel chrome. These rules were lost when the MultiView block
    was replaced, which left titles and chips rendering unstyled.
@@ -1235,7 +1234,6 @@ body.nav-hidden .navpeek{display:inline-flex}
 @media (prefers-reduced-motion:reduce){
   .mv-resizer,.mv-resizer::after,.mv-select select,.picker-row,.picker-logo img{transition:none}
 }
-
 
 /* ============================================================
    PICKS ADMIN
@@ -1371,7 +1369,6 @@ body.watch-on .view{
   50%{box-shadow:0 0 0 5px rgba(var(--gold-rgb),.3)}
 }
 @media (prefers-reduced-motion:reduce){.watchsel.nudge{animation:none}}
-
 
 /* Who's watching — the Green Room's pile of faces, in the player bar.
    Sits beside "← Events" and disappears entirely when nobody else is
@@ -2290,7 +2287,8 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
    card, value first and the label under it, the way a player page
    carries them. Hairlines between cells, no boxes — the card is the
    only framed thing in the header. */
-.pf-glance.stats{display:block;margin:16px 0 0}
+.pf-statband{margin:16px 0 0}
+.pf-statband h2{margin:0 0 7px;font-family:var(--display);font-weight:800;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2)}
 .pf-keys{display:flex;flex-wrap:wrap;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .pf-key{flex:1 1 auto;padding:11px 14px 10px;border-right:1px solid var(--line);min-width:0}
 .pf-key:last-child{border-right:0}
@@ -2300,9 +2298,7 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .pf-key b.gold{color:var(--gold)}
 .pf-key span{display:block;margin-top:3px;font-size:.58rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted-2)}
 .pf-key small{display:block;margin-top:2px;font-size:.7rem;color:var(--muted-2)}
-.pf-jump{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px}
-.pf-jumplink{border:0;background:none;padding:0;font:inherit;font-size:.78rem;font-weight:800;color:var(--gold);cursor:pointer}
-.pf-jumplink:hover{text-decoration:underline}
+
 .pf-panel .gp-hls{margin-top:16px}
 @media (max-width:640px){.pf-quick{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .pf-avatar{
@@ -2556,7 +2552,6 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .wh-av.has-logo{color:transparent}.wh-av.has-logo img{opacity:1}
 .wh-empty{color:var(--muted-2);font-size:.82rem}
 
-
 /* The admin page's headline strip and tabs, same parts as the Dashboard. */
 .adm-quick{grid-template-columns:repeat(6,minmax(0,1fr))}
 @media (max-width:1100px){.adm-quick{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -2597,7 +2592,6 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .db-winblock{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:13px 15px}
 .db-winblock h3{margin:0 0 10px;font-family:var(--display);font-weight:700;font-size:.94rem}
 .db-winblock .db-windows{margin:0}
-
 
 .dashboard{max-width:1100px}
 .db-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
@@ -3436,7 +3430,6 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .cas-rules ul{margin:0;padding-left:18px;color:var(--muted);font-size:.86rem;line-height:1.55}
 .cas-rules li{margin:4px 0}
 
-
 /* ============================================================
    Dashboard — the book
 
@@ -3561,7 +3554,6 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .mn-rung.next{background:var(--gold-dim)}
 .mn-rung.next strong{color:var(--gold)}
 
-
 /* ============================================================
    Casino — Plinko
 
@@ -3631,7 +3623,6 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
   .pk-bucket{padding:7px 0;letter-spacing:-.03em}
 }
 
-
 /* ============================================================
    Casino — louder wins, near misses, the tables' ticker, and the
    casino strip on profiles
@@ -3666,7 +3657,6 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 }
 
 .pf-quick-casino{margin-top:10px;padding-top:12px;border-top:1px dashed var(--line)}
-
 
 /* ============================================================
    Casino — the PvP tables (Russian Roulette, Last One Standing)
@@ -4410,12 +4400,13 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 .pf-head.has-tcard{
   display:grid;
   grid-template-columns:262px minmax(0,1fr);
-  grid-template-rows:1fr auto;
-  grid-template-areas:"card copy" "card glance";
-  gap:14px 22px;
+  grid-template-areas:"card copy" "band band";
+  gap:6px 22px;
 }
-.pf-head.has-tcard .pf-copy{grid-area:copy;align-self:start}
-.pf-head.has-tcard .pf-glance{grid-area:glance;align-self:end;margin:0}
+/* Centred against the card: the name and the chip are half the card's
+   height, so top-aligning them left a hole under the identity. */
+.pf-head.has-tcard .pf-copy{grid-area:copy;align-self:center}
+.pf-head.has-tcard .pf-statband{grid-area:band}
 .pf-head.has-tcard .tc-case{grid-area:card;align-self:start}
 
 /* The case: a clear holder with a label strip, like a graded card. */
@@ -4587,14 +4578,13 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
   .pf-head.has-tcard{
     grid-template-columns:minmax(0,1fr);
     grid-template-rows:auto;
-    grid-template-areas:"card" "copy" "glance";
+    grid-template-areas:"card" "copy" "band";
     justify-items:center;
   }
   .pf-head.has-tcard .tc-case{width:100%;max-width:272px}
   .pf-head.has-tcard .pf-copy{justify-items:center;text-align:center;width:100%}
   .pf-head.has-tcard .pf-copy h1{justify-content:center}
-  .pf-head.has-tcard .pf-glance{width:100%}
-  .pf-head.has-tcard .pf-jump{justify-content:center}
+  .pf-head.has-tcard .pf-statband{width:100%}
 }
 
 /* Held while a route's script is on its way; no text, just the room. */

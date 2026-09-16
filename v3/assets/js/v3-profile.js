@@ -749,13 +749,15 @@
     if (look.player) copy.append(playerChip(look.player));
     head.append(copy);
 
-    /* Beside the card: the season's headline numbers, the way a player
-       page carries them under the name — value first, then the label.
-       Six, and the section is wide enough (1000px) to keep them on one
-       row beside the card; the rest of the box score is the
-       Overview's own stat sheet. The two launcher cards that used to
-       sit here are now the small links under it. */
-    const glance = el("div", "pf-glance stats");
+    /* The season's headline numbers as a band across the FOOT of the
+       header, under the card and the name both — value first, then the
+       label, the way a player page carries them. It ran up the right
+       column at first, where the card is far taller than the name and
+       the team chip, so a hole opened between them; full width it has
+       no column to be short of, and the six cells get 160px each. The
+       rest of the box score is the Overview's own stat sheet. */
+    const glance = el("div", "pf-statband");
+    glance.append(el("h2", null, `${data.season?.name || "Season"} season`));
     const keys = el("div", "pf-keys");
     const keyCell = (value, label, note, cls) => {
       const cell = el("div", "pf-key");
@@ -771,19 +773,8 @@
     if (c?.total) keyCell(plusMinus(c.net), "Casino", `${c.total} play${c.total === 1 ? "" : "s"}`, tone(c.net));
     keyCell(k.streak.current > 0 ? `W${k.streak.current}` : k.streak.current < 0 ? `L${Math.abs(k.streak.current)}` : "—", "Streak", k.streak.bestWin ? `best W${k.streak.bestWin}` : "", tone(k.streak.current));
     glance.append(keys);
-
-    // The launchers stay, as links rather than cards: two boxes of
-    // numbers beside a stat rail said the same thing twice.
-    const jump = el("div", "pf-jump");
-    const jumpTo = (key, text) => {
-      const b = el("button", "pf-jumplink", text);
-      b.type = "button";
-      b.addEventListener("click", () => select(key, true));
-      jump.append(b);
-    };
-    jumpTo("picks", "Every pick →");
-    if (c?.total) jumpTo("casino", "Casino results →");
-    glance.append(jump);
+    // No launchers under it: the tabs are right below the header and
+    // say the same thing.
     head.append(glance);
     wrap.append(head);
 
