@@ -751,8 +751,8 @@
 
     /* Beside the card: the season's headline numbers, the way a player
        page carries them under the name — value first, then the label.
-       Six is the most that fits next to a 262px card without a cell
-       falling to one figure per row; the rest of the box score is the
+       Five is what fits beside a 262px card in one row — a sixth
+       wrapped a lone cell onto its own line; the rest of the box score is the
        Overview's own stat sheet. The two launcher cards that used to
        sit here are now the small links under it. */
     const glance = el("div", "pf-glance stats");
@@ -769,7 +769,6 @@
     keyCell(pct3(k.wins, settledAll), "Win %", `${k.total} picks`);
     keyCell(plusMinus(k.profit), "Profit", `${k.staked.toLocaleString()} staked`, tone(k.profit));
     if (c?.total) keyCell(plusMinus(c.net), "Casino", `${c.total} play${c.total === 1 ? "" : "s"}`, tone(c.net));
-    keyCell(k.streak.current > 0 ? `W${k.streak.current}` : k.streak.current < 0 ? `L${Math.abs(k.streak.current)}` : "—", "Streak", k.streak.bestWin ? `best W${k.streak.bestWin}` : "", tone(k.streak.current));
     glance.append(keys);
 
     // The launchers stay, as links rather than cards: two boxes of

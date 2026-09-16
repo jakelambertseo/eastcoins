@@ -2291,10 +2291,10 @@ a.ulink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
    carries them. Hairlines between cells, no boxes — the card is the
    only framed thing in the header. */
 .pf-glance.stats{display:block;margin:16px 0 0}
-.pf-keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.pf-key{padding:11px 14px 10px;border-right:1px solid var(--line);min-width:0}
+.pf-keys{display:flex;flex-wrap:wrap;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.pf-key{flex:1 1 auto;padding:11px 14px 10px;border-right:1px solid var(--line);min-width:0}
 .pf-key:last-child{border-right:0}
-.pf-key b{display:block;font-family:var(--display);font-weight:800;font-size:1.5rem;line-height:1.05;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.pf-key b{display:block;font-family:var(--display);font-weight:800;font-size:1.42rem;line-height:1.05;letter-spacing:-.02em;white-space:nowrap;font-variant-numeric:tabular-nums}
 .pf-key b.up{color:var(--green)}
 .pf-key b.down{color:var(--red)}
 .pf-key b.gold{color:var(--gold)}
