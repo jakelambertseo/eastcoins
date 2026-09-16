@@ -4820,11 +4820,12 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 }
 
 /* Profile: the owner's way into the store (2026-09-15), with a NEW tag. */
-.pf-customize{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;margin-top:10px;height:36px;padding:0 14px;border-radius:11px;border:1px solid rgba(var(--gold-rgb),.45);background:var(--gold-dim);color:var(--gold);font-weight:800;font-size:.86rem;text-decoration:none;transition:filter .14s ease,border-color .14s ease}
-.pf-customize:hover{filter:brightness(1.12);border-color:rgba(var(--gold-rgb),.7)}
-.pf-customize:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-.pf-customize .nav-tag{margin-left:0}
-@media (max-width:760px){.pf-customize{align-self:center}}
+/* In the mini nav with the other page links, so it takes that pill's
+   shape and keeps only its gold. */
+.pf-nav-link.pf-customize{border-color:rgba(var(--gold-rgb),.45);background:var(--gold-dim);color:var(--gold);font-weight:800}
+.pf-nav-link.pf-customize:hover{border-color:rgba(var(--gold-rgb),.75);background:rgba(var(--gold-rgb),.16);color:var(--gold)}
+.pf-nav-link.pf-customize:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.pf-nav-link.pf-customize .nav-tag{margin-left:0}
 
 /* ------------------------------------------------------------------
    PROFILE SPLITS — the Overview reads like the back of a card:

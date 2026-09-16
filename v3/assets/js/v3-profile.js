@@ -814,12 +814,6 @@
     copy.append(name);
     copy.append(el("p", null, `@${u.login}${u.since ? " · with EastCoin since " + when(u.since, { month: "short", year: "numeric" }) : ""}`));
     if (look.message) copy.append(el("p", "pf-msg", look.message));
-    // Only on your own page: the way into the store's looks.
-    if (isMine(u)) {
-      const custom = link("/?view=store", "pf-customize");
-      custom.append(document.createTextNode("🎨 Customize my profile"), el("span", "nav-tag", "NEW"));
-      copy.append(custom);
-    }
     copy.append(teamChip(u, look));
     if (look.player) copy.append(playerChip(look.player));
     // The form guide is the one thing here that is nowhere else on the
@@ -1007,6 +1001,14 @@
     );
     // Once EastCoin Wrapped has dropped, every profile links to its season.
     if (data?.wrappedOpen && data.user?.login) nav.append(link(`/wrapped/${encodeURIComponent(data.user.login)}`, "pf-nav-link", "🎁 Wrapped"));
+    // Only on your own page: the way into the store's looks. It sits
+    // with the other page links rather than in the identity block —
+    // it is navigation, not something the profile says about them.
+    if (data?.user && isMine(data.user)) {
+      const custom = link("/?view=store", "pf-nav-link pf-customize");
+      custom.append(document.createTextNode("🎨 Customize my profile"), el("span", "nav-tag", "NEW"));
+      nav.append(custom);
+    }
     return nav;
   }
 
