@@ -585,6 +585,124 @@
     return card;
   }
 
+  /* ---------------------------------------------------------- stat lines
+
+     The Overview reads like a player page on a sports site: a season
+     stat bar, then splits by league and by casino game with a TOTAL
+     row. Every figure is already in /api/picks/profile — the only
+     thing added for it was staked per league. */
+
+  const pct3 = (made, all) => (all ? (made / all).toFixed(3).replace(/^0\./, ".") : "—");
+  const plusMinus = (n) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(Math.round(Number(n) || 0)).toLocaleString()}`;
+  const roiOf = (profit, staked) => (staked ? `${profit > 0 ? "+" : profit < 0 ? "−" : ""}${Math.abs((100 * profit) / staked).toFixed(1)}%` : "—");
+  const tone = (n) => (n > 0 ? "up" : n < 0 ? "down" : "");
+
+  function statBar(cells) {
+    const bar = el("div", "pfs-bar");
+    for (const [label, value, cls] of cells) {
+      const box = el("div", "pfs-cell");
+      box.append(el("span", null, label), el("b", `nums${cls ? " " + cls : ""}`, value));
+      bar.append(box);
+    }
+    return bar;
+  }
+
+  /** cols: header strings. rows/total: arrays of [value, className]. */
+  function statTable(cols, rows, total) {
+    const wrap = el("div", "pfs-tablewrap");
+    const table = el("table", "pfs-table");
+    const head = el("tr");
+    cols.forEach((c, i) => head.append(el("th", i ? "n" : null, c)));
+    const thead = el("thead");
+    thead.append(head);
+    table.append(thead);
+    const body = el("tbody");
+    const line = (cells, cls) => {
+      const tr = el("tr", cls);
+      cells.forEach(([value, extra], i) => tr.append(el("td", i ? `n${extra ? " " + extra : ""}` : null, value)));
+      return tr;
+    };
+    for (const r of rows) body.append(line(r));
+    if (total) body.append(line(total, "tot"));
+    table.append(body);
+    wrap.append(table);
+    return wrap;
+  }
+
+  function seasonStats(data) {
+    const k = data.picks;
+    const c = data.casino;
+    const box = el("section", "pf-section pfs");
+    const head = el("div", "pfs-head");
+    head.append(el("h2", null, `${data.season?.name || "Season"} · Picks`));
+    if (k.rank) head.append(el("span", "pfs-rank", `#${k.rank} of ${k.players}`));
+    if (k.open) head.append(el("span", "pfs-open", `${k.open} open`));
+    box.append(head);
+
+    const settled = k.wins + k.losses;
+    box.append(statBar([
+      ["GP", String(settled)],
+      ["W", String(k.wins)],
+      ["L", String(k.losses)],
+      ["PCT", pct3(k.wins, settled)],
+      ["STAKED", k.staked.toLocaleString()],
+      ["PROFIT", plusMinus(k.profit), tone(k.profit)],
+      ["ROI", roiOf(k.profit, k.staked), tone(k.profit)],
+      ["AVG", settled ? Math.round(k.staked / Math.max(1, k.total)).toLocaleString() : "—"],
+      ["STRK", k.streak.current > 0 ? `W${k.streak.current}` : k.streak.current < 0 ? `L${Math.abs(k.streak.current)}` : "—", tone(k.streak.current)],
+      ["LONG", k.streak.bestWin ? `W${k.streak.bestWin}` : "—"]
+    ]));
+
+    const leagues = Object.entries(k.records || {})
+      .map(([lg, r]) => ({ lg, staked: 0, ...r }))
+      .sort((a, b) => (b.wins + b.losses) - (a.wins + a.losses));
+    if (leagues.length) {
+      box.append(el("h3", "pfs-sub", "Splits by league"));
+      box.append(statTable(
+        ["LG", "GP", "W", "L", "PCT", "STAKED", "PROFIT", "ROI"],
+        leagues.map((r) => [
+          [LEAGUE_NAME[r.lg] || r.lg],
+          [String(r.wins + r.losses)],
+          [String(r.wins)],
+          [String(r.losses)],
+          [pct3(r.wins, r.wins + r.losses)],
+          [r.staked.toLocaleString()],
+          [plusMinus(r.profit), tone(r.profit)],
+          [roiOf(r.profit, r.staked), tone(r.profit)]
+        ]),
+        [
+          ["Total"], [String(settled)], [String(k.wins)], [String(k.losses)], [pct3(k.wins, settled)],
+          [k.staked.toLocaleString()], [plusMinus(k.profit), tone(k.profit)], [roiOf(k.profit, k.staked), tone(k.profit)]
+        ]
+      ));
+    }
+
+    if (c?.total) {
+      box.append(el("h3", "pfs-sub", "Casino by game"));
+      const games = Object.entries(c.games || {})
+        .map(([game, g]) => ({ game, ...g }))
+        .sort((a, b) => b.plays - a.plays);
+      box.append(statTable(
+        ["GAME", "GP", "W", "L", "PCT", "STAKED", "NET", "ROI"],
+        games.map((g) => [
+          [`${GAME_ICON[g.game] || "🎰"} ${GAME_NAME[g.game] || g.game}`],
+          [String(g.plays)],
+          [String(g.wins)],
+          [String(g.losses)],
+          [pct3(g.wins, g.plays)],
+          [Number(g.staked || 0).toLocaleString()],
+          [plusMinus(g.net), tone(g.net)],
+          [roiOf(g.net, g.staked || 0), tone(g.net)]
+        ]),
+        [
+          ["Total"], [String(c.total)], [String(c.wins)], [String(c.losses)], [pct3(c.wins, c.total)],
+          [c.staked.toLocaleString()], [plusMinus(c.net), tone(c.net)], [roiOf(c.net, c.staked), tone(c.net)]
+        ]
+      ));
+    }
+    return box;
+  }
+
   function page(data, music) {
     const u = data.user;
     const k = data.picks;
@@ -675,6 +793,7 @@
 
     // ---- Overview: the bankroll, the highlights, and a glance at each tab
     const ov = panels.overview;
+    if (k.total || c?.total) ov.append(seasonStats(data));
     if (data.bankroll?.points?.length > 1) ov.append(bankrollSection(data.bankroll));
     if (k.biggestWin || k.worstBeat) {
       const hls = el("div", "gp-hls");

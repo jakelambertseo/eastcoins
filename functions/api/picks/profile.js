@@ -94,9 +94,11 @@ export async function onRequestGet(context) {
   const records = {};
   for (const p of settled) {
     const key = String(p.league || "OTHER").toUpperCase();
-    const r = records[key] || (records[key] = { wins: 0, losses: 0, profit: 0 });
+    const r = records[key] || (records[key] = { wins: 0, losses: 0, profit: 0, staked: 0 });
     if (p.status === "WON") r.wins += 1; else r.losses += 1;
     r.profit += Number(p.profit || 0);
+    // Staked per league, so the profile can show a return on it.
+    r.staked += Number(p.wager || 0);
   }
   const profit = settled.reduce((n, p) => n + Number(p.profit || 0), 0);
   const staked = picks.filter((p) => p.status !== "REFUNDED").reduce((n, p) => n + Number(p.wager), 0);

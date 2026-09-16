@@ -4786,3 +4786,36 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 .pf-customize:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .pf-customize .nav-tag{margin-left:0}
 @media (max-width:760px){.pf-customize{align-self:center}}
+
+/* ------------------------------------------------------------------
+   PROFILE STAT LINES — the Overview reads like a player page: a season
+   bar, then splits by league and by casino game with a total row.
+   Numbers are tabular so the columns line up like a box score.
+------------------------------------------------------------------ */
+.pfs-head{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin:0 0 10px}
+.pfs-head h2{margin:0;font-family:var(--display);font-weight:800;font-size:1.02rem;letter-spacing:.02em;text-transform:uppercase}
+.pfs-rank,.pfs-open{padding:2px 9px;border-radius:999px;font-size:.66rem;font-weight:800;letter-spacing:.06em}
+.pfs-rank{border:1px solid rgba(var(--gold-rgb),.42);background:var(--gold-dim);color:var(--gold)}
+.pfs-open{border:1px solid var(--line);color:var(--muted-2)}
+.pfs-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(78px,1fr));border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}
+.pfs-cell{padding:11px 13px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:4px;min-width:0}
+.pfs-cell:last-child{border-right:0}
+.pfs-cell span{font-size:.57rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted-2)}
+.pfs-cell b{font-family:var(--display);font-weight:800;font-size:1.22rem;line-height:1;font-variant-numeric:tabular-nums}
+.pfs-cell b.up{color:var(--green)}
+.pfs-cell b.down{color:var(--red)}
+.pfs-sub{margin:18px 0 8px;font-size:.62rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted-2)}
+.pfs-tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.pfs-table{width:100%;min-width:540px;border-collapse:collapse;font-size:.85rem;font-variant-numeric:tabular-nums}
+.pfs-table th{padding:9px 12px;text-align:left;font-size:.57rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);background:var(--panel-2);border-bottom:1px solid var(--line);white-space:nowrap}
+.pfs-table th.n,.pfs-table td.n{text-align:right}
+.pfs-table td{padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.pfs-table tbody tr:last-child td{border-bottom:0}
+.pfs-table td:first-child{font-weight:700}
+.pfs-table td.up{color:var(--green)}
+.pfs-table td.down{color:var(--red)}
+.pfs-table tr.tot td{border-top:2px solid var(--line-2);font-weight:800;background:rgba(255,255,255,.025)}
+@media (max-width:620px){
+  .pfs-cell{padding:9px 11px}
+  .pfs-cell b{font-size:1.06rem}
+}
