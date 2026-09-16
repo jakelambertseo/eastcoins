@@ -4984,7 +4984,7 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 @media (prefers-reduced-motion:reduce){.grd-chip.in,.grd-tray.ok,.grd-tray.bad{animation:none}.grd-lock i{animation:none!important}}
 
 /* The Grind's sign on the door: a tilted gold sticker with a red edge. */
-.grd-poor{display:inline-flex;align-items:center;gap:6px;margin:10px 0 4px;padding:7px 14px 7px 12px;border-radius:10px;
+.grd-poor{display:inline-flex;align-items:center;gap:6px;margin:10px 0 16px;padding:7px 14px 7px 12px;border-radius:10px;
   background:linear-gradient(180deg,#ffd84d,#f0b429);color:#2a1300;border:2px solid #c8203a;
   font-family:var(--display);font-weight:800;font-size:1.05rem;letter-spacing:.01em;line-height:1;
   transform:rotate(-2deg);box-shadow:0 6px 0 rgba(200,32,58,.45),0 12px 26px rgba(240,180,41,.28);animation:grd-poor 2.4s ease-in-out infinite}
