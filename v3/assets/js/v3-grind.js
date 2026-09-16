@@ -262,7 +262,18 @@
 
     const head = K.el("div", "viewhead");
     const copy = K.el("div");
-    copy.append(K.el("h1", null, "The Grind"),
+    // The sign on the door, loud on purpose.
+    const poor = K.el("div", "grd-poor");
+    const coin = document.createElement("img");
+    coin.className = "zcoin-mark";
+    coin.src = "/v3/assets/img/zcoin.webp";
+    coin.alt = "ZCoin";
+    coin.width = 18;
+    coin.height = 18;
+    const line = K.el("span", "grd-poor-line");
+    line.append(document.createTextNode(`(<${cfg().brokeLine} `), coin, document.createTextNode(")"));
+    poor.append(K.el("b", null, "Only for poors!"), line);
+    copy.append(K.el("h1", null, "The Grind"), poor,
       K.el("p", null, `Broke? Pick up a shift. Clock in for ${DEFAULT_JOBS.clicks.pay} ZC, or sort chips for ${DEFAULT_JOBS.sort.pay} if you can stand it. One shift of each an hour, for anyone under ${cfg().brokeLine} — a way back to the tables, not a job.`));
     head.append(copy);
     const right = K.el("div", "cas-headright");
