@@ -10,6 +10,7 @@ import { ensureHilo } from "./hilo/_hilo.js";
 import { ensureMines } from "./mines/_mines.js";
 import { ensurePlinko } from "./plinko/_plinko.js";
 import { ensureScratch } from "./scratch/_scratch.js";
+import { ensureGrind } from "./grind/_grind.js";
 import { ensurePvp, settleDue as settlePvp, GAMES as PVP, lobbyFor as pvpLobby, entriesFor as pvpEntries, STAKE as PVP_STAKE, lobbyMsFor as pvpLobbyMs } from "./pvp/_pvp.js";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
@@ -83,6 +84,15 @@ export async function onRequestGet(context) {
     people("casino_presence", "scratch")
   ]);
   games.push({ key: "scratch", name: "Scratch-Off", route: "scratch", round: null, inRound: 0, staked: 0, room: Number(scratchRoom?.n || 0), people: scratchPeople });
+
+  // The Grind is work, not a bet: no round, no stake — just who is on shift.
+  await ensureGrind(db).catch(() => {});
+  const [grindWorking, grindRoom, grindPeople] = await Promise.all([
+    db.prepare(`SELECT COUNT(*) AS n FROM grind_shifts WHERE status = 'WORKING' AND updated_at >= datetime('now', '-10 minutes')`).first().catch(() => null),
+    db.prepare(`SELECT COUNT(*) AS n FROM casino_presence WHERE game = 'grind' AND seen_at >= ?`).bind(since).first().catch(() => null),
+    people("casino_presence", "grind")
+  ]);
+  games.push({ key: "grind", name: "The Grind", route: "grind", round: null, inRound: Number(grindWorking?.n || 0), staked: 0, room: Number(grindRoom?.n || 0), people: grindPeople, work: true });
 
   // The PvP tables. The floor is polled far more widely than either
   // table's own page, so settling here is what pays a round whose

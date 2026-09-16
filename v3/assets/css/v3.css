@@ -4885,3 +4885,48 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
   .pf-bandcell:nth-child(3n){border-right:0}
   .pf-bandcell b{font-size:1.24rem}
 }
+
+/* ------------------------------------------------------------------
+   THE GRIND — work a shift. One big button that has to feel good the
+   hundredth time: it squashes on every press and throws a "+1" off,
+   and the bar under it fills toward payday.
+------------------------------------------------------------------ */
+.cas-card.cas-grind{--card-rgb:120,98,62}
+.grd-stage{display:flex;flex-direction:column;gap:14px}
+.grd-shop{align-self:stretch;width:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:22px;padding:26px 16px 22px;border:1px solid var(--line);border-radius:var(--radius);
+  background:radial-gradient(120% 90% at 50% 0%,rgba(var(--gold-rgb),.10),transparent 60%),var(--panel)}
+.grd-btnwrap{position:relative;display:grid;place-items:center}
+.grd-btn{position:relative;width:196px;height:196px;border-radius:50%;border:0;cursor:pointer;color:#1b1206;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  background:radial-gradient(circle at 35% 30%,#ffe9a3,var(--gold) 52%,#a8741a);
+  box-shadow:inset 0 -8px 0 rgba(0,0,0,.22),inset 0 3px 0 rgba(255,255,255,.45),0 10px 0 #6f4a0e,0 18px 34px rgba(0,0,0,.45);
+  transition:transform .06s ease,box-shadow .06s ease,filter .2s ease;-webkit-tap-highlight-color:transparent;user-select:none;touch-action:manipulation}
+.grd-btn b{font-family:var(--display);font-weight:800;font-size:2rem;letter-spacing:.02em;text-transform:uppercase;line-height:1;font-variant-numeric:tabular-nums}
+.grd-btn small{font-size:.72rem;font-weight:800;letter-spacing:.06em;opacity:.78}
+.grd-btn:hover:not(:disabled){filter:brightness(1.05)}
+.grd-btn:active:not(:disabled),.grd-btn.hit{transform:translateY(6px) scale(.985);box-shadow:inset 0 -4px 0 rgba(0,0,0,.22),inset 0 3px 0 rgba(255,255,255,.45),0 4px 0 #6f4a0e,0 8px 18px rgba(0,0,0,.45)}
+.grd-btn.hit{animation:grd-hit .12s ease-out}
+.grd-btn:focus-visible{outline:3px solid var(--gold);outline-offset:6px}
+.grd-btn:disabled{cursor:default}
+.grd-btn.resting{background:radial-gradient(circle at 35% 30%,#4a4238,#2d2822 60%,#1e1a16);color:var(--muted);
+  box-shadow:inset 0 -8px 0 rgba(0,0,0,.3),inset 0 2px 0 rgba(255,255,255,.08),0 10px 0 #120f0c,0 18px 34px rgba(0,0,0,.4)}
+.grd-btn.resting b{font-size:1.7rem}
+@keyframes grd-hit{from{transform:translateY(6px) scale(.97)}to{transform:none}}
+.grd-floaters{position:absolute;inset:0;pointer-events:none}
+.grd-float{position:absolute;left:50%;top:18%;font-family:var(--display);font-weight:800;font-size:1.05rem;color:var(--gold);text-shadow:0 2px 8px rgba(0,0,0,.6);
+  transform:translate(-50%,0);animation:grd-float .7s ease-out forwards}
+@keyframes grd-float{to{transform:translate(calc(-50% + var(--dx,0px)),-70px);opacity:0}}
+.grd-meter{width:min(420px,100%)}
+.grd-bar{height:14px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);overflow:hidden}
+.grd-fill{display:block;height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,#a8741a,var(--gold));transition:width .12s ease-out}
+.grd-meterline{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px;font-size:.82rem;color:var(--muted-2)}
+.grd-meterline b{font-family:var(--display);font-size:1.1rem;color:var(--text)}
+.grd-pay{display:inline-flex;align-items:center;gap:5px;font-weight:800;color:var(--gold)}
+.grd-note{text-align:center}
+/* .hl-stat span is the LABEL rule, and it also caught the coin amount inside
+   a stat value — on Hi-Lo's Net row as well as here. */
+.hl-stat strong .zc-amount{display:inline-flex;margin:0;font:inherit;color:inherit;letter-spacing:inherit;text-transform:none}
+.grd-rules{margin:0;padding-left:18px;color:var(--muted);font-size:.84rem;line-height:1.55}
+.grd-rules li + li{margin-top:4px}
+@media (max-width:620px){.grd-btn{width:168px;height:168px}.grd-btn b{font-size:1.7rem}}
+@media (prefers-reduced-motion:reduce){.grd-btn,.grd-fill{transition:none}.grd-btn.hit{animation:none}.grd-float{animation:none;opacity:0}}

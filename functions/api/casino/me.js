@@ -14,6 +14,7 @@ import { gamesLastHour as minesPlays } from "./mines/_mines.js";
 import { dropsLastHour as plinkoPlays } from "./plinko/_plinko.js";
 import { cardsLastHour as scratchPlays } from "./scratch/_scratch.js";
 import { GAMES as PVP, joinsLastHour as pvpPlays } from "./pvp/_pvp.js";
+import { ensureGrind, nextShiftAt, workingShift } from "./grind/_grind.js";
 import { getSessionUser } from "../picks/_lib.js";
 
 export async function onRequestGet(context) {
@@ -66,6 +67,13 @@ export async function onRequestGet(context) {
         hourNet: n(hourNet), hourCap: HOUR_WIN_CAP,
         playsCap: MAX_BETS_PER_HOUR, played
       };
+      // The Grind has no plays: a shift is either open, being worked, or
+      // resting until an hour after the last one.
+      try {
+        await ensureGrind(db);
+        const [next, working] = await Promise.all([nextShiftAt(db, uid), workingShift(db, uid)]);
+        me.grind = { nextShiftAt: next ? new Date(next).toISOString() : null, working: Boolean(working) };
+      } catch { me.grind = null; }
     }
   } catch { me = null; }
 

@@ -49,7 +49,7 @@
   // had a chance to register. An unknown name still falls back.
   // "game" is the /g/<slug> page chat links to. It is a route, not a nav
   // item: the only way in is a link.
-  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre", "wrapped", "highlights", "store"];
+  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "grind", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre", "wrapped", "highlights", "store"];
 
   /* ------------------------------------------------------ loading views
 
@@ -89,7 +89,7 @@
     verify: ["v3-verify.js"],
     casino: [...KIT, "v3-activity.js", "v3-casino.js"],
     flip: [...KIT, "v3-coin.js"], wheel: [...KIT, "v3-wheel.js"], race: [...KIT, "v3-race.js"],
-    hilo: [...KIT, "v3-hilo.js"], mines: [...KIT, "v3-mines.js"], plinko: [...KIT, "v3-plinko.js"], scratch: [...KIT, "v3-scratch.js"],
+    hilo: [...KIT, "v3-hilo.js"], mines: [...KIT, "v3-mines.js"], plinko: [...KIT, "v3-plinko.js"], scratch: [...KIT, "v3-scratch.js"], grind: [...KIT, "v3-grind.js"],
     roulette: [...KIT, "v3-pvp.js"], standing: [...KIT, "v3-pvp.js"],
     games: [...KIT, "v3-games.js"], helmet: [...KIT, ...LOGOS, "v3-helmet.js"], fg: [...KIT, "v3-fg.js"], simon: [...KIT, "v3-simon.js"], centre: [...KIT, "v3-centre.js"]
   };
@@ -108,7 +108,7 @@
     casino: ["The casino is for members", "Log in with Twitch to play with your ZCoins."],
     store: ["The store is for members", "Log in with Twitch to spend your ZCoins on your card and profile."]
   };
-  for (const room of ["flip", "wheel", "race", "hilo", "mines", "plinko", "scratch", "roulette", "standing"]) MEMBERS_ONLY[room] = MEMBERS_ONLY.casino;
+  for (const room of ["flip", "wheel", "race", "hilo", "mines", "plinko", "scratch", "grind", "roulette", "standing"]) MEMBERS_ONLY[room] = MEMBERS_ONLY.casino;
 
   function memberGate(route) {
     const [title, line] = MEMBERS_ONLY[route];
@@ -292,7 +292,7 @@
     events: "EastCoin — Sports", music: "The Green Room — EastCoin", screen: "Movies & TV — EastCoin",
     multiview: "MultiView — EastCoin", picks: "Picks — EastCoin", casino: "Casino — EastCoin",
     flip: "Coin Flip — EastCoin Casino", wheel: "Wheel — EastCoin Casino", race: "Horse Race — EastCoin Casino",
-    hilo: "Higher or Lower — EastCoin Casino", mines: "Mines — EastCoin Casino", plinko: "Plinko — EastCoin Casino", scratch: "Scratch-Off — EastCoin Casino", users: "All Users — EastCoin", activity: "Activity — EastCoin",
+    hilo: "Higher or Lower — EastCoin Casino", mines: "Mines — EastCoin Casino", plinko: "Plinko — EastCoin Casino", scratch: "Scratch-Off — EastCoin Casino", grind: "The Grind — EastCoin Casino", users: "All Users — EastCoin", activity: "Activity — EastCoin",
     roulette: "Russian Roulette - PVP — EastCoin Casino", standing: "Last One Standing - PVP — EastCoin Casino", verify: "Check a seed — EastCoin Casino",
     games: "Game Room — EastCoin", helmet: "Helmet Zoom — EastCoin", fg: "Field Goal — EastCoin",
     simon: "Simon — EastCoin", centre: "Dead Centre — EastCoin",

@@ -34,6 +34,7 @@
     mines: { title: "Mines", icon: "💣", blurb: "Twenty-five tiles, a few of them bombs. Every safe one pays more; cash out before you find one.", route: "mines" },
     plinko: { title: "Plinko", icon: "🎯", blurb: "Drop a ball through the pegs. Every bucket but the middle pays; the edges pay 25×.", route: "plinko" },
     scratch: { title: "Scratch-Off", icon: "🎟️", blurb: "Rub the foil off. Three of a kind pays, from money back on coins to 100× on crowns.", route: "scratch" },
+    grind: { title: "The Grind", icon: "🔨", blurb: "Broke? Put in a shift: a hundred clicks pays 10 ZC. One shift an hour, for anyone under 50.", route: "grind" },
     roulette: { title: "Russian Roulette - PVP", iconUrl: "https://cdn.7tv.app/emote/01G1FDHE4R0005G1MWWMPGSX71/1x.webp", icon: "🔫", blurb: "Everyone puts in 20. One live round. Whoever it fires on pays the rest.", route: "roulette" },
     standing: { title: "Last One Standing - PVP", icon: "🏆", blurb: "Everyone puts in 20. One knocked out at a time; the last one takes the lot.", route: "standing", hidden: true }
   };
@@ -338,6 +339,9 @@
         phase = inBets ? "Bets open" : g.key === "race" ? "Running" : g.key === "wheel" ? "Spinning" : "Result";
         clock = `${left}s`;
         hot = inBets;
+      } else if (g.work) {
+        phase = g.inRound ? `${g.inRound} on shift` : "Clock in any time";
+        hot = Boolean(g.inRound);
       } else if (g.pvp) {
         if (g.lobby) {
           const left = Math.max(0, Math.ceil((g.lobby.startsAt - now) / 1000));
@@ -356,7 +360,18 @@
       r.clock.textContent = clock;
 
       const cap = Number(data.me?.playsCap || 0);
-      if (cap && data.me?.played) {
+      if (g.work) {
+        // Not plays: whether a shift is open, and if not, when it will be.
+        const gr = data.me?.grind;
+        const at = gr?.nextShiftAt ? Date.parse(gr.nextShiftAt) : 0;
+        r.plays.hidden = !gr;
+        if (gr) {
+          const mins = at > now ? Math.ceil((at - now) / 60000) : 0;
+          r.plays.textContent = gr.working ? "On a shift" : mins ? `Next shift in ${mins}m` : "Shift open";
+          r.plays.classList.toggle("out", Boolean(mins) && !gr.working);
+          r.plays.title = mins ? "One shift an hour, counted from when your last one finished." : "For anyone under 50 ZC.";
+        }
+      } else if (cap && data.me?.played) {
         const left = Math.max(0, cap - Number(data.me.played[g.key] || 0));
         r.plays.hidden = false;
         // Short on purpose: the long form ran to the exact width of a
