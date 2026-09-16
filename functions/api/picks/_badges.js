@@ -35,13 +35,13 @@
    ============================================================ */
 
 import { readBalance } from "./_lib.js";
+import { musicRoomUrl } from "../_config.js";
 
 const CACHE_URL = "https://eastcoin-picks.internal/badges/v2";
 const CACHE_TTL_S = 60;
 const DAY_MS = 24 * 3600 * 1000;
 const WEEK_MS = 7 * DAY_MS;
 const MONTH_MS = 30 * DAY_MS;
-const DEFAULT_MUSIC_ROOM = "https://eastcoin-music-room.jake-7f5.workers.dev";
 
 const BROKE_CEILING = 10;      // 💸 clears once the wallet is above this
 const REGULAR_REQUESTS = 50;   // 🎸
@@ -82,7 +82,7 @@ export async function ensureBadgeExtras(db) {
 /* ---------------------------------------------------------- Green Room */
 
 async function musicRoom(env) {
-  const base = String(env.MUSIC_ROOM_URL || DEFAULT_MUSIC_ROOM).trim().replace(/\/$/, "");
+  const base = musicRoomUrl(env);
   if (!base) return null;
   try {
     const response = await fetch(`${base}/history/main`, { cf: { cacheTtl: 120, cacheEverything: true } });

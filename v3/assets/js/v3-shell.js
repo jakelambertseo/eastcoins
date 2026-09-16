@@ -545,7 +545,6 @@
     if (chatMounted) return;
     chatMounted = true;
     chatMountedAt = Date.now();
-    els.chatFrame.src = els.chatFrame.dataset.src;
     // The frame stays display:none while Twitch loads and the placeholder
     // holds the rail; the two swap in the same instant once the frame has
     // loaded (or after five seconds regardless, so a slow embed cannot
@@ -560,8 +559,27 @@
       els.chatFrame.hidden = false;
       els.chatPlaceholder?.remove();
     };
-    els.chatFrame.addEventListener("load", reveal, { once: true });
-    window.setTimeout(reveal, 5000);
+
+    // Which channel is a deployment's choice now (TWITCH_CHAT_CHANNEL,
+    // via /api/config), and eastcoins-config.js writes the answer into
+    // data-src. Loading what the HTML shipped with and swapping on
+    // arrival would mount one channel's chat only to throw it away, so
+    // wait for the answer instead — a same-origin fetch that has been in
+    // flight since the first script on the page. It resolves even when it
+    // fails, in which case data-src is what the HTML said and chat mounts
+    // exactly as it always did.
+    // The swap is armed here, not at mount, for the same reason: the five
+    // seconds are meant to measure a slow embed, not a slow /api/config.
+    const load = () => {
+      // Hidden again while we waited: unmountChat() already had its say.
+      if (!chatMounted) return;
+      els.chatFrame.src = els.chatFrame.dataset.src;
+      chatMountedAt = Date.now();
+      els.chatFrame.addEventListener("load", reveal, { once: true });
+      window.setTimeout(reveal, 5000);
+    };
+    if (window.ECConfig?.ready) window.ECConfig.ready.then(load);
+    else load();
 
     if (!chatWatchdog) {
       chatWatchdog = window.setInterval(chatWatchdogTick, 60000);
