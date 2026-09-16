@@ -34,7 +34,7 @@
     mines: { title: "Mines", icon: "💣", blurb: "Twenty-five tiles, a few of them bombs. Every safe one pays more; cash out before you find one.", route: "mines" },
     plinko: { title: "Plinko", icon: "🎯", blurb: "Drop a ball through the pegs. Every bucket but the middle pays; the edges pay 25×.", route: "plinko" },
     scratch: { title: "Scratch-Off", icon: "🎟️", blurb: "Rub the foil off. Three of a kind pays, from money back on coins to 100× on crowns.", route: "scratch" },
-    grind: { title: "The Grind", icon: "🔨", blurb: "Broke? Put in a shift: 100 clicks pays 10 ZC, sorting 150 chips pays 15. One shift of each an hour, for anyone under 50.", route: "grind" },
+    grind: { title: "The Grind", icon: "🔨", blurb: "Broke? Put in a shift: 100 clicks pays 10 ZC, sorting 75 chips pays 15. One shift of each an hour, for anyone under 50.", route: "grind" },
     roulette: { title: "Russian Roulette - PVP", iconUrl: "https://cdn.7tv.app/emote/01G1FDHE4R0005G1MWWMPGSX71/1x.webp", icon: "🔫", blurb: "Everyone puts in 20. One live round. Whoever it fires on pays the rest.", route: "roulette" },
     standing: { title: "Last One Standing - PVP", icon: "🏆", blurb: "Everyone puts in 20. One knocked out at a time; the last one takes the lot.", route: "standing", hidden: true }
   };

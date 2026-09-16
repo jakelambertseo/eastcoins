@@ -7,7 +7,7 @@
    job, once an hour each:
 
      Clock in        press one button a hundred times — 10 ZC
-     Sort the Chips  put 150 chips in the tray for their suit — 15 ZC
+     Sort the Chips  put 75 chips in the tray for their suit — 15 ZC
 
    The server does the counting for both. Clicks are counted here the
    moment they happen so the bar feels instant and handed in in small
@@ -26,7 +26,7 @@
   const SUIT_NAMES = ["spades", "hearts", "diamonds", "clubs"];
   const DEFAULT_JOBS = {
     clicks: { key: "clicks", name: "Clock in", units: 100, unitName: "clicks", pay: 10, msPerUnit: 120, batchMax: 25 },
-    sort: { key: "sort", name: "Sort the Chips", units: 150, unitName: "chips", pay: 15, msPerUnit: 300, penaltyMs: 1000 }
+    sort: { key: "sort", name: "Sort the Chips", units: 75, unitName: "chips", pay: 15, msPerUnit: 300, penaltyMs: 1000 }
   };
 
   let root = null;
@@ -104,7 +104,7 @@
       setJobState(k, { shift: payload.shift });
       if (payload.balance != null) { data.me.balance = payload.balance; data.me.eligible = true; }
       lastSortAt = Date.now();
-      toast(k === "sort" ? "Belt's running. 150 chips and it's payday." : "Clocked in. A hundred and it's payday.");
+      toast(k === "sort" ? `Belt's running. ${jobCfg("sort").units} chips and it's payday.` : "Clocked in. A hundred and it's payday.");
     } finally { busy = false; if (data) render(); }
   }
 
@@ -225,7 +225,7 @@
           setJobState("sort", { shift: null, nextShiftAt: payload.nextShiftAt || null });
           render();
           if (payload.balance != null) window.ECV3?.setWallet?.(payload.balance);
-          pop({ won: true, big: false, amount: payload.payout, headline: "Payday", detail: `150 chips sorted, ${fmt(payload.payout)} ZC. Next shift in ${cfg().cooldownMinutes} minutes.` });
+          pop({ won: true, big: false, amount: payload.payout, headline: "Payday", detail: `${jobCfg("sort").units} chips sorted, ${fmt(payload.payout)} ZC. Next shift in ${cfg().cooldownMinutes} minutes.` });
           window.ECV3?.refreshSession?.();
           await load({ balance: true });
         }

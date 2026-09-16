@@ -8,10 +8,11 @@
 
      clicks   "Clock in" — press one button 100 times. Pays 10.
      sort     "Sort the Chips" — a chip comes down the belt marked
-              ♠ ♥ ♦ or ♣; put it in the matching tray. 150 of them.
+              ♠ ♥ ♦ or ♣; put it in the matching tray. 75 of them
+              (150 until 2026-09-16 night).
               A wrong tray costs a second's recount. Pays 15, because
-              it is far duller: every chip is a decision, about two
-              minutes of them.
+              it is far duller: every chip is a decision, about a
+              minute of them.
 
    The jobs keep their own clocks, so both can be worked in the same
    hour (25 ZC). To make them share one shift an hour instead, make
@@ -49,7 +50,7 @@ export const SHIFT_COOLDOWN_MS = 60 * 60 * 1000;
 
 export const JOBS = {
   clicks: { key: "clicks", name: "Clock in", units: 100, unitName: "clicks", pay: 10, msPerUnit: 120, batchMax: 25 },
-  sort: { key: "sort", name: "Sort the Chips", units: 150, unitName: "chips", pay: 15, msPerUnit: 300, penaltyMs: 1000 }
+  sort: { key: "sort", name: "Sort the Chips", units: 75, unitName: "chips", pay: 15, msPerUnit: 300, penaltyMs: 1000 }
 };
 export const jobOf = (key) => JOBS[String(key || "clicks")] || null;
 
