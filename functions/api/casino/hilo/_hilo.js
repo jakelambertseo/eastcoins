@@ -112,7 +112,11 @@ export function publicGame(g, { revealSeed = false } = {}) {
     step: calls.length,
     rights: rightsOf(calls),
     pushes: calls.filter((c) => c && c.push).length,
-    cards: cards.map((c) => ({ rank: c.rank, label: RANKS[c.rank - 1], suit: SUITS[c.suit] })),
+    // A suit is stored as its index (0-3). Runs dealt before 2026-09-16
+    // stored every card after the first as the SYMBOL instead, and this
+    // line only understood the index — so those cards reached the page
+    // with no suit, and a J♠ and a J♦ drew as the same black "J".
+    cards: cards.map((c) => ({ rank: c.rank, label: RANKS[c.rank - 1], suit: typeof c.suit === "number" ? SUITS[c.suit] : SUITS.includes(c.suit) ? c.suit : "" })),
     calls,
     odds: g.status === "LIVE" && current ? oddsFrom(current.rank) : null,
     hash: g.hash,

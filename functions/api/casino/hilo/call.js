@@ -37,10 +37,13 @@ export async function onRequestPost(context) {
   if (!price) return fail("IMPOSSIBLE_CALL", call === "higher" ? "Nothing beats a king." : "Nothing sits under an ace.");
 
   const drawn = await cardAt(g.seed, cards.length);
+  // Stored like the first card (the suit as its index); the reply carries
+  // the label and symbol the page draws.
   const next = { rank: drawn.rank, label: RANKS[drawn.rank - 1], suit: SUITS[drawn.suit] };
+  const stored = { rank: drawn.rank, suit: drawn.suit };
   const push = next.rank === current.rank;
   const won = !push && (call === "higher" ? next.rank > current.rank : next.rank < current.rank);
-  const newCards = [...cards, next];
+  const newCards = [...cards, stored];
   const newCalls = [...calls, push ? { call, price, won: false, push: true } : { call, price, won }];
 
   if (push) {
