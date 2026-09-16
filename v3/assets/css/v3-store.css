@@ -1,0 +1,132 @@
+/* ============================================================
+   EASTCOIN STORE (2026-09-15) — linked by v3-store.js only.
+   The cosmetics themselves (finishes, name colours, banners, the foil
+   label) live in v3.css, because profiles draw them too.
+   ============================================================ */
+.st{display:flex;flex-direction:column;gap:18px;min-width:0}
+.st-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.st-wallet{display:flex;flex-direction:column;align-items:flex-end;gap:2px;padding:10px 14px;border-radius:14px;border:1px solid rgba(var(--gold-rgb),.35);background:var(--gold-dim)}
+.st-wallet > span:first-child{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.st-wallet .st-coins{font-family:var(--display);font-weight:800;font-size:1.35rem;color:var(--gold)}
+.st-coins{display:inline-flex;align-items:center;gap:6px;font-weight:800}
+.st-coins .zcoin-mark{width:15px;height:15px}
+
+.st-layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:900px){.st-layout{grid-template-columns:1fr}}
+
+.st-preview{position:sticky;top:76px;display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px;border:1px solid var(--line);border-radius:var(--radius,16px);background:var(--panel)}
+@media (max-width:900px){.st-preview{position:static}}
+.st-stage{position:relative;width:100%;display:flex;justify-content:center;padding:16px 10px;border-radius:14px;overflow:hidden;background:var(--panel-2)}
+.st-stage .tc-case{width:100%;max-width:262px;position:relative;z-index:1}
+.st-name{margin:0;font-family:var(--display);font-weight:800;font-size:1.5rem;letter-spacing:-.02em}
+.st-note{margin:0;color:var(--muted-2);font-size:.76rem;text-align:center;max-width:36ch}
+
+.st-shelves{display:flex;flex-direction:column;gap:22px;min-width:0}
+.st-msg{margin:0;padding:10px 14px;border-radius:12px;font-size:.88rem;border:1px solid var(--line)}
+.st-msg.good{border-color:rgba(77,219,139,.4);background:rgba(77,219,139,.08);color:#b9f5d2}
+.st-msg.bad{border-color:rgba(255,107,133,.4);background:rgba(255,107,133,.08);color:#ffc4cf}
+.st-shelf h2{margin:0 0 10px;font-family:var(--display);font-weight:700;font-size:1.15rem;letter-spacing:-.01em;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.st-shelf h2 small{color:var(--muted-2);font-size:.74rem;font-weight:600}
+.st-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+
+.st-item{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden;transition:border-color .15s ease,transform .15s ease}
+.st-item:hover{border-color:var(--line-2);transform:translateY(-2px)}
+.st-item.on{border-color:rgba(var(--gold-rgb),.55)}
+.st-swatch{position:relative;height:92px;display:grid;place-items:center;background:var(--panel-3);overflow:hidden}
+.st-swatch b{font-family:var(--display);font-weight:800;font-size:2.2rem;letter-spacing:-.02em}
+.st-swatch .tc-case-label{margin:0;font-size:.62rem}
+.st-badge{position:absolute;top:8px;right:8px;padding:2px 8px;border-radius:999px;background:var(--gold);color:#1b1203;font-size:.58rem;font-weight:800;letter-spacing:.1em}
+.st-badge.dim{background:rgba(0,0,0,.55);color:var(--text)}
+.st-body{padding:12px 13px 4px}
+.st-body h3{margin:0;font-family:var(--display);font-weight:700;font-size:1.02rem}
+.st-body p{margin:4px 0 0;color:var(--muted);font-size:.8rem;line-height:1.4}
+.st-foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:10px 13px 13px}
+.st-owned{color:var(--muted-2);font-size:.76rem;font-weight:700}
+.st-btn{height:34px;padding:0 13px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);font:inherit;font-size:.8rem;font-weight:700;cursor:pointer}
+.st-btn:hover:not(:disabled){background:var(--panel-3)}
+.st-btn.gold{border-color:rgba(var(--gold-rgb),.5);background:var(--gold);color:#1b1203}
+.st-btn.gold:hover:not(:disabled){filter:brightness(1.08)}
+.st-btn:disabled{opacity:.55;cursor:not-allowed}
+.st-btn:focus-visible,.st-title input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.st-confirm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.8rem;font-weight:700}
+.st-title{display:flex;gap:6px;flex-wrap:wrap;width:100%}
+.st-title input{flex:1;min-width:0;height:34px;padding:0 10px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);font:inherit;font-size:.84rem}
+
+/* swatches: a small picture of each look */
+.sw-finish-holo{background:linear-gradient(120deg,#ff2fa0,#22e6ff 30%,#ffe14a 55%,#8c52ff 80%,#ff2fa0);background-size:250% 250%;animation:tcholo 7s linear infinite}
+.sw-finish-gold{background:linear-gradient(115deg,#6b4a09,#e9b93f 30%,#fff3c4 45%,#d49b1d 60%,#6b4a09);background-size:250% 100%;animation:tcfoil 5s ease-in-out infinite;box-shadow:inset 0 0 0 2px rgba(255,236,170,.8)}
+@media (prefers-reduced-motion:reduce){.sw-finish-gold{animation:none}}
+.sw-finish-chrome{background:repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 2px,transparent 2px 4px),linear-gradient(115deg,#5c6068,#e7eaee 45%,#7b8089 60%,#2d3036)}
+.sw-name-gold,.sw-name-ice,.sw-name-ember,.sw-title-custom{background:linear-gradient(160deg,#1e1f26,#121318)}
+.sw-title-custom b{color:var(--muted);font-size:2.6rem}
+.sw-banner-stadium,.sw-banner-matrix,.sw-banner-retro,.sw-label-foil{background:#121318}
+.sw-banner-stadium::before,.sw-banner-matrix::before,.sw-banner-retro::before{content:"";position:absolute;inset:0}
+@media (prefers-reduced-motion:reduce){.st-item{transition:none}.st-item:hover{transform:none}.sw-finish-holo{animation:none}}
+
+/* ---- round two: the mini profile in the preview, the wide tiles
+   with a form, the player search, and swatches for the new slots. */
+.st-preview.pbg{background:transparent}
+.st-mini{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:4px 2px}
+.st-mini .st-name{font-size:1.45rem}
+.st-mini .pf-team{margin-top:8px}
+.st-note.left{text-align:left;max-width:none}
+.st-item.wide{grid-column:1/-1}
+.st-sw-title{font-family:var(--display);font-weight:800;font-size:1.05rem!important;letter-spacing:-.01em;padding:0 10px;text-align:center;color:var(--text)}
+.st-swatch .pf-team{margin:0}
+.st-swatch .pf-team b{font-size:1rem}
+.st-swatch.pbg::before{border-radius:0}
+
+.st-player{display:flex;flex-direction:column;gap:8px;width:100%}
+.st-player > input{height:36px;padding:0 11px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);font:inherit;font-size:.86rem}
+.st-player > input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.st-player-current{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.st-player-current .pf-player{margin:0}
+.st-player-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}
+.st-player-row{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:10px;border:1px solid var(--line);background:var(--panel-2);color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.st-player-row:hover,.st-player-row:focus-visible{border-color:rgba(var(--gold-rgb),.55);outline:none}
+.st-player-row img{width:38px;height:38px;border-radius:50%;object-fit:cover;object-position:50% 15%;background:var(--panel-3);flex:0 0 auto}
+.st-player-row b{display:block;font-size:.86rem}
+.st-player-row small{display:block;color:var(--muted-2);font-size:.72rem}
+
+/* ---- chase items (2026-09-15): the gold ones, 500 ZC. A shimmering
+   gold border, a ribbon and a warmer panel mark them as the prize. */
+.st-item{position:relative}
+.st-item.chase{border-color:transparent;background:
+  linear-gradient(var(--panel),var(--panel)) padding-box,
+  linear-gradient(115deg,#7a5608,#f0c24a 30%,#fff3c4 45%,#d49b1d 60%,#7a5608) border-box;
+  background-size:auto,250% 100%;animation:stchase 5s ease-in-out infinite;
+  border:1.5px solid transparent;box-shadow:0 0 22px rgba(var(--gold-rgb),.18)}
+.st-item.chase .st-swatch{background-color:#1a1406;box-shadow:inset 0 -40px 60px -40px rgba(var(--gold-rgb),.35)}
+.st-item.chase .st-body h3{color:#ffd978}
+@keyframes stchase{0%,100%{background-position:0 0,0 0}50%{background-position:0 0,100% 0}}
+/* The ribbon's centre sits on the corner, so roughly 84px of it shows
+   inside the card; "LEGENDARY" at this size is about 58px wide. */
+.st-ribbon{position:absolute;top:20px;left:-47px;z-index:2;width:160px;padding:3px 0;transform:rotate(-38deg);text-align:center;
+  background:linear-gradient(180deg,#ffe28a,#e0a82a);color:#2a1a02;font-size:.56rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;box-shadow:0 2px 8px rgba(0,0,0,.35);white-space:nowrap}
+.st-item.chase .st-badge{top:auto;bottom:8px}
+
+/* header: profile link beside the wallet */
+.st-headside{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.st-profile-link{display:inline-flex;align-items:center;height:38px;padding:0 14px;border-radius:11px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);font-weight:700;font-size:.86rem;text-decoration:none}
+.st-profile-link:hover{border-color:rgba(var(--gold-rgb),.5)}
+.st-profile-link:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.st-item.chase{animation:none}}
+
+/* ---- promo items and the after-purchase link (2026-09-15) */
+.st-ribbon.promo{background:linear-gradient(180deg,#7dffb4,#2fbf71);color:#04260f}
+.st-free{font-family:var(--display);font-weight:800;font-size:1rem;color:#7dffb4;letter-spacing:.02em}
+.st-msg-link{margin-left:4px;font-weight:800;color:inherit;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.st-msg-link:hover{color:#fff}
+.st-msg-link:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
+
+/* ---- the All / Owned filter (2026-09-15) */
+.st-filter{display:inline-flex;align-self:flex-start;gap:4px;padding:4px;border-radius:12px;border:1px solid var(--line);background:var(--panel)}
+.st-filter-btn{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:9px;border:0;background:none;color:var(--muted);font:inherit;font-size:.84rem;font-weight:700;cursor:pointer}
+.st-filter-btn em{font-style:normal;font-size:.72rem;padding:1px 7px;border-radius:999px;background:var(--panel-3);color:var(--muted-2)}
+.st-filter-btn:hover{color:var(--text)}
+.st-filter-btn.on{background:var(--gold-dim);color:var(--gold)}
+.st-filter-btn.on em{background:rgba(var(--gold-rgb),.2);color:var(--gold)}
+.st-filter-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.st-empty{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:22px;border:1px dashed var(--line-2);border-radius:14px;background:var(--panel)}
+.st-empty b{font-family:var(--display);font-size:1.15rem}
+.st-empty p{margin:0;color:var(--muted);font-size:.88rem}

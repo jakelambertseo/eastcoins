@@ -69,7 +69,7 @@ export async function onRequestGet(context) {
     return say(`${who} no open game for "${team}". ${markets.length} open — try !odds`);
   }
   if (found.ambiguous) {
-    if (found.prop) return say(`${who} which prop? ${found.ambiguous.join(" or ")} — add a word from it: !pick ${amount} yes <word>`);
+    if (found.prop) return say(`${who} which prop? ${found.ambiguous.join(" · ")} — say the number: !pick ${amount} ${/^(no|n)/i.test(team) ? "no" : "yes"} 1`);
     return say(`${who} "${team}" matches ${found.ambiguous.join(" and ")}. Be more specific.`);
   }
   if (found.needSchool) {

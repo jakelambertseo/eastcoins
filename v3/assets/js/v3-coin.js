@@ -115,7 +115,7 @@
       img.alt = "";
       img.addEventListener("load", () => box.classList.add("has-logo"));
       img.addEventListener("error", () => img.remove());
-      img.src = user.avatar;
+      img.src = window.ECAvatar ? window.ECAvatar.small(user.avatar) : user.avatar;
       box.append(img);
     }
     return box;
@@ -193,7 +193,7 @@
     emote.width = 32;
     emote.height = 32;
     h1.append(emote);
-    copy.append(h1, el("p", null, "One coin for the whole room. Fifteen seconds to get in, then it flips. Heads or tails pays 2×."));
+    copy.append(h1, el("p", null, "One coin for the whole room. Fifteen seconds to get in, then it flips. Heads or tails pays about 2×, drawn with the round between 1.92 and 2.08."));
     head.append(copy);
     const right = el("div", "cas-headright");
     refs.status = el("span", "cf-status", "Connecting…");

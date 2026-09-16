@@ -82,11 +82,15 @@
   /* ---------------------------------------------------------- data */
 
   async function load() {
-    const [health, markets, announce] = await Promise.all([
+    const [health, markets, announce, notices, reconcile] = await Promise.all([
       fetch("/api/picks/wallet-health").then((r) => r.json()).catch(() => null),
       fetch("/api/picks/admin/markets").then((r) => r.json()).catch(() => null),
-      fetch("/api/picks/admin/announce").then((r) => r.json()).catch(() => null)
+      fetch("/api/picks/admin/announce").then((r) => r.json()).catch(() => null),
+      fetch("/api/picks/admin/notice").then((r) => r.json()).catch(() => null),
+      fetch("/api/picks/admin/reconcile").then((r) => r.json()).catch(() => null)
     ]);
+    local.stuckOps = reconcile?.ok ? reconcile.operations : local.stuckOps || [];
+    local.notices = notices?.ok ? notices.notices : local.notices || [];
     local.announce = announce?.ok ? announce : null;
     local.health = health;
     local.markets = markets?.ok ? markets.markets : [];
@@ -206,6 +210,62 @@
         ? `Token belongs to ${h.channel.name || h.channel.tokenBelongsTo} — the channel being written to.`
         : `Token belongs to ${h.channel.tokenBelongsTo}, but ${h.channel.configured} is configured. Nothing will be written.`;
       card.append(detail);
+    }
+    return card;
+  }
+
+  /* ---------------------------------------------------------- stuck charges
+
+     ZCoin operations that never finished (/api/picks/admin/reconcile).
+     A casino stake that was taken but whose game was never created can
+     be refunded here, once: the refund's own idempotency key makes a
+     second press a no-op. Anything else is listed to check by hand. */
+
+  function stuckCard() {
+    const card = el("div", "adm-card");
+    card.append(el("h2", "adm-h", "Stuck ZCoin charges"));
+    const ops = local.stuckOps || [];
+    if (!ops.length) {
+      card.append(el("p", "adm-note", "Nothing stuck. Every ZCoin operation finished."));
+      return card;
+    }
+    card.append(el("p", "adm-note", "Charges that started and never finished. Refund returns the coins and records it, and can only happen once per charge."));
+    for (const op of ops) {
+      const row = el("div", "adm-market");
+      const top = el("div", "adm-market-top");
+      const who = el("div");
+      who.append(
+        el("strong", null, `${op.login || op.userId} · ${op.amount > 0 ? "+" : ""}${op.amount} ZC`),
+        el("small", null, `${op.what} · ${op.status} · ${new Date(op.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`)
+      );
+      top.append(who);
+      if (op.refundable) {
+        const b = el("button", "btn primary", `Refund ${Math.abs(op.amount)} ZC`);
+        b.type = "button";
+        b.disabled = local.busy;
+        b.addEventListener("click", async () => {
+          if (!window.confirm(`Refund ${Math.abs(op.amount)} ZC to ${op.login}?`)) return;
+          b.disabled = true;
+          b.textContent = "Refunding…";
+          let r = null;
+          try {
+            r = await fetch("/api/picks/admin/reconcile", {
+              method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ opId: op.id })
+            }).then((x) => x.json());
+          } catch { r = null; }
+          const note = el("p", `adm-message ${r?.ok ? "good" : "bad"}`, r?.ok ? r.message : (r?.message || "That didn't go through."));
+          row.append(note);
+          if (r?.ok) { b.textContent = "Refunded"; local.stuckOps = r.operations || []; }
+          else { b.disabled = false; b.textContent = `Refund ${Math.abs(op.amount)} ZC`; }
+        });
+        top.append(b);
+      } else {
+        top.append(el("span", "adm-tag bad", "check by hand"));
+      }
+      row.append(top);
+      if (op.why) row.append(el("small", "adm-note", op.why));
+      card.append(row);
     }
     return card;
   }
@@ -596,6 +656,143 @@
     return card;
   }
 
+  /* ---------------------------------------------------------- notices
+
+     One line into everyone's bell. On-site only: nothing is sent to
+     chat or Discord, so this can never surprise a stream. Reposting
+     the same title updates that notice and makes it unread again. */
+
+  function noticeCard() {
+    const card = el("div", "adm-card");
+    card.append(el("h2", "adm-h", "Post a notice"));
+    card.append(el("p", "adm-note",
+      "Lands in everyone's bell as an unread item, and toasts within a minute on any tab that is open. " +
+      "Nothing goes to chat or Discord. Reposting the same title replaces that notice and makes it new again."));
+
+    const grid = el("div", "adm-grid adm-propgrid");
+    const fields = {};
+    const field = (key, label, attrs = {}) => {
+      const wrap = el("label", `adm-field${attrs.wide ? " wide" : ""}`);
+      wrap.append(el("span", null, label));
+      const input = document.createElement(attrs.tag === "select" ? "select" : "input");
+      if (attrs.tag === "select") {
+        for (const [value, text] of attrs.options) { const o = document.createElement("option"); o.value = value; o.textContent = text; input.append(o); }
+      } else {
+        input.type = "text";
+        if (attrs.placeholder) input.placeholder = attrs.placeholder;
+        if (attrs.maxLength) input.maxLength = attrs.maxLength;
+      }
+      if (attrs.value) input.value = attrs.value;
+      wrap.append(input);
+      fields[key] = input;
+      grid.append(wrap);
+      return input;
+    };
+    field("title", "Title", { placeholder: "Watch rooms are here", maxLength: 80, wide: true });
+    field("text", "The line under it", { placeholder: "Movies & TV: press Watch together and everyone follows your player.", maxLength: 200, wide: true });
+    field("icon", "Icon", { placeholder: "📣", maxLength: 4, value: "📣" });
+    field("href", "Opens", {
+      tag: "select",
+      options: [
+        ["/?view=screen", "Movies & TV"],
+        // {me} becomes each reader's own login when the bell is built.
+        ["/u/{me}", "Their own profile"],
+        ["/u/{me}#picks", "Their own profile · Picks"],
+        ["/u/{me}#casino", "Their own profile · Casino"],
+        ["/u/{me}#movies", "Their own profile · Movies"],
+        ["/?view=picks", "Picks"],
+        ["/?view=casino", "Casino"],
+        ["/?view=music", "Green Room"],
+        ["/", "Sports"],
+        ["/?view=activity", "Activity"]
+      ]
+    });
+    card.append(grid);
+
+    const NOTICE_KEYS = ["title", "text", "icon", "href"];
+    if (local.noticeDraft) for (const k of NOTICE_KEYS) if (local.noticeDraft[k] !== undefined) fields[k].value = local.noticeDraft[k];
+    const saveDraft = () => { local.noticeDraft = Object.fromEntries(NOTICE_KEYS.map((k) => [k, fields[k].value])); };
+
+    // Exactly how the row will read in the bell.
+    const preview = el("div", "adm-preview adm-noticepreview");
+    function refresh() {
+      preview.replaceChildren();
+      const row = el("div", "notif-row unread adm-noticerow");
+      row.append(el("span", "notif-ico gold", fields.icon.value || "📣"));
+      const t = el("span", "notif-t");
+      const head = el("span");
+      head.append(el("b", null, fields.title.value || "Your title here"));
+      t.append(head);
+      t.append(el("small", null, fields.text.value || "And the line underneath it."));
+      row.append(t, el("span", "notif-at", "now"));
+      preview.append(row);
+    }
+    for (const k of NOTICE_KEYS) { fields[k].addEventListener("input", () => { saveDraft(); refresh(); }); fields[k].addEventListener("change", () => { saveDraft(); refresh(); }); }
+    refresh();
+    card.append(preview);
+
+    const actions = el("div", "adm-actions");
+    const post = el("button", "btn primary", "Post to everyone");
+    post.type = "button";
+    post.style.cssText = "flex:0 0 auto;padding:0 20px;height:38px";
+    post.disabled = local.busy;
+    post.addEventListener("click", async () => {
+      const body = { title: fields.title.value.trim(), text: fields.text.value.trim(), icon: fields.icon.value.trim(), href: fields.href.value };
+      saveDraft();
+      if (body.title.length < 4 || body.text.length < 4) {
+        local.noticeMsg = { tone: "bad", text: "A notice needs a title and a line under it." };
+        paint();
+        return;
+      }
+      if (!window.confirm(`Post this to everyone's notifications?\n\n${body.icon} ${body.title}\n${body.text}`)) return;
+      const result = await post_("/api/picks/admin/notice", body);
+      if (result.ok) {
+        local.noticeMsg = { tone: "good", text: `Posted. Everyone sees it in the bell; open tabs toast it within a minute.` };
+        local.noticeDraft = null;
+        local.notices = result.notices || local.notices;
+      } else {
+        local.noticeMsg = { tone: "bad", text: result.message || "Couldn't post that." };
+      }
+      paint();
+    });
+    actions.append(post);
+    card.append(actions);
+
+    if (local.noticeMsg) {
+      const note = el("div", `adm-message ${local.noticeMsg.tone}`, local.noticeMsg.text);
+      note.style.marginTop = "10px";
+      card.append(note);
+    }
+
+    // What is already out there, and the way to pull one.
+    const live = local.notices || [];
+    if (live.length) {
+      card.append(el("h3", "adm-h adm-subh", "Posted"));
+      for (const n of live) {
+        const row = el("div", "adm-market adm-noticelive");
+        const top = el("div", "adm-market-top");
+        top.append(el("strong", null, `${n.icon} ${n.title}`));
+        top.append(el("span", `adm-tag${n.live ? "" : " "}`, n.live ? "IN THE BELL" : "EXPIRED"));
+        const pull = el("button", "adm-rowbtn", "Pull");
+        pull.type = "button";
+        pull.title = "Remove it from everyone's notifications";
+        pull.disabled = local.busy;
+        pull.addEventListener("click", async () => {
+          if (!window.confirm(`Pull "${n.title}"? It disappears from everyone's bell.`)) return;
+          const result = await post_("/api/picks/admin/notice", { action: "remove", key: n.key });
+          local.noticeMsg = result.ok ? { tone: "good", text: `Pulled “${n.title}”.` } : { tone: "bad", text: result.message || "Couldn't pull it." };
+          if (result.ok) local.notices = result.notices || [];
+          paint();
+        });
+        top.append(pull);
+        row.append(top);
+        row.append(el("p", "adm-note", `${n.text} · ${n.by ? n.by + " · " : ""}${ago(n.at)}`));
+        card.append(row);
+      }
+    }
+    return card;
+  }
+
   /* ---------------------------------------------------------- markets */
 
   function marketsCard() {
@@ -895,13 +1092,15 @@ ${cost}`)) return;
     panels.open.append(openForm());
     panels.prop.append(propForm());
     panels.announce.append(announceCard());
+    panels.announce.append(noticeCard());
     panels.health.append(healthCard());
+    panels.health.append(stuckCard());
     for (const [key] of TABS) root.append(panels[key]);
 
     // A message about something that lives on another tab would otherwise
     // be posted to a panel nobody is looking at.
     const wanted = local.message?.at === "markets" || local.message?.id ? "markets"
-      : local.message?.at === "announce" ? "announce"
+      : local.message?.at === "announce" || local.noticeMsg ? "announce"
         : local.formMsg ? "open" : local.propMsg ? "prop" : null;
     select(wanted || local.tab || "markets");
   }
@@ -913,6 +1112,7 @@ ${cost}`)) return;
       local.message = null;
       local.formMsg = null;
       local.propMsg = null;
+      local.noticeMsg = null;
       paint();
       await load();
       if (container.isConnected) paint();

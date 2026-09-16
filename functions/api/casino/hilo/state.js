@@ -2,8 +2,8 @@
    recent runs, and the room's recent runs (the public ledger). */
 
 import { getSessionUser, walletWritesEnabled } from "../../picks/_lib.js";
-import { ensureSchema, touchPresence, roomFor, hourlyNet, HOUR_WIN_CAP } from "../_engine.js";
-import { ensureHilo, liveGameFor, gamesLastHour, publicGame, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR, MAX_MULTIPLIER, MAX_STEPS, EDGE_RETURN } from "./_hilo.js";
+import { ensureSchema, touchPresence, roomFor, hourlyNet, HOUR_WIN_CAP, EDGE_MIN, EDGE_MAX } from "../_engine.js";
+import { ensureHilo, liveGameFor, gamesLastHour, publicGame, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR, MAX_MULTIPLIER, MAX_STEPS } from "./_hilo.js";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 const HILO = { key: "hilo" };
@@ -22,11 +22,11 @@ export async function onRequestGet(context) {
 
   const recent = await db
     .prepare(
-      `SELECT g.id, g.stake, g.multiplier, g.status, g.payout, g.calls, g.cards, g.updated_at,
+      `SELECT g.id, g.stake, g.multiplier, g.status, g.payout, g.calls, g.cards, g.updated_at, g.edge,
               u.twitch_id, u.twitch_login, u.display_name, u.avatar_url
          FROM hilo_games g JOIN users u ON u.twitch_id = g.user_id
         WHERE g.status IN ('CASHED','BUST')
-        ORDER BY datetime(g.updated_at) DESC LIMIT 40`
+        ORDER BY g.updated_at DESC LIMIT 40`
     )
     .all();
   const ledger = (recent.results || []).map((r) => ({
@@ -65,7 +65,7 @@ export async function onRequestGet(context) {
   return json({
     ok: true,
     now,
-    config: { maxBet: MAX_BET, minBet: MIN_BET, maxPerHour: MAX_BETS_PER_HOUR, maxMultiplier: MAX_MULTIPLIER, maxSteps: MAX_STEPS, edgeReturn: EDGE_RETURN, hourCap: HOUR_WIN_CAP, canBet: Boolean(user) && walletWritesEnabled(context.env) },
+    config: { maxBet: MAX_BET, minBet: MIN_BET, maxPerHour: MAX_BETS_PER_HOUR, maxMultiplier: MAX_MULTIPLIER, maxSteps: MAX_STEPS, edgeMin: EDGE_MIN, edgeMax: EDGE_MAX, hourCap: HOUR_WIN_CAP, canBet: Boolean(user) && walletWritesEnabled(context.env) },
     live: live ? publicGame(live) : null,
     ledger,
     room: await roomFor(db, HILO, now),

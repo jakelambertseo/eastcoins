@@ -24,9 +24,15 @@
    ============================================================ */
 
 import { moveBalance, beginOperation, finishOperation, newId } from "../../picks/_lib.js";
-import { sha256, randomSeed, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
+import { sha256, randomSeed, edgeFor, ensureColumn, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
 
-export const EDGE_RETURN = 0.99;
+// 2026-09-14: the players' side. Per call, so a six-call run returns about
+// 104% and a single call about 100.5%; the x50 ceiling is what trims long
+// chains, not the price. Was 0.99, which compounded to 87% in practice.
+// Each call is priced FAIRLY now. The run's edge is drawn once from its
+// seed and applied to the payout, so a long chain no longer compounds a
+// per-call shave the way it used to.
+export const EDGE_RETURN = 1;
 export const MAX_MULTIPLIER = 50;
 export const MAX_STEPS = 12;
 export const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
@@ -53,8 +59,10 @@ export async function ensureHilo(db) {
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_hilo_user ON hilo_games (user_id, created_at)`),
     // The floor counts live games every five seconds; without this that
     // is a full scan each time.
-    db.prepare(`CREATE INDEX IF NOT EXISTS idx_hilo_live ON hilo_games (status, updated_at)`)
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_hilo_live ON hilo_games (status, updated_at)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_hilo_recent ON hilo_games (updated_at)`)
   ]);
+  await ensureColumn(db, "hilo_games", "edge", "REAL NOT NULL DEFAULT 1");
   ready = true;
 }
 
@@ -84,7 +92,7 @@ export function publicGame(g, { revealSeed = false } = {}) {
     stake: Number(g.stake),
     multiplier: Number(g.multiplier),
     payout: Number(g.payout || 0),
-    potential: Math.floor(Number(g.stake) * Number(g.multiplier)),
+    potential: Math.round(Number(g.stake) * Number(g.multiplier) * Number(g.edge || 1)),
     step: calls.length,
     cards: cards.map((c) => ({ rank: c.rank, label: RANKS[c.rank - 1], suit: SUITS[c.suit] })),
     calls,
@@ -107,7 +115,8 @@ export async function gamesLastHour(db, userId) {
 
 /** Pays out a run. Idempotent per game: the operation key is the game id. */
 export async function cashOut(env, db, g, login) {
-  const payout = Math.floor(Number(g.stake) * Number(g.multiplier));
+  // Rounded, not floored: flooring took 2-7% off small stakes on its own.
+  const payout = Math.round(Number(g.stake) * Number(g.multiplier) * Number(g.edge || 1));
   const opId = newId("op");
   const begun = await beginOperation(db, {
     id: opId, idempotencyKey: `CASINO:HILO:PAY:${g.id}`, userId: g.user_id,
@@ -124,4 +133,4 @@ export async function cashOut(env, db, g, login) {
   return { ok: true, payout, balance: credit.balance };
 }
 
-export { MAX_BET, MIN_BET, MAX_BETS_PER_HOUR, randomSeed, sha256 };
+export { MAX_BET, MIN_BET, MAX_BETS_PER_HOUR, randomSeed, sha256, edgeFor };

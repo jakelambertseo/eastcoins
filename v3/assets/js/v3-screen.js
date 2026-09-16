@@ -39,8 +39,19 @@
     episodes: [],
     epsOpen: false,
     barHidden: false,
-    hasKey: true
+    hasKey: true,
+    // Watch rooms: one host's clock, everyone else follows it.
+    room: null,             // { id, isHost, host, item, position, playing, updatedAt, stale, ended, people, watching }
+    roomWanted: null,       // ?room= from the URL, joined once the page is up
+    myPos: 0,               // this tab's own player, from vidy's events
+    myPlaying: false,
+    lastReloadAt: 0,        // drift fixes reload the embed; never twice in a row
+    lastBeatAt: 0,
+    lastBeatPos: 0,
+    serverOffset: 0         // server clock minus ours, so a guest projects the host's position honestly
   };
+  let roomTimer = 0;
+  let roomsTimer = 0;
 
   let root = null;
   let shell = null;
@@ -182,6 +193,8 @@
       }
       next = url.pathname + url.search;
     }
+    // A room rides on whichever form the link takes.
+    if (local.room && !local.room.ended) next += (next.includes("?") ? "&" : "?") + "room=" + encodeURIComponent(local.room.id);
     // Opening the player is one history entry, so Back returns to the
     // shelves; moving between episodes replaces it rather than stacking.
     if (push) history.pushState({ view: "screen", play: true }, "", next);
@@ -190,6 +203,7 @@
 
   function readUrl() {
     const p = new URL(location.href).searchParams;
+    local.roomWanted = String(p.get("room") || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) || null;
 
     // A pretty path wins over anything in the query string. The name in
     // it is not an id, so this only says WHAT was asked for; mount()
@@ -226,9 +240,10 @@
 
   /* ---------------------------------------------------------- player */
 
-  function embedUrl(item, resume) {
+  function embedUrl(item, resume, autoplay) {
     const p = new URLSearchParams({ color: ACCENT });
     if (resume > 0) p.set("progress", String(resume));
+    if (autoplay !== undefined) p.set("autoplay", autoplay ? "true" : "false");
     if (item.type === "tv") {
       p.set("nextEpisode", "true");
       p.set("episodeSelector", "true");
@@ -276,7 +291,16 @@
     });
   }
 
-  function play(item, { resume = 0 } = {}) {
+  /** Swaps the embed to a position without rebuilding the page — how a guest is kept in step. */
+  function reloadEmbed(resume, autoplay) {
+    if (!local.now || !iframe) return;
+    iframe.src = embedUrl(local.now, Math.max(0, Math.floor(resume)), autoplay);
+    local.myPlaying = Boolean(autoplay);
+    local.myPos = Math.max(0, resume);
+    local.lastReloadAt = Date.now();
+  }
+
+  function play(item, { resume = 0, autoplay } = {}) {
     const wasPlaying = Boolean(local.now);
     local.now = { ...item };
     if (item.type === "tv") {
@@ -301,7 +325,10 @@
     iframe.allow = "autoplay; fullscreen; picture-in-picture; encrypted-media";
     iframe.allowFullscreen = true;
     iframe.referrerPolicy = "origin";
-    iframe.src = embedUrl(local.now, from);
+    iframe.src = embedUrl(local.now, from, autoplay);
+    local.myPos = from;
+    local.myPlaying = autoplay !== false;
+    local.lastReloadAt = Date.now();
     refs.frame.append(iframe);
     refs.stage.hidden = false;
     refs.stage.classList.add("is-playing");
@@ -322,14 +349,21 @@
     writeUrl({ push: !wasPlaying && !history.state?.play });
     window.scrollTo(0, 0);
     loadDetails();
+    loadRating();
+    // A host who moves to another episode takes the room with them.
+    if (local.room?.isHost) hostBeat({ force: true, item: true });
+    renderRoom();
+    window.ECPresence?.beat("screen", local.now.title, local.room ? `room:${local.room.id}` : "");
   }
 
   function stop() {
+    if (local.room) { if (local.room.isHost) endRoom({ quiet: true }); else leaveRoom({ quiet: true }); }
     if (iframe) iframe.remove();
     iframe = null;
     local.now = null;
     refs.stage.hidden = true;
     refs.stage.classList.remove("is-playing");
+    if (refs.rate) refs.rate.hidden = true;
     document.body.classList.remove("screen-on");
     document.title = "Movies & TV — EastCoin";
     // If opening the player made a history entry, closing it goes back
@@ -345,8 +379,113 @@
     local.barHidden = hidden;
     refs.bar.hidden = hidden;
     refs.peek.hidden = !hidden;
+    if (refs.rate) refs.rate.hidden = hidden || !local.now;
     if (hidden) refs.epStrip.hidden = true;
     else renderEpisodes();
+  }
+
+  /* ---------------------------------------------------------- tomatoes
+
+     0 to 5 tomatoes per title, per person (/api/screen/ratings). 3 and
+     up is fresh; chat's meter reads FRESH at 60% fresh, the Rotten
+     Tomatoes line. Read once when a title opens — moving between
+     episodes of the same show does not ask again — and never polled. */
+
+  async function loadRating() {
+    const item = local.now;
+    if (!item) return;
+    const key = keyFor(item);
+    if (local.rating?.key === key && !local.rating.failed) { renderRating(); return; }
+    local.rating = { key, loading: true };
+    renderRating();
+    const r = await getJson(`/api/screen/ratings?type=${item.type}&id=${item.id}`);
+    if (!local.now || keyFor(local.now) !== key) return;
+    local.rating = r?.ok ? { key, ...r } : { key, failed: true };
+    renderRating();
+  }
+
+  async function rateTitle(score) {
+    const item = local.now;
+    if (!item || local.rating?.saving) return;
+    const key = keyFor(item);
+    const before = local.rating;
+    local.rating = { ...before, mine: score, saving: true, error: "" };
+    renderRating();
+    let r = null;
+    try {
+      r = await fetch("/api/screen/ratings", {
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: item.type, id: item.id, score })
+      }).then((x) => x.json());
+    } catch { r = null; }
+    if (!local.now || keyFor(local.now) !== key) return;
+    local.rating = r?.ok ? { key, ...r } : { ...before, saving: false, error: r?.message || "Couldn't save that score. Try again." };
+    renderRating();
+  }
+
+  function renderRating() {
+    const box = refs.rate;
+    if (!box) return;
+    box.hidden = !local.now || local.barHidden;
+    const s = local.rating || {};
+    box.replaceChildren();
+
+    const mine = el("div", "sc-rate-mine");
+    mine.append(el("span", "sc-rate-k", local.now?.type === "tv" ? "Rate the show" : "Your score"));
+    const picks = el("div", `sc-rate-picks${s.saving ? " saving" : ""}`);
+    picks.setAttribute("aria-label", "Your score, 0 to 5 tomatoes");
+    const splat = btn("🤢", `sc-splat${s.mine === 0 ? " on" : ""}`, () => rateTitle(s.mine === 0 ? null : 0));
+    splat.title = "0 tomatoes";
+    splat.setAttribute("aria-label", "0 tomatoes");
+    splat.setAttribute("aria-pressed", String(s.mine === 0));
+    picks.append(splat);
+    const toms = [];
+    for (let i = 1; i <= 5; i += 1) {
+      const b = btn("🍅", `sc-tom${s.mine >= i ? " on" : ""}`, () => rateTitle(s.mine === i ? null : i));
+      b.title = `${i} of 5`;
+      b.setAttribute("aria-label", `${i} tomato${i === 1 ? "" : "es"}`);
+      b.setAttribute("aria-pressed", String(s.mine === i));
+      b.addEventListener("mouseenter", () => toms.forEach((t, j) => t.classList.toggle("hov", j < i)));
+      toms.push(b);
+      picks.append(b);
+    }
+    picks.addEventListener("mouseleave", () => toms.forEach((t) => t.classList.remove("hov")));
+    mine.append(picks, el("small", `sc-rate-note${s.error ? " err" : ""}`, s.error
+      ? s.error
+      : s.mine == null ? "Tap to score it · tap again to take it back" : `${s.mine} / 5 · ${s.mine >= 3 ? "fresh" : "rotten"}`));
+    box.append(mine);
+
+    const chat = el("div", "sc-rate-chat");
+    if (s.loading) chat.append(el("small", null, "Loading chat's score…"));
+    else if (s.failed) chat.append(el("small", null, "Chat's score didn't load."));
+    else if (!s.count) chat.append(el("small", null, "Nobody has rated this yet — be the first."));
+    else {
+      const fresh = s.freshPct >= 60;
+      chat.append(el("span", `sc-rate-meter ${fresh ? "fresh" : "rotten"}`, `${fresh ? "🍅" : "🤢"} ${s.freshPct}%`));
+      const sum = el("div", "sc-rate-sum");
+      sum.append(el("b", null, "Chat's score"), el("small", null, `${s.avg} / 5 from ${s.count} ${s.count === 1 ? "person" : "people"}`));
+      chat.append(sum);
+      const faces = el("div", "sc-rate-faces");
+      for (const p of (s.people || []).slice(0, 6)) {
+        const a = el("a", "sc-rate-face ulink");
+        a.href = `/u/${encodeURIComponent(p.login)}`;
+        a.title = `${p.name}: ${p.score} / 5`;
+        if (p.avatar) {
+          const img = el("img");
+          const small = window.ECAvatar?.small?.(p.avatar);
+          img.src = typeof small === "string" && small ? small : p.avatar;
+          img.alt = "";
+          img.loading = "lazy";
+          a.append(img);
+        } else {
+          a.append(document.createTextNode((p.name || "?").slice(0, 1).toUpperCase()));
+        }
+        a.append(el("i", null, String(p.score)));
+        faces.append(a);
+      }
+      chat.append(faces);
+    }
+    box.append(chat);
   }
 
   async function loadDetails() {
@@ -409,6 +548,201 @@
     const d = data.data || data;
     const ev = d.event || d.name;
     if (ev === "timeupdate" || ev === "pause" || ev === "ended") remember(local.now, Number(d.currentTime), Number(d.duration));
+    const t = Number(d.currentTime);
+    if (Number.isFinite(t)) local.myPos = t;
+    if (ev === "play" || ev === "timeupdate") local.myPlaying = true;
+    if (ev === "pause" || ev === "ended") local.myPlaying = false;
+    if (local.room?.isHost) {
+      // Play, pause and a seek go out at once; steady playback every 5 s.
+      const jumped = Math.abs(t - (local.lastBeatPos + (Date.now() - local.lastBeatAt) / 1000)) > 3;
+      if (ev === "play" || ev === "pause" || ev === "ended" || jumped || Date.now() - local.lastBeatAt > 5000) hostBeat({ playing: ev === "pause" || ev === "ended" ? false : true });
+    }
+  }
+
+  /* ---------------------------------------------------------- watch rooms
+
+     The player only reports its clock, so a room is the host's clock
+     written every few seconds and every guest reading it: a guest who
+     drifts past eight seconds is reloaded at the host's position, one
+     whose host paused is reloaded paused there. Not frame-locked; close
+     enough for a film, and honest about it in the bar. */
+
+  const serverNow = () => Date.now() + local.serverOffset;
+  const itemKey = (i) => (i ? `${i.type}:${i.id}:${i.season || 0}:${i.episode || 0}` : "");
+
+  async function roomPost(body) {
+    try {
+      return await fetch("/api/screen/room", { method: "POST", credentials: "include", keepalive: true, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((r) => r.json());
+    } catch { return null; }
+  }
+  function takeRoom(payload, isHost) {
+    local.room = { ...payload.room, isHost: isHost ?? Boolean(payload.room.isHost) };
+    if (Number.isFinite(payload.now)) local.serverOffset = payload.now - Date.now();
+  }
+  /** Where the host is right now, projected from their last beat. */
+  function hostPos() {
+    const r = local.room;
+    if (!r) return 0;
+    return r.playing ? r.position + Math.max(0, (serverNow() - r.updatedAt) / 1000) : r.position;
+  }
+
+  async function startRoom() {
+    if (!local.now || local.room) return;
+    const r = await roomPost({ action: "create", item: local.now, position: local.myPos });
+    if (!r?.ok) { roomNote(r?.message || "Couldn't open a room."); return; }
+    takeRoom(r, true);
+    local.lastBeatAt = Date.now(); local.lastBeatPos = local.myPos;
+    writeUrl();
+    renderRoom();
+    startRoomPoll();
+    window.ECPresence?.beat("screen", local.now.title, `room:${local.room.id}`);
+    try { await navigator.clipboard.writeText(location.href); roomNote("Room open — invite link copied."); } catch { roomNote("Room open — Copy link to invite people."); }
+  }
+
+  async function hostBeat({ force = false, playing, item = false } = {}) {
+    if (!local.room?.isHost) return;
+    const now = Date.now();
+    if (!force && now - local.lastBeatAt < 1000) return;
+    local.lastBeatAt = now; local.lastBeatPos = local.myPos;
+    const body = { action: "beat", room: local.room.id, position: local.myPos, playing: playing ?? local.myPlaying };
+    if (item) body.item = local.now;
+    const r = await roomPost(body);
+    if (r?.code === "NO_ROOM" || r?.code === "ENDED") leaveRoom({ quiet: true });
+    if (local.room) { local.room.position = local.myPos; local.room.playing = body.playing; local.room.updatedAt = serverNow(); }
+  }
+
+  async function endRoom({ quiet = false } = {}) {
+    if (!local.room) return;
+    const id = local.room.id;
+    local.room = null;
+    stopRoomPoll();
+    roomPost({ action: "end", room: id });
+    if (!quiet) { writeUrl(); renderRoom(); roomNote("Room ended."); }
+    window.ECPresence?.beat("screen", local.now?.title || "", "");
+  }
+
+  function leaveRoom({ quiet = false } = {}) {
+    if (!local.room) return;
+    local.room = null;
+    stopRoomPoll();
+    if (!quiet) { writeUrl(); renderRoom(); roomNote("You left the room — the film keeps playing for you."); }
+    window.ECPresence?.beat("screen", local.now?.title || "", "");
+  }
+
+  async function joinRoom(id) {
+    const r = await getJson(`/api/screen/room?room=${encodeURIComponent(id)}`);
+    if (!root?.isConnected) return false;
+    if (!r?.ok) { roomNote(r?.message || "That room doesn't exist any more."); return false; }
+    if (r.room.ended) { roomNote("That room has ended."); return false; }
+    takeRoom(r);
+    if (local.room.isHost) {
+      // The host's own link, opened again: carry on hosting.
+      if (itemKey(local.now) !== itemKey(local.room.item)) play(local.room.item, { resume: Math.floor(local.room.position) });
+      else renderRoom();
+      startRoomPoll();
+      return true;
+    }
+    const at = hostPos();
+    play({ ...local.room.item }, { resume: Math.floor(at), autoplay: local.room.playing });
+    startRoomPoll();
+    return true;
+  }
+
+  function startRoomPoll() {
+    stopRoomPoll();
+    roomTimer = window.setInterval(pollRoom, 5000);
+  }
+  function stopRoomPoll() { window.clearInterval(roomTimer); roomTimer = 0; }
+
+  async function pollRoom() {
+    if (!local.room || !root?.isConnected) { stopRoomPoll(); return; }
+    const r = await getJson(`/api/screen/room?room=${encodeURIComponent(local.room.id)}`);
+    if (!r?.ok) { if (r?.code === "NO_ROOM") leaveRoom(); return; }
+    const wasHost = local.room.isHost;
+    takeRoom(r, wasHost);
+    if (wasHost) { renderRoom(); return; }          // the host only wants to see who is here
+    const room = local.room;
+    if (room.ended) { roomNote("The host ended the room — the film keeps playing for you."); leaveRoom({ quiet: true }); writeUrl(); renderRoom(); return; }
+    // The host moved to another episode.
+    if (itemKey(room.item) !== itemKey(local.now)) { play({ ...room.item }, { resume: Math.floor(hostPos()), autoplay: room.playing }); return; }
+    renderRoom();
+    if (room.stale) return;                           // no clock to follow; say so, touch nothing
+    if (Date.now() - local.lastReloadAt < 12000) return;   // let the last reload settle
+    const at = hostPos();
+    if (!room.playing && local.myPlaying) reloadEmbed(room.position, false);
+    else if (room.playing && (!local.myPlaying || Math.abs(local.myPos - at) > 8)) reloadEmbed(at + 1, true);
+    renderRoom();
+  }
+
+  function roomNote(text) {
+    if (!refs.roomNote) return;
+    refs.roomNote.textContent = text;
+    refs.roomNote.hidden = !text;
+    window.clearTimeout(refs.roomNoteTimer);
+    refs.roomNoteTimer = window.setTimeout(() => { if (refs.roomNote) refs.roomNote.hidden = true; }, 6000);
+  }
+
+  const clock = (s) => { const n = Math.max(0, Math.floor(s)); const h = Math.floor(n / 3600), m = Math.floor((n % 3600) / 60), sec = n % 60; return h ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}` : `${m}:${String(sec).padStart(2, "0")}`; };
+
+  function faces(people, max = 6) {
+    const pile = el("span", "sc-room-people");
+    for (const u of (people || []).slice(0, max)) {
+      const a = el("a", "cf-av small sc-face ulink", String(u.displayName || u.login || "?").slice(0, 2).toUpperCase());
+      a.href = `/u/${encodeURIComponent(u.login)}`;
+      a.title = u.displayName || u.login;
+      if (u.avatar) { const img = el("img"); img.alt = ""; img.src = window.ECAvatar ? window.ECAvatar.small(u.avatar) : u.avatar; img.addEventListener("load", () => a.classList.add("has-logo")); img.addEventListener("error", () => img.remove()); a.append(img); }
+      pile.append(a);
+    }
+    return pile;
+  }
+
+  function renderRoom() {
+    if (!refs.roomBar) return;
+    const r = local.room;
+    refs.together.hidden = !local.now || Boolean(r);
+    refs.roomBar.hidden = !r;
+    refs.hostPaused.hidden = true;
+    if (!r) { refs.roomBar.replaceChildren(); return; }
+    refs.roomBar.replaceChildren();
+    const tag = el("span", "sc-room-tag", r.isHost ? "You're hosting" : "Watch room");
+    refs.roomBar.append(tag);
+    const who = el("span", "sc-room-who");
+    const n = Number(r.watching || 0);
+    who.append(document.createTextNode(r.isHost ? `${n || 1} watching` : `with ${r.host?.displayName || "the host"} · ${n || 1} here`));
+    refs.roomBar.append(who, faces(r.people));
+    if (!r.isHost) {
+      if (r.stale) refs.roomBar.append(el("span", "sc-room-note", "The host's player has gone quiet — you're on your own clock."));
+      else if (!r.playing) { refs.roomBar.append(el("span", "sc-room-note", `Host paused at ${clock(r.position)}`)); refs.hostPaused.hidden = false; refs.hostPausedText.textContent = `Paused by ${r.host?.displayName || "the host"} at ${clock(r.position)}`; }
+      else refs.roomBar.append(el("span", "sc-room-note", `Following the host · ${clock(hostPos())}`));
+      refs.roomBar.append(btn("Sync now", "sc-btn", () => { if (!local.room) return; reloadEmbed(local.room.playing ? hostPos() + 1 : local.room.position, local.room.playing); }));
+      refs.roomBar.append(btn("Leave room", "sc-btn", () => leaveRoom()));
+    } else {
+      refs.roomBar.append(el("span", "sc-room-note", "Everyone follows your play, pause and seeks. Share the link from Copy link."));
+      refs.roomBar.append(btn("End room", "sc-btn", () => endRoom()));
+    }
+  }
+
+  async function loadRooms() {
+    if (!refs.roomsRow || !root?.isConnected) return;
+    const r = await getJson("/api/screen/room?list=1");
+    if (!refs.roomsRow || !r?.ok) return;
+    const rooms = (r.rooms || []).filter((x) => !x.stale);
+    refs.roomsRow.replaceChildren();
+    for (const room of rooms) {
+      const b = el("button", "sc-card sc-roomcard");
+      b.type = "button";
+      const it = room.item;
+      if (it.poster) { const img = el("img", "sc-poster"); img.src = it.poster; img.alt = ""; img.loading = "lazy"; b.append(img); }
+      else b.append(el("div", "sc-ph", (it.title || "?").split(" ").map((w) => w[0]).join("").slice(0, 3).toUpperCase()));
+      b.append(el("span", "sc-kind sc-live", room.playing ? "LIVE" : "PAUSED"));
+      const cap = el("div", "sc-cap");
+      cap.append(el("b", null, it.title || "Untitled"));
+      cap.append(el("small", null, `${room.host?.displayName || "someone"} hosting · ${room.watching} watching${it.type === "tv" ? ` · S${it.season} E${it.episode}` : ""}`));
+      b.append(cap);
+      b.addEventListener("click", () => joinRoom(room.id));
+      refs.roomsRow.append(b);
+    }
+    refs.roomsSec.hidden = !rooms.length;
   }
 
   /* ---------------------------------------------------------- cards */
@@ -662,11 +996,30 @@
       catch { copyLink.textContent = "Couldn't copy"; }
       setTimeout(() => { copyLink.textContent = "Copy link"; }, 1600);
     });
+    const together = btn("Watch together", "sc-btn gold", startRoom);
+    together.title = "Open a room: everyone who joins follows your player";
+    together.hidden = true;
     const back = btn("← Back to Movies & TV", "sc-btn sc-back", stop);
     const close = btn("✕", "sc-btn", () => setBarHidden(true));
     close.title = "Hide controls";
-    bar.append(back, title, seasonSel, prevEp, nextEp, epToggle, copyLink, close);
+    bar.append(back, title, seasonSel, prevEp, nextEp, epToggle, together, copyLink, close);
     stage.append(bar);
+    // Tomato scores: yours, and chat's. A show is rated as a whole.
+    const rateBox = el("div", "sc-rate");
+    rateBox.hidden = true;
+    stage.append(rateBox);
+    refs.rate = rateBox;
+    const roomBar = el("div", "sc-room");
+    roomBar.hidden = true;
+    stage.append(roomBar);
+    const roomNoteEl = el("p", "sc-room-toast");
+    roomNoteEl.hidden = true;
+    stage.append(roomNoteEl);
+    const hostPaused = el("div", "sc-hostpaused");
+    hostPaused.hidden = true;
+    const hostPausedText = el("b", null, "");
+    hostPaused.append(el("span", "sc-hostpaused-k", "⏸"), hostPausedText, el("small", null, "It starts again when they press play."));
+    frame.append(hostPaused);
     const peek = btn("⌃", "sc-peek", () => setBarHidden(false));
     peek.title = "Show controls";
     peek.hidden = true;
@@ -675,7 +1028,17 @@
     epStrip.hidden = true;
     stage.append(epStrip);
     page.append(stage);
-    Object.assign(refs, { stage, frame, bar, peek, nowTitle, nowMeta, seasonSel, prevEp, nextEp, epToggle, epStrip });
+    Object.assign(refs, { stage, frame, bar, peek, nowTitle, nowMeta, seasonSel, prevEp, nextEp, epToggle, epStrip, together, roomBar, roomNote: roomNoteEl, hostPaused, hostPausedText });
+
+    // Rooms people are watching in right now.
+    const roomsSec = el("section", "sc-section sc-rooms");
+    roomsSec.hidden = true;
+    const rh0 = el("h2", null, "Watch rooms");
+    rh0.append(el("small", null, "join and you follow the host's player"));
+    const roomsRow = el("div", "sc-grid");
+    roomsSec.append(rh0, roomsRow);
+    page.append(roomsSec);
+    Object.assign(refs, { roomsSec, roomsRow });
 
     // Continue watching
     const continueSec = el("section", "sc-section");
@@ -735,6 +1098,8 @@
       if (iframe) iframe.remove();
       iframe = null;
       local.now = null;
+      local.room = null;
+      stopRoomPoll();
 
       // Members only. Wait for the session read rather than racing it,
       // then show the door instead of the shelves for anyone logged out.
@@ -752,8 +1117,12 @@
       renderFilters("movie");
       renderFilters("tv");
       renderContinue();
-      if (wanted?.pending) resolvePending(wanted);
+      if (local.roomWanted) joinRoom(local.roomWanted).then((ok) => { if (!ok) { if (wanted?.pending) resolvePending(wanted); else if (wanted) play(wanted); } });
+      else if (wanted?.pending) resolvePending(wanted);
       else if (wanted) play(wanted);
+      loadRooms();
+      window.clearInterval(roomsTimer);
+      roomsTimer = window.setInterval(() => { if (!document.hidden) loadRooms(); }, 30000);
 
       // Genres once per kind, then the shelf.
       for (const kind of ["movie", "tv"]) {
@@ -774,6 +1143,10 @@
       loadShelf("tv");
     },
     unmount() {
+      if (local.room) { if (local.room.isHost) endRoom({ quiet: true }); else leaveRoom({ quiet: true }); }
+      stopRoomPoll();
+      window.clearInterval(roomsTimer);
+      roomsTimer = 0;
       document.body.classList.remove("screen-on");
       window.removeEventListener("message", onMessage);
       clearTimeout(searchTimer);

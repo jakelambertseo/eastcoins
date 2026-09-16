@@ -16,7 +16,7 @@
   "use strict";
 
   const GAMES = [
-    ["hilo", "Higher or Lower"], ["mines", "Mines"], ["plinko", "Plinko"],
+    ["hilo", "Higher or Lower"], ["mines", "Mines"], ["plinko", "Plinko"], ["scratch", "Scratch-Off"],
     ["wheel", "Wheel"], ["flip", "Coin Flip"], ["roulette", "Russian Roulette"], ["standing", "Last One Standing"], ["race", "Horse Race"],
     ["pot", "The Daily Jackpot"]
   ];
@@ -271,6 +271,12 @@
       const path = el("div", "vf-path");
       [...d.path].forEach((c, i) => path.append(el("span", `vf-step ${c === "R" ? "r" : "l"}`, `${i + 1} ${c === "R" ? "→" : "←"}`)));
       out.append(path);
+    } else if (d.game === "scratch") {
+      const EMOJI = { crown: "👑", diamond: "💎", fire: "🔥", clover: "🍀", target: "🎯", football: "🏈", coin: "🪙" };
+      out.append(el("p", "vf-note", d.prize ? `${d.prize.name} × 3 — ×${d.prize.multiplier}.` : "No match — no three of a kind on this card."));
+      const grid = el("div", "vf-grid vf-scratch");
+      for (const k of d.grid) grid.append(el("div", `vf-tile${d.prize && k === d.prize.key ? " win" : ""}`, EMOJI[k] || k));
+      out.append(grid);
     } else if (d.game === "wheel") {
       out.append(el("p", "vf-note", `The pointer lands at ${d.result.angle}° from the top: slice ${d.result.slice}, ${d.describe}.`));
       const chip = el("div", `vf-big ${d.result.color}`, d.describe.toUpperCase());

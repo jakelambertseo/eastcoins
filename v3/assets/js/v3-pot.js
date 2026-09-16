@@ -1,7 +1,7 @@
 /* ============================================================
    The Daily Jackpot, on the page.
 
-   ECPot.mount(container, { compact })  — draws the pot and keeps it
+   ECPot.mount(container, { compact | pill })  — draws the pot and keeps it
    current: the amount, a bar of the day's play toward the ceiling
    (the line itself is hidden until it pays), the viewer's share, the
    last winner. Polls /api/casino/pot every 15 seconds while visible.
@@ -116,11 +116,30 @@
     window.setTimeout(() => banner.remove(), 14000);
   }
 
-  function mount(container, { compact = false } = {}) {
-    const box = el("section", `cf-card pot${compact ? " compact" : ""}`);
+  /* The casino floor's header bar: one cell with the amount on it, the
+     detail on hover. Same poll, same cache and the SAME hit banner —
+     only the drawing is different, so the Jackpot can sit in the pill
+     without a second source of truth or a second request. */
+  function drawPill(box, pot) {
+    box.replaceChildren();
+    const paid = pot?.status === "PAID";
+    box.classList.toggle("paid", Boolean(paid));
+    box.append(el("small", null, paid ? "Jackpot went" : "Jackpot"));
+    const b = el("b", "nums", pot ? nums(pot.amount) : "100");
+    b.append(el("i", null, " ZC"));
+    box.append(b);
+    box.title = !pot ? "Today's Jackpot"
+      : paid ? `${pot.winner?.displayName || "Someone"} took it today. Tomorrow's opens at midnight Central.`
+        : pot.yours > 0 ? `Your share ${pot.share}% · ${nums(pot.play)} ZC staked today by ${nums(pot.players)} players.`
+          : `${nums(pot.play)} ZC of play today. Play once and you're in the draw.`;
+  }
+
+  function mount(container, { compact = false, pill = false } = {}) {
+    const box = el(pill ? "span" : "section", pill ? "cas-jack" : `cf-card pot${compact ? " compact" : ""}`);
     container.append(box);
     const last = cached();
-    if (last) draw(box, last, compact); else skeleton(box, compact);
+    if (pill) drawPill(box, last);
+    else if (last) draw(box, last, compact); else skeleton(box, compact);
     let timer = 0;
     let misses = 0;
     const tick = async () => {
@@ -147,7 +166,8 @@
         // it just happened — not a pot that paid hours before it opened.
         if (before && before !== "PAID" && pot.status === "PAID" && pot.paidAt && Date.now() - new Date(pot.paidAt).getTime() < RECENT_MS && !document.querySelector(".pot-hit")) hit(pot);
       }
-      if (pot || box.querySelector(".pot-you")?.textContent !== "Loading the day's play…") draw(box, pot, compact);
+      if (pill) drawPill(box, pot);
+      else if (pot || box.querySelector(".pot-you")?.textContent !== "Loading the day's play…") draw(box, pot, compact);
     };
     tick();
     timer = window.setInterval(tick, POLL_MS);

@@ -723,6 +723,21 @@
    * room's queue entries carry no thumbnail field, and this needs neither
    * a request nor an API key.
    */
+  /* "Save to your YouTube": opens the song on YouTube in a new tab,
+     where Save is the button under the video. YouTube has no link that
+     opens its playlist picker directly, and adding to someone's playlist
+     from here would need a Google sign-in with YouTube access — so this
+     is the one-click-away version, on purpose. */
+  function saveLink(videoId, className, label) {
+    if (!/^[A-Za-z0-9_-]{11}$/.test(String(videoId || ""))) return null;
+    const a = el("a", className, label);
+    a.href = `https://www.youtube.com/watch?v=${videoId}`;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.title = "Opens on YouTube — press Save under the video to add it to a playlist";
+    return a;
+  }
+
   function thumbUrl(videoId) {
     return /^[A-Za-z0-9_-]{11}$/.test(String(videoId || ""))
       ? `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`
@@ -935,6 +950,7 @@
     let unsub = null;
     let stage = null;
     let history = [];
+    let skips = [];
     let requesters = [];
     // Kept across repaints so a state broadcast — anyone joining, any
     // reaction — does not throw you back to page one mid-browse.
@@ -1040,6 +1056,8 @@
           : [];
         // Comes back on the same request, already ordered by count.
         requesters = Array.isArray(payload?.userStats) ? payload.userStats : [];
+        // Newest first from the room; absent on a room older than the log.
+        skips = Array.isArray(payload?.skips) ? payload.skips : [];
         // Who moved since last time. Only meaningful once there is a
         // "last time": the first fetch just records where everyone is.
         const next = new Map(requesters.map((r) => [String(r.login || "").toLowerCase(), Math.round(Number(r.rating) || 1000)]));
@@ -1402,7 +1420,7 @@
         if (entry.avatar) {
           const img = document.createElement("img");
           img.className = "mtop-av";
-          img.src = entry.avatar;
+          img.src = window.ECAvatar ? window.ECAvatar.small(entry.avatar) : entry.avatar;
           img.alt = "";
           img.loading = "lazy";
           line.append(img);
@@ -1473,7 +1491,7 @@
         if (entry.avatar) {
           const img = document.createElement("img");
           img.className = "mtop-av";
-          img.src = entry.avatar;
+          img.src = window.ECAvatar ? window.ECAvatar.small(entry.avatar) : entry.avatar;
           img.alt = "";
           img.loading = "lazy";
           line.append(img);
@@ -1488,6 +1506,52 @@
         line.append(el("span", "elo-score", `${Number(entry.count || 0)} songs`));
         wrap.append(line);
       });
+      return wrap;
+    }
+
+    /* The skip log: what left early and why, newest first, from the
+       room's own record (the worker's `skips`, 40 kept). A song that
+       simply finished is History's, not this. */
+    function skipReason(s) {
+      if (s.kind === "vote-skip") {
+        return { tag: "Voted off", cls: "vote", why: s.votes ? `${s.votes} vote${s.votes === 1 ? "" : "s"}${s.listeners ? ` of ${s.listeners} listening` : ""}` : "the room voted" };
+      }
+      if (s.kind === "error") return { tag: "Wouldn't play", cls: "error", why: "YouTube refused to play it here" };
+      const who = s.actor || "someone";
+      if (s.how === "mod") return { tag: "Mod skip", cls: "mod", why: `skipped by ${who}` };
+      if (s.how === "own") return { tag: "Own song", cls: "own", why: `${who} skipped their own request` };
+      if (s.how === "chat") return { tag: "!skip", cls: "chat", why: `${who} typed !skip in chat` };
+      return { tag: "Skipped", cls: "mod", why: `skipped by ${who}` };
+    }
+
+    function skipsList() {
+      const wrap = el("div", "mq");
+      if (!skips.length) {
+        wrap.append(el("p", "mq-empty", "Nothing has been skipped yet. Songs voted off, skipped or unplayable show here with the reason."));
+        return wrap;
+      }
+      const clock = (ms) => {
+        const t = Math.max(0, Math.round(Number(ms || 0) / 1000));
+        return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
+      };
+      for (const s of skips.slice(0, 25)) {
+        const r = skipReason(s);
+        const row = el("div", "mq-row mskiprow");
+        const art = thumb(s.videoId, "mq-thumb");
+        if (art) row.append(art);
+        const meta = el("div", "mq-meta");
+        const title = el("strong", null, s.title || "Untitled");
+        meta.append(title);
+        const line = el("small", "mskip-why");
+        line.append(el("span", `mskip-tag ${r.cls}`, r.tag), document.createTextNode(` ${r.why}`));
+        meta.append(line);
+        meta.append(el("small", null,
+          `${s.requestedBy || "chat"}'s request · ${s.playedMs ? `after ${clock(s.playedMs)} · ` : ""}${timeAgo(s.at)}`));
+        row.append(meta);
+        const save = saveLink(s.videoId, "watchbtn mq-again msave", "Save ↗");
+        if (save) row.append(save);
+        wrap.append(row);
+      }
       return wrap;
     }
 
@@ -1524,6 +1588,8 @@
         const again = el("button", "watchbtn mq-again", "Play again");
         again.type = "button";
         again.addEventListener("click", () => addVideo(entry.videoId, entry.title || ""));
+        const save = saveLink(entry.videoId, "watchbtn mq-again msave", "Save ↗");
+        if (save) row.append(save);
         row.append(again);
 
         wrap.append(row);
@@ -1629,7 +1695,15 @@
       link.href = SKIN_FONTS;
       document.head.append(link);
     }
+    // The skins' stylesheet (about 8 KB) belongs to this page alone.
+    function needSkinsCss() {
+      if (document.getElementById("css-skins")) return;
+      const link = document.createElement("link");
+      link.id = "css-skins"; link.rel = "stylesheet"; link.href = "/v3/assets/css/v3-skins.css?v=2";
+      document.head.append(link);
+    }
     function applySkin(key) {
+      needSkinsCss();
       if (root) { if (key) root.dataset.skin = key; else delete root.dataset.skin; }
       if (key) document.body.dataset.musicSkin = key; else delete document.body.dataset.musicSkin;
       if (NEEDS_FONTS.has(key)) loadSkinFonts();
@@ -1790,6 +1864,8 @@
         by.append(document.createTextNode("requested by "), profileLink(current.requestedByLogin || current.requestedBy, current.requestedBy));
         text.append(by);
       }
+      const save = saveLink(current.videoId, "msave msave-now", "Save to your YouTube ↗");
+      if (save) text.append(save);
       box.append(text);
       const time = el("span", "mnow-ov-time nums");
       time.append(refs.progressNow, document.createTextNode(" / "), refs.progressEnd);
@@ -1929,13 +2005,13 @@
 
       const queued = (state?.queue || []).length;
       const tabs = el("div", "mtabs");
-      for (const [key, label] of [["queue", queued ? `Up next · ${queued}` : "Up next"], ["history", "History"], ["elo", "Rankings"]]) {
+      for (const [key, label] of [["queue", queued ? `Up next · ${queued}` : "Up next"], ["history", "History"], ["skips", "Skipped"], ["elo", "Rankings"]]) {
         const btn = el("button", `mtab${tab === key ? " active" : ""}`, label);
         btn.type = "button";
         btn.addEventListener("click", () => {
           tab = key;
-          // Both come back on the same request, so either tab warms both.
-          if ((key === "history" || key === "elo") && !history.length) loadHistory();
+          // All three come back on the same request, so any tab warms them.
+          if (key !== "queue" && !history.length) loadHistory();
           renderSide(conn.state);
         });
         tabs.append(btn);
@@ -1953,7 +2029,7 @@
         side.append(seg);
         side.append(rankSeg === "elo" ? ratingsList() : requestsList());
       } else {
-        side.append(tab === "queue" ? queueList(state) : historyList());
+        side.append(tab === "queue" ? queueList(state) : tab === "skips" ? skipsList() : historyList());
       }
     }
 

@@ -9,7 +9,7 @@
                flips at   n * 30s + 15s     (15s of betting)
                ends at    n * 30s + 30s     (15s to look at the result)
 
-   Heads pays 2×, tails pays 2×, no edge. The result of a round is
+   Heads and tails pay the same. The result of a round is
    fixed the moment the round row is created — a random seed whose
    hash is shown while bets are open and revealed after the flip —
    so nothing decided after the bets are in can change it.
@@ -19,7 +19,12 @@
    a retried settlement cannot pay twice.
    ============================================================ */
 
+import { edgeFor } from "../casino/_engine.js";
 import { moveBalance, beginOperation, finishOperation, newId } from "../picks/_lib.js";
+
+// The fair price of a fair coin. The round's own edge is multiplied in
+// when it settles, so a flip pays between 1.92 and 2.08.
+export const COIN_PAYS = 2;
 
 export const CYCLE_MS = 30 * 1000;
 export const BET_MS = 15 * 1000;
@@ -57,6 +62,7 @@ export async function ensureSchema(db) {
     // Without this, hourlyNet() read every row of coin_bets on every
     // casino state poll — the single biggest source of D1 row reads.
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_coin_bets_user ON coin_bets (user_id, created_at)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_coin_bets_created ON coin_bets (created_at)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS coin_presence (
       user_id TEXT PRIMARY KEY,
       seen_at INTEGER NOT NULL
@@ -144,12 +150,13 @@ export async function settleRound(env, db, no, now = Date.now()) {
     .bind(no)
     .all();
 
+  const edge = await edgeFor(round.seed);
   for (const b of bets.results || []) {
     if (b.side !== result) {
       await db.prepare(`UPDATE coin_bets SET status = 'LOST', payout = 0 WHERE id = ? AND status = 'ACTIVE'`).bind(b.id).run();
       continue;
     }
-    const payout = Number(b.wager) * 2;
+    const payout = Math.round(Number(b.wager) * COIN_PAYS * edge);
     const opId = newId("op");
     const begun = await beginOperation(db, {
       id: opId,

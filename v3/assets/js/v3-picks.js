@@ -36,6 +36,8 @@
     page: { mypicks: 1, history: 1, leaderboard: 1, ledger: 1 },   // one page per list
     day: "",        // Markets tab: which day's slate is showing (a toDateString key)
     communityLedger: [],
+    ledgerFull: false,            // the full history is fetched only when the tab opens
+    ledgerLoading: false,
     season: null,
     login: "",
     config: {},
@@ -91,7 +93,9 @@
       local.markets = Array.isArray(payload.markets) ? payload.markets : [];
       local.myPicks = Array.isArray(payload.myPicks) ? payload.myPicks : [];
       local.leaderboard = Array.isArray(payload.leaderboard) ? payload.leaderboard : [];
-      local.communityLedger = Array.isArray(payload.communityLedger) ? payload.communityLedger : [];
+      // Bootstrap now carries only the ACTIVE rows; once the tab has
+      // fetched the full history, a refresh must not shrink it back.
+      if (!local.ledgerFull) local.communityLedger = Array.isArray(payload.communityLedger) ? payload.communityLedger : [];
       local.season = payload.season || null;
       local.login = String(payload.session?.user?.login || "").toLowerCase();
       local.wallet = payload.session?.wallet || null;
@@ -229,7 +233,8 @@
   function avatar(user, className) {
     const name = user?.displayName || user?.login || "?";
     const box = el("span", className, initials(name));
-    const src = String(user?.profileImageUrl || user?.avatar || "");
+    const raw = String(user?.profileImageUrl || user?.avatar || "");
+    const src = window.ECAvatar ? window.ECAvatar.small(raw) : raw;
     if (!src) return box;
     const img = document.createElement("img");
     img.alt = "";
@@ -487,6 +492,12 @@
     return section;
   }
 
+  const NFL_MONTHS = new Set([9, 10, 11, 12, 1]);
+  function nflDayNow() {
+    const ct = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" }));
+    return (ct.getDay() === 0 || ct.getDay() === 1) && NFL_MONTHS.has(ct.getMonth() + 1);
+  }
+
   function marketsView() {
     const wrap = document.createDocumentFragment();
 
@@ -515,6 +526,11 @@
 
     const openNow = local.sport === "all" ? allOpen : allOpen.filter((m) => leagueOf(m) === local.sport);
 
+    // Football days: the same rule the Sports page keeps (Sunday and
+    // Monday, September to January, Chicago time) — say up front that
+    // nothing else takes bets, so an empty baseball tab is not a bug.
+    if (nflDayNow()) wrap.append(el("p", "sundaynote picks-note", "🏈 No betting on baseball or anything else except for football on Sundays and Mondays."));
+
     if (local.failed || !openNow.length) {
       const empty = el("div", "empty");
       empty.append(
@@ -523,8 +539,8 @@
           local.failed
             ? "The Picks catalog didn't answer. This is usually temporary."
             : local.upcoming.length
-              ? "The next games are listed below. NFL opens an hour before kickoff; MLB opens every day at 4 PM CT."
-              : "NFL opens an hour before kickoff; MLB opens every day at 4 PM CT. Check back closer to game time.")
+              ? (nflDayNow() ? "The next games are listed below. NFL opens an hour before kickoff." : "The next games are listed below. NFL opens an hour before kickoff; MLB opens every day at 4 PM CT.")
+              : (nflDayNow() ? "NFL opens an hour before kickoff. Check back closer to game time." : "NFL opens an hour before kickoff; MLB opens every day at 4 PM CT. Check back closer to game time."))
       );
       wrap.append(empty);
     } else {
@@ -734,6 +750,12 @@
   /* ---------------------------------------------------------- ticket */
 
   function openTicket(market, side, team, line) {
+    // The one pick box every page shares (v3-pickbox.js); the ticket
+    // below is only the fallback if that module never loaded.
+    if (window.ECPickBox) {
+      window.ECPickBox.open({ market, side, onPlaced: async () => { await loadMarkets(); if (root?.isConnected) paint(); } });
+      return;
+    }
     local.ticket = { market, side, team, line, stake: 10 };
     renderTicket();
   }
@@ -1255,11 +1277,22 @@
       wrap.append(skelRows(8, true));
       return wrap;
     }
+    // The full ledger arrives on first open; until then the open picks
+    // bootstrap already carried are shown, so the tab is never blank.
+    if (!local.ledgerFull && !local.ledgerLoading) {
+      local.ledgerLoading = true;
+      fetch("/api/picks/ledger", { credentials: "include" })
+        .then((r) => r.json())
+        .then((p) => { if (Array.isArray(p?.ledger)) { local.communityLedger = p.ledger; local.ledgerFull = true; } })
+        .catch(() => { /* the open rows stay up */ })
+        .finally(() => { local.ledgerLoading = false; if (local.tab === "ledger") paint(); });
+    }
     const ll = leagueCounts(local.communityLedger.map(leagueOf));
     if (ll.leagues.length > 1) mountTools(sportFilter(ll.leagues, ll.counts, local.communityLedger.length));
     const rows = local.sport === "all" ? local.communityLedger : local.communityLedger.filter((r) => leagueOf(r) === local.sport);
 
     if (!rows.length) {
+      if (!local.ledgerFull) { wrap.append(skelRows(8, true)); return wrap; }
       wrap.append(emptyNote("No picks yet", "Every pick anyone makes shows here — who, which side, how much, and what came of it."));
       return wrap;
     }

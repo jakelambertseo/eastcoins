@@ -3,8 +3,8 @@
    the multiplier ladder for each bomb count. */
 
 import { getSessionUser, walletWritesEnabled } from "../../picks/_lib.js";
-import { ensureSchema, touchPresence, roomFor, hourlyNet, HOUR_WIN_CAP } from "../_engine.js";
-import { ensureMines, liveGameFor, gamesLastHour, publicGame, ladderFor, multiplierFor, TILES, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR, MAX_MULTIPLIER, MIN_MINES, MAX_MINES, DEFAULT_MINES, EDGE_RETURN } from "./_mines.js";
+import { ensureSchema, touchPresence, roomFor, hourlyNet, HOUR_WIN_CAP, EDGE_MIN, EDGE_MAX } from "../_engine.js";
+import { ensureMines, liveGameFor, gamesLastHour, publicGame, ladderFor, multiplierFor, TILES, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR, MAX_MULTIPLIER, MIN_MINES, MAX_MINES, DEFAULT_MINES } from "./_mines.js";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 const MINES = { key: "mines" };
@@ -27,7 +27,7 @@ export async function onRequestGet(context) {
               u.twitch_id, u.twitch_login, u.display_name, u.avatar_url
          FROM mines_games g JOIN users u ON u.twitch_id = g.user_id
         WHERE g.status IN ('CASHED','BUST')
-        ORDER BY datetime(g.updated_at) DESC LIMIT 40`
+        ORDER BY g.updated_at DESC LIMIT 40`
     )
     .all();
   const ledger = (recent.results || []).map((r) => ({
@@ -79,13 +79,13 @@ export async function onRequestGet(context) {
     config: {
       tiles: TILES, maxBet: MAX_BET, minBet: MIN_BET, maxPerHour: MAX_BETS_PER_HOUR,
       minMines: MIN_MINES, maxMines: MAX_MINES, defaultMines: DEFAULT_MINES,
-      maxMultiplier: MAX_MULTIPLIER, edgeReturn: EDGE_RETURN, hourCap: HOUR_WIN_CAP,
+      maxMultiplier: MAX_MULTIPLIER, edgeMin: EDGE_MIN, edgeMax: EDGE_MAX, hourCap: HOUR_WIN_CAP,
       firstStep,
       canBet: Boolean(user) && walletWritesEnabled(context.env)
     },
     ladders,
     // Kept for older clients that read a single ladder.
-    ladder: live ? ladderFor(Number(live.mines)) : ladderFor(DEFAULT_MINES),
+    ladder: live ? ladderFor(Number(live.mines), Number(live.edge || 1)) : ladderFor(DEFAULT_MINES),
     live: live ? publicGame(live) : null,
     ledger,
     room: await roomFor(db, MINES, now),

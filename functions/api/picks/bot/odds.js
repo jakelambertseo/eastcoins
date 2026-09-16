@@ -72,7 +72,7 @@ export async function onRequestGet(context) {
         const props = markets.filter((m) => isProp(m.sport));
         parts.push(props.length === 1
           ? `Prop: "${shortQuestion(props[0].question, 50)}" Yes ${formatLine(props[0].away_odds_locked)} / No ${formatLine(props[0].home_odds_locked)} · !pick <amount> yes`
-          : `Props: ${n} open · !odds yes`);
+          : `Props: ${props.map((m, i) => `${i + 1}) "${shortQuestion(m.question, 30)}"`).join(" · ")} · !pick <amount> yes 1`);
         continue;
       }
       parts.push(`${league}: ${n} open`);
@@ -90,7 +90,7 @@ export async function onRequestGet(context) {
     return say(withLink(`"${team}" is a college mascot — say the school: !odds ${school}`));
   }
   if (found.ambiguous) {
-    if (found.prop) return say(withLink(`Props open: ${found.ambiguous.join(" · ")} — !odds yes <word> for one`));
+    if (found.prop) return say(withLink(`Props open: ${found.ambiguous.join(" · ")} — !odds yes 1 for the first`));
     return say(withLink(`"${team}" matches ${found.ambiguous.join(" and ")}. Be more specific.`));
   }
 

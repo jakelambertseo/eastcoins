@@ -291,9 +291,10 @@ async function picksBadges(env, db, add) {
   // 💸 — a stake that left the wallet at zero, and it has not recovered past the ceiling.
   const zeroed = await db
     .prepare(
-      `SELECT DISTINCT u.twitch_login AS login
-         FROM wallet_operations w JOIN users u ON u.twitch_id = w.user_id
-        WHERE w.type = 'WAGER_DEBIT' AND w.status = 'CONFIRMED' AND w.balance_after = 0`
+      `SELECT u.twitch_login AS login FROM users u
+         WHERE EXISTS (SELECT 1 FROM wallet_operations w
+                        WHERE w.user_id = u.twitch_id AND w.balance_after = 0
+                          AND w.type = 'WAGER_DEBIT' AND w.status = 'CONFIRMED')`
     )
     .all()
     .catch(() => ({ results: [] }));

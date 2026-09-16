@@ -18,7 +18,7 @@
 (() => {
   "use strict";
 
-  const POLL_MS = 90 * 1000;
+  const POLL_MS = 45 * 1000;      // 45 s: a settled pick or a jackpot toasts while it still matters (~1,900 reads a day per tab)
   const TOAST_MS = 7000;
   const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined && text !== null) n.textContent = String(text); return n; };
 
@@ -58,6 +58,9 @@
       if (fresh) toast(fresh);
     }
     lastUnread = payload.unread;
+    // The Gold Button's window comes down this pipe because this is the
+    // one request every open tab already makes. v3-gold.js draws it.
+    document.dispatchEvent(new CustomEvent("ec-gold", { detail: payload.gold || null }));
   }
 
   async function markSeen() {
@@ -223,8 +226,8 @@
     if (Number.isFinite(Number(item.amount)) && item.amount !== null) copy.append(document.createTextNode(" · "), amount(Number(item.amount), item.amountWord));
     t.append(copy);
     t.addEventListener("click", () => { t.remove(); setOpen(true); });
-    const chatOpen = document.body.classList.contains("chat-open") && !document.body.classList.contains("chat-hidden") && window.innerWidth >= 981;
-    t.style.right = chatOpen ? `calc(var(--chat-w) + 16px)` : "16px";
+    // Bottom LEFT, always: the Twitch rail is on the right and flags
+    // itself obscured by anything that ever covers it.
     document.body.append(t);
     window.setTimeout(() => t.classList.add("show"), 20);
     window.setTimeout(() => { t.classList.remove("show"); window.setTimeout(() => t.remove(), 300); }, TOAST_MS);

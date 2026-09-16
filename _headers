@@ -31,13 +31,33 @@
   Cache-Control: public, max-age=3600, must-revalidate
 
 /assets/eastcoins-streamed-api.js
-  Cache-Control: public, max-age=3600, must-revalidate
+  Cache-Control: public, max-age=31536000, immutable
 
 /assets/eastcoins-ppv-api.js
-  Cache-Control: public, max-age=3600, must-revalidate
+  Cache-Control: public, max-age=31536000, immutable
 
 /assets/eastcoins-events-home.js
   Cache-Control: public, max-age=3600, must-revalidate
 
 /assets/eastcoins-persistent-shell.js
   Cache-Control: public, max-age=3600, must-revalidate
+
+# The new shell's assets all carry ?v=N in the URL, and that bump is the
+# invalidation, so the files themselves can be held for a year. Before
+# 2026-09-16 they fell to the Pages default (an hour, must-revalidate):
+# a returning visitor re-validated 46 files an hour and the edge dropped
+# them between visits. Images without a version stay at a day.
+/v3/assets/img/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/v3/assets/img/casino/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/v3/assets/js/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/v3/assets/css/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/v3/assets/fonts/*
+  Cache-Control: public, max-age=31536000, immutable

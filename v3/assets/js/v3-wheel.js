@@ -5,7 +5,8 @@
 
    Twenty-four red and black slices and one slim gold sliver. Forty
    seconds of bets, a four-second spin, the rest of the minute to
-   look at where it landed. Red and black pay 2×, gold pays 40×.
+   look at where it landed. Red and black pay about 2.03× and gold
+   about 60×, each spin drawn 96-104% of that.
    The server owns the clock and the slice; this page spins to it.
    ============================================================ */
 (() => {
@@ -73,7 +74,7 @@
   const view = K.sharedGame({
     key: "wheel",
     title: "Wheel",
-    intro: "One spin a minute. Red or black pays 2×; the slim gold sliver pays 40×. Forty seconds to get in.",
+    intro: "One spin a minute. Red or black pays about 2.03×; the slim gold sliver about 60×. Each spin draws its own price, 96-104%. Forty seconds to get in.",
     running: "Spinning…",
     revealMs: 4200,
     buildStage,

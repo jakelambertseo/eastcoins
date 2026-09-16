@@ -358,8 +358,12 @@
   function nflSundayNow() {
     try { if (new URL(location.href).searchParams.get("allsports") === "1") return false; } catch { /* fine */ }
     const ct = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" }));
-    // Sunday and Monday night: the two days the room is here for.
-    return (ct.getDay() === 0 || ct.getDay() === 1) && NFL_MONTHS.has(ct.getMonth() + 1);
+    // Sunday all day, and Monday until the night game is done — 10:30 PM
+    // Central, when Monday Night Football is over and the room wants its
+    // baseball back. Nothing else needs a football-only screen after that.
+    if (!NFL_MONTHS.has(ct.getMonth() + 1)) return false;
+    if (ct.getDay() === 0) return true;
+    return ct.getDay() === 1 && ct.getHours() * 60 + ct.getMinutes() < 22 * 60 + 30;
   }
   const nflDayIsMonday = () => new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" })).getDay() === 1;
   const isNflSunday = (m) => Sports.footballRank(m) === 0 || isRedZone(m) || /^ppv-nfl-/.test(String(m?.id || "")) || /nfl/i.test(String(m?.title || ""));
@@ -526,7 +530,17 @@
     return grid;
   }
 
+  // "Tonight on Picks": what is on the table right now, from
+  // v3-tonight.js — an open prop with a stake box, your picks with the
+  // score, tonight's slate, or what opens next. The old onboarding
+  // card below is the fallback if that module never loaded.
   function picksBanner() {
+    if (window.ECTonight) {
+      const slot = document.createElement("div");
+      slot.className = "tonight-slot";
+      window.ECTonight.mount(slot, shell);
+      return slot;
+    }
     const banner = document.createElement("a");
     banner.className = "picksbanner";
     banner.href = "/?view=picks";
@@ -768,7 +782,7 @@
       const line = document.createElement("p");
       line.className = "sundaynote";
       line.append(nflDayIsMonday()
-        ? "🏈 It's Monday Night Football, football only on here today. Sybau. Baseball and other shit will be back tomorrow"
+        ? "🏈 It's Monday Night Football, football only on here today. No bets open except for football."
         : "🏈 It's NFL Sunday, football only on here today. Sybau. Baseball and other shit will be back tomorrow");
       root.append(line);
     }

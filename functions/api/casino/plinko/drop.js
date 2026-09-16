@@ -7,7 +7,7 @@
 import { getSessionUser, walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOperation, newId, json, fail } from "../../picks/_lib.js";
 import { settlePot } from "../_pot.js";
 import { ensureSchema, touchPresence, capCheck } from "../_engine.js";
-import { ensurePlinko, commitFor, rotateCommit, pathFor, bucketOf, multiplierFor, publicDrop, dropsLastHour, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "./_plinko.js";
+import { ensurePlinko, commitFor, rotateCommit, pathFor, bucketOf, multiplierFor, publicDrop, dropsLastHour, edgeFor, TABLE_RETURN, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "./_plinko.js";
 
 const PLINKO = { key: "plinko" };
 
@@ -55,13 +55,16 @@ export async function onRequestPost(context) {
 
   const path = await pathFor(commit.seed);
   const bucket = bucketOf(path);
-  const multiplier = multiplierFor(bucket);
-  const payout = Math.floor(stake * multiplier);
+  // The board keeps its shape; the row is divided through by what it
+  // returns on its own so the drop pays exactly its drawn edge.
+  const edge = await edgeFor(commit.seed);
+  const multiplier = Math.round((multiplierFor(bucket) * edge / TABLE_RETURN) * 10000) / 10000;
+  const payout = Math.round(stake * multiplier);
 
   try {
     await db
-      .prepare(`INSERT INTO plinko_drops (id, user_id, seed, hash, stake, path, bucket, multiplier, payout) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .bind(id, user.id, commit.seed, commit.hash, stake, path, bucket, multiplier, payout)
+      .prepare(`INSERT INTO plinko_drops (id, user_id, seed, hash, stake, path, bucket, multiplier, payout, edge) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(id, user.id, commit.seed, commit.hash, stake, path, bucket, multiplier, payout, edge)
       .run();
   } catch (error) {
     const refund = await moveBalance(context.env, user.login, stake);

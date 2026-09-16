@@ -79,7 +79,7 @@
       img.alt = "";
       img.addEventListener("load", () => box.classList.add("has-logo"));
       img.addEventListener("error", () => img.remove());
-      img.src = user.avatar;
+      img.src = window.ECAvatar ? window.ECAvatar.small(user.avatar) : user.avatar;
       box.append(img);
     }
     return box;

@@ -64,7 +64,7 @@
       img.loading = "lazy";
       img.addEventListener("load", () => box.classList.add("has-logo"));
       img.addEventListener("error", () => img.remove());
-      img.src = u.avatar;
+      img.src = window.ECAvatar ? window.ECAvatar.small(u.avatar) : u.avatar;
       box.append(img);
     }
     return box;
@@ -105,7 +105,7 @@
     if (a === h) return `${nick(m.away)} and ${nick(m.home)} level at ${a}`;
     return a > h ? `${nick(m.away)} up ${a}–${h} on the ${nick(m.home)}` : `${nick(m.home)} up ${h}–${a} on the ${nick(m.away)}`;
   }
-  const CASINO_ICON = { flip: "🪙", wheel: "🎡", race: "🐎", hilo: "🃏", mines: "💣", plinko: "🎯" };
+  const CASINO_ICON = { flip: "🪙", wheel: "🎡", race: "🐎", hilo: "🃏", mines: "💣", plinko: "🎯", scratch: "🎟️" };
   function casinoLink(item) {
     const a = el("a", "glink", item.gameName);
     a.href = `/?view=${item.game}`;
@@ -289,7 +289,7 @@
   }
 
   let tickerTimer = 0;
-  async function mountTicker(container, { limit = 30, types = null, label: labelText = "LIVE", href = "/?view=activity", empty = "Quiet for now — the first pick lands here." } = {}) {
+  async function mountTicker(container, { limit = 30, types = null, keep = null, label: labelText = "LIVE", href = "/?view=activity", empty = "Quiet for now — the first pick lands here." } = {}) {
     window.clearInterval(tickerTimer);
     container.classList.add("ticker");
     container.setAttribute("aria-label", "Latest activity");
@@ -306,8 +306,12 @@
       let payload = null;
       try { payload = await fetch("/api/picks/activity", { credentials: "include" }).then((r) => r.json()); } catch { payload = null; }
       if (!container.isConnected) return;
-      // types: keep only these item types — the casino floor wants wins and losses from the tables and nothing else.
-      const items = (payload?.items || []).filter((i) => !types || types.includes(i.type)).slice(0, limit).map(shortItem).filter(Boolean);
+      // types keeps whole item types; keep is a finer cut inside them —
+      // the casino floor wants the tables' wins and nothing else.
+      const items = (payload?.items || [])
+        .filter((i) => !types || types.includes(i.type))
+        .filter((i) => !keep || keep(i))
+        .slice(0, limit).map(shortItem).filter(Boolean);
       track.replaceChildren();
       if (!items.length) { track.append(el("span", "tk-item", empty)); container.classList.add("still"); return; }
       // Two copies of the row make the loop seamless: when the first

@@ -66,7 +66,9 @@
   function avatar(user, className) {
     const name = user?.displayName || user?.login || "?";
     const box = el("span", className, name.replace(/[^a-z0-9]/gi, "").slice(0, 2).toUpperCase() || "?");
-    const src = String(user?.avatar || user?.profileImageUrl || "");
+    const raw = String(user?.avatar || user?.profileImageUrl || "");
+    // The card's photo is drawn at ~176px and keeps the full picture.
+    const src = className === "tc-photo" || !window.ECAvatar ? raw : window.ECAvatar.small(raw);
     if (!src) return box;
     const img = document.createElement("img");
     img.alt = "";
@@ -123,7 +125,7 @@
     const base = String(config.websocketUrl || "").trim();
     if (!base) return null;
     try {
-      const response = await fetch(`${base}/history/${encodeURIComponent(config.room || "main")}`);
+      const response = await fetch(`${base}/history/${encodeURIComponent(config.room || "main")}?limit=60`);
       if (!response.ok) return null;
       const payload = await response.json();
       const stats = (payload.userStats || []).find((s) => String(s.login || "").toLowerCase() === login) || null;
@@ -320,6 +322,7 @@
           st("Net", sign(last), tone(last)),
           st("Picks", sign(Number(b.picksNet || 0)), tone(Number(b.picksNet || 0))),
           st("Casino", sign(Number(b.casinoNet || 0)), tone(Number(b.casinoNet || 0))),
+          ...(Number(b.storeNet || 0) ? [st("Store", sign(Number(b.storeNet)), tone(Number(b.storeNet)))] : []),
           st("Peak", sign(b.peak), tone(b.peak)),
           st("Low", sign(b.trough), tone(b.trough))
         );
@@ -382,9 +385,25 @@
      then tabs: Overview (bankroll and highlights), Picks, Casino,
      Music. The tab is in the hash, so /u/name#casino opens there. */
 
-  const TABS = [["overview", "Overview"], ["picks", "Picks"], ["casino", "Casino"], ["music", "Music"]];
-  const GAME_NAME = { flip: "Coin Flip", wheel: "Wheel", race: "Horse Race", hilo: "Higher or Lower", mines: "Mines", plinko: "Plinko" };
-  const GAME_ICON = { flip: "🪙", wheel: "🎡", race: "🐎", hilo: "🃏", mines: "💣", plinko: "🎯" };
+  const TABS = [["overview", "Overview"], ["picks", "Picks"], ["casino", "Casino"], ["music", "Music"], ["movies", "Movies"]];
+
+  /* A tomato score as the row of tomatoes it is; zero is the splat. */
+  const tomatoes = (n) => (n > 0 ? "🍅".repeat(n) : "🤢");
+
+  function movieCard(r) {
+    const a = link(`/?view=screen&t=${r.type}&id=${r.id}`, `sc-card pf-movie ${r.score >= 3 ? "fresh" : "rotten"}`);
+    a.title = `${r.title}: ${r.score} / 5`;
+    if (r.poster) { const img = el("img", "sc-poster"); img.src = r.poster; img.alt = ""; img.loading = "lazy"; a.append(img); }
+    else a.append(el("div", "sc-ph", (r.title || "?").split(" ").map((w) => w[0]).join("").slice(0, 3).toUpperCase()));
+    a.append(el("span", "sc-kind", r.type === "tv" ? "SHOW" : "MOVIE"), el("span", "pf-tomato nums", `${r.score >= 3 ? "🍅" : "🤢"} ${r.score}`));
+    const cap = el("div", "sc-cap");
+    cap.append(el("b", null, r.title), el("small", null, `${tomatoes(r.score)}${r.year ? " · " + r.year : ""}`));
+    a.append(cap);
+    return a;
+  }
+  const LEAGUE_NAME = { NFL: "NFL", MLB: "MLB", CFB: "CFB", UFC: "UFC", BOXING: "Boxing", PROP: "Prop", NBA: "NBA", NHL: "NHL" };
+  const GAME_NAME = { flip: "Coin Flip", wheel: "Wheel", race: "Horse Race", hilo: "Higher or Lower", mines: "Mines", plinko: "Plinko", scratch: "Scratch-Off", roulette: "Russian Roulette", standing: "Last One Standing" };
+  const GAME_ICON = { flip: "🪙", wheel: "🎡", race: "🐎", hilo: "🃏", mines: "💣", plinko: "🎯", scratch: "🎟️", roulette: "🔫", standing: "🏁" };
 
   function quickStat(label, value, note, tone) {
     const box = el("div", `pf-q${tone ? " " + tone : ""}`);
@@ -419,56 +438,431 @@
     return h;
   }
 
+  /* ------------------------------------------------------------ the card
+
+     The profile header as a physical trading card: the photo on a
+     coloured panel, the name across the bottom of it, and the league
+     table on the back. Every figure already comes back from
+     /api/picks/profile — nothing new is tracked for it.
+
+     The FINISH is the point. It comes off the season ladder, so the
+     card changes when someone climbs rather than being a picture of a
+     page. Deliberately no team crest and no fallback mark behind the
+     photo: half the site has not picked a team, and a placeholder
+     badge on those cards read as a missing image rather than a design.
+
+     It is not live. The page fetches once on mount and never polls, so
+     a card showing #1 keeps showing #1 until the profile is opened
+     again. See the note in CLAUDE.md before changing that — a poll
+     here is not free. */
+  function tierOf(k) {
+    if (k.rank === 1) return "gold";
+    if ((k.rank && k.rank <= 5) || (k.accuracy !== null && k.accuracy >= 80)) return "silver";
+    return "base";
+  }
+
+  /** The one line under the name: their loudest badge, else the record. */
+  function billing(data) {
+    const first = (data.badges || [])[0];
+    if (first) return String(first.label).split("\u2014")[0].trim();
+    const k = data.picks;
+    if (!k.total) return "No picks settled";
+    return k.accuracy !== null ? `${k.accuracy}% right` : "Picks";
+  }
+
+  function tradingCard(data) {
+    const u = data.user;
+    const k = data.picks;
+    const tier = tierOf(k);
+
+    // Store cosmetics. An EARNED gold or silver finish always shows over a
+    // bought one, so a store look can never pass for a ladder finish.
+    const cos = data.cosmetics || {};
+    const skin = tier === "base" && cos.finish ? ` tc-skin-${cos.finish.replace(/^finish-/, "")}` : "";
+    const card = el("button", `tc tc-${tier}${skin}`);
+    card.type = "button";
+    card.setAttribute("aria-pressed", "false");
+    card.title = "Turn the card over";
+    const flip = el("div", "tc-flip");
+
+    // ---- front
+    const front = el("div", "tc-face tc-front");
+    const fi = el("div", "tc-inner");
+    const series = el("div", "tc-series");
+    series.append(el("span", null, `EastCoin \u00b7 ${data.season?.name || "Season"}`), el("span", "tc-tier", tier));
+    fi.append(series);
+
+    if (k.rank) {
+      const rank = el("div", "tc-rank");
+      rank.append(el("b", null, String(k.rank)), el("small", null, `of ${k.players}`));
+      fi.append(rank);
+    }
+
+    const shot = el("div", "tc-shot");
+    shot.append(avatar(u, "tc-photo"));
+    fi.append(shot);
+
+    const plate = el("div", "tc-plate");
+    plate.append(el("b", `tc-name${cos.name ? " nm-" + cos.name.replace(/^name-/, "") : ""}`, u.displayName));
+    const pos = el("span", "tc-pos");
+    // A gifted title can wear its club's crest where the pip goes.
+    let mark = el("i", "tc-pip");
+    if (cos.titleCrest) {
+      mark = teamCrest(cos.titleCrest, "tc-crest");
+      // Decoration on this line: the crest box holds the abbreviation as
+      // its fallback, and a reader would otherwise say "DOD" mid-title.
+      mark.setAttribute("aria-hidden", "true");
+      mark.title = cos.titleCrest.name;
+    }
+    pos.append(mark, document.createTextNode(cos.title || billing(data)));
+    plate.append(pos);
+    const line = el("div", "tc-line");
+    const cell = (label, value, tone) => {
+      const d = el("div");
+      d.append(el("span", null, label), el("b", tone ? tone : null, value));
+      return d;
+    };
+    line.append(
+      cell("Record", `${k.wins}\u2013${k.losses}`),
+      cell("Profit", `${k.profit > 0 ? "+" : k.profit < 0 ? "\u2212" : ""}${Math.abs(k.profit).toLocaleString()}`, k.profit > 0 ? "up" : k.profit < 0 ? "down" : ""),
+      cell("Staked", k.staked.toLocaleString())
+    );
+    plate.append(line);
+    fi.append(plate);
+    front.append(fi);
+
+    // ---- back: the league table, the way a real card back reads
+    const back = el("div", "tc-face tc-back");
+    const bi = el("div", "tc-binner");
+    const bh = el("div", "tc-bhead");
+    bh.append(avatar(u, "tc-bav"));
+    const who = el("div");
+    who.append(el("b", null, u.displayName), el("small", null, `@${u.login}${u.since ? " \u00b7 since " + when(u.since, { month: "short", year: "numeric" }) : ""}`));
+    bh.append(who);
+    if (k.rank) bh.append(el("span", "tc-no", `#${String(k.rank).padStart(2, "0")}`));
+    bi.append(bh);
+
+    const rows = Object.entries(k.records || {})
+      .map(([lg, r]) => ({ lg, ...r }))
+      .sort((a, b) => (b.wins + b.losses) - (a.wins + a.losses))
+      .slice(0, 6);
+    if (rows.length) {
+      bi.append(el("div", "tc-btitle", `By league \u00b7 ${data.season?.name || ""}`.trim()));
+      const table = el("table");
+      const thead = el("thead");
+      const hr = el("tr");
+      for (const [h, cls] of [["Lg", ""], ["W", ""], ["L", ""], ["Profit", ""]]) hr.append(el("th", cls, h));
+      thead.append(hr);
+      table.append(thead);
+      const tbody = el("tbody");
+      for (const r of rows) {
+        const tr = el("tr");
+        tr.append(el("td", null, LEAGUE_NAME[r.lg] || r.lg), el("td", null, String(r.wins)), el("td", null, String(r.losses)),
+          el("td", r.profit > 0 ? "up" : r.profit < 0 ? "down" : null, `${r.profit > 0 ? "+" : r.profit < 0 ? "\u2212" : ""}${Math.abs(r.profit).toLocaleString()}`));
+        tbody.append(tr);
+      }
+      const tot = el("tr", "tot");
+      tot.append(el("td", null, "Total"), el("td", null, String(k.wins)), el("td", null, String(k.losses)),
+        el("td", k.profit > 0 ? "up" : k.profit < 0 ? "down" : null, `${k.profit > 0 ? "+" : k.profit < 0 ? "\u2212" : ""}${Math.abs(k.profit).toLocaleString()}`));
+      tbody.append(tot);
+      table.append(tbody);
+      bi.append(table);
+    } else {
+      bi.append(el("p", "tc-empty", "No settled picks yet. The table fills in as they land."));
+    }
+
+    if ((data.badges || []).length) {
+      bi.append(el("div", "tc-btitle", "Honours"));
+      const chips = el("div", "tc-chips");
+      for (const b of data.badges.slice(0, 5)) chips.append(el("span", "tc-chip", `${b.emoji} ${String(b.label).split("\u2014")[0].trim()}`));
+      bi.append(chips);
+    }
+
+    const fine = [];
+    if (data.casino?.total) fine.push(`Casino ${data.casino.wins}\u2013${data.casino.losses}, net ${data.casino.net > 0 ? "+" : ""}${data.casino.net.toLocaleString()}.`);
+    if (k.streak?.bestWin) fine.push(`Best run ${k.streak.bestWin}.`);
+    fine.push("EastCoin Picks.");
+    bi.append(el("p", "tc-fine", fine.join(" ")));
+    back.append(bi);
+
+    flip.append(front, back);
+    card.append(flip);
+    card.addEventListener("click", () => {
+      const on = card.classList.toggle("turned");
+      card.setAttribute("aria-pressed", String(on));
+    });
+    return card;
+  }
+
+  /* ---------------------------------------------------------- stat lines
+
+     The Overview reads like a player page on a sports site: a season
+     stat bar, then splits by league and by casino game with a TOTAL
+     row. Every figure is already in /api/picks/profile — the only
+     thing added for it was staked per league. */
+
+  const pct3 = (made, all) => (all ? (made / all).toFixed(3).replace(/^0\./, ".") : "—");
+  const plusMinus = (n) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(Math.round(Number(n) || 0)).toLocaleString()}`;
+  const roiOf = (profit, staked) => (staked ? `${profit > 0 ? "+" : profit < 0 ? "−" : ""}${Math.abs((100 * profit) / staked).toFixed(1)}%` : "—");
+  const tone = (n) => (n > 0 ? "up" : n < 0 ? "down" : "");
+
+  /**
+   * The header's stat band: the season at a glance, value over label,
+   * across the foot of the header card. Six figures and no more —
+   * it is the summary, and the splits below are the detail. Every
+   * number here is the headline of something the page shows in full
+   * further down, which is why the cells are not links.
+   */
+  function statBand(data) {
+    const k = data.picks;
+    const c = data.casino;
+    const band = el("div", "pf-band");
+    band.append(el("h2", null, `${data.season?.name || "Season"} at a glance`));
+    const row = el("div", "pf-band-row");
+    const cell = (value, label, { suffix, cls, note } = {}) => {
+      const box = el("div", "pf-bandcell");
+      const b = el("b", cls ? `nums ${cls}` : "nums", value);
+      if (suffix) b.append(el("i", null, suffix));
+      box.append(b, el("span", null, label));
+      if (note) box.title = note;
+      row.append(box);
+    };
+    const settledAll = k.wins + k.losses;
+    cell(k.rank ? `#${k.rank}` : "—", "Rank", { suffix: k.rank ? `/${k.players}` : "", cls: k.rank === 1 ? "gold" : "" });
+    cell(`${k.wins}–${k.losses}`, "Record", { note: k.open ? `${k.open} still open` : `${k.total} picks this season` });
+    cell(pct3(k.wins, settledAll), "Win %", { note: `${settledAll} settled` });
+    cell(plusMinus(k.profit), "Picks", { cls: tone(k.profit), note: `${k.staked.toLocaleString()} staked` });
+    if (c?.total) cell(plusMinus(c.net), "Casino", { cls: tone(c.net), note: `${c.total} plays` });
+    cell(k.streak.current > 0 ? `W${k.streak.current}` : k.streak.current < 0 ? `L${Math.abs(k.streak.current)}` : "—", "Streak",
+      { cls: tone(k.streak.current), note: k.streak.bestWin ? `best run W${k.streak.bestWin}` : "" });
+    band.append(row);
+    return band;
+  }
+
+  /**
+   * The season's net as a sparkline, under the identity: the shape of
+   * it, which no single figure carries. The Overview keeps the full
+   * chart with its axes, tooltip and balance toggle — this is the
+   * trend line a player page runs under the name, and it is what
+   * fills the column beside a card three times the height of a name.
+   */
+  function trendBlock(b) {
+    const pts = (b?.points || [])
+      .map((p) => ({ t: new Date(p.t).getTime(), v: Number(p.net) }))
+      .filter((p) => Number.isFinite(p.t) && Number.isFinite(p.v));
+    if (pts.length < 3) return null;
+    const last = pts[pts.length - 1].v;
+    const cls = tone(last);
+    const box = el("div", "pf-trend");
+    const head = el("div", "pf-trend-head");
+    // The figure wears the coin, like every other money number here.
+    const figure = el("b", cls);
+    figure.append(zc(last, { sign: true }));
+    head.append(el("span", null, `Net since ${when(b.first, { month: "short", day: "numeric" })}`), figure);
+    box.append(head);
+
+    const W = 600, H = 78, PAD = 5;
+    const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, class: "pf-spark", role: "img", "aria-label": `Net ZCoins over the season, ending ${plusMinus(last)}` });
+    const t0 = pts[0].t;
+    const t1 = pts[pts.length - 1].t || t0 + 1;
+    const vs = pts.map((p) => p.v);
+    const lo = Math.min(0, ...vs);
+    const hi = Math.max(0, ...vs);
+    const x = (t) => ((t - t0) / Math.max(1, t1 - t0)) * W;
+    const y = (v) => H - PAD - ((v - lo) / Math.max(1, hi - lo)) * (H - PAD * 2);
+    const line = pts.map((p, i) => `${i ? "L" : "M"}${x(p.t).toFixed(1)} ${y(p.v).toFixed(1)}`).join(" ");
+    // The area closes on the zero line, so a losing season fills downward.
+    const zero = y(0);
+    svg.append(
+      svgEl("path", { class: `fill ${cls}`, d: `${line} L${W} ${zero.toFixed(1)} L0 ${zero.toFixed(1)} Z` }),
+      svgEl("line", { class: "zero", x1: 0, x2: W, y1: zero.toFixed(1), y2: zero.toFixed(1) }),
+      svgEl("path", { class: `line ${cls}`, d: line })
+    );
+    box.append(svg);
+    return box;
+  }
+
+  /**
+   * The last ten picks as a form guide, newest first — W, L, or a dot
+   * for one still open. Nothing else on the page says how the season
+   * has been going lately rather than overall.
+   */
+  function formStrip(recent) {
+    const picks = (recent || []).filter((p) => p.status !== "REFUNDED").slice(0, 10);
+    if (!picks.length) return null;
+    const box = el("div", "pf-form");
+    box.append(el("span", "pf-form-k", "Form"));
+    const row = el("div", "pf-form-row");
+    for (const p of picks) {
+      const key = p.status === "WON" ? "w" : p.status === "LOST" ? "l" : "o";
+      const pip = el("span", `pf-pip ${key}`, key === "w" ? "W" : key === "l" ? "L" : "·");
+      pip.title = `${p.team} vs ${p.opponent} · ${p.status === "ACTIVE" ? "open" : plusMinus(p.profit)}`;
+      row.append(pip);
+    }
+    box.append(row, el("small", null, "newest first"));
+    return box;
+  }
+
+  /** cols: header strings. rows/total: arrays of [value, className]. */
+  function statTable(cols, rows, total) {
+    const wrap = el("div", "pfs-tablewrap");
+    const table = el("table", "pfs-table");
+    const head = el("tr");
+    cols.forEach((c, i) => head.append(el("th", i ? "n" : null, c)));
+    const thead = el("thead");
+    thead.append(head);
+    table.append(thead);
+    const body = el("tbody");
+    const line = (cells, cls) => {
+      const tr = el("tr", cls);
+      cells.forEach(([value, extra], i) => tr.append(el("td", i ? `n${extra ? " " + extra : ""}` : null, value)));
+      return tr;
+    };
+    for (const r of rows) body.append(line(r));
+    if (total) body.append(line(total, "tot"));
+    table.append(body);
+    wrap.append(table);
+    return wrap;
+  }
+
+  function seasonStats(data) {
+    const k = data.picks;
+    const c = data.casino;
+    const box = el("section", "pf-section pfs");
+    const head = el("div", "pfs-head");
+    head.append(el("h2", null, `${data.season?.name || "Season"} splits`));
+    if (k.open) head.append(el("span", "pfs-open", `${k.open} open`));
+    box.append(head);
+    /* No stat bar here any more: it was the header band's ten figures
+       over again, one screen apart. The tables' TOTAL rows carry the
+       season line, so the summary is said once at the top and the
+       detail once here. */
+
+    const settled = k.wins + k.losses;
+
+    const leagues = Object.entries(k.records || {})
+      .map(([lg, r]) => ({ lg, staked: 0, ...r }))
+      .sort((a, b) => (b.wins + b.losses) - (a.wins + a.losses));
+    if (leagues.length) {
+      box.append(el("h3", "pfs-sub", "Splits by league"));
+      box.append(statTable(
+        ["LG", "GP", "W", "L", "PCT", "STAKED", "PROFIT", "ROI"],
+        leagues.map((r) => [
+          [LEAGUE_NAME[r.lg] || r.lg],
+          [String(r.wins + r.losses)],
+          [String(r.wins)],
+          [String(r.losses)],
+          [pct3(r.wins, r.wins + r.losses)],
+          [r.staked.toLocaleString()],
+          [plusMinus(r.profit), tone(r.profit)],
+          [roiOf(r.profit, r.staked), tone(r.profit)]
+        ]),
+        [
+          ["Total"], [String(settled)], [String(k.wins)], [String(k.losses)], [pct3(k.wins, settled)],
+          [k.staked.toLocaleString()], [plusMinus(k.profit), tone(k.profit)], [roiOf(k.profit, k.staked), tone(k.profit)]
+        ]
+      ));
+    }
+
+    if (c?.total) {
+      box.append(el("h3", "pfs-sub", "Casino by game"));
+      const games = Object.entries(c.games || {})
+        .map(([game, g]) => ({ game, ...g }))
+        .sort((a, b) => b.plays - a.plays);
+      box.append(statTable(
+        ["GAME", "GP", "W", "L", "PCT", "STAKED", "NET", "ROI"],
+        games.map((g) => [
+          [`${GAME_ICON[g.game] || "🎰"} ${GAME_NAME[g.game] || g.game}`],
+          [String(g.plays)],
+          [String(g.wins)],
+          [String(g.losses)],
+          [pct3(g.wins, g.plays)],
+          [Number(g.staked || 0).toLocaleString()],
+          [plusMinus(g.net), tone(g.net)],
+          [roiOf(g.net, g.staked || 0), tone(g.net)]
+        ]),
+        [
+          ["Total"], [String(c.total)], [String(c.wins)], [String(c.losses)], [pct3(c.wins, c.total)],
+          [c.staked.toLocaleString()], [plusMinus(c.net), tone(c.net)], [roiOf(c.net, c.staked), tone(c.net)]
+        ]
+      ));
+    }
+    return box;
+  }
+
   function page(data, music) {
     const u = data.user;
     const k = data.picks;
     const c = data.casino;
-    const wrap = el("section", "profile");
-    wrap.append(profileNav());
+    // Store cosmetics they have switched on (null for most people).
+    const look = data.cosmetics || {};
+    const wrap = el("section", `profile${look.background ? ` pbg pbg-${look.background.replace(/^background-/, "")}` : ""}`);
+    wrap.append(profileNav(data));
 
     // ---- the header card
-    const head = el("div", "pf-card pf-head");
-    head.append(avatar(u, "pf-avatar"));
+    const head = el("div", `pf-card pf-head has-tcard${look.banner ? ` pf-banner pf-banner-${look.banner.replace(/^banner-/, "")}` : ""}`);
+    // The card sits in a case, like a graded card, with its own label.
+    const cardCase = el("div", "tc-case");
+    const label = el("div", `tc-case-label${look.label ? " foil" : ""}`);
+    label.append(el("i", null, "◆"), el("span", null, "EastCoin Trading Card"), el("i", null, "◆"));
+    const card = tradingCard(data);
+    cardCase.append(label, card);
+    head.append(cardCase);
     const copy = el("div", "pf-copy");
-    const name = el("h1", null, u.displayName);
+    const name = el("h1");
+    // The name is its own span so a bought name colour never tints the badges beside it.
+    name.append(nameSpan(u.displayName, look));
     const badges = el("span", "pf-badges");
-    for (const b of data.badges || []) badges.append(el("span", `pf-badge ${b.key}`, `${b.emoji} ${b.label}`));
+    /* A title is worn beside the name as well as on the card, first in
+       the row — but never dressed as an earned badge: it keeps the
+       plain pill, because the earned ones carry the colour. */
+    if (look.title) {
+      const pill = el("span", "pf-badge pf-badge-title");
+      if (look.titleCrest) {
+        const mark = teamCrest(look.titleCrest, "pf-badge-crest");
+        mark.setAttribute("aria-hidden", "true");
+        pill.append(mark);
+      }
+      pill.append(document.createTextNode(look.title));
+      pill.title = look.titleCrest ? `${look.title} · ${look.titleCrest.name}` : look.title;
+      badges.append(pill);
+    }
+    for (const b of data.badges || []) {
+      const pill = el("span", `pf-badge ${b.key}`, `${b.emoji} ${String(b.label).split("—")[0].trim()}`);
+      pill.title = b.label;
+      badges.append(pill);
+    }
     name.append(badges);
     copy.append(name);
-    copy.append(el("p", null, `@${u.login}${u.since ? " · with EastCoin since " + when(u.since, { month: "short", year: "numeric" }) : ""}`));
-    copy.append(teamChip(u));
+    const meta = el("p", null, `@${u.login}${u.since ? " · with EastCoin since " + when(u.since, { month: "short", year: "numeric" }) : ""}`);
+    // One per person per day, never your own — so the number means
+    // people rather than refreshes. It is the figure as the page was
+    // asked for, so your own visit shows up the next time you look.
+    if (u.views > 0) {
+      const views = el("span", "pf-views", `${u.views.toLocaleString()} profile view${u.views === 1 ? "" : "s"}`);
+      views.title = "Counted once per person per day";
+      meta.append(document.createTextNode(" · "), views);
+    }
+    copy.append(meta);
+    if (look.message) copy.append(el("p", "pf-msg", look.message));
+    copy.append(teamChip(u, look));
+    if (look.player) copy.append(playerChip(look.player));
+    // The form guide is the one thing here that is nowhere else on the
+    // page, and it is what fills the column beside a tall card.
+    const form = formStrip(k.recent);
+    if (form) copy.append(form);
+    const trend = trendBlock(data.bankroll);
+    if (trend) copy.append(trend);
     head.append(copy);
 
-    const seasonName = data.season?.name || "Season";
-    const quick = el("div", "pf-quick");
-    quick.append(
-      quickStat("Record", `${k.wins}–${k.losses}`, recordNote(k.records) || (k.accuracy !== null ? `${k.accuracy}% of settled picks` : "Nothing settled yet")),
-      quickStat(`${seasonName} profit`, zc(k.profit, { sign: true }), `${k.staked.toLocaleString()} staked · ${k.total} pick${k.total === 1 ? "" : "s"}`, k.profit > 0 ? "up" : k.profit < 0 ? "down" : ""),
-      quickStat("Picks rank", k.rank ? `#${k.rank} of ${k.players}` : "—", k.rank ? "by Picks profit" : "settle a pick to rank"),
-      quickStat("Streak", k.streak.current > 0 ? `W${k.streak.current}` : k.streak.current < 0 ? `L${Math.abs(k.streak.current)}` : "—",
-        k.streak.bestWin ? `best run ${k.streak.bestWin}` : "no settled picks", k.streak.current > 0 ? "up" : k.streak.current < 0 ? "down" : "")
-    );
-    head.append(quick);
-
-    // The casino's numbers, in the same shape as the season strip above.
-    if (c && c.total) {
-      const cq = el("div", "pf-quick pf-quick-casino");
-      const favName = c.favourite ? (GAME_NAME[c.favourite.game] || c.favourite.game) : null;
-      cq.append(
-        quickStat("Casino profit", zc(c.net, { sign: true }), `${c.staked.toLocaleString()} staked · ${c.total} play${c.total === 1 ? "" : "s"}`, c.net > 0 ? "up" : c.net < 0 ? "down" : ""),
-        quickStat("Casino record", `${c.wins}–${c.losses}`, `${Math.round((100 * c.wins) / c.total)}% of plays won`),
-        quickStat("Biggest win", c.biggestWin ? zc(c.biggestWin, { sign: true }) : "—", c.biggestWin ? "in one play" : "none yet", c.biggestWin ? "up" : ""),
-        quickStat("Favourite game", favName || "—", c.favourite ? `${c.favourite.plays} play${c.favourite.plays === 1 ? "" : "s"}` : "")
-      );
-      head.append(cq);
-    }
+    head.append(statBand(data));
     wrap.append(head);
 
     // ---- the tabs
     const bar = el("nav", "pf-tabs");
     bar.setAttribute("aria-label", "Profile sections");
     const panels = {};
-    const counts = { picks: k.total, casino: c?.total || 0, music: music?.requests || 0 };
+    const counts = { picks: k.total, casino: c?.total || 0, music: music?.requests || 0, movies: data.movies?.total || 0 };
     const buttons = {};
     for (const [key, label] of TABS) {
       const btn = el("button", "pf-tab", label);
@@ -486,6 +880,7 @@
 
     // ---- Overview: the bankroll, the highlights, and a glance at each tab
     const ov = panels.overview;
+    if (k.total || c?.total) ov.append(seasonStats(data));
     if (data.bankroll?.points?.length > 1) ov.append(bankrollSection(data.bankroll));
     if (k.biggestWin || k.worstBeat) {
       const hls = el("div", "gp-hls");
@@ -493,20 +888,6 @@
       if (k.worstBeat) hls.append(highlight("bad", "Worst beat", k.worstBeat, `−${k.worstBeat.wager}`, `${k.worstBeat.team} ${formatLine(k.worstBeat.line)} vs ${k.worstBeat.opponent}`));
       ov.append(hls);
     }
-    const glance = el("div", "pf-glance");
-    const glanceCard = (key, icon, title, big, small) => {
-      const card = el("button", "pf-glance-card");
-      card.type = "button";
-      card.append(el("span", "pf-glance-k", `${icon} ${title}`), el("b", "nums", big), el("small", null, small), el("em", null, "Open →"));
-      card.addEventListener("click", () => select(key, true));
-      return card;
-    };
-    glance.append(
-      glanceCard("picks", "🪙", "Picks", `${k.wins}–${k.losses}`, k.open ? `${k.open} open right now` : `${k.total} pick${k.total === 1 ? "" : "s"} all season`),
-      glanceCard("casino", "🎰", "Casino", c ? `${c.net > 0 ? "+" : ""}${c.net.toLocaleString()}` : "—", c ? `${c.wins}–${c.losses} across ${c.total} play${c.total === 1 ? "" : "s"}` : "no results yet"),
-      glanceCard("music", "🎵", "Green Room", music ? String(music.rating ?? 1000) : "—", music ? `ELO · ${music.requests} request${music.requests === 1 ? "" : "s"}` : "no requests yet")
-    );
-    ov.append(glance);
     const foot = el("div", "gp-links");
     foot.append(link("/?view=picks&tab=leaderboard", "gp-back", "Leaderboard"), link("/?view=picks&tab=ledger", "gp-back", "Community Ledger"), link("/?view=casino", "gp-back", "Casino floor"));
     ov.append(foot);
@@ -518,7 +899,9 @@
     pstrip.append(
       stat("Record", recordSplit(k.records), k.accuracy !== null ? `${k.accuracy}% of settled picks` : "Nothing settled yet"),
       stat("Staked", k.staked.toLocaleString(), `across ${k.total} pick${k.total === 1 ? "" : "s"}`),
-      stat("Best run", k.streak.bestWin ? `${k.streak.bestWin} straight` : "—", k.streak.worstLoss ? `worst: ${k.streak.worstLoss} in a row` : "")
+      stat("Best run", k.streak.bestWin ? `${k.streak.bestWin} straight` : "—", k.streak.worstLoss ? `worst: ${k.streak.worstLoss} in a row` : ""),
+      stat("Right now", k.streak.current > 0 ? `W${k.streak.current}` : k.streak.current < 0 ? `L${Math.abs(k.streak.current)}` : "—",
+        k.streak.current > 0 ? "on a run" : k.streak.current < 0 ? "on a slide" : "nothing settled yet", k.streak.current > 0 ? "up" : k.streak.current < 0 ? "down" : "")
     );
     pk.append(pstrip);
     const prow = el("div", "gp-rows");
@@ -590,6 +973,29 @@
       }
     }
 
+    // ---- Movies: their tomato scores from Movies & TV
+    const mv = panels.movies;
+    const m = data.movies;
+    mv.append(sectionHead("Movies & TV", m ? `${m.total} rated` : ""));
+    if (!m) {
+      const note = emptyNote("No scores yet", "Movies and shows they rate out of five tomatoes in Movies & TV show here.");
+      if (isMine(u)) note.append(link("/?view=screen", "gp-back", "Rate something →"));
+      mv.append(note);
+    } else {
+      const freshPct = Math.round(100 * m.fresh / m.total);
+      const mstrip = el("div", "summarystrip four");
+      mstrip.append(
+        stat("Rated", String(m.total), `movie${m.total === 1 ? "" : "s"} and shows`),
+        stat("Average", `${m.avg} / 5`, tomatoes(Math.round(m.avg))),
+        stat("Fresh", `${freshPct}%`, `${m.fresh} fresh · ${m.rotten} rotten`),
+        stat("Latest", m.recent[0].title, `${m.recent[0].score} / 5`)
+      );
+      mv.append(mstrip);
+      const grid = el("div", "sc-grid pf-movies");
+      for (const r of m.recent) grid.append(movieCard(r));
+      mv.append(el("h3", "pf-sub", m.total > m.recent.length ? `Latest ${m.recent.length} of ${m.total}` : "Every score, newest first"), grid);
+    }
+
     for (const key of Object.keys(panels)) wrap.append(panels[key]);
 
     // ---- selection, remembered in the hash
@@ -617,13 +1023,23 @@
      the left, the way back to the rest of the site on the right.
      Every link stays inside the shell, so the chat never reloads. */
 
-  function profileNav() {
+  function profileNav(data = null) {
     const nav = el("nav", "pf-nav");
     nav.setAttribute("aria-label", "Profile links");
     nav.append(
       link("/?view=users", "pf-nav-link", "All Users"),
       link("/?view=picks", "pf-nav-link", "← Back to Picks")
     );
+    // Once EastCoin Wrapped has dropped, every profile links to its season.
+    if (data?.wrappedOpen && data.user?.login) nav.append(link(`/wrapped/${encodeURIComponent(data.user.login)}`, "pf-nav-link", "🎁 Wrapped"));
+    // Only on your own page: the way into the store's looks. It sits
+    // with the other page links rather than in the identity block —
+    // it is navigation, not something the profile says about them.
+    if (data?.user && isMine(data.user)) {
+      const custom = link("/?view=store", "pf-nav-link pf-customize");
+      custom.append(document.createTextNode("🎨 Customize my profile"), el("span", "nav-tag", "NEW"));
+      nav.append(custom);
+    }
     return nav;
   }
 
@@ -652,13 +1068,43 @@
     return box;
   }
 
-  function teamChip(u) {
+  /* ---------------------------------------------------------- store looks */
+
+  /** The profile name, wearing a bought colour and effect. data-text feeds the effects' overlays. */
+  function nameSpan(text, look = {}) {
+    const cls = ["pf-name"];
+    if (look.name) cls.push("nm-" + look.name.replace(/^name-/, ""));
+    if (look.namefx) cls.push("nf-" + look.namefx.replace(/^namefx-/, ""));
+    const span = el("span", cls.join(" "), text);
+    span.dataset.text = text;
+    return span;
+  }
+
+  /** A favourite player from the store: ESPN headshot, name, position and team. */
+  function playerChip(p) {
+    const chip = el("div", "pf-player");
+    const shot = el("span", "pf-player-shot", String(p.name || "?").split(" ").map((w) => w[0]).join("").slice(0, 2));
+    if (p.headshot) {
+      const img = document.createElement("img");
+      img.alt = ""; img.decoding = "async"; img.loading = "lazy";
+      img.addEventListener("load", () => shot.classList.add("has-logo"));
+      img.addEventListener("error", () => img.remove());
+      img.src = p.headshot;
+      shot.append(img);
+    }
+    const copy = el("div");
+    copy.append(el("b", null, p.name), el("small", null, [p.position, p.team].filter(Boolean).join(" · ") + " · favourite player"));
+    chip.append(shot, copy);
+    return chip;
+  }
+
+  function teamChip(u, look = {}) {
     const wrap = el("div", "pf-teamwrap");
     const mine = isMine(u);
     const fav = u.favourite;
     if (!fav && !mine) return wrap;
 
-    const row = el("div", "pf-team");
+    const row = el("div", `pf-team${fav && look.team ? " tfx-" + look.team.replace(/^team-/, "") : ""}`);
     if (fav) {
       row.append(teamCrest(fav, "pf-team-crest"));
       const copy = el("div");
@@ -854,6 +1300,18 @@
       event.preventDefault();
       history.pushState({ view: "flip" }, "", href);
       shell.go("flip", { push: false });
+    } else if (href.startsWith("/?view=store")) {
+      event.preventDefault();
+      history.pushState({ view: "store" }, "", href);
+      shell.go("store", { push: false });
+    } else if (href.startsWith("/wrapped/")) {
+      event.preventDefault();
+      history.pushState({ view: "wrapped" }, "", href);
+      shell.go("wrapped", { push: false });
+    } else if (href.startsWith("/?view=screen")) {
+      event.preventDefault();
+      history.pushState({ view: "screen" }, "", href);
+      shell.go("screen", { push: false });
     } else if (href.startsWith("/?view=music")) {
       event.preventDefault();
       history.pushState({ view: "music" }, "", href);
@@ -879,6 +1337,10 @@
       document.title = previousTitle || "EastCoin";
     }
   };
+
+  // The store draws its preview with this same card, so what someone
+  // tries on there is exactly what their profile will show.
+  window.ECProfileCard = { tradingCard, tierOf, nameSpan, playerChip };
 
   function boot() {
     if (!window.ECV3) return window.setTimeout(boot, 30);

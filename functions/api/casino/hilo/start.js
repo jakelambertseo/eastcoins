@@ -6,7 +6,7 @@
 import { getSessionUser, walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOperation, newId, json, fail } from "../../picks/_lib.js";
 import { settlePot } from "../_pot.js";
 import { ensureSchema, touchPresence, capCheck } from "../_engine.js";
-import { ensureHilo, cardAt, liveGameFor, gamesLastHour, publicGame, randomSeed, sha256, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "./_hilo.js";
+import { ensureHilo, cardAt, liveGameFor, gamesLastHour, publicGame, randomSeed, sha256, edgeFor, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "./_hilo.js";
 
 const HILO = { key: "hilo" };
 
@@ -55,8 +55,8 @@ export async function onRequestPost(context) {
 
   try {
     await db
-      .prepare(`INSERT INTO hilo_games (id, user_id, seed, hash, stake, cards) VALUES (?, ?, ?, ?, ?, ?)`)
-      .bind(id, user.id, seed, hash, stake, JSON.stringify([first]))
+      .prepare(`INSERT INTO hilo_games (id, user_id, seed, hash, stake, cards, edge) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+      .bind(id, user.id, seed, hash, stake, JSON.stringify([first]), await edgeFor(seed))
       .run();
   } catch (error) {
     const refund = await moveBalance(context.env, user.login, stake);

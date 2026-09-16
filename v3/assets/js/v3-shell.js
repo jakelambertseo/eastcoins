@@ -49,7 +49,115 @@
   // had a chance to register. An unknown name still falls back.
   // "game" is the /g/<slug> page chat links to. It is a route, not a nav
   // item: the only way in is a link.
-  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "roulette", "standing", "verify"];
+  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre", "wrapped", "highlights", "store"];
+
+  /* ------------------------------------------------------ loading views
+
+     Until 2026-09-16 all 45 scripts loaded on every page — 284 KB
+     compressed — and, because a deferred script cannot run until every
+     deferred script before it has, the casino (around position 30)
+     waited on the Green Room, the admin page and the Game Room before
+     it could register. Now only the shell and its chrome are eager;
+     each route names the files it needs, dependencies first, and they
+     are injected the first time that route is opened. Views already
+     boot with a retry that tolerates registering late, so none of them
+     changed. The versioned URLs come from the inert tags in index.html,
+     so bump.mjs keeps working and a file loads once per page. */
+  const LOGOS = ["v3-cfb-teams.js", "v3-logos.js"];
+  const SPORTS = ["eastcoins-ppv-api.js", "eastcoins-streamed-api.js", ...LOGOS, "v3-sports.js"];
+  const KIT = ["v3-casino-kit.js", "v3-pot.js"];
+  const GROUPS = {
+    events: [...SPORTS, "v3-scores.js", "v3-activity.js", "v3-pickbox.js", "v3-tonight.js", "v3-events.js"],
+    multiview: [...SPORTS, "v3-multiview.js"],
+    watch: [...SPORTS, "v3-gameday.js", "eastcoins-youtube.js", "v3-watch.js"],
+    picks: [...LOGOS, "v3-scores.js", "v3-pickbox.js", "v3-picks.js"],
+    game: [...LOGOS, "v3-pickbox.js", "v3-game.js"],
+    // The Music tab and the users list read the room worker directly, so
+    // they need its config — without it the fetch has no base URL and
+    // the tab silently reads as "no Green Room data".
+    profile: [...LOGOS, "eastcoins-music-config.js", "v3-profile.js"],
+    wrapped: [...LOGOS, "v3-wrapped.js"],
+    highlights: ["v3-highlights.js"],
+    // The store's preview is the real profile card, so it loads the profile script too.
+    store: [...LOGOS, "v3-profile.js", "v3-store.js"],
+    users: ["eastcoins-music-config.js", "v3-users.js"],
+    activity: [...LOGOS, "v3-activity.js"],
+    music: ["eastcoins-music-config.js", "eastcoins-youtube.js", "v3-activity.js", "v3-music.js"],
+    screen: ["v3-screen.js"],
+    admin: ["v3-admin.js"],
+    dashboard: ["v3-dashboard.js"],
+    verify: ["v3-verify.js"],
+    casino: [...KIT, "v3-activity.js", "v3-casino.js"],
+    flip: [...KIT, "v3-coin.js"], wheel: [...KIT, "v3-wheel.js"], race: [...KIT, "v3-race.js"],
+    hilo: [...KIT, "v3-hilo.js"], mines: [...KIT, "v3-mines.js"], plinko: [...KIT, "v3-plinko.js"], scratch: [...KIT, "v3-scratch.js"],
+    roulette: [...KIT, "v3-pvp.js"], standing: [...KIT, "v3-pvp.js"],
+    games: [...KIT, "v3-games.js"], helmet: [...KIT, ...LOGOS, "v3-helmet.js"], fg: [...KIT, "v3-fg.js"], simon: [...KIT, "v3-simon.js"], centre: [...KIT, "v3-centre.js"]
+  };
+  /* ------------------------------------------------------ members only
+
+     The same door Movies & TV has had since it opened: a visitor who is
+     not logged in with Twitch sees why and the one button that fixes it,
+     instead of the page. Checked here, before a route's scripts are even
+     fetched, so a visitor at the door downloads none of the code behind
+     it. Every casino room is listed, not only the floor, because a link
+     to a game page is as direct a way in as the floor is. Movies & TV
+     keeps its own check inside its view. */
+  const MEMBERS_ONLY = {
+    multiview: ["MultiView is for members", "Log in with Twitch to watch several streams at once."],
+    picks: ["Picks is for members", "Log in with Twitch to make picks and follow the ledger."],
+    casino: ["The casino is for members", "Log in with Twitch to play with your ZCoins."],
+    store: ["The store is for members", "Log in with Twitch to spend your ZCoins on your card and profile."]
+  };
+  for (const room of ["flip", "wheel", "race", "hilo", "mines", "plinko", "scratch", "roulette", "standing"]) MEMBERS_ONLY[room] = MEMBERS_ONLY.casino;
+
+  function memberGate(route) {
+    const [title, line] = MEMBERS_ONLY[route];
+    const box = document.createElement("section");
+    box.className = "sc-gate";
+    const logo = document.createElement("img");
+    logo.className = "sc-gate-logo"; logo.src = "/assets/eastcoins-logo.webp"; logo.alt = "";
+    const h = document.createElement("h2"); h.textContent = title;
+    const p = document.createElement("p"); p.textContent = line;
+    const a = document.createElement("a");
+    a.className = "login-btn"; a.textContent = "Log in with Twitch";
+    a.href = "/api/picks/auth/twitch/start?returnTo=" + encodeURIComponent(location.pathname + location.search);
+    box.append(logo, h, p, a);
+    return box;
+  }
+
+  const lazySrc = new Map();
+  for (const t of document.querySelectorAll("script[data-lazy]")) {
+    const src = t.getAttribute("src") || "";
+    lazySrc.set(src.split("/").pop().split("?")[0], src);
+  }
+  const loads = new Map();              // file -> promise, so a file loads once
+  function loadOne(name) {
+    if (loads.has(name)) return loads.get(name);
+    const src = lazySrc.get(name);
+    const p = !src ? Promise.resolve() : new Promise((done) => {
+      const el = document.createElement("script");
+      el.src = src;
+      el.async = false;                 // keeps insertion order among these
+      el.onload = done;
+      el.onerror = done;                // a missing file must not wedge the route
+      document.head.append(el);
+    });
+    loads.set(name, p);
+    return p;
+  }
+  const pending = new Set();
+  function ensure(route) {
+    const files = GROUPS[route];
+    if (!files || views[route] || pending.has(route)) return;
+    pending.add(route);
+    Promise.all(files.map(loadOne)).then(() => {
+      pending.delete(route);
+      // The view registers itself when its script runs; if it has not
+      // (a 404, say) and this is still the page, say so rather than
+      // leaving the empty space.
+      if (!views[route] && state.route === route) render();
+    });
+  }
 
   /* ------------------------------------------------------------ legacy URLs
 
@@ -69,8 +177,10 @@
   // Extensionless: Pages canonicalises away the .html with a 308, and
   // sending someone through a redirect to reach a redirect is a hop for
   // nothing.
+  // "games" is NOT here any more (2026-09-16): the Game Room took that
+  // name, so ?view=games is a real route now. The old mini-games page is
+  // still a page and still lives at /games for anyone who has that link.
   const LEGACY_PAGES = {
-    games: "/games",
     streams: "/favorites",
     sicko: "/picks-kalshi-test#prop-of-week"
   };
@@ -146,6 +256,8 @@
   function routeFromUrl() {
     if (/^\/g\/./i.test(location.pathname)) return "game";
     if (/^\/u\/./i.test(location.pathname)) return "profile";
+    // /wrapped/<login>, and a bare /wrapped that opens your own.
+    if (/^\/wrapped(\/|$)/i.test(location.pathname)) return "wrapped";
     // /movie/inception and /tv/lost-s1-ep1 are the Movies & TV view.
     if (/^\/(movie|tv)\/./i.test(location.pathname)) return "screen";
     const view = new URL(location.href).searchParams.get("view");
@@ -166,7 +278,7 @@
 
     // The game view owns its own URL (/g/<slug>); every other view is
     // reached by name.
-    if (push && name !== "game" && name !== "profile") {
+    if (push && name !== "game" && name !== "profile" && name !== "wrapped") {
       const url = name === "events" ? "/" : `/?view=${name}`;
       history.pushState({ view: name }, "", url);
     }
@@ -174,11 +286,16 @@
   }
 
   const TITLES = {
+    wrapped: "EastCoin Wrapped",
+    highlights: "Highlights — EastCoin",
+    store: "Store — EastCoin",
     events: "EastCoin — Sports", music: "The Green Room — EastCoin", screen: "Movies & TV — EastCoin",
     multiview: "MultiView — EastCoin", picks: "Picks — EastCoin", casino: "Casino — EastCoin",
     flip: "Coin Flip — EastCoin Casino", wheel: "Wheel — EastCoin Casino", race: "Horse Race — EastCoin Casino",
-    hilo: "Higher or Lower — EastCoin Casino", mines: "Mines — EastCoin Casino", plinko: "Plinko — EastCoin Casino", users: "All Users — EastCoin", activity: "Activity — EastCoin",
+    hilo: "Higher or Lower — EastCoin Casino", mines: "Mines — EastCoin Casino", plinko: "Plinko — EastCoin Casino", scratch: "Scratch-Off — EastCoin Casino", users: "All Users — EastCoin", activity: "Activity — EastCoin",
     roulette: "Russian Roulette - PVP — EastCoin Casino", standing: "Last One Standing - PVP — EastCoin Casino", verify: "Check a seed — EastCoin Casino",
+    games: "Game Room — EastCoin", helmet: "Helmet Zoom — EastCoin", fg: "Field Goal — EastCoin",
+    simon: "Simon — EastCoin", centre: "Dead Centre — EastCoin",
     dashboard: "Dashboard — EastCoin", admin: "Admin — EastCoin", watch: "Watching — EastCoin"
   };
 
@@ -200,11 +317,22 @@
     return new Date().toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "numeric" }) === "10";
   }
 
+  /* A stylesheet the page needs only sometimes, linked once. The October
+     theme and the Green Room skins left v3.css on 2026-09-16 so the nine
+     skins and a month's dressing stop shipping to every page all year. */
+  function needCss(id, href) {
+    if (document.getElementById(id)) return;
+    const link = document.createElement("link");
+    link.id = id; link.rel = "stylesheet"; link.href = href;
+    document.head.append(link);
+  }
+
   function applySeason() {
     const pref = spookyChoice();
     const on = pref === "1" || (pref === "auto" && spookyByDate());
     document.body.classList.toggle("spooky", on);
     document.body.classList.toggle("full", on);
+    if (on) needCss("css-spooky", "/v3/assets/css/v3-spooky.css?v=2");
 
     const sw = document.getElementById("spookyToggle");
     if (sw) {
@@ -245,7 +373,29 @@
   });
 
   function render() {
+    // A members-only route is decided before its scripts are fetched.
+    // Until the session read lands, hold the space rather than guess.
+    const gated = Object.prototype.hasOwnProperty.call(MEMBERS_ONLY, state.route);
+    const sessionKnown = state.session !== null;
+    if (gated && !sessionKnown) {
+      if (currentView) { currentView.unmount?.(); currentView = null; }
+      els.view.replaceChildren();
+      const hold = document.createElement("div"); hold.className = "view-loading"; els.view.append(hold);
+      document.body.dataset.route = state.route;
+      const at = state.route;
+      Promise.resolve(window.ECV3?.sessionReady).catch(() => null).then(() => { if (state.route === at) render(); });
+      return;
+    }
+    if (gated && !state.session?.user?.login) {
+      if (currentView) { currentView.unmount?.(); currentView = null; }
+      els.view.replaceChildren();
+      document.body.dataset.route = state.route;
+      document.title = TITLES[state.route] || "EastCoin";
+      els.view.append(memberGate(state.route));
+      return;
+    }
     const view = views[state.route];
+    if (!view) ensure(state.route);
 
     for (const link of els.navLinks) {
       // A game page is a Picks page as far as the nav is concerned.
@@ -276,7 +426,14 @@
     document.title = TITLES[state.route] || "EastCoin";
 
     if (!view) {
-      els.view.append(stub("Not built yet", "This view arrives in a later phase."));
+      if (GROUPS[state.route] && pending.has(state.route)) {
+        // Its script is on the way; hold the space rather than flash a title.
+        const hold = document.createElement("div");
+        hold.className = "view-loading";
+        els.view.append(hold);
+      } else {
+        els.view.append(stub("Not built yet", "This view arrives in a later phase."));
+      }
       return;
     }
     view.mount(els.view, { state, go, stub });
@@ -642,6 +799,9 @@
   /* ---------------------------------------------------------- wiring */
 
   for (const link of els.navLinks) {
+    // Start fetching a page's script when the pointer reaches its link,
+    // so the click usually finds it already there.
+    link.addEventListener("mouseenter", () => { if (link.dataset.route) ensure(link.dataset.route); }, { passive: true });
     link.addEventListener("click", (event) => {
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
       const name = link.dataset.route;
@@ -658,7 +818,7 @@
     const a = event.target.closest("a.ulink, a.glink");
     if (!a) return;
     const href = a.getAttribute("href") || "";
-    const target = href.startsWith("/u/") ? "profile" : href.startsWith("/g/") ? "game" : "";
+    const target = href.startsWith("/u/") ? "profile" : href.startsWith("/g/") ? "game" : href.startsWith("/wrapped") ? "wrapped" : "";
     if (!target) return;
     event.preventDefault();
     history.pushState({ view: target }, "", href);
@@ -851,6 +1011,16 @@
     if (state.session?.wallet) state.session.wallet.balance = n;
   }
 
+  /* Twitch keeps one profile picture and serves it at several sizes by
+     suffix. The site stores the 300x300 URL (30-80 KB a face) and draws
+     it at 18-72px in a dozen places, so every small render asks for the
+     70x70 instead: the same picture at about a tenth of the bytes. The
+     profile card's big photo is the one place that keeps the original. */
+  window.ECAvatar = Object.freeze({
+    small: (url) => String(url || "").replace(/-profile_image-300x300\./, "-profile_image-70x70."),
+    medium: (url) => String(url || "").replace(/-profile_image-300x300\./, "-profile_image-150x150.")
+  });
+
   window.ECV3 = { register, go, state, stub, setWallet, refreshSession: loadSession };
 
   // Before anything reads the URL: an old-shaped link is rewritten to
@@ -860,6 +1030,9 @@
 
   state.route = routeFromUrl();
   loadPrefs();
+  // The floating player lives in the Green Room's script; if it is
+  // switched on it must be there on every page, not only after a visit.
+  try { if (localStorage.getItem("ec_v3_music_dock") === "1") ensure("music"); } catch { /* private mode */ }
   setChatVisible(prefs.chat);
   applyPrefs();
   armChatLoad();

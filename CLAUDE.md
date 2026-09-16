@@ -107,10 +107,54 @@
 > `.tabs-tools` slot where `sportFilter()` (segmented All/NFL/MLB) is
 > mounted by the Markets, History and Ledger views via `mountTools()`.
 >
-> **Profile layout** (`v3-profile.js` `page()`): mini nav → `.pf-card.pf-head`
-> (avatar, name+badges, team, `.pf-quick` four numbers) → `.pf-tabs`
-> Overview (bankroll, highlights, glance cards) / Picks / Casino / Music;
-> the tab lives in the hash (`/u/name#casino`).
+> **Profile layout** (`v3-profile.js` `page()`): mini nav →
+> `.pf-card.pf-head.has-tcard` → `.pf-tabs` Overview (bankroll,
+> highlights) / Picks / Casino / Music; the tab lives in the hash
+> (`/u/name#casino`). **The header is the card plus identity plus two
+> launchers, and nothing numeric beyond that** (tidied 2026-09-16): the
+> card carries record, profit, staked and rank; beside it sit the name,
+> the badges (short, full label on hover), the handle and join date,
+> the team chip, and the Picks and Casino launchers that used to open
+> the Overview. The two `.pf-quick` summary strips that sat there were
+> the clutter — the casino one was the Casino tab's own strip repeated
+> — and are gone; the one figure only they carried, the current
+> streak, is now the "Right now" stat on the Picks strip. The Green
+> Room launcher was dropped rather than squeezed in as a third: it
+> wrapped onto its own row and left a hole under both columns. Music
+> keeps its tab.
+>
+> **The profile card (2026-09-16)** — the header leads with a
+> **trading card** (`tradingCard()`, `.tc*` in `v3.css`): real 2.5×3.5
+> proportions, a bone border, the photo on a coloured panel, the name
+> across the bottom, and the **league table on the back** — click
+> turns it over. It replaced the plain `.pf-avatar`; the name, badges,
+> team chip and the two `.pf-quick` strips sit beside it in a
+> `238px 1fr` grid and stack under it below 760px. Every figure was
+> already in `/api/picks/profile`, so nothing new is tracked.
+>
+> **The finish comes off the season ladder** (`tierOf()`): gold at
+> rank 1, silver in the top five or at 80%+ accuracy, base otherwise
+> — so the card changes when someone climbs rather than being a
+> picture of a page. Gold and silver get a foil sweep; only gold gets
+> the lit rank flash. The line under the name is their loudest badge,
+> falling back to accuracy when they have none.
+>
+> Two things that are deliberate. **No team crest and no fallback mark
+> behind the photo**: most of the site has not set a favourite team and
+> a placeholder badge read as a broken image rather than a design.
+> And `avatar()` returns a SPAN holding the initials with the `<img>`
+> as a CHILD — so the circle goes on the wrapper and the image is
+> absolutely positioned inside it, the shape `.cf-av` uses. Styling the
+> wrapper as though it were the image is what made the first build
+> render a square photo.
+>
+> **It is not live.** `v3-profile.js` has no poll at all: the page
+> fetches once on mount, so a card showing #1 keeps showing #1 until
+> the profile is opened again. Rank itself is recomputed server-side on
+> every request and settlement runs on the 5-minute cron, so the number
+> is right within about five minutes of a game ending — for anyone who
+> loads the page after that. Read the poll-rate note above before
+> adding a refresh here.
 >
 > **MLB slate line** — quiet sports still get one chat line a day when
 > the 4 PM slate opens (`composeSlateOpen`, keyed `slateopen:<sport>:<day>`
@@ -183,6 +227,103 @@
 > `v3.css`. Not in the bell on purpose: other people's picks, songs,
 > casino spins, "closing soon" — the ticker and Activity carry those.
 >
+> **The Game Room (2026-09-16)** — `/?view=games`, a nav link of its
+> own. Small games played for TITLES, never ZCoins: keeping coins out
+> is what lets them be quick and daft, and it is why a browser game is
+> allowed here at all. `functions/api/games/_games.js` holds the frame
+> — `game_scores` (one row per person per game per Chicago day),
+> `game_days` (the day's seed, made on first request so an answer
+> cannot be derived from the date), `board`, `recordFor` with a day
+> streak, and `champions` for who has taken the most days in 30.
+> One row per person per game per day is a UNIQUE INDEX on
+> `(game, user_id, day)` — a random primary key never collided, so the
+> daily rule was not actually enforced; it is added on its own and
+> forgiving, because a table that somehow already held a duplicate
+> would otherwise take the whole room down with it.
+> `/api/games/home` is the room. The nav link is **hidden** while the
+> room is iterated on. Five games:
+>
+> **Helmet Zoom** `/?view=helmet` (`v3-helmet.js`,
+> `games/helmet/*`, table `helmet_plays`) — one NFL crest a day,
+> cropped by `ZOOMS` from ×15 down to ×1.7, six guesses, scored 6
+> down to 1 and 0 for a miss. **The page never learns the club**: it
+> draws onto a canvas from `/api/games/helmet/img`, which is keyed on
+> the DAY, and `guess.js` grades. Conference after three wrong,
+> division after four. `matchTeam` takes abbreviation, nickname, city
+> or full name and ASKS which when a city is shared (New York, Los
+> Angeles) rather than guessing. Honest limit: the crest is still an
+> image the network tab can show, which is another reason it pays
+> titles.
+>
+> **Field Goal** `/?view=fg` (`v3-fg.js`, `games/fg/*`, table
+> `fg_runs`) — power meter, then aim, into a wind the SERVER picks
+> from the run's seed. Every kick is five yards further (from 20) and
+> one miss ends it. The page shows the result at once, then hands in
+> every stop and `replay()` judges the lot, so a score always matches
+> the run. Perfect play is 11 makes to 70 yards; ignoring the wind is
+> about 8. **The maths is mirrored in `_fg.js` and `v3-fg.js`** —
+> change one, change the other; the scratch test runs both. Meters are
+> read from the clock at the moment of the click, never from the last
+> painted frame, so a throttled tab cannot judge a kick on a number
+> nobody saw.
+>
+> **Simon (2026-09-16)** `/?view=simon` (`v3-simon.js`,
+> `games/simon/*`, table `simon_runs`) — four pads, one more every
+> round, score is rounds CLEARED and `saveScore({keepBest:true})`
+> keeps the day's best. The sequence is a pure function of the run's
+> seed (`sequenceFor`) and is handed out **one round at a time**, so
+> the page is never told more than it is about to show and there is
+> nothing to read ahead. `step.js` grades the answer against the
+> server's copy; a wrong pad ends the run there rather than at the end
+> of the round. The straightest game in the room.
+>
+> **Dead Centre (2026-09-16)** `/?view=centre` (`v3-centre.js`,
+> `games/centre/*`, table `centre_runs`) — a bar sweeps, stop it in
+> the middle, five goes. `speedsFor` picks the sweep speeds from the
+> seed and `replay()` scores the set server-side, so a good run cannot
+> be copied into a later one. `pointsFor(stop, speed) = max(0,
+> round((200 - error*2000) * (0.85 + speed*0.3)))`, so a **quick sweep
+> is worth more than a slow one** and a perfect set beats 1,000 — do
+> not write "out of 1,000" in copy. Like Field Goal, `barAt()` reads
+> the bar from `performance.now()` at the moment of the press, never
+> from the last painted frame.
+>
+> **The Gold Button (2026-09-16)** (`v3-gold.js`, `games/gold/*`,
+> table `gold_claims`) — once a day, at a moment nobody knows
+> (`triggerFor` from the day's seed, always between 10:00 and 22:30
+> Central), it appears **on every page** for two minutes; first press
+> takes the day, scored `120` for instant down to `1` on the bell.
+> **It has no page and it does not poll**: the bell already asks
+> `/api/picks/notifications` every 45 seconds, that answer now carries
+> `gold`, and `v3-notify.js` dispatches it as an `ec-gold` DOM event
+> which `v3-gold.js` only listens for and draws. That is why the
+> window is two minutes rather than thirty seconds — one poll has to
+> be certain to catch it. Any future "it appears everywhere" feature
+> should ride that request the same way rather than adding a poll.
+> The winner is atomic: `gold_claims.day` is the PRIMARY KEY and the
+> claim is `INSERT OR IGNORE`, so two presses in the same instant
+> cannot both win. It sits **bottom LEFT** for the same reason the
+> bell's toasts do — anything over the Twitch rail on the right makes
+> it flag itself obscured and stops chat. **Bottom left is only safe
+> above 980px**, where the rail is a right-hand column: below that the
+> rail is a fixed drawer over the right of the screen and it is OPEN BY
+> DEFAULT, so a phone is the ordinary case, not an edge one (measured
+> at 430px the full button lay across 272px of the rail at z-index 73
+> against its 55). Under 980px with `body.chat-open` the button
+> collapses to a disc in the strip the drawer leaves, and the notif
+> toast, same corner and same bug, simply waits. The disc's width is
+> `calc(100vw - min(360px,86vw) - 12px)` — the drawer's OWN expression,
+> so an overlap is impossible at any viewport rather than merely absent
+> at the widths someone checked. The guarantee runs the safe way round:
+> the only rule that makes the rail visible under 980px requires
+> `body.chat-open`, which is exactly the condition the collapse keys
+> on, so the rail can never be up without the collapse being active.
+> Anything new that parks itself in that corner needs the same pair of
+> rules — the floating music player is already there, so the button
+> moves to the top when a dock is up. `/api/games/gold/state` says
+> whether it is up and who took it, and **never when it is due**; its
+> Game Room card is a `div`, not a link.
+>
 > **Check a seed (2026-09-13)** — `/?view=verify` (`v3-verify.js`) over
 > `GET /api/casino/verify?game=&seed=[&hash=&mines=&players=]`, which is
 > pure maths with no session or database: it hashes the seed and replays
@@ -195,10 +336,79 @@
 > seed →" under every game's verify block, deep-linking here with the
 > seed and hash filled in; the floor's House rules link to it too.
 >
-> **Casino layout**: the floor is title → `.cas-me` strip (`/api/casino/home`
-> `me`: wallet, casino net, record, this hour vs cap; a login card when
-> signed out) → tiles → `.pf-tabs.cas-tabs` Recent results (paged) / House
-> rules. Game pages keep stage + side column; the fairness line is a
+> **Casino layout (rebuilt 2026-09-16)**: the floor **opens on the
+> games** and is one screen. Head → `.cas-cards` → the `.cas-ledger-head`
+> fold. It had grown the other way about: a ticker, a four-card
+> `.cas-me` summary strip and the Jackpot meter all sat above the
+> tiles, so the games began 528px down a 595px viewport and a laptop
+> opened the casino on everything except a game. People come here to
+> play and mostly click a card straight away, so **anything added to
+> this page goes below the cards unless it is a game**.
+>
+> The head carries the title, the limits line as the subtitle, and
+> `.cas-headme` → `.cas-mebar`, one pill holding the Jackpot cell
+> (ECPot's, see below) then wallet ("My (coin) Wallet", the only money
+> figure so the only one wearing the coin), net, record and this hour
+> vs cap. **The bar is built once and renderMe() only writes its
+> numbers**: it used to be replaced every five-second poll, which would
+> tear the Jackpot's poller down and stand a new one up at three times
+> its rate. Signed out, the stat cells hide and a login button shows.
+>
+> `.cas-card` is the game card: a portrait panel carrying **painted art**
+> (`/v3/assets/img/casino/<key>.webp`, 540x720, ~35 KB each, 249 KB for
+> all seven) with the name across the bottom, a live line under the
+> panel (phase, countdown, who is in) and, signed in,
+> **how many plays are left this hour**. That limit is TEN PER GAME,
+> not ten across the floor, so it is a number per card; `home.js` counts
+> it with each game's OWN limiter helper (`betsLastHour`,
+> `gamesLastHour`, `dropsLastHour`, `cardsLastHour`, `joinsLastHour`)
+> rather than a query written for the display, so the card and the bet
+> endpoint cannot drift apart — keep it that way. The blurb and who is
+> in the room moved to the card's `title`; who is in the room is ALSO
+> a pile of small faces (`.cas-card-who`, `K.avatar` as `cf-av
+> cas-face`, up to four) at the right of the live line with the count
+> after it. That line is redrawn twice a second for the countdown, so
+> the pile is rebuilt only when the roster's login list changes —
+> keep it behind that `peopleSig` check. **`.cas-card` is the casino's
+> alone; the Game Room still draws `.cas-tile`**, so its accents and
+> layout are separate.
+>
+> **The art (2026-09-16)** — built from 1.7 MB PNG uploads by
+> `scratchpad/build-cards.mjs` (sharp). Two crops matter. The black
+> frame is removed so the art fills the panel rather than sitting in a
+> second border; and the game's name, which was baked across the bottom
+> of every upload, is cropped OFF — the page already draws that same
+> nameplate, and as real text it stays sharp at any size, reads to a
+> screen reader and needs no new image when a game is renamed. Finding
+> that title band is fussier than it looks: the scan is limited to the
+> bottom 28% AND the left 60%, because Plinko's payout numbers and
+> Scratch-Off's silver panel are just as bright, sit mid-card, and take
+> a third of the art off those two otherwise. Each is then cover-cropped
+> to 3:4 at build time so the browser never fetches a pixel the layout
+> crops. `--card-rgb` survives as the **loading state** behind the
+> image, and the emoji returns via an `error` handler if the art ever
+> 404s, so a card is never a hole. Adding a game means adding one
+> `<key>.webp` and one `--card-rgb`.
+>
+> Two things about that art are easy to get wrong later. The images
+> are served with an hour of cache and carry no version in their path,
+> so **`ART_V` in `v3-casino.js` must be bumped whenever an image
+> changes** or the edge keeps handing out the old one; a regenerated
+> set looked unchanged in production until that was added. And the
+> grid **counts** its columns (`repeat(4, …)`, 3 under 980px, 2 under
+> 620px, with a `max-width:1080px`) rather than fitting them: an
+> `auto-fill` track packed seven across a desktop and left each card a
+> thumbnail. Card width therefore drives the art size — four across is
+> about 260px, which is why the source is 540 wide.
+>
+> The ledger (Recent results paged / House rules) is a **fold that
+> starts closed** — `.cas-ledger-head` is a button, `.cas-ledger-body`
+> is hidden — because it is reference, not a reason anyone opened the
+> casino. Closed the page is ~900px; open, ~1,580. The Jackpot no
+> longer has a card here: `ECPot.mount(el, {pill:true})` draws it as the
+> bar's first cell with the detail on hover, keeping one poll, one
+> cache and the same hit banner. Game pages keep stage + side column
+> and still use `{compact:true}`; the fairness line is a
 > `<details class="cf-verify">` with the full hash and seed, and every
 > ledger is paged with `ECCasino.pager/pageOf`.
 >
@@ -212,7 +422,7 @@
 > `/?view=hilo` (per-player, `functions/api/casino/hilo/*`, table
 > `hilo_games`, committed deck, 1% edge per call, ×50 / 12-card cap).
 > Shared limits: 20 ZC a bet, 10 an hour per game, and `HOUR_WIN_CAP`
-> (750 ZC net in any rolling hour across every game — 300 until 2026-09-13, `capCheck` in
+> (400 ZC net in any rolling hour across every game — 750 until 2026-09-16 and 300 until 2026-09-13; it blocks new bets and never trims a win already paid, `capCheck` in
 > `_engine.js`, enforced by every bet/deal endpoint including the coin's).
 > Wheel: 24 red/black slices + one 6-degree gold sliver at 40x, outcome is an
 > angle (red/black return 98.3%; gold is the 1-in-60 long shot at ~67%). Race: whole-number payouts 2/3/7/14, odds normalised from them —
@@ -236,8 +446,10 @@
 > derived from the seed alone (Fisher–Yates over 0..24, each swap from
 > `sha256(seed:shuffle:i)`). Each safe tile pays `C(25,k)/C(S,k)` less the
 > same 1% edge Hi-Lo takes; cash out after any safe tile. The run
-> auto-cashes at `topRung()` — the last rung still **under** the ×125
-> ceiling (3 bombs: 19 tiles ×113.85; 10 bombs: 7 tiles ×73.95; best board
+> auto-cashes at `topRung()` — the last rung still **under** the ×30
+> ceiling (×125 until 2026-09-14 night, when one player took 1,554 and
+> 777 on ten-bomb boards in two hours; ×30 makes the best board 570 on
+> 20 ZC, under the hourly cap) (3 bombs: 19 tiles ×113.85; 10 bombs: 7 tiles ×73.95; best board
 > 2,277 on a 20 ZC stake, 1 in 115; the ceiling was ×50, then ×25, then
 > ×125 on 2026-09-12 when a real jackpot was wanted — the ladder roughly
 > doubles per tile so the prize cannot be dialled in exactly) — rather
@@ -272,9 +484,26 @@
 > re-tune, change `ROWS` and `PAYOUTS` in `_plinko.js` only — the client
 > draws the pegs and the board width from `config.rows`/`config.payouts`,
 > and the odds column and the "once in N drops" line come from
-> `oddsTable()`. Never let the return past 100%. Winnings count
+> `oddsTable()`. Keep it inside the 96-104% band. Winnings count
 > toward `HOUR_WIN_CAP` via `hourlyNet()`; every new casino game must be
 > added there or it escapes the cap.
+>
+> **Scratch-Off (2026-09-14)** — `/?view=scratch` (`v3-scratch.js`,
+> `functions/api/casino/scratch/*`, tables `scratch_cards` and
+> `scratch_commits`). Nine cells under a foil (a canvas the pointer
+> erases; 60% scratched clears the rest, "Reveal all" skips it); three
+> of a kind pays that symbol's price. `PRIZES` in `_scratch.js`, rarest
+> first: crown ×100 (0.1%), diamond ×25 (0.3%), fire ×10 (1%), clover ×5
+> (3%), target ×3 (5%), football ×2 (12%), coin ×1 (22%) — 103.5%
+> return, 43.4% of cards win something, top prize 2,000 on a 20 ZC card.
+> The card is DECIDED AND PAID at `buy`, like a Plinko drop; scratching
+> is the reveal. Fairness is Plinko's commit-per-card: the outcome is
+> `sha256(seed:scratch)` as a fraction walked down the table, then the
+> grid is laid out to match it (`gridFor`: exactly three of the winner
+> on a win, nothing three times on a loss, shuffled by
+> `sha256(seed:cell:i)`), so a card never lies and a two-crown near-miss
+> is real. In `hourlyNet()`, the Jackpot's `dayStakes()`, the floor, the
+> feed, profiles, the dashboard's book and the check page (`game=scratch`).
 >
 > **The PvP tables (2026-09-12)** — Russian Roulette `/?view=roulette` and
 > Last One Standing `/?view=standing`, one client (`v3-pvp.js`, a `table(spec)`
@@ -320,21 +549,84 @@
 > intercepts every `/api/` call, so no ZCoin can move there. Flip
 > `paused` to reopen; the practice page needs nothing changed.
 >
-> **The casino is near-fair on purpose (2026-09-11)** — every game
-> returns ~98–99% (Hi-Lo and Mines `EDGE_RETURN = 0.99`; Plinko's table
-> 98.6%; Wheel red/black 98.3%; Coin Flip was always exactly fair at 2×).
-> The old 4% edge earned the house ~30 ZC a day and made players feel they
-> never won, so they drifted to Picks. Payout shapes favour FREQUENT wins
-> over big ones. Do not push the return past 100%: with the 750/hour cap
-> only blocking new bets, a positive player edge prints thousands of
-> ZCoins a day and devalues Picks. **Louder wins** — `makePop` takes
+> **The rule is the band, and it is drawn per PLAY: 96-104%.** There is
+> no requirement that the room comes out ahead, no prohibition on a
+> house edge, and no per-GAME rate — all three were assumed at some
+> point and all three were wrong. `edgeFor(seed)` in `_engine.js`:
+> `0.96 + (sha256(seed:edge)[0..8] / 2^32) * 0.08`, uniform, mean
+> exactly 1.00.
+>
+> **No game is a better bet than another**, which is the whole point: a
+> fixed rate per game is an edge a player can find and farm, and one
+> already had — 191 of every Mines board ever played were one person's,
+> because Mines was the game sitting at 104%. A per-play draw cannot be
+> shopped for: the seed is sealed behind its committed hash before the
+> stake is taken and revealed only once the play is over.
+>
+> It rides the fairness model already here rather than sitting beside
+> it — same seed, same commit-reveal — and `/api/casino/verify` returns
+> `edge` and `edgeRule` for every game, with Mines, Plinko and
+> Scratch-Off showing the drawn price beside the nominal one.
+>
+> Each game keeps its own shape and is divided through by what that
+> shape returns on its own, so the board, the ladder and the prize
+> table all still look as they did:
+>
+> | Game | How the draw is applied |
+> |---|---|
+> | Coin Flip, Wheel | quote FAIR prices (2, and 360/177 and 60); the round's edge multiplies in at settle |
+> | Hi-Lo | priced fairly per call (`EDGE_RETURN = 1`), the run's edge applied once — a long chain no longer compounds a per-call shave |
+> | Mines | `multiplierFor(mines, picks, edge)`, so every rung carries the board's edge and cashing early or late is still worth the same |
+> | Plinko | `PAYOUTS[b] * edge / TABLE_RETURN` |
+> | Scratch-Off | `prize.x * edge / RETURN` |
+> | PvP | **untouched** — zero-sum between players, there is no house side to take an edge from |
+>
+> `hilo_games`, `mines_games`, `plinko_drops` and `scratch_cards` each
+> gained an `edge` column (added by `ensureColumn` on the ensure path,
+> forgiving so an existing column cannot break the request), so the
+> number shown, recorded and paid is one number. **Do not reintroduce a
+> per-game rate.** If a game needs to feel different, change its payout
+> SHAPE — how often it pays and how big — not its return.
+>
+> Verified against the live modules: the draw is uniform across the
+> band, mean 1.00006 over 40,000 seeds, and every game measures 100.00%
+> expected with each play inside 96-104%. Everything below this line is
+> the history of getting it wrong three times, kept because the reasons
+> still matter.
+>
+> **The overcorrection (2026-09-14, since superseded)** — after four
+> days at 99.0% with almost everyone down, every game was pushed onto
+> the players' side at once, for a 103–104% blend. That was read as a
+> requirement that players must come out ahead; it never was one, and
+> the 2026-09-16 spread above replaced it. **Two mechanical fixes from
+> that day are permanent and must not be undone**: every payout is
+> `Math.round`ed rather than floored to the coin, which had been
+> quietly taking 2–7% off small stakes on top of the stated edge; and
+> Hi-Lo's edge is applied PER CALL, so its per-play return depends on
+> how far the chain runs and a small per-call number moves a lot over
+> six calls. `HOUR_WIN_CAP` (400) plus the 20 ZC and ten-an-hour limits
+> are what bound anyone farming whichever game sits at the top of the
+> band.
+>
+> **The flat house edge (2026-09-11, since superseded)** — every game
+> was set to ~98–99% at once. Before that a flat 4% edge earned the
+> house about 30 ZC a day and made players feel they never won, so they
+> drifted to Picks. **That is the lesson worth keeping: a uniform edge
+> across every game is what empties the room**, which is why the band
+> now varies by game rather than sitting at one number. Payout shapes
+> still favour FREQUENT wins over big ones. **Louder wins** — `makePop` takes
 > `big`, adds `.cf-pop.big` and fires `burst()` confetti (also for any
 > 30+ ZC profit); `makeToast(text, "near")` is the gold near-miss toast.
 > `sharedGame` specs may add `bigWin(result, mine, config)` and
 > `nearMiss(result, mine, config)` (the Wheel uses both); Hi-Lo, Mines and
 > Plinko call near-miss toasts themselves. **The tables' ticker** — the
 > casino floor mounts `ECActivity.mountTicker(el, { types: ["casino"],
-> label, href, empty })`, the same ticker filtered to casino items.
+> label, href, empty })`, the same ticker filtered to casino items. It
+> carries **wins and losses**: it ran wins-only for a day in September
+> 2026 and was put back, because a casino that only ever reports
+> winning is not telling the room anything. `mountTicker` also takes a
+> `keep` predicate for cutting inside a type, which is what that
+> wins-only run used.
 > **Profiles** get a second `.pf-quick.pf-quick-casino` strip (profit,
 > record, biggest win, favourite game) under the season strip, from
 > `profile.casino`.
@@ -376,6 +668,96 @@
 > Decided rows only (WON/LOST/BUST/CASHED); anything live counts as
 > neither.
 >
+> **Members only (2026-09-16)** — MultiView, Picks and the casino (the
+> floor AND every room: flip, wheel, race, hilo, mines, plinko, scratch,
+> roulette, standing) show the same door Movies & TV has: a visitor
+> without a Twitch session sees the `.sc-gate` card and a login button
+> that returns them to the page they asked for. It is decided in
+> `v3-shell.js` `render()` — `MEMBERS_ONLY` — BEFORE `ensure()` fetches a
+> route's scripts, so a visitor at the door downloads none of the code
+> behind it; until `sessionReady` resolves the space is held with
+> `.view-loading` rather than guessed. Movies & TV keeps its own check
+> inside its view. To gate another route, add it to `MEMBERS_ONLY`.
+>
+> On the server, `screen/_gate.js` `requireLogin(context, message)` is
+> the one gate; the Picks ledger now stands behind it and is `no-store`
+> (a cached 200 would be handed to the next visitor at the door). **The
+> public reads stay public on purpose**: `/api/picks/bootstrap` carries
+> the session the shell needs on every page and the slate the home
+> strip shows to everyone; `/api/casino/home` is what lets the edge
+> absorb the floor's polling and holds nothing the activity feed does
+> not already show; bets and plays already require a login. Gating
+> those would break the home page or undo the edge cache, so anything
+> that should be private beyond the page itself needs its own decision.
+>
+> **Page speed (2026-09-16)** — seven changes from an overnight audit,
+> all measured on the live site. Cold JS per route went from **284 KB
+> on every page** to: home 82, picks 65, music 56, profile 53, casino
+> 50, a casino game 42, Game Room 39 (compressed). Bootstrap 159 → 20 KB
+> raw. Fonts 95 → 79 KB, no Google request at load. Core CSS 63 → 54 KB.
+>
+> **Scripts load per route.** `index.html` has FIVE eager scripts
+> (shell, presence, notify, gold, badges); every other `<script>` is an
+> inert tag — `type="text/plain" data-lazy src="…?v=N"` — that the shell
+> reads for the versioned URL and injects the first time a route needs
+> it. `GROUPS` in `v3-shell.js` names each route's files, dependencies
+> first (`LOGOS`, `SPORTS`, `KIT` are the shared sets). **Adding a view
+> means an inert tag in index.html and a GROUPS entry; nothing else.**
+> Views keep their `boot()` retry, so they tolerate registering late; a
+> nav link prefetches on hover; the Green Room's script is forced eager
+> when the floating player is on (`ec_v3_music_dock === "1"`), because
+> `ECMusicDock` lives in it. `bump.mjs` still finds the inert tags.
+> `.view-loading` holds the space while a script is on the way.
+>
+> **Assets are held for a year.** `_headers` marks `/v3/assets/{js,css,
+> fonts,img/casino}/*` `max-age=31536000, immutable`; the `?v=` bump is
+> the invalidation. Unversioned images stay at a day; `index.html` is
+> `no-store`. Pages MERGES directives from every rule that matches a
+> path rather than replacing, which is why a card image shows both
+> `immutable` and a `stale-while-revalidate`. **The hazard this creates:
+> a request for a brand-new asset that races the deployment gets the
+> SPA fallback (the shell, as text/html), and the edge then keeps that
+> under the asset's URL for a year.** It happened to `v3-skins.css?v=1`
+> the night this shipped. So: after a deploy that adds a file, confirm
+> the ORIGIN serves it with a cache-busted fetch (`?v=N&probe=random`
+> returning the right content-type) before anything touches the real
+> URL; and if a real URL is ever poisoned, bump its version — nothing
+> here can purge the edge.
+>
+> **Fonts are self-hosted**: `/v3/assets/fonts/fonts.css` plus two
+> latin woff2 files, preloaded from the head, built from Google's own
+> `@font-face` CSS and then instanced to the axes the site uses
+> (Bricolage wght 700–800 with opsz kept, 75 → 60 KB; Figtree 400–800)
+> with fontTools' `instancer`. The subsetter's glyph pass fails on these
+> files after instancing (a lazy `gvar` lookup), so instance only. The
+> Green Room's retro faces still come from Google on demand.
+>
+> **Avatars**: `ECAvatar.small()` / `.medium()` in the shell swap
+> Twitch's `-300x300.` suffix for `70x70` / `150x150`. Every small render
+> uses `small`; the profile card's `tc-photo` (drawn ~176px) keeps the
+> original. New avatar code should go through it.
+>
+> **Bootstrap carries only ACTIVE ledger rows** (`getCommunityLedger(db,
+> {activeOnly:true})`), which is what the Tonight strip needs; the full
+> 200 are `/api/picks/ledger` (`public, max-age=20`), fetched by the
+> Ledger tab on open and not shrunk back by a refresh.
+>
+> **The casino floor is two endpoints.** `/api/casino/home` is public,
+> holds no viewer data, and is shared at the edge (`max-age=3,
+> stale-while-revalidate=5`), so N tabs polling every 5 s cost the
+> origin one call every few seconds; settlement still runs there.
+> `/api/casino/me` is the viewer's block, `no-store`, polled every 15 s
+> and on tab return. The per-game play counters were NOT folded into
+> GROUP BY queries: the paused games are already skipped and every
+> remaining counter is a single-table query, so there was nothing to
+> fold.
+>
+> **The Green Room skins and the October theme are their own files**
+> (`v3-skins.css`, linked by `applySkin()`; `v3-spooky.css`, linked by
+> `applySeason()` when the season is on). Their `?v=` lives in those JS
+> strings, not in index.html — bump it there when either sheet changes.
+> The per-view CSS split beyond that is still open.
+
 > **D1 reads are the budget that binds, and POLL RATE is what spends them**
 > (2026-09-12) — the free plan allows 5 million rows read a day and the site
 > spent them by about 1:30 PM on a Saturday, 500ing login, presence and the
@@ -407,6 +789,22 @@
 > (`.db-card.bad, .db-card.warn`) so a new card is included automatically.
 > Long lists page client-side via `pagedTable`/`pagedList`, keyed so the
 > one-minute refresh keeps the reader's page.
+>
+> **Watch rooms (2026-09-15)** — Movies & TV, "Watch together" in the
+> player bar. `functions/api/screen/room.js` (table `watch_rooms`):
+> the host's tab writes its clock (position, playing, the episode)
+> every ~5 s and at once on play/pause/seek, from the vidy.st events
+> the page already reads; guests poll every 5 s. **vidy.st cannot be
+> driven from outside** — it only emits events — so a guest is kept in
+> step by reloading the embed (`reloadEmbed`) at the host's projected
+> position when they drift past 8 s, and loaded PAUSED there
+> (`autoplay=false`) when the host pauses; never twice within 12 s.
+> Close enough for a film, not frame-locked, and the bar says so. Who
+> is in a room comes from `site_presence` rows with ref `room:<id>`.
+> The room rides on the URL as `?room=<id>` on either link form; a
+> "Watch rooms" shelf on the page lists live rooms (`?list=1`). A host
+> whose beat stops for two minutes is stale (guests keep their own
+> clock); leaving the player ends (host) or leaves (guest) the room.
 >
 > **Pretty URLs, Movies & TV only (2026-09-12)** — `/movie/inception`,
 > `/tv/lost`, `/tv/lost-s1`, `/tv/lost-s1-ep1`. Served by
@@ -479,7 +877,9 @@
 > leaves `ops_status` notes (`_ops.js`: `settle:last`, `odds:quota`).
 >
 > **Old links still work.** `v3-shell.js` rewrites `?event=`, `?watch=`,
-> and the `games` / `streams` / `sicko` view names on load, and
+> and the `streams` / `sicko` view names on load (`games` was one of
+> them until 2026-09-16, when the Game Room took that name; the old
+> mini-games page is still served at `/games`), and
 > `v3-multiview.js` decodes MultiView share tokens made by the V2 shell.
 > Do not remove either without a reason — every link ever pasted in chat
 > is one of those shapes.
@@ -531,7 +931,11 @@
 > per threshold, one line per threshold per tick). The cron runs every 5
 > minutes. The schedule
 > is cached 30 minutes (one credit per refresh, shared with the Picks
-> page's Upcoming list via `/api/picks/upcoming`); a fresh price is
+> page's Upcoming list via `/api/picks/upcoming`; since 2026-09-15 a
+> paused sport, or a daily sport outside its opening hours — MLB before
+> 3 PM or after 1 AM Central — is served from a 12-hour shadow copy
+> instead of refetched, `refreshWorthIt` in `_autoopen.js`; and live
+> score tracking runs every other tick, `live:last` in `ops_status`); a fresh price is
 > fetched only when a game is due, so section 9.5's quota concern is
 > handled by design rather than by a cap. The Odds API plan is 20,000
 > credits/month — comfortable, still not to be spent casually.
@@ -563,6 +967,17 @@
 > idempotency as automatic settlement), records `settlement_source =
 > 'admin-result'`, and posts the chat line and Discord card. Team games
 > are refused there. Fights read "A vs B" in chat, Discord and the game page.
+>
+> **Site-wide notices (2026-09-15)** — the admin page's Announce tab
+> has a **Post a notice** box: a title, a line, an icon and which page
+> it opens. It writes an `ops_status` row keyed `notice:<slug>`
+> (`admin/notice.js`), which `/api/picks/notifications` folds into the
+> bell, so it lands unread for everyone who has not looked since and
+> toasts on any open tab within a poll. Nothing goes to chat or
+> Discord — a notice is on-site only, so posting one can never be a
+> surprise in someone's stream. Reposting the same title replaces that
+> notice and makes it unread again; Pull removes it from every bell.
+> The bell only carries notices from the last fortnight.
 >
 > **Announcing one market** — each open, not-yet-started market on the
 > admin page has an Announce button: it previews via
@@ -608,9 +1023,9 @@
 > name or logo is drawn from must therefore SELECT `league` — `_wager.js`
 > did not, which is why a Missouri pick showed the Detroit Tigers crest.
 >
-> **NFL Sunday (2026-09-13)** — on Sundays AND Mondays September–January
-> (Chicago time; the community is ~95% NFL, and Monday night is a game
-> night) the Sports page shows football only: `nflSundayNow()` +
+> **NFL Sunday (2026-09-13)** — on Sundays, and Mondays until 10:30 PM
+> Central (when the night game is over), September–January (Chicago
+> time; the community is ~95% NFL) the Sports page shows football only: `nflSundayNow()` +
 > `isNflSunday()` in `v3-events.js` keep any listing naming an NFL team
 > (`footballRank === 0`, whatever category the provider filed it under),
 > RedZone, `ppv-nfl-*` feeds and titles with "NFL"; everything else is
@@ -618,6 +1033,30 @@
 > reads "NFL Sunday · football only". A Sunday with nothing that fits
 > shows the usual page. `?allsports=1` shows everything for a look. Picks
 > is untouched — baseball markets still open there.
+>
+> **One pick box (2026-09-15)** — `v3-pickbox.js` (`ECPickBox.open({
+> market, side, onPlaced })`) is the only place a pick is placed from
+> the site: the Picks card, the game page's Yes/No or team buttons and
+> the Tonight strip all open it. Same stake field with 10 / 25 / 50 /
+> All-in chips, same three-line summary, same receipt, prop-aware
+> (question line, "pays when the call is made"). It POSTs
+> `/api/picks/wagers`, updates the wallet chip and refreshes the bell.
+> The old ticket code in `v3-picks.js` is the fallback if the module is
+> missing. **Colour rule (same day):** gold is money (the wallet chip
+> went from green to gold), violet is props, semantic green/red are
+> results only, and a game's accent lives on its floor tile, not its
+> page; the blue that marked refunds is gone (neutral now).
+>
+> **Tonight on Picks (2026-09-15)** — the strip under the Sports
+> ticker (`v3-tonight.js`, mounted by `picksBanner()` in `v3-events.js`;
+> the old "Picks are now live" card is its fallback). Reads
+> `/api/picks/bootstrap` every 60 s while visible and shows, in order:
+> an open PROP (question, Yes/No with lines, a stake box that POSTs
+> `/api/picks/wagers` right there; more props link to Picks), else
+> your open picks with the live score from `ECV3Scores`, else the
+> slate (games open, first close, how chat is split on it from the
+> ledger), else what opens next from `/api/picks/upcoming`. Styles
+> `.tonight-*` wear `.picksbanner`'s frame; a prop turns it violet.
 >
 > **RedZone Sunday (2026-09-13)** — when the provider lists NFL RedZone
 > (`isRedZone`: title "NFL RedZone" or id `ppv-nfl-red-zone`), the Sports

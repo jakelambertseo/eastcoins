@@ -33,10 +33,9 @@ export const ROOM_WINDOW_MS = 60 * 1000;
 /* ---------------------------------------------------------- games */
 
 // The wheel: 24 slices alternating red and black share 354 degrees, and
-// one slim gold sliver takes the last 6. Red and black pay 2×; gold 40×.
-// Red/black return 0.983 of the stake over time — near fair, on purpose:
-// the casino is meant to be fun to come back to, not a drain. Gold is the
-// long shot (1 in 60) and returns 0.67; nobody is told it is smart.
+// one slim gold sliver takes the last 6. Red and black pay 2.05×; gold 60×.
+// Red/black return just over the stake (2026-09-14, the players' side);
+// gold is the 1-in-60 long shot and returns exactly the stake over time.
 const GOLD_DEG = 6;
 const WHEEL = (() => {
   const segments = [];
@@ -59,7 +58,41 @@ const RUNNERS = [
 
 // Nobody takes more than this out of the casino in any rolling hour.
 // Past it, new bets and deals are refused until the hour rolls on.
-export const HOUR_WIN_CAP = 750;
+// 400 since 2026-09-16 (750 before, 300 before that). It blocks NEW bets
+// once someone is up this much in a rolling hour; it never trims a payout
+// already won, so a single big win can still land above it.
+export const HOUR_WIN_CAP = 400;
+
+/* ------------------------------------------------------------- the edge
+
+   Every play draws its own return between 96% and 104%, uniformly, from
+   that play's seed. Nothing here is a fixed house edge and no game is a
+   better bet than any other: the expected return everywhere is the mean
+   of the band, 100%, and where a given play lands is decided by the same
+   committed seed that decides the cards, the bombs and the angle.
+
+   That is the point. A fixed rate per game — Coin Flip at 96%, Mines at
+   104% — is an edge a player can find and farm, and one of them did:
+   191 of the Mines boards ever played were one person's. A per-play draw
+   cannot be shopped for, because the seed is sealed behind its hash
+   before the stake is taken and only revealed once the play is over.
+
+   Games that keep a `multiplier` column bake the drawn edge into it, so
+   the number shown, the number recorded and the number paid are the same
+   number. The rest apply it where the payout is computed. */
+export const EDGE_MIN = 0.96;
+export const EDGE_MAX = 1.04;
+
+export async function edgeFor(seed) {
+  const h = await sha256(`${seed}:edge`);
+  const r = parseInt(h.slice(0, 8), 16) / 0x100000000;
+  return Math.round((EDGE_MIN + r * (EDGE_MAX - EDGE_MIN)) * 10000) / 10000;
+}
+
+/** Adds a column that older rows predate. Safe to call on every request. */
+export async function ensureColumn(db, table, column, decl) {
+  await db.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${decl}`).run().catch(() => {});
+}
 
 export const GAMES = {
   wheel: {
@@ -68,7 +101,11 @@ export const GAMES = {
     cycleMs: 60 * 1000,
     betMs: 40 * 1000,
     picks: ["red", "black", "gold"],
-    payout: { red: 2, black: 2, gold: 40 },
+    // These are the FAIR prices: a colour is 12 of 24 slices across 354
+    // degrees, so 360/177; gold is the 6-degree sliver, 1 in 60. The
+    // play's own edge is multiplied in when it settles, so what a spin
+    // actually pays lands between 96% and 104% of these.
+    payout: { red: 360 / 177, black: 360 / 177, gold: 60 },
     segments: WHEEL,
     /** Where the pointer lands, in degrees from the top, from the seed alone. */
     async outcome(seed) {
@@ -138,6 +175,7 @@ export async function ensureSchema(db) {
     )`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_casino_bets_round ON casino_bets (game, round_no)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_casino_bets_user ON casino_bets (user_id, created_at)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_casino_bets_created ON casino_bets (created_at)`),
     db.prepare(`CREATE TABLE IF NOT EXISTS casino_presence (
       game TEXT NOT NULL,
       user_id TEXT NOT NULL,
@@ -222,7 +260,8 @@ export async function settleRound(env, db, game, no, now = Date.now()) {
       await db.prepare(`UPDATE casino_bets SET status = 'LOST', payout = 0 WHERE id = ? AND status = 'ACTIVE'`).bind(b.id).run();
       continue;
     }
-    const payout = Math.floor(Number(b.wager) * Number(game.payout[b.pick] || 0));
+    const edge = await edgeFor(round.seed);
+    const payout = Math.round(Number(b.wager) * Number(game.payout[b.pick] || 0) * edge);
     const opId = newId("op");
     const begun = await beginOperation(db, {
       id: opId,
@@ -326,7 +365,8 @@ export async function hourlyNet(db, userId) {
   const plinko = await q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM plinko_drops WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
   // The PvP tables. A refund is neither a win nor a loss.
   const pvp = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - stake WHEN status = 'LOST' THEN -stake ELSE 0 END), 0) AS net FROM pvp_entries WHERE user_id = ? AND updated_at >= datetime('now', '-1 hour')`);
-  return coin + shared + hilo + mines + plinko + pvp;
+  const scratch = await q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM scratch_cards WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
+  return coin + shared + hilo + mines + plinko + pvp + scratch;
 }
 
 /** Whether this person may place another bet, and where they stand. */

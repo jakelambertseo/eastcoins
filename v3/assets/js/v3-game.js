@@ -138,80 +138,23 @@
       return box;
     }
 
-    const wallet = Number(shell?.state?.session?.wallet?.balance);
-    let selection = null;
-
+    // Choosing a side opens the one pick box every page shares.
     const sides = el("div", "gp-bet-sides");
-    const buttons = {};
     for (const key of ["away", "home"]) {
       const side = m[key];
       const b = el("button", "gp-bet-side");
       b.type = "button";
-      b.append(el("span", "gp-bet-team", side.name), el("span", "gp-bet-line", formatLine(side.line)));
-      b.addEventListener("click", () => { selection = key; refresh(); });
-      buttons[key] = b;
+      const name = isProp(m) ? (key === "home" ? "NO" : "YES") : side.name;
+      b.append(el("span", "gp-bet-team", name), el("span", "gp-bet-line", formatLine(side.line)));
+      b.addEventListener("click", () => {
+        if (window.ECPickBox) window.ECPickBox.open({ market: m, side: key, onPlaced: () => load() });
+        else { history.pushState({ view: "picks" }, "", "/?view=picks"); shell?.go?.("picks", { push: false }); }
+      });
       sides.append(b);
     }
     box.append(sides);
-
-    const form = el("form", "gp-bet-form");
-    const label = el("label", "ticket-label", "Stake");
-    label.htmlFor = "gpStake";
-    const input = document.createElement("input");
-    input.id = "gpStake";
-    input.type = "number";
-    input.min = "1";
-    input.step = "1";
-    input.inputMode = "numeric";
-    input.value = String(Math.min(10, Number.isFinite(wallet) && wallet >= 1 ? wallet : 10));
-    if (Number.isFinite(wallet)) input.max = String(Math.max(1, Math.floor(wallet)));
-    const preview = el("span", "gp-bet-preview");
-    const lock = el("button", "btn primary gp-bet-lock", "Lock pick");
-    lock.type = "submit";
-    const note = el("p", "gp-bet-note");
-    form.append(label, input, preview, lock);
-    box.append(form, note);
+    const wallet = Number(shell?.state?.session?.wallet?.balance);
     box.append(el("p", "gp-bet-copy", Number.isFinite(wallet) ? `Wallet: ${wallet.toLocaleString()} ZC · one pick per game, the line is locked.` : "One pick per game, the line is locked."));
-
-    const refresh = () => {
-      for (const key of ["away", "home"]) buttons[key].classList.toggle("on", selection === key);
-      const stake = Math.floor(Number(input.value) || 0);
-      if (!selection) { preview.textContent = "Choose a side"; lock.disabled = true; return; }
-      const line = m[selection].line;
-      preview.replaceChildren(document.createTextNode("Returns "), coin(totalReturn(stake, line)), document.createTextNode(" if it lands"));
-      lock.disabled = !(stake >= 1);
-    };
-    input.addEventListener("input", refresh);
-    refresh();
-
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      if (!selection) return;
-      const stake = Math.floor(Number(input.value) || 0);
-      if (stake < 1) { note.textContent = "Minimum stake is 1 ZCoin."; return; }
-      lock.disabled = true;
-      lock.textContent = "Locking…";
-      note.textContent = "";
-      let payload = null;
-      try {
-        payload = await fetch("/api/picks/wagers", {
-          method: "POST", credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ marketId: m.id, selection, wager: stake })
-        }).then((r) => r.json());
-      } catch { payload = null; }
-      if (!payload?.ok) {
-        note.textContent = payload?.message || "That didn't go through. Try again.";
-        lock.disabled = false;
-        lock.textContent = "Lock pick";
-        return;
-      }
-      if (Number.isFinite(Number(payload.balance))) {
-        window.ECV3?.setWallet?.(Number(payload.balance));
-        if (shell?.state?.session?.wallet) shell.state.session.wallet.balance = Number(payload.balance);
-      }
-      load();   // the page redraws with the pick in the ledger
-    });
 
     return box;
   }
@@ -340,7 +283,7 @@
       let av;
       if (p.user.avatar) {
         av = el("img", "gp-av");
-        av.src = p.user.avatar;
+        av.src = window.ECAvatar ? window.ECAvatar.small(p.user.avatar) : p.user.avatar;
         av.alt = "";
         av.loading = "lazy";
       } else {

@@ -29,6 +29,8 @@ import { isProp, matchup, sideLabel, shortQuestion } from "./_props.js";
 import { findTeam, ensureFavouriteColumns } from "./_teams.js";
 import { badgesFor } from "./_badges.js";
 import { ensureOps } from "./_ops.js";
+import { ensureGames, seedFor, chicagoDay as gameDay } from "../games/_games.js";
+import { ensureGold, goldState } from "../games/gold/_gold.js";
 
 const DAYS_BACK = 14;
 const FIRST_LOOK_DAYS = 3;      // a brand-new bell shows three days, not fourteen
@@ -103,6 +105,8 @@ async function teamOpened(db, user, from) {
   const rows = await db.prepare(
     `SELECT id, sport, league, away_name, home_name, starts_at, odds_locked_at, state, away_odds_locked, home_odds_locked
        FROM markets WHERE odds_locked_at >= ? AND (away_name = ? OR home_name = ?)
+        -- Baseball opens a slate every afternoon; it stays out of the bell (2026-09-15).
+        AND sport <> 'baseball'
       ORDER BY odds_locked_at DESC LIMIT 3`
   ).bind(from, team.name, team.name).all().catch(() => ({ results: [] }));
   return (rows.results || []).map((m) => {
@@ -128,12 +132,38 @@ async function announces(db, from) {
   const by = new Map((markets.results || []).map((m) => [m.id, m]));
   return list.map((r) => {
     const m = by.get(r.key.slice("announce:".length));
-    if (!m) return null;
+    // Baseball markets opening never go in the bell, announced or not.
+    if (!m || String(m.sport) === "baseball") return null;
     let v = {}; try { v = JSON.parse(r.value) || {}; } catch { v = {}; }
     const prop = isProp(m.sport);
     return { type: "announce", icon: prop ? "🎯" : "📣", tone: prop ? "prop" : "", at: utc(r.updated_at), href: `/g/${slugFor(m)}`,
       strong: v.by ? `${v.by} opened` : "Opened", text: prop ? `a prop: “${shortQuestion(m.question, 56)}”` : matchup(m),
       sub: prop ? `Yes ${line(m.away_odds_locked)} / No ${line(m.home_odds_locked)}` : `${nick(m.away_name)} ${line(m.away_odds_locked)} / ${nick(m.home_name)} ${line(m.home_odds_locked)}` };
+  }).filter(Boolean);
+}
+
+/**
+ * Site-wide notices — a new feature, a heads-up — for everyone at once.
+ * One ops_status row per notice, key "notice:<slug>", value
+ * { title, text, href }. Post one with wrangler:
+ *   INSERT INTO ops_status (key, value) VALUES ('notice:watch-rooms',
+ *     '{"title":"…","text":"…","href":"/?view=screen"}')
+ * It shows unread to anyone who has not looked since, and toasts on
+ * every open tab within a poll.
+ */
+async function notices(db, from, user) {
+  await ensureOps(db);
+  const rows = await db.prepare(
+    `SELECT key, value, updated_at FROM ops_status WHERE key LIKE 'notice:%' AND updated_at >= ? ORDER BY updated_at DESC LIMIT 5`
+  ).bind(from).all().catch(() => ({ results: [] }));
+  // "{me}" in a notice's link is the reader: /u/{me} opens each person's
+  // OWN profile, filled in here per request (2026-09-15).
+  const me = encodeURIComponent(String(user?.login || "").toLowerCase());
+  return (rows.results || []).map((r) => {
+    let v = {}; try { v = JSON.parse(r.value) || {}; } catch { v = {}; }
+    if (!v.title) return null;
+    return { type: "notice", icon: v.icon || "📣", tone: "gold", at: utc(r.updated_at), href: String(v.href || "/").replace(/\{me\}/g, me),
+      strong: String(v.title).slice(0, 80), text: "", sub: String(v.text || "").slice(0, 160) };
   }).filter(Boolean);
 }
 
@@ -169,21 +199,32 @@ export async function onRequestGet(context) {
   const since = seenAt ?? Date.now() - FIRST_LOOK_DAYS * 86400000;
   const from = stamp(floor);
 
-  const [picks, pots, team, said, badges] = await Promise.all([
+  const [picks, pots, team, said, badges, told] = await Promise.all([
     settledPicks(db, user, from), jackpots(db, user, from), teamOpened(db, user, from), announces(db, from),
-    newBadges(context.env, db, user, remembered)
+    newBadges(context.env, db, user, remembered), notices(db, from, user)
   ]);
-  const items = [...picks, ...pots, ...team, ...said, ...badges.items]
+  const items = [...picks, ...pots, ...team, ...said, ...badges.items, ...told]
     .filter((i) => i.at && !Number.isNaN(new Date(i.at).getTime()))
     .map((i) => ({ ...i, unread: i.fresh || new Date(i.at).getTime() > since }))
     .sort((a, b) => new Date(b.at) - new Date(a.at))
     .slice(0, LIMIT);
+
+  // The Gold Button's window rides along here rather than polling of
+  // its own: this is the only thing every open tab already asks for.
+  let gold = null;
+  try {
+    await ensureGames(db);
+    await ensureGold(db);
+    const gday = gameDay(Date.now());
+    gold = await goldState(db, gday, await seedFor(db, "gold", gday));
+  } catch { gold = null; }
 
   return json({
     ok: true,
     since: new Date(since).toISOString(),
     firstLook: seenAt === null,
     login: user.login,
+    gold,
     unread: items.filter((i) => i.unread).length,
     items
   });

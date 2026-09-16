@@ -42,12 +42,23 @@
    ============================================================ */
 
 import { moveBalance, beginOperation, finishOperation, newId } from "../../picks/_lib.js";
-import { sha256, randomSeed, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
+import { sha256, randomSeed, edgeFor, ensureColumn, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
 
 export const ROWS = 12;
 export const BUCKETS = ROWS + 1;
-export const PAYOUTS = [25, 4, 2, 1.4, 1.1, 1.05, 0.3, 1.05, 1.1, 1.4, 2, 4, 25];
+// 2026-09-14: the players' side — 102.3% on a 20 ZC drop, 104% on 10
+// (payouts rounded to the coin). Was 1.4 / 0.3 in the inner buckets for 99%.
+export const PAYOUTS = [25, 4, 2, 1.5, 1.1, 1.05, 0.3, 1.05, 1.1, 1.5, 2, 4, 25];
 export const MAX_MULTIPLIER = Math.max(...PAYOUTS);
+
+/* What the payout row returns on its own, before the play's edge. The
+   row is divided through by this so the board keeps its shape and the
+   drop still returns exactly its drawn edge. */
+export const TABLE_RETURN = PAYOUTS.reduce((sum, pay, k) => {
+  let c = 1;
+  for (let i = 0; i < k; i += 1) c = (c * (ROWS - i)) / (i + 1);
+  return sum + (c / 2 ** ROWS) * pay;
+}, 0);
 
 let ready = false;
 export async function ensurePlinko(db) {
@@ -66,6 +77,7 @@ export async function ensurePlinko(db) {
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_plinko_user ON plinko_drops (user_id, created_at)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_plinko_recent ON plinko_drops (created_at)`),
     // One committed seed per player, waiting to be used by their next drop.
     db.prepare(`CREATE TABLE IF NOT EXISTS plinko_commits (
       user_id TEXT PRIMARY KEY,
@@ -74,6 +86,7 @@ export async function ensurePlinko(db) {
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`)
   ]);
+  await ensureColumn(db, "plinko_drops", "edge", "REAL NOT NULL DEFAULT 1");
   ready = true;
 }
 
@@ -149,4 +162,4 @@ export async function dropsLastHour(db, userId) {
   return Number(row?.n || 0);
 }
 
-export { MAX_BET, MIN_BET, MAX_BETS_PER_HOUR, randomSeed, sha256 };
+export { MAX_BET, MIN_BET, MAX_BETS_PER_HOUR, randomSeed, sha256, edgeFor };

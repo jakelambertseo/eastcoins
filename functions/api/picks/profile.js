@@ -14,6 +14,9 @@ import { badgesFor } from "./_badges.js";
 import { getSessionUser } from "./_lib.js";
 import { ensureSchema as ensureCoinSchema } from "../coin/_coin.js";
 import { findTeam, ensureFavouriteColumns } from "./_teams.js";
+import { isOpen as wrappedIsOpen } from "./_wrapped.js";
+import { cosmeticsFor } from "../store/_store.js";
+import { countView, ensureViews } from "./_views.js";
 
 const json = (body, status = 200) => Response.json(body, {
   status,
@@ -31,9 +34,9 @@ export async function onRequestGet(context) {
   if (!db) return json({ ok: false, code: "NO_DB" }, 503);
   if (!/^[a-z0-9_]{2,25}$/.test(login)) return json({ ok: false, code: "BAD_LOGIN" }, 400);
 
-  await ensureFavouriteColumns(db);
+  await Promise.all([ensureFavouriteColumns(db), ensureViews(db)]);
   const user = await db
-    .prepare(`SELECT twitch_id, twitch_login, display_name, avatar_url, created_at, favourite_league, favourite_team FROM users WHERE twitch_login = ? COLLATE NOCASE LIMIT 1`)
+    .prepare(`SELECT twitch_id, twitch_login, display_name, avatar_url, created_at, favourite_league, favourite_team, profile_views FROM users WHERE twitch_login = ? COLLATE NOCASE LIMIT 1`)
     .bind(login)
     .first();
   if (!user) return json({ ok: false, code: "NOT_FOUND", message: "Nobody by that name has made a pick yet." }, 404);
@@ -73,7 +76,7 @@ export async function onRequestGet(context) {
               m.final_away_score, m.final_home_score, m.winner
          FROM picks p JOIN markets m ON m.id = p.market_id
         WHERE p.user_id = ? AND p.status IN ('ACTIVE','WON','LOST','REFUNDED')
-        ORDER BY datetime(m.starts_at) DESC, datetime(p.created_at) DESC`;
+        ORDER BY m.starts_at DESC, p.created_at DESC`;
   if (list === "picks") {
     const [count, slice] = await Promise.all([
       db.prepare(`SELECT COUNT(*) AS n FROM picks WHERE user_id = ? AND status IN ('ACTIVE','WON','LOST','REFUNDED')`).bind(String(user.twitch_id)).first(),
@@ -92,9 +95,11 @@ export async function onRequestGet(context) {
   const records = {};
   for (const p of settled) {
     const key = String(p.league || "OTHER").toUpperCase();
-    const r = records[key] || (records[key] = { wins: 0, losses: 0, profit: 0 });
+    const r = records[key] || (records[key] = { wins: 0, losses: 0, profit: 0, staked: 0 });
     if (p.status === "WON") r.wins += 1; else r.losses += 1;
     r.profit += Number(p.profit || 0);
+    // Staked per league, so the profile can show a return on it.
+    r.staked += Number(p.wager || 0);
   }
   const profit = settled.reduce((n, p) => n + Number(p.profit || 0), 0);
   const staked = picks.filter((p) => p.status !== "REFUNDED").reduce((n, p) => n + Number(p.wager), 0);
@@ -145,26 +150,29 @@ export async function onRequestGet(context) {
   try {
     await ensureCoinSchema(db);
     const uid = String(user.twitch_id);
-    const [coin, shared, hilo, mines, plinko, pvp] = await Promise.all([
+    const [coin, shared, hilo, mines, plinko, pvp, scratch] = await Promise.all([
       db.prepare(`SELECT 'flip' AS game, b.status, b.payout - b.wager AS profit, b.wager, b.side AS pick, r.settled_at AS at, r.result
                     FROM coin_bets b JOIN coin_rounds r ON r.no = b.round_no WHERE b.user_id = ? AND b.status IN ('WON','LOST') ORDER BY b.round_no DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
       db.prepare(`SELECT b.game, b.status, b.payout - b.wager AS profit, b.wager, b.pick, r.settled_at AS at, r.result
                     FROM casino_bets b JOIN casino_rounds r ON r.game = b.game AND r.no = b.round_no WHERE b.user_id = ? AND b.status IN ('WON','LOST') ORDER BY b.round_no DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
       db.prepare(`SELECT 'hilo' AS game, CASE WHEN status = 'CASHED' THEN 'WON' ELSE 'LOST' END AS status, CASE WHEN status = 'CASHED' THEN payout - stake ELSE -stake END AS profit,
                          stake AS wager, ('×' || ROUND(multiplier, 2)) AS pick, updated_at AS at, NULL AS result
-                    FROM hilo_games WHERE user_id = ? AND status IN ('CASHED','BUST') ORDER BY datetime(updated_at) DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
+                    FROM hilo_games WHERE user_id = ? AND status IN ('CASHED','BUST') ORDER BY updated_at DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
       db.prepare(`SELECT 'mines' AS game, CASE WHEN status = 'CASHED' THEN 'WON' ELSE 'LOST' END AS status, CASE WHEN status = 'CASHED' THEN payout - stake ELSE -stake END AS profit,
                          stake AS wager, ('×' || ROUND(multiplier, 2)) AS pick, updated_at AS at, NULL AS result
-                    FROM mines_games WHERE user_id = ? AND status IN ('CASHED','BUST') ORDER BY datetime(updated_at) DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
+                    FROM mines_games WHERE user_id = ? AND status IN ('CASHED','BUST') ORDER BY updated_at DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
       db.prepare(`SELECT 'plinko' AS game, CASE WHEN payout > stake THEN 'WON' ELSE 'LOST' END AS status, payout - stake AS profit,
                          stake AS wager, ('x' || ROUND(multiplier, 2)) AS pick, created_at AS at, NULL AS result
-                    FROM plinko_drops WHERE user_id = ? ORDER BY datetime(created_at) DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
+                    FROM plinko_drops WHERE user_id = ? ORDER BY created_at DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
       db.prepare(`SELECT e.game, e.status, e.payout - e.stake AS profit, e.stake AS wager, (r.players || ' at the table') AS pick,
                          datetime(r.settled_at / 1000, 'unixepoch') AS at, NULL AS result
                     FROM pvp_entries e JOIN pvp_rounds r ON r.id = e.round_id
-                   WHERE e.user_id = ? AND e.status IN ('WON','LOST') ORDER BY r.settled_at DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] }))
+                   WHERE e.user_id = ? AND e.status IN ('WON','LOST') ORDER BY r.settled_at DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] })),
+      db.prepare(`SELECT 'scratch' AS game, CASE WHEN payout > stake THEN 'WON' ELSE 'LOST' END AS status, payout - stake AS profit,
+                         stake AS wager, CASE WHEN prize IS NULL THEN 'no match' ELSE (prize || ' ×3') END AS pick, created_at AS at, NULL AS result
+                    FROM scratch_cards WHERE user_id = ? ORDER BY created_at DESC LIMIT 200`).bind(uid).all().catch(() => ({ results: [] }))
     ]);
-    const all = [...(coin.results || []), ...(shared.results || []), ...(hilo.results || []), ...(mines.results || []), ...(plinko.results || []), ...(pvp.results || [])]
+    const all = [...(coin.results || []), ...(shared.results || []), ...(hilo.results || []), ...(mines.results || []), ...(plinko.results || []), ...(pvp.results || []), ...(scratch.results || [])]
       .map((r) => ({ game: String(r.game), status: r.status, profit: Number(r.profit), wager: Number(r.wager), pick: String(r.pick), at: r.at ? String(r.at).replace(" ", "T") + "Z" : null }))
       .sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
     if (list === "casino") {
@@ -196,23 +204,27 @@ export async function onRequestGet(context) {
   // person (picks and casino), as a running net. Balances stay private
   // — the Community Ledger rule — so only the owner's own view carries
   // the balance after each operation.
+  const viewer = await getSessionUser(db, context.request).catch(() => null);
   let bankroll = null;
   try {
     const ops = await db
-      .prepare(`SELECT type, amount, balance_after, market_id, COALESCE(confirmed_at, created_at) AS at
+      .prepare(`SELECT type, amount, balance_after, market_id, idempotency_key, COALESCE(confirmed_at, created_at) AS at
                   FROM wallet_operations WHERE user_id = ? AND status = 'CONFIRMED'
                  ORDER BY datetime(COALESCE(confirmed_at, created_at)) ASC, rowid ASC LIMIT 3000`)
       .bind(String(user.twitch_id)).all();
     const rows = ops.results || [];
     if (rows.length) {
-      const viewer = await getSessionUser(db, context.request).catch(() => null);
       const owner = Boolean(viewer && String(viewer.id) === String(user.twitch_id));
-      let net = 0, picksNet = 0, casinoNet = 0;
+      let net = 0, picksNet = 0, casinoNet = 0, storeNet = 0;
       const pts = [];
       for (const r of rows) {
         net += Number(r.amount || 0);
-        // A move with a market behind it is a pick; the rest is the casino.
-        if (r.market_id) picksNet += Number(r.amount || 0); else casinoNet += Number(r.amount || 0);
+        // A move with a market behind it is a pick; store purchases are
+        // their own line; the rest is the casino.
+        const opKey = String(r.idempotency_key || "");
+        if (r.market_id) picksNet += Number(r.amount || 0);
+        else if (opKey.startsWith("STORE:") || opKey.startsWith("REFUND:STORE:")) storeNet += Number(r.amount || 0);
+        else casinoNet += Number(r.amount || 0);
         const p = { t: utc(String(r.at)), net, k: String(r.type || "") };
         if (owner && Number.isFinite(Number(r.balance_after))) p.bal = Number(r.balance_after);
         pts.push(p);
@@ -220,7 +232,7 @@ export async function onRequestGet(context) {
       const step = Math.ceil(pts.length / 400);
       const sampled = step > 1 ? pts.filter((_, i) => i % step === 0 || i === pts.length - 1) : pts;
       bankroll = {
-        owner, ops: rows.length, net, picksNet, casinoNet,
+        owner, ops: rows.length, net, picksNet, casinoNet, storeNet,
         peak: Math.max(...pts.map((p) => p.net)), trough: Math.min(...pts.map((p) => p.net)),
         first: pts[0].t, last: pts[pts.length - 1].t, points: sampled
       };
@@ -228,17 +240,53 @@ export async function onRequestGet(context) {
   } catch { bankroll = null; }
   const flip = casino;   // older readers of this payload
 
+  // Tomato scores from Movies & TV (screen/ratings.js). The table is
+  // made on the first rating, so a missing one simply means none yet.
+  let movies = null;
+  try {
+    const uid = String(user.twitch_id);
+    const [agg, rows] = await Promise.all([
+      db.prepare(`SELECT COUNT(*) AS n, AVG(score) AS avg, SUM(CASE WHEN score >= 3 THEN 1 ELSE 0 END) AS fresh
+                    FROM title_ratings WHERE user_id = ?`).bind(uid).first(),
+      db.prepare(`SELECT type, tmdb_id, score, title, poster, year, updated_at
+                    FROM title_ratings WHERE user_id = ? ORDER BY updated_at DESC LIMIT 60`).bind(uid).all()
+    ]);
+    const total = Number(agg?.n || 0);
+    if (total) {
+      movies = {
+        total,
+        avg: Math.round(Number(agg.avg) * 10) / 10,
+        fresh: Number(agg.fresh || 0),
+        rotten: total - Number(agg.fresh || 0),
+        recent: (rows.results || []).map((r) => ({
+          type: String(r.type), id: Number(r.tmdb_id), score: Number(r.score),
+          title: String(r.title), poster: String(r.poster || ""), year: String(r.year || ""), at: utc(r.updated_at)
+        }))
+      };
+    }
+  } catch { movies = null; }
+
+  const counting = countView(db, context.request, login, viewer && { twitch_id: viewer.id, twitch_login: viewer.login });
+  if (context.waitUntil) context.waitUntil(counting); else await counting;
+
   return json({
     ok: true,
     badges,
     flip,
     casino,
+    movies,
+    // Store cosmetics they have switched on (and still own), or null.
+    cosmetics: await cosmeticsFor(db, String(user.twitch_id)),
+    // EastCoin Wrapped has dropped: the profile links to it.
+    wrappedOpen: wrappedIsOpen(context.env),
     user: {
       id: String(user.twitch_id),
       login: String(user.twitch_login).toLowerCase(),
       displayName: String(user.display_name || user.twitch_login),
       avatar: String(user.avatar_url || ""),
       since: utc(user.created_at),
+      // Counted below; this is the figure as it stood when the page was asked for.
+      views: Number(user.profile_views || 0),
       // Their own choice, made on the profile page — not inferred from picks.
       favourite: findTeam(user.favourite_league, user.favourite_team)
     },
