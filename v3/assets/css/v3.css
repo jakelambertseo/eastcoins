@@ -4456,9 +4456,13 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 /* The case: a clear holder with a label strip, like a graded card. */
 .tc-case{
   position:relative;padding:8px 10px 11px;border-radius:18px;
-  background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.015) 45%,rgba(255,255,255,.05));
-  border:1px solid rgba(255,255,255,.14);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 14px 34px rgba(0,0,0,.35);
+  background:linear-gradient(160deg,rgba(var(--gold-rgb),.08),rgba(255,255,255,.015) 45%,rgba(var(--gold-rgb),.06));
+  border:1px solid rgba(var(--gold-rgb),.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12),
+    0 0 0 1px rgba(var(--gold-rgb),.1),
+    0 0 24px rgba(var(--gold-rgb),.1),
+    0 18px 40px rgba(0,0,0,.5);
 }
 .tc-case-label{
   display:flex;align-items:center;justify-content:center;gap:8px;
