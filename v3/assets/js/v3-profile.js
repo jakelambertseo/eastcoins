@@ -757,7 +757,7 @@
        no column to be short of, and the six cells get 160px each. The
        rest of the box score is the Overview's own stat sheet. */
     const glance = el("div", "pf-statband");
-    glance.append(el("h2", null, `${data.season?.name || "Season"} season`));
+    glance.append(el("h2", null, `${data.season?.name || "Season"} stats`));
     const keys = el("div", "pf-keys");
     const keyCell = (value, label, note, cls) => {
       const cell = el("div", "pf-key");
