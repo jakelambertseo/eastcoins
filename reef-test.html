@@ -316,6 +316,45 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .seg button{flex:1;background:none;border:0;padding:5px 6px;border-radius:7px;font-weight:800;font-size:.76rem;color:var(--muted);cursor:pointer;white-space:nowrap}
 .seg button[aria-pressed="true"]{background:var(--panel-3);color:var(--text)}
 .ctl-btns{display:flex;flex-wrap:wrap;gap:6px}
+/* the profile: a card, the numbers, and where they put you in the room */
+.pcard{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:820px){.pcard{grid-template-columns:1fr}}
+.pcard-face{border-radius:16px;overflow:hidden;border:1px solid var(--line-2);background:linear-gradient(180deg,#1d2a36,#0d1620)}
+.pcard-face.gold{border-color:rgba(var(--gold-rgb),.6);box-shadow:0 0 0 1px rgba(var(--gold-rgb),.25),0 14px 34px rgba(0,0,0,.5)}
+.pcard-art{height:150px;display:block;width:100%}
+.pcard-who{padding:11px 13px 13px;display:grid;gap:3px;background:var(--panel)}
+.pcard-who b{font-family:var(--display);font-weight:800;font-size:1.15rem}
+.pcard-who small{font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.pcard-lvl{display:flex;align-items:baseline;gap:6px;margin-top:4px;font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--gold)}
+.pcard-lvl span{font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.pstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:9px}
+.pstat{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:10px 11px;display:grid;gap:2px}
+.pstat small{font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.pstat b{font-family:var(--display);font-weight:800;font-size:1.15rem;font-variant-numeric:tabular-nums;line-height:1.1}
+.pstat .rank{font-size:.7rem;font-weight:800;color:var(--muted)}
+.pstat .rank.top{color:var(--gold)}
+.psec{margin-top:18px}
+.psec h3{font-family:var(--display);font-weight:800;font-size:1rem;margin:0 0 9px;display:flex;align-items:baseline;gap:8px}
+.psec h3 small{font-size:.72rem;font-weight:600;color:var(--muted-2)}
+.pskills{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.pskill{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.pskill svg{width:18px;height:18px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pskill b{font-size:.82rem;font-weight:700}
+.pskill i{font-style:normal;font-family:var(--display);font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+.prank-list{display:grid;gap:6px}
+.prank{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 10px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line);font-size:.84rem}
+.prank.me{border-color:rgba(var(--gold-rgb),.45);background:var(--gold-dim)}
+.prank .rk{font-family:var(--display);font-weight:800;color:var(--muted-2);text-align:center}
+.prank.me .rk{color:var(--gold)}
+.prank .v{font-variant-numeric:tabular-nums;font-weight:700;color:var(--muted)}
+.precs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.prec{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:8px 11px;font-size:.84rem}
+.prec b{font-weight:700}
+.prec span{font-variant-numeric:tabular-nums;color:var(--gold);font-weight:800}
+.prec.held{border-color:rgba(232,191,53,.45)}
+.pboss{display:flex;flex-wrap:wrap;gap:7px}
+.pboss span{padding:6px 11px;border-radius:99px;border:1px solid var(--line-2);font-size:.78rem;font-weight:700;color:var(--muted-2)}
+.pboss span.got{border-color:rgba(77,219,139,.5);color:var(--green)}
 .profile-tank{border-radius:12px;overflow:hidden;border:1px solid rgba(79,195,217,.35)}
 .profile-tank canvas{display:block;width:100%;height:auto;aspect-ratio:16/10}
 .profile-line{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);margin-top:8px}
@@ -700,11 +739,28 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   </section>
 
   <section class="view view-profile" role="tabpanel" id="panel-profile" aria-labelledby="tab-profile" data-panel="profile" hidden>
-    <header class="view-h"><div><h1>Profile preview</h1><p>What visitors would see on your EastCoin profile.</p></div></header>
+    <header class="view-h"><div><h1>Profile preview</h1><p>What visitors would see on your EastCoin profile — your card, your numbers, and where they put you in the room.</p></div></header>
     <div class="view-stack">
       <div class="card"><div class="card-body">
-        <h2 style="font-family:var(--display);font-size:1rem;margin:0 0 2px">On your profile</h2>
-        <p class="note" style="font-size:.76rem;margin-bottom:8px">Your tank, swimming, for anyone who visits.</p>
+        <div class="pcard">
+          <div class="pcard-face" id="pFace">
+            <canvas class="pcard-art" id="pCardArt" width="520" height="300"></canvas>
+            <div class="pcard-who"><b id="pName">bootypaper</b><small id="pTitle">Angler</small>
+              <span class="pcard-lvl" id="pTotal">0 <span>total level</span></span></div>
+          </div>
+          <div>
+            <div class="pstats" id="pStats"></div>
+            <div class="psec"><h3>Skills</h3><div class="pskills" id="pSkills"></div></div>
+          </div>
+        </div>
+        <div class="psec"><h3>Where you sit <small>against the room · example figures</small></h3><div class="prank-list" id="pRanks"></div></div>
+        <div class="psec"><h3>Records <small>your heaviest, and whether the room has beaten it</small></h3><div class="precs" id="pRecords"></div></div>
+        <div class="psec"><h3>Bosses</h3><div class="pboss" id="pBosses"></div></div>
+        <div class="psec"><h3>Habits</h3><div class="pstats" id="pHabits"></div></div>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <h2 style="font-family:var(--display);font-size:1rem;margin:0 0 2px">Your tank, for anyone who visits</h2>
+        <p class="note" style="font-size:.76rem;margin-bottom:8px">Fish you keep swim here on your profile page.</p>
         <div class="profile-tank"><canvas id="miniTank" width="480" height="300"></canvas></div>
         <div class="profile-line"><span><b id="pDex">0/30</b> species</span><span><b id="pBest">—</b> biggest</span><span><b id="pShiny">0</b> shiny</span></div>
       </div></div>
@@ -872,7 +928,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     skills: { fishing: 0, farming: 0, cooking: 0, breeding: 0, diving: 0, crafting: 0 },
     auto: { sprinkler: false, caretaker: false, turner: false, hatchery: false, smokehouse: false, cannery: false }, smokeAt: 0,
     inv: {}, charm: 0, benchAt: 0, boss: {}, perks: {},
-    zc: 2500, conv: {}, cosm: {}, worn: { theme: "", name: "", title: "", pet: "" }, shopTab: "all" });
+    zc: 2500, conv: {}, cosm: {}, worn: { theme: "", name: "", title: "", pet: "" }, shopTab: "all",
+    stats: { dives: 0, diveValue: 0, crafts: 0, cooked: 0, spots: {}, baits: {}, casts: 0 } });
   let S = fresh();
   try { const raw = localStorage.getItem(SAVE); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch {}
   S.skills = Object.assign({ fishing: 0, farming: 0, cooking: 0, breeding: 0, diving: 0, crafting: 0 }, S.skills || {});
@@ -880,6 +937,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   S.inv = S.inv || {}; S.charm = S.charm || 0; S.boss = S.boss || {}; S.perks = S.perks || {};
   S.conv = S.conv || {}; S.cosm = S.cosm || {}; S.worn = Object.assign({ theme: "", name: "", title: "", pet: "" }, S.worn || {});
   if (typeof S.zc !== "number") S.zc = 2500;
+  S.stats = Object.assign({ dives: 0, diveValue: 0, crafts: 0, cooked: 0, spots: {}, baits: {}, casts: 0 }, S.stats || {});
   const save = () => { S.saved = Date.now(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch {} };
 
   /* ============================================================ helpers */
@@ -1409,6 +1467,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       fish.pick = rollCatch();
       const bait = activeBait();
       if (bait && !(S.conv.baitline && Math.random() < 0.5)) { S.bait[S.baitOn]--; if (!S.bait[S.baitOn]) { toast(`Out of ${bait.name}`, "Grow more in the bait garden."); S.baitOn = "none"; } renderBaitSel(); }
+      S.stats.casts += 1;
+      if (activeBait()) S.stats.baits[S.baitOn] = (S.stats.baits[S.baitOn] || 0) + 1;
       fish.waitFor = 1300 + Math.random() * 2800;
       setPhase("wait");
     } else if (fish.phase === "wait") {
@@ -1514,6 +1574,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     $("cKeep").focus();
     if (sp.rar >= 3 || c.shiny) toast(`You landed a ${c.shiny ? "Shiny " : ""}${sp.name}!`, "In the real game this goes to the activity feed and the ticker.");
     renderDex(); renderProfile(); renderDerby();
+    S.stats.spots[S.spot] = (S.stats.spots[S.spot] || 0) + 1;
     track("catch", { rar: sp.rar, w: c.w, spot: S.spot });
     if (isNew) track("newSpecies");
     if (c.shiny) track("shiny");
@@ -1538,6 +1599,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const c = fish.result; if (!c) return;
     const pearls = Math.round(fishRate({ key: c.sp.key, w: c.w, shiny: c.shiny }) * 2);
     S.pearls += pearls;
+    S.stats.cooked += 1;
     const xp = grant("cooking", COOK_XP[c.sp.rar] * (1 + 0.5 * (c.frac || 0)) * (c.shiny ? 2 : 1));
     closeCatch(); track("sell"); renderProfile(); save();
     toast(`Cooked the ${c.shiny ? "shiny " : ""}${c.sp.name}`, `+${num(pearls)} pearls · +${num(xp)} Cooking xp`);
@@ -2085,6 +2147,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       const got = [];
       let xp = 0;
       for (let i = 0; i < n; i++) { const k = diveRoll(); addItem(k); got.push(k); xp += DIVE_XP[LOOT[k].rar]; }
+      S.stats.dives += 1;
+      S.stats.diveValue += got.reduce((n, k) => n + LOOT[k].value, 0);
       const gained = grant("diving", xp);
       diving = false;
       const best = got.slice().sort((a, b) => LOOT[b].rar - LOOT[a].rar)[0];
@@ -2134,6 +2198,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const keptParts = idleOn("toolbox") && Math.random() < 0.25;
     if (!keptParts) Object.entries(r.need).forEach(([k, n]) => { S.inv[k] -= n; if (S.inv[k] <= 0) delete S.inv[k]; });
     r.give();
+    S.stats.crafts += 1;
     const xp = grant("crafting", r.xp);
     toast(`Made ${r.name}`, `${r.about}${keptParts ? " · the toolbox saved the parts" : ""} · +${num(xp)} Crafting xp`);
     renderCraft(); renderInv(); renderDive(); renderBaitSel(); renderStatbar(); save();
@@ -2802,13 +2867,106 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (titleEl) titleEl.textContent = (COSM.find((c) => c.key === wearing("title"))?.name || "Angler").replace("Title: ", "");
   }
 
+  /* The room, for ranking. In the real game these come from the other
+     players; here they are fixed so the position reads honestly while the
+     numbers move. Anything ranked says "example" on the page. */
+  const ROOM = [
+    { n: "kellzifer", total: 214, species: 21, best: 118, bosses: 3, dives: 640, value: 21400 },
+    { n: "zwades", total: 186, species: 17, best: 96, bosses: 2, dives: 410, value: 15900 },
+    { n: "andyreidisapawg", total: 151, species: 14, best: 74, bosses: 2, dives: 260, value: 9800 },
+    { n: "saturdaysfortheufcv2", total: 122, species: 11, best: 61, bosses: 1, dives: 180, value: 6100 },
+    { n: "heartlarva", total: 88, species: 8, best: 39, bosses: 0, dives: 90, value: 3050 }
+  ];
+  const rankIn = (field, mine) => 1 + ROOM.filter((r) => r[field] > mine).length;
+  const ord = (n) => `${n}${["th", "st", "nd", "rd"][(n % 100 - 20) % 10] || ["th", "st", "nd", "rd"][n % 100] || "th"}`;
+
   function renderProfile() {
     renderStatbar();
+    if (!$("pStats")) return;
     const caught = SPECIES.filter((sp) => S.dex[sp.key]?.n).length;
+    const entries = Object.entries(S.dex).filter(([, d]) => d.n);
+    const best = entries.slice().sort((a, b) => b[1].best - a[1].best)[0];
+    const landed = entries.reduce((n, [, d]) => n + d.n, 0);
+    const shiny = entries.filter(([, d]) => d.shiny).length;
+    const total = Object.keys(SKILLS).reduce((n, k) => n + levelIn(k), 0);
+    const bosses = BOSSES.filter((b) => bossState(b).beaten).length;
     $("pDex").textContent = `${caught}/${SPECIES.length}`;
-    const best = Object.entries(S.dex).filter(([, d]) => d.n).sort((a, b) => b[1].best - a[1].best)[0];
     $("pBest").textContent = best ? `${lbs(best[1].best)} ${BY_KEY[best[0]].name}` : "—";
-    $("pShiny").textContent = Object.values(S.dex).filter((d) => d.shiny).length;
+    $("pShiny").textContent = shiny;
+
+    // the card
+    $("pFace").className = "pcard-face" + (S.cosm["frame:gold"] && wearing("frame") !== "" ? " gold" : (S.cosm["frame:gold"] ? " gold" : ""));
+    $("pName").style.color = NAME_COLOURS[wearing("name")] || "";
+    $("pTitle").textContent = (COSM.find((c) => c.key === wearing("title"))?.name || "Angler").replace("Title: ", "");
+    $("pTotal").innerHTML = `${total} <span>total level</span>`;
+    const cv = $("pCardArt"), ctx = cv.getContext("2d");
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    const g = ctx.createLinearGradient(0, 0, 0, cv.height);
+    const th = THEMES[wearing("theme")] || THEMES[""];
+    g.addColorStop(0, th[0]); g.addColorStop(1, th[2]);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, cv.width, cv.height);
+    if (best) drawFish(ctx, BY_KEY[best[0]], cv.width / 2, cv.height / 2, Math.min(440, 240 + BY_KEY[best[0]].size * 1.4), { shiny: S.dex[best[0]].shiny, wag: 0.1 });
+
+    // the headline numbers, with where they put you
+    const stat = (label, value, rank) => `<div class="pstat"><small>${label}</small><b>${value}</b>${rank ? `<span class="rank${rank.startsWith("1st") ? " top" : ""}">${rank}</span>` : ""}</div>`;
+    $("pStats").innerHTML = [
+      stat("Total level", total, `${ord(rankIn("total", total))} of ${ROOM.length + 1}`),
+      stat("Species", `${caught}/${SPECIES.length}`, `${ord(rankIn("species", caught))} of ${ROOM.length + 1}`),
+      stat("Biggest", best ? lbs(best[1].best) : "—", best ? `${ord(rankIn("best", best[1].best))} of ${ROOM.length + 1}` : ""),
+      stat("Fish landed", num(landed)),
+      stat("Shiny", shiny),
+      stat("Bosses", `${bosses}/${BOSSES.length}`, `${ord(rankIn("bosses", bosses))} of ${ROOM.length + 1}`)
+    ].join("");
+
+    // every skill at a glance
+    $("pSkills").innerHTML = Object.entries(SKILLS).map(([k, sk]) => `<div class="pskill">${sk.icon}<b>${sk.name}</b><i>${levelIn(k)}</i></div>`).join("");
+
+    // the boards you appear on
+    const boards = [
+      { label: "Total level", field: "total", mine: total, fmt: (v) => v },
+      { label: "Species in the book", field: "species", mine: caught, fmt: (v) => `${v}/30` },
+      { label: "Heaviest fish", field: "best", mine: best ? best[1].best : 0, fmt: (v) => lbs(v) },
+      { label: "Dive value", field: "value", mine: S.stats.diveValue, fmt: (v) => `${num(v)} pearls` }
+    ];
+    $("pRanks").replaceChildren();
+    boards.forEach((b) => {
+      const rows = [...ROOM.map((r) => ({ n: r.n, v: r[b.field] })), { n: "You", v: b.mine, me: true }].sort((x, y) => y.v - x.v);
+      const at = rows.findIndex((r) => r.me) + 1;
+      const above = rows[at - 2];
+      const row = el("div", "prank me");
+      row.innerHTML = `<span class="rk">${at}</span><span><b>${b.label}</b>${above ? ` · ${above.n} ahead on ${b.fmt(above.v)}` : " · top of the room"}</span><span class="v">${b.fmt(b.mine)}</span>`;
+      $("pRanks").append(row);
+    });
+
+    // records: your heaviest per species, and whether the room has one bigger
+    const recs = entries.sort((a, b) => b[1].best - a[1].best).slice(0, 6);
+    $("pRecords").innerHTML = recs.length
+      ? recs.map(([k, d]) => {
+        const room = 0.6 + ((hashStr(k) % 90) / 100);            // the room's best, as an example
+        const held = d.best >= BY_KEY[k].w[1] * room;
+        return `<div class="prec${held ? " held" : ""}"><b>${BY_KEY[k].name}</b><span>${lbs(d.best)}${held ? " · held" : ""}</span></div>`;
+      }).join("")
+      : '<p class="cf-empty">Nothing in the book yet.</p>';
+
+    // bosses
+    $("pBosses").innerHTML = BOSSES.map((b) => {
+      const st = bossState(b);
+      return `<span class="${st.beaten ? "got" : ""}">${b.name}${st.beaten ? ` · ${st.best}s` : " · not yet"}</span>`;
+    }).join("");
+
+    // habits
+    const spotTop = Object.entries(S.stats.spots).sort((a, b) => b[1] - a[1])[0];
+    const baitTop = Object.entries(S.stats.baits).sort((a, b) => b[1] - a[1])[0];
+    $("pHabits").innerHTML = [
+      stat("Favourite spot", spotTop ? SPOTS[spotTop[0]].name : "—"),
+      stat("Favourite bait", baitTop ? BAITS[baitTop[0]].name : "None"),
+      stat("Casts", num(S.stats.casts)),
+      stat("Dives", num(S.stats.dives), `${ord(rankIn("dives", S.stats.dives))} of ${ROOM.length + 1}`),
+      stat("Dived up", `${num(S.stats.diveValue)} pearls`),
+      stat("Cooked", num(S.stats.cooked)),
+      stat("Crafted", num(S.stats.crafts)),
+      stat("Tank makes", `${num(tankRate())}/hr`)
+    ].join("");
   }
 
   function toast(title, sub) {
