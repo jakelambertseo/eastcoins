@@ -1948,19 +1948,27 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     ctx.fillStyle = side; ctx.beginPath(); ctx.moveTo(x - rw, y); ctx.lineTo(x - rw * 0.7, y - rh); ctx.lineTo(x + rw * 0.55, y - rh * 0.88); ctx.lineTo(x + rw, y); ctx.closePath(); ctx.fill();
     ctx.fillStyle = top; ctx.beginPath(); ctx.moveTo(x - rw * 0.7, y - rh); ctx.lineTo(x + rw * 0.55, y - rh * 0.88); ctx.lineTo(x + rw * 0.2, y - rh * 1.02); ctx.lineTo(x - rw * 0.45, y - rh * 1.06); ctx.closePath(); ctx.fill();
   };
-  /** A branching coral, grown from one seed so it is the same every frame. */
-  function coral(ctx, x, y, size, col, t, seed) {
+  /** A branching coral, grown from one seed so it is the same every frame.
+      Three fat trunks off one foot rather than one thin one, short segments,
+      and a lighter knob on every tip — a single trunk with long arms read as
+      a bare tree, which is what the first pass looked like. */
+  function coral(ctx, x, y, size, col, tip, t, seed) {
     const R = prng(Math.floor(seed));
-    ctx.strokeStyle = col; ctx.lineCap = "round";
+    ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = col;
+    const tips = [];
     const arm = (ax, ay, len, ang, wide, depth) => {
-      const wob = Math.sin(t / 1600 + seed + depth) * 0.04;
+      const wob = Math.sin(t / 1600 + seed + depth) * 0.05;
       const bx = ax + Math.cos(ang + wob) * len, by = ay + Math.sin(ang + wob) * len;
       ctx.lineWidth = wide; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
-      if (depth > 2 || len < 5) return;
-      arm(bx, by, len * 0.72, ang - 0.45 - R() * 0.3, wide * 0.7, depth + 1);
-      arm(bx, by, len * 0.72, ang + 0.45 + R() * 0.3, wide * 0.7, depth + 1);
+      if (depth >= 3 || len < 5) { tips.push([bx, by, wide]); return; }
+      const spread = 0.42 + R() * 0.3;
+      arm(bx, by, len * 0.66, ang - spread, wide * 0.74, depth + 1);
+      arm(bx, by, len * 0.66, ang + spread, wide * 0.74, depth + 1);
+      if (R() < 0.45) arm(bx, by, len * 0.55, ang + (R() - 0.5) * 0.35, wide * 0.6, depth + 1);
     };
-    arm(x, y, size * 0.4, -Math.PI / 2, Math.max(2, size * 0.12), 0);
+    for (let i = -1; i <= 1; i++) arm(x + i * size * 0.13, y, size * 0.26, -Math.PI / 2 + i * 0.34, Math.max(3, size * 0.15), 0);
+    ctx.fillStyle = tip;
+    for (const [tx, ty, tw] of tips) { ctx.beginPath(); ctx.arc(tx, ty, tw * 0.85, 0, Math.PI * 2); ctx.fill(); }
   }
   /** A fan coral: a filled half-disc with ribs. */
   function fan(ctx, x, y, size, col, rib) {
@@ -2027,8 +2035,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       ctx.fillStyle = "#3b3226"; ctx.beginPath(); ctx.moveTo(0, h);
       for (let x = 0; x <= w; x += 20) ctx.lineTo(x, sandY + 4 + Math.sin(x * 0.015) * 6);
       ctx.lineTo(w, h); ctx.fill();
-      ctx.fillStyle = "#ddd0a8"; ctx.beginPath(); ctx.moveTo(w * 0.34, h);
-      ctx.lineTo(w * 0.42, sandY + 8); ctx.lineTo(w * 0.6, sandY + 8); ctx.lineTo(w * 0.7, h); ctx.fill();
+      ctx.fillStyle = "#ddd0a8"; ctx.beginPath(); ctx.moveTo(w * 0.3, h);
+      ctx.quadraticCurveTo(w * 0.43, sandY + 16, w * 0.5, sandY + 11);
+      ctx.quadraticCurveTo(w * 0.59, sandY + 16, w * 0.74, h); ctx.fill();
+      ctx.fillStyle = "rgba(59,50,38,.5)";
+      for (let i = 0; i < 22; i++) { const gx = w * (0.31 + (i % 11) * 0.04), gy = h - ((i * 37) % Math.max(8, h - sandY - 14)); ctx.beginPath(); ctx.arc(gx, gy, 3, 0, Math.PI * 2); ctx.fill(); }
       ctx.save(); ctx.translate(w * 0.2, sandY + 6); ctx.strokeStyle = "#4a3421"; ctx.lineCap = "round";
       ctx.lineWidth = 13; ctx.beginPath(); ctx.moveTo(-40, 4); ctx.quadraticCurveTo(10, -30, 62, -74); ctx.stroke();
       ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(4, -18); ctx.quadraticCurveTo(-18, -44, -44, -52); ctx.stroke();
@@ -2055,8 +2066,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       for (const [sx, dir] of [[0.1, -1], [0.88, 1]]) {
         stone(ctx, w * sx, sandY + 6, w * 0.13, h * 0.3, "#8b9098", "#4f565f");
         stone(ctx, w * (sx + dir * 0.07), sandY + 6, w * 0.09, h * 0.19, "#7e848c", "#464d55");
-        coral(ctx, w * (sx - dir * 0.02), sandY - h * 0.28, h * 0.3, "#e8743c", t, 21 + sx * 100);
-        coral(ctx, w * (sx + dir * 0.06), sandY - h * 0.16, h * 0.24, "#b06fd0", t, 44 + sx * 100);
+        coral(ctx, w * (sx - dir * 0.02), sandY - h * 0.28, h * 0.3, "#e8743c", "#ffc089", t, 21 + sx * 100);
+        coral(ctx, w * (sx + dir * 0.06), sandY - h * 0.16, h * 0.24, "#b06fd0", "#e6c2ff", t, 44 + sx * 100);
         fan(ctx, w * (sx + dir * 0.03), sandY - h * 0.05, h * 0.1, "#e0577f", "#ff9ab4");
         clump(ctx, w * (sx + dir * 0.1), sandY + 4, h * 0.2, t, 17 + sx * 50, ["#2f9a7a", "#41bd92"], 4, 2.6, 4);
       }
@@ -2067,11 +2078,15 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     }
 
     // the wall: an arch behind, coral towers, a gold frame on marble
-    ctx.fillStyle = "rgba(6,40,66,.5)";
-    ctx.fillRect(w * 0.3, h * 0.22, w * 0.4, sandY - h * 0.22);
-    ctx.beginPath(); ctx.ellipse(w * 0.5, h * 0.22, w * 0.2, h * 0.1, 0, Math.PI, 0); ctx.fill();
-    ctx.fillStyle = "rgba(9,58,92,.55)";
-    for (const cx of [0.36, 0.64]) ctx.fillRect(w * cx - 12, h * 0.18, 24, sandY - h * 0.18);
+    // a ruined arch, far back: two legs and a span, with daylight through it
+    ctx.save();
+    ctx.strokeStyle = "rgba(6,38,64,.55)"; ctx.lineWidth = Math.max(10, w * 0.035); ctx.lineCap = "butt";
+    ctx.beginPath(); ctx.arc(w * 0.5, h * 0.46, w * 0.16, Math.PI, 0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w * 0.34, h * 0.46); ctx.lineTo(w * 0.34, sandY);
+    ctx.moveTo(w * 0.66, h * 0.46); ctx.lineTo(w * 0.66, sandY); ctx.stroke();
+    ctx.strokeStyle = "rgba(9,58,92,.4)"; ctx.lineWidth = Math.max(7, w * 0.022);
+    for (const cx of [0.22, 0.78]) { ctx.beginPath(); ctx.moveTo(w * cx, h * 0.3); ctx.lineTo(w * cx, sandY); ctx.stroke(); }
+    ctx.restore();
     rays(ctx, w, h, t, 7, 0.14, 44);
     ctx.fillStyle = "#f2e6c8"; ctx.beginPath(); ctx.moveTo(0, h);
     for (let x = 0; x <= w; x += 20) ctx.lineTo(x, sandY + Math.sin(x * 0.016) * 4);
@@ -2080,9 +2095,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     for (const [sx, dir] of [[0.08, -1], [0.9, 1]]) {
       stone(ctx, w * sx, sandY + 6, w * 0.15, h * 0.46, "#93a2ad", "#4a5966");
       stone(ctx, w * (sx + dir * 0.09), sandY + 6, w * 0.1, h * 0.3, "#8694a0", "#414f5c");
-      coral(ctx, w * (sx - dir * 0.03), sandY - h * 0.44, h * 0.3, "#f0a13c", t, 61 + sx * 100);
-      coral(ctx, w * (sx + dir * 0.04), sandY - h * 0.3, h * 0.28, "#6fd0c4", t, 77 + sx * 100);
-      coral(ctx, w * (sx + dir * 0.11), sandY - h * 0.16, h * 0.26, "#d95f8e", t, 93 + sx * 100);
+      coral(ctx, w * (sx - dir * 0.03), sandY - h * 0.44, h * 0.3, "#f0a13c", "#ffd9a0", t, 61 + sx * 100);
+      coral(ctx, w * (sx + dir * 0.04), sandY - h * 0.3, h * 0.28, "#6fd0c4", "#c4fff4", t, 77 + sx * 100);
+      coral(ctx, w * (sx + dir * 0.11), sandY - h * 0.16, h * 0.26, "#d95f8e", "#ffc0d8", t, 93 + sx * 100);
       fan(ctx, w * (sx + dir * 0.02), sandY - h * 0.09, h * 0.13, "#d4478f", "#ffa6cf");
       fan(ctx, w * (sx + dir * 0.13), sandY - h * 0.03, h * 0.1, "#7a5fd0", "#c3b0ff");
       clump(ctx, w * (sx + dir * 0.17), sandY + 4, h * 0.26, t, 31 + sx * 60, ["#2f9a7a", "#4bd0a0"], 5, 2.8, 5);
@@ -2135,7 +2150,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       ctx.fillStyle = "#f2c94c"; for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(cx - 16 + i * 8, cy - 22 - (i % 2) * 3, 4, 0, Math.PI * 2); ctx.fill(); }
       if (live && Math.random() < dt * 3) bubbles.push({ x: cx + (Math.random() - 0.5) * 20, y: cy - 24, r: 2 + Math.random() * 3 });
     }
-    if (live && Math.random() < dt * 2.2) bubbles.push({ x: w * 0.93, y: sandY, r: 1.5 + Math.random() * 3 });
+    // out of the air stone in a shop tank, off the rock in the rest
+    if (live && Math.random() < dt * 2.2) bubbles.push({ x: S.tank === 0 ? w * 0.055 : w * 0.93, y: sandY, r: 1.5 + Math.random() * 3 });
     // fish
     const tSec = t / 1000;
     const sorted = swimmers.slice().sort((a, b) => swimLen(a.f, w) - swimLen(b.f, w));
