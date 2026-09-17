@@ -167,7 +167,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
    same. Animations are decoration; never hang content off one. */
 .chest-card{position:relative;width:min(420px,92vw);background:var(--panel);border:1px solid rgba(var(--gold-rgb),.5);
   border-radius:18px;padding:20px;text-align:center;box-shadow:0 26px 70px rgba(0,0,0,.65)}
-@keyframes chest-in{from{transform:scale(.7);opacity:0}}
+@keyframes chest-in{from{transform:scale(.96)}}
 .chest-kind{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
 .chest-card h2{font-family:var(--display);font-weight:800;font-size:1.5rem;margin:5px 0 14px}
 .chest-loot{display:grid;gap:8px;margin-bottom:16px}
@@ -177,10 +177,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .chest-loot .ico{font-size:1.3rem;line-height:1}
 .chest-loot b{font-family:var(--display);font-weight:800;font-size:1.05rem}
 .chest-loot small{display:block;font-size:.72rem;color:var(--muted-2)}
-@keyframes loot-in{from{opacity:0;transform:translateY(8px)}}
 @media (prefers-reduced-motion:no-preference){
-  .chest-card{animation:chest-in .3s cubic-bezier(.2,1.5,.4,1) both}
-  .chest-loot .row{animation:loot-in .3s cubic-bezier(.2,1.4,.4,1) both}
+  .chest-card{animation:chest-in .22s ease-out both}
 }
 /* a way out you can see, not just one you can guess at */
 .chest-x{position:absolute;top:9px;right:10px;width:30px;height:30px;display:grid;place-items:center;border-radius:9px;
@@ -3158,7 +3156,6 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     $("chestLoot").replaceChildren();
     loot.forEach((it, i) => {
       const row = el("div", "row" + (it.big ? " big" : ""), `<span class="ico">${it.icon}</span><span><b>${it.what}</b><small>${it.note}</small></span>`);
-      row.style.animationDelay = `${0.05 + i * 0.07}s`;
       $("chestLoot").append(row);
     });
     $("chest").hidden = false;
