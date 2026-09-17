@@ -150,6 +150,20 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .fnav .tabs{display:flex;flex-direction:column;gap:2px}
 .main{min-width:0;padding:22px 28px 56px}
 /* The stat bar: every page, always on screen. */
+/* The tour: one dark sheet with a hole cut in it by a very large box-shadow,
+   and a card that sits under the hole (or over it, near the bottom of the
+   screen). The sheet does not take clicks — only the card does — so a step
+   can point at a live button without the page freezing underneath. */
+.tour{position:fixed;inset:0;z-index:80;pointer-events:none}
+.tour-hole{position:fixed;border-radius:14px;box-shadow:0 0 0 9999px rgba(4,3,2,.74);transition:all .22s ease;pointer-events:none}
+.tour-hole.none{box-shadow:0 0 0 9999px rgba(4,3,2,.8)}
+.tour-card{position:fixed;width:min(360px,calc(100vw - 32px));background:var(--panel);border:1px solid rgba(var(--gold-rgb),.45);
+  border-radius:16px;padding:16px 17px 14px;box-shadow:0 22px 60px rgba(0,0,0,.6);pointer-events:auto;transition:all .22s ease}
+.tour-step{font-size:.6rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+.tour-card h2{font-family:var(--display);font-weight:800;font-size:1.15rem;margin:4px 0 6px}
+.tour-card p{margin:0;color:var(--muted);font-size:.88rem;line-height:1.5}
+.tour-btns{display:flex;gap:8px;margin-top:14px;align-items:center}
+.tour-btns .ghost{margin-right:auto;border-color:transparent;background:transparent;color:var(--muted-2)}
 .statbar{position:sticky;top:0;z-index:30;margin:-22px -28px 18px;padding:9px 28px;display:flex;align-items:center;gap:10px 22px;flex-wrap:wrap;
   background:rgba(12,10,9,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
 .sb-me{display:flex;align-items:center;gap:9px;padding-right:18px;border-right:1px solid var(--line);min-width:0}
@@ -661,6 +675,19 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   </aside>
 
 <main class="main">
+  <div class="tour" id="tour" hidden>
+    <div class="tour-hole" id="tourHole"></div>
+    <div class="tour-card" id="tourCard" role="dialog" aria-modal="true" aria-labelledby="tourT">
+      <span class="tour-step" id="tourStep"></span>
+      <h2 id="tourT"></h2>
+      <p id="tourB"></p>
+      <div class="tour-btns">
+        <button class="btn small ghost" id="tourSkip" type="button">Skip</button>
+        <button class="btn small" id="tourBack" type="button">Back</button>
+        <button class="btn small gold" id="tourNext" type="button">Next</button>
+      </div>
+    </div>
+  </div>
   <header class="statbar" id="statbar" aria-label="Your Reef">
     <div class="sb-me"><span class="sb-face">BP</span><span class="sb-name"><b>bootypaper</b><small>Angler</small></span></div>
     <div class="sb-stat gold"><small>Pearls</small><b><span class="pearl"></span><span id="tbPearls">0</span></b></div>
@@ -849,6 +876,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
             <button class="btn small" id="cAway" type="button">Away 2 hours</button>
             <button class="btn small" id="cDay" type="button">Next day (quests)</button>
             <button class="btn small" id="cWeek" type="button">Next week (quests)</button>
+            <button class="btn small" id="cTour" type="button">Run the tour again</button>
             <button class="btn small" id="cWipe" type="button">Wipe save</button>
           </div>
         </div>
@@ -3476,6 +3504,93 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     renderShop();
   }
 
+  /* ============================================================ the tour
+     A first run walks you round the place once. Every step names a tab to
+     open and, optionally, one element to put the spotlight on; a step whose
+     element is not on the page is skipped rather than pointing at nothing,
+     so the tour cannot break when a panel changes. The sheet never takes
+     clicks, so the thing being pointed at stays live underneath. */
+  const TOUR = [
+    { tab: "fishing", title: "Welcome to the Reef",
+      body: "A fishing game you play in a minute or leave running for a day. Everything here is caught, grown or made — nothing is bought with real money. Thirty seconds and you will know your way round." },
+    { tab: "fishing", sel: "#act", title: "Cast, then keep it in the green",
+      body: "Cast and wait for the bite. When it runs, hold the bar inside the green band — press to pull up, let go to drop. Common fish barely fight. A legendary one will take everything you have." },
+    { tab: "fishing", sel: "#spots", title: "Five places to fish",
+      body: "Each spot holds its own six or seven species and better things live deeper. You unlock the next one in the shop, and the same spots are where you dive." },
+    { tab: "fishing", sel: ".baitpick", title: "Bait changes what bites",
+      body: "No bait still catches fish. Better bait pushes the odds toward the rare end, and you grow all of it yourself in the bait garden." },
+    { tab: "fishing", sel: "#clock", title: "The reef keeps its own clock",
+      body: "A day here is 24 real minutes and a season is two of those, so dawn, dusk, winter and a storm all come round while you play. Some fish only bite at one of them — the list under the rod says which, and how long until it is." },
+    { tab: "tank", title: "Fish you keep make pearls",
+      body: "Anything you put in the tank earns pearls every hour, awake or not, and keeps paying for up to eight hours after you close the page. Rarer and heavier pays more, so the tank is the decision: keep it, cook it, or sell it." },
+    { tab: "garden", title: "Grow your own bait",
+      body: "Plant a bed, water it, come back. Slower bait is better bait. At Farming 20 and 40 the garden waters and replants itself while you are away." },
+    { tab: "dive", title: "Dive for what is on the bottom",
+      body: "Kelp, shells, old coins, sometimes a sunken chest. Air runs out and has to be refilled at the surface, and the bag fills up — which is what sends you to the crafting page." },
+    { tab: "craft", title: "Make things out of what you find",
+      body: "Recipes turn junk into bait, pearls and charms. Every craft trains Crafting, and the odd cast brings a part up on the line so you are never stuck waiting on a dive." },
+    { tab: "skills", title: "Six skills, 0 to 99",
+      body: "Fishing, Farming, Cooking, Breeding, Diving and Crafting, on the curve you already know. Levels are what open the shop — pearls are only the other half of the price." },
+    { tab: "boss", title: "Then there are the big ones",
+      body: "Five of them, one to a spot. Old Scar is about four casts away: two pond species and Fishing 5. Beat one and that spot runs richer in rare fish for good." },
+    { tab: "shop", title: "Spend it here",
+      body: "Rods, tanks, gardens, nests, air, bags and the idle kit. Everything you have earned goes through this page." },
+    { tab: "fishing", sel: "#act", title: "That's the lot",
+      body: "Quests, the weekly derby, breeding and your profile are all in the menu when you want them. Go and catch something." }
+  ];
+  let tourAt = -1;
+  function tourShow(i) {
+    const step = TOUR[i]; if (!step) return tourEnd();
+    tourAt = i;
+    if (step.tab) { const b = document.querySelector(`.fnav .tab[data-tab="${step.tab}"]`); if (b && b.getAttribute("aria-selected") !== "true") b.click(); }
+    const box = $("tour"), hole = $("tourHole"), card = $("tourCard");
+    box.hidden = false;
+    $("tourStep").textContent = `Step ${i + 1} of ${TOUR.length}`;
+    $("tourT").textContent = step.title;
+    $("tourB").textContent = step.body;
+    $("tourBack").disabled = i === 0;
+    $("tourNext").textContent = i === TOUR.length - 1 ? "Start fishing" : "Next";
+    const el = step.sel ? document.querySelector(step.sel) : null;
+    const seen = el && el.offsetParent !== null;
+    if (seen) el.scrollIntoView({ block: "center", behavior: "smooth" });
+    // let the scroll settle before measuring, or the hole lands where it was
+    setTimeout(() => {
+      if (tourAt !== i) return;
+      if (seen) {
+        const r = el.getBoundingClientRect(), pad = 8;
+        hole.className = "tour-hole";
+        Object.assign(hole.style, { left: `${r.left - pad}px`, top: `${r.top - pad}px`, width: `${r.width + pad * 2}px`, height: `${r.height + pad * 2}px` });
+        const cw = card.offsetWidth, ch = card.offsetHeight;
+        const below = r.bottom + 14 + ch < window.innerHeight;
+        const top = below ? r.bottom + 14 : Math.max(12, r.top - 14 - ch);
+        const left = Math.min(Math.max(12, r.left + r.width / 2 - cw / 2), window.innerWidth - cw - 12);
+        Object.assign(card.style, { top: `${top}px`, left: `${left}px`, transform: "none" });
+      } else {
+        hole.className = "tour-hole none";
+        Object.assign(hole.style, { left: "50%", top: "50%", width: "0px", height: "0px" });
+        Object.assign(card.style, { top: "50%", left: "50%", transform: "translate(-50%,-50%)" });
+      }
+    }, seen ? 260 : 0);
+  }
+  function tourEnd() {
+    tourAt = -1;
+    $("tour").hidden = true;
+    S.tour = 1; save();
+    const b = document.querySelector('.fnav .tab[data-tab="fishing"]');
+    if (b && b.getAttribute("aria-selected") !== "true") b.click();
+  }
+  const tourStart = () => tourShow(0);
+  $("tourNext").addEventListener("click", () => tourShow(tourAt + 1));
+  $("tourBack").addEventListener("click", () => tourShow(Math.max(0, tourAt - 1)));
+  $("tourSkip").addEventListener("click", tourEnd);
+  document.addEventListener("keydown", (e) => {
+    if ($("tour").hidden) return;
+    if (e.key === "Escape") { e.preventDefault(); tourEnd(); }
+    if (e.key === "ArrowRight" || e.key === "Enter") { e.preventDefault(); tourShow(tourAt + 1); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); tourShow(Math.max(0, tourAt - 1)); }
+  });
+  window.addEventListener("resize", () => { if (!$("tour").hidden && tourAt >= 0) tourShow(tourAt); });
+
   const navTabs = [...document.querySelectorAll(".fnav .tab")];
   function openTab(b, focus) {
     if (b.dataset.tab !== "fishing" && (fish.phase === "wait" || fish.phase === "bite" || fish.phase === "reel")) { setPhase("idle"); toast("You reeled your line in"); }
@@ -3538,6 +3653,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const awayFor = (Date.now() - (S.saved || Date.now())) / 1000;
   if (awayFor > 120) away(awayFor, true);
   if (fromHash) openTab(fromHash);
+  $("cTour").addEventListener("click", () => tourStart());
+  if (!S.tour) setTimeout(tourStart, 500);
   requestAnimationFrame(frame);
   setInterval(save, 5000);
   document.addEventListener("visibilitychange", save);
