@@ -4081,7 +4081,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   setInterval(save, 5000);
   document.addEventListener("visibilitychange", save);
   window.addEventListener("pagehide", save);
-  window.__reef = { tick: (ms) => { const t0 = performance.now(); for (let k = 0; k <= ms / 16; k++) { last = t0 + (k - 1) * 16; frameBody(t0 + k * 16); } }, get S() { return S; }, lake, heronBox, track, hatch, harvest, plant, water, breed, claim, openDailyChest, openWeeklyChest, pairs, fish, SPECIES, landed, action, rollCatch, renderEverything, drawFish, BY_KEY, syncTank, renderTank };
+  window.__reef = { tick: (ms) => { const t0 = performance.now(); for (let k = 0; k <= ms / 16; k++) { last = t0 + (k - 1) * 16; frameBody(t0 + k * 16); } }, get S() { return S; }, lake, heronBox, checkUnlocks, paintNav, GATES, track, hatch, harvest, plant, water, breed, claim, openDailyChest, openWeeklyChest, pairs, fish, SPECIES, landed, action, rollCatch, renderEverything, drawFish, BY_KEY, syncTank, renderTank };
 })();
 </script>
 </body>
