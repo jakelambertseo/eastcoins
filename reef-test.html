@@ -400,9 +400,18 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 /* The reel bar lives on the right side of the scene; get out of its way while reeling. */
 .xpt.dim{opacity:0}
 /* the same widget, sitting in a page instead of over the scene */
-.xpt.flat{position:static;width:100%;max-width:none;margin:0;background:var(--panel-2);backdrop-filter:none;box-shadow:none}
-.xpt.flat .xpt-drops{bottom:auto;top:0}
-.xpw-row{display:grid;grid-template-columns:minmax(0,340px);margin-bottom:14px}
+.xpt.flat{position:relative;width:100%;max-width:none;margin:0;padding:12px 16px;background:var(--panel);border:1px solid var(--line);backdrop-filter:none;box-shadow:none;
+  display:grid;grid-template-columns:minmax(180px,auto) minmax(160px,1fr) minmax(190px,auto);gap:5px 20px;align-items:center}
+.xpt.flat .xpt-top{grid-area:1/1/3/2}
+.xpt.flat .xpt-bar{grid-area:1/2/2/3;margin:0}
+.xpt.flat .xpt-to{grid-area:1/3/2/4;text-align:right;margin:0}
+.xpt.flat .xpt-sess{grid-area:2/2/3/3;margin:0}
+.xpt.flat .xpt-next{grid-area:2/3/3/4;text-align:right}
+.xpt.flat .xpt-drops{left:auto;right:16px;bottom:100%}
+.xpt-next{display:none;font-size:.72rem;font-weight:700;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xpt.flat .xpt-next{display:block}
+.xpw-row{margin-bottom:14px}
+@media (max-width:900px){.xpt.flat{grid-template-columns:1fr}.xpt.flat > *{grid-area:auto !important;text-align:left !important}}
 .xpdrop{position:absolute;right:6px;bottom:6px;display:flex;align-items:center;gap:4px;color:var(--gold);font-family:var(--display);font-size:.9rem;font-weight:800;text-shadow:0 2px 10px rgba(0,0,0,.9);animation:xpdrop 1.8s ease-out forwards;white-space:nowrap}
 .xpdrop svg{width:15px;height:15px;stroke:var(--gold);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 @keyframes xpdrop{0%{transform:translateY(0);opacity:0}12%{opacity:1}75%{opacity:1}100%{transform:translateY(-62px);opacity:0}}
@@ -442,7 +451,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .skill.soon{opacity:.6}
 .skill.soon .skill-lvl{color:var(--muted)}
 
-.levelup{position:fixed;left:50%;top:18px;z-index:90;transform:translateX(-50%);min-width:min(420px,92vw);padding:13px 20px 14px;border-radius:14px;background:linear-gradient(180deg,rgba(var(--gold-rgb),.12),transparent 60%),var(--panel);border:1px solid rgba(var(--gold-rgb),.45);box-shadow:0 18px 50px rgba(0,0,0,.6);text-align:center;color:var(--text);pointer-events:none;animation:lvlin .35s ease-out}
+.levelup{position:fixed;left:50%;top:66px;z-index:25;transform:translateX(-50%);min-width:min(420px,92vw);padding:13px 20px 14px;border-radius:14px;background:linear-gradient(180deg,#2a2118,var(--panel) 55%);border:1px solid rgba(var(--gold-rgb),.5);box-shadow:0 20px 50px rgba(0,0,0,.75),0 0 0 1px rgba(0,0,0,.5);text-align:center;color:var(--text);pointer-events:none;animation:lvlin .35s ease-out;overflow:hidden}
 .levelup b{display:block;font-family:var(--display);font-size:1.15rem;color:var(--gold)}
 .levelup span{display:block;margin-top:3px;font-weight:700;color:var(--muted)}
 .levelup .fw{position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:50%;pointer-events:none}
@@ -552,8 +561,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   </section>
 
   <section class="view view-tank" role="tabpanel" id="panel-tank" aria-labelledby="tab-tank" data-panel="tank" hidden>
-    <div class="xpw-row"><div class="xpt flat" data-skill="cooking" aria-live="polite"></div></div>
     <header class="view-h"><div><h1>Your tank</h1><p>Fish you keep swim here and make Pearls, even while you're away.</p></div><span class="meta" id="capLine">0 of 5 fish</span></header>
+    <div class="xpw-row"><div class="xpt flat" data-skill="cooking" aria-live="polite"></div></div>
+
     <section class="card" aria-label="Aquarium">
       <div class="tank-wrap" id="tankWrap">
         <canvas id="tank"></canvas>
@@ -573,11 +583,13 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 
   <section class="view view-garden" role="tabpanel" id="panel-garden" aria-labelledby="tab-garden" data-panel="garden" hidden>
     <header class="view-h"><div><h1>Bait garden</h1><p>Grow bait that changes what bites.</p></div></header>
+    <div class="xpw-row"><div class="xpt flat" data-skill="farming" aria-live="polite"></div></div>
     <div class="card"><div class="card-body"><div id="garden"></div></div></div>
   </section>
 
   <section class="view view-breeding" role="tabpanel" id="panel-breeding" aria-labelledby="tab-breeding" data-panel="breeding" hidden>
     <header class="view-h"><div><h1>Breeding</h1><p>Two of the same fish lay an egg. Shiny parents raise the odds of a shiny baby.</p></div></header>
+    <div class="xpw-row"><div class="xpt flat" data-skill="breeding" aria-live="polite"></div></div>
     <div class="card"><div class="card-body"><div id="breeding"></div></div></div>
   </section>
 
@@ -615,11 +627,13 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 
   <section class="view view-dive" role="tabpanel" id="panel-dive" aria-labelledby="tab-dive" data-panel="dive" hidden>
     <header class="view-h"><div><h1>Diving</h1><p>Go down for what the fish swim over. Deeper spots, better finds.</p></div></header>
+    <div class="xpw-row"><div class="xpt flat" data-skill="diving" aria-live="polite"></div></div>
     <div class="card"><div class="card-body"><div id="dive"></div></div></div>
   </section>
 
   <section class="view view-craft" role="tabpanel" id="panel-craft" aria-labelledby="tab-craft" data-panel="craft" hidden>
     <header class="view-h"><div><h1>Crafting</h1><p>Turn what you dive up into bait, pearls and charms.</p></div></header>
+    <div class="xpw-row"><div class="xpt flat" data-skill="crafting" aria-live="polite"></div></div>
     <div class="card"><div class="card-body"><div id="craft"></div></div></div>
   </section>
 
@@ -929,6 +943,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       <div class="xpt-bar"><i class="xpt-fill"></i><span class="xpt-pct"></span></div>
       <div class="xpt-to"></div>
       <div class="xpt-sess"></div>
+      <div class="xpt-next"></div>
       <div class="xpt-drops"></div>`;
     return box;
   }
@@ -959,6 +974,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const mine = session.xp[key] || 0;
     const hrs = session.since ? Math.max(1 / 60, (Date.now() - session.since) / 3600000) : 0;
     box.querySelector(".xpt-sess").textContent = mine ? `This session +${num(mine)} xp · ${num(mine / hrs)}/hr` : "This session 0 xp";
+    const next = UNLOCKS.filter((u) => u.skill === key && lvl < u.at).sort((a, b) => a.at - b.at)[0];
+    const to = next ? next.at - lvl : 0;
+    box.querySelector(".xpt-next").textContent = next
+      ? `Next unlock: ${next.what} in ${to} level${to === 1 ? "" : "s"}`
+      : "Everything this skill unlocks is open";
   }
   /** Repaint every tracker on the page. */
   function renderXpTracker() { document.querySelectorAll(".xpt").forEach(paintXp); }
@@ -1726,7 +1746,6 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   function renderGarden() {
     normalizeLoop();
     const box = $("garden"); box.replaceChildren();
-    box.append(xpWidget("farming"));
 
     const owned = BAIT_KEYS.filter((k) => S.bait[k] > 0);
     const intro = el("div", "panel-intro");
@@ -1815,7 +1834,6 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   function renderDive() {
     const box = $("dive"); if (!box) return;
     box.replaceChildren();
-    box.append(xpWidget("diving"));
     const spot = SPOTS[S.spot];
     const head = el("div", "panel-intro");
     head.append(el("p", null, `Diving <b>${spot.name}</b>. Deeper water holds better things — change spot on the fishing page.`));
@@ -1850,7 +1868,6 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   function renderCraft() {
     const box = $("craft"); if (!box) return;
     box.replaceChildren();
-    box.append(xpWidget("crafting"));
     const lvl = levelIn("crafting");
     const list = el("div", "rows");
     RECIPES.forEach((r) => {
@@ -1965,7 +1982,6 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   function renderBreeding() {
     normalizeLoop();
     const box = $("breeding"); box.replaceChildren();
-    box.append(xpWidget("breeding"));
 
     const cols = el("div", "breed-cols");
     const left = el("div");
