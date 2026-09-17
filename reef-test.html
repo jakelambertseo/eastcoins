@@ -822,6 +822,16 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         <ul class="tank-list" id="tankList"></ul>
       </div>
     </section>
+
+    <section class="card" aria-label="Tank upgrades">
+      <div class="card-body">
+        <div class="panel-intro">
+          <p>Bigger glass and things to put in it. Every decoration adds <b>+5%</b> to what the tank pays.</p>
+          <span class="hint" id="tankUpHint"></span>
+        </div>
+        <div class="shop-grid" id="tankUp"></div>
+      </div>
+    </section>
   </section>
 
   <section class="view view-quests" role="tabpanel" id="panel-quests" aria-labelledby="tab-quests" data-panel="quests" hidden>
@@ -2452,7 +2462,36 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     track("sell");
     save();
   }
+  /* The tank's own upgrades, below the tank. Exactly the shop's cards —
+     shopCard() and .shop-grid, same art, same prices, same locks — because
+     two different-looking ways to buy the same thing is how a shop stops
+     being trusted. The shop keeps its copies too; both call this list. */
+  function tankUpgrades() {
+    const box = $("tankUp"); if (!box) return;
+    box.replaceChildren();
+    const cards = [];
+    TANKS.forEach((t, i) => {
+      if (i === 0) return;
+      const u = needOf(`${t.cap}-fish tank`), locked = u && levelIn(u.skill) < u.at;
+      cards.push(shopCard({ art: t.art, icon: t.icon, name: t.name, about: `${t.about} · room for ${t.cap} fish`,
+        price: t.cost, owned: S.tank >= i, ownedLabel: S.tank === i ? "In use" : "Owned", locked,
+        need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
+        onBuy: () => { if (S.pearls < t.cost) return; S.pearls -= t.cost; S.tank = i; toast(t.name, `Room for ${t.cap} fish.`); renderShop(); renderTank(); save(); } }));
+    });
+    DECOR.forEach((d) => {
+      const u = needOf(d.name), locked = u && levelIn(u.skill) < u.at;
+      cards.push(shopCard({ icon: { kelp: "🌿", castle: "🏰", ship: "🚢", chest: "🧰" }[d.key] || "🐚",
+        name: d.name, about: "Tank makes +5% pearls", price: d.cost, owned: !!S.decor[d.key], ownedLabel: "Placed", locked,
+        need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
+        onBuy: () => { if (S.pearls < d.cost) return; S.pearls -= d.cost; S.decor[d.key] = true; toast(`${d.name} placed`, "+5% pearls."); renderShop(); renderTank(); save(); } }));
+    });
+    cards.forEach((c) => box.append(c));
+    const placed = DECOR.filter((d) => S.decor[d.key]).length;
+    $("tankUpHint").textContent = `${placed} of ${DECOR.length} decorations placed`;
+  }
+
   function renderTank() {
+    tankUpgrades();
     const list = $("tankList"); list.replaceChildren();
     const capN = TANKS[S.tank].cap;
     $("capLine").textContent = `${S.fish.length} of ${capN} fish`;
