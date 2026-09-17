@@ -59,6 +59,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .scene-wrap{position:relative;aspect-ratio:16/10;background:#0b1a2a;touch-action:none;user-select:none;-webkit-user-select:none}
 .scene-wrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .status{position:absolute;left:12px;top:10px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+.sfx-btn{pointer-events:auto;background:rgba(8,6,5,.62);border:1px solid rgba(255,255,255,.12);padding:3px 8px;border-radius:99px;font-size:.82rem;line-height:1.2;cursor:pointer;margin-right:auto;margin-left:7px}
+.sfx-btn:hover{border-color:var(--sea)}
 .status > span{background:rgba(8,6,5,.62);border:1px solid rgba(255,255,255,.12);padding:4px 9px;border-radius:99px;font-size:.74rem;font-weight:800}
 .say{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);font-family:var(--display);font-weight:800;font-size:clamp(1.1rem,3.4vw,1.6rem);text-align:center;text-shadow:0 2px 12px rgba(0,0,0,.8);pointer-events:none;white-space:nowrap}
 .say.bite{color:var(--gold);font-size:clamp(2rem,7vw,3.2rem);animation:pulse .35s ease-in-out infinite alternate}
@@ -706,7 +708,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       <div class="spots" id="spots"></div>
       <div class="scene-wrap" id="sceneWrap">
         <canvas id="scene"></canvas>
-        <div class="status"><span id="clock">Day · Fall</span><span id="spotName">Backyard Pond</span></div>
+        <div class="status"><span id="clock">Day · Fall</span>
+          <button class="sfx-btn" id="sfxBtn" type="button" aria-pressed="false" title="Fishing sounds"></button>
+          <span id="spotName">Backyard Pond</span></div>
         <div class="say" id="say"></div>
         <div class="xpt" id="xpt" data-skill="fishing" aria-live="polite"></div>
         <div class="reel" id="reel" hidden>
@@ -1655,7 +1659,15 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     say.className = "say";
     say.textContent = `${boss.name} · ${Math.max(0, left).toFixed(0)}s${prog > 0.55 ? " · it's waking up" : ""}`;
   }
-  function setPhase(p, msg = "") { fish.phase = p; fish.at = performance.now(); fish.msg = msg; syncAction(); }
+  function setPhase(p, msg = "") {
+    if (p !== fish.phase) {
+      if (p === "wait") SFX.cast();
+      else if (p === "bite") SFX.bite();
+      else if (p === "lost") SFX.lost();
+      else if (p === "reel" && fish.pick?.boss) SFX.boss();
+    }
+    fish.phase = p; fish.at = performance.now(); fish.msg = msg; syncAction();
+  }
   function action() {
     if (fish.phase === "reel" && fish.pick?.boss) return;
     if (fish.phase === "idle" || fish.phase === "lost") {
@@ -1709,6 +1721,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       fish.fy += Math.sign(diffY) * Math.min(Math.abs(diffY), sp * dt) + (Math.random() - 0.5) * 0.02 * d;
       fish.fy = Math.max(0.03, Math.min(0.97, fish.fy));
       const inside = fish.fy >= fish.zone && fish.fy <= fish.zone + zoneH;
+      if (inside !== fish.wasInside) { SFX.tick(inside); fish.wasInside = inside; }
       fish.prog += (inside ? 0.25 : -0.24 * tier.loss * (0.8 + d * 0.35)) * dt;
       $("zone").style.bottom = `${fish.zone * 100}%`; $("zone").style.height = `${zoneH * 100}%`;
       $("zone").classList.toggle("on", inside);
@@ -1731,6 +1744,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     entry.n++; entry.best = Math.max(entry.best, c.w); entry.shiny = entry.shiny || c.shiny;
     S.dex[sp.key] = entry;
     fish.result = c;
+    SFX.land(sp.rar, c.shiny);
     setPhase("caught");
     const cv = $("catchC"), ctx = cv.getContext("2d");
     ctx.clearRect(0, 0, cv.width, cv.height);
@@ -3503,6 +3517,77 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     toast(`While you were away: +${num(made)} pearls`, `${(seconds / 3600).toFixed(1)} hours${seconds / 3600 > offlineCap() ? `, capped at ${offlineCap()}` : ""} of your tank's ${num(tankRate())}/hr.`);
     renderShop();
   }
+
+  /* ============================================================ sound
+     Fishing only, and synthesised rather than downloaded — every noise here
+     is a couple of oscillators and a burst of filtered noise, so the whole
+     thing costs nothing to load and nothing to host. The context is built on
+     the first sound rather than at load, because a browser will not let audio
+     start before the player has clicked something; the first Cast is that
+     click. Off is remembered, and off means the context is never built. */
+  let AC = null;
+  const sfxOn = () => S.sfx !== false;
+  function ac() {
+    if (!AC) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; AC = new C(); }
+    if (AC.state === "suspended") AC.resume();
+    return AC;
+  }
+  /** One note: type, start and end pitch, how long, how loud, when. */
+  function tone(type, f0, f1, dur, vol, at = 0) {
+    const c = ac(); if (!c) return;
+    const t = c.currentTime + at;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, t);
+    if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(Math.max(1, f1), t + dur);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + Math.min(0.02, dur / 3));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(c.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+  /** Filtered noise: splashes and whooshes. */
+  function noise(dur, vol, hz, sweepTo, at = 0) {
+    const c = ac(); if (!c) return;
+    const t = c.currentTime + at, n = Math.floor(c.sampleRate * dur);
+    const buf = c.createBuffer(1, n, c.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    const src = c.createBufferSource(); src.buffer = buf;
+    const f = c.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 0.9;
+    f.frequency.setValueAtTime(hz, t);
+    if (sweepTo) f.frequency.exponentialRampToValueAtTime(sweepTo, t + dur);
+    const g = c.createGain();
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f).connect(g).connect(c.destination);
+    src.start(t); src.stop(t + dur);
+  }
+  const SFX = {
+    cast() { if (!sfxOn()) return; noise(0.22, 0.09, 1800, 500); tone("sine", 420, 130, 0.14, 0.12, 0.2); noise(0.12, 0.06, 900, 300, 0.2); },
+    bite() { if (!sfxOn()) return; tone("square", 880, 880, 0.07, 0.07); tone("square", 1245, 1245, 0.09, 0.07, 0.1); },
+    tick(inside) { if (!sfxOn()) return; tone("triangle", inside ? 720 : 400, inside ? 760 : 380, 0.04, 0.035); },
+    lost() { if (!sfxOn()) return; tone("sawtooth", 260, 70, 0.34, 0.08); noise(0.2, 0.05, 500, 180); },
+    land(rar, shiny) {
+      if (!sfxOn()) return;
+      noise(0.26, 0.1, 1400, 400);
+      const root = [392, 440, 494, 523, 587][rar] || 440;               // higher for rarer
+      const notes = rar >= 3 ? [1, 1.25, 1.5, 2] : rar >= 1 ? [1, 1.25, 1.5] : [1, 1.5];
+      notes.forEach((m, i) => tone("triangle", root * m, root * m, 0.26, 0.09, 0.08 + i * 0.09));
+      if (shiny) [1568, 2093, 2637].forEach((f, i) => tone("sine", f, f, 0.18, 0.05, 0.45 + i * 0.07));
+    },
+    boss() { if (!sfxOn()) return; tone("sawtooth", 110, 82, 0.5, 0.09); tone("sine", 220, 165, 0.5, 0.06); noise(0.4, 0.07, 700, 200); }
+  };
+  function paintSfx() {
+    const b = $("sfxBtn"); if (!b) return;
+    b.setAttribute("aria-pressed", String(sfxOn()));
+    b.textContent = sfxOn() ? "🔊" : "🔇";
+    b.title = sfxOn() ? "Fishing sounds are on" : "Fishing sounds are off";
+  }
+  $("sfxBtn").addEventListener("click", () => {
+    S.sfx = !sfxOn();
+    paintSfx(); save();
+    if (sfxOn()) SFX.tick(true);
+  });
+  paintSfx();
 
   /* ============================================================ the tour
      A first run walks you round the place once. Every step names a tab to
