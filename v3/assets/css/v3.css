@@ -3029,7 +3029,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 
 /* ---------------------------------------------------------------- the Daily Crate (nav present + popover) */
 .cratewrap{display:flex}
-.crate-btn{background:linear-gradient(180deg,#ff9a3c,#e8641a);border-color:#ff7a1f;color:#2a0d00}
+.crate-btn{position:relative;background:linear-gradient(180deg,#ff9a3c,#e8641a);border-color:#ff7a1f;color:#2a0d00}
 .crate-btn:hover,.crate-btn.on{color:#2a0d00;background:linear-gradient(180deg,#ffa955,#f07226);border-color:#ffb066}
 .crate-btn.ready::after{content:"";position:absolute;top:-4px;right:-4px;width:11px;height:11px;border-radius:50%;background:var(--green);border:2px solid var(--ink)}
 @media (prefers-reduced-motion:no-preference){.crate-btn.ready{animation:crate-glow 2.2s ease-in-out infinite}}
