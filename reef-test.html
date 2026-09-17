@@ -674,7 +674,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .levelup b{display:block;font-family:var(--display);font-size:1.15rem;color:var(--gold)}
 .levelup span{display:block;margin-top:3px;font-weight:700;color:var(--muted)}
 .levelup .fw{position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:50%;pointer-events:none}
-@keyframes lvlin{from{transform:translate(-50%,-14px);opacity:0}to{transform:translateX(-50%);opacity:1}}
+/* No opacity in this one. It slides down and that is all: the level-up and
+   unlock banners are the game's only notifications, and a keyframe that
+   starts at opacity 0 leaves them invisible on any frame the browser has
+   not got round to serving yet. A banner 14px too high is survivable; one
+   nobody can see is not. */
+@keyframes lvlin{from{transform:translate(-50%,-14px)}to{transform:translateX(-50%)}}
 @keyframes fwburst{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(.4);opacity:0}}
 @media (prefers-reduced-motion:reduce){.xpdrop{animation-duration:.01s}.levelup,.levelup .fw{animation:none}}
 </style>
