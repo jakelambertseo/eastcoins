@@ -17,7 +17,7 @@ export async function onRequestGet(context) {
 
   let title = `${login} — EastCoin`;
   let description = "Picks record, biggest win, worst beat, and what they play in the Green Room.";
-  let image = "https://eastcoin.vip/assets/eastcoins-logo.webp";
+  let image = "https://eastcoin.vip/assets/eastcoin-og.png";
   if (env.PICKS_DB) {
     const row = await env.PICKS_DB
       .prepare(`SELECT display_name, avatar_url FROM users WHERE twitch_login = ? COLLATE NOCASE LIMIT 1`)

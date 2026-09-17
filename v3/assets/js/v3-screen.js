@@ -824,7 +824,7 @@
     const box = el("section", "sc-gate");
     const logo = document.createElement("img");
     logo.className = "sc-gate-logo";
-    logo.src = "/assets/eastcoins-logo.webp";
+    logo.src = "/assets/eastcoins-logo.webp?v=2";
     logo.alt = "";
     box.append(logo, el("h2", null, "Movies & TV is for members"),
       el("p", null, "Log in with Twitch to browse the catalog and watch."));

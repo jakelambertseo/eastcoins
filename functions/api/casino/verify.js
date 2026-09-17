@@ -7,7 +7,7 @@
    query string — no session, no database — and the seed's hash comes
    back too, so it can be held against the one shown before play.
 
-   Games: hilo, mines, plinko, scratch, wheel, race, flip, roulette, standing. */
+   Games: hilo, mines, plinko, scratch, wheel, race, flip, roulette, standing, pot, crate. */
 
 import { json, fail } from "../picks/_lib.js";
 import { sha256, edgeFor, EDGE_MIN, EDGE_MAX, GAMES as SHARED } from "./_engine.js";
@@ -17,6 +17,7 @@ import { pathFor, bucketOf, multiplierFor, ROWS, TABLE_RETURN as PLINKO_RETURN }
 import { resultOf } from "../coin/_coin.js";
 import { GAMES as PVP, outcomeFor, chambersFor, MIN_PLAYERS, MAX_PLAYERS } from "./pvp/_pvp.js";
 import { triggerFor, drawFor, TRIGGER_MIN, TRIGGER_MAX } from "./_pot.js";
+import { rarityFor, coinsFor, pickIndex, tierItems, ODDS, COINS } from "../crate/_crate.js";
 import { outcomeFor as scratchOutcome, gridFor as scratchGrid, PRIZES as SCRATCH_PRIZES, RETURN as SCRATCH_RETURN } from "./scratch/_scratch.js";
 
 const clampInt = (v, lo, hi, dflt) => {
@@ -112,5 +113,20 @@ export async function onRequestGet({ request }) {
     });
   }
 
-  return fail("BAD_GAME", "game must be one of: hilo, mines, plinko, scratch, wheel, race, flip, roulette, standing, pot");
+  if (game === "crate") {
+    // The tier and coins-or-item come straight from the seed; which item
+    // depended on what the opener already owned, so the pick index is
+    // shown alongside the full tier list.
+    const rarity = await rarityFor(seed);
+    const coins = await coinsFor(seed, rarity);
+    const tier = tierItems(rarity);
+    return json({
+      ...base, name: "The Daily Crate", rarity, odds: ODDS,
+      coins: coins ? COINS[rarity][await pickIndex(seed, COINS[rarity].length)] : null,
+      itemIndex: coins ? null : await pickIndex(seed, tier.length), tierItems: tier.map((i) => i.name),
+      rule: "u = sha256(seed:crate) as a percentage, walked down common/rare/epic/legendary at 79.92/15.98/3.20/0.64; sha256(seed:kind) under the tier's coin share pays coins; sha256(seed:pick) picks from the tier's items the opener did not yet own (or from the coin amounts)"
+    });
+  }
+
+  return fail("BAD_GAME", "game must be one of: hilo, mines, plinko, scratch, wheel, race, flip, roulette, standing, pot, crate");
 }

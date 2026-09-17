@@ -385,7 +385,7 @@
      then tabs: Overview (bankroll and highlights), Picks, Casino,
      Music. The tab is in the hash, so /u/name#casino opens there. */
 
-  const TABS = [["overview", "Overview"], ["picks", "Picks"], ["casino", "Casino"], ["music", "Music"], ["movies", "Movies"]];
+  const TABS = [["overview", "Overview"], ["picks", "Picks"], ["casino", "Casino"], ["music", "Music"], ["movies", "Movies"], ["collection", "Collection"]];
 
   /* A tomato score as the row of tomatoes it is; zero is the splat. */
   const tomatoes = (n) => (n > 0 ? "🍅".repeat(n) : "🤢");
@@ -727,7 +727,6 @@
 
   function seasonStats(data) {
     const k = data.picks;
-    const c = data.casino;
     const box = el("section", "pf-section pfs");
     const head = el("div", "pfs-head");
     head.append(el("h2", null, `${data.season?.name || "Season"} splits`));
@@ -764,29 +763,33 @@
       ));
     }
 
-    if (c?.total) {
-      box.append(el("h3", "pfs-sub", "Casino by game"));
-      const games = Object.entries(c.games || {})
-        .map(([game, g]) => ({ game, ...g }))
-        .sort((a, b) => b.plays - a.plays);
-      box.append(statTable(
-        ["GAME", "GP", "W", "L", "PCT", "STAKED", "NET", "ROI"],
-        games.map((g) => [
-          [`${GAME_ICON[g.game] || "🎰"} ${GAME_NAME[g.game] || g.game}`],
-          [String(g.plays)],
-          [String(g.wins)],
-          [String(g.losses)],
-          [pct3(g.wins, g.plays)],
-          [Number(g.staked || 0).toLocaleString()],
-          [plusMinus(g.net), tone(g.net)],
-          [roiOf(g.net, g.staked || 0), tone(g.net)]
-        ]),
-        [
-          ["Total"], [String(c.total)], [String(c.wins)], [String(c.losses)], [pct3(c.wins, c.total)],
-          [c.staked.toLocaleString()], [plusMinus(c.net), tone(c.net)], [roiOf(c.net, c.staked), tone(c.net)]
-        ]
-      ));
-    }
+    return box;
+  }
+
+  /** The casino's box score: one row per game and a total, for the Casino tab. */
+  function casinoSplits(c) {
+    const box = el("div", "pfs pfs-casino");
+    box.append(el("h3", "pfs-sub", "By game"));
+    const games = Object.entries(c.games || {})
+      .map(([game, g]) => ({ game, ...g }))
+      .sort((a, b) => b.plays - a.plays);
+    box.append(statTable(
+      ["GAME", "GP", "W", "L", "PCT", "STAKED", "NET", "ROI"],
+      games.map((g) => [
+        [`${GAME_ICON[g.game] || "🎰"} ${GAME_NAME[g.game] || g.game}`],
+        [String(g.plays)],
+        [String(g.wins)],
+        [String(g.losses)],
+        [pct3(g.wins, g.plays)],
+        [Number(g.staked || 0).toLocaleString()],
+        [plusMinus(g.net), tone(g.net)],
+        [roiOf(g.net, g.staked || 0), tone(g.net)]
+      ]),
+      [
+        ["Total"], [String(c.total)], [String(c.wins)], [String(c.losses)], [pct3(c.wins, c.total)],
+        [c.staked.toLocaleString()], [plusMinus(c.net), tone(c.net)], [roiOf(c.net, c.staked), tone(c.net)]
+      ]
+    ));
     return box;
   }
 
@@ -862,7 +865,7 @@
     const bar = el("nav", "pf-tabs");
     bar.setAttribute("aria-label", "Profile sections");
     const panels = {};
-    const counts = { picks: k.total, casino: c?.total || 0, music: music?.requests || 0, movies: data.movies?.total || 0 };
+    const counts = { picks: k.total, casino: c?.total || 0, music: music?.requests || 0, movies: data.movies?.total || 0, collection: data.collection?.total || 0 };
     const buttons = {};
     for (const [key, label] of TABS) {
       const btn = el("button", "pf-tab", label);
@@ -880,7 +883,7 @@
 
     // ---- Overview: the bankroll, the highlights, and a glance at each tab
     const ov = panels.overview;
-    if (k.total || c?.total) ov.append(seasonStats(data));
+    if (k.total) ov.append(seasonStats(data));
     if (data.bankroll?.points?.length > 1) ov.append(bankrollSection(data.bankroll));
     if (k.biggestWin || k.worstBeat) {
       const hls = el("div", "gp-hls");
@@ -927,6 +930,7 @@
         stat("Favourite", c.favourite ? `${GAME_ICON[c.favourite.game] || ""} ${GAME_NAME[c.favourite.game] || c.favourite.game}` : "—", c.favourite ? `${c.favourite.plays} play${c.favourite.plays === 1 ? "" : "s"}` : "")
       );
       cs.append(cstrip);
+      if (c.total && c.games) cs.append(casinoSplits(c));
       const casinoRow = (r) => {
         const won = r.status === "WON";
         const row = el("div", `gp-row ${won ? "won" : "lost"}`);
@@ -994,6 +998,44 @@
       const grid = el("div", "sc-grid pf-movies");
       for (const r of m.recent) grid.append(movieCard(r));
       mv.append(el("h3", "pf-sub", m.total > m.recent.length ? `Latest ${m.recent.length} of ${m.total}` : "Every score, newest first"), grid);
+    }
+
+    // ---- Collection: every cosmetic they own, from the Store and the Daily Crate
+    const co = panels.collection;
+    const col = data.collection || { items: [], total: 0, of: 0 };
+    co.append(sectionHead("Collection", col.total ? `${col.total} of ${col.of} items` : ""));
+    if (!col.total) {
+      const note = emptyNote("Nothing yet", "Cosmetics from the Store and the Daily Crate show here as cards.");
+      if (isMine(u)) note.append(link("/?view=store", "gp-back", "Open the Store →"));
+      co.append(note);
+    } else {
+      const TIER_NAME = { common: "Common", rare: "Rare", epic: "Epic", legendary: "Legendary" };
+      const SOURCE = { crate: "Daily Crate", bought: "Bought", free: "Free", gift: "Gift" };
+      const SLOT_ICON = { finish: "🃏", name: "✒️", namefx: "💫", title: "🏷️", message: "💬", background: "🌌", banner: "🏟️", team: "🏈", player: "⭐", label: "💳" };
+      const n = (f) => col.items.filter(f).length;
+      const cstrip = el("div", "summarystrip four");
+      cstrip.append(
+        stat("Owned", `${col.total} / ${col.of}`, `${Math.round(100 * col.total / Math.max(1, col.of))}% of the catalogue`),
+        stat("Legendary", String(n((i) => i.tier === "legendary")), "the gold ones"),
+        stat("From crates", String(n((i) => i.source === "crate")), "pulled, not bought"),
+        stat("Wearing", String(n((i) => i.equipped)), "switched on now")
+      );
+      co.append(cstrip);
+      const order = { legendary: 0, epic: 1, rare: 2, common: 3 };
+      const grid = el("div", "pf-coll");
+      for (const it of col.items.slice().sort((a, b) => (order[a.tier] ?? 4) - (order[b.tier] ?? 4) || new Date(b.at) - new Date(a.at))) {
+        const card = el("div", `pf-item ${it.tier || "plain"}${it.equipped ? " on" : ""}`);
+        const art = el("div", "pf-item-art");
+        art.append(el("span", "pf-item-ico", SLOT_ICON[it.slot] || "🎁"));
+        if (it.equipped) art.append(el("span", "pf-item-on", "Wearing"));
+        const body = el("div", "pf-item-body");
+        body.append(el("b", null, it.detail ? `${it.name}: ${it.detail}` : it.name), el("span", "pf-item-kind", it.slotName));
+        const foot = el("div", "pf-item-foot");
+        foot.append(el("span", "pf-item-tier", TIER_NAME[it.tier] || "Store"), el("span", "pf-item-src", `${SOURCE[it.source] || ""} · ${new Date(it.at).toLocaleDateString([], { month: "short", day: "numeric" })}`));
+        card.append(art, body, foot);
+        grid.append(card);
+      }
+      co.append(grid);
     }
 
     for (const key of Object.keys(panels)) wrap.append(panels[key]);
@@ -1251,7 +1293,7 @@
     const wrap = el("section", "profile");
     const box = el("div", "gp-notice");
     const img = el("img", "gp-logo");
-    img.src = "/assets/eastcoins-logo.webp";
+    img.src = "/assets/eastcoins-logo.webp?v=2";
     img.alt = "";
     box.append(img, el("strong", null, strong), el("p", null, text));
     wrap.append(box);

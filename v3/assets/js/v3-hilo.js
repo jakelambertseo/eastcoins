@@ -6,7 +6,8 @@
    Your own deck, dealt from a seed the server committed before
    the first card. Call the next card higher or lower; every
    right call multiplies the stake, a wrong one busts it, and you
-   can cash out after any right call. Ties lose. Ace low, king high.
+   can cash out after any right call. A tie is a push — the run carries
+   on at the same multiplier. Ace low, king high.
    ============================================================ */
 (() => {
   "use strict";
@@ -70,12 +71,19 @@
       data.live = payload.game.status === "LIVE" ? payload.game : null;
       refs.lastGame = payload.game;
       flipIn(payload.card);
-      if (payload.outcome === "bust") {
+      if (payload.outcome === "push") {
+        if (payload.autoCashed) {
+          pop({ won: true, big: false, amount: payload.payout - payload.game.stake, headline: "Out of cards", detail: `×${payload.game.multiplier} — ${fmt(payload.payout)} back on ${fmt(payload.game.stake)}.` });
+          if (payload.balance != null) window.ECV3?.setWallet?.(payload.balance);
+          await poll();
+        } else {
+          toast(`${cardText(payload.card)} — a tie. Push: still ×${payload.game.multiplier}, call again.`);
+        }
+      } else if (payload.outcome === "bust") {
         pop({ won: false, amount: payload.game.stake, headline: "Bust", detail: `${cardText(payload.card)} — ${which} was wrong. Next deal when you're ready.` });
-        // Say how close it was: a tie, or one rank either side.
+        // Say how close it was: one rank either side.
         const diff = before ? Math.abs(Number(payload.card.rank) - Number(before.rank)) : 99;
-        if (diff === 0) window.setTimeout(() => toast("A tie — the one card that beats you either way.", "near"), 900);
-        else if (diff === 1) window.setTimeout(() => toast("One rank off. Brutal.", "near"), 900);
+        if (diff === 1) window.setTimeout(() => toast("One rank off. Brutal.", "near"), 900);
         window.ECV3?.refreshSession?.();
         await poll();
       } else if (payload.autoCashed) {
@@ -119,7 +127,7 @@
     const head = K.el("div", "viewhead");
     const copy = K.el("div");
     copy.append(K.el("h1", null, "Higher or Lower"),
-      K.el("p", null, "Your own deck, committed before the first card. Each right call multiplies your stake; a wrong one — ties included — busts it. Cash out whenever you like."));
+      K.el("p", null, "Your own deck, committed before the first card. Each right call multiplies your stake, a tie is a push, and a wrong call busts it. Cash out whenever you like."));
     head.append(copy);
     const right = K.el("div", "cas-headright");
     refs.status = K.el("span", "cf-status", "Connecting…");
@@ -228,7 +236,10 @@
     if (live) {
       refs.mult.replaceChildren();
       K.withCoins(refs.mult, `×${live.multiplier} · [[${live.potential}]] on the table`);
-      refs.phase.textContent = live.step ? `${live.step} right so far` : "Fresh deal";
+      const rights = live.rights ?? live.step;
+      refs.phase.textContent = rights
+        ? `${rights} right so far${live.pushes ? ` · ${live.pushes} push${live.pushes === 1 ? "" : "es"}` : ""}`
+        : live.pushes ? `${live.pushes} push${live.pushes === 1 ? "" : "es"}, nothing won yet` : "Fresh deal";
       refs.phase.className = "cf-phase open";
     } else if (shown) {
       refs.mult.textContent = shown.status === "CASHED" ? `Cashed at ×${shown.multiplier}` : "Bust";
@@ -251,14 +262,16 @@
       const oddsSig = `${o.higher}|${o.lower}`;
       if (refs.oddsSig !== oddsSig) {
         refs.oddsSig = oddsSig;
-        refs.higherBtn.replaceChildren(K.el("b", null, "Higher"), K.el("small", null, o.higher ? `×${o.higher}` : "—"));
-        refs.lowerBtn.replaceChildren(K.el("b", null, "Lower"), K.el("small", null, o.lower ? `×${o.lower}` : "—"));
+        const label = (x) => (!x ? "—" : Number(x) <= 1 ? "next card" : `×${x}`);
+        refs.higherBtn.replaceChildren(K.el("b", null, "Higher"), K.el("small", null, label(o.higher)));
+        refs.lowerBtn.replaceChildren(K.el("b", null, "Lower"), K.el("small", null, label(o.lower)));
       }
       refs.higherBtn.disabled = busy || !o.higher;
       refs.lowerBtn.disabled = busy || !o.lower;
-      refs.cash.disabled = busy || live.step < 1;
-      K.withCoins(refs.cash, live.step < 1 ? "Cash out after one right call" : `Cash out [[${live.potential}]]`);
-      refs.note.textContent = `Ties lose. Run ends at ×${config.maxMultiplier} or ${config.maxSteps} calls.`;
+      const canCash = (live.rights ?? live.step) >= 1;
+      refs.cash.disabled = busy || !canCash;
+      K.withCoins(refs.cash, !canCash ? "Cash out after one right call" : `Cash out [[${live.potential}]]`);
+      refs.note.textContent = `A tie is a push. Run ends at ×${config.maxMultiplier} or ${config.maxSteps} cards.`;
     } else {
       const capped = Number.isFinite(data.me?.hourNet) && data.me.hourNet >= config.hourCap;
       refs.deal.disabled = busy || !config.canBet || capped;

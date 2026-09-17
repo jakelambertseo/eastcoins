@@ -56,14 +56,30 @@ export const ITEMS = [
   // buy.js records ownership without a wallet operation.
   { id: "finish-chrome", slot: "finish", name: "Chrome", price: 0, promo: "Free", blurb: "Brushed metal from edge to edge. Free for a limited time." },
 
+  // Round three (2026-09-16): anime, Halloween and a few more. `tag` is the ribbon the store shows.
+  { id: "finish-diamond", slot: "finish", name: "Diamond", price: 500, chase: true, blurb: "The whole card cut like a diamond, with light sliding across the facets. A Legendary item." },
+  { id: "finish-sakura", slot: "finish", name: "Sakura", price: 75, blurb: "Cherry blossom pink, with petals drifting down the card." },
+  { id: "finish-pumpkin", slot: "finish", name: "Jack-o'-Lantern", price: 75, tag: "Halloween", blurb: "Pumpkin orange with a candle flickering inside." },
+  { id: "finish-obsidian", slot: "finish", name: "Obsidian", price: 75, tag: "New", blurb: "Black volcanic glass with a violet edge." },
+
   { id: "name-gold", slot: "name", name: "Gold", price: 500, chase: true, blurb: "Your name in gold on your card and profile. A Legendary item." },
   { id: "name-ice", slot: "name", name: "Ice", price: 75, blurb: "Your name in frosted blue." },
   { id: "name-ember", slot: "name", name: "Ember", price: 75, blurb: "Your name glowing hot orange." },
+
+  { id: "name-diamond", slot: "name", name: "Diamond", price: 500, chase: true, blurb: "Your name in cut ice-white diamond. A Legendary item." },
+  { id: "name-sakura", slot: "name", name: "Sakura", price: 75, blurb: "Your name in cherry blossom pink." },
+  { id: "name-slime", slot: "name", name: "Slime", price: 75, tag: "Halloween", blurb: "Your name in glowing toxic green." },
+  { id: "name-mint", slot: "name", name: "Mint", price: 75, tag: "New", blurb: "Your name in cool mint." },
 
   { id: "namefx-shine", slot: "namefx", name: "Shine", price: 75, blurb: "A light sweeps across your profile name every few seconds." },
   { id: "namefx-glitch", slot: "namefx", name: "Glitch", price: 75, blurb: "Your name jitters with a red and cyan glitch." },
   { id: "namefx-rainbow", slot: "namefx", name: "Rainbow", price: 75, blurb: "Your name slowly cycles through every colour." },
   { id: "namefx-pulse", slot: "namefx", name: "Pulse", price: 75, blurb: "A soft glow breathes around your name." },
+
+  { id: "namefx-prism", slot: "namefx", name: "Prism", price: 500, chase: true, blurb: "Your name splits light into a rainbow that sweeps across it. A Legendary item." },
+  { id: "namefx-powerup", slot: "namefx", name: "Power Up", price: 75, blurb: "A golden aura flares around your name, like a final form." },
+  { id: "namefx-haunted", slot: "namefx", name: "Haunted", price: 75, tag: "Halloween", blurb: "Your name flickers, and a ghost of it drifts away." },
+  { id: "namefx-neon", slot: "namefx", name: "Neon Sign", price: 75, tag: "New", blurb: "Your name buzzes like a neon tube in a bar window." },
 
   { id: "title-oracle", slot: "title", name: "The Oracle", text: "The Oracle", price: 75, blurb: "For the one who saw it coming." },
   { id: "title-hater", slot: "title", name: "Certified Hater", text: "Certified Hater", price: 75, blurb: "Fades everyone. Proudly." },
@@ -71,6 +87,12 @@ export const ITEMS = [
   { id: "title-underdog", slot: "title", name: "Underdog King", text: "Underdog King", price: 75, blurb: "Plus money or nothing." },
   { id: "title-degen", slot: "title", name: "Professional Degen", text: "Professional Degen", price: 75, blurb: "It's not gambling if you're good at it." },
   { id: "title-legend", slot: "title", name: "Chat Legend", text: "Chat Legend", price: 75, blurb: "Everybody knows the name." },
+  { id: "title-maincharacter", slot: "title", name: "Main Character", text: "Main Character", price: 75, blurb: "The story is obviously about you." },
+  { id: "title-finalboss", slot: "title", name: "Final Boss", text: "Final Boss", price: 75, blurb: "Everyone else is a side quest." },
+  { id: "title-cursed", slot: "title", name: "Cursed", text: "Cursed", price: 75, tag: "Halloween", blurb: "For the one whose picks die at the one-yard line." },
+  { id: "title-trickortreat", slot: "title", name: "Trick or Treater", text: "Trick or Treater", price: 75, tag: "Halloween", blurb: "Here for the candy." },
+  { id: "title-scaries", slot: "title", name: "Sunday Scaries", text: "Sunday Scaries", price: 75, tag: "New", blurb: "Seven games live and none of them going well." },
+  { id: "title-bag", slot: "title", name: "Bag Secured", text: "Bag Secured", price: 75, tag: "New", blurb: "Cashed and logged off." },
   { id: "title-custom", slot: "title", name: "Custom title", price: 75, blurb: "Write your own, up to 24 characters." },
 
   { id: "message-custom", slot: "message", name: "Profile message", price: 75, blurb: "A short line of your own on your profile, up to 100 characters." },
@@ -80,13 +102,23 @@ export const ITEMS = [
   { id: "background-carbon", slot: "background", name: "Carbon", price: 75, blurb: "Woven carbon fibre, like a race car." },
   { id: "background-velvet", slot: "background", name: "Velvet", price: 75, blurb: "Deep red velvet with a VIP glow." },
 
+  { id: "background-neontokyo", slot: "background", name: "Neon Tokyo", price: 75, blurb: "A night city in magenta and cyan behind your profile." },
+  { id: "background-bloodmoon", slot: "background", name: "Blood Moon", price: 75, tag: "Halloween", blurb: "A red moon hanging over a very dark night." },
+  { id: "background-playbook", slot: "background", name: "Playbook", price: 75, tag: "New", blurb: "Chalk routes and circles on a coach's blue board." },
+
   { id: "banner-stadium", slot: "banner", name: "Stadium lights", price: 75, blurb: "Floodlights over the top of your profile." },
   { id: "banner-matrix", slot: "banner", name: "Matrix", price: 75, blurb: "Green code raining behind your profile." },
   { id: "banner-retro", slot: "banner", name: "Retro sunset", price: 75, blurb: "An '80s sunset grid behind your profile." },
 
+  { id: "banner-speedlines", slot: "banner", name: "Speed Lines", price: 75, blurb: "Manga action lines bursting out from behind your name." },
+  { id: "banner-graveyard", slot: "banner", name: "Graveyard", price: 75, tag: "Halloween", blurb: "A full moon, purple sky and fog rolling in." },
+  { id: "banner-aurora", slot: "banner", name: "Aurora", price: 75, tag: "New", blurb: "Northern lights drifting over your profile." },
+
   { id: "team-glow", slot: "team", name: "Team glow", price: 75, blurb: "Your favourite team glows on your profile." },
   { id: "team-gold", slot: "team", name: "Gold plate", price: 500, chase: true, blurb: "Your team on an engraved gold nameplate. A Legendary item." },
   { id: "team-flame", slot: "team", name: "On fire", price: 75, blurb: "Your team's name burns hot." },
+
+  { id: "team-frost", slot: "team", name: "Frozen", price: 75, tag: "New", blurb: "Your team's name iced over. Built for December football." },
 
   { id: "player-pick", slot: "player", name: "Favourite player", price: 75, blurb: "Pick any NFL, MLB or NBA player — their ESPN photo goes on your profile. Change them any time." },
 
@@ -185,6 +217,38 @@ export async function cosmeticsFor(db, userId) {
     return Object.values(out).some(Boolean) ? out : null;
   } catch {
     return null;
+  }
+}
+
+/** Everything someone owns, newest first, shaped for the profile's
+    Collection tab. `tierOf` is the crate's item -> tier map, passed in so
+    this file does not import the crate (which imports this). Never throws. */
+export async function collectionFor(db, userId, tierOf = {}) {
+  try {
+    const [rows, row] = await Promise.all([
+      db.prepare(`SELECT item, price, op_key, created_at FROM store_purchases WHERE user_id = ? AND status = 'OWNED' ORDER BY created_at DESC`).bind(String(userId)).all(),
+      db.prepare(`SELECT * FROM user_cosmetics WHERE user_id = ?`).bind(String(userId)).first()
+    ]);
+    const items = [];
+    for (const r of rows.results || []) {
+      const item = itemById(String(r.item));
+      if (!item) continue;
+      const key = String(r.op_key || "");
+      const source = key.startsWith("CRATE:") ? "crate" : key.startsWith("STORE:GIFT") ? "gift" : key.startsWith("STORE:FREE") ? "free" : "bought";
+      let detail = null;
+      if (item.id === "title-custom" && row?.title_text) detail = String(row.title_text);
+      else if (item.slot === "title" && item.text) detail = null;
+      else if (item.id === "player-pick") detail = parsePlayer(row?.player_json)?.name || null;
+      items.push({
+        id: item.id, name: item.name, slot: item.slot, slotName: SLOTS[item.slot] || item.slot,
+        tier: tierOf[item.id] || (item.chase ? "legendary" : null), source, price: Number(r.price || 0), detail,
+        equipped: Boolean(row && row[item.slot] === item.id),
+        at: String(r.created_at).replace(" ", "T") + "Z"
+      });
+    }
+    return { items, total: items.length, of: ITEMS.length };
+  } catch {
+    return { items: [], total: 0, of: ITEMS.length };
   }
 }
 

@@ -74,7 +74,7 @@
 
   function logo() {
     const img = el("img", "gp-logo");
-    img.src = "/assets/eastcoins-logo.webp";
+    img.src = "/assets/eastcoins-logo.webp?v=2";
     img.alt = "";
     img.width = 44;
     img.height = 44;

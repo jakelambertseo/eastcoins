@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
 <title>EastCoin V3</title>
-<link href="/assets/eastcoin-favicon.svg?v=full-logo1" rel="icon" type="image/svg+xml">
+<link href="/assets/eastcoin-favicon.svg?v=coin1" rel="icon" type="image/svg+xml">
+<link href="/assets/eastcoin-favicon.png?v=coin1" rel="apple-touch-icon">
 <link rel="preconnect" href="https://streamed.st">
 <link rel="preconnect" href="https://static-cdn.jtvnw.net">
 <link rel="preconnect" href="https://site.api.espn.com">
@@ -13,7 +14,7 @@
 <link rel="preload" href="/v3/assets/fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/v3/assets/fonts/figtree-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/v3/assets/fonts/fonts.css?v=1">
-<link rel="stylesheet" href="/v3/assets/css/v3.css?v=260">
+<link rel="stylesheet" href="/v3/assets/css/v3.css?v=274">
 </head>
 <body>
 
@@ -23,7 +24,7 @@
 
 <header class="topnav">
   <a class="brand" href="/" data-route="events">
-    <span class="brand-mark"><img src="/assets/eastcoins-logo.webp" alt="" width="30" height="30"></span> EastCoin
+    <span class="brand-mark"><img src="/assets/eastcoins-logo.webp?v=2" alt="" width="30" height="30"></span> EastCoin
   </a>
 
   <nav class="nav-links" aria-label="Main">
@@ -43,6 +44,9 @@
     <div class="navsearch" id="navSearchBox">
       <button class="navsearch-btn" id="navSearchBtn" type="button" aria-label="Search events, or paste a stream link" title="Search or embed">🔍</button>
       <input id="navSearch" type="search" placeholder="Search or embed" aria-label="Search events, or paste a stream link to embed" autocomplete="off">
+    </div>
+    <div class="cratewrap" id="crateWrap" hidden>
+      <button class="iconbtn crate-btn" id="crateBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Daily Crate" title="Daily Crate"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="9" width="18" height="12" rx="2"/><path d="M3 13h18M12 9v12"/><path d="M12 9c-2-1-4-4-4-5.5C8 2 11 2.5 12 5c1-2.5 4-3 4-1.5C16 5 14 8 12 9z"/></svg></button>
     </div>
     <div class="notifwrap" id="notifWrap" hidden>
       <button class="iconbtn notif-btn" id="notifBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Notifications" title="What happened while you were away"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span class="notif-cnt" id="notifCount" hidden>0</span></button>
@@ -96,12 +100,12 @@
 <script defer src="/assets/eastcoins-config.js?v=1"></script>
 <script type="text/plain" data-lazy src="/assets/eastcoins-ppv-api.js?v=1"></script>
 <script type="text/plain" data-lazy src="/assets/eastcoins-streamed-api.js?v=1"></script>
-<script type="text/plain" data-lazy src="/v3/assets/js/v3-sports.js?v=10"></script>
+<script type="text/plain" data-lazy src="/v3/assets/js/v3-sports.js?v=11"></script>
 <!-- Only the shell and its chrome load with the page. Every other script
      below is an inert tag (type text/plain is never fetched) that the
      shell reads for the file's versioned URL and injects when a route
      that needs it is opened. bump.mjs still finds them here. -->
-<script defer src="/v3/assets/js/v3-shell.js?v=92"></script>
+<script defer src="/v3/assets/js/v3-shell.js?v=94"></script>
 <script defer src="/v3/assets/js/v3-presence.js?v=16"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-scores.js?v=5"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-tonight.js?v=4"></script>
@@ -110,39 +114,41 @@
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-watch.js?v=33"></script>
 <script type="text/plain" data-lazy src="/assets/eastcoins-youtube.js?v=3"></script>
 <script type="text/plain" data-lazy src="/assets/eastcoins-music-config.js?v=3"></script>
-<script type="text/plain" data-lazy src="/v3/assets/js/v3-music.js?v=81"></script>
+<script type="text/plain" data-lazy src="/v3/assets/js/v3-music.js?v=82"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-cfb-teams.js?v=3"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-logos.js?v=5"></script>
 <script defer src="/v3/assets/js/v3-badges.js?v=2"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-pickbox.js?v=1"></script>
 <script defer src="/v3/assets/js/v3-notify.js?v=5"></script>
+<script defer src="/v3/assets/js/v3-crate.js?v=2"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-picks.js?v=55"></script>
-<script type="text/plain" data-lazy src="/v3/assets/js/v3-game.js?v=14"></script>
-<script type="text/plain" data-lazy src="/v3/assets/js/v3-screen.js?v=15"></script>
-<script type="text/plain" data-lazy src="/v3/assets/js/v3-profile.js?v=55"></script>
+<script type="text/plain" data-lazy src="/v3/assets/js/v3-game.js?v=15"></script>
+<script type="text/plain" data-lazy src="/v3/assets/js/v3-screen.js?v=16"></script>
+<script type="text/plain" data-lazy src="/v3/assets/js/v3-profile.js?v=58"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-wrapped.js?v=1"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-highlights.js?v=1"></script>
-<script type="text/plain" data-lazy src="/v3/assets/js/v3-store.js?v=7"></script>
+<script type="text/plain" data-lazy src="/v3/assets/js/v3-store.js?v=9"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-users.js?v=6"></script>
-<script type="text/plain" data-lazy src="/v3/assets/js/v3-activity.js?v=14"></script>
+<script type="text/plain" data-lazy src="/v3/assets/js/v3-activity.js?v=15"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-coin.js?v=17"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-casino-kit.js?v=12"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-pot.js?v=5"></script>
-<script type="text/plain" data-lazy src="/v3/assets/js/v3-casino.js?v=40"></script>
+<script type="text/plain" data-lazy src="/v3/assets/js/v3-casino.js?v=46"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-wheel.js?v=8"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-race.js?v=4"></script>
-<script type="text/plain" data-lazy src="/v3/assets/js/v3-hilo.js?v=8"></script>
+<script type="text/plain" data-lazy src="/v3/assets/js/v3-hilo.js?v=9"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-mines.js?v=6"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-plinko.js?v=9"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-scratch.js?v=3"></script>
+<script type="text/plain" data-lazy src="/v3/assets/js/v3-grind.js?v=8"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-games.js?v=2"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-helmet.js?v=1"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-fg.js?v=1"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-simon.js?v=1"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-centre.js?v=1"></script>
 <script defer src="/v3/assets/js/v3-gold.js?v=1"></script>
-<script type="text/plain" data-lazy src="/v3/assets/js/v3-pvp.js?v=11"></script>
-<script type="text/plain" data-lazy src="/v3/assets/js/v3-verify.js?v=5"></script>
+<script type="text/plain" data-lazy src="/v3/assets/js/v3-pvp.js?v=13"></script>
+<script type="text/plain" data-lazy src="/v3/assets/js/v3-verify.js?v=6"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-dashboard.js?v=9"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-multiview.js?v=34"></script>
 <script type="text/plain" data-lazy src="/v3/assets/js/v3-admin.js?v=24"></script>

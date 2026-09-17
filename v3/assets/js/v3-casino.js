@@ -16,7 +16,7 @@
   /* The card art is served with an hour of cache and no version in its
      own path, so a redrawn card would take up to an hour to appear.
      Bump this whenever an image in /v3/assets/img/casino/ changes. */
-  const ART_V = 2;
+  const ART_V = 3;
   let root = null;
   let refs = {};
   let data = null;
@@ -34,6 +34,7 @@
     mines: { title: "Mines", icon: "💣", blurb: "Twenty-five tiles, a few of them bombs. Every safe one pays more; cash out before you find one.", route: "mines" },
     plinko: { title: "Plinko", icon: "🎯", blurb: "Drop a ball through the pegs. Every bucket but the middle pays; the edges pay 25×.", route: "plinko" },
     scratch: { title: "Scratch-Off", icon: "🎟️", blurb: "Rub the foil off. Three of a kind pays, from money back on coins to 100× on crowns.", route: "scratch" },
+    grind: { title: "The Grind", icon: "🔨", blurb: "Broke? Put in a shift: 100 clicks pays 5 ZC, sorting 35 chips pays 15. One shift of each an hour, for anyone under 50.", route: "grind" },
     roulette: { title: "Russian Roulette - PVP", iconUrl: "https://cdn.7tv.app/emote/01G1FDHE4R0005G1MWWMPGSX71/1x.webp", icon: "🔫", blurb: "Everyone puts in 20. One live round. Whoever it fires on pays the rest.", route: "roulette" },
     standing: { title: "Last One Standing - PVP", icon: "🏆", blurb: "Everyone puts in 20. One knocked out at a time; the last one takes the lot.", route: "standing", hidden: true }
   };
@@ -338,6 +339,9 @@
         phase = inBets ? "Bets open" : g.key === "race" ? "Running" : g.key === "wheel" ? "Spinning" : "Result";
         clock = `${left}s`;
         hot = inBets;
+      } else if (g.work) {
+        phase = g.inRound ? `${g.inRound} on shift` : "Clock in any time";
+        hot = Boolean(g.inRound);
       } else if (g.pvp) {
         if (g.lobby) {
           const left = Math.max(0, Math.ceil((g.lobby.startsAt - now) / 1000));
@@ -356,7 +360,20 @@
       r.clock.textContent = clock;
 
       const cap = Number(data.me?.playsCap || 0);
-      if (cap && data.me?.played) {
+      if (g.work) {
+        // Not plays: whether a shift is open, and if not, when it will be.
+        const gr = data.me?.grind;
+        r.plays.hidden = !gr;
+        if (gr) {
+          const jobs = Object.values(gr.jobs || { clicks: gr });
+          const waits = jobs.map((j) => (j.nextShiftAt ? Date.parse(j.nextShiftAt) - now : 0));
+          const open = waits.filter((w) => w <= 0).length;
+          const soonest = Math.min(...waits.filter((w) => w > 0));
+          r.plays.textContent = gr.working ? "On a shift" : open ? `${open} job${open === 1 ? "" : "s"} open` : `Next job in ${Math.ceil(soonest / 60000)}m`;
+          r.plays.classList.toggle("out", !open && !gr.working);
+          r.plays.title = "One shift of each job an hour, for anyone under 50 ZC.";
+        }
+      } else if (cap && data.me?.played) {
         const left = Math.max(0, cap - Number(data.me.played[g.key] || 0));
         r.plays.hidden = false;
         // Short on purpose: the long form ran to the exact width of a

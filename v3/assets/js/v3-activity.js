@@ -97,7 +97,7 @@
       : el("span", "av-crest", String(teamName || "?").slice(0, 3).toUpperCase());
   }
 
-  const ICON = { pick: "🪙", won: "✅", lost: "❌", refunded: "↩️", open: "🏟️", final: "🏁", void: "🚫", joined: "👋", song: "🎵", casino: "🎰", score: "📊", pot: "🏆" };
+  const ICON = { pick: "🪙", won: "✅", lost: "❌", refunded: "↩️", open: "🏟️", final: "🏁", void: "🚫", joined: "👋", song: "🎵", casino: "🎰", score: "📊", pot: "🏆", crate: "🎁" };
   /** "Rangers up 3–1 on the Mariners", "Rangers and Mariners level at 2". */
   function scoreLine(item) {
     const m = item.market;
@@ -180,6 +180,10 @@
         text.append(name(item.who), document.createTextNode(item.status === "WON" ? " won " : " lost "), coin(Math.abs(item.profit)),
           document.createTextNode(" on the "), casinoLink(item));
         meta.textContent = `${CASINO_ICON[item.game] || "🎰"} ${item.pick} · ${item.wager} ZC staked`;
+        break;
+      case "crate":
+        text.append(name(item.who), document.createTextNode(" pulled a LEGENDARY from the Daily Crate: "), el("b", null, item.prize));
+        meta.textContent = "🎁 the 0.64%";
         break;
       case "pot":
         text.append(name(item.who), document.createTextNode(" hit the Daily Jackpot for "), coin(item.amount));
@@ -281,6 +285,7 @@
       case "song": span.append(who(), document.createTextNode(" played "), el("b", null, item.title.length > 40 ? item.title.slice(0, 38) + "…" : item.title)); break;
       case "casino": span.append(who(), document.createTextNode(item.status === "WON" ? ` won ${Math.abs(item.profit)} ZC on the ` : ` lost ${Math.abs(item.profit)} ZC on the `), casinoLink(item)); break;
       case "pot": span.append(document.createTextNode("🏆 "), who(), document.createTextNode(` hit the Daily Jackpot for ${item.amount} ZC`)); break;
+      case "crate": span.append(who(), document.createTextNode(" pulled a LEGENDARY from the Daily Crate: "), el("b", null, item.prize)); break;
       case "score": return null;   // scores stay in the feed and on game pages; off the ticker for now
       default: return null;
     }

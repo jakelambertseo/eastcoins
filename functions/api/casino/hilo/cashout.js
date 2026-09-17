@@ -1,12 +1,13 @@
 /* POST /api/casino/hilo/cashout  { id }
 
    Ends a live run and pays stake × multiplier. Needs at least one
-   correct call — a fresh deal is not a bet you can walk away from
-   with the stake back. Idempotent per game. */
+   right call that moved the multiplier — a fresh deal, a push, or a
+   ×1 call from an ace is not a bet you can walk away from with the
+   stake back. Idempotent per game. */
 
 import { getSessionUser, json, fail } from "../../picks/_lib.js";
 import { ensureSchema } from "../_engine.js";
-import { ensureHilo, publicGame, cashOut } from "./_hilo.js";
+import { ensureHilo, publicGame, cashOut, rightsOf } from "./_hilo.js";
 
 export async function onRequestPost(context) {
   const db = context.env.PICKS_DB;
@@ -23,7 +24,7 @@ export async function onRequestPost(context) {
   const g = await db.prepare(`SELECT * FROM hilo_games WHERE id = ? AND user_id = ?`).bind(id, user.id).first();
   if (!g) return fail("NO_GAME", "No such run.", 404);
   if (g.status !== "LIVE") return fail("NOT_LIVE", "That run is over.", 409);
-  if (JSON.parse(g.calls || "[]").length < 1) return fail("TOO_EARLY", "Make at least one call before cashing out.", 409);
+  if (rightsOf(JSON.parse(g.calls || "[]")) < 1) return fail("TOO_EARLY", "Win at least one call before cashing out.", 409);
 
   const paid = await cashOut(context.env, db, g, user.login);
   if (!paid.ok) return fail(paid.code, paid.code === "DUPLICATE" ? "That run is already being paid." : "Couldn't pay the run out — a moderator has been notified.", paid.code === "DUPLICATE" ? 409 : 502);

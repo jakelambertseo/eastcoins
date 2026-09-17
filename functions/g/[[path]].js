@@ -57,7 +57,7 @@ export async function onRequestGet(context) {
   const meta =
     `<meta property="og:title" content="${h(title)}">` +
     `<meta property="og:description" content="${h(description)}">` +
-    `<meta property="og:image" content="https://eastcoin.vip/assets/eastcoins-logo.webp">` +
+    `<meta property="og:image" content="https://eastcoin.vip/assets/eastcoin-og.png">` +
     `<meta name="twitter:card" content="summary">`;
 
   const rewritten = new HTMLRewriter()
