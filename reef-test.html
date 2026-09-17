@@ -1700,7 +1700,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     document.querySelectorAll(".spot").forEach((s) => (s.disabled = p === "wait" || p === "bite" || p === "reel"));
   }
 
+  function stepScene(t, dt) {
+    const cv = $("scene"); if (!cv) return;
+    stepLake(t, dt, cv.clientWidth, cv.clientHeight, cv.clientHeight * 0.42);
+  }
   function stepFishing(t, dt) {
+    stepScene(t, dt);
     const p = fish.phase, since = t - fish.at;
     if (p === "wait" && since > fish.waitFor) setPhase("bite");
     else if (p === "bite" && since > 1150) setPhase("lost", "Too slow. It spat the hook.");
@@ -1826,6 +1831,86 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   });
   function closeCatch() { $("catch").hidden = true; fish.result = null; setPhase("idle"); $("act").focus(); save(); }
 
+  /* Lake Michigan gets two things nowhere else does. A sailboat crosses the
+     horizon now and then and is scenery. A heron wades in now and then and is
+     NOT: click it before it goes and it turns up three pearls, which is the
+     only thing on the fishing page you can earn without a rod. Both live in
+     one object and are cleared the moment you leave the lake, so nothing
+     lingers on the wrong water. */
+  const lake = { boat: null, heron: null };
+  const LAKE_SPOT = 2;
+  function stepLake(t, dt, w, h, horizon) {
+    if (S.spot !== LAKE_SPOT) { lake.boat = null; lake.heron = null; return; }
+    if (!lake.boat && Math.random() < dt * 0.014) lake.boat = { x: Math.random() < 0.5 ? -0.12 : 1.12, dir: 0, y: horizon - 6 - Math.random() * 14, sc: 0.75 + Math.random() * 0.5 };
+    if (lake.boat) {
+      const b = lake.boat;
+      if (!b.dir) b.dir = b.x < 0 ? 1 : -1;
+      b.x += b.dir * dt * 0.022;
+      if (b.x < -0.2 || b.x > 1.2) lake.boat = null;
+    }
+    if (!lake.heron && Math.random() < dt * 0.03) {
+      const left = Math.random() < 0.5;
+      lake.heron = { x: left ? 0.1 + Math.random() * 0.17 : 0.7 + Math.random() * 0.18, face: left ? 1 : -1, born: t, gone: 0, taken: false };
+    }
+    if (lake.heron && !lake.heron.gone && t - lake.heron.born > 14000) lake.heron.gone = t;
+    if (lake.heron && lake.heron.gone && t - lake.heron.gone > 900) lake.heron = null;
+  }
+  /** Where the heron is on the canvas right now, for drawing and for clicks. */
+  function heronBox(w, h) {
+    const hr = lake.heron; if (!hr) return null;
+    const size = h * 0.3, x = hr.x * w, groundY = h * 0.6;
+    return { x, y: groundY - size, w: size * 0.62, h: size, size, groundY, cx: x, cy: groundY - size * 0.55 };
+  }
+  function drawHeron(ctx, t, w, h) {
+    const hr = lake.heron; if (!hr) return;
+    const b = heronBox(w, h); if (!b) return;
+    const lift = hr.gone ? Math.min(1, (t - hr.gone) / 900) : 0;
+    ctx.save();
+    ctx.globalAlpha = 1 - lift * 0.9;
+    ctx.translate(b.x, b.groundY - lift * b.size * 1.6);
+    ctx.scale(hr.face, 1);
+    const S1 = b.size, bob = Math.sin(t / 700) * S1 * 0.012;
+    // legs
+    ctx.strokeStyle = "#caa24e"; ctx.lineWidth = Math.max(1.5, S1 * 0.028); ctx.lineCap = "round";
+    for (const lx of [-S1 * 0.05, S1 * 0.06]) { ctx.beginPath(); ctx.moveTo(lx, 0); ctx.lineTo(lx * 0.6, -S1 * 0.34 + bob); ctx.stroke(); }
+    // body
+    ctx.fillStyle = "#93a7b8";
+    ctx.beginPath(); ctx.ellipse(0, -S1 * 0.46 + bob, S1 * 0.24, S1 * 0.15, -0.12, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#7b90a3";
+    ctx.beginPath(); ctx.moveTo(S1 * 0.1, -S1 * 0.46 + bob); ctx.quadraticCurveTo(S1 * 0.34, -S1 * 0.42 + bob, S1 * 0.4, -S1 * 0.3 + bob);
+    ctx.quadraticCurveTo(S1 * 0.2, -S1 * 0.36 + bob, S1 * 0.06, -S1 * 0.4 + bob); ctx.fill();
+    // the S of the neck
+    ctx.strokeStyle = "#a8bccd"; ctx.lineWidth = S1 * 0.07; ctx.beginPath();
+    ctx.moveTo(-S1 * 0.12, -S1 * 0.5 + bob);
+    ctx.bezierCurveTo(-S1 * 0.3, -S1 * 0.58 + bob, -S1 * 0.16, -S1 * 0.78 + bob, -S1 * 0.26, -S1 * 0.86 + bob);
+    ctx.stroke();
+    // head, beak, crest
+    ctx.fillStyle = "#c3d4e2";
+    ctx.beginPath(); ctx.ellipse(-S1 * 0.27, -S1 * 0.88 + bob, S1 * 0.07, S1 * 0.055, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#e0b53c";
+    ctx.beginPath(); ctx.moveTo(-S1 * 0.33, -S1 * 0.89 + bob); ctx.lineTo(-S1 * 0.56, -S1 * 0.85 + bob); ctx.lineTo(-S1 * 0.33, -S1 * 0.845 + bob); ctx.fill();
+    ctx.strokeStyle = "#2b3a46"; ctx.lineWidth = S1 * 0.018;
+    ctx.beginPath(); ctx.moveTo(-S1 * 0.24, -S1 * 0.92 + bob); ctx.lineTo(-S1 * 0.08, -S1 * 0.97 + bob); ctx.stroke();
+    ctx.fillStyle = "#12202b"; ctx.beginPath(); ctx.arc(-S1 * 0.3, -S1 * 0.895 + bob, S1 * 0.014, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    if (!lift) {
+      ctx.save(); ctx.globalAlpha = 0.25; ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.ellipse(b.x, b.groundY + 2, b.size * 0.2 + Math.sin(t / 600) * 3, b.size * 0.03, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+    }
+  }
+  function drawBoat(ctx, w, h) {
+    const b = lake.boat; if (!b) return;
+    const x = b.x * w, y = b.y, S1 = Math.max(14, h * 0.07 * b.sc);
+    ctx.save(); ctx.translate(x, y); ctx.scale(b.dir, 1);
+    ctx.fillStyle = "#f2f4f6";
+    ctx.beginPath(); ctx.moveTo(-S1 * 0.06, -S1 * 0.1); ctx.lineTo(-S1 * 0.06, -S1 * 0.95); ctx.lineTo(S1 * 0.42, -S1 * 0.12); ctx.fill();
+    ctx.fillStyle = "#dfe6ec";
+    ctx.beginPath(); ctx.moveTo(-S1 * 0.12, -S1 * 0.1); ctx.lineTo(-S1 * 0.12, -S1 * 0.72); ctx.lineTo(-S1 * 0.46, -S1 * 0.1); ctx.fill();
+    ctx.fillStyle = "#2f3a45";
+    ctx.beginPath(); ctx.moveTo(-S1 * 0.55, -S1 * 0.1); ctx.lineTo(S1 * 0.5, -S1 * 0.1); ctx.lineTo(S1 * 0.34, S1 * 0.05); ctx.lineTo(-S1 * 0.42, S1 * 0.05); ctx.fill();
+    ctx.restore();
+  }
+
   // scene
   const SKY = { dawn: ["#6f7fb8", "#f6a86b"], day: ["#7cc6f2", "#d6f0ff"], dusk: ["#3a2a5a", "#f07a4a"], night: ["#070b1c", "#1c2448"] };
   function drawScene(t) {
@@ -1859,6 +1944,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     ctx.strokeStyle = "rgba(255,255,255,.12)"; ctx.lineWidth = 1.5;
     for (let i = 0; i < 12; i++) { const yy = horizon + 10 + i * i * (h - horizon) / 150; const off = (t / (40 + i * 6) + i * 37) % w; ctx.beginPath(); ctx.moveTo(off - 30, yy); ctx.lineTo(off + 30 + i * 3, yy); ctx.stroke(); ctx.beginPath(); ctx.moveTo((off + w / 2) % w - 20, yy + 4); ctx.lineTo((off + w / 2) % w + 20, yy + 4); ctx.stroke(); }
     if (dark) { ctx.fillStyle = `rgba(4,8,20,${dark * 0.6})`; ctx.fillRect(0, horizon, w, h - horizon); }
+    if (S.spot === LAKE_SPOT) { drawBoat(ctx, w, h); drawHeron(ctx, t, w, h); }
 
     // foreground by spot
     if (spot.look === "pond" || spot.look === "river") {
@@ -1965,7 +2051,24 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const holdOn = (e) => { if (fish.phase === "reel") { fish.holding = true; e && e.preventDefault(); } };
   const holdOff = () => { fish.holding = false; };
   act.addEventListener("pointerdown", holdOn);
-  $("sceneWrap").addEventListener("pointerdown", (e) => { if (e.target.closest(".catch")) return; if (fish.phase === "reel") holdOn(e); else if (fish.phase === "bite") action(); });
+  $("sceneWrap").addEventListener("pointerdown", (e) => {
+    if (e.target.closest(".catch")) return;
+    if (takeHeron(e)) return;                                  // the bird beats the water to the click
+    if (fish.phase === "reel") holdOn(e); else if (fish.phase === "bite") action();
+  });
+  /** Three pearls if the click landed on the heron. */
+  function takeHeron(e) {
+    const hr = lake.heron; if (!hr || hr.gone || hr.taken) return false;
+    const cv = $("scene"), r = cv.getBoundingClientRect();
+    const b = heronBox(cv.clientWidth, cv.clientHeight); if (!b) return false;
+    const mx = e.clientX - r.left, my = e.clientY - r.top;
+    if (Math.abs(mx - b.cx) > b.size * 0.42 || my < b.groundY - b.size || my > b.groundY + 6) return false;
+    hr.taken = true; hr.gone = performance.now();
+    S.pearls += 3;
+    toast("The heron drops what it was holding", "+3 pearls");
+    renderStatbar(); save();
+    return true;
+  }
   window.addEventListener("pointerup", holdOff);
   window.addEventListener("pointercancel", holdOff);
   window.addEventListener("blur", holdOff);
@@ -2542,6 +2645,17 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     for (let i = 0; i < w.length; i++) { t -= w[i]; if (t <= 0) return LOOT_KEYS[i]; }
     return "shell";
   }
+  /* A dive that always pays is a button, not a dive. Deeper water is a worse
+     bet: 1% at the pond up to 6% in the deep. A failed dive still spends the
+     air and still costs the time, which is the whole point of it. */
+  const diveFail = () => 0.01 + S.spot * 0.0125;
+  const DIVE_MISS = [
+    "A current pushed you off the mark.",
+    "You lost your grip and had to let it go.",
+    "Nothing but silt down there today.",
+    "Something big moved and you went up instead.",
+    "You came up a metre short of the bottom."
+  ];
   let diving = false, diveEnds = 0, filling = false, fillEnds = 0;
   const diveMs = () => (idleOn("airtank") ? DIVE_MS * 0.6 : DIVE_MS);
   /** Come up and fill the tank. Nothing else can happen while you do. */
@@ -2565,6 +2679,13 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     diving = true; diveEnds = performance.now() + each;
     renderDive();
     setTimeout(() => {
+      if (Math.random() < diveFail()) {
+        diving = false;
+        S.stats.dives += 1;
+        toast("Came up with nothing", DIVE_MISS[Math.floor(Math.random() * DIVE_MISS.length)]);
+        renderDive(); renderStatbar(); save();
+        return;
+      }
       const n = 1 + (idleOn("meshbag") ? 1 : 0) + (idleOn("airtank") ? 1 : 0) + (Math.random() < 0.25 ? 1 : 0);
       const got = [];
       let xp = 0, lost = 0;
@@ -2624,7 +2745,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         : filling ? `Back on the surface · ${(fillMs() / 1000).toFixed(1)}s`
           : full ? "Sell something, craft something, or buy a bigger bag"
             : dry ? `Filling the tank takes ${(fillMs() / 1000).toFixed(1)}s`
-              : `A dive takes ${(diveMs() / 1000).toFixed(1)}s`));
+              : `A dive takes ${(diveMs() / 1000).toFixed(1)}s · ${Math.round(diveFail() * 100)}% come up empty`));
     box.append(go);
     if (diving || filling) {
       const fill = bar.querySelector("i");
@@ -3637,9 +3758,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     $("tourNext").textContent = i === TOUR.length - 1 ? "Start fishing" : "Next";
     const el = step.sel ? document.querySelector(step.sel) : null;
     const seen = el && el.offsetParent !== null;
-    if (seen) el.scrollIntoView({ block: "center", behavior: "smooth" });
-    // let the scroll settle before measuring, or the hole lands where it was
-    setTimeout(() => {
+    // an INSTANT scroll, because a smooth one is still moving when the hole is
+    // measured and the spotlight lands where the element used to be
+    if (seen) el.scrollIntoView({ block: "center" });
+    requestAnimationFrame(() => requestAnimationFrame(() => {
       if (tourAt !== i) return;
       if (seen) {
         const r = el.getBoundingClientRect(), pad = 8;
@@ -3655,7 +3777,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         Object.assign(hole.style, { left: "50%", top: "50%", width: "0px", height: "0px" });
         Object.assign(card.style, { top: "50%", left: "50%", transform: "translate(-50%,-50%)" });
       }
-    }, seen ? 260 : 0);
+    }));
   }
   function tourEnd() {
     tourAt = -1;
