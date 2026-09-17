@@ -771,7 +771,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       </div></div>
       <div class="card"><div class="card-body">
         <h2 style="font-family:var(--display);font-size:1rem;margin:0 0 6px">How the real one works</h2>
-        <p class="note">The server rolls every bite from the spot, your rod and the real time and season in Chicago, so rare fish can't be picked.</p>
+        <p class="note">The server rolls every bite from the spot, your rod and the reef's own clock, so rare fish can't be picked. The reef runs a 24-minute day and a two-day season, and its weather is a pure function of that clock — so everyone is in the same storm at the same moment, and any past or future hour can be worked out without having stored it.</p>
         <p class="note">It keeps your tank and when you last collected, and works out Pearls when you open the page. Nothing polls. Pearls never turn into ZCoins; it plays for titles.</p>
       </div></div>
     </div>
@@ -805,7 +805,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   </section>
 
   <section class="view view-controls" role="tabpanel" id="panel-controls" aria-labelledby="tab-controls" data-panel="controls" hidden>
-    <header class="view-h"><div><h1>Mockup controls</h1><p>Bend time, weather and luck to test the loop. Not in the real game.</p></div></header>
+    <header class="view-h"><div><h1>Mockup controls</h1><p>Bend the reef's clock, its weather and your luck to test the loop. Not in the real game — left on Reef clock, all three run themselves.</p></div></header>
       <div class="card"><div class="card-body">
         <div class="ctl">
           <div><label>Time of day</label><div class="seg" id="cTime"></div></div>
@@ -927,7 +927,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   /* ============================================================ state */
   const SAVE = "ec_reef_mock_v1";
   const fresh = () => ({ pearls: 0, spots: [true, false, false, false, false], spot: 0, rod: 0, tank: 0, decor: {}, lucky: 0,
-    fish: [], dex: {}, time: "auto", season: "auto", weather: "clear", sunday: false, shinyBoost: false, speed: 60, saved: Date.now(), uid: 1,
+    fish: [], dex: {}, time: "auto", season: "auto", weather: "auto", sunday: false, shinyBoost: false, speed: 60, saved: Date.now(), uid: 1,
     clock: 0, bait: {}, baitOn: "none", seedPick: "worm", plots: [], plotLvl: 0, nests: [], nestLvl: 0, nursery: [], dayShift: 0,
     q: { day: "", daily: [], week: "", weekly: [], streak: 0, chest: false, weekChest: false },
     skills: { fishing: 0, farming: 0, cooking: 0, breeding: 0, diving: 0, crafting: 0 },
@@ -942,6 +942,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   S.inv = S.inv || {}; S.charm = S.charm || 0; S.boss = S.boss || {}; S.perks = S.perks || {};
   S.conv = S.conv || {}; S.cosm = S.cosm || {}; S.worn = Object.assign({ theme: "", name: "", title: "", pet: "" }, S.worn || {});
   if (typeof S.zc !== "number") S.zc = 2500;
+  if (!S.wv) { S.weather = "auto"; S.wv = 1; }          // saves from before the reef had its own weather
   S.stats = Object.assign({ dives: 0, diveValue: 0, crafts: 0, cooked: 0, spots: {}, baits: {}, casts: 0, snags: 0 }, S.stats || {});
   const save = () => { S.saved = Date.now(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch {} };
 
@@ -1297,19 +1298,78 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     setTimeout(() => b.remove(), lvl === 99 ? 7000 : opened.length ? 5200 : 3600);
   }
 
-  function chicago() {
-    const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "numeric", month: "numeric", weekday: "short", hourCycle: "h23" }).formatToParts(new Date()).map((p) => [p.type, p.value]));
-    const h = Number(parts.hour), m = Number(parts.month);
+  /* The reef keeps its own calendar rather than reading the wall clock in
+     Chicago. Three things were wrong with borrowing the real one. A SEASON
+     lasted three months, so Lake Trout was a winter fish nobody could catch
+     in September and the Sturgeon was out of reach until March. A NIGHT
+     lasted nine hours, so a night-only fish was either free all evening or
+     impossible all afternoon, depending on nothing the player did. And
+     STORMS did not exist at all — the two storm fish were reachable only by
+     the mockup's own override, which is not a game.
+
+     So: a reef day is 24 real minutes, a season is two reef days, and a
+     year comes round every 3h 12m. A player who opens the page for half an
+     hour sees dawn, day, dusk and night, and inside a week sees every
+     season several times over.
+
+     Everything here is a pure function of the clock — no state, no roll
+     kept anywhere — so every player is in the same weather at the same
+     moment and the server can work out any past or future hour without
+     having stored it. That is the same shape as the casino's seeds. */
+  const REEF_EPOCH = Date.UTC(2026, 8, 1);            // the reef's day one
+  const REEF_DAY = 24 * 60 * 1000;                    // a day is 24 real minutes
+  const SEASON_DAYS = 2;                              // two days to a season
+  const PHASES = [["dawn", 3 / 24], ["day", 13 / 24], ["dusk", 16 / 24], ["night", 1]];   // 3 / 10 / 3 / 8 minutes
+  const STORM_SLOT = 8 * 60 * 1000;                   // weather is decided in 8-minute blocks
+  const STORM_ODDS = { spring: 0.16, summer: 0.09, fall: 0.20, winter: 0.13 };
+  const STORM_HOLD = 0.35;                            // a storm's chance of running into the next block
+
+  const roll = (n, salt) => {
+    let x = Math.imul((n ^ salt) >>> 0, 2654435761) >>> 0;
+    x ^= x >>> 15; x = Math.imul(x, 2246822519) >>> 0; x ^= x >>> 13;
+    return (x >>> 8) / 16777216;
+  };
+  const seasonAt = (ms) => SEASONS[Math.floor(Math.floor(ms / REEF_DAY) / SEASON_DAYS) % SEASONS.length];
+  const blows = (slot) => roll(slot, 0x5eed) < STORM_ODDS[seasonAt(slot * STORM_SLOT)];
+  const storming = (slot) => blows(slot) || (blows(slot - 1) && roll(slot, 0xb10c5) < STORM_HOLD);
+  /** The world at a moment, with no override applied. */
+  function world(at = Date.now()) {
+    const ms = at - REEF_EPOCH, f = (ms % REEF_DAY + REEF_DAY) % REEF_DAY / REEF_DAY;
     return {
-      time: h >= 5 && h < 8 ? "dawn" : h >= 8 && h < 17 ? "day" : h >= 17 && h < 20 ? "dusk" : "night",
-      season: m <= 2 || m === 12 ? "winter" : m <= 5 ? "spring" : m <= 8 ? "summer" : "fall",
-      sunday: parts.weekday === "Sun"
+      time: PHASES.find(([, end]) => f < end)[0],
+      season: seasonAt(ms),
+      weather: storming(Math.floor(ms / STORM_SLOT)) ? "storm" : "clear"
     };
   }
-  const now = () => {
-    const c = chicago();
-    return { time: S.time === "auto" ? c.time : S.time, season: S.season === "auto" ? c.season : S.season, weather: S.weather, sunday: S.sunday || c.sunday };
+  /* NFL Sunday is the one thing still read from the real calendar, on
+     purpose: the joke is that it is actually Sunday. */
+  const realSunday = () => new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", weekday: "short" }).format(new Date()) === "Sun";
+  const now = (at) => {
+    const w = world(at);
+    return {
+      time: S.time === "auto" ? w.time : S.time,
+      season: S.season === "auto" ? w.season : S.season,
+      weather: S.weather === "auto" ? w.weather : S.weather,
+      sunday: S.sunday || realSunday()
+    };
   };
+  const mins = (ms) => (ms < 60000 ? "<1m" : ms < 5400000 ? `${Math.round(ms / 60000)}m` : `${(ms / 3600000).toFixed(1)}h`);
+  /** The next phase of the day, and how long until it starts. */
+  function nextPhase(at = Date.now()) {
+    const ms = at - REEF_EPOCH, f = ((ms % REEF_DAY) + REEF_DAY) % REEF_DAY / REEF_DAY;
+    const i = PHASES.findIndex(([, end]) => f < end);
+    return { name: PHASES[(i + 1) % PHASES.length][0], in: (PHASES[i][1] - f) * REEF_DAY };
+  }
+  /** How long until the world looks like ok() wants it to. Forced values
+      never change, so an override answers "never" rather than lying. */
+  function waitFor(ok, from = Date.now()) {
+    const forced = S.time !== "auto" || S.season !== "auto" || S.weather !== "auto";
+    if (ok(now(from))) return 0;
+    if (forced) return null;
+    const STEP = 30000, LIMIT = REEF_DAY * SEASON_DAYS * SEASONS.length;   // one reef year
+    for (let d = STEP; d <= LIMIT; d += STEP) if (ok(now(from + d))) return d;
+    return null;
+  }
   function biting(sp, w = now()) {
     const c = sp.cond; if (!c) return true;
     if (c.time && !c.time.includes(w.time)) return false;
@@ -1759,11 +1819,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       const chip = el("span", "chipf" + (on ? "" : " off"));
       const dot = el("i"); dot.style.background = RAR[sp.rar].color;
       chip.append(dot, document.createTextNode(known ? sp.name : "???"));
-      if (!on || sp.cond) chip.append(el("small", null, on ? "· now" : `· ${hint(sp).toLowerCase()}`));
-      chip.title = `${RAR[sp.rar].name} · ${hint(sp)}`;
+      const wait = on ? 0 : waitFor((w) => biting(sp, w));
+      if (!on || sp.cond) chip.append(el("small", null, on ? "· now" : wait ? `· in ${mins(wait)}` : `· ${hint(sp).toLowerCase()}`));
+      chip.title = `${RAR[sp.rar].name} · ${hint(sp)}${!on && wait ? ` · next in ${mins(wait)}` : ""}`;
       box.append(chip);
     });
-    $("clock").textContent = `${cap(W.time)} · ${cap(W.season)}${W.weather === "storm" ? " · Storm" : ""}${W.sunday ? " · NFL Sunday" : ""}`;
+    const nx = nextPhase(), forced = S.time !== "auto" || S.season !== "auto" || S.weather !== "auto";
+    $("clock").textContent = `${cap(W.time)} · ${cap(W.season)}${W.weather === "storm" ? " · Storm" : ""}${W.sunday ? " · NFL Sunday" : ""}`
+      + (forced ? " · forced" : ` · ${cap(nx.name)} in ${mins(nx.in)}`);
     $("rodLine").innerHTML = `<img class="rod-ico" src="${artSrc(RODS[S.rod].art)}" alt="">${RODS[S.rod].name}` + (activeBait() ? ` · <img class="bait-ico" src="${artSrc("bait-" + S.baitOn)}" alt="">${activeBait().name} ×${S.bait[S.baitOn]}` : "");
   }
 
@@ -3017,9 +3080,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       box.append(b);
     });
   }
-  seg("cTime", [["auto", "Real"], ...TIMES.map((x) => [x, cap(x)])], () => S.time, (v) => (S.time = v));
-  seg("cSeason", [["auto", "Real"], ...SEASONS.map((x) => [x, cap(x)])], () => S.season, (v) => (S.season = v));
-  seg("cWeather", [["clear", "Clear"], ["storm", "Storm"]], () => S.weather, (v) => (S.weather = v));
+  seg("cTime", [["auto", "Reef clock"], ...TIMES.map((x) => [x, cap(x)])], () => S.time, (v) => (S.time = v));
+  seg("cSeason", [["auto", "Reef clock"], ...SEASONS.map((x) => [x, cap(x)])], () => S.season, (v) => (S.season = v));
+  seg("cWeather", [["auto", "Reef clock"], ["clear", "Clear"], ["storm", "Storm"]], () => S.weather, (v) => (S.weather = v));
   seg("cSpeed", [[1, "1×"], [60, "60×"], [600, "600×"]], () => S.speed, (v) => (S.speed = v));
   const toggleBtn = (id, key, label) => {
     const b = $(id);
