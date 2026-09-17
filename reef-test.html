@@ -310,6 +310,45 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 @keyframes tin{from{transform:translateY(10px);opacity:0}}
 @media (max-width:820px){.toasts{left:16px}}
 @media (prefers-reduced-motion:reduce){.say.bite,.toast{animation:none}}
+
+/* ---- skills: an OSRS-style XP tracker on the scene, a Skills page, level-up banner */
+.xpt{position:absolute;left:12px;top:40px;z-index:4;width:210px;padding:7px 9px 8px;border-radius:6px;background:rgba(62,53,41,.9);border:1px solid #1e1a15;box-shadow:inset 0 0 0 1px #5d5447,0 6px 16px rgba(0,0,0,.45);color:#ff981f;font-size:.74rem;font-weight:700;pointer-events:none;text-shadow:1px 1px 0 #000}
+.xpt-top{display:flex;align-items:center;gap:6px}
+.xpt-top svg{width:18px;height:18px;flex:none;stroke:#ffcf6a;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(1px 1px 0 #000)}
+.xpt-top b{color:#ffff00;font-size:.8rem}
+.xpt-top span{margin-left:auto;color:#fff;font-variant-numeric:tabular-nums}
+.xpt-bar{position:relative;height:13px;margin-top:5px;background:#3b0000;border:1px solid #000;border-radius:2px;overflow:hidden}
+.xpt-bar i{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(180deg,#26d926,#0a8f0a);transition:width .5s ease}
+.xpt-bar span{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:.66rem;line-height:1}
+.xpt-to,.xpt-sess{margin-top:4px;font-variant-numeric:tabular-nums}
+.xpt-sess{color:#ffcf6a;font-weight:600}
+.xpt-drops{position:absolute;left:0;right:0;top:100%;height:0}
+.xpdrop{position:absolute;right:6px;top:38px;display:flex;align-items:center;gap:4px;color:#fff;font-size:.86rem;font-weight:800;text-shadow:1px 1px 0 #000,0 0 6px rgba(0,0,0,.8);animation:xpdrop 1.8s ease-out forwards;white-space:nowrap}
+.xpdrop svg{width:15px;height:15px;stroke:#ffcf6a;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+@keyframes xpdrop{0%{transform:translateY(0);opacity:0}12%{opacity:1}75%{opacity:1}100%{transform:translateY(-62px);opacity:0}}
+@media (max-width:560px){.xpt{width:170px;top:36px;left:8px;font-size:.66rem}.xpt-sess{display:none}}
+
+.skills{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.skill{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px}
+.skill-h{display:flex;align-items:center;gap:10px}
+.skill-ico{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:rgba(62,53,41,.9);box-shadow:inset 0 0 0 1px #5d5447}
+.skill-ico svg{width:24px;height:24px;stroke:#ffcf6a;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.skill-h h3{font-family:var(--display);font-weight:800;font-size:1.05rem;margin:0}
+.skill-lvl{margin-left:auto;font-family:var(--display);font-weight:800;font-size:1.5rem;color:#ffff00;text-shadow:1px 1px 0 #000;font-variant-numeric:tabular-nums}
+.skill-lvl small{font-size:.8rem;color:var(--muted)}
+.skill .xpt-bar{height:15px;margin:0}
+.skill-meta{display:flex;justify-content:space-between;gap:8px;font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.skill-how{margin:0;font-size:.78rem;color:var(--muted-2);line-height:1.4}
+.skill.soon{opacity:.6}
+.skill.soon .skill-lvl{color:var(--muted)}
+
+.levelup{position:fixed;left:50%;top:18px;z-index:90;transform:translateX(-50%);min-width:min(420px,92vw);padding:12px 18px 13px;border-radius:8px;background:rgba(62,53,41,.96);border:1px solid #1e1a15;box-shadow:inset 0 0 0 1px #5d5447,0 14px 40px rgba(0,0,0,.6);text-align:center;color:#ffff00;text-shadow:1px 1px 0 #000;pointer-events:none;animation:lvlin .35s ease-out}
+.levelup b{display:block;font-family:var(--display);font-size:1.1rem;color:#ff981f}
+.levelup span{display:block;margin-top:3px;font-weight:700;color:#fff}
+.levelup .fw{position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:50%;pointer-events:none}
+@keyframes lvlin{from{transform:translate(-50%,-14px);opacity:0}to{transform:translateX(-50%);opacity:1}}
+@keyframes fwburst{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(.4);opacity:0}}
+@media (prefers-reduced-motion:reduce){.xpdrop{animation-duration:.01s}.levelup,.levelup .fw{animation:none}}
 </style>
 </head>
 <body>
@@ -330,6 +369,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
           <span class="fnav-h">Play</span>
           <button class="tab" role="tab" id="tab-fishing" aria-controls="panel-fishing" data-tab="fishing" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3v9a4 4 0 0 0 8 0"/><path d="M5 3l14 5"/><path d="M19 8v6"/><circle cx="19" cy="16" r="2"/></svg><span class="tab-label">Fishing</span></button>
           <button class="tab" role="tab" id="tab-tank" aria-controls="panel-tank" data-tab="tank" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 13c1.5-2 4-2 5.5 0-1.5 2-4 2-5.5 0zM12.5 13l2-1.5v3z"/><path d="M3 9h18"/></svg><span class="tab-label">Your tank</span></button>
+          <button class="tab" role="tab" id="tab-skills" aria-controls="panel-skills" data-tab="skills" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-7M10 20V6M15 20v-9M20 20V9"/></svg><span class="tab-label">Skills</span></button>
           <span class="fnav-h">Every day</span>
           <button class="tab" role="tab" id="tab-quests" aria-controls="panel-quests" data-tab="quests" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 9l1.6 1.6L13.5 7.5M9 15h6"/></svg><span class="tab-label">Quests</span><span class="count" hidden></span></button>
           <button class="tab" role="tab" id="tab-garden" aria-controls="panel-garden" data-tab="garden" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20v-8"/><path d="M12 12c-4 0-6-3-6-6 3 0 6 2 6 6zM12 14c3.5 0 5.5-2.5 5.5-5.5-3 0-5.5 2-5.5 5.5z"/><path d="M5 20h14"/></svg><span class="tab-label">Bait garden</span><span class="count" hidden></span></button>
@@ -355,6 +395,13 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         <canvas id="scene"></canvas>
         <div class="status"><span id="clock">Day · Fall</span><span id="spotName">Backyard Pond</span></div>
         <div class="say" id="say"></div>
+        <div class="xpt" id="xpt" aria-live="polite">
+          <div class="xpt-top"><span id="xptIco"></span><b id="xptName">Fishing 1</b><span id="xptXp">0 xp</span></div>
+          <div class="xpt-bar"><i id="xptFill"></i><span id="xptPct">0%</span></div>
+          <div class="xpt-to" id="xptTo">83 xp to level 2</div>
+          <div class="xpt-sess" id="xptSess">This session: 0 xp</div>
+          <div class="xpt-drops" id="xptDrops"></div>
+        </div>
         <div class="reel" id="reel" hidden>
           <div class="track" id="track"><div class="zone" id="zone"></div><div class="rfish" id="rfish"><canvas id="rfishC" width="60" height="36"></canvas></div></div>
           <div class="prog"><i id="prog"></i></div>
@@ -446,6 +493,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     </div>
   </section>
 
+  <section class="view view-skills" role="tabpanel" id="panel-skills" aria-labelledby="tab-skills" data-panel="skills" hidden>
+    <header class="view-h"><div><h1>Skills</h1><p>Everything you do trains a skill, from level 1 to 99 on the RuneScape XP curve. Early levels come fast; 99 is a long road.</p></div><span class="meta" id="totalLvl">Total level 4</span></header>
+    <div class="skills" id="skills"></div>
+  </section>
+
   <section class="view view-controls" role="tabpanel" id="panel-controls" aria-labelledby="tab-controls" data-panel="controls" hidden>
     <header class="view-h"><div><h1>Mockup controls</h1><p>Bend time, weather and luck to test the loop. Not in the real game.</p></div></header>
       <div class="card"><div class="card-body">
@@ -458,6 +510,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
             <button class="btn small" id="cSunday" type="button" aria-pressed="false">NFL Sunday: off</button>
             <button class="btn small" id="cShiny" type="button" aria-pressed="false">Shiny odds ×50: off</button>
             <button class="btn small" id="cPearls" type="button">+2,000 pearls</button>
+            <button class="btn small" id="cXp" type="button">+5,000 Fishing xp</button>
             <button class="btn small" id="cAway" type="button">Away 2 hours</button>
             <button class="btn small" id="cDay" type="button">Next day (quests)</button>
             <button class="btn small" id="cWeek" type="button">Next week (quests)</button>
@@ -561,9 +614,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const fresh = () => ({ pearls: 0, spots: [true, false, false, false, false], spot: 0, rod: 0, tank: 0, decor: {}, lucky: 0,
     fish: [], dex: {}, time: "auto", season: "auto", weather: "clear", sunday: false, shinyBoost: false, speed: 60, saved: Date.now(), uid: 1,
     clock: 0, bait: {}, baitOn: "none", seedPick: "worm", plots: [], plotLvl: 0, nests: [], nestLvl: 0, nursery: [], dayShift: 0,
-    q: { day: "", daily: [], week: "", weekly: [], streak: 0, chest: false, weekChest: false } });
+    q: { day: "", daily: [], week: "", weekly: [], streak: 0, chest: false, weekChest: false },
+    skills: { fishing: 0, farming: 0, cooking: 0, breeding: 0 } });
   let S = fresh();
   try { const raw = localStorage.getItem(SAVE); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch {}
+  S.skills = Object.assign({ fishing: 0, farming: 0, cooking: 0, breeding: 0 }, S.skills || {});
   const save = () => { S.saved = Date.now(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch {} };
 
   /* ============================================================ helpers */
@@ -573,6 +628,100 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const lbs = (w) => (w < 1 ? `${(w * 16).toFixed(1)} oz` : `${w < 10 ? w.toFixed(1) : Math.round(w).toLocaleString()} lb`);
   function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
   function prng(seed) { return () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+  /* ============================================================ skills
+     RuneScape's curve: level L needs floor(sum_{i<L} floor(i + 300·2^(i/7)) / 4)
+     xp — 83 for level 2, 13,034,431 for 99. Every skill shares it, so a new
+     skill is one SKILLS entry plus a grant() wherever it is trained. */
+  const XP_AT = [0, 0];
+  { let pts = 0; for (let l = 1; l < 99; l++) { pts += Math.floor(l + 300 * Math.pow(2, l / 7)); XP_AT[l + 1] = Math.floor(pts / 4); } }
+  const MAX_XP = 200000000;
+  const levelOf = (xp) => { let lo = 1, hi = 99; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (xp >= XP_AT[mid]) lo = mid; else hi = mid - 1; } return lo; };
+  const SKILLS = {
+    fishing: { name: "Fishing", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12c3-4.5 8-5.5 12-2.2L20 7v10l-5-2.8C11 17.5 6 16.5 3 12z"/><circle cx="8.2" cy="11" r=".6"/></svg>', how: "Every catch. Rarer, heavier and shiny fish give more, and a new species gives a bonus." },
+    farming: { name: "Farming", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20v-8"/><path d="M12 12c-4 0-6-3-6-6 3 0 6 2 6 6zM12 14c3.5 0 5.5-2.5 5.5-5.5-3 0-5.5 2-5.5 5.5z"/><path d="M5 20h14"/></svg>', how: "Harvesting the bait garden. Slower baits give more." },
+    cooking: { name: "Cooking", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6z"/><path d="M8 6.5c0-1 1-1 1-2.2M12 6.5c0-1 1-1 1-2.2M16 6.5c0-1 1-1 1-2.2"/></svg>', how: "Coming soon: cook your catch into dishes.", soon: true },
+    breeding: { name: "Breeding", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3.6 0 6 5.2 6 9.2A6 6 0 0 1 6 12.7c0-4 2.4-9.2 6-9.2z"/></svg>', how: "Hatching eggs. Rarer species give more, and a shiny baby triples it." }
+  };
+  const CATCH_XP = [40, 90, 200, 500, 1500];
+  const HARVEST_XP = { worm: 30, cricket: 80, glow: 250, shimmer: 700 };
+  const HATCH_XP = [120, 250, 500, 1100, 3000];
+  const session = { xp: 0, since: 0 };
+  let tracked = "fishing";
+
+  /** Give xp to a skill: the drop on the tracker, the bar, and a level-up if one happened. Returns the xp given. */
+  function grant(key, amount) {
+    amount = Math.round(amount);
+    if (!amount || !SKILLS[key]) return 0;
+    const before = levelOf(S.skills[key]);
+    S.skills[key] = Math.min(MAX_XP, S.skills[key] + amount);
+    const after = levelOf(S.skills[key]);
+    if (!session.since) session.since = Date.now();
+    session.xp += amount;
+    tracked = key;
+    xpDrop(key, amount);
+    renderXpTracker();
+    renderSkills();
+    if (after > before) levelUp(key, after);
+    return amount;
+  }
+  function xpDrop(key, amount) {
+    const box = $("xptDrops"); if (!box) return;
+    const d = el("div", "xpdrop", `${SKILLS[key].icon}+${num(amount)}`);
+    // stack a burst of drops rather than drawing them on top of each other
+    d.style.top = `${38 + box.childElementCount * 18}px`;
+    box.append(d);
+    setTimeout(() => d.remove(), 1850);
+  }
+  function renderXpTracker() {
+    const key = tracked, xp = S.skills[key], lvl = levelOf(xp);
+    $("xptIco").innerHTML = SKILLS[key].icon;
+    $("xptName").textContent = `${SKILLS[key].name} ${lvl}`;
+    $("xptXp").textContent = `${num(xp)} xp`;
+    const lo = XP_AT[lvl], hi = lvl >= 99 ? lo : XP_AT[lvl + 1];
+    const pct = lvl >= 99 ? 100 : Math.floor((100 * (xp - lo)) / (hi - lo));
+    $("xptFill").style.width = `${pct}%`;
+    $("xptPct").textContent = `${pct}%`;
+    $("xptTo").textContent = lvl >= 99 ? "Level 99. Maxed." : `${num(hi - xp)} xp to level ${lvl + 1}`;
+    const hrs = session.since ? Math.max(1 / 60, (Date.now() - session.since) / 3600000) : 0;
+    $("xptSess").textContent = session.xp ? `This session: +${num(session.xp)} xp · ${num(session.xp / hrs)}/hr` : "This session: 0 xp";
+  }
+  function renderSkills() {
+    const box = $("skills"); if (!box) return;
+    box.replaceChildren();
+    let total = 0;
+    for (const [key, sk] of Object.entries(SKILLS)) {
+      const xp = S.skills[key], lvl = levelOf(xp);
+      total += lvl;
+      const lo = XP_AT[lvl], hi = lvl >= 99 ? lo : XP_AT[lvl + 1];
+      const pct = lvl >= 99 ? 100 : Math.floor((100 * (xp - lo)) / (hi - lo));
+      const card = el("div", "skill" + (sk.soon ? " soon" : ""));
+      card.innerHTML = `<div class="skill-h"><span class="skill-ico">${sk.icon}</span><h3>${sk.name}</h3><span class="skill-lvl">${lvl}<small> / 99</small></span></div>
+        <div class="xpt-bar"><i style="width:${pct}%"></i><span>${pct}%</span></div>
+        <div class="skill-meta"><span>${num(xp)} xp</span><span>${lvl >= 99 ? "Maxed" : `${num(hi - xp)} to ${lvl + 1}`}</span></div>
+        <p class="skill-how">${sk.how}</p>`;
+      box.append(card);
+    }
+    $("totalLvl").textContent = `Total level ${total}`;
+  }
+  function levelUp(key, lvl) {
+    document.querySelector(".levelup")?.remove();
+    const b = el("div", "levelup");
+    b.setAttribute("role", "status");
+    b.innerHTML = `<b>Congratulations, you just advanced a ${SKILLS[key].name} level.</b><span>Your ${SKILLS[key].name} level is now ${lvl}.</span>`;
+    const colors = ["#ffff00", "#ff981f", "#26d926", "#7fd0ff", "#ff6bd6"];
+    for (let i = 0; i < 26; i++) {
+      const f = el("i", "fw");
+      const a = (i / 26) * Math.PI * 2, r = 70 + Math.random() * 90;
+      f.style.background = colors[i % colors.length];
+      f.style.setProperty("--dx", `${Math.cos(a) * r * 1.8}px`);
+      f.style.setProperty("--dy", `${Math.sin(a) * r}px`);
+      f.style.animation = `fwburst ${0.9 + Math.random() * 0.5}s ease-out forwards`;
+      b.append(f);
+    }
+    document.body.append(b);
+    setTimeout(() => b.remove(), lvl === 99 ? 7000 : 3600);
+  }
 
   function chicago() {
     const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "numeric", month: "numeric", weekday: "short", hourCycle: "h23" }).formatToParts(new Date()).map((p) => [p.type, p.value]));
@@ -825,7 +974,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (isNew) tags.append(el("span", "tag new", "New to your book"));
     if (record) tags.append(el("span", "tag solid", "New record"));
     const rate = fishRate({ key: sp.key, w: c.w, shiny: c.shiny });
-    $("cLine").innerHTML = `${lbs(c.w)} · makes ${num(rate)} pearls an hour in your tank`;
+    const xp = grant("fishing", CATCH_XP[sp.rar] * (1 + 0.5 * (c.frac || 0)) * (c.shiny ? 3 : 1) + (isNew ? 250 : 0));
+    $("cLine").innerHTML = `${lbs(c.w)} · makes ${num(rate)} pearls an hour in your tank · <b style="color:#ff981f">+${num(xp)} Fishing xp</b>`;
     const full = S.fish.length >= TANKS[S.tank].cap;
     $("cKeep").disabled = full;
     $("cKeep").textContent = full ? "Tank's full" : "Put in tank";
@@ -1191,7 +1341,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const b = BAITS[p.seed];
     S.bait[p.seed] = (S.bait[p.seed] || 0) + b.yield;
     if (!activeBait()) S.baitOn = p.seed;
-    toast(`+${b.yield} ${b.name}`, `${b.about} when you fish with it.`);
+    const xp = grant("farming", HARVEST_XP[p.seed] || 20);
+    toast(`+${b.yield} ${b.name}`, `${b.about} when you fish with it. +${num(xp)} Farming xp`);
     Object.assign(p, { seed: null, at: 0, ready: 0, watered: false });
     track("harvest"); renderGarden(); renderBaitSel(); save();
   }
@@ -1295,7 +1446,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     S.dex[n.key] = entry;
     S.nursery.push({ id: S.uid++, key: n.key, w, shiny });
     S.nests[i] = null;
-    toast(`${shiny ? "A shiny " : "A "}${sp.name} hatched!`, `${lbs(w)}${record ? " · a new record" : ""}. It's in the nursery.`);
+    const xp = grant("breeding", HATCH_XP[sp.rar] * (shiny ? 3 : 1));
+    toast(`${shiny ? "A shiny " : "A "}${sp.name} hatched!`, `${lbs(w)}${record ? " · a new record" : ""}. It's in the nursery. +${num(xp)} Breeding xp`);
     track("hatch"); if (shiny) track("shiny");
     renderBreeding(); renderTank(); renderDex(); renderProfile(); save();
   }
@@ -1663,6 +1815,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   toggleBtn("cSunday", "sunday", "NFL Sunday");
   toggleBtn("cShiny", "shinyBoost", "Shiny odds ×50");
   $("cPearls").addEventListener("click", () => { S.pearls += 2000; renderShop(); toast("+2,000 pearls"); });
+  $("cXp").addEventListener("click", () => { grant("fishing", 5000); save(); });
   $("cAway").addEventListener("click", () => away(2 * 3600));
   $("cDay").addEventListener("click", () => { S.dayShift += 1; ensureQuests(); renderQuests(); toast("A new day", S.q.streak ? `Streak: ${S.q.streak} days` : "New daily quests."); save(); });
   $("cWeek").addEventListener("click", () => { S.dayShift += 7; ensureQuests(); renderQuests(); toast("A new week", "New weekly quests."); save(); });
@@ -1688,6 +1841,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     document.querySelectorAll("[data-panel]").forEach((p) => { p.hidden = p.dataset.panel !== b.dataset.tab; });
     if (b.dataset.tab === "shop") renderShop();
     if (b.dataset.tab === "derby") renderDerby();
+    if (b.dataset.tab === "skills") renderSkills();
     if (focus) b.focus();
     if (window.matchMedia("(max-width:820px)").matches) b.scrollIntoView({ block: "nearest", inline: "nearest" });
     tickLoop(true);
@@ -1704,7 +1858,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   });
 
   /* ============================================================ loop */
-  function renderEverything() { normalizeLoop(); ensureQuests(); renderSpots(); syncTank(); renderTank(); renderDex(); renderShop(); renderDerby(); renderProfile(); renderGarden(); renderBreeding(); renderQuests(); renderBaitSel(); }
+  function renderEverything() { normalizeLoop(); ensureQuests(); renderSpots(); syncTank(); renderTank(); renderDex(); renderShop(); renderDerby(); renderProfile(); renderGarden(); renderBreeding(); renderQuests(); renderBaitSel(); renderSkills(); renderXpTracker(); }
 
   // the reel's little fish
   function drawReelFish() {
