@@ -193,6 +193,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .shop-row strong{display:block;font-size:.9rem}
 .shop-row small{color:var(--muted);font-size:.78rem}
 .shop-row.owned{opacity:.6}
+.shop-row.locked{opacity:.75}
+.shop-row .need{display:block;font-size:.74rem;font-weight:800;color:#ff981f}
+.shop-row.locked .shop-ico{filter:grayscale(.85) brightness(.7)}
+.levelup .unlock{display:block;margin-top:7px;padding-top:7px;border-top:1px solid rgba(255,255,255,.18);color:#26d926;font-weight:800}
+.levelup .unlock em{font-style:normal;color:#fff;font-weight:700}
+.skill-next{margin:0;font-size:.76rem;font-weight:700;color:#ff981f}
 .shop-row.has-ico{grid-template-columns:48px minmax(0,1fr) auto}
 .shop-ico{width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
 .rod-ico{width:24px;height:24px;object-fit:contain;vertical-align:-7px;margin-right:3px}
@@ -661,6 +667,28 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     cooking: { name: "Cooking", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6z"/><path d="M8 6.5c0-1 1-1 1-2.2M12 6.5c0-1 1-1 1-2.2M16 6.5c0-1 1-1 1-2.2"/></svg>', how: "Coming soon: cook your catch into dishes.", soon: true },
     breeding: { name: "Breeding", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3.6 0 6 5.2 6 9.2A6 6 0 0 1 6 12.7c0-4 2.4-9.2 6-9.2z"/></svg>', how: "Hatching eggs. Rarer species give more, and a shiny baby triples it." }
   };
+  /* Shop unlocks. `at` is the level in `skill` you need before the thing can
+     be bought — pearls are still the other half. Ordered by level inside a
+     skill; the level-up banner reads the same list. */
+  const UNLOCKS = [
+    { skill: "fishing", at: 5, what: "8-fish tank" },
+    { skill: "fishing", at: 10, what: "Fibreglass Rod" },
+    { skill: "fishing", at: 20, what: "12-fish tank" },
+    { skill: "fishing", at: 25, what: "Graphite Rod" },
+    { skill: "fishing", at: 30, what: "Sunken pirate ship" },
+    { skill: "fishing", at: 40, what: "16-fish tank" },
+    { skill: "fishing", at: 45, what: "Carbon Pro" },
+    { skill: "fishing", at: 60, what: "Zcoin treasure chest" },
+    { skill: "fishing", at: 70, what: "Golden Rod" },
+    { skill: "farming", at: 10, what: "6 garden plots" },
+    { skill: "farming", at: 30, what: "8 garden plots" },
+    { skill: "breeding", at: 10, what: "2 nests" },
+    { skill: "breeding", at: 30, what: "3 nests" }
+  ];
+  const needOf = (what) => UNLOCKS.find((u) => u.what === what) || null;
+  const levelIn = (skill) => levelOf(S.skills[skill] || 0);
+  const unlocked = (what) => { const u = needOf(what); return !u || levelIn(u.skill) >= u.at; };
+
   const CATCH_XP = [40, 90, 200, 500, 1500];
   const HARVEST_XP = { worm: 30, cricket: 80, glow: 250, shimmer: 700 };
   const HATCH_XP = [120, 250, 500, 1100, 3000];
@@ -680,7 +708,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     xpDrop(key, amount);
     renderXpTracker();
     renderSkills();
-    if (after > before) levelUp(key, after);
+    if (after > before) levelUp(key, after, before);
     return amount;
   }
   function xpDrop(key, amount) {
@@ -718,15 +746,21 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         <div class="xpt-bar"><i style="width:${pct}%"></i><span>${pct}%</span></div>
         <div class="skill-meta"><span>${num(xp)} xp</span><span>${lvl >= 99 ? "Maxed" : `${num(hi - xp)} to ${lvl + 1}`}</span></div>
         <p class="skill-how">${sk.how}</p>`;
+      const next = UNLOCKS.find((u) => u.skill === key && u.at > lvl);
+      if (next) card.append(el("p", "skill-next", `Next unlock: ${next.what} at level ${next.at}`));
       box.append(card);
     }
     $("totalLvl").textContent = `Total level ${total}`;
   }
-  function levelUp(key, lvl) {
+  function levelUp(key, lvl, from = lvl - 1) {
     document.querySelector(".levelup")?.remove();
     const b = el("div", "levelup");
     b.setAttribute("role", "status");
-    b.innerHTML = `<b>Congratulations, you just advanced a ${SKILLS[key].name} level.</b><span>Your ${SKILLS[key].name} level is now ${lvl}.</span>`;
+    // Everything this level (or the levels jumped over) opened up.
+    const opened = UNLOCKS.filter((u) => u.skill === key && u.at > from && u.at <= lvl);
+    b.innerHTML = `<b>Congratulations, you just advanced a ${SKILLS[key].name} level.</b><span>Your ${SKILLS[key].name} level is now ${lvl}.</span>`
+      + opened.map((u) => `<span class="unlock">Level ${u.at} ${SKILLS[key].name} unlocked ${u.what}! <em>Buy it in the Shop now.</em></span>`).join("");
+    if (opened.length) renderShop();
     const colors = ["#ffff00", "#ff981f", "#26d926", "#7fd0ff", "#ff6bd6"];
     for (let i = 0; i < 26; i++) {
       const f = el("i", "fw");
@@ -738,7 +772,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       b.append(f);
     }
     document.body.append(b);
-    setTimeout(() => b.remove(), lvl === 99 ? 7000 : 3600);
+    setTimeout(() => b.remove(), lvl === 99 ? 7000 : opened.length ? 5200 : 3600);
   }
 
   function chicago() {
@@ -1774,8 +1808,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       const r = el("div", "shop-row" + (owned ? " owned" : "") + (art ? " has-ico" : ""));
       if (art) { const im = el("img", "shop-ico"); im.src = artSrc(art); im.alt = ""; im.loading = "lazy"; r.append(im); }
       r.append(el("div", null, `<strong>${name}</strong><small>${about}</small>`));
-      const b = el("button", "btn small" + (owned ? "" : " gold"), owned ? (label || "Owned") : `<span class="pearl"></span> ${num(cost)}`);
-      b.type = "button"; b.disabled = owned || S.pearls < cost;
+      const u = owned ? null : needOf(name);
+      const locked = Boolean(u) && levelIn(u.skill) < u.at;
+      if (locked) {
+        r.classList.add("locked");
+        r.lastElementChild.insertAdjacentHTML("beforeend", `<span class="need">Needs ${SKILLS[u.skill].name} level ${u.at} · you're ${levelIn(u.skill)}</span>`);
+      }
+      const b = el("button", "btn small" + (owned || locked ? "" : " gold"), owned ? (label || "Owned") : locked ? `${SKILLS[u.skill].name} ${u.at}` : `<span class="pearl"></span> ${num(cost)}`);
+      b.type = "button"; b.disabled = owned || locked || S.pearls < cost;
       b.addEventListener("click", () => { if (S.pearls < cost) return; S.pearls -= cost; onBuy(); renderShop(); renderTank(); renderBiting(); save(); });
       r.append(b); parent.append(r);
     };
