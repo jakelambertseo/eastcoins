@@ -259,8 +259,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .sitem.locked{opacity:.75}
 .sitem.zcoin{background:linear-gradient(180deg,rgba(var(--gold-rgb),.07),transparent 45%),var(--panel);border-color:rgba(var(--gold-rgb),.3)}
 .sitem.worn{border-color:rgba(77,219,139,.5)}
-.sitem-art{height:74px;display:grid;place-items:center;border-radius:11px;background:radial-gradient(120% 120% at 50% 15%,rgba(255,255,255,.07),transparent 70%),var(--panel-2);font-size:2.2rem;line-height:1}
-.sitem-art img{width:86%;height:74px;object-fit:contain}
+.sitem-art{height:92px;display:grid;place-items:center;border-radius:11px;background:radial-gradient(120% 120% at 50% 15%,rgba(255,255,255,.07),transparent 70%),var(--panel-2);font-size:2.2rem;line-height:1}
+.sitem-art img{width:88%;height:92px;object-fit:contain}
 .sitem-b{display:grid;gap:3px;align-content:start}
 .sitem-b b{font-family:var(--display);font-weight:800;font-size:.98rem;line-height:1.2}
 .sitem-b small{font-size:.78rem;color:var(--muted);line-height:1.4}
@@ -561,9 +561,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .inv-main small{display:block;font-size:.74rem;color:var(--muted-2)}
 .inv-row .btn{white-space:nowrap}
 /* crafting rows: recipe and parts on the left, one button on the right */
-.craft-row{display:grid;grid-template-columns:92px minmax(0,1fr) auto;gap:15px;align-items:center;padding:12px 2px;border-bottom:1px solid var(--line)}
-.craft-art{width:92px;height:92px;display:grid;place-items:center;border-radius:14px;background:var(--panel-2);border:1px solid var(--line)}
-.craft-art img{width:84px;height:84px;object-fit:contain;display:block}
+.craft-row{display:grid;grid-template-columns:118px minmax(0,1fr) auto;gap:16px;align-items:center;padding:13px 2px;border-bottom:1px solid var(--line)}
+.craft-art{width:118px;height:118px;display:grid;place-items:center;border-radius:16px;background:var(--panel-2);border:1px solid var(--line)}
+.craft-art img{width:108px;height:108px;object-fit:contain;display:block}
 @media (max-width:620px){
   .craft-row{grid-template-columns:68px minmax(0,1fr) auto;gap:11px}
   .craft-art{width:68px;height:68px;border-radius:12px}
@@ -1026,9 +1026,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const ROD_IMGS = RODS.map((r) => { const i = new Image(); i.decoding = "async"; i.src = artSrc(r.art + "-scene"); return i; });
   const TANKS = [
     { cap: 5, cost: 0, name: "Starter tank", icon: "🪣", about: "A plastic hood, an air stone and two fake plants" },
-    { cap: 8, cost: 300, name: "Planted tank", icon: "🌿", about: "Driftwood and stone under an LED bar" },
-    { cap: 12, cost: 1500, name: "Reef tank", icon: "🪸", about: "Rimless glass, hard light, live rock" },
-    { cap: 16, cost: 6000, name: "Grand reef", icon: "🏛️", about: "A gold-framed wall on a marble plinth" }
+    { cap: 8, cost: 300, name: "Planted tank", icon: "🌿", art: "shop-planted", about: "Driftwood and stone under an LED bar" },
+    { cap: 12, cost: 1500, name: "Reef tank", icon: "🪸", art: "shop-reef", about: "Rimless glass, hard light, live rock" },
+    { cap: 16, cost: 6000, name: "Grand reef", icon: "🏛️", art: "shop-grand", about: "A gold-framed wall on a marble plinth" }
   ];
   /* The tanks are DRAWN, not photographed. Painted backdrops looked good and
      said nothing: they were four nice aquariums, and an upgrade did not read
@@ -1214,15 +1214,15 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
      someone with 200 kelp ever opens the crafting page. */
   const AIR_CAPS = [
     { dives: 5, cost: 0, name: "Lungs", about: "Five dives before you come up" },
-    { dives: 8, cost: 400, name: "Pony bottle", about: "Eight dives between trips up" },
-    { dives: 12, cost: 2000, name: "Steel tank", about: "Twelve dives between trips up" },
-    { dives: 18, cost: 8000, name: "Twin set", about: "Eighteen dives between trips up" }
+    { dives: 8, cost: 400, name: "Pony bottle", art: "shop-pony", about: "Eight dives between trips up" },
+    { dives: 12, cost: 2000, name: "Steel tank", art: "shop-steel", about: "Twelve dives between trips up" },
+    { dives: 18, cost: 8000, name: "Twin set", art: "shop-twinset", about: "Eighteen dives between trips up" }
   ];
   const BAG_CAPS = [
     { cap: 20, cost: 0, name: "Net bag" },
-    { cap: 40, cost: 500, name: "Dive sack" },
-    { cap: 75, cost: 2500, name: "Catch crate" },
-    { cap: 130, cost: 9000, name: "Hauler" }
+    { cap: 40, cost: 500, name: "Dive sack", art: "shop-divesack" },
+    { cap: 75, cost: 2500, name: "Catch crate", art: "shop-crate" },
+    { cap: 130, cost: 9000, name: "Hauler", art: "shop-hauler" }
   ];
   const airCap = () => AIR_CAPS[S.airLvl].dives;
   const fillMs = () => 3000 + S.airLvl * 600;                 // 3.0s to 4.8s, by tank
@@ -2479,8 +2479,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     shimmer: { name: "Shimmer shrimp", bed: "Shimmer pool", cost: 400, grow: 12 * HOUR, yield: 1, about: "Shiny odds ×10", shiny: 10, color: "#f3a6d8" }
   };
   const BAIT_KEYS = Object.keys(BAITS);
-  const PLOT_CAPS = [{ cap: 4, cost: 0 }, { cap: 6, cost: 400 }, { cap: 8, cost: 2000 }];
-  const NEST_CAPS = [{ cap: 1, cost: 0 }, { cap: 2, cost: 1500 }, { cap: 3, cost: 6000 }];
+  const PLOT_CAPS = [{ cap: 4, cost: 0 }, { cap: 6, cost: 400, art: "shop-plots6" }, { cap: 8, cost: 2000, art: "shop-plots8" }];
+  const NEST_CAPS = [{ cap: 1, cost: 0 }, { cap: 2, cost: 1500, art: "shop-nests2" }, { cap: 3, cost: 6000 }];
   const HATCH_MS = [1, 2, 4, 8, 16].map((h) => h * HOUR);
   const breedCost = (rar) => RAR[rar].rate * 10;
   const ui = { choosing: -1 };
@@ -2846,7 +2846,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       const parts = Object.entries(r.need).map(([k, n]) => `<span class="${(S.inv[k] || 0) >= n ? "ok" : "no"}">${LOOT[k].icon} ${n} ${LOOT[k].name}</span>`).join("");
       const pic = el("span", "craft-art" + (ready && !locked ? " ready" : ""));
       const im = document.createElement("img");
-      im.src = artSrc(r.art); im.alt = ""; im.loading = "lazy"; im.width = 84; im.height = 84;
+      im.src = artSrc(r.art); im.alt = ""; im.loading = "lazy"; im.width = 108; im.height = 108;
       pic.append(im);
       row.append(pic);
       row.append(el("span", "craft-main", `<b>${r.name}</b><span class="craft-parts">${parts}<span class="arrow">→</span><span>${r.about}</span></span>`));
@@ -3424,32 +3424,32 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (show("gear")) AIR_CAPS.forEach((a, i) => {
       if (i === 0) return;
       const u = needOf(a.name), locked = u && levelIn(u.skill) < u.at;
-      add(shopCard({ icon: "🫧", name: a.name, about: `${a.about} · ${((3000 + i * 600) / 1000).toFixed(1)}s to fill`, price: a.cost, owned: S.airLvl >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
+      add(shopCard({ art: a.art, icon: "🫧", name: a.name, about: `${a.about} · ${((3000 + i * 600) / 1000).toFixed(1)}s to fill`, price: a.cost, owned: S.airLvl >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
         onBuy: () => { if (S.pearls < a.cost) return; S.pearls -= a.cost; S.airLvl = i; S.air = airCap(); toast(a.name, `${a.dives} dives between trips up.`); renderShop(); renderDive(); save(); } }));
     });
     if (show("gear")) BAG_CAPS.forEach((c, i) => {
       if (i === 0) return;
       const u = needOf(c.name), locked = u && levelIn(u.skill) < u.at;
-      add(shopCard({ icon: "🧺", name: c.name, about: `Carry ${c.cap} things off the bottom`, price: c.cost, owned: S.bagLvl >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
+      add(shopCard({ art: c.art, icon: "🧺", name: c.name, about: `Carry ${c.cap} things off the bottom`, price: c.cost, owned: S.bagLvl >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
         onBuy: () => { if (S.pearls < c.cost) return; S.pearls -= c.cost; S.bagLvl = i; toast(c.name, `Room for ${c.cap} things.`); renderShop(); renderDive(); renderInv(); save(); } }));
     });
     if (show("places")) {
       TANKS.forEach((t, i) => {
         if (i === 0) return;
         const u = needOf(`${t.cap}-fish tank`), locked = u && levelIn(u.skill) < u.at;
-        add(shopCard({ icon: t.icon, name: t.name, about: `${t.about} · room for ${t.cap} fish`, price: t.cost, owned: S.tank >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
+        add(shopCard({ art: t.art, icon: t.icon, name: t.name, about: `${t.about} · room for ${t.cap} fish`, price: t.cost, owned: S.tank >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
           onBuy: () => { if (S.pearls < t.cost) return; S.pearls -= t.cost; S.tank = i; toast(t.name, `Room for ${t.cap} fish.`); renderShop(); renderTank(); save(); } }));
       });
       PLOT_CAPS.forEach((c, i) => {
         if (i === 0) return;
         const u = needOf(`${c.cap} garden plots`), locked = u && levelIn(u.skill) < u.at;
-        add(shopCard({ icon: "🌱", name: `${c.cap} garden plots`, about: "Grow more bait at once", price: c.cost, owned: S.plotLvl >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
+        add(shopCard({ art: c.art, icon: "🌱", name: `${c.cap} garden plots`, about: "Grow more bait at once", price: c.cost, owned: S.plotLvl >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
           onBuy: () => { if (S.pearls < c.cost) return; S.pearls -= c.cost; S.plotLvl = i; normalizeLoop(); renderGarden(); toast(`${c.cap} garden plots`); renderShop(); save(); } }));
       });
       NEST_CAPS.forEach((c, i) => {
         if (i === 0) return;
         const u = needOf(`${c.cap} nests`), locked = u && levelIn(u.skill) < u.at;
-        add(shopCard({ icon: "🥚", name: `${c.cap} nests`, about: "Incubate more eggs at once", price: c.cost, owned: S.nestLvl >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
+        add(shopCard({ art: c.art, icon: "🥚", name: `${c.cap} nests`, about: "Incubate more eggs at once", price: c.cost, owned: S.nestLvl >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
           onBuy: () => { if (S.pearls < c.cost) return; S.pearls -= c.cost; S.nestLvl = i; normalizeLoop(); renderBreeding(); toast(`${c.cap} nests`); renderShop(); save(); } }));
       });
       DECOR.forEach((d) => {
