@@ -373,6 +373,41 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .seg button{flex:1;background:none;border:0;padding:5px 6px;border-radius:7px;font-weight:800;font-size:.76rem;color:var(--muted);cursor:pointer;white-space:nowrap}
 .seg button[aria-pressed="true"]{background:var(--panel-3);color:var(--text)}
 .ctl-btns{display:flex;flex-wrap:wrap;gap:6px}
+/* The leaderboard: a rail of boards down the left, one table on the right.
+   Same shape as the skills page so the two read as a pair. */
+.lb{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.lb{grid-template-columns:1fr}}
+.lb-rail{position:sticky;top:76px;display:grid;gap:3px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:9px;max-height:calc(100vh - 100px);overflow:auto}
+@media (max-width:860px){.lb-rail{position:static;max-height:none}}
+.lb-rail h4{font-size:.58rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted-2);margin:9px 0 3px 8px}
+.lb-rail h4:first-child{margin-top:2px}
+.lb-b{display:flex;align-items:center;gap:9px;width:100%;padding:7px 9px;border-radius:9px;border:0;background:none;color:var(--muted);font:inherit;font-size:.84rem;font-weight:700;cursor:pointer;text-align:left}
+.lb-b:hover{background:var(--panel-2);color:var(--text)}
+.lb-b[aria-current="true"]{background:var(--gold-dim);color:var(--gold)}
+.lb-b svg{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.lb-b .ico{width:16px;text-align:center;flex:none;font-size:.95rem;line-height:1}
+.lb-head{display:flex;align-items:center;gap:13px;background:linear-gradient(90deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:13px 16px;margin-bottom:11px}
+.lb-head .lb-ico{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:11px;background:var(--gold-dim);border:1px solid rgba(var(--gold-rgb),.35);font-size:1.15rem}
+.lb-head .lb-ico svg{width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.lb-head h2{font-family:var(--display);font-weight:800;font-size:1.25rem;margin:0}
+.lb-head small{display:block;font-size:.74rem;color:var(--muted-2);margin-top:1px}
+.lb-table{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.lb-row{display:grid;grid-template-columns:52px minmax(0,1fr) 92px 130px;gap:10px;align-items:center;padding:9px 16px;border-bottom:1px solid var(--line);font-size:.88rem}
+.lb-row:last-child{border-bottom:0}
+.lb-row.lb-th{font-size:.58rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);background:var(--panel-2);padding:8px 16px}
+.lb-row .rk{font-family:var(--display);font-weight:800;color:var(--muted-2);font-variant-numeric:tabular-nums}
+.lb-row .who{display:flex;align-items:center;gap:8px;font-weight:700;min-width:0}
+.lb-row .who span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-row .lv,.lb-row .xp{font-variant-numeric:tabular-nums;text-align:right;font-weight:700}
+.lb-row .lv{color:var(--gold);font-family:var(--display);font-weight:800}
+.lb-row .xp{color:var(--muted)}
+.lb-row.me{background:var(--gold-dim);border-color:rgba(var(--gold-rgb),.3)}
+.lb-row.me .rk,.lb-row.me .who{color:var(--gold)}
+.lb-row.top .rk{color:var(--gold)}
+.lb-medal{font-size:.9rem}
+.lb-note{padding:10px 16px;font-size:.74rem;color:var(--muted-2);background:var(--panel-2);border-top:1px solid var(--line)}
+@media (max-width:620px){.lb-row{grid-template-columns:38px minmax(0,1fr) 62px 92px;padding:9px 11px;font-size:.82rem}}
+
 /* the profile: a card, the numbers, and where they put you in the room */
 .pcard{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:16px;align-items:start}
 @media (max-width:820px){.pcard{grid-template-columns:1fr}}
@@ -702,6 +737,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
           <button class="tab" role="tab" id="tab-inv" aria-controls="panel-inv" data-tab="inv" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 8V6a4 4 0 0 1 8 0v2M4 12h16"/></svg><span class="tab-label">Inventory</span></button>
           <span class="fnav-h">Progress</span>
           <button class="tab" role="tab" id="tab-skills" aria-controls="panel-skills" data-tab="skills" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-7M10 20V6M15 20v-9M20 20V9"/></svg><span class="tab-label">Skills</span></button>
+          <button class="tab" role="tab" id="tab-board" aria-controls="panel-board" data-tab="board" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M5 5h3M16 5h3M12 13v3M8 20h8l-1-4H9z"/></svg><span class="tab-label">Leaderboard</span></button>
           <button class="tab" role="tab" id="tab-quests" aria-controls="panel-quests" data-tab="quests" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 9l1.6 1.6L13.5 7.5M9 15h6"/></svg><span class="tab-label">Quests</span><span class="count" hidden></span></button>
           <button class="tab" role="tab" id="tab-derby" aria-controls="panel-derby" data-tab="derby" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5v1.5A3 3 0 0 0 8 10.5M16 6h3v1.5a3 3 0 0 1-3 3M12 13v4M8.5 20h7"/></svg><span class="tab-label">Weekly derby</span></button>
           <span class="fnav-h">You</span>
@@ -860,6 +896,17 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   <section class="view view-derby" role="tabpanel" id="panel-derby" aria-labelledby="tab-derby" data-panel="derby" hidden>
     <header class="view-h"><div><h1>Weekly derby</h1><p>One species a week. Heaviest fish by Sunday night takes the title.</p></div></header>
     <div class="card"><div class="card-body"><div id="derby"></div></div></div>
+  </section>
+
+  <section class="view view-board" role="tabpanel" id="panel-board" aria-labelledby="tab-board" data-panel="board" hidden>
+    <header class="view-h"><div><h1>Leaderboard</h1><p>Where you stand in the room. Everyone but you is an example figure — the real one reads the same numbers off every player.</p></div></header>
+    <div class="lb">
+      <nav class="lb-rail" id="lbRail" aria-label="Boards"></nav>
+      <div class="lb-main">
+        <div class="lb-head" id="lbHead"></div>
+        <div class="lb-table" id="lbTable"></div>
+      </div>
+    </div>
   </section>
 
   <section class="view view-profile" role="tabpanel" id="panel-profile" aria-labelledby="tab-profile" data-panel="profile" hidden>
@@ -3601,6 +3648,87 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const rankIn = (field, mine) => 1 + ROOM.filter((r) => r[field] > mine).length;
   const ord = (n) => `${n}${["th", "st", "nd", "rd"][(n % 100 - 20) % 10] || ["th", "st", "nd", "rd"][n % 100] || "th"}`;
 
+  /* The room the boards rank you against. Each player's numbers are grown
+     from their own name, so they never move between renders and the same
+     player sits in the same place on every board. In the real game this is
+     one query; here it is stable make-believe, and the page says so. */
+  const LB_NAMES = ["kellzifer", "zwades", "andyreidisapawg", "saturdaysfortheufcv2", "heartlarva", "bootypaper2",
+    "GrillDaddy", "wadewilson", "no_scope_nancy", "TheRealSlimJim", "puntgod", "hexadecimal", "OldBayEnjoyer", "quietriot"];
+  const LB_ROOM = LB_NAMES.map((n, i) => {
+    const R = prng(hashStr(n));
+    // a rough ladder: the top of the list is further along than the bottom
+    const pull = 1 - i / (LB_NAMES.length + 3);
+    const p = {};
+    Object.keys(SKILLS).forEach((k) => {
+      const lvl = Math.max(1, Math.min(99, Math.round((18 + R() * 74) * pull + (k === "fishing" ? 6 : 0))));
+      p[k] = XP_AT[lvl] + Math.floor(R() * Math.max(1, (XP_AT[Math.min(99, lvl + 1)] - XP_AT[lvl])));
+    });
+    return { name: n, skills: p,
+      species: Math.round((6 + R() * 24) * pull), best: Math.round((20 + R() * 260) * pull),
+      bosses: Math.min(5, Math.floor(R() * 6 * pull)), dives: Math.round((40 + R() * 900) * pull),
+      value: Math.round((900 + R() * 34000) * pull) };
+  });
+  const BOARDS = [
+    { key: "overall", group: "Overall", name: "Overall", icon: "🏆", sub: "Total level across all six skills",
+      lvl: (p) => Object.keys(SKILLS).reduce((n, k) => n + levelOf(p.skills[k] || 0), 0),
+      xp: (p) => Object.keys(SKILLS).reduce((n, k) => n + (p.skills[k] || 0), 0), unit: "xp" },
+    ...Object.entries(SKILLS).map(([k, sk]) => ({
+      key: k, group: "Skills", name: sk.name, svg: sk.icon, sub: sk.how.split(".")[0],
+      lvl: (p) => levelOf(p.skills[k] || 0), xp: (p) => p.skills[k] || 0, unit: "xp"
+    })),
+    { key: "species", group: "Records", name: "Species", icon: "📖", sub: "How much of the fish book is filled in",
+      lvl: null, xp: (p) => p.species, unit: `of ${SPECIES.length}` },
+    { key: "best", group: "Records", name: "Heaviest fish", icon: "🐟", sub: "The biggest thing anyone has landed",
+      lvl: null, xp: (p) => p.best, unit: "lb", fmt: (v) => lbs(v) },
+    { key: "bosses", group: "Records", name: "Leviathans", icon: "⭐", sub: "Bosses beaten, out of five",
+      lvl: null, xp: (p) => p.bosses, unit: "of 5" },
+    { key: "value", group: "Records", name: "Dive value", icon: "🤿", sub: "Everything brought up off the bottom",
+      lvl: null, xp: (p) => p.value, unit: "pearls" }
+  ];
+  /** You, in the same shape as everyone else. */
+  const lbMe = () => {
+    const entries = Object.entries(S.dex).filter(([, d]) => d.n);
+    const best = entries.slice().sort((a, b) => b[1].best - a[1].best)[0];
+    return { name: "You", me: true, skills: Object.assign({}, S.skills),
+      species: entries.length, best: best ? best[1].best : 0,
+      bosses: BOSSES.filter((b) => bossState(b).beaten).length,
+      dives: S.stats.dives, value: S.stats.diveValue };
+  };
+  let lbOn = "overall";
+  function renderBoard() {
+    const rail = $("lbRail"); if (!rail) return;
+    rail.replaceChildren();
+    let group = "";
+    BOARDS.forEach((b) => {
+      if (b.group !== group) { group = b.group; rail.append(el("h4", null, group)); }
+      const btn = el("button", "lb-b", (b.svg || `<span class="ico">${b.icon}</span>`) + `<span>${b.name}</span>`);
+      btn.type = "button";
+      btn.setAttribute("aria-current", String(b.key === lbOn));
+      btn.addEventListener("click", () => { lbOn = b.key; renderBoard(); });
+      rail.append(btn);
+    });
+    const b = BOARDS.find((x) => x.key === lbOn) || BOARDS[0];
+    $("lbHead").replaceChildren();
+    $("lbHead").innerHTML = `<span class="lb-ico">${b.svg || b.icon}</span><div><h2>${b.name}</h2><small>${b.sub}</small></div>`;
+
+    const rows = [...LB_ROOM, lbMe()].map((p) => ({ p, v: b.xp(p), lvl: b.lvl ? b.lvl(p) : null }))
+      .sort((x, y) => y.v - x.v || (y.lvl || 0) - (x.lvl || 0));
+    const table = $("lbTable");
+    table.replaceChildren();
+    table.append(el("div", "lb-row lb-th", `<span>Rank</span><span>Name</span><span class="lv">${b.lvl ? "Level" : ""}</span><span class="xp">${b.unit === "xp" ? "XP" : b.unit.replace(/^of /, "Out of ")}</span>`));
+    rows.forEach((r, i) => {
+      const medal = ["🥇", "🥈", "🥉"][i] || "";
+      const row = el("div", "lb-row" + (r.p.me ? " me" : "") + (i < 3 ? " top" : ""));
+      const val = b.fmt ? b.fmt(r.v) : num(r.v);
+      row.innerHTML = `<span class="rk">${i + 1}</span>
+        <span class="who">${medal ? `<span class="lb-medal">${medal}</span>` : ""}<span>${r.p.name}</span></span>
+        <span class="lv">${r.lvl != null ? r.lvl : ""}</span>
+        <span class="xp">${val}</span>`;
+      table.append(row);
+    });
+    table.append(el("div", "lb-note", "Everyone but you is an example figure, grown from their own name so the board never shuffles. The real one reads these off every player."));
+  }
+
   function renderProfile() {
     renderStatbar();
     if (!$("pStats")) return;
@@ -3922,6 +4050,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     window.scrollTo(0, 0);
     document.querySelectorAll("[data-panel]").forEach((p) => { p.hidden = p.dataset.panel !== b.dataset.tab; });
     if (b.dataset.tab === "shop") renderShop();
+    if (b.dataset.tab === "board") renderBoard();
     if (b.dataset.tab === "derby") renderDerby();
     if (b.dataset.tab === "skills") renderSkills();
     if (b.dataset.tab === "dive") renderDive();
@@ -3945,7 +4074,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   });
 
   /* ============================================================ loop */
-  function renderEverything() { normalizeLoop(); ensureQuests(); renderSpots(); syncTank(); renderTank(); renderDex(); renderShop(); renderDerby(); renderProfile(); renderGarden(); renderBreeding(); renderQuests(); renderBaitSel(); renderSkills(); renderDive(); renderCraft(); renderInv(); renderBosses(); renderXpTracker(); }
+  function renderEverything() { normalizeLoop(); ensureQuests(); renderSpots(); syncTank(); renderTank(); renderDex(); renderShop(); renderDerby(); renderProfile(); renderGarden(); renderBreeding(); renderQuests(); renderBaitSel(); renderSkills(); renderDive(); renderCraft(); renderInv(); renderBosses(); renderBoard(); renderXpTracker(); }
 
   // the reel's little fish
   function drawReelFish() {
