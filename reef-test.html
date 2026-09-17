@@ -198,9 +198,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .shop-row.locked .shop-ico{filter:grayscale(.85) brightness(.7)}
 .levelup .unlock{display:block;margin-top:7px;padding-top:7px;border-top:1px solid rgba(255,255,255,.18);color:#26d926;font-weight:800}
 .levelup .unlock em{font-style:normal;color:#fff;font-weight:700}
-.skill-next{margin:0;font-size:.76rem;font-weight:700;color:#ff981f}
+.skill-next{margin:auto 0 0;font-size:.76rem;font-weight:700;color:#ff981f}
 /* what levels unlock, under the skill cards */
-.unlocks{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.unlocks{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;align-self:start}
 .unlocks h2{font-family:var(--display);font-weight:800;font-size:.92rem;margin:0;padding:11px 13px 0;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .unlocks h2 small{color:var(--muted-2);font-size:.7rem;font-weight:600;white-space:nowrap}
 .utab{width:100%;border-collapse:collapse;margin-top:8px;font-size:.8rem}
@@ -368,11 +368,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 @keyframes xpdrop{0%{transform:translateY(0);opacity:0}12%{opacity:1}75%{opacity:1}100%{transform:translateY(-62px);opacity:0}}
 @media (max-width:560px){.xpt{width:170px;right:8px;bottom:8px;font-size:.66rem}.xpt-sess{display:none}}
 
-.skills{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}
-.skill-col{display:grid;gap:12px;align-content:start;min-width:0}
+.skills{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:auto auto;gap:12px;align-items:start}
+/* Each column is two rows of the page grid, so every card is as tall as the
+   tallest one and the tables below them all start on the same line. */
+.skill-col{display:grid;grid-template-rows:subgrid;grid-row:span 2;gap:12px;min-width:0}
+@supports not (grid-template-rows:subgrid){.skill-col{grid-row:auto;grid-template-rows:auto auto;align-content:start}}
 @media (max-width:1240px){.skills{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:700px){.skills{grid-template-columns:1fr}}
-.skill{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px}
+.skill{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px;align-content:start}
 .skill-h{display:flex;align-items:center;gap:10px}
 .skill-ico{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:rgba(62,53,41,.9);box-shadow:inset 0 0 0 1px #5d5447}
 .skill-ico svg{width:24px;height:24px;stroke:#ffcf6a;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
