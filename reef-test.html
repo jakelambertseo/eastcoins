@@ -199,6 +199,26 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .levelup .unlock{display:block;margin-top:7px;padding-top:7px;border-top:1px solid rgba(255,255,255,.18);color:#26d926;font-weight:800}
 .levelup .unlock em{font-style:normal;color:#fff;font-weight:700}
 .skill-next{margin:0;font-size:.76rem;font-weight:700;color:#ff981f}
+/* what levels unlock, under the skill cards */
+.unlocks{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.unlocks h2{font-family:var(--display);font-weight:800;font-size:1.05rem;margin:0;padding:13px 15px 0;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.unlocks h2 small{color:var(--muted-2);font-size:.74rem;font-weight:600}
+.utab{width:100%;border-collapse:collapse;margin-top:10px;font-size:.84rem}
+.utab th{text-align:left;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);padding:6px 15px;border-bottom:1px solid var(--line);font-weight:800}
+.utab td{padding:9px 15px;border-bottom:1px solid var(--line)}
+.utab tr:last-child td{border-bottom:0}
+.utab .u-skill{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-weight:700}
+.utab .u-skill svg{width:16px;height:16px;stroke:#ffcf6a;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.utab .u-lvl{font-variant-numeric:tabular-nums;font-weight:800;color:#ffff00;text-shadow:1px 1px 0 #000}
+.utab .u-what{font-weight:700}
+.utab .u-state{text-align:right;font-weight:800;font-size:.78rem;white-space:nowrap}
+.utab tr.locked{opacity:.45}
+.utab tr.locked .u-lvl{color:var(--muted);text-shadow:none}
+.utab tr.next{background:rgba(255,152,31,.08)}
+.utab .u-state.open{color:var(--green)}
+.utab .u-state.owned{color:var(--gold)}
+.utab .u-state.shut{color:var(--muted-2)}
+@media (max-width:560px){.utab .u-skill span{display:none}.utab td,.utab th{padding-left:10px;padding-right:10px}}
 .shop-row.has-ico{grid-template-columns:48px minmax(0,1fr) auto}
 .shop-ico{width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
 .rod-ico{width:24px;height:24px;object-fit:contain;vertical-align:-7px;margin-right:3px}
@@ -512,6 +532,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   <section class="view view-skills" role="tabpanel" id="panel-skills" aria-labelledby="tab-skills" data-panel="skills" hidden>
     <header class="view-h"><div><h1>Skills</h1><p>Everything you do trains a skill, from level 1 to 99 on the RuneScape XP curve. Early levels come fast; 99 is a long road.</p></div><span class="meta" id="totalLvl">Total level 4</span></header>
     <div class="skills" id="skills"></div>
+    <section class="unlocks">
+      <h2>What levels unlock<small id="unlockCount"></small></h2>
+      <table class="utab"><thead><tr><th>Unlock</th><th>Skill</th><th>Level</th><th style="text-align:right">Status</th></tr></thead><tbody id="unlockRows"></tbody></table>
+    </section>
   </section>
 
   <section class="view view-controls" role="tabpanel" id="panel-controls" aria-labelledby="tab-controls" data-panel="controls" hidden>
@@ -686,6 +710,15 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { skill: "breeding", at: 30, what: "3 nests" }
   ];
   const needOf = (what) => UNLOCKS.find((u) => u.what === what) || null;
+  /** Has this unlock already been bought? Reads whatever the shop section keeps. */
+  function ownsUnlock(what) {
+    const rod = RODS.findIndex((r) => r.name === what); if (rod > 0) return S.rod >= rod;
+    const tank = TANKS.findIndex((t) => `${t.cap}-fish tank` === what); if (tank > 0) return S.tank >= tank;
+    const plot = PLOT_CAPS.findIndex((c) => `${c.cap} garden plots` === what); if (plot > 0) return S.plotLvl >= plot;
+    const nest = NEST_CAPS.findIndex((c) => `${c.cap} nests` === what); if (nest > 0) return S.nestLvl >= nest;
+    const dec = DECOR.find((d) => d.name === what); if (dec) return Boolean(S.decor[dec.key]);
+    return false;
+  }
   const levelIn = (skill) => levelOf(S.skills[skill] || 0);
   const unlocked = (what) => { const u = needOf(what); return !u || levelIn(u.skill) >= u.at; };
 
@@ -751,6 +784,28 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       box.append(card);
     }
     $("totalLvl").textContent = `Total level ${total}`;
+    renderUnlocks();
+  }
+
+  /* The ladder: everything a level opens, what is open now and what is next. */
+  function renderUnlocks() {
+    const body = $("unlockRows"); if (!body) return;
+    body.replaceChildren();
+    const rows = UNLOCKS.slice().sort((a, b) => a.at - b.at || a.skill.localeCompare(b.skill));
+    let open = 0;
+    const nextPer = {};
+    for (const u of rows) if (levelIn(u.skill) < u.at && !nextPer[u.skill]) nextPer[u.skill] = u;
+    for (const u of rows) {
+      const have = levelIn(u.skill) >= u.at, owned = have && ownsUnlock(u.what);
+      if (have) open += 1;
+      const tr = el("tr", have ? "" : nextPer[u.skill] === u ? "locked next" : "locked");
+      tr.innerHTML = `<td class="u-what">${u.what}</td>
+        <td><span class="u-skill">${SKILLS[u.skill].icon}<span>${SKILLS[u.skill].name}</span></span></td>
+        <td class="u-lvl">${u.at}</td>
+        <td class="u-state ${owned ? "owned" : have ? "open" : "shut"}">${owned ? "Owned" : have ? "Unlocked" : `Level ${u.at - levelIn(u.skill)} to go`}</td>`;
+      body.append(tr);
+    }
+    $("unlockCount").textContent = `${open} of ${rows.length} unlocked`;
   }
   function levelUp(key, lvl, from = lvl - 1) {
     document.querySelector(".levelup")?.remove();
