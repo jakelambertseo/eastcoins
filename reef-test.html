@@ -520,6 +520,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .craft-parts .arrow{color:var(--muted-2)}
 .craft-row .btn{min-width:110px;justify-content:center}
 /* the dive itself */
+.air{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+.air-lab{font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.air-pips{display:flex;gap:4px;flex-wrap:wrap}
+.air-pips i{width:13px;height:20px;border-radius:3px;background:var(--panel-3);border:1px solid var(--line);display:block}
+.air-pips i.on{background:linear-gradient(180deg,#bdf0ff,#4fc3d9 60%,#1f6fd1);border-color:rgba(79,195,217,.6)}
+.air-n{font-size:.78rem;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.hint.bad{color:var(--red);border-color:rgba(255,107,133,.45)}
+.dive-bar.up i{background:linear-gradient(90deg,#8a6a1f,#e8bf35 70%,#ffe9a8)}
 .dive-go{display:flex;align-items:center;gap:14px;margin-top:14px;flex-wrap:wrap}
 .dive-bar{flex:1;min-width:220px;height:10px;border-radius:99px;background:var(--panel-3);border:1px solid var(--line);overflow:hidden}
 .dive-bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#1f6fd1,#4fc3d9 70%,#bdf0ff)}
@@ -957,7 +965,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     q: { day: "", daily: [], week: "", weekly: [], streak: 0, chest: false, weekChest: false },
     skills: { fishing: 0, farming: 0, cooking: 0, breeding: 0, diving: 0, crafting: 0 },
     auto: { sprinkler: false, caretaker: false, turner: false, hatchery: false, smokehouse: false, cannery: false }, smokeAt: 0,
-    inv: {}, charm: 0, benchAt: 0, boss: {}, perks: {},
+    inv: {}, charm: 0, benchAt: 0, boss: {}, perks: {}, airLvl: 0, air: 5, bagLvl: 0,
     zc: 2500, conv: {}, cosm: {}, worn: { theme: "", name: "", title: "", pet: "" }, shopTab: "all",
     stats: { dives: 0, diveValue: 0, crafts: 0, cooked: 0, spots: {}, baits: {}, casts: 0, snags: 0 } });
   let S = fresh();
@@ -967,7 +975,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   S.inv = S.inv || {}; S.charm = S.charm || 0; S.boss = S.boss || {}; S.perks = S.perks || {};
   S.conv = S.conv || {}; S.cosm = S.cosm || {}; S.worn = Object.assign({ theme: "", name: "", title: "", pet: "" }, S.worn || {});
   if (typeof S.zc !== "number") S.zc = 2500;
-  if (!S.wv) { S.weather = "auto"; S.wv = 1; }          // saves from before the reef had its own weather
+  if (!S.wv) { S.weather = "auto"; S.wv = 1; }
+  S.airLvl = S.airLvl || 0; S.bagLvl = S.bagLvl || 0;
+  if (typeof S.air !== "number") S.air = AIR_CAPS[S.airLvl].dives;
+  S.air = Math.min(S.air, AIR_CAPS[S.airLvl].dives);          // saves from before the reef had its own weather
   S.stats = Object.assign({ dives: 0, diveValue: 0, crafts: 0, cooked: 0, spots: {}, baits: {}, casts: 0, snags: 0 }, S.stats || {});
   const save = () => { S.saved = Date.now(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch {} };
 
@@ -991,7 +1002,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     fishing: { name: "Fishing", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12c3-4.5 8-5.5 12-2.2L20 7v10l-5-2.8C11 17.5 6 16.5 3 12z"/><circle cx="8.2" cy="11" r=".6"/></svg>', how: "Every catch. Rarer, heavier and shiny fish give more, and a new species gives a bonus." },
     farming: { name: "Farming", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20v-8"/><path d="M12 12c-4 0-6-3-6-6 3 0 6 2 6 6zM12 14c3.5 0 5.5-2.5 5.5-5.5-3 0-5.5 2-5.5 5.5z"/><path d="M5 20h14"/></svg>', how: "Planting, watering and harvesting the bait garden. Slower baits give more. Level 20 and 40 let the garden run itself." },
     cooking: { name: "Cooking", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6z"/><path d="M8 6.5c0-1 1-1 1-2.2M12 6.5c0-1 1-1 1-2.2M16 6.5c0-1 1-1 1-2.2"/></svg>', how: "Cooking a catch instead of selling it. It pays fewer pearls, so it costs you something. Level 20 opens the smokehouse." },
-    diving: { name: "Diving", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21c-3.5-3.6-6-6.6-6-9.8A6 6 0 0 1 18 11.2c0 3.2-2.5 6.2-6 9.8z"/><circle cx="12" cy="10.6" r="2.3"/></svg>', how: "Diving a spot for what's on the bottom. Deeper water hides better things." },
+    diving: { name: "Diving", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21c-3.5-3.6-6-6.6-6-9.8A6 6 0 0 1 18 11.2c0 3.2-2.5 6.2-6 9.8z"/><circle cx="12" cy="10.6" r="2.3"/></svg>', how: "Diving a spot for what's on the bottom. Deeper water hides better things. Air runs out and the bag fills up, so a session is trips, not one long hold." },
     crafting: { name: "Crafting", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4.5l5 5-8.5 8.5-5-5z"/><path d="M4.5 19.5l2.5-2.5M16 3l1.4 1.4M20 7l1 1"/></svg>', how: "Making things out of what you dive up. Every recipe trains it." },
     breeding: { name: "Breeding", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3.6 0 6 5.2 6 9.2A6 6 0 0 1 6 12.7c0-4 2.4-9.2 6-9.2z"/></svg>', how: "Pairing fish, turning the eggs and hatching them. A shiny baby triples the hatch. Level 20 and 40 automate the nests." }
   };
@@ -1008,6 +1019,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { skill: "fishing", at: 45, what: "Carbon Pro" },
     { skill: "fishing", at: 60, what: "Zcoin treasure chest" },
     { skill: "fishing", at: 70, what: "Golden Rod" },
+    { skill: "diving", at: 10, what: "Pony bottle" },
+    { skill: "diving", at: 25, what: "Steel tank" },
+    { skill: "diving", at: 45, what: "Twin set" },
+    { skill: "diving", at: 5, what: "Dive sack" },
+    { skill: "diving", at: 30, what: "Catch crate" },
+    { skill: "diving", at: 50, what: "Hauler" },
     { skill: "diving", at: 20, what: "Mesh bag" },
     { skill: "diving", at: 40, what: "Air tank" },
     { skill: "crafting", at: 20, what: "Toolbox" },
@@ -1032,6 +1049,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const tank = TANKS.findIndex((t) => `${t.cap}-fish tank` === what); if (tank > 0) return S.tank >= tank;
     const plot = PLOT_CAPS.findIndex((c) => `${c.cap} garden plots` === what); if (plot > 0) return S.plotLvl >= plot;
     const nest = NEST_CAPS.findIndex((c) => `${c.cap} nests` === what); if (nest > 0) return S.nestLvl >= nest;
+    const air = AIR_CAPS.findIndex((a) => a.name === what); if (air > 0) return S.airLvl >= air;
+    const bag = BAG_CAPS.findIndex((b) => b.name === what); if (bag > 0) return S.bagLvl >= bag;
     const dec = DECOR.find((d) => d.name === what); if (dec) return Boolean(S.decor[dec.key]);
     const kit = KIT.find((k) => k.name === what); if (kit) return Boolean(S.auto[kit.key]);
     return false;
@@ -1088,6 +1107,34 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   }
   const DIVE_XP = [25, 60, 140, 400, 1200];
   const DIVE_MS = 2600;
+  /* Two things now bound a diving session, because an unlimited one was just
+     a button you held down: AIR and the BAG.
+
+     Air is dives, not seconds — one dive, one breath — and refilling means
+     surfacing, which costs 3 to 5 seconds of doing nothing. A bigger tank
+     holds more dives but takes longer to fill, so it buys fewer
+     interruptions rather than none, and the total time per dive barely
+     moves. That is the point: it is a rhythm, not a tax.
+
+     The bag is what makes diving talk to the rest of the game. Fill it and
+     you have to sell, craft or buy your way out, which is the only reason
+     someone with 200 kelp ever opens the crafting page. */
+  const AIR_CAPS = [
+    { dives: 5, cost: 0, name: "Lungs", about: "Five dives before you come up" },
+    { dives: 8, cost: 400, name: "Pony bottle", about: "Eight dives between trips up" },
+    { dives: 12, cost: 2000, name: "Steel tank", about: "Twelve dives between trips up" },
+    { dives: 18, cost: 8000, name: "Twin set", about: "Eighteen dives between trips up" }
+  ];
+  const BAG_CAPS = [
+    { cap: 20, cost: 0, name: "Net bag" },
+    { cap: 40, cost: 500, name: "Dive sack" },
+    { cap: 75, cost: 2500, name: "Catch crate" },
+    { cap: 130, cost: 9000, name: "Hauler" }
+  ];
+  const airCap = () => AIR_CAPS[S.airLvl].dives;
+  const fillMs = () => 3000 + S.airLvl * 600;                 // 3.0s to 4.8s, by tank
+  const bagCap = () => BAG_CAPS[S.bagLvl].cap + (S.conv.bag ? 15 : 0);
+  const bagFull = () => invCount() >= bagCap();
   const RECIPES = [
     { key: "chum", name: "Chum bucket", at: 1, need: { kelp: 3, shell: 2 }, xp: 120, about: "10 Nightcrawlers", give: () => { S.bait.worm = (S.bait.worm || 0) + 10; } },
     { key: "junk", name: "Melt down junk", at: 1, need: { boot: 2, driftwood: 2 }, xp: 100, about: "250 pearls", give: () => { S.pearls += 250; } },
@@ -1110,7 +1157,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { key: "baitline", name: "Second bait line", icon: "🪝", zc: 150, about: "Bait lasts twice as long — half of your casts don't spend any" },
     { key: "plot", name: "Extra garden plot", icon: "🪴", zc: 100, about: "One more bed than pearls can buy" },
     { key: "nest", name: "Extra nest", icon: "🪺", zc: 100, about: "One more egg on the go than pearls can buy" },
-    { key: "bag", name: "Bigger bag", icon: "🧺", zc: 75, about: "Sell every bit of junk in the bag with one button" }
+    { key: "bag", name: "Bigger bag", icon: "🧺", zc: 75, about: "15 more slots than pearls can buy, and a button that sells every bit of junk at once" }
   ];
   const BUYS = [
     { key: "skip", name: "Skip the wait", icon: "⏩", zc: 15, about: "Finishes whichever bed or egg is closest, right now" },
@@ -2252,7 +2299,13 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 
   /* ---------------------------------------------------------- diving */
   const invCount = () => Object.values(S.inv).reduce((n, v) => n + v, 0);
-  const addItem = (key, n = 1) => { S.inv[key] = (S.inv[key] || 0) + n; };
+  /** Puts what fits in the bag and says how many did not. */
+  const addItem = (key, n = 1) => {
+    const room = Math.max(0, bagCap() - invCount());
+    const put = Math.min(n, room);
+    if (put) S.inv[key] = (S.inv[key] || 0) + put;
+    return put;
+  };
   /** One thing off the bottom. Deeper spots and a higher level tilt it. */
   function diveRoll() {
     const depth = S.spot, lvl = levelIn("diving");
@@ -2265,24 +2318,46 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     for (let i = 0; i < w.length; i++) { t -= w[i]; if (t <= 0) return LOOT_KEYS[i]; }
     return "shell";
   }
-  let diving = false, diveEnds = 0;
+  let diving = false, diveEnds = 0, filling = false, fillEnds = 0;
   const diveMs = () => (idleOn("airtank") ? DIVE_MS * 0.6 : DIVE_MS);
+  /** Come up and fill the tank. Nothing else can happen while you do. */
+  function surface() {
+    if (diving || filling || S.air >= airCap()) return;
+    const each = fillMs();
+    filling = true; fillEnds = performance.now() + each;
+    renderDive();
+    setTimeout(() => {
+      filling = false; S.air = airCap();
+      renderDive(); renderStatbar(); save();
+      toast("Tank full", `${airCap()} dives of air.`);
+    }, each);
+  }
   function dive() {
-    if (diving) return;
+    if (diving || filling) return;
+    if (S.air <= 0) { toast("Out of air", "Surface and fill the tank."); return; }
+    if (bagFull()) { toast("Your bag is full", "Sell something, craft something, or buy a bigger bag."); return; }
     const each = diveMs();
+    S.air -= 1;
     diving = true; diveEnds = performance.now() + each;
     renderDive();
     setTimeout(() => {
       const n = 1 + (idleOn("meshbag") ? 1 : 0) + (idleOn("airtank") ? 1 : 0) + (Math.random() < 0.25 ? 1 : 0);
       const got = [];
-      let xp = 0;
-      for (let i = 0; i < n; i++) { const k = diveRoll(); addItem(k); got.push(k); xp += DIVE_XP[LOOT[k].rar]; }
+      let xp = 0, lost = 0;
+      for (let i = 0; i < n; i++) {
+        const k = diveRoll();
+        if (!addItem(k)) { lost++; continue; }               // no room, no item, no xp
+        got.push(k); xp += DIVE_XP[LOOT[k].rar];
+      }
       S.stats.dives += 1;
       S.stats.diveValue += got.reduce((n, k) => n + LOOT[k].value, 0);
       const gained = grant("diving", xp);
       diving = false;
-      const best = got.slice().sort((a, b) => LOOT[b].rar - LOOT[a].rar)[0];
-      toast(`${LOOT[best].icon} ${got.map((k) => LOOT[k].name).join(", ")}`, `In the bag. +${num(gained)} Diving xp`);
+      if (got.length) {
+        const best = got.slice().sort((a, b) => LOOT[b].rar - LOOT[a].rar)[0];
+        toast(`${LOOT[best].icon} ${got.map((k) => LOOT[k].name).join(", ")}`,
+          `In the bag. +${num(gained)} Diving xp${lost ? ` · ${lost} left behind, the bag is full` : ""}`);
+      } else toast("Your bag is full", "Everything you found went back on the bottom. Sell, craft, or buy a bigger bag.");
       renderDive(); renderInv(); renderCraft(); renderStatbar(); save();
     }, each);
   }
@@ -2290,22 +2365,40 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const box = $("dive"); if (!box) return;
     box.replaceChildren();
     const spot = SPOTS[S.spot];
+    const full = bagFull(), dry = S.air <= 0;
     const head = el("div", "panel-intro");
     head.append(el("p", null, `Diving <b>${spot.name}</b>. Deeper water holds better things — change spot on the fishing page.`));
-    head.append(el("span", "hint", `${invCount()} things in the bag`));
+    head.append(el("span", "hint" + (full ? " bad" : ""), `Bag ${invCount()}/${bagCap()}${full ? " · full" : ""}`));
     box.append(head);
+
+    // air: one pip a dive, so what it costs is never a number to work out
+    const air = el("div", "air");
+    const pips = el("div", "air-pips");
+    for (let i = 0; i < airCap(); i++) pips.append(el("i", i < S.air ? "on" : ""));
+    air.append(el("span", "air-lab", AIR_CAPS[S.airLvl].name), pips, el("span", "air-n", filling ? "filling…" : `${S.air}/${airCap()} dives`));
+    box.append(air);
+
     const go = el("div", "dive-go");
-    const b = el("button", "btn primary big", diving ? "Down there…" : "Dive");
-    b.type = "button"; b.disabled = diving;
+    const b = el("button", "btn primary big", diving ? "Down there…" : filling ? "Filling the tank…" : dry ? "Out of air" : full ? "Bag is full" : "Dive");
+    b.type = "button"; b.disabled = diving || filling || dry || full;
     b.addEventListener("click", dive);
-    const bar = el("div", "dive-bar", "<i></i>");
-    go.append(b, bar, el("span", "dive-note", diving ? "Holding your breath…" : `A dive takes ${(diveMs() / 1000).toFixed(1)}s`));
+    const up = el("button", "btn big" + (dry ? " gold" : ""), `Surface ${dry ? "and fill" : "for air"}`);
+    up.type = "button"; up.disabled = diving || filling || S.air >= airCap();
+    up.addEventListener("click", surface);
+    const bar = el("div", "dive-bar" + (filling ? " up" : ""), "<i></i>");
+    go.append(b, up, bar, el("span", "dive-note",
+      diving ? "Holding your breath…"
+        : filling ? `Back on the surface · ${(fillMs() / 1000).toFixed(1)}s`
+          : full ? "Sell something, craft something, or buy a bigger bag"
+            : dry ? `Filling the tank takes ${(fillMs() / 1000).toFixed(1)}s`
+              : `A dive takes ${(diveMs() / 1000).toFixed(1)}s`));
     box.append(go);
-    if (diving) {
+    if (diving || filling) {
       const fill = bar.querySelector("i");
-      const left = Math.max(0, diveEnds - performance.now());
+      const span = diving ? diveMs() : fillMs();
+      const left = Math.max(0, (diving ? diveEnds : fillEnds) - performance.now());
       fill.style.transition = "none";
-      fill.style.width = `${Math.round(100 * (1 - left / diveMs()))}%`;
+      fill.style.width = `${Math.round(100 * (1 - left / span))}%`;
       void fill.offsetWidth;
       fill.style.transition = `width ${left}ms linear`;
       fill.style.width = "100%";
@@ -2371,9 +2464,24 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const keys = LOOT_KEYS.filter((k) => S.inv[k]);
     const intro = el("div", "panel-intro");
     intro.append(el("p", null, keys.length ? `<b>${invCount()}</b> things, worth <b>${num(keys.reduce((n, k) => n + S.inv[k] * LOOT[k].value, 0))}</b> pearls if you sold the lot.` : "Empty. Dive a spot and see what's down there — or keep fishing and wait for a snag."));
-    if (S.stats.snags) intro.append(el("span", "hint", `${num(S.stats.snags)} came up on the line`));
+    intro.append(el("span", "hint" + (bagFull() ? " bad" : ""), `Bag ${invCount()}/${bagCap()}${bagFull() ? " · full" : ""}${S.stats.snags ? ` · ${num(S.stats.snags)} off the line` : ""}`));
     box.append(intro);
     if (!keys.length) return;
+    if (S.conv.bag) {
+      const junk = keys.filter((k) => LOOT[k].rar === 0);
+      const worth = junk.reduce((n, k) => n + S.inv[k] * LOOT[k].value, 0);
+      const b = el("button", "btn small gold", `Sell all junk <span class="pearl"></span>${num(worth)}`);
+      b.type = "button"; b.disabled = !junk.length;
+      b.addEventListener("click", () => {
+        junk.forEach((k) => delete S.inv[k]);
+        S.pearls += worth;
+        toast("Bag emptied of junk", `+${num(worth)} pearls`);
+        renderInv(); renderCraft(); renderDive(); renderStatbar(); save();
+      });
+      const row = el("div", "inv-row");
+      row.append(el("span", "loot-ico", "🧺"), el("span", "inv-main", `<b>Bigger bag</b><small>Kelp, shells, driftwood and boots in one go. Recipes use them too, so check the crafting page first</small>`), b);
+      box.append(row);
+    }
     const list = el("div", "rows");
     keys.forEach((k) => {
       const it = LOOT[k];
@@ -2901,6 +3009,18 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       add(shopCard({ art: r.art, name: r.name, about: `Catch zone ${Math.round(r.zone * 100)}% · rare fish ×${r.luck}`, price: r.cost,
         owned: S.rod >= i, ownedLabel: S.rod === i ? "Using" : "Owned", locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
         onBuy: () => { if (S.pearls < r.cost) return; S.pearls -= r.cost; S.rod = i; toast(`${r.name} rigged`); renderShop(); renderBiting(); save(); } }));
+    });
+    if (show("gear")) AIR_CAPS.forEach((a, i) => {
+      if (i === 0) return;
+      const u = needOf(a.name), locked = u && levelIn(u.skill) < u.at;
+      add(shopCard({ icon: "🫧", name: a.name, about: `${a.about} · ${((3000 + i * 600) / 1000).toFixed(1)}s to fill`, price: a.cost, owned: S.airLvl >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
+        onBuy: () => { if (S.pearls < a.cost) return; S.pearls -= a.cost; S.airLvl = i; S.air = airCap(); toast(a.name, `${a.dives} dives between trips up.`); renderShop(); renderDive(); save(); } }));
+    });
+    if (show("gear")) BAG_CAPS.forEach((c, i) => {
+      if (i === 0) return;
+      const u = needOf(c.name), locked = u && levelIn(u.skill) < u.at;
+      add(shopCard({ icon: "🧺", name: c.name, about: `Carry ${c.cap} things off the bottom`, price: c.cost, owned: S.bagLvl >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
+        onBuy: () => { if (S.pearls < c.cost) return; S.pearls -= c.cost; S.bagLvl = i; toast(c.name, `Room for ${c.cap} things.`); renderShop(); renderDive(); renderInv(); save(); } }));
     });
     if (show("places")) {
       TANKS.forEach((t, i) => {
