@@ -713,10 +713,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     fish: [], dex: {}, time: "auto", season: "auto", weather: "clear", sunday: false, shinyBoost: false, speed: 60, saved: Date.now(), uid: 1,
     clock: 0, bait: {}, baitOn: "none", seedPick: "worm", plots: [], plotLvl: 0, nests: [], nestLvl: 0, nursery: [], dayShift: 0,
     q: { day: "", daily: [], week: "", weekly: [], streak: 0, chest: false, weekChest: false },
-    skills: { fishing: 0, farming: 0, cooking: 0, breeding: 0 } });
+    skills: { fishing: 0, farming: 0, cooking: 0, breeding: 0 },
+    auto: { sprinkler: false, caretaker: false, turner: false, hatchery: false, smokehouse: false, cannery: false }, smokeAt: 0 });
   let S = fresh();
   try { const raw = localStorage.getItem(SAVE); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch {}
   S.skills = Object.assign({ fishing: 0, farming: 0, cooking: 0, breeding: 0 }, S.skills || {});
+  S.auto = Object.assign({ sprinkler: false, caretaker: false, turner: false, hatchery: false, smokehouse: false, cannery: false }, S.auto || {});
   const save = () => { S.saved = Date.now(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch {} };
 
   /* ============================================================ helpers */
@@ -737,9 +739,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const levelOf = (xp) => { let lo = 1, hi = 99; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (xp >= XP_AT[mid]) lo = mid; else hi = mid - 1; } return lo; };
   const SKILLS = {
     fishing: { name: "Fishing", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12c3-4.5 8-5.5 12-2.2L20 7v10l-5-2.8C11 17.5 6 16.5 3 12z"/><circle cx="8.2" cy="11" r=".6"/></svg>', how: "Every catch. Rarer, heavier and shiny fish give more, and a new species gives a bonus." },
-    farming: { name: "Farming", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20v-8"/><path d="M12 12c-4 0-6-3-6-6 3 0 6 2 6 6zM12 14c3.5 0 5.5-2.5 5.5-5.5-3 0-5.5 2-5.5 5.5z"/><path d="M5 20h14"/></svg>', how: "Planting, watering and harvesting the bait garden. Slower baits give more." },
-    cooking: { name: "Cooking", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6z"/><path d="M8 6.5c0-1 1-1 1-2.2M12 6.5c0-1 1-1 1-2.2M16 6.5c0-1 1-1 1-2.2"/></svg>', how: "Cooking a catch instead of selling it. It pays fewer pearls, so it costs you something." },
-    breeding: { name: "Breeding", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3.6 0 6 5.2 6 9.2A6 6 0 0 1 6 12.7c0-4 2.4-9.2 6-9.2z"/></svg>', how: "Pairing fish, turning the eggs and hatching them. A shiny baby triples the hatch." }
+    farming: { name: "Farming", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20v-8"/><path d="M12 12c-4 0-6-3-6-6 3 0 6 2 6 6zM12 14c3.5 0 5.5-2.5 5.5-5.5-3 0-5.5 2-5.5 5.5z"/><path d="M5 20h14"/></svg>', how: "Planting, watering and harvesting the bait garden. Slower baits give more. Level 20 and 40 let the garden run itself." },
+    cooking: { name: "Cooking", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6z"/><path d="M8 6.5c0-1 1-1 1-2.2M12 6.5c0-1 1-1 1-2.2M16 6.5c0-1 1-1 1-2.2"/></svg>', how: "Cooking a catch instead of selling it. It pays fewer pearls, so it costs you something. Level 20 opens the smokehouse." },
+    breeding: { name: "Breeding", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3.6 0 6 5.2 6 9.2A6 6 0 0 1 6 12.7c0-4 2.4-9.2 6-9.2z"/></svg>', how: "Pairing fish, turning the eggs and hatching them. A shiny baby triples the hatch. Level 20 and 40 automate the nests." }
   };
   /* Shop unlocks. `at` is the level in `skill` you need before the thing can
      be bought — pearls are still the other half. Ordered by level inside a
@@ -754,6 +756,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { skill: "fishing", at: 45, what: "Carbon Pro" },
     { skill: "fishing", at: 60, what: "Zcoin treasure chest" },
     { skill: "fishing", at: 70, what: "Golden Rod" },
+    { skill: "farming", at: 20, what: "Sprinkler" },
+    { skill: "farming", at: 40, what: "Caretaker" },
+    { skill: "breeding", at: 20, what: "Egg turner" },
+    { skill: "breeding", at: 40, what: "Hatchery" },
+    { skill: "cooking", at: 20, what: "Smokehouse" },
+    { skill: "cooking", at: 40, what: "Cannery" },
     { skill: "cooking", at: 5, what: "Kelp forest" },
     { skill: "cooking", at: 15, what: "Sand castle" },
     { skill: "farming", at: 10, what: "6 garden plots" },
@@ -769,6 +777,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const plot = PLOT_CAPS.findIndex((c) => `${c.cap} garden plots` === what); if (plot > 0) return S.plotLvl >= plot;
     const nest = NEST_CAPS.findIndex((c) => `${c.cap} nests` === what); if (nest > 0) return S.nestLvl >= nest;
     const dec = DECOR.find((d) => d.name === what); if (dec) return Boolean(S.decor[dec.key]);
+    const kit = KIT.find((k) => k.name === what); if (kit) return Boolean(S.auto[kit.key]);
     return false;
   }
   const levelIn = (skill) => levelOf(S.skills[skill] || 0);
@@ -787,6 +796,20 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const HATCH_XP = [400, 800, 1600, 3500, 9000];
   const COOK_XP = [60, 140, 300, 750, 2000];
   const TURN_MS = 10 * 60 * 1000;   // how often a nest can be turned
+  /* Idle kit. Fishing is never idle — someone has to be holding the rod —
+     but the other three can be left running once the skill is high enough.
+     Idle work pays LESS xp than doing it yourself (IDLE_CUT), so it tops a
+     skill up between sessions rather than replacing them. */
+  const IDLE_CUT = 0.55;
+  const SMOKE_MS = 30 * 60 * 1000;  // the smokehouse cooks one fish this often (half that with the cannery)
+  const KIT = [
+    { key: "sprinkler", name: "Sprinkler", skill: "farming", at: 20, cost: 3000, about: "Waters every bed for you, awake or away" },
+    { key: "caretaker", name: "Caretaker", skill: "farming", at: 40, cost: 15000, about: "Harvests a ready bed and replants the same bait" },
+    { key: "turner", name: "Egg turner", skill: "breeding", at: 20, cost: 3000, about: "Turns every egg the moment it can be turned" },
+    { key: "hatchery", name: "Hatchery", skill: "breeding", at: 40, cost: 15000, about: "Hatches eggs into the nursery without you" },
+    { key: "smokehouse", name: "Smokehouse", skill: "cooking", at: 20, cost: 3000, about: "Cooks a nursery fish every 30 minutes, keeping two back" },
+    { key: "cannery", name: "Cannery", skill: "cooking", at: 40, cost: 15000, about: "The smokehouse runs twice as often and keeps one back" }
+  ];
   const session = { xp: 0, since: 0 };
   let tracked = "fishing";
 
@@ -1640,7 +1663,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     toast(`${sp.name} egg laid`, `Hatches in ${dur(HATCH_MS[sp.rar])}. +${num(xp)} Breeding xp`);
     track("breed"); renderBreeding(); renderTank(); save();
   }
-  function hatch(i) {
+  function hatch(i, quiet) {
     const n = S.nests[i]; if (!n || S.clock < n.ready) return;
     const sp = BY_KEY[n.key];
     const w = Math.min(sp.w[1] * 1.05, Math.max(sp.w[0], ((n.wa + n.wb) / 2) * (0.85 + Math.random() * 0.35)));
@@ -1653,8 +1676,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     S.dex[n.key] = entry;
     S.nursery.push({ id: S.uid++, key: n.key, w, shiny });
     S.nests[i] = null;
-    const xp = grant("breeding", HATCH_XP[sp.rar] * (shiny ? 3 : 1));
-    toast(`${shiny ? "A shiny " : "A "}${sp.name} hatched!`, `${lbs(w)}${record ? " · a new record" : ""}. It's in the nursery. +${num(xp)} Breeding xp`);
+    const xp = grant("breeding", HATCH_XP[sp.rar] * (shiny ? 3 : 1) * (quiet ? IDLE_CUT : 1));
+    idleLog.xp += quiet ? xp : 0;
+    if (!quiet || shiny) toast(`${shiny ? "A shiny " : "A "}${sp.name} hatched!`, `${lbs(w)}${record ? " · a new record" : ""}. It's in the nursery.${quiet ? " The hatchery saw to it." : ``} +${num(xp)} Breeding xp`);
     track("hatch"); if (shiny) track("shiny");
     renderBreeding(); renderTank(); renderDex(); renderProfile(); save();
   }
@@ -1917,7 +1941,75 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (!b) return;
     b.hidden = !n; b.textContent = n;
   }
+  /* Idle work. Everything runs off the game clock, so it catches up the same
+     way whether the tab was open or shut. What it did is collected in idleLog
+     so coming back can say it in one line. */
+  const idleLog = { watered: 0, harvested: 0, planted: 0, turned: 0, hatched: 0, cooked: 0, pearls: 0, xp: 0 };
+  const idleOn = (key) => { const k = KIT.find((x) => x.key === key); return Boolean(S.auto[key]) && levelIn(k.skill) >= k.at; };
+  function idleTick() {
+    let touched = false;
+    // the garden
+    if (idleOn("sprinkler")) {
+      S.plots.forEach((p) => {
+        if (!p.seed || p.watered || S.clock >= p.ready) return;
+        p.watered = true;
+        p.ready = S.clock + (p.ready - S.clock) * 0.75;
+        idleLog.xp += grant("farming", (WATER_XP[p.seed] || 50) * IDLE_CUT);
+        idleLog.watered += 1; touched = true;
+      });
+    }
+    if (idleOn("caretaker")) {
+      S.plots.forEach((p) => {
+        if (!p.seed || S.clock < p.ready) return;
+        const b = BAITS[p.seed], seed = p.seed;
+        S.bait[seed] = (S.bait[seed] || 0) + b.yield;
+        idleLog.xp += grant("farming", (HARVEST_XP[seed] || 150) * IDLE_CUT);
+        idleLog.harvested += 1; touched = true;
+        if (S.pearls >= b.cost) {
+          S.pearls -= b.cost;
+          Object.assign(p, { seed, at: S.clock, ready: S.clock + b.grow, watered: false });
+          idleLog.xp += grant("farming", (PLANT_XP[seed] || 60) * IDLE_CUT);
+          idleLog.planted += 1;
+        } else Object.assign(p, { seed: null, at: 0, ready: 0, watered: false });
+      });
+    }
+    // the nests
+    if (idleOn("turner")) {
+      S.nests.forEach((n) => {
+        if (!n || S.clock >= n.ready || S.clock < (n.turnAt || 0) + TURN_MS) return;
+        n.turnAt = S.clock;
+        n.ready -= (n.ready - S.clock) * 0.02;
+        idleLog.xp += grant("breeding", TURN_XP[BY_KEY[n.key].rar] * IDLE_CUT);
+        idleLog.turned += 1; touched = true;
+      });
+    }
+    if (idleOn("hatchery")) {
+      S.nests.forEach((n, i) => { if (n && S.clock >= n.ready) { hatch(i, true); idleLog.hatched += 1; touched = true; } });
+    }
+    // the smokehouse
+    if (idleOn("smokehouse")) {
+      const every = idleOn("cannery") ? SMOKE_MS / 2 : SMOKE_MS;
+      const keep = idleOn("cannery") ? 1 : 2;
+      if (!S.smokeAt) S.smokeAt = S.clock;
+      let guard = 40;
+      while (S.clock - S.smokeAt >= every && S.nursery.length > keep && guard-- > 0) {
+        S.smokeAt += every;
+        const f = S.nursery.shift();
+        const sp = BY_KEY[f.key];
+        const pearls = Math.round(fishRate(f) * 2);
+        S.pearls += pearls;
+        idleLog.pearls += pearls;
+        idleLog.xp += grant("cooking", COOK_XP[sp.rar] * (f.shiny ? 2 : 1) * IDLE_CUT);
+        idleLog.cooked += 1; touched = true;
+      }
+      if (S.clock - S.smokeAt > every) S.smokeAt = S.clock;   // nothing to cook: don't bank up a backlog
+    }
+    if (touched) { renderProfile(); renderBaitSel(); save(); }
+    return touched;
+  }
+
   function tickLoop(skipRebuild) {
+    idleTick();
     if (!skipRebuild) {
       if (gardenSig() !== loopRefs.gardenSig) renderGarden();
       if (nestSig() !== loopRefs.nestSig) renderBreeding();
@@ -2007,6 +2099,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     PLOT_CAPS.forEach((c, i) => { if (i === 0) return; row(garden, `${c.cap} garden plots`, "Grow more bait at once", c.cost, S.plotLvl >= i, () => { S.plotLvl = i; normalizeLoop(); renderGarden(); toast(`${c.cap} garden plots`); }); });
     const nestsSec = sec("Breeding");
     NEST_CAPS.forEach((c, i) => { if (i === 0) return; row(nestsSec, `${c.cap} nests`, "Incubate more eggs at once", c.cost, S.nestLvl >= i, () => { S.nestLvl = i; normalizeLoop(); renderBreeding(); toast(`${c.cap} nests`); }); });
+    const kit = sec("Idle kit");
+    kit.append(el("p", "note", "Runs whether the tab is open or shut. Fishing is never idle — someone has to hold the rod."));
+    KIT.forEach((k) => row(kit, k.name, `${k.about} · ${Math.round(IDLE_CUT * 100)}% xp`, k.cost, Boolean(S.auto[k.key]), () => { S.auto[k.key] = true; toast(`${k.name} installed`, k.about + "."); }));
     const dec = sec("Decorations");
     DECOR.forEach((d) => row(dec, d.name, `Looks great · tank makes +5% pearls`, d.cost, !!S.decor[d.key], () => { S.decor[d.key] = true; toast(`${d.name} placed`, "+5% pearls."); }));
   }
@@ -2097,6 +2192,15 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     S.clock += seconds * 1000;
     const hrs = Math.min(seconds / 3600, OFFLINE_CAP_H), made = tankRate() * hrs;
     tickLoop();
+    const bits = [];
+    if (idleLog.watered) bits.push(`${idleLog.watered} watered`);
+    if (idleLog.harvested) bits.push(`${idleLog.harvested} harvested`);
+    if (idleLog.planted) bits.push(`${idleLog.planted} replanted`);
+    if (idleLog.turned) bits.push(`${idleLog.turned} eggs turned`);
+    if (idleLog.hatched) bits.push(`${idleLog.hatched} hatched`);
+    if (idleLog.cooked) bits.push(`${idleLog.cooked} cooked`);
+    if (bits.length) toast("Your kit kept working", `${bits.join(" · ")} · +${num(idleLog.xp)} xp`);
+    Object.keys(idleLog).forEach((k) => { idleLog[k] = 0; });
     if (made <= 0) { if (!quiet) toast("Nothing in the tank", "Fish you keep make pearls while you're gone. The garden and eggs kept growing."); return; }
     S.pearls += made;
     toast(`While you were away: +${num(made)} pearls`, `${(seconds / 3600).toFixed(1)} hours${seconds / 3600 > OFFLINE_CAP_H ? ", capped at 8" : ""} of your tank's ${num(tankRate())}/hr.`);
