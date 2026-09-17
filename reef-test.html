@@ -920,31 +920,22 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   ];
   const ROD_IMGS = RODS.map((r) => { const i = new Image(); i.decoding = "async"; i.src = artSrc(r.art + "-scene"); return i; });
   const TANKS = [
-    { cap: 5, cost: 0, name: "Starter tank", art: "tank-starter", about: "A pump, two plants and some gravel" },
-    { cap: 8, cost: 300, name: "Planted tank", art: "tank-planted", about: "Driftwood, stone and a bed of plants" },
-    { cap: 12, cost: 1500, name: "Reef tank", art: "tank-reef", about: "Live coral over a sand shelf" },
-    { cap: 16, cost: 6000, name: "Grand reef", art: "tank-grand", about: "A gold-framed wall of reef" }
+    { cap: 5, cost: 0, name: "Starter tank", icon: "🪣", about: "A plastic hood, an air stone and two fake plants" },
+    { cap: 8, cost: 300, name: "Planted tank", icon: "🌿", about: "Driftwood and stone under an LED bar" },
+    { cap: 12, cost: 1500, name: "Reef tank", icon: "🪸", about: "Rimless glass, hard light, live rock" },
+    { cap: 16, cost: 6000, name: "Grand reef", icon: "🏛️", about: "A gold-framed wall on a marble plinth" }
   ];
-  /* The tank art is the BACKDROP: the painting already has its own sand,
-     plants and rock, so when it is up the drawn gradient, back plants and
-     sand line are skipped and only the live layer — bought decorations,
-     bubbles, the fish — goes over the top. sandY still decides where a fish
-     may swim and where a decoration sits, so the two agree. Loaded on
-     demand rather than all four at once: only the tank you own is fetched
-     (58-214 KB each), and the shop's cards lazy-load their own copies. */
-  const tankImgs = {};
-  function tankArt(i) {
-    const t = TANKS[i]; if (!t || !t.art) return null;
-    let im = tankImgs[t.art];
-    if (!im) { im = tankImgs[t.art] = new Image(); im.decoding = "async"; im.src = artSrc(t.art); }
-    return im.complete && im.naturalWidth ? im : null;
-  }
-  /** Cover-crop, so the painting fills the canvas at any shape. */
-  function drawCover(ctx, im, w, h) {
-    const scale = Math.max(w / im.naturalWidth, h / im.naturalHeight);
-    const dw = im.naturalWidth * scale, dh = im.naturalHeight * scale;
-    ctx.drawImage(im, (w - dw) / 2, (h - dh) / 2, dw, dh);
-  }
+  /* The tanks are DRAWN, not photographed. Painted backdrops looked good and
+     said nothing: they were four nice aquariums, and an upgrade did not read
+     as an upgrade. Drawing them puts the ladder in the picture — a
+     store-bought box with a plastic hood and two fake plants, then a planted
+     aquascape under an LED bar, then a lit reef in rimless glass, then a
+     gold-framed wall on a marble plinth. It also costs nothing to download,
+     scales to any canvas, and moves.
+
+     sandY is shared by all four, because it is what decides where a fish may
+     swim and where a bought decoration sits. Anything the player BOUGHT
+     draws on top, so a sunken ship reads the same in every tank. */
   const DECOR = [
     { key: "kelp", name: "Kelp forest", cost: 60 },
     { key: "castle", name: "Sand castle", cost: 250 },
@@ -1940,25 +1931,181 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (tankOn) { const { ctx, w, h } = fitCanvas($("tank")); drawTankTo(ctx, w, h, t, dt, true); }
     if (miniOn) { const mini = $("miniTank"); drawTankTo(mini.getContext("2d"), mini.width, mini.height, t, dt, !tankOn); }
   }
-  function drawTankTo(ctx, w, h, t, dt, live) {
-    const painted = tankArt(S.tank);
-    if (painted) drawCover(ctx, painted, w, h);
-    else {
-      let g = ctx.createLinearGradient(0, 0, 0, h);
-      const theme = THEMES[wearing("theme")] || THEMES[""];
-      g.addColorStop(0, theme[0]); g.addColorStop(0.55, theme[1]); g.addColorStop(1, theme[2]);
-      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-      // light rays
-      ctx.save(); ctx.globalAlpha = 0.08; ctx.fillStyle = "#fff";
-      for (let i = 0; i < 5; i++) { const x = (i * w / 4 + Math.sin(t / 3000 + i) * 30); ctx.beginPath(); ctx.moveTo(x - 20, 0); ctx.lineTo(x + 30, 0); ctx.lineTo(x + 90, h); ctx.lineTo(x + 10, h); ctx.fill(); }
-      ctx.restore();
+  /* --- the bits the tanks are built from --------------------------- */
+  const blade = (ctx, x, y, len, wide, sway, col, t, seed) => {
+    ctx.strokeStyle = col; ctx.lineWidth = wide; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(x, y);
+    for (let k = 1; k <= 6; k++) ctx.lineTo(x + Math.sin(t / 1400 + seed + k * 0.55) * k * sway, y - (len * k) / 6);
+    ctx.stroke();
+  };
+  const clump = (ctx, x, y, len, t, seed, cols, n = 5, sway = 2.2, wide = 5) => {
+    for (let i = 0; i < n; i++) blade(ctx, x + (i - (n - 1) / 2) * wide * 1.5, y, len * (0.65 + ((seed + i * 7) % 5) / 10), wide, sway, cols[i % cols.length], t, seed + i);
+  };
+  const stone = (ctx, x, y, rw, rh, top, side) => {
+    ctx.fillStyle = side; ctx.beginPath(); ctx.moveTo(x - rw, y); ctx.lineTo(x - rw * 0.7, y - rh); ctx.lineTo(x + rw * 0.55, y - rh * 0.88); ctx.lineTo(x + rw, y); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = top; ctx.beginPath(); ctx.moveTo(x - rw * 0.7, y - rh); ctx.lineTo(x + rw * 0.55, y - rh * 0.88); ctx.lineTo(x + rw * 0.2, y - rh * 1.02); ctx.lineTo(x - rw * 0.45, y - rh * 1.06); ctx.closePath(); ctx.fill();
+  };
+  /** A branching coral, grown from one seed so it is the same every frame. */
+  function coral(ctx, x, y, size, col, t, seed) {
+    const R = prng(Math.floor(seed));
+    ctx.strokeStyle = col; ctx.lineCap = "round";
+    const arm = (ax, ay, len, ang, wide, depth) => {
+      const wob = Math.sin(t / 1600 + seed + depth) * 0.04;
+      const bx = ax + Math.cos(ang + wob) * len, by = ay + Math.sin(ang + wob) * len;
+      ctx.lineWidth = wide; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+      if (depth > 2 || len < 5) return;
+      arm(bx, by, len * 0.72, ang - 0.45 - R() * 0.3, wide * 0.7, depth + 1);
+      arm(bx, by, len * 0.72, ang + 0.45 + R() * 0.3, wide * 0.7, depth + 1);
+    };
+    arm(x, y, size * 0.4, -Math.PI / 2, Math.max(2, size * 0.12), 0);
+  }
+  /** A fan coral: a filled half-disc with ribs. */
+  function fan(ctx, x, y, size, col, rib) {
+    ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(x, y, size, size * 0.85, 0, Math.PI, 0); ctx.fill();
+    ctx.strokeStyle = rib; ctx.lineWidth = 1.4;
+    for (let a = -2.7; a < -0.4; a += 0.28) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * size * 0.95, y + Math.sin(a) * size * 0.8); ctx.stroke(); }
+  }
+  /** Light through moving water, on the floor. */
+  function caustics(ctx, w, y, hgt, t, alpha) {
+    if (hgt <= 0) return;
+    ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
+    for (let i = 0; i < 14; i++) {
+      ctx.beginPath();
+      for (let x = 0; x <= w; x += 12) ctx.lineTo(x, y + hgt * ((i + 0.5) / 14) + Math.sin(x * 0.03 + t / 900 + i) * 4);
+      ctx.stroke();
     }
+    ctx.restore();
+  }
+  const rays = (ctx, w, h, t, n, alpha, wide) => {
+    ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = "#fff";
+    for (let i = 0; i < n; i++) { const x = i * w / (n - 1) + Math.sin(t / 3000 + i) * 26; ctx.beginPath(); ctx.moveTo(x - wide * 0.3, 0); ctx.lineTo(x + wide * 0.4, 0); ctx.lineTo(x + wide * 1.3, h); ctx.lineTo(x + wide * 0.2, h); ctx.fill(); }
+    ctx.restore();
+  };
+
+  /* --- the tanks themselves ---------------------------------------- */
+  const TANK_WATER = [
+    ["#3fb4e2", "#1f8dc4", "#14648f"],     // a shop tank, flat and bright
+    ["#2a9ec4", "#14709a", "#093f5c"],     // planted, greener and deeper
+    ["#38c9e0", "#1190b6", "#064d70"],     // reef, lit hard from above
+    ["#3ecbe8", "#0f7fae", "#03253e"]      // the deep blue of a public aquarium
+  ];
+  function drawTankBack(ctx, w, h, t, sandY) {
+    const lvl = Math.min(S.tank, TANK_WATER.length - 1);
+    const worn = wearing("theme");
+    const cols = worn && THEMES[worn] ? THEMES[worn] : TANK_WATER[lvl];
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, cols[0]); g.addColorStop(0.55, cols[1]); g.addColorStop(1, cols[2]);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+
+    if (lvl === 0) {
+      // a household tank: a plastic hood, an air stone, gravel, two fake plants
+      rays(ctx, w, h, t, 4, 0.06, 40);
+      ctx.fillStyle = "rgba(255,255,255,.16)"; ctx.fillRect(0, h * 0.075, w, 2);
+      ctx.fillStyle = "#cfd6cf"; ctx.fillRect(w * 0.055, h * 0.08, 6, sandY - h * 0.16);
+      ctx.fillStyle = "#3a3f45"; ctx.fillRect(w * 0.045, sandY - h * 0.08, 12, h * 0.08);
+      ctx.fillStyle = "#c9b48a"; ctx.beginPath(); ctx.moveTo(0, h);
+      for (let x = 0; x <= w; x += 22) ctx.lineTo(x, sandY + Math.sin(x * 0.02) * 4);
+      ctx.lineTo(w, h); ctx.fill();
+      for (let i = 0; i < 90; i++) { const gx = (i * 97) % w, gy = sandY + 6 + (i * 31) % Math.max(4, h - sandY - 10); ctx.fillStyle = ["#a8926a", "#8d7a58", "#d8c9a4", "#6f6250"][i % 4]; ctx.fillRect(gx, gy, 4, 3); }
+      clump(ctx, w * 0.17, sandY + 4, h * 0.34, t, 3, ["#2f8a4a", "#3fae5e"], 5, 1.4, 6);
+      clump(ctx, w * 0.84, sandY + 4, h * 0.28, t, 9, ["#35995a", "#49b96c"], 4, 1.4, 5);
+      stone(ctx, w * 0.28, sandY + 6, 26, 20, "#8b8d8c", "#5f6362");
+      ctx.fillStyle = "#15181c"; ctx.fillRect(0, 0, w, h * 0.07);
+      ctx.fillRect(0, h - h * 0.06, w, h * 0.06);
+      ctx.fillStyle = "rgba(255,255,255,.07)"; ctx.fillRect(0, h * 0.07, w * 0.02, h * 0.87); ctx.fillRect(w - w * 0.02, h * 0.07, w * 0.02, h * 0.87);
+      return;
+    }
+
+    if (lvl === 1) {
+      // a planted tank: an LED bar, driftwood, a sand path, stem plants
+      ctx.fillStyle = "#0e1116"; ctx.fillRect(0, 0, w, h * 0.04);
+      ctx.fillStyle = "rgba(226,246,255,.85)"; ctx.fillRect(w * 0.06, h * 0.038, w * 0.88, 3);
+      rays(ctx, w, h, t, 5, 0.09, 46);
+      ctx.fillStyle = "#3b3226"; ctx.beginPath(); ctx.moveTo(0, h);
+      for (let x = 0; x <= w; x += 20) ctx.lineTo(x, sandY + 4 + Math.sin(x * 0.015) * 6);
+      ctx.lineTo(w, h); ctx.fill();
+      ctx.fillStyle = "#ddd0a8"; ctx.beginPath(); ctx.moveTo(w * 0.34, h);
+      ctx.lineTo(w * 0.42, sandY + 8); ctx.lineTo(w * 0.6, sandY + 8); ctx.lineTo(w * 0.7, h); ctx.fill();
+      ctx.save(); ctx.translate(w * 0.2, sandY + 6); ctx.strokeStyle = "#4a3421"; ctx.lineCap = "round";
+      ctx.lineWidth = 13; ctx.beginPath(); ctx.moveTo(-40, 4); ctx.quadraticCurveTo(10, -30, 62, -74); ctx.stroke();
+      ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(4, -18); ctx.quadraticCurveTo(-18, -44, -44, -52); ctx.stroke();
+      ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(34, -46); ctx.quadraticCurveTo(48, -70, 40, -92); ctx.stroke(); ctx.restore();
+      stone(ctx, w * 0.8, sandY + 6, 40, 30, "#8d9299", "#585f66");
+      stone(ctx, w * 0.9, sandY + 6, 26, 44, "#848a91", "#4e555c");
+      clump(ctx, w * 0.08, sandY + 6, h * 0.5, t, 2, ["#2c7f43", "#3a9c52"], 6, 2.4, 6);
+      clump(ctx, w * 0.3, sandY + 4, h * 0.34, t, 5, ["#b8443f", "#d1584c"], 5, 2.2, 5);
+      clump(ctx, w * 0.69, sandY + 6, h * 0.44, t, 8, ["#2f8a4a", "#46ad5c"], 6, 2.4, 6);
+      clump(ctx, w * 0.95, sandY + 6, h * 0.3, t, 11, ["#c04a3c", "#e0705a"], 4, 2, 5);
+      ctx.fillStyle = "rgba(120,200,150,.5)";
+      for (let i = 0; i < 28; i++) { const cx = (i * 61) % w; ctx.beginPath(); ctx.arc(cx, sandY + 10 + ((i * 17) % 10), 7, Math.PI, 0); ctx.fill(); }
+      ctx.fillStyle = "#0e1116"; ctx.fillRect(0, h - h * 0.035, w, h * 0.035);
+      return;
+    }
+
+    if (lvl === 2) {
+      // a reef: rimless glass, hard light, live rock either side
+      rays(ctx, w, h, t, 6, 0.12, 40);
+      ctx.fillStyle = "#e6dcbd"; ctx.beginPath(); ctx.moveTo(0, h);
+      for (let x = 0; x <= w; x += 20) ctx.lineTo(x, sandY + Math.sin(x * 0.018) * 5);
+      ctx.lineTo(w, h); ctx.fill();
+      caustics(ctx, w, sandY, h - sandY, t, 0.14);
+      for (const [sx, dir] of [[0.1, -1], [0.88, 1]]) {
+        stone(ctx, w * sx, sandY + 6, w * 0.13, h * 0.3, "#8b9098", "#4f565f");
+        stone(ctx, w * (sx + dir * 0.07), sandY + 6, w * 0.09, h * 0.19, "#7e848c", "#464d55");
+        coral(ctx, w * (sx - dir * 0.02), sandY - h * 0.28, h * 0.3, "#e8743c", t, 21 + sx * 100);
+        coral(ctx, w * (sx + dir * 0.06), sandY - h * 0.16, h * 0.24, "#b06fd0", t, 44 + sx * 100);
+        fan(ctx, w * (sx + dir * 0.03), sandY - h * 0.05, h * 0.1, "#e0577f", "#ff9ab4");
+        clump(ctx, w * (sx + dir * 0.1), sandY + 4, h * 0.2, t, 17 + sx * 50, ["#2f9a7a", "#41bd92"], 4, 2.6, 4);
+      }
+      ctx.fillStyle = "#f0c14b";
+      for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(w * (0.34 + i * 0.08), sandY - 1, 9, Math.PI, 0); ctx.fill(); }
+      ctx.strokeStyle = "rgba(226,246,255,.7)"; ctx.lineWidth = 3; ctx.strokeRect(1.5, 1.5, w - 3, h - 3);
+      return;
+    }
+
+    // the wall: an arch behind, coral towers, a gold frame on marble
+    ctx.fillStyle = "rgba(6,40,66,.5)";
+    ctx.fillRect(w * 0.3, h * 0.22, w * 0.4, sandY - h * 0.22);
+    ctx.beginPath(); ctx.ellipse(w * 0.5, h * 0.22, w * 0.2, h * 0.1, 0, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = "rgba(9,58,92,.55)";
+    for (const cx of [0.36, 0.64]) ctx.fillRect(w * cx - 12, h * 0.18, 24, sandY - h * 0.18);
+    rays(ctx, w, h, t, 7, 0.14, 44);
+    ctx.fillStyle = "#f2e6c8"; ctx.beginPath(); ctx.moveTo(0, h);
+    for (let x = 0; x <= w; x += 20) ctx.lineTo(x, sandY + Math.sin(x * 0.016) * 4);
+    ctx.lineTo(w, h); ctx.fill();
+    caustics(ctx, w, sandY, h - sandY, t, 0.2);
+    for (const [sx, dir] of [[0.08, -1], [0.9, 1]]) {
+      stone(ctx, w * sx, sandY + 6, w * 0.15, h * 0.46, "#93a2ad", "#4a5966");
+      stone(ctx, w * (sx + dir * 0.09), sandY + 6, w * 0.1, h * 0.3, "#8694a0", "#414f5c");
+      coral(ctx, w * (sx - dir * 0.03), sandY - h * 0.44, h * 0.3, "#f0a13c", t, 61 + sx * 100);
+      coral(ctx, w * (sx + dir * 0.04), sandY - h * 0.3, h * 0.28, "#6fd0c4", t, 77 + sx * 100);
+      coral(ctx, w * (sx + dir * 0.11), sandY - h * 0.16, h * 0.26, "#d95f8e", t, 93 + sx * 100);
+      fan(ctx, w * (sx + dir * 0.02), sandY - h * 0.09, h * 0.13, "#d4478f", "#ffa6cf");
+      fan(ctx, w * (sx + dir * 0.13), sandY - h * 0.03, h * 0.1, "#7a5fd0", "#c3b0ff");
+      clump(ctx, w * (sx + dir * 0.17), sandY + 4, h * 0.26, t, 31 + sx * 60, ["#2f9a7a", "#4bd0a0"], 5, 2.8, 5);
+    }
+    // the case: a marble plinth and a gold frame
+    const plinth = h - h * 0.075;
+    const mg = ctx.createLinearGradient(0, plinth, 0, h);
+    mg.addColorStop(0, "#241f1c"); mg.addColorStop(1, "#0f0d0c");
+    ctx.fillStyle = mg; ctx.fillRect(0, plinth, w, h - plinth);
+    ctx.save(); ctx.beginPath(); ctx.rect(0, plinth, w, h - plinth); ctx.clip();
+    ctx.strokeStyle = "rgba(255,255,255,.14)"; ctx.lineWidth = 1;
+    for (let i = 0; i < 7; i++) { ctx.beginPath(); ctx.moveTo((i * 191) % w, plinth + 3); ctx.lineTo(((i * 191) % w) + 60, h); ctx.stroke(); }
+    ctx.restore();
+    const gold = ctx.createLinearGradient(0, 0, 0, h);
+    gold.addColorStop(0, "#f7dd8a"); gold.addColorStop(0.5, "#c89a2a"); gold.addColorStop(1, "#8a6a1f");
+    ctx.strokeStyle = gold; ctx.lineWidth = 7; ctx.strokeRect(3.5, 3.5, w - 7, h - 7);
+    ctx.lineWidth = 1.5; ctx.strokeRect(11.5, 11.5, w - 23, h - 23);
+  }
+
+  function drawTankTo(ctx, w, h, t, dt, live) {
     const sandY = h * 0.84;
-    // back plants — the painted tanks bring their own, so only the bought kelp shows
-    const plants = painted ? (S.decor.kelp ? 11 : 0) : (S.decor.kelp ? 11 : 4);
-    for (let i = 0; i < plants; i++) {
-      const px = (i + 0.5) * w / plants + Math.sin(i * 7) * 12, ph = h * (0.25 + ((i * 37) % 10) / 30) * (S.decor.kelp ? 1.3 : 1);
-      ctx.strokeStyle = i % 2 ? "#2f8a4a" : "#3aa05a"; ctx.lineWidth = S.decor.kelp ? 7 : 5; ctx.beginPath(); ctx.moveTo(px, sandY + 6);
+    drawTankBack(ctx, w, h, t, sandY);
+    // the bought kelp forest, on top of whatever tank it is in
+    if (S.decor.kelp) for (let i = 0; i < 11; i++) {
+      const px = (i + 0.5) * w / 11 + Math.sin(i * 7) * 12, ph = h * (0.25 + ((i * 37) % 10) / 30) * 1.3;
+      ctx.strokeStyle = i % 2 ? "#2f8a4a" : "#3aa05a"; ctx.lineWidth = 7; ctx.lineCap = "butt"; ctx.beginPath(); ctx.moveTo(px, sandY + 6);
       for (let k = 1; k <= 6; k++) ctx.lineTo(px + Math.sin(t / 1200 + i + k * 0.6) * k * 2.2, sandY + 6 - (ph * k) / 6);
       ctx.stroke();
     }
@@ -1976,13 +2123,6 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       ctx.fillRect(cx - cw / 2 - 12, sandY - 88, 26, 92); ctx.fillRect(cx + cw / 2 - 14, sandY - 88, 26, 92);
       ctx.fillStyle = "#9c8d70"; for (const bx of [cx - cw / 2 - 12, cx + cw / 2 - 14]) for (let k = 0; k < 3; k++) ctx.fillRect(bx + k * 9, sandY - 96, 6, 8);
       ctx.fillStyle = "#3a3024"; ctx.beginPath(); ctx.arc(cx, sandY - 12, 14, Math.PI, 0); ctx.fillRect(cx - 14, sandY - 12, 28, 16); ctx.fill();
-    }
-    // sand
-    if (!painted) {
-      ctx.fillStyle = "#d8c08a"; ctx.beginPath(); ctx.moveTo(0, h);
-      for (let x = 0; x <= w; x += 20) ctx.lineTo(x, sandY + Math.sin(x * 0.02) * 5);
-      ctx.lineTo(w, h); ctx.fill();
-      ctx.fillStyle = "rgba(0,0,0,.08)"; for (let i = 0; i < 40; i++) ctx.fillRect((i * 73) % w, sandY + 8 + (i * 29) % (h - sandY - 8), 3, 2);
     }
     if (S.decor.chest) {
       const cx = w * 0.5, cy = sandY + 2;
@@ -2020,16 +2160,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     bubbles = bubbles.filter((b) => b.y > -10);
     for (const b of bubbles) { if (live) { b.y -= (30 + b.r * 10) * dt; b.x += Math.sin(t / 300 + b.r * 10) * 0.3; } ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.stroke(); }
     // glass
-    if (!painted) { ctx.fillStyle = "rgba(255,255,255,.05)"; ctx.fillRect(0, 0, w * 0.08, h); }
+    ctx.fillStyle = "rgba(255,255,255,.05)"; ctx.fillRect(0, 0, w * 0.08, h);
     if (!swimmers.length) {
       const line = "Your tank is empty. Go catch something.";
       ctx.font = `700 ${Math.max(13, w / 34)}px Figtree, sans-serif`; ctx.textAlign = "center";
-      if (painted) {
-        const tw = ctx.measureText(line).width, fs = Math.max(13, w / 34);
-        ctx.fillStyle = "rgba(8,6,5,.55)";
-        ctx.beginPath(); ctx.roundRect(w / 2 - tw / 2 - 14, h * 0.42 - fs, tw + 28, fs * 1.8, 99); ctx.fill();
-      }
-      ctx.fillStyle = painted ? "rgba(255,255,255,.92)" : "rgba(255,255,255,.7)";
+      const tw = ctx.measureText(line).width, fs = Math.max(13, w / 34);
+      ctx.fillStyle = "rgba(8,6,5,.5)";
+      ctx.beginPath(); ctx.roundRect(w / 2 - tw / 2 - 14, h * 0.42 - fs, tw + 28, fs * 1.8, 99); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.92)";
       ctx.fillText(line, w / 2, h * 0.42);
     }
   }
@@ -3026,7 +3164,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       TANKS.forEach((t, i) => {
         if (i === 0) return;
         const u = needOf(`${t.cap}-fish tank`), locked = u && levelIn(u.skill) < u.at;
-        add(shopCard({ art: t.art, name: t.name, about: `${t.about} · room for ${t.cap} fish`, price: t.cost, owned: S.tank >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
+        add(shopCard({ icon: t.icon, name: t.name, about: `${t.about} · room for ${t.cap} fish`, price: t.cost, owned: S.tank >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
           onBuy: () => { if (S.pearls < t.cost) return; S.pearls -= t.cost; S.tank = i; toast(t.name, `Room for ${t.cap} fish.`); renderShop(); renderTank(); save(); } }));
       });
       PLOT_CAPS.forEach((c, i) => {
