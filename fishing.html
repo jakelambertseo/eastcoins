@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>EastCoin Reef — Mockup</title>
+<title>EastCoin Fishing</title>
 <link rel="stylesheet" href="/v3/assets/fonts/fonts.css">
 <style>
 :root{
@@ -698,7 +698,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     <div class="sb-top">
       <div class="sb-brand">
         <div class="eyebrow">EastCoin · Game Room</div>
-        <div class="sb-title">Reef <span class="mock-tag">Mockup</span></div>
+        <div class="sb-title">Fishing <span class="mock-tag">Mockup</span></div>
       </div>
       <div class="sb-wallet" hidden>
         <div><small>Pearls</small><strong><span class="pearl"></span><span id="pearls">0</span></strong></div>
@@ -883,8 +883,13 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   </section>
 
   <section class="view view-profile" role="tabpanel" id="panel-profile" aria-labelledby="tab-profile" data-panel="profile" hidden>
-    <header class="view-h"><div><h1>Profile preview</h1><p>What visitors would see on your EastCoin profile — your card, your numbers, and where they put you in the room.</p></div></header>
-    <div class="view-stack">
+    <header class="view-h"><div><h1 id="pHead">Profile preview</h1><p id="pSub">What visitors would see on your EastCoin profile — your card, your numbers, and where they put you in the room.</p></div></header>
+    <div class="card" id="pVisiting" hidden><div class="card-body">
+      <h2 class="card-h" id="pVisitName"></h2>
+      <p class="note">This mockup only holds your own reef, so there is nothing to show here yet. The address is the one a real angler's page will live at.</p>
+      <p><a class="btn small gold" href="/fishing/profile">Back to your own reef</a></p>
+    </div></div>
+    <div class="view-stack" id="pStack">
       <div class="card"><div class="card-body">
         <div class="pcard">
           <div class="pcard-face" id="pFace">
@@ -3705,6 +3710,15 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   function renderProfile() {
     renderStatbar();
     if (!$("pStats")) return;
+    // /fishing/u/<someone else> — the URL is real, the data is not here
+    const away = Boolean(viewing);
+    $("pVisiting").hidden = !away;
+    $("pStack").hidden = away;
+    $("pHead").textContent = away ? `${viewing}'s reef` : "Profile preview";
+    $("pSub").textContent = away
+      ? "Every angler gets a page of their own at /fishing/u/<name>."
+      : "What visitors would see on your EastCoin profile — your card, your numbers, and where they put you in the room.";
+    if (away) { $("pVisitName").textContent = viewing; return; }
     const caught = SPECIES.filter((sp) => S.dex[sp.key]?.n).length;
     const entries = Object.entries(S.dex).filter(([, d]) => d.n);
     const best = entries.slice().sort((a, b) => b[1].best - a[1].best)[0];
@@ -4101,13 +4115,44 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     setTimeout(() => b.remove(), 5200);
   }
 
+  /* ============================================================ routing
+     Every section has a real URL under /fishing, and a person's reef is
+     /fishing/u/<login>. The slug is deliberately not always the tab id —
+     "diving" reads better than "dive" — so the two are mapped here and
+     nowhere else.
+
+     The SAVE key is untouched by any of this. It is keyed to the origin,
+     not the path, so a rename cannot cost anyone their progress. */
+  const ROOT = "/fishing";
+  const ME = "bootypaper";                             // the mockup's own angler
+  const SLUGS = {
+    fishing: "", tank: "tank", dive: "diving", boss: "bosses", garden: "garden",
+    breeding: "breeding", craft: "crafting", inv: "inventory", skills: "skills",
+    quests: "quests", derby: "derby", dex: "book", board: "leaderboard",
+    profile: "profile", shop: "shop", controls: "controls"
+  };
+  const TAB_OF = Object.fromEntries(Object.entries(SLUGS).map(([tab, slug]) => [slug, tab]));
+  const pathFor = (tab) => ROOT + (SLUGS[tab] ? "/" + SLUGS[tab] : "");
+  /** What the address bar is asking for: a tab, and maybe someone's login. */
+  function readPath() {
+    const parts = location.pathname.replace(/\/+$/, "").split("/").filter(Boolean);
+    if (parts[0] !== "fishing") return { tab: null, who: null };
+    if (parts[1] === "u") return { tab: "profile", who: decodeURIComponent(parts[2] || "") };
+    if (!parts[1]) return { tab: "fishing", who: null };
+    return { tab: TAB_OF[parts[1]] || null, who: null };
+  }
+  let viewing = null;                                  // whose reef, when it is not yours
+
   const navTabs = [...document.querySelectorAll(".fnav .tab")];
   function openTab(b, focus) {
     if (!navOpen(b.dataset.tab)) { sayLocked(b.dataset.tab); return; }
     if (b.dataset.tab !== "fishing" && (fish.phase === "wait" || fish.phase === "bite" || fish.phase === "reel")) { setPhase("idle"); toast("You reeled your line in"); }
     $("fishtip").hidden = true;
     navTabs.forEach((x) => { const on = x === b; x.setAttribute("aria-selected", String(on)); x.tabIndex = on ? 0 : -1; });
-    try { history.replaceState(null, "", "#" + b.dataset.tab); } catch {}
+    try {
+      const want = b.dataset.tab === "profile" && viewing ? `${ROOT}/u/${encodeURIComponent(viewing)}` : pathFor(b.dataset.tab);
+      if (location.pathname !== want) history.pushState({ tab: b.dataset.tab }, "", want);
+    } catch {}
     window.scrollTo(0, 0);
     document.querySelectorAll("[data-panel]").forEach((p) => { p.hidden = p.dataset.panel !== b.dataset.tab; });
     if (b.dataset.tab === "shop") renderShop();
@@ -4164,6 +4209,19 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   renderEverything();
   const awayFor = (Date.now() - (S.saved || Date.now())) / 1000;
   if (awayFor > 120) away(awayFor, true);
+  function openFromUrl(push) {
+    const { tab, who } = readPath();
+    viewing = who && who.toLowerCase() !== ME.toLowerCase() ? who : null;
+    const b = navTabs.find((x) => x.dataset.tab === (tab || "fishing"));
+    if (!b) return;
+    if (!navOpen(b.dataset.tab)) { sayLocked(b.dataset.tab); return; }
+    if (!push) { navTabs.forEach((x) => { const on = x === b; x.setAttribute("aria-selected", String(on)); x.tabIndex = on ? 0 : -1; }); document.querySelectorAll("[data-panel]").forEach((q) => { q.hidden = q.dataset.panel !== b.dataset.tab; }); if (b.dataset.tab === "shop") renderShop(); if (b.dataset.tab === "board") renderBoard(); }
+    else openTab(b);
+    renderProfile();
+  }
+  openFromUrl(false);
+  window.addEventListener("popstate", () => openFromUrl(false));
+  // an old #hash link still works, and is upgraded to the real path
   if (fromHash && navOpen(fromHash.dataset.tab)) openTab(fromHash);
   $("cTour").addEventListener("click", () => tourStart());
   if (!S.tour) setTimeout(tourStart, 500);
