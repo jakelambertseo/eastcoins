@@ -283,6 +283,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .shop-row.locked{opacity:.75}
 .shop-row .need{display:block;font-size:.74rem;font-weight:800;color:#ff981f}
 .shop-row.locked .shop-ico{filter:grayscale(.85) brightness(.7)}
+.levelup.unlockup{background:linear-gradient(180deg,#132a33,var(--panel) 55%);border-color:rgba(79,195,217,.55)}
+.levelup.unlockup b{color:var(--sea)}
+.levelup.unlockup .unlock{color:var(--sea)}
 .levelup .unlock{display:block;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);color:var(--green);font-weight:800}
 .levelup .unlock em{font-style:normal;color:var(--text);font-weight:700}
 .skill-next{margin:auto 0 0;font-size:.76rem;font-weight:700;color:var(--gold)}
@@ -1063,7 +1066,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     auto: { sprinkler: false, caretaker: false, turner: false, hatchery: false, smokehouse: false, cannery: false }, smokeAt: 0,
     inv: {}, charm: 0, benchAt: 0, boss: {}, perks: {}, airLvl: 0, air: 5, bagLvl: 0,
     zc: 2500, conv: {}, cosm: {}, worn: { theme: "", name: "", title: "", pet: "" }, shopTab: "all",
-    stats: { dives: 0, diveValue: 0, crafts: 0, cooked: 0, spots: {}, baits: {}, casts: 0, snags: 0 } });
+    stats: { dives: 0, diveValue: 0, crafts: 0, cooked: 0, spots: {}, baits: {}, casts: 0, snags: 0 }, nav: {} });
   let S = fresh();
   try { const raw = localStorage.getItem(SAVE); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch {}
   S.skills = Object.assign({ fishing: 0, farming: 0, cooking: 0, breeding: 0, diving: 0, crafting: 0 }, S.skills || {});
@@ -1073,6 +1076,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   if (typeof S.zc !== "number") S.zc = 2500;
   if (!S.wv) { S.weather = "auto"; S.wv = 1; }                // saves from before the reef had its own weather
   S.stats = Object.assign({ dives: 0, diveValue: 0, crafts: 0, cooked: 0, spots: {}, baits: {}, casts: 0, snags: 0 }, S.stats || {});
+  S.nav = S.nav || {};
   const save = () => { S.saved = Date.now(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch {} };
 
   /* ============================================================ helpers */
@@ -3291,6 +3295,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 
   function tickLoop(skipRebuild) {
     idleTick();
+    checkUnlocks();
     if (!skipRebuild) {
       if (gardenSig() !== loopRefs.gardenSig) renderGarden();
       if (nestSig() !== loopRefs.nestSig) renderBreeding();
@@ -3849,33 +3854,18 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
      element is not on the page is skipped rather than pointing at nothing,
      so the tour cannot break when a panel changes. The sheet never takes
      clicks, so the thing being pointed at stays live underneath. */
+  /* Four steps, because the menu is three items long on a first run and
+     everything else introduces itself when it opens. The old thirteen-step
+     version walked people round pages they could not reach yet. */
   const TOUR = [
     { tab: "fishing", title: "Welcome to the Reef",
-      body: "A fishing game you play in a minute or leave running for a day. Everything here is caught, grown or made — nothing is bought with real money. Thirty seconds and you will know your way round." },
+      body: "A fishing game you play in a minute or leave running for a day. Everything here is caught, grown or made — nothing is bought with real money. Twenty seconds and you are away." },
     { tab: "fishing", sel: "#act", title: "Cast, then keep it in the green",
       body: "Cast and wait for the bite. When it runs, hold the bar inside the green band — press to pull up, let go to drop. Common fish barely fight. A legendary one will take everything you have." },
     { tab: "fishing", sel: "#spots", title: "Five places to fish",
       body: "Each spot holds its own six or seven species and better things live deeper. You unlock the next one in the shop, and the same spots are where you dive." },
-    { tab: "fishing", sel: ".baitpick", title: "Bait changes what bites",
-      body: "No bait still catches fish. Better bait pushes the odds toward the rare end, and you grow all of it yourself in the bait garden." },
-    { tab: "fishing", sel: "#clock", title: "The reef keeps its own clock",
-      body: "A day here is 24 real minutes and a season is two of those, so dawn, dusk, winter and a storm all come round while you play. Some fish only bite at one of them — the list under the rod says which, and how long until it is." },
-    { tab: "tank", title: "Fish you keep make pearls",
-      body: "Anything you put in the tank earns pearls every hour, awake or not, and keeps paying for up to eight hours after you close the page. Rarer and heavier pays more, so the tank is the decision: keep it, cook it, or sell it." },
-    { tab: "garden", title: "Grow your own bait",
-      body: "Plant a bed, water it, come back. Slower bait is better bait. At Farming 20 and 40 the garden waters and replants itself while you are away." },
-    { tab: "dive", title: "Dive for what is on the bottom",
-      body: "Kelp, shells, old coins, sometimes a sunken chest. Air runs out and has to be refilled at the surface, and the bag fills up — which is what sends you to the crafting page." },
-    { tab: "craft", title: "Make things out of what you find",
-      body: "Recipes turn junk into bait, pearls and charms. Every craft trains Crafting, and the odd cast brings a part up on the line so you are never stuck waiting on a dive." },
-    { tab: "skills", title: "Six skills, 0 to 99",
-      body: "Fishing, Farming, Cooking, Breeding, Diving and Crafting, on the curve you already know. Levels are what open the shop — pearls are only the other half of the price." },
-    { tab: "boss", title: "Then there are the big ones",
-      body: "Five of them, one to a spot. Old Scar is about four casts away: two pond species and Fishing 5. Beat one and that spot runs richer in rare fish for good." },
-    { tab: "shop", title: "Spend it here",
-      body: "Rods, tanks, gardens, nests, air, bags and the idle kit. Everything you have earned goes through this page." },
-    { tab: "fishing", sel: "#act", title: "That's the lot",
-      body: "Quests, the weekly derby, breeding and your profile are all in the menu when you want them. Go and catch something." }
+    { tab: "fishing", title: "The rest turns up on its own",
+      body: "Keep what you catch and the tank pays you pearls every hour, awake or not. Everything else — the bait garden, diving, crafting, the bosses — opens when you do the thing that needs it, and tells you when it does. Go and catch something." }
   ];
   let tourAt = -1;
   function tourShow(i) {
@@ -3938,6 +3928,90 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   });
   window.addEventListener("resize", () => { if (!$("tour").hidden && tourAt >= 0) tourShow(tourAt); });
 
+  /* ============================================================ unfolding
+     Fifteen destinations on a first load is a menu, not a game. Everything
+     past the first three arrives when you do the thing that needs it, so a
+     page never appears before it means something.
+
+     Every gate is PROGRESS, never a clock — "your first quest tick", not
+     "come back tomorrow". A returning player with a finished save sees all
+     of it on the first paint, because every test reads the save rather than
+     a flag written when it happened. */
+  const caught = () => Object.values(S.dex).reduce((n, d) => n + (d.n || 0), 0);
+  const totalLevel = () => Object.keys(SKILLS).reduce((n, k) => n + levelIn(k), 0);
+  const samePair = () => { const c = {}; return S.fish.some((f) => (c[f.key] = (c[f.key] || 0) + 1) >= 2); };
+  const GATES = [
+    { tab: "garden", name: "the Bait garden", when: () => caught() >= 8,
+      why: "Ten casts in and the fish are getting choosy. Grow your own bait and pick what bites." },
+    { tab: "skills", name: "Skills", when: () => totalLevel() >= 8,
+      why: "You are levelling. Six skills run to 99, and the levels are what open the shop." },
+    { tab: "quests", name: "Quests", when: () => S.q.daily.some((q) => q.prog >= q.target),
+      why: "You just ticked one off without trying. Three a day, and the third pays a chest." },
+    { tab: "dex", name: "the Fish book", when: () => SPECIES.filter((sp) => S.dex[sp.key]?.n).length >= 3,
+      why: "Three species down. The book keeps every one you land and the heaviest of each." },
+    { tab: "dive", name: "Diving", when: () => levelIn("fishing") >= 12,
+      why: "There is more down there than fish. Hold your breath and see what is on the bottom." },
+    { tab: "inv", name: "your Inventory", when: () => invCount() > 0,
+      why: "You brought something up. Everything you find lives in the bag until you sell or use it." },
+    { tab: "craft", name: "Crafting", when: () => invCount() >= 5,
+      why: "Enough bits to start making things. Junk turns into bait, pearls and charms." },
+    { tab: "breeding", name: "Breeding", when: () => samePair(),
+      why: "Two of the same species in the tank. Pair them up and see what hatches." },
+    { tab: "boss", name: "Bosses", when: () => BOSSES.some((b) => bossOpen(b)),
+      why: "Something old is waiting at one of your spots, and it is ready for you." },
+    { tab: "derby", name: "the Weekly derby", when: () => caught() >= 25,
+      why: "One species a week, heaviest fish takes the title. You have caught enough to enter." },
+    { tab: "board", name: "the Leaderboard", when: () => totalLevel() >= 40,
+      why: "You are on the board now. See where you sit against the room." },
+    { tab: "profile", name: "your Profile", when: () => totalLevel() >= 25,
+      why: "Enough of a record to show people. This is what a visitor sees." }
+  ];
+  const navOpen = (tab) => !GATES.some((g) => g.tab === tab) || Boolean(S.nav[tab]);
+  /** Show what is open, and hide a group heading whose whole group is shut. */
+  function paintNav() {
+    document.querySelectorAll(".fnav .tab").forEach((b) => { b.hidden = !navOpen(b.dataset.tab); });
+    let head = null, any = false;
+    const close = () => { if (head) head.hidden = !any; };
+    [...document.querySelectorAll(".fnav .tabs > *")].forEach((n) => {
+      if (n.classList.contains("fnav-h")) { close(); head = n; any = false; }
+      else if (!n.hidden) any = true;
+    });
+    close();
+  }
+  let unfolding = false;
+  /** Anything newly earned, announced one at a time. */
+  function checkUnlocks(quiet) {
+    if (unfolding) return;
+    unfolding = true;
+    const won = GATES.filter((g) => !S.nav[g.tab] && g.when());
+    won.forEach((g) => { S.nav[g.tab] = 1; });
+    if (won.length) {
+      paintNav();
+      if (!quiet) won.forEach((g, i) => setTimeout(() => unlockBanner(g), i * 900));
+    }
+    unfolding = false;
+    return won.length;
+  }
+  /** The same banner a level-up uses, in the reef's blue rather than gold. */
+  function unlockBanner(g) {
+    document.querySelector(".levelup")?.remove();
+    const b = el("div", "levelup unlockup");
+    b.setAttribute("role", "status");
+    b.innerHTML = `<b>You just unlocked ${g.name}!</b><span>${g.why}</span><span class="unlock"><em>It is in the menu on the left.</em></span>`;
+    const colors = ["#4fc3d9", "#bdf0ff", "#26d926", "#ffff00", "#7fd0ff"];
+    for (let i = 0; i < 26; i++) {
+      const f = el("i", "fw");
+      const a = (i / 26) * Math.PI * 2, r = 70 + Math.random() * 90;
+      f.style.background = colors[i % colors.length];
+      f.style.setProperty("--dx", `${Math.cos(a) * r * 1.8}px`);
+      f.style.setProperty("--dy", `${Math.sin(a) * r}px`);
+      f.style.animation = `fwburst ${0.9 + Math.random() * 0.5}s ease-out forwards`;
+      b.append(f);
+    }
+    document.body.append(b);
+    setTimeout(() => b.remove(), 5200);
+  }
+
   const navTabs = [...document.querySelectorAll(".fnav .tab")];
   function openTab(b, focus) {
     if (b.dataset.tab !== "fishing" && (fish.phase === "wait" || fish.phase === "bite" || fish.phase === "reel")) { setPhase("idle"); toast("You reeled your line in"); }
@@ -3971,7 +4045,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   });
 
   /* ============================================================ loop */
-  function renderEverything() { normalizeLoop(); ensureQuests(); renderSpots(); syncTank(); renderTank(); renderDex(); renderShop(); renderDerby(); renderProfile(); renderGarden(); renderBreeding(); renderQuests(); renderBaitSel(); renderSkills(); renderDive(); renderCraft(); renderInv(); renderBosses(); renderBoard(); renderXpTracker(); }
+  function renderEverything() { checkUnlocks(true); paintNav(); normalizeLoop(); ensureQuests(); renderSpots(); syncTank(); renderTank(); renderDex(); renderShop(); renderDerby(); renderProfile(); renderGarden(); renderBreeding(); renderQuests(); renderBaitSel(); renderSkills(); renderDive(); renderCraft(); renderInv(); renderBosses(); renderBoard(); renderXpTracker(); }
 
   // the reel's little fish
   function drawReelFish() {
@@ -4000,7 +4074,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   renderEverything();
   const awayFor = (Date.now() - (S.saved || Date.now())) / 1000;
   if (awayFor > 120) away(awayFor, true);
-  if (fromHash) openTab(fromHash);
+  if (fromHash && navOpen(fromHash.dataset.tab)) openTab(fromHash);
   $("cTour").addEventListener("click", () => tourStart());
   if (!S.tour) setTimeout(tourStart, 500);
   requestAnimationFrame(frame);
