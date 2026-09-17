@@ -200,25 +200,29 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .levelup .unlock em{font-style:normal;color:#fff;font-weight:700}
 .skill-next{margin:0;font-size:.76rem;font-weight:700;color:#ff981f}
 /* what levels unlock, under the skill cards */
-.unlocks{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
-.unlocks h2{font-family:var(--display);font-weight:800;font-size:1.05rem;margin:0;padding:13px 15px 0;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-.unlocks h2 small{color:var(--muted-2);font-size:.74rem;font-weight:600}
-.utab{width:100%;border-collapse:collapse;margin-top:10px;font-size:.84rem}
-.utab th{text-align:left;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);padding:6px 15px;border-bottom:1px solid var(--line);font-weight:800}
-.utab td{padding:9px 15px;border-bottom:1px solid var(--line)}
+.unlocks{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.unlocks h2{font-family:var(--display);font-weight:800;font-size:.92rem;margin:0;padding:11px 13px 0;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.unlocks h2 small{color:var(--muted-2);font-size:.7rem;font-weight:600;white-space:nowrap}
+.utab{width:100%;border-collapse:collapse;margin-top:8px;font-size:.8rem}
+.utab th{text-align:left;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);padding:5px 13px;border-bottom:1px solid var(--line);font-weight:800}
+.utab td{padding:8px 13px;border-bottom:1px solid var(--line)}
 .utab tr:last-child td{border-bottom:0}
 .utab .u-skill{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-weight:700}
 .utab .u-skill svg{width:16px;height:16px;stroke:#ffcf6a;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .utab .u-lvl{font-variant-numeric:tabular-nums;font-weight:800;color:#ffff00;text-shadow:1px 1px 0 #000}
 .utab .u-what{font-weight:700}
-.utab .u-state{text-align:right;font-weight:800;font-size:.78rem;white-space:nowrap}
+.utab .u-state{text-align:right;font-weight:800;font-size:.74rem;white-space:nowrap}
+.utab .u-lvl{text-align:center}
+.utab th.c{text-align:center}
+.utab th.r{text-align:right}
+.unlocks .none{margin:10px 13px 13px;color:var(--muted-2);font-size:.78rem}
 .utab tr.locked{opacity:.45}
 .utab tr.locked .u-lvl{color:var(--muted);text-shadow:none}
 .utab tr.next{background:rgba(255,152,31,.08)}
 .utab .u-state.open{color:var(--green)}
 .utab .u-state.owned{color:var(--gold)}
 .utab .u-state.shut{color:var(--muted-2)}
-@media (max-width:560px){.utab .u-skill span{display:none}.utab td,.utab th{padding-left:10px;padding-right:10px}}
+
 .shop-row.has-ico{grid-template-columns:48px minmax(0,1fr) auto}
 .shop-ico{width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
 .rod-ico{width:24px;height:24px;object-fit:contain;vertical-align:-7px;margin-right:3px}
@@ -364,7 +368,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 @keyframes xpdrop{0%{transform:translateY(0);opacity:0}12%{opacity:1}75%{opacity:1}100%{transform:translateY(-62px);opacity:0}}
 @media (max-width:560px){.xpt{width:170px;right:8px;bottom:8px;font-size:.66rem}.xpt-sess{display:none}}
 
-.skills{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.skills{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}
+.skill-col{display:grid;gap:12px;align-content:start;min-width:0}
+@media (max-width:1240px){.skills{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:700px){.skills{grid-template-columns:1fr}}
 .skill{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px}
 .skill-h{display:flex;align-items:center;gap:10px}
 .skill-ico{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:rgba(62,53,41,.9);box-shadow:inset 0 0 0 1px #5d5447}
@@ -532,10 +539,6 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   <section class="view view-skills" role="tabpanel" id="panel-skills" aria-labelledby="tab-skills" data-panel="skills" hidden>
     <header class="view-h"><div><h1>Skills</h1><p>Everything you do trains a skill, from level 1 to 99 on the RuneScape XP curve. Early levels come fast; 99 is a long road.</p></div><span class="meta" id="totalLvl">Total level 4</span></header>
     <div class="skills" id="skills"></div>
-    <section class="unlocks">
-      <h2>What levels unlock<small id="unlockCount"></small></h2>
-      <table class="utab"><thead><tr><th>Unlock</th><th>Skill</th><th>Level</th><th style="text-align:right">Status</th></tr></thead><tbody id="unlockRows"></tbody></table>
-    </section>
   </section>
 
   <section class="view view-controls" role="tabpanel" id="panel-controls" aria-labelledby="tab-controls" data-panel="controls" hidden>
@@ -774,6 +777,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       total += lvl;
       const lo = XP_AT[lvl], hi = lvl >= 99 ? lo : XP_AT[lvl + 1];
       const pct = lvl >= 99 ? 100 : Math.floor((100 * (xp - lo)) / (hi - lo));
+      const col = el("div", "skill-col");
       const card = el("div", "skill" + (sk.soon ? " soon" : ""));
       card.innerHTML = `<div class="skill-h"><span class="skill-ico">${sk.icon}</span><h3>${sk.name}</h3><span class="skill-lvl">${lvl}<small> / 99</small></span></div>
         <div class="xpt-bar"><i style="width:${pct}%"></i><span>${pct}%</span></div>
@@ -781,31 +785,37 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         <p class="skill-how">${sk.how}</p>`;
       const next = UNLOCKS.find((u) => u.skill === key && u.at > lvl);
       if (next) card.append(el("p", "skill-next", `Next unlock: ${next.what} at level ${next.at}`));
-      box.append(card);
+      col.append(card, unlockTable(key, lvl));
+      box.append(col);
     }
     $("totalLvl").textContent = `Total level ${total}`;
-    renderUnlocks();
   }
 
-  /* The ladder: everything a level opens, what is open now and what is next. */
-  function renderUnlocks() {
-    const body = $("unlockRows"); if (!body) return;
-    body.replaceChildren();
-    const rows = UNLOCKS.slice().sort((a, b) => a.at - b.at || a.skill.localeCompare(b.skill));
-    let open = 0;
-    const nextPer = {};
-    for (const u of rows) if (levelIn(u.skill) < u.at && !nextPer[u.skill]) nextPer[u.skill] = u;
+  /* One skill's ladder: what it has opened, and what is next at what level. */
+  function unlockTable(key, lvl) {
+    const rows = UNLOCKS.filter((u) => u.skill === key).sort((a, b) => a.at - b.at);
+    const box = el("section", "unlocks");
+    const open = rows.filter((u) => lvl >= u.at).length;
+    box.append(el("h2", null, `What ${SKILLS[key].name} unlocks<small>${rows.length ? `${open} of ${rows.length}` : ""}</small>`));
+    if (!rows.length) {
+      box.append(el("p", "none", "Nothing yet — this skill unlocks nothing until it has something to open."));
+      return box;
+    }
+    const next = rows.find((u) => lvl < u.at);
+    const tab = el("table", "utab");
+    tab.innerHTML = '<thead><tr><th>Unlock</th><th class="c">Lvl</th><th class="r">Status</th></tr></thead>';
+    const body = el("tbody");
     for (const u of rows) {
-      const have = levelIn(u.skill) >= u.at, owned = have && ownsUnlock(u.what);
-      if (have) open += 1;
-      const tr = el("tr", have ? "" : nextPer[u.skill] === u ? "locked next" : "locked");
+      const have = lvl >= u.at, owned = have && ownsUnlock(u.what);
+      const tr = el("tr", have ? "" : next === u ? "locked next" : "locked");
       tr.innerHTML = `<td class="u-what">${u.what}</td>
-        <td><span class="u-skill">${SKILLS[u.skill].icon}<span>${SKILLS[u.skill].name}</span></span></td>
         <td class="u-lvl">${u.at}</td>
-        <td class="u-state ${owned ? "owned" : have ? "open" : "shut"}">${owned ? "Owned" : have ? "Unlocked" : `Level ${u.at - levelIn(u.skill)} to go`}</td>`;
+        <td class="u-state ${owned ? "owned" : have ? "open" : "shut"}">${owned ? "Owned" : have ? "Unlocked" : `${u.at - lvl} to go`}</td>`;
       body.append(tr);
     }
-    $("unlockCount").textContent = `${open} of ${rows.length} unlocked`;
+    tab.append(body);
+    box.append(tab);
+    return box;
   }
   function levelUp(key, lvl, from = lvl - 1) {
     document.querySelector(".levelup")?.remove();
