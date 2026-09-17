@@ -152,27 +152,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .fnav .tabs{display:flex;flex-direction:column;gap:2px}
 .main{min-width:0;padding:22px 28px 56px}
 /* The stat bar: every page, always on screen. */
-/* The chest. Three beats: it shakes and asks to be clicked, the lid throws
-   back with light and confetti behind it, and then the card counts the
-   rewards in one at a time. Everything is CSS and one canvas-free burst of
-   absolutely positioned dots, so it costs nothing. */
-.chest{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background:rgba(4,3,2,.82);backdrop-filter:blur(3px)}
-.chest-rays{position:absolute;width:min(760px,92vw);aspect-ratio:1;border-radius:50%;opacity:0;
-  background:conic-gradient(from 0deg,rgba(var(--gold-rgb),.42) 0 6deg,transparent 6deg 24deg);
-  animation:chest-spin 14s linear infinite}
-.chest.open .chest-rays{opacity:1;transition:opacity .5s ease .1s}
-@keyframes chest-spin{to{transform:rotate(360deg)}}
-.chest-box{position:relative;display:grid;justify-items:center;gap:14px}
-.chest.open .chest-box{animation:chest-away .45s ease forwards}
-@keyframes chest-away{to{transform:scale(.72) translateY(-26px);opacity:0}}
-.chest-lid{background:none;border:0;padding:0;cursor:pointer;filter:drop-shadow(0 18px 40px rgba(0,0,0,.6))}
-.chest-lid svg{width:min(260px,58vw);height:auto;display:block;animation:chest-shake 2.4s ease-in-out infinite}
-@keyframes chest-shake{0%,72%,100%{transform:rotate(0) translateY(0)}78%{transform:rotate(-3deg) translateY(-4px)}84%{transform:rotate(3deg) translateY(-2px)}90%{transform:rotate(-2deg)}}
-.cl-lid,.cl-base{fill:#7a4a24;stroke:#3d2412;stroke-width:3}
-.cl-band{fill:#e8bf35;stroke:#8a6a1f;stroke-width:2}
-.cl-lock{fill:#f7dd8a;stroke:#8a6a1f;stroke-width:2.5}
-.chest-hint{font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);animation:chest-pulse 1.6s ease-in-out infinite}
-@keyframes chest-pulse{50%{opacity:.35}}
+/* The chest reward, as a plain dialog. It used to be a two-beat thing — a
+   chest you clicked, then the card — and that was a trap: the only hit area
+   was the SVG itself, so a click on the "Click to open" label under it did
+   nothing, and with no backdrop click and no Escape there was no way out of
+   the overlay at all. One card, three ways to close it, no step in between. */
+.chest{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background:rgba(4,3,2,.78);backdrop-filter:blur(3px)}
 .chest-card{position:relative;width:min(420px,92vw);background:var(--panel);border:1px solid rgba(var(--gold-rgb),.5);
   border-radius:18px;padding:20px;text-align:center;box-shadow:0 26px 70px rgba(0,0,0,.65);animation:chest-in .4s cubic-bezier(.2,1.5,.4,1) both}
 @keyframes chest-in{from{transform:scale(.7);opacity:0}}
@@ -186,9 +171,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .chest-loot b{font-family:var(--display);font-weight:800;font-size:1.05rem}
 .chest-loot small{display:block;font-size:.72rem;color:var(--muted-2)}
 @keyframes loot-in{to{opacity:1;transform:none}}
-.chest-dot{position:absolute;width:9px;height:9px;border-radius:2px;pointer-events:none;animation:chest-fly .9s ease-out forwards}
-@keyframes chest-fly{to{transform:translate(var(--dx),var(--dy)) rotate(var(--rot));opacity:0}}
-@media (prefers-reduced-motion:reduce){.chest-lid svg,.chest-rays,.chest-hint{animation:none}.chest-dot{display:none}}
+@media (prefers-reduced-motion:reduce){.chest-card,.chest-loot .row{animation:none}}
 
 /* The tour: one dark sheet with a hole cut in it by a very large box-shadow,
    and a card that sits under the hole (or over it, near the bottom of the
@@ -752,20 +735,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 
 <main class="main">
   <div class="chest" id="chest" hidden>
-    <div class="chest-rays" id="chestRays"></div>
-    <div class="chest-box" id="chestBox">
-      <button class="chest-lid" id="chestLid" type="button" aria-label="Open the chest">
-        <svg viewBox="0 0 120 96" aria-hidden="true">
-          <path class="cl-lid" d="M8 44a52 52 0 0 1 104 0v6H8z"/>
-          <path class="cl-band" d="M54 6h12v44H54z"/>
-          <rect class="cl-base" x="8" y="50" width="104" height="40" rx="5"/>
-          <rect class="cl-band" x="54" y="50" width="12" height="40"/>
-          <rect class="cl-lock" x="50" y="58" width="20" height="17" rx="4"/>
-        </svg>
-      </button>
-      <span class="chest-hint" id="chestHint">Click to open</span>
-    </div>
-    <div class="chest-card" id="chestCard" hidden>
+    <div class="chest-card" id="chestCard" role="dialog" aria-modal="true" aria-labelledby="chestTitle">
       <span class="chest-kind" id="chestKind"></span>
       <h2 id="chestTitle"></h2>
       <div class="chest-loot" id="chestLoot"></div>
@@ -3166,41 +3136,21 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
      never the thing that decides, so closing the tab mid-open cannot cost you
      anything. Same rule the casino's games follow. */
   function chestShow(kind, title, loot) {
-    const box = $("chest"), lid = $("chestLid"), card = $("chestCard");
-    box.hidden = false; box.className = "chest";
-    $("chestBox").hidden = false; card.hidden = true;
-    $("chestHint").textContent = "Click to open";
     $("chestKind").textContent = kind;
     $("chestTitle").textContent = title;
     $("chestLoot").replaceChildren();
     loot.forEach((it, i) => {
       const row = el("div", "row" + (it.big ? " big" : ""), `<span class="ico">${it.icon}</span><span><b>${it.what}</b><small>${it.note}</small></span>`);
-      row.style.animationDelay = `${0.12 + i * 0.13}s`;
+      row.style.animationDelay = `${0.05 + i * 0.07}s`;
       $("chestLoot").append(row);
     });
-    const open = () => {
-      lid.removeEventListener("click", open);
-      box.className = "chest open";
-      burstChest();
-      setTimeout(() => { $("chestBox").hidden = true; card.hidden = false; }, 430);
-    };
-    lid.addEventListener("click", open);
-    lid.focus();
+    $("chest").hidden = false;
+    $("chestDone").focus();
   }
-  /** Forty coloured chips thrown out of the middle. */
-  function burstChest() {
-    const box = $("chest");
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    for (let i = 0; i < 40; i++) {
-      const d = el("i", "chest-dot");
-      const a = Math.random() * Math.PI * 2, r = 120 + Math.random() * 260;
-      d.style.cssText = `left:50%;top:50%;background:${["#e8bf35", "#f7dd8a", "#4fc3d9", "#ff8fb0", "#4ddb8b"][i % 5]};`
-        + `--dx:${Math.cos(a) * r}px;--dy:${Math.sin(a) * r}px;--rot:${Math.random() * 720 - 360}deg;animation-delay:${Math.random() * 0.12}s`;
-      box.append(d);
-      setTimeout(() => d.remove(), 1200);
-    }
-  }
-  $("chestDone").addEventListener("click", () => { $("chest").hidden = true; renderStatbar(); });
+  function chestClose() { $("chest").hidden = true; renderStatbar(); }
+  $("chestDone").addEventListener("click", chestClose);
+  $("chest").addEventListener("click", (e) => { if (e.target === $("chest")) chestClose(); });
+  document.addEventListener("keydown", (e) => { if (!$("chest").hidden && (e.key === "Escape" || e.key === "Enter")) { e.preventDefault(); chestClose(); } });
 
   function openDailyChest() {
     if (S.q.chest || !S.q.daily.every((q) => q.claimed)) return;
