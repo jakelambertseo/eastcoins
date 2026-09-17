@@ -47,6 +47,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 
 /* ---------- fishing */
 .spots{display:flex;gap:6px;padding:0 14px 10px;overflow-x:auto;scrollbar-width:none}
+.spots-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:12px 14px 7px;flex-wrap:wrap}
+.spots-head .eyebrow{font-size:.62rem;color:var(--muted-2)}
+.spots-head small{color:var(--muted-2);font-size:.74rem}
 .spots::-webkit-scrollbar{display:none}
 .spot{flex:none;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:.82rem;font-weight:800;cursor:pointer;color:var(--muted);display:flex;align-items:center;gap:6px}
 .spot[aria-pressed="true"]{color:var(--text);border-color:rgba(79,195,217,.6);background:rgba(79,195,217,.12)}
@@ -600,7 +603,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   <section class="view view-fishing" role="tabpanel" id="panel-fishing" aria-labelledby="tab-fishing" data-panel="fishing">
     <header class="view-h"><div><h1>Fishing</h1><p>Cast, wait for the splash, then hold to reel.</p></div><span class="meta" id="rodLine">Twig Rod</span></header>
     <section class="card" aria-label="Fishing">
-      <div class="spots" id="spots" style="padding-top:12px"></div>
+      <div class="spots-head"><span class="eyebrow">Fishing spot</span><small>Deeper water holds rarer fish — and diving and bosses use whichever you pick</small></div>
+      <div class="spots" id="spots"></div>
       <div class="scene-wrap" id="sceneWrap">
         <canvas id="scene"></canvas>
         <div class="status"><span id="clock">Day · Fall</span><span id="spotName">Backyard Pond</span></div>
