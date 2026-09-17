@@ -18,7 +18,7 @@
   const GAMES = [
     ["hilo", "Higher or Lower"], ["mines", "Mines"], ["plinko", "Plinko"], ["scratch", "Scratch-Off"],
     ["wheel", "Wheel"], ["flip", "Coin Flip"], ["roulette", "Russian Roulette"], ["standing", "Last One Standing"], ["race", "Horse Race"],
-    ["pot", "The Daily Jackpot"]
+    ["pot", "The Daily Jackpot"], ["crate", "The Daily Crate"]
   ];
 
   function el(tag, cls, text) {

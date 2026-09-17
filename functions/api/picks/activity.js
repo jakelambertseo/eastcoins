@@ -15,6 +15,7 @@
    ============================================================ */
 
 import { slugFor } from "./_slug.js";
+import { recentLegendaries } from "../crate/_crate.js";
 import { utc } from "./_game.js";
 
 const LIMIT = 80;
@@ -102,6 +103,9 @@ export async function onRequestGet(context) {
       WHERE p.status = 'PAID' ORDER BY p.day DESC LIMIT 10`
   ).all().catch(() => ({ results: [] }));
   for (const p of pots.results || []) items.push({ type: "pot", at: String(p.paid_at).replace(" ", "T") + "Z", who: { login: String(p.twitch_login || "").toLowerCase(), displayName: String(p.display_name || p.twitch_login || ""), avatar: String(p.avatar_url || "") }, amount: Number(p.amount), day: p.day, total: Number(p.total_stake) });
+
+  // Daily Crate Legendaries — the ticker and the feed, never chat.
+  for (const c of await recentLegendaries(db).catch(() => [])) items.push(c);
 
   const feed = items
     .filter((i) => i.at && !Number.isNaN(new Date(i.at).getTime()))

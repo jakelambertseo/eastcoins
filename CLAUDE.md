@@ -55,7 +55,22 @@
 > (queue N of 14) → rail with tabs Up next / History /
 > Rankings (ELO | Most requests). No per-person queue cap (the worker
 > publishes `queueLimit` only); `loadHistory()` diffs
-> ratings between fetches to show `.elo-delta` chips.
+> ratings between fetches to show `.elo-delta` chips. **Save to your
+> YouTube (2026-09-15)**: `saveLink()` puts a link on the now-playing
+> overlay and a "Save ↗" beside Play again in History, opening
+> `youtube.com/watch?v=` in a new tab. YouTube has no deep link to its
+> playlist picker, and writing to someone's playlist would need Google
+> OAuth with the `youtube` scope, so it stops one click short on purpose.
+> **Skipped tab (2026-09-15)**: the rail's tabs are Up next / History /
+> Skipped / Rankings. The music worker keeps `this.skips` (storage key
+> `music-skips`, newest first, 40 kept), written in `advance()` for
+> `SKIP_KINDS` only — `vote-skip` (votes, listeners), `chat-skip` with
+> `how` = `mod` | `own` | `chat` (IRC `!skip`) and the actor, and
+> `error` (YouTube refused it). A natural end and the client's
+> `safety-net` report are not skips. `/history/<room>` returns `skips`
+> beside `history`; `skipsList()`/`skipReason()` in `v3-music.js` draw
+> the tag, the reason, how long it played and when. The worker is
+> deployed separately (`cd worker && npx wrangler deploy`).
 >
 > **Green Room skins (2026-09-12)** — a `Skin ·` chip in the music
 > page's header (next to See who; deliberately NOT in the ⋯ menu) picks
@@ -110,27 +125,58 @@
 > **Profile layout** (`v3-profile.js` `page()`): mini nav →
 > `.pf-card.pf-head.has-tcard` → `.pf-tabs` Overview (bankroll,
 > highlights) / Picks / Casino / Music; the tab lives in the hash
-> (`/u/name#casino`). **The header is the card plus identity plus two
-> launchers, and nothing numeric beyond that** (tidied 2026-09-16): the
-> card carries record, profit, staked and rank; beside it sit the name,
-> the badges (short, full label on hover), the handle and join date,
-> the team chip, and the Picks and Casino launchers that used to open
-> the Overview. The two `.pf-quick` summary strips that sat there were
-> the clutter — the casino one was the Casino tab's own strip repeated
-> — and are gone; the one figure only they carried, the current
-> streak, is now the "Right now" stat on the Picks strip. The Green
-> Room launcher was dropped rather than squeezed in as a third: it
-> wrapped onto its own row and left a hole under both columns. Music
-> keeps its tab.
+> (`/u/name#casino`). The owner-only **Customize my profile** button
+> lives in that mini nav, beside All Users and Back to Picks: it is
+> navigation, not something the profile says about someone. The header is
+> rebuilt below; what the 2026-09-16 tidy settled and this kept is
+> that **nothing in it duplicates a tab**. Two `.pf-quick` summary
+> strips used to sit there, one of them the Casino tab's own strip
+> repeated; the current streak they carried is the "Right now" stat
+> on the Picks strip. A third tab launcher for the Green Room was
+> dropped rather than squeezed in — it wrapped onto its own row and
+> left a hole under both columns — and the launchers themselves went
+> in the rebuild, because the tabs are directly below and say the
+> same thing. Music keeps its tab.
+>
+> **The header, rebuilt (2026-09-15)** — one card holding four
+> things and no repetition: the trading card on the left; the
+> identity beside it (name, badges, handle, team chip, message);
+> under that a **form guide** (`.pf-form`, the last ten
+> picks as W/L pips, newest first, an open one a dot) and a **trend
+> line** (`.pf-trend`, the season's net as an axis-less sparkline,
+> area closed on the zero line, green or red by where it ends); and
+> along the foot of the identity column the **stat band**
+> (`.pf-band`): six equal, centred cells — rank (with `/30` as a
+> small suffix), record, win %, picks profit, casino net, streak —
+> value over label, under a "2026 SEASON AT A GLANCE" heading.
+>
+> Four things about it are the lessons, not the taste. **The page was
+> saying the same season three times** — the card's own
+> record/profit/staked, the band, and the Overview's ten-cell stat bar
+> one screen below — so the Overview's bar was deleted; its tables'
+> TOTAL rows already carry the season line, and the summary is now
+> said once at the top, the detail once below. **A card is three times
+> the height of a name and a team chip**, so any two-column header
+> leaves the identity column short: the form guide and the trend fill
+> it (the trend carries `margin-top:auto`, so it takes whatever the
+> card leaves), and the band sits `align-self:end` on the card's own
+> baseline. **Stretched, left-aligned cells look ragged** — equal
+> centred cells read as a scoreboard; an equal-track grid had also
+> clipped a four-figure profit at 71px. And **`.profile` is 1000px**
+> (was 820), which is what keeps six cells off a second row.
 >
 > **The profile card (2026-09-16)** — the header leads with a
 > **trading card** (`tradingCard()`, `.tc*` in `v3.css`): real 2.5×3.5
 > proportions, a bone border, the photo on a coloured panel, the name
 > across the bottom, and the **league table on the back** — click
-> turns it over. It replaced the plain `.pf-avatar`; the name, badges,
-> team chip and the two `.pf-quick` strips sit beside it in a
-> `238px 1fr` grid and stack under it below 760px. Every figure was
-> already in `/api/picks/profile`, so nothing new is tracked.
+> turns it over. It replaced the plain `.pf-avatar`; the identity
+> column sits beside it in a `300px 1fr` grid (240px wide and stacked
+> under it below 760px). It carried a "Click to turn card over." hint
+> under the case until 2026-09-16, when the card was grown to fill the
+> header's height instead — the caption was the only thing keeping it
+> short of the stat band, and turning a card over is what people try
+> anyway. Every figure on it was already in `/api/picks/profile`, so
+> nothing new is tracked.
 >
 > **The finish comes off the season ladder** (`tierOf()`): gold at
 > rank 1, silver in the top five or at 80%+ accuracy, base otherwise
@@ -420,7 +466,7 @@
 > endpoints `/api/casino/<game>/{state,bet,history}`; clients built on
 > `v3-casino-kit.js`'s `sharedGame(spec)`), and Higher or Lower
 > `/?view=hilo` (per-player, `functions/api/casino/hilo/*`, table
-> `hilo_games`, committed deck, 1% edge per call, ×50 / 12-card cap).
+> `hilo_games`, committed deck, 1% edge per call, ×50 / 12-card cap). **A tie is a push (2026-09-16)** — it busted the run before, and was 21 of 117 busts in a day. The run carries on at the same multiplier from the tied card, and a call is priced on the twelve cards that can settle it (`oddsFrom`: (13−r)/12, so ×1.20 from a 3, ×2 from a 7, ×4 from a 10), which keeps each call fair: win 10/13 × 1.2 + tie 1/13 × 1 = 1. Return unchanged at 100% before the run edge; fewer busts, round prices. From an ace “higher” cannot lose and pays ×1 (the button reads “next card”); **`rightsOf(calls)` counts only wins that moved the multiplier**, and cash-out needs one, so neither a push nor a ×1 call is a way to walk off a fresh deal with the stake back. A push counts toward the 12 cards. **Before building this, Hi-Lo read 77.9% over 157 runs and looked broken; it was not** — every call was priced at 0.9996 of fair, the expected return given the calls actually made was 100.1%, and the shortfall was −1.5 SD. It is the most right-skewed game on the floor, and a small sample of it lands under its mean. Measure a game against the expectation of the decisions played, not against 100%, before calling it a bug.
 > Shared limits: 20 ZC a bet, 10 an hour per game, and `HOUR_WIN_CAP`
 > (400 ZC net in any rolling hour across every game — 750 until 2026-09-16 and 300 until 2026-09-13; it blocks new bets and never trims a win already paid, `capCheck` in
 > `_engine.js`, enforced by every bet/deal endpoint including the coin's).
@@ -504,6 +550,74 @@
 > `sha256(seed:cell:i)`), so a card never lies and a two-crown near-miss
 > is real. In `hourlyNet()`, the Jackpot's `dayStakes()`, the floor, the
 > feed, profiles, the dashboard's book and the check page (`game=scratch`).
+>
+> **The Grind has two jobs (2026-09-16, evening)** — `JOBS` in
+> `_grind.js`: **Clock in** (`clicks`, 100 clicks, 10 ZC, `work.js`) and
+> **Sort the Chips** (`sort`, 150 chips, 15 ZC, `sort.js`): a chip marked
+> ♠ ♥ ♦ ♣ comes down a belt and goes in its suit's tray. It pays more
+> because it is far duller — each chip is graded by the server against the
+> shift's seed (`chipAt(seed, done)`), the page is only ever told the chip
+> in front of it, a wrong tray locks the trays for `penaltyMs` (and a wrong
+> tray INSIDE the lockout cannot stack a second penalty), and at most one
+> chip per `msPerUnit` (300 ms) is taken. About two minutes a shift; keys
+> 1–4 sort. **Each job has its own hour**, so both can be worked (25 ZC an
+> hour, only under the line); to make them share one, have `nextShiftAt`
+> ignore the job. `grind_shifts` gained `job`, `seed`,
+> `penalty_until_ms`, `misses` (`clicks` is units done for every job);
+> the one-WORKING-per-person index became one-per-job
+> (`idx_grind_one_working_job`) and `ensureGrind` drops the old one. Pay
+> for both goes through `payShift`. `state` keeps the first job at the top
+> level for a page loaded before the second existed. Chips and trays use
+> the four-colour deck (spades black, hearts red, diamonds blue, clubs
+> green) and always carry the suit. **Migrating a live table**: production
+> was altered by hand BEFORE the deploy, adding only what the old code could
+> live with (columns with defaults, the new index), and the drop of the old
+> index was left to the new code's first request. **And after any deploy,
+> check the real asset URL's CONTENT, not just its status**: the first probe
+> of `v3-grind.js?v=2` returned the OLD 16 KB file for a few seconds while
+> the new shell was already live — had a player's browser been the one to
+> ask, the edge would have kept the old script under the new version for a
+> year. Size or a known string is the check.
+>
+> **The Grind (2026-09-16)** — `/?view=grind` (`v3-grind.js`,
+> `functions/api/casino/grind/*`, table `grind_shifts`). **Work, not a
+> bet**: anyone under `BROKE_LINE` (50) clocks in, `CLICKS_PER_SHIFT` (100)
+> clicks of one button pays `SHIFT_PAY` (10 ZC), one shift per
+> `SHIFT_COOLDOWN_MS` (an hour) counted from `done_at`. Constants in
+> `_grind.js`. **It is the only thing in the casino that makes ZCoins out
+> of nothing**, and four rules keep it honest — change them together or
+> not at all. The SERVER counts clicks: the page sends batches of up to
+> `BATCH_MAX` (25) and `work.js` credits at most one per
+> `MIN_MS_PER_CLICK` (120 ms) since the last accepted batch, advancing
+> `last_click_ms` only by what it paid for, so unspent time carries and a
+> script can work a shift but never faster than a person. The broke line
+> is read LIVE from StreamElements at `start`, so grinding can never build
+> a balance past the line plus one shift. The pay is a `PAYOUT_CREDIT`
+> keyed `CASINO:GRIND:PAY:<shift id>`, and only the batch whose optimistic
+> UPDATE moves WORKING -> PAYING reaches it. And the cooldown runs from
+> `done_at`, set at completion, even if the wallet refuses the credit
+> (the shift stays PAYING, the op is NEEDS_RECONCILIATION and shows in
+> the admin Wallet tab) — a failing wallet is not a way to chain shifts.
+> Nothing is staked, so it is deliberately NOT in `hourlyNet`, the
+> Jackpot's stakes or the results board. `state` reads the balance only
+> on `?balance=1` (arrival and after payday), never on its 20 s poll.
+> **The page queues clicks and removes only what the server CREDITED**,
+> so a fast clicker's bar never runs backwards and the rest go in as time
+> allows; and `press()` ignores clicks while a cooldown is known, because
+> the last clicks of a shift land between payday and the redraw and
+> would otherwise try to clock in again. On the floor it is `work: true`
+> in `home.js`: its tile shows who is on shift and, from `me.grind`,
+> "Shift open" / "Next shift in 42m" instead of plays left. Its art
+> (`grind.webp`, 2026-09-16) went in with ART_V 2 -> 3, and that bump was
+> not optional: the floor had requested `grind.webp?v=2` before the file
+> existed, and that URL is STILL cached at the edge as the SPA fallback
+> (text/html) — **a game that ships before its art has poisoned its own
+> art URL, so bump ART_V when the art lands.** The shared title scan in
+> `build-cards.mjs` also stopped on this card's pitch markings, which are
+> as bright as the lettering; it was cropped above the glyphs instead
+> (`grind-art.mjs`: left third only, where the name sits). Tested against the real endpoints on
+> Node's built-in SQLite with StreamElements stubbed at `fetch` — worth
+> reusing for any new money path.
 >
 > **The PvP tables (2026-09-12)** — Russian Roulette `/?view=roulette` and
 > Last One Standing `/?view=standing`, one client (`v3-pvp.js`, a `table(spec)`
@@ -707,6 +821,12 @@
 > nav link prefetches on hover; the Green Room's script is forced eager
 > when the floating player is on (`ec_v3_music_dock === "1"`), because
 > `ECMusicDock` lives in it. `bump.mjs` still finds the inert tags.
+> **A route that reads another service needs that service's config in
+> its group**: the profile and the users list read the music worker
+> directly, and neither listed `eastcoins-music-config.js`, so
+> `EASTCOIN_MUSIC_CONFIG` was undefined and every Green Room tab read
+> as no data unless the visitor had opened the Green Room first in the
+> same tab (fixed 2026-09-15).
 > `.view-loading` holds the space while a script is on the way.
 >
 > **Assets are held for a year.** `_headers` marks `/v3/assets/{js,css,
@@ -758,6 +878,52 @@
 > strings, not in index.html — bump it there when either sheet changes.
 > The per-view CSS split beyond that is still open.
 
+> **Sorting by a wrapped column is the other way to spend them**
+> (2026-09-16) — every "last N results" feed ordered by
+> `datetime(col) DESC LIMIT n`, which no index can answer, so each call
+> read and sorted the whole table: 105M rows a day, and 57M of it was
+> five queries returning ten rows each. Three lessons, in order of how
+> easily they are missed. **The wrapper is the bug**: every timestamp
+> here is written "YYYY-MM-DD HH:MM:SS" (or ISO throughout, for
+> `markets.starts_at`) and that text already sorts chronologically, so
+> `datetime()` in an ORDER BY only ever costs the index — check the
+> column's format is uniform before removing one. **An index is not
+> enough on its own**: given `WHERE status IN (…) ORDER BY updated_at
+> DESC`, SQLite spends its one index on the filter and sorts the rest
+> in a temp B-tree, so the reads do not move. A unary `+` on the
+> filtered column (`WHERE +g.status IN (…)`) makes that term
+> non-indexable — same value, same rows — and the planner walks the
+> timestamp index newest-first instead: Mines 2,208 rows to 30, Hi-Lo
+> 2,115 to 50. **And a feed ordered by a JOINED table's clock should
+> drive off that table**: the PvP feed reads the newest rounds in a
+> subquery and joins their entries, 632 rows to 83. The 💸 badge's
+> "who did a debit leave at zero" is an EXISTS per user over a partial
+> index (`idx_wallet_zeroed`) rather than a de-duplicated join over
+> every wallet operation: 4,078 rows to 56. Measure with
+> `npx wrangler d1 insights eastcoin-picks --timePeriod=1d --sort-by=reads`,
+> and `EXPLAIN QUERY PLAN` before believing an index is being used —
+> "USE TEMP B-TREE FOR ORDER BY" means it is not.
+>
+> **Profile views (2026-09-16)** — `functions/api/picks/_views.js`.
+> One per viewer per Chicago day and never your own, so the number
+> means people rather than refreshes. The count is
+> `users.profile_views` (the profile's existing SELECT carries it, so
+> reading is free) and `profile_view_hits` only answers "counted
+> today?" — a signed-out viewer is a hash of address and day, swept to
+> three days on about one request in a hundred. The write rides
+> `context.waitUntil` and can fail without the profile failing; the
+> figure shown is the one from before the visit, so your own view
+> appears next time. A `?list=` page is paging, not a visit.
+>
+> **The music room's /history/ takes ?limit=** (2026-09-16): a profile
+> asks for 60 plays rather than 300 (110 KB to 20 KB) and the users
+> list for none, since it reads only the ELO table. **The default is
+> still the whole list** — the Green Room's History tab and the 🗑️
+> badge's 30-day window both need it. Two traps in that one line:
+> `Number(null)` is 0, so "no ?limit=" must be its own case or every
+> caller gets an empty history, and `slice(-0)` is the whole array, so
+> zero must be too.
+>
 > **D1 reads are the budget that binds, and POLL RATE is what spends them**
 > (2026-09-12) — the free plan allows 5 million rows read a day and the site
 > spent them by about 1:30 PM on a Saturday, 500ing login, presence and the
@@ -805,6 +971,165 @@
 > "Watch rooms" shelf on the page lists live rooms (`?list=1`). A host
 > whose beat stops for two minutes is stale (guests keep their own
 > clock); leaving the player ends (host) or leaves (guest) the room.
+>
+> **The store (2026-09-15, members only, in the top nav since the same
+> evening, after Casino)** — **chase items** are the gold ones
+> (`chase: true` in `ITEMS`: Gold card finish, Gold name, Gold plate, Gold foil label — the Gold finish replaced Neon), all
+> 500 ZC, drawn in the store with a moving gold border and a LEGENDARY ribbon
+> (`.st-item.chase`, `.st-ribbon`); the store header has a "View my
+> profile →" link. **Promo items**: `price: 0` plus `promo: "Free"`
+> (Chrome finish, since 2026-09-15) get a green ribbon and a "Claim free"
+> button; `buy.js` records them with op_key `STORE:FREE:…` and NO wallet
+> operation (the table's CHECK only allows debits below zero). After any
+> purchase or switch-on the store message reads "Effect applied!" with
+> a "View your profile now →" link. **The top nav has no icons any more** (text only,
+> slightly smaller) to make room for Store. —
+> `/?view=store` (`v3-store.js`, its own `v3-store.css?v=N`; GROUPS loads
+> `v3-profile.js` too, because the preview is the real card through
+> `window.ECProfileCard.tradingCard`). Cosmetics bought with ZCoins,
+> permanent, one of each: card finishes Holo/Gold (legendary)/Chrome, name colours
+> Gold/Ice/Ember, a custom title (2–24 chars, `cleanTitle` filter,
+> replaces the badge line), banners Stadium/Matrix/Retro, and the foil
+> case label. `functions/api/store/_store.js` holds `ITEMS`/`SLOTS`,
+> `store_purchases` (partial unique index: owned once) and
+> `user_cosmetics` (one column per slot); `/api/store`, `/buy`, `/equip`.
+> **Money path is the casino's**: `WAGER_DEBIT` (the only debit type the
+> table's CHECK allows) with key `STORE:BUY:<user>:<item>:<n>` so a
+> double click cannot charge twice; a failed row insert refunds on the
+> spot. Profile bankroll counts `STORE:` keys as `storeNet`, not casino.
+> Profiles draw what is equipped AND still owned (`cosmeticsFor` in the
+> profile payload): **earned gold/silver always beats a bought finish**;
+> classes `tc-skin-*`, `nm-*`, `pf-banner-*`, `.tc-case-label.foil` in
+> the STORE COSMETICS block at the end of `v3.css`. Add an item = one
+> `ITEMS` row + its CSS. No admin refund UI for purchases yet.
+> **Round two (same day):** name effects (`namefx`: Shine, Glitch,
+> Rainbow, Pulse — `.nf-*` on `.pf-name`, which carries `data-text` for
+> the overlays; they stack with a name colour), title presets (`title-*`
+> items with their own `text`, sharing the slot with `title-custom`),
+> a profile message (`message-custom` → `message_text`, `cleanMessage`:
+> 2–100 chars, emoji ok, no links), profile backgrounds
+> (`background-*` → `.profile.pbg.pbg-*`), team-chip effects
+> (`team-*` → `.pf-team.tfx-*`), and a favourite player (`player-pick` →
+> `player_json`). **The player is picked from ESPN's search in the
+> browser** (`site.web.api.espn.com/apis/common/v3/search`, NFL/MLB/NBA
+> with a headshot) because ESPN refuses Cloudflare; `cleanPlayer`
+> accepts only id/league/name/team/position and BUILDS the headshot URL
+> itself. `NEEDS_INPUT` items are not switched on at purchase. New
+> columns are added by `ensureStore` with forgiving ALTERs.
+> **A title can wear a club crest (2026-09-16)**: `user_cosmetics.title_crest`
+> holds "<league>:<abbr>" ("mlb:lad"), resolved through `findTeam` in
+> `_teams.js` — so it can only ever be a real club — and `cosmeticsFor`
+> returns it as `titleCrest` beside the title; the card draws it
+> (`.tc-crest`, aria-hidden, club name on the hover) where the gold
+> pip goes, and an equipped title also LEADS the profile badge row as
+> `.pf-badge-title` (with `.pf-badge-crest` when it has one) — in the
+> plain pill, never a coloured one, because colour there is earned. **There is no way to buy one.** It is a gift, set by hand:
+> a `store_purchases` row for `title-custom` at price 0 with op_key
+> `STORE:GIFT:<user>:title-custom` and NO wallet operation (nothing is
+> charged for a gift), then `title`, `title_text` and `title_crest` on
+> that person's `user_cosmetics` row. First one: andyreidisapawg,
+> "Knows Freddie Freeman" under the Dodgers. The store
+> preview uses the profile's own `nameSpan`/`playerChip`/`tradingCard`
+> from `window.ECProfileCard`.
+>
+> **The Daily Crate (2026-09-16, evening)** — the orange present in
+> the top nav between search and the bell (`#crateBtn`, shown only to
+> members), opening a fixed popover over whatever page is up
+> (`v3-crate.js`, eager; `.crate-*` in `v3.css`). One FREE crate every
+> 24 hours from the last free open, then "Open another · 25 ZC" at the
+> same odds. `functions/api/crate/`: `_crate.js` (ODDS are CS2's case
+> odds 79.92 / 15.98 / 3.20 / 0.64 — they add to 99.74, their knife
+> tier being the rest, so the walk is over the sum; TIER_OF puts every
+> store item in a tier, the gold ones Legendary; COINS 1–3 / 5–10 /
+> 100 / 500 ZC with COIN_SHARE the chance a tier pays coins), `open.js`,
+> `state.js`. **Four rules.** The pull is decided from a committed seed
+> BEFORE anything is granted (`crate_opens` row: seed, hash, rarity,
+> prize) and `/api/casino/verify?game=crate` replays it; the page's
+> reel only plays back what the server returned. A crate NEVER
+> duplicates: the item is drawn from the tier's items the opener does
+> not own, and a tier owned out pays that tier's coins. Money is the
+> store's shape: a buy is a WAGER_DEBIT keyed `CRATE:BUY:<user>:<n>`,
+> a coin prize a PAYOUT_CREDIT keyed `CRATE:PAY:<open id>` (house
+> money like the Jackpot — not in hourlyNet, not on the results board;
+> about 2.3 ZC a crate on average, so the free crate is ~2.3 ZC a day
+> per active member), an item a `store_purchases` row at price 0 keyed
+> `CRATE:ITEM:<open id>`, switched on only if that slot was empty. And
+> **a Legendary goes to the ticker and the activity feed (type
+> `crate`, gold shimmer) and nowhere else — never chat, never
+> Discord.** The free crate's 24-hour rule is enforced inside the
+> INSERT (`WHERE NOT EXISTS … last 24 hours`), so two clicks at once
+> cannot both be free. The nav asks `/api/crate/state` once per page
+> load for a member (no poll). Tested against the real endpoints on
+> Node's SQLite with StreamElements stubbed (`scratchpad/cratetest.mjs`).
+>
+> **Stuck ZCoin charges (2026-09-15)** — admin Wallet tab →
+> `/api/picks/admin/reconcile`. Lists every PENDING/NEEDS_RECONCILIATION
+> operation; a DEBIT older than two minutes whose game/purchase row was
+> never created (key → table map `DEBITS`) gets a Refund button, once
+> (`REFUND:<key>` is unique). Built after a missing import in
+> `scratch/buy.js` charged cards that never existed.
+>
+> **Baseball stays out of the bell** (2026-09-15): `teamOpened` and
+> `announces` in `notifications.js` skip `sport = 'baseball'`.
+>
+> **Highlights (2026-09-15, TEST PAGE, deliberately unlinked)** —
+> `/?view=highlights` (`v3-highlights.js`, its own `v3-highlights.css?v=N`
+> linked from the JS). Sports YouTube Shorts from `CHANNELS` in
+> `functions/api/highlights.js`: each handle is resolved to its channel
+> id once a week (`channels.list forHandle`, 1 unit), and a channel's
+> Shorts are read from playlist `UUSH` + the id after `UC` (1 unit;
+> **undocumented by YouTube** — a sudden 404 across channels means that
+> trick broke). The feed is cached 30 min with a 24 h shadow copy, so
+> it costs under 600 units a day even left open, out of the same 10,000
+> the Green Room's search (100 a call) spends. Mixed channels are sorted
+> NFL / College / MLB / other by title words, NFL first. The player is
+> inline in the page (never over the chat rail) and rolls to the next
+> clip when the embed reports ended via postMessage. The page lists
+> which channels answered, for testing. **Needs `YOUTUBE_API_KEY` as a
+> Pages variable** — the music worker's copy is separate. Not in the
+> nav and not on Sports until it is approved.
+>
+> **EastCoin Wrapped (2026-09-15)** — `/wrapped/<login>` (bare
+> `/wrapped` opens your own): a story, one 9:16 screen per part of the
+> site — intro, Picks (record, profit, rank, accuracy, best run), the
+> moments (biggest win, worst beat, all-ins), your team, Casino (plays,
+> favourite game, **net including losses**, biggest hit, busiest day),
+> Green Room (requests, top song, ELO tier, reactions), Movies & TV
+> (rated, average, shelf, hottest take, rooms hosted), a superlative,
+> and a share card. A screen with no data is left out. Server:
+> `functions/api/picks/_wrapped.js` (`buildWrapped`, `awardFor` —
+> first matching rule wins, "Here for the Vibes" otherwise) behind
+> `/api/picks/wrapped?login=`; page `functions/wrapped/[[path]].js`
+> sets title/OG like `/u/`. Client `v3-wrapped.js` (route `wrapped`,
+> GROUPS with LOGOS) links its own `v3-wrapped.css?v=N` — bump that
+> string when the sheet changes. **Nothing is tracked for it**: Picks
+> by `seasons.id` "2026", everything else by `WRAPPED.from` to the drop.
+> **It is PUBLIC and drops after the Super Bowl**: `WRAPPED.opensAt`
+> is 2027-02-15 15:00Z (9 AM CT the Monday after Super Bowl LXI),
+> movable with the `WRAPPED_OPENS_AT` Pages variable. Before then the
+> API answers `{locked:true}` (a countdown page) to everyone but
+> admins, who get the season so far marked "Preview" (`no-store`).
+> After the drop it is `public, max-age=600`, and profiles get a
+> "🎁 Wrapped" link (`wrappedOpen` in the profile payload). Launch
+> with a bell notice opening `/wrapped/{me}`. Music and movie figures
+> are all-time where the source keeps no dates (ELO, reactions).
+>
+> **Tomato scores (2026-09-15)** — anyone signed in rates a movie or a
+> show 0–5 tomatoes from a strip under the Movies & TV player
+> (`.sc-rate`, `loadRating`/`rateTitle`/`renderRating` in
+> `v3-screen.js`); a show is rated as a whole, not per episode. Tapping
+> your current score again takes it back. `functions/api/screen/ratings.js`
+> (table `title_ratings`, one row per person per title, created on first
+> use) is members-only and `no-store`; the title, poster and year are
+> read from **TMDB when the score is saved**, never taken from the
+> request, so a profile can only show a real title. 3+ is fresh; chat's
+> meter reads fresh at 60% fresh, the Rotten Tomatoes line, next to the
+> average and up to six faces. The profile payload carries `movies`
+> (count, average, fresh/rotten, latest 60) and the profile has a
+> **Movies** tab: a four-stat strip and a poster grid linking back to
+> the player by `?view=screen&t=&id=`. Nothing polls: one read when a
+> title opens (not again for another episode of the same show), one
+> write per tap.
 >
 > **Pretty URLs, Movies & TV only (2026-09-12)** — `/movie/inception`,
 > `/tv/lost`, `/tv/lost-s1`, `/tv/lost-s1-ep1`. Served by
@@ -925,7 +1250,7 @@
 > day games, `SPORTS` in `_autoopen.js`), **at most 5 open at a time**
 > (`maxOpen`; earliest first, the next opens when one locks) and is **quiet in chat** —
 > `quietInChat(sport)` keeps open/countdown/closed lines to NFL; MLB
-> finals still get one chat line per settled game (`settle.js`), and the
+> finals still get one chat line per settled game **that had at least one pick** — since 2026-09-15 a final nobody bet on is silent (`settle.js`), and the
 > site, `!pick`/`!odds` replies and Discord carry the rest. Then
 > `_reminders.js` posts "Closing in X minutes" at 30/10/5 (once per market
 > per threshold, one line per threshold per tick). The cron runs every 5
@@ -977,7 +1302,11 @@
 > Discord — a notice is on-site only, so posting one can never be a
 > surprise in someone's stream. Reposting the same title replaces that
 > notice and makes it unread again; Pull removes it from every bell.
-> The bell only carries notices from the last fortnight.
+> The bell only carries notices from the last fortnight. **A link may
+> carry `{me}`** (2026-09-15): `/u/{me}` is stored as written and
+> `notices()` in `notifications.js` swaps in the reader's own login
+> per request, so one notice opens everyone's OWN profile; the form's
+> "Opens" menu offers the profile and its Picks / Casino / Movies tabs.
 >
 > **Announcing one market** — each open, not-yet-started market on the
 > admin page has an Announce button: it previews via
