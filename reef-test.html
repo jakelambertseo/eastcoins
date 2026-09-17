@@ -152,40 +152,6 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .fnav .tabs{display:flex;flex-direction:column;gap:2px}
 .main{min-width:0;padding:22px 28px 56px}
 /* The stat bar: every page, always on screen. */
-/* The chest reward, as a plain dialog. It used to be a two-beat thing — a
-   chest you clicked, then the card — and that was a trap: the only hit area
-   was the SVG itself, so a click on the "Click to open" label under it did
-   nothing, and with no backdrop click and no Escape there was no way out of
-   the overlay at all. One card, three ways to close it, no step in between. */
-.chest{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background:rgba(4,3,2,.78);backdrop-filter:blur(3px)}
-/* Everything here is VISIBLE at rest and the animation only moves it in.
-   The first version did the opposite — opacity:0 in the base rule, brought
-   to 1 by the keyframes — so the moment the animation did not run, the card
-   was an empty box with a button in it. That is exactly what
-   prefers-reduced-motion did, because the rule that switched the animation
-   off left the zero opacity behind. A throttled tab would have done the
-   same. Animations are decoration; never hang content off one. */
-.chest-card{position:relative;width:min(420px,92vw);background:var(--panel);border:1px solid rgba(var(--gold-rgb),.5);
-  border-radius:18px;padding:20px;text-align:center;box-shadow:0 26px 70px rgba(0,0,0,.65)}
-@keyframes chest-in{from{transform:scale(.96)}}
-.chest-kind{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
-.chest-card h2{font-family:var(--display);font-weight:800;font-size:1.5rem;margin:5px 0 14px}
-.chest-loot{display:grid;gap:8px;margin-bottom:16px}
-.chest-loot .row{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:12px;background:var(--panel-2);
-  border:1px solid var(--line);text-align:left}
-.chest-loot .row.big{border-color:rgba(var(--gold-rgb),.5);background:var(--gold-dim)}
-.chest-loot .ico{font-size:1.3rem;line-height:1}
-.chest-loot b{font-family:var(--display);font-weight:800;font-size:1.05rem}
-.chest-loot small{display:block;font-size:.72rem;color:var(--muted-2)}
-@media (prefers-reduced-motion:no-preference){
-  .chest-card{animation:chest-in .22s ease-out both}
-}
-/* a way out you can see, not just one you can guess at */
-.chest-x{position:absolute;top:9px;right:10px;width:30px;height:30px;display:grid;place-items:center;border-radius:9px;
-  border:1px solid var(--line);background:var(--panel-2);color:var(--muted);font-size:1rem;line-height:1;cursor:pointer}
-.chest-x:hover{border-color:var(--red);color:var(--red)}
-.chest-esc{display:block;margin-top:9px;font-size:.68rem;color:var(--muted-2)}
-
 /* The tour: one dark sheet with a hole cut in it by a very large box-shadow,
    and a card that sits under the hole (or over it, near the bottom of the
    screen). The sheet does not take clicks — only the card does — so a step
@@ -747,16 +713,6 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   </aside>
 
 <main class="main">
-  <div class="chest" id="chest" hidden>
-    <div class="chest-card" id="chestCard" role="dialog" aria-modal="true" aria-labelledby="chestTitle">
-      <button class="chest-x" id="chestX" type="button" aria-label="Close">✕</button>
-      <span class="chest-kind" id="chestKind"></span>
-      <h2 id="chestTitle"></h2>
-      <div class="chest-loot" id="chestLoot"></div>
-      <button class="btn gold" id="chestDone" type="button">Take it</button>
-      <small class="chest-esc">Esc, or click outside, also closes this</small>
-    </div>
-  </div>
   <div class="tour" id="tour" hidden>
     <div class="tour-hole" id="tourHole"></div>
     <div class="tour-card" id="tourCard" role="dialog" aria-modal="true" aria-labelledby="tourT">
@@ -3147,52 +3103,23 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (S.q.daily.includes(q)) track("daily");
     renderQuests(); save();
   }
-  /* The chest is granted the moment you earn it — the animation is playback,
-     never the thing that decides, so closing the tab mid-open cannot cost you
-     anything. Same rule the casino's games follow. */
-  function chestShow(kind, title, loot) {
-    $("chestKind").textContent = kind;
-    $("chestTitle").textContent = title;
-    $("chestLoot").replaceChildren();
-    loot.forEach((it, i) => {
-      const row = el("div", "row" + (it.big ? " big" : ""), `<span class="ico">${it.icon}</span><span><b>${it.what}</b><small>${it.note}</small></span>`);
-      $("chestLoot").append(row);
-    });
-    $("chest").hidden = false;
-    $("chestDone").focus();
-  }
-  function chestClose() { $("chest").hidden = true; renderStatbar(); }
-  $("chestDone").addEventListener("click", chestClose);
-  $("chestX").addEventListener("click", chestClose);
-  $("chest").addEventListener("click", (e) => { if (e.target === $("chest")) chestClose(); });
-  document.addEventListener("keydown", (e) => { if (!$("chest").hidden && (e.key === "Escape" || e.key === "Enter")) { e.preventDefault(); chestClose(); } });
-
   function openDailyChest() {
     if (S.q.chest || !S.q.daily.every((q) => q.claimed)) return;
     S.q.chest = true; S.q.streak++;
     const pearls = Math.round(100 * (1 + Math.min(S.q.streak, 7) * 0.1));
     S.pearls += pearls;
     S.bait.worm = (S.bait.worm || 0) + 5;
-    const loot = [
-      { icon: "⚪", what: `${num(pearls)} pearls`, note: S.q.streak > 1 ? `${Math.min(S.q.streak, 7) * 10}% streak bonus included` : "The base hundred", big: true },
-      { icon: "🪱", what: "5 Nightcrawlers", note: "Straight into the bait box" }
-    ];
-    if (S.q.streak >= 3) { S.bait.cricket = (S.bait.cricket || 0) + 3; loot.push({ icon: "🦗", what: "3 Crickets", note: "For keeping it up three days" }); }
-    if (S.q.streak >= 7) { S.bait.glow = (S.bait.glow || 0) + 2; loot.push({ icon: "✨", what: "2 Glow grubs", note: "A full week. These are the good ones", big: true }); }
-    loot.push({ icon: "🔥", what: `${S.q.streak} day${S.q.streak === 1 ? "" : "s"} running`, note: S.q.streak >= 7 ? "Streak bonus is maxed out" : `${7 - S.q.streak} more for the biggest bonus` });
-    chestShow("Daily chest", "Three for three", loot);
+    let extra = "5 Nightcrawlers";
+    if (S.q.streak >= 3) { S.bait.cricket = (S.bait.cricket || 0) + 3; extra += ", 3 Crickets"; }
+    if (S.q.streak >= 7) { S.bait.glow = (S.bait.glow || 0) + 2; extra += ", 2 Glow grubs"; }
+    toast(`Daily chest: +${num(pearls)} pearls`, `${extra}. Streak: ${S.q.streak} day${S.q.streak === 1 ? "" : "s"}.`);
     renderQuests(); renderBaitSel(); renderGarden(); save();
   }
   function openWeeklyChest() {
     if (S.q.weekChest || !S.q.weekly.every((q) => q.claimed)) return;
     S.q.weekChest = true;
     S.pearls += 1500; S.bait.glow = (S.bait.glow || 0) + 3; S.bait.shimmer = (S.bait.shimmer || 0) + 1;
-    chestShow("Weekly chest", "A full week of it", [
-      { icon: "⚪", what: "1,500 pearls", note: "Fifteen daily chests in one go", big: true },
-      { icon: "✨", what: "3 Glow grubs", note: "Rare bait, straight in" },
-      { icon: "🦐", what: "1 Shimmer shrimp", note: "The best bait there is", big: true },
-      { icon: "🏅", what: "Reef Regular", note: "A title for your profile" }
-    ]);
+    toast("Weekly chest: +1,500 pearls", "3 Glow grubs, 1 Shimmer shrimp, and the title Reef Regular.");
     renderQuests(); renderBaitSel(); renderGarden(); save();
   }
   const CHECK = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -4075,7 +4002,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   setInterval(save, 5000);
   document.addEventListener("visibilitychange", save);
   window.addEventListener("pagehide", save);
-  window.__reef = { tick: (ms) => { const t0 = performance.now(); for (let k = 0; k <= ms / 16; k++) { last = t0 + (k - 1) * 16; frameBody(t0 + k * 16); } }, get S() { return S; }, lake, heronBox, track, hatch, harvest, plant, water, breed, claim, openDailyChest, openWeeklyChest, chestShow, pairs, fish, SPECIES, landed, action, rollCatch, renderEverything, drawFish, BY_KEY, syncTank, renderTank };
+  window.__reef = { tick: (ms) => { const t0 = performance.now(); for (let k = 0; k <= ms / 16; k++) { last = t0 + (k - 1) * 16; frameBody(t0 + k * 16); } }, get S() { return S; }, lake, heronBox, track, hatch, harvest, plant, water, breed, claim, openDailyChest, openWeeklyChest, pairs, fish, SPECIES, landed, action, rollCatch, renderEverything, drawFish, BY_KEY, syncTank, renderTank };
 })();
 </script>
 </body>
