@@ -966,10 +966,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   S.inv = S.inv || {}; S.charm = S.charm || 0; S.boss = S.boss || {}; S.perks = S.perks || {};
   S.conv = S.conv || {}; S.cosm = S.cosm || {}; S.worn = Object.assign({ theme: "", name: "", title: "", pet: "" }, S.worn || {});
   if (typeof S.zc !== "number") S.zc = 2500;
-  if (!S.wv) { S.weather = "auto"; S.wv = 1; }
-  S.airLvl = S.airLvl || 0; S.bagLvl = S.bagLvl || 0;
-  if (typeof S.air !== "number") S.air = AIR_CAPS[S.airLvl].dives;
-  S.air = Math.min(S.air, AIR_CAPS[S.airLvl].dives);          // saves from before the reef had its own weather
+  if (!S.wv) { S.weather = "auto"; S.wv = 1; }                // saves from before the reef had its own weather
   S.stats = Object.assign({ dives: 0, diveValue: 0, crafts: 0, cooked: 0, spots: {}, baits: {}, casts: 0, snags: 0 }, S.stats || {});
   const save = () => { S.saved = Date.now(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch {} };
 
@@ -1126,6 +1123,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const fillMs = () => 3000 + S.airLvl * 600;                 // 3.0s to 4.8s, by tank
   const bagCap = () => BAG_CAPS[S.bagLvl].cap + (S.conv.bag ? 15 : 0);
   const bagFull = () => invCount() >= bagCap();
+  /* Sits here, not up with the rest of the save migration, because it reads
+     the tables right above it — a const cannot be read before its line runs,
+     and doing it up there threw on load. */
+  S.airLvl = Math.min(S.airLvl || 0, AIR_CAPS.length - 1);
+  S.bagLvl = Math.min(S.bagLvl || 0, BAG_CAPS.length - 1);
+  S.air = typeof S.air === "number" ? Math.min(S.air, airCap()) : airCap();
   const RECIPES = [
     { key: "chum", name: "Chum bucket", at: 1, need: { kelp: 3, shell: 2 }, xp: 120, about: "10 Nightcrawlers", give: () => { S.bait.worm = (S.bait.worm || 0) + 10; } },
     { key: "junk", name: "Melt down junk", at: 1, need: { boot: 2, driftwood: 2 }, xp: 100, about: "250 pearls", give: () => { S.pearls += 250; } },
