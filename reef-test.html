@@ -89,7 +89,15 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .tag.solid{background:var(--gold);color:#2a1300;border-color:transparent}
 .tag.new{color:var(--sea)}
 .catch-line{color:var(--muted);font-size:.86rem;margin:0 0 10px}
-.btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.catch-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:2px 0 10px}
+.cstat{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:7px 5px;display:grid;gap:2px;justify-items:center}
+.cstat small{font-size:.58rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);white-space:nowrap}
+.cstat b{font-family:var(--display);font-weight:800;font-size:.95rem;display:flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cstat.xp b{color:#ff981f}
+.cstat .pearl{width:12px;height:12px}
+.btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.btns .btn{justify-content:center;padding:0 8px;white-space:nowrap}
+.btns .btn .pearl{margin-left:3px}
 .btn{border:1px solid var(--line-2);background:var(--panel-3);border-radius:10px;padding:9px 14px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .btn.primary{background:var(--sea);color:#062028;border-color:transparent}
 .btn.gold{background:var(--gold);color:#2a1300;border-color:transparent}
@@ -411,7 +419,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .row2-main .ok{color:var(--green)}
 .row2-main .no{color:var(--red)}
 .btn.big{height:46px;padding:0 26px;font-size:1rem;margin-top:12px}
-.tank-up{margin:8px 0 0;font-size:.8rem;color:#ff981f;font-weight:700}
+.tank-up{margin:0 0 10px;padding:7px 9px;border-radius:9px;background:rgba(255,152,31,.12);border:1px solid rgba(255,152,31,.35);font-size:.78rem;color:#ffb861;font-weight:700;line-height:1.35}
+.tank-up b{color:#fff}
 .skills{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:auto auto;gap:12px;align-items:start}
 /* Each column is two rows of the page grid, so every card is as tall as the
    tallest one and the tables below them all start on the same line. */
@@ -510,7 +519,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
             <canvas id="catchC" width="640" height="320"></canvas>
             <h3 id="cName">Bluegill</h3>
             <div class="tags" id="cTags"></div>
-            <p class="catch-line" id="cLine"></p>
+            <div class="catch-stats">
+              <div class="cstat"><small>Weight</small><b id="cWeight">—</b></div>
+              <div class="cstat"><small>In the tank</small><b id="cRate">—</b></div>
+              <div class="cstat xp"><small>Fishing xp</small><b id="cXpGot">—</b></div>
+            </div>
             <p class="tank-up" id="cUpNote" hidden></p>
             <div class="btns">
               <button class="btn primary" id="cKeep" type="button">Put in tank</button>
@@ -1275,7 +1288,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (record) tags.append(el("span", "tag solid", "New record"));
     const rate = fishRate({ key: sp.key, w: c.w, shiny: c.shiny });
     const xp = grant("fishing", CATCH_XP[sp.rar] * (1 + 0.5 * (c.frac || 0)) * (c.shiny ? 3 : 1) + (isNew ? 250 : 0));
-    $("cLine").innerHTML = `${lbs(c.w)} · makes ${num(rate)} pearls an hour in your tank · <b style="color:#ff981f">+${num(xp)} Fishing xp</b>`;
+    $("cWeight").textContent = lbs(c.w);
+    $("cRate").innerHTML = `<span class="pearl"></span>${num(rate)}/hr`;
+    $("cXpGot").textContent = `+${num(xp)}`;
     const full = S.fish.length >= TANKS[S.tank].cap;
     const up = TANKS[S.tank + 1];
     const upNeed = up ? needOf(`${up.cap}-fish tank`) : null;
@@ -1286,12 +1301,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const note = $("cUpNote");
     note.hidden = !full;
     if (!full) $("cKeep").textContent = "Put in tank";
-    else if (!up) { $("cKeep").textContent = "Tank's full"; note.textContent = "That's the biggest tank there is. Sell or cook this one."; }
-    else if (upLocked) { $("cKeep").textContent = "Tank's full"; note.textContent = `A ${up.cap}-fish tank needs ${SKILLS[upNeed.skill].name} level ${upNeed.at} — you're ${levelIn(upNeed.skill)}.`; }
-    else if (short) { $("cKeep").textContent = "Tank's full"; note.innerHTML = `A ${up.cap}-fish tank costs ${num(up.cost)} pearls — you're <b>${num(short)}</b> short.`; }
-    else { $("cKeep").innerHTML = `Upgrade tank <span class="pearl"></span> ${num(up.cost)}`; note.textContent = `Buys the ${up.cap}-fish tank and this catch goes straight in.`; }
-    $("cSell").innerHTML = `Sell <span class="pearl"></span> ${num(rate * 3)}`;
-    $("cCook").innerHTML = `Cook <span class="pearl"></span> ${num(rate * 2)}`;
+    else if (!up) { $("cKeep").textContent = "Tank's full"; note.textContent = "That's the biggest tank there is — sell or cook this one."; }
+    else if (upLocked) { $("cKeep").textContent = "Tank's full"; note.innerHTML = `Tank's full. A <b>${up.cap}-fish tank</b> needs ${SKILLS[upNeed.skill].name} <b>${upNeed.at}</b> — you're ${levelIn(upNeed.skill)}.`; }
+    else if (short) { $("cKeep").textContent = "Tank's full"; note.innerHTML = `Tank's full. A <b>${up.cap}-fish tank</b> costs ${num(up.cost)} pearls — <b>${num(short)}</b> short.`; }
+    else { $("cKeep").innerHTML = `Upgrade <span class="pearl"></span>${num(up.cost)}`; note.innerHTML = `Tank's full. <b>${up.cap}-fish tank</b> buys room and this one goes straight in.`; }
+    $("cSell").innerHTML = `Sell <span class="pearl"></span>${num(rate * 3)}`;
+    $("cCook").innerHTML = `Cook <span class="pearl"></span>${num(rate * 2)}`;
     $("cCook").title = "Fewer pearls than selling, but it trains Cooking";
     $("catch").hidden = false;
     $("cKeep").focus();
