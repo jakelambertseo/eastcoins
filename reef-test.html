@@ -510,7 +510,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .inv-main small{display:block;font-size:.74rem;color:var(--muted-2)}
 .inv-row .btn{white-space:nowrap}
 /* crafting rows: recipe and parts on the left, one button on the right */
-.craft-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;padding:11px 2px;border-bottom:1px solid var(--line)}
+.craft-row{display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:14px;align-items:center;padding:11px 2px;border-bottom:1px solid var(--line)}
+.craft-art{width:58px;height:58px;display:grid;place-items:center;border-radius:12px;background:var(--panel-2);border:1px solid var(--line)}
+.craft-art img{width:52px;height:52px;object-fit:contain;display:block}
+.craft-art.ready{border-color:rgba(var(--gold-rgb),.5);background:var(--gold-dim)}
+.craft-row.locked .craft-art img{filter:grayscale(1) brightness(.6)}
 .craft-row:last-child{border-bottom:0}
 .craft-row.locked{opacity:.55}
 .craft-main b{display:block;font-size:.9rem}
@@ -1147,14 +1151,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   S.bagLvl = Math.min(S.bagLvl || 0, BAG_CAPS.length - 1);
   S.air = typeof S.air === "number" ? Math.min(S.air, airCap()) : airCap();
   const RECIPES = [
-    { key: "chum", name: "Chum bucket", at: 1, need: { kelp: 3, shell: 2 }, xp: 120, about: "10 Nightcrawlers", give: () => { S.bait.worm = (S.bait.worm || 0) + 10; } },
-    { key: "junk", name: "Melt down junk", at: 1, need: { boot: 2, driftwood: 2 }, xp: 100, about: "250 pearls", give: () => { S.pearls += 250; } },
-    { key: "cage", name: "Cricket cage", at: 10, need: { driftwood: 3, shell: 2 }, xp: 300, about: "8 Crickets", give: () => { S.bait.cricket = (S.bait.cricket || 0) + 8; } },
-    { key: "polish", name: "Polish pearls", at: 15, need: { pearl: 2, coral: 1 }, xp: 500, about: "600 pearls", give: () => { S.pearls += 600; } },
-    { key: "lure", name: "Glow lure", at: 20, need: { seaglass: 2, coral: 2 }, xp: 800, about: "4 Glow grubs", give: () => { S.bait.glow = (S.bait.glow || 0) + 4; } },
-    { key: "charm", name: "Reef charm", at: 25, need: { pearl: 1, seaglass: 2, coral: 1 }, xp: 1200, about: "25 casts at 1.5× rare odds", give: () => { S.charm += 25; } },
-    { key: "setting", name: "Gem setting", at: 30, need: { ruby: 1, seaglass: 2 }, xp: 1500, about: "2,500 pearls", give: () => { S.pearls += 2500; } },
-    { key: "rig", name: "Shimmer rig", at: 35, need: { coral: 3, ruby: 1 }, xp: 2200, about: "2 Shimmer shrimp", give: () => { S.bait.shimmer = (S.bait.shimmer || 0) + 2; } }
+    { key: "chum", art: "craft-chum", name: "Chum bucket", at: 1, need: { kelp: 3, shell: 2 }, xp: 120, about: "10 Nightcrawlers", give: () => { S.bait.worm = (S.bait.worm || 0) + 10; } },
+    { key: "junk", art: "craft-junk", name: "Melt down junk", at: 1, need: { boot: 2, driftwood: 2 }, xp: 100, about: "250 pearls", give: () => { S.pearls += 250; } },
+    { key: "cage", art: "craft-cage", name: "Cricket cage", at: 10, need: { driftwood: 3, shell: 2 }, xp: 300, about: "8 Crickets", give: () => { S.bait.cricket = (S.bait.cricket || 0) + 8; } },
+    { key: "polish", art: "craft-polish", name: "Polish pearls", at: 15, need: { pearl: 2, coral: 1 }, xp: 500, about: "600 pearls", give: () => { S.pearls += 600; } },
+    { key: "lure", art: "craft-lure", name: "Glow lure", at: 20, need: { seaglass: 2, coral: 2 }, xp: 800, about: "4 Glow grubs", give: () => { S.bait.glow = (S.bait.glow || 0) + 4; } },
+    { key: "charm", art: "craft-charm", name: "Reef charm", at: 25, need: { pearl: 1, seaglass: 2, coral: 1 }, xp: 1200, about: "25 casts at 1.5× rare odds", give: () => { S.charm += 25; } },
+    { key: "setting", art: "craft-setting", name: "Gem setting", at: 30, need: { ruby: 1, seaglass: 2 }, xp: 1500, about: "2,500 pearls", give: () => { S.pearls += 2500; } },
+    { key: "rig", art: "craft-rig", name: "Shimmer rig", at: 35, need: { coral: 3, ruby: 1 }, xp: 2200, about: "2 Shimmer shrimp", give: () => { S.bait.shimmer = (S.bait.shimmer || 0) + 2; } }
   ];
   const BENCH_MS = 30 * 60 * 1000;
 
@@ -2625,6 +2629,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       const locked = lvl < r.at, ready = canCraft(r);
       const row = el("div", "craft-row" + (locked ? " locked" : ""));
       const parts = Object.entries(r.need).map(([k, n]) => `<span class="${(S.inv[k] || 0) >= n ? "ok" : "no"}">${LOOT[k].icon} ${n} ${LOOT[k].name}</span>`).join("");
+      const pic = el("span", "craft-art" + (ready && !locked ? " ready" : ""));
+      const im = document.createElement("img");
+      im.src = artSrc(r.art); im.alt = ""; im.loading = "lazy"; im.width = 110; im.height = 110;
+      pic.append(im);
+      row.append(pic);
       row.append(el("span", "craft-main", `<b>${r.name}</b><span class="craft-parts">${parts}<span class="arrow">→</span><span>${r.about}</span></span>`));
       const b = el("button", "btn small" + (!locked && ready ? " gold" : ""), locked ? `Crafting ${r.at}` : ready ? "Make" : "Need parts");
       b.type = "button"; b.disabled = locked || !ready;
