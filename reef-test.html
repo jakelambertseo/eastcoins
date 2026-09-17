@@ -477,11 +477,17 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 
   /* ============================================================ data */
   const RAR = [
-    { name: "Common", color: "#b9b0a6", weight: 55, rate: 2, diff: 0.55 },
-    { name: "Uncommon", color: "#4ddb8b", weight: 28, rate: 5, diff: 0.8 },
-    { name: "Rare", color: "#5aa2ff", weight: 12, rate: 12, diff: 1.0 },
-    { name: "Epic", color: "#b98aff", weight: 4.2, rate: 30, diff: 1.2 },
-    { name: "Legendary", color: "#e8bf35", weight: 0.8, rate: 80, diff: 1.4 }
+    // The reel gets harder with rarity. Common and Uncommon are casual —
+    // a slower fish, a taller bar, a floatier bar and a slow drain — so an
+    // everyday catch just needs a hold now and then. Epic and Legendary are
+    // the skill catches, and the better rods are what make them fair.
+    // diff: fish speed · zone: extra bar height · loss: drain when outside
+    // start: where the catch meter begins · up/down/vmax: how the bar moves
+    { name: "Common", color: "#b9b0a6", weight: 55, rate: 2, diff: 0.3, zone: 0.12, loss: 0.55, start: 0.45, up: 1.9, down: 1.5, vmax: 1.1 },
+    { name: "Uncommon", color: "#4ddb8b", weight: 28, rate: 5, diff: 0.45, zone: 0.08, loss: 0.65, start: 0.42, up: 2.1, down: 1.7, vmax: 1.25 },
+    { name: "Rare", color: "#5aa2ff", weight: 12, rate: 12, diff: 0.8, zone: 0.05, loss: 0.8, start: 0.38, up: 2.5, down: 2.1, vmax: 1.5 },
+    { name: "Epic", color: "#b98aff", weight: 4.2, rate: 30, diff: 1.15, zone: 0.03, loss: 0.85, start: 0.32, up: 2.7, down: 2.3, vmax: 1.6 },
+    { name: "Legendary", color: "#e8bf35", weight: 0.8, rate: 80, diff: 1.35, zone: 0.02, loss: 0.95, start: 0.3, up: 2.7, down: 2.3, vmax: 1.6 }
   ];
   const SPOTS = [
     { key: "pond", name: "Backyard Pond", cost: 0, water: ["#4a8f6e", "#1d4a3a"], look: "pond" },
@@ -754,8 +760,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     } else if (fish.phase === "wait") {
       setPhase("lost", "Too early. You pulled the bait away.");
     } else if (fish.phase === "bite") {
-      const d = RAR[fish.pick.sp.rar].diff;
-      Object.assign(fish, { zone: .35, vel: 0, fy: .45, ftarget: .5, fnext: 0, prog: .3, holding: false });
+      const tier = RAR[fish.pick.sp.rar];
+      Object.assign(fish, { zone: .35, vel: 0, fy: .45, ftarget: .5, fnext: 0, prog: tier.start, holding: false });
       setPhase("reel");
     }
   }
@@ -777,9 +783,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (p === "wait" && since > fish.waitFor) setPhase("bite");
     else if (p === "bite" && since > 1150) setPhase("lost", "Too slow. It spat the hook.");
     else if (p === "reel") {
-      const d = RAR[fish.pick.sp.rar].diff, zoneH = RODS[S.rod].zone;
-      fish.vel += (fish.holding ? 2.7 : -2.3) * dt;
-      fish.vel = Math.max(-1.6, Math.min(1.6, fish.vel));
+      const tier = RAR[fish.pick.sp.rar], d = tier.diff, zoneH = Math.min(0.6, RODS[S.rod].zone + tier.zone);
+      fish.vel += (fish.holding ? tier.up : -tier.down) * dt;
+      fish.vel = Math.max(-tier.vmax, Math.min(tier.vmax, fish.vel));
       fish.zone += fish.vel * dt;
       if (fish.zone < 0) { fish.zone = 0; fish.vel = Math.max(0, fish.vel) * -0.2; }
       if (fish.zone > 1 - zoneH) { fish.zone = 1 - zoneH; fish.vel = Math.min(0, fish.vel) * -0.2; }
@@ -789,7 +795,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       fish.fy += Math.sign(diffY) * Math.min(Math.abs(diffY), sp * dt) + (Math.random() - 0.5) * 0.02 * d;
       fish.fy = Math.max(0.03, Math.min(0.97, fish.fy));
       const inside = fish.fy >= fish.zone && fish.fy <= fish.zone + zoneH;
-      fish.prog += (inside ? 0.25 : -0.24 * (0.8 + d * 0.35)) * dt;
+      fish.prog += (inside ? 0.25 : -0.24 * tier.loss * (0.8 + d * 0.35)) * dt;
       $("zone").style.bottom = `${fish.zone * 100}%`; $("zone").style.height = `${zoneH * 100}%`;
       $("zone").classList.toggle("on", inside);
       $("rfish").style.bottom = `${fish.fy * 100}%`;
