@@ -417,6 +417,48 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 @keyframes xpdrop{0%{transform:translateY(0);opacity:0}12%{opacity:1}75%{opacity:1}100%{transform:translateY(-62px);opacity:0}}
 @media (max-width:560px){.xpt{width:170px;right:8px;bottom:8px;font-size:.66rem}.xpt-sess{display:none}}
 
+/* inventory rows: picture, what it is, then the two sell buttons */
+.inv-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:11px 2px;border-bottom:1px solid var(--line)}
+.inv-row:last-child{border-bottom:0}
+.inv-row .loot-ico{font-size:1.6rem;line-height:1;text-align:center}
+.inv-main b{display:block;font-size:.9rem}
+.inv-main small{display:block;font-size:.74rem;color:var(--muted-2)}
+.inv-row .btn{white-space:nowrap}
+/* crafting rows: recipe and parts on the left, one button on the right */
+.craft-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;padding:11px 2px;border-bottom:1px solid var(--line)}
+.craft-row:last-child{border-bottom:0}
+.craft-row.locked{opacity:.55}
+.craft-main b{display:block;font-size:.9rem}
+.craft-parts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:3px;font-size:.78rem;color:var(--muted)}
+.craft-parts .ok{color:var(--green);font-weight:700}
+.craft-parts .no{color:var(--red);font-weight:700}
+.craft-parts .arrow{color:var(--muted-2)}
+.craft-row .btn{min-width:110px;justify-content:center}
+/* the dive itself */
+.dive-go{display:flex;align-items:center;gap:14px;margin-top:14px;flex-wrap:wrap}
+.dive-bar{flex:1;min-width:220px;height:10px;border-radius:99px;background:var(--panel-3);border:1px solid var(--line);overflow:hidden}
+.dive-bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#1f6fd1,#4fc3d9 70%,#bdf0ff)}
+.dive-note{color:var(--muted-2);font-size:.78rem}
+/* bosses */
+.boss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.boss{border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden;display:grid;align-content:start}
+.boss.open{border-color:rgba(var(--gold-rgb),.45)}
+.boss.beaten{border-color:rgba(77,219,139,.4)}
+.boss-art{position:relative;height:130px;background:radial-gradient(120% 120% at 50% 20%,#1b2c3d,#0a1119 75%);display:grid;place-items:center}
+.boss.locked .boss-art{filter:grayscale(1) brightness(.5)}
+.boss-art canvas{width:100%;height:100%;display:block}
+.boss-tag{position:absolute;top:8px;left:10px;font-size:.6rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:99px;background:rgba(0,0,0,.6)}
+.boss-tag.open{color:var(--gold);border:1px solid rgba(var(--gold-rgb),.5)}
+.boss-tag.beaten{color:var(--green);border:1px solid rgba(77,219,139,.5)}
+.boss-tag.locked{color:var(--muted-2);border:1px solid var(--line-2)}
+.boss-body{padding:12px 14px 14px;display:grid;gap:7px}
+.boss-body h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:0}
+.boss-body h3 small{display:block;font-size:.72rem;font-weight:700;color:var(--muted-2);letter-spacing:.06em;text-transform:uppercase}
+.boss-body p{margin:0;font-size:.82rem;color:var(--muted);line-height:1.45}
+.boss-need{font-size:.78rem;font-weight:700;color:var(--gold)}
+.boss-need.no{color:var(--muted-2)}
+.boss-perk{font-size:.76rem;color:var(--muted-2)}
+.boss-perk b{color:var(--green)}
 .loot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:14px}
 .loot{background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:10px;display:grid;justify-items:center;gap:1px;text-align:center}
 .loot.none{opacity:.4}
@@ -484,6 +526,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
           <button class="tab" role="tab" id="tab-quests" aria-controls="panel-quests" data-tab="quests" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 9l1.6 1.6L13.5 7.5M9 15h6"/></svg><span class="tab-label">Quests</span><span class="count" hidden></span></button>
           <button class="tab" role="tab" id="tab-garden" aria-controls="panel-garden" data-tab="garden" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20v-8"/><path d="M12 12c-4 0-6-3-6-6 3 0 6 2 6 6zM12 14c3.5 0 5.5-2.5 5.5-5.5-3 0-5.5 2-5.5 5.5z"/><path d="M5 20h14"/></svg><span class="tab-label">Bait garden</span><span class="count" hidden></span></button>
           <button class="tab" role="tab" id="tab-breeding" aria-controls="panel-breeding" data-tab="breeding" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3.6 0 6 5.2 6 9.2A6 6 0 0 1 6 12.7c0-4 2.4-9.2 6-9.2z"/></svg><span class="tab-label">Breeding</span><span class="count" hidden></span></button>
+          <button class="tab" role="tab" id="tab-boss" aria-controls="panel-boss" data-tab="boss" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6.4.7-4.8 4.2 1.4 6.1L12 16.8 6.4 19.6l1.4-6.1L3 9.3l6.4-.7z"/></svg><span class="tab-label">Leviathans</span></button>
           <button class="tab" role="tab" id="tab-craft" aria-controls="panel-craft" data-tab="craft" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4.5l5 5-8.5 8.5-5-5z"/><path d="M16 3l1.4 1.4M20 7l1 1M4.5 19.5l2.5-2.5"/></svg><span class="tab-label">Crafting</span></button>
           <span class="fnav-h">Collection</span>
           <button class="tab" role="tab" id="tab-inv" aria-controls="panel-inv" data-tab="inv" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 8V6a4 4 0 0 1 8 0v2M4 12h16"/></svg><span class="tab-label">Inventory</span></button>
@@ -623,6 +666,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         <p class="note">It keeps your tank and when you last collected, and works out Pearls when you open the page. Nothing polls. Pearls never turn into ZCoins; it plays for titles.</p>
       </div></div>
     </div>
+  </section>
+
+  <section class="view view-boss" role="tabpanel" id="panel-boss" aria-labelledby="tab-boss" data-panel="boss" hidden>
+    <header class="view-h"><div><h1>Leviathans</h1><p>One monster lives at every spot. They only bite for someone who knows the water, and they fight on a clock.</p></div></header>
+    <div class="card"><div class="card-body"><div id="bosses"></div></div></div>
   </section>
 
   <section class="view view-dive" role="tabpanel" id="panel-dive" aria-labelledby="tab-dive" data-panel="dive" hidden>
@@ -774,12 +822,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     q: { day: "", daily: [], week: "", weekly: [], streak: 0, chest: false, weekChest: false },
     skills: { fishing: 0, farming: 0, cooking: 0, breeding: 0, diving: 0, crafting: 0 },
     auto: { sprinkler: false, caretaker: false, turner: false, hatchery: false, smokehouse: false, cannery: false }, smokeAt: 0,
-    inv: {}, charm: 0, benchAt: 0 });
+    inv: {}, charm: 0, benchAt: 0, boss: {}, perks: {} });
   let S = fresh();
   try { const raw = localStorage.getItem(SAVE); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch {}
   S.skills = Object.assign({ fishing: 0, farming: 0, cooking: 0, breeding: 0, diving: 0, crafting: 0 }, S.skills || {});
   S.auto = Object.assign({ sprinkler: false, caretaker: false, turner: false, hatchery: false, smokehouse: false, cannery: false, meshbag: false, airtank: false, toolbox: false, bench: false }, S.auto || {});
-  S.inv = S.inv || {}; S.charm = S.charm || 0;
+  S.inv = S.inv || {}; S.charm = S.charm || 0; S.boss = S.boss || {}; S.perks = S.perks || {};
   const save = () => { S.saved = Date.now(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch {} };
 
   /* ============================================================ helpers */
@@ -895,6 +943,30 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { key: "rig", name: "Shimmer rig", at: 35, need: { coral: 3, ruby: 1 }, xp: 2200, about: "2 Shimmer shrimp", give: () => { S.bait.shimmer = (S.bait.shimmer || 0) + 2; } }
   ];
   const BENCH_MS = 30 * 60 * 1000;
+
+  /* One leviathan per spot: the thing that lives there and is never caught by
+     accident. It asks for a Fishing level AND that you have met the water —
+     four species from that spot in the book — then fights on the same reel
+     with its own rules: a longer bar, a faster fish, a drain that hurts, a
+     clock, and a second phase at the halfway mark where it wakes up.
+     Beating one pays a title, a heap of xp and a permanent 5% on that spot's
+     rare odds. Nothing here touches pearls. */
+  const BOSSES = [
+    { key: "scar", name: "Old Scar", sub: "the pond's oldest resident", spot: 0, art: "koi", at: 10, w: 34, secs: 45, diff: 1.15, zone: .06, loss: .7, xp: 3000, title: "Pond Warden",
+      about: "A koi the size of a dog. He has seen every hook in this pond and broken most of them." },
+    { key: "backbreaker", name: "Backbreaker", sub: "the river's armoured ghost", spot: 1, art: "sturgeon", at: 30, w: 210, secs: 50, diff: 1.3, zone: .04, loss: .85, xp: 9000, title: "River Breaker",
+      about: "A sturgeon older than the bridge. It does not run — it sits on the bottom and waits for your line to give." },
+    { key: "admiral", name: "The Admiral", sub: "the lake's long shadow", spot: 2, art: "muskie", at: 50, w: 74, secs: 55, diff: 1.45, zone: .03, loss: .95, xp: 25000, title: "Lake Admiral",
+      about: "Every fisherman on this lake has a story about the muskie that took their whole spool. It's the same fish." },
+    { key: "fathoms", name: "Nine Fathoms", sub: "the pier's freight train", spot: 3, art: "tuna", at: 70, w: 1100, secs: 60, diff: 1.6, zone: .02, loss: 1.05, xp: 60000, title: "Blue Water",
+      about: "A bluefin that tows boats for fun. You are not going to out-pull it, so out-last it." },
+    { key: "pale", name: "The Pale One", sub: "what the deep sends up", spot: 4, art: "oarfish", at: 90, w: 700, secs: 70, diff: 1.8, zone: .015, loss: 1.15, xp: 150000, title: "Deep Keeper",
+      about: "Sailors say an oarfish at the surface means a bad day coming. This one has been up here a while." }
+  ];
+  const BOSS_PERK = 0.05;
+  const bossState = (b) => (S.boss[b.key] || { beaten: false, tries: 0, best: 0 });
+  const bossSeen = (b) => SPECIES.filter((sp) => sp.spot === b.spot && S.dex[sp.key]?.n).length;
+  const bossOpen = (b) => levelIn("fishing") >= b.at && bossSeen(b) >= 4;
 
   const IDLE_CUT = 0.55;
   const SMOKE_MS = 30 * 60 * 1000;  // the smokehouse cooks one fish this often (half that with the cannery)
@@ -1223,7 +1295,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const w = now(), rod = RODS[S.rod];
     const pool = SPECIES.filter((sp) => sp.spot === S.spot && biting(sp, w));
     const bait = activeBait();
-    const charmed = S.charm > 0 ? 1.5 : 1;
+    const charmed = (S.charm > 0 ? 1.5 : 1) * (1 + (S.perks[S.spot] || 0));
     const weights = pool.map((sp) => RAR[sp.rar].weight * (sp.rar >= 2 ? rod.luck * charmed : 1) * (bait?.mult?.[sp.rar] || 1));
     if (S.charm > 0) S.charm -= 1;
     let r = Math.random() * weights.reduce((a, b) => a + b, 0);
@@ -1232,8 +1304,15 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const frac = Math.pow(Math.random(), 2.2);
     return { sp, frac, w: sp.w[0] + (sp.w[1] - sp.w[0]) * frac, shiny: Math.random() < (S.shinyBoost ? 1 / 10 : 1 / 500) * (bait?.shiny || 1) };
   }
+  /** The word over the water while a leviathan is on. */
+  function refs_phaseBoss(boss, left, prog) {
+    const say = $("say");
+    say.className = "say";
+    say.textContent = `${boss.name} · ${Math.max(0, left).toFixed(0)}s${prog > 0.55 ? " · it's waking up" : ""}`;
+  }
   function setPhase(p, msg = "") { fish.phase = p; fish.at = performance.now(); fish.msg = msg; syncAction(); }
   function action() {
+    if (fish.phase === "reel" && fish.pick?.boss) return;
     if (fish.phase === "idle" || fish.phase === "lost") {
       fish.pick = rollCatch();
       const bait = activeBait();
@@ -1267,7 +1346,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (p === "wait" && since > fish.waitFor) setPhase("bite");
     else if (p === "bite" && since > 1150) setPhase("lost", "Too slow. It spat the hook.");
     else if (p === "reel") {
-      const tier = RAR[fish.pick.sp.rar], d = tier.diff, zoneH = Math.min(0.6, RODS[S.rod].zone + tier.zone);
+      const boss = fish.pick.boss;
+      const tier = boss
+        ? { diff: boss.diff * (fish.prog > 0.55 ? 1.25 : 1), zone: boss.zone, loss: boss.loss, up: 2.7, down: 2.3, vmax: 1.6 }
+        : RAR[fish.pick.sp.rar];
+      const d = tier.diff, zoneH = Math.min(0.6, RODS[S.rod].zone + tier.zone);
       fish.vel += (fish.holding ? tier.up : -tier.down) * dt;
       fish.vel = Math.max(-tier.vmax, Math.min(tier.vmax, fish.vel));
       fish.zone += fish.vel * dt;
@@ -1284,8 +1367,13 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       $("zone").classList.toggle("on", inside);
       $("rfish").style.bottom = `${fish.fy * 100}%`;
       $("prog").style.height = `${Math.max(0, Math.min(1, fish.prog)) * 100}%`;
-      if (fish.prog >= 1) landed();
-      else if (fish.prog <= 0) setPhase("lost", "The line went slack. It got away.");
+      if (boss) {
+        const left = boss.secs - since / 1000;
+        refs_phaseBoss(boss, left, fish.prog);
+        if (left <= 0) { setPhase("lost", `${boss.name} wore you out.`); toast(`${boss.name} got away`, "It had more in it than you did. Try again."); return; }
+      }
+      if (fish.prog >= 1) { if (boss) bossLanded(boss); else landed(); }
+      else if (fish.prog <= 0) setPhase("lost", boss ? `${boss.name} broke the line.` : "The line went slack. It got away.");
     }
   }
 
@@ -1798,6 +1886,79 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   }
   const gardenSig = () => S.plots.map((p) => plotState(p) + (p.watered ? "w" : "") + (p.seed ? Math.floor(Math.min(1, (S.clock - p.at) / (p.ready - p.at || 1)) * 3) : "")).join(",") + S.plots.length + "|" + ui.choosing;
 
+  /* ---------------------------------------------------------- bosses */
+  function faceBoss(key) {
+    const b = BOSSES.find((x) => x.key === key); if (!b || !bossOpen(b)) return;
+    if (fish.phase === "wait" || fish.phase === "bite" || fish.phase === "reel") return;
+    S.spot = b.spot;
+    renderSpots(); renderBiting();
+    openTab(navTabs.find((t) => t.dataset.tab === "fishing"));
+    const sp = BY_KEY[b.art];
+    fish.pick = { sp, frac: 1, w: b.w, shiny: false, boss: b };
+    Object.assign(fish, { zone: .35, vel: 0, fy: .45, ftarget: .5, fnext: 0, prog: .35, holding: false });
+    setPhase("reel");
+    const st = bossState(b);
+    S.boss[b.key] = { ...st, tries: st.tries + 1 };
+    toast(`${b.name} is on`, `${b.secs} seconds. Keep it in the bar or it's gone.`);
+    save();
+  }
+  function bossLanded(b) {
+    const st = bossState(b);
+    const first = !st.beaten;
+    S.boss[b.key] = { beaten: true, tries: st.tries, best: Math.max(st.best || 0, Math.round((performance.now() - fish.at) / 100) / 10) };
+    if (first) S.perks[b.spot] = (S.perks[b.spot] || 0) + BOSS_PERK;
+    const xp = grant("fishing", first ? b.xp : Math.round(b.xp * 0.2));
+    setPhase("idle");
+    burstConfetti();
+    toast(`${b.name} is beaten`, first
+      ? `Title: ${b.title} · +${num(xp)} Fishing xp · rare fish at ${SPOTS[b.spot].name} up ${Math.round(BOSS_PERK * 100)}% for good`
+      : `Again. +${num(xp)} Fishing xp`);
+    renderBosses(); renderProfile(); save();
+  }
+  function burstConfetti() {
+    const b = el("div", "levelup");
+    b.innerHTML = "<b>Leviathan landed</b><span>It fought you to the last second.</span>";
+    document.body.append(b);
+    setTimeout(() => b.remove(), 2600);
+  }
+  function renderBosses() {
+    const box = $("bosses"); if (!box) return;
+    box.replaceChildren();
+    const done = BOSSES.filter((b) => bossState(b).beaten).length;
+    const intro = el("div", "panel-intro");
+    intro.append(el("p", null, `One lives at every spot. Beat it and its water is kinder to you for good. <b>${done} of ${BOSSES.length}</b> landed.`));
+    intro.append(el("span", "hint", "No pearls, no bait — just you and it"));
+    box.append(intro);
+    const grid = el("div", "boss-grid");
+    BOSSES.forEach((b) => {
+      const st = bossState(b), open = bossOpen(b);
+      const card = el("div", "boss " + (st.beaten ? "beaten" : open ? "open" : "locked"));
+      const art = el("div", "boss-art");
+      const cv = document.createElement("canvas");
+      art.append(cv);
+      art.append(el("span", `boss-tag ${st.beaten ? "beaten" : open ? "open" : "locked"}`, st.beaten ? "Landed" : open ? "Waiting for you" : "Locked"));
+      const body = el("div", "boss-body");
+      body.append(el("h3", null, `${b.name}<small>${SPOTS[b.spot].name} · ${b.sub}</small>`));
+      body.append(el("p", null, b.about));
+      body.append(el("div", "boss-need" + (open ? "" : " no"),
+        open ? `${b.secs} seconds · about ${lbs(b.w)}` : `Needs Fishing ${b.at} (you're ${levelIn("fishing")}) and 4 species from ${SPOTS[b.spot].name} (you have ${bossSeen(b)})`));
+      if (st.beaten) body.append(el("div", "boss-perk", `<b>${b.title}</b> · rare fish here up ${Math.round((S.perks[b.spot] || 0) * 100)}% · beaten in ${st.best}s`));
+      const go = el("button", "btn" + (open && !st.beaten ? " primary" : ""), st.beaten ? "Fight it again" : open ? "Face it" : "Not yet");
+      go.type = "button"; go.disabled = !open;
+      go.addEventListener("click", () => faceBoss(b.key));
+      body.append(go);
+      card.append(art, body);
+      grid.append(card);
+      // draw it once the card has a size
+      requestAnimationFrame(() => {
+        const { ctx, w, h } = fitCanvas(cv);
+        ctx.clearRect(0, 0, w, h);
+        drawFish(ctx, BY_KEY[b.art], w / 2, h / 2, Math.min(w * 0.92, 320), { sil: !open && !st.beaten, wag: 0.12 });
+      });
+    });
+    box.append(grid);
+  }
+
   /* ---------------------------------------------------------- diving */
   const invCount = () => Object.values(S.inv).reduce((n, v) => n + v, 0);
   const addItem = (key, n = 1) => { S.inv[key] = (S.inv[key] || 0) + n; };
@@ -1813,12 +1974,13 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     for (let i = 0; i < w.length; i++) { t -= w[i]; if (t <= 0) return LOOT_KEYS[i]; }
     return "shell";
   }
-  let diving = false;
+  let diving = false, diveEnds = 0;
+  const diveMs = () => (idleOn("airtank") ? DIVE_MS * 0.6 : DIVE_MS);
   function dive() {
     if (diving) return;
-    diving = true;
+    const each = diveMs();
+    diving = true; diveEnds = performance.now() + each;
     renderDive();
-    const each = (S.auto.airtank && levelIn("diving") >= 40 ? DIVE_MS * 0.6 : DIVE_MS);
     setTimeout(() => {
       const n = 1 + (idleOn("meshbag") ? 1 : 0) + (idleOn("airtank") ? 1 : 0) + (Math.random() < 0.25 ? 1 : 0);
       const got = [];
@@ -1839,10 +2001,22 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     head.append(el("p", null, `Diving <b>${spot.name}</b>. Deeper water holds better things — change spot on the fishing page.`));
     head.append(el("span", "hint", `${invCount()} things in the bag`));
     box.append(head);
+    const go = el("div", "dive-go");
     const b = el("button", "btn primary big", diving ? "Down there…" : "Dive");
     b.type = "button"; b.disabled = diving;
     b.addEventListener("click", dive);
-    box.append(b);
+    const bar = el("div", "dive-bar", "<i></i>");
+    go.append(b, bar, el("span", "dive-note", diving ? "Holding your breath…" : `A dive takes ${(diveMs() / 1000).toFixed(1)}s`));
+    box.append(go);
+    if (diving) {
+      const fill = bar.querySelector("i");
+      const left = Math.max(0, diveEnds - performance.now());
+      fill.style.transition = "none";
+      fill.style.width = `${Math.round(100 * (1 - left / diveMs()))}%`;
+      void fill.offsetWidth;
+      fill.style.transition = `width ${left}ms linear`;
+      fill.style.width = "100%";
+    }
     const table = el("div", "loot-grid");
     LOOT_KEYS.forEach((k) => {
       const it = LOOT[k], has = S.inv[k] || 0;
@@ -1872,9 +2046,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const list = el("div", "rows");
     RECIPES.forEach((r) => {
       const locked = lvl < r.at, ready = canCraft(r);
-      const row = el("div", "row2" + (locked ? " locked" : ""));
-      const parts = Object.entries(r.need).map(([k, n]) => `<span class="${(S.inv[k] || 0) >= n ? "ok" : "no"}">${LOOT[k].icon} ${n}</span>`).join(" ");
-      row.append(el("span", "row2-main", `<b>${r.name}</b><small>${parts} → ${r.about}</small>`));
+      const row = el("div", "craft-row" + (locked ? " locked" : ""));
+      const parts = Object.entries(r.need).map(([k, n]) => `<span class="${(S.inv[k] || 0) >= n ? "ok" : "no"}">${LOOT[k].icon} ${n} ${LOOT[k].name}</span>`).join("");
+      row.append(el("span", "craft-main", `<b>${r.name}</b><span class="craft-parts">${parts}<span class="arrow">→</span><span>${r.about}</span></span>`));
       const b = el("button", "btn small" + (!locked && ready ? " gold" : ""), locked ? `Crafting ${r.at}` : ready ? "Make" : "Need parts");
       b.type = "button"; b.disabled = locked || !ready;
       b.addEventListener("click", () => craft(r.key));
@@ -1905,8 +2079,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const list = el("div", "rows");
     keys.forEach((k) => {
       const it = LOOT[k];
-      const row = el("div", "row2");
-      row.append(el("span", "loot-ico", it.icon), el("span", "row2-main", `<b>${it.name} ×${S.inv[k]}</b><small style="color:${RAR[it.rar].color}">${RAR[it.rar].name} · ${it.value} pearls each</small>`));
+      const row = el("div", "inv-row");
+      row.append(el("span", "loot-ico", it.icon), el("span", "inv-main", `<b>${it.name} ×${S.inv[k]}</b><small><span style="color:${RAR[it.rar].color}">${RAR[it.rar].name}</span> · ${it.value} pearls each</small>`));
       const one = el("button", "btn small", "Sell 1"); one.type = "button"; one.addEventListener("click", () => sellItem(k, false));
       const all = el("button", "btn small gold", `Sell all <span class="pearl"></span>${num(it.value * S.inv[k])}`); all.type = "button"; all.addEventListener("click", () => sellItem(k, true));
       row.append(one, all);
@@ -2510,6 +2684,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (b.dataset.tab === "derby") renderDerby();
     if (b.dataset.tab === "skills") renderSkills();
     if (b.dataset.tab === "dive") renderDive();
+    if (b.dataset.tab === "boss") renderBosses();
     if (b.dataset.tab === "craft") renderCraft();
     if (b.dataset.tab === "inv") renderInv();
     renderXpTracker();
@@ -2529,7 +2704,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   });
 
   /* ============================================================ loop */
-  function renderEverything() { normalizeLoop(); ensureQuests(); renderSpots(); syncTank(); renderTank(); renderDex(); renderShop(); renderDerby(); renderProfile(); renderGarden(); renderBreeding(); renderQuests(); renderBaitSel(); renderSkills(); renderDive(); renderCraft(); renderInv(); renderXpTracker(); }
+  function renderEverything() { normalizeLoop(); ensureQuests(); renderSpots(); syncTank(); renderTank(); renderDex(); renderShop(); renderDerby(); renderProfile(); renderGarden(); renderBreeding(); renderQuests(); renderBaitSel(); renderSkills(); renderDive(); renderCraft(); renderInv(); renderBosses(); renderXpTracker(); }
 
   // the reel's little fish
   function drawReelFish() {
