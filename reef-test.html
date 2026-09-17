@@ -1,0 +1,1738 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>EastCoin Reef — Mockup</title>
+<link rel="stylesheet" href="/v3/assets/fonts/fonts.css">
+<style>
+:root{
+  --ink:#0c0a09;--panel:#161311;--panel-2:#1e1a17;--panel-3:#241f1b;
+  --line:rgba(255,255,255,.1);--line-2:rgba(255,255,255,.16);
+  --text:#f4ede5;--muted:#aca298;--muted-2:#7d746a;
+  --gold:#e8bf35;--gold-dim:rgba(232,191,53,.13);--green:#4ddb8b;--green-dim:rgba(77,219,139,.11);--red:#ff6b85;
+  --sea:#4fc3d9;--pearl-1:#fff;--pearl-2:#f3d9e6;
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --body:"Figtree","Segoe UI",system-ui,sans-serif;
+  --r0:#b9b0a6;--r1:#4ddb8b;--r2:#5aa2ff;--r3:#b98aff;--r4:#e8bf35;
+}
+*{box-sizing:border-box}
+html{background:var(--ink);color-scheme:dark}
+body{margin:0;min-height:100vh;background:var(--ink);color:var(--text);font-family:var(--body)}
+button{font:inherit;color:inherit}
+.topbar{max-width:1120px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.topbar .brand{font-family:var(--display);font-weight:800}
+.topbar .brand span{color:var(--gold)}
+.mock-tag{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2a1300;background:var(--gold);padding:4px 9px;border-radius:99px}
+.page{max-width:1120px;margin:0 auto}
+
+.head{display:flex;justify-content:space-between;align-items:end;gap:16px;padding:20px 0 14px;flex-wrap:wrap}
+.eyebrow{font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);letter-spacing:-.02em;margin:4px 0 4px;line-height:1}
+.sub{color:var(--muted);margin:0;max-width:60ch;line-height:1.5}
+.wallet{display:flex;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:13px;overflow:hidden}
+.wallet div{background:var(--panel);padding:9px 14px;min-width:120px}
+.wallet small{display:block;font-size:.64rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.wallet strong{font-family:var(--display);font-size:1.45rem;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:7px}
+.pearl{display:inline-block;width:.8em;height:.8em;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0 18%,#f6e6ef 40%,#c9a9bd 100%);box-shadow:0 0 6px rgba(255,220,240,.35);flex:none}
+
+.grid2{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:920px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px 10px}
+.card-head h2{font-family:var(--display);font-size:1.1rem;margin:0}
+.card-head .meta{font-size:.78rem;color:var(--muted)}
+.card-body{padding:12px 14px 14px}
+
+/* ---------- fishing */
+.spots{display:flex;gap:6px;padding:0 14px 10px;overflow-x:auto;scrollbar-width:none}
+.spots::-webkit-scrollbar{display:none}
+.spot{flex:none;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:.82rem;font-weight:800;cursor:pointer;color:var(--muted);display:flex;align-items:center;gap:6px}
+.spot[aria-pressed="true"]{color:var(--text);border-color:rgba(79,195,217,.6);background:rgba(79,195,217,.12)}
+.spot.locked{color:var(--muted-2)}
+.spot.locked b{display:inline-flex;align-items:center;gap:4px;color:var(--muted)}
+.spot:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.scene-wrap{position:relative;aspect-ratio:16/10;background:#0b1a2a;touch-action:none;user-select:none;-webkit-user-select:none}
+.scene-wrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.status{position:absolute;left:12px;top:10px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+.status > span{background:rgba(8,6,5,.62);border:1px solid rgba(255,255,255,.12);padding:4px 9px;border-radius:99px;font-size:.74rem;font-weight:800}
+.say{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);font-family:var(--display);font-weight:800;font-size:clamp(1.1rem,3.4vw,1.6rem);text-align:center;text-shadow:0 2px 12px rgba(0,0,0,.8);pointer-events:none;white-space:nowrap}
+.say.bite{color:var(--gold);font-size:clamp(2rem,7vw,3.2rem);animation:pulse .35s ease-in-out infinite alternate}
+@keyframes pulse{to{transform:translate(-50%,-50%) scale(1.12)}}
+.reel{position:absolute;right:16px;top:12%;bottom:12%;display:flex;gap:6px}
+.reel[hidden]{display:none}
+.track{position:relative;width:46px;border-radius:12px;background:linear-gradient(180deg,rgba(10,30,50,.85),rgba(5,15,28,.9));border:2px solid rgba(255,255,255,.25);overflow:hidden}
+.zone{position:absolute;left:3px;right:3px;border-radius:8px;background:linear-gradient(180deg,rgba(77,219,139,.55),rgba(77,219,139,.35));border:2px solid rgba(160,255,200,.9)}
+.zone.on{box-shadow:0 0 14px rgba(77,219,139,.8)}
+.rfish{position:absolute;left:50%;width:30px;height:18px;margin-left:-15px;margin-bottom:-9px}
+.rfish canvas{position:static;width:30px;height:18px}
+.prog{position:relative;width:10px;border-radius:6px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.2);overflow:hidden}
+.prog i{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,var(--red),var(--gold),var(--green))}
+.reel-tip{position:absolute;right:84px;bottom:14%;font-size:.8rem;font-weight:800;background:rgba(8,6,5,.7);padding:5px 9px;border-radius:8px;pointer-events:none}
+.actions{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--line);flex-wrap:wrap}
+.act{border:0;border-radius:11px;padding:12px 22px;font-weight:800;font-size:1rem;cursor:pointer;background:var(--sea);color:#062028;min-width:170px;touch-action:none}
+.act.hook{background:var(--gold);color:#2a1300}
+.act.reeling{background:var(--green);color:#052a15}
+.act:focus-visible,.btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.act-note{font-size:.78rem;color:var(--muted)}
+.bait{font-size:.78rem;color:var(--muted)}
+.bait b{color:var(--gold)}
+
+.catch{position:absolute;inset:0;display:grid;place-items:center;background:rgba(4,10,18,.72);backdrop-filter:blur(2px);padding:12px}
+.catch[hidden]{display:none}
+.catch-card{background:var(--panel);border:1px solid var(--line-2);border-radius:14px;padding:14px;width:min(340px,100%);text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.catch-card canvas{position:static;width:100%;height:auto;aspect-ratio:2/1;display:block;border-radius:10px;background:radial-gradient(circle at 50% 60%,rgba(79,195,217,.22),rgba(0,0,0,0) 70%)}
+.catch-card h3{font-family:var(--display);font-size:1.35rem;margin:4px 0 2px}
+.tags{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:4px 0 8px}
+.tag{font-size:.66rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:99px;border:1px solid currentColor}
+.tag.solid{background:var(--gold);color:#2a1300;border-color:transparent}
+.tag.new{color:var(--sea)}
+.catch-line{color:var(--muted);font-size:.86rem;margin:0 0 10px}
+.btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.btn{border:1px solid var(--line-2);background:var(--panel-3);border-radius:10px;padding:9px 14px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn.primary{background:var(--sea);color:#062028;border-color:transparent}
+.btn.gold{background:var(--gold);color:#2a1300;border-color:transparent}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.small{padding:5px 9px;font-size:.78rem;border-radius:8px}
+
+.biting{padding:10px 14px 14px;border-top:1px solid var(--line)}
+.biting h4{margin:0 0 8px;font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chipf{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:99px;background:var(--panel-2);border:1px solid var(--line);font-size:.78rem;font-weight:700}
+.chipf i{width:8px;height:8px;border-radius:50%}
+.chipf.off{opacity:.45;font-weight:600}
+.chipf small{color:var(--muted-2);font-weight:600}
+
+/* ---------- tank */
+.tank-wrap{position:relative;aspect-ratio:16/10;background:#08364a}
+.tank-wrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:pointer}
+.tank-hud{position:absolute;left:10px;right:10px;top:10px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+.tank-hud > span{background:rgba(4,14,22,.62);border:1px solid rgba(255,255,255,.14);padding:4px 9px;border-radius:99px;font-size:.74rem;font-weight:800;display:inline-flex;align-items:center;gap:6px}
+.fishtip{position:absolute;z-index:3;background:rgba(12,10,9,.94);border:1px solid var(--line-2);border-radius:11px;padding:10px 12px;min-width:190px;box-shadow:0 10px 30px rgba(0,0,0,.5);transform:translate(-50%,-110%)}
+.fishtip[hidden]{display:none}
+.fishtip strong{font-family:var(--display);display:block}
+.fishtip small{display:block;color:var(--muted);margin:2px 0 8px}
+.tank-list{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.tank-list li{display:grid;grid-template-columns:10px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:6px 8px;border-radius:9px;background:var(--panel-2);font-size:.86rem}
+.tank-list li i{width:10px;height:10px;border-radius:50%}
+.tank-list li .rate{color:var(--muted);font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.tank-list .empty{grid-template-columns:1fr;color:var(--muted);background:none;text-align:center;padding:14px}
+.tank-list .shiny{color:var(--gold);font-size:.7rem;font-weight:800}
+
+/* ---------- lower */
+.lower{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;margin-top:16px;align-items:start}
+@media (max-width:920px){.lower{grid-template-columns:minmax(0,1fr)}}
+.app{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding:18px 12px 16px;border-right:1px solid var(--line);background:#100e0c;scrollbar-width:thin}
+.sb-top{display:grid;gap:14px;padding:0 6px}
+.sb-title{font-family:var(--display);font-weight:800;font-size:1.7rem;letter-spacing:-.02em;line-height:1.05;display:flex;align-items:center;gap:8px;margin-top:2px}
+.sb-title .mock-tag{font-size:.56rem;padding:3px 7px}
+.sb-wallet{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.sb-wallet div{background:var(--panel);padding:8px 10px}
+.sb-wallet small{display:block;font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.sb-wallet strong{font-family:var(--display);font-size:1.05rem;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.sb-foot{margin:auto 6px 0;font-size:.72rem;color:var(--muted-2);line-height:1.4}
+.fnav .tabs{display:flex;flex-direction:column;gap:2px}
+.main{min-width:0;padding:22px 28px 56px}
+.view{max-width:1040px;margin:0 auto}
+.view-h{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:14px;flex-wrap:wrap}
+.view-h h1{font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,3vw,2.1rem);letter-spacing:-.02em;margin:0;line-height:1.05}
+.view-h p{margin:4px 0 0;color:var(--muted);font-size:.9rem;max-width:62ch}
+.view-h .meta{font-size:.82rem;color:var(--muted);font-weight:700}
+.view-fishing,.view-tank{max-width:880px}
+.view-profile .view-stack{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
+.view-controls{max-width:560px}
+@media (max-width:860px){.view-profile .view-stack{grid-template-columns:minmax(0,1fr)}}
+.fnav-h{font-size:.64rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);padding:10px 10px 4px}
+.fnav-h:first-child{padding-top:2px}
+.tab{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-radius:9px;padding:9px 10px;font-weight:700;font-size:.9rem;color:var(--muted);cursor:pointer;text-align:left;white-space:nowrap;position:relative}
+.tab svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+.tab .tab-label{flex:1}
+.tab:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.tab[aria-selected="true"]{background:rgba(79,195,217,.12);color:var(--text)}
+.tab[aria-selected="true"]::before{content:"";position:absolute;left:-10px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--sea)}
+.tab[aria-selected="true"] svg{color:var(--sea);opacity:1}
+.tab:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.fpanels{min-width:0}
+.fpanels .card-body{padding:16px 18px 18px}
+.fpanel-h{font-family:var(--display);font-size:1.2rem;margin:0 0 12px}
+@media (max-width:820px){
+  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr}
+  .sidebar{position:sticky;top:0;z-index:30;height:auto;overflow:visible;gap:8px;padding:10px 12px 0;border-right:0;border-bottom:1px solid var(--line);background:rgba(16,14,12,.96);backdrop-filter:blur(8px)}
+  .sb-top{grid-template-columns:auto minmax(0,1fr);align-items:center;gap:12px;padding:0}
+  .sb-brand .eyebrow{display:none}
+  .sb-title{font-size:1.3rem;margin:0}
+  .sb-wallet div{padding:5px 8px}
+  .sb-wallet strong{font-size:.9rem}
+  .sb-foot{display:none}
+  .fnav{margin:0 -12px;padding:0 8px;overflow-x:auto;scrollbar-width:none}
+  .fnav::-webkit-scrollbar{display:none}
+  .fnav .tabs{flex-direction:row}
+  .fnav-h{display:none}
+  .tab{width:auto;padding:10px 10px 12px;font-size:.84rem;border-radius:9px 9px 0 0}
+  .tab[aria-selected="true"]{background:none}
+  .tab[aria-selected="true"]::before{left:10px;right:10px;top:auto;bottom:0;width:auto;height:3px;border-radius:3px 3px 0 0}
+  .main{padding:16px 16px 48px}
+  .view-h .meta{width:100%}
+}
+.dex-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.dex-bar{flex:1;min-width:160px;height:8px;border-radius:8px;background:var(--panel-3);overflow:hidden}
+.dex-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--sea),var(--gold))}
+.dex-spot{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);margin:14px 0 6px}
+.dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.dexc{background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:8px;position:relative}
+.dexc canvas{width:100%;height:auto;aspect-ratio:2/1;display:block}
+.dexc strong{display:block;font-size:.86rem;margin-top:2px}
+.dexc small{display:block;color:var(--muted-2);font-size:.72rem;line-height:1.35}
+.dexc .rd{position:absolute;top:8px;right:8px;width:8px;height:8px;border-radius:50%}
+.dexc .star{position:absolute;top:5px;left:8px;color:var(--gold);font-size:.8rem}
+.shop-sec{margin-bottom:14px}
+.shop-sec h3{font-family:var(--display);font-size:.95rem;margin:0 0 6px}
+.shop-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--panel-2);margin-bottom:5px}
+.shop-row strong{display:block;font-size:.9rem}
+.shop-row small{color:var(--muted);font-size:.78rem}
+.shop-row.owned{opacity:.6}
+.lb{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.lb li{display:grid;grid-template-columns:22px 1fr auto;gap:8px;padding:7px 8px;border-radius:8px;font-size:.88rem}
+.lb li:nth-child(odd){background:rgba(255,255,255,.025)}
+.lb .rk{color:var(--muted-2);font-weight:800}
+.lb li:first-child .rk{color:var(--gold)}
+.lb .v{font-weight:800;font-variant-numeric:tabular-nums}
+.lb li.me{background:var(--gold-dim);box-shadow:inset 0 0 0 1px rgba(232,191,53,.4)}
+.example{font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);border:1px solid var(--line-2);border-radius:99px;padding:1px 6px;margin-left:6px;vertical-align:2px}
+.note{font-size:.84rem;color:var(--muted);line-height:1.5;margin:0}
+.note+.note{margin-top:8px}
+
+.side{display:grid;gap:14px}
+.ctl{display:grid;gap:10px}
+.ctl label{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);display:block;margin-bottom:4px}
+.seg{display:flex;flex-wrap:wrap;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg button{flex:1;background:none;border:0;padding:5px 6px;border-radius:7px;font-weight:800;font-size:.76rem;color:var(--muted);cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--panel-3);color:var(--text)}
+.ctl-btns{display:flex;flex-wrap:wrap;gap:6px}
+.profile-tank{border-radius:12px;overflow:hidden;border:1px solid rgba(79,195,217,.35)}
+.profile-tank canvas{display:block;width:100%;height:auto;aspect-ratio:16/10}
+.profile-line{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);margin-top:8px}
+.profile-line b{color:var(--text)}
+
+/* ---------- the daily loop (tabs in the lower card) */
+.tab .count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;margin-left:auto;border-radius:9px;background:var(--gold);color:#2a1300;font-size:.68rem;font-weight:800;vertical-align:1px}
+.tab .count[hidden]{display:none}
+.panel-intro{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin:2px 0 14px}
+.panel-intro p{margin:0;color:var(--muted);font-size:.86rem;line-height:1.45;max-width:60ch}
+.panel-intro p b{color:var(--text);font-weight:700}
+.panel-intro .hint{font-size:.76rem;color:var(--muted-2)}
+.sec-h{margin:0 0 8px;font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.sec-h small{font-weight:700;letter-spacing:0;text-transform:none;margin-left:6px}
+.empty-note{font-size:.84rem;color:var(--muted);margin:0}
+.thinbar{height:3px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
+.thinbar i{display:block;height:100%;width:0;background:var(--green);transition:width .3s}
+.btn.ghost{background:transparent}
+.btn.water{background:rgba(31,111,209,.22);color:#9cc6ff;border-color:rgba(90,162,255,.4)}
+.linkbtn{background:none;border:0;color:var(--muted);font-size:.78rem;font-weight:700;cursor:pointer;padding:4px;justify-self:center}
+.linkbtn:hover{color:var(--text)}
+
+/* quests */
+.q-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+@media (max-width:720px){.q-cols{grid-template-columns:minmax(0,1fr);gap:18px}}
+.q-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:2px}
+.q-head .sec-h{margin:0}
+.q-meta{font-size:.74rem;color:var(--muted-2)}
+.q-meta .streak{color:var(--gold);font-weight:800}
+.q-list{display:grid}
+.quest{position:relative;display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}
+.quest::after{content:"";position:absolute;left:28px;bottom:-1px;height:1px;width:calc((100% - 28px) * var(--p));background:var(--green);opacity:.7}
+.quest .q-mark{width:18px;height:18px;border-radius:50%;border:2px solid var(--line-2);display:grid;place-items:center;color:#062028}
+.quest .q-mark svg{width:12px;height:12px}
+.quest.done .q-mark{border-color:var(--gold)}
+.quest.claimed .q-mark{background:var(--green);border-color:var(--green)}
+.quest .q-text{font-size:.9rem;font-weight:700;line-height:1.3}
+.quest .q-text small{display:block;font-weight:600;font-size:.74rem;color:var(--muted-2);font-variant-numeric:tabular-nums;margin-top:1px}
+.quest.claimed .q-text{color:var(--muted)}
+.q-reward{display:inline-flex;align-items:center;gap:4px;font-size:.82rem;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
+.quest.claimed .q-reward{opacity:.5}
+.q-chest{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;font-size:.78rem;color:var(--muted-2);min-height:30px}
+.q-chest.ready{color:var(--text);font-weight:700}
+.q-chest.opened{color:var(--green)}
+
+/* garden */
+.plots{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.plot{border:1px solid var(--line);border-radius:12px;padding:10px;display:grid;gap:8px;align-content:start;background:var(--panel-2)}
+.plot.ready{border-color:rgba(77,219,139,.5)}
+.plot-art svg{display:block;width:100%;height:58px}
+.plot-label b{display:block;font-size:.86rem}
+.plot-label small{display:block;font-size:.74rem;color:var(--muted);font-variant-numeric:tabular-nums;min-height:1.2em}
+.plot.ready .plot-label small{color:var(--green);font-weight:700}
+.plot .btn{width:100%;justify-content:center}
+.plot.choosing{gap:6px;align-content:start}
+.choose-head{font-size:.82rem;margin-bottom:2px}
+.choose{display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:8px;align-items:center;text-align:left;background:var(--panel-3);border:1px solid var(--line);border-radius:9px;padding:6px 8px;cursor:pointer}
+.choose i{width:8px;height:8px;border-radius:50%}
+.choose b{display:block;font-size:.78rem}
+.choose small{display:block;font-size:.68rem;color:var(--muted-2);font-weight:600}
+.choose em{font-style:normal;font-size:.76rem;font-weight:800;display:inline-flex;align-items:center;gap:3px}
+.choose:hover:not(:disabled){border-color:rgba(79,195,217,.5)}
+.choose:disabled{opacity:.45;cursor:default}
+.choose:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+/* breeding */
+.breed-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:24px;align-items:start}
+@media (max-width:720px){.breed-cols{grid-template-columns:minmax(0,1fr);gap:18px}}
+.nests{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.nest{border:1px solid var(--line);border-radius:12px;padding:12px 8px 10px;display:grid;gap:8px;justify-items:center;text-align:center;background:var(--panel-2)}
+.nest.ready{border-color:rgba(232,191,53,.5)}
+.nest .thinbar,.nest .btn{width:100%}
+.nest .btn{justify-content:center}
+.nest-label b{display:block;font-size:.84rem}
+.nest-label small{display:block;font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.nest.ready .nest-label small{color:var(--gold);font-weight:700}
+.egg{--egg:#ddd;--spot:#999;width:34px;height:44px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;
+  background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.6),rgba(255,255,255,0) 30%),radial-gradient(circle at 62% 60%,var(--spot) 0 9%,transparent 10%),radial-gradient(circle at 36% 72%,var(--spot) 0 7%,transparent 8%),radial-gradient(circle at 66% 32%,var(--spot) 0 6%,transparent 7%),var(--egg);
+  box-shadow:inset -4px -6px 10px rgba(0,0,0,.3),0 4px 10px rgba(0,0,0,.35)}
+.egg.hollow{background:none;border:2px dashed var(--line-2);box-shadow:none}
+.egg.wobble{animation:wobble .9s ease-in-out infinite}
+@keyframes wobble{0%,100%{transform:rotate(0)}20%{transform:rotate(-9deg)}40%{transform:rotate(8deg)}60%{transform:rotate(-5deg)}80%{transform:rotate(3deg)}}
+.rows{display:grid;margin-bottom:14px}
+.row2{display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.rdot{width:8px;height:8px;border-radius:50%}
+.row2-main b{display:block;font-size:.88rem}
+.row2-main small{display:block;font-size:.74rem;color:var(--muted-2)}
+.row2-btns{display:flex;gap:6px}
+
+.baitpick{display:flex;align-items:center;gap:6px;font-size:.78rem;font-weight:800;color:var(--muted)}
+.baitpick select{background:var(--panel-2);color:var(--text);border:1px solid var(--line-2);border-radius:9px;padding:7px 8px;font:inherit;font-weight:700;max-width:220px}
+.baitpick select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.egg.wobble{animation:none}}
+.toasts{position:fixed;left:252px;bottom:16px;display:grid;gap:8px;z-index:50;max-width:min(360px,calc(100vw - 32px))}
+.toast{background:#101a20;border:1px solid rgba(79,195,217,.45);border-radius:11px;padding:10px 14px;font-weight:700;box-shadow:0 12px 30px rgba(0,0,0,.5);animation:tin .25s ease-out}
+.toast small{display:block;color:var(--muted);font-weight:600}
+@keyframes tin{from{transform:translateY(10px);opacity:0}}
+@media (max-width:820px){.toasts{left:16px}}
+@media (prefers-reduced-motion:reduce){.say.bite,.toast{animation:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-top">
+      <div class="sb-brand">
+        <div class="eyebrow">EastCoin · Game Room</div>
+        <div class="sb-title">Reef <span class="mock-tag">Mockup</span></div>
+      </div>
+      <div class="sb-wallet">
+        <div><small>Pearls</small><strong><span class="pearl"></span><span id="pearls">0</span></strong></div>
+        <div><small>Tank makes</small><strong id="rate">0 / hr</strong></div>
+      </div>
+    </div>
+    <nav class="fnav" aria-label="Reef">
+      <div class="tabs" role="tablist" aria-orientation="vertical">
+          <span class="fnav-h">Play</span>
+          <button class="tab" role="tab" id="tab-fishing" aria-controls="panel-fishing" data-tab="fishing" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3v9a4 4 0 0 0 8 0"/><path d="M5 3l14 5"/><path d="M19 8v6"/><circle cx="19" cy="16" r="2"/></svg><span class="tab-label">Fishing</span></button>
+          <button class="tab" role="tab" id="tab-tank" aria-controls="panel-tank" data-tab="tank" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 13c1.5-2 4-2 5.5 0-1.5 2-4 2-5.5 0zM12.5 13l2-1.5v3z"/><path d="M3 9h18"/></svg><span class="tab-label">Your tank</span></button>
+          <span class="fnav-h">Every day</span>
+          <button class="tab" role="tab" id="tab-quests" aria-controls="panel-quests" data-tab="quests" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 9l1.6 1.6L13.5 7.5M9 15h6"/></svg><span class="tab-label">Quests</span><span class="count" hidden></span></button>
+          <button class="tab" role="tab" id="tab-garden" aria-controls="panel-garden" data-tab="garden" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20v-8"/><path d="M12 12c-4 0-6-3-6-6 3 0 6 2 6 6zM12 14c3.5 0 5.5-2.5 5.5-5.5-3 0-5.5 2-5.5 5.5z"/><path d="M5 20h14"/></svg><span class="tab-label">Bait garden</span><span class="count" hidden></span></button>
+          <button class="tab" role="tab" id="tab-breeding" aria-controls="panel-breeding" data-tab="breeding" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3.6 0 6 5.2 6 9.2A6 6 0 0 1 6 12.7c0-4 2.4-9.2 6-9.2z"/></svg><span class="tab-label">Breeding</span><span class="count" hidden></span></button>
+          <span class="fnav-h">Collection</span>
+          <button class="tab" role="tab" id="tab-dex" aria-controls="panel-dex" data-tab="dex" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h10a3 3 0 0 1 3 3v12H8a3 3 0 0 1-3-3z"/><path d="M5 16.5a3 3 0 0 1 3-3h10"/></svg><span class="tab-label">Fish book</span></button>
+          <button class="tab" role="tab" id="tab-shop" aria-controls="panel-shop" data-tab="shop" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 11.5H6.2z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg><span class="tab-label">Shop</span></button>
+          <button class="tab" role="tab" id="tab-derby" aria-controls="panel-derby" data-tab="derby" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5v1.5A3 3 0 0 0 8 10.5M16 6h3v1.5a3 3 0 0 1-3 3M12 13v4M8.5 20h7"/></svg><span class="tab-label">Weekly derby</span></button>
+          <span class="fnav-h">Mockup</span>
+          <button class="tab" role="tab" id="tab-profile" aria-controls="panel-profile" data-tab="profile" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1.2-3.6 4-5 7-5s5.8 1.4 7 5"/></svg><span class="tab-label">Profile preview</span></button>
+          <button class="tab" role="tab" id="tab-controls" aria-controls="panel-controls" data-tab="controls" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h9M18 7h1M5 17h1M10 17h9"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span class="tab-label">Controls</span></button>
+      </div>
+    </nav>
+    <p class="sb-foot">Plays for titles. Pearls never turn into ZCoins.</p>
+  </aside>
+
+<main class="main">
+  <section class="view view-fishing" role="tabpanel" id="panel-fishing" aria-labelledby="tab-fishing" data-panel="fishing">
+    <header class="view-h"><div><h1>Fishing</h1><p>Cast, wait for the splash, then hold to reel.</p></div><span class="meta" id="rodLine">Twig Rod</span></header>
+    <section class="card" aria-label="Fishing">
+      <div class="spots" id="spots" style="padding-top:12px"></div>
+      <div class="scene-wrap" id="sceneWrap">
+        <canvas id="scene"></canvas>
+        <div class="status"><span id="clock">Day · Fall</span><span id="spotName">Backyard Pond</span></div>
+        <div class="say" id="say"></div>
+        <div class="reel" id="reel" hidden>
+          <div class="track" id="track"><div class="zone" id="zone"></div><div class="rfish" id="rfish"><canvas id="rfishC" width="60" height="36"></canvas></div></div>
+          <div class="prog"><i id="prog"></i></div>
+        </div>
+        <div class="reel-tip" id="reelTip" hidden>Hold to raise the bar. Keep the fish inside.</div>
+        <div class="catch" id="catch" hidden>
+          <div class="catch-card">
+            <canvas id="catchC" width="640" height="320"></canvas>
+            <h3 id="cName">Bluegill</h3>
+            <div class="tags" id="cTags"></div>
+            <p class="catch-line" id="cLine"></p>
+            <div class="btns">
+              <button class="btn primary" id="cKeep" type="button">Put in tank</button>
+              <button class="btn" id="cSell" type="button">Sell</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="act" id="act" type="button">Cast</button>
+        <label class="baitpick">Bait <select id="baitSel"></select></label>
+        <span class="act-note" id="actNote">Space works too.</span>
+      </div>
+      <div class="biting">
+        <h4>Biting here</h4>
+        <div class="chips" id="biting"></div>
+      </div>
+    </section>
+  </section>
+
+  <section class="view view-tank" role="tabpanel" id="panel-tank" aria-labelledby="tab-tank" data-panel="tank" hidden>
+    <header class="view-h"><div><h1>Your tank</h1><p>Fish you keep swim here and make Pearls, even while you're away.</p></div><span class="meta" id="capLine">0 of 5 fish</span></header>
+    <section class="card" aria-label="Aquarium">
+      <div class="tank-wrap" id="tankWrap">
+        <canvas id="tank"></canvas>
+        <div class="tank-hud"><span id="tankRate"><span class="pearl"></span> 0 / hr</span><span id="tankAway">Up to 8 h while you're away</span></div>
+        <div class="fishtip" id="fishtip" hidden></div>
+      </div>
+      <div class="card-body">
+        <ul class="tank-list" id="tankList"></ul>
+      </div>
+    </section>
+  </section>
+
+  <section class="view view-quests" role="tabpanel" id="panel-quests" aria-labelledby="tab-quests" data-panel="quests" hidden>
+    <header class="view-h"><div><h1>Quests</h1><p>New dailies at midnight Central, new weeklies on Monday.</p></div></header>
+    <div class="card"><div class="card-body"><div id="quests"></div></div></div>
+  </section>
+
+  <section class="view view-garden" role="tabpanel" id="panel-garden" aria-labelledby="tab-garden" data-panel="garden" hidden>
+    <header class="view-h"><div><h1>Bait garden</h1><p>Grow bait that changes what bites.</p></div></header>
+    <div class="card"><div class="card-body"><div id="garden"></div></div></div>
+  </section>
+
+  <section class="view view-breeding" role="tabpanel" id="panel-breeding" aria-labelledby="tab-breeding" data-panel="breeding" hidden>
+    <header class="view-h"><div><h1>Breeding</h1><p>Two of the same fish lay an egg. Shiny parents raise the odds of a shiny baby.</p></div></header>
+    <div class="card"><div class="card-body"><div id="breeding"></div></div></div>
+  </section>
+
+  <section class="view view-dex" role="tabpanel" id="panel-dex" aria-labelledby="tab-dex" data-panel="dex" hidden>
+    <header class="view-h"><div><h1>Fish book</h1><p>Every species, and when it bites.</p></div></header>
+    <div class="card"><div class="card-body"><div id="dex"></div></div></div>
+  </section>
+
+  <section class="view view-shop" role="tabpanel" id="panel-shop" aria-labelledby="tab-shop" data-panel="shop" hidden>
+    <header class="view-h"><div><h1>Shop</h1><p>Rods, tanks, garden plots, nests and decorations.</p></div></header>
+    <div class="card"><div class="card-body"><div id="shop"></div></div></div>
+  </section>
+
+  <section class="view view-derby" role="tabpanel" id="panel-derby" aria-labelledby="tab-derby" data-panel="derby" hidden>
+    <header class="view-h"><div><h1>Weekly derby</h1><p>One species a week. Heaviest fish by Sunday night takes the title.</p></div></header>
+    <div class="card"><div class="card-body"><div id="derby"></div></div></div>
+  </section>
+
+  <section class="view view-profile" role="tabpanel" id="panel-profile" aria-labelledby="tab-profile" data-panel="profile" hidden>
+    <header class="view-h"><div><h1>Profile preview</h1><p>What visitors would see on your EastCoin profile.</p></div></header>
+    <div class="view-stack">
+      <div class="card"><div class="card-body">
+        <h2 style="font-family:var(--display);font-size:1rem;margin:0 0 2px">On your profile</h2>
+        <p class="note" style="font-size:.76rem;margin-bottom:8px">Your tank, swimming, for anyone who visits.</p>
+        <div class="profile-tank"><canvas id="miniTank" width="480" height="300"></canvas></div>
+        <div class="profile-line"><span><b id="pDex">0/30</b> species</span><span><b id="pBest">—</b> biggest</span><span><b id="pShiny">0</b> shiny</span></div>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <h2 style="font-family:var(--display);font-size:1rem;margin:0 0 6px">How the real one works</h2>
+        <p class="note">The server rolls every bite from the spot, your rod and the real time and season in Chicago, so rare fish can't be picked.</p>
+        <p class="note">It keeps your tank and when you last collected, and works out Pearls when you open the page. Nothing polls. Pearls never turn into ZCoins; it plays for titles.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="view view-controls" role="tabpanel" id="panel-controls" aria-labelledby="tab-controls" data-panel="controls" hidden>
+    <header class="view-h"><div><h1>Mockup controls</h1><p>Bend time, weather and luck to test the loop. Not in the real game.</p></div></header>
+      <div class="card"><div class="card-body">
+        <div class="ctl">
+          <div><label>Time of day</label><div class="seg" id="cTime"></div></div>
+          <div><label>Season</label><div class="seg" id="cSeason"></div></div>
+          <div><label>Weather</label><div class="seg" id="cWeather"></div></div>
+          <div><label>Time speed (tank, garden, eggs)</label><div class="seg" id="cSpeed"></div></div>
+          <div class="ctl-btns">
+            <button class="btn small" id="cSunday" type="button" aria-pressed="false">NFL Sunday: off</button>
+            <button class="btn small" id="cShiny" type="button" aria-pressed="false">Shiny odds ×50: off</button>
+            <button class="btn small" id="cPearls" type="button">+2,000 pearls</button>
+            <button class="btn small" id="cAway" type="button">Away 2 hours</button>
+            <button class="btn small" id="cDay" type="button">Next day (quests)</button>
+            <button class="btn small" id="cWeek" type="button">Next week (quests)</button>
+            <button class="btn small" id="cWipe" type="button">Wipe save</button>
+          </div>
+        </div>
+      </div></div>
+  </section>
+</main>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ============================================================ data */
+  const RAR = [
+    { name: "Common", color: "#b9b0a6", weight: 55, rate: 2, diff: 0.55 },
+    { name: "Uncommon", color: "#4ddb8b", weight: 28, rate: 5, diff: 0.8 },
+    { name: "Rare", color: "#5aa2ff", weight: 12, rate: 12, diff: 1.0 },
+    { name: "Epic", color: "#b98aff", weight: 4.2, rate: 30, diff: 1.2 },
+    { name: "Legendary", color: "#e8bf35", weight: 0.8, rate: 80, diff: 1.4 }
+  ];
+  const SPOTS = [
+    { key: "pond", name: "Backyard Pond", cost: 0, water: ["#4a8f6e", "#1d4a3a"], look: "pond" },
+    { key: "river", name: "Fox River", cost: 150, water: ["#4f8a93", "#1c4450"], look: "river" },
+    { key: "lake", name: "Lake Michigan", cost: 800, water: ["#3f86b8", "#143e63"], look: "lake" },
+    { key: "pier", name: "Ocean Pier", cost: 3000, water: ["#2f9cc4", "#0f4a70"], look: "pier" },
+    { key: "deep", name: "Deep Sea", cost: 12000, water: ["#1d5a92", "#061c3a"], look: "deep" }
+  ];
+  // shape: h body height, sn snout, tail fork|round|fan|lunate|taper, d dorsal 0-1, p pattern(s), x extra
+  // c: [base, belly, accent, fin]
+  const F = (key, name, spot, rar, size, w, shape, c, cond) => ({ key, name, spot, rar, size, w, ...shape, c, cond: cond || null });
+  const SPECIES = [
+    F("bluegill", "Bluegill", 0, 0, 38, [0.2, 1], { h: .52, sn: .38, tail: "round", d: .6, p: "bands" }, ["#46789a", "#e8a33a", "#23405a", "#3b5f7a"]),
+    F("goldfish", "Goldfish", 0, 0, 32, [0.1, .6], { h: .46, sn: .4, tail: "fan", d: .7, p: "" }, ["#f08a24", "#ffc46b", "#e06a10", "#f7a651"]),
+    F("pumpkinseed", "Pumpkinseed", 0, 1, 38, [0.2, .8], { h: .56, sn: .38, tail: "round", d: .6, p: "spots" }, ["#5a8f6a", "#f0b43a", "#e0662a", "#4f7f5f"]),
+    F("koi", "Koi", 0, 2, 62, [2, 12], { h: .34, sn: .42, tail: "fan", d: .5, p: "patches", x: "whiskers" }, ["#f5f0e6", "#ffffff", "#e0441f", "#f1e6dc"], { time: ["day"] }),
+    F("goldkoi", "Golden Koi", 0, 4, 70, [4, 18], { h: .34, sn: .42, tail: "fan", d: .5, p: "patches", x: "whiskers" }, ["#f2c14e", "#ffe08a", "#fff4c9", "#f5d270"], { time: ["dawn"] }),
+
+    F("chub", "Creek Chub", 1, 0, 34, [0.1, .5], { h: .28, sn: .45, tail: "fork", d: .5, p: "lateral" }, ["#8a8f7a", "#e9e4d0", "#3f4a5a", "#9a9a88"]),
+    F("rainbow", "Rainbow Trout", 1, 1, 52, [1, 8], { h: .3, sn: .44, tail: "fork", d: .5, p: "lateral+spots" }, ["#71906c", "#efe6d8", "#e46a8a", "#7f8f70"]),
+    F("catfish", "Channel Catfish", 1, 1, 64, [2, 25], { h: .3, sn: .36, tail: "fork", d: .6, p: "spots", x: "whiskers" }, ["#5d6f7c", "#d9dde0", "#2e3a44", "#56636d"], { time: ["dusk", "night"] }),
+    F("smallmouth", "Smallmouth Bass", 1, 2, 50, [1, 7], { h: .38, sn: .4, tail: "round", d: .8, p: "bands" }, ["#8a7a45", "#e6dcb0", "#4f4526", "#7d6e3e"]),
+    F("bearcat", "Bear Catfish", 1, 3, 78, [10, 40], { h: .32, sn: .36, tail: "fork", d: .6, p: "stripes", x: "whiskers" }, ["#0b162a", "#f4ede5", "#c83803", "#c83803"], { sunday: true }),
+    F("sturgeon", "Lake Sturgeon", 1, 3, 96, [20, 150], { h: .22, sn: .46, tail: "lunate", d: .4, p: "spots", x: "longsnout" }, ["#6d6a5f", "#cfc8b5", "#3e3b33", "#5d5a50"], { season: ["spring"] }),
+    F("paddlefish", "Paddlefish", 1, 4, 104, [30, 120], { h: .24, sn: .44, tail: "fork", d: .4, p: "", x: "paddle" }, ["#6b7f8f", "#d6dde2", "#44525e", "#5d6d7a"], { weather: ["storm"] }),
+
+    F("perch", "Yellow Perch", 2, 0, 38, [0.2, 1.5], { h: .33, sn: .42, tail: "fork", d: .8, p: "bands" }, ["#c9b23a", "#f2e7b0", "#3c4a22", "#e07b2a"]),
+    F("largemouth", "Largemouth Bass", 2, 1, 58, [1, 12], { h: .38, sn: .4, tail: "round", d: .8, p: "lateral" }, ["#6f8a4a", "#e8e6c8", "#2f3d22", "#6a7f47"]),
+    F("pike", "Northern Pike", 2, 2, 84, [3, 30], { h: .2, sn: .46, tail: "fork", d: .4, p: "spots", x: "longsnout" }, ["#4d6b3a", "#e8e4c0", "#d6d9a0", "#7a6a3a"]),
+    F("coho", "Coho Salmon", 2, 2, 66, [5, 20], { h: .3, sn: .44, tail: "fork", d: .5, p: "lateral+spots" }, ["#95a4ad", "#f0f0ee", "#d0405a", "#7a8a92"], { season: ["fall"] }),
+    F("laketrout", "Lake Trout", 2, 3, 76, [5, 40], { h: .28, sn: .44, tail: "fork", d: .5, p: "spots" }, ["#4f5d63", "#dddddd", "#cfd6d0", "#5c6a70"], { season: ["winter"] }),
+    F("muskie", "Muskie", 2, 4, 100, [15, 55], { h: .2, sn: .46, tail: "fork", d: .4, p: "bands", x: "longsnout" }, ["#9a9a68", "#eee8c8", "#5f5e3a", "#8a6a3a"], { time: ["dusk"] }),
+
+    F("mackerel", "Mackerel", 3, 0, 44, [0.5, 3], { h: .24, sn: .45, tail: "fork", d: .4, p: "stripes" }, ["#3a7f8f", "#e9f2f2", "#1c3c4a", "#6aa4ad"]),
+    F("snapper", "Red Snapper", 3, 1, 54, [2, 25], { h: .42, sn: .42, tail: "fork", d: .8, p: "" }, ["#e0503a", "#ffb0a0", "#b33a2a", "#f06a50"]),
+    F("puffer", "Pufferfish", 3, 1, 40, [0.5, 4], { h: .82, sn: .4, tail: "round", d: .3, p: "spots", x: "spikes" }, ["#d6b84a", "#f6eed0", "#5a4a22", "#caa840"]),
+    F("mahi", "Mahi-mahi", 3, 2, 80, [10, 50], { h: .36, sn: .3, tail: "fork", d: .95, p: "spots" }, ["#2fae6a", "#f2d23a", "#2a7fd6", "#3fb0d0"], { season: ["summer"] }),
+    F("barracuda", "Barracuda", 3, 3, 92, [10, 60], { h: .18, sn: .46, tail: "fork", d: .4, p: "bands", x: "longsnout" }, ["#9fb0b8", "#eef2f4", "#3a4a52", "#7f9098"]),
+    F("tuna", "Bluefin Tuna", 3, 4, 120, [200, 900], { h: .34, sn: .44, tail: "lunate", d: .5, p: "lateral" }, ["#1f3a66", "#e6ecf0", "#d9c25a", "#2a4a7a"]),
+
+    F("lantern", "Lanternfish", 4, 0, 30, [0.05, .2], { h: .3, sn: .4, tail: "fork", d: .4, p: "", x: "glow" }, ["#2a2f4a", "#5a6080", "#7ff0ff", "#3a4060"]),
+    F("chimaera", "Ghost Shark", 4, 1, 60, [3, 12], { h: .28, sn: .36, tail: "taper", d: .7, p: "" }, ["#cfcbe0", "#efedf6", "#9a94b8", "#b4aed0"]),
+    F("swordfish", "Swordfish", 4, 2, 116, [100, 600], { h: .26, sn: .44, tail: "lunate", d: .8, p: "" , x: "sword" }, ["#3a4f6a", "#d8dee4", "#243446", "#34485f"]),
+    F("hammerhead", "Hammerhead", 4, 3, 130, [200, 900], { h: .22, sn: .44, tail: "lunate", d: 1, p: "", x: "hammer" }, ["#6f7f8a", "#e4e8ea", "#4a5860", "#65747e"]),
+    F("angler", "Anglerfish", 4, 3, 50, [2, 30], { h: .62, sn: .3, tail: "round", d: .3, p: "", x: "lure" }, ["#2b2230", "#4a3a4f", "#f0e27a", "#3a2f40"], { time: ["dusk", "night"] }),
+    F("oarfish", "Oarfish", 4, 4, 160, [50, 600], { h: .1, sn: .42, tail: "taper", d: 1, p: "spots", x: "crest" }, ["#c9d2da", "#eef2f6", "#d0304a", "#d0304a"], { weather: ["storm"] })
+  ];
+  const BY_KEY = Object.fromEntries(SPECIES.map((s) => [s.key, s]));
+
+  const RODS = [
+    { name: "Twig Rod", cost: 0, zone: .28, luck: 1 },
+    { name: "Fibreglass Rod", cost: 150, zone: .31, luck: 1.3 },
+    { name: "Graphite Rod", cost: 800, zone: .34, luck: 1.7 },
+    { name: "Carbon Pro", cost: 3000, zone: .37, luck: 2.2 },
+    { name: "Golden Rod", cost: 12000, zone: .4, luck: 3 }
+  ];
+  const TANKS = [{ cap: 5, cost: 0 }, { cap: 8, cost: 300 }, { cap: 12, cost: 1500 }, { cap: 16, cost: 6000 }];
+  const DECOR = [
+    { key: "kelp", name: "Kelp forest", cost: 60 },
+    { key: "castle", name: "Sand castle", cost: 250 },
+    { key: "ship", name: "Sunken pirate ship", cost: 900 },
+    { key: "chest", name: "Zcoin treasure chest", cost: 2500 }
+  ];
+  const DECOR_BONUS = 0.05;
+  const OFFLINE_CAP_H = 8;
+  const TIMES = ["dawn", "day", "dusk", "night"], SEASONS = ["spring", "summer", "fall", "winter"];
+  const cap = (s) => s[0].toUpperCase() + s.slice(1);
+
+  /* ============================================================ state */
+  const SAVE = "ec_reef_mock_v1";
+  const fresh = () => ({ pearls: 0, spots: [true, false, false, false, false], spot: 0, rod: 0, tank: 0, decor: {}, lucky: 0,
+    fish: [], dex: {}, time: "auto", season: "auto", weather: "clear", sunday: false, shinyBoost: false, speed: 60, saved: Date.now(), uid: 1,
+    clock: 0, bait: {}, baitOn: "none", seedPick: "worm", plots: [], plotLvl: 0, nests: [], nestLvl: 0, nursery: [], dayShift: 0,
+    q: { day: "", daily: [], week: "", weekly: [], streak: 0, chest: false, weekChest: false } });
+  let S = fresh();
+  try { const raw = localStorage.getItem(SAVE); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch {}
+  const save = () => { S.saved = Date.now(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch {} };
+
+  /* ============================================================ helpers */
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
+  const num = (x) => Math.floor(x).toLocaleString();
+  const lbs = (w) => (w < 1 ? `${(w * 16).toFixed(1)} oz` : `${w < 10 ? w.toFixed(1) : Math.round(w).toLocaleString()} lb`);
+  function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function prng(seed) { return () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+  function chicago() {
+    const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "numeric", month: "numeric", weekday: "short", hourCycle: "h23" }).formatToParts(new Date()).map((p) => [p.type, p.value]));
+    const h = Number(parts.hour), m = Number(parts.month);
+    return {
+      time: h >= 5 && h < 8 ? "dawn" : h >= 8 && h < 17 ? "day" : h >= 17 && h < 20 ? "dusk" : "night",
+      season: m <= 2 || m === 12 ? "winter" : m <= 5 ? "spring" : m <= 8 ? "summer" : "fall",
+      sunday: parts.weekday === "Sun"
+    };
+  }
+  const now = () => {
+    const c = chicago();
+    return { time: S.time === "auto" ? c.time : S.time, season: S.season === "auto" ? c.season : S.season, weather: S.weather, sunday: S.sunday || c.sunday };
+  };
+  function biting(sp, w = now()) {
+    const c = sp.cond; if (!c) return true;
+    if (c.time && !c.time.includes(w.time)) return false;
+    if (c.season && !c.season.includes(w.season)) return false;
+    if (c.weather && !c.weather.includes(w.weather)) return false;
+    if (c.sunday && !w.sunday) return false;
+    return true;
+  }
+  function hint(sp) {
+    const c = sp.cond; if (!c) return "Any time";
+    if (c.sunday) return "NFL Sundays only";
+    if (c.weather) return "Only in a storm";
+    if (c.time) return c.time.length > 1 ? `${c.time.map(cap).join(" and ")} only` : c.time[0] === "night" ? "Bites at night" : `${cap(c.time[0])} only`;
+    if (c.season) return `${cap(c.season[0])} only`;
+    return "";
+  }
+
+  // colours
+  function hexToHsl(hex) {
+    const n = parseInt(hex.slice(1), 16); let r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b); let h = 0, s = 0; const l = (mx + mn) / 2;
+    if (mx !== mn) { const d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; }
+    return [h, s, l];
+  }
+  const hsl = (h, s, l) => `hsl(${((h % 360) + 360) % 360} ${Math.round(s * 100)}% ${Math.round(l * 100)}%)`;
+  const shinyCache = {};
+  function colorsOf(sp, shiny) {
+    if (!shiny) return sp.c;
+    return shinyCache[sp.key] || (shinyCache[sp.key] = sp.c.map((c) => { const [h, s, l] = hexToHsl(c); return hsl(h + 150, Math.min(1, s * 1.1 + .15), Math.min(.85, l * 1.05 + .04)); }));
+  }
+
+  /* ============================================================ fish drawing
+     Every fish is drawn in code from its shape: a body curve, a tail, fins,
+     a pattern clipped to the body, an eye and one optional extra. Facing
+     right at +1, left at -1; values between squash it, which reads as a
+     turn. */
+  function bodyPath(sp) {
+    const hh = sp.h / 2, taper = sp.tail === "taper", tb = taper ? -0.52 : -0.3;
+    const nose = sp.x === "longsnout" || sp.x === "paddle" ? 0.56 : 0.5, s = sp.sn;
+    const p = new Path2D();
+    p.moveTo(nose, 0);
+    p.bezierCurveTo(nose, -hh * (sp.x === "longsnout" ? 0.25 : 0.55), s, -hh, 0.08, -hh);
+    p.bezierCurveTo(-0.14, -hh, tb + 0.08, -hh * 0.4, tb, taper ? 0 : -hh * 0.18);
+    if (!taper) p.lineTo(tb, hh * 0.18);
+    p.bezierCurveTo(tb + 0.08, hh * 0.4, -0.14, hh, 0.08, hh);
+    p.bezierCurveTo(s, hh, nose, hh * (sp.x === "longsnout" ? 0.25 : 0.55), nose, 0);
+    p.closePath();
+    return p;
+  }
+  function drawFish(ctx, sp, x, y, L, o = {}) {
+    const face = o.face ?? 1, sil = !!o.sil, c = colorsOf(sp, o.shiny);
+    const hh = sp.h / 2;
+    const fill = (col, a = 1) => { ctx.globalAlpha = sil ? 1 : a; ctx.fillStyle = sil ? "rgba(255,255,255,.12)" : col; };
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(L * (Math.abs(face) < 0.08 ? 0.08 * Math.sign(face || 1) : face), L);
+    ctx.lineJoin = "round"; ctx.lineCap = "round";
+
+    // tail
+    if (sp.tail !== "taper") {
+      ctx.save(); ctx.translate(-0.3, 0); ctx.rotate(o.wag || 0);
+      const T = Math.max(hh * 1.05, 0.13);
+      fill(c[3], .95); ctx.beginPath();
+      if (sp.tail === "fork") { ctx.moveTo(0.03, 0); ctx.lineTo(-0.2, -T); ctx.quadraticCurveTo(-0.1, 0, -0.2, T); ctx.closePath(); }
+      else if (sp.tail === "lunate") { ctx.moveTo(0.03, -0.02); ctx.quadraticCurveTo(-0.08, -T * .5, -0.2, -T * 1.25); ctx.quadraticCurveTo(-0.09, 0, -0.2, T * 1.25); ctx.quadraticCurveTo(-0.08, T * .5, 0.03, 0.02); ctx.closePath(); }
+      else if (sp.tail === "round") { ctx.ellipse(-0.1, 0, 0.12, T * 0.85, 0, 0, Math.PI * 2); }
+      else { ctx.moveTo(0.03, 0); ctx.bezierCurveTo(-0.12, -T * 1.7, -0.36, -T * 1.2, -0.3, -T * 0.1); ctx.quadraticCurveTo(-0.22, 0, -0.3, T * 0.1); ctx.bezierCurveTo(-0.36, T * 1.2, -0.12, T * 1.7, 0.03, 0); }
+      ctx.fill(); ctx.restore();
+    }
+    // dorsal and belly fins
+    if (sp.d) {
+      const long = sp.d > 0.9, x0 = long ? 0.38 : 0.2, x1 = long ? -0.42 : -0.12;
+      fill(sp.x === "crest" ? c[2] : c[3], .92);
+      ctx.beginPath(); ctx.moveTo(x0, -hh * 0.85);
+      ctx.quadraticCurveTo((x0 + x1) / 2 + 0.04, -hh - 0.05 - 0.14 * sp.d * (long ? 0.6 : 1), x1, -hh * (long ? 0.3 : 0.7));
+      ctx.closePath(); ctx.fill();
+    }
+    fill(c[3], .9); ctx.beginPath(); ctx.moveTo(0.04, hh * 0.85); ctx.quadraticCurveTo(-0.04, hh + 0.07, -0.14, hh * 0.72); ctx.closePath(); ctx.fill();
+
+    // things in front of the head that sit behind the body
+    if (sp.x === "sword") { fill(c[0]); ctx.beginPath(); ctx.moveTo(0.46, -0.014); ctx.lineTo(0.95, -0.002); ctx.lineTo(0.46, 0.02); ctx.closePath(); ctx.fill(); }
+    if (sp.x === "paddle") { fill(c[0]); ctx.beginPath(); ctx.ellipse(0.74, -0.005, 0.2, Math.max(0.03, hh * 0.3), 0, 0, Math.PI * 2); ctx.fill(); }
+    if (sp.x === "hammer") { fill(c[0]); ctx.beginPath(); ctx.ellipse(0.45, 0, 0.045, hh * 1.9, 0, 0, Math.PI * 2); ctx.fill(); }
+
+    // body
+    const body = bodyPath(sp);
+    if (sil) { fill(); ctx.fill(body); }
+    else {
+      ctx.globalAlpha = 1;
+      const g = ctx.createLinearGradient(0, -hh, 0, hh);
+      g.addColorStop(0, c[0]); g.addColorStop(0.42, c[0]); g.addColorStop(1, c[1]);
+      ctx.fillStyle = g; ctx.fill(body);
+      ctx.save(); ctx.clip(body);
+      const R = prng(hashStr(sp.key));
+      for (const pat of String(sp.p || "").split("+").filter(Boolean)) {
+        if (pat === "bands") { fill(c[2], .42); for (let bx = -0.24; bx < 0.34; bx += 0.09) ctx.fillRect(bx, -hh, 0.035, hh * 1.6); }
+        if (pat === "lateral") { fill(c[2], .5); ctx.fillRect(-0.45, -hh * 0.12, 1, hh * 0.26); }
+        if (pat === "stripes") { ctx.globalAlpha = .6; ctx.strokeStyle = c[2]; ctx.lineWidth = Math.max(0.012, hh * 0.09); for (let i = 0; i < 3; i++) { const yy = -hh * 0.72 + i * hh * 0.28; ctx.beginPath(); ctx.moveTo(-0.4, yy); for (let xx = -0.4; xx <= 0.5; xx += 0.03) ctx.lineTo(xx, yy + Math.sin(xx * 34 + i) * 0.012); ctx.stroke(); } }
+        if (pat === "spots") { fill(c[2], .75); for (let i = 0; i < 26; i++) { ctx.beginPath(); ctx.arc(-0.32 + R() * 0.74, (R() * 2 - 1) * hh * 0.8, 0.008 + R() * 0.016, 0, Math.PI * 2); ctx.fill(); } }
+        if (pat === "patches") { fill(c[2], .9); for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.ellipse(-0.24 + i * 0.17 + R() * 0.04, (R() - 0.6) * hh * 0.9, 0.06 + R() * 0.05, hh * (0.35 + R() * 0.3), R(), 0, Math.PI * 2); ctx.fill(); } }
+      }
+      // a soft top light
+      ctx.globalAlpha = .18; ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.ellipse(0.12, -hh * 0.55, 0.25, hh * 0.22, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+      // gill and pectoral fin
+      ctx.globalAlpha = 1; ctx.strokeStyle = "rgba(0,0,0,.25)"; ctx.lineWidth = 0.012;
+      ctx.beginPath(); ctx.arc(0.16, 0, hh * 0.72, -0.75, 0.75); ctx.stroke();
+      fill(c[3], .85); ctx.beginPath(); ctx.ellipse(0.12, hh * 0.25, 0.075, 0.028, 0.5, 0, Math.PI * 2); ctx.fill();
+      // eye
+      const ex = sp.x === "longsnout" ? 0.4 : 0.35, ey = -hh * 0.2, er = sp.x === "lure" ? 0.022 : Math.min(0.045, Math.max(0.024, hh * 0.16));
+      ctx.globalAlpha = 1; ctx.fillStyle = "#f7f4ee"; ctx.beginPath(); ctx.arc(ex, ey, er, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(ex + er * 0.2, ey, er * 0.6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(ex + er * 0.4, ey - er * 0.3, er * 0.2, 0, Math.PI * 2); ctx.fill();
+    }
+    // extras in front
+    ctx.globalAlpha = sil ? 1 : 1;
+    const stroke = (col, w) => { ctx.strokeStyle = sil ? "rgba(255,255,255,.12)" : col; ctx.lineWidth = w; };
+    if (sp.x === "whiskers") { stroke(c[2] === "#fff4c9" ? "#b88a2a" : "#3a2a22", 0.01); for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(0.47, 0.02 * s + 0.02); ctx.quadraticCurveTo(0.58, 0.05 * s + 0.05, 0.54, 0.11 * s + 0.06); ctx.stroke(); } }
+    if (sp.x === "lure") {
+      stroke(c[3], 0.014); ctx.beginPath(); ctx.moveTo(0.28, -hh * 0.9); ctx.quadraticCurveTo(0.44, -hh - 0.24, 0.62, -hh - 0.04); ctx.stroke();
+      if (!sil) { ctx.save(); ctx.shadowColor = c[2]; ctx.shadowBlur = 14; ctx.fillStyle = c[2]; ctx.beginPath(); ctx.arc(0.62, -hh - 0.04, 0.035, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+        ctx.fillStyle = "#f4ede5"; for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.moveTo(0.42 + i * 0.022, hh * 0.05); ctx.lineTo(0.43 + i * 0.022, hh * 0.2); ctx.lineTo(0.44 + i * 0.022, hh * 0.05); ctx.fill(); } }
+    }
+    if (sp.x === "spikes") { stroke(c[2], 0.012); for (let i = 0; i < 18; i++) { const a = (i / 18) * Math.PI * 2, px = 0.1 + 0.38 * Math.cos(a), py = hh * 0.95 * Math.sin(a); ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(0.1 + 0.45 * Math.cos(a), hh * 1.12 * Math.sin(a)); ctx.stroke(); } }
+    if (sp.x === "crest") { stroke(c[2], 0.016); for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.moveTo(0.4 - i * 0.03, -hh * 0.8); ctx.quadraticCurveTo(0.42 - i * 0.05, -hh - 0.12 - i * 0.02, 0.3 - i * 0.07, -hh - 0.2 - i * 0.015); ctx.stroke(); } }
+    if (sp.x === "glow" && !sil) { ctx.save(); ctx.shadowColor = c[2]; ctx.shadowBlur = 8; ctx.fillStyle = c[2]; for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.arc(0.28 - i * 0.1, hh * 0.55, 0.014, 0, Math.PI * 2); ctx.fill(); } ctx.restore(); }
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+  function sparkle(ctx, x, y, r, t) {
+    ctx.save(); ctx.fillStyle = "#fff8d0"; ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 5);
+    for (let i = 0; i < 3; i++) {
+      const a = t * 1.3 + i * 2.1, sx = x + Math.cos(a) * r, sy = y + Math.sin(a * 1.3) * r * 0.5, s = 2.5 + Math.sin(t * 7 + i) * 1.2;
+      ctx.beginPath(); ctx.moveTo(sx, sy - s * 2); ctx.lineTo(sx + s * .5, sy); ctx.lineTo(sx, sy + s * 2); ctx.lineTo(sx - s * .5, sy); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(sx - s * 2, sy); ctx.lineTo(sx, sy + s * .5); ctx.lineTo(sx + s * 2, sy); ctx.lineTo(sx, sy - s * .5); ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  /* ============================================================ canvases */
+  function fitCanvas(cv) {
+    const dpr = Math.min(2, window.devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, w, h };
+  }
+
+  /* ============================================================ fishing */
+  const fish = { phase: "idle", at: 0, waitFor: 0, pick: null, holding: false, zone: .3, vel: 0, fy: .5, ftarget: .5, fnext: 0, prog: .3, result: null, msg: "" };
+  let rain = [], snow = [];
+
+  function rollCatch() {
+    const w = now(), rod = RODS[S.rod];
+    const pool = SPECIES.filter((sp) => sp.spot === S.spot && biting(sp, w));
+    const bait = activeBait();
+    const weights = pool.map((sp) => RAR[sp.rar].weight * (sp.rar >= 2 ? rod.luck : 1) * (bait?.mult?.[sp.rar] || 1));
+    let r = Math.random() * weights.reduce((a, b) => a + b, 0);
+    let sp = pool[0];
+    for (let i = 0; i < pool.length; i++) { r -= weights[i]; if (r <= 0) { sp = pool[i]; break; } }
+    const frac = Math.pow(Math.random(), 2.2);
+    return { sp, frac, w: sp.w[0] + (sp.w[1] - sp.w[0]) * frac, shiny: Math.random() < (S.shinyBoost ? 1 / 10 : 1 / 500) * (bait?.shiny || 1) };
+  }
+  function setPhase(p, msg = "") { fish.phase = p; fish.at = performance.now(); fish.msg = msg; syncAction(); }
+  function action() {
+    if (fish.phase === "idle" || fish.phase === "lost") {
+      fish.pick = rollCatch();
+      const bait = activeBait();
+      if (bait) { S.bait[S.baitOn]--; if (!S.bait[S.baitOn]) { toast(`Out of ${bait.name}`, "Grow more in the bait garden."); S.baitOn = "none"; } renderBaitSel(); }
+      fish.waitFor = 1300 + Math.random() * 2800;
+      setPhase("wait");
+    } else if (fish.phase === "wait") {
+      setPhase("lost", "Too early. You pulled the bait away.");
+    } else if (fish.phase === "bite") {
+      const d = RAR[fish.pick.sp.rar].diff;
+      Object.assign(fish, { zone: .35, vel: 0, fy: .45, ftarget: .5, fnext: 0, prog: .3, holding: false });
+      setPhase("reel");
+    }
+  }
+  function syncAction() {
+    const b = $("act"), p = fish.phase;
+    b.className = "act" + (p === "bite" ? " hook" : p === "reel" ? " reeling" : "");
+    b.textContent = p === "idle" ? "Cast" : p === "wait" ? "Waiting for a bite…" : p === "bite" ? "Hook it!" : p === "reel" ? "Hold to reel" : p === "lost" ? "Cast again" : "Cast";
+    b.disabled = p === "caught";
+    $("actNote").textContent = p === "reel" ? "Hold the button, the water, or Space." : p === "wait" ? "Wait for the splash. Too early scares it off." : activeBait() ? `${activeBait().about} while it lasts.` : "Space works too.";
+    $("reel").hidden = p !== "reel"; $("reelTip").hidden = p !== "reel";
+    const say = $("say");
+    say.className = "say" + (p === "bite" ? " bite" : "");
+    say.textContent = p === "bite" ? "!" : p === "lost" ? fish.msg : p === "idle" ? "" : "";
+    document.querySelectorAll(".spot").forEach((s) => (s.disabled = p === "wait" || p === "bite" || p === "reel"));
+  }
+
+  function stepFishing(t, dt) {
+    const p = fish.phase, since = t - fish.at;
+    if (p === "wait" && since > fish.waitFor) setPhase("bite");
+    else if (p === "bite" && since > 1150) setPhase("lost", "Too slow. It spat the hook.");
+    else if (p === "reel") {
+      const d = RAR[fish.pick.sp.rar].diff, zoneH = RODS[S.rod].zone;
+      fish.vel += (fish.holding ? 2.7 : -2.3) * dt;
+      fish.vel = Math.max(-1.6, Math.min(1.6, fish.vel));
+      fish.zone += fish.vel * dt;
+      if (fish.zone < 0) { fish.zone = 0; fish.vel = Math.max(0, fish.vel) * -0.2; }
+      if (fish.zone > 1 - zoneH) { fish.zone = 1 - zoneH; fish.vel = Math.min(0, fish.vel) * -0.2; }
+      if (t > fish.fnext) { fish.ftarget = 0.06 + Math.random() * 0.88; fish.fnext = t + (350 + Math.random() * 1100) / d; }
+      const sp = 0.3 + d * 0.5;
+      const diffY = fish.ftarget - fish.fy;
+      fish.fy += Math.sign(diffY) * Math.min(Math.abs(diffY), sp * dt) + (Math.random() - 0.5) * 0.02 * d;
+      fish.fy = Math.max(0.03, Math.min(0.97, fish.fy));
+      const inside = fish.fy >= fish.zone && fish.fy <= fish.zone + zoneH;
+      fish.prog += (inside ? 0.25 : -0.24 * (0.8 + d * 0.35)) * dt;
+      $("zone").style.bottom = `${fish.zone * 100}%`; $("zone").style.height = `${zoneH * 100}%`;
+      $("zone").classList.toggle("on", inside);
+      $("rfish").style.bottom = `${fish.fy * 100}%`;
+      $("prog").style.height = `${Math.max(0, Math.min(1, fish.prog)) * 100}%`;
+      if (fish.prog >= 1) landed();
+      else if (fish.prog <= 0) setPhase("lost", "The line went slack. It got away.");
+    }
+  }
+
+  function landed() {
+    const c = fish.pick, sp = c.sp;
+    const entry = S.dex[sp.key] || { n: 0, best: 0, shiny: false };
+    const isNew = entry.n === 0, record = !isNew && c.w > entry.best;
+    entry.n++; entry.best = Math.max(entry.best, c.w); entry.shiny = entry.shiny || c.shiny;
+    S.dex[sp.key] = entry;
+    fish.result = c;
+    setPhase("caught");
+    const cv = $("catchC"), ctx = cv.getContext("2d");
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    const L = Math.min(560, 320 + sp.size * 1.6);
+    drawFish(ctx, sp, cv.width / 2 + (sp.x === "sword" || sp.x === "paddle" ? -L * 0.12 : 0), cv.height / 2 + 10, L, { shiny: c.shiny, wag: 0.1 });
+    if (c.shiny) sparkle(ctx, cv.width / 2, cv.height / 2, 120, 1);
+    $("cName").textContent = (c.shiny ? "Shiny " : "") + sp.name;
+    const tags = $("cTags"); tags.replaceChildren();
+    const rt = el("span", "tag", RAR[sp.rar].name); rt.style.color = RAR[sp.rar].color; tags.append(rt);
+    if (c.shiny) tags.append(el("span", "tag solid", "Shiny"));
+    if (isNew) tags.append(el("span", "tag new", "New to your book"));
+    if (record) tags.append(el("span", "tag solid", "New record"));
+    const rate = fishRate({ key: sp.key, w: c.w, shiny: c.shiny });
+    $("cLine").innerHTML = `${lbs(c.w)} · makes ${num(rate)} pearls an hour in your tank`;
+    const full = S.fish.length >= TANKS[S.tank].cap;
+    $("cKeep").disabled = full;
+    $("cKeep").textContent = full ? "Tank's full" : "Put in tank";
+    $("cSell").innerHTML = `Sell <span class="pearl"></span> ${num(rate * 3)}`;
+    $("catch").hidden = false;
+    $("cKeep").focus();
+    if (sp.rar >= 3 || c.shiny) toast(`You landed a ${c.shiny ? "Shiny " : ""}${sp.name}!`, "In the real game this goes to the activity feed and the ticker.");
+    renderDex(); renderProfile(); renderDerby();
+    track("catch", { rar: sp.rar, w: c.w, spot: S.spot });
+    if (isNew) track("newSpecies");
+    if (c.shiny) track("shiny");
+    save();
+  }
+  $("cKeep").addEventListener("click", () => {
+    const c = fish.result; if (!c || S.fish.length >= TANKS[S.tank].cap) return;
+    S.fish.push({ id: S.uid++, key: c.sp.key, w: c.w, shiny: c.shiny });
+    closeCatch(); syncTank(); renderTank(); track("keep");
+    toast(`${c.shiny ? "Shiny " : ""}${c.sp.name} is in the tank`, `+${num(fishRate(S.fish[S.fish.length - 1]))} pearls an hour`);
+  });
+  $("cSell").addEventListener("click", () => {
+    const c = fish.result; if (!c) return;
+    const v = fishRate({ key: c.sp.key, w: c.w, shiny: c.shiny }) * 3;
+    S.pearls += v; closeCatch(); toast(`Sold for ${num(v)} pearls`); track("sell");
+  });
+  function closeCatch() { $("catch").hidden = true; fish.result = null; setPhase("idle"); $("act").focus(); save(); }
+
+  // scene
+  const SKY = { dawn: ["#6f7fb8", "#f6a86b"], day: ["#7cc6f2", "#d6f0ff"], dusk: ["#3a2a5a", "#f07a4a"], night: ["#070b1c", "#1c2448"] };
+  function drawScene(t) {
+    const { ctx, w, h } = fitCanvas($("scene"));
+    const W = now(), spot = SPOTS[S.spot], horizon = h * 0.42;
+    let sky = SKY[W.time];
+    if (W.weather === "storm") sky = ["#2a2f3a", "#4a5260"];
+    let g = ctx.createLinearGradient(0, 0, 0, horizon);
+    g.addColorStop(0, sky[0]); g.addColorStop(1, sky[1]);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, horizon + 2);
+    if (W.time === "night" && W.weather !== "storm") { const R = prng(9); ctx.fillStyle = "#fff"; for (let i = 0; i < 50; i++) { ctx.globalAlpha = 0.3 + R() * 0.6 * (0.7 + 0.3 * Math.sin(t / 700 + i)); ctx.fillRect(R() * w, R() * horizon * 0.9, 1.5, 1.5); } ctx.globalAlpha = 1; }
+    if (W.weather !== "storm") { ctx.fillStyle = W.time === "night" ? "#f4f1e0" : "#ffe7a3"; ctx.globalAlpha = W.time === "day" ? .9 : .85; ctx.beginPath(); ctx.arc(w * 0.8, horizon * (W.time === "day" ? 0.3 : 0.62), Math.min(w, h) * 0.06, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
+
+    // far shore
+    const dark = W.time === "night" ? 0.55 : W.time === "dusk" ? 0.3 : 0;
+    ctx.fillStyle = spot.look === "lake" ? "#2e3a4a" : spot.look === "pier" || spot.look === "deep" ? "transparent" : "#2f5a34";
+    if (spot.look === "pond" || spot.look === "river") {
+      ctx.beginPath(); ctx.moveTo(0, horizon);
+      for (let x = 0; x <= w; x += w / 14) ctx.lineTo(x, horizon - 14 - Math.abs(Math.sin(x * 0.02 + S.spot)) * (spot.look === "river" ? 38 : 20));
+      ctx.lineTo(w, horizon); ctx.fill();
+    } else if (spot.look === "lake") {
+      // a skyline you can only get from one lake
+      const R = prng(4); ctx.fillStyle = W.time === "night" ? "#141a28" : "#4a5566";
+      for (let x = w * 0.08; x < w * 0.72; x += 9 + R() * 10) { const bh = 8 + R() * 30 + (x > w * 0.3 && x < w * 0.36 ? 38 : 0); ctx.fillRect(x, horizon - bh, 7 + R() * 6, bh); }
+      if (W.time === "night" || W.time === "dusk") { ctx.fillStyle = "#ffd98a"; for (let i = 0; i < 40; i++) ctx.fillRect(w * 0.08 + R() * w * 0.62, horizon - R() * 40, 1.5, 1.5); }
+    }
+    // water
+    g = ctx.createLinearGradient(0, horizon, 0, h);
+    g.addColorStop(0, spot.water[0]); g.addColorStop(1, spot.water[1]);
+    ctx.fillStyle = g; ctx.fillRect(0, horizon, w, h - horizon);
+    ctx.strokeStyle = "rgba(255,255,255,.12)"; ctx.lineWidth = 1.5;
+    for (let i = 0; i < 12; i++) { const yy = horizon + 10 + i * i * (h - horizon) / 150; const off = (t / (40 + i * 6) + i * 37) % w; ctx.beginPath(); ctx.moveTo(off - 30, yy); ctx.lineTo(off + 30 + i * 3, yy); ctx.stroke(); ctx.beginPath(); ctx.moveTo((off + w / 2) % w - 20, yy + 4); ctx.lineTo((off + w / 2) % w + 20, yy + 4); ctx.stroke(); }
+    if (dark) { ctx.fillStyle = `rgba(4,8,20,${dark * 0.6})`; ctx.fillRect(0, horizon, w, h - horizon); }
+
+    // foreground by spot
+    if (spot.look === "pond" || spot.look === "river") {
+      ctx.strokeStyle = "#2d5a2a"; ctx.lineWidth = 3;
+      for (let i = 0; i < 16; i++) { const bx = i * 14 - 6, sway = Math.sin(t / 900 + i) * 4; ctx.beginPath(); ctx.moveTo(bx, h); ctx.quadraticCurveTo(bx + sway, h - 50, bx + sway * 2, h - 70 - (i % 3) * 18); ctx.stroke(); }
+    }
+    if (spot.look === "pier") { ctx.fillStyle = "#6a4a2e"; ctx.fillRect(0, h - 26, w * 0.34, 26); ctx.fillStyle = "#553a22"; for (let x = 6; x < w * 0.34; x += 22) ctx.fillRect(x, h - 26, 3, 26); ctx.fillRect(w * 0.33, h - 60, 10, 60); }
+    if (spot.look === "deep") { ctx.fillStyle = "#e8e2d4"; ctx.beginPath(); ctx.moveTo(0, h - 40); ctx.lineTo(w * 0.36, h - 22); ctx.lineTo(w * 0.36, h); ctx.lineTo(0, h); ctx.fill(); ctx.fillStyle = "#b8202e"; ctx.fillRect(0, h - 36, w * 0.36, 5); }
+
+    // rod, line, bobber
+    const tipX = w * 0.16, tipY = h * 0.16;
+    ctx.strokeStyle = "#3a2a1a"; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-10, h + 10); ctx.lineTo(tipX, tipY); ctx.stroke();
+    ctx.strokeStyle = S.rod === 4 ? "#e8bf35" : "#6b4a2a"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(w * 0.07, h * 0.62); ctx.lineTo(tipX, tipY); ctx.stroke();
+    const p = fish.phase, since = t - fish.at;
+    if (p !== "idle" && p !== "caught") {
+      let bx = w * 0.62, by = horizon + (h - horizon) * 0.45;
+      if (p === "wait") by += Math.sin(t / 380) * 3;
+      if (p === "bite") by += 10 + Math.sin(t / 40) * 5;
+      if (p === "reel") { bx += Math.sin(t / 70) * 6 + (fish.fy - 0.5) * 60; by += 14; }
+      if (p === "lost") by += Math.sin(t / 380) * 3;
+      ctx.strokeStyle = "rgba(255,255,255,.7)"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(tipX, tipY);
+      ctx.quadraticCurveTo((tipX + bx) / 2, p === "reel" ? (tipY + by) / 2 : by + 10, bx, by); ctx.stroke();
+      if (p !== "reel") {
+        const rip = (since / 1400) % 1;
+        ctx.strokeStyle = `rgba(255,255,255,${0.35 * (1 - rip)})`; ctx.beginPath(); ctx.ellipse(bx, by + 6, 10 + rip * 30, 3 + rip * 8, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = "#f4ede5"; ctx.beginPath(); ctx.arc(bx, by + 2, 7, 0, Math.PI); ctx.fill();
+        ctx.fillStyle = "#d42a3a"; ctx.beginPath(); ctx.arc(bx, by + 1, 7, Math.PI, 0); ctx.fill();
+        if (p === "bite") { ctx.strokeStyle = "rgba(255,255,255,.8)"; ctx.lineWidth = 2; for (let i = 0; i < 6; i++) { const a = i * 1.05 + since / 200; ctx.beginPath(); ctx.moveTo(bx + Math.cos(a) * 12, by + 4); ctx.lineTo(bx + Math.cos(a) * 20, by - 8 - Math.abs(Math.sin(a)) * 8); ctx.stroke(); } }
+      } else {
+        ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.lineWidth = 2;
+        for (let i = 0; i < 3; i++) { const r = ((t / 300 + i / 3) % 1); ctx.globalAlpha = 1 - r; ctx.beginPath(); ctx.ellipse(bx, by, 8 + r * 34, 3 + r * 10, 0, 0, Math.PI * 2); ctx.stroke(); }
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // weather
+    if (W.weather === "storm") {
+      if (rain.length < 140) for (let i = 0; i < 140; i++) rain.push({ x: Math.random(), y: Math.random(), s: 0.6 + Math.random() * 0.6 });
+      ctx.strokeStyle = "rgba(200,220,255,.45)"; ctx.lineWidth = 1.2; ctx.beginPath();
+      for (const d of rain) { d.y += 0.02 * d.s; d.x -= 0.004 * d.s; if (d.y > 1) { d.y = 0; d.x = Math.random() * 1.1; } ctx.moveTo(d.x * w, d.y * h); ctx.lineTo(d.x * w - 5, d.y * h + 14); }
+      ctx.stroke();
+      if (Math.sin(t / 2300) > 0.995) { ctx.fillStyle = "rgba(255,255,255,.35)"; ctx.fillRect(0, 0, w, h); }
+    } else if (W.season === "winter") {
+      if (snow.length < 60) for (let i = 0; i < 60; i++) snow.push({ x: Math.random(), y: Math.random(), s: 0.3 + Math.random() * 0.7 });
+      ctx.fillStyle = "rgba(255,255,255,.8)";
+      for (const d of snow) { d.y += 0.0015 * d.s; d.x += Math.sin(t / 900 + d.s * 9) * 0.0006; if (d.y > 1) d.y = 0; ctx.beginPath(); ctx.arc(d.x * w, d.y * h, 1.2 + d.s, 0, Math.PI * 2); ctx.fill(); }
+    }
+  }
+
+  function renderSpots() {
+    const box = $("spots"); box.replaceChildren();
+    SPOTS.forEach((sp, i) => {
+      const b = el("button", "spot" + (S.spots[i] ? "" : " locked"));
+      b.type = "button";
+      b.setAttribute("aria-pressed", String(S.spot === i));
+      if (S.spots[i]) b.textContent = sp.name;
+      else b.innerHTML = `${sp.name} <b><span class="pearl"></span>${num(sp.cost)}</b>`;
+      b.addEventListener("click", () => {
+        if (fish.phase === "wait" || fish.phase === "bite" || fish.phase === "reel") return;
+        if (!S.spots[i]) {
+          if (S.pearls < sp.cost) { toast(`${sp.name} costs ${num(sp.cost)} pearls`, `You have ${num(S.pearls)}.`); return; }
+          S.pearls -= sp.cost; S.spots[i] = true; toast(`${sp.name} unlocked`, `${SPECIES.filter((f) => f.spot === i).length} new fish to find.`);
+        }
+        S.spot = i; if (fish.phase === "lost") setPhase("idle");
+        renderSpots(); renderBiting(); save();
+      });
+      box.append(b);
+    });
+    $("spotName").textContent = SPOTS[S.spot].name;
+  }
+  function renderBiting() {
+    const box = $("biting"); box.replaceChildren();
+    const W = now();
+    SPECIES.filter((sp) => sp.spot === S.spot).forEach((sp) => {
+      const known = S.dex[sp.key]?.n > 0, on = biting(sp, W);
+      const chip = el("span", "chipf" + (on ? "" : " off"));
+      const dot = el("i"); dot.style.background = RAR[sp.rar].color;
+      chip.append(dot, document.createTextNode(known ? sp.name : "???"));
+      if (!on || sp.cond) chip.append(el("small", null, on ? "· now" : `· ${hint(sp).toLowerCase()}`));
+      chip.title = `${RAR[sp.rar].name} · ${hint(sp)}`;
+      box.append(chip);
+    });
+    $("clock").textContent = `${cap(W.time)} · ${cap(W.season)}${W.weather === "storm" ? " · Storm" : ""}${W.sunday ? " · NFL Sunday" : ""}`;
+    $("rodLine").textContent = RODS[S.rod].name + (activeBait() ? ` · ${activeBait().name} ×${S.bait[S.baitOn]}` : "");
+  }
+
+  // input
+  const act = $("act");
+  act.addEventListener("click", () => { if (fish.phase !== "reel") action(); });
+  const holdOn = (e) => { if (fish.phase === "reel") { fish.holding = true; e && e.preventDefault(); } };
+  const holdOff = () => { fish.holding = false; };
+  act.addEventListener("pointerdown", holdOn);
+  $("sceneWrap").addEventListener("pointerdown", (e) => { if (e.target.closest(".catch")) return; if (fish.phase === "reel") holdOn(e); else if (fish.phase === "bite") action(); });
+  window.addEventListener("pointerup", holdOff);
+  window.addEventListener("pointercancel", holdOff);
+  window.addEventListener("blur", holdOff);
+  window.addEventListener("keydown", (e) => {
+    if (e.code !== "Space" || e.target.matches("input,textarea,select") || (e.target.matches("button") && e.target.id !== "act") || !onScreen("scene")) return;
+    if (!$("catch").hidden) return;
+    e.preventDefault();
+    if (e.repeat) return;
+    if (fish.phase === "reel") fish.holding = true; else action();
+  });
+  window.addEventListener("keyup", (e) => { if (e.code === "Space") { fish.holding = false; if (e.target.id === "act") e.preventDefault(); } });
+
+  /* ============================================================ tank */
+  const fishRate = (f) => { const sp = BY_KEY[f.key]; const frac = (f.w - sp.w[0]) / (sp.w[1] - sp.w[0] || 1); return RAR[sp.rar].rate * (0.8 + 0.5 * frac) * (f.shiny ? 3 : 1); };
+  const decorCount = () => DECOR.filter((d) => S.decor[d.key]).length;
+  const tankRate = () => S.fish.reduce((a, f) => a + fishRate(f), 0) * (1 + DECOR_BONUS * decorCount());
+
+  let swimmers = [], bubbles = [];
+  function syncTank() {
+    const ids = new Set(S.fish.map((f) => f.id));
+    swimmers = swimmers.filter((s) => ids.has(s.f.id));
+    for (const f of S.fish) if (!swimmers.find((s) => s.f.id === f.id)) swimmers.push({ f, x: Math.random(), y: 0.2 + Math.random() * 0.5, tx: Math.random(), ty: 0.2 + Math.random() * 0.55, face: 1, phase: Math.random() * 9, pause: 0 });
+  }
+  function swimLen(f, W) { const sp = BY_KEY[f.key]; const frac = (f.w - sp.w[0]) / (sp.w[1] - sp.w[0] || 1); return Math.min(W * 0.32, sp.size * (0.85 + 0.35 * frac) * Math.max(0.7, W / 520)); }
+
+  const onScreen = (id) => !$(id).closest("[hidden]");
+  function drawTank(t, dt) {
+    const tankOn = onScreen("tank"), miniOn = onScreen("miniTank");
+    if (tankOn) { const { ctx, w, h } = fitCanvas($("tank")); drawTankTo(ctx, w, h, t, dt, true); }
+    if (miniOn) { const mini = $("miniTank"); drawTankTo(mini.getContext("2d"), mini.width, mini.height, t, dt, !tankOn); }
+  }
+  function drawTankTo(ctx, w, h, t, dt, live) {
+    let g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, "#1f8fb0"); g.addColorStop(0.55, "#0c5a7a"); g.addColorStop(1, "#063247");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    // light rays
+    ctx.save(); ctx.globalAlpha = 0.08; ctx.fillStyle = "#fff";
+    for (let i = 0; i < 5; i++) { const x = (i * w / 4 + Math.sin(t / 3000 + i) * 30); ctx.beginPath(); ctx.moveTo(x - 20, 0); ctx.lineTo(x + 30, 0); ctx.lineTo(x + 90, h); ctx.lineTo(x + 10, h); ctx.fill(); }
+    ctx.restore();
+    const sandY = h * 0.84;
+    // back plants
+    const plants = S.decor.kelp ? 11 : 4;
+    for (let i = 0; i < plants; i++) {
+      const px = (i + 0.5) * w / plants + Math.sin(i * 7) * 12, ph = h * (0.25 + ((i * 37) % 10) / 30) * (S.decor.kelp ? 1.3 : 1);
+      ctx.strokeStyle = i % 2 ? "#2f8a4a" : "#3aa05a"; ctx.lineWidth = S.decor.kelp ? 7 : 5; ctx.beginPath(); ctx.moveTo(px, sandY + 6);
+      for (let k = 1; k <= 6; k++) ctx.lineTo(px + Math.sin(t / 1200 + i + k * 0.6) * k * 2.2, sandY + 6 - (ph * k) / 6);
+      ctx.stroke();
+    }
+    // decorations
+    if (S.decor.ship) {
+      ctx.save(); ctx.translate(w * 0.22, sandY + 4); ctx.rotate(-0.12);
+      ctx.fillStyle = "#5a3a22"; ctx.beginPath(); ctx.moveTo(-70, -30); ctx.lineTo(70, -34); ctx.lineTo(52, 6); ctx.lineTo(-58, 6); ctx.fill();
+      ctx.fillStyle = "#3e2716"; for (let i = -60; i < 60; i += 16) ctx.fillRect(i, -26, 4, 28);
+      ctx.fillStyle = "#4a2f1a"; ctx.fillRect(-4, -110, 6, 80); ctx.fillStyle = "rgba(230,220,200,.55)"; ctx.beginPath(); ctx.moveTo(2, -104); ctx.lineTo(44, -70); ctx.lineTo(2, -52); ctx.fill();
+      ctx.restore();
+    }
+    if (S.decor.castle) {
+      const cx = w * 0.74, cw = 90;
+      ctx.fillStyle = "#b8a88a"; ctx.fillRect(cx - cw / 2, sandY - 60, cw, 64);
+      ctx.fillRect(cx - cw / 2 - 12, sandY - 88, 26, 92); ctx.fillRect(cx + cw / 2 - 14, sandY - 88, 26, 92);
+      ctx.fillStyle = "#9c8d70"; for (const bx of [cx - cw / 2 - 12, cx + cw / 2 - 14]) for (let k = 0; k < 3; k++) ctx.fillRect(bx + k * 9, sandY - 96, 6, 8);
+      ctx.fillStyle = "#3a3024"; ctx.beginPath(); ctx.arc(cx, sandY - 12, 14, Math.PI, 0); ctx.fillRect(cx - 14, sandY - 12, 28, 16); ctx.fill();
+    }
+    // sand
+    ctx.fillStyle = "#d8c08a"; ctx.beginPath(); ctx.moveTo(0, h);
+    for (let x = 0; x <= w; x += 20) ctx.lineTo(x, sandY + Math.sin(x * 0.02) * 5);
+    ctx.lineTo(w, h); ctx.fill();
+    ctx.fillStyle = "rgba(0,0,0,.08)"; for (let i = 0; i < 40; i++) ctx.fillRect((i * 73) % w, sandY + 8 + (i * 29) % (h - sandY - 8), 3, 2);
+    if (S.decor.chest) {
+      const cx = w * 0.5, cy = sandY + 2;
+      ctx.fillStyle = "#6a3f1e"; ctx.fillRect(cx - 26, cy - 22, 52, 26);
+      ctx.fillStyle = "#e8bf35"; ctx.fillRect(cx - 26, cy - 14, 52, 4); ctx.fillRect(cx - 4, cy - 22, 8, 26);
+      ctx.save(); ctx.translate(cx - 26, cy - 22); ctx.rotate(-0.55); ctx.fillStyle = "#7a4a24"; ctx.fillRect(0, -16, 52, 16); ctx.restore();
+      ctx.fillStyle = "#f2c94c"; for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(cx - 16 + i * 8, cy - 22 - (i % 2) * 3, 4, 0, Math.PI * 2); ctx.fill(); }
+      if (live && Math.random() < dt * 3) bubbles.push({ x: cx + (Math.random() - 0.5) * 20, y: cy - 24, r: 2 + Math.random() * 3 });
+    }
+    if (live && Math.random() < dt * 2.2) bubbles.push({ x: w * 0.93, y: sandY, r: 1.5 + Math.random() * 3 });
+    // fish
+    const tSec = t / 1000;
+    const sorted = swimmers.slice().sort((a, b) => swimLen(a.f, w) - swimLen(b.f, w));
+    for (const s of sorted) {
+      const sp = BY_KEY[s.f.key], L = swimLen(s.f, w);
+      if (live) {
+        const speed = (70 / Math.sqrt(L)) * 0.018;
+        if (s.pause > 0) s.pause -= dt;
+        else {
+          const dx = s.tx - s.x, dy = s.ty - s.y, dist = Math.hypot(dx, dy);
+          if (dist < 0.02) { s.tx = 0.08 + Math.random() * 0.84; s.ty = 0.12 + Math.random() * 0.6; if (Math.random() < 0.3) s.pause = 0.5 + Math.random() * 1.5; }
+          else { s.x += (dx / dist) * speed * dt; s.y += (dy / dist) * speed * dt * 0.6; }
+          const want = Math.sign(dx) || 1;
+          s.face += (want - s.face) * Math.min(1, dt * 4);
+        }
+      }
+      const moving = s.pause <= 0;
+      const x = s.x * w, y = s.y * sandY + Math.sin(tSec * 1.3 + s.phase) * 3;
+      drawFish(ctx, sp, x, y, L, { face: s.face, wag: Math.sin(tSec * (moving ? 9 : 4) + s.phase) * (moving ? 0.28 : 0.12), shiny: s.f.shiny });
+      if (s.f.shiny) sparkle(ctx, x, y - L * 0.1, L * 0.45, tSec + s.phase);
+      s.screen = { x, y, L };
+    }
+    // bubbles
+    ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 1;
+    bubbles = bubbles.filter((b) => b.y > -10);
+    for (const b of bubbles) { if (live) { b.y -= (30 + b.r * 10) * dt; b.x += Math.sin(t / 300 + b.r * 10) * 0.3; } ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.stroke(); }
+    // glass
+    ctx.fillStyle = "rgba(255,255,255,.05)"; ctx.fillRect(0, 0, w * 0.08, h);
+    if (!swimmers.length) { ctx.fillStyle = "rgba(255,255,255,.7)"; ctx.font = `700 ${Math.max(13, w / 34)}px Figtree, sans-serif`; ctx.textAlign = "center"; ctx.fillText("Your tank is empty. Go catch something.", w / 2, h * 0.42); }
+  }
+
+  $("tank").addEventListener("click", (e) => {
+    const r = $("tank").getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    let best = null, bestD = Infinity;
+    for (const s of swimmers) { if (!s.screen) continue; const d = Math.hypot(mx - s.screen.x, my - s.screen.y); if (d < s.screen.L * 0.5 && d < bestD) { best = s; bestD = d; } }
+    const tip = $("fishtip");
+    if (!best) { tip.hidden = true; return; }
+    showTip(best.f, best.screen.x, best.screen.y - best.screen.L * 0.2);
+  });
+  function showTip(f, x, y) {
+    const sp = BY_KEY[f.key], tip = $("fishtip");
+    tip.innerHTML = `<strong>${f.shiny ? "Shiny " : ""}${sp.name}</strong><small>${RAR[sp.rar].name} · ${lbs(f.w)} · ${num(fishRate(f))} pearls/hr</small>`;
+    const b = el("button", "btn small", `Release for <span class="pearl"></span> ${num(fishRate(f) * 3)}`); b.type = "button";
+    b.addEventListener("click", () => release(f.id));
+    tip.append(b);
+    const wrap = $("tankWrap");
+    tip.style.left = `${Math.max(100, Math.min(wrap.clientWidth - 100, x))}px`;
+    tip.style.top = `${Math.max(90, y)}px`;
+    tip.hidden = false;
+  }
+  function release(id) {
+    const i = S.fish.findIndex((f) => f.id === id); if (i < 0) return;
+    if (isBreeding(id)) { toast("That fish is on a nest", "Wait for the egg to hatch."); return; }
+    const f = S.fish[i], v = fishRate(f) * 3;
+    S.fish.splice(i, 1); S.pearls += v;
+    $("fishtip").hidden = true;
+    syncTank(); renderTank();
+    toast(`Released the ${BY_KEY[f.key].name}`, `+${num(v)} pearls`);
+    track("sell");
+    save();
+  }
+  function renderTank() {
+    const list = $("tankList"); list.replaceChildren();
+    const capN = TANKS[S.tank].cap;
+    $("capLine").textContent = `${S.fish.length} of ${capN} fish`;
+    if (!S.fish.length) list.append(el("li", "empty", "Fish you keep swim here and make pearls, even while you're away."));
+    S.fish.slice().sort((a, b) => fishRate(b) - fishRate(a)).forEach((f) => {
+      const sp = BY_KEY[f.key];
+      const li = el("li");
+      const dot = el("i"); dot.style.background = RAR[sp.rar].color;
+      const name = el("span", null, `${sp.name} ${f.shiny ? '<span class="shiny">★ SHINY</span>' : ""} <small style="color:var(--muted-2)">${lbs(f.w)}</small>`);
+      const rate = el("span", "rate", `<span class="pearl"></span>${num(fishRate(f))}/hr`);
+      const breeding = isBreeding(f.id);
+      const b = el("button", "btn small", breeding ? "♥ Nesting" : "Release"); b.type = "button"; b.disabled = breeding; b.addEventListener("click", () => release(f.id));
+      li.append(dot, name, rate, b); list.append(li);
+    });
+    const r = tankRate();
+    $("tankRate").innerHTML = `<span class="pearl"></span> ${num(r)} / hr${decorCount() ? ` · decor +${decorCount() * 5}%` : ""}`;
+    $("rate").textContent = `${num(r)} / hr`;
+    renderProfile();
+  }
+
+  /* ============================================================ the daily loop: garden, breeding, quests
+     Timers run on S.clock, a game clock the mockup speed control can run
+     faster. The real game uses the server's clock and nothing else. */
+  const HOUR = 3600000;
+  function dur(ms) {
+    const s = Math.max(0, Math.ceil(ms / 1000));
+    if (s >= 3600) return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
+    if (s >= 60) return `${Math.floor(s / 60)}m ${s % 60}s`;
+    return `${s}s`;
+  }
+  const shortDur = (ms) => { const h = ms / HOUR; return h >= 1 ? `${+h.toFixed(1)}h` : `${Math.round(ms / 60000)}m`; };
+
+  const BAITS = {
+    worm: { name: "Nightcrawlers", bed: "Worm bed", cost: 15, grow: 0.5 * HOUR, yield: 5, about: "Uncommon ×1.6", mult: { 1: 1.6 }, color: "#c9785a" },
+    cricket: { name: "Crickets", bed: "Cricket box", cost: 40, grow: 2 * HOUR, yield: 5, about: "Rare ×2", mult: { 2: 2 }, color: "#8fbf4a" },
+    glow: { name: "Glow grubs", bed: "Glow patch", cost: 120, grow: 6 * HOUR, yield: 3, about: "Epic & Legendary ×2.5", mult: { 3: 2.5, 4: 2.5 }, color: "#7ff0ff" },
+    shimmer: { name: "Shimmer shrimp", bed: "Shimmer pool", cost: 400, grow: 12 * HOUR, yield: 1, about: "Shiny odds ×10", shiny: 10, color: "#f3a6d8" }
+  };
+  const BAIT_KEYS = Object.keys(BAITS);
+  const PLOT_CAPS = [{ cap: 4, cost: 0 }, { cap: 6, cost: 400 }, { cap: 8, cost: 2000 }];
+  const NEST_CAPS = [{ cap: 1, cost: 0 }, { cap: 2, cost: 1500 }, { cap: 3, cost: 6000 }];
+  const HATCH_MS = [1, 2, 4, 8, 16].map((h) => h * HOUR);
+  const breedCost = (rar) => RAR[rar].rate * 10;
+  const ui = { choosing: -1 };
+
+  function normalizeLoop() {
+    while (S.plots.length < PLOT_CAPS[S.plotLvl].cap) S.plots.push({ seed: null, at: 0, ready: 0, watered: false });
+    while (S.nests.length < NEST_CAPS[S.nestLvl].cap) S.nests.push(null);
+  }
+  const activeBait = () => (S.baitOn !== "none" && (S.bait[S.baitOn] || 0) > 0 ? BAITS[S.baitOn] : null);
+
+  /* ---------------------------------------------------------- bait garden */
+  const plotState = (p) => (!p.seed ? "empty" : S.clock >= p.ready ? "ready" : "growing");
+  function plant(i, key = S.seedPick) {
+    const b = BAITS[key], p = S.plots[i];
+    if (p.seed) return;
+    if (S.pearls < b.cost) { toast(`${b.bed} costs ${b.cost} pearls`); return; }
+    S.pearls -= b.cost; S.seedPick = key; ui.choosing = -1;
+    Object.assign(p, { seed: key, at: S.clock, ready: S.clock + b.grow, watered: false });
+    track("plant"); renderGarden(); save();
+  }
+  function water(i) {
+    const p = S.plots[i];
+    if (!p.seed || p.watered || S.clock >= p.ready) return;
+    p.watered = true;
+    p.ready = S.clock + (p.ready - S.clock) * 0.75;
+    track("water"); renderGarden(); save();
+  }
+  function harvest(i) {
+    const p = S.plots[i];
+    if (!p.seed || S.clock < p.ready) return;
+    const b = BAITS[p.seed];
+    S.bait[p.seed] = (S.bait[p.seed] || 0) + b.yield;
+    if (!activeBait()) S.baitOn = p.seed;
+    toast(`+${b.yield} ${b.name}`, `${b.about} when you fish with it.`);
+    Object.assign(p, { seed: null, at: 0, ready: 0, watered: false });
+    track("harvest"); renderGarden(); renderBaitSel(); save();
+  }
+  function sprout(state, frac, color) {
+    const mound = `<ellipse cx="40" cy="50" rx="30" ry="8" fill="#4a3020"/><ellipse cx="40" cy="48" rx="26" ry="6" fill="#6a4630"/>`;
+    if (state === "empty") return `<svg viewBox="0 0 80 60" aria-hidden="true">${mound}<path d="M22 47h6M36 45h8M52 47h6" stroke="#8a6040" stroke-width="2" stroke-linecap="round"/></svg>`;
+    const stage = state === "ready" ? 3 : frac < 0.34 ? 0 : frac < 0.67 ? 1 : 2;
+    let s = mound;
+    if (stage === 0) s += `<circle cx="36" cy="45" r="2.5" fill="#caa36a"/><circle cx="45" cy="46" r="2.5" fill="#caa36a"/><path d="M40 46v-6" stroke="#6fbf5a" stroke-width="2.5" stroke-linecap="round"/>`;
+    if (stage >= 1) s += `<path d="M40 47V${stage === 1 ? 32 : 20}" stroke="#4f9a3f" stroke-width="3" stroke-linecap="round"/><path d="M40 40c-8-2-12-7-12-10 6 0 11 4 12 10zM40 38c8-2 12-7 12-10-6 0-11 4-12 10z" fill="#6fbf5a"/>`;
+    if (stage >= 2) s += `<path d="M40 30c-9-2-14-8-14-12 7 0 13 5 14 12zM40 28c9-2 14-8 14-12-7 0-13 5-14 12z" fill="#7fd06a"/>`;
+    if (stage === 3) s += `<g style="filter:drop-shadow(0 0 4px ${color})"><circle cx="31" cy="16" r="5" fill="${color}"/><circle cx="49" cy="14" r="5" fill="${color}"/><circle cx="40" cy="8" r="5.5" fill="${color}"/></g>`;
+    return `<svg viewBox="0 0 80 60" aria-hidden="true">${s}</svg>`;
+  }
+  const loopRefs = { plots: [], nests: [], gardenSig: "", nestSig: "" };
+  function renderGarden() {
+    normalizeLoop();
+    const box = $("garden"); box.replaceChildren();
+
+    const owned = BAIT_KEYS.filter((k) => S.bait[k] > 0);
+    const intro = el("div", "panel-intro");
+    intro.append(el("p", null, owned.length
+      ? `Your bait: ${owned.map((k) => `<b>${BAITS[k].name} ×${S.bait[k]}</b>`).join(" · ")}`
+      : "Grow bait here, then pick it on the fishing card to change what bites."));
+    intro.append(el("span", "hint", "Watering takes a quarter off"));
+    box.append(intro);
+
+    const grid = el("div", "plots");
+    loopRefs.plots = [];
+    S.plots.forEach((p, i) => {
+      const st = plotState(p), b = p.seed ? BAITS[p.seed] : null;
+      const cell = el("div", "plot " + st);
+      if (st === "empty" && ui.choosing === i) {
+        cell.classList.add("choosing");
+        cell.append(el("div", "choose-head", "<b>Plant a bed</b>"));
+        BAIT_KEYS.forEach((k) => {
+          const bb = BAITS[k];
+          const opt = el("button", "choose", `<i style="background:${bb.color}"></i><span><b>${bb.bed}</b><small>${bb.about} · ${shortDur(bb.grow)}</small></span><em><span class="pearl"></span>${bb.cost}</em>`);
+          opt.type = "button"; opt.disabled = S.pearls < bb.cost;
+          opt.addEventListener("click", () => plant(i, k));
+          cell.append(opt);
+        });
+        const cancel = el("button", "linkbtn", "Cancel"); cancel.type = "button";
+        cancel.addEventListener("click", () => { ui.choosing = -1; renderGarden(); });
+        cell.append(cancel);
+        grid.append(cell); loopRefs.plots.push(null);
+        return;
+      }
+      const frac = p.seed ? Math.min(1, (S.clock - p.at) / (p.ready - p.at || 1)) : 0;
+      cell.append(el("div", "plot-art", sprout(st, frac, b?.color)));
+      const label = el("div", "plot-label", b ? `<b>${b.bed}</b><small></small>` : `<b>Empty plot</b><small>&nbsp;</small>`);
+      cell.append(label);
+      let btn;
+      if (st === "empty") { btn = el("button", "btn small ghost", "Plant…"); btn.addEventListener("click", () => { ui.choosing = i; renderGarden(); }); }
+      else if (st === "ready") { btn = el("button", "btn small primary", `Harvest ${b.yield}`); btn.addEventListener("click", () => harvest(i)); }
+      else if (p.watered) { btn = el("button", "btn small ghost", "Watered"); btn.disabled = true; }
+      else { btn = el("button", "btn small water", "Water"); btn.addEventListener("click", () => water(i)); }
+      btn.type = "button";
+      const bar = el("div", "thinbar", "<i></i>");
+      if (st === "empty") bar.style.visibility = "hidden";
+      cell.append(bar, btn);
+      grid.append(cell);
+      loopRefs.plots.push({ time: label.querySelector("small"), fill: bar.querySelector("i") });
+    });
+    box.append(grid);
+    loopRefs.gardenSig = gardenSig();
+    tickLoop(true);
+  }
+  const gardenSig = () => S.plots.map((p) => plotState(p) + (p.watered ? "w" : "") + (p.seed ? Math.floor(Math.min(1, (S.clock - p.at) / (p.ready - p.at || 1)) * 3) : "")).join(",") + S.plots.length + "|" + ui.choosing;
+
+  /* ---------------------------------------------------------- breeding */
+  const breedingIds = () => new Set(S.nests.filter(Boolean).flatMap((n) => [n.a, n.b]));
+  const isBreeding = (id) => breedingIds().has(id);
+  function pairs() {
+    const busy = breedingIds(), by = {};
+    S.fish.filter((f) => !busy.has(f.id)).forEach((f) => (by[f.key] = by[f.key] || []).push(f));
+    return Object.entries(by).filter(([, list]) => list.length >= 2).map(([key, list]) => ({ key, list: list.sort((a, b) => b.w - a.w) }));
+  }
+  function breed(key) {
+    const i = S.nests.findIndex((n) => !n);
+    if (i < 0) { toast("Every nest is busy", "More nests are in the shop."); return; }
+    const pair = pairs().find((p) => p.key === key); if (!pair) return;
+    const sp = BY_KEY[key], cost = breedCost(sp.rar);
+    if (S.pearls < cost) { toast(`Breeding ${sp.name} costs ${cost} pearls`); return; }
+    S.pearls -= cost;
+    const [a, b] = pair.list;
+    S.nests[i] = { key, a: a.id, b: b.id, wa: a.w, wb: b.w, shinyParents: (a.shiny ? 1 : 0) + (b.shiny ? 1 : 0), at: S.clock, ready: S.clock + HATCH_MS[sp.rar] };
+    toast(`${sp.name} egg laid`, `Hatches in ${dur(HATCH_MS[sp.rar])}.`);
+    track("breed"); renderBreeding(); renderTank(); save();
+  }
+  function hatch(i) {
+    const n = S.nests[i]; if (!n || S.clock < n.ready) return;
+    const sp = BY_KEY[n.key];
+    const w = Math.min(sp.w[1] * 1.05, Math.max(sp.w[0], ((n.wa + n.wb) / 2) * (0.85 + Math.random() * 0.35)));
+    let chance = shinyOdds(n.shinyParents);
+    if (S.shinyBoost) chance = Math.min(0.9, chance * 5);
+    const shiny = Math.random() < chance;
+    const entry = S.dex[n.key] || { n: 0, best: 0, shiny: false };
+    const record = w > entry.best;
+    entry.n++; entry.best = Math.max(entry.best, w); entry.shiny = entry.shiny || shiny;
+    S.dex[n.key] = entry;
+    S.nursery.push({ id: S.uid++, key: n.key, w, shiny });
+    S.nests[i] = null;
+    toast(`${shiny ? "A shiny " : "A "}${sp.name} hatched!`, `${lbs(w)}${record ? " · a new record" : ""}. It's in the nursery.`);
+    track("hatch"); if (shiny) track("shiny");
+    renderBreeding(); renderTank(); renderDex(); renderProfile(); save();
+  }
+  const shinyOdds = (parents) => (parents === 2 ? 1 / 3 : parents === 1 ? 1 / 10 : 1 / 40);
+  const oddsText = (parents) => (parents === 2 ? "1 in 3" : parents === 1 ? "1 in 10" : "1 in 40");
+  function fromNursery(id, keep) {
+    const i = S.nursery.findIndex((f) => f.id === id); if (i < 0) return;
+    const f = S.nursery[i];
+    if (keep) {
+      if (S.fish.length >= TANKS[S.tank].cap) { toast("Your tank is full", "Release a fish or buy a bigger tank."); return; }
+      S.fish.push(f); track("keep"); syncTank();
+    } else { S.pearls += fishRate(f) * 3; track("sell"); }
+    S.nursery.splice(i, 1);
+    renderBreeding(); renderTank(); save();
+  }
+  const nestState = (n) => (!n ? "empty" : S.clock >= n.ready ? "ready" : "incubating");
+  function renderBreeding() {
+    normalizeLoop();
+    const box = $("breeding"); box.replaceChildren();
+
+    const cols = el("div", "breed-cols");
+    const left = el("div");
+    left.append(el("h4", "sec-h", `Nests <small>${S.nests.filter(Boolean).length} of ${S.nests.length} in use</small>`));
+    const nests = el("div", "nests");
+    loopRefs.nests = [];
+    S.nests.forEach((n, i) => {
+      const st = nestState(n), sp = n ? BY_KEY[n.key] : null;
+      const cell = el("div", "nest " + st);
+      if (!n) {
+        cell.append(el("div", "egg hollow"), el("div", "nest-label", "<b>Empty</b><small>Breed a pair</small>"));
+        nests.append(cell); loopRefs.nests.push(null); return;
+      }
+      const egg = el("div", "egg" + (st === "ready" ? " wobble" : ""));
+      egg.style.setProperty("--egg", sp.c[0]); egg.style.setProperty("--spot", sp.c[2]);
+      const label = el("div", "nest-label", `<b>${sp.name}</b><small></small>`);
+      const bar = el("div", "thinbar", "<i></i>");
+      cell.append(egg, label);
+      if (st === "ready") { const b = el("button", "btn small primary", "Hatch"); b.type = "button"; b.addEventListener("click", () => hatch(i)); cell.append(b); }
+      else cell.append(bar);
+      nests.append(cell);
+      loopRefs.nests.push({ time: label.querySelector("small"), fill: bar.querySelector("i") });
+    });
+    left.append(nests);
+
+    const right = el("div");
+    const ps = pairs();
+    right.append(el("h4", "sec-h", "Ready to breed"));
+    if (!ps.length) right.append(el("p", "empty-note", "No pairs yet. Keep two of the same species in your tank."));
+    const list = el("div", "rows");
+    ps.forEach(({ key, list: fishes }) => {
+      const sp = BY_KEY[key], shinies = fishes.slice(0, 2).filter((f) => f.shiny).length;
+      const row = el("div", "row2");
+      const dot = el("i", "rdot"); dot.style.background = RAR[sp.rar].color;
+      row.append(dot, el("span", "row2-main", `<b>${sp.name}</b><small>${shortDur(HATCH_MS[sp.rar])} · shiny ${oddsText(shinies)}</small>`));
+      const b = el("button", "btn small gold", `Breed <span class="pearl"></span>${breedCost(sp.rar)}`); b.type = "button";
+      b.disabled = !S.nests.some((n) => !n);
+      b.title = b.disabled ? "Every nest is busy" : "";
+      b.addEventListener("click", () => breed(key));
+      row.append(b); list.append(row);
+    });
+    right.append(list);
+
+    if (S.nursery.length) {
+      right.append(el("h4", "sec-h", "Nursery"));
+      const nl = el("div", "rows");
+      S.nursery.forEach((f) => {
+        const sp = BY_KEY[f.key];
+        const row = el("div", "row2");
+        const dot = el("i", "rdot"); dot.style.background = RAR[sp.rar].color;
+        row.append(dot, el("span", "row2-main", `<b>${f.shiny ? "Shiny " : ""}${sp.name}</b><small>${lbs(f.w)} · ${num(fishRate(f))}/hr</small>`));
+        const g = el("span", "row2-btns");
+        const k = el("button", "btn small primary", "Keep"); k.type = "button"; k.addEventListener("click", () => fromNursery(f.id, true));
+        const s = el("button", "btn small ghost", `Sell ${num(fishRate(f) * 3)}`); s.type = "button"; s.addEventListener("click", () => fromNursery(f.id, false));
+        g.append(k, s); row.append(g); nl.append(row);
+      });
+      right.append(nl);
+    }
+    cols.append(left, right);
+    box.append(cols);
+    loopRefs.nestSig = nestSig();
+    tickLoop(true);
+  }
+  const nestSig = () => S.nests.map(nestState).join(",") + "|" + pairs().map((p) => p.key + p.list.length + p.list.slice(0, 2).filter((f) => f.shiny).length).join(",") + "|" + S.nursery.length + "|" + S.fish.length;
+
+  /* ---------------------------------------------------------- quests */
+  const Q_DAILY = [
+    { id: "catch", ev: "catch", reward: 60, gen: (r) => ({ target: [10, 15, 20][Math.floor(r() * 3)] }), text: (q) => `Catch ${q.target} fish` },
+    { id: "uncommon", ev: "catch", reward: 80, gen: (r) => ({ target: [3, 5][Math.floor(r() * 2)] }), filter: (d) => d.rar >= 1, text: (q) => `Catch ${q.target} Uncommon or better` },
+    { id: "rare", ev: "catch", reward: 120, gen: (r) => ({ target: [1, 2][Math.floor(r() * 2)] }), filter: (d) => d.rar >= 2, text: (q) => `Catch ${q.target === 1 ? "a" : q.target} Rare or better` },
+    { id: "heavy", ev: "catch", reward: 90, gen: (r) => ({ target: 1, param: [3, 8, 20][Math.floor(r() * 3)] }), filter: (d, q) => d.w >= q.param, text: (q) => `Land a fish over ${q.param} lb` },
+    { id: "spot", ev: "catch", reward: 70, gen: (r) => { const open = SPOTS.map((s, i) => i).filter((i) => S.spots[i]); return { target: 6, param: open[Math.floor(r() * open.length)] }; }, filter: (d, q) => d.spot === q.param, text: (q) => `Catch ${q.target} fish at ${SPOTS[q.param].name}` },
+    { id: "harvest", ev: "harvest", reward: 70, gen: (r) => ({ target: [2, 3][Math.floor(r() * 2)] }), text: (q) => `Harvest ${q.target} garden plots` },
+    { id: "water", ev: "water", reward: 40, gen: (r) => ({ target: [2, 4][Math.floor(r() * 2)] }), text: (q) => `Water ${q.target} plants` },
+    { id: "breed", ev: "breed", reward: 80, gen: () => ({ target: 1 }), text: () => "Breed a pair" },
+    { id: "keep", ev: "keep", reward: 50, gen: (r) => ({ target: [2, 3][Math.floor(r() * 2)] }), text: (q) => `Put ${q.target} fish in your tank` },
+    { id: "sell", ev: "sell", reward: 50, gen: (r) => ({ target: [5, 8][Math.floor(r() * 2)] }), text: (q) => `Sell or release ${q.target} fish` }
+  ];
+  const Q_WEEKLY = [
+    { id: "wcatch", ev: "catch", reward: 500, gen: () => ({ target: 150 }), text: (q) => `Catch ${q.target} fish` },
+    { id: "wepic", ev: "catch", reward: 800, gen: () => ({ target: 4 }), filter: (d) => d.rar >= 3, text: (q) => `Catch ${q.target} Epic or better` },
+    { id: "whatch", ev: "hatch", reward: 600, gen: () => ({ target: 3 }), text: (q) => `Hatch ${q.target} eggs` },
+    { id: "wnew", ev: "newSpecies", reward: 700, gen: () => ({ target: 3 }), text: (q) => `Add ${q.target} new species to your book` },
+    { id: "wharvest", ev: "harvest", reward: 450, gen: () => ({ target: 15 }), text: (q) => `Harvest ${q.target} plots` },
+    { id: "wdaily", ev: "daily", reward: 900, gen: () => ({ target: 12 }), text: (q) => `Finish ${q.target} daily quests` },
+    { id: "wshiny", ev: "shiny", reward: 1200, gen: () => ({ target: 1 }), text: () => "Catch or hatch a shiny" }
+  ];
+  const Q_BY_ID = Object.fromEntries([...Q_DAILY, ...Q_WEEKLY].map((t) => [t.id, t]));
+  const chicagoDate = (shift) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(Date.now() + shift * 864e5));
+  function weekOf(day) {
+    const d = new Date(day + "T12:00:00Z");
+    d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+    return d.toISOString().slice(0, 10);
+  }
+  function rollQuests(pool, n, seed) {
+    const r = prng(hashStr(seed)), list = pool.slice();
+    for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
+    return list.slice(0, n).map((t) => ({ id: t.id, prog: 0, claimed: false, ...t.gen(r) }));
+  }
+  function ensureQuests() {
+    const day = chicagoDate(S.dayShift), week = weekOf(day);
+    if (S.q.day !== day) {
+      if (S.q.day && !S.q.chest) S.q.streak = 0;
+      S.q.day = day; S.q.daily = rollQuests(Q_DAILY, 3, "daily:" + day); S.q.chest = false;
+    }
+    if (S.q.week !== week) { S.q.week = week; S.q.weekly = rollQuests(Q_WEEKLY, 3, "weekly:" + week); S.q.weekChest = false; }
+  }
+  function track(ev, data = {}) {
+    ensureQuests();
+    let changed = false;
+    for (const q of [...S.q.daily, ...S.q.weekly]) {
+      const t = Q_BY_ID[q.id];
+      if (t.ev !== ev || q.prog >= q.target) continue;
+      if (t.filter && !t.filter(data, q)) continue;
+      q.prog++; changed = true;
+      if (q.prog >= q.target) toast(`Quest done: ${t.text(q)}`, "Claim it in Quests.");
+    }
+    if (changed) renderQuests();
+  }
+  function claim(q) {
+    const t = Q_BY_ID[q.id];
+    if (q.claimed || q.prog < q.target) return;
+    q.claimed = true; S.pearls += t.reward;
+    toast(`+${t.reward} pearls`, t.text(q));
+    if (S.q.daily.includes(q)) track("daily");
+    renderQuests(); save();
+  }
+  function openDailyChest() {
+    if (S.q.chest || !S.q.daily.every((q) => q.claimed)) return;
+    S.q.chest = true; S.q.streak++;
+    const pearls = Math.round(100 * (1 + Math.min(S.q.streak, 7) * 0.1));
+    S.pearls += pearls;
+    S.bait.worm = (S.bait.worm || 0) + 5;
+    let extra = "5 Nightcrawlers";
+    if (S.q.streak >= 3) { S.bait.cricket = (S.bait.cricket || 0) + 3; extra += ", 3 Crickets"; }
+    if (S.q.streak >= 7) { S.bait.glow = (S.bait.glow || 0) + 2; extra += ", 2 Glow grubs"; }
+    toast(`Daily chest: +${pearls} pearls`, `${extra}. Streak: ${S.q.streak} day${S.q.streak === 1 ? "" : "s"}.`);
+    renderQuests(); renderBaitSel(); renderGarden(); save();
+  }
+  function openWeeklyChest() {
+    if (S.q.weekChest || !S.q.weekly.every((q) => q.claimed)) return;
+    S.q.weekChest = true;
+    S.pearls += 1500; S.bait.glow = (S.bait.glow || 0) + 3; S.bait.shimmer = (S.bait.shimmer || 0) + 1;
+    toast("Weekly chest: +1,500 pearls", "3 Glow grubs, 1 Shimmer shrimp, and the title Reef Regular.");
+    renderQuests(); renderBaitSel(); renderGarden(); save();
+  }
+  const CHECK = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  function renderQuests() {
+    ensureQuests();
+    const box = $("quests"); box.replaceChildren();
+    const cols = el("div", "q-cols");
+    const column = (title, meta, list, chestDone, chestText, onChest) => {
+      const col = el("div", "q-col");
+      col.append(el("div", "q-head", `<h4 class="sec-h">${title}</h4><span class="q-meta">${meta}</span>`));
+      const ul = el("div", "q-list");
+      list.forEach((q) => {
+        const t = Q_BY_ID[q.id], p = Math.min(q.prog, q.target), done = p >= q.target;
+        const row = el("div", "quest" + (q.claimed ? " claimed" : done ? " done" : ""));
+        row.style.setProperty("--p", String(p / q.target));
+        row.append(el("span", "q-mark", q.claimed ? CHECK : ""));
+        row.append(el("span", "q-text", `${t.text(q)}<small>${q.claimed ? "Claimed" : `${p} / ${q.target}`}</small>`));
+        if (done && !q.claimed) {
+          const b = el("button", "btn small gold", `Claim <span class="pearl"></span>${t.reward}`); b.type = "button";
+          b.addEventListener("click", () => claim(q)); row.append(b);
+        } else row.append(el("span", "q-reward", `<span class="pearl"></span>${t.reward}`));
+        ul.append(row);
+      });
+      col.append(ul);
+      const all = list.every((q) => q.claimed);
+      const chest = el("div", "q-chest" + (chestDone ? " opened" : all ? " ready" : ""));
+      chest.append(el("span", null, chestDone ? `${title} chest opened` : chestText));
+      if (all && !chestDone) { const b = el("button", "btn small primary", "Open chest"); b.type = "button"; b.addEventListener("click", onChest); chest.append(b); }
+      col.append(chest);
+      return col;
+    };
+    const streak = S.q.streak ? `<b class="streak">${S.q.streak}-day streak</b> · ` : "";
+    cols.append(
+      column("Daily", `${streak}<span id="qDayLeft"></span>`, S.q.daily, S.q.chest, `Claim all three for the daily chest${S.q.streak >= 2 ? ` (+${Math.min(S.q.streak + 1, 7) * 10}%)` : ""}`, openDailyChest),
+      column("Weekly", `<span id="qWeekLeft"></span>`, S.q.weekly, S.q.weekChest, "Claim all three for the weekly chest and a title", openWeeklyChest)
+    );
+    box.append(cols);
+    tickLoop(true);
+  }
+
+  /* ---------------------------------------------------------- bait picker */
+  function renderBaitSel() {
+    const sel = $("baitSel"); sel.replaceChildren();
+    sel.append(new Option("No bait", "none"));
+    BAIT_KEYS.forEach((k) => { if ((S.bait[k] || 0) > 0) sel.append(new Option(`${BAITS[k].name} ×${S.bait[k]} (${BAITS[k].about})`, k)); });
+    if (!activeBait()) S.baitOn = "none";
+    sel.value = S.baitOn;
+    renderBiting(); syncAction();
+  }
+  $("baitSel").addEventListener("change", (e) => { S.baitOn = e.target.value; renderBiting(); syncAction(); save(); });
+
+  /* ---------------------------------------------------------- per tick */
+  function setBadge(tab, n) {
+    const b = document.querySelector(`.tab[data-tab="${tab}"] .count`);
+    if (!b) return;
+    b.hidden = !n; b.textContent = n;
+  }
+  function tickLoop(skipRebuild) {
+    if (!skipRebuild) {
+      if (gardenSig() !== loopRefs.gardenSig) renderGarden();
+      if (nestSig() !== loopRefs.nestSig) renderBreeding();
+      if (chicagoDate(S.dayShift) !== S.q.day) renderQuests();
+    }
+    S.plots.forEach((p, i) => {
+      const r = loopRefs.plots[i]; if (!r) return;
+      if (!p.seed) return;
+      r.fill.style.width = `${Math.min(1, (S.clock - p.at) / (p.ready - p.at || 1)) * 100}%`;
+      r.time.textContent = S.clock >= p.ready ? "Ready" : dur((p.ready - S.clock) / S.speed);
+    });
+    S.nests.forEach((n, i) => {
+      const r = loopRefs.nests[i]; if (!n || !r) return;
+      r.fill.style.width = `${Math.min(1, (S.clock - n.at) / (n.ready - n.at)) * 100}%`;
+      r.time.textContent = S.clock >= n.ready ? "Ready to hatch" : dur((n.ready - S.clock) / S.speed);
+    });
+    const dayLeft = $("qDayLeft"), weekLeft = $("qWeekLeft");
+    if (dayLeft) {
+      const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "numeric", minute: "numeric", hourCycle: "h23" }).formatToParts(new Date()).map((p) => [p.type, p.value]));
+      const mins = 24 * 60 - (Number(parts.hour) * 60 + Number(parts.minute));
+      dayLeft.textContent = `new in ${Math.floor(mins / 60)}h ${mins % 60}m`;
+      const d = new Date(S.q.day + "T12:00:00Z"), daysLeft = 6 - ((d.getUTCDay() + 6) % 7);
+      weekLeft.textContent = daysLeft ? `resets in ${daysLeft}d ${Math.floor(mins / 60)}h` : `resets in ${Math.floor(mins / 60)}h ${mins % 60}m`;
+    }
+    const claimable = [...S.q.daily, ...S.q.weekly].filter((q) => !q.claimed && q.prog >= q.target).length
+      + (!S.q.chest && S.q.daily.every((q) => q.claimed) ? 1 : 0) + (!S.q.weekChest && S.q.weekly.every((q) => q.claimed) ? 1 : 0);
+    setBadge("quests", claimable);
+    setBadge("garden", S.plots.filter((p) => p.seed && S.clock >= p.ready).length);
+    setBadge("breeding", S.nests.filter((n) => n && S.clock >= n.ready).length + S.nursery.length);
+  }
+
+  /* ============================================================ book, shop, derby */
+  function renderDex() {
+    const box = $("dex"); box.replaceChildren();
+    const caught = SPECIES.filter((sp) => S.dex[sp.key]?.n).length;
+    const head = el("div", "dex-head");
+    head.append(el("strong", null, `${caught} of ${SPECIES.length} species`), Object.assign(el("div", "dex-bar"), { innerHTML: `<i style="width:${(caught / SPECIES.length) * 100}%"></i>` }), el("span", "note", caught === SPECIES.length ? "Master Angler" : `Title at 100%: <b>Master Angler</b>`));
+    box.append(head);
+    SPOTS.forEach((spot, si) => {
+      box.append(el("div", "dex-spot", spot.name + (S.spots[si] ? "" : " · locked")));
+      const grid = el("div", "dex");
+      SPECIES.filter((sp) => sp.spot === si).forEach((sp) => {
+        const d = S.dex[sp.key], known = d?.n > 0;
+        const card = el("div", "dexc");
+        const cv = el("canvas"); cv.width = 300; cv.height = 150;
+        card.append(cv);
+        const rd = el("span", "rd"); rd.style.background = RAR[sp.rar].color; card.append(rd);
+        if (d?.shiny) card.append(el("span", "star", "★"));
+        card.append(el("strong", null, known ? sp.name : "???"));
+        card.append(el("small", null, known ? `Caught ${d.n} · best ${lbs(d.best)}` : RAR[sp.rar].name));
+        card.append(el("small", null, hint(sp)));
+        card.title = known ? `${sp.name} · ${RAR[sp.rar].name}` : "Not caught yet";
+        grid.append(card);
+        const ctx = cv.getContext("2d");
+        const L = Math.min(230, 110 + sp.size * 0.9);
+        drawFish(ctx, sp, 150 - (sp.x === "sword" || sp.x === "paddle" ? L * 0.14 : 0), 80, L, { sil: !known, wag: 0.08 });
+      });
+      box.append(grid);
+    });
+  }
+
+  const shopSig = () => [...RODS, ...TANKS, ...DECOR, ...PLOT_CAPS, ...NEST_CAPS].map((x) => (S.pearls >= x.cost ? 1 : 0)).join("") + S.rod + S.tank + S.plotLvl + S.nestLvl + JSON.stringify(S.decor);
+  function renderShop() {
+    renderShop.sig = shopSig();
+    const box = $("shop"); box.replaceChildren();
+    const sec = (title) => { const s = el("div", "shop-sec"); s.append(el("h3", null, title)); box.append(s); return s; };
+    const row = (parent, name, about, cost, owned, onBuy, label) => {
+      const r = el("div", "shop-row" + (owned ? " owned" : ""));
+      r.append(el("div", null, `<strong>${name}</strong><small>${about}</small>`));
+      const b = el("button", "btn small" + (owned ? "" : " gold"), owned ? (label || "Owned") : `<span class="pearl"></span> ${num(cost)}`);
+      b.type = "button"; b.disabled = owned || S.pearls < cost;
+      b.addEventListener("click", () => { if (S.pearls < cost) return; S.pearls -= cost; onBuy(); renderShop(); renderTank(); renderBiting(); save(); });
+      r.append(b); parent.append(r);
+    };
+    const rods = sec("Rods");
+    RODS.forEach((r, i) => { if (i === 0) return; row(rods, r.name, `Catch zone ${Math.round(r.zone * 100)}% · rare fish ×${r.luck}`, r.cost, S.rod >= i, () => { S.rod = i; toast(`${r.name} rigged`); }, S.rod === i ? "Using" : "Owned"); });
+    const tanks = sec("Tank");
+    TANKS.forEach((t, i) => { if (i === 0) return; row(tanks, `${t.cap}-fish tank`, `Room for ${t.cap} fish`, t.cost, S.tank >= i, () => { S.tank = i; toast(`Bigger tank`, `Room for ${t.cap} fish.`); }); });
+    const garden = sec("Bait garden");
+    PLOT_CAPS.forEach((c, i) => { if (i === 0) return; row(garden, `${c.cap} garden plots`, "Grow more bait at once", c.cost, S.plotLvl >= i, () => { S.plotLvl = i; normalizeLoop(); renderGarden(); toast(`${c.cap} garden plots`); }); });
+    const nestsSec = sec("Breeding");
+    NEST_CAPS.forEach((c, i) => { if (i === 0) return; row(nestsSec, `${c.cap} nests`, "Incubate more eggs at once", c.cost, S.nestLvl >= i, () => { S.nestLvl = i; normalizeLoop(); renderBreeding(); toast(`${c.cap} nests`); }); });
+    const dec = sec("Decorations");
+    DECOR.forEach((d) => row(dec, d.name, `Looks great · tank makes +5% pearls`, d.cost, !!S.decor[d.key], () => { S.decor[d.key] = true; toast(`${d.name} placed`, "+5% pearls."); }));
+  }
+
+  function renderDerby() {
+    const box = $("derby"); box.replaceChildren();
+    box.append(el("p", "note", "<strong style='color:var(--text)'>This week: biggest Largemouth Bass</strong> (Lake Michigan). Heaviest single fish by Sunday night takes the title <b>Derby Champ</b>."));
+    const rows = [["bootypaper", 11.2], ["kellzifer", 9.8], ["andyreidisapawg", 7.4], ["saturdaysfortheufcv2", 5.1]].map(([n, w]) => ({ n, w }));
+    const mine = S.dex.largemouth?.best;
+    if (mine) rows.push({ n: "You", w: mine, me: true });
+    rows.sort((a, b) => b.w - a.w);
+    const head = el("div", null); head.style.margin = "10px 0 6px";
+    head.innerHTML = `<span style="font-family:var(--display);font-weight:800">Leaderboard</span><span class="example">Example</span>`;
+    box.append(head);
+    const ol = el("ol", "lb");
+    rows.forEach((r, i) => { const li = el("li", r.me ? "me" : "", `<span class="rk">${i + 1}</span><span></span><span class="v">${lbs(r.w)}</span>`); li.children[1].textContent = r.n; ol.append(li); });
+    box.append(ol);
+    const records = Object.entries(S.dex).filter(([, d]) => d.n).sort((a, b) => b[1].best - a[1].best).slice(0, 5);
+    if (records.length) {
+      box.append(Object.assign(el("div", "dex-spot", "Your heaviest catches")));
+      const ol2 = el("ol", "lb");
+      records.forEach(([k, d], i) => { const li = el("li", "", `<span class="rk">${i + 1}</span><span></span><span class="v">${lbs(d.best)}</span>`); li.children[1].textContent = BY_KEY[k].name; ol2.append(li); });
+      box.append(ol2);
+    }
+  }
+  function renderProfile() {
+    const caught = SPECIES.filter((sp) => S.dex[sp.key]?.n).length;
+    $("pDex").textContent = `${caught}/${SPECIES.length}`;
+    const best = Object.entries(S.dex).filter(([, d]) => d.n).sort((a, b) => b[1].best - a[1].best)[0];
+    $("pBest").textContent = best ? `${lbs(best[1].best)} ${BY_KEY[best[0]].name}` : "—";
+    $("pShiny").textContent = Object.values(S.dex).filter((d) => d.shiny).length;
+  }
+
+  function toast(title, sub) {
+    const t = el("div", "toast"); t.textContent = title;
+    if (sub) t.append(el("small", null, sub));
+    $("toasts").append(t);
+    setTimeout(() => t.remove(), 3800);
+    while ($("toasts").childElementCount > 3) $("toasts").firstChild.remove();
+  }
+
+  /* ============================================================ controls */
+  function seg(id, options, get, set) {
+    const box = $(id); box.replaceChildren();
+    options.forEach(([v, label]) => {
+      const b = el("button", null, label); b.type = "button";
+      b.setAttribute("aria-pressed", String(get() === v));
+      b.addEventListener("click", () => { set(v); seg(id, options, get, set); renderBiting(); save(); });
+      box.append(b);
+    });
+  }
+  seg("cTime", [["auto", "Real"], ...TIMES.map((x) => [x, cap(x)])], () => S.time, (v) => (S.time = v));
+  seg("cSeason", [["auto", "Real"], ...SEASONS.map((x) => [x, cap(x)])], () => S.season, (v) => (S.season = v));
+  seg("cWeather", [["clear", "Clear"], ["storm", "Storm"]], () => S.weather, (v) => (S.weather = v));
+  seg("cSpeed", [[1, "1×"], [60, "60×"], [600, "600×"]], () => S.speed, (v) => (S.speed = v));
+  const toggleBtn = (id, key, label) => {
+    const b = $(id);
+    const paint = () => { b.setAttribute("aria-pressed", String(S[key])); b.textContent = `${label}: ${S[key] ? "on" : "off"}`; };
+    b.addEventListener("click", () => { S[key] = !S[key]; paint(); renderBiting(); save(); });
+    paint();
+  };
+  toggleBtn("cSunday", "sunday", "NFL Sunday");
+  toggleBtn("cShiny", "shinyBoost", "Shiny odds ×50");
+  $("cPearls").addEventListener("click", () => { S.pearls += 2000; renderShop(); toast("+2,000 pearls"); });
+  $("cAway").addEventListener("click", () => away(2 * 3600));
+  $("cDay").addEventListener("click", () => { S.dayShift += 1; ensureQuests(); renderQuests(); toast("A new day", S.q.streak ? `Streak: ${S.q.streak} days` : "New daily quests."); save(); });
+  $("cWeek").addEventListener("click", () => { S.dayShift += 7; ensureQuests(); renderQuests(); toast("A new week", "New weekly quests."); save(); });
+  $("cWipe").addEventListener("click", () => { try { localStorage.removeItem(SAVE); } catch {} S = fresh(); swimmers = []; bubbles = []; setPhase("idle"); $("catch").hidden = true; renderEverything(); toast("Save wiped"); });
+
+  function away(seconds, quiet) {
+    S.clock += seconds * 1000;
+    const hrs = Math.min(seconds / 3600, OFFLINE_CAP_H), made = tankRate() * hrs;
+    tickLoop();
+    if (made <= 0) { if (!quiet) toast("Nothing in the tank", "Fish you keep make pearls while you're gone. The garden and eggs kept growing."); return; }
+    S.pearls += made;
+    toast(`While you were away: +${num(made)} pearls`, `${(seconds / 3600).toFixed(1)} hours${seconds / 3600 > OFFLINE_CAP_H ? ", capped at 8" : ""} of your tank's ${num(tankRate())}/hr.`);
+    renderShop();
+  }
+
+  const navTabs = [...document.querySelectorAll(".fnav .tab")];
+  function openTab(b, focus) {
+    if (b.dataset.tab !== "fishing" && (fish.phase === "wait" || fish.phase === "bite" || fish.phase === "reel")) { setPhase("idle"); toast("You reeled your line in"); }
+    $("fishtip").hidden = true;
+    navTabs.forEach((x) => { const on = x === b; x.setAttribute("aria-selected", String(on)); x.tabIndex = on ? 0 : -1; });
+    try { history.replaceState(null, "", "#" + b.dataset.tab); } catch {}
+    window.scrollTo(0, 0);
+    document.querySelectorAll("[data-panel]").forEach((p) => { p.hidden = p.dataset.panel !== b.dataset.tab; });
+    if (b.dataset.tab === "shop") renderShop();
+    if (b.dataset.tab === "derby") renderDerby();
+    if (focus) b.focus();
+    if (window.matchMedia("(max-width:820px)").matches) b.scrollIntoView({ block: "nearest", inline: "nearest" });
+    tickLoop(true);
+  }
+  const fromHash = navTabs.find((b) => "#" + b.dataset.tab === location.hash);
+  navTabs.forEach((b, i) => {
+    b.addEventListener("click", () => openTab(b));
+    b.addEventListener("keydown", (e) => {
+      const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
+      if (step) { e.preventDefault(); openTab(navTabs[(i + step + navTabs.length) % navTabs.length], true); }
+      if (e.key === "Home") { e.preventDefault(); openTab(navTabs[0], true); }
+      if (e.key === "End") { e.preventDefault(); openTab(navTabs[navTabs.length - 1], true); }
+    });
+  });
+
+  /* ============================================================ loop */
+  function renderEverything() { normalizeLoop(); ensureQuests(); renderSpots(); syncTank(); renderTank(); renderDex(); renderShop(); renderDerby(); renderProfile(); renderGarden(); renderBreeding(); renderQuests(); renderBaitSel(); }
+
+  // the reel's little fish
+  function drawReelFish() {
+    const cv = $("rfishC"), ctx = cv.getContext("2d");
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    if (fish.pick) drawFish(ctx, fish.pick.sp, 30, 18, 46, { sil: false, wag: Math.sin(performance.now() / 60) * 0.3 });
+  }
+
+  let last = performance.now(), lastShop = 0, lastClock = 0, lastLoop = 0;
+  function frame(t) { frameBody(t); requestAnimationFrame(frame); }
+  function frameBody(t) {
+    const dt = Math.min(0.1, (t - last) / 1000); last = t;
+    stepFishing(t, dt);
+    if (onScreen("scene")) drawScene(t);
+    if (fish.phase === "reel") drawReelFish();
+    drawTank(t, dt);
+    S.pearls += (tankRate() / 3600) * dt * S.speed;
+    S.clock += dt * 1000 * S.speed;
+    if (t - lastLoop > 400) { lastLoop = t; tickLoop(); }
+    $("pearls").textContent = num(S.pearls);
+    if (t - lastShop > 500) { lastShop = t; const sig = shopSig(); if (sig !== renderShop.sig && !$("shop").closest("[hidden]")) renderShop(); }
+    if (t - lastClock > 30000) { lastClock = t; renderBiting(); }
+  }
+
+  renderEverything();
+  const awayFor = (Date.now() - (S.saved || Date.now())) / 1000;
+  if (awayFor > 120) away(awayFor, true);
+  if (fromHash) openTab(fromHash);
+  requestAnimationFrame(frame);
+  setInterval(save, 5000);
+  document.addEventListener("visibilitychange", save);
+  window.addEventListener("pagehide", save);
+  window.__reef = { tick: (ms) => { const t0 = performance.now(); for (let k = 0; k <= ms / 16; k++) { last = t0 + (k - 1) * 16; frameBody(t0 + k * 16); } }, get S() { return S; }, track, hatch, harvest, plant, water, breed, claim, openDailyChest, pairs, fish, SPECIES, landed, action, rollCatch, renderEverything, drawFish, BY_KEY, syncTank, renderTank };
+})();
+</script>
+</body>
+</html>
