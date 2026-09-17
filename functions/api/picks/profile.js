@@ -15,7 +15,8 @@ import { getSessionUser } from "./_lib.js";
 import { ensureSchema as ensureCoinSchema } from "../coin/_coin.js";
 import { findTeam, ensureFavouriteColumns } from "./_teams.js";
 import { isOpen as wrappedIsOpen } from "./_wrapped.js";
-import { cosmeticsFor } from "../store/_store.js";
+import { cosmeticsFor, collectionFor } from "../store/_store.js";
+import { TIER_OF } from "../crate/_crate.js";
 import { countView, ensureViews } from "./_views.js";
 
 const json = (body, status = 200) => Response.json(body, {
@@ -277,6 +278,8 @@ export async function onRequestGet(context) {
     movies,
     // Store cosmetics they have switched on (and still own), or null.
     cosmetics: await cosmeticsFor(db, String(user.twitch_id)),
+    // Everything they own from the Store and the Daily Crate, for the Collection tab.
+    collection: await collectionFor(db, String(user.twitch_id), TIER_OF),
     // EastCoin Wrapped has dropped: the profile links to it.
     wrappedOpen: wrappedIsOpen(context.env),
     user: {

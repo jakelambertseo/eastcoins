@@ -3010,6 +3010,23 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .av-when{flex:0 0 auto;color:var(--muted-2);font-size:.72rem;font-weight:700;white-space:nowrap}
 .av-row.is-sk{min-height:58px}
 
+/* ---------------------------------------------------------------- profile: the Collection tab */
+.pf-coll{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px;margin-top:14px}
+.pf-item{--c:#8b8f99;display:flex;flex-direction:column;border-radius:13px;overflow:hidden;background:var(--panel);border:1px solid color-mix(in srgb,var(--c) 45%,transparent)}
+.pf-item.common{--c:#4e7fd6}.pf-item.rare{--c:#a35ce8}.pf-item.epic{--c:#e84d9a}.pf-item.legendary{--c:#e8bf35}
+.pf-item-art{position:relative;height:92px;display:grid;place-items:center;background:radial-gradient(120% 120% at 50% 0%,color-mix(in srgb,var(--c) 42%,#120e0b),#120e0b 75%)}
+.pf-item-ico{font-size:2.3rem;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
+.pf-item-on{position:absolute;top:8px;right:8px;font-size:.58rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:99px;background:rgba(77,219,139,.18);color:var(--green);border:1px solid rgba(77,219,139,.45)}
+.pf-item-body{padding:10px 12px 6px;display:grid;gap:1px}
+.pf-item-body b{font-family:var(--display);font-size:.98rem;line-height:1.2;overflow-wrap:anywhere}
+.pf-item-kind{font-size:.76rem;color:var(--muted)}
+.pf-item-foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px 10px;border-top:1px solid var(--line);font-size:.68rem}
+.pf-item-tier{font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--c)}
+.pf-item-src{color:var(--muted-2);white-space:nowrap}
+.pf-item.legendary{box-shadow:0 0 22px rgba(var(--gold-rgb),.16)}
+.pf-item.on{border-color:color-mix(in srgb,var(--c) 85%,transparent)}
+@media (prefers-reduced-motion:no-preference){.pf-item.legendary .pf-item-art{background-size:200% 100%;background-image:linear-gradient(115deg,#3a2d0c 0%,#120e0b 35%,#5a4410 50%,#120e0b 65%,#3a2d0c 100%);animation:crate-foil 3.5s linear infinite}}
+
 /* ---------------------------------------------------------------- the Daily Crate (nav present + popover) */
 .cratewrap{display:flex}
 .crate-btn{background:linear-gradient(180deg,#ff9a3c,#e8641a);border-color:#ff7a1f;color:#2a0d00}

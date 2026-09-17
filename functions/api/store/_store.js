@@ -188,6 +188,38 @@ export async function cosmeticsFor(db, userId) {
   }
 }
 
+/** Everything someone owns, newest first, shaped for the profile's
+    Collection tab. `tierOf` is the crate's item -> tier map, passed in so
+    this file does not import the crate (which imports this). Never throws. */
+export async function collectionFor(db, userId, tierOf = {}) {
+  try {
+    const [rows, row] = await Promise.all([
+      db.prepare(`SELECT item, price, op_key, created_at FROM store_purchases WHERE user_id = ? AND status = 'OWNED' ORDER BY created_at DESC`).bind(String(userId)).all(),
+      db.prepare(`SELECT * FROM user_cosmetics WHERE user_id = ?`).bind(String(userId)).first()
+    ]);
+    const items = [];
+    for (const r of rows.results || []) {
+      const item = itemById(String(r.item));
+      if (!item) continue;
+      const key = String(r.op_key || "");
+      const source = key.startsWith("CRATE:") ? "crate" : key.startsWith("STORE:GIFT") ? "gift" : key.startsWith("STORE:FREE") ? "free" : "bought";
+      let detail = null;
+      if (item.id === "title-custom" && row?.title_text) detail = String(row.title_text);
+      else if (item.slot === "title" && item.text) detail = null;
+      else if (item.id === "player-pick") detail = parsePlayer(row?.player_json)?.name || null;
+      items.push({
+        id: item.id, name: item.name, slot: item.slot, slotName: SLOTS[item.slot] || item.slot,
+        tier: tierOf[item.id] || (item.chase ? "legendary" : null), source, price: Number(r.price || 0), detail,
+        equipped: Boolean(row && row[item.slot] === item.id),
+        at: String(r.created_at).replace(" ", "T") + "Z"
+      });
+    }
+    return { items, total: items.length, of: ITEMS.length };
+  } catch {
+    return { items: [], total: 0, of: ITEMS.length };
+  }
+}
+
 /* Text people write shows on a public profile, so it is kept plain and
    clean: no links, simple punctuation, and none of a short list of
    slurs (checked with spaces and common letter swaps removed). */
