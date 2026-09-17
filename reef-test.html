@@ -312,7 +312,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 @media (prefers-reduced-motion:reduce){.say.bite,.toast{animation:none}}
 
 /* ---- skills: an OSRS-style XP tracker on the scene, a Skills page, level-up banner */
-.xpt{position:absolute;left:12px;top:40px;z-index:4;width:210px;padding:7px 9px 8px;border-radius:6px;background:rgba(62,53,41,.9);border:1px solid #1e1a15;box-shadow:inset 0 0 0 1px #5d5447,0 6px 16px rgba(0,0,0,.45);color:#ff981f;font-size:.74rem;font-weight:700;pointer-events:none;text-shadow:1px 1px 0 #000}
+.xpt{position:absolute;right:12px;bottom:12px;z-index:4;transition:opacity .2s ease;width:210px;padding:7px 9px 8px;border-radius:6px;background:rgba(62,53,41,.9);border:1px solid #1e1a15;box-shadow:inset 0 0 0 1px #5d5447,0 6px 16px rgba(0,0,0,.45);color:#ff981f;font-size:.74rem;font-weight:700;pointer-events:none;text-shadow:1px 1px 0 #000}
 .xpt-top{display:flex;align-items:center;gap:6px}
 .xpt-top svg{width:18px;height:18px;flex:none;stroke:#ffcf6a;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(1px 1px 0 #000)}
 .xpt-top b{color:#ffff00;font-size:.8rem}
@@ -322,11 +322,13 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .xpt-bar span{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:.66rem;line-height:1}
 .xpt-to,.xpt-sess{margin-top:4px;font-variant-numeric:tabular-nums}
 .xpt-sess{color:#ffcf6a;font-weight:600}
-.xpt-drops{position:absolute;left:0;right:0;top:100%;height:0}
-.xpdrop{position:absolute;right:6px;top:38px;display:flex;align-items:center;gap:4px;color:#fff;font-size:.86rem;font-weight:800;text-shadow:1px 1px 0 #000,0 0 6px rgba(0,0,0,.8);animation:xpdrop 1.8s ease-out forwards;white-space:nowrap}
+.xpt-drops{position:absolute;left:0;right:0;bottom:100%;height:0}
+/* The reel bar lives on the right side of the scene; get out of its way while reeling. */
+.xpt.dim{opacity:0}
+.xpdrop{position:absolute;right:6px;bottom:6px;display:flex;align-items:center;gap:4px;color:#fff;font-size:.86rem;font-weight:800;text-shadow:1px 1px 0 #000,0 0 6px rgba(0,0,0,.8);animation:xpdrop 1.8s ease-out forwards;white-space:nowrap}
 .xpdrop svg{width:15px;height:15px;stroke:#ffcf6a;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 @keyframes xpdrop{0%{transform:translateY(0);opacity:0}12%{opacity:1}75%{opacity:1}100%{transform:translateY(-62px);opacity:0}}
-@media (max-width:560px){.xpt{width:170px;top:36px;left:8px;font-size:.66rem}.xpt-sess{display:none}}
+@media (max-width:560px){.xpt{width:170px;right:8px;bottom:8px;font-size:.66rem}.xpt-sess{display:none}}
 
 .skills{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
 .skill{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px}
@@ -669,7 +671,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const box = $("xptDrops"); if (!box) return;
     const d = el("div", "xpdrop", `${SKILLS[key].icon}+${num(amount)}`);
     // stack a burst of drops rather than drawing them on top of each other
-    d.style.top = `${38 + box.childElementCount * 18}px`;
+    d.style.bottom = `${6 + box.childElementCount * 18}px`;
     box.append(d);
     setTimeout(() => d.remove(), 1850);
   }
@@ -921,6 +923,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     b.disabled = p === "caught";
     $("actNote").textContent = p === "reel" ? "Hold the button, the water, or Space." : p === "wait" ? "Wait for the splash. Too early scares it off." : activeBait() ? `${activeBait().about} while it lasts.` : "Space works too.";
     $("reel").hidden = p !== "reel"; $("reelTip").hidden = p !== "reel";
+    $("xpt").classList.toggle("dim", p === "reel");
     const say = $("say");
     say.className = "say" + (p === "bite" ? " bite" : "");
     say.textContent = p === "bite" ? "!" : p === "lost" ? fish.msg : p === "idle" ? "" : "";
