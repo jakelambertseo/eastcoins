@@ -533,43 +533,56 @@
       }
     }
 
-    // Your shifts
-    refs.youList.replaceChildren();
-    const row = (label, value) => {
-      const r = K.el("div", "hl-stat");
-      r.append(K.el("span", null, label));
-      const v = K.el("strong", "nums");
-      if (value instanceof Node) v.append(value); else v.textContent = value;
-      r.append(v);
-      return r;
-    };
-    if (me) {
-      const when = (k) => (shiftOf(k) ? "on one now" : coolingOf(k) ? mmss(nextAtOf(k) - Date.now()) : "now");
-      refs.youNote.textContent = me.shifts ? `${me.shifts} worked` : "";
-      refs.youList.append(
-        row("Shifts", String(me.shifts || 0)),
-        row("Earned", K.zc(me.earned || 0)),
-        row("Clock in", when("clicks")),
-        row("Sorting", when("sort"))
-      );
+    // Your shifts (its coin icons would flash too if rebuilt every click)
+    const when = (k) => (shiftOf(k) ? "on one now" : coolingOf(k) ? mmss(nextAtOf(k) - Date.now()) : "now");
+    const youSig = me ? [me.shifts, me.earned, when("clicks"), when("sort")].join("|") : "";
+    if (youSig !== refs.youSig) {
+      refs.youSig = youSig;
+      refs.youList.replaceChildren();
+      const row = (label, value) => {
+        const r = K.el("div", "hl-stat");
+        r.append(K.el("span", null, label));
+        const v = K.el("strong", "nums");
+        if (value instanceof Node) v.append(value); else v.textContent = value;
+        r.append(v);
+        return r;
+      };
+      if (me) {
+        refs.youNote.textContent = me.shifts ? `${me.shifts} worked` : "";
+        refs.youList.append(
+          row("Shifts", String(me.shifts || 0)),
+          row("Earned", K.zc(me.earned || 0)),
+          row("Clock in", when("clicks")),
+          row("Sorting", when("sort"))
+        );
+      }
     }
 
-    // On the floor
+    // On the floor. render() runs on every click, so the lists below are
+    // rebuilt only when what they show changes: replacing an avatar <img>
+    // makes it flash even when the picture is cached.
     const room = data?.room || [];
     refs.roomCount.textContent = room.length ? String(room.length) : "";
-    refs.roomList.replaceChildren();
-    if (!room.length) refs.roomList.append(K.el("p", "cf-empty", "Nobody on the floor right now."));
-    for (const u of room) {
-      const chip = K.el("a", "cf-chipuser ulink");
-      chip.href = `/u/${encodeURIComponent(u.login)}`;
-      chip.append(K.avatar(u, "cf-av small"), document.createTextNode(u.displayName));
-      refs.roomList.append(chip);
+    const roomSig = room.map((u) => u.login + "|" + u.avatar + "|" + u.displayName).join(",");
+    if (roomSig !== refs.roomSig) {
+      refs.roomSig = roomSig;
+      refs.roomList.replaceChildren();
+      if (!room.length) refs.roomList.append(K.el("p", "cf-empty", "Nobody on the floor right now."));
+      for (const u of room) {
+        const chip = K.el("a", "cf-chipuser ulink");
+        chip.href = `/u/${encodeURIComponent(u.login)}`;
+        chip.append(K.avatar(u, "cf-av small"), document.createTextNode(u.displayName));
+        refs.roomList.append(chip);
+      }
     }
 
     // Recent paydays
     const recent = data?.recent || [];
-    refs.ledgerList.replaceChildren();
     refs.ledgerNote.textContent = recent.length ? `${recent.length} recent` : "";
+    const recentSig = ledgerPage + "#" + (me?.id || "") + "#" + recent.map((e) => e.id + "|" + e.user.avatar).join(",");
+    if (recentSig === refs.recentSig) return;
+    refs.recentSig = recentSig;
+    refs.ledgerList.replaceChildren();
     if (!recent.length) refs.ledgerList.append(K.el("p", "cf-empty", "Nobody has worked a shift yet."));
     const pg = K.pageOf(recent, ledgerPage, 10);
     for (const e of pg.slice) {
