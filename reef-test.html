@@ -356,8 +356,18 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .row2-btns{display:flex;gap:6px}
 
 .baitpick{display:flex;align-items:center;gap:6px;font-size:.78rem;font-weight:800;color:var(--muted)}
-.baitpick select{background:var(--panel-2);color:var(--text);border:1px solid var(--line-2);border-radius:9px;padding:7px 8px;font:inherit;font-weight:700;max-width:220px}
-.baitpick select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.baitdd{position:relative}
+.baitdd-btn{display:flex;align-items:center;gap:7px;min-width:190px;background:var(--panel-2);color:var(--text);border:1px solid var(--line-2);border-radius:9px;padding:6px 9px;font:inherit;font-weight:700;cursor:pointer}
+.baitdd-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.baitdd-btn i{margin-left:auto;font-style:normal;color:var(--muted-2)}
+.baitdd-btn img,.baitdd-opt img{width:22px;height:22px;object-fit:contain;flex:none}
+.baitdd-menu{position:absolute;left:0;bottom:calc(100% + 6px);z-index:25;min-width:240px;padding:5px;border-radius:11px;background:var(--panel);border:1px solid var(--line-2);box-shadow:0 18px 40px rgba(0,0,0,.6);display:grid;gap:2px}
+.baitdd-menu[hidden]{display:none}
+.baitdd-opt{display:flex;align-items:center;gap:8px;width:100%;padding:6px 8px;border-radius:8px;border:0;background:none;color:var(--text);font:inherit;font-weight:700;cursor:pointer;text-align:left}
+.baitdd-opt:hover,.baitdd-opt:focus-visible{background:var(--panel-3);outline:none}
+.baitdd-opt.on{background:var(--gold-dim);color:var(--gold)}
+.baitdd-opt small{display:block;font-size:.7rem;font-weight:600;color:var(--muted-2)}
+.baitdd-opt .none{width:22px;height:22px;display:grid;place-items:center;color:var(--muted-2)}
 @media (prefers-reduced-motion:reduce){.egg.wobble{animation:none}}
 .toasts{position:fixed;left:252px;bottom:16px;display:grid;gap:8px;z-index:50;max-width:min(360px,calc(100vw - 32px))}
 .toast{background:#101a20;border:1px solid rgba(79,195,217,.45);border-radius:11px;padding:10px 14px;font-weight:700;box-shadow:0 12px 30px rgba(0,0,0,.5);animation:tin .25s ease-out}
@@ -489,6 +499,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
             <p class="catch-line" id="cLine"></p>
             <div class="btns">
               <button class="btn primary" id="cKeep" type="button">Put in tank</button>
+              <button class="btn" id="cCook" type="button">Cook</button>
               <button class="btn" id="cSell" type="button">Sell</button>
             </div>
           </div>
@@ -496,7 +507,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       </div>
       <div class="actions">
         <button class="act" id="act" type="button">Cast</button>
-        <label class="baitpick">Bait <img class="bait-sel-ico" id="baitIco" alt="" hidden><select id="baitSel"></select></label>
+        <div class="baitpick">Bait
+          <div class="baitdd" id="baitDD">
+            <button class="baitdd-btn" id="baitBtn" type="button" aria-haspopup="listbox" aria-expanded="false"><img id="baitIco" alt="" hidden><span id="baitLabel">No bait</span><i>▾</i></button>
+            <div class="baitdd-menu" id="baitMenu" role="listbox" aria-label="Bait" hidden></div>
+          </div>
+        </div>
         <span class="act-note" id="actNote">Space works too.</span>
       </div>
       <div class="biting">
@@ -721,9 +737,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const levelOf = (xp) => { let lo = 1, hi = 99; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (xp >= XP_AT[mid]) lo = mid; else hi = mid - 1; } return lo; };
   const SKILLS = {
     fishing: { name: "Fishing", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12c3-4.5 8-5.5 12-2.2L20 7v10l-5-2.8C11 17.5 6 16.5 3 12z"/><circle cx="8.2" cy="11" r=".6"/></svg>', how: "Every catch. Rarer, heavier and shiny fish give more, and a new species gives a bonus." },
-    farming: { name: "Farming", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20v-8"/><path d="M12 12c-4 0-6-3-6-6 3 0 6 2 6 6zM12 14c3.5 0 5.5-2.5 5.5-5.5-3 0-5.5 2-5.5 5.5z"/><path d="M5 20h14"/></svg>', how: "Harvesting the bait garden. Slower baits give more." },
-    cooking: { name: "Cooking", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6z"/><path d="M8 6.5c0-1 1-1 1-2.2M12 6.5c0-1 1-1 1-2.2M16 6.5c0-1 1-1 1-2.2"/></svg>', how: "Coming soon: cook your catch into dishes.", soon: true },
-    breeding: { name: "Breeding", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3.6 0 6 5.2 6 9.2A6 6 0 0 1 6 12.7c0-4 2.4-9.2 6-9.2z"/></svg>', how: "Hatching eggs. Rarer species give more, and a shiny baby triples it." }
+    farming: { name: "Farming", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20v-8"/><path d="M12 12c-4 0-6-3-6-6 3 0 6 2 6 6zM12 14c3.5 0 5.5-2.5 5.5-5.5-3 0-5.5 2-5.5 5.5z"/><path d="M5 20h14"/></svg>', how: "Planting, watering and harvesting the bait garden. Slower baits give more." },
+    cooking: { name: "Cooking", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6z"/><path d="M8 6.5c0-1 1-1 1-2.2M12 6.5c0-1 1-1 1-2.2M16 6.5c0-1 1-1 1-2.2"/></svg>', how: "Cooking a catch instead of selling it. It pays fewer pearls, so it costs you something." },
+    breeding: { name: "Breeding", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3.6 0 6 5.2 6 9.2A6 6 0 0 1 6 12.7c0-4 2.4-9.2 6-9.2z"/></svg>', how: "Pairing fish, turning the eggs and hatching them. A shiny baby triples the hatch." }
   };
   /* Shop unlocks. `at` is the level in `skill` you need before the thing can
      be bought — pearls are still the other half. Ordered by level inside a
@@ -738,6 +754,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { skill: "fishing", at: 45, what: "Carbon Pro" },
     { skill: "fishing", at: 60, what: "Zcoin treasure chest" },
     { skill: "fishing", at: 70, what: "Golden Rod" },
+    { skill: "cooking", at: 5, what: "Kelp forest" },
+    { skill: "cooking", at: 15, what: "Sand castle" },
     { skill: "farming", at: 10, what: "6 garden plots" },
     { skill: "farming", at: 30, what: "8 garden plots" },
     { skill: "breeding", at: 10, what: "2 nests" },
@@ -756,9 +774,19 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const levelIn = (skill) => levelOf(S.skills[skill] || 0);
   const unlocked = (what) => { const u = needOf(what); return !u || levelIn(u.skill) >= u.at; };
 
+  /* Every skill is trained by the things you DO, not by waiting: the garden
+     pays for planting, watering and harvesting, breeding for pairing, turning
+     the eggs and hatching, cooking for cooking a catch. Tuned so half an hour
+     a day moves each skill at about the pace fishing does. */
   const CATCH_XP = [40, 90, 200, 500, 1500];
-  const HARVEST_XP = { worm: 30, cricket: 80, glow: 250, shimmer: 700 };
-  const HATCH_XP = [120, 250, 500, 1100, 3000];
+  const PLANT_XP = { worm: 60, cricket: 160, glow: 500, shimmer: 1400 };
+  const WATER_XP = { worm: 50, cricket: 130, glow: 400, shimmer: 1100 };
+  const HARVEST_XP = { worm: 150, cricket: 400, glow: 1200, shimmer: 3300 };
+  const PAIR_XP = [400, 700, 1200, 2600, 6000];
+  const TURN_XP = [90, 150, 260, 550, 1200];
+  const HATCH_XP = [400, 800, 1600, 3500, 9000];
+  const COOK_XP = [60, 140, 300, 750, 2000];
+  const TURN_MS = 10 * 60 * 1000;   // how often a nest can be turned
   const session = { xp: 0, since: 0 };
   let tracked = "fishing";
 
@@ -1130,6 +1158,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     $("cKeep").disabled = full;
     $("cKeep").textContent = full ? "Tank's full" : "Put in tank";
     $("cSell").innerHTML = `Sell <span class="pearl"></span> ${num(rate * 3)}`;
+    $("cCook").innerHTML = `Cook <span class="pearl"></span> ${num(rate * 2)}`;
+    $("cCook").title = "Fewer pearls than selling, but it trains Cooking";
     $("catch").hidden = false;
     $("cKeep").focus();
     if (sp.rar >= 3 || c.shiny) toast(`You landed a ${c.shiny ? "Shiny " : ""}${sp.name}!`, "In the real game this goes to the activity feed and the ticker.");
@@ -1144,6 +1174,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     S.fish.push({ id: S.uid++, key: c.sp.key, w: c.w, shiny: c.shiny });
     closeCatch(); syncTank(); renderTank(); track("keep");
     toast(`${c.shiny ? "Shiny " : ""}${c.sp.name} is in the tank`, `+${num(fishRate(S.fish[S.fish.length - 1]))} pearls an hour`);
+  });
+  $("cCook").addEventListener("click", () => {
+    const c = fish.result; if (!c) return;
+    const pearls = Math.round(fishRate({ key: c.sp.key, w: c.w, shiny: c.shiny }) * 2);
+    S.pearls += pearls;
+    const xp = grant("cooking", COOK_XP[c.sp.rar] * (1 + 0.5 * (c.frac || 0)) * (c.shiny ? 2 : 1));
+    closeCatch(); track("sell"); renderProfile(); save();
+    toast(`Cooked the ${c.shiny ? "shiny " : ""}${c.sp.name}`, `+${num(pearls)} pearls · +${num(xp)} Cooking xp`);
   });
   $("cSell").addEventListener("click", () => {
     const c = fish.result; if (!c) return;
@@ -1487,6 +1525,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (S.pearls < b.cost) { toast(`${b.bed} costs ${b.cost} pearls`); return; }
     S.pearls -= b.cost; S.seedPick = key; ui.choosing = -1;
     Object.assign(p, { seed: key, at: S.clock, ready: S.clock + b.grow, watered: false });
+    const xp = grant("farming", PLANT_XP[key] || 60);
+    toast(`${b.bed} planted`, `Ready in ${dur(b.grow)}. +${num(xp)} Farming xp`);
     track("plant"); renderGarden(); save();
   }
   function water(i) {
@@ -1494,6 +1534,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (!p.seed || p.watered || S.clock >= p.ready) return;
     p.watered = true;
     p.ready = S.clock + (p.ready - S.clock) * 0.75;
+    const xp = grant("farming", WATER_XP[p.seed] || 50);
+    toast("Watered", `A quarter off the wait. +${num(xp)} Farming xp`);
     track("water"); renderGarden(); save();
   }
   function harvest(i) {
@@ -1594,7 +1636,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     S.pearls -= cost;
     const [a, b] = pair.list;
     S.nests[i] = { key, a: a.id, b: b.id, wa: a.w, wb: b.w, shinyParents: (a.shiny ? 1 : 0) + (b.shiny ? 1 : 0), at: S.clock, ready: S.clock + HATCH_MS[sp.rar] };
-    toast(`${sp.name} egg laid`, `Hatches in ${dur(HATCH_MS[sp.rar])}.`);
+    const xp = grant("breeding", PAIR_XP[sp.rar]);
+    toast(`${sp.name} egg laid`, `Hatches in ${dur(HATCH_MS[sp.rar])}. +${num(xp)} Breeding xp`);
     track("breed"); renderBreeding(); renderTank(); save();
   }
   function hatch(i) {
@@ -1615,6 +1658,17 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     track("hatch"); if (shiny) track("shiny");
     renderBreeding(); renderTank(); renderDex(); renderProfile(); save();
   }
+  /** Turning an egg: a little xp and 2% off the wait, once every ten minutes. */
+  function turnEgg(i) {
+    const n = S.nests[i]; if (!n || S.clock >= n.ready) return;
+    if (S.clock < (n.turnAt || 0) + TURN_MS) return;
+    n.turnAt = S.clock;
+    n.ready -= (n.ready - S.clock) * 0.02;
+    const xp = grant("breeding", TURN_XP[BY_KEY[n.key].rar]);
+    toast("Turned the egg", `A touch sooner. +${num(xp)} Breeding xp`);
+    renderBreeding(); save();
+  }
+
   const shinyOdds = (parents) => (parents === 2 ? 1 / 3 : parents === 1 ? 1 / 10 : 1 / 40);
   const oddsText = (parents) => (parents === 2 ? "1 in 3" : parents === 1 ? "1 in 10" : "1 in 40");
   function fromNursery(id, keep) {
@@ -1650,7 +1704,15 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       const bar = el("div", "thinbar", "<i></i>");
       cell.append(egg, label);
       if (st === "ready") { const b = el("button", "btn small primary", "Hatch"); b.type = "button"; b.addEventListener("click", () => hatch(i)); cell.append(b); }
-      else cell.append(bar);
+      else {
+        cell.append(bar);
+        const ready = S.clock >= (n.turnAt || 0) + TURN_MS;
+        const t = el("button", "btn small" + (ready ? "" : " ghost"), ready ? "Turn the egg" : "Turned");
+        t.type = "button"; t.disabled = !ready;
+        t.title = ready ? "A little Breeding xp and 2% off the wait" : "Ready again in a few minutes";
+        t.addEventListener("click", () => turnEgg(i));
+        cell.append(t);
+      }
       nests.append(cell);
       loopRefs.nests.push({ time: label.querySelector("small"), fill: bar.querySelector("i") });
     });
@@ -1817,7 +1879,20 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 
   /* ---------------------------------------------------------- bait picker */
   function renderBaitSel() {
-    const sel = $("baitSel"); sel.replaceChildren();
+    const menu = $("baitMenu"); menu.replaceChildren();
+    if (!activeBait()) S.baitOn = "none";
+    const pick = (k) => { S.baitOn = k; closeBaitMenu(); renderBaitSel(); renderBiting(); syncAction(); save(); };
+    const opt = (k, label, about) => {
+      const b = el("button", "baitdd-opt" + (S.baitOn === k ? " on" : ""));
+      b.type = "button"; b.setAttribute("role", "option"); b.setAttribute("aria-selected", String(S.baitOn === k));
+      b.innerHTML = (k === "none" ? '<span class="none">—</span>' : `<img src="${artSrc("bait-" + k)}" alt="">`) + `<span><b>${label}</b>${about ? `<small>${about}</small>` : ""}</span>`;
+      b.addEventListener("click", () => pick(k));
+      menu.append(b);
+    };
+    opt("none", "No bait", "Whatever is biting");
+    BAIT_KEYS.forEach((k) => { if ((S.bait[k] || 0) > 0) opt(k, `${BAITS[k].name} ×${S.bait[k]}`, BAITS[k].about); });
+    $("baitLabel").textContent = activeBait() ? `${activeBait().name} ×${S.bait[S.baitOn]}` : "No bait";
+    const sel = { replaceChildren() {}, append() {}, set value(v) {}, get value() { return S.baitOn; } };
     sel.append(new Option("No bait", "none"));
     BAIT_KEYS.forEach((k) => { if ((S.bait[k] || 0) > 0) sel.append(new Option(`${BAITS[k].name} ×${S.bait[k]} (${BAITS[k].about})`, k)); });
     if (!activeBait()) S.baitOn = "none";
@@ -1826,7 +1901,15 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (activeBait()) { ico.src = artSrc("bait-" + S.baitOn); ico.hidden = false; } else ico.hidden = true;
     renderBiting(); syncAction();
   }
-  $("baitSel").addEventListener("change", (e) => { S.baitOn = e.target.value; renderBiting(); syncAction(); save(); });
+  const closeBaitMenu = () => { $("baitMenu").hidden = true; $("baitBtn").setAttribute("aria-expanded", "false"); };
+  $("baitBtn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = $("baitMenu").hidden;
+    $("baitMenu").hidden = !open;
+    $("baitBtn").setAttribute("aria-expanded", String(open));
+  });
+  document.addEventListener("click", (e) => { if (!e.target.closest("#baitDD")) closeBaitMenu(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeBaitMenu(); });
 
   /* ---------------------------------------------------------- per tick */
   function setBadge(tab, n) {
