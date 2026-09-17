@@ -112,7 +112,7 @@
     const recent = el("div", "crate-card");
     recent.append(el("h3", null, "Recent pulls"));
     const ul = el("ul", "crate-pulls");
-    for (const r of state?.recent || []) ul.append(pullRow(r));
+    for (const r of (state?.recent || []).slice(0, 7)) ul.append(pullRow(r));
     if (!state?.recent?.length) ul.append(el("li", "crate-empty", "Nobody has opened one yet. Be first."));
     recent.append(ul);
     refs.pulls = ul;

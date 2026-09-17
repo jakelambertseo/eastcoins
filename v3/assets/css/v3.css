@@ -3914,6 +3914,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .pv-fold-b .cf-verify-body{margin:0}
 .pv-fold-b .cf-card.pot{border:0;padding:0;background:none}
 .pv-fold-note{margin:0 0 8px;color:var(--muted-2);font-size:.74rem}
+.pv-ledger{margin-top:10px}
 
 /* Russian Roulette: the board is as tall as the screen allows. */
 .pv-arena.roulette{height:clamp(400px,calc(100vh - 300px),660px);padding:8px;container-type:size}

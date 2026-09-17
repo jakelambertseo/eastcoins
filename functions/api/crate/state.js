@@ -21,7 +21,7 @@ export async function onRequestGet(context) {
     lastFreeAt(db, user.id),
     ownedItems(db, user.id),
     db.prepare(`SELECT c.rarity, c.prize, c.coins, c.created_at, u.twitch_login, u.display_name, u.avatar_url
-                  FROM crate_opens c JOIN users u ON u.twitch_id = c.user_id ORDER BY c.created_at DESC LIMIT 12`).all().catch(() => ({ results: [] })),
+                  FROM crate_opens c JOIN users u ON u.twitch_id = c.user_id ORDER BY c.created_at DESC LIMIT 7`).all().catch(() => ({ results: [] })),
     db.prepare(`SELECT COUNT(*) AS n, COALESCE(SUM(coins), 0) AS coins FROM crate_opens WHERE user_id = ?`).bind(user.id).first().catch(() => null)
   ]);
   const next = nextFreeAt(last);

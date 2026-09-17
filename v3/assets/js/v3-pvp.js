@@ -273,12 +273,15 @@
       }
       page.append(folds);
 
-      const ledger = K.el("section", "cf-card cf-ledger");
-      const lgh = K.el("h2", null, "Recent tables");
-      refs.ledgerNote = K.el("small");
-      lgh.append(refs.ledgerNote);
+      // Recent tables: a fold like the others, shut until opened.
+      const ledger = K.el("details", "pv-fold pv-ledger");
+      const lgh = K.el("summary");
+      refs.ledgerNote = K.el("span", "pv-fold-v", "");
+      lgh.append(K.el("span", "pv-fold-t", "Recent tables"), refs.ledgerNote);
       refs.ledgerList = K.el("div", "cf-list paged");
-      ledger.append(lgh, refs.ledgerList);
+      const lgb = K.el("div", "pv-fold-b");
+      lgb.append(refs.ledgerList);
+      ledger.append(lgh, lgb);
       page.append(ledger);
 
       pop = K.makePop(page);
