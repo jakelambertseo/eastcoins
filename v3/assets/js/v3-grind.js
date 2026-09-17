@@ -7,7 +7,7 @@
    job, once an hour each:
 
      Clock in        press one button a hundred times — 5 ZC
-     Sort the Chips  put 75 chips in the tray for their suit — 15 ZC
+     Sort the Chips  put 35 chips in the tray for their suit — 15 ZC
 
    The server does the counting for both. Clicks are counted here the
    moment they happen so the bar feels instant and handed in in small
@@ -26,7 +26,7 @@
   const SUIT_NAMES = ["spades", "hearts", "diamonds", "clubs"];
   const DEFAULT_JOBS = {
     clicks: { key: "clicks", name: "Clock in", units: 100, unitName: "clicks", pay: 5, msPerUnit: 120, batchMax: 25 },
-    sort: { key: "sort", name: "Sort the Chips", units: 75, unitName: "chips", pay: 15, msPerUnit: 300, penaltyMs: 1000 }
+    sort: { key: "sort", name: "Sort the Chips", units: 35, unitName: "chips", pay: 15, msPerUnit: 300, penaltyMs: 1000 }
   };
 
   let root = null;

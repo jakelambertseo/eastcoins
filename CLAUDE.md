@@ -553,7 +553,7 @@
 >
 > **The Grind has two jobs (2026-09-16, evening)** — `JOBS` in
 > `_grind.js`: **Clock in** (`clicks`, 100 clicks, 10 ZC, `work.js`) and
-> **Sort the Chips** (`sort`, 150 chips, 15 ZC, `sort.js`): a chip marked
+> **Sort the Chips** (`sort`, 35 chips since 2026-09-17 — 150, then 75 before — 15 ZC, `sort.js`): a chip marked
 > ♠ ♥ ♦ ♣ comes down a belt and goes in its suit's tray. It pays more
 > because it is far duller — each chip is graded by the server against the
 > shift's seed (`chipAt(seed, done)`), the page is only ever told the chip

@@ -8,8 +8,8 @@
 
      clicks   "Clock in" — press one button 100 times. Pays 5 (10 until 2026-09-16 night).
      sort     "Sort the Chips" — a chip comes down the belt marked
-              ♠ ♥ ♦ or ♣; put it in the matching tray. 75 of them
-              (150 until 2026-09-16 night).
+              ♠ ♥ ♦ or ♣; put it in the matching tray. 35 of them
+              (150, then 75, until 2026-09-17).
               A wrong tray costs a second's recount. Pays 15, because
               it is far duller: every chip is a decision, about a
               minute of them.
@@ -50,7 +50,7 @@ export const SHIFT_COOLDOWN_MS = 60 * 60 * 1000;
 
 export const JOBS = {
   clicks: { key: "clicks", name: "Clock in", units: 100, unitName: "clicks", pay: 5, msPerUnit: 120, batchMax: 25 },
-  sort: { key: "sort", name: "Sort the Chips", units: 75, unitName: "chips", pay: 15, msPerUnit: 300, penaltyMs: 1000 }
+  sort: { key: "sort", name: "Sort the Chips", units: 35, unitName: "chips", pay: 15, msPerUnit: 300, penaltyMs: 1000 }
 };
 export const jobOf = (key) => JOBS[String(key || "clicks")] || null;
 
