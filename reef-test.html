@@ -169,6 +169,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .view-profile .view-stack{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
 .view-controls{max-width:560px}
 @media (max-width:860px){.view-profile .view-stack{grid-template-columns:minmax(0,1fr)}}
+.tab-shop{margin-bottom:8px;border:1px solid rgba(var(--gold-rgb),.45);background:linear-gradient(180deg,rgba(var(--gold-rgb),.16),rgba(var(--gold-rgb),.06));color:var(--gold);font-weight:800}
+.tab-shop svg{stroke:var(--gold)}
+.tab-shop:hover{background:linear-gradient(180deg,rgba(var(--gold-rgb),.26),rgba(var(--gold-rgb),.1));color:var(--gold)}
+.tab-shop[aria-selected="true"]{background:var(--gold);color:#221700;border-color:transparent}
+.tab-shop[aria-selected="true"] svg{stroke:#221700}
 .fnav-h{font-size:.64rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);padding:10px 10px 4px}
 .fnav-h:first-child{padding-top:2px}
 .tab{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-radius:9px;padding:9px 10px;font-weight:700;font-size:.9rem;color:var(--muted);cursor:pointer;text-align:left;white-space:nowrap;position:relative}
@@ -459,6 +464,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .boss-need.no{color:var(--muted-2)}
 .boss-perk{font-size:.76rem;color:var(--muted-2)}
 .boss-perk b{color:var(--green)}
+.boss-reward{display:grid;gap:3px;padding:8px 10px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line);font-size:.78rem;color:var(--muted)}
+.boss-reward small{font-size:.6rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted-2)}
+.boss-reward b{color:var(--gold)}
+.boss-reward .perk{color:var(--green);font-weight:700}
 .loot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:14px}
 .loot{background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:10px;display:grid;justify-items:center;gap:1px;text-align:center}
 .loot.none{opacity:.4}
@@ -517,6 +526,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     </div>
     <nav class="fnav" aria-label="Reef">
       <div class="tabs" role="tablist" aria-orientation="vertical">
+          <button class="tab tab-shop" role="tab" id="tab-shop" aria-controls="panel-shop" data-tab="shop" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 11.5H6.2z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg><span class="tab-label">Shop</span></button>
           <span class="fnav-h">Play</span>
           <button class="tab" role="tab" id="tab-fishing" aria-controls="panel-fishing" data-tab="fishing" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3v9a4 4 0 0 0 8 0"/><path d="M5 3l14 5"/><path d="M19 8v6"/><circle cx="19" cy="16" r="2"/></svg><span class="tab-label">Fishing</span></button>
           <button class="tab" role="tab" id="tab-tank" aria-controls="panel-tank" data-tab="tank" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 13c1.5-2 4-2 5.5 0-1.5 2-4 2-5.5 0zM12.5 13l2-1.5v3z"/><path d="M3 9h18"/></svg><span class="tab-label">Your tank</span></button>
@@ -526,12 +536,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
           <button class="tab" role="tab" id="tab-quests" aria-controls="panel-quests" data-tab="quests" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 9l1.6 1.6L13.5 7.5M9 15h6"/></svg><span class="tab-label">Quests</span><span class="count" hidden></span></button>
           <button class="tab" role="tab" id="tab-garden" aria-controls="panel-garden" data-tab="garden" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20v-8"/><path d="M12 12c-4 0-6-3-6-6 3 0 6 2 6 6zM12 14c3.5 0 5.5-2.5 5.5-5.5-3 0-5.5 2-5.5 5.5z"/><path d="M5 20h14"/></svg><span class="tab-label">Bait garden</span><span class="count" hidden></span></button>
           <button class="tab" role="tab" id="tab-breeding" aria-controls="panel-breeding" data-tab="breeding" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3.6 0 6 5.2 6 9.2A6 6 0 0 1 6 12.7c0-4 2.4-9.2 6-9.2z"/></svg><span class="tab-label">Breeding</span><span class="count" hidden></span></button>
-          <button class="tab" role="tab" id="tab-boss" aria-controls="panel-boss" data-tab="boss" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6.4.7-4.8 4.2 1.4 6.1L12 16.8 6.4 19.6l1.4-6.1L3 9.3l6.4-.7z"/></svg><span class="tab-label">Leviathans</span></button>
+          <button class="tab" role="tab" id="tab-boss" aria-controls="panel-boss" data-tab="boss" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6.4.7-4.8 4.2 1.4 6.1L12 16.8 6.4 19.6l1.4-6.1L3 9.3l6.4-.7z"/></svg><span class="tab-label">Bosses</span></button>
           <button class="tab" role="tab" id="tab-craft" aria-controls="panel-craft" data-tab="craft" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4.5l5 5-8.5 8.5-5-5z"/><path d="M16 3l1.4 1.4M20 7l1 1M4.5 19.5l2.5-2.5"/></svg><span class="tab-label">Crafting</span></button>
           <span class="fnav-h">Collection</span>
           <button class="tab" role="tab" id="tab-inv" aria-controls="panel-inv" data-tab="inv" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 8V6a4 4 0 0 1 8 0v2M4 12h16"/></svg><span class="tab-label">Inventory</span></button>
           <button class="tab" role="tab" id="tab-dex" aria-controls="panel-dex" data-tab="dex" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h10a3 3 0 0 1 3 3v12H8a3 3 0 0 1-3-3z"/><path d="M5 16.5a3 3 0 0 1 3-3h10"/></svg><span class="tab-label">Fish book</span></button>
-          <button class="tab" role="tab" id="tab-shop" aria-controls="panel-shop" data-tab="shop" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 11.5H6.2z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg><span class="tab-label">Shop</span></button>
           <button class="tab" role="tab" id="tab-derby" aria-controls="panel-derby" data-tab="derby" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5v1.5A3 3 0 0 0 8 10.5M16 6h3v1.5a3 3 0 0 1-3 3M12 13v4M8.5 20h7"/></svg><span class="tab-label">Weekly derby</span></button>
           <span class="fnav-h">Mockup</span>
           <button class="tab" role="tab" id="tab-profile" aria-controls="panel-profile" data-tab="profile" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1.2-3.6 4-5 7-5s5.8 1.4 7 5"/></svg><span class="tab-label">Profile preview</span></button>
@@ -1942,7 +1951,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       body.append(el("p", null, b.about));
       body.append(el("div", "boss-need" + (open ? "" : " no"),
         open ? `${b.secs} seconds · about ${lbs(b.w)}` : `Needs Fishing ${b.at} (you're ${levelIn("fishing")}) and 4 species from ${SPOTS[b.spot].name} (you have ${bossSeen(b)})`));
-      if (st.beaten) body.append(el("div", "boss-perk", `<b>${b.title}</b> · rare fish here up ${Math.round((S.perks[b.spot] || 0) * 100)}% · beaten in ${st.best}s`));
+      body.append(el("div", "boss-reward", `<small>${st.beaten ? "What it gave you" : "Beat it and you get"}</small>
+        <span>Title <b>${b.title}</b></span>
+        <span class="perk">+${Math.round(BOSS_PERK * 100)}% rare fish at ${SPOTS[b.spot].name}, for good</span>
+        <span>${num(b.xp)} Fishing xp${st.beaten ? "" : " · a fifth of that every time after"}</span>`));
+      if (st.beaten) body.append(el("div", "boss-perk", `Landed in ${st.best}s · this spot now runs +${Math.round((S.perks[b.spot] || 0) * 100)}% on rare fish`));
       const go = el("button", "btn" + (open && !st.beaten ? " primary" : ""), st.beaten ? "Fight it again" : open ? "Face it" : "Not yet");
       go.type = "button"; go.disabled = !open;
       go.addEventListener("click", () => faceBoss(b.key));
