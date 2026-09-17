@@ -169,11 +169,6 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .view-profile .view-stack{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
 .view-controls{max-width:560px}
 @media (max-width:860px){.view-profile .view-stack{grid-template-columns:minmax(0,1fr)}}
-.tab-shop{margin-bottom:8px;border:1px solid rgba(var(--gold-rgb),.45);background:linear-gradient(180deg,rgba(var(--gold-rgb),.16),rgba(var(--gold-rgb),.06));color:var(--gold);font-weight:800}
-.tab-shop svg{stroke:var(--gold)}
-.tab-shop:hover{background:linear-gradient(180deg,rgba(var(--gold-rgb),.26),rgba(var(--gold-rgb),.1));color:var(--gold)}
-.tab-shop[aria-selected="true"]{background:var(--gold);color:#221700;border-color:transparent}
-.tab-shop[aria-selected="true"] svg{stroke:#221700}
 .fnav-h{font-size:.64rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);padding:10px 10px 4px}
 .fnav-h:first-child{padding-top:2px}
 .tab{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-radius:9px;padding:9px 10px;font-weight:700;font-size:.9rem;color:var(--muted);cursor:pointer;text-align:left;white-space:nowrap;position:relative}
@@ -181,6 +176,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .tab .tab-label{flex:1}
 .tab:hover{background:rgba(255,255,255,.04);color:var(--text)}
 .tab[aria-selected="true"]{background:rgba(79,195,217,.12);color:var(--text)}
+/* the Shop sits above everything else in the menu and says so */
+.fnav .tab.tab-shop{margin-bottom:10px;border:1px solid rgba(var(--gold-rgb),.5);background:linear-gradient(180deg,rgba(var(--gold-rgb),.18),rgba(var(--gold-rgb),.06));color:var(--gold);font-weight:800}
+.fnav .tab.tab-shop svg{stroke:var(--gold);opacity:1}
+.fnav .tab.tab-shop:hover{background:linear-gradient(180deg,rgba(var(--gold-rgb),.3),rgba(var(--gold-rgb),.12));color:var(--gold)}
+.fnav .tab.tab-shop[aria-selected="true"]{background:linear-gradient(180deg,#f3cf57,#c99a1c);color:#221700;border-color:transparent}
+.fnav .tab.tab-shop[aria-selected="true"] svg{stroke:#221700}
 .tab[aria-selected="true"]::before{content:"";position:absolute;left:-10px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--sea)}
 .tab[aria-selected="true"] svg{color:var(--sea);opacity:1}
 .tab:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
