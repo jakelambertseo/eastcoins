@@ -220,6 +220,40 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .dexc .star{position:absolute;top:5px;left:8px;color:var(--gold);font-size:.8rem}
 .shop-sec{margin-bottom:14px}
 .shop-sec h3{font-family:var(--display);font-size:.95rem;margin:0 0 6px}
+.shop-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.wallets{display:flex;gap:8px;flex-wrap:wrap}
+.wallet2{display:flex;align-items:center;gap:8px;padding:8px 13px;border-radius:12px;background:var(--panel);border:1px solid var(--line)}
+.wallet2 small{font-size:.6rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted-2);display:block}
+.wallet2 b{font-family:var(--display);font-weight:800;font-size:1.1rem;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:5px}
+.wallet2.zc b{color:var(--gold)}
+.shop-filters{display:flex;gap:6px;flex-wrap:wrap}
+.sfilter{padding:7px 13px;border-radius:99px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--muted);font:inherit;font-size:.8rem;font-weight:700;cursor:pointer}
+.sfilter:hover{color:var(--text)}
+.sfilter.on{background:var(--gold);border-color:transparent;color:#221700}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.sitem{position:relative;display:grid;grid-template-rows:auto 1fr auto;gap:9px;padding:14px;border-radius:14px;background:var(--panel);border:1px solid var(--line);transition:border-color .15s ease,transform .15s ease}
+.sitem:hover{border-color:var(--line-2);transform:translateY(-2px)}
+.sitem.owned{opacity:.62}
+.sitem.locked{opacity:.75}
+.sitem.zcoin{background:linear-gradient(180deg,rgba(var(--gold-rgb),.07),transparent 45%),var(--panel);border-color:rgba(var(--gold-rgb),.3)}
+.sitem.worn{border-color:rgba(77,219,139,.5)}
+.sitem-art{height:74px;display:grid;place-items:center;border-radius:11px;background:radial-gradient(120% 120% at 50% 15%,rgba(255,255,255,.07),transparent 70%),var(--panel-2);font-size:2.2rem;line-height:1}
+.sitem-art img{width:86%;height:74px;object-fit:contain}
+.sitem-b{display:grid;gap:3px;align-content:start}
+.sitem-b b{font-family:var(--display);font-weight:800;font-size:.98rem;line-height:1.2}
+.sitem-b small{font-size:.78rem;color:var(--muted);line-height:1.4}
+.sitem-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sprice{display:inline-flex;align-items:center;gap:5px;font-family:var(--display);font-weight:800;font-size:1rem;font-variant-numeric:tabular-nums}
+.sprice.zc{color:var(--gold)}
+.sprice .pearl,.sprice .zmark{width:14px;height:14px}
+.zmark{display:inline-block;width:14px;height:14px;border-radius:50%;background:linear-gradient(150deg,#f3cf57,#c99a1c);box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.25);position:relative}
+.zmark::after{content:"Z";position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-size:.56rem;font-weight:800;color:#2a1d05}
+.stag{position:absolute;top:10px;right:10px;font-size:.58rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;padding:3px 8px;border-radius:99px;background:rgba(0,0,0,.55);color:var(--muted)}
+.stag.owned{color:var(--green);border:1px solid rgba(77,219,139,.4)}
+.stag.worn{color:#221700;background:var(--green)}
+.stag.need{color:var(--gold);border:1px solid rgba(var(--gold-rgb),.45)}
+.sitem .btn{width:100%;justify-content:center}
+.shop-note{margin:14px 0 0;font-size:.78rem;color:var(--muted-2);line-height:1.5}
 .shop-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--panel-2);margin-bottom:5px}
 .shop-row strong{display:block;font-size:.9rem}
 .shop-row small{color:var(--muted);font-size:.78rem}
@@ -821,6 +855,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   ];
   const DECOR_BONUS = 0.05;
   const OFFLINE_CAP_H = 8;
+  const offlineCap = () => (S.conv.pockets ? 24 : OFFLINE_CAP_H);
   const TIMES = ["dawn", "day", "dusk", "night"], SEASONS = ["spring", "summer", "fall", "winter"];
   const cap = (s) => s[0].toUpperCase() + s.slice(1);
 
@@ -832,12 +867,15 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     q: { day: "", daily: [], week: "", weekly: [], streak: 0, chest: false, weekChest: false },
     skills: { fishing: 0, farming: 0, cooking: 0, breeding: 0, diving: 0, crafting: 0 },
     auto: { sprinkler: false, caretaker: false, turner: false, hatchery: false, smokehouse: false, cannery: false }, smokeAt: 0,
-    inv: {}, charm: 0, benchAt: 0, boss: {}, perks: {} });
+    inv: {}, charm: 0, benchAt: 0, boss: {}, perks: {},
+    zc: 2500, conv: {}, cosm: {}, worn: { theme: "", name: "", title: "", pet: "" }, shopTab: "all" });
   let S = fresh();
   try { const raw = localStorage.getItem(SAVE); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch {}
   S.skills = Object.assign({ fishing: 0, farming: 0, cooking: 0, breeding: 0, diving: 0, crafting: 0 }, S.skills || {});
   S.auto = Object.assign({ sprinkler: false, caretaker: false, turner: false, hatchery: false, smokehouse: false, cannery: false, meshbag: false, airtank: false, toolbox: false, bench: false }, S.auto || {});
   S.inv = S.inv || {}; S.charm = S.charm || 0; S.boss = S.boss || {}; S.perks = S.perks || {};
+  S.conv = S.conv || {}; S.cosm = S.cosm || {}; S.worn = Object.assign({ theme: "", name: "", title: "", pet: "" }, S.worn || {});
+  if (typeof S.zc !== "number") S.zc = 2500;
   const save = () => { S.saved = Date.now(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch {} };
 
   /* ============================================================ helpers */
@@ -953,6 +991,46 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { key: "rig", name: "Shimmer rig", at: 35, need: { coral: 3, ruby: 1 }, xp: 2200, about: "2 Shimmer shrimp", give: () => { S.bait.shimmer = (S.bait.shimmer || 0) + 2; } }
   ];
   const BENCH_MS = 30 * 60 * 1000;
+
+  /* Bought with ZCoins, not pearls. Two rules hold this together: nothing
+     here sells a LEVEL or a record — only time and looks — and pearls never
+     turn back into ZCoins, so this is a one-way sink. In the real game every
+     line is a WAGER_DEBIT with an idempotency key that refunds on the spot if
+     the grant fails, the same money path the store uses. */
+  const CONV = [
+    { key: "pockets", name: "Deep pockets", icon: "🎒", zc: 75, about: "Your tank keeps paying for 24 hours away instead of 8" },
+    { key: "baitline", name: "Second bait line", icon: "🪝", zc: 150, about: "Bait lasts twice as long — half of your casts don't spend any" },
+    { key: "plot", name: "Extra garden plot", icon: "🪴", zc: 100, about: "One more bed than pearls can buy" },
+    { key: "nest", name: "Extra nest", icon: "🪺", zc: 100, about: "One more egg on the go than pearls can buy" },
+    { key: "bag", name: "Bigger bag", icon: "🧺", zc: 75, about: "Sell every bit of junk in the bag with one button" }
+  ];
+  const BUYS = [
+    { key: "skip", name: "Skip the wait", icon: "⏩", zc: 15, about: "Finishes whichever bed or egg is closest, right now" },
+    { key: "tackle", name: "Tackle box", icon: "🧰", zc: 25, about: "10 Nightcrawlers, 6 Crickets and 2 Glow grubs" }
+  ];
+  const COSM = [
+    { key: "theme:reef", slot: "theme", name: "Coral reef tank", icon: "🪸", zc: 75, about: "Warm reef water in your tank" },
+    { key: "theme:deep", slot: "theme", name: "Deep water tank", icon: "🌑", zc: 75, about: "Cold, dark, a long way down" },
+    { key: "theme:bears", slot: "theme", name: "Sunday tank", icon: "🏈", zc: 75, about: "Navy and orange, for the one day a week" },
+    { key: "name:gold", slot: "name", name: "Gold name", icon: "✨", zc: 75, about: "Your name in gold, everywhere it shows" },
+    { key: "name:reef", slot: "name", name: "Reef name", icon: "💠", zc: 75, about: "Your name in reef blue" },
+    { key: "name:coral", slot: "name", name: "Coral name", icon: "🌺", zc: 75, about: "Your name in coral pink" },
+    { key: "title:angler", slot: "title", name: "Title: Angler of the Year", icon: "🎣", zc: 100, about: "Sits under your name" },
+    { key: "title:deep", slot: "title", name: "Title: Deep Diver", icon: "🤿", zc: 100, about: "Sits under your name" },
+    { key: "title:keeper", slot: "title", name: "Title: Reef Keeper", icon: "🐠", zc: 100, about: "Sits under your name" },
+    { key: "pet:crab", slot: "pet", name: "Tank crab", icon: "🦀", zc: 150, about: "A crab pottering along the sand" },
+    { key: "pet:turtle", slot: "pet", name: "Tank turtle", icon: "🐢", zc: 150, about: "A turtle doing laps of the glass" },
+    { key: "frame:gold", slot: "frame", name: "Gold card frame", icon: "🖼️", zc: 500, about: "A gold edge on your Reef card" }
+  ];
+  const THEMES = {
+    "": ["#1f8fb0", "#0c5a7a", "#063247"],
+    "theme:reef": ["#2fbfa0", "#0f7d78", "#08414a"],
+    "theme:deep": ["#16324d", "#0a1c33", "#04091a"],
+    "theme:bears": ["#1b3a6b", "#0b1f3f", "#2a1405"]
+  };
+  const NAME_COLOURS = { "": "", "name:gold": "#e8bf35", "name:reef": "#4fc3d9", "name:coral": "#ff8fb0" };
+  const wearing = (slot) => S.worn[slot] || "";
+  const owns = (key) => Boolean(S.cosm[key] || S.conv[key]);
 
   /* One leviathan per spot: the thing that lives there and is never caught by
      accident. It asks for a Fishing level AND that you have met the water —
@@ -1326,7 +1404,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (fish.phase === "idle" || fish.phase === "lost") {
       fish.pick = rollCatch();
       const bait = activeBait();
-      if (bait) { S.bait[S.baitOn]--; if (!S.bait[S.baitOn]) { toast(`Out of ${bait.name}`, "Grow more in the bait garden."); S.baitOn = "none"; } renderBaitSel(); }
+      if (bait && !(S.conv.baitline && Math.random() < 0.5)) { S.bait[S.baitOn]--; if (!S.bait[S.baitOn]) { toast(`Out of ${bait.name}`, "Grow more in the bait garden."); S.baitOn = "none"; } renderBaitSel(); }
       fish.waitFor = 1300 + Math.random() * 2800;
       setPhase("wait");
     } else if (fish.phase === "wait") {
@@ -1637,7 +1715,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   }
   function drawTankTo(ctx, w, h, t, dt, live) {
     let g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, "#1f8fb0"); g.addColorStop(0.55, "#0c5a7a"); g.addColorStop(1, "#063247");
+    const theme = THEMES[wearing("theme")] || THEMES[""];
+    g.addColorStop(0, theme[0]); g.addColorStop(0.55, theme[1]); g.addColorStop(1, theme[2]);
     ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
     // light rays
     ctx.save(); ctx.globalAlpha = 0.08; ctx.fillStyle = "#fff";
@@ -1789,8 +1868,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const ui = { choosing: -1 };
 
   function normalizeLoop() {
-    while (S.plots.length < PLOT_CAPS[S.plotLvl].cap) S.plots.push({ seed: null, at: 0, ready: 0, watered: false });
-    while (S.nests.length < NEST_CAPS[S.nestLvl].cap) S.nests.push(null);
+    const plotCap = PLOT_CAPS[S.plotLvl].cap + (S.conv.plot ? 1 : 0);
+    const nestCap = NEST_CAPS[S.nestLvl].cap + (S.conv.nest ? 1 : 0);
+    while (S.plots.length < plotCap) S.plots.push({ seed: null, at: 0, ready: 0, watered: false });
+    while (S.nests.length < nestCap) S.nests.push(null);
   }
   const activeBait = () => (S.baitOn !== "none" && (S.bait[S.baitOn] || 0) > 0 ? BAITS[S.baitOn] : null);
 
@@ -2550,38 +2631,132 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   }
 
   const shopSig = () => [...RODS, ...TANKS, ...DECOR, ...PLOT_CAPS, ...NEST_CAPS].map((x) => (S.pearls >= x.cost ? 1 : 0)).join("") + S.rod + S.tank + S.plotLvl + S.nestLvl + JSON.stringify(S.decor);
+  const SHOP_TABS = [["all", "Everything"], ["gear", "Gear"], ["places", "Tank & garden"], ["kit", "Idle kit"], ["time", "Time savers"], ["looks", "Looks"]];
+  /* Card shape used by everything in the shop: art, words, price, one button.
+     `pay` is "pearls" or "zc"; a ZCoin line is tinted and marked, because it
+     is real money out of the wallet rather than game currency. */
+  function shopCard({ art, icon, name, about, price, pay = "pearls", owned, ownedLabel, locked, need, worn, onBuy, onWear }) {
+    const card = el("div", `sitem${pay === "zc" ? " zcoin" : ""}${owned ? " owned" : ""}${locked ? " locked" : ""}${worn ? " worn" : ""}`);
+    const box = el("div", "sitem-art");
+    if (art) { const im = document.createElement("img"); im.src = artSrc(art); im.alt = ""; im.loading = "lazy"; box.append(im); }
+    else box.textContent = icon || "•";
+    card.append(box);
+    card.append(el("div", "sitem-b", `<b>${name}</b><small>${about}</small>`));
+    if (worn) card.append(el("span", "stag worn", "Wearing"));
+    else if (owned) card.append(el("span", "stag owned", ownedLabel || "Owned"));
+    else if (locked && need) card.append(el("span", "stag need", need));
+    const foot = el("div", "sitem-foot");
+    if (owned && onWear) {
+      const b = el("button", "btn small" + (worn ? "" : " gold"), worn ? "Take it off" : "Wear it");
+      b.type = "button"; b.addEventListener("click", onWear);
+      foot.append(b);
+    } else if (owned) {
+      foot.append(el("span", "sprice", ownedLabel || "Owned"));
+    } else {
+      foot.append(el("span", `sprice${pay === "zc" ? " zc" : ""}`, `${pay === "zc" ? '<span class="zmark"></span>' : '<span class="pearl"></span>'}${num(price)}`));
+      const short = pay === "zc" ? S.zc < price : S.pearls < price;
+      const b = el("button", "btn small" + (!locked && !short ? " gold" : ""), locked ? "Locked" : short ? "Not enough" : "Buy");
+      b.type = "button"; b.disabled = Boolean(locked) || short;
+      b.addEventListener("click", onBuy);
+      foot.append(b);
+    }
+    card.append(foot);
+    return card;
+  }
+  function buyZc(price, then) {
+    if (S.zc < price) return;
+    S.zc -= price;                      // the real game debits the wallet here
+    then();
+    renderShop(); renderStatbar(); save();
+  }
+
   function renderShop() {
     renderShop.sig = shopSig();
     const box = $("shop"); box.replaceChildren();
-    const sec = (title) => { const s = el("div", "shop-sec"); s.append(el("h3", null, title)); box.append(s); return s; };
-    const row = (parent, name, about, cost, owned, onBuy, label, art) => {
-      const r = el("div", "shop-row" + (owned ? " owned" : "") + (art ? " has-ico" : ""));
-      if (art) { const im = el("img", "shop-ico"); im.src = artSrc(art); im.alt = ""; im.loading = "lazy"; r.append(im); }
-      r.append(el("div", null, `<strong>${name}</strong><small>${about}</small>`));
-      const u = owned ? null : needOf(name);
-      const locked = Boolean(u) && levelIn(u.skill) < u.at;
-      if (locked) {
-        r.classList.add("locked");
-        r.lastElementChild.insertAdjacentHTML("beforeend", `<span class="need">Needs ${SKILLS[u.skill].name} level ${u.at} · you're ${levelIn(u.skill)}</span>`);
-      }
-      const b = el("button", "btn small" + (owned || locked ? "" : " gold"), owned ? (label || "Owned") : locked ? `${SKILLS[u.skill].name} ${u.at}` : `<span class="pearl"></span> ${num(cost)}`);
-      b.type = "button"; b.disabled = owned || locked || S.pearls < cost;
-      b.addEventListener("click", () => { if (S.pearls < cost) return; S.pearls -= cost; onBuy(); renderShop(); renderTank(); renderBiting(); save(); });
-      r.append(b); parent.append(r);
-    };
-    const rods = sec("Rods");
-    RODS.forEach((r, i) => { if (i === 0) return; row(rods, r.name, `Catch zone ${Math.round(r.zone * 100)}% · rare fish ×${r.luck}`, r.cost, S.rod >= i, () => { S.rod = i; toast(`${r.name} rigged`); }, S.rod === i ? "Using" : "Owned", r.art); });
-    const tanks = sec("Tank");
-    TANKS.forEach((t, i) => { if (i === 0) return; row(tanks, `${t.cap}-fish tank`, `Room for ${t.cap} fish`, t.cost, S.tank >= i, () => { S.tank = i; toast(`Bigger tank`, `Room for ${t.cap} fish.`); }); });
-    const garden = sec("Bait garden");
-    PLOT_CAPS.forEach((c, i) => { if (i === 0) return; row(garden, `${c.cap} garden plots`, "Grow more bait at once", c.cost, S.plotLvl >= i, () => { S.plotLvl = i; normalizeLoop(); renderGarden(); toast(`${c.cap} garden plots`); }); });
-    const nestsSec = sec("Breeding");
-    NEST_CAPS.forEach((c, i) => { if (i === 0) return; row(nestsSec, `${c.cap} nests`, "Incubate more eggs at once", c.cost, S.nestLvl >= i, () => { S.nestLvl = i; normalizeLoop(); renderBreeding(); toast(`${c.cap} nests`); }); });
-    const kit = sec("Idle kit");
-    kit.append(el("p", "note", "Runs whether the tab is open or shut. Fishing is never idle — someone has to hold the rod."));
-    KIT.forEach((k) => row(kit, k.name, `${k.about} · ${Math.round(IDLE_CUT * 100)}% xp`, k.cost, Boolean(S.auto[k.key]), () => { S.auto[k.key] = true; toast(`${k.name} installed`, k.about + "."); }));
-    const dec = sec("Decorations");
-    DECOR.forEach((d) => row(dec, d.name, `Looks great · tank makes +5% pearls`, d.cost, !!S.decor[d.key], () => { S.decor[d.key] = true; toast(`${d.name} placed`, "+5% pearls."); }));
+    const tab = S.shopTab || "all";
+    const head = el("div", "shop-head");
+    const wallets = el("div", "wallets");
+    wallets.append(el("div", "wallet2", `<span><small>Pearls</small><b><span class="pearl"></span><span id="shopPearls">${num(S.pearls)}</span></b></span>`));
+    wallets.append(el("div", "wallet2 zc", `<span><small>ZCoins</small><b><span class="zmark"></span>${num(S.zc)}</b></span>`));
+    head.append(wallets);
+    const filters = el("div", "shop-filters");
+    SHOP_TABS.forEach(([key, label]) => {
+      const b = el("button", "sfilter" + (tab === key ? " on" : ""), label);
+      b.type = "button";
+      b.addEventListener("click", () => { S.shopTab = key; renderShop(); save(); });
+      filters.append(b);
+    });
+    head.append(filters);
+    box.append(head);
+    const grid = el("div", "shop-grid");
+    const show = (group) => tab === "all" || tab === group;
+    const add = (c) => grid.append(c);
+
+    if (show("gear")) RODS.forEach((r, i) => {
+      if (i === 0) return;
+      const u = needOf(r.name), locked = u && levelIn(u.skill) < u.at;
+      add(shopCard({ art: r.art, name: r.name, about: `Catch zone ${Math.round(r.zone * 100)}% · rare fish ×${r.luck}`, price: r.cost,
+        owned: S.rod >= i, ownedLabel: S.rod === i ? "Using" : "Owned", locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
+        onBuy: () => { if (S.pearls < r.cost) return; S.pearls -= r.cost; S.rod = i; toast(`${r.name} rigged`); renderShop(); renderBiting(); save(); } }));
+    });
+    if (show("places")) {
+      TANKS.forEach((t, i) => {
+        if (i === 0) return;
+        const u = needOf(`${t.cap}-fish tank`), locked = u && levelIn(u.skill) < u.at;
+        add(shopCard({ icon: "🐟", name: `${t.cap}-fish tank`, about: `Room for ${t.cap} fish`, price: t.cost, owned: S.tank >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
+          onBuy: () => { if (S.pearls < t.cost) return; S.pearls -= t.cost; S.tank = i; toast("Bigger tank", `Room for ${t.cap} fish.`); renderShop(); renderTank(); save(); } }));
+      });
+      PLOT_CAPS.forEach((c, i) => {
+        if (i === 0) return;
+        const u = needOf(`${c.cap} garden plots`), locked = u && levelIn(u.skill) < u.at;
+        add(shopCard({ icon: "🌱", name: `${c.cap} garden plots`, about: "Grow more bait at once", price: c.cost, owned: S.plotLvl >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
+          onBuy: () => { if (S.pearls < c.cost) return; S.pearls -= c.cost; S.plotLvl = i; normalizeLoop(); renderGarden(); toast(`${c.cap} garden plots`); renderShop(); save(); } }));
+      });
+      NEST_CAPS.forEach((c, i) => {
+        if (i === 0) return;
+        const u = needOf(`${c.cap} nests`), locked = u && levelIn(u.skill) < u.at;
+        add(shopCard({ icon: "🥚", name: `${c.cap} nests`, about: "Incubate more eggs at once", price: c.cost, owned: S.nestLvl >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
+          onBuy: () => { if (S.pearls < c.cost) return; S.pearls -= c.cost; S.nestLvl = i; normalizeLoop(); renderBreeding(); toast(`${c.cap} nests`); renderShop(); save(); } }));
+      });
+      DECOR.forEach((d) => {
+        const u = needOf(d.name), locked = u && levelIn(u.skill) < u.at;
+        add(shopCard({ icon: { kelp: "🌿", castle: "🏰", ship: "🚢", chest: "🧰" }[d.key] || "🐚", name: d.name, about: "Tank makes +5% pearls", price: d.cost, owned: !!S.decor[d.key], locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
+          onBuy: () => { if (S.pearls < d.cost) return; S.pearls -= d.cost; S.decor[d.key] = true; toast(`${d.name} placed`, "+5% pearls."); renderShop(); renderTank(); save(); } }));
+      });
+    }
+    if (show("kit")) KIT.forEach((k) => {
+      const locked = levelIn(k.skill) < k.at;
+      add(shopCard({ icon: { sprinkler: "💧", caretaker: "🧑‍🌾", turner: "🔄", hatchery: "🐣", smokehouse: "🔥", cannery: "🥫", meshbag: "🕸️", airtank: "🫧", toolbox: "🧰", bench: "🔨" }[k.key] || "⚙️",
+        name: k.name, about: `${k.about} · ${Math.round(IDLE_CUT * 100)}% xp`, price: k.cost, owned: Boolean(S.auto[k.key]), locked, need: locked ? `${SKILLS[k.skill].name} ${k.at}` : "",
+        onBuy: () => { if (S.pearls < k.cost) return; S.pearls -= k.cost; S.auto[k.key] = true; toast(`${k.name} installed`, k.about + "."); renderShop(); save(); } }));
+    });
+    if (show("time")) {
+      CONV.forEach((c) => add(shopCard({ icon: c.icon, name: c.name, about: c.about, price: c.zc, pay: "zc", owned: Boolean(S.conv[c.key]),
+        onBuy: () => buyZc(c.zc, () => { S.conv[c.key] = true; normalizeLoop(); renderGarden(); renderBreeding(); renderInv(); toast(`${c.name}`, c.about + "."); }) })));
+      BUYS.forEach((c) => add(shopCard({ icon: c.icon, name: c.name, about: c.about, price: c.zc, pay: "zc",
+        onBuy: () => buyZc(c.zc, () => {
+          if (c.key === "tackle") { S.bait.worm = (S.bait.worm || 0) + 10; S.bait.cricket = (S.bait.cricket || 0) + 6; S.bait.glow = (S.bait.glow || 0) + 2; renderBaitSel(); toast("Tackle box", "10 Nightcrawlers, 6 Crickets, 2 Glow grubs."); }
+          if (c.key === "skip") skipSoonest();
+        }) })));
+    }
+    if (show("looks")) COSM.forEach((c) => {
+      const has = Boolean(S.cosm[c.key]), worn = wearing(c.slot) === c.key;
+      add(shopCard({ icon: c.icon, name: c.name, about: c.about, price: c.zc, pay: "zc", owned: has, worn,
+        onBuy: () => buyZc(c.zc, () => { S.cosm[c.key] = true; S.worn[c.slot] = c.key; toast(`${c.name}`, "On you now."); renderStatbar(); }),
+        onWear: () => { S.worn[c.slot] = worn ? "" : c.key; renderShop(); renderStatbar(); save(); } }));
+    });
+    box.append(grid);
+    box.append(el("p", "shop-note", "Pearls are earned in the game. ZCoin lines buy time and looks only — never a level, a record or a fish. This is a mockup wallet; the real one debits ZCoins the way the store does."));
+  }
+
+  /** "Skip the wait": whichever bed or egg is closest to done. */
+  function skipSoonest() {
+    let best = null;
+    S.plots.forEach((p2, i) => { if (p2.seed && S.clock < p2.ready && (!best || p2.ready < best.at)) best = { kind: "plot", i, at: p2.ready }; });
+    S.nests.forEach((n, i) => { if (n && S.clock < n.ready && (!best || n.ready < best.at)) best = { kind: "nest", i, at: n.ready }; });
+    if (!best) { toast("Nothing to skip", "Plant a bed or lay an egg first."); return; }
+    if (best.kind === "plot") { S.plots[best.i].ready = S.clock; toast("Bed skipped", "It's ready to harvest."); renderGarden(); }
+    else { S.nests[best.i].ready = S.clock; toast("Egg skipped", "It's ready to hatch."); renderBreeding(); }
   }
 
   function renderDerby() {
@@ -2618,6 +2793,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     $("tbShiny").textContent = Object.values(S.dex).filter((d) => d.shiny).length;
     $("tbTank").textContent = `${S.fish.length}/${TANKS[S.tank].cap}`;
     $("tbRate").textContent = `${num(tankRate())} / hr`;
+    const nameEl = document.querySelector(".sb-name b"), titleEl = document.querySelector(".sb-name small");
+    if (nameEl) nameEl.style.color = NAME_COLOURS[wearing("name")] || "";
+    if (titleEl) titleEl.textContent = (COSM.find((c) => c.key === wearing("title"))?.name || "Angler").replace("Title: ", "");
   }
 
   function renderProfile() {
@@ -2668,7 +2846,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 
   function away(seconds, quiet) {
     S.clock += seconds * 1000;
-    const hrs = Math.min(seconds / 3600, OFFLINE_CAP_H), made = tankRate() * hrs;
+    const hrs = Math.min(seconds / 3600, offlineCap()), made = tankRate() * hrs;
     tickLoop();
     const bits = [];
     if (idleLog.watered) bits.push(`${idleLog.watered} watered`);
@@ -2682,7 +2860,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     Object.keys(idleLog).forEach((k) => { idleLog[k] = 0; });
     if (made <= 0) { if (!quiet) toast("Nothing in the tank", "Fish you keep make pearls while you're gone. The garden and eggs kept growing."); return; }
     S.pearls += made;
-    toast(`While you were away: +${num(made)} pearls`, `${(seconds / 3600).toFixed(1)} hours${seconds / 3600 > OFFLINE_CAP_H ? ", capped at 8" : ""} of your tank's ${num(tankRate())}/hr.`);
+    toast(`While you were away: +${num(made)} pearls`, `${(seconds / 3600).toFixed(1)} hours${seconds / 3600 > offlineCap() ? `, capped at ${offlineCap()}` : ""} of your tank's ${num(tankRate())}/hr.`);
     renderShop();
   }
 
