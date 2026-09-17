@@ -197,6 +197,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .tab svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
 .tab .tab-label{flex:1}
 .tab:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.tab.locked{opacity:.38;cursor:not-allowed}
+.tab.locked:hover{background:none;color:var(--muted)}
+.tab.locked .tab-label{text-decoration:none}
+.tab.locked::after{content:"🔒";position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:.7rem;line-height:1;filter:grayscale(1)}
 .tab[aria-selected="true"]{background:rgba(79,195,217,.12);color:var(--text)}
 /* the Shop sits above everything else in the menu and says so */
 .fnav .tab.tab-shop{margin-bottom:10px;border:1px solid rgba(var(--gold-rgb),.5);background:linear-gradient(180deg,rgba(var(--gold-rgb),.18),rgba(var(--gold-rgb),.06));color:var(--gold);font-weight:800}
@@ -3947,41 +3951,59 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const samePair = () => { const c = {}; return S.fish.some((f) => (c[f.key] = (c[f.key] || 0) + 1) >= 2); };
   const GATES = [
     { tab: "garden", name: "the Bait garden", when: () => caught() >= 8,
+      need: "8 fish landed", have: () => `${caught()} so far`,
       why: "Ten casts in and the fish are getting choosy. Grow your own bait and pick what bites." },
     { tab: "skills", name: "Skills", when: () => totalLevel() >= 8,
+      need: "8 levels across your skills", have: () => `${totalLevel()} so far`,
       why: "You are levelling. Six skills run to 99, and the levels are what open the shop." },
     { tab: "quests", name: "Quests", when: () => S.q.daily.some((q) => q.prog >= q.target),
+      need: "to finish one quest objective",
       why: "You just ticked one off without trying. Three a day, and the third pays a chest." },
     { tab: "dex", name: "the Fish book", when: () => SPECIES.filter((sp) => S.dex[sp.key]?.n).length >= 3,
+      need: "3 different species", have: () => `${SPECIES.filter((sp) => S.dex[sp.key]?.n).length} so far`,
       why: "Three species down. The book keeps every one you land and the heaviest of each." },
     { tab: "dive", name: "Diving", when: () => levelIn("fishing") >= 12,
+      need: "Fishing level 12", have: () => `you're ${levelIn("fishing")}`,
       why: "There is more down there than fish. Hold your breath and see what is on the bottom." },
     { tab: "inv", name: "your Inventory", when: () => invCount() > 0,
+      need: "something in your bag — dive, or snag one on the line",
       why: "You brought something up. Everything you find lives in the bag until you sell or use it." },
     { tab: "craft", name: "Crafting", when: () => invCount() >= 5,
+      need: "5 things in your bag", have: () => `${invCount()} so far`,
       why: "Enough bits to start making things. Junk turns into bait, pearls and charms." },
     { tab: "breeding", name: "Breeding", when: () => samePair(),
+      need: "two of the same species in your tank",
       why: "Two of the same species in the tank. Pair them up and see what hatches." },
     { tab: "boss", name: "Bosses", when: () => BOSSES.some((b) => bossOpen(b)),
+      need: "a boss you can face — Fishing 5 and 2 species from the pond",
       why: "Something old is waiting at one of your spots, and it is ready for you." },
     { tab: "derby", name: "the Weekly derby", when: () => caught() >= 25,
+      need: "25 fish landed", have: () => `${caught()} so far`,
       why: "One species a week, heaviest fish takes the title. You have caught enough to enter." },
     { tab: "board", name: "the Leaderboard", when: () => totalLevel() >= 40,
+      need: "40 levels across your skills", have: () => `${totalLevel()} so far`,
       why: "You are on the board now. See where you sit against the room." },
     { tab: "profile", name: "your Profile", when: () => totalLevel() >= 25,
+      need: "25 levels across your skills", have: () => `${totalLevel()} so far`,
       why: "Enough of a record to show people. This is what a visitor sees." }
   ];
+  const gateOf = (tab) => GATES.find((g) => g.tab === tab) || null;
   const navOpen = (tab) => !GATES.some((g) => g.tab === tab) || Boolean(S.nav[tab]);
-  /** Show what is open, and hide a group heading whose whole group is shut. */
+  /** Grey out what is still shut, and say so to a screen reader. */
   function paintNav() {
-    document.querySelectorAll(".fnav .tab").forEach((b) => { b.hidden = !navOpen(b.dataset.tab); });
-    let head = null, any = false;
-    const close = () => { if (head) head.hidden = !any; };
-    [...document.querySelectorAll(".fnav .tabs > *")].forEach((n) => {
-      if (n.classList.contains("fnav-h")) { close(); head = n; any = false; }
-      else if (!n.hidden) any = true;
+    document.querySelectorAll(".fnav .tab").forEach((b) => {
+      const shut = !navOpen(b.dataset.tab);
+      b.classList.toggle("locked", shut);
+      b.setAttribute("aria-disabled", String(shut));
+      const g = gateOf(b.dataset.tab);
+      if (g) b.title = shut ? `Locked — needs ${g.need}` : "";
     });
-    close();
+  }
+  /** Why you cannot go there yet, in one line, with how far off you are. */
+  function sayLocked(tab) {
+    const g = gateOf(tab); if (!g) return;
+    const far = g.have ? g.have() : "";
+    toast("You have not unlocked this yet", `You need ${g.need} to unlock.${far ? ` (${far})` : ""}`);
   }
   let unfolding = false;
   /** Anything newly earned, announced one at a time. */
@@ -4019,6 +4041,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 
   const navTabs = [...document.querySelectorAll(".fnav .tab")];
   function openTab(b, focus) {
+    if (!navOpen(b.dataset.tab)) { sayLocked(b.dataset.tab); return; }
     if (b.dataset.tab !== "fishing" && (fish.phase === "wait" || fish.phase === "bite" || fish.phase === "reel")) { setPhase("idle"); toast("You reeled your line in"); }
     $("fishtip").hidden = true;
     navTabs.forEach((x) => { const on = x === b; x.setAttribute("aria-selected", String(on)); x.tabIndex = on ? 0 : -1; });
