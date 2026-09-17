@@ -4214,7 +4214,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     viewing = who && who.toLowerCase() !== ME.toLowerCase() ? who : null;
     const b = navTabs.find((x) => x.dataset.tab === (tab || "fishing"));
     if (!b) return;
-    if (!navOpen(b.dataset.tab)) { sayLocked(b.dataset.tab); return; }
+    if (!viewing && !navOpen(b.dataset.tab)) { sayLocked(b.dataset.tab); return; }
     if (!push) { navTabs.forEach((x) => { const on = x === b; x.setAttribute("aria-selected", String(on)); x.tabIndex = on ? 0 : -1; }); document.querySelectorAll("[data-panel]").forEach((q) => { q.hidden = q.dataset.panel !== b.dataset.tab; }); if (b.dataset.tab === "shop") renderShop(); if (b.dataset.tab === "board") renderBoard(); }
     else openTab(b);
     renderProfile();
