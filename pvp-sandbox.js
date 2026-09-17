@@ -28,6 +28,8 @@
   const MAX_PLAYERS = 12;
   const NAMES = { roulette: "Russian Roulette", standing: "Last One Standing" };
   const BOTS = ["Rook", "Vance", "Milo", "Juno", "Pax", "Wren", "Odie", "Brill", "Case", "Dov", "Esk"];
+  // A few people in the room who never sit, so "Watching" has faces.
+  const WATCHERS = [{ login: "bot-nova", displayName: "Nova" }, { login: "bot-tilt", displayName: "Tilt" }, { login: "bot-grim", displayName: "Grim" }];
 
   const enc = new TextEncoder();
   async function sha256(text) {
@@ -157,7 +159,8 @@
       lobby: pub(state.lobby),
       last: pub(state.last, { reveal: true }),
       history: state.history.map((r) => ({ id: r.id, status: r.status, at: r.settledAt, players: r.players.length, pot: r.status === "VOID" ? 0 : STAKE * r.players.length, seats: r.players.map((p) => ({ ...p })) })),
-      room: state.lobby ? state.lobby.players.map((p) => ({ login: p.login, displayName: p.displayName, avatar: "" })) : [],
+      room: [...(state.lobby ? state.lobby.players.map((p) => ({ login: p.login, displayName: p.displayName, avatar: "" })) : []), { login: state.me.login, displayName: state.me.displayName, avatar: "" }, ...WATCHERS]
+        .filter((u, i, all) => all.findIndex((x) => x.login === u.login) === i),
       me: { id: "you", login: state.me.login, displayName: state.me.displayName, joinsThisHour: state.joinsThisHour, hourNet: 0 }
     };
   }

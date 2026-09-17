@@ -5,14 +5,24 @@
      /?view=standing    Last One Standing
 
    One file, two games, because they are the same shape: a lobby
-   that the first person to sit down opens, a sixty-second clock,
-   and a result the server has already settled that this page only
-   plays back. The buy-in is fixed at 20, so there is nothing to
-   choose but whether to sit.
+   that the first person to sit down opens, a clock, and a result the
+   server has already settled that this page only plays back. The
+   buy-in is fixed at 20, so there is nothing to choose but whether
+   to sit.
 
    The page never decides anything. The result arrives settled, paid,
    with its seed revealed; the animation is theatre, and closing the
    tab during it changes nothing about who got paid.
+
+   Layout (2026-09-16, night): the board and "At the table" share the first
+   screen — the board is the game, the panel beside it is who is in,
+   the pot, the clock and the one button. Everything that is reference
+   (this hour, what it pays, the seed, the Jackpot) folds shut below.
+   A finished table stays on the board for HOLD_MS and then clears, so
+   nobody arrives to a result from hours ago. On Roulette the board is
+   a ring of seats round a big cylinder, and an open seat is a button.
+   (A revolver in the middle with skins was tried and held back; that
+   version is kept in mockups-archive/.)
    ============================================================ */
 (() => {
   "use strict";
@@ -20,7 +30,9 @@
   const K = window.ECCasino;
   const LOBBY_POLL = 2500;      // while a clock is running
   const IDLE_POLL = 6000;       // nothing open
-  const NAMES_MAX = 12;
+  const HOLD_MS = 2600;         // a finished table stays up this long, then the board clears
+  const STALE_MS = 45000;       // a table that finished longer ago than this is not replayed
+  const WATCHERS_SHOWN = 14;
 
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const fmt = K.fmt;
@@ -42,7 +54,11 @@
     let pop = () => {};
     let polledPastZero = false;     // one immediate poll when the clock ends
     let onVis = null;               // polls the moment the tab comes back
-    let arenaFresh = false;         // the animation just drew the final state; skip one redraw
+    let holdUntil = 0;              // the finished table is on the board until then
+    let holdTimer = 0;
+    let arenaSig = "";              // what the arena is drawing; unchanged means leave it alone
+    let seatedSig = "";
+    let watchSig = "";
 
     const serverNow = () => Date.now() + offset;
     const myLogin = () => String(data?.me?.login || "");
@@ -71,27 +87,54 @@
       pollTimer = window.setInterval(() => { if (!busy) poll(); }, data?.lobby ? LOBBY_POLL : IDLE_POLL);
     }
 
-    /** A round that finished since we last looked gets played back. */
+    /** Keep the finished table on the board for ms, then clear it. */
+    function holdFor(ms) {
+      holdUntil = Date.now() + Math.max(0, ms);
+      window.clearTimeout(holdTimer);
+      holdTimer = window.setTimeout(() => { holdUntil = 0; render(); }, Math.max(0, ms) + 20);
+    }
+
+    /** A round that finished since we last looked gets played back — if it is recent. */
     async function maybePlayback() {
       const last = data?.last;
       // An empty table with no history still counts as seen, so the first
       // round it ever plays is played back rather than shown settled.
       if (!last) { if (shownRoundId === null) shownRoundId = "none"; return; }
-      if (shownRoundId === null) { shownRoundId = last.id; return; }   // first paint: just show it
+      const age = serverNow() - Number(last.settledAt || 0);
+      if (shownRoundId === null) {
+        // First paint: never replay, and only show the result if it is
+        // still inside its hold — otherwise the board opens empty.
+        shownRoundId = last.id;
+        if (last.status === "SETTLED" && age < HOLD_MS) holdFor(HOLD_MS - age);
+        return;
+      }
       if (last.id === shownRoundId) return;
       shownRoundId = last.id;
-      if (last.status !== "SETTLED") { toast("Only one at the table — buy-ins returned.", "near"); return; }
+      const mine = last.players.find((p) => p.login === myLogin());
+      if (last.status !== "SETTLED") {
+        if (mine && age < STALE_MS) toast("Only one at the table — buy-ins returned.", "near");
+        return;
+      }
+      // The tab was away while it played: say what happened to you, but
+      // don't sit everyone through a table that is long over.
+      if (age > STALE_MS) {
+        if (mine) {
+          const won = mine.payout > last.stake;
+          toast(won ? `While you were away you won a table: ${fmt(mine.payout)} ZC.` : `A table you were in played while you were away. ${fmt(last.stake)} ZC gone.`, !won);
+        }
+        return;
+      }
       playing = true;
       try {
-        render();                   // the arena gets the seats before anything moves
+        render();                   // the side panel gets the seats before anything moves
         await spec.animate(last, refs, { wait, me: myLogin() });
         // The animation ends on exactly what the settled draw would show,
-        // so the next render leaves the arena alone rather than rebuilding
-        // it — rebuilding was the flash at the end of every round.
-        arenaFresh = true;
+        // so the hold keeps that drawing rather than rebuilding it.
+        arenaSig = `hold:${last.id}`;
         announce(last);
       } finally {
         playing = false;
+        holdFor(HOLD_MS);
       }
     }
 
@@ -130,6 +173,7 @@
     function build() {
       root.replaceChildren();
       refs = {};
+      arenaSig = seatedSig = watchSig = "";
       const page = K.el("section", `coinflip casino-pvp casino-${spec.key}`);
 
       const head = K.el("div", "viewhead");
@@ -151,53 +195,83 @@
       head.append(right);
       page.append(head);
 
-      const grid = K.el("div", "cf-grid");
-      const stage = K.el("section", "cf-stage");
+      // The first screen: the board, and who is at the table.
+      const main = K.el("div", "pv-main");
+      const board = K.el("section", "pv-board");
+      const hud = K.el("div", "pv-hud");
       refs.phase = K.el("div", "cf-phase", "");
+      refs.phase.setAttribute("aria-live", "polite");
       refs.count = K.el("div", "pv-count", "");
+      refs.count.hidden = true;
+      hud.append(refs.phase, refs.count);
       refs.arena = K.el("div", `pv-arena ${spec.key}`);
-      stage.append(refs.phase, refs.count, refs.arena);
+      board.append(hud, refs.arena);
 
-      const bet = K.el("div", "cf-bet");
-      refs.join = K.btn("Join", "cf-lock", join);
-      refs.note = K.el("p", "cf-note", "");
-      refs.limits = K.el("p", "cf-limits", "");
-      bet.append(refs.join, refs.note, refs.limits);
-      stage.append(bet);
-      grid.append(stage);
+      const side = K.el("aside", "pv-side");
+      const sh = K.el("div", "pv-side-h");
+      refs.seatCount = K.el("span", "pv-seatcount", "");
+      sh.append(K.el("h2", null, "At the table"), refs.seatCount);
+      const pot = K.el("div", "pv-pot");
+      refs.pot = K.el("div", "pv-pot-amt");
+      refs.potNote = K.el("div", "pv-pot-note");
+      pot.append(refs.pot, refs.potNote);
+      refs.clock = K.el("div", "pv-clock");
+      refs.clockFill = K.el("i");
+      refs.clock.append(refs.clockFill);
+      refs.clock.hidden = true;
+      refs.join = K.btn("Join", "cf-lock pv-join", join);
+      refs.note = K.el("p", "cf-note pv-note", "");
+      refs.seated = K.el("div", "pv-seated");
+      const watch = K.el("div", "pv-watch");
+      refs.watchHead = K.el("h3", null, "Watching");
+      refs.watchList = K.el("div", "pv-watchlist");
+      watch.append(refs.watchHead, refs.watchList);
+      refs.limits = K.el("p", "cf-limits pv-limits", "");
+      side.append(sh, pot, refs.clock, refs.join, refs.note, refs.seated, watch, refs.limits);
+      main.append(board, side);
+      page.append(main);
 
-      const col = K.el("div", "cf-side-col");
-
-      const hour = K.el("section", "cf-card");
-      const hh = K.el("h2", null, "This hour");
-      refs.hourNote = K.el("small");
-      hh.append(refs.hourNote);
+      // Below the fold: reference, shut until someone opens it.
+      const folds = K.el("div", "pv-folds");
+      const fold = (title) => {
+        const d = K.el("details", "pv-fold");
+        const s = K.el("summary");
+        const v = K.el("span", "pv-fold-v", "");
+        s.append(K.el("span", "pv-fold-t", title), v);
+        const body = K.el("div", "pv-fold-b");
+        d.append(s, body);
+        folds.append(d);
+        return { d, v, body };
+      };
+      const hour = fold("This hour");
+      refs.hourSum = hour.v;
       refs.hourList = K.el("div", "hl-stats");
-      hour.append(hh, refs.hourList);
+      hour.body.append(refs.hourList);
 
-      const pays = K.el("section", "cf-card");
-      const ph = K.el("h2", null, spec.paysTitle);
-      ph.append(K.el("small", null, "by table size"));
+      const pays = fold(spec.paysTitle);
+      refs.paysSum = pays.v;
       refs.paysList = K.el("div", "mn-ladder");
-      pays.append(ph, refs.paysList);
+      pays.body.append(K.el("p", "pv-fold-note", "By table size. The buy-in is always 20 and the house takes nothing."), refs.paysList);
 
-      const fair = K.el("section", "cf-card cf-card-verify");
-      const verify = K.verifyBox("Verify this round");
-      refs.fair = verify.node;
-      refs.fairBody = verify.body;
-      fair.append(refs.fair);
+      const fair = fold("Verify this round");
+      refs.fairSum = fair.v;
+      refs.fair = fair.body;
+      refs.fairBody = K.el("pre", "cf-verify-body", "");
+      fair.body.append(refs.fairBody);
 
-      const room = K.el("section", "cf-card");
-      const rh = K.el("h2", null, "At the table");
-      refs.roomCount = K.el("small");
-      rh.append(refs.roomCount);
-      refs.roomList = K.el("div", "cf-room");
-      room.append(rh, refs.roomList);
-
-      col.append(hour, pays, fair, room);
-      window.ECPot?.mount(col, { compact: true });
-      grid.append(col);
-      page.append(grid);
+      const jack = fold("Daily Jackpot");
+      if (window.ECPot) {
+        // The amount rides the summary; the full card mounts the first
+        // time the fold is opened, so a shut fold costs one poll, not two.
+        window.ECPot.mount(jack.v, { pill: true });
+        jack.d.addEventListener("toggle", () => {
+          if (jack.d.open && !jack.body.childElementCount) window.ECPot.mount(jack.body, { compact: true });
+        });
+      } else {
+        jack.v.textContent = "on the floor";
+        jack.body.append(K.el("p", "cf-empty", "The Jackpot shows on the casino floor."));
+      }
+      page.append(folds);
 
       const ledger = K.el("section", "cf-card cf-ledger");
       const lgh = K.el("h2", null, "Recent tables");
@@ -214,39 +288,46 @@
 
     /* ---------------------------------------------------- render */
 
+    function drawArena(sig, draw) {
+      if (sig === arenaSig) return;
+      arenaSig = sig;
+      draw();
+    }
+
     function render() {
       if (!data || !refs.arena) return;
       const config = data.config;
       const lobby = data.lobby;
       const last = data.last;
       const me = myLogin();
+      const holding = !playing && Date.now() < holdUntil && last?.status === "SETTLED";
+      const capped = Number.isFinite(data.me?.hourNet) && data.me.hourNet >= config.hourCap;
+      const full = lobby && lobby.players.length >= config.maxPlayers;
+      const canSit = Boolean(data.me && config.canBet && !config.paused && !capped && !busy && !playing && !lobby?.youIn && !full);
 
-      refs.status.textContent = playing ? "Playing…" : lobby ? "Lobby open" : "Ready";
+      refs.status.textContent = playing ? "Playing…" : holding ? "Table over" : lobby ? "Lobby open" : config.paused ? "Closed" : "Ready";
 
-      if (playing) {
-        /* the animation owns the arena */
-      } else if (arenaFresh) {
-        arenaFresh = false;
-      } else {
-        if (lobby) {
-          refs.phase.textContent = lobby.youIn ? "You're in — waiting for the clock" : `${lobby.players.length} at the table`;
-          refs.phase.className = "cf-phase open";
-          spec.drawSeats(lobby.players, refs.arena, { me, lobby: true });
-        } else if (last?.status === "SETTLED") {
+      // The board
+      if (!playing) {
+        if (holding) {
+          const won = last.players.find((p) => p.login === me)?.payout > last.stake;
           refs.phase.textContent = spec.resultLine(last, me);
-          refs.phase.className = `cf-phase ${last.players.find((p) => p.login === me)?.payout > last.stake ? "open" : ""}`;
-          spec.drawSeats(last.players, refs.arena, { me, result: last.result, settled: true });
+          refs.phase.className = `cf-phase ${won ? "open" : "done"}`;
+          drawArena(`hold:${last.id}`, () => spec.drawSeats(last.players, refs.arena, { id: last.id, me, result: last.result, settled: true }));
+        } else if (lobby) {
+          refs.phase.textContent = lobby.youIn ? "You're in — waiting for the clock" : `${lobby.players.length} seated — starts in`;
+          refs.phase.className = "cf-phase open";
+          drawArena(`lobby:${lobby.id}:${lobby.players.map((p) => p.login).join(",")}:${canSit}`,
+            () => spec.drawSeats(lobby.players, refs.arena, { id: lobby.id, me, lobby: true, canSit, onSit: join, stake: config.stake }));
         } else {
-          refs.phase.textContent = config.paused ? "Closed for now" : "Nobody at the table";
+          refs.phase.textContent = config.paused ? "Closed for now" : "Table's empty";
           refs.phase.className = "cf-phase";
-          spec.drawSeats([], refs.arena, { me });
+          drawArena(`idle:${canSit}:${Boolean(config.paused)}`, () => spec.drawSeats([], refs.arena, { me, canSit, onSit: join, stake: config.stake }));
         }
       }
       tick();
 
-      // Controls
-      const capped = Number.isFinite(data.me?.hourNet) && data.me.hourNet >= config.hourCap;
-      const full = lobby && lobby.players.length >= config.maxPlayers;
+      // The button
       refs.join.disabled = busy || playing || !config.canBet || capped || Boolean(lobby?.youIn) || Boolean(full) || Boolean(config.paused);
       if (playing) { K.plain(refs.join, "Playing…"); refs.note.textContent = "The table is playing out. The next one opens the moment it's done."; }
       else if (config.paused) { K.plain(refs.join, "Closed for now"); refs.note.textContent = "This table is off the floor while it's being worked on. Try it on the practice page at eastcoin.vip/pvp-test — no ZCoins change hands there."; }
@@ -254,25 +335,81 @@
       else if (!config.canBet) { K.plain(refs.join, "Casino paused"); refs.note.textContent = "ZCoin transfers aren't switched on right now."; }
       else if (capped) { K.withCoins(refs.join, `Up [[${data.me.hourNet}]] this hour — the cap`); refs.note.textContent = "The tables reopen for you as the hour rolls on."; }
       else if (lobby?.youIn) { K.plain(refs.join, "You're in"); refs.note.textContent = spec.waitingLine(lobby); }
-      else if (full) { K.plain(refs.join, "Table's full"); refs.note.textContent = `Twelve is the most that fit. The next table opens when this one plays.`; }
+      else if (full) { K.plain(refs.join, "Table's full"); refs.note.textContent = `${config.maxPlayers} is the most that fit. The next table opens when this one plays.`; }
       else if (lobby) { K.withCoins(refs.join, `Join for [[${config.stake}]]`); refs.note.textContent = spec.openLine(lobby); }
       else { K.withCoins(refs.join, `Sit down for [[${config.stake}]]`); refs.note.textContent = `You open the table. The clock starts at ${config.lobbySeconds} seconds and whoever's in when it hits zero plays.`; }
       const used = data.me?.joinsThisHour;
-      K.withCoins(refs.limits, `Buy-in is always [[${config.stake}]] · ${config.maxPerHour} tables an hour · winnings cap [[${config.hourCap}]] an hour` + (Number.isFinite(used) ? ` · you've used ${used} of ${config.maxPerHour}` : ""));
+      K.withCoins(refs.limits, `Buy-in always [[${config.stake}]] · ${config.maxPerHour} tables an hour · winnings cap [[${config.hourCap}]] an hour` + (Number.isFinite(used) ? ` · you've used ${used} of ${config.maxPerHour}` : ""));
+
+      // At the table: the lobby, or the table that is playing or just played.
+      const afterPlay = playing || holding;
+      const shown = afterPlay ? (last?.players || []) : (lobby?.players || []);
+      const n = shown.length;
+      refs.seatCount.textContent = afterPlay ? `${n} played` : `${n} of ${config.maxPlayers} seats`;
+      refs.pot.replaceChildren(K.zc(afterPlay ? last.pot : lobby ? lobby.pot : config.stake));
+      if (holding) {
+        const w = last.players.find((p) => p.status === "WON");
+        refs.potNote.textContent = w ? `taken by ${w.login === me ? "you" : w.displayName}` : "paid";
+      } else if (playing) refs.potNote.textContent = "on the table — last one standing takes it";
+      else if (lobby?.youIn) refs.potNote.textContent = `in the pot · you're 1 in ${n}`;
+      else if (lobby) refs.potNote.textContent = `in the pot · sit and it's ${fmt(lobby.pot + config.stake)}`;
+      else refs.potNote.textContent = "to sit · the last one standing takes every buy-in";
+
+      const sSig = `${afterPlay ? (holding ? "h" : "p") : "l"}:${shown.map((p) => `${p.login}/${p.status}`).join(",")}:${me}`;
+      if (sSig !== seatedSig) {
+        seatedSig = sSig;
+        refs.seated.replaceChildren();
+        if (!n) {
+          refs.seated.append(K.el("p", "cf-empty", config.paused ? "Nobody can sit while the table is closed." : "No one yet."));
+        }
+        for (const p of shown) {
+          const mineRow = p.login === me;
+          const rowNode = K.el("div", `pv-seat-row${mineRow ? " me" : ""}${holding && p.status === "WON" ? " won" : ""}${holding && p.status === "LOST" ? " out" : ""}`);
+          const name = K.el("div", "pv-seat-name");
+          name.append(mineRow ? K.el("b", null, "You") : K.nameLink(p));
+          let r;
+          if (holding && p.status === "WON") { r = K.el("span", "pv-seat-r won"); r.append(K.zc(p.payout - last.stake, { sign: true })); }
+          else if (holding) r = K.el("span", "pv-seat-r out", "Out");
+          else r = K.el("span", "pv-seat-r", playing ? "" : `1 in ${n}`);
+          rowNode.append(K.avatar(p, "cf-av"), name, r);
+          refs.seated.append(rowNode);
+        }
+      }
+
+      // Watching: here, but not sitting.
+      const seatedLogins = new Set(shown.map((p) => p.login));
+      const watching = (data.room || []).filter((u) => !seatedLogins.has(u.login));
+      const wSig = watching.map((u) => u.login).join(",");
+      if (wSig !== watchSig) {
+        watchSig = wSig;
+        refs.watchHead.textContent = watching.length ? `Watching · ${watching.length}` : "Watching";
+        refs.watchList.replaceChildren();
+        if (!watching.length) refs.watchList.append(K.el("span", "pv-watchmore", "Nobody else is watching."));
+        for (const u of watching.slice(0, WATCHERS_SHOWN)) {
+          const a = K.el("a", "pv-watcher ulink");
+          a.href = `/u/${encodeURIComponent(u.login)}`;
+          a.title = u.displayName || u.login;
+          a.append(K.avatar(u, "cf-av"));
+          refs.watchList.append(a);
+        }
+        if (watching.length > WATCHERS_SHOWN) refs.watchList.append(K.el("span", "pv-watchmore", `+${watching.length - WATCHERS_SHOWN}`));
+      }
 
       // This hour
       refs.hourList.replaceChildren();
       const row = (k, v) => { const r = K.el("div", "hl-stat"); r.append(K.el("span", null, k)); const s = K.el("strong"); if (v instanceof Node) s.append(v); else s.textContent = v; r.append(s); return r; };
       if (data.me) {
-        refs.hourNote.textContent = "";
+        refs.hourSum.textContent = `${data.me.joinsThisHour} of ${config.maxPerHour} tables`;
         refs.hourList.append(row("Tables", `${data.me.joinsThisHour} of ${config.maxPerHour}`), row("Casino net", K.zc(data.me.hourNet, { sign: true })), row("Cap", K.zc(config.hourCap)));
       } else {
+        refs.hourSum.textContent = "Log in";
         refs.hourList.append(K.el("p", "cf-empty", "Log in to keep a record."));
       }
 
       // What it pays
-      refs.paysList.replaceChildren();
       const at = lobby ? lobby.players.length : last?.players.length;
+      refs.paysSum.textContent = lobby && lobby.players.length >= 2 ? `${fmt(lobby.pot)} ZC at ${lobby.players.length} seats` : `${config.stake} × seats`;
+      refs.paysList.replaceChildren();
       for (const t of config.table || []) {
         const r = K.el("div", `mn-rung${t.players === at ? " at" : ""}`);
         r.append(K.el("span", null, `${t.players} players`), K.el("strong", null, spec.payCell(t)));
@@ -280,7 +417,8 @@
       }
 
       // Fairness
-      refs.fair.hidden = false;
+      const hash = lobby?.hash || last?.hash || "";
+      refs.fairSum.textContent = hash ? `${hash.slice(0, 8)}…` : "";
       const lines = [];
       if (lobby) lines.push(`this table's hash  ${lobby.hash}   (the seed is revealed when it plays)`);
       if (last) {
@@ -293,18 +431,6 @@
       // Only a round that played has a result to check; a refunded table
       // of one has a seed but nothing it decided.
       K.verifyLink(refs.fair, last?.seed && last.status === "SETTLED" ? { game: spec.key, seed: last.seed, hash: last.hash, players: last.players.length } : null);
-
-      // Room
-      const room = data.room || [];
-      refs.roomCount.textContent = String(room.length);
-      refs.roomList.replaceChildren();
-      if (!room.length) refs.roomList.append(K.el("p", "cf-empty", "Nobody logged in is here yet."));
-      for (const u of room) {
-        const chip = K.el("a", "cf-chipuser ulink");
-        chip.href = `/u/${encodeURIComponent(u.login)}`;
-        chip.append(K.avatar(u, "cf-av small"), document.createTextNode(u.displayName));
-        refs.roomList.append(chip);
-      }
 
       // Ledger
       const items = data.history || [];
@@ -327,17 +453,22 @@
         line.append(who);
         refs.ledgerList.append(line);
       }
-      refs.ledgerList.append(K.pager(pg, (n) => { ledgerPage = n; render(); }, "tables"));
+      refs.ledgerList.append(K.pager(pg, (p) => { ledgerPage = p; render(); }, "tables"));
     }
 
-    /** The countdown, off the server clock, four times a second. */
+    /** The countdown and its bar, off the server clock, four times a second. */
     function tick() {
       if (!refs.count) return;
       const lobby = data?.lobby;
-      if (!lobby || playing) { refs.count.textContent = ""; refs.count.hidden = true; return; }
-      const left = Math.max(0, (lobby.startsAt - serverNow()) / 1000);
+      if (!lobby || playing) { refs.count.hidden = true; refs.clock.hidden = true; return; }
+      const leftMs = Math.max(0, lobby.startsAt - serverNow());
+      const left = leftMs / 1000;
       refs.count.hidden = false;
       refs.count.textContent = left > 0 ? `${Math.ceil(left)}s` : "Starting…";
+      refs.count.classList.toggle("soon", left > 0 && left <= 5);
+      const total = Math.max(1000, lobby.startsAt - (lobby.opensAt || lobby.startsAt - (data.config.lobbySeconds || 30) * 1000));
+      refs.clock.hidden = false;
+      refs.clockFill.style.width = `${Math.min(100, (100 * leftMs) / total)}%`;
       if (left <= 0 && !polledPastZero && !busy) { polledPastZero = true; poll(); }
     }
 
@@ -347,20 +478,22 @@
         document.title = `${spec.title} — EastCoin Casino`;
         window.ECPresence?.beat(spec.key);
         shownRoundId = null;
+        holdUntil = 0;
         build();
         poll();
         schedule();
         tickTimer = window.setInterval(tick, 250);
         // A tab that comes back into view gets its state now, not on the
-        // next tick: with a sixty-second clock on screen, six seconds of
-        // stale page reads as broken.
+        // next tick: with a clock on screen, six seconds of stale page
+        // reads as broken.
         onVis = () => { if (!document.hidden && !busy) poll(); };
         document.addEventListener("visibilitychange", onVis);
       },
       unmount() {
         window.clearInterval(pollTimer);
         window.clearInterval(tickTimer);
-        pollTimer = tickTimer = 0;
+        window.clearTimeout(holdTimer);
+        pollTimer = tickTimer = holdTimer = 0;
         if (onVis) document.removeEventListener("visibilitychange", onVis);
         onVis = null;
         data = null; refs = {}; playing = false;
@@ -405,15 +538,16 @@
     return st.length === 1 && n === 2 ? 1 - st[0].shot : null;
   };
 
-  /* The cylinder. Chambers sit on a ring inside a rotating disc; the
-     hammer is a fixed mark at the top, and turning the disc brings one
-     chamber under it. --a places a chamber, --d sizes it (tighter with
-     more chambers: a 22-chamber round still fits the same disc). */
-  const CYL_R = 44;
+  /* The cylinder, in the middle of the ring. Chambers sit on a ring
+     inside a rotating disc; the hammer is a fixed mark at the top, and
+     turning the disc brings one chamber under it. --a places a chamber,
+     --d sizes it as a share of the cylinder (tighter with more chambers),
+     so the same drawing works at any size. */
+  const CYL_R = 35;
   function loadCylinder(cyl, chambers, stage) {
     cyl.replaceChildren();
-    const d = Math.max(9, Math.min(16, Math.floor((2 * Math.PI * CYL_R) / (chambers * 1.45))));
-    cyl.style.setProperty("--d", `${d}px`);
+    const d = Math.max(7, Math.min(17, Math.floor((2 * Math.PI * CYL_R) / (chambers * 1.45))));
+    cyl.style.setProperty("--d", String(d));
     for (let c = 0; c < chambers; c += 1) {
       const ch = K.el("i", "rr-ch");
       ch.style.setProperty("--a", `${(c * 360) / chambers}deg`);
@@ -478,9 +612,9 @@
     paysTitle: "What the winner takes",
     verifyRule: "round k: live = sha256(seed:roulette:k) mod chambers · chamber c is pulled by the c-th seat still in, wrapping · last left wins",
     payCell: (t) => `${t.pot} · 1 in ${t.chance}${t.chambers ? ` · ${t.chambers} chambers` : ""}`,
-    openLine: (l) => `${l.players.length} in so far, ${l.pot} in the pot. Sit and it's ${l.pot + 20} to the last one standing.`,
+    openLine: (l) => `${l.players.length} in so far. Sit and it's ${l.pot + 20} to the last one standing.`,
     waitingLine: (l) => `${l.players.length} at the table, ${l.pot} in the pot. You're on 1 in ${l.players.length}.`,
-    resultLine: (r, me) => { const w = r.players[winnerOf(r.result, r.players.length)]; return w ? (w.login === me ? `You survive — takes ${r.pot}` : `${w.displayName} survived — takes ${r.pot}`) : `Table played — ${r.pot} paid`; },
+    resultLine: (r, me) => { const w = r.players[winnerOf(r.result, r.players.length)]; return w ? (w.login === me ? `You survive — you take ${r.pot}` : `${w.displayName} survived — takes ${r.pot}`) : `Table played — ${r.pot} paid`; },
     wonHeadline: () => "Last one standing",
     lostLine: (r, mine) => {
       const k = stagesOf(r.result, r.players.length).findIndex((s) => s.shot === mine.seat);
@@ -502,34 +636,55 @@
       return frag;
     },
 
-    drawSeats(players, arena, { me, result, settled }) {
+    /* The board: seats on a ring round a big cylinder. An open seat is a
+       button — clicking it is the same as the Join button. */
+    drawSeats(players, arena, { me, result, settled, canSit, onSit, stake }) {
       arena.replaceChildren();
+      arena.classList.remove("bang");
       const ring = K.el("div", "rr-ring");
       const n = players.length;
+      const ghost = !settled && canSit ? 1 : 0;
+      const slots = Math.max(1, n + ghost);
+      const angleOf = (i) => (i / slots) * Math.PI * 2 - Math.PI / 2;
+      const place = (node, a) => {
+        node.style.left = `${50 + Math.cos(a) * 41}%`;
+        node.style.top = `${50 + Math.sin(a) * 41}%`;
+        node.dataset.angle = String(a);
+      };
       const stages = settled ? stagesOf(result, n) : [];
       const winner = settled ? winnerOf(result, n) : null;
       players.forEach((p, i) => {
         const s = seatNode(p, me);
-        const a = (i / Math.max(1, n)) * Math.PI * 2 - Math.PI / 2;
-        s.style.left = `${50 + Math.cos(a) * 40}%`;
-        s.style.top = `${50 + Math.sin(a) * 40}%`;
+        place(s, angleOf(i));
         if (settled && winner !== null) s.classList.add(i === winner ? "winner" : "dead");
         ring.append(s);
       });
-      if (!n) ring.append(K.el("p", "cf-empty rr-empty", "Sit down to open the table."));
-      const gun = K.el("div", "rr-gun");
+      if (ghost) {
+        const g = K.el("button", "rr-seat rr-sit");
+        g.type = "button";
+        g.append(K.el("span", "rr-av", "+"), K.el("b", null, "Sit here"));
+        const price = K.el("small");
+        price.append(K.zc(stake || 20));
+        g.append(price);
+        g.addEventListener("click", () => onSit?.());
+        place(g, angleOf(n));
+        ring.append(g);
+      }
+
+      const center = K.el("div", "rr-center");
       const wrap = K.el("div", "rr-cylwrap");
       const cyl = K.el("div", "rr-cyl");
       // Idle: a cylinder sized for the table. Settled: the last round's,
       // as it was left, spent up to the live one.
       const lastStage = stages[stages.length - 1];
       const chambers = lastStage ? lastStage.chambers : (n ? n * Math.max(1, Math.ceil(6 / n)) : 6);
-      loadCylinder(cyl, chambers, lastStage || null);
-      const word = K.el("div", "rr-word", n && !settled ? "Loaded" : "");
-      wrap.append(K.el("div", "rr-hammer"), cyl, word);
-      gun.append(wrap, K.el("div", "rr-odds", n && !settled ? `${chambers} chambers · 1 live` : ""));
-      ring.append(gun);
+      wrap.append(K.el("div", "rr-hammer"), cyl, K.el("div", "rr-word", ""));
+      center.append(wrap, K.el("div", "rr-odds", n && !settled ? `${chambers} chambers · 1 live` : ""));
+      ring.append(center);
+      if (!n && !canSit) ring.append(K.el("p", "cf-empty rr-empty", "Nobody at the table."));
       arena.append(ring);
+      loadCylinder(cyl, chambers, lastStage || null);
+
       if (settled && winner !== null && players[winner]) {
         const w = players[winner];
         banner(arena, `${w.login === me ? "You take" : `${w.displayName} takes`} `, 20 * n);
@@ -542,23 +697,23 @@
       const nameOf = (i) => (round.players[i]?.login === me ? "You" : round.players[i]?.displayName || "Someone");
       const verb = (i, third, second) => (round.players[i]?.login === me ? second : third);
       roulette.drawSeats(round.players, refs.arena, { me });
-      const seats = [...refs.arena.querySelectorAll(".rr-seat")];
-      const gun = refs.arena.querySelector(".rr-gun");
-      const cyl = refs.arena.querySelector(".rr-cyl");
-      const word = refs.arena.querySelector(".rr-word");
-      const odds = refs.arena.querySelector(".rr-odds");
+      const arena = refs.arena;
+      const seats = [...arena.querySelectorAll(".rr-seat")];
+      const cyl = arena.querySelector(".rr-cyl");
+      const word = arena.querySelector(".rr-word");
+      const odds = arena.querySelector(".rr-odds");
       let remaining = round.players.map((_, i) => i);
 
       for (let k = 0; k < stages.length; k += 1) {
         const st = stages[k];
-        // Load for whoever is left, then spin. Said out loud between
-        // rounds so a second BANG reads as a new round, not the same one.
+        // Load for whoever is left, then spin. Said out loud between rounds so a second BANG reads as
+        // a new round, not the same one.
         loadCylinder(cyl, st.chambers, null);
         const chs = [...cyl.children];
         word.textContent = k > 0 ? "Reload" : "";
         word.className = k > 0 ? "rr-word reload" : "rr-word";
         refs.phase.className = "cf-phase open";
-        refs.phase.textContent = k > 0 ? `${remaining.length} left — reloading…` : "Spinning the cylinder…";
+        refs.phase.textContent = k > 0 ? `${remaining.length} left — reloading…` : "Spinning…";
         odds.textContent = `${st.chambers} chambers · 1 live`;
         if (k > 0) await wait(700);
         turnTo(cyl, 0, true);
@@ -580,7 +735,7 @@
           await wait(700);
           if (c === st.live) {
             chs[c].className = "rr-ch live under";
-            gun.classList.add("bang");
+            arena.classList.remove("bang"); void arena.offsetWidth; arena.classList.add("bang");
             word.textContent = "BANG";
             word.className = "rr-word bang";
             odds.textContent = "";
@@ -589,14 +744,14 @@
             refs.phase.className = "cf-phase bad";
             refs.phase.textContent = `${nameOf(who)} ${verb(who, "is", "are")} out`;
             remaining = remaining.filter((s) => s !== who);
-            await wait(1100);
-            gun.classList.remove("bang");
+            await wait(1150);
+            arena.classList.remove("bang");
             break;
           }
           chs[c].className = "rr-ch spent under";
           word.textContent = "click";
           word.className = "rr-word click";
-          await wait(320);
+          await wait(340);
         }
       }
 
@@ -608,11 +763,11 @@
       seats[w]?.classList.add("winner");
       word.textContent = "";
       word.className = "rr-word";
-      banner(refs.arena, `${nameOf(w)} ${verb(w, "takes", "take")} `, round.pot);
+      banner(arena, `${nameOf(w)} ${verb(w, "takes", "take")} `, round.pot);
       refs.phase.className = "cf-phase open";
       refs.phase.textContent = `${nameOf(w)} ${verb(w, "survives", "survive")} — takes ${round.pot}`;
       K.burst?.();
-      await wait(1800);
+      await wait(500);
     }
   };
 
@@ -640,10 +795,10 @@
       return frag;
     },
     payCell: (t) => `${t.pot} · 1 in ${t.chance}`,
-    openLine: (l) => `${l.players.length} in so far, ${l.pot} in the pot. Sit and it's ${l.pot + 20} to one person.`,
+    openLine: (l) => `${l.players.length} in so far. Sit and it's ${l.pot + 20} to one person.`,
     waitingLine: (l) => `${l.players.length} at the table, ${l.pot} in the pot. You're on 1 in ${l.players.length}.`,
     resultLine: (r, me) => { const w = r.players[r.result.winner]; return w ? (w.login === me ? `You take ${r.pot} — last of ${r.players.length}` : `${w.displayName} took ${r.pot} — last of ${r.players.length}`) : `Table played — ${r.pot} paid`; },
-    wonHeadline: (r) => `Last one standing`,
+    wonHeadline: () => "Last one standing",
     lostLine: (r, mine) => { const place = r.result.order.indexOf(mine.seat); return `Knocked out ${place === 0 ? "first" : `${r.players.length - place}${ordinal(r.players.length - place)}`} of ${r.players.length}.`; },
     verifyLine: (r) => `order ${r.result.order.join(",")} · seat ${r.result.winner} won`,
 
@@ -702,7 +857,7 @@
       refs.phase.textContent = `${round.players[r.winner]?.login === me ? "You take" : `${round.players[r.winner]?.displayName} takes`} ${round.pot}`;
       banner(refs.arena, `${round.players[r.winner]?.login === me ? "You take" : `${round.players[r.winner]?.displayName} takes`} `, round.pot);
       K.burst?.();
-      await wait(1800);
+      await wait(500);
     }
   };
 

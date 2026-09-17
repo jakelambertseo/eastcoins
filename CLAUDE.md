@@ -619,6 +619,30 @@
 > Node's built-in SQLite with StreamElements stubbed at `fetch` — worth
 > reusing for any new money path.
 >
+> **The PvP room, rebuilt (2026-09-16, night)** — one screen: the board
+> (`.pv-board`, a HUD line with the phase and a big countdown, then the
+> arena sized `clamp(400px, 100vh - 300px, 660px)`) beside **At the
+> table** (`.pv-side`: the pot, a clock bar, the one button, every seat
+> with "1 in N", and a Watching row from `room` minus the seated). This
+> hour / What the winner takes / Verify / Daily Jackpot are `<details>`
+> folds below (`.pv-folds`); the Jackpot rides the fold's summary as
+> `ECPot.mount(…, {pill:true})` and mounts its full card only when opened.
+> Roulette's ring holds a big cylinder in the middle (sizes in `cqw` of
+> the cylinder) and, when you can sit, a **"+ Sit here" seat that is the
+> Join button**. Three behaviours: a finished table stays up `HOLD_MS`
+> (2.6 s) and then the board clears — first paint never shows an old
+> result; a round that settled more than `STALE_MS` (45 s) before this
+> tab saw it is not replayed (a toast tells you if you were in it); and
+> the arena, seat list and watchers redraw only when their signature
+> changes, so avatars do not reload every poll. A revolver in the middle
+> with skins (Factory Blue / Scrollwork / Hexed / Hotline / Midas, one gun
+> per table with a "<name>'s gun skin" label) was built and **held back**
+> by request; it is in `mockups-archive/` (not deployed) with the
+> matching practice page. The layout is shared, so Last One Standing
+> (still paused) has it too. Measuring a spin in the browser pane is
+> unreliable: a hidden pane pauses CSS transitions, so a chamber reads
+> mid-turn — check geometry with the transition switched off.
+>
 > **The PvP tables (2026-09-12)** — Russian Roulette `/?view=roulette` and
 > Last One Standing `/?view=standing`, one client (`v3-pvp.js`, a `table(spec)`
 > factory registered twice) over one server module
