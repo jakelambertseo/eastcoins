@@ -193,6 +193,13 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .shop-row strong{display:block;font-size:.9rem}
 .shop-row small{color:var(--muted);font-size:.78rem}
 .shop-row.owned{opacity:.6}
+.shop-row.has-ico{grid-template-columns:48px minmax(0,1fr) auto}
+.shop-ico{width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.rod-ico{width:24px;height:24px;object-fit:contain;vertical-align:-7px;margin-right:3px}
+.bait-ico{width:20px;height:20px;object-fit:contain;vertical-align:-5px;margin-right:3px}
+.btn-ico{width:18px;height:18px;object-fit:contain;vertical-align:-4px;margin-right:4px}
+.bait-sel-ico{width:28px;height:28px;object-fit:contain}
+.bait-sel-ico[hidden]{display:none}
 .lb{list-style:none;margin:0;padding:0;display:grid;gap:2px}
 .lb li{display:grid;grid-template-columns:22px 1fr auto;gap:8px;padding:7px 8px;border-radius:8px;font-size:.88rem}
 .lb li:nth-child(odd){background:rgba(255,255,255,.025)}
@@ -267,8 +274,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .plot .btn{width:100%;justify-content:center}
 .plot.choosing{gap:6px;align-content:start}
 .choose-head{font-size:.82rem;margin-bottom:2px}
-.choose{display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:8px;align-items:center;text-align:left;background:var(--panel-3);border:1px solid var(--line);border-radius:9px;padding:6px 8px;cursor:pointer}
+.choose{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:8px;align-items:center;text-align:left;background:var(--panel-3);border:1px solid var(--line);border-radius:9px;padding:6px 8px;cursor:pointer}
 .choose i{width:8px;height:8px;border-radius:50%}
+.choose img{width:30px;height:30px;object-fit:contain}
 .choose b{display:block;font-size:.78rem}
 .choose small{display:block;font-size:.68rem;color:var(--muted-2);font-weight:600}
 .choose em{font-style:normal;font-size:.76rem;font-weight:800;display:inline-flex;align-items:center;gap:3px}
@@ -424,7 +432,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       </div>
       <div class="actions">
         <button class="act" id="act" type="button">Cast</button>
-        <label class="baitpick">Bait <select id="baitSel"></select></label>
+        <label class="baitpick">Bait <img class="bait-sel-ico" id="baitIco" alt="" hidden><select id="baitSel"></select></label>
         <span class="act-note" id="actNote">Space works too.</span>
       </div>
       <div class="biting">
@@ -592,13 +600,21 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   ];
   const BY_KEY = Object.fromEntries(SPECIES.map((s) => [s.key, s]));
 
+  /* Art (2026-09-17): /v3/assets/img/reef/<name>.webp, bump ART_V when a file changes.
+     Each rod also has a "-scene" copy with its hanging line and hook cut off,
+     because the scene draws its own line from the tip to the bobber; tip and
+     handle are where those points sit in that copy, so it can be laid along
+     the pole. */
+  const ART = "/v3/assets/img/reef/", ART_V = "?v=1";
+  const artSrc = (name) => `${ART}${name}.webp${ART_V}`;
   const RODS = [
-    { name: "Twig Rod", cost: 0, zone: .28, luck: 1 },
-    { name: "Fibreglass Rod", cost: 150, zone: .31, luck: 1.3 },
-    { name: "Graphite Rod", cost: 800, zone: .34, luck: 1.7 },
-    { name: "Carbon Pro", cost: 3000, zone: .37, luck: 2.2 },
-    { name: "Golden Rod", cost: 12000, zone: .4, luck: 3 }
+    { name: "Twig Rod", cost: 0, zone: .28, luck: 1, art: "rod-twig", scene: { w: 651, h: 768, tip: [646, 39], handle: [9, 742] } },
+    { name: "Fibreglass Rod", cost: 150, zone: .31, luck: 1.3, art: "rod-fibreglass", scene: { w: 731, h: 768, tip: [716, 5], handle: [8, 742] } },
+    { name: "Graphite Rod", cost: 800, zone: .34, luck: 1.7, art: "rod-graphite", scene: { w: 707, h: 768, tip: [690, 8], handle: [11, 744] } },
+    { name: "Carbon Pro", cost: 3000, zone: .37, luck: 2.2, art: "rod-carbon", scene: { w: 675, h: 768, tip: [661, 6], handle: [8, 740] } },
+    { name: "Golden Rod", cost: 12000, zone: .4, luck: 3, art: "rod-golden", scene: { w: 677, h: 768, tip: [664, 3], handle: [19, 749] } }
   ];
+  const ROD_IMGS = RODS.map((r) => { const i = new Image(); i.decoding = "async"; i.src = artSrc(r.art + "-scene"); return i; });
   const TANKS = [{ cap: 5, cost: 0 }, { cap: 8, cost: 300 }, { cap: 12, cost: 1500 }, { cap: 16, cost: 6000 }];
   const DECOR = [
     { key: "kelp", name: "Kelp forest", cost: 60 },
@@ -1048,9 +1064,20 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (spot.look === "deep") { ctx.fillStyle = "#e8e2d4"; ctx.beginPath(); ctx.moveTo(0, h - 40); ctx.lineTo(w * 0.36, h - 22); ctx.lineTo(w * 0.36, h); ctx.lineTo(0, h); ctx.fill(); ctx.fillStyle = "#b8202e"; ctx.fillRect(0, h - 36, w * 0.36, 5); }
 
     // rod, line, bobber
-    const tipX = w * 0.16, tipY = h * 0.16;
-    ctx.strokeStyle = "#3a2a1a"; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-10, h + 10); ctx.lineTo(tipX, tipY); ctx.stroke();
-    ctx.strokeStyle = S.rod === 4 ? "#e8bf35" : "#6b4a2a"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(w * 0.07, h * 0.62); ctx.lineTo(tipX, tipY); ctx.stroke();
+    const tipX = w * 0.125, tipY = h * 0.23;
+    const rodImg = ROD_IMGS[S.rod], ra = RODS[S.rod].scene;
+    if (rodImg && rodImg.complete && rodImg.naturalWidth) {
+      // lay the drawing's handle→tip along the pole: butt just off the bottom-left, tip where the line starts
+      const hx = w * -0.02, hy = h * 1.09, dx = tipX - hx, dy = tipY - hy;
+      const ix = ra.tip[0] - ra.handle[0], iy = ra.tip[1] - ra.handle[1];
+      const sc = Math.hypot(dx, dy) / Math.hypot(ix, iy);
+      ctx.save(); ctx.translate(hx, hy); ctx.rotate(Math.atan2(dy, dx) - Math.atan2(iy, ix)); ctx.scale(sc, sc);
+      ctx.drawImage(rodImg, -ra.handle[0], -ra.handle[1], ra.w, ra.h);
+      ctx.restore();
+    } else {
+      ctx.strokeStyle = "#3a2a1a"; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-10, h + 10); ctx.lineTo(tipX, tipY); ctx.stroke();
+      ctx.strokeStyle = S.rod === 4 ? "#e8bf35" : "#6b4a2a"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(w * 0.07, h * 0.62); ctx.lineTo(tipX, tipY); ctx.stroke();
+    }
     const p = fish.phase, since = t - fish.at;
     if (p !== "idle" && p !== "caught") {
       let bx = w * 0.62, by = horizon + (h - horizon) * 0.45;
@@ -1121,7 +1148,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       box.append(chip);
     });
     $("clock").textContent = `${cap(W.time)} · ${cap(W.season)}${W.weather === "storm" ? " · Storm" : ""}${W.sunday ? " · NFL Sunday" : ""}`;
-    $("rodLine").textContent = RODS[S.rod].name + (activeBait() ? ` · ${activeBait().name} ×${S.bait[S.baitOn]}` : "");
+    $("rodLine").innerHTML = `<img class="rod-ico" src="${artSrc(RODS[S.rod].art)}" alt="">${RODS[S.rod].name}` + (activeBait() ? ` · <img class="bait-ico" src="${artSrc("bait-" + S.baitOn)}" alt="">${activeBait().name} ×${S.bait[S.baitOn]}` : "");
   }
 
   // input
@@ -1349,7 +1376,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     Object.assign(p, { seed: null, at: 0, ready: 0, watered: false });
     track("harvest"); renderGarden(); renderBaitSel(); save();
   }
-  function sprout(state, frac, color) {
+  function sprout(state, frac, color, key) {
     const mound = `<ellipse cx="40" cy="50" rx="30" ry="8" fill="#4a3020"/><ellipse cx="40" cy="48" rx="26" ry="6" fill="#6a4630"/>`;
     if (state === "empty") return `<svg viewBox="0 0 80 60" aria-hidden="true">${mound}<path d="M22 47h6M36 45h8M52 47h6" stroke="#8a6040" stroke-width="2" stroke-linecap="round"/></svg>`;
     const stage = state === "ready" ? 3 : frac < 0.34 ? 0 : frac < 0.67 ? 1 : 2;
@@ -1357,7 +1384,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (stage === 0) s += `<circle cx="36" cy="45" r="2.5" fill="#caa36a"/><circle cx="45" cy="46" r="2.5" fill="#caa36a"/><path d="M40 46v-6" stroke="#6fbf5a" stroke-width="2.5" stroke-linecap="round"/>`;
     if (stage >= 1) s += `<path d="M40 47V${stage === 1 ? 32 : 20}" stroke="#4f9a3f" stroke-width="3" stroke-linecap="round"/><path d="M40 40c-8-2-12-7-12-10 6 0 11 4 12 10zM40 38c8-2 12-7 12-10-6 0-11 4-12 10z" fill="#6fbf5a"/>`;
     if (stage >= 2) s += `<path d="M40 30c-9-2-14-8-14-12 7 0 13 5 14 12zM40 28c9-2 14-8 14-12-7 0-13 5-14 12z" fill="#7fd06a"/>`;
-    if (stage === 3) s += `<g style="filter:drop-shadow(0 0 4px ${color})"><circle cx="31" cy="16" r="5" fill="${color}"/><circle cx="49" cy="14" r="5" fill="${color}"/><circle cx="40" cy="8" r="5.5" fill="${color}"/></g>`;
+    // ready: the bait itself sits on top of the plant
+    if (stage === 3) s += key
+      ? `<image href="${artSrc("bait-" + key)}" x="22" y="-6" width="36" height="36" style="filter:drop-shadow(0 0 4px ${color})"/>`
+      : `<g style="filter:drop-shadow(0 0 4px ${color})"><circle cx="31" cy="16" r="5" fill="${color}"/><circle cx="49" cy="14" r="5" fill="${color}"/><circle cx="40" cy="8" r="5.5" fill="${color}"/></g>`;
     return `<svg viewBox="0 0 80 60" aria-hidden="true">${s}</svg>`;
   }
   const loopRefs = { plots: [], nests: [], gardenSig: "", nestSig: "" };
@@ -1368,7 +1398,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const owned = BAIT_KEYS.filter((k) => S.bait[k] > 0);
     const intro = el("div", "panel-intro");
     intro.append(el("p", null, owned.length
-      ? `Your bait: ${owned.map((k) => `<b>${BAITS[k].name} ×${S.bait[k]}</b>`).join(" · ")}`
+      ? `Your bait: ${owned.map((k) => `<img class="bait-ico" src="${artSrc("bait-" + k)}" alt=""><b>${BAITS[k].name} ×${S.bait[k]}</b>`).join(" · ")}`
       : "Grow bait here, then pick it on the fishing card to change what bites."));
     intro.append(el("span", "hint", "Watering takes a quarter off"));
     box.append(intro);
@@ -1383,7 +1413,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         cell.append(el("div", "choose-head", "<b>Plant a bed</b>"));
         BAIT_KEYS.forEach((k) => {
           const bb = BAITS[k];
-          const opt = el("button", "choose", `<i style="background:${bb.color}"></i><span><b>${bb.bed}</b><small>${bb.about} · ${shortDur(bb.grow)}</small></span><em><span class="pearl"></span>${bb.cost}</em>`);
+          const opt = el("button", "choose", `<img src="${artSrc("bait-" + k)}" alt=""><span><b>${bb.bed}</b><small>${bb.about} · ${shortDur(bb.grow)}</small></span><em><span class="pearl"></span>${bb.cost}</em>`);
           opt.type = "button"; opt.disabled = S.pearls < bb.cost;
           opt.addEventListener("click", () => plant(i, k));
           cell.append(opt);
@@ -1395,14 +1425,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         return;
       }
       const frac = p.seed ? Math.min(1, (S.clock - p.at) / (p.ready - p.at || 1)) : 0;
-      cell.append(el("div", "plot-art", sprout(st, frac, b?.color)));
+      cell.append(el("div", "plot-art", sprout(st, frac, b?.color, p.seed)));
       const label = el("div", "plot-label", b ? `<b>${b.bed}</b><small></small>` : `<b>Empty plot</b><small>&nbsp;</small>`);
       cell.append(label);
       let btn;
       if (st === "empty") { btn = el("button", "btn small ghost", "Plant…"); btn.addEventListener("click", () => { ui.choosing = i; renderGarden(); }); }
       else if (st === "ready") { btn = el("button", "btn small primary", `Harvest ${b.yield}`); btn.addEventListener("click", () => harvest(i)); }
-      else if (p.watered) { btn = el("button", "btn small ghost", "Watered"); btn.disabled = true; }
-      else { btn = el("button", "btn small water", "Water"); btn.addEventListener("click", () => water(i)); }
+      else if (p.watered) { btn = el("button", "btn small ghost", `<img class="btn-ico" src="${artSrc("watering-can")}" alt="" style="opacity:.55">Watered`); btn.disabled = true; }
+      else { btn = el("button", "btn small water", `<img class="btn-ico" src="${artSrc("watering-can")}" alt="">Water`); btn.addEventListener("click", () => water(i)); }
       btn.type = "button";
       const bar = el("div", "thinbar", "<i></i>");
       if (st === "empty") bar.style.visibility = "hidden";
@@ -1661,6 +1691,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     BAIT_KEYS.forEach((k) => { if ((S.bait[k] || 0) > 0) sel.append(new Option(`${BAITS[k].name} ×${S.bait[k]} (${BAITS[k].about})`, k)); });
     if (!activeBait()) S.baitOn = "none";
     sel.value = S.baitOn;
+    const ico = $("baitIco");
+    if (activeBait()) { ico.src = artSrc("bait-" + S.baitOn); ico.hidden = false; } else ico.hidden = true;
     renderBiting(); syncAction();
   }
   $("baitSel").addEventListener("change", (e) => { S.baitOn = e.target.value; renderBiting(); syncAction(); save(); });
@@ -1738,8 +1770,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     renderShop.sig = shopSig();
     const box = $("shop"); box.replaceChildren();
     const sec = (title) => { const s = el("div", "shop-sec"); s.append(el("h3", null, title)); box.append(s); return s; };
-    const row = (parent, name, about, cost, owned, onBuy, label) => {
-      const r = el("div", "shop-row" + (owned ? " owned" : ""));
+    const row = (parent, name, about, cost, owned, onBuy, label, art) => {
+      const r = el("div", "shop-row" + (owned ? " owned" : "") + (art ? " has-ico" : ""));
+      if (art) { const im = el("img", "shop-ico"); im.src = artSrc(art); im.alt = ""; im.loading = "lazy"; r.append(im); }
       r.append(el("div", null, `<strong>${name}</strong><small>${about}</small>`));
       const b = el("button", "btn small" + (owned ? "" : " gold"), owned ? (label || "Owned") : `<span class="pearl"></span> ${num(cost)}`);
       b.type = "button"; b.disabled = owned || S.pearls < cost;
@@ -1747,7 +1780,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       r.append(b); parent.append(r);
     };
     const rods = sec("Rods");
-    RODS.forEach((r, i) => { if (i === 0) return; row(rods, r.name, `Catch zone ${Math.round(r.zone * 100)}% · rare fish ×${r.luck}`, r.cost, S.rod >= i, () => { S.rod = i; toast(`${r.name} rigged`); }, S.rod === i ? "Using" : "Owned"); });
+    RODS.forEach((r, i) => { if (i === 0) return; row(rods, r.name, `Catch zone ${Math.round(r.zone * 100)}% · rare fish ×${r.luck}`, r.cost, S.rod >= i, () => { S.rod = i; toast(`${r.name} rigged`); }, S.rod === i ? "Using" : "Owned", r.art); });
     const tanks = sec("Tank");
     TANKS.forEach((t, i) => { if (i === 0) return; row(tanks, `${t.cap}-fish tank`, `Room for ${t.cap} fish`, t.cost, S.tank >= i, () => { S.tank = i; toast(`Bigger tank`, `Room for ${t.cap} fish.`); }); });
     const garden = sec("Bait garden");
