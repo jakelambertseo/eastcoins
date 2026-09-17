@@ -3712,7 +3712,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     $("lbHead").innerHTML = `<span class="lb-ico">${b.svg || b.icon}</span><div><h2>${b.name}</h2><small>${b.sub}</small></div>`;
 
     const rows = [...LB_ROOM, lbMe()].map((p) => ({ p, v: b.xp(p), lvl: b.lvl ? b.lvl(p) : null }))
-      .sort((x, y) => y.v - x.v || (y.lvl || 0) - (x.lvl || 0));
+      .sort((x, y) => (b.lvl ? y.lvl - x.lvl : 0) || y.v - x.v);
     const table = $("lbTable");
     table.replaceChildren();
     table.append(el("div", "lb-row lb-th", `<span>Rank</span><span>Name</span><span class="lv">${b.lvl ? "Level" : ""}</span><span class="xp">${b.unit === "xp" ? "XP" : b.unit.replace(/^of /, "Out of ")}</span>`));
