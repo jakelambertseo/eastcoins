@@ -119,6 +119,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chipf{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:99px;background:var(--panel-2);border:1px solid var(--line);font-size:.78rem;font-weight:700}
 .chipf i{width:8px;height:8px;border-radius:50%}
+.chipf-fish{width:34px;height:20px;display:block;flex:none}
+.chipf-fish.unknown{filter:grayscale(1) brightness(.45) contrast(.8)}
 .chipf.off{opacity:.45;font-weight:600}
 .chipf small{color:var(--muted-2);font-weight:600}
 
@@ -2104,6 +2106,24 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     });
     $("spotName").textContent = SPOTS[S.spot].name;
   }
+  /* The species itself, drawn at 34x20 from the same routine the tank and
+     the catch card use, so a chip can never disagree with the fish. One you
+     have never landed is greyed to a silhouette rather than hidden: the
+     shape is the clue, and "??? " beside a blank is no fun to read. */
+  function fishChip(sp, known) {
+    const dpr = Math.min(2, window.devicePixelRatio || 1), w = 34, h = 20;
+    const cv = document.createElement("canvas");
+    cv.className = "chipf-fish" + (known ? "" : " unknown");
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    const ctx = cv.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // a swordfish's bill and a paddlefish's snout hang off the nose, so the
+    // long ones are nudged right and drawn a little shorter to stay inside
+    const long = sp.x === "sword" || sp.x === "paddle";
+    drawFish(ctx, sp, w / 2 + (long ? 4 : 0), h / 2, long ? w * 0.78 : w * 0.94, { wag: 0.06 });
+    return cv;
+  }
+
   function renderBiting() {
     const box = $("biting"); box.replaceChildren();
     const W = now();
@@ -2111,7 +2131,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       const known = S.dex[sp.key]?.n > 0, on = biting(sp, W);
       const chip = el("span", "chipf" + (on ? "" : " off"));
       const dot = el("i"); dot.style.background = RAR[sp.rar].color;
-      chip.append(dot, document.createTextNode(known ? sp.name : "???"));
+      chip.append(dot, fishChip(sp, known), document.createTextNode(known ? sp.name : "???"));
       const wait = on ? 0 : waitFor((w) => biting(sp, w));
       if (!on || sp.cond) chip.append(el("small", null, on ? "· now" : wait ? `· in ${mins(wait)}` : `· ${hint(sp).toLowerCase()}`));
       chip.title = `${RAR[sp.rar].name} · ${hint(sp)}${!on && wait ? ` · next in ${mins(wait)}` : ""}`;
