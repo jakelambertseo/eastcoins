@@ -51,6 +51,7 @@ export const TIER_OF = {
   "title-maincharacter": "rare", "title-finalboss": "rare", "title-cursed": "rare", "title-trickortreat": "rare", "title-scaries": "rare", "title-bag": "rare",
   "finish-sakura": "rare", "finish-pumpkin": "rare", "banner-speedlines": "rare", "banner-graveyard": "rare", "background-playbook": "rare",
   "finish-obsidian": "epic", "namefx-powerup": "epic", "namefx-haunted": "epic", "banner-aurora": "epic", "background-neontokyo": "epic", "background-bloodmoon": "epic",
+  "finish-diamond": "legendary", "name-diamond": "legendary", "namefx-prism": "legendary",
   "finish-gold": "legendary", "name-gold": "legendary", "team-gold": "legendary", "label-foil": "legendary"
 };
 export const tierItems = (tier) => ITEMS.filter((i) => TIER_OF[i.id] === tier);

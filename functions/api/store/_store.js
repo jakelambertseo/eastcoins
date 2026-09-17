@@ -57,7 +57,8 @@ export const ITEMS = [
   { id: "finish-chrome", slot: "finish", name: "Chrome", price: 0, promo: "Free", blurb: "Brushed metal from edge to edge. Free for a limited time." },
 
   // Round three (2026-09-16): anime, Halloween and a few more. `tag` is the ribbon the store shows.
-  { id: "finish-sakura", slot: "finish", name: "Sakura", price: 75, tag: "Anime", blurb: "Cherry blossom pink, with petals drifting down the card." },
+  { id: "finish-diamond", slot: "finish", name: "Diamond", price: 500, chase: true, blurb: "The whole card cut like a diamond, with light sliding across the facets. A Legendary item." },
+  { id: "finish-sakura", slot: "finish", name: "Sakura", price: 75, blurb: "Cherry blossom pink, with petals drifting down the card." },
   { id: "finish-pumpkin", slot: "finish", name: "Jack-o'-Lantern", price: 75, tag: "Halloween", blurb: "Pumpkin orange with a candle flickering inside." },
   { id: "finish-obsidian", slot: "finish", name: "Obsidian", price: 75, tag: "New", blurb: "Black volcanic glass with a violet edge." },
 
@@ -65,7 +66,8 @@ export const ITEMS = [
   { id: "name-ice", slot: "name", name: "Ice", price: 75, blurb: "Your name in frosted blue." },
   { id: "name-ember", slot: "name", name: "Ember", price: 75, blurb: "Your name glowing hot orange." },
 
-  { id: "name-sakura", slot: "name", name: "Sakura", price: 75, tag: "Anime", blurb: "Your name in cherry blossom pink." },
+  { id: "name-diamond", slot: "name", name: "Diamond", price: 500, chase: true, blurb: "Your name in cut ice-white diamond. A Legendary item." },
+  { id: "name-sakura", slot: "name", name: "Sakura", price: 75, blurb: "Your name in cherry blossom pink." },
   { id: "name-slime", slot: "name", name: "Slime", price: 75, tag: "Halloween", blurb: "Your name in glowing toxic green." },
   { id: "name-mint", slot: "name", name: "Mint", price: 75, tag: "New", blurb: "Your name in cool mint." },
 
@@ -74,7 +76,8 @@ export const ITEMS = [
   { id: "namefx-rainbow", slot: "namefx", name: "Rainbow", price: 75, blurb: "Your name slowly cycles through every colour." },
   { id: "namefx-pulse", slot: "namefx", name: "Pulse", price: 75, blurb: "A soft glow breathes around your name." },
 
-  { id: "namefx-powerup", slot: "namefx", name: "Power Up", price: 75, tag: "Anime", blurb: "A golden aura flares around your name, like a final form." },
+  { id: "namefx-prism", slot: "namefx", name: "Prism", price: 500, chase: true, blurb: "Your name splits light into a rainbow that sweeps across it. A Legendary item." },
+  { id: "namefx-powerup", slot: "namefx", name: "Power Up", price: 75, blurb: "A golden aura flares around your name, like a final form." },
   { id: "namefx-haunted", slot: "namefx", name: "Haunted", price: 75, tag: "Halloween", blurb: "Your name flickers, and a ghost of it drifts away." },
   { id: "namefx-neon", slot: "namefx", name: "Neon Sign", price: 75, tag: "New", blurb: "Your name buzzes like a neon tube in a bar window." },
 
@@ -84,8 +87,8 @@ export const ITEMS = [
   { id: "title-underdog", slot: "title", name: "Underdog King", text: "Underdog King", price: 75, blurb: "Plus money or nothing." },
   { id: "title-degen", slot: "title", name: "Professional Degen", text: "Professional Degen", price: 75, blurb: "It's not gambling if you're good at it." },
   { id: "title-legend", slot: "title", name: "Chat Legend", text: "Chat Legend", price: 75, blurb: "Everybody knows the name." },
-  { id: "title-maincharacter", slot: "title", name: "Main Character", text: "Main Character", price: 75, tag: "Anime", blurb: "The story is obviously about you." },
-  { id: "title-finalboss", slot: "title", name: "Final Boss", text: "Final Boss", price: 75, tag: "Anime", blurb: "Everyone else is a side quest." },
+  { id: "title-maincharacter", slot: "title", name: "Main Character", text: "Main Character", price: 75, blurb: "The story is obviously about you." },
+  { id: "title-finalboss", slot: "title", name: "Final Boss", text: "Final Boss", price: 75, blurb: "Everyone else is a side quest." },
   { id: "title-cursed", slot: "title", name: "Cursed", text: "Cursed", price: 75, tag: "Halloween", blurb: "For the one whose picks die at the one-yard line." },
   { id: "title-trickortreat", slot: "title", name: "Trick or Treater", text: "Trick or Treater", price: 75, tag: "Halloween", blurb: "Here for the candy." },
   { id: "title-scaries", slot: "title", name: "Sunday Scaries", text: "Sunday Scaries", price: 75, tag: "New", blurb: "Seven games live and none of them going well." },
@@ -99,7 +102,7 @@ export const ITEMS = [
   { id: "background-carbon", slot: "background", name: "Carbon", price: 75, blurb: "Woven carbon fibre, like a race car." },
   { id: "background-velvet", slot: "background", name: "Velvet", price: 75, blurb: "Deep red velvet with a VIP glow." },
 
-  { id: "background-neontokyo", slot: "background", name: "Neon Tokyo", price: 75, tag: "Anime", blurb: "A night city in magenta and cyan behind your profile." },
+  { id: "background-neontokyo", slot: "background", name: "Neon Tokyo", price: 75, blurb: "A night city in magenta and cyan behind your profile." },
   { id: "background-bloodmoon", slot: "background", name: "Blood Moon", price: 75, tag: "Halloween", blurb: "A red moon hanging over a very dark night." },
   { id: "background-playbook", slot: "background", name: "Playbook", price: 75, tag: "New", blurb: "Chalk routes and circles on a coach's blue board." },
 
@@ -107,7 +110,7 @@ export const ITEMS = [
   { id: "banner-matrix", slot: "banner", name: "Matrix", price: 75, blurb: "Green code raining behind your profile." },
   { id: "banner-retro", slot: "banner", name: "Retro sunset", price: 75, blurb: "An '80s sunset grid behind your profile." },
 
-  { id: "banner-speedlines", slot: "banner", name: "Speed Lines", price: 75, tag: "Anime", blurb: "Manga action lines bursting out from behind your name." },
+  { id: "banner-speedlines", slot: "banner", name: "Speed Lines", price: 75, blurb: "Manga action lines bursting out from behind your name." },
   { id: "banner-graveyard", slot: "banner", name: "Graveyard", price: 75, tag: "Halloween", blurb: "A full moon, purple sky and fog rolling in." },
   { id: "banner-aurora", slot: "banner", name: "Aurora", price: 75, tag: "New", blurb: "Northern lights drifting over your profile." },
 

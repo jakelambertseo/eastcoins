@@ -973,7 +973,7 @@
 > clock); leaving the player ends (host) or leaves (guest) the room.
 >
 > **The store (2026-09-15, members only, in the top nav since the same
-> evening, after Casino)** — **chase items** are the gold ones
+> evening, after Casino)** — **chase items** are the gold ones (plus Diamond finish, Diamond name and the Prism name effect since 2026-09-16 night)
 > (`chase: true` in `ITEMS`: Gold card finish, Gold name, Gold plate, Gold foil label — the Gold finish replaced Neon), all
 > 500 ZC, drawn in the store with a moving gold border and a LEGENDARY ribbon
 > (`.st-item.chase`, `.st-ribbon`); the store header has a "View my
@@ -1038,7 +1038,7 @@
 > finish, Slime name, Haunted, Graveyard, Blood Moon, titles Cursed /
 > Trick or Treater) and general (Obsidian, Mint, Neon Sign, Aurora,
 > Playbook, Frozen team effect, titles Sunday Scaries / Bag Secured),
-> all 75 ZC. An item may carry `tag` ("Anime", "Halloween", "New"),
+> all 75 ZC. An item may carry `tag` ("Halloween", "New" — the Anime ribbon was dropped the same night),
 > which the store draws as a themed ribbon (`.st-ribbon.tag-*`). **A
 > new item is three things**: its `ITEMS` row, its CSS in the round-three
 > block of `v3.css` (and a `.sw-finish-*` swatch in `v3-store.css` for
