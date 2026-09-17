@@ -53,10 +53,17 @@ export async function onRequestGet(context) {
     return Response.redirect(new URL("/fishing", request.url).toString(), 302);
   }
 
+  /* Ask for the EXTENSIONLESS path. Pages serves fishing.html at /fishing
+     and 308s /fishing.html to it, so asking for the .html here hands back a
+     redirect rather than the file — and the redirect is what got served.
+     env.ASSETS skips Functions, so asking for /fishing cannot recurse. */
   const pageUrl = new URL(request.url);
-  pageUrl.pathname = "/fishing.html";
+  pageUrl.pathname = "/fishing";
   pageUrl.search = "";
-  const page = await env.ASSETS.fetch(new Request(pageUrl.toString(), request));
+  let page = await env.ASSETS.fetch(new Request(pageUrl.toString(), request));
+  if (page.status >= 300 && page.status < 400 && page.headers.get("location")) {
+    page = await env.ASSETS.fetch(new Request(new URL(page.headers.get("location"), request.url).toString(), request));
+  }
 
   const meta =
     `<meta property="og:title" content="${h(title)}">` +
