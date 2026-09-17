@@ -39,6 +39,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 
 .grid2{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:16px;align-items:start}
 @media (max-width:920px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.card-next{margin-top:18px}
+.card-h{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:0 0 10px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px 10px}
 .card-head h2{font-family:var(--display);font-size:1.1rem;margin:0}
@@ -823,8 +825,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       </div>
     </section>
 
-    <section class="card" aria-label="Tank upgrades">
+    <section class="card card-next" aria-label="Tank upgrades">
       <div class="card-body">
+        <h2 class="card-h">Tank Upgrades</h2>
         <div class="panel-intro">
           <p>Bigger glass and things to put in it. Every decoration adds <b>+5%</b> to what the tank pays.</p>
           <span class="hint" id="tankUpHint"></span>
