@@ -390,11 +390,28 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .xpt-drops{position:absolute;left:0;right:0;bottom:100%;height:0}
 /* The reel bar lives on the right side of the scene; get out of its way while reeling. */
 .xpt.dim{opacity:0}
+/* the same widget, sitting in a page instead of over the scene */
+.xpt.flat{position:static;width:100%;max-width:none;margin:0 0 14px}
+.xpt.flat .xpt-drops{bottom:auto;top:0}
+.xpw-row{display:grid;grid-template-columns:minmax(0,340px);margin-bottom:14px}
 .xpdrop{position:absolute;right:6px;bottom:6px;display:flex;align-items:center;gap:4px;color:#fff;font-size:.86rem;font-weight:800;text-shadow:1px 1px 0 #000,0 0 6px rgba(0,0,0,.8);animation:xpdrop 1.8s ease-out forwards;white-space:nowrap}
 .xpdrop svg{width:15px;height:15px;stroke:#ffcf6a;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 @keyframes xpdrop{0%{transform:translateY(0);opacity:0}12%{opacity:1}75%{opacity:1}100%{transform:translateY(-62px);opacity:0}}
 @media (max-width:560px){.xpt{width:170px;right:8px;bottom:8px;font-size:.66rem}.xpt-sess{display:none}}
 
+.loot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:14px}
+.loot{background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:10px;display:grid;justify-items:center;gap:1px;text-align:center}
+.loot.none{opacity:.4}
+.loot b{font-size:.82rem}
+.loot small{font-size:.66rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.loot em{font-style:normal;font-size:.78rem;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+.loot-ico{font-size:1.7rem;line-height:1}
+.row2 .loot-ico{font-size:1.5rem}
+.row2.locked{opacity:.55}
+.row2-main .ok{color:var(--green)}
+.row2-main .no{color:var(--red)}
+.btn.big{height:46px;padding:0 26px;font-size:1rem;margin-top:12px}
+.tank-up{margin:8px 0 0;font-size:.8rem;color:#ff981f;font-weight:700}
 .skills{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:auto auto;gap:12px;align-items:start}
 /* Each column is two rows of the page grid, so every card is as tall as the
    tallest one and the tables below them all start on the same line. */
@@ -442,12 +459,15 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
           <span class="fnav-h">Play</span>
           <button class="tab" role="tab" id="tab-fishing" aria-controls="panel-fishing" data-tab="fishing" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3v9a4 4 0 0 0 8 0"/><path d="M5 3l14 5"/><path d="M19 8v6"/><circle cx="19" cy="16" r="2"/></svg><span class="tab-label">Fishing</span></button>
           <button class="tab" role="tab" id="tab-tank" aria-controls="panel-tank" data-tab="tank" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 13c1.5-2 4-2 5.5 0-1.5 2-4 2-5.5 0zM12.5 13l2-1.5v3z"/><path d="M3 9h18"/></svg><span class="tab-label">Your tank</span></button>
+          <button class="tab" role="tab" id="tab-dive" aria-controls="panel-dive" data-tab="dive" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21c-3.5-3.6-6-6.6-6-9.8A6 6 0 0 1 18 11.2c0 3.2-2.5 6.2-6 9.8z"/><circle cx="12" cy="10.6" r="2.3"/></svg><span class="tab-label">Diving</span></button>
           <button class="tab" role="tab" id="tab-skills" aria-controls="panel-skills" data-tab="skills" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-7M10 20V6M15 20v-9M20 20V9"/></svg><span class="tab-label">Skills</span></button>
           <span class="fnav-h">Every day</span>
           <button class="tab" role="tab" id="tab-quests" aria-controls="panel-quests" data-tab="quests" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 9l1.6 1.6L13.5 7.5M9 15h6"/></svg><span class="tab-label">Quests</span><span class="count" hidden></span></button>
           <button class="tab" role="tab" id="tab-garden" aria-controls="panel-garden" data-tab="garden" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20v-8"/><path d="M12 12c-4 0-6-3-6-6 3 0 6 2 6 6zM12 14c3.5 0 5.5-2.5 5.5-5.5-3 0-5.5 2-5.5 5.5z"/><path d="M5 20h14"/></svg><span class="tab-label">Bait garden</span><span class="count" hidden></span></button>
           <button class="tab" role="tab" id="tab-breeding" aria-controls="panel-breeding" data-tab="breeding" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3.6 0 6 5.2 6 9.2A6 6 0 0 1 6 12.7c0-4 2.4-9.2 6-9.2z"/></svg><span class="tab-label">Breeding</span><span class="count" hidden></span></button>
+          <button class="tab" role="tab" id="tab-craft" aria-controls="panel-craft" data-tab="craft" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4.5l5 5-8.5 8.5-5-5z"/><path d="M16 3l1.4 1.4M20 7l1 1M4.5 19.5l2.5-2.5"/></svg><span class="tab-label">Crafting</span></button>
           <span class="fnav-h">Collection</span>
+          <button class="tab" role="tab" id="tab-inv" aria-controls="panel-inv" data-tab="inv" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 8V6a4 4 0 0 1 8 0v2M4 12h16"/></svg><span class="tab-label">Inventory</span></button>
           <button class="tab" role="tab" id="tab-dex" aria-controls="panel-dex" data-tab="dex" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h10a3 3 0 0 1 3 3v12H8a3 3 0 0 1-3-3z"/><path d="M5 16.5a3 3 0 0 1 3-3h10"/></svg><span class="tab-label">Fish book</span></button>
           <button class="tab" role="tab" id="tab-shop" aria-controls="panel-shop" data-tab="shop" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 11.5H6.2z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg><span class="tab-label">Shop</span></button>
           <button class="tab" role="tab" id="tab-derby" aria-controls="panel-derby" data-tab="derby" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5v1.5A3 3 0 0 0 8 10.5M16 6h3v1.5a3 3 0 0 1-3 3M12 13v4M8.5 20h7"/></svg><span class="tab-label">Weekly derby</span></button>
@@ -479,13 +499,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         <canvas id="scene"></canvas>
         <div class="status"><span id="clock">Day · Fall</span><span id="spotName">Backyard Pond</span></div>
         <div class="say" id="say"></div>
-        <div class="xpt" id="xpt" aria-live="polite">
-          <div class="xpt-top"><span id="xptIco"></span><b id="xptName">Fishing 1</b><span id="xptXp">0 xp</span></div>
-          <div class="xpt-bar"><i id="xptFill"></i><span id="xptPct">0%</span></div>
-          <div class="xpt-to" id="xptTo">83 xp to level 2</div>
-          <div class="xpt-sess" id="xptSess">This session: 0 xp</div>
-          <div class="xpt-drops" id="xptDrops"></div>
-        </div>
+        <div class="xpt" id="xpt" data-skill="fishing" aria-live="polite"></div>
         <div class="reel" id="reel" hidden>
           <div class="track" id="track"><div class="zone" id="zone"></div><div class="rfish" id="rfish"><canvas id="rfishC" width="60" height="36"></canvas></div></div>
           <div class="prog"><i id="prog"></i></div>
@@ -497,6 +511,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
             <h3 id="cName">Bluegill</h3>
             <div class="tags" id="cTags"></div>
             <p class="catch-line" id="cLine"></p>
+            <p class="tank-up" id="cUpNote" hidden></p>
             <div class="btns">
               <button class="btn primary" id="cKeep" type="button">Put in tank</button>
               <button class="btn" id="cCook" type="button">Cook</button>
@@ -523,6 +538,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   </section>
 
   <section class="view view-tank" role="tabpanel" id="panel-tank" aria-labelledby="tab-tank" data-panel="tank" hidden>
+    <div class="xpw-row"><div class="xpt flat" data-skill="cooking" aria-live="polite"></div></div>
     <header class="view-h"><div><h1>Your tank</h1><p>Fish you keep swim here and make Pearls, even while you're away.</p></div><span class="meta" id="capLine">0 of 5 fish</span></header>
     <section class="card" aria-label="Aquarium">
       <div class="tank-wrap" id="tankWrap">
@@ -581,6 +597,21 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         <p class="note">It keeps your tank and when you last collected, and works out Pearls when you open the page. Nothing polls. Pearls never turn into ZCoins; it plays for titles.</p>
       </div></div>
     </div>
+  </section>
+
+  <section class="view view-dive" role="tabpanel" id="panel-dive" aria-labelledby="tab-dive" data-panel="dive" hidden>
+    <header class="view-h"><div><h1>Diving</h1><p>Go down for what the fish swim over. Deeper spots, better finds.</p></div></header>
+    <div class="card"><div class="card-body"><div id="dive"></div></div></div>
+  </section>
+
+  <section class="view view-craft" role="tabpanel" id="panel-craft" aria-labelledby="tab-craft" data-panel="craft" hidden>
+    <header class="view-h"><div><h1>Crafting</h1><p>Turn what you dive up into bait, pearls and charms.</p></div></header>
+    <div class="card"><div class="card-body"><div id="craft"></div></div></div>
+  </section>
+
+  <section class="view view-inv" role="tabpanel" id="panel-inv" aria-labelledby="tab-inv" data-panel="inv" hidden>
+    <header class="view-h"><div><h1>Inventory</h1><p>Everything you've brought up. Sell it, or keep it for a recipe.</p></div></header>
+    <div class="card"><div class="card-body"><div id="inv"></div></div></div>
   </section>
 
   <section class="view view-skills" role="tabpanel" id="panel-skills" aria-labelledby="tab-skills" data-panel="skills" hidden>
@@ -713,12 +744,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     fish: [], dex: {}, time: "auto", season: "auto", weather: "clear", sunday: false, shinyBoost: false, speed: 60, saved: Date.now(), uid: 1,
     clock: 0, bait: {}, baitOn: "none", seedPick: "worm", plots: [], plotLvl: 0, nests: [], nestLvl: 0, nursery: [], dayShift: 0,
     q: { day: "", daily: [], week: "", weekly: [], streak: 0, chest: false, weekChest: false },
-    skills: { fishing: 0, farming: 0, cooking: 0, breeding: 0 },
-    auto: { sprinkler: false, caretaker: false, turner: false, hatchery: false, smokehouse: false, cannery: false }, smokeAt: 0 });
+    skills: { fishing: 0, farming: 0, cooking: 0, breeding: 0, diving: 0, crafting: 0 },
+    auto: { sprinkler: false, caretaker: false, turner: false, hatchery: false, smokehouse: false, cannery: false }, smokeAt: 0,
+    inv: {}, charm: 0, benchAt: 0 });
   let S = fresh();
   try { const raw = localStorage.getItem(SAVE); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch {}
-  S.skills = Object.assign({ fishing: 0, farming: 0, cooking: 0, breeding: 0 }, S.skills || {});
-  S.auto = Object.assign({ sprinkler: false, caretaker: false, turner: false, hatchery: false, smokehouse: false, cannery: false }, S.auto || {});
+  S.skills = Object.assign({ fishing: 0, farming: 0, cooking: 0, breeding: 0, diving: 0, crafting: 0 }, S.skills || {});
+  S.auto = Object.assign({ sprinkler: false, caretaker: false, turner: false, hatchery: false, smokehouse: false, cannery: false, meshbag: false, airtank: false, toolbox: false, bench: false }, S.auto || {});
+  S.inv = S.inv || {}; S.charm = S.charm || 0;
   const save = () => { S.saved = Date.now(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch {} };
 
   /* ============================================================ helpers */
@@ -741,6 +774,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     fishing: { name: "Fishing", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12c3-4.5 8-5.5 12-2.2L20 7v10l-5-2.8C11 17.5 6 16.5 3 12z"/><circle cx="8.2" cy="11" r=".6"/></svg>', how: "Every catch. Rarer, heavier and shiny fish give more, and a new species gives a bonus." },
     farming: { name: "Farming", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20v-8"/><path d="M12 12c-4 0-6-3-6-6 3 0 6 2 6 6zM12 14c3.5 0 5.5-2.5 5.5-5.5-3 0-5.5 2-5.5 5.5z"/><path d="M5 20h14"/></svg>', how: "Planting, watering and harvesting the bait garden. Slower baits give more. Level 20 and 40 let the garden run itself." },
     cooking: { name: "Cooking", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6z"/><path d="M8 6.5c0-1 1-1 1-2.2M12 6.5c0-1 1-1 1-2.2M16 6.5c0-1 1-1 1-2.2"/></svg>', how: "Cooking a catch instead of selling it. It pays fewer pearls, so it costs you something. Level 20 opens the smokehouse." },
+    diving: { name: "Diving", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21c-3.5-3.6-6-6.6-6-9.8A6 6 0 0 1 18 11.2c0 3.2-2.5 6.2-6 9.8z"/><circle cx="12" cy="10.6" r="2.3"/></svg>', how: "Diving a spot for what's on the bottom. Deeper water hides better things." },
+    crafting: { name: "Crafting", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4.5l5 5-8.5 8.5-5-5z"/><path d="M4.5 19.5l2.5-2.5M16 3l1.4 1.4M20 7l1 1"/></svg>', how: "Making things out of what you dive up. Every recipe trains it." },
     breeding: { name: "Breeding", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3.6 0 6 5.2 6 9.2A6 6 0 0 1 6 12.7c0-4 2.4-9.2 6-9.2z"/></svg>', how: "Pairing fish, turning the eggs and hatching them. A shiny baby triples the hatch. Level 20 and 40 automate the nests." }
   };
   /* Shop unlocks. `at` is the level in `skill` you need before the thing can
@@ -756,6 +791,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { skill: "fishing", at: 45, what: "Carbon Pro" },
     { skill: "fishing", at: 60, what: "Zcoin treasure chest" },
     { skill: "fishing", at: 70, what: "Golden Rod" },
+    { skill: "diving", at: 20, what: "Mesh bag" },
+    { skill: "diving", at: 40, what: "Air tank" },
+    { skill: "crafting", at: 20, what: "Toolbox" },
+    { skill: "crafting", at: 40, what: "Workbench" },
     { skill: "farming", at: 20, what: "Sprinkler" },
     { skill: "farming", at: 40, what: "Caretaker" },
     { skill: "breeding", at: 20, what: "Egg turner" },
@@ -800,6 +839,35 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
      but the other three can be left running once the skill is high enough.
      Idle work pays LESS xp than doing it yourself (IDLE_CUT), so it tops a
      skill up between sessions rather than replacing them. */
+  /* Diving loot. rar matches the fish tiers, so xp and colour read the same
+     way everywhere. Deeper spots weight the good stuff up (see diveRoll). */
+  const LOOT = {
+    kelp: { name: "Kelp", icon: "🌿", rar: 0, value: 6 },
+    shell: { name: "Shell", icon: "🐚", rar: 0, value: 8 },
+    driftwood: { name: "Driftwood", icon: "🪵", rar: 0, value: 10 },
+    boot: { name: "Old boot", icon: "🥾", rar: 0, value: 4 },
+    seaglass: { name: "Sea glass", icon: "🔷", rar: 1, value: 25 },
+    coral: { name: "Coral", icon: "🪸", rar: 1, value: 30 },
+    oldcoin: { name: "Old coin", icon: "🪙", rar: 2, value: 70 },
+    pearl: { name: "Wild pearl", icon: "⚪", rar: 2, value: 90 },
+    ruby: { name: "Ruby", icon: "💎", rar: 3, value: 260 },
+    chest: { name: "Sunken chest", icon: "🧰", rar: 4, value: 900 }
+  };
+  const LOOT_KEYS = Object.keys(LOOT);
+  const DIVE_XP = [25, 60, 140, 400, 1200];
+  const DIVE_MS = 2600;
+  const RECIPES = [
+    { key: "chum", name: "Chum bucket", at: 1, need: { kelp: 3, shell: 2 }, xp: 120, about: "10 Nightcrawlers", give: () => { S.bait.worm = (S.bait.worm || 0) + 10; } },
+    { key: "junk", name: "Melt down junk", at: 1, need: { boot: 2, driftwood: 2 }, xp: 100, about: "250 pearls", give: () => { S.pearls += 250; } },
+    { key: "cage", name: "Cricket cage", at: 10, need: { driftwood: 3, shell: 2 }, xp: 300, about: "8 Crickets", give: () => { S.bait.cricket = (S.bait.cricket || 0) + 8; } },
+    { key: "polish", name: "Polish pearls", at: 15, need: { pearl: 2, coral: 1 }, xp: 500, about: "600 pearls", give: () => { S.pearls += 600; } },
+    { key: "lure", name: "Glow lure", at: 20, need: { seaglass: 2, coral: 2 }, xp: 800, about: "4 Glow grubs", give: () => { S.bait.glow = (S.bait.glow || 0) + 4; } },
+    { key: "charm", name: "Reef charm", at: 25, need: { pearl: 1, seaglass: 2, coral: 1 }, xp: 1200, about: "25 casts at 1.5× rare odds", give: () => { S.charm += 25; } },
+    { key: "setting", name: "Gem setting", at: 30, need: { ruby: 1, seaglass: 2 }, xp: 1500, about: "2,500 pearls", give: () => { S.pearls += 2500; } },
+    { key: "rig", name: "Shimmer rig", at: 35, need: { coral: 3, ruby: 1 }, xp: 2200, about: "2 Shimmer shrimp", give: () => { S.bait.shimmer = (S.bait.shimmer || 0) + 2; } }
+  ];
+  const BENCH_MS = 30 * 60 * 1000;
+
   const IDLE_CUT = 0.55;
   const SMOKE_MS = 30 * 60 * 1000;  // the smokehouse cooks one fish this often (half that with the cannery)
   const KIT = [
@@ -807,11 +875,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { key: "caretaker", name: "Caretaker", skill: "farming", at: 40, cost: 15000, about: "Harvests a ready bed and replants the same bait" },
     { key: "turner", name: "Egg turner", skill: "breeding", at: 20, cost: 3000, about: "Turns every egg the moment it can be turned" },
     { key: "hatchery", name: "Hatchery", skill: "breeding", at: 40, cost: 15000, about: "Hatches eggs into the nursery without you" },
+    { key: "meshbag", name: "Mesh bag", skill: "diving", at: 20, cost: 3000, about: "One more thing off the bottom every dive" },
+    { key: "airtank", name: "Air tank", skill: "diving", at: 40, cost: 15000, about: "Quicker dives and another thing again" },
+    { key: "toolbox", name: "Toolbox", skill: "crafting", at: 20, cost: 3000, about: "One in four crafts keeps its parts" },
+    { key: "bench", name: "Workbench", skill: "crafting", at: 40, cost: 15000, about: "Melts spare junk down on its own every 30 minutes" },
     { key: "smokehouse", name: "Smokehouse", skill: "cooking", at: 20, cost: 3000, about: "Cooks a nursery fish every 30 minutes, keeping two back" },
     { key: "cannery", name: "Cannery", skill: "cooking", at: 40, cost: 15000, about: "The smokehouse runs twice as often and keeps one back" }
   ];
-  const session = { xp: 0, since: 0 };
-  let tracked = "fishing";
+  const session = { xp: {}, since: 0 };
 
   /** Give xp to a skill: the drop on the tracker, the bar, and a level-up if one happened. Returns the xp given. */
   function grant(key, amount) {
@@ -821,8 +892,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     S.skills[key] = Math.min(MAX_XP, S.skills[key] + amount);
     const after = levelOf(S.skills[key]);
     if (!session.since) session.since = Date.now();
-    session.xp += amount;
-    tracked = key;
+    session.xp[key] = (session.xp[key] || 0) + amount;
     xpDrop(key, amount);
     renderXpTracker();
     renderSkills();
@@ -830,25 +900,52 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     return amount;
   }
   function xpDrop(key, amount) {
-    const box = $("xptDrops"); if (!box) return;
-    const d = el("div", "xpdrop", `${SKILLS[key].icon}+${num(amount)}`);
-    // stack a burst of drops rather than drawing them on top of each other
-    d.style.bottom = `${6 + box.childElementCount * 18}px`;
-    box.append(d);
-    setTimeout(() => d.remove(), 1850);
+    // the drop lands on that skill's own tracker, wherever it is mounted
+    document.querySelectorAll(`.xpt[data-skill="${key}"] .xpt-drops`).forEach((box) => {
+      if (!box.closest(".view") || box.closest("[hidden]")) return;
+      const d = el("div", "xpdrop", `${SKILLS[key].icon}+${num(amount)}`);
+      d.style.bottom = `${6 + box.childElementCount * 18}px`;
+      box.append(d);
+      setTimeout(() => d.remove(), 1850);
+    });
   }
+  /** Build the widget's insides once; every page's tracker is the same shape. */
+  function fillXpWidget(box) {
+    box.innerHTML = `<div class="xpt-top"><span class="xpt-ico"></span><b class="xpt-name"></b><span class="xpt-xp"></span></div>
+      <div class="xpt-bar"><i class="xpt-fill"></i><span class="xpt-pct"></span></div>
+      <div class="xpt-to"></div>
+      <div class="xpt-sess"></div>
+      <div class="xpt-drops"></div>`;
+    return box;
+  }
+  /** A tracker for a page: same widget, laid into the page rather than over the scene. */
+  function xpWidget(key) {
+    const row = el("div", "xpw-row");
+    const box = el("div", "xpt flat");
+    box.dataset.skill = key;
+    box.setAttribute("aria-live", "polite");
+    row.append(fillXpWidget(box));
+    return row;
+  }
+  /** Repaint every tracker on the page from its own skill. */
   function renderXpTracker() {
-    const key = tracked, xp = S.skills[key], lvl = levelOf(xp);
-    $("xptIco").innerHTML = SKILLS[key].icon;
-    $("xptName").textContent = `${SKILLS[key].name} ${lvl}`;
-    $("xptXp").textContent = `${num(xp)} xp`;
-    const lo = XP_AT[lvl], hi = lvl >= 99 ? lo : XP_AT[lvl + 1];
-    const pct = lvl >= 99 ? 100 : Math.floor((100 * (xp - lo)) / (hi - lo));
-    $("xptFill").style.width = `${pct}%`;
-    $("xptPct").textContent = `${pct}%`;
-    $("xptTo").textContent = lvl >= 99 ? "Level 99. Maxed." : `${num(hi - xp)} xp to level ${lvl + 1}`;
-    const hrs = session.since ? Math.max(1 / 60, (Date.now() - session.since) / 3600000) : 0;
-    $("xptSess").textContent = session.xp ? `This session: +${num(session.xp)} xp · ${num(session.xp / hrs)}/hr` : "This session: 0 xp";
+    document.querySelectorAll(".xpt").forEach((box) => {
+      const key = box.dataset.skill;
+      if (!SKILLS[key]) return;
+      if (!box.querySelector(".xpt-name")) fillXpWidget(box);
+      const xp = S.skills[key], lvl = levelOf(xp);
+      box.querySelector(".xpt-ico").innerHTML = SKILLS[key].icon;
+      box.querySelector(".xpt-name").textContent = `${SKILLS[key].name} ${lvl}`;
+      box.querySelector(".xpt-xp").textContent = `${num(xp)} xp`;
+      const lo = XP_AT[lvl], hi = lvl >= 99 ? lo : XP_AT[lvl + 1];
+      const pct = lvl >= 99 ? 100 : Math.floor((100 * (xp - lo)) / (hi - lo));
+      box.querySelector(".xpt-fill").style.width = `${pct}%`;
+      box.querySelector(".xpt-pct").textContent = `${pct}%`;
+      box.querySelector(".xpt-to").textContent = lvl >= 99 ? "Level 99. Maxed." : `${num(hi - xp)} xp to level ${lvl + 1}`;
+      const mine = session.xp[key] || 0;
+      const hrs = session.since ? Math.max(1 / 60, (Date.now() - session.since) / 3600000) : 0;
+      box.querySelector(".xpt-sess").textContent = mine ? `This session: +${num(mine)} xp · ${num(mine / hrs)}/hr` : "This session: 0 xp";
+    });
   }
   function renderSkills() {
     const box = $("skills"); if (!box) return;
@@ -1091,7 +1188,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const w = now(), rod = RODS[S.rod];
     const pool = SPECIES.filter((sp) => sp.spot === S.spot && biting(sp, w));
     const bait = activeBait();
-    const weights = pool.map((sp) => RAR[sp.rar].weight * (sp.rar >= 2 ? rod.luck : 1) * (bait?.mult?.[sp.rar] || 1));
+    const charmed = S.charm > 0 ? 1.5 : 1;
+    const weights = pool.map((sp) => RAR[sp.rar].weight * (sp.rar >= 2 ? rod.luck * charmed : 1) * (bait?.mult?.[sp.rar] || 1));
+    if (S.charm > 0) S.charm -= 1;
     let r = Math.random() * weights.reduce((a, b) => a + b, 0);
     let sp = pool[0];
     for (let i = 0; i < pool.length; i++) { r -= weights[i]; if (r <= 0) { sp = pool[i]; break; } }
@@ -1178,8 +1277,19 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const xp = grant("fishing", CATCH_XP[sp.rar] * (1 + 0.5 * (c.frac || 0)) * (c.shiny ? 3 : 1) + (isNew ? 250 : 0));
     $("cLine").innerHTML = `${lbs(c.w)} · makes ${num(rate)} pearls an hour in your tank · <b style="color:#ff981f">+${num(xp)} Fishing xp</b>`;
     const full = S.fish.length >= TANKS[S.tank].cap;
-    $("cKeep").disabled = full;
-    $("cKeep").textContent = full ? "Tank's full" : "Put in tank";
+    const up = TANKS[S.tank + 1];
+    const upNeed = up ? needOf(`${up.cap}-fish tank`) : null;
+    const upLocked = Boolean(upNeed) && levelIn(upNeed.skill) < upNeed.at;
+    const short = up ? Math.max(0, Math.ceil(up.cost - S.pearls)) : 0;
+    keepMode = full && up && !upLocked && !short ? "upgrade" : "keep";
+    $("cKeep").disabled = full && keepMode !== "upgrade";
+    const note = $("cUpNote");
+    note.hidden = !full;
+    if (!full) $("cKeep").textContent = "Put in tank";
+    else if (!up) { $("cKeep").textContent = "Tank's full"; note.textContent = "That's the biggest tank there is. Sell or cook this one."; }
+    else if (upLocked) { $("cKeep").textContent = "Tank's full"; note.textContent = `A ${up.cap}-fish tank needs ${SKILLS[upNeed.skill].name} level ${upNeed.at} — you're ${levelIn(upNeed.skill)}.`; }
+    else if (short) { $("cKeep").textContent = "Tank's full"; note.innerHTML = `A ${up.cap}-fish tank costs ${num(up.cost)} pearls — you're <b>${num(short)}</b> short.`; }
+    else { $("cKeep").innerHTML = `Upgrade tank <span class="pearl"></span> ${num(up.cost)}`; note.textContent = `Buys the ${up.cap}-fish tank and this catch goes straight in.`; }
     $("cSell").innerHTML = `Sell <span class="pearl"></span> ${num(rate * 3)}`;
     $("cCook").innerHTML = `Cook <span class="pearl"></span> ${num(rate * 2)}`;
     $("cCook").title = "Fewer pearls than selling, but it trains Cooking";
@@ -1192,8 +1302,17 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (c.shiny) track("shiny");
     save();
   }
+  let keepMode = "keep";
   $("cKeep").addEventListener("click", () => {
-    const c = fish.result; if (!c || S.fish.length >= TANKS[S.tank].cap) return;
+    const c = fish.result; if (!c) return;
+    if (keepMode === "upgrade") {
+      const up = TANKS[S.tank + 1];
+      if (!up || S.pearls < up.cost) return;
+      S.pearls -= up.cost; S.tank += 1;
+      toast(`${up.cap}-fish tank`, "More room. Your catch went straight in.");
+      renderShop();
+    }
+    if (S.fish.length >= TANKS[S.tank].cap) return;
     S.fish.push({ id: S.uid++, key: c.sp.key, w: c.w, shiny: c.shiny });
     closeCatch(); syncTank(); renderTank(); track("keep");
     toast(`${c.shiny ? "Shiny " : ""}${c.sp.name} is in the tank`, `+${num(fishRate(S.fish[S.fish.length - 1]))} pearls an hour`);
@@ -1590,6 +1709,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   function renderGarden() {
     normalizeLoop();
     const box = $("garden"); box.replaceChildren();
+    box.append(xpWidget("farming"));
 
     const owned = BAIT_KEYS.filter((k) => S.bait[k] > 0);
     const intro = el("div", "panel-intro");
@@ -1641,6 +1761,125 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     tickLoop(true);
   }
   const gardenSig = () => S.plots.map((p) => plotState(p) + (p.watered ? "w" : "") + (p.seed ? Math.floor(Math.min(1, (S.clock - p.at) / (p.ready - p.at || 1)) * 3) : "")).join(",") + S.plots.length + "|" + ui.choosing;
+
+  /* ---------------------------------------------------------- diving */
+  const invCount = () => Object.values(S.inv).reduce((n, v) => n + v, 0);
+  const addItem = (key, n = 1) => { S.inv[key] = (S.inv[key] || 0) + n; };
+  /** One thing off the bottom. Deeper spots and a higher level tilt it. */
+  function diveRoll() {
+    const depth = S.spot, lvl = levelIn("diving");
+    const w = LOOT_KEYS.map((k) => {
+      const r = LOOT[k].rar;
+      const base = [100, 34, 12, 3.2, 0.7][r];
+      return base * (1 + depth * 0.35 * r) * (1 + (lvl / 99) * 0.6 * r);
+    });
+    let t = w.reduce((a, b) => a + b, 0) * Math.random();
+    for (let i = 0; i < w.length; i++) { t -= w[i]; if (t <= 0) return LOOT_KEYS[i]; }
+    return "shell";
+  }
+  let diving = false;
+  function dive() {
+    if (diving) return;
+    diving = true;
+    renderDive();
+    const each = (S.auto.airtank && levelIn("diving") >= 40 ? DIVE_MS * 0.6 : DIVE_MS);
+    setTimeout(() => {
+      const n = 1 + (idleOn("meshbag") ? 1 : 0) + (idleOn("airtank") ? 1 : 0) + (Math.random() < 0.25 ? 1 : 0);
+      const got = [];
+      let xp = 0;
+      for (let i = 0; i < n; i++) { const k = diveRoll(); addItem(k); got.push(k); xp += DIVE_XP[LOOT[k].rar]; }
+      const gained = grant("diving", xp);
+      diving = false;
+      const best = got.slice().sort((a, b) => LOOT[b].rar - LOOT[a].rar)[0];
+      toast(`${LOOT[best].icon} ${got.map((k) => LOOT[k].name).join(", ")}`, `In the bag. +${num(gained)} Diving xp`);
+      renderDive(); renderInv(); renderCraft(); renderStatbar(); save();
+    }, each);
+  }
+  function renderDive() {
+    const box = $("dive"); if (!box) return;
+    box.replaceChildren();
+    box.append(xpWidget("diving"));
+    const spot = SPOTS[S.spot];
+    const head = el("div", "panel-intro");
+    head.append(el("p", null, `Diving <b>${spot.name}</b>. Deeper water holds better things — change spot on the fishing page.`));
+    head.append(el("span", "hint", `${invCount()} things in the bag`));
+    box.append(head);
+    const b = el("button", "btn primary big", diving ? "Down there…" : "Dive");
+    b.type = "button"; b.disabled = diving;
+    b.addEventListener("click", dive);
+    box.append(b);
+    const table = el("div", "loot-grid");
+    LOOT_KEYS.forEach((k) => {
+      const it = LOOT[k], has = S.inv[k] || 0;
+      const c = el("div", "loot" + (has ? "" : " none"));
+      c.innerHTML = `<span class="loot-ico">${it.icon}</span><b>${it.name}</b><small style="color:${RAR[it.rar].color}">${RAR[it.rar].name}</small><em>${has ? `×${has}` : "—"}</em>`;
+      table.append(c);
+    });
+    box.append(table);
+  }
+
+  /* ---------------------------------------------------------- crafting */
+  const canCraft = (r) => Object.entries(r.need).every(([k, n]) => (S.inv[k] || 0) >= n);
+  function craft(key) {
+    const r = RECIPES.find((x) => x.key === key); if (!r) return;
+    if (levelIn("crafting") < r.at || !canCraft(r)) return;
+    const keptParts = idleOn("toolbox") && Math.random() < 0.25;
+    if (!keptParts) Object.entries(r.need).forEach(([k, n]) => { S.inv[k] -= n; if (S.inv[k] <= 0) delete S.inv[k]; });
+    r.give();
+    const xp = grant("crafting", r.xp);
+    toast(`Made ${r.name}`, `${r.about}${keptParts ? " · the toolbox saved the parts" : ""} · +${num(xp)} Crafting xp`);
+    renderCraft(); renderInv(); renderDive(); renderBaitSel(); renderStatbar(); save();
+  }
+  function renderCraft() {
+    const box = $("craft"); if (!box) return;
+    box.replaceChildren();
+    box.append(xpWidget("crafting"));
+    const lvl = levelIn("crafting");
+    const list = el("div", "rows");
+    RECIPES.forEach((r) => {
+      const locked = lvl < r.at, ready = canCraft(r);
+      const row = el("div", "row2" + (locked ? " locked" : ""));
+      const parts = Object.entries(r.need).map(([k, n]) => `<span class="${(S.inv[k] || 0) >= n ? "ok" : "no"}">${LOOT[k].icon} ${n}</span>`).join(" ");
+      row.append(el("span", "row2-main", `<b>${r.name}</b><small>${parts} → ${r.about}</small>`));
+      const b = el("button", "btn small" + (!locked && ready ? " gold" : ""), locked ? `Crafting ${r.at}` : ready ? "Make" : "Need parts");
+      b.type = "button"; b.disabled = locked || !ready;
+      b.addEventListener("click", () => craft(r.key));
+      row.append(b);
+      list.append(row);
+    });
+    box.append(list);
+  }
+
+  /* ---------------------------------------------------------- the bag */
+  function sellItem(key, all) {
+    const have = S.inv[key] || 0; if (!have) return;
+    const n = all ? have : 1;
+    S.inv[key] = have - n; if (S.inv[key] <= 0) delete S.inv[key];
+    const got = LOOT[key].value * n;
+    S.pearls += got;
+    toast(`Sold ${n} × ${LOOT[key].name}`, `+${num(got)} pearls`);
+    renderInv(); renderCraft(); renderDive(); renderStatbar(); save();
+  }
+  function renderInv() {
+    const box = $("inv"); if (!box) return;
+    box.replaceChildren();
+    const keys = LOOT_KEYS.filter((k) => S.inv[k]);
+    const intro = el("div", "panel-intro");
+    intro.append(el("p", null, keys.length ? `<b>${invCount()}</b> things, worth <b>${num(keys.reduce((n, k) => n + S.inv[k] * LOOT[k].value, 0))}</b> pearls if you sold the lot.` : "Empty. Dive a spot and see what's down there."));
+    box.append(intro);
+    if (!keys.length) return;
+    const list = el("div", "rows");
+    keys.forEach((k) => {
+      const it = LOOT[k];
+      const row = el("div", "row2");
+      row.append(el("span", "loot-ico", it.icon), el("span", "row2-main", `<b>${it.name} ×${S.inv[k]}</b><small style="color:${RAR[it.rar].color}">${RAR[it.rar].name} · ${it.value} pearls each</small>`));
+      const one = el("button", "btn small", "Sell 1"); one.type = "button"; one.addEventListener("click", () => sellItem(k, false));
+      const all = el("button", "btn small gold", `Sell all <span class="pearl"></span>${num(it.value * S.inv[k])}`); all.type = "button"; all.addEventListener("click", () => sellItem(k, true));
+      row.append(one, all);
+      list.append(row);
+    });
+    box.append(list);
+  }
 
   /* ---------------------------------------------------------- breeding */
   const breedingIds = () => new Set(S.nests.filter(Boolean).flatMap((n) => [n.a, n.b]));
@@ -1709,6 +1948,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   function renderBreeding() {
     normalizeLoop();
     const box = $("breeding"); box.replaceChildren();
+    box.append(xpWidget("breeding"));
 
     const cols = el("div", "breed-cols");
     const left = el("div");
@@ -2004,7 +2244,24 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       }
       if (S.clock - S.smokeAt > every) S.smokeAt = S.clock;   // nothing to cook: don't bank up a backlog
     }
-    if (touched) { renderProfile(); renderBaitSel(); save(); }
+    // the workbench melts spare junk down while you are away
+    if (idleOn("bench")) {
+      if (!S.benchAt) S.benchAt = S.clock;
+      let guard = 30;
+      while (S.clock - S.benchAt >= BENCH_MS && guard-- > 0) {
+        const junk = LOOT_KEYS.filter((k) => LOOT[k].rar === 0 && (S.inv[k] || 0) > 0);
+        if (junk.length < 2) break;
+        S.benchAt += BENCH_MS;
+        junk.slice(0, 2).forEach((k) => { S.inv[k] -= 1; if (S.inv[k] <= 0) delete S.inv[k]; });
+        S.pearls += 250;
+        idleLog.pearls += 250;
+        idleLog.xp += grant("crafting", 100 * IDLE_CUT);
+        idleLog.crafted = (idleLog.crafted || 0) + 1;
+        touched = true;
+      }
+      if (S.clock - S.benchAt > BENCH_MS) S.benchAt = S.clock;
+    }
+    if (touched) { renderProfile(); renderBaitSel(); renderInv(); renderDive(); renderCraft(); save(); }
     return touched;
   }
 
@@ -2199,6 +2456,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (idleLog.turned) bits.push(`${idleLog.turned} eggs turned`);
     if (idleLog.hatched) bits.push(`${idleLog.hatched} hatched`);
     if (idleLog.cooked) bits.push(`${idleLog.cooked} cooked`);
+    if (idleLog.crafted) bits.push(`${idleLog.crafted} melted down`);
     if (bits.length) toast("Your kit kept working", `${bits.join(" · ")} · +${num(idleLog.xp)} xp`);
     Object.keys(idleLog).forEach((k) => { idleLog[k] = 0; });
     if (made <= 0) { if (!quiet) toast("Nothing in the tank", "Fish you keep make pearls while you're gone. The garden and eggs kept growing."); return; }
@@ -2218,6 +2476,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (b.dataset.tab === "shop") renderShop();
     if (b.dataset.tab === "derby") renderDerby();
     if (b.dataset.tab === "skills") renderSkills();
+    if (b.dataset.tab === "dive") renderDive();
+    if (b.dataset.tab === "craft") renderCraft();
+    if (b.dataset.tab === "inv") renderInv();
+    renderXpTracker();
     if (focus) b.focus();
     if (window.matchMedia("(max-width:820px)").matches) b.scrollIntoView({ block: "nearest", inline: "nearest" });
     tickLoop(true);
@@ -2234,7 +2496,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   });
 
   /* ============================================================ loop */
-  function renderEverything() { normalizeLoop(); ensureQuests(); renderSpots(); syncTank(); renderTank(); renderDex(); renderShop(); renderDerby(); renderProfile(); renderGarden(); renderBreeding(); renderQuests(); renderBaitSel(); renderSkills(); renderXpTracker(); }
+  function renderEverything() { normalizeLoop(); ensureQuests(); renderSpots(); syncTank(); renderTank(); renderDex(); renderShop(); renderDerby(); renderProfile(); renderGarden(); renderBreeding(); renderQuests(); renderBaitSel(); renderSkills(); renderDive(); renderCraft(); renderInv(); renderXpTracker(); }
 
   // the reel's little fish
   function drawReelFish() {
