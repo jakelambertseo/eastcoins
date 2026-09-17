@@ -152,6 +152,44 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .fnav .tabs{display:flex;flex-direction:column;gap:2px}
 .main{min-width:0;padding:22px 28px 56px}
 /* The stat bar: every page, always on screen. */
+/* The chest. Three beats: it shakes and asks to be clicked, the lid throws
+   back with light and confetti behind it, and then the card counts the
+   rewards in one at a time. Everything is CSS and one canvas-free burst of
+   absolutely positioned dots, so it costs nothing. */
+.chest{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background:rgba(4,3,2,.82);backdrop-filter:blur(3px)}
+.chest-rays{position:absolute;width:min(760px,92vw);aspect-ratio:1;border-radius:50%;opacity:0;
+  background:conic-gradient(from 0deg,rgba(var(--gold-rgb),.42) 0 6deg,transparent 6deg 24deg);
+  animation:chest-spin 14s linear infinite}
+.chest.open .chest-rays{opacity:1;transition:opacity .5s ease .1s}
+@keyframes chest-spin{to{transform:rotate(360deg)}}
+.chest-box{position:relative;display:grid;justify-items:center;gap:14px}
+.chest.open .chest-box{animation:chest-away .45s ease forwards}
+@keyframes chest-away{to{transform:scale(.72) translateY(-26px);opacity:0}}
+.chest-lid{background:none;border:0;padding:0;cursor:pointer;filter:drop-shadow(0 18px 40px rgba(0,0,0,.6))}
+.chest-lid svg{width:min(260px,58vw);height:auto;display:block;animation:chest-shake 2.4s ease-in-out infinite}
+@keyframes chest-shake{0%,72%,100%{transform:rotate(0) translateY(0)}78%{transform:rotate(-3deg) translateY(-4px)}84%{transform:rotate(3deg) translateY(-2px)}90%{transform:rotate(-2deg)}}
+.cl-lid,.cl-base{fill:#7a4a24;stroke:#3d2412;stroke-width:3}
+.cl-band{fill:#e8bf35;stroke:#8a6a1f;stroke-width:2}
+.cl-lock{fill:#f7dd8a;stroke:#8a6a1f;stroke-width:2.5}
+.chest-hint{font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);animation:chest-pulse 1.6s ease-in-out infinite}
+@keyframes chest-pulse{50%{opacity:.35}}
+.chest-card{position:relative;width:min(420px,92vw);background:var(--panel);border:1px solid rgba(var(--gold-rgb),.5);
+  border-radius:18px;padding:20px;text-align:center;box-shadow:0 26px 70px rgba(0,0,0,.65);animation:chest-in .4s cubic-bezier(.2,1.5,.4,1) both}
+@keyframes chest-in{from{transform:scale(.7);opacity:0}}
+.chest-kind{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.chest-card h2{font-family:var(--display);font-weight:800;font-size:1.5rem;margin:5px 0 14px}
+.chest-loot{display:grid;gap:8px;margin-bottom:16px}
+.chest-loot .row{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:12px;background:var(--panel-2);
+  border:1px solid var(--line);text-align:left;opacity:0;transform:translateY(8px);animation:loot-in .34s cubic-bezier(.2,1.4,.4,1) both}
+.chest-loot .row.big{border-color:rgba(var(--gold-rgb),.5);background:var(--gold-dim)}
+.chest-loot .ico{font-size:1.3rem;line-height:1}
+.chest-loot b{font-family:var(--display);font-weight:800;font-size:1.05rem}
+.chest-loot small{display:block;font-size:.72rem;color:var(--muted-2)}
+@keyframes loot-in{to{opacity:1;transform:none}}
+.chest-dot{position:absolute;width:9px;height:9px;border-radius:2px;pointer-events:none;animation:chest-fly .9s ease-out forwards}
+@keyframes chest-fly{to{transform:translate(var(--dx),var(--dy)) rotate(var(--rot));opacity:0}}
+@media (prefers-reduced-motion:reduce){.chest-lid svg,.chest-rays,.chest-hint{animation:none}.chest-dot{display:none}}
+
 /* The tour: one dark sheet with a hole cut in it by a very large box-shadow,
    and a card that sits under the hole (or over it, near the bottom of the
    screen). The sheet does not take clicks — only the card does — so a step
@@ -677,6 +715,27 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   </aside>
 
 <main class="main">
+  <div class="chest" id="chest" hidden>
+    <div class="chest-rays" id="chestRays"></div>
+    <div class="chest-box" id="chestBox">
+      <button class="chest-lid" id="chestLid" type="button" aria-label="Open the chest">
+        <svg viewBox="0 0 120 96" aria-hidden="true">
+          <path class="cl-lid" d="M8 44a52 52 0 0 1 104 0v6H8z"/>
+          <path class="cl-band" d="M54 6h12v44H54z"/>
+          <rect class="cl-base" x="8" y="50" width="104" height="40" rx="5"/>
+          <rect class="cl-band" x="54" y="50" width="12" height="40"/>
+          <rect class="cl-lock" x="50" y="58" width="20" height="17" rx="4"/>
+        </svg>
+      </button>
+      <span class="chest-hint" id="chestHint">Click to open</span>
+    </div>
+    <div class="chest-card" id="chestCard" hidden>
+      <span class="chest-kind" id="chestKind"></span>
+      <h2 id="chestTitle"></h2>
+      <div class="chest-loot" id="chestLoot"></div>
+      <button class="btn gold" id="chestDone" type="button">Take it</button>
+    </div>
+  </div>
   <div class="tour" id="tour" hidden>
     <div class="tour-hole" id="tourHole"></div>
     <div class="tour-card" id="tourCard" role="dialog" aria-modal="true" aria-labelledby="tourT">
@@ -3056,23 +3115,72 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (S.q.daily.includes(q)) track("daily");
     renderQuests(); save();
   }
+  /* The chest is granted the moment you earn it — the animation is playback,
+     never the thing that decides, so closing the tab mid-open cannot cost you
+     anything. Same rule the casino's games follow. */
+  function chestShow(kind, title, loot) {
+    const box = $("chest"), lid = $("chestLid"), card = $("chestCard");
+    box.hidden = false; box.className = "chest";
+    $("chestBox").hidden = false; card.hidden = true;
+    $("chestHint").textContent = "Click to open";
+    $("chestKind").textContent = kind;
+    $("chestTitle").textContent = title;
+    $("chestLoot").replaceChildren();
+    loot.forEach((it, i) => {
+      const row = el("div", "row" + (it.big ? " big" : ""), `<span class="ico">${it.icon}</span><span><b>${it.what}</b><small>${it.note}</small></span>`);
+      row.style.animationDelay = `${0.12 + i * 0.13}s`;
+      $("chestLoot").append(row);
+    });
+    const open = () => {
+      lid.removeEventListener("click", open);
+      box.className = "chest open";
+      burstChest();
+      setTimeout(() => { $("chestBox").hidden = true; card.hidden = false; }, 430);
+    };
+    lid.addEventListener("click", open);
+    lid.focus();
+  }
+  /** Forty coloured chips thrown out of the middle. */
+  function burstChest() {
+    const box = $("chest");
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    for (let i = 0; i < 40; i++) {
+      const d = el("i", "chest-dot");
+      const a = Math.random() * Math.PI * 2, r = 120 + Math.random() * 260;
+      d.style.cssText = `left:50%;top:50%;background:${["#e8bf35", "#f7dd8a", "#4fc3d9", "#ff8fb0", "#4ddb8b"][i % 5]};`
+        + `--dx:${Math.cos(a) * r}px;--dy:${Math.sin(a) * r}px;--rot:${Math.random() * 720 - 360}deg;animation-delay:${Math.random() * 0.12}s`;
+      box.append(d);
+      setTimeout(() => d.remove(), 1200);
+    }
+  }
+  $("chestDone").addEventListener("click", () => { $("chest").hidden = true; renderStatbar(); });
+
   function openDailyChest() {
     if (S.q.chest || !S.q.daily.every((q) => q.claimed)) return;
     S.q.chest = true; S.q.streak++;
     const pearls = Math.round(100 * (1 + Math.min(S.q.streak, 7) * 0.1));
     S.pearls += pearls;
     S.bait.worm = (S.bait.worm || 0) + 5;
-    let extra = "5 Nightcrawlers";
-    if (S.q.streak >= 3) { S.bait.cricket = (S.bait.cricket || 0) + 3; extra += ", 3 Crickets"; }
-    if (S.q.streak >= 7) { S.bait.glow = (S.bait.glow || 0) + 2; extra += ", 2 Glow grubs"; }
-    toast(`Daily chest: +${pearls} pearls`, `${extra}. Streak: ${S.q.streak} day${S.q.streak === 1 ? "" : "s"}.`);
+    const loot = [
+      { icon: "⚪", what: `${num(pearls)} pearls`, note: S.q.streak > 1 ? `${Math.min(S.q.streak, 7) * 10}% streak bonus included` : "The base hundred", big: true },
+      { icon: "🪱", what: "5 Nightcrawlers", note: "Straight into the bait box" }
+    ];
+    if (S.q.streak >= 3) { S.bait.cricket = (S.bait.cricket || 0) + 3; loot.push({ icon: "🦗", what: "3 Crickets", note: "For keeping it up three days" }); }
+    if (S.q.streak >= 7) { S.bait.glow = (S.bait.glow || 0) + 2; loot.push({ icon: "✨", what: "2 Glow grubs", note: "A full week. These are the good ones", big: true }); }
+    loot.push({ icon: "🔥", what: `${S.q.streak} day${S.q.streak === 1 ? "" : "s"} running`, note: S.q.streak >= 7 ? "Streak bonus is maxed out" : `${7 - S.q.streak} more for the biggest bonus` });
+    chestShow("Daily chest", "Three for three", loot);
     renderQuests(); renderBaitSel(); renderGarden(); save();
   }
   function openWeeklyChest() {
     if (S.q.weekChest || !S.q.weekly.every((q) => q.claimed)) return;
     S.q.weekChest = true;
     S.pearls += 1500; S.bait.glow = (S.bait.glow || 0) + 3; S.bait.shimmer = (S.bait.shimmer || 0) + 1;
-    toast("Weekly chest: +1,500 pearls", "3 Glow grubs, 1 Shimmer shrimp, and the title Reef Regular.");
+    chestShow("Weekly chest", "A full week of it", [
+      { icon: "⚪", what: "1,500 pearls", note: "Fifteen daily chests in one go", big: true },
+      { icon: "✨", what: "3 Glow grubs", note: "Rare bait, straight in" },
+      { icon: "🦐", what: "1 Shimmer shrimp", note: "The best bait there is", big: true },
+      { icon: "🏅", what: "Reef Regular", note: "A title for your profile" }
+    ]);
     renderQuests(); renderBaitSel(); renderGarden(); save();
   }
   const CHECK = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -3873,7 +3981,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   setInterval(save, 5000);
   document.addEventListener("visibilitychange", save);
   window.addEventListener("pagehide", save);
-  window.__reef = { tick: (ms) => { const t0 = performance.now(); for (let k = 0; k <= ms / 16; k++) { last = t0 + (k - 1) * 16; frameBody(t0 + k * 16); } }, get S() { return S; }, lake, heronBox, track, hatch, harvest, plant, water, breed, claim, openDailyChest, pairs, fish, SPECIES, landed, action, rollCatch, renderEverything, drawFish, BY_KEY, syncTank, renderTank };
+  window.__reef = { tick: (ms) => { const t0 = performance.now(); for (let k = 0; k <= ms / 16; k++) { last = t0 + (k - 1) * 16; frameBody(t0 + k * 16); } }, get S() { return S; }, lake, heronBox, track, hatch, harvest, plant, water, breed, claim, openDailyChest, openWeeklyChest, chestShow, pairs, fish, SPECIES, landed, action, rollCatch, renderEverything, drawFish, BY_KEY, syncTank, renderTank };
 })();
 </script>
 </body>
