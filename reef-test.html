@@ -3761,7 +3761,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     // an INSTANT scroll, because a smooth one is still moving when the hole is
     // measured and the spotlight lands where the element used to be
     if (seen) el.scrollIntoView({ block: "center" });
-    requestAnimationFrame(() => requestAnimationFrame(() => {
+    /* Placed from a frame AND from a timer. A background or throttled tab
+       stops serving frames, and a tour that only ever positioned itself from
+       requestAnimationFrame left the spotlight sitting at 0,0 with the card
+       in the corner. Placing is idempotent, so whichever fires first wins and
+       the other is free. */
+    const place = () => {
       if (tourAt !== i) return;
       if (seen) {
         const r = el.getBoundingClientRect(), pad = 8;
@@ -3777,7 +3782,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         Object.assign(hole.style, { left: "50%", top: "50%", width: "0px", height: "0px" });
         Object.assign(card.style, { top: "50%", left: "50%", transform: "translate(-50%,-50%)" });
       }
-    }));
+    };
+    requestAnimationFrame(() => requestAnimationFrame(place));
+    setTimeout(place, 60);
   }
   function tourEnd() {
     tourAt = -1;
