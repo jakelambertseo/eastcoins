@@ -92,6 +92,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .tag.solid{background:var(--gold);color:#2a1300;border-color:transparent}
 .tag.new{color:var(--sea)}
 .catch-line{color:var(--muted);font-size:.86rem;margin:0 0 10px}
+.csnag{display:flex;align-items:center;justify-content:center;gap:7px;margin:0 0 10px;padding:7px 10px;border-radius:10px;background:var(--gold-dim);border:1px solid rgba(var(--gold-rgb),.35);font-size:.82rem;color:var(--muted)}
+.csnag span{font-size:1.05rem}
+.csnag b{color:var(--gold);font-weight:800}
 .catch-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:2px 0 10px}
 .cstat{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:7px 5px;display:grid;gap:2px;justify-items:center}
 .cstat small{font-size:.58rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);white-space:nowrap}
@@ -664,6 +667,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
               <div class="cstat"><small>In the tank</small><b id="cRate">—</b></div>
               <div class="cstat xp"><small>Fishing xp</small><b id="cXpGot">—</b></div>
             </div>
+            <p class="csnag" id="cSnag" hidden></p>
             <p class="tank-up" id="cUpNote" hidden></p>
             <div class="btns">
               <button class="btn primary" id="cKeep" type="button">Put in tank</button>
@@ -929,7 +933,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     auto: { sprinkler: false, caretaker: false, turner: false, hatchery: false, smokehouse: false, cannery: false }, smokeAt: 0,
     inv: {}, charm: 0, benchAt: 0, boss: {}, perks: {},
     zc: 2500, conv: {}, cosm: {}, worn: { theme: "", name: "", title: "", pet: "" }, shopTab: "all",
-    stats: { dives: 0, diveValue: 0, crafts: 0, cooked: 0, spots: {}, baits: {}, casts: 0 } });
+    stats: { dives: 0, diveValue: 0, crafts: 0, cooked: 0, spots: {}, baits: {}, casts: 0, snags: 0 } });
   let S = fresh();
   try { const raw = localStorage.getItem(SAVE); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch {}
   S.skills = Object.assign({ fishing: 0, farming: 0, cooking: 0, breeding: 0, diving: 0, crafting: 0 }, S.skills || {});
@@ -937,7 +941,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   S.inv = S.inv || {}; S.charm = S.charm || 0; S.boss = S.boss || {}; S.perks = S.perks || {};
   S.conv = S.conv || {}; S.cosm = S.cosm || {}; S.worn = Object.assign({ theme: "", name: "", title: "", pet: "" }, S.worn || {});
   if (typeof S.zc !== "number") S.zc = 2500;
-  S.stats = Object.assign({ dives: 0, diveValue: 0, crafts: 0, cooked: 0, spots: {}, baits: {}, casts: 0 }, S.stats || {});
+  S.stats = Object.assign({ dives: 0, diveValue: 0, crafts: 0, cooked: 0, spots: {}, baits: {}, casts: 0, snags: 0 }, S.stats || {});
   const save = () => { S.saved = Date.now(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch {} };
 
   /* ============================================================ helpers */
@@ -1040,6 +1044,21 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     chest: { name: "Sunken chest", icon: "🧰", rar: 4, value: 900 }
   };
   const LOOT_KEYS = Object.keys(LOOT);
+  /* Every so often the hook brings up something that isn't a fish. It is a
+     trickle of crafting parts for people who only fish, so Crafting is never
+     hard-blocked behind Diving — and it is deliberately the SHALLOW end of
+     the table: a wild pearl, a ruby and a sunken chest still only come off
+     the bottom, so diving keeps the whole reason anyone does it. No xp
+     either, for the same reason. */
+  const SNAG_W = { kelp: 26, shell: 22, driftwood: 20, boot: 16, seaglass: 9, coral: 6, oldcoin: 1 };
+  const snagOdds = () => 0.01 + S.spot * 0.01;               // 1% at the pond, 5% in the deep
+  function rollSnag() {
+    if (Math.random() >= snagOdds()) return null;
+    const keys = Object.keys(SNAG_W);
+    let t = keys.reduce((a, k) => a + SNAG_W[k], 0) * Math.random();
+    for (const k of keys) { t -= SNAG_W[k]; if (t <= 0) return k; }
+    return "kelp";
+  }
   const DIVE_XP = [25, 60, 140, 400, 1200];
   const DIVE_MS = 2600;
   const RECIPES = [
@@ -1550,6 +1569,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (record) tags.append(el("span", "tag solid", "New record"));
     const rate = fishRate({ key: sp.key, w: c.w, shiny: c.shiny });
     const xp = grant("fishing", CATCH_XP[sp.rar] * (1 + 0.5 * (c.frac || 0)) * (c.shiny ? 3 : 1) + (isNew ? 250 : 0));
+    const snag = rollSnag();
+    if (snag) { addItem(snag); S.stats.snags = (S.stats.snags || 0) + 1; }
+    const snagRow = $("cSnag");
+    snagRow.hidden = !snag;
+    if (snag) snagRow.innerHTML = `<span>${LOOT[snag].icon}</span> Snagged on the way in — <b>${LOOT[snag].name}</b> went in the bag.`;
     $("cWeight").textContent = lbs(c.w);
     $("cRate").innerHTML = `<span class="pearl"></span>${num(rate)}/hr`;
     $("cXpGot").textContent = `+${num(xp)}`;
@@ -1574,6 +1598,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     $("cKeep").focus();
     if (sp.rar >= 3 || c.shiny) toast(`You landed a ${c.shiny ? "Shiny " : ""}${sp.name}!`, "In the real game this goes to the activity feed and the ticker.");
     renderDex(); renderProfile(); renderDerby();
+    if (snag) { renderInv(); renderCraft(); }
     S.stats.spots[S.spot] = (S.stats.spots[S.spot] || 0) + 1;
     track("catch", { rar: sp.rar, w: c.w, spot: S.spot });
     if (isNew) track("newSpecies");
@@ -2207,6 +2232,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const box = $("craft"); if (!box) return;
     box.replaceChildren();
     const lvl = levelIn("crafting");
+    const intro = el("div", "panel-intro");
+    intro.append(el("p", null, "Parts come off the bottom when you dive — and one cast in a hundred at the pond, one in twenty in the deep, brings something up on the line instead of a fish."));
+    box.append(intro);
     const list = el("div", "rows");
     RECIPES.forEach((r) => {
       const locked = lvl < r.at, ready = canCraft(r);
@@ -2237,7 +2265,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     box.replaceChildren();
     const keys = LOOT_KEYS.filter((k) => S.inv[k]);
     const intro = el("div", "panel-intro");
-    intro.append(el("p", null, keys.length ? `<b>${invCount()}</b> things, worth <b>${num(keys.reduce((n, k) => n + S.inv[k] * LOOT[k].value, 0))}</b> pearls if you sold the lot.` : "Empty. Dive a spot and see what's down there."));
+    intro.append(el("p", null, keys.length ? `<b>${invCount()}</b> things, worth <b>${num(keys.reduce((n, k) => n + S.inv[k] * LOOT[k].value, 0))}</b> pearls if you sold the lot.` : "Empty. Dive a spot and see what's down there — or keep fishing and wait for a snag."));
+    if (S.stats.snags) intro.append(el("span", "hint", `${num(S.stats.snags)} came up on the line`));
     box.append(intro);
     if (!keys.length) return;
     const list = el("div", "rows");
