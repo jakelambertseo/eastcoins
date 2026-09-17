@@ -4909,7 +4909,7 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 .pf-name.nf-glitch::after{color:#08f7fe;clip-path:inset(50% 0 0 0);animation:nfglitch 2.6s steps(2) infinite reverse;mix-blend-mode:screen}
 @keyframes nfglitch{0%,86%,100%{transform:translate(0,0);opacity:0}88%{transform:translate(-3px,1px);opacity:1}92%{transform:translate(3px,-1px);opacity:1}96%{transform:translate(-1px,0);opacity:1}}
 .pf-name.nf-rainbow{animation:nfrainbow 6s linear infinite}
-.pf-name.nf-rainbow:not(.nm-gold):not(.nm-ember):not(.nm-ice){color:#ff6b6b}
+.pf-name.nf-rainbow:not(.nm-gold):not(.nm-ember):not(.nm-ice):not(.nm-sakura):not(.nm-slime):not(.nm-mint){color:#ff6b6b}
 @keyframes nfrainbow{to{filter:hue-rotate(360deg)}}
 .pf-name.nf-pulse{animation:nfpulse 2.4s ease-in-out infinite}
 @keyframes nfpulse{0%,100%{filter:drop-shadow(0 0 0 rgba(255,255,255,0))}50%{filter:drop-shadow(0 0 10px rgba(255,236,170,.85))}}
@@ -4968,6 +4968,73 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 @media (prefers-reduced-motion:reduce){
   .pf-name.nf-shine::after,.pf-name.nf-glitch::before,.pf-name.nf-glitch::after,.pf-name.nf-rainbow,.pf-name.nf-pulse,
   .pf-team.tfx-gold,.pf-team.tfx-flame b,.pbg-starfield::before{animation:none}
+}
+
+/* ---- store cosmetics, round three (2026-09-16): anime, Halloween and a few more */
+.tc-skin-sakura{--tc-a:150,62,104;--tc-b:54,18,44}
+.tc-skin-sakura .tc-inner::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.85;
+  background:radial-gradient(6px 4px at 12% 10%,#ffd1e6,transparent 70%),radial-gradient(5px 3px at 58% 30%,#ffb3d4,transparent 70%),radial-gradient(6px 4px at 82% 62%,#ffe0ee,transparent 70%),radial-gradient(5px 3px at 30% 78%,#ffc2dd,transparent 70%);
+  background-size:120px 160px,150px 190px,130px 170px,160px 200px;animation:tcpetals 9s linear infinite}
+@keyframes tcpetals{to{background-position:60px 160px,-75px 190px,65px 170px,-80px 200px}}
+.tc-skin-pumpkin{--tc-a:214,98,18;--tc-b:60,22,4}
+.tc-skin-pumpkin .tc-inner::after{content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
+  background:radial-gradient(ellipse 70% 45% at 50% 100%,rgba(255,200,60,.7),rgba(255,120,10,.25) 55%,transparent 75%);animation:tcflicker 2.6s ease-in-out infinite}
+@keyframes tcflicker{0%,100%{opacity:.75}22%{opacity:.5}35%{opacity:.95}58%{opacity:.6}70%{opacity:1}}
+.tc-skin-obsidian{--tc-a:30,24,44;--tc-b:6,6,10}
+.tc-skin-obsidian .tc-inner{box-shadow:inset 0 0 0 1.5px rgba(160,110,255,.55),inset 0 0 28px rgba(120,70,220,.28)}
+.tc-skin-obsidian .tc-inner::after{content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
+  background:linear-gradient(125deg,transparent 0 40%,rgba(190,160,255,.4) 47%,rgba(255,255,255,.18) 50%,transparent 57% 100%);background-size:260% 100%;animation:tcfoil 7s ease-in-out infinite}
+
+.tc-name.nm-sakura,.pf-name.nm-sakura,.st-swatch .nm-sakura,.st-name .nm-sakura{background:linear-gradient(180deg,#ffe3f0,#ff8fc0 58%,#d94f8f);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none}
+.tc-name.nm-slime,.pf-name.nm-slime,.st-swatch .nm-slime,.st-name .nm-slime{color:#9dff57;text-shadow:0 0 10px rgba(120,255,60,.65),0 2px 0 rgba(20,80,0,.6)}
+.tc-name.nm-mint,.pf-name.nm-mint,.st-swatch .nm-mint,.st-name .nm-mint{background:linear-gradient(180deg,#e6fff5,#5ff0c0 58%,#1fa98a);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none}
+
+.pf-name.nf-powerup{animation:nfpower 1.1s ease-in-out infinite}
+@keyframes nfpower{0%,100%{filter:drop-shadow(0 0 3px #ffe873) drop-shadow(0 -2px 8px rgba(255,180,0,.75))}50%{filter:drop-shadow(0 0 6px #fff6c0) drop-shadow(0 -6px 16px rgba(255,140,0,.9))}}
+.pf-name.nf-haunted{position:relative;display:inline-block;animation:nfhaunt 5s steps(1) infinite}
+.pf-name.nf-haunted::after{content:attr(data-text);position:absolute;inset:0;pointer-events:none;background:none;-webkit-background-clip:border-box;background-clip:border-box;color:#b6ffe0;filter:blur(2.5px);animation:nfghost 5s ease-in-out infinite}
+@keyframes nfhaunt{0%,100%{opacity:1}43%{opacity:1}44%{opacity:.35}46%{opacity:1}47%{opacity:.5}49%{opacity:1}}
+@keyframes nfghost{0%,35%{opacity:0;transform:translate(0,0)}55%{opacity:.55;transform:translate(10px,-8px)}80%,100%{opacity:0;transform:translate(22px,-18px)}}
+.pf-name.nf-neon{animation:nfneon 4s steps(1) infinite}
+@keyframes nfneon{0%,100%{filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 9px #ff3df0) drop-shadow(0 0 20px rgba(255,61,240,.7))}6%{filter:none}8%{filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 9px #ff3df0) drop-shadow(0 0 20px rgba(255,61,240,.7))}62%{filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 6px #ff3df0)}64%{filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 9px #ff3df0) drop-shadow(0 0 20px rgba(255,61,240,.7))}}
+
+.pf-banner-speedlines::before{opacity:.75;background:
+  repeating-conic-gradient(from 0deg at 50% 125%,rgba(255,255,255,.26) 0 1.1deg,transparent 1.1deg 4.6deg),
+  linear-gradient(180deg,#23285c,transparent)}
+.pf-banner-graveyard::before{opacity:.8;background:
+  radial-gradient(circle at 82% 34%,#fdf6d8 0 22px,rgba(253,246,216,.35) 23px 46px,transparent 80px),
+  radial-gradient(ellipse 60% 40% at 25% 110%,rgba(210,220,230,.35),transparent 70%),
+  radial-gradient(ellipse 50% 35% at 75% 115%,rgba(210,220,230,.28),transparent 70%),
+  linear-gradient(180deg,#1a0f33,#3a1d52 60%,transparent)}
+.pf-banner-aurora::before{opacity:.75;background:
+  linear-gradient(100deg,rgba(60,255,180,.55),rgba(80,140,255,.45) 30%,rgba(190,90,255,.5) 60%,rgba(60,255,180,.55)),
+  linear-gradient(180deg,#04101e,transparent);background-size:300% 100%,auto;animation:bnaurora 14s ease-in-out infinite alternate}
+@keyframes bnaurora{to{background-position:100% 0,0 0}}
+
+.pbg-neontokyo::before{background:
+  repeating-linear-gradient(90deg,rgba(255,40,160,.2) 0 3px,transparent 3px 96px),
+  repeating-linear-gradient(90deg,transparent 0 48px,rgba(40,220,255,.16) 48px 50px,transparent 50px 140px),
+  radial-gradient(ellipse at 20% 0%,rgba(255,40,160,.3),transparent 55%),
+  radial-gradient(ellipse at 85% 100%,rgba(40,220,255,.25),transparent 55%),#0a0616}
+.pbg-bloodmoon::before{background:
+  radial-gradient(circle at 82% 80px,#e8503f 0 36px,rgba(255,70,50,.32) 37px 84px,transparent 200px),
+  radial-gradient(ellipse at 50% 120%,rgba(120,10,10,.5),transparent 60%),
+  linear-gradient(180deg,#2a0508,#0d0203)}
+.pbg-playbook::before{background:
+  radial-gradient(circle,transparent 7px,rgba(255,255,255,.4) 7px 9px,transparent 9px) 30px 40px/180px 150px,
+  radial-gradient(circle,transparent 7px,rgba(255,255,255,.3) 7px 9px,transparent 9px) 120px 110px/180px 150px,
+  repeating-linear-gradient(60deg,transparent 0 22px,rgba(255,255,255,.14) 22px 24px,transparent 24px 90px),
+  repeating-linear-gradient(0deg,rgba(255,255,255,.06) 0 1px,transparent 1px 30px),
+  repeating-linear-gradient(90deg,rgba(255,255,255,.06) 0 1px,transparent 1px 30px),
+  linear-gradient(180deg,#123a66,#0b2442)}
+
+.pf-team.tfx-frost b{color:#e4f7ff;text-shadow:0 0 8px rgba(140,220,255,.95),0 0 18px rgba(90,180,255,.55),0 1px 0 #fff}
+
+@media (prefers-reduced-motion:reduce){
+  .tc-skin-sakura .tc-inner::after,.tc-skin-pumpkin .tc-inner::after,.tc-skin-obsidian .tc-inner::after,
+  .pf-name.nf-powerup,.pf-name.nf-haunted,.pf-name.nf-haunted::after,.pf-name.nf-neon,.pf-banner-aurora::before{animation:none}
+  .pf-name.nf-powerup{filter:drop-shadow(0 0 4px #ffe873) drop-shadow(0 -3px 10px rgba(255,170,0,.8))}
+  .pf-name.nf-neon{filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 9px #ff3df0)}
 }
 
 /* Profile: the owner's way into the store (2026-09-15), with a NEW tag. */

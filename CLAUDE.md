@@ -1032,6 +1032,24 @@
 > preview uses the profile's own `nameSpan`/`playerChip`/`tradingCard`
 > from `window.ECProfileCard`.
 >
+> **Store, round three (2026-09-16 night)** — 22 more items, 52 in all:
+> anime (Sakura finish and name, Power Up, Speed Lines, Neon Tokyo,
+> titles Main Character / Final Boss), Halloween (Jack-o'-Lantern
+> finish, Slime name, Haunted, Graveyard, Blood Moon, titles Cursed /
+> Trick or Treater) and general (Obsidian, Mint, Neon Sign, Aurora,
+> Playbook, Frozen team effect, titles Sunday Scaries / Bag Secured),
+> all 75 ZC. An item may carry `tag` ("Anime", "Halloween", "New"),
+> which the store draws as a themed ribbon (`.st-ribbon.tag-*`). **A
+> new item is three things**: its `ITEMS` row, its CSS in the round-three
+> block of `v3.css` (and a `.sw-finish-*` swatch in `v3-store.css` for
+> a finish — banners and backgrounds draw their own swatch from the
+> real class), and a line in `TIER_OF` in `crate/_crate.js`, or the
+> Daily Crate never drops it. A gradient name colour must also be added
+> to the `:not()` list on `.pf-name.nf-rainbow`, and effects on a name
+> use `filter: drop-shadow`, never `text-shadow`, because a gradient
+> name is transparent text and a text-shadow shows through it. The
+> Halloween items are sold all year for now.
+>
 > **The Daily Crate (2026-09-16, evening)** — the orange present in
 > the top nav between search and the bell (`#crateBtn`, shown only to
 > members), opening a fixed popover over whatever page is up

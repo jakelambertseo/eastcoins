@@ -45,6 +45,12 @@ export const TIER_OF = {
   "name-ice": "rare", "name-ember": "rare", "title-oracle": "rare", "title-hater": "rare", "title-parlay": "rare", "title-underdog": "rare", "title-degen": "rare", "title-legend": "rare",
   "finish-holo": "rare", "namefx-shine": "rare", "banner-stadium": "rare", "banner-matrix": "rare", "background-gridiron": "rare",
   "namefx-glitch": "epic", "namefx-rainbow": "epic", "background-starfield": "epic", "background-velvet": "epic", "background-carbon": "epic", "team-flame": "epic",
+  // round three
+  "team-frost": "common",
+  "name-sakura": "rare", "name-slime": "rare", "name-mint": "rare", "namefx-neon": "rare",
+  "title-maincharacter": "rare", "title-finalboss": "rare", "title-cursed": "rare", "title-trickortreat": "rare", "title-scaries": "rare", "title-bag": "rare",
+  "finish-sakura": "rare", "finish-pumpkin": "rare", "banner-speedlines": "rare", "banner-graveyard": "rare", "background-playbook": "rare",
+  "finish-obsidian": "epic", "namefx-powerup": "epic", "namefx-haunted": "epic", "banner-aurora": "epic", "background-neontokyo": "epic", "background-bloodmoon": "epic",
   "finish-gold": "legendary", "name-gold": "legendary", "team-gold": "legendary", "label-foil": "legendary"
 };
 export const tierItems = (tier) => ITEMS.filter((i) => TIER_OF[i.id] === tier);

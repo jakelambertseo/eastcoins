@@ -63,6 +63,17 @@
 .sw-banner-stadium::before,.sw-banner-matrix::before,.sw-banner-retro::before{content:"";position:absolute;inset:0}
 @media (prefers-reduced-motion:reduce){.st-item{transition:none}.st-item:hover{transform:none}.sw-finish-holo{animation:none}}
 
+/* round three swatches and the themed ribbons */
+.sw-finish-sakura{background:radial-gradient(6px 4px at 20% 30%,#ffd1e6,transparent 70%),radial-gradient(5px 3px at 65% 60%,#ffe0ee,transparent 70%),radial-gradient(5px 3px at 85% 25%,#ffb3d4,transparent 70%),linear-gradient(170deg,#96406a,#36122c)}
+.sw-finish-pumpkin{background:radial-gradient(ellipse 70% 60% at 50% 110%,rgba(255,200,60,.75),transparent 70%),linear-gradient(170deg,#d66212,#3c1604)}
+.sw-finish-obsidian{background:linear-gradient(125deg,transparent 40%,rgba(190,160,255,.35) 48%,transparent 56%),linear-gradient(170deg,#1e182c,#06060a);box-shadow:inset 0 0 0 1.5px rgba(160,110,255,.55)}
+.st-swatch.pf-banner{background:#121318}
+.st-swatch.pf-banner::before{height:100%}
+.st-ribbon.tag{background:#3a3f4b;color:#fff}
+.st-ribbon.tag-anime{background:linear-gradient(90deg,#ff5fa8,#a35ce8);color:#fff}
+.st-ribbon.tag-halloween{background:linear-gradient(90deg,#ff7a1a,#7a2bd6);color:#fff}
+.st-ribbon.tag-new{background:#1f9d6b;color:#fff}
+
 /* ---- round two: the mini profile in the preview, the wide tiles
    with a form, the player search, and swatches for the new slots. */
 .st-preview.pbg{background:transparent}

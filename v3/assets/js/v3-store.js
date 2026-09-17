@@ -13,7 +13,7 @@
    accepts an id, league and name and builds the photo URL itself.
    ============================================================ */
 (() => {
-  const CSS = "/v3/assets/css/v3-store.css?v=7";
+  const CSS = "/v3/assets/css/v3-store.css?v=8";
   const ESPN_SEARCH = "https://site.web.api.espn.com/apis/common/v3/search";
   const PLAYER_LEAGUES = new Set(["nfl", "mlb", "nba"]);
 
@@ -228,7 +228,7 @@
   /* ---------------------------------------------------------- shelves */
 
   function swatch(item, owned, on) {
-    const sw = el("div", `st-swatch sw-${item.id}${item.slot === "background" ? ` pbg pbg-${suffix(item.id, "background")}` : ""}`);
+    const sw = el("div", `st-swatch sw-${item.id}${item.slot === "background" ? ` pbg pbg-${suffix(item.id, "background")}` : ""}${item.slot === "banner" ? ` pf-banner pf-banner-${suffix(item.id, "banner")}` : ""}`);
     if (item.slot === "name") sw.append(el("b", `pf-name nm-${suffix(item.id, "name")}`, "Aa"));
     if (item.slot === "namefx") { const s = el("b", `pf-name nf-${suffix(item.id, "namefx")}`, "Aa"); s.dataset.text = "Aa"; sw.append(s); }
     if (item.slot === "title") sw.append(el("b", "st-sw-title", item.id === "title-custom" ? "“ ”" : item.text || item.name));
@@ -249,6 +249,7 @@
     const t = el("article", `st-item${owned ? " owned" : ""}${on ? " on" : ""}${wide ? " wide" : ""}${item.chase ? " chase" : ""}`);
     if (item.chase) t.append(el("span", "st-ribbon", "Legendary"));
     else if (item.promo) t.append(el("span", "st-ribbon promo", item.promo));
+    else if (item.tag) t.append(el("span", `st-ribbon tag tag-${String(item.tag).toLowerCase()}`, item.tag));
     t.addEventListener("mouseenter", () => { S.hover = item.id; repaintPreview(); });
     t.addEventListener("mouseleave", () => { if (S.hover === item.id) { S.hover = null; S.hoverPlayer = null; repaintPreview(); } });
     t.addEventListener("focusin", () => { S.hover = item.id; repaintPreview(); });
