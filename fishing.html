@@ -103,6 +103,22 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .tag.solid{background:var(--gold);color:#2a1300;border-color:transparent}
 .tag.new{color:var(--sea)}
 .catch-line{color:var(--muted);font-size:.86rem;margin:0 0 10px}
+.ctank{margin:0 0 10px;padding:7px 10px;border-radius:10px;background:rgba(79,195,217,.08);border:1px solid rgba(79,195,217,.35);font-size:.8rem;color:var(--muted);text-align:center}
+.ctank b{color:var(--sea)}
+.tank-list .lends{display:block;font-size:.66rem;font-weight:800;color:var(--sea)}
+.tank-list .lends.dup{color:var(--muted-2);font-weight:700}
+.tb-grid{display:grid;gap:7px}
+.tb-row{display:grid;grid-template-columns:34px minmax(0,1fr) minmax(90px,180px) 64px;gap:12px;align-items:center;padding:8px 11px;border-radius:11px;background:var(--panel-2);border:1px solid var(--line)}
+.tb-row.none{opacity:.55}
+.tb-ico{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:var(--panel-3)}
+.tb-ico svg{width:18px;height:18px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tb-main b{display:block;font-size:.88rem}
+.tb-main small{display:block;font-size:.72rem;color:var(--muted-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-bar{height:8px;border-radius:99px;background:var(--panel-3);border:1px solid var(--line);overflow:hidden}
+.tb-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#1f6fd1,#4fc3d9)}
+.tb-v{font-family:var(--display);font-weight:800;color:var(--sea);text-align:right;font-variant-numeric:tabular-nums}
+.skill-tank{margin:0;font-size:.74rem;color:var(--muted-2)}
+.skill-tank b{color:var(--sea)}
 .csnag{display:flex;align-items:center;justify-content:center;gap:7px;margin:0 0 10px;padding:7px 10px;border-radius:10px;background:var(--gold-dim);border:1px solid rgba(var(--gold-rgb),.35);font-size:.82rem;color:var(--muted)}
 .csnag span{font-size:1.05rem}
 .csnag b{color:var(--gold);font-weight:800}
@@ -815,6 +831,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
               <div class="cstat xp"><small>Fishing xp</small><b id="cXpGot">—</b></div>
             </div>
             <p class="csnag" id="cSnag" hidden></p>
+            <p class="ctank" id="cTank" hidden></p>
             <p class="tank-up" id="cUpNote" hidden></p>
             <div class="btns">
               <button class="btn primary" id="cKeep" type="button">Put in tank</button>
@@ -853,6 +870,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       </div>
       <div class="card-body">
         <ul class="tank-list" id="tankList"></ul>
+      </div>
+    </section>
+
+    <section class="card card-next" aria-label="What your tank does">
+      <div class="card-body">
+        <h2 class="card-h">What your tank does for you</h2>
+        <div class="panel-intro"><p>Every species in the tank lends a skill a bonus — the water it came from decides which — and Fishing takes <b>+1%</b> from each one. Only your best of each species counts. Put a whole spot's set in at once for <b>+5% to everything</b>.</p><span class="hint" id="tbSets"></span></div>
+        <div class="tb-grid" id="tbGrid"></div>
       </div>
     </section>
 
@@ -1271,7 +1296,13 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     for (const k of keys) { t -= SNAG_W[k]; if (t <= 0) return k; }
     return "kelp";
   }
-  const DIVE_XP = [25, 60, 140, 400, 1200];
+  /* A dive pays the xp of the BEST thing it brings up, not of every thing.
+     It used to pay per item, and the Mesh bag and Air tank multiply items, so a
+     kitted deep-sea diver made 129 xp a second against Fishing's 14 — Diving at
+     99 in 52 days. Now the kit is loot, which is what it says it is, and the
+     table is a third of what it was: mid-game diving keeps pace with Fishing,
+     and a fully kitted deep dive runs about twice as fast. */
+  const DIVE_XP = [10, 20, 50, 140, 420];
   const DIVE_MS = 2600;
   /* Two things now bound a diving session, because an unlimited one was just
      a button you held down: AIR and the BAG.
@@ -1317,7 +1348,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { key: "setting", art: "craft-setting", name: "Gem setting", at: 30, need: { ruby: 1, seaglass: 2 }, xp: 1500, about: "2,500 pearls", give: () => { S.pearls += 2500; } },
     { key: "rig", art: "craft-rig", name: "Shimmer rig", at: 35, need: { coral: 3, ruby: 1 }, xp: 2200, about: "2 Shimmer shrimp", give: () => { S.bait.shimmer = (S.bait.shimmer || 0) + 2; } }
   ];
-  const BENCH_MS = 30 * 60 * 1000;
+  const BENCH_MS = 10 * 60 * 1000;                 // was 30: 13 years to 99 at one melt per half hour
 
   /* Bought with ZCoins, not pearls. Two rules hold this together: nothing
      here sells a LEVEL or a record — only time and looks — and pearls never
@@ -1393,15 +1424,71 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { key: "meshbag", name: "Mesh bag", skill: "diving", at: 20, cost: 3000, about: "One more thing off the bottom every dive" },
     { key: "airtank", name: "Air tank", skill: "diving", at: 40, cost: 15000, about: "Quicker dives and another thing again" },
     { key: "toolbox", name: "Toolbox", skill: "crafting", at: 20, cost: 3000, about: "One in four crafts keeps its parts" },
-    { key: "bench", name: "Workbench", skill: "crafting", at: 40, cost: 15000, about: "Melts spare junk down on its own every 30 minutes" },
+    { key: "bench", name: "Workbench", skill: "crafting", at: 40, cost: 15000, about: "Melts spare junk down on its own every 10 minutes" },
     { key: "smokehouse", name: "Smokehouse", skill: "cooking", at: 20, cost: 3000, about: "Cooks a nursery fish every 30 minutes, keeping two back" },
     { key: "cannery", name: "Cannery", skill: "cooking", at: 40, cost: 15000, about: "The smokehouse runs twice as often and keeps one back" }
   ];
   const session = { xp: {}, since: 0 };
 
   /** Give xp to a skill: the drop on the tracker, the bar, and a level-up if one happened. Returns the xp given. */
+  /* ============================================================ the tank, as a build
+     A fish in the tank lends a SKILL a bonus as well as paying pearls, which
+     turns keep / cook / sell from a pearls sum into a build decision. Each
+     spot's water feeds one skill; Fishing takes a share from every species in
+     the tank, because the whole collection is what makes an angler — and it
+     is the skill that cannot be idled or bought, so this is its way to scale.
+
+     Only the best specimen of each species counts: sixteen bluegill are worth
+     one, which is what makes the fish book matter. A whole spot's set in the
+     tank at once lifts every skill. Nothing goes past TANK_CAP, so it stays a
+     multiplier you can read rather than a number with an exponent. */
+  const SPOT_SKILL = ["farming", "cooking", "breeding", "crafting", "diving"];
+  const TANK_PCT = [0.5, 0.75, 1, 1.5, 2.5];        // per species, by rarity; a shiny doubles it
+  const FISHING_PCT = 1;                              // Fishing, per distinct species in the tank
+  const SET_PCT = 5;                                  // per complete spot in the tank, to every skill
+  const TANK_CAP = 25;
+  function tankBonus() {
+    const best = {};
+    for (const f of S.fish) { const cur = best[f.key]; if (!cur || (f.shiny && !cur.shiny)) best[f.key] = f; }
+    const pct = Object.fromEntries(Object.keys(SKILLS).map((k) => [k, 0]));
+    const from = Object.fromEntries(Object.keys(SKILLS).map((k) => [k, []]));
+    for (const [key, f] of Object.entries(best)) {
+      const sp = BY_KEY[key], skill = SPOT_SKILL[sp.spot], v = TANK_PCT[sp.rar] * (f.shiny ? 2 : 1);
+      pct[skill] += v; from[skill].push({ sp, v, shiny: f.shiny });
+      pct.fishing += FISHING_PCT;
+    }
+    const sets = SPOTS.filter((_, si) => SPECIES.filter((sp) => sp.spot === si).every((sp) => best[sp.key]));
+    for (const k in pct) pct[k] = Math.min(TANK_CAP, pct[k] + SET_PCT * sets.length);
+    return { pct, from, sets, best, species: Object.keys(best).length };
+  }
+  /** What keeping this fish would add, for the catch card. */
+  function tankGain(sp, shiny) {
+    const cur = S.fish.find((f) => f.key === sp.key);
+    if (cur && (cur.shiny || !shiny)) return null;                  // it would be a duplicate
+    // a shiny replacing a plain one adds only the difference (the shiny doubling)
+    return { skill: SPOT_SKILL[sp.spot], v: cur ? TANK_PCT[sp.rar] : TANK_PCT[sp.rar] * (shiny ? 2 : 1), fishing: cur ? 0 : FISHING_PCT };
+  }
+
+  /* ============================================================ idle, bounded
+     Idle kit used to have no ceiling, and the egg turner alone — a turn every
+     ten minutes on every nest, all day — put Breeding at 99 in about 69 days
+     against Fishing's 631. A daily ceiling per skill fixes every idle source
+     at once instead of retuning each: the work still gets done after it (bait
+     still grows, eggs still hatch) but the xp stops. Resets at midnight
+     Central with the quests, so the mockup's Next day button resets it too. */
+  const IDLE_DAY_CAP = 15000;
+  function idleGrant(key, amount) {
+    const day = chicagoDate(S.dayShift || 0);
+    if (S.idleDay !== day) { S.idleDay = day; S.idleXp = {}; }
+    const used = S.idleXp[key] || 0;
+    const give = Math.max(0, Math.min(amount, IDLE_DAY_CAP - used));
+    if (!give) return 0;
+    S.idleXp[key] = used + give;
+    return grant(key, give);
+  }
+
   function grant(key, amount) {
-    amount = Math.round(amount);
+    amount = Math.round(amount * (1 + tankBonus().pct[key] / 100));
     if (!amount || !SKILLS[key]) return 0;
     const before = levelOf(S.skills[key]);
     S.skills[key] = Math.min(MAX_XP, S.skills[key] + amount);
@@ -1483,7 +1570,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       card.innerHTML = `<div class="skill-h"><span class="skill-ico">${sk.icon}</span><h3>${sk.name}</h3><span class="skill-lvl">${lvl}<small> / 99</small></span></div>
         <div class="xpt-bar"><i style="width:${pct}%"></i><span>${pct}%</span></div>
         <div class="skill-meta"><span>${num(xp)} xp</span><span>${lvl >= 99 ? "Maxed" : `${num(hi - xp)} to ${lvl + 1}`}</span></div>
-        <p class="skill-how">${sk.how}</p>`;
+        <p class="skill-how">${sk.how}</p>`
+        + (tankBonus().pct[key] ? `<p class="skill-tank">Tank bonus <b>+${+tankBonus().pct[key].toFixed(2)}%</b> xp</p>` : "");
       const next = UNLOCKS.find((u) => u.skill === key && u.at > lvl);
       if (next) card.append(el("p", "skill-next", `Next unlock: ${next.what} at level ${next.at}`));
       col.append(card, unlockTable(key, lvl));
@@ -1894,6 +1982,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const snagRow = $("cSnag");
     snagRow.hidden = !snag;
     if (snag) snagRow.innerHTML = `<span>${LOOT[snag].icon}</span> Snagged on the way in — <b>${LOOT[snag].name}</b> went in the bag.`;
+    const gain = tankGain(sp, c.shiny), tn = $("cTank");
+    tn.hidden = !gain;
+    if (gain) tn.innerHTML = `Keep it: <b>+${gain.v}% ${SKILLS[gain.skill].name}</b>${gain.fishing ? ` and <b>+${gain.fishing}% Fishing</b>` : ""} while it swims in your tank`;
     $("cWeight").textContent = lbs(c.w);
     $("cRate").innerHTML = `<span class="pearl"></span>${num(rate)}/hr`;
     $("cXpGot").textContent = `+${num(xp)}`;
@@ -2558,18 +2649,38 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     $("tankUpHint").textContent = `${placed} of ${DECOR.length} decorations placed`;
   }
 
+  function paintTankBonus(tb) {
+    const box = $("tbGrid"); if (!box) return;
+    box.replaceChildren();
+    Object.entries(SKILLS).forEach(([k, sk]) => {
+      const v = tb.pct[k], src = k === "fishing" ? `${tb.species} species` : tb.from[k].map((x) => x.sp.name + (x.shiny ? " ★" : "")).join(", ");
+      const water = k === "fishing" ? "every species" : SPOTS[SPOT_SKILL.indexOf(k)]?.name || "";
+      const row = el("div", "tb-row" + (v ? "" : " none"));
+      row.innerHTML = `<span class="tb-ico">${sk.icon}</span>
+        <span class="tb-main"><b>${sk.name}</b><small>${src || `Fish from ${water}`}</small></span>
+        <span class="tb-bar"><i style="width:${(v / TANK_CAP) * 100}%"></i></span>
+        <span class="tb-v">+${+v.toFixed(2)}%</span>`;
+      box.append(row);
+    });
+    $("tbSets").textContent = tb.sets.length ? `Full sets: ${tb.sets.map((x) => x.name).join(", ")}` : `Up to +${TANK_CAP}% a skill`;
+  }
+
   function renderTank() {
     tankUpgrades();
     const list = $("tankList"); list.replaceChildren();
     const capN = TANKS[S.tank].cap;
     $("capLine").textContent = `${S.fish.length} of ${capN} fish`;
     if (!S.fish.length) list.append(el("li", "empty", "Fish you keep swim here and make pearls, even while you're away."));
+    const tb = tankBonus();
+    paintTankBonus(tb);
     S.fish.slice().sort((a, b) => fishRate(b) - fishRate(a)).forEach((f) => {
       const sp = BY_KEY[f.key];
       const li = el("li");
       const dot = el("i"); dot.style.background = RAR[sp.rar].color;
       const name = el("span", null, `${sp.name} ${f.shiny ? '<span class="shiny">★ SHINY</span>' : ""} <small style="color:var(--muted-2)">${lbs(f.w)}</small>`);
-      const rate = el("span", "rate", `<span class="pearl"></span>${num(fishRate(f))}/hr`);
+      const lends = tb.best[f.key] === f;
+      const rate = el("span", "rate", `<span class="pearl"></span>${num(fishRate(f))}/hr`
+        + (lends ? `<small class="lends">+${TANK_PCT[sp.rar] * (f.shiny ? 2 : 1)}% ${SKILLS[SPOT_SKILL[sp.spot]].name}</small>` : '<small class="lends dup">duplicate</small>'));
       const breeding = isBreeding(f.id);
       const b = el("button", "btn small", breeding ? "♥ Nesting" : "Release"); b.type = "button"; b.disabled = breeding; b.addEventListener("click", () => release(f.id));
       li.append(dot, name, rate, b); list.append(li);
@@ -2640,9 +2751,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const b = BAITS[p.seed];
     S.bait[p.seed] = (S.bait[p.seed] || 0) + b.yield;
     if (!activeBait()) S.baitOn = p.seed;
-    const xp = grant("farming", HARVEST_XP[p.seed] || 20);
-    toast(`+${b.yield} ${b.name}`, `${b.about} when you fish with it. +${num(xp)} Farming xp`);
-    Object.assign(p, { seed: null, at: 0, ready: 0, watered: false });
+    const xp = grant("farming", (HARVEST_XP[p.seed] || 20) * (p.skipped ? 0.5 : 1));
+    toast(`+${b.yield} ${b.name}`, `${b.about} when you fish with it. +${num(xp)} Farming xp${p.skipped ? " (skipped: half)" : ""}`);
+    Object.assign(p, { seed: null, at: 0, ready: 0, watered: false, skipped: false });
     track("harvest"); renderGarden(); renderBaitSel(); save();
   }
   function sprout(state, frac, color, key) {
@@ -2864,7 +2975,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       for (let i = 0; i < n; i++) {
         const k = diveRoll();
         if (!addItem(k)) { lost++; continue; }               // no room, no item, no xp
-        got.push(k); xp += DIVE_XP[LOOT[k].rar];
+        got.push(k); xp = Math.max(xp, DIVE_XP[LOOT[k].rar]);
       }
       S.stats.dives += 1;
       S.stats.diveValue += got.reduce((n, k) => n + LOOT[k].value, 0);
@@ -3060,7 +3171,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     S.dex[n.key] = entry;
     S.nursery.push({ id: S.uid++, key: n.key, w, shiny });
     S.nests[i] = null;
-    const xp = grant("breeding", HATCH_XP[sp.rar] * (shiny ? 3 : 1) * (quiet ? IDLE_CUT : 1));
+    const hatchXp = HATCH_XP[sp.rar] * (shiny ? 3 : 1) * (n.skipped ? 0.5 : 1);
+    const xp = quiet ? idleGrant("breeding", hatchXp * IDLE_CUT) : grant("breeding", hatchXp);
     idleLog.xp += quiet ? xp : 0;
     if (!quiet || shiny) toast(`${shiny ? "A shiny " : "A "}${sp.name} hatched!`, `${lbs(w)}${record ? " · a new record" : ""}. It's in the nursery.${quiet ? " The hatchery saw to it." : ``} +${num(xp)} Breeding xp`);
     track("hatch"); if (shiny) track("shiny");
@@ -3338,7 +3450,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         if (!p.seed || p.watered || S.clock >= p.ready) return;
         p.watered = true;
         p.ready = S.clock + (p.ready - S.clock) * 0.75;
-        idleLog.xp += grant("farming", (WATER_XP[p.seed] || 50) * IDLE_CUT);
+        idleLog.xp += idleGrant("farming", (WATER_XP[p.seed] || 50) * IDLE_CUT);
         idleLog.watered += 1; touched = true;
       });
     }
@@ -3347,14 +3459,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         if (!p.seed || S.clock < p.ready) return;
         const b = BAITS[p.seed], seed = p.seed;
         S.bait[seed] = (S.bait[seed] || 0) + b.yield;
-        idleLog.xp += grant("farming", (HARVEST_XP[seed] || 150) * IDLE_CUT);
+        idleLog.xp += idleGrant("farming", (HARVEST_XP[seed] || 150) * IDLE_CUT * (p.skipped ? 0.5 : 1));
         idleLog.harvested += 1; touched = true;
         if (S.pearls >= b.cost) {
           S.pearls -= b.cost;
-          Object.assign(p, { seed, at: S.clock, ready: S.clock + b.grow, watered: false });
-          idleLog.xp += grant("farming", (PLANT_XP[seed] || 60) * IDLE_CUT);
+          Object.assign(p, { seed, at: S.clock, ready: S.clock + b.grow, watered: false, skipped: false });
+          idleLog.xp += idleGrant("farming", (PLANT_XP[seed] || 60) * IDLE_CUT);
           idleLog.planted += 1;
-        } else Object.assign(p, { seed: null, at: 0, ready: 0, watered: false });
+        } else Object.assign(p, { seed: null, at: 0, ready: 0, watered: false, skipped: false });
       });
     }
     // the nests
@@ -3363,7 +3475,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         if (!n || S.clock >= n.ready || S.clock < (n.turnAt || 0) + TURN_MS) return;
         n.turnAt = S.clock;
         n.ready -= (n.ready - S.clock) * 0.02;
-        idleLog.xp += grant("breeding", TURN_XP[BY_KEY[n.key].rar] * IDLE_CUT);
+        idleLog.xp += idleGrant("breeding", TURN_XP[BY_KEY[n.key].rar] * IDLE_CUT);
         idleLog.turned += 1; touched = true;
       });
     }
@@ -3383,7 +3495,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         const pearls = Math.round(fishRate(f) * 2);
         S.pearls += pearls;
         idleLog.pearls += pearls;
-        idleLog.xp += grant("cooking", COOK_XP[sp.rar] * (f.shiny ? 2 : 1) * IDLE_CUT);
+        idleLog.xp += idleGrant("cooking", COOK_XP[sp.rar] * (f.shiny ? 2 : 1) * IDLE_CUT);
         idleLog.cooked += 1; touched = true;
       }
       if (S.clock - S.smokeAt > every) S.smokeAt = S.clock;   // nothing to cook: don't bank up a backlog
@@ -3399,7 +3511,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         junk.slice(0, 2).forEach((k) => { S.inv[k] -= 1; if (S.inv[k] <= 0) delete S.inv[k]; });
         S.pearls += 250;
         idleLog.pearls += 250;
-        idleLog.xp += grant("crafting", 100 * IDLE_CUT);
+        idleLog.xp += idleGrant("crafting", 100 * IDLE_CUT);
         idleLog.crafted = (idleLog.crafted || 0) + 1;
         touched = true;
       }
@@ -3582,17 +3694,27 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (show("kit")) KIT.forEach((k) => {
       const locked = levelIn(k.skill) < k.at;
       add(shopCard({ icon: { sprinkler: "💧", caretaker: "🧑‍🌾", turner: "🔄", hatchery: "🐣", smokehouse: "🔥", cannery: "🥫", meshbag: "🕸️", airtank: "🫧", toolbox: "🧰", bench: "🔨" }[k.key] || "⚙️",
-        name: k.name, about: `${k.about} · ${Math.round(IDLE_CUT * 100)}% xp`, price: k.cost, owned: Boolean(S.auto[k.key]), locked, need: locked ? `${SKILLS[k.skill].name} ${k.at}` : "",
+        name: k.name, about: `${k.about} · ${Math.round(IDLE_CUT * 100)}% xp, up to ${num(IDLE_DAY_CAP)} a day`, price: k.cost, owned: Boolean(S.auto[k.key]), locked, need: locked ? `${SKILLS[k.skill].name} ${k.at}` : "",
         onBuy: () => { if (S.pearls < k.cost) return; S.pearls -= k.cost; S.auto[k.key] = true; toast(`${k.name} installed`, k.about + "."); renderShop(); save(); } }));
     });
     if (show("time")) {
       CONV.forEach((c) => add(shopCard({ icon: c.icon, name: c.name, about: c.about, price: c.zc, pay: "zc", owned: Boolean(S.conv[c.key]),
         onBuy: () => buyZc(c.zc, () => { S.conv[c.key] = true; normalizeLoop(); renderGarden(); renderBreeding(); renderInv(); toast(`${c.name}`, c.about + "."); }) })));
-      BUYS.forEach((c) => add(shopCard({ icon: c.icon, name: c.name, about: c.about, price: c.zc, pay: "zc",
-        onBuy: () => buyZc(c.zc, () => {
-          if (c.key === "tackle") { S.bait.worm = (S.bait.worm || 0) + 10; S.bait.cricket = (S.bait.cricket || 0) + 6; S.bait.glow = (S.bait.glow || 0) + 2; renderBaitSel(); toast("Tackle box", "10 Nightcrawlers, 6 Crickets, 2 Glow grubs."); }
-          if (c.key === "skip") skipSoonest();
-        }) })));
+      BUYS.forEach((c) => add(shopCard({ icon: c.icon, name: c.name,
+        about: c.key === "skip" ? `${c.about}. Half the xp, ${SKIP_DAY_CAP - skipsToday()} of ${SKIP_DAY_CAP} left today` : c.about,
+        price: c.zc, pay: "zc",
+        onBuy: () => {
+          if (c.key === "skip") {
+            const target = skipTarget();
+            if (!target) { toast("Nothing to skip", "Plant a bed or lay an egg first — you have not been charged."); return; }
+            if (skipsToday() >= SKIP_DAY_CAP) { toast("That's today's skips", `${SKIP_DAY_CAP} a day. More tomorrow.`); return; }
+            buyZc(c.zc, () => { skipSoonest(target); renderShop(); });
+            return;
+          }
+          buyZc(c.zc, () => {
+            if (c.key === "tackle") { S.bait.worm = (S.bait.worm || 0) + 10; S.bait.cricket = (S.bait.cricket || 0) + 6; S.bait.glow = (S.bait.glow || 0) + 2; renderBaitSel(); toast("Tackle box", "10 Nightcrawlers, 6 Crickets, 2 Glow grubs."); }
+          });
+        } })));
     }
     if (show("looks")) COSM.forEach((c) => {
       const has = Boolean(S.cosm[c.key]), worn = wearing(c.slot) === c.key;
@@ -3605,13 +3727,29 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   }
 
   /** "Skip the wait": whichever bed or egg is closest to done. */
-  function skipSoonest() {
+  /* Skip the wait is ZCoins for time, and it was quietly ZCoins for levels:
+     a skipped rare egg paid 4,700 Breeding xp, 313 xp per ZCoin, so a 99 was
+     about 42,000 ZC away. Three changes, together:
+       - a skipped bed or egg pays HALF the xp when you collect it;
+       - no more than SKIP_DAY_CAP skips a day;
+       - and the check comes BEFORE the charge. It used to take the ZCoins
+         first and then say "Nothing to skip", keeping them. */
+  const SKIP_DAY_CAP = 10;
+  function skipTarget() {
     let best = null;
     S.plots.forEach((p2, i) => { if (p2.seed && S.clock < p2.ready && (!best || p2.ready < best.at)) best = { kind: "plot", i, at: p2.ready }; });
     S.nests.forEach((n, i) => { if (n && S.clock < n.ready && (!best || n.ready < best.at)) best = { kind: "nest", i, at: n.ready }; });
-    if (!best) { toast("Nothing to skip", "Plant a bed or lay an egg first."); return; }
-    if (best.kind === "plot") { S.plots[best.i].ready = S.clock; toast("Bed skipped", "It's ready to harvest."); renderGarden(); }
-    else { S.nests[best.i].ready = S.clock; toast("Egg skipped", "It's ready to hatch."); renderBreeding(); }
+    return best;
+  }
+  function skipsToday() {
+    const day = chicagoDate(S.dayShift || 0);
+    if (S.skipDay !== day) { S.skipDay = day; S.skips = 0; }
+    return S.skips || 0;
+  }
+  function skipSoonest(best) {
+    S.skips = skipsToday() + 1;
+    if (best.kind === "plot") { Object.assign(S.plots[best.i], { ready: S.clock, skipped: true }); toast("Bed skipped", `Ready to harvest, for half the xp. ${SKIP_DAY_CAP - S.skips} skips left today.`); renderGarden(); }
+    else { Object.assign(S.nests[best.i], { ready: S.clock, skipped: true }); toast("Egg skipped", `Ready to hatch, for half the xp. ${SKIP_DAY_CAP - S.skips} skips left today.`); renderBreeding(); }
   }
 
   function renderDerby() {
@@ -3809,16 +3947,17 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       ${wkTable(["Plots", "Price", "Needs"], PLOT_CAPS.map((c) => [`${c.cap} plots`, wkPearls(c.cost), c.cost ? wkNeed(`${c.cap} garden plots`) : "—"]), [1])}` },
 
     { key: "tank", name: "Tank & décor", icon: "🐠", sub: "Where your pearls come from", body: () => `
+      <p>Every fish in your tank also lends a <b>skill</b> a bonus to all xp: the pond feeds Farming, the river Cooking, the lake Breeding, the pier Crafting and the deep Diving — ${TANK_PCT.map((v, i) => `${RAR[i].name} +${v}%`).join(", ")}, doubled for a shiny. Fishing takes +${FISHING_PCT}% for every species in the tank. Only your best of each species counts, a whole spot's set at once adds +${SET_PCT}% to everything, and no skill goes past +${TANK_CAP}%.</p>
       <p>Every fish in your tank earns pearls every hour, whether the page is open or not. Rarer, heavier and shiny fish earn more. A bigger tank holds more fish; each decoration adds <b>+${Math.round(DECOR_BONUS * 100)}%</b> to everything the tank makes.</p>
       ${wkTable(["Tank", "Holds", "Price", "Needs"], TANKS.map((t) => [t.name, `${t.cap} fish`, wkPearls(t.cost), t.cost ? wkNeed(`${t.cap}-fish tank`) : "—"]), [1, 2])}
       ${wkTable(["Decoration", "Price", "Bonus", "Needs"], DECOR.map((d) => [d.name, wkPearls(d.cost), `+${Math.round(DECOR_BONUS * 100)}%`, wkNeed(d.name)]), [1, 2])}` },
 
     { key: "dive", name: "Diving", icon: "🤿", sub: "Air, a bag, and the bottom", body: () => `
-      <p>Each dive uses one breath of air and brings up one to four things off the bottom — more with the Mesh bag and Air tank. When the air runs out, <b>surface</b> to refill it, which takes a few seconds. When your bag is full you cannot dive until you sell, craft or buy a bigger bag.</p>
+      <p>Each dive uses one breath of air and brings up one to four things off the bottom — more with the Mesh bag and Air tank. A dive pays the Diving xp of the <b>best</b> thing it brings up, so the kit is for loot, not levels. When the air runs out, <b>surface</b> to refill it, which takes a few seconds. When your bag is full you cannot dive until you sell, craft or buy a bigger bag.</p>
       <p>Deeper water holds rarer things but is riskier: a dive comes up empty ${SPOTS.map((sp, i) => `<b>${Math.round((0.01 + i * 0.0125) * 100)}%</b> at ${sp.name}`).join(", ")}. An empty dive still costs the air.</p>
       <p>Every now and then a <b>cast</b> brings up a part instead: 1% at the pond up to 5% in the deep. Those are always the common parts.</p>
       <h3>What is down there</h3>
-      ${wkTable(["Item", "Rarity", "Sells for", "Diving xp"], LOOT_KEYS.map((k) => { const it = LOOT[k]; return [`${it.icon} ${it.name}`, wkRar(it.rar), wkPearls(it.value), num(DIVE_XP[it.rar])]; }), [2, 3])}
+      ${wkTable(["Item", "Rarity", "Sells for", "Diving xp, if the best find"], LOOT_KEYS.map((k) => { const it = LOOT[k]; return [`${it.icon} ${it.name}`, wkRar(it.rar), wkPearls(it.value), num(DIVE_XP[it.rar])]; }), [2, 3])}
       <h3>Air</h3>
       ${wkTable(["Tank", "Dives", "Refill", "Price", "Needs"], AIR_CAPS.map((a, i) => [a.name, `${a.dives}`, `${((3000 + i * 600) / 1000).toFixed(1)} s`, wkPearls(a.cost), a.cost ? wkNeed(a.name) : "—"]), [1, 2, 3])}
       <h3>Bags</h3>
@@ -3844,7 +3983,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       ${wkTable(["Boss", "Spot", "Fishing", "Species", "Time", "Title", "xp"], BOSSES.map((b) => [b.name, SPOTS[b.spot].name, `${b.at}`, `${b.need}`, `${b.secs} s`, b.title, num(b.xp)]), [2, 3, 4, 6])}` },
 
     { key: "idle", name: "Idle kit", icon: "⚙️", sub: "Things that work while you do not", body: () => `
-      <p>Past level 20 and 40 in each skill you can buy kit that does the work for you while you are away. It earns a little over half the xp you would have got doing it by hand. Fishing can never be idled.</p>
+      <p>Past level 20 and 40 in each skill you can buy kit that does the work for you while you are away. It earns a little over half the xp you would have got doing it by hand, and <b>at most ${num(IDLE_DAY_CAP)} xp per skill per day</b> — the work carries on past that, the xp stops until midnight Central. Fishing can never be idled.</p>
       ${wkTable(["Kit", "Skill", "Price", "Does"], KIT.map((k) => [k.name, `${SKILLS[k.skill].name} ${k.at}`, wkPearls(k.cost), k.about]), [2])}` },
 
     { key: "quests", name: "Quests & derby", icon: "🏆", sub: "Daily goals and the weekly contest", body: () => `
@@ -4404,7 +4543,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   setInterval(save, 5000);
   document.addEventListener("visibilitychange", save);
   window.addEventListener("pagehide", save);
-  window.__reef = { tick: (ms) => { const t0 = performance.now(); for (let k = 0; k <= ms / 16; k++) { last = t0 + (k - 1) * 16; frameBody(t0 + k * 16); } }, get S() { return S; }, lake, heronBox, checkUnlocks, paintNav, GATES, track, hatch, harvest, plant, water, breed, claim, openDailyChest, openWeeklyChest, pairs, fish, SPECIES, landed, action, rollCatch, renderEverything, drawFish, BY_KEY, syncTank, renderTank };
+  window.__reef = { tick: (ms) => { const t0 = performance.now(); for (let k = 0; k <= ms / 16; k++) { last = t0 + (k - 1) * 16; frameBody(t0 + k * 16); } }, get S() { return S; }, lake, heronBox, tankBonus, tankGain, idleGrant, grant, skipTarget, skipsToday, checkUnlocks, paintNav, GATES, track, hatch, harvest, plant, water, breed, claim, openDailyChest, openWeeklyChest, pairs, fish, SPECIES, landed, action, rollCatch, renderEverything, drawFish, BY_KEY, syncTank, renderTank };
 })();
 </script>
 </body>
