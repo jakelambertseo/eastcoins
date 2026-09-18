@@ -7,14 +7,14 @@
 <title>EastScape — mockup</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <!-- A MOCKUP: a flat, scene-based mini MMO with the Gladiator character.
      Nothing is on a server; the other players are simulated. Saved in this
      browser only. -->
 <style>
 :root{--ink:#e8e0cc;--muted:#9a917e;--gold:#f2c94c;--panel:#f3e7cc;--panel-ink:#2a2016;--frame:#1a1410;--bar:#0b0908;--link-a:#7ee07e;--link-b:#e0e0e0}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:#000;color:var(--ink);font-family:"Pixelify Sans",ui-monospace,monospace;overflow:hidden}
+html,body{margin:0;height:100%;background:#000;color:var(--ink);font-family:"Nunito",system-ui,sans-serif;overflow:hidden}
 button{font:inherit}
 .top{height:32px;display:flex;align-items:center;gap:26px;padding:0 12px;background:var(--bar);border-bottom:2px solid #2a2118;font-size:15px;white-space:nowrap;overflow:hidden}
 .top .logo{font-weight:700;color:#7ee07e;font-size:18px}
@@ -57,10 +57,15 @@ button{font:inherit}
 .slot{position:relative;aspect-ratio:1;border:1px solid #bfb193;background:#e6dcc4;display:grid;place-items:center;font-size:26px;cursor:pointer;user-select:none}
 .slot:hover{background:#efe6d0}
 .slot.empty{cursor:default;background:#e2d8bf}
+.slot.hint{outline:3px solid #ffb400;outline-offset:-3px;animation:hint .6s ease-in-out infinite alternate}
+@keyframes hint{from{background:#e6dcc4}to{background:#ffe27a}}
+@media (prefers-reduced-motion:reduce){.slot.hint{animation:none;background:#ffe27a}}
 .slot em{position:absolute;left:2px;top:0;font-style:normal;font-size:12px;font-weight:700;color:#ff0;text-shadow:1px 1px 0 #000,-1px 0 0 #000,0 -1px 0 #000,1px 0 0 #000}
 .doll{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(4,64px);gap:6px;justify-content:center;padding:14px 6px 8px;
   grid-template-areas:". helm ." "weapon body shield" ". legs ." "gloves boots ring"}
-.eq{border:2px solid #8a7a5a;border-radius:4px;background:#d8cbac;display:grid;place-items:center;font-size:30px;position:relative;cursor:default}
+.eq{border:2px solid #8a7a5a;border-radius:4px;background:#d8cbac;display:grid;place-items:center;font-size:30px;position:relative;cursor:pointer;font-family:inherit;color:inherit;padding:0}
+.eq:hover:not(:disabled){background:#e6dcc4}
+.eq:disabled{cursor:default}
 .eq small{position:absolute;bottom:1px;left:0;right:0;text-align:center;font-size:10px;color:#5a4a30}
 .eq.empty{opacity:.55;font-size:22px;filter:grayscale(1)}
 .bonl{margin:4px 8px 8px;border:2px solid #8a7a5a;background:#e6dcc4}
@@ -140,15 +145,40 @@ button{font:inherit}
   const ITEMS = {
     coins: { name: "Denarii", icon: "🪙" }, wheat: { name: "Wheat", icon: "🌾" }, bones: { name: "Bones", icon: "🦴" },
     beef: { name: "Raw beef", icon: "🥩" }, hide: { name: "Cowhide", icon: "🟫" }, chicken: { name: "Raw chicken", icon: "🍗" },
-    feather: { name: "Feather", icon: "🪶" }, sardine: { name: "Raw sardine", icon: "🐟" }, trout: { name: "Raw trout", icon: "🐠" }
+    feather: { name: "Feather", icon: "🪶" }, sardine: { name: "Raw sardine", icon: "🐟" }, trout: { name: "Raw trout", icon: "🐠" },
+    copper: { name: "Copper ore", icon: "🟠" }, tin: { name: "Tin ore", icon: "⚪" }, logs: { name: "Logs", icon: "🪵" }, olives: { name: "Olives", icon: "🫒" },
+    pork: { name: "Raw boar", icon: "🥓" }, tusk: { name: "Boar tusk", icon: "🦷" },
+    pit: { name: "Olive pit", icon: "🌰", ex: "It's still warm. And still angry." },
+    monocle: { name: "Tiny monocle", icon: "🧐", ex: "The olive was wearing it. You feel slightly more distinguished just holding it." },
+    manifesto: { name: "Goat's manifesto", icon: "📜", ex: "Mostly bleats. Page three is surprisingly moving." },
+    // things you wear: a slot, and what they add. Tools go in the weapon hand and must be held to use.
+    rudis: { name: "Wooden rudis", short: "Rudis", icon: "🗡️", slot: "weapon", acc: 4, str: 2 },
+    pickaxe: { name: "Bronze pickaxe", short: "Pickaxe", icon: "⛏️", slot: "weapon", tool: "mining", acc: 1, str: 1 },
+    axe: { name: "Bronze axe", short: "Axe", icon: "🪓", slot: "weapon", tool: "woodcutting", acc: 2, str: 2 },
+    rod: { name: "Fishing rod", short: "Rod", icon: "🎣", slot: "weapon", tool: "fishing" },
+    cap: { name: "Leather cap", short: "Cap", icon: "⛑️", slot: "helm", def: 1 },
+    tunic: { name: "Tunic", icon: "🥋", slot: "body", def: 2 },
+    toga: { name: "Goat-sized toga", short: "Toga", icon: "🥻", slot: "body", def: 3, acc: 1, ex: "Smells of goat. Fits you perfectly, which is worrying." },
+    parma: { name: "Parma", icon: "🛡️", slot: "shield", def: 3 },
+    sandals: { name: "Sandals", icon: "🩴", slot: "boots", def: 1 }
   };
-  const SKILLS = { melee: { name: "Melee", icon: "⚔️" }, hp: { name: "Hitpoints", icon: "❤️" }, fishing: { name: "Fishing", icon: "🎣" }, farming: { name: "Harvesting", icon: "🌾" } };
+  const SKILLS = { melee: { name: "Melee", icon: "⚔️" }, hp: { name: "Hitpoints", icon: "❤️" }, fishing: { name: "Fishing", icon: "🎣" }, farming: { name: "Harvesting", icon: "🌾" }, mining: { name: "Mining", icon: "⛏️" }, woodcutting: { name: "Woodcutting", icon: "🪓" } };
 
   /* ------------------------------------------------------------ state, saved in this browser */
   const SAVE = "ec_glad_flat_v1";
-  const fresh = () => ({ scene: "farm", x: 11, y: 7, hp: 10, inv: [{ k: "coins", n: 25 }], xp: { melee: 0, hp: XP_AT[10], fishing: 0, farming: 0 }, q: { cows: 0, fish: 0, done: {} } });
+  // you start with your tools in your bag, not in your hand: wielding them is the first lesson
+  const fresh = () => ({ scene: "farm", x: 11, y: 7, hp: 10, inv: [{ k: "coins", n: 25 }, { k: "pickaxe", n: 1 }, { k: "axe", n: 1 }, { k: "rod", n: 1 }],
+    eq: { weapon: "rudis", helm: "cap", body: "tunic", shield: "parma", boots: "sandals", legs: null, gloves: null, ring: null },
+    xp: { melee: 0, hp: XP_AT[10], fishing: 0, farming: 0, mining: 0, woodcutting: 0 }, q: { cows: 0, fish: 0, ore: 0, logs: 0, done: {} } });
   let S = fresh();
-  try { const o = JSON.parse(localStorage.getItem(SAVE) || "null"); if (o) S = { ...fresh(), ...o, xp: { ...fresh().xp, ...o.xp }, q: { ...fresh().q, ...o.q } }; } catch (e) { /* fresh */ }
+  try {
+    const o = JSON.parse(localStorage.getItem(SAVE) || "null");
+    if (o) {
+      S = { ...fresh(), ...o, xp: { ...fresh().xp, ...o.xp }, q: { ...fresh().q, ...o.q } };
+      // a save from before tools existed gets the starting kit
+      if (!o.eq) for (const k of ["pickaxe", "axe", "rod"]) if (!S.inv.some((x) => x.k === k)) S.inv.push({ k, n: 1 });
+    }
+  } catch (e) { /* fresh */ }
   const save = () => { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* private window */ } };
   const lvl = (k) => levelOf(S.xp[k]);
   const maxHp = () => lvl("hp");
@@ -163,6 +193,33 @@ button{font:inherit}
   }
   const xpDrops = [];
   let tracker = null;   // { k, at }: the skill last trained, drawn as a ring at the top of the game
+  // what your gear adds, and the tool check every skill makes
+  const bon = () => { const b = { acc: 0, str: 0, def: 0 }; for (const k of Object.values(S.eq)) if (k && ITEMS[k]) for (const q in b) b[q] += ITEMS[k][q] || 0; return b; };
+  const TOOL_OF = { mining: "pickaxe", woodcutting: "axe", fishing: "rod" };
+  let hintSlot = null;
+  function hasTool(skill) {
+    const w = S.eq.weapon; if (w && ITEMS[w].tool === skill) return true;
+    const k = TOOL_OF[skill], nm = ITEMS[k].name.toLowerCase();
+    if (!S.inv.some((x) => x.k === k)) { say(`You need a ${nm} to do that.`, "bad"); return false; }
+    say(`You need to hold your ${nm} first. Click it in your inventory to wield it.`, "bad");
+    hintSlot = { k, until: performance.now() + 8000 }; tab = "inv"; syncTabs(); renderPanel(); setTimeout(renderPanel, 8100);
+    return false;
+  }
+  function equip(i) {
+    const st = S.inv[i], it = ITEMS[st.k]; if (!it.slot) return;
+    const old = S.eq[it.slot];
+    if (st.n > 1) st.n--; else S.inv.splice(i, 1);
+    if (old) give(old);
+    S.eq[it.slot] = st.k;
+    say(`You ${it.slot === "weapon" ? "wield" : "put on"} the ${it.name.toLowerCase()}.`, "sys");
+    if (hintSlot && hintSlot.k === st.k) hintSlot = null;
+    save(); renderPanel();
+  }
+  function unequip(slot) {
+    const k = S.eq[slot]; if (!k) return;
+    if (!give(k)) return;
+    S.eq[slot] = null; say(`You take off the ${ITEMS[k].name.toLowerCase()}.`, "sys"); save(); renderPanel();
+  }
   function grant(k, xp, track = true) {
     const before = lvl(k); S.xp[k] += xp; const after = lvl(k);
     xpDrops.push({ k, xp, at: performance.now() });
@@ -180,63 +237,170 @@ button{font:inherit}
 
   /* ------------------------------------------------------------ the two scenes
      grid: . grass  , path  ~ water  s sand  # blocked-by-object  e exit (blue) */
+  // the fence (or wall) round a scene, with a 3-tile gap for each exit; exits sit mid-side
+  const SPAN = { n: [16, 18], s: [16, 18], e: [5, 7], w: [5, 7] }, OPP = { n: "s", s: "n", e: "w", w: "e" };
+  const grid = (fill = ".") => Array.from({ length: ROWS }, () => Array(COLS).fill(fill));
+  const block = (g, x, y, w = 1, h = 1) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) g[j][i] = "#"; };
+  function border(g, objs, exits, open = () => false, wall = false) {
+    const fh = wall ? "wallH" : "fenceH", fv = wall ? "wallV" : "fenceV";
+    for (let x = 0; x < COLS; x++) for (const [y, d] of [[0, "n"], [ROWS - 1, "s"]]) {
+      if (open(x, y)) continue;
+      if (exits[d] && x >= SPAN[d][0] && x <= SPAN[d][1]) g[y][x] = "e"; else { g[y][x] = "#"; objs.push({ t: fh, x, y }); }
+    }
+    for (let y = 1; y < ROWS - 1; y++) for (const [x, d] of [[0, "w"], [COLS - 1, "e"]]) {
+      if (open(x, y)) continue;
+      if (exits[d] && y >= SPAN[d][0] && y <= SPAN[d][1]) g[y][x] = "e"; else { g[y][x] = "#"; objs.push({ t: fv, x, y }); }
+    }
+  }
+  // natural edges instead of a fence: forest, brush, rocks or water, deeper in some places than others,
+  // with the exits cut through. It runs after a scene's own things are placed, so it only fills open grass,
+  // then opens up any brush that cut part of the scene off from its exits.
+  const keepOf = (sc) => [...sc.mobs.map(([, x, y]) => [x, y]), ...sc.npcs.map((n) => [n.x, n.y])];
+  function wild(g, objs, exits, edges, keep = [], seed = 1) {
+    const kept = new Set(keep.map(([x, y]) => `${x},${y}`)), rim = [];
+    const put = (t, x, y) => { const ob = { t, x, y, name: { tree: "Tree", bush: "Bush", boulder: "Boulder" }[t] }; objs.push(ob); g[y][x] = "#"; rim.push(ob); };
+    for (const d of ["n", "s", "w", "e"]) {
+      const kind = edges[d] || "forest", len = d === "n" || d === "s" ? COLS : ROWS, dc = d.charCodeAt(0);
+      if (kind !== "open") for (let i = 0; i < len; i++) {
+        const nearExit = exits[d] && i >= SPAN[d][0] - 1 && i <= SPAN[d][1] + 1;
+        const depth = nearExit ? 0 : Math.max(1, Math.min(3, Math.round(1.3 + Math.sin(i * 0.8 + seed * 3.1 + dc) * 0.9 + hashRand(i, seed, dc) * 0.9)));
+        for (let k = 0; k < depth; k++) {
+          const x = d === "w" ? k : d === "e" ? COLS - 1 - k : i, y = d === "n" ? k : d === "s" ? ROWS - 1 - k : i;
+          if (g[y][x] !== "." || kept.has(`${x},${y}`)) continue;
+          if (kind === "water") { g[y][x] = "~"; rim.push({ x, y }); continue; }
+          const r = hashRand(x, y, seed + 11);
+          put(kind === "rocky" ? (r < 0.45 ? "boulder" : r < 0.8 ? "tree" : "bush") : (r < 0.62 ? "tree" : r < 0.88 ? "bush" : "boulder"), x, y);
+        }
+      }
+      if (exits[d]) for (let i = SPAN[d][0]; i <= SPAN[d][1]; i++) { const x = d === "w" ? 0 : d === "e" ? COLS - 1 : i, y = d === "n" ? 0 : d === "s" ? ROWS - 1 : i; g[y][x] = "e"; }
+    }
+    // a few bushes and boulders out in the open
+    for (let y = 2; y < ROWS - 2; y++) for (let x = 2; x < COLS - 2; x++) {
+      if (g[y][x] !== "." || kept.has(`${x},${y}`)) continue;
+      let open = true; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (g[y + dy][x + dx] !== ".") open = false;
+      if (open && hashRand(x, y, seed + 21) < 0.04) put(hashRand(x, y, seed + 22) < 0.6 ? "bush" : "boulder", x, y);
+    }
+    // everything you can stand on must be reachable from an exit
+    for (let pass = 0; pass < 12; pass++) {
+      const q = []; for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (g[y][x] === "e") q.push([x, y]);
+      const seen = new Set(q.map(([x, y]) => y * COLS + x));
+      while (q.length) { const [x, y] = q.pop(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy, k = ny * COLS + nx; if (nx >= 0 && ny >= 0 && nx < COLS && ny < ROWS && !seen.has(k) && ".,sep".includes(g[ny][nx])) { seen.add(k); q.push([nx, ny]); } } }
+      const stuck = []; for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (".,sp".includes(g[y][x]) && !seen.has(y * COLS + x)) stuck.push([x, y]);
+      if (!stuck.length) break;
+      // a pocket of open grass is filled in with brush; only paths and anyone standing there get the brush opened instead
+      for (const [x, y] of stuck) {
+        if (g[y][x] === "." && !kept.has(`${x},${y}`)) put(hashRand(x, y, seed + 41) < 0.6 ? "tree" : "bush", x, y);
+        else for (const ob of rim) if (!ob.gone && Math.abs(ob.x - x) <= 1 && Math.abs(ob.y - y) <= 1) { ob.gone = true; g[ob.y][ob.x] = "."; }
+      }
+    }
+    for (let i = objs.length - 1; i >= 0; i--) if (objs[i].gone) objs.splice(i, 1);
+  }
   const SCENES = {
     farm: {
-      name: "Ludus Farm", exits: { e: { to: "river", side: "right" } },
+      name: "Ludus Farm", exits: { e: "river", n: "forum" },
       build() {
-        const g = Array.from({ length: ROWS }, () => Array(COLS).fill("."));
-        const objs = [];
-        for (let x = 0; x < COLS; x++) { g[0][x] = "#"; g[ROWS - 1][x] = "#"; objs.push({ t: "fenceH", x, y: 0 }, { t: "fenceH", x, y: ROWS - 1 }); }
-        for (let y = 1; y < ROWS - 1; y++) { g[y][0] = "#"; objs.push({ t: "fenceV", x: 0, y }); if (y < 5 || y > 7) { g[y][COLS - 1] = "#"; objs.push({ t: "fenceV", x: COLS - 1, y }); } else g[y][COLS - 1] = "e"; }
-        for (let x = 13; x < COLS - 1; x++) g[6][x] = ",";
+        const g = grid(), objs = [];
+        for (let x = 13; x < COLS; x++) g[6][x] = ",";
+        for (let y = 0; y < 6; y++) g[y][17] = ",";
         for (let y = 5; y < 10; y++) g[y][8] = ",";
         for (let x = 8; x < 14; x++) g[9][x] = ",";
         const house = { t: "house", img: "farmhouse", x: 2, y: 2, w: 5, h: 3, door: { x: 4, y: 4 }, name: "Farmhouse" }; objs.push(house);
-        for (let y = house.y; y < house.y + house.h; y++) for (let x = house.x; x < house.x + house.w; x++) g[y][x] = "#";
+        block(g, house.x, house.y, house.w, house.h);
         objs.push({ t: "well", x: 9, y: 2, name: "Well" }); g[3][9] = "#"; g[3][10] = "#";
         objs.push({ t: "pond", x: 11, y: 1, w: 3, h: 2 }); for (let y = 1; y < 3; y++) for (let x = 11; x < 14; x++) g[y][x] = "~";
         objs.push({ t: "hay", x: 8, y: 4 }, { t: "hay", x: 9, y: 4 }); g[4][8] = "#"; g[4][9] = "#";
-        for (let y = 6; y < 11; y++) { objs.push({ t: "wheat", x: 2, y, name: "Wheat", grownAt: 0 }); g[y][2] = "#"; }
-        for (let y = 6; y < 11; y++) { objs.push({ t: "wheat", x: 3, y, name: "Wheat", grownAt: 0 }); g[y][3] = "#"; }
-        objs.push({ t: "tree", x: 19, y: 1 }); g[1][19] = "#"; objs.push({ t: "tree", x: 17, y: 11 }); g[11][17] = "#";
+        for (let y = 6; y < 11; y++) for (const x of [2, 3]) { objs.push({ t: "wheat", x, y, name: "Wheat", grownAt: 0 }); g[y][x] = "#"; }
+        for (const [x, y] of [[20, 2], [19, 11], [14, 11]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
+        wild(g, objs, this.exits, { n: "forest", w: "forest", s: "water", e: "forest" }, keepOf(this), 1);
         return { g, objs, blobs: [[7, 8, 3], [15, 4, 3], [18, 9, 2], [5, 11, 2]] };
       },
-      mobs: [["cow", 12, 4], ["cow", 15, 8], ["cow", 18, 4], ["cow", 11, 10], ["cow", 16, 10]],
-      npcs: [{ name: "Tom Brady", art: "tom", x: 10, y: 6, hair: "#c86a2a", shirt: "#3a6ac8", pants: "#2a2a4a", lines: ["Mind the cows, gladiator. They blitz.", "The lanista wants wheat for the horses. Pick some by the house.", "The river's past the blue marker, east of here."] },
-             { name: "Waldy", art: "waldy", x: 6, y: 9, hair: "#3a2a1a", shirt: "#8a3a2a", pants: "#4a3a2a", lines: ["Every champion started on cows.", "Hit them until they stop mooing. That's the whole trick.", "The bucket? Keeps the thoughts in."] }],
-      bots: [{ name: "Crixus", level: 42, crest: "#c43a2a" }]
+      mobs: [["cow", 12, 4], ["cow", 15, 8], ["cow", 19, 4], ["cow", 11, 10], ["cow", 16, 10]],
+      npcs: [{ name: "Tom Brady", art: "tom", x: 10, y: 6, hair: "#c86a2a", shirt: "#3a6ac8", pants: "#2a2a4a", lines: ["Mind the cows, gladiator. They blitz.", "Your pickaxe, axe and rod are in your bag. Hold the right one for the job.", "Town's north, through the gate. The river's east.", "Mine an ore, chop a log, catch a fish. Then we talk."] },
+             { name: "Waldy", art: "waldy", x: 6, y: 9, hair: "#3a2a1a", shirt: "#8a3a2a", pants: "#4a3a2a", lines: ["Every champion started on cows.", "Hit them until they stop mooing. That's the whole trick.", "The bucket? Keeps the thoughts in.", "Don't go west of town. The olives have opinions."] }],
+      bots: [{ name: "Crixus", level: 42 }]
     },
     river: {
-      name: "River Bend", exits: { w: { to: "farm", side: "left" } },
+      name: "River Bend", exits: { w: "farm" },
       build() {
-        const g = Array.from({ length: ROWS }, () => Array(COLS).fill("."));
-        const objs = [];
-        for (let x = 0; x < 17; x++) { g[0][x] = "#"; g[ROWS - 1][x] = "#"; objs.push({ t: "fenceH", x, y: 0 }, { t: "fenceH", x, y: ROWS - 1 }); }
-        for (let y = 1; y < ROWS - 1; y++) { if (y < 5 || y > 7) { g[y][0] = "#"; objs.push({ t: "fenceV", x: 0, y }); } else g[y][0] = "e"; }
+        const g = grid(), objs = [];
         for (let y = 0; y < ROWS; y++) { if (y && y < ROWS - 1) g[y][16] = "s"; for (let x = 17; x < COLS; x++) g[y][x] = "~"; }
         objs.push({ t: "spot", x: 17, y: 4, name: "Fishing spot" }, { t: "spot", x: 17, y: 8, name: "Fishing spot" });
-        for (let x = 1; x < 16; x++) g[6][x] = ",";
+        for (let x = 0; x < 16; x++) g[6][x] = ",";
         const house = { t: "house", img: "hut", x: 9, y: 1, w: 5, h: 3, door: { x: 11, y: 3 }, name: "Fisher's hut" }; objs.push(house);
-        for (let y = house.y; y < house.y + house.h; y++) for (let x = house.x; x < house.x + house.w; x++) g[y][x] = "#";
+        block(g, house.x, house.y, house.w, house.h);
         // the coop: a fenced run with a gap on its top side
         for (let x = 2; x <= 7; x++) { if (x !== 4) { g[8][x] = "#"; objs.push({ t: "fenceH", x, y: 8 }); } g[11][x] = "#"; }
         for (let y = 9; y <= 10; y++) { g[y][2] = "#"; g[y][7] = "#"; objs.push({ t: "fenceV", x: 2, y }, { t: "fenceV", x: 7, y }); }
-        objs.push({ t: "tree", x: 3, y: 2 }); g[2][3] = "#"; objs.push({ t: "tree", x: 14, y: 10 }); g[10][14] = "#"; objs.push({ t: "tree", x: 6, y: 3 }); g[3][6] = "#";
+        for (const [x, y] of [[3, 2], [14, 9], [6, 3]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
+        // copper: single rocks (one ore a click) and a big vein you can leave running
+        for (const [x, y] of [[9, 9], [10, 10], [11, 9]]) { objs.push({ t: "rock", ore: "copper", x, y, name: "Copper rock" }); g[y][x] = "#"; }
+        objs.push({ t: "vein", ore: "copper", x: 12, y: 10, name: "Copper vein" }); block(g, 12, 10, 2, 2);
+        wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "open" }, keepOf(this), 2);
         return { g, objs, blobs: [[5, 5, 2], [12, 9, 3], [15, 3, 2]] };
       },
       mobs: [["chicken", 4, 9], ["chicken", 5, 10], ["chicken", 6, 9], ["chicken", 3, 10]],
-      npcs: [{ name: "Old Tullius", art: "tullius", x: 15, y: 6, hair: "#d8d8d8", shirt: "#5a7a3a", pants: "#3a3a2a", lines: ["The fish bite best where the water bubbles.", "Don't let the chickens fool you. One took my eye.", "Farm's back west, past the blue."] }],
-      bots: [{ name: "Spartacus", level: 77, crest: "#e8bf35" }]
+      npcs: [{ name: "Old Tullius", art: "tullius", x: 15, y: 6, hair: "#d8d8d8", shirt: "#5a7a3a", pants: "#3a3a2a", lines: ["The fish bite best where the water bubbles.", "Can't fish with a sword, lad. Hold your rod.", "Don't let the chickens fool you. One took my eye.", "That big copper vein never runs dry. Slow, mind."] }],
+      bots: [{ name: "Spartacus", level: 77 }]
+    },
+    forum: {
+      name: "The Forum", exits: { s: "farm", w: "grove" },
+      build() {
+        const g = grid(), objs = [];
+        // a rough oval of paving in the grass, with roads out to the gates
+        for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+          const dx = (x - 10.5) / 9.6, dy = (y - 5.6) / 5.4, wob = (hashRand(x, y, 51) - 0.5) * 0.22;
+          if (dx * dx + dy * dy < 1 + wob) g[y][x] = "p";
+        }
+        for (let y = 7; y < ROWS; y++) for (let x = 16; x <= 18; x++) g[y][x] = "p";
+        for (let x = 0; x < 4; x++) for (let y = 5; y <= 7; y++) g[y][x] = "p";
+        const paved = g.map((r) => r.slice());
+        const bath = { t: "house", x: 2, y: 1, w: 6, h: 3, door: { x: 4, y: 3 }, name: "Bathhouse", roof: "#8a9aa8", wall: "#efe6d4", sign: "BANK" };
+        const forge = { t: "house", x: 12, y: 1, w: 6, h: 3, door: { x: 15, y: 3 }, name: "Forge", roof: "#7a4a3a", wall: "#c8b89a", sign: "STORE" };
+        objs.push(bath, forge); block(g, 2, 1, 6, 3); block(g, 12, 1, 6, 3);
+        objs.push({ t: "fountain", x: 10, y: 6, name: "Fountain" }); block(g, 10, 6, 2, 2);
+        objs.push({ t: "notice", x: 9, y: 2, name: "Notice board" }); g[2][9] = "#";
+        objs.push({ t: "statue", x: 15, y: 9, name: "Statue" }); g[9][15] = "#";
+        objs.push({ t: "sign", x: 19, y: 6, name: "Signpost" }); g[6][19] = "#";
+        for (const [x, y] of [[6, 9], [13, 9]]) { objs.push({ t: "bush", x, y, name: "Planter" }); g[y][x] = "#"; }
+        // things standing on the paving keep the paving under them ("P": paved, not walkable)
+        for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (g[y][x] === "#" && paved[y][x] === "p") g[y][x] = "P";
+        wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "forest" }, keepOf(this), 4);
+        return { g, objs, blobs: [] };
+      },
+      mobs: [],
+      npcs: [{ name: "Gaius", x: 7, y: 7, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: Coo. The Forge buys ore. Coo.", "PIGEON: He doesn't talk. I do the talking. Coo.", "PIGEON: The Bathhouse keeps your things safe. Opening soon. Coo.", "PIGEON: West is the Olive Grove. Bring a sword. Seriously. Coo."] }],
+      bots: [{ name: "Gannicus", level: 55 }, { name: "Naevia", level: 31 }]
+    },
+    grove: {
+      name: "Olive Grove", exits: { e: "forum" },
+      build() {
+        const g = grid(), objs = [];
+        for (let x = 13; x < COLS; x++) g[6][x] = ",";
+        for (const [x, y] of [[2, 2], [5, 2], [8, 2], [2, 5], [5, 5], [8, 5], [3, 8], [6, 8]]) { objs.push({ t: "olive", x, y, name: "Olive tree", left: 4 }); g[y][x] = "#"; }
+        for (const [x, y] of [[18, 2], [20, 9], [13, 11]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
+        objs.push({ t: "hive", x: 15, y: 2, name: "Beehive" }, { t: "hive", x: 16, y: 2, name: "Beehive" }); g[2][15] = "#"; g[2][16] = "#";
+        objs.push({ t: "shrine", x: 2, y: 10, name: "Shrine" }); block(g, 2, 10, 2, 1);
+        objs.push({ t: "fire", x: 12, y: 8, name: "Campfire" }); g[8][12] = "#";
+        for (const [x, y] of [[8, 10], [9, 11], [10, 10]]) { objs.push({ t: "rock", ore: "tin", x, y, name: "Tin rock" }); g[y][x] = "#"; }
+        wild(g, objs, this.exits, { w: "water", n: "rocky", s: "forest", e: "forest" }, keepOf(this), 3);
+        return { g, objs, blobs: [[11, 4, 3], [16, 9, 3]] };
+      },
+      mobs: [["olive", 11, 3], ["olive", 13, 4], ["olive", 11, 6], ["boar", 15, 9], ["boar", 17, 4], ["goat", 17, 10]],
+      npcs: [],
+      bots: [{ name: "Agron", level: 23 }]
     }
   };
   const MOBS = {
-    cow: { name: "Cow", hp: 8, att: 1, def: 1, max: 1, speed: 3000, drops: () => [["beef", 1], ["hide", 1], ["bones", 1]], xp: 1 },
-    chicken: { name: "Chicken", hp: 3, att: 1, def: 1, max: 1, speed: 2400, drops: () => [["chicken", 1], ["feather", rint(5, 15)], ["bones", 1]], xp: 1 }
+    cow: { name: "Cow", lvl: 2, hp: 8, att: 1, def: 1, max: 1, speed: 3000, oy: 11, box: [11, 20], drops: () => [["beef", 1], ["hide", 1], ["bones", 1]] },
+    chicken: { name: "Chicken", lvl: 1, hp: 3, att: 1, def: 1, max: 1, speed: 2400, oy: 11, box: [7, 14], drops: () => [["chicken", 1], ["feather", rint(5, 15)], ["bones", 1]] },
+    olive: { name: "Angry Olive", lvl: 6, hp: 12, att: 5, def: 4, max: 2, speed: 2600, box: [7, 16], drops: () => [["olives", rint(2, 5)], ["pit", 1], ...(Math.random() < 0.1 ? [["monocle", 1]] : [])] },
+    boar: { name: "Wild boar", lvl: 8, hp: 16, att: 6, def: 6, max: 2, speed: 2800, box: [11, 16], drops: () => [["pork", 1], ["tusk", 1], ["bones", 1]] },
+    goat: { name: "Goat in a Toga", lvl: 12, hp: 24, att: 9, def: 8, max: 3, speed: 2400, box: [8, 26], drops: () => [["manifesto", 1], ["bones", 1], ...(Math.random() < 0.25 ? [["toga", 1]] : [])] }
   };
 
   /* ------------------------------------------------------------ the scene you are in */
   const Z = { key: "", g: null, objs: [], blobs: [], bg: null, mobs: [], npcs: [], bots: [], fadeAt: 0 };
-  const walkable = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && ".,se".includes(Z.g[y][x]);
+  const walkable = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && ".,sep".includes(Z.g[y][x]);
   const P = { x: S.x, y: S.y, px: S.x, py: S.y, path: [], step: null, face: 1, act: null, lastSwing: 0, hurtAt: 0, swingAt: 0 };
   function loadScene(key, fromSide) {
     const sc = SCENES[key], b = sc.build();
@@ -244,11 +408,13 @@ button{font:inherit}
     Z.bg = paintBg();
     Z.mobs = sc.mobs.map(([t, x, y], i) => ({ id: `${key}${i}`, t, x, y, px: x, py: y, hx: x, hy: y, hp: MOBS[t].hp, path: [], step: null, face: Math.random() < .5 ? 1 : -1, nextWander: 0, dead: false, respawnAt: 0, hurtAt: 0, swingAt: 0, lastSwing: 0 }));
     Z.npcs = sc.npcs.map((n, i) => ({ ...n, id: `${key}n${i}`, hx: n.x, hy: n.y, px: n.x, py: n.y, path: [], step: null, face: -1, nextWander: 0, bubble: null }));
-    Z.bots = sc.bots.map((b, i) => ({ ...b, id: `${key}b${i}`, x: rint(8, 14), y: rint(5, 9), path: [], step: null, face: 1, nextWander: 0 }));
+    Z.bots = sc.bots.map((b, i) => { let x, y; do { x = rint(3, COLS - 4); y = rint(3, ROWS - 4); } while (!walkable(x, y)); return { ...b, id: `${key}b${i}`, x, y, path: [], step: null, face: 1, nextWander: 0 }; });
     Z.bots.forEach((b) => { b.px = b.x; b.py = b.y; b.hue = b.level > 50 ? 150 : 0; });
+    // you come in on the side you walked towards: leave the farm north, arrive at the Forum's south gate
     if (fromSide) {
-      const y = 6, x = fromSide === "right" ? 1 : COLS - 2;
-      Object.assign(P, { x, y, px: x, py: y, path: [], step: null, act: null, face: fromSide === "right" ? 1 : -1 });
+      const mid = (SPAN[fromSide][0] + SPAN[fromSide][1]) / 2;
+      const x = fromSide === "w" ? 1 : fromSide === "e" ? COLS - 2 : mid, y = fromSide === "n" ? 1 : fromSide === "s" ? ROWS - 2 : mid;
+      Object.assign(P, { x, y, px: x, py: y, path: [], step: null, act: null });
     }
     S.scene = key; save();
   }
@@ -299,6 +465,19 @@ button{font:inherit}
       }
     }
     o.scale(A, A);
+    // flowers and tufts in the open grass
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (Z.g[y][x] === "." && IMG.t_dirt) {
+      const r = hashRand(x, y, 31), X = x * T, Y = y * T;
+      if (r < 0.09) { const c = ["#f4f0e0", "#f2c230", "#d8506a", "#a070d8"][Math.floor(hashRand(x, y, 32) * 4)]; for (let i = 0; i < 3; i++) { const fx = X + 2 + Math.floor(hashRand(x, i, 33) * 11), fy = Y + 3 + Math.floor(hashRand(y, i, 34) * 10); f(fx, fy + 1, 1, 2, "#3f6a2a"); f(fx - 1, fy, 3, 1, c); f(fx, fy - 1, 1, 3, c); } }
+      else if (r < 0.2) { const fx = X + 3 + Math.floor(hashRand(x, y, 35) * 9), fy = Y + 5 + Math.floor(hashRand(x, y, 36) * 8); f(fx, fy, 1, 3, "#4f7a36"); f(fx + 2, fy - 1, 1, 4, "#5a8a3e"); f(fx + 4, fy + 1, 1, 2, "#4f7a36"); }
+    }
+    // the Forum's paving, drawn in code for now
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (Z.g[y][x] === "p" || Z.g[y][x] === "P") {
+      const X = x * T, Y = y * T, off = (y % 2) * 4;
+      f(X, Y, T, T, "#bdb29c"); f(X, Y, T, 1, "#a0957e"); f(X, Y + 8, T, 1, "#a0957e");
+      f(X + off, Y, 1, 8, "#a0957e"); f(X + off + 8, Y, 1, 8, "#a0957e"); f(X + (off + 4) % 8, Y + 8, 1, 8, "#a0957e"); f(X + (off + 4) % 8 + 8, Y + 8, 1, 8, "#a0957e");
+      if (hashRand(x, y, 4) < 0.3) f(X + 3, Y + 10, 3, 2, "#cdc3ae");
+    }
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
       if (IMG.t_dirt) break;
       const t = Z.g[y][x], X = x * T, Y = y * T;
@@ -314,10 +493,24 @@ button{font:inherit}
       const X = ob.x * T, Y = ob.y * T;
       if (ob.t === "pond" && !IMG.t_water) { f(X, Y, ob.w * T, ob.h * T, "#4a8fd6"); o.strokeStyle = "#d8c08a"; o.lineWidth = 2; o.strokeRect(X + 1, Y + 1, ob.w * T - 2, ob.h * T - 2); }
       if (ob.t === "fenceH") { f(X, Y + 7, T, 2, "#6b3f23"); f(X, Y + 11, T, 2, "#6b3f23"); f(X + 6, Y + 2, 4, 13, "#4a2a16"); f(X + 7, Y + 2, 2, 12, "#7a4a26"); f(X + 6, Y + 1, 4, 2, "#8a5a32"); }
+      if (ob.t === "wallH" || ob.t === "wallV") { f(X, Y + 2, T, 13, "#8a8478"); f(X, Y + 2, T, 3, "#aaa496"); f(X, Y + 14, T, 1, "#5a564c"); f(X + (ob.x % 2 ? 4 : 11), Y + 5, 1, 9, "#6a6458"); f(X, Y + 9, T, 1, "#6a6458"); }
+      if (ob.t === "bush") {
+        f(X + 1, Y + 13, 14, 3, "rgba(0,0,0,.25)"); f(X + 1, Y + 6, 14, 9, "#2c5626"); f(X + 2, Y + 3, 12, 11, "#3b7334"); f(X + 4, Y + 2, 7, 3, "#3b7334"); f(X + 4, Y + 4, 5, 3, "#57944a"); f(X + 10, Y + 7, 3, 2, "#4a8a40");
+        if (hashRand(ob.x, ob.y, 5) < 0.35) for (let i = 0; i < 4; i++) f(X + 3 + Math.floor(hashRand(ob.x, i, 6) * 10), Y + 5 + Math.floor(hashRand(ob.y, i, 7) * 7), 2, 2, "#c43a4a");
+      }
+      if (ob.t === "boulder") { f(X + 1, Y + 13, 14, 3, "rgba(0,0,0,.25)"); f(X + 2, Y + 4, 12, 11, "#5e5a52"); f(X + 1, Y + 7, 14, 7, "#5e5a52"); f(X + 3, Y + 5, 10, 8, "#7d776c"); f(X + 4, Y + 5, 6, 2, "#9c968a"); f(X + 9, Y + 10, 3, 1, "#5e5a52"); }
+      if (ob.t === "hive") { f(X + 2, Y + 13, 12, 2, "rgba(0,0,0,.25)"); f(X + 3, Y + 4, 10, 10, "#c89a3a"); f(X + 4, Y + 2, 8, 2, "#c89a3a"); f(X + 6, Y + 1, 4, 1, "#c89a3a"); for (let i = 0; i < 4; i++) f(X + 3, Y + 5 + i * 2, 10, 1, "#a8781e"); f(X + 7, Y + 10, 3, 3, "#2a1a0a"); }
+      if (ob.t === "shrine") { f(X + 1, Y + 12, 30, 3, "rgba(0,0,0,.25)"); f(X + 3, Y + 3, 26, 10, "#a8a294"); f(X + 3, Y + 3, 26, 2, "#c8c2b4"); f(X + 1, Y + 11, 30, 3, "#8a8478");
+        f(X + 11, Y - 2, 10, 4, "#8a5a2a"); f(X + 12, Y - 5, 1, 4, "#6a3a1a"); f(X + 18, Y - 5, 1, 4, "#6a3a1a"); f(X + 12, Y - 5, 7, 1, "#6a3a1a");   // the sandal
+        f(X + 5, Y - 1, 2, 4, "#f0e8d0"); f(X + 5, Y - 3, 2, 2, "#ffb030"); f(X + 25, Y - 1, 2, 4, "#f0e8d0"); f(X + 25, Y - 3, 2, 2, "#ffb030"); }
+      if (ob.t === "notice") { f(X + 3, Y + 6, 2, 10, "#5a3418"); f(X + 11, Y + 6, 2, 10, "#5a3418"); f(X + 1, Y - 3, 14, 11, "#7a4a26"); f(X + 2, Y - 2, 12, 9, "#a8784a"); f(X + 3, Y - 1, 4, 3, "#f0ead8"); f(X + 8, Y, 5, 4, "#f0ead8"); f(X + 4, Y + 3, 3, 3, "#f0ead8"); }
+      if (ob.t === "sign") { f(X + 7, Y + 1, 2, 14, "#5a3418"); f(X + 1, Y + 2, 12, 5, "#8a5a32"); f(X + 13, Y + 3, 2, 3, "#8a5a32"); f(X + 3, Y + 4, 8, 1, "#3a2616"); }
+      if (ob.t === "statue") { f(X + 1, Y + 13, 14, 2, "rgba(0,0,0,.25)"); f(X + 2, Y + 6, 12, 9, "#a8a294"); f(X + 2, Y + 6, 12, 2, "#c8c2b4");
+        f(X + 3, Y - 5, 9, 9, "#d8d2c4"); f(X + 9, Y - 11, 4, 7, "#d8d2c4"); f(X + 13, Y - 9, 2, 1, "#b8b2a4"); f(X + 10, Y - 13, 2, 2, "#c8c2b4"); f(X + 11, Y - 9, 1, 1, "#6a665c"); f(X + 1, Y - 7, 3, 4, "#c8c2b4"); }
       if (ob.t === "fenceV") { f(X + 6, Y, 4, T, "#5a3418"); f(X + 7, Y, 2, T, "#7a4a26"); f(X + 5, Y + 3, 6, 3, "#4a2a16"); }
       if (ob.t === "house" && !IMG[ob.img]) {
         const w = ob.w * T, h = ob.h * T;
-        f(X + 2, Y + h * 0.45, w - 4, h * 0.55, "#e7c49a"); f(X + 2, Y + h * 0.45, 3, h * 0.55, "#c9a47a");
+        f(X + 2, Y + h * 0.45, w - 4, h * 0.55, ob.wall || "#e7c49a"); f(X + 2, Y + h * 0.45, 3, h * 0.55, "#c9a47a");
         for (let i = 0; i < 5; i++) f(X + 4, Y + h * 0.5 + i * 8, w - 8, 1, "rgba(150,110,70,.35)");
         const roof = ob.roof || "#e2b04a";
         f(X - 2, Y, w + 4, h * 0.5, roof);
@@ -327,6 +520,7 @@ button{font:inherit}
         const dx = ob.door.x * T, dy = ob.door.y * T;
         f(dx + 3, dy - 6, 10, 22, "#3a2616"); f(dx + 4, dy - 5, 8, 21, "#7a3b1f"); f(dx + 10, dy + 4, 1, 2, "#e8bf35");
         f(X + 2 + w * 0.7, Y + h * 0.58, 8, 7, "#3a2616"); f(X + 3 + w * 0.7, Y + h * 0.58 + 1, 6, 5, "#7ab0e0");
+        if (ob.sign) { const sw = ob.sign.length * 5 + 6; f(dx + 8 - sw / 2, dy - 13, sw, 7, "#3a2616"); f(dx + 9 - sw / 2, dy - 12, sw - 2, 5, "#e8d8a8"); o.fillStyle = "#3a2616"; o.font = "bold 5px monospace"; o.textAlign = "center"; o.textBaseline = "middle"; o.fillText(ob.sign, dx + 8, dy - 9.5); }
       }
       if (ob.t === "well" && !IMG.well) {
         f(X + 2, Y + 14, 28, 16, "#5a5a5a"); f(X + 4, Y + 16, 24, 12, "#7a7a7a"); for (let i = 0; i < 4; i++) f(X + 4 + i * 6, Y + 16, 1, 12, "#5a5a5a"); f(X + 7, Y + 18, 18, 6, "#1a2a3a");
@@ -360,6 +554,47 @@ button{font:inherit}
     px(2, -9, 4, 5, "#222"); px(3, -8, 2, 3, "#fafafa"); px(3, -10, 2, 2, "#e03030"); px(5, -7, 2, 1, "#f0b020"); px(4, -8, 1, 1, "#111");
     lc.restore();
   }
+  // the Olive Grove: an olive with a grudge, a boar, and a goat who has read some philosophy
+  function drawOlive(x, y, face, hurt) {
+    lc.save(); lc.translate(Math.round(x), Math.round(y)); if (face < 0) lc.scale(-1, 1);
+    px(-5, 0, 10, 2, "rgba(0,0,0,.25)");
+    px(-3, -3, 2, 3, "#2a1a10"); px(1, -3, 2, 3, "#2a1a10");
+    const b = hurt ? "#c8d890" : "#5a7a2a", d = "#34501a";
+    px(-5, -14, 10, 11, d); px(-4, -15, 8, 13, d); px(-4, -14, 8, 11, b); px(-3, -15, 6, 13, b); px(-3, -13, 2, 4, "#8aa84a");
+    px(1, -13, 3, 3, "#c43a2a"); px(2, -12, 1, 1, "#f08a6a");
+    px(0, -15, 5, 1, "#1a1a0a"); px(-1, -7, 4, 1, "#1a1a0a"); px(-2, -8, 1, 1, "#1a1a0a");
+    px(-7, -10, 2, 1, "#2a1a10"); px(5, -10, 2, 1, "#2a1a10"); px(7, -11, 2, 2, "#2a1a10");
+    lc.restore();
+  }
+  function drawBoar(x, y, face, hurt) {
+    lc.save(); lc.translate(Math.round(x), Math.round(y)); if (face < 0) lc.scale(-1, 1);
+    px(-9, 0, 18, 2, "rgba(0,0,0,.25)");
+    for (const lx of [-7, -3, 2, 5]) px(lx, -4, 2, 4, "#2a1a10");
+    const c = hurt ? "#e0a090" : "#6a4a2a", d = "#3e2812";
+    px(-9, -12, 15, 9, d); px(-8, -11, 13, 7, c); px(-8, -13, 11, 2, "#2a180a"); px(-10, -10, 2, 2, d);
+    px(4, -11, 7, 7, d); px(5, -10, 6, 5, c); px(10, -8, 2, 3, "#c88a7a"); px(7, -9, 1, 1, "#000"); px(9, -6, 1, 3, "#f4eed8"); px(5, -13, 2, 2, d);
+    lc.restore();
+  }
+  function drawGoat(x, y, face, hurt) {
+    lc.save(); lc.translate(Math.round(x), Math.round(y)); if (face < 0) lc.scale(-1, 1);
+    px(-6, 0, 12, 2, "rgba(0,0,0,.25)");
+    px(-3, -5, 2, 5, "#8a8070"); px(1, -5, 2, 5, "#8a8070"); px(-3, -1, 2, 1, "#2a2a2a"); px(1, -1, 2, 1, "#2a2a2a");
+    px(-5, -16, 10, 12, hurt ? "#ffd0d0" : "#f4f0e4"); px(-5, -16, 2, 12, "#ddd6c4");
+    for (let i = 0; i < 10; i++) px(-5 + i, -16 + i, 2, 1, "#7a3a9a");
+    px(-7, -14, 2, 6, "#c8c0b0"); px(5, -14, 2, 6, "#c8c0b0"); px(6, -9, 2, 2, "#8a8070");
+    px(-2, -23, 6, 7, "#d8d2c4"); px(3, -21, 3, 4, "#c8c0b0"); px(1, -21, 2, 1, "#000"); px(3, -16, 2, 3, "#e8e2d4");
+    px(-2, -26, 2, 3, "#8a7a5a"); px(2, -26, 2, 3, "#8a7a5a"); px(-3, -24, 8, 1, "#5a8a2a"); px(-3, -23, 1, 1, "#7aaa3a"); px(4, -23, 1, 1, "#7aaa3a");
+    lc.restore();
+  }
+  const DRAW = { cow: (...a) => drawCow(...a), chicken: (...a) => drawChicken(...a), olive: drawOlive, boar: drawBoar, goat: drawGoat };
+  function drawRock(ob, now) {
+    const big = ob.t === "vein", w = big ? 30 : 14, h = big ? 24 : 11, X = ob.x * T + 1, Y = ob.y * T + (big ? 31 : 15) - h;
+    const empty = ob.emptyUntil > now, ore = ob.ore === "copper" ? ["#d8793a", "#f4a868"] : ["#a8b4bc", "#eef4f8"];
+    px(X, Y + h - 2, w, 3, "rgba(0,0,0,.25)");
+    px(X + 2, Y, w - 4, h, "#5e5a52"); px(X, Y + 3, w, h - 4, "#5e5a52"); px(X + 2, Y + 1, w - 5, h - 4, empty ? "#77736a" : "#857f74"); px(X + 3, Y + 1, w - 8, 2, empty ? "#8a867c" : "#a49e92");
+    if (!empty) for (let i = 0; i < (big ? 10 : 4); i++) { const rx = X + 3 + Math.floor(hashRand(ob.x, i, 7) * (w - 7)), ry = Y + 2 + Math.floor(hashRand(ob.y, i, 8) * (h - 6)); px(rx, ry, 2, 2, ore[0]); px(rx, ry, 1, 1, ore[1]); }
+    if (big && Math.floor(now / 700) % 5 === 0) px(X + 8 + (Math.floor(now / 3500) % 3) * 6, Y + 5, 1, 1, "#fff");
+  }
   function drawPerson(x, y, face, look, bob = 0) {
     lc.save(); lc.translate(Math.round(x), Math.round(y + bob)); if (face < 0) lc.scale(-1, 1);
     px(-5, 0, 10, 2, "rgba(0,0,0,.25)");
@@ -368,6 +603,7 @@ button{font:inherit}
     px(-3, -20, 6, 6, "#e8c09a");
     if (look.helm) { px(-4, -22, 8, 4, "#9a9fa6"); px(-2, -25, 5, 3, look.crest); px(2, -19, 2, 1, "#9a9fa6"); }
     else { px(-4, -22, 8, 3, look.hair); px(-4, -19, 2, 5, look.hair); }
+    if (look.pigeon) { px(-3, -26, 6, 4, "#8a8a9a"); px(2, -28, 3, 3, "#6a6a7a"); px(5, -27, 1, 1, "#e0a020"); px(3, -27, 1, 1, "#000"); px(-4, -25, 2, 2, "#6a6a7a"); }
     px(1, -18, 1, 1, "#222");
     lc.restore();
   }
@@ -420,7 +656,7 @@ button{font:inherit}
   }
   const adjacent = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)) === 1;
   const hitChance = (att, def) => Math.max(0.1, Math.min(0.95, 0.5 + (att - def) * 0.04));
-  const maxHit = () => 1 + Math.floor(lvl("melee") / 6);
+  const maxHit = () => 1 + Math.floor(lvl("melee") / 6) + Math.floor(bon().str / 2);
   let splats = [];
   const splat = (who, n, kind) => splats.push({ who, n, kind, at: performance.now() });
 
@@ -434,7 +670,7 @@ button{font:inherit}
       if (!a.started) { a.started = now; P.lastSwing = now - 1800; m.lastSwing = now; m.fighting = true; }
       if (now - P.lastSwing >= 2400) {
         P.lastSwing = now; P.swingAt = now;
-        const hit = Math.random() < hitChance(lvl("melee") + 3, MOBS[m.t].def), dmg = hit ? rint(1, maxHit()) : 0;
+        const hit = Math.random() < hitChance(lvl("melee") + 1 + bon().acc, MOBS[m.t].def), dmg = hit ? rint(1, maxHit()) : 0;
         m.hp -= dmg; m.hurtAt = now; splat(m.id, dmg, dmg ? "hit" : "miss");
         if (dmg) { grant("melee", dmg * 4); grant("hp", Math.round(dmg * 1.33), false); }
         if (m.hp <= 0) return killMob(m, now);
@@ -445,6 +681,59 @@ button{font:inherit}
     if (a.kind === "npc") { const n = Z.npcs.find((x) => x.id === a.id); if (n) { const line = pick(n.lines); n.bubble = { text: line, at: now }; n.face = P.x > n.x ? 1 : -1; n.turned = P.x !== n.x; setTimeout(() => { n.turned = false; }, 4000); } P.act = null; return; }
     if (a.kind === "door") { say(`The ${a.name.toLowerCase()} door is shut. Houses you can walk into come next: they're their own scenes.`, "sys"); P.act = null; return; }
     if (a.kind === "well") { say("You look down the well. Something glints at the bottom, but it's too far down.", "sys"); P.act = null; return; }
+    const faceIt = () => { P.dir = DIRS[`${Math.sign(a.x - P.x)},${Math.sign(a.y - P.y)}`] || P.dir; P.face = a.x > P.x ? 1 : a.x < P.x ? -1 : P.face; };
+    if (EXAMINE[a.kind]) { faceIt(); say(pick(EXAMINE[a.kind]), "sys"); P.act = null; return; }
+    if (a.kind === "shrine") {
+      faceIt(); P.act = null;
+      if (S.hp < maxHp()) { S.hp = maxHp(); renderStats(); return say("You pray at the shrine. The sandal seems pleased. Your hitpoints are restored.", "good"); }
+      return say("You pray at the shrine. The sandal regards you coolly.", "sys");
+    }
+    if (a.kind === "rock" || a.kind === "vein") {
+      faceIt(); const ob = a.ob, vein = a.kind === "vein";
+      if (!hasTool("mining")) { P.act = null; return; }
+      if (ob.emptyUntil > now) { say("There's no ore left in this rock. It'll be back soon.", "sys"); P.act = null; return; }
+      if (!a.started) { a.started = now; a.next = now + (vein ? 5000 : 1800); P.swingAt = now; say(vein ? "You settle in at the vein. It's slow, but it never runs dry." : "You swing your pickaxe at the rock.", "sys"); return; }
+      if (now - P.swingAt > 1100) P.swingAt = now;
+      if (now < a.next) return;
+      if (vein) {
+        a.next = now + 6000;
+        if (Math.random() < 0.55) { if (!give(ob.ore)) { P.act = null; return; } grant("mining", 9); S.q.ore++; questCheck(); save(); renderPanel(); }
+      } else {
+        a.next = now + 1800;
+        if (Math.random() < Math.min(0.9, 0.4 + lvl("mining") * 0.02)) {
+          if (!give(ob.ore)) { P.act = null; return; }
+          grant("mining", ob.ore === "tin" ? 18 : 17); say(`You mine some ${ITEMS[ob.ore].name.toLowerCase()}.`, "good");
+          ob.emptyUntil = now + 8000; S.q.ore++; questCheck(); P.act = null; save(); renderPanel();
+        }
+      }
+      return;
+    }
+    if (a.kind === "tree") {
+      faceIt(); const ob = a.ob;
+      if (ob.stumpUntil > now) { say("That tree's been cut down. It'll grow back.", "sys"); P.act = null; return; }
+      if (!hasTool("woodcutting")) { P.act = null; return; }
+      if (!a.started) { a.started = now; a.next = now + 2000; P.swingAt = now; say("You swing your axe at the tree.", "sys"); return; }
+      if (now - P.swingAt > 1000) P.swingAt = now;
+      if (now < a.next) return;
+      a.next = now + 2000;
+      if (Math.random() < Math.min(0.85, 0.35 + lvl("woodcutting") * 0.02)) {
+        if (!give("logs")) { P.act = null; return; }
+        grant("woodcutting", 25); say("You get some logs.", "good"); S.q.logs++; questCheck(); save(); renderPanel();
+        if (Math.random() < 0.2) { ob.stumpUntil = now + 15000; say("The tree falls.", "sys"); P.act = null; }
+      }
+      return;
+    }
+    if (a.kind === "olive") {
+      faceIt(); const ob = a.ob;
+      if (ob.bareUntil > now) { say("You've picked this tree clean. Give it a moment.", "sys"); P.act = null; return; }
+      if (!a.started) { a.started = now; a.next = now + 1500; say("You start picking olives…", "sys"); return; }
+      if (now < a.next) return;
+      a.next = now + 1500;
+      if (!give("olives")) { P.act = null; return; }
+      grant("farming", 6);
+      if (--ob.left <= 0) { ob.left = 4; ob.bareUntil = now + 20000; say("That's the last of the olives on this tree.", "sys"); P.act = null; }
+      save(); renderPanel(); return;
+    }
     if (a.kind === "wheat") {
       const w = a.ob; if (w.grownAt > now) { say("That's already been picked. It'll grow back soon.", "sys"); P.act = null; return; }
       if (!a.started) { a.started = now; say("You start picking the wheat…", "sys"); return; }
@@ -452,6 +741,8 @@ button{font:inherit}
       return;
     }
     if (a.kind === "spot") {
+      faceIt();
+      if (!hasTool("fishing")) { P.act = null; return; }
       if (!a.started) { a.started = now; a.next = now + 2600; say("You cast out your line…", "sys"); return; }
       if (now >= a.next) {
         a.next = now + 2600;
@@ -480,7 +771,7 @@ button{font:inherit}
         m.face = P.x > m.x ? 1 : -1;
         if (now - m.lastSwing >= MOBS[m.t].speed) {
           m.lastSwing = now; m.swingAt = now;
-          const hit = Math.random() < hitChance(MOBS[m.t].att, lvl("melee") / 2), dmg = hit ? rint(1, MOBS[m.t].max) : 0;
+          const hit = Math.random() < hitChance(MOBS[m.t].att, (lvl("melee") + bon().def) / 2), dmg = hit ? rint(1, MOBS[m.t].max) : 0;
           S.hp -= dmg; if (dmg) P.hurtAt = now; splat("you", dmg, dmg ? "hit" : "miss");
           if (S.hp <= 0) { die(); return; }
         }
@@ -506,8 +797,19 @@ button{font:inherit}
     S.hp = maxHp(); P.act = null; loadScene("farm"); Object.assign(P, { x: 4, y: 6, px: 4, py: 6, path: [], step: null });
     save(); renderPanel();
   }
+  const EXAMINE = {
+    notice: ["NOTICE: Lost, one (1) sense of smell. If found, return to Waldy.", "NOTICE: The Forge buys ore. The Forge always buys ore.", "NOTICE: Do NOT feed the olives.", "NOTICE: Wanted: goat, wears a toga, answers to 'Senator'. Do not debate him."],
+    sign: ["Via Appia → Closed: bandits. (Coming soon.)"],
+    hive: ["The bees are humming the same four notes. Over and over.", "One bee is wearing a tiny helmet. It salutes you."],
+    statue: ["'GALLUS THE BRAVE. He did not flinch.' It's a chicken."],
+    fountain: ["The water tastes faintly of denarii."],
+    fire: ["A campfire. Cooking comes soon; for now it's just warm."],
+    bush: ["A bush. Something inside it is breathing.", "Just a bush. Probably.", "A bush. It rustles when you aren't looking."],
+    boulder: ["A big rock. Too big for your pickaxe. For now.", "Someone has scratched 'CRIXUS WAS HERE' into it."]
+  };
   const QUESTS = [
     { key: "cows", name: "Cattle Drive", goal: 5, about: "Tom Brady wants five cows seen to.", reward: 60, have: () => S.q.cows },
+    { key: "tools", name: "Tools of the Trade", goal: 3, about: "Tom Brady wants to see you use your tools: mine an ore, chop a log and catch a fish. Wield each one first.", reward: 30, have: () => Math.min(1, S.q.ore) + Math.min(1, S.q.logs) + Math.min(1, S.q.fish) },
     { key: "fish", name: "Catch of the Day", goal: 3, about: "Old Tullius wants three fish off the river.", reward: 40, have: () => S.q.fish }
   ];
   function questCheck() {
@@ -523,15 +825,23 @@ button{font:inherit}
     const s = Math.min(w / W, (h) / H); view = { s, ox: Math.round((w - W * s) / 2), oy: Math.round((h - H * s) / 2) };
     return { w, h };
   }
+  const VERB = { mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
   const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
   function thingAt(wx, wy) {
     const near = (px_, py_, rx, ry) => Math.abs(wx - px_) <= rx && wy <= py_ + 4 && wy >= py_ - ry;
-    for (const m of Z.mobs) if (!m.dead && near(m.px * T + 8, m.py * T + 12, m.t === "cow" ? 11 : 7, m.t === "cow" ? 20 : 14)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: MOBS[m.t].name };
+    for (const m of Z.mobs) if (!m.dead && near(m.px * T + 8, m.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})` };
     for (const n of Z.npcs) if (near(n.px * T + 8, n.py * T + 14, 6, 24)) return { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name };
     const tx = Math.floor(wx / T), ty = Math.floor(wy / T);
     for (const ob of Z.objs) {
       if (ob.t === "wheat" && ob.x === tx && ob.y === ty) return { kind: "wheat", ob, x: ob.x, y: ob.y, name: "Wheat" };
       if (ob.t === "spot" && Math.abs(ob.x - tx) <= 0 && Math.abs(ob.y - ty) <= 0) return { kind: "spot", ob, x: ob.x, y: ob.y, name: "Fishing spot" };
+      if (ob.t === "rock" && ob.x === tx && ob.y === ty) return { kind: "rock", ob, x: ob.x, y: ob.y, name: ob.name };
+      if (ob.t === "vein" && tx >= ob.x && tx <= ob.x + 1 && ty >= ob.y && ty <= ob.y + 1) return { kind: "vein", ob, x: tx, y: ty, name: ob.name };
+      if ((ob.t === "tree" || ob.t === "olive") && ob.x === tx && (ty === ob.y || ty === ob.y - 1)) return { kind: ob.t, ob, x: ob.x, y: ob.y, name: ob.name };
+      if (["hive", "shrine", "notice", "sign", "statue", "fountain", "fire", "bush", "boulder"].includes(ob.t)) {
+        const ow = ob.t === "shrine" || ob.t === "fountain" ? 2 : 1, oh = ob.t === "fountain" ? 2 : 1;
+        if (tx >= ob.x && tx < ob.x + ow && ty >= ob.y - 1 && ty < ob.y + oh) return { kind: ob.t, ob, x: Math.min(tx, ob.x + ow - 1), y: Math.max(ob.y, Math.min(ty, ob.y + oh - 1)), name: ob.name };
+      }
       if (ob.t === "well" && tx >= ob.x && tx <= ob.x + 1 && ty >= ob.y && ty <= ob.y + 1) return { kind: "well", x: ob.x, y: ob.y + 1, name: "Well" };
       if (ob.t === "house" && Math.abs(tx - ob.door.x) <= 0 && Math.abs(ty - ob.door.y) <= 1 && ty <= ob.door.y) return { kind: "door", x: ob.door.x, y: ob.door.y, name: ob.name };
     }
@@ -563,11 +873,11 @@ button{font:inherit}
   /* ------------------------------------------------------------ the frame */
   const kOf = (at, ms) => (performance.now() - at) / ms;
   function label(text, x, y, color, size = 13) {
-    ctx.font = `600 ${size}px "Pixelify Sans", monospace`; ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.font = `600 ${size}px "Nunito", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "top";
     ctx.lineWidth = 3; ctx.strokeStyle = "rgba(0,0,0,.85)"; ctx.strokeText(text, x, y); ctx.fillStyle = color; ctx.fillText(text, x, y);
   }
   function bubble(text, x, y) {
-    ctx.font = `600 13px "Pixelify Sans", monospace`; const w = Math.min(260, ctx.measureText(text).width + 14);
+    ctx.font = `600 13px "Nunito", system-ui, sans-serif`; const w = Math.min(260, ctx.measureText(text).width + 14);
     ctx.fillStyle = "rgba(255,255,240,.94)"; ctx.fillRect(x - w / 2, y - 26, w, 22); ctx.strokeStyle = "#2a2016"; ctx.lineWidth = 2; ctx.strokeRect(x - w / 2, y - 26, w, 22);
     ctx.fillStyle = "#2a2016"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(text.length > 40 ? text.slice(0, 38) + "…" : text, x, y - 15);
   }
@@ -576,7 +886,10 @@ button{font:inherit}
     keyMove();
     const moving = tick(P, now);
     // stepping onto the blue takes you through
-    if (!moving && Z.g[P.y][P.x] === "e") { const ex = Object.values(SCENES[Z.key].exits)[0]; loadScene(ex.to, ex.side); say(`You travel to ${SCENES[ex.to].name}.`, "sys"); renderPanel(); }
+    if (!moving && Z.g[P.y][P.x] === "e") {
+      const d = P.x === COLS - 1 ? "e" : P.x === 0 ? "w" : P.y === 0 ? "n" : "s", to = SCENES[Z.key].exits[d];
+      if (to) { loadScene(to, OPP[d]); say(`You travel to ${SCENES[to].name}.`, "sys"); renderPanel(); }
+    }
     doActions(now); mobsAct(now);
     S.x = P.x; S.y = P.y;
     // regenerate a hitpoint every 20 seconds out of a fight
@@ -594,7 +907,29 @@ button{font:inherit}
       // the buildings and props stand in the sort with everyone else, so you can walk behind a tree
       if (ob.t === "house" && IMG[ob.img]) sprites.push({ y: (ob.y + ob.h) * T - 1, draw: () => spr(ob.img, ob.door.x * T + 8, (ob.y + ob.h) * T) });
       if (ob.t === "well" && IMG.well) sprites.push({ y: (ob.y + 2) * T - 1, draw: () => spr("well", (ob.x + 1) * T, (ob.y + 2) * T - 1) });
-      if (ob.t === "tree" && IMG.tree) sprites.push({ y: ob.y * T + 14, draw: () => spr("tree", ob.x * T + 8, ob.y * T + 15) });
+      if (ob.t === "tree") sprites.push({ y: ob.y * T + 14, draw: () => {
+        if (ob.stumpUntil > now) { const X = ob.x * T, Y = ob.y * T; px(X + 3, Y + 13, 10, 2, "rgba(0,0,0,.25)"); px(X + 4, Y + 8, 8, 6, "#6b4423"); px(X + 5, Y + 7, 6, 2, "#b8905a"); px(X + 7, Y + 8, 2, 1, "#8a6a3a"); return; }
+        if (!spr("tree", ob.x * T + 8, ob.y * T + 15)) { const X = ob.x * T, Y = ob.y * T; px(X + 6, Y + 6, 4, 10, "#6b4423"); px(X - 3, Y - 8, 22, 16, "#3f7a3a"); px(X, Y - 9, 8, 5, "#5a9a4a"); }
+      } });
+      if (ob.t === "olive") sprites.push({ y: ob.y * T + 14, draw: () => {
+        const X = ob.x * T, Y = ob.y * T, bare = ob.bareUntil > now;
+        px(X + 1, Y + 13, 14, 3, "rgba(0,0,0,.25)"); px(X + 6, Y + 4, 3, 11, "#7a6a50"); px(X + 8, Y + 8, 2, 4, "#6a5a40"); px(X + 4, Y + 6, 2, 3, "#7a6a50");
+        px(X - 3, Y - 7, 22, 12, "#6f8a5a"); px(X - 1, Y - 10, 18, 4, "#6f8a5a"); px(X, Y - 8, 7, 4, "#8aa878"); px(X + 9, Y - 5, 7, 3, "#8aa878"); px(X - 3, Y + 3, 22, 2, "#566e44");
+        if (!bare) for (let i = 0; i < 7; i++) px(X - 1 + Math.floor(hashRand(ob.x, i, 2) * 17), Y - 8 + Math.floor(hashRand(ob.y, i, 3) * 11), 2, 2, "#2e2a40");
+      } });
+      if (ob.t === "rock" || ob.t === "vein") sprites.push({ y: ob.y * T + (ob.t === "vein" ? 30 : 14), draw: () => drawRock(ob, now) });
+      if (ob.t === "fountain") sprites.push({ y: (ob.y + 2) * T - 2, draw: () => {
+        const X = ob.x * T, Y = ob.y * T;
+        px(X, Y + 26, 32, 4, "rgba(0,0,0,.2)"); px(X, Y + 12, 32, 16, "#9a9484"); px(X + 2, Y + 14, 28, 10, "#4a8fd6"); px(X + 2, Y + 14, 28, 2, "#7ab4ec"); px(X, Y + 12, 32, 2, "#c8c2b4");
+        px(X + 14, Y + 1, 4, 15, "#b8b2a4"); px(X + 11, Y - 1, 10, 3, "#c8c2b4");
+        for (let i = 0; i < 8; i++) { const k = (now / 700 + i / 8) % 1, sd = i % 2 ? 1 : -1; px(X + 16 + Math.round(sd * k * 10), Y - 1 + Math.round(k * k * 18 - k * 6), 1, 2, "#cfe8ff"); }
+      } });
+      if (ob.t === "fire") sprites.push({ y: ob.y * T + 14, draw: () => {
+        const X = ob.x * T, Y = ob.y * T;
+        px(X + 2, Y + 11, 12, 3, "#5a3418"); px(X + 4, Y + 9, 8, 2, "#6b4423");
+        for (let i = 0; i < 5; i++) { const fl = Math.round(Math.sin(now / 90 + i * 1.7) * 2), c = Math.abs(i - 2); px(X + 3 + i * 2, Y + 2 + c - fl, 2, 8 - c + fl, i % 2 ? "#ffb030" : "#ff6a1a"); }
+        px(X + 7, Y + 5, 2, 4, "#fff0a0");
+      } });
       if (ob.t === "hay" && IMG.hay) sprites.push({ y: ob.y * T + 12, draw: () => spr("hay", ob.x * T + 8, ob.y * T + 14) });
       if (ob.t === "wheat") sprites.push({ y: ob.y * T + 15, draw: () => {
         const X = ob.x * T, Y = ob.y * T;
@@ -610,7 +945,7 @@ button{font:inherit}
     for (const m of Z.mobs) if (!m.dead) sprites.push({ y: m.py * T + 14, draw: () => {
       const hurt = now - m.hurtAt < 200, lunge = now - m.swingAt < 200 ? m.face * 2 : 0;
       // the PixelLab mobs face right; mirror for left
-      if (!spr(m.t, m.px * T + 8 + lunge, m.py * T + 14 + bobOf(m, 110), m.face < 0, hurt ? RED : "")) (m.t === "cow" ? drawCow : drawChicken)(m.px * T + 8 + lunge, m.py * T + 11, m.face, hurt);
+      if (!spr(m.t, m.px * T + 8 + lunge, m.py * T + 14 + bobOf(m, 110), m.face < 0, hurt ? RED : "")) DRAW[m.t](m.px * T + 8 + lunge, m.py * T + (MOBS[m.t].oy ?? 14) + bobOf(m, 110), m.face, hurt);
     } });
     for (const n of Z.npcs) sprites.push({ y: n.py * T + 14, draw: () => {
       const side = n.step || n.turned, k = `${n.art}_${side ? "east" : "south"}`;
@@ -621,7 +956,7 @@ button{font:inherit}
       if (!spr(`hero_${b.dir || "south"}`, b.px * T + 8, b.py * T + 15 + bobOf(b), false, `hue-rotate(${b.hue || 0}deg)`)) drawPerson(b.px * T + 8, b.py * T + 15, b.face, { shirt: "#7a2a2a", pants: "#4a3a2a", helm: true, crest: b.crest });
     } });
     // your gladiator, in the sort like everyone else: 8 facings, a lunge when you swing, red when hit
-    const fightingNow = P.act?.kind === "mob" && !P.step && !P.path.length;
+    const fightingNow = !!(P.act && P.act.started && P.act.kind !== "spot" && !P.step && !P.path.length);
     if (IMG.hero_south) sprites.push({ y: P.py * T + 14.5, draw: () => {
       const d = P.dir || "south", sw = now - P.swingAt, lunge = fightingNow && sw < 260 ? Math.sin((sw / 260) * Math.PI) * 4 : 0;
       const [ux, uy] = Object.keys(DIRS).find((k) => DIRS[k] === d).split(",").map(Number);
@@ -654,6 +989,12 @@ button{font:inherit}
       ctx.drawImage(hero, fr * SHEET.fw, r * SHEET.fh, SHEET.fw, SHEET.fh, -SHEET.fw * sc / 2, -SHEET.foot * sc, SHEET.fw * sc, SHEET.fh * sc);
       ctx.restore();
     }
+    // what's in your hand, until the art has tools: the sword is already in the sprite
+    if (IMG.hero_south && S.eq.weapon && S.eq.weapon !== "rudis" && P.dir !== "north") {
+      const west = (P.dir || "").includes("west");
+      ctx.save(); ctx.translate(hx + (west ? -9 : 9) * S2, hy - 10 * S2); if (west) ctx.scale(-1, 1);
+      ctx.font = `${Math.round(8 * S2)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(ITEMS[S.eq.weapon].icon, 0, 0); ctx.restore();
+    }
     // names under everyone, like the real thing
     label("bootypaper", hx, hy + 4, "#fff"); label(`level ${total()}`, hx, hy + 18, "#ffe45c", 12);
     for (const m of Z.mobs) if (!m.dead) {
@@ -671,7 +1012,7 @@ button{font:inherit}
       const k = (now - s.at) / 900; ctx.globalAlpha = Math.min(1, (1 - k) * 2.5);
       ctx.fillStyle = s.kind === "miss" ? "#2f6fd6" : "#c42a2a"; ctx.beginPath(); ctx.arc(x, y - k * 10, 11, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = "#000"; ctx.lineWidth = 1.5; ctx.stroke();
-      ctx.fillStyle = "#fff"; ctx.font = `700 13px "Pixelify Sans", monospace`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(s.n), x, y - k * 10 + 1);
+      ctx.fillStyle = "#fff"; ctx.font = `700 13px "Nunito", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(s.n), x, y - k * 10 + 1);
       ctx.globalAlpha = 1;
     }
     // xp drops: rise off your head and fade, a few stacked if they land together
@@ -679,15 +1020,15 @@ button{font:inherit}
     xpDrops.forEach((d, i) => {
       const k = (now - d.at) / 1600, y = hy - 31 * S2 - k * 34 - (xpDrops.length - 1 - i) * 16;
       ctx.globalAlpha = Math.min(1, (1 - k) * 2.2);
-      ctx.font = `700 15px "Pixelify Sans", monospace`; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.font = `700 15px "Nunito", system-ui, sans-serif`; ctx.textAlign = "left"; ctx.textBaseline = "middle";
       const t = `+${d.xp} xp`, tw = ctx.measureText(t).width, x = hx - (tw + 20) / 2;
       ctx.font = "13px sans-serif"; ctx.fillText(SKILLS[d.k].icon, x, y);
-      ctx.font = `700 15px "Pixelify Sans", monospace`; ctx.lineWidth = 3; ctx.strokeStyle = "#0a1a08"; ctx.strokeText(t, x + 19, y); ctx.fillStyle = "#5dff4a"; ctx.fillText(t, x + 19, y);
+      ctx.font = `700 15px "Nunito", system-ui, sans-serif`; ctx.lineWidth = 3; ctx.strokeStyle = "#0a1a08"; ctx.strokeText(t, x + 19, y); ctx.fillStyle = "#5dff4a"; ctx.fillText(t, x + 19, y);
       ctx.globalAlpha = 1;
     });
     // the skill ring: progress to the next level, up while you work and for a few seconds after
     if (tracker) {
-      const busy = P.act && (P.act.kind === "mob" || P.act.kind === "spot" || P.act.kind === "wheat"), idle = now - tracker.at;
+      const busy = P.act && ["mob", "spot", "wheat", "rock", "vein", "tree", "olive"].includes(P.act.kind), idle = now - tracker.at;
       if (busy) tracker.at = Math.max(tracker.at, now - 3000);
       const a = busy ? 1 : Math.max(0, 1 - (idle - 5000) / 800);
       if (a <= 0) tracker = null;
@@ -699,11 +1040,11 @@ button{font:inherit}
         ctx.strokeStyle = "rgba(255,255,255,.14)"; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
         ctx.strokeStyle = "#f2d22e"; ctx.lineCap = "round"; ctx.beginPath(); ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.02, f)); ctx.stroke(); ctx.lineCap = "butt";
         ctx.font = "20px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(SKILLS[k].icon, cx, cy + 1);
-        ctx.font = `700 12px "Pixelify Sans", monospace`; ctx.lineWidth = 3; ctx.strokeStyle = "#000"; ctx.strokeText(String(l), cx + r - 2, cy + r - 4); ctx.fillStyle = "#fff"; ctx.fillText(String(l), cx + r - 2, cy + r - 4);
+        ctx.font = `700 12px "Nunito", system-ui, sans-serif`; ctx.lineWidth = 3; ctx.strokeStyle = "#000"; ctx.strokeText(String(l), cx + r - 2, cy + r - 4); ctx.fillStyle = "#fff"; ctx.fillText(String(l), cx + r - 2, cy + r - 4);
         ctx.globalAlpha = 1;
       }
     }
-    if (hoverThing) { const t = `${hoverThing.kind === "mob" ? "Attack" : hoverThing.kind === "npc" ? "Talk-to" : hoverThing.kind === "wheat" ? "Pick" : hoverThing.kind === "spot" ? "Fish" : hoverThing.kind === "door" ? "Open" : "Search"} ${hoverThing.name}`; label(t, w / 2, 8, "#fff", 14); }
+    if (hoverThing) { const t = `${VERB[hoverThing.kind] || "Examine"} ${hoverThing.name}`; label(t, w / 2, 8, "#fff", 14); }
     // a scene change fades in
     const fk = (now - Z.fadeAt) / 350; if (fk < 1) { ctx.fillStyle = `rgba(0,0,0,${1 - fk})`; ctx.fillRect(0, 0, w, h); }
     $("dbg").textContent = `Town: ${SCENES[Z.key].name}\nPlayer: bootypaper · level ${total()}\nTile: ${P.x} ${P.y}${hoverTile ? `   Mouse: ${hoverTile.x} ${hoverTile.y}` : ""}\nAction: ${P.act ? (P.act.kind === "mob" ? `fighting ${P.act.name}` : P.act.kind === "spot" ? "fishing" : P.act.kind === "wheat" ? "picking wheat" : P.act.kind) : moving ? "walking" : "none"}`;
@@ -712,33 +1053,39 @@ button{font:inherit}
 
   /* ------------------------------------------------------------ the right-hand panel */
   let tab = "inv";
+  const syncTabs = () => document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.tab === tab)));
   function renderStats() {
     $("stats").innerHTML = [
       ["❤️", `${Math.max(0, S.hp)}/${maxHp()}`, "Hitpoints"], ["⚔️", combat(), "Combat level"],
       ["⭐", total(), "Total level"], ["🪙", (S.inv.find((x) => x.k === "coins")?.n || 0).toLocaleString(), "Denarii"],
-      ["🎒", `${invCount()}/30`, "Inventory"], ["🏛️", Z.key ? SCENES[Z.key].name.split(" ")[0] : "", "Area"]
+      ["🎒", `${invCount()}/30`, "Inventory"], ["🏛️", Z.key ? SCENES[Z.key].name.replace(/^The /, "").split(" ")[0] : "", "Area"]
     ].map(([i, v, t]) => `<div class="stat" title="${t}"><i>${i}</i><b>${v}</b></div>`).join("");
   }
   function renderPanel() {
     renderStats();
     const p = $("panel");
     if (tab === "inv") {
-      const cells = S.inv.map((s, i) => `<div class="slot" data-i="${i}" title="${ITEMS[s.k].name}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""} — click to examine, shift-click to drop">${ITEMS[s.k].icon}${s.n > 1 ? `<em>${s.n >= 100000 ? Math.floor(s.n / 1000) + "k" : s.n.toLocaleString()}</em>` : ""}</div>`);
+      const hint = hintSlot && hintSlot.until > performance.now() ? hintSlot.k : null;
+      const cells = S.inv.map((s, i) => `<div class="slot${s.k === hint ? " hint" : ""}${ITEMS[s.k].slot ? " gear" : ""}" data-i="${i}" title="${ITEMS[s.k].name}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""} — ${ITEMS[s.k].slot ? (ITEMS[s.k].slot === "weapon" ? "click to wield" : "click to wear") : "click to examine"}, shift-click to drop">${ITEMS[s.k].icon}${s.n > 1 ? `<em>${s.n >= 100000 ? Math.floor(s.n / 1000) + "k" : s.n.toLocaleString()}</em>` : ""}</div>`);
       while (cells.length < 30) cells.push('<div class="slot empty"></div>');
       p.innerHTML = `<div class="ph">Inventory <small>${invCount()}/30</small></div><div class="inv">${cells.join("")}</div>`;
       p.querySelectorAll(".slot[data-i]").forEach((el) => el.addEventListener("click", (e) => {
         const s = S.inv[+el.dataset.i]; if (!s) return;
         if (e.shiftKey) { if (s.k === "coins") return say("You'd rather not drop your denarii.", "sys"); S.inv.splice(+el.dataset.i, 1); say(`You drop the ${ITEMS[s.k].name.toLowerCase()}.`, "sys"); save(); renderPanel(); }
-        else say(`${ITEMS[s.k].name}${s.n > 1 ? ` (×${s.n.toLocaleString()})` : ""}.`, "sys");
+        else if (ITEMS[s.k].slot) equip(+el.dataset.i);
+        else say(`${ITEMS[s.k].name}${s.n > 1 ? ` (×${s.n.toLocaleString()})` : ""}.${ITEMS[s.k].ex ? " " + ITEMS[s.k].ex : ""}`, "sys");
       }));
     }
     if (tab === "equip") {
-      const slot = (area, icon, name) => `<div class="eq${icon ? "" : " empty"}" style="grid-area:${area}" title="${name || area}">${icon || { helm: "⛑️", weapon: "🗡️", body: "🥋", shield: "🛡️", legs: "👖", gloves: "🧤", boots: "🥾", ring: "💍" }[area]}<small>${name || ""}</small></div>`;
-      p.innerHTML = `<div class="ph">Equipment <small>paper doll</small></div><div class="doll">${slot("helm", "⛑️", "Leather cap")}${slot("weapon", "🗡️", "Wooden rudis")}${slot("body", "🥋", "Tunic")}${slot("shield", "🛡️", "Parma")}${slot("legs")}${slot("gloves")}${slot("boots", "🥾", "Sandals")}${slot("ring")}</div>
-        <div class="bonl"><div class="bh">⚔️ Stab</div>
-          <div><i>⊕</i><span>accuracy</span><b>2</b></div><div><i>🔺</i><span>melee damage</span><b>1</b></div>
-          <div><i>🎯</i><span>max hit</span><b>${maxHit()}</b></div><div><i>🛡️</i><span>melee defence</span><b>6</b></div></div>
-        <p class="note">Gear, drops and the loot hunt come later. This is the layout.</p>`;
+      const EMPTY = { helm: "⛑️", weapon: "🗡️", body: "🥋", shield: "🛡️", legs: "👖", gloves: "🧤", boots: "🥾", ring: "💍" };
+      const slot = (area) => { const k = S.eq[area], it = k && ITEMS[k]; return `<button type="button" class="eq${it ? "" : " empty"}" data-slot="${area}" style="grid-area:${area}" title="${it ? `${it.name} — click to take off` : `${area}: empty`}"${it ? "" : " disabled"}>${it ? it.icon : EMPTY[area]}<small>${it ? it.short || it.name : ""}</small></button>`; };
+      const b = bon(), tool = S.eq.weapon && ITEMS[S.eq.weapon].tool;
+      p.innerHTML = `<div class="ph">Equipment <small>paper doll</small></div><div class="doll">${["helm", "weapon", "body", "shield", "legs", "gloves", "boots", "ring"].map(slot).join("")}</div>
+        <div class="bonl"><div class="bh">${S.eq.weapon ? `${ITEMS[S.eq.weapon].icon} ${ITEMS[S.eq.weapon].name}` : "✊ Unarmed"}${tool ? ` · lets you train ${SKILLS[tool].name}` : ""}</div>
+          <div><i>⊕</i><span>accuracy</span><b>+${b.acc}</b></div><div><i>🔺</i><span>strength</span><b>+${b.str}</b></div>
+          <div><i>🎯</i><span>max hit</span><b>${maxHit()}</b></div><div><i>🛡️</i><span>defence</span><b>+${b.def}</b></div></div>
+        <p class="note">Click something you're wearing to take it off. Tools go in your weapon hand: hold the pickaxe to mine, the axe to chop, the rod to fish.</p>`;
+      p.querySelectorAll(".eq[data-slot]").forEach((el) => el.addEventListener("click", () => unequip(el.dataset.slot)));
     }
     if (tab === "skills") {
       p.innerHTML = `<div class="ph">Skills <small>total ${total()}</small></div><div class="sk">${Object.entries(SKILLS).map(([k, s]) => {
@@ -754,14 +1101,15 @@ button{font:inherit}
         <p><b>Walk:</b> click the ground, or WASD / arrow keys.</p>
         <p><b>Fight:</b> click a cow or a chicken.</p>
         <p><b>Talk:</b> click a person.</p>
-        <p><b>Gather:</b> click wheat to pick it; click the bubbling water to fish.</p>
+        <p><b>Tools:</b> your pickaxe, axe and fishing rod start in your bag. Click one to wield it; you have to be holding the right one to mine, chop or fish. Click your sword to fight properly again.</p>
+        <p><b>Gather:</b> click wheat or an olive tree to pick it, a rock to mine it (the big vein keeps going on its own), a tree to chop it, the bubbling water to fish.</p>
         <p><b>Travel:</b> walk onto the blue tiles at the edge to reach the next area.</p>
         <p><b>Chat:</b> use the Twitch chat beside the game.</p>
         <p>This is a mockup: the other players are simulated, and it saves in this browser only.</p></div>`;
     }
   }
   document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => {
-    tab = b.dataset.tab; document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); renderPanel();
+    tab = b.dataset.tab; syncTabs(); renderPanel();
   }));
 
   /* ------------------------------------------------------------ the rest of the "server" */
@@ -784,10 +1132,10 @@ button{font:inherit}
   artReady.then(() => { Z.bg = paintBg(); });
   Object.assign(P, { x: S.x, y: S.y, px: S.x, py: S.y });
   if (!walkable(P.x, P.y) || Z.g[P.y][P.x] === "e") Object.assign(P, { x: 11, y: 7, px: 11, py: 7 });
-  say("Welcome to the Ludus Farm. Click to walk (or WASD), click a cow to fight it, click wheat to pick it. Blue tiles lead to the river.", "sys");
+  say("Welcome to EastScape. Your pickaxe, axe and fishing rod are in your bag: click one to wield it before you mine, chop or fish. Blue tiles lead on.", "sys");
   renderPanel();
   requestAnimationFrame(frame);
-  window.__flat = { get S() { return S; }, P, Z, loadScene, grant };
+  window.__flat = { get S() { return S; }, P, Z, loadScene, grant, interact, equip };
 })();
 </script>
 </body>
