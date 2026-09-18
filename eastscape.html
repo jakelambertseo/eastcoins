@@ -2026,7 +2026,7 @@ function renderPanel() {
   }
   if (tab === "admin" && you?.admin) renderAdmin(p);
 }
-const ADMIN_FIELDS = ["aSkill", "aXp", "aLvl", "aItem", "aQty", "aScene", "aQuest", "aQState", "aSpeed"];
+const ADMIN_FIELDS = ["aSkill", "aXp", "aLvl", "aItem", "aQty", "aScene", "aQuest", "aQState", "aSpeed", "aRestart"];
 function renderAdmin(p) {
   // the panel redraws whenever your character changes; keep whatever was picked or typed
   const keep = ADMIN_FIELDS.map((id) => [id, $(id)?.value]).filter(([, v]) => v != null);
@@ -2058,6 +2058,12 @@ function renderAdmin(p) {
       <div class="row"><select id="aQuest">${opts(quests)}</select></div>
       <div class="row"><select id="aQState"><option value="new">new</option><option value="active">active</option><option value="done">done</option></select><button class="btn" data-a="quest">Set</button><button class="btn plain" data-a="resetquests">Reset all</button></div>
     </fieldset>
+    <fieldset><legend>The world</legend>
+      <div class="row"><button class="btn" data-a="stats">My stats</button><span class="tag">kills, gathers, xp, cash, time played</span></div>
+      <div class="row"><button class="btn" data-a="saveall">Save everyone</button><span class="tag">every character and the Exchange, written now</span></div>
+      <div class="row"><input type="number" id="aRestart" value="120" min="0" max="3600" aria-label="Seconds until restart"><button class="btn" data-a="restart">Announce restart</button><button class="btn" data-a="restartoff">Cancel</button></div>
+      <div class="row"><span class="tag">Counts down, saves every character, then drops everyone with a "restarting" message instead of "connection lost". Deploy once it has run.</span></div>
+    </fieldset>
     <fieldset><legend>Danger</legend>
       <div class="row"><button class="btn danger" data-a="reset">Reset my character</button></div>
     </fieldset>
@@ -2073,12 +2079,15 @@ function renderAdmin(p) {
     clearinv: () => ({ cmd: "clearinv" }), heal: () => ({ cmd: "heal" }), god: () => ({ cmd: "god" }),
     tp: () => ({ cmd: "tp", scene: v("aScene") }), resetscene: () => ({ cmd: "resetscene" }),
     quest: () => ({ cmd: "quest", k: v("aQuest"), state: v("aQState") }), resetquests: () => ({ cmd: "resetquests" }),
-    reset: () => ({ cmd: "reset" }), speed: () => ({ cmd: "speed", n: +v("aSpeed") })
+    reset: () => ({ cmd: "reset" }), speed: () => ({ cmd: "speed", n: +v("aSpeed") }),
+    stats: () => ({ cmd: "stats" }), saveall: () => ({ cmd: "saveall" }),
+    restart: () => ({ cmd: "restart", n: +v("aRestart") }), restartoff: () => ({ cmd: "restart", n: "cancel" })
   };
   for (const [id, val] of keep) if ($(id)) $(id).value = val;
   p.querySelectorAll("[data-a]").forEach((b) => b.addEventListener("click", () => {
     const a = b.dataset.a, go = () => send({ t: "admin", ...A2[a]() });
-    if (a === "reset" || a === "clearall" || a === "clearinv") return popup("Are you sure?", { reset: "Wipe your character back to a brand-new one?", clearall: "Clear the xp in every skill?", clearinv: "Empty your whole inventory?" }[a], "⚠️", [["Yes, do it", go], ["Cancel", null]]);
+    // a restart drops EVERY player, so it asks first — the others here only affect you
+    if (a === "reset" || a === "clearall" || a === "clearinv" || a === "restart") return popup("Are you sure?", { reset: "Wipe your character back to a brand-new one?", clearall: "Clear the xp in every skill?", clearinv: "Empty your whole inventory?", restart: `Tell everyone the world restarts in ${v("aRestart")} seconds, then save and disconnect them all?` }[a], "⚠️", [["Yes, do it", go], ["Cancel", null]]);
     go();
   }));
 }
