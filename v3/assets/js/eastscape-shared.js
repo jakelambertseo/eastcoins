@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 15;
+export const VERSION = 16;
 export const COLS = 22, ROWS = 13;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -187,10 +187,10 @@ export const SCENES = {
       wild(g, objs, this.exits, { n: "forest", w: "forest", s: "water", e: "forest" }, [...keepOf(this), ...clearing], 1);
       return { g, objs, blobs: [] };
     },
-    mobs: [["cow", 12, 5], ["cow", 15, 8], ["cow", 19, 4], ["cow", 14, 9], ["cow", 18, 10]],
+    mobs: [["cow", 12, 5], ["cow", 19, 4], ["cow", 18, 10]],
     npcs: [{ name: "Bom Trady", art: "tom", quests: ["firewood", "cattle"], outOfWork: "I'm all out of work for you, rookie. You've earned your cleats.", x: 10, y: 5, still: true, hair: "#c86a2a", shirt: "#3a6ac8", pants: "#2a2a4a", lines: ["Mind the cows, gladiator. They blitz.", "Your pickaxe, axe and rod are in your bag. Hold the right one for the job.", "Town's north, through the gate. The river's east.", "Sundays I play. The rest of the week, I farm. Don't ask."] },
            { name: "Waldy", art: "waldy", x: 6, y: 9, hair: "#3a2a1a", shirt: "#8a3a2a", pants: "#4a3a2a", lines: ["Every champion started on cows.", "Hit them until they stop mooing. That's the whole trick.", "The bucket? Keeps the thoughts in.", "Don't go west of town. The olives have opinions."] }],
-    bots: [{ name: "Crixus", level: 42 }]
+    bots: [{ name: "Crixus", level: 91, art: "legend" }]
   },
   river: {
     name: "River Bend", exits: { w: "farm" },
@@ -530,18 +530,18 @@ export function nearestCell(ob, from) {
 /* ------------------------------------------------------------ monsters */
 // drops: [item, n] always; [item, [lo, hi]] a range; [item, n, chance] sometimes
 export const MOBS = {
-  cow: { name: "Cow", lvl: 2, hp: 8, att: 1, def: 1, max: 1, speed: 3000, oy: 11, box: [11, 20], drops: [["beef", 1], ["hide", 1], ["bones", 1]] },
-  chicken: { name: "Chicken", lvl: 1, hp: 3, att: 1, def: 1, max: 1, speed: 2400, oy: 11, box: [7, 14], drops: [["chicken", 1], ["feather", [5, 15]], ["bones", 1]] },
-  olive: { name: "Angry Olive", lvl: 6, hp: 12, att: 5, def: 4, max: 2, speed: 2600, box: [7, 16], drops: [["olives", [2, 5]], ["pit", 1], ["monocle", 1, 0.1]] },
-  boar: { name: "Wild boar", lvl: 8, hp: 16, att: 6, def: 6, max: 2, speed: 2800, box: [11, 16], drops: [["pork", 1], ["tusk", 1], ["bones", 1]] },
-  rotten: { name: "Rotten Tomatoe", lvl: 4, hp: 10, att: 3, def: 2, max: 1, speed: 2600, box: [8, 14], drops: [["tomatoe", [1, 3]], ["husk", 1, 0.05]] },
-  hornworm: { name: "Tomatoe Hornworm", lvl: 7, hp: 15, att: 6, def: 5, max: 2, speed: 2800, box: [12, 12], drops: [["husk", 1], ["tomatoe", 1, 0.5]] },
+  cow: { name: "Cow", lvl: 2, hp: 8, att: 1, def: 1, max: 1, speed: 3000, oy: 11, box: [14, 21], drops: [["beef", 1], ["hide", 1], ["bones", 1]] },
+  chicken: { name: "Chicken", lvl: 1, hp: 3, att: 1, def: 1, max: 1, speed: 2400, oy: 11, box: [8, 16], drops: [["chicken", 1], ["feather", [5, 15]], ["bones", 1]] },
+  olive: { name: "Angry Olive", lvl: 6, hp: 12, att: 5, def: 4, max: 2, speed: 2600, box: [9, 24], drops: [["olives", [2, 5]], ["pit", 1], ["monocle", 1, 0.1]] },
+  boar: { name: "Wild boar", lvl: 8, hp: 16, att: 6, def: 6, max: 2, speed: 2800, box: [15, 23], drops: [["pork", 1], ["tusk", 1], ["bones", 1]] },
+  rotten: { name: "Rotten Tomatoe", lvl: 4, hp: 10, att: 3, def: 2, max: 1, speed: 2600, box: [10, 27], drops: [["tomatoe", [1, 3]], ["husk", 1, 0.05]] },
+  hornworm: { name: "Tomatoe Hornworm", lvl: 7, hp: 15, att: 6, def: 5, max: 2, speed: 2800, box: [15, 13], drops: [["husk", 1], ["tomatoe", 1, 0.5]] },
   highwayman: { name: "Highwayman", lvl: 12, hp: 22, att: 10, def: 9, max: 3, speed: 2400, box: [7, 26], drops: [["coins", [5, 20]], ["bones", 1], ["mask", 1, 0.15]] },
-  gnasher: { name: "Bog Gnasher", lvl: 18, hp: 30, att: 14, def: 12, max: 4, speed: 2600, aggro: 3, oy: 12, box: [11, 16], drops: [["bones", 1], ["coins", [5, 25]], ["bogplate", 1, 0.03]] },
-  taxwraith: { name: "Tax Wraith", lvl: 28, hp: 42, att: 20, def: 18, max: 5, speed: 2400, aggro: 4, box: [8, 26], drops: [["coins", [20, 80]], ["receipt", 1], ["wraithhood", 1, 0.03], ["menace", 1, 0.02], ["spiderboots", 1, 0.004]] },
+  gnasher: { name: "Bog Gnasher", lvl: 18, hp: 30, att: 14, def: 12, max: 4, speed: 2600, aggro: 3, oy: 12, box: [10, 24], drops: [["bones", 1], ["coins", [5, 25]], ["bogplate", 1, 0.03]] },
+  taxwraith: { name: "Tax Wraith", lvl: 28, hp: 42, att: 20, def: 18, max: 5, speed: 2400, aggro: 4, box: [9, 25], drops: [["coins", [20, 80]], ["receipt", 1], ["wraithhood", 1, 0.03], ["menace", 1, 0.02], ["spiderboots", 1, 0.004]] },
   chandelier: { name: "Chandelier Spider", lvl: 34, hp: 50, att: 24, def: 20, max: 6, speed: 2600, aggro: 4, oy: 12, box: [13, 22], drops: [["cobweb", 1], ["bones", 1], ["lantern", 1, 0.03], ["spiderboots", 1, 0.01]] },
-  revenant: { name: "Sulking Revenant", lvl: 45, hp: 80, att: 32, def: 28, max: 8, speed: 2800, aggro: 5, box: [9, 30], drops: [["bones", 2], ["coins", [50, 150]], ["grudge", 1, 0.04], ["menace", 1, 0.03]] },
-  goat: { name: "Goat in a Toga", lvl: 12, hp: 24, att: 9, def: 8, max: 3, speed: 2400, box: [8, 26], drops: [["manifesto", 1], ["bones", 1], ["toga", 1, 0.25]] }
+  revenant: { name: "Sulking Revenant", lvl: 45, hp: 80, att: 32, def: 28, max: 8, speed: 2800, aggro: 5, box: [8, 27], drops: [["bones", 2], ["coins", [50, 150]], ["grudge", 1, 0.04], ["menace", 1, 0.03]] },
+  goat: { name: "Goat in a Toga", lvl: 12, hp: 24, att: 9, def: 8, max: 3, speed: 2400, box: [7, 26], drops: [["manifesto", 1], ["bones", 1], ["toga", 1, 0.25]] }
 };
 
 /* ------------------------------------------------------------ words */
