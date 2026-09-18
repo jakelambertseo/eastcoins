@@ -84,7 +84,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .kq-main small{color:var(--muted-2);font-size:.76rem}
 .kq-main .ok{color:var(--green);font-weight:700}
 .kq-main .no{color:var(--red);font-weight:700}
-.kq-bar{margin-top:10px;min-width:0}
+.kq-now{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center;margin-top:10px}
+.kq-now>span{font-size:.8rem;font-weight:700;color:var(--muted);white-space:nowrap}
+.kq-now b{color:var(--text)}
+.kq-now small{color:var(--muted-2);font-weight:700;margin-left:4px}
+@media (max-width:600px){.kq-now{grid-template-columns:minmax(0,1fr)}.kq-now>span{white-space:normal}}
+.kq-bar{min-width:0}
 .kq-bar i{transition:none}
 .kauto{display:flex;align-items:center;gap:4px;margin:0 0 10px;font-size:.8rem;font-weight:700;color:var(--muted)}
 .krow{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line)}
@@ -1797,7 +1802,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       sb.innerHTML = `<h2 class="card-h">On the stove</h2>
         <div class="kq"><span class="kq-fish"></span><span class="kq-main"><b>${dishOf(sp, grade).name}</b> ${grade ? qTag(grade) : ""}
           <small>${q.total - q.left} of ${q.total} · <span class="ok">${q.done} cooked</span> · <span class="no">${q.burnt} burnt</span> · ${dur(cookMs(sp))} each · ${Math.round(burnChance(sp.rar) * 100)}% burn · <span id="kqLeft"></span></small></span></div>
-        <div class="dive-bar kq-bar"><i id="kqBar"></i></div>`;
+        <div class="kq-now"><span>Now cooking: <b>${dishOf(sp, grade).name}</b> <small id="kqWhich">${q.total - q.left + 1} of ${q.total}</small></span><div class="dive-bar kq-bar"><i id="kqBar"></i></div></div>`;
       sb.querySelector(".kq-fish").append(fishChip(sp, true));
       const stop = el("button", "btn small", "Stop"); stop.type = "button"; stop.addEventListener("click", stopCook);
       sb.querySelector(".kq").append(stop);
