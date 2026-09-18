@@ -321,6 +321,8 @@ button,input,select{font:inherit}
 .wiki .up{border-left-color:#b87a3a}
 .dlg-face{position:relative;width:84px;height:84px}
 .dlg-face img{position:absolute;width:204px;height:204px;max-width:none;object-fit:fill;image-rendering:pixelated}
+/* the inventory side is a scroll (PixelLab, hard pixels, 1:1): rods top and bottom, torn edges, parchment stretched between */
+.panel{border-style:solid;border-width:36px 28px 43px 32px;border-color:transparent;border-image:url(/v3/assets/img/glad/flat/ui/scroll.png?v=1) 36 28 43 32 fill / 36px 28px 43px 32px stretch;background:none;image-rendering:pixelated;margin:4px 4px 6px}
 </style>
 </head>
 <body>
@@ -613,7 +615,7 @@ function say(text, cls = "sys") {
 /* ------------------------------------------------------------ the art (PixelLab, style A) */
 const ART = "/v3/assets/img/glad/flat/", ART_V = 3;
 // pictures replaced after they first shipped (the edge keeps each URL for a year): bump the one that changed
-const ART_VER = {};   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
+const ART_VER = { farmhouse: 4, bank: 4, store: 4, hut: 4, cottage: 4, tree: 4, t_dirt: 4, t_water: 4 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
 const ART_FILES = ["t_dirt", "t_water", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d, "legend_" + d]),
   "bank", "store", "cottage", "o_spot", "g_bush", "g_boulder", "g_grass", "g_flowers",
@@ -703,7 +705,7 @@ function paintBg() {
       const corners = [[x, y], [x + 1, y], [x, y + 1], [x + 1, y + 1]], wet = corners.map(([a, b]) => vert(a, b, "w"));
       let sheet, bits;
       if (wet.some(Boolean)) { sheet = WATER.im; bits = wet.map((v) => (v ? 0 : 1)); }
-      else { sheet = DIRT.im; bits = corners.map(([a, b]) => (vert(a, b, "d") === (DIRT === IMG.t_wdirt) ? 1 : 0)); }   // this sheet's corners run the other way
+      else { sheet = DIRT.im; bits = corners.map(([a, b]) => (vert(a, b, "d") ? 1 : 0)); }   // both dirt sheets (farm and Wilderness) have their corners this way round
       const [sx, sy] = WANG[bits[0] * 8 + bits[1] * 4 + bits[2] * 2 + bits[3]];
       o.drawImage(sheet, sx, sy, 32, 32, x * 32, y * 32, 32, 32);
     }
