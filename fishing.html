@@ -68,6 +68,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .scene-wrap{position:relative;aspect-ratio:16/10;background:#0b1a2a;touch-action:none;user-select:none;-webkit-user-select:none}
 .scene-wrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .status{position:absolute;left:12px;top:10px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+.tankpill{pointer-events:auto;background:rgba(8,6,5,.62);border:1px solid rgba(255,255,255,.12);padding:4px 9px;border-radius:99px;font:inherit;font-size:.74rem;font-weight:800;color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.tankpill b{font-variant-numeric:tabular-nums}
+.tankpill:hover{border-color:var(--sea)}
+.tankpill.near{border-color:rgba(var(--gold-rgb),.6);color:var(--gold)}
+.tankpill.full{border-color:rgba(255,107,133,.6);color:var(--red);background:rgba(40,8,12,.72)}
 .sfx-btn{pointer-events:auto;background:rgba(8,6,5,.62);border:1px solid rgba(255,255,255,.12);padding:3px 8px;border-radius:99px;font-size:.82rem;line-height:1.2;cursor:pointer;margin-right:auto;margin-left:7px}
 .sfx-btn:hover{border-color:var(--sea)}
 .status > span{background:rgba(8,6,5,.62);border:1px solid rgba(255,255,255,.12);padding:4px 9px;border-radius:99px;font-size:.74rem;font-weight:800}
@@ -818,6 +823,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         <canvas id="scene"></canvas>
         <div class="status"><span id="clock">Day · Fall</span>
           <button class="sfx-btn" id="sfxBtn" type="button" aria-pressed="false" title="Fishing sounds"></button>
+          <button class="tankpill" id="tankPill" type="button"></button>
           <span id="spotName">Backyard Pond</span></div>
         <div class="say" id="say"></div>
         <div class="xpt" id="xpt" data-skill="fishing" aria-live="polite"></div>
@@ -3794,6 +3800,13 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     $("tbBest").textContent = best ? `${lbs(best[1].best)} ${BY_KEY[best[0]].name}` : "—";
     $("tbShiny").textContent = Object.values(S.dex).filter((d) => d.shiny).length;
     $("tbTank").textContent = `${S.fish.length}/${TANKS[S.tank].cap}`;
+    // the same count on the fishing scene, where keep-or-sell is decided
+    const tp = $("tankPill"), held = S.fish.length, capN = TANKS[S.tank].cap;
+    if (tp) {
+      tp.className = "tankpill" + (held >= capN ? " full" : held / capN >= 0.75 ? " near" : "");
+      tp.innerHTML = `<span aria-hidden="true">🐟</span> ${held >= capN ? "Tank full " : "Tank "}<b>${held}/${capN}</b>`;
+      tp.title = held >= capN ? "Your tank is full — a new catch means upgrading, cooking or selling" : `Your tank: ${held} of ${capN} fish`;
+    }
     $("tbRate").textContent = `${num(tankRate())} / hr`;
     const nameEl = document.querySelector(".sb-name b"), titleEl = document.querySelector(".sb-name small");
     if (nameEl) nameEl.style.color = NAME_COLOURS[wearing("name")] || "";
@@ -4243,6 +4256,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     b.textContent = sfxOn() ? "🔊" : "🔇";
     b.title = sfxOn() ? "Fishing sounds are on" : "Fishing sounds are off";
   }
+  // the tank pill on the scene opens the tank
+  $("tankPill").addEventListener("click", () => goTab("tank"));
   $("sfxBtn").addEventListener("click", () => {
     S.sfx = !sfxOn();
     paintSfx(); save();
