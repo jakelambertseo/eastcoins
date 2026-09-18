@@ -33,6 +33,11 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/health") return new Response("ok", { headers: { "Cache-Control": "no-store" } });
+    // which Cloudflare data centre the world runs in, and how long the hop from this edge to it takes
+    if (url.pathname === "/where") {
+      const t0 = Date.now(), r = await env.WORLD.get(env.WORLD.idFromName("world")).fetch("https://world/where"), j = await r.json();
+      return Response.json({ edge: request.cf?.colo, world: j.colo, hopMs: Date.now() - t0, players: j.players }, { headers: { "Cache-Control": "no-store" } });
+    }
     if (url.pathname !== "/ws") return new Response("EastScape game server", { status: 404 });
     if (request.headers.get("Upgrade") !== "websocket") return new Response("Expected a websocket", { status: 426 });
     const origin = request.headers.get("Origin") || "";
@@ -72,6 +77,10 @@ export class World {
 
   /* ------------------------------------------------------------ connections */
   async fetch(request) {
+    if (new URL(request.url).pathname === "/where") {
+      let colo = null; try { colo = (await (await fetch("https://www.cloudflare.com/cdn-cgi/trace")).text()).match(/colo=(\w+)/)?.[1]; } catch (e) { /* unknown */ }
+      return Response.json({ colo, players: this.pls.size });
+    }
     let user; try { user = JSON.parse(request.headers.get("x-es-user")); } catch (e) { /* none */ }
     if (!user?.id) return new Response("No user", { status: 400 });
     const pair = new WebSocketPair(); const [client, server] = Object.values(pair);
