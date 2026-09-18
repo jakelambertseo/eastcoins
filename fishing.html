@@ -131,7 +131,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
 .btns .btn{min-width:0;justify-content:center;white-space:nowrap}
 .btns.upgrading{grid-template-columns:repeat(2,minmax(0,1fr))}
-.btns .btn.wide{grid-column:1 / -1}
+.btns .btn.wide{grid-column:1 / -1;white-space:normal}
 .btns .btn{justify-content:center;padding:0 8px;white-space:nowrap}
 .btns .btn .pearl{margin-left:3px}
 .btn{border:1px solid var(--line-2);background:var(--panel-3);border-radius:10px;padding:9px 14px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
@@ -2008,7 +2008,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     else if (!up) { $("cKeep").textContent = "Tank's full"; note.textContent = "That's the biggest tank there is — sell or cook this one."; }
     else if (upLocked) { $("cKeep").textContent = "Tank's full"; note.innerHTML = `Tank's full. A <b>${up.cap}-fish tank</b> needs ${SKILLS[upNeed.skill].name} <b>${upNeed.at}</b> — you're ${levelIn(upNeed.skill)}.`; }
     else if (short) { $("cKeep").textContent = "Tank's full"; note.innerHTML = `Tank's full. A <b>${up.cap}-fish tank</b> costs ${num(up.cost)} pearls — <b>${num(short)}</b> short.`; }
-    else { $("cKeep").innerHTML = `Upgrade to ${up.cap}-fish tank <span class="pearl"></span>${num(up.cost)}`; note.innerHTML = `Tank's full. <b>${up.cap}-fish tank</b> buys room and this one goes straight in.`; }
+    else { $("cKeep").innerHTML = `Upgrade tank <span class="pearl"></span>${num(up.cost)}`; note.innerHTML = `Tank's full. <b>${up.cap}-fish tank</b> buys room and this one goes straight in.`; }
     $("cSell").innerHTML = `Sell <span class="pearl"></span>${num(rate * 3)}`;
     $("cCook").innerHTML = `Cook <span class="pearl"></span>${num(rate * 2)}`;
     $("cCook").title = "Fewer pearls than selling, but it trains Cooking";
