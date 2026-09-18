@@ -319,6 +319,8 @@ button,input,select{font:inherit}
 .chat-form button:hover{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_on.png?v=1)}
 .chat-log p .act{background:#8a4a24}
 .wiki .up{border-left-color:#b87a3a}
+.dlg-face{position:relative;width:84px;height:84px}
+.dlg-face img{position:absolute;width:204px;height:204px;max-width:none;object-fit:fill;image-rendering:pixelated}
 </style>
 </head>
 <body>
@@ -550,7 +552,7 @@ function loadScene(key) {
   const b = G.buildScene(key);
   Object.assign(Z, { key, g: b.g, objs: b.objs, fadeAt: performance.now(), defs: {} });
   Z.def = G.sceneDef(key); Z.isle = null; Z.ground = [];
-  Z.def.npcs.forEach((n, i) => { Z.defs[`${key}n${i}`] = n; });
+  Z.def.npcs.forEach((n, i) => { Z.defs[`${key}n${i}`] = n.art || !NPC_ART[n.name] ? n : { ...n, art: NPC_ART[n.name] }; });
   Z.npcs = []; botBubbles.clear(); PRED.on = false; PRED.path = []; PRED.step = null;
   for (const id of ["bankWin", "exWin", "isleWin", "pickWin"]) $(id).hidden = true;
   Z.bg = paintBg();
@@ -609,12 +611,14 @@ function say(text, cls = "sys") {
 const ART = "/v3/assets/img/glad/flat/", ART_V = 1;
 const ART_FILES = ["t_dirt", "t_water", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].map((d) => "hero_" + d),
-  ...["tom", "waldy", "tullius"].flatMap((n) => [n + "_south", n + "_east"]),
+  ...["tom", "waldy", "tullius", "charon", "livia", "gaius", "nonna", "vibius", "aurelia", "cassia"].flatMap((n) => [n + "_south", n + "_east"]),
   // the Wilderness (PixelLab, 2026-09-18)
   "t_wdirt", "t_wwater", "deadtree", "w_tree", "snag", "w_bush", "w_boulder", "grimstone", "gravestone", "skeleton", "rope", "cagesign", "gnasher", "taxwraith", "chandelier", "revenant",
   // the rest of the monsters (PixelLab, overnight 2026-09-18)
   "olive", "boar", "goat", "rotten", "hornworm", "highwayman"];
 const IMG = {};
+// NPCs whose art came later (PixelLab, overnight 2026-09-18): matched by name, so the shared rules don't change
+const NPC_ART = { "Charon the Ferryman": "charon", "Livia the Broker": "livia", "Gaius": "gaius", "Nonna Tomatoe": "nonna", "Centurion Vibius": "vibius", "Aurelia": "aurelia", "Cassia": "cassia" };
 const artReady = Promise.all(ART_FILES.map((k) => new Promise((res) => {
   const im = new Image(); im.onload = () => {
     const c = document.createElement("canvas"); c.width = im.width; c.height = im.height; const o = c.getContext("2d"); o.drawImage(im, 0, 0);
@@ -982,7 +986,8 @@ function showTalk(n, text, options, have) {
     const last = i === pages.length - 1, opts = last ? options : [["Continue", () => page(i + 1)]];
     DLG = { npc: n, opts };
     const face = IMG[`${n.art}_south`];
-    $("dlgFace").innerHTML = face ? `<img src="${face.im.src}" alt="">` : "🙂";
+    // head and shoulders: the sprite at 3x, its top and centre measured from the art
+    $("dlgFace").innerHTML = face ? `<img src="${face.im.src}" alt="" style="left:${Math.round(37 - face.cx * 3)}px;top:${Math.round(6 - face.top * 3)}px">` : "🙂";
     $("dlgName").textContent = n.name;
     $("dlgText").textContent = pages[i].replace("{have}", have ?? "");
     $("dlgOpts").innerHTML = opts.map(([label], j) => `<button type="button" data-j="${j}"><span>${j + 1}.</span> ${esc(label)}</button>`).join("");
