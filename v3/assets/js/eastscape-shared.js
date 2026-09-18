@@ -61,6 +61,7 @@ export const inReach = (a, b, r) => { const d = cheb(a, b); return d >= 1 && d <
 
 /* ------------------------------------------------------------ building scenes
    grid: . grass  , path  ~ water  s sand  p paving  P paved but blocked  b bank (water reaches it; nobody stands there)
+         f soil: a picked wheat tile, walkable until the wheat grows back
          # blocked by something  e exit (blue) */
 const grid = (fill = ".") => Array.from({ length: ROWS }, () => Array(COLS).fill(fill));
 const block = (g, x, y, w = 1, h = 1) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) g[j][i] = "#"; };
@@ -233,7 +234,7 @@ export function buildScene(key) {
   b.objs.forEach((o, i) => { o.id = i; o.w ??= 1; o.h ??= 1; });
   return b;
 }
-export const walkableIn = (g, x, y, swim = false) => x >= 0 && y >= 0 && x < COLS && y < ROWS && (swim ? ".,sepb~" : ".,sep").includes(g[y][x]);
+export const walkableIn = (g, x, y, swim = false) => x >= 0 && y >= 0 && x < COLS && y < ROWS && (swim ? ".,sepfb~" : ".,sepf").includes(g[y][x]);
 export const canStepIn = (g, x, y, dx, dy, swim = false) => walkableIn(g, x + dx, y + dy, swim) && (!dx || !dy || (walkableIn(g, x + dx, y, swim) && walkableIn(g, x, y + dy, swim)));
 // 8-way BFS with no corner cutting. reach 0: stand on it; n: stand within n tiles of it
 export function findPath(g, from, to, reach = 0) {

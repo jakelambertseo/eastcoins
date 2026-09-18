@@ -317,6 +317,10 @@ export class World {
       if (!live.has(key)) { S.idleSince ||= now; if (now - S.idleSince > SCENE_IDLE_MS) this.scenes.delete(key); continue; }
       S.idleSince = 0;
       for (const pl of this.playersIn(S)) this.playerTick(S, pl, now);
+      for (const o of S.objs) if (o.t === "wheat" && S.g[o.y][o.x] === "f" && !(o.grownAt > now)) {
+        if (this.occupied(S, o.x, o.y, null)) o.grownAt = now + 2000;   // someone's standing in it: grow back a moment later
+        else S.g[o.y][o.x] = "#";
+      }
       this.mobsTick(S, now);
     }
     // the simulated players chat now and then
@@ -464,7 +468,7 @@ export class World {
     if (a.kind === "wheat") {
       if (ob.grownAt > now) { this.say(pl, "That's already been picked. It'll grow back soon."); pl.act = null; return; }
       if (!a.started) { a.started = now; this.say(pl, "You start picking the wheat…"); return; }
-      if (now - a.started >= 1400) { if (this.give(pl, "wheat")) { this.gained(S, pl, "wheat"); this.grant(pl, "farming", 8); this.say(pl, "You pick some wheat.", "good"); ob.grownAt = now + 20000; this.questCheck(pl); } pl.act = null; }
+      if (now - a.started >= 1400) { if (this.give(pl, "wheat")) { this.gained(S, pl, "wheat"); this.grant(pl, "farming", 8); this.say(pl, "You pick some wheat.", "good"); ob.grownAt = now + 20000; S.g[ob.y][ob.x] = "f"; this.questCheck(pl); } pl.act = null; }
       return;
     }
     if (a.kind === "spot") {
