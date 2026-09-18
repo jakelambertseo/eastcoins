@@ -31,6 +31,26 @@ button{font:inherit}
 .game{position:relative;background:#000;overflow:hidden;min-height:320px}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated;cursor:pointer;touch-action:none}
 .dbg{position:absolute;left:10px;top:8px;color:#ffe45c;font-size:13px;line-height:1.35;text-shadow:1px 1px 0 #000,0 0 3px #000;pointer-events:none;white-space:pre}
+.dlg{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:min(620px,calc(100% - 24px));display:grid;grid-template-columns:84px 1fr;gap:12px;padding:12px 14px;background:var(--panel);color:var(--panel-ink);border:3px solid var(--frame);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:5}
+.dlg[hidden]{display:none}
+.game:has(.dlg:not([hidden])) .feed{bottom:150px}
+.dlg-face{width:84px;height:84px;border:2px solid #8a7a5a;background:#d8cbac;display:grid;place-items:center;overflow:hidden;font-size:40px}
+.dlg-face img{width:136px;height:136px;image-rendering:pixelated;object-fit:none;object-position:50% 28%;transform:scale(1)}
+.dlg-body b{display:block;font-size:16px;color:#7a2a1a}
+.dlg-body p{margin:4px 0 8px;font-size:15px;line-height:1.35}
+.dlg-opts{display:grid;gap:4px}
+.dlg-opts button{text-align:left;font:inherit;font-size:14px;font-weight:700;padding:5px 9px;border:1px solid #bfb193;background:#e6dcc4;color:#2a2016;border-radius:4px;cursor:pointer}
+.dlg-opts button:hover,.dlg-opts button:focus-visible{background:#fff3c8;border-color:#8a7a5a;outline:none}
+.dlg-opts button span{color:#7a2a1a;margin-right:4px}
+.dlg-x{position:absolute;top:4px;right:6px;border:0;background:none;font-size:20px;line-height:1;cursor:pointer;color:#6a5a40}
+.qdone{position:absolute;left:50%;top:84px;transform:translateX(-50%);text-align:center;padding:12px 28px;background:linear-gradient(#3a2a14,#1e160c);border:3px solid #e8bf35;border-radius:8px;color:#fff;box-shadow:0 0 30px rgba(232,191,53,.45);z-index:6;pointer-events:none}
+.qdone[hidden]{display:none}
+.qdone small{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#e8bf35;font-weight:800}
+.qdone b{display:block;font-size:24px;margin:2px 0}
+.qdone span{font-size:14px;color:#e8dcc0}
+.qdone.show{animation:qpop .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes qpop{from{transform:translateX(-50%) scale(.6);opacity:0}to{transform:translateX(-50%) scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.qdone.show{animation:none}}
 .feed{position:absolute;left:10px;bottom:10px;width:min(520px,70%);display:flex;flex-direction:column;gap:2px;pointer-events:none}
 .feed p{margin:0;align-self:flex-start;max-width:100%;padding:3px 9px;border-radius:3px;background:rgba(14,11,8,.72);font-size:14px;line-height:1.3;text-shadow:1px 1px 0 #000;animation:feedOut 9s linear forwards}
 @keyframes feedOut{0%,80%{opacity:1}100%{opacity:0}}
@@ -87,6 +107,11 @@ button{font:inherit}
 .q b{display:block;font-size:15px}
 .q small{display:block;font-size:13px;color:#6a5a40}
 .q.done b{color:#2a6a1a}
+.q .qtag{display:inline-block;font-style:normal;font-size:11px;font-weight:800;padding:1px 6px;border-radius:3px;background:#d0c4a8;color:#5a4a30;margin:2px 0 3px}
+.q.ready .qtag{background:#ffd23f;color:#3a2a00}
+.q.active .qtag{background:#9fd07a;color:#1a3a0a}
+.q.done{opacity:.75}
+.q.locked{opacity:.5}
 .note{padding:8px 12px;font-size:13px;color:#6a5a40}
 .bottomtabs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:0 8px 8px}
 </style>
@@ -106,6 +131,12 @@ button{font:inherit}
     <div class="dbg" id="dbg"></div>
     <!-- no in-game chat: the game sits beside the site's Twitch chat. This is only the game's own messages. -->
     <div class="feed" id="log" aria-live="polite"></div>
+    <div class="dlg" id="dlg" role="dialog" aria-label="Conversation" hidden>
+      <div class="dlg-face" id="dlgFace"></div>
+      <div class="dlg-body"><b id="dlgName"></b><p id="dlgText"></p><div class="dlg-opts" id="dlgOpts"></div></div>
+      <button type="button" class="dlg-x" id="dlgX" aria-label="Close">×</button>
+    </div>
+    <div class="qdone" id="qdone" hidden></div>
   </section>
   <aside class="side" aria-label="Character">
     <div class="stats" id="stats"></div>
@@ -258,7 +289,9 @@ button{font:inherit}
   const keepOf = (sc) => [...sc.mobs.map(([, x, y]) => [x, y]), ...sc.npcs.map((n) => [n.x, n.y])];
   function wild(g, objs, exits, edges, keep = [], seed = 1) {
     const kept = new Set(keep.map(([x, y]) => `${x},${y}`)), rim = [];
-    const put = (t, x, y) => { const ob = { t, x, y, name: { tree: "Tree", bush: "Bush", boulder: "Boulder" }[t] }; objs.push(ob); g[y][x] = "#"; rim.push(ob); };
+    // nothing grows in the water: no tree, bush or rock on a tile that touches it
+    const wet = (x, y) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (g[y + dy]?.[x + dx] === "~") return true; return false; };
+    const put = (t, x, y) => { if (wet(x, y)) return; const ob = { t, x, y, name: { tree: "Tree", bush: "Bush", boulder: "Boulder" }[t] }; objs.push(ob); g[y][x] = "#"; rim.push(ob); };
     for (const d of ["n", "s", "w", "e"]) {
       const kind = edges[d] || "forest", len = d === "n" || d === "s" ? COLS : ROWS, dc = d.charCodeAt(0);
       if (kind !== "open") for (let i = 0; i < len; i++) {
@@ -269,7 +302,10 @@ button{font:inherit}
           if (g[y][x] !== "." || kept.has(`${x},${y}`)) continue;
           if (kind === "water") { g[y][x] = "~"; rim.push({ x, y }); continue; }
           const r = hashRand(x, y, seed + 11);
-          put(kind === "rocky" ? (r < 0.45 ? "boulder" : r < 0.8 ? "tree" : "bush") : (r < 0.62 ? "tree" : r < 0.88 ? "bush" : "boulder"), x, y);
+          const t = kind === "rocky" ? (r < 0.45 ? "boulder" : r < 0.8 ? "tree" : "bush") : (r < 0.62 ? "tree" : r < 0.88 ? "bush" : "boulder");
+          // about a third of the trees back from the very edge are left as open grass: woods, not a wall of forest
+          if (t === "tree" && k > 0 && hashRand(x, y, seed + 13) < 0.45) continue;
+          put(t, x, y);
         }
       }
       if (exits[d]) for (let i = SPAN[d][0]; i <= SPAN[d][1]; i++) { const x = d === "w" ? 0 : d === "e" ? COLS - 1 : i, y = d === "n" ? 0 : d === "s" ? ROWS - 1 : i; g[y][x] = "e"; }
@@ -280,6 +316,8 @@ button{font:inherit}
       let open = true; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (g[y + dy][x + dx] !== ".") open = false;
       if (open && hashRand(x, y, seed + 21) < 0.04) put(hashRand(x, y, seed + 22) < 0.6 ? "bush" : "boulder", x, y);
     }
+    // water laid down on a later side can reach things placed earlier; clear anything now standing in it
+    for (const ob of objs) if (["tree", "bush", "boulder", "oak"].includes(ob.t) && wet(ob.x, ob.y)) { ob.gone = true; g[ob.y][ob.x] = "."; }
     // everything you can stand on must be reachable from an exit
     for (let pass = 0; pass < 12; pass++) {
       const q = []; for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (g[y][x] === "e") q.push([x, y]);
@@ -289,7 +327,7 @@ button{font:inherit}
       if (!stuck.length) break;
       // a pocket of open grass is filled in with brush; only paths and anyone standing there get the brush opened instead
       for (const [x, y] of stuck) {
-        if (g[y][x] === "." && !kept.has(`${x},${y}`)) put(hashRand(x, y, seed + 41) < 0.6 ? "tree" : "bush", x, y);
+        if (g[y][x] === "." && !kept.has(`${x},${y}`)) put(hashRand(x, y, seed + 41) < 0.3 ? "tree" : "bush", x, y);
         else for (const ob of rim) if (!ob.gone && Math.abs(ob.x - x) <= 1 && Math.abs(ob.y - y) <= 1) { ob.gone = true; g[ob.y][ob.x] = "."; }
       }
     }
@@ -309,13 +347,15 @@ button{font:inherit}
         objs.push({ t: "well", x: 9, y: 2, name: "Well" }); g[3][9] = "#"; g[3][10] = "#";
         objs.push({ t: "pond", x: 11, y: 1, w: 3, h: 2 }); for (let y = 1; y < 3; y++) for (let x = 11; x < 14; x++) g[y][x] = "~";
         objs.push({ t: "hay", x: 8, y: 4 }, { t: "hay", x: 9, y: 4 }); g[4][8] = "#"; g[4][9] = "#";
-        for (let y = 6; y < 11; y++) for (const x of [2, 3]) { objs.push({ t: "wheat", x, y, name: "Wheat", grownAt: 0 }); g[y][x] = "#"; }
+        for (let y = 6; y < 9; y++) for (const x of [2, 3]) { objs.push({ t: "wheat", x, y, name: "Wheat", grownAt: 0 }); g[y][x] = "#"; }
         for (const [x, y] of [[20, 2], [19, 11], [14, 11]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
+        // two oaks by the path: Bom Trady's firewood
+        for (const [x, y] of [[13, 7], [15, 7]]) { objs.push({ t: "oak", x, y, name: "Oak tree" }); g[y][x] = "#"; }
         wild(g, objs, this.exits, { n: "forest", w: "forest", s: "water", e: "forest" }, keepOf(this), 1);
         return { g, objs, blobs: [[7, 8, 3], [15, 4, 3], [18, 9, 2], [5, 11, 2]] };
       },
-      mobs: [["cow", 12, 4], ["cow", 15, 8], ["cow", 19, 4], ["cow", 11, 10], ["cow", 16, 10]],
-      npcs: [{ name: "Tom Brady", art: "tom", x: 10, y: 6, hair: "#c86a2a", shirt: "#3a6ac8", pants: "#2a2a4a", lines: ["Mind the cows, gladiator. They blitz.", "Your pickaxe, axe and rod are in your bag. Hold the right one for the job.", "Town's north, through the gate. The river's east.", "Mine an ore, chop a log, catch a fish. Then we talk."] },
+      mobs: [["cow", 12, 4], ["cow", 15, 8], ["cow", 19, 4], ["cow", 11, 8], ["cow", 18, 9]],
+      npcs: [{ name: "Bom Trady", art: "tom", quests: ["firewood", "cattle"], x: 10, y: 6, hair: "#c86a2a", shirt: "#3a6ac8", pants: "#2a2a4a", lines: ["Mind the cows, gladiator. They blitz.", "Your pickaxe, axe and rod are in your bag. Hold the right one for the job.", "Town's north, through the gate. The river's east.", "Sundays I play. The rest of the week, I farm. Don't ask."] },
              { name: "Waldy", art: "waldy", x: 6, y: 9, hair: "#3a2a1a", shirt: "#8a3a2a", pants: "#4a3a2a", lines: ["Every champion started on cows.", "Hit them until they stop mooing. That's the whole trick.", "The bucket? Keeps the thoughts in.", "Don't go west of town. The olives have opinions."] }],
       bots: [{ name: "Crixus", level: 42 }]
     },
@@ -339,7 +379,7 @@ button{font:inherit}
         return { g, objs, blobs: [[5, 5, 2], [12, 9, 3], [15, 3, 2]] };
       },
       mobs: [["chicken", 4, 9], ["chicken", 5, 10], ["chicken", 6, 9], ["chicken", 3, 10]],
-      npcs: [{ name: "Old Tullius", art: "tullius", x: 15, y: 6, hair: "#d8d8d8", shirt: "#5a7a3a", pants: "#3a3a2a", lines: ["The fish bite best where the water bubbles.", "Can't fish with a sword, lad. Hold your rod.", "Don't let the chickens fool you. One took my eye.", "That big copper vein never runs dry. Slow, mind."] }],
+      npcs: [{ name: "Old Tullius", art: "tullius", quests: ["catch"], x: 15, y: 6, hair: "#d8d8d8", shirt: "#5a7a3a", pants: "#3a3a2a", lines: ["The fish bite best where the water bubbles.", "Can't fish with a sword, lad. Hold your rod.", "Don't let the chickens fool you. One took my eye.", "That big copper vein never runs dry. Slow, mind."] }],
       bots: [{ name: "Spartacus", level: 77 }]
     },
     forum: {
@@ -400,6 +440,7 @@ button{font:inherit}
 
   /* ------------------------------------------------------------ the scene you are in */
   const Z = { key: "", g: null, objs: [], blobs: [], bg: null, mobs: [], npcs: [], bots: [], fadeAt: 0 };
+  const shore = (x, y) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (Z.g[y + dy]?.[x + dx] === "~") return true; return false; };
   const walkable = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && ".,sep".includes(Z.g[y][x]);
   const P = { x: S.x, y: S.y, px: S.x, py: S.y, path: [], step: null, face: 1, act: null, lastSwing: 0, hurtAt: 0, swingAt: 0 };
   function loadScene(key, fromSide) {
@@ -647,8 +688,9 @@ button{font:inherit}
   }
 
   /* ------------------------------------------------------------ actions: walk up to something, then do it */
-  function goTo(x, y) { P.act = null; const p = path(P, { x, y }, false); if (p) P.path = p; }
+  function goTo(x, y) { if (DLG) closeTalk(); P.act = null; const p = path(P, { x, y }, false); if (p) P.path = p; }
   function interact(target) {
+    if (DLG) closeTalk();
     P.act = { ...target, started: 0 };
     const p = path(P, { x: target.x, y: target.y }, true);
     if (p === null) { say("You can't reach that.", "bad"); P.act = null; return; }
@@ -678,7 +720,7 @@ button{font:inherit}
       return;
     }
     if (!adjacent(P, a)) { P.act = null; return; }
-    if (a.kind === "npc") { const n = Z.npcs.find((x) => x.id === a.id); if (n) { const line = pick(n.lines); n.bubble = { text: line, at: now }; n.face = P.x > n.x ? 1 : -1; n.turned = P.x !== n.x; setTimeout(() => { n.turned = false; }, 4000); } P.act = null; return; }
+    if (a.kind === "npc") { const n = Z.npcs.find((x) => x.id === a.id); if (n) { n.face = P.x > n.x ? 1 : -1; n.turned = P.x !== n.x; n.talking = true; talkTo(n); } P.act = null; return; }
     if (a.kind === "door") { say(`The ${a.name.toLowerCase()} door is shut. Houses you can walk into come next: they're their own scenes.`, "sys"); P.act = null; return; }
     if (a.kind === "well") { say("You look down the well. Something glints at the bottom, but it's too far down.", "sys"); P.act = null; return; }
     const faceIt = () => { P.dir = DIRS[`${Math.sign(a.x - P.x)},${Math.sign(a.y - P.y)}`] || P.dir; P.face = a.x > P.x ? 1 : a.x < P.x ? -1 : P.face; };
@@ -716,10 +758,11 @@ button{font:inherit}
       if (now - P.swingAt > 1000) P.swingAt = now;
       if (now < a.next) return;
       a.next = now + 2000;
-      if (Math.random() < Math.min(0.85, 0.35 + lvl("woodcutting") * 0.02)) {
+      const oak = ob.t === "oak";
+      if (Math.random() < Math.min(0.9, (oak ? 0.5 : 0.35) + lvl("woodcutting") * 0.02)) {
         if (!give("logs")) { P.act = null; return; }
-        grant("woodcutting", 25); say("You get some logs.", "good"); S.q.logs++; questCheck(); save(); renderPanel();
-        if (Math.random() < 0.2) { ob.stumpUntil = now + 15000; say("The tree falls.", "sys"); P.act = null; }
+        grant("woodcutting", 25); say(oak ? "You get some logs from the oak." : "You get some logs.", "good"); save(); renderPanel();
+        if (Math.random() < (oak ? 0.08 : 0.2)) { ob.stumpUntil = now + 15000; say(`The ${oak ? "oak" : "tree"} falls.`, "sys"); P.act = null; }
       }
       return;
     }
@@ -760,7 +803,7 @@ button{font:inherit}
     m.dead = true; m.respawnAt = now + 15000; m.fighting = false; P.act = null;
     const got = def.drops().filter(([k, n]) => give(k, n));
     say(`You defeat the ${def.name.toLowerCase()}.${got.length ? ` It drops ${got.map(([k, n]) => `${n > 1 ? n + " " : ""}${ITEMS[k].name.toLowerCase()}`).join(", ")}.` : ""}`, "loot");
-    if (m.t === "cow") { S.q.cows++; questCheck(); }
+    questEvent("kill", m.t);
     save(); renderPanel();
   }
   function mobsAct(now) {
@@ -781,7 +824,7 @@ button{font:inherit}
       if (!tick(m, now) && now > m.nextWander) {
         m.nextWander = now + 2000 + Math.random() * 4000;
         const [dx, dy] = pick(D8);
-        if (Math.abs(m.x + dx - m.hx) <= 3 && Math.abs(m.y + dy - m.hy) <= 2 && canStep(m.x, m.y, dx, dy) && !(m.x + dx === P.x && m.y + dy === P.y)) m.path = [{ x: m.x + dx, y: m.y + dy }];
+        if (Math.abs(m.x + dx - m.hx) <= 3 && Math.abs(m.y + dy - m.hy) <= 2 && canStep(m.x, m.y, dx, dy) && !shore(m.x + dx, m.y + dy) && !(m.x + dx === P.x && m.y + dy === P.y)) m.path = [{ x: m.x + dx, y: m.y + dy }];
       }
     }
     for (const n of [...Z.npcs, ...Z.bots]) {
@@ -807,14 +850,130 @@ button{font:inherit}
     bush: ["A bush. Something inside it is breathing.", "Just a bush. Probably.", "A bush. It rustles when you aren't looking."],
     boulder: ["A big rock. Too big for your pickaxe. For now.", "Someone has scratched 'CRIXUS WAS HERE' into it."]
   };
-  const QUESTS = [
-    { key: "cows", name: "Cattle Drive", goal: 5, about: "Tom Brady wants five cows seen to.", reward: 60, have: () => S.q.cows },
-    { key: "tools", name: "Tools of the Trade", goal: 3, about: "Tom Brady wants to see you use your tools: mine an ore, chop a log and catch a fish. Wield each one first.", reward: 30, have: () => Math.min(1, S.q.ore) + Math.min(1, S.q.logs) + Math.min(1, S.q.fish) },
-    { key: "fish", name: "Catch of the Day", goal: 3, about: "Old Tullius wants three fish off the river.", reward: 40, have: () => S.q.fish }
-  ];
-  function questCheck() {
-    for (const q of QUESTS) if (!S.q.done[q.key] && q.have() >= q.goal) { S.q.done[q.key] = true; give("coins", q.reward); say(`Quest complete: ${q.name}! You receive ${q.reward} denarii.`, "good"); }
+  /* quests are data. Each one: who gives it, what it needs, what everyone says, what it pays.
+     goal.type "bring": have goal.n of goal.items in your bag when you talk to the giver (they're taken)
+     goal.type "kill":  defeat goal.n of goal.mob after you've accepted
+     requires: quests that must be done first. {have} in a line is replaced with your progress. */
+  const QUESTS = {
+    firewood: {
+      name: "Firewood", giver: "Bom Trady", where: "Ludus Farm", icon: "🪵",
+      goal: { type: "bring", items: ["logs"], n: 5, what: "logs" },
+      brief: "Bring Bom Trady 5 logs for the ludus kitchen.",
+      talk: {
+        offer: ["Hey, rookie. Kitchen's out of firewood, and I've got a game Sunday.", "Bring me 5 logs. The two oaks by the path are good ones. Hold your axe, not your sword, then click a tree."],
+        accept: "I'll get your logs.", decline: "Not right now.",
+        accepted: "Attaboy. The oaks are just east of here. Don't chop Waldy.",
+        progress: "How's that firewood coming? I need 5 logs. You've got {have}.",
+        ready: "Now those are logs. Hand 'em over.", hand: "Here you go.",
+        done: "Kitchen's warm. You did good, rookie. Come back when you want real work."
+      },
+      reward: { coins: 40, xp: { woodcutting: 150 }, text: "40 denarii, 150 Woodcutting xp" }
+    },
+    cattle: {
+      name: "Cattle Drive", giver: "Bom Trady", where: "Ludus Farm", icon: "🐄", requires: ["firewood"],
+      goal: { type: "kill", mob: "cow", n: 5, what: "cows" },
+      brief: "Bom Trady wants 5 cows seen to.",
+      talk: {
+        offer: ["Real work, as promised. The cows have been running routes on my field.", "Put 5 of them down. Hold your sword for this one."],
+        accept: "Consider it done.", decline: "Maybe later.",
+        accepted: "Hit them until they stop mooing. Waldy says that's the whole trick.",
+        progress: "That's {have} cows so far. I said 5.",
+        ready: "Field's quiet. You're a natural.", hand: "What do I get?",
+        done: "Denarii, and my respect. Mostly the denarii."
+      },
+      reward: { coins: 60, xp: { melee: 200 }, text: "60 denarii, 200 Melee xp" }
+    },
+    catch: {
+      name: "Catch of the Day", giver: "Old Tullius", where: "River Bend", icon: "🐟",
+      goal: { type: "bring", items: ["sardine", "trout"], n: 3, what: "raw fish" },
+      brief: "Bring Old Tullius 3 raw fish.",
+      talk: {
+        offer: ["My back's gone, lad, and the fish won't catch themselves.", "Bring me 3 raw fish. Hold your rod and click where the water bubbles."],
+        accept: "I'll catch you some.", decline: "Not today.",
+        accepted: "Good lad. Mind the chickens.",
+        progress: "{have} fish so far. I said 3.",
+        ready: "Oh, lovely fish. Give them here.", hand: "Here they are.",
+        done: "Supper sorted. Here, take something for your trouble."
+      },
+      reward: { coins: 40, xp: { fishing: 150 }, text: "40 denarii, 150 Fishing xp" }
+    }
+  };
+  if (!S.qs) S.qs = {};
+  const qOf = (k) => S.qs[k] || (S.qs[k] = { state: "new", n: 0 });
+  const countItems = (keys) => S.inv.filter((x) => keys.includes(x.k)).reduce((n, x) => n + x.n, 0);
+  const qHave = (q, k) => (q.goal.type === "bring" ? countItems(q.goal.items) : qOf(k).n);
+  const qOpen = (q) => (q.requires || []).every((r) => qOf(r).state === "done");
+  // where a quest is now: new, locked, active, ready (can hand in), done
+  function qState(k) {
+    const q = QUESTS[k], st = qOf(k).state;
+    if (st === "done") return "done";
+    if (st === "active") return qHave(q, k) >= q.goal.n ? "ready" : "active";
+    return qOpen(q) ? "new" : "locked";
   }
+  // the quest an NPC is dealing with right now: the first of theirs that isn't done or locked
+  const npcQuest = (n) => (n.quests || []).find((k) => ["new", "active", "ready"].includes(qState(k)));
+  function questEvent(type, what) {
+    for (const k in QUESTS) { const q = QUESTS[k]; if (qOf(k).state === "active" && q.goal.type === type && q.goal.mob === what) { qOf(k).n++; if (qOf(k).n === q.goal.n) say(`${q.name}: that's ${q.goal.n}. Go back to ${q.giver}.`, "good"); } }
+  }
+  function questCheck() {
+    // tell you once when a "bring" quest has everything it needs
+    for (const k in QUESTS) { const q = QUESTS[k], o = qOf(k); if (o.state === "active" && q.goal.type === "bring" && !o.told && qHave(q, k) >= q.goal.n) { o.told = true; say(`${q.name}: you have all ${q.goal.n} ${q.goal.what}. Take them to ${q.giver}.`, "good"); } }
+  }
+  function finishQuest(k) {
+    const q = QUESTS[k];
+    if (q.goal.type === "bring") { let left = q.goal.n; for (const key of q.goal.items) { const st = S.inv.find((x) => x.k === key); if (!st) continue; const take = Math.min(left, st.n); st.n -= take; left -= take; if (!st.n) S.inv.splice(S.inv.indexOf(st), 1); if (!left) break; } }
+    qOf(k).state = "done";
+    if (q.reward.coins) give("coins", q.reward.coins);
+    for (const [sk, xp] of Object.entries(q.reward.xp || {})) grant(sk, xp);
+    for (const [it, n] of q.reward.items || []) give(it, n);
+    questBanner(q); save(); renderPanel();
+  }
+  function questBanner(q) {
+    const b = $("qdone"); b.innerHTML = `<small>Quest complete!</small><b>${q.icon} ${q.name}</b><span>${q.reward.text}</span>`;
+    b.hidden = false; b.classList.remove("show"); void b.offsetWidth; b.classList.add("show");
+    clearTimeout(questBanner.t); questBanner.t = setTimeout(() => { b.hidden = true; }, 4200);
+  }
+
+  /* ------------------------------------------------------------ dialogue: a box with a face, some words and numbered options */
+  let DLG = null;
+  function closeTalk() { DLG = null; $("dlg").hidden = true; }
+  // text can be a list of pages; every page but the last gets a Continue
+  function showTalk(n, text, options) {
+    const pages = Array.isArray(text) ? text : [text];
+    const fill = (t) => t.replace("{have}", DLG?.have ?? "");
+    const page = (i) => {
+      const last = i === pages.length - 1, opts = last ? options : [["Continue", () => page(i + 1)]];
+      DLG = { npc: n, opts, have: DLG?.have };
+      const face = IMG[`${n.art}_south`];
+      $("dlgFace").innerHTML = face ? `<img src="${face.im.src}" alt="">` : "🙂";
+      $("dlgName").textContent = n.name;
+      $("dlgText").textContent = fill(pages[i]);
+      $("dlgOpts").innerHTML = opts.map(([label], j) => `<button type="button" data-j="${j}"><span>${j + 1}.</span> ${label}</button>`).join("");
+      $("dlgOpts").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => DLG.opts[+b.dataset.j][1]()));
+      $("dlg").hidden = false;
+    };
+    page(0);
+  }
+  function talkTo(n) {
+    const k = npcQuest(n), bye = ["Bye.", closeTalk];
+    const chat = ["Tell me about this place.", () => showTalk(n, pick(n.lines), [["Something else…", () => talkTo(n)], bye])];
+    if (!k) return showTalk(n, pick(n.lines), [chat, bye]);
+    const q = QUESTS[k], st = qState(k);
+    DLG = { have: `${qHave(q, k)}` };
+    if (st === "new") return showTalk(n, q.talk.offer, [
+      [q.talk.accept, () => { qOf(k).state = "active"; qOf(k).n = 0; say(`Quest started: ${q.name}. ${q.brief}`, "good"); save(); renderPanel(); questCheck(); showTalk(n, q.talk.accepted, [bye]); }],
+      [q.talk.decline, () => showTalk(n, "Suit yourself. You know where I am.", [bye])], chat]);
+    if (st === "ready") return showTalk(n, q.talk.ready, [[q.talk.hand, () => { finishQuest(k); showTalk(n, q.talk.done, [bye]); }], ["Not yet.", closeTalk]]);
+    return showTalk(n, q.talk.progress, [["I'm on it.", closeTalk], chat]);
+  }
+  document.addEventListener("keydown", (e) => {
+    if (!DLG || $("dlg").hidden) return;
+    if (e.key === "Escape") return closeTalk();
+    const j = +e.key - 1; if (DLG.opts && DLG.opts[j]) { e.preventDefault(); DLG.opts[j][1](); }
+    if (e.key === " " && DLG.opts?.length === 1) { e.preventDefault(); DLG.opts[0][1](); }
+  });
+  $("dlgX").addEventListener("click", closeTalk);
+
 
   /* ------------------------------------------------------------ input */
   let view = { s: 3, ox: 0, oy: 0 }, hoverTile = null, hoverThing = null, clickMark = null;
@@ -837,6 +996,7 @@ button{font:inherit}
       if (ob.t === "spot" && Math.abs(ob.x - tx) <= 0 && Math.abs(ob.y - ty) <= 0) return { kind: "spot", ob, x: ob.x, y: ob.y, name: "Fishing spot" };
       if (ob.t === "rock" && ob.x === tx && ob.y === ty) return { kind: "rock", ob, x: ob.x, y: ob.y, name: ob.name };
       if (ob.t === "vein" && tx >= ob.x && tx <= ob.x + 1 && ty >= ob.y && ty <= ob.y + 1) return { kind: "vein", ob, x: tx, y: ty, name: ob.name };
+      if (ob.t === "oak" && Math.abs(tx - ob.x) <= 1 && (ty === ob.y || ty === ob.y - 1) && (tx === ob.x || ty === ob.y - 1)) return { kind: "tree", ob, x: ob.x, y: ob.y, name: ob.name };
       if ((ob.t === "tree" || ob.t === "olive") && ob.x === tx && (ty === ob.y || ty === ob.y - 1)) return { kind: ob.t, ob, x: ob.x, y: ob.y, name: ob.name };
       if (["hive", "shrine", "notice", "sign", "statue", "fountain", "fire", "bush", "boulder"].includes(ob.t)) {
         const ow = ob.t === "shrine" || ob.t === "fountain" ? 2 : 1, oh = ob.t === "fountain" ? 2 : 1;
@@ -868,7 +1028,7 @@ button{font:inherit}
     if (!keys.size || P.step || P.path.length) return;
     let dx = 0, dy = 0; for (const k of keys) { dx += KM[k][0]; dy += KM[k][1]; }
     dx = Math.sign(dx); dy = Math.sign(dy);
-    if ((dx || dy) && canStep(P.x, P.y, dx, dy)) { P.act = null; P.path = [{ x: P.x + dx, y: P.y + dy }]; }
+    if ((dx || dy) && canStep(P.x, P.y, dx, dy)) { if (DLG) closeTalk(); P.act = null; P.path = [{ x: P.x + dx, y: P.y + dy }]; }
   }
   /* ------------------------------------------------------------ the frame */
   const kOf = (at, ms) => (performance.now() - at) / ms;
@@ -911,6 +1071,17 @@ button{font:inherit}
         if (ob.stumpUntil > now) { const X = ob.x * T, Y = ob.y * T; px(X + 3, Y + 13, 10, 2, "rgba(0,0,0,.25)"); px(X + 4, Y + 8, 8, 6, "#6b4423"); px(X + 5, Y + 7, 6, 2, "#b8905a"); px(X + 7, Y + 8, 2, 1, "#8a6a3a"); return; }
         if (!spr("tree", ob.x * T + 8, ob.y * T + 15)) { const X = ob.x * T, Y = ob.y * T; px(X + 6, Y + 6, 4, 10, "#6b4423"); px(X - 3, Y - 8, 22, 16, "#3f7a3a"); px(X, Y - 9, 8, 5, "#5a9a4a"); }
       } });
+      // oaks: broad, dark and round on a thick trunk, with acorns; nothing like the PixelLab trees
+      if (ob.t === "oak") sprites.push({ y: ob.y * T + 14, draw: () => {
+        const X = ob.x * T, Y = ob.y * T;
+        if (ob.stumpUntil > now) { px(X + 1, Y + 13, 14, 3, "rgba(0,0,0,.25)"); px(X + 2, Y + 7, 12, 7, "#5a3a1e"); px(X + 3, Y + 6, 10, 2, "#c09a60"); px(X + 6, Y + 7, 4, 1, "#9a7440"); return; }
+        px(X - 6, Y + 12, 28, 4, "rgba(0,0,0,.25)");
+        px(X + 4, Y + 1, 8, 14, "#5a3a1e"); px(X + 2, Y + 12, 12, 3, "#5a3a1e"); px(X + 5, Y + 2, 2, 11, "#74502c"); px(X + 1, Y + 14, 3, 1, "#4a2e16"); px(X + 12, Y + 14, 3, 1, "#4a2e16");
+        px(X - 8, Y - 10, 32, 14, "#2f4a1c"); px(X - 6, Y - 15, 28, 6, "#2f4a1c"); px(X - 2, Y - 18, 20, 4, "#2f4a1c"); px(X - 9, Y - 6, 34, 7, "#2f4a1c");
+        px(X - 6, Y - 13, 12, 8, "#46692a"); px(X + 8, Y - 16, 10, 7, "#46692a"); px(X + 12, Y - 7, 10, 6, "#46692a"); px(X - 7, Y - 4, 10, 5, "#3c5c24");
+        px(X - 4, Y - 13, 5, 3, "#5e8638"); px(X + 10, Y - 15, 4, 2, "#5e8638");
+        for (let i = 0; i < 6; i++) { const ax = X - 6 + Math.floor(hashRand(ob.x, i, 61) * 28), ay = Y - 14 + Math.floor(hashRand(ob.y, i, 62) * 16); px(ax, ay, 2, 2, "#8a5a24"); px(ax, ay, 2, 1, "#5a3a14"); }
+      } });
       if (ob.t === "olive") sprites.push({ y: ob.y * T + 14, draw: () => {
         const X = ob.x * T, Y = ob.y * T, bare = ob.bareUntil > now;
         px(X + 1, Y + 13, 14, 3, "rgba(0,0,0,.25)"); px(X + 6, Y + 4, 3, 11, "#7a6a50"); px(X + 8, Y + 8, 2, 4, "#6a5a40"); px(X + 4, Y + 6, 2, 3, "#7a6a50");
@@ -948,6 +1119,7 @@ button{font:inherit}
       if (!spr(m.t, m.px * T + 8 + lunge, m.py * T + 14 + bobOf(m, 110), m.face < 0, hurt ? RED : "")) DRAW[m.t](m.px * T + 8 + lunge, m.py * T + (MOBS[m.t].oy ?? 14) + bobOf(m, 110), m.face, hurt);
     } });
     for (const n of Z.npcs) sprites.push({ y: n.py * T + 14, draw: () => {
+      if (n.talking && !DLG) { n.talking = false; n.turned = false; }
       const side = n.step || n.turned, k = `${n.art}_${side ? "east" : "south"}`;
       if (!spr(k, n.px * T + 8, n.py * T + 15 + bobOf(n), side && n.face < 0)) drawPerson(n.px * T + 8, n.py * T + 15, n.face, n);
     } });
@@ -1000,6 +1172,16 @@ button{font:inherit}
     for (const m of Z.mobs) if (!m.dead) {
       const x = sx(m.px * T + 8), y = sy(m.py * T + 15); label(MOBS[m.t].name, x, y + 2, "#ffb23f", 12);
       if (m.hp < MOBS[m.t].hp) { const bw = 30; ctx.fillStyle = "#c00"; ctx.fillRect(x - bw / 2, sy(m.py * T - 5), bw, 5); ctx.fillStyle = "#0c0"; ctx.fillRect(x - bw / 2, sy(m.py * T - 5), bw * Math.max(0, m.hp / MOBS[m.t].hp), 5); }
+    }
+    for (const n of Z.npcs) {
+      const k = npcQuest(n), st = k && qState(k);
+      if (st === "new" || st === "ready") {
+        const ax = sx(n.px * T + 8), ay = sy(n.py * T - 13) + Math.sin(now / 220) * 4, a = 0.55 + 0.45 * Math.abs(Math.sin(now / 300)), r = 9;
+        ctx.globalAlpha = a; ctx.beginPath(); ctx.moveTo(ax - r, ay - r * 1.2); ctx.lineTo(ax + r, ay - r * 1.2); ctx.lineTo(ax, ay + r * 0.6); ctx.closePath();
+        ctx.fillStyle = st === "ready" ? "#ffd23f" : "#ff2a2a"; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = "#fff"; ctx.stroke();
+        ctx.fillStyle = st === "ready" ? "#ffd23f" : "#ff2a2a"; ctx.fillRect(ax - r * 0.4, ay - r * 2.3, r * 0.8, r * 1.2); ctx.strokeRect(ax - r * 0.4, ay - r * 2.3, r * 0.8, r * 1.1);
+        ctx.globalAlpha = 1;
+      }
     }
     for (const n of Z.npcs) { const x = sx(n.px * T + 8), y = sy(n.py * T + 15); label(n.name, x, y + 2, "#fff", 12); if (n.bubble && now - n.bubble.at < 3500) bubble(n.bubble.text, x, sy(n.py * T - 10)); }
     for (const b of Z.bots) { const x = sx(b.px * T + 8), y = sy(b.py * T + 15); label(b.name, x, y + 2, "#fff", 12); label(`level ${b.level}`, x, y + 15, "#ffe45c", 11); if (b.bubble && now - b.bubble.at < 3500) bubble(b.bubble.text, x, sy(b.py * T - 10)); }
@@ -1062,6 +1244,7 @@ button{font:inherit}
     ].map(([i, v, t]) => `<div class="stat" title="${t}"><i>${i}</i><b>${v}</b></div>`).join("");
   }
   function renderPanel() {
+    questCheck();
     renderStats();
     const p = $("panel");
     if (tab === "inv") {
@@ -1094,7 +1277,14 @@ button{font:inherit}
       }).join("")}</div>`;
     }
     if (tab === "quests") {
-      p.innerHTML = `<div class="ph">Quests</div><div class="qs">${QUESTS.map((q) => `<div class="q${S.q.done[q.key] ? " done" : ""}"><b>${S.q.done[q.key] ? "✓ " : ""}${q.name}</b><small>${q.about}</small><small>${Math.min(q.have(), q.goal)}/${q.goal} · reward ${q.reward} denarii</small></div>`).join("")}</div>`;
+      const order = { ready: 0, active: 1, new: 2, done: 3, locked: 4 }, keys = Object.keys(QUESTS).sort((a, b) => order[qState(a)] - order[qState(b)]);
+      const done = keys.filter((k) => qState(k) === "done").length;
+      p.innerHTML = `<div class="ph">Quests <small>${done}/${keys.length} done</small></div><div class="qs">${keys.map((k) => {
+        const q = QUESTS[k], st = qState(k), have = Math.min(qHave(q, k), q.goal.n);
+        const line = st === "new" ? `Talk to ${q.giver} at ${q.where}.` : st === "locked" ? "Finish an earlier quest to unlock this." : st === "done" ? `Reward: ${q.reward.text}` : q.brief;
+        const tag = { new: "Not started", active: "In progress", ready: `Hand in to ${q.giver}`, done: "Done", locked: "Locked" }[st];
+        return `<div class="q ${st}"><b>${q.icon} ${q.name}</b><em class="qtag">${tag}</em><small>${line}</small>${st === "active" || st === "ready" ? `<div class="xpb"><i style="width:${(have / q.goal.n) * 100}%"></i></div><small>${have}/${q.goal.n} ${q.goal.what}</small>` : ""}</div>`;
+      }).join("")}</div>`;
     }
     if (tab === "help") {
       p.innerHTML = `<div class="ph">How to play</div><div class="note">
