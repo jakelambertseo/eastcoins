@@ -129,7 +129,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .cstat.xp b{color:#ff981f}
 .cstat .pearl{width:12px;height:12px}
 .btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
-.btns .btn{min-width:0;justify-content:center;white-space:nowrap}
+/* A catch button wraps its own label before it will spill out of its cell,
+   and the row drops to two columns, then one, on a card too narrow for three. */
+.btns{grid-template-columns:repeat(auto-fit,minmax(84px,1fr))}
+.btns .btn{min-width:0;justify-content:center;white-space:normal;text-align:center;line-height:1.15}
 .btns.upgrading{grid-template-columns:repeat(2,minmax(0,1fr))}
 .btns .btn.wide{grid-column:1 / -1;white-space:normal}
 .btns .btn{justify-content:center;padding:0 8px;white-space:nowrap}
