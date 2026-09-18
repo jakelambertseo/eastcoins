@@ -2224,7 +2224,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
      mirrored to face left unless the sheet says faces: "left"). attack, hit
      and death are stretched over their durations in ANIM_MS; idle and run
      loop at their fps. Monsters are keyed by name: SHEETS["Sewer wolf"]. */
-  const SHEETS = {};
+  const SHEETS = {
+    // PixelLab, 2026-09-18: side view, facing right, packed by scratchpad/packsheet.mjs (192px cells, feet at y=184)
+    hero: { src: "/v3/assets/img/glad/hero.png?v=1", fw: 192, fh: 192, foot: 184, body: 127,
+      anims: { idle: { row: 0, frames: 6, fps: 7 }, run: { row: 1, frames: 6, fps: 12 }, attack: { row: 2, frames: 6 }, hit: { row: 3, frames: 6 }, death: { row: 4, frames: 7 } } }
+  };
   const ANIM_MS = { attack: 380, hit: 260, death: 900 };
   const sheetImg = {};
   function sheetFor(key) {
@@ -2336,11 +2340,15 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (sp) {
       const a = sp.sh.anims[anim] || sp.sh.anims.idle, n = a.frames;
       const fr = anim === "idle" || anim === "run" ? Math.floor(t / (1000 / (a.fps || 8))) % n : Math.min(n - 1, Math.floor(k * n));
-      const sc = (H / sp.sh.fh) * (sp.sh.scale || 1), dw = sp.sh.fw * sc, dh = sp.sh.fh * sc;
-      ctx.save(); ctx.translate(x, feet);
+      // whole-number scale, so every art pixel is the same size on screen; feet on the floor line
+      const body = sp.sh.body || sp.sh.fh, foot = sp.sh.foot ?? sp.sh.fh;
+      const sc = Math.max(1, Math.round(H * (sp.sh.scale || 1) / body * 2) / 2), dw = sp.sh.fw * sc, dh = sp.sh.fh * sc;   // half-steps: a touch uneven at x1.5, far closer to the size the scene wants
+      ctx.save(); ctx.translate(Math.round(x), Math.round(feet)); ctx.imageSmoothingEnabled = false;
       const flip = face < 0 && sp.sh.faces !== "left" || face > 0 && sp.sh.faces === "left";
       if (flip) ctx.scale(-1, 1);
-      ctx.drawImage(sp.img, fr * sp.sh.fw, a.row * sp.sh.fh, sp.sh.fw, sp.sh.fh, -dw / 2, -dh, dw, dh);
+      ctx.fillStyle = "rgba(0,0,0,.42)"; ctx.beginPath(); ctx.ellipse(0, 2, body * sc * .2, body * sc * .04, 0, 0, Math.PI * 2); ctx.fill();
+      if (anim === "death" && k > 0.75) ctx.globalAlpha = 1 - (k - 0.75) / 0.25;
+      ctx.drawImage(sp.img, fr * sp.sh.fw, a.row * sp.sh.fh, sp.sh.fw, sp.sh.fh, -dw / 2, -foot * sc, dw, dh);
       ctx.restore(); return;
     }
     if (kind === "hero") gladPH(x, feet, H, face, def, anim, k, t);
