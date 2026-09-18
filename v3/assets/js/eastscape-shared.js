@@ -12,6 +12,8 @@
    worker (cd eastscape-worker && npx wrangler deploy).
    ============================================================ */
 
+// bump with every change to this file: the server says which version it runs, and a page on another version reloads
+export const VERSION = 8;
 export const COLS = 22, ROWS = 13;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 

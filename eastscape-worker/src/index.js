@@ -95,7 +95,7 @@ export class World {
     ws.addEventListener("message", (e) => { try { this.onMessage(pl, JSON.parse(e.data)); } catch (err) { /* ignore bad frames */ } });
     ws.addEventListener("close", () => this.leave(pl));
     ws.addEventListener("error", () => this.leave(pl));
-    this.send(pl, { type: "hello", t: Date.now(), you: { id: pl.id, login: pl.login, name: pl.name, admin: pl.admin }, me: this.meOf(pl) });
+    this.send(pl, { type: "hello", version: G.VERSION, t: Date.now(), you: { id: pl.id, login: pl.login, name: pl.name, admin: pl.admin }, me: this.meOf(pl) });
     this.send(pl, JSON.parse(this.snapOf(S, Date.now(), false)));
     if (!stored) this.say(pl, "Welcome to EastScape. Your pickaxe, axe and fishing rod are in your bag: click one to wield it before you mine, chop or fish.");
     else this.say(pl, `Welcome back, ${pl.name}.`);
