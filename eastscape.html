@@ -381,7 +381,7 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=11";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=12";
 import * as WK from "/v3/assets/js/eastscape-wiki.js?v=4";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -1669,7 +1669,7 @@ function showInfo(t, cx, cy) {
     const m = Z.mobs.find((x) => x.id === t.id), d = MOBS[m?.t]; if (!d) return;
     wiki = `monsters/${m.t}`;
     html = `<h5>👹 ${esc(d.name)}</h5><div class="sub">Level ${d.lvl} monster</div>
-      <dl><dt>Hitpoints</dt><dd>${m.hp}/${d.hp}</dd><dt>Max hit</dt><dd>${d.max}</dd><dt>Attack / defence</dt><dd>${d.att} / ${d.def}</dd><dt>Attacks every</dt><dd>${(d.speed / 1000).toFixed(1)}s</dd></dl>
+      <dl><dt>Hitpoints</dt><dd>${m.hp}/${d.hp}</dd><dt>Max hit</dt><dd>${d.max}</dd><dt>Attack / defence</dt><dd>${d.att} / ${d.def}</dd><dt>Attacks every</dt><dd>${(d.speed / 1000).toFixed(1)}s</dd><dt>Respawns after</dt><dd>${G.fmtWait(G.respawnMs(Z.def, m.t))}</dd></dl>
       <b>Drops</b><ul>${d.drops.map(([k, n, ch]) => `<li>${ITEMS[k].icon} ${esc(ITEMS[k].name)}${Array.isArray(n) ? ` ×${n[0]}–${n[1]}` : n > 1 ? ` ×${n}` : ""} · ${ch == null ? "always" : `${Math.round(ch * 100)}%`}</li>`).join("")}</ul>`;
   } else if (t.ob) {
     const rows = resourceInfo(t.ob), ex = G.EXAMINE[KIND_OF[t.ob.t]] || null;
