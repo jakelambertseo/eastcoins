@@ -27,7 +27,7 @@ const SCENE_IDLE_MS = 120000;
 const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const BOT_LINES = ["anyone know where the good fishing is?", "gz", "cows are free xp lol", "selling feathers", "this farm is peaceful", "wheat run anyone?", "brb", "that yew is taunting me", "who keeps feeding the olives"];
-const EXAMINE_KINDS = new Set(["hive", "notice", "sign", "statue", "fountain", "fire", "bush", "boulder", "hay"]);
+const EXAMINE_KINDS = new Set(["hive", "notice", "sign", "statue", "fountain", "fire", "bush", "boulder", "hay", "counter", "pool", "column", "range", "table", "barrel", "bed"]);
 
 export default {
   async fetch(request, env) {
@@ -64,6 +64,9 @@ export class World {
     this.pls = new Map();       // player id -> session
     this.scenes = new Map();    // scene key -> live scene
     this.timer = null; this.tickN = 0; this.nextChatter = 0;
+    this.trades = new Map();    // trade id -> a trade between two players in progress
+    // the Exchange: every offer from every player, online or not. Loaded before anything else runs.
+    ctx.blockConcurrencyWhile(async () => { this.ex = (await ctx.storage.get("exchange")) || { next: 1, orders: [], last: {}, tax: 0 }; });
   }
 
   /* ------------------------------------------------------------ connections */
@@ -101,6 +104,7 @@ export class World {
 
   async leave(pl, replaced = false) {
     if (pl.left) return; pl.left = true;
+    if (pl.trade) this.tradeEnd(pl.trade, `${pl.name} left.`);
     if (this.pls.get(pl.id) === pl) this.pls.delete(pl.id);
     pl.act = null; pl.path = [];
     await this.persist(pl);
@@ -122,7 +126,7 @@ export class World {
   }
   touch(pl) { pl.dirty = true; pl.needSave = true; pl.changedAt ??= Date.now(); }
 
-  meOf(pl) { const C = pl.C; return { hp: C.hp, inv: C.inv, eq: C.eq, xp: C.xp, qs: C.qs, settings: C.settings, scene: C.scene, god: pl.god, saved: C.saved || 0 }; }
+  meOf(pl) { const C = pl.C; return { hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, settings: C.settings, scene: C.scene, god: pl.god, saved: C.saved || 0 }; }
 
   /* ------------------------------------------------------------ scenes */
   scene(key) {
@@ -156,6 +160,7 @@ export class World {
   }
   moveToScene(pl, key, side, at) {
     const S = this.scene(key);
+    if (pl.trade) this.tradeEnd(pl.trade, "Trade cancelled: someone left the area.");
     pl.C.scene = key; pl.path = []; pl.step = null; pl.act = null;
     if (at) { pl.x = at.x; pl.y = at.y; }
     else if (side) {
@@ -192,7 +197,7 @@ export class World {
       case "unequip": return this.unequip(pl, String(m.slot));
       case "drop": {
         const i = m.i | 0, st = C.inv[i]; if (!st) return;
-        if (st.k === "coins") return this.say(pl, "You'd rather not drop your denarii.");
+        if (st.k === "coins") return this.say(pl, "You'd rather not drop your Cash.");
         C.inv.splice(i, 1); this.say(pl, `You drop the ${G.ITEMS[st.k].name.toLowerCase()}.`); this.touch(pl); return;
       }
       case "chat": {
@@ -209,6 +214,9 @@ export class World {
         for (const [k, v] of Object.entries(m.patch || {})) if (k in G.DEFAULT_SETTINGS && typeof v === "boolean") C.settings[k] = v;
         this.touch(pl); return;
       }
+      case "bank": return this.bankOp(S, pl, m);
+      case "ex": return this.exOp(S, pl, m);
+      case "trade": return this.tradeOp(S, pl, m);
       case "admin": return pl.admin ? this.admin(S, pl, m) : undefined;
     }
   }
@@ -222,17 +230,17 @@ export class World {
     const C = pl.C, f = this.from(pl), now = Date.now();
     let act = null;
     if (m.kind === "mob") { const mob = S.mobs.find((x) => x.id === m.id && !x.dead); if (mob) act = { kind: "mob", id: mob.id, x: mob.x, y: mob.y, name: G.MOBS[mob.t].name }; }
-    else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name }; }
+    else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob) return;
-      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine" }[ob.t] || (EXAMINE_KINDS.has(ob.t) ? ob.t : null);
+      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange" }[ob.t] || (EXAMINE_KINDS.has(ob.t) ? ob.t : null);
       if (!kind) return;
       const at = kind === "door" ? ob.door : G.nearestCell(ob, f);
       act = { kind, ob, x: at.x, y: at.y, name: ob.name };
     }
     if (!act) return;
     act.started = 0;
-    const p = G.findPath(S.g, f, act, G.reachOf(act.kind) || 1);
+    const p = G.findPath(S.g, f, act, act.reach || G.reachOf(act.kind) || 1);
     if (p === null) { this.say(pl, "You can't reach that.", "bad"); pl.act = null; return; }
     pl.act = act; pl.path = p; this.kick(S, pl, now);
   }
@@ -248,7 +256,7 @@ export class World {
     const C = pl.C, before = G.lvlOf(C, k);
     C.xp[k] = Math.max(0, (C.xp[k] || 0) + xp); const after = G.lvlOf(C, k);
     if (xp > 0) pl.out.push({ type: "xp", k, xp, track });
-    if (after > before) { this.say(pl, `Congratulations, you just advanced a ${G.SKILLS[k].name} level! You are now level ${after}.`, "good"); if (k === "hp") C.hp = Math.min(G.maxHpOf(C), C.hp + (after - before)); }
+    if (after > before) { this.say(pl, `Congratulations, you just advanced a ${G.SKILLS[k].name} level! You are now level ${after}.`, "good"); pl.out.push({ type: "levelup", k, lvl: after }); if (k === "hp") C.hp = Math.min(G.maxHpOf(C), C.hp + (after - before)); }
     if (C.hp > G.maxHpOf(C)) C.hp = G.maxHpOf(C);
     this.touch(pl);
   }
@@ -326,8 +334,9 @@ export class World {
     // the simulated players chat now and then
     if (now > this.nextChatter) {
       this.nextChatter = now + 9000;
-      for (const key of live) { const S = this.scenes.get(key); if (S?.bots.length && Math.random() < 0.35) S.events.push({ type: "bubble", id: pick(S.bots).id, text: pick(BOT_LINES), t: now }); }
+      for (const key of live) { const S = this.scenes.get(key); if (S?.bots.length && Math.random() < 0.035) S.events.push({ type: "bubble", id: pick(S.bots).id, text: pick(BOT_LINES), t: now }); }
     }
+    for (const T of this.trades.values()) { const a = this.pls.get(T.a), b = this.pls.get(T.b); if (!a || !b || G.cheb(a, b) > G.TRADE_RANGE + 2) this.tradeEnd(T, "Trade cancelled: you walked too far apart."); }
     if (this.tickN % SNAP_EVERY === 0) this.broadcast(now); else this.sendPrivate();
     // saving: anything changed more than SAVE_MS ago is written now
     for (const pl of this.pls.values()) if (pl.needSave && pl.changedAt && now - pl.changedAt >= SAVE_MS) { pl.changedAt = null; this.persist(pl); }
@@ -355,6 +364,10 @@ export class World {
     const C = pl.C;
     const moving = this.stepEntity(S, pl, now, true);
     // stepping onto the blue takes you through
+    if (!moving && S.g[pl.y][pl.x] === "e" && S.def.interior) {
+      const o = S.def.exitTo; this.moveToScene(pl, o.scene, null, o); pl.dir = "south";
+      this.say(pl, `You step back out into ${G.SCENES[o.scene].name.replace(/^The /, "the ")}.`); return;
+    }
     if (!moving && S.g[pl.y][pl.x] === "e") {
       const d = pl.x === G.COLS - 1 ? "e" : pl.x === 0 ? "w" : pl.y === 0 ? "n" : "s", to = S.def.exits[d];
       if (to) { this.moveToScene(pl, to, G.OPP[d]); this.say(pl, `You travel to ${G.SCENES[to].name}.`); return; }
@@ -392,7 +405,7 @@ export class World {
       }
       return;
     }
-    if (!G.inReach(pl, a, G.reachOf(a.kind))) { pl.act = null; return; }
+    if (!G.inReach(pl, a, a.reach || G.reachOf(a.kind))) { pl.act = null; return; }
     if (a.kind === "npc") {
       const n = S.npcs.find((x) => x.id === a.id); pl.act = null; if (!n) return;
       faceIt(); n.face = pl.x > n.x ? 1 : -1; n.holdUntil = now + 60000; n.path = [];
@@ -400,7 +413,13 @@ export class World {
     }
     pl.act = null;   // most things are one go; the gathering ones below put it back
     faceIt();
-    if (a.kind === "door") return this.say(pl, `The ${a.name.toLowerCase()} is shut. Going inside comes soon: every building will be its own scene.`);
+    if (a.kind === "door") {
+      if (!a.ob?.enter || !G.SCENES[a.ob.enter]) return this.say(pl, `The ${a.name.toLowerCase()} is shut. It'll open soon.`);
+      const inside = G.SCENES[a.ob.enter]; this.moveToScene(pl, a.ob.enter, null, inside.entry); pl.dir = "north";
+      return this.say(pl, `You go into ${inside.name.replace(/^The /, "the ")}.`);
+    }
+    if (a.kind === "bank") return pl.out.push({ type: "bank" });
+    if (a.kind === "exchange") { pl.out.push({ type: "exchange" }); return this.exSend(pl); }
     if (a.kind === "hole") {
       if (G.lvlOf(C, G.WILD_REQ.skill) < G.WILD_REQ.lvl) return pl.out.push({ type: "popup", title: "The Wilderness", icon: "☠️", text: `You need level ${G.WILD_REQ.lvl} in ${G.SKILLS[G.WILD_REQ.skill].name} to enter the Wilderness.` });
       return pl.out.push({ type: "popup", title: "The Wilderness", icon: "☠️", text: "Down there, other players can attack you. It isn't open yet. It will be soon." });
@@ -590,6 +609,165 @@ export class World {
       if (pl.dirty) { pl.dirty = false; this.send(pl, { type: "me", me: this.meOf(pl) }); }
       if (pl.out.length) { this.send(pl, { type: "ev", list: pl.out }); pl.out = []; }
     }
+  }
+
+  /* ------------------------------------------------------------ the bank: any booth in the Bathhouse */
+  near(S, pl, type, r = 2) { return S.objs.some((o) => o.t === type && G.cheb(pl, G.nearestCell(o, pl)) <= r); }
+  bankAdd(pl, k, n) {
+    const C = pl.C, s = C.bank.find((x) => x.k === k);
+    if (s) { s.n += n; return true; }
+    if (C.bank.length >= G.BANK_MAX) { this.say(pl, `Your bank is full (${G.BANK_MAX} different items).`, "bad"); return false; }
+    C.bank.push({ k, n }); return true;
+  }
+  bankOp(S, pl, m) {
+    if (!this.near(S, pl, "booth")) return this.say(pl, "You need to be at a bank booth.", "bad");
+    const C = pl.C, qty = (want, have) => Math.max(1, Math.min(have, want === "all" ? have : Math.floor(Number(want)) || 1));
+    if (m.op === "dep") { const st = C.inv[m.i | 0]; if (!st) return; const q = qty(m.n, st.n); if (!this.bankAdd(pl, st.k, q)) return; st.n -= q; if (!st.n) C.inv.splice(C.inv.indexOf(st), 1); }
+    else if (m.op === "depinv") { for (const st of [...C.inv]) { if (!this.bankAdd(pl, st.k, st.n)) break; C.inv.splice(C.inv.indexOf(st), 1); } }
+    else if (m.op === "depeq") { for (const sl of G.SLOTS) { const k = C.eq[sl]; if (k && this.bankAdd(pl, k, 1)) C.eq[sl] = null; } }
+    else if (m.op === "wd") { const st = C.bank[m.i | 0]; if (!st) return; const q = qty(m.n, st.n); if (!this.give(pl, st.k, q)) return; st.n -= q; if (!st.n) C.bank.splice(C.bank.indexOf(st), 1); }
+    else return;
+    this.touch(pl);
+  }
+
+  /* ------------------------------------------------------------ the Exchange: the stall in the Forum
+     Offers keep working while their owner is away; what they earn waits in the offer's box until collected.
+     Anything that moves items or Cash between a character and the Exchange saves both in one write. */
+  async exCommit(...pls) {
+    const put = { exchange: this.ex };
+    for (const p of pls) { p.C.x = p.x; p.C.y = p.y; put[`char:${p.id}`] = p.C; p.needSave = false; p.changedAt = null; }
+    await this.ctx.storage.put(put);
+  }
+  exMine(pl) { return this.ex.orders.filter((o) => o.owner === pl.id); }
+  exSend(pl) { this.send(pl, { type: "exch", mine: this.exMine(pl), book: G.exSummary(this.ex.orders), last: this.ex.last }); }
+  exOp(S, pl, m) {
+    const C = pl.C, now = Date.now();
+    if (!this.near(S, pl, "stall")) return this.say(pl, "You need to be at the Exchange stall in the Forum.", "bad");
+    if (m.op === "open") return this.exSend(pl);
+    if (m.op === "place") {
+      const side = m.side === "buy" ? "buy" : "sell", k = String(m.k), qty = Math.floor(Number(m.qty)), price = Math.floor(Number(m.price));
+      if (!G.ITEMS[k] || k === "coins") return this.say(pl, "You can't trade that on the Exchange.", "bad");
+      if (!(qty >= 1 && qty <= 1e9 && price >= 1 && price <= 1e9)) return this.say(pl, "Pick a quantity and a price of at least 1.", "bad");
+      if (this.exMine(pl).length >= G.EX_SLOTS) return this.say(pl, `You can have ${G.EX_SLOTS} offers at once. Collect or cancel one first.`, "bad");
+      if (side === "sell") {
+        const have = G.countItems(C, [k]); if (have < qty) return this.say(pl, `You only have ${have} ${G.ITEMS[k].name.toLowerCase()}.`, "bad");
+        let left = qty; for (const st of C.inv.filter((x) => x.k === k)) { const t = Math.min(left, st.n); st.n -= t; left -= t; if (!st.n) C.inv.splice(C.inv.indexOf(st), 1); if (!left) break; }
+      } else {
+        const cost = qty * price; if (G.cashIn(C) < cost) return this.say(pl, `That needs ${G.fmtCash(cost)}. You have ${G.fmtCash(G.cashIn(C))}.`, "bad");
+        const st = C.inv.find((x) => x.k === "coins"); st.n -= cost; if (!st.n) C.inv.splice(C.inv.indexOf(st), 1);
+      }
+      const o = { id: this.ex.next++, owner: pl.id, name: pl.name, side, k, qty, done: 0, price, at: now, open: true, box: { items: 0, cash: 0 } };
+      this.ex.orders.push(o);
+      this.say(pl, `Offer placed: ${side === "sell" ? "selling" : "buying"} ${qty.toLocaleString()} × ${G.ITEMS[k].name} at ${G.fmtCash(price)} each.`, "good");
+      const touched = this.exMatch(o);
+      this.touch(pl); this.exCommit(pl, ...touched.filter((p) => p !== pl));
+      this.exSend(pl); for (const p of touched) if (p !== pl) this.exSend(p);
+      return;
+    }
+    const o = this.ex.orders.find((x) => x.id === (m.id | 0) && x.owner === pl.id); if (!o) return;
+    if (m.op === "cancel" && o.open) {
+      o.open = false;
+      const left = o.qty - o.done;
+      if (o.side === "sell") o.box.items += left; else o.box.cash += left * o.price;
+      this.say(pl, "Offer cancelled. What's left is waiting to be collected.");
+    }
+    if (m.op === "collect" || m.op === "cancel") {
+      if (o.box.items && this.give(pl, o.k, o.box.items)) o.box.items = 0;
+      if (o.box.cash && this.give(pl, "coins", o.box.cash)) o.box.cash = 0;
+      // a finished offer with nothing left in its box is done with
+      if (!o.open && !o.box.items && !o.box.cash) this.ex.orders.splice(this.ex.orders.indexOf(o), 1);
+      this.touch(pl); this.exCommit(pl); this.exSend(pl);
+    }
+  }
+  // fill a new offer against the other side: best price first, then whoever was there first, at the waiting offer's price
+  exMatch(o) {
+    const touched = new Set();
+    const other = this.ex.orders.filter((x) => x.open && x !== o && x.k === o.k && x.side !== o.side && x.done < x.qty && x.owner !== o.owner && (o.side === "buy" ? x.price <= o.price : x.price >= o.price))
+      .sort((a, b) => (o.side === "buy" ? a.price - b.price : b.price - a.price) || a.at - b.at);
+    for (const x of other) {
+      const q = Math.min(o.qty - o.done, x.qty - x.done); if (q <= 0) break;
+      const price = x.price, sell = o.side === "sell" ? o : x, buy = o.side === "buy" ? o : x, gross = q * price, tax = G.exTax(gross);
+      sell.done += q; buy.done += q;
+      buy.box.items += q;
+      sell.box.cash += gross - tax;
+      if (buy.price > price) buy.box.cash += (buy.price - price) * q;   // bid more than it cost: the difference comes back
+      this.ex.last[o.k] = { price, at: Date.now() }; this.ex.tax += tax;
+      for (const side of [sell, buy]) {
+        if (side.done >= side.qty) side.open = false;
+        const p = this.pls.get(side.owner);
+        if (p) { touched.add(p); this.say(p, `Exchange: ${side.side === "sell" ? "sold" : "bought"} ${q.toLocaleString()} × ${G.ITEMS[o.k].name} at ${G.fmtCash(price)} each. Collect it at the stall.`, "loot"); }
+      }
+      if (o.done >= o.qty) break;
+    }
+    return [...touched];
+  }
+
+  /* ------------------------------------------------------------ trading face to face
+     Both players put up items and Cash, both accept, then both confirm on a second screen. Nothing moves until the
+     final confirm, and then it all moves at once and both characters are saved together. */
+  tradeView(T, forId) {
+    const other = forId === T.a ? T.b : T.a;
+    return { type: "trade", id: T.id, stage: T.stage, you: T.off[forId], them: T.off[other], themName: this.pls.get(other)?.name || "?", ok: { you: !!T.ok[forId], them: !!T.ok[other] } };
+  }
+  tradeSync(T) { for (const id of [T.a, T.b]) { const p = this.pls.get(id); if (p) this.send(p, this.tradeView(T, id)); } }
+  tradeEnd(T, why) {
+    this.trades.delete(T.id);
+    for (const id of [T.a, T.b]) { const p = this.pls.get(id); if (p) { p.trade = null; this.send(p, { type: "trade", closed: true }); if (why) this.say(p, why); } }
+  }
+  tradeOp(S, pl, m) {
+    const now = Date.now();
+    if (m.op === "req") {
+      const o = this.pls.get(String(m.to));
+      if (!o || o === pl || o.C.scene !== pl.C.scene) return this.say(pl, "They're not here.", "bad");
+      if (G.cheb(pl, o) > G.TRADE_RANGE) return this.say(pl, `Get a bit closer to ${o.name} to trade.`, "bad");
+      if (pl.trade || o.trade) return this.say(pl, pl.trade ? "You're already trading." : `${o.name} is busy trading.`, "bad");
+      // they asked us first: that's a yes
+      if (o.tradeReq?.to === pl.id && now - o.tradeReq.at < 30000) {
+        o.tradeReq = null; pl.tradeReq = null;
+        const T = { id: `t${now}${Math.random().toString(36).slice(2, 6)}`, a: o.id, b: pl.id, stage: "offer", ok: {}, off: { [o.id]: { items: {}, cash: 0 }, [pl.id]: { items: {}, cash: 0 } } };
+        this.trades.set(T.id, T); o.trade = T; pl.trade = T; this.tradeSync(T); return;
+      }
+      pl.tradeReq = { to: o.id, at: now };
+      o.out.push({ type: "tradereq", from: pl.id, name: pl.name });
+      return this.say(pl, `You ask ${o.name} to trade…`);
+    }
+    const T = pl.trade; if (!T) return;
+    const mine = T.off[pl.id], C = pl.C;
+    if (m.op === "decline") return this.tradeEnd(T, `${pl.name} declined the trade.`);
+    if (T.stage === "offer" && (m.op === "add" || m.op === "remove" || m.op === "cash")) {
+      if (m.op === "add") { const k = String(m.k); if (!G.ITEMS[k] || k === "coins") return; const have = G.countItems(C, [k]) - (mine.items[k] || 0); const n = Math.max(0, Math.min(have, m.n === "all" ? have : Math.floor(Number(m.n)) || 1)); if (n) mine.items[k] = (mine.items[k] || 0) + n; }
+      if (m.op === "remove") delete mine.items[String(m.k)];
+      if (m.op === "cash") mine.cash = Math.max(0, Math.min(G.cashIn(C), Math.floor(Number(m.n)) || 0));
+      T.ok = {}; return this.tradeSync(T);   // any change means both have to accept again
+    }
+    if (m.op === "accept") {
+      T.ok[pl.id] = true;
+      if (!(T.ok[T.a] && T.ok[T.b])) return this.tradeSync(T);
+      if (T.stage === "offer") { T.stage = "confirm"; T.ok = {}; return this.tradeSync(T); }
+      return this.tradeFinish(T);
+    }
+  }
+  tradeFinish(T) {
+    const A = this.pls.get(T.a), B = this.pls.get(T.b); if (!A || !B) return this.tradeEnd(T, "Trade cancelled.");
+    // everything offered must still be there, and both bags must have room for what's coming
+    const still = (p) => Object.entries(T.off[p.id].items).every(([k, n]) => G.countItems(p.C, [k]) >= n) && G.cashIn(p.C) >= T.off[p.id].cash;
+    if (!still(A) || !still(B)) return this.tradeEnd(T, "Trade cancelled: something offered wasn't there any more.");
+    const after = (p, give, get) => {
+      const inv = new Map(p.C.inv.map((s) => [s.k, s.n]));
+      for (const [k, n] of Object.entries(give.items)) inv.set(k, inv.get(k) - n);
+      if (give.cash) inv.set("coins", inv.get("coins") - give.cash);
+      for (const [k, n] of Object.entries(get.items)) inv.set(k, (inv.get(k) || 0) + n);
+      if (get.cash) inv.set("coins", (inv.get("coins") || 0) + get.cash);
+      return [...inv.entries()].filter(([, n]) => n > 0);
+    };
+    const newA = after(A, T.off[A.id], T.off[B.id]), newB = after(B, T.off[B.id], T.off[A.id]);
+    if (newA.length > G.INV_MAX || newB.length > G.INV_MAX) return this.tradeEnd(T, "Trade cancelled: not enough room in someone's bag.");
+    // keep each bag's order where it can: existing stacks stay put, new ones go on the end
+    const apply = (p, list) => { const m = new Map(list); p.C.inv = p.C.inv.filter((s) => m.has(s.k)).map((s) => ({ k: s.k, n: m.get(s.k) })); for (const [k, n] of list) if (!p.C.inv.some((s) => s.k === k)) p.C.inv.push({ k, n }); this.touch(p); };
+    apply(A, newA); apply(B, newB);
+    this.exCommit(A, B);
+    this.tradeEnd(T, null);
+    this.say(A, `Trade with ${B.name} complete.`, "good"); this.say(B, `Trade with ${A.name} complete.`, "good");
   }
 
   /* ------------------------------------------------------------ admin: only for the logins the site says are admins */

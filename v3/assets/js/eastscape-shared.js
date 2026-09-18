@@ -22,7 +22,7 @@ export const levelOf = (xp) => { let l = 1; while (l < 99 && xp >= XP_AT[l + 1])
 
 /* ------------------------------------------------------------ things you can carry */
 export const ITEMS = {
-  coins: { name: "Denarii", icon: "🪙" }, wheat: { name: "Wheat", icon: "🌾" }, bones: { name: "Bones", icon: "🦴" },
+  coins: { name: "Cash", icon: "💵", ex: "The money of EastScape. Earned from quests and the Exchange." }, wheat: { name: "Wheat", icon: "🌾" }, bones: { name: "Bones", icon: "🦴" },
   beef: { name: "Raw beef", icon: "🥩" }, hide: { name: "Cowhide", icon: "🟫" }, chicken: { name: "Raw chicken", icon: "🍗" },
   feather: { name: "Feather", icon: "🪶" }, sardine: { name: "Raw sardine", icon: "🐟" }, trout: { name: "Raw trout", icon: "🐠" },
   copper: { name: "Copper ore", icon: "🟠" }, tin: { name: "Tin ore", icon: "⚪" }, logs: { name: "Logs", icon: "🪵" }, olives: { name: "Olives", icon: "🫒" },
@@ -49,6 +49,12 @@ export const SLOTS = ["helm", "weapon", "body", "shield", "legs", "gloves", "boo
 export const SKILLS = { melee: { name: "Melee", icon: "⚔️" }, hp: { name: "Hitpoints", icon: "❤️" }, fishing: { name: "Fishing", icon: "🎣" }, farming: { name: "Harvesting", icon: "🌾" }, mining: { name: "Mining", icon: "⛏️" }, woodcutting: { name: "Woodcutting", icon: "🪓" } };
 export const TOOL_OF = { mining: "pickaxe", woodcutting: "axe", fishing: "rod" };
 export const INV_MAX = 30;
+export const BANK_MAX = 200;       // different items the bank holds (stacks are unlimited)
+export const EX_SLOTS = 8;         // Exchange offers a player can have open at once
+export const EX_TAX = 0.01;        // the Exchange keeps 1% of every sale (rounded down); direct trades are free
+export const TRADE_RANGE = 5;      // how close two players must stay to trade face to face
+export const cashIn = (c) => c.inv.find((x) => x.k === "coins")?.n || 0;
+export const fmtCash = (n) => `${Math.round(n).toLocaleString()} Cash`;
 
 /* ------------------------------------------------------------ directions and reach */
 export const DIRS = { "1,0": "east", "-1,0": "west", "0,1": "south", "0,-1": "north", "1,1": "south-east", "-1,1": "south-west", "1,-1": "north-east", "-1,-1": "north-west" };
@@ -62,6 +68,7 @@ export const inReach = (a, b, r) => { const d = cheb(a, b); return d >= 1 && d <
 /* ------------------------------------------------------------ building scenes
    grid: . grass  , path  ~ water  s sand  p paving  P paved but blocked  b bank (water reaches it; nobody stands there)
          f soil: a picked wheat tile, walkable until the wheat grows back
+         i indoor floor   v the dark outside a room (never walkable)
          # blocked by something  e exit (blue) */
 const grid = (fill = ".") => Array.from({ length: ROWS }, () => Array(COLS).fill(fill));
 const block = (g, x, y, w = 1, h = 1) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) g[j][i] = "#"; };
@@ -133,7 +140,7 @@ export const SCENES = {
       for (let y = 0; y < 6; y++) g[y][17] = ",";
       for (let y = 5; y < 10; y++) g[y][8] = ",";
       for (let x = 8; x < 14; x++) g[9][x] = ",";
-      const house = { t: "house", img: "farmhouse", x: 2, y: 2, w: 5, h: 3, door: { x: 4, y: 4 }, name: "Farmhouse" }; objs.push(house);
+      const house = { t: "house", img: "farmhouse", x: 2, y: 2, w: 5, h: 3, door: { x: 4, y: 4 }, name: "Farmhouse", enter: "farmhouse" }; objs.push(house);
       block(g, house.x, house.y, house.w, house.h);
       objs.push({ t: "well", x: 9, y: 2, name: "Well" }); g[3][9] = "#"; g[3][10] = "#";
       // the pond sits a row down from the top so its bank never runs under the treeline
@@ -170,7 +177,9 @@ export const SCENES = {
       for (const [x, y] of [[3, 2], [14, 9], [6, 3]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
       for (const [x, y] of [[9, 9], [10, 10], [11, 9]]) { objs.push({ t: "rock", ore: "copper", x, y, name: "Copper rock" }); g[y][x] = "#"; }
       objs.push({ t: "vein", ore: "copper", x: 12, y: 10, w: 2, h: 2, name: "Copper vein" }); block(g, 12, 10, 2, 2);
-      wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "open" }, keepOf(this), 2);
+      // a clearing round the copper, so the rocks aren't buried in the treeline
+      const clearing = []; for (let y = 8; y <= 12; y++) for (let x = 8; x <= 14; x++) clearing.push([x, y]);
+      wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "open" }, [...keepOf(this), ...clearing], 2);
       return { g, objs, blobs: [] };
     },
     mobs: [["chicken", 4, 9], ["chicken", 5, 10], ["chicken", 6, 9], ["chicken", 3, 10]],
@@ -188,12 +197,14 @@ export const SCENES = {
       for (let y = 7; y < ROWS; y++) for (let x = 16; x <= 18; x++) g[y][x] = "p";
       for (let x = 0; x < 4; x++) for (let y = 5; y <= 7; y++) g[y][x] = "p";
       const paved = g.map((r) => r.slice());
-      const bath = { t: "house", x: 2, y: 1, w: 6, h: 3, door: { x: 4, y: 3 }, name: "Bathhouse", roof: "#8a9aa8", wall: "#efe6d4", sign: "BANK" };
+      const bath = { t: "house", x: 2, y: 1, w: 6, h: 3, door: { x: 4, y: 3 }, name: "Bathhouse", roof: "#8a9aa8", wall: "#efe6d4", sign: "BANK", enter: "bathhouse" };
       const forge = { t: "house", x: 12, y: 1, w: 6, h: 3, door: { x: 15, y: 3 }, name: "Forge", roof: "#7a4a3a", wall: "#c8b89a", sign: "STORE" };
       objs.push(bath, forge); block(g, 2, 1, 6, 3); block(g, 12, 1, 6, 3);
       objs.push({ t: "fountain", x: 10, y: 6, w: 2, h: 2, name: "Fountain" }); block(g, 10, 6, 2, 2);
       objs.push({ t: "rock", ore: "stardust", x: 5, y: 6, name: "Fallen Star", special: true, glow: "#e0b0ff", req: { skill: "mining", lvl: 50 }, xp: 150, tease: "It landed during the games last spring. Nobody's managed to chip it since." }); g[6][5] = "#";
       objs.push({ t: "notice", x: 9, y: 2, name: "Notice board" }); g[2][9] = "#";
+      // the Exchange: a market stall where offers are placed and collected
+      objs.push({ t: "stall", x: 14, y: 5, w: 2, h: 1, name: "Exchange stall" }); block(g, 14, 5, 2, 1);
       objs.push({ t: "statue", x: 15, y: 9, name: "Statue" }); g[9][15] = "#";
       objs.push({ t: "sign", x: 19, y: 6, name: "Signpost" }); g[6][19] = "#";
       for (const [x, y] of [[6, 9], [13, 9]]) { objs.push({ t: "bush", x, y, name: "Planter" }); g[y][x] = "#"; }
@@ -202,7 +213,8 @@ export const SCENES = {
       return { g, objs, blobs: [] };
     },
     mobs: [],
-    npcs: [{ name: "Gaius", x: 7, y: 7, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: Coo. The Forge buys ore. Coo.", "PIGEON: He doesn't talk. I do the talking. Coo.", "PIGEON: The Bathhouse keeps your things safe. Opening soon. Coo.", "PIGEON: West is the Olive Grove. Bring a sword. Seriously. Coo."] }],
+    npcs: [{ name: "Livia the Broker", x: 15, y: 4, still: true, opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Selling? Buying? Use the stall. I just take my 1%.", "Offers keep working while you sleep. Come back and collect.", "The best price wins, and whoever was there first."] },
+           { name: "Gaius", x: 7, y: 7, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: Coo. The Forge buys ore. Coo.", "PIGEON: He doesn't talk. I do the talking. Coo.", "PIGEON: The Bathhouse keeps your things safe. Opening soon. Coo.", "PIGEON: West is the Olive Grove. Bring a sword. Seriously. Coo."] }],
     bots: [{ name: "Gannicus", level: 55 }, { name: "Naevia", level: 31 }]
   },
   grove: {
@@ -227,6 +239,47 @@ export const SCENES = {
 };
 // where a brand-new character appears: just outside the farmhouse door
 export const START = { scene: "farm", x: 4, y: 5 };
+
+/* interiors: a room in the middle of the dark. "e" tiles on the room's bottom edge lead back out to exitTo.
+   Rooms are drawn by the page from their floor kind and objects; nothing grows or spawns indoors. */
+function room(x0, y0, x1, y1, doorX) {
+  const g = grid("v");
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) g[y][x] = "i";
+  g[y1 + 1][doorX] = "e"; g[y1 + 1][doorX + 1] = "e";
+  return g;
+}
+Object.assign(SCENES, {
+  bathhouse: {
+    name: "The Bathhouse", interior: true, floor: "marble", room: [4, 3, 17, 10], exitTo: { scene: "forum", x: 4, y: 4 }, entry: { x: 10, y: 10 },
+    build() {
+      const g = room(4, 3, 17, 10, 10), objs = [];
+      // the bank counter runs wall to wall; the tellers work behind it
+      for (const x of [6, 10, 14]) objs.push({ t: "booth", x, y: 4, name: "Bank booth" });
+      objs.push({ t: "counter", x: 4, y: 4, w: 14, h: 1, name: "Counter" }); block(g, 4, 4, 14, 1);
+      // the bath itself, and columns
+      objs.push({ t: "pool", x: 6, y: 7, w: 4, h: 2, name: "Bath" }); block(g, 6, 7, 4, 2);
+      objs.push({ t: "pool", x: 12, y: 7, w: 4, h: 2, name: "Bath" }); block(g, 12, 7, 4, 2);
+      for (const [x, y] of [[4, 6], [17, 6], [4, 9], [17, 9]]) { objs.push({ t: "column", x, y, name: "Column" }); g[y][x] = "#"; }
+      return { g, objs, blobs: [] };
+    },
+    mobs: [], bots: [],
+    npcs: [{ name: "Aurelia", x: 10, y: 3, still: true, opens: "bank", reach: 2, hair: "#1a1a2a", shirt: "#3a6a8a", pants: "#2a2a3a", lines: ["Welcome to the Bathhouse. Your things are safe with us. Mostly.", "Use any booth. I'm the one counting.", "Two hundred different things we'll hold for you. Stack them as high as you like."] }]
+  },
+  farmhouse: {
+    name: "The Farmhouse", interior: true, floor: "wood", room: [6, 4, 15, 10], exitTo: { scene: "farm", x: 4, y: 5 }, entry: { x: 10, y: 10 },
+    build() {
+      const g = room(6, 4, 15, 10, 10), objs = [];
+      objs.push({ t: "range", x: 7, y: 4, w: 2, h: 1, name: "Range" }); block(g, 7, 4, 2, 1);
+      objs.push({ t: "table", x: 10, y: 6, w: 3, h: 2, name: "Table" }); block(g, 10, 6, 3, 2);
+      objs.push({ t: "barrel", x: 15, y: 4, name: "Barrel" }); g[4][15] = "#";
+      objs.push({ t: "barrel", x: 14, y: 4, name: "Barrel" }); g[4][14] = "#";
+      objs.push({ t: "bed", x: 6, y: 8, w: 1, h: 2, name: "Bed" }); block(g, 6, 8, 1, 2);
+      return { g, objs, blobs: [] };
+    },
+    mobs: [], bots: [],
+    npcs: [{ name: "Cassia", x: 12, y: 9, still: true, hair: "#8a3a1a", shirt: "#e8e0c8", pants: "#6a5a4a", lines: ["Mind the range, it's hot. Cooking lessons start soon.", "Bom eats like three gladiators.", "If you catch fish, I can teach you to cook them. Soon."] }]
+  }
+});
 // the same scene, built the same way everywhere; every object gets its index as its id
 export function buildScene(key) {
   const sc = SCENES[key], b = sc.build.call(sc);
@@ -234,7 +287,7 @@ export function buildScene(key) {
   b.objs.forEach((o, i) => { o.id = i; o.w ??= 1; o.h ??= 1; });
   return b;
 }
-export const walkableIn = (g, x, y, swim = false) => x >= 0 && y >= 0 && x < COLS && y < ROWS && (swim ? ".,sepfb~" : ".,sepf").includes(g[y][x]);
+export const walkableIn = (g, x, y, swim = false) => x >= 0 && y >= 0 && x < COLS && y < ROWS && (swim ? ".,sepfib~" : ".,sepfi").includes(g[y][x]);
 export const canStepIn = (g, x, y, dx, dy, swim = false) => walkableIn(g, x + dx, y + dy, swim) && (!dx || !dy || (walkableIn(g, x + dx, y, swim) && walkableIn(g, x, y + dy, swim)));
 // 8-way BFS with no corner cutting. reach 0: stand on it; n: stand within n tiles of it
 export function findPath(g, from, to, reach = 0) {
@@ -272,13 +325,20 @@ export const EXAMINE = {
   sign: ["Via Appia → Closed: bandits. (Coming soon.)"],
   hive: ["The bees are humming the same four notes. Over and over.", "One bee is wearing a tiny helmet. It salutes you."],
   statue: ["'GALLUS THE BRAVE. He did not flinch.' It's a chicken."],
-  fountain: ["The water tastes faintly of denarii."],
+  fountain: ["The water tastes faintly of coins. People keep throwing Cash in it."],
   fire: ["A campfire. Cooking comes soon; for now it's just warm."],
   bush: ["A bush. Something inside it is breathing.", "Just a bush. Probably.", "A bush. It rustles when you aren't looking."],
   boulder: ["A big rock. Too big for your pickaxe. For now.", "Someone has scratched 'CRIXUS WAS HERE' into it."],
-  hay: ["A hay bale. Waldy sleeps on it, sometimes."]
+  hay: ["A hay bale. Waldy sleeps on it, sometimes."],
+  counter: ["Polished marble. Aurelia polishes it when she's nervous, which is always."],
+  pool: ["Warm, and suspiciously green. Nobody bathes here any more; they just store things."],
+  column: ["A marble column. Someone has carved 'Z WAS HERE' into the base."],
+  range: ["A wood-burning range. Cooking comes soon."],
+  table: ["A heavy farmhouse table. It's seen a lot of stew."],
+  barrel: ["Full of something that smells like olives. Or feet."],
+  bed: ["Waldy's bed, apparently. There's a bucket-shaped dent in the pillow."]
 };
-export const VERB = { hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
+export const VERB = { bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
 /* ------------------------------------------------------------ quests are data
    goal.type "bring": have goal.n of goal.items in your bag when you talk to the giver (they're taken)
@@ -297,7 +357,7 @@ export const QUESTS = {
       ready: "Now those are logs. Hand 'em over.", hand: "Here you go.",
       done: "Kitchen's warm. You did good, rookie. Come back when you want real work."
     },
-    reward: { coins: 40, xp: { woodcutting: 150 }, text: "40 denarii, 150 Woodcutting xp" }
+    reward: { coins: 40, xp: { woodcutting: 150 }, text: "40 Cash, 150 Woodcutting xp" }
   },
   cattle: {
     name: "Cattle Drive", giver: "Bom Trady", where: "Ludus Farm", icon: "🐄", requires: ["firewood"],
@@ -309,9 +369,9 @@ export const QUESTS = {
       accepted: "Hit them until they stop mooing. Waldy says that's the whole trick.",
       progress: "That's {have} cows so far. I said 5.",
       ready: "Field's quiet. You're a natural.", hand: "What do I get?",
-      done: "Denarii, and my respect. Mostly the denarii."
+      done: "Cash, and my respect. Mostly the Cash."
     },
-    reward: { coins: 60, xp: { melee: 200 }, text: "60 denarii, 200 Melee xp" }
+    reward: { coins: 60, xp: { melee: 200 }, text: "60 Cash, 200 Melee xp" }
   },
   catch: {
     name: "Catch of the Day", giver: "Old Tullius", where: "River Bend", icon: "🐟",
@@ -326,7 +386,7 @@ export const QUESTS = {
       ready: "Oh, lovely fish. Give them here.", hand: "Here they are.",
       done: "Supper sorted. Here, take something for your trouble."
     },
-    reward: { coins: 40, xp: { fishing: 150 }, text: "40 denarii, 150 Fishing xp" }
+    reward: { coins: 40, xp: { fishing: 150 }, text: "40 Cash, 150 Fishing xp" }
   }
 };
 
@@ -349,7 +409,7 @@ export function freshChar() {
     inv: [{ k: "coins", n: 25 }, { k: "pickaxe", n: 1 }, { k: "axe", n: 1 }, { k: "rod", n: 1 }],
     eq: { helm: "cap", weapon: "rudis", body: "tunic", shield: "parma", legs: null, gloves: null, boots: "sandals", ring: null },
     xp: { melee: 0, hp: XP_AT[10], fishing: 0, farming: 0, mining: 0, woodcutting: 0 },
-    qs: {}, settings: { ...DEFAULT_SETTINGS }, created: Date.now()
+    qs: {}, bank: [], settings: { ...DEFAULT_SETTINGS }, created: Date.now()
   };
 }
 // fill in anything a stored character is missing, and drop what isn't real any more
@@ -358,6 +418,7 @@ export function normChar(c) {
   if (!c || typeof c !== "object") return f;
   const out = { ...f, ...c, xp: { ...f.xp, ...(c.xp || {}) }, eq: { ...f.eq, ...(c.eq || {}) }, settings: { ...f.settings, ...(c.settings || {}) }, qs: { ...(c.qs || {}) } };
   out.inv = (Array.isArray(c.inv) ? c.inv : f.inv).filter((s) => s && ITEMS[s.k] && s.n > 0).slice(0, INV_MAX);
+  out.bank = (Array.isArray(c.bank) ? c.bank : []).filter((s) => s && ITEMS[s.k] && s.n > 0).slice(0, BANK_MAX);
   for (const s of SLOTS) if (out.eq[s] && !ITEMS[out.eq[s]]) out.eq[s] = null;
   if (!SCENES[out.scene]) Object.assign(out, START);
   return out;
@@ -369,6 +430,23 @@ export const totalOf = (c) => Object.keys(SKILLS).reduce((n, k) => n + lvlOf(c, 
 export const bonusOf = (c) => { const b = { acc: 0, str: 0, def: 0 }; for (const k of Object.values(c.eq)) if (k && ITEMS[k]) for (const q in b) b[q] += ITEMS[k][q] || 0; return b; };
 export const maxHitOf = (c) => 1 + Math.floor(lvlOf(c, "melee") / 6) + Math.floor(bonusOf(c).str / 2);
 export const hitChance = (att, def) => Math.max(0.1, Math.min(0.95, 0.5 + (att - def) * 0.04));
+
+/* ------------------------------------------------------------ the Exchange
+   an offer: { id, owner, name, side: "sell"|"buy", k, qty, done, price (each), at, open,
+               box: { items: n waiting to collect, cash: n waiting to collect } }
+   A new offer fills against the other side at the RESTING offer's price, best price first then oldest. */
+export const exTax = (cash) => Math.floor(cash * EX_TAX);
+export function exSummary(orders) {
+  const out = {};
+  for (const o of orders) {
+    if (!o.open || o.done >= o.qty) continue;
+    const b = (out[o.k] ||= { sell: null, sellQty: 0, buy: null, buyQty: 0 });
+    const left = o.qty - o.done;
+    if (o.side === "sell") { b.sellQty += left; if (b.sell == null || o.price < b.sell) b.sell = o.price; }
+    else { b.buyQty += left; if (b.buy == null || o.price > b.buy) b.buy = o.price; }
+  }
+  return out;
+}
 
 /* ------------------------------------------------------------ quest state, read from a character */
 export const qGet = (c, k) => c.qs[k] || { state: "new", n: 0 };
