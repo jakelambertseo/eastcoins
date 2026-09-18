@@ -247,7 +247,7 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=5";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=6";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -333,6 +333,7 @@ function onMsg(m) {
     const bubbles = new Map(Z.bots.map((b) => [b.id, null]));
     for (const o of Z.objs) { o.stumpUntil = 0; o.emptyUntil = 0; o.bareUntil = 0; o.grownAt = 0; }
     for (const [id, st, em, ba, gr] of m.dyn) { const o = Z.objs[id]; if (o) Object.assign(o, { stumpUntil: st, emptyUntil: em, bareUntil: ba, grownAt: gr }); }
+    for (const o of Z.objs) if (o.t === "wheat") Z.g[o.y][o.x] = o.grownAt > m.t ? "f" : "#";
     for (const e of m.ev || []) {
       if (e.type === "splat") splats.push({ who: e.who, n: e.n, kind: e.kind, at: performance.now() });
       if (e.type === "gain") gains.push({ who: e.who, k: e.k, n: e.n, at: performance.now() });
