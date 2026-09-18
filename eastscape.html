@@ -110,6 +110,92 @@ button,input,select{font:inherit}
 .chat-form input{flex:1;min-width:0;padding:6px 8px;border:1px solid #5a4a38;border-radius:4px;background:#1e1812;color:#fff}
 .chat-form input:focus{outline:2px solid var(--gold);outline-offset:-1px}
 .chat-form button{padding:6px 12px;border:2px solid #000;border-radius:4px;background:linear-gradient(#f39ab5,#d9738f);color:#fff;font-weight:800;cursor:pointer}
+/* windows over the game: the bank, the Exchange, a trade, the wiki */
+.win{position:absolute;inset:14px;margin:auto;width:min(760px,calc(100% - 28px));height:fit-content;max-height:calc(100% - 28px);display:flex;flex-direction:column;background:var(--panel);color:var(--panel-ink);border:3px solid var(--frame);border-radius:8px;box-shadow:0 14px 40px rgba(0,0,0,.6);z-index:7;overflow:hidden}
+.win[hidden]{display:none}
+.win-head{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#e6d8b6;border-bottom:2px solid rgba(0,0,0,.14)}
+.win-head b{font-size:17px;flex:1}
+.win-head small{color:#6a5a40;font-weight:700}
+.win-x{border:0;background:none;font-size:22px;line-height:1;cursor:pointer;color:#6a5a40;padding:0 4px}
+.win-body{overflow:auto;padding:10px 12px;min-height:0}
+.win-foot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 12px;border-top:2px solid rgba(0,0,0,.1)}
+.qty{display:inline-flex;border:1px solid #8a7a5a;border-radius:4px;overflow:hidden}
+.qty button{border:0;border-right:1px solid #8a7a5a;background:#e6dcc4;padding:4px 10px;font-weight:800;cursor:pointer;color:#2a2016}
+.qty button:last-child{border-right:0}
+.qty button[aria-pressed="true"]{background:#d9738f;color:#fff}
+.cols2{display:grid;grid-template-columns:1.5fr 1fr;gap:12px}
+@media (max-width:620px){.cols2{grid-template-columns:1fr}}
+.cols2 h4,.wiki h4{margin:0 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#6a5a40}
+.grid8{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:3px}
+.grid8 .slot{font-size:22px}
+.grid8 .note{grid-column:1/-1;padding:4px 2px}
+.search{width:100%;padding:5px 8px;border:1px solid #8a7a5a;border-radius:4px;background:#fffaf0;margin-bottom:6px}
+.ex-tabs{display:flex;gap:4px;margin-bottom:10px}
+.ex-tabs button{flex:1;padding:6px;border:1px solid #8a7a5a;border-radius:4px;background:#e6dcc4;font-weight:800;cursor:pointer;color:#2a2016}
+.ex-tabs button[aria-pressed="true"]{background:#d9738f;color:#fff;border-color:#000}
+.offers{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.offer{border:1px solid #bfb193;background:#e6dcc4;border-radius:5px;padding:8px;display:grid;gap:4px;font-size:13px}
+.offer.empty{display:grid;place-items:center;color:#8a7a5a;min-height:90px;border-style:dashed}
+.offer .otop{display:flex;align-items:center;gap:8px}
+.offer .otop i{font-style:normal;font-size:26px}
+.offer .otop b{font-size:14px;display:block}
+.tag2{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:3px;color:#fff}
+.tag2.sell{background:#b8503a}.tag2.buy{background:#3a7a3a}.tag2.done{background:#6a5a40}
+.offer .bar{height:6px;background:#bfb193;border-radius:3px;overflow:hidden}.offer .bar i{display:block;height:100%;background:#3f9a2e}
+.offer .row{display:flex;gap:6px;flex-wrap:wrap}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#6a5a40;padding:4px 6px;border-bottom:2px solid #bfb193}
+.tbl td{padding:5px 6px;border-bottom:1px solid #d6caae;font-variant-numeric:tabular-nums}
+.tbl tr.click{cursor:pointer}.tbl tr.click:hover td{background:#fff3c8}
+.form{display:grid;gap:8px;max-width:420px}
+.form label{display:grid;gap:3px;font-size:13px;font-weight:700}
+.form input,.form select{padding:6px 8px;border:1px solid #8a7a5a;border-radius:4px;background:#fffaf0;color:#2a2016}
+.sum{font-size:13px;color:#5a4a30;background:#e6dcc4;border:1px solid #bfb193;border-radius:4px;padding:6px 8px}
+.trade-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.trade-box{border:2px solid #bfb193;border-radius:5px;background:#e6dcc4;min-height:120px;padding:6px}
+.trade-box.ok{border-color:#3a9a3a;box-shadow:0 0 0 2px rgba(58,154,58,.25)}
+.trade-box .cash{font-weight:800;color:#6a5a1a;margin-top:6px}
+.warn{background:#fff0c0;border:1px solid #d8b040;border-radius:4px;padding:6px 8px;font-size:13px;font-weight:700;color:#5a4000}
+.chat-log p .act{margin-left:6px;padding:1px 8px;border:1px solid #000;border-radius:3px;background:#d9738f;color:#fff;font-weight:800;font-size:12px;cursor:pointer}
+/* level up */
+.lvlup{position:absolute;left:50%;top:22%;transform:translateX(-50%);text-align:center;padding:10px 26px;background:radial-gradient(circle at 50% 30%,#4a3a14,#1e160c);border:3px solid #ffd23f;border-radius:10px;color:#fff;z-index:6;pointer-events:none;box-shadow:0 0 34px rgba(255,210,63,.55)}
+.lvlup[hidden]{display:none}
+/* right-click info card */
+.info{position:absolute;z-index:8;width:250px;padding:10px 12px;background:var(--panel);color:var(--panel-ink);border:3px solid var(--frame);border-radius:7px;box-shadow:0 10px 26px rgba(0,0,0,.55);font-size:13px;line-height:1.35}
+.info[hidden]{display:none}
+.info h5{margin:0 0 2px;font-size:16px;color:#7a2a1a;display:flex;align-items:center;gap:6px}
+.info .sub{color:#6a5a40;font-weight:700;margin-bottom:6px}
+.info dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:0 0 6px}
+.info dt{color:#6a5a40}.info dd{margin:0;font-weight:800}
+.info .low{color:#b8302a}.info .ok{color:#2a7a1a}
+.info ul{margin:2px 0 6px;padding-left:18px}
+.info .more{color:#1a5a8a;font-weight:800;cursor:pointer;text-decoration:underline}
+.info .ex{font-style:italic;color:#5a4a30;margin:4px 0 6px}
+.lvlup small{display:block;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#ffd23f;font-weight:800}
+.lvlup b{display:block;font-size:26px;margin-top:2px}
+.lvlup.show{animation:qpop .5s cubic-bezier(.2,1.6,.4,1)}
+/* wiki */
+.top .wikib{border:1px solid #3a2e22;background:#1e1812;color:#f2d22e;font-weight:800;font-size:14px;padding:3px 10px;border-radius:5px;cursor:pointer}
+.top .wikib:hover{background:#2a2118}
+.wiki{display:grid;grid-template-columns:190px minmax(0,1fr);gap:0;min-height:0;flex:1}
+.wiki nav{border-right:2px solid rgba(0,0,0,.1);overflow:auto;padding:8px;background:#ece0c2}
+.wiki nav button{display:block;width:100%;text-align:left;border:0;background:none;padding:5px 8px;border-radius:4px;font-weight:700;cursor:pointer;color:#2a2016;font-size:14px}
+.wiki nav button:hover,.wiki nav button[aria-current="true"]{background:#d9c9a2}
+.wiki nav hr{border:0;border-top:1px solid #cdbf9c;margin:6px 0}
+.wiki article{overflow:auto;padding:12px 16px;line-height:1.5;font-size:14px}
+.wiki article h2{margin:0 0 4px;font-size:22px;color:#7a2a1a;display:flex;align-items:center;gap:10px}
+.wiki article h2 i{font-style:normal;font-size:34px}
+.wiki article h3{margin:14px 0 6px;font-size:15px;color:#5a2a1a}
+.wiki article .lede{color:#5a4a30;margin:0 0 8px}
+.wiki article a,.wiki article [data-wiki]{color:#1a5a8a;font-weight:700;cursor:pointer;text-decoration:underline;text-decoration-thickness:1px}
+.wiki .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.wiki .card{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid #bfb193;background:#e6dcc4;border-radius:5px;cursor:pointer;text-decoration:none!important;color:#2a2016!important}
+.wiki .card:hover{background:#fff3c8}
+.wiki .card i{font-style:normal;font-size:22px}
+.wiki .up{border-left:4px solid #d9738f;padding:4px 0 4px 12px;margin:0 0 14px}
+.wiki .up small{color:#6a5a40;font-weight:800}
+@media (max-width:620px){.wiki{grid-template-columns:1fr}.wiki nav{display:none}}
+
 /* the door for visitors who aren't signed in, and the "reconnecting" veil */
 .cover{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,5,4,.78);z-index:9;padding:16px}
 .cover[hidden]{display:none}
@@ -200,6 +286,7 @@ button,input,select{font:inherit}
   <span class="logo">⚔ EastScape</span>
   <span class="me"><img id="topAv" alt="" hidden><span id="topName">—</span></span>
   <span class="clock" id="clock">--:--:--</span>
+  <button type="button" class="wikib" id="wikiBtn" title="The EastScape wiki">📖 Wiki</button>
   <span class="spacer"></span>
   <span class="net" id="net" role="status" aria-live="polite"><i></i><span id="netText">Connecting…</span></span>
   <span class="online" id="online"></span>
@@ -227,6 +314,33 @@ button,input,select{font:inherit}
     <div class="pop" id="pop" role="alertdialog" aria-modal="true" aria-labelledby="popTitle" hidden>
       <div class="pop-card"><div class="pop-ico" id="popIco"></div><b id="popTitle"></b><p id="popText"></p><div class="pop-btns" id="popBtns"></div></div>
     </div>
+    <div class="lvlup" id="lvlup" hidden></div>
+    <div class="info" id="info" role="dialog" aria-label="Details" hidden></div>
+    <section class="win" id="bankWin" aria-label="Bank" hidden>
+      <div class="win-head"><b>🏛️ The Bank</b><small id="bankCount"></small><button type="button" class="win-x" data-close="bankWin" aria-label="Close">×</button></div>
+      <div class="win-body cols2">
+        <div><h4>In the bank</h4><input class="search" id="bankSearch" placeholder="Search the bank…" aria-label="Search the bank"><div class="grid8" id="bankGrid"></div></div>
+        <div><h4>Your bag</h4><div class="grid8" id="bankBag"></div></div>
+      </div>
+      <div class="win-foot"><span>Move</span><div class="qty" id="bankQty"><button data-n="1" aria-pressed="true">1</button><button data-n="5">5</button><button data-n="10">10</button><button data-n="all">All</button></div>
+        <span style="flex:1"></span><button type="button" class="btn plain" id="depInv">Deposit bag</button><button type="button" class="btn plain" id="depEq">Deposit worn</button></div>
+    </section>
+    <section class="win" id="exWin" aria-label="The Exchange" hidden>
+      <div class="win-head"><b>⚖️ The Exchange</b><small>1% of each sale goes to the house</small><button type="button" class="win-x" data-close="exWin" aria-label="Close">×</button></div>
+      <div class="win-body">
+        <div class="ex-tabs" role="tablist"><button data-ex="mine" aria-pressed="true">My offers</button><button data-ex="browse" aria-pressed="false">Browse</button><button data-ex="new" aria-pressed="false">New offer</button></div>
+        <div id="exBody"></div>
+      </div>
+    </section>
+    <section class="win" id="tradeWin" aria-label="Trade" hidden>
+      <div class="win-head"><b id="tradeTitle">🤝 Trade</b><button type="button" class="win-x" id="tradeX" aria-label="Decline">×</button></div>
+      <div class="win-body" id="tradeBody"></div>
+      <div class="win-foot" id="tradeFoot"></div>
+    </section>
+    <section class="win" id="wikiWin" aria-label="Wiki" hidden style="width:min(980px,calc(100% - 28px));height:calc(100% - 28px)">
+      <div class="win-head"><b>📖 EastScape Wiki</b><small>built from the game itself</small><button type="button" class="win-x" data-close="wikiWin" aria-label="Close">×</button></div>
+      <div class="wiki"><nav id="wikiNav"></nav><article id="wikiPage"></article></div>
+    </section>
     <div class="cover" id="gate" hidden>
       <div class="card"><div style="font-size:36px">⚔️</div><h2>EastScape is members-only</h2><p>Log in with Twitch to play. Your character is saved to your Twitch account, so you can pick up from any browser.</p><a class="btn" href="/api/picks/auth/twitch/start?returnTo=%2Feastscape">Log in with Twitch</a></div>
     </div>
@@ -247,7 +361,8 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=6";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=7";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=1";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -342,7 +457,9 @@ function onMsg(m) {
     $("online").textContent = `${m.online} online`;
     return;
   }
-  if (m.type === "me") { me = m.me; renderPanel(); return; }
+  if (m.type === "me") { me = m.me; renderPanel(); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("exWin").hidden && exTab === "new") renderEx(); return; }
+  if (m.type === "exch") { EX = m; if (!$("exWin").hidden) renderEx(); return; }
+  if (m.type === "trade") { if (m.closed) { TR = null; $("tradeWin").hidden = true; } else { TR = m; openWin("tradeWin"); } return; }
   if (m.type === "pong") return;
   if (m.type === "kicked") { kicked = true; return; }
   if (m.type === "ev") for (const e of m.list) onEvent(e);
@@ -356,6 +473,10 @@ function onEvent(e) {
   if (e.type === "questdone") { const q = QUESTS[e.k]; if (q) questBanner(q); return; }
   if (e.type === "scene") { if (DLG) closeTalk(); return; }
   if (e.type === "saved") { savedAt = e.t; return; }
+  if (e.type === "bank") return openWin("bankWin");
+  if (e.type === "exchange") return openWin("exWin");
+  if (e.type === "tradereq") { tradeReqLine(e.from, e.name); return; }
+  if (e.type === "levelup") return levelUp(e.k, e.lvl);
   if (e.type === "chat") { if (e.scene === Z.key) botBubbles.set(e.id, { text: e.text, at: performance.now() }); chatLine(e.name, e.text, e.id === you?.id ? "mine" : ""); return; }
 }
 let savedAt = 0;
@@ -366,6 +487,7 @@ function loadScene(key) {
   Object.assign(Z, { key, g: b.g, objs: b.objs, fadeAt: performance.now(), defs: {} });
   SCENES[key].npcs.forEach((n, i) => { Z.defs[`${key}n${i}`] = n; });
   Z.npcs = []; botBubbles.clear(); PRED.on = false; PRED.path = []; PRED.step = null;
+  for (const id of ["bankWin", "exWin"]) $(id).hidden = true;
   Z.bg = paintBg();
   if (DLG) closeTalk();
   renderStats();
@@ -445,6 +567,8 @@ const WANG = [[64, 32], [96, 32], [64, 64], [32, 64], [64, 0], [96, 64], [0, 32]
 function paintBg() {
   const c = document.createElement("canvas"); c.width = W * A; c.height = H * A;
   const o = c.getContext("2d"), f = (x, y, w, h, col) => { o.fillStyle = col; o.fillRect(x, y, w, h); };
+  const inside = SCENES[Z.key]?.interior;
+  if (inside) { paintRoom(o, f); return c; }
   if (IMG.t_dirt && IMG.t_water) {
     const cell = (x, y) => { const t = Z.g[Math.max(0, Math.min(ROWS - 1, y))][Math.max(0, Math.min(COLS - 1, x))]; return t === "~" ? "w" : t === "," ? "d" : "g"; };
     const vert = (x, y, k) => [cell(x - 1, y - 1), cell(x, y - 1), cell(x - 1, y), cell(x, y)].includes(k);
@@ -478,6 +602,14 @@ function paintBg() {
       if (hashRand(ob.x, ob.y, 5) < 0.35) for (let i = 0; i < 4; i++) f(X + 3 + Math.floor(hashRand(ob.x, i, 6) * 10), Y + 5 + Math.floor(hashRand(ob.y, i, 7) * 7), 2, 2, "#c43a4a");
     }
     if (ob.t === "boulder") { f(X + 1, Y + 13, 14, 3, "rgba(0,0,0,.25)"); f(X + 2, Y + 4, 12, 11, "#5e5a52"); f(X + 1, Y + 7, 14, 7, "#5e5a52"); f(X + 3, Y + 5, 10, 8, "#7d776c"); f(X + 4, Y + 5, 6, 2, "#9c968a"); f(X + 9, Y + 10, 3, 1, "#5e5a52"); }
+    if (ob.t === "stall") {
+      // a market stall: counter, goods, and a striped awning on two poles
+      f(X + 1, Y + 13, 30, 3, "rgba(0,0,0,.25)"); f(X + 2, Y + 6, 28, 9, "#8a5a32"); f(X + 2, Y + 6, 28, 2, "#a8784a");
+      f(X + 4, Y + 3, 4, 3, "#d8793a"); f(X + 9, Y + 4, 5, 2, "#e8c050"); f(X + 16, Y + 3, 3, 3, "#6a9a3a"); f(X + 21, Y + 4, 6, 2, "#c43a4a");
+      f(X + 2, Y - 8, 2, 14, "#5a3418"); f(X + 28, Y - 8, 2, 14, "#5a3418");
+      for (let i = 0; i < 8; i++) f(X - 1 + i * 4.25, Y - 12, 4.25, 5, i % 2 ? "#f0e8d0" : "#c43a3a");
+      f(X - 1, Y - 7, 34, 1, "#8a2a2a");
+    }
     if (ob.t === "hive") { f(X + 2, Y + 13, 12, 2, "rgba(0,0,0,.25)"); f(X + 3, Y + 4, 10, 10, "#c89a3a"); f(X + 4, Y + 2, 8, 2, "#c89a3a"); f(X + 6, Y + 1, 4, 1, "#c89a3a"); for (let i = 0; i < 4; i++) f(X + 3, Y + 5 + i * 2, 10, 1, "#a8781e"); f(X + 7, Y + 10, 3, 3, "#2a1a0a"); }
     if (ob.t === "shrine") { f(X + 1, Y + 12, 30, 3, "rgba(0,0,0,.25)"); f(X + 3, Y + 3, 26, 10, "#a8a294"); f(X + 3, Y + 3, 26, 2, "#c8c2b4"); f(X + 1, Y + 11, 30, 3, "#8a8478");
       f(X + 11, Y - 2, 10, 4, "#8a5a2a"); f(X + 12, Y - 5, 1, 4, "#6a3a1a"); f(X + 18, Y - 5, 1, 4, "#6a3a1a"); f(X + 12, Y - 5, 7, 1, "#6a3a1a");
@@ -501,6 +633,37 @@ function paintBg() {
     }
   }
   return c;
+}
+
+/* ------------------------------------------------------------ rooms: a lit floor in the dark, walls round it, the furniture */
+function paintRoom(o, f) {
+  const def = SCENES[Z.key], [x0, y0, x1, y1] = def.room;
+  f(0, 0, W, H, "#060504");
+  const X0 = x0 * T, Y0 = y0 * T, X1 = (x1 + 1) * T, Y1 = (y1 + 1) * T;
+  // the back wall: a band of plaster above the floor, then the floor itself
+  f(X0 - 4, Y0 - 22, X1 - X0 + 8, 22, def.floor === "marble" ? "#d8d0bc" : "#b8986a"); f(X0 - 4, Y0 - 4, X1 - X0 + 8, 4, "#6a5a40");
+  for (let x = X0; x < X1; x += 24) f(x, Y0 - 20, 1, 16, "rgba(0,0,0,.08)");
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const X = x * T, Y = y * T;
+    if (def.floor === "marble") { f(X, Y, T, T, (x + y) % 2 ? "#e8e2d4" : "#cfc6b2"); if (hashRand(x, y, 9) < 0.2) f(X + 3, Y + 5, 6, 1, "rgba(120,110,90,.25)"); }
+    else { f(X, Y, T, T, "#9a6a3a"); f(X, Y + (x % 2 ? 7 : 3), T, 1, "#7a4a26"); f(X + ((y * 5) % 16), Y, 1, T, "#86582e"); }
+  }
+  // side walls and the front wall with its doorway
+  f(X0 - 4, Y0 - 22, 4, Y1 - Y0 + 26, "#3a2e22"); f(X1, Y0 - 22, 4, Y1 - Y0 + 26, "#3a2e22");
+  for (let x = x0; x <= x1; x++) if (Z.g[y1 + 1][x] !== "e") f(x * T, Y1, T, 5, "#3a2e22");
+  f(X0 - 4, Y1, 4, 5, "#3a2e22"); f(X1, Y1, 4, 5, "#3a2e22");
+  for (let x = x0; x <= x1; x++) if (Z.g[y1 + 1][x] === "e") { f(x * T, Y1, T, T, "#2a2016"); f(x * T + 2, Y1 + 2, T - 4, T - 6, "#8a4a2a"); }
+  for (const ob of Z.objs) {
+    const X = ob.x * T, Y = ob.y * T, w = (ob.w || 1) * T, h = (ob.h || 1) * T;
+    if (ob.t === "counter") { f(X, Y + 2, w, h, "#b8ae98"); f(X, Y, w, 5, "#7a4a26"); f(X, Y + h, w, 3, "rgba(0,0,0,.25)"); for (let i = X + 6; i < X + w; i += 16) f(i, Y + 7, 1, h - 6, "#a09680"); }
+    if (ob.t === "booth") { f(X + 2, Y - 10, 12, 11, "#6a4a2a"); f(X + 3, Y - 9, 10, 9, "#2a2016"); for (let i = 0; i < 4; i++) f(X + 4 + i * 3, Y - 9, 1, 9, "#c8a040"); f(X + 1, Y - 12, 14, 2, "#c8a040"); }
+    if (ob.t === "pool") { f(X - 2, Y - 2, w + 4, h + 4, "#e8e2d4"); f(X, Y, w, h, "#3a8ab8"); f(X + 2, Y + 2, w - 4, 2, "#8ac8e8"); for (let i = 0; i < 5; i++) f(X + 4 + hashRand(ob.x, i, 3) * (w - 10), Y + 6 + hashRand(ob.y, i, 4) * (h - 10), 4, 1, "#6ab0d8"); f(X - 2, Y + h + 2, w + 4, 2, "rgba(0,0,0,.2)"); }
+    if (ob.t === "column") { f(X + 3, Y + 13, 10, 3, "rgba(0,0,0,.25)"); f(X + 4, Y - 16, 8, 30, "#f0ead8"); f(X + 5, Y - 16, 1, 30, "#d8d0bc"); f(X + 9, Y - 16, 1, 30, "#d8d0bc"); f(X + 2, Y - 18, 12, 3, "#e0d8c4"); f(X + 2, Y + 11, 12, 3, "#e0d8c4"); }
+    if (ob.t === "range") { f(X, Y - 6, w, h + 6, "#2a2a2e"); f(X + 1, Y - 5, w - 2, 3, "#4a4a52"); f(X + 6, Y + 3, 10, 7, "#1a1a1a"); f(X + 8, Y + 5, 6, 4, "#ff7a2a"); f(X + 9, Y + 6, 4, 2, "#ffd060"); f(X + w - 6, Y - 16, 4, 11, "#3a3a40"); }
+    if (ob.t === "table") { f(X + 2, Y + h - 4, 3, 4, "#5a3a1e"); f(X + w - 5, Y + h - 4, 3, 4, "#5a3a1e"); f(X, Y + 2, w, h - 6, "#8a5a32"); f(X, Y + 2, w, 3, "#a8784a"); f(X + 8, Y + 6, 7, 5, "#e8e0c8"); f(X + 10, Y + 7, 3, 3, "#c86a2a"); }
+    if (ob.t === "barrel") { f(X + 2, Y + 2, 12, 13, "#7a4a26"); f(X + 2, Y + 4, 12, 1, "#3a2a1a"); f(X + 2, Y + 11, 12, 1, "#3a2a1a"); f(X + 4, Y + 1, 8, 2, "#8a5a32"); }
+    if (ob.t === "bed") { f(X, Y + 2, w, h - 2, "#6a4a2a"); f(X + 1, Y + 3, w - 2, 6, "#f0e8d0"); f(X + 1, Y + 9, w - 2, h - 12, "#a83a3a"); }
+  }
 }
 
 /* ------------------------------------------------------------ the little people and animals, drawn in code until the art comes */
@@ -647,6 +810,11 @@ function showTalk(n, text, options, have) {
 function talkTo(n) {
   const k = G.npcQuest(me, n), bye = ["Bye.", closeTalk];
   const chat = ["Tell me about this place.", () => showTalk(n, pick(n.lines), [["Something else…", () => talkTo(n)], bye])];
+  if (n.opens) {
+    const kind = n.opens === "bank" ? "booth" : "stall", ob = Z.objs.filter((o) => o.t === kind).sort((a, b) => G.cheb(a, myEnt() || a) - G.cheb(b, myEnt() || b))[0];
+    const go = () => { closeTalk(); if (ob) send({ t: "act", kind: "ob", ob: ob.id }); };
+    return showTalk(n, pick(n.lines), [[n.opens === "bank" ? "I'd like to use my bank." : "Show me the Exchange.", go], chat, bye]);
+  }
   if (!k) {
     if (n.quests?.length) return showTalk(n, [n.outOfWork || "That's all the work I've got for you.", G.nextHint(me, n)], [["Thanks.", closeTalk], chat]);
     return showTalk(n, pick(n.lines), [chat, bye]);
@@ -676,11 +844,12 @@ function fit() {
   return { w, h };
 }
 const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
-const KIND_OF = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
+const KIND_OF = { booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
 function thingAt(wx, wy) {
   const now = snow(), near = (x_, y_, rx, ry) => Math.abs(wx - x_) <= rx && wy <= y_ + 4 && wy >= y_ - ry;
   for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})` }; }
-  for (const n of Z.npcs) { const p = posOf(n, now); if (near(p.px * T + 8, p.py * T + 14, 6, 24)) return { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name }; }
+  for (const n of Z.npcs) { const p = posOf(n, now); if (near(p.px * T + 8, p.py * T + 14, 6, 24)) return { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach }; }
+  for (const pl of Z.players) if (pl.id !== you?.id) { const p = posOf(pl, now); if (near(p.px * T + 8, p.py * T + 14, 6, 24)) return { kind: "player", id: pl.id, x: pl.x, y: pl.y, name: pl.name }; }
   const tx = Math.floor(wx / T), ty = Math.floor(wy / T);
   for (const ob of Z.objs) {
     const kind = KIND_OF[ob.t]; if (!kind) continue;
@@ -689,24 +858,26 @@ function thingAt(wx, wy) {
     else if (ob.t === "oak" || ob.t === "yew") hit = Math.abs(tx - ob.x) <= 1 && (ty === ob.y || ty === ob.y - 1) && (tx === ob.x || ty === ob.y - 1);
     else if (ob.t === "spot" || ob.t === "wheat") hit = tx === ob.x && ty === ob.y;
     else hit = tx >= ob.x && tx < ob.x + ob.w && ty >= ob.y - (ob.t === "vein" || ob.t === "well" ? 0 : 1) && ty < ob.y + ob.h;   // tall things can be clicked on their top half too
-    if (hit) return { kind, ob, x: ob.x, y: ob.y, name: ob.t === "spot" && !ob.special ? "Fishing spot" : ob.name };
+    if (hit) return { kind: ob.t === "house" && ob.enter ? "enter" : kind, ob, x: ob.x, y: ob.y, name: ob.t === "spot" && !ob.special ? "Fishing spot" : ob.name };
   }
   return null;
 }
 cv.addEventListener("pointerdown", (e) => {
   e.preventDefault();
-  if (!me || !Z.g) return;
+  if (e.button !== 0 || !me || !Z.g) return;
   const w = toWorld(e); if (w.x < 0 || w.y < 0 || w.x >= W || w.y >= H) return;
   if (DLG) closeTalk();
   const t = thingAt(w.x, w.y), from = predFrom();
+  if (t && t.kind === "player") { send({ t: "trade", op: "req", to: t.id }); clickMark = { x: t.x, y: t.y, at: performance.now() }; return; }
   if (t) {
+    if (t.kind === "enter") t.kind = "door";
     if (t.kind === "mob") send({ t: "act", kind: "mob", id: t.id });
     else if (t.kind === "npc") send({ t: "act", kind: "npc", id: t.id });
     else send({ t: "act", kind: "ob", ob: t.ob.id });
     // walk there now, the way the server will
     if (from) {
       const at = t.kind === "mob" || t.kind === "npc" ? { x: t.x, y: t.y } : t.kind === "door" ? t.ob.door : G.nearestCell(t.ob, from);
-      predGo(G.findPath(Z.g, from, at, G.reachOf(t.kind) || 1));
+      predGo(G.findPath(Z.g, from, at, t.reach || G.reachOf(t.kind) || 1));
     }
     clickMark = { x: t.x, y: t.y, at: performance.now(), red: t.kind === "mob" }; return;
   }
@@ -925,6 +1096,14 @@ function frame() {
     if (g.n > 1) { ctx.font = `800 12px "Nunito", system-ui, sans-serif`; ctx.lineWidth = 3; ctx.strokeStyle = "#000"; ctx.strokeText(`×${g.n}`, x + 14, y + 8); ctx.fillStyle = "#fff"; ctx.fillText(`×${g.n}`, x + 14, y + 8); }
     ctx.globalAlpha = 1;
   }
+  // level up: a ring of gold sparks bursting off your head
+  for (let i = bursts.length - 1; i >= 0; i--) if (pnow - bursts[i].at > 1200) bursts.splice(i, 1);
+  if (P) for (const b of bursts) {
+    const k = (pnow - b.at) / 1200;
+    ctx.globalAlpha = 1 - k;
+    for (let i = 0; i < 18; i++) { const a = (i / 18) * Math.PI * 2, r = 10 + k * 46, x = hx + Math.cos(a) * r, y = hy - 22 * S2 + Math.sin(a) * r * 0.8 + k * k * 30; ctx.fillStyle = i % 3 ? "#ffd23f" : "#fff6c0"; ctx.fillRect(x - 2, y - 2, 4, 4); }
+    ctx.globalAlpha = 1;
+  }
   // xp drops: rise off your head and fade
   for (let i = xpDrops.length - 1; i >= 0; i--) if (pnow - xpDrops[i].at > 1600) xpDrops.splice(i, 1);
   if (P && set("xpDrops")) xpDrops.forEach((d, i) => {
@@ -973,6 +1152,312 @@ function frame() {
   if (set("debug") && P) $("dbg").textContent = `Scene: ${SCENES[Z.key].name}\nTile: ${P.x} ${P.y}${hoverTile ? `   Mouse: ${hoverTile.x} ${hoverTile.y}` : ""}\nAction: ${P.act || (P.moving ? "walking" : "none")}\nClock offset: ${Math.round(offset || 0)} ms`;
 }
 
+/* ------------------------------------------------------------ windows: open, close */
+function openWin(id) {
+  for (const w of ["bankWin", "exWin", "wikiWin"]) if (w !== id && id !== "tradeWin") $(w).hidden = true;
+  $(id).hidden = false;
+  if (id === "bankWin") renderBank();
+  if (id === "exWin") { renderEx(); send({ t: "ex", op: "open" }); }
+  if (id === "tradeWin") renderTrade();
+  if (id === "wikiWin") wikiGo(wikiRoute || "home");
+}
+document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => { $(b.dataset.close).hidden = true; if (b.dataset.close === "wikiWin" && location.hash.startsWith("#wiki")) history.replaceState(null, "", location.pathname + location.search); }));
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape" || e.target.closest?.("input, textarea, select") || !$("pop").hidden || DLG) return;
+  for (const w of ["wikiWin", "bankWin", "exWin"]) if (!$(w).hidden) { $(w).hidden = true; return; }
+});
+// windows that need you standing somewhere close themselves when you walk off
+setInterval(() => { if (PRED.on && PRED.step) for (const w of ["bankWin", "exWin"]) $(w).hidden = true; }, 300);
+const slotHtml = (s, i, attr = "data-i") => `<div class="slot" ${attr}="${i}" title="${esc(ITEMS[s.k].name)}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}">${ITEMS[s.k].icon}${s.n > 1 ? `<em>${s.n >= 100000 ? Math.floor(s.n / 1000) + "k" : s.n.toLocaleString()}</em>` : ""}</div>`;
+
+/* ------------------------------------------------------------ the bank */
+let bankN = 1;
+$("bankQty").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { bankN = b.dataset.n === "all" ? "all" : +b.dataset.n; $("bankQty").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); }));
+$("bankSearch").addEventListener("input", () => renderBank());
+$("depInv").addEventListener("click", () => send({ t: "bank", op: "depinv" }));
+$("depEq").addEventListener("click", () => send({ t: "bank", op: "depeq" }));
+function renderBank() {
+  if (!me) return;
+  const q = $("bankSearch").value.trim().toLowerCase(), bank = me.bank || [];
+  $("bankCount").textContent = `${bank.length}/${G.BANK_MAX} items`;
+  const shown = bank.map((s, i) => [s, i]).filter(([s]) => !q || ITEMS[s.k].name.toLowerCase().includes(q));
+  $("bankGrid").innerHTML = shown.length ? shown.map(([s, i]) => slotHtml(s, i, "data-b")).join("") : `<p class="note">${bank.length ? "Nothing matches." : "Your bank is empty. Click things in your bag to put them in."}</p>`;
+  $("bankBag").innerHTML = me.inv.map((s, i) => slotHtml(s, i)).join("") || `<p class="note">Your bag is empty.</p>`;
+  $("bankGrid").querySelectorAll("[data-b]").forEach((el) => el.addEventListener("click", () => send({ t: "bank", op: "wd", i: +el.dataset.b, n: bankN })));
+  $("bankBag").querySelectorAll("[data-i]").forEach((el) => el.addEventListener("click", () => send({ t: "bank", op: "dep", i: +el.dataset.i, n: bankN })));
+}
+
+/* ------------------------------------------------------------ the Exchange */
+let EX = { mine: [], book: {}, last: {} }, exTab = "mine", exDraft = { side: "sell", k: "", qty: 1, price: 1 };
+$("exWin").querySelectorAll("[data-ex]").forEach((b) => b.addEventListener("click", () => { exTab = b.dataset.ex; renderEx(); }));
+function renderEx() {
+  $("exWin").querySelectorAll("[data-ex]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.ex === exTab)));
+  const body = $("exBody"), name = (k) => `${ITEMS[k].icon} ${esc(ITEMS[k].name)}`;
+  if (exTab === "mine") {
+    const cards = EX.mine.map((o) => {
+      const pc = Math.round((o.done / o.qty) * 100), waiting = o.box.items || o.box.cash, state = o.open ? `<span class="tag2 ${o.side}">${o.side === "sell" ? "Selling" : "Buying"}</span>` : `<span class="tag2 done">${o.done >= o.qty ? "Finished" : "Cancelled"}</span>`;
+      return `<div class="offer"><div class="otop"><i>${ITEMS[o.k].icon}</i><span><b>${esc(ITEMS[o.k].name)}</b>${state}</span></div>
+        <div>${o.done.toLocaleString()} of ${o.qty.toLocaleString()} at ${G.fmtCash(o.price)} each</div><div class="bar"><i style="width:${pc}%"></i></div>
+        ${waiting ? `<div><b>Ready to collect:</b> ${o.box.items ? `${o.box.items.toLocaleString()} × ${esc(ITEMS[o.k].name)}` : ""}${o.box.items && o.box.cash ? " and " : ""}${o.box.cash ? G.fmtCash(o.box.cash) : ""}</div>` : ""}
+        <div class="row">${waiting ? `<button class="btn" data-collect="${o.id}">Collect</button>` : ""}${o.open ? `<button class="btn plain" data-cancel="${o.id}">Cancel</button>` : ""}</div></div>`;
+    });
+    for (let i = EX.mine.length; i < G.EX_SLOTS; i++) cards.push(`<button class="offer empty" data-newslot>+ New offer</button>`);
+    body.innerHTML = `<div class="offers">${cards.join("")}</div>`;
+    body.querySelectorAll("[data-collect]").forEach((b) => b.addEventListener("click", () => send({ t: "ex", op: "collect", id: +b.dataset.collect })));
+    body.querySelectorAll("[data-cancel]").forEach((b) => b.addEventListener("click", () => send({ t: "ex", op: "cancel", id: +b.dataset.cancel })));
+    body.querySelectorAll("[data-newslot]").forEach((b) => b.addEventListener("click", () => { exTab = "new"; renderEx(); }));
+  }
+  if (exTab === "browse") {
+    const keys = Object.keys(ITEMS).filter((k) => k !== "coins" && (EX.book[k] || EX.last[k]));
+    body.innerHTML = keys.length ? `<table class="tbl"><thead><tr><th>Item</th><th>Cheapest</th><th>For sale</th><th>Best bid</th><th>Wanted</th><th>Last sold</th></tr></thead><tbody>${keys.map((k) => {
+      const b = EX.book[k] || {}, l = EX.last[k];
+      return `<tr class="click" data-k="${k}"><td>${name(k)}</td><td>${b.sell != null ? G.fmtCash(b.sell) : "—"}</td><td>${b.sellQty ? b.sellQty.toLocaleString() : "—"}</td><td>${b.buy != null ? G.fmtCash(b.buy) : "—"}</td><td>${b.buyQty ? b.buyQty.toLocaleString() : "—"}</td><td>${l ? G.fmtCash(l.price) : "—"}</td></tr>`;
+    }).join("")}</tbody></table><p class="note">Click a row to make an offer on it.</p>` : `<p class="note">The board is empty. Be the first: place an offer.</p>`;
+    body.querySelectorAll("tr[data-k]").forEach((r) => r.addEventListener("click", () => {
+      const k = r.dataset.k, b = EX.book[k] || {}, mine = G.countItems(me, [k]);
+      exDraft = mine ? { side: "sell", k, qty: mine, price: b.buy || b.sell || EX.last[k]?.price || 1 } : { side: "buy", k, qty: 1, price: b.sell || EX.last[k]?.price || 1 };
+      exTab = "new"; renderEx();
+    }));
+  }
+  if (exTab === "new") {
+    const d = exDraft, sellable = [...new Set(me.inv.map((s) => s.k))].filter((k) => k !== "coins"), buyable = Object.keys(ITEMS).filter((k) => k !== "coins");
+    const list = d.side === "sell" ? sellable : buyable; if (!list.includes(d.k)) d.k = list[0] || "";
+    const b = EX.book[d.k] || {}, total = d.qty * d.price, tax = G.exTax(total);
+    body.innerHTML = `<div class="form">
+      <div class="qty" role="group" aria-label="Sell or buy"><button data-side="sell" aria-pressed="${d.side === "sell"}">Sell</button><button data-side="buy" aria-pressed="${d.side === "buy"}">Buy</button></div>
+      ${list.length ? `<label>Item<select id="exK">${list.map((k) => `<option value="${k}"${k === d.k ? " selected" : ""}>${ITEMS[k].icon} ${esc(ITEMS[k].name)}${d.side === "sell" ? ` (you have ${G.countItems(me, [k]).toLocaleString()})` : ""}</option>`).join("")}</select></label>
+      <label>How many<input id="exQty" type="number" min="1" value="${d.qty}"></label>
+      <label>Price each (Cash)<input id="exPrice" type="number" min="1" value="${d.price}"></label>
+      <div class="sum">Board now: cheapest ${b.sell != null ? G.fmtCash(b.sell) : "—"} · best bid ${b.buy != null ? G.fmtCash(b.buy) : "—"} · last sold ${EX.last[d.k] ? G.fmtCash(EX.last[d.k].price) : "—"}</div>
+      <div class="sum">${d.side === "sell" ? `You'd get up to <b>${G.fmtCash(total - tax)}</b> (${G.fmtCash(total)} less ${G.fmtCash(tax)} to the house). The items leave your bag now.` : `This puts <b>${G.fmtCash(total)}</b> on the board now (you have ${G.fmtCash(G.cashIn(me))}). If it fills cheaper, you get the difference back.`}</div>
+      <button class="btn" id="exPlace">${d.side === "sell" ? "Place sell offer" : "Place buy order"}</button>` : `<p class="note">You have nothing in your bag to sell. Bring things from the bank, or switch to Buy.</p>`}</div>`;
+    body.querySelectorAll("[data-side]").forEach((x) => x.addEventListener("click", () => { d.side = x.dataset.side; renderEx(); }));
+    const upd = () => { d.k = $("exK").value; d.qty = Math.max(1, +$("exQty").value | 0); d.price = Math.max(1, +$("exPrice").value | 0); };
+    if ($("exK")) {
+      $("exK").addEventListener("change", () => { upd(); renderEx(); });
+      for (const id of ["exQty", "exPrice"]) $(id).addEventListener("change", () => { upd(); renderEx(); });
+      $("exPlace").addEventListener("click", () => { upd(); send({ t: "ex", op: "place", side: d.side, k: d.k, qty: d.qty, price: d.price }); exTab = "mine"; renderEx(); });
+    }
+  }
+}
+
+/* ------------------------------------------------------------ trading face to face */
+let TR = null;
+function tradeReqLine(from, name) {
+  say(`${name} wants to trade with you. Click them, or accept in the chat.`, "good");
+  const log = $("chatLog"); log.querySelector(".empty")?.remove();
+  const p = document.createElement("p"); p.className = "sys"; p.textContent = `${name} wants to trade with you.`;
+  const b = document.createElement("button"); b.className = "act"; b.type = "button"; b.textContent = "Accept"; b.addEventListener("click", () => { send({ t: "trade", op: "req", to: from }); b.remove(); });
+  p.append(b); log.append(p); log.scrollTop = log.scrollHeight;
+  if (!chatOpen) { unread++; $("chatUnread").textContent = unread > 9 ? "9+" : String(unread); $("chatUnread").hidden = false; }
+}
+$("tradeX").addEventListener("click", () => send({ t: "trade", op: "decline" }));
+function offerHtml(off, clickable) {
+  const items = Object.entries(off.items).map(([k, n]) => `<div class="slot"${clickable ? ` data-rm="${k}"` : ""} title="${esc(ITEMS[k].name)}${clickable ? " — click to take back" : ""}">${ITEMS[k].icon}${n > 1 ? `<em>${n.toLocaleString()}</em>` : ""}</div>`).join("");
+  return `<div class="grid8">${items || '<p class="note">Nothing yet.</p>'}</div>${off.cash ? `<div class="cash">+ ${G.fmtCash(off.cash)}</div>` : ""}`;
+}
+function renderTrade() {
+  if (!TR || !me) return;
+  $("tradeTitle").textContent = `🤝 Trading with ${TR.themName}`;
+  const listOf = (off) => [...Object.entries(off.items).map(([k, n]) => `${n.toLocaleString()} × ${ITEMS[k].name}`), off.cash ? G.fmtCash(off.cash) : null].filter(Boolean).join(", ") || "nothing";
+  if (TR.stage === "offer") {
+    $("tradeBody").innerHTML = `<div class="trade-cols"><div><h4>Your offer</h4><div class="trade-box${TR.ok.you ? " ok" : ""}">${offerHtml(TR.you, true)}</div></div>
+      <div><h4>${esc(TR.themName)}'s offer</h4><div class="trade-box${TR.ok.them ? " ok" : ""}">${offerHtml(TR.them, false)}</div></div></div>
+      <h4 style="margin-top:12px">Your bag · click to offer (shift-click offers the whole stack)</h4><div class="grid8" id="tradeBag">${me.inv.filter((s) => s.k !== "coins").map((s) => slotHtml(s, s.k, "data-k")).join("")}</div>`;
+    $("tradeFoot").innerHTML = `<label class="note" style="padding:0">Cash to offer <input id="trCash" type="number" min="0" value="${TR.you.cash}" style="width:110px"></label><span class="note" style="padding:0">you have ${G.fmtCash(G.cashIn(me))}</span><span style="flex:1"></span>
+      <span class="note" style="padding:0">${TR.ok.them ? `${esc(TR.themName)} has accepted.` : TR.ok.you ? "Waiting for them…" : ""}</span><button class="btn" id="trOk"${TR.ok.you ? " disabled" : ""}>Accept</button><button class="btn danger" id="trNo">Decline</button>`;
+    $("tradeBody").querySelectorAll("[data-k]").forEach((el) => el.addEventListener("click", (e) => send({ t: "trade", op: "add", k: el.dataset.k, n: e.shiftKey ? "all" : 1 })));
+    $("tradeBody").querySelectorAll("[data-rm]").forEach((el) => el.addEventListener("click", () => send({ t: "trade", op: "remove", k: el.dataset.rm })));
+    $("trCash").addEventListener("change", () => send({ t: "trade", op: "cash", n: +$("trCash").value || 0 }));
+  } else {
+    $("tradeBody").innerHTML = `<div class="warn">Check this carefully. Nothing moves until you both accept this screen too.</div>
+      <div class="trade-cols" style="margin-top:10px"><div><h4>You give</h4><div class="trade-box${TR.ok.you ? " ok" : ""}"><b>${esc(listOf(TR.you))}</b></div></div><div><h4>You get</h4><div class="trade-box${TR.ok.them ? " ok" : ""}"><b>${esc(listOf(TR.them))}</b></div></div></div>`;
+    $("tradeFoot").innerHTML = `<span style="flex:1" class="note">${TR.ok.them ? `${esc(TR.themName)} has confirmed.` : TR.ok.you ? "Waiting for them…" : ""}</span><button class="btn" id="trOk"${TR.ok.you ? " disabled" : ""}>Confirm trade</button><button class="btn danger" id="trNo">Decline</button>`;
+  }
+  $("trOk").addEventListener("click", () => send({ t: "trade", op: "accept" }));
+  $("trNo").addEventListener("click", () => send({ t: "trade", op: "decline" }));
+}
+
+/* ------------------------------------------------------------ level ups: in the chat, a banner, and a little burst */
+const bursts = [];
+function levelUp(k, l) {
+  const s = SKILLS[k]; if (!s) return;
+  const log = $("chatLog"); log.querySelector(".empty")?.remove();
+  const p = document.createElement("p"); p.className = "loot"; p.textContent = `🎉 Level up! Your ${s.name} is now level ${l}.`; log.append(p); log.scrollTop = log.scrollHeight;
+  const b = $("lvlup"); b.innerHTML = `<small>Level up!</small><b>${s.icon} ${esc(s.name)} ${l}</b>`;
+  b.hidden = false; b.classList.remove("show"); void b.offsetWidth; b.classList.add("show");
+  clearTimeout(levelUp.t); levelUp.t = setTimeout(() => { b.hidden = true; }, 2600);
+  if (!set("reducedMotion")) bursts.push({ at: performance.now() });
+}
+
+/* ------------------------------------------------------------ the wiki: built from the game's own rules */
+let wikiRoute = null;
+const WIKI = (() => {
+  const areas = {}, sources = {}, npcs = {};
+  const addSrc = (k, s) => { (sources[k] ||= []).push(s); };
+  for (const key of Object.keys(SCENES)) {
+    const def = SCENES[key], b = G.buildScene(key), a = areas[key] = { key, def, mobs: {}, res: {}, buildings: [] };
+    for (const [t] of def.mobs) a.mobs[t] = (a.mobs[t] || 0) + 1;
+    for (const n of def.npcs) npcs[n.name] = { ...n, scene: key };
+    for (const o of b.objs) {
+      const lvl = o.req?.lvl || 1, where = { scene: key, obj: o.name, lvl };
+      if (o.t === "rock" || o.t === "vein") { addSrc(o.ore, { ...where, skill: "mining" }); a.res[o.name] = "mining"; }
+      if (o.t === "tree" || o.t === "oak" || o.t === "yew") { addSrc(o.log || "logs", { ...where, skill: "woodcutting" }); a.res[o.name] = "woodcutting"; }
+      if (o.t === "olive") { addSrc(o.crop || "olives", { ...where, skill: "farming" }); a.res[o.name] = "farming"; }
+      if (o.t === "wheat") { addSrc("wheat", { ...where, skill: "farming" }); a.res.Wheat = "farming"; }
+      if (o.t === "spot") { if (o.fish) addSrc(o.fish, { ...where, skill: "fishing" }); else { addSrc("sardine", { ...where, skill: "fishing" }); addSrc("trout", { ...where, skill: "fishing", lvl: 10 }); } a.res[o.special ? o.name : "Fishing spot"] = "fishing"; }
+      if (o.t === "house") a.buildings.push(o);
+    }
+  }
+  // one line per place a thing comes from (the same tree type appears many times in an area)
+  for (const k in sources) { const seen = new Set(); sources[k] = sources[k].filter((s) => { const id = `${s.scene}|${s.obj}|${s.lvl}`; if (seen.has(id)) return false; seen.add(id); return true; }); }
+  const drops = {};
+  for (const [t, m] of Object.entries(MOBS)) for (const [k, n, ch] of m.drops) (drops[k] ||= []).push({ mob: t, n, ch });
+  const inQuests = {};
+  for (const [qk, q] of Object.entries(QUESTS)) for (const k of q.goal.items || []) (inQuests[k] ||= []).push(qk);
+  return { areas, sources, npcs, drops, inQuests };
+})();
+const wl = (route, text) => `<a data-wiki="${esc(route)}">${text}</a>`;
+const areaLink = (k) => wl(`areas/${k}`, esc(SCENES[k].name));
+const qn = (n) => (Array.isArray(n) ? `${n[0]}–${n[1]}` : n);
+function wikiPages() {
+  const pages = [{ route: "home", title: "Home", icon: "🏠", group: "" }, { route: "updates", title: "Updates", icon: "📰", group: "" }];
+  for (const g of WK.GUIDES) pages.push({ route: `guides/${g.id}`, title: g.title, icon: g.icon, group: "Guides" });
+  for (const [k, s] of Object.entries(SKILLS)) pages.push({ route: `skills/${k}`, title: s.name, icon: s.icon, group: "Skills" });
+  for (const [k, q] of Object.entries(QUESTS)) pages.push({ route: `quests/${k}`, title: q.name, icon: q.icon, group: "Quests" });
+  for (const [k, m] of Object.entries(MOBS)) pages.push({ route: `monsters/${k}`, title: m.name, icon: "👹", group: "Monsters" });
+  for (const [k, d] of Object.entries(SCENES)) pages.push({ route: `areas/${k}`, title: d.name, icon: d.interior ? "🚪" : "🗺️", group: "Areas" });
+  for (const n of Object.keys(WIKI.npcs)) pages.push({ route: `npcs/${n}`, title: n, icon: "🧑", group: "People" });
+  for (const [k, it] of Object.entries(ITEMS)) pages.push({ route: `items/${k}`, title: it.name, icon: it.icon, group: "Items" });
+  return pages;
+}
+function wikiNav(active) {
+  const pages = wikiPages(), groups = ["Guides", "Skills", "Quests", "Monsters", "Areas", "People", "Items"];
+  $("wikiNav").innerHTML = `<input class="search" id="wikiSearch" placeholder="Search the wiki…" aria-label="Search the wiki">
+    <button data-wiki="home"${active === "home" ? ' aria-current="true"' : ""}>🏠 Home</button><button data-wiki="updates"${active === "updates" ? ' aria-current="true"' : ""}>📰 Updates</button><hr>
+    ${groups.map((g) => `<button data-wiki="list/${g}"${active === `list/${g}` ? ' aria-current="true"' : ""}>${{ Guides: "🧭", Skills: "📶", Quests: "📜", Monsters: "👹", Areas: "🗺️", People: "🧑", Items: "🎒" }[g]} ${g}</button>`).join("")}`;
+  $("wikiSearch").addEventListener("input", (e) => { const q = e.target.value.trim(); if (q) wikiGo(`search/${q}`, false); });
+}
+function wikiGo(route, setNav = true) {
+  wikiRoute = route;
+  if (setNav) wikiNav(route);
+  if (!location.hash.startsWith(`#wiki/${route}`)) history.replaceState(null, "", `#wiki/${route}`);
+  const [kind, ...rest] = route.split("/"), id = decodeURIComponent(rest.join("/")), page = $("wikiPage");
+  const cards = (list) => `<div class="cards">${list.map((p) => `<a class="card" data-wiki="${esc(p.route)}"><i>${p.icon}</i>${esc(p.title)}</a>`).join("")}</div>`;
+  let html = "";
+  if (kind === "home") html = `<h2><i>⚔️</i>EastScape Wiki</h2><p class="lede">Everything in the game, written from the game itself: every item, monster, drop, skill, quest and place on these pages comes from the same rules the server plays by.</p>
+    <h3>Start here</h3>${cards(wikiPages().filter((p) => p.group === "Guides"))}<h3>Browse</h3>${cards(["Skills", "Quests", "Monsters", "Areas", "People", "Items"].map((g) => ({ route: `list/${g}`, title: g, icon: { Skills: "📶", Quests: "📜", Monsters: "👹", Areas: "🗺️", People: "🧑", Items: "🎒" }[g] })))}
+    <h3>Latest update</h3>${wikiUpdate(WK.UPDATES[0])}`;
+  else if (kind === "updates") html = `<h2><i>📰</i>Updates</h2><p class="lede">Every change to the game, newest first.</p>${WK.UPDATES.map(wikiUpdate).join("")}`;
+  else if (kind === "list") html = `<h2><i>📚</i>${esc(id)}</h2>${cards(wikiPages().filter((p) => p.group === id))}`;
+  else if (kind === "search") { const q = id.toLowerCase(); const hits = wikiPages().filter((p) => p.title.toLowerCase().includes(q)); html = `<h2><i>🔎</i>“${esc(id)}”</h2>${hits.length ? cards(hits) : '<p class="lede">Nothing by that name.</p>'}`; }
+  else if (kind === "guides") { const g = WK.GUIDES.find((x) => x.id === id); html = g ? `<h2><i>${g.icon}</i>${esc(g.title)}</h2>${g.body}` : ""; }
+  else if (kind === "items" && ITEMS[id]) {
+    const it = ITEMS[id], src = WIKI.sources[id] || [], dr = WIKI.drops[id] || [], qs = WIKI.inQuests[id] || [];
+    const rewards = Object.entries(QUESTS).filter(([, q]) => (id === "coins" && q.reward.coins) || (q.reward.items || []).some(([k]) => k === id));
+    html = `<h2><i>${it.icon}</i>${esc(it.name)}</h2>${it.ex ? `<p class="lede">“${esc(it.ex)}”</p>` : ""}
+      ${it.slot ? `<h3>Equipment</h3><table class="tbl"><tr><th>Slot</th><th>Accuracy</th><th>Strength</th><th>Defence</th><th>Lets you</th></tr><tr><td>${it.slot}</td><td>+${it.acc || 0}</td><td>+${it.str || 0}</td><td>+${it.def || 0}</td><td>${it.tool ? `train ${wl(`skills/${it.tool}`, SKILLS[it.tool].name)}` : "—"}</td></tr></table>` : ""}
+      ${src.length ? `<h3>Gathered from</h3><table class="tbl"><tr><th>What</th><th>Where</th><th>Skill</th><th>Level</th></tr>${src.map((s) => `<tr><td>${esc(s.obj)}</td><td>${areaLink(s.scene)}</td><td>${wl(`skills/${s.skill}`, SKILLS[s.skill].name)}</td><td>${s.lvl}</td></tr>`).join("")}</table>` : ""}
+      ${dr.length ? `<h3>Dropped by</h3><table class="tbl"><tr><th>Monster</th><th>How many</th><th>Chance</th></tr>${dr.map((d) => `<tr><td>${wl(`monsters/${d.mob}`, esc(MOBS[d.mob].name))}</td><td>${qn(d.n)}</td><td>${d.ch == null ? "Always" : `${Math.round(d.ch * 100)}%`}</td></tr>`).join("")}</table>` : ""}
+      ${rewards.length ? `<h3>Quest rewards</h3><p>${rewards.map(([k, q]) => wl(`quests/${k}`, esc(q.name))).join(", ")}</p>` : ""}
+      ${qs.length ? `<h3>Wanted for</h3><p>${qs.map((k) => wl(`quests/${k}`, esc(QUESTS[k].name))).join(", ")}</p>` : ""}
+      ${EX.last[id] ? `<h3>On the Exchange</h3><p>Last sold for ${G.fmtCash(EX.last[id].price)}.</p>` : ""}`;
+  }
+  else if (kind === "monsters" && MOBS[id]) {
+    const m = MOBS[id], where = Object.values(WIKI.areas).filter((a) => a.mobs[id]);
+    html = `<h2><i>👹</i>${esc(m.name)}</h2><p class="lede">Level ${m.lvl}.</p>
+      <table class="tbl"><tr><th>Hitpoints</th><th>Attack</th><th>Defence</th><th>Max hit</th><th>Attacks every</th></tr><tr><td>${m.hp}</td><td>${m.att}</td><td>${m.def}</td><td>${m.max}</td><td>${(m.speed / 1000).toFixed(1)}s</td></tr></table>
+      <h3>Found in</h3><p>${where.map((a) => `${areaLink(a.key)} (${a.mobs[id]})`).join(", ") || "Nowhere yet."}</p>
+      <h3>Drops</h3><table class="tbl"><tr><th>Item</th><th>How many</th><th>Chance</th></tr>${m.drops.map(([k, n, ch]) => `<tr><td>${wl(`items/${k}`, `${ITEMS[k].icon} ${esc(ITEMS[k].name)}`)}</td><td>${qn(n)}</td><td>${ch == null ? "Always" : `${Math.round(ch * 100)}%`}</td></tr>`).join("")}</table>`;
+  }
+  else if (kind === "skills" && SKILLS[id]) {
+    const s = SKILLS[id], rows = [];
+    for (const [k, list] of Object.entries(WIKI.sources)) for (const src of list) if (src.skill === id) rows.push({ k, ...src });
+    rows.sort((a, b) => a.lvl - b.lvl);
+    html = `<h2><i>${s.icon}</i>${esc(s.name)}</h2><p class="lede">${esc(WK.SKILL_GUIDE[id] || "")}</p>
+      ${rows.length ? `<h3>What you can train on</h3><table class="tbl"><tr><th>Level</th><th>What</th><th>Gives</th><th>Where</th></tr>${rows.map((r) => `<tr><td>${r.lvl}</td><td>${esc(r.obj)}</td><td>${wl(`items/${r.k}`, `${ITEMS[r.k].icon} ${esc(ITEMS[r.k].name)}`)}</td><td>${areaLink(r.scene)}</td></tr>`).join("")}</table>` : ""}
+      ${Object.values(ITEMS).some((it) => it.tool === id) ? `<h3>Tool</h3><p>${Object.entries(ITEMS).filter(([, it]) => it.tool === id).map(([k, it]) => wl(`items/${k}`, `${it.icon} ${esc(it.name)}`)).join(", ")}: hold it in your weapon hand.</p>` : ""}
+      <h3>Levels</h3><p>Levels go from 1 to 99 on the classic curve: level 10 is ${XP_AT[10].toLocaleString()} xp, level 50 is ${XP_AT[50].toLocaleString()}, level 99 is ${XP_AT[99].toLocaleString()}.</p>`;
+  }
+  else if (kind === "quests" && QUESTS[id]) {
+    const q = QUESTS[id], n = WIKI.npcs[q.giver], st = me ? G.qState(me, id) : null;
+    html = `<h2><i>${q.icon}</i>${esc(q.name)}</h2><p class="lede">${esc(q.brief)}</p>
+      <table class="tbl"><tr><th>Given by</th><td>${wl(`npcs/${q.giver}`, esc(q.giver))}${n ? ` in ${areaLink(n.scene)}` : ""}</td></tr>
+      <tr><th>Needs</th><td>${(q.requires || []).map((r) => wl(`quests/${r}`, esc(QUESTS[r].name))).join(", ") || "Nothing"}</td></tr>
+      <tr><th>Task</th><td>${q.goal.type === "bring" ? `Bring ${q.goal.n} ${q.goal.items.map((k) => wl(`items/${k}`, esc(ITEMS[k].name.toLowerCase()))).join(" or ")}` : `Defeat ${q.goal.n} ${wl(`monsters/${q.goal.mob}`, esc(MOBS[q.goal.mob].name.toLowerCase()))}s`}</td></tr>
+      <tr><th>Reward</th><td>${esc(q.reward.text)}</td></tr>${st ? `<tr><th>You</th><td>${{ new: "Not started", active: "In progress", ready: "Ready to hand in", done: "Done ✓", locked: "Locked" }[st]}</td></tr>` : ""}</table>`;
+  }
+  else if (kind === "areas" && SCENES[id]) {
+    const a = WIKI.areas[id], d = a.def, ex = d.interior ? [d.exitTo.scene] : Object.values(d.exits || {});
+    html = `<h2><i>${d.interior ? "🚪" : "🗺️"}</i>${esc(d.name)}</h2>
+      <h3>Leads to</h3><p>${ex.map(areaLink).join(", ")}${a.buildings.filter((b) => b.enter).map((b) => `, ${areaLink(b.enter)} (door)`).join("")}</p>
+      ${Object.keys(a.mobs).length ? `<h3>Monsters</h3><p>${Object.entries(a.mobs).map(([t, n]) => `${wl(`monsters/${t}`, esc(MOBS[t].name))} (${n})`).join(", ")}</p>` : `<h3>Monsters</h3><p>None: it's safe here.</p>`}
+      ${d.npcs.length ? `<h3>People</h3><p>${d.npcs.map((n) => wl(`npcs/${n.name}`, esc(n.name))).join(", ")}</p>` : ""}
+      ${Object.keys(a.res).length ? `<h3>Resources</h3><p>${Object.entries(a.res).map(([n, sk]) => `${esc(n)} (${wl(`skills/${sk}`, SKILLS[sk].name)})`).join(", ")}</p>` : ""}`;
+  }
+  else if (kind === "npcs" && WIKI.npcs[id]) {
+    const n = WIKI.npcs[id], qs = n.quests || [];
+    html = `<h2><i>🧑</i>${esc(id)}</h2><p class="lede">Found in ${areaLink(n.scene)}.${n.opens ? ` Runs the ${n.opens === "bank" ? "bank" : "Exchange"}.` : ""}</p>
+      ${qs.length ? `<h3>Quests</h3><p>${qs.map((k) => wl(`quests/${k}`, esc(QUESTS[k].name))).join(", ")}</p>` : ""}
+      <h3>Says</h3><ul>${n.lines.map((l) => `<li>“${esc(l)}”</li>`).join("")}</ul>`;
+  }
+  page.innerHTML = html || `<h2><i>❓</i>Not found</h2><p class="lede">There's no page here yet.</p>`;
+  page.scrollTop = 0;
+}
+function wikiUpdate(u) { return `<div class="up"><small>${u.date}</small><h3 style="margin:2px 0 4px">${esc(u.title)}</h3><ul>${u.items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul></div>`; }
+$("wikiWin").addEventListener("click", (e) => { const a = e.target.closest("[data-wiki]"); if (a) { e.preventDefault(); wikiGo(a.dataset.wiki); } });
+$("wikiBtn").addEventListener("click", () => { if ($("wikiWin").hidden) openWin("wikiWin"); else $("wikiWin").hidden = true; });
+// a shared link straight to a page: /eastscape#wiki/items/logs
+if (location.hash.startsWith("#wiki")) { wikiRoute = decodeURIComponent(location.hash.slice(6)) || "home"; setTimeout(() => openWin("wikiWin"), 0); }
+
+/* ------------------------------------------------------------ right-click anything to see what it is */
+// what a resource needs and gives, read from the same rules the server uses
+function resourceInfo(ob) {
+  const lv = ob.req?.lvl || 1, rows = [];
+  if (ob.t === "tree" || ob.t === "oak" || ob.t === "yew") rows.push({ skill: "woodcutting", lvl: lv, gives: ob.log || "logs", xp: ob.xp || 25, note: ob.t === "oak" || ob.special ? "Rarely falls." : "Falls now and then; grows back in 15s." });
+  if (ob.t === "rock") rows.push({ skill: "mining", lvl: lv, gives: ob.ore, xp: ob.xp || (ob.ore === "tin" ? 18 : 17), note: `One ore, then empty for ${ob.special ? 30 : 8}s.` });
+  if (ob.t === "vein") rows.push({ skill: "mining", lvl: lv, gives: ob.ore, xp: 9, note: "Slow, but never runs dry." });
+  if (ob.t === "olive") rows.push({ skill: "farming", lvl: lv, gives: ob.crop || "olives", xp: ob.xp || 6, note: `${ob.picks || 4} picks, then bare for 20s.` });
+  if (ob.t === "wheat") rows.push({ skill: "farming", lvl: 1, gives: "wheat", xp: 8, note: "Grows back in 20s." });
+  if (ob.t === "spot") { if (ob.fish) rows.push({ skill: "fishing", lvl: lv, gives: ob.fish, xp: ob.xp, note: "Fish from the bank, two tiles away." }); else { rows.push({ skill: "fishing", lvl: 1, gives: "sardine", xp: 20 }); rows.push({ skill: "fishing", lvl: 10, gives: "trout", xp: 50, note: "Fish from the bank, two tiles away." }); } }
+  return rows;
+}
+function showInfo(t, cx, cy) {
+  const box = $("info"); let html = "", wiki = null;
+  if (t.kind === "mob") {
+    const m = Z.mobs.find((x) => x.id === t.id), d = MOBS[m?.t]; if (!d) return;
+    wiki = `monsters/${m.t}`;
+    html = `<h5>👹 ${esc(d.name)}</h5><div class="sub">Level ${d.lvl} monster</div>
+      <dl><dt>Hitpoints</dt><dd>${m.hp}/${d.hp}</dd><dt>Max hit</dt><dd>${d.max}</dd><dt>Attack / defence</dt><dd>${d.att} / ${d.def}</dd><dt>Attacks every</dt><dd>${(d.speed / 1000).toFixed(1)}s</dd></dl>
+      <b>Drops</b><ul>${d.drops.map(([k, n, ch]) => `<li>${ITEMS[k].icon} ${esc(ITEMS[k].name)}${Array.isArray(n) ? ` ×${n[0]}–${n[1]}` : n > 1 ? ` ×${n}` : ""} · ${ch == null ? "always" : `${Math.round(ch * 100)}%`}</li>`).join("")}</ul>`;
+  } else if (t.ob) {
+    const rows = resourceInfo(t.ob), ex = G.EXAMINE[KIND_OF[t.ob.t]] || null;
+    if (!rows.length && !ex) return;
+    const r0 = rows[0];
+    if (r0) wiki = `skills/${r0.skill}`;
+    html = `<h5>${r0 ? ITEMS[r0.gives].icon : "🔍"} ${esc(t.ob.t === "spot" && !t.ob.special ? "Fishing spot" : t.ob.name)}</h5>
+      ${rows.map((r) => { const have = lvl(r.skill), ok = have >= r.lvl; return `<div class="sub">${SKILLS[r.skill].icon} ${SKILLS[r.skill].name} <span class="${ok ? "ok" : "low"}">level ${r.lvl}</span>${ok ? "" : ` · you're ${have}`}</div>
+        <dl><dt>Gives</dt><dd>${ITEMS[r.gives].icon} ${esc(ITEMS[r.gives].name)}</dd><dt>XP each</dt><dd>${r.xp}</dd>${G.TOOL_OF[r.skill] ? `<dt>Needs</dt><dd>${ITEMS[G.TOOL_OF[r.skill]].icon} ${esc(ITEMS[G.TOOL_OF[r.skill]].name)} in hand</dd>` : ""}</dl>${r.note ? `<div class="sub" style="font-weight:600">${esc(r.note)}</div>` : ""}`; }).join("")}
+      ${t.ob.tease ? `<div class="ex">${esc(t.ob.tease)}</div>` : ex ? `<div class="ex">${esc(ex[0])}</div>` : ""}`;
+    if (r0) wiki = `items/${r0.gives}`;
+  } else if (t.kind === "npc") {
+    const n = Z.npcs.find((x) => x.id === t.id); if (!n) return; wiki = `npcs/${n.name}`;
+    html = `<h5>🧑 ${esc(n.name)}</h5><div class="sub">${n.opens ? `Runs the ${n.opens === "bank" ? "bank" : "Exchange"}` : (n.quests?.length ? "Has quests" : "Local")}</div>`;
+  } else return;
+  box.innerHTML = html + (wiki ? `<span class="more" data-more="${esc(wiki)}">More in the wiki →</span>` : "");
+  const game = cv.getBoundingClientRect(); box.hidden = false;
+  const x = Math.min(cx + 12, game.width - box.offsetWidth - 8), y = Math.min(cy + 12, game.height - box.offsetHeight - 8);
+  box.style.left = `${Math.max(8, x)}px`; box.style.top = `${Math.max(8, y)}px`;
+  box.querySelector("[data-more]")?.addEventListener("click", (e) => { box.hidden = true; wikiRoute = e.target.dataset.more; openWin("wikiWin"); });
+}
+cv.addEventListener("contextmenu", (e) => {
+  e.preventDefault(); if (!Z.g) return;
+  const w = toWorld(e), t = thingAt(w.x, w.y), r = cv.getBoundingClientRect();
+  if (t) showInfo(t, e.clientX - r.left, e.clientY - r.top); else $("info").hidden = true;
+});
+cv.addEventListener("pointerdown", (e) => { if (e.button === 0) $("info").hidden = true; }, true);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("info").hidden = true; });
+
 /* ------------------------------------------------------------ the character panel */
 let tab = "inv";
 const syncTabs = () => document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.tab === tab)));
@@ -980,7 +1465,7 @@ function renderStats() {
   if (!me) return;
   $("stats").innerHTML = [
     ["❤️", `${Math.max(0, me.hp)}/${maxHp()}${me.god ? " ⭐" : ""}`, "Hitpoints"], ["⚔️", G.combatOf(me), "Combat level"],
-    ["⭐", total(), "Total level"], ["🪙", (me.inv.find((x) => x.k === "coins")?.n || 0).toLocaleString(), "Denarii"],
+    ["⭐", total(), "Total level"], ["💵", G.cashIn(me).toLocaleString(), "Cash"],
     ["🎒", `${me.inv.length}/${G.INV_MAX}`, "Inventory"], ["🏛️", Z.key ? SCENES[Z.key].name.replace(/^The /, "").split(" ")[0] : "", "Area"]
   ].map(([i, v, t]) => `<div class="stat" title="${t}"><i>${i}</i><b>${v}</b></div>`).join("");
 }
@@ -996,7 +1481,7 @@ function renderPanel() {
     p.querySelectorAll(".slot[data-i]").forEach((el) => el.addEventListener("click", (e) => {
       const i = +el.dataset.i, s = me.inv[i]; if (!s) return;
       if (e.shiftKey) {
-        if (s.k === "coins") return say("You'd rather not drop your denarii.");
+        if (s.k === "coins") return say("You'd rather not drop your Cash.");
         if (set("confirmDrop")) return popup("Drop it?", `Drop ${s.n > 1 ? `${s.n.toLocaleString()} × ` : "the "}${ITEMS[s.k].name.toLowerCase()}? It's gone for good.`, ITEMS[s.k].icon, [["Drop it", () => send({ t: "drop", i })], ["Keep it", null]]);
         return send({ t: "drop", i });
       }
@@ -1104,7 +1589,7 @@ function renderAdmin(p) {
   }));
 }
 document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => { tab = b.dataset.tab; syncTabs(); renderPanel(); }));
-window.__es = { get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED };
+window.__es = { get EX() { return EX; }, get TR() { return TR; }, wikiGo, get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED };
 
 setInterval(() => {
   const d = new Date(); $("clock").textContent = d.toTimeString().slice(0, 8);
