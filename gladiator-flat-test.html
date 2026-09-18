@@ -43,6 +43,15 @@ button{font:inherit}
 .dlg-opts button:hover,.dlg-opts button:focus-visible{background:#fff3c8;border-color:#8a7a5a;outline:none}
 .dlg-opts button span{color:#7a2a1a;margin-right:4px}
 .dlg-x{position:absolute;top:4px;right:6px;border:0;background:none;font-size:20px;line-height:1;cursor:pointer;color:#6a5a40}
+.pop{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.45);z-index:8}
+.pop[hidden]{display:none}
+.pop-card{width:min(380px,calc(100% - 32px));padding:18px 20px 16px;background:var(--panel);color:var(--panel-ink);border:3px solid var(--frame);border-radius:8px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.6)}
+.pop-ico{font-size:34px;line-height:1}
+.pop-card b{display:block;font-size:19px;margin:6px 0 4px;color:#7a2a1a}
+.pop-card p{margin:0 0 14px;font-size:15px;line-height:1.4}
+.pop-btns{display:flex;gap:8px;justify-content:center}
+.pop-btns button{font:inherit;font-weight:800;font-size:14px;padding:7px 22px;border:2px solid #000;border-radius:4px;background:linear-gradient(#f39ab5,#d9738f);color:#fff;cursor:pointer}
+.pop-btns button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .qdone{position:absolute;left:50%;top:84px;transform:translateX(-50%);text-align:center;padding:12px 28px;background:linear-gradient(#3a2a14,#1e160c);border:3px solid #e8bf35;border-radius:8px;color:#fff;box-shadow:0 0 30px rgba(232,191,53,.45);z-index:6;pointer-events:none}
 .qdone[hidden]{display:none}
 .qdone small{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#e8bf35;font-weight:800}
@@ -137,6 +146,9 @@ button{font:inherit}
       <button type="button" class="dlg-x" id="dlgX" aria-label="Close">×</button>
     </div>
     <div class="qdone" id="qdone" hidden></div>
+    <div class="pop" id="pop" role="alertdialog" aria-modal="true" aria-labelledby="popTitle" hidden>
+      <div class="pop-card"><div class="pop-ico" id="popIco"></div><b id="popTitle"></b><p id="popText"></p><div class="pop-btns" id="popBtns"></div></div>
+    </div>
   </section>
   <aside class="side" aria-label="Character">
     <div class="stats" id="stats"></div>
@@ -364,7 +376,9 @@ button{font:inherit}
         block(g, house.x, house.y, house.w, house.h);
         objs.push({ t: "well", x: 9, y: 2, name: "Well" }); g[3][9] = "#"; g[3][10] = "#";
         objs.push({ t: "pond", x: 11, y: 1, w: 3, h: 2 }); for (let y = 1; y < 3; y++) for (let x = 11; x < 14; x++) g[y][x] = "~";
-        objs.push({ t: "hay", x: 8, y: 4 }, { t: "hay", x: 9, y: 4 }); g[4][8] = "#"; g[4][9] = "#";
+        objs.push({ t: "hay", x: 7, y: 4 }); g[4][7] = "#";
+        // the way down to the Wilderness (PvP): a pit with a rope, right on the farm path
+        objs.push({ t: "hole", x: 11, y: 9, name: "Wilderness pit" }); g[9][11] = "#";
         for (let y = 6; y < 9; y++) for (const x of [2, 3]) { objs.push({ t: "wheat", x, y, name: "Wheat", grownAt: 0 }); g[y][x] = "#"; }
         for (const [x, y] of [[20, 2], [19, 11], [14, 11]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
         // an oak by the path: Bom Trady's firewood
@@ -466,6 +480,7 @@ button{font:inherit}
   const shore = (x, y) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (Z.g[y + dy]?.[x + dx] === "~") return true; return false; };
   // "b" is a bank: a tile the water reaches into. Nobody stands on water or on a bank. Something that
   // swims (a boss, a river spirit, a ferryman, later) passes swim = true to walk both.
+  const occupied = (x, y, self) => [...Z.mobs.filter((m) => !m.dead), ...Z.npcs, ...Z.bots, P].some((o) => o !== self && ((o.x === x && o.y === y) || (o.step && o.step.tx === x && o.step.ty === y)));
   const walkable = (x, y, swim = false) => x >= 0 && y >= 0 && x < COLS && y < ROWS && (swim ? ".,sepb~" : ".,sep").includes(Z.g[y][x]);
   const P = { x: S.x, y: S.y, px: S.x, py: S.y, path: [], step: null, face: 1, act: null, lastSwing: 0, hurtAt: 0, swingAt: 0 };
   function loadScene(key, fromSide) {
@@ -475,7 +490,7 @@ button{font:inherit}
     Z.bg = paintBg();
     Z.mobs = sc.mobs.map(([t, x, y], i) => ({ id: `${key}${i}`, t, x, y, px: x, py: y, hx: x, hy: y, hp: MOBS[t].hp, path: [], step: null, face: Math.random() < .5 ? 1 : -1, nextWander: 0, dead: false, respawnAt: 0, hurtAt: 0, swingAt: 0, lastSwing: 0 }));
     Z.npcs = sc.npcs.map((n, i) => ({ ...n, id: `${key}n${i}`, hx: n.x, hy: n.y, px: n.x, py: n.y, path: [], step: null, face: -1, nextWander: 0, bubble: null }));
-    Z.bots = sc.bots.map((b, i) => { let x, y; do { x = rint(3, COLS - 4); y = rint(3, ROWS - 4); } while (!walkable(x, y)); return { ...b, id: `${key}b${i}`, x, y, path: [], step: null, face: 1, nextWander: 0 }; });
+    Z.bots = sc.bots.map((b, i) => { let x, y; do { x = rint(3, COLS - 4); y = rint(3, ROWS - 4); } while (!walkable(x, y) || [...Z.mobs, ...Z.npcs].some((o) => o.x === x && o.y === y)); return { ...b, id: `${key}b${i}`, x, y, path: [], step: null, face: 1, nextWander: 0 }; });
     Z.bots.forEach((b) => { b.px = b.x; b.py = b.y; b.hue = b.level > 50 ? 150 : 0; });
     // you come in on the side you walked towards: leave the farm north, arrive at the Forum's south gate
     if (fromSide) {
@@ -710,6 +725,8 @@ button{font:inherit}
     if (n) {
       const dx = n.x - e.x, dy = n.y - e.y;
       if (!canStep(e.x, e.y, dx, dy)) { e.path = []; return false; }
+      // everyone but you waits rather than stepping onto someone (or where someone is stepping to)
+      if (e !== P && occupied(n.x, n.y, e)) { e.path = []; return false; }
       e.step = { fx: e.x, fy: e.y, tx: n.x, ty: n.y, t0: now, ms: dx && dy ? STEP * 1.4 : STEP };
       if (dx) e.face = dx > 0 ? 1 : -1;
       e.dir = DIRS[`${dx},${dy}`];
@@ -755,6 +772,11 @@ button{font:inherit}
     if (!inReach(P, a, reachOf(a.kind))) { P.act = null; return; }
     if (a.kind === "npc") { const n = Z.npcs.find((x) => x.id === a.id); if (n) { n.face = P.x > n.x ? 1 : -1; n.turned = P.x !== n.x; n.talking = true; talkTo(n); } P.act = null; return; }
     if (a.kind === "door") { say(`The ${a.name.toLowerCase()} door is shut. Houses you can walk into come next: they're their own scenes.`, "sys"); P.act = null; return; }
+    if (a.kind === "hole") {
+      P.face = a.x > P.x ? 1 : a.x < P.x ? -1 : P.face; P.act = null;
+      if (lvl(WILD_REQ.skill) < WILD_REQ.lvl) return popup("The Wilderness", `You need level ${WILD_REQ.lvl} in ${SKILLS[WILD_REQ.skill].name} to enter the Wilderness.`, "☠️", [["Okay", null]]);
+      return popup("The Wilderness", "Down there, other players can attack you. It isn't open yet. It will be soon.", "☠️", [["Okay", null]]);
+    }
     if (a.kind === "well") { say("You look down the well. Something glints at the bottom, but it's too far down.", "sys"); P.act = null; return; }
     const faceIt = () => { P.dir = DIRS[`${Math.sign(a.x - P.x)},${Math.sign(a.y - P.y)}`] || P.dir; P.face = a.x > P.x ? 1 : a.x < P.x ? -1 : P.face; };
     // anything with a level requirement says so, and what it is, and stops you there
@@ -876,12 +898,15 @@ button{font:inherit}
     S.hp = maxHp(); P.act = null; loadScene("farm"); Object.assign(P, { x: 4, y: 6, px: 4, py: 6, path: [], step: null });
     save(); renderPanel();
   }
+  // what it takes to climb down into the Wilderness (PvP). Change it here.
+  const WILD_REQ = { skill: "melee", lvl: 10 };
   const EXAMINE = {
     notice: ["NOTICE: Lost, one (1) sense of smell. If found, return to Waldy.", "NOTICE: The Forge buys ore. The Forge always buys ore.", "NOTICE: Do NOT feed the olives.", "NOTICE: Wanted: goat, wears a toga, answers to 'Senator'. Do not debate him."],
     sign: ["Via Appia → Closed: bandits. (Coming soon.)"],
     hive: ["The bees are humming the same four notes. Over and over.", "One bee is wearing a tiny helmet. It salutes you."],
     statue: ["'GALLUS THE BRAVE. He did not flinch.' It's a chicken."],
     fountain: ["The water tastes faintly of denarii."],
+    hole: ["A pit with a rope down into the dark. The sign says WILDERNESS. Someone has added 'NO REFUNDS'."],
     fire: ["A campfire. Cooking comes soon; for now it's just warm."],
     bush: ["A bush. Something inside it is breathing.", "Just a bush. Probably.", "A bush. It rustles when you aren't looking."],
     boulder: ["A big rock. Too big for your pickaxe. For now.", "Someone has scratched 'CRIXUS WAS HERE' into it."]
@@ -973,6 +998,13 @@ button{font:inherit}
   }
 
   /* ------------------------------------------------------------ dialogue: a box with a face, some words and numbered options */
+  function popup(title, text, icon, buttons) {
+    $("popIco").textContent = icon || ""; $("popTitle").textContent = title; $("popText").textContent = text;
+    $("popBtns").innerHTML = buttons.map(([l], i) => `<button type="button" data-i="${i}">${l}</button>`).join("");
+    $("popBtns").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { $("pop").hidden = true; const f = buttons[+b.dataset.i][1]; if (f) f(); }));
+    $("pop").hidden = false; $("popBtns").querySelector("button")?.focus();
+  }
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("pop").hidden) $("pop").hidden = true; });
   let DLG = null;
   function closeTalk() { DLG = null; $("dlg").hidden = true; }
   // text can be a list of pages; every page but the last gets a Continue
@@ -1030,7 +1062,7 @@ button{font:inherit}
     const s = Math.min(w / W, (h) / H); view = { s, ox: Math.round((w - W * s) / 2), oy: Math.round((h - H * s) / 2) };
     return { w, h };
   }
-  const VERB = { mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
+  const VERB = { hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
   const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
   function thingAt(wx, wy) {
     const near = (px_, py_, rx, ry) => Math.abs(wx - px_) <= rx && wy <= py_ + 4 && wy >= py_ - ry;
@@ -1048,6 +1080,7 @@ button{font:inherit}
         const ow = ob.t === "shrine" || ob.t === "fountain" ? 2 : 1, oh = ob.t === "fountain" ? 2 : 1;
         if (tx >= ob.x && tx < ob.x + ow && ty >= ob.y - 1 && ty < ob.y + oh) return { kind: ob.t, ob, x: Math.min(tx, ob.x + ow - 1), y: Math.max(ob.y, Math.min(ty, ob.y + oh - 1)), name: ob.name };
       }
+      if (ob.t === "hole" && ob.x === tx && (ty === ob.y || ty === ob.y - 1)) return { kind: "hole", ob, x: ob.x, y: ob.y, name: ob.name };
       if (ob.t === "well" && tx >= ob.x && tx <= ob.x + 1 && ty >= ob.y && ty <= ob.y + 1) return { kind: "well", x: ob.x, y: ob.y + 1, name: "Well" };
       if (ob.t === "house" && Math.abs(tx - ob.door.x) <= 0 && Math.abs(ty - ob.door.y) <= 1 && ty <= ob.door.y) return { kind: "door", x: ob.door.x, y: ob.door.y, name: ob.name };
     }
@@ -1161,6 +1194,18 @@ button{font:inherit}
         px(X + 2, Y + 11, 12, 3, "#5a3418"); px(X + 4, Y + 9, 8, 2, "#6b4423");
         for (let i = 0; i < 5; i++) { const fl = Math.round(Math.sin(now / 90 + i * 1.7) * 2), c = Math.abs(i - 2); px(X + 3 + i * 2, Y + 2 + c - fl, 2, 8 - c + fl, i % 2 ? "#ffb030" : "#ff6a1a"); }
         px(X + 7, Y + 5, 2, 4, "#fff0a0");
+      } });
+      if (ob.t === "hole") sprites.push({ y: ob.y * T + 14, draw: () => {
+        const X = ob.x * T, Y = ob.y * T;
+        px(X - 1, Y + 4, 18, 11, "#6a4a2a"); px(X, Y + 5, 16, 9, "#3a2616"); px(X + 1, Y + 6, 14, 7, "#120c08"); px(X + 3, Y + 7, 10, 5, "#050302");
+        px(X - 2, Y + 8, 2, 4, "#8a6a42"); px(X + 16, Y + 7, 2, 5, "#8a6a42"); px(X + 2, Y + 3, 5, 2, "#8a6a42");
+        // the stake and the rope going over the edge
+        px(X + 13, Y - 3, 2, 9, "#5a3a1e"); px(X + 12, Y - 3, 4, 1, "#7a5a32");
+        px(X + 11, Y, 3, 1, "#d8c08a"); px(X + 10, Y + 1, 1, 6, "#d8c08a"); px(X + 9, Y + 7, 1, 5, "#c8b07a");
+        // the sign
+        px(X - 1, Y - 6, 2, 10, "#5a3a1e"); px(X - 5, Y - 9, 10, 6, "#8a5a32"); px(X - 4, Y - 8, 8, 4, "#c8a870"); px(X - 2, Y - 7, 1, 2, "#8a1a1a"); px(X + 1, Y - 7, 1, 2, "#8a1a1a"); px(X - 2, Y - 5, 4, 1, "#8a1a1a");
+        // something breathing down there
+        if (Math.floor(now / 3000) % 4 === 0) { px(X + 5, Y + 9, 1, 1, "#ff4a2a"); px(X + 9, Y + 9, 1, 1, "#ff4a2a"); }
       } });
       if (ob.t === "hay" && IMG.hay) sprites.push({ y: ob.y * T + 12, draw: () => spr("hay", ob.x * T + 8, ob.y * T + 14) });
       if (ob.t === "wheat") sprites.push({ y: ob.y * T + 15, draw: () => {
