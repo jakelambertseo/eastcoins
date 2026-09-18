@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Gladiator — Flat MMO mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<!-- A MOCKUP: a flat, scene-based mini MMO with the Gladiator character.
+     Nothing is on a server; the other players are simulated. Saved in this
+     browser only. -->
+<style>
+:root{--ink:#e8e0cc;--muted:#9a917e;--gold:#f2c94c;--panel:#f3e7cc;--panel-ink:#2a2016;--frame:#1a1410;--bar:#0b0908;--link-a:#7ee07e;--link-b:#e0e0e0}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#000;color:var(--ink);font-family:"Pixelify Sans",ui-monospace,monospace;overflow:hidden}
+button{font:inherit}
+.top{height:32px;display:flex;align-items:center;gap:26px;padding:0 12px;background:var(--bar);border-bottom:2px solid #2a2118;font-size:15px;white-space:nowrap;overflow:hidden}
+.top .logo{font-weight:700;color:#7ee07e;font-size:18px}
+.top .me{color:#fff}
+.top .clock{color:#fff;font-variant-numeric:tabular-nums}
+.top a{color:var(--link-a);text-decoration:none}
+.top a.w{color:var(--link-b)}
+.top .online{color:#ffd23f}
+.top .spacer{flex:1}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;height:calc(100vh - 32px)}
+@media (max-width:820px){.wrap{grid-template-columns:minmax(0,1fr);grid-template-rows:60vh auto;overflow:auto;height:auto}html,body{overflow:auto}}
+.game{position:relative;background:#000;overflow:hidden;min-height:320px}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated;cursor:pointer;touch-action:none}
+.dbg{position:absolute;left:10px;top:8px;color:#ffe45c;font-size:13px;line-height:1.35;text-shadow:1px 1px 0 #000,0 0 3px #000;pointer-events:none;white-space:pre}
+.chat{position:absolute;left:0;bottom:0;width:min(620px,70%);height:190px;display:flex;flex-direction:column;background:rgba(20,16,12,.72);border-top:2px solid rgba(0,0,0,.6);border-right:2px solid rgba(0,0,0,.6)}
+.log{flex:1;overflow-y:auto;padding:6px 10px;font-size:14px;line-height:1.35;scrollbar-width:thin}
+.log p{margin:0}
+.log .sys{color:#c9c2b0}
+.log .good{color:#7ee07e}
+.log .loot{color:#ffd23f}
+.log .bad{color:#ff7a6a}
+.log .say b{color:#9fd0ff}
+.log .yell{color:#ffb86b}
+#chatF{display:flex;gap:6px;align-items:center;padding:4px 8px;background:rgba(0,0,0,.45)}
+#chatF span{color:#9fd0ff;font-size:13px}
+#chatI{flex:1;background:transparent;border:0;color:#fff;font:inherit;font-size:14px;outline:none}
+.side{display:flex;flex-direction:column;background:#141010;border-left:2px solid #2a2118;min-height:0}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;padding:12px 14px;background:#0e0c0a;border-bottom:2px solid #2a2118}
+.stat{display:flex;align-items:center;gap:10px;font-size:16px}
+.stat i{font-style:normal;font-size:22px;width:28px;text-align:center}
+.stat b{font-weight:600;font-variant-numeric:tabular-nums}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:8px}
+.tabs button{height:44px;border:2px solid #000;border-radius:4px;background:linear-gradient(#5a5048,#3a322c);color:#fff;font-size:22px;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
+.tabs button[aria-pressed="true"]{background:linear-gradient(#f39ab5,#d9738f);outline:2px solid #fff2;outline-offset:-4px}
+.tabs button:focus-visible{outline:2px solid var(--gold)}
+.panel{flex:1;margin:0 8px 8px;background:var(--panel);color:var(--panel-ink);border:3px solid var(--frame);overflow:auto;min-height:0}
+.ph{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:14px;border-bottom:2px solid rgba(0,0,0,.12)}
+.ph small{font-weight:600;text-transform:none;color:#6a5a40}
+.inv{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:6px}
+.slot{position:relative;aspect-ratio:1;border:1px solid #bfb193;background:#e6dcc4;display:grid;place-items:center;font-size:26px;cursor:pointer;user-select:none}
+.slot:hover{background:#efe6d0}
+.slot.empty{cursor:default;background:#e2d8bf}
+.slot em{position:absolute;left:2px;top:0;font-style:normal;font-size:12px;font-weight:700;color:#ff0;text-shadow:1px 1px 0 #000,-1px 0 0 #000,0 -1px 0 #000,1px 0 0 #000}
+.doll{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(4,64px);gap:6px;justify-content:center;padding:14px 6px 8px;
+  grid-template-areas:". helm ." "weapon body shield" ". legs ." "gloves boots ring"}
+.eq{border:2px solid #8a7a5a;border-radius:4px;background:#d8cbac;display:grid;place-items:center;font-size:30px;position:relative;cursor:default}
+.eq small{position:absolute;bottom:1px;left:0;right:0;text-align:center;font-size:10px;color:#5a4a30}
+.eq.empty{opacity:.55;font-size:22px;filter:grayscale(1)}
+.bonl{margin:4px 8px 8px;border:2px solid #8a7a5a;background:#e6dcc4}
+.bonl .bh{padding:4px 8px;font-size:13px;color:#5a4a30;border-bottom:2px solid #bfb193}
+.bonl div:not(.bh){display:grid;grid-template-columns:22px 1fr auto;gap:6px;align-items:center;padding:4px 8px;font-size:13px;border-bottom:1px solid #d0c4a8}
+.bonl i{font-style:normal;text-align:center}
+.bon{display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;padding:6px 14px 12px;font-size:14px}
+.bon span{display:flex;justify-content:space-between}
+.sk{display:grid;gap:6px;padding:8px}
+.skr{display:grid;grid-template-columns:30px 1fr auto;gap:8px;align-items:center;padding:6px 8px;background:#e6dcc4;border:1px solid #bfb193}
+.skr i{font-style:normal;font-size:22px;text-align:center}
+.skr b{display:block;font-size:15px}
+.skr small{display:block;font-size:12px;color:#6a5a40}
+.skr .lv{font-size:20px;font-weight:700;color:#2a6a1a}
+.xpb{height:6px;background:#bfb193;margin-top:3px}
+.xpb i{display:block;height:100%;background:#3f9a2e}
+.qs{display:grid;gap:6px;padding:8px}
+.q{padding:8px 10px;background:#e6dcc4;border:1px solid #bfb193}
+.q b{display:block;font-size:15px}
+.q small{display:block;font-size:13px;color:#6a5a40}
+.q.done b{color:#2a6a1a}
+.note{padding:8px 12px;font-size:13px;color:#6a5a40}
+.bottomtabs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:0 8px 8px}
+</style>
+</head>
+<body>
+<header class="top">
+  <span class="logo">⚔ Gladiator</span>
+  <span class="me" id="topName">bootypaper</span>
+  <span class="clock" id="clock">--:--:--</span>
+  <a href="#" title="Mockup">Purchases</a><a href="#" class="w" title="Mockup">Hiscores</a><a href="#" class="w" title="Mockup">WIKI</a><a href="#" class="w" title="Mockup">Updates</a>
+  <span class="spacer"></span>
+  <span class="online" id="online">— players</span>
+</header>
+<main class="wrap">
+  <section class="game" aria-label="Game">
+    <canvas id="cv"></canvas>
+    <div class="dbg" id="dbg"></div>
+    <div class="chat">
+      <div class="log" id="log" aria-live="polite"></div>
+      <form id="chatF" autocomplete="off"><span>💬 bootypaper:</span><input id="chatI" maxlength="120" placeholder="Press Enter to chat"></form>
+    </div>
+  </section>
+  <aside class="side" aria-label="Character">
+    <div class="stats" id="stats"></div>
+    <nav class="tabs" role="tablist">
+      <button type="button" data-tab="inv" aria-pressed="true" title="Inventory">🎒</button>
+      <button type="button" data-tab="equip" aria-pressed="false" title="Equipment">🪖</button>
+      <button type="button" data-tab="skills" aria-pressed="false" title="Skills">📶</button>
+      <button type="button" data-tab="quests" aria-pressed="false" title="Quests">📜</button>
+      <button type="button" data-tab="help" aria-pressed="false" title="How to play">❔</button>
+    </nav>
+    <div class="panel" id="panel"></div>
+  </aside>
+</main>
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+
+  /* ------------------------------------------------------------ the world is drawn small, then scaled up crisp */
+  const T = 16, COLS = 22, ROWS = 13, W = COLS * T, H = ROWS * T;
+  const cv = $("cv"), ctx = cv.getContext("2d");
+  const low = document.createElement("canvas"); low.width = W; low.height = H;
+  const lc = low.getContext("2d");
+  const px = (x, y, w, h, c) => { lc.fillStyle = c; lc.fillRect(Math.round(x), Math.round(y), w, h); };
+  function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+
+  /* ------------------------------------------------------------ OSRS curve */
+  const XP_AT = [0, 0];
+  { let p = 0; for (let l = 1; l < 99; l++) { p += Math.floor(l + 300 * Math.pow(2, l / 7)); XP_AT[l + 1] = Math.floor(p / 4); } }
+  const levelOf = (xp) => { let l = 1; while (l < 99 && xp >= XP_AT[l + 1]) l++; return l; };
+
+  /* ------------------------------------------------------------ things you can carry */
+  const ITEMS = {
+    coins: { name: "Denarii", icon: "🪙" }, wheat: { name: "Wheat", icon: "🌾" }, bones: { name: "Bones", icon: "🦴" },
+    beef: { name: "Raw beef", icon: "🥩" }, hide: { name: "Cowhide", icon: "🟫" }, chicken: { name: "Raw chicken", icon: "🍗" },
+    feather: { name: "Feather", icon: "🪶" }, sardine: { name: "Raw sardine", icon: "🐟" }, trout: { name: "Raw trout", icon: "🐠" }
+  };
+  const SKILLS = { melee: { name: "Melee", icon: "⚔️" }, hp: { name: "Hitpoints", icon: "❤️" }, fishing: { name: "Fishing", icon: "🎣" }, farming: { name: "Harvesting", icon: "🌾" } };
+
+  /* ------------------------------------------------------------ state, saved in this browser */
+  const SAVE = "ec_glad_flat_v1";
+  const fresh = () => ({ scene: "farm", x: 11, y: 7, hp: 10, inv: [{ k: "coins", n: 25 }], xp: { melee: 0, hp: XP_AT[10], fishing: 0, farming: 0 }, q: { cows: 0, fish: 0, done: {} } });
+  let S = fresh();
+  try { const o = JSON.parse(localStorage.getItem(SAVE) || "null"); if (o) S = { ...fresh(), ...o, xp: { ...fresh().xp, ...o.xp }, q: { ...fresh().q, ...o.q } }; } catch (e) { /* fresh */ }
+  const save = () => { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* private window */ } };
+  const lvl = (k) => levelOf(S.xp[k]);
+  const maxHp = () => lvl("hp");
+  const combat = () => Math.floor((lvl("melee") * 1.3 + lvl("hp")) / 2.3) + 2;
+  const total = () => Object.keys(SKILLS).reduce((n, k) => n + lvl(k), 0);
+  const invCount = () => S.inv.length;
+  function give(k, n = 1) {
+    const s = S.inv.find((x) => x.k === k);
+    if (s) { s.n += n; return true; }
+    if (S.inv.length >= 30) { say("Your inventory is full.", "bad"); return false; }
+    S.inv.push({ k, n }); return true;
+  }
+  function grant(k, xp) {
+    const before = lvl(k); S.xp[k] += xp; const after = lvl(k);
+    if (after > before) { say(`Congratulations, you just advanced a ${SKILLS[k].name} level! You are now level ${after}.`, "good"); if (k === "hp") S.hp = Math.min(maxHp(), S.hp + 1); }
+  }
+
+  /* ------------------------------------------------------------ chat */
+  function say(text, cls = "sys", who) {
+    const p = document.createElement("p"); p.className = cls;
+    if (who) { const b = document.createElement("b"); b.textContent = `${who}: `; p.append(b); p.append(document.createTextNode(text)); } else p.textContent = text;
+    const log = $("log"); log.append(p); while (log.children.length > 80) log.firstChild.remove(); log.scrollTop = log.scrollHeight;
+  }
+
+  /* ------------------------------------------------------------ the two scenes
+     grid: . grass  , path  ~ water  s sand  # blocked-by-object  e exit (blue) */
+  const SCENES = {
+    farm: {
+      name: "Ludus Farm", exits: { e: { to: "river", side: "right" } },
+      build() {
+        const g = Array.from({ length: ROWS }, () => Array(COLS).fill("."));
+        const objs = [];
+        for (let x = 0; x < COLS; x++) { g[0][x] = "#"; g[ROWS - 1][x] = "#"; objs.push({ t: "fenceH", x, y: 0 }, { t: "fenceH", x, y: ROWS - 1 }); }
+        for (let y = 1; y < ROWS - 1; y++) { g[y][0] = "#"; objs.push({ t: "fenceV", x: 0, y }); if (y < 5 || y > 7) { g[y][COLS - 1] = "#"; objs.push({ t: "fenceV", x: COLS - 1, y }); } else g[y][COLS - 1] = "e"; }
+        for (let x = 13; x < COLS - 1; x++) g[6][x] = ",";
+        for (let y = 5; y < 10; y++) g[y][8] = ",";
+        for (let x = 8; x < 14; x++) g[9][x] = ",";
+        const house = { t: "house", x: 2, y: 1, w: 6, h: 4, door: { x: 4, y: 4 }, name: "Farmhouse" }; objs.push(house);
+        for (let y = house.y; y < house.y + house.h; y++) for (let x = house.x; x < house.x + house.w; x++) g[y][x] = "#";
+        objs.push({ t: "well", x: 9, y: 2, name: "Well" }); g[2][9] = "#"; g[2][10] = "#"; g[3][9] = "#"; g[3][10] = "#";
+        objs.push({ t: "pond", x: 11, y: 1, w: 3, h: 2 }); for (let y = 1; y < 3; y++) for (let x = 11; x < 14; x++) g[y][x] = "~";
+        objs.push({ t: "hay", x: 8, y: 4 }, { t: "hay", x: 9, y: 4 }); g[4][8] = "#"; g[4][9] = "#";
+        for (let y = 6; y < 11; y++) { objs.push({ t: "wheat", x: 2, y, name: "Wheat", grownAt: 0 }); g[y][2] = "#"; }
+        for (let y = 6; y < 11; y++) { objs.push({ t: "wheat", x: 3, y, name: "Wheat", grownAt: 0 }); g[y][3] = "#"; }
+        objs.push({ t: "tree", x: 19, y: 1 }); g[1][19] = "#"; objs.push({ t: "tree", x: 17, y: 11 }); g[11][17] = "#";
+        return { g, objs, blobs: [[7, 8, 3], [15, 4, 3], [18, 9, 2], [5, 11, 2]] };
+      },
+      mobs: [["cow", 12, 4], ["cow", 15, 8], ["cow", 18, 4], ["cow", 11, 10], ["cow", 16, 10]],
+      npcs: [{ name: "Livia", x: 10, y: 6, hair: "#c86a2a", shirt: "#3a6ac8", pants: "#2a2a4a", lines: ["Mind the cows, gladiator. They kick.", "The lanista wants wheat for the horses. Pick some by the house.", "The river's past the blue marker, east of here."] },
+             { name: "Marcus", x: 6, y: 9, hair: "#3a2a1a", shirt: "#8a3a2a", pants: "#4a3a2a", lines: ["Every champion started on cows.", "Hit them until they stop mooing. That's the whole trick."] }],
+      bots: [{ name: "Crixus", level: 42, crest: "#c43a2a" }]
+    },
+    river: {
+      name: "River Bend", exits: { w: { to: "farm", side: "left" } },
+      build() {
+        const g = Array.from({ length: ROWS }, () => Array(COLS).fill("."));
+        const objs = [];
+        for (let x = 0; x < COLS; x++) { g[0][x] = "#"; g[ROWS - 1][x] = "#"; objs.push({ t: "fenceH", x, y: 0 }, { t: "fenceH", x, y: ROWS - 1 }); }
+        for (let y = 1; y < ROWS - 1; y++) { if (y < 5 || y > 7) { g[y][0] = "#"; objs.push({ t: "fenceV", x: 0, y }); } else g[y][0] = "e"; }
+        for (let y = 1; y < ROWS - 1; y++) { g[y][16] = "s"; for (let x = 17; x < COLS; x++) g[y][x] = "~"; }
+        objs.push({ t: "spot", x: 17, y: 4, name: "Fishing spot" }, { t: "spot", x: 17, y: 8, name: "Fishing spot" });
+        for (let x = 1; x < 16; x++) g[6][x] = ",";
+        const house = { t: "house", x: 9, y: 1, w: 5, h: 4, door: { x: 11, y: 4 }, name: "Fisher's hut", roof: "#a8743a" }; objs.push(house);
+        for (let y = house.y; y < house.y + house.h; y++) for (let x = house.x; x < house.x + house.w; x++) g[y][x] = "#";
+        // the coop: a fenced run with a gap on its top side
+        for (let x = 2; x <= 7; x++) { if (x !== 4) { g[8][x] = "#"; objs.push({ t: "fenceH", x, y: 8 }); } g[11][x] = "#"; }
+        for (let y = 9; y <= 10; y++) { g[y][2] = "#"; g[y][7] = "#"; objs.push({ t: "fenceV", x: 2, y }, { t: "fenceV", x: 7, y }); }
+        objs.push({ t: "tree", x: 3, y: 2 }); g[2][3] = "#"; objs.push({ t: "tree", x: 14, y: 10 }); g[10][14] = "#"; objs.push({ t: "tree", x: 6, y: 3 }); g[3][6] = "#";
+        return { g, objs, blobs: [[5, 5, 2], [12, 9, 3], [15, 3, 2]] };
+      },
+      mobs: [["chicken", 4, 9], ["chicken", 5, 10], ["chicken", 6, 9], ["chicken", 3, 10]],
+      npcs: [{ name: "Old Tullius", x: 15, y: 6, hair: "#d8d8d8", shirt: "#5a7a3a", pants: "#3a3a2a", lines: ["The fish bite best where the water bubbles.", "Don't let the chickens fool you. One took my eye.", "Farm's back west, past the blue."] }],
+      bots: [{ name: "Spartacus", level: 77, crest: "#e8bf35" }]
+    }
+  };
+  const MOBS = {
+    cow: { name: "Cow", hp: 8, att: 1, def: 1, max: 1, speed: 3000, drops: () => [["beef", 1], ["hide", 1], ["bones", 1]], xp: 1 },
+    chicken: { name: "Chicken", hp: 3, att: 1, def: 1, max: 1, speed: 2400, drops: () => [["chicken", 1], ["feather", rint(5, 15)], ["bones", 1]], xp: 1 }
+  };
+
+  /* ------------------------------------------------------------ the scene you are in */
+  const Z = { key: "", g: null, objs: [], blobs: [], bg: null, mobs: [], npcs: [], bots: [], fadeAt: 0 };
+  const walkable = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && ".,se".includes(Z.g[y][x]);
+  const P = { x: S.x, y: S.y, px: S.x, py: S.y, path: [], step: null, face: 1, act: null, lastSwing: 0, hurtAt: 0, swingAt: 0 };
+  function loadScene(key, fromSide) {
+    const sc = SCENES[key], b = sc.build();
+    Object.assign(Z, { key, g: b.g, objs: b.objs, blobs: b.blobs, fadeAt: performance.now() });
+    Z.bg = paintBg();
+    Z.mobs = sc.mobs.map(([t, x, y], i) => ({ id: `${key}${i}`, t, x, y, px: x, py: y, hx: x, hy: y, hp: MOBS[t].hp, path: [], step: null, face: Math.random() < .5 ? 1 : -1, nextWander: 0, dead: false, respawnAt: 0, hurtAt: 0, swingAt: 0, lastSwing: 0 }));
+    Z.npcs = sc.npcs.map((n, i) => ({ ...n, id: `${key}n${i}`, hx: n.x, hy: n.y, px: n.x, py: n.y, path: [], step: null, face: -1, nextWander: 0, bubble: null }));
+    Z.bots = sc.bots.map((b, i) => ({ ...b, id: `${key}b${i}`, x: rint(8, 14), y: rint(5, 9), path: [], step: null, face: 1, nextWander: 0 }));
+    Z.bots.forEach((b) => { b.px = b.x; b.py = b.y; });
+    if (fromSide) {
+      const y = 6, x = fromSide === "right" ? 1 : COLS - 2;
+      Object.assign(P, { x, y, px: x, py: y, path: [], step: null, act: null, face: fromSide === "right" ? 1 : -1 });
+    }
+    S.scene = key; save();
+  }
+
+  /* ------------------------------------------------------------ painting: ground and the things that do not move */
+  function paintBg() {
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const o = c.getContext("2d"), f = (x, y, w, h, col) => { o.fillStyle = col; o.fillRect(x, y, w, h); };
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      const t = Z.g[y][x], X = x * T, Y = y * T;
+      if (t === "~") { f(X, Y, T, T, "#3f7fc2"); continue; }
+      f(X, Y, T, T, t === "," ? "#b8966a" : t === "s" ? "#d8c08a" : "#7aa15a");
+      for (let i = 0; i < 6; i++) { const r = hashRand(x * 7 + i, y * 13 + i); f(X + Math.floor(r * 15), Y + Math.floor(hashRand(y + i, x + i, 3) * 15), 1, 1, t === "," ? "#a3845a" : t === "s" ? "#c8ae76" : (r < 0.5 ? "#6f9651" : "#86ad66")); }
+    }
+    // the darker patches of grass, like shade under something
+    for (const [bx, by, r] of Z.blobs) for (let y = -r * T; y <= r * T; y += 2) for (let x = -r * T; x <= r * T; x += 2) {
+      const X = bx * T + x, Y = by * T + y, d = Math.hypot(x, y) / (r * T); if (d < 1 && Z.g[Math.floor(Y / T)]?.[Math.floor(X / T)] === ".") { if (hashRand(X, Y, 9) < 0.9 - d * 0.5) f(X, Y, 2, 2, "#6c9450"); }
+    }
+    for (const ob of Z.objs) {
+      const X = ob.x * T, Y = ob.y * T;
+      if (ob.t === "pond") { f(X, Y, ob.w * T, ob.h * T, "#4a8fd6"); o.strokeStyle = "#d8c08a"; o.lineWidth = 2; o.strokeRect(X + 1, Y + 1, ob.w * T - 2, ob.h * T - 2); }
+      if (ob.t === "fenceH") { f(X, Y + 7, T, 2, "#6b3f23"); f(X, Y + 11, T, 2, "#6b3f23"); f(X + 6, Y + 2, 4, 13, "#4a2a16"); f(X + 7, Y + 2, 2, 12, "#7a4a26"); f(X + 6, Y + 1, 4, 2, "#8a5a32"); }
+      if (ob.t === "fenceV") { f(X + 6, Y, 4, T, "#5a3418"); f(X + 7, Y, 2, T, "#7a4a26"); f(X + 5, Y + 3, 6, 3, "#4a2a16"); }
+      if (ob.t === "house") {
+        const w = ob.w * T, h = ob.h * T;
+        f(X + 2, Y + h * 0.45, w - 4, h * 0.55, "#e7c49a"); f(X + 2, Y + h * 0.45, 3, h * 0.55, "#c9a47a");
+        for (let i = 0; i < 5; i++) f(X + 4, Y + h * 0.5 + i * 8, w - 8, 1, "rgba(150,110,70,.35)");
+        const roof = ob.roof || "#e2b04a";
+        f(X - 2, Y, w + 4, h * 0.5, roof);
+        for (let i = 0; i < h * 0.5; i += 3) f(X - 2, Y + i, w + 4, 1, "rgba(120,80,20,.35)");
+        for (let i = 0; i < w + 4; i += 5) f(X - 2 + i, Y, 1, h * 0.5, "rgba(255,230,150,.25)");
+        f(X - 2, Y + h * 0.5 - 2, w + 4, 3, "#9a6a20");
+        const dx = ob.door.x * T, dy = ob.door.y * T;
+        f(dx + 3, dy - 6, 10, 22, "#3a2616"); f(dx + 4, dy - 5, 8, 21, "#7a3b1f"); f(dx + 10, dy + 4, 1, 2, "#e8bf35");
+        f(X + 2 + w * 0.7, Y + h * 0.58, 8, 7, "#3a2616"); f(X + 3 + w * 0.7, Y + h * 0.58 + 1, 6, 5, "#7ab0e0");
+      }
+      if (ob.t === "well") {
+        f(X + 2, Y + 14, 28, 16, "#5a5a5a"); f(X + 4, Y + 16, 24, 12, "#7a7a7a"); for (let i = 0; i < 4; i++) f(X + 4 + i * 6, Y + 16, 1, 12, "#5a5a5a"); f(X + 7, Y + 18, 18, 6, "#1a2a3a");
+        f(X + 3, Y + 2, 3, 14, "#5a3418"); f(X + 26, Y + 2, 3, 14, "#5a3418"); f(X + 1, Y + 1, 30, 4, "#6b3f23"); f(X + 1, Y, 30, 2, "#8a5a32"); f(X + 14, Y + 5, 3, 8, "#9a9a9a");
+      }
+      if (ob.t === "hay") { f(X + 1, Y + 3, 14, 12, "#b88a20"); f(X + 2, Y + 4, 12, 10, "#e0b030"); for (let i = 0; i < 4; i++) f(X + 2, Y + 5 + i * 3, 12, 1, "#c89a28"); f(X + 7, Y + 3, 2, 12, "#a8781a"); }
+      if (ob.t === "tree") {
+        f(X + 2, Y + 14, 14, 3, "rgba(0,0,0,.25)"); f(X + 6, Y + 6, 4, 10, "#6b4423");
+        f(X - 3, Y - 8, 22, 16, "#3f7a3a"); f(X - 1, Y - 11, 18, 5, "#3f7a3a"); f(X, Y - 9, 8, 5, "#5a9a4a"); f(X + 9, Y - 5, 6, 4, "#5a9a4a"); f(X - 3, Y + 4, 22, 3, "#2f5a2a");
+      }
+    }
+    return c;
+  }
+
+  /* ------------------------------------------------------------ the little people and animals */
+  function drawCow(x, y, face, hurt) {
+    lc.save(); lc.translate(Math.round(x), Math.round(y)); if (face < 0) lc.scale(-1, 1);
+    px(-9, 5, 18, 2, "rgba(0,0,0,.25)");
+    const k = "#111", w = hurt ? "#ffd0d0" : "#fafafa";
+    px(-8, 1, 3, 5, k); px(-4, 1, 3, 5, k); px(3, 1, 3, 5, k); px(6, 1, 3, 5, k);
+    px(-10, -9, 18, 11, k); px(-9, -8, 16, 9, w); px(-7, -7, 5, 4, k); px(1, -5, 4, 3, k); px(-3, -2, 3, 2, k);
+    px(6, -12, 8, 9, k); px(7, -11, 6, 7, w); px(9, -8, 5, 4, "#f2a8b8"); px(8, -10, 1, 1, k); px(6, -13, 2, 2, "#e0d0a0"); px(12, -13, 2, 2, "#e0d0a0");
+    px(-12, -8, 2, 6, k);
+    lc.restore();
+  }
+  function drawChicken(x, y, face, hurt) {
+    lc.save(); lc.translate(Math.round(x), Math.round(y)); if (face < 0) lc.scale(-1, 1);
+    px(-5, 3, 10, 2, "rgba(0,0,0,.25)");
+    px(-2, 1, 1, 3, "#e8a030"); px(1, 1, 1, 3, "#e8a030");
+    px(-5, -5, 9, 7, "#222"); px(-4, -4, 7, 5, hurt ? "#ffd0d0" : "#fafafa"); px(-6, -6, 3, 3, "#eee");
+    px(2, -9, 4, 5, "#222"); px(3, -8, 2, 3, "#fafafa"); px(3, -10, 2, 2, "#e03030"); px(5, -7, 2, 1, "#f0b020"); px(4, -8, 1, 1, "#111");
+    lc.restore();
+  }
+  function drawPerson(x, y, face, look, bob = 0) {
+    lc.save(); lc.translate(Math.round(x), Math.round(y + bob)); if (face < 0) lc.scale(-1, 1);
+    px(-5, 0, 10, 2, "rgba(0,0,0,.25)");
+    px(-3, -6, 2, 6, look.pants); px(1, -6, 2, 6, look.pants); px(-3, 0, 3, 1, "#2a1a10"); px(1, 0, 3, 1, "#2a1a10");
+    px(-4, -14, 8, 8, look.shirt); px(-5, -13, 1, 6, "#e8c09a"); px(4, -13, 1, 6, "#e8c09a");
+    px(-3, -20, 6, 6, "#e8c09a");
+    if (look.helm) { px(-4, -22, 8, 4, "#9a9fa6"); px(-2, -25, 5, 3, look.crest); px(2, -19, 2, 1, "#9a9fa6"); }
+    else { px(-4, -22, 8, 3, look.hair); px(-4, -19, 2, 5, look.hair); }
+    px(1, -18, 1, 1, "#222");
+    lc.restore();
+  }
+
+  /* ------------------------------------------------------------ your gladiator: the PixelLab sheet, drawn at screen scale */
+  const hero = new Image(); hero.src = "/v3/assets/img/glad/hero.png?v=2";
+  const SHEET = { fw: 192, fh: 192, foot: 184, body: 127, rows: { idle: [0, 6], run: [1, 6], attack: [2, 6] } };
+
+  /* ------------------------------------------------------------ pathing: 8 ways, no cutting corners */
+  const D8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+  const canStep = (x, y, dx, dy) => walkable(x + dx, y + dy) && (!dx || !dy || (walkable(x + dx, y) && walkable(x, y + dy)));
+  function path(from, to, adjacent) {
+    const key = (x, y) => y * COLS + x, prev = new Map([[key(from.x, from.y), null]]), q = [from];
+    const done = (c) => adjacent ? Math.max(Math.abs(c.x - to.x), Math.abs(c.y - to.y)) === 1 : c.x === to.x && c.y === to.y;
+    if (done(from)) return [];
+    while (q.length) {
+      const c = q.shift();
+      if (done(c)) { const p = []; let k = key(c.x, c.y); while (k != null) { p.unshift({ x: k % COLS, y: Math.floor(k / COLS) }); k = prev.get(k); } p.shift(); return p; }
+      for (const [dx, dy] of D8) { const nx = c.x + dx, ny = c.y + dy, k = key(nx, ny); if (!prev.has(k) && canStep(c.x, c.y, dx, dy)) { prev.set(k, key(c.x, c.y)); q.push({ x: nx, y: ny }); } }
+    }
+    return null;
+  }
+  const STEP = 240;
+  function tick(e, now) {
+    if (e.step) {
+      const k = Math.min(1, (now - e.step.t0) / e.step.ms);
+      e.px = e.step.fx + (e.step.tx - e.step.fx) * k; e.py = e.step.fy + (e.step.ty - e.step.fy) * k;
+      if (k < 1) return true;
+      e.x = e.step.tx; e.y = e.step.ty; e.step = null;
+    }
+    const n = e.path.shift();
+    if (n) {
+      const dx = n.x - e.x, dy = n.y - e.y;
+      if (!canStep(e.x, e.y, dx, dy)) { e.path = []; return false; }
+      e.step = { fx: e.x, fy: e.y, tx: n.x, ty: n.y, t0: now, ms: dx && dy ? STEP * 1.4 : STEP };
+      if (dx) e.face = dx > 0 ? 1 : -1;
+      return true;
+    }
+    return false;
+  }
+
+  /* ------------------------------------------------------------ actions: walk up to something, then do it */
+  function goTo(x, y) { P.act = null; const p = path(P, { x, y }, false); if (p) P.path = p; }
+  function interact(target) {
+    P.act = { ...target, started: 0 };
+    const p = path(P, { x: target.x, y: target.y }, true);
+    if (p === null) { say("You can't reach that.", "bad"); P.act = null; return; }
+    P.path = p;
+  }
+  const adjacent = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)) === 1;
+  const hitChance = (att, def) => Math.max(0.1, Math.min(0.95, 0.5 + (att - def) * 0.04));
+  const maxHit = () => 1 + Math.floor(lvl("melee") / 6);
+  let splats = [];
+  const splat = (who, n, kind) => splats.push({ who, n, kind, at: performance.now() });
+
+  function doActions(now) {
+    const a = P.act; if (!a || P.step || P.path.length) return;
+    // a moving target: follow it
+    if (a.kind === "mob") {
+      const m = Z.mobs.find((x) => x.id === a.id); if (!m || m.dead) { P.act = null; return; }
+      if (!adjacent(P, m)) { const p = path(P, m, true); if (p && p.length) P.path = p; else if (!p) P.act = null; return; }
+      P.face = m.x > P.x ? 1 : m.x < P.x ? -1 : P.face;
+      if (!a.started) { a.started = now; P.lastSwing = now - 1800; m.lastSwing = now; m.fighting = true; }
+      if (now - P.lastSwing >= 2400) {
+        P.lastSwing = now; P.swingAt = now;
+        const hit = Math.random() < hitChance(lvl("melee") + 3, MOBS[m.t].def), dmg = hit ? rint(1, maxHit()) : 0;
+        m.hp -= dmg; m.hurtAt = now; splat(m.id, dmg, dmg ? "hit" : "miss");
+        if (dmg) { grant("melee", dmg * 4); grant("hp", Math.round(dmg * 1.33)); }
+        if (m.hp <= 0) return killMob(m, now);
+      }
+      return;
+    }
+    if (!adjacent(P, a)) { P.act = null; return; }
+    if (a.kind === "npc") { const n = Z.npcs.find((x) => x.id === a.id); if (n) { const line = pick(n.lines); n.bubble = { text: line, at: now }; say(line, "say", n.name); n.face = P.x > n.x ? 1 : -1; } P.act = null; return; }
+    if (a.kind === "door") { say(`The ${a.name.toLowerCase()} door is shut. Houses you can walk into come next: they're their own scenes.`, "sys"); P.act = null; return; }
+    if (a.kind === "well") { say("You look down the well. Something glints at the bottom, but it's too far down.", "sys"); P.act = null; return; }
+    if (a.kind === "wheat") {
+      const w = a.ob; if (w.grownAt > now) { say("That's already been picked. It'll grow back soon.", "sys"); P.act = null; return; }
+      if (!a.started) { a.started = now; say("You start picking the wheat…", "sys"); return; }
+      if (now - a.started >= 1400) { if (give("wheat")) { grant("farming", 8); say("You pick some wheat.", "good"); w.grownAt = now + 20000; } P.act = null; save(); renderPanel(); }
+      return;
+    }
+    if (a.kind === "spot") {
+      if (!a.started) { a.started = now; a.next = now + 2600; say("You cast out your line…", "sys"); return; }
+      if (now >= a.next) {
+        a.next = now + 2600;
+        const trout = lvl("fishing") >= 10 && Math.random() < 0.35;
+        if (Math.random() < 0.45) {
+          if (!give(trout ? "trout" : "sardine")) { P.act = null; return; }
+          grant("fishing", trout ? 50 : 20); say(`You catch a ${trout ? "trout" : "sardine"}.`, "good");
+          S.q.fish++; questCheck(); save(); renderPanel();
+        }
+      }
+    }
+  }
+  function killMob(m, now) {
+    const def = MOBS[m.t];
+    m.dead = true; m.respawnAt = now + 15000; m.fighting = false; P.act = null;
+    const got = def.drops().filter(([k, n]) => give(k, n));
+    say(`You defeat the ${def.name.toLowerCase()}.${got.length ? ` It drops ${got.map(([k, n]) => `${n > 1 ? n + " " : ""}${ITEMS[k].name.toLowerCase()}`).join(", ")}.` : ""}`, "loot");
+    if (m.t === "cow") { S.q.cows++; questCheck(); }
+    save(); renderPanel();
+  }
+  function mobsAct(now) {
+    for (const m of Z.mobs) {
+      if (m.dead) { if (now >= m.respawnAt) Object.assign(m, { dead: false, hp: MOBS[m.t].hp, x: m.hx, y: m.hy, px: m.hx, py: m.hy, path: [], step: null }); continue; }
+      const fighting = P.act?.kind === "mob" && P.act.id === m.id && adjacent(P, m) && !P.step;
+      if (fighting) {
+        m.face = P.x > m.x ? 1 : -1;
+        if (now - m.lastSwing >= MOBS[m.t].speed) {
+          m.lastSwing = now; m.swingAt = now;
+          const hit = Math.random() < hitChance(MOBS[m.t].att, lvl("melee") / 2), dmg = hit ? rint(1, MOBS[m.t].max) : 0;
+          S.hp -= dmg; if (dmg) P.hurtAt = now; splat("you", dmg, dmg ? "hit" : "miss");
+          if (S.hp <= 0) { die(); return; }
+        }
+        continue;
+      }
+      if (m.fighting && P.act?.id !== m.id) m.fighting = false;
+      if (!tick(m, now) && now > m.nextWander) {
+        m.nextWander = now + 2000 + Math.random() * 4000;
+        const [dx, dy] = pick(D8);
+        if (Math.abs(m.x + dx - m.hx) <= 3 && Math.abs(m.y + dy - m.hy) <= 2 && canStep(m.x, m.y, dx, dy) && !(m.x + dx === P.x && m.y + dy === P.y)) m.path = [{ x: m.x + dx, y: m.y + dy }];
+      }
+    }
+    for (const n of [...Z.npcs, ...Z.bots]) {
+      if (!tick(n, now) && now > n.nextWander) {
+        n.nextWander = now + (n.level ? 1500 : 4000) + Math.random() * 5000;
+        if (n.level) { const tx = rint(2, COLS - 3), ty = rint(2, ROWS - 3); if (walkable(tx, ty)) { const p = path(n, { x: tx, y: ty }, false); if (p) n.path = p.slice(0, 8); } }
+        else { const [dx, dy] = pick(D8); if (Math.abs(n.x + dx - n.hx) <= 1 && Math.abs(n.y + dy - n.hy) <= 1 && canStep(n.x, n.y, dx, dy)) n.path = [{ x: n.x + dx, y: n.y + dy }]; }
+      }
+    }
+  }
+  function die() {
+    say("Oh dear, you are dead! You wake up at the farmhouse.", "bad");
+    S.hp = maxHp(); P.act = null; loadScene("farm"); Object.assign(P, { x: 4, y: 6, px: 4, py: 6, path: [], step: null });
+    save(); renderPanel();
+  }
+  const QUESTS = [
+    { key: "cows", name: "Cattle Drive", goal: 5, about: "Livia wants five cows seen to.", reward: 60, have: () => S.q.cows },
+    { key: "fish", name: "Catch of the Day", goal: 3, about: "Old Tullius wants three fish off the river.", reward: 40, have: () => S.q.fish }
+  ];
+  function questCheck() {
+    for (const q of QUESTS) if (!S.q.done[q.key] && q.have() >= q.goal) { S.q.done[q.key] = true; give("coins", q.reward); say(`Quest complete: ${q.name}! You receive ${q.reward} denarii.`, "good"); }
+  }
+
+  /* ------------------------------------------------------------ input */
+  let view = { s: 3, ox: 0, oy: 0 }, hoverTile = null, hoverThing = null, clickMark = null;
+  function fit() {
+    const d = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight;
+    if (cv.width !== Math.round(w * d) || cv.height !== Math.round(h * d)) { cv.width = Math.round(w * d); cv.height = Math.round(h * d); }
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+    const s = Math.min(w / W, (h) / H); view = { s, ox: Math.round((w - W * s) / 2), oy: Math.round((h - H * s) / 2) };
+    return { w, h };
+  }
+  const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
+  function thingAt(wx, wy) {
+    const near = (px_, py_, rx, ry) => Math.abs(wx - px_) <= rx && wy <= py_ + 4 && wy >= py_ - ry;
+    for (const m of Z.mobs) if (!m.dead && near(m.px * T + 8, m.py * T + 12, m.t === "cow" ? 11 : 7, m.t === "cow" ? 20 : 14)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: MOBS[m.t].name };
+    for (const n of Z.npcs) if (near(n.px * T + 8, n.py * T + 14, 6, 24)) return { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name };
+    const tx = Math.floor(wx / T), ty = Math.floor(wy / T);
+    for (const ob of Z.objs) {
+      if (ob.t === "wheat" && ob.x === tx && ob.y === ty) return { kind: "wheat", ob, x: ob.x, y: ob.y, name: "Wheat" };
+      if (ob.t === "spot" && Math.abs(ob.x - tx) <= 0 && Math.abs(ob.y - ty) <= 0) return { kind: "spot", ob, x: ob.x, y: ob.y, name: "Fishing spot" };
+      if (ob.t === "well" && tx >= ob.x && tx <= ob.x + 1 && ty >= ob.y && ty <= ob.y + 1) return { kind: "well", x: ob.x, y: ob.y + 1, name: "Well" };
+      if (ob.t === "house" && Math.abs(tx - ob.door.x) <= 0 && Math.abs(ty - ob.door.y) <= 1 && ty <= ob.door.y) return { kind: "door", x: ob.door.x, y: ob.door.y, name: ob.name };
+    }
+    return null;
+  }
+  cv.addEventListener("pointerdown", (e) => {
+    e.preventDefault(); $("chatI").blur();
+    const w = toWorld(e); if (w.x < 0 || w.y < 0 || w.x >= W || w.y >= H) return;
+    const t = thingAt(w.x, w.y);
+    if (t) { interact(t); clickMark = { x: t.x, y: t.y, at: performance.now(), red: t.kind === "mob" }; return; }
+    const tx = Math.floor(w.x / T), ty = Math.floor(w.y / T);
+    if (walkable(tx, ty)) { goTo(tx, ty); clickMark = { x: tx, y: ty, at: performance.now() }; }
+  });
+  cv.addEventListener("pointermove", (e) => { const w = toWorld(e); hoverTile = { x: Math.floor(w.x / T), y: Math.floor(w.y / T) }; hoverThing = thingAt(w.x, w.y); cv.style.cursor = hoverThing ? (hoverThing.kind === "mob" ? "crosshair" : "help") : "pointer"; });
+  cv.addEventListener("pointerleave", () => { hoverTile = null; hoverThing = null; });
+  const keys = new Set(), KM = { w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0], arrowup: [0, -1], arrowdown: [0, 1], arrowleft: [-1, 0], arrowright: [1, 0] };
+  document.addEventListener("keydown", (e) => {
+    if (e.target === $("chatI")) { if (e.key === "Escape") $("chatI").blur(); return; }
+    if (e.key === "Enter") { $("chatI").focus(); e.preventDefault(); return; }
+    const k = e.key.toLowerCase(); if (KM[k]) { keys.add(k); e.preventDefault(); }
+  });
+  document.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
+  addEventListener("blur", () => keys.clear());
+  function keyMove() {
+    if (!keys.size || P.step || P.path.length) return;
+    let dx = 0, dy = 0; for (const k of keys) { dx += KM[k][0]; dy += KM[k][1]; }
+    dx = Math.sign(dx); dy = Math.sign(dy);
+    if ((dx || dy) && canStep(P.x, P.y, dx, dy)) { P.act = null; P.path = [{ x: P.x + dx, y: P.y + dy }]; }
+  }
+  $("chatF").addEventListener("submit", (e) => {
+    e.preventDefault(); const v = $("chatI").value.trim(); if (!v) return;
+    say(v, "say", "bootypaper"); P.bubble = { text: v, at: performance.now() }; $("chatI").value = ""; $("chatI").blur();
+  });
+
+  /* ------------------------------------------------------------ the frame */
+  const kOf = (at, ms) => (performance.now() - at) / ms;
+  function label(text, x, y, color, size = 13) {
+    ctx.font = `600 ${size}px "Pixelify Sans", monospace`; ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.lineWidth = 3; ctx.strokeStyle = "rgba(0,0,0,.85)"; ctx.strokeText(text, x, y); ctx.fillStyle = color; ctx.fillText(text, x, y);
+  }
+  function bubble(text, x, y) {
+    ctx.font = `600 13px "Pixelify Sans", monospace`; const w = Math.min(260, ctx.measureText(text).width + 14);
+    ctx.fillStyle = "rgba(255,255,240,.94)"; ctx.fillRect(x - w / 2, y - 26, w, 22); ctx.strokeStyle = "#2a2016"; ctx.lineWidth = 2; ctx.strokeRect(x - w / 2, y - 26, w, 22);
+    ctx.fillStyle = "#2a2016"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(text.length > 40 ? text.slice(0, 38) + "…" : text, x, y - 15);
+  }
+  function frame() {
+    const now = performance.now(), { w, h } = fit();
+    keyMove();
+    const moving = tick(P, now);
+    // stepping onto the blue takes you through
+    if (!moving && Z.g[P.y][P.x] === "e") { const ex = Object.values(SCENES[Z.key].exits)[0]; loadScene(ex.to, ex.side); say(`You travel to ${SCENES[ex.to].name}.`, "sys"); renderPanel(); }
+    doActions(now); mobsAct(now);
+    S.x = P.x; S.y = P.y;
+    // regenerate a hitpoint every 20 seconds out of a fight
+    if (!P.act || P.act.kind !== "mob") { if (!P.regen) P.regen = now; if (now - P.regen > 20000) { P.regen = now; if (S.hp < maxHp()) { S.hp++; renderStats(); } } } else P.regen = now;
+
+    // ---- the low-resolution world
+    lc.clearRect(0, 0, W, H); lc.drawImage(Z.bg, 0, 0);
+    // water shimmer, the blue exits, wheat and fishing spots: the living bits of the ground
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      if (Z.g[y][x] === "~" && hashRand(x, y, 5) < 0.35) { const o = Math.floor((now / 180 + hashRand(x, y) * 16) % 16); px(x * T + o % 12, y * T + 4 + (x * 3 + y) % 8, 4, 1, "#7ab4ec"); }
+      if (Z.g[y][x] === "e") { const a = 0.55 + Math.sin(now / 400) * 0.15; lc.fillStyle = `rgba(70,120,230,${a})`; lc.fillRect(x * T, y * T, T, T); }
+    }
+    const sprites = [];
+    for (const ob of Z.objs) {
+      if (ob.t === "wheat") sprites.push({ y: ob.y * T + 15, draw: () => {
+        const X = ob.x * T, Y = ob.y * T;
+        if (ob.grownAt > now) { for (let i = 0; i < 4; i++) px(X + 2 + i * 3, Y + 11, 2, 3, "#9a7a3a"); return; }
+        for (let i = 0; i < 3; i++) { const sx = X + 2 + i * 5, sw = Math.round(Math.sin(now / 600 + i + ob.y) * 1); px(sx + 1, Y + 6, 1, 9, "#b89a28"); px(sx + sw, Y - 1, 3, 8, "#f0d040"); px(sx + sw, Y + 1, 1, 5, "#c8a020"); px(sx + sw + 2, Y, 1, 5, "#fff08a"); }
+      } });
+      if (ob.t === "spot") sprites.push({ y: ob.y * T, draw: () => { const X = ob.x * T + 8, Y = ob.y * T + 8, r = 3 + ((now / 160) % 5); lc.strokeStyle = "rgba(230,245,255,.85)"; lc.lineWidth = 1; lc.beginPath(); lc.ellipse(X, Y, r, r * 0.55, 0, 0, Math.PI * 2); lc.stroke(); px(X - 1, Y - 1, 2, 2, "#fff"); px(X + 3, Y - 3, 1, 1, "#fff"); } });
+    }
+    for (const m of Z.mobs) if (!m.dead) sprites.push({ y: m.py * T + 14, draw: () => { const hurt = now - m.hurtAt < 200, lunge = now - m.swingAt < 200 ? m.face * 2 : 0; (m.t === "cow" ? drawCow : drawChicken)(m.px * T + 8 + lunge, m.py * T + 11, m.face, hurt); } });
+    for (const n of Z.npcs) sprites.push({ y: n.py * T + 14, draw: () => drawPerson(n.px * T + 8, n.py * T + 15, n.face, n) });
+    for (const b of Z.bots) sprites.push({ y: b.py * T + 14, draw: () => drawPerson(b.px * T + 8, b.py * T + 15, b.face, { shirt: "#7a2a2a", pants: "#4a3a2a", helm: true, crest: b.crest }, b.step ? -Math.abs(Math.sin(now / 80)) : 0) });
+    sprites.sort((a, b) => a.y - b.y).forEach((s) => s.draw());
+
+    // ---- up to screen size, crisp
+    ctx.fillStyle = "#000"; ctx.fillRect(0, 0, w, h);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(low, view.ox, view.oy, W * view.s, H * view.s);
+    const S2 = view.s, sx = (tx) => view.ox + tx * S2, sy = (ty) => view.oy + ty * S2;
+    // hover square and where you clicked
+    if (hoverTile && walkable(hoverTile.x, hoverTile.y)) { ctx.strokeStyle = "rgba(160,70,50,.6)"; ctx.lineWidth = 2; ctx.strokeRect(sx(hoverTile.x * T) + 2, sy(hoverTile.y * T) + 2, T * S2 - 4, T * S2 - 4); }
+    if (clickMark && now - clickMark.at < 500) { const k = (now - clickMark.at) / 500; ctx.strokeStyle = clickMark.red ? `rgba(255,60,40,${1 - k})` : `rgba(255,230,80,${1 - k})`; ctx.lineWidth = 3; const c = { x: sx(clickMark.x * T + 8), y: sy(clickMark.y * T + 8) }; ctx.beginPath(); ctx.moveTo(c.x - 8 - k * 4, c.y - 8 - k * 4); ctx.lineTo(c.x + 8 + k * 4, c.y + 8 + k * 4); ctx.moveTo(c.x + 8 + k * 4, c.y - 8 - k * 4); ctx.lineTo(c.x - 8 - k * 4, c.y + 8 + k * 4); ctx.stroke(); }
+
+    // your gladiator (the only thing drawn at screen scale, from the PixelLab sheet)
+    const hx = sx(P.px * T + 8), hy = sy(P.py * T + 15), fighting = P.act?.kind === "mob" && !moving && !P.path.length;
+    if (hero.complete && hero.naturalWidth) {
+      const heightPx = 27 * S2, sc = heightPx / SHEET.body;
+      let row = "idle", fr;
+      if (moving) { row = "run"; fr = Math.floor(now / 85) % 6; }
+      else if (fighting && now - P.swingAt < 420) { row = "attack"; fr = Math.min(5, Math.floor((now - P.swingAt) / 70)); }
+      else fr = Math.floor(now / 150) % 6;
+      const [r] = SHEET.rows[row];
+      ctx.save(); ctx.translate(Math.round(hx), Math.round(hy)); if (P.face < 0) ctx.scale(-1, 1);
+      ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.beginPath(); ctx.ellipse(0, 0, 7 * S2, 2 * S2, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.imageSmoothingEnabled = sc < 1;
+      if (now - P.hurtAt < 200) ctx.filter = "brightness(1.6) sepia(1) saturate(4) hue-rotate(-30deg)";
+      ctx.drawImage(hero, fr * SHEET.fw, r * SHEET.fh, SHEET.fw, SHEET.fh, -SHEET.fw * sc / 2, -SHEET.foot * sc, SHEET.fw * sc, SHEET.fh * sc);
+      ctx.restore();
+    }
+    // names under everyone, like the real thing
+    label("bootypaper", hx, hy + 4, "#fff"); label(`level ${total()}`, hx, hy + 18, "#ffe45c", 12);
+    for (const m of Z.mobs) if (!m.dead) {
+      const x = sx(m.px * T + 8), y = sy(m.py * T + 15); label(MOBS[m.t].name, x, y + 2, "#ffb23f", 12);
+      if (m.hp < MOBS[m.t].hp) { const bw = 30; ctx.fillStyle = "#c00"; ctx.fillRect(x - bw / 2, sy(m.py * T) - (m.t === "cow" ? 22 : 10) , bw, 5); ctx.fillStyle = "#0c0"; ctx.fillRect(x - bw / 2, sy(m.py * T) - (m.t === "cow" ? 22 : 10), bw * Math.max(0, m.hp / MOBS[m.t].hp), 5); }
+    }
+    for (const n of Z.npcs) { const x = sx(n.px * T + 8), y = sy(n.py * T + 15); label(n.name, x, y + 2, "#fff", 12); if (n.bubble && now - n.bubble.at < 3500) bubble(n.bubble.text, x, sy(n.py * T) - 16); }
+    for (const b of Z.bots) { const x = sx(b.px * T + 8), y = sy(b.py * T + 15); label(b.name, x, y + 2, "#fff", 12); label(`level ${b.level}`, x, y + 15, "#ffe45c", 11); if (b.bubble && now - b.bubble.at < 3500) bubble(b.bubble.text, x, sy(b.py * T) - 16); }
+    if (P.bubble && now - P.bubble.at < 3500) bubble(P.bubble.text, hx, hy - 28 * S2);
+    if (fighting && S.hp < maxHp()) { ctx.fillStyle = "#c00"; ctx.fillRect(hx - 18, hy - 29 * S2, 36, 5); ctx.fillStyle = "#0c0"; ctx.fillRect(hx - 18, hy - 29 * S2, 36 * Math.max(0, S.hp / maxHp()), 5); }
+    // hit splats
+    splats = splats.filter((s) => now - s.at < 900);
+    for (const s of splats) {
+      let x, y;
+      if (s.who === "you") { x = hx; y = hy - 18 * S2; } else { const m = Z.mobs.find((q) => q.id === s.who); if (!m) continue; x = sx(m.px * T + 8); y = sy(m.py * T) - 2 * S2; }
+      const k = (now - s.at) / 900; ctx.globalAlpha = Math.min(1, (1 - k) * 2.5);
+      ctx.fillStyle = s.kind === "miss" ? "#2f6fd6" : "#c42a2a"; ctx.beginPath(); ctx.arc(x, y - k * 10, 11, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "#000"; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.fillStyle = "#fff"; ctx.font = `700 13px "Pixelify Sans", monospace`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(s.n), x, y - k * 10 + 1);
+      ctx.globalAlpha = 1;
+    }
+    if (hoverThing) { const t = `${hoverThing.kind === "mob" ? "Attack" : hoverThing.kind === "npc" ? "Talk-to" : hoverThing.kind === "wheat" ? "Pick" : hoverThing.kind === "spot" ? "Fish" : hoverThing.kind === "door" ? "Open" : "Search"} ${hoverThing.name}`; label(t, w / 2, 8, "#fff", 14); }
+    // a scene change fades in
+    const fk = (now - Z.fadeAt) / 350; if (fk < 1) { ctx.fillStyle = `rgba(0,0,0,${1 - fk})`; ctx.fillRect(0, 0, w, h); }
+    $("dbg").textContent = `Town: ${SCENES[Z.key].name}\nPlayer: bootypaper · level ${total()}\nTile: ${P.x} ${P.y}${hoverTile ? `   Mouse: ${hoverTile.x} ${hoverTile.y}` : ""}\nAction: ${P.act ? (P.act.kind === "mob" ? `fighting ${P.act.name}` : P.act.kind === "spot" ? "fishing" : P.act.kind === "wheat" ? "picking wheat" : P.act.kind) : moving ? "walking" : "none"}`;
+    requestAnimationFrame(frame);
+  }
+
+  /* ------------------------------------------------------------ the right-hand panel */
+  let tab = "inv";
+  function renderStats() {
+    $("stats").innerHTML = [
+      ["❤️", `${Math.max(0, S.hp)}/${maxHp()}`, "Hitpoints"], ["⚔️", combat(), "Combat level"],
+      ["⭐", total(), "Total level"], ["🪙", (S.inv.find((x) => x.k === "coins")?.n || 0).toLocaleString(), "Denarii"],
+      ["🎒", `${invCount()}/30`, "Inventory"], ["🏛️", Z.key ? SCENES[Z.key].name.split(" ")[0] : "", "Area"]
+    ].map(([i, v, t]) => `<div class="stat" title="${t}"><i>${i}</i><b>${v}</b></div>`).join("");
+  }
+  function renderPanel() {
+    renderStats();
+    const p = $("panel");
+    if (tab === "inv") {
+      const cells = S.inv.map((s, i) => `<div class="slot" data-i="${i}" title="${ITEMS[s.k].name}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""} — click to examine, shift-click to drop">${ITEMS[s.k].icon}${s.n > 1 ? `<em>${s.n >= 100000 ? Math.floor(s.n / 1000) + "k" : s.n.toLocaleString()}</em>` : ""}</div>`);
+      while (cells.length < 30) cells.push('<div class="slot empty"></div>');
+      p.innerHTML = `<div class="ph">Inventory <small>${invCount()}/30</small></div><div class="inv">${cells.join("")}</div>`;
+      p.querySelectorAll(".slot[data-i]").forEach((el) => el.addEventListener("click", (e) => {
+        const s = S.inv[+el.dataset.i]; if (!s) return;
+        if (e.shiftKey) { if (s.k === "coins") return say("You'd rather not drop your denarii.", "sys"); S.inv.splice(+el.dataset.i, 1); say(`You drop the ${ITEMS[s.k].name.toLowerCase()}.`, "sys"); save(); renderPanel(); }
+        else say(`${ITEMS[s.k].name}${s.n > 1 ? ` (×${s.n.toLocaleString()})` : ""}.`, "sys");
+      }));
+    }
+    if (tab === "equip") {
+      const slot = (area, icon, name) => `<div class="eq${icon ? "" : " empty"}" style="grid-area:${area}" title="${name || area}">${icon || { helm: "⛑️", weapon: "🗡️", body: "🥋", shield: "🛡️", legs: "👖", gloves: "🧤", boots: "🥾", ring: "💍" }[area]}<small>${name || ""}</small></div>`;
+      p.innerHTML = `<div class="ph">Equipment <small>paper doll</small></div><div class="doll">${slot("helm", "⛑️", "Leather cap")}${slot("weapon", "🗡️", "Wooden rudis")}${slot("body", "🥋", "Tunic")}${slot("shield", "🛡️", "Parma")}${slot("legs")}${slot("gloves")}${slot("boots", "🥾", "Sandals")}${slot("ring")}</div>
+        <div class="bonl"><div class="bh">⚔️ Stab</div>
+          <div><i>⊕</i><span>accuracy</span><b>2</b></div><div><i>🔺</i><span>melee damage</span><b>1</b></div>
+          <div><i>🎯</i><span>max hit</span><b>${maxHit()}</b></div><div><i>🛡️</i><span>melee defence</span><b>6</b></div></div>
+        <p class="note">Gear, drops and the loot hunt come later. This is the layout.</p>`;
+    }
+    if (tab === "skills") {
+      p.innerHTML = `<div class="ph">Skills <small>total ${total()}</small></div><div class="sk">${Object.entries(SKILLS).map(([k, s]) => {
+        const L = lvl(k), lo = XP_AT[L], hi = XP_AT[Math.min(99, L + 1)], pc = L >= 99 ? 100 : Math.floor((S.xp[k] - lo) / (hi - lo) * 100);
+        return `<div class="skr"><i>${s.icon}</i><span><b>${s.name}</b><small>${S.xp[k].toLocaleString()} xp · ${L >= 99 ? "max" : `${(hi - S.xp[k]).toLocaleString()} to go`}</small><div class="xpb"><i style="width:${pc}%"></i></div></span><span class="lv">${L}</span></div>`;
+      }).join("")}</div>`;
+    }
+    if (tab === "quests") {
+      p.innerHTML = `<div class="ph">Quests</div><div class="qs">${QUESTS.map((q) => `<div class="q${S.q.done[q.key] ? " done" : ""}"><b>${S.q.done[q.key] ? "✓ " : ""}${q.name}</b><small>${q.about}</small><small>${Math.min(q.have(), q.goal)}/${q.goal} · reward ${q.reward} denarii</small></div>`).join("")}</div>`;
+    }
+    if (tab === "help") {
+      p.innerHTML = `<div class="ph">How to play</div><div class="note">
+        <p><b>Walk:</b> click the ground, or WASD / arrow keys.</p>
+        <p><b>Fight:</b> click a cow or a chicken.</p>
+        <p><b>Talk:</b> click a person.</p>
+        <p><b>Gather:</b> click wheat to pick it; click the bubbling water to fish.</p>
+        <p><b>Travel:</b> walk onto the blue tiles at the edge to reach the next area.</p>
+        <p><b>Chat:</b> press Enter.</p>
+        <p>This is a mockup: the other players are simulated, and it saves in this browser only.</p></div>`;
+    }
+  }
+  document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => {
+    tab = b.dataset.tab; document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); renderPanel();
+  }));
+
+  /* ------------------------------------------------------------ the rest of the "server" */
+  const BOT_LINES = ["anyone know where the good fishing is?", "gz", "cows are free xp lol", "selling feathers", "this farm is peaceful", "wheat run anyone?", "brb"];
+  setInterval(() => {
+    if (Math.random() < 0.35 && Z.bots.length) { const b = pick(Z.bots), line = pick(BOT_LINES); say(line, "say", b.name); b.bubble = { text: line, at: performance.now() }; }
+    else if (Math.random() < 0.15) say(`[server] ${pick(["Crixus", "Varro", "Gannicus", "Naevia", "Agron"])} has reached level ${rint(20, 90)} in ${pick(["Melee", "Fishing", "Harvesting"])}!`, "yell");
+  }, 9000);
+  let online = rint(40, 70);
+  setInterval(() => {
+    const d = new Date(); $("clock").textContent = d.toTimeString().slice(0, 8);
+    if (Math.random() < 0.2) online = Math.max(20, online + rint(-2, 2));
+    $("online").textContent = `${online} players`;
+    renderStats();
+  }, 1000);
+  setInterval(save, 5000);
+  addEventListener("pagehide", save);
+
+  loadScene(S.scene in SCENES ? S.scene : "farm");
+  Object.assign(P, { x: S.x, y: S.y, px: S.x, py: S.y });
+  if (!walkable(P.x, P.y) || Z.g[P.y][P.x] === "e") Object.assign(P, { x: 11, y: 7, px: 11, py: 7 });
+  say("Welcome to the Ludus Farm. Click to walk (or WASD), click a cow to fight it, click wheat to pick it. The blue tiles lead east to the river.", "sys");
+  renderPanel();
+  requestAnimationFrame(frame);
+  window.__flat = { get S() { return S; }, P, Z, loadScene };
+})();
+</script>
+</body>
+</html>
