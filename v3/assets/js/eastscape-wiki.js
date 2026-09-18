@@ -75,6 +75,15 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-18", title: "The Forum opens north and east",
+    items: [
+      "The Forum now has gates on all four sides. The Forge moved over to make room for the north road.",
+      "North: Tomatoe Hill. Tomatoe vines to pick, the Big Tomatoe, Nonna Tomatoe (it has an e), Rotten Tomatoes and Tomatoe Hornworms. And a golden vine for much later.",
+      "East: the Via Appia. Cypress trees to chop, milestones, a toll post with Centurion Vibius, Highwaymen (level 12, they drop Cash and sometimes a mask), a very stubborn mule, and a marble outcrop for later. The road is washed out past the barricade.",
+      "New things: tomatoes, golden tomatoes, hornworm husks, marble, and the Highwayman's mask (a helmet)."
+    ]
+  },
+  {
     date: "2026-09-18", title: "The Bank, a lived-in farmhouse, and movement speed",
     items: [
       "The Bathhouse is now just the Bank, inside and out. It has a red runner to the counter, potted palms, benches, banners, a vault door, and a statue of its first depositor.",

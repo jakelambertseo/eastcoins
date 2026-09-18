@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 9;
+export const VERSION = 10;
 export const COLS = 22, ROWS = 13;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -29,6 +29,11 @@ export const ITEMS = {
   feather: { name: "Feather", icon: "🪶" }, sardine: { name: "Raw sardine", icon: "🐟" }, trout: { name: "Raw trout", icon: "🐠" },
   copper: { name: "Copper ore", icon: "🟠" }, tin: { name: "Tin ore", icon: "⚪" }, logs: { name: "Logs", icon: "🪵" }, olives: { name: "Olives", icon: "🫒" },
   pork: { name: "Raw boar", icon: "🥓" }, tusk: { name: "Boar tusk", icon: "🦷" },
+  tomatoe: { name: "Tomatoe", icon: "🍅", ex: "Nonna insists on the e. Nobody has ever won that argument." },
+  goldtomatoe: { name: "Golden tomatoe", icon: "🍅", ex: "Heavy as a coin and warm as a hug. It hums when it's ripe." },
+  husk: { name: "Hornworm husk", icon: "🐛", ex: "Still a little squishy. Still a little angry." },
+  marble: { name: "Marble chunk", icon: "🪨", ex: "The same stone the Bank is made of. Someone will want this." },
+  mask: { name: "Highwayman's mask", short: "Mask", icon: "🎭", slot: "helm", def: 1, acc: 1, ex: "Smells of the road. Makes you look shifty." },
   yewlogs: { name: "Ancient yew logs", icon: "🪵", ex: "Heavy, dark and faintly warm. The grain moves if you stare." },
   mooncarp: { name: "Raw moon carp", icon: "🐡", ex: "It's looking at you. It's always looking at you." },
   stardust: { name: "Stardust", icon: "✨", ex: "Warm, and humming a note you almost recognise." },
@@ -197,26 +202,29 @@ export const SCENES = {
     bots: [{ name: "Spartacus", level: 77 }]
   },
   forum: {
-    name: "The Forum", exits: { s: "farm", w: "grove" },
+    name: "The Forum", exits: { s: "farm", w: "grove", n: "tomato", e: "appia" },
     build() {
       const g = grid(), objs = [];
       for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
         const dx = (x - 10.5) / 9.6, dy = (y - 5.6) / 5.4, wob = (hashRand(x, y, 51) - 0.5) * 0.22;
         if (dx * dx + dy * dy < 1 + wob) g[y][x] = "p";
       }
+      // roads out of town on all four sides
       for (let y = 7; y < ROWS; y++) for (let x = 16; x <= 18; x++) g[y][x] = "p";
       for (let x = 0; x < 4; x++) for (let y = 5; y <= 7; y++) g[y][x] = "p";
+      for (let y = 0; y < 5; y++) for (let x = 16; x <= 18; x++) g[y][x] = "p";
+      for (let x = 18; x < COLS; x++) for (let y = 5; y <= 7; y++) g[y][x] = "p";
       const paved = g.map((r) => r.slice());
       const bath = { t: "house", x: 2, y: 1, w: 6, h: 3, door: { x: 4, y: 3 }, name: "Bank", roof: "#8a9aa8", wall: "#efe6d4", sign: "BANK", enter: "bathhouse" };
-      const forge = { t: "house", x: 12, y: 1, w: 6, h: 3, door: { x: 15, y: 3 }, name: "Forge", roof: "#7a4a3a", wall: "#c8b89a", sign: "STORE" };
-      objs.push(bath, forge); block(g, 2, 1, 6, 3); block(g, 12, 1, 6, 3);
+      const forge = { t: "house", x: 10, y: 1, w: 6, h: 3, door: { x: 13, y: 3 }, name: "Forge", roof: "#7a4a3a", wall: "#c8b89a", sign: "STORE" };
+      objs.push(bath, forge); block(g, 2, 1, 6, 3); block(g, 10, 1, 6, 3);
       objs.push({ t: "fountain", x: 10, y: 6, w: 2, h: 2, name: "Fountain" }); block(g, 10, 6, 2, 2);
       objs.push({ t: "rock", ore: "stardust", x: 5, y: 6, name: "Fallen Star", special: true, glow: "#e0b0ff", req: { skill: "mining", lvl: 50 }, xp: 150, tease: "It landed during the games last spring. Nobody's managed to chip it since." }); g[6][5] = "#";
-      objs.push({ t: "notice", x: 9, y: 2, name: "Notice board" }); g[2][9] = "#";
+      objs.push({ t: "notice", x: 8, y: 2, name: "Notice board" }); g[2][8] = "#";
       // the Exchange: a market stall where offers are placed and collected
       objs.push({ t: "stall", x: 14, y: 5, w: 2, h: 1, name: "Exchange stall" }); block(g, 14, 5, 2, 1);
       objs.push({ t: "statue", x: 15, y: 9, name: "Statue" }); g[9][15] = "#";
-      objs.push({ t: "sign", x: 19, y: 6, name: "Signpost" }); g[6][19] = "#";
+      objs.push({ t: "sign", x: 19, y: 3, name: "Signpost" }); g[3][19] = "#";
       for (const [x, y] of [[6, 9], [13, 9]]) { objs.push({ t: "bush", x, y, name: "Planter" }); g[y][x] = "#"; }
       for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (g[y][x] === "#" && paved[y][x] === "p") g[y][x] = "P";
       wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "forest" }, keepOf(this), 4);
@@ -224,7 +232,7 @@ export const SCENES = {
     },
     mobs: [],
     npcs: [{ name: "Livia the Broker", x: 15, y: 4, still: true, opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Selling? Buying? Use the stall. I just take my 1%.", "Offers keep working while you sleep. Come back and collect.", "The best price wins, and whoever was there first."] },
-           { name: "Gaius", x: 7, y: 7, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: Coo. The Forge buys ore. Coo.", "PIGEON: He doesn't talk. I do the talking. Coo.", "PIGEON: The Bank keeps your things safe. Aurelia counts everything twice. Coo.", "PIGEON: West is the Olive Grove. Bring a sword. Seriously. Coo."] }],
+           { name: "Gaius", x: 7, y: 7, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: Coo. The Forge buys ore. Coo.", "PIGEON: He doesn't talk. I do the talking. Coo.", "PIGEON: The Bank keeps your things safe. Aurelia counts everything twice. Coo.", "PIGEON: West is the Olive Grove. Bring a sword. Seriously. Coo.", "PIGEON: North is Tomatoe Hill. Don't correct her spelling. Coo.", "PIGEON: East is the Via Appia. Highwaymen. Hold on to your Cash. Coo."] }],
     bots: [{ name: "Gannicus", level: 55 }, { name: "Naevia", level: 31 }]
   },
   grove: {
@@ -248,6 +256,51 @@ export const SCENES = {
   }
 };
 // where a brand-new character appears: just outside the farmhouse door
+Object.assign(SCENES, {
+  // north of the Forum: a hill of tomato vines, a giant tomato, and a Nonna who insists on the spelling
+  tomato: {
+    name: "Tomatoe Hill", exits: { s: "forum" },
+    build() {
+      const g = grid(), objs = [];
+      for (let y = 6; y < ROWS; y++) g[y][17] = ",";
+      for (let x = 3; x <= 17; x++) g[6][x] = ",";
+      // two rows of vines, with walking room between them
+      for (const y of [8, 10]) for (let x = 3; x <= 8; x++) { objs.push({ t: "vine", x, y, name: "Tomatoe vine", crop: "tomatoe", xp: 10, picks: 3 }); g[y][x] = "#"; }
+      objs.push({ t: "bigtomato", x: 10, y: 2, w: 3, h: 3, name: "The Big Tomatoe" }); block(g, 10, 2, 3, 3);
+      objs.push({ t: "press", x: 14, y: 3, w: 2, h: 1, name: "Tomatoe press" }); block(g, 14, 3, 2, 1);
+      for (const x of [14, 15]) { objs.push({ t: "crate", x, y: 5, name: "Crate of tomatoes" }); g[5][x] = "#"; }
+      objs.push({ t: "scarecrow", x: 6, y: 4, name: "Scarecrow" }); g[4][6] = "#";
+      // the teaser
+      objs.push({ t: "vine", x: 19, y: 3, name: "Golden Tomatoe vine", special: true, glow: "#ffd84a", req: { skill: "farming", lvl: 50 }, crop: "goldtomatoe", xp: 70, picks: 2, tease: "The tomatoes on this one are gold. Actual gold. Nonna guards it with her eyes." }); g[3][19] = "#";
+      wild(g, objs, this.exits, { n: "forest", w: "forest", e: "forest", s: "forest" }, keepOf(this), 5);
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["rotten", 12, 8], ["rotten", 14, 10], ["rotten", 11, 11], ["hornworm", 19, 6], ["hornworm", 15, 8]],
+    npcs: [{ name: "Nonna Tomatoe", x: 13, y: 7, still: true, hair: "#e8e8e8", shirt: "#c43a3a", pants: "#3a2a2a", lines: ["Tomatoe. With an e. Say it back to me.", "The big one? That's the Big Tomatoe. It was here before the town. Probably before the hill.", "The rotten ones walk at night. And in the day. Mostly they just walk.", "The golden vine is not for you. Not yet. Maybe not ever."] }],
+    bots: [{ name: "Oenomaus", level: 38 }]
+  },
+  // east of the Forum: the great road, a toll post, highwaymen, and a barricade where the road washed out
+  appia: {
+    name: "Via Appia", exits: { w: "forum" },
+    build() {
+      const g = grid(), objs = [];
+      for (let x = 0; x < 19; x++) for (let y = 5; y <= 7; y++) g[y][x] = "p";
+      for (const x of [2, 6, 10, 14]) for (const y of [3, 9]) { objs.push({ t: "cypress", x, y, name: "Cypress" }); g[y][x] = "#"; }
+      for (const x of [4, 12]) { objs.push({ t: "milestone", x, y: 4, name: "Milestone" }); g[4][x] = "#"; }
+      objs.push({ t: "toll", x: 16, y: 3, w: 2, h: 1, name: "Toll post" }); block(g, 16, 3, 2, 1);
+      // the road washed out here; the Bandit Camp is beyond, for later
+      for (let y = 4; y <= 8; y++) { objs.push({ t: "barricade", x: 19, y, name: "Barricade" }); g[y][19] = "#"; }
+      objs.push({ t: "chariot", x: 8, y: 9, w: 2, h: 1, name: "Abandoned chariot" }); block(g, 8, 9, 2, 1);
+      objs.push({ t: "mule", x: 11, y: 10, name: "Mule" }); g[10][11] = "#";
+      objs.push({ t: "rock", ore: "marble", x: 3, y: 10, name: "Marble outcrop", special: true, glow: "#ffffff", req: { skill: "mining", lvl: 30 }, xp: 65, tease: "Pure white marble. The Bank was built from this hill. Your pickaxe just bounces." }); g[10][3] = "#";
+      wild(g, objs, this.exits, { n: "forest", s: "rocky", w: "forest", e: "forest" }, keepOf(this), 6);
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["highwayman", 5, 2], ["highwayman", 12, 11], ["highwayman", 17, 10]],
+    npcs: [{ name: "Centurion Vibius", x: 16, y: 4, still: true, hair: "#3a2a1a", shirt: "#9a2a2a", pants: "#6a5a4a", lines: ["Halt. Toll's waived. The road's closed past the barricade anyway.", "Highwaymen on my road. When you can swing a sword properly, come and see me.", "The Bandit Camp's past the washout. When the road's fixed, we go in.", "That mule has not moved in eleven years. I respect it."] }],
+    bots: []
+  }
+});
 export const START = { scene: "farm", x: 4, y: 5 };
 
 /* interiors: a room in the middle of the dark. "e" tiles on the room's bottom edge lead back out to exitTo.
@@ -337,6 +390,9 @@ export const MOBS = {
   chicken: { name: "Chicken", lvl: 1, hp: 3, att: 1, def: 1, max: 1, speed: 2400, oy: 11, box: [7, 14], drops: [["chicken", 1], ["feather", [5, 15]], ["bones", 1]] },
   olive: { name: "Angry Olive", lvl: 6, hp: 12, att: 5, def: 4, max: 2, speed: 2600, box: [7, 16], drops: [["olives", [2, 5]], ["pit", 1], ["monocle", 1, 0.1]] },
   boar: { name: "Wild boar", lvl: 8, hp: 16, att: 6, def: 6, max: 2, speed: 2800, box: [11, 16], drops: [["pork", 1], ["tusk", 1], ["bones", 1]] },
+  rotten: { name: "Rotten Tomatoe", lvl: 4, hp: 10, att: 3, def: 2, max: 1, speed: 2600, box: [8, 14], drops: [["tomatoe", [1, 3]], ["husk", 1, 0.05]] },
+  hornworm: { name: "Tomatoe Hornworm", lvl: 7, hp: 15, att: 6, def: 5, max: 2, speed: 2800, box: [12, 12], drops: [["husk", 1], ["tomatoe", 1, 0.5]] },
+  highwayman: { name: "Highwayman", lvl: 12, hp: 22, att: 10, def: 9, max: 3, speed: 2400, box: [7, 26], drops: [["coins", [5, 20]], ["bones", 1], ["mask", 1, 0.15]] },
   goat: { name: "Goat in a Toga", lvl: 12, hp: 24, att: 9, def: 8, max: 3, speed: 2400, box: [8, 26], drops: [["manifesto", 1], ["bones", 1], ["toga", 1, 0.25]] }
 };
 
@@ -368,7 +424,17 @@ export const EXAMINE = {
   chair: ["A three-legged stool. Bom has broken four of these."],
   sack: ["A sack of flour. Baking comes later."],
   cat: ["A cat wearing a tiny gladiator helmet. It judges you.", "The cat's helmet has a little crest. It has clearly won fights."],
-  bucket: ["Waldy's spare bucket. Freshly polished. It has googly eyes too."]
+  bucket: ["Waldy's spare bucket. Freshly polished. It has googly eyes too."],
+  bigtomato: ["The Big Tomatoe. It's warm. It's slightly soft. There's a door-shaped outline you choose not to think about."],
+  press: ["A tomatoe press. It smells like every summer at once."],
+  crate: ["A crate of tomatoes, each one labelled TOMATOE in careful handwriting."],
+  scarecrow: ["A scarecrow with a tomato for a head. The crows seem fine with it. The crows seem to love it."],
+  cypress: ["A tall, thin cypress. The road is lined with them, all leaning very slightly east."],
+  milestone: ["'ROMA · MILES: ' and then nothing. Someone scratched the number off. Twice.", "'YOU ARE HERE.' Helpful."],
+  toll: ["A toll post. The price board has been painted over with 'NO'."],
+  barricade: ["Timber and rope. Past it, the road just stops: washed out. The Bandit Camp is somewhere beyond."],
+  chariot: ["A chariot with one wheel. Whoever left it left in a hurry, or a very bad mood."],
+  mule: ["A mule. It refuses to move. It has refused for eleven years.", "The mule looks at you. You feel judged by a professional."]
 };
 export const VERB = { bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
