@@ -207,14 +207,18 @@ button,input,select{font:inherit}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid #8a7a5a;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .side{display:flex;flex-direction:column;background:#141010;min-height:0}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;padding:12px 14px;background:#0e0c0a;border-bottom:2px solid #2a2118}
+/* PixelLab UI: the stats sit in a wood-and-bronze frame, the tabs are wooden buttons that glow gold when picked */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;padding:10px 12px;margin:8px 8px 0;border:10px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/frame.png?v=1) 12 fill / 10px stretch;image-rendering:pixelated}
 .stat{display:flex;align-items:center;gap:10px;font-size:16px}
-.stat i{font-style:normal;font-size:22px;width:28px;text-align:center}
+.stat i{font-style:normal;font-size:22px;width:28px;height:28px;display:grid;place-items:center}
+.stat i img,.tabs button img{width:26px;height:26px;image-rendering:pixelated;display:block}
+.stat b{text-shadow:1px 1px 0 #000}
 .stat b{font-weight:700;font-variant-numeric:tabular-nums}
 .tabs{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:3px;padding:8px}
-.tabs button{height:40px;min-width:0;padding:0;border:2px solid #000;border-radius:4px;background:linear-gradient(#5a5048,#3a322c);color:#fff;font-size:18px;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
+.tabs button{height:40px;min-width:0;padding:0;display:grid;place-items:center;border:8px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/tab.png?v=1) 24 fill / 8px stretch;background:none;color:#fff;font-size:18px;cursor:pointer;image-rendering:pixelated}
+.tabs button:hover{border-image-source:url(/v3/assets/img/glad/flat/ui/tab_on.png?v=1)}
 .tabs button[hidden]{display:none}
-.tabs button[aria-pressed="true"]{background:linear-gradient(#f39ab5,#d9738f);outline:2px solid #fff2;outline-offset:-4px}
+.tabs button[aria-pressed="true"]{border-image-source:url(/v3/assets/img/glad/flat/ui/tab_on.png?v=1);filter:brightness(1.12)}
 .tabs button:focus-visible{outline:2px solid var(--gold)}
 .panel{flex:1;margin:0 8px 8px;background:var(--panel);color:var(--panel-ink);border:3px solid var(--frame);overflow:auto;min-height:0}
 .ph{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:14px;border-bottom:2px solid rgba(0,0,0,.12)}
@@ -349,13 +353,13 @@ button,input,select{font:inherit}
   <aside class="side" aria-label="Character">
     <div class="stats" id="stats"></div>
     <nav class="tabs" role="tablist">
-      <button type="button" data-tab="inv" aria-pressed="true" title="Inventory">🎒</button>
-      <button type="button" data-tab="equip" aria-pressed="false" title="Equipment">🪖</button>
-      <button type="button" data-tab="skills" aria-pressed="false" title="Skills">📶</button>
-      <button type="button" data-tab="quests" aria-pressed="false" title="Quests">📜</button>
-      <button type="button" data-tab="settings" aria-pressed="false" title="Settings">⚙️</button>
-      <button type="button" data-tab="help" aria-pressed="false" title="How to play">❔</button>
-      <button type="button" data-tab="admin" aria-pressed="false" title="Admin" hidden>🛠️</button>
+      <button type="button" data-tab="inv" aria-pressed="true" title="Inventory"><img src="/v3/assets/img/glad/flat/ui/bag.png?v=1" alt="Inventory"></button>
+      <button type="button" data-tab="equip" aria-pressed="false" title="Equipment"><img src="/v3/assets/img/glad/flat/ui/equip.png?v=1" alt="Equipment"></button>
+      <button type="button" data-tab="skills" aria-pressed="false" title="Skills"><img src="/v3/assets/img/glad/flat/ui/skills.png?v=1" alt="Skills"></button>
+      <button type="button" data-tab="quests" aria-pressed="false" title="Quests"><img src="/v3/assets/img/glad/flat/ui/quests.png?v=1" alt="Quests"></button>
+      <button type="button" data-tab="settings" aria-pressed="false" title="Settings"><img src="/v3/assets/img/glad/flat/ui/settings.png?v=1" alt="Settings"></button>
+      <button type="button" data-tab="help" aria-pressed="false" title="How to play"><img src="/v3/assets/img/glad/flat/ui/help.png?v=1" alt="How to play"></button>
+      <button type="button" data-tab="admin" aria-pressed="false" title="Admin" hidden><img src="/v3/assets/img/glad/flat/ui/admin.png?v=1" alt="Admin"></button>
     </nav>
     <div class="panel" id="panel"></div>
   </aside>
@@ -573,7 +577,7 @@ function paintBg() {
   const c = document.createElement("canvas"); c.width = W * A; c.height = H * A;
   const o = c.getContext("2d"), f = (x, y, w, h, col) => { o.fillStyle = col; o.fillRect(x, y, w, h); };
   const inside = SCENES[Z.key]?.interior;
-  if (inside) { paintRoom(o, f); return c; }
+  if (inside) { o.scale(A, A); paintRoom(o, f); return c; }
   if (IMG.t_dirt && IMG.t_water) {
     const cell = (x, y) => { const t = Z.g[Math.max(0, Math.min(ROWS - 1, y))][Math.max(0, Math.min(COLS - 1, x))]; return t === "~" ? "w" : t === "," ? "d" : "g"; };
     const vert = (x, y, k) => [cell(x - 1, y - 1), cell(x, y - 1), cell(x - 1, y), cell(x, y)].includes(k);
@@ -1469,10 +1473,10 @@ const syncTabs = () => document.querySelectorAll(".tabs button").forEach((x) => 
 function renderStats() {
   if (!me) return;
   $("stats").innerHTML = [
-    ["❤️", `${Math.max(0, me.hp)}/${maxHp()}${me.god ? " ⭐" : ""}`, "Hitpoints"], ["⚔️", G.combatOf(me), "Combat level"],
-    ["⭐", total(), "Total level"], ["💵", G.cashIn(me).toLocaleString(), "Cash"],
-    ["🎒", `${me.inv.length}/${G.INV_MAX}`, "Inventory"], ["🏛️", Z.key ? SCENES[Z.key].name.replace(/^The /, "").split(" ")[0] : "", "Area"]
-  ].map(([i, v, t]) => `<div class="stat" title="${t}"><i>${i}</i><b>${v}</b></div>`).join("");
+    ["hp", `${Math.max(0, me.hp)}/${maxHp()}${me.god ? " ⭐" : ""}`, "Hitpoints"], ["combat", G.combatOf(me), "Combat level"],
+    ["total", total(), "Total level"], ["cash", G.cashIn(me).toLocaleString(), "Cash"],
+    ["bag", `${me.inv.length}/${G.INV_MAX}`, "Inventory"], ["area", Z.key ? SCENES[Z.key].name.replace(/^The /, "").split(" ")[0] : "", "Area"]
+  ].map(([i, v, t]) => `<div class="stat" title="${t}"><i><img src="/v3/assets/img/glad/flat/ui/${i}.png?v=1" alt=""></i><b>${v}</b></div>`).join("");
 }
 function renderPanel() {
   if (!me) return;
