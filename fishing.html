@@ -126,10 +126,13 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .bait{font-size:.78rem;color:var(--muted)}
 .bait b{color:var(--gold)}
 
-.catch{position:absolute;inset:0;display:grid;place-items:center;background:rgba(4,10,18,.72);backdrop-filter:blur(2px);padding:12px}
+.catch{position:absolute;inset:0;z-index:12;display:grid;place-items:safe center;overflow:auto;background:rgba(4,10,18,.72);backdrop-filter:blur(2px);padding:8px}
 .catch[hidden]{display:none}
 .catch-card{background:var(--panel);border:1px solid var(--line-2);border-radius:14px;padding:14px;width:min(340px,100%);text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6)}
-.catch-card canvas{position:static;width:100%;height:auto;aspect-ratio:2/1;display:block;border-radius:10px;background:radial-gradient(circle at 50% 60%,rgba(79,195,217,.22),rgba(0,0,0,0) 70%)}
+.catch-card{max-height:100%;overflow-y:auto;display:flex;flex-direction:column;padding:12px}
+.catch-card>*{flex:none}
+.catch-card>canvas{flex:0 1 auto;min-height:56px}
+.catch-card canvas{position:static;width:100%;max-width:100%;height:auto;max-height:170px;aspect-ratio:2/1;object-fit:contain;display:block;margin:0 auto;border-radius:10px;background:radial-gradient(circle at 50% 60%,rgba(79,195,217,.22),rgba(0,0,0,0) 70%)}
 .catch-card h3{font-family:var(--display);font-size:1.35rem;margin:4px 0 2px}
 .tags{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:4px 0 8px}
 .tag{font-size:.66rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:99px;border:1px solid currentColor}
@@ -647,6 +650,40 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 @media (max-width:560px){.xpt{width:170px;right:8px;bottom:8px;font-size:.66rem}.xpt-sess{display:none}}
 
 /* inventory rows: picture, what it is, then the two sell buttons */
+.inv-wrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+@media (max-width:860px){.inv-wrap{grid-template-columns:minmax(0,1fr)}.inv-side{position:static}}
+.inv-sec{display:grid;gap:9px;margin-bottom:16px}
+.inv-sec:last-child{margin-bottom:0}
+.inv-sec h4{margin:0;display:flex;align-items:baseline;gap:8px;font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.inv-sec h4 span{letter-spacing:0;text-transform:none;font-weight:700}
+.inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.inv-tile{position:relative;display:grid;grid-template-rows:62px auto;gap:4px;justify-items:center;padding:8px 6px 7px;border-radius:12px;background:var(--panel-2);border:1px solid var(--line);border-bottom:3px solid var(--rc,var(--line-2));color:var(--text);font:inherit;cursor:pointer;min-width:0}
+.inv-tile:hover{background:var(--panel-3)}
+.inv-tile:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.inv-tile.on{border-color:rgba(var(--gold-rgb),.75);box-shadow:0 0 0 1px rgba(var(--gold-rgb),.5);background:var(--panel-3)}
+.inv-art{width:100%;height:62px;display:grid;place-items:center;font-size:2.3rem;line-height:1;border-radius:9px;background:radial-gradient(circle at 50% 60%,rgba(255,255,255,.06),rgba(0,0,0,0) 70%)}
+.inv-art canvas{width:84px;height:50px;display:block}
+.inv-art.dish{background:radial-gradient(circle at 50% 62%,rgba(var(--gold-rgb),.16) 0 38%,rgba(0,0,0,0) 40%)}
+.inv-tile small{font-size:.7rem;font-weight:700;color:var(--muted);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inv-n{position:absolute;top:5px;right:6px;min-width:22px;padding:1px 6px;border-radius:99px;background:rgba(10,8,6,.82);border:1px solid var(--line-2);font-family:var(--display);font-weight:800;font-size:.72rem;font-variant-numeric:tabular-nums}
+.inv-side{position:sticky;top:64px;background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:12px}
+.inv-side .inv-art{height:110px;font-size:4rem;background:var(--panel-3)}
+.inv-side .inv-art canvas{width:170px;height:100px}
+.inv-side h3{margin:0;font-family:var(--display);font-weight:800;font-size:1.2rem}
+.inv-side .tags{justify-content:flex-start;margin:4px 0 0}
+.inv-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.inv-facts div{background:var(--panel-3);border-radius:10px;padding:7px 9px;display:grid;gap:1px}
+.inv-facts small{font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.inv-facts b{font-family:var(--display);font-weight:800;display:flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums}
+.inv-facts .pearl{width:12px;height:12px}
+.inv-use h5{margin:0 0 6px;font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.inv-use ul{margin:0;padding:0;list-style:none;display:grid;gap:5px}
+.inv-use li{font-size:.8rem;color:var(--muted);line-height:1.35}
+.inv-use li b{color:var(--text)}
+.inv-use li.no{opacity:.6}
+.inv-acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.inv-acts .btn{justify-content:center;min-width:0;white-space:normal;text-align:center}
+.inv-acts .btn.wide{grid-column:1 / -1}
 .inv-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:11px 2px;border-bottom:1px solid var(--line)}
 .inv-row:last-child{border-bottom:0}
 .inv-row .loot-ico{font-size:1.6rem;line-height:1;text-align:center}
@@ -1333,7 +1370,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const PAIR_XP = [400, 700, 1200, 2600, 6000];
   const TURN_XP = [90, 150, 260, 550, 1200];
   const HATCH_XP = [400, 800, 1600, 3500, 9000];
-  const COOK_XP = [60, 140, 300, 750, 2000];
+  /* A dish takes real time (2026-09-17): minutes by how deep the spot is plus
+     how rare the fish, from a 1-minute Bluegill to an hour-long Oarfish.
+     Xp is paid by the minute, so a long dish is worth waiting for rather than
+     a worse use of the stove. Level and Copper pans make it quicker, never
+     worth less. */
+  const COOK_MIN = [1, 3, 5, 7, 10, 15, 30, 45, 60];
+  const cookMin = (sp) => COOK_MIN[sp.spot + sp.rar];
+  const cookXp = (sp) => Math.round(cookMin(sp) * 100 * (1 + 0.25 * sp.rar));
   const TURN_MS = 10 * 60 * 1000;   // how often a nest can be turned
   /* Idle kit. Fishing is never idle — someone has to be holding the rod —
      but the other three can be left running once the skill is high enough.
@@ -1595,7 +1639,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (L >= stop) return 0;
     return COOK_BURN_TOP * Math.min(1, (stop - L) / Math.max(1, stop - can));
   }
-  const cookMs = () => Math.max(1500, 3000 - levelIn("cooking") * 15) * (S.gear.pans ? 0.75 : 1);
+  const cookSpeed = () => Math.max(0.5, 1 - (levelIn("cooking") - 1) * 0.0051) * (S.gear.pans ? 0.75 : 1);
+  const cookMs = (sp) => cookMin(sp) * 60000 * cookSpeed();
   const AUTO_RAR = { off: -1, common: 0, uncommon: 1, rare: 2 };
   function bankFish(sp) {
     if (bankCount() >= bankCap()) return false;
@@ -1623,7 +1668,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   /** Cook everything that should have finished by `until`. Returns how many came off. */
   function cookTick(until = Date.now(), idle = false, speed = 1) {
     const q = S.cookQ; if (!q) return 0;
-    const sp = BY_KEY[q.key], per = cookMs() / speed, burn = burnChance(sp.rar);
+    const sp = BY_KEY[q.key], per = cookMs(sp) / speed, burn = burnChance(sp.rar);
     let done = 0, burnt = 0, guard = 20000;
     while (q.left > 0 && until - q.last >= per && guard-- > 0) {
       q.last += per; q.left--;
@@ -1634,7 +1679,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     S.dishes[q.key] = (S.dishes[q.key] || 0) + done; S.stats.cooked += done;
     // one grant for the lot, so a thousand fish is one level-up, not a thousand
     if (done) {
-      const xp = COOK_XP[sp.rar] * done;
+      const xp = cookXp(sp) * done;
       if (idle) { idleLog.xp += idleGrant("cooking", xp * IDLE_CUT); idleLog.cooked += done; }
       else grant("cooking", xp);
     }
@@ -1717,7 +1762,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       const sp = BY_KEY[q.key];
       sb.innerHTML = `<h2 class="card-h">On the stove</h2>
         <div class="kq"><span class="kq-fish"></span><span class="kq-main"><b>${dishOf(sp).name}</b>
-          <small>${q.total - q.left} of ${q.total} · <span class="ok">${q.done} cooked</span> · <span class="no">${q.burnt} burnt</span> · ${(cookMs() / 1000).toFixed(1)}s each · ${Math.round(burnChance(sp.rar) * 100)}% burn</small></span></div>
+          <small>${q.total - q.left} of ${q.total} · <span class="ok">${q.done} cooked</span> · <span class="no">${q.burnt} burnt</span> · ${dur(cookMs(sp))} each · ${Math.round(burnChance(sp.rar) * 100)}% burn · <span id="kqLeft"></span></small></span></div>
         <div class="dive-bar kq-bar"><i id="kqBar"></i></div>`;
       sb.querySelector(".kq-fish").append(fishChip(sp, true));
       const stop = el("button", "btn small", "Stop"); stop.type = "button"; stop.addEventListener("click", stopCook);
@@ -1746,7 +1791,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       const sp = BY_KEY[k], n = S.bank[k], can = L >= COOK_CAN[sp.rar], burn = burnChance(sp.rar);
       const row = el("div", "krow" + (can ? "" : " locked"));
       const pic = el("span", "krow-fish"); pic.append(fishChip(sp, true));
-      row.append(pic, el("span", "krow-main", `<b>${sp.name} ×${num(n)}</b><small><span style="color:${RAR[sp.rar].color}">${RAR[sp.rar].name}</span> · ${can ? (burn ? `${Math.round(burn * 100)}% burn · stops at ${cookStop(sp.rar)}` : "never burns") : `Cooking ${COOK_CAN[sp.rar]} to cook`} · makes ${dishOf(sp).buff.icon} ${dishOf(sp).buff.name}</small>`));
+      row.append(pic, el("span", "krow-main", `<b>${sp.name} ×${num(n)}</b><small><span style="color:${RAR[sp.rar].color}">${RAR[sp.rar].name}</span> · ${can ? (burn ? `${Math.round(burn * 100)}% burn · stops at ${cookStop(sp.rar)}` : "never burns") : `Cooking ${COOK_CAN[sp.rar]} to cook`} · ${dur(cookMs(sp))} · ${num(cookXp(sp))} xp · makes ${dishOf(sp).buff.icon} ${dishOf(sp).buff.name}</small>`));
       const btns = el("span", "krow-btns");
       [["1", 1], ["10", 10], ["100", 100], ["All", n]].forEach(([t, m]) => {
         if (t !== "All" && m > n) return;
@@ -1791,7 +1836,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   /** The stove's bar moves every frame; the rest redraws only when a count changes. */
   function paintCookBar() {
     const q = S.cookQ, bar = $("kqBar"); if (!q || !bar) return;
-    bar.style.width = `${Math.min(100, ((Date.now() - q.last) / cookMs()) * 100)}%`;
+    const per = cookMs(BY_KEY[q.key]), into = Date.now() - q.last;
+    bar.style.width = `${Math.min(100, (into / per) * 100)}%`;
+    const left = $("kqLeft"); if (left) left.textContent = `${dur(per * q.left - into)} left`;
   }
 
   /* ============================================================ idle, bounded
@@ -3447,41 +3494,155 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     toast(`Sold ${n} × ${LOOT[key].name}`, `+${num(got)} pearls`);
     renderInv(); renderCraft(); renderDive(); renderStatbar(); save();
   }
+  /* The inventory is everything you are holding: the bag (dive and snag
+     finds), raw fish in the cold store, and cooked dishes. One grid of tiles,
+     and a column beside it for whichever tile is picked. */
+  let invSel = null;
+  const RAW_SELL = (sp) => Math.round(RAR[sp.rar].rate * 2);   // a dish sells for ×3 — cooking is worth it
+  function fishArt(sp, w, h) {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const cv = document.createElement("canvas");
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    const ctx = cv.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const long = sp.x === "sword" || sp.x === "paddle";
+    drawFish(ctx, sp, w / 2 + (long ? w * 0.1 : 0), h / 2, long ? w * 0.72 : w * 0.86, { wag: 0.06 });
+    return cv;
+  }
+  function sellBanked(key, all) {
+    const have = S.bank[key] || 0; if (!have) return;
+    const sp = BY_KEY[key], n = all ? have : 1, got = RAW_SELL(sp) * n;
+    S.bank[key] = have - n; if (!S.bank[key]) delete S.bank[key];
+    S.pearls += got;
+    toast(`Sold ${n} raw ${sp.name}`, `+${num(got)} pearls`);
+    renderKitchen(); renderInv(); renderStatbar(); save();
+  }
+  function invItems() {
+    const out = [];
+    LOOT_KEYS.filter((k) => S.inv[k]).forEach((k) => out.push({ id: "loot:" + k, kind: "loot", key: k, n: S.inv[k], name: LOOT[k].name, rar: LOOT[k].rar }));
+    SPECIES.filter((sp) => S.bank[sp.key]).forEach((sp) => out.push({ id: "fish:" + sp.key, kind: "fish", key: sp.key, sp, n: S.bank[sp.key], name: sp.name, rar: sp.rar }));
+    SPECIES.filter((sp) => S.dishes[sp.key]).forEach((sp) => out.push({ id: "dish:" + sp.key, kind: "dish", key: sp.key, sp, n: S.dishes[sp.key], name: dishOf(sp).name, rar: sp.rar }));
+    return out;
+  }
+  function invArt(it, big) {
+    const a = el("span", "inv-art" + (it.kind === "dish" ? " dish" : ""));
+    if (it.kind === "loot") a.textContent = LOOT[it.key].icon;
+    else a.append(big ? fishArt(it.sp, 170, 100) : fishArt(it.sp, 84, 50));
+    return a;
+  }
   function renderInv() {
     const box = $("inv"); if (!box) return;
     box.replaceChildren();
-    const keys = LOOT_KEYS.filter((k) => S.inv[k]);
+    const items = invItems();
+    const loot = items.filter((i) => i.kind === "loot"), fish = items.filter((i) => i.kind === "fish"), dishes = items.filter((i) => i.kind === "dish");
+    const worth = loot.reduce((n, i) => n + i.n * LOOT[i.key].value, 0);
     const intro = el("div", "panel-intro");
-    intro.append(el("p", null, keys.length ? `<b>${invCount()}</b> things, worth <b>${num(keys.reduce((n, k) => n + S.inv[k] * LOOT[k].value, 0))}</b> pearls if you sold the lot.` : "Empty. Dive a spot and see what's down there — or keep fishing and wait for a snag."));
+    intro.append(el("p", null, items.length
+      ? `Bag <b>${invCount()}</b> things (worth <b>${num(worth)}</b> pearls) · cold store <b>${bankCount()}</b> fish · pantry <b>${Object.values(S.dishes).reduce((a, b) => a + b, 0)}</b> dishes.`
+      : "Empty. Dive a spot and see what's down there, keep fishing and wait for a snag, or press Bank on a catch."));
     intro.append(el("span", "hint" + (bagFull() ? " bad" : ""), `Bag ${invCount()}/${bagCap()}${bagFull() ? " · full" : ""}${S.stats.snags ? ` · ${num(S.stats.snags)} off the line` : ""}`));
     box.append(intro);
-    if (!keys.length) return;
+    if (!items.length) return;
+    if (!items.some((i) => i.id === invSel)) invSel = items[0].id;
+
+    const wrap = el("div", "inv-wrap"), main = el("div");
+    const section = (title, sub, list, extra) => {
+      if (!list.length) return;
+      const sec = el("div", "inv-sec");
+      const h = el("h4", null, `${title} <span>${sub}</span>`);
+      sec.append(h);
+      if (extra) sec.append(extra);
+      const g = el("div", "inv-grid");
+      list.forEach((it) => {
+        const t = el("button", "inv-tile" + (it.id === invSel ? " on" : ""));
+        t.type = "button"; t.style.setProperty("--rc", RAR[it.rar].color);
+        t.setAttribute("aria-pressed", it.id === invSel ? "true" : "false");
+        t.title = it.name;
+        t.append(invArt(it, false), el("small", null, it.name), el("span", "inv-n", "×" + num(it.n)));
+        t.addEventListener("click", () => { invSel = it.id; renderInv(); });
+        g.append(t);
+      });
+      sec.append(g);
+      main.append(sec);
+    };
+    let junkBtn = null;
     if (S.conv.bag) {
-      const junk = keys.filter((k) => LOOT[k].rar === 0);
-      const worth = junk.reduce((n, k) => n + S.inv[k] * LOOT[k].value, 0);
-      const b = el("button", "btn small gold", `Sell all junk <span class="pearl"></span>${num(worth)}`);
-      b.type = "button"; b.disabled = !junk.length;
-      b.addEventListener("click", () => {
-        junk.forEach((k) => delete S.inv[k]);
-        S.pearls += worth;
-        toast("Bag emptied of junk", `+${num(worth)} pearls`);
+      const junk = loot.filter((i) => LOOT[i.key].rar === 0);
+      const jw = junk.reduce((n, i) => n + i.n * LOOT[i.key].value, 0);
+      junkBtn = el("button", "btn small gold", `🧺 Sell all junk <span class="pearl"></span>${num(jw)}`);
+      junkBtn.type = "button"; junkBtn.disabled = !junk.length; junkBtn.style.justifySelf = "start";
+      junkBtn.title = "Kelp, shells, driftwood and boots in one go. Recipes use them too, so check the crafting page first";
+      junkBtn.addEventListener("click", () => {
+        junk.forEach((i) => delete S.inv[i.key]);
+        S.pearls += jw;
+        toast("Bag emptied of junk", `+${num(jw)} pearls`);
         renderInv(); renderCraft(); renderDive(); renderStatbar(); save();
       });
-      const row = el("div", "inv-row");
-      row.append(el("span", "loot-ico", "🧺"), el("span", "inv-main", `<b>Bigger bag</b><small>Kelp, shells, driftwood and boots in one go. Recipes use them too, so check the crafting page first</small>`), b);
-      box.append(row);
     }
-    const list = el("div", "rows");
-    keys.forEach((k) => {
-      const it = LOOT[k];
-      const row = el("div", "inv-row");
-      row.append(el("span", "loot-ico", it.icon), el("span", "inv-main", `<b>${it.name} ×${S.inv[k]}</b><small><span style="color:${RAR[it.rar].color}">${RAR[it.rar].name}</span> · ${it.value} pearls each</small>`));
-      const one = el("button", "btn small", "Sell 1"); one.type = "button"; one.addEventListener("click", () => sellItem(k, false));
-      const all = el("button", "btn small gold", `Sell all <span class="pearl"></span>${num(it.value * S.inv[k])}`); all.type = "button"; all.addEventListener("click", () => sellItem(k, true));
-      row.append(one, all);
-      list.append(row);
-    });
-    box.append(list);
+    section("Bag", `${invCount()}/${bagCap()}`, loot, junkBtn);
+    section("Cold store", `${bankCount()}/${bankCap()} · raw fish`, fish);
+    section("Pantry", "cooked dishes", dishes);
+    wrap.append(main, invDetail(items.find((i) => i.id === invSel)));
+    box.append(wrap);
+  }
+  function invDetail(it) {
+    const side = el("aside", "inv-side");
+    side.setAttribute("aria-live", "polite");
+    const act = (label, cls, fn, off) => { const b = el("button", "btn small" + (cls ? " " + cls : ""), label); b.type = "button"; b.disabled = !!off; b.addEventListener("click", fn); return b; };
+    const head = el("div");
+    head.append(el("h3", null, it.name));
+    const tags = el("div", "tags");
+    tags.append(el("span", "tag", RAR[it.rar].name)); tags.lastChild.style.color = RAR[it.rar].color;
+    tags.append(el("span", "tag", it.kind === "loot" ? "Bag" : it.kind === "fish" ? "Raw fish" : "Dish"));
+    head.append(tags);
+    const facts = el("div", "inv-facts"), use = el("div", "inv-use"), acts = el("div", "inv-acts");
+    const fact = (k, v) => { const d = el("div"); d.append(el("small", null, k), el("b", null, v)); facts.append(d); };
+    const uses = [];
+    fact("You have", num(it.n));
+
+    if (it.kind === "loot") {
+      const v = LOOT[it.key].value;
+      fact("Sells for", `<span class="pearl"></span>${num(v)} each`);
+      const L = levelIn("crafting");
+      RECIPES.filter((r) => r.need[it.key]).forEach((r) => uses.push(
+        `<li class="${L < r.at ? "no" : ""}"><b>${r.name}</b> takes ${r.need[it.key]} · makes ${r.about}${L < r.at ? ` · Crafting ${r.at}` : ""}</li>`));
+      if (!uses.length) uses.push(`<li>Nothing uses it — it's here to be sold.</li>`);
+      acts.append(
+        act("Sell 1", "", () => sellItem(it.key, false)),
+        act(`Sell all <span class="pearl"></span>${num(v * it.n)}`, "gold", () => sellItem(it.key, true)));
+      if (RECIPES.some((r) => r.need[it.key])) acts.append(act("Open Crafting →", "wide", () => goTab("craft")));
+    } else if (it.kind === "fish") {
+      const sp = it.sp, d = dishOf(sp), L = levelIn("cooking"), can = COOK_CAN[sp.rar], burn = burnChance(sp.rar);
+      fact("Sells raw", `<span class="pearl"></span>${num(RAW_SELL(sp))} each`);
+      fact("Burn chance", L < can ? "—" : `${Math.round(burn * 100)}%`);
+      fact("Cooks at", `Cooking ${can}`);
+      fact("Cook time", `${dur(cookMs(sp))} · ${num(cookXp(sp))} xp`);
+      uses.push(`<li>Cooks into <b>${d.name}</b>, which sells for ${num(d.value)} — or eat it for <b>${d.buff.icon} ${d.buff.name}</b>: ${d.buff.say(d.mag)} for ${d.n} ${d.buff.unit}.</li>`);
+      uses.push(L < can ? `<li class="no">You need Cooking ${can} to cook it (you're ${L}).</li>`
+        : burn ? `<li>Stops burning at Cooking ${cookStop(sp.rar)}.</li>` : `<li>You never burn this one any more.</li>`);
+      const off = L < can || !!S.cookQ;
+      if (S.cookQ) uses.push(`<li class="no">The stove is busy with a batch.</li>`);
+      const cook = (n) => () => { startCook(it.key, n); if (S.cookQ) toast(`On the stove`, `${Math.min(n, it.n)} × ${sp.name}`); renderInv(); };
+      acts.append(act("Cook 1", "", cook(1), off), act(`Cook all (${num(it.n)})`, "", cook(it.n), off));
+      acts.append(
+        act("Sell 1", "", () => sellBanked(it.key, false)),
+        act(`Sell all <span class="pearl"></span>${num(RAW_SELL(sp) * it.n)}`, "gold", () => sellBanked(it.key, true)),
+        act("Open the Kitchen →", "wide", () => goTab("kitchen")));
+    } else {
+      const d = dishOf(it.sp), cur = S.buffs[d.buff.key];
+      fact("Sells for", `<span class="pearl"></span>${num(d.value)} each`);
+      fact("Lasts", `${d.n} ${d.buff.unit}`);
+      uses.push(`<li>Eat it for <b>${d.buff.icon} ${d.buff.name}</b>: ${d.buff.say(d.mag)} for ${d.n} ${d.buff.unit}.</li>`);
+      if (cur?.left) uses.push(`<li>Already on: ${cur.left} ${d.buff.unit} left. Eating adds to it.</li>`);
+      const after = () => { renderInv(); renderStatbar(); };
+      acts.append(
+        act("Eat 1", "wide gold", () => { eatDish(it.key); after(); }),
+        act("Sell 1", "", () => { sellDish(it.key, false); after(); }),
+        act(`Sell all <span class="pearl"></span>${num(d.value * it.n)}`, "", () => { sellDish(it.key, true); after(); }));
+    }
+    use.append(el("h5", null, "Used for"), el("ul", null, uses.join("")));
+    side.append(invArt(it, true), head, facts, use, acts);
+    return side;
   }
 
   /* ---------------------------------------------------------- breeding */
@@ -4332,9 +4493,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         Object.entries(r.need).map(([k, n]) => `${n} ${LOOT[k].name}`).join(", "), r.about, num(r.xp)]), [1, 4])}` },
 
     { key: "kitchen", name: "Kitchen", icon: "🍳", sub: "Bank, cook, burn, eat", body: () => `
-      <p>Bank a catch and it waits in the <b>cold store</b>, counted by species. In the Kitchen, pick a fish and cook 1, 10, 100 or all of them: each takes ${(cookMs() / 1000).toFixed(1)} seconds at your level, faster as you level and with Copper pans. The stove keeps going while the page is open, even on another page. With the <b>Smokehouse</b> it carries on while the page is closed, as idle work.</p>
+      <p>Bank a catch and it waits in the <b>cold store</b>, counted by species. In the Kitchen, pick a fish and cook 1, 10, 100 or all of them: each dish takes real time — from 1 minute for a Bluegill to an hour for the deep sea's best — and pays xp by the minute. Cooking level (up to twice as fast at 99) and Copper pans make it quicker. The stove keeps going while the page is open, even on another page. With the <b>Smokehouse</b> it carries on while the page is closed, as idle work.</p>
       <p>Every fish can first be cooked at one level and <b>stops burning</b> at another. Between the two, the burn chance falls from 55% to nothing. Chef's gauntlets bring every stop-burning level 8 closer. Burnt fish are not wasted: ten of them compost onto the bait beds.</p>
-      ${wkTable(["Rarity", "Can cook at", "Stops burning at", "Cooking xp"], RAR.map((r, i) => [wkRar(i), `${COOK_CAN[i]}`, `${cookStop(i)}`, num(COOK_XP[i])]), [1, 2, 3])}
+      ${wkTable(["Rarity", "Can cook at", "Stops burning at"], RAR.map((r, i) => [wkRar(i), `${COOK_CAN[i]}`, `${cookStop(i)}`]), [1, 2])}
+      ${wkTable(["Fish", "Time (base)", "Cooking xp"], SPECIES.map((sp) => [sp.name, `${cookMin(sp)} min`, num(cookXp(sp))]), [1, 2])}
       <h3>Dishes are buffs</h3>
       <p>Where a fish came from decides what its dish does; how rare it is decides how long it lasts. Eating another of the same kind adds to what is left and keeps the stronger effect. You can sell a dish instead, for about what the raw fish would have made.</p>
       ${wkTable(["Water", "Dish", "Buff", "Lasts"], SPOTS.map((sp, i) => [sp.name, `${METHOD[i]} …`, `${BUFF[i].icon} ${BUFF[i].name}: ${BUFF[i].say(BUFF[i].mag[2])}`, `${BUFF[i].n[0]}–${BUFF[i].n[4]} ${BUFF[i].unit}`]))}
@@ -4726,8 +4888,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { tab: "dive", name: "Diving", when: () => levelIn("fishing") >= 12,
       need: "Fishing level 12", have: () => `you're ${levelIn("fishing")}`,
       why: "There is more down there than fish. Hold your breath and see what is on the bottom." },
-    { tab: "inv", name: "your Inventory", when: () => invCount() > 0,
-      need: "something in your bag — dive, or snag one on the line",
+    { tab: "inv", name: "your Inventory", when: () => invCount() > 0 || bankCount() > 0 || Object.keys(S.dishes).length > 0,
+      need: "something in your bag or cold store — dive, snag one on the line, or bank a catch",
       why: "You brought something up. Everything you find lives in the bag until you sell or use it." },
     { tab: "kitchen", name: "the Kitchen", when: () => bankCount() > 0 || S.stats.cooked > 0,
       need: "a fish in the cold store — press Bank on a catch",
