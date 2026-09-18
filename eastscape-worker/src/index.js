@@ -538,7 +538,7 @@ export class World {
       if (b.working && (now > b.working.until || b.path.length)) b.working = null;
     }
     for (const n of [...S.npcs, ...S.bots]) {
-      if (n.working || n.holdUntil > now) continue;
+      if (n.working || n.holdUntil > now || n.still) continue;   // "still" NPCs keep to their spot
       if (!this.stepEntity(S, n, now, false) && now > n.nextWander) {
         n.nextWander = now + (n.level ? 1500 : 4000) + Math.random() * 5000;
         if (n.level && Math.random() < 0.45) {
