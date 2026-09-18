@@ -4394,7 +4394,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   // an old #hash link still works, and is upgraded to the real path
   if (fromHash && navOpen(fromHash.dataset.tab)) openTab(fromHash);
   $("cTour").addEventListener("click", () => tourStart());
-  if (!S.tour) setTimeout(tourStart, 500);
+  /* Only on the game's own front door. A first visit that arrives on a deep
+     link — someone handed a new player /fishing/wiki or /fishing/u/<name> —
+     would otherwise be dragged back to Fishing by the tour's first step. They
+     get the tour the first time they land on /fishing itself, and it is on
+     the Controls page either way. */
+  if (!S.tour && (readPath().tab || "fishing") === "fishing" && !viewing) setTimeout(tourStart, 500);
   requestAnimationFrame(frame);
   setInterval(save, 5000);
   document.addEventListener("visibilitychange", save);
