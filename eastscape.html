@@ -229,14 +229,15 @@ button,input,select{font:inherit}
 .ph small{font-weight:600;text-transform:none;color:#6a5a40}
 .inv{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:6px}
 .ico{width:1.3em;height:1.3em;image-rendering:pixelated;vertical-align:-.3em;object-fit:contain}
-.slot .ico,.eq .ico{width:78%;height:78%;vertical-align:0}.eq .ico{width:62%;height:62%}
+.slot .ico,.eq .ico{width:86%;height:86%;vertical-align:0}.slot .ico{margin-top:10%}.eq .ico{width:62%;height:62%}
 .slot{position:relative;aspect-ratio:1;border:1px solid #bfb193;background:#e6dcc4;display:grid;place-items:center;font-size:26px;cursor:pointer;user-select:none}
 .slot:hover{background:#efe6d0}
 .slot.empty{cursor:default;background:#e2d8bf}
 .slot.hint{outline:3px solid #ffb400;outline-offset:-3px;animation:hint .6s ease-in-out infinite alternate}
 @keyframes hint{from{background:#e6dcc4}to{background:#ffe27a}}
 @media (prefers-reduced-motion:reduce){.slot.hint{animation:none;background:#ffe27a}}
-.slot em{position:absolute;left:2px;top:0;font-style:normal;font-size:12px;font-weight:800;color:#ff0;text-shadow:1px 1px 0 #000,-1px 0 0 #000,0 -1px 0 #000,1px 0 0 #000}
+.slot em{position:absolute;left:1px;top:1px;font-style:normal;font-size:11px;font-weight:800;line-height:1;color:#ffe45c;background:rgba(26,16,8,.72);padding:1px 3px 2px;border-radius:3px;text-shadow:none;pointer-events:none}
+.slot em.k{color:#fff}.slot em.m{color:#7dff6a}
 .doll{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(4,64px);gap:6px;justify-content:center;padding:14px 6px 8px;
   grid-template-areas:". helm ." "weapon body shield" ". legs ." "gloves boots ring"}
 .eq{border:2px solid #8a7a5a;border-radius:4px;background:#d8cbac;display:grid;place-items:center;font-size:30px;position:relative;cursor:pointer;color:inherit;padding:0}
@@ -1575,7 +1576,9 @@ document.addEventListener("keydown", (e) => {
 });
 // windows that need you standing somewhere close themselves when you walk off
 setInterval(() => { if (PRED.on && PRED.step) for (const w of ["bankWin", "exWin"]) $(w).hidden = true; }, 300);
-const slotHtml = (s, i, attr = "data-i") => `<div class="slot" ${attr}="${i}" title="${esc(ITEMS[s.k].name)}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}">${ico(s.k)}${s.n > 1 ? `<em>${s.n >= 100000 ? Math.floor(s.n / 1000) + "k" : s.n.toLocaleString()}</em>` : ""}</div>`;
+// stack sizes the old-school way: in full to 9,999, then K (white) and M (green); the exact number is in the tooltip
+const qty = (n) => n >= 1e6 ? `<em class="m">${(n / 1e6).toFixed(n < 1e7 ? 1 : 0).replace(/\.0$/, "")}M</em>` : n >= 1e4 ? `<em class="k">${Math.floor(n / 1000)}K</em>` : `<em>${n.toLocaleString()}</em>`;
+const slotHtml = (s, i, attr = "data-i") => `<div class="slot" ${attr}="${i}" title="${esc(ITEMS[s.k].name)}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}</div>`;
 
 /* ------------------------------------------------------------ islands */
 function renderIsles(list) {
@@ -1680,7 +1683,7 @@ function tradeReqLine(from, name) {
 }
 $("tradeX").addEventListener("click", () => send({ t: "trade", op: "decline" }));
 function offerHtml(off, clickable) {
-  const items = Object.entries(off.items).map(([k, n]) => `<div class="slot"${clickable ? ` data-rm="${k}"` : ""} title="${esc(ITEMS[k].name)}${clickable ? " — click to take back" : ""}">${ico(k)}${n > 1 ? `<em>${n.toLocaleString()}</em>` : ""}</div>`).join("");
+  const items = Object.entries(off.items).map(([k, n]) => `<div class="slot"${clickable ? ` data-rm="${k}"` : ""} title="${esc(ITEMS[k].name)}${clickable ? " — click to take back" : ""}">${ico(k)}${n > 1 ? `${qty(n)}` : ""}</div>`).join("");
   return `<div class="grid8">${items || '<p class="note">Nothing yet.</p>'}</div>${off.cash ? `<div class="cash">+ ${G.fmtCash(off.cash)}</div>` : ""}`;
 }
 function renderTrade() {
@@ -1903,7 +1906,7 @@ function renderPanel() {
   const p = $("panel");
   if (tab === "inv") {
     const hint = hintSlot && hintSlot.until > performance.now() ? hintSlot.k : null;
-    const cells = me.inv.map((s, i) => `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" title="${esc(ITEMS[s.k].name)}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""} — ${ITEMS[s.k].slot ? (ITEMS[s.k].slot === "weapon" ? "click to wield" : "click to wear") : "click to examine"}, shift-click to drop">${ico(s.k)}${s.n > 1 ? `<em>${s.n >= 100000 ? Math.floor(s.n / 1000) + "k" : s.n.toLocaleString()}</em>` : ""}</div>`);
+    const cells = me.inv.map((s, i) => `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" title="${esc(ITEMS[s.k].name)}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""} — ${ITEMS[s.k].slot ? (ITEMS[s.k].slot === "weapon" ? "click to wield" : "click to wear") : "click to examine"}, shift-click to drop">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}</div>`);
     while (cells.length < G.INV_MAX) cells.push('<div class="slot empty"></div>');
     p.innerHTML = `<div class="ph">Inventory <small>${me.inv.length}/${G.INV_MAX}</small></div><div class="inv">${cells.join("")}</div>`;
     p.querySelectorAll(".slot[data-i]").forEach((el) => el.addEventListener("click", (e) => {
