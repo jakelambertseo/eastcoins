@@ -20,7 +20,7 @@
 import * as G from "../../v3/assets/js/eastscape-shared.js";
 
 const TICK_MS = 100;         // the world steps ten times a second
-const SNAP_EVERY = 2;        // and tells everyone about it five times a second
+const SNAP_EVERY = 1;        // and tells everyone about it every step (the page predicts your own movement anyway)
 const SAVE_MS = 4000;        // a changed character is written at most this long after the change
 const STEP = 240;            // one tile of walking
 const SCENE_IDLE_MS = 120000;
@@ -178,11 +178,13 @@ export class World {
       case "ping": return this.send(pl, { type: "pong", t: now, c: m.c });
       case "walk": {
         if (!Number.isInteger(m.x) || !Number.isInteger(m.y)) return;
-        pl.act = null; const p = G.findPath(S.g, pl, { x: m.x, y: m.y }, 0); if (p) pl.path = p; return;
+        // path from where you'll be when the current step lands, so a new click never stops you dead
+        pl.act = null; const p = G.findPath(S.g, this.from(pl), { x: m.x, y: m.y }, 0); if (p) { pl.path = p; this.kick(S, pl, now); } return;
       }
       case "step": {
-        const dx = Math.sign(m.dx | 0), dy = Math.sign(m.dy | 0);
-        if ((dx || dy) && !pl.step && !pl.path.length && G.canStepIn(S.g, pl.x, pl.y, dx, dy)) { pl.act = null; pl.path = [{ x: pl.x + dx, y: pl.y + dy }]; }
+        const dx = Math.sign(m.dx | 0), dy = Math.sign(m.dy | 0), f = this.from(pl);
+        // held keys: queue the next step behind the one in progress rather than dropping it
+        if ((dx || dy) && G.canStepIn(S.g, f.x, f.y, dx, dy)) { pl.act = null; pl.path = [{ x: f.x + dx, y: f.y + dy }]; this.kick(S, pl, now); }
         return;
       }
       case "act": return this.startAct(S, pl, m);
@@ -194,11 +196,11 @@ export class World {
         C.inv.splice(i, 1); this.say(pl, `You drop the ${G.ITEMS[st.k].name.toLowerCase()}.`); this.touch(pl); return;
       }
       case "chat": {
-        // public chat: everyone in the same area sees it, and it floats over the speaker's head
+        // public chat is game-wide: everyone online sees it; it floats over the speaker's head for those in the same area
         const text = String(m.text || "").replace(/[\u0000-\u001f\u007f]/g, "").replace(/\s+/g, " ").trim().slice(0, 120);
         if (!text || now - (pl.lastChat || 0) < 700) return;
         pl.lastChat = now;
-        S.events.push({ type: "chat", id: pl.id, name: pl.name, text, t: now });
+        for (const p of this.pls.values()) p.out.push({ type: "chat", id: pl.id, name: pl.name, text, scene: pl.C.scene, t: now });
         return;
       }
       case "quest": return this.questOp(S, pl, m);
@@ -211,8 +213,13 @@ export class World {
     }
   }
 
+  // where a player will stand once the step in progress lands
+  from(pl) { return pl.step ? { x: pl.step.tx, y: pl.step.ty } : { x: pl.x, y: pl.y }; }
+  // start walking straight away rather than on the next tick
+  kick(S, pl, now) { if (!pl.step) this.stepEntity(S, pl, now, true); }
+
   startAct(S, pl, m) {
-    const C = pl.C;
+    const C = pl.C, f = this.from(pl), now = Date.now();
     let act = null;
     if (m.kind === "mob") { const mob = S.mobs.find((x) => x.id === m.id && !x.dead); if (mob) act = { kind: "mob", id: mob.id, x: mob.x, y: mob.y, name: G.MOBS[mob.t].name }; }
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name }; }
@@ -220,14 +227,14 @@ export class World {
       const ob = S.objs[m.ob | 0]; if (!ob) return;
       const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine" }[ob.t] || (EXAMINE_KINDS.has(ob.t) ? ob.t : null);
       if (!kind) return;
-      const at = kind === "door" ? ob.door : G.nearestCell(ob, pl);
+      const at = kind === "door" ? ob.door : G.nearestCell(ob, f);
       act = { kind, ob, x: at.x, y: at.y, name: ob.name };
     }
     if (!act) return;
     act.started = 0;
-    const p = G.findPath(S.g, pl, act, G.reachOf(act.kind) || 1);
+    const p = G.findPath(S.g, f, act, G.reachOf(act.kind) || 1);
     if (p === null) { this.say(pl, "You can't reach that.", "bad"); pl.act = null; return; }
-    pl.act = act; pl.path = p;
+    pl.act = act; pl.path = p; this.kick(S, pl, now);
   }
 
   /* ------------------------------------------------------------ inventory and gear */
