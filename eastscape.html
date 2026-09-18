@@ -43,8 +43,8 @@ button,input,select{font:inherit}
 .dlg{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:min(620px,calc(100% - 24px));display:grid;grid-template-columns:84px 1fr;gap:12px;padding:12px 14px;background:var(--panel);color:var(--panel-ink);border:3px solid var(--frame);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:5}
 .dlg[hidden]{display:none}
 .game:has(.dlg:not([hidden])) .feed{bottom:190px}
-/* with the chat open, game messages go into it instead of floating over the map */
-.game:has(.chat-box:not([hidden])) .feed{display:none}
+/* with the chat open, game messages float just above it */
+.game:has(.chat-box:not([hidden])) .feed{bottom:302px}
 .dlg-face{width:84px;height:84px;border:2px solid #8a7a5a;background:#d8cbac;display:grid;place-items:center;overflow:hidden;font-size:40px}
 .dlg-face img{width:136px;height:136px;image-rendering:pixelated;object-fit:none;object-position:50% 28%}
 .dlg-body b{display:block;font-size:16px;color:#7a2a1a}
@@ -412,7 +412,6 @@ document.addEventListener("keydown", (e) => {
 
 /* ------------------------------------------------------------ messages */
 function say(text, cls = "sys") {
-  gameLine(text, cls);
   const p = document.createElement("p"); p.className = cls; p.textContent = text;
   const log = $("log"); log.append(p); while (log.children.length > 5) log.firstChild.remove();
   setTimeout(() => p.remove(), 9000);

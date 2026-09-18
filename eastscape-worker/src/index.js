@@ -19,8 +19,8 @@
 
 import * as G from "../../v3/assets/js/eastscape-shared.js";
 
-const TICK_MS = 100;         // the world steps ten times a second
-const SNAP_EVERY = 1;        // and tells everyone about it every step (the page predicts your own movement anyway)
+const TICK_MS = 50;          // the world steps twenty times a second, so actions start the moment you arrive
+const SNAP_EVERY = 2;        // the world's state goes out ten times a second; your own news (xp, messages, dialogue) every tick
 const SAVE_MS = 4000;        // a changed character is written at most this long after the change
 const STEP = 240;            // one tile of walking
 const SCENE_IDLE_MS = 120000;
@@ -324,7 +324,7 @@ export class World {
       this.nextChatter = now + 9000;
       for (const key of live) { const S = this.scenes.get(key); if (S?.bots.length && Math.random() < 0.35) S.events.push({ type: "bubble", id: pick(S.bots).id, text: pick(BOT_LINES), t: now }); }
     }
-    if (this.tickN % SNAP_EVERY === 0) this.broadcast(now);
+    if (this.tickN % SNAP_EVERY === 0) this.broadcast(now); else this.sendPrivate();
     // saving: anything changed more than SAVE_MS ago is written now
     for (const pl of this.pls.values()) if (pl.needSave && pl.changedAt && now - pl.changedAt >= SAVE_MS) { pl.changedAt = null; this.persist(pl); }
   }
@@ -578,8 +578,11 @@ export class World {
       snaps.set(key, this.snapOf(S, now));
       S.events = [];
     }
+    for (const pl of this.pls.values()) { const s = snaps.get(pl.C.scene); if (s) this.send(pl, s); }
+    this.sendPrivate();
+  }
+  sendPrivate() {
     for (const pl of this.pls.values()) {
-      const s = snaps.get(pl.C.scene); if (s) this.send(pl, s);
       if (pl.dirty) { pl.dirty = false; this.send(pl, { type: "me", me: this.meOf(pl) }); }
       if (pl.out.length) { this.send(pl, { type: "ev", list: pl.out }); pl.out = []; }
     }
