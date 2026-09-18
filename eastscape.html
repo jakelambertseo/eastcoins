@@ -415,7 +415,7 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=16";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=17";
 import * as WK from "/v3/assets/js/eastscape-wiki.js?v=5";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -611,14 +611,11 @@ function say(text, cls = "sys") {
 }
 
 /* ------------------------------------------------------------ the art (PixelLab, style A) */
-const ART = "/v3/assets/img/glad/flat/", ART_V = 1;
+const ART = "/v3/assets/img/glad/flat/", ART_V = 3;
 // pictures replaced after they first shipped (the edge keeps each URL for a year): bump the one that changed
-const ART_VER = { o_fountain: 2, o_stall: 2, o_ferry: 2, o_bed: 2, bank: 2, cottage: 2, hole: 2,
-  // every character redrawn in the hero's own style (PixelLab pro, styled on the hero)
-  ...Object.fromEntries(["tom", "waldy", "tullius", "charon", "livia", "gaius", "nonna", "vibius", "aurelia", "cassia"].flatMap((n) => [[n + "_south", 2], [n + "_east", 2]])),
-  ...Object.fromEntries(["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].map((d) => ["hero_tiro_" + d, 2])) };
+const ART_VER = {};   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
 const ART_FILES = ["t_dirt", "t_water", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
-  ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d]),
+  ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d, "legend_" + d]),
   "bank", "store", "cottage", "o_spot", "g_bush", "g_boulder", "g_grass", "g_flowers",
   ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
   ...["tom", "waldy", "tullius", "charon", "livia", "gaius", "nonna", "vibius", "aurelia", "cassia"].flatMap((n) => [n + "_south", n + "_east"]),
@@ -662,7 +659,7 @@ function spr(k, x, y, flip = false, filter = "", sc = 1) {
 }
 // item and skill icons (PixelLab): art where it exists, the emoji where it doesn't
 const ITEM_ART = new Set(["ashlogs", "axe", "beef", "bogplate", "bones", "bronzecuirass", "cap", "chicken", "cobweb", "coins", "copper", "feather", "geode", "gloomfin", "goldtomatoe", "grimstone", "grudge", "hide", "husk", "lantern", "logs", "manifesto", "marble", "mask", "menace", "monocle", "mooncarp", "olives", "parma", "pickaxe", "pit", "pork", "receipt", "rod", "rudis", "sandals", "sardine", "spiderboots", "stardust", "sunolive", "tin", "toga", "tomatoe", "trout", "tunic", "tusk", "wheat", "wraithhood", "yewlogs"]), SKILL_ART = new Set(["farming", "fishing", "hp", "melee", "mining", "woodcutting"]), EQ_ART = new Set(["body", "boots", "gloves", "helm", "legs", "ring", "shield", "weapon"]);
-const IART = "/v3/assets/img/glad/flat/items/", IART_V = 1, ICO_IMG = {};
+const IART = "/v3/assets/img/glad/flat/items/", IART_V = 2, ICO_IMG = {};
 for (const k of [...ITEM_ART, ...[...SKILL_ART].map((x) => "skill_" + x), ...[...EQ_ART].map((x) => "eq_" + x)]) { const im = new Image(); im.src = `${IART}${k}.png?v=${IART_V}`; ICO_IMG[k] = im; }
 const artOf = (k) => `<img class="ico" src="${IART}${k}.png?v=${IART_V}" alt="">`;
 const ico = (k) => (ITEM_ART.has(k) ? artOf(k) : ITEMS[k]?.icon || "");
@@ -1374,7 +1371,8 @@ function frame() {
   } });
   for (const b of Z.bots) sprites.push({ y: posOf(b, now).py * T + 14, draw: () => {
     const p = posOf(b, now), sw = b.work != null && !calm ? Math.max(0, Math.sin(pnow / 180 + b.x)) * 1.5 : 0;
-    spr(`hero_${b.dir || "south"}`, p.px * T + 8 + (b.face || 1) * sw, p.py * T + 15 + bobOf(p.moving), false, `hue-rotate(${b.hue || 0}deg)`);
+    const bk = b.art && IMG[`${b.art}_${b.dir || "south"}`] ? `${b.art}_${b.dir || "south"}` : `hero_${b.dir || "south"}`;
+    spr(bk, p.px * T + 8 + (b.face || 1) * sw, p.py * T + 15 + bobOf(p.moving), false, b.art ? "" : `hue-rotate(${b.hue || 0}deg)`);
   } });
   // players (you among them): 8 facings, a lunge when swinging, red when hit
   const pos = (pl) => (pl.id === you.id ? ownPos(pl, now) : posOf(pl, now));
