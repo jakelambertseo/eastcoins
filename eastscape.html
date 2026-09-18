@@ -415,7 +415,7 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=13";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=15";
 import * as WK from "/v3/assets/js/eastscape-wiki.js?v=5";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -610,34 +610,49 @@ function say(text, cls = "sys") {
 /* ------------------------------------------------------------ the art (PixelLab, style A) */
 const ART = "/v3/assets/img/glad/flat/", ART_V = 1;
 const ART_FILES = ["t_dirt", "t_water", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
-  ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].map((d) => "hero_" + d),
+  ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d]),
+  "bank", "store", "cottage", "g_bush", "g_boulder", "g_grass", "g_flowers",
+  ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
   ...["tom", "waldy", "tullius", "charon", "livia", "gaius", "nonna", "vibius", "aurelia", "cassia"].flatMap((n) => [n + "_south", n + "_east"]),
   // the Wilderness (PixelLab, 2026-09-18)
   "t_wdirt", "t_wwater", "deadtree", "w_tree", "snag", "w_bush", "w_boulder", "grimstone", "gravestone", "skeleton", "rope", "cagesign", "gnasher", "taxwraith", "chandelier", "revenant",
   // the rest of the monsters (PixelLab, overnight 2026-09-18)
   "olive", "boar", "goat", "rotten", "hornworm", "highwayman",
   // scenery (PixelLab, overnight 2026-09-18)
-  "o_barricade", "o_bigtomato", "o_chariot", "o_crate", "o_cypress", "o_fountain", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_notice", "o_oak", "o_olive", "o_press", "o_rock_copper", "o_rock_marble", "o_rock_stardust", "o_rock_tin", "o_scarecrow", "o_shrine", "o_sign", "o_stall", "o_statue", "o_toll", "o_vein_copper", "o_vine", "o_vine_gold", "o_yew"];
+  "o_barrel", "o_barricade", "o_bed", "o_bench", "o_bigtomato", "o_booth", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chair", "o_chariot", "o_chest", "o_column", "o_crate", "o_cypress", "o_cypress_stump", "o_deadtree_stump", "o_ferry", "o_fire", "o_fountain", "o_goatstatue", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_notice", "o_oak", "o_oak_stump", "o_olive", "o_olive_bare", "o_pedestal", "o_plant", "o_plot", "o_press", "o_range", "o_rock_copper", "o_rock_empty", "o_rock_marble", "o_rock_stardust", "o_rock_tin", "o_sack", "o_scarecrow", "o_shrine", "o_sign", "o_stall", "o_statue", "o_table", "o_toll", "o_tree_stump", "o_vein_copper", "o_vine", "o_vine_bare", "o_vine_gold", "o_yew", "o_yew_stump"];
 const IMG = {};
 // NPCs whose art came later (PixelLab, overnight 2026-09-18): matched by name, so the shared rules don't change
+// NPC art came out at different sizes: draw everyone at one height (the hero is 48), a few on purpose
+const NPC_H = { tom: 58, gaius: 58, nonna: 44 };
+const npcScale = (k, art) => { const a = IMG[k]; return a ? (NPC_H[art] || 52) / (a.foot - a.top) : 1; };
 const NPC_ART = { "Charon the Ferryman": "charon", "Livia the Broker": "livia", "Gaius": "gaius", "Nonna Tomatoe": "nonna", "Centurion Vibius": "vibius", "Aurelia": "aurelia", "Cassia": "cassia" };
 const artReady = Promise.all(ART_FILES.map((k) => new Promise((res) => {
   const im = new Image(); im.onload = () => {
     const c = document.createElement("canvas"); c.width = im.width; c.height = im.height; const o = c.getContext("2d"); o.drawImage(im, 0, 0);
     const d = o.getImageData(0, 0, im.width, im.height).data; let x0 = im.width, x1 = -1, y0 = im.height, y1 = -1;
     for (let y = 0; y < im.height; y++) for (let x = 0; x < im.width; x++) if (d[(y * im.width + x) * 4 + 3] > 40) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
-    IMG[k] = { im, cx: (x0 + x1 + 1) / 2, foot: y1 + 1, top: y0, w: x1 - x0 + 1 }; res();
+    // its silhouette, for the cast shadow
+    const sh = document.createElement("canvas"); sh.width = im.width; sh.height = im.height; const so = sh.getContext("2d"); so.drawImage(im, 0, 0); so.globalCompositeOperation = "source-in"; so.fillStyle = "#1a1020"; so.fillRect(0, 0, im.width, im.height);
+    IMG[k] = { im, sh, cx: (x0 + x1 + 1) / 2, foot: y1 + 1, top: y0, w: x1 - x0 + 1 }; res();
   };
   im.onerror = () => res(); im.src = `${ART}${k}.png?v=${ART_V}`;
 })));
+/* painted sunlight: everything stands on its own shadow, its silhouette laid flat on the ground and leaning away
+   from a sun behind the viewer's left shoulder. Purely a picture; nothing in the game knows about light. */
+const SHADOW = { skew: -0.85, flat: 0.34, alpha: 0.26 }, NO_SHADOW = new Set(["hole"]);
+function castShadow(ctx2, a, flip, sc) {
+  ctx2.save(); ctx2.transform(1, 0, SHADOW.skew, SHADOW.flat, 0, 0); if (flip) ctx2.scale(-1, 1); if (sc !== 1) ctx2.scale(sc, sc);
+  ctx2.globalAlpha = SHADOW.alpha; ctx2.drawImage(a.sh, -Math.round(a.cx), -a.foot); ctx2.restore();
+}
 function spr(k, x, y, flip = false, filter = "", sc = 1) {
   const a = IMG[k]; if (!a) return false;
+  if (a.sh && !NO_SHADOW.has(k)) { lc.save(); lc.setTransform(1, 0, 0, 1, Math.round(x * A), Math.round(y * A)); castShadow(lc, a, flip, sc); lc.restore(); }
   lc.save(); lc.setTransform(1, 0, 0, 1, Math.round(x * A), Math.round(y * A)); if (flip) lc.scale(-1, 1); if (sc !== 1) lc.scale(sc, sc);
   if (filter) lc.filter = filter;
   lc.drawImage(a.im, -Math.round(a.cx), -a.foot); lc.restore(); return true;
 }
 // item and skill icons (PixelLab): art where it exists, the emoji where it doesn't
-const ITEM_ART = new Set(["ashlogs", "axe", "beef", "bogplate", "bones", "cap", "chicken", "cobweb", "coins", "copper", "feather", "geode", "gloomfin", "goldtomatoe", "grimstone", "grudge", "hide", "husk", "lantern", "logs", "manifesto", "marble", "mask", "menace", "monocle", "mooncarp", "olives", "parma", "pickaxe", "pit", "pork", "receipt", "rod", "rudis", "sandals", "sardine", "spiderboots", "stardust", "sunolive", "tin", "toga", "tomatoe", "trout", "tunic", "tusk", "wheat", "wraithhood", "yewlogs"]), SKILL_ART = new Set(["farming", "fishing", "hp", "melee", "mining", "woodcutting"]), EQ_ART = new Set(["body", "boots", "gloves", "helm", "legs", "ring", "shield", "weapon"]);
+const ITEM_ART = new Set(["ashlogs", "axe", "beef", "bogplate", "bones", "bronzecuirass", "cap", "chicken", "cobweb", "coins", "copper", "feather", "geode", "gloomfin", "goldtomatoe", "grimstone", "grudge", "hide", "husk", "lantern", "logs", "manifesto", "marble", "mask", "menace", "monocle", "mooncarp", "olives", "parma", "pickaxe", "pit", "pork", "receipt", "rod", "rudis", "sandals", "sardine", "spiderboots", "stardust", "sunolive", "tin", "toga", "tomatoe", "trout", "tunic", "tusk", "wheat", "wraithhood", "yewlogs"]), SKILL_ART = new Set(["farming", "fishing", "hp", "melee", "mining", "woodcutting"]), EQ_ART = new Set(["body", "boots", "gloves", "helm", "legs", "ring", "shield", "weapon"]);
 const IART = "/v3/assets/img/glad/flat/items/", IART_V = 1, ICO_IMG = {};
 for (const k of [...ITEM_ART, ...[...SKILL_ART].map((x) => "skill_" + x), ...[...EQ_ART].map((x) => "eq_" + x)]) { const im = new Image(); im.src = `${IART}${k}.png?v=${IART_V}`; ICO_IMG[k] = im; }
 const artOf = (k) => `<img class="ico" src="${IART}${k}.png?v=${IART_V}" alt="">`;
@@ -650,9 +665,16 @@ function drawIco(k, x, y, size, skill) {
   ctx.font = `${Math.round(size * 0.8)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(skill ? SKILLS[k].icon : ITEMS[k].icon, x, y);
 }
 // scenery art: o_<type>, rocks and veins by their ore, the golden vine its own; null when there's no picture
-const objArt = (ob) => { const k = ob.t === "rock" || ob.t === "vein" ? `o_${ob.t}_${ob.ore}` : ob.t === "vine" && ob.special ? "o_vine_gold" : `o_${ob.t}`; return IMG[k] ? k : null; };
+const objArt = (ob, now = 0) => {
+  if (ob.t === "plot") return null;
+  const k = ob.stumpUntil > now ? `o_${ob.t}_stump` : ob.emptyUntil > now ? "o_rock_empty" : ob.bareUntil > now ? `o_${ob.t}_bare`
+    : ob.t === "rock" || ob.t === "vein" ? `o_${ob.t}_${ob.ore}` : ob.t === "vine" && ob.special ? "o_vine_gold" : ob.t === "boatback" ? "o_ferry" : `o_${ob.t}`;
+  return IMG[k] ? k : null;
+};
+// the back wall's decor, centred where the drawn versions were
+const WALL_CX = { banner: 5, lamp: 4, vault: 0, herbs: 1, shelf: 1, window: 0 };
 // a few pictures came out small for their spot: drawn a bit bigger
-const OBJ_SCALE = { o_stall: 1.5, o_fountain: 1.4 };
+const OBJ_SCALE = {}, HOUSE_SCALE = {};   // integer sizes only: a fractional scale makes pixel art uneven
 const objBusy = (ob, now) => ob.stumpUntil > now || ob.emptyUntil > now || ob.bareUntil > now;
 const WANG = [[64, 32], [96, 32], [64, 64], [32, 64], [64, 0], [96, 64], [0, 32], [96, 96], [32, 32], [64, 96], [32, 0], [0, 64], [96, 0], [0, 0], [32, 96], [0, 96]];
 
@@ -679,9 +701,10 @@ function paintBg() {
   // island themes recolour the land
   if (theme === "dunes" || theme === "gloom") for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (".sb".includes(Z.g[y][x])) f(x * 32, y * 32, 32, 32, theme === "dunes" ? "rgba(236,204,128,.62)" : "rgba(70,66,86,.55)");
   o.scale(A, A);
-  const bgSpr = (k, x, y) => { const a = IMG[k]; if (!a) return false; o.drawImage(a.im, x - a.cx / A, y - a.foot / A, a.im.width / A, a.im.height / A); return true; };
+  const bgSpr = (k, x, y) => { const a = IMG[k]; if (!a) return false; o.save(); o.translate(x, y); o.scale(1 / A, 1 / A); castShadow(o, a, false, 1); o.restore(); o.drawImage(a.im, x - a.cx / A, y - a.foot / A, a.im.width / A, a.im.height / A); return true; };
   if (!dark && theme !== "gloom") for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (Z.g[y][x] === ".") {
     const r = hashRand(x, y, 31), X = x * T, Y = y * T;
+    if (r < 0.2 && IMG.g_grass && IMG.g_flowers) { const im = (r < 0.09 ? IMG.g_flowers : IMG.g_grass).im; o.drawImage(im, X + Math.floor(hashRand(x, y, 35) * 4) - 2, Y + Math.floor(hashRand(x, y, 36) * 4) - 2, T, T); continue; }
     if (r < 0.09) { const c = ["#f4f0e0", "#f2c230", "#d8506a", "#a070d8"][Math.floor(hashRand(x, y, 32) * 4)]; for (let i = 0; i < 3; i++) { const fx = X + 2 + Math.floor(hashRand(x, i, 33) * 11), fy = Y + 3 + Math.floor(hashRand(y, i, 34) * 10); f(fx, fy + 1, 1, 2, "#3f6a2a"); f(fx - 1, fy, 3, 1, c); f(fx, fy - 1, 1, 3, c); } }
     else if (r < 0.2) { const fx = X + 3 + Math.floor(hashRand(x, y, 35) * 9), fy = Y + 5 + Math.floor(hashRand(x, y, 36) * 8); f(fx, fy, 1, 3, "#4f7a36"); f(fx + 2, fy - 1, 1, 4, "#5a8a3e"); f(fx + 4, fy + 1, 1, 2, "#4f7a36"); }
   }
@@ -693,6 +716,8 @@ function paintBg() {
   }
   for (const ob of Z.objs) {
     const X = ob.x * T, Y = ob.y * T;
+    if (ob.t === "plot" && IMG.o_plot) { o.drawImage(IMG.o_plot.im, X, Y, T, T); continue; }
+    if (!dark && (ob.t === "bush" || ob.t === "boulder") && bgSpr(`g_${ob.t}`, X + 8, Y + 16)) continue;
     if (objArt(ob)) continue;
     if (ob.t === "fenceH") { f(X, Y + 7, T, 2, "#6b3f23"); f(X, Y + 11, T, 2, "#6b3f23"); f(X + 6, Y + 2, 4, 13, "#4a2a16"); f(X + 7, Y + 2, 2, 12, "#7a4a26"); f(X + 6, Y + 1, 4, 2, "#8a5a32"); }
     if (ob.t === "fenceV") { f(X + 6, Y, 4, T, "#5a3418"); f(X + 7, Y, 2, T, "#7a4a26"); f(X + 5, Y + 3, 6, 3, "#4a2a16"); }
@@ -788,6 +813,8 @@ function paintRoom(o, f) {
   // the back wall's decor
   for (const d of def.wall || []) {
     const X = d.x * T, Y = Y0 - 22;
+    const wa = IMG[`wall_${d.t}`];
+    if (wa) { o.drawImage(wa.im, X + (WALL_CX[d.t] || 0) - wa.cx / A, Y + 21 - wa.foot / A, wa.im.width / A, wa.im.height / A); continue; }
     if (d.t === "banner") { f(X - 1, Y + 1, 12, 2, "#8a6a2a"); f(X, Y + 3, 10, 15, "#9a2a2a"); f(X, Y + 17, 5, 3, "#9a2a2a"); f(X + 5, Y + 17, 5, 2, "#9a2a2a"); f(X + 3, Y + 7, 4, 4, "#e8c050"); f(X + 4, Y + 8, 2, 2, "#b8902a"); }
     if (d.t === "lamp") { f(X + 3, Y + 6, 2, 6, "#5a4a2a"); f(X + 1, Y + 10, 6, 3, "#8a6a2a"); f(X + 2, Y + 5, 4, 3, "#ffd060"); f(X + 3, Y + 3, 2, 2, "#fff0a0"); }
     if (d.t === "vault") { f(X - 9, Y + 1, 18, 19, "#6a6a72"); f(X - 8, Y + 2, 16, 17, "#8a8a94"); f(X - 5, Y + 5, 10, 10, "#6a6a72"); f(X - 1, Y + 6, 2, 8, "#c8a040"); f(X - 4, Y + 9, 8, 2, "#c8a040"); for (const [a, b] of [[-7, 3], [5, 3], [-7, 16], [5, 16]]) f(X + a, Y + b, 2, 2, "#4a4a52"); }
@@ -796,6 +823,7 @@ function paintRoom(o, f) {
     if (d.t === "window") { f(X - 7, Y + 2, 14, 13, "#5a3a1e"); f(X - 6, Y + 3, 12, 11, "#9ad0f0"); f(X - 1, Y + 3, 1, 11, "#5a3a1e"); f(X - 6, Y + 8, 12, 1, "#5a3a1e"); f(X - 6, Y + 3, 5, 2, "#d8f0ff"); }
   }
   for (const ob of Z.objs) {
+    if (objArt(ob)) continue;   // pictured furniture is drawn by the frame, depth-sorted
     const X = ob.x * T, Y = ob.y * T, w = (ob.w || 1) * T, h = (ob.h || 1) * T;
     if (ob.t === "plant") { f(X + 3, Y + 14, 10, 2, "rgba(0,0,0,.25)"); f(X + 4, Y + 8, 8, 7, "#b8603a"); f(X + 4, Y + 8, 8, 2, "#d8804a"); f(X + 7, Y - 2, 2, 10, "#5a7a2a"); for (const [a, b, c] of [[-2, -6, 7], [8, -5, 6], [1, -10, 6], [5, -9, 5]]) f(X + a + 1, Y + b, c, 3, "#3f8a3a"); f(X + 3, Y - 7, 3, 2, "#5aa84a"); }
     if (ob.t === "bench") { f(X, Y + 13, w, 2, "rgba(0,0,0,.25)"); f(X + 1, Y + 5, w - 2, 5, "#e8e2d4"); f(X + 1, Y + 5, w - 2, 1, "#fffaf0"); f(X + 2, Y + 10, 3, 4, "#cfc6b2"); f(X + w - 5, Y + 10, 3, 4, "#cfc6b2"); }
@@ -1163,11 +1191,13 @@ function frame() {
   if (Z.def.tint || Z.isle?.theme === "gloom") { lc.fillStyle = Z.def.tint || "rgba(40,30,60,.25)"; lc.fillRect(0, 0, W, H); }
   const sprites = [], pvp = !!Z.def.pvp, theme = Z.isle?.theme;
   for (const ob of Z.objs) {
-    const oa = objArt(ob);
-    if (oa && !objBusy(ob, now)) {
-      sprites.push({ y: (ob.y + ob.h) * T - 1, draw: () => spr(oa, (ob.x + ob.w / 2) * T, (ob.y + ob.h) * T, false, "", OBJ_SCALE[oa] || 1) });
-      // special ones keep their sparkles
-      if (ob.special && !calm) sprites.push({ y: ob.y * T + 16, draw: () => { for (let i = 0; i < 6; i++) { const k = (pnow / 2600 + i / 6) % 1, mx = ob.x * T + 8 + Math.sin(i * 2.3 + pnow / 800) * 9, my = ob.y * T + 8 - k * 30; lc.globalAlpha = Math.sin(k * Math.PI) * 0.9; px(mx, my, 1, 1, ob.glow || "#ffe27a"); } lc.globalAlpha = 1; } });
+    const oa = objArt(ob, now);
+    if (oa) {
+      const sc = OBJ_SCALE[oa] || (oa === "o_rock_empty" && ob.t === "vein" ? 2 : 1), bob = (ob.t === "ferry" || ob.t === "boatback") && !calm ? Math.round(Math.sin(pnow / 600)) : 0;
+      sprites.push({ y: (ob.y + ob.h) * T - 1, draw: () => spr(oa, (ob.x + ob.w / 2) * T, (ob.y + ob.h) * T + bob, false, "", sc) });
+      // special ones keep their sparkles; a fire sends up embers
+      const fire = ob.t === "fire";
+      if ((ob.special || fire) && !calm && !objBusy(ob, now)) sprites.push({ y: ob.y * T + 16, draw: () => { for (let i = 0; i < 6; i++) { const k = (pnow / (fire ? 1100 : 2600) + i / 6) % 1, mx = ob.x * T + 8 + Math.sin(i * 2.3 + pnow / 800) * (fire ? 3 : 9), my = ob.y * T + (fire ? 4 : 8) - k * (fire ? 18 : 30); lc.globalAlpha = Math.sin(k * Math.PI) * 0.9; px(mx, my, 1, 1, ob.glow || (fire ? (i % 2 ? "#ffb030" : "#ff6a1a") : "#ffe27a")); } lc.globalAlpha = 1; } });
       continue;
     }
     const tall = { gravestone: 14, cagesign: 14, rope: 14, snag: 14 }[ob.t];
@@ -1214,7 +1244,10 @@ function frame() {
       if (k < 0.34) { for (const dx of [3, 7, 11]) px(X + dx, Y + 9, 2, 3, "#5aa040"); return; }
       for (const dx of [2, 7, 12]) { const h = Math.round(4 + k * 8); px(X + dx + 1, Y + 14 - h, 1, h, "#4a8a34"); px(X + dx, Y + 14 - h, 3, 3, k >= 1 ? col : "#6ab04a"); }
     } });
-    if (ob.t === "house" && IMG[ob.img]) sprites.push({ y: (ob.y + ob.h) * T - 1, draw: () => spr(ob.img, ob.door.x * T + 8, (ob.y + ob.h) * T) });
+    if (ob.t === "house" && IMG[ob.img]) sprites.push({ y: (ob.y + ob.h) * T - 1, draw: () => {
+      spr(ob.img, ob.door.x * T + 8, (ob.y + ob.h) * T, false, "", HOUSE_SCALE[ob.img] || 1);
+      if (ob.sign) { const sw = ob.sign.length * 5 + 8, dx = ob.door.x * T + 8, dy = ob.door.y * T - 16; px(dx - sw / 2, dy, sw, 9, "#3a2616"); px(dx - sw / 2 + 1, dy + 1, sw - 2, 7, "#e8d8a8"); lc.save(); lc.fillStyle = "#3a2616"; lc.font = `bold ${6 * A}px sans-serif`; lc.textAlign = "center"; lc.textBaseline = "middle"; lc.setTransform(1, 0, 0, 1, 0, 0); lc.fillText(ob.sign, dx * A, (dy + 4.6) * A); lc.restore(); }
+    } });
     if (ob.t === "well" && IMG.well) sprites.push({ y: (ob.y + 2) * T - 1, draw: () => spr("well", (ob.x + 1) * T, (ob.y + 2) * T - 1) });
     if (ob.t === "tree") sprites.push({ y: ob.y * T + 14, draw: () => {
       if (pvp && spr("w_tree", ob.x * T + 8, ob.y * T + 15)) return;
@@ -1302,7 +1335,7 @@ function frame() {
   } });
   for (const n of Z.npcs) sprites.push({ y: posOf(n, now).py * T + 14, draw: () => {
     const p = posOf(n, now), side = p.moving || (n.held && DLG?.npc?.id === n.id && P && P.x !== n.x), k = `${n.art}_${side ? "east" : "south"}`;
-    if (!spr(k, p.px * T + 8, p.py * T + 15 + bobOf(p.moving), side && n.face < 0)) drawPerson(p.px * T + 8, p.py * T + 15, n.face, n);
+    if (!spr(k, p.px * T + 8, p.py * T + 15 + bobOf(p.moving), side && n.face < 0, "", npcScale(k, n.art))) drawPerson(p.px * T + 8, p.py * T + 15, n.face, n);
   } });
   for (const b of Z.bots) sprites.push({ y: posOf(b, now).py * T + 14, draw: () => {
     const p = posOf(b, now), sw = b.work != null && !calm ? Math.max(0, Math.sin(pnow / 180 + b.x)) * 1.5 : 0;
@@ -1314,7 +1347,8 @@ function frame() {
     const p = pos(pl), d = (pl.id === you.id && PRED.on ? PRED.dir : pl.dir) || "south", sw = now - pl.swingAt, working = pl.started && pl.act !== "spot" && !p.moving;
     const lunge = working && sw < 260 && !calm ? Math.sin((sw / 260) * Math.PI) * 4 : 0;
     const [ux, uy] = Object.keys(DIRS).find((k) => DIRS[k] === d).split(",").map(Number);
-    spr(`hero_${d}`, p.px * T + 8 + ux * lunge * 0.7, p.py * T + 15 + uy * lunge * 0.7 + bobOf(p.moving), false, (hurtNow(pl) ? RED : "") + (pl.id === you.id ? "" : " hue-rotate(200deg)"));
+    const fit = G.outfitOf({ body: pl.body }), hk = fit === "tiro" && IMG[`hero_tiro_${d}`] ? `hero_tiro_${d}` : `hero_${d}`;
+    spr(hk, p.px * T + 8 + ux * lunge * 0.7, p.py * T + 15 + uy * lunge * 0.7 + bobOf(p.moving), false, (hurtNow(pl) ? RED : "") + (pl.id === you.id ? "" : " hue-rotate(200deg)"));
   } });
   sprites.sort((a, b) => a.y - b.y).forEach((s) => s.draw());
 
