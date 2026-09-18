@@ -1218,6 +1218,34 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .it-mod i{position:absolute;right:0;top:2px;font-style:normal;font-size:.6rem;font-weight:800;color:#7a7060}
 .it-sec.uq .it-mod{color:#e8843c}
 .it-flav{padding:8px 12px 10px;font-style:italic;font-size:.78rem;color:#b07040}
+/* ================= rifts (2026-09-17) ================= */
+.mode-switch{display:inline-flex;border:1px solid var(--line-2);border-radius:10px;overflow:hidden}
+.mode-switch button{border:0;background:var(--panel-2);color:var(--muted);font:inherit;font-weight:800;font-size:.8rem;padding:6px 14px;cursor:pointer}
+.mode-switch button+button{border-left:1px solid var(--line-2)}
+.mode-switch button[aria-pressed="true"]{background:var(--gold-dim);color:var(--gold)}
+.mode-switch button.locked{opacity:.5}
+.rift-tier{display:inline-flex;align-items:center;gap:8px;padding:4px 6px;border-radius:10px;background:var(--panel-2);border:1px solid rgba(185,138,255,.45)}
+.rift-tier span{display:grid;justify-items:center;min-width:46px;line-height:1.05}
+.rift-tier small{font-size:.56rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
+.rift-tier b{font-family:var(--display);font-size:1.25rem;color:#cfa8ff;font-variant-numeric:tabular-nums}
+.rift-tier .btn{padding:3px 10px;font-size:1rem;line-height:1}
+#venues .g-select{margin:0;flex:none;max-width:300px}
+.rift-best{align-self:center;font-size:.78rem;color:var(--muted);white-space:nowrap}
+.rift-best b{color:#cfa8ff}
+#venues{align-items:center}
+.rift-bar{position:absolute;left:50%;top:40px;transform:translateX(-50%);width:min(46%,340px);height:18px;z-index:3;border-radius:99px;background:rgba(10,4,14,.8);border:1px solid rgba(185,138,255,.55);overflow:hidden}
+.rift-bar[hidden]{display:none}
+.rift-bar i{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#5a2a9a,#b98aff);transition:width .3s ease}
+.rift-bar span{position:relative;display:block;text-align:center;font-size:.66rem;font-weight:800;line-height:16px;color:#fff;text-shadow:0 1px 2px #000;white-space:nowrap}
+.rift-bar.guard{border-color:rgba(255,90,60,.8)}
+.rift-bar.guard i{background:linear-gradient(90deg,#8a1a0a,#ff6a4a)}
+.rt-h{margin:14px 0 6px;font-size:.66rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
+.rt-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.rt-row{display:flex;justify-content:space-between;padding:6px 10px;border-radius:9px;background:var(--panel-2);border:1px solid var(--line);font-size:.8rem}
+.rt-row b{font-variant-numeric:tabular-nums}
+.rt-row.best{border-color:rgba(185,138,255,.55)}
+.rt-row.best span{color:#cfa8ff;font-weight:800}
+.rift-card .chest-loot span{font-weight:800}
 </style>
 </head>
 <body>
@@ -1233,7 +1261,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       <div class="tabs" role="tablist" aria-orientation="vertical">
         <button class="tab tab-shop" data-tab="market" type="button"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1.2 11.5H6.2z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg><span class="tab-label">Market</span></button>
         <span class="fnav-h">Under Rome</span>
-        <button class="tab" data-tab="arena" type="button" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M5 19 19 5M14 5h5v5M5 14l5 5M8 16l-3 3"/></svg><span class="tab-label">Dungeons</span></button>
+        <button class="tab" data-tab="arena" type="button" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M5 19 19 5M14 5h5v5M5 14l5 5M8 16l-3 3"/></svg><span class="tab-label">Dungeons &amp; Rifts</span></button>
         <button class="tab" data-tab="beasts" type="button"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.4.7-4.8 4.2 1.4 6.1L12 16.8 6.4 19.6l1.4-6.1L3 9.3l6.4-.7z"/></svg><span class="tab-label">Bosses</span></button>
         <button class="tab" data-tab="tourney" type="button"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5v1.5A3 3 0 0 0 8 10.5M16 6h3v1.5a3 3 0 0 1-3 3M12 13v4M8.5 20h7"/></svg><span class="tab-label">Tournaments</span></button>
         <span class="fnav-h">At the ludus</span>
@@ -1267,14 +1295,15 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 
   <!-- ============ DUNGEONS ============ -->
   <section class="view" data-panel="arena">
-    <header class="view-h"><div><h1>Dungeons</h1><p>Pick a dungeon and go down. Your gladiator fights every room on his own, to the boss and the chest at the bottom — while the page is open, and for up to 8 hours after it isn't.</p></div><span class="meta" id="gearLine"></span></header>
+    <header class="view-h"><div><h1>Dungeons &amp; Rifts</h1><p>Your gladiator fights on his own — while the page is open, and for up to 8 hours after it isn't. Click the enemy to hit faster. Dungeons teach you; rifts never end.</p></div><span class="meta" id="gearLine"></span></header>
     <section class="card">
-      <div class="spots-head"><span class="eyebrow">Dungeon</span><small>Each one opens when you clear the one before</small></div>
+      <div class="spots-head"><div class="mode-switch" id="modeSwitch" role="group" aria-label="Where to fight"><button type="button" data-view="dun">Dungeons</button><button type="button" data-view="rift">🌀 Rifts</button></div><small>Dungeons open one after another; rifts open after the Ludus Cellars and go on forever</small></div>
       <div class="spots" id="venues"></div>
       <div class="fight-grid">
         <div class="scene-wrap" id="arenaWrap">
           <canvas id="arena"></canvas>
           <div class="status"><span id="foeLine">Not in a dungeon</span><span id="venueLine"></span></div>
+          <div class="rift-bar" id="riftBar" hidden><i></i><span></span></div>
           <div class="g-hp you"><small>You <span id="hpYouN"></span></small><div class="g-bar"><i id="hpYou"></i></div><div class="g-atk"><i id="atkYou"></i></div></div>
           <div class="g-hp foe"><small><span id="foeName">—</span> <span id="hpFoeN"></span></small><div class="g-bar"><i id="hpFoe"></i></div><div class="g-atk"><i id="atkFoe"></i></div></div>
           <span class="click-hint" id="clickHint" hidden>Click the enemy to strike faster</span>
@@ -1305,7 +1334,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       </div>
       <div class="cb-line" id="cbLine"></div>
     </section>
-    <section class="card card-next"><div class="card-body">
+    <section class="card card-next" id="riftCard" hidden><div class="card-body">
+        <h2 class="card-h">Rifts of Tartarus</h2>
+        <p class="note">A crack under the arena floor that goes all the way down. Every kill fills the bar, elites fill it faster, and at the top the Guardian comes for you. Each tier is about 12% tougher and drops better gear. Push climbs on a clear and steps back on a death; either way, a death is a rest and another go, so a push runs all night.</p>
+        <p class="dun-meta" id="riftMeta"></p>
+        <h3 class="rt-h">Best clear times</h3>
+        <div class="rt-list" id="riftTimes"></div>
+    </div></section>
+    <section class="card card-next" id="dunCard"><div class="card-body">
         <h2 class="card-h" id="dunName"></h2>
         <p class="note" id="dunAbout"></p>
         <p class="dun-meta" id="dunMeta"></p>
@@ -1476,6 +1512,34 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   ];
   const seqOf = (d) => DUNGEONS[d].rooms.flatMap(([k, n]) => Array(n).fill(k));
 
+  /* ================================================================== rifts
+     The long tail. A rift is a progress bar: every kill fills it, elites fill
+     it faster, and at 100% the Guardian comes. Tiers never end; each is about
+     12% tougher, sets the item level, and adds 2% item rarity. Push climbs a
+     tier on a clear and drops one on a death; Hold stays put. Either way a
+     death is a rest and a retry, so an idle push never stops. */
+  const RIFT_POOL = Object.keys(MON).filter((k) => !MON[k].boss);
+  const GUARDIANS = [{ name: "Cerberus", icon: "🐕" }, { name: "The Minotaur", icon: "🐂" }, { name: "Charon", icon: "💀" }, { name: "Medusa", icon: "🐍" }, { name: "The Hydra", icon: "🐉" }, { name: "The Cyclops", icon: "👁️" }];
+  const ELITE = { fast: "Fast", vamp: "Vampiric", armour: "Armoured", frenzy: "Frenzied", regen: "Regenerating" };
+  const RIFT_LOOK = { wall: ["#3a1838", "#221024"], floor: "#1a0a1c" };
+  const riftIlvl = (T) => Math.min(100, 4 + T * 3);
+  const riftLvl = (T) => 4 + 3 * T;
+  function riftFoe(T, kind) {
+    const b = kind === "guardian" ? GUARDIANS[Math.floor(Math.random() * GUARDIANS.length)] : MON[RIFT_POOL[Math.floor(Math.random() * RIFT_POOL.length)]];
+    const L = riftLvl(T);
+    const f = { name: b.name, icon: b.icon || null, look: b.look || null, att: L, def: L, hp: Math.round(60 * Math.pow(1.12, T) + 20 * T), max: Math.round(10 + 4.5 * T),
+      speed: b.speed || 2400, coin: [T, 3 * T], drops: [], ilvl: riftIlvl(T), rift: true };
+    if (kind === "elite") {
+      const keys = Object.keys(ELITE).sort(() => Math.random() - 0.5).slice(0, T >= 10 ? 2 : 1);
+      Object.assign(f, { elite: true, afx: keys, hp: f.hp * 3, max: Math.round(f.max * 1.3), name: `${keys.map((k) => ELITE[k]).join(" ")} ${b.name}` });
+      if (keys.includes("fast")) f.speed = Math.round(f.speed * 0.7);
+      if (keys.includes("armour")) { f.def = Math.round(f.def * 1.4); f.dr = 0.25; }
+      if (keys.includes("frenzy")) f.max = Math.round(f.max * 1.4);
+    }
+    if (kind === "guardian") Object.assign(f, { boss: true, guardian: true, hp: f.hp * 12, max: Math.round(f.max * 1.6), att: L + 5, def: L + 5, speed: 2400, coin: [20 * T, 40 * T], ilvl: Math.min(100, f.ilvl + 3) });
+    return f;
+  }
+
   const ITEMS = {
     iron: { name: "Iron scrap", icon: "⛓️" }, hide: { name: "Beast hide", icon: "🦴" }, bronze: { name: "Bronze fitting", icon: "🟫" }, laurel: { name: "Laurel leaf", icon: "🌿" },
     bread: { name: "Bread", icon: "🍞", heal: 40, cost: 4 }, chicken: { name: "Roast chicken", icon: "🍗", heal: 80, cost: 12 },
@@ -1530,7 +1594,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (s !== "ring") return s;
     if (!S.eq.ring) return "ring";
     if (!S.eq.ring2) return "ring2";
-    const m = C.on ? foeNow() : MON[seqOf(S.dun)[0]], score = (k) => dpsOf(derive(sumGear({ ...S.eq, [k]: it })), m);
+    const m = (C.on && foeNow()) || MON[seqOf(S.dun)[0]], score = (k) => dpsOf(derive(sumGear({ ...S.eq, [k]: it })), m);
     return score("ring2") > score("ring") ? "ring2" : "ring";
   }
   const BASES = {
@@ -1665,12 +1729,13 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     skills: { attack: 0, strength: 0, defence: 0, hitpoints: XP_AT[10], showman: 0, smithing: 0 },
     hp: 100, items: { bread: 20, iron: 2, hide: 1 }, food: "bread", autoEat: 0.3,
     stable: [{ name: "Crixus", icon: "🧑", rate: 8 }], drills: {}, clears: {}, titles: {}, kills: {},
-    buffs: { whet: 0, wrap: 0, crown: 0 }, dun: 0, repeat: true,
-    C: { on: false, dun: 0, room: 0, farm: null, foeHp: 0, pAt: 0, eAt: 0, rAt: 0 }, regenAt: Date.now() + 6000, at: Date.now()
+    buffs: { whet: 0, wrap: 0, crown: 0 }, dun: 0, repeat: true, view: "dun",
+    rift: { tier: 1, best: 0, mode: "push", clears: 0, times: {} },
+    C: { on: false, dun: 0, room: 0, farm: null, rift: null, foe: null, foeHp: 0, pAt: 0, eAt: 0, rAt: 0 }, regenAt: Date.now() + 6000, at: Date.now()
   });
   function starter() { return { weapon: makeItem("rudis", 0, 1), offhand: makeItem("parma", 0, 1), helm: makeItem("cap", 0, 1), body: makeItem("tunic", 0, 1), boots: makeItem("sandals", 0, 1), ring: null, ring2: null, amulet: null, gloves: null, belt: null }; }
   let S = fresh();
-  try { const raw = localStorage.getItem(SAVE); if (raw) { const o = JSON.parse(raw); S = { ...fresh(), ...o, skills: { ...fresh().skills, ...o.skills }, buffs: { ...fresh().buffs, ...o.buffs }, C: { ...fresh().C, ...o.C } }; if (!o.eq) S.eq = starter(); for (const k of EQ_KEYS) if (S.eq[k] === undefined) S.eq[k] = null; } } catch (e) { /* a fresh start */ }
+  try { const raw = localStorage.getItem(SAVE); if (raw) { const o = JSON.parse(raw); S = { ...fresh(), ...o, skills: { ...fresh().skills, ...o.skills }, buffs: { ...fresh().buffs, ...o.buffs }, rift: { ...fresh().rift, ...o.rift }, C: { ...fresh().C, ...o.C } }; if (!o.eq) S.eq = starter(); for (const k of EQ_KEYS) if (S.eq[k] === undefined) S.eq[k] = null; } } catch (e) { /* a fresh start */ }
   let wiping = false;   // a reset must not be undone by the save that runs as the page unloads
   const save = () => { if (wiping) return; S.at = Date.now(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* private window */ } };
 
@@ -1752,7 +1817,43 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const C = S.C;
   const sess = { t0: Date.now(), kills: 0, clears: 0, xp: 0, coin: 0, drops: {}, loot: [0, 0, 0, 0], feed: [] };
   let splats = [], lunge = 0, hurt = 0, dying = 0;
-  const foeNow = () => MON[C.farm || seqOf(C.dun)[C.room]];
+  const foeNow = () => (C.rift ? C.foe : MON[C.farm || seqOf(C.dun)[C.room]]);
+  const riftOpen = () => Boolean(S.clears.cellars);
+  function enterRift(T) {
+    if (!riftOpen()) return toast("You have not unlocked this yet", "You need to clear The Ludus Cellars to unlock the rifts.");
+    if (S.hp < maxHp() * 0.2) return toast("You are in no state to go down there", "Eat something, or rest until your health comes back.");
+    const now = Date.now();
+    Object.assign(C, { on: true, farm: null, rift: { tier: T, prog: 0, t0: now + 600 }, foe: null, foeHp: 0, rAt: now + 600, pAt: 0, eAt: 0, resting: false });
+    S.rift.tier = T; S.view = "rift";
+    Object.assign(sess, { t0: now, kills: 0, clears: 0, xp: xpNow(), coin: S.coin, drops: {}, loot: [0, 0, 0, 0] });
+    $("result").hidden = true;
+    renderArena(); save();
+  }
+  function riftKill(t, m) {
+    const R = C.rift;
+    if (m.guardian) return riftClear(t);
+    const was = R.prog;
+    R.prog = Math.min(100, R.prog + (m.elite ? 9 : 2.5));
+    C.rAt = t + 1500;
+    if (was < 100 && R.prog >= 100 && !away) toast("The Rift Guardian is coming", `Tier ${R.tier}`);
+  }
+  function riftClear(t) {
+    const R = C.rift, T = R.tier, took = t - R.t0;
+    S.rift.clears++; sess.clears++;
+    S.rift.best = Math.max(S.rift.best, T);
+    if (!S.rift.times[T] || took < S.rift.times[T]) S.rift.times[T] = took;
+    // the chest: more, and rarer, the deeper you are
+    const find = 1 + gear().find + T * 0.02, n = 1 + Math.floor(T / 5), il = Math.min(100, riftIlvl(T) + 3);
+    const got = [];
+    for (let i = 0; i < n; i++) got.push(makeItem(pickBase(il), Math.random() < Math.min(0.5, (0.15 + T * 0.005) * find) ? 2 : 1, il));
+    if (Math.random() < 0.04 * find) got.push(makeUnique(pick(Object.keys(UNIQUES).filter((k) => UNIQUES[k].lvl <= il + 10))));
+    got.forEach((it) => take(it, t));
+    const cash = Math.round(50 * Math.pow(T, 1.3) * (1 + gear().gold)); S.coin += cash;
+    if (away) away.rifts = Math.max(away.rifts || 0, T);
+    const next = S.rift.mode === "push" ? T + 1 : T;
+    if (!away) showRiftClear(T, took, cash, got, next);
+    C.rift = { tier: next, prog: 0, t0: t + 4000 }; S.rift.tier = next; C.foe = null; C.rAt = t + 4000;
+  }
   const xpNow = () => Object.values(S.skills).reduce((a, b) => a + b, 0);
 
   /** A dungeon run, or — with a monster key — farming one of its rooms over and over, no boss, no chest. */
@@ -1760,7 +1861,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (!dunOpen(d)) return toast("Not yet", `Clear ${DUNGEONS[d - 1].name} first.`);
     if (S.hp < maxHp() * 0.2) return toast("You are in no state to go down there", "Eat something, or rest until your health comes back.");
     const now = Date.now();
-    Object.assign(C, { on: true, dun: d, room: 0, farm, foeHp: 0, rAt: now + 600, pAt: 0, eAt: 0 });
+    Object.assign(C, { on: true, dun: d, room: 0, farm, rift: null, foe: null, foeHp: 0, rAt: now + 600, pAt: 0, eAt: 0, resting: false });
+    S.view = "dun";
     S.dun = d;
     Object.assign(sess, { t0: now, kills: 0, clears: 0, xp: xpNow(), coin: S.coin, drops: {}, loot: [0, 0, 0, 0] });
     $("result").hidden = true;
@@ -1773,6 +1875,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   }
   function spawn(t) {
     C.resting = false;
+    if (C.rift) C.foe = riftFoe(C.rift.tier, C.rift.prog >= 100 ? "guardian" : Math.random() < 0.1 ? "elite" : "mob");
     const m = foeNow();
     C.foeHp = m.hp; C.rAt = 0;
     C.pAt = t + pSpeed(); C.eAt = t + m.speed;
@@ -1791,7 +1894,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   function strike(t, scale) {
     const m = foeNow();
     const d = derive(gear()), hit = Math.random() < hitVs(m), crit = hit && Math.random() < d.crit;
-    const dmg = hit ? Math.max(1, Math.round(rint(1, d.max) * scale * (crit ? d.cm : 1))) : 0;
+    const dmg = hit ? Math.max(1, Math.round(rint(1, d.max) * scale * (crit ? d.cm : 1) * (1 - (m.dr || 0)))) : 0;
     C.foeHp -= dmg; lunge = t;
     splat("foe", String(dmg), hit ? (crit ? "crit" : scale < 1 ? "jab" : "hit") : "miss", t);
     if (dmg) {
@@ -1823,6 +1926,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const m = foeNow();
     const hit = Math.random() < foeHits(m), dmg = hit ? Math.max(1, Math.round(rint(1, m.max) * (1 - pDR()))) : 0;
     S.hp -= dmg; if (dmg) hurt = t;
+    if (m.afx?.includes("vamp") && dmg) C.foeHp = Math.min(m.hp, C.foeHp + Math.round(dmg * 0.3));
+    if (m.afx?.includes("regen")) C.foeHp = Math.min(m.hp, C.foeHp + Math.round(m.hp * 0.02));
     splat("you", String(dmg), hit ? "hit" : "miss", t);
     if (S.autoEat && S.hp < maxHp() * S.autoEat) { let g = 4; while (g-- > 0 && S.hp < maxHp() * S.autoEat) { const f = anyFood(); if (!f || !eat(f, away)) break; } }
     if (S.hp <= 0) return die(t, m);
@@ -1846,6 +1951,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     m.drops.forEach(([k, ch]) => { let n = ch >= 1 ? ch : Math.random() < ch ? 1 : 0; if (n) { S.items[k] = (S.items[k] || 0) + n; sess.drops[k] = (sess.drops[k] || 0) + n; } });
     if (S.buffs.whet > 0) S.buffs.whet--; if (S.buffs.wrap > 0) S.buffs.wrap--;
     dying = t;
+    if (C.rift) return riftKill(t, m);
     if (C.farm) { C.rAt = t + 3000; return; }
     const seq = seqOf(C.dun);
     if (C.room + 1 < seq.length) { C.room++; C.rAt = t + 3000; return; }
@@ -1856,10 +1962,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
      The loot filter salvages what you have said you don't want. */
   let lootLabels = [], fullToast = 0;
   function dropLoot(m, t) {
-    const find = 1 + gear().find, ilvl = foeCb(m) + (m.boss ? 3 : 0), got = [];
-    const n = m.boss ? 2 : Math.random() < 0.12 ? 1 : 0;
+    const find = 1 + gear().find + (m.rift && C.rift ? C.rift.tier * 0.02 : 0), ilvl = m.ilvl ?? foeCb(m) + (m.boss ? 3 : 0), got = [];
+    const n = m.boss ? 2 : m.elite ? 1 : Math.random() < 0.12 ? 1 : 0;
     for (let i = 0; i < n; i++) {
-      const r = Math.random(), rare = (m.boss ? 0.35 : 0.06) * find, magic = (m.boss ? 1 : 0.32 * find);
+      const r = Math.random(), rare = (m.boss ? 0.3 : m.elite ? 0.1 : 0.04) * find, magic = (m.boss || m.elite ? 1 : 0.32 * find);
       const rar = r < rare ? 2 : r < rare + magic ? 1 : 0;
       got.push(makeItem(pickBase(ilvl), rar, ilvl));
     }
@@ -1900,6 +2006,18 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     else { C.on = false; C.rAt = 0; }
   }
   function die(t, m) {
+    if (C.rift) {
+      // a rift never ends on a death: rest, then go again, a tier lower on Push
+      S.l++;
+      const T = C.rift.tier, next = S.rift.mode === "push" ? Math.max(1, T - 1) : T;
+      S.hp = Math.round(maxHp() * 0.3);
+      const tick = Math.max(1, Math.round(maxHp() * 0.05));
+      C.resting = true; C.foe = null;
+      C.rAt = t + Math.ceil((maxHp() - S.hp) / tick) * 6000 + 1000;
+      C.rift = { tier: next, prog: 0, t0: C.rAt }; S.rift.tier = next;
+      if (away) away.deaths++; else toast(`${m.name} put you down at tier ${T}`, next < T ? `Resting, then tier ${next}` : "Resting, then again");
+      return;
+    }
     S.l++; C.on = false; C.rAt = 0;
     S.hp = Math.round(maxHp() * 0.3);
     if (!away) showDeath(m);
@@ -1925,7 +2043,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const span = Math.min(gap, OFFLINE_CAP), skip = gap - span;
     if (skip > 0) { S.regenAt += skip; if (C.on) { C.pAt += skip; C.eAt += skip; if (C.rAt) C.rAt += skip; } }
     const before = { xp: { ...S.skills }, coin: S.coin, w: S.w, clears: Object.values(S.clears).reduce((a, b) => a + b, 0), items: { ...S.items } };
-    away = { levels: {}, deaths: 0, loot: [0, 0, 0, 0], salvaged: 0 };
+    away = { levels: {}, deaths: 0, loot: [0, 0, 0, 0], salvaged: 0, rifts: 0 };
     const wasOn = C.on;
     advance(now);
     S.coin += rate() * span / 3600000;
@@ -1944,6 +2062,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       </div>
       ${xpLines.length ? `<p class="away-xp">${xpLines.map(([k, v]) => `${SKILLS[k].icon} +${num(v)} ${SKILLS[k].name}${got.levels[k] ? ` <b>→ ${got.levels[k]}</b>` : ""}`).join(" · ")}</p>` : ""}
       ${drops.length ? `<p class="away-xp">${drops.map(([k, v]) => `${ITEMS[k].icon} ${v} ${ITEMS[k].name}`).join(" · ")}</p>` : ""}
+      ${got.rifts ? `<p class="away-xp">🌀 Rifts cleared up to <b>tier ${got.rifts}</b> · best ever ${S.rift.best}${C.rift ? ` · now on tier ${C.rift.tier}` : ""}</p>` : ""}
       ${got.loot.some(Boolean) ? `<p class="away-xp">Gear found: ${got.loot.map((n, r) => (n ? `<b style="color:${RARITY[r].color}">${num(n)} ${RARITY[r].name.toLowerCase()}</b>` : "")).filter(Boolean).join(" · ")}${got.salvaged ? ` · ${num(got.salvaged)} salvaged by your filter` : ""}</p>` : ""}
       ${got.deaths ? `<p class="lost">You were carried out ${got.deaths === 1 ? "once" : `${got.deaths} times`} and stopped.</p>` : C.on ? `<p>Still down there.</p>` : ""}
       <button class="btn gold" type="button" id="awayOk">Back to it</button>`);
@@ -1964,6 +2083,18 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     $("chestOk").addEventListener("click", () => { $("result").hidden = true; });
     setTimeout(() => { if ($("chestOk")) $("result").hidden = true; }, 4800);
   }
+  function showRiftClear(T, took, cash, got, next) {
+    const best = S.rift.times[T] === took;
+    $("result").innerHTML = `<div class="g-card chest-card rift-card"><div class="chest-ico">🌀</div><h3 class="won">Tier ${T} cleared</h3>
+      <p>In <b>${dur(took)}</b>${best ? ` · <span style="color:var(--gold)">your best at this tier</span>` : ""}</p>
+      <p class="chest-loot">${coin(cash)} ${got.map((it) => `<span style="color:${RARITY[it.rar].color}">${itemName(it)}</span>`).join("")}</p>
+      <p class="note">${next > T ? `Pushing on: tier ${next} opens in 4 seconds.` : `Holding at tier ${T}.`}</p>
+      <button class="btn gold" type="button" id="chestOk">Keep going</button></div>`;
+    $("result").hidden = false;
+    $("chestOk").addEventListener("click", () => { $("result").hidden = true; });
+    setTimeout(() => { if ($("chestOk")) $("result").hidden = true; }, 3800);
+  }
+  const dur = (ms) => { const s = Math.round(ms / 1000); return s >= 60 ? `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s` : `${s}s`; };
   function showDeath(m) {
     $("result").innerHTML = `<div class="g-card"><h3 class="lost">Carried out</h3><p>${m.name} was too much. You woke up in the infirmary with ${num(S.hp)} health, and this run is lost.</p>
       <p class="note">Bring more food, turn auto-eat up, or pick a shallower dungeon.</p><button class="btn gold" type="button" id="deadOk">Back to the ludus</button></div>`;
@@ -2011,7 +2142,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   }
   let wallCache = null;
   function dungeonBack(w, h, d, t) {
-    const D = DUNGEONS[d], key = `${w}x${h}:${d}`;
+    const D = d < 0 ? RIFT_LOOK : DUNGEONS[d], key = `${w}x${h}:${d}`;
     if (!wallCache || wallCache.key !== key) {
       const off = document.createElement("canvas"); off.width = Math.max(1, Math.round(w)); off.height = Math.max(1, Math.round(h));
       const c = off.getContext("2d");
@@ -2084,12 +2215,18 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   function frame(t) {
     const { w, h } = fit();
     const now = Date.now();
-    dungeonBack(w, h, C.on ? C.dun : S.dun, t);
+    const inRift = C.on ? Boolean(C.rift) : S.view === "rift";
+    dungeonBack(w, h, inRift ? -1 : C.on ? C.dun : S.dun, t);
     const H = h * .44, feet = h * .92, youX = w * .38, foeX = w * .62;
     gladiator(youX, feet, H, 1, ["#7a2a2a", "#2a3a7a", "#7a6a1a", "#8a4a1a"][S.eq.body?.rar ?? 0], RARITY[S.eq.helm?.rar ?? 0].color, t, lunge, hurt);
     const showFoe = C.on && !C.rAt;
     if (showFoe) {
       const m = foeNow();
+      if (m.elite || m.guardian) {
+        const g = ctx.createRadialGradient(foeX, feet, 4, foeX, feet, H * 0.55);
+        g.addColorStop(0, m.guardian ? "rgba(255,90,60,.55)" : "rgba(185,138,255,.5)"); g.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(foeX, feet, H * 0.55, H * 0.14, 0, 0, Math.PI * 2); ctx.fill();
+      }
       if (m.icon) beast(foeX, feet, H, m.icon, m.boss, t, hurt, lunge);
       else gladiator(foeX, feet, H, -1, m.look[0], m.look[1], t, hurt, lunge);
     }
@@ -2107,12 +2244,26 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       $("hpFoe").style.width = "0%"; $("atkYou").style.width = "0%"; $("atkFoe").style.width = "0%";
       $("hpFoeN").textContent = C.on && C.resting ? "resting" : C.on && C.rAt ? `next in ${Math.max(0, Math.ceil((C.rAt - now) / 1000))}s` : "";
     }
+    const rb = $("riftBar");
+    if (rb) {
+      rb.hidden = !(C.on && C.rift);
+      if (C.on && C.rift) {
+        const p = C.rift.prog, g = C.foe?.guardian;
+        rb.querySelector("i").style.width = `${p}%`;
+        rb.querySelector("span").textContent = C.resting ? `Tier ${C.rift.tier} · resting` : g ? `Tier ${C.rift.tier} · Guardian: ${C.foe.name}` : `Tier ${C.rift.tier} · ${Math.floor(p)}% · ${dur(Math.max(0, Date.now() - C.rift.t0))}`;
+        rb.classList.toggle("guard", Boolean(g));
+      }
+    }
     requestAnimationFrame(frame);
   }
 
   /* ================================================================== the dungeon page */
   const dunOpen = (d) => d === 0 || Boolean(S.clears[DUNGEONS[d - 1].key]);
   function renderArena() {
+    const sw = $("modeSwitch");
+    sw.querySelectorAll("button").forEach((b) => { b.setAttribute("aria-pressed", String(S.view === b.dataset.view)); b.classList.toggle("locked", b.dataset.view === "rift" && !riftOpen()); });
+    if (S.view === "rift") return renderRift();
+    $("riftCard").hidden = true; $("dunCard").hidden = false;
     // the dungeon picker
     const v = $("venues"); v.replaceChildren();
     DUNGEONS.forEach((d, i) => {
@@ -2153,8 +2304,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     });
     // the button
     const act = $("act");
-    if (C.on) { act.textContent = C.dun !== S.dun ? `In ${DUNGEONS[C.dun].name}` : C.farm ? "Stop farming" : "Leave the dungeon"; act.className = "act hook"; }
+    if (C.on && C.rift) { act.textContent = "Leave the rift"; act.className = "act hook"; }
+    else if (C.on) { act.textContent = C.dun !== S.dun ? `In ${DUNGEONS[C.dun].name}` : C.farm ? "Stop farming" : "Leave the dungeon"; act.className = "act hook"; }
     else { act.textContent = `Enter ${D.name}`; act.className = "act"; }
+    paintControls();
+  }
+  function paintControls() {
     // styles
     const st = $("styles"); st.replaceChildren();
     STYLES.forEach((s, i) => {
@@ -2171,11 +2326,37 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     $("gearLine").innerHTML = S.eq.weapon ? `<span style="color:${RARITY[S.eq.weapon.rar].color}">${itemName(S.eq.weapon)}</span> · ${S.stash.length}/${STASH_CAP} in the stash` : "Fists";
     paintStats();
   }
+  function renderRift() {
+    $("riftCard").hidden = false; $("dunCard").hidden = true;
+    const T = S.rift.tier, v = $("venues"); v.replaceChildren();
+    const tierBox = el("div", "rift-tier", `<button class="btn small" type="button" data-d="-1" aria-label="Tier down">−</button><span><small>Tier</small><b>${T}</b></span><button class="btn small" type="button" data-d="1" aria-label="Tier up">+</button>`);
+    tierBox.querySelectorAll("button").forEach((b) => {
+      const d = Number(b.dataset.d), to = T + d;
+      b.disabled = C.on || to < 1 || to > S.rift.best + 1;
+      b.addEventListener("click", () => { S.rift.tier = to; renderArena(); save(); });
+    });
+    const mode = el("select", "g-select"); mode.id = "riftMode"; mode.setAttribute("aria-label", "Rift mode");
+    [["push", "Push: up a tier on a clear, down on a death"], ["hold", "Hold: stay at this tier"]].forEach(([k, t]) => { const o = el("option", null, t); o.value = k; o.selected = S.rift.mode === k; mode.append(o); });
+    mode.addEventListener("change", () => { S.rift.mode = mode.value; save(); });
+    v.append(tierBox, mode, el("span", "rift-best", `Best tier <b>${S.rift.best}</b> · ${num(S.rift.clears)} cleared`));
+    $("venueLine").textContent = "Rifts of Tartarus";
+    const L = riftLvl(T), sample = riftFoe(T, "mob");
+    $("riftMeta").innerHTML = `Tier ${T} · monsters around combat ${L} · ${num(sample.hp)} health, hitting up to ${sample.max} · item level ${riftIlvl(T)} · +${T * 2}% item rarity · chest of ${1 + Math.floor(T / 5)}`;
+    const times = $("riftTimes"); times.replaceChildren();
+    const tiers = Object.keys(S.rift.times).map(Number).sort((a, b) => b - a).slice(0, 10);
+    if (!tiers.length) times.append(el("p", "note", "No tier cleared yet. Your best time at each tier lands here; the leaderboard will read from it."));
+    tiers.forEach((t) => times.append(el("div", "rt-row" + (t === S.rift.best ? " best" : ""), `<span>Tier ${t}</span><b>${dur(S.rift.times[t])}</b>`)));
+    const act = $("act");
+    if (C.on && C.rift) { act.textContent = "Leave the rift"; act.className = "act hook"; }
+    else if (C.on) { act.textContent = "In a dungeon"; act.className = "act hook"; }
+    else { act.textContent = `Open a tier ${T} rift`; act.className = "act"; }
+    paintControls();
+  }
   function paintStats() {
-    const m = C.on ? foeNow() : MON[seqOf(S.dun)[0]], d = derive(gear());
+    const m = (C.on && foeNow()) || (S.view === "rift" ? riftFoe(S.rift.tier, "mob") : MON[seqOf(S.dun)[0]]), d = derive(gear());
     const seq = seqOf(C.on ? C.dun : S.dun);
-    $("foeLine").textContent = !C.on ? "Not in a dungeon" : C.resting ? `Resting · back in ${Math.max(0, Math.ceil((C.rAt - Date.now()) / 1000))}s` : C.farm ? `Farming · ${foeNow().name}` : `Room ${C.room + 1} of ${seq.length} · ${foeNow().name}`;
-    $("foeName").textContent = C.on ? foeNow().name : "—";
+    $("foeLine").textContent = !C.on ? (S.view === "rift" ? "Not in a rift" : "Not in a dungeon") : C.rift ? (C.resting ? "Resting" : `Tier ${C.rift.tier}${C.foe ? ` · ${C.foe.name}` : ""}`) : C.resting ? `Resting · back in ${Math.max(0, Math.ceil((C.rAt - Date.now()) / 1000))}s` : C.farm ? `Farming · ${foeNow().name}` : `Room ${C.room + 1} of ${seq.length} · ${foeNow().name}`;
+    $("foeName").textContent = C.on && foeNow() && !C.rAt ? foeNow().name : "—";
     const idle = dpsOf(d, m), click = clickDps();
     $("cbLine").innerHTML = `<span><small>You</small> combat ${myCb()} · max hit <b>${num(d.max)}</b> · ${secs(d.speed)} · crit ${pct(d.crit)}</span>
       <span><small>${m.icon || "🪖"} ${m.name}</small> you hit <b>${pct(hitVs(m))}</b> · it hits <b>${pct(foeHits(m))}</b> for up to ${m.max}</span>
@@ -2344,14 +2525,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   /** Is this better than what is worn in its slot? More damage, or as much and tougher. */
   function upgradeOf(it) {
     if (!reqMet(it)) return false;
-    const slot = targetOf(it), m = C.on ? foeNow() : MON[seqOf(S.dun)[0]];
+    const slot = targetOf(it), m = (C.on && foeNow()) || MON[seqOf(S.dun)[0]];
     const a = derive(gear()), b = derive(sumGear({ ...S.eq, [slot]: it }));
     const da = dpsOf(a, m), db = dpsOf(b, m), tough = (d) => d.hp / (1 - d.dr) * (1 + d.ev / 4000);
     return db > da * 1.01 || (db >= da * 0.99 && tough(b) > tough(a) * 1.01);
   }
   function compare(it) {
     const slot = targetOf(it), now = derive(gear()), eq2 = { ...S.eq, [slot]: it }, then = derive(sumGear(eq2));
-    const m = C.on ? foeNow() : MON[seqOf(S.dun)[0]];
+    const m = (C.on && foeNow()) || MON[seqOf(S.dun)[0]];
     const rows = [
       ["Max hit", now.max, then.max, (v) => num(v)], ["Swing", now.speed, then.speed, (v) => secs(v), true],
       ["Hit chance", chance(now.acc, (m.def + 9) * 64), chance(then.acc, (m.def + 9) * 64), pct], ["Crit chance", now.crit, then.crit, pct],
@@ -2497,7 +2678,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       openTab(tab); renderAll();
     });
   });
+  $("modeSwitch").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-view]"); if (!b) return;
+    if (b.dataset.view === "rift" && !riftOpen()) return toast("You have not unlocked this yet", "You need to clear The Ludus Cellars to unlock the rifts.");
+    S.view = b.dataset.view; renderArena(); save();
+  });
   $("act").addEventListener("click", () => {
+    if (C.on && C.rift) { C.rift = null; C.foe = null; leave("You stepped back out of the rift"); return; }
+    if (!C.on && S.view === "rift") return enterRift(S.rift.tier);
     if (C.on) { if (C.dun === S.dun) leave(C.farm ? "You stopped farming" : "You climbed back out"); else { S.dun = C.dun; renderArena(); } return; }
     enter(S.dun);
   });
@@ -2527,7 +2715,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     advance(now);
     S.coin += rate() / 3600 / 4;
     paintBar(); paintStats();
-    const sig = [S.stash.length, C.on, C.dun, C.room, C.farm, S.dun, S.w, S.l, S.style, lvl("attack"), lvl("strength"), lvl("defence"), JSON.stringify(S.items)].join("|");
+    const sig = [S.view, C.rift ? `${C.rift.tier}:${Math.floor(C.rift.prog / 5)}:${C.foe?.name}` : "", S.rift.best, S.stash.length, C.on, C.dun, C.room, C.farm, S.dun, S.w, S.l, S.style, lvl("attack"), lvl("strength"), lvl("defence"), JSON.stringify(S.items)].join("|");
     if (sig !== lastSig) { lastSig = sig; renderArena(); }
     renderLootCol();
     if (!document.querySelector('[data-panel="yard"]').hidden) renderYard();
@@ -2537,7 +2725,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   document.addEventListener("visibilitychange", () => { if (document.hidden) save(); });
   paintBar(); renderAll();
   requestAnimationFrame(frame);
-  window.__glad = { wipe() { wiping = true; localStorage.removeItem(SAVE); location.reload(); }, get S() { return S; }, advance, enter, MON, DUNGEONS, hitVs, foeHits, pMax };
+  window.__glad = { upgradeOf, equip, enterRift, riftFoe, derive, gear, wipe() { wiping = true; localStorage.removeItem(SAVE); location.reload(); }, get S() { return S; }, advance, enter, MON, DUNGEONS, hitVs, foeHits, pMax };
 })();
 
 </script>
