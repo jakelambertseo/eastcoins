@@ -361,7 +361,7 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=7";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=8";
 import * as WK from "/v3/assets/js/eastscape-wiki.js?v=1";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -434,6 +434,11 @@ setInterval(() => { if (ws && ws.readyState === 1) { send({ t: "ping", c: Date.n
 
 function onMsg(m) {
   if (m.type === "hello") {
+    // the server runs newer rules than this page: fetch the new page (at most once a minute, so a half-finished deploy can't loop)
+    if (m.version !== G.VERSION) {
+      let last = 0; try { last = +sessionStorage.getItem("es_reload") || 0; } catch (e) { /* no storage */ }
+      if (Date.now() - last > 60000) { try { sessionStorage.setItem("es_reload", String(Date.now())); } catch (e) { /* no storage */ } location.reload(); return; }
+    }
     you = m.you; me = m.me; everConnected = true; veil(null); $("gate").hidden = true;
     $("topName").textContent = you.name;
     document.querySelector('[data-tab="admin"]').hidden = !you.admin;
