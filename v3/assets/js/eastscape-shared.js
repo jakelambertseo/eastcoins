@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 10;
+export const VERSION = 11;
 export const COLS = 22, ROWS = 13;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -38,6 +38,18 @@ export const ITEMS = {
   mooncarp: { name: "Raw moon carp", icon: "🐡", ex: "It's looking at you. It's always looking at you." },
   stardust: { name: "Stardust", icon: "✨", ex: "Warm, and humming a note you almost recognise." },
   sunolive: { name: "Sun olive", icon: "🫒", ex: "Glows in the dark. Tastes like a summer you never had." },
+  grimstone: { name: "Grimstone ore", icon: "🟣", ex: "Heavy, cold, and it hums when nobody's holding it. Only found in the Deep Wild." },
+  ashlogs: { name: "Deadwood logs", icon: "🪵", ex: "Grey all the way through. They burn with no smoke and a faint sigh." },
+  gloomfin: { name: "Raw gloomfin", icon: "🐟", ex: "It has too many fins and not enough patience." },
+  geode: { name: "Glimmering geode", icon: "💎", ex: "Found now and then by anyone gathering in the Deep Wild. Worth a lot to the right person. Everyone is the right person." },
+  receipt: { name: "Tax receipt", icon: "🧾", ex: "Proof you paid. Paid what, and to whom? It won't say." },
+  cobweb: { name: "Enormous cobweb", icon: "🕸️", ex: "Still sticky. Still somebody's home." },
+  grudge: { name: "Grudge knife", short: "Grudge", icon: "🔪", slot: "weapon", acc: 9, str: 7, ex: "It remembers everyone it has ever cut, and it holds the grudges so you don't have to." },
+  wraithhood: { name: "Tax Wraith hood", short: "Hood", icon: "🥷", slot: "helm", def: 4, acc: 2, ex: "Smells of paperwork. Faintly see-through." },
+  bogplate: { name: "Bog-hound hide", short: "Hide", icon: "🦺", slot: "body", def: 7, ex: "Still damp. It will always be damp." },
+  lantern: { name: "Lantern shield", short: "Lantern", icon: "🏮", slot: "shield", def: 6, acc: 1, ex: "A very small man lives inside the lantern. He keeps it lit. Don't knock." },
+  menace: { name: "Ring of Mild Menace", short: "Menace", icon: "💍", slot: "ring", str: 3, acc: 2, ex: "Makes you about eleven percent more threatening. People notice, but can't say why." },
+  spiderboots: { name: "Eight-league boots", short: "Boots", icon: "🥾", slot: "boots", def: 2, spd: 6, ex: "Four boots, sewn into two. Nobody asks what happened to the spider. You walk a little faster." },
   pit: { name: "Olive pit", icon: "🌰", ex: "It's still warm. And still angry." },
   monocle: { name: "Tiny monocle", icon: "🧐", ex: "The olive was wearing it. You feel slightly more distinguished just holding it." },
   manifesto: { name: "Goat's manifesto", icon: "📜", ex: "Mostly bleats. Page three is surprisingly moving." },
@@ -77,7 +89,7 @@ export function speedBonus(c, extra = 0) { const raw = speedRaw(c, extra); retur
 export const stepMsOf = (c, extra = 0) => Math.round(STEP_MS / (1 + speedBonus(c, extra) / 100));
 export const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
 // fishing reaches two tiles (the river's edge is a bank you can't stand on); everything else is next to you
-export const reachOf = (kind) => (kind === "spot" ? 2 : 1);
+export const reachOf = (kind) => (kind === "spot" || kind === "ferry" ? 2 : 1);
 export const inReach = (a, b, r) => { const d = cheb(a, b); return d >= 1 && d <= r; };
 
 /* ------------------------------------------------------------ building scenes
@@ -192,13 +204,17 @@ export const SCENES = {
       for (const [x, y] of [[3, 2], [14, 9], [6, 3]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
       for (const [x, y] of [[9, 9], [10, 10], [11, 9]]) { objs.push({ t: "rock", ore: "copper", x, y, name: "Copper rock" }); g[y][x] = "#"; }
       objs.push({ t: "vein", ore: "copper", x: 12, y: 10, w: 2, h: 2, name: "Copper vein" }); block(g, 12, 10, 2, 2);
+      objs.push({ t: "ferry", x: 17, y: 10, w: 2, h: 1, name: "Ferry" });
       // a clearing round the copper, so the rocks aren't buried in the treeline
       const clearing = []; for (let y = 8; y <= 12; y++) for (let x = 8; x <= 14; x++) clearing.push([x, y]);
+      // the ferry landing: open shore south of the copper
+      for (let y = 9; y <= 12; y++) clearing.push([15, y]);
       wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "open" }, [...keepOf(this), ...clearing], 2);
       return { g, objs, blobs: [] };
     },
     mobs: [["chicken", 4, 9], ["chicken", 5, 10], ["chicken", 6, 9], ["chicken", 3, 10]],
-    npcs: [{ name: "Old Tullius", art: "tullius", quests: ["catch"], x: 15, y: 6, hair: "#d8d8d8", shirt: "#5a7a3a", pants: "#3a3a2a", lines: ["The fish bite best where the water bubbles.", "Can't fish with a sword, lad. Hold your rod.", "Don't let the chickens fool you. One took my eye.", "That big copper vein never runs dry. Slow, mind."] }],
+    npcs: [{ name: "Charon the Ferryman", x: 15, y: 11, still: true, opens: "ferry", hair: "#e8e8e8", shirt: "#3a3a5a", pants: "#2a2a3a", lines: ["Islands. Everyone gets one. Nobody knows who's paying for them.", "I row, you ride. No refunds, no questions, no singing.", "Your island grows while you're away. Mine doesn't. I don't have one. It's fine."] },
+      { name: "Old Tullius", art: "tullius", quests: ["catch"], x: 15, y: 6, hair: "#d8d8d8", shirt: "#5a7a3a", pants: "#3a3a2a", lines: ["The fish bite best where the water bubbles.", "Can't fish with a sword, lad. Hold your rod.", "Don't let the chickens fool you. One took my eye.", "That big copper vein never runs dry. Slow, mind."] }],
     bots: [{ name: "Spartacus", level: 77 }]
   },
   forum: {
@@ -356,9 +372,86 @@ Object.assign(SCENES, {
     npcs: [{ name: "Cassia", x: 12, y: 9, still: true, hair: "#8a3a1a", shirt: "#e8e0c8", pants: "#6a5a4a", lines: ["Mind the range, it's hot. Cooking lessons start soon.", "Bom eats like three gladiators.", "If you catch fish, I can teach you to cook them. Soon."] }]
   }
 });
+/* the Wilderness: down the pit on the farm. pvp: anyone can attack anyone. The Cage is a fenced ring where
+   fights cost nothing; beyond it, and in the Deep Wild, monsters come for you and dying can cost you. */
+Object.assign(SCENES, {
+  wild: {
+    name: "The Wilderness", pvp: true, exits: { n: "deep" }, entry: { x: 3, y: 10 }, tint: "rgba(60,20,70,.26)",
+    cage: [6, 3, 12, 6], cageOut: { x: 9, y: 9 },
+    build() {
+      const g = grid(), objs = [], keep = [];
+      for (let x = 3; x <= 17; x++) g[10][x] = ",";
+      for (let y = 0; y < 10; y++) g[y][17] = ",";
+      for (let y = 8; y < 10; y++) g[y][9] = ",";
+      objs.push({ t: "rope", x: 2, y: 10, name: "Rope" }); g[10][2] = "#";
+      // the Cage: iron bars round a ring, one gap at the bottom
+      for (let x = 5; x <= 13; x++) { objs.push({ t: "cageH", x, y: 2 }); g[2][x] = "#"; if (x !== 9) { objs.push({ t: "cageH", x, y: 7 }); g[7][x] = "#"; } }
+      for (let y = 3; y <= 6; y++) for (const x of [5, 13]) { objs.push({ t: "cageV", x, y }); g[y][x] = "#"; }
+      for (let y = 3; y <= 6; y++) for (let x = 6; x <= 12; x++) { g[y][x] = "s"; keep.push([x, y]); }
+      objs.push({ t: "cagesign", x: 8, y: 8, name: "The Cage" }); g[8][8] = "#";
+      for (const [x, y] of [[15, 3], [20, 7]]) { objs.push({ t: "gravestone", x, y, name: "Gravestone" }); g[y][x] = "#"; }
+      objs.push({ t: "skeleton", x: 12, y: 11, name: "Skeleton" }); g[11][12] = "#";
+      for (const [x, y] of [[15, 8], [20, 2], [3, 5]]) { objs.push({ t: "snag", x, y, name: "Dead tree" }); g[y][x] = "#"; }
+      for (let x = 3; x <= 17; x++) keep.push([x, 10], [x, 9]);
+      wild(g, objs, this.exits, { n: "rocky", s: "rocky", w: "rocky", e: "rocky" }, [...keepOf(this), ...keep], 7);
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["gnasher", 16, 6], ["gnasher", 20, 10], ["gnasher", 4, 3]],
+    npcs: [], bots: []
+  },
+  deep: {
+    name: "The Deep Wild", pvp: true, exits: { s: "wild" }, tint: "rgba(50,10,45,.38)", xpMul: 1.5, luck: 0.1, geode: 0.01,
+    build() {
+      const g = grid(), objs = [], keep = [];
+      for (let y = 7; y < ROWS; y++) g[y][17] = ",";
+      for (let x = 4; x <= 17; x++) g[7][x] = ",";
+      // the Black Pool, fished from two tiles back
+      for (let y = 2; y <= 4; y++) for (let x = 2; x <= 6; x++) g[y][x] = "~";
+      for (const x of [3, 5]) objs.push({ t: "spot", x, y: 4, name: "Black pool", req: { skill: "fishing", lvl: 20 }, fish: "gloomfin", xp: 80, glow: "#b080ff", tease: "The water is black and very still. Something down there is even stiller." });
+      for (let y = 5; y <= 6; y++) for (let x = 2; x <= 7; x++) keep.push([x, y]);
+      for (const [x, y] of [[10, 3], [12, 2], [13, 4]]) { objs.push({ t: "rock", ore: "grimstone", x, y, name: "Grimstone rock", req: { skill: "mining", lvl: 20 }, xp: 60, tease: "Cold purple stone. Your pickaxe skids right off." }); g[y][x] = "#"; }
+      for (const [x, y] of [[8, 10], [10, 11], [13, 10]]) { objs.push({ t: "deadtree", x, y, name: "Deadwood tree", log: "ashlogs", req: { skill: "woodcutting", lvl: 20 }, xp: 70, tease: "Grey, hard as bone. Your axe just bounces." }); g[y][x] = "#"; }
+      for (const [x, y] of [[20, 3], [7, 12], [19, 11]]) { objs.push({ t: "gravestone", x, y, name: "Gravestone" }); g[y][x] = "#"; }
+      objs.push({ t: "skeleton", x: 15, y: 9, name: "Skeleton" }); g[9][15] = "#";
+      for (const [x, y] of [[9, 5], [16, 2]]) { objs.push({ t: "snag", x, y, name: "Dead tree" }); g[y][x] = "#"; }
+      for (let x = 4; x <= 17; x++) keep.push([x, 7], [x, 8], [x, 6]);
+      for (let y = 7; y < ROWS; y++) keep.push([16, y], [18, y]);
+      wild(g, objs, this.exits, { n: "rocky", s: "rocky", w: "rocky", e: "rocky" }, [...keepOf(this), ...keep], 8);
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["taxwraith", 15, 4], ["taxwraith", 19, 6], ["chandelier", 5, 10], ["chandelier", 20, 9], ["revenant", 11, 9]],
+    npcs: [], bots: []
+  },
+  /* a player's island: the same layout for everyone, reached by the ferry at River Bend. What's planted, shown and
+     painted lives on the owner's character (c.isle); the server sends it with each snapshot. */
+  isle: {
+    name: "Island", island: true, exitTo: { scene: "river", x: 15, y: 10 }, entry: { x: 10, y: 10 },
+    build() {
+      const g = grid("~"), objs = [];
+      for (let y = 1; y <= 10; y++) for (let x = 1; x < COLS - 1; x++) if (((x - 10.5) / 8.6) ** 2 + ((y - 5.5) / 4.9) ** 2 <= 1) g[y][x] = ".";
+      for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (g[y][x] === ".") { let wet = false; for (const [dx, dy] of D8) if (g[y + dy]?.[x + dx] === "~") wet = true; if (wet) g[y][x] = "s"; }
+      // the dock: planks out to the ferry; the far end takes you back to River Bend
+      for (let y = 10; y < ROWS; y++) for (const x of [10, 11]) g[y][x] = y === ROWS - 1 ? "e" : "p";
+      objs.push({ t: "dock", x: 10, y: 10, w: 2, h: 3 });
+      objs.push({ t: "boatback", x: 12, y: 11, w: 2, h: 1, name: "Ferry" });
+      const house = { t: "house", img: "hut", x: 8, y: 1, w: 5, h: 3, door: { x: 10, y: 3 }, name: "Cottage" }; objs.push(house); block(g, 8, 1, 5, 3);
+      [[4, 5], [5, 5], [6, 5], [7, 5], [4, 7], [5, 7], [6, 7], [7, 7]].forEach(([x, y], i) => { objs.push({ t: "plot", i, x, y, name: "Plot" }); g[y][x] = "#"; });
+      [[13, 5], [15, 5], [17, 5], [13, 7], [15, 7], [17, 7]].forEach(([x, y], i) => { objs.push({ t: "pedestal", i, x, y, name: "Pedestal" }); g[y][x] = "#"; });
+      objs.push({ t: "pen", x: 13, y: 9, w: 3, h: 1, name: "Pet pen" }); block(g, 13, 9, 3, 1);
+      objs.push({ t: "islesign", x: 8, y: 9, name: "Island sign" }); g[9][8] = "#";
+      for (const [x, y] of [[4, 3], [16, 3], [3, 8]]) { objs.push({ t: "palm", x, y, name: "Tree" }); g[y][x] = "#"; }
+      return { g, objs, blobs: [] };
+    },
+    mobs: [], npcs: [], bots: []
+  }
+});
+
+// scene keys: most are a SCENES key; a player's island is "isle:<owner id>", every island built from SCENES.isle
+export const sceneDef = (key) => SCENES[String(key).split(":")[0]];
+export const isIsle = (key) => String(key).startsWith("isle:");
 // the same scene, built the same way everywhere; every object gets its index as its id
 export function buildScene(key) {
-  const sc = SCENES[key], b = sc.build.call(sc);
+  const sc = sceneDef(key), b = sc.build.call(sc);
   markBanks(b.g);
   b.objs.forEach((o, i) => { o.id = i; o.w ??= 1; o.h ??= 1; });
   return b;
@@ -393,12 +486,35 @@ export const MOBS = {
   rotten: { name: "Rotten Tomatoe", lvl: 4, hp: 10, att: 3, def: 2, max: 1, speed: 2600, box: [8, 14], drops: [["tomatoe", [1, 3]], ["husk", 1, 0.05]] },
   hornworm: { name: "Tomatoe Hornworm", lvl: 7, hp: 15, att: 6, def: 5, max: 2, speed: 2800, box: [12, 12], drops: [["husk", 1], ["tomatoe", 1, 0.5]] },
   highwayman: { name: "Highwayman", lvl: 12, hp: 22, att: 10, def: 9, max: 3, speed: 2400, box: [7, 26], drops: [["coins", [5, 20]], ["bones", 1], ["mask", 1, 0.15]] },
+  gnasher: { name: "Bog Gnasher", lvl: 18, hp: 30, att: 14, def: 12, max: 4, speed: 2600, aggro: 3, oy: 12, box: [11, 16], drops: [["bones", 1], ["coins", [5, 25]], ["bogplate", 1, 0.03]] },
+  taxwraith: { name: "Tax Wraith", lvl: 28, hp: 42, att: 20, def: 18, max: 5, speed: 2400, aggro: 4, box: [8, 26], drops: [["coins", [20, 80]], ["receipt", 1], ["wraithhood", 1, 0.03], ["menace", 1, 0.02], ["spiderboots", 1, 0.004]] },
+  chandelier: { name: "Chandelier Spider", lvl: 34, hp: 50, att: 24, def: 20, max: 6, speed: 2600, aggro: 4, oy: 12, box: [13, 22], drops: [["cobweb", 1], ["bones", 1], ["lantern", 1, 0.03], ["spiderboots", 1, 0.01]] },
+  revenant: { name: "Sulking Revenant", lvl: 45, hp: 80, att: 32, def: 28, max: 8, speed: 2800, aggro: 5, box: [9, 30], drops: [["bones", 2], ["coins", [50, 150]], ["grudge", 1, 0.04], ["menace", 1, 0.03]] },
   goat: { name: "Goat in a Toga", lvl: 12, hp: 24, att: 9, def: 8, max: 3, speed: 2400, box: [8, 26], drops: [["manifesto", 1], ["bones", 1], ["toga", 1, 0.25]] }
 };
 
 /* ------------------------------------------------------------ words */
 // what it takes to climb down into the Wilderness (PvP). Change it here.
 export const WILD_REQ = { skill: "melee", lvl: 10 };
+// dying outside the Cage: a quarter of the time one worn item falls where you died. The killer alone can take it
+// for lootMs, then anyone, until it's gone. Leaving mid-fight leaves your character standing there for lingerMs.
+export const PVP = { drop: 0.25, lootMs: 60000, groundMs: 180000, lingerMs: 10000 };
+export const inCage = (def, x, y) => !!def?.cage && x >= def.cage[0] && x <= def.cage[2] && y >= def.cage[1] && y <= def.cage[3];
+
+// islands: everyone has one. Plots grow in real time (online or not); pedestals show off one item each.
+export const ISLE = { plots: 8, shelf: 6 };
+export const ISLE_FERRY = { scene: "river", x: 15, y: 10 };
+export const CROPS = {
+  wheat: { lvl: 1, ms: 10 * 60000, yield: [3, 5], xp: 30 },
+  tomatoe: { lvl: 5, ms: 20 * 60000, yield: [3, 6], xp: 70 },
+  goldtomatoe: { lvl: 50, ms: 4 * 3600000, yield: [1, 3], xp: 600 }
+};
+// a theme repaints your island; price null means you can't buy it (events, quests)
+export const THEMES = {
+  meadow: { name: "Meadow", icon: "🌿", ex: "Green grass, round trees, a nice breeze.", price: 0 },
+  dunes: { name: "Sunny Dunes", icon: "🏝️", ex: "Warm sand, palm trees and one crab that watches you.", price: 2500 },
+  gloom: { name: "Gloom", icon: "🕸️", ex: "Grey grass, bare trees, a little fog. Not for sale.", price: null }
+};
 export const EXAMINE = {
   notice: ["NOTICE: Lost, one (1) sense of smell. If found, return to Waldy.", "NOTICE: The Forge buys ore. The Forge always buys ore.", "NOTICE: Do NOT feed the olives.", "NOTICE: Wanted: goat, wears a toga, answers to 'Senator'. Do not debate him."],
   sign: ["Via Appia → Closed: bandits. (Coming soon.)"],
@@ -434,9 +550,15 @@ export const EXAMINE = {
   toll: ["A toll post. The price board has been painted over with 'NO'."],
   barricade: ["Timber and rope. Past it, the road just stops: washed out. The Bandit Camp is somewhere beyond."],
   chariot: ["A chariot with one wheel. Whoever left it left in a hurry, or a very bad mood."],
+  rope: ["A rope back up to the farm. Somebody has tied a very bad knot, but it holds."],
+  cagesign: ["THE CAGE. Fight anyone in here as much as you like: nobody loses anything, and nobody learns anything."],
+  gravestone: ["'HERE LIES KEVIN. He went in for one more ore.'", "'HERE LIES A PERSON WHO SAID IT WAS SAFE.'", "The name's worn off. Someone has left a single, very small shoe."],
+  skeleton: ["A skeleton, still holding a fishing rod. It's got a bite.", "A skeleton in a comfortable pose. It looks like it's waiting for someone."],
+  snag: ["A dead tree. It creaks when nothing is moving."],
+  pen: ["A pet pen, empty for now. Something will live here one day."],
   mule: ["A mule. It refuses to move. It has refused for eleven years.", "The mule looks at you. You feel judged by a professional."]
 };
-export const VERB = { bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
+export const VERB = { pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
 /* ------------------------------------------------------------ quests are data
    goal.type "bring": have goal.n of goal.items in your bag when you talk to the giver (they're taken)
@@ -507,7 +629,8 @@ export function freshChar() {
     inv: [{ k: "coins", n: 25 }, { k: "pickaxe", n: 1 }, { k: "axe", n: 1 }, { k: "rod", n: 1 }],
     eq: { helm: "cap", weapon: "rudis", body: "tunic", shield: "parma", legs: null, gloves: null, boots: "sandals", ring: null },
     xp: { melee: 0, hp: XP_AT[10], fishing: 0, farming: 0, mining: 0, woodcutting: 0 },
-    qs: {}, bank: [], settings: { ...DEFAULT_SETTINGS }, created: Date.now()
+    qs: {}, bank: [], settings: { ...DEFAULT_SETTINGS }, created: Date.now(),
+    isle: { plots: Array(ISLE.plots).fill(null), shelf: Array(ISLE.shelf).fill(null), theme: "meadow", themes: ["meadow"], open: true }
   };
 }
 // fill in anything a stored character is missing, and drop what isn't real any more
@@ -518,7 +641,15 @@ export function normChar(c) {
   out.inv = (Array.isArray(c.inv) ? c.inv : f.inv).filter((s) => s && ITEMS[s.k] && s.n > 0).slice(0, INV_MAX);
   out.bank = (Array.isArray(c.bank) ? c.bank : []).filter((s) => s && ITEMS[s.k] && s.n > 0).slice(0, BANK_MAX);
   for (const s of SLOTS) if (out.eq[s] && !ITEMS[out.eq[s]]) out.eq[s] = null;
-  if (!SCENES[out.scene]) Object.assign(out, START);
+  if (!SCENES[out.scene]) Object.assign(out, isIsle(out.scene) ? ISLE_FERRY : START);   // back from an island: the ferry at River Bend
+  const fi = f.isle, ci = c.isle && typeof c.isle === "object" ? c.isle : {};
+  out.isle = {
+    plots: Array.from({ length: ISLE.plots }, (_, i) => { const p = ci.plots?.[i]; return p && CROPS[p.k] && Number.isFinite(p.at) ? { k: p.k, at: p.at } : null; }),
+    shelf: Array.from({ length: ISLE.shelf }, (_, i) => (ITEMS[ci.shelf?.[i]] ? ci.shelf[i] : null)),
+    themes: [...new Set(["meadow", ...(Array.isArray(ci.themes) ? ci.themes : [])])].filter((t) => THEMES[t]),
+    theme: fi.theme, open: ci.open !== false
+  };
+  if (out.isle.themes.includes(ci.theme)) out.isle.theme = ci.theme;
   return out;
 }
 export const lvlOf = (c, k) => levelOf(c.xp[k] || 0);

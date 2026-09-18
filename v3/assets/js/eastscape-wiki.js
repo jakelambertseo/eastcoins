@@ -68,12 +68,38 @@ export const GUIDES = [
   },
   {
     id: "wilderness", title: "The Wilderness", icon: "☠️",
-    body: `<p>A pit with a rope on the <a data-wiki="areas/farm">Ludus Farm</a> path leads down to the Wilderness: an area where other players can attack you, with rare resources and monsters. It needs level 10 Melee, and it isn't open yet.</p>`
+    body: `<p>The pit with a rope on the <a data-wiki="areas/farm">Ludus Farm</a> leads down to <a data-wiki="areas/wild">the Wilderness</a>. You need level 10 Melee to climb down.</p>
+      <ul><li><b>Anyone can attack anyone</b> down there. Click another player to fight them.</li>
+      <li><b>The Cage</b>, just past the rope, is a ring for fair fights: dying in the Cage costs nothing, and you're patched up outside the bars. Fights in the Cage don't give xp.</li>
+      <li>Die anywhere else down there and there's a <b>1 in 4 chance</b> you drop one of the things you're wearing. Whoever killed you has a minute to pick it up; after that, anyone can.</li>
+      <li>The monsters <b>come for you</b>: get close and they attack.</li>
+      <li><a data-wiki="areas/deep">The Deep Wild</a>, further in, has the best gathering in the game: Grimstone, Deadwood and the Black Pool give <b>50% more xp</b> and succeed more often, and now and then you'll dig up a glimmering geode.</li>
+      <li>Logging out mid-fight doesn't save you: your character stays where it was for 10 seconds.</li></ul>
+      <p>Climb the rope to get back up to the farm.</p>`
+  },
+  {
+    id: "islands", title: "Your island", icon: "🏝️",
+    body: `<p>Everyone has an island. Talk to <b>Charon the Ferryman</b> on the shore at <a data-wiki="areas/river">River Bend</a> and he'll row you out.</p>
+      <ul><li><b>Plots:</b> plant wheat, tomatoes or golden tomatoes from your bag. They grow in real time, whether you're online or not; come back and harvest more than you planted, plus Harvesting xp.</li>
+      <li><b>Pedestals:</b> put six things on display. Click one again to take it back.</li>
+      <li><b>Themes:</b> the sign by the dock changes your island's look. Charon sells new themes; others will come from events.</li>
+      <li><b>Visitors:</b> anyone can visit your island by asking Charon for you by name. They can look, but they can't pick your crops or touch your things. The sign can close your island to visitors.</li>
+      <li>The pet pen is empty for now. One day it won't be.</li></ul>`
   }
 ];
 
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
+  {
+    date: "2026-09-18", title: "The Wilderness and your own island",
+    items: [
+      "The Wilderness is open, down the pit on the Ludus Farm (Melee 10). Anyone can attack anyone. The Cage, by the rope, is for fights that cost nothing.",
+      "Die outside the Cage and there's a 1 in 4 chance you drop something you're wearing. Your killer has a minute to grab it.",
+      "The Deep Wild: Tax Wraiths, Chandelier Spiders and the Sulking Revenant come looking for you. Grimstone, Deadwood and the Black Pool give 50% more xp, and sometimes a glimmering geode.",
+      "New gear from the Wilderness: the Grudge knife, Tax Wraith hood, Bog-hound hide, Lantern shield, Ring of Mild Menace, and Eight-league boots, the first thing that makes you walk faster.",
+      "Everyone has an island. Charon the Ferryman at River Bend rows you there. Grow crops while you're away, show off six things, pick a theme, and visit other people's islands."
+    ]
+  },
   {
     date: "2026-09-18", title: "The Forum opens north and east",
     items: [
