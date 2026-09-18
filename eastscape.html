@@ -429,7 +429,7 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=19";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=20";
 import * as WK from "/v3/assets/js/eastscape-wiki.js?v=7";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -644,7 +644,7 @@ function say(text, cls = "sys") {
 /* ------------------------------------------------------------ the art (PixelLab, style A) */
 const ART = "/v3/assets/img/glad/flat/", ART_V = 3;
 // pictures replaced after they first shipped (the edge keeps each URL for a year): bump the one that changed
-const ART_VER = { farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
+const ART_VER = { chicken: 4, olive: 4, rotten: 4, chandelier: 4, revenant: 4, farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
 const ART_FILES = ["t_dirt", "t_water", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d, "legend_" + d]),
   "bank", "store", "cottage", "signpost", "tree2", "tree3", "tree4", "o_spot", "g_bush", "g_boulder", "g_grass", "g_flowers",
@@ -1828,7 +1828,7 @@ function wikiGo(route, setNav = true) {
   }
   else if (kind === "monsters" && MOBS[id]) {
     const m = MOBS[id], where = Object.values(WIKI.areas).filter((a) => a.mobs[id]);
-    html = `<h2><i>👹</i>${esc(m.name)}</h2><p class="lede">Level ${m.lvl}.</p>
+    html = `<h2><i>👹</i>${esc(m.name)}</h2><p class="lede">Level ${m.lvl} · ${G.MOB_SIZES[m.size] || "Medium"}${m.aggro ? " · attacks on sight" : ""}.</p>
       <table class="tbl"><tr><th>Hitpoints</th><th>Attack</th><th>Defence</th><th>Max hit</th><th>Attacks every</th></tr><tr><td>${m.hp}</td><td>${m.att}</td><td>${m.def}</td><td>${m.max}</td><td>${(m.speed / 1000).toFixed(1)}s</td></tr></table>
       <h3>Found in</h3><p>${where.map((a) => `${areaLink(a.key)} (${a.mobs[id]})`).join(", ") || "Nowhere yet."}</p>
       <h3>Drops</h3><table class="tbl"><tr><th>Item</th><th>How many</th><th>Chance</th></tr>${m.drops.map(([k, n, ch]) => `<tr><td>${wl(`items/${k}`, `${ico(k)} ${esc(ITEMS[k].name)}`)}</td><td>${qn(n)}</td><td>${ch == null ? "Always" : `${Math.round(ch * 100)}%`}</td></tr>`).join("")}</table>`;
