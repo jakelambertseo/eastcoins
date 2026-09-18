@@ -381,8 +381,8 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=12";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=4";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=13";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=5";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -639,7 +639,7 @@ function paintBg() {
     if (ob.t === "fenceV") { f(X + 6, Y, 4, T, "#5a3418"); f(X + 7, Y, 2, T, "#7a4a26"); f(X + 5, Y + 3, 6, 3, "#4a2a16"); }
     if (dark && (ob.t === "bush" || ob.t === "boulder") && bgSpr(`w_${ob.t}`, X + 8, Y + 16)) continue;
     if (ob.t === "skeleton") { if (bgSpr("skeleton", X + 8, Y + 15)) continue; f(X + 3, Y + 8, 10, 2, "#e8e4d8"); f(X + 2, Y + 6, 4, 4, "#e8e4d8"); f(X + 3, Y + 7, 1, 1, "#222"); for (let i = 0; i < 4; i++) f(X + 6 + i * 2, Y + 7, 1, 4, "#d8d4c8"); f(X + 12, Y + 2, 1, 10, "#8a6a3a"); }
-    if (ob.t === "dock") { for (let y = 0; y < ob.h; y++) { f(X, Y + y * T, 32, T, "#8a5a32"); for (let i = 0; i < 4; i++) f(X, Y + y * T + i * 4, 32, 1, "#6b4423"); } f(X, Y, 1, ob.h * T, "#5a3418"); f(X + 31, Y, 1, ob.h * T, "#5a3418"); }
+    if (ob.t === "dock") { const dw = ob.w * T; for (let y = 0; y < ob.h; y++) { f(X, Y + y * T, dw, T, "#8a5a32"); for (let i = 0; i < 4; i++) f(X, Y + y * T + i * 4, dw, 1, "#6b4423"); } f(X, Y, 1, ob.h * T, "#5a3418"); f(X + dw - 1, Y, 1, ob.h * T, "#5a3418"); }
     if (ob.t === "pen") { f(X, Y + 2, 48, 13, "#c8a860"); for (let i = 0; i < 12; i++) f(X + 2 + Math.floor(hashRand(i, 3, 91) * 44), Y + 4 + Math.floor(hashRand(i, 4, 92) * 9), 3, 1, "#a88a40");
       f(X, Y + 1, 48, 2, "#6b3f23"); f(X, Y + 14, 48, 2, "#6b3f23"); for (const px_ of [0, 23, 46]) f(X + px_, Y - 2, 2, 17, "#4a2a16"); }
     if (ob.t === "plot") { f(X + 1, Y + 2, 14, 13, "#5a3a22"); f(X + 1, Y + 2, 14, 1, "#3a2414"); for (let i = 0; i < 3; i++) f(X + 2, Y + 5 + i * 4, 12, 1, "#4a2e1a"); }
@@ -950,6 +950,7 @@ function talkTo(n) {
   if (n.opens === "ferry") return showTalk(n, pick(n.lines), [
     ["Take me to my island.", () => { closeTalk(); send({ t: "isle", op: "go" }); }],
     ["Row me to someone else's island.", () => { closeTalk(); openWin("isleWin"); send({ t: "isle", op: "list" }); setTimeout(() => $("isleName").focus(), 50); }],
+    ...(G.ISLE_TIERS[(me.isle?.tier || 1) + 1] ? [[`Upgrade my island (${G.fmtCash(G.ISLE_TIERS[(me.isle?.tier || 1) + 1].price)})…`, () => { const nx = G.ISLE_TIERS[(me.isle?.tier || 1) + 1]; showTalk(n, [`${nx.name}. ${nx.ex}`, `That's ${G.fmtCash(nx.price)}. Everything you've planted and put on show stays where it is.`], [[`Deal: ${G.fmtCash(nx.price)}`, () => { send({ t: "isle", op: "upgrade" }); closeTalk(); }], ["Maybe later.", closeTalk]]); }]] : []),
     ["What island themes do you have?", () => showTalk(n, "Themes repaint your whole island. Buy one here, then change it at the sign on your island.", [
       ...Object.entries(G.THEMES).filter(([k, th]) => th.price).map(([k, th]) => [me.isle?.themes?.includes(k) ? `${th.icon} ${th.name}: you have it` : `${th.icon} Buy ${th.name} for ${G.fmtCash(th.price)}`, () => { if (!me.isle?.themes?.includes(k)) send({ t: "isle", op: "buy", theme: k }); closeTalk(); }]),
       bye])],
@@ -1123,6 +1124,13 @@ function frame() {
       px(X + 3, Y + 13, 10, 2, "rgba(0,0,0,.25)"); for (let i = 0; i < 6; i++) px(X + 7 + Math.round(Math.sin(i * 0.5) * 2), Y + 12 - i * 4, 3, 4, "#a8784a");
       for (const [dx, dy, w_] of [[-6, -14, 10], [4, -15, 10], [-3, -18, 12], [0, -12, 5], [6, -11, 6]]) px(X + 5 + dx, Y + dy, w_, 3, "#3a8a3a");
       px(X + 6, Y - 12, 3, 3, "#6a4a2a");
+    } });
+    if (ob.t === "lighthouse") sprites.push({ y: (ob.y + 2) * T - 2, draw: () => {
+      const X = ob.x * T, Y = ob.y * T;
+      px(X + 2, Y + 28, 28, 4, "rgba(0,0,0,.25)"); px(X + 8, Y - 14, 16, 44, "#f0ead8");
+      for (let i = 0; i < 4; i++) px(X + 8, Y - 10 + i * 11, 16, 4, "#c43a3a");
+      px(X + 6, Y - 22, 20, 9, "#3a3a44"); px(X + 9, Y - 20, 14, 5, calm || Math.sin(pnow / 400) > 0 ? "#ffe27a" : "#c8a040"); px(X + 12, Y - 28, 8, 6, "#c43a3a");
+      px(X + 13, Y + 20, 6, 10, "#5a3418");
     } });
     if (ob.t === "pedestal") sprites.push({ y: ob.y * T + 14, draw: () => { const X = ob.x * T, Y = ob.y * T; px(X + 2, Y + 13, 12, 2, "rgba(0,0,0,.25)"); px(X + 3, Y + 1, 10, 13, "#b8b2a4"); px(X + 2, Y, 12, 3, "#d8d2c4"); px(X + 2, Y + 12, 12, 3, "#9a9484"); px(X + 4, Y + 3, 1, 9, "#9a9484"); } });
     if (ob.t === "islesign") sprites.push({ y: ob.y * T + 14, draw: () => { const X = ob.x * T, Y = ob.y * T; px(X + 7, Y + 2, 2, 13, "#5a3418"); px(X + 1, Y - 3, 14, 8, "#a8784a"); px(X + 2, Y - 2, 12, 6, "#c89a5a"); px(X + 4, Y, 8, 1, "#5a3418"); px(X + 4, Y + 2, 5, 1, "#5a3418"); } });
@@ -1359,7 +1367,7 @@ function frame() {
     }
   }
   if (pvp || Z.isle) {
-    const cage = P && G.inCage(Z.def, P.x, P.y), text = Z.isle ? `🏝️ ${Z.isle.owner === you.id ? "Your island" : `${Z.isle.name}'s island`}` : cage ? "🛡️ The Cage: fights here cost nothing" : "☠️ PvP: anyone can attack you";
+    const cage = P && G.inCage(Z.def, P.x, P.y), text = Z.isle ? `${Z.def.home ? "🏠" : "🏝️"} ${Z.isle.owner === you.id ? `Your ${Z.def.home ? "cottage" : Z.def.name === "The Far Shore" ? "far shore" : "island"}` : `${Z.isle.name}'s ${Z.def.home ? "cottage" : "island"}`}` : cage ? "🛡️ The Cage: fights here cost nothing" : "☠️ PvP: anyone can attack you";
     ctx.font = `800 13px "Nunito", system-ui, sans-serif`; const bw = ctx.measureText(text).width + 20, bx = view.ox + 10, by = view.oy + 10;
     ctx.fillStyle = Z.isle ? "rgba(20,60,90,.85)" : cage ? "rgba(30,60,40,.88)" : "rgba(110,14,14,.88)"; ctx.fillRect(bx, by, bw, 24);
     ctx.fillStyle = "#fff"; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(text, bx + 10, by + 12);
@@ -1536,7 +1544,7 @@ let wikiRoute = null;
 const WIKI = (() => {
   const areas = {}, sources = {}, npcs = {};
   const addSrc = (k, s) => { (sources[k] ||= []).push(s); };
-  for (const key of Object.keys(SCENES)) {
+  for (const key of Object.keys(SCENES).filter((k) => !SCENES[k].wikiHide)) {
     const def = SCENES[key], b = G.buildScene(key), a = areas[key] = { key, def, mobs: {}, res: {}, buildings: [] };
     for (const [t] of def.mobs) a.mobs[t] = (a.mobs[t] || 0) + 1;
     for (const n of def.npcs) npcs[n.name] = { ...n, scene: key };
@@ -1567,7 +1575,7 @@ function wikiPages() {
   for (const [k, s] of Object.entries(SKILLS)) pages.push({ route: `skills/${k}`, title: s.name, icon: s.icon, group: "Skills" });
   for (const [k, q] of Object.entries(QUESTS)) pages.push({ route: `quests/${k}`, title: q.name, icon: q.icon, group: "Quests" });
   for (const [k, m] of Object.entries(MOBS)) pages.push({ route: `monsters/${k}`, title: m.name, icon: "👹", group: "Monsters" });
-  for (const [k, d] of Object.entries(SCENES)) pages.push({ route: `areas/${k}`, title: d.name, icon: d.interior ? "🚪" : "🗺️", group: "Areas" });
+  for (const [k, d] of Object.entries(SCENES).filter(([, d]) => !d.wikiHide)) pages.push({ route: `areas/${k}`, title: d.name, icon: d.interior ? "🚪" : "🗺️", group: "Areas" });
   for (const n of Object.keys(WIKI.npcs)) pages.push({ route: `npcs/${n}`, title: n, icon: "🧑", group: "People" });
   for (const [k, it] of Object.entries(ITEMS)) pages.push({ route: `items/${k}`, title: it.name, icon: it.icon, group: "Items" });
   return pages;
@@ -1708,7 +1716,7 @@ function renderStats() {
   $("stats").innerHTML = [
     ["hp", `${Math.max(0, me.hp)}/${maxHp()}${me.god ? " ⭐" : ""}`, "Hitpoints"], ["combat", G.combatOf(me), "Combat level"],
     ["total", total(), "Total level"], ["cash", G.cashIn(me).toLocaleString(), "Cash"],
-    ["bag", `${me.inv.length}/${G.INV_MAX}`, "Inventory"], ["area", Z.key ? (Z.def.island ? "Island" : Z.def.name.replace(/^The /, "").split(" ")[0]) : "", "Area"]
+    ["bag", `${me.inv.length}/${G.INV_MAX}`, "Inventory"], ["area", Z.key ? (Z.def.island ? "Island" : Z.def.home ? "Cottage" : Z.def.name.replace(/^The /, "").split(" ")[0]) : "", "Area"]
   ].map(([i, v, t]) => `<div class="stat" title="${t}"><i><img src="/v3/assets/img/glad/flat/ui/${i}.png?v=1" alt=""></i><b>${v}</b></div>`).join("");
 }
 function renderPanel() {
