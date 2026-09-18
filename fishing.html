@@ -518,6 +518,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 /* ---------- the daily loop (tabs in the lower card) */
 .tab .count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;margin-left:auto;border-radius:9px;background:var(--gold);color:#2a1300;font-size:.68rem;font-weight:800;vertical-align:1px}
 .tab .count[hidden]{display:none}
+.tab .count.ready{background:#e5484d;color:#fff;letter-spacing:.06em;font-size:.6rem;padding:0 7px;animation:readyPulse 2s ease-in-out infinite}
+@keyframes readyPulse{50%{box-shadow:0 0 0 4px rgba(229,72,77,.25)}}
+@media (prefers-reduced-motion:reduce){.tab .count.ready{animation:none}}
 .panel-intro{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin:2px 0 14px}
 .panel-intro p{margin:0;color:var(--muted);font-size:.86rem;line-height:1.45;max-width:60ch}
 .panel-intro p b{color:var(--text);font-weight:700}
@@ -533,7 +536,54 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .linkbtn:hover{color:var(--text)}
 
 /* quests */
-.q-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.q-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+@media (max-width:900px){.q-cols{grid-template-columns:minmax(0,1fr)}}
+/* quests, rebuilt 2026-09-17: a board per cadence, tiles not rows */
+.qb{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:grid}
+.qb-top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:16px 18px;background:linear-gradient(180deg,rgba(var(--gold-rgb),.07),transparent);border-bottom:1px solid var(--line)}
+.qb-ring{--v:0;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--gold) calc(var(--v) * 1turn),var(--panel-3) 0)}
+.qb-ring span{width:40px;height:40px;border-radius:50%;background:var(--panel);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:.9rem;font-variant-numeric:tabular-nums}
+.qb-ring small{font-size:.66rem;color:var(--muted-2)}
+.qb-title h2{margin:0;font-family:var(--display);font-weight:800;font-size:1.2rem}
+.qb-title p{margin:2px 0 0;font-size:.76rem;color:var(--muted-2)}
+.qb-pills{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.qb-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;background:var(--panel-2);border:1px solid var(--line-2);font-size:.72rem;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.qb-pill svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.qb-pill.fire{color:#ff9d3c;border-color:rgba(255,157,60,.45);background:rgba(255,157,60,.1)}
+.qb-list{display:grid;gap:9px;padding:14px}
+.qt{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 13px;border-radius:13px;background:var(--panel-2);border:1px solid var(--line);transition:border-color .2s}
+.qt-ico{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:var(--panel-3);color:var(--sea)}
+.qt-ico svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.qt-main{display:grid;gap:6px;min-width:0}
+.qt-main b{font-size:.9rem;line-height:1.25}
+.qt-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:center}
+.qt-track{height:8px;border-radius:99px;background:var(--panel-3);overflow:hidden}
+.qt-track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#1f6fd1,var(--sea));width:calc(var(--p) * 100%)}
+.qt-bar small{font-size:.72rem;font-weight:800;color:var(--muted-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.qt-side{display:grid;justify-items:end;gap:4px}
+.qt-reward{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;background:var(--gold-dim);color:var(--gold);font-weight:800;font-size:.8rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.qt-reward .pearl{width:13px;height:13px}
+.qt.done{border-color:rgba(var(--gold-rgb),.6);box-shadow:0 0 0 1px rgba(var(--gold-rgb),.2) inset}
+.qt.done .qt-ico{background:var(--gold-dim);color:var(--gold)}
+.qt.done .qt-track i{background:linear-gradient(90deg,#c9922a,var(--gold))}
+.qt.claimed{opacity:.62}
+.qt.claimed .qt-ico{background:rgba(77,219,139,.14);color:var(--green)}
+.qt.claimed .qt-track i{background:var(--green)}
+.qt.claimed .qt-reward{background:var(--panel-3);color:var(--muted)}
+.qt-got{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:800;color:var(--green)}
+.qt-got svg{width:13px;height:13px}
+.qb-chest{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;margin:0 14px 14px;padding:12px 13px;border-radius:13px;border:1px dashed var(--line-2);background:rgba(0,0,0,.14)}
+.qb-chest .ch-ico{font-size:1.9rem;line-height:1;text-align:center;filter:grayscale(.7) brightness(.8)}
+.qb-chest b{display:block;font-size:.86rem}
+.qb-chest small{display:block;font-size:.74rem;color:var(--muted-2);margin-top:2px}
+.qb-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:7px}
+.qb-steps i{height:5px;border-radius:99px;background:var(--panel-3)}
+.qb-steps i.on{background:var(--gold)}
+.qb-chest.ready{border-style:solid;border-color:rgba(var(--gold-rgb),.7);background:linear-gradient(90deg,rgba(var(--gold-rgb),.14),rgba(var(--gold-rgb),.04))}
+.qb-chest.ready .ch-ico{filter:none}
+.qb-chest.opened{border-style:solid;border-color:rgba(77,219,139,.4)}
+.qb-chest.opened .ch-ico{filter:none}
+.qb-chest.opened small{color:var(--green)}
 @media (max-width:720px){.q-cols{grid-template-columns:minmax(0,1fr);gap:18px}}
 .q-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:2px}
 .q-head .sec-h{margin:0}
@@ -854,7 +904,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
           <span class="fnav-h">Out on the water</span>
           <button class="tab" role="tab" id="tab-fishing" aria-controls="panel-fishing" data-tab="fishing" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3v9a4 4 0 0 0 8 0"/><path d="M5 3l14 5"/><path d="M19 8v6"/><circle cx="19" cy="16" r="2"/></svg><span class="tab-label">Fishing</span></button>
           <button class="tab" role="tab" id="tab-dive" aria-controls="panel-dive" data-tab="dive" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21c-3.5-3.6-6-6.6-6-9.8A6 6 0 0 1 18 11.2c0 3.2-2.5 6.2-6 9.8z"/><circle cx="12" cy="10.6" r="2.3"/></svg><span class="tab-label">Diving</span></button>
-          <button class="tab" role="tab" id="tab-boss" aria-controls="panel-boss" data-tab="boss" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6.4.7-4.8 4.2 1.4 6.1L12 16.8 6.4 19.6l1.4-6.1L3 9.3l6.4-.7z"/></svg><span class="tab-label">Bosses</span></button>
+          <button class="tab" role="tab" id="tab-boss" aria-controls="panel-boss" data-tab="boss" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6.4.7-4.8 4.2 1.4 6.1L12 16.8 6.4 19.6l1.4-6.1L3 9.3l6.4-.7z"/></svg><span class="tab-label">Bosses</span><span class="count ready" hidden></span></button>
           <span class="fnav-h">Back at the reef</span>
           <button class="tab" role="tab" id="tab-tank" aria-controls="panel-tank" data-tab="tank" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 13c1.5-2 4-2 5.5 0-1.5 2-4 2-5.5 0zM12.5 13l2-1.5v3z"/><path d="M3 9h18"/></svg><span class="tab-label">Your tank</span></button>
           <button class="tab" role="tab" id="tab-kitchen" aria-controls="panel-kitchen" data-tab="kitchen" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6z"/><path d="M8 6.5c0-1 1-1 1-2.2M12 6.5c0-1 1-1 1-2.2M16 6.5c0-1 1-1 1-2.2"/></svg><span class="tab-label">Kitchen</span></button>
@@ -997,7 +1047,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 
   <section class="view view-quests" role="tabpanel" id="panel-quests" aria-labelledby="tab-quests" data-panel="quests" hidden>
     <header class="view-h"><div><h1>Quests</h1><p>New dailies at midnight Central, new weeklies on Monday.</p></div></header>
-    <div class="card"><div class="card-body"><div id="quests"></div></div></div>
+    <div id="quests"></div>
   </section>
 
   <section class="view view-kitchen" role="tabpanel" id="panel-kitchen" aria-labelledby="tab-kitchen" data-panel="kitchen" hidden>
@@ -3853,6 +3903,18 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { id: "wshiny", ev: "shiny", reward: 1200, gen: () => ({ target: 1 }), text: () => "Catch or hatch a shiny" }
   ];
   const Q_BY_ID = Object.fromEntries([...Q_DAILY, ...Q_WEEKLY].map((t) => [t.id, t]));
+  const Q_ICON = {
+    catch: '<svg viewBox="0 0 24 24"><path d="M3 12c3-4.5 7-6 11-4.5L19 5v14l-5-2.5C10 18 6 16.5 3 12z"/><circle cx="7.5" cy="11" r=".8"/></svg>',
+    harvest: '<svg viewBox="0 0 24 24"><path d="M12 20v-8"/><path d="M12 12c-4 0-6-3-6-6 3 0 6 2 6 6zM12 14c3.5 0 5.5-2.5 5.5-5.5-3 0-5.5 2-5.5 5.5z"/><path d="M5 20h14"/></svg>',
+    breed: '<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4 4 0 0 1 12 8a4 4 0 0 1 7 2.5C19 15.6 12 20 12 20z"/></svg>',
+    hatch: '<svg viewBox="0 0 24 24"><path d="M12 3.5c3.6 0 6 5.2 6 9.2A6 6 0 0 1 6 12.7c0-4 2.4-9.2 6-9.2z"/><path d="M7 12l2.5 1.5L12 11l2.5 2.5L17 12"/></svg>',
+    keep: '<svg viewBox="0 0 24 24"><rect x="3.5" y="6" width="17" height="12" rx="2"/><path d="M3.5 10c3 1.5 5 1.5 8.5 0s5.5-1.5 8.5 0"/></svg>',
+    sell: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5-1.5 0-2.5.8-2.5 2s1 1.6 2.5 2 2.5.9 2.5 2-1 2-2.5 2c-1.1 0-2-.5-2.5-1.5M12 6.5V8M12 16v1.5"/></svg>',
+    newSpecies: '<svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5M12 7v6M9 10h6"/></svg>',
+    daily: '<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9.5h16M8.5 3v4M15.5 3v4M9 14.5l2 2 4-4"/></svg>',
+    water: '<svg viewBox="0 0 24 24"><path d="M12 3.5s-6 6.6-6 10.5a6 6 0 0 0 12 0c0-3.9-6-10.5-6-10.5z"/></svg>',
+    shiny: '<svg viewBox="0 0 24 24"><path d="M12 3l2.2 6.3L20.5 12l-6.3 2.7L12 21l-2.2-6.3L3.5 12l6.3-2.7z"/></svg>'
+  };
   const chicagoDate = (shift) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(Date.now() + shift * 864e5));
   function weekOf(day) {
     const d = new Date(day + "T12:00:00Z");
@@ -3916,34 +3978,46 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     ensureQuests();
     const box = $("quests"); box.replaceChildren();
     const cols = el("div", "q-cols");
-    const column = (title, meta, list, chestDone, chestText, onChest) => {
-      const col = el("div", "q-col");
-      col.append(el("div", "q-head", `<h4 class="sec-h">${title}</h4><span class="q-meta">${meta}</span>`));
-      const ul = el("div", "q-list");
+    const CLOCK = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>';
+    const board = (title, sub, timerId, list, chestDone, chestText, onChest, extraPill) => {
+      const claimed = list.filter((q) => q.claimed).length;
+      const b = el("section", "qb");
+      b.append(el("div", "qb-top", `<div class="qb-ring" style="--v:${claimed / list.length}"><span>${claimed}<small>/${list.length}</small></span></div>
+        <div class="qb-title"><h2>${title}</h2><p>${sub}</p></div>
+        <div class="qb-pills"><span class="qb-pill">${CLOCK}<span id="${timerId}"></span></span>${extraPill || ""}</div>`));
+      const ul = el("div", "qb-list");
       list.forEach((q) => {
         const t = Q_BY_ID[q.id], p = Math.min(q.prog, q.target), done = p >= q.target;
-        const row = el("div", "quest" + (q.claimed ? " claimed" : done ? " done" : ""));
+        const row = el("div", "qt" + (q.claimed ? " claimed" : done ? " done" : ""));
         row.style.setProperty("--p", String(p / q.target));
-        row.append(el("span", "q-mark", q.claimed ? CHECK : ""));
-        row.append(el("span", "q-text", `${t.text(q)}<small>${q.claimed ? "Claimed" : `${p} / ${q.target}`}</small>`));
+        row.append(el("span", "qt-ico", Q_ICON[t.ev] || Q_ICON.catch));
+        row.append(el("div", "qt-main", `<b>${t.text(q)}</b><div class="qt-bar"><span class="qt-track"><i></i></span><small>${num(p)} / ${num(q.target)}</small></div>`));
+        const side = el("div", "qt-side");
         if (done && !q.claimed) {
-          const b = el("button", "btn small gold", `Claim <span class="pearl"></span>${t.reward}`); b.type = "button";
-          b.addEventListener("click", () => claim(q)); row.append(b);
-        } else row.append(el("span", "q-reward", `<span class="pearl"></span>${t.reward}`));
+          const btn = el("button", "btn small gold", `Claim <span class="pearl"></span>${t.reward}`); btn.type = "button";
+          btn.addEventListener("click", () => claim(q)); side.append(btn);
+        } else {
+          side.append(el("span", "qt-reward", `<span class="pearl"></span>${t.reward}`));
+          if (q.claimed) side.append(el("span", "qt-got", `${CHECK} Claimed`));
+        }
+        row.append(side);
         ul.append(row);
       });
-      col.append(ul);
-      const all = list.every((q) => q.claimed);
-      const chest = el("div", "q-chest" + (chestDone ? " opened" : all ? " ready" : ""));
-      chest.append(el("span", null, chestDone ? `${title} chest opened` : chestText));
-      if (all && !chestDone) { const b = el("button", "btn small primary", "Open chest"); b.type = "button"; b.addEventListener("click", onChest); chest.append(b); }
-      col.append(chest);
-      return col;
+      b.append(ul);
+      const all = claimed === list.length;
+      const chest = el("div", "qb-chest" + (chestDone ? " opened" : all ? " ready" : ""));
+      chest.append(el("span", "ch-ico", "🧰"));
+      chest.append(el("div", null, `<b>${title} chest</b><small>${chestDone ? "Opened — a new one comes with the next set" : all ? "Ready to open" : chestText}</small>`
+        + `<div class="qb-steps">${list.map((q) => `<i class="${q.claimed ? "on" : ""}"></i>`).join("")}</div>`));
+      if (all && !chestDone) { const btn = el("button", "btn small primary", "Open chest"); btn.type = "button"; btn.addEventListener("click", onChest); chest.append(btn); }
+      else chest.append(el("span"));
+      b.append(chest);
+      return b;
     };
-    const streak = S.q.streak ? `<b class="streak">${S.q.streak}-day streak</b> · ` : "";
+    const fire = S.q.streak ? `<span class="qb-pill fire">🔥 ${S.q.streak}-day streak</span>` : "";
     cols.append(
-      column("Daily", `${streak}<span id="qDayLeft"></span>`, S.q.daily, S.q.chest, `Claim all three for the daily chest${S.q.streak >= 2 ? ` (+${Math.min(S.q.streak + 1, 7) * 10}%)` : ""}`, openDailyChest),
-      column("Weekly", `<span id="qWeekLeft"></span>`, S.q.weekly, S.q.weekChest, "Claim all three for the weekly chest and a title", openWeeklyChest)
+      board("Daily", "New set at midnight Central", "qDayLeft", S.q.daily, S.q.chest, `Claim all three to open it${S.q.streak >= 2 ? ` · streak bonus +${Math.min(S.q.streak + 1, 7) * 10}%` : ""}`, openDailyChest, fire),
+      board("Weekly", "New set every Monday", "qWeekLeft", S.q.weekly, S.q.weekChest, "Claim all three for the chest and a title", openWeeklyChest)
     );
     box.append(cols);
     tickLoop(true);
@@ -4103,6 +4177,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     setBadge("quests", claimable);
     setBadge("garden", S.plots.filter((p) => p.seed && S.clock >= p.ready).length);
     setBadge("breeding", S.nests.filter((n) => n && S.clock >= n.ready).length + S.nursery.length);
+    // a boss you can fight and haven't landed says READY rather than a number
+    { const rb = document.querySelector('.tab[data-tab="boss"] .count'); if (rb) { const on = BOSSES.some((x) => bossOpen(x) && !bossState(x).beaten); rb.hidden = !on; rb.textContent = "READY"; } }
   }
 
   /* ============================================================ book, shop, derby */
