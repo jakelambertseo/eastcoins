@@ -217,6 +217,30 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .mini-tip{pointer-events:none;min-width:170px}
 .mini-tip small{margin:4px 0 0}
 .mini-tip .lends{display:block;font-size:.7rem;font-weight:800;color:var(--sea);margin-top:3px}
+/* tank page, 2026-09-17: the glass and what is in it side by side, so the page reads across not down */
+.tank-top{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(280px,1fr);gap:16px;align-items:stretch}
+.tank-main{overflow:hidden}
+.tank-side{height:0;min-height:100%;display:flex;flex-direction:column;padding:14px 14px 12px;gap:10px}
+.tank-side-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tank-side-head .card-h{margin:0}
+.tank-cap{padding:3px 10px;border-radius:99px;background:var(--panel-2);border:1px solid var(--line-2);font-weight:800;font-size:.76rem;font-variant-numeric:tabular-nums}
+.tank-cap.full{color:#ffb54a;border-color:rgba(255,181,74,.55);background:rgba(255,181,74,.1)}
+.tank-side-scroll{flex:1 1 0;min-height:0;overflow-y:auto;margin-right:-6px;padding-right:6px}
+.tank-side .tank-list li{grid-template-columns:10px minmax(0,1fr) auto;row-gap:6px;font-size:.82rem}
+.tank-side .tank-list li .btn{grid-column:2 / -1;justify-self:end;padding:3px 9px;font-size:.72rem}
+.tank-side .tank-list li .rate{flex-direction:column;align-items:flex-end;gap:0}
+.tank-side .tank-list li > span:nth-child(2){line-height:1.55}
+.tank-list .qtag{font-size:.56rem;padding:0 6px;gap:2px}
+.tank-full{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,181,74,.55);background:linear-gradient(90deg,rgba(255,181,74,.14),rgba(255,181,74,.04))}
+.tank-full[hidden]{display:none}
+.tank-full b{display:block;font-size:.88rem;color:#ffcf7a}
+.tank-full small{display:block;font-size:.74rem;color:var(--muted)}
+.tank-full .btn{white-space:nowrap}
+.tank-fullpill{position:absolute;right:10px;bottom:10px;z-index:2;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;border:1px solid rgba(255,181,74,.7);background:rgba(40,24,6,.85);color:#ffcf7a;font:inherit;font-weight:800;font-size:.8rem;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.tank-fullpill[hidden]{display:none}
+.tank-fullpill:hover{background:rgba(70,42,10,.9)}
+@media (min-width:1100px){#tbGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:1000px){.tank-top{grid-template-columns:minmax(0,1fr)}.tank-side{height:auto;min-height:0}.tank-side-scroll{max-height:360px;flex:none}}
 .tank-list{list-style:none;margin:0;padding:0;display:grid;gap:4px}
 .tank-list li{display:grid;grid-template-columns:10px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:6px 8px;border-radius:9px;background:var(--panel-2);font-size:.86rem}
 .tank-list li i{width:10px;height:10px;border-radius:50%}
@@ -827,6 +851,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .dive-bar{flex:1;min-width:220px;height:10px;border-radius:99px;background:var(--panel-3);border:1px solid var(--line);overflow:hidden}
 .dive-bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#1f6fd1,#4fc3d9 70%,#bdf0ff)}
 .dive-note{color:var(--muted-2);font-size:.78rem}
+.dive-bar.has-diver{overflow:visible;margin-left:128px;height:12px;position:relative}
+.dive-bar.has-diver i{position:relative}
+.dive-bar .diver{position:absolute;right:-14px;top:50%;height:44px;width:auto;max-width:none;transform:translateY(-60%);pointer-events:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55));animation:diverBob 2.4s ease-in-out infinite}
+.dive-bar.going .diver{animation-duration:.9s}
+@keyframes diverBob{50%{transform:translateY(-44%) rotate(-2deg)}}
+@media (prefers-reduced-motion:reduce){.dive-bar .diver{animation:none}}
 /* bosses */
 .boss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
 .boss{border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden;display:grid;align-content:start}
@@ -1062,17 +1092,22 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   <section class="view view-tank" role="tabpanel" id="panel-tank" aria-labelledby="tab-tank" data-panel="tank" hidden>
     <header class="view-h"><div><h1>Your tank</h1><p>Fish you keep swim here and make Pearls, even while you're away.</p></div><span class="meta" id="capLine">0 of 5 fish</span></header>
 
-    <section class="card" aria-label="Aquarium">
+    <div class="tank-top">
+    <section class="card tank-main" aria-label="Aquarium">
       <div class="tank-wrap" id="tankWrap">
         <canvas id="tank"></canvas>
         <div class="tank-hud"><span id="tankRate"><span class="pearl"></span> 0 / hr</span><span id="tankAway">Up to 8 h while you're away</span></div>
         <div class="fishtip" id="fishtip" hidden></div>
         <button class="tank-name" id="tankName" type="button" title="Rename your tank"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg><span id="tankNameText">My tank</span></button>
-      </div>
-      <div class="card-body">
-        <ul class="tank-list" id="tankList"></ul>
+        <button class="tank-fullpill" id="tankFullPill" type="button" hidden></button>
       </div>
     </section>
+    <section class="card tank-side" aria-label="Fish in the tank">
+      <div class="tank-side-head"><h2 class="card-h">In the tank</h2><span class="tank-cap" id="tankCapPill">0/5</span></div>
+      <div class="tank-full" id="tankFull" hidden></div>
+      <div class="tank-side-scroll"><ul class="tank-list" id="tankList"></ul></div>
+    </section>
+    </div>
 
     <section class="card card-next" aria-label="What your tank does">
       <div class="card-body">
@@ -1721,7 +1756,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   }
 
   /* ============================================================ the kitchen
-     Melvor-style cooking. Catches go to the COLD STORE by species (counts, not
+     Melvor-style cooking. Catches go to the FREEZER by species (counts, not
      individual fish — a thousand Bluegill are one row), and the Kitchen cooks
      them in batches on a timer while the page is open. Each fish has a level it
      can first be cooked at and a level it STOPS BURNING at; between the two the
@@ -1786,7 +1821,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     return true;
   }
 
-  /** Put n of a species on the stove. They leave the cold store as they go on. */
+  /** Put n of a species on the stove. They leave the freezer as they go on. */
   function startCook(key, n) {
     if (S.cookQ) { toast("The stove is busy", "Stop the batch that is cooking first."); return; }
     const sp = unq(key).sp, have = S.bank[key] || 0;
@@ -1800,7 +1835,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const q = S.cookQ; if (!q) return;
     if (q.left) S.bank[q.key] = (S.bank[q.key] || 0) + q.left;
     S.cookQ = null;
-    toast("Stopped", `${q.done} cooked, ${q.burnt} burnt. The rest went back in the cold store.`);
+    toast("Stopped", `${q.done} cooked, ${q.burnt} burnt. The rest went back in the freezer.`);
     renderKitchen(); save();
   }
   /** Cook everything that should have finished by `until`. Returns how many came off. */
@@ -1905,21 +1940,21 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       sb.querySelector(".kq-fish").append(fishChip(sp, true));
       const stop = el("button", "btn small", "Stop"); stop.type = "button"; stop.addEventListener("click", stopCook);
       sb.querySelector(".kq").append(stop);
-    } else sb.innerHTML = `<h2 class="card-h">On the stove</h2><p class="note">Nothing cooking. Pick a fish from the cold store below and choose how many.</p>`;
+    } else sb.innerHTML = `<h2 class="card-h">On the stove</h2><p class="note">Nothing cooking. Pick a fish from the freezer below and choose how many.</p>`;
     stove.append(sb); box.append(stove);
 
-    // the cold store
+    // the freezer
     const store = el("section", "card card-next");
     const cb = el("div", "card-body");
     const full = bankCount() >= bankCap();
-    cb.innerHTML = `<h2 class="card-h">Cold store</h2>
+    cb.innerHTML = `<h2 class="card-h">Freezer</h2>
       <div class="panel-intro"><p>Press <b>Bank</b> on a catch to store it here. Cook them in batches: each fish has a level where it stops burning.</p>
         <span class="hint${full ? " bad" : ""}">${BANK_CAPS[S.bankLvl].name} · ${num(bankCount())}/${num(bankCap())}</span></div>`;
     const auto = el("label", "kauto", "Auto-bank ");
     const sel = el("select", "g-select");
     [["off", "Off — ask every time"], ["common", "Commons"], ["uncommon", "Uncommon and below"], ["rare", "Rare and below"]]
       .forEach(([v, t]) => { const o = el("option", null, t); o.value = v; o.selected = S.autoBank === v; sel.append(o); });
-    sel.addEventListener("change", () => { S.autoBank = sel.value; save(); toast("Auto-bank", sel.value === "off" ? "Off. Every catch will ask." : `${sel.options[sel.selectedIndex].text} go straight to the cold store — never a shiny, a new species or a record.`); });
+    sel.addEventListener("change", () => { S.autoBank = sel.value; save(); toast("Auto-bank", sel.value === "off" ? "Off. Every catch will ask." : `${sel.options[sel.selectedIndex].text} go straight to the freezer — never a shiny, a new species or a record.`); });
     auto.append(sel);
     cb.append(auto);
     const keys = Object.keys(S.bank).sort((a, b) => unq(a).sp.rar - unq(b).sp.rar || unq(a).sp.spot - unq(b).sp.spot || a.localeCompare(b));
@@ -2522,14 +2557,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     $("cSell").innerHTML = `Sell <span class="pearl"></span>${num(rate * 3)}`;
     const bankFull = bankCount() >= bankCap();
     $("cBank").disabled = bankFull || c.shiny;
-    $("cBank").textContent = c.shiny ? "Keep the shiny" : bankFull ? "Cold store full" : "Bank";
-    $("cBank").title = c.shiny ? "Shinies are too good to cook" : bankFull ? "Cook or sell what is in the cold store, or buy a bigger one" : `Store it to cook in the Kitchen · ${bankCount()}/${bankCap()}`;
+    $("cBank").textContent = c.shiny ? "Keep the shiny" : bankFull ? "Freezer full" : "Bank";
+    $("cBank").title = c.shiny ? "Shinies are too good to cook" : bankFull ? "Cook or sell what is in the freezer, or buy a bigger one" : `Store it to cook in the Kitchen · ${bankCount()}/${bankCap()}`;
     // Auto-bank: an ordinary catch at or below the chosen rarity goes straight to
-    // the cold store. Never a shiny, a new species or a record — those always ask.
+    // the freezer. Never a shiny, a new species or a record — those always ask.
     const autoB = !c.shiny && !isNew && !record && sp.rar <= AUTO_RAR[S.autoBank] && bankCount() < bankCap();
     if (autoB) {
       bankFish(sp, c.q); fish.result = null; setPhase("idle"); renderKitchen();
-      toast(`${c.q ? QUAL[c.q].name + " " : ""}${sp.name} banked`, `Auto-bank · ${num(bankCount())}/${num(bankCap())} in the cold store`);
+      toast(`${c.q ? QUAL[c.q].name + " " : ""}${sp.name} banked`, `Auto-bank · ${num(bankCount())}/${num(bankCap())} in the freezer`);
     } else {
       $("catch").hidden = false;
       $("cKeep").focus();
@@ -2560,9 +2595,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   });
   $("cBank").addEventListener("click", () => {
     const c = fish.result; if (!c || c.shiny) return;
-    if (!bankFish(c.sp, c.q)) { toast("Cold store full", "Cook or sell what is in it, or buy a bigger one."); return; }
+    if (!bankFish(c.sp, c.q)) { toast("Freezer full", "Cook or sell what is in it, or buy a bigger one."); return; }
     closeCatch(); renderKitchen();
-    toast(`${c.sp.name} banked`, `${num(bankCount())}/${num(bankCap())} in the cold store · cook it in the Kitchen`);
+    toast(`${c.sp.name} banked`, `${num(bankCount())}/${num(bankCap())} in the freezer · cook it in the Kitchen`);
   });
   $("cSell").addEventListener("click", () => {
     const c = fish.result; if (!c) return;
@@ -3218,6 +3253,37 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
      shopCard() and .shop-grid, same art, same prices, same locks — because
      two different-looking ways to buy the same thing is how a shop stops
      being trusted. The shop keeps its copies too; both call this list. */
+  function buyTank(i) {
+    const t = TANKS[i]; if (!t || S.tank >= i || S.pearls < t.cost) return false;
+    const u = needOf(`${t.cap}-fish tank`); if (u && levelIn(u.skill) < u.at) return false;
+    S.pearls -= t.cost; S.tank = i; toast(t.name, `Room for ${t.cap} fish.`); renderShop(); renderTank(); renderStatbar(); save();
+    return true;
+  }
+  /** Full tank: say so where you are looking, with the next glass one click away. */
+  function paintTankFull() {
+    const box = $("tankFull"), pill = $("tankFullPill"), cap = TANKS[S.tank].cap, full = S.fish.length >= cap;
+    const cp = $("tankCapPill"); if (cp) { cp.textContent = `${S.fish.length}/${cap}`; cp.classList.toggle("full", full); }
+    if (!box || !pill) return;
+    box.hidden = pill.hidden = !full;
+    if (!full) return;
+    const next = TANKS[S.tank + 1];
+    box.replaceChildren();
+    if (!next) {
+      box.append(el("div", null, `<b>Your tank is full</b><small>This is the biggest glass there is. Release or breed out a fish to make room.</small>`));
+      pill.textContent = "Tank full";
+      pill.onclick = () => $("tankList")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      return;
+    }
+    const u = needOf(`${next.cap}-fish tank`), locked = u && levelIn(u.skill) < u.at, short = next.cost - S.pearls;
+    const why = locked ? `Needs ${SKILLS[u.skill].name} ${u.at} — you're ${levelIn(u.skill)}` : short > 0 ? `${num(short)} pearls short` : `Room for ${next.cap} fish`;
+    box.append(el("div", null, `<b>Your tank is full</b><small>${next.name} · ${why}</small>`));
+    const b = el("button", "btn small gold", `Upgrade <span class="pearl"></span>${num(next.cost)}`); b.type = "button";
+    b.disabled = locked || short > 0;
+    b.addEventListener("click", () => buyTank(S.tank + 1));
+    box.append(b);
+    pill.innerHTML = locked || short > 0 ? `Tank full · ${next.name} ${locked ? "locked" : `needs ${num(next.cost)}`}` : `Tank full · Upgrade to ${next.cap} <span class="pearl"></span>${num(next.cost)}`;
+    pill.onclick = () => { if (!buyTank(S.tank + 1)) $("tankFull").scrollIntoView({ block: "nearest", behavior: "smooth" }); };
+  }
   function tankUpgrades() {
     const box = $("tankUp"); if (!box) return;
     box.replaceChildren();
@@ -3279,7 +3345,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       const b = el("button", "btn small", breeding ? "♥ Nesting" : "Release"); b.type = "button"; b.disabled = breeding; b.addEventListener("click", () => release(f.id));
       li.append(dot, name, rate, b); list.append(li);
     });
-    paintTankName();
+    paintTankName(); paintTankFull();
     const r = tankRate();
     $("tankRate").innerHTML = `<span class="pearl"></span> ${num(r)} / hr${decorCount() ? ` · decor +${decorCount() * 5}%` : ""}`;
     $("rate").textContent = `${num(r)} / hr`;
@@ -3663,7 +3729,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const up = el("button", "btn big" + (dry ? " gold" : ""), `Surface ${dry ? "and fill" : "for air"}`);
     up.type = "button"; up.disabled = diving || filling || S.air >= airCap();
     up.addEventListener("click", surface);
-    const bar = el("div", "dive-bar" + (filling ? " up" : ""), "<i></i>");
+    // the diver rides the front of the bar: he lives inside the fill, so the fill's own transition carries him
+    const bar = el("div", "dive-bar has-diver" + (filling ? " up" : "") + (diving || filling ? " going" : ""), `<i><img class="diver" src="${ART}diver.webp?v=1" alt="" width="320" height="96"></i>`);
     go.append(b, up, bar, el("span", "dive-note",
       diving ? "Holding your breath…"
         : filling ? `Back on the surface · ${(fillMs() / 1000).toFixed(1)}s`
@@ -3749,7 +3816,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     renderInv(); renderCraft(); renderDive(); renderStatbar(); save();
   }
   /* The inventory is everything you are holding: the bag (dive and snag
-     finds), raw fish in the cold store, and cooked dishes. One grid of tiles,
+     finds), raw fish in the freezer, and cooked dishes. One grid of tiles,
      and a column beside it for whichever tile is picked. */
   let invSel = null;
   const RAW_SELL = (sp, q = 0) => Math.round(RAR[sp.rar].rate * 2 * QUAL[q].val);   // a dish sells for ×3 — cooking is worth it
@@ -3794,7 +3861,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const worth = loot.reduce((n, i) => n + i.n * LOOT[i.key].value, 0);
     const intro = el("div", "panel-intro");
     intro.append(el("p", null, items.length
-      ? `Bag <b>${invCount()}</b> things (worth <b>${num(worth)}</b> pearls) · cold store <b>${bankCount()}</b> fish · pantry <b>${Object.values(S.dishes).reduce((a, b) => a + b, 0)}</b> dishes.`
+      ? `Bag <b>${invCount()}</b> things (worth <b>${num(worth)}</b> pearls) · freezer <b>${bankCount()}</b> fish · pantry <b>${Object.values(S.dishes).reduce((a, b) => a + b, 0)}</b> dishes.`
       : "Empty. Dive a spot and see what's down there, keep fishing and wait for a snag, or press Bank on a catch."));
     intro.append(el("span", "hint" + (bagFull() ? " bad" : ""), `Bag ${invCount()}/${bagCap()}${bagFull() ? " · full" : ""}${S.stats.snags ? ` · ${num(S.stats.snags)} off the line` : ""}`));
     box.append(intro);
@@ -3837,7 +3904,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       });
     }
     section("Bag", `${invCount()}/${bagCap()}`, loot, junkBtn);
-    section("Cold store", `${bankCount()}/${bankCap()} · raw fish`, fish);
+    section("Freezer", `${bankCount()}/${bankCap()} · raw fish`, fish);
     section("Pantry", "cooked dishes", dishes);
     wrap.append(main, invDetail(items.find((i) => i.id === invSel)));
     box.append(wrap);
@@ -4464,7 +4531,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (show("places")) BANK_CAPS.forEach((c, i) => {
       if (i === 0) return;
       const u = needOf(c.name), locked = u && levelIn(u.skill) < u.at;
-      add(shopCard({ icon: "🧊", name: c.name, about: `A cold store for ${num(c.cap)} fish waiting to be cooked`, price: c.cost, owned: S.bankLvl >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
+      add(shopCard({ icon: "🧊", name: c.name, about: `A freezer for ${num(c.cap)} fish waiting to be cooked`, price: c.cost, owned: S.bankLvl >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
         onBuy: () => { if (S.pearls < c.cost) return; S.pearls -= c.cost; S.bankLvl = i; toast(c.name, `Room for ${num(c.cap)} fish.`); renderShop(); renderKitchen(); save(); } }));
     });
     if (show("places")) {
@@ -4712,7 +4779,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       <h3>Cast, hook, reel</h3>
       <p>Press <b>Cast</b> (or Space) and wait. When the float dips and the button says <b>Hook it!</b>, press it quickly — too early pulls the bait away, too late and it spits the hook. Then the reel starts: <b>hold</b> to lift the green band, <b>let go</b> to drop it, and keep the fish inside the band until the bar fills. A common fish barely fights; a legendary one moves fast and punishes every second outside the band.</p>
       <h3>Keep, bank or sell</h3>
-      <p>Every catch asks. <b>Keep</b> puts it in your tank, where it earns pearls every hour and lends a skill a bonus. <b>Bank</b> sends it to the cold store to be cooked in the Kitchen. <b>Sell</b> pays three hours of what it would have earned, right now. Auto-bank can send ordinary catches straight to the cold store so they stop interrupting.</p>
+      <p>Every catch asks. <b>Keep</b> puts it in your tank, where it earns pearls every hour and lends a skill a bonus. <b>Bank</b> sends it to the freezer to be cooked in the Kitchen. <b>Sell</b> pays three hours of what it would have earned, right now. Auto-bank can send ordinary catches straight to the freezer so they stop interrupting.</p>
       <h3>Pearls</h3>
       <p><span class="pearl"></span> Pearls are the game's money. They buy rods, tanks, bait seed, gear and upgrades in the Shop, and nothing else. They never turn into ZCoins.</p>
       <h3>While you are away</h3>
@@ -4777,7 +4844,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         Object.entries(r.need).map(([k, n]) => `${n} ${LOOT[k].name}`).join(", "), r.about, num(r.xp)]), [1, 4])}` },
 
     { key: "kitchen", name: "Kitchen", icon: "🍳", sub: "Bank, cook, burn, eat", body: () => `
-      <p>Bank a catch and it waits in the <b>cold store</b>, counted by species. In the Kitchen, pick a fish and cook 1, 10, 100 or all of them: each dish takes real time — from 1 minute for a Bluegill to an hour for the deep sea's best — and pays xp by the minute. Cooking level (up to twice as fast at 99) and Copper pans make it quicker. The stove keeps going while the page is open, even on another page. With the <b>Smokehouse</b> it carries on while the page is closed, as idle work.</p>
+      <p>Bank a catch and it waits in the <b>freezer</b>, counted by species. In the Kitchen, pick a fish and cook 1, 10, 100 or all of them: each dish takes real time — from 1 minute for a Bluegill to an hour for the deep sea's best — and pays xp by the minute. Cooking level (up to twice as fast at 99) and Copper pans make it quicker. The stove keeps going while the page is open, even on another page. With the <b>Smokehouse</b> it carries on while the page is closed, as idle work.</p>
       <p>Every fish can first be cooked at one level and <b>stops burning</b> at another. Between the two, the burn chance falls from 55% to nothing. Chef's gauntlets bring every stop-burning level 8 closer. Burnt fish are not wasted: ten of them compost onto the bait beds.</p>
       ${wkTable(["Rarity", "Can cook at", "Stops burning at"], RAR.map((r, i) => [wkRar(i), `${COOK_CAN[i]}`, `${cookStop(i)}`]), [1, 2])}
       <p><b>Quality.</b> Every fish you catch or hatch also rolls a grade, shown in stars: separate from the species' rarity, so a Legendary Bluegill is still a Bluegill, just a great one. A better grade makes more pearls and lends more to its skill in the tank, sells for more raw or cooked, and cooks into a dish that lasts longer and hits harder. The bank and the pantry keep each grade apart.</p>
@@ -4787,7 +4854,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       <p>Where a fish came from decides what its dish does; how rare it is decides how long it lasts. Eating another of the same kind adds to what is left and keeps the stronger effect. You can sell a dish instead, for about what the raw fish would have made.</p>
       ${wkTable(["Water", "Dish", "Buff", "Lasts"], SPOTS.map((sp, i) => [sp.name, `${METHOD[i]} …`, `${BUFF[i].icon} ${BUFF[i].name}: ${BUFF[i].say(BUFF[i].mag[2])}`, `${BUFF[i].n[0]}–${BUFF[i].n[4]} ${BUFF[i].unit}`]))}
       <h3>Storage</h3>
-      ${wkTable(["Cold store", "Holds", "Price", "Needs"], BANK_CAPS.map((c) => [c.name, num(c.cap), wkPearls(c.cost), c.cost ? wkNeed(c.name) : "—"]), [1, 2])}` },
+      ${wkTable(["Freezer", "Holds", "Price", "Needs"], BANK_CAPS.map((c) => [c.name, num(c.cap), wkPearls(c.cost), c.cost ? wkNeed(c.name) : "—"]), [1, 2])}` },
 
     { key: "skills", name: "Skills", icon: "📈", sub: "Six skills, 1 to 99", body: () => `
       <p>Skills level on the same curve as RuneScape: 83 xp for level 2 and about 13 million for 99. Levels are what open the Shop — the price in pearls is only the other half.</p>
@@ -5175,11 +5242,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       need: "Fishing level 12", have: () => `you're ${levelIn("fishing")}`,
       why: "There is more down there than fish. Hold your breath and see what is on the bottom." },
     { tab: "inv", name: "your Inventory", when: () => invCount() > 0 || bankCount() > 0 || Object.keys(S.dishes).length > 0,
-      need: "something in your bag or cold store — dive, snag one on the line, or bank a catch",
+      need: "something in your bag or freezer — dive, snag one on the line, or bank a catch",
       why: "You brought something up. Everything you find lives in the bag until you sell or use it." },
     { tab: "kitchen", name: "the Kitchen", when: () => bankCount() > 0 || S.stats.cooked > 0,
-      need: "a fish in the cold store — press Bank on a catch",
-      why: "Your first fish is in the cold store. Cook them in batches — the dishes are buffs." },
+      need: "a fish in the freezer — press Bank on a catch",
+      why: "Your first fish is in the freezer. Cook them in batches — the dishes are buffs." },
     { tab: "craft", name: "Crafting", when: () => invCount() >= 5,
       need: "5 things in your bag", have: () => `${invCount()} so far`,
       why: "Enough bits to start making things. Junk turns into bait, pearls and charms." },
