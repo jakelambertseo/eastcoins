@@ -1913,7 +1913,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
      live fight and eight hours of catching up, so the two can never disagree. */
   const C = S.C;
   const sess = { t0: Date.now(), kills: 0, clears: 0, xp: 0, coin: 0, drops: {}, loot: [0, 0, 0, 0], feed: [] };
-  let splats = [], lunge = 0, hurt = 0, dying = 0;
+  let splats = [], lunge = 0, hurt = 0, dying = 0, foeSwingAt = 0;
   const foeNow = () => (C.rift ? C.foe : MON[C.farm || seqOf(C.dun)[C.room]]);
   const riftOpen = () => Boolean(S.clears.cellars);
   function enterRift(T) {
@@ -2031,7 +2031,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   function foeSwing(t) {
     const m = foeNow();
     const hit = Math.random() < foeHits(m), dmg = hit ? Math.max(1, Math.round(rint(1, m.max) * (1 - pDR()))) : 0;
-    S.hp -= dmg; if (dmg) hurt = t;
+    S.hp -= dmg; if (dmg) hurt = t; foeSwingAt = t;
     if (m.afx?.includes("vamp") && dmg) C.foeHp = Math.min(m.hp, C.foeHp + Math.round(dmg * 0.3));
     if (m.afx?.includes("regen")) C.foeHp = Math.min(m.hp, C.foeHp + Math.round(m.hp * 0.02));
     splat("you", String(dmg), hit ? "hit" : "miss", t);
@@ -2209,267 +2209,221 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     $("deadOk").addEventListener("click", () => { $("result").hidden = true; });
   }
 
-  /* ================================================================== the dungeon, drawn top-down
-     Purely a picture of what the engine is doing. The engine decides every
-     swing and spawn; this places a small gladiator on a generated map, walks
-     him to the next monster during the respawn gap so he arrives as it spawns,
-     and shows the monsters still to come where he will find them. Nothing
-     here changes an outcome, so offline catch-up never needs it. */
+  /* ================================================================== the fight, drawn side-on
+     A picture of the engine, never a part of it: every swing, hit and kill is
+     decided by the event clock above, and this plays the matching animation.
+     So a sprite sheet can replace a placeholder without touching the combat,
+     the saves or the offline catch-up.
+
+     SPRITE SHEETS — the drop-in. Register a character's sheet here and it is
+     drawn from the sheet instead of the placeholder:
+       SHEETS.hero = { src: "/v3/assets/img/glad/hero.png", fw: 96, fh: 96, scale: 1,
+                       anims: { idle: { row: 0, frames: 6, fps: 8 }, run: { row: 1, frames: 8, fps: 12 },
+                                attack: { row: 2, frames: 6 }, hit: { row: 3, frames: 3 }, death: { row: 4, frames: 6 } } };
+     One row per animation, frames left to right, facing RIGHT (enemies are
+     mirrored to face left unless the sheet says faces: "left"). attack, hit
+     and death are stretched over their durations in ANIM_MS; idle and run
+     loop at their fps. Monsters are keyed by name: SHEETS["Sewer wolf"]. */
+  const SHEETS = {};
+  const ANIM_MS = { attack: 380, hit: 260, death: 900 };
+  const sheetImg = {};
+  function sheetFor(key) {
+    const sh = SHEETS[key]; if (!sh) return null;
+    let img = sheetImg[key];
+    if (!img) { img = sheetImg[key] = new Image(); img.src = sh.src; }
+    return img.complete && img.naturalWidth ? { sh, img } : null;
+  }
   const cv = $("arena"), ctx = cv.getContext("2d");
   function fit() { const d = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight; if (cv.width !== Math.round(w * d)) { cv.width = Math.round(w * d); cv.height = Math.round(h * d); } ctx.setTransform(d, 0, 0, d, 0, 0); return { w, h }; }
-  const TILE = 45, MW = 56, MH = 40;
-  const V = { key: "", map: null, img: null, torches: [], hero: { x: 0, y: 0 }, face: 0, slots: [], corpses: [], walk: null, kills: 0, cam: { x: 0, y: 0 }, target: null, labels: [] };
+  const V = { target: null, scroll: 0, last: performance.now(), seen: { lunge: 0, hurt: 0, swing: 0, dying: 0 }, hero: { anim: "idle", at: 0 }, foe: { anim: "idle", at: 0 }, dead: null, cur: null, bgKey: "", bg: null };
+  let lootLabels = [], fullToast = 0;
 
-  /* rooms joined by corridors, carved into solid rock */
-  function genMap(seed) {
-    const R = prng(seed), g = Array.from({ length: MH }, () => new Array(MW).fill(1)), rooms = [];
-    for (let tries = 0; rooms.length < 11 && tries < 400; tries++) {
-      const w = 5 + Math.floor(R() * 6), h = 4 + Math.floor(R() * 5), x = 1 + Math.floor(R() * (MW - w - 2)), y = 1 + Math.floor(R() * (MH - h - 2));
-      if (rooms.some((r) => x < r.x + r.w + 2 && x + w + 2 > r.x && y < r.y + r.h + 2 && y + h + 2 > r.y)) continue;
-      rooms.push({ x, y, w, h, cx: x + (w >> 1), cy: y + (h >> 1) });
+  /* ---- the backdrop: a wall and a floor, each tileable, scrolled at two speeds */
+  function lookNow() { const r = C.on ? Boolean(C.rift) : S.view === "rift"; return r ? { key: "rift", ...RIFT_LOOK } : { key: `d${C.on ? C.dun : S.dun}`, ...DUNGEONS[C.on ? C.dun : S.dun] }; }
+  function buildBg(look, h) {
+    const W = 960, wall = document.createElement("canvas"); wall.width = W; wall.height = Math.max(1, Math.round(h * 0.66));
+    const c = wall.getContext("2d"), wh = wall.height;
+    let g = c.createLinearGradient(0, 0, 0, wh); g.addColorStop(0, look.wall[1]); g.addColorStop(1, look.wall[0]);
+    c.fillStyle = g; c.fillRect(0, 0, W, wh);
+    const bh = Math.max(14, wh / 11), bw = bh * 2.3;
+    c.strokeStyle = "rgba(0,0,0,.34)"; c.lineWidth = 1.5;
+    for (let r = 0, y = 0; y < wh; r++, y += bh) { c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke(); for (let x = (r % 2) * bw / 2; x < W; x += bw) { c.beginPath(); c.moveTo(x, y); c.lineTo(x, y + bh); c.stroke(); } }
+    // two arches per tile, dark, where the next thing comes from
+    for (const ax of [W * 0.25, W * 0.75]) {
+      const aw = wh * 0.42, ah = wh * 0.62;
+      c.fillStyle = "rgba(0,0,0,.66)"; c.beginPath(); c.moveTo(ax - aw / 2, wh); c.lineTo(ax - aw / 2, wh - ah + aw / 2); c.arc(ax, wh - ah + aw / 2, aw / 2, Math.PI, 0); c.lineTo(ax + aw / 2, wh); c.fill();
+      c.strokeStyle = "rgba(255,255,255,.07)"; c.lineWidth = 4; c.beginPath(); c.arc(ax, wh - ah + aw / 2, aw / 2 + 4, Math.PI, 0); c.stroke();
     }
-    rooms.sort((a, b) => a.cx + a.cy - (b.cx + b.cy));
-    for (const r of rooms) for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) g[y][x] = 0;
-    const dig = (x, y) => { for (const [dx, dy] of [[0, 0], [1, 0], [0, 1]]) if (y + dy > 0 && y + dy < MH - 1 && x + dx > 0 && x + dx < MW - 1) g[y + dy][x + dx] = 0; };
-    for (let i = 1; i < rooms.length; i++) {
-      const a = rooms[i - 1], b = rooms[i];
-      let x = a.cx, y = a.cy;
-      const hFirst = R() < 0.5;
-      if (hFirst) { while (x !== b.cx) { dig(x, y); x += Math.sign(b.cx - x); } while (y !== b.cy) { dig(x, y); y += Math.sign(b.cy - y); } }
-      else { while (y !== b.cy) { dig(x, y); y += Math.sign(b.cy - y); } while (x !== b.cx) { dig(x, y); x += Math.sign(b.cx - x); } }
-    }
-    const torches = [];
-    for (let y = 1; y < MH - 1; y++) for (let x = 1; x < MW - 1; x++) if (g[y][x] === 1 && g[y + 1][x] === 0 && R() < 0.06) torches.push({ x, y, p: R() * 9 });
-    return { g, rooms, torches, R };
+    const fl = document.createElement("canvas"); fl.width = W; fl.height = Math.max(1, Math.round(h * 0.34));
+    const f = fl.getContext("2d"), fh = fl.height;
+    g = f.createLinearGradient(0, 0, 0, fh); g.addColorStop(0, look.floor); g.addColorStop(1, "#0b0806");
+    f.fillStyle = g; f.fillRect(0, 0, W, fh);
+    f.strokeStyle = "rgba(0,0,0,.4)"; f.lineWidth = 1.5;
+    for (let i = 1; i < 5; i++) { const y = fh * (i / 5) ** 1.3; f.beginPath(); f.moveTo(0, y); f.lineTo(W, y); f.stroke(); }
+    for (let x = 0; x < W; x += 80) { f.beginPath(); f.moveTo(x, 0); f.lineTo(x - 30, fh); f.stroke(); }
+    f.fillStyle = "rgba(255,255,255,.035)"; for (let i = 0; i < 40; i++) f.fillRect((i * 173) % W, (i * 71) % fh, 3, 2);
+    return { wall, fl, W, torches: [W * 0.08, W * 0.42, W * 0.58, W * 0.92] };
   }
-  function prng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
-  const floor = (x, y) => V.map && y >= 0 && y < MH && x >= 0 && x < MW && V.map.g[y][x] === 0;
-  function bfs(from, to) {
-    const key = (x, y) => y * MW + x, prev = new Map([[key(from.x, from.y), null]]), q = [from];
-    while (q.length) {
-      const c = q.shift();
-      if (c.x === to.x && c.y === to.y) { const path = []; let k = key(c.x, c.y); while (k != null) { path.unshift({ x: k % MW, y: Math.floor(k / MW) }); k = prev.get(k); } return path; }
-      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = c.x + dx, ny = c.y + dy, k = key(nx, ny); if (floor(nx, ny) && !prev.has(k)) { prev.set(k, key(c.x, c.y)); q.push({ x: nx, y: ny }); } }
+  function drawBg(w, h, t) {
+    const look = lookNow(), key = `${look.key}:${Math.round(h)}`;
+    if (V.bgKey !== key) { V.bgKey = key; V.bg = buildBg(look, h); }
+    const B = V.bg, wallH = B.wall.height, floorY = h - B.fl.height;
+    const wx = -((V.scroll * 0.45) % B.W), fx = -((V.scroll) % B.W);
+    for (let x = wx; x < w; x += B.W) ctx.drawImage(B.wall, x, floorY - wallH);
+    for (let x = fx; x < w; x += B.W) ctx.drawImage(B.fl, x, floorY);
+    ctx.fillStyle = "#050404"; ctx.fillRect(0, 0, w, Math.max(0, floorY - wallH));
+    for (let x0 = wx; x0 < w + B.W; x0 += B.W) for (const tx of B.torches) {
+      const x = x0 + tx, y = floorY - wallH * 0.62; if (x < -120 || x > w + 120) continue;
+      const k = 1 + Math.sin(t / 90 + tx) * .08 + Math.sin(t / 37 + tx) * .05;
+      const gl = ctx.createRadialGradient(x, y, 2, x, y, h * .3 * k); gl.addColorStop(0, "rgba(255,170,70,.36)"); gl.addColorStop(1, "rgba(255,120,40,0)");
+      ctx.fillStyle = gl; ctx.fillRect(x - h * .35, y - h * .35, h * .7, h * .7);
+      ctx.fillStyle = "#3a2a1a"; ctx.fillRect(x - 3, y + 6, 6, h * .06);
+      ctx.fillStyle = "#ffb347"; ctx.beginPath(); ctx.ellipse(x, y, 5 * k, 11 * k, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#fff0b0"; ctx.beginPath(); ctx.ellipse(x, y + 3, 2.5, 5, 0, 0, Math.PI * 2); ctx.fill();
     }
-    return [from];
-  }
-  /** Somewhere a few steps on from p that nobody is standing on. */
-  function nextSpot(p) {
-    const seen = new Set([p.y * MW + p.x]), q = [[p, 0]], band = [];
-    const taken = new Set(V.slots.map((s) => s.y * MW + s.x));
-    while (q.length) {
-      const [c, d] = q.shift();
-      if (d >= 4 && d <= 8 && !taken.has(c.y * MW + c.x)) band.push(c);
-      if (d > 8) continue;
-      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const n = { x: c.x + dx, y: c.y + dy }, k = n.y * MW + n.x; if (floor(n.x, n.y) && !seen.has(k)) { seen.add(k); q.push([n, d + 1]); } }
-    }
-    // prefer ground not yet walked, so the run moves through the dungeon
-    band.sort((a, b) => (V.visited.has(a.y * MW + a.x) ? 1 : 0) - (V.visited.has(b.y * MW + b.x) ? 1 : 0) || Math.random() - 0.5);
-    return band[0] || p;
-  }
-  function paintMap(look) {
-    const off = document.createElement("canvas"); off.width = MW * TILE; off.height = MH * TILE;
-    const c = off.getContext("2d"), R = prng(V.seed + 7);
-    c.fillStyle = "#07060a"; c.fillRect(0, 0, off.width, off.height);
-    for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
-      const px = x * TILE, py = y * TILE;
-      if (V.map.g[y][x] === 0) {
-        c.fillStyle = look.floor; c.fillRect(px, py, TILE, TILE);
-        c.fillStyle = `rgba(255,255,255,${0.02 + R() * 0.04})`; c.fillRect(px + 1, py + 1, TILE - 2, TILE - 2);
-        c.strokeStyle = "rgba(0,0,0,.35)"; c.lineWidth = 1; c.strokeRect(px + .5, py + .5, TILE - 1, TILE - 1);
-        if (R() < 0.05) { c.fillStyle = "rgba(0,0,0,.25)"; c.beginPath(); c.arc(px + R() * TILE, py + R() * TILE, 2 + R() * 3, 0, Math.PI * 2); c.fill(); }
-      } else if (floor(x, y + 1) || floor(x, y - 1) || floor(x + 1, y) || floor(x - 1, y)) {
-        // a wall face: lit top edge, darker body, so the rooms read as sunk into rock
-        c.fillStyle = look.wall[1]; c.fillRect(px, py, TILE, TILE);
-        c.fillStyle = look.wall[0]; c.fillRect(px, py, TILE, TILE * 0.55);
-        c.strokeStyle = "rgba(0,0,0,.45)"; c.strokeRect(px + .5, py + .5, TILE - 1, TILE - 1);
-        c.fillStyle = "rgba(255,255,255,.06)"; c.fillRect(px, py, TILE, 2);
-      }
-    }
-    return off;
-  }
-  function runKey() {
-    if (C.on && C.rift) return `r:${C.rift.tier}:${C.rift.t0}`;
-    if (C.on) return `d:${C.dun}:${C.farm || ""}:${S.clears[DUNGEONS[C.dun].key] || 0}`;
-    return `idle:${S.view}:${S.dun}`;
-  }
-  /** The monsters still to come, in the order the engine will send them. */
-  function upcoming() {
-    if (!C.on) return S.view === "rift" ? [] : seqOf(S.dun).map((k) => MON[k]);
-    if (C.rift) {
-      const list = [];
-      if (!C.rAt && C.foe) list.push(C.foe);
-      if (C.rift.prog >= 100 && C.nextG) list.push(C.nextG);
-      return list.concat(C.queue || []);
-    }
-    if (C.farm) return Array(6).fill(MON[C.farm]);
-    return seqOf(C.dun).slice(C.room).map((k) => MON[k]);
-  }
-  function syncWorld(now) {
-    const key = runKey();
-    if (key !== V.key) {
-      V.key = key; V.seed = Math.floor(Math.random() * 1e9);
-      V.map = genMap(V.seed);
-      const look = (C.on ? C.rift : S.view === "rift") ? RIFT_LOOK : DUNGEONS[C.on ? C.dun : S.dun];
-      V.img = paintMap(look); V.look = look;
-      const r0 = V.map.rooms[0];
-      V.hero = { x: r0.cx, y: r0.cy }; V.visited = new Set(); V.slots = []; V.corpses = []; V.walk = null; V.kills = S.w; V.labels = [];
-      V.cam = { x: V.hero.x, y: V.hero.y };
-    }
-    // a kill: the front monster falls where it stood
-    if (S.w > V.kills) {
-      for (let i = V.kills; i < S.w && V.slots.length; i++) { const s = V.slots.shift(); V.corpses.push({ x: s.x, y: s.y, at: now }); }
-      V.kills = S.w; V.walk = null;
-    }
-    const want = Math.min(6, upcoming().length);
-    while (V.slots.length < want) V.slots.push(nextSpot(V.slots.at(-1) || V.hero));
-    V.slots.length = Math.min(V.slots.length, Math.max(want, 0));
-    V.corpses = V.corpses.filter((c) => now - c.at < 20000).slice(-14);
-    // where he is: fighting beside the front monster, or walking to it
-    const front = V.slots[0];
-    if (!front || !C.on || C.resting) { V.walk = null; return; }
-    if (!C.rAt) {
-      if (V.stood !== front) {
-        // mid-fight with no walk behind it (a reload, a catch-up): stand beside it
-        if (!V.walk || now >= V.walk.end) { const path = bfs(V.hero, front); V.hero = { ...(path.length > 1 ? path[path.length - 2] : V.hero) }; }
-        V.walk = null; V.stood = front;
-      }
-    } else if (!V.walk || V.walk.to !== front) {
-      const path = bfs(V.hero, front); path.pop();
-      const t0 = now, end = Math.max(now + 250, C.rAt - 120);
-      V.walk = { path: path.length ? path : [V.hero], t0, end, to: front };
-    }
-    if (V.walk) {
-      const p = V.walk.path, k = Math.min(1, (now - V.walk.t0) / (V.walk.end - V.walk.t0)), f = k * (p.length - 1), i = Math.floor(f), a = p[i], b = p[Math.min(p.length - 1, i + 1)];
-      V.pos = { x: a.x + (b.x - a.x) * (f - i), y: a.y + (b.y - a.y) * (f - i) };
-      if (b !== a) V.face = Math.atan2(b.y - a.y, b.x - a.x);
-      V.visited.add(Math.round(V.pos.y) * MW + Math.round(V.pos.x));
-      if (k >= 1) { V.hero = { ...p[p.length - 1] }; }
-    }
+    return floorY;
   }
 
-  /* ---- the little people */
-  function drawGlad(x, y, s, face, tunic, crest, swing, hurtK, walkK) {
-    ctx.save(); ctx.translate(x, y);
-    ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.beginPath(); ctx.ellipse(0, s * .55, s * .7, s * .28, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.rotate(face);
-    const step = Math.sin(walkK * 14) * s * .18;
-    ctx.fillStyle = "#4a3020"; ctx.beginPath(); ctx.ellipse(-s * .1 + step, -s * .28, s * .22, s * .14, 0, 0, Math.PI * 2); ctx.ellipse(-s * .1 - step, s * .28, s * .22, s * .14, 0, 0, Math.PI * 2); ctx.fill();
-    // shield on the left, sword on the right
-    ctx.fillStyle = "#7a5a2a"; ctx.strokeStyle = "#e8bf35"; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.ellipse(s * .12, -s * .62, s * .34, s * .2, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    const sw = -0.9 + swing * 2.1;
-    ctx.strokeStyle = "#c69a6a"; ctx.lineWidth = s * .2; ctx.lineCap = "round";
-    ctx.beginPath(); ctx.moveTo(0, s * .45); ctx.lineTo(Math.cos(sw) * s * .55, s * .45 + Math.sin(sw) * s * .55); ctx.stroke();
-    ctx.strokeStyle = "#e6ebf0"; ctx.lineWidth = s * .12;
-    const hx = Math.cos(sw) * s * .55, hy = s * .45 + Math.sin(sw) * s * .55;
-    ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + Math.cos(sw) * s * .85, hy + Math.sin(sw) * s * .85); ctx.stroke();
-    if (swing > 0 && swing < 1) { ctx.strokeStyle = `rgba(255,240,200,${0.5 * (1 - swing)})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, s * .45, s * 1.35, -0.9, sw); ctx.stroke(); }
-    // body, head, helmet, crest
-    ctx.fillStyle = tunic; ctx.beginPath(); ctx.ellipse(0, 0, s * .42, s * .6, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = "#8a8f96"; ctx.beginPath(); ctx.arc(s * .05, 0, s * .36, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = crest; ctx.beginPath(); ctx.ellipse(-s * .05, 0, s * .42, s * .1, 0, 0, Math.PI * 2); ctx.fill();
-    if (hurtK > 0) { ctx.globalAlpha = hurtK * .6; ctx.fillStyle = "#ff3a2a"; ctx.beginPath(); ctx.arc(0, 0, s * .75, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
+  /* ---- placeholders, one per kind, drawn frame by frame from (anim, k) */
+  function gladPH(x, feet, H, face, col, anim, k, t) {
+    let dx = 0, rot = 0, alpha = 1, arm = -0.5, lean = 0, legA = 0.12, legB = -0.12, bob = Math.sin(t / 420) * H * 0.012, flash = 0;
+    if (anim === "run") { const ph = t / 85; legA = Math.sin(ph) * 0.55; legB = -legA; bob = -Math.abs(Math.sin(ph)) * H * 0.04; lean = 0.12; arm = -0.2 + Math.sin(ph) * 0.3; }
+    if (anim === "attack") { const wind = Math.min(1, k / 0.35), strike = Math.max(0, Math.min(1, (k - 0.35) / 0.25)), back = Math.max(0, (k - 0.6) / 0.4);
+      arm = -0.5 - wind * 1.7 + strike * 2.6 - back * 0.4; dx = (strike - back) * H * 0.16; lean = strike * 0.14 - back * 0.1; legA = 0.25 * strike; legB = -0.35 * strike; }
+    if (anim === "hit") { dx = -(1 - k) * H * 0.07; lean = -(1 - k) * 0.18; flash = 1 - k; arm = -0.9; }
+    if (anim === "death") { rot = -Math.min(1, k / 0.6) * 1.45; alpha = k < 0.7 ? 1 : 1 - (k - 0.7) / 0.3; arm = -1.4; flash = Math.max(0, 0.6 - k); }
+    ctx.save(); ctx.globalAlpha = alpha;
+    ctx.fillStyle = "rgba(0,0,0,.42)"; ctx.beginPath(); ctx.ellipse(x + face * dx, feet + 2, H * .22, H * .045, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.translate(x + face * dx, feet + bob); ctx.scale(face, 1); ctx.rotate(rot);
+    const hip = -H * .36;
+    ctx.lineCap = "round"; ctx.strokeStyle = "#4a3020"; ctx.lineWidth = H * .065;
+    for (const a of [legA, legB]) { ctx.beginPath(); ctx.moveTo(0, hip); ctx.lineTo(Math.sin(a) * H * .36, hip + Math.cos(a) * H * .36); ctx.stroke(); }
+    ctx.fillStyle = "#6a4a2a"; for (const a of [legA, legB]) { ctx.beginPath(); ctx.ellipse(Math.sin(a) * H * .36 + H * .03, hip + Math.cos(a) * H * .36, H * .06, H * .03, 0, 0, Math.PI * 2); ctx.fill(); }
+    ctx.save(); ctx.rotate(lean);
+    ctx.fillStyle = col.tunic; ctx.beginPath(); ctx.roundRect(-H * .12, -H * .76, H * .24, H * .44, H * .06); ctx.fill();
+    ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.fillRect(-H * .12, -H * .42, H * .24, H * .05);
+    ctx.fillStyle = "#c69a6a"; ctx.beginPath(); ctx.arc(H * .02, -H * .86, H * .09, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#8a8f96"; ctx.beginPath(); ctx.arc(H * .02, -H * .88, H * .1, Math.PI * 1.05, Math.PI * 2.05); ctx.fill(); ctx.fillRect(H * .02, -H * .9, H * .1, H * .05);
+    ctx.fillStyle = col.crest; ctx.beginPath(); ctx.ellipse(-H * .02, -H * 1.0, H * .11, H * .04, -.25, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#7a5a2a"; ctx.strokeStyle = col.crest; ctx.lineWidth = H * .014;       // shield, the far arm
+    ctx.beginPath(); ctx.ellipse(-H * .02, -H * .56, H * .1, H * .17, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    const sx = H * .08, sy = -H * .66, ax = sx + Math.cos(arm) * H * .22, ay = sy + Math.sin(arm) * H * .22;
+    ctx.strokeStyle = "#c69a6a"; ctx.lineWidth = H * .05; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ax, ay); ctx.stroke();
+    ctx.strokeStyle = col.blade; ctx.lineWidth = H * .032; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + Math.cos(arm) * H * .32, ay + Math.sin(arm) * H * .32); ctx.stroke();
+    if (anim === "attack" && k > 0.35 && k < 0.7) { ctx.strokeStyle = `rgba(255,240,200,${0.6 * (1 - (k - 0.35) / 0.35)})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(sx, sy, H * .56, -1.8, arm); ctx.stroke(); }
+    ctx.restore();
+    if (flash > 0) { ctx.globalCompositeOperation = "source-atop"; ctx.globalAlpha = flash * 0.55; ctx.fillStyle = "#ff3a2a"; ctx.fillRect(-H * .4, -H * 1.1, H * .8, H * 1.15); }
     ctx.restore();
   }
-  function drawBeast(x, y, s, icon, hurtK, lungeK, dx, dy) {
-    ctx.save(); ctx.translate(x + dx * lungeK * s * .5, y + dy * lungeK * s * .5);
-    ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.beginPath(); ctx.ellipse(0, s * .45, s * .62, s * .24, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.font = `${Math.round(s * 1.5)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    if (hurtK > 0) ctx.filter = `brightness(${1 + hurtK}) saturate(${1 + hurtK * 3})`;
-    ctx.fillText(icon, 0, 0);
+  function beastPH(x, feet, H, icon, anim, k, t, size) {
+    let dx = 0, dy = 0, rot = 0, alpha = 1, sq = 1, flash = 0;
+    const S2 = H * size;
+    if (anim === "idle") { sq = 1 + Math.sin(t / 380) * 0.025; }
+    if (anim === "run") { dy = -Math.abs(Math.sin(t / 90)) * H * 0.08; rot = Math.sin(t / 90) * 0.06; }
+    if (anim === "attack") { const s = Math.sin(Math.min(1, k) * Math.PI); dx = -s * H * 0.3; dy = -s * H * 0.06; rot = -s * 0.15; }
+    if (anim === "hit") { dx = (1 - k) * H * 0.08; flash = 1 - k; }
+    if (anim === "death") { rot = Math.min(1, k / 0.5) * 1.3; dy = Math.min(1, k / 0.5) * S2 * 0.12; alpha = k < 0.6 ? 1 : 1 - (k - 0.6) / 0.4; flash = Math.max(0, .5 - k); }
+    ctx.save(); ctx.globalAlpha = alpha;
+    ctx.fillStyle = "rgba(0,0,0,.42)"; ctx.beginPath(); ctx.ellipse(x + dx, feet + 2, S2 * .42, S2 * .07, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.translate(x + dx, feet + dy); ctx.rotate(rot); ctx.scale(1, sq);
+    ctx.font = `${Math.round(S2)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    if (flash > 0) ctx.filter = `brightness(${1 + flash * 1.5}) saturate(${1 + flash * 4}) hue-rotate(-25deg)`;
+    ctx.fillText(icon, 0, -S2 * 0.06);
     ctx.restore();
+  }
+  function drawActor(kind, def, x, feet, H, face, anim, k, t) {
+    const key = kind === "hero" ? "hero" : def.name, sp = sheetFor(key);
+    if (sp) {
+      const a = sp.sh.anims[anim] || sp.sh.anims.idle, n = a.frames;
+      const fr = anim === "idle" || anim === "run" ? Math.floor(t / (1000 / (a.fps || 8))) % n : Math.min(n - 1, Math.floor(k * n));
+      const sc = (H / sp.sh.fh) * (sp.sh.scale || 1), dw = sp.sh.fw * sc, dh = sp.sh.fh * sc;
+      ctx.save(); ctx.translate(x, feet);
+      const flip = face < 0 && sp.sh.faces !== "left" || face > 0 && sp.sh.faces === "left";
+      if (flip) ctx.scale(-1, 1);
+      ctx.drawImage(sp.img, fr * sp.sh.fw, a.row * sp.sh.fh, sp.sh.fw, sp.sh.fh, -dw / 2, -dh, dw, dh);
+      ctx.restore(); return;
+    }
+    if (kind === "hero") gladPH(x, feet, H, face, def, anim, k, t);
+    else if (def.icon) beastPH(x, feet, H, def.icon, anim, k, t, def.guardian ? 0.95 : def.boss ? 0.85 : 0.62);
+    else gladPH(x, feet, H * (def.boss ? 1.15 : 1), face, { tunic: def.look[0], crest: def.look[1], blade: "#d8dde2" }, anim, k, t);
   }
   function drawSplat(x, y, s, now) {
-    const k = (now - s.at) / 1000, yy = y - 34 - k * 26;
+    const k = (now - s.at) / 1000, yy = y - k * 30;
     const col = s.kind === "miss" ? "#2f6fd6" : s.kind === "heal" ? "#2fae5a" : s.kind === "crit" ? "#e0761a" : s.kind === "jab" ? "#9a3a8a" : "#c42a2a";
     ctx.globalAlpha = Math.min(1, (1 - k) * 2.4);
-    const r = s.kind === "crit" ? 16 : 13;
-    ctx.fillStyle = col; ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.lineWidth = 1.5;
+    const r = s.kind === "crit" ? 18 : 14;
+    ctx.fillStyle = col; ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.lineWidth = 2;
     ctx.beginPath(); for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2, rr = i % 2 ? r * .78 : r; ctx.lineTo(x + Math.cos(a) * rr, yy + Math.sin(a) * rr); } ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.fillStyle = "#fff"; ctx.font = `800 ${r}px Figtree, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(s.text, x, yy + 1);
     ctx.globalAlpha = 1;
   }
-  let lootLabels = [], fullToast = 0;
+  const animK = (a, now) => Math.min(1, (now - a.at) / (ANIM_MS[a.anim] || 1));
   function frame(t) {
-    const { w, h } = fit(), now = Date.now(), pnow = performance.now();
-    syncWorld(now);
-    const hero = V.walk && V.pos ? V.pos : V.hero;
-    // camera: eased onto him
-    V.cam.x += (hero.x - V.cam.x) * 0.12; V.cam.y += (hero.y - V.cam.y) * 0.12;
-    const ox = Math.round(w / 2 - (V.cam.x + .5) * TILE), oy = Math.round(h / 2 - (V.cam.y + .5) * TILE);
-    ctx.fillStyle = "#07060a"; ctx.fillRect(0, 0, w, h);
-    ctx.drawImage(V.img, ox, oy);
-    const sx = (p) => ox + (p.x + .5) * TILE, sy = (p) => oy + (p.y + .5) * TILE;
-    // torchlight
-    for (const tc of V.map.torches) {
-      const x = sx(tc), y = sy(tc); if (x < -80 || x > w + 80 || y < -80 || y > h + 80) continue;
-      const fl = 1 + Math.sin(t / 90 + tc.p) * .08 + Math.sin(t / 37 + tc.p) * .05;
-      const g = ctx.createRadialGradient(x, y + 8, 2, x, y + 8, 90 * fl); g.addColorStop(0, "rgba(255,170,70,.32)"); g.addColorStop(1, "rgba(255,120,40,0)");
-      ctx.fillStyle = g; ctx.fillRect(x - 100, y - 90, 200, 200);
-      ctx.fillStyle = "#ffb347"; ctx.beginPath(); ctx.ellipse(x, y + 2, 3.5 * fl, 6 * fl, 0, 0, Math.PI * 2); ctx.fill();
-    }
-    // the fallen
-    for (const c of V.corpses) {
-      const a = Math.max(0, 1 - (now - c.at) / 20000);
-      ctx.globalAlpha = a * .7; ctx.fillStyle = "#5a0f14"; ctx.beginPath(); ctx.ellipse(sx(c), sy(c) + 4, 11, 6, 0.4, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "#2a0a0c"; ctx.beginPath(); ctx.ellipse(sx(c) + 5, sy(c) + 7, 5, 3, 0, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
-    }
-    // what is still to come, front first
-    const list = upcoming(), fighting = C.on && !C.rAt && !C.resting;
+    const { w, h } = fit(), now = Date.now(), pnow = performance.now(), dt = Math.min(0.05, (pnow - V.last) / 1000); V.last = pnow;
+    // engine events -> animations
+    if (lunge > V.seen.lunge) { V.seen.lunge = lunge; V.hero = { anim: "attack", at: lunge }; if (C.on && !C.rAt) V.foe = { anim: "hit", at: lunge + 120 }; }
+    if (foeSwingAt > V.seen.swing) { V.seen.swing = foeSwingAt; V.foe = { anim: "attack", at: foeSwingAt }; }
+    if (hurt > V.seen.hurt) { V.seen.hurt = hurt; if (V.hero.anim !== "attack" || now - V.hero.at > 200) V.hero = { anim: "hit", at: hurt + 140 }; }
+    if (dying > V.seen.dying) { V.seen.dying = dying; if (V.cur) V.dead = { m: V.cur, at: dying }; V.foe = { anim: "idle", at: now }; }
+    const fighting = C.on && !C.rAt && !C.resting;
+    if (fighting) V.cur = foeNow();
+    // between fights he walks on; the world moves past him
+    const deathDone = !V.dead || now - V.dead.at > ANIM_MS.death;
+    const walking = C.on && C.rAt && !C.resting && deathDone;
+    if (walking) V.scroll += dt * h * 0.9;
+    const floorY = drawBg(w, h, t);
+    const H = h * 0.42, feet = floorY + h * 0.07, heroX = w * 0.3, foeX = w * 0.68;
+    // the hero
+    let ha = V.hero.anim, hk = animK(V.hero, now);
+    const hPending = hk < 0;                      // a reaction queued a beat after the blow
+    if (hPending) { ha = "idle"; hk = 0; } else if ((ha === "attack" || ha === "hit") && hk >= 1) ha = "idle";
+    if (walking && ha === "idle") ha = "run";
+    if (!hPending && ha === "idle" && V.hero.anim !== "idle") V.hero = { anim: "idle", at: now };
+    const heroCol = { tunic: ["#7a2a2a", "#2a3a7a", "#7a6a1a", "#8a4a1a"][S.eq.body?.rar ?? 0], crest: RARITY[S.eq.helm?.rar ?? 0].color, blade: S.eq.weapon ? ["#d8dde2", "#b8c8ff", "#ffe98a", "#ffb070"][S.eq.weapon.rar] : "#b89a6a" };
+    // the one dying
+    if (V.dead && now - V.dead.at < ANIM_MS.death) drawActor("foe", V.dead.m, foeX, feet, H, -1, "death", (now - V.dead.at) / ANIM_MS.death, t);
+    // the one coming, or the one here
     V.target = null;
-    for (let i = Math.min(list.length, V.slots.length) - 1; i >= 0; i--) {
-      const m = list[i], p = V.slots[i]; if (!m || !p) continue;
-      const x = sx(p), y = sy(p), active = fighting && i === 0;
-      const s = m.guardian ? 29 : m.boss ? 25 : m.elite ? 20 : 17;
-      if (m.elite || m.boss) { const g = ctx.createRadialGradient(x, y, 2, x, y, s * 2.2); g.addColorStop(0, m.elite && !m.boss ? "rgba(185,138,255,.55)" : "rgba(255,90,60,.55)"); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, s * 2.2, 0, Math.PI * 2); ctx.fill(); }
-      if (!active) ctx.globalAlpha = 0.85;
-      const hurtK = active ? Math.max(0, 1 - (now - lunge) / 260) : 0, lungeK = active ? Math.max(0, 1 - (now - hurt) / 220) : 0;
-      const dx = hero.x - p.x, dy = hero.y - p.y, dl = Math.hypot(dx, dy) || 1;
-      if (m.icon) drawBeast(x, y, s, m.icon, hurtK, lungeK, dx / dl, dy / dl);
-      else drawGlad(x, y, s, Math.atan2(dy, dx), m.look[0], m.look[1], lungeK > 0 ? 1 - lungeK : 0, hurtK, 0);
-      ctx.globalAlpha = 1;
-      if (active) {
-        V.target = { x, y, r: s * 2.4 };
-        const hpk = Math.min(1, Math.max(0, C.foeHp / m.hp));
-        ctx.fillStyle = "rgba(0,0,0,.7)"; ctx.fillRect(x - 28, y - s - 16, 56, 7);
-        ctx.fillStyle = m.boss ? "#ff6a4a" : "#d94a4a"; ctx.fillRect(x - 28, y - s - 16, 56 * hpk, 7);
-        ctx.strokeStyle = "rgba(255,230,150,.55)"; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(x, y, s * 1.6, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+    if (C.on && !C.resting) {
+      let m = null, x = foeX, fa = "idle", fk = 0;
+      if (fighting) {
+        m = V.cur; fa = V.foe.anim; fk = animK(V.foe, now);
+        const pending = fk < 0;
+        if (pending) { fa = "idle"; fk = 0; } else if ((fa === "attack" || fa === "hit") && fk >= 1) fa = "idle";
+        if (!pending && fa === "idle" && V.foe.anim !== "idle") V.foe = { anim: "idle", at: now };
+      }
+      else if (C.rAt && deathDone) {
+        // the next one runs in over the last stretch of the gap, so it arrives as it spawns
+        const up = (C.rift ? (C.rift.prog >= 100 ? C.nextG : C.queue?.[0]) : C.farm ? MON[C.farm] : MON[seqOf(C.dun)[C.room]]);
+        const span = 1100, k = 1 - Math.max(0, Math.min(1, (C.rAt - now) / span));
+        if (up && k > 0) { m = up; x = foeX + (1 - k) * (w - foeX + H * 0.6); fa = "run"; }
+      }
+      if (m) {
+        if (m.elite || m.guardian || m.boss) { const gl = ctx.createRadialGradient(x, feet, 4, x, feet, H * .5); gl.addColorStop(0, m.elite && !m.boss ? "rgba(185,138,255,.5)" : "rgba(255,90,60,.5)"); gl.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = gl; ctx.beginPath(); ctx.ellipse(x, feet, H * .5, H * .12, 0, 0, Math.PI * 2); ctx.fill(); }
+        drawActor("foe", m, x, feet, H, -1, fa, Math.max(0, fk), t);
+        if (fighting) V.target = { x, y: feet - H * 0.5, r: H * 0.55 };
       }
     }
-    // him
-    const front = V.slots[0], fx = front ? front.x - hero.x : 1, fy = front ? front.y - hero.y : 0;
-    const face = fighting && front ? Math.atan2(fy, fx) : V.face;
-    const swingK = Math.min(1, (now - lunge) / 220), swing = now - lunge < 220 ? swingK : 0;
-    const hurtK = Math.max(0, 1 - (now - hurt) / 280);
-    const hx = sx(hero), hy = sy(hero);
-    drawGlad(hx, hy, 19, face, ["#7a2a2a", "#2a3a7a", "#7a6a1a", "#8a4a1a"][S.eq.body?.rar ?? 0], RARITY[S.eq.helm?.rar ?? 0].color, swing, hurtK, V.walk ? now / 1000 : 0);
-    if (C.resting && C.on) { ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.font = "800 11px Figtree, sans-serif"; ctx.textAlign = "center"; ctx.fillText("resting… z", hx, hy - 20); }
-    // hits and heals over heads
+    drawActor("hero", heroCol, heroX, feet, H, 1, ha, hk, t);
+    if (C.resting && C.on) { ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.font = "800 13px Figtree, sans-serif"; ctx.textAlign = "center"; ctx.fillText("resting… z z", heroX, feet - H * 1.15); }
+    // numbers over heads
     splats = splats.filter((s) => pnow - s.at < 1000);
-    for (const s of splats) {
-      if (s.who === "you") drawSplat(hx, hy, s, pnow);
-      else if (V.target) drawSplat(V.target.x, V.target.y, s, pnow);
-    }
-    // loot, where it fell
+    for (const s of splats) drawSplat(s.who === "you" ? heroX : foeX, feet - H * 1.08, s, pnow);
+    // loot on the floor where it fell
     lootLabels = lootLabels.filter((l) => pnow - l.at < 3200);
-    const lc = V.corpses.at(-1);
     lootLabels.forEach((l, i) => {
-      const k = (pnow - l.at) / 3200, x = lc ? sx(lc) : hx, y = (lc ? sy(lc) : hy) + 22 + i * 20;
+      const k = (pnow - l.at) / 3200, x = foeX, y = feet + 14 + i * 20 - (i === 0 ? 0 : 0);
       ctx.globalAlpha = Math.min(1, (1 - k) * 3);
-      ctx.font = `800 ${l.rar >= 2 ? 12 : 11}px Figtree, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      const tw = ctx.measureText(l.text).width + 12;
-      if (l.rar >= 2) { const beam = ctx.createLinearGradient(0, y - 90, 0, y); beam.addColorStop(0, "rgba(0,0,0,0)"); beam.addColorStop(1, l.color + "99"); ctx.fillStyle = beam; ctx.fillRect(x - 2, y - 90, 4, 80); }
-      ctx.fillStyle = "rgba(0,0,0,.82)"; ctx.fillRect(x - tw / 2, y - 9, tw, 18);
-      ctx.strokeStyle = l.color; ctx.lineWidth = l.rar >= 2 ? 1.5 : 1; ctx.strokeRect(x - tw / 2, y - 9, tw, 18);
-      ctx.fillStyle = l.color; ctx.fillText(l.text, x, y + 1);
+      ctx.font = `800 ${l.rar >= 2 ? 13 : 12}px Figtree, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      const tw = ctx.measureText(l.text).width + 14, yy = Math.min(h - 12, y);
+      if (l.rar >= 2) { const beam = ctx.createLinearGradient(0, yy - h * .5, 0, yy); beam.addColorStop(0, "rgba(0,0,0,0)"); beam.addColorStop(1, l.color + "99"); ctx.fillStyle = beam; ctx.fillRect(x - 3, yy - h * .5, 6, h * .5 - 10); }
+      ctx.fillStyle = "rgba(0,0,0,.82)"; ctx.fillRect(x - tw / 2, yy - 10, tw, 20);
+      ctx.strokeStyle = l.color; ctx.lineWidth = l.rar >= 2 ? 2 : 1; ctx.strokeRect(x - tw / 2, yy - 10, tw, 20);
+      ctx.fillStyle = l.color; ctx.fillText(l.text, x, yy + 1);
     });
     ctx.globalAlpha = 1;
-    const lamp = ctx.createRadialGradient(hx, hy, 8, hx, hy, 200); lamp.addColorStop(0, "rgba(255,220,160,.14)"); lamp.addColorStop(1, "rgba(255,220,160,0)");
-    ctx.fillStyle = lamp; ctx.fillRect(hx - 200, hy - 200, 400, 400);
-    // a vignette, so the light sits on him
-    const vg = ctx.createRadialGradient(w / 2, h / 2, h * .25, w / 2, h / 2, Math.max(w, h) * .72);
-    vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,.5)"); ctx.fillStyle = vg; ctx.fillRect(0, 0, w, h);
+    const vg = ctx.createRadialGradient(w / 2, h * .62, h * .3, w / 2, h * .55, w * .75);
+    vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,.55)"); ctx.fillStyle = vg; ctx.fillRect(0, 0, w, h);
     hud(now);
     requestAnimationFrame(frame);
   }
@@ -3022,7 +2976,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   document.addEventListener("visibilitychange", () => { if (document.hidden) save(); });
   paintBar(); renderAll();
   requestAnimationFrame(frame);
-  window.__glad = { get jabCount() { return jabs.length; }, get V() { return V; }, upgradeOf, equip, enterRift, riftFoe, derive, gear, wipe() { wiping = true; localStorage.removeItem(SAVE); location.reload(); }, get S() { return S; }, advance, enter, MON, DUNGEONS, hitVs, foeHits, pMax };
+  window.__glad = { SHEETS, get jabCount() { return jabs.length; }, get V() { return V; }, upgradeOf, equip, enterRift, riftFoe, derive, gear, wipe() { wiping = true; localStorage.removeItem(SAVE); location.reload(); }, get S() { return S; }, advance, enter, MON, DUNGEONS, hitVs, foeHits, pMax };
 })();
 
 </script>
