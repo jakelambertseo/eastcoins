@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>EastCoin Fishing</title>
+<link rel="icon" type="image/png" href="/v3/assets/img/reef/fishing-icon.png?v=1">
+<link rel="apple-touch-icon" href="/v3/assets/img/reef/fishing-icon.png?v=1">
 <link rel="stylesheet" href="/v3/assets/fonts/fonts.css">
 <style>
 :root{
@@ -151,6 +153,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .app{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100vh}
 .sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding:18px 12px 16px;border-right:1px solid var(--line);background:#100e0c;scrollbar-width:thin}
 .sb-top{display:grid;gap:14px;padding:0 6px}
+.sb-brand{display:flex;align-items:center;gap:11px}
+.sb-logo{width:44px;height:44px;flex:none;display:block;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
 .sb-title{font-family:var(--display);font-weight:800;font-size:1.7rem;letter-spacing:-.02em;line-height:1.05;display:flex;align-items:center;gap:8px;margin-top:2px}
 .sb-title .mock-tag{font-size:.56rem;padding:3px 7px}
 .sb-wallet{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:11px;overflow:hidden}
@@ -702,8 +706,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   <aside class="sidebar">
     <div class="sb-top">
       <div class="sb-brand">
-        <div class="eyebrow">EastCoin · Game Room</div>
-        <div class="sb-title">Fishing <span class="mock-tag">Mockup</span></div>
+        <img class="sb-logo" src="/v3/assets/img/reef/fishing-logo.webp?v=1" alt="" width="44" height="44" decoding="async">
+        <div>
+          <div class="eyebrow">EastCoin · Game Room</div>
+          <div class="sb-title">Fishing <span class="mock-tag">Mockup</span></div>
+        </div>
       </div>
       <div class="sb-wallet" hidden>
         <div><small>Pearls</small><strong><span class="pearl"></span><span id="pearls">0</span></strong></div>
