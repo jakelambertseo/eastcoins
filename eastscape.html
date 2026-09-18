@@ -429,6 +429,7 @@ const cv = $("cv"), ctx = cv.getContext("2d");
 // kept on a 16-unit grid, drawn at art resolution (32px a tile) so PixelLab sprites land 1:1
 const A = 2, low = document.createElement("canvas"); low.width = W * A; low.height = H * A;
 const lc = low.getContext("2d"); lc.setTransform(A, 0, 0, A, 0, 0);
+lc.imageSmoothingEnabled = false;   // hard pixel edges everywhere: old-school, never blurred
 const px = (x, y, w, h, c) => { lc.fillStyle = c; lc.fillRect(Math.round(x), Math.round(y), w, h); };
 
 /* ------------------------------------------------------------ what the server has told us */
@@ -612,7 +613,10 @@ function say(text, cls = "sys") {
 /* ------------------------------------------------------------ the art (PixelLab, style A) */
 const ART = "/v3/assets/img/glad/flat/", ART_V = 1;
 // pictures replaced after they first shipped (the edge keeps each URL for a year): bump the one that changed
-const ART_VER = { o_fountain: 2, o_stall: 2, o_ferry: 2, o_bed: 2, bank: 2, cottage: 2, hole: 2 };
+const ART_VER = { o_fountain: 2, o_stall: 2, o_ferry: 2, o_bed: 2, bank: 2, cottage: 2, hole: 2,
+  // every character redrawn in the hero's own style (PixelLab pro, styled on the hero)
+  ...Object.fromEntries(["tom", "waldy", "tullius", "charon", "livia", "gaius", "nonna", "vibius", "aurelia", "cassia"].flatMap((n) => [[n + "_south", 2], [n + "_east", 2]])),
+  ...Object.fromEntries(["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].map((d) => ["hero_tiro_" + d, 2])) };
 const ART_FILES = ["t_dirt", "t_water", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d]),
   "bank", "store", "cottage", "o_spot", "g_bush", "g_boulder", "g_grass", "g_flowers",
@@ -628,7 +632,8 @@ const IMG = {};
 // NPCs whose art came later (PixelLab, overnight 2026-09-18): matched by name, so the shared rules don't change
 // NPC art came out at different sizes: draw everyone at one height (the hero is 48), a few on purpose
 const NPC_H = { tom: 58, gaius: 58, nonna: 44 };
-const npcScale = (k, art) => { const a = IMG[k]; return a ? (NPC_H[art] || 52) / (a.foot - a.top) : 1; };
+// (no scaling: the NPCs are drawn in the hero's style at the hero's size; shrinking pixel art by a fraction mangles it)
+const npcScale = () => 1;
 const NPC_ART = { "Charon the Ferryman": "charon", "Livia the Broker": "livia", "Gaius": "gaius", "Nonna Tomatoe": "nonna", "Centurion Vibius": "vibius", "Aurelia": "aurelia", "Cassia": "cassia" };
 const artReady = Promise.all(ART_FILES.map((k) => new Promise((res) => {
   const im = new Image(); im.onload = () => {
@@ -689,6 +694,7 @@ const WANG = [[64, 32], [96, 32], [64, 64], [32, 64], [64, 0], [96, 64], [0, 32]
 function paintBg() {
   const c = document.createElement("canvas"); c.width = W * A; c.height = H * A;
   const o = c.getContext("2d"), f = (x, y, w, h, col) => { o.fillStyle = col; o.fillRect(x, y, w, h); };
+  o.imageSmoothingEnabled = false;
   const inside = Z.def?.interior, dark = Z.def?.pvp, theme = Z.isle?.theme;
   if (inside) { o.scale(A, A); paintRoom(o, f); return c; }
   const DIRT = dark && IMG.t_wdirt ? IMG.t_wdirt : IMG.t_dirt, WATER = dark && IMG.t_wwater ? IMG.t_wwater : IMG.t_water;
