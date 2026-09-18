@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 14;
+export const VERSION = 15;
 export const COLS = 22, ROWS = 13;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -234,9 +234,9 @@ export const SCENES = {
       for (let y = 0; y < 5; y++) for (let x = 16; x <= 18; x++) g[y][x] = "p";
       for (let x = 18; x < COLS; x++) for (let y = 5; y <= 7; y++) g[y][x] = "p";
       const paved = g.map((r) => r.slice());
-      const bath = { t: "house", img: "bank", x: 2, y: 1, w: 5, h: 3, door: { x: 4, y: 3 }, name: "Bank", roof: "#8a9aa8", wall: "#efe6d4", sign: "BANK", enter: "bathhouse" };
+      const bath = { t: "house", img: "bank", x: 2, y: 2, w: 5, h: 3, door: { x: 4, y: 4 }, name: "Bank", roof: "#8a9aa8", wall: "#efe6d4", sign: "BANK", enter: "bathhouse" };
       const forge = { t: "house", img: "store", x: 11, y: 1, w: 5, h: 3, door: { x: 13, y: 3 }, name: "Forge", roof: "#7a4a3a", wall: "#c8b89a", sign: "STORE" };
-      objs.push(bath, forge); block(g, 2, 1, 5, 3); block(g, 11, 1, 5, 3);
+      objs.push(bath, forge); block(g, 2, 2, 5, 3); block(g, 11, 1, 5, 3);
       objs.push({ t: "fountain", x: 10, y: 6, w: 2, h: 2, name: "Fountain" }); block(g, 10, 6, 2, 2);
       objs.push({ t: "rock", ore: "stardust", x: 5, y: 6, name: "Fallen Star", special: true, glow: "#e0b0ff", req: { skill: "mining", lvl: 50 }, xp: 150, tease: "It landed during the games last spring. Nobody's managed to chip it since." }); g[6][5] = "#";
       objs.push({ t: "notice", x: 8, y: 2, name: "Notice board" }); g[2][8] = "#";
@@ -333,7 +333,7 @@ function room(x0, y0, x1, y1, doorX) {
 Object.assign(SCENES, {
   // the scene key stays "bathhouse" so saved characters standing in it still load; everything a player sees says Bank
   bathhouse: {
-    name: "The Bank", interior: true, floor: "marble", room: [4, 3, 17, 10], exitTo: { scene: "forum", x: 4, y: 4 }, entry: { x: 10, y: 10 },
+    name: "The Bank", interior: true, floor: "marble", room: [4, 3, 17, 10], exitTo: { scene: "forum", x: 4, y: 5 }, entry: { x: 10, y: 10 },
     // on the back wall, left to right: a banner, a lamp, the vault door, a lamp, a banner
     wall: [{ t: "banner", x: 6 }, { t: "lamp", x: 8.5 }, { t: "vault", x: 10.5 }, { t: "lamp", x: 12.5 }, { t: "banner", x: 15 }],
     build() {
