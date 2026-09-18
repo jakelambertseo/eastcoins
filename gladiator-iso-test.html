@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Ultimate Gladiator — Mockup</title>
+<title>Ultimate Gladiator — Isometric prototype</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Ctext%20y%3D%22.9em%22%20font-size%3D%2290%22%3E%E2%9A%94%EF%B8%8F%3C%2Ftext%3E%3C%2Fsvg%3E">
 <link rel="stylesheet" href="/v3/assets/fonts/fonts.css">
 <!-- A MOCKUP. The stylesheet below is Fishing's, copied verbatim from
@@ -1279,9 +1279,13 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .tree-sum{display:grid;gap:4px;font-size:.82rem;color:#9fb2ff}
 .tree-side .note{font-size:.78rem;margin:0 0 6px}
 .potion-btn b{font-variant-numeric:tabular-nums}
+body[data-view=iso] #modeSwitch button[data-view=rift]{display:none}
+body[data-view=iso] .cb-check{display:none}
+body[data-view=iso] .click-hint{display:none}
+body[data-view=iso] .fight-grid .scene-wrap{aspect-ratio:16/11}
 </style>
 </head>
-<body>
+<body data-view="iso">
 <div class="app">
   <aside class="sidebar">
     <div class="sb-top">
