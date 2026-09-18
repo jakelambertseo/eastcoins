@@ -17,5 +17,8 @@ export async function onRequestPost(context) {
     .bind(ticket, user.id, user.login, user.displayName).run();
   // sweep old ones now and then; there are only ever a handful
   if (Math.random() < 0.05) context.waitUntil(db.prepare(`DELETE FROM eastscape_tickets WHERE expires_at < datetime('now')`).run().catch(() => {}));
-  return Response.json({ ok: true, ticket, ws: WS_URL, login: user.login, name: user.displayName, admin: isAdminLogin(user.login) }, { headers: noStore });
+  // the small Twitch picture for the top bar (the site stores the 300px one; Twitch serves a 70px copy at the same path)
+  const row = await db.prepare(`SELECT avatar_url FROM users WHERE twitch_id = ?`).bind(user.id).first().catch(() => null);
+  const avatar = row?.avatar_url ? String(row.avatar_url).replace("-300x300.", "-70x70.") : null;
+  return Response.json({ ok: true, ticket, ws: WS_URL, login: user.login, name: user.displayName, avatar, admin: isAdminLogin(user.login) }, { headers: noStore });
 }

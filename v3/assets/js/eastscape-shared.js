@@ -224,7 +224,8 @@ export const SCENES = {
     bots: [{ name: "Agron", level: 23 }]
   }
 };
-export const START = { scene: "farm", x: 11, y: 7 };
+// where a brand-new character appears: just outside the farmhouse door
+export const START = { scene: "farm", x: 4, y: 5 };
 // the same scene, built the same way everywhere; every object gets its index as its id
 export function buildScene(key) {
   const sc = SCENES[key], b = sc.build.call(sc);

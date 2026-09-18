@@ -193,6 +193,14 @@ export class World {
         if (st.k === "coins") return this.say(pl, "You'd rather not drop your denarii.");
         C.inv.splice(i, 1); this.say(pl, `You drop the ${G.ITEMS[st.k].name.toLowerCase()}.`); this.touch(pl); return;
       }
+      case "chat": {
+        // public chat: everyone in the same area sees it, and it floats over the speaker's head
+        const text = String(m.text || "").replace(/[\u0000-\u001f\u007f]/g, "").replace(/\s+/g, " ").trim().slice(0, 120);
+        if (!text || now - (pl.lastChat || 0) < 700) return;
+        pl.lastChat = now;
+        S.events.push({ type: "chat", id: pl.id, name: pl.name, text, t: now });
+        return;
+      }
       case "quest": return this.questOp(S, pl, m);
       case "talked": { const n = S.npcs.find((x) => x.id === m.npc); if (n) n.holdUntil = 0; return; }
       case "settings": {
