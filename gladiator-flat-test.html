@@ -33,7 +33,7 @@ button{font:inherit}
 .dbg{position:absolute;left:10px;top:8px;color:#ffe45c;font-size:13px;line-height:1.35;text-shadow:1px 1px 0 #000,0 0 3px #000;pointer-events:none;white-space:pre}
 .dlg{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:min(620px,calc(100% - 24px));display:grid;grid-template-columns:84px 1fr;gap:12px;padding:12px 14px;background:var(--panel);color:var(--panel-ink);border:3px solid var(--frame);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:5}
 .dlg[hidden]{display:none}
-.game:has(.dlg:not([hidden])) .feed{bottom:150px}
+.game:has(.dlg:not([hidden])) .feed{bottom:190px}
 .dlg-face{width:84px;height:84px;border:2px solid #8a7a5a;background:#d8cbac;display:grid;place-items:center;overflow:hidden;font-size:40px}
 .dlg-face img{width:136px;height:136px;image-rendering:pixelated;object-fit:none;object-position:50% 28%;transform:scale(1)}
 .dlg-body b{display:block;font-size:16px;color:#7a2a1a}
@@ -355,7 +355,7 @@ button{font:inherit}
         return { g, objs, blobs: [[7, 8, 3], [15, 4, 3], [18, 9, 2], [5, 11, 2]] };
       },
       mobs: [["cow", 12, 4], ["cow", 15, 8], ["cow", 19, 4], ["cow", 11, 8], ["cow", 18, 9]],
-      npcs: [{ name: "Bom Trady", art: "tom", quests: ["firewood", "cattle"], x: 10, y: 6, hair: "#c86a2a", shirt: "#3a6ac8", pants: "#2a2a4a", lines: ["Mind the cows, gladiator. They blitz.", "Your pickaxe, axe and rod are in your bag. Hold the right one for the job.", "Town's north, through the gate. The river's east.", "Sundays I play. The rest of the week, I farm. Don't ask."] },
+      npcs: [{ name: "Bom Trady", art: "tom", quests: ["firewood", "cattle"], outOfWork: "I'm all out of work for you, rookie. You've earned your cleats.", x: 10, y: 6, hair: "#c86a2a", shirt: "#3a6ac8", pants: "#2a2a4a", lines: ["Mind the cows, gladiator. They blitz.", "Your pickaxe, axe and rod are in your bag. Hold the right one for the job.", "Town's north, through the gate. The river's east.", "Sundays I play. The rest of the week, I farm. Don't ask."] },
              { name: "Waldy", art: "waldy", x: 6, y: 9, hair: "#3a2a1a", shirt: "#8a3a2a", pants: "#4a3a2a", lines: ["Every champion started on cows.", "Hit them until they stop mooing. That's the whole trick.", "The bucket? Keeps the thoughts in.", "Don't go west of town. The olives have opinions."] }],
       bots: [{ name: "Crixus", level: 42 }]
     },
@@ -885,6 +885,8 @@ button{font:inherit}
     },
     catch: {
       name: "Catch of the Day", giver: "Old Tullius", where: "River Bend", icon: "🐟",
+      // what anyone who has run out of work says to send you here
+      hint: "Old Tullius needs a hand down at River Bend. Head east from the farm, through the blue, and look for the old man by the water.",
       goal: { type: "bring", items: ["sardine", "trout"], n: 3, what: "raw fish" },
       brief: "Bring Old Tullius 3 raw fish.",
       talk: {
@@ -957,7 +959,15 @@ button{font:inherit}
   function talkTo(n) {
     const k = npcQuest(n), bye = ["Bye.", closeTalk];
     const chat = ["Tell me about this place.", () => showTalk(n, pick(n.lines), [["Something else…", () => talkTo(n)], bye])];
-    if (!k) return showTalk(n, pick(n.lines), [chat, bye]);
+    if (!k) {
+      // out of quests: point at the next one somewhere else, if there is one
+      if (n.quests?.length) {
+        const next = Object.keys(QUESTS).find((q) => !n.quests.includes(q) && ["new", "active", "ready"].includes(qState(q)));
+        const hint = next ? (QUESTS[next].hint || `${QUESTS[next].giver} at ${QUESTS[next].where} could use a hand.`) : "That's all the work there is for now. Check back soon.";
+        return showTalk(n, [n.outOfWork || "That's all the work I've got for you.", hint], [["Thanks.", closeTalk], chat]);
+      }
+      return showTalk(n, pick(n.lines), [chat, bye]);
+    }
     const q = QUESTS[k], st = qState(k);
     DLG = { have: `${qHave(q, k)}` };
     if (st === "new") return showTalk(n, q.talk.offer, [
