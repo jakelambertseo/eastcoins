@@ -27,6 +27,8 @@ button,input,select{font:inherit}
 .top a:hover{text-decoration:underline}
 .top .spacer{flex:1}
 .top .online{color:#ffd23f}
+.topcash{display:inline-flex;align-items:center;gap:5px;padding:2px 10px 2px 6px;border:1px solid #3a2e22;border-radius:12px;background:#1e1812;color:#ffe27a;font-weight:800;font-variant-numeric:tabular-nums}
+.topcash img{width:20px;height:20px;image-rendering:pixelated}
 .net{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#b8b0a0}
 .net i{width:8px;height:8px;border-radius:50%;background:#6a6258;display:inline-block}
 .net.ok i{background:#5dd65d;box-shadow:0 0 6px #5dd65d}
@@ -288,12 +290,13 @@ button,input,select{font:inherit}
 <body>
 <header class="top">
   <span class="logo">⚔ EastScape</span>
-  <span class="me"><img id="topAv" alt="" hidden><span id="topName">—</span></span>
   <span class="clock" id="clock">--:--:--</span>
   <button type="button" class="wikib" id="wikiBtn" title="The EastScape wiki">📖 Wiki</button>
   <span class="spacer"></span>
   <span class="net" id="net" role="status" aria-live="polite"><i></i><span id="netText">Connecting…</span></span>
   <span class="online" id="online"></span>
+  <span class="topcash" title="Your Cash (in your bag)"><img src="/v3/assets/img/glad/flat/ui/cash.png?v=1" alt=""><b id="topCash">0</b></span>
+  <span class="me"><img id="topAv" alt="" hidden><span id="topName">—</span></span>
 </header>
 <main class="wrap">
   <section class="game" aria-label="Game">
@@ -365,8 +368,8 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=8";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=1";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=9";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=2";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -662,8 +665,32 @@ function paintRoom(o, f) {
   for (let x = x0; x <= x1; x++) if (Z.g[y1 + 1][x] !== "e") f(x * T, Y1, T, 5, "#3a2e22");
   f(X0 - 4, Y1, 4, 5, "#3a2e22"); f(X1, Y1, 4, 5, "#3a2e22");
   for (let x = x0; x <= x1; x++) if (Z.g[y1 + 1][x] === "e") { f(x * T, Y1, T, T, "#2a2016"); f(x * T + 2, Y1 + 2, T - 4, T - 6, "#8a4a2a"); }
+  // rugs lie on the floor, under everything else
+  for (const ob of Z.objs) if (ob.t === "rug") {
+    const X = ob.x * T, Y = ob.y * T, w = ob.w * T, h = ob.h * T;
+    f(X + 1, Y + 1, w - 2, h - 2, ob.color); f(X + 3, Y + 3, w - 6, 1, "#e8c050"); f(X + 3, Y + h - 4, w - 6, 1, "#e8c050"); f(X + 3, Y + 3, 1, h - 6, "#e8c050"); f(X + w - 4, Y + 3, 1, h - 6, "#e8c050");
+    for (let i = X + 3; i < X + w - 3; i += 4) { f(i, Y, 2, 1, "#e8d8a8"); f(i, Y + h - 1, 2, 1, "#e8d8a8"); }
+  }
+  // the back wall's decor
+  for (const d of def.wall || []) {
+    const X = d.x * T, Y = Y0 - 22;
+    if (d.t === "banner") { f(X - 1, Y + 1, 12, 2, "#8a6a2a"); f(X, Y + 3, 10, 15, "#9a2a2a"); f(X, Y + 17, 5, 3, "#9a2a2a"); f(X + 5, Y + 17, 5, 2, "#9a2a2a"); f(X + 3, Y + 7, 4, 4, "#e8c050"); f(X + 4, Y + 8, 2, 2, "#b8902a"); }
+    if (d.t === "lamp") { f(X + 3, Y + 6, 2, 6, "#5a4a2a"); f(X + 1, Y + 10, 6, 3, "#8a6a2a"); f(X + 2, Y + 5, 4, 3, "#ffd060"); f(X + 3, Y + 3, 2, 2, "#fff0a0"); }
+    if (d.t === "vault") { f(X - 9, Y + 1, 18, 19, "#6a6a72"); f(X - 8, Y + 2, 16, 17, "#8a8a94"); f(X - 5, Y + 5, 10, 10, "#6a6a72"); f(X - 1, Y + 6, 2, 8, "#c8a040"); f(X - 4, Y + 9, 8, 2, "#c8a040"); for (const [a, b] of [[-7, 3], [5, 3], [-7, 16], [5, 16]]) f(X + a, Y + b, 2, 2, "#4a4a52"); }
+    if (d.t === "herbs") { f(X - 6, Y + 2, 14, 1, "#5a3a1e"); for (let i = 0; i < 4; i++) { f(X - 5 + i * 4, Y + 3, 1, 3, "#5a3a1e"); f(X - 6 + i * 4, Y + 6, 3, 6, i % 2 ? "#5a8a3a" : "#e8e0c8"); } }
+    if (d.t === "shelf") { f(X - 8, Y + 11, 18, 2, "#6a4a2a"); for (let i = 0; i < 4; i++) f(X - 7 + i * 4, Y + 5 + (i % 2), 3, 6 - (i % 2), ["#c86a2a", "#e8d8a8", "#5a7a9a", "#8a5a32"][i]); }
+    if (d.t === "window") { f(X - 7, Y + 2, 14, 13, "#5a3a1e"); f(X - 6, Y + 3, 12, 11, "#9ad0f0"); f(X - 1, Y + 3, 1, 11, "#5a3a1e"); f(X - 6, Y + 8, 12, 1, "#5a3a1e"); f(X - 6, Y + 3, 5, 2, "#d8f0ff"); }
+  }
   for (const ob of Z.objs) {
     const X = ob.x * T, Y = ob.y * T, w = (ob.w || 1) * T, h = (ob.h || 1) * T;
+    if (ob.t === "plant") { f(X + 3, Y + 14, 10, 2, "rgba(0,0,0,.25)"); f(X + 4, Y + 8, 8, 7, "#b8603a"); f(X + 4, Y + 8, 8, 2, "#d8804a"); f(X + 7, Y - 2, 2, 10, "#5a7a2a"); for (const [a, b, c] of [[-2, -6, 7], [8, -5, 6], [1, -10, 6], [5, -9, 5]]) f(X + a + 1, Y + b, c, 3, "#3f8a3a"); f(X + 3, Y - 7, 3, 2, "#5aa84a"); }
+    if (ob.t === "bench") { f(X, Y + 13, w, 2, "rgba(0,0,0,.25)"); f(X + 1, Y + 5, w - 2, 5, "#e8e2d4"); f(X + 1, Y + 5, w - 2, 1, "#fffaf0"); f(X + 2, Y + 10, 3, 4, "#cfc6b2"); f(X + w - 5, Y + 10, 3, 4, "#cfc6b2"); }
+    if (ob.t === "goatstatue") { f(X + 1, Y + 13, 14, 2, "rgba(0,0,0,.25)"); f(X + 2, Y + 7, 12, 8, "#a8a294"); f(X + 2, Y + 7, 12, 2, "#c8c2b4"); f(X + 4, Y - 6, 7, 13, "#b8844a"); f(X + 5, Y - 11, 5, 6, "#c8945a"); f(X + 4, Y - 13, 2, 3, "#8a6a3a"); f(X + 9, Y - 13, 2, 3, "#8a6a3a"); f(X + 10, Y - 2, 5, 5, "#e8c050"); f(X + 11, Y - 3, 3, 1, "#8a6a2a"); }
+    if (ob.t === "chest") { f(X + 1, Y + 13, 14, 2, "rgba(0,0,0,.25)"); f(X + 1, Y + 4, 14, 10, "#6a4a2a"); f(X + 1, Y + 4, 14, 3, "#8a5a32"); f(X + 1, Y + 7, 14, 1, "#3a2a1a"); f(X + 7, Y + 7, 2, 3, "#e8c050"); f(X + 1, Y + 4, 1, 10, "#c8a040"); f(X + 14, Y + 4, 1, 10, "#c8a040"); }
+    if (ob.t === "chair") { f(X + 4, Y + 6, 8, 3, "#8a5a32"); f(X + 4, Y + 9, 1, 5, "#5a3a1e"); f(X + 11, Y + 9, 1, 5, "#5a3a1e"); f(X + 7, Y + 9, 1, 5, "#5a3a1e"); }
+    if (ob.t === "sack") { f(X + 2, Y + 13, 12, 2, "rgba(0,0,0,.25)"); f(X + 3, Y + 4, 10, 11, "#e8dcb8"); f(X + 5, Y + 2, 6, 3, "#d8cca8"); f(X + 6, Y + 1, 4, 2, "#a8784a"); f(X + 5, Y + 8, 6, 1, "#c8b890"); }
+    if (ob.t === "cat") { f(X + 3, Y + 13, 10, 2, "rgba(0,0,0,.25)"); f(X + 3, Y + 8, 9, 6, "#e8883a"); f(X + 9, Y + 5, 5, 5, "#e8883a"); f(X + 10, Y + 3, 5, 3, "#c8a040"); f(X + 12, Y + 1, 2, 2, "#c43a3a"); f(X + 12, Y + 7, 1, 1, "#000"); f(X + 1, Y + 9, 2, 4, "#e8883a"); f(X + 5, Y + 10, 3, 1, "#c86a2a"); }
+    if (ob.t === "bucket") { f(X + 3, Y + 13, 10, 2, "rgba(0,0,0,.25)"); f(X + 3, Y + 5, 10, 9, "#8a5a32"); f(X + 3, Y + 7, 10, 1, "#5a3a1e"); f(X + 3, Y + 11, 10, 1, "#5a3a1e"); f(X + 5, Y + 8, 2, 2, "#fff"); f(X + 9, Y + 8, 2, 2, "#fff"); f(X + 6, Y + 9, 1, 1, "#000"); f(X + 9, Y + 8, 1, 1, "#000"); }
     if (ob.t === "counter") { f(X, Y + 2, w, h, "#b8ae98"); f(X, Y, w, 5, "#7a4a26"); f(X, Y + h, w, 3, "rgba(0,0,0,.25)"); for (let i = X + 6; i < X + w; i += 16) f(i, Y + 7, 1, h - 6, "#a09680"); }
     if (ob.t === "booth") { f(X + 2, Y - 10, 12, 11, "#6a4a2a"); f(X + 3, Y - 9, 10, 9, "#2a2016"); for (let i = 0; i < 4; i++) f(X + 4 + i * 3, Y - 9, 1, 9, "#c8a040"); f(X + 1, Y - 12, 14, 2, "#c8a040"); }
     if (ob.t === "pool") { f(X - 2, Y - 2, w + 4, h + 4, "#e8e2d4"); f(X, Y, w, h, "#3a8ab8"); f(X + 2, Y + 2, w - 4, 2, "#8ac8e8"); for (let i = 0; i < 5; i++) f(X + 4 + hashRand(ob.x, i, 3) * (w - 10), Y + 6 + hashRand(ob.y, i, 4) * (h - 10), 4, 1, "#6ab0d8"); f(X - 2, Y + h + 2, w + 4, 2, "rgba(0,0,0,.2)"); }
@@ -764,7 +791,8 @@ function predTick(pnow) {
   if (n) {
     const dx = n.x - PRED.x, dy = n.y - PRED.y;
     if (Math.max(Math.abs(dx), Math.abs(dy)) !== 1 || !G.canStepIn(Z.g, PRED.x, PRED.y, dx, dy)) { PRED.path = []; return; }
-    PRED.step = { fx: PRED.x, fy: PRED.y, tx: n.x, ty: n.y, t0: pnow, ms: dx && dy ? STEP * 1.4 : STEP };
+    const base = me ? G.stepMsOf(me, me.speedTest || 0) : STEP;
+    PRED.step = { fx: PRED.x, fy: PRED.y, tx: n.x, ty: n.y, t0: pnow, ms: Math.round(dx && dy ? base * 1.4 : base) };
     PRED.dir = DIRS[`${dx},${dy}`]; if (dx) PRED.face = dx > 0 ? 1 : -1;
     return;
   }
@@ -783,7 +811,9 @@ function checkPred() {
   if (!PRED.on) return;
   const P = myEnt(); if (!P) return;
   const sx_ = P.s ? P.s[2] : P.x, sy_ = P.s ? P.s[3] : P.y, px_ = PRED.step ? PRED.step.tx : PRED.x, py_ = PRED.step ? PRED.step.ty : PRED.y;
-  if (Math.max(Math.abs(sx_ - px_), Math.abs(sy_ - py_)) > 2) { PRED.on = false; PRED.path = []; PRED.step = null; }
+  // how far apart the page and the server may drift before the server's word wins: about 0.7s of walking, never under 2 tiles
+  const allow = Math.max(2, Math.round(700 / (me ? G.stepMsOf(me, me.speedTest || 0) : STEP)));
+  if (Math.max(Math.abs(sx_ - px_), Math.abs(sy_ - py_)) > allow) { PRED.on = false; PRED.path = []; PRED.step = null; }
 }
 
 /* ------------------------------------------------------------ dialogue, popups and banners */
@@ -853,7 +883,7 @@ function fit() {
   return { w, h };
 }
 const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
-const KIND_OF = { booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
+const KIND_OF = { plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
 function thingAt(wx, wy) {
   const now = snow(), near = (x_, y_, rx, ry) => Math.abs(wx - x_) <= rx && wy <= y_ + 4 && wy >= y_ - ry;
   for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})` }; }
@@ -1472,6 +1502,7 @@ let tab = "inv";
 const syncTabs = () => document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.tab === tab)));
 function renderStats() {
   if (!me) return;
+  $("topCash").textContent = G.cashIn(me).toLocaleString();
   $("stats").innerHTML = [
     ["hp", `${Math.max(0, me.hp)}/${maxHp()}${me.god ? " ⭐" : ""}`, "Hitpoints"], ["combat", G.combatOf(me), "Combat level"],
     ["total", total(), "Total level"], ["cash", G.cashIn(me).toLocaleString(), "Cash"],
@@ -1505,7 +1536,8 @@ function renderPanel() {
     p.innerHTML = `<div class="ph">Equipment <small>paper doll</small></div><div class="doll">${G.SLOTS.map(slot).join("")}</div>
       <div class="bonl"><div class="bh">${me.eq.weapon ? `${ITEMS[me.eq.weapon].icon} ${esc(ITEMS[me.eq.weapon].name)}` : "✊ Unarmed"}${tool ? ` · lets you train ${SKILLS[tool].name}` : ""}</div>
         <div><i>⊕</i><span>accuracy</span><b>+${b.acc}</b></div><div><i>🔺</i><span>strength</span><b>+${b.str}</b></div>
-        <div><i>🎯</i><span>max hit</span><b>${G.maxHitOf(me)}</b></div><div><i>🛡️</i><span>defence</span><b>+${b.def}</b></div></div>
+        <div><i>🎯</i><span>max hit</span><b>${G.maxHitOf(me)}</b></div><div><i>🛡️</i><span>defence</span><b>+${b.def}</b></div>
+        <div><i>👟</i><span>speed</span><b>+${G.speedBonus(me, me.speedTest || 0)}%</b></div></div>
       <p class="note">Click something you're wearing to take it off. Tools go in your weapon hand: hold the pickaxe to mine, the axe to chop, the rod to fish.</p>`;
     p.querySelectorAll(".eq[data-slot]").forEach((el) => el.addEventListener("click", () => send({ t: "unequip", slot: el.dataset.slot })));
   }
@@ -1544,7 +1576,7 @@ function renderPanel() {
   }
   if (tab === "admin" && you?.admin) renderAdmin(p);
 }
-const ADMIN_FIELDS = ["aSkill", "aXp", "aLvl", "aItem", "aQty", "aScene", "aQuest", "aQState"];
+const ADMIN_FIELDS = ["aSkill", "aXp", "aLvl", "aItem", "aQty", "aScene", "aQuest", "aQState", "aSpeed"];
 function renderAdmin(p) {
   // the panel redraws whenever your character changes; keep whatever was picked or typed
   const keep = ADMIN_FIELDS.map((id) => [id, $(id)?.value]).filter(([, v]) => v != null);
@@ -1569,6 +1601,9 @@ function renderAdmin(p) {
       <div class="row"><select id="aScene">${opts(scenes)}</select><button class="btn" data-a="tp">Teleport</button></div>
       <div class="row"><button class="btn plain" data-a="resetscene">Reset this area</button><span class="tag">monsters, trees, rocks, bots</span></div>
     </fieldset>
+    <fieldset><legend>Speed test</legend>
+      <div class="row"><input type="number" id="aSpeed" value="${me.speedTest || 0}" min="0" max="200" aria-label="Raw speed bonus percent"><button class="btn" data-a="speed">Set</button><span class="tag">raw %, before the taper and the +${G.SPEED_CAP}% cap; this session only</span></div>
+    </fieldset>
     <fieldset><legend>Quests</legend>
       <div class="row"><select id="aQuest">${opts(quests)}</select></div>
       <div class="row"><select id="aQState"><option value="new">new</option><option value="active">active</option><option value="done">done</option></select><button class="btn" data-a="quest">Set</button><button class="btn plain" data-a="resetquests">Reset all</button></div>
@@ -1588,7 +1623,7 @@ function renderAdmin(p) {
     clearinv: () => ({ cmd: "clearinv" }), heal: () => ({ cmd: "heal" }), god: () => ({ cmd: "god" }),
     tp: () => ({ cmd: "tp", scene: v("aScene") }), resetscene: () => ({ cmd: "resetscene" }),
     quest: () => ({ cmd: "quest", k: v("aQuest"), state: v("aQState") }), resetquests: () => ({ cmd: "resetquests" }),
-    reset: () => ({ cmd: "reset" })
+    reset: () => ({ cmd: "reset" }), speed: () => ({ cmd: "speed", n: +v("aSpeed") })
   };
   for (const [id, val] of keep) if ($(id)) $(id).value = val;
   p.querySelectorAll("[data-a]").forEach((b) => b.addEventListener("click", () => {
