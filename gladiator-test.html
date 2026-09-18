@@ -984,6 +984,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .g-zone.crit{background:rgba(232,191,53,.95);box-shadow:0 0 12px rgba(232,191,53,.8)}
 .g-mark{position:absolute;top:-3px;bottom:-3px;width:4px;margin-left:-2px;border-radius:3px;background:#fff;box-shadow:0 0 8px #fff}
 .g-result{position:absolute;inset:0;display:grid;place-items:center;z-index:5;background:rgba(6,4,3,.55)}
+/* [hidden] must win: display:grid on the overlay was covering the scene and eating every click */
+.g-result[hidden]{display:none}
 .g-card{background:var(--panel);border:1px solid rgba(var(--gold-rgb),.5);border-radius:16px;padding:18px 22px;text-align:center;min-width:min(320px,86%);box-shadow:0 20px 50px rgba(0,0,0,.6)}
 .g-card h3{font-family:var(--display);font-weight:800;font-size:1.4rem;margin:2px 0 8px}
 .g-card .won{color:var(--gold)}
@@ -1823,19 +1825,21 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (!riftOpen()) return toast("You have not unlocked this yet", "You need to clear The Ludus Cellars to unlock the rifts.");
     if (S.hp < maxHp() * 0.2) return toast("You are in no state to go down there", "Eat something, or rest until your health comes back.");
     const now = Date.now();
-    Object.assign(C, { on: true, farm: null, rift: { tier: T, prog: 0, t0: now + 600 }, foe: null, foeHp: 0, rAt: now + 600, pAt: 0, eAt: 0, resting: false });
+    Object.assign(C, { on: true, farm: null, rift: { tier: T, prog: 0, t0: now + 600 }, foe: null, nextG: null, queue: riftQueue(T), foeHp: 0, rAt: now + 1400, pAt: 0, eAt: 0, resting: false });
     S.rift.tier = T; S.view = "rift";
     Object.assign(sess, { t0: now, kills: 0, clears: 0, xp: xpNow(), coin: S.coin, drops: {}, loot: [0, 0, 0, 0] });
     $("result").hidden = true;
     renderArena(); save();
   }
+  const rollRift = (T) => riftFoe(T, Math.random() < 0.1 ? "elite" : "mob");
+  const riftQueue = (T) => Array.from({ length: 6 }, () => rollRift(T));
   function riftKill(t, m) {
     const R = C.rift;
     if (m.guardian) return riftClear(t);
     const was = R.prog;
     R.prog = Math.min(100, R.prog + (m.elite ? 9 : 2.5));
     C.rAt = t + 1500;
-    if (was < 100 && R.prog >= 100 && !away) toast("The Rift Guardian is coming", `Tier ${R.tier}`);
+    if (was < 100 && R.prog >= 100) { C.nextG = riftFoe(R.tier, "guardian"); if (!away) toast("The Rift Guardian is coming", `Tier ${R.tier}`); }
   }
   function riftClear(t) {
     const R = C.rift, T = R.tier, took = t - R.t0;
@@ -1852,7 +1856,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (away) away.rifts = Math.max(away.rifts || 0, T);
     const next = S.rift.mode === "push" ? T + 1 : T;
     if (!away) showRiftClear(T, took, cash, got, next);
-    C.rift = { tier: next, prog: 0, t0: t + 4000 }; S.rift.tier = next; C.foe = null; C.rAt = t + 4000;
+    C.rift = { tier: next, prog: 0, t0: t + 4000 }; S.rift.tier = next; C.foe = null; C.nextG = null; C.queue = riftQueue(next); C.rAt = t + 4000;
   }
   const xpNow = () => Object.values(S.skills).reduce((a, b) => a + b, 0);
 
@@ -1861,7 +1865,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (!dunOpen(d)) return toast("Not yet", `Clear ${DUNGEONS[d - 1].name} first.`);
     if (S.hp < maxHp() * 0.2) return toast("You are in no state to go down there", "Eat something, or rest until your health comes back.");
     const now = Date.now();
-    Object.assign(C, { on: true, dun: d, room: 0, farm, rift: null, foe: null, foeHp: 0, rAt: now + 600, pAt: 0, eAt: 0, resting: false });
+    Object.assign(C, { on: true, dun: d, room: 0, farm, rift: null, foe: null, foeHp: 0, rAt: now + 1400, pAt: 0, eAt: 0, resting: false });
     S.view = "dun";
     S.dun = d;
     Object.assign(sess, { t0: now, kills: 0, clears: 0, xp: xpNow(), coin: S.coin, drops: {}, loot: [0, 0, 0, 0] });
@@ -1875,7 +1879,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   }
   function spawn(t) {
     C.resting = false;
-    if (C.rift) C.foe = riftFoe(C.rift.tier, C.rift.prog >= 100 ? "guardian" : Math.random() < 0.1 ? "elite" : "mob");
+    if (C.rift) {
+      if (C.rift.prog >= 100) { C.foe = C.nextG || riftFoe(C.rift.tier, "guardian"); C.nextG = null; }
+      else { C.queue = C.queue && C.queue.length ? C.queue : riftQueue(C.rift.tier); C.foe = C.queue.shift(); C.queue.push(rollRift(C.rift.tier)); }
+    }
     const m = foeNow();
     C.foeHp = m.hp; C.rAt = 0;
     C.pAt = t + pSpeed(); C.eAt = t + m.speed;
@@ -1914,11 +1921,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   let lastJab = 0, jabs = [];
   function jab() {
     const now = Date.now();
-    if (now - lastJab < JAB_GAP) return;
+    // every click lands; one that follows the last quickly hits for that fraction
+    // of a jab, so damage from clicking is capped by time, not by thrown-away clicks
+    const k = Math.min(1, (now - lastJab) / JAB_GAP);
+    if (k < 0.08) return;
     advance(now);
     if (!C.on || C.rAt) return;
     lastJab = now;
-    const dmg = strike(now, jabScale());
+    const dmg = strike(now, jabScale() * k);
     jabs.push({ t: now, dmg });
   }
   const clickDps = () => { const now = Date.now(); jabs = jabs.filter((j) => now - j.t < 3000); return jabs.reduce((a, j) => a + j.dmg, 0) / 3; };
@@ -1960,7 +1970,6 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   /* A kill rolls for gear. Bosses always drop two magic-or-better and have a
      shot at their own unique; anything can, very rarely, drop a world unique.
      The loot filter salvages what you have said you don't want. */
-  let lootLabels = [], fullToast = 0;
   function dropLoot(m, t) {
     const find = 1 + gear().find + (m.rift && C.rift ? C.rift.tier * 0.02 : 0), ilvl = m.ilvl ?? foeCb(m) + (m.boss ? 3 : 0), got = [];
     const n = m.boss ? 2 : m.elite ? 1 : Math.random() < 0.12 ? 1 : 0;
@@ -2014,7 +2023,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       const tick = Math.max(1, Math.round(maxHp() * 0.05));
       C.resting = true; C.foe = null;
       C.rAt = t + Math.ceil((maxHp() - S.hp) / tick) * 6000 + 1000;
-      C.rift = { tier: next, prog: 0, t0: C.rAt }; S.rift.tier = next;
+      C.rift = { tier: next, prog: 0, t0: C.rAt }; S.rift.tier = next; C.nextG = null; C.queue = riftQueue(next);
       if (away) away.deaths++; else toast(`${m.name} put you down at tier ${T}`, next < T ? `Resting, then tier ${next}` : "Resting, then again");
       return;
     }
@@ -2102,140 +2111,276 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     $("deadOk").addEventListener("click", () => { $("result").hidden = true; });
   }
 
-  /* ================================================================== the dungeon, drawn */
+  /* ================================================================== the dungeon, drawn top-down
+     Purely a picture of what the engine is doing. The engine decides every
+     swing and spawn; this places a small gladiator on a generated map, walks
+     him to the next monster during the respawn gap so he arrives as it spawns,
+     and shows the monsters still to come where he will find them. Nothing
+     here changes an outcome, so offline catch-up never needs it. */
   const cv = $("arena"), ctx = cv.getContext("2d");
   function fit() { const d = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight; if (cv.width !== Math.round(w * d)) { cv.width = Math.round(w * d); cv.height = Math.round(h * d); } ctx.setTransform(d, 0, 0, d, 0, 0); return { w, h }; }
-  function gladiator(x, feet, H, face, tunic, crest, t, lungeT, hurtT) {
-    const now = Date.now();
-    const lg = Math.max(0, 1 - (now - lungeT) / 240), hr = Math.max(0, 1 - (now - hurtT) / 280);
-    x += face * lg * H * 0.12 - face * hr * H * 0.05;
-    const bob = Math.sin(t / 420 + (face > 0 ? 0 : 2)) * H * 0.012;
-    ctx.save(); ctx.translate(x, feet + bob); ctx.scale(face, 1); ctx.lineCap = "round";
-    ctx.strokeStyle = "#5a3a22"; ctx.lineWidth = H * 0.055;
-    ctx.beginPath(); ctx.moveTo(-H * .06, 0); ctx.lineTo(-H * .02, -H * .34); ctx.moveTo(H * .08, 0); ctx.lineTo(H * .03, -H * .34); ctx.stroke();
-    ctx.fillStyle = tunic; ctx.beginPath(); ctx.roundRect(-H * .11, -H * .72, H * .22, H * .42, H * .05); ctx.fill();
-    ctx.fillStyle = "#c69a6a"; ctx.beginPath(); ctx.arc(0, -H * .82, H * .085, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = "#8a8f96"; ctx.beginPath(); ctx.arc(0, -H * .84, H * .095, Math.PI, 0); ctx.fill();
-    ctx.fillStyle = crest; ctx.beginPath(); ctx.ellipse(-H * .01, -H * .95, H * .1, H * .035, -.2, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "#c69a6a"; ctx.lineWidth = H * .045;
-    const swing = -0.9 + lg * 1.4;
-    ctx.beginPath(); ctx.moveTo(H * .08, -H * .64); ctx.lineTo(H * .08 + Math.cos(swing) * H * .2, -H * .64 + Math.sin(swing) * H * .2); ctx.stroke();
-    ctx.strokeStyle = "#d8dde2"; ctx.lineWidth = H * .03;
-    const hx = H * .08 + Math.cos(swing) * H * .2, hy = -H * .64 + Math.sin(swing) * H * .2;
-    ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + Math.cos(swing) * H * .26, hy + Math.sin(swing) * H * .26); ctx.stroke();
-    ctx.fillStyle = "#7a5a2a"; ctx.strokeStyle = "#e8bf35"; ctx.lineWidth = H * .012;
-    ctx.beginPath(); ctx.ellipse(-H * .12, -H * .5, H * .09, H * .15, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    if (hr > 0) { ctx.globalAlpha = hr * .5; ctx.fillStyle = "#ff3a2a"; ctx.fillRect(-H * .2, -H * 1.02, H * .45, H * 1.02); ctx.globalAlpha = 1; }
-    ctx.restore();
+  const TILE = 34, MW = 56, MH = 40;
+  const V = { key: "", map: null, img: null, torches: [], hero: { x: 0, y: 0 }, face: 0, slots: [], corpses: [], walk: null, kills: 0, cam: { x: 0, y: 0 }, target: null, labels: [] };
+
+  /* rooms joined by corridors, carved into solid rock */
+  function genMap(seed) {
+    const R = prng(seed), g = Array.from({ length: MH }, () => new Array(MW).fill(1)), rooms = [];
+    for (let tries = 0; rooms.length < 11 && tries < 400; tries++) {
+      const w = 5 + Math.floor(R() * 6), h = 4 + Math.floor(R() * 5), x = 1 + Math.floor(R() * (MW - w - 2)), y = 1 + Math.floor(R() * (MH - h - 2));
+      if (rooms.some((r) => x < r.x + r.w + 2 && x + w + 2 > r.x && y < r.y + r.h + 2 && y + h + 2 > r.y)) continue;
+      rooms.push({ x, y, w, h, cx: x + (w >> 1), cy: y + (h >> 1) });
+    }
+    rooms.sort((a, b) => a.cx + a.cy - (b.cx + b.cy));
+    for (const r of rooms) for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) g[y][x] = 0;
+    const dig = (x, y) => { for (const [dx, dy] of [[0, 0], [1, 0], [0, 1]]) if (y + dy > 0 && y + dy < MH - 1 && x + dx > 0 && x + dx < MW - 1) g[y + dy][x + dx] = 0; };
+    for (let i = 1; i < rooms.length; i++) {
+      const a = rooms[i - 1], b = rooms[i];
+      let x = a.cx, y = a.cy;
+      const hFirst = R() < 0.5;
+      if (hFirst) { while (x !== b.cx) { dig(x, y); x += Math.sign(b.cx - x); } while (y !== b.cy) { dig(x, y); y += Math.sign(b.cy - y); } }
+      else { while (y !== b.cy) { dig(x, y); y += Math.sign(b.cy - y); } while (x !== b.cx) { dig(x, y); x += Math.sign(b.cx - x); } }
+    }
+    const torches = [];
+    for (let y = 1; y < MH - 1; y++) for (let x = 1; x < MW - 1; x++) if (g[y][x] === 1 && g[y + 1][x] === 0 && R() < 0.06) torches.push({ x, y, p: R() * 9 });
+    return { g, rooms, torches, R };
   }
-  function beast(x, feet, H, icon, boss, t, lungeT, hurtT) {
-    const now = Date.now();
-    const lg = Math.max(0, 1 - (now - lungeT) / 240), hr = Math.max(0, 1 - (now - hurtT) / 280);
-    const size = H * (boss ? 0.8 : 0.58);
-    ctx.save();
-    ctx.translate(x - lg * H * 0.12 + hr * H * 0.05, feet + Math.sin(t / 380) * H * 0.012);
-    ctx.fillStyle = "rgba(0,0,0,.35)"; ctx.beginPath(); ctx.ellipse(0, 0, size * .45, size * .08, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.font = `${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
-    if (hr > 0) ctx.filter = `brightness(${1 + hr}) sepia(${hr}) saturate(${1 + hr * 4}) hue-rotate(-20deg)`;
-    ctx.fillText(icon, 0, -size * 0.08);
-    ctx.restore();
+  function prng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  const floor = (x, y) => V.map && y >= 0 && y < MH && x >= 0 && x < MW && V.map.g[y][x] === 0;
+  function bfs(from, to) {
+    const key = (x, y) => y * MW + x, prev = new Map([[key(from.x, from.y), null]]), q = [from];
+    while (q.length) {
+      const c = q.shift();
+      if (c.x === to.x && c.y === to.y) { const path = []; let k = key(c.x, c.y); while (k != null) { path.unshift({ x: k % MW, y: Math.floor(k / MW) }); k = prev.get(k); } return path; }
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = c.x + dx, ny = c.y + dy, k = key(nx, ny); if (floor(nx, ny) && !prev.has(k)) { prev.set(k, key(c.x, c.y)); q.push({ x: nx, y: ny }); } }
+    }
+    return [from];
   }
-  let wallCache = null;
-  function dungeonBack(w, h, d, t) {
-    const D = d < 0 ? RIFT_LOOK : DUNGEONS[d], key = `${w}x${h}:${d}`;
-    if (!wallCache || wallCache.key !== key) {
-      const off = document.createElement("canvas"); off.width = Math.max(1, Math.round(w)); off.height = Math.max(1, Math.round(h));
-      const c = off.getContext("2d");
-      let g = c.createLinearGradient(0, 0, 0, h * .62); g.addColorStop(0, D.wall[1]); g.addColorStop(1, D.wall[0]);
-      c.fillStyle = g; c.fillRect(0, 0, w, h * .62);
-      const bh = h * .055, bw = bh * 2.2;
-      c.strokeStyle = "rgba(0,0,0,.35)"; c.lineWidth = 1.5;
-      for (let r = 0, y = 0; y < h * .62; r++, y += bh) {
-        c.beginPath(); c.moveTo(0, y); c.lineTo(w, y); c.stroke();
-        for (let x = (r % 2) * bw / 2; x < w; x += bw) { c.beginPath(); c.moveTo(x, y); c.lineTo(x, y + bh); c.stroke(); }
+  /** Somewhere a few steps on from p that nobody is standing on. */
+  function nextSpot(p) {
+    const seen = new Set([p.y * MW + p.x]), q = [[p, 0]], band = [];
+    const taken = new Set(V.slots.map((s) => s.y * MW + s.x));
+    while (q.length) {
+      const [c, d] = q.shift();
+      if (d >= 4 && d <= 8 && !taken.has(c.y * MW + c.x)) band.push(c);
+      if (d > 8) continue;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const n = { x: c.x + dx, y: c.y + dy }, k = n.y * MW + n.x; if (floor(n.x, n.y) && !seen.has(k)) { seen.add(k); q.push([n, d + 1]); } }
+    }
+    // prefer ground not yet walked, so the run moves through the dungeon
+    band.sort((a, b) => (V.visited.has(a.y * MW + a.x) ? 1 : 0) - (V.visited.has(b.y * MW + b.x) ? 1 : 0) || Math.random() - 0.5);
+    return band[0] || p;
+  }
+  function paintMap(look) {
+    const off = document.createElement("canvas"); off.width = MW * TILE; off.height = MH * TILE;
+    const c = off.getContext("2d"), R = prng(V.seed + 7);
+    c.fillStyle = "#07060a"; c.fillRect(0, 0, off.width, off.height);
+    for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
+      const px = x * TILE, py = y * TILE;
+      if (V.map.g[y][x] === 0) {
+        c.fillStyle = look.floor; c.fillRect(px, py, TILE, TILE);
+        c.fillStyle = `rgba(255,255,255,${0.02 + R() * 0.04})`; c.fillRect(px + 1, py + 1, TILE - 2, TILE - 2);
+        c.strokeStyle = "rgba(0,0,0,.35)"; c.lineWidth = 1; c.strokeRect(px + .5, py + .5, TILE - 1, TILE - 1);
+        if (R() < 0.05) { c.fillStyle = "rgba(0,0,0,.25)"; c.beginPath(); c.arc(px + R() * TILE, py + R() * TILE, 2 + R() * 3, 0, Math.PI * 2); c.fill(); }
+      } else if (floor(x, y + 1) || floor(x, y - 1) || floor(x + 1, y) || floor(x - 1, y)) {
+        // a wall face: lit top edge, darker body, so the rooms read as sunk into rock
+        c.fillStyle = look.wall[1]; c.fillRect(px, py, TILE, TILE);
+        c.fillStyle = look.wall[0]; c.fillRect(px, py, TILE, TILE * 0.55);
+        c.strokeStyle = "rgba(0,0,0,.45)"; c.strokeRect(px + .5, py + .5, TILE - 1, TILE - 1);
+        c.fillStyle = "rgba(255,255,255,.06)"; c.fillRect(px, py, TILE, 2);
       }
-      // the arch the next thing comes through
-      const ax = w * .5, aw = w * .16, ay = h * .62, ah = h * .4;
-      c.fillStyle = "rgba(0,0,0,.72)"; c.beginPath(); c.moveTo(ax - aw / 2, ay); c.lineTo(ax - aw / 2, ay - ah + aw / 2); c.arc(ax, ay - ah + aw / 2, aw / 2, Math.PI, 0); c.lineTo(ax + aw / 2, ay); c.fill();
-      c.strokeStyle = "rgba(255,255,255,.08)"; c.lineWidth = 4; c.beginPath(); c.arc(ax, ay - ah + aw / 2, aw / 2 + 4, Math.PI, 0); c.stroke();
-      // the floor
-      g = c.createLinearGradient(0, h * .62, 0, h); g.addColorStop(0, D.floor); g.addColorStop(1, "#0c0906");
-      c.fillStyle = g; c.fillRect(0, h * .62, w, h * .38);
-      c.strokeStyle = "rgba(0,0,0,.4)"; c.lineWidth = 1;
-      for (let i = 1; i < 6; i++) { const y = h * .62 + (h * .38) * (i / 6) ** 1.4; c.beginPath(); c.moveTo(0, y); c.lineTo(w, y); c.stroke(); }
-      for (let i = -6; i <= 6; i++) { c.beginPath(); c.moveTo(w / 2 + i * w * .06, h * .62); c.lineTo(w / 2 + i * w * .2, h); c.stroke(); }
-      wallCache = { key, off };
     }
-    ctx.drawImage(wallCache.off, 0, 0, w, h);
-    // torches: the only thing that moves on the walls
-    for (const tx of [.2, .8]) {
-      const x = w * tx, y = h * .3, fl = 1 + Math.sin(t / 90 + tx * 9) * .08 + Math.sin(t / 37 + tx) * .05;
-      const glow = ctx.createRadialGradient(x, y, 2, x, y, h * .32 * fl);
-      glow.addColorStop(0, "rgba(255,170,70,.42)"); glow.addColorStop(1, "rgba(255,120,40,0)");
-      ctx.fillStyle = glow; ctx.fillRect(x - h * .4, y - h * .4, h * .8, h * .8);
-      ctx.fillStyle = "#3a2a1a"; ctx.fillRect(x - 3, y + 4, 6, h * .07);
-      ctx.fillStyle = "#ffb347"; ctx.beginPath(); ctx.ellipse(x, y, 5 * fl, 11 * fl, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "#fff0b0"; ctx.beginPath(); ctx.ellipse(x, y + 3, 2.5, 5, 0, 0, Math.PI * 2); ctx.fill();
-    }
-    // a vignette so the fighters sit in the light
-    const v = ctx.createRadialGradient(w / 2, h * .7, h * .2, w / 2, h * .6, w * .7);
-    v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,.55)");
-    ctx.fillStyle = v; ctx.fillRect(0, 0, w, h);
+    return off;
   }
-  function drawSplats(w, h, now, youX, foeX, top) {
-    splats = splats.filter((s) => now - s.at < 1000);
-    for (const s of splats) {
-      const k = (now - s.at) / 1000, x = s.who === "you" ? youX : foeX, y = top - k * h * .06;
-      const col = s.kind === "miss" ? "#2f6fd6" : s.kind === "heal" ? "#2fae5a" : s.kind === "crit" ? "#e0761a" : s.kind === "jab" ? "#9a3a8a" : "#c42a2a";
-      ctx.globalAlpha = Math.min(1, (1 - k) * 2.4);
-      ctx.fillStyle = col; ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.lineWidth = 2;
-      const r = Math.max(13, h * .036);
-      ctx.beginPath();
-      for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2, rr = i % 2 ? r * .78 : r; ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
-      ctx.closePath(); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = "#fff"; ctx.font = `800 ${Math.round(r * .95)}px Figtree, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText(s.text, x, y + 1);
+  function runKey() {
+    if (C.on && C.rift) return `r:${C.rift.tier}:${C.rift.t0}`;
+    if (C.on) return `d:${C.dun}:${C.farm || ""}:${S.clears[DUNGEONS[C.dun].key] || 0}`;
+    return `idle:${S.view}:${S.dun}`;
+  }
+  /** The monsters still to come, in the order the engine will send them. */
+  function upcoming() {
+    if (!C.on) return S.view === "rift" ? [] : seqOf(S.dun).map((k) => MON[k]);
+    if (C.rift) {
+      const list = [];
+      if (!C.rAt && C.foe) list.push(C.foe);
+      if (C.rift.prog >= 100 && C.nextG) list.push(C.nextG);
+      return list.concat(C.queue || []);
     }
+    if (C.farm) return Array(6).fill(MON[C.farm]);
+    return seqOf(C.dun).slice(C.room).map((k) => MON[k]);
+  }
+  function syncWorld(now) {
+    const key = runKey();
+    if (key !== V.key) {
+      V.key = key; V.seed = Math.floor(Math.random() * 1e9);
+      V.map = genMap(V.seed);
+      const look = (C.on ? C.rift : S.view === "rift") ? RIFT_LOOK : DUNGEONS[C.on ? C.dun : S.dun];
+      V.img = paintMap(look); V.look = look;
+      const r0 = V.map.rooms[0];
+      V.hero = { x: r0.cx, y: r0.cy }; V.visited = new Set(); V.slots = []; V.corpses = []; V.walk = null; V.kills = S.w; V.labels = [];
+      V.cam = { x: V.hero.x, y: V.hero.y };
+    }
+    // a kill: the front monster falls where it stood
+    if (S.w > V.kills) {
+      for (let i = V.kills; i < S.w && V.slots.length; i++) { const s = V.slots.shift(); V.corpses.push({ x: s.x, y: s.y, at: now }); }
+      V.kills = S.w; V.walk = null;
+    }
+    const want = Math.min(6, upcoming().length);
+    while (V.slots.length < want) V.slots.push(nextSpot(V.slots.at(-1) || V.hero));
+    V.slots.length = Math.min(V.slots.length, Math.max(want, 0));
+    V.corpses = V.corpses.filter((c) => now - c.at < 20000).slice(-14);
+    // where he is: fighting beside the front monster, or walking to it
+    const front = V.slots[0];
+    if (!front || !C.on || C.resting) { V.walk = null; return; }
+    if (!C.rAt) {
+      if (V.stood !== front) {
+        // mid-fight with no walk behind it (a reload, a catch-up): stand beside it
+        if (!V.walk || now >= V.walk.end) { const path = bfs(V.hero, front); V.hero = { ...(path.length > 1 ? path[path.length - 2] : V.hero) }; }
+        V.walk = null; V.stood = front;
+      }
+    } else if (!V.walk || V.walk.to !== front) {
+      const path = bfs(V.hero, front); path.pop();
+      const t0 = now, end = Math.max(now + 250, C.rAt - 120);
+      V.walk = { path: path.length ? path : [V.hero], t0, end, to: front };
+    }
+    if (V.walk) {
+      const p = V.walk.path, k = Math.min(1, (now - V.walk.t0) / (V.walk.end - V.walk.t0)), f = k * (p.length - 1), i = Math.floor(f), a = p[i], b = p[Math.min(p.length - 1, i + 1)];
+      V.pos = { x: a.x + (b.x - a.x) * (f - i), y: a.y + (b.y - a.y) * (f - i) };
+      if (b !== a) V.face = Math.atan2(b.y - a.y, b.x - a.x);
+      V.visited.add(Math.round(V.pos.y) * MW + Math.round(V.pos.x));
+      if (k >= 1) { V.hero = { ...p[p.length - 1] }; }
+    }
+  }
+
+  /* ---- the little people */
+  function drawGlad(x, y, s, face, tunic, crest, swing, hurtK, walkK) {
+    ctx.save(); ctx.translate(x, y);
+    ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.beginPath(); ctx.ellipse(0, s * .55, s * .7, s * .28, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.rotate(face);
+    const step = Math.sin(walkK * 14) * s * .18;
+    ctx.fillStyle = "#4a3020"; ctx.beginPath(); ctx.ellipse(-s * .1 + step, -s * .28, s * .22, s * .14, 0, 0, Math.PI * 2); ctx.ellipse(-s * .1 - step, s * .28, s * .22, s * .14, 0, 0, Math.PI * 2); ctx.fill();
+    // shield on the left, sword on the right
+    ctx.fillStyle = "#7a5a2a"; ctx.strokeStyle = "#e8bf35"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(s * .12, -s * .62, s * .34, s * .2, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    const sw = -0.9 + swing * 2.1;
+    ctx.strokeStyle = "#c69a6a"; ctx.lineWidth = s * .2; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(0, s * .45); ctx.lineTo(Math.cos(sw) * s * .55, s * .45 + Math.sin(sw) * s * .55); ctx.stroke();
+    ctx.strokeStyle = "#e6ebf0"; ctx.lineWidth = s * .12;
+    const hx = Math.cos(sw) * s * .55, hy = s * .45 + Math.sin(sw) * s * .55;
+    ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + Math.cos(sw) * s * .85, hy + Math.sin(sw) * s * .85); ctx.stroke();
+    if (swing > 0 && swing < 1) { ctx.strokeStyle = `rgba(255,240,200,${0.5 * (1 - swing)})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, s * .45, s * 1.35, -0.9, sw); ctx.stroke(); }
+    // body, head, helmet, crest
+    ctx.fillStyle = tunic; ctx.beginPath(); ctx.ellipse(0, 0, s * .42, s * .6, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#8a8f96"; ctx.beginPath(); ctx.arc(s * .05, 0, s * .36, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = crest; ctx.beginPath(); ctx.ellipse(-s * .05, 0, s * .42, s * .1, 0, 0, Math.PI * 2); ctx.fill();
+    if (hurtK > 0) { ctx.globalAlpha = hurtK * .6; ctx.fillStyle = "#ff3a2a"; ctx.beginPath(); ctx.arc(0, 0, s * .75, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
+    ctx.restore();
+  }
+  function drawBeast(x, y, s, icon, hurtK, lungeK, dx, dy) {
+    ctx.save(); ctx.translate(x + dx * lungeK * s * .5, y + dy * lungeK * s * .5);
+    ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.beginPath(); ctx.ellipse(0, s * .45, s * .62, s * .24, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.font = `${Math.round(s * 1.5)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    if (hurtK > 0) ctx.filter = `brightness(${1 + hurtK}) saturate(${1 + hurtK * 3})`;
+    ctx.fillText(icon, 0, 0);
+    ctx.restore();
+  }
+  function drawSplat(x, y, s, now) {
+    const k = (now - s.at) / 1000, yy = y - 26 - k * 22;
+    const col = s.kind === "miss" ? "#2f6fd6" : s.kind === "heal" ? "#2fae5a" : s.kind === "crit" ? "#e0761a" : s.kind === "jab" ? "#9a3a8a" : "#c42a2a";
+    ctx.globalAlpha = Math.min(1, (1 - k) * 2.4);
+    const r = s.kind === "crit" ? 13 : 10;
+    ctx.fillStyle = col; ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2, rr = i % 2 ? r * .78 : r; ctx.lineTo(x + Math.cos(a) * rr, yy + Math.sin(a) * rr); } ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#fff"; ctx.font = `800 ${r}px Figtree, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(s.text, x, yy + 1);
     ctx.globalAlpha = 1;
-    // loot drops, PoE-style: a label in the item's colour over where it fell
-    lootLabels = lootLabels.filter((l) => now - l.at < 2600);
+  }
+  let lootLabels = [], fullToast = 0;
+  function frame(t) {
+    const { w, h } = fit(), now = Date.now(), pnow = performance.now();
+    syncWorld(now);
+    const hero = V.walk && V.pos ? V.pos : V.hero;
+    // camera: eased onto him
+    V.cam.x += (hero.x - V.cam.x) * 0.12; V.cam.y += (hero.y - V.cam.y) * 0.12;
+    const ox = Math.round(w / 2 - (V.cam.x + .5) * TILE), oy = Math.round(h / 2 - (V.cam.y + .5) * TILE);
+    ctx.fillStyle = "#07060a"; ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(V.img, ox, oy);
+    const sx = (p) => ox + (p.x + .5) * TILE, sy = (p) => oy + (p.y + .5) * TILE;
+    // torchlight
+    for (const tc of V.map.torches) {
+      const x = sx(tc), y = sy(tc); if (x < -80 || x > w + 80 || y < -80 || y > h + 80) continue;
+      const fl = 1 + Math.sin(t / 90 + tc.p) * .08 + Math.sin(t / 37 + tc.p) * .05;
+      const g = ctx.createRadialGradient(x, y + 8, 2, x, y + 8, 90 * fl); g.addColorStop(0, "rgba(255,170,70,.32)"); g.addColorStop(1, "rgba(255,120,40,0)");
+      ctx.fillStyle = g; ctx.fillRect(x - 100, y - 90, 200, 200);
+      ctx.fillStyle = "#ffb347"; ctx.beginPath(); ctx.ellipse(x, y + 2, 3.5 * fl, 6 * fl, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    // the fallen
+    for (const c of V.corpses) {
+      const a = Math.max(0, 1 - (now - c.at) / 20000);
+      ctx.globalAlpha = a * .7; ctx.fillStyle = "#5a0f14"; ctx.beginPath(); ctx.ellipse(sx(c), sy(c) + 4, 11, 6, 0.4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#2a0a0c"; ctx.beginPath(); ctx.ellipse(sx(c) + 5, sy(c) + 7, 5, 3, 0, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+    }
+    // what is still to come, front first
+    const list = upcoming(), fighting = C.on && !C.rAt && !C.resting;
+    V.target = null;
+    for (let i = Math.min(list.length, V.slots.length) - 1; i >= 0; i--) {
+      const m = list[i], p = V.slots[i]; if (!m || !p) continue;
+      const x = sx(p), y = sy(p), active = fighting && i === 0;
+      const s = m.guardian ? 22 : m.boss ? 19 : m.elite ? 15 : 13;
+      if (m.elite || m.boss) { const g = ctx.createRadialGradient(x, y, 2, x, y, s * 2.2); g.addColorStop(0, m.elite && !m.boss ? "rgba(185,138,255,.55)" : "rgba(255,90,60,.55)"); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, s * 2.2, 0, Math.PI * 2); ctx.fill(); }
+      if (!active) ctx.globalAlpha = 0.85;
+      const hurtK = active ? Math.max(0, 1 - (now - lunge) / 260) : 0, lungeK = active ? Math.max(0, 1 - (now - hurt) / 220) : 0;
+      const dx = hero.x - p.x, dy = hero.y - p.y, dl = Math.hypot(dx, dy) || 1;
+      if (m.icon) drawBeast(x, y, s, m.icon, hurtK, lungeK, dx / dl, dy / dl);
+      else drawGlad(x, y, s, Math.atan2(dy, dx), m.look[0], m.look[1], lungeK > 0 ? 1 - lungeK : 0, hurtK, 0);
+      ctx.globalAlpha = 1;
+      if (active) {
+        V.target = { x, y, r: s * 2.4 };
+        const hpk = Math.min(1, Math.max(0, C.foeHp / m.hp));
+        ctx.fillStyle = "rgba(0,0,0,.7)"; ctx.fillRect(x - 22, y - s - 14, 44, 6);
+        ctx.fillStyle = m.boss ? "#ff6a4a" : "#d94a4a"; ctx.fillRect(x - 22, y - s - 14, 44 * hpk, 6);
+        ctx.strokeStyle = "rgba(255,230,150,.55)"; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(x, y, s * 1.6, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+      }
+    }
+    // him
+    const front = V.slots[0], fx = front ? front.x - hero.x : 1, fy = front ? front.y - hero.y : 0;
+    const face = fighting && front ? Math.atan2(fy, fx) : V.face;
+    const swingK = Math.min(1, (now - lunge) / 220), swing = now - lunge < 220 ? swingK : 0;
+    const hurtK = Math.max(0, 1 - (now - hurt) / 280);
+    const hx = sx(hero), hy = sy(hero);
+    drawGlad(hx, hy, 14, face, ["#7a2a2a", "#2a3a7a", "#7a6a1a", "#8a4a1a"][S.eq.body?.rar ?? 0], RARITY[S.eq.helm?.rar ?? 0].color, swing, hurtK, V.walk ? now / 1000 : 0);
+    if (C.resting && C.on) { ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.font = "800 11px Figtree, sans-serif"; ctx.textAlign = "center"; ctx.fillText("resting… z", hx, hy - 20); }
+    // hits and heals over heads
+    splats = splats.filter((s) => pnow - s.at < 1000);
+    for (const s of splats) {
+      if (s.who === "you") drawSplat(hx, hy, s, pnow);
+      else if (V.target) drawSplat(V.target.x, V.target.y, s, pnow);
+    }
+    // loot, where it fell
+    lootLabels = lootLabels.filter((l) => pnow - l.at < 3200);
+    const lc = V.corpses.at(-1);
     lootLabels.forEach((l, i) => {
-      const k = (now - l.at) / 2600, y = h * .6 - i * 24;
+      const k = (pnow - l.at) / 3200, x = lc ? sx(lc) : hx, y = (lc ? sy(lc) : hy) + 22 + i * 20;
       ctx.globalAlpha = Math.min(1, (1 - k) * 3);
-      ctx.font = `800 ${l.rar >= 2 ? 14 : 12}px Figtree, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      const tw = ctx.measureText(l.text).width + 16;
-      ctx.fillStyle = "rgba(0,0,0,.78)"; ctx.fillRect(foeX - tw / 2, y - 11, tw, 22);
-      ctx.strokeStyle = l.color; ctx.lineWidth = l.rar >= 2 ? 2 : 1; ctx.strokeRect(foeX - tw / 2, y - 11, tw, 22);
-      if (l.rar >= 2) { const beam = ctx.createLinearGradient(0, y - h * .5, 0, y); beam.addColorStop(0, "rgba(0,0,0,0)"); beam.addColorStop(1, l.color + "88"); ctx.fillStyle = beam; ctx.fillRect(foeX - 3, y - h * .5, 6, h * .5 - 11); }
-      ctx.fillStyle = l.color; ctx.fillText(l.text, foeX, y + 1);
+      ctx.font = `800 ${l.rar >= 2 ? 12 : 11}px Figtree, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      const tw = ctx.measureText(l.text).width + 12;
+      if (l.rar >= 2) { const beam = ctx.createLinearGradient(0, y - 90, 0, y); beam.addColorStop(0, "rgba(0,0,0,0)"); beam.addColorStop(1, l.color + "99"); ctx.fillStyle = beam; ctx.fillRect(x - 2, y - 90, 4, 80); }
+      ctx.fillStyle = "rgba(0,0,0,.82)"; ctx.fillRect(x - tw / 2, y - 9, tw, 18);
+      ctx.strokeStyle = l.color; ctx.lineWidth = l.rar >= 2 ? 1.5 : 1; ctx.strokeRect(x - tw / 2, y - 9, tw, 18);
+      ctx.fillStyle = l.color; ctx.fillText(l.text, x, y + 1);
     });
     ctx.globalAlpha = 1;
+    const lamp = ctx.createRadialGradient(hx, hy, 6, hx, hy, 150); lamp.addColorStop(0, "rgba(255,220,160,.14)"); lamp.addColorStop(1, "rgba(255,220,160,0)");
+    ctx.fillStyle = lamp; ctx.fillRect(hx - 150, hy - 150, 300, 300);
+    // a vignette, so the light sits on him
+    const vg = ctx.createRadialGradient(w / 2, h / 2, h * .25, w / 2, h / 2, Math.max(w, h) * .72);
+    vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,.5)"); ctx.fillStyle = vg; ctx.fillRect(0, 0, w, h);
+    hud(now);
+    requestAnimationFrame(frame);
   }
-  let lastDraw = 0;
-  function frame(t) {
-    const { w, h } = fit();
-    const now = Date.now();
-    const inRift = C.on ? Boolean(C.rift) : S.view === "rift";
-    dungeonBack(w, h, inRift ? -1 : C.on ? C.dun : S.dun, t);
-    const H = h * .44, feet = h * .92, youX = w * .38, foeX = w * .62;
-    gladiator(youX, feet, H, 1, ["#7a2a2a", "#2a3a7a", "#7a6a1a", "#8a4a1a"][S.eq.body?.rar ?? 0], RARITY[S.eq.helm?.rar ?? 0].color, t, lunge, hurt);
+  function hud(now) {
     const showFoe = C.on && !C.rAt;
-    if (showFoe) {
-      const m = foeNow();
-      if (m.elite || m.guardian) {
-        const g = ctx.createRadialGradient(foeX, feet, 4, foeX, feet, H * 0.55);
-        g.addColorStop(0, m.guardian ? "rgba(255,90,60,.55)" : "rgba(185,138,255,.5)"); g.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(foeX, feet, H * 0.55, H * 0.14, 0, 0, Math.PI * 2); ctx.fill();
-      }
-      if (m.icon) beast(foeX, feet, H, m.icon, m.boss, t, hurt, lunge);
-      else gladiator(foeX, feet, H, -1, m.look[0], m.look[1], t, hurt, lunge);
-    }
-    drawSplats(w, h, performance.now(), youX, foeX, h * .34);
-    // the attack timers and health, every frame
     const you = Math.max(0, S.hp / maxHp());
     $("hpYou").style.width = pct(you); $("hpYouN").textContent = `${num(Math.max(0, S.hp))} / ${num(maxHp())}`;
     $("hpYou").classList.toggle("low", you < 0.3);
-    if (showFoe) {
+    if (showFoe && foeNow()) {
       const m = foeNow();
       $("hpFoe").style.width = pct(Math.max(0, C.foeHp / m.hp)); $("hpFoeN").textContent = `${num(Math.max(0, C.foeHp))} / ${num(m.hp)}`;
       $("atkYou").style.width = pct(Math.min(1, 1 - (C.pAt - now) / pSpeed()));
@@ -2248,13 +2393,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (rb) {
       rb.hidden = !(C.on && C.rift);
       if (C.on && C.rift) {
-        const p = C.rift.prog, g = C.foe?.guardian;
+        const p = C.rift.prog, g = C.foe?.guardian && !C.rAt;
         rb.querySelector("i").style.width = `${p}%`;
         rb.querySelector("span").textContent = C.resting ? `Tier ${C.rift.tier} · resting` : g ? `Tier ${C.rift.tier} · Guardian: ${C.foe.name}` : `Tier ${C.rift.tier} · ${Math.floor(p)}% · ${dur(Math.max(0, Date.now() - C.rift.t0))}`;
         rb.classList.toggle("guard", Boolean(g));
       }
     }
-    requestAnimationFrame(frame);
   }
 
   /* ================================================================== the dungeon page */
@@ -2697,12 +2841,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   $("lootFilterCol").addEventListener("change", (e) => { S.filter = Number(e.target.value); save(); feedSig = ""; renderLootCol(); });
   $("lootAll").addEventListener("click", () => { openTab("spoils"); renderAll(); });
   // the enemy is the button: a pointer on the right half of the scene jabs
-  cv.addEventListener("pointerdown", (e) => {
-    const r = cv.getBoundingClientRect();
-    if (e.clientX - r.left < r.width * 0.45) return;
-    e.preventDefault(); jab();
-  });
-  cv.addEventListener("pointermove", (e) => { const r = cv.getBoundingClientRect(); cv.style.cursor = C.on && !C.rAt && e.clientX - r.left >= r.width * 0.45 ? "crosshair" : ""; });
+  const onTarget = (e) => { const r = cv.getBoundingClientRect(), T = V.target; return T && Math.hypot(e.clientX - r.left - T.x, e.clientY - r.top - T.y) <= Math.max(34, T.r); };
+  cv.addEventListener("pointerdown", (e) => { if (!onTarget(e)) return; e.preventDefault(); jab(); });
+  cv.addEventListener("pointermove", (e) => { cv.style.cursor = onTarget(e) ? "crosshair" : ""; });
   $("salvNormal").addEventListener("click", () => salvageBelow(0));
   $("salvMagic").addEventListener("click", () => salvageBelow(1));
   $("resetSave").addEventListener("click", () => { if (!confirm("Start the mockup over? This only clears this browser.")) return; wiping = true; localStorage.removeItem(SAVE); location.reload(); });
@@ -2725,7 +2866,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   document.addEventListener("visibilitychange", () => { if (document.hidden) save(); });
   paintBar(); renderAll();
   requestAnimationFrame(frame);
-  window.__glad = { upgradeOf, equip, enterRift, riftFoe, derive, gear, wipe() { wiping = true; localStorage.removeItem(SAVE); location.reload(); }, get S() { return S; }, advance, enter, MON, DUNGEONS, hitVs, foeHits, pMax };
+  window.__glad = { get jabCount() { return jabs.length; }, get V() { return V; }, upgradeOf, equip, enterRift, riftFoe, derive, gear, wipe() { wiping = true; localStorage.removeItem(SAVE); location.reload(); }, get S() { return S; }, advance, enter, MON, DUNGEONS, hitVs, foeHits, pMax };
 })();
 
 </script>
