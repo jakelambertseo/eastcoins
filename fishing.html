@@ -169,14 +169,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .cstat b{font-family:var(--display);font-weight:800;font-size:.95rem;display:flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .cstat.xp b{color:#ff981f}
 .cstat .pearl{width:12px;height:12px}
-.btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 /* A catch button wraps its own label before it will spill out of its cell,
    and the row drops to two columns, then one, on a card too narrow for three. */
 .btns{grid-template-columns:repeat(auto-fit,minmax(84px,1fr))}
 .btns .btn{min-width:0;justify-content:center;white-space:normal;text-align:center;line-height:1.15}
 .btns.upgrading{grid-template-columns:repeat(2,minmax(0,1fr))}
 .btns .btn.wide{grid-column:1 / -1;white-space:normal}
-.btns .btn{justify-content:center;padding:0 8px;white-space:nowrap}
+.btns .btn{justify-content:center;padding:8px 10px;min-height:40px;font-size:.86rem;white-space:normal}
 .btns .btn .pearl{margin-left:3px}
 .btn{border:1px solid var(--line-2);background:var(--panel-3);border-radius:10px;padding:9px 14px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .btn.primary{background:var(--sea);color:#062028;border-color:transparent}
@@ -203,6 +203,20 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .fishtip[hidden]{display:none}
 .fishtip strong{font-family:var(--display);display:block}
 .fishtip small{display:block;color:var(--muted);margin:2px 0 8px}
+.fishtip .sp{display:block;font-size:.72rem;font-weight:700;color:var(--muted-2);margin-top:1px}
+.fishtip .tip-btns{display:flex;gap:6px;flex-wrap:wrap}
+.fishtip input,.tank-name input{font:inherit;font-weight:800;color:var(--text);background:var(--panel-2);border:1px solid rgba(var(--gold-rgb),.6);border-radius:8px;padding:4px 8px;width:100%;min-width:0;outline:none}
+.tank-name{position:absolute;left:10px;bottom:10px;z-index:2;display:inline-flex;align-items:center;gap:7px;max-width:calc(100% - 20px);padding:5px 11px;border-radius:99px;background:rgba(4,14,22,.72);border:1px solid rgba(255,255,255,.18);color:#fff;font:inherit;font-family:var(--display);font-weight:800;font-size:.86rem;cursor:pointer}
+.tank-name:hover,.tank-name:focus-visible{border-color:rgba(var(--gold-rgb),.7);outline:none}
+.tank-name svg{width:13px;height:13px;stroke:var(--gold);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tank-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tank-name.editing{cursor:default;width:min(320px,calc(100% - 20px))}
+.profile-tank{position:relative;overflow:visible!important}
+.profile-tank canvas{cursor:crosshair;border-radius:12px}
+.mini-tip.below{transform:translate(-50%,16px)}
+.mini-tip{pointer-events:none;min-width:170px}
+.mini-tip small{margin:4px 0 0}
+.mini-tip .lends{display:block;font-size:.7rem;font-weight:800;color:var(--sea);margin-top:3px}
 .tank-list{list-style:none;margin:0;padding:0;display:grid;gap:4px}
 .tank-list li{display:grid;grid-template-columns:10px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:6px 8px;border-radius:9px;background:var(--panel-2);font-size:.86rem}
 .tank-list li i{width:10px;height:10px;border-radius:50%}
@@ -818,6 +832,40 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .boss{border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden;display:grid;align-content:start}
 .boss.open{border-color:rgba(var(--gold-rgb),.45)}
 .boss.beaten{border-color:rgba(77,219,139,.4)}
+/* the boss victory card (2026-09-17): the catch card's shape, with rays, confetti and a gold rim.
+   Readable content never waits on opacity — the card pops in on transform only. */
+.bw{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:16px;background:radial-gradient(circle at 50% 42%,rgba(40,26,6,.78),rgba(3,6,10,.9) 70%);backdrop-filter:blur(3px);overflow:hidden}
+.bw-rays{position:absolute;left:50%;top:42%;width:170vmax;height:170vmax;margin:-85vmax 0 0 -85vmax;pointer-events:none;
+  background:repeating-conic-gradient(from 0deg,rgba(var(--gold-rgb),.13) 0 6deg,transparent 6deg 18deg);
+  -webkit-mask:radial-gradient(circle,#000 0,transparent 55%);mask:radial-gradient(circle,#000 0,transparent 55%);animation:bwSpin 26s linear infinite}
+@keyframes bwSpin{to{transform:rotate(1turn)}}
+.bw-conf{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.bw-conf i{position:absolute;top:-4vh;width:8px;height:13px;border-radius:2px;animation:bwFall linear forwards}
+@keyframes bwFall{to{transform:translate3d(var(--dx),112vh,0) rotate(var(--r))}}
+.bw-card{position:relative;width:min(400px,100%);max-height:calc(100vh - 32px);overflow-y:auto;padding:18px 18px 16px;text-align:center;border-radius:18px;
+  background:linear-gradient(180deg,#2a2016,var(--panel) 38%);border:1px solid rgba(var(--gold-rgb),.75);
+  box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 60px rgba(var(--gold-rgb),.28),0 30px 80px rgba(0,0,0,.7);animation:bwPop .55s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes bwPop{from{transform:scale(.72) translateY(24px)}}
+.bw-eye{font-size:.7rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.bw-art{position:relative;margin:8px 0 4px;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 55%,rgba(var(--gold-rgb),.3),rgba(79,195,217,.08) 45%,rgba(0,0,0,0) 72%)}
+.bw-art canvas{display:block;width:100%;height:auto;aspect-ratio:2/1}
+.bw-art::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,240,200,.28) 50%,transparent 65%);transform:translateX(-120%);animation:bwSheen 2.6s ease-in-out .5s infinite}
+@keyframes bwSheen{60%,100%{transform:translateX(120%)}}
+.bw-card h3{margin:2px 0 0;font-family:var(--display);font-weight:800;font-size:1.7rem;line-height:1.1;
+  background:linear-gradient(90deg,#f7d774,#fff6d5,#e8b53a,#f7d774);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:bwShine 3s linear infinite}
+@keyframes bwShine{to{background-position:-200% 0}}
+.bw-sub{margin:3px 0 12px;font-size:.84rem;color:var(--muted)}
+.bw-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:12px}
+.bw-unl{display:grid;gap:7px;text-align:left;margin-bottom:14px}
+.bw-unl h4{margin:0 0 1px;font-size:.66rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);text-align:center}
+.bw-row{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:center;padding:9px 11px;border-radius:11px;background:var(--panel-2);border:1px solid var(--line)}
+.bw-row.gold{border-color:rgba(var(--gold-rgb),.55);background:linear-gradient(90deg,rgba(var(--gold-rgb),.14),var(--panel-2))}
+.bw-row .i{font-size:1.35rem;text-align:center}
+.bw-row b{display:block;font-size:.88rem}
+.bw-row small{display:block;font-size:.74rem;color:var(--muted-2)}
+.bw-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bw-btns .btn{justify-content:center}
+@media (prefers-reduced-motion:reduce){.bw-rays,.bw-conf,.bw-art::after{display:none}.bw-card,.bw-card h3{animation:none}}
 .boss-art{position:relative;height:130px;background:radial-gradient(120% 120% at 50% 20%,#1b2c3d,#0a1119 75%);display:grid;place-items:center}
 .boss.locked .boss-art{filter:grayscale(1) brightness(.5)}
 .boss-art canvas{width:100%;height:100%;display:block}
@@ -1019,6 +1067,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         <canvas id="tank"></canvas>
         <div class="tank-hud"><span id="tankRate"><span class="pearl"></span> 0 / hr</span><span id="tankAway">Up to 8 h while you're away</span></div>
         <div class="fishtip" id="fishtip" hidden></div>
+        <button class="tank-name" id="tankName" type="button" title="Rename your tank"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg><span id="tankNameText">My tank</span></button>
       </div>
       <div class="card-body">
         <ul class="tank-list" id="tankList"></ul>
@@ -1131,9 +1180,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         <div class="psec"><h3>Habits</h3><div class="pstats" id="pHabits"></div></div>
       </div></div>
       <div class="card"><div class="card-body">
-        <h2 style="font-family:var(--display);font-size:1rem;margin:0 0 2px">Your tank, for anyone who visits</h2>
-        <p class="note" style="font-size:.76rem;margin-bottom:8px">Fish you keep swim here on your profile page.</p>
-        <div class="profile-tank"><canvas id="miniTank" width="480" height="300"></canvas></div>
+        <h2 style="font-family:var(--display);font-size:1rem;margin:0 0 2px" id="pTankName">Your tank, for anyone who visits</h2>
+        <p class="note" style="font-size:.76rem;margin-bottom:8px">Fish you keep swim here on your profile page. Hover one to see who it is.</p>
+        <div class="profile-tank"><canvas id="miniTank" width="480" height="300"></canvas><div class="fishtip mini-tip" id="miniTip" hidden></div></div>
         <div class="profile-line"><span><b id="pDex">0/30</b> species</span><span><b id="pBest">—</b> biggest</span><span><b id="pShiny">0</b> shiny</span></div>
       </div></div>
       <div class="card"><div class="card-body">
@@ -2435,7 +2484,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     $("cName").textContent = (c.shiny ? "Shiny " : "") + sp.name;
     const tags = $("cTags"); tags.replaceChildren();
     const rt = el("span", "tag", RAR[sp.rar].name); rt.style.color = RAR[sp.rar].color; tags.append(rt);
-    tags.insertAdjacentHTML("beforeend", qTag(c.q || 0));
+    if (c.q) tags.insertAdjacentHTML("beforeend", qTag(c.q));
     if (c.shiny) tags.append(el("span", "tag solid", "Shiny"));
     if (isNew) tags.append(el("span", "tag new", "New to your book"));
     if (record) tags.append(el("span", "tag solid", "New record"));
@@ -3033,7 +3082,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     for (const s of sorted) {
       const sp = BY_KEY[s.f.key], L = swimLen(s.f, w);
       if (live) {
-        const speed = (70 / Math.sqrt(L)) * 0.018;
+        // a tank drawn at zero width (a collapsed layout) must not send a fish to NaN for good
+        if (!Number.isFinite(s.x) || !Number.isFinite(s.y)) { s.x = Math.random(); s.y = 0.2 + Math.random() * 0.5; }
+        const speed = (70 / Math.sqrt(Math.max(L, 8))) * 0.018;
         if (s.pause > 0) s.pause -= dt;
         else {
           const dx = s.tx - s.x, dy = s.ty - s.y, dist = Math.hypot(dx, dy);
@@ -3047,7 +3098,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       const x = s.x * w, y = s.y * sandY + Math.sin(tSec * 1.3 + s.phase) * 3;
       drawFish(ctx, sp, x, y, L, { face: s.face, wag: Math.sin(tSec * (moving ? 9 : 4) + s.phase) * (moving ? 0.28 : 0.12), shiny: s.f.shiny });
       if (s.f.shiny) sparkle(ctx, x, y - L * 0.1, L * 0.45, tSec + s.phase);
-      s.screen = { x, y, L };
+      if (ctx.canvas.id === "miniTank") s.mini = { x, y, L }; else s.screen = { x, y, L };
     }
     // bubbles
     ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 1;
@@ -3074,17 +3125,84 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (!best) { tip.hidden = true; return; }
     showTip(best.f, best.screen.x, best.screen.y - best.screen.L * 0.2);
   });
+  /* Names (2026-09-17): the tank has one and so can every fish in it. Plain
+     text only, trimmed, and never HTML — it is drawn with textContent, and on
+     the real site it would pass the same filter a store title does. */
+  const cleanName = (v, max) => String(v || "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, max);
+  const fishLabel = (f) => f.nick || `${f.shiny ? "Shiny " : ""}${BY_KEY[f.key].name}`;
+  function inlineEdit(host, value, max, placeholder, onDone) {
+    const input = el("input");
+    input.value = value; input.maxLength = max; input.placeholder = placeholder;
+    input.setAttribute("aria-label", placeholder);
+    host.replaceChildren(input); input.focus(); input.select();
+    let done = false;
+    const finish = (keep) => { if (done) return; done = true; onDone(keep ? cleanName(input.value, max) : null); };
+    input.addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") finish(true); if (e.key === "Escape") finish(false); });
+    input.addEventListener("blur", () => finish(true));
+    input.addEventListener("click", (e) => e.stopPropagation());
+  }
+  function paintTankName() {
+    const n = S.tankName || "My tank";
+    const t = $("tankNameText"); if (t) t.textContent = n;
+    const p = $("pTankName"); if (p) p.textContent = S.tankName ? `${S.tankName} — your tank, for anyone who visits` : "Your tank, for anyone who visits";
+  }
+  $("tankName").addEventListener("click", () => {
+    const btn = $("tankName"); if (btn.classList.contains("editing")) return;
+    btn.classList.add("editing");
+    inlineEdit(btn, S.tankName || "", 28, "Name your tank", (v) => {
+      btn.classList.remove("editing");
+      btn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg><span id="tankNameText"></span>`;
+      if (v !== null && v !== (S.tankName || "")) { S.tankName = v; save(); if (v) toast("Tank renamed", v); }
+      paintTankName();
+    });
+  });
   function showTip(f, x, y) {
     const sp = BY_KEY[f.key], tip = $("fishtip");
-    tip.innerHTML = `<strong>${f.shiny ? "Shiny " : ""}${sp.name}</strong><small>${qTag(qOf(f))} ${RAR[sp.rar].name} · ${lbs(f.w)} · ${num(fishRate(f))} pearls/hr</small>`;
+    tip.innerHTML = `<strong></strong>${f.nick ? `<span class="sp">${f.shiny ? "Shiny " : ""}${sp.name}</span>` : ""}<small>${qTag(qOf(f))} ${RAR[sp.rar].name} · ${lbs(f.w)} · ${num(fishRate(f))} pearls/hr</small>`;
+    tip.querySelector("strong").textContent = fishLabel(f);
+    const btns = el("div", "tip-btns");
+    const rn = el("button", "btn small", f.nick ? "Rename" : "Name it"); rn.type = "button";
+    rn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      inlineEdit(tip.querySelector("strong"), f.nick || "", 20, `Name your ${sp.name}`, (v) => {
+        if (v !== null) { if (v) f.nick = v; else delete f.nick; save(); renderTank(); }
+        showTip(f, x, y);
+      });
+    });
     const b = el("button", "btn small", `Release for <span class="pearl"></span> ${num(fishRate(f) * 3)}`); b.type = "button";
     b.addEventListener("click", () => release(f.id));
-    tip.append(b);
+    btns.append(rn, b);
+    tip.append(btns);
     const wrap = $("tankWrap");
     tip.style.left = `${Math.max(100, Math.min(wrap.clientWidth - 100, x))}px`;
     tip.style.top = `${Math.max(90, y)}px`;
     tip.hidden = false;
   }
+  // the profile's tank: hover (or tap) a fish for who it is
+  (() => {
+    const cv = $("miniTank"), tip = $("miniTip"); if (!cv || !tip) return;
+    const at = (e) => {
+      const r = cv.getBoundingClientRect(), sx = cv.width / r.width, sy = cv.height / r.height;
+      const mx = (e.clientX - r.left) * sx, my = (e.clientY - r.top) * sy;
+      let best = null, bestD = Infinity;
+      for (const s of swimmers) { if (!s.mini) continue; const d = Math.hypot(mx - s.mini.x, my - s.mini.y); if (d < Math.max(18, s.mini.L * 0.55) && d < bestD) { best = s; bestD = d; } }
+      if (!best) { tip.hidden = true; cv.title = ""; return; }
+      const f = best.f, sp = BY_KEY[f.key], tb = tankBonus(), lends = tb.best[f.key] === f;
+      tip.innerHTML = `<strong></strong>${f.nick ? `<span class="sp">${f.shiny ? "Shiny " : ""}${sp.name}</span>` : ""}
+        <small>${qTag(qOf(f))} <span style="color:${RAR[sp.rar].color}">${RAR[sp.rar].name}</span> · ${lbs(f.w)}</small>
+        <small><span class="pearl"></span> ${num(fishRate(f))} pearls/hr</small>
+        <span class="lends">${lends ? `+${tankV(f)}% ${SKILLS[SPOT_SKILL[sp.spot]].name}` : "A spare — your best of the species lends the bonus"}</span>`;
+      tip.querySelector("strong").textContent = fishLabel(f);
+      tip.style.left = `${Math.max(95, Math.min(r.width - 95, best.mini.x / sx))}px`;
+      const fy = best.mini.y / sy, below = fy < 120;
+      tip.classList.toggle("below", below);
+      tip.style.top = `${below ? fy : fy - best.mini.L / sy * 0.2}px`;
+      tip.hidden = false;
+    };
+    cv.addEventListener("mousemove", at);
+    cv.addEventListener("click", at);
+    cv.addEventListener("mouseleave", () => { tip.hidden = true; });
+  })();
   function release(id) {
     const i = S.fish.findIndex((f) => f.id === id); if (i < 0) return;
     if (isBreeding(id)) { toast("That fish is on a nest", "Wait for the egg to hatch."); return; }
@@ -3152,7 +3270,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       const sp = BY_KEY[f.key];
       const li = el("li");
       const dot = el("i"); dot.style.background = RAR[sp.rar].color;
-      const name = el("span", null, `${sp.name} ${qOf(f) ? qTag(qOf(f)) : ""} ${f.shiny ? '<span class="shiny">★ SHINY</span>' : ""} <small style="color:var(--muted-2)">${lbs(f.w)}</small>`);
+      const name = el("span", null, `${f.nick ? `<b class="nick"></b> <small style="color:var(--muted-2)">${sp.name}</small>` : sp.name} ${qOf(f) ? qTag(qOf(f)) : ""} ${f.shiny ? '<span class="shiny">★ SHINY</span>' : ""} <small style="color:var(--muted-2)">${lbs(f.w)}</small>`);
+      if (f.nick) name.querySelector(".nick").textContent = f.nick;
       const lends = tb.best[f.key] === f;
       const rate = el("span", "rate", `<span class="pearl"></span>${num(fishRate(f))}/hr`
         + (lends ? `<small class="lends">+${tankV(f)}% ${SKILLS[SPOT_SKILL[sp.spot]].name}</small>` : '<small class="lends dup">duplicate</small>'));
@@ -3160,6 +3279,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       const b = el("button", "btn small", breeding ? "♥ Nesting" : "Release"); b.type = "button"; b.disabled = breeding; b.addEventListener("click", () => release(f.id));
       li.append(dot, name, rate, b); list.append(li);
     });
+    paintTankName();
     const r = tankRate();
     $("tankRate").innerHTML = `<span class="pearl"></span> ${num(r)} / hr${decorCount() ? ` · decor +${decorCount() * 5}%` : ""}`;
     $("rate").textContent = `${num(r)} / hr`;
@@ -3320,21 +3440,65 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   function bossLanded(b) {
     const st = bossState(b);
     const first = !st.beaten;
-    S.boss[b.key] = { beaten: true, tries: st.tries, best: Math.max(st.best || 0, Math.round((performance.now() - fish.at) / 100) / 10) };
+    const secs = Math.round((performance.now() - fish.at) / 100) / 10;
+    S.boss[b.key] = { beaten: true, tries: st.tries, best: Math.max(st.best || 0, secs) };
     if (first) S.perks[b.spot] = (S.perks[b.spot] || 0) + BOSS_PERK;
     const xp = grant("fishing", first ? b.xp : Math.round(b.xp * 0.2));
     setPhase("idle");
-    burstConfetti();
-    toast(`${b.name} is beaten`, first
-      ? `Title: ${b.title} · +${num(xp)} Fishing xp · rare fish at ${SPOTS[b.spot].name} up ${Math.round(BOSS_PERK * 100)}% for good`
-      : `Again. +${num(xp)} Fishing xp`);
+    showBossWin(b, { first, xp, secs, tries: st.tries });
     renderBosses(); renderProfile(); save();
   }
-  function burstConfetti() {
-    const b = el("div", "levelup");
-    b.innerHTML = "<b>Leviathan landed</b><span>It fought you to the last second.</span>";
-    document.body.append(b);
-    setTimeout(() => b.remove(), 2600);
+  /** The victory card: the boss, what it took, and what it gave you. */
+  function showBossWin(b, r) {
+    document.querySelector(".bw")?.remove();
+    const next = BOSSES[BOSSES.indexOf(b) + 1];
+    const ov = el("div", "bw");
+    ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.setAttribute("aria-label", `${b.name} landed`);
+    const conf = el("div", "bw-conf");
+    const COLS = ["#f7d774", "#e8b53a", "#4fc3d9", "#ff8a6a", "#fff6d5", "#8be08a"];
+    for (let i = 0; i < 70; i++) {
+      const c = el("i");
+      c.style.left = `${Math.random() * 100}%`;
+      c.style.background = COLS[i % COLS.length];
+      c.style.setProperty("--dx", `${Math.round((Math.random() - 0.5) * 240)}px`);
+      c.style.setProperty("--r", `${Math.round((Math.random() - 0.5) * 1440)}deg`);
+      c.style.animationDuration = `${2.4 + Math.random() * 2.6}s`;
+      c.style.animationDelay = `${Math.random() * 1.2}s`;
+      conf.append(c);
+    }
+    const perkNow = Math.round((S.perks[b.spot] || 0) * 100);
+    const unl = r.first
+      ? `<div class="bw-row gold"><span class="i">🏷️</span><span><b>Title: ${b.title}</b><small>Yours to wear on your profile</small></span></div>
+         <div class="bw-row gold"><span class="i">✨</span><span><b>+${Math.round(BOSS_PERK * 100)}% rare fish at ${SPOTS[b.spot].name}</b><small>For good · that water now runs +${perkNow}% on rare fish</small></span></div>
+         <div class="bw-row"><span class="i">🎣</span><span><b>+${num(r.xp)} Fishing xp</b><small>A fifth of that every time you beat it again</small></span></div>`
+        + (next ? `<div class="bw-row"><span class="i">${bossOpen(next) ? "⚔️" : "🔒"}</span><span><b>Next: ${next.name}</b><small>${bossOpen(next) ? `Waiting for you at ${SPOTS[next.spot].name}` : `Fishing ${next.at} and ${next.need} species from ${SPOTS[next.spot].name}`}</small></span></div>`
+          : `<div class="bw-row gold"><span class="i">👑</span><span><b>Every leviathan landed</b><small>There is nothing left in the water that can beat you</small></span></div>`)
+      : `<div class="bw-row"><span class="i">🎣</span><span><b>+${num(r.xp)} Fishing xp</b><small>A rematch pays a fifth. The title and the perk are already yours.</small></span></div>`;
+    const card = el("div", "bw-card", `<div class="bw-eye">${r.first ? "Leviathan landed" : "Landed again"}</div>
+      <div class="bw-art"><canvas width="720" height="360"></canvas></div>
+      <h3>${b.name}</h3>
+      <p class="bw-sub">${SPOTS[b.spot].name} · ${b.sub}</p>
+      <div class="bw-stats">
+        <div class="cstat"><small>Landed in</small><b>${r.secs}s</b></div>
+        <div class="cstat"><small>Weight</small><b>${lbs(b.w)}</b></div>
+        <div class="cstat"><small>${r.first ? "Attempts" : "Best"}</small><b>${r.first ? num(r.tries) : `${bossState(b).best}s`}</b></div>
+      </div>
+      <div class="bw-unl"><h4>${r.first ? "You unlocked" : "You earned"}</h4>${unl}</div>
+      <div class="bw-btns"><button class="btn gold" type="button" data-bw="fish">Keep fishing</button><button class="btn" type="button" data-bw="bosses">See the bosses</button></div>`);
+    ov.append(el("div", "bw-rays"), conf, card);
+    document.body.append(ov);
+    const cv = card.querySelector("canvas"), ctx = cv.getContext("2d");
+    drawFish(ctx, BY_KEY[b.art], cv.width / 2, cv.height / 2 + 8, Math.min(cv.width * 0.86, 560), { wag: 0.12 });
+    sparkle(ctx, cv.width / 2, cv.height / 2, 170, 1);
+    const close = (to) => {
+      ov.remove(); document.removeEventListener("keydown", onKey);
+      if (to === "bosses") goTab("boss"); else $("act")?.focus();
+    };
+    const onKey = (e) => { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", onKey);
+    ov.addEventListener("click", (e) => { const t = e.target.closest("[data-bw]"); if (t) close(t.dataset.bw); else if (e.target === ov) close(); });
+    card.querySelector("[data-bw=fish]").focus();
+    SFX.land?.(4, true);
   }
   function renderBosses() {
     const box = $("bosses"); if (!box) return;
@@ -5209,7 +5373,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   setInterval(save, 5000);
   document.addEventListener("visibilitychange", save);
   window.addEventListener("pagehide", save);
-  window.__reef = { tick: (ms) => { const t0 = performance.now(); for (let k = 0; k <= ms / 16; k++) { last = t0 + (k - 1) * 16; frameBody(t0 + k * 16); } }, get S() { return S; }, lake, heronBox, bankFish, startCook, cookTick, stopCook, eatDish, castBuffs, burnChance, kitchenAway, renderKitchen, tankBonus, tankGain, idleGrant, grant, skipTarget, skipsToday, checkUnlocks, paintNav, GATES, track, hatch, harvest, plant, water, breed, claim, openDailyChest, openWeeklyChest, pairs, fish, SPECIES, landed, action, rollCatch, renderEverything, drawFish, BY_KEY, syncTank, renderTank };
+  window.__reef = { get swimmers() { return swimmers; }, showBossWin, bossLanded, BOSSES, tick: (ms) => { const t0 = performance.now(); for (let k = 0; k <= ms / 16; k++) { last = t0 + (k - 1) * 16; frameBody(t0 + k * 16); } }, get S() { return S; }, lake, heronBox, bankFish, startCook, cookTick, stopCook, eatDish, castBuffs, burnChance, kitchenAway, renderKitchen, tankBonus, tankGain, idleGrant, grant, skipTarget, skipsToday, checkUnlocks, paintNav, GATES, track, hatch, harvest, plant, water, breed, claim, openDailyChest, openWeeklyChest, pairs, fish, SPECIES, landed, action, rollCatch, renderEverything, drawFish, BY_KEY, syncTank, renderTank };
 })();
 </script>
 </body>
