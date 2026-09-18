@@ -364,6 +364,8 @@ export class World {
     if (!ob) return 0;
     return S.bots.filter((b) => b.working?.ob === ob).length + this.playersIn(S).filter((p) => p !== except && p.act?.ob === ob && p.act.started).length;
   }
+  // a gather landed: the item pops up over the gatherer for everyone in the area
+  gained(S, pl, k, n = 1) { S.events.push({ type: "gain", who: pl.id, k, n, t: Date.now() }); }
   groupNote(S, pl, a) {
     const n = this.workersOn(S, a.ob, pl); if (n === a.groupSeen) return; a.groupSeen = n;
     if (n) this.say(pl, `Group bonus: ${n} other${n > 1 ? "s" : ""} working this ${a.ob.name.toLowerCase()} with you. +${n}% to your chance and xp.`, "good", "group");
@@ -418,11 +420,12 @@ export class World {
       this.groupNote(S, pl, a);
       if (vein) {
         a.next = now + 6000;
-        if (Math.random() < 0.55 + bonus) { if (!this.give(pl, ob.ore)) { pl.act = null; return; } this.grant(pl, "mining", gx(9)); this.questCheck(pl); }
+        if (Math.random() < 0.55 + bonus) { if (!this.give(pl, ob.ore)) { pl.act = null; return; } this.gained(S, pl, ob.ore); this.grant(pl, "mining", gx(9)); this.questCheck(pl); }
       } else {
         a.next = now + 1800;
         if (Math.random() < Math.min(0.9, 0.4 + G.lvlOf(C, "mining") * 0.02) + bonus) {
           if (!this.give(pl, ob.ore)) { pl.act = null; return; }
+          this.gained(S, pl, ob.ore);
           this.grant(pl, "mining", gx(ob.xp || (ob.ore === "tin" ? 18 : 17))); this.say(pl, `You mine some ${G.ITEMS[ob.ore].name.toLowerCase()}.`, "good");
           ob.emptyUntil = now + (ob.special ? 30000 : 8000); this.questCheck(pl); pl.act = null;
         }
@@ -441,6 +444,7 @@ export class World {
       if (Math.random() < Math.min(0.9, (oak ? 0.5 : 0.35) + G.lvlOf(C, "woodcutting") * 0.02) + bonus) {
         const log = ob.log || "logs";
         if (!this.give(pl, log)) { pl.act = null; return; }
+        this.gained(S, pl, log);
         this.grant(pl, "woodcutting", gx(ob.xp || 25)); this.say(pl, oak ? "You get some logs from the oak." : `You get some ${G.ITEMS[log].name.toLowerCase()}.`, "good"); this.questCheck(pl);
         if (Math.random() < (oak || ob.special ? 0.08 : 0.2)) { ob.stumpUntil = now + 15000; this.say(pl, `The ${oak ? "oak" : "tree"} falls.`); pl.act = null; }
       }
@@ -452,6 +456,7 @@ export class World {
       if (now < a.next) return;
       a.next = now + 1500;
       if (!this.give(pl, ob.crop || "olives")) { pl.act = null; return; }
+      this.gained(S, pl, ob.crop || "olives");
       this.groupNote(S, pl, a); this.grant(pl, "farming", gx(ob.xp || 6));
       if (--ob.left <= 0) { ob.left = ob.picks || 4; ob.bareUntil = now + 20000; this.say(pl, "That's the last of the olives on this tree."); pl.act = null; }
       return;
@@ -459,7 +464,7 @@ export class World {
     if (a.kind === "wheat") {
       if (ob.grownAt > now) { this.say(pl, "That's already been picked. It'll grow back soon."); pl.act = null; return; }
       if (!a.started) { a.started = now; this.say(pl, "You start picking the wheat…"); return; }
-      if (now - a.started >= 1400) { if (this.give(pl, "wheat")) { this.grant(pl, "farming", 8); this.say(pl, "You pick some wheat.", "good"); ob.grownAt = now + 20000; this.questCheck(pl); } pl.act = null; }
+      if (now - a.started >= 1400) { if (this.give(pl, "wheat")) { this.gained(S, pl, "wheat"); this.grant(pl, "farming", 8); this.say(pl, "You pick some wheat.", "good"); ob.grownAt = now + 20000; this.questCheck(pl); } pl.act = null; }
       return;
     }
     if (a.kind === "spot") {
@@ -471,6 +476,7 @@ export class World {
       this.groupNote(S, pl, a);
       if (Math.random() < (ob.fish ? 0.3 : 0.45) + bonus) {
         if (!this.give(pl, fish)) { pl.act = null; return; }
+        this.gained(S, pl, fish);
         this.grant(pl, "fishing", gx(ob.xp || (trout ? 50 : 20))); this.say(pl, `You catch a ${G.ITEMS[fish].name.replace(/^Raw /, "").toLowerCase()}.`, "good"); this.questCheck(pl);
       }
     }

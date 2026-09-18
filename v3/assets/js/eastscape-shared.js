@@ -330,9 +330,10 @@ export const QUESTS = {
 };
 
 /* ------------------------------------------------------------ a character */
-export const DEFAULT_SETTINGS = { xpDrops: true, skillRing: true, names: true, hoverTile: true, groupNotes: true, debug: false, reducedMotion: false, confirmDrop: true };
+export const DEFAULT_SETTINGS = { xpDrops: true, gainPops: true, skillRing: true, names: true, hoverTile: true, groupNotes: true, debug: false, reducedMotion: false, confirmDrop: true };
 export const SETTING_INFO = {
   xpDrops: ["XP drops", "Show +xp over your head when you earn it."],
+  gainPops: ["Item pops", "Show what you (and others) gather popping up over their heads."],
   skillRing: ["Skill ring", "Show the progress ring for the skill you're training."],
   names: ["Names", "Show names and levels under players, NPCs and monsters."],
   hoverTile: ["Tile outline", "Outline the tile under your mouse."],
