@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 12;
+export const VERSION = 13;
 export const COLS = 22, ROWS = 13;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -372,6 +372,34 @@ Object.assign(SCENES, {
     npcs: [{ name: "Cassia", x: 12, y: 9, still: true, hair: "#8a3a1a", shirt: "#e8e0c8", pants: "#6a5a4a", lines: ["Mind the range, it's hot. Cooking lessons start soon.", "Bom eats like three gladiators.", "If you catch fish, I can teach you to cook them. Soon."] }]
   }
 });
+// island land: an ellipse of grass with a sand edge (the edge next to the water becomes bank)
+function isleLand(g, cx, cy, rx, ry) {
+  for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) if (((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1) g[y][x] = ".";
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (g[y][x] === ".") { let wet = false; for (const [dx, dy] of D8) if (g[y + dy]?.[x + dx] === "~") wet = true; if (wet) g[y][x] = "s"; }
+}
+function isleBuild(tier) {
+  const g = grid("~"), objs = [], big = tier >= 2;
+  if (big) isleLand(g, 10.5, 6, 10.3, 5.6); else isleLand(g, 10.5, 5.5, 8.6, 4.9);
+  // the dock: planks out to the ferry; the far end takes you back to River Bend
+  const d0 = big ? 11 : 10;
+  for (let y = d0; y < ROWS; y++) for (const x of [10, 11]) g[y][x] = y === ROWS - 1 ? "e" : "p";
+  objs.push({ t: "dock", x: 10, y: d0, w: 2, h: ROWS - d0 });
+  objs.push({ t: "boatback", x: 12, y: 11, w: 2, h: 1, name: "Ferry" });
+  // the Far Shore: a bridge off the east side
+  if (tier >= 3) { for (let y = 5; y <= 7; y++) { g[y][COLS - 1] = "e"; for (let x = 19; x < COLS - 1; x++) g[y][x] = "p"; } objs.push({ t: "dock", x: 19, y: 5, w: 2, h: 3 }); }
+  const house = { t: "house", img: "hut", x: 8, y: 1, w: 5, h: 3, door: { x: 10, y: 3 }, name: "Cottage", enter: "home" }; objs.push(house); block(g, 8, 1, 5, 3);
+  const plots = big ? [[3, 5], [4, 5], [5, 5], [6, 5], [3, 7], [4, 7], [5, 7], [6, 7], [7, 5], [8, 5], [7, 7], [8, 7]] : [[4, 5], [5, 5], [6, 5], [7, 5], [4, 7], [5, 7], [6, 7], [7, 7]];
+  plots.forEach(([x, y], i) => { objs.push({ t: "plot", i, x, y, name: "Plot" }); g[y][x] = "#"; });
+  const peds = big ? [[13, 5], [15, 5], [17, 5], [13, 7], [15, 7], [17, 7], [13, 9], [15, 9], [17, 9]] : [[13, 5], [15, 5], [17, 5], [13, 7], [15, 7], [17, 7]];
+  peds.forEach(([x, y], i) => { objs.push({ t: "pedestal", i, x, y, name: "Pedestal" }); g[y][x] = "#"; });
+  if (big) { objs.push({ t: "pen", x: 4, y: 9, w: 3, h: 1, name: "Pet pen" }); block(g, 4, 9, 3, 1); }
+  else { objs.push({ t: "pen", x: 13, y: 9, w: 3, h: 1, name: "Pet pen" }); block(g, 13, 9, 3, 1); }
+  objs.push({ t: "islesign", x: 8, y: 9, name: "Island sign" }); g[9][8] = "#";
+  for (const [x, y] of big ? [[3, 3], [18, 3], [2, 8], [19, 9]] : [[4, 3], [16, 3], [3, 8]]) { objs.push({ t: "palm", x, y, name: "Tree" }); g[y][x] = "#"; }
+  markBanks(g);
+  return { g, objs, blobs: [] };
+}
+
 /* the Wilderness: down the pit on the farm. pvp: anyone can attack anyone. The Cage is a fenced ring where
    fights cost nothing; beyond it, and in the Deep Wild, monsters come for you and dying can cost you. */
 Object.assign(SCENES, {
@@ -422,24 +450,41 @@ Object.assign(SCENES, {
     mobs: [["taxwraith", 15, 4], ["taxwraith", 19, 6], ["chandelier", 5, 10], ["chandelier", 20, 9], ["revenant", 11, 9]],
     npcs: [], bots: []
   },
-  /* a player's island: the same layout for everyone, reached by the ferry at River Bend. What's planted, shown and
-     painted lives on the owner's character (c.isle); the server sends it with each snapshot. */
-  isle: {
-    name: "Island", island: true, exitTo: { scene: "river", x: 15, y: 10 }, entry: { x: 10, y: 10 },
+  /* a player's island: one layout per upgrade tier (isle, isle2, isle3), plus the Far Shore past isle3's bridge
+     and the cottage inside. Keys are "<layout>:<owner id>". What's planted, shown and painted lives on the owner's
+     character (c.isle); the server sends it with each snapshot. Plot and pedestal numbers carry over between tiers. */
+  isle: { name: "Island", island: true, exitTo: { scene: "river", x: 15, y: 10 }, entry: { x: 10, y: 10 }, build() { return isleBuild(1); }, mobs: [], npcs: [], bots: [] },
+  isle2: { name: "Island", island: true, wikiHide: true, exitTo: { scene: "river", x: 15, y: 10 }, entry: { x: 10, y: 10 }, build() { return isleBuild(2); }, mobs: [], npcs: [], bots: [] },
+  isle3: { name: "Island", island: true, wikiHide: true, exits: { e: "shore" }, exitTo: { scene: "river", x: 15, y: 10 }, entry: { x: 10, y: 10 }, build() { return isleBuild(3); }, mobs: [], npcs: [], bots: [] },
+  shore: {
+    name: "The Far Shore", island: true, exits: { w: "isle3" },
     build() {
       const g = grid("~"), objs = [];
-      for (let y = 1; y <= 10; y++) for (let x = 1; x < COLS - 1; x++) if (((x - 10.5) / 8.6) ** 2 + ((y - 5.5) / 4.9) ** 2 <= 1) g[y][x] = ".";
-      for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (g[y][x] === ".") { let wet = false; for (const [dx, dy] of D8) if (g[y + dy]?.[x + dx] === "~") wet = true; if (wet) g[y][x] = "s"; }
-      // the dock: planks out to the ferry; the far end takes you back to River Bend
-      for (let y = 10; y < ROWS; y++) for (const x of [10, 11]) g[y][x] = y === ROWS - 1 ? "e" : "p";
-      objs.push({ t: "dock", x: 10, y: 10, w: 2, h: 3 });
-      objs.push({ t: "boatback", x: 12, y: 11, w: 2, h: 1, name: "Ferry" });
-      const house = { t: "house", img: "hut", x: 8, y: 1, w: 5, h: 3, door: { x: 10, y: 3 }, name: "Cottage" }; objs.push(house); block(g, 8, 1, 5, 3);
-      [[4, 5], [5, 5], [6, 5], [7, 5], [4, 7], [5, 7], [6, 7], [7, 7]].forEach(([x, y], i) => { objs.push({ t: "plot", i, x, y, name: "Plot" }); g[y][x] = "#"; });
-      [[13, 5], [15, 5], [17, 5], [13, 7], [15, 7], [17, 7]].forEach(([x, y], i) => { objs.push({ t: "pedestal", i, x, y, name: "Pedestal" }); g[y][x] = "#"; });
-      objs.push({ t: "pen", x: 13, y: 9, w: 3, h: 1, name: "Pet pen" }); block(g, 13, 9, 3, 1);
-      objs.push({ t: "islesign", x: 8, y: 9, name: "Island sign" }); g[9][8] = "#";
-      for (const [x, y] of [[4, 3], [16, 3], [3, 8]]) { objs.push({ t: "palm", x, y, name: "Tree" }); g[y][x] = "#"; }
+      isleLand(g, 11, 6, 8.6, 5.3);
+      for (let y = 5; y <= 7; y++) { g[y][0] = "e"; for (let x = 1; x <= 3; x++) g[y][x] = "p"; }
+      objs.push({ t: "dock", x: 1, y: 5, w: 3, h: 3 });
+      [[6, 3], [7, 3], [8, 3], [9, 3], [6, 9], [7, 9], [8, 9], [9, 9]].forEach(([x, y], k) => { objs.push({ t: "plot", i: 12 + k, x, y, name: "Plot" }); g[y][x] = "#"; });
+      [[13, 4], [15, 4], [17, 4], [13, 8], [15, 8], [17, 8]].forEach(([x, y], k) => { objs.push({ t: "pedestal", i: 9 + k, x, y, name: "Pedestal" }); g[y][x] = "#"; });
+      objs.push({ t: "lighthouse", x: 10, y: 1, w: 2, h: 2, name: "Lighthouse" }); block(g, 10, 1, 2, 2);
+      objs.push({ t: "pen", x: 11, y: 10, w: 4, h: 1, name: "Pet pen" }); block(g, 11, 10, 4, 1);
+      for (const [x, y] of [[18, 6], [5, 8], [16, 2]]) { objs.push({ t: "palm", x, y, name: "Tree" }); g[y][x] = "#"; }
+      markBanks(g);
+      return { g, objs, blobs: [] };
+    },
+    mobs: [], npcs: [], bots: []
+  },
+  home: {
+    name: "The Cottage", interior: true, home: true, floor: "wood", room: [5, 3, 16, 10], exitTo: { scene: "isle", x: 10, y: 4 }, entry: { x: 10, y: 10 },
+    wall: [{ t: "window", x: 8 }, { t: "shelf", x: 11 }, { t: "window", x: 14 }],
+    build() {
+      // the furniture that comes with it; the rest of the floor is left open for your own, later
+      const g = room(5, 3, 16, 10, 10), objs = [];
+      objs.push({ t: "range", x: 5, y: 3, w: 2, h: 1, name: "Hearth" }); block(g, 5, 3, 2, 1);
+      objs.push({ t: "bed", x: 16, y: 3, w: 1, h: 2, name: "Bed" }); block(g, 16, 3, 1, 2);
+      objs.push({ t: "rug", x: 8, y: 5, w: 6, h: 4, color: "#3a6a8a", name: "Rug" });
+      objs.push({ t: "chest", x: 15, y: 3, name: "Chest" }); g[3][15] = "#";
+      objs.push({ t: "plant", x: 5, y: 10, name: "Potted fern" }); g[10][5] = "#";
+      objs.push({ t: "plant", x: 16, y: 10, name: "Potted fern" }); g[10][16] = "#";
       return { g, objs, blobs: [] };
     },
     mobs: [], npcs: [], bots: []
@@ -448,7 +493,10 @@ Object.assign(SCENES, {
 
 // scene keys: most are a SCENES key; a player's island is "isle:<owner id>", every island built from SCENES.isle
 export const sceneDef = (key) => SCENES[String(key).split(":")[0]];
-export const isIsle = (key) => String(key).startsWith("isle:");
+export const isIsle = (key) => /^(isle\d?|shore|home):/.test(String(key));
+export const ownerOf = (key) => (isIsle(key) ? String(key).slice(String(key).indexOf(":") + 1) : null);
+// which island layout an owner's island uses, by upgrade tier
+export const isleKey = (isle, id) => `${["isle", "isle", "isle2", "isle3"][isle?.tier || 1]}:${id}`;
 // the same scene, built the same way everywhere; every object gets its index as its id
 export function buildScene(key) {
   const sc = sceneDef(key), b = sc.build.call(sc);
@@ -506,7 +554,12 @@ export const fmtWait = (ms) => { const s = Math.round(ms / 1000), m = Math.floor
 export const inCage = (def, x, y) => !!def?.cage && x >= def.cage[0] && x <= def.cage[2] && y >= def.cage[1] && y <= def.cage[3];
 
 // islands: everyone has one. Plots grow in real time (online or not); pedestals show off one item each.
-export const ISLE = { plots: 8, shelf: 6 };
+export const ISLE = { plots: 20, shelf: 15 };
+// upgrades, bought from Charon: each tier is a bigger layout; the plots and pedestals you already have stay put
+export const ISLE_TIERS = [null,
+  { name: "Island", plots: 8, shelf: 6 },
+  { name: "Bigger island", price: 5000, plots: 12, shelf: 9, ex: "More land: 12 plots, 9 pedestals and a bigger pen." },
+  { name: "The Far Shore", price: 20000, plots: 20, shelf: 15, ex: "A bridge off the east side to a second island: 8 more plots, 6 more pedestals and a lighthouse." }];
 export const ISLE_FERRY = { scene: "river", x: 15, y: 10 };
 export const CROPS = {
   wheat: { lvl: 1, ms: 10 * 60000, yield: [3, 5], xp: 30 },
@@ -560,6 +613,7 @@ export const EXAMINE = {
   skeleton: ["A skeleton, still holding a fishing rod. It's got a bite.", "A skeleton in a comfortable pose. It looks like it's waiting for someone."],
   snag: ["A dead tree. It creaks when nothing is moving."],
   pen: ["A pet pen, empty for now. Something will live here one day."],
+  lighthouse: ["A lighthouse. The light points inward, at the island. Nobody knows who it's warning.", "The door's painted on. The light is on anyway."],
   mule: ["A mule. It refuses to move. It has refused for eleven years.", "The mule looks at you. You feel judged by a professional."]
 };
 export const VERB = { pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
@@ -634,7 +688,7 @@ export function freshChar() {
     eq: { helm: "cap", weapon: "rudis", body: "tunic", shield: "parma", legs: null, gloves: null, boots: "sandals", ring: null },
     xp: { melee: 0, hp: XP_AT[10], fishing: 0, farming: 0, mining: 0, woodcutting: 0 },
     qs: {}, bank: [], settings: { ...DEFAULT_SETTINGS }, created: Date.now(),
-    isle: { plots: Array(ISLE.plots).fill(null), shelf: Array(ISLE.shelf).fill(null), theme: "meadow", themes: ["meadow"], open: true }
+    isle: { plots: Array(ISLE.plots).fill(null), shelf: Array(ISLE.shelf).fill(null), theme: "meadow", themes: ["meadow"], open: true, tier: 1 }
   };
 }
 // fill in anything a stored character is missing, and drop what isn't real any more
@@ -651,7 +705,7 @@ export function normChar(c) {
     plots: Array.from({ length: ISLE.plots }, (_, i) => { const p = ci.plots?.[i]; return p && CROPS[p.k] && Number.isFinite(p.at) ? { k: p.k, at: p.at } : null; }),
     shelf: Array.from({ length: ISLE.shelf }, (_, i) => (ITEMS[ci.shelf?.[i]] ? ci.shelf[i] : null)),
     themes: [...new Set(["meadow", ...(Array.isArray(ci.themes) ? ci.themes : [])])].filter((t) => THEMES[t]),
-    theme: fi.theme, open: ci.open !== false
+    theme: fi.theme, open: ci.open !== false, tier: [1, 2, 3].includes(ci.tier) ? ci.tier : 1
   };
   if (out.isle.themes.includes(ci.theme)) out.isle.theme = ci.theme;
   return out;

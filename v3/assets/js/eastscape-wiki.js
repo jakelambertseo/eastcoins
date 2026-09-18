@@ -84,12 +84,22 @@ export const GUIDES = [
       <li><b>Pedestals:</b> put six things on display. Click one again to take it back.</li>
       <li><b>Themes:</b> the sign by the dock changes your island's look. Charon sells new themes; others will come from events.</li>
       <li><b>Visitors:</b> anyone can visit your island by asking Charon for you by name. They can look, but they can't pick your crops or touch your things. The sign can close your island to visitors.</li>
-      <li>The pet pen is empty for now. One day it won't be.</li></ul>`
+      <li><b>The cottage:</b> walk in through its door. It's yours; one day you'll be able to furnish it.</li>
+      <li><b>Upgrades</b> (from Charon): a <b>Bigger island</b> (5,000 Cash: 12 plots, 9 pedestals) and then <b>The Far Shore</b> (20,000 Cash: a bridge off the east side to a second island with 8 more plots, 6 more pedestals and a lighthouse). Everything you've planted or put on show stays put.</li>
+      <li>The pet pens are empty for now. One day they won't be.</li></ul>`
   }
 ];
 
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
+  {
+    date: "2026-09-18", title: "Bigger islands, the Far Shore, and your cottage",
+    items: [
+      "Island upgrades from Charon: a Bigger island (5,000 Cash) with 12 plots and 9 pedestals, then The Far Shore (20,000 Cash): a bridge to a second island with 8 more plots, 6 more pedestals and a lighthouse that points the wrong way.",
+      "Your cottage opens: walk in through the door. A hearth, a bed, a chest and a lot of empty floor, for later.",
+      "Wilderness monsters take longer to come back the tougher they are: from a minute up to three."
+    ]
+  },
   {
     date: "2026-09-18", title: "The Wilderness and your own island",
     items: [
