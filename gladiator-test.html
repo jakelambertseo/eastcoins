@@ -1248,6 +1248,37 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .rt-row.best{border-color:rgba(185,138,255,.55)}
 .rt-row.best span{color:#cfa8ff;font-weight:800}
 .rift-card .chest-loot span{font-weight:800}
+/* ================= passive tree (2026-09-17) ================= */
+.tree-wrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+@media (max-width:1000px){.tree-wrap{grid-template-columns:minmax(0,1fr)}}
+.tree-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.tree-pts{font-size:.9rem;color:var(--muted)}
+.tree-pts b{font-family:var(--display);font-size:1.3rem;color:var(--gold)}
+.tree-stage{position:relative;border-radius:14px;background:radial-gradient(circle at 50% 50%,#1c1712,#0a0807 72%);border:1px solid rgba(var(--gold-rgb),.22)}
+#treeSvg{display:block;width:100%;height:auto;max-height:78vh}
+#treeSvg .tl{stroke:#3a3226;stroke-width:5}
+#treeSvg .tl.on{stroke:#d9b04a;stroke-width:6}
+#treeSvg .tn circle{fill:#15110d;stroke:#4a4030;stroke-width:3;transition:fill .15s}
+#treeSvg .tn.small circle{fill:#221c16}
+#treeSvg .tn.notable circle{stroke-width:4}
+#treeSvg .tn.key circle{stroke-width:5}
+#treeSvg .tn.on circle{fill:var(--nc);stroke:#fff3c8}
+#treeSvg .tn.can{cursor:pointer}
+#treeSvg .tn.can circle{stroke:var(--nc);stroke-width:4;filter:drop-shadow(0 0 6px var(--nc))}
+#treeSvg .tn.can:hover circle,#treeSvg .tn.can:focus circle{fill:color-mix(in srgb,var(--nc) 45%,#15110d)}
+#treeSvg .tn:focus{outline:none}
+#treeSvg .tn.start circle{fill:#3a2a12;stroke:var(--gold);stroke-width:4}
+#treeSvg text{text-anchor:middle;font-size:22px;fill:#fff3c8;pointer-events:none}
+#treeSvg .tb-name{font-family:var(--display);font-weight:800;font-size:30px;letter-spacing:.06em;text-transform:uppercase}
+.tree-tip{position:absolute;z-index:4;transform:translate(-50%,calc(-100% - 22px));min-width:200px;max-width:260px;padding:9px 12px;border-radius:10px;background:rgba(12,10,8,.96);border:1px solid rgba(var(--gold-rgb),.5);box-shadow:0 12px 30px rgba(0,0,0,.6);font-size:.8rem;display:grid;gap:3px;pointer-events:none;text-align:center}
+.tree-tip[hidden]{display:none}
+.tree-tip b{font-family:var(--display);font-size:.95rem}
+.tree-tip small{font-size:.6rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
+.tree-tip div{color:#9fb2ff}
+.tree-tip em{font-size:.7rem;color:var(--muted-2)}
+.tree-sum{display:grid;gap:4px;font-size:.82rem;color:#9fb2ff}
+.tree-side .note{font-size:.78rem;margin:0 0 6px}
+.potion-btn b{font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -1272,6 +1303,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         <button class="tab" data-tab="forge" type="button"><svg viewBox="0 0 24 24"><path d="M14.5 4.5l5 5-8.5 8.5-5-5z"/><path d="M4.5 19.5l2.5-2.5"/></svg><span class="tab-label">Forge</span></button>
         <button class="tab" data-tab="spoils" type="button"><svg viewBox="0 0 24 24"><path d="M4 8h16v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/></svg><span class="tab-label">Gear &amp; loot</span></button>
         <span class="fnav-h">Progress</span>
+        <button class="tab" data-tab="tree" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.5"/><circle cx="12" cy="4" r="1.8"/><circle cx="20" cy="12" r="1.8"/><circle cx="12" cy="20" r="1.8"/><circle cx="4" cy="12" r="1.8"/><path d="M12 6v3.5M18 12h-3.5M12 18v-3.5M6 12h3.5"/></svg><span class="tab-label">Passive tree</span><span class="count" hidden></span></button>
         <button class="tab" data-tab="skills" type="button"><svg viewBox="0 0 24 24"><path d="M5 20v-7M10 20V6M15 20v-9M20 20V9"/></svg><span class="tab-label">Skills</span></button>
         <button class="tab" data-tab="board" type="button"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M12 13v3M8 20h8l-1-4H9z"/></svg><span class="tab-label">Leaderboard</span></button>
         <span class="fnav-h">You</span>
@@ -1324,7 +1356,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       </div>
       <div class="cb-bar">
         <button class="act" id="act" type="button">Enter</button>
-        <div class="cb-styles" id="styles" role="group" aria-label="Combat style"></div>
+        <button class="btn small potion-btn" id="drinkNow" type="button" title="Heals 30% of your maximum health">🧪 Drink</button>
         <div class="cb-food">
           <select id="foodSel" class="g-select" aria-label="Food"></select>
           <button class="btn small" id="eatNow" type="button">Eat</button>
@@ -1402,9 +1434,30 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     <div class="boss-grid" id="beasts"></div>
   </section>
 
+  <!-- ============ PASSIVE TREE ============ -->
+  <section class="view" data-panel="tree" hidden>
+    <header class="view-h"><div><h1>Passive tree</h1><p>One class for now: the Warrior. Every level is a point. Spend it on a node joined to one you already hold, and work out towards a keystone.</p></div><span class="meta" id="treeLvl"></span></header>
+    <div class="tree-wrap">
+      <section class="card tree-card"><div class="card-body">
+        <div class="tree-head"><span class="tree-pts" id="treePts"></span><button class="btn small" id="treeReset" type="button">Reset tree</button></div>
+        <div class="tree-stage"><svg id="treeSvg" viewBox="-680 -680 1360 1360" role="group" aria-label="Passive tree"></svg><div class="tree-tip" id="treeTip" hidden></div></div>
+      </div></section>
+      <aside class="card tree-side"><div class="card-body">
+        <h2 class="card-h">What your tree gives</h2>
+        <div class="tree-sum" id="treeSum"></div>
+        <h3 class="rt-h">The four paths</h3>
+        <p class="note"><b style="color:#e05a4a">Brute</b> — damage and strength, ending in <b>Berserker</b>: 40% more damage, 15% less health.</p>
+        <p class="note"><b style="color:#e8bf35">Blademaster</b> — attack speed and crits, ending in <b>Deadly Rhythm</b>.</p>
+        <p class="note"><b style="color:#6fb8ff">Juggernaut</b> — health, armour and regeneration, ending in <b>Juggernaut</b>.</p>
+        <p class="note"><b style="color:#4ddb8b">Gladiator</b> — accuracy, evasion, fame and loot, ending in <b>Showman&#39;s Luck</b>.</p>
+        <p class="note">Bridges join neighbouring paths, so a build can cross over.</p>
+      </div></aside>
+    </div>
+  </section>
+
   <!-- ============ SKILLS ============ -->
   <section class="view" data-panel="skills" hidden>
-    <header class="view-h"><div><h1>Skills</h1><p>Six skills, 1 to 99. Your combat style picks which one a hit trains; Hitpoints trains on every hit.</p></div></header>
+    <header class="view-h"><div><h1>Skills</h1><p>Your Warrior level comes from every hit you land and feeds the passive tree. Showmanship and Smithing level alongside it.</p></div></header>
     <div class="g-skills" id="skills"></div>
   </section>
 
@@ -1453,21 +1506,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const levelOf = (xp) => { let lo = 1, hi = 99; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (xp >= XP_AT[m]) lo = m; else hi = m - 1; } return lo; };
 
   const SKILLS = {
-    attack: { name: "Attack", icon: "⚔️", how: "Damage you deal on Accurate. Raises how often you land a blow." },
-    strength: { name: "Strength", icon: "💪", how: "Damage you deal on Aggressive. Raises your max hit." },
-    defence: { name: "Defence", icon: "🛡️", how: "Damage you deal on Defensive. Makes you harder to hit, and opens armour." },
-    hitpoints: { name: "Hitpoints", icon: "❤️", how: "A third as much from every hit you land, whatever the style. Ten health a level." },
+    level: { name: "Warrior", icon: "⚔️", how: "Every hit you land. Each level raises accuracy, max hit, evasion and health, and gives a passive point for the tree." },
     showman: { name: "Showmanship", icon: "🎭", how: "Every kill. The crowd pays you in fame." },
     smithing: { name: "Smithing", icon: "🔨", how: "Everything you beat into shape at the forge." }
   };
-  // OSRS styles: which skill a hit trains, and the invisible +3 it gives
-  const STYLES = [
-    { key: "acc", name: "Accurate", trains: ["attack"], b: { acc: 3, str: 0, def: 0 } },
-    { key: "agg", name: "Aggressive", trains: ["strength"], b: { acc: 0, str: 3, def: 0 } },
-    { key: "def", name: "Defensive", trains: ["defence"], b: { acc: 0, str: 0, def: 3 } },
-    { key: "ctl", name: "Controlled", trains: ["attack", "strength", "defence"], b: { acc: 1, str: 1, def: 1 } }
-  ];
-
   /* ------------------------------------------------------------------ what lives down there */
   const MON = {
     rat: { name: "Sewer rats", icon: "🐀", att: 2, def: 1, hp: 30, max: 8, speed: 2000, coin: [0, 2], drops: [["bread", .12]] },
@@ -1548,6 +1590,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     boar: { name: "Boar haunch", icon: "🍖", heal: 150, cost: 30 }, feast: { name: "Feast platter", icon: "🍱", heal: 300, cost: 90 }
   };
   const FOODS = ["bread", "chicken", "boar", "feast"];
+  // potions heal a share of your health, so a small one stays worth carrying; medium and large come later
+  ITEMS.potion_s = { name: "Small healing potion", icon: "🧪", healPct: 0.3 };
   const RECRUITS = [
     { name: "Novice Tiro", icon: "🧑", cost: 200, rate: 8 },
     { name: "Thraex", icon: "🗡️", cost: 900, rate: 30 },
@@ -1555,10 +1599,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { name: "Dimachaerus", icon: "⚔️", cost: 12000, rate: 260 }
   ];
   const DRILLS = [
-    { key: "post", name: "Sparring post", icon: "🎯", skill: "attack", secs: 30, xp: 180, about: "Hit the marks on the post, over and over." },
-    { key: "pell", name: "Heavy pell", icon: "🪵", skill: "strength", secs: 120, xp: 640, about: "Hack at a post until your arms go." },
-    { key: "wall", name: "Shield wall", icon: "🧱", skill: "defence", secs: 120, xp: 640, about: "Hold the line while the veterans lean on you." },
-    { key: "run", name: "Long run", icon: "🏃", skill: "hitpoints", secs: 300, xp: 1500, about: "Round the walls of the ludus until dark." }
+    { key: "post", name: "Sparring post", icon: "🎯", skill: "level", secs: 30, xp: 180, about: "Hit the marks on the post, over and over." },
+    { key: "pell", name: "Heavy pell", icon: "🪵", skill: "level", secs: 120, xp: 640, about: "Hack at a post until your arms go." },
+    { key: "wall", name: "Shield wall", icon: "🧱", skill: "level", secs: 120, xp: 640, about: "Hold the line while the veterans lean on you." },
+    { key: "run", name: "Long run", icon: "🏃", skill: "level", secs: 300, xp: 1500, about: "Round the walls of the ludus until dark." }
   ];
   const RECIPES = [
     { key: "whet", name: "Whetstone the blade", need: { iron: 2 }, xp: 120, about: "+10% max hit for your next 50 kills" },
@@ -1567,6 +1611,49 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { key: "crown", name: "Laurel crown", need: { laurel: 3, bronze: 1 }, xp: 1400, about: "+50% fame for an hour" }
   ];
   const OFFLINE_CAP = 8 * 3600 * 1000;
+
+  /* ================================================================== the passive tree
+     Path of Exile, simplified, one class for now. A point a level. Four
+     branches out of the Warrior: damage, speed and crit, health and armour,
+     and loot. Small nodes, named notables, and a keystone at the end of each
+     that is worth building towards and costs you something. You can only take
+     a node joined to one you already have. */
+  const BRANCHES = [
+    { key: "brute", name: "Brute", ang: -90, color: "#e05a4a", nodes: [
+      [{ dmg: .05 }], [{ str: 3 }], [{ dmg: .12, str: 5 }, "Heavy Blows"], [{ dmg: .05 }], [{ str: 4 }], [{ dmg: .15, cm: .15 }, "Executioner"],
+      [{ dmg: .06 }], [{ str: 5 }], [{ dmg: .12, lok: 6 }, "Blood Rage"], [{ dmg: .07 }], [{ str: 6 }], [{ dmg: .4, hpPct: -.15 }, "Berserker", true]] },
+    { key: "blade", name: "Blademaster", ang: 0, color: "#e8bf35", nodes: [
+      [{ ias: .03 }], [{ crit: .01 }], [{ ias: .08 }, "Flurry"], [{ ias: .03 }], [{ cm: .08 }], [{ crit: .03, cm: .2 }, "Precision"],
+      [{ ias: .03 }], [{ crit: .01 }], [{ ias: .1, acc: 10 }, "Whirlwind"], [{ cm: .1 }], [{ crit: .015 }], [{ cm: .5, crit: .05, ias: -.08 }, "Deadly Rhythm", true]] },
+    { key: "jugg", name: "Juggernaut", ang: 90, color: "#6fb8ff", nodes: [
+      [{ hp: 20 }], [{ dr: .01 }], [{ hp: 40, dr: .03 }, "Iron Skin"], [{ regen: 2 }], [{ hp: 25 }], [{ dr: .04, hpPct: .08 }, "Unbreakable"],
+      [{ hp: 30 }], [{ dr: .01 }], [{ regen: 8, hp: 40 }, "Second Wind"], [{ hp: 35 }], [{ dr: .015 }], [{ hpPct: .25, dr: .06, ias: -.08 }, "Juggernaut", true]] },
+    { key: "glad", name: "Gladiator", ang: 180, color: "#4ddb8b", nodes: [
+      [{ acc: 8 }], [{ ev: 8 }], [{ fame: .2, gold: .1 }, "Crowd Pleaser"], [{ find: .04 }], [{ acc: 10 }], [{ find: .12, gold: .15 }, "Plunderer"],
+      [{ ev: 12 }], [{ find: .05 }], [{ fame: .3, acc: 15 }, "Showstopper"], [{ gold: .1 }], [{ ev: 15 }], [{ find: .3, gold: .3, dmg: -.1 }, "Showman's Luck", true]] }
+  ];
+  const TREE = [{ id: "start", x: 0, y: 0, kind: "start", name: "Warrior", stats: {}, links: [] }];
+  BRANCHES.forEach((b) => {
+    const a = b.ang * Math.PI / 180;
+    b.nodes.forEach(([stats, name, key], i) => {
+      const r = 60 + i * 44, wob = (i % 2 ? 1 : -1) * 0.06 * (i > 0 ? 1 : 0);
+      TREE.push({ id: `${b.key}${i}`, x: Math.round(Math.cos(a + wob) * r), y: Math.round(Math.sin(a + wob) * r), kind: key ? "key" : name ? "notable" : "small",
+        name: name || null, branch: b.key, color: b.color, stats, links: [i ? `${b.key}${i - 1}` : "start"] });
+    });
+  });
+  // bridges between neighbouring branches, at the first and second notables
+  const BRIDGES = [[{ dmg: .04, ias: .02 }, { cm: .08, dmg: .05 }], [{ lok: 4 }, { regen: 3, ias: .03 }], [{ ev: 6, hp: 15 }, { hp: 25, find: .04 }], [{ acc: 6, str: 3 }, { str: 5, acc: 8 }]];
+  BRANCHES.forEach((b, bi) => {
+    const nb = BRANCHES[(bi + 1) % 4], mid = ((b.ang + (bi === 3 ? 360 : 0) + nb.ang + (bi === 3 ? 0 : 0)) / 2 + (bi === 3 ? 0 : 0)) * Math.PI / 180;
+    [2, 5].forEach((ni, ri) => {
+      const r = 60 + ni * 44, ang = bi === 3 ? (180 + 270) / 2 * Math.PI / 180 : mid;
+      TREE.push({ id: `bridge${bi}${ri}`, x: Math.round(Math.cos(ang) * r * 0.86), y: Math.round(Math.sin(ang) * r * 0.86), kind: "small", branch: "bridge", color: "#c8b89a",
+        stats: BRIDGES[bi][ri], links: [`${b.key}${ni}`, `${nb.key}${ni}`] });
+    });
+  });
+  const TREE_BY = Object.fromEntries(TREE.map((n) => [n.id, n]));
+  TREE.forEach((n) => n.links.forEach((l) => { const o = TREE_BY[l]; if (o && !o.links.includes(n.id)) o.links.push(n.id); }));
+  const pointsFree = () => Math.max(0, (lvl("level") - 1) - ((S.tree || []).length - 1));
 
   /* ================================================================== loot
      The ARPG half. Everything you wear drops: a base (Gladius, Scutum…) that
@@ -1578,10 +1665,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { name: "Rare", color: "#f2d45c" }, { name: "Unique", color: "#e8843c" }
   ];
   const SLOTS = {
-    weapon: { name: "Weapon", icon: "🗡️", req: "attack" }, offhand: { name: "Shield", icon: "🛡️", req: "defence" },
-    helm: { name: "Helmet", icon: "⛑️", req: "defence" }, body: { name: "Armour", icon: "🥋", req: "defence" },
-    boots: { name: "Boots", icon: "🥾", req: "defence" }, ring: { name: "Ring", icon: "💍", req: "cb" }, amulet: { name: "Amulet", icon: "📿", req: "cb" },
-    gloves: { name: "Gloves", icon: "🧤", req: "attack" }, belt: { name: "Belt", icon: "🎗️", req: "defence" }
+    weapon: { name: "Weapon", icon: "🗡️" }, offhand: { name: "Shield", icon: "🛡️" },
+    helm: { name: "Helmet", icon: "⛑️" }, body: { name: "Armour", icon: "🥋" },
+    boots: { name: "Boots", icon: "🥾" }, ring: { name: "Ring", icon: "💍" }, amulet: { name: "Amulet", icon: "📿" },
+    gloves: { name: "Gloves", icon: "🧤" }, belt: { name: "Belt", icon: "🎗️" }
   };
   const SLOT_KEYS = Object.keys(SLOTS);                     // what can drop
   // where it can be worn: two rings, one of everything else
@@ -1639,8 +1726,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     ev: { say: (v) => `+${v} to evasion` }, dr: { pct: P, say: (v) => `${pct(v)} damage reduction` },
     hp: { say: (v) => `+${v} to maximum health` }, regen: { say: (v) => `Regenerate ${v} health every 6 seconds` },
     lok: { say: (v) => `Gain ${v} health on kill` }, fame: { pct: P, say: (v) => `${pct(v)} more fame` },
-    find: { pct: P, say: (v) => `${pct(v)} increased item rarity` }, gold: { pct: P, say: (v) => `${pct(v)} more denarii found` }
+    find: { pct: P, say: (v) => `${pct(v)} increased item rarity` }, gold: { pct: P, say: (v) => `${pct(v)} more denarii found` },
+    hpPct: { pct: P, say: (v) => `${pct(v)} increased maximum health` }
   };
+  const NEG = { dmg: "damage", ias: "attack speed", hpPct: "maximum health" };
+  const sayStat = (k, v) => (v < 0 && NEG[k] ? `${pct(-v)} reduced ${NEG[k]}` : STAT[k].say(v));
   const ARMOUR = ["helm", "body", "boots", "offhand", "gloves"], JEWEL = ["ring", "amulet"];
   const AFFIXES = [
     { k: "dmg", t: "p", slots: ["weapon", ...JEWEL], names: ["Sharp", "Keen", "Vicious", "Cruel", "Merciless"], tiers: [[1, .08, .15], [12, .16, .25], [28, .26, .38], [45, .39, .55], [70, .56, .8]] },
@@ -1716,9 +1806,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (it.rar === 1) { const p = it.mods.find((m) => m.t === "p"), s = it.mods.find((m) => m.t === "s"); return `${p ? p.name + " " : ""}${b.name}${s ? " " + s.name : ""}`; }
     return b.name;
   };
-  const itemReq = (it) => { const s = SLOTS[slotOf(it)]; return { skill: s.req, lvl: it.rar === 3 ? UNIQUES[it.uq].lvl : Math.max(1, Math.min(BASES[it.base].lvl, Math.floor(it.ilvl * 0.8))) }; };
-  const reqName = (r) => (r.skill === "cb" ? "combat" : SKILLS[r.skill].name);
-  const reqMet = (it) => { const r = itemReq(it); return (r.skill === "cb" ? myCb() : lvl(r.skill)) >= r.lvl; };
+  const itemReq = (it) => { return { skill: "level", lvl: it.rar === 3 ? UNIQUES[it.uq].lvl : Math.max(1, Math.min(BASES[it.base].lvl, Math.floor(it.ilvl * 0.8))) }; };
+  const reqName = () => "level";
+  const reqMet = (it) => myCb() >= itemReq(it).lvl;
   const itemValue = (it) => [2 + it.ilvl / 2, 5 + it.ilvl, 15 + it.ilvl * 3, 200 + it.ilvl * 10][it.rar];
   const SALVAGE = [{ iron: 1 }, { bronze: 1 }, { laurel: 1, bronze: 1 }, { laurel: 3 }];
 
@@ -1728,8 +1818,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const fresh = () => ({
     coin: 180, fame: 0, w: 0, l: 0, style: 0,
     eq: starter(), stash: [], filter: 0, found: [0, 0, 0, 0],
-    skills: { attack: 0, strength: 0, defence: 0, hitpoints: XP_AT[10], showman: 0, smithing: 0 },
-    hp: 100, items: { bread: 20, iron: 2, hide: 1 }, food: "bread", autoEat: 0.3,
+    skills: { level: 0, showman: 0, smithing: 0 }, tree: ["start"], potionsGiven: true,
+    hp: 100, items: { bread: 20, iron: 2, hide: 1, potion_s: 5 }, food: "bread", autoEat: 0.3,
     stable: [{ name: "Crixus", icon: "🧑", rate: 8 }], drills: {}, clears: {}, titles: {}, kills: {},
     buffs: { whet: 0, wrap: 0, crown: 0 }, dun: 0, repeat: true, view: "dun",
     rift: { tier: 1, best: 0, mode: "push", clears: 0, times: {} },
@@ -1737,7 +1827,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   });
   function starter() { return { weapon: makeItem("rudis", 0, 1), offhand: makeItem("parma", 0, 1), helm: makeItem("cap", 0, 1), body: makeItem("tunic", 0, 1), boots: makeItem("sandals", 0, 1), ring: null, ring2: null, amulet: null, gloves: null, belt: null }; }
   let S = fresh();
-  try { const raw = localStorage.getItem(SAVE); if (raw) { const o = JSON.parse(raw); S = { ...fresh(), ...o, skills: { ...fresh().skills, ...o.skills }, buffs: { ...fresh().buffs, ...o.buffs }, rift: { ...fresh().rift, ...o.rift }, C: { ...fresh().C, ...o.C } }; if (!o.eq) S.eq = starter(); for (const k of EQ_KEYS) if (S.eq[k] === undefined) S.eq[k] = null; } } catch (e) { /* a fresh start */ }
+  try { const raw = localStorage.getItem(SAVE); if (raw) { const o = JSON.parse(raw); S = { ...fresh(), ...o, skills: { ...fresh().skills, ...o.skills }, buffs: { ...fresh().buffs, ...o.buffs }, rift: { ...fresh().rift, ...o.rift }, C: { ...fresh().C, ...o.C } }; if (!o.eq) S.eq = starter();
+      // one Warrior level replaces Attack/Strength/Defence/Hitpoints: keep the best of them
+      if (o.skills && o.skills.level == null) { S.skills.level = Math.max(o.skills.attack || 0, o.skills.strength || 0, o.skills.defence || 0, o.skills.hitpoints || 0); ["attack", "strength", "defence", "hitpoints"].forEach((k) => delete S.skills[k]); }
+      if (!S.tree) S.tree = ["start"];
+      if (!o.potionsGiven) { S.items.potion_s = (S.items.potion_s || 0) + 5; S.potionsGiven = true; } for (const k of EQ_KEYS) if (S.eq[k] === undefined) S.eq[k] = null; } } catch (e) { /* a fresh start */ }
   let wiping = false;   // a reset must not be undone by the save that runs as the page unloads
   const save = () => { if (wiping) return; S.at = Date.now(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* private window */ } };
 
@@ -1745,15 +1839,15 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const total = () => Object.keys(SKILLS).reduce((n, k) => n + lvl(k), 0);
   const rate = () => S.stable.reduce((n, f) => n + f.rate, 0);
   const cbLevel = (att, str, def, hp) => Math.floor(0.25 * (def + hp) + 0.325 * (att + str));
-  const myCb = () => cbLevel(lvl("attack"), lvl("strength"), lvl("defence"), lvl("hitpoints"));
+  const myCb = () => lvl("level");
   const foeCb = (m) => cbLevel(m.att, m.att, m.def, Math.round(m.hp / 10));
 
   /* ------------------------------------------------------------------ the numbers (Melvor's melee maths) */
-  const ST = () => STYLES[S.style];
   /** Everything your gear adds up to: implicits plus every affix, summed once and cached until the gear changes. */
   let gearCache = null;
   function sumGear(eq) {
-    const g = { wacc: 0, wstr: 0, acc: 0, str: 0, dmg: 0, ias: 0, crit: 0, cm: 0, ev: 0, dr: 0, hp: 0, regen: 0, lok: 0, fame: 0, find: 0, gold: 0, speed: 2600 };
+    const g = { wacc: 0, wstr: 0, acc: 0, str: 0, dmg: 0, ias: 0, crit: 0, cm: 0, ev: 0, dr: 0, hp: 0, hpPct: 0, regen: 0, lok: 0, fame: 0, find: 0, gold: 0, speed: 2600 };
+    for (const id of S.tree || []) { const n = TREE_BY[id]; if (n) for (const [k, v] of Object.entries(n.stats)) g[k] += v; }
     for (const k of EQ_KEYS) {
       const it = eq[k]; if (!it) continue;
       const b = BASES[it.base];
@@ -1767,18 +1861,18 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const gearChanged = () => { gearCache = null; };
   // the derived numbers, for any set of gear, so an item can be compared before you put it on
   function derive(g) {
-    const es = lvl("strength") + 9 + ST().b.str, ws = g.wstr + g.str;
+    const L = lvl("level"), es = L + 9, ws = g.wstr + g.str;
     return {
-      acc: (lvl("attack") + 9 + ST().b.acc) * (g.wacc + g.acc + 64),
-      ev: (lvl("defence") + 9 + ST().b.def) * (g.ev + 64),
+      acc: (L + 9) * (g.wacc + g.acc + 64),
+      ev: (L + 9) * (g.ev + 64),
       max: Math.floor(10 * (1.3 + es / 10 + ws / 80 + es * ws / 640) * (1 + g.dmg) * (S.buffs.whet > 0 ? 1.1 : 1)),
       speed: Math.round(g.speed / (1 + g.ias)),
       crit: Math.min(0.75, 0.05 + g.crit), cm: 1.5 + g.cm,
       dr: Math.min(0.6, g.dr + (S.buffs.wrap > 0 ? 0.05 : 0)),
-      hp: lvl("hitpoints") * 10 + g.hp, regen: g.regen, lok: g.lok, find: g.find, gold: g.gold, fame: g.fame
+      hp: Math.round((Math.max(100, L * 10) + g.hp) * (1 + g.hpPct)), regen: g.regen, lok: g.lok, find: g.find, gold: g.gold, fame: g.fame
     };
   }
-  const maxHp = () => lvl("hitpoints") * 10 + gear().hp;
+  const maxHp = () => derive(gear()).hp;
   const pAcc = () => derive(gear()).acc;
   const pEv = () => derive(gear()).ev;
   const pMax = () => derive(gear()).max;
@@ -1799,7 +1893,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       if (away) { away.levels[k] = after; return; }
       document.querySelector(".levelup")?.remove();
       const b = el("div", "levelup");
-      b.innerHTML = `<b>Congratulations, you just advanced a ${SKILLS[k].name} level.</b><span>Your ${SKILLS[k].name} level is now ${after}.</span>`;
+      b.innerHTML = k === "level" ? `<b>Warrior level ${after}</b><span>${after - before === 1 ? "A passive point" : `${after - before} passive points`} to spend on the tree.</span>`
+        : `<b>Congratulations, you just advanced a ${SKILLS[k].name} level.</b><span>Your ${SKILLS[k].name} level is now ${after}.</span>`;
       document.body.append(b); setTimeout(() => b.remove(), 3600);
     }
   }
@@ -1888,13 +1983,15 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     C.pAt = t + pSpeed(); C.eAt = t + m.speed;
   }
   function eat(k, quiet) {
-    const it = ITEMS[k]; if (!it?.heal || !(S.items[k] > 0) || S.hp >= maxHp()) return false;
+    const it = ITEMS[k]; if (!(it?.heal || it?.healPct) || !(S.items[k] > 0) || S.hp >= maxHp()) return false;
+    const heal = it.heal || Math.round(maxHp() * it.healPct);
     S.items[k]--; if (!S.items[k]) delete S.items[k];
-    S.hp = Math.min(maxHp(), S.hp + it.heal);
-    if (!quiet) splat("you", `+${it.heal}`, "heal");
+    S.hp = Math.min(maxHp(), S.hp + heal);
+    if (!quiet) splat("you", `+${heal}`, "heal");
     return true;
   }
-  const anyFood = () => (S.items[S.food] > 0 ? S.food : FOODS.find((k) => S.items[k] > 0));
+  // food first; a potion only when the food has run out
+  const anyFood = () => (S.items[S.food] > 0 ? S.food : FOODS.find((k) => S.items[k] > 0) || (S.items.potion_s > 0 ? "potion_s" : null));
   function splat(who, text, kind, t = Date.now()) { const age = Date.now() - t; if (!away && age >= -50 && age < 1500) splats.push({ who, text, kind, at: performance.now() - (Date.now() - t) }); }
 
   /** One blow: a full swing off the timer, or a click's jab at JAB of the damage. */
@@ -1905,8 +2002,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     C.foeHp -= dmg; lunge = t;
     splat("foe", String(dmg), hit ? (crit ? "crit" : scale < 1 ? "jab" : "hit") : "miss", t);
     if (dmg) {
-      ST().trains.forEach((k) => grant(k, Math.round(dmg * 0.4 / ST().trains.length)));
-      grant("hitpoints", Math.round(dmg * 0.133));
+      grant("level", Math.round(dmg * 0.25));
     }
     if (C.foeHp <= 0) kill(t, m);
     return dmg;
@@ -1958,6 +2054,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const fame = Math.round((1 + foeCb(m) * 0.4) * (1 + g.fame) * (m.boss ? 10 : 1) * (S.buffs.crown > t ? 1.5 : 1));
     dropLoot(m, t);
     S.fame += fame; grant("showman", fame * 2);
+    const pots = m.boss ? 2 : Math.random() < (m.elite ? 0.25 : 0.05) ? 1 : 0;
+    if (pots) { S.items.potion_s = (S.items.potion_s || 0) + pots; sess.drops.potion_s = (sess.drops.potion_s || 0) + pots; }
     m.drops.forEach(([k, ch]) => { let n = ch >= 1 ? ch : Math.random() < ch ? 1 : 0; if (n) { S.items[k] = (S.items[k] || 0) + n; sess.drops[k] = (sess.drops[k] || 0) + n; } });
     if (S.buffs.whet > 0) S.buffs.whet--; if (S.buffs.wrap > 0) S.buffs.wrap--;
     dying = t;
@@ -2119,7 +2217,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
      here changes an outcome, so offline catch-up never needs it. */
   const cv = $("arena"), ctx = cv.getContext("2d");
   function fit() { const d = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight; if (cv.width !== Math.round(w * d)) { cv.width = Math.round(w * d); cv.height = Math.round(h * d); } ctx.setTransform(d, 0, 0, d, 0, 0); return { w, h }; }
-  const TILE = 34, MW = 56, MH = 40;
+  const TILE = 45, MW = 56, MH = 40;
   const V = { key: "", map: null, img: null, torches: [], hero: { x: 0, y: 0 }, face: 0, slots: [], corpses: [], walk: null, kills: 0, cam: { x: 0, y: 0 }, target: null, labels: [] };
 
   /* rooms joined by corridors, carved into solid rock */
@@ -2283,10 +2381,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     ctx.restore();
   }
   function drawSplat(x, y, s, now) {
-    const k = (now - s.at) / 1000, yy = y - 26 - k * 22;
+    const k = (now - s.at) / 1000, yy = y - 34 - k * 26;
     const col = s.kind === "miss" ? "#2f6fd6" : s.kind === "heal" ? "#2fae5a" : s.kind === "crit" ? "#e0761a" : s.kind === "jab" ? "#9a3a8a" : "#c42a2a";
     ctx.globalAlpha = Math.min(1, (1 - k) * 2.4);
-    const r = s.kind === "crit" ? 13 : 10;
+    const r = s.kind === "crit" ? 16 : 13;
     ctx.fillStyle = col; ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.lineWidth = 1.5;
     ctx.beginPath(); for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2, rr = i % 2 ? r * .78 : r; ctx.lineTo(x + Math.cos(a) * rr, yy + Math.sin(a) * rr); } ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.fillStyle = "#fff"; ctx.font = `800 ${r}px Figtree, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(s.text, x, yy + 1);
@@ -2323,7 +2421,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     for (let i = Math.min(list.length, V.slots.length) - 1; i >= 0; i--) {
       const m = list[i], p = V.slots[i]; if (!m || !p) continue;
       const x = sx(p), y = sy(p), active = fighting && i === 0;
-      const s = m.guardian ? 22 : m.boss ? 19 : m.elite ? 15 : 13;
+      const s = m.guardian ? 29 : m.boss ? 25 : m.elite ? 20 : 17;
       if (m.elite || m.boss) { const g = ctx.createRadialGradient(x, y, 2, x, y, s * 2.2); g.addColorStop(0, m.elite && !m.boss ? "rgba(185,138,255,.55)" : "rgba(255,90,60,.55)"); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, s * 2.2, 0, Math.PI * 2); ctx.fill(); }
       if (!active) ctx.globalAlpha = 0.85;
       const hurtK = active ? Math.max(0, 1 - (now - lunge) / 260) : 0, lungeK = active ? Math.max(0, 1 - (now - hurt) / 220) : 0;
@@ -2334,8 +2432,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       if (active) {
         V.target = { x, y, r: s * 2.4 };
         const hpk = Math.min(1, Math.max(0, C.foeHp / m.hp));
-        ctx.fillStyle = "rgba(0,0,0,.7)"; ctx.fillRect(x - 22, y - s - 14, 44, 6);
-        ctx.fillStyle = m.boss ? "#ff6a4a" : "#d94a4a"; ctx.fillRect(x - 22, y - s - 14, 44 * hpk, 6);
+        ctx.fillStyle = "rgba(0,0,0,.7)"; ctx.fillRect(x - 28, y - s - 16, 56, 7);
+        ctx.fillStyle = m.boss ? "#ff6a4a" : "#d94a4a"; ctx.fillRect(x - 28, y - s - 16, 56 * hpk, 7);
         ctx.strokeStyle = "rgba(255,230,150,.55)"; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(x, y, s * 1.6, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
       }
     }
@@ -2345,7 +2443,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const swingK = Math.min(1, (now - lunge) / 220), swing = now - lunge < 220 ? swingK : 0;
     const hurtK = Math.max(0, 1 - (now - hurt) / 280);
     const hx = sx(hero), hy = sy(hero);
-    drawGlad(hx, hy, 14, face, ["#7a2a2a", "#2a3a7a", "#7a6a1a", "#8a4a1a"][S.eq.body?.rar ?? 0], RARITY[S.eq.helm?.rar ?? 0].color, swing, hurtK, V.walk ? now / 1000 : 0);
+    drawGlad(hx, hy, 19, face, ["#7a2a2a", "#2a3a7a", "#7a6a1a", "#8a4a1a"][S.eq.body?.rar ?? 0], RARITY[S.eq.helm?.rar ?? 0].color, swing, hurtK, V.walk ? now / 1000 : 0);
     if (C.resting && C.on) { ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.font = "800 11px Figtree, sans-serif"; ctx.textAlign = "center"; ctx.fillText("resting… z", hx, hy - 20); }
     // hits and heals over heads
     splats = splats.filter((s) => pnow - s.at < 1000);
@@ -2367,8 +2465,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       ctx.fillStyle = l.color; ctx.fillText(l.text, x, y + 1);
     });
     ctx.globalAlpha = 1;
-    const lamp = ctx.createRadialGradient(hx, hy, 6, hx, hy, 150); lamp.addColorStop(0, "rgba(255,220,160,.14)"); lamp.addColorStop(1, "rgba(255,220,160,0)");
-    ctx.fillStyle = lamp; ctx.fillRect(hx - 150, hy - 150, 300, 300);
+    const lamp = ctx.createRadialGradient(hx, hy, 8, hx, hy, 200); lamp.addColorStop(0, "rgba(255,220,160,.14)"); lamp.addColorStop(1, "rgba(255,220,160,0)");
+    ctx.fillStyle = lamp; ctx.fillRect(hx - 200, hy - 200, 400, 400);
     // a vignette, so the light sits on him
     const vg = ctx.createRadialGradient(w / 2, h / 2, h * .25, w / 2, h / 2, Math.max(w, h) * .72);
     vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,.5)"); ctx.fillStyle = vg; ctx.fillRect(0, 0, w, h);
@@ -2454,14 +2552,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     paintControls();
   }
   function paintControls() {
-    // styles
-    const st = $("styles"); st.replaceChildren();
-    STYLES.forEach((s, i) => {
-      const b = el("button", "cb-style" + (S.style === i ? " on" : ""), `<b>${s.name}</b><small>${s.trains.length > 1 ? "All three" : SKILLS[s.trains[0]].name} xp</small>`);
-      b.type = "button"; b.setAttribute("aria-pressed", String(S.style === i));
-      b.addEventListener("click", () => { S.style = i; renderArena(); save(); });
-      st.append(b);
-    });
+    $("drinkNow").innerHTML = `🧪 Drink <b>${num(S.items.potion_s || 0)}</b>`;
+    $("drinkNow").disabled = !S.items.potion_s;
     // food
     const fs = $("foodSel"); fs.replaceChildren();
     FOODS.forEach((k) => { const o = el("option", null, `${ITEMS[k].icon} ${ITEMS[k].name} ×${num(S.items[k] || 0)} · heals ${ITEMS[k].heal}`); o.value = k; o.selected = S.food === k; o.disabled = !S.items[k] && S.food !== k; fs.append(o); });
@@ -2502,7 +2594,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     $("foeLine").textContent = !C.on ? (S.view === "rift" ? "Not in a rift" : "Not in a dungeon") : C.rift ? (C.resting ? "Resting" : `Tier ${C.rift.tier}${C.foe ? ` · ${C.foe.name}` : ""}`) : C.resting ? `Resting · back in ${Math.max(0, Math.ceil((C.rAt - Date.now()) / 1000))}s` : C.farm ? `Farming · ${foeNow().name}` : `Room ${C.room + 1} of ${seq.length} · ${foeNow().name}`;
     $("foeName").textContent = C.on && foeNow() && !C.rAt ? foeNow().name : "—";
     const idle = dpsOf(d, m), click = clickDps();
-    $("cbLine").innerHTML = `<span><small>You</small> combat ${myCb()} · max hit <b>${num(d.max)}</b> · ${secs(d.speed)} · crit ${pct(d.crit)}</span>
+    $("cbLine").innerHTML = `<span><small>You</small> level ${myCb()} · max hit <b>${num(d.max)}</b> · ${secs(d.speed)} · crit ${pct(d.crit)}</span>
       <span><small>${m.icon || "🪖"} ${m.name}</small> you hit <b>${pct(hitVs(m))}</b> · it hits <b>${pct(foeHits(m))}</b> for up to ${m.max}</span>
       <span><small>Damage</small> <b>${idle.toFixed(1)}</b>/s idle${click ? ` <b class="clk">+${click.toFixed(1)}</b>/s clicking` : ""}</span>`
       + (S.buffs.whet > 0 || S.buffs.wrap > 0 || S.buffs.crown > Date.now() ? `<span class="cb-buffs">${S.buffs.whet > 0 ? `<i>🗡️ ${S.buffs.whet}</i>` : ""}${S.buffs.wrap > 0 ? `<i>🦴 ${S.buffs.wrap}</i>` : ""}${S.buffs.crown > Date.now() ? `<i>🌿 ${Math.ceil((S.buffs.crown - Date.now()) / 60000)}m</i>` : ""}</span>` : "");
@@ -2564,7 +2656,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     $("tbRank").textContent = t || (S.w >= 400 ? "Primus" : S.w >= 100 ? "Veteranus" : S.w >= 10 ? "Gladiator" : "Tiro");
   }
   function renderAll() {
-    renderArena();
+    renderArena(); renderTree();
     // stable
     $("stableCap").textContent = `${S.stable.length} fighters · ${num(rate())} an hour`;
     const ro = $("roster"); ro.replaceChildren();
@@ -2778,6 +2870,59 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     toast(`Salvaged ${out.length} items`); gearSel = null; renderAll(); save();
   }
 
+  let treeHover = null;
+  function renderTree() {
+    const svg = $("treeSvg"); if (!svg) return;
+    const have = new Set(S.tree), free = pointsFree();
+    const can = (n) => !have.has(n.id) && free > 0 && n.links.some((l) => have.has(l));
+    let lines = "", dots = "";
+    const done = new Set();
+    TREE.forEach((n) => n.links.forEach((l) => {
+      const k = [n.id, l].sort().join("|"); if (done.has(k)) return; done.add(k);
+      const o = TREE_BY[l], on = have.has(n.id) && have.has(l);
+      lines += `<line x1="${n.x}" y1="${n.y}" x2="${o.x}" y2="${o.y}" class="tl${on ? " on" : ""}"/>`;
+    }));
+    TREE.forEach((n) => {
+      const r = n.kind === "start" ? 26 : n.kind === "key" ? 22 : n.kind === "notable" ? 15 : 9;
+      const cls = `tn ${n.kind}${have.has(n.id) ? " on" : can(n) ? " can" : ""}`;
+      dots += `<g class="${cls}" data-id="${n.id}" style="--nc:${n.color || "#e8bf35"}" tabindex="0" role="button" aria-label="${n.name || "Passive"}"><circle cx="${n.x}" cy="${n.y}" r="${r}"/>${n.kind === "start" ? `<text x="0" y="6">⚔️</text>` : n.kind === "key" ? `<text x="${n.x}" y="${n.y + 6}">★</text>` : ""}</g>`;
+    });
+    // names sit just past each keystone; the side ones above it, so they never run off the edge
+    const labels = BRANCHES.map((b) => { const k = TREE_BY[`${b.key}11`], side = Math.abs(Math.cos(b.ang * Math.PI / 180)) > 0.5;
+      const x = side ? k.x - Math.sign(k.x) * 40 : k.x, y = side ? k.y - 44 : k.y + Math.sign(k.y) * 56 + 8;
+      return `<text class="tb-name" x="${x}" y="${y}" fill="${b.color}">${b.name}</text>`; }).join("");
+    svg.innerHTML = `<g>${lines}</g><g>${dots}</g>${labels}`;
+    $("treePts").innerHTML = free ? `<b>${free}</b> point${free === 1 ? "" : "s"} to spend` : "No points to spend";
+    $("treeLvl").textContent = `Warrior level ${lvl("level")} · ${S.tree.length - 1} allocated`;
+    const tb = sumTree();
+    $("treeSum").innerHTML = Object.keys(tb).length ? Object.entries(tb).map(([k, v]) => `<span>${sayStat(k, Math.round(v * 1000) / 1000)}</span>`).join("") : '<span class="note">Nothing allocated yet. Start next to the Warrior in the middle.</span>';
+    $("treeReset").textContent = `Reset tree ${S.tree.length > 1 ? `· ${num(treeResetCost())} denarii` : ""}`;
+    $("treeReset").disabled = S.tree.length <= 1;
+    const cnt = document.querySelector('.tab[data-tab="tree"] .count'); if (cnt) { cnt.hidden = !free; cnt.textContent = free; }
+    showTreeTip(treeHover);
+  }
+  const treeResetCost = () => Math.round(20 * (S.tree.length - 1) * Math.max(1, lvl("level") / 5));
+  function sumTree() { const t = {}; for (const id of S.tree) { const n = TREE_BY[id]; if (n) for (const [k, v] of Object.entries(n.stats)) t[k] = (t[k] || 0) + v; } return t; }
+  function showTreeTip(id) {
+    const tip = $("treeTip"); if (!tip) return;
+    const n = id && TREE_BY[id]; if (!n) { tip.hidden = true; return; }
+    const have = S.tree.includes(n.id), can = !have && pointsFree() > 0 && n.links.some((l) => S.tree.includes(l));
+    tip.innerHTML = `<b style="color:${n.color || "var(--gold)"}">${n.name || (n.kind === "start" ? "Warrior" : "Passive")}</b>${n.kind === "key" ? "<small>Keystone</small>" : n.kind === "notable" ? "<small>Notable</small>" : ""}
+      ${Object.entries(n.stats).map(([k, v]) => `<div>${sayStat(k, v)}</div>`).join("") || "<div>Where every Warrior starts.</div>"}
+      <em>${have ? "Allocated" : can ? "Click to allocate" : pointsFree() ? "Take a node next to it first" : "Level up for another point"}</em>`;
+    const svg = $("treeSvg"), box = svg.getBoundingClientRect(), wrap = svg.parentElement.getBoundingClientRect(), vb = svg.viewBox.baseVal;
+    const x = box.left - wrap.left + (n.x - vb.x) / vb.width * box.width, y = box.top - wrap.top + (n.y - vb.y) / vb.height * box.height;
+    tip.style.left = `${Math.max(110, Math.min(wrap.width - 110, x))}px`; tip.style.top = `${y}px`; tip.hidden = false;
+  }
+  function allocate(id) {
+    const n = TREE_BY[id]; if (!n || S.tree.includes(id)) return;
+    if (!pointsFree()) return toast("No passive points", "Level up for another.");
+    if (!n.links.some((l) => S.tree.includes(l))) return toast("Not connected", "Take a node next to it first.");
+    S.tree.push(id); gearChanged(); S.hp = Math.min(S.hp, maxHp());
+    if (n.kind !== "small") toast(`${n.name}`, Object.entries(n.stats).map(([k, v]) => sayStat(k, v)).join(" · "));
+    renderTree(); paintBar(); save();
+  }
+
   function renderYard() {
     const dr = $("drills"); dr.replaceChildren();
     DRILLS.forEach((d) => {
@@ -2833,6 +2978,16 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (C.on) { if (C.dun === S.dun) leave(C.farm ? "You stopped farming" : "You climbed back out"); else { S.dun = C.dun; renderArena(); } return; }
     enter(S.dun);
   });
+  $("treeSvg").addEventListener("click", (e) => { const g = e.target.closest("[data-id]"); if (g) allocate(g.dataset.id); });
+  $("treeSvg").addEventListener("mouseover", (e) => { const g = e.target.closest("[data-id]"); treeHover = g ? g.dataset.id : null; showTreeTip(treeHover); });
+  $("treeSvg").addEventListener("mouseleave", () => { treeHover = null; showTreeTip(null); });
+  $("treeSvg").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { const g = e.target.closest("[data-id]"); if (g) { e.preventDefault(); allocate(g.dataset.id); } } });
+  $("treeReset").addEventListener("click", () => {
+    const cost = treeResetCost(); if (S.coin < cost) return toast("Not enough denarii", `A reset costs ${num(cost)}.`);
+    if (!confirm(`Take back all ${S.tree.length - 1} points for ${num(cost)} denarii?`)) return;
+    S.coin -= cost; S.tree = ["start"]; gearChanged(); S.hp = Math.min(S.hp, maxHp()); renderTree(); paintBar(); save();
+  });
+  $("drinkNow").addEventListener("click", () => { if (!S.items.potion_s) return; if (!eat("potion_s")) toast("You are already at full health"); renderArena(); save(); });
   $("eatNow").addEventListener("click", () => { const f = S.items[S.food] ? S.food : anyFood(); if (!f) return toast("No food", "Buy some at the Market."); if (!eat(f)) toast("You are already at full health"); renderArena(); save(); });
   $("foodSel").addEventListener("change", (e) => { S.food = e.target.value; save(); });
   $("autoEat").addEventListener("change", (e) => { S.autoEat = Number(e.target.value); save(); });
@@ -2856,10 +3011,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     advance(now);
     S.coin += rate() / 3600 / 4;
     paintBar(); paintStats();
-    const sig = [S.view, C.rift ? `${C.rift.tier}:${Math.floor(C.rift.prog / 5)}:${C.foe?.name}` : "", S.rift.best, S.stash.length, C.on, C.dun, C.room, C.farm, S.dun, S.w, S.l, S.style, lvl("attack"), lvl("strength"), lvl("defence"), JSON.stringify(S.items)].join("|");
+    const sig = [S.items.potion_s, S.view, C.rift ? `${C.rift.tier}:${Math.floor(C.rift.prog / 5)}:${C.foe?.name}` : "", S.rift.best, S.stash.length, C.on, C.dun, C.room, C.farm, S.dun, S.w, S.l, lvl("level"), S.tree.length, JSON.stringify(S.items)].join("|");
     if (sig !== lastSig) { lastSig = sig; renderArena(); }
     renderLootCol();
     if (!document.querySelector('[data-panel="yard"]').hidden) renderYard();
+    { const cnt = document.querySelector('.tab[data-tab="tree"] .count'), f = pointsFree(); if (cnt && String(f) !== cnt.dataset.v) { cnt.dataset.v = String(f); cnt.hidden = !f; cnt.textContent = f; if (!document.querySelector('[data-panel="tree"]').hidden) renderTree(); } }
   }, 250);
   setInterval(save, 5000);
   addEventListener("pagehide", save);
