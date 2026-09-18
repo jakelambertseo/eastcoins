@@ -415,7 +415,7 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=15";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=16";
 import * as WK from "/v3/assets/js/eastscape-wiki.js?v=5";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -500,6 +500,8 @@ function onMsg(m) {
   }
   if (m.type === "snap") {
     const est = m.t - Date.now(); offset = offset == null ? est : Math.max(offset - 5, Math.min(offset + 5, offset * 0.8 + est * 0.2));
+    if (Z.pending && m.scene === Z.pending.from && performance.now() < Z.pending.until) return;   // the old area's last word, already left
+    Z.pending = null;
     if (m.scene !== Z.key) loadScene(m.scene);
     Z.players = m.players; Z.mobs = m.mobs; Z.bots = m.bots; Z.ground = m.ground || [];
     if (m.isle) { const was = Z.isle?.theme; Z.isle = m.isle; if (was !== m.isle.theme) Z.bg = paintBg(); } else Z.isle = null;
@@ -610,10 +612,10 @@ function say(text, cls = "sys") {
 /* ------------------------------------------------------------ the art (PixelLab, style A) */
 const ART = "/v3/assets/img/glad/flat/", ART_V = 1;
 // pictures replaced after they first shipped (the edge keeps each URL for a year): bump the one that changed
-const ART_VER = { o_fountain: 2, o_stall: 2, o_ferry: 2, o_bed: 2, bank: 2, cottage: 2 };
+const ART_VER = { o_fountain: 2, o_stall: 2, o_ferry: 2, o_bed: 2, bank: 2, cottage: 2, hole: 2 };
 const ART_FILES = ["t_dirt", "t_water", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d]),
-  "bank", "store", "cottage", "g_bush", "g_boulder", "g_grass", "g_flowers",
+  "bank", "store", "cottage", "o_spot", "g_bush", "g_boulder", "g_grass", "g_flowers",
   ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
   ...["tom", "waldy", "tullius", "charon", "livia", "gaius", "nonna", "vibius", "aurelia", "cassia"].flatMap((n) => [n + "_south", n + "_east"]),
   // the Wilderness (PixelLab, 2026-09-18)
@@ -641,7 +643,7 @@ const artReady = Promise.all(ART_FILES.map((k) => new Promise((res) => {
 })));
 /* painted sunlight: everything stands on its own shadow, its silhouette laid flat on the ground and leaning away
    from a sun behind the viewer's left shoulder. Purely a picture; nothing in the game knows about light. */
-const SHADOW = { skew: -0.85, flat: 0.34, alpha: 0.26 }, NO_SHADOW = new Set(["hole"]);
+const SHADOW = { skew: -0.85, flat: 0.28, alpha: 0.15 }, NO_SHADOW = new Set(["hole", "o_spot", "o_plot"]);
 function castShadow(ctx2, a, flip, sc) {
   ctx2.save(); ctx2.transform(1, 0, SHADOW.skew, SHADOW.flat, 0, 0); if (flip) ctx2.scale(-1, 1); if (sc !== 1) ctx2.scale(sc, sc);
   ctx2.globalAlpha = SHADOW.alpha; ctx2.drawImage(a.sh, -Math.round(a.cx), -a.foot); ctx2.restore();
@@ -675,6 +677,9 @@ const objArt = (ob, now = 0) => {
 };
 // the back wall's decor, centred where the drawn versions were
 const WALL_CX = { banner: 5, lamp: 4, vault: 0, herbs: 1, shelf: 1, window: 0 };
+// natural things are mirrored at random (by position, so it's the same for everyone) so a forest isn't one tree
+const VARY = new Set(["tree", "oak", "olive", "cypress", "yew", "rock", "vein", "deadtree", "snag", "gravestone", "bush", "boulder", "crate", "barrel", "plant", "palm", "vine", "hive", "skeleton"]);
+const flipOf = (ob) => VARY.has(ob.t) && hashRand(ob.x, ob.y, 77) < 0.5;
 // a few pictures came out small for their spot: drawn a bit bigger
 const OBJ_SCALE = {}, HOUSE_SCALE = {};   // integer sizes only: a fractional scale makes pixel art uneven
 const objBusy = (ob, now) => ob.stumpUntil > now || ob.emptyUntil > now || ob.bareUntil > now;
@@ -703,10 +708,16 @@ function paintBg() {
   // island themes recolour the land
   if (theme === "dunes" || theme === "gloom") for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (".sb".includes(Z.g[y][x])) f(x * 32, y * 32, 32, 32, theme === "dunes" ? "rgba(236,204,128,.62)" : "rgba(70,66,86,.55)");
   o.scale(A, A);
-  const bgSpr = (k, x, y) => { const a = IMG[k]; if (!a) return false; o.save(); o.translate(x, y); o.scale(1 / A, 1 / A); castShadow(o, a, false, 1); o.restore(); o.drawImage(a.im, x - a.cx / A, y - a.foot / A, a.im.width / A, a.im.height / A); return true; };
+  const bgSpr = (k, x, y, ob) => {
+    const a = IMG[k]; if (!a) return false;
+    const flip = ob ? flipOf(ob) : false, lit = ob ? 0.9 + hashRand(ob.x, ob.y, 78) * 0.18 : 1;
+    o.save(); o.translate(x, y); o.scale(1 / A, 1 / A); castShadow(o, a, flip, 1); o.restore();
+    o.save(); o.translate(x, y); if (flip) o.scale(-1, 1); if (lit !== 1) o.filter = `brightness(${lit.toFixed(2)})`;
+    o.drawImage(a.im, -a.cx / A, -a.foot / A, a.im.width / A, a.im.height / A); o.restore(); return true;
+  };
   if (!dark && theme !== "gloom") for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (Z.g[y][x] === ".") {
     const r = hashRand(x, y, 31), X = x * T, Y = y * T;
-    if (r < 0.2 && IMG.g_grass && IMG.g_flowers) { const im = (r < 0.09 ? IMG.g_flowers : IMG.g_grass).im; o.drawImage(im, X + Math.floor(hashRand(x, y, 35) * 4) - 2, Y + Math.floor(hashRand(x, y, 36) * 4) - 2, T, T); continue; }
+    if (r < 0.2 && IMG.g_grass && IMG.g_flowers) { const im = (r < 0.09 ? IMG.g_flowers : IMG.g_grass).im, fx = X + Math.floor(hashRand(x, y, 35) * 4) - 2, fy = Y + Math.floor(hashRand(x, y, 36) * 4) - 2; o.save(); if (hashRand(x, y, 37) < 0.5) { o.translate(fx + T, fy); o.scale(-1, 1); } else o.translate(fx, fy); o.drawImage(im, 0, 0, T, T); o.restore(); continue; }
     if (r < 0.09) { const c = ["#f4f0e0", "#f2c230", "#d8506a", "#a070d8"][Math.floor(hashRand(x, y, 32) * 4)]; for (let i = 0; i < 3; i++) { const fx = X + 2 + Math.floor(hashRand(x, i, 33) * 11), fy = Y + 3 + Math.floor(hashRand(y, i, 34) * 10); f(fx, fy + 1, 1, 2, "#3f6a2a"); f(fx - 1, fy, 3, 1, c); f(fx, fy - 1, 1, 3, c); } }
     else if (r < 0.2) { const fx = X + 3 + Math.floor(hashRand(x, y, 35) * 9), fy = Y + 5 + Math.floor(hashRand(x, y, 36) * 8); f(fx, fy, 1, 3, "#4f7a36"); f(fx + 2, fy - 1, 1, 4, "#5a8a3e"); f(fx + 4, fy + 1, 1, 2, "#4f7a36"); }
   }
@@ -719,12 +730,12 @@ function paintBg() {
   for (const ob of Z.objs) {
     const X = ob.x * T, Y = ob.y * T;
     if (ob.t === "plot" && IMG.o_plot) { o.drawImage(IMG.o_plot.im, X, Y, T, T); continue; }
-    if (!dark && (ob.t === "bush" || ob.t === "boulder") && bgSpr(`g_${ob.t}`, X + 8, Y + 16)) continue;
+    if (!dark && (ob.t === "bush" || ob.t === "boulder") && bgSpr(`g_${ob.t}`, X + 8, Y + 16, ob)) continue;
     if (objArt(ob)) continue;
     if (ob.t === "fenceH") { f(X, Y + 7, T, 2, "#6b3f23"); f(X, Y + 11, T, 2, "#6b3f23"); f(X + 6, Y + 2, 4, 13, "#4a2a16"); f(X + 7, Y + 2, 2, 12, "#7a4a26"); f(X + 6, Y + 1, 4, 2, "#8a5a32"); }
     if (ob.t === "fenceV") { f(X + 6, Y, 4, T, "#5a3418"); f(X + 7, Y, 2, T, "#7a4a26"); f(X + 5, Y + 3, 6, 3, "#4a2a16"); }
-    if (dark && (ob.t === "bush" || ob.t === "boulder") && bgSpr(`w_${ob.t}`, X + 8, Y + 16)) continue;
-    if (ob.t === "skeleton") { if (bgSpr("skeleton", X + 8, Y + 15)) continue; f(X + 3, Y + 8, 10, 2, "#e8e4d8"); f(X + 2, Y + 6, 4, 4, "#e8e4d8"); f(X + 3, Y + 7, 1, 1, "#222"); for (let i = 0; i < 4; i++) f(X + 6 + i * 2, Y + 7, 1, 4, "#d8d4c8"); f(X + 12, Y + 2, 1, 10, "#8a6a3a"); }
+    if (dark && (ob.t === "bush" || ob.t === "boulder") && bgSpr(`w_${ob.t}`, X + 8, Y + 16, ob)) continue;
+    if (ob.t === "skeleton") { if (bgSpr("skeleton", X + 8, Y + 15, ob)) continue; f(X + 3, Y + 8, 10, 2, "#e8e4d8"); f(X + 2, Y + 6, 4, 4, "#e8e4d8"); f(X + 3, Y + 7, 1, 1, "#222"); for (let i = 0; i < 4; i++) f(X + 6 + i * 2, Y + 7, 1, 4, "#d8d4c8"); f(X + 12, Y + 2, 1, 10, "#8a6a3a"); }
     if (ob.t === "dock") { const dw = ob.w * T; for (let y = 0; y < ob.h; y++) { f(X, Y + y * T, dw, T, "#8a5a32"); for (let i = 0; i < 4; i++) f(X, Y + y * T + i * 4, dw, 1, "#6b4423"); } f(X, Y, 1, ob.h * T, "#5a3418"); f(X + dw - 1, Y, 1, ob.h * T, "#5a3418"); }
     if (ob.t === "pen") { f(X, Y + 2, 48, 13, "#c8a860"); for (let i = 0; i < 12; i++) f(X + 2 + Math.floor(hashRand(i, 3, 91) * 44), Y + 4 + Math.floor(hashRand(i, 4, 92) * 9), 3, 1, "#a88a40");
       f(X, Y + 1, 48, 2, "#6b3f23"); f(X, Y + 14, 48, 2, "#6b3f23"); for (const px_ of [0, 23, 46]) f(X + px_, Y - 2, 2, 17, "#4a2a16"); }
@@ -983,9 +994,24 @@ function predTick(pnow) {
     PRED.dir = DIRS[`${dx},${dy}`]; if (dx) PRED.face = dx > 0 ? 1 : -1;
     return;
   }
+  // stepped onto an exit: go through now rather than waiting a round trip for the server to say so
+  if (Z.g[PRED.y]?.[PRED.x] === "e" && predictExit(PRED.x, PRED.y)) return;
   // arrived: give control back to the server once it agrees (or after a moment regardless)
   const P = myEnt();
   if (!P || (!P.s || posOf(P, snow()).moving === false) && (P.x === PRED.x && P.y === PRED.y || pnow - PRED.t > 1500)) PRED.on = false;
+}
+function predictExit(x, y) {
+  if (Z.def.exitTo && !Z.def.exits) return false;   // rooms and docks: the server decides where you come out
+  const d = x === COLS - 1 ? "e" : x === 0 ? "w" : y === 0 ? "n" : "s", base = Z.def.exits?.[d]; if (!base) return false;
+  const owner = G.ownerOf(Z.key), to = owner ? `${base}:${owner}` : base, side = G.OPP[d], mid = (G.SPAN[side][0] + G.SPAN[side][1]) / 2;
+  const ax = side === "w" ? 1 : side === "e" ? COLS - 2 : mid, ay = side === "n" ? 1 : side === "s" ? ROWS - 2 : mid;
+  const me_ = myEnt(), from = Z.key;
+  loadScene(to);
+  if (!G.walkableIn(Z.g, ax, ay)) return true;   // the server will pick a spot; its snapshot arrives shortly
+  // until the server's first word from the new area: you, standing at the way in, and nobody else yet
+  Z.players = me_ ? [{ ...me_, x: ax, y: ay, s: 0, act: null, started: false, moving: false }] : []; Z.mobs = []; Z.bots = []; Z.npcs = []; Z.ground = [];
+  Z.pending = { from, until: performance.now() + 1500 };
+  return true;
 }
 function predPos(pnow) {
   if (!PRED.step) return { px: PRED.x, py: PRED.y, moving: false };
@@ -1196,7 +1222,7 @@ function frame() {
     const oa = objArt(ob, now);
     if (oa) {
       const sc = OBJ_SCALE[oa] || (oa === "o_rock_empty" && ob.t === "vein" ? 2 : 1), bob = (ob.t === "ferry" || ob.t === "boatback") && !calm ? Math.round(Math.sin(pnow / 600)) : 0;
-      sprites.push({ y: (ob.y + ob.h) * T - 1, draw: () => spr(oa, (ob.x + ob.w / 2) * T, (ob.y + ob.h) * T + bob, false, "", sc) });
+      sprites.push({ y: (ob.y + ob.h) * T - 1, draw: () => spr(oa, (ob.x + ob.w / 2) * T, (ob.y + ob.h) * T + bob, flipOf(ob), "", sc) });
       // special ones keep their sparkles; a fire sends up embers
       const fire = ob.t === "fire";
       if ((ob.special || fire) && !calm && !objBusy(ob, now)) sprites.push({ y: ob.y * T + 16, draw: () => { for (let i = 0; i < 6; i++) { const k = (pnow / (fire ? 1100 : 2600) + i / 6) % 1, mx = ob.x * T + 8 + Math.sin(i * 2.3 + pnow / 800) * (fire ? 3 : 9), my = ob.y * T + (fire ? 4 : 8) - k * (fire ? 18 : 30); lc.globalAlpha = Math.sin(k * Math.PI) * 0.9; px(mx, my, 1, 1, ob.glow || (fire ? (i % 2 ? "#ffb030" : "#ff6a1a") : "#ffe27a")); } lc.globalAlpha = 1; } });
@@ -1204,7 +1230,7 @@ function frame() {
     }
     const tall = { gravestone: 14, cagesign: 14, rope: 14, snag: 14 }[ob.t];
     if (tall) sprites.push({ y: ob.y * T + tall, draw: () => {
-      if (spr(ob.t, ob.x * T + 8, ob.y * T + 16)) return;
+      if (spr(ob.t, ob.x * T + 8, ob.y * T + 16, flipOf(ob))) return;
       const X = ob.x * T, Y = ob.y * T;
       if (ob.t === "gravestone") { px(X + 3, Y + 13, 10, 2, "rgba(0,0,0,.3)"); px(X + 4, Y + 1, 8, 13, "#7a7a82"); px(X + 5, Y, 6, 2, "#8a8a92"); px(X + 6, Y + 4, 4, 1, "#4a4a52"); px(X + 7, Y + 3, 2, 4, "#4a4a52"); }
       if (ob.t === "cagesign") { px(X + 7, Y, 2, 15, "#5a3418"); px(X + 1, Y - 2, 14, 8, "#8a5a32"); px(X + 6, Y, 4, 4, "#e8e4d8"); px(X + 6, Y + 1, 1, 1, "#c42a2a"); px(X + 9, Y + 1, 1, 1, "#c42a2a"); }
@@ -1214,7 +1240,7 @@ function frame() {
     if (ob.t === "deadtree") sprites.push({ y: ob.y * T + 14, draw: () => {
       const X = ob.x * T, Y = ob.y * T;
       if (ob.stumpUntil > now) { px(X + 3, Y + 13, 10, 2, "rgba(0,0,0,.25)"); px(X + 4, Y + 8, 8, 6, "#8a8490"); px(X + 5, Y + 7, 6, 2, "#c8c0d0"); px(X + 7, Y + 8, 2, 1, "#a060d0"); return; }
-      if (spr("deadtree", X + 8, Y + 15)) return;
+      if (spr("deadtree", X + 8, Y + 15, flipOf(ob))) return;
       px(X + 6, Y - 10, 4, 25, "#d8d0c8"); px(X + 1, Y - 8, 6, 2, "#d8d0c8"); px(X + 9, Y - 13, 6, 2, "#d8d0c8"); px(X + 7, Y - 2, 2, 3, "#a060d0");
     } });
     if (ob.t === "palm") sprites.push({ y: ob.y * T + 14, draw: () => {
@@ -1252,9 +1278,9 @@ function frame() {
     } });
     if (ob.t === "well" && IMG.well) sprites.push({ y: (ob.y + 2) * T - 1, draw: () => spr("well", (ob.x + 1) * T, (ob.y + 2) * T - 1) });
     if (ob.t === "tree") sprites.push({ y: ob.y * T + 14, draw: () => {
-      if (pvp && spr("w_tree", ob.x * T + 8, ob.y * T + 15)) return;
+      if (pvp && spr("w_tree", ob.x * T + 8, ob.y * T + 15, flipOf(ob))) return;
       if (ob.stumpUntil > now) { const X = ob.x * T, Y = ob.y * T; px(X + 3, Y + 13, 10, 2, "rgba(0,0,0,.25)"); px(X + 4, Y + 8, 8, 6, "#6b4423"); px(X + 5, Y + 7, 6, 2, "#b8905a"); px(X + 7, Y + 8, 2, 1, "#8a6a3a"); return; }
-      if (!spr("tree", ob.x * T + 8, ob.y * T + 15)) { const X = ob.x * T, Y = ob.y * T; px(X + 6, Y + 6, 4, 10, "#6b4423"); px(X - 3, Y - 8, 22, 16, "#3f7a3a"); px(X, Y - 9, 8, 5, "#5a9a4a"); }
+      if (!spr("tree", ob.x * T + 8, ob.y * T + 15, flipOf(ob))) { const X = ob.x * T, Y = ob.y * T; px(X + 6, Y + 6, 4, 10, "#6b4423"); px(X - 3, Y - 8, 22, 16, "#3f7a3a"); px(X, Y - 9, 8, 5, "#5a9a4a"); }
     } });
     if (ob.t === "oak") sprites.push({ y: ob.y * T + 14, draw: () => {
       const X = ob.x * T, Y = ob.y * T;
@@ -1324,6 +1350,7 @@ function frame() {
       if (spr("wheat", X + 8, Y + 15)) return;
       for (let i = 0; i < 3; i++) { const sx = X + 2 + i * 5; px(sx + 1, Y + 6, 1, 9, "#b89a28"); px(sx, Y - 1, 3, 8, "#f0d040"); }
     } });
+    if (ob.t === "spot" && IMG.o_spot && !ob.special) { sprites.push({ y: ob.y * T, draw: () => { lc.globalAlpha = calm ? 0.9 : 0.72 + 0.28 * Math.sin(pnow / 500 + ob.x); spr("o_spot", ob.x * T + 8, ob.y * T + 16 + (calm ? 0 : Math.round(Math.sin(pnow / 700 + ob.y)))); lc.globalAlpha = 1; } }); continue; }
     if (ob.t === "spot") sprites.push({ y: ob.y * T, draw: () => { const X = ob.x * T + 8, Y = ob.y * T + 8, r = calm ? 5 : 3 + ((pnow / 160) % 5);
       if (ob.special) { px(X - 6, Y - 3, 12, 6, "rgba(40,20,90,.35)"); lc.strokeStyle = "rgba(210,190,255,.9)"; lc.lineWidth = 1; for (const rr of [r, (r + 2.5) % 8 + 1]) { lc.beginPath(); lc.ellipse(X, Y, rr * 1.2, rr * 0.6, 0, 0, Math.PI * 2); lc.stroke(); } px(X - 1, Y - 1, 2, 2, "#f0e8ff"); return; }
       lc.strokeStyle = "rgba(230,245,255,.85)"; lc.lineWidth = 1; lc.beginPath(); lc.ellipse(X, Y, r, r * 0.55, 0, 0, Math.PI * 2); lc.stroke(); px(X - 1, Y - 1, 2, 2, "#fff"); px(X + 3, Y - 3, 1, 1, "#fff"); } });
@@ -1480,7 +1507,7 @@ function frame() {
     const rq = hoverThing.ob?.req, low = rq && lvl(rq.skill) < rq.lvl;
     label(`${G.VERB[hoverThing.kind] || "Examine"} ${hoverThing.name}${rq ? ` (${SKILLS[rq.skill].name} ${rq.lvl})` : ""}`, view.ox + (W * S2) / 2, view.oy + 8, low ? "#ff8a7a" : "#fff", 14);
   }
-  const fk = (performance.now() - Z.fadeAt) / 350; if (fk < 1) { ctx.fillStyle = `rgba(0,0,0,${1 - fk})`; ctx.fillRect(0, 0, w, h); }
+  const fk = (performance.now() - Z.fadeAt) / 200; if (fk < 1) { ctx.fillStyle = `rgba(0,0,0,${1 - fk})`; ctx.fillRect(0, 0, w, h); }
   $("dbg").hidden = !set("debug");
   if (set("debug") && P) $("dbg").textContent = `Scene: ${Z.def.name}\nTile: ${P.x} ${P.y}${hoverTile ? `   Mouse: ${hoverTile.x} ${hoverTile.y}` : ""}\nAction: ${P.act || (P.moving ? "walking" : "none")}\nClock offset: ${Math.round(offset || 0)} ms`;
 }
