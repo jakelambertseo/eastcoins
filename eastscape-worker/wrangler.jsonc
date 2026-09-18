@@ -1,0 +1,23 @@
+{
+  // EastScape's game server: one Durable Object ("the world") that runs every
+  // scene, decides every hit, drop and level, and keeps every character.
+  // Deploy: cd eastscape-worker && npx wrangler deploy
+  // Local:  cd eastscape-worker && npx wrangler dev --var DEV:1   (lets localhost connect as a dev admin)
+  "$schema": "../worker/node_modules/wrangler/config-schema.json",
+  "name": "eastcoin-eastscape",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-21",
+  "workers_dev": true,
+  "preview_urls": false,
+  "durable_objects": {
+    "bindings": [{ "name": "WORLD", "class_name": "World" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["World"] }],
+  "vars": {
+    "ALLOWED_ORIGINS": "https://eastcoin.vip,https://www.eastcoin.vip,https://eastcoins.pages.dev,http://localhost:4321,http://127.0.0.1:4321",
+    // where tickets are checked: the site's /api/eastscape/verify
+    "SITE": "https://eastcoin.vip",
+    // "1" only under `wrangler dev`: lets a localhost page connect as a dev admin without a ticket
+    "DEV": "0"
+  }
+}
