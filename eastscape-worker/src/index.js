@@ -27,7 +27,7 @@ const SCENE_IDLE_MS = 120000;
 const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const BOT_LINES = ["anyone know where the good fishing is?", "gz", "cows are free xp lol", "selling feathers", "this farm is peaceful", "wheat run anyone?", "brb", "that yew is taunting me", "who keeps feeding the olives"];
-const EXAMINE_KINDS = new Set(["hive", "notice", "sign", "statue", "fountain", "fire", "bush", "boulder", "hay", "counter", "pool", "column", "range", "table", "barrel", "bed", "plant", "bench", "goatstatue", "chest", "rug", "chair", "sack", "cat", "bucket"]);
+const EXAMINE_KINDS = new Set(["hive", "notice", "sign", "statue", "fountain", "fire", "bush", "boulder", "hay", "counter", "pool", "column", "range", "table", "barrel", "bed", "plant", "bench", "goatstatue", "chest", "rug", "chair", "sack", "cat", "bucket", "bigtomato", "press", "crate", "scarecrow", "milestone", "toll", "barricade", "chariot", "mule"]);
 
 export default {
   async fetch(request, env) {
@@ -65,6 +65,7 @@ export class World {
     this.scenes = new Map();    // scene key -> live scene
     this.timer = null; this.tickN = 0; this.nextChatter = 0;
     this.trades = new Map();    // trade id -> a trade between two players in progress
+    this.gseq = 0;              // ids for things lying on the ground
     // the Exchange: every offer from every player, online or not. Loaded before anything else runs.
     ctx.blockConcurrencyWhile(async () => { this.ex = (await ctx.storage.get("exchange")) || { next: 1, orders: [], last: {}, tax: 0 }; });
   }
@@ -90,6 +91,7 @@ export class World {
       x: C.x, y: C.y, path: [], step: null, face: 1, dir: "south", act: null,
       lastSwing: 0, swingAt: 0, hurtAt: 0, regen: Date.now(), dirty: true, needSave: !stored, out: [], god: false, msgs: 0, msgWindow: 0, joinedAt: Date.now() };
     this.pls.set(user.id, pl);
+    this.ctx.storage.put(`who:${String(user.login).toLowerCase()}`, { id: user.id, name: pl.name }).catch(() => {});
     const S = this.scene(C.scene);
     this.placeSafely(S, pl);
     ws.addEventListener("message", (e) => { try { this.onMessage(pl, JSON.parse(e.data)); } catch (err) { /* ignore bad frames */ } });
@@ -105,6 +107,12 @@ export class World {
   async leave(pl, replaced = false) {
     if (pl.left) return; pl.left = true;
     if (pl.trade) this.tradeEnd(pl.trade, `${pl.name} left.`);
+    for (const S of this.scenes.values()) if (S.owner === pl.id) S.isleCopy = pl.C.isle;   // visitors keep seeing it as it was left
+    const S = this.scenes.get(pl.C.scene), now = Date.now();
+    if (!replaced && S?.def.pvp && now - (pl.combatAt || 0) < G.PVP.lingerMs && this.pls.get(pl.id) === pl) {
+      pl.lingerUntil = now + G.PVP.lingerMs; pl.path = []; pl.act = null; pl.needSave = true;
+      await this.persist(pl); return;
+    }
     if (this.pls.get(pl.id) === pl) this.pls.delete(pl.id);
     pl.act = null; pl.path = [];
     await this.persist(pl);
@@ -126,15 +134,18 @@ export class World {
   }
   touch(pl) { pl.dirty = true; pl.needSave = true; pl.changedAt ??= Date.now(); }
 
-  meOf(pl) { const C = pl.C; return { speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, settings: C.settings, scene: C.scene, god: pl.god, saved: C.saved || 0 }; }
+  meOf(pl) { const C = pl.C; return { isle: { tier: C.isle.tier, themes: C.isle.themes }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, settings: C.settings, scene: C.scene, god: pl.god, saved: C.saved || 0 }; }
 
   /* ------------------------------------------------------------ scenes */
   scene(key) {
     let S = this.scenes.get(key);
     if (S) return S;
-    const def = G.SCENES[key], b = G.buildScene(key);
-    S = { key, def, g: b.g, objs: b.objs, events: [], idleSince: 0 };
-    for (const o of S.objs) if (o.t === "olive") o.left = o.picks || 4;
+    const def = G.sceneDef(key), b = G.buildScene(key);
+    S = { key, def, g: b.g, objs: b.objs, events: [], idleSince: 0, ground: [] };
+    S.owner = G.ownerOf(key);
+    // the owner's other scenes (island, far shore, cottage) share what we know about an offline owner's island
+    if (S.owner) for (const o of this.scenes.values()) if (o !== S && o.owner === S.owner) { S.isleCopy ||= o.isleCopy; S.ownerName ||= o.ownerName; }
+    for (const o of S.objs) if (o.t === "olive" || o.t === "vine") o.left = o.picks || 4;
     S.mobs = def.mobs.map(([t, x, y], i) => ({ id: `${key}m${i}`, t, x, y, hx: x, hy: y, hp: G.MOBS[t].hp, path: [], step: null, face: Math.random() < 0.5 ? 1 : -1, nextWander: 0, dead: false, respawnAt: 0, hurtAt: 0, swingAt: 0, lastSwing: 0 }));
     S.npcs = def.npcs.map((n, i) => ({ ...n, id: `${key}n${i}`, hx: n.x, hy: n.y, path: [], step: null, face: -1, nextWander: 0, holdUntil: 0 }));
     S.bots = def.bots.map((bt, i) => {
@@ -145,6 +156,8 @@ export class World {
     this.scenes.set(key, S);
     return S;
   }
+  isleOf(S) { return this.pls.get(S.owner)?.C.isle || S.isleCopy; }
+  dropGround(S, k, n, x, y, owner, now) { S.ground.push({ id: `g${++this.gseq}`, k, n, x, y, owner, until: now + G.PVP.lootMs, gone: now + G.PVP.groundMs }); }
   playersIn(S) { const out = []; for (const p of this.pls.values()) if (p.C.scene === S.key) out.push(p); return out; }
   occupied(S, x, y, self) {
     const hit = (o) => o !== self && ((o.x === x && o.y === y) || (o.step && o.step.tx === x && o.step.ty === y));
@@ -193,7 +206,15 @@ export class World {
         return;
       }
       case "act": return this.startAct(S, pl, m);
+      case "wild": {
+        if (S.key !== "farm" || !this.near(S, pl, "hole", 2) || G.lvlOf(C, G.WILD_REQ.skill) < G.WILD_REQ.lvl) return;
+        this.moveToScene(pl, "wild", null, G.SCENES.wild.entry);
+        return this.say(pl, "You climb down into the Wilderness. You're flagged for PvP: anyone here can attack you.", "bad");
+      }
+      case "isle": return this.isleOp(S, pl, m);
       case "equip": return this.equip(pl, m.i | 0);
+      case "eat": return this.eat(pl, m.i | 0, now);
+      case "shop": return this.shopOp(S, pl, m);
       case "unequip": return this.unequip(pl, String(m.slot));
       case "drop": {
         const i = m.i | 0, st = C.inv[i]; if (!st) return;
@@ -229,28 +250,36 @@ export class World {
   startAct(S, pl, m) {
     const C = pl.C, f = this.from(pl), now = Date.now();
     let act = null;
-    if (m.kind === "mob") { const mob = S.mobs.find((x) => x.id === m.id && !x.dead); if (mob) act = { kind: "mob", id: mob.id, x: mob.x, y: mob.y, name: G.MOBS[mob.t].name }; }
+    if (m.kind === "pvp") { if (!S.def.pvp) return; const T = this.pls.get(String(m.id)); if (!T || T === pl || T.C.scene !== S.key) return; act = { kind: "pvp", id: T.id, x: T.x, y: T.y, name: T.name }; }
+    else if (m.kind === "ground") { const it = S.ground.find((x) => x.id === m.id); if (it) act = { kind: "ground", id: it.id, x: it.x, y: it.y, name: G.ITEMS[it.k].name }; }
+    else if (m.kind === "mob") { const mob = S.mobs.find((x) => x.id === m.id && !x.dead); if (mob) act = { kind: "mob", id: mob.id, x: mob.x, y: mob.y, name: G.MOBS[mob.t].name }; }
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob) return;
-      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange" }[ob.t] || (EXAMINE_KINDS.has(ob.t) ? ob.t : null);
+      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", range: "cook", fire: "cook", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       if (!kind) return;
       const at = kind === "door" ? ob.door : G.nearestCell(ob, f);
       act = { kind, ob, x: at.x, y: at.y, name: ob.name };
     }
     if (!act) return;
     act.started = 0;
-    const p = G.findPath(S.g, f, act, act.reach || G.reachOf(act.kind) || 1);
+    const p = G.findPath(S.g, f, act, act.kind === "ground" ? 0 : act.reach || G.reachOf(act.kind) || 1);
     if (p === null) { this.say(pl, "You can't reach that.", "bad"); pl.act = null; return; }
     pl.act = act; pl.path = p; this.kick(S, pl, now);
   }
 
   /* ------------------------------------------------------------ inventory and gear */
+  // all or nothing: n of k go in (topping up stacks of 99, then new slots) or none do
   give(pl, k, n = 1) {
-    const C = pl.C, s = C.inv.find((x) => x.k === k);
-    if (s) { s.n += n; this.touch(pl); return true; }
-    if (C.inv.length >= G.INV_MAX) { this.say(pl, "Your inventory is full.", "bad"); return false; }
-    C.inv.push({ k, n }); this.touch(pl); return true;
+    const C = pl.C;
+    if (G.roomFor(C.inv, k) < n) { this.say(pl, "Your inventory is full.", "bad"); return false; }
+    G.addInv(C.inv, k, n); this.touch(pl); return true;
+  }
+  // as many of n as there's room for; returns how many went in
+  giveUpTo(pl, k, n) {
+    const q = Math.min(n, G.roomFor(pl.C.inv, k));
+    if (q < 1) { this.say(pl, "Your inventory is full.", "bad"); return 0; }
+    G.addInv(pl.C.inv, k, q); this.touch(pl); return q;
   }
   grant(pl, k, xp, track = true) {
     const C = pl.C, before = G.lvlOf(C, k);
@@ -270,12 +299,44 @@ export class World {
   }
   equip(pl, i) {
     const C = pl.C, st = C.inv[i]; if (!st) return; const it = G.ITEMS[st.k]; if (!it?.slot) return;
+    if (it.req && G.lvlOf(C, it.req.skill) < it.req.lvl) return this.say(pl, `You need a ${G.SKILLS[it.req.skill].name} level of ${it.req.lvl} to use the ${it.name.toLowerCase()}.`, "bad");
     const old = C.eq[it.slot];
     if (st.n > 1) st.n--; else C.inv.splice(i, 1);
     if (old) this.give(pl, old);
     C.eq[it.slot] = st.k;
     this.say(pl, `You ${it.slot === "weapon" ? "wield" : "put on"} the ${it.name.toLowerCase()}.`);
     this.touch(pl);
+  }
+  // eating: a moment's pause, and your next swing waits a little
+  eat(pl, i, now) {
+    const C = pl.C, st = C.inv[i], it = st && G.ITEMS[st.k]; if (!it?.heal) return;
+    if (now - (pl.lastEat || 0) < G.EAT_MS) return;
+    pl.lastEat = now; pl.lastSwing = Math.max(pl.lastSwing, now - 1200);
+    st.n--; if (!st.n) C.inv.splice(i, 1);
+    const before = C.hp; C.hp = Math.min(G.maxHpOf(C), C.hp + it.heal); this.touch(pl);
+    this.say(pl, C.hp > before ? `You eat the ${it.name.toLowerCase()}. It heals ${C.hp - before}.` : `You eat the ${it.name.toLowerCase()}. You were already full.`, "good");
+  }
+  // the Forge: buy from Brutus, sell him what you gathered. You have to be standing with him.
+  shopOp(S, pl, m) {
+    const C = pl.C, n = S.npcs.find((x) => x.opens === "shop");
+    if (!n || G.cheb(pl, n) > 3) return this.say(pl, "You need to be at the Forge, with Brutus.", "bad");
+    const cash = () => C.inv.find((x) => x.k === "coins");
+    if (m.op === "buy") {
+      const row = G.SHOP.sells.find(([k]) => k === m.k); if (!row) return;
+      const [k, price] = row, want = Math.max(1, Math.min(1000, m.n === "all" ? 1000 : m.n | 0)), have = cash()?.n || 0, room = G.roomFor(C.inv, k), qty = Math.min(want, Math.floor(have / price), room);
+      if (room < 1) return this.say(pl, "Your inventory is full.", "bad");
+      if (qty < 1) return this.say(pl, `That's ${G.fmtCash(price)}. You have ${G.fmtCash(have)}.`, "bad");
+      const c = cash(); c.n -= qty * price; if (!c.n) C.inv.splice(C.inv.indexOf(c), 1);
+      this.give(pl, k, qty); this.touch(pl);
+      return this.say(pl, `You buy ${qty > 1 ? `${qty} × ` : "a "}${G.ITEMS[k].name.toLowerCase()} for ${G.fmtCash(qty * price)}.`, "good");
+    }
+    if (m.op === "sell") {
+      const st = C.inv[m.i | 0]; if (!st) return; const price = G.SHOP.buys[st.k];
+      if (!price) return this.say(pl, `Brutus squints at the ${G.ITEMS[st.k].name.toLowerCase()}. "Not buying that."`);
+      const k = st.k, all = G.countItems(C, [k]), qty = G.takeInv(C.inv, k, Math.max(1, Math.min(all, m.n === "all" ? all : m.n | 0)));
+      this.give(pl, "coins", qty * price); this.touch(pl);
+      return this.say(pl, `You sell ${qty > 1 ? `${qty} × ` : "the "}${G.ITEMS[k].name.toLowerCase()} for ${G.fmtCash(qty * price)}.`, "good");
+    }
   }
   unequip(pl, slot) {
     const C = pl.C, k = C.eq[slot]; if (!k) return;
@@ -307,7 +368,7 @@ export class World {
   }
   finishQuest(pl, k) {
     const C = pl.C, q = G.QUESTS[k];
-    if (q.goal.type === "bring") { let left = q.goal.n; for (const key of q.goal.items) { const st = C.inv.find((x) => x.k === key); if (!st) continue; const take = Math.min(left, st.n); st.n -= take; left -= take; if (!st.n) C.inv.splice(C.inv.indexOf(st), 1); if (!left) break; } }
+    if (q.goal.type === "bring") { let left = q.goal.n; for (const key of q.goal.items) { left -= G.takeInv(C.inv, key, left); if (!left) break; } }
     C.qs[k] = { ...(C.qs[k] || {}), state: "done" };
     if (q.reward.coins) this.give(pl, "coins", q.reward.coins);
     for (const [sk, xp] of Object.entries(q.reward.xp || {})) this.grant(pl, sk, xp);
@@ -322,7 +383,7 @@ export class World {
     this.tickN++;
     const live = new Set([...this.pls.values()].map((p) => p.C.scene));
     for (const [key, S] of this.scenes) {
-      if (!live.has(key)) { S.idleSince ||= now; if (now - S.idleSince > SCENE_IDLE_MS) this.scenes.delete(key); continue; }
+      if (!live.has(key)) { S.idleSince ||= now; if (now - S.idleSince > SCENE_IDLE_MS && !(S.def.pvp && S.mobs.some((m) => m.dead && now < m.respawnAt))) this.scenes.delete(key); continue; }
       S.idleSince = 0;
       for (const pl of this.playersIn(S)) this.playerTick(S, pl, now);
       for (const o of S.objs) if (o.t === "wheat" && S.g[o.y][o.x] === "f" && !(o.grownAt > now)) {
@@ -338,6 +399,9 @@ export class World {
     }
     for (const T of this.trades.values()) { const a = this.pls.get(T.a), b = this.pls.get(T.b); if (!a || !b || G.cheb(a, b) > G.TRADE_RANGE + 2) this.tradeEnd(T, "Trade cancelled: you walked too far apart."); }
     if (this.tickN % SNAP_EVERY === 0) this.broadcast(now); else this.sendPrivate();
+    for (const S of this.scenes.values()) if (S.ground.length) S.ground = S.ground.filter((x) => now < x.gone);
+    for (const pl of this.pls.values()) if (pl.lingerUntil && now > pl.lingerUntil) { this.pls.delete(pl.id); pl.needSave = true; this.persist(pl); }
+    if (!this.pls.size) this.stop();
     // saving: anything changed more than SAVE_MS ago is written now
     for (const pl of this.pls.values()) if (pl.needSave && pl.changedAt && now - pl.changedAt >= SAVE_MS) { pl.changedAt = null; this.persist(pl); }
   }
@@ -365,13 +429,15 @@ export class World {
     const C = pl.C;
     const moving = this.stepEntity(S, pl, now, true);
     // stepping onto the blue takes you through
-    if (!moving && S.g[pl.y][pl.x] === "e" && S.def.interior) {
-      const o = S.def.exitTo; this.moveToScene(pl, o.scene, null, o); pl.dir = "south";
-      this.say(pl, `You step back out into ${G.SCENES[o.scene].name.replace(/^The /, "the ")}.`); return;
+    const edge = !moving && S.g[pl.y][pl.x] === "e", side = pl.x === G.COLS - 1 ? "e" : pl.x === 0 ? "w" : pl.y === 0 ? "n" : "s";
+    if (edge && S.def.exitTo && !S.def.exits?.[side]) {
+      const o = S.def.home ? { scene: G.isleKey(this.isleOf(S), S.owner), x: 10, y: 4 } : S.def.exitTo; this.moveToScene(pl, o.scene, null, o); pl.dir = "south";
+      this.say(pl, `You step back out into ${G.sceneDef(o.scene).name.replace(/^The /, "the ")}.`); return;
     }
     if (!moving && S.g[pl.y][pl.x] === "e") {
-      const d = pl.x === G.COLS - 1 ? "e" : pl.x === 0 ? "w" : pl.y === 0 ? "n" : "s", to = S.def.exits[d];
-      if (to) { this.moveToScene(pl, to, G.OPP[d]); this.say(pl, `You travel to ${G.SCENES[to].name}.`); return; }
+      const d = side; let to = S.def.exits?.[d];
+      if (to && S.owner) to = `${to}:${S.owner}`;   // an island's far shore is that owner's far shore
+      if (to) { this.moveToScene(pl, to, G.OPP[d]); this.say(pl, `You travel to ${G.sceneDef(to).name}.`); return; }
     }
     if (!moving) this.doAction(S, pl, now);
     // a hitpoint back every 20 seconds out of a fight
@@ -383,7 +449,10 @@ export class World {
     return S.bots.filter((b) => b.working?.ob === ob).length + this.playersIn(S).filter((p) => p !== except && p.act?.ob === ob && p.act.started).length;
   }
   // a gather landed: the item pops up over the gatherer for everyone in the area
-  gained(S, pl, k, n = 1) { S.events.push({ type: "gain", who: pl.id, k, n, t: Date.now() }); }
+  gained(S, pl, k, n = 1) {
+    S.events.push({ type: "gain", who: pl.id, k, n, t: Date.now() });
+    if (S.def.geode && Math.random() < S.def.geode && this.give(pl, "geode")) { S.events.push({ type: "gain", who: pl.id, k: "geode", n: 1, t: Date.now() }); this.say(pl, "Something glints in the dirt: a glimmering geode!", "loot"); }
+  }
   groupNote(S, pl, a) {
     const n = this.workersOn(S, a.ob, pl); if (n === a.groupSeen) return; a.groupSeen = n;
     if (n) this.say(pl, `Group bonus: ${n} other${n > 1 ? "s" : ""} working this ${a.ob.name.toLowerCase()} with you. +${n}% to your chance and xp.`, "good", "group");
@@ -406,6 +475,16 @@ export class World {
       }
       return;
     }
+    if (a.kind === "pvp") return this.pvpSwing(S, pl, a, now, faceIt);
+    if (a.kind === "ground") {
+      pl.act = null;
+      const it = S.ground.find((x) => x.id === a.id); if (!it) return this.say(pl, "Too late: it's gone.");
+      if (G.cheb(pl, it) > 1) return;
+      if (it.owner && it.owner !== pl.id && now < it.until) return this.say(pl, "That isn't yours to take. Not yet, anyway.", "bad");
+      if (!this.give(pl, it.k, it.n)) return;
+      S.ground.splice(S.ground.indexOf(it), 1);
+      return this.say(pl, `You pick up the ${G.ITEMS[it.k].name.toLowerCase()}.`, "loot");
+    }
     if (!G.inReach(pl, a, a.reach || G.reachOf(a.kind))) { pl.act = null; return; }
     if (a.kind === "npc") {
       const n = S.npcs.find((x) => x.id === a.id); pl.act = null; if (!n) return;
@@ -414,6 +493,10 @@ export class World {
     }
     pl.act = null;   // most things are one go; the gathering ones below put it back
     faceIt();
+    if (a.kind === "door" && a.ob?.enter === "home" && S.owner) {
+      this.moveToScene(pl, `home:${S.owner}`, null, G.SCENES.home.entry); pl.dir = "north";
+      return this.say(pl, S.owner === pl.id ? "You go into your cottage." : `You go into ${S.ownerName || "their"}'s cottage.`);
+    }
     if (a.kind === "door") {
       if (!a.ob?.enter || !G.SCENES[a.ob.enter]) return this.say(pl, `The ${a.name.toLowerCase()} is shut. It'll open soon.`);
       const inside = G.SCENES[a.ob.enter]; this.moveToScene(pl, a.ob.enter, null, inside.entry); pl.dir = "north";
@@ -423,8 +506,12 @@ export class World {
     if (a.kind === "exchange") { pl.out.push({ type: "exchange" }); return this.exSend(pl); }
     if (a.kind === "hole") {
       if (G.lvlOf(C, G.WILD_REQ.skill) < G.WILD_REQ.lvl) return pl.out.push({ type: "popup", title: "The Wilderness", icon: "☠️", text: `You need level ${G.WILD_REQ.lvl} in ${G.SKILLS[G.WILD_REQ.skill].name} to enter the Wilderness.` });
-      return pl.out.push({ type: "popup", title: "The Wilderness", icon: "☠️", text: "Down there, other players can attack you. It isn't open yet. It will be soon." });
+      return pl.out.push({ type: "wildask" });
     }
+    if (a.kind === "rope") { this.moveToScene(pl, "farm", null, { x: 10, y: 9 }); return this.say(pl, "You climb back up to the farm. Nobody can attack you up here."); }
+    if (a.kind === "ferry") return pl.out.push({ type: "ferry" });
+    if (a.kind === "boatback") { this.moveToScene(pl, "river", null, G.ISLE_FERRY); return this.say(pl, "Charon rows you back to River Bend without a word."); }
+    if (a.kind === "plot" || a.kind === "pedestal" || a.kind === "islesign") return this.isleUse(S, pl, a, now);
     if (a.kind === "well") return this.say(pl, "You look down the well. Something glints at the bottom, but it's too far down.");
     if (a.ob?.req && G.lvlOf(C, a.ob.req.skill) < a.ob.req.lvl) return this.say(pl, `You need a ${G.SKILLS[a.ob.req.skill].name} level of ${a.ob.req.lvl} to ${(G.VERB[a.kind] || "use").toLowerCase()} the ${a.ob.name}. ${a.ob.tease || ""}`, "bad");
     if (G.EXAMINE[a.kind]) return this.say(pl, pick(G.EXAMINE[a.kind]));
@@ -433,7 +520,7 @@ export class World {
       return this.say(pl, "You pray at the shrine. The sandal regards you coolly.");
     }
     pl.act = a;   // the rest keep going until done
-    const ob = a.ob, bonus = this.workersOn(S, ob, pl) * 0.01, gx = (xp) => Math.round(xp * (1 + bonus));
+    const ob = a.ob, group = this.workersOn(S, ob, pl) * 0.01, bonus = group + (S.def.luck || 0), gx = (xp) => Math.round(xp * (1 + group) * (S.def.xpMul || 1));
     if (a.kind === "rock" || a.kind === "vein") {
       const vein = a.kind === "vein";
       if (!this.hasTool(pl, "mining")) { pl.act = null; return; }
@@ -456,6 +543,26 @@ export class World {
       }
       return;
     }
+    if (a.kind === "cook") {
+      const lv = G.lvlOf(C, "cooking"), raw = C.inv.find((x) => G.COOK[x.k] && lv >= G.COOK[x.k].lvl);
+      if (!raw) {
+        const tooHard = C.inv.find((x) => G.COOK[x.k]);
+        this.say(pl, tooHard ? `You need a Cooking level of ${G.COOK[tooHard.k].lvl} to cook ${G.ITEMS[tooHard.k].name.toLowerCase()}.` : "You have nothing raw to cook.", tooHard ? "bad" : "sys");
+        pl.act = null; return;
+      }
+      if (!a.started) { a.started = now; a.next = now + 1800; pl.swingAt = now; this.say(pl, `You start cooking the ${G.ITEMS[raw.k].name.toLowerCase().replace(/^raw /, "")}.`); return; }
+      if (now - pl.swingAt > 900) pl.swingAt = now;
+      if (now < a.next) return;
+      a.next = now + 1800;
+      const r = G.COOK[raw.k];
+      if (raw.n > 1 && (G.roomFor(C.inv, r.to) < 1 || G.roomFor(C.inv, "burnt") < 1)) { this.say(pl, "Your inventory is full.", "bad"); pl.act = null; return; }
+      raw.n--; if (!raw.n) C.inv.splice(C.inv.indexOf(raw), 1);
+      if (Math.random() < G.burnChance(r, lv, ob.t === "range")) { this.give(pl, "burnt"); this.say(pl, "You burn it.", "bad"); }
+      else { this.give(pl, r.to); this.gained(S, pl, r.to); this.grant(pl, "cooking", r.xp); }
+      this.touch(pl);
+      if (!C.inv.some((x) => G.COOK[x.k] && lv >= G.COOK[x.k].lvl)) { this.say(pl, "That's everything cooked."); pl.act = null; }
+      return;
+    }
     if (a.kind === "tree") {
       if (ob.stumpUntil > now) { this.say(pl, "That tree's been cut down. It'll grow back."); pl.act = null; return; }
       if (!this.hasTool(pl, "woodcutting")) { pl.act = null; return; }
@@ -476,7 +583,7 @@ export class World {
     }
     if (a.kind === "olive") {
       if (ob.bareUntil > now) { this.say(pl, "You've picked this tree clean. Give it a moment."); pl.act = null; return; }
-      if (!a.started) { a.started = now; a.next = now + 1500; this.say(pl, "You start picking olives…"); return; }
+      if (!a.started) { a.started = now; a.next = now + 1500; this.say(pl, ob.t === "vine" ? "You start picking tomatoes…" : "You start picking olives…"); return; }
       if (now < a.next) return;
       a.next = now + 1500;
       if (!this.give(pl, ob.crop || "olives")) { pl.act = null; return; }
@@ -508,7 +615,7 @@ export class World {
 
   killMob(S, pl, m, now) {
     const def = G.MOBS[m.t];
-    m.dead = true; m.respawnAt = now + 15000; pl.act = null;
+    m.dead = true; m.respawnAt = now + G.respawnMs(S.def, m.t); pl.act = null;
     const got = [];
     for (const [k, n, chance] of def.drops) {
       if (chance != null && Math.random() >= chance) continue;
@@ -518,10 +625,146 @@ export class World {
     this.say(pl, `You defeat the ${def.name.toLowerCase()}.${got.length ? ` It drops ${got.map(([k, n]) => `${n > 1 ? n + " " : ""}${G.ITEMS[k].name.toLowerCase()}`).join(", ")}.` : ""}`, "loot");
     this.questEvent(pl, "kill", m.t);
   }
-  die(pl) {
+  // killer: the player who landed the last hit, or { mob: name }
+  die(pl, S, killer) {
+    const now = Date.now(), C = pl.C, pk = killer?.C ? killer : null;
+    pl.act = null; pl.path = [];
+    if (pk && pk.act?.id === pl.id) pk.act = null;
+    if (S?.def.pvp && G.inCage(S.def, pl.x, pl.y)) {
+      C.hp = G.maxHpOf(C); pl.x = S.def.cageOut.x; pl.y = S.def.cageOut.y; pl.step = null; this.placeSafely(S, pl); this.touch(pl);
+      if (pk) this.say(pk, `You beat ${pl.name} in the Cage.`, "good");
+      return this.say(pl, `${pk ? pk.name : "Someone"} beat you in the Cage. Nothing lost: you're back outside the bars, patched up.`, "bad");
+    }
+    let lost = null;
+    if (S?.def.pvp) {
+      const worn = G.SLOTS.filter((s) => C.eq[s]);
+      if (worn.length && Math.random() < G.PVP.drop) { const s = pick(worn); lost = C.eq[s]; C.eq[s] = null; this.dropGround(S, lost, 1, pl.x, pl.y, pk ? pk.id : null, now); }
+      const nm = lost ? G.ITEMS[lost].name.toLowerCase() : null;
+      if (pk) this.say(pk, `You have defeated ${pl.name}.${nm ? ` They dropped their ${nm}. It's yours for the next minute.` : ""}`, "loot");
+      this.say(pl, `${pk ? `${pk.name} killed you` : `A ${killer?.mob?.toLowerCase() || "monster"} killed you`} in the Wilderness.${nm ? ` You dropped your ${nm}.` : " You kept everything this time."}`, "bad");
+      for (const p of this.pls.values()) if (p !== pl && p !== pk && G.sceneDef(p.C.scene)?.pvp) this.say(p, `☠️ ${pl.name} was killed by ${pk ? pk.name : `a ${killer?.mob?.toLowerCase() || "monster"}`}.`);
+    }
     this.say(pl, "Oh dear, you are dead! You wake up at the farmhouse.", "bad");
-    pl.C.hp = G.maxHpOf(pl.C);
+    C.hp = G.maxHpOf(C);
     this.moveToScene(pl, "farm", null, { x: 4, y: 6 });
+  }
+
+  // one swing at another player, in the Wilderness
+  pvpSwing(S, pl, a, now, faceIt) {
+    const T = this.pls.get(a.id), C = pl.C;
+    if (!T || T.C.scene !== S.key || !S.def.pvp) { pl.act = null; return; }
+    if (G.cheb(pl, T) !== 1) { const p = G.findPath(S.g, pl, T, 1); if (p && p.length) pl.path = p; else if (!p) pl.act = null; return; }
+    const cage = G.inCage(S.def, pl.x, pl.y);
+    if (cage !== G.inCage(S.def, T.x, T.y)) { this.say(pl, "The cage bars are in the way."); pl.act = null; return; }
+    a.x = T.x; a.y = T.y; faceIt();
+    if (!a.started) { a.started = now; pl.lastSwing = now - 1800; }
+    if (now - pl.lastSwing < 2400) return;
+    pl.lastSwing = now; pl.swingAt = now; pl.combatAt = now; T.combatAt = now;
+    const TC = T.C, hit = Math.random() < G.hitChance(G.lvlOf(C, "melee") + 1 + G.bonusOf(C).acc, (G.lvlOf(TC, "melee") + G.bonusOf(TC).def) / 2), dmg = hit ? rint(1, G.maxHitOf(C)) : 0;
+    if (!T.god) { TC.hp -= dmg; this.touch(T); }
+    if (dmg) T.hurtAt = now;
+    S.events.push({ type: "splat", who: `p:${T.id}`, n: dmg, kind: dmg ? "hit" : "miss", t: now });
+    // real fights train you; the Cage doesn't
+    if (dmg && !cage) { this.grant(pl, "melee", dmg * 4); this.grant(pl, "hp", Math.round(dmg * 1.33), false); }
+    // hit back, if they weren't doing anything
+    if (!T.act && !T.path.length && !T.step && !T.lingerUntil) T.act = { kind: "pvp", id: pl.id, x: pl.x, y: pl.y, name: pl.name, started: 0 };
+    if (TC.hp <= 0) this.die(T, S, pl);
+  }
+
+  /* ------------------------------------------------------------ islands */
+  async isleOp(S, pl, m) {
+    const C = pl.C, I = C.isle, mine = S.owner === pl.id;
+    if (m.op === "list") {
+      const list = [...this.pls.values()].filter((p) => p !== pl && !p.lingerUntil && p.C.isle.open).map((p) => ({ id: p.id, name: p.name }));
+      return pl.out.push({ type: "isles", list });
+    }
+    if (m.op === "go") {
+      if (S.key !== "river" || !this.near(S, pl, "ferry", 3)) return this.say(pl, "You need to be at Charon's ferry, at River Bend.", "bad");
+      let id = pl.id, name = pl.name;
+      if (m.id != null) { const o = this.pls.get(String(m.id)); if (!o) return this.say(pl, "They aren't around right now. Try their name."); id = o.id; name = o.name; }
+      else if (m.name) {
+        const who = await this.ctx.storage.get(`who:${String(m.name).replace(/^@/, "").trim().toLowerCase()}`);
+        if (!who) return this.say(pl, `Charon has never heard of anyone called ${String(m.name).slice(0, 25)}.`);
+        id = who.id; name = who.name;
+      }
+      if (pl.left || pl.C.scene !== "river") return;
+      const owner = this.pls.get(id);
+      let copy = null;
+      if (id !== pl.id && !owner) copy = G.normChar(await this.ctx.storage.get(`char:${id}`)).isle;
+      if (pl.left || pl.C.scene !== "river") return;
+      const isle = owner ? owner.C.isle : copy || I, key = G.isleKey(isle, id);
+      if (id !== pl.id && !isle.open) return this.say(pl, `${name}'s island is closed to visitors.`);
+      const S2 = this.scene(key); S2.ownerName = name; if (copy) S2.isleCopy = copy;
+      this.moveToScene(pl, key, null, G.SCENES.isle.entry); pl.dir = "north";
+      return this.say(pl, id === pl.id ? "Charon rows you out to your island." : `Charon rows you out to ${name}'s island.`, "good");
+    }
+    if (m.op === "upgrade") {
+      const next = G.ISLE_TIERS[I.tier + 1];
+      if (S.key !== "river" || !this.near(S, pl, "ferry", 3) || !next) return;
+      const cash = C.inv.find((x) => x.k === "coins");
+      if (!cash || cash.n < next.price) return this.say(pl, `${next.name} costs ${G.fmtCash(next.price)}.`, "bad");
+      cash.n -= next.price; if (!cash.n) C.inv.splice(C.inv.indexOf(cash), 1);
+      const oldKey = G.isleKey(I, pl.id); I.tier++; this.touch(pl);
+      const newKey = G.isleKey(I, pl.id);
+      for (const p of this.pls.values()) if (p.C.scene === oldKey) { this.moveToScene(p, newKey, null, G.SCENES.isle.entry); this.say(p, "The island grows around you. Somebody paid for an upgrade."); }
+      return this.say(pl, `Your island is now: ${next.name}. ${next.ex}`, "good");
+    }
+    if (m.op === "buy") {
+      const th = G.THEMES[m.theme];
+      if (S.key !== "river" || !this.near(S, pl, "ferry", 3) || !th || th.price == null || I.themes.includes(m.theme)) return;
+      const cash = C.inv.find((x) => x.k === "coins");
+      if (!cash || cash.n < th.price) return this.say(pl, `The ${th.name} theme costs ${G.fmtCash(th.price)}.`, "bad");
+      cash.n -= th.price; if (!cash.n) C.inv.splice(C.inv.indexOf(cash), 1);
+      I.themes.push(m.theme); this.touch(pl);
+      return this.say(pl, `You bought the ${th.name} island theme. Change it at the sign on your island.`, "good");
+    }
+    if (!mine) return;
+    const within = (t, i) => S.objs.some((o) => o.t === t && o.i === i && G.cheb(pl, o) <= 1);
+    if (m.op === "theme") { if (!I.themes.includes(m.theme)) return; I.theme = m.theme; this.touch(pl); return this.say(pl, `Your island is now ${G.THEMES[m.theme].name}.`, "good"); }
+    if (m.op === "open") {
+      I.open = !!m.v; this.touch(pl);
+      if (!I.open) for (const p of [...this.pls.values()]) if (p !== pl && G.ownerOf(p.C.scene) === pl.id) { this.moveToScene(p, "river", null, G.ISLE_FERRY); this.say(p, `${pl.name} closed their island. Charon rows you back.`); }
+      return this.say(pl, I.open ? "Your island is open: anyone can visit." : "Your island is closed to visitors.", "good");
+    }
+    if (m.op === "plant") {
+      const i = m.i | 0, k = String(m.k), crop = G.CROPS[k];
+      if (!crop || I.plots[i] !== null || !within("plot", i)) return;
+      if (G.lvlOf(C, "farming") < crop.lvl) return this.say(pl, `You need a Harvesting level of ${crop.lvl} to grow ${G.ITEMS[k].name.toLowerCase()}.`, "bad");
+      const st = C.inv.find((x) => x.k === k); if (!st) return;
+      st.n--; if (!st.n) C.inv.splice(C.inv.indexOf(st), 1);
+      I.plots[i] = { k, at: Date.now() }; this.touch(pl);
+      return this.say(pl, `You plant some ${G.ITEMS[k].name.toLowerCase()}. It'll be ready in ${Math.round(crop.ms / 60000)} minutes, whether you're here or not.`, "good");
+    }
+    if (m.op === "show") {
+      const i = m.i | 0, st = C.inv[m.s | 0];
+      if (!st || st.k === "coins" || I.shelf[i] !== null || !within("pedestal", i)) return;
+      st.n--; if (!st.n) C.inv.splice(C.inv.indexOf(st), 1);
+      I.shelf[i] = st.k; this.touch(pl);
+      return this.say(pl, `You put your ${G.ITEMS[st.k].name.toLowerCase()} on display.`, "good");
+    }
+  }
+  isleUse(S, pl, a, now) {
+    const I = this.isleOf(S); if (!I) return;
+    const mine = S.owner === pl.id, whose = mine ? "Your" : `${S.ownerName || "Their"}'s`, ob = a.ob;
+    if (a.kind === "islesign") return mine ? pl.out.push({ type: "islesign", themes: I.themes, theme: I.theme, open: I.open }) : this.say(pl, `"${S.ownerName || "Someone"}'s island. Visitors welcome. Please don't lick the pedestals."`);
+    if (a.kind === "pedestal") {
+      const k = I.shelf[ob.i];
+      if (!mine) return this.say(pl, k ? `On display: ${G.ITEMS[k].name}. ${G.ITEMS[k].ex || ""}` : "An empty pedestal.");
+      if (!k) return pl.out.push({ type: "display", i: ob.i });
+      if (!this.give(pl, k)) return;
+      I.shelf[ob.i] = null; this.touch(pl);
+      return this.say(pl, `You take your ${G.ITEMS[k].name.toLowerCase()} off display.`);
+    }
+    const p = I.plots[ob.i];
+    if (!p) return mine ? pl.out.push({ type: "plant", i: ob.i }) : this.say(pl, "An empty plot.");
+    const crop = G.CROPS[p.k], left = p.at + crop.ms - now, nm = G.ITEMS[p.k].name.toLowerCase();
+    if (!mine) return this.say(pl, `${whose} ${nm} ${left > 0 ? "is growing" : "looks ready to pick"}.`);
+    if (left > 0) return this.say(pl, `Your ${nm} will be ready in ${left > 90000 ? `about ${Math.round(left / 60000)} minutes` : `${Math.ceil(left / 1000)} seconds`}.`);
+    const n = rint(crop.yield[0], crop.yield[1]);
+    if (!this.give(pl, p.k, n)) return;
+    I.plots[ob.i] = null; this.touch(pl);
+    this.gained(S, pl, p.k, n); this.grant(pl, "farming", crop.xp);
+    this.say(pl, `You harvest ${n} ${nm}.`, "good");
   }
 
   mobsTick(S, now) {
@@ -539,7 +782,17 @@ export class World {
         Object.assign(m, { dead: false, hp: G.MOBS[m.t].hp, x: spot.x, y: spot.y, path: [], step: null });
         continue;
       }
-      const foe = players.find((p) => p.act?.kind === "mob" && p.act.id === m.id && G.cheb(p, m) === 1 && !p.step);
+      const def = G.MOBS[m.t];
+      let foe = players.find((p) => p.act?.kind === "mob" && p.act.id === m.id && G.cheb(p, m) === 1 && !p.step);
+      if (!foe && def.aggro) {
+        const ok = (p) => p.C.scene === S.key && !G.inCage(S.def, p.x, p.y) && G.cheb(p, { x: m.hx, y: m.hy }) <= def.aggro + 5;
+        let tgt = m.target ? players.find((p) => p.id === m.target) : null;
+        if (!tgt || !ok(tgt)) { tgt = players.filter((p) => ok(p) && G.cheb(p, m) <= def.aggro).sort((a, b) => G.cheb(a, m) - G.cheb(b, m))[0] || null; m.target = tgt ? tgt.id : null; }
+        if (tgt) {
+          if (G.cheb(tgt, m) === 1 && !tgt.step) foe = tgt;
+          else { if (!m.step && now > (m.nextChase || 0)) { m.nextChase = now + 500; m.path = G.findPath(S.g, m, tgt, 1) || []; } this.stepEntity(S, m, now, false); continue; }
+        } else if (G.cheb(m, { x: m.hx, y: m.hy }) > 4 && !m.step && !m.path.length) m.path = G.findPath(S.g, m, { x: m.hx, y: m.hy }, 0)?.slice(0, 6) || [];
+      }
       if (foe) {
         m.face = foe.x > m.x ? 1 : -1;
         if (now - m.lastSwing >= G.MOBS[m.t].speed) {
@@ -547,8 +800,10 @@ export class World {
           const C = foe.C, hit = Math.random() < G.hitChance(G.MOBS[m.t].att, (G.lvlOf(C, "melee") + G.bonusOf(C).def) / 2), dmg = hit ? rint(1, G.MOBS[m.t].max) : 0;
           if (!foe.god) { C.hp -= dmg; this.touch(foe); }
           if (dmg) foe.hurtAt = now;
+          foe.combatAt = now;
           S.events.push({ type: "splat", who: `p:${foe.id}`, n: dmg, kind: dmg ? "hit" : "miss", t: now });
-          if (C.hp <= 0) this.die(foe);
+          if (!foe.act && !foe.path.length && !foe.lingerUntil) foe.act = { kind: "mob", id: m.id, x: m.x, y: m.y, name: def.name, started: 0 };
+          if (C.hp <= 0) this.die(foe, S, { mob: def.name });
         }
         continue;
       }
@@ -572,7 +827,7 @@ export class World {
       if (!this.stepEntity(S, n, now, false) && now > n.nextWander) {
         n.nextWander = now + (n.level ? 1500 : 4000) + Math.random() * 5000;
         if (n.level && Math.random() < 0.45) {
-          const jobs = S.objs.filter((o) => ["tree", "oak", "rock", "vein", "spot", "olive"].includes(o.t) && !o.special && !(o.stumpUntil > now) && !(o.emptyUntil > now));
+          const jobs = S.objs.filter((o) => ["tree", "oak", "cypress", "rock", "vein", "spot", "olive", "vine"].includes(o.t) && !o.special && !(o.stumpUntil > now) && !(o.emptyUntil > now));
           const ob = jobs.length && pick(jobs), at = ob && G.nearestCell(ob, n), p = ob && G.findPath(S.g, n, at, ob.t === "spot" ? 2 : 1);
           if (p) { n.path = p; n.goal = { ob, x: at.x, y: at.y }; }
         } else if (n.level) { const tx = rint(2, G.COLS - 3), ty = rint(2, G.ROWS - 3); if (G.walkableIn(S.g, tx, ty)) { const p = G.findPath(S.g, n, { x: tx, y: ty }, 0); if (p) n.path = p.slice(0, 8); } }
@@ -586,10 +841,12 @@ export class World {
     const st = (e) => (e.step ? [e.step.fx, e.step.fy, e.step.tx, e.step.ty, e.step.t0, e.step.ms] : 0);
     const out = {
       type: "snap", t: now, scene: S.key, online: this.pls.size,
-      players: this.playersIn(S).map((p) => ({ id: p.id, name: p.name, lvl: G.totalOf(p.C), x: p.x, y: p.y, s: st(p), dir: p.dir, face: p.face, hurtAt: p.hurtAt, swingAt: p.swingAt, act: p.act?.kind || null, started: !!p.act?.started, ob: p.act?.ob ? p.act.ob.id : null, mob: p.act?.kind === "mob" ? p.act.id : null, weapon: p.C.eq.weapon, hp: p.C.hp, maxHp: G.maxHpOf(p.C), moving: !!(p.step || p.path.length) })),
+      players: this.playersIn(S).map((p) => ({ id: p.id, name: p.name, lvl: G.totalOf(p.C), x: p.x, y: p.y, s: st(p), dir: p.dir, face: p.face, hurtAt: p.hurtAt, swingAt: p.swingAt, act: p.act?.kind || null, started: !!p.act?.started, ob: p.act?.ob ? p.act.ob.id : null, mob: p.act?.kind === "mob" ? p.act.id : null, weapon: p.C.eq.weapon, body: p.C.eq.body, hp: p.C.hp, maxHp: G.maxHpOf(p.C), moving: !!(p.step || p.path.length) })),
       mobs: S.mobs.map((m) => ({ id: m.id, t: m.t, x: m.x, y: m.y, s: st(m), face: m.face, hp: m.hp, dead: m.dead, hurtAt: m.hurtAt, swingAt: m.swingAt })),
       npcs: S.npcs.map((n) => ({ id: n.id, x: n.x, y: n.y, s: st(n), face: n.face, held: n.holdUntil > now })),
-      bots: S.bots.map((b) => ({ id: b.id, name: b.name, level: b.level, x: b.x, y: b.y, s: st(b), dir: b.dir, face: b.face, hue: b.hue, work: b.working ? b.working.ob.id : null, workT: b.working ? b.working.ob.t : null })),
+      bots: S.bots.map((b) => ({ id: b.id, name: b.name, level: b.level, art: b.art, x: b.x, y: b.y, s: st(b), dir: b.dir, face: b.face, hue: b.hue, work: b.working ? b.working.ob.id : null, workT: b.working ? b.working.ob.t : null })),
+      ground: S.ground.map((x) => ({ id: x.id, k: x.k, n: x.n, x: x.x, y: x.y, owner: x.owner, until: x.until })),
+      isle: S.owner ? (() => { const I = this.isleOf(S); return I && { owner: S.owner, name: S.ownerName || this.pls.get(S.owner)?.name || "Someone", plots: I.plots, shelf: I.shelf, theme: I.theme, open: I.open }; })() : null,
       dyn: S.objs.filter((o) => o.stumpUntil > now || o.emptyUntil > now || o.bareUntil > now || o.grownAt > now).map((o) => [o.id, o.stumpUntil || 0, o.emptyUntil || 0, o.bareUntil || 0, o.grownAt || 0]),
       ev: withEvents ? S.events : []
     };
@@ -623,10 +880,10 @@ export class World {
   bankOp(S, pl, m) {
     if (!this.near(S, pl, "booth")) return this.say(pl, "You need to be at a bank booth.", "bad");
     const C = pl.C, qty = (want, have) => Math.max(1, Math.min(have, want === "all" ? have : Math.floor(Number(want)) || 1));
-    if (m.op === "dep") { const st = C.inv[m.i | 0]; if (!st) return; const q = qty(m.n, st.n); if (!this.bankAdd(pl, st.k, q)) return; st.n -= q; if (!st.n) C.inv.splice(C.inv.indexOf(st), 1); }
+    if (m.op === "dep") { const st = C.inv[m.i | 0]; if (!st) return; const k = st.k, q = qty(m.n, G.countItems(C, [k])); if (!this.bankAdd(pl, k, q)) return; G.takeInv(C.inv, k, q); }
     else if (m.op === "depinv") { for (const st of [...C.inv]) { if (!this.bankAdd(pl, st.k, st.n)) break; C.inv.splice(C.inv.indexOf(st), 1); } }
     else if (m.op === "depeq") { for (const sl of G.SLOTS) { const k = C.eq[sl]; if (k && this.bankAdd(pl, k, 1)) C.eq[sl] = null; } }
-    else if (m.op === "wd") { const st = C.bank[m.i | 0]; if (!st) return; const q = qty(m.n, st.n); if (!this.give(pl, st.k, q)) return; st.n -= q; if (!st.n) C.bank.splice(C.bank.indexOf(st), 1); }
+    else if (m.op === "wd") { const st = C.bank[m.i | 0]; if (!st) return; const q = this.giveUpTo(pl, st.k, qty(m.n, st.n)); if (!q) return; st.n -= q; if (!st.n) C.bank.splice(C.bank.indexOf(st), 1); }
     else return;
     this.touch(pl);
   }
@@ -673,7 +930,7 @@ export class World {
       this.say(pl, "Offer cancelled. What's left is waiting to be collected.");
     }
     if (m.op === "collect" || m.op === "cancel") {
-      if (o.box.items && this.give(pl, o.k, o.box.items)) o.box.items = 0;
+      if (o.box.items) o.box.items -= this.giveUpTo(pl, o.k, o.box.items);
       if (o.box.cash && this.give(pl, "coins", o.box.cash)) o.box.cash = 0;
       // a finished offer with nothing left in its box is done with
       if (!o.open && !o.box.items && !o.box.cash) this.ex.orders.splice(this.ex.orders.indexOf(o), 1);
@@ -754,17 +1011,17 @@ export class World {
     const still = (p) => Object.entries(T.off[p.id].items).every(([k, n]) => G.countItems(p.C, [k]) >= n) && G.cashIn(p.C) >= T.off[p.id].cash;
     if (!still(A) || !still(B)) return this.tradeEnd(T, "Trade cancelled: something offered wasn't there any more.");
     const after = (p, give, get) => {
-      const inv = new Map(p.C.inv.map((s) => [s.k, s.n]));
-      for (const [k, n] of Object.entries(give.items)) inv.set(k, inv.get(k) - n);
-      if (give.cash) inv.set("coins", inv.get("coins") - give.cash);
-      for (const [k, n] of Object.entries(get.items)) inv.set(k, (inv.get(k) || 0) + n);
-      if (get.cash) inv.set("coins", (inv.get("coins") || 0) + get.cash);
-      return [...inv.entries()].filter(([, n]) => n > 0);
+      const inv = p.C.inv.map((s) => ({ k: s.k, n: s.n }));
+      for (const [k, n] of Object.entries(give.items)) G.takeInv(inv, k, n);
+      if (give.cash) G.takeInv(inv, "coins", give.cash);
+      let over = 0;
+      for (const [k, n] of Object.entries(get.items)) over += G.addInv(inv, k, n);
+      if (get.cash) over += G.addInv(inv, "coins", get.cash);
+      return over ? null : inv;
     };
     const newA = after(A, T.off[A.id], T.off[B.id]), newB = after(B, T.off[B.id], T.off[A.id]);
-    if (newA.length > G.INV_MAX || newB.length > G.INV_MAX) return this.tradeEnd(T, "Trade cancelled: not enough room in someone's bag.");
-    // keep each bag's order where it can: existing stacks stay put, new ones go on the end
-    const apply = (p, list) => { const m = new Map(list); p.C.inv = p.C.inv.filter((s) => m.has(s.k)).map((s) => ({ k: s.k, n: m.get(s.k) })); for (const [k, n] of list) if (!p.C.inv.some((s) => s.k === k)) p.C.inv.push({ k, n }); this.touch(p); };
+    if (!newA || !newB) return this.tradeEnd(T, "Trade cancelled: not enough room in someone's bag.");
+    const apply = (p, inv) => { p.C.inv = inv; this.touch(p); };
     apply(A, newA); apply(B, newB);
     this.exCommit(A, B);
     this.tradeEnd(T, null);
@@ -783,7 +1040,7 @@ export class World {
         if (m.skill === "all") { C.xp = { ...f }; C.hp = Math.min(C.hp, G.maxHpOf(C)); this.touch(pl); return note("All xp cleared."); }
         if (!skill) return; C.xp[skill] = f[skill]; C.hp = Math.min(C.hp, G.maxHpOf(C)); this.touch(pl); return note(`${G.SKILLS[skill].name} xp cleared.`);
       }
-      case "item": { const k = String(m.k), n = Math.max(1, Math.min(1000000, m.n | 0)); if (!G.ITEMS[k]) return; if (this.give(pl, k, n)) note(`Gave ${n.toLocaleString()} × ${G.ITEMS[k].name}.`); return; }
+      case "item": { const k = String(m.k), n = Math.max(1, Math.min(1000000, m.n | 0)); if (!G.ITEMS[k]) return; const got = this.giveUpTo(pl, k, n); if (got) note(`Gave ${got.toLocaleString()} × ${G.ITEMS[k].name}.`); return; }
       case "clearinv": C.inv = []; this.touch(pl); return note("Inventory cleared.");
       case "heal": C.hp = G.maxHpOf(C); this.touch(pl); return note("Healed.");
       case "god": pl.god = !pl.god; this.touch(pl); return note(pl.god ? "God mode on: nothing can hurt you." : "God mode off.");

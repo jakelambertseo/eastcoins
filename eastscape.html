@@ -34,7 +34,7 @@ button,input,select{font:inherit}
 .net.ok i{background:#5dd65d;box-shadow:0 0 6px #5dd65d}
 .net.warn i{background:#ffb400}
 .net.bad i{background:#ff5a4a}
-.wrap{display:grid;grid-template-columns:336px minmax(0,1fr);height:calc(100vh - 32px)}
+.wrap{display:grid;grid-template-columns:352px minmax(0,1fr);height:calc(100vh - 32px)}
 /* the character panel sits on the LEFT: on the site, Twitch chat takes the right */
 .wrap .side{order:-1;border-left:0;border-right:2px solid #2a2118}
 @media (max-width:820px){.wrap{grid-template-columns:minmax(0,1fr);grid-template-rows:60vh auto;overflow:auto;height:auto}html,body{overflow:auto}}
@@ -127,6 +127,8 @@ button,input,select{font:inherit}
 .qty button[aria-pressed="true"]{background:#d9738f;color:#fff}
 .isleform{display:flex;gap:8px;margin:0 0 12px}.isleform input{flex:1;min-width:0;padding:8px 10px;border:2px solid var(--frame);border-radius:6px;font:inherit}
 .islelist{display:flex;flex-wrap:wrap;gap:6px}.islelist .note{margin:0}
+.slot .price{position:absolute;right:1px;bottom:0;font-style:normal;font-size:10px;font-weight:800;line-height:1;color:#ffe45c;background:rgba(26,16,8,.66);padding:1px 2px;border-radius:2px;pointer-events:none}
+.slot.nobuy{opacity:.45}
 .cols2{display:grid;grid-template-columns:1.5fr 1fr;gap:12px}
 @media (max-width:620px){.cols2{grid-template-columns:1fr}}
 .cols2 h4,.wiki h4{margin:0 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#6a5a40}
@@ -227,7 +229,7 @@ button,input,select{font:inherit}
 .panel{flex:1;margin:0 8px 8px;background:var(--panel);color:var(--panel-ink);border:3px solid var(--frame);overflow:auto;min-height:0}
 .ph{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:14px;border-bottom:2px solid rgba(0,0,0,.12)}
 .ph small{font-weight:600;text-transform:none;color:#6a5a40}
-.inv{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:4px 0}
+.inv{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:4px 7px 4px 5px}
 #panel{overflow-x:hidden}
 .ico{width:1.3em;height:1.3em;image-rendering:pixelated;vertical-align:-.3em;object-fit:contain}
 .slot .ico,.eq .ico{width:84%;height:84%;vertical-align:0}.slot .ico{margin-top:18%}.eq .ico{width:62%;height:62%}
@@ -374,6 +376,14 @@ button,input,select{font:inherit}
       <div class="win-head"><b id="pickTitle">Choose</b><button type="button" class="win-x" data-close="pickWin" aria-label="Close">×</button></div>
       <div class="win-body"><p class="note" id="pickNote" style="margin:0 0 8px"></p><div class="grid8" id="pickGrid"></div></div>
     </section>
+    <section class="win" id="shopWin" aria-label="The Forge" hidden>
+      <div class="win-head"><b>⚒️ The Forge</b><small>Brutus the Smith</small><button type="button" class="win-x" data-close="shopWin" aria-label="Close">×</button></div>
+      <div class="win-body cols2">
+        <div><h4>For sale</h4><div class="grid8" id="shopSell"></div></div>
+        <div><h4>Your bag <small style="text-transform:none;letter-spacing:0;font-weight:600">(click to sell)</small></h4><div class="grid8" id="shopBag"></div></div>
+      </div>
+      <div class="win-foot"><span>How many</span><div class="qty" id="shopQty"><button data-n="1" aria-pressed="true">1</button><button data-n="5">5</button><button data-n="10">10</button><button data-n="all">All</button></div><span style="flex:1"></span><small id="shopNote"></small></div>
+    </section>
     <section class="win" id="bankWin" aria-label="Bank" hidden>
       <div class="win-head"><b>🏛️ The Bank</b><small id="bankCount"></small><button type="button" class="win-x" data-close="bankWin" aria-label="Close">×</button></div>
       <div class="win-body cols2">
@@ -419,8 +429,8 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=17";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=5";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=19";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=7";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -524,7 +534,7 @@ function onMsg(m) {
     $("online").textContent = `${m.online} online`;
     return;
   }
-  if (m.type === "me") { me = m.me; renderPanel(); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("exWin").hidden && exTab === "new") renderEx(); return; }
+  if (m.type === "me") { me = m.me; renderPanel(); if (!$("shopWin").hidden) renderShop(); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("exWin").hidden && exTab === "new") renderEx(); return; }
   if (m.type === "exch") { EX = m; if (!$("exWin").hidden) renderEx(); return; }
   if (m.type === "trade") { if (m.closed) { TR = null; $("tradeWin").hidden = true; } else { TR = m; openWin("tradeWin"); } return; }
   if (m.type === "pong") return;
@@ -561,7 +571,7 @@ function loadScene(key) {
   Z.def = G.sceneDef(key); Z.isle = null; Z.ground = [];
   Z.def.npcs.forEach((n, i) => { Z.defs[`${key}n${i}`] = n.art || !NPC_ART[n.name] ? n : { ...n, art: NPC_ART[n.name] }; });
   Z.npcs = []; botBubbles.clear(); PRED.on = false; PRED.path = []; PRED.step = null;
-  for (const id of ["bankWin", "exWin", "isleWin", "pickWin"]) $(id).hidden = true;
+  for (const id of ["bankWin", "exWin", "isleWin", "pickWin", "shopWin"]) $(id).hidden = true;
   Z.exits = exitsOf();
   Z.bg = paintBg();
   if (DLG) closeTalk();
@@ -639,7 +649,7 @@ const ART_FILES = ["t_dirt", "t_water", "farmhouse", "hut", "well", "tree", "hay
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d, "legend_" + d]),
   "bank", "store", "cottage", "signpost", "tree2", "tree3", "tree4", "o_spot", "g_bush", "g_boulder", "g_grass", "g_flowers",
   ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
-  ...["tom", "waldy", "tullius", "charon", "livia", "gaius", "nonna", "vibius", "aurelia", "cassia"].flatMap((n) => [n + "_south", n + "_east"]),
+  ...["tom", "waldy", "tullius", "brutus", "charon", "livia", "gaius", "nonna", "vibius", "aurelia", "cassia"].flatMap((n) => [n + "_south", n + "_east"]),
   // the Wilderness (PixelLab, 2026-09-18)
   "t_wdirt", "t_wwater", "deadtree", "w_tree", "snag", "w_bush", "w_boulder", "grimstone", "gravestone", "skeleton", "rope", "cagesign", "gnasher", "taxwraith", "chandelier", "revenant",
   // the rest of the monsters (PixelLab, overnight 2026-09-18)
@@ -652,7 +662,7 @@ const IMG = {};
 const NPC_H = { tom: 58, gaius: 58, nonna: 44 };
 // (no scaling: the NPCs are drawn in the hero's style at the hero's size; shrinking pixel art by a fraction mangles it)
 const npcScale = () => 1;
-const NPC_ART = { "Charon the Ferryman": "charon", "Livia the Broker": "livia", "Gaius": "gaius", "Nonna Tomatoe": "nonna", "Centurion Vibius": "vibius", "Aurelia": "aurelia", "Cassia": "cassia" };
+const NPC_ART = { "Brutus the Smith": "brutus", "Charon the Ferryman": "charon", "Livia the Broker": "livia", "Gaius": "gaius", "Nonna Tomatoe": "nonna", "Centurion Vibius": "vibius", "Aurelia": "aurelia", "Cassia": "cassia" };
 const artReady = Promise.all(ART_FILES.map((k) => new Promise((res) => {
   const im = new Image(); im.onload = () => {
     const c = document.createElement("canvas"); c.width = im.width; c.height = im.height; const o = c.getContext("2d"); o.drawImage(im, 0, 0);
@@ -679,7 +689,7 @@ function spr(k, x, y, flip = false, filter = "", sc = 1) {
   lc.drawImage(a.im, -Math.round(a.cx), -a.foot); lc.restore(); return true;
 }
 // item and skill icons (PixelLab): art where it exists, the emoji where it doesn't
-const ITEM_ART = new Set(["ashlogs", "axe", "beef", "bogplate", "bones", "bronzecuirass", "cap", "chicken", "cobweb", "coins", "copper", "feather", "geode", "gloomfin", "goldtomatoe", "grimstone", "grudge", "hide", "husk", "lantern", "logs", "manifesto", "marble", "mask", "menace", "monocle", "mooncarp", "olives", "parma", "pickaxe", "pit", "pork", "receipt", "rod", "rudis", "sandals", "sardine", "spiderboots", "stardust", "sunolive", "tin", "toga", "tomatoe", "trout", "tunic", "tusk", "wheat", "wraithhood", "yewlogs"]), SKILL_ART = new Set(["farming", "fishing", "hp", "melee", "mining", "woodcutting"]), EQ_ART = new Set(["body", "boots", "gloves", "helm", "legs", "ring", "shield", "weapon"]);
+const ITEM_ART = new Set(["ashlogs", "axe", "beef", "bogplate", "bones", "bronzecuirass", "bronzehelm", "bronzeshield", "bronzesword", "burnt", "cap", "cbeef", "cchicken", "cgloomfin", "chicken", "cmooncarp", "cobweb", "coins", "copper", "cpork", "csardine", "ctrout", "feather", "geode", "gloomfin", "goldtomatoe", "grimstone", "grudge", "hide", "husk", "lantern", "logs", "manifesto", "marble", "mask", "menace", "monocle", "mooncarp", "olives", "parma", "pickaxe", "pit", "pork", "receipt", "rod", "rudis", "sandals", "sardine", "spiderboots", "stardust", "sunolive", "tin", "toga", "tomatoe", "trout", "tunic", "tusk", "wheat", "wraithhood", "yewlogs"]), SKILL_ART = new Set(["cooking", "farming", "fishing", "hp", "melee", "mining", "woodcutting"]), EQ_ART = new Set(["body", "boots", "gloves", "helm", "legs", "ring", "shield", "weapon"]);
 const IART = "/v3/assets/img/glad/flat/items/", IART_V = 2, ICO_IMG = {};
 for (const k of [...ITEM_ART, ...[...SKILL_ART].map((x) => "skill_" + x), ...[...EQ_ART].map((x) => "eq_" + x)]) { const im = new Image(); im.src = `${IART}${k}.png?v=${IART_V}`; ICO_IMG[k] = im; }
 const artOf = (k) => `<img class="ico" src="${IART}${k}.png?v=${IART_V}" alt="">`;
@@ -1090,6 +1100,7 @@ function showTalk(n, text, options, have) {
 function talkTo(n) {
   const k = G.npcQuest(me, n), bye = ["Bye.", closeTalk];
   const chat = ["Tell me about this place.", () => showTalk(n, pick(n.lines), [["Something else…", () => talkTo(n)], bye])];
+  if (n.opens === "shop") return showTalk(n, pick(n.lines), [["Let's trade.", () => { closeTalk(); openWin("shopWin"); }], chat, bye]);
   if (n.opens === "ferry") return showTalk(n, pick(n.lines), [
     ["Take me to my island.", () => { closeTalk(); send({ t: "isle", op: "go" }); }],
     ["Row me to someone else's island.", () => { closeTalk(); openWin("isleWin"); send({ t: "isle", op: "list" }); setTimeout(() => $("isleName").focus(), 50); }],
@@ -1132,7 +1143,7 @@ function fit() {
   return { w, h };
 }
 const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
-const KIND_OF = { deadtree: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
+const KIND_OF = { range: "cook", fire: "cook", deadtree: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
 function thingAt(wx, wy) {
   const now = snow(), near = (x_, y_, rx, ry) => Math.abs(wx - x_) <= rx && wy <= y_ + 4 && wy >= y_ - ry;
   for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})` }; }
@@ -1566,6 +1577,7 @@ function openWin(id) {
   for (const w of ["bankWin", "exWin", "wikiWin"]) if (w !== id && id !== "tradeWin") $(w).hidden = true;
   $(id).hidden = false;
   if (id === "bankWin") renderBank();
+  if (id === "shopWin") renderShop();
   if (id === "exWin") { renderEx(); send({ t: "ex", op: "open" }); }
   if (id === "tradeWin") renderTrade();
   if (id === "wikiWin") wikiGo(wikiRoute || "home");
@@ -1573,7 +1585,7 @@ function openWin(id) {
 document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => { $(b.dataset.close).hidden = true; if (b.dataset.close === "wikiWin" && location.hash.startsWith("#wiki")) history.replaceState(null, "", location.pathname + location.search); }));
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape" || e.target.closest?.("input, textarea, select") || !$("pop").hidden || DLG) return;
-  for (const w of ["wikiWin", "bankWin", "exWin", "isleWin", "pickWin"]) if (!$(w).hidden) { $(w).hidden = true; return; }
+  for (const w of ["wikiWin", "bankWin", "exWin", "isleWin", "pickWin", "shopWin"]) if (!$(w).hidden) { $(w).hidden = true; return; }
 });
 // windows that need you standing somewhere close themselves when you walk off
 setInterval(() => { if (PRED.on && PRED.step) for (const w of ["bankWin", "exWin"]) $(w).hidden = true; }, 300);
@@ -1599,6 +1611,21 @@ function pickItems(title, note, ok, go, empty) {
 function isleSign(e) {
   const th = e.themes.map((k) => [`${G.THEMES[k].icon} ${G.THEMES[k].name}${k === e.theme ? " (now)" : ""}`, () => send({ t: "isle", op: "theme", theme: k })]);
   popup("Your island", `${e.open ? "Open to visitors." : "Closed to visitors."} Pick a theme, or change who can visit.`, "🏝️", [...th, [e.open ? "🔒 Close to visitors" : "🔓 Open to visitors", () => send({ t: "isle", op: "open", v: !e.open })], ["Done", null]]);
+}
+
+/* ------------------------------------------------------------ the Forge: Brutus's shop */
+let shopN = 1;
+$("shopQty").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { shopN = b.dataset.n === "all" ? "all" : +b.dataset.n; $("shopQty").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); }));
+function renderShop() {
+  if (!me) return;
+  const cash = G.cashIn(me), short = (p) => (p >= 1000 ? `${Math.floor(p / 100) / 10}K` : String(p));
+  $("shopSell").innerHTML = G.SHOP.sells.map(([k, p]) => { const it = ITEMS[k], rq = it.req ? ` · needs ${SKILLS[it.req.skill].name} ${it.req.lvl}` : "";
+    return `<div class="slot${cash < p ? " nobuy" : ""}" data-k="${k}" title="${esc(it.name)}: ${G.fmtCash(p)}${rq}">${ico(k)}<em class="price">${short(p)}</em></div>`; }).join("");
+  $("shopBag").innerHTML = me.inv.map((s, i) => { const p = G.SHOP.buys[s.k];
+    return `<div class="slot${p ? "" : " nobuy"}" data-i="${i}" title="${esc(ITEMS[s.k].name)}${p ? `: Brutus pays ${G.fmtCash(p)} each` : ": Brutus won't buy this"}">${ico(s.k)}${s.n > 1 ? qty(s.n) : ""}${p ? `<em class="price">${short(p)}</em>` : ""}</div>`; }).join("") || `<p class="note">Your bag is empty.</p>`;
+  $("shopNote").textContent = `You have ${G.fmtCash(cash)}`;
+  $("shopSell").querySelectorAll("[data-k]").forEach((el) => el.addEventListener("click", () => send({ t: "shop", op: "buy", k: el.dataset.k, n: shopN })));
+  $("shopBag").querySelectorAll("[data-i]").forEach((el) => el.addEventListener("click", () => send({ t: "shop", op: "sell", i: +el.dataset.i, n: shopN })));
 }
 
 /* ------------------------------------------------------------ the bank */
@@ -1790,6 +1817,11 @@ function wikiGo(route, setNav = true) {
       ${it.slot ? `<h3>Equipment</h3><table class="tbl"><tr><th>Slot</th><th>Accuracy</th><th>Strength</th><th>Defence</th><th>Lets you</th></tr><tr><td>${it.slot}</td><td>+${it.acc || 0}</td><td>+${it.str || 0}</td><td>+${it.def || 0}</td><td>${it.tool ? `train ${wl(`skills/${it.tool}`, SKILLS[it.tool].name)}` : "—"}</td></tr></table>` : ""}
       ${src.length ? `<h3>Gathered from</h3><table class="tbl"><tr><th>What</th><th>Where</th><th>Skill</th><th>Level</th></tr>${src.map((s) => `<tr><td>${esc(s.obj)}</td><td>${areaLink(s.scene)}</td><td>${wl(`skills/${s.skill}`, SKILLS[s.skill].name)}</td><td>${s.lvl}</td></tr>`).join("")}</table>` : ""}
       ${dr.length ? `<h3>Dropped by</h3><table class="tbl"><tr><th>Monster</th><th>How many</th><th>Chance</th></tr>${dr.map((d) => `<tr><td>${wl(`monsters/${d.mob}`, esc(MOBS[d.mob].name))}</td><td>${qn(d.n)}</td><td>${d.ch == null ? "Always" : `${Math.round(d.ch * 100)}%`}</td></tr>`).join("")}</table>` : ""}
+      ${it.heal ? `<h3>Food</h3><p>Heals <b>${it.heal}</b> hitpoints. Click it in your bag to eat.</p>` : ""}
+      ${Object.entries(G.COOK).some(([, r]) => r.to === id) ? `<h3>Cooked from</h3><p>${Object.entries(G.COOK).filter(([, r]) => r.to === id).map(([raw, r]) => `${wl(`items/${raw}`, `${ico(raw)} ${esc(ITEMS[raw].name)}`)} at Cooking ${r.lvl} (${r.xp} xp; no more burning from level ${r.burnStop})`).join("")}</p>` : ""}
+      ${G.COOK[id] ? `<h3>Cooking</h3><p>Cook it at a range or campfire (Cooking ${G.COOK[id].lvl}) to make ${wl(`items/${G.COOK[id].to}`, `${ico(G.COOK[id].to)} ${esc(ITEMS[G.COOK[id].to].name)}`)}.</p>` : ""}
+      ${it.req ? `<p>Needs <b>${SKILLS[it.req.skill].name} ${it.req.lvl}</b> to use.</p>` : ""}
+      ${G.SHOP.sells.some(([k]) => k === id) || G.SHOP.buys[id] ? `<h3>The Forge</h3><p>${G.SHOP.sells.some(([k]) => k === id) ? `Brutus sells it for <b>${G.fmtCash(G.SHOP.sells.find(([k]) => k === id)[1])}</b>. ` : ""}${G.SHOP.buys[id] ? `He buys it for <b>${G.fmtCash(G.SHOP.buys[id])}</b>.` : ""}</p>` : ""}
       ${rewards.length ? `<h3>Quest rewards</h3><p>${rewards.map(([k, q]) => wl(`quests/${k}`, esc(q.name))).join(", ")}</p>` : ""}
       ${qs.length ? `<h3>Wanted for</h3><p>${qs.map((k) => wl(`quests/${k}`, esc(QUESTS[k].name))).join(", ")}</p>` : ""}
       ${EX.last[id] ? `<h3>On the Exchange</h3><p>Last sold for ${G.fmtCash(EX.last[id].price)}.</p>` : ""}`;
@@ -1907,7 +1939,7 @@ function renderPanel() {
   const p = $("panel");
   if (tab === "inv") {
     const hint = hintSlot && hintSlot.until > performance.now() ? hintSlot.k : null;
-    const cells = me.inv.map((s, i) => `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" title="${esc(ITEMS[s.k].name)}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""} — ${ITEMS[s.k].slot ? (ITEMS[s.k].slot === "weapon" ? "click to wield" : "click to wear") : "click to examine"}, shift-click to drop">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}</div>`);
+    const cells = me.inv.map((s, i) => `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" title="${esc(ITEMS[s.k].name)}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""} — ${ITEMS[s.k].heal ? `click to eat (heals ${ITEMS[s.k].heal})` : ITEMS[s.k].slot ? (ITEMS[s.k].slot === "weapon" ? "click to wield" : "click to wear") : "click to examine"}, shift-click to drop">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}</div>`);
     while (cells.length < G.INV_MAX) cells.push('<div class="slot empty"></div>');
     p.innerHTML = `<div class="ph">Inventory <small>${me.inv.length}/${G.INV_MAX}</small></div><div class="inv">${cells.join("")}</div>`;
     p.querySelectorAll(".slot[data-i]").forEach((el) => el.addEventListener("click", (e) => {
@@ -1917,6 +1949,7 @@ function renderPanel() {
         if (set("confirmDrop")) return popup("Drop it?", `Drop ${s.n > 1 ? `${s.n.toLocaleString()} × ` : "the "}${ITEMS[s.k].name.toLowerCase()}? It's gone for good.`, ITEMS[s.k].icon, [["Drop it", () => send({ t: "drop", i })], ["Keep it", null]]);
         return send({ t: "drop", i });
       }
+      if (ITEMS[s.k].heal) return send({ t: "eat", i });
       if (ITEMS[s.k].slot) send({ t: "equip", i });
       else say(`${ITEMS[s.k].name}${s.n > 1 ? ` (×${s.n.toLocaleString()})` : ""}.${ITEMS[s.k].ex ? " " + ITEMS[s.k].ex : ""}`);
     }));
