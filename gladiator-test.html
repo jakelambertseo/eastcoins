@@ -1175,6 +1175,49 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .cb-line b{color:var(--text);font-variant-numeric:tabular-nums}
 .cb-line b.clk{color:#d88ad0}
 .cb-line .cb-buffs i{font-style:normal;font-size:.7rem;font-weight:800;padding:1px 7px;border-radius:99px;background:var(--gold-dim);color:var(--gold);margin-right:4px}
+/* ================= the paper doll and item card, Diablo / PoE layout (2026-09-17) ================= */
+.doll{position:relative;display:grid;gap:8px;justify-content:center;margin:4px auto 14px;padding:16px 12px;border-radius:14px;
+  grid-template-columns:86px 54px 100px 54px 86px;grid-template-rows:repeat(5,58px);
+  grid-template-areas:"wpn . helm . off" "wpn amu helm . off" "wpn ring body ring2 off" "glv . body . bts" "glv . belt . bts";
+  background:radial-gradient(60% 70% at 50% 45%,rgba(var(--gold-rgb),.06),transparent 70%),linear-gradient(180deg,#0f0c0a,#0a0807);
+  border:1px solid rgba(var(--gold-rgb),.28);box-shadow:inset 0 0 0 3px #0a0807,inset 0 0 0 4px rgba(var(--gold-rgb),.14)}
+.doll-fig{position:absolute;left:50%;top:10px;bottom:10px;transform:translateX(-50%);width:170px;pointer-events:none;opacity:.14}
+.doll-fig svg{width:100%;height:100%;fill:#c8b89a}
+.doll-cell{position:relative;z-index:1;display:grid;place-items:center;align-content:center;gap:3px;padding:0;border-radius:6px;cursor:pointer;font:inherit;color:inherit;
+  border:1px solid color-mix(in srgb,var(--rc,#6a5a3a) 70%,#000);
+  background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--rc,#1a2438) 26%,transparent),transparent 72%),linear-gradient(180deg,#18223a,#0d1220);
+  box-shadow:inset 0 0 0 2px #06080f,inset 0 0 14px color-mix(in srgb,var(--rc,#000) 30%,transparent)}
+.doll-cell:hover{border-color:var(--rc,var(--gold))}
+.doll-cell.on{outline:2px solid var(--gold);outline-offset:2px}
+.doll-cell.r3{box-shadow:inset 0 0 0 2px #06080f,inset 0 0 22px color-mix(in srgb,var(--rc) 55%,transparent)}
+.doll-cell.empty{cursor:default;border:1px dashed rgba(var(--gold-rgb),.22);background:rgba(8,10,16,.55);box-shadow:none}
+.doll-cell.empty .dc-ico{filter:grayscale(1);opacity:.28}
+.doll-cell small{font-size:.54rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-2)}
+.dc-ico{font-size:2rem;line-height:1;filter:drop-shadow(0 3px 6px rgba(0,0,0,.6))}
+.d-weapon .dc-ico,.d-offhand .dc-ico,.d-body .dc-ico,.d-helm .dc-ico,.d-gloves .dc-ico,.d-boots .dc-ico{font-size:3.1rem}
+.d-weapon{grid-area:wpn}.d-offhand{grid-area:off}.d-helm{grid-area:helm}.d-amulet{grid-area:amu}.d-body{grid-area:body}
+.d-belt{grid-area:belt}.d-gloves{grid-area:glv}.d-boots{grid-area:bts}.d-ring{grid-area:ring}.d-ring2{grid-area:ring2}
+@media (max-width:520px){.doll{grid-template-columns:64px 44px 80px 44px 64px;grid-template-rows:repeat(5,48px);gap:6px}.dc-ico{font-size:1.4rem}}
+.lt-stats{margin-top:2px}
+/* the item card */
+.it-card{border-radius:4px;border:1px solid rgba(var(--gold-rgb),.55);background:linear-gradient(180deg,#141008,#0b0907);text-align:center;overflow:hidden;
+  box-shadow:inset 0 0 0 3px #0b0907,inset 0 0 0 4px rgba(var(--gold-rgb),.22),0 12px 30px rgba(0,0,0,.5)}
+.it-head{padding:10px 10px 8px;background:linear-gradient(180deg,color-mix(in srgb,var(--rc) 22%,#141008),#141008);border-bottom:1px solid rgba(var(--gold-rgb),.35)}
+.it-head b{display:block;font-family:var(--display);font-weight:800;font-size:1.05rem;letter-spacing:.06em;text-transform:uppercase;color:var(--rc)}
+.it-head span{display:block;font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--rc);opacity:.85}
+.it-type{padding:7px 8px 2px;font-size:.78rem;color:#c9bfae}
+.it-base{padding:4px 10px 6px;display:grid;gap:2px;font-size:.8rem;color:#a9a090}
+.it-base b{color:#f1e6d0}
+.it-lvl{margin:0 12px;padding:6px 0;border-top:1px solid rgba(var(--gold-rgb),.2);border-bottom:1px solid rgba(var(--gold-rgb),.2);font-size:.76rem;color:#a9a090;letter-spacing:.04em}
+.it-lvl b{color:#f1e6d0}
+.it-lvl .no{color:var(--red)}
+.it-sec{padding:6px 10px 4px}
+.it-sec h6{margin:2px 0 5px;display:flex;align-items:center;gap:8px;font-size:.62rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#8a7f6c}
+.it-sec h6::before,.it-sec h6::after{content:"";flex:1;height:1px;background:rgba(var(--gold-rgb),.2)}
+.it-mod{display:flex;justify-content:center;gap:8px;position:relative;font-size:.8rem;color:#8ea2ff;padding:1px 26px}
+.it-mod i{position:absolute;right:0;top:2px;font-style:normal;font-size:.6rem;font-weight:800;color:#7a7060}
+.it-sec.uq .it-mod{color:#e8843c}
+.it-flav{padding:8px 12px 10px;font-style:italic;font-size:.78rem;color:#b07040}
 </style>
 </head>
 <body>
@@ -1471,9 +1514,25 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const SLOTS = {
     weapon: { name: "Weapon", icon: "🗡️", req: "attack" }, offhand: { name: "Shield", icon: "🛡️", req: "defence" },
     helm: { name: "Helmet", icon: "⛑️", req: "defence" }, body: { name: "Armour", icon: "🥋", req: "defence" },
-    boots: { name: "Boots", icon: "🥾", req: "defence" }, ring: { name: "Ring", icon: "💍", req: "cb" }, amulet: { name: "Amulet", icon: "📿", req: "cb" }
+    boots: { name: "Boots", icon: "🥾", req: "defence" }, ring: { name: "Ring", icon: "💍", req: "cb" }, amulet: { name: "Amulet", icon: "📿", req: "cb" },
+    gloves: { name: "Gloves", icon: "🧤", req: "attack" }, belt: { name: "Belt", icon: "🎗️", req: "defence" }
   };
-  const SLOT_KEYS = Object.keys(SLOTS);
+  const SLOT_KEYS = Object.keys(SLOTS);                     // what can drop
+  // where it can be worn: two rings, one of everything else
+  const EQ_KEYS = ["weapon", "offhand", "helm", "amulet", "body", "belt", "gloves", "boots", "ring", "ring2"];
+  const EQ_NAME = { ring: "Left ring", ring2: "Right ring" };
+  const eqName = (k) => EQ_NAME[k] || SLOTS[k].name;
+  const eqIcon = (k) => SLOTS[k === "ring2" ? "ring" : k].icon;
+  const slotOf = (it) => BASES[it.base].slot;
+  /** Where an item would go: its slot, or for a ring the empty hand, else the weaker one. */
+  function targetOf(it) {
+    const s = slotOf(it);
+    if (s !== "ring") return s;
+    if (!S.eq.ring) return "ring";
+    if (!S.eq.ring2) return "ring2";
+    const m = C.on ? foeNow() : MON[seqOf(S.dun)[0]], score = (k) => dpsOf(derive(sumGear({ ...S.eq, [k]: it })), m);
+    return score("ring2") > score("ring") ? "ring2" : "ring";
+  }
   const BASES = {
     rudis: { slot: "weapon", name: "Wooden rudis", lvl: 1, imp: {}, speed: 2600 },
     gladius: { slot: "weapon", name: "Gladius", lvl: 3, imp: { wacc: 14, wstr: 10 }, speed: 2400 },
@@ -1494,6 +1553,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     sandals: { slot: "boots", name: "Sandals", lvl: 1, imp: { ev: 3 } },
     caligae: { slot: "boots", name: "Caligae", lvl: 12, imp: { ev: 8 } },
     greaves: { slot: "boots", name: "Bronze greaves", lvl: 32, imp: { ev: 14, dr: .01 } },
+    wraps: { slot: "gloves", name: "Hand wraps", lvl: 1, imp: { acc: 3 } },
+    manica: { slot: "gloves", name: "Manica", lvl: 14, imp: { acc: 6, ev: 5 } },
+    cestus: { slot: "gloves", name: "Cestus", lvl: 34, imp: { acc: 8, str: 6 } },
+    rope: { slot: "belt", name: "Rope belt", lvl: 1, imp: { hp: 10 } },
+    balteus: { slot: "belt", name: "Balteus", lvl: 15, imp: { hp: 25 } },
+    cingulum: { slot: "belt", name: "Gilded cingulum", lvl: 40, imp: { hp: 45, dr: .01 } },
     iring: { slot: "ring", name: "Iron ring", lvl: 1, imp: {} },
     gring: { slot: "ring", name: "Gold ring", lvl: 25, imp: { find: .05 } },
     charm: { slot: "amulet", name: "Bone charm", lvl: 1, imp: {} },
@@ -1510,22 +1575,22 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     lok: { say: (v) => `Gain ${v} health on kill` }, fame: { pct: P, say: (v) => `${pct(v)} more fame` },
     find: { pct: P, say: (v) => `${pct(v)} increased item rarity` }, gold: { pct: P, say: (v) => `${pct(v)} more denarii found` }
   };
-  const ARMOUR = ["helm", "body", "boots", "offhand"], JEWEL = ["ring", "amulet"];
+  const ARMOUR = ["helm", "body", "boots", "offhand", "gloves"], JEWEL = ["ring", "amulet"];
   const AFFIXES = [
     { k: "dmg", t: "p", slots: ["weapon", ...JEWEL], names: ["Sharp", "Keen", "Vicious", "Cruel", "Merciless"], tiers: [[1, .08, .15], [12, .16, .25], [28, .26, .38], [45, .39, .55], [70, .56, .8]] },
-    { k: "str", t: "p", slots: ["weapon", ...JEWEL], names: ["Heavy", "Brutal", "Savage", "Titanic"], tiers: [[1, 3, 6], [15, 7, 12], [35, 13, 20], [60, 21, 30]] },
-    { k: "hp", t: "p", slots: [...ARMOUR, ...JEWEL], names: ["Hale", "Stout", "Robust", "Colossal", "Titan's"], tiers: [[1, 10, 20], [10, 21, 40], [25, 41, 70], [45, 71, 110], [70, 111, 160]] },
+    { k: "str", t: "p", slots: ["weapon", "gloves", "belt", ...JEWEL], names: ["Heavy", "Brutal", "Savage", "Titanic"], tiers: [[1, 3, 6], [15, 7, 12], [35, 13, 20], [60, 21, 30]] },
+    { k: "hp", t: "p", slots: [...ARMOUR, "belt", ...JEWEL], names: ["Hale", "Stout", "Robust", "Colossal", "Titan's"], tiers: [[1, 10, 20], [10, 21, 40], [25, 41, 70], [45, 71, 110], [70, 111, 160]] },
     { k: "ev", t: "p", slots: ARMOUR, names: ["Nimble", "Agile", "Evasive", "Phantom"], tiers: [[1, 4, 8], [15, 9, 16], [35, 17, 28], [60, 29, 42]] },
-    { k: "dr", t: "p", slots: ["body", "offhand", "helm"], names: ["Bronzed", "Ironclad", "Steeled", "Adamant"], tiers: [[5, .01, .02], [20, .02, .03], [40, .03, .05], [65, .05, .07]] },
-    { k: "acc", t: "s", slots: ["weapon", "helm", ...JEWEL], names: ["of Aim", "of Accuracy", "of the Hawk", "of the Eagle"], tiers: [[1, 5, 10], [15, 11, 20], [35, 21, 34], [60, 35, 50]] },
-    { k: "ias", t: "s", slots: ["weapon", "boots", "ring"], names: ["of Speed", "of Haste", "of Fury", "of Frenzy"], tiers: [[1, .04, .07], [18, .08, .11], [38, .12, .16], [62, .17, .22]] },
-    { k: "crit", t: "s", slots: ["weapon", ...JEWEL], names: ["of Precision", "of the Viper", "of Slaughter"], tiers: [[5, .02, .04], [25, .05, .07], [50, .08, .11]] },
+    { k: "dr", t: "p", slots: ["body", "offhand", "helm", "belt"], names: ["Bronzed", "Ironclad", "Steeled", "Adamant"], tiers: [[5, .01, .02], [20, .02, .03], [40, .03, .05], [65, .05, .07]] },
+    { k: "acc", t: "s", slots: ["weapon", "helm", "gloves", ...JEWEL], names: ["of Aim", "of Accuracy", "of the Hawk", "of the Eagle"], tiers: [[1, 5, 10], [15, 11, 20], [35, 21, 34], [60, 35, 50]] },
+    { k: "ias", t: "s", slots: ["weapon", "boots", "gloves", "ring"], names: ["of Speed", "of Haste", "of Fury", "of Frenzy"], tiers: [[1, .04, .07], [18, .08, .11], [38, .12, .16], [62, .17, .22]] },
+    { k: "crit", t: "s", slots: ["weapon", "gloves", ...JEWEL], names: ["of Precision", "of the Viper", "of Slaughter"], tiers: [[5, .02, .04], [25, .05, .07], [50, .08, .11]] },
     { k: "cm", t: "s", slots: ["weapon", "amulet"], names: ["of Ruin", "of Butchery", "of Carnage"], tiers: [[10, .1, .2], [30, .21, .35], [55, .36, .5]] },
-    { k: "regen", t: "s", slots: ["body", "helm", ...JEWEL], names: ["of Mending", "of Recovery", "of the Phoenix"], tiers: [[1, 1, 3], [20, 4, 7], [45, 8, 14]] },
+    { k: "regen", t: "s", slots: ["body", "helm", "belt", ...JEWEL], names: ["of Mending", "of Recovery", "of the Phoenix"], tiers: [[1, 1, 3], [20, 4, 7], [45, 8, 14]] },
     { k: "lok", t: "s", slots: ["weapon", "ring"], names: ["of the Leech", "of Feasting"], tiers: [[8, 3, 8], [30, 9, 18]] },
-    { k: "fame", t: "s", slots: ["helm", "amulet", "body"], names: ["of the Crowd", "of Glory", "of Legend"], tiers: [[1, .08, .15], [20, .16, .28], [45, .29, .45]] },
-    { k: "find", t: "s", slots: ["boots", "helm", ...JEWEL], names: ["of Plunder", "of Fortune", "of Riches"], tiers: [[1, .06, .12], [20, .13, .22], [45, .23, .35]] },
-    { k: "gold", t: "s", slots: ["boots", ...JEWEL], names: ["of Greed", "of Avarice"], tiers: [[1, .1, .2], [25, .21, .4]] }
+    { k: "fame", t: "s", slots: ["helm", "amulet", "body", "belt"], names: ["of the Crowd", "of Glory", "of Legend"], tiers: [[1, .08, .15], [20, .16, .28], [45, .29, .45]] },
+    { k: "find", t: "s", slots: ["boots", "helm", "gloves", ...JEWEL], names: ["of Plunder", "of Fortune", "of Riches"], tiers: [[1, .06, .12], [20, .13, .22], [45, .23, .35]] },
+    { k: "gold", t: "s", slots: ["boots", "belt", ...JEWEL], names: ["of Greed", "of Avarice"], tiers: [[1, .1, .2], [25, .21, .4]] }
   ];
   const UNIQUES = {
     nemean: { name: "The Nemean Hide", base: "tunic", lvl: 12, from: "lion", mods: { hp: 90, dr: .06, ev: 20, fame: .2 }, flavour: "Arrows bounced off it. Your sword will too." },
@@ -1538,7 +1603,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   };
   const RARE_A = ["Grim", "Doom", "Blood", "Storm", "Iron", "Ash", "Dusk", "Bone", "Wrath", "Ember", "Gloom", "Vengeance", "Carrion", "Sol"];
   const RARE_B = { weapon: ["Bite", "Fang", "Edge", "Song", "Thirst", "Needle"], offhand: ["Ward", "Wall", "Guard", "Bulwark"], helm: ["Crown", "Visor", "Brow", "Horn"],
-    body: ["Shell", "Coat", "Hide", "Veil"], boots: ["Stride", "Tread", "Road", "Spur"], ring: ["Loop", "Band", "Coil", "Knot"], amulet: ["Eye", "Heart", "Charm", "Token"] };
+    body: ["Shell", "Coat", "Hide", "Veil"], gloves: ["Grip", "Hand", "Fist", "Claw"], belt: ["Cord", "Clasp", "Buckle", "Sash"], boots: ["Stride", "Tread", "Road", "Spur"], ring: ["Loop", "Band", "Coil", "Knot"], amulet: ["Eye", "Heart", "Charm", "Token"] };
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
   const newId = () => Math.random().toString(36).slice(2, 10);
 
@@ -1585,7 +1650,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (it.rar === 1) { const p = it.mods.find((m) => m.t === "p"), s = it.mods.find((m) => m.t === "s"); return `${p ? p.name + " " : ""}${b.name}${s ? " " + s.name : ""}`; }
     return b.name;
   };
-  const itemReq = (it) => { const s = SLOTS[BASES[it.base].slot]; return { skill: s.req, lvl: it.rar === 3 ? UNIQUES[it.uq].lvl : Math.max(1, Math.min(BASES[it.base].lvl, Math.floor(it.ilvl * 0.8))) }; };
+  const itemReq = (it) => { const s = SLOTS[slotOf(it)]; return { skill: s.req, lvl: it.rar === 3 ? UNIQUES[it.uq].lvl : Math.max(1, Math.min(BASES[it.base].lvl, Math.floor(it.ilvl * 0.8))) }; };
   const reqName = (r) => (r.skill === "cb" ? "combat" : SKILLS[r.skill].name);
   const reqMet = (it) => { const r = itemReq(it); return (r.skill === "cb" ? myCb() : lvl(r.skill)) >= r.lvl; };
   const itemValue = (it) => [2 + it.ilvl / 2, 5 + it.ilvl, 15 + it.ilvl * 3, 200 + it.ilvl * 10][it.rar];
@@ -1603,9 +1668,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     buffs: { whet: 0, wrap: 0, crown: 0 }, dun: 0, repeat: true,
     C: { on: false, dun: 0, room: 0, farm: null, foeHp: 0, pAt: 0, eAt: 0, rAt: 0 }, regenAt: Date.now() + 6000, at: Date.now()
   });
-  function starter() { return { weapon: makeItem("rudis", 0, 1), offhand: makeItem("parma", 0, 1), helm: makeItem("cap", 0, 1), body: makeItem("tunic", 0, 1), boots: makeItem("sandals", 0, 1), ring: null, amulet: null }; }
+  function starter() { return { weapon: makeItem("rudis", 0, 1), offhand: makeItem("parma", 0, 1), helm: makeItem("cap", 0, 1), body: makeItem("tunic", 0, 1), boots: makeItem("sandals", 0, 1), ring: null, ring2: null, amulet: null, gloves: null, belt: null }; }
   let S = fresh();
-  try { const raw = localStorage.getItem(SAVE); if (raw) { const o = JSON.parse(raw); S = { ...fresh(), ...o, skills: { ...fresh().skills, ...o.skills }, buffs: { ...fresh().buffs, ...o.buffs }, C: { ...fresh().C, ...o.C } }; if (!o.eq) S.eq = starter(); } } catch (e) { /* a fresh start */ }
+  try { const raw = localStorage.getItem(SAVE); if (raw) { const o = JSON.parse(raw); S = { ...fresh(), ...o, skills: { ...fresh().skills, ...o.skills }, buffs: { ...fresh().buffs, ...o.buffs }, C: { ...fresh().C, ...o.C } }; if (!o.eq) S.eq = starter(); for (const k of EQ_KEYS) if (S.eq[k] === undefined) S.eq[k] = null; } } catch (e) { /* a fresh start */ }
   let wiping = false;   // a reset must not be undone by the save that runs as the page unloads
   const save = () => { if (wiping) return; S.at = Date.now(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* private window */ } };
 
@@ -1622,7 +1687,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   let gearCache = null;
   function sumGear(eq) {
     const g = { wacc: 0, wstr: 0, acc: 0, str: 0, dmg: 0, ias: 0, crit: 0, cm: 0, ev: 0, dr: 0, hp: 0, regen: 0, lok: 0, fame: 0, find: 0, gold: 0, speed: 2600 };
-    for (const k of SLOT_KEYS) {
+    for (const k of EQ_KEYS) {
       const it = eq[k]; if (!it) continue;
       const b = BASES[it.base];
       if (b.speed) g.speed = b.speed;
@@ -2259,25 +2324,33 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   };
   function itemCard(it) {
     const b = BASES[it.base], r = itemReq(it), c = RARITY[it.rar].color;
-    const imp = Object.entries(b.imp).map(([k, v]) => `<div>${STAT[k].say(v)}</div>`).join("") + (b.speed ? `<div>${secs(b.speed)} per swing</div>` : "");
-    const mods = it.mods.map((m) => `<div>${STAT[m.k].say(m.v)}${m.tier ? `<small>T${m.tier}</small>` : ""}</div>`).join("");
+    const base = [];
+    if (b.speed) base.push(["Swing", secs(b.speed)]);
+    const BASE_NAMES = { wacc: "Accuracy", wstr: "Strength", ev: "Evasion", dr: "Damage reduction", hp: "Health", acc: "Accuracy", str: "Strength", find: "Item rarity", fame: "Fame" };
+    Object.entries(b.imp).forEach(([k, v]) => base.push([BASE_NAMES[k] || k, STAT[k].pct ? pct(v) : num(v)]));
+    const line = (m) => `<div class="it-mod"><span>${STAT[m.k].say(m.v)}</span>${m.tier ? `<i>T${m.tier}</i>` : ""}</div>`;
+    const pre = it.mods.filter((m) => m.t === "p"), suf = it.mods.filter((m) => m.t === "s"), uq = it.mods.filter((m) => m.t === "u");
     return `<div class="it-card" style="--rc:${c}">
       <div class="it-head"><b>${itemName(it)}</b>${it.rar >= 2 ? `<span>${b.name}</span>` : ""}</div>
-      <div class="it-sub">${RARITY[it.rar].name} ${SLOTS[b.slot].name.toLowerCase()} · item level ${it.ilvl} · <span class="${reqMet(it) ? "" : "no"}">requires ${reqName(r)} ${r.lvl}</span></div>
-      ${imp ? `<div class="it-imp">${imp}</div>` : ""}${mods ? `<div class="it-mods">${mods}</div>` : ""}
+      <div class="it-type">${RARITY[it.rar].name} ${SLOTS[b.slot].name}</div>
+      ${base.length ? `<div class="it-base">${base.map(([k, v]) => `<div>${k}: <b>${v}</b></div>`).join("")}</div>` : ""}
+      <div class="it-lvl">Item level <b>${it.ilvl}</b> · <span class="${reqMet(it) ? "" : "no"}">Requires ${reqName(r)} ${r.lvl}</span></div>
+      ${pre.length ? `<div class="it-sec"><h6>Prefixes</h6>${pre.map(line).join("")}</div>` : ""}
+      ${suf.length ? `<div class="it-sec"><h6>Suffixes</h6>${suf.map(line).join("")}</div>` : ""}
+      ${uq.length ? `<div class="it-sec uq">${uq.map(line).join("")}</div>` : ""}
       ${it.uq ? `<div class="it-flav">${UNIQUES[it.uq].flavour}</div>` : ""}</div>`;
   }
   const dpsOf = (d, m) => chance(d.acc, (m.def + 9) * 64) * ((1 + d.max) / 2) * (1 + d.crit * (d.cm - 1)) / (d.speed / 1000);
   /** Is this better than what is worn in its slot? More damage, or as much and tougher. */
   function upgradeOf(it) {
     if (!reqMet(it)) return false;
-    const slot = BASES[it.base].slot, m = C.on ? foeNow() : MON[seqOf(S.dun)[0]];
+    const slot = targetOf(it), m = C.on ? foeNow() : MON[seqOf(S.dun)[0]];
     const a = derive(gear()), b = derive(sumGear({ ...S.eq, [slot]: it }));
     const da = dpsOf(a, m), db = dpsOf(b, m), tough = (d) => d.hp / (1 - d.dr) * (1 + d.ev / 4000);
     return db > da * 1.01 || (db >= da * 0.99 && tough(b) > tough(a) * 1.01);
   }
   function compare(it) {
-    const slot = BASES[it.base].slot, now = derive(gear()), eq2 = { ...S.eq, [slot]: it }, then = derive(sumGear(eq2));
+    const slot = targetOf(it), now = derive(gear()), eq2 = { ...S.eq, [slot]: it }, then = derive(sumGear(eq2));
     const m = C.on ? foeNow() : MON[seqOf(S.dun)[0]];
     const rows = [
       ["Max hit", now.max, then.max, (v) => num(v)], ["Swing", now.speed, then.speed, (v) => secs(v), true],
@@ -2286,13 +2359,13 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       ["Item rarity", now.find, then.find, pct], ["Denarii found", now.gold, then.gold, pct], ["Fame", now.fame, then.fame, pct]
     ].filter(([, a, b]) => a !== b);
     const d0 = dpsOf(now, m), d1 = dpsOf(then, m);
-    return `<div class="it-cmp"><h5>Against what you wear, vs ${m.name}</h5>
+    return `<div class="it-cmp"><h5>In place of ${S.eq[slot] ? `your ${itemName(S.eq[slot])}` : `an empty ${eqName(slot).toLowerCase()}`} · vs ${m.name}</h5>
       <div class="cmp-row big"><span>Damage per second</span><b class="${d1 > d0 ? "up" : d1 < d0 ? "dn" : ""}">${d0.toFixed(1)} → ${d1.toFixed(1)}</b></div>
       ${rows.map(([k, a, b, f, lowGood]) => { const better = lowGood ? b < a : b > a; return `<div class="cmp-row"><span>${k}</span><b class="${better ? "up" : "dn"}">${f(a)} → ${f(b)}</b></div>`; }).join("") || '<p class="note">No change to your numbers.</p>'}</div>`;
   }
-  function equip(it) {
+  function equip(it, into) {
     if (!reqMet(it)) { const r = itemReq(it); return toast("You can't use that yet", `It needs ${reqName(r)} ${r.lvl}.`); }
-    const slot = BASES[it.base].slot, old = S.eq[slot];
+    const slot = into || targetOf(it), old = S.eq[slot];
     S.stash = S.stash.filter((x) => x.id !== it.id);
     if (old) S.stash.push(old);
     S.eq[slot] = it; gearChanged();
@@ -2329,11 +2402,13 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   function renderGear() {
     if (!$("doll")) return;
     const doll = $("doll"); doll.replaceChildren();
-    SLOT_KEYS.forEach((k) => {
-      const it = S.eq[k], cell = el("div", "doll-slot" + (it && gearSel === it.id ? " on" : ""));
-      cell.append(el("small", null, SLOTS[k].name));
-      if (it) { const t = tileOf(it, "worn"); cell.append(t, el("span", "doll-name", itemName(it))); cell.querySelector(".doll-name").style.color = RARITY[it.rar].color; }
-      else cell.append(el("span", "lt-tile empty", SLOTS[k].icon), el("span", "doll-name none", "Empty"));
+    doll.append(el("div", "doll-fig", `<svg viewBox="0 0 100 200" aria-hidden="true"><circle cx="50" cy="22" r="14"/><path d="M28 44h44l10 58-12 3-6-38v53l6 70H55l-5-58-5 58H30l6-70V70l-6 38-12-3z"/></svg>`));
+    EQ_KEYS.forEach((k) => {
+      const it = S.eq[k];
+      const cell = el("button", `doll-cell d-${k}${it ? ` r${it.rar}` : " empty"}${it && gearSel === it.id ? " on" : ""}`);
+      cell.type = "button";
+      if (it) { cell.style.setProperty("--rc", RARITY[it.rar].color); cell.innerHTML = `<span class="dc-ico">${eqIcon(k)}</span>`; cell.title = `${itemName(it)} · ${eqName(k)}`; cell.addEventListener("click", () => { gearSel = it.id; renderGear(); }); }
+      else { cell.innerHTML = `<span class="dc-ico">${eqIcon(k)}</span><small>${eqName(k)}</small>`; cell.title = `${eqName(k)} · empty`; cell.disabled = true; }
       doll.append(cell);
     });
     const d = derive(gear());
@@ -2347,7 +2422,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     for (let i = S.stash.length; i < STASH_CAP; i++) grid.append(el("span", "lt-tile empty"));
     // the item card
     const box = $("itemDetail"); box.replaceChildren();
-    const worn = SLOT_KEYS.find((k) => S.eq[k]?.id === gearSel), it = worn ? S.eq[worn] : S.stash.find((x) => x.id === gearSel);
+    const worn = EQ_KEYS.find((k) => S.eq[k]?.id === gearSel), it = worn ? S.eq[worn] : S.stash.find((x) => x.id === gearSel);
     if (!it) { box.append(el("p", "note", "Pick an item to see it, compare it with what you wear, equip it, sell it, or work it at the bench.")); return; }
     box.insertAdjacentHTML("beforeend", itemCard(it));
     if (!worn) box.insertAdjacentHTML("beforeend", compare(it));
@@ -2355,7 +2430,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const btn = (label, cls, fn, off) => { const b = el("button", "btn small " + cls, label); b.type = "button"; b.disabled = !!off; b.addEventListener("click", fn); acts.append(b); };
     if (worn) btn("Take off", "", () => unequip(worn), S.stash.length >= STASH_CAP);
     else {
-      btn(reqMet(it) ? "Equip" : `Needs ${reqName(itemReq(it))} ${itemReq(it).lvl}`, "gold wide", () => equip(it), !reqMet(it));
+      if (slotOf(it) === "ring" && reqMet(it)) { btn("Wear on left", "gold", () => equip(it, "ring")); btn("Wear on right", "gold", () => equip(it, "ring2")); }
+      else btn(reqMet(it) ? "Equip" : `Needs ${reqName(itemReq(it))} ${itemReq(it).lvl}`, "gold wide", () => equip(it), !reqMet(it));
       btn(`Sell ${coin(itemValue(it))}`, "", () => destroy(it, true));
       btn("Salvage", "", () => destroy(it, false));
     }
