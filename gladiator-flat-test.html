@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Gladiator — Flat MMO mockup</title>
+<title>EastScape — mockup</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -88,7 +88,7 @@ button{font:inherit}
 </head>
 <body>
 <header class="top">
-  <span class="logo">⚔ Gladiator</span>
+  <span class="logo">⚔ EastScape</span>
   <span class="me" id="topName">bootypaper</span>
   <span class="clock" id="clock">--:--:--</span>
   <a href="#" title="Mockup">Purchases</a><a href="#" class="w" title="Mockup">Hiscores</a><a href="#" class="w" title="Mockup">WIKI</a><a href="#" class="w" title="Mockup">Updates</a>
@@ -124,8 +124,10 @@ button{font:inherit}
   /* ------------------------------------------------------------ the world is drawn small, then scaled up crisp */
   const T = 16, COLS = 22, ROWS = 13, W = COLS * T, H = ROWS * T;
   const cv = $("cv"), ctx = cv.getContext("2d");
-  const low = document.createElement("canvas"); low.width = W; low.height = H;
-  const lc = low.getContext("2d");
+  // the world is kept on a 16-unit grid; it is drawn at art resolution, 32px a tile,
+  // so PixelLab sprites land 1:1 and the procedural bits are drawn at 2x
+  const A = 2, low = document.createElement("canvas"); low.width = W * A; low.height = H * A;
+  const lc = low.getContext("2d"); lc.setTransform(A, 0, 0, A, 0, 0);
   const px = (x, y, w, h, c) => { lc.fillStyle = c; lc.fillRect(Math.round(x), Math.round(y), w, h); };
   function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -159,8 +161,12 @@ button{font:inherit}
     if (S.inv.length >= 30) { say("Your inventory is full.", "bad"); return false; }
     S.inv.push({ k, n }); return true;
   }
-  function grant(k, xp) {
+  const xpDrops = [];
+  let tracker = null;   // { k, at }: the skill last trained, drawn as a ring at the top of the game
+  function grant(k, xp, track = true) {
     const before = lvl(k); S.xp[k] += xp; const after = lvl(k);
+    xpDrops.push({ k, xp, at: performance.now() });
+    if (track) tracker = { k, at: performance.now() };
     if (after > before) { say(`Congratulations, you just advanced a ${SKILLS[k].name} level! You are now level ${after}.`, "good"); if (k === "hp") S.hp = Math.min(maxHp(), S.hp + 1); }
   }
 
@@ -185,9 +191,9 @@ button{font:inherit}
         for (let x = 13; x < COLS - 1; x++) g[6][x] = ",";
         for (let y = 5; y < 10; y++) g[y][8] = ",";
         for (let x = 8; x < 14; x++) g[9][x] = ",";
-        const house = { t: "house", x: 2, y: 1, w: 6, h: 4, door: { x: 4, y: 4 }, name: "Farmhouse" }; objs.push(house);
+        const house = { t: "house", img: "farmhouse", x: 2, y: 2, w: 5, h: 3, door: { x: 4, y: 4 }, name: "Farmhouse" }; objs.push(house);
         for (let y = house.y; y < house.y + house.h; y++) for (let x = house.x; x < house.x + house.w; x++) g[y][x] = "#";
-        objs.push({ t: "well", x: 9, y: 2, name: "Well" }); g[2][9] = "#"; g[2][10] = "#"; g[3][9] = "#"; g[3][10] = "#";
+        objs.push({ t: "well", x: 9, y: 2, name: "Well" }); g[3][9] = "#"; g[3][10] = "#";
         objs.push({ t: "pond", x: 11, y: 1, w: 3, h: 2 }); for (let y = 1; y < 3; y++) for (let x = 11; x < 14; x++) g[y][x] = "~";
         objs.push({ t: "hay", x: 8, y: 4 }, { t: "hay", x: 9, y: 4 }); g[4][8] = "#"; g[4][9] = "#";
         for (let y = 6; y < 11; y++) { objs.push({ t: "wheat", x: 2, y, name: "Wheat", grownAt: 0 }); g[y][2] = "#"; }
@@ -196,8 +202,8 @@ button{font:inherit}
         return { g, objs, blobs: [[7, 8, 3], [15, 4, 3], [18, 9, 2], [5, 11, 2]] };
       },
       mobs: [["cow", 12, 4], ["cow", 15, 8], ["cow", 18, 4], ["cow", 11, 10], ["cow", 16, 10]],
-      npcs: [{ name: "Livia", x: 10, y: 6, hair: "#c86a2a", shirt: "#3a6ac8", pants: "#2a2a4a", lines: ["Mind the cows, gladiator. They kick.", "The lanista wants wheat for the horses. Pick some by the house.", "The river's past the blue marker, east of here."] },
-             { name: "Marcus", x: 6, y: 9, hair: "#3a2a1a", shirt: "#8a3a2a", pants: "#4a3a2a", lines: ["Every champion started on cows.", "Hit them until they stop mooing. That's the whole trick."] }],
+      npcs: [{ name: "Tom Brady", art: "tom", x: 10, y: 6, hair: "#c86a2a", shirt: "#3a6ac8", pants: "#2a2a4a", lines: ["Mind the cows, gladiator. They blitz.", "The lanista wants wheat for the horses. Pick some by the house.", "The river's past the blue marker, east of here."] },
+             { name: "Waldy", art: "waldy", x: 6, y: 9, hair: "#3a2a1a", shirt: "#8a3a2a", pants: "#4a3a2a", lines: ["Every champion started on cows.", "Hit them until they stop mooing. That's the whole trick.", "The bucket? Keeps the thoughts in."] }],
       bots: [{ name: "Crixus", level: 42, crest: "#c43a2a" }]
     },
     river: {
@@ -205,12 +211,12 @@ button{font:inherit}
       build() {
         const g = Array.from({ length: ROWS }, () => Array(COLS).fill("."));
         const objs = [];
-        for (let x = 0; x < COLS; x++) { g[0][x] = "#"; g[ROWS - 1][x] = "#"; objs.push({ t: "fenceH", x, y: 0 }, { t: "fenceH", x, y: ROWS - 1 }); }
+        for (let x = 0; x < 17; x++) { g[0][x] = "#"; g[ROWS - 1][x] = "#"; objs.push({ t: "fenceH", x, y: 0 }, { t: "fenceH", x, y: ROWS - 1 }); }
         for (let y = 1; y < ROWS - 1; y++) { if (y < 5 || y > 7) { g[y][0] = "#"; objs.push({ t: "fenceV", x: 0, y }); } else g[y][0] = "e"; }
-        for (let y = 1; y < ROWS - 1; y++) { g[y][16] = "s"; for (let x = 17; x < COLS; x++) g[y][x] = "~"; }
+        for (let y = 0; y < ROWS; y++) { if (y && y < ROWS - 1) g[y][16] = "s"; for (let x = 17; x < COLS; x++) g[y][x] = "~"; }
         objs.push({ t: "spot", x: 17, y: 4, name: "Fishing spot" }, { t: "spot", x: 17, y: 8, name: "Fishing spot" });
         for (let x = 1; x < 16; x++) g[6][x] = ",";
-        const house = { t: "house", x: 9, y: 1, w: 5, h: 4, door: { x: 11, y: 4 }, name: "Fisher's hut", roof: "#a8743a" }; objs.push(house);
+        const house = { t: "house", img: "hut", x: 9, y: 1, w: 5, h: 3, door: { x: 11, y: 3 }, name: "Fisher's hut" }; objs.push(house);
         for (let y = house.y; y < house.y + house.h; y++) for (let x = house.x; x < house.x + house.w; x++) g[y][x] = "#";
         // the coop: a fenced run with a gap on its top side
         for (let x = 2; x <= 7; x++) { if (x !== 4) { g[8][x] = "#"; objs.push({ t: "fenceH", x, y: 8 }); } g[11][x] = "#"; }
@@ -219,7 +225,7 @@ button{font:inherit}
         return { g, objs, blobs: [[5, 5, 2], [12, 9, 3], [15, 3, 2]] };
       },
       mobs: [["chicken", 4, 9], ["chicken", 5, 10], ["chicken", 6, 9], ["chicken", 3, 10]],
-      npcs: [{ name: "Old Tullius", x: 15, y: 6, hair: "#d8d8d8", shirt: "#5a7a3a", pants: "#3a3a2a", lines: ["The fish bite best where the water bubbles.", "Don't let the chickens fool you. One took my eye.", "Farm's back west, past the blue."] }],
+      npcs: [{ name: "Old Tullius", art: "tullius", x: 15, y: 6, hair: "#d8d8d8", shirt: "#5a7a3a", pants: "#3a3a2a", lines: ["The fish bite best where the water bubbles.", "Don't let the chickens fool you. One took my eye.", "Farm's back west, past the blue."] }],
       bots: [{ name: "Spartacus", level: 77, crest: "#e8bf35" }]
     }
   };
@@ -239,7 +245,7 @@ button{font:inherit}
     Z.mobs = sc.mobs.map(([t, x, y], i) => ({ id: `${key}${i}`, t, x, y, px: x, py: y, hx: x, hy: y, hp: MOBS[t].hp, path: [], step: null, face: Math.random() < .5 ? 1 : -1, nextWander: 0, dead: false, respawnAt: 0, hurtAt: 0, swingAt: 0, lastSwing: 0 }));
     Z.npcs = sc.npcs.map((n, i) => ({ ...n, id: `${key}n${i}`, hx: n.x, hy: n.y, px: n.x, py: n.y, path: [], step: null, face: -1, nextWander: 0, bubble: null }));
     Z.bots = sc.bots.map((b, i) => ({ ...b, id: `${key}b${i}`, x: rint(8, 14), y: rint(5, 9), path: [], step: null, face: 1, nextWander: 0 }));
-    Z.bots.forEach((b) => { b.px = b.x; b.py = b.y; });
+    Z.bots.forEach((b) => { b.px = b.x; b.py = b.y; b.hue = b.level > 50 ? 150 : 0; });
     if (fromSide) {
       const y = 6, x = fromSide === "right" ? 1 : COLS - 2;
       Object.assign(P, { x, y, px: x, py: y, path: [], step: null, act: null, face: fromSide === "right" ? 1 : -1 });
@@ -247,26 +253,69 @@ button{font:inherit}
     S.scene = key; save();
   }
 
+  /* ------------------------------------------------------------ the art (PixelLab, style A) */
+  const ART = "/v3/assets/img/glad/flat/", ART_V = 1;
+  const ART_FILES = ["t_dirt", "t_water", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken",
+    ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].map((d) => "hero_" + d),
+    ...["tom", "waldy", "tullius"].flatMap((n) => [n + "_south", n + "_east"])];
+  const IMG = {};
+  // each sprite is measured once: where its feet are and its middle, so every one stands on its tile the same way
+  const artReady = Promise.all(ART_FILES.map((k) => new Promise((res) => {
+    const im = new Image(); im.onload = () => {
+      const c = document.createElement("canvas"); c.width = im.width; c.height = im.height; const o = c.getContext("2d"); o.drawImage(im, 0, 0);
+      const d = o.getImageData(0, 0, im.width, im.height).data; let x0 = im.width, x1 = -1, y0 = im.height, y1 = -1;
+      for (let y = 0; y < im.height; y++) for (let x = 0; x < im.width; x++) if (d[(y * im.width + x) * 4 + 3] > 40) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      IMG[k] = { im, cx: (x0 + x1 + 1) / 2, foot: y1 + 1, top: y0, w: x1 - x0 + 1 }; res();
+    };
+    im.onerror = () => res(); im.src = `${ART}${k}.png?v=${ART_V}`;
+  })));
+  // draw a sprite in art pixels with its feet at (x, y) in world units
+  function spr(k, x, y, flip = false, filter = "") {
+    const a = IMG[k]; if (!a) return false;
+    lc.save(); lc.setTransform(1, 0, 0, 1, Math.round(x * A), Math.round(y * A)); if (flip) lc.scale(-1, 1);
+    if (filter) lc.filter = filter;
+    lc.drawImage(a.im, -Math.round(a.cx), -a.foot); lc.restore(); return true;
+  }
+  // a Wang tile per cell, picked by its four corners (NW NE SW SE, 1 = the tileset's upper terrain)
+  const WANG = [[64, 32], [96, 32], [64, 64], [32, 64], [64, 0], [96, 64], [0, 32], [96, 96], [32, 32], [64, 96], [32, 0], [0, 64], [96, 0], [0, 0], [32, 96], [0, 96]];
+  const DIRS = { "1,0": "east", "-1,0": "west", "0,1": "south", "0,-1": "north", "1,1": "south-east", "-1,1": "south-west", "1,-1": "north-east", "-1,-1": "north-west" };
+
   /* ------------------------------------------------------------ painting: ground and the things that do not move */
   function paintBg() {
-    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const c = document.createElement("canvas"); c.width = W * A; c.height = H * A;
     const o = c.getContext("2d"), f = (x, y, w, h, col) => { o.fillStyle = col; o.fillRect(x, y, w, h); };
+    if (IMG.t_dirt && IMG.t_water) {
+      // a corner is water (or dirt) when any of the four cells touching it is
+      const cell = (x, y) => { const t = Z.g[Math.max(0, Math.min(ROWS - 1, y))][Math.max(0, Math.min(COLS - 1, x))]; return t === "~" ? "w" : t === "," ? "d" : "g"; };
+      const vert = (x, y, k) => [cell(x - 1, y - 1), cell(x, y - 1), cell(x - 1, y), cell(x, y)].includes(k);
+      for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+        const corners = [[x, y], [x + 1, y], [x, y + 1], [x + 1, y + 1]];
+        const wet = corners.map(([a, b]) => vert(a, b, "w"));
+        let sheet, bits;
+        if (wet.some(Boolean)) { sheet = IMG.t_water.im; bits = wet.map((v) => (v ? 0 : 1)); }       // water is its lower terrain
+        else { sheet = IMG.t_dirt.im; bits = corners.map(([a, b]) => (vert(a, b, "d") ? 0 : 1)); }   // grass is its upper, in practice
+        const [sx, sy] = WANG[bits[0] * 8 + bits[1] * 4 + bits[2] * 2 + bits[3]];
+        o.drawImage(sheet, sx, sy, 32, 32, x * 32, y * 32, 32, 32);
+      }
+    }
+    o.scale(A, A);
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      if (IMG.t_dirt) break;
       const t = Z.g[y][x], X = x * T, Y = y * T;
       if (t === "~") { f(X, Y, T, T, "#3f7fc2"); continue; }
       f(X, Y, T, T, t === "," ? "#b8966a" : t === "s" ? "#d8c08a" : "#7aa15a");
       for (let i = 0; i < 6; i++) { const r = hashRand(x * 7 + i, y * 13 + i); f(X + Math.floor(r * 15), Y + Math.floor(hashRand(y + i, x + i, 3) * 15), 1, 1, t === "," ? "#a3845a" : t === "s" ? "#c8ae76" : (r < 0.5 ? "#6f9651" : "#86ad66")); }
     }
     // the darker patches of grass, like shade under something
-    for (const [bx, by, r] of Z.blobs) for (let y = -r * T; y <= r * T; y += 2) for (let x = -r * T; x <= r * T; x += 2) {
+    if (!IMG.t_dirt) for (const [bx, by, r] of Z.blobs) for (let y = -r * T; y <= r * T; y += 2) for (let x = -r * T; x <= r * T; x += 2) {
       const X = bx * T + x, Y = by * T + y, d = Math.hypot(x, y) / (r * T); if (d < 1 && Z.g[Math.floor(Y / T)]?.[Math.floor(X / T)] === ".") { if (hashRand(X, Y, 9) < 0.9 - d * 0.5) f(X, Y, 2, 2, "#6c9450"); }
     }
     for (const ob of Z.objs) {
       const X = ob.x * T, Y = ob.y * T;
-      if (ob.t === "pond") { f(X, Y, ob.w * T, ob.h * T, "#4a8fd6"); o.strokeStyle = "#d8c08a"; o.lineWidth = 2; o.strokeRect(X + 1, Y + 1, ob.w * T - 2, ob.h * T - 2); }
+      if (ob.t === "pond" && !IMG.t_water) { f(X, Y, ob.w * T, ob.h * T, "#4a8fd6"); o.strokeStyle = "#d8c08a"; o.lineWidth = 2; o.strokeRect(X + 1, Y + 1, ob.w * T - 2, ob.h * T - 2); }
       if (ob.t === "fenceH") { f(X, Y + 7, T, 2, "#6b3f23"); f(X, Y + 11, T, 2, "#6b3f23"); f(X + 6, Y + 2, 4, 13, "#4a2a16"); f(X + 7, Y + 2, 2, 12, "#7a4a26"); f(X + 6, Y + 1, 4, 2, "#8a5a32"); }
       if (ob.t === "fenceV") { f(X + 6, Y, 4, T, "#5a3418"); f(X + 7, Y, 2, T, "#7a4a26"); f(X + 5, Y + 3, 6, 3, "#4a2a16"); }
-      if (ob.t === "house") {
+      if (ob.t === "house" && !IMG[ob.img]) {
         const w = ob.w * T, h = ob.h * T;
         f(X + 2, Y + h * 0.45, w - 4, h * 0.55, "#e7c49a"); f(X + 2, Y + h * 0.45, 3, h * 0.55, "#c9a47a");
         for (let i = 0; i < 5; i++) f(X + 4, Y + h * 0.5 + i * 8, w - 8, 1, "rgba(150,110,70,.35)");
@@ -279,12 +328,12 @@ button{font:inherit}
         f(dx + 3, dy - 6, 10, 22, "#3a2616"); f(dx + 4, dy - 5, 8, 21, "#7a3b1f"); f(dx + 10, dy + 4, 1, 2, "#e8bf35");
         f(X + 2 + w * 0.7, Y + h * 0.58, 8, 7, "#3a2616"); f(X + 3 + w * 0.7, Y + h * 0.58 + 1, 6, 5, "#7ab0e0");
       }
-      if (ob.t === "well") {
+      if (ob.t === "well" && !IMG.well) {
         f(X + 2, Y + 14, 28, 16, "#5a5a5a"); f(X + 4, Y + 16, 24, 12, "#7a7a7a"); for (let i = 0; i < 4; i++) f(X + 4 + i * 6, Y + 16, 1, 12, "#5a5a5a"); f(X + 7, Y + 18, 18, 6, "#1a2a3a");
         f(X + 3, Y + 2, 3, 14, "#5a3418"); f(X + 26, Y + 2, 3, 14, "#5a3418"); f(X + 1, Y + 1, 30, 4, "#6b3f23"); f(X + 1, Y, 30, 2, "#8a5a32"); f(X + 14, Y + 5, 3, 8, "#9a9a9a");
       }
-      if (ob.t === "hay") { f(X + 1, Y + 3, 14, 12, "#b88a20"); f(X + 2, Y + 4, 12, 10, "#e0b030"); for (let i = 0; i < 4; i++) f(X + 2, Y + 5 + i * 3, 12, 1, "#c89a28"); f(X + 7, Y + 3, 2, 12, "#a8781a"); }
-      if (ob.t === "tree") {
+      if (ob.t === "hay" && !IMG.hay) { f(X + 1, Y + 3, 14, 12, "#b88a20"); f(X + 2, Y + 4, 12, 10, "#e0b030"); for (let i = 0; i < 4; i++) f(X + 2, Y + 5 + i * 3, 12, 1, "#c89a28"); f(X + 7, Y + 3, 2, 12, "#a8781a"); }
+      if (ob.t === "tree" && !IMG.tree) {
         f(X + 2, Y + 14, 14, 3, "rgba(0,0,0,.25)"); f(X + 6, Y + 6, 4, 10, "#6b4423");
         f(X - 3, Y - 8, 22, 16, "#3f7a3a"); f(X - 1, Y - 11, 18, 5, "#3f7a3a"); f(X, Y - 9, 8, 5, "#5a9a4a"); f(X + 9, Y - 5, 6, 4, "#5a9a4a"); f(X - 3, Y + 4, 22, 3, "#2f5a2a");
       }
@@ -355,6 +404,7 @@ button{font:inherit}
       if (!canStep(e.x, e.y, dx, dy)) { e.path = []; return false; }
       e.step = { fx: e.x, fy: e.y, tx: n.x, ty: n.y, t0: now, ms: dx && dy ? STEP * 1.4 : STEP };
       if (dx) e.face = dx > 0 ? 1 : -1;
+      e.dir = DIRS[`${dx},${dy}`];
       return true;
     }
     return false;
@@ -380,19 +430,19 @@ button{font:inherit}
     if (a.kind === "mob") {
       const m = Z.mobs.find((x) => x.id === a.id); if (!m || m.dead) { P.act = null; return; }
       if (!adjacent(P, m)) { const p = path(P, m, true); if (p && p.length) P.path = p; else if (!p) P.act = null; return; }
-      P.face = m.x > P.x ? 1 : m.x < P.x ? -1 : P.face;
+      P.face = m.x > P.x ? 1 : m.x < P.x ? -1 : P.face; P.dir = DIRS[`${Math.sign(m.x - P.x)},${Math.sign(m.y - P.y)}`] || P.dir;
       if (!a.started) { a.started = now; P.lastSwing = now - 1800; m.lastSwing = now; m.fighting = true; }
       if (now - P.lastSwing >= 2400) {
         P.lastSwing = now; P.swingAt = now;
         const hit = Math.random() < hitChance(lvl("melee") + 3, MOBS[m.t].def), dmg = hit ? rint(1, maxHit()) : 0;
         m.hp -= dmg; m.hurtAt = now; splat(m.id, dmg, dmg ? "hit" : "miss");
-        if (dmg) { grant("melee", dmg * 4); grant("hp", Math.round(dmg * 1.33)); }
+        if (dmg) { grant("melee", dmg * 4); grant("hp", Math.round(dmg * 1.33), false); }
         if (m.hp <= 0) return killMob(m, now);
       }
       return;
     }
     if (!adjacent(P, a)) { P.act = null; return; }
-    if (a.kind === "npc") { const n = Z.npcs.find((x) => x.id === a.id); if (n) { const line = pick(n.lines); n.bubble = { text: line, at: now }; n.face = P.x > n.x ? 1 : -1; } P.act = null; return; }
+    if (a.kind === "npc") { const n = Z.npcs.find((x) => x.id === a.id); if (n) { const line = pick(n.lines); n.bubble = { text: line, at: now }; n.face = P.x > n.x ? 1 : -1; n.turned = P.x !== n.x; setTimeout(() => { n.turned = false; }, 4000); } P.act = null; return; }
     if (a.kind === "door") { say(`The ${a.name.toLowerCase()} door is shut. Houses you can walk into come next: they're their own scenes.`, "sys"); P.act = null; return; }
     if (a.kind === "well") { say("You look down the well. Something glints at the bottom, but it's too far down.", "sys"); P.act = null; return; }
     if (a.kind === "wheat") {
@@ -457,7 +507,7 @@ button{font:inherit}
     save(); renderPanel();
   }
   const QUESTS = [
-    { key: "cows", name: "Cattle Drive", goal: 5, about: "Livia wants five cows seen to.", reward: 60, have: () => S.q.cows },
+    { key: "cows", name: "Cattle Drive", goal: 5, about: "Tom Brady wants five cows seen to.", reward: 60, have: () => S.q.cows },
     { key: "fish", name: "Catch of the Day", goal: 3, about: "Old Tullius wants three fish off the river.", reward: 40, have: () => S.q.fish }
   ];
   function questCheck() {
@@ -533,7 +583,7 @@ button{font:inherit}
     if (!P.act || P.act.kind !== "mob") { if (!P.regen) P.regen = now; if (now - P.regen > 20000) { P.regen = now; if (S.hp < maxHp()) { S.hp++; renderStats(); } } } else P.regen = now;
 
     // ---- the low-resolution world
-    lc.clearRect(0, 0, W, H); lc.drawImage(Z.bg, 0, 0);
+    lc.clearRect(0, 0, W, H); lc.drawImage(Z.bg, 0, 0, W, H);
     // water shimmer, the blue exits, wheat and fishing spots: the living bits of the ground
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
       if (Z.g[y][x] === "~" && hashRand(x, y, 5) < 0.35) { const o = Math.floor((now / 180 + hashRand(x, y) * 16) % 16); px(x * T + o % 12, y * T + 4 + (x * 3 + y) % 8, 4, 1, "#7ab4ec"); }
@@ -541,16 +591,42 @@ button{font:inherit}
     }
     const sprites = [];
     for (const ob of Z.objs) {
+      // the buildings and props stand in the sort with everyone else, so you can walk behind a tree
+      if (ob.t === "house" && IMG[ob.img]) sprites.push({ y: (ob.y + ob.h) * T - 1, draw: () => spr(ob.img, ob.door.x * T + 8, (ob.y + ob.h) * T) });
+      if (ob.t === "well" && IMG.well) sprites.push({ y: (ob.y + 2) * T - 1, draw: () => spr("well", (ob.x + 1) * T, (ob.y + 2) * T - 1) });
+      if (ob.t === "tree" && IMG.tree) sprites.push({ y: ob.y * T + 14, draw: () => spr("tree", ob.x * T + 8, ob.y * T + 15) });
+      if (ob.t === "hay" && IMG.hay) sprites.push({ y: ob.y * T + 12, draw: () => spr("hay", ob.x * T + 8, ob.y * T + 14) });
       if (ob.t === "wheat") sprites.push({ y: ob.y * T + 15, draw: () => {
         const X = ob.x * T, Y = ob.y * T;
         if (ob.grownAt > now) { for (let i = 0; i < 4; i++) px(X + 2 + i * 3, Y + 11, 2, 3, "#9a7a3a"); return; }
+        if (spr("wheat", X + 8, Y + 15)) return;
         for (let i = 0; i < 3; i++) { const sx = X + 2 + i * 5, sw = Math.round(Math.sin(now / 600 + i + ob.y) * 1); px(sx + 1, Y + 6, 1, 9, "#b89a28"); px(sx + sw, Y - 1, 3, 8, "#f0d040"); px(sx + sw, Y + 1, 1, 5, "#c8a020"); px(sx + sw + 2, Y, 1, 5, "#fff08a"); }
       } });
       if (ob.t === "spot") sprites.push({ y: ob.y * T, draw: () => { const X = ob.x * T + 8, Y = ob.y * T + 8, r = 3 + ((now / 160) % 5); lc.strokeStyle = "rgba(230,245,255,.85)"; lc.lineWidth = 1; lc.beginPath(); lc.ellipse(X, Y, r, r * 0.55, 0, 0, Math.PI * 2); lc.stroke(); px(X - 1, Y - 1, 2, 2, "#fff"); px(X + 3, Y - 3, 1, 1, "#fff"); } });
     }
-    for (const m of Z.mobs) if (!m.dead) sprites.push({ y: m.py * T + 14, draw: () => { const hurt = now - m.hurtAt < 200, lunge = now - m.swingAt < 200 ? m.face * 2 : 0; (m.t === "cow" ? drawCow : drawChicken)(m.px * T + 8 + lunge, m.py * T + 11, m.face, hurt); } });
-    for (const n of Z.npcs) sprites.push({ y: n.py * T + 14, draw: () => drawPerson(n.px * T + 8, n.py * T + 15, n.face, n) });
-    for (const b of Z.bots) sprites.push({ y: b.py * T + 14, draw: () => drawPerson(b.px * T + 8, b.py * T + 15, b.face, { shirt: "#7a2a2a", pants: "#4a3a2a", helm: true, crest: b.crest }, b.step ? -Math.abs(Math.sin(now / 80)) : 0) });
+    // everyone glides between tiles with a little bob; only fighting moves the body
+    const bobOf = (e, ms = 80) => (e.step ? -Math.abs(Math.sin(now / ms)) * 1.5 : 0);
+    const RED = "brightness(1.5) sepia(1) saturate(5) hue-rotate(-30deg)";
+    for (const m of Z.mobs) if (!m.dead) sprites.push({ y: m.py * T + 14, draw: () => {
+      const hurt = now - m.hurtAt < 200, lunge = now - m.swingAt < 200 ? m.face * 2 : 0;
+      // the PixelLab mobs face right; mirror for left
+      if (!spr(m.t, m.px * T + 8 + lunge, m.py * T + 14 + bobOf(m, 110), m.face < 0, hurt ? RED : "")) (m.t === "cow" ? drawCow : drawChicken)(m.px * T + 8 + lunge, m.py * T + 11, m.face, hurt);
+    } });
+    for (const n of Z.npcs) sprites.push({ y: n.py * T + 14, draw: () => {
+      const side = n.step || n.turned, k = `${n.art}_${side ? "east" : "south"}`;
+      if (!spr(k, n.px * T + 8, n.py * T + 15 + bobOf(n), side && n.face < 0)) drawPerson(n.px * T + 8, n.py * T + 15, n.face, n);
+    } });
+    for (const b of Z.bots) sprites.push({ y: b.py * T + 14, draw: () => {
+      // other players: the same gladiator for now, tinted so they read as someone else
+      if (!spr(`hero_${b.dir || "south"}`, b.px * T + 8, b.py * T + 15 + bobOf(b), false, `hue-rotate(${b.hue || 0}deg)`)) drawPerson(b.px * T + 8, b.py * T + 15, b.face, { shirt: "#7a2a2a", pants: "#4a3a2a", helm: true, crest: b.crest });
+    } });
+    // your gladiator, in the sort like everyone else: 8 facings, a lunge when you swing, red when hit
+    const fightingNow = P.act?.kind === "mob" && !P.step && !P.path.length;
+    if (IMG.hero_south) sprites.push({ y: P.py * T + 14.5, draw: () => {
+      const d = P.dir || "south", sw = now - P.swingAt, lunge = fightingNow && sw < 260 ? Math.sin((sw / 260) * Math.PI) * 4 : 0;
+      const [ux, uy] = Object.keys(DIRS).find((k) => DIRS[k] === d).split(",").map(Number);
+      spr(`hero_${d}`, P.px * T + 8 + ux * lunge * 0.7, P.py * T + 15 + uy * lunge * 0.7 + bobOf(P), false, now - P.hurtAt < 200 ? RED : "");
+    } });
     sprites.sort((a, b) => a.y - b.y).forEach((s) => s.draw());
 
     // ---- up to screen size, crisp
@@ -564,7 +640,7 @@ button{font:inherit}
 
     // your gladiator (the only thing drawn at screen scale, from the PixelLab sheet)
     const hx = sx(P.px * T + 8), hy = sy(P.py * T + 15), fighting = P.act?.kind === "mob" && !moving && !P.path.length;
-    if (hero.complete && hero.naturalWidth) {
+    if (!IMG.hero_south && hero.complete && hero.naturalWidth) {
       const heightPx = 27 * S2, sc = heightPx / SHEET.body;
       let row = "idle", fr;
       if (moving) { row = "run"; fr = Math.floor(now / 85) % 6; }
@@ -582,10 +658,10 @@ button{font:inherit}
     label("bootypaper", hx, hy + 4, "#fff"); label(`level ${total()}`, hx, hy + 18, "#ffe45c", 12);
     for (const m of Z.mobs) if (!m.dead) {
       const x = sx(m.px * T + 8), y = sy(m.py * T + 15); label(MOBS[m.t].name, x, y + 2, "#ffb23f", 12);
-      if (m.hp < MOBS[m.t].hp) { const bw = 30; ctx.fillStyle = "#c00"; ctx.fillRect(x - bw / 2, sy(m.py * T) - (m.t === "cow" ? 22 : 10) , bw, 5); ctx.fillStyle = "#0c0"; ctx.fillRect(x - bw / 2, sy(m.py * T) - (m.t === "cow" ? 22 : 10), bw * Math.max(0, m.hp / MOBS[m.t].hp), 5); }
+      if (m.hp < MOBS[m.t].hp) { const bw = 30; ctx.fillStyle = "#c00"; ctx.fillRect(x - bw / 2, sy(m.py * T - 5), bw, 5); ctx.fillStyle = "#0c0"; ctx.fillRect(x - bw / 2, sy(m.py * T - 5), bw * Math.max(0, m.hp / MOBS[m.t].hp), 5); }
     }
-    for (const n of Z.npcs) { const x = sx(n.px * T + 8), y = sy(n.py * T + 15); label(n.name, x, y + 2, "#fff", 12); if (n.bubble && now - n.bubble.at < 3500) bubble(n.bubble.text, x, sy(n.py * T) - 16); }
-    for (const b of Z.bots) { const x = sx(b.px * T + 8), y = sy(b.py * T + 15); label(b.name, x, y + 2, "#fff", 12); label(`level ${b.level}`, x, y + 15, "#ffe45c", 11); if (b.bubble && now - b.bubble.at < 3500) bubble(b.bubble.text, x, sy(b.py * T) - 16); }
+    for (const n of Z.npcs) { const x = sx(n.px * T + 8), y = sy(n.py * T + 15); label(n.name, x, y + 2, "#fff", 12); if (n.bubble && now - n.bubble.at < 3500) bubble(n.bubble.text, x, sy(n.py * T - 10)); }
+    for (const b of Z.bots) { const x = sx(b.px * T + 8), y = sy(b.py * T + 15); label(b.name, x, y + 2, "#fff", 12); label(`level ${b.level}`, x, y + 15, "#ffe45c", 11); if (b.bubble && now - b.bubble.at < 3500) bubble(b.bubble.text, x, sy(b.py * T - 10)); }
     if (fighting && S.hp < maxHp()) { ctx.fillStyle = "#c00"; ctx.fillRect(hx - 18, hy - 29 * S2, 36, 5); ctx.fillStyle = "#0c0"; ctx.fillRect(hx - 18, hy - 29 * S2, 36 * Math.max(0, S.hp / maxHp()), 5); }
     // hit splats
     splats = splats.filter((s) => now - s.at < 900);
@@ -597,6 +673,35 @@ button{font:inherit}
       ctx.strokeStyle = "#000"; ctx.lineWidth = 1.5; ctx.stroke();
       ctx.fillStyle = "#fff"; ctx.font = `700 13px "Pixelify Sans", monospace`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(s.n), x, y - k * 10 + 1);
       ctx.globalAlpha = 1;
+    }
+    // xp drops: rise off your head and fade, a few stacked if they land together
+    for (let i = xpDrops.length - 1; i >= 0; i--) if (now - xpDrops[i].at > 1600) xpDrops.splice(i, 1);
+    xpDrops.forEach((d, i) => {
+      const k = (now - d.at) / 1600, y = hy - 31 * S2 - k * 34 - (xpDrops.length - 1 - i) * 16;
+      ctx.globalAlpha = Math.min(1, (1 - k) * 2.2);
+      ctx.font = `700 15px "Pixelify Sans", monospace`; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      const t = `+${d.xp} xp`, tw = ctx.measureText(t).width, x = hx - (tw + 20) / 2;
+      ctx.font = "13px sans-serif"; ctx.fillText(SKILLS[d.k].icon, x, y);
+      ctx.font = `700 15px "Pixelify Sans", monospace`; ctx.lineWidth = 3; ctx.strokeStyle = "#0a1a08"; ctx.strokeText(t, x + 19, y); ctx.fillStyle = "#5dff4a"; ctx.fillText(t, x + 19, y);
+      ctx.globalAlpha = 1;
+    });
+    // the skill ring: progress to the next level, up while you work and for a few seconds after
+    if (tracker) {
+      const busy = P.act && (P.act.kind === "mob" || P.act.kind === "spot" || P.act.kind === "wheat"), idle = now - tracker.at;
+      if (busy) tracker.at = Math.max(tracker.at, now - 3000);
+      const a = busy ? 1 : Math.max(0, 1 - (idle - 5000) / 800);
+      if (a <= 0) tracker = null;
+      else {
+        const k = tracker.k, l = lvl(k), lo = XP_AT[l], hi = XP_AT[Math.min(99, l + 1)], f = l >= 99 ? 1 : (S.xp[k] - lo) / (hi - lo);
+        const cx = w / 2, cy = 52, r = 22;
+        ctx.globalAlpha = a;
+        ctx.fillStyle = "rgba(20,24,20,.82)"; ctx.beginPath(); ctx.arc(cx, cy, r + 4, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,.14)"; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = "#f2d22e"; ctx.lineCap = "round"; ctx.beginPath(); ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.02, f)); ctx.stroke(); ctx.lineCap = "butt";
+        ctx.font = "20px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(SKILLS[k].icon, cx, cy + 1);
+        ctx.font = `700 12px "Pixelify Sans", monospace`; ctx.lineWidth = 3; ctx.strokeStyle = "#000"; ctx.strokeText(String(l), cx + r - 2, cy + r - 4); ctx.fillStyle = "#fff"; ctx.fillText(String(l), cx + r - 2, cy + r - 4);
+        ctx.globalAlpha = 1;
+      }
     }
     if (hoverThing) { const t = `${hoverThing.kind === "mob" ? "Attack" : hoverThing.kind === "npc" ? "Talk-to" : hoverThing.kind === "wheat" ? "Pick" : hoverThing.kind === "spot" ? "Fish" : hoverThing.kind === "door" ? "Open" : "Search"} ${hoverThing.name}`; label(t, w / 2, 8, "#fff", 14); }
     // a scene change fades in
@@ -676,12 +781,13 @@ button{font:inherit}
   addEventListener("pagehide", save);
 
   loadScene(S.scene in SCENES ? S.scene : "farm");
+  artReady.then(() => { Z.bg = paintBg(); });
   Object.assign(P, { x: S.x, y: S.y, px: S.x, py: S.y });
   if (!walkable(P.x, P.y) || Z.g[P.y][P.x] === "e") Object.assign(P, { x: 11, y: 7, px: 11, py: 7 });
   say("Welcome to the Ludus Farm. Click to walk (or WASD), click a cow to fight it, click wheat to pick it. Blue tiles lead to the river.", "sys");
   renderPanel();
   requestAnimationFrame(frame);
-  window.__flat = { get S() { return S; }, P, Z, loadScene };
+  window.__flat = { get S() { return S; }, P, Z, loadScene, grant };
 })();
 </script>
 </body>
