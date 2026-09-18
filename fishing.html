@@ -684,6 +684,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .inv-acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
 .inv-acts .btn{justify-content:center;min-width:0;white-space:normal;text-align:center}
 .inv-acts .btn.wide{grid-column:1 / -1}
+.qtag{display:inline-flex;align-items:center;gap:3px;font-size:.66rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:99px;color:var(--qc);background:color-mix(in srgb,var(--qc) 16%,transparent);border:1px solid color-mix(in srgb,var(--qc) 50%,transparent);white-space:nowrap;vertical-align:1px}
+.qtag i{font-style:normal;letter-spacing:-1px}
+.inv-q{position:absolute;top:6px;left:7px;font-size:.66rem;letter-spacing:-1px;color:var(--qc);text-shadow:0 1px 2px #000}
 .inv-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:11px 2px;border-bottom:1px solid var(--line)}
 .inv-row:last-child{border-bottom:0}
 .inv-row .loot-ico{font-size:1.6rem;line-height:1;text-align:center}
@@ -1564,14 +1567,41 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const FISHING_PCT = 1;                              // Fishing, per distinct species in the tank
   const SET_PCT = 5;                                  // per complete spot in the tank, to every skill
   const TANK_CAP = 25;
+
+  /* Quality (2026-09-17): every fish also rolls a grade when it is caught or
+     hatched, on top of its species' rarity — so there are Common Bluegills and
+     Legendary Bluegills. The grade is drawn as stars and a filled chip, never
+     as an outlined rarity tag, so "Epic Bluegill" can't be read as the species
+     being epic. A better grade makes more pearls in the tank, lends more to
+     its skill, sells for more, and cooks into a stronger, longer dish.
+     Bank and pantry are keyed "bluegill" for Common and "bluegill.2" above it,
+     so every save from before this reads as Common. */
+  const QUAL = [
+    { name: "Common", stars: 1, color: "#b9b2a6", odds: 0.70, val: 1, tank: 1, n: 1, mag: 1 },
+    { name: "Rare", stars: 2, color: "#6fb8ff", odds: 0.22, val: 1.5, tank: 1.25, n: 1.5, mag: 1.15 },
+    { name: "Epic", stars: 3, color: "#c28bff", odds: 0.07, val: 2.25, tank: 1.5, n: 2, mag: 1.3 },
+    { name: "Legendary", stars: 4, color: "#ffc93c", odds: 0.01, val: 3.5, tank: 2, n: 3, mag: 1.5 }
+  ];
+  function rollQual() {
+    let r = Math.random();
+    for (let i = QUAL.length - 1; i > 0; i--) { r -= QUAL[i].odds; if (r < 0) return i; }
+    return 0;
+  }
+  const qOf = (f) => f.q || 0;
+  const qk = (key, q) => (q ? `${key}.${q}` : key);
+  const unq = (k) => { const [key, q] = String(k).split("."); return { key, sp: BY_KEY[key], q: +q || 0 }; };
+  const qTag = (q) => `<span class="qtag" style="--qc:${QUAL[q].color}"><i>${"★".repeat(QUAL[q].stars)}</i> ${QUAL[q].name}</span>`;
+  const r2 = (v) => Math.round(v * 100) / 100;
+  const tankV = (f) => r2(TANK_PCT[BY_KEY[f.key].rar] * (f.shiny ? 2 : 1) * QUAL[qOf(f)].tank);
+
   function tankBonus() {
     const best = {};
-    for (const f of S.fish) { const cur = best[f.key]; if (!cur || (f.shiny && !cur.shiny)) best[f.key] = f; }
+    for (const f of S.fish) { const cur = best[f.key]; if (!cur || tankV(f) > tankV(cur)) best[f.key] = f; }
     const pct = Object.fromEntries(Object.keys(SKILLS).map((k) => [k, 0]));
     const from = Object.fromEntries(Object.keys(SKILLS).map((k) => [k, []]));
     for (const [key, f] of Object.entries(best)) {
-      const sp = BY_KEY[key], skill = SPOT_SKILL[sp.spot], v = TANK_PCT[sp.rar] * (f.shiny ? 2 : 1);
-      pct[skill] += v; from[skill].push({ sp, v, shiny: f.shiny });
+      const sp = BY_KEY[key], skill = SPOT_SKILL[sp.spot], v = tankV(f);
+      pct[skill] = r2(pct[skill] + v); from[skill].push({ sp, v, shiny: f.shiny, q: qOf(f) });
       pct.fishing += FISHING_PCT;
     }
     const sets = SPOTS.filter((_, si) => SPECIES.filter((sp) => sp.spot === si).every((sp) => best[sp.key]));
@@ -1579,11 +1609,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     return { pct, from, sets, best, species: Object.keys(best).length };
   }
   /** What keeping this fish would add, for the catch card. */
-  function tankGain(sp, shiny) {
-    const cur = S.fish.find((f) => f.key === sp.key);
-    if (cur && (cur.shiny || !shiny)) return null;                  // it would be a duplicate
-    // a shiny replacing a plain one adds only the difference (the shiny doubling)
-    return { skill: SPOT_SKILL[sp.spot], v: cur ? TANK_PCT[sp.rar] : TANK_PCT[sp.rar] * (shiny ? 2 : 1), fishing: cur ? 0 : FISHING_PCT };
+  function tankGain(sp, shiny, q = 0) {
+    const cur = tankBonus().best[sp.key], v = tankV({ key: sp.key, shiny, q });
+    if (cur && tankV(cur) >= v) return null;                        // it would be a duplicate
+    // a better one of a species already in the tank adds only the difference
+    return { skill: SPOT_SKILL[sp.spot], v: r2(cur ? v - tankV(cur) : v), fishing: cur ? 0 : FISHING_PCT };
   }
 
   /* ============================================================ the kitchen
@@ -1629,8 +1659,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { key: "deep", name: "Deep breath", icon: "🫧", unit: "dives", n: [5, 8, 12, 18, 25], mag: [1, 1, 1, 1, 1],
       say: () => "dives never come up empty and bring one thing more" }
   ];
-  const dishOf = (sp) => ({ key: sp.key, sp, name: `${METHOD[sp.spot]} ${sp.name}`, buff: BUFF[sp.spot],
-    n: BUFF[sp.spot].n[sp.rar], mag: BUFF[sp.spot].mag[sp.rar], value: Math.round(RAR[sp.rar].rate * 3) });
+  // a better grade lasts longer and hits harder; Lucky line's is a multiplier, so its excess is what scales
+  const qMag = (buff, m, q) => buff.key === "luck" ? r2(1 + (m - 1) * QUAL[q].mag) : Math.round(m * QUAL[q].mag * 1000) / 1000;
+  const dishOf = (sp, q = 0) => ({ key: qk(sp.key, q), sp, q, name: `${METHOD[sp.spot]} ${sp.name}`, buff: BUFF[sp.spot],
+    n: Math.round(BUFF[sp.spot].n[sp.rar] * QUAL[q].n), mag: qMag(BUFF[sp.spot], BUFF[sp.spot].mag[sp.rar], q),
+    value: Math.round(RAR[sp.rar].rate * 3 * QUAL[q].val) });
   const bankCount = () => Object.values(S.bank).reduce((n, v) => n + v, 0);
   const bankCap = () => BANK_CAPS[S.bankLvl].cap;
   const cookStop = (rar) => COOK_STOP[rar] - (S.gear.gauntlets ? 8 : 0);
@@ -1642,16 +1675,17 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const cookSpeed = () => Math.max(0.5, 1 - (levelIn("cooking") - 1) * 0.0051) * (S.gear.pans ? 0.75 : 1);
   const cookMs = (sp) => cookMin(sp) * 60000 * cookSpeed();
   const AUTO_RAR = { off: -1, common: 0, uncommon: 1, rare: 2 };
-  function bankFish(sp) {
+  function bankFish(sp, q = 0) {
     if (bankCount() >= bankCap()) return false;
-    S.bank[sp.key] = (S.bank[sp.key] || 0) + 1;
+    const k = qk(sp.key, q);
+    S.bank[k] = (S.bank[k] || 0) + 1;
     return true;
   }
 
   /** Put n of a species on the stove. They leave the cold store as they go on. */
   function startCook(key, n) {
     if (S.cookQ) { toast("The stove is busy", "Stop the batch that is cooking first."); return; }
-    const sp = BY_KEY[key], have = S.bank[key] || 0;
+    const sp = unq(key).sp, have = S.bank[key] || 0;
     n = Math.min(n, have); if (!n) return;
     if (levelIn("cooking") < COOK_CAN[sp.rar]) { toast("Not yet", `You need Cooking ${COOK_CAN[sp.rar]} to cook ${sp.name}.`); return; }
     S.bank[key] = have - n; if (!S.bank[key]) delete S.bank[key];
@@ -1668,7 +1702,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   /** Cook everything that should have finished by `until`. Returns how many came off. */
   function cookTick(until = Date.now(), idle = false, speed = 1) {
     const q = S.cookQ; if (!q) return 0;
-    const sp = BY_KEY[q.key], per = cookMs(sp) / speed, burn = burnChance(sp.rar);
+    const { sp, q: grade } = unq(q.key), per = cookMs(sp) / speed, burn = burnChance(sp.rar);
     let done = 0, burnt = 0, guard = 20000;
     while (q.left > 0 && until - q.last >= per && guard-- > 0) {
       q.last += per; q.left--;
@@ -1685,7 +1719,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     }
     if (!q.left) {
       S.cookQ = null;
-      if (!idle) toast(`Kitchen: ${q.done} ${dishOf(sp).name}`, `${q.burnt ? `${q.burnt} burnt · ` : ""}in the pantry, ready to eat or sell`);
+      if (!idle) toast(`Kitchen: ${q.done} ${grade ? QUAL[grade].name + " " : ""}${dishOf(sp, grade).name}`, `${q.burnt ? `${q.burnt} burnt · ` : ""}in the pantry, ready to eat or sell`);
     }
     return done + burnt;
   }
@@ -1703,7 +1737,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   /* ---------------- dishes and the buffs they give */
   function eatDish(key) {
     if (!S.dishes[key]) return;
-    const d = dishOf(BY_KEY[key]);
+    const d = dishOf(unq(key).sp, unq(key).q);
     S.dishes[key]--; if (!S.dishes[key]) delete S.dishes[key];
     const b = S.buffs[d.buff.key] || { left: 0, mag: 0 };
     b.left += d.n; b.mag = Math.max(b.mag, d.mag);
@@ -1713,7 +1747,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   }
   function sellDish(key, all) {
     const have = S.dishes[key] || 0; if (!have) return;
-    const d = dishOf(BY_KEY[key]), n = all ? have : 1;
+    const d = dishOf(unq(key).sp, unq(key).q), n = all ? have : 1;
     S.dishes[key] = have - n; if (!S.dishes[key]) delete S.dishes[key];
     S.pearls += d.value * n;
     toast(`Sold ${n} ${d.name}`, `+${num(d.value * n)} pearls`);
@@ -1759,9 +1793,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const sb = el("div", "card-body");
     const q = S.cookQ;
     if (q) {
-      const sp = BY_KEY[q.key];
+      const { sp, q: grade } = unq(q.key);
       sb.innerHTML = `<h2 class="card-h">On the stove</h2>
-        <div class="kq"><span class="kq-fish"></span><span class="kq-main"><b>${dishOf(sp).name}</b>
+        <div class="kq"><span class="kq-fish"></span><span class="kq-main"><b>${dishOf(sp, grade).name}</b> ${grade ? qTag(grade) : ""}
           <small>${q.total - q.left} of ${q.total} · <span class="ok">${q.done} cooked</span> · <span class="no">${q.burnt} burnt</span> · ${dur(cookMs(sp))} each · ${Math.round(burnChance(sp.rar) * 100)}% burn · <span id="kqLeft"></span></small></span></div>
         <div class="dive-bar kq-bar"><i id="kqBar"></i></div>`;
       sb.querySelector(".kq-fish").append(fishChip(sp, true));
@@ -1784,14 +1818,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     sel.addEventListener("change", () => { S.autoBank = sel.value; save(); toast("Auto-bank", sel.value === "off" ? "Off. Every catch will ask." : `${sel.options[sel.selectedIndex].text} go straight to the cold store — never a shiny, a new species or a record.`); });
     auto.append(sel);
     cb.append(auto);
-    const keys = Object.keys(S.bank).sort((a, b) => BY_KEY[a].rar - BY_KEY[b].rar || S.bank[b] - S.bank[a]);
+    const keys = Object.keys(S.bank).sort((a, b) => unq(a).sp.rar - unq(b).sp.rar || unq(a).sp.spot - unq(b).sp.spot || a.localeCompare(b));
     if (!keys.length) cb.append(el("p", "note", "Empty. Bank a catch and it waits here to be cooked."));
     const rows = el("div", "rows");
     keys.forEach((k) => {
-      const sp = BY_KEY[k], n = S.bank[k], can = L >= COOK_CAN[sp.rar], burn = burnChance(sp.rar);
+      const { sp, q: grade } = unq(k), n = S.bank[k], can = L >= COOK_CAN[sp.rar], burn = burnChance(sp.rar);
       const row = el("div", "krow" + (can ? "" : " locked"));
       const pic = el("span", "krow-fish"); pic.append(fishChip(sp, true));
-      row.append(pic, el("span", "krow-main", `<b>${sp.name} ×${num(n)}</b><small><span style="color:${RAR[sp.rar].color}">${RAR[sp.rar].name}</span> · ${can ? (burn ? `${Math.round(burn * 100)}% burn · stops at ${cookStop(sp.rar)}` : "never burns") : `Cooking ${COOK_CAN[sp.rar]} to cook`} · ${dur(cookMs(sp))} · ${num(cookXp(sp))} xp · makes ${dishOf(sp).buff.icon} ${dishOf(sp).buff.name}</small>`));
+      row.append(pic, el("span", "krow-main", `<b>${sp.name} ×${num(n)}</b> ${grade ? qTag(grade) : ""}<small><span style="color:${RAR[sp.rar].color}">${RAR[sp.rar].name}</span> · ${can ? (burn ? `${Math.round(burn * 100)}% burn · stops at ${cookStop(sp.rar)}` : "never burns") : `Cooking ${COOK_CAN[sp.rar]} to cook`} · ${dur(cookMs(sp))} · ${num(cookXp(sp))} xp · makes ${dishOf(sp, grade).buff.icon} ${dishOf(sp, grade).buff.name}</small>`));
       const btns = el("span", "krow-btns");
       [["1", 1], ["10", 10], ["100", 100], ["All", n]].forEach(([t, m]) => {
         if (t !== "All" && m > n) return;
@@ -1808,14 +1842,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const pantry = el("section", "card card-next");
     const pb = el("div", "card-body");
     pb.innerHTML = `<h2 class="card-h">Pantry</h2><div class="panel-intro"><p>Eat a dish for a buff, or sell it. Eating another of the same kind adds to what is left and keeps the stronger effect.</p></div>`;
-    const dk = Object.keys(S.dishes).sort((a, b) => BY_KEY[b].rar - BY_KEY[a].rar);
+    const dk = Object.keys(S.dishes).sort((a, b) => unq(b).sp.rar - unq(a).sp.rar || unq(b).q - unq(a).q);
     if (!dk.length && !S.burnt) pb.append(el("p", "note", "Nothing cooked yet."));
     const prow = el("div", "rows");
     dk.forEach((k) => {
-      const d = dishOf(BY_KEY[k]);
+      const d = dishOf(unq(k).sp, unq(k).q);
       const row = el("div", "krow");
       const pic = el("span", "krow-fish"); pic.append(fishChip(d.sp, true));
-      row.append(pic, el("span", "krow-main", `<b>${d.name} ×${num(S.dishes[k])}</b><small>${d.buff.icon} <b>${d.buff.name}</b> — ${d.buff.say(d.mag)} for ${d.n} ${d.buff.unit}</small>`));
+      row.append(pic, el("span", "krow-main", `<b>${d.name} ×${num(S.dishes[k])}</b> ${d.q ? qTag(d.q) : ""}<small>${d.buff.icon} <b>${d.buff.name}</b> — ${d.buff.say(d.mag)} for ${d.n} ${d.buff.unit}</small>`));
       const btns = el("span", "krow-btns");
       const eat = el("button", "btn small gold", "Eat"); eat.type = "button"; eat.addEventListener("click", () => eatDish(k));
       const sell = el("button", "btn small", `Sell <span class="pearl"></span>${num(d.value)}`); sell.type = "button"; sell.addEventListener("click", () => sellDish(k, false));
@@ -1836,7 +1870,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   /** The stove's bar moves every frame; the rest redraws only when a count changes. */
   function paintCookBar() {
     const q = S.cookQ, bar = $("kqBar"); if (!q || !bar) return;
-    const per = cookMs(BY_KEY[q.key]), into = Date.now() - q.last;
+    const per = cookMs(unq(q.key).sp), into = Date.now() - q.last;
     bar.style.width = `${Math.min(100, (into / per) * 100)}%`;
     const left = $("kqLeft"); if (left) left.textContent = `${dur(per * q.left - into)} left`;
   }
@@ -2236,7 +2270,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     let sp = pool[0];
     for (let i = 0; i < pool.length; i++) { r -= weights[i]; if (r <= 0) { sp = pool[i]; break; } }
     const frac = Math.pow(Math.random(), 2.2 * (1 - (fx.heavy || 0)));
-    return { sp, frac, w: sp.w[0] + (sp.w[1] - sp.w[0]) * frac, shiny: Math.random() < (S.shinyBoost ? 1 / 10 : 1 / 500) * (bait?.shiny || 1) };
+    return { sp, frac, q: rollQual(), w: sp.w[0] + (sp.w[1] - sp.w[0]) * frac, shiny: Math.random() < (S.shinyBoost ? 1 / 10 : 1 / 500) * (bait?.shiny || 1) };
   }
   /** The word over the water while a leviathan is on. */
   function refs_phaseBoss(boss, left, prog) {
@@ -2346,17 +2380,18 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     $("cName").textContent = (c.shiny ? "Shiny " : "") + sp.name;
     const tags = $("cTags"); tags.replaceChildren();
     const rt = el("span", "tag", RAR[sp.rar].name); rt.style.color = RAR[sp.rar].color; tags.append(rt);
+    tags.insertAdjacentHTML("beforeend", qTag(c.q || 0));
     if (c.shiny) tags.append(el("span", "tag solid", "Shiny"));
     if (isNew) tags.append(el("span", "tag new", "New to your book"));
     if (record) tags.append(el("span", "tag solid", "New record"));
-    const rate = fishRate({ key: sp.key, w: c.w, shiny: c.shiny });
+    const rate = fishRate({ key: sp.key, w: c.w, shiny: c.shiny, q: c.q });
     const xp = grant("fishing", CATCH_XP[sp.rar] * (1 + 0.5 * (c.frac || 0)) * (c.shiny ? 3 : 1) + (isNew ? 250 : 0));
     const snag = rollSnag();
     if (snag) { addItem(snag); S.stats.snags = (S.stats.snags || 0) + 1; }
     const snagRow = $("cSnag");
     snagRow.hidden = !snag;
     if (snag) snagRow.innerHTML = `<span>${LOOT[snag].icon}</span> Snagged on the way in — <b>${LOOT[snag].name}</b> went in the bag.`;
-    const gain = tankGain(sp, c.shiny), tn = $("cTank");
+    const gain = tankGain(sp, c.shiny, c.q), tn = $("cTank");
     tn.hidden = !gain;
     if (gain) tn.innerHTML = `Keep it: <b>+${gain.v}% ${SKILLS[gain.skill].name}</b>${gain.fishing ? ` and <b>+${gain.fishing}% Fishing</b>` : ""} while it swims in your tank`;
     $("cWeight").textContent = lbs(c.w);
@@ -2389,8 +2424,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     // the cold store. Never a shiny, a new species or a record — those always ask.
     const autoB = !c.shiny && !isNew && !record && sp.rar <= AUTO_RAR[S.autoBank] && bankCount() < bankCap();
     if (autoB) {
-      bankFish(sp); fish.result = null; setPhase("idle"); renderKitchen();
-      toast(`${sp.name} banked`, `Auto-bank · ${num(bankCount())}/${num(bankCap())} in the cold store`);
+      bankFish(sp, c.q); fish.result = null; setPhase("idle"); renderKitchen();
+      toast(`${c.q ? QUAL[c.q].name + " " : ""}${sp.name} banked`, `Auto-bank · ${num(bankCount())}/${num(bankCap())} in the cold store`);
     } else {
       $("catch").hidden = false;
       $("cKeep").focus();
@@ -2415,19 +2450,19 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       renderShop();
     }
     if (S.fish.length >= TANKS[S.tank].cap) return;
-    S.fish.push({ id: S.uid++, key: c.sp.key, w: c.w, shiny: c.shiny });
+    S.fish.push({ id: S.uid++, key: c.sp.key, w: c.w, shiny: c.shiny, q: c.q || 0 });
     closeCatch(); syncTank(); renderTank(); track("keep");
     toast(`${c.shiny ? "Shiny " : ""}${c.sp.name} is in the tank`, `+${num(fishRate(S.fish[S.fish.length - 1]))} pearls an hour`);
   });
   $("cBank").addEventListener("click", () => {
     const c = fish.result; if (!c || c.shiny) return;
-    if (!bankFish(c.sp)) { toast("Cold store full", "Cook or sell what is in it, or buy a bigger one."); return; }
+    if (!bankFish(c.sp, c.q)) { toast("Cold store full", "Cook or sell what is in it, or buy a bigger one."); return; }
     closeCatch(); renderKitchen();
     toast(`${c.sp.name} banked`, `${num(bankCount())}/${num(bankCap())} in the cold store · cook it in the Kitchen`);
   });
   $("cSell").addEventListener("click", () => {
     const c = fish.result; if (!c) return;
-    const v = fishRate({ key: c.sp.key, w: c.w, shiny: c.shiny }) * 3;
+    const v = fishRate({ key: c.sp.key, w: c.w, shiny: c.shiny, q: c.q }) * 3;
     S.pearls += v; closeCatch(); toast(`Sold for ${num(v)} pearls`); track("sell");
   });
   function closeCatch() { $("catch").hidden = true; fish.result = null; setPhase("idle"); $("act").focus(); save(); }
@@ -2701,7 +2736,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   window.addEventListener("keyup", (e) => { if (e.code === "Space") { fish.holding = false; if (e.target.id === "act") e.preventDefault(); } });
 
   /* ============================================================ tank */
-  const fishRate = (f) => { const sp = BY_KEY[f.key]; const frac = (f.w - sp.w[0]) / (sp.w[1] - sp.w[0] || 1); return RAR[sp.rar].rate * (0.8 + 0.5 * frac) * (f.shiny ? 3 : 1); };
+  const fishRate = (f) => { const sp = BY_KEY[f.key]; const frac = (f.w - sp.w[0]) / (sp.w[1] - sp.w[0] || 1); return RAR[sp.rar].rate * (0.8 + 0.5 * frac) * QUAL[qOf(f)].val * (f.shiny ? 3 : 1); };
   const decorCount = () => DECOR.filter((d) => S.decor[d.key]).length;
   const tankRate = () => S.fish.reduce((a, f) => a + fishRate(f), 0) * (1 + DECOR_BONUS * decorCount());
 
@@ -2986,7 +3021,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   });
   function showTip(f, x, y) {
     const sp = BY_KEY[f.key], tip = $("fishtip");
-    tip.innerHTML = `<strong>${f.shiny ? "Shiny " : ""}${sp.name}</strong><small>${RAR[sp.rar].name} · ${lbs(f.w)} · ${num(fishRate(f))} pearls/hr</small>`;
+    tip.innerHTML = `<strong>${f.shiny ? "Shiny " : ""}${sp.name}</strong><small>${qTag(qOf(f))} ${RAR[sp.rar].name} · ${lbs(f.w)} · ${num(fishRate(f))} pearls/hr</small>`;
     const b = el("button", "btn small", `Release for <span class="pearl"></span> ${num(fishRate(f) * 3)}`); b.type = "button";
     b.addEventListener("click", () => release(f.id));
     tip.append(b);
@@ -3038,7 +3073,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const box = $("tbGrid"); if (!box) return;
     box.replaceChildren();
     Object.entries(SKILLS).forEach(([k, sk]) => {
-      const v = tb.pct[k], src = k === "fishing" ? `${tb.species} species` : tb.from[k].map((x) => x.sp.name + (x.shiny ? " ★" : "")).join(", ");
+      const v = tb.pct[k], src = k === "fishing" ? `${tb.species} species` : tb.from[k].map((x) => (x.q ? QUAL[x.q].name + " " : "") + x.sp.name + (x.shiny ? " (shiny)" : "")).join(", ");
       const water = k === "fishing" ? "every species" : SPOTS[SPOT_SKILL.indexOf(k)]?.name || "";
       const row = el("div", "tb-row" + (v ? "" : " none"));
       row.innerHTML = `<span class="tb-ico">${sk.icon}</span>
@@ -3062,10 +3097,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       const sp = BY_KEY[f.key];
       const li = el("li");
       const dot = el("i"); dot.style.background = RAR[sp.rar].color;
-      const name = el("span", null, `${sp.name} ${f.shiny ? '<span class="shiny">★ SHINY</span>' : ""} <small style="color:var(--muted-2)">${lbs(f.w)}</small>`);
+      const name = el("span", null, `${sp.name} ${qOf(f) ? qTag(qOf(f)) : ""} ${f.shiny ? '<span class="shiny">★ SHINY</span>' : ""} <small style="color:var(--muted-2)">${lbs(f.w)}</small>`);
       const lends = tb.best[f.key] === f;
       const rate = el("span", "rate", `<span class="pearl"></span>${num(fishRate(f))}/hr`
-        + (lends ? `<small class="lends">+${TANK_PCT[sp.rar] * (f.shiny ? 2 : 1)}% ${SKILLS[SPOT_SKILL[sp.spot]].name}</small>` : '<small class="lends dup">duplicate</small>'));
+        + (lends ? `<small class="lends">+${tankV(f)}% ${SKILLS[SPOT_SKILL[sp.spot]].name}</small>` : '<small class="lends dup">duplicate</small>'));
       const breeding = isBreeding(f.id);
       const b = el("button", "btn small", breeding ? "♥ Nesting" : "Release"); b.type = "button"; b.disabled = breeding; b.addEventListener("click", () => release(f.id));
       li.append(dot, name, rate, b); list.append(li);
@@ -3498,7 +3533,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
      finds), raw fish in the cold store, and cooked dishes. One grid of tiles,
      and a column beside it for whichever tile is picked. */
   let invSel = null;
-  const RAW_SELL = (sp) => Math.round(RAR[sp.rar].rate * 2);   // a dish sells for ×3 — cooking is worth it
+  const RAW_SELL = (sp, q = 0) => Math.round(RAR[sp.rar].rate * 2 * QUAL[q].val);   // a dish sells for ×3 — cooking is worth it
   function fishArt(sp, w, h) {
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const cv = document.createElement("canvas");
@@ -3511,17 +3546,19 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   }
   function sellBanked(key, all) {
     const have = S.bank[key] || 0; if (!have) return;
-    const sp = BY_KEY[key], n = all ? have : 1, got = RAW_SELL(sp) * n;
+    const { sp, q } = unq(key), n = all ? have : 1, got = RAW_SELL(sp, q) * n;
     S.bank[key] = have - n; if (!S.bank[key]) delete S.bank[key];
     S.pearls += got;
-    toast(`Sold ${n} raw ${sp.name}`, `+${num(got)} pearls`);
+    toast(`Sold ${n} raw ${q ? QUAL[q].name + " " : ""}${sp.name}`, `+${num(got)} pearls`);
     renderKitchen(); renderInv(); renderStatbar(); save();
   }
   function invItems() {
     const out = [];
     LOOT_KEYS.filter((k) => S.inv[k]).forEach((k) => out.push({ id: "loot:" + k, kind: "loot", key: k, n: S.inv[k], name: LOOT[k].name, rar: LOOT[k].rar }));
-    SPECIES.filter((sp) => S.bank[sp.key]).forEach((sp) => out.push({ id: "fish:" + sp.key, kind: "fish", key: sp.key, sp, n: S.bank[sp.key], name: sp.name, rar: sp.rar }));
-    SPECIES.filter((sp) => S.dishes[sp.key]).forEach((sp) => out.push({ id: "dish:" + sp.key, kind: "dish", key: sp.key, sp, n: S.dishes[sp.key], name: dishOf(sp).name, rar: sp.rar }));
+    const order = (box) => Object.keys(box).filter((k) => box[k] > 0 && unq(k).sp)
+      .sort((a, b) => unq(a).sp.spot - unq(b).sp.spot || unq(a).sp.rar - unq(b).sp.rar || a.localeCompare(b));
+    order(S.bank).forEach((k) => { const { sp, q } = unq(k); out.push({ id: "fish:" + k, kind: "fish", key: k, sp, q, n: S.bank[k], name: sp.name, rar: sp.rar }); });
+    order(S.dishes).forEach((k) => { const { sp, q } = unq(k); out.push({ id: "dish:" + k, kind: "dish", key: k, sp, q, n: S.dishes[k], name: dishOf(sp, q).name, rar: sp.rar }); });
     return out;
   }
   function invArt(it, big) {
@@ -3559,6 +3596,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         t.setAttribute("aria-pressed", it.id === invSel ? "true" : "false");
         t.title = it.name;
         t.append(invArt(it, false), el("small", null, it.name), el("span", "inv-n", "×" + num(it.n)));
+        if (it.kind !== "loot") { const qs = el("span", "inv-q", "★".repeat(QUAL[it.q].stars)); qs.style.setProperty("--qc", QUAL[it.q].color); t.append(qs); t.title = `${QUAL[it.q].name} ${it.name}`; }
         t.addEventListener("click", () => { invSel = it.id; renderInv(); });
         g.append(t);
       });
@@ -3593,6 +3631,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     head.append(el("h3", null, it.name));
     const tags = el("div", "tags");
     tags.append(el("span", "tag", RAR[it.rar].name)); tags.lastChild.style.color = RAR[it.rar].color;
+    if (it.kind !== "loot") tags.insertAdjacentHTML("beforeend", qTag(it.q));
     tags.append(el("span", "tag", it.kind === "loot" ? "Bag" : it.kind === "fish" ? "Raw fish" : "Dish"));
     head.append(tags);
     const facts = el("div", "inv-facts"), use = el("div", "inv-use"), acts = el("div", "inv-acts");
@@ -3612,8 +3651,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         act(`Sell all <span class="pearl"></span>${num(v * it.n)}`, "gold", () => sellItem(it.key, true)));
       if (RECIPES.some((r) => r.need[it.key])) acts.append(act("Open Crafting →", "wide", () => goTab("craft")));
     } else if (it.kind === "fish") {
-      const sp = it.sp, d = dishOf(sp), L = levelIn("cooking"), can = COOK_CAN[sp.rar], burn = burnChance(sp.rar);
-      fact("Sells raw", `<span class="pearl"></span>${num(RAW_SELL(sp))} each`);
+      const sp = it.sp, d = dishOf(sp, it.q), L = levelIn("cooking"), can = COOK_CAN[sp.rar], burn = burnChance(sp.rar);
+      fact("Sells raw", `<span class="pearl"></span>${num(RAW_SELL(sp, it.q))} each`);
       fact("Burn chance", L < can ? "—" : `${Math.round(burn * 100)}%`);
       fact("Cooks at", `Cooking ${can}`);
       fact("Cook time", `${dur(cookMs(sp))} · ${num(cookXp(sp))} xp`);
@@ -3626,10 +3665,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       acts.append(act("Cook 1", "", cook(1), off), act(`Cook all (${num(it.n)})`, "", cook(it.n), off));
       acts.append(
         act("Sell 1", "", () => sellBanked(it.key, false)),
-        act(`Sell all <span class="pearl"></span>${num(RAW_SELL(sp) * it.n)}`, "gold", () => sellBanked(it.key, true)),
+        act(`Sell all <span class="pearl"></span>${num(RAW_SELL(sp, it.q) * it.n)}`, "gold", () => sellBanked(it.key, true)),
         act("Open the Kitchen →", "wide", () => goTab("kitchen")));
     } else {
-      const d = dishOf(it.sp), cur = S.buffs[d.buff.key];
+      const d = dishOf(it.sp, it.q), cur = S.buffs[d.buff.key];
       fact("Sells for", `<span class="pearl"></span>${num(d.value)} each`);
       fact("Lasts", `${d.n} ${d.buff.unit}`);
       uses.push(`<li>Eat it for <b>${d.buff.icon} ${d.buff.name}</b>: ${d.buff.say(d.mag)} for ${d.n} ${d.buff.unit}.</li>`);
@@ -3677,7 +3716,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const record = w > entry.best;
     entry.n++; entry.best = Math.max(entry.best, w); entry.shiny = entry.shiny || shiny;
     S.dex[n.key] = entry;
-    S.nursery.push({ id: S.uid++, key: n.key, w, shiny });
+    S.nursery.push({ id: S.uid++, key: n.key, w, shiny, q: rollQual() });
     S.nests[i] = null;
     const hatchXp = HATCH_XP[sp.rar] * (shiny ? 3 : 1) * (n.skipped ? 0.5 : 1);
     const xp = quiet ? idleGrant("breeding", hatchXp * IDLE_CUT) : grant("breeding", hatchXp);
@@ -4496,6 +4535,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       <p>Bank a catch and it waits in the <b>cold store</b>, counted by species. In the Kitchen, pick a fish and cook 1, 10, 100 or all of them: each dish takes real time — from 1 minute for a Bluegill to an hour for the deep sea's best — and pays xp by the minute. Cooking level (up to twice as fast at 99) and Copper pans make it quicker. The stove keeps going while the page is open, even on another page. With the <b>Smokehouse</b> it carries on while the page is closed, as idle work.</p>
       <p>Every fish can first be cooked at one level and <b>stops burning</b> at another. Between the two, the burn chance falls from 55% to nothing. Chef's gauntlets bring every stop-burning level 8 closer. Burnt fish are not wasted: ten of them compost onto the bait beds.</p>
       ${wkTable(["Rarity", "Can cook at", "Stops burning at"], RAR.map((r, i) => [wkRar(i), `${COOK_CAN[i]}`, `${cookStop(i)}`]), [1, 2])}
+      <p><b>Quality.</b> Every fish you catch or hatch also rolls a grade, shown in stars: separate from the species' rarity, so a Legendary Bluegill is still a Bluegill, just a great one. A better grade makes more pearls and lends more to its skill in the tank, sells for more raw or cooked, and cooks into a dish that lasts longer and hits harder. The bank and the pantry keep each grade apart.</p>
+      ${wkTable(["Grade", "Chance", "Pearls & sell price", "Tank skill bonus", "Dish lasts", "Dish strength"], QUAL.map((g) => [qTag(QUAL.indexOf(g)), `${Math.round(g.odds * 100)}%`, `×${g.val}`, `×${g.tank}`, `×${g.n}`, `×${g.mag}`]), [1, 2, 3, 4, 5])}
       ${wkTable(["Fish", "Time (base)", "Cooking xp"], SPECIES.map((sp) => [sp.name, `${cookMin(sp)} min`, num(cookXp(sp))]), [1, 2])}
       <h3>Dishes are buffs</h3>
       <p>Where a fish came from decides what its dish does; how rare it is decides how long it lasts. Eating another of the same kind adds to what is left and keeps the stronger effect. You can sell a dish instead, for about what the raw fish would have made.</p>
