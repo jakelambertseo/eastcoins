@@ -30,6 +30,7 @@ const SECTIONS = {
   leaderboard: ["Leaderboard — EastCoin Fishing", "Where you sit against the room, skill by skill."],
   profile: ["Your reef — EastCoin Fishing", "Your card, your records and where they put you."],
   shop: ["Shop — EastCoin Fishing", "Rods, tanks, gardens, nests, air and bags."],
+  wiki: ["Wiki — EastCoin Fishing", "How everything works, and every fish, rod, bait and item in the game."],
   controls: ["Mockup controls — EastCoin Fishing", "Bend the clock, the weather and your luck."]
 };
 

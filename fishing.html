@@ -390,6 +390,24 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .lb-note{padding:10px 16px;font-size:.74rem;color:var(--muted-2);background:var(--panel-2);border-top:1px solid var(--line)}
 @media (max-width:620px){.lb-row{grid-template-columns:38px minmax(0,1fr) 62px 92px;padding:9px 11px;font-size:.82rem}}
 
+/* The wiki: the leaderboard's rail and header, prose and plain tables. */
+.wk{font-size:.9rem;line-height:1.55;color:var(--muted)}
+.wk h3{font-family:var(--display);font-weight:800;font-size:1rem;color:var(--text);margin:18px 0 6px}
+.wk h3:first-child{margin-top:0}
+.wk p{margin:0 0 10px;max-width:70ch}
+.wk b{color:var(--text)}
+.wk ul{margin:0 0 10px;padding-left:18px}
+.wk li{margin:3px 0}
+.wk-scroll{overflow-x:auto;margin:6px 0 14px;border:1px solid var(--line);border-radius:11px}
+.wk-t{width:100%;border-collapse:collapse;font-size:.82rem}
+.wk-t th{text-align:left;font-size:.6rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted-2);background:var(--panel-2);padding:8px 10px;white-space:nowrap}
+.wk-t td{padding:7px 10px;border-top:1px solid var(--line);vertical-align:middle;color:var(--text)}
+.wk-t td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.wk-t td.m{color:var(--muted)}
+.wk-fish{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.wk-rar{font-weight:800;white-space:nowrap}
+.wk-got{color:var(--green);font-weight:800;margin-left:4px}
+
 /* the profile: a card, the numbers, and where they put you in the room */
 .pcard{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:16px;align-items:start}
 @media (max-width:820px){.pcard{grid-template-columns:1fr}}
@@ -735,6 +753,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
           <span class="fnav-h">You</span>
           <button class="tab" role="tab" id="tab-dex" aria-controls="panel-dex" data-tab="dex" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h10a3 3 0 0 1 3 3v12H8a3 3 0 0 1-3-3z"/><path d="M5 16.5a3 3 0 0 1 3-3h10"/></svg><span class="tab-label">Fish book</span></button>
           <button class="tab" role="tab" id="tab-profile" aria-controls="panel-profile" data-tab="profile" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1.2-3.6 4-5 7-5s5.8 1.4 7 5"/></svg><span class="tab-label">Profile preview</span></button>
+          <span class="fnav-h">Help</span>
+          <button class="tab" role="tab" id="tab-wiki" aria-controls="panel-wiki" data-tab="wiki" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20v3H6.5A2.5 2.5 0 0 1 4 20.5zM9 8h7M9 11.5h5"/></svg><span class="tab-label">Wiki</span></button>
           <span class="fnav-h">Mockup</span>
           <button class="tab" role="tab" id="tab-controls" aria-controls="panel-controls" data-tab="controls" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h9M18 7h1M5 17h1M10 17h9"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span class="tab-label">Controls</span></button>
       </div>
@@ -887,6 +907,17 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       <div class="lb-main">
         <div class="lb-head" id="lbHead"></div>
         <div class="lb-table" id="lbTable"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view view-wiki" role="tabpanel" id="panel-wiki" aria-labelledby="tab-wiki" data-panel="wiki" hidden>
+    <header class="view-h"><div><h1>Wiki</h1><p>How everything works, and every fish, rod, bait and item in the game. Read straight off the game's own tables, so it is always current.</p></div></header>
+    <div class="lb">
+      <nav class="lb-rail" id="wkRail" aria-label="Wiki topics"></nav>
+      <div class="lb-main">
+        <div class="lb-head" id="wkHead"></div>
+        <div class="card"><div class="card-body wk" id="wkBody"></div></div>
       </div>
     </div>
   </section>
@@ -3716,6 +3747,135 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     table.append(el("div", "lb-note", "Everyone but you is an example figure, grown from their own name so the board never shuffles. The real one reads these off every player."));
   }
 
+  /* ============================================================ wiki
+     Every table here is built from the same constants the game runs on —
+     SPECIES, RODS, BAITS, LOOT, RECIPES and the rest — so a price or a
+     level changed anywhere is already right here. Only the prose is
+     written by hand. */
+  const wkTable = (heads, rows, num = []) =>
+    `<div class="wk-scroll"><table class="wk-t"><thead><tr>${heads.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>`
+    + rows.map((r) => `<tr>${r.map((c, i) => `<td class="${num.includes(i) ? "n" : ""}">${c ?? "—"}</td>`).join("")}</tr>`).join("")
+    + "</tbody></table></div>";
+  const wkRar = (r) => `<span class="wk-rar" style="color:${RAR[r].color}">${RAR[r].name}</span>`;
+  const wkNeed = (what) => { const u = needOf(what); return u ? `${SKILLS[u.skill].name} ${u.at}` : "—"; };
+  const wkPearls = (n) => (n ? `<span class="pearl"></span> ${num(n)}` : "Free");
+  const wkHours = (ms) => (ms >= HOUR ? `${+(ms / HOUR).toFixed(1)} h` : `${Math.round(ms / 60000)} min`);
+
+  const WIKI = [
+    { key: "start", name: "Getting started", icon: "🎣", sub: "The loop, in the order you will meet it", body: () => `
+      <h3>Cast, hook, reel</h3>
+      <p>Press <b>Cast</b> (or Space) and wait. When the float dips and the button says <b>Hook it!</b>, press it quickly — too early pulls the bait away, too late and it spits the hook. Then the reel starts: <b>hold</b> to lift the green band, <b>let go</b> to drop it, and keep the fish inside the band until the bar fills. A common fish barely fights; a legendary one moves fast and punishes every second outside the band.</p>
+      <h3>Keep, cook or sell</h3>
+      <p>Every catch asks. <b>Keep</b> puts it in your tank, where it earns pearls every hour. <b>Sell</b> pays three hours of what it would have earned, right now. <b>Cook</b> pays a little less but trains Cooking. Rarer and heavier fish are worth more whichever you choose.</p>
+      <h3>Pearls</h3>
+      <p><span class="pearl"></span> Pearls are the game's money. They buy rods, tanks, bait seed, gear and upgrades in the Shop, and nothing else. They never turn into ZCoins.</p>
+      <h3>While you are away</h3>
+      <p>Your tank keeps paying for up to <b>${OFFLINE_CAP_H} hours</b> after you close the page. Gardens keep growing and eggs keep incubating.</p>
+      <h3>The menu opens as you go</h3>
+      <p>You start with Fishing, your tank and the Shop. Everything else unlocks through progress, never a timer:</p>
+      ${wkTable(["Page", "Opens when you have"], GATES.map((g) => [g.name.replace(/^(the|your) /, "").replace(/^./, (c) => c.toUpperCase()), g.need]))}` },
+
+    { key: "clock", name: "Time & weather", icon: "🌗", sub: "The reef keeps its own clock", body: () => `
+      <p>The reef does not follow the real clock. A <b>day is 24 minutes</b> — dawn 3, day 10, dusk 3 and night 8 — a <b>season is two reef days</b>, and the whole year comes round every 3 hours 12 minutes.</p>
+      <p><b>Storms</b> are decided in 8-minute blocks and are up about a fifth of the time, most often in autumn and least in summer; a storm has a good chance of running into the next block. Everyone is in the same weather at the same moment.</p>
+      <p>Some fish only bite at a certain time, season or in a storm. The <b>Biting here</b> list under the scene shows which, and how long until each one is back.</p>
+      <p><b>NFL Sunday</b> is the one thing on the real calendar: some fish only turn up on an actual Sunday.</p>` },
+
+    { key: "fish", name: "Fish", icon: "🐟", sub: `All ${SPECIES.length}, by spot`, body: () => {
+      const caughtN = SPECIES.filter((sp) => S.dex[sp.key]?.n).length;
+      const odds = RAR.map((r) => r.weight), tot = odds.reduce((a, b) => a + b, 0);
+      return `
+      <p>You have caught <b>${caughtN} of ${SPECIES.length}</b>. Silhouettes are ones you have not landed yet.</p>
+      <p>Base odds before bait, rods and bosses: ${RAR.map((r, i) => `${wkRar(i)} ${(odds[i] / tot * 100).toFixed(1)}%`).join(" · ")}. About one fish in <b>500</b> is <b>shiny</b> — one in 50 with Shimmer shrimp on the hook — and a shiny is worth three times the xp and three times the pearls.</p>
+      ${SPOTS.map((spot, si) => `<h3>${spot.name}${spot.cost ? ` <small class="m">· ${wkPearls(spot.cost)} to unlock</small>` : ""}</h3>`
+        + wkTable(["Fish", "Rarity", "Weight", "When"], SPECIES.filter((sp) => sp.spot === si).map((sp) => {
+          const got = S.dex[sp.key]?.n;
+          const cell = document.createElement("span"); cell.className = "wk-fish";
+          cell.append(fishChip(sp, got), document.createTextNode(sp.name));
+          const tmp = document.createElement("div"); tmp.append(cell);
+          return [tmp.innerHTML.replace("<canvas", `<canvas data-sp="${sp.key}" data-got="${got ? 1 : 0}"`) + (got ? '<span class="wk-got">✓</span>' : ""),
+            wkRar(sp.rar), `${lbs(sp.w[0])} – ${lbs(sp.w[1])}`, hint(sp)];
+        }))).join("")}`;
+    } },
+
+    { key: "rods", name: "Rods", icon: "🪝", sub: "A wider band and better luck", body: () => `
+      <p>A better rod widens the green band while you reel, which makes every fish easier, and multiplies your chance at the rarer ones.</p>
+      ${wkTable(["Rod", "Price", "Band", "Rare-fish luck", "Needs"], RODS.map((r) => [r.name, wkPearls(r.cost), `${Math.round(r.zone * 100)}%`, `×${r.luck}`, wkNeed(r.name)]), [1, 2, 3])}` },
+
+    { key: "bait", name: "Bait & garden", icon: "🪱", sub: "Grow the thing that decides what bites", body: () => `
+      <p>Bait is grown, never bought. Plant a bed in the <b>Bait garden</b>, water it to speed it up by a quarter, and harvest when it is ready. Slower bait is better bait. Choose which bait is on the hook from the dropdown beside Cast; each cast uses one.</p>
+      ${wkTable(["Bait", "Seed", "Grows in", "Harvest", "Effect"], BAIT_KEYS.map((k) => { const b = BAITS[k]; return [b.name, wkPearls(b.cost), wkHours(b.grow), `${b.yield}`, b.about]; }), [1, 2, 3])}
+      <h3>Garden size</h3>
+      ${wkTable(["Plots", "Price", "Needs"], PLOT_CAPS.map((c) => [`${c.cap} plots`, wkPearls(c.cost), c.cost ? wkNeed(`${c.cap} garden plots`) : "—"]), [1])}` },
+
+    { key: "tank", name: "Tank & décor", icon: "🐠", sub: "Where your pearls come from", body: () => `
+      <p>Every fish in your tank earns pearls every hour, whether the page is open or not. Rarer, heavier and shiny fish earn more. A bigger tank holds more fish; each decoration adds <b>+${Math.round(DECOR_BONUS * 100)}%</b> to everything the tank makes.</p>
+      ${wkTable(["Tank", "Holds", "Price", "Needs"], TANKS.map((t) => [t.name, `${t.cap} fish`, wkPearls(t.cost), t.cost ? wkNeed(`${t.cap}-fish tank`) : "—"]), [1, 2])}
+      ${wkTable(["Decoration", "Price", "Bonus", "Needs"], DECOR.map((d) => [d.name, wkPearls(d.cost), `+${Math.round(DECOR_BONUS * 100)}%`, wkNeed(d.name)]), [1, 2])}` },
+
+    { key: "dive", name: "Diving", icon: "🤿", sub: "Air, a bag, and the bottom", body: () => `
+      <p>Each dive uses one breath of air and brings up one to four things off the bottom — more with the Mesh bag and Air tank. When the air runs out, <b>surface</b> to refill it, which takes a few seconds. When your bag is full you cannot dive until you sell, craft or buy a bigger bag.</p>
+      <p>Deeper water holds rarer things but is riskier: a dive comes up empty ${SPOTS.map((sp, i) => `<b>${Math.round((0.01 + i * 0.0125) * 100)}%</b> at ${sp.name}`).join(", ")}. An empty dive still costs the air.</p>
+      <p>Every now and then a <b>cast</b> brings up a part instead: 1% at the pond up to 5% in the deep. Those are always the common parts.</p>
+      <h3>What is down there</h3>
+      ${wkTable(["Item", "Rarity", "Sells for", "Diving xp"], LOOT_KEYS.map((k) => { const it = LOOT[k]; return [`${it.icon} ${it.name}`, wkRar(it.rar), wkPearls(it.value), num(DIVE_XP[it.rar])]; }), [2, 3])}
+      <h3>Air</h3>
+      ${wkTable(["Tank", "Dives", "Refill", "Price", "Needs"], AIR_CAPS.map((a, i) => [a.name, `${a.dives}`, `${((3000 + i * 600) / 1000).toFixed(1)} s`, wkPearls(a.cost), a.cost ? wkNeed(a.name) : "—"]), [1, 2, 3])}
+      <h3>Bags</h3>
+      ${wkTable(["Bag", "Holds", "Price", "Needs"], BAG_CAPS.map((c) => [c.name, `${c.cap}`, wkPearls(c.cost), c.cost ? wkNeed(c.name) : "—"]), [1, 2])}` },
+
+    { key: "craft", name: "Crafting", icon: "🔨", sub: "Everything you can make", body: () => `
+      <p>Recipes turn what you dive up into bait, pearls and charms. Every craft trains Crafting, and the higher recipes need a Crafting level before you can make them.</p>
+      ${wkTable(["Recipe", "Level", "Takes", "Makes", "xp"], RECIPES.map((r) => [r.name, `${r.at}`,
+        Object.entries(r.need).map(([k, n]) => `${n} ${LOOT[k].name}`).join(", "), r.about, num(r.xp)]), [1, 4])}` },
+
+    { key: "skills", name: "Skills", icon: "📈", sub: "Six skills, 1 to 99", body: () => `
+      <p>Skills level on the same curve as RuneScape: 83 xp for level 2 and about 13 million for 99. Levels are what open the Shop — the price in pearls is only the other half.</p>
+      ${Object.entries(SKILLS).map(([k, sk]) => `<h3>${sk.name}</h3><p>${sk.how}</p>`
+        + (UNLOCKS.some((u) => u.skill === k) ? wkTable(["Level", "Unlocks"], UNLOCKS.filter((u) => u.skill === k).sort((a, b) => a.at - b.at).map((u) => [`${u.at}`, u.what]), [0]) : "")).join("")}` },
+
+    { key: "breed", name: "Breeding", icon: "🥚", sub: "Two of a kind, one egg", body: () => `
+      <p>Two fish of the same species in your tank can be paired on a nest. The egg takes time to hatch — longer for rarer fish — and <b>turning</b> it every so often speeds it up. Two shiny parents give the best chance of a shiny baby. Hatchlings go to the nursery, then into your tank.</p>
+      ${wkTable(["Rarity", "Hatches in"], RAR.map((r, i) => [wkRar(i), wkHours(HATCH_MS[i])]), [1])}
+      ${wkTable(["Nests", "Price", "Needs"], NEST_CAPS.map((c) => [`${c.cap}`, wkPearls(c.cost), c.cost ? wkNeed(`${c.cap} nests`) : "—"]), [1])}` },
+
+    { key: "boss", name: "Bosses", icon: "⭐", sub: "Five leviathans, one to a spot", body: () => `
+      <p>Each spot has one. You need a Fishing level and enough species from that spot to face it; then it is a reel against the clock, and it speeds up once you are past half way. Beat one and you keep a title and <b>+${Math.round(BOSS_PERK * 100)}% rare fish</b> at that spot for good. You can fight them again for a fifth of the xp.</p>
+      ${wkTable(["Boss", "Spot", "Fishing", "Species", "Time", "Title", "xp"], BOSSES.map((b) => [b.name, SPOTS[b.spot].name, `${b.at}`, `${b.need}`, `${b.secs} s`, b.title, num(b.xp)]), [2, 3, 4, 6])}` },
+
+    { key: "idle", name: "Idle kit", icon: "⚙️", sub: "Things that work while you do not", body: () => `
+      <p>Past level 20 and 40 in each skill you can buy kit that does the work for you while you are away. It earns a little over half the xp you would have got doing it by hand. Fishing can never be idled.</p>
+      ${wkTable(["Kit", "Skill", "Price", "Does"], KIT.map((k) => [k.name, `${SKILLS[k.skill].name} ${k.at}`, wkPearls(k.cost), k.about]), [2])}` },
+
+    { key: "quests", name: "Quests & derby", icon: "🏆", sub: "Daily goals and the weekly contest", body: () => `
+      <h3>Quests</h3>
+      <p>Three daily quests and three weekly ones, rolled fresh. Finish all three of either set to open its chest. Daily chests grow with your streak — a bonus for every day in a row, up to a week — and the weekly chest also gives a title.</p>
+      <h3>Weekly derby</h3>
+      <p>One species a week. The heaviest one landed by Sunday night takes the title. Only the single heaviest fish counts, so one lucky cast can win it.</p>
+      <h3>Leaderboard</h3>
+      <p>Where you rank on total level, each skill, species caught, heaviest fish, bosses and dive value.</p>` }
+  ];
+  let wkOn = "start";
+  function renderWiki() {
+    const rail = $("wkRail"); if (!rail) return;
+    rail.replaceChildren();
+    WIKI.forEach((t) => {
+      const b = el("button", "lb-b", `<span class="ico">${t.icon}</span><span>${t.name}</span>`);
+      b.type = "button"; b.setAttribute("aria-current", String(t.key === wkOn));
+      b.addEventListener("click", () => { wkOn = t.key; renderWiki(); window.scrollTo(0, 0); });
+      rail.append(b);
+    });
+    const t = WIKI.find((x) => x.key === wkOn) || WIKI[0];
+    $("wkHead").innerHTML = `<span class="lb-ico">${t.icon}</span><div><h2>${t.name}</h2><small>${t.sub}</small></div>`;
+    let html;
+    try { html = t.body(); } catch (e) { html = `<p>This page could not be drawn.</p>`; console.error("wiki", t.key, e); }
+    $("wkBody").innerHTML = html;
+    // the fish icons were copied in as markup, which loses a canvas's pixels; draw them again
+    $("wkBody").querySelectorAll("canvas[data-sp]").forEach((cv) => {
+      cv.replaceWith(fishChip(BY_KEY[cv.dataset.sp], cv.dataset.got === "1"));
+    });
+  }
+
   function renderProfile() {
     renderStatbar();
     if (!$("pStats")) return;
@@ -4138,7 +4298,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     fishing: "", tank: "tank", dive: "diving", boss: "bosses", garden: "garden",
     breeding: "breeding", craft: "crafting", inv: "inventory", skills: "skills",
     quests: "quests", derby: "derby", dex: "book", board: "leaderboard",
-    profile: "profile", shop: "shop", controls: "controls"
+    profile: "profile", shop: "shop", wiki: "wiki", controls: "controls"
   };
   const TAB_OF = Object.fromEntries(Object.entries(SLUGS).map(([tab, slug]) => [slug, tab]));
   const pathFor = (tab) => ROOT + (SLUGS[tab] ? "/" + SLUGS[tab] : "");
@@ -4166,6 +4326,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     document.querySelectorAll("[data-panel]").forEach((p) => { p.hidden = p.dataset.panel !== b.dataset.tab; });
     if (b.dataset.tab === "shop") renderShop();
     if (b.dataset.tab === "board") renderBoard();
+    if (b.dataset.tab === "wiki") renderWiki();
     if (b.dataset.tab === "derby") renderDerby();
     if (b.dataset.tab === "skills") renderSkills();
     if (b.dataset.tab === "dive") renderDive();
@@ -4224,7 +4385,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const b = navTabs.find((x) => x.dataset.tab === (tab || "fishing"));
     if (!b) return;
     if (!viewing && !navOpen(b.dataset.tab)) { sayLocked(b.dataset.tab); return; }
-    if (!push) { navTabs.forEach((x) => { const on = x === b; x.setAttribute("aria-selected", String(on)); x.tabIndex = on ? 0 : -1; }); document.querySelectorAll("[data-panel]").forEach((q) => { q.hidden = q.dataset.panel !== b.dataset.tab; }); if (b.dataset.tab === "shop") renderShop(); if (b.dataset.tab === "board") renderBoard(); }
+    if (!push) { navTabs.forEach((x) => { const on = x === b; x.setAttribute("aria-selected", String(on)); x.tabIndex = on ? 0 : -1; }); document.querySelectorAll("[data-panel]").forEach((q) => { q.hidden = q.dataset.panel !== b.dataset.tab; }); if (b.dataset.tab === "shop") renderShop(); if (b.dataset.tab === "board") renderBoard(); if (b.dataset.tab === "wiki") renderWiki(); }
     else openTab(b);
     renderProfile();
   }
