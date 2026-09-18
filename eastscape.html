@@ -615,7 +615,9 @@ const ART_FILES = ["t_dirt", "t_water", "farmhouse", "hut", "well", "tree", "hay
   // the Wilderness (PixelLab, 2026-09-18)
   "t_wdirt", "t_wwater", "deadtree", "w_tree", "snag", "w_bush", "w_boulder", "grimstone", "gravestone", "skeleton", "rope", "cagesign", "gnasher", "taxwraith", "chandelier", "revenant",
   // the rest of the monsters (PixelLab, overnight 2026-09-18)
-  "olive", "boar", "goat", "rotten", "hornworm", "highwayman"];
+  "olive", "boar", "goat", "rotten", "hornworm", "highwayman",
+  // scenery (PixelLab, overnight 2026-09-18)
+  "o_barricade", "o_bigtomato", "o_chariot", "o_crate", "o_cypress", "o_fountain", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_notice", "o_oak", "o_olive", "o_press", "o_rock_copper", "o_rock_marble", "o_rock_stardust", "o_rock_tin", "o_scarecrow", "o_shrine", "o_sign", "o_stall", "o_statue", "o_toll", "o_vein_copper", "o_vine", "o_vine_gold", "o_yew"];
 const IMG = {};
 // NPCs whose art came later (PixelLab, overnight 2026-09-18): matched by name, so the shared rules don't change
 const NPC_ART = { "Charon the Ferryman": "charon", "Livia the Broker": "livia", "Gaius": "gaius", "Nonna Tomatoe": "nonna", "Centurion Vibius": "vibius", "Aurelia": "aurelia", "Cassia": "cassia" };
@@ -628,9 +630,9 @@ const artReady = Promise.all(ART_FILES.map((k) => new Promise((res) => {
   };
   im.onerror = () => res(); im.src = `${ART}${k}.png?v=${ART_V}`;
 })));
-function spr(k, x, y, flip = false, filter = "") {
+function spr(k, x, y, flip = false, filter = "", sc = 1) {
   const a = IMG[k]; if (!a) return false;
-  lc.save(); lc.setTransform(1, 0, 0, 1, Math.round(x * A), Math.round(y * A)); if (flip) lc.scale(-1, 1);
+  lc.save(); lc.setTransform(1, 0, 0, 1, Math.round(x * A), Math.round(y * A)); if (flip) lc.scale(-1, 1); if (sc !== 1) lc.scale(sc, sc);
   if (filter) lc.filter = filter;
   lc.drawImage(a.im, -Math.round(a.cx), -a.foot); lc.restore(); return true;
 }
@@ -647,6 +649,11 @@ function drawIco(k, x, y, size, skill) {
   if (im && im.complete && im.naturalWidth) { const sm = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false; ctx.drawImage(im, Math.round(x - size / 2), Math.round(y - size / 2), size, size); ctx.imageSmoothingEnabled = sm; return; }
   ctx.font = `${Math.round(size * 0.8)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(skill ? SKILLS[k].icon : ITEMS[k].icon, x, y);
 }
+// scenery art: o_<type>, rocks and veins by their ore, the golden vine its own; null when there's no picture
+const objArt = (ob) => { const k = ob.t === "rock" || ob.t === "vein" ? `o_${ob.t}_${ob.ore}` : ob.t === "vine" && ob.special ? "o_vine_gold" : `o_${ob.t}`; return IMG[k] ? k : null; };
+// a few pictures came out small for their spot: drawn a bit bigger
+const OBJ_SCALE = { o_stall: 1.5, o_fountain: 1.4 };
+const objBusy = (ob, now) => ob.stumpUntil > now || ob.emptyUntil > now || ob.bareUntil > now;
 const WANG = [[64, 32], [96, 32], [64, 64], [32, 64], [64, 0], [96, 64], [0, 32], [96, 96], [32, 32], [64, 96], [32, 0], [0, 64], [96, 0], [0, 0], [32, 96], [0, 96]];
 
 /* ------------------------------------------------------------ painting: ground and the things that do not move */
@@ -686,6 +693,7 @@ function paintBg() {
   }
   for (const ob of Z.objs) {
     const X = ob.x * T, Y = ob.y * T;
+    if (objArt(ob)) continue;
     if (ob.t === "fenceH") { f(X, Y + 7, T, 2, "#6b3f23"); f(X, Y + 11, T, 2, "#6b3f23"); f(X + 6, Y + 2, 4, 13, "#4a2a16"); f(X + 7, Y + 2, 2, 12, "#7a4a26"); f(X + 6, Y + 1, 4, 2, "#8a5a32"); }
     if (ob.t === "fenceV") { f(X + 6, Y, 4, T, "#5a3418"); f(X + 7, Y, 2, T, "#7a4a26"); f(X + 5, Y + 3, 6, 3, "#4a2a16"); }
     if (dark && (ob.t === "bush" || ob.t === "boulder") && bgSpr(`w_${ob.t}`, X + 8, Y + 16)) continue;
@@ -1155,6 +1163,13 @@ function frame() {
   if (Z.def.tint || Z.isle?.theme === "gloom") { lc.fillStyle = Z.def.tint || "rgba(40,30,60,.25)"; lc.fillRect(0, 0, W, H); }
   const sprites = [], pvp = !!Z.def.pvp, theme = Z.isle?.theme;
   for (const ob of Z.objs) {
+    const oa = objArt(ob);
+    if (oa && !objBusy(ob, now)) {
+      sprites.push({ y: (ob.y + ob.h) * T - 1, draw: () => spr(oa, (ob.x + ob.w / 2) * T, (ob.y + ob.h) * T, false, "", OBJ_SCALE[oa] || 1) });
+      // special ones keep their sparkles
+      if (ob.special && !calm) sprites.push({ y: ob.y * T + 16, draw: () => { for (let i = 0; i < 6; i++) { const k = (pnow / 2600 + i / 6) % 1, mx = ob.x * T + 8 + Math.sin(i * 2.3 + pnow / 800) * 9, my = ob.y * T + 8 - k * 30; lc.globalAlpha = Math.sin(k * Math.PI) * 0.9; px(mx, my, 1, 1, ob.glow || "#ffe27a"); } lc.globalAlpha = 1; } });
+      continue;
+    }
     const tall = { gravestone: 14, cagesign: 14, rope: 14, snag: 14 }[ob.t];
     if (tall) sprites.push({ y: ob.y * T + tall, draw: () => {
       if (spr(ob.t, ob.x * T + 8, ob.y * T + 16)) return;
