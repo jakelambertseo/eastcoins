@@ -384,8 +384,10 @@ button{font:inherit}
         // an oak by the path: Bom Trady's firewood
         for (const [x, y] of [[17, 8]]) { objs.push({ t: "oak", x, y, name: "Oak tree" }); g[y][x] = "#"; }
         // the teaser: a tree you'll walk past for weeks before you can touch it
-        objs.push({ t: "yew", x: 5, y: 7, name: "Ancient Yew", special: true, req: { skill: "woodcutting", lvl: 60 }, log: "yewlogs", xp: 175, tease: "Its golden needles hum as you get close." }); g[7][5] = "#";
-        wild(g, objs, this.exits, { n: "forest", w: "forest", s: "water", e: "forest" }, keepOf(this), 1);
+        objs.push({ t: "yew", x: 8, y: 1, name: "Ancient Yew", special: true, req: { skill: "woodcutting", lvl: 60 }, log: "yewlogs", xp: 175, tease: "Its golden needles hum as you get close." }); g[1][8] = "#";
+        // nothing else grows right round the yew: it stands in its own clearing
+        const clearing = []; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (dx || dy) clearing.push([8 + dx, 1 + dy]);
+        wild(g, objs, this.exits, { n: "forest", w: "forest", s: "water", e: "forest" }, [...keepOf(this), ...clearing], 1);
         return { g, objs, blobs: [[7, 8, 3], [15, 4, 3], [18, 9, 2], [5, 11, 2]] };
       },
       mobs: [["cow", 12, 4], ["cow", 15, 8], ["cow", 19, 4], ["cow", 11, 8], ["cow", 18, 9]],
@@ -503,7 +505,7 @@ button{font:inherit}
 
   /* ------------------------------------------------------------ the art (PixelLab, style A) */
   const ART = "/v3/assets/img/glad/flat/", ART_V = 1;
-  const ART_FILES = ["t_dirt", "t_water", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken",
+  const ART_FILES = ["t_dirt", "t_water", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
     ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].map((d) => "hero_" + d),
     ...["tom", "waldy", "tullius"].flatMap((n) => [n + "_south", n + "_east"])];
   const IMG = {};
@@ -796,12 +798,14 @@ button{font:inherit}
       if (now < a.next) return;
       if (vein) {
         a.next = now + 6000;
-        if (Math.random() < 0.55) { if (!give(ob.ore)) { P.act = null; return; } grant("mining", 9); S.q.ore++; questCheck(); save(); renderPanel(); }
+        groupNote(a);
+        if (Math.random() < 0.55 + workersOn(ob) * 0.01) { if (!give(ob.ore)) { P.act = null; return; } grant("mining", groupXp(9, ob)); S.q.ore++; questCheck(); save(); renderPanel(); }
       } else {
         a.next = now + 1800;
-        if (Math.random() < Math.min(0.9, 0.4 + lvl("mining") * 0.02)) {
+        groupNote(a);
+        if (Math.random() < Math.min(0.9, 0.4 + lvl("mining") * 0.02) + workersOn(ob) * 0.01) {
           if (!give(ob.ore)) { P.act = null; return; }
-          grant("mining", ob.xp || (ob.ore === "tin" ? 18 : 17)); say(`You mine some ${ITEMS[ob.ore].name.toLowerCase()}.`, "good");
+          grant("mining", groupXp(ob.xp || (ob.ore === "tin" ? 18 : 17), ob)); say(`You mine some ${ITEMS[ob.ore].name.toLowerCase()}.`, "good");
           ob.emptyUntil = now + (ob.special ? 30000 : 8000); S.q.ore++; questCheck(); P.act = null; save(); renderPanel();
         }
       }
@@ -816,10 +820,11 @@ button{font:inherit}
       if (now < a.next) return;
       a.next = now + 2000;
       const oak = ob.t === "oak";
-      if (Math.random() < Math.min(0.9, (oak ? 0.5 : 0.35) + lvl("woodcutting") * 0.02)) {
+      groupNote(a);
+      if (Math.random() < Math.min(0.9, (oak ? 0.5 : 0.35) + lvl("woodcutting") * 0.02) + workersOn(ob) * 0.01) {
         const log = ob.log || "logs";
         if (!give(log)) { P.act = null; return; }
-        grant("woodcutting", ob.xp || 25); say(oak ? "You get some logs from the oak." : `You get some ${ITEMS[log].name.toLowerCase()}.`, "good"); save(); renderPanel();
+        grant("woodcutting", groupXp(ob.xp || 25, ob)); say(oak ? "You get some logs from the oak." : `You get some ${ITEMS[log].name.toLowerCase()}.`, "good"); save(); renderPanel();
         if (Math.random() < (oak || ob.special ? 0.08 : 0.2)) { ob.stumpUntil = now + 15000; say(`The ${oak ? "oak" : "tree"} falls.`, "sys"); P.act = null; }
       }
       return;
@@ -831,7 +836,7 @@ button{font:inherit}
       if (now < a.next) return;
       a.next = now + 1500;
       if (!give(ob.crop || "olives")) { P.act = null; return; }
-      grant("farming", ob.xp || 6);
+      groupNote(a); grant("farming", groupXp(ob.xp || 6, ob));
       if (--ob.left <= 0) { ob.left = 4; ob.bareUntil = now + 20000; say("That's the last of the olives on this tree.", "sys"); P.act = null; }
       save(); renderPanel(); return;
     }
@@ -848,9 +853,10 @@ button{font:inherit}
       if (now >= a.next) {
         a.next = now + 2600;
         const sp = a.ob || {}, trout = lvl("fishing") >= 10 && Math.random() < 0.35, fish = sp.fish || (trout ? "trout" : "sardine");
-        if (Math.random() < (sp.fish ? 0.3 : 0.45)) {
+        groupNote(a);
+        if (Math.random() < (sp.fish ? 0.3 : 0.45) + workersOn(a.ob) * 0.01) {
           if (!give(fish)) { P.act = null; return; }
-          grant("fishing", sp.xp || (trout ? 50 : 20)); say(`You catch a ${ITEMS[fish].name.replace(/^Raw /, "").toLowerCase()}.`, "good");
+          grant("fishing", groupXp(sp.xp || (trout ? 50 : 20), a.ob)); say(`You catch a ${ITEMS[fish].name.replace(/^Raw /, "").toLowerCase()}.`, "good");
           S.q.fish++; questCheck(); save(); renderPanel();
         }
       }
@@ -885,10 +891,25 @@ button{font:inherit}
         if (Math.abs(m.x + dx - m.hx) <= 3 && Math.abs(m.y + dy - m.hy) <= 2 && canStep(m.x, m.y, dx, dy) && !shore(m.x + dx, m.y + dy) && !(m.x + dx === P.x && m.y + dy === P.y)) m.path = [{ x: m.x + dx, y: m.y + dy }];
       }
     }
+    for (const n of Z.bots) {
+      // arrived at their job: work it for a while
+      if (n.goal && !n.step && !n.path.length) {
+        const r = Math.max(Math.abs(n.x - n.goal.x), Math.abs(n.y - n.goal.y));
+        if (r >= 1 && r <= (n.goal.t === "spot" ? 2 : 1)) { n.working = { ob: n.goal, until: now + 15000 + Math.random() * 25000 }; n.face = n.goal.x > n.x ? 1 : -1; n.dir = DIRS[`${Math.sign(n.goal.x - n.x)},${Math.sign(n.goal.y - n.y)}`] || n.dir; }
+        n.goal = null;
+      }
+      if (n.working && (now > n.working.until || n.path.length)) n.working = null;
+    }
     for (const n of [...Z.npcs, ...Z.bots]) {
+      if (n.working) continue;
       if (!tick(n, now) && now > n.nextWander) {
         n.nextWander = now + (n.level ? 1500 : 4000) + Math.random() * 5000;
-        if (n.level) { const tx = rint(2, COLS - 3), ty = rint(2, ROWS - 3); if (walkable(tx, ty)) { const p = path(n, { x: tx, y: ty }, false); if (p) n.path = p.slice(0, 8); } }
+        if (n.level && Math.random() < 0.45) {
+          // go and work something: a tree, a rock or a fishing spot they're allowed to use
+          const jobs = Z.objs.filter((o) => ["tree", "oak", "rock", "vein", "spot", "olive"].includes(o.t) && !o.special && !(o.stumpUntil > now) && !(o.emptyUntil > now));
+          const ob = jobs.length && pick(jobs), p = ob && path(n, { x: ob.x, y: ob.y }, ob.t === "spot" ? 2 : true);
+          if (p) { n.path = p; n.goal = ob; }
+        } else if (n.level) { const tx = rint(2, COLS - 3), ty = rint(2, ROWS - 3); if (walkable(tx, ty)) { const p = path(n, { x: tx, y: ty }, false); if (p) n.path = p.slice(0, 8); } }
         else { const [dx, dy] = pick(D8); if (Math.abs(n.x + dx - n.hx) <= 1 && Math.abs(n.y + dy - n.hy) <= 1 && canStep(n.x, n.y, dx, dy)) n.path = [{ x: n.x + dx, y: n.y + dy }]; }
       }
     }
@@ -978,6 +999,13 @@ button{font:inherit}
   function questEvent(type, what) {
     for (const k in QUESTS) { const q = QUESTS[k]; if (qOf(k).state === "active" && q.goal.type === type && q.goal.mob === what) { qOf(k).n++; if (qOf(k).n === q.goal.n) say(`${q.name}: that's ${q.goal.n}. Go back to ${q.giver}.`, "good"); } }
   }
+  // other players working the same tree, rock or spot: each one adds 1% to your chance and your xp
+  const workersOn = (ob) => (ob ? Z.bots.filter((b) => b.working && b.working.ob === ob).length : 0);
+  const groupXp = (xp, ob) => Math.round(xp * (1 + workersOn(ob) * 0.01));
+  function groupNote(a) {
+    const n = workersOn(a.ob); if (n === a.groupSeen) return; a.groupSeen = n;
+    if (n) say(`Group bonus: ${n} other${n > 1 ? "s" : ""} working this ${a.ob.name.toLowerCase()} with you. +${n}% to your chance and xp.`, "good");
+  }
   function questCheck() {
     // tell you once when a "bring" quest has everything it needs
     for (const k in QUESTS) { const q = QUESTS[k], o = qOf(k); if (o.state === "active" && q.goal.type === "bring" && !o.told && qHave(q, k) >= q.goal.n) { o.told = true; say(`${q.name}: you have all ${q.goal.n} ${q.goal.what}. Take them to ${q.giver}.`, "good"); } }
@@ -1054,6 +1082,7 @@ button{font:inherit}
 
 
   /* ------------------------------------------------------------ input */
+  let mouse = null;
   let view = { s: 3, ox: 0, oy: 0 }, hoverTile = null, hoverThing = null, clickMark = null;
   function fit() {
     const d = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight;
@@ -1094,6 +1123,8 @@ button{font:inherit}
     const tx = Math.floor(w.x / T), ty = Math.floor(w.y / T);
     if (walkable(tx, ty)) { goTo(tx, ty); clickMark = { x: tx, y: ty, at: performance.now() }; }
   });
+  cv.addEventListener("pointermove", (e) => { const r = cv.getBoundingClientRect(); mouse = { x: e.clientX - r.left, y: e.clientY - r.top }; });
+  cv.addEventListener("pointerleave", () => { mouse = null; });
   cv.addEventListener("pointermove", (e) => { const w = toWorld(e); hoverTile = { x: Math.floor(w.x / T), y: Math.floor(w.y / T) }; hoverThing = thingAt(w.x, w.y); cv.style.cursor = hoverThing ? (hoverThing.kind === "mob" ? "crosshair" : "help") : "pointer"; });
   cv.addEventListener("pointerleave", () => { hoverTile = null; hoverThing = null; });
   const keys = new Set(), KM = { w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0], arrowup: [0, -1], arrowdown: [0, 1], arrowleft: [-1, 0], arrowright: [1, 0] };
@@ -1196,6 +1227,8 @@ button{font:inherit}
         px(X + 7, Y + 5, 2, 4, "#fff0a0");
       } });
       if (ob.t === "hole") sprites.push({ y: ob.y * T + 14, draw: () => {
+        // the PixelLab pit, centred on its tile; the code-drawn one below is only the fallback
+        if (spr("hole", ob.x * T + 8, ob.y * T + 22)) return;
         const X = ob.x * T, Y = ob.y * T;
         px(X - 1, Y + 4, 18, 11, "#6a4a2a"); px(X, Y + 5, 16, 9, "#3a2616"); px(X + 1, Y + 6, 14, 7, "#120c08"); px(X + 3, Y + 7, 10, 5, "#050302");
         px(X - 2, Y + 8, 2, 4, "#8a6a42"); px(X + 16, Y + 7, 2, 5, "#8a6a42"); px(X + 2, Y + 3, 5, 2, "#8a6a42");
@@ -1233,7 +1266,8 @@ button{font:inherit}
     } });
     for (const b of Z.bots) sprites.push({ y: b.py * T + 14, draw: () => {
       // other players: the same gladiator for now, tinted so they read as someone else
-      if (!spr(`hero_${b.dir || "south"}`, b.px * T + 8, b.py * T + 15 + bobOf(b), false, `hue-rotate(${b.hue || 0}deg)`)) drawPerson(b.px * T + 8, b.py * T + 15, b.face, { shirt: "#7a2a2a", pants: "#4a3a2a", helm: true, crest: b.crest });
+      const sw = b.working ? Math.max(0, Math.sin(now / 180 + b.x)) * 1.5 : 0;
+      if (!spr(`hero_${b.dir || "south"}`, b.px * T + 8 + (b.face || 1) * sw, b.py * T + 15 + bobOf(b), false, `hue-rotate(${b.hue || 0}deg)`)) drawPerson(b.px * T + 8, b.py * T + 15, b.face, { shirt: "#7a2a2a", pants: "#4a3a2a", helm: true, crest: b.crest });
     } });
     // your gladiator, in the sort like everyone else: 8 facings, a lunge when you swing, red when hit
     const fightingNow = !!(P.act && P.act.started && P.act.kind !== "spot" && !P.step && !P.path.length);
@@ -1274,6 +1308,10 @@ button{font:inherit}
       const west = (P.dir || "").includes("west");
       ctx.save(); ctx.translate(hx + (west ? -9 : 9) * S2, hy - 10 * S2); if (west) ctx.scale(-1, 1);
       ctx.font = `${Math.round(8 * S2)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(ITEMS[S.eq.weapon].icon, 0, 0); ctx.restore();
+    }
+    for (const b of Z.bots) if (b.working) {
+      const t = b.working.ob.t, icon = t === "spot" ? "🎣" : t === "rock" || t === "vein" ? "⛏️" : t === "olive" ? "🫒" : "🪓", west = (b.dir || "").includes("west");
+      ctx.font = `${Math.round(8 * S2)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(icon, sx(b.px * T + 8) + (west ? -9 : 9) * S2, sy(b.py * T + 15) - 10 * S2);
     }
     // names under everyone, like the real thing
     label("bootypaper", hx, hy + 4, "#fff"); label(`level ${total()}`, hx, hy + 18, "#ffe45c", 12);
@@ -1331,6 +1369,17 @@ button{font:inherit}
         ctx.strokeStyle = "#f2d22e"; ctx.lineCap = "round"; ctx.beginPath(); ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.02, f)); ctx.stroke(); ctx.lineCap = "butt";
         ctx.font = "20px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(SKILLS[k].icon, cx, cy + 1);
         ctx.font = `700 12px "Nunito", system-ui, sans-serif`; ctx.lineWidth = 3; ctx.strokeStyle = "#000"; ctx.strokeText(String(l), cx + r - 2, cy + r - 4); ctx.fillStyle = "#fff"; ctx.fillText(String(l), cx + r - 2, cy + r - 4);
+        const gb = busy && P.act.ob ? workersOn(P.act.ob) : 0;
+        if (gb) { ctx.font = `800 12px "Nunito", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.strokeText(`+${gb}% group`, cx, cy + r + 14); ctx.fillStyle = "#7dff6a"; ctx.fillText(`+${gb}% group`, cx, cy + r + 14); }
+        // hovering the ring: how much xp to the next level, to its right
+        if (mouse && Math.hypot(mouse.x - cx, mouse.y - cy) <= r + 6) {
+          tracker.at = now;
+          const lines = l >= 99 ? [`${SKILLS[k].name} 99`, "Max level"] : [`${SKILLS[k].name} ${l} → ${l + 1}`, `${(hi - S.xp[k]).toLocaleString()} xp to go`];
+          ctx.font = `700 13px "Nunito", system-ui, sans-serif`; const bw = Math.max(...lines.map((t) => ctx.measureText(t).width)) + 18, bx = cx + r + 12, by = cy - 21;
+          ctx.fillStyle = "rgba(20,24,20,.92)"; ctx.fillRect(bx, by, bw, 42); ctx.strokeStyle = "#f2d22e"; ctx.lineWidth = 1.5; ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, 41);
+          ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillStyle = "#fff"; ctx.fillText(lines[0], bx + 9, by + 13);
+          ctx.font = `800 13px "Nunito", system-ui, sans-serif`; ctx.fillStyle = "#f2d22e"; ctx.fillText(lines[1], bx + 9, by + 29);
+        }
         ctx.globalAlpha = 1;
       }
     }
