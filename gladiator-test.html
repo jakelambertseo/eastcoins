@@ -1125,6 +1125,56 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .bench-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:7px 9px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line)}
 .bench-row b{display:block;font-size:.84rem}
 .bench-row small{display:block;font-size:.7rem;color:var(--muted-2)}
+/* ================= fight + loot side by side, controls in one bar (2026-09-17) ================= */
+.fight-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,1fr);border-top:1px solid var(--line)}
+@media (max-width:1000px){.fight-grid{grid-template-columns:minmax(0,1fr)}}
+.fight-grid .scene-wrap{max-height:none;min-height:300px}
+.fight-grid .scene-wrap canvas{touch-action:manipulation}
+.click-hint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:3;padding:5px 12px;border-radius:99px;background:rgba(10,8,6,.78);border:1px solid rgba(var(--gold-rgb),.55);color:var(--gold);font-size:.74rem;font-weight:800;pointer-events:none;white-space:nowrap;animation:hintPulse 1.8s ease-in-out infinite}
+.click-hint[hidden]{display:none}
+@keyframes hintPulse{50%{border-color:rgba(var(--gold-rgb),.15)}}
+.loot-col{display:flex;flex-direction:column;gap:8px;padding:12px;border-left:1px solid var(--line);background:linear-gradient(180deg,rgba(0,0,0,.18),transparent);min-height:0;max-height:560px}
+@media (max-width:1000px){.loot-col{border-left:0;border-top:1px solid var(--line);max-height:420px}}
+.lc-head{display:flex;justify-content:space-between;align-items:center}
+.lc-head h2{margin:0;font-family:var(--display);font-weight:800;font-size:1.05rem}
+.lc-n{padding:2px 9px;border-radius:99px;background:var(--panel-2);border:1px solid var(--line-2);font-size:.72rem;font-weight:800;font-variant-numeric:tabular-nums}
+.lc-n.full{color:var(--red);border-color:rgba(255,107,133,.5)}
+.lc-counts{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:.72rem;font-weight:700}
+.lc-feed{flex:1 1 auto;min-height:120px;overflow-y:auto;display:grid;align-content:start;gap:4px;margin-right:-4px;padding-right:4px}
+.loot-empty{margin:6px 0}
+.lf-row{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 8px;border-radius:9px;background:var(--panel-2);border:1px solid color-mix(in srgb,var(--rc) 30%,transparent);border-left:3px solid var(--rc)}
+.lf-row.open{cursor:pointer}
+.lf-row.open:hover{background:var(--panel-3)}
+.lf-row.gone{opacity:.42}
+.lf-row.up{border-color:rgba(77,219,139,.55);border-left-color:var(--green)}
+.lf-row.r3{box-shadow:0 0 12px color-mix(in srgb,var(--rc) 30%,transparent) inset}
+.lf-ico{font-size:1.15rem;text-align:center}
+.lf-main{min-width:0}
+.lf-main b{display:block;font-size:.8rem;color:var(--rc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lf-row.up .lf-main b{color:var(--green)}
+.lf-main small{display:block;font-size:.66rem;color:var(--muted-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lf-row .btn{padding:3px 9px;font-size:.7rem}
+.lc-run{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.lc-run div{background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:5px 7px;display:grid}
+.lc-run small{font-size:.56rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-2)}
+.lc-run b{font-variant-numeric:tabular-nums;font-size:.86rem}
+.lc-foot{display:flex;gap:6px}
+.lc-foot .g-select{margin:0;flex:1;min-width:0;max-width:none}
+.cb-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--line)}
+.cb-bar .act{min-width:190px;padding:10px 18px}
+.cb-bar .cb-styles{display:flex;gap:0;border:1px solid var(--line-2);border-radius:10px;overflow:hidden}
+.cb-bar .cb-style{border:0;border-radius:0;border-right:1px solid var(--line-2);padding:6px 10px;display:block}
+.cb-bar .cb-style:last-child{border-right:0}
+.cb-bar .cb-style small{display:none}
+.cb-bar .cb-food{flex:0 1 auto}
+.cb-bar .cb-food .g-select{flex:0 1 auto;max-width:200px;font-size:.8rem}
+.cb-bar .act{min-width:160px}
+.cb-bar{gap:8px}
+.cb-line{display:flex;flex-wrap:wrap;gap:6px 18px;padding:0 14px 12px;font-size:.78rem;color:var(--muted)}
+.cb-line small{font-size:.62rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-2);margin-right:4px}
+.cb-line b{color:var(--text);font-variant-numeric:tabular-nums}
+.cb-line b.clk{color:#d88ad0}
+.cb-line .cb-buffs i{font-style:normal;font-size:.7rem;font-weight:800;padding:1px 7px;border-radius:99px;background:var(--gold-dim);color:var(--gold);margin-right:4px}
 </style>
 </head>
 <body>
@@ -1178,43 +1228,46 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     <section class="card">
       <div class="spots-head"><span class="eyebrow">Dungeon</span><small>Each one opens when you clear the one before</small></div>
       <div class="spots" id="venues"></div>
-      <div class="scene-wrap" id="arenaWrap">
-        <canvas id="arena"></canvas>
-        <div class="status"><span id="foeLine">Not in a dungeon</span><span id="venueLine"></span></div>
-        <div class="g-hp you"><small>You <span id="hpYouN"></span></small><div class="g-bar"><i id="hpYou"></i></div><div class="g-atk"><i id="atkYou"></i></div></div>
-        <div class="g-hp foe"><small><span id="foeName">—</span> <span id="hpFoeN"></span></small><div class="g-bar"><i id="hpFoe"></i></div><div class="g-atk"><i id="atkFoe"></i></div></div>
-        <div class="g-result" id="result" hidden></div>
-      </div>
-      <div class="cb-panel">
-        <div class="cb-side" id="youStats"></div>
-        <div class="cb-mid">
-          <button class="act" id="act" type="button">Enter</button>
-          <div class="cb-styles" id="styles" role="group" aria-label="Combat style"></div>
-          <div class="cb-food">
-            <select id="foodSel" class="g-select" aria-label="Food"></select>
-            <button class="btn small" id="eatNow" type="button">Eat</button>
-          </div>
-          <div class="cb-food">
-            <label class="cb-lab" for="autoEat">Auto-eat</label>
-            <select id="autoEat" class="g-select"><option value="0">Off</option><option value="0.3">Below 30% health</option><option value="0.5">Below 50% health</option><option value="0.7">Below 70% health</option></select>
-            <label class="cb-check"><input type="checkbox" id="repeat"> Repeat</label>
-          </div>
+      <div class="fight-grid">
+        <div class="scene-wrap" id="arenaWrap">
+          <canvas id="arena"></canvas>
+          <div class="status"><span id="foeLine">Not in a dungeon</span><span id="venueLine"></span></div>
+          <div class="g-hp you"><small>You <span id="hpYouN"></span></small><div class="g-bar"><i id="hpYou"></i></div><div class="g-atk"><i id="atkYou"></i></div></div>
+          <div class="g-hp foe"><small><span id="foeName">—</span> <span id="hpFoeN"></span></small><div class="g-bar"><i id="hpFoe"></i></div><div class="g-atk"><i id="atkFoe"></i></div></div>
+          <span class="click-hint" id="clickHint" hidden>Click the enemy to strike faster</span>
+          <div class="g-result" id="result" hidden></div>
         </div>
-        <div class="cb-side foe" id="foeStats"></div>
+        <aside class="loot-col" aria-label="Loot">
+          <div class="lc-head"><h2>Loot</h2><span class="lc-n" id="lootN">0/48</span></div>
+          <div class="lc-counts" id="lootCounts"></div>
+          <div class="lc-feed" id="lootFeed"></div>
+          <div class="lc-run" id="lootRun"></div>
+          <div class="lc-foot">
+            <select id="lootFilterCol" class="g-select" aria-label="Loot filter"><option value="0">Keep everything</option><option value="1">Keep magic and better</option><option value="2">Keep rare and better</option></select>
+            <button class="btn small" id="lootAll" type="button">Stash →</button>
+          </div>
+        </aside>
       </div>
+      <div class="cb-bar">
+        <button class="act" id="act" type="button">Enter</button>
+        <div class="cb-styles" id="styles" role="group" aria-label="Combat style"></div>
+        <div class="cb-food">
+          <select id="foodSel" class="g-select" aria-label="Food"></select>
+          <button class="btn small" id="eatNow" type="button">Eat</button>
+        </div>
+        <div class="cb-food">
+          <select id="autoEat" class="g-select" aria-label="Auto-eat"><option value="0">Auto-eat off</option><option value="0.3">Auto-eat below 30%</option><option value="0.5">Auto-eat below 50%</option><option value="0.7">Auto-eat below 70%</option></select>
+          <label class="cb-check"><input type="checkbox" id="repeat"> Repeat</label>
+        </div>
+      </div>
+      <div class="cb-line" id="cbLine"></div>
     </section>
-    <div class="dun-cols">
-      <section class="card card-next"><div class="card-body">
+    <section class="card card-next"><div class="card-body">
         <h2 class="card-h" id="dunName"></h2>
         <p class="note" id="dunAbout"></p>
         <p class="dun-meta" id="dunMeta"></p>
         <div class="rooms" id="foes"></div>
-      </div></section>
-      <section class="card card-next"><div class="card-body">
-        <h2 class="card-h">This run</h2>
-        <div id="session"></div>
-      </div></section>
-    </div>
+    </div></section>
   </section>
 
   <!-- ============ STABLE ============ -->
@@ -1632,7 +1685,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
      timestamp, and advance(now) plays them in order. The same code runs a
      live fight and eight hours of catching up, so the two can never disagree. */
   const C = S.C;
-  const sess = { t0: Date.now(), kills: 0, clears: 0, xp: 0, coin: 0, drops: {}, loot: [0, 0, 0, 0] };
+  const sess = { t0: Date.now(), kills: 0, clears: 0, xp: 0, coin: 0, drops: {}, loot: [0, 0, 0, 0], feed: [] };
   let splats = [], lunge = 0, hurt = 0, dying = 0;
   const foeNow = () => MON[C.farm || seqOf(C.dun)[C.room]];
   const xpNow = () => Object.values(S.skills).reduce((a, b) => a + b, 0);
@@ -1667,20 +1720,40 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     return true;
   }
   const anyFood = () => (S.items[S.food] > 0 ? S.food : FOODS.find((k) => S.items[k] > 0));
-  function splat(who, text, kind, t = Date.now()) { if (!away && Date.now() - t < 1500) splats.push({ who, text, kind, at: performance.now() - (Date.now() - t) }); }
+  function splat(who, text, kind, t = Date.now()) { const age = Date.now() - t; if (!away && age >= -50 && age < 1500) splats.push({ who, text, kind, at: performance.now() - (Date.now() - t) }); }
 
-  function playerSwing(t) {
+  /** One blow: a full swing off the timer, or a click's jab at JAB of the damage. */
+  function strike(t, scale) {
     const m = foeNow();
     const d = derive(gear()), hit = Math.random() < hitVs(m), crit = hit && Math.random() < d.crit;
-    const dmg = hit ? Math.round(rint(1, d.max) * (crit ? d.cm : 1)) : 0;
+    const dmg = hit ? Math.max(1, Math.round(rint(1, d.max) * scale * (crit ? d.cm : 1))) : 0;
     C.foeHp -= dmg; lunge = t;
-    splat("foe", String(dmg), hit ? (crit ? "crit" : "hit") : "miss", t);
+    splat("foe", String(dmg), hit ? (crit ? "crit" : scale < 1 ? "jab" : "hit") : "miss", t);
     if (dmg) {
       ST().trains.forEach((k) => grant(k, Math.round(dmg * 0.4 / ST().trains.length)));
       grant("hitpoints", Math.round(dmg * 0.133));
     }
     if (C.foeHp <= 0) kill(t, m);
+    return dmg;
   }
+  const playerSwing = (t) => strike(t, 1);
+  /* Clicking the enemy jabs, up to three a second. A jab is sized off your swing
+     speed so that clicking flat out exactly doubles your damage, whatever the
+     weapon: active play is worth twice idle, never more. The clock is caught
+     up first, so a jab never lands on a fight that is already over. */
+  const JAB_GAP = 300;
+  const jabScale = () => (JAB_GAP / 1000) / (pSpeed() / 1000);
+  let lastJab = 0, jabs = [];
+  function jab() {
+    const now = Date.now();
+    if (now - lastJab < JAB_GAP) return;
+    advance(now);
+    if (!C.on || C.rAt) return;
+    lastJab = now;
+    const dmg = strike(now, jabScale());
+    jabs.push({ t: now, dmg });
+  }
+  const clickDps = () => { const now = Date.now(); jabs = jabs.filter((j) => now - j.t < 3000); return jabs.reduce((a, j) => a + j.dmg, 0) / 3; };
   function foeSwing(t) {
     const m = foeNow();
     const hit = Math.random() < foeHits(m), dmg = hit ? Math.max(1, Math.round(rint(1, m.max) * (1 - pDR()))) : 0;
@@ -1734,6 +1807,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     S.found[it.rar]++; sess.loot[it.rar]++;
     if (away) away.loot[it.rar]++;
     const keep = it.rar === 3 || it.rar >= S.filter;
+    if (!away) { sess.feed.unshift({ it, salvaged: !keep || S.stash.length >= STASH_CAP }); sess.feed.length = Math.min(sess.feed.length, 40); }
     if (!keep || S.stash.length >= STASH_CAP) {
       salvage(it); if (away) away.salvaged++;
       if (keep && !away && Date.now() - fullToast > 60000) { fullToast = Date.now(); toast("Stash full", `${itemName(it)} was salvaged. Make room in Gear & loot.`); }
@@ -1916,7 +1990,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     splats = splats.filter((s) => now - s.at < 1000);
     for (const s of splats) {
       const k = (now - s.at) / 1000, x = s.who === "you" ? youX : foeX, y = top - k * h * .06;
-      const col = s.kind === "miss" ? "#2f6fd6" : s.kind === "heal" ? "#2fae5a" : s.kind === "crit" ? "#e0761a" : "#c42a2a";
+      const col = s.kind === "miss" ? "#2f6fd6" : s.kind === "heal" ? "#2fae5a" : s.kind === "crit" ? "#e0761a" : s.kind === "jab" ? "#9a3a8a" : "#c42a2a";
       ctx.globalAlpha = Math.min(1, (1 - k) * 2.4);
       ctx.fillStyle = col; ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.lineWidth = 2;
       const r = Math.max(13, h * .036);
@@ -2033,21 +2107,40 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     paintStats();
   }
   function paintStats() {
-    const m = C.on ? foeNow() : MON[seqOf(S.dun)[0]];
-    const row = (k, v) => `<div><small>${k}</small><b>${v}</b></div>`;
-    $("youStats").innerHTML = `<h4>You <span>combat ${myCb()}</span></h4><div class="cb-grid">${row("Max hit", num(pMax()))}${row("Attack speed", secs(pSpeed()))}${row("Accuracy", num(pAcc()))}${row("Evasion", num(pEv()))}${row("Damage reduction", pct(pDR()))}${row("Crit", `${pct(derive(gear()).crit)} · ×${derive(gear()).cm.toFixed(2)}`)}</div>`
-      + (S.buffs.whet > 0 || S.buffs.wrap > 0 || S.buffs.crown > Date.now() ? `<p class="cb-buffs">${S.buffs.whet > 0 ? `<span>🗡️ Whetted · ${S.buffs.whet}</span>` : ""}${S.buffs.wrap > 0 ? `<span>🦴 Wrapped · ${S.buffs.wrap}</span>` : ""}${S.buffs.crown > Date.now() ? `<span>🌿 Crowned · ${Math.ceil((S.buffs.crown - Date.now()) / 60000)}m</span>` : ""}</p>` : "");
-    $("foeStats").innerHTML = `<h4>${m.icon || "🪖"} ${m.name} <span>combat ${foeCb(m)}</span></h4><div class="cb-grid">${row("Max hit", num(m.max))}${row("Attack speed", secs(m.speed))}${row("You hit it", pct(hitVs(m)))}${row("It hits you", pct(foeHits(m)))}${row("Health", num(m.hp))}${row("Killed", num(S.kills[m.name] || 0))}</div>`;
+    const m = C.on ? foeNow() : MON[seqOf(S.dun)[0]], d = derive(gear());
     const seq = seqOf(C.on ? C.dun : S.dun);
     $("foeLine").textContent = !C.on ? "Not in a dungeon" : C.resting ? `Resting · back in ${Math.max(0, Math.ceil((C.rAt - Date.now()) / 1000))}s` : C.farm ? `Farming · ${foeNow().name}` : `Room ${C.room + 1} of ${seq.length} · ${foeNow().name}`;
     $("foeName").textContent = C.on ? foeNow().name : "—";
-    // this run
+    const idle = dpsOf(d, m), click = clickDps();
+    $("cbLine").innerHTML = `<span><small>You</small> combat ${myCb()} · max hit <b>${num(d.max)}</b> · ${secs(d.speed)} · crit ${pct(d.crit)}</span>
+      <span><small>${m.icon || "🪖"} ${m.name}</small> you hit <b>${pct(hitVs(m))}</b> · it hits <b>${pct(foeHits(m))}</b> for up to ${m.max}</span>
+      <span><small>Damage</small> <b>${idle.toFixed(1)}</b>/s idle${click ? ` <b class="clk">+${click.toFixed(1)}</b>/s clicking` : ""}</span>`
+      + (S.buffs.whet > 0 || S.buffs.wrap > 0 || S.buffs.crown > Date.now() ? `<span class="cb-buffs">${S.buffs.whet > 0 ? `<i>🗡️ ${S.buffs.whet}</i>` : ""}${S.buffs.wrap > 0 ? `<i>🦴 ${S.buffs.wrap}</i>` : ""}${S.buffs.crown > Date.now() ? `<i>🌿 ${Math.ceil((S.buffs.crown - Date.now()) / 60000)}m</i>` : ""}</span>` : "");
+    const hint = $("clickHint"); if (hint) hint.hidden = !(C.on && !C.rAt) || Date.now() - lastJab < 8000;
     const mins = Math.max(1, (Date.now() - sess.t0) / 60000), gained = xpNow() - sess.xp;
-    $("session").innerHTML = C.on || sess.kills
-      ? `<div class="sess-grid"><div class="cstat"><small>Kills</small><b>${num(sess.kills)}</b></div><div class="cstat"><small>Cleared</small><b>${num(sess.clears)}</b></div>
-         <div class="cstat"><small>Xp / hour</small><b>${num(gained / mins * 60)}</b></div><div class="cstat"><small>Denarii / hour</small><b>${num((S.coin - sess.coin) / mins * 60)}</b></div></div>
-         <p class="sess-drops">${sess.loot.map((n, r) => (n ? `<span class="chipf" style="color:${RARITY[r].color}">${num(n)} ${RARITY[r].name.toLowerCase()}</span>` : "")).join("")}${Object.entries(sess.drops).map(([k, n]) => `<span class="chipf">${ITEMS[k].icon} ${n} ${ITEMS[k].name}</span>`).join("") || '<span class="note">Nothing dropped yet.</span>'}</p>`
-      : `<p class="note">Enter a dungeon and this fills in: kills, xp and denarii an hour, and what dropped.</p>`;
+    $("lootRun").innerHTML = `<div><small>Kills</small><b>${num(sess.kills)}</b></div><div><small>Xp / hr</small><b>${num(C.on || sess.kills ? gained / mins * 60 : 0)}</b></div><div><small>Denarii / hr</small><b>${num(C.on || sess.kills ? (S.coin - sess.coin) / mins * 60 : 0)}</b></div>`;
+  }
+  /* The loot column: primary, so it sits beside the fight rather than under it. */
+  let feedSig = "";
+  function renderLootCol() {
+    const sig = [C.on, sess.feed.length, sess.feed[0]?.it.id, S.stash.length, S.filter, JSON.stringify(S.eq).length].join("|");
+    if (sig === feedSig) return; feedSig = sig;
+    $("lootN").textContent = `${S.stash.length}/${STASH_CAP}`;
+    $("lootN").classList.toggle("full", S.stash.length >= STASH_CAP);
+    $("lootFilterCol").value = String(S.filter);
+    $("lootCounts").innerHTML = sess.loot.map((n, r) => `<span style="color:${RARITY[r].color}"><b>${num(n)}</b> ${RARITY[r].name.toLowerCase()}</span>`).join("");
+    const feed = $("lootFeed"); feed.replaceChildren();
+    if (!sess.feed.length) { feed.append(el("p", "note loot-empty", C.on ? "Nothing yet. About one kill in eight drops something; bosses always do." : "Enter a dungeon. What drops lands here, and anything better than what you wear is marked ▲.")); return; }
+    sess.feed.forEach(({ it, salvaged }) => {
+      const inStash = S.stash.includes(it), up = inStash && upgradeOf(it);
+      const row = el("div", `lf-row r${it.rar}${salvaged ? " gone" : ""}${up ? " up" : ""}`);
+      row.style.setProperty("--rc", RARITY[it.rar].color);
+      row.innerHTML = `<span class="lf-ico">${SLOTS[BASES[it.base].slot].icon}</span><span class="lf-main"><b></b><small>${RARITY[it.rar].name} ${BASES[it.base].name} · ilvl ${it.ilvl}${salvaged ? " · salvaged" : !inStash && Object.values(S.eq).includes(it) ? " · equipped" : ""}</small></span>`;
+      row.querySelector("b").textContent = (up ? "▲ " : "") + itemName(it);
+      if (up) { const b = el("button", "btn small gold", "Equip"); b.type = "button"; b.addEventListener("click", (e) => { e.stopPropagation(); equip(it); feedSig = ""; renderLootCol(); }); row.append(b); }
+      if (!salvaged) { row.classList.add("open"); row.addEventListener("click", () => { gearSel = it.id; openTab("spoils"); renderAll(); }); }
+      feed.append(row);
+    });
   }
 
   /* ================================================================== the other pages */
@@ -2174,6 +2267,15 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       ${imp ? `<div class="it-imp">${imp}</div>` : ""}${mods ? `<div class="it-mods">${mods}</div>` : ""}
       ${it.uq ? `<div class="it-flav">${UNIQUES[it.uq].flavour}</div>` : ""}</div>`;
   }
+  const dpsOf = (d, m) => chance(d.acc, (m.def + 9) * 64) * ((1 + d.max) / 2) * (1 + d.crit * (d.cm - 1)) / (d.speed / 1000);
+  /** Is this better than what is worn in its slot? More damage, or as much and tougher. */
+  function upgradeOf(it) {
+    if (!reqMet(it)) return false;
+    const slot = BASES[it.base].slot, m = C.on ? foeNow() : MON[seqOf(S.dun)[0]];
+    const a = derive(gear()), b = derive(sumGear({ ...S.eq, [slot]: it }));
+    const da = dpsOf(a, m), db = dpsOf(b, m), tough = (d) => d.hp / (1 - d.dr) * (1 + d.ev / 4000);
+    return db > da * 1.01 || (db >= da * 0.99 && tough(b) > tough(a) * 1.01);
+  }
   function compare(it) {
     const slot = BASES[it.base].slot, now = derive(gear()), eq2 = { ...S.eq, [slot]: it }, then = derive(sumGear(eq2));
     const m = C.on ? foeNow() : MON[seqOf(S.dun)[0]];
@@ -2183,8 +2285,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       ["Health", now.hp, then.hp, num], ["Evasion", now.ev, then.ev, num], ["Damage reduction", now.dr, then.dr, pct],
       ["Item rarity", now.find, then.find, pct], ["Denarii found", now.gold, then.gold, pct], ["Fame", now.fame, then.fame, pct]
     ].filter(([, a, b]) => a !== b);
-    const dps = (d) => chance(d.acc, (m.def + 9) * 64) * ((1 + d.max) / 2) * (1 + d.crit * (d.cm - 1)) / (d.speed / 1000);
-    const d0 = dps(now), d1 = dps(then);
+    const d0 = dpsOf(now, m), d1 = dpsOf(then, m);
     return `<div class="it-cmp"><h5>Against what you wear, vs ${m.name}</h5>
       <div class="cmp-row big"><span>Damage per second</span><b class="${d1 > d0 ? "up" : d1 < d0 ? "dn" : ""}">${d0.toFixed(1)} → ${d1.toFixed(1)}</b></div>
       ${rows.map(([k, a, b, f, lowGood]) => { const better = lowGood ? b < a : b > a; return `<div class="cmp-row"><span>${k}</span><b class="${better ? "up" : "dn"}">${f(a)} → ${f(b)}</b></div>`; }).join("") || '<p class="note">No change to your numbers.</p>'}</div>`;
@@ -2329,6 +2430,15 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   $("autoEat").addEventListener("change", (e) => { S.autoEat = Number(e.target.value); save(); });
   $("repeat").addEventListener("change", (e) => { S.repeat = e.target.checked; save(); });
   $("lootFilter").addEventListener("change", (e) => { S.filter = Number(e.target.value); save(); renderGear(); });
+  $("lootFilterCol").addEventListener("change", (e) => { S.filter = Number(e.target.value); save(); feedSig = ""; renderLootCol(); });
+  $("lootAll").addEventListener("click", () => { openTab("spoils"); renderAll(); });
+  // the enemy is the button: a pointer on the right half of the scene jabs
+  cv.addEventListener("pointerdown", (e) => {
+    const r = cv.getBoundingClientRect();
+    if (e.clientX - r.left < r.width * 0.45) return;
+    e.preventDefault(); jab();
+  });
+  cv.addEventListener("pointermove", (e) => { const r = cv.getBoundingClientRect(); cv.style.cursor = C.on && !C.rAt && e.clientX - r.left >= r.width * 0.45 ? "crosshair" : ""; });
   $("salvNormal").addEventListener("click", () => salvageBelow(0));
   $("salvMagic").addEventListener("click", () => salvageBelow(1));
   $("resetSave").addEventListener("click", () => { if (!confirm("Start the mockup over? This only clears this browser.")) return; wiping = true; localStorage.removeItem(SAVE); location.reload(); });
@@ -2343,6 +2453,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     paintBar(); paintStats();
     const sig = [S.stash.length, C.on, C.dun, C.room, C.farm, S.dun, S.w, S.l, S.style, lvl("attack"), lvl("strength"), lvl("defence"), JSON.stringify(S.items)].join("|");
     if (sig !== lastSig) { lastSig = sig; renderArena(); }
+    renderLootCol();
     if (!document.querySelector('[data-panel="yard"]').hidden) renderYard();
   }, 250);
   setInterval(save, 5000);
