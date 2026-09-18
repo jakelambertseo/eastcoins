@@ -1,0 +1,1324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Ultimate Gladiator — Mockup</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Ctext%20y%3D%22.9em%22%20font-size%3D%2290%22%3E%E2%9A%94%EF%B8%8F%3C%2Ftext%3E%3C%2Fsvg%3E">
+<link rel="stylesheet" href="/v3/assets/fonts/fonts.css">
+<!-- A MOCKUP. The stylesheet below is Fishing's, copied verbatim from
+     fishing.html, so this page shows how much of Fishing is a template.
+     Only the block at the end is new. Nothing here is saved or linked. -->
+<style>
+:root{
+  --ink:#0c0a09;--panel:#161311;--panel-2:#1e1a17;--panel-3:#241f1b;
+  --line:rgba(255,255,255,.1);--line-2:rgba(255,255,255,.16);
+  --text:#f4ede5;--muted:#aca298;--muted-2:#7d746a;
+  --gold:#e8bf35;--gold-dim:rgba(232,191,53,.13);--green:#4ddb8b;--green-dim:rgba(77,219,139,.11);--red:#ff6b85;
+  --sea:#4fc3d9;--pearl-1:#fff;--pearl-2:#f3d9e6;
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --body:"Figtree","Segoe UI",system-ui,sans-serif;
+  --r0:#b9b0a6;--r1:#4ddb8b;--r2:#5aa2ff;--r3:#b98aff;--r4:#e8bf35;
+}
+*{box-sizing:border-box}
+html{background:var(--ink);color-scheme:dark}
+body{margin:0;min-height:100vh;background:var(--ink);color:var(--text);font-family:var(--body)}
+button{font:inherit;color:inherit}
+.topbar{max-width:1120px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.topbar .brand{font-family:var(--display);font-weight:800}
+.topbar .brand span{color:var(--gold)}
+.mock-tag{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2a1300;background:var(--gold);padding:4px 9px;border-radius:99px}
+.page{max-width:1120px;margin:0 auto}
+
+.head{display:flex;justify-content:space-between;align-items:end;gap:16px;padding:20px 0 14px;flex-wrap:wrap}
+.eyebrow{font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);letter-spacing:-.02em;margin:4px 0 4px;line-height:1}
+.sub{color:var(--muted);margin:0;max-width:60ch;line-height:1.5}
+.wallet{display:flex;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:13px;overflow:hidden}
+.wallet div{background:var(--panel);padding:9px 14px;min-width:120px}
+.wallet small{display:block;font-size:.64rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.wallet strong{font-family:var(--display);font-size:1.45rem;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:7px}
+/* The pearl. The art carries its own glow and sparkle, which sit outside
+   the sphere, so it is set a little larger than the drawn dot it replaces
+   to keep the ball itself the same size in a line of text. The ?v= here is
+   the same bump rule as ART_V in the script: change the file, change this. */
+.pearl{display:inline-block;width:.95em;height:.95em;vertical-align:-.12em;flex:none;
+  background:url(/v3/assets/img/reef/pearl.webp?v=2) center/contain no-repeat}
+
+.grid2{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:920px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.card-next{margin-top:18px}
+.card-h{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:0 0 10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px 10px}
+.card-head h2{font-family:var(--display);font-size:1.1rem;margin:0}
+.card-head .meta{font-size:.78rem;color:var(--muted)}
+.card-body{padding:12px 14px 14px}
+
+/* ---------- fishing */
+.spots{display:flex;gap:6px;padding:0 14px 10px;overflow-x:auto;scrollbar-width:none}
+.spots-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:12px 14px 7px;flex-wrap:wrap}
+.spots-head .eyebrow{font-size:.62rem;color:var(--muted-2)}
+.spots-head small{color:var(--muted-2);font-size:.74rem}
+.spots::-webkit-scrollbar{display:none}
+.spot{flex:none;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:.82rem;font-weight:800;cursor:pointer;color:var(--muted);display:flex;align-items:center;gap:6px}
+.spot[aria-pressed="true"]{color:var(--text);border-color:rgba(79,195,217,.6);background:rgba(79,195,217,.12)}
+.spot.locked{color:var(--muted-2)}
+.spot.locked b{display:inline-flex;align-items:center;gap:4px;color:var(--muted)}
+.spot:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.scene-wrap{position:relative;aspect-ratio:16/10;background:#0b1a2a;touch-action:none;user-select:none;-webkit-user-select:none}
+.scene-wrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.status{position:absolute;left:12px;top:10px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+.sfx-btn{pointer-events:auto;background:rgba(8,6,5,.62);border:1px solid rgba(255,255,255,.12);padding:3px 8px;border-radius:99px;font-size:.82rem;line-height:1.2;cursor:pointer;margin-right:auto;margin-left:7px}
+.sfx-btn:hover{border-color:var(--sea)}
+.status > span{background:rgba(8,6,5,.62);border:1px solid rgba(255,255,255,.12);padding:4px 9px;border-radius:99px;font-size:.74rem;font-weight:800}
+.say{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);font-family:var(--display);font-weight:800;font-size:clamp(1.1rem,3.4vw,1.6rem);text-align:center;text-shadow:0 2px 12px rgba(0,0,0,.8);pointer-events:none;white-space:nowrap}
+.say.bite{color:var(--gold);font-size:clamp(2rem,7vw,3.2rem);animation:pulse .35s ease-in-out infinite alternate}
+@keyframes pulse{to{transform:translate(-50%,-50%) scale(1.12)}}
+.reel{position:absolute;right:16px;top:12%;bottom:12%;display:flex;gap:6px}
+.reel[hidden]{display:none}
+.track{position:relative;width:46px;border-radius:12px;background:linear-gradient(180deg,rgba(10,30,50,.85),rgba(5,15,28,.9));border:2px solid rgba(255,255,255,.25);overflow:hidden}
+.zone{position:absolute;left:3px;right:3px;border-radius:8px;background:linear-gradient(180deg,rgba(77,219,139,.55),rgba(77,219,139,.35));border:2px solid rgba(160,255,200,.9)}
+.zone.on{box-shadow:0 0 14px rgba(77,219,139,.8)}
+.rfish{position:absolute;left:50%;width:30px;height:18px;margin-left:-15px;margin-bottom:-9px}
+.rfish canvas{position:static;width:30px;height:18px}
+.prog{position:relative;width:10px;border-radius:6px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.2);overflow:hidden}
+.prog i{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,var(--red),var(--gold),var(--green))}
+.reel-tip{position:absolute;right:84px;bottom:14%;font-size:.8rem;font-weight:800;background:rgba(8,6,5,.7);padding:5px 9px;border-radius:8px;pointer-events:none}
+.actions{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--line);flex-wrap:wrap}
+.act{border:0;border-radius:11px;padding:12px 22px;font-weight:800;font-size:1rem;cursor:pointer;background:var(--sea);color:#062028;min-width:170px;touch-action:none}
+.act.hook{background:var(--gold);color:#2a1300}
+.act.reeling{background:var(--green);color:#052a15}
+.act:focus-visible,.btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.act-note{font-size:.78rem;color:var(--muted)}
+.bait{font-size:.78rem;color:var(--muted)}
+.bait b{color:var(--gold)}
+
+.catch{position:absolute;inset:0;display:grid;place-items:center;background:rgba(4,10,18,.72);backdrop-filter:blur(2px);padding:12px}
+.catch[hidden]{display:none}
+.catch-card{background:var(--panel);border:1px solid var(--line-2);border-radius:14px;padding:14px;width:min(340px,100%);text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.catch-card canvas{position:static;width:100%;height:auto;aspect-ratio:2/1;display:block;border-radius:10px;background:radial-gradient(circle at 50% 60%,rgba(79,195,217,.22),rgba(0,0,0,0) 70%)}
+.catch-card h3{font-family:var(--display);font-size:1.35rem;margin:4px 0 2px}
+.tags{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:4px 0 8px}
+.tag{font-size:.66rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:99px;border:1px solid currentColor}
+.tag.solid{background:var(--gold);color:#2a1300;border-color:transparent}
+.tag.new{color:var(--sea)}
+.catch-line{color:var(--muted);font-size:.86rem;margin:0 0 10px}
+.csnag{display:flex;align-items:center;justify-content:center;gap:7px;margin:0 0 10px;padding:7px 10px;border-radius:10px;background:var(--gold-dim);border:1px solid rgba(var(--gold-rgb),.35);font-size:.82rem;color:var(--muted)}
+.csnag span{font-size:1.05rem}
+.csnag b{color:var(--gold);font-weight:800}
+.catch-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:2px 0 10px}
+.cstat{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:7px 5px;display:grid;gap:2px;justify-items:center}
+.cstat small{font-size:.58rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);white-space:nowrap}
+.cstat b{font-family:var(--display);font-weight:800;font-size:.95rem;display:flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cstat.xp b{color:#ff981f}
+.cstat .pearl{width:12px;height:12px}
+.btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.btns .btn{justify-content:center;padding:0 8px;white-space:nowrap}
+.btns .btn .pearl{margin-left:3px}
+.btn{border:1px solid var(--line-2);background:var(--panel-3);border-radius:10px;padding:9px 14px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn.primary{background:var(--sea);color:#062028;border-color:transparent}
+.btn.gold{background:var(--gold);color:#2a1300;border-color:transparent}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.small{padding:5px 9px;font-size:.78rem;border-radius:8px}
+
+.biting{padding:10px 14px 14px;border-top:1px solid var(--line)}
+.biting h4{margin:0 0 8px;font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chipf{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:99px;background:var(--panel-2);border:1px solid var(--line);font-size:.78rem;font-weight:700}
+.chipf i{width:8px;height:8px;border-radius:50%}
+.chipf-fish{width:34px;height:20px;display:block;flex:none}
+.chipf-fish.unknown{filter:grayscale(1) brightness(.45) contrast(.8)}
+.chipf.off{opacity:.45;font-weight:600}
+.chipf small{color:var(--muted-2);font-weight:600}
+
+/* ---------- tank */
+.tank-wrap{position:relative;aspect-ratio:16/10;background:#08364a}
+.tank-wrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:pointer}
+.tank-hud{position:absolute;left:10px;right:10px;top:10px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+.tank-hud > span{background:rgba(4,14,22,.62);border:1px solid rgba(255,255,255,.14);padding:4px 9px;border-radius:99px;font-size:.74rem;font-weight:800;display:inline-flex;align-items:center;gap:6px}
+.fishtip{position:absolute;z-index:3;background:rgba(12,10,9,.94);border:1px solid var(--line-2);border-radius:11px;padding:10px 12px;min-width:190px;box-shadow:0 10px 30px rgba(0,0,0,.5);transform:translate(-50%,-110%)}
+.fishtip[hidden]{display:none}
+.fishtip strong{font-family:var(--display);display:block}
+.fishtip small{display:block;color:var(--muted);margin:2px 0 8px}
+.tank-list{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.tank-list li{display:grid;grid-template-columns:10px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:6px 8px;border-radius:9px;background:var(--panel-2);font-size:.86rem}
+.tank-list li i{width:10px;height:10px;border-radius:50%}
+.tank-list li .rate{color:var(--muted);font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.tank-list .empty{grid-template-columns:1fr;color:var(--muted);background:none;text-align:center;padding:14px}
+.tank-list .shiny{color:var(--gold);font-size:.7rem;font-weight:800}
+
+/* ---------- lower */
+.lower{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;margin-top:16px;align-items:start}
+@media (max-width:920px){.lower{grid-template-columns:minmax(0,1fr)}}
+.app{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding:18px 12px 16px;border-right:1px solid var(--line);background:#100e0c;scrollbar-width:thin}
+.sb-top{display:grid;gap:14px;padding:0 6px}
+.sb-brand{display:flex;align-items:center;gap:11px}
+.sb-logo{width:44px;height:44px;flex:none;display:block;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
+.sb-title{font-family:var(--display);font-weight:800;font-size:1.7rem;letter-spacing:-.02em;line-height:1.05;display:flex;align-items:center;gap:8px}
+.sb-title .mock-tag{font-size:.56rem;padding:3px 7px}
+.sb-wallet{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.sb-wallet div{background:var(--panel);padding:8px 10px}
+.sb-wallet small{display:block;font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.sb-wallet strong{font-family:var(--display);font-size:1.05rem;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.sb-foot{margin:auto 6px 0;font-size:.72rem;color:var(--muted-2);line-height:1.4}
+.fnav .tabs{display:flex;flex-direction:column;gap:2px}
+.main{min-width:0;padding:22px 28px 56px}
+/* The stat bar: every page, always on screen. */
+/* The tour: one dark sheet with a hole cut in it by a very large box-shadow,
+   and a card that sits under the hole (or over it, near the bottom of the
+   screen). The sheet does not take clicks — only the card does — so a step
+   can point at a live button without the page freezing underneath. */
+.tour{position:fixed;inset:0;z-index:80;pointer-events:none}
+.tour-hole{position:fixed;border-radius:14px;box-shadow:0 0 0 9999px rgba(4,3,2,.74);transition:all .22s ease;pointer-events:none}
+.tour-hole.none{box-shadow:0 0 0 9999px rgba(4,3,2,.8)}
+.tour-card{position:fixed;width:min(360px,calc(100vw - 32px));background:var(--panel);border:1px solid rgba(var(--gold-rgb),.45);
+  border-radius:16px;padding:16px 17px 14px;box-shadow:0 22px 60px rgba(0,0,0,.6);pointer-events:auto;transition:all .22s ease}
+.tour-step{font-size:.6rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+.tour-card h2{font-family:var(--display);font-weight:800;font-size:1.15rem;margin:4px 0 6px}
+.tour-card p{margin:0;color:var(--muted);font-size:.88rem;line-height:1.5}
+.tour-btns{display:flex;gap:8px;margin-top:14px;align-items:center}
+.tour-btns .ghost{margin-right:auto;border-color:transparent;background:transparent;color:var(--muted-2)}
+.statbar{position:sticky;top:0;z-index:30;margin:-22px -28px 18px;padding:9px 28px;display:flex;align-items:center;gap:10px 22px;flex-wrap:wrap;
+  background:rgba(12,10,9,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.sb-me{display:flex;align-items:center;gap:9px;padding-right:18px;border-right:1px solid var(--line);min-width:0}
+.sb-face{width:32px;height:32px;border-radius:50%;flex:none;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:.86rem;color:#2a1d05;background:linear-gradient(150deg,#f3cf57,#c99a1c)}
+.sb-name{display:grid;line-height:1.15;min-width:0}
+.sb-name b{font-family:var(--display);font-weight:800;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-name small{font-size:.66rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-2)}
+.sb-stat{display:grid;line-height:1.15;white-space:nowrap}
+.sb-stat small{font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.sb-stat b{font-family:var(--display);font-weight:800;font-size:1rem;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:5px}
+.sb-stat.gold b{color:var(--gold)}
+.sb-stat.lvl b{color:#ffff00;text-shadow:1px 1px 0 #000}
+.sb-stat .pearl{width:12px;height:12px}
+.sb-spacer{margin-left:auto}
+@media (max-width:1100px){.statbar{gap:8px 16px}.sb-stat.wide{display:none}}
+@media (max-width:820px){.statbar{margin:-18px -16px 14px;padding:8px 16px}}
+.view{max-width:1040px;margin:0 auto}
+.view-h{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.view-h h1{font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,3vw,2.1rem);letter-spacing:-.02em;margin:0;line-height:1.05}
+.view-h p{margin:6px 0 0;color:var(--muted);font-size:.9rem;max-width:62ch;line-height:1.45}
+.view-h .meta{font-size:.82rem;color:var(--muted);font-weight:700}
+.view-fishing,.view-tank{max-width:880px}
+.view-profile .view-stack{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
+.view-controls{max-width:560px}
+@media (max-width:860px){.view-profile .view-stack{grid-template-columns:minmax(0,1fr)}}
+.fnav-h{font-size:.64rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);padding:10px 10px 4px}
+.fnav-h:first-child{padding-top:2px}
+.tab{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-radius:9px;padding:9px 10px;font-weight:700;font-size:.9rem;color:var(--muted);cursor:pointer;text-align:left;white-space:nowrap;position:relative}
+.tab svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+.tab .tab-label{flex:1}
+.tab:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.tab.locked{opacity:.38;cursor:not-allowed}
+.tab.locked:hover{background:none;color:var(--muted)}
+.tab.locked .tab-label{text-decoration:none}
+.tab.locked::after{content:"🔒";position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:.7rem;line-height:1;filter:grayscale(1)}
+.tab[aria-selected="true"]{background:rgba(79,195,217,.12);color:var(--text)}
+/* the Shop sits above everything else in the menu and says so */
+.fnav .tab.tab-shop{margin-bottom:10px;border:1px solid rgba(var(--gold-rgb),.5);background:linear-gradient(180deg,rgba(var(--gold-rgb),.18),rgba(var(--gold-rgb),.06));color:var(--gold);font-weight:800}
+.fnav .tab.tab-shop svg{stroke:var(--gold);opacity:1}
+.fnav .tab.tab-shop:hover{background:linear-gradient(180deg,rgba(var(--gold-rgb),.3),rgba(var(--gold-rgb),.12));color:var(--gold)}
+.fnav .tab.tab-shop[aria-selected="true"]{background:linear-gradient(180deg,#f3cf57,#c99a1c);color:#221700;border-color:transparent}
+.fnav .tab.tab-shop[aria-selected="true"] svg{stroke:#221700}
+.tab[aria-selected="true"]::before{content:"";position:absolute;left:-10px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--sea)}
+.tab[aria-selected="true"] svg{color:var(--sea);opacity:1}
+.tab:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.fpanels{min-width:0}
+.fpanels .card-body{padding:16px 18px 18px}
+.fpanel-h{font-family:var(--display);font-size:1.2rem;margin:0 0 12px}
+@media (max-width:820px){
+  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr}
+  .sidebar{position:sticky;top:0;z-index:30;height:auto;overflow:visible;gap:8px;padding:10px 12px 0;border-right:0;border-bottom:1px solid var(--line);background:rgba(16,14,12,.96);backdrop-filter:blur(8px)}
+  .sb-top{grid-template-columns:auto minmax(0,1fr);align-items:center;gap:12px;padding:0}
+  .sb-brand .eyebrow{display:none}
+  .sb-title{font-size:1.3rem;margin:0}
+  .sb-wallet div{padding:5px 8px}
+  .sb-wallet strong{font-size:.9rem}
+  .sb-foot{display:none}
+  .fnav{margin:0 -12px;padding:0 8px;overflow-x:auto;scrollbar-width:none}
+  .fnav::-webkit-scrollbar{display:none}
+  .fnav .tabs{flex-direction:row}
+  .fnav-h{display:none}
+  .tab{width:auto;padding:10px 10px 12px;font-size:.84rem;border-radius:9px 9px 0 0}
+  .tab[aria-selected="true"]{background:none}
+  .tab[aria-selected="true"]::before{left:10px;right:10px;top:auto;bottom:0;width:auto;height:3px;border-radius:3px 3px 0 0}
+  .main{padding:16px 16px 48px}
+  .view-h .meta{width:100%}
+}
+.dex-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.dex-bar{flex:1;min-width:160px;height:8px;border-radius:8px;background:var(--panel-3);overflow:hidden}
+.dex-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--sea),var(--gold))}
+.dex-spot{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);margin:14px 0 6px}
+.dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.dexc{background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:8px;position:relative}
+.dexc canvas{width:100%;height:auto;aspect-ratio:2/1;display:block}
+.dexc strong{display:block;font-size:.86rem;margin-top:2px}
+.dexc small{display:block;color:var(--muted-2);font-size:.72rem;line-height:1.35}
+.dexc .rd{position:absolute;top:8px;right:8px;width:8px;height:8px;border-radius:50%}
+.dexc .star{position:absolute;top:5px;left:8px;color:var(--gold);font-size:.8rem}
+.shop-sec{margin-bottom:14px}
+.shop-sec h3{font-family:var(--display);font-size:.95rem;margin:0 0 6px}
+.shop-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.wallets{display:flex;gap:8px;flex-wrap:wrap}
+.wallet2{display:flex;align-items:center;gap:8px;padding:8px 13px;border-radius:12px;background:var(--panel);border:1px solid var(--line)}
+.wallet2 small{font-size:.6rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted-2);display:block}
+.wallet2 b{font-family:var(--display);font-weight:800;font-size:1.1rem;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:5px}
+.wallet2.zc b{color:var(--gold)}
+.shop-filters{display:flex;gap:6px;flex-wrap:wrap}
+.sfilter{padding:7px 13px;border-radius:99px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--muted);font:inherit;font-size:.8rem;font-weight:700;cursor:pointer}
+.sfilter:hover{color:var(--text)}
+.sfilter.on{background:var(--gold);border-color:transparent;color:#221700}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.sitem{position:relative;display:grid;grid-template-rows:auto 1fr auto;gap:9px;padding:14px;border-radius:14px;background:var(--panel);border:1px solid var(--line);transition:border-color .15s ease,transform .15s ease}
+.sitem:hover{border-color:var(--line-2);transform:translateY(-2px)}
+.sitem.owned{opacity:.62}
+.sitem.locked{opacity:.75}
+.sitem.zcoin{background:linear-gradient(180deg,rgba(var(--gold-rgb),.07),transparent 45%),var(--panel);border-color:rgba(var(--gold-rgb),.3)}
+.sitem.worn{border-color:rgba(77,219,139,.5)}
+.sitem-art{height:92px;display:grid;place-items:center;border-radius:11px;background:radial-gradient(120% 120% at 50% 15%,rgba(255,255,255,.07),transparent 70%),var(--panel-2);font-size:2.2rem;line-height:1}
+.sitem-art img{width:88%;height:92px;object-fit:contain}
+.sitem-b{display:grid;gap:3px;align-content:start}
+.sitem-b b{font-family:var(--display);font-weight:800;font-size:.98rem;line-height:1.2}
+.sitem-b small{font-size:.78rem;color:var(--muted);line-height:1.4}
+.sitem-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sprice{display:inline-flex;align-items:center;gap:5px;font-family:var(--display);font-weight:800;font-size:1rem;font-variant-numeric:tabular-nums}
+.sprice.zc{color:var(--gold)}
+.sprice .pearl,.sprice .zmark{width:14px;height:14px}
+.zmark{display:inline-block;width:14px;height:14px;border-radius:50%;background:linear-gradient(150deg,#f3cf57,#c99a1c);box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.25);position:relative}
+.zmark::after{content:"Z";position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-size:.56rem;font-weight:800;color:#2a1d05}
+.stag{position:absolute;top:10px;right:10px;font-size:.58rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;padding:3px 8px;border-radius:99px;background:rgba(0,0,0,.55);color:var(--muted)}
+.stag.owned{color:var(--green);border:1px solid rgba(77,219,139,.4)}
+.stag.worn{color:#221700;background:var(--green)}
+.stag.need{color:var(--gold);border:1px solid rgba(var(--gold-rgb),.45)}
+.sitem .btn{width:100%;justify-content:center}
+.shop-note{margin:14px 0 0;font-size:.78rem;color:var(--muted-2);line-height:1.5}
+.shop-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--panel-2);margin-bottom:5px}
+.shop-row strong{display:block;font-size:.9rem}
+.shop-row small{color:var(--muted);font-size:.78rem}
+.shop-row.owned{opacity:.6}
+.shop-row.locked{opacity:.75}
+.shop-row .need{display:block;font-size:.74rem;font-weight:800;color:#ff981f}
+.shop-row.locked .shop-ico{filter:grayscale(.85) brightness(.7)}
+.levelup.unlockup{background:linear-gradient(180deg,#132a33,var(--panel) 55%);border-color:rgba(79,195,217,.55)}
+.levelup.unlockup b{color:var(--sea)}
+.levelup.unlockup .unlock{color:var(--sea)}
+.levelup .unlock{display:block;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);color:var(--green);font-weight:800}
+.levelup .unlock em{font-style:normal;color:var(--text);font-weight:700}
+.skill-next{margin:auto 0 0;font-size:.76rem;font-weight:700;color:var(--gold)}
+/* what levels unlock, under the skill cards */
+.unlocks{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;align-self:start}
+.unlocks h2{font-family:var(--display);font-weight:800;font-size:.92rem;margin:0;padding:11px 13px 0;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.unlocks h2 small{color:var(--muted-2);font-size:.7rem;font-weight:600;white-space:nowrap}
+.utab{width:100%;border-collapse:collapse;margin-top:8px;font-size:.8rem}
+.utab th{text-align:left;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);padding:5px 13px;border-bottom:1px solid var(--line);font-weight:800}
+.utab td{padding:8px 13px;border-bottom:1px solid var(--line)}
+.utab tr:last-child td{border-bottom:0}
+.utab .u-skill{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-weight:700}
+.utab .u-skill svg{width:16px;height:16px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.utab .u-lvl{font-variant-numeric:tabular-nums;font-weight:800;color:var(--gold)}
+.utab .u-what{font-weight:700}
+.utab .u-state{text-align:right;font-weight:800;font-size:.74rem;white-space:nowrap}
+.utab .u-lvl{text-align:center}
+.utab th.c{text-align:center}
+.utab th.r{text-align:right}
+.unlocks .none{margin:10px 13px 13px;color:var(--muted-2);font-size:.78rem}
+.utab tr.locked{opacity:.45}
+.utab tr.locked .u-lvl{color:var(--muted);text-shadow:none}
+.utab tr.next{background:var(--gold-dim)}
+.utab .u-state.open{color:var(--green)}
+.utab .u-state.owned{color:var(--gold)}
+.utab .u-state.shut{color:var(--muted-2)}
+
+.shop-row.has-ico{grid-template-columns:48px minmax(0,1fr) auto}
+.shop-ico{width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.rod-ico{width:24px;height:24px;object-fit:contain;vertical-align:-7px;margin-right:3px}
+.bait-ico{width:20px;height:20px;object-fit:contain;vertical-align:-5px;margin-right:3px}
+.btn-ico{width:18px;height:18px;object-fit:contain;vertical-align:-4px;margin-right:4px}
+.bait-sel-ico{width:28px;height:28px;object-fit:contain}
+.bait-sel-ico[hidden]{display:none}
+.lb{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.lb li{display:grid;grid-template-columns:22px 1fr auto;gap:8px;padding:7px 8px;border-radius:8px;font-size:.88rem}
+.lb li:nth-child(odd){background:rgba(255,255,255,.025)}
+.lb .rk{color:var(--muted-2);font-weight:800}
+.lb li:first-child .rk{color:var(--gold)}
+.lb .v{font-weight:800;font-variant-numeric:tabular-nums}
+.lb li.me{background:var(--gold-dim);box-shadow:inset 0 0 0 1px rgba(232,191,53,.4)}
+.example{font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);border:1px solid var(--line-2);border-radius:99px;padding:1px 6px;margin-left:6px;vertical-align:2px}
+.note{font-size:.84rem;color:var(--muted);line-height:1.5;margin:0}
+.note+.note{margin-top:8px}
+
+.side{display:grid;gap:14px}
+.ctl{display:grid;gap:10px}
+.ctl label{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);display:block;margin-bottom:4px}
+.seg{display:flex;flex-wrap:wrap;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg button{flex:1;background:none;border:0;padding:5px 6px;border-radius:7px;font-weight:800;font-size:.76rem;color:var(--muted);cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--panel-3);color:var(--text)}
+.ctl-btns{display:flex;flex-wrap:wrap;gap:6px}
+/* The leaderboard: a rail of boards down the left, one table on the right.
+   Same shape as the skills page so the two read as a pair. */
+.lb{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.lb{grid-template-columns:1fr}}
+.lb-rail{position:sticky;top:76px;display:grid;gap:3px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:9px;max-height:calc(100vh - 100px);overflow:auto}
+@media (max-width:860px){.lb-rail{position:static;max-height:none}}
+.lb-rail h4{font-size:.58rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted-2);margin:9px 0 3px 8px}
+.lb-rail h4:first-child{margin-top:2px}
+.lb-b{display:flex;align-items:center;gap:9px;width:100%;padding:7px 9px;border-radius:9px;border:0;background:none;color:var(--muted);font:inherit;font-size:.84rem;font-weight:700;cursor:pointer;text-align:left}
+.lb-b:hover{background:var(--panel-2);color:var(--text)}
+.lb-b[aria-current="true"]{background:var(--gold-dim);color:var(--gold)}
+.lb-b svg{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.lb-b .ico{width:16px;text-align:center;flex:none;font-size:.95rem;line-height:1}
+.lb-head{display:flex;align-items:center;gap:13px;background:linear-gradient(90deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:13px 16px;margin-bottom:11px}
+.lb-head .lb-ico{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:11px;background:var(--gold-dim);border:1px solid rgba(var(--gold-rgb),.35);font-size:1.15rem}
+.lb-head .lb-ico svg{width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.lb-head h2{font-family:var(--display);font-weight:800;font-size:1.25rem;margin:0}
+.lb-head small{display:block;font-size:.74rem;color:var(--muted-2);margin-top:1px}
+.lb-table{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.lb-row{display:grid;grid-template-columns:52px minmax(0,1fr) 92px 130px;gap:10px;align-items:center;padding:9px 16px;border-bottom:1px solid var(--line);font-size:.88rem}
+.lb-row:last-child{border-bottom:0}
+.lb-row.lb-th{font-size:.58rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);background:var(--panel-2);padding:8px 16px}
+.lb-row .rk{font-family:var(--display);font-weight:800;color:var(--muted-2);font-variant-numeric:tabular-nums}
+.lb-row .who{display:flex;align-items:center;gap:8px;font-weight:700;min-width:0}
+.lb-row .who span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-row .lv,.lb-row .xp{font-variant-numeric:tabular-nums;text-align:right;font-weight:700}
+.lb-row .lv{color:var(--gold);font-family:var(--display);font-weight:800}
+.lb-row .xp{color:var(--muted)}
+.lb-row.me{background:var(--gold-dim);border-color:rgba(var(--gold-rgb),.3)}
+.lb-row.me .rk,.lb-row.me .who{color:var(--gold)}
+.lb-row.top .rk{color:var(--gold)}
+.lb-medal{font-size:.9rem}
+.lb-note{padding:10px 16px;font-size:.74rem;color:var(--muted-2);background:var(--panel-2);border-top:1px solid var(--line)}
+@media (max-width:620px){.lb-row{grid-template-columns:38px minmax(0,1fr) 62px 92px;padding:9px 11px;font-size:.82rem}}
+
+/* The wiki: the leaderboard's rail and header, prose and plain tables. */
+.wk{font-size:.9rem;line-height:1.55;color:var(--muted)}
+.wk h3{font-family:var(--display);font-weight:800;font-size:1rem;color:var(--text);margin:18px 0 6px}
+.wk h3:first-child{margin-top:0}
+.wk p{margin:0 0 10px;max-width:70ch}
+.wk b{color:var(--text)}
+.wk ul{margin:0 0 10px;padding-left:18px}
+.wk li{margin:3px 0}
+.wk-scroll{overflow-x:auto;margin:6px 0 14px;border:1px solid var(--line);border-radius:11px}
+.wk-t{width:100%;border-collapse:collapse;font-size:.82rem}
+.wk-t th{text-align:left;font-size:.6rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted-2);background:var(--panel-2);padding:8px 10px;white-space:nowrap}
+.wk-t td{padding:7px 10px;border-top:1px solid var(--line);vertical-align:middle;color:var(--text)}
+.wk-t td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.wk-t td.m{color:var(--muted)}
+.wk-fish{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.wk-rar{font-weight:800;white-space:nowrap}
+.wk-got{color:var(--green);font-weight:800;margin-left:4px}
+
+/* the profile: a card, the numbers, and where they put you in the room */
+.pcard{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:820px){.pcard{grid-template-columns:1fr}}
+.pcard-face{border-radius:16px;overflow:hidden;border:1px solid var(--line-2);background:linear-gradient(180deg,#1d2a36,#0d1620)}
+.pcard-face.gold{border-color:rgba(var(--gold-rgb),.6);box-shadow:0 0 0 1px rgba(var(--gold-rgb),.25),0 14px 34px rgba(0,0,0,.5)}
+.pcard-art{height:150px;display:block;width:100%}
+.pcard-who{padding:11px 13px 13px;display:grid;gap:3px;background:var(--panel)}
+.pcard-who b{font-family:var(--display);font-weight:800;font-size:1.15rem}
+.pcard-who small{font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.pcard-lvl{display:flex;align-items:baseline;gap:6px;margin-top:4px;font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--gold)}
+.pcard-lvl span{font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.pstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:9px}
+.pstat{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:10px 11px;display:grid;gap:2px}
+.pstat small{font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.pstat b{font-family:var(--display);font-weight:800;font-size:1.15rem;font-variant-numeric:tabular-nums;line-height:1.1}
+.pstat .rank{font-size:.7rem;font-weight:800;color:var(--muted)}
+.pstat .rank.top{color:var(--gold)}
+.psec{margin-top:18px}
+.psec h3{font-family:var(--display);font-weight:800;font-size:1rem;margin:0 0 9px;display:flex;align-items:baseline;gap:8px}
+.psec h3 small{font-size:.72rem;font-weight:600;color:var(--muted-2)}
+.pskills{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.pskill{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.pskill svg{width:18px;height:18px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pskill b{font-size:.82rem;font-weight:700}
+.pskill i{font-style:normal;font-family:var(--display);font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+.prank-list{display:grid;gap:6px}
+.prank{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 10px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line);font-size:.84rem}
+.prank.me{border-color:rgba(var(--gold-rgb),.45);background:var(--gold-dim)}
+.prank .rk{font-family:var(--display);font-weight:800;color:var(--muted-2);text-align:center}
+.prank.me .rk{color:var(--gold)}
+.prank .v{font-variant-numeric:tabular-nums;font-weight:700;color:var(--muted)}
+.precs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.prec{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:8px 11px;font-size:.84rem}
+.prec b{font-weight:700}
+.prec span{font-variant-numeric:tabular-nums;color:var(--gold);font-weight:800}
+.prec.held{border-color:rgba(232,191,53,.45)}
+.pboss{display:flex;flex-wrap:wrap;gap:7px}
+.pboss span{padding:6px 11px;border-radius:99px;border:1px solid var(--line-2);font-size:.78rem;font-weight:700;color:var(--muted-2)}
+.pboss span.got{border-color:rgba(77,219,139,.5);color:var(--green)}
+.profile-tank{border-radius:12px;overflow:hidden;border:1px solid rgba(79,195,217,.35)}
+.profile-tank canvas{display:block;width:100%;height:auto;aspect-ratio:16/10}
+.profile-line{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);margin-top:8px}
+.profile-line b{color:var(--text)}
+
+/* ---------- the daily loop (tabs in the lower card) */
+.tab .count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;margin-left:auto;border-radius:9px;background:var(--gold);color:#2a1300;font-size:.68rem;font-weight:800;vertical-align:1px}
+.tab .count[hidden]{display:none}
+.panel-intro{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin:2px 0 14px}
+.panel-intro p{margin:0;color:var(--muted);font-size:.86rem;line-height:1.45;max-width:60ch}
+.panel-intro p b{color:var(--text);font-weight:700}
+.panel-intro .hint{font-size:.76rem;color:var(--muted-2)}
+.sec-h{margin:0 0 8px;font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.sec-h small{font-weight:700;letter-spacing:0;text-transform:none;margin-left:6px}
+.empty-note{font-size:.84rem;color:var(--muted);margin:0}
+.thinbar{height:3px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
+.thinbar i{display:block;height:100%;width:0;background:var(--green);transition:width .3s}
+.btn.ghost{background:transparent}
+.btn.water{background:rgba(31,111,209,.22);color:#9cc6ff;border-color:rgba(90,162,255,.4)}
+.linkbtn{background:none;border:0;color:var(--muted);font-size:.78rem;font-weight:700;cursor:pointer;padding:4px;justify-self:center}
+.linkbtn:hover{color:var(--text)}
+
+/* quests */
+.q-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+@media (max-width:720px){.q-cols{grid-template-columns:minmax(0,1fr);gap:18px}}
+.q-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:2px}
+.q-head .sec-h{margin:0}
+.q-meta{font-size:.74rem;color:var(--muted-2)}
+.q-meta .streak{color:var(--gold);font-weight:800}
+.q-list{display:grid}
+.quest{position:relative;display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}
+.quest::after{content:"";position:absolute;left:28px;bottom:-1px;height:1px;width:calc((100% - 28px) * var(--p));background:var(--green);opacity:.7}
+.quest .q-mark{width:18px;height:18px;border-radius:50%;border:2px solid var(--line-2);display:grid;place-items:center;color:#062028}
+.quest .q-mark svg{width:12px;height:12px}
+.quest.done .q-mark{border-color:var(--gold)}
+.quest.claimed .q-mark{background:var(--green);border-color:var(--green)}
+.quest .q-text{font-size:.9rem;font-weight:700;line-height:1.3}
+.quest .q-text small{display:block;font-weight:600;font-size:.74rem;color:var(--muted-2);font-variant-numeric:tabular-nums;margin-top:1px}
+.quest.claimed .q-text{color:var(--muted)}
+.q-reward{display:inline-flex;align-items:center;gap:4px;font-size:.82rem;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
+.quest.claimed .q-reward{opacity:.5}
+.q-chest{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;font-size:.78rem;color:var(--muted-2);min-height:30px}
+.q-chest.ready{color:var(--text);font-weight:700}
+.q-chest.opened{color:var(--green)}
+
+/* garden */
+.plots{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.plot{border:1px solid var(--line);border-radius:12px;padding:10px;display:grid;gap:8px;align-content:start;background:var(--panel-2)}
+.plot.ready{border-color:rgba(77,219,139,.5)}
+.plot-art svg{display:block;width:100%;height:58px}
+.plot-label b{display:block;font-size:.86rem}
+.plot-label small{display:block;font-size:.74rem;color:var(--muted);font-variant-numeric:tabular-nums;min-height:1.2em}
+.plot.ready .plot-label small{color:var(--green);font-weight:700}
+.plot .btn{width:100%;justify-content:center}
+.plot.choosing{gap:6px;align-content:start}
+.choose-head{font-size:.82rem;margin-bottom:2px}
+.choose{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:8px;align-items:center;text-align:left;background:var(--panel-3);border:1px solid var(--line);border-radius:9px;padding:6px 8px;cursor:pointer}
+.choose i{width:8px;height:8px;border-radius:50%}
+.choose img{width:30px;height:30px;object-fit:contain}
+.choose b{display:block;font-size:.78rem}
+.choose small{display:block;font-size:.68rem;color:var(--muted-2);font-weight:600}
+.choose em{font-style:normal;font-size:.76rem;font-weight:800;display:inline-flex;align-items:center;gap:3px}
+.choose:hover:not(:disabled){border-color:rgba(79,195,217,.5)}
+.choose:disabled{opacity:.45;cursor:default}
+.choose:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+/* breeding */
+.breed-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:24px;align-items:start}
+@media (max-width:720px){.breed-cols{grid-template-columns:minmax(0,1fr);gap:18px}}
+.nests{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.nest{border:1px solid var(--line);border-radius:12px;padding:12px 8px 10px;display:grid;gap:8px;justify-items:center;text-align:center;background:var(--panel-2)}
+.nest.ready{border-color:rgba(232,191,53,.5)}
+.nest .thinbar,.nest .btn{width:100%}
+.nest .btn{justify-content:center}
+.nest-label b{display:block;font-size:.84rem}
+.nest-label small{display:block;font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.nest.ready .nest-label small{color:var(--gold);font-weight:700}
+.egg{--egg:#ddd;--spot:#999;width:34px;height:44px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;
+  background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.6),rgba(255,255,255,0) 30%),radial-gradient(circle at 62% 60%,var(--spot) 0 9%,transparent 10%),radial-gradient(circle at 36% 72%,var(--spot) 0 7%,transparent 8%),radial-gradient(circle at 66% 32%,var(--spot) 0 6%,transparent 7%),var(--egg);
+  box-shadow:inset -4px -6px 10px rgba(0,0,0,.3),0 4px 10px rgba(0,0,0,.35)}
+.egg.hollow{background:none;border:2px dashed var(--line-2);box-shadow:none}
+.egg.wobble{animation:wobble .9s ease-in-out infinite}
+@keyframes wobble{0%,100%{transform:rotate(0)}20%{transform:rotate(-9deg)}40%{transform:rotate(8deg)}60%{transform:rotate(-5deg)}80%{transform:rotate(3deg)}}
+.rows{display:grid;margin-bottom:14px}
+.row2{display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.rdot{width:8px;height:8px;border-radius:50%}
+.row2-main b{display:block;font-size:.88rem}
+.row2-main small{display:block;font-size:.74rem;color:var(--muted-2)}
+.row2-btns{display:flex;gap:6px}
+
+.baitpick{display:flex;align-items:center;gap:6px;font-size:.78rem;font-weight:800;color:var(--muted)}
+.baitdd{position:relative}
+.baitdd-btn{display:flex;align-items:center;gap:7px;min-width:190px;background:var(--panel-2);color:var(--text);border:1px solid var(--line-2);border-radius:9px;padding:6px 9px;font:inherit;font-weight:700;cursor:pointer}
+.baitdd-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.baitdd-btn i{margin-left:auto;font-style:normal;color:var(--muted-2)}
+.baitdd-btn img,.baitdd-opt img{width:22px;height:22px;object-fit:contain;flex:none}
+.baitdd-menu{position:absolute;left:0;bottom:calc(100% + 6px);z-index:25;min-width:240px;padding:5px;border-radius:11px;background:var(--panel);border:1px solid var(--line-2);box-shadow:0 18px 40px rgba(0,0,0,.6);display:grid;gap:2px}
+.baitdd-menu[hidden]{display:none}
+.baitdd-opt{display:flex;align-items:center;gap:8px;width:100%;padding:6px 8px;border-radius:8px;border:0;background:none;color:var(--text);font:inherit;font-weight:700;cursor:pointer;text-align:left}
+.baitdd-opt:hover,.baitdd-opt:focus-visible{background:var(--panel-3);outline:none}
+.baitdd-opt.on{background:var(--gold-dim);color:var(--gold)}
+.baitdd-opt small{display:block;font-size:.7rem;font-weight:600;color:var(--muted-2)}
+.baitdd-opt .none{width:22px;height:22px;display:grid;place-items:center;color:var(--muted-2)}
+@media (prefers-reduced-motion:reduce){.egg.wobble{animation:none}}
+.toasts{position:fixed;left:252px;bottom:16px;display:grid;gap:8px;z-index:50;max-width:min(360px,calc(100vw - 32px))}
+.toast{background:#101a20;border:1px solid rgba(79,195,217,.45);border-radius:11px;padding:10px 14px;font-weight:700;box-shadow:0 12px 30px rgba(0,0,0,.5);animation:tin .25s ease-out}
+.toast small{display:block;color:var(--muted);font-weight:600}
+@keyframes tin{from{transform:translateY(10px);opacity:0}}
+@media (max-width:820px){.toasts{left:16px}}
+@media (prefers-reduced-motion:reduce){.say.bite,.toast{animation:none}}
+
+/* ---- skills: an OSRS-style XP tracker on the scene, a Skills page, level-up banner */
+.xpt{position:absolute;right:12px;bottom:12px;z-index:4;transition:opacity .2s ease;width:216px;padding:9px 11px 10px;border-radius:12px;background:rgba(18,15,13,.92);border:1px solid var(--line-2);box-shadow:0 12px 30px rgba(0,0,0,.5);color:var(--muted);font-size:.74rem;font-weight:700;pointer-events:none;backdrop-filter:blur(6px)}
+.xpt-top{display:flex;align-items:center;gap:6px}
+.xpt-top svg{width:18px;height:18px;flex:none;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.xpt-top b{color:var(--text);font-family:var(--display);font-weight:800;font-size:.9rem;letter-spacing:-.01em}
+.xpt-top span{margin-left:auto;color:var(--muted-2);font-variant-numeric:tabular-nums;font-size:.7rem}
+.xpt-bar{position:relative;height:10px;margin-top:7px;background:var(--panel-3);border:1px solid var(--line);border-radius:99px;overflow:hidden}
+.xpt-bar i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:99px;background:linear-gradient(90deg,#8a6a1c,var(--gold) 72%,#fff2b8);box-shadow:0 0 14px rgba(var(--gold-rgb),.45);transition:width .5s ease}
+.xpt-bar span{position:absolute;inset:0;display:grid;place-items:center;color:var(--text);font-size:.6rem;font-weight:800;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.xpt-to,.xpt-sess{margin-top:4px;font-variant-numeric:tabular-nums}
+.xpt-to{color:var(--muted);font-weight:700}
+.xpt-sess{color:var(--muted-2);font-weight:600;font-size:.7rem}
+.xpt-drops{position:absolute;left:0;right:0;bottom:100%;height:0}
+/* The reel bar lives on the right side of the scene; get out of its way while reeling. */
+.xpt.dim{opacity:0}
+/* the same widget, sitting in a page instead of over the scene */
+.xpt.flat{position:relative;width:100%;max-width:none;margin:0;padding:12px 16px;background:var(--panel);border:1px solid var(--line);backdrop-filter:none;box-shadow:none;
+  display:grid;grid-template-columns:minmax(180px,auto) minmax(160px,1fr) minmax(190px,auto);gap:5px 20px;align-items:center}
+.xpt.flat .xpt-top{grid-area:1/1/3/2}
+.xpt.flat .xpt-bar{grid-area:1/2/2/3;margin:0}
+.xpt.flat .xpt-to{grid-area:1/3/2/4;text-align:right;margin:0}
+.xpt.flat .xpt-sess{grid-area:2/2/3/3;margin:0}
+.xpt.flat .xpt-next{grid-area:2/3/3/4;text-align:right}
+.xpt.flat .xpt-drops{left:auto;right:16px;bottom:100%}
+.xpt-next{display:none;font-size:.72rem;font-weight:700;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xpt.flat .xpt-next{display:block}
+.xpw-row{margin-bottom:14px}
+@media (max-width:900px){.xpt.flat{grid-template-columns:1fr}.xpt.flat > *{grid-area:auto !important;text-align:left !important}}
+.xpdrop{position:absolute;right:6px;bottom:6px;display:flex;align-items:center;gap:4px;color:var(--gold);font-family:var(--display);font-size:.9rem;font-weight:800;text-shadow:0 2px 10px rgba(0,0,0,.9);animation:xpdrop 1.8s ease-out forwards;white-space:nowrap}
+.xpdrop svg{width:15px;height:15px;stroke:var(--gold);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+@keyframes xpdrop{0%{transform:translateY(0);opacity:0}12%{opacity:1}75%{opacity:1}100%{transform:translateY(-62px);opacity:0}}
+@media (max-width:560px){.xpt{width:170px;right:8px;bottom:8px;font-size:.66rem}.xpt-sess{display:none}}
+
+/* inventory rows: picture, what it is, then the two sell buttons */
+.inv-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:11px 2px;border-bottom:1px solid var(--line)}
+.inv-row:last-child{border-bottom:0}
+.inv-row .loot-ico{font-size:1.6rem;line-height:1;text-align:center}
+.inv-main b{display:block;font-size:.9rem}
+.inv-main small{display:block;font-size:.74rem;color:var(--muted-2)}
+.inv-row .btn{white-space:nowrap}
+/* crafting rows: recipe and parts on the left, one button on the right */
+.craft-row{display:grid;grid-template-columns:118px minmax(0,1fr) auto;gap:16px;align-items:center;padding:13px 2px;border-bottom:1px solid var(--line)}
+.craft-art{width:118px;height:118px;display:grid;place-items:center;border-radius:16px;background:var(--panel-2);border:1px solid var(--line)}
+.craft-art img{width:108px;height:108px;object-fit:contain;display:block}
+@media (max-width:620px){
+  .craft-row{grid-template-columns:68px minmax(0,1fr) auto;gap:11px}
+  .craft-art{width:68px;height:68px;border-radius:12px}
+  .craft-art img{width:62px;height:62px}
+}
+.craft-art.ready{border-color:rgba(var(--gold-rgb),.5);background:var(--gold-dim)}
+.craft-row.locked .craft-art img{filter:grayscale(1) brightness(.6)}
+.craft-row:last-child{border-bottom:0}
+.craft-row.locked{opacity:.55}
+.craft-main b{display:block;font-size:.9rem}
+.craft-parts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:3px;font-size:.78rem;color:var(--muted)}
+.craft-parts .ok{color:var(--green);font-weight:700}
+.craft-parts .no{color:var(--red);font-weight:700}
+.craft-parts .arrow{color:var(--muted-2)}
+.craft-row .btn{min-width:110px;justify-content:center}
+/* the dive itself */
+.air{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+.air-lab{font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.air-pips{display:flex;gap:4px;flex-wrap:wrap}
+.air-pips i{width:13px;height:20px;border-radius:3px;background:var(--panel-3);border:1px solid var(--line);display:block}
+.air-pips i.on{background:linear-gradient(180deg,#bdf0ff,#4fc3d9 60%,#1f6fd1);border-color:rgba(79,195,217,.6)}
+.air-n{font-size:.78rem;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.hint.bad{color:var(--red);border-color:rgba(255,107,133,.45)}
+.boss-need span{display:block;font-variant-numeric:tabular-nums}
+.boss-need span.ok{color:var(--green)}
+.bagpill{display:inline-flex;align-items:center;gap:11px;padding:7px 15px 7px 11px;border-radius:99px;cursor:pointer;
+  background:var(--panel-3);border:1px solid var(--line-2);color:var(--text);font:inherit}
+.bagpill:hover{border-color:var(--sea)}
+.bagpill-ico{font-size:1.15rem;line-height:1}
+.bagpill-n{display:flex;align-items:baseline;gap:2px;font-family:var(--display);font-weight:800;font-variant-numeric:tabular-nums}
+.bagpill-n b{font-size:1.25rem;line-height:1}
+.bagpill-n i{font-style:normal;font-size:.95rem;color:var(--muted-2)}
+.bagpill-n small{margin-left:7px;font-family:var(--body,inherit);font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.bagpill-bar{width:72px;height:7px;border-radius:99px;background:var(--panel);border:1px solid var(--line);overflow:hidden}
+.bagpill-bar i{display:block;height:100%;background:linear-gradient(90deg,#1f6fd1,#4fc3d9);border-radius:99px}
+.bagpill-go{font-size:.74rem;font-weight:800;color:var(--sea);white-space:nowrap}
+.bagpill.near .bagpill-bar i{background:linear-gradient(90deg,#c99a1c,#f3cf57)}
+.bagpill.full{border-color:rgba(255,107,133,.55);background:rgba(255,107,133,.08)}
+.bagpill.full .bagpill-n b,.bagpill.full .bagpill-n small,.bagpill.full .bagpill-go{color:var(--red)}
+.bagpill.full .bagpill-bar i{background:linear-gradient(90deg,#b8354f,#ff6b85)}
+.dive-bar.up i{background:linear-gradient(90deg,#8a6a1f,#e8bf35 70%,#ffe9a8)}
+.dive-go{display:flex;align-items:center;gap:14px;margin-top:14px;flex-wrap:wrap}
+.dive-bar{flex:1;min-width:220px;height:10px;border-radius:99px;background:var(--panel-3);border:1px solid var(--line);overflow:hidden}
+.dive-bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#1f6fd1,#4fc3d9 70%,#bdf0ff)}
+.dive-note{color:var(--muted-2);font-size:.78rem}
+/* bosses */
+.boss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.boss{border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden;display:grid;align-content:start}
+.boss.open{border-color:rgba(var(--gold-rgb),.45)}
+.boss.beaten{border-color:rgba(77,219,139,.4)}
+.boss-art{position:relative;height:130px;background:radial-gradient(120% 120% at 50% 20%,#1b2c3d,#0a1119 75%);display:grid;place-items:center}
+.boss.locked .boss-art{filter:grayscale(1) brightness(.5)}
+.boss-art canvas{width:100%;height:100%;display:block}
+.boss-tag{position:absolute;top:8px;left:10px;font-size:.6rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:99px;background:rgba(0,0,0,.6)}
+.boss-tag.open{color:var(--gold);border:1px solid rgba(var(--gold-rgb),.5)}
+.boss-tag.beaten{color:var(--green);border:1px solid rgba(77,219,139,.5)}
+.boss-tag.locked{color:var(--muted-2);border:1px solid var(--line-2)}
+.boss-body{padding:12px 14px 14px;display:grid;gap:7px}
+.boss-body h3{font-family:var(--display);font-weight:800;font-size:1.1rem;margin:0}
+.boss-body h3 small{display:block;font-size:.72rem;font-weight:700;color:var(--muted-2);letter-spacing:.06em;text-transform:uppercase}
+.boss-body p{margin:0;font-size:.82rem;color:var(--muted);line-height:1.45}
+.boss-need{font-size:.78rem;font-weight:700;color:var(--gold)}
+.boss-need.no{color:var(--muted-2)}
+.boss-perk{font-size:.76rem;color:var(--muted-2)}
+.boss-perk b{color:var(--green)}
+.boss-reward{display:grid;gap:3px;padding:8px 10px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line);font-size:.78rem;color:var(--muted)}
+.boss-reward small{font-size:.6rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted-2)}
+.boss-reward b{color:var(--gold)}
+.boss-reward .perk{color:var(--green);font-weight:700}
+.loot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:14px}
+.loot{background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:10px;display:grid;justify-items:center;gap:1px;text-align:center}
+.loot.none{opacity:.4}
+.loot b{font-size:.82rem}
+.loot small{font-size:.66rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.loot em{font-style:normal;font-size:.78rem;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+.loot-ico{font-size:1.7rem;line-height:1}
+.row2 .loot-ico{font-size:1.5rem}
+.row2.locked{opacity:.55}
+.row2-main .ok{color:var(--green)}
+.row2-main .no{color:var(--red)}
+.btn.big{height:46px;padding:0 26px;font-size:1rem;margin-top:12px}
+.tank-up{margin:0 0 10px;padding:7px 9px;border-radius:9px;background:rgba(255,152,31,.12);border:1px solid rgba(255,152,31,.35);font-size:.78rem;color:#ffb861;font-weight:700;line-height:1.35}
+.tank-up b{color:#fff}
+.skills{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:auto auto;gap:12px;align-items:start}
+/* Each column is two rows of the page grid, so every card is as tall as the
+   tallest one and the tables below them all start on the same line. */
+.skill-col{display:grid;grid-template-rows:subgrid;grid-row:span 2;gap:12px;min-width:0}
+@supports not (grid-template-rows:subgrid){.skill-col{grid-row:auto;grid-template-rows:auto auto;align-content:start}}
+@media (max-width:1240px){.skills{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:700px){.skills{grid-template-columns:1fr}}
+.skill{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px;align-content:start}
+.skill-h{display:flex;align-items:center;gap:10px}
+.skill-ico{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;background:var(--gold-dim);box-shadow:inset 0 0 0 1px rgba(var(--gold-rgb),.3)}
+.skill-ico svg{width:24px;height:24px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.skill-h h3{font-family:var(--display);font-weight:800;font-size:1.05rem;margin:0}
+.skill-lvl{margin-left:auto;font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--gold);font-variant-numeric:tabular-nums}
+.skill-lvl small{font-size:.8rem;color:var(--muted)}
+.skill .xpt-bar{height:15px;margin:0}
+.skill-meta{display:flex;justify-content:space-between;gap:8px;font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.skill-how{margin:0;font-size:.78rem;color:var(--muted-2);line-height:1.4}
+.skill.soon{opacity:.6}
+.skill.soon .skill-lvl{color:var(--muted)}
+
+.levelup{position:fixed;left:50%;top:66px;z-index:25;transform:translateX(-50%);min-width:min(420px,92vw);padding:13px 20px 14px;border-radius:14px;background:linear-gradient(180deg,#2a2118,var(--panel) 55%);border:1px solid rgba(var(--gold-rgb),.5);box-shadow:0 20px 50px rgba(0,0,0,.75),0 0 0 1px rgba(0,0,0,.5);text-align:center;color:var(--text);pointer-events:none;animation:lvlin .35s ease-out;overflow:hidden}
+.levelup b{display:block;font-family:var(--display);font-size:1.15rem;color:var(--gold)}
+.levelup span{display:block;margin-top:3px;font-weight:700;color:var(--muted)}
+.levelup .fw{position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:50%;pointer-events:none}
+/* No opacity in this one. It slides down and that is all: the level-up and
+   unlock banners are the game's only notifications, and a keyframe that
+   starts at opacity 0 leaves them invisible on any frame the browser has
+   not got round to serving yet. A banner 14px too high is survivable; one
+   nobody can see is not. */
+@keyframes lvlin{from{transform:translate(-50%,-14px)}to{transform:translateX(-50%)}}
+@keyframes fwburst{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(.4);opacity:0}}
+@media (prefers-reduced-motion:reduce){.xpdrop{animation-duration:.01s}.levelup,.levelup .fw{animation:none}}
+
+/* ================= Gladiator: the only styles that are not Fishing's ================= */
+.denarius{display:inline-block;width:.9em;height:.9em;border-radius:50%;vertical-align:-.1em;flex:none;
+  background:radial-gradient(circle at 35% 30%,#fff4c2 0 14%,#f1c64a 38%,#b8861a 78%,#7a5410 100%);
+  box-shadow:inset 0 0 0 1.5px rgba(122,84,16,.9),inset 0 0 0 3px rgba(255,236,170,.35)}
+.sb-mark{width:44px;height:44px;flex:none;display:grid;place-items:center;font-size:1.7rem;border-radius:12px;
+  background:radial-gradient(circle at 40% 30%,#5a2a1a,#241410);border:1px solid rgba(var(--gold-rgb),.45)}
+.g-hp{position:absolute;top:44px;width:min(34%,230px);display:grid;gap:4px;z-index:3}
+.g-hp.you{left:14px}
+.g-hp.foe{right:14px;text-align:right}
+.g-hp small{font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#fff;text-shadow:0 1px 3px #000}
+.g-bar{height:10px;border-radius:99px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.25);overflow:hidden}
+.g-bar i{display:block;height:100%;width:100%;border-radius:99px;background:linear-gradient(90deg,#3fbf6a,#8be08a);transition:width .25s ease}
+.g-hp.foe .g-bar i{background:linear-gradient(90deg,#d94a4a,#ff8a6a);margin-left:auto}
+.g-meter{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:min(560px,86%);z-index:3}
+.g-track{position:relative;height:22px;border-radius:99px;background:rgba(10,8,6,.78);border:1px solid rgba(255,255,255,.22);overflow:hidden}
+.g-zone{position:absolute;top:0;bottom:0}
+.g-zone.ok{background:rgba(77,219,139,.42)}
+.g-zone.crit{background:rgba(232,191,53,.95);box-shadow:0 0 12px rgba(232,191,53,.8)}
+.g-mark{position:absolute;top:-3px;bottom:-3px;width:4px;margin-left:-2px;border-radius:3px;background:#fff;box-shadow:0 0 8px #fff}
+.g-result{position:absolute;inset:0;display:grid;place-items:center;z-index:5;background:rgba(6,4,3,.55)}
+.g-card{background:var(--panel);border:1px solid rgba(var(--gold-rgb),.5);border-radius:16px;padding:18px 22px;text-align:center;min-width:min(320px,86%);box-shadow:0 20px 50px rgba(0,0,0,.6)}
+.g-card h3{font-family:var(--display);font-weight:800;font-size:1.4rem;margin:2px 0 8px}
+.g-card .won{color:var(--gold)}
+.g-card .lost{color:var(--red)}
+.g-card p{margin:3px 0;color:var(--muted);font-weight:700}
+.g-card .btn{margin-top:12px}
+.g-select{background:var(--panel-2);color:var(--text);border:1px solid var(--line-2);border-radius:9px;padding:7px 9px;font:inherit;font-size:.84rem;font-weight:700;margin-left:6px;max-width:220px}
+.act-note{color:var(--muted-2);font-size:.78rem}
+.bite-row{display:flex;flex-wrap:wrap;gap:6px}
+.g-roster{display:grid;gap:8px}
+.g-fighter{display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 12px;border-radius:12px;background:var(--panel-2);border:1px solid var(--line)}
+.g-fighter .face{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:1.5rem;background:var(--panel-3)}
+.g-fighter b{display:block;font-size:.95rem}
+.g-fighter small{color:var(--muted-2);font-size:.76rem}
+.g-fighter .earn{font-family:var(--display);font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap}
+.g-drills{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.g-drill{background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px}
+.g-drill h3{margin:0;font-family:var(--display);font-weight:800;font-size:1rem;display:flex;align-items:center;gap:8px}
+.g-drill p{margin:0;font-size:.8rem;color:var(--muted-2)}
+.g-drill .dive-bar{min-width:0}
+.g-skills{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.g-skills{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.boss-art.g-beast{display:grid;place-items:center;font-size:4.2rem;background:radial-gradient(circle at 50% 60%,#4a2a18,#150c08)}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-top">
+      <div class="sb-brand">
+        <span class="sb-mark" aria-hidden="true">⚔️</span>
+        <div class="sb-title">Gladiator</div>
+      </div>
+    </div>
+    <nav class="fnav" aria-label="Gladiator">
+      <div class="tabs" role="tablist" aria-orientation="vertical">
+        <button class="tab tab-shop" data-tab="market" type="button"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1.2 11.5H6.2z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg><span class="tab-label">Market</span></button>
+        <span class="fnav-h">In the arena</span>
+        <button class="tab" data-tab="arena" type="button" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M5 19 19 5M14 5h5v5M5 14l5 5M8 16l-3 3"/></svg><span class="tab-label">Arena</span></button>
+        <button class="tab" data-tab="beasts" type="button"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.4.7-4.8 4.2 1.4 6.1L12 16.8 6.4 19.6l1.4-6.1L3 9.3l6.4-.7z"/></svg><span class="tab-label">Beasts</span></button>
+        <button class="tab" data-tab="tourney" type="button"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5v1.5A3 3 0 0 0 8 10.5M16 6h3v1.5a3 3 0 0 1-3 3M12 13v4M8.5 20h7"/></svg><span class="tab-label">Tournaments</span></button>
+        <span class="fnav-h">At the ludus</span>
+        <button class="tab" data-tab="stable" type="button"><svg viewBox="0 0 24 24"><path d="M3 20V9l9-5 9 5v11"/><path d="M9 20v-6h6v6"/></svg><span class="tab-label">Your stable</span></button>
+        <button class="tab" data-tab="yard" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="6" r="2.5"/><path d="M12 9v6M8 12h8M9 21l3-6 3 6"/></svg><span class="tab-label">Training yard</span></button>
+        <button class="tab" data-tab="forge" type="button"><svg viewBox="0 0 24 24"><path d="M14.5 4.5l5 5-8.5 8.5-5-5z"/><path d="M4.5 19.5l2.5-2.5"/></svg><span class="tab-label">Forge</span></button>
+        <button class="tab" data-tab="spoils" type="button"><svg viewBox="0 0 24 24"><path d="M4 8h16v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/></svg><span class="tab-label">Spoils</span></button>
+        <span class="fnav-h">Progress</span>
+        <button class="tab" data-tab="skills" type="button"><svg viewBox="0 0 24 24"><path d="M5 20v-7M10 20V6M15 20v-9M20 20V9"/></svg><span class="tab-label">Skills</span></button>
+        <button class="tab" data-tab="board" type="button"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M12 13v3M8 20h8l-1-4H9z"/></svg><span class="tab-label">Leaderboard</span></button>
+        <span class="fnav-h">You</span>
+        <button class="tab" data-tab="fame" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1.2-3.6 4-5 7-5s5.8 1.4 7 5"/></svg><span class="tab-label">Hall of fame</span></button>
+        <span class="fnav-h">Mockup</span>
+        <button class="tab" data-tab="about" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><span class="tab-label">About this mockup</span></button>
+      </div>
+    </nav>
+    <p class="sb-foot">A mockup of the Fishing template, reskinned. Nothing here is saved or real.</p>
+  </aside>
+
+<main class="main">
+  <header class="statbar" aria-label="Your gladiator">
+    <div class="sb-me"><span class="sb-face">BP</span><span class="sb-name"><b>bootypaper</b><small id="tbRank">Tiro</small></span></div>
+    <div class="sb-stat gold"><small>Denarii</small><b><span class="denarius"></span><span id="tbCoin">0</span></b></div>
+    <div class="sb-stat"><small>Fame</small><b id="tbFame">0</b></div>
+    <div class="sb-stat"><small>Record</small><b id="tbRec">0–0</b></div>
+    <div class="sb-stat lvl"><small>Total level</small><b id="tbTotal">6</b></div>
+    <div class="sb-stat wide"><small>Beasts slain</small><b id="tbBeasts">0/5</b></div>
+    <div class="sb-stat sb-spacer"><small>Stable earns</small><b id="tbRate">0 / hr</b></div>
+  </header>
+
+  <!-- ============ ARENA ============ -->
+  <section class="view" data-panel="arena">
+    <header class="view-h"><div><h1>The Arena</h1><p>Watch the strike meter. Hit it in the gold for a critical, in the green for a clean blow.</p></div><span class="meta" id="gearLine">Wooden rudis</span></header>
+    <section class="card">
+      <div class="spots-head"><span class="eyebrow">Venue</span><small>Bigger crowds, harder opponents — and more denarii for a win</small></div>
+      <div class="spots" id="venues"></div>
+      <div class="scene-wrap" id="arenaWrap">
+        <canvas id="arena"></canvas>
+        <div class="status"><span id="foeLine">Opponent</span><span id="venueLine">Training Grounds</span></div>
+        <div class="g-hp you"><small>You</small><div class="g-bar"><i id="hpYou"></i></div></div>
+        <div class="g-hp foe"><small id="foeName">—</small><div class="g-bar"><i id="hpFoe"></i></div></div>
+        <div class="g-meter" id="meterWrap" hidden>
+          <div class="g-track"><span class="g-zone ok" id="zoneOk"></span><span class="g-zone crit" id="zoneCrit"></span><i class="g-mark" id="mark"></i></div>
+        </div>
+        <div class="g-result" id="result" hidden></div>
+      </div>
+      <div class="actions">
+        <button class="act" id="act" type="button">Enter the arena</button>
+        <div class="baitpick">Stance
+          <select id="stance" class="g-select">
+            <option value="bal">Balanced</option>
+            <option value="agg">Aggressive — bigger hits, wider openings</option>
+            <option value="def">Defensive — smaller hits, harder to wound</option>
+          </select>
+        </div>
+        <span class="act-note">Space works too.</span>
+      </div>
+      <div class="biting"><h4>Fighting here</h4><div class="bite-row" id="foes"></div></div>
+    </section>
+  </section>
+
+  <!-- ============ STABLE ============ -->
+  <section class="view" data-panel="stable" hidden>
+    <header class="view-h"><div><h1>Your stable</h1><p>Gladiators you own fight minor bouts on the undercard and send you their purse, awake or not.</p></div><span class="meta" id="stableCap"></span></header>
+    <section class="card"><div class="card-body"><div class="g-roster" id="roster"></div></div></section>
+    <section class="card card-next"><div class="card-body">
+      <h2 class="card-h">Recruit</h2>
+      <div class="panel-intro"><p>Buy a fighter from the slave market. Better stock earns more per hour and can be sent to the tournaments later.</p></div>
+      <div class="shop-grid" id="recruits"></div>
+    </div></section>
+  </section>
+
+  <!-- ============ YARD ============ -->
+  <section class="view" data-panel="yard" hidden>
+    <header class="view-h"><div><h1>Training yard</h1><p>Set a drill running and come back to it. Longer drills train more.</p></div></header>
+    <section class="card"><div class="card-body"><div class="g-drills" id="drills"></div></div></section>
+  </section>
+
+  <!-- ============ FORGE ============ -->
+  <section class="view" data-panel="forge" hidden>
+    <header class="view-h"><div><h1>Forge</h1><p>Beat what you win in the arena into something worth carrying back into it.</p></div></header>
+    <section class="card"><div class="card-body"><div class="rows" id="recipes"></div></div></section>
+  </section>
+
+  <!-- ============ BEASTS ============ -->
+  <section class="view" data-panel="beasts" hidden>
+    <header class="view-h"><div><h1>Beasts</h1><p>Five of them, one to a venue. Survive the clock and the crowd remembers your name for good.</p></div></header>
+    <div class="boss-grid" id="beasts"></div>
+  </section>
+
+  <!-- ============ SKILLS ============ -->
+  <section class="view" data-panel="skills" hidden>
+    <header class="view-h"><div><h1>Skills</h1><p>Six skills, 1 to 99. Levels open the Market; denarii are the other half of the price.</p></div></header>
+    <div class="g-skills" id="skills"></div>
+  </section>
+
+  <!-- ============ MARKET ============ -->
+  <section class="view" data-panel="market" hidden>
+    <header class="view-h"><div><h1>Market</h1><p>Weapons, shields and helmets. Better gear widens the gold on the strike meter and hits harder.</p></div></header>
+    <section class="card"><div class="card-body"><h2 class="card-h">Weapons</h2><div class="shop-grid" id="mkWeapons"></div></div></section>
+    <section class="card card-next"><div class="card-body"><h2 class="card-h">Shields</h2><div class="shop-grid" id="mkShields"></div></div></section>
+    <section class="card card-next"><div class="card-body"><h2 class="card-h">Helmets</h2><div class="shop-grid" id="mkHelms"></div></div></section>
+  </section>
+
+  <!-- ============ ABOUT ============ -->
+  <section class="view" data-panel="about" hidden>
+    <header class="view-h"><div><h1>About this mockup</h1><p>What it would look like to run a second idle game on the Fishing template.</p></div></header>
+    <section class="card"><div class="card-body wk">
+      <p>This page is the Fishing game's stylesheet and layout, lifted as they are, with a different game poured into them. Nothing here is saved, nothing here is real, and it is not linked from anywhere. It exists to show how much of Fishing is a <b>template</b> rather than a fishing game.</p>
+      <h3>How each system maps across</h3>
+      <div class="wk-scroll"><table class="wk-t"><thead><tr><th>Fishing</th><th>Gladiator</th><th>Same machinery</th></tr></thead><tbody id="mapRows"></tbody></table></div>
+      <h3>What would need building for real</h3>
+      <p>The fight is the only genuinely new mechanic — a strike meter read from the clock at the moment of the press, the same way Dead Centre and Field Goal read theirs, so a slow frame can never cost a hit. Everything else is the Fishing code with its tables swapped: species become opponents, rods become weapons, the tank becomes the stable, bait becomes stances and drills, diving loot becomes spoils, and the five bosses become five beasts.</p>
+    </div></section>
+  </section>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+</main>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  /* Ultimate Gladiator — a MOCKUP of a second game on the Fishing template.
+     Nothing is saved; a reload starts over. */
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
+  const num = (x) => Math.floor(x).toLocaleString();
+  const coin = (n) => `<span class="denarius"></span>${num(n)}`;
+
+  /* the same RuneScape curve Fishing uses */
+  const XP_AT = [0, 0];
+  { let pts = 0; for (let l = 1; l < 99; l++) { pts += Math.floor(l + 300 * Math.pow(2, l / 7)); XP_AT[l + 1] = Math.floor(pts / 4); } }
+  const levelOf = (xp) => { let lo = 1, hi = 99; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (xp >= XP_AT[m]) lo = m; else hi = m - 1; } return lo; };
+
+  const RAR = [
+    { name: "Common", color: "#b9b0a6" }, { name: "Uncommon", color: "#4ddb8b" }, { name: "Rare", color: "#5aa2ff" },
+    { name: "Epic", color: "#b98aff" }, { name: "Legendary", color: "#e8bf35" }
+  ];
+  const SKILLS = {
+    strength: { name: "Strength", icon: "💪", how: "Every blow that lands. Crits count double." },
+    defence: { name: "Defence", icon: "🛡️", how: "Every hit you take and walk away from." },
+    agility: { name: "Agility", icon: "🌀", how: "Landing in the gold, and the rope ladder in the yard." },
+    endurance: { name: "Endurance", icon: "❤️", how: "Finishing long fights, and the long run in the yard." },
+    showman: { name: "Showmanship", icon: "🎭", how: "Winning well. The crowd pays you in fame." },
+    smithing: { name: "Smithing", icon: "🔨", how: "Everything you beat into shape at the forge." }
+  };
+  const VENUES = [
+    { name: "Training Grounds", cost: 0, mult: 1, tilt: 0 },
+    { name: "Provincial Games", cost: 150, mult: 2, tilt: 1 },
+    { name: "Capua", cost: 800, mult: 4, tilt: 2 },
+    { name: "Rome", cost: 3000, mult: 8, tilt: 3 },
+    { name: "The Colosseum", cost: 12000, mult: 16, tilt: 4 }
+  ];
+  const CLASSES = [
+    { name: "Tiro", rar: 0, hp: 60, hit: 6, speed: 1300, purse: 12, tunic: "#8a7a62", crest: "#6a5a42" },
+    { name: "Murmillo", rar: 1, hp: 85, hit: 8, speed: 1150, purse: 22, tunic: "#7a3a2a", crest: "#c43a2a" },
+    { name: "Retiarius", rar: 2, hp: 95, hit: 10, speed: 950, purse: 40, tunic: "#2a5a7a", crest: "#4fc3d9" },
+    { name: "Secutor", rar: 3, hp: 130, hit: 13, speed: 820, purse: 75, tunic: "#4a2a6a", crest: "#b98aff" },
+    { name: "Champion", rar: 4, hp: 170, hit: 16, speed: 700, purse: 140, tunic: "#6a5010", crest: "#e8bf35" }
+  ];
+  const BEASTS = [
+    { name: "The Nemean", icon: "🦁", venue: 0, need: 5, hp: 220, hit: 14, speed: 760, purse: 400, title: "Lion-Breaker", about: "A lion off the boat from Africa, starved for three days so it would be angry. It is angry." },
+    { name: "The Bear of Dacia", icon: "🐻", venue: 1, need: 20, hp: 320, hit: 18, speed: 720, purse: 1200, title: "Bear-Wrestler", about: "It does not charge. It waits for you to come close enough, and then it does not let go." },
+    { name: "Two Tigers", icon: "🐅", venue: 2, need: 40, hp: 380, hit: 20, speed: 620, purse: 3000, title: "Tiger-Tamer", about: "The first one is a distraction. Watch the second one." },
+    { name: "Tusk", icon: "🐘", venue: 3, need: 60, hp: 600, hit: 26, speed: 700, purse: 8000, title: "Giant-Killer", about: "A war elephant retired from the legions. It has seen more battles than you have." },
+    { name: "The Emperor's Champion", icon: "👑", venue: 4, need: 85, hp: 700, hit: 30, speed: 520, purse: 25000, title: "Ultimate Gladiator", about: "Undefeated in forty bouts. The Emperor has never once had to lift his thumb for him." }
+  ];
+  const WEAPONS = [
+    { name: "Wooden rudis", cost: 0, dmg: 1, zone: 0, need: null },
+    { name: "Iron gladius", cost: 250, dmg: 1.35, zone: .02, need: ["strength", 10] },
+    { name: "Steel gladius", cost: 1200, dmg: 1.7, zone: .035, need: ["strength", 25] },
+    { name: "Damascus spatha", cost: 5000, dmg: 2.2, zone: .05, need: ["strength", 45] },
+    { name: "Golden gladius", cost: 20000, dmg: 3, zone: .07, need: ["strength", 70] }
+  ];
+  const SHIELDS = [
+    { name: "Wicker parma", cost: 0, block: 0, need: null },
+    { name: "Bronze parma", cost: 300, block: .12, need: ["defence", 10] },
+    { name: "Legion scutum", cost: 1800, block: .22, need: ["defence", 30] },
+    { name: "Gilded scutum", cost: 9000, block: .34, need: ["defence", 55] }
+  ];
+  const HELMS = [
+    { name: "Leather cap", cost: 0, fame: 1, need: null },
+    { name: "Galea", cost: 400, fame: 1.25, need: ["showman", 10] },
+    { name: "Murmillo helm", cost: 2200, fame: 1.6, need: ["showman", 30] },
+    { name: "Champion's crest", cost: 10000, fame: 2.2, need: ["showman", 55] }
+  ];
+  const RECRUITS = [
+    { name: "Novice Tiro", icon: "🧑", cost: 200, rate: 8 },
+    { name: "Thraex", icon: "🗡️", cost: 900, rate: 30 },
+    { name: "Hoplomachus", icon: "🔱", cost: 3500, rate: 95 },
+    { name: "Dimachaerus", icon: "⚔️", cost: 12000, rate: 260 }
+  ];
+  const DRILLS = [
+    { key: "pell", name: "Heavy pell", icon: "🪵", skill: "strength", secs: 30, xp: 180, about: "Hack at a post until your arms go." },
+    { key: "ladder", name: "Rope ladder", icon: "🪜", skill: "agility", secs: 120, xp: 640, about: "Feet first, then everything else." },
+    { key: "run", name: "Long run", icon: "🏃", skill: "endurance", secs: 300, xp: 1500, about: "Round the walls of the ludus until dark." }
+  ];
+  const SPOILS = { iron: { name: "Iron scrap", icon: "⛓️" }, hide: { name: "Beast hide", icon: "🦴" }, bronze: { name: "Bronze fitting", icon: "🟫" }, laurel: { name: "Laurel leaf", icon: "🌿" } };
+  const RECIPES = [
+    { name: "Whetstone the blade", need: { iron: 2 }, xp: 120, about: "+10% damage for your next five bouts" },
+    { name: "Hide wrap", need: { hide: 1, iron: 1 }, xp: 300, about: "Take 15% less for your next five bouts" },
+    { name: "Bronze greaves", need: { bronze: 3, iron: 2 }, xp: 700, about: "Sell to a wealthy patron for 900" },
+    { name: "Laurel crown", need: { laurel: 3, bronze: 1 }, xp: 1400, about: "The crowd loves it: +50% fame for a day" }
+  ];
+
+  /* the mockup's state — in memory only */
+  const S = {
+    coin: 180, fame: 0, w: 0, l: 0, venue: 0, venues: [true, false, false, false, false],
+    weapon: 0, shield: 0, helm: 0,
+    skills: { strength: 0, defence: 0, agility: 0, endurance: 0, showman: 0, smithing: 0 },
+    stable: [{ name: "Crixus", icon: "🧑", rate: 8 }, { name: "Varro", icon: "🗡️", rate: 30 }],
+    beasts: {}, spoils: { iron: 4, hide: 1, bronze: 2, laurel: 0 },
+    drills: {}
+  };
+  const lvl = (k) => levelOf(S.skills[k]);
+  const total = () => Object.keys(SKILLS).reduce((n, k) => n + lvl(k), 0);
+  const rate = () => S.stable.reduce((n, f) => n + f.rate, 0);
+
+  function toast(title, sub) {
+    const t = el("div", "toast"); t.textContent = title;
+    if (sub) t.append(el("small", null, sub));
+    $("toasts").append(t);
+    setTimeout(() => t.remove(), 3800);
+    while ($("toasts").childElementCount > 3) $("toasts").firstChild.remove();
+  }
+  function grant(k, xp) {
+    const before = lvl(k);
+    S.skills[k] += Math.round(xp);
+    const after = lvl(k);
+    if (after > before) {
+      document.querySelector(".levelup")?.remove();
+      const b = el("div", "levelup");
+      b.innerHTML = `<b>Congratulations, you just advanced a ${SKILLS[k].name} level.</b><span>Your ${SKILLS[k].name} level is now ${after}.</span>`;
+      document.body.append(b); setTimeout(() => b.remove(), 3600);
+    }
+  }
+  function paintBar() {
+    $("tbCoin").textContent = num(S.coin); $("tbFame").textContent = num(S.fame);
+    $("tbRec").textContent = `${S.w}–${S.l}`; $("tbTotal").textContent = total();
+    $("tbBeasts").textContent = `${Object.keys(S.beasts).length}/${BEASTS.length}`;
+    $("tbRate").innerHTML = `${coin(rate())} / hr`;
+    $("tbRank").textContent = S.w >= 40 ? "Primus" : S.w >= 15 ? "Veteranus" : S.w >= 3 ? "Gladiator" : "Tiro";
+  }
+
+  /* ========================================================= the fight
+     The meter is read from the CLOCK at the moment of the press, never from
+     the last painted frame — the Dead Centre and Field Goal rule — so a slow
+     or throttled tab can never cost a hit. */
+  const F = { on: false, foe: null, hpYou: 100, hpFoe: 0, max: 0, t0: 0, ok: [0, 0], crit: [0, 0], lunge: 0, hurt: 0, flash: 0, dust: [] };
+  const meterAt = (t) => { const p = ((t - F.t0) / F.foe.speed) % 2; return p < 1 ? p : 2 - p; };
+  function newZones() {
+    const g = WEAPONS[S.weapon], stance = $("stance").value;
+    let okW = 0.24 + g.zone + lvl("agility") * 0.001;
+    if (stance === "agg") okW *= 0.85;
+    const critW = 0.06 + g.zone * 0.6 + lvl("agility") * 0.0006;
+    const c = 0.15 + Math.random() * 0.7;
+    F.ok = [Math.max(0, c - okW / 2), Math.min(1, c + okW / 2)];
+    F.crit = [c - critW / 2, c + critW / 2];
+    $("zoneOk").style.left = `${F.ok[0] * 100}%`; $("zoneOk").style.width = `${(F.ok[1] - F.ok[0]) * 100}%`;
+    $("zoneCrit").style.left = `${F.crit[0] * 100}%`; $("zoneCrit").style.width = `${(F.crit[1] - F.crit[0]) * 100}%`;
+  }
+  function pickFoe(beast) {
+    if (beast) return { ...beast, name: beast.name, rar: 4, tunic: "#3a2410", crest: "#e8bf35", beast: true };
+    const tilt = VENUES[S.venue].tilt;
+    const w = CLASSES.map((c) => [55, 28, 12, 4.2, 0.8][c.rar] * (1 + tilt * 0.45 * c.rar));
+    let r = w.reduce((a, b) => a + b, 0) * Math.random();
+    for (let i = 0; i < w.length; i++) { r -= w[i]; if (r <= 0) return { ...CLASSES[i] }; }
+    return { ...CLASSES[0] };
+  }
+  function startFight(beast) {
+    const foe = pickFoe(beast);
+    const mult = beast ? 1 : VENUES[S.venue].mult;
+    foe.hp = Math.round(foe.hp * (beast ? 1 : 0.8 + 0.2 * mult ** 0.5)); foe.purse = Math.round(foe.purse * mult);
+    Object.assign(F, { on: true, foe, hpYou: 100 + lvl("endurance") * 2, hpFoe: foe.hp, max: foe.hp, t0: performance.now(), dust: [] });
+    F.youMax = F.hpYou;
+    $("result").hidden = true; $("meterWrap").hidden = false;
+    $("foeName").textContent = foe.name;
+    $("foeLine").innerHTML = `<span style="color:${RAR[foe.rar].color}">●</span> ${foe.beast ? "Beast" : RAR[foe.rar].name} · ${foe.name}`;
+    $("act").textContent = "Strike!"; $("act").className = "act hook";
+    newZones(); paintHp();
+    if (beast) document.querySelector('.tab[data-tab="arena"]').click();
+  }
+  function paintHp() {
+    $("hpYou").style.width = `${Math.max(0, F.hpYou / (F.youMax || 100)) * 100}%`;
+    $("hpFoe").style.width = `${Math.max(0, F.hpFoe / (F.max || 1)) * 100}%`;
+  }
+  function strike() {
+    if (!F.on) return startFight();
+    const now = performance.now(), m = meterAt(now), stance = $("stance").value, g = WEAPONS[S.weapon];
+    const crit = m >= F.crit[0] && m <= F.crit[1], hit = crit || (m >= F.ok[0] && m <= F.ok[1]);
+    let base = (9 + lvl("strength") * 0.35) * g.dmg * (stance === "agg" ? 1.3 : stance === "def" ? 0.8 : 1);
+    F.lunge = now;
+    if (hit) {
+      const dmg = Math.round(base * (crit ? 2.2 : 1) * (0.85 + Math.random() * 0.3));
+      F.hpFoe -= dmg; F.flash = now;
+      for (let i = 0; i < (crit ? 18 : 8); i++) F.dust.push({ x: 0.64, y: 0.72, vx: (Math.random() - .2) * .5, vy: -Math.random() * .6, life: 1 });
+      grant("strength", dmg * (crit ? 2 : 1)); if (crit) grant("agility", 25);
+      if (crit) toast("Critical!", `${dmg} damage`);
+    }
+    if (F.hpFoe > 0 && !crit) {
+      const block = SHIELDS[S.shield].block + lvl("defence") * 0.002;
+      const taken = Math.round(F.foe.hit * (hit ? 0.5 : 1.2) * (stance === "def" ? 0.6 : stance === "agg" ? 1.25 : 1) * (1 - block) * (0.8 + Math.random() * 0.4));
+      F.hpYou -= taken; F.hurt = now; grant("defence", taken * 2);
+    }
+    paintHp(); newZones();
+    if (F.hpFoe <= 0) return finish(true);
+    if (F.hpYou <= 0) return finish(false);
+  }
+  function finish(won) {
+    F.on = false; $("meterWrap").hidden = true;
+    $("act").textContent = "Fight again"; $("act").className = "act";
+    const foe = F.foe;
+    let lines;
+    if (won) {
+      const fame = Math.round((10 + foe.rar * 12) * HELMS[S.helm].fame * (foe.beast ? 8 : 1));
+      S.coin += foe.purse; S.fame += fame; S.w++;
+      grant("showman", fame * 3); grant("endurance", 40 + foe.rar * 20);
+      const drop = Object.keys(SPOILS)[Math.floor(Math.random() * 4)];
+      S.spoils[drop]++;
+      if (foe.beast) S.beasts[foe.name] = true;
+      lines = `<p>${coin(foe.purse)} purse · +${fame} fame</p><p>${SPOILS[drop].icon} ${SPOILS[drop].name} off the sand</p>`
+        + (foe.beast ? `<p>Title earned: <b style="color:var(--gold)">${foe.title}</b></p>` : "");
+    } else {
+      S.l++; const comfort = Math.round(foe.purse * 0.1); S.coin += comfort;
+      lines = `<p>The crowd spared you. ${coin(comfort)} for the effort.</p>`;
+    }
+    $("result").innerHTML = `<div class="g-card"><h3 class="${won ? "won" : "lost"}">${won ? "Victory" : "Defeated"}</h3><p>${won ? "You beat" : "You fell to"} the ${foe.name}.</p>${lines}<button class="btn gold" id="again" type="button">Fight again</button></div>`;
+    $("result").hidden = false;
+    $("again").addEventListener("click", () => startFight());
+    paintBar(); renderAll();
+  }
+
+  /* ========================================================= the arena, drawn */
+  const cv = $("arena"), ctx = cv.getContext("2d");
+  const crowd = Array.from({ length: 260 }, (_, i) => ({ x: Math.random(), row: i % 4, c: ["#c9a27a", "#8a5a3a", "#e0c090", "#b04a3a", "#4a6a9a", "#e8d8b0"][i % 6], p: Math.random() * 6 }));
+  function fit() { const d = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight; if (cv.width !== Math.round(w * d)) { cv.width = Math.round(w * d); cv.height = Math.round(h * d); } ctx.setTransform(d, 0, 0, d, 0, 0); return { w, h }; }
+  function gladiator(x, feet, H, face, tunic, crest, t, lungeT, hurtT) {
+    const now = performance.now();
+    const lunge = Math.max(0, 1 - (now - lungeT) / 220), hurt = Math.max(0, 1 - (now - hurtT) / 260);
+    x += face * lunge * H * 0.35 - face * hurt * H * 0.08;
+    const bob = Math.sin(t / 420 + (face > 0 ? 0 : 2)) * H * 0.012;
+    ctx.save(); ctx.translate(x, feet + bob); ctx.scale(face, 1);
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#5a3a22"; ctx.lineWidth = H * 0.055;                          // legs
+    ctx.beginPath(); ctx.moveTo(-H * .06, 0); ctx.lineTo(-H * .02, -H * .34); ctx.moveTo(H * .08, 0); ctx.lineTo(H * .03, -H * .34); ctx.stroke();
+    ctx.fillStyle = tunic;                                                           // body
+    ctx.beginPath(); ctx.roundRect(-H * .11, -H * .72, H * .22, H * .42, H * .05); ctx.fill();
+    ctx.fillStyle = "#c69a6a";                                                       // head
+    ctx.beginPath(); ctx.arc(0, -H * .82, H * .085, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#8a8f96";                                                       // helmet
+    ctx.beginPath(); ctx.arc(0, -H * .84, H * .095, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = crest;                                                           // crest
+    ctx.beginPath(); ctx.ellipse(-H * .01, -H * .95, H * .1, H * .035, -.2, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#c69a6a"; ctx.lineWidth = H * .045;                          // sword arm
+    const swing = -0.9 + lunge * 1.4;
+    ctx.beginPath(); ctx.moveTo(H * .08, -H * .64); ctx.lineTo(H * .08 + Math.cos(swing) * H * .2, -H * .64 + Math.sin(swing) * H * .2); ctx.stroke();
+    ctx.strokeStyle = "#d8dde2"; ctx.lineWidth = H * .03;                           // blade
+    const hx = H * .08 + Math.cos(swing) * H * .2, hy = -H * .64 + Math.sin(swing) * H * .2;
+    ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + Math.cos(swing) * H * .26, hy + Math.sin(swing) * H * .26); ctx.stroke();
+    ctx.fillStyle = "#7a5a2a"; ctx.strokeStyle = "#e8bf35"; ctx.lineWidth = H * .012;  // shield
+    ctx.beginPath(); ctx.ellipse(-H * .12, -H * .5, H * .09, H * .15, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    if (hurt > 0) { ctx.globalAlpha = hurt * .5; ctx.fillStyle = "#ff3a2a"; ctx.fillRect(-H * .2, -H * 1.02, H * .45, H * 1.02); ctx.globalAlpha = 1; }
+    ctx.restore();
+  }
+  let last = performance.now();
+  function frame(t) {
+    const dt = Math.min(0.05, (t - last) / 1000); last = t;
+    const { w, h } = fit();
+    let g = ctx.createLinearGradient(0, 0, 0, h * .5);
+    g.addColorStop(0, "#f0a860"); g.addColorStop(1, "#f7d6a0");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h * .5);
+    ctx.fillStyle = "#fff3c8"; ctx.beginPath(); ctx.arc(w * .82, h * .12, Math.min(w, h) * .05, 0, Math.PI * 2); ctx.fill();
+    // the stands: stone tiers with the crowd in them
+    for (let r = 0; r < 4; r++) {
+      const y0 = h * (.14 + r * .1);
+      ctx.fillStyle = ["#6a5a4a", "#7a6a58", "#8a7864", "#9a8670"][r]; ctx.fillRect(0, y0, w, h * .1);
+      ctx.fillStyle = "rgba(0,0,0,.18)";
+      for (let x = (r % 2) * 22; x < w; x += 44) { ctx.beginPath(); ctx.arc(x + 20, y0 + h * .1, h * .035, Math.PI, 0); ctx.fill(); }
+    }
+    for (const c of crowd) {
+      const y0 = h * (.155 + c.row * .1), jump = F.flash && t - F.flash < 500 ? Math.abs(Math.sin((t - F.flash) / 60 + c.p)) * h * .012 : Math.sin(t / 700 + c.p) * h * .002;
+      ctx.fillStyle = c.c; ctx.beginPath(); ctx.arc(c.x * w, y0 - jump, Math.max(2, h * .011), 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = "#3a2a1c"; ctx.fillRect(0, h * .54, w, h * .025);             // the wall
+    g = ctx.createLinearGradient(0, h * .565, 0, h);                                // the sand
+    g.addColorStop(0, "#e8cf98"); g.addColorStop(1, "#c9a868");
+    ctx.fillStyle = g; ctx.fillRect(0, h * .565, w, h * .435);
+    ctx.fillStyle = "rgba(120,90,50,.18)"; for (let i = 0; i < 70; i++) ctx.fillRect((i * 97) % w, h * .6 + ((i * 53) % (h * .38)), 3, 2);
+    const H = h * .42, feet = h * .9;
+    gladiator(w * .34, feet, H, 1, ["#7a2a2a", "#2a4a7a", "#3a5a2a"][S.weapon % 3], "#c43a2a", t, F.lunge, F.hurt);
+    if (F.foe) gladiator(w * .66, feet, H * (F.foe.beast ? 1.12 : 1), -1, F.foe.tunic, F.foe.crest, t, F.hurt, F.flash);
+    for (const d of F.dust) { d.x += d.vx * dt; d.y += d.vy * dt; d.vy += dt * 1.2; d.life -= dt * 1.6; ctx.globalAlpha = Math.max(0, d.life); ctx.fillStyle = "#e0c088"; ctx.beginPath(); ctx.arc(d.x * w, d.y * h, 3, 0, Math.PI * 2); ctx.fill(); }
+    ctx.globalAlpha = 1; F.dust = F.dust.filter((d) => d.life > 0);
+    if (F.on) $("mark").style.left = `${meterAt(t) * 100}%`;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* ========================================================= the other pages */
+  const gearNeed = (it) => (it.need && lvl(it.need[0]) < it.need[1] ? `${SKILLS[it.need[0]].name} ${it.need[1]}` : "");
+  function card({ icon, name, about, price, owned, ownedLabel, need, onBuy }) {
+    const c = el("div", `sitem${owned ? " owned" : ""}${need ? " locked" : ""}`);
+    c.append(el("div", "sitem-art", icon), el("div", "sitem-b", `<b>${name}</b><small>${about}</small>`));
+    if (owned) c.append(el("span", "stag owned", ownedLabel || "Owned")); else if (need) c.append(el("span", "stag need", need));
+    const foot = el("div", "sitem-foot");
+    if (owned) foot.append(el("span", "sprice", ownedLabel || "Owned"));
+    else {
+      foot.append(el("span", "sprice", coin(price)));
+      const short = S.coin < price, b = el("button", "btn small" + (!need && !short ? " gold" : ""), need ? "Locked" : short ? "Not enough" : "Buy");
+      b.type = "button"; b.disabled = Boolean(need) || short; b.addEventListener("click", onBuy); foot.append(b);
+    }
+    c.append(foot); return c;
+  }
+  const gearGrid = (id, list, key, icon, about) => {
+    const box = $(id); box.replaceChildren();
+    list.forEach((it, i) => box.append(card({ icon, name: it.name, about: about(it), price: it.cost, owned: S[key] >= i,
+      ownedLabel: S[key] === i ? "Equipped" : "Owned", need: S[key] >= i ? "" : gearNeed(it),
+      onBuy: () => { if (S.coin < it.cost) return; S.coin -= it.cost; S[key] = i; toast(`${it.name} bought`); paintBar(); renderAll(); } })));
+  };
+  function renderAll() {
+    // venues
+    const v = $("venues"); v.replaceChildren();
+    VENUES.forEach((ven, i) => {
+      const b = el("button", "spot", S.venues[i] ? ven.name : `${ven.name} ${coin(ven.cost)}`); b.type = "button";
+      b.setAttribute("aria-pressed", String(S.venue === i));
+      b.addEventListener("click", () => {
+        if (F.on) return toast("Finish the bout first");
+        if (!S.venues[i]) { if (S.coin < ven.cost) return toast("Not enough denarii", `${ven.name} costs ${num(ven.cost)}`); S.coin -= ven.cost; S.venues[i] = true; toast(`${ven.name} open`); }
+        S.venue = i; $("venueLine").textContent = ven.name; paintBar(); renderAll();
+      });
+      v.append(b);
+    });
+    // who fights here
+    const f = $("foes"); f.replaceChildren();
+    CLASSES.forEach((c) => { const chip = el("span", "chipf"); const d = el("i"); d.style.background = RAR[c.rar].color; chip.append(d, document.createTextNode(c.name)); chip.title = RAR[c.rar].name; f.append(chip); });
+    $("gearLine").textContent = `${WEAPONS[S.weapon].name} · ${SHIELDS[S.shield].name}`;
+    // stable
+    $("stableCap").textContent = `${S.stable.length} fighters · ${num(rate())} an hour`;
+    const ro = $("roster"); ro.replaceChildren();
+    S.stable.forEach((ft) => { const r = el("div", "g-fighter"); r.innerHTML = `<span class="face">${ft.icon}</span><span><b>${ft.name}</b><small>Fighting the undercard</small></span><span class="earn">${coin(ft.rate)} / hr</span>`; ro.append(r); });
+    const rc = $("recruits"); rc.replaceChildren();
+    RECRUITS.forEach((r) => rc.append(card({ icon: r.icon, name: r.name, about: `Earns ${num(r.rate)} an hour on the undercard`, price: r.cost, need: "",
+      onBuy: () => { if (S.coin < r.cost) return; S.coin -= r.cost; S.stable.push({ name: ["Spartacus", "Gannicus", "Oenomaus", "Agron", "Nasir", "Barca"][S.stable.length % 6], icon: r.icon, rate: r.rate }); toast(`${r.name} joins the ludus`); paintBar(); renderAll(); } })));
+    // drills
+    const dr = $("drills"); dr.replaceChildren();
+    DRILLS.forEach((d) => {
+      const run = S.drills[d.key], left = run ? Math.max(0, run - Date.now()) : 0, pct = run ? Math.min(100, 100 - left / (d.secs * 10)) : 0;
+      const c = el("div", "g-drill");
+      c.innerHTML = `<h3>${d.icon} ${d.name}</h3><p>${d.about}</p><p>${SKILLS[d.skill].name} · ${num(d.xp)} xp · ${d.secs < 60 ? d.secs + " s" : d.secs / 60 + " min"}</p><div class="dive-bar"><i style="width:${pct}%"></i></div>`;
+      const b = el("button", "btn small" + (run && !left ? " gold" : ""), !run ? "Start" : left ? `${Math.ceil(left / 1000)} s left` : "Collect");
+      b.type = "button"; b.disabled = Boolean(run && left);
+      b.addEventListener("click", () => { if (!run) S.drills[d.key] = Date.now() + d.secs * 1000; else if (!left) { delete S.drills[d.key]; grant(d.skill, d.xp); toast(`${d.name} done`, `+${num(d.xp)} ${SKILLS[d.skill].name} xp`); paintBar(); } renderAll(); });
+      c.append(b); dr.append(c);
+    });
+    // forge
+    const fr = $("recipes"); fr.replaceChildren();
+    const mats = el("div", "panel-intro", `<p>${Object.entries(SPOILS).map(([k, s]) => `${s.icon} <b>${S.spoils[k]}</b> ${s.name}`).join(" · ")}</p>`);
+    fr.append(mats);
+    RECIPES.forEach((r) => {
+      const ok = Object.entries(r.need).every(([k, n]) => S.spoils[k] >= n);
+      const row = el("div", "craft-row");
+      row.innerHTML = `<span class="craft-art">🔥</span><span class="craft-main"><b>${r.name}</b><span class="craft-parts">${Object.entries(r.need).map(([k, n]) => `<span class="${S.spoils[k] >= n ? "ok" : "no"}">${SPOILS[k].icon} ${n} ${SPOILS[k].name}</span>`).join("")}<span class="arrow">→</span><span>${r.about}</span></span></span>`;
+      const b = el("button", "btn small" + (ok ? " gold" : ""), ok ? "Make" : "Need parts"); b.type = "button"; b.disabled = !ok;
+      b.addEventListener("click", () => { Object.entries(r.need).forEach(([k, n]) => { S.spoils[k] -= n; }); grant("smithing", r.xp); toast(`Made: ${r.name}`, `+${num(r.xp)} Smithing xp`); renderAll(); });
+      row.append(b); fr.append(row);
+    });
+    // beasts
+    const bz = $("beasts"); bz.replaceChildren();
+    BEASTS.forEach((b) => {
+      const done = S.beasts[b.name], open = lvl("strength") >= b.need && S.venues[b.venue];
+      const c = el("div", "boss " + (done ? "beaten" : open ? "open" : "locked"));
+      const art = el("div", "boss-art g-beast", b.icon);
+      art.append(el("span", `boss-tag ${done ? "beaten" : open ? "open" : "locked"}`, done ? "Slain" : open ? "Waiting for you" : "Locked"));
+      const body = el("div", "boss-body");
+      body.append(el("h3", null, `${b.name}<small>${VENUES[b.venue].name}</small>`), el("p", null, b.about));
+      body.append(el("div", "boss-need" + (open ? "" : " no"), open ? `${b.hp} health · purse ${num(b.purse)}` : `Needs Strength ${b.need} and ${VENUES[b.venue].name} open`));
+      body.append(el("div", "boss-reward", `<small>${done ? "What it gave you" : "Slay it and you get"}</small><span>Title <b>${b.title}</b></span><span>${coin(b.purse)} and a crowd that remembers</span>`));
+      const go = el("button", "btn" + (open ? " primary" : ""), done ? "Fight it again" : open ? "Face it" : "Not yet"); go.type = "button"; go.disabled = !open;
+      go.addEventListener("click", () => startFight(b));
+      body.append(go); c.append(art, body); bz.append(c);
+    });
+    // skills
+    const sk = $("skills"); sk.replaceChildren();
+    Object.entries(SKILLS).forEach(([k, s]) => {
+      const xp = S.skills[k], L = lvl(k), lo = XP_AT[L], hi = L >= 99 ? lo : XP_AT[L + 1], pct = L >= 99 ? 100 : Math.floor(100 * (xp - lo) / (hi - lo));
+      const c = el("div", "skill");
+      c.innerHTML = `<div class="skill-h"><span class="skill-ico" style="font-size:1.3rem">${s.icon}</span><h3>${s.name}</h3><span class="skill-lvl">${L}<small> / 99</small></span></div>
+        <div class="xpt-bar"><i style="width:${pct}%"></i><span>${pct}%</span></div>
+        <div class="skill-meta"><span>${num(xp)} xp</span><span>${L >= 99 ? "Maxed" : `${num(hi - xp)} to ${L + 1}`}</span></div><p class="skill-how">${s.how}</p>`;
+      sk.append(c);
+    });
+    // market
+    gearGrid("mkWeapons", WEAPONS, "weapon", "🗡️", (w) => `×${w.dmg} damage · +${Math.round(w.zone * 100)}% on the meter`);
+    gearGrid("mkShields", SHIELDS, "shield", "🛡️", (s) => `Blocks ${Math.round(s.block * 100)}% of every hit`);
+    gearGrid("mkHelms", HELMS, "helm", "⛑️", (h) => `×${h.fame} fame from the crowd`);
+  }
+
+  /* the map between the two games, for the About page */
+  $("mapRows").innerHTML = [
+    ["Fishing spots", "Venues", "Five tiers, bought with the currency, better odds deeper in"],
+    ["Species & rarity", "Opponent classes", "Tiro to Champion on the same five rarity colours"],
+    ["Reel minigame", "Strike meter", "A skill check read from the clock at the press"],
+    ["Rods", "Weapons", "Wider target, better outcome"],
+    ["Bait", "Stances", "A choice before each attempt that bends the odds"],
+    ["Your tank", "Your stable", "Things you own earn per hour, awake or not"],
+    ["Bait garden", "Training yard", "Start a timer, come back, collect"],
+    ["Diving & inventory", "Spoils", "Drops off the main loop that feed the next system"],
+    ["Crafting", "Forge", "Turn drops into buffs and currency"],
+    ["Leviathans", "Beasts", "Five bosses, one per tier, a title for each"],
+    ["Pearls", "Denarii", "The in-game money, never real money"],
+    ["Skills 0–99", "Skills 0–99", "The same curve, six new names"]
+  ].map((r) => `<tr><td>${r[0]}</td><td><b>${r[1]}</b></td><td class="m">${r[2]}</td></tr>`).join("");
+
+  /* ========================================================= nav */
+  const LOCKED = { tourney: "a win at Capua", board: "40 levels across your skills", fame: "25 levels across your skills", spoils: "the Forge — spoils live there for now" };
+  document.querySelectorAll(".fnav .tab").forEach((b) => {
+    if (LOCKED[b.dataset.tab]) b.classList.add("locked");
+    b.addEventListener("click", () => {
+      const tab = b.dataset.tab;
+      if (LOCKED[tab]) return toast("You have not unlocked this yet", `You need ${LOCKED[tab]} to unlock.`);
+      document.querySelectorAll(".fnav .tab").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
+      document.querySelectorAll("[data-panel]").forEach((p) => { p.hidden = p.dataset.panel !== tab; });
+      window.scrollTo(0, 0);
+    });
+  });
+  $("act").addEventListener("click", strike);
+  // Space strikes, but only on the arena and never while typing in a control
+  document.addEventListener("keydown", (e) => {
+    if (e.code !== "Space" || document.querySelector('[data-panel="arena"]').hidden) return;
+    if (e.target.closest("input, select, textarea, button")) return;
+    e.preventDefault(); strike();
+  });
+
+  // the stable pays in real time, so the top bar moves while you watch
+  setInterval(() => { S.coin += rate() / 3600; paintBar(); }, 1000);
+  setInterval(() => { if (!document.querySelector('[data-panel="yard"]').hidden) renderAll(); }, 1000);
+  paintBar(); renderAll();
+})();
+
+</script>
+</body>
+</html>
