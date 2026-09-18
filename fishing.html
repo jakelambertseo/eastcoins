@@ -68,8 +68,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 /* 16:10 when there is room, but never taller than the window can show with
    the Cast button under it: on a shorter screen a wide card made the scene
    ~690px and put Cast below the fold. The scene draws to whatever box it
-   gets (fitCanvas reads clientWidth/Height), so capping it is safe. */
-.scene-wrap{position:relative;aspect-ratio:16/10;max-height:calc(100vh - 360px);min-height:260px;background:#0b1a2a;touch-action:none;user-select:none;-webkit-user-select:none}
+   gets (fitCanvas reads clientWidth/Height), so capping it is safe. The
+   width is pinned at 100%, or the browser keeps 16:10 by narrowing the box
+   and leaves a gap beside the scene instead of giving up height. */
+.scene-wrap{position:relative;width:100%;aspect-ratio:16/10;max-height:calc(100vh - 360px);min-height:260px;background:#0b1a2a;touch-action:none;user-select:none;-webkit-user-select:none}
 .scene-wrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .status{position:absolute;left:12px;top:10px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
 .buffrow{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px 0}
