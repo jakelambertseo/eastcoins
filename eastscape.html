@@ -368,8 +368,8 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=9";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=2";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=10";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=3";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -614,6 +614,25 @@ function paintBg() {
       if (hashRand(ob.x, ob.y, 5) < 0.35) for (let i = 0; i < 4; i++) f(X + 3 + Math.floor(hashRand(ob.x, i, 6) * 10), Y + 5 + Math.floor(hashRand(ob.y, i, 7) * 7), 2, 2, "#c43a4a");
     }
     if (ob.t === "boulder") { f(X + 1, Y + 13, 14, 3, "rgba(0,0,0,.25)"); f(X + 2, Y + 4, 12, 11, "#5e5a52"); f(X + 1, Y + 7, 14, 7, "#5e5a52"); f(X + 3, Y + 5, 10, 8, "#7d776c"); f(X + 4, Y + 5, 6, 2, "#9c968a"); f(X + 9, Y + 10, 3, 1, "#5e5a52"); }
+    if (ob.t === "bigtomato") {
+      // the Big Tomatoe: taller than the houses, warm, with a door-shaped outline nobody talks about
+      const cx = X + 24, cy = Y + 22;
+      f(X + 4, Y + 44, 40, 4, "rgba(0,0,0,.3)");
+      o.fillStyle = "#8a1a14"; o.beginPath(); o.ellipse(cx, cy + 2, 25, 23, 0, 0, Math.PI * 2); o.fill();
+      o.fillStyle = "#d8342a"; o.beginPath(); o.ellipse(cx, cy, 24, 22, 0, 0, Math.PI * 2); o.fill();
+      o.fillStyle = "#f0704a"; o.beginPath(); o.ellipse(cx - 9, cy - 9, 7, 5, -0.5, 0, Math.PI * 2); o.fill();
+      f(cx - 3, cy + 6, 7, 14, "#a8241c"); f(cx - 2, cy + 7, 5, 12, "#b82a22"); f(cx + 1, cy + 12, 1, 1, "#ffd060");
+      for (const [dx, dy, w] of [[-10, -22, 8], [3, -23, 8], [-4, -25, 8], [-14, -20, 5], [9, -20, 5]]) f(cx + dx, cy + dy, w, 3, "#3a8a2a");
+      f(cx - 1, cy - 29, 3, 7, "#2a6a1a");
+    }
+    if (ob.t === "press") { f(X, Y + 13, 32, 3, "rgba(0,0,0,.25)"); f(X + 2, Y + 6, 28, 9, "#8a5a32"); f(X + 4, Y + 7, 24, 5, "#b82a22"); f(X + 3, Y - 6, 2, 13, "#5a3418"); f(X + 27, Y - 6, 2, 13, "#5a3418"); f(X + 3, Y - 7, 26, 3, "#6b4423"); f(X + 15, Y - 5, 2, 12, "#8a8a92"); f(X + 12, Y - 5, 8, 2, "#6a6a72"); }
+    if (ob.t === "crate") { f(X + 1, Y + 13, 14, 2, "rgba(0,0,0,.25)"); f(X + 1, Y + 5, 14, 10, "#a8784a"); f(X + 1, Y + 9, 14, 1, "#7a4a26"); f(X + 1, Y + 5, 1, 10, "#7a4a26"); f(X + 14, Y + 5, 1, 10, "#7a4a26"); for (const [a, b] of [[3, 2], [7, 1], [11, 2], [5, 4], [9, 3]]) { f(X + a, Y + b, 3, 3, "#d8322a"); f(X + a, Y + b, 1, 1, "#ff9a7a"); } }
+    if (ob.t === "scarecrow") { f(X + 3, Y + 13, 10, 2, "rgba(0,0,0,.25)"); f(X + 7, Y - 8, 2, 23, "#6b4423"); f(X, Y - 3, 16, 2, "#6b4423"); f(X + 4, Y - 3, 8, 10, "#c8a050"); f(X + 1, Y - 3, 3, 4, "#e0c070"); f(X + 12, Y - 3, 3, 4, "#e0c070"); f(X + 4, Y - 14, 8, 8, "#d8322a"); f(X + 5, Y - 13, 2, 2, "#ff9a7a"); f(X + 6, Y - 11, 1, 1, "#000"); f(X + 9, Y - 11, 1, 1, "#000"); f(X + 7, Y - 16, 2, 2, "#3a8a2a"); f(X + 3, Y - 15, 10, 2, "#8a6a2a"); }
+    if (ob.t === "milestone") { f(X + 3, Y + 13, 10, 2, "rgba(0,0,0,.25)"); f(X + 4, Y - 2, 8, 16, "#a8a294"); f(X + 5, Y - 4, 6, 3, "#b8b2a4"); f(X + 4, Y - 2, 1, 16, "#8a8478"); f(X + 6, Y + 2, 4, 1, "#6a665c"); f(X + 6, Y + 5, 4, 1, "#6a665c"); f(X + 6, Y + 8, 3, 1, "#6a665c"); }
+    if (ob.t === "toll") { f(X, Y + 13, 32, 3, "rgba(0,0,0,.25)"); f(X + 2, Y - 2, 12, 16, "#8a5a32"); f(X + 1, Y - 5, 14, 4, "#9a2a2a"); f(X + 5, Y + 2, 6, 5, "#2a2016"); f(X + 14, Y + 6, 2, 8, "#5a3418"); for (let i = 0; i < 4; i++) f(X + 16 + i * 4, Y + 6, 4, 2, i % 2 ? "#f0e8d0" : "#c43a3a"); }
+    if (ob.t === "barricade") { f(X + 1, Y + 13, 14, 2, "rgba(0,0,0,.25)"); f(X + 1, Y + 3, 14, 3, "#6b4423"); f(X + 1, Y + 9, 14, 3, "#6b4423"); f(X + 3, Y, 2, 15, "#5a3418"); f(X + 11, Y, 2, 15, "#5a3418"); f(X + 1, Y + 6, 14, 1, "#c8b890"); }
+    if (ob.t === "chariot") { f(X + 2, Y + 13, 28, 3, "rgba(0,0,0,.25)"); f(X + 8, Y + 2, 16, 9, "#9a6a3a"); f(X + 8, Y + 2, 16, 2, "#c89a5a"); f(X + 22, Y - 2, 3, 6, "#9a6a3a"); f(X + 1, Y + 9, 9, 2, "#6b4423"); o.fillStyle = "#5a3418"; o.beginPath(); o.arc(X + 20, Y + 11, 5, 0, Math.PI * 2); o.fill(); o.fillStyle = "#9a6a3a"; o.beginPath(); o.arc(X + 20, Y + 11, 3, 0, Math.PI * 2); o.fill(); f(X + 6, Y + 13, 5, 2, "#5a3418"); }
+    if (ob.t === "mule") { f(X, Y + 14, 16, 2, "rgba(0,0,0,.25)"); f(X + 1, Y + 4, 11, 7, "#7a6a5a"); for (const lx of [2, 4, 8, 10]) f(X + lx, Y + 11, 1, 4, "#4a3a2a"); f(X + 11, Y + 1, 5, 6, "#7a6a5a"); f(X + 12, Y - 2, 1, 3, "#5a4a3a"); f(X + 14, Y - 2, 1, 3, "#5a4a3a"); f(X + 14, Y + 3, 1, 1, "#000"); f(X + 14, Y + 5, 2, 2, "#b8a898"); f(X, Y + 5, 1, 4, "#4a3a2a"); }
     if (ob.t === "stall") {
       // a market stall: counter, goods, and a striped awning on two poles
       f(X + 1, Y + 13, 30, 3, "rgba(0,0,0,.25)"); f(X + 2, Y + 6, 28, 9, "#8a5a32"); f(X + 2, Y + 6, 28, 2, "#a8784a");
@@ -741,7 +760,37 @@ function drawGoat(x, y, face, hurt) {
   px(-2, -23, 6, 7, "#d8d2c4"); px(3, -21, 3, 4, "#c8c0b0"); px(1, -21, 2, 1, "#000"); px(3, -16, 2, 3, "#e8e2d4");
   px(-2, -26, 2, 3, "#8a7a5a"); px(2, -26, 2, 3, "#8a7a5a"); px(-3, -24, 8, 1, "#5a8a2a"); px(-3, -23, 1, 1, "#7aaa3a"); px(4, -23, 1, 1, "#7aaa3a"); lc.restore();
 }
-const DRAW = { cow: drawCow, chicken: drawChicken, olive: drawOlive, boar: drawBoar, goat: drawGoat };
+// Tomatoe Hill: a tomato that went bad and stood up, and a hornworm the size of a dog
+function drawRotten(x, y, face, hurt) {
+  lc.save(); lc.translate(Math.round(x), Math.round(y)); if (face < 0) lc.scale(-1, 1);
+  px(-6, 0, 12, 2, "rgba(0,0,0,.25)"); px(-3, -2, 2, 2, "#3a2a1a"); px(2, -2, 2, 2, "#3a2a1a");
+  const r = hurt ? "#ff9a8a" : "#c8342a";
+  px(-6, -11, 12, 10, "#7a1a14"); px(-5, -12, 10, 12, r); px(-6, -10, 12, 7, r); px(-4, -11, 3, 2, "#f07a5a");
+  px(-3, -7, 3, 2, "#6a4a1a"); px(2, -4, 2, 2, "#6a4a1a"); px(-1, -9, 2, 1, "#6a4a1a");
+  px(1, -9, 2, 2, "#fff"); px(2, -9, 1, 1, "#000"); px(-3, -9, 2, 2, "#fff"); px(-3, -9, 1, 1, "#000"); px(-3, -10, 6, 1, "#3a0a0a");
+  px(-2, -14, 4, 2, "#3a8a2a"); px(-4, -13, 2, 1, "#3a8a2a"); px(2, -13, 2, 1, "#3a8a2a"); px(0, -16, 1, 2, "#2a6a1a");
+  lc.restore();
+}
+function drawHornworm(x, y, face, hurt) {
+  lc.save(); lc.translate(Math.round(x), Math.round(y)); if (face < 0) lc.scale(-1, 1);
+  px(-10, 0, 20, 2, "rgba(0,0,0,.25)");
+  const g1 = hurt ? "#c8f0a0" : "#6ac04a", g2 = "#4a9a3a";
+  for (let i = 0; i < 5; i++) { const sx = -9 + i * 4, bob = i % 2; px(sx, -6 - bob, 5, 6 + bob, i % 2 ? g1 : g2); px(sx + 1, -4 - bob, 3, 1, "#f0f0d0"); px(sx + 1, -1, 1, 1, "#2a4a1a"); }
+  px(9, -8, 4, 7, g1); px(11, -6, 1, 1, "#000"); px(12, -3, 1, 1, "#000");
+  px(-10, -10, 2, 4, "#c83a2a"); px(-11, -12, 2, 3, "#c83a2a");
+  lc.restore();
+}
+// the Via Appia: a hooded, masked robber with a knife
+function drawHighwayman(x, y, face, hurt) {
+  lc.save(); lc.translate(Math.round(x), Math.round(y)); if (face < 0) lc.scale(-1, 1);
+  px(-5, 0, 10, 2, "rgba(0,0,0,.25)");
+  px(-3, -6, 2, 6, "#3a3a3a"); px(1, -6, 2, 6, "#3a3a3a"); px(-3, 0, 3, 1, "#1a1a1a"); px(1, 0, 3, 1, "#1a1a1a");
+  px(-5, -15, 10, 10, hurt ? "#b86a6a" : "#4a3a2a"); px(-5, -15, 2, 10, "#3a2a1a");
+  px(-4, -22, 8, 8, "#3a2a1a"); px(-3, -20, 6, 5, "#e8c09a"); px(-3, -19, 6, 2, "#1a1a1a"); px(1, -19, 1, 1, "#fff");
+  px(4, -12, 1, 5, "#c8c8d0"); px(4, -8, 2, 2, "#6a4a2a");
+  lc.restore();
+}
+const DRAW = { cow: drawCow, chicken: drawChicken, olive: drawOlive, boar: drawBoar, goat: drawGoat, rotten: drawRotten, hornworm: drawHornworm, highwayman: drawHighwayman };
 function drawRock(ob, now) {
   const big = ob.t === "vein", w = big ? 30 : 14, h = big ? 24 : 11, X = ob.x * T + 1, Y = ob.y * T + (big ? 31 : 15) - h;
   const empty = ob.emptyUntil > now, ore = ob.ore === "copper" ? ["#d8793a", "#f4a868"] : ob.ore === "stardust" ? ["#b86aff", "#f4e0ff"] : ["#a8b4bc", "#eef4f8"];
@@ -883,7 +932,7 @@ function fit() {
   return { w, h };
 }
 const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
-const KIND_OF = { plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
+const KIND_OF = { vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
 function thingAt(wx, wy) {
   const now = snow(), near = (x_, y_, rx, ry) => Math.abs(wx - x_) <= rx && wy <= y_ + 4 && wy >= y_ - ry;
   for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})` }; }
@@ -1013,6 +1062,19 @@ function frame() {
       px(X - 5, Y - 4, 11, 4, "#24463f"); px(X - 1, Y - 12, 9, 4, "#24463f"); px(X + 3, Y - 19, 6, 3, "#24463f");
       const tw = calm ? 0 : Math.floor(pnow / 400);
       for (let i = 0; i < 12; i++) { const gx = X - 5 + Math.floor(hashRand(ob.x, i, 71) * 26), gy = Y - 23 + Math.floor(hashRand(ob.y, i, 72) * 26); px(gx, gy, 2, 1, (i + tw) % 4 ? "#e8b82a" : "#fff0a0"); }
+    } });
+    if (ob.t === "vine") sprites.push({ y: ob.y * T + 14, draw: () => {
+      const X = ob.x * T, Y = ob.y * T, bare = ob.bareUntil > now, fruit = ob.special ? "#ffd84a" : "#d8322a";
+      px(X + 2, Y + 13, 12, 2, "rgba(0,0,0,.25)"); px(X + 7, Y - 6, 2, 20, "#8a6a3a"); px(X + 4, Y - 2, 8, 1, "#8a6a3a");
+      px(X + 3, Y - 4, 10, 14, "#3a7a2a"); px(X + 2, Y - 1, 12, 8, "#4a8a34"); px(X + 5, Y - 6, 6, 3, "#3a7a2a");
+      if (!bare) for (let i = 0; i < 5; i++) { const fx = X + 3 + Math.floor(hashRand(ob.x, i, 81) * 9), fy = Y - 3 + Math.floor(hashRand(ob.y, i, 82) * 10); if (ob.special) px(fx - 1, fy - 1, 4, 4, "rgba(255,220,90,.35)"); px(fx, fy, 3, 3, fruit); px(fx, fy, 1, 1, "#fff"); }
+    } });
+    if (ob.t === "cypress") sprites.push({ y: ob.y * T + 14, draw: () => {
+      const X = ob.x * T, Y = ob.y * T;
+      if (ob.stumpUntil > now) { px(X + 5, Y + 9, 6, 5, "#6b4423"); px(X + 5, Y + 8, 6, 2, "#b8905a"); return; }
+      px(X + 3, Y + 13, 10, 2, "rgba(0,0,0,.25)"); px(X + 7, Y + 8, 2, 7, "#5a3a1e");
+      px(X + 5, Y - 18, 6, 27, "#23462a"); px(X + 4, Y - 10, 8, 18, "#23462a"); px(X + 6, Y - 22, 4, 5, "#23462a"); px(X + 7, Y - 24, 2, 3, "#23462a");
+      px(X + 6, Y - 16, 2, 20, "#34603a"); px(X + 9, Y - 8, 1, 12, "#1a3420");
     } });
     if (ob.t === "olive") sprites.push({ y: ob.y * T + 14, draw: () => {
       const X = ob.x * T, Y = ob.y * T, bare = ob.bareUntil > now;
@@ -1341,8 +1403,8 @@ const WIKI = (() => {
     for (const o of b.objs) {
       const lvl = o.req?.lvl || 1, where = { scene: key, obj: o.name, lvl };
       if (o.t === "rock" || o.t === "vein") { addSrc(o.ore, { ...where, skill: "mining" }); a.res[o.name] = "mining"; }
-      if (o.t === "tree" || o.t === "oak" || o.t === "yew") { addSrc(o.log || "logs", { ...where, skill: "woodcutting" }); a.res[o.name] = "woodcutting"; }
-      if (o.t === "olive") { addSrc(o.crop || "olives", { ...where, skill: "farming" }); a.res[o.name] = "farming"; }
+      if (o.t === "tree" || o.t === "oak" || o.t === "yew" || o.t === "cypress") { addSrc(o.log || "logs", { ...where, skill: "woodcutting" }); a.res[o.name] = "woodcutting"; }
+      if (o.t === "olive" || o.t === "vine") { addSrc(o.crop || "olives", { ...where, skill: "farming" }); a.res[o.name] = "farming"; }
       if (o.t === "wheat") { addSrc("wheat", { ...where, skill: "farming" }); a.res.Wheat = "farming"; }
       if (o.t === "spot") { if (o.fish) addSrc(o.fish, { ...where, skill: "fishing" }); else { addSrc("sardine", { ...where, skill: "fishing" }); addSrc("trout", { ...where, skill: "fishing", lvl: 10 }); } a.res[o.special ? o.name : "Fishing spot"] = "fishing"; }
       if (o.t === "house") a.buildings.push(o);
@@ -1453,10 +1515,10 @@ if (location.hash.startsWith("#wiki")) { wikiRoute = decodeURIComponent(location
 // what a resource needs and gives, read from the same rules the server uses
 function resourceInfo(ob) {
   const lv = ob.req?.lvl || 1, rows = [];
-  if (ob.t === "tree" || ob.t === "oak" || ob.t === "yew") rows.push({ skill: "woodcutting", lvl: lv, gives: ob.log || "logs", xp: ob.xp || 25, note: ob.t === "oak" || ob.special ? "Rarely falls." : "Falls now and then; grows back in 15s." });
+  if (ob.t === "tree" || ob.t === "oak" || ob.t === "yew" || ob.t === "cypress") rows.push({ skill: "woodcutting", lvl: lv, gives: ob.log || "logs", xp: ob.xp || 25, note: ob.t === "oak" || ob.special ? "Rarely falls." : "Falls now and then; grows back in 15s." });
   if (ob.t === "rock") rows.push({ skill: "mining", lvl: lv, gives: ob.ore, xp: ob.xp || (ob.ore === "tin" ? 18 : 17), note: `One ore, then empty for ${ob.special ? 30 : 8}s.` });
   if (ob.t === "vein") rows.push({ skill: "mining", lvl: lv, gives: ob.ore, xp: 9, note: "Slow, but never runs dry." });
-  if (ob.t === "olive") rows.push({ skill: "farming", lvl: lv, gives: ob.crop || "olives", xp: ob.xp || 6, note: `${ob.picks || 4} picks, then bare for 20s.` });
+  if (ob.t === "olive" || ob.t === "vine") rows.push({ skill: "farming", lvl: lv, gives: ob.crop || "olives", xp: ob.xp || 6, note: `${ob.picks || 4} picks, then bare for 20s.` });
   if (ob.t === "wheat") rows.push({ skill: "farming", lvl: 1, gives: "wheat", xp: 8, note: "Grows back in 20s." });
   if (ob.t === "spot") { if (ob.fish) rows.push({ skill: "fishing", lvl: lv, gives: ob.fish, xp: ob.xp, note: "Fish from the bank, two tiles away." }); else { rows.push({ skill: "fishing", lvl: 1, gives: "sardine", xp: 20 }); rows.push({ skill: "fishing", lvl: 10, gives: "trout", xp: 50, note: "Fish from the bank, two tiles away." }); } }
   return rows;
