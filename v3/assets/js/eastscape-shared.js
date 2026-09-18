@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 13;
+export const VERSION = 14;
 export const COLS = 22, ROWS = 13;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -60,10 +60,13 @@ export const ITEMS = {
   rod: { name: "Fishing rod", short: "Rod", icon: "🎣", slot: "weapon", tool: "fishing" },
   cap: { name: "Leather cap", short: "Cap", icon: "⛑️", slot: "helm", def: 1 },
   tunic: { name: "Tunic", icon: "🥋", slot: "body", def: 2 },
+  bronzecuirass: { name: "Bronze cuirass", short: "Cuirass", icon: "🛡️", slot: "body", def: 6, tier: "bronze", ex: "Moulded bronze with somebody else's muscles on it. You'll grow into them." },
   toga: { name: "Goat-sized toga", short: "Toga", icon: "🥻", slot: "body", def: 3, acc: 1, ex: "Smells of goat. Fits you perfectly, which is worrying." },
   parma: { name: "Parma", icon: "🛡️", slot: "shield", def: 3 },
   sandals: { name: "Sandals", icon: "🩴", slot: "boots", def: 1 }
 };
+// what a character looks like comes from their body armour: "tiro" (a recruit) unless it has a tier
+export const outfitOf = (eq) => ITEMS[eq?.body]?.tier || "tiro";
 export const SLOTS = ["helm", "weapon", "body", "shield", "legs", "gloves", "boots", "ring"];
 export const SKILLS = { melee: { name: "Melee", icon: "⚔️" }, hp: { name: "Hitpoints", icon: "❤️" }, fishing: { name: "Fishing", icon: "🎣" }, farming: { name: "Harvesting", icon: "🌾" }, mining: { name: "Mining", icon: "⛏️" }, woodcutting: { name: "Woodcutting", icon: "🪓" } };
 export const TOOL_OF = { mining: "pickaxe", woodcutting: "axe", fishing: "rod" };
@@ -179,8 +182,8 @@ export const SCENES = {
       for (const [x, y] of [[20, 2], [19, 11], [14, 11]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
       objs.push({ t: "oak", x: 17, y: 8, name: "Oak tree" }); g[8][17] = "#";
       // the teaser: a tree you'll walk past for weeks before you can touch it, in its own clearing
-      objs.push({ t: "yew", x: 8, y: 1, name: "Ancient Yew", special: true, req: { skill: "woodcutting", lvl: 60 }, log: "yewlogs", xp: 175, tease: "Its golden needles hum as you get close." }); g[1][8] = "#";
-      const clearing = []; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (dx || dy) clearing.push([8 + dx, 1 + dy]);
+      objs.push({ t: "yew", x: 8, y: 2, name: "Ancient Yew", special: true, req: { skill: "woodcutting", lvl: 60 }, log: "yewlogs", xp: 175, tease: "Its golden needles hum as you get close." }); g[2][8] = "#";
+      const clearing = []; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (dx || dy) clearing.push([8 + dx, 2 + dy]);
       wild(g, objs, this.exits, { n: "forest", w: "forest", s: "water", e: "forest" }, [...keepOf(this), ...clearing], 1);
       return { g, objs, blobs: [] };
     },
@@ -231,9 +234,9 @@ export const SCENES = {
       for (let y = 0; y < 5; y++) for (let x = 16; x <= 18; x++) g[y][x] = "p";
       for (let x = 18; x < COLS; x++) for (let y = 5; y <= 7; y++) g[y][x] = "p";
       const paved = g.map((r) => r.slice());
-      const bath = { t: "house", x: 2, y: 1, w: 6, h: 3, door: { x: 4, y: 3 }, name: "Bank", roof: "#8a9aa8", wall: "#efe6d4", sign: "BANK", enter: "bathhouse" };
-      const forge = { t: "house", x: 10, y: 1, w: 6, h: 3, door: { x: 13, y: 3 }, name: "Forge", roof: "#7a4a3a", wall: "#c8b89a", sign: "STORE" };
-      objs.push(bath, forge); block(g, 2, 1, 6, 3); block(g, 10, 1, 6, 3);
+      const bath = { t: "house", img: "bank", x: 2, y: 1, w: 5, h: 3, door: { x: 4, y: 3 }, name: "Bank", roof: "#8a9aa8", wall: "#efe6d4", sign: "BANK", enter: "bathhouse" };
+      const forge = { t: "house", img: "store", x: 11, y: 1, w: 5, h: 3, door: { x: 13, y: 3 }, name: "Forge", roof: "#7a4a3a", wall: "#c8b89a", sign: "STORE" };
+      objs.push(bath, forge); block(g, 2, 1, 5, 3); block(g, 11, 1, 5, 3);
       objs.push({ t: "fountain", x: 10, y: 6, w: 2, h: 2, name: "Fountain" }); block(g, 10, 6, 2, 2);
       objs.push({ t: "rock", ore: "stardust", x: 5, y: 6, name: "Fallen Star", special: true, glow: "#e0b0ff", req: { skill: "mining", lvl: 50 }, xp: 150, tease: "It landed during the games last spring. Nobody's managed to chip it since." }); g[6][5] = "#";
       objs.push({ t: "notice", x: 8, y: 2, name: "Notice board" }); g[2][8] = "#";
@@ -387,7 +390,7 @@ function isleBuild(tier) {
   objs.push({ t: "boatback", x: 12, y: 11, w: 2, h: 1, name: "Ferry" });
   // the Far Shore: a bridge off the east side
   if (tier >= 3) { for (let y = 5; y <= 7; y++) { g[y][COLS - 1] = "e"; for (let x = 19; x < COLS - 1; x++) g[y][x] = "p"; } objs.push({ t: "dock", x: 19, y: 5, w: 2, h: 3 }); }
-  const house = { t: "house", img: "hut", x: 8, y: 1, w: 5, h: 3, door: { x: 10, y: 3 }, name: "Cottage", enter: "home" }; objs.push(house); block(g, 8, 1, 5, 3);
+  const house = { t: "house", img: "cottage", x: 8, y: 1, w: 5, h: 3, door: { x: 10, y: 3 }, name: "Cottage", enter: "home" }; objs.push(house); block(g, 8, 1, 5, 3);
   const plots = big ? [[3, 5], [4, 5], [5, 5], [6, 5], [3, 7], [4, 7], [5, 7], [6, 7], [7, 5], [8, 5], [7, 7], [8, 7]] : [[4, 5], [5, 5], [6, 5], [7, 5], [4, 7], [5, 7], [6, 7], [7, 7]];
   plots.forEach(([x, y], i) => { objs.push({ t: "plot", i, x, y, name: "Plot" }); g[y][x] = "#"; });
   const peds = big ? [[13, 5], [15, 5], [17, 5], [13, 7], [15, 7], [17, 7], [13, 9], [15, 9], [17, 9]] : [[13, 5], [15, 5], [17, 5], [13, 7], [15, 7], [17, 7]];
