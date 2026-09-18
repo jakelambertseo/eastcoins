@@ -34,7 +34,7 @@ button,input,select{font:inherit}
 .net.ok i{background:#5dd65d;box-shadow:0 0 6px #5dd65d}
 .net.warn i{background:#ffb400}
 .net.bad i{background:#ff5a4a}
-.wrap{display:grid;grid-template-columns:300px minmax(0,1fr);height:calc(100vh - 32px)}
+.wrap{display:grid;grid-template-columns:336px minmax(0,1fr);height:calc(100vh - 32px)}
 /* the character panel sits on the LEFT: on the site, Twitch chat takes the right */
 .wrap .side{order:-1;border-left:0;border-right:2px solid #2a2118}
 @media (max-width:820px){.wrap{grid-template-columns:minmax(0,1fr);grid-template-rows:60vh auto;overflow:auto;height:auto}html,body{overflow:auto}}
@@ -227,16 +227,17 @@ button,input,select{font:inherit}
 .panel{flex:1;margin:0 8px 8px;background:var(--panel);color:var(--panel-ink);border:3px solid var(--frame);overflow:auto;min-height:0}
 .ph{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:14px;border-bottom:2px solid rgba(0,0,0,.12)}
 .ph small{font-weight:600;text-transform:none;color:#6a5a40}
-.inv{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:6px}
+.inv{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:4px 0}
+#panel{overflow-x:hidden}
 .ico{width:1.3em;height:1.3em;image-rendering:pixelated;vertical-align:-.3em;object-fit:contain}
-.slot .ico,.eq .ico{width:86%;height:86%;vertical-align:0}.slot .ico{margin-top:10%}.eq .ico{width:62%;height:62%}
+.slot .ico,.eq .ico{width:84%;height:84%;vertical-align:0}.slot .ico{margin-top:18%}.eq .ico{width:62%;height:62%}
 .slot{position:relative;aspect-ratio:1;border:1px solid #bfb193;background:#e6dcc4;display:grid;place-items:center;font-size:26px;cursor:pointer;user-select:none}
 .slot:hover{background:#efe6d0}
 .slot.empty{cursor:default;background:#e2d8bf}
 .slot.hint{outline:3px solid #ffb400;outline-offset:-3px;animation:hint .6s ease-in-out infinite alternate}
 @keyframes hint{from{background:#e6dcc4}to{background:#ffe27a}}
 @media (prefers-reduced-motion:reduce){.slot.hint{animation:none;background:#ffe27a}}
-.slot em{position:absolute;left:1px;top:1px;font-style:normal;font-size:11px;font-weight:800;line-height:1;color:#ffe45c;background:rgba(26,16,8,.72);padding:1px 3px 2px;border-radius:3px;text-shadow:none;pointer-events:none}
+.slot em{position:absolute;left:0;top:0;font-style:normal;font-size:10px;font-weight:800;line-height:1;color:#ffe45c;background:rgba(26,16,8,.66);padding:1px 2px;border-radius:2px;text-shadow:none;pointer-events:none}
 .slot em.k{color:#fff}.slot em.m{color:#7dff6a}
 .doll{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(4,64px);gap:6px;justify-content:center;padding:14px 6px 8px;
   grid-template-areas:". helm ." "weapon body shield" ". legs ." "gloves boots ring"}
