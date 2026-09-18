@@ -68,6 +68,28 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .scene-wrap{position:relative;aspect-ratio:16/10;background:#0b1a2a;touch-action:none;user-select:none;-webkit-user-select:none}
 .scene-wrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .status{position:absolute;left:12px;top:10px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+.buffrow{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px 0}
+.buffrow[hidden]{display:none}
+.buffrow.kbuffs{padding:12px 0 0}
+.buffchip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;background:rgba(var(--gold-rgb),.1);border:1px solid rgba(var(--gold-rgb),.45);color:var(--gold);font-size:.76rem;font-weight:800}
+.buffchip b{font-variant-numeric:tabular-nums;color:var(--text)}
+.kq{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center}
+.kq-main b{display:block;font-size:.95rem}
+.kq-main small{color:var(--muted-2);font-size:.76rem}
+.kq-main .ok{color:var(--green);font-weight:700}
+.kq-main .no{color:var(--red);font-weight:700}
+.kq-bar{margin-top:10px;min-width:0}
+.kq-bar i{transition:none}
+.kauto{display:flex;align-items:center;gap:4px;margin:0 0 10px;font-size:.8rem;font-weight:700;color:var(--muted)}
+.krow{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line)}
+.krow:last-child{border-bottom:0}
+.krow.locked{opacity:.55}
+.krow-fish{display:grid;place-items:center;font-size:1.2rem}
+.krow-main b{display:block;font-size:.9rem}
+.krow-main small{display:block;font-size:.76rem;color:var(--muted-2)}
+.krow-main small b{display:inline;font-size:inherit}
+.krow-btns{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.g-select{background:var(--panel-2);color:var(--text);border:1px solid var(--line-2);border-radius:9px;padding:6px 9px;font:inherit;font-size:.82rem;font-weight:700;margin-left:6px}
 .tankpill{pointer-events:auto;background:rgba(8,6,5,.62);border:1px solid rgba(255,255,255,.12);padding:4px 9px;border-radius:99px;font:inherit;font-size:.74rem;font-weight:800;color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:5px}
 .tankpill b{font-variant-numeric:tabular-nums}
 .tankpill:hover{border-color:var(--sea)}
@@ -768,6 +790,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
           <button class="tab" role="tab" id="tab-boss" aria-controls="panel-boss" data-tab="boss" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6.4.7-4.8 4.2 1.4 6.1L12 16.8 6.4 19.6l1.4-6.1L3 9.3l6.4-.7z"/></svg><span class="tab-label">Bosses</span></button>
           <span class="fnav-h">Back at the reef</span>
           <button class="tab" role="tab" id="tab-tank" aria-controls="panel-tank" data-tab="tank" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 13c1.5-2 4-2 5.5 0-1.5 2-4 2-5.5 0zM12.5 13l2-1.5v3z"/><path d="M3 9h18"/></svg><span class="tab-label">Your tank</span></button>
+          <button class="tab" role="tab" id="tab-kitchen" aria-controls="panel-kitchen" data-tab="kitchen" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6z"/><path d="M8 6.5c0-1 1-1 1-2.2M12 6.5c0-1 1-1 1-2.2M16 6.5c0-1 1-1 1-2.2"/></svg><span class="tab-label">Kitchen</span></button>
           <button class="tab" role="tab" id="tab-garden" aria-controls="panel-garden" data-tab="garden" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20v-8"/><path d="M12 12c-4 0-6-3-6-6 3 0 6 2 6 6zM12 14c3.5 0 5.5-2.5 5.5-5.5-3 0-5.5 2-5.5 5.5z"/><path d="M5 20h14"/></svg><span class="tab-label">Bait garden</span><span class="count" hidden></span></button>
           <button class="tab" role="tab" id="tab-breeding" aria-controls="panel-breeding" data-tab="breeding" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3.6 0 6 5.2 6 9.2A6 6 0 0 1 6 12.7c0-4 2.4-9.2 6-9.2z"/></svg><span class="tab-label">Breeding</span><span class="count" hidden></span></button>
           <button class="tab" role="tab" id="tab-craft" aria-controls="panel-craft" data-tab="craft" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4.5l5 5-8.5 8.5-5-5z"/><path d="M16 3l1.4 1.4M20 7l1 1M4.5 19.5l2.5-2.5"/></svg><span class="tab-label">Crafting</span></button>
@@ -847,7 +870,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
             <p class="tank-up" id="cUpNote" hidden></p>
             <div class="btns">
               <button class="btn primary" id="cKeep" type="button">Put in tank</button>
-              <button class="btn" id="cCook" type="button">Cook</button>
+              <button class="btn" id="cBank" type="button">Bank</button>
               <button class="btn" id="cSell" type="button">Sell</button>
             </div>
           </div>
@@ -863,6 +886,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         </div>
         <span class="act-note" id="actNote">Space works too.</span>
       </div>
+      <div class="buffrow" id="buffRow" hidden></div>
       <div class="biting">
         <h4>Biting here</h4>
         <div class="chips" id="biting"></div>
@@ -907,6 +931,12 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   <section class="view view-quests" role="tabpanel" id="panel-quests" aria-labelledby="tab-quests" data-panel="quests" hidden>
     <header class="view-h"><div><h1>Quests</h1><p>New dailies at midnight Central, new weeklies on Monday.</p></div></header>
     <div class="card"><div class="card-body"><div id="quests"></div></div></div>
+  </section>
+
+  <section class="view view-kitchen" role="tabpanel" id="panel-kitchen" aria-labelledby="tab-kitchen" data-panel="kitchen" hidden>
+    <header class="view-h"><div><h1>Kitchen</h1><p>Cook what you bank in batches. Burnt ones compost; cooked ones are dishes you eat for a buff.</p></div></header>
+    <div class="xpw-row"><div class="xpt flat" data-skill="cooking" aria-live="polite"></div></div>
+    <div id="kitchen"></div>
   </section>
 
   <section class="view view-garden" role="tabpanel" id="panel-garden" aria-labelledby="tab-garden" data-panel="garden" hidden>
@@ -1171,7 +1201,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     auto: { sprinkler: false, caretaker: false, turner: false, hatchery: false, smokehouse: false, cannery: false }, smokeAt: 0,
     inv: {}, charm: 0, benchAt: 0, boss: {}, perks: {}, airLvl: 0, air: 5, bagLvl: 0,
     zc: 2500, conv: {}, cosm: {}, worn: { theme: "", name: "", title: "", pet: "" }, shopTab: "all",
-    stats: { dives: 0, diveValue: 0, crafts: 0, cooked: 0, spots: {}, baits: {}, casts: 0, snags: 0 }, nav: {} });
+    stats: { dives: 0, diveValue: 0, crafts: 0, cooked: 0, spots: {}, baits: {}, casts: 0, snags: 0 }, nav: {},
+    bank: {}, bankLvl: 0, autoBank: "off", cookQ: null, dishes: {}, buffs: {}, burnt: 0, gear: {} });
   let S = fresh();
   try { const raw = localStorage.getItem(SAVE); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch {}
   S.skills = Object.assign({ fishing: 0, farming: 0, cooking: 0, breeding: 0, diving: 0, crafting: 0 }, S.skills || {});
@@ -1182,6 +1213,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   if (!S.wv) { S.weather = "auto"; S.wv = 1; }                // saves from before the reef had its own weather
   S.stats = Object.assign({ dives: 0, diveValue: 0, crafts: 0, cooked: 0, spots: {}, baits: {}, casts: 0, snags: 0 }, S.stats || {});
   S.nav = S.nav || {};
+  S.bank = S.bank || {}; S.bankLvl = S.bankLvl || 0; S.autoBank = S.autoBank || "off";
+  S.dishes = S.dishes || {}; S.buffs = S.buffs || {}; S.burnt = S.burnt || 0; S.gear = S.gear || {};
+  if (S.cookQ === undefined) S.cookQ = null;
   const save = () => { S.saved = Date.now(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch {} };
 
   /* ============================================================ helpers */
@@ -1203,7 +1237,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const SKILLS = {
     fishing: { name: "Fishing", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12c3-4.5 8-5.5 12-2.2L20 7v10l-5-2.8C11 17.5 6 16.5 3 12z"/><circle cx="8.2" cy="11" r=".6"/></svg>', how: "Every catch. Rarer, heavier and shiny fish give more, and a new species gives a bonus." },
     farming: { name: "Farming", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20v-8"/><path d="M12 12c-4 0-6-3-6-6 3 0 6 2 6 6zM12 14c3.5 0 5.5-2.5 5.5-5.5-3 0-5.5 2-5.5 5.5z"/><path d="M5 20h14"/></svg>', how: "Planting, watering and harvesting the bait garden. Slower baits give more. Level 20 and 40 let the garden run itself." },
-    cooking: { name: "Cooking", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6z"/><path d="M8 6.5c0-1 1-1 1-2.2M12 6.5c0-1 1-1 1-2.2M16 6.5c0-1 1-1 1-2.2"/></svg>', how: "Cooking a catch instead of selling it. It pays fewer pearls, so it costs you something. Level 20 opens the smokehouse." },
+    cooking: { name: "Cooking", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6z"/><path d="M8 6.5c0-1 1-1 1-2.2M12 6.5c0-1 1-1 1-2.2M16 6.5c0-1 1-1 1-2.2"/></svg>', how: "Cooking banked fish in the Kitchen. Each fish stops burning at its own level. Level 20 keeps the stove on while you are away" },
     diving: { name: "Diving", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21c-3.5-3.6-6-6.6-6-9.8A6 6 0 0 1 18 11.2c0 3.2-2.5 6.2-6 9.8z"/><circle cx="12" cy="10.6" r="2.3"/></svg>', how: "Diving a spot for what's on the bottom. Deeper water hides better things. Air runs out and the bag fills up, so a session is trips, not one long hold." },
     crafting: { name: "Crafting", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4.5l5 5-8.5 8.5-5-5z"/><path d="M4.5 19.5l2.5-2.5M16 3l1.4 1.4M20 7l1 1"/></svg>', how: "Making things out of what you dive up. Every recipe trains it." },
     breeding: { name: "Breeding", icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3.6 0 6 5.2 6 9.2A6 6 0 0 1 6 12.7c0-4 2.4-9.2 6-9.2z"/></svg>', how: "Pairing fish, turning the eggs and hatching them. A shiny baby triples the hatch. Level 20 and 40 automate the nests." }
@@ -1235,6 +1269,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { skill: "farming", at: 40, what: "Caretaker" },
     { skill: "breeding", at: 20, what: "Egg turner" },
     { skill: "breeding", at: 40, what: "Hatchery" },
+    { skill: "cooking", at: 15, what: "Cold room" },
+    { skill: "cooking", at: 20, what: "Copper pans" },
+    { skill: "cooking", at: 30, what: "Chef's gauntlets" },
+    { skill: "cooking", at: 40, what: "Walk-in freezer" },
     { skill: "cooking", at: 20, what: "Smokehouse" },
     { skill: "cooking", at: 40, what: "Cannery" },
     { skill: "cooking", at: 5, what: "Kelp forest" },
@@ -1253,6 +1291,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const nest = NEST_CAPS.findIndex((c) => `${c.cap} nests` === what); if (nest > 0) return S.nestLvl >= nest;
     const air = AIR_CAPS.findIndex((a) => a.name === what); if (air > 0) return S.airLvl >= air;
     const bag = BAG_CAPS.findIndex((b) => b.name === what); if (bag > 0) return S.bagLvl >= bag;
+    const cold = BANK_CAPS.findIndex((b) => b.name === what); if (cold > 0) return S.bankLvl >= cold;
+    const kg = COOK_GEAR.find((g) => g.name === what); if (kg) return Boolean(S.gear[kg.key]);
     const dec = DECOR.find((d) => d.name === what); if (dec) return Boolean(S.decor[dec.key]);
     const kit = KIT.find((k) => k.name === what); if (kit) return Boolean(S.auto[kit.key]);
     return false;
@@ -1436,8 +1476,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { key: "airtank", name: "Air tank", skill: "diving", at: 40, cost: 15000, about: "Quicker dives and another thing again" },
     { key: "toolbox", name: "Toolbox", skill: "crafting", at: 20, cost: 3000, about: "One in four crafts keeps its parts" },
     { key: "bench", name: "Workbench", skill: "crafting", at: 40, cost: 15000, about: "Melts spare junk down on its own every 10 minutes" },
-    { key: "smokehouse", name: "Smokehouse", skill: "cooking", at: 20, cost: 3000, about: "Cooks a nursery fish every 30 minutes, keeping two back" },
-    { key: "cannery", name: "Cannery", skill: "cooking", at: 40, cost: 15000, about: "The smokehouse runs twice as often and keeps one back" }
+    { key: "smokehouse", name: "Smokehouse", skill: "cooking", at: 20, cost: 3000, about: "Keeps the kitchen cooking while you are away, and banks spare nursery fish" },
+    { key: "cannery", name: "Cannery", skill: "cooking", at: 40, cost: 15000, about: "The kitchen cooks twice as fast while you are away" }
   ];
   const session = { xp: {}, since: 0 };
 
@@ -1478,6 +1518,258 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (cur && (cur.shiny || !shiny)) return null;                  // it would be a duplicate
     // a shiny replacing a plain one adds only the difference (the shiny doubling)
     return { skill: SPOT_SKILL[sp.spot], v: cur ? TANK_PCT[sp.rar] : TANK_PCT[sp.rar] * (shiny ? 2 : 1), fishing: cur ? 0 : FISHING_PCT };
+  }
+
+  /* ============================================================ the kitchen
+     Melvor-style cooking. Catches go to the COLD STORE by species (counts, not
+     individual fish — a thousand Bluegill are one row), and the Kitchen cooks
+     them in batches on a timer while the page is open. Each fish has a level it
+     can first be cooked at and a level it STOPS BURNING at; between the two the
+     burn chance falls in a straight line from 55% to nothing. Burnt fish are
+     not waste: they compost onto the bait beds.
+
+     Cooked fish are DISHES, and a dish is a buff you eat: the water a fish came
+     from decides what it does, its rarity how long it lasts. That is what ties
+     Cooking back into Fishing, Diving and the bosses rather than being a pearls
+     sink. A dish can also be sold, for about what the raw fish would have made,
+     so cooking is never a pearls trap.
+
+     The queue keeps a real-time timestamp. While the page is open it cooks at
+     full xp, including in a background tab (it catches up on return). While the
+     page is CLOSED it only carries on with the Smokehouse, as idle work — 55% xp
+     and under the daily idle ceiling — or a big bank would be the new egg turner. */
+  const BANK_CAPS = [
+    { cap: 100, cost: 0, name: "Ice chest" },
+    { cap: 500, cost: 1500, name: "Cold room" },
+    { cap: 2500, cost: 9000, name: "Walk-in freezer" }
+  ];
+  const COOK_GEAR = [
+    { key: "pans", name: "Copper pans", icon: "🍳", cost: 2500, about: "The kitchen cooks 25% faster" },
+    { key: "gauntlets", name: "Chef's gauntlets", icon: "🧤", cost: 4000, about: "Every fish stops burning 8 levels sooner" }
+  ];
+  const COOK_CAN = [1, 10, 25, 45, 65];            // the level a fish can first be cooked at, by rarity
+  const COOK_STOP = [25, 40, 60, 75, 92];          // the level it stops burning at
+  const COOK_BURN_TOP = 0.55;
+  const METHOD = ["Pan-fried", "Grilled", "Smoked", "Seared", "Braised"];
+  const BUFF = [
+    { key: "quick", name: "Quick bite", icon: "⚡", unit: "casts", n: [8, 12, 20, 30, 50], mag: [0.25, 0.3, 0.35, 0.4, 0.5],
+      say: (m) => `bites come ${Math.round(m * 100)}% sooner` },
+    { key: "band", name: "Steady hands", icon: "🎯", unit: "casts", n: [8, 12, 20, 30, 50], mag: [0.03, 0.04, 0.05, 0.06, 0.08],
+      say: (m) => `the green band is ${Math.round(m * 100)}% wider` },
+    { key: "luck", name: "Lucky line", icon: "🍀", unit: "casts", n: [8, 12, 20, 30, 50], mag: [1.2, 1.3, 1.4, 1.5, 1.7],
+      say: (m) => `rare-and-up fish are ×${m} as likely` },
+    { key: "heavy", name: "Heavy hitter", icon: "⚖️", unit: "casts", n: [8, 12, 20, 30, 50], mag: [0.15, 0.2, 0.25, 0.3, 0.4],
+      say: (m) => `fish run heavier (${Math.round(m * 100)}% less skew to the small end)` },
+    { key: "deep", name: "Deep breath", icon: "🫧", unit: "dives", n: [5, 8, 12, 18, 25], mag: [1, 1, 1, 1, 1],
+      say: () => "dives never come up empty and bring one thing more" }
+  ];
+  const dishOf = (sp) => ({ key: sp.key, sp, name: `${METHOD[sp.spot]} ${sp.name}`, buff: BUFF[sp.spot],
+    n: BUFF[sp.spot].n[sp.rar], mag: BUFF[sp.spot].mag[sp.rar], value: Math.round(RAR[sp.rar].rate * 3) });
+  const bankCount = () => Object.values(S.bank).reduce((n, v) => n + v, 0);
+  const bankCap = () => BANK_CAPS[S.bankLvl].cap;
+  const cookStop = (rar) => COOK_STOP[rar] - (S.gear.gauntlets ? 8 : 0);
+  function burnChance(rar, L = levelIn("cooking")) {
+    const can = COOK_CAN[rar], stop = cookStop(rar);
+    if (L >= stop) return 0;
+    return COOK_BURN_TOP * Math.min(1, (stop - L) / Math.max(1, stop - can));
+  }
+  const cookMs = () => Math.max(1500, 3000 - levelIn("cooking") * 15) * (S.gear.pans ? 0.75 : 1);
+  const AUTO_RAR = { off: -1, common: 0, uncommon: 1, rare: 2 };
+  function bankFish(sp) {
+    if (bankCount() >= bankCap()) return false;
+    S.bank[sp.key] = (S.bank[sp.key] || 0) + 1;
+    return true;
+  }
+
+  /** Put n of a species on the stove. They leave the cold store as they go on. */
+  function startCook(key, n) {
+    if (S.cookQ) { toast("The stove is busy", "Stop the batch that is cooking first."); return; }
+    const sp = BY_KEY[key], have = S.bank[key] || 0;
+    n = Math.min(n, have); if (!n) return;
+    if (levelIn("cooking") < COOK_CAN[sp.rar]) { toast("Not yet", `You need Cooking ${COOK_CAN[sp.rar]} to cook ${sp.name}.`); return; }
+    S.bank[key] = have - n; if (!S.bank[key]) delete S.bank[key];
+    S.cookQ = { key, left: n, total: n, done: 0, burnt: 0, last: Date.now() };
+    renderKitchen(); save();
+  }
+  function stopCook() {
+    const q = S.cookQ; if (!q) return;
+    if (q.left) S.bank[q.key] = (S.bank[q.key] || 0) + q.left;
+    S.cookQ = null;
+    toast("Stopped", `${q.done} cooked, ${q.burnt} burnt. The rest went back in the cold store.`);
+    renderKitchen(); save();
+  }
+  /** Cook everything that should have finished by `until`. Returns how many came off. */
+  function cookTick(until = Date.now(), idle = false, speed = 1) {
+    const q = S.cookQ; if (!q) return 0;
+    const sp = BY_KEY[q.key], per = cookMs() / speed, burn = burnChance(sp.rar);
+    let done = 0, burnt = 0, guard = 20000;
+    while (q.left > 0 && until - q.last >= per && guard-- > 0) {
+      q.last += per; q.left--;
+      if (Math.random() < burn) burnt++; else done++;
+    }
+    if (!done && !burnt) return 0;
+    q.done += done; q.burnt += burnt; S.burnt += burnt;
+    S.dishes[q.key] = (S.dishes[q.key] || 0) + done; S.stats.cooked += done;
+    // one grant for the lot, so a thousand fish is one level-up, not a thousand
+    if (done) {
+      const xp = COOK_XP[sp.rar] * done;
+      if (idle) { idleLog.xp += idleGrant("cooking", xp * IDLE_CUT); idleLog.cooked += done; }
+      else grant("cooking", xp);
+    }
+    if (!q.left) {
+      S.cookQ = null;
+      if (!idle) toast(`Kitchen: ${q.done} ${dishOf(sp).name}`, `${q.burnt ? `${q.burnt} burnt · ` : ""}in the pantry, ready to eat or sell`);
+    }
+    return done + burnt;
+  }
+  /** Time the page spent closed: the Smokehouse keeps the stove on, at idle rates. */
+  function kitchenAway(seconds) {
+    if (!S.cookQ) return;
+    const saved = Math.min(Date.now(), S.saved || Date.now());
+    if (saved > S.cookQ.last) cookTick(saved, false, 1);            // it was open until the last save
+    if (!S.cookQ) return;
+    const span = Math.min(seconds, offlineCap() * 3600) * 1000;
+    if (idleOn("smokehouse")) cookTick(S.cookQ.last + span, true, idleOn("cannery") ? 2 : 1);
+    if (S.cookQ) S.cookQ.last = Date.now();                         // otherwise it simply waited
+  }
+
+  /* ---------------- dishes and the buffs they give */
+  function eatDish(key) {
+    if (!S.dishes[key]) return;
+    const d = dishOf(BY_KEY[key]);
+    S.dishes[key]--; if (!S.dishes[key]) delete S.dishes[key];
+    const b = S.buffs[d.buff.key] || { left: 0, mag: 0 };
+    b.left += d.n; b.mag = Math.max(b.mag, d.mag);
+    S.buffs[d.buff.key] = b;
+    toast(`Ate the ${d.name}`, `${d.buff.name}: ${d.buff.say(b.mag)} for ${b.left} ${d.buff.unit}`);
+    renderKitchen(); paintBuffs(); save();
+  }
+  function sellDish(key, all) {
+    const have = S.dishes[key] || 0; if (!have) return;
+    const d = dishOf(BY_KEY[key]), n = all ? have : 1;
+    S.dishes[key] = have - n; if (!S.dishes[key]) delete S.dishes[key];
+    S.pearls += d.value * n;
+    toast(`Sold ${n} ${d.name}`, `+${num(d.value * n)} pearls`);
+    renderKitchen(); save();
+  }
+  /** Taken at the cast: what the fish on this line gets, and one cast off each. */
+  function castBuffs() {
+    const fx = {};
+    for (const k of ["quick", "band", "luck", "heavy"]) {
+      const b = S.buffs[k];
+      if (b && b.left > 0) { fx[k] = b.mag; b.left--; if (!b.left) delete S.buffs[k]; }
+    }
+    return fx;
+  }
+  function paintBuffs() {
+    const row = $("buffRow"); if (!row) return;
+    const on = BUFF.filter((b) => S.buffs[b.key]?.left);
+    row.hidden = !on.length;
+    row.innerHTML = on.map((b) => `<span class="buffchip" title="${b.say(S.buffs[b.key].mag)}">${b.icon} ${b.name} <b>${S.buffs[b.key].left}</b> ${b.unit}</span>`).join("");
+  }
+  /** Ten burnt fish on the beds: every growing bed jumps a quarter closer. */
+  function compost() {
+    if (S.burnt < 10) return;
+    const growing = S.plots.filter((pl) => pl.seed && S.clock < pl.ready);
+    if (!growing.length) { toast("Nothing growing", "Plant a bed first, then compost it."); return; }
+    S.burnt -= 10;
+    growing.forEach((pl) => { pl.ready = S.clock + (pl.ready - S.clock) * 0.75; });
+    toast("Composted", `${growing.length} bed${growing.length === 1 ? "" : "s"} a quarter closer to ready`);
+    renderGarden(); renderKitchen(); save();
+  }
+
+  /* ---------------- the page */
+  const kitchenSig = () => [bankCount(), JSON.stringify(S.bank), JSON.stringify(S.dishes), S.burnt, S.cookQ && S.cookQ.left, S.bankLvl, levelIn("cooking")].join("|");
+  let kitchenDrawn = "";
+  function renderKitchen() {
+    const box = $("kitchen"); if (!box) return;
+    kitchenDrawn = kitchenSig();
+    box.replaceChildren();
+    const L = levelIn("cooking");
+
+    // the stove
+    const stove = el("section", "card");
+    const sb = el("div", "card-body");
+    const q = S.cookQ;
+    if (q) {
+      const sp = BY_KEY[q.key];
+      sb.innerHTML = `<h2 class="card-h">On the stove</h2>
+        <div class="kq"><span class="kq-fish"></span><span class="kq-main"><b>${dishOf(sp).name}</b>
+          <small>${q.total - q.left} of ${q.total} · <span class="ok">${q.done} cooked</span> · <span class="no">${q.burnt} burnt</span> · ${(cookMs() / 1000).toFixed(1)}s each · ${Math.round(burnChance(sp.rar) * 100)}% burn</small></span></div>
+        <div class="dive-bar kq-bar"><i id="kqBar"></i></div>`;
+      sb.querySelector(".kq-fish").append(fishChip(sp, true));
+      const stop = el("button", "btn small", "Stop"); stop.type = "button"; stop.addEventListener("click", stopCook);
+      sb.querySelector(".kq").append(stop);
+    } else sb.innerHTML = `<h2 class="card-h">On the stove</h2><p class="note">Nothing cooking. Pick a fish from the cold store below and choose how many.</p>`;
+    stove.append(sb); box.append(stove);
+
+    // the cold store
+    const store = el("section", "card card-next");
+    const cb = el("div", "card-body");
+    const full = bankCount() >= bankCap();
+    cb.innerHTML = `<h2 class="card-h">Cold store</h2>
+      <div class="panel-intro"><p>Press <b>Bank</b> on a catch to store it here. Cook them in batches: each fish has a level where it stops burning.</p>
+        <span class="hint${full ? " bad" : ""}">${BANK_CAPS[S.bankLvl].name} · ${num(bankCount())}/${num(bankCap())}</span></div>`;
+    const auto = el("label", "kauto", "Auto-bank ");
+    const sel = el("select", "g-select");
+    [["off", "Off — ask every time"], ["common", "Commons"], ["uncommon", "Uncommon and below"], ["rare", "Rare and below"]]
+      .forEach(([v, t]) => { const o = el("option", null, t); o.value = v; o.selected = S.autoBank === v; sel.append(o); });
+    sel.addEventListener("change", () => { S.autoBank = sel.value; save(); toast("Auto-bank", sel.value === "off" ? "Off. Every catch will ask." : `${sel.options[sel.selectedIndex].text} go straight to the cold store — never a shiny, a new species or a record.`); });
+    auto.append(sel);
+    cb.append(auto);
+    const keys = Object.keys(S.bank).sort((a, b) => BY_KEY[a].rar - BY_KEY[b].rar || S.bank[b] - S.bank[a]);
+    if (!keys.length) cb.append(el("p", "note", "Empty. Bank a catch and it waits here to be cooked."));
+    const rows = el("div", "rows");
+    keys.forEach((k) => {
+      const sp = BY_KEY[k], n = S.bank[k], can = L >= COOK_CAN[sp.rar], burn = burnChance(sp.rar);
+      const row = el("div", "krow" + (can ? "" : " locked"));
+      const pic = el("span", "krow-fish"); pic.append(fishChip(sp, true));
+      row.append(pic, el("span", "krow-main", `<b>${sp.name} ×${num(n)}</b><small><span style="color:${RAR[sp.rar].color}">${RAR[sp.rar].name}</span> · ${can ? (burn ? `${Math.round(burn * 100)}% burn · stops at ${cookStop(sp.rar)}` : "never burns") : `Cooking ${COOK_CAN[sp.rar]} to cook`} · makes ${dishOf(sp).buff.icon} ${dishOf(sp).buff.name}</small>`));
+      const btns = el("span", "krow-btns");
+      [["1", 1], ["10", 10], ["100", 100], ["All", n]].forEach(([t, m]) => {
+        if (t !== "All" && m > n) return;
+        const b = el("button", "btn small" + (t === "All" ? " gold" : ""), t); b.type = "button";
+        b.disabled = !can || Boolean(S.cookQ);
+        b.addEventListener("click", () => startCook(k, m));
+        btns.append(b);
+      });
+      row.append(btns); rows.append(row);
+    });
+    cb.append(rows); store.append(cb); box.append(store);
+
+    // the pantry
+    const pantry = el("section", "card card-next");
+    const pb = el("div", "card-body");
+    pb.innerHTML = `<h2 class="card-h">Pantry</h2><div class="panel-intro"><p>Eat a dish for a buff, or sell it. Eating another of the same kind adds to what is left and keeps the stronger effect.</p></div>`;
+    const dk = Object.keys(S.dishes).sort((a, b) => BY_KEY[b].rar - BY_KEY[a].rar);
+    if (!dk.length && !S.burnt) pb.append(el("p", "note", "Nothing cooked yet."));
+    const prow = el("div", "rows");
+    dk.forEach((k) => {
+      const d = dishOf(BY_KEY[k]);
+      const row = el("div", "krow");
+      const pic = el("span", "krow-fish"); pic.append(fishChip(d.sp, true));
+      row.append(pic, el("span", "krow-main", `<b>${d.name} ×${num(S.dishes[k])}</b><small>${d.buff.icon} <b>${d.buff.name}</b> — ${d.buff.say(d.mag)} for ${d.n} ${d.buff.unit}</small>`));
+      const btns = el("span", "krow-btns");
+      const eat = el("button", "btn small gold", "Eat"); eat.type = "button"; eat.addEventListener("click", () => eatDish(k));
+      const sell = el("button", "btn small", `Sell <span class="pearl"></span>${num(d.value)}`); sell.type = "button"; sell.addEventListener("click", () => sellDish(k, false));
+      btns.append(eat, sell); row.append(btns); prow.append(row);
+    });
+    if (S.burnt) {
+      const row = el("div", "krow");
+      row.append(el("span", "krow-fish", "🔥"), el("span", "krow-main", `<b>Burnt fish ×${num(S.burnt)}</b><small>Ten of them compost onto the bait beds: every growing bed jumps a quarter closer to ready</small>`));
+      const b = el("button", "btn small" + (S.burnt >= 10 ? " gold" : ""), "Compost 10"); b.type = "button"; b.disabled = S.burnt < 10;
+      b.addEventListener("click", compost);
+      const btns = el("span", "krow-btns"); btns.append(b); row.append(btns); prow.append(row);
+    }
+    pb.append(prow);
+    const act = BUFF.filter((b) => S.buffs[b.key]?.left);
+    if (act.length) pb.append(el("div", "buffrow kbuffs", act.map((b) => `<span class="buffchip">${b.icon} ${b.name} <b>${S.buffs[b.key].left}</b> ${b.unit}</span>`).join("")));
+    pantry.append(pb); box.append(pantry);
+  }
+  /** The stove's bar moves every frame; the rest redraws only when a count changes. */
+  function paintCookBar() {
+    const q = S.cookQ, bar = $("kqBar"); if (!q || !bar) return;
+    bar.style.width = `${Math.min(100, ((Date.now() - q.last) / cookMs()) * 100)}%`;
   }
 
   /* ============================================================ idle, bounded
@@ -1864,17 +2156,17 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const fish = { phase: "idle", at: 0, waitFor: 0, pick: null, holding: false, zone: .3, vel: 0, fy: .5, ftarget: .5, fnext: 0, prog: .3, result: null, msg: "" };
   let rain = [], snow = [];
 
-  function rollCatch() {
+  function rollCatch(fx = {}) {
     const w = now(), rod = RODS[S.rod];
     const pool = SPECIES.filter((sp) => sp.spot === S.spot && biting(sp, w));
     const bait = activeBait();
     const charmed = (S.charm > 0 ? 1.5 : 1) * (1 + (S.perks[S.spot] || 0));
-    const weights = pool.map((sp) => RAR[sp.rar].weight * (sp.rar >= 2 ? rod.luck * charmed : 1) * (bait?.mult?.[sp.rar] || 1));
+    const weights = pool.map((sp) => RAR[sp.rar].weight * (sp.rar >= 2 ? rod.luck * charmed * (fx.luck || 1) : 1) * (bait?.mult?.[sp.rar] || 1));
     if (S.charm > 0) S.charm -= 1;
     let r = Math.random() * weights.reduce((a, b) => a + b, 0);
     let sp = pool[0];
     for (let i = 0; i < pool.length; i++) { r -= weights[i]; if (r <= 0) { sp = pool[i]; break; } }
-    const frac = Math.pow(Math.random(), 2.2);
+    const frac = Math.pow(Math.random(), 2.2 * (1 - (fx.heavy || 0)));
     return { sp, frac, w: sp.w[0] + (sp.w[1] - sp.w[0]) * frac, shiny: Math.random() < (S.shinyBoost ? 1 / 10 : 1 / 500) * (bait?.shiny || 1) };
   }
   /** The word over the water while a leviathan is on. */
@@ -1895,12 +2187,13 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   function action() {
     if (fish.phase === "reel" && fish.pick?.boss) return;
     if (fish.phase === "idle" || fish.phase === "lost") {
-      fish.pick = rollCatch();
+      const fx = castBuffs(); fish.fx = fx;
+      fish.pick = rollCatch(fx);
       const bait = activeBait();
       if (bait && !(S.conv.baitline && Math.random() < 0.5)) { S.bait[S.baitOn]--; if (!S.bait[S.baitOn]) { toast(`Out of ${bait.name}`, "Grow more in the bait garden."); S.baitOn = "none"; } renderBaitSel(); }
       S.stats.casts += 1;
       if (activeBait()) S.stats.baits[S.baitOn] = (S.stats.baits[S.baitOn] || 0) + 1;
-      fish.waitFor = 1300 + Math.random() * 2800;
+      fish.waitFor = (1300 + Math.random() * 2800) * (1 - (fx.quick || 0));
       setPhase("wait");
     } else if (fish.phase === "wait") {
       setPhase("lost", "Too early. You pulled the bait away.");
@@ -1917,6 +2210,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     b.disabled = p === "caught";
     $("actNote").textContent = p === "reel" ? "Hold the button, the water, or Space." : p === "wait" ? "Wait for the splash. Too early scares it off." : activeBait() ? `${activeBait().about} while it lasts.` : "Space works too.";
     $("reel").hidden = p !== "reel"; $("reelTip").hidden = p !== "reel";
+    paintBuffs();
     $("xpt").classList.toggle("dim", p === "reel");
     const say = $("say");
     say.className = "say" + (p === "bite" ? " bite" : "");
@@ -1938,7 +2232,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       const tier = boss
         ? { diff: boss.diff * (fish.prog > 0.55 ? 1.25 : 1), zone: boss.zone, loss: boss.loss, up: 2.7, down: 2.3, vmax: 1.6 }
         : RAR[fish.pick.sp.rar];
-      const d = tier.diff, zoneH = Math.min(0.6, RODS[S.rod].zone + tier.zone);
+      const d = tier.diff, zoneH = Math.min(0.6, RODS[S.rod].zone + tier.zone + (boss ? 0 : (fish.fx?.band || 0)));
       fish.vel += (fish.holding ? tier.up : -tier.down) * dt;
       fish.vel = Math.max(-tier.vmax, Math.min(tier.vmax, fish.vel));
       fish.zone += fish.vel * dt;
@@ -2013,15 +2307,25 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const note = $("cUpNote");
     note.hidden = !full;
     if (!full) $("cKeep").textContent = "Put in tank";
-    else if (!up) { $("cKeep").textContent = "Tank's full"; note.textContent = "That's the biggest tank there is — sell or cook this one."; }
+    else if (!up) { $("cKeep").textContent = "Tank's full"; note.textContent = "That's the biggest tank there is — bank or sell this one."; }
     else if (upLocked) { $("cKeep").textContent = "Tank's full"; note.innerHTML = `Tank's full. A <b>${up.cap}-fish tank</b> needs ${SKILLS[upNeed.skill].name} <b>${upNeed.at}</b> — you're ${levelIn(upNeed.skill)}.`; }
     else if (short) { $("cKeep").textContent = "Tank's full"; note.innerHTML = `Tank's full. A <b>${up.cap}-fish tank</b> costs ${num(up.cost)} pearls — <b>${num(short)}</b> short.`; }
     else { $("cKeep").innerHTML = `Upgrade tank <span class="pearl"></span>${num(up.cost)}`; note.innerHTML = `Tank's full. <b>${up.cap}-fish tank</b> buys room and this one goes straight in.`; }
     $("cSell").innerHTML = `Sell <span class="pearl"></span>${num(rate * 3)}`;
-    $("cCook").innerHTML = `Cook <span class="pearl"></span>${num(rate * 2)}`;
-    $("cCook").title = "Fewer pearls than selling, but it trains Cooking";
-    $("catch").hidden = false;
-    $("cKeep").focus();
+    const bankFull = bankCount() >= bankCap();
+    $("cBank").disabled = bankFull || c.shiny;
+    $("cBank").textContent = c.shiny ? "Keep the shiny" : bankFull ? "Cold store full" : "Bank";
+    $("cBank").title = c.shiny ? "Shinies are too good to cook" : bankFull ? "Cook or sell what is in the cold store, or buy a bigger one" : `Store it to cook in the Kitchen · ${bankCount()}/${bankCap()}`;
+    // Auto-bank: an ordinary catch at or below the chosen rarity goes straight to
+    // the cold store. Never a shiny, a new species or a record — those always ask.
+    const autoB = !c.shiny && !isNew && !record && sp.rar <= AUTO_RAR[S.autoBank] && bankCount() < bankCap();
+    if (autoB) {
+      bankFish(sp); fish.result = null; setPhase("idle"); renderKitchen();
+      toast(`${sp.name} banked`, `Auto-bank · ${num(bankCount())}/${num(bankCap())} in the cold store`);
+    } else {
+      $("catch").hidden = false;
+      $("cKeep").focus();
+    }
     if (sp.rar >= 3 || c.shiny) toast(`You landed a ${c.shiny ? "Shiny " : ""}${sp.name}!`, "In the real game this goes to the activity feed and the ticker.");
     renderDex(); renderProfile(); renderDerby();
     if (snag) { renderInv(); renderCraft(); }
@@ -2046,14 +2350,11 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     closeCatch(); syncTank(); renderTank(); track("keep");
     toast(`${c.shiny ? "Shiny " : ""}${c.sp.name} is in the tank`, `+${num(fishRate(S.fish[S.fish.length - 1]))} pearls an hour`);
   });
-  $("cCook").addEventListener("click", () => {
-    const c = fish.result; if (!c) return;
-    const pearls = Math.round(fishRate({ key: c.sp.key, w: c.w, shiny: c.shiny }) * 2);
-    S.pearls += pearls;
-    S.stats.cooked += 1;
-    const xp = grant("cooking", COOK_XP[c.sp.rar] * (1 + 0.5 * (c.frac || 0)) * (c.shiny ? 2 : 1));
-    closeCatch(); track("sell"); renderProfile(); save();
-    toast(`Cooked the ${c.shiny ? "shiny " : ""}${c.sp.name}`, `+${num(pearls)} pearls · +${num(xp)} Cooking xp`);
+  $("cBank").addEventListener("click", () => {
+    const c = fish.result; if (!c || c.shiny) return;
+    if (!bankFish(c.sp)) { toast("Cold store full", "Cook or sell what is in it, or buy a bigger one."); return; }
+    closeCatch(); renderKitchen();
+    toast(`${c.sp.name} banked`, `${num(bankCount())}/${num(bankCap())} in the cold store · cook it in the Kitchen`);
   });
   $("cSell").addEventListener("click", () => {
     const c = fish.result; if (!c) return;
@@ -2977,14 +3278,16 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     diving = true; diveEnds = performance.now() + each;
     renderDive();
     setTimeout(() => {
-      if (Math.random() < diveFail()) {
+      const breath = S.buffs.deep && S.buffs.deep.left > 0;
+      if (breath) { S.buffs.deep.left--; if (!S.buffs.deep.left) delete S.buffs.deep; paintBuffs(); }
+      if (!breath && Math.random() < diveFail()) {
         diving = false;
         S.stats.dives += 1;
         toast("Came up with nothing", DIVE_MISS[Math.floor(Math.random() * DIVE_MISS.length)]);
         renderDive(); renderStatbar(); save();
         return;
       }
-      const n = 1 + (idleOn("meshbag") ? 1 : 0) + (idleOn("airtank") ? 1 : 0) + (Math.random() < 0.25 ? 1 : 0);
+      const n = 1 + (idleOn("meshbag") ? 1 : 0) + (idleOn("airtank") ? 1 : 0) + (Math.random() < 0.25 ? 1 : 0) + (breath ? 1 : 0);
       const got = [];
       let xp = 0, lost = 0;
       for (let i = 0; i < n; i++) {
@@ -3497,23 +3800,19 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (idleOn("hatchery")) {
       S.nests.forEach((n, i) => { if (n && S.clock >= n.ready) { hatch(i, true); idleLog.hatched += 1; touched = true; } });
     }
-    // the smokehouse
+    // the smokehouse banks spare nursery fish for the kitchen, keeping some back
     if (idleOn("smokehouse")) {
       const every = idleOn("cannery") ? SMOKE_MS / 2 : SMOKE_MS;
       const keep = idleOn("cannery") ? 1 : 2;
       if (!S.smokeAt) S.smokeAt = S.clock;
       let guard = 40;
-      while (S.clock - S.smokeAt >= every && S.nursery.length > keep && guard-- > 0) {
+      while (S.clock - S.smokeAt >= every && S.nursery.length > keep && bankCount() < bankCap() && guard-- > 0) {
         S.smokeAt += every;
         const f = S.nursery.shift();
-        const sp = BY_KEY[f.key];
-        const pearls = Math.round(fishRate(f) * 2);
-        S.pearls += pearls;
-        idleLog.pearls += pearls;
-        idleLog.xp += idleGrant("cooking", COOK_XP[sp.rar] * (f.shiny ? 2 : 1) * IDLE_CUT);
-        idleLog.cooked += 1; touched = true;
+        bankFish(BY_KEY[f.key]);
+        idleLog.banked = (idleLog.banked || 0) + 1; touched = true;
       }
-      if (S.clock - S.smokeAt > every) S.smokeAt = S.clock;   // nothing to cook: don't bank up a backlog
+      if (S.clock - S.smokeAt > every) S.smokeAt = S.clock;
     }
     // the workbench melts spare junk down while you are away
     if (idleOn("bench")) {
@@ -3538,6 +3837,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 
   function tickLoop(skipRebuild) {
     idleTick();
+    if (S.cookQ && cookTick()) { renderStatbar(); if (onScreen("kitchen")) renderKitchen(); save(); }
+    else if (onScreen("kitchen") && kitchenSig() !== kitchenDrawn) renderKitchen();
     checkUnlocks();
     if (!skipRebuild) {
       if (gardenSig() !== loopRefs.gardenSig) renderGarden();
@@ -3680,6 +3981,17 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       const u = needOf(c.name), locked = u && levelIn(u.skill) < u.at;
       add(shopCard({ art: c.art, icon: "🧺", name: c.name, about: `Carry ${c.cap} things off the bottom`, price: c.cost, owned: S.bagLvl >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
         onBuy: () => { if (S.pearls < c.cost) return; S.pearls -= c.cost; S.bagLvl = i; toast(c.name, `Room for ${c.cap} things.`); renderShop(); renderDive(); renderInv(); save(); } }));
+    });
+    if (show("gear")) COOK_GEAR.forEach((g) => {
+      const u = needOf(g.name), locked = u && levelIn(u.skill) < u.at;
+      add(shopCard({ icon: g.icon, name: g.name, about: g.about, price: g.cost, owned: Boolean(S.gear[g.key]), locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
+        onBuy: () => { if (S.pearls < g.cost) return; S.pearls -= g.cost; S.gear[g.key] = true; toast(g.name, g.about + "."); renderShop(); renderKitchen(); save(); } }));
+    });
+    if (show("places")) BANK_CAPS.forEach((c, i) => {
+      if (i === 0) return;
+      const u = needOf(c.name), locked = u && levelIn(u.skill) < u.at;
+      add(shopCard({ icon: "🧊", name: c.name, about: `A cold store for ${num(c.cap)} fish waiting to be cooked`, price: c.cost, owned: S.bankLvl >= i, locked, need: locked ? `${SKILLS[u.skill].name} ${u.at}` : "",
+        onBuy: () => { if (S.pearls < c.cost) return; S.pearls -= c.cost; S.bankLvl = i; toast(c.name, `Room for ${num(c.cap)} fish.`); renderShop(); renderKitchen(); save(); } }));
     });
     if (show("places")) {
       TANKS.forEach((t, i) => {
@@ -3925,8 +4237,8 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { key: "start", name: "Getting started", icon: "🎣", sub: "The loop, in the order you will meet it", body: () => `
       <h3>Cast, hook, reel</h3>
       <p>Press <b>Cast</b> (or Space) and wait. When the float dips and the button says <b>Hook it!</b>, press it quickly — too early pulls the bait away, too late and it spits the hook. Then the reel starts: <b>hold</b> to lift the green band, <b>let go</b> to drop it, and keep the fish inside the band until the bar fills. A common fish barely fights; a legendary one moves fast and punishes every second outside the band.</p>
-      <h3>Keep, cook or sell</h3>
-      <p>Every catch asks. <b>Keep</b> puts it in your tank, where it earns pearls every hour. <b>Sell</b> pays three hours of what it would have earned, right now. <b>Cook</b> pays a little less but trains Cooking. Rarer and heavier fish are worth more whichever you choose.</p>
+      <h3>Keep, bank or sell</h3>
+      <p>Every catch asks. <b>Keep</b> puts it in your tank, where it earns pearls every hour and lends a skill a bonus. <b>Bank</b> sends it to the cold store to be cooked in the Kitchen. <b>Sell</b> pays three hours of what it would have earned, right now. Auto-bank can send ordinary catches straight to the cold store so they stop interrupting.</p>
       <h3>Pearls</h3>
       <p><span class="pearl"></span> Pearls are the game's money. They buy rods, tanks, bait seed, gear and upgrades in the Shop, and nothing else. They never turn into ZCoins.</p>
       <h3>While you are away</h3>
@@ -3989,6 +4301,16 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
       <p>Recipes turn what you dive up into bait, pearls and charms. Every craft trains Crafting, and the higher recipes need a Crafting level before you can make them.</p>
       ${wkTable(["Recipe", "Level", "Takes", "Makes", "xp"], RECIPES.map((r) => [r.name, `${r.at}`,
         Object.entries(r.need).map(([k, n]) => `${n} ${LOOT[k].name}`).join(", "), r.about, num(r.xp)]), [1, 4])}` },
+
+    { key: "kitchen", name: "Kitchen", icon: "🍳", sub: "Bank, cook, burn, eat", body: () => `
+      <p>Bank a catch and it waits in the <b>cold store</b>, counted by species. In the Kitchen, pick a fish and cook 1, 10, 100 or all of them: each takes ${(cookMs() / 1000).toFixed(1)} seconds at your level, faster as you level and with Copper pans. The stove keeps going while the page is open, even on another page. With the <b>Smokehouse</b> it carries on while the page is closed, as idle work.</p>
+      <p>Every fish can first be cooked at one level and <b>stops burning</b> at another. Between the two, the burn chance falls from 55% to nothing. Chef's gauntlets bring every stop-burning level 8 closer. Burnt fish are not wasted: ten of them compost onto the bait beds.</p>
+      ${wkTable(["Rarity", "Can cook at", "Stops burning at", "Cooking xp"], RAR.map((r, i) => [wkRar(i), `${COOK_CAN[i]}`, `${cookStop(i)}`, num(COOK_XP[i])]), [1, 2, 3])}
+      <h3>Dishes are buffs</h3>
+      <p>Where a fish came from decides what its dish does; how rare it is decides how long it lasts. Eating another of the same kind adds to what is left and keeps the stronger effect. You can sell a dish instead, for about what the raw fish would have made.</p>
+      ${wkTable(["Water", "Dish", "Buff", "Lasts"], SPOTS.map((sp, i) => [sp.name, `${METHOD[i]} …`, `${BUFF[i].icon} ${BUFF[i].name}: ${BUFF[i].say(BUFF[i].mag[2])}`, `${BUFF[i].n[0]}–${BUFF[i].n[4]} ${BUFF[i].unit}`]))}
+      <h3>Storage</h3>
+      ${wkTable(["Cold store", "Holds", "Price", "Needs"], BANK_CAPS.map((c) => [c.name, num(c.cap), wkPearls(c.cost), c.cost ? wkNeed(c.name) : "—"]), [1, 2])}` },
 
     { key: "skills", name: "Skills", icon: "📈", sub: "Six skills, 1 to 99", body: () => `
       <p>Skills level on the same curve as RuneScape: 83 xp for level 2 and about 13 million for 99. Levels are what open the Shop — the price in pearls is only the other half.</p>
@@ -4173,6 +4495,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   $("cWipe").addEventListener("click", () => { try { localStorage.removeItem(SAVE); } catch {} S = fresh(); swimmers = []; bubbles = []; setPhase("idle"); $("catch").hidden = true; renderEverything(); toast("Save wiped"); });
 
   function away(seconds, quiet) {
+    kitchenAway(seconds);
     S.clock += seconds * 1000;
     const hrs = Math.min(seconds / 3600, offlineCap()), made = tankRate() * hrs;
     tickLoop();
@@ -4183,6 +4506,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (idleLog.turned) bits.push(`${idleLog.turned} eggs turned`);
     if (idleLog.hatched) bits.push(`${idleLog.hatched} hatched`);
     if (idleLog.cooked) bits.push(`${idleLog.cooked} cooked`);
+    if (idleLog.banked) bits.push(`${idleLog.banked} banked`);
     if (idleLog.crafted) bits.push(`${idleLog.crafted} melted down`);
     if (bits.length) toast("Your kit kept working", `${bits.join(" · ")} · +${num(idleLog.xp)} xp`);
     Object.keys(idleLog).forEach((k) => { idleLog[k] = 0; });
@@ -4376,6 +4700,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { tab: "inv", name: "your Inventory", when: () => invCount() > 0,
       need: "something in your bag — dive, or snag one on the line",
       why: "You brought something up. Everything you find lives in the bag until you sell or use it." },
+    { tab: "kitchen", name: "the Kitchen", when: () => bankCount() > 0 || S.stats.cooked > 0,
+      need: "a fish in the cold store — press Bank on a catch",
+      why: "Your first fish is in the cold store. Cook them in batches — the dishes are buffs." },
     { tab: "craft", name: "Crafting", when: () => invCount() >= 5,
       need: "5 things in your bag", have: () => `${invCount()} so far`,
       why: "Enough bits to start making things. Junk turns into bait, pearls and charms." },
@@ -4458,7 +4785,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   const ROOT = "/fishing";
   const ME = "bootypaper";                             // the mockup's own angler
   const SLUGS = {
-    fishing: "", tank: "tank", dive: "diving", boss: "bosses", garden: "garden",
+    fishing: "", tank: "tank", kitchen: "kitchen", dive: "diving", boss: "bosses", garden: "garden",
     breeding: "breeding", craft: "crafting", inv: "inventory", skills: "skills",
     quests: "quests", derby: "derby", dex: "book", board: "leaderboard",
     profile: "profile", shop: "shop", wiki: "wiki", controls: "controls"
@@ -4490,6 +4817,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (b.dataset.tab === "shop") renderShop();
     if (b.dataset.tab === "board") renderBoard();
     if (b.dataset.tab === "wiki") renderWiki();
+    if (b.dataset.tab === "kitchen") renderKitchen();
     if (b.dataset.tab === "derby") renderDerby();
     if (b.dataset.tab === "skills") renderSkills();
     if (b.dataset.tab === "dive") renderDive();
@@ -4513,7 +4841,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   });
 
   /* ============================================================ loop */
-  function renderEverything() { checkUnlocks(true); paintNav(); normalizeLoop(); ensureQuests(); renderSpots(); syncTank(); renderTank(); renderDex(); renderShop(); renderDerby(); renderProfile(); renderGarden(); renderBreeding(); renderQuests(); renderBaitSel(); renderSkills(); renderDive(); renderCraft(); renderInv(); renderBosses(); renderBoard(); renderXpTracker(); }
+  function renderEverything() { checkUnlocks(true); paintNav(); normalizeLoop(); ensureQuests(); renderSpots(); syncTank(); renderTank(); renderDex(); renderShop(); renderDerby(); renderProfile(); renderGarden(); renderBreeding(); renderQuests(); renderBaitSel(); renderSkills(); renderDive(); renderCraft(); renderInv(); renderBosses(); renderBoard(); renderKitchen(); paintBuffs(); renderXpTracker(); }
 
   // the reel's little fish
   function drawReelFish() {
@@ -4533,6 +4861,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     S.pearls += (tankRate() / 3600) * dt * S.speed;
     S.clock += dt * 1000 * S.speed;
     if (t - lastLoop > 400) { lastLoop = t; tickLoop(); }
+    if (S.cookQ && onScreen("kitchen")) paintCookBar();
     $("pearls").textContent = num(S.pearls);
     $("tbPearls").textContent = num(S.pearls);
     if (t - lastShop > 500) { lastShop = t; const sig = shopSig(); if (sig !== renderShop.sig && !$("shop").closest("[hidden]")) renderShop(); }
@@ -4548,7 +4877,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const b = navTabs.find((x) => x.dataset.tab === (tab || "fishing"));
     if (!b) return;
     if (!viewing && !navOpen(b.dataset.tab)) { sayLocked(b.dataset.tab); return; }
-    if (!push) { navTabs.forEach((x) => { const on = x === b; x.setAttribute("aria-selected", String(on)); x.tabIndex = on ? 0 : -1; }); document.querySelectorAll("[data-panel]").forEach((q) => { q.hidden = q.dataset.panel !== b.dataset.tab; }); if (b.dataset.tab === "shop") renderShop(); if (b.dataset.tab === "board") renderBoard(); if (b.dataset.tab === "wiki") renderWiki(); }
+    if (!push) { navTabs.forEach((x) => { const on = x === b; x.setAttribute("aria-selected", String(on)); x.tabIndex = on ? 0 : -1; }); document.querySelectorAll("[data-panel]").forEach((q) => { q.hidden = q.dataset.panel !== b.dataset.tab; }); if (b.dataset.tab === "shop") renderShop(); if (b.dataset.tab === "board") renderBoard(); if (b.dataset.tab === "wiki") renderWiki(); if (b.dataset.tab === "kitchen") renderKitchen(); }
     else openTab(b);
     renderProfile();
   }
@@ -4567,7 +4896,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
   setInterval(save, 5000);
   document.addEventListener("visibilitychange", save);
   window.addEventListener("pagehide", save);
-  window.__reef = { tick: (ms) => { const t0 = performance.now(); for (let k = 0; k <= ms / 16; k++) { last = t0 + (k - 1) * 16; frameBody(t0 + k * 16); } }, get S() { return S; }, lake, heronBox, tankBonus, tankGain, idleGrant, grant, skipTarget, skipsToday, checkUnlocks, paintNav, GATES, track, hatch, harvest, plant, water, breed, claim, openDailyChest, openWeeklyChest, pairs, fish, SPECIES, landed, action, rollCatch, renderEverything, drawFish, BY_KEY, syncTank, renderTank };
+  window.__reef = { tick: (ms) => { const t0 = performance.now(); for (let k = 0; k <= ms / 16; k++) { last = t0 + (k - 1) * 16; frameBody(t0 + k * 16); } }, get S() { return S; }, lake, heronBox, bankFish, startCook, cookTick, stopCook, eatDish, castBuffs, burnChance, kitchenAway, renderKitchen, tankBonus, tankGain, idleGrant, grant, skipTarget, skipsToday, checkUnlocks, paintNav, GATES, track, hatch, harvest, plant, water, breed, claim, openDailyChest, openWeeklyChest, pairs, fish, SPECIES, landed, action, rollCatch, renderEverything, drawFish, BY_KEY, syncTank, renderTank };
 })();
 </script>
 </body>

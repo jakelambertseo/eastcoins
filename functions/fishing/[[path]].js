@@ -17,6 +17,7 @@ const h = (v) => String(v ?? "")
 const SECTIONS = {
   "": ["EastCoin Fishing", "Cast, keep what you catch, and let the tank pay you while you are away."],
   tank: ["Your tank — EastCoin Fishing", "Fish you keep swim here and make pearls, awake or not."],
+  kitchen: ["Kitchen — EastCoin Fishing", "Bank your catch, cook it in batches, and eat the dishes for buffs."],
   diving: ["Diving — EastCoin Fishing", "Air, a bag, and whatever is on the bottom."],
   bosses: ["Bosses — EastCoin Fishing", "Five leviathans, one to a spot. Beat one and that water runs richer for good."],
   garden: ["Bait garden — EastCoin Fishing", "Grow the bait that decides what bites."],
