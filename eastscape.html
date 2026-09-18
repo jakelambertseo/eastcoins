@@ -322,7 +322,7 @@ button,input,select{font:inherit}
 .dlg-face{position:relative;width:84px;height:84px}
 .dlg-face img{position:absolute;width:204px;height:204px;max-width:none;object-fit:fill;image-rendering:pixelated}
 /* the inventory side is a scroll (PixelLab, 1:1): rods top and bottom, torn edges; the paper between is CSS, so it is smooth at any size */
-.panel{border-style:solid;border-width:36px 28px 43px 32px;border-color:transparent;border-image:url(/v3/assets/img/glad/flat/ui/scroll3.png?v=1) 36 28 43 32 / 36px 28px 43px 32px stretch repeat;background-color:#efe2c4;background-image:radial-gradient(rgba(150,110,60,.07) 1px,transparent 1.5px),radial-gradient(rgba(150,110,60,.05) 1px,transparent 1.5px);background-size:7px 9px,11px 13px;background-position:0 0,4px 6px;background-clip:padding-box;image-rendering:pixelated;margin:4px 4px 6px}
+.panel{border-style:solid;border-width:36px 28px 43px 32px;border-color:transparent;border-image:url(/v3/assets/img/glad/flat/ui/scroll4.png?v=1) 36 28 43 32 / 36px 28px 43px 32px stretch repeat;background-color:#efe2c4;background-image:radial-gradient(ellipse 60px 40px at 24% 18%,rgba(160,105,50,.13),transparent 70%),radial-gradient(ellipse 44px 58px at 78% 46%,rgba(150,95,45,.10),transparent 70%),radial-gradient(ellipse 70px 34px at 36% 82%,rgba(165,110,55,.12),transparent 70%),radial-gradient(ellipse 22px 18px at 66% 12%,rgba(120,70,30,.14),transparent 70%),radial-gradient(rgba(150,110,60,.07) 1px,transparent 1.5px),radial-gradient(rgba(150,110,60,.05) 1px,transparent 1.5px);background-size:100% 100%,100% 100%,100% 100%,100% 100%,7px 9px,11px 13px;background-position:0 0,0 0,0 0,0 0,0 0,4px 6px;background-repeat:no-repeat,no-repeat,no-repeat,no-repeat,repeat,repeat;background-clip:padding-box;box-shadow:inset 0 0 26px 6px rgba(150,95,40,.20),inset 0 0 6px 1px rgba(120,70,30,.18);image-rendering:pixelated;margin:4px 4px 6px}
 </style>
 </head>
 <body>
@@ -615,10 +615,10 @@ function say(text, cls = "sys") {
 /* ------------------------------------------------------------ the art (PixelLab, style A) */
 const ART = "/v3/assets/img/glad/flat/", ART_V = 3;
 // pictures replaced after they first shipped (the edge keeps each URL for a year): bump the one that changed
-const ART_VER = { farmhouse: 4, bank: 4, store: 4, hut: 4, cottage: 4, tree: 4, t_dirt: 4, t_water: 4 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
+const ART_VER = { farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
 const ART_FILES = ["t_dirt", "t_water", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d, "legend_" + d]),
-  "bank", "store", "cottage", "o_spot", "g_bush", "g_boulder", "g_grass", "g_flowers",
+  "bank", "store", "cottage", "tree2", "tree3", "tree4", "o_spot", "g_bush", "g_boulder", "g_grass", "g_flowers",
   ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
   ...["tom", "waldy", "tullius", "charon", "livia", "gaius", "nonna", "vibius", "aurelia", "cassia"].flatMap((n) => [n + "_south", n + "_east"]),
   // the Wilderness (PixelLab, 2026-09-18)
@@ -683,6 +683,9 @@ const objArt = (ob, now = 0) => {
 const WALL_CX = { banner: 5, lamp: 4, vault: 0, herbs: 1, shelf: 1, window: 0 };
 // natural things are mirrored at random (by position, so it's the same for everyone) so a forest isn't one tree
 const VARY = new Set(["tree", "oak", "olive", "cypress", "yew", "rock", "vein", "deadtree", "snag", "gravestone", "bush", "boulder", "crate", "barrel", "plant", "palm", "vine", "hive", "skeleton"]);
+// the common tree comes in a few shapes; which one stands where is fixed by its position
+const TREE_KINDS = ["tree", "tree2", "tree3", "tree4"];
+const treeArt = (ob) => { const have = TREE_KINDS.filter((k) => IMG[k]); return have[Math.floor(hashRand(ob.x, ob.y, 79) * have.length)] || "tree"; };
 const flipOf = (ob) => VARY.has(ob.t) && hashRand(ob.x, ob.y, 77) < 0.5;
 // a few pictures came out small for their spot: drawn a bit bigger
 const OBJ_SCALE = {}, HOUSE_SCALE = {};   // integer sizes only: a fractional scale makes pixel art uneven
@@ -1285,7 +1288,7 @@ function frame() {
     if (ob.t === "tree") sprites.push({ y: ob.y * T + 14, draw: () => {
       if (pvp && spr("w_tree", ob.x * T + 8, ob.y * T + 15, flipOf(ob))) return;
       if (ob.stumpUntil > now) { const X = ob.x * T, Y = ob.y * T; px(X + 3, Y + 13, 10, 2, "rgba(0,0,0,.25)"); px(X + 4, Y + 8, 8, 6, "#6b4423"); px(X + 5, Y + 7, 6, 2, "#b8905a"); px(X + 7, Y + 8, 2, 1, "#8a6a3a"); return; }
-      if (!spr("tree", ob.x * T + 8, ob.y * T + 15, flipOf(ob))) { const X = ob.x * T, Y = ob.y * T; px(X + 6, Y + 6, 4, 10, "#6b4423"); px(X - 3, Y - 8, 22, 16, "#3f7a3a"); px(X, Y - 9, 8, 5, "#5a9a4a"); }
+      if (!spr(treeArt(ob), ob.x * T + 8, ob.y * T + 15, flipOf(ob))) { const X = ob.x * T, Y = ob.y * T; px(X + 6, Y + 6, 4, 10, "#6b4423"); px(X - 3, Y - 8, 22, 16, "#3f7a3a"); px(X, Y - 9, 8, 5, "#5a9a4a"); }
     } });
     if (ob.t === "oak") sprites.push({ y: ob.y * T + 14, draw: () => {
       const X = ob.x * T, Y = ob.y * T;
