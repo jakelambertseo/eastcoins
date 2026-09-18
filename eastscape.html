@@ -237,7 +237,7 @@ const myEnt = () => Z.players.find((p) => p.id === you?.id);
 
 /* ------------------------------------------------------------ talking to the server */
 const DEV = ["localhost", "127.0.0.1"].includes(location.hostname);
-let ws = null, retry = 0, retryTimer = null, lastMsg = 0, everConnected = false, kicked = false;
+let ws = null, retry = 0, retryTimer = null, lastMsg = 0, everConnected = false, kicked = false, signedOut = false;
 function net(state, text) { $("net").className = `net ${state}`; $("netText").textContent = text; }
 function send(m) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(m)); }
 async function connect() {
@@ -249,7 +249,7 @@ async function connect() {
     if (DEV) url = `ws://${location.hostname}:8787/ws?dev=1&login=${encodeURIComponent(new URLSearchParams(location.search).get("as") || "bootypaper")}`;
     else {
       const r = await fetch("/api/eastscape/ticket", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: "{}" });
-      if (r.status === 401) { $("gate").hidden = false; $("veil").hidden = true; net("bad", "Not logged in"); return; }
+      if (r.status === 401) { signedOut = true; $("gate").hidden = false; $("veil").hidden = true; net("bad", "Not logged in"); return; }
       const j = await r.json(); if (!j.ok) throw new Error(j.message || "no ticket");
       url = `${j.ws}?ticket=${j.ticket}`;
     }
@@ -272,8 +272,8 @@ function later() {
 }
 function veil(html) { if (html) { $("veilText").innerHTML = html; $("veil").hidden = false; } else $("veil").hidden = true; }
 // coming back to the tab, or the network coming back: reconnect straight away
-document.addEventListener("visibilitychange", () => { if (!document.hidden && !ws && !kicked && you !== false) { retry = 0; connect(); } });
-addEventListener("online", () => { if (!ws && !kicked) { retry = 0; connect(); } });
+document.addEventListener("visibilitychange", () => { if (!document.hidden && !ws && !kicked && !signedOut) { retry = 0; connect(); } });
+addEventListener("online", () => { if (!ws && !kicked && !signedOut) { retry = 0; connect(); } });
 // a quiet socket is a dead socket: ping, and give up on it after 12 seconds of nothing
 setInterval(() => { if (ws && ws.readyState === 1) { send({ t: "ping", c: Date.now() }); if (lastMsg && Date.now() - lastMsg > 12000) ws.close(); } }, 4000);
 
