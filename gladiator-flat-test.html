@@ -349,8 +349,8 @@ button{font:inherit}
         objs.push({ t: "hay", x: 8, y: 4 }, { t: "hay", x: 9, y: 4 }); g[4][8] = "#"; g[4][9] = "#";
         for (let y = 6; y < 9; y++) for (const x of [2, 3]) { objs.push({ t: "wheat", x, y, name: "Wheat", grownAt: 0 }); g[y][x] = "#"; }
         for (const [x, y] of [[20, 2], [19, 11], [14, 11]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
-        // two oaks by the path: Bom Trady's firewood
-        for (const [x, y] of [[13, 7], [15, 7]]) { objs.push({ t: "oak", x, y, name: "Oak tree" }); g[y][x] = "#"; }
+        // an oak by the path: Bom Trady's firewood
+        for (const [x, y] of [[17, 8]]) { objs.push({ t: "oak", x, y, name: "Oak tree" }); g[y][x] = "#"; }
         wild(g, objs, this.exits, { n: "forest", w: "forest", s: "water", e: "forest" }, keepOf(this), 1);
         return { g, objs, blobs: [[7, 8, 3], [15, 4, 3], [18, 9, 2], [5, 11, 2]] };
       },
@@ -860,9 +860,9 @@ button{font:inherit}
       goal: { type: "bring", items: ["logs"], n: 5, what: "logs" },
       brief: "Bring Bom Trady 5 logs for the ludus kitchen.",
       talk: {
-        offer: ["Hey, rookie. Kitchen's out of firewood, and I've got a game Sunday.", "Bring me 5 logs. The two oaks by the path are good ones. Hold your axe, not your sword, then click a tree."],
+        offer: ["Hey, rookie. Kitchen's out of firewood, and I've got a game Sunday.", "Bring me 5 logs. The oak down by the path is a good one. Hold your axe, not your sword, then click a tree."],
         accept: "I'll get your logs.", decline: "Not right now.",
-        accepted: "Attaboy. The oaks are just east of here. Don't chop Waldy.",
+        accepted: "Attaboy. The oak's just southeast of here. Don't chop Waldy.",
         progress: "How's that firewood coming? I need 5 logs. You've got {have}.",
         ready: "Now those are logs. Hand 'em over.", hand: "Here you go.",
         done: "Kitchen's warm. You did good, rookie. Come back when you want real work."
