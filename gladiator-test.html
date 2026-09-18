@@ -67,9 +67,47 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .spot.locked{color:var(--muted-2)}
 .spot.locked b{display:inline-flex;align-items:center;gap:4px;color:var(--muted)}
 .spot:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-.scene-wrap{position:relative;aspect-ratio:16/10;background:#0b1a2a;touch-action:none;user-select:none;-webkit-user-select:none}
+/* 16:10 when there is room, but never taller than the window can show with
+   the Cast button under it: on a shorter screen a wide card made the scene
+   ~690px and put Cast below the fold. The scene draws to whatever box it
+   gets (fitCanvas reads clientWidth/Height), so capping it is safe. The
+   width is pinned at 100%, or the browser keeps 16:10 by narrowing the box
+   and leaves a gap beside the scene instead of giving up height. */
+.scene-wrap{position:relative;width:100%;aspect-ratio:16/10;max-height:calc(100vh - 360px);min-height:260px;background:#0b1a2a;touch-action:none;user-select:none;-webkit-user-select:none}
 .scene-wrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .status{position:absolute;left:12px;top:10px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+.buffrow{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px 0}
+.buffrow[hidden]{display:none}
+.buffrow.kbuffs{padding:12px 0 0}
+.buffchip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;background:rgba(var(--gold-rgb),.1);border:1px solid rgba(var(--gold-rgb),.45);color:var(--gold);font-size:.76rem;font-weight:800}
+.buffchip b{font-variant-numeric:tabular-nums;color:var(--text)}
+.kq{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center}
+.kq-main b{display:block;font-size:.95rem}
+.kq-main small{color:var(--muted-2);font-size:.76rem}
+.kq-main .ok{color:var(--green);font-weight:700}
+.kq-main .no{color:var(--red);font-weight:700}
+.kq-now{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center;margin-top:10px}
+.kq-now>span{font-size:.8rem;font-weight:700;color:var(--muted);white-space:nowrap}
+.kq-now b{color:var(--text)}
+.kq-now small{color:var(--muted-2);font-weight:700;margin-left:4px}
+@media (max-width:600px){.kq-now{grid-template-columns:minmax(0,1fr)}.kq-now>span{white-space:normal}}
+.kq-bar{min-width:0}
+.kq-bar i{transition:none}
+.kauto{display:flex;align-items:center;gap:4px;margin:0 0 10px;font-size:.8rem;font-weight:700;color:var(--muted)}
+.krow{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line)}
+.krow:last-child{border-bottom:0}
+.krow.locked{opacity:.55}
+.krow-fish{display:grid;place-items:center;font-size:1.2rem}
+.krow-main b{display:block;font-size:.9rem}
+.krow-main small{display:block;font-size:.76rem;color:var(--muted-2)}
+.krow-main small b{display:inline;font-size:inherit}
+.krow-btns{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.g-select{background:var(--panel-2);color:var(--text);border:1px solid var(--line-2);border-radius:9px;padding:6px 9px;font:inherit;font-size:.82rem;font-weight:700;margin-left:6px}
+.tankpill{pointer-events:auto;background:rgba(8,6,5,.62);border:1px solid rgba(255,255,255,.12);padding:4px 9px;border-radius:99px;font:inherit;font-size:.74rem;font-weight:800;color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.tankpill b{font-variant-numeric:tabular-nums}
+.tankpill:hover{border-color:var(--sea)}
+.tankpill.near{border-color:rgba(var(--gold-rgb),.6);color:var(--gold)}
+.tankpill.full{border-color:rgba(255,107,133,.6);color:var(--red);background:rgba(40,8,12,.72)}
 .sfx-btn{pointer-events:auto;background:rgba(8,6,5,.62);border:1px solid rgba(255,255,255,.12);padding:3px 8px;border-radius:99px;font-size:.82rem;line-height:1.2;cursor:pointer;margin-right:auto;margin-left:7px}
 .sfx-btn:hover{border-color:var(--sea)}
 .status > span{background:rgba(8,6,5,.62);border:1px solid rgba(255,255,255,.12);padding:4px 9px;border-radius:99px;font-size:.74rem;font-weight:800}
@@ -95,16 +133,35 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .bait{font-size:.78rem;color:var(--muted)}
 .bait b{color:var(--gold)}
 
-.catch{position:absolute;inset:0;display:grid;place-items:center;background:rgba(4,10,18,.72);backdrop-filter:blur(2px);padding:12px}
+.catch{position:absolute;inset:0;z-index:12;display:grid;place-items:safe center;overflow:auto;background:rgba(4,10,18,.72);backdrop-filter:blur(2px);padding:8px}
 .catch[hidden]{display:none}
 .catch-card{background:var(--panel);border:1px solid var(--line-2);border-radius:14px;padding:14px;width:min(340px,100%);text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6)}
-.catch-card canvas{position:static;width:100%;height:auto;aspect-ratio:2/1;display:block;border-radius:10px;background:radial-gradient(circle at 50% 60%,rgba(79,195,217,.22),rgba(0,0,0,0) 70%)}
+.catch-card{max-height:100%;overflow-y:auto;display:flex;flex-direction:column;padding:12px}
+.catch-card>*{flex:none}
+.catch-card>canvas{flex:0 1 auto;min-height:56px}
+.catch-card canvas{position:static;width:100%;max-width:100%;height:auto;max-height:170px;aspect-ratio:2/1;object-fit:contain;display:block;margin:0 auto;border-radius:10px;background:radial-gradient(circle at 50% 60%,rgba(79,195,217,.22),rgba(0,0,0,0) 70%)}
 .catch-card h3{font-family:var(--display);font-size:1.35rem;margin:4px 0 2px}
 .tags{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:4px 0 8px}
 .tag{font-size:.66rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:99px;border:1px solid currentColor}
 .tag.solid{background:var(--gold);color:#2a1300;border-color:transparent}
 .tag.new{color:var(--sea)}
 .catch-line{color:var(--muted);font-size:.86rem;margin:0 0 10px}
+.ctank{margin:0 0 10px;padding:7px 10px;border-radius:10px;background:rgba(79,195,217,.08);border:1px solid rgba(79,195,217,.35);font-size:.8rem;color:var(--muted);text-align:center}
+.ctank b{color:var(--sea)}
+.tank-list .lends{display:block;font-size:.66rem;font-weight:800;color:var(--sea)}
+.tank-list .lends.dup{color:var(--muted-2);font-weight:700}
+.tb-grid{display:grid;gap:7px}
+.tb-row{display:grid;grid-template-columns:34px minmax(0,1fr) minmax(90px,180px) 64px;gap:12px;align-items:center;padding:8px 11px;border-radius:11px;background:var(--panel-2);border:1px solid var(--line)}
+.tb-row.none{opacity:.55}
+.tb-ico{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:var(--panel-3)}
+.tb-ico svg{width:18px;height:18px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tb-main b{display:block;font-size:.88rem}
+.tb-main small{display:block;font-size:.72rem;color:var(--muted-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-bar{height:8px;border-radius:99px;background:var(--panel-3);border:1px solid var(--line);overflow:hidden}
+.tb-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#1f6fd1,#4fc3d9)}
+.tb-v{font-family:var(--display);font-weight:800;color:var(--sea);text-align:right;font-variant-numeric:tabular-nums}
+.skill-tank{margin:0;font-size:.74rem;color:var(--muted-2)}
+.skill-tank b{color:var(--sea)}
 .csnag{display:flex;align-items:center;justify-content:center;gap:7px;margin:0 0 10px;padding:7px 10px;border-radius:10px;background:var(--gold-dim);border:1px solid rgba(var(--gold-rgb),.35);font-size:.82rem;color:var(--muted)}
 .csnag span{font-size:1.05rem}
 .csnag b{color:var(--gold);font-weight:800}
@@ -114,8 +171,14 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .cstat b{font-family:var(--display);font-weight:800;font-size:.95rem;display:flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .cstat.xp b{color:#ff981f}
 .cstat .pearl{width:12px;height:12px}
-.btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
-.btns .btn{justify-content:center;padding:0 8px;white-space:nowrap}
+.btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+/* A catch button wraps its own label before it will spill out of its cell,
+   and the row drops to two columns, then one, on a card too narrow for three. */
+.btns{grid-template-columns:repeat(auto-fit,minmax(84px,1fr))}
+.btns .btn{min-width:0;justify-content:center;white-space:normal;text-align:center;line-height:1.15}
+.btns.upgrading{grid-template-columns:repeat(2,minmax(0,1fr))}
+.btns .btn.wide{grid-column:1 / -1;white-space:normal}
+.btns .btn{justify-content:center;padding:8px 10px;min-height:40px;font-size:.86rem;white-space:normal}
 .btns .btn .pearl{margin-left:3px}
 .btn{border:1px solid var(--line-2);background:var(--panel-3);border-radius:10px;padding:9px 14px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .btn.primary{background:var(--sea);color:#062028;border-color:transparent}
@@ -142,6 +205,44 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .fishtip[hidden]{display:none}
 .fishtip strong{font-family:var(--display);display:block}
 .fishtip small{display:block;color:var(--muted);margin:2px 0 8px}
+.fishtip .sp{display:block;font-size:.72rem;font-weight:700;color:var(--muted-2);margin-top:1px}
+.fishtip .tip-btns{display:flex;gap:6px;flex-wrap:wrap}
+.fishtip input,.tank-name input{font:inherit;font-weight:800;color:var(--text);background:var(--panel-2);border:1px solid rgba(var(--gold-rgb),.6);border-radius:8px;padding:4px 8px;width:100%;min-width:0;outline:none}
+.tank-name{position:absolute;left:10px;bottom:10px;z-index:2;display:inline-flex;align-items:center;gap:7px;max-width:calc(100% - 20px);padding:5px 11px;border-radius:99px;background:rgba(4,14,22,.72);border:1px solid rgba(255,255,255,.18);color:#fff;font:inherit;font-family:var(--display);font-weight:800;font-size:.86rem;cursor:pointer}
+.tank-name:hover,.tank-name:focus-visible{border-color:rgba(var(--gold-rgb),.7);outline:none}
+.tank-name svg{width:13px;height:13px;stroke:var(--gold);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tank-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tank-name.editing{cursor:default;width:min(320px,calc(100% - 20px))}
+.profile-tank{position:relative;overflow:visible!important}
+.profile-tank canvas{cursor:crosshair;border-radius:12px}
+.mini-tip.below{transform:translate(-50%,16px)}
+.mini-tip{pointer-events:none;min-width:170px}
+.mini-tip small{margin:4px 0 0}
+.mini-tip .lends{display:block;font-size:.7rem;font-weight:800;color:var(--sea);margin-top:3px}
+/* tank page, 2026-09-17: the glass and what is in it side by side, so the page reads across not down */
+.tank-top{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(280px,1fr);gap:16px;align-items:stretch}
+.tank-main{overflow:hidden}
+.tank-side{height:0;min-height:100%;display:flex;flex-direction:column;padding:14px 14px 12px;gap:10px}
+.tank-side-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tank-side-head .card-h{margin:0}
+.tank-cap{padding:3px 10px;border-radius:99px;background:var(--panel-2);border:1px solid var(--line-2);font-weight:800;font-size:.76rem;font-variant-numeric:tabular-nums}
+.tank-cap.full{color:#ffb54a;border-color:rgba(255,181,74,.55);background:rgba(255,181,74,.1)}
+.tank-side-scroll{flex:1 1 0;min-height:0;overflow-y:auto;margin-right:-6px;padding-right:6px}
+.tank-side .tank-list li{grid-template-columns:10px minmax(0,1fr) auto;row-gap:6px;font-size:.82rem}
+.tank-side .tank-list li .btn{grid-column:2 / -1;justify-self:end;padding:3px 9px;font-size:.72rem}
+.tank-side .tank-list li .rate{flex-direction:column;align-items:flex-end;gap:0}
+.tank-side .tank-list li > span:nth-child(2){line-height:1.55}
+.tank-list .qtag{font-size:.56rem;padding:0 6px;gap:2px}
+.tank-full{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,181,74,.55);background:linear-gradient(90deg,rgba(255,181,74,.14),rgba(255,181,74,.04))}
+.tank-full[hidden]{display:none}
+.tank-full b{display:block;font-size:.88rem;color:#ffcf7a}
+.tank-full small{display:block;font-size:.74rem;color:var(--muted)}
+.tank-full .btn{white-space:nowrap}
+.tank-fullpill{position:absolute;right:10px;bottom:10px;z-index:2;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;border:1px solid rgba(255,181,74,.7);background:rgba(40,24,6,.85);color:#ffcf7a;font:inherit;font-weight:800;font-size:.8rem;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.tank-fullpill[hidden]{display:none}
+.tank-fullpill:hover{background:rgba(70,42,10,.9)}
+@media (min-width:1100px){#tbGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:1000px){.tank-top{grid-template-columns:minmax(0,1fr)}.tank-side{height:auto;min-height:0}.tank-side-scroll{max-height:360px;flex:none}}
 .tank-list{list-style:none;margin:0;padding:0;display:grid;gap:4px}
 .tank-list li{display:grid;grid-template-columns:10px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:6px 8px;border-radius:9px;background:var(--panel-2);font-size:.86rem}
 .tank-list li i{width:10px;height:10px;border-radius:50%}
@@ -457,6 +558,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 /* ---------- the daily loop (tabs in the lower card) */
 .tab .count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;margin-left:auto;border-radius:9px;background:var(--gold);color:#2a1300;font-size:.68rem;font-weight:800;vertical-align:1px}
 .tab .count[hidden]{display:none}
+.tab .count.ready{background:#e5484d;color:#fff;letter-spacing:.06em;font-size:.6rem;padding:0 7px;animation:readyPulse 2s ease-in-out infinite}
+@keyframes readyPulse{50%{box-shadow:0 0 0 4px rgba(229,72,77,.25)}}
+@media (prefers-reduced-motion:reduce){.tab .count.ready{animation:none}}
 .panel-intro{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin:2px 0 14px}
 .panel-intro p{margin:0;color:var(--muted);font-size:.86rem;line-height:1.45;max-width:60ch}
 .panel-intro p b{color:var(--text);font-weight:700}
@@ -472,7 +576,54 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .linkbtn:hover{color:var(--text)}
 
 /* quests */
-.q-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.q-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+@media (max-width:900px){.q-cols{grid-template-columns:minmax(0,1fr)}}
+/* quests, rebuilt 2026-09-17: a board per cadence, tiles not rows */
+.qb{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:grid}
+.qb-top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:16px 18px;background:linear-gradient(180deg,rgba(var(--gold-rgb),.07),transparent);border-bottom:1px solid var(--line)}
+.qb-ring{--v:0;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--gold) calc(var(--v) * 1turn),var(--panel-3) 0)}
+.qb-ring span{width:40px;height:40px;border-radius:50%;background:var(--panel);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:.9rem;font-variant-numeric:tabular-nums}
+.qb-ring small{font-size:.66rem;color:var(--muted-2)}
+.qb-title h2{margin:0;font-family:var(--display);font-weight:800;font-size:1.2rem}
+.qb-title p{margin:2px 0 0;font-size:.76rem;color:var(--muted-2)}
+.qb-pills{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.qb-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;background:var(--panel-2);border:1px solid var(--line-2);font-size:.72rem;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.qb-pill svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.qb-pill.fire{color:#ff9d3c;border-color:rgba(255,157,60,.45);background:rgba(255,157,60,.1)}
+.qb-list{display:grid;gap:9px;padding:14px}
+.qt{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 13px;border-radius:13px;background:var(--panel-2);border:1px solid var(--line);transition:border-color .2s}
+.qt-ico{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:var(--panel-3);color:var(--sea)}
+.qt-ico svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.qt-main{display:grid;gap:6px;min-width:0}
+.qt-main b{font-size:.9rem;line-height:1.25}
+.qt-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:center}
+.qt-track{height:8px;border-radius:99px;background:var(--panel-3);overflow:hidden}
+.qt-track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#1f6fd1,var(--sea));width:calc(var(--p) * 100%)}
+.qt-bar small{font-size:.72rem;font-weight:800;color:var(--muted-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.qt-side{display:grid;justify-items:end;gap:4px}
+.qt-reward{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;background:var(--gold-dim);color:var(--gold);font-weight:800;font-size:.8rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.qt-reward .pearl{width:13px;height:13px}
+.qt.done{border-color:rgba(var(--gold-rgb),.6);box-shadow:0 0 0 1px rgba(var(--gold-rgb),.2) inset}
+.qt.done .qt-ico{background:var(--gold-dim);color:var(--gold)}
+.qt.done .qt-track i{background:linear-gradient(90deg,#c9922a,var(--gold))}
+.qt.claimed{opacity:.62}
+.qt.claimed .qt-ico{background:rgba(77,219,139,.14);color:var(--green)}
+.qt.claimed .qt-track i{background:var(--green)}
+.qt.claimed .qt-reward{background:var(--panel-3);color:var(--muted)}
+.qt-got{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:800;color:var(--green)}
+.qt-got svg{width:13px;height:13px}
+.qb-chest{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;margin:0 14px 14px;padding:12px 13px;border-radius:13px;border:1px dashed var(--line-2);background:rgba(0,0,0,.14)}
+.qb-chest .ch-ico{font-size:1.9rem;line-height:1;text-align:center;filter:grayscale(.7) brightness(.8)}
+.qb-chest b{display:block;font-size:.86rem}
+.qb-chest small{display:block;font-size:.74rem;color:var(--muted-2);margin-top:2px}
+.qb-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:7px}
+.qb-steps i{height:5px;border-radius:99px;background:var(--panel-3)}
+.qb-steps i.on{background:var(--gold)}
+.qb-chest.ready{border-style:solid;border-color:rgba(var(--gold-rgb),.7);background:linear-gradient(90deg,rgba(var(--gold-rgb),.14),rgba(var(--gold-rgb),.04))}
+.qb-chest.ready .ch-ico{filter:none}
+.qb-chest.opened{border-style:solid;border-color:rgba(77,219,139,.4)}
+.qb-chest.opened .ch-ico{filter:none}
+.qb-chest.opened small{color:var(--green)}
 @media (max-width:720px){.q-cols{grid-template-columns:minmax(0,1fr);gap:18px}}
 .q-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:2px}
 .q-head .sec-h{margin:0}
@@ -594,6 +745,43 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 @media (max-width:560px){.xpt{width:170px;right:8px;bottom:8px;font-size:.66rem}.xpt-sess{display:none}}
 
 /* inventory rows: picture, what it is, then the two sell buttons */
+.inv-wrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+@media (max-width:860px){.inv-wrap{grid-template-columns:minmax(0,1fr)}.inv-side{position:static}}
+.inv-sec{display:grid;gap:9px;margin-bottom:16px}
+.inv-sec:last-child{margin-bottom:0}
+.inv-sec h4{margin:0;display:flex;align-items:baseline;gap:8px;font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.inv-sec h4 span{letter-spacing:0;text-transform:none;font-weight:700}
+.inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.inv-tile{position:relative;display:grid;grid-template-rows:62px auto;gap:4px;justify-items:center;padding:8px 6px 7px;border-radius:12px;background:var(--panel-2);border:1px solid var(--line);border-bottom:3px solid var(--rc,var(--line-2));color:var(--text);font:inherit;cursor:pointer;min-width:0}
+.inv-tile:hover{background:var(--panel-3)}
+.inv-tile:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.inv-tile.on{border-color:rgba(var(--gold-rgb),.75);box-shadow:0 0 0 1px rgba(var(--gold-rgb),.5);background:var(--panel-3)}
+.inv-art{width:100%;height:62px;display:grid;place-items:center;font-size:2.3rem;line-height:1;border-radius:9px;background:radial-gradient(circle at 50% 60%,rgba(255,255,255,.06),rgba(0,0,0,0) 70%)}
+.inv-art canvas{width:84px;height:50px;display:block}
+.inv-art.dish{background:radial-gradient(circle at 50% 62%,rgba(var(--gold-rgb),.16) 0 38%,rgba(0,0,0,0) 40%)}
+.inv-tile small{font-size:.7rem;font-weight:700;color:var(--muted);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inv-n{position:absolute;top:5px;right:6px;min-width:22px;padding:1px 6px;border-radius:99px;background:rgba(10,8,6,.82);border:1px solid var(--line-2);font-family:var(--display);font-weight:800;font-size:.72rem;font-variant-numeric:tabular-nums}
+.inv-side{position:sticky;top:64px;background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:12px}
+.inv-side .inv-art{height:110px;font-size:4rem;background:var(--panel-3)}
+.inv-side .inv-art canvas{width:170px;height:100px}
+.inv-side h3{margin:0;font-family:var(--display);font-weight:800;font-size:1.2rem}
+.inv-side .tags{justify-content:flex-start;margin:4px 0 0}
+.inv-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.inv-facts div{background:var(--panel-3);border-radius:10px;padding:7px 9px;display:grid;gap:1px}
+.inv-facts small{font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.inv-facts b{font-family:var(--display);font-weight:800;display:flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums}
+.inv-facts .pearl{width:12px;height:12px}
+.inv-use h5{margin:0 0 6px;font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.inv-use ul{margin:0;padding:0;list-style:none;display:grid;gap:5px}
+.inv-use li{font-size:.8rem;color:var(--muted);line-height:1.35}
+.inv-use li b{color:var(--text)}
+.inv-use li.no{opacity:.6}
+.inv-acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.inv-acts .btn{justify-content:center;min-width:0;white-space:normal;text-align:center}
+.inv-acts .btn.wide{grid-column:1 / -1}
+.qtag{display:inline-flex;align-items:center;gap:3px;font-size:.66rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:99px;color:var(--qc);background:color-mix(in srgb,var(--qc) 16%,transparent);border:1px solid color-mix(in srgb,var(--qc) 50%,transparent);white-space:nowrap;vertical-align:1px}
+.qtag i{font-style:normal;letter-spacing:-1px}
+.inv-q{position:absolute;top:6px;left:7px;font-size:.66rem;letter-spacing:-1px;color:var(--qc);text-shadow:0 1px 2px #000}
 .inv-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:11px 2px;border-bottom:1px solid var(--line)}
 .inv-row:last-child{border-bottom:0}
 .inv-row .loot-ico{font-size:1.6rem;line-height:1;text-align:center}
@@ -613,7 +801,23 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .craft-row.locked .craft-art img{filter:grayscale(1) brightness(.6)}
 .craft-row:last-child{border-bottom:0}
 .craft-row.locked{opacity:.55}
-.craft-main b{display:block;font-size:.9rem}
+/* a recipe reads in three lines beside its 118px art: what it is, what it
+   takes (have/need, green or red), and what it gives */
+.craft-main{display:grid;gap:9px;min-width:0}
+.cm-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.cm-head b{font-family:var(--display);font-weight:800;font-size:1.15rem;color:var(--text)}
+.cm-meta{font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.cm-row{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;align-items:center}
+.cm-lab{font-size:.62rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted-2)}
+.cm-chips{display:flex;flex-wrap:wrap;gap:6px}
+.cm-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 7px;border-radius:99px;font-size:.84rem;font-weight:700;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text)}
+.cm-chip .i{font-size:1rem;line-height:1}
+.cm-chip em{font-style:normal;font-weight:800;font-variant-numeric:tabular-nums;margin-left:2px}
+.cm-chip.ok{border-color:rgba(77,219,139,.45);background:var(--green-dim)}
+.cm-chip.ok em{color:var(--green)}
+.cm-chip.no{border-color:rgba(255,107,133,.45);background:rgba(255,107,133,.08)}
+.cm-chip.no em{color:var(--red)}
+.cm-out{display:inline-flex;justify-self:start;padding:5px 12px;border-radius:99px;font-size:.88rem;font-weight:800;color:var(--gold);background:var(--gold-dim);border:1px solid rgba(var(--gold-rgb),.4)}
 .craft-parts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:3px;font-size:.78rem;color:var(--muted)}
 .craft-parts .ok{color:var(--green);font-weight:700}
 .craft-parts .no{color:var(--red);font-weight:700}
@@ -649,11 +853,51 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .dive-bar{flex:1;min-width:220px;height:10px;border-radius:99px;background:var(--panel-3);border:1px solid var(--line);overflow:hidden}
 .dive-bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#1f6fd1,#4fc3d9 70%,#bdf0ff)}
 .dive-note{color:var(--muted-2);font-size:.78rem}
+.dive-bar.has-diver{overflow:visible;margin-left:128px;height:12px;position:relative}
+.dive-bar.has-diver i{position:relative}
+.dive-bar .diver{position:absolute;right:-14px;top:50%;height:44px;width:auto;max-width:none;transform:translateY(-60%);pointer-events:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55));animation:diverBob 2.4s ease-in-out infinite}
+.dive-bar.going .diver{animation-duration:.9s}
+@keyframes diverBob{50%{transform:translateY(-44%) rotate(-2deg)}}
+@media (prefers-reduced-motion:reduce){.dive-bar .diver{animation:none}}
 /* bosses */
 .boss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
 .boss{border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden;display:grid;align-content:start}
 .boss.open{border-color:rgba(var(--gold-rgb),.45)}
 .boss.beaten{border-color:rgba(77,219,139,.4)}
+/* the boss victory card (2026-09-17): the catch card's shape, with rays, confetti and a gold rim.
+   Readable content never waits on opacity — the card pops in on transform only. */
+.bw{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:16px;background:radial-gradient(circle at 50% 42%,rgba(40,26,6,.78),rgba(3,6,10,.9) 70%);backdrop-filter:blur(3px);overflow:hidden}
+.bw-rays{position:absolute;left:50%;top:42%;width:170vmax;height:170vmax;margin:-85vmax 0 0 -85vmax;pointer-events:none;
+  background:repeating-conic-gradient(from 0deg,rgba(var(--gold-rgb),.13) 0 6deg,transparent 6deg 18deg);
+  -webkit-mask:radial-gradient(circle,#000 0,transparent 55%);mask:radial-gradient(circle,#000 0,transparent 55%);animation:bwSpin 26s linear infinite}
+@keyframes bwSpin{to{transform:rotate(1turn)}}
+.bw-conf{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.bw-conf i{position:absolute;top:-4vh;width:8px;height:13px;border-radius:2px;animation:bwFall linear forwards}
+@keyframes bwFall{to{transform:translate3d(var(--dx),112vh,0) rotate(var(--r))}}
+.bw-card{position:relative;width:min(400px,100%);max-height:calc(100vh - 32px);overflow-y:auto;padding:18px 18px 16px;text-align:center;border-radius:18px;
+  background:linear-gradient(180deg,#2a2016,var(--panel) 38%);border:1px solid rgba(var(--gold-rgb),.75);
+  box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 60px rgba(var(--gold-rgb),.28),0 30px 80px rgba(0,0,0,.7);animation:bwPop .55s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes bwPop{from{transform:scale(.72) translateY(24px)}}
+.bw-eye{font-size:.7rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.bw-art{position:relative;margin:8px 0 4px;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 55%,rgba(var(--gold-rgb),.3),rgba(79,195,217,.08) 45%,rgba(0,0,0,0) 72%)}
+.bw-art canvas{display:block;width:100%;height:auto;aspect-ratio:2/1}
+.bw-art::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,240,200,.28) 50%,transparent 65%);transform:translateX(-120%);animation:bwSheen 2.6s ease-in-out .5s infinite}
+@keyframes bwSheen{60%,100%{transform:translateX(120%)}}
+.bw-card h3{margin:2px 0 0;font-family:var(--display);font-weight:800;font-size:1.7rem;line-height:1.1;
+  background:linear-gradient(90deg,#f7d774,#fff6d5,#e8b53a,#f7d774);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:bwShine 3s linear infinite}
+@keyframes bwShine{to{background-position:-200% 0}}
+.bw-sub{margin:3px 0 12px;font-size:.84rem;color:var(--muted)}
+.bw-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:12px}
+.bw-unl{display:grid;gap:7px;text-align:left;margin-bottom:14px}
+.bw-unl h4{margin:0 0 1px;font-size:.66rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);text-align:center}
+.bw-row{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:center;padding:9px 11px;border-radius:11px;background:var(--panel-2);border:1px solid var(--line)}
+.bw-row.gold{border-color:rgba(var(--gold-rgb),.55);background:linear-gradient(90deg,rgba(var(--gold-rgb),.14),var(--panel-2))}
+.bw-row .i{font-size:1.35rem;text-align:center}
+.bw-row b{display:block;font-size:.88rem}
+.bw-row small{display:block;font-size:.74rem;color:var(--muted-2)}
+.bw-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bw-btns .btn{justify-content:center}
+@media (prefers-reduced-motion:reduce){.bw-rays,.bw-conf,.bw-art::after{display:none}.bw-card,.bw-card h3{animation:none}}
 .boss-art{position:relative;height:130px;background:radial-gradient(120% 120% at 50% 20%,#1b2c3d,#0a1119 75%);display:grid;place-items:center}
 .boss.locked .boss-art{filter:grayscale(1) brightness(.5)}
 .boss-art canvas{width:100%;height:100%;display:block}
@@ -763,6 +1007,67 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .g-skills{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 @media (max-width:900px){.g-skills{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .boss-art.g-beast{display:grid;place-items:center;font-size:4.2rem;background:radial-gradient(circle at 50% 60%,#4a2a18,#150c08)}
+/* ================= idle combat and dungeons (2026-09-17) ================= */
+.g-hp small span{font-variant-numeric:tabular-nums;opacity:.85;letter-spacing:0;text-transform:none;font-weight:700}
+.g-bar i{transition:width .15s linear}
+.g-bar i.low{background:linear-gradient(90deg,#b8354f,#ff6b85)}
+.g-atk{height:4px;border-radius:99px;background:rgba(0,0,0,.5);overflow:hidden}
+.g-atk i{display:block;height:100%;width:0;background:#f1d27a}
+.g-hp.foe .g-atk i{margin-left:auto;background:#ff9a7a}
+.dun-spot{display:grid;gap:1px;text-align:left;line-height:1.2}
+.dun-spot small{font-size:.66rem;font-weight:700;color:var(--muted-2)}
+.spot.locked{opacity:.55}
+.cb-panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,300px) minmax(0,1fr);gap:12px;padding:14px;border-top:1px solid var(--line)}
+@media (max-width:980px){.cb-panel{grid-template-columns:minmax(0,1fr)}}
+.cb-side{background:var(--panel-2);border:1px solid var(--line);border-radius:13px;padding:11px 12px;display:grid;gap:8px;align-content:start}
+.cb-side h4{margin:0;display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-family:var(--display);font-weight:800;font-size:.95rem}
+.cb-side h4 span{font-family:inherit;font-size:.7rem;font-weight:800;color:var(--gold);letter-spacing:.04em;text-transform:uppercase}
+.cb-side.foe h4 span{color:#ff9a7a}
+.cb-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 12px}
+.cb-grid div{display:flex;justify-content:space-between;gap:8px;font-size:.78rem;border-bottom:1px dashed var(--line);padding-bottom:3px}
+.cb-grid small{color:var(--muted-2);font-weight:700}
+.cb-grid b{font-variant-numeric:tabular-nums}
+.cb-buffs{display:flex;flex-wrap:wrap;gap:5px;margin:0}
+.cb-buffs span{font-size:.7rem;font-weight:800;padding:2px 8px;border-radius:99px;background:var(--gold-dim);color:var(--gold)}
+.cb-mid{display:grid;gap:9px;align-content:start}
+.cb-mid .act{width:100%;min-width:0}
+.cb-styles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+.cb-style{display:grid;gap:1px;padding:6px 8px;border-radius:9px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);font:inherit;cursor:pointer;text-align:left}
+.cb-style b{font-size:.8rem}
+.cb-style small{font-size:.66rem;color:var(--muted-2);font-weight:700}
+.cb-style.on{border-color:rgba(var(--gold-rgb),.75);background:var(--gold-dim)}
+.cb-style.on b{color:var(--gold)}
+.cb-food{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cb-food .g-select{margin:0;flex:1;min-width:0;max-width:none}
+.cb-lab{font-size:.74rem;font-weight:800;color:var(--muted)}
+.cb-check{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;font-weight:800;color:var(--muted);cursor:pointer}
+.dun-cols{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
+.dun-cols .card-next{margin-top:18px}
+@media (max-width:980px){.dun-cols{grid-template-columns:minmax(0,1fr);gap:0}}
+.dun-meta{margin:4px 0 12px;font-size:.78rem;color:var(--muted);display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.rooms{display:grid;gap:5px}
+.room{display:grid;grid-template-columns:24px 30px minmax(0,1fr) auto auto 74px;gap:10px;align-items:center;padding:7px 10px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line)}
+.room-n{font-family:var(--display);font-weight:800;font-size:.8rem;color:var(--muted-2);text-align:center}
+.room-ico{font-size:1.35rem;text-align:center}
+.room-main b{display:block;font-size:.86rem}
+.room-main small{display:block;font-size:.7rem;color:var(--muted-2)}
+.room-odds{display:grid;justify-items:end;min-width:46px}
+.room-odds small{font-size:.58rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-2)}
+.room-odds b{font-variant-numeric:tabular-nums;font-size:.85rem}
+.room.boss{border-color:rgba(var(--gold-rgb),.45);background:linear-gradient(90deg,rgba(var(--gold-rgb),.1),var(--panel-2))}
+.room.done{opacity:.45}
+.room.now{border-color:rgba(255,154,122,.8);box-shadow:0 0 0 1px rgba(255,154,122,.35) inset}
+.room.now .room-n{color:#ff9a7a}
+.sess-grid,.away-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.away-grid{grid-template-columns:repeat(3,minmax(0,1fr));margin:10px 0}
+.sess-drops{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.away-xp{font-size:.8rem;color:var(--muted);line-height:1.6}
+.g-card .note{font-size:.76rem;color:var(--muted-2);font-weight:600}
+.chest-ico{font-size:2.6rem;line-height:1}
+.chest-loot{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 12px;color:var(--text)!important}
+.g-result{overflow:auto}
+.room .btn,.room-farm{justify-self:end}
+.room .btn{width:100%;justify-content:center}
 </style>
 </head>
 <body>
@@ -777,9 +1082,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     <nav class="fnav" aria-label="Gladiator">
       <div class="tabs" role="tablist" aria-orientation="vertical">
         <button class="tab tab-shop" data-tab="market" type="button"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1.2 11.5H6.2z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg><span class="tab-label">Market</span></button>
-        <span class="fnav-h">In the arena</span>
-        <button class="tab" data-tab="arena" type="button" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M5 19 19 5M14 5h5v5M5 14l5 5M8 16l-3 3"/></svg><span class="tab-label">Arena</span></button>
-        <button class="tab" data-tab="beasts" type="button"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.4.7-4.8 4.2 1.4 6.1L12 16.8 6.4 19.6l1.4-6.1L3 9.3l6.4-.7z"/></svg><span class="tab-label">Beasts</span></button>
+        <span class="fnav-h">Under Rome</span>
+        <button class="tab" data-tab="arena" type="button" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M5 19 19 5M14 5h5v5M5 14l5 5M8 16l-3 3"/></svg><span class="tab-label">Dungeons</span></button>
+        <button class="tab" data-tab="beasts" type="button"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.4.7-4.8 4.2 1.4 6.1L12 16.8 6.4 19.6l1.4-6.1L3 9.3l6.4-.7z"/></svg><span class="tab-label">Bosses</span></button>
         <button class="tab" data-tab="tourney" type="button"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5v1.5A3 3 0 0 0 8 10.5M16 6h3v1.5a3 3 0 0 1-3 3M12 13v4M8.5 20h7"/></svg><span class="tab-label">Tournaments</span></button>
         <span class="fnav-h">At the ludus</span>
         <button class="tab" data-tab="stable" type="button"><svg viewBox="0 0 24 24"><path d="M3 20V9l9-5 9 5v11"/><path d="M9 20v-6h6v6"/></svg><span class="tab-label">Your stable</span></button>
@@ -795,7 +1100,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
         <button class="tab" data-tab="about" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><span class="tab-label">About this mockup</span></button>
       </div>
     </nav>
-    <p class="sb-foot">A mockup of the Fishing template, reskinned. Nothing here is saved or real.</p>
+    <p class="sb-foot">A mockup on the Fishing template. Saved in this browser only — nothing here is real.</p>
   </aside>
 
 <main class="main">
@@ -803,41 +1108,56 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     <div class="sb-me"><span class="sb-face">BP</span><span class="sb-name"><b>bootypaper</b><small id="tbRank">Tiro</small></span></div>
     <div class="sb-stat gold"><small>Denarii</small><b><span class="denarius"></span><span id="tbCoin">0</span></b></div>
     <div class="sb-stat"><small>Fame</small><b id="tbFame">0</b></div>
-    <div class="sb-stat"><small>Record</small><b id="tbRec">0–0</b></div>
+    <div class="sb-stat"><small>Kills · deaths</small><b id="tbRec">0 · 0</b></div>
+    <div class="sb-stat"><small>Combat</small><b id="tbCb">3</b></div>
     <div class="sb-stat lvl"><small>Total level</small><b id="tbTotal">6</b></div>
-    <div class="sb-stat wide"><small>Beasts slain</small><b id="tbBeasts">0/5</b></div>
+    <div class="sb-stat wide"><small>Dungeons cleared</small><b id="tbBeasts">0/5</b></div>
     <div class="sb-stat sb-spacer"><small>Stable earns</small><b id="tbRate">0 / hr</b></div>
   </header>
 
-  <!-- ============ ARENA ============ -->
+  <!-- ============ DUNGEONS ============ -->
   <section class="view" data-panel="arena">
-    <header class="view-h"><div><h1>The Arena</h1><p>Watch the strike meter. Hit it in the gold for a critical, in the green for a clean blow.</p></div><span class="meta" id="gearLine">Wooden rudis</span></header>
+    <header class="view-h"><div><h1>Dungeons</h1><p>Pick a dungeon and go down. Your gladiator fights every room on his own, to the boss and the chest at the bottom — while the page is open, and for up to 8 hours after it isn't.</p></div><span class="meta" id="gearLine"></span></header>
     <section class="card">
-      <div class="spots-head"><span class="eyebrow">Venue</span><small>Bigger crowds, harder opponents — and more denarii for a win</small></div>
+      <div class="spots-head"><span class="eyebrow">Dungeon</span><small>Each one opens when you clear the one before</small></div>
       <div class="spots" id="venues"></div>
       <div class="scene-wrap" id="arenaWrap">
         <canvas id="arena"></canvas>
-        <div class="status"><span id="foeLine">Opponent</span><span id="venueLine">Training Grounds</span></div>
-        <div class="g-hp you"><small>You</small><div class="g-bar"><i id="hpYou"></i></div></div>
-        <div class="g-hp foe"><small id="foeName">—</small><div class="g-bar"><i id="hpFoe"></i></div></div>
-        <div class="g-meter" id="meterWrap" hidden>
-          <div class="g-track"><span class="g-zone ok" id="zoneOk"></span><span class="g-zone crit" id="zoneCrit"></span><i class="g-mark" id="mark"></i></div>
-        </div>
+        <div class="status"><span id="foeLine">Not in a dungeon</span><span id="venueLine"></span></div>
+        <div class="g-hp you"><small>You <span id="hpYouN"></span></small><div class="g-bar"><i id="hpYou"></i></div><div class="g-atk"><i id="atkYou"></i></div></div>
+        <div class="g-hp foe"><small><span id="foeName">—</span> <span id="hpFoeN"></span></small><div class="g-bar"><i id="hpFoe"></i></div><div class="g-atk"><i id="atkFoe"></i></div></div>
         <div class="g-result" id="result" hidden></div>
       </div>
-      <div class="actions">
-        <button class="act" id="act" type="button">Enter the arena</button>
-        <div class="baitpick">Stance
-          <select id="stance" class="g-select">
-            <option value="bal">Balanced</option>
-            <option value="agg">Aggressive — bigger hits, wider openings</option>
-            <option value="def">Defensive — smaller hits, harder to wound</option>
-          </select>
+      <div class="cb-panel">
+        <div class="cb-side" id="youStats"></div>
+        <div class="cb-mid">
+          <button class="act" id="act" type="button">Enter</button>
+          <div class="cb-styles" id="styles" role="group" aria-label="Combat style"></div>
+          <div class="cb-food">
+            <select id="foodSel" class="g-select" aria-label="Food"></select>
+            <button class="btn small" id="eatNow" type="button">Eat</button>
+          </div>
+          <div class="cb-food">
+            <label class="cb-lab" for="autoEat">Auto-eat</label>
+            <select id="autoEat" class="g-select"><option value="0">Off</option><option value="0.3">Below 30% health</option><option value="0.5">Below 50% health</option><option value="0.7">Below 70% health</option></select>
+            <label class="cb-check"><input type="checkbox" id="repeat"> Repeat</label>
+          </div>
         </div>
-        <span class="act-note">Space works too.</span>
+        <div class="cb-side foe" id="foeStats"></div>
       </div>
-      <div class="biting"><h4>Fighting here</h4><div class="bite-row" id="foes"></div></div>
     </section>
+    <div class="dun-cols">
+      <section class="card card-next"><div class="card-body">
+        <h2 class="card-h" id="dunName"></h2>
+        <p class="note" id="dunAbout"></p>
+        <p class="dun-meta" id="dunMeta"></p>
+        <div class="rooms" id="foes"></div>
+      </div></section>
+      <section class="card card-next"><div class="card-body">
+        <h2 class="card-h">This run</h2>
+        <div id="session"></div>
+      </div></section>
+    </div>
   </section>
 
   <!-- ============ STABLE ============ -->
@@ -865,33 +1185,35 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 
   <!-- ============ BEASTS ============ -->
   <section class="view" data-panel="beasts" hidden>
-    <header class="view-h"><div><h1>Beasts</h1><p>Five of them, one to a venue. Survive the clock and the crowd remembers your name for good.</p></div></header>
+    <header class="view-h"><div><h1>Bosses</h1><p>One waits at the bottom of every dungeon. Kill it and you keep its title for good.</p></div></header>
     <div class="boss-grid" id="beasts"></div>
   </section>
 
   <!-- ============ SKILLS ============ -->
   <section class="view" data-panel="skills" hidden>
-    <header class="view-h"><div><h1>Skills</h1><p>Six skills, 1 to 99. Levels open the Market; denarii are the other half of the price.</p></div></header>
+    <header class="view-h"><div><h1>Skills</h1><p>Six skills, 1 to 99. Your combat style picks which one a hit trains; Hitpoints trains on every hit.</p></div></header>
     <div class="g-skills" id="skills"></div>
   </section>
 
   <!-- ============ MARKET ============ -->
   <section class="view" data-panel="market" hidden>
-    <header class="view-h"><div><h1>Market</h1><p>Weapons, shields and helmets. Better gear widens the gold on the strike meter and hits harder.</p></div></header>
+    <header class="view-h"><div><h1>Market</h1><p>Weapons, shields, helmets and food. Accuracy lands blows, strength makes them bigger, armour keeps you standing.</p></div></header>
     <section class="card"><div class="card-body"><h2 class="card-h">Weapons</h2><div class="shop-grid" id="mkWeapons"></div></div></section>
     <section class="card card-next"><div class="card-body"><h2 class="card-h">Shields</h2><div class="shop-grid" id="mkShields"></div></div></section>
     <section class="card card-next"><div class="card-body"><h2 class="card-h">Helmets</h2><div class="shop-grid" id="mkHelms"></div></div></section>
+    <section class="card card-next"><div class="card-body"><h2 class="card-h">Food</h2><div class="shop-grid" id="mkFood"></div></div></section>
   </section>
 
   <!-- ============ ABOUT ============ -->
   <section class="view" data-panel="about" hidden>
     <header class="view-h"><div><h1>About this mockup</h1><p>What it would look like to run a second idle game on the Fishing template.</p></div></header>
     <section class="card"><div class="card-body wk">
-      <p>This page is the Fishing game's stylesheet and layout, lifted as they are, with a different game poured into them. Nothing here is saved, nothing here is real, and it is not linked from anywhere. It exists to show how much of Fishing is a <b>template</b> rather than a fishing game.</p>
+      <p>This page is the Fishing game's stylesheet and layout, lifted as they are, with a different game poured into them. It saves in this browser only, nothing here is real, and it is not linked from anywhere. It exists to show how much of Fishing is a <b>template</b> rather than a fishing game.</p>
       <h3>How each system maps across</h3>
       <div class="wk-scroll"><table class="wk-t"><thead><tr><th>Fishing</th><th>Gladiator</th><th>Same machinery</th></tr></thead><tbody id="mapRows"></tbody></table></div>
-      <h3>What would need building for real</h3>
-      <p>The fight is the only genuinely new mechanic — a strike meter read from the clock at the moment of the press, the same way Dead Centre and Field Goal read theirs, so a slow frame can never cost a hit. Everything else is the Fishing code with its tables swapped: species become opponents, rods become weapons, the tank becomes the stable, bait becomes stances and drills, diving loot becomes spoils, and the five bosses become five beasts.</p>
+      <h3>How the combat works</h3>
+      <p>It is Melvor's melee maths on OSRS's skills. Your <b>accuracy</b> is (Attack + 9 + style) × (weapon accuracy + 64); an opponent's <b>evasion</b> is (Defence + 9) × 64, and the two give a hit chance. Your <b>max hit</b> comes from Strength and the weapon's strength bonus, and every hit rolls between 1 and it. Each side swings on its own timer. Your health carries from room to room, so food and auto-eat decide how deep you get. Every swing is an event with a timestamp, and the same code plays a live fight and eight hours away, so they can never disagree.</p>
+      <p><button class="btn small" id="resetSave" type="button">Start the mockup over</button></p>
     </div></section>
   </section>
 
@@ -903,69 +1225,110 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 (() => {
   "use strict";
   /* Ultimate Gladiator — a MOCKUP of a second game on the Fishing template.
-     Nothing is saved; a reload starts over. */
+     Combat is idle, OSRS / Melvor style: pick a dungeon and your gladiator
+     fights room after room on his own, on attack timers, while the page is
+     open and for up to 8 hours after it closes. Saved in this browser only. */
   const $ = (id) => document.getElementById(id);
   const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
   const num = (x) => Math.floor(x).toLocaleString();
   const coin = (n) => `<span class="denarius"></span>${num(n)}`;
+  const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  const secs = (ms) => `${(ms / 1000).toFixed(1)}s`;
+  const pct = (x) => `${Math.round(x * 100)}%`;
 
   /* the same RuneScape curve Fishing uses */
   const XP_AT = [0, 0];
   { let pts = 0; for (let l = 1; l < 99; l++) { pts += Math.floor(l + 300 * Math.pow(2, l / 7)); XP_AT[l + 1] = Math.floor(pts / 4); } }
   const levelOf = (xp) => { let lo = 1, hi = 99; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (xp >= XP_AT[m]) lo = m; else hi = m - 1; } return lo; };
 
-  const RAR = [
-    { name: "Common", color: "#b9b0a6" }, { name: "Uncommon", color: "#4ddb8b" }, { name: "Rare", color: "#5aa2ff" },
-    { name: "Epic", color: "#b98aff" }, { name: "Legendary", color: "#e8bf35" }
-  ];
   const SKILLS = {
-    strength: { name: "Strength", icon: "💪", how: "Every blow that lands. Crits count double." },
-    defence: { name: "Defence", icon: "🛡️", how: "Every hit you take and walk away from." },
-    agility: { name: "Agility", icon: "🌀", how: "Landing in the gold, and the rope ladder in the yard." },
-    endurance: { name: "Endurance", icon: "❤️", how: "Finishing long fights, and the long run in the yard." },
-    showman: { name: "Showmanship", icon: "🎭", how: "Winning well. The crowd pays you in fame." },
+    attack: { name: "Attack", icon: "⚔️", how: "Damage you deal on Accurate. Raises how often you land a blow." },
+    strength: { name: "Strength", icon: "💪", how: "Damage you deal on Aggressive. Raises your max hit." },
+    defence: { name: "Defence", icon: "🛡️", how: "Damage you deal on Defensive. Makes you harder to hit, and opens armour." },
+    hitpoints: { name: "Hitpoints", icon: "❤️", how: "A third as much from every hit you land, whatever the style. Ten health a level." },
+    showman: { name: "Showmanship", icon: "🎭", how: "Every kill. The crowd pays you in fame." },
     smithing: { name: "Smithing", icon: "🔨", how: "Everything you beat into shape at the forge." }
   };
-  const VENUES = [
-    { name: "Training Grounds", cost: 0, mult: 1, tilt: 0 },
-    { name: "Provincial Games", cost: 150, mult: 2, tilt: 1 },
-    { name: "Capua", cost: 800, mult: 4, tilt: 2 },
-    { name: "Rome", cost: 3000, mult: 8, tilt: 3 },
-    { name: "The Colosseum", cost: 12000, mult: 16, tilt: 4 }
+  // OSRS styles: which skill a hit trains, and the invisible +3 it gives
+  const STYLES = [
+    { key: "acc", name: "Accurate", trains: ["attack"], b: { acc: 3, str: 0, def: 0 } },
+    { key: "agg", name: "Aggressive", trains: ["strength"], b: { acc: 0, str: 3, def: 0 } },
+    { key: "def", name: "Defensive", trains: ["defence"], b: { acc: 0, str: 0, def: 3 } },
+    { key: "ctl", name: "Controlled", trains: ["attack", "strength", "defence"], b: { acc: 1, str: 1, def: 1 } }
   ];
-  const CLASSES = [
-    { name: "Tiro", rar: 0, hp: 60, hit: 6, speed: 1300, purse: 12, tunic: "#8a7a62", crest: "#6a5a42" },
-    { name: "Murmillo", rar: 1, hp: 85, hit: 8, speed: 1150, purse: 22, tunic: "#7a3a2a", crest: "#c43a2a" },
-    { name: "Retiarius", rar: 2, hp: 95, hit: 10, speed: 950, purse: 40, tunic: "#2a5a7a", crest: "#4fc3d9" },
-    { name: "Secutor", rar: 3, hp: 130, hit: 13, speed: 820, purse: 75, tunic: "#4a2a6a", crest: "#b98aff" },
-    { name: "Champion", rar: 4, hp: 170, hit: 16, speed: 700, purse: 140, tunic: "#6a5010", crest: "#e8bf35" }
+
+  /* ------------------------------------------------------------------ what lives down there */
+  const MON = {
+    rat: { name: "Sewer rats", icon: "🐀", att: 2, def: 1, hp: 30, max: 8, speed: 2000, coin: [0, 2], drops: [["bread", .12]] },
+    tiro: { name: "Tiro recruit", look: ["#8a7a62", "#6a5a42"], att: 5, def: 4, hp: 60, max: 15, speed: 2800, coin: [2, 6], drops: [["bread", .2], ["iron", .1]] },
+    legion: { name: "Drunk legionary", look: ["#7a2a2a", "#c43a2a"], att: 9, def: 7, hp: 90, max: 22, speed: 3000, coin: [5, 12], drops: [["iron", .15], ["bronze", .03]] },
+    lion: { name: "The Nemean", icon: "🦁", boss: true, att: 14, def: 10, hp: 320, max: 34, speed: 2200, coin: [120, 160], drops: [["hide", 1]], title: "Lion-Breaker",
+      about: "A lion off the boat from Africa, kept in the cellars and starved for three days so it would be angry. It is angry." },
+
+    wolf: { name: "Sewer wolf", icon: "🐺", att: 16, def: 9, hp: 110, max: 30, speed: 1900, coin: [0, 3], drops: [["hide", .35], ["chicken", .2]] },
+    murm: { name: "Murmillo deserter", look: ["#7a3a2a", "#c43a2a"], att: 18, def: 20, hp: 170, max: 38, speed: 2600, coin: [12, 30], drops: [["iron", .2], ["bronze", .06]] },
+    thraex: { name: "Thraex cutthroat", look: ["#3a3a3a", "#8a8a8a"], att: 24, def: 14, hp: 150, max: 44, speed: 2300, coin: [15, 34], drops: [["iron", .2], ["bronze", .08], ["laurel", .01]] },
+    bear: { name: "The Bear of Dacia", icon: "🐻", boss: true, att: 30, def: 26, hp: 650, max: 70, speed: 2600, coin: [400, 500], drops: [["hide", 2], ["boar", 1]], title: "Bear-Wrestler",
+      about: "Escaped from a beast-dealer's cart and went down the drain. It does not charge. It waits for you to come close enough." },
+
+    dead: { name: "Restless dead", icon: "💀", att: 28, def: 24, hp: 200, max: 52, speed: 2600, coin: [5, 20], drops: [["bronze", .12], ["laurel", .02]] },
+    ret: { name: "Retiarius", look: ["#2a5a7a", "#4fc3d9"], att: 34, def: 28, hp: 240, max: 62, speed: 2200, coin: [30, 70], drops: [["iron", .25], ["bronze", .15]] },
+    hop: { name: "Hoplomachus", look: ["#6a5010", "#e8bf35"], att: 38, def: 40, hp: 300, max: 70, speed: 2600, coin: [35, 80], drops: [["bronze", .18], ["laurel", .03]] },
+    tigers: { name: "Two Tigers", icon: "🐅", boss: true, att: 48, def: 36, hp: 900, max: 92, speed: 1700, coin: [1100, 1300], drops: [["hide", 3], ["laurel", 1]], title: "Tiger-Tamer",
+      about: "Loosed among the tombs by someone who wanted the tomb-robbers gone. The first one is a distraction. Watch the second one." },
+
+    leo: { name: "Leopard", icon: "🐆", att: 46, def: 34, hp: 360, max: 95, speed: 1800, coin: [0, 5], drops: [["hide", .5], ["boar", .2]] },
+    sec: { name: "Secutor", look: ["#4a2a6a", "#b98aff"], att: 52, def: 56, hp: 440, max: 100, speed: 2600, coin: [70, 150], drops: [["bronze", .25], ["laurel", .05]] },
+    dim: { name: "Dimachaerus", look: ["#5a1a1a", "#ff6a4a"], att: 60, def: 44, hp: 400, max: 118, speed: 2000, coin: [80, 160], drops: [["laurel", .06], ["iron", .3]] },
+    tusk: { name: "Tusk", icon: "🐘", boss: true, att: 62, def: 70, hp: 1500, max: 145, speed: 3200, coin: [3000, 3600], drops: [["laurel", 2], ["feast", 2]], title: "Giant-Killer",
+      about: "A war elephant retired from the legions and kept under the sand for the Emperor's birthday. It has seen more battles than you have." },
+
+    croc: { name: "Nile crocodile", icon: "🐊", att: 66, def: 72, hp: 700, max: 140, speed: 2800, coin: [0, 10], drops: [["hide", .7], ["feast", .1]] },
+    prae: { name: "Praetorian", look: ["#5a0f1a", "#e8bf35"], att: 78, def: 82, hp: 650, max: 155, speed: 2400, coin: [150, 320], drops: [["laurel", .12], ["bronze", .3]] },
+    champ: { name: "Champion", look: ["#6a5010", "#fff3c8"], att: 85, def: 78, hp: 600, max: 170, speed: 2200, coin: [200, 400], drops: [["laurel", .15]] },
+    emp: { name: "The Emperor's Champion", icon: "👑", boss: true, att: 92, def: 95, hp: 1300, max: 200, speed: 2000, coin: [9000, 11000], drops: [["laurel", 4], ["feast", 3]], title: "Ultimate Gladiator",
+      about: "Undefeated in forty bouts, guarding Nero's gold where no crowd will ever see him lose. The Emperor has never once had to lift his thumb for him." }
+  };
+  const DUNGEONS = [
+    { key: "cellars", name: "The Ludus Cellars", rec: 5, rooms: [["rat", 3], ["tiro", 2], ["legion", 2], ["lion", 1]], chest: 40,
+      about: "Under your own training school: storerooms, cages, and whatever the lanista forgot was down here.", wall: ["#4a3a2c", "#3a2c20"], floor: "#2c2218" },
+    { key: "cloaca", name: "The Cloaca Maxima", rec: 20, rooms: [["wolf", 3], ["murm", 2], ["thraex", 2], ["bear", 1]], chest: 150,
+      about: "Rome's great sewer. Deserters hide down here, and so does anything that fell in.", wall: ["#34403a", "#26302b"], floor: "#1c2420" },
+    { key: "catacombs", name: "The Catacombs", rec: 40, rooms: [["dead", 3], ["ret", 2], ["hop", 2], ["tigers", 1]], chest: 450,
+      about: "Miles of tombs cut into the rock outside the walls. Not everything in them is resting.", wall: ["#5a5448", "#403c34"], floor: "#2a2722" },
+    { key: "hypogeum", name: "The Hypogeum", rec: 60, rooms: [["leo", 3], ["sec", 2], ["dim", 2], ["tusk", 1]], chest: 1200,
+      about: "The pens and tunnels under the Colosseum floor, where the animals wait for their lift into the light.", wall: ["#6a4a2a", "#4a321c"], floor: "#302214" },
+    { key: "vault", name: "Nero's Golden Vault", rec: 85, rooms: [["croc", 3], ["prae", 2], ["champ", 2], ["emp", 1]], chest: 3500,
+      about: "Beneath the Golden House. Nero's treasure, Nero's pets and Nero's best swordsman.", wall: ["#5a4a1a", "#3a2e10"], floor: "#2a200c" }
   ];
-  const BEASTS = [
-    { name: "The Nemean", icon: "🦁", venue: 0, need: 5, hp: 220, hit: 14, speed: 760, purse: 400, title: "Lion-Breaker", about: "A lion off the boat from Africa, starved for three days so it would be angry. It is angry." },
-    { name: "The Bear of Dacia", icon: "🐻", venue: 1, need: 20, hp: 320, hit: 18, speed: 720, purse: 1200, title: "Bear-Wrestler", about: "It does not charge. It waits for you to come close enough, and then it does not let go." },
-    { name: "Two Tigers", icon: "🐅", venue: 2, need: 40, hp: 380, hit: 20, speed: 620, purse: 3000, title: "Tiger-Tamer", about: "The first one is a distraction. Watch the second one." },
-    { name: "Tusk", icon: "🐘", venue: 3, need: 60, hp: 600, hit: 26, speed: 700, purse: 8000, title: "Giant-Killer", about: "A war elephant retired from the legions. It has seen more battles than you have." },
-    { name: "The Emperor's Champion", icon: "👑", venue: 4, need: 85, hp: 700, hit: 30, speed: 520, purse: 25000, title: "Ultimate Gladiator", about: "Undefeated in forty bouts. The Emperor has never once had to lift his thumb for him." }
-  ];
+  const seqOf = (d) => DUNGEONS[d].rooms.flatMap(([k, n]) => Array(n).fill(k));
+
   const WEAPONS = [
-    { name: "Wooden rudis", cost: 0, dmg: 1, zone: 0, need: null },
-    { name: "Iron gladius", cost: 250, dmg: 1.35, zone: .02, need: ["strength", 10] },
-    { name: "Steel gladius", cost: 1200, dmg: 1.7, zone: .035, need: ["strength", 25] },
-    { name: "Damascus spatha", cost: 5000, dmg: 2.2, zone: .05, need: ["strength", 45] },
-    { name: "Golden gladius", cost: 20000, dmg: 3, zone: .07, need: ["strength", 70] }
+    { name: "Wooden rudis", cost: 0, acc: 0, str: 0, speed: 2600, need: null },
+    { name: "Iron gladius", cost: 250, acc: 18, str: 14, speed: 2400, need: ["attack", 10] },
+    { name: "Steel gladius", cost: 1200, acc: 36, str: 30, speed: 2400, need: ["attack", 25] },
+    { name: "Damascus spatha", cost: 5000, acc: 55, str: 58, speed: 2800, need: ["attack", 40] },
+    { name: "Twin sicae", cost: 9000, acc: 62, str: 46, speed: 1900, need: ["attack", 50] },
+    { name: "Golden gladius", cost: 20000, acc: 95, str: 90, speed: 2400, need: ["attack", 70] }
   ];
   const SHIELDS = [
-    { name: "Wicker parma", cost: 0, block: 0, need: null },
-    { name: "Bronze parma", cost: 300, block: .12, need: ["defence", 10] },
-    { name: "Legion scutum", cost: 1800, block: .22, need: ["defence", 30] },
-    { name: "Gilded scutum", cost: 9000, block: .34, need: ["defence", 55] }
+    { name: "Wicker parma", cost: 0, ev: 0, dr: 0, need: null },
+    { name: "Bronze parma", cost: 300, ev: 15, dr: .03, need: ["defence", 10] },
+    { name: "Legion scutum", cost: 1800, ev: 35, dr: .07, need: ["defence", 30] },
+    { name: "Gilded scutum", cost: 9000, ev: 60, dr: .12, need: ["defence", 55] }
   ];
   const HELMS = [
-    { name: "Leather cap", cost: 0, fame: 1, need: null },
-    { name: "Galea", cost: 400, fame: 1.25, need: ["showman", 10] },
-    { name: "Murmillo helm", cost: 2200, fame: 1.6, need: ["showman", 30] },
-    { name: "Champion's crest", cost: 10000, fame: 2.2, need: ["showman", 55] }
+    { name: "Leather cap", cost: 0, ev: 0, dr: 0, fame: 1, need: null },
+    { name: "Galea", cost: 400, ev: 8, dr: .02, fame: 1.25, need: ["defence", 10] },
+    { name: "Murmillo helm", cost: 2200, ev: 18, dr: .04, fame: 1.6, need: ["defence", 30] },
+    { name: "Champion's crest", cost: 10000, ev: 30, dr: .06, fame: 2.2, need: ["defence", 55] }
   ];
+  const ITEMS = {
+    iron: { name: "Iron scrap", icon: "⛓️" }, hide: { name: "Beast hide", icon: "🦴" }, bronze: { name: "Bronze fitting", icon: "🟫" }, laurel: { name: "Laurel leaf", icon: "🌿" },
+    bread: { name: "Bread", icon: "🍞", heal: 40, cost: 4 }, chicken: { name: "Roast chicken", icon: "🍗", heal: 80, cost: 12 },
+    boar: { name: "Boar haunch", icon: "🍖", heal: 150, cost: 30 }, feast: { name: "Feast platter", icon: "🍱", heal: 300, cost: 90 }
+  };
+  const FOODS = ["bread", "chicken", "boar", "feast"];
   const RECRUITS = [
     { name: "Novice Tiro", icon: "🧑", cost: 200, rate: 8 },
     { name: "Thraex", icon: "🗡️", cost: 900, rate: 30 },
@@ -973,214 +1336,450 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     { name: "Dimachaerus", icon: "⚔️", cost: 12000, rate: 260 }
   ];
   const DRILLS = [
-    { key: "pell", name: "Heavy pell", icon: "🪵", skill: "strength", secs: 30, xp: 180, about: "Hack at a post until your arms go." },
-    { key: "ladder", name: "Rope ladder", icon: "🪜", skill: "agility", secs: 120, xp: 640, about: "Feet first, then everything else." },
-    { key: "run", name: "Long run", icon: "🏃", skill: "endurance", secs: 300, xp: 1500, about: "Round the walls of the ludus until dark." }
+    { key: "post", name: "Sparring post", icon: "🎯", skill: "attack", secs: 30, xp: 180, about: "Hit the marks on the post, over and over." },
+    { key: "pell", name: "Heavy pell", icon: "🪵", skill: "strength", secs: 120, xp: 640, about: "Hack at a post until your arms go." },
+    { key: "wall", name: "Shield wall", icon: "🧱", skill: "defence", secs: 120, xp: 640, about: "Hold the line while the veterans lean on you." },
+    { key: "run", name: "Long run", icon: "🏃", skill: "hitpoints", secs: 300, xp: 1500, about: "Round the walls of the ludus until dark." }
   ];
-  const SPOILS = { iron: { name: "Iron scrap", icon: "⛓️" }, hide: { name: "Beast hide", icon: "🦴" }, bronze: { name: "Bronze fitting", icon: "🟫" }, laurel: { name: "Laurel leaf", icon: "🌿" } };
   const RECIPES = [
-    { name: "Whetstone the blade", need: { iron: 2 }, xp: 120, about: "+10% damage for your next five bouts" },
-    { name: "Hide wrap", need: { hide: 1, iron: 1 }, xp: 300, about: "Take 15% less for your next five bouts" },
-    { name: "Bronze greaves", need: { bronze: 3, iron: 2 }, xp: 700, about: "Sell to a wealthy patron for 900" },
-    { name: "Laurel crown", need: { laurel: 3, bronze: 1 }, xp: 1400, about: "The crowd loves it: +50% fame for a day" }
+    { key: "whet", name: "Whetstone the blade", need: { iron: 2 }, xp: 120, about: "+10% max hit for your next 50 kills" },
+    { key: "wrap", name: "Hide wrap", need: { hide: 1, iron: 1 }, xp: 300, about: "Take 5% less damage for your next 50 kills" },
+    { key: "greaves", name: "Bronze greaves", need: { bronze: 3, iron: 2 }, xp: 700, about: "Sell to a wealthy patron for 900" },
+    { key: "crown", name: "Laurel crown", need: { laurel: 3, bronze: 1 }, xp: 1400, about: "+50% fame for an hour" }
   ];
+  const OFFLINE_CAP = 8 * 3600 * 1000;
 
-  /* the mockup's state — in memory only */
-  const S = {
-    coin: 180, fame: 0, w: 0, l: 0, venue: 0, venues: [true, false, false, false, false],
-    weapon: 0, shield: 0, helm: 0,
-    skills: { strength: 0, defence: 0, agility: 0, endurance: 0, showman: 0, smithing: 0 },
-    stable: [{ name: "Crixus", icon: "🧑", rate: 8 }, { name: "Varro", icon: "🗡️", rate: 30 }],
-    beasts: {}, spoils: { iron: 4, hide: 1, bronze: 2, laurel: 0 },
-    drills: {}
-  };
+  /* ------------------------------------------------------------------ state, saved in this browser */
+  const SAVE = "ec_glad_mock_v2";
+  const fresh = () => ({
+    coin: 180, fame: 0, w: 0, l: 0, weapon: 0, shield: 0, helm: 0, style: 0,
+    skills: { attack: 0, strength: 0, defence: 0, hitpoints: XP_AT[10], showman: 0, smithing: 0 },
+    hp: 100, items: { bread: 20, iron: 2, hide: 1 }, food: "bread", autoEat: 0.3,
+    stable: [{ name: "Crixus", icon: "🧑", rate: 8 }], drills: {}, clears: {}, titles: {}, kills: {},
+    buffs: { whet: 0, wrap: 0, crown: 0 }, dun: 0, repeat: true,
+    C: { on: false, dun: 0, room: 0, farm: null, foeHp: 0, pAt: 0, eAt: 0, rAt: 0 }, regenAt: Date.now() + 6000, at: Date.now()
+  });
+  let S = fresh();
+  try { const raw = localStorage.getItem(SAVE); if (raw) { const o = JSON.parse(raw); S = { ...fresh(), ...o, skills: { ...fresh().skills, ...o.skills }, buffs: { ...fresh().buffs, ...o.buffs }, C: { ...fresh().C, ...o.C } }; } } catch (e) { /* a fresh start */ }
+  let wiping = false;   // a reset must not be undone by the save that runs as the page unloads
+  const save = () => { if (wiping) return; S.at = Date.now(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* private window */ } };
+
   const lvl = (k) => levelOf(S.skills[k]);
   const total = () => Object.keys(SKILLS).reduce((n, k) => n + lvl(k), 0);
   const rate = () => S.stable.reduce((n, f) => n + f.rate, 0);
+  const cbLevel = (att, str, def, hp) => Math.floor(0.25 * (def + hp) + 0.325 * (att + str));
+  const myCb = () => cbLevel(lvl("attack"), lvl("strength"), lvl("defence"), lvl("hitpoints"));
+  const foeCb = (m) => cbLevel(m.att, m.att, m.def, Math.round(m.hp / 10));
 
-  function toast(title, sub) {
-    const t = el("div", "toast"); t.textContent = title;
-    if (sub) t.append(el("small", null, sub));
-    $("toasts").append(t);
-    setTimeout(() => t.remove(), 3800);
-    while ($("toasts").childElementCount > 3) $("toasts").firstChild.remove();
-  }
+  /* ------------------------------------------------------------------ the numbers (Melvor's melee maths) */
+  const W = () => WEAPONS[S.weapon], SH = () => SHIELDS[S.shield], HE = () => HELMS[S.helm], ST = () => STYLES[S.style];
+  const maxHp = () => lvl("hitpoints") * 10;
+  const pAcc = () => (lvl("attack") + 9 + ST().b.acc) * (W().acc + 64);
+  const pEv = () => (lvl("defence") + 9 + ST().b.def) * (SH().ev + HE().ev + 64);
+  const pMax = () => { const es = lvl("strength") + 9 + ST().b.str, ws = W().str; return Math.floor(10 * (1.3 + es / 10 + ws / 80 + es * ws / 640) * (S.buffs.whet > 0 ? 1.1 : 1)); };
+  const pDR = () => Math.min(0.6, SH().dr + HE().dr + (S.buffs.wrap > 0 ? 0.05 : 0));
+  const pSpeed = () => W().speed;
+  const chance = (a, e) => (a > e ? 1 - (e + 2) / (2 * (a + 1)) : a / (2 * (e + 1)));
+  const hitVs = (m) => chance(pAcc(), (m.def + 9) * 64);
+  const foeHits = (m) => chance((m.att + 9) * 64, pEv());
+
+  /* ------------------------------------------------------------------ xp, quietly while away */
+  let away = null;       // while catching up on time away, level-ups are counted rather than shown
   function grant(k, xp) {
+    if (!xp) return;
     const before = lvl(k);
-    S.skills[k] += Math.round(xp);
+    S.skills[k] += xp;
     const after = lvl(k);
     if (after > before) {
+      if (away) { away.levels[k] = after; return; }
       document.querySelector(".levelup")?.remove();
       const b = el("div", "levelup");
       b.innerHTML = `<b>Congratulations, you just advanced a ${SKILLS[k].name} level.</b><span>Your ${SKILLS[k].name} level is now ${after}.</span>`;
       document.body.append(b); setTimeout(() => b.remove(), 3600);
     }
   }
-  function paintBar() {
-    $("tbCoin").textContent = num(S.coin); $("tbFame").textContent = num(S.fame);
-    $("tbRec").textContent = `${S.w}–${S.l}`; $("tbTotal").textContent = total();
-    $("tbBeasts").textContent = `${Object.keys(S.beasts).length}/${BEASTS.length}`;
-    $("tbRate").innerHTML = `${coin(rate())} / hr`;
-    $("tbRank").textContent = S.w >= 40 ? "Primus" : S.w >= 15 ? "Veteranus" : S.w >= 3 ? "Gladiator" : "Tiro";
+  function toast(title, sub) {
+    if (away) return;
+    const t = el("div", "toast"); t.textContent = title;
+    if (sub) t.append(el("small", null, sub));
+    $("toasts").append(t);
+    setTimeout(() => t.remove(), 3800);
+    while ($("toasts").childElementCount > 3) $("toasts").firstChild.remove();
   }
 
-  /* ========================================================= the fight
-     The meter is read from the CLOCK at the moment of the press, never from
-     the last painted frame — the Dead Centre and Field Goal rule — so a slow
-     or throttled tab can never cost a hit. */
-  const F = { on: false, foe: null, hpYou: 100, hpFoe: 0, max: 0, t0: 0, ok: [0, 0], crit: [0, 0], lunge: 0, hurt: 0, flash: 0, dust: [] };
-  const meterAt = (t) => { const p = ((t - F.t0) / F.foe.speed) % 2; return p < 1 ? p : 2 - p; };
-  function newZones() {
-    const g = WEAPONS[S.weapon], stance = $("stance").value;
-    let okW = 0.24 + g.zone + lvl("agility") * 0.001;
-    if (stance === "agg") okW *= 0.85;
-    const critW = 0.06 + g.zone * 0.6 + lvl("agility") * 0.0006;
-    const c = 0.15 + Math.random() * 0.7;
-    F.ok = [Math.max(0, c - okW / 2), Math.min(1, c + okW / 2)];
-    F.crit = [c - critW / 2, c + critW / 2];
-    $("zoneOk").style.left = `${F.ok[0] * 100}%`; $("zoneOk").style.width = `${(F.ok[1] - F.ok[0]) * 100}%`;
-    $("zoneCrit").style.left = `${F.crit[0] * 100}%`; $("zoneCrit").style.width = `${(F.crit[1] - F.crit[0]) * 100}%`;
+  /* ================================================================== combat
+     Event-driven on the wall clock: every swing, respawn and regen tick has a
+     timestamp, and advance(now) plays them in order. The same code runs a
+     live fight and eight hours of catching up, so the two can never disagree. */
+  const C = S.C;
+  const sess = { t0: Date.now(), kills: 0, clears: 0, xp: 0, coin: 0, drops: {} };
+  let splats = [], lunge = 0, hurt = 0, dying = 0;
+  const foeNow = () => MON[C.farm || seqOf(C.dun)[C.room]];
+  const xpNow = () => Object.values(S.skills).reduce((a, b) => a + b, 0);
+
+  /** A dungeon run, or — with a monster key — farming one of its rooms over and over, no boss, no chest. */
+  function enter(d, farm = null) {
+    if (!dunOpen(d)) return toast("Not yet", `Clear ${DUNGEONS[d - 1].name} first.`);
+    if (S.hp < maxHp() * 0.2) return toast("You are in no state to go down there", "Eat something, or rest until your health comes back.");
+    const now = Date.now();
+    Object.assign(C, { on: true, dun: d, room: 0, farm, foeHp: 0, rAt: now + 600, pAt: 0, eAt: 0 });
+    S.dun = d;
+    Object.assign(sess, { t0: now, kills: 0, clears: 0, xp: xpNow(), coin: S.coin, drops: {} });
+    $("result").hidden = true;
+    renderArena(); save();
   }
-  function pickFoe(beast) {
-    if (beast) return { ...beast, name: beast.name, rar: 4, tunic: "#3a2410", crest: "#e8bf35", beast: true };
-    const tilt = VENUES[S.venue].tilt;
-    const w = CLASSES.map((c) => [55, 28, 12, 4.2, 0.8][c.rar] * (1 + tilt * 0.45 * c.rar));
-    let r = w.reduce((a, b) => a + b, 0) * Math.random();
-    for (let i = 0; i < w.length; i++) { r -= w[i]; if (r <= 0) return { ...CLASSES[i] }; }
-    return { ...CLASSES[0] };
+  function leave(why) {
+    C.on = false; C.rAt = 0;
+    if (why) toast(why);
+    renderArena(); save();
   }
-  function startFight(beast) {
-    const foe = pickFoe(beast);
-    const mult = beast ? 1 : VENUES[S.venue].mult;
-    foe.hp = Math.round(foe.hp * (beast ? 1 : 0.8 + 0.2 * mult ** 0.5)); foe.purse = Math.round(foe.purse * mult);
-    Object.assign(F, { on: true, foe, hpYou: 100 + lvl("endurance") * 2, hpFoe: foe.hp, max: foe.hp, t0: performance.now(), dust: [] });
-    F.youMax = F.hpYou;
-    $("result").hidden = true; $("meterWrap").hidden = false;
-    $("foeName").textContent = foe.name;
-    $("foeLine").innerHTML = `<span style="color:${RAR[foe.rar].color}">●</span> ${foe.beast ? "Beast" : RAR[foe.rar].name} · ${foe.name}`;
-    $("act").textContent = "Strike!"; $("act").className = "act hook";
-    newZones(); paintHp();
-    if (beast) document.querySelector('.tab[data-tab="arena"]').click();
+  function spawn(t) {
+    C.resting = false;
+    const m = foeNow();
+    C.foeHp = m.hp; C.rAt = 0;
+    C.pAt = t + pSpeed(); C.eAt = t + m.speed;
   }
-  function paintHp() {
-    $("hpYou").style.width = `${Math.max(0, F.hpYou / (F.youMax || 100)) * 100}%`;
-    $("hpFoe").style.width = `${Math.max(0, F.hpFoe / (F.max || 1)) * 100}%`;
+  function eat(k, quiet) {
+    const it = ITEMS[k]; if (!it?.heal || !(S.items[k] > 0) || S.hp >= maxHp()) return false;
+    S.items[k]--; if (!S.items[k]) delete S.items[k];
+    S.hp = Math.min(maxHp(), S.hp + it.heal);
+    if (!quiet) splat("you", `+${it.heal}`, "heal");
+    return true;
   }
-  function strike() {
-    if (!F.on) return startFight();
-    const now = performance.now(), m = meterAt(now), stance = $("stance").value, g = WEAPONS[S.weapon];
-    const crit = m >= F.crit[0] && m <= F.crit[1], hit = crit || (m >= F.ok[0] && m <= F.ok[1]);
-    let base = (9 + lvl("strength") * 0.35) * g.dmg * (stance === "agg" ? 1.3 : stance === "def" ? 0.8 : 1);
-    F.lunge = now;
-    if (hit) {
-      const dmg = Math.round(base * (crit ? 2.2 : 1) * (0.85 + Math.random() * 0.3));
-      F.hpFoe -= dmg; F.flash = now;
-      for (let i = 0; i < (crit ? 18 : 8); i++) F.dust.push({ x: 0.64, y: 0.72, vx: (Math.random() - .2) * .5, vy: -Math.random() * .6, life: 1 });
-      grant("strength", dmg * (crit ? 2 : 1)); if (crit) grant("agility", 25);
-      if (crit) toast("Critical!", `${dmg} damage`);
+  const anyFood = () => (S.items[S.food] > 0 ? S.food : FOODS.find((k) => S.items[k] > 0));
+  function splat(who, text, kind, t = Date.now()) { if (!away && Date.now() - t < 1500) splats.push({ who, text, kind, at: performance.now() - (Date.now() - t) }); }
+
+  function playerSwing(t) {
+    const m = foeNow();
+    const hit = Math.random() < hitVs(m), dmg = hit ? rint(1, pMax()) : 0;
+    C.foeHp -= dmg; lunge = t;
+    splat("foe", String(dmg), hit ? "hit" : "miss", t);
+    if (dmg) {
+      ST().trains.forEach((k) => grant(k, Math.round(dmg * 0.4 / ST().trains.length)));
+      grant("hitpoints", Math.round(dmg * 0.133));
     }
-    if (F.hpFoe > 0 && !crit) {
-      const block = SHIELDS[S.shield].block + lvl("defence") * 0.002;
-      const taken = Math.round(F.foe.hit * (hit ? 0.5 : 1.2) * (stance === "def" ? 0.6 : stance === "agg" ? 1.25 : 1) * (1 - block) * (0.8 + Math.random() * 0.4));
-      F.hpYou -= taken; F.hurt = now; grant("defence", taken * 2);
-    }
-    paintHp(); newZones();
-    if (F.hpFoe <= 0) return finish(true);
-    if (F.hpYou <= 0) return finish(false);
+    if (C.foeHp <= 0) kill(t, m);
   }
-  function finish(won) {
-    F.on = false; $("meterWrap").hidden = true;
-    $("act").textContent = "Fight again"; $("act").className = "act";
-    const foe = F.foe;
-    let lines;
-    if (won) {
-      const fame = Math.round((10 + foe.rar * 12) * HELMS[S.helm].fame * (foe.beast ? 8 : 1));
-      S.coin += foe.purse; S.fame += fame; S.w++;
-      grant("showman", fame * 3); grant("endurance", 40 + foe.rar * 20);
-      const drop = Object.keys(SPOILS)[Math.floor(Math.random() * 4)];
-      S.spoils[drop]++;
-      if (foe.beast) S.beasts[foe.name] = true;
-      lines = `<p>${coin(foe.purse)} purse · +${fame} fame</p><p>${SPOILS[drop].icon} ${SPOILS[drop].name} off the sand</p>`
-        + (foe.beast ? `<p>Title earned: <b style="color:var(--gold)">${foe.title}</b></p>` : "");
-    } else {
-      S.l++; const comfort = Math.round(foe.purse * 0.1); S.coin += comfort;
-      lines = `<p>The crowd spared you. ${coin(comfort)} for the effort.</p>`;
+  function foeSwing(t) {
+    const m = foeNow();
+    const hit = Math.random() < foeHits(m), dmg = hit ? Math.max(1, Math.round(rint(1, m.max) * (1 - pDR()))) : 0;
+    S.hp -= dmg; if (dmg) hurt = t;
+    splat("you", String(dmg), hit ? "hit" : "miss", t);
+    if (S.autoEat && S.hp < maxHp() * S.autoEat) { let g = 4; while (g-- > 0 && S.hp < maxHp() * S.autoEat) { const f = anyFood(); if (!f || !eat(f, away)) break; } }
+    if (S.hp <= 0) return die(t, m);
+    // farming only: out of food and low, he walks out, rests five times as fast, and goes back in
+    if (C.farm && S.hp < maxHp() * 0.3 && !anyFood()) rest(t);
+  }
+  function rest(t) {
+    C.resting = true;
+    const tick = Math.max(1, Math.round(maxHp() * 0.05));
+    C.rAt = t + Math.ceil((maxHp() - S.hp) / tick) * 6000 + 1000;
+    splat("you", "rest", "heal", t);
+  }
+  function kill(t, m) {
+    S.w++; sess.kills++; S.kills[m.name] = (S.kills[m.name] || 0) + 1;
+    const got = rint(m.coin[0], m.coin[1]); S.coin += got;
+    const fame = Math.round((1 + foeCb(m) * 0.4) * HE().fame * (m.boss ? 10 : 1) * (S.buffs.crown > t ? 1.5 : 1));
+    S.fame += fame; grant("showman", fame * 2);
+    m.drops.forEach(([k, ch]) => { let n = ch >= 1 ? ch : Math.random() < ch ? 1 : 0; if (n) { S.items[k] = (S.items[k] || 0) + n; sess.drops[k] = (sess.drops[k] || 0) + n; } });
+    if (S.buffs.whet > 0) S.buffs.whet--; if (S.buffs.wrap > 0) S.buffs.wrap--;
+    dying = t;
+    if (C.farm) { C.rAt = t + 3000; return; }
+    const seq = seqOf(C.dun);
+    if (C.room + 1 < seq.length) { C.room++; C.rAt = t + 3000; return; }
+    cleared(t);
+  }
+  function cleared(t) {
+    const d = DUNGEONS[C.dun], boss = MON[seqOf(C.dun).at(-1)], first = !S.clears[d.key];
+    S.clears[d.key] = (S.clears[d.key] || 0) + 1; sess.clears++;
+    const chest = Math.round(d.chest * (0.85 + Math.random() * 0.3));
+    S.coin += chest;
+    const loot = { [FOODS[Math.min(3, C.dun)]]: 1, laurel: C.dun >= 2 ? 1 : 0, bronze: 1 + Math.floor(C.dun / 2) };
+    Object.entries(loot).forEach(([k, n]) => { if (n) { S.items[k] = (S.items[k] || 0) + n; sess.drops[k] = (sess.drops[k] || 0) + n; } });
+    if (first) S.titles[boss.title] = true;
+    if (!away) showChest(d, boss, chest, loot, first);
+    if (S.repeat && S.hp > maxHp() * 0.2) { C.room = 0; C.rAt = t + 5000; }
+    else { C.on = false; C.rAt = 0; }
+  }
+  function die(t, m) {
+    S.l++; C.on = false; C.rAt = 0;
+    S.hp = Math.round(maxHp() * 0.3);
+    if (!away) showDeath(m);
+    else away.deaths++;
+  }
+  function advance(now) {
+    let guard = 400000;
+    while (guard-- > 0) {
+      const fight = C.on ? (C.rAt ? C.rAt : Math.min(C.pAt, C.eAt)) : Infinity;
+      const next = Math.min(S.regenAt, fight);
+      if (next > now) break;
+      if (S.regenAt <= fight) { S.hp = Math.min(maxHp(), S.hp + Math.max(1, Math.round(maxHp() * (C.on && C.resting ? 0.05 : 0.01)))); S.regenAt += 6000; continue; }
+      if (C.rAt) { spawn(C.rAt); continue; }
+      if (C.pAt <= C.eAt) { const t = C.pAt; C.pAt += pSpeed(); playerSwing(t); }
+      else { const t = C.eAt; C.eAt += foeNow().speed; foeSwing(t); }
     }
-    $("result").innerHTML = `<div class="g-card"><h3 class="${won ? "won" : "lost"}">${won ? "Victory" : "Defeated"}</h3><p>${won ? "You beat" : "You fell to"} the ${foe.name}.</p>${lines}<button class="btn gold" id="again" type="button">Fight again</button></div>`;
+  }
+
+  /* ------------------------------------------------------------------ while you were away */
+  function catchUp() {
+    const now = Date.now(), gap = now - (S.at || now);
+    if (gap < 5000) return;
+    const span = Math.min(gap, OFFLINE_CAP), skip = gap - span;
+    if (skip > 0) { S.regenAt += skip; if (C.on) { C.pAt += skip; C.eAt += skip; if (C.rAt) C.rAt += skip; } }
+    const before = { xp: { ...S.skills }, coin: S.coin, w: S.w, clears: Object.values(S.clears).reduce((a, b) => a + b, 0), items: { ...S.items } };
+    away = { levels: {}, deaths: 0 };
+    const wasOn = C.on;
+    advance(now);
+    S.coin += rate() * span / 3600000;
+    const got = away; away = null;
+    if (!wasOn && !rate()) return;
+    const xpLines = Object.keys(SKILLS).map((k) => [k, S.skills[k] - before.xp[k]]).filter(([, v]) => v > 0);
+    const kills = S.w - before.w, clears = Object.values(S.clears).reduce((a, b) => a + b, 0) - before.clears;
+    const drops = Object.keys(ITEMS).map((k) => [k, (S.items[k] || 0) - (before.items[k] || 0)]).filter(([, v]) => v > 0);
+    const h = span / 3600000;
+    const card = el("div", "g-card away-card", `<h3 class="won">While you were away</h3>
+      <p>${h >= 1 ? `${h.toFixed(1)} hours` : `${Math.round(span / 60000)} minutes`}${gap > OFFLINE_CAP ? " (the most it keeps)" : ""}</p>
+      <div class="away-grid">
+        <div class="cstat"><small>Kills</small><b>${num(kills)}</b></div>
+        <div class="cstat"><small>Dungeons cleared</small><b>${num(clears)}</b></div>
+        <div class="cstat"><small>Denarii</small><b>${coin(S.coin - before.coin)}</b></div>
+      </div>
+      ${xpLines.length ? `<p class="away-xp">${xpLines.map(([k, v]) => `${SKILLS[k].icon} +${num(v)} ${SKILLS[k].name}${got.levels[k] ? ` <b>→ ${got.levels[k]}</b>` : ""}`).join(" · ")}</p>` : ""}
+      ${drops.length ? `<p class="away-xp">${drops.map(([k, v]) => `${ITEMS[k].icon} ${v} ${ITEMS[k].name}`).join(" · ")}</p>` : ""}
+      ${got.deaths ? `<p class="lost">You were carried out ${got.deaths === 1 ? "once" : `${got.deaths} times`} and stopped.</p>` : C.on ? `<p>Still down there.</p>` : ""}
+      <button class="btn gold" type="button" id="awayOk">Back to it</button>`);
+    $("result").replaceChildren(card); $("result").hidden = false;
+    $("awayOk").addEventListener("click", () => { $("result").hidden = true; });
+  }
+
+  /* ------------------------------------------------------------------ result cards */
+  function showChest(d, boss, chest, loot, first) {
+    const again = C.on;
+    $("result").innerHTML = `<div class="g-card chest-card"><div class="chest-ico">🧰</div><h3 class="won">${d.name} cleared</h3>
+      <p>${boss.name} is down. The chest at the end holds:</p>
+      <p class="chest-loot">${coin(chest)} ${Object.entries(loot).filter(([, n]) => n).map(([k, n]) => `<span>${ITEMS[k].icon} ${n} ${ITEMS[k].name}</span>`).join("")}</p>
+      ${first ? `<p>Title earned: <b style="color:var(--gold)">${boss.title}</b></p>` : `<p>Cleared ${num(S.clears[d.key])} times.</p>`}
+      <p class="note">${again ? "Going back in on your own in 5 seconds." : "Repeat is off, so you came back up."}</p>
+      <button class="btn gold" type="button" id="chestOk">${again ? "Keep going" : "Back to the ludus"}</button></div>`;
     $("result").hidden = false;
-    $("again").addEventListener("click", () => startFight());
-    paintBar(); renderAll();
+    $("chestOk").addEventListener("click", () => { $("result").hidden = true; });
+    setTimeout(() => { if ($("chestOk")) $("result").hidden = true; }, 4800);
+  }
+  function showDeath(m) {
+    $("result").innerHTML = `<div class="g-card"><h3 class="lost">Carried out</h3><p>${m.name} was too much. You woke up in the infirmary with ${num(S.hp)} health, and this run is lost.</p>
+      <p class="note">Bring more food, turn auto-eat up, or pick a shallower dungeon.</p><button class="btn gold" type="button" id="deadOk">Back to the ludus</button></div>`;
+    $("result").hidden = false;
+    $("deadOk").addEventListener("click", () => { $("result").hidden = true; });
   }
 
-  /* ========================================================= the arena, drawn */
+  /* ================================================================== the dungeon, drawn */
   const cv = $("arena"), ctx = cv.getContext("2d");
-  const crowd = Array.from({ length: 260 }, (_, i) => ({ x: Math.random(), row: i % 4, c: ["#c9a27a", "#8a5a3a", "#e0c090", "#b04a3a", "#4a6a9a", "#e8d8b0"][i % 6], p: Math.random() * 6 }));
   function fit() { const d = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight; if (cv.width !== Math.round(w * d)) { cv.width = Math.round(w * d); cv.height = Math.round(h * d); } ctx.setTransform(d, 0, 0, d, 0, 0); return { w, h }; }
   function gladiator(x, feet, H, face, tunic, crest, t, lungeT, hurtT) {
-    const now = performance.now();
-    const lunge = Math.max(0, 1 - (now - lungeT) / 220), hurt = Math.max(0, 1 - (now - hurtT) / 260);
-    x += face * lunge * H * 0.35 - face * hurt * H * 0.08;
+    const now = Date.now();
+    const lg = Math.max(0, 1 - (now - lungeT) / 240), hr = Math.max(0, 1 - (now - hurtT) / 280);
+    x += face * lg * H * 0.12 - face * hr * H * 0.05;
     const bob = Math.sin(t / 420 + (face > 0 ? 0 : 2)) * H * 0.012;
-    ctx.save(); ctx.translate(x, feet + bob); ctx.scale(face, 1);
-    ctx.lineCap = "round";
-    ctx.strokeStyle = "#5a3a22"; ctx.lineWidth = H * 0.055;                          // legs
+    ctx.save(); ctx.translate(x, feet + bob); ctx.scale(face, 1); ctx.lineCap = "round";
+    ctx.strokeStyle = "#5a3a22"; ctx.lineWidth = H * 0.055;
     ctx.beginPath(); ctx.moveTo(-H * .06, 0); ctx.lineTo(-H * .02, -H * .34); ctx.moveTo(H * .08, 0); ctx.lineTo(H * .03, -H * .34); ctx.stroke();
-    ctx.fillStyle = tunic;                                                           // body
-    ctx.beginPath(); ctx.roundRect(-H * .11, -H * .72, H * .22, H * .42, H * .05); ctx.fill();
-    ctx.fillStyle = "#c69a6a";                                                       // head
-    ctx.beginPath(); ctx.arc(0, -H * .82, H * .085, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = "#8a8f96";                                                       // helmet
-    ctx.beginPath(); ctx.arc(0, -H * .84, H * .095, Math.PI, 0); ctx.fill();
-    ctx.fillStyle = crest;                                                           // crest
-    ctx.beginPath(); ctx.ellipse(-H * .01, -H * .95, H * .1, H * .035, -.2, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "#c69a6a"; ctx.lineWidth = H * .045;                          // sword arm
-    const swing = -0.9 + lunge * 1.4;
+    ctx.fillStyle = tunic; ctx.beginPath(); ctx.roundRect(-H * .11, -H * .72, H * .22, H * .42, H * .05); ctx.fill();
+    ctx.fillStyle = "#c69a6a"; ctx.beginPath(); ctx.arc(0, -H * .82, H * .085, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#8a8f96"; ctx.beginPath(); ctx.arc(0, -H * .84, H * .095, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = crest; ctx.beginPath(); ctx.ellipse(-H * .01, -H * .95, H * .1, H * .035, -.2, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#c69a6a"; ctx.lineWidth = H * .045;
+    const swing = -0.9 + lg * 1.4;
     ctx.beginPath(); ctx.moveTo(H * .08, -H * .64); ctx.lineTo(H * .08 + Math.cos(swing) * H * .2, -H * .64 + Math.sin(swing) * H * .2); ctx.stroke();
-    ctx.strokeStyle = "#d8dde2"; ctx.lineWidth = H * .03;                           // blade
+    ctx.strokeStyle = "#d8dde2"; ctx.lineWidth = H * .03;
     const hx = H * .08 + Math.cos(swing) * H * .2, hy = -H * .64 + Math.sin(swing) * H * .2;
     ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + Math.cos(swing) * H * .26, hy + Math.sin(swing) * H * .26); ctx.stroke();
-    ctx.fillStyle = "#7a5a2a"; ctx.strokeStyle = "#e8bf35"; ctx.lineWidth = H * .012;  // shield
+    ctx.fillStyle = "#7a5a2a"; ctx.strokeStyle = "#e8bf35"; ctx.lineWidth = H * .012;
     ctx.beginPath(); ctx.ellipse(-H * .12, -H * .5, H * .09, H * .15, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    if (hurt > 0) { ctx.globalAlpha = hurt * .5; ctx.fillStyle = "#ff3a2a"; ctx.fillRect(-H * .2, -H * 1.02, H * .45, H * 1.02); ctx.globalAlpha = 1; }
+    if (hr > 0) { ctx.globalAlpha = hr * .5; ctx.fillStyle = "#ff3a2a"; ctx.fillRect(-H * .2, -H * 1.02, H * .45, H * 1.02); ctx.globalAlpha = 1; }
     ctx.restore();
   }
-  let last = performance.now();
+  function beast(x, feet, H, icon, boss, t, lungeT, hurtT) {
+    const now = Date.now();
+    const lg = Math.max(0, 1 - (now - lungeT) / 240), hr = Math.max(0, 1 - (now - hurtT) / 280);
+    const size = H * (boss ? 0.8 : 0.58);
+    ctx.save();
+    ctx.translate(x - lg * H * 0.12 + hr * H * 0.05, feet + Math.sin(t / 380) * H * 0.012);
+    ctx.fillStyle = "rgba(0,0,0,.35)"; ctx.beginPath(); ctx.ellipse(0, 0, size * .45, size * .08, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.font = `${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    if (hr > 0) ctx.filter = `brightness(${1 + hr}) sepia(${hr}) saturate(${1 + hr * 4}) hue-rotate(-20deg)`;
+    ctx.fillText(icon, 0, -size * 0.08);
+    ctx.restore();
+  }
+  let wallCache = null;
+  function dungeonBack(w, h, d, t) {
+    const D = DUNGEONS[d], key = `${w}x${h}:${d}`;
+    if (!wallCache || wallCache.key !== key) {
+      const off = document.createElement("canvas"); off.width = Math.max(1, Math.round(w)); off.height = Math.max(1, Math.round(h));
+      const c = off.getContext("2d");
+      let g = c.createLinearGradient(0, 0, 0, h * .62); g.addColorStop(0, D.wall[1]); g.addColorStop(1, D.wall[0]);
+      c.fillStyle = g; c.fillRect(0, 0, w, h * .62);
+      const bh = h * .055, bw = bh * 2.2;
+      c.strokeStyle = "rgba(0,0,0,.35)"; c.lineWidth = 1.5;
+      for (let r = 0, y = 0; y < h * .62; r++, y += bh) {
+        c.beginPath(); c.moveTo(0, y); c.lineTo(w, y); c.stroke();
+        for (let x = (r % 2) * bw / 2; x < w; x += bw) { c.beginPath(); c.moveTo(x, y); c.lineTo(x, y + bh); c.stroke(); }
+      }
+      // the arch the next thing comes through
+      const ax = w * .5, aw = w * .16, ay = h * .62, ah = h * .4;
+      c.fillStyle = "rgba(0,0,0,.72)"; c.beginPath(); c.moveTo(ax - aw / 2, ay); c.lineTo(ax - aw / 2, ay - ah + aw / 2); c.arc(ax, ay - ah + aw / 2, aw / 2, Math.PI, 0); c.lineTo(ax + aw / 2, ay); c.fill();
+      c.strokeStyle = "rgba(255,255,255,.08)"; c.lineWidth = 4; c.beginPath(); c.arc(ax, ay - ah + aw / 2, aw / 2 + 4, Math.PI, 0); c.stroke();
+      // the floor
+      g = c.createLinearGradient(0, h * .62, 0, h); g.addColorStop(0, D.floor); g.addColorStop(1, "#0c0906");
+      c.fillStyle = g; c.fillRect(0, h * .62, w, h * .38);
+      c.strokeStyle = "rgba(0,0,0,.4)"; c.lineWidth = 1;
+      for (let i = 1; i < 6; i++) { const y = h * .62 + (h * .38) * (i / 6) ** 1.4; c.beginPath(); c.moveTo(0, y); c.lineTo(w, y); c.stroke(); }
+      for (let i = -6; i <= 6; i++) { c.beginPath(); c.moveTo(w / 2 + i * w * .06, h * .62); c.lineTo(w / 2 + i * w * .2, h); c.stroke(); }
+      wallCache = { key, off };
+    }
+    ctx.drawImage(wallCache.off, 0, 0, w, h);
+    // torches: the only thing that moves on the walls
+    for (const tx of [.2, .8]) {
+      const x = w * tx, y = h * .3, fl = 1 + Math.sin(t / 90 + tx * 9) * .08 + Math.sin(t / 37 + tx) * .05;
+      const glow = ctx.createRadialGradient(x, y, 2, x, y, h * .32 * fl);
+      glow.addColorStop(0, "rgba(255,170,70,.42)"); glow.addColorStop(1, "rgba(255,120,40,0)");
+      ctx.fillStyle = glow; ctx.fillRect(x - h * .4, y - h * .4, h * .8, h * .8);
+      ctx.fillStyle = "#3a2a1a"; ctx.fillRect(x - 3, y + 4, 6, h * .07);
+      ctx.fillStyle = "#ffb347"; ctx.beginPath(); ctx.ellipse(x, y, 5 * fl, 11 * fl, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#fff0b0"; ctx.beginPath(); ctx.ellipse(x, y + 3, 2.5, 5, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    // a vignette so the fighters sit in the light
+    const v = ctx.createRadialGradient(w / 2, h * .7, h * .2, w / 2, h * .6, w * .7);
+    v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,.55)");
+    ctx.fillStyle = v; ctx.fillRect(0, 0, w, h);
+  }
+  function drawSplats(w, h, now, youX, foeX, top) {
+    splats = splats.filter((s) => now - s.at < 1000);
+    for (const s of splats) {
+      const k = (now - s.at) / 1000, x = s.who === "you" ? youX : foeX, y = top - k * h * .06;
+      const col = s.kind === "miss" ? "#2f6fd6" : s.kind === "heal" ? "#2fae5a" : "#c42a2a";
+      ctx.globalAlpha = Math.min(1, (1 - k) * 2.4);
+      ctx.fillStyle = col; ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.lineWidth = 2;
+      const r = Math.max(13, h * .036);
+      ctx.beginPath();
+      for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2, rr = i % 2 ? r * .78 : r; ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#fff"; ctx.font = `800 ${Math.round(r * .95)}px Figtree, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(s.text, x, y + 1);
+    }
+    ctx.globalAlpha = 1;
+  }
+  let lastDraw = 0;
   function frame(t) {
-    const dt = Math.min(0.05, (t - last) / 1000); last = t;
     const { w, h } = fit();
-    let g = ctx.createLinearGradient(0, 0, 0, h * .5);
-    g.addColorStop(0, "#f0a860"); g.addColorStop(1, "#f7d6a0");
-    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h * .5);
-    ctx.fillStyle = "#fff3c8"; ctx.beginPath(); ctx.arc(w * .82, h * .12, Math.min(w, h) * .05, 0, Math.PI * 2); ctx.fill();
-    // the stands: stone tiers with the crowd in them
-    for (let r = 0; r < 4; r++) {
-      const y0 = h * (.14 + r * .1);
-      ctx.fillStyle = ["#6a5a4a", "#7a6a58", "#8a7864", "#9a8670"][r]; ctx.fillRect(0, y0, w, h * .1);
-      ctx.fillStyle = "rgba(0,0,0,.18)";
-      for (let x = (r % 2) * 22; x < w; x += 44) { ctx.beginPath(); ctx.arc(x + 20, y0 + h * .1, h * .035, Math.PI, 0); ctx.fill(); }
+    const now = Date.now();
+    dungeonBack(w, h, C.on ? C.dun : S.dun, t);
+    const H = h * .44, feet = h * .92, youX = w * .38, foeX = w * .62;
+    gladiator(youX, feet, H, 1, ["#7a2a2a", "#2a4a7a", "#3a5a2a", "#4a2a6a", "#6a5010", "#5a0f1a"][S.weapon], "#c43a2a", t, lunge, hurt);
+    const showFoe = C.on && !C.rAt;
+    if (showFoe) {
+      const m = foeNow();
+      if (m.icon) beast(foeX, feet, H, m.icon, m.boss, t, hurt, lunge);
+      else gladiator(foeX, feet, H, -1, m.look[0], m.look[1], t, hurt, lunge);
     }
-    for (const c of crowd) {
-      const y0 = h * (.155 + c.row * .1), jump = F.flash && t - F.flash < 500 ? Math.abs(Math.sin((t - F.flash) / 60 + c.p)) * h * .012 : Math.sin(t / 700 + c.p) * h * .002;
-      ctx.fillStyle = c.c; ctx.beginPath(); ctx.arc(c.x * w, y0 - jump, Math.max(2, h * .011), 0, Math.PI * 2); ctx.fill();
+    drawSplats(w, h, performance.now(), youX, foeX, h * .34);
+    // the attack timers and health, every frame
+    const you = Math.max(0, S.hp / maxHp());
+    $("hpYou").style.width = pct(you); $("hpYouN").textContent = `${num(Math.max(0, S.hp))} / ${num(maxHp())}`;
+    $("hpYou").classList.toggle("low", you < 0.3);
+    if (showFoe) {
+      const m = foeNow();
+      $("hpFoe").style.width = pct(Math.max(0, C.foeHp / m.hp)); $("hpFoeN").textContent = `${num(Math.max(0, C.foeHp))} / ${num(m.hp)}`;
+      $("atkYou").style.width = pct(Math.min(1, 1 - (C.pAt - now) / pSpeed()));
+      $("atkFoe").style.width = pct(Math.min(1, 1 - (C.eAt - now) / m.speed));
+    } else {
+      $("hpFoe").style.width = "0%"; $("atkYou").style.width = "0%"; $("atkFoe").style.width = "0%";
+      $("hpFoeN").textContent = C.on && C.resting ? "resting" : C.on && C.rAt ? `next in ${Math.max(0, Math.ceil((C.rAt - now) / 1000))}s` : "";
     }
-    ctx.fillStyle = "#3a2a1c"; ctx.fillRect(0, h * .54, w, h * .025);             // the wall
-    g = ctx.createLinearGradient(0, h * .565, 0, h);                                // the sand
-    g.addColorStop(0, "#e8cf98"); g.addColorStop(1, "#c9a868");
-    ctx.fillStyle = g; ctx.fillRect(0, h * .565, w, h * .435);
-    ctx.fillStyle = "rgba(120,90,50,.18)"; for (let i = 0; i < 70; i++) ctx.fillRect((i * 97) % w, h * .6 + ((i * 53) % (h * .38)), 3, 2);
-    const H = h * .42, feet = h * .9;
-    gladiator(w * .34, feet, H, 1, ["#7a2a2a", "#2a4a7a", "#3a5a2a"][S.weapon % 3], "#c43a2a", t, F.lunge, F.hurt);
-    if (F.foe) gladiator(w * .66, feet, H * (F.foe.beast ? 1.12 : 1), -1, F.foe.tunic, F.foe.crest, t, F.hurt, F.flash);
-    for (const d of F.dust) { d.x += d.vx * dt; d.y += d.vy * dt; d.vy += dt * 1.2; d.life -= dt * 1.6; ctx.globalAlpha = Math.max(0, d.life); ctx.fillStyle = "#e0c088"; ctx.beginPath(); ctx.arc(d.x * w, d.y * h, 3, 0, Math.PI * 2); ctx.fill(); }
-    ctx.globalAlpha = 1; F.dust = F.dust.filter((d) => d.life > 0);
-    if (F.on) $("mark").style.left = `${meterAt(t) * 100}%`;
     requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
 
-  /* ========================================================= the other pages */
+  /* ================================================================== the dungeon page */
+  const dunOpen = (d) => d === 0 || Boolean(S.clears[DUNGEONS[d - 1].key]);
+  function renderArena() {
+    // the dungeon picker
+    const v = $("venues"); v.replaceChildren();
+    DUNGEONS.forEach((d, i) => {
+      const open = dunOpen(i), n = S.clears[d.key] || 0;
+      const b = el("button", "spot dun-spot" + (open ? "" : " locked"), `${open ? "" : "🔒 "}${d.name}<small>${open ? (n ? `cleared ×${num(n)}` : `combat ${d.rec}+`) : "locked"}</small>`);
+      b.type = "button"; b.setAttribute("aria-pressed", String(S.dun === i));
+      b.addEventListener("click", () => {
+        if (!open) return toast("You have not unlocked this yet", `You need to clear ${DUNGEONS[i - 1].name} to unlock.`);
+        if (C.on && C.dun !== i) return toast("You are in a dungeon", "Leave it first.");
+        S.dun = i; renderArena(); save();
+      });
+      v.append(b);
+    });
+    const D = DUNGEONS[S.dun], seq = seqOf(S.dun);
+    $("venueLine").textContent = D.name;
+    $("dunName").textContent = D.name;
+    $("dunAbout").textContent = D.about;
+    $("dunMeta").innerHTML = `${seq.length} rooms · recommended combat ${D.rec} · chest about ${coin(D.chest)} · cleared ${num(S.clears[D.key] || 0)}×`;
+    // the rooms, in order
+    const rooms = $("foes"); rooms.replaceChildren();
+    seq.forEach((k, i) => {
+      const m = MON[k], here = C.on && C.dun === S.dun;
+      const state = here ? (C.farm ? (k === C.farm && seq.indexOf(k) === i ? "now" : "") : i < C.room ? "done" : i === C.room ? "now" : "") : "";
+      const r = el("div", `room ${state}${m.boss ? " boss" : ""}`);
+      r.innerHTML = `<span class="room-n">${m.boss ? "👑" : i + 1}</span><span class="room-ico">${m.icon || "🪖"}</span>
+        <span class="room-main"><b>${m.name}</b><small>Combat ${foeCb(m)} · ${num(m.hp)} health · hits up to ${m.max} · ${secs(m.speed)}</small></span>
+        <span class="room-odds"><small>You hit</small><b>${pct(hitVs(m))}</b></span><span class="room-odds"><small>It hits</small><b>${pct(foeHits(m))}</b></span>`;
+      const farming = C.on && C.farm === k && C.dun === S.dun;
+      if (m.boss) r.append(el("span", "room-farm"));
+      else if (seq.indexOf(k) === i) {
+        const b = el("button", "btn small" + (farming ? " gold" : ""), farming ? "Farming" : "Farm"); b.type = "button";
+        b.title = `Fight ${m.name} over and over — no boss, no chest, just xp and drops`;
+        b.disabled = !dunOpen(S.dun) || (C.on && !farming);
+        b.addEventListener("click", () => { if (farming) leave("You stopped farming"); else enter(S.dun, k); });
+        r.append(b);
+      } else r.append(el("span", "room-farm"));
+      rooms.append(r);
+    });
+    // the button
+    const act = $("act");
+    if (C.on) { act.textContent = C.dun !== S.dun ? `In ${DUNGEONS[C.dun].name}` : C.farm ? "Stop farming" : "Leave the dungeon"; act.className = "act hook"; }
+    else { act.textContent = `Enter ${D.name}`; act.className = "act"; }
+    // styles
+    const st = $("styles"); st.replaceChildren();
+    STYLES.forEach((s, i) => {
+      const b = el("button", "cb-style" + (S.style === i ? " on" : ""), `<b>${s.name}</b><small>${s.trains.length > 1 ? "All three" : SKILLS[s.trains[0]].name} xp</small>`);
+      b.type = "button"; b.setAttribute("aria-pressed", String(S.style === i));
+      b.addEventListener("click", () => { S.style = i; renderArena(); save(); });
+      st.append(b);
+    });
+    // food
+    const fs = $("foodSel"); fs.replaceChildren();
+    FOODS.forEach((k) => { const o = el("option", null, `${ITEMS[k].icon} ${ITEMS[k].name} ×${num(S.items[k] || 0)} · heals ${ITEMS[k].heal}`); o.value = k; o.selected = S.food === k; o.disabled = !S.items[k] && S.food !== k; fs.append(o); });
+    $("autoEat").value = String(S.autoEat);
+    $("repeat").checked = S.repeat;
+    $("gearLine").textContent = `${W().name} · ${SH().name} · ${HE().name}`;
+    paintStats();
+  }
+  function paintStats() {
+    const m = C.on ? foeNow() : MON[seqOf(S.dun)[0]];
+    const row = (k, v) => `<div><small>${k}</small><b>${v}</b></div>`;
+    $("youStats").innerHTML = `<h4>You <span>combat ${myCb()}</span></h4><div class="cb-grid">${row("Max hit", num(pMax()))}${row("Attack speed", secs(pSpeed()))}${row("Accuracy", num(pAcc()))}${row("Evasion", num(pEv()))}${row("Damage reduction", pct(pDR()))}${row("Style", ST().name)}</div>`
+      + (S.buffs.whet > 0 || S.buffs.wrap > 0 || S.buffs.crown > Date.now() ? `<p class="cb-buffs">${S.buffs.whet > 0 ? `<span>🗡️ Whetted · ${S.buffs.whet}</span>` : ""}${S.buffs.wrap > 0 ? `<span>🦴 Wrapped · ${S.buffs.wrap}</span>` : ""}${S.buffs.crown > Date.now() ? `<span>🌿 Crowned · ${Math.ceil((S.buffs.crown - Date.now()) / 60000)}m</span>` : ""}</p>` : "");
+    $("foeStats").innerHTML = `<h4>${m.icon || "🪖"} ${m.name} <span>combat ${foeCb(m)}</span></h4><div class="cb-grid">${row("Max hit", num(m.max))}${row("Attack speed", secs(m.speed))}${row("You hit it", pct(hitVs(m)))}${row("It hits you", pct(foeHits(m)))}${row("Health", num(m.hp))}${row("Killed", num(S.kills[m.name] || 0))}</div>`;
+    const seq = seqOf(C.on ? C.dun : S.dun);
+    $("foeLine").textContent = !C.on ? "Not in a dungeon" : C.resting ? `Resting · back in ${Math.max(0, Math.ceil((C.rAt - Date.now()) / 1000))}s` : C.farm ? `Farming · ${foeNow().name}` : `Room ${C.room + 1} of ${seq.length} · ${foeNow().name}`;
+    $("foeName").textContent = C.on ? foeNow().name : "—";
+    // this run
+    const mins = Math.max(1, (Date.now() - sess.t0) / 60000), gained = xpNow() - sess.xp;
+    $("session").innerHTML = C.on || sess.kills
+      ? `<div class="sess-grid"><div class="cstat"><small>Kills</small><b>${num(sess.kills)}</b></div><div class="cstat"><small>Cleared</small><b>${num(sess.clears)}</b></div>
+         <div class="cstat"><small>Xp / hour</small><b>${num(gained / mins * 60)}</b></div><div class="cstat"><small>Denarii / hour</small><b>${num((S.coin - sess.coin) / mins * 60)}</b></div></div>
+         <p class="sess-drops">${Object.entries(sess.drops).map(([k, n]) => `<span class="chipf">${ITEMS[k].icon} ${n} ${ITEMS[k].name}</span>`).join("") || '<span class="note">Nothing dropped yet.</span>'}</p>`
+      : `<p class="note">Enter a dungeon and this fills in: kills, xp and denarii an hour, and what dropped.</p>`;
+  }
+
+  /* ================================================================== the other pages */
   const gearNeed = (it) => (it.need && lvl(it.need[0]) < it.need[1] ? `${SKILLS[it.need[0]].name} ${it.need[1]}` : "");
-  function card({ icon, name, about, price, owned, ownedLabel, need, onBuy }) {
+  function card({ icon, name, about, price, owned, ownedLabel, need, onBuy, buy }) {
     const c = el("div", `sitem${owned ? " owned" : ""}${need ? " locked" : ""}`);
     c.append(el("div", "sitem-art", icon), el("div", "sitem-b", `<b>${name}</b><small>${about}</small>`));
     if (owned) c.append(el("span", "stag owned", ownedLabel || "Owned")); else if (need) c.append(el("span", "stag need", need));
@@ -1188,7 +1787,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     if (owned) foot.append(el("span", "sprice", ownedLabel || "Owned"));
     else {
       foot.append(el("span", "sprice", coin(price)));
-      const short = S.coin < price, b = el("button", "btn small" + (!need && !short ? " gold" : ""), need ? "Locked" : short ? "Not enough" : "Buy");
+      const short = S.coin < price, b = el("button", "btn small" + (!need && !short ? " gold" : ""), need ? "Locked" : short ? "Not enough" : buy || "Buy");
       b.type = "button"; b.disabled = Boolean(need) || short; b.addEventListener("click", onBuy); foot.append(b);
     }
     c.append(foot); return c;
@@ -1197,126 +1796,148 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const box = $(id); box.replaceChildren();
     list.forEach((it, i) => box.append(card({ icon, name: it.name, about: about(it), price: it.cost, owned: S[key] >= i,
       ownedLabel: S[key] === i ? "Equipped" : "Owned", need: S[key] >= i ? "" : gearNeed(it),
-      onBuy: () => { if (S.coin < it.cost) return; S.coin -= it.cost; S[key] = i; toast(`${it.name} bought`); paintBar(); renderAll(); } })));
+      onBuy: () => { if (S.coin < it.cost) return; S.coin -= it.cost; S[key] = i; toast(`${it.name} bought`); paintBar(); renderAll(); save(); } })));
   };
+  function paintBar() {
+    $("tbCoin").textContent = num(S.coin); $("tbFame").textContent = num(S.fame);
+    $("tbRec").textContent = `${num(S.w)} · ${num(S.l)}`; $("tbTotal").textContent = total();
+    $("tbCb").textContent = myCb();
+    $("tbBeasts").textContent = `${DUNGEONS.filter((d) => S.clears[d.key]).length}/${DUNGEONS.length}`;
+    $("tbRate").innerHTML = `${coin(rate())} / hr`;
+    const t = Object.keys(S.titles).at(-1);
+    $("tbRank").textContent = t || (S.w >= 400 ? "Primus" : S.w >= 100 ? "Veteranus" : S.w >= 10 ? "Gladiator" : "Tiro");
+  }
   function renderAll() {
-    // venues
-    const v = $("venues"); v.replaceChildren();
-    VENUES.forEach((ven, i) => {
-      const b = el("button", "spot", S.venues[i] ? ven.name : `${ven.name} ${coin(ven.cost)}`); b.type = "button";
-      b.setAttribute("aria-pressed", String(S.venue === i));
-      b.addEventListener("click", () => {
-        if (F.on) return toast("Finish the bout first");
-        if (!S.venues[i]) { if (S.coin < ven.cost) return toast("Not enough denarii", `${ven.name} costs ${num(ven.cost)}`); S.coin -= ven.cost; S.venues[i] = true; toast(`${ven.name} open`); }
-        S.venue = i; $("venueLine").textContent = ven.name; paintBar(); renderAll();
-      });
-      v.append(b);
-    });
-    // who fights here
-    const f = $("foes"); f.replaceChildren();
-    CLASSES.forEach((c) => { const chip = el("span", "chipf"); const d = el("i"); d.style.background = RAR[c.rar].color; chip.append(d, document.createTextNode(c.name)); chip.title = RAR[c.rar].name; f.append(chip); });
-    $("gearLine").textContent = `${WEAPONS[S.weapon].name} · ${SHIELDS[S.shield].name}`;
+    renderArena();
     // stable
     $("stableCap").textContent = `${S.stable.length} fighters · ${num(rate())} an hour`;
     const ro = $("roster"); ro.replaceChildren();
     S.stable.forEach((ft) => { const r = el("div", "g-fighter"); r.innerHTML = `<span class="face">${ft.icon}</span><span><b>${ft.name}</b><small>Fighting the undercard</small></span><span class="earn">${coin(ft.rate)} / hr</span>`; ro.append(r); });
     const rc = $("recruits"); rc.replaceChildren();
-    RECRUITS.forEach((r) => rc.append(card({ icon: r.icon, name: r.name, about: `Earns ${num(r.rate)} an hour on the undercard`, price: r.cost, need: "",
-      onBuy: () => { if (S.coin < r.cost) return; S.coin -= r.cost; S.stable.push({ name: ["Spartacus", "Gannicus", "Oenomaus", "Agron", "Nasir", "Barca"][S.stable.length % 6], icon: r.icon, rate: r.rate }); toast(`${r.name} joins the ludus`); paintBar(); renderAll(); } })));
-    // drills
-    const dr = $("drills"); dr.replaceChildren();
-    DRILLS.forEach((d) => {
-      const run = S.drills[d.key], left = run ? Math.max(0, run - Date.now()) : 0, pct = run ? Math.min(100, 100 - left / (d.secs * 10)) : 0;
-      const c = el("div", "g-drill");
-      c.innerHTML = `<h3>${d.icon} ${d.name}</h3><p>${d.about}</p><p>${SKILLS[d.skill].name} · ${num(d.xp)} xp · ${d.secs < 60 ? d.secs + " s" : d.secs / 60 + " min"}</p><div class="dive-bar"><i style="width:${pct}%"></i></div>`;
-      const b = el("button", "btn small" + (run && !left ? " gold" : ""), !run ? "Start" : left ? `${Math.ceil(left / 1000)} s left` : "Collect");
-      b.type = "button"; b.disabled = Boolean(run && left);
-      b.addEventListener("click", () => { if (!run) S.drills[d.key] = Date.now() + d.secs * 1000; else if (!left) { delete S.drills[d.key]; grant(d.skill, d.xp); toast(`${d.name} done`, `+${num(d.xp)} ${SKILLS[d.skill].name} xp`); paintBar(); } renderAll(); });
-      c.append(b); dr.append(c);
-    });
+    RECRUITS.forEach((r) => rc.append(card({ icon: r.icon, name: r.name, about: `Earns ${num(r.rate)} an hour on the undercard, awake or not`, price: r.cost, need: "",
+      onBuy: () => { if (S.coin < r.cost) return; S.coin -= r.cost; S.stable.push({ name: ["Spartacus", "Gannicus", "Oenomaus", "Agron", "Nasir", "Barca"][S.stable.length % 6], icon: r.icon, rate: r.rate }); toast(`${r.name} joins the ludus`); paintBar(); renderAll(); save(); } })));
+    renderYard();
     // forge
     const fr = $("recipes"); fr.replaceChildren();
-    const mats = el("div", "panel-intro", `<p>${Object.entries(SPOILS).map(([k, s]) => `${s.icon} <b>${S.spoils[k]}</b> ${s.name}`).join(" · ")}</p>`);
-    fr.append(mats);
+    fr.append(el("div", "panel-intro", `<p>${["iron", "hide", "bronze", "laurel"].map((k) => `${ITEMS[k].icon} <b>${num(S.items[k] || 0)}</b> ${ITEMS[k].name}`).join(" · ")}</p>`));
     RECIPES.forEach((r) => {
-      const ok = Object.entries(r.need).every(([k, n]) => S.spoils[k] >= n);
+      const ok = Object.entries(r.need).every(([k, n]) => (S.items[k] || 0) >= n);
       const row = el("div", "craft-row");
-      row.innerHTML = `<span class="craft-art">🔥</span><span class="craft-main"><b>${r.name}</b><span class="craft-parts">${Object.entries(r.need).map(([k, n]) => `<span class="${S.spoils[k] >= n ? "ok" : "no"}">${SPOILS[k].icon} ${n} ${SPOILS[k].name}</span>`).join("")}<span class="arrow">→</span><span>${r.about}</span></span></span>`;
+      row.innerHTML = `<span class="craft-art">🔥</span><span class="craft-main"><b>${r.name}</b><span class="craft-parts">${Object.entries(r.need).map(([k, n]) => `<span class="${(S.items[k] || 0) >= n ? "ok" : "no"}">${ITEMS[k].icon} ${n} ${ITEMS[k].name}</span>`).join("")}<span class="arrow">→</span><span>${r.about}</span></span></span>`;
       const b = el("button", "btn small" + (ok ? " gold" : ""), ok ? "Make" : "Need parts"); b.type = "button"; b.disabled = !ok;
-      b.addEventListener("click", () => { Object.entries(r.need).forEach(([k, n]) => { S.spoils[k] -= n; }); grant("smithing", r.xp); toast(`Made: ${r.name}`, `+${num(r.xp)} Smithing xp`); renderAll(); });
+      b.addEventListener("click", () => {
+        Object.entries(r.need).forEach(([k, n]) => { S.items[k] -= n; if (!S.items[k]) delete S.items[k]; });
+        if (r.key === "whet") S.buffs.whet += 50; if (r.key === "wrap") S.buffs.wrap += 50;
+        if (r.key === "greaves") S.coin += 900; if (r.key === "crown") S.buffs.crown = Math.max(Date.now(), S.buffs.crown) + 3600000;
+        grant("smithing", r.xp); toast(`Made: ${r.name}`, `+${num(r.xp)} Smithing xp`); paintBar(); renderAll(); save();
+      });
       row.append(b); fr.append(row);
     });
-    // beasts
+    // bosses: the thing at the bottom of each dungeon
     const bz = $("beasts"); bz.replaceChildren();
-    BEASTS.forEach((b) => {
-      const done = S.beasts[b.name], open = lvl("strength") >= b.need && S.venues[b.venue];
+    DUNGEONS.forEach((d, i) => {
+      const m = MON[seqOf(i).at(-1)], done = S.clears[d.key], open = dunOpen(i);
       const c = el("div", "boss " + (done ? "beaten" : open ? "open" : "locked"));
-      const art = el("div", "boss-art g-beast", b.icon);
+      const art = el("div", "boss-art g-beast", m.icon);
       art.append(el("span", `boss-tag ${done ? "beaten" : open ? "open" : "locked"}`, done ? "Slain" : open ? "Waiting for you" : "Locked"));
       const body = el("div", "boss-body");
-      body.append(el("h3", null, `${b.name}<small>${VENUES[b.venue].name}</small>`), el("p", null, b.about));
-      body.append(el("div", "boss-need" + (open ? "" : " no"), open ? `${b.hp} health · purse ${num(b.purse)}` : `Needs Strength ${b.need} and ${VENUES[b.venue].name} open`));
-      body.append(el("div", "boss-reward", `<small>${done ? "What it gave you" : "Slay it and you get"}</small><span>Title <b>${b.title}</b></span><span>${coin(b.purse)} and a crowd that remembers</span>`));
-      const go = el("button", "btn" + (open ? " primary" : ""), done ? "Fight it again" : open ? "Face it" : "Not yet"); go.type = "button"; go.disabled = !open;
-      go.addEventListener("click", () => startFight(b));
+      body.append(el("h3", null, `${m.name}<small>At the bottom of ${d.name}</small>`), el("p", null, m.about));
+      body.append(el("div", "boss-need" + (open ? "" : " no"), open ? `Combat ${foeCb(m)} · ${num(m.hp)} health · hits up to ${m.max}` : `Clear ${DUNGEONS[i - 1].name} to open the way`));
+      body.append(el("div", "boss-reward", `<small>${done ? "What it gave you" : "Kill it and you get"}</small><span>Title <b>${m.title}</b></span><span>The dungeon chest, about ${coin(d.chest)}</span>`));
+      const go = el("button", "btn" + (open ? " primary" : ""), open ? `Go to ${d.name}` : "Not yet"); go.type = "button"; go.disabled = !open;
+      go.addEventListener("click", () => { S.dun = i; openTab("arena"); renderArena(); });
       body.append(go); c.append(art, body); bz.append(c);
     });
     // skills
     const sk = $("skills"); sk.replaceChildren();
     Object.entries(SKILLS).forEach(([k, s]) => {
-      const xp = S.skills[k], L = lvl(k), lo = XP_AT[L], hi = L >= 99 ? lo : XP_AT[L + 1], pct = L >= 99 ? 100 : Math.floor(100 * (xp - lo) / (hi - lo));
+      const xp = S.skills[k], L = lvl(k), lo = XP_AT[L], hi = L >= 99 ? lo : XP_AT[L + 1], p = L >= 99 ? 100 : Math.floor(100 * (xp - lo) / (hi - lo));
       const c = el("div", "skill");
       c.innerHTML = `<div class="skill-h"><span class="skill-ico" style="font-size:1.3rem">${s.icon}</span><h3>${s.name}</h3><span class="skill-lvl">${L}<small> / 99</small></span></div>
-        <div class="xpt-bar"><i style="width:${pct}%"></i><span>${pct}%</span></div>
+        <div class="xpt-bar"><i style="width:${p}%"></i><span>${p}%</span></div>
         <div class="skill-meta"><span>${num(xp)} xp</span><span>${L >= 99 ? "Maxed" : `${num(hi - xp)} to ${L + 1}`}</span></div><p class="skill-how">${s.how}</p>`;
       sk.append(c);
     });
     // market
-    gearGrid("mkWeapons", WEAPONS, "weapon", "🗡️", (w) => `×${w.dmg} damage · +${Math.round(w.zone * 100)}% on the meter`);
-    gearGrid("mkShields", SHIELDS, "shield", "🛡️", (s) => `Blocks ${Math.round(s.block * 100)}% of every hit`);
-    gearGrid("mkHelms", HELMS, "helm", "⛑️", (h) => `×${h.fame} fame from the crowd`);
+    gearGrid("mkWeapons", WEAPONS, "weapon", "🗡️", (w) => `+${w.acc} accuracy · +${w.str} strength · ${secs(w.speed)} a swing`);
+    gearGrid("mkShields", SHIELDS, "shield", "🛡️", (s) => `+${s.ev} evasion · ${pct(s.dr)} damage reduction`);
+    gearGrid("mkHelms", HELMS, "helm", "⛑️", (h) => `+${h.ev} evasion · ${pct(h.dr)} reduction · ×${h.fame} fame`);
+    const fd = $("mkFood"); fd.replaceChildren();
+    FOODS.forEach((k) => fd.append(card({ icon: ITEMS[k].icon, name: `${ITEMS[k].name} ×10`, about: `Heals ${ITEMS[k].heal} each · you have ${num(S.items[k] || 0)}`, price: ITEMS[k].cost * 10, need: "", buy: "Buy 10",
+      onBuy: () => { if (S.coin < ITEMS[k].cost * 10) return; S.coin -= ITEMS[k].cost * 10; S.items[k] = (S.items[k] || 0) + 10; toast(`10 ${ITEMS[k].name}`); paintBar(); renderAll(); save(); } })));
+  }
+  function renderYard() {
+    const dr = $("drills"); dr.replaceChildren();
+    DRILLS.forEach((d) => {
+      const run = S.drills[d.key], left = run ? Math.max(0, run - Date.now()) : 0, p = run ? Math.min(100, 100 - left / (d.secs * 10)) : 0;
+      const c = el("div", "g-drill");
+      c.innerHTML = `<h3>${d.icon} ${d.name}</h3><p>${d.about}</p><p>${SKILLS[d.skill].name} · ${num(d.xp)} xp · ${d.secs < 60 ? d.secs + " s" : d.secs / 60 + " min"}</p><div class="dive-bar"><i style="width:${p}%"></i></div>`;
+      const b = el("button", "btn small" + (run && !left ? " gold" : ""), !run ? "Start" : left ? `${Math.ceil(left / 1000)} s left` : "Collect");
+      b.type = "button"; b.disabled = Boolean(run && left);
+      b.addEventListener("click", () => { if (!run) S.drills[d.key] = Date.now() + d.secs * 1000; else if (!left) { delete S.drills[d.key]; grant(d.skill, d.xp); toast(`${d.name} done`, `+${num(d.xp)} ${SKILLS[d.skill].name} xp`); paintBar(); } renderYard(); save(); });
+      c.append(b); dr.append(c);
+    });
   }
 
   /* the map between the two games, for the About page */
   $("mapRows").innerHTML = [
-    ["Fishing spots", "Venues", "Five tiers, bought with the currency, better odds deeper in"],
-    ["Species & rarity", "Opponent classes", "Tiro to Champion on the same five rarity colours"],
-    ["Reel minigame", "Strike meter", "A skill check read from the clock at the press"],
-    ["Rods", "Weapons", "Wider target, better outcome"],
-    ["Bait", "Stances", "A choice before each attempt that bends the odds"],
+    ["Fishing spots", "Dungeons", "Five tiers, deeper is harder and pays more; each opens the next"],
+    ["Species & rarity", "Rooms", "A fixed run of opponents ending in a boss"],
+    ["Reel minigame", "Idle combat", "Attack timers, accuracy against evasion, a max hit — OSRS and Melvor's melee maths"],
+    ["Rods", "Weapons", "Accuracy, strength and swing speed"],
+    ["Bait", "Food and styles", "Auto-eat keeps a run alive; the style picks which skill trains"],
     ["Your tank", "Your stable", "Things you own earn per hour, awake or not"],
     ["Bait garden", "Training yard", "Start a timer, come back, collect"],
-    ["Diving & inventory", "Spoils", "Drops off the main loop that feed the next system"],
-    ["Crafting", "Forge", "Turn drops into buffs and currency"],
-    ["Leviathans", "Beasts", "Five bosses, one per tier, a title for each"],
+    ["Diving & inventory", "Drops", "Everything you kill can drop the next system's materials"],
+    ["Crafting", "Forge", "Turn drops into buffs and denarii"],
+    ["Leviathans", "Dungeon bosses", "Five, one at the bottom of each dungeon, a title for each"],
     ["Pearls", "Denarii", "The in-game money, never real money"],
-    ["Skills 0–99", "Skills 0–99", "The same curve, six new names"]
+    ["Skills 0–99", "Skills 0–99", "The same curve: Attack, Strength, Defence, Hitpoints, and two more"]
   ].map((r) => `<tr><td>${r[0]}</td><td><b>${r[1]}</b></td><td class="m">${r[2]}</td></tr>`).join("");
 
-  /* ========================================================= nav */
-  const LOCKED = { tourney: "a win at Capua", board: "40 levels across your skills", fame: "25 levels across your skills", spoils: "the Forge — spoils live there for now" };
+  /* ================================================================== nav and wiring */
+  const LOCKED = { tourney: "to clear the Catacombs", board: "40 levels across your skills", fame: "25 levels across your skills", spoils: "the Forge — drops live there for now" };
+  function openTab(tab) {
+    document.querySelectorAll(".fnav .tab").forEach((x) => x.setAttribute("aria-selected", String(x.dataset.tab === tab)));
+    document.querySelectorAll("[data-panel]").forEach((p) => { p.hidden = p.dataset.panel !== tab; });
+    window.scrollTo(0, 0);
+  }
   document.querySelectorAll(".fnav .tab").forEach((b) => {
     if (LOCKED[b.dataset.tab]) b.classList.add("locked");
     b.addEventListener("click", () => {
       const tab = b.dataset.tab;
       if (LOCKED[tab]) return toast("You have not unlocked this yet", `You need ${LOCKED[tab]} to unlock.`);
-      document.querySelectorAll(".fnav .tab").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
-      document.querySelectorAll("[data-panel]").forEach((p) => { p.hidden = p.dataset.panel !== tab; });
-      window.scrollTo(0, 0);
+      openTab(tab); renderAll();
     });
   });
-  $("act").addEventListener("click", strike);
-  // Space strikes, but only on the arena and never while typing in a control
-  document.addEventListener("keydown", (e) => {
-    if (e.code !== "Space" || document.querySelector('[data-panel="arena"]').hidden) return;
-    if (e.target.closest("input, select, textarea, button")) return;
-    e.preventDefault(); strike();
+  $("act").addEventListener("click", () => {
+    if (C.on) { if (C.dun === S.dun) leave(C.farm ? "You stopped farming" : "You climbed back out"); else { S.dun = C.dun; renderArena(); } return; }
+    enter(S.dun);
   });
+  $("eatNow").addEventListener("click", () => { const f = S.items[S.food] ? S.food : anyFood(); if (!f) return toast("No food", "Buy some at the Market."); if (!eat(f)) toast("You are already at full health"); renderArena(); save(); });
+  $("foodSel").addEventListener("change", (e) => { S.food = e.target.value; save(); });
+  $("autoEat").addEventListener("change", (e) => { S.autoEat = Number(e.target.value); save(); });
+  $("repeat").addEventListener("change", (e) => { S.repeat = e.target.checked; save(); });
+  $("resetSave").addEventListener("click", () => { if (!confirm("Start the mockup over? This only clears this browser.")) return; wiping = true; localStorage.removeItem(SAVE); location.reload(); });
 
-  // the stable pays in real time, so the top bar moves while you watch
-  setInterval(() => { S.coin += rate() / 3600; paintBar(); }, 1000);
-  setInterval(() => { if (!document.querySelector('[data-panel="yard"]').hidden) renderAll(); }, 1000);
+  // play the time the page was shut, then run live
+  catchUp();
+  let lastSig = "";
+  setInterval(() => {
+    const now = Date.now();
+    advance(now);
+    S.coin += rate() / 3600 / 4;
+    paintBar(); paintStats();
+    const sig = [C.on, C.dun, C.room, C.farm, S.dun, S.w, S.l, S.style, lvl("attack"), lvl("strength"), lvl("defence"), JSON.stringify(S.items)].join("|");
+    if (sig !== lastSig) { lastSig = sig; renderArena(); }
+    if (!document.querySelector('[data-panel="yard"]').hidden) renderYard();
+  }, 250);
+  setInterval(save, 5000);
+  addEventListener("pagehide", save);
+  document.addEventListener("visibilitychange", () => { if (document.hidden) save(); });
   paintBar(); renderAll();
+  requestAnimationFrame(frame);
+  window.__glad = { wipe() { wiping = true; localStorage.removeItem(SAVE); location.reload(); }, get S() { return S; }, advance, enter, MON, DUNGEONS, hitVs, foeHits, pMax };
 })();
 
 </script>
