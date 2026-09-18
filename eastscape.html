@@ -609,6 +609,8 @@ function say(text, cls = "sys") {
 
 /* ------------------------------------------------------------ the art (PixelLab, style A) */
 const ART = "/v3/assets/img/glad/flat/", ART_V = 1;
+// pictures replaced after they first shipped (the edge keeps each URL for a year): bump the one that changed
+const ART_VER = { o_fountain: 2, o_stall: 2, o_ferry: 2, o_bed: 2, bank: 2, cottage: 2 };
 const ART_FILES = ["t_dirt", "t_water", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d]),
   "bank", "store", "cottage", "g_bush", "g_boulder", "g_grass", "g_flowers",
@@ -635,7 +637,7 @@ const artReady = Promise.all(ART_FILES.map((k) => new Promise((res) => {
     const sh = document.createElement("canvas"); sh.width = im.width; sh.height = im.height; const so = sh.getContext("2d"); so.drawImage(im, 0, 0); so.globalCompositeOperation = "source-in"; so.fillStyle = "#1a1020"; so.fillRect(0, 0, im.width, im.height);
     IMG[k] = { im, sh, cx: (x0 + x1 + 1) / 2, foot: y1 + 1, top: y0, w: x1 - x0 + 1 }; res();
   };
-  im.onerror = () => res(); im.src = `${ART}${k}.png?v=${ART_V}`;
+  im.onerror = () => res(); im.src = `${ART}${k}.png?v=${ART_VER[k] || ART_V}`;
 })));
 /* painted sunlight: everything stands on its own shadow, its silhouette laid flat on the ground and leaning away
    from a sun behind the viewer's left shoulder. Purely a picture; nothing in the game knows about light. */
