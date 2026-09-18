@@ -27,7 +27,7 @@ const SCENE_IDLE_MS = 120000;
 const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const BOT_LINES = ["anyone know where the good fishing is?", "gz", "cows are free xp lol", "selling feathers", "this farm is peaceful", "wheat run anyone?", "brb", "that yew is taunting me", "who keeps feeding the olives"];
-const EXAMINE_KINDS = new Set(["hive", "notice", "sign", "statue", "fountain", "fire", "bush", "boulder", "hay", "counter", "pool", "column", "range", "table", "barrel", "bed"]);
+const EXAMINE_KINDS = new Set(["hive", "notice", "sign", "statue", "fountain", "fire", "bush", "boulder", "hay", "counter", "pool", "column", "range", "table", "barrel", "bed", "plant", "bench", "goatstatue", "chest", "rug", "chair", "sack", "cat", "bucket"]);
 
 export default {
   async fetch(request, env) {
@@ -126,7 +126,7 @@ export class World {
   }
   touch(pl) { pl.dirty = true; pl.needSave = true; pl.changedAt ??= Date.now(); }
 
-  meOf(pl) { const C = pl.C; return { hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, settings: C.settings, scene: C.scene, god: pl.god, saved: C.saved || 0 }; }
+  meOf(pl) { const C = pl.C; return { speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, settings: C.settings, scene: C.scene, god: pl.god, saved: C.saved || 0 }; }
 
   /* ------------------------------------------------------------ scenes */
   scene(key) {
@@ -354,7 +354,8 @@ export class World {
     if (Math.max(Math.abs(dx), Math.abs(dy)) !== 1 || !G.canStepIn(S.g, e.x, e.y, dx, dy)) { e.path = []; return false; }
     // everyone but players waits rather than stepping onto someone
     if (!isPlayer && this.occupied(S, n.x, n.y, e)) { e.path = []; return false; }
-    e.step = { fx: e.x, fy: e.y, tx: n.x, ty: n.y, t0: now, ms: dx && dy ? STEP * 1.4 : STEP };
+    const base = isPlayer ? G.stepMsOf(e.C, e.speedTest || 0) : STEP;
+    e.step = { fx: e.x, fy: e.y, tx: n.x, ty: n.y, t0: now, ms: Math.round(dx && dy ? base * 1.4 : base) };
     if (dx) e.face = dx > 0 ? 1 : -1;
     e.dir = G.DIRS[`${dx},${dy}`];
     return true;
@@ -611,7 +612,7 @@ export class World {
     }
   }
 
-  /* ------------------------------------------------------------ the bank: any booth in the Bathhouse */
+  /* ------------------------------------------------------------ the bank: any booth inside the Bank */
   near(S, pl, type, r = 2) { return S.objs.some((o) => o.t === type && G.cheb(pl, G.nearestCell(o, pl)) <= r); }
   bankAdd(pl, k, n) {
     const C = pl.C, s = C.bank.find((x) => x.k === k);
@@ -792,6 +793,8 @@ export class World {
       case "resetscene": { this.scenes.delete(S.key); const S2 = this.scene(S.key); this.placeSafely(S2, pl); return note(`${S.def.name} reset: monsters, trees, rocks and bots are back.`); }
       case "reset": { const settings = C.settings; pl.C = G.freshChar(); pl.C.settings = settings; pl.x = pl.C.x; pl.y = pl.C.y; this.moveToScene(pl, pl.C.scene, null, { x: pl.x, y: pl.y }); this.touch(pl); return note("Character reset to a brand-new one."); }
       case "save": pl.needSave = true; this.persist(pl); return note("Saved.");
+      // try a speed bonus without any gear (this session only; it isn't saved)
+      case "speed": { pl.speedTest = Math.max(0, Math.min(200, Math.trunc(Number(m.n)) || 0)); this.touch(pl); return note(`Speed test: +${pl.speedTest}% raw, which gives +${G.speedBonus(C, pl.speedTest)}% (${G.stepMsOf(C, pl.speedTest)}ms a tile).`); }
     }
   }
 }

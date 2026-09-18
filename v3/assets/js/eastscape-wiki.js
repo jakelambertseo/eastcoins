@@ -38,7 +38,7 @@ export const GUIDES = [
   },
   {
     id: "bank", title: "The bank", icon: "🏛️",
-    body: `<p>The bank is inside the <a data-wiki="areas/bathhouse">Bathhouse</a> in <a data-wiki="areas/forum">the Forum</a>. Walk in through the door marked BANK and use any booth (or talk to Aurelia).</p>
+    body: `<p>The <a data-wiki="areas/bathhouse">Bank</a> is the building marked BANK in <a data-wiki="areas/forum">the Forum</a>, the town square. Walk in and use any booth (or talk to Aurelia).</p>
       <ul><li>It holds <b>200 different items</b>, and each stack is unlimited.</li>
       <li>Click an item to move it; pick <b>1, 5, 10 or All</b> first to move more at once.</li>
       <li><b>Deposit bag</b> and <b>Deposit worn</b> empty your inventory or your equipment in one click.</li></ul>`
@@ -61,6 +61,12 @@ export const GUIDES = [
       <li>Any change to either offer resets both accepts, so nobody can swap something out at the last second.</li></ul>`
   },
   {
+    id: "speed", title: "Movement speed", icon: "👟",
+    body: `<p>Walking one tile takes a quarter of a second. Speed bonuses (from boots, pets and potions, as they arrive) make that faster:</p>
+      <ul><li>The first <b>+20%</b> counts in full.</li><li>Anything past that counts <b>half</b>.</li><li>The total can't go past <b>+50%</b>.</li></ul>
+      <p>So +40% from gear gives +30% speed, and stacking past +80% doesn't help. Your Equipment tab shows your current speed.</p>`
+  },
+  {
     id: "wilderness", title: "The Wilderness", icon: "☠️",
     body: `<p>A pit with a rope on the <a data-wiki="areas/farm">Ludus Farm</a> path leads down to the Wilderness: an area where other players can attack you, with rare resources and monsters. It needs level 10 Melee, and it isn't open yet.</p>`
   }
@@ -69,10 +75,19 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-18", title: "The Bank, a lived-in farmhouse, and movement speed",
+    items: [
+      "The Bathhouse is now just the Bank, inside and out. It has a red runner to the counter, potted palms, benches, banners, a vault door, and a statue of its first depositor.",
+      "The Farmhouse has a rug, stools, shelves, drying herbs, a window, a flour sack, a spare bucket and a cat in a tiny helmet.",
+      "Movement speed is now a number the server keeps. Boots, pets and potions will raise it later: the first +20% counts in full, the rest counts half, and it caps at +50%. Your Equipment tab shows your speed.",
+      "Your Cash and your name and picture now sit at the top right."
+    ]
+  },
+  {
     date: "2026-09-18", title: "Buildings, the bank, the Exchange and trading",
     items: [
-      "Buildings you can walk into: each is its own room. The Bathhouse in the Forum and the Farmhouse on the Ludus Farm are open.",
-      "The bank, inside the Bathhouse: 200 item slots, unlimited stacks.",
+      "Buildings you can walk into: each is its own room. The Bank in the Forum and the Farmhouse on the Ludus Farm are open.",
+      "The bank: 200 item slots, unlimited stacks.",
       "The Exchange: a market stall in the Forum with sell offers and buy orders that match on their own, a board to browse, and a 1% cut on sales.",
       "Trading face to face: click another player.",
       "The currency is now called Cash.",

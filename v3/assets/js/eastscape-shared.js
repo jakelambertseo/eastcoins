@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 8;
+export const VERSION = 9;
 export const COLS = 22, ROWS = 13;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -62,6 +62,14 @@ export const fmtCash = (n) => `${Math.round(n).toLocaleString()} Cash`;
 export const DIRS = { "1,0": "east", "-1,0": "west", "0,1": "south", "0,-1": "north", "1,1": "south-east", "-1,1": "south-west", "1,-1": "north-east", "-1,-1": "north-west" };
 export const D8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
 export const SPAN = { n: [16, 18], s: [16, 18], e: [5, 7], w: [5, 7] }, OPP = { n: "s", s: "n", e: "w", w: "e" };
+/* movement speed. Walking one tile takes STEP_MS; a speed bonus (boots, pets, potions later: an item's "spd", in %)
+   shortens that. The first 20% counts in full, anything past it counts half, and the total can't pass +50%
+   (about 6 tiles a second), so every upgrade is worth having but nothing stacks into chaos. The server times your
+   steps with this and the page predicts with the same rule, so they always agree. */
+export const STEP_MS = 240, SPEED_FULL = 20, SPEED_CAP = 50;
+export function speedRaw(c, extra = 0) { let raw = extra; for (const k of Object.values(c.eq || {})) if (k && ITEMS[k]?.spd) raw += ITEMS[k].spd; return raw; }
+export function speedBonus(c, extra = 0) { const raw = speedRaw(c, extra); return Math.max(0, Math.min(SPEED_CAP, Math.min(SPEED_FULL, raw) + Math.max(0, raw - SPEED_FULL) * 0.5)); }
+export const stepMsOf = (c, extra = 0) => Math.round(STEP_MS / (1 + speedBonus(c, extra) / 100));
 export const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
 // fishing reaches two tiles (the river's edge is a bank you can't stand on); everything else is next to you
 export const reachOf = (kind) => (kind === "spot" ? 2 : 1);
@@ -199,7 +207,7 @@ export const SCENES = {
       for (let y = 7; y < ROWS; y++) for (let x = 16; x <= 18; x++) g[y][x] = "p";
       for (let x = 0; x < 4; x++) for (let y = 5; y <= 7; y++) g[y][x] = "p";
       const paved = g.map((r) => r.slice());
-      const bath = { t: "house", x: 2, y: 1, w: 6, h: 3, door: { x: 4, y: 3 }, name: "Bathhouse", roof: "#8a9aa8", wall: "#efe6d4", sign: "BANK", enter: "bathhouse" };
+      const bath = { t: "house", x: 2, y: 1, w: 6, h: 3, door: { x: 4, y: 3 }, name: "Bank", roof: "#8a9aa8", wall: "#efe6d4", sign: "BANK", enter: "bathhouse" };
       const forge = { t: "house", x: 12, y: 1, w: 6, h: 3, door: { x: 15, y: 3 }, name: "Forge", roof: "#7a4a3a", wall: "#c8b89a", sign: "STORE" };
       objs.push(bath, forge); block(g, 2, 1, 6, 3); block(g, 12, 1, 6, 3);
       objs.push({ t: "fountain", x: 10, y: 6, w: 2, h: 2, name: "Fountain" }); block(g, 10, 6, 2, 2);
@@ -216,7 +224,7 @@ export const SCENES = {
     },
     mobs: [],
     npcs: [{ name: "Livia the Broker", x: 15, y: 4, still: true, opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Selling? Buying? Use the stall. I just take my 1%.", "Offers keep working while you sleep. Come back and collect.", "The best price wins, and whoever was there first."] },
-           { name: "Gaius", x: 7, y: 7, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: Coo. The Forge buys ore. Coo.", "PIGEON: He doesn't talk. I do the talking. Coo.", "PIGEON: The Bathhouse keeps your things safe. Opening soon. Coo.", "PIGEON: West is the Olive Grove. Bring a sword. Seriously. Coo."] }],
+           { name: "Gaius", x: 7, y: 7, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: Coo. The Forge buys ore. Coo.", "PIGEON: He doesn't talk. I do the talking. Coo.", "PIGEON: The Bank keeps your things safe. Aurelia counts everything twice. Coo.", "PIGEON: West is the Olive Grove. Bring a sword. Seriously. Coo."] }],
     bots: [{ name: "Gannicus", level: 55 }, { name: "Naevia", level: 31 }]
   },
   grove: {
@@ -251,31 +259,44 @@ function room(x0, y0, x1, y1, doorX) {
   return g;
 }
 Object.assign(SCENES, {
+  // the scene key stays "bathhouse" so saved characters standing in it still load; everything a player sees says Bank
   bathhouse: {
-    name: "The Bathhouse", interior: true, floor: "marble", room: [4, 3, 17, 10], exitTo: { scene: "forum", x: 4, y: 4 }, entry: { x: 10, y: 10 },
+    name: "The Bank", interior: true, floor: "marble", room: [4, 3, 17, 10], exitTo: { scene: "forum", x: 4, y: 4 }, entry: { x: 10, y: 10 },
+    // on the back wall, left to right: a banner, a lamp, the vault door, a lamp, a banner
+    wall: [{ t: "banner", x: 6 }, { t: "lamp", x: 8.5 }, { t: "vault", x: 10.5 }, { t: "lamp", x: 12.5 }, { t: "banner", x: 15 }],
     build() {
       const g = room(4, 3, 17, 10, 10), objs = [];
       // the bank counter runs wall to wall; the tellers work behind it
       for (const x of [6, 10, 14]) objs.push({ t: "booth", x, y: 4, name: "Bank booth" });
       objs.push({ t: "counter", x: 4, y: 4, w: 14, h: 1, name: "Counter" }); block(g, 4, 4, 14, 1);
-      // the bath itself, and columns
-      objs.push({ t: "pool", x: 6, y: 7, w: 4, h: 2, name: "Bath" }); block(g, 6, 7, 4, 2);
-      objs.push({ t: "pool", x: 12, y: 7, w: 4, h: 2, name: "Bath" }); block(g, 12, 7, 4, 2);
+      // a red runner from the door to the counter (you walk on it)
+      objs.push({ t: "rug", x: 10, y: 5, w: 2, h: 6, color: "#9a2a2a", name: "Runner" });
       for (const [x, y] of [[4, 6], [17, 6], [4, 9], [17, 9]]) { objs.push({ t: "column", x, y, name: "Column" }); g[y][x] = "#"; }
+      for (const [x, y] of [[5, 5], [16, 5], [6, 10], [15, 10]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
+      objs.push({ t: "bench", x: 6, y: 7, w: 3, h: 1, name: "Bench" }); block(g, 6, 7, 3, 1);
+      objs.push({ t: "bench", x: 13, y: 7, w: 3, h: 1, name: "Bench" }); block(g, 13, 7, 3, 1);
+      objs.push({ t: "goatstatue", x: 7, y: 9, name: "Statue" }); g[9][7] = "#";
+      objs.push({ t: "chest", x: 14, y: 9, name: "Strongbox" }); g[9][14] = "#";
       return { g, objs, blobs: [] };
     },
     mobs: [], bots: [],
-    npcs: [{ name: "Aurelia", x: 10, y: 3, still: true, opens: "bank", reach: 2, hair: "#1a1a2a", shirt: "#3a6a8a", pants: "#2a2a3a", lines: ["Welcome to the Bathhouse. Your things are safe with us. Mostly.", "Use any booth. I'm the one counting.", "Two hundred different things we'll hold for you. Stack them as high as you like."] }]
+    npcs: [{ name: "Aurelia", x: 10, y: 3, still: true, opens: "bank", reach: 2, hair: "#1a1a2a", shirt: "#3a6a8a", pants: "#2a2a3a", lines: ["Welcome to the Bank. Your things are safe with us. Mostly.", "Use any booth. I'm the one counting.", "Two hundred different things we'll hold for you. Stack them as high as you like."] }]
   },
   farmhouse: {
     name: "The Farmhouse", interior: true, floor: "wood", room: [6, 4, 15, 10], exitTo: { scene: "farm", x: 4, y: 5 }, entry: { x: 10, y: 10 },
+    wall: [{ t: "herbs", x: 9.5 }, { t: "shelf", x: 11.5 }, { t: "window", x: 13.5 }],
     build() {
       const g = room(6, 4, 15, 10, 10), objs = [];
+      objs.push({ t: "rug", x: 9, y: 5, w: 5, h: 4, color: "#6a7a3a", name: "Rug" });
       objs.push({ t: "range", x: 7, y: 4, w: 2, h: 1, name: "Range" }); block(g, 7, 4, 2, 1);
       objs.push({ t: "table", x: 10, y: 6, w: 3, h: 2, name: "Table" }); block(g, 10, 6, 3, 2);
       objs.push({ t: "barrel", x: 15, y: 4, name: "Barrel" }); g[4][15] = "#";
       objs.push({ t: "barrel", x: 14, y: 4, name: "Barrel" }); g[4][14] = "#";
       objs.push({ t: "bed", x: 6, y: 8, w: 1, h: 2, name: "Bed" }); block(g, 6, 8, 1, 2);
+      for (const x of [9, 13]) { objs.push({ t: "chair", x, y: 7, name: "Stool" }); g[7][x] = "#"; }
+      objs.push({ t: "sack", x: 6, y: 5, name: "Flour sack" }); g[5][6] = "#";
+      objs.push({ t: "cat", x: 7, y: 9, name: "Cat" }); g[9][7] = "#";
+      objs.push({ t: "bucket", x: 15, y: 9, name: "Bucket" }); g[9][15] = "#";
       return { g, objs, blobs: [] };
     },
     mobs: [], bots: [],
@@ -338,7 +359,16 @@ export const EXAMINE = {
   range: ["A wood-burning range. Cooking comes soon."],
   table: ["A heavy farmhouse table. It's seen a lot of stew."],
   barrel: ["Full of something that smells like olives. Or feet."],
-  bed: ["Waldy's bed, apparently. There's a bucket-shaped dent in the pillow."]
+  bed: ["Waldy's bed, apparently. There's a bucket-shaped dent in the pillow."],
+  plant: ["A potted palm. Someone has been watering it with wine.", "A potted palm. It's doing better than most of the customers."],
+  bench: ["A marble bench, for waiting. Nobody waits. Aurelia is very fast."],
+  goatstatue: ["'THE FIRST DEPOSITOR.' A bronze goat, clutching a coin purse. It looks smug."],
+  chest: ["The vault's overflow. Locked. Aurelia has the key and won't say where."],
+  rug: ["A good rug. Mind your sandals."],
+  chair: ["A three-legged stool. Bom has broken four of these."],
+  sack: ["A sack of flour. Baking comes later."],
+  cat: ["A cat wearing a tiny gladiator helmet. It judges you.", "The cat's helmet has a little crest. It has clearly won fights."],
+  bucket: ["Waldy's spare bucket. Freshly polished. It has googly eyes too."]
 };
 export const VERB = { bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
