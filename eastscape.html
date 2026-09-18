@@ -43,6 +43,8 @@ button,input,select{font:inherit}
 .dlg{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:min(620px,calc(100% - 24px));display:grid;grid-template-columns:84px 1fr;gap:12px;padding:12px 14px;background:var(--panel);color:var(--panel-ink);border:3px solid var(--frame);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:5}
 .dlg[hidden]{display:none}
 .game:has(.dlg:not([hidden])) .feed{bottom:190px}
+/* with the chat open, game messages go into it instead of floating over the map */
+.game:has(.chat-box:not([hidden])) .feed{display:none}
 .dlg-face{width:84px;height:84px;border:2px solid #8a7a5a;background:#d8cbac;display:grid;place-items:center;overflow:hidden;font-size:40px}
 .dlg-face img{width:136px;height:136px;image-rendering:pixelated;object-fit:none;object-position:50% 28%}
 .dlg-body b{display:block;font-size:16px;color:#7a2a1a}
@@ -71,7 +73,7 @@ button,input,select{font:inherit}
 .qdone.show{animation:qpop .45s cubic-bezier(.2,1.6,.4,1)}
 @keyframes qpop{from{transform:translateX(-50%) scale(.6);opacity:0}to{transform:translateX(-50%) scale(1);opacity:1}}
 @media (prefers-reduced-motion:reduce){.qdone.show{animation:none}}
-.feed{position:absolute;left:10px;bottom:10px;width:min(520px,70%);display:flex;flex-direction:column;gap:2px;pointer-events:none}
+.feed{position:absolute;left:10px;bottom:52px;width:min(520px,70%);display:flex;flex-direction:column;gap:2px;pointer-events:none}
 .feed p{margin:0;align-self:flex-start;max-width:100%;padding:3px 9px;border-radius:3px;background:rgba(14,11,8,.72);font-size:14px;line-height:1.3;text-shadow:1px 1px 0 #000;animation:feedOut 9s linear forwards}
 @keyframes feedOut{0%,80%{opacity:1}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.feed p{animation:none}}
@@ -81,7 +83,7 @@ button,input,select{font:inherit}
 .feed .bad{color:#ff7a6a}
 .feed .admin{color:#8fd0ff}
 /* chat: a tab in the corner, closed until you open it */
-.chat{position:absolute;right:10px;bottom:10px;z-index:4;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.chat{position:absolute;left:10px;bottom:10px;z-index:4;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 .chat-tab{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:2px solid #000;border-radius:6px;background:linear-gradient(#5a5048,#3a322c);color:#fff;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.4)}
 .chat-tab[aria-expanded="true"]{background:linear-gradient(#f39ab5,#d9738f)}
 .chat-tab:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
@@ -97,6 +99,12 @@ button,input,select{font:inherit}
 .chat-log p b{color:#9fd0ff;font-weight:800}
 .chat-log p.mine b{color:#7ee07e}
 .chat-log p.bot b{color:#e8c07a}
+.bot-tag{display:inline-block;padding:0 5px;border-radius:3px;background:#4a3e2e;color:#e8dcc0;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;vertical-align:1px}
+.chat-log p.sys{color:#b8b0a0}
+.chat-log p.good{color:#7ee07e}
+.chat-log p.loot{color:#ffd23f}
+.chat-log p.bad{color:#ff7a6a}
+.chat-log p.admin{color:#8fd0ff}
 .chat-log .empty{color:var(--muted);font-style:italic}
 .chat-form{display:flex;gap:6px;padding:6px;border-top:1px solid #3a2e22}
 .chat-form input{flex:1;min-width:0;padding:6px 8px;border:1px solid #5a4a38;border-radius:4px;background:#1e1812;color:#fff}
@@ -210,7 +218,7 @@ button,input,select{font:inherit}
     <div class="qdone" id="qdone" hidden></div>
     <div class="chat" id="chat">
       <div class="chat-box" id="chatBox" hidden>
-        <div class="chat-head"><b>Chat</b><small id="chatWhere">everyone in this area</small></div>
+        <div class="chat-head"><b>Chat</b><small id="chatWhere">everyone in EastScape</small></div>
         <div class="chat-log" id="chatLog" aria-live="polite"><p class="empty">Nobody has said anything here yet.</p></div>
         <form class="chat-form" id="chatForm" autocomplete="off"><input id="chatIn" maxlength="120" placeholder="Say something… (Enter)" aria-label="Chat message"><button type="submit">Send</button></form>
       </div>
@@ -239,7 +247,7 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=2";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=3";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -320,6 +328,7 @@ function onMsg(m) {
     const est = m.t - Date.now(); offset = offset == null ? est : Math.max(offset - 5, Math.min(offset + 5, offset * 0.8 + est * 0.2));
     if (m.scene !== Z.key) loadScene(m.scene);
     Z.players = m.players; Z.mobs = m.mobs; Z.bots = m.bots;
+    checkPred();
     Z.npcs = m.npcs.map((n) => ({ ...Z.defs[n.id], ...n, bubble: Z.npcs.find((o) => o.id === n.id)?.bubble }));
     const bubbles = new Map(Z.bots.map((b) => [b.id, null]));
     for (const o of Z.objs) { o.stumpUntil = 0; o.emptyUntil = 0; o.bareUntil = 0; o.grownAt = 0; }
@@ -327,7 +336,6 @@ function onMsg(m) {
     for (const e of m.ev || []) {
       if (e.type === "splat") splats.push({ who: e.who, n: e.n, kind: e.kind, at: performance.now() });
       if (e.type === "bubble") { botBubbles.set(e.id, { text: e.text, at: performance.now() }); const b = Z.bots.find((x) => x.id === e.id); if (b) chatLine(b.name, e.text, "bot"); }
-      if (e.type === "chat") { botBubbles.set(e.id, { text: e.text, at: performance.now() }); chatLine(e.name, e.text, e.id === you?.id ? "mine" : ""); }
     }
     $("online").textContent = `${m.online} online`;
     return;
@@ -346,6 +354,7 @@ function onEvent(e) {
   if (e.type === "questdone") { const q = QUESTS[e.k]; if (q) questBanner(q); return; }
   if (e.type === "scene") { if (DLG) closeTalk(); return; }
   if (e.type === "saved") { savedAt = e.t; return; }
+  if (e.type === "chat") { if (e.scene === Z.key) botBubbles.set(e.id, { text: e.text, at: performance.now() }); chatLine(e.name, e.text, e.id === you?.id ? "mine" : ""); return; }
 }
 let savedAt = 0;
 
@@ -354,8 +363,7 @@ function loadScene(key) {
   const b = G.buildScene(key);
   Object.assign(Z, { key, g: b.g, objs: b.objs, fadeAt: performance.now(), defs: {} });
   SCENES[key].npcs.forEach((n, i) => { Z.defs[`${key}n${i}`] = n; });
-  Z.npcs = []; botBubbles.clear();
-  $("chatWhere").textContent = `everyone in ${SCENES[key].name}`;
+  Z.npcs = []; botBubbles.clear(); PRED.on = false; PRED.path = []; PRED.step = null;
   Z.bg = paintBg();
   if (DLG) closeTalk();
   renderStats();
@@ -367,11 +375,22 @@ let chatOpen = false, unread = 0;
 function chatLine(name, text, cls) {
   const log = $("chatLog"); log.querySelector(".empty")?.remove();
   const p = document.createElement("p"); if (cls) p.className = cls;
-  const b = document.createElement("b"); b.textContent = `${name}: `; p.append(b, document.createTextNode(text));
+  const b = document.createElement("b"); b.textContent = name;
+  // the simulated players say so
+  if (cls === "bot") { const tag = document.createElement("span"); tag.className = "bot-tag"; tag.textContent = "Bot"; b.append(" ", tag); }
+  b.append(": "); p.append(b, document.createTextNode(text));
   const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 30;
   log.append(p); while (log.children.length > 60) log.firstChild.remove();
   if (atBottom || cls === "mine") log.scrollTop = log.scrollHeight;
   if (!chatOpen && cls !== "mine") { unread++; $("chatUnread").textContent = unread > 9 ? "9+" : String(unread); $("chatUnread").hidden = false; }
+}
+// game messages sit in the chat log too (not counted as unread), so opening it shows everything
+function gameLine(text, cls) {
+  const log = $("chatLog"); log.querySelector(".empty")?.remove();
+  const p = document.createElement("p"); p.className = cls || "sys"; p.textContent = text;
+  const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 30;
+  log.append(p); while (log.children.length > 80) log.firstChild.remove();
+  if (atBottom) log.scrollTop = log.scrollHeight;
 }
 function setChat(open, focus = true) {
   chatOpen = open; $("chatBox").hidden = !open; $("chatTab").setAttribute("aria-expanded", String(open));
@@ -392,6 +411,7 @@ document.addEventListener("keydown", (e) => {
 
 /* ------------------------------------------------------------ messages */
 function say(text, cls = "sys") {
+  gameLine(text, cls);
   const p = document.createElement("p"); p.className = cls; p.textContent = text;
   const log = $("log"); log.append(p); while (log.children.length > 5) log.firstChild.remove();
   setTimeout(() => p.remove(), 9000);
@@ -549,6 +569,50 @@ function posOf(e, now) {
   return { px: fx + (tx - fx) * k, py: fy + (ty - fy) * k, moving: k < 1 };
 }
 
+/* ------------------------------------------------------------ your own movement, predicted
+   The server decides where you are, but waiting for it to say so makes walking feel laggy. So the
+   page walks you straight away with the same pathfinding and step timing the server uses, and hands
+   back to the server's word once you stop (or at once if the two ever disagree by more than 2 tiles). */
+const STEP = 240;
+const PRED = { on: false, x: 0, y: 0, step: null, path: [], dir: "south", face: 1, t: 0 };
+function predFrom() {
+  if (PRED.on) return PRED.step ? { x: PRED.step.tx, y: PRED.step.ty } : { x: PRED.x, y: PRED.y };
+  const P = myEnt(); if (!P) return null;
+  // take over from the server mid-step, on the same clock
+  PRED.step = null; PRED.x = P.x; PRED.y = P.y; PRED.dir = P.dir || PRED.dir; PRED.face = P.face || 1;
+  if (P.s) { const [fx, fy, tx, ty, t0, ms] = P.s, left = t0 + ms - snow(); if (left > 0) { PRED.x = fx; PRED.y = fy; PRED.step = { fx, fy, tx, ty, t0: performance.now() - (ms - left), ms }; } else { PRED.x = tx; PRED.y = ty; } }
+  return PRED.step ? { x: PRED.step.tx, y: PRED.step.ty } : { x: PRED.x, y: PRED.y };
+}
+function predGo(path) { if (!path) return; PRED.on = true; PRED.path = path; PRED.t = performance.now(); predTick(PRED.t); }
+function predTick(pnow) {
+  if (!PRED.on) return;
+  if (PRED.step) { if (pnow < PRED.step.t0 + PRED.step.ms) return; PRED.x = PRED.step.tx; PRED.y = PRED.step.ty; PRED.step = null; }
+  const n = PRED.path.shift();
+  if (n) {
+    const dx = n.x - PRED.x, dy = n.y - PRED.y;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) !== 1 || !G.canStepIn(Z.g, PRED.x, PRED.y, dx, dy)) { PRED.path = []; return; }
+    PRED.step = { fx: PRED.x, fy: PRED.y, tx: n.x, ty: n.y, t0: pnow, ms: dx && dy ? STEP * 1.4 : STEP };
+    PRED.dir = DIRS[`${dx},${dy}`]; if (dx) PRED.face = dx > 0 ? 1 : -1;
+    return;
+  }
+  // arrived: give control back to the server once it agrees (or after a moment regardless)
+  const P = myEnt();
+  if (!P || (!P.s || posOf(P, snow()).moving === false) && (P.x === PRED.x && P.y === PRED.y || pnow - PRED.t > 1500)) PRED.on = false;
+}
+function predPos(pnow) {
+  if (!PRED.step) return { px: PRED.x, py: PRED.y, moving: false };
+  const k = Math.max(0, Math.min(1, (pnow - PRED.step.t0) / PRED.step.ms));
+  return { px: PRED.step.fx + (PRED.step.tx - PRED.step.fx) * k, py: PRED.step.fy + (PRED.step.ty - PRED.step.fy) * k, moving: k < 1 };
+}
+// where to draw you: the prediction while it's running, the server otherwise
+function ownPos(P, now) { return PRED.on ? predPos(performance.now()) : posOf(P, now); }
+function checkPred() {
+  if (!PRED.on) return;
+  const P = myEnt(); if (!P) return;
+  const sx_ = P.s ? P.s[2] : P.x, sy_ = P.s ? P.s[3] : P.y, px_ = PRED.step ? PRED.step.tx : PRED.x, py_ = PRED.step ? PRED.step.ty : PRED.y;
+  if (Math.max(Math.abs(sx_ - px_), Math.abs(sy_ - py_)) > 2) { PRED.on = false; PRED.path = []; PRED.step = null; }
+}
+
 /* ------------------------------------------------------------ dialogue, popups and banners */
 function popup(title, text, icon, buttons) {
   $("popIco").textContent = icon || ""; $("popTitle").textContent = title; $("popText").textContent = text;
@@ -633,15 +697,20 @@ cv.addEventListener("pointerdown", (e) => {
   if (!me || !Z.g) return;
   const w = toWorld(e); if (w.x < 0 || w.y < 0 || w.x >= W || w.y >= H) return;
   if (DLG) closeTalk();
-  const t = thingAt(w.x, w.y);
+  const t = thingAt(w.x, w.y), from = predFrom();
   if (t) {
     if (t.kind === "mob") send({ t: "act", kind: "mob", id: t.id });
     else if (t.kind === "npc") send({ t: "act", kind: "npc", id: t.id });
     else send({ t: "act", kind: "ob", ob: t.ob.id });
+    // walk there now, the way the server will
+    if (from) {
+      const at = t.kind === "mob" || t.kind === "npc" ? { x: t.x, y: t.y } : t.kind === "door" ? t.ob.door : G.nearestCell(t.ob, from);
+      predGo(G.findPath(Z.g, from, at, G.reachOf(t.kind) || 1));
+    }
     clickMark = { x: t.x, y: t.y, at: performance.now(), red: t.kind === "mob" }; return;
   }
   const tx = Math.floor(w.x / T), ty = Math.floor(w.y / T);
-  if (G.walkableIn(Z.g, tx, ty)) { send({ t: "walk", x: tx, y: ty }); clickMark = { x: tx, y: ty, at: performance.now() }; }
+  if (G.walkableIn(Z.g, tx, ty)) { send({ t: "walk", x: tx, y: ty }); if (from) predGo(G.findPath(Z.g, from, { x: tx, y: ty }, 0)); clickMark = { x: tx, y: ty, at: performance.now() }; }
 });
 cv.addEventListener("pointermove", (e) => {
   const r = cv.getBoundingClientRect(); mouse = { x: e.clientX - r.left, y: e.clientY - r.top };
@@ -657,13 +726,19 @@ document.addEventListener("keydown", (e) => {
 });
 document.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
 addEventListener("blur", () => keys.clear());
-let lastKeyStep = 0;
 function keyMove() {
-  if (!keys.size || performance.now() - lastKeyStep < 110) return;
-  const p = myEnt(); if (!p || p.moving && p.s && posOf(p, snow()).moving) return;
+  if (!keys.size) return;
+  // one step at a time: the next is queued as the current one finishes, so holding a key walks smoothly
+  if (PRED.on && (PRED.path.length || (PRED.step && performance.now() < PRED.step.t0 + PRED.step.ms - 40))) return;
   let dx = 0, dy = 0; for (const k of keys) { dx += KM[k][0]; dy += KM[k][1]; }
   dx = Math.sign(dx); dy = Math.sign(dy);
-  if ((dx || dy) && G.canStepIn(Z.g, p.x, p.y, dx, dy)) { if (DLG) closeTalk(); lastKeyStep = performance.now(); send({ t: "step", dx, dy }); }
+  const from = predFrom(); if (!from || !(dx || dy)) return;
+  if (G.canStepIn(Z.g, from.x, from.y, dx, dy)) {
+    if (DLG) closeTalk();
+    send({ t: "step", dx, dy });
+    PRED.on = true; PRED.t = performance.now(); PRED.path = [{ x: from.x + dx, y: from.y + dy }];
+    if (!PRED.step) predTick(PRED.t);
+  }
 }
 
 /* ------------------------------------------------------------ the frame */
@@ -692,6 +767,7 @@ function frame() {
   if (!Z.g || !me) return;
   keyMove();
   const now = snow(), pnow = performance.now(), calm = set("reducedMotion");
+  predTick(pnow);
   const P = myEnt();
   // ---- the low-resolution world
   lc.clearRect(0, 0, W, H); lc.drawImage(Z.bg, 0, 0, W, H);
@@ -782,8 +858,9 @@ function frame() {
     spr(`hero_${b.dir || "south"}`, p.px * T + 8 + (b.face || 1) * sw, p.py * T + 15 + bobOf(p.moving), false, `hue-rotate(${b.hue || 0}deg)`);
   } });
   // players (you among them): 8 facings, a lunge when swinging, red when hit
-  for (const pl of Z.players) sprites.push({ y: posOf(pl, now).py * T + 14.5, draw: () => {
-    const p = posOf(pl, now), d = pl.dir || "south", sw = now - pl.swingAt, working = pl.started && pl.act !== "spot" && !p.moving;
+  const pos = (pl) => (pl.id === you.id ? ownPos(pl, now) : posOf(pl, now));
+  for (const pl of Z.players) sprites.push({ y: pos(pl).py * T + 14.5, draw: () => {
+    const p = pos(pl), d = (pl.id === you.id && PRED.on ? PRED.dir : pl.dir) || "south", sw = now - pl.swingAt, working = pl.started && pl.act !== "spot" && !p.moving;
     const lunge = working && sw < 260 && !calm ? Math.sin((sw / 260) * Math.PI) * 4 : 0;
     const [ux, uy] = Object.keys(DIRS).find((k) => DIRS[k] === d).split(",").map(Number);
     spr(`hero_${d}`, p.px * T + 8 + ux * lunge * 0.7, p.py * T + 15 + uy * lunge * 0.7 + bobOf(p.moving), false, (hurtNow(pl) ? RED : "") + (pl.id === you.id ? "" : " hue-rotate(200deg)"));
@@ -794,15 +871,15 @@ function frame() {
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(low, view.ox, view.oy, W * view.s, H * view.s);
   const S2 = view.s, sx = (tx) => view.ox + tx * S2, sy = (ty) => view.oy + ty * S2;
-  if (hoverTile && G.walkableIn(Z.g, hoverTile.x, hoverTile.y)) { ctx.strokeStyle = "rgba(160,70,50,.6)"; ctx.lineWidth = 2; ctx.strokeRect(sx(hoverTile.x * T) + 2, sy(hoverTile.y * T) + 2, T * S2 - 4, T * S2 - 4); }
+  if (hoverTile && set("hoverTile") && G.walkableIn(Z.g, hoverTile.x, hoverTile.y)) { ctx.strokeStyle = "rgba(160,70,50,.6)"; ctx.lineWidth = 2; ctx.strokeRect(sx(hoverTile.x * T) + 2, sy(hoverTile.y * T) + 2, T * S2 - 4, T * S2 - 4); }
   if (clickMark && pnow - clickMark.at < 500) { const k = (pnow - clickMark.at) / 500; ctx.strokeStyle = clickMark.red ? `rgba(255,60,40,${1 - k})` : `rgba(255,230,80,${1 - k})`; ctx.lineWidth = 3; const c = { x: sx(clickMark.x * T + 8), y: sy(clickMark.y * T + 8) }; ctx.beginPath(); ctx.moveTo(c.x - 8 - k * 4, c.y - 8 - k * 4); ctx.lineTo(c.x + 8 + k * 4, c.y + 8 + k * 4); ctx.moveTo(c.x + 8 + k * 4, c.y - 8 - k * 4); ctx.lineTo(c.x - 8 - k * 4, c.y + 8 + k * 4); ctx.stroke(); }
 
   // what's in everyone's hand, until the art has tools (the sword is already in the sprite)
-  for (const pl of Z.players) if (pl.weapon && pl.weapon !== "rudis") { const p = posOf(pl, now); heldIcon(ITEMS[pl.weapon].icon, sx(p.px * T + 8), sy(p.py * T + 15), pl.dir, S2); }
+  for (const pl of Z.players) if (pl.weapon && pl.weapon !== "rudis") { const p = pos(pl); heldIcon(ITEMS[pl.weapon].icon, sx(p.px * T + 8), sy(p.py * T + 15), pl.id === you.id && PRED.on ? PRED.dir : pl.dir, S2); }
   for (const b of Z.bots) if (b.work != null) { const p = posOf(b, now), t = b.workT; heldIcon(t === "spot" ? "🎣" : t === "rock" || t === "vein" ? "⛏️" : t === "olive" ? "🫒" : "🪓", sx(p.px * T + 8), sy(p.py * T + 15), b.dir, S2); }
   // names under everyone
   const names = set("names");
-  for (const pl of Z.players) { const p = posOf(pl, now), x = sx(p.px * T + 8), y = sy(p.py * T + 15); if (pl.id === you.id || names) { label(pl.name, x, y + 4, pl.id === you.id ? "#fff" : "#9fd0ff"); label(`level ${pl.lvl}`, x, y + 18, "#ffe45c", 12); } }
+  for (const pl of Z.players) { const p = pos(pl), x = sx(p.px * T + 8), y = sy(p.py * T + 15); if (pl.id === you.id || names) { label(pl.name, x, y + 4, pl.id === you.id ? "#fff" : "#9fd0ff"); label(`level ${pl.lvl}`, x, y + 18, "#ffe45c", 12); } }
   for (const m of Z.mobs) if (!m.dead) {
     const p = posOf(m, now), x = sx(p.px * T + 8), y = sy(p.py * T + 15);
     if (names) label(MOBS[m.t].name, x, y + 2, "#ffb23f", 12);
@@ -819,15 +896,15 @@ function frame() {
     }
     if (names) label(n.name, sx(p.px * T + 8), sy(p.py * T + 15) + 2, "#fff", 12);
   }
-  for (const pl of Z.players) { const bb = botBubbles.get(pl.id); if (bb && pnow - bb.at < 4500) { const p = posOf(pl, now); bubble(bb.text, sx(p.px * T + 8), sy(p.py * T - 12)); } }
+  for (const pl of Z.players) { const bb = botBubbles.get(pl.id); if (bb && pnow - bb.at < 4500) { const p = pos(pl); bubble(bb.text, sx(p.px * T + 8), sy(p.py * T - 12)); } }
   for (const b of Z.bots) { const p = posOf(b, now), x = sx(p.px * T + 8), y = sy(p.py * T + 15); if (names) { label(b.name, x, y + 2, "#fff", 12); label(`level ${b.level}`, x, y + 15, "#ffe45c", 11); } const bb = botBubbles.get(b.id); if (bb && pnow - bb.at < 3500) bubble(bb.text, x, sy(p.py * T - 10)); }
-  const pp = P ? posOf(P, now) : null, hx = pp ? sx(pp.px * T + 8) : 0, hy = pp ? sy(pp.py * T + 15) : 0;
+  const pp = P ? ownPos(P, now) : null, hx = pp ? sx(pp.px * T + 8) : 0, hy = pp ? sy(pp.py * T + 15) : 0;
   if (P && P.mob && me.hp < maxHp()) { ctx.fillStyle = "#c00"; ctx.fillRect(hx - 18, hy - 29 * S2, 36, 5); ctx.fillStyle = "#0c0"; ctx.fillRect(hx - 18, hy - 29 * S2, 36 * Math.max(0, me.hp / maxHp()), 5); }
   // hit splats
   splats = splats.filter((s) => pnow - s.at < 900);
   for (const s of splats) {
     let x, y;
-    if (s.who.startsWith("p:")) { const pl = Z.players.find((q) => `p:${q.id}` === s.who); if (!pl) continue; const p = posOf(pl, now); x = sx(p.px * T + 8); y = sy(p.py * T + 15) - 18 * S2; }
+    if (s.who.startsWith("p:")) { const pl = Z.players.find((q) => `p:${q.id}` === s.who); if (!pl) continue; const p = pos(pl); x = sx(p.px * T + 8); y = sy(p.py * T + 15) - 18 * S2; }
     else { const m = Z.mobs.find((q) => q.id === s.who); if (!m) continue; const p = posOf(m, now); x = sx(p.px * T + 8); y = sy(p.py * T) - 2 * S2; }
     const k = (pnow - s.at) / 900; ctx.globalAlpha = Math.min(1, (1 - k) * 2.5);
     ctx.fillStyle = s.kind === "miss" ? "#2f6fd6" : "#c42a2a"; ctx.beginPath(); ctx.arc(x, y - k * 10, 11, 0, Math.PI * 2); ctx.fill();
@@ -1014,7 +1091,7 @@ function renderAdmin(p) {
   }));
 }
 document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => { tab = b.dataset.tab; syncTabs(); renderPanel(); }));
-window.__es = { get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; } };
+window.__es = { get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED };
 
 setInterval(() => {
   const d = new Date(); $("clock").textContent = d.toTimeString().slice(0, 8);
