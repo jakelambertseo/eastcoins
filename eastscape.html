@@ -228,6 +228,8 @@ button,input,select{font:inherit}
 .ph{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:14px;border-bottom:2px solid rgba(0,0,0,.12)}
 .ph small{font-weight:600;text-transform:none;color:#6a5a40}
 .inv{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:6px}
+.ico{width:1.3em;height:1.3em;image-rendering:pixelated;vertical-align:-.3em;object-fit:contain}
+.slot .ico,.eq .ico{width:78%;height:78%;vertical-align:0}.eq .ico{width:62%;height:62%}
 .slot{position:relative;aspect-ratio:1;border:1px solid #bfb193;background:#e6dcc4;display:grid;place-items:center;font-size:26px;cursor:pointer;user-select:none}
 .slot:hover{background:#efe6d0}
 .slot.empty{cursor:default;background:#e2d8bf}
@@ -287,6 +289,36 @@ button,input,select{font:inherit}
 .adm .btn{padding:4px 10px;font-size:13px}
 .adm pre{margin:0;max-height:220px;overflow:auto;font-size:11px;background:#fffaf0;border:1px solid #bfb193;padding:6px;white-space:pre-wrap;word-break:break-all}
 .adm .tag{font-size:12px;color:#6a5a40}
+
+/* ---- PixelLab interface (2026-09-18 overnight): parchment windows in a wood-and-bronze frame, wooden buttons,
+   framed inventory slots. Everything is a 9-slice border-image drawn pixel-crisp; remove this block to go back. */
+.win,.dlg,.pop-card{border:15px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/win.png?v=1) 12 fill / 15px stretch;border-radius:0;background:none;image-rendering:pixelated}
+.win-head{background:#5a3220;color:#f3e7cc;border-bottom:3px solid #3a1e12;margin:-3px -3px 0;border-radius:2px}
+.win-head small{color:#e0c890}
+.win-x,.dlg-x{color:#f3e7cc}
+.win-head .win-x{color:#f3e7cc}
+.dlg-x{color:#6a4a2a;top:0;right:2px}
+.slot{border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/slot.png?v=1) 7 fill / 5px stretch;background:none;image-rendering:pixelated}
+.slot:hover{background:none;filter:brightness(1.08) saturate(1.1)}
+.slot.empty{background:none;opacity:.55}
+.btn{border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png?v=1) 10 fill / 7px stretch;border-radius:0;background:none;color:#f8ecd0;padding:1px 12px;text-shadow:1px 1px 0 #1a0e08;image-rendering:pixelated}
+.btn:hover,.btn:focus-visible{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_on.png?v=1)}
+.btn.plain{border-image-source:url(/v3/assets/img/glad/flat/ui/plain.png?v=1);background:none;color:#2a2016;text-shadow:none}
+.btn.plain:hover,.btn.plain:focus-visible{filter:brightness(1.06);border-image-source:url(/v3/assets/img/glad/flat/ui/plain.png?v=1)}
+.btn.danger{filter:hue-rotate(-12deg) saturate(1.8)}
+.eq{border:6px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/plain.png?v=1) 10 fill / 6px stretch;border-radius:0;background:none;image-rendering:pixelated}
+.eq.empty .ico{opacity:1}
+.chat-tab{border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png?v=1) 10 fill / 7px stretch;border-radius:0;background:none;padding:0 10px}
+.chat-tab[aria-expanded="true"],.chat-tab:hover{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_on.png?v=1);background:none}
+.dlg-opts button{border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/slot.png?v=1) 7 fill / 5px stretch;border-radius:0;background:none;padding:2px 6px}
+.dlg-opts button:hover,.dlg-opts button:focus-visible{background:none;filter:brightness(1.08)}
+.dlg-face{border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/slot.png?v=1) 7 fill / 5px stretch;background:none}
+.qty,.qty button{border-color:#6b4423}
+.qty button[aria-pressed="true"],.ex-tabs button[aria-pressed="true"]{background:#8a4a24;color:#fff3d8}
+.chat-form button{border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png?v=1) 10 fill / 7px stretch;border-radius:0;background:none;padding:0 10px}
+.chat-form button:hover{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_on.png?v=1)}
+.chat-log p .act{background:#8a4a24}
+.wiki .up{border-left-color:#b87a3a}
 </style>
 </head>
 <body>
@@ -579,7 +611,9 @@ const ART_FILES = ["t_dirt", "t_water", "farmhouse", "hut", "well", "tree", "hay
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].map((d) => "hero_" + d),
   ...["tom", "waldy", "tullius"].flatMap((n) => [n + "_south", n + "_east"]),
   // the Wilderness (PixelLab, 2026-09-18)
-  "t_wdirt", "t_wwater", "deadtree", "w_tree", "snag", "w_bush", "w_boulder", "grimstone", "gravestone", "skeleton", "rope", "cagesign", "gnasher", "taxwraith", "chandelier", "revenant"];
+  "t_wdirt", "t_wwater", "deadtree", "w_tree", "snag", "w_bush", "w_boulder", "grimstone", "gravestone", "skeleton", "rope", "cagesign", "gnasher", "taxwraith", "chandelier", "revenant",
+  // the rest of the monsters (PixelLab, overnight 2026-09-18)
+  "olive", "boar", "goat", "rotten", "hornworm", "highwayman"];
 const IMG = {};
 const artReady = Promise.all(ART_FILES.map((k) => new Promise((res) => {
   const im = new Image(); im.onload = () => {
@@ -595,6 +629,19 @@ function spr(k, x, y, flip = false, filter = "") {
   lc.save(); lc.setTransform(1, 0, 0, 1, Math.round(x * A), Math.round(y * A)); if (flip) lc.scale(-1, 1);
   if (filter) lc.filter = filter;
   lc.drawImage(a.im, -Math.round(a.cx), -a.foot); lc.restore(); return true;
+}
+// item and skill icons (PixelLab): art where it exists, the emoji where it doesn't
+const ITEM_ART = new Set(["ashlogs", "axe", "beef", "bogplate", "bones", "cap", "chicken", "cobweb", "coins", "copper", "feather", "geode", "gloomfin", "goldtomatoe", "grimstone", "grudge", "hide", "husk", "lantern", "logs", "manifesto", "marble", "mask", "menace", "monocle", "mooncarp", "olives", "parma", "pickaxe", "pit", "pork", "receipt", "rod", "rudis", "sandals", "sardine", "spiderboots", "stardust", "sunolive", "tin", "toga", "tomatoe", "trout", "tunic", "tusk", "wheat", "wraithhood", "yewlogs"]), SKILL_ART = new Set(["farming", "fishing", "hp", "melee", "mining", "woodcutting"]), EQ_ART = new Set(["body", "boots", "gloves", "helm", "legs", "ring", "shield", "weapon"]);
+const IART = "/v3/assets/img/glad/flat/items/", IART_V = 1, ICO_IMG = {};
+for (const k of [...ITEM_ART, ...[...SKILL_ART].map((x) => "skill_" + x), ...[...EQ_ART].map((x) => "eq_" + x)]) { const im = new Image(); im.src = `${IART}${k}.png?v=${IART_V}`; ICO_IMG[k] = im; }
+const artOf = (k) => `<img class="ico" src="${IART}${k}.png?v=${IART_V}" alt="">`;
+const ico = (k) => (ITEM_ART.has(k) ? artOf(k) : ITEMS[k]?.icon || "");
+const sico = (k) => (SKILL_ART.has(k) ? artOf(`skill_${k}`) : SKILLS[k]?.icon || "");
+// on the canvas: centred on x, y, size pixels square
+function drawIco(k, x, y, size, skill) {
+  const im = ICO_IMG[skill ? `skill_${k}` : k];
+  if (im && im.complete && im.naturalWidth) { const sm = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false; ctx.drawImage(im, Math.round(x - size / 2), Math.round(y - size / 2), size, size); ctx.imageSmoothingEnabled = sm; return; }
+  ctx.font = `${Math.round(size * 0.8)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(skill ? SKILLS[k].icon : ITEMS[k].icon, x, y);
 }
 const WANG = [[64, 32], [96, 32], [64, 64], [32, 64], [64, 0], [96, 64], [0, 32], [96, 96], [32, 32], [64, 96], [32, 0], [0, 64], [96, 0], [0, 0], [32, 96], [0, 96]];
 
@@ -1082,7 +1129,8 @@ function heldIcon(icon, x, y, dir, S2) {
   if (dir === "north") return;
   const west = (dir || "south").includes("west");
   ctx.save(); ctx.translate(x + (west ? -9 : 9) * S2, y - 10 * S2); if (!west) ctx.scale(-1, 1);
-  ctx.font = `${Math.round(8 * S2)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(icon, 0, 0); ctx.restore();
+  if (ITEMS[icon]) drawIco(icon, 0, 0, Math.round(10 * S2)); else { ctx.font = `${Math.round(8 * S2)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(icon, 0, 0); }
+  ctx.restore();
 }
 function frame() {
   requestAnimationFrame(frame);
@@ -1258,8 +1306,8 @@ function frame() {
   if (clickMark && pnow - clickMark.at < 500) { const k = (pnow - clickMark.at) / 500; ctx.strokeStyle = clickMark.red ? `rgba(255,60,40,${1 - k})` : `rgba(255,230,80,${1 - k})`; ctx.lineWidth = 3; const c = { x: sx(clickMark.x * T + 8), y: sy(clickMark.y * T + 8) }; ctx.beginPath(); ctx.moveTo(c.x - 8 - k * 4, c.y - 8 - k * 4); ctx.lineTo(c.x + 8 + k * 4, c.y + 8 + k * 4); ctx.moveTo(c.x + 8 + k * 4, c.y - 8 - k * 4); ctx.lineTo(c.x - 8 - k * 4, c.y + 8 + k * 4); ctx.stroke(); }
 
   // what's in everyone's hand, until the art has tools (the sword is already in the sprite)
-  for (const pl of Z.players) if (pl.weapon && pl.weapon !== "rudis") { const p = pos(pl); heldIcon(ITEMS[pl.weapon].icon, sx(p.px * T + 8), sy(p.py * T + 15), pl.id === you.id && PRED.on ? PRED.dir : pl.dir, S2); }
-  for (const b of Z.bots) if (b.work != null) { const p = posOf(b, now), t = b.workT; heldIcon(t === "spot" ? "🎣" : t === "rock" || t === "vein" ? "⛏️" : t === "olive" ? "🫒" : "🪓", sx(p.px * T + 8), sy(p.py * T + 15), b.dir, S2); }
+  for (const pl of Z.players) if (pl.weapon && pl.weapon !== "rudis") { const p = pos(pl); heldIcon(pl.weapon, sx(p.px * T + 8), sy(p.py * T + 15), pl.id === you.id && PRED.on ? PRED.dir : pl.dir, S2); }
+  for (const b of Z.bots) if (b.work != null) { const p = posOf(b, now), t = b.workT; heldIcon(t === "spot" ? "rod" : t === "rock" || t === "vein" ? "pickaxe" : t === "olive" ? "olives" : "axe", sx(p.px * T + 8), sy(p.py * T + 15), b.dir, S2); }
   // names under everyone
   const names = set("names");
   for (const pl of Z.players) {
@@ -1271,11 +1319,11 @@ function frame() {
   for (const it of Z.ground) {
     const x = sx(it.x * T + 8), y = sy(it.y * T + 9), mine = !it.owner || it.owner === you.id || now >= it.until;
     ctx.globalAlpha = 0.5 + (calm ? 0.2 : 0.2 * Math.sin(pnow / 250)); ctx.fillStyle = mine ? "#ffe45c" : "#ff5a4a"; ctx.beginPath(); ctx.ellipse(x, y + 12, 13, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
-    ctx.font = "22px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(ITEMS[it.k].icon, x, y);
+    drawIco(it.k, x, y, 30);
     if (!mine) label(`${Math.ceil((it.until - now) / 1000)}s`, x, y + 16, "#ff9a8a", 11);
   }
   // your island: what's on each pedestal
-  if (Z.isle) for (const ob of Z.objs) if (ob.t === "pedestal") { const k = Z.isle.shelf[ob.i]; if (k && ITEMS[k]) { ctx.font = "20px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(ITEMS[k].icon, sx(ob.x * T + 8), sy(ob.y * T - 2) + (calm ? 0 : Math.sin(pnow / 500 + ob.i) * 2)); } }
+  if (Z.isle) for (const ob of Z.objs) if (ob.t === "pedestal") { const k = Z.isle.shelf[ob.i]; if (k && ITEMS[k]) drawIco(k, sx(ob.x * T + 8), sy(ob.y * T - 2) + (calm ? 0 : Math.sin(pnow / 500 + ob.i) * 2), 30); }
   for (const m of Z.mobs) if (!m.dead) {
     const p = posOf(m, now), x = sx(p.px * T + 8), y = sy(p.py * T + 15);
     if (names) label(MOBS[m.t].name, x, y + 2, "#ffb23f", 12);
@@ -1315,7 +1363,7 @@ function frame() {
     const p = pos(pl), k = (pnow - g.at) / 1300, pop = calm ? 1 : Math.min(1, k * 6) * (1 + 0.25 * Math.max(0, 1 - k * 4));
     const x = sx(p.px * T + 8), y = sy(p.py * T + 15) - 30 * S2 - k * 26;
     ctx.globalAlpha = Math.min(1, (1 - k) * 2.5);
-    ctx.font = `${Math.round(22 * pop)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(ITEMS[g.k].icon, x - (set("xpDrops") && pl.id === you.id ? 34 : 0), y);
+    drawIco(g.k, x - (set("xpDrops") && pl.id === you.id ? 34 : 0), y, Math.round(30 * pop));
     if (g.n > 1) { ctx.font = `800 12px "Nunito", system-ui, sans-serif`; ctx.lineWidth = 3; ctx.strokeStyle = "#000"; ctx.strokeText(`×${g.n}`, x + 14, y + 8); ctx.fillStyle = "#fff"; ctx.fillText(`×${g.n}`, x + 14, y + 8); }
     ctx.globalAlpha = 1;
   }
@@ -1334,7 +1382,7 @@ function frame() {
     ctx.globalAlpha = Math.min(1, (1 - k) * 2.2);
     ctx.font = `800 15px "Nunito", system-ui, sans-serif`; ctx.textAlign = "left"; ctx.textBaseline = "middle";
     const t = `+${d.xp} xp`, tw = ctx.measureText(t).width, x = hx - (tw + 20) / 2;
-    ctx.font = "13px sans-serif"; ctx.fillText(SKILLS[d.k].icon, x, y);
+    drawIco(d.k, x, y, 18, true);
     ctx.font = `800 15px "Nunito", system-ui, sans-serif`; ctx.lineWidth = 3; ctx.strokeStyle = "#0a1a08"; ctx.strokeText(t, x + 19, y); ctx.fillStyle = "#5dff4a"; ctx.fillText(t, x + 19, y);
     ctx.globalAlpha = 1;
   });
@@ -1351,7 +1399,7 @@ function frame() {
       ctx.fillStyle = "rgba(20,24,20,.82)"; ctx.beginPath(); ctx.arc(cx, cy, r + 4, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = "rgba(255,255,255,.14)"; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
       ctx.strokeStyle = "#f2d22e"; ctx.lineCap = "round"; ctx.beginPath(); ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.02, f)); ctx.stroke(); ctx.lineCap = "butt";
-      ctx.font = "20px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#fff"; ctx.fillText(SKILLS[k].icon, cx, cy + 1);
+      ctx.fillStyle = "#fff"; drawIco(k, cx, cy + 1, 26, true);
       ctx.font = `800 12px "Nunito", system-ui, sans-serif`; ctx.lineWidth = 3; ctx.strokeStyle = "#000"; ctx.strokeText(String(l), cx + r - 2, cy + r - 4); ctx.fillStyle = "#fff"; ctx.fillText(String(l), cx + r - 2, cy + r - 4);
       const gb = busy && P.ob != null ? Z.bots.filter((b) => b.work === P.ob).length + Z.players.filter((q) => q.id !== you.id && q.ob === P.ob && q.started).length : 0;
       if (gb) { ctx.font = `800 12px "Nunito", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.strokeText(`+${gb}% group`, cx, cy + r + 14); ctx.fillStyle = "#7dff6a"; ctx.fillText(`+${gb}% group`, cx, cy + r + 14); }
@@ -1397,7 +1445,7 @@ document.addEventListener("keydown", (e) => {
 });
 // windows that need you standing somewhere close themselves when you walk off
 setInterval(() => { if (PRED.on && PRED.step) for (const w of ["bankWin", "exWin"]) $(w).hidden = true; }, 300);
-const slotHtml = (s, i, attr = "data-i") => `<div class="slot" ${attr}="${i}" title="${esc(ITEMS[s.k].name)}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}">${ITEMS[s.k].icon}${s.n > 1 ? `<em>${s.n >= 100000 ? Math.floor(s.n / 1000) + "k" : s.n.toLocaleString()}</em>` : ""}</div>`;
+const slotHtml = (s, i, attr = "data-i") => `<div class="slot" ${attr}="${i}" title="${esc(ITEMS[s.k].name)}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}">${ico(s.k)}${s.n > 1 ? `<em>${s.n >= 100000 ? Math.floor(s.n / 1000) + "k" : s.n.toLocaleString()}</em>` : ""}</div>`;
 
 /* ------------------------------------------------------------ islands */
 function renderIsles(list) {
@@ -1441,11 +1489,11 @@ let EX = { mine: [], book: {}, last: {} }, exTab = "mine", exDraft = { side: "se
 $("exWin").querySelectorAll("[data-ex]").forEach((b) => b.addEventListener("click", () => { exTab = b.dataset.ex; renderEx(); }));
 function renderEx() {
   $("exWin").querySelectorAll("[data-ex]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.ex === exTab)));
-  const body = $("exBody"), name = (k) => `${ITEMS[k].icon} ${esc(ITEMS[k].name)}`;
+  const body = $("exBody"), name = (k) => `${ico(k)} ${esc(ITEMS[k].name)}`;
   if (exTab === "mine") {
     const cards = EX.mine.map((o) => {
       const pc = Math.round((o.done / o.qty) * 100), waiting = o.box.items || o.box.cash, state = o.open ? `<span class="tag2 ${o.side}">${o.side === "sell" ? "Selling" : "Buying"}</span>` : `<span class="tag2 done">${o.done >= o.qty ? "Finished" : "Cancelled"}</span>`;
-      return `<div class="offer"><div class="otop"><i>${ITEMS[o.k].icon}</i><span><b>${esc(ITEMS[o.k].name)}</b>${state}</span></div>
+      return `<div class="offer"><div class="otop"><i>${ico(o.k)}</i><span><b>${esc(ITEMS[o.k].name)}</b>${state}</span></div>
         <div>${o.done.toLocaleString()} of ${o.qty.toLocaleString()} at ${G.fmtCash(o.price)} each</div><div class="bar"><i style="width:${pc}%"></i></div>
         ${waiting ? `<div><b>Ready to collect:</b> ${o.box.items ? `${o.box.items.toLocaleString()} × ${esc(ITEMS[o.k].name)}` : ""}${o.box.items && o.box.cash ? " and " : ""}${o.box.cash ? G.fmtCash(o.box.cash) : ""}</div>` : ""}
         <div class="row">${waiting ? `<button class="btn" data-collect="${o.id}">Collect</button>` : ""}${o.open ? `<button class="btn plain" data-cancel="${o.id}">Cancel</button>` : ""}</div></div>`;
@@ -1502,7 +1550,7 @@ function tradeReqLine(from, name) {
 }
 $("tradeX").addEventListener("click", () => send({ t: "trade", op: "decline" }));
 function offerHtml(off, clickable) {
-  const items = Object.entries(off.items).map(([k, n]) => `<div class="slot"${clickable ? ` data-rm="${k}"` : ""} title="${esc(ITEMS[k].name)}${clickable ? " — click to take back" : ""}">${ITEMS[k].icon}${n > 1 ? `<em>${n.toLocaleString()}</em>` : ""}</div>`).join("");
+  const items = Object.entries(off.items).map(([k, n]) => `<div class="slot"${clickable ? ` data-rm="${k}"` : ""} title="${esc(ITEMS[k].name)}${clickable ? " — click to take back" : ""}">${ico(k)}${n > 1 ? `<em>${n.toLocaleString()}</em>` : ""}</div>`).join("");
   return `<div class="grid8">${items || '<p class="note">Nothing yet.</p>'}</div>${off.cash ? `<div class="cash">+ ${G.fmtCash(off.cash)}</div>` : ""}`;
 }
 function renderTrade() {
@@ -1533,7 +1581,7 @@ function levelUp(k, l) {
   const s = SKILLS[k]; if (!s) return;
   const log = $("chatLog"); log.querySelector(".empty")?.remove();
   const p = document.createElement("p"); p.className = "loot"; p.textContent = `🎉 Level up! Your ${s.name} is now level ${l}.`; log.append(p); log.scrollTop = log.scrollHeight;
-  const b = $("lvlup"); b.innerHTML = `<small>Level up!</small><b>${s.icon} ${esc(s.name)} ${l}</b>`;
+  const b = $("lvlup"); b.innerHTML = `<small>Level up!</small><b>${sico(k)} ${esc(s.name)} ${l}</b>`;
   b.hidden = false; b.classList.remove("show"); void b.offsetWidth; b.classList.add("show");
   clearTimeout(levelUp.t); levelUp.t = setTimeout(() => { b.hidden = true; }, 2600);
   if (!set("reducedMotion")) bursts.push({ at: performance.now() });
@@ -1572,12 +1620,12 @@ const qn = (n) => (Array.isArray(n) ? `${n[0]}–${n[1]}` : n);
 function wikiPages() {
   const pages = [{ route: "home", title: "Home", icon: "🏠", group: "" }, { route: "updates", title: "Updates", icon: "📰", group: "" }];
   for (const g of WK.GUIDES) pages.push({ route: `guides/${g.id}`, title: g.title, icon: g.icon, group: "Guides" });
-  for (const [k, s] of Object.entries(SKILLS)) pages.push({ route: `skills/${k}`, title: s.name, icon: s.icon, group: "Skills" });
+  for (const [k, s] of Object.entries(SKILLS)) pages.push({ route: `skills/${k}`, title: s.name, icon: sico(k), group: "Skills" });
   for (const [k, q] of Object.entries(QUESTS)) pages.push({ route: `quests/${k}`, title: q.name, icon: q.icon, group: "Quests" });
   for (const [k, m] of Object.entries(MOBS)) pages.push({ route: `monsters/${k}`, title: m.name, icon: "👹", group: "Monsters" });
   for (const [k, d] of Object.entries(SCENES).filter(([, d]) => !d.wikiHide)) pages.push({ route: `areas/${k}`, title: d.name, icon: d.interior ? "🚪" : "🗺️", group: "Areas" });
   for (const n of Object.keys(WIKI.npcs)) pages.push({ route: `npcs/${n}`, title: n, icon: "🧑", group: "People" });
-  for (const [k, it] of Object.entries(ITEMS)) pages.push({ route: `items/${k}`, title: it.name, icon: it.icon, group: "Items" });
+  for (const [k, it] of Object.entries(ITEMS)) pages.push({ route: `items/${k}`, title: it.name, icon: ico(k), group: "Items" });
   return pages;
 }
 function wikiNav(active) {
@@ -1604,7 +1652,7 @@ function wikiGo(route, setNav = true) {
   else if (kind === "items" && ITEMS[id]) {
     const it = ITEMS[id], src = WIKI.sources[id] || [], dr = WIKI.drops[id] || [], qs = WIKI.inQuests[id] || [];
     const rewards = Object.entries(QUESTS).filter(([, q]) => (id === "coins" && q.reward.coins) || (q.reward.items || []).some(([k]) => k === id));
-    html = `<h2><i>${it.icon}</i>${esc(it.name)}</h2>${it.ex ? `<p class="lede">“${esc(it.ex)}”</p>` : ""}
+    html = `<h2><i>${ico(id)}</i>${esc(it.name)}</h2>${it.ex ? `<p class="lede">“${esc(it.ex)}”</p>` : ""}
       ${it.slot ? `<h3>Equipment</h3><table class="tbl"><tr><th>Slot</th><th>Accuracy</th><th>Strength</th><th>Defence</th><th>Lets you</th></tr><tr><td>${it.slot}</td><td>+${it.acc || 0}</td><td>+${it.str || 0}</td><td>+${it.def || 0}</td><td>${it.tool ? `train ${wl(`skills/${it.tool}`, SKILLS[it.tool].name)}` : "—"}</td></tr></table>` : ""}
       ${src.length ? `<h3>Gathered from</h3><table class="tbl"><tr><th>What</th><th>Where</th><th>Skill</th><th>Level</th></tr>${src.map((s) => `<tr><td>${esc(s.obj)}</td><td>${areaLink(s.scene)}</td><td>${wl(`skills/${s.skill}`, SKILLS[s.skill].name)}</td><td>${s.lvl}</td></tr>`).join("")}</table>` : ""}
       ${dr.length ? `<h3>Dropped by</h3><table class="tbl"><tr><th>Monster</th><th>How many</th><th>Chance</th></tr>${dr.map((d) => `<tr><td>${wl(`monsters/${d.mob}`, esc(MOBS[d.mob].name))}</td><td>${qn(d.n)}</td><td>${d.ch == null ? "Always" : `${Math.round(d.ch * 100)}%`}</td></tr>`).join("")}</table>` : ""}
@@ -1617,15 +1665,15 @@ function wikiGo(route, setNav = true) {
     html = `<h2><i>👹</i>${esc(m.name)}</h2><p class="lede">Level ${m.lvl}.</p>
       <table class="tbl"><tr><th>Hitpoints</th><th>Attack</th><th>Defence</th><th>Max hit</th><th>Attacks every</th></tr><tr><td>${m.hp}</td><td>${m.att}</td><td>${m.def}</td><td>${m.max}</td><td>${(m.speed / 1000).toFixed(1)}s</td></tr></table>
       <h3>Found in</h3><p>${where.map((a) => `${areaLink(a.key)} (${a.mobs[id]})`).join(", ") || "Nowhere yet."}</p>
-      <h3>Drops</h3><table class="tbl"><tr><th>Item</th><th>How many</th><th>Chance</th></tr>${m.drops.map(([k, n, ch]) => `<tr><td>${wl(`items/${k}`, `${ITEMS[k].icon} ${esc(ITEMS[k].name)}`)}</td><td>${qn(n)}</td><td>${ch == null ? "Always" : `${Math.round(ch * 100)}%`}</td></tr>`).join("")}</table>`;
+      <h3>Drops</h3><table class="tbl"><tr><th>Item</th><th>How many</th><th>Chance</th></tr>${m.drops.map(([k, n, ch]) => `<tr><td>${wl(`items/${k}`, `${ico(k)} ${esc(ITEMS[k].name)}`)}</td><td>${qn(n)}</td><td>${ch == null ? "Always" : `${Math.round(ch * 100)}%`}</td></tr>`).join("")}</table>`;
   }
   else if (kind === "skills" && SKILLS[id]) {
     const s = SKILLS[id], rows = [];
     for (const [k, list] of Object.entries(WIKI.sources)) for (const src of list) if (src.skill === id) rows.push({ k, ...src });
     rows.sort((a, b) => a.lvl - b.lvl);
-    html = `<h2><i>${s.icon}</i>${esc(s.name)}</h2><p class="lede">${esc(WK.SKILL_GUIDE[id] || "")}</p>
-      ${rows.length ? `<h3>What you can train on</h3><table class="tbl"><tr><th>Level</th><th>What</th><th>Gives</th><th>Where</th></tr>${rows.map((r) => `<tr><td>${r.lvl}</td><td>${esc(r.obj)}</td><td>${wl(`items/${r.k}`, `${ITEMS[r.k].icon} ${esc(ITEMS[r.k].name)}`)}</td><td>${areaLink(r.scene)}</td></tr>`).join("")}</table>` : ""}
-      ${Object.values(ITEMS).some((it) => it.tool === id) ? `<h3>Tool</h3><p>${Object.entries(ITEMS).filter(([, it]) => it.tool === id).map(([k, it]) => wl(`items/${k}`, `${it.icon} ${esc(it.name)}`)).join(", ")}: hold it in your weapon hand.</p>` : ""}
+    html = `<h2><i>${sico(id)}</i>${esc(s.name)}</h2><p class="lede">${esc(WK.SKILL_GUIDE[id] || "")}</p>
+      ${rows.length ? `<h3>What you can train on</h3><table class="tbl"><tr><th>Level</th><th>What</th><th>Gives</th><th>Where</th></tr>${rows.map((r) => `<tr><td>${r.lvl}</td><td>${esc(r.obj)}</td><td>${wl(`items/${r.k}`, `${ico(r.k)} ${esc(ITEMS[r.k].name)}`)}</td><td>${areaLink(r.scene)}</td></tr>`).join("")}</table>` : ""}
+      ${Object.values(ITEMS).some((it) => it.tool === id) ? `<h3>Tool</h3><p>${Object.entries(ITEMS).filter(([, it]) => it.tool === id).map(([k, it]) => wl(`items/${k}`, `${ico(k)} ${esc(it.name)}`)).join(", ")}: hold it in your weapon hand.</p>` : ""}
       <h3>Levels</h3><p>Levels go from 1 to 99 on the classic curve: level 10 is ${XP_AT[10].toLocaleString()} xp, level 50 is ${XP_AT[50].toLocaleString()}, level 99 is ${XP_AT[99].toLocaleString()}.</p>`;
   }
   else if (kind === "quests" && QUESTS[id]) {
@@ -1678,15 +1726,15 @@ function showInfo(t, cx, cy) {
     wiki = `monsters/${m.t}`;
     html = `<h5>👹 ${esc(d.name)}</h5><div class="sub">Level ${d.lvl} monster</div>
       <dl><dt>Hitpoints</dt><dd>${m.hp}/${d.hp}</dd><dt>Max hit</dt><dd>${d.max}</dd><dt>Attack / defence</dt><dd>${d.att} / ${d.def}</dd><dt>Attacks every</dt><dd>${(d.speed / 1000).toFixed(1)}s</dd><dt>Respawns after</dt><dd>${G.fmtWait(G.respawnMs(Z.def, m.t))}</dd></dl>
-      <b>Drops</b><ul>${d.drops.map(([k, n, ch]) => `<li>${ITEMS[k].icon} ${esc(ITEMS[k].name)}${Array.isArray(n) ? ` ×${n[0]}–${n[1]}` : n > 1 ? ` ×${n}` : ""} · ${ch == null ? "always" : `${Math.round(ch * 100)}%`}</li>`).join("")}</ul>`;
+      <b>Drops</b><ul>${d.drops.map(([k, n, ch]) => `<li>${ico(k)} ${esc(ITEMS[k].name)}${Array.isArray(n) ? ` ×${n[0]}–${n[1]}` : n > 1 ? ` ×${n}` : ""} · ${ch == null ? "always" : `${Math.round(ch * 100)}%`}</li>`).join("")}</ul>`;
   } else if (t.ob) {
     const rows = resourceInfo(t.ob), ex = G.EXAMINE[KIND_OF[t.ob.t]] || null;
     if (!rows.length && !ex) return;
     const r0 = rows[0];
     if (r0) wiki = `skills/${r0.skill}`;
     html = `<h5>${r0 ? ITEMS[r0.gives].icon : "🔍"} ${esc(t.ob.t === "spot" && !t.ob.special ? "Fishing spot" : t.ob.name)}</h5>
-      ${rows.map((r) => { const have = lvl(r.skill), ok = have >= r.lvl; return `<div class="sub">${SKILLS[r.skill].icon} ${SKILLS[r.skill].name} <span class="${ok ? "ok" : "low"}">level ${r.lvl}</span>${ok ? "" : ` · you're ${have}`}</div>
-        <dl><dt>Gives</dt><dd>${ITEMS[r.gives].icon} ${esc(ITEMS[r.gives].name)}</dd><dt>XP each</dt><dd>${r.xp}</dd>${G.TOOL_OF[r.skill] ? `<dt>Needs</dt><dd>${ITEMS[G.TOOL_OF[r.skill]].icon} ${esc(ITEMS[G.TOOL_OF[r.skill]].name)} in hand</dd>` : ""}</dl>${r.note ? `<div class="sub" style="font-weight:600">${esc(r.note)}</div>` : ""}`; }).join("")}
+      ${rows.map((r) => { const have = lvl(r.skill), ok = have >= r.lvl; return `<div class="sub">${sico(r.skill)} ${SKILLS[r.skill].name} <span class="${ok ? "ok" : "low"}">level ${r.lvl}</span>${ok ? "" : ` · you're ${have}`}</div>
+        <dl><dt>Gives</dt><dd>${ico(r.gives)} ${esc(ITEMS[r.gives].name)}</dd><dt>XP each</dt><dd>${r.xp}</dd>${G.TOOL_OF[r.skill] ? `<dt>Needs</dt><dd>${ITEMS[G.TOOL_OF[r.skill]].icon} ${esc(ITEMS[G.TOOL_OF[r.skill]].name)} in hand</dd>` : ""}</dl>${r.note ? `<div class="sub" style="font-weight:600">${esc(r.note)}</div>` : ""}`; }).join("")}
       ${t.ob.tease ? `<div class="ex">${esc(t.ob.tease)}</div>` : ex ? `<div class="ex">${esc(ex[0])}</div>` : ""}`;
     if (r0) wiki = `items/${r0.gives}`;
   } else if (t.kind === "npc") {
@@ -1725,7 +1773,7 @@ function renderPanel() {
   const p = $("panel");
   if (tab === "inv") {
     const hint = hintSlot && hintSlot.until > performance.now() ? hintSlot.k : null;
-    const cells = me.inv.map((s, i) => `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" title="${esc(ITEMS[s.k].name)}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""} — ${ITEMS[s.k].slot ? (ITEMS[s.k].slot === "weapon" ? "click to wield" : "click to wear") : "click to examine"}, shift-click to drop">${ITEMS[s.k].icon}${s.n > 1 ? `<em>${s.n >= 100000 ? Math.floor(s.n / 1000) + "k" : s.n.toLocaleString()}</em>` : ""}</div>`);
+    const cells = me.inv.map((s, i) => `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" title="${esc(ITEMS[s.k].name)}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""} — ${ITEMS[s.k].slot ? (ITEMS[s.k].slot === "weapon" ? "click to wield" : "click to wear") : "click to examine"}, shift-click to drop">${ico(s.k)}${s.n > 1 ? `<em>${s.n >= 100000 ? Math.floor(s.n / 1000) + "k" : s.n.toLocaleString()}</em>` : ""}</div>`);
     while (cells.length < G.INV_MAX) cells.push('<div class="slot empty"></div>');
     p.innerHTML = `<div class="ph">Inventory <small>${me.inv.length}/${G.INV_MAX}</small></div><div class="inv">${cells.join("")}</div>`;
     p.querySelectorAll(".slot[data-i]").forEach((el) => el.addEventListener("click", (e) => {
@@ -1741,10 +1789,10 @@ function renderPanel() {
   }
   if (tab === "equip") {
     const EMPTY = { helm: "⛑️", weapon: "🗡️", body: "🥋", shield: "🛡️", legs: "👖", gloves: "🧤", boots: "🥾", ring: "💍" };
-    const slot = (area) => { const k = me.eq[area], it = k && ITEMS[k]; return `<button type="button" class="eq${it ? "" : " empty"}" data-slot="${area}" style="grid-area:${area}" title="${it ? `${esc(it.name)} — click to take off` : `${area}: empty`}"${it ? "" : " disabled"}>${it ? it.icon : EMPTY[area]}<small>${it ? esc(it.short || it.name) : ""}</small></button>`; };
+    const slot = (area) => { const k = me.eq[area], it = k && ITEMS[k]; return `<button type="button" class="eq${it ? "" : " empty"}" data-slot="${area}" style="grid-area:${area}" title="${it ? `${esc(it.name)} — click to take off` : `${area}: empty`}"${it ? "" : " disabled"}>${it ? ico(k) : EQ_ART.has(area) ? artOf(`eq_${area}`) : EMPTY[area]}<small>${it ? esc(it.short || it.name) : ""}</small></button>`; };
     const b = G.bonusOf(me), tool = me.eq.weapon && ITEMS[me.eq.weapon].tool;
     p.innerHTML = `<div class="ph">Equipment <small>paper doll</small></div><div class="doll">${G.SLOTS.map(slot).join("")}</div>
-      <div class="bonl"><div class="bh">${me.eq.weapon ? `${ITEMS[me.eq.weapon].icon} ${esc(ITEMS[me.eq.weapon].name)}` : "✊ Unarmed"}${tool ? ` · lets you train ${SKILLS[tool].name}` : ""}</div>
+      <div class="bonl"><div class="bh">${me.eq.weapon ? `${ico(me.eq.weapon)} ${esc(ITEMS[me.eq.weapon].name)}` : "✊ Unarmed"}${tool ? ` · lets you train ${SKILLS[tool].name}` : ""}</div>
         <div><i>⊕</i><span>accuracy</span><b>+${b.acc}</b></div><div><i>🔺</i><span>strength</span><b>+${b.str}</b></div>
         <div><i>🎯</i><span>max hit</span><b>${G.maxHitOf(me)}</b></div><div><i>🛡️</i><span>defence</span><b>+${b.def}</b></div>
         <div><i>👟</i><span>speed</span><b>+${G.speedBonus(me, me.speedTest || 0)}%</b></div></div>
@@ -1754,7 +1802,7 @@ function renderPanel() {
   if (tab === "skills") {
     p.innerHTML = `<div class="ph">Skills <small>total ${total()}</small></div><div class="sk">${Object.entries(SKILLS).map(([k, s]) => {
       const L = lvl(k), lo = XP_AT[L], hi = XP_AT[Math.min(99, L + 1)], pc = L >= 99 ? 100 : Math.floor((me.xp[k] - lo) / (hi - lo) * 100);
-      return `<div class="skr"><i>${s.icon}</i><span><b>${s.name}</b><small>${me.xp[k].toLocaleString()} xp · ${L >= 99 ? "max" : `${(hi - me.xp[k]).toLocaleString()} to go`}</small><div class="xpb"><i style="width:${pc}%"></i></div></span><span class="lv">${L}</span></div>`;
+      return `<div class="skr"><i>${sico(k)}</i><span><b>${s.name}</b><small>${me.xp[k].toLocaleString()} xp · ${L >= 99 ? "max" : `${(hi - me.xp[k]).toLocaleString()} to go`}</small><div class="xpb"><i style="width:${pc}%"></i></div></span><span class="lv">${L}</span></div>`;
     }).join("")}</div>`;
   }
   if (tab === "quests") {
