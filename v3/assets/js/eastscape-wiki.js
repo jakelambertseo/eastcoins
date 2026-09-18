@@ -67,6 +67,20 @@ export const GUIDES = [
       <p>So +40% from gear gives +30% speed, and stacking past +80% doesn't help. Your Equipment tab shows your current speed.</p>`
   },
   {
+    id: "cooking", title: "Cooking and eating", icon: "🍳",
+    body: `<p>Raw fish and meat can be cooked at the <b>range</b> in the Farmhouse, the <b>hearth</b> in your island cottage, or any <b>campfire</b>. Click one with raw food in your bag and you'll cook it all, one at a time.</p>
+      <ul><li>You can burn food. The chance drops as your Cooking level rises, and each food stops burning at a certain level. Ranges and hearths burn a little less than campfires.</li>
+      <li><b>Click cooked food in your bag to eat it.</b> It heals hitpoints straight away, even mid-fight, but your next swing waits a moment.</li>
+      <li>Better food heals more: sardines and chicken 3, trout 7, moon carp 14.</li></ul>`
+  },
+  {
+    id: "forge", title: "The Forge", icon: "⚒️",
+    body: `<p><b>Brutus the Smith</b> stands outside the store in <a data-wiki="areas/forum">the Forum</a>. Talk to him to trade.</p>
+      <ul><li>He sells tools and the <b>Bronze set</b>: a gladius, a helm, a shield and a cuirass. Bronze needs Melee 5 (the cuirass needs Melee 10), and wearing the cuirass changes how you look.</li>
+      <li>He buys ore, logs, hides, bones, food and most things you'll find, for Cash. The Exchange usually pays more, but Brutus pays right now.</li>
+      <li>Pick 1, 5, 10 or All before clicking to buy or sell more at once.</li></ul>`
+  },
+  {
     id: "wilderness", title: "The Wilderness", icon: "☠️",
     body: `<p>The pit with a rope on the <a data-wiki="areas/farm">Ludus Farm</a> leads down to <a data-wiki="areas/wild">the Wilderness</a>. You need level 10 Melee to climb down.</p>
       <ul><li><b>Anyone can attack anyone</b> down there. Click another player to fight them.</li>
@@ -92,6 +106,16 @@ export const GUIDES = [
 
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
+  {
+    date: "2026-09-18", title: "Cooking, eating and the Forge",
+    items: [
+      "A new skill, Cooking: cook raw fish and meat at the Farmhouse range, your cottage hearth or a campfire. Food can burn, less as you level.",
+      "Click cooked food in your bag to eat it and heal, even mid-fight.",
+      "Brutus the Smith has opened the Forge in the Forum: tools and the Bronze set for sale, and he'll buy what you gather.",
+      "A bag slot now holds up to 99 of anything (Cash has no limit). Extra spills into the next slot; the bank still holds any amount.",
+      "Bronze gear needs a Melee level to wear, and the Bronze cuirass changes your look from recruit to gladiator."
+    ]
+  },
   {
     date: "2026-09-18", title: "Bigger islands, the Far Shore, and your cottage",
     items: [
@@ -166,6 +190,7 @@ export const UPDATES = [
 
 // how each skill is trained, in words (the resources and their levels are added from the rules)
 export const SKILL_GUIDE = {
+  cooking: "Cook raw fish and meat at a range, hearth or campfire. Each food needs a level to cook and stops burning at a higher one. Cooked food heals when you eat it.",
   melee: "Fight monsters with a weapon in hand. Every point of damage you deal gives Melee xp (and a little Hitpoints xp).",
   hp: "Goes up alongside Melee as you deal damage. Your Hitpoints level is your maximum health.",
   fishing: "Hold a fishing rod and click the bubbling water. You fish from the bank, two tiles away. Trout start biting at level 10.",

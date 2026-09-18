@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 16;
+export const VERSION = 18;
 export const COLS = 22, ROWS = 13;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -24,7 +24,7 @@ export const levelOf = (xp) => { let l = 1; while (l < 99 && xp >= XP_AT[l + 1])
 
 /* ------------------------------------------------------------ things you can carry */
 export const ITEMS = {
-  coins: { name: "Cash", icon: "💵", ex: "The money of EastScape. Earned from quests and the Exchange." }, wheat: { name: "Wheat", icon: "🌾" }, bones: { name: "Bones", icon: "🦴" },
+  coins: { name: "Cash", icon: "💵", nocap: true, ex: "The money of EastScape. Earned from quests and the Exchange." }, wheat: { name: "Wheat", icon: "🌾" }, bones: { name: "Bones", icon: "🦴" },
   beef: { name: "Raw beef", icon: "🥩" }, hide: { name: "Cowhide", icon: "🟫" }, chicken: { name: "Raw chicken", icon: "🍗" },
   feather: { name: "Feather", icon: "🪶" }, sardine: { name: "Raw sardine", icon: "🐟" }, trout: { name: "Raw trout", icon: "🐠" },
   copper: { name: "Copper ore", icon: "🟠" }, tin: { name: "Tin ore", icon: "⚪" }, logs: { name: "Logs", icon: "🪵" }, olives: { name: "Olives", icon: "🫒" },
@@ -60,7 +60,20 @@ export const ITEMS = {
   rod: { name: "Fishing rod", short: "Rod", icon: "🎣", slot: "weapon", tool: "fishing" },
   cap: { name: "Leather cap", short: "Cap", icon: "⛑️", slot: "helm", def: 1 },
   tunic: { name: "Tunic", icon: "🥋", slot: "body", def: 2 },
-  bronzecuirass: { name: "Bronze cuirass", short: "Cuirass", icon: "🛡️", slot: "body", def: 6, tier: "bronze", ex: "Moulded bronze with somebody else's muscles on it. You'll grow into them." },
+  // cooked food: click it in your bag to eat. heal is hitpoints back
+  csardine: { name: "Cooked sardine", icon: "🐟", heal: 3, ex: "Crunchy. Mostly bones, some joy." },
+  cchicken: { name: "Cooked chicken", icon: "🍗", heal: 3, ex: "Tastes like chicken. Waldy is relieved." },
+  cbeef: { name: "Cooked beef", icon: "🥩", heal: 4, ex: "A good honest steak." },
+  cpork: { name: "Roast boar", icon: "🍖", heal: 6, ex: "Crackling on the outside, grudge on the inside." },
+  ctrout: { name: "Cooked trout", icon: "🐠", heal: 7, ex: "Flaky, buttery, and it no longer judges you." },
+  cgloomfin: { name: "Cooked gloomfin", icon: "🐟", heal: 10, ex: "Still slightly annoyed. Very filling." },
+  cmooncarp: { name: "Cooked moon carp", icon: "🐡", heal: 14, ex: "It glows faintly in your stomach. That's normal. Probably." },
+  burnt: { name: "Burnt food", icon: "⚫", ex: "Whatever it was, it's charcoal now." },
+  // the Forge's Bronze set (Brutus sells it); req is what you need to wear it
+  bronzesword: { name: "Bronze gladius", short: "Gladius", icon: "🗡️", slot: "weapon", acc: 8, str: 6, req: { skill: "melee", lvl: 5 }, ex: "Short, sharp, and very Roman." },
+  bronzehelm: { name: "Bronze helm", short: "Helm", icon: "⛑️", slot: "helm", def: 3, req: { skill: "melee", lvl: 5 }, ex: "Rings like a bell when hit. Try not to get hit." },
+  bronzeshield: { name: "Bronze shield", short: "Shield", icon: "🛡️", slot: "shield", def: 5, req: { skill: "melee", lvl: 5 }, ex: "Round, heavy, and slightly dented already." },
+  bronzecuirass: { name: "Bronze cuirass", short: "Cuirass", icon: "🛡️", slot: "body", def: 6, tier: "bronze", req: { skill: "melee", lvl: 10 }, ex: "Moulded bronze with somebody else's muscles on it. You'll grow into them." },
   toga: { name: "Goat-sized toga", short: "Toga", icon: "🥻", slot: "body", def: 3, acc: 1, ex: "Smells of goat. Fits you perfectly, which is worrying." },
   parma: { name: "Parma", icon: "🛡️", slot: "shield", def: 3 },
   sandals: { name: "Sandals", icon: "🩴", slot: "boots", def: 1 }
@@ -68,10 +81,32 @@ export const ITEMS = {
 // what a character looks like comes from their body armour: "tiro" (a recruit) unless it has a tier
 export const outfitOf = (eq) => ITEMS[eq?.body]?.tier || "tiro";
 export const SLOTS = ["helm", "weapon", "body", "shield", "legs", "gloves", "boots", "ring"];
-export const SKILLS = { melee: { name: "Melee", icon: "⚔️" }, hp: { name: "Hitpoints", icon: "❤️" }, fishing: { name: "Fishing", icon: "🎣" }, farming: { name: "Harvesting", icon: "🌾" }, mining: { name: "Mining", icon: "⛏️" }, woodcutting: { name: "Woodcutting", icon: "🪓" } };
+export const SKILLS = { melee: { name: "Melee", icon: "⚔️" }, hp: { name: "Hitpoints", icon: "❤️" }, fishing: { name: "Fishing", icon: "🎣" }, cooking: { name: "Cooking", icon: "🍳" }, farming: { name: "Harvesting", icon: "🌾" }, mining: { name: "Mining", icon: "⛏️" }, woodcutting: { name: "Woodcutting", icon: "🪓" } };
 export const TOOL_OF = { mining: "pickaxe", woodcutting: "axe", fishing: "rod" };
 export const INV_MAX = 30;
-export const BANK_MAX = 200;       // different items the bank holds (stacks are unlimited)
+export const BANK_MAX = 200;
+// a bag slot holds up to 99 of a thing; Cash (and anything marked nocap) piles up without limit. The bank has no cap.
+export const STACK_MAX = 99;
+export const capOf = (k) => (ITEMS[k]?.nocap ? Infinity : STACK_MAX);
+// how many more of k the bag can take
+export const roomFor = (inv, k) => {
+  const cap = capOf(k), free = INV_MAX - inv.length;
+  if (cap === Infinity) return inv.some((s) => s.k === k) || free > 0 ? Infinity : 0;
+  return inv.reduce((r, s) => r + (s.k === k ? Math.max(0, cap - s.n) : 0), 0) + free * cap;
+};
+// top up the stacks already there, then open new ones; returns what didn't fit
+export const addInv = (inv, k, n) => {
+  const cap = capOf(k);
+  for (const s of inv) { if (n <= 0) break; if (s.k === k && s.n < cap) { const t = Math.min(n, cap - s.n); s.n += t; n -= t; } }
+  while (n > 0 && inv.length < INV_MAX) { const t = Math.min(n, cap); inv.push({ k, n: t }); n -= t; }
+  return n;
+};
+// take up to n of k, from the last stacks first; returns how many were taken
+export const takeInv = (inv, k, n) => {
+  let got = 0;
+  for (let i = inv.length - 1; i >= 0 && got < n; i--) { const s = inv[i]; if (s.k !== k) continue; const t = Math.min(n - got, s.n); s.n -= t; got += t; if (!s.n) inv.splice(i, 1); }
+  return got;
+};       // different items the bank holds (stacks are unlimited)
 export const EX_SLOTS = 8;         // Exchange offers a player can have open at once
 export const EX_TAX = 0.01;        // the Exchange keeps 1% of every sale (rounded down); direct trades are free
 export const TRADE_RANGE = 5;      // how close two players must stay to trade face to face
@@ -250,7 +285,8 @@ export const SCENES = {
       return { g, objs, blobs: [] };
     },
     mobs: [],
-    npcs: [{ name: "Livia the Broker", x: 15, y: 4, still: true, opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Selling? Buying? Use the stall. I just take my 1%.", "Offers keep working while you sleep. Come back and collect.", "The best price wins, and whoever was there first."] },
+    npcs: [{ name: "Brutus the Smith", x: 11, y: 4, still: true, opens: "shop", hair: "#2a1a10", shirt: "#5a3a2a", pants: "#3a2a1a", lines: ["Tools, bronze, and I'll buy whatever you dug up. Fair prices. Mostly fair.", "Bronze is where it starts. Nobody walks into the Wilderness in a tunic twice.", "Brought ore? I'll take it. Brought a goat? Take it back."] },
+      { name: "Livia the Broker", x: 15, y: 4, still: true, opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Selling? Buying? Use the stall. I just take my 1%.", "Offers keep working while you sleep. Come back and collect.", "The best price wins, and whoever was there first."] },
            { name: "Gaius", x: 7, y: 7, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: Coo. The Forge buys ore. Coo.", "PIGEON: He doesn't talk. I do the talking. Coo.", "PIGEON: The Bank keeps your things safe. Aurelia counts everything twice. Coo.", "PIGEON: West is the Olive Grove. Bring a sword. Seriously. Coo.", "PIGEON: North is Tomatoe Hill. Don't correct her spelling. Coo.", "PIGEON: East is the Via Appia. Highwaymen. Hold on to your Cash. Coo."] }],
     bots: [{ name: "Gannicus", level: 55 }, { name: "Naevia", level: 31 }]
   },
@@ -547,6 +583,26 @@ export const MOBS = {
 /* ------------------------------------------------------------ words */
 // what it takes to climb down into the Wilderness (PvP). Change it here.
 export const WILD_REQ = { skill: "melee", lvl: 10 };
+
+// cooking: raw -> cooked at a range, hearth or campfire. Burns less as you level, never at burnStop and above.
+export const COOK = {
+  sardine: { to: "csardine", lvl: 1, xp: 30, burnStop: 20 }, chicken: { to: "cchicken", lvl: 1, xp: 30, burnStop: 20 },
+  beef: { to: "cbeef", lvl: 5, xp: 40, burnStop: 25 }, pork: { to: "cpork", lvl: 10, xp: 60, burnStop: 35 },
+  trout: { to: "ctrout", lvl: 15, xp: 70, burnStop: 40 }, gloomfin: { to: "cgloomfin", lvl: 25, xp: 100, burnStop: 55 },
+  mooncarp: { to: "cmooncarp", lvl: 40, xp: 150, burnStop: 70 }
+};
+// the chance to burn at a cooking level: about half when you first can, nothing by burnStop; a range is kinder than a fire
+export const burnChance = (r, lvl, range) => lvl >= r.burnStop ? 0 : Math.max(0.03, 0.5 * (r.burnStop - lvl) / Math.max(1, r.burnStop - r.lvl)) * (range ? 0.8 : 1);
+export const EAT_MS = 1200;
+
+// the Forge: Brutus sells tools and the Bronze set, and buys what you gather (for less than you'll get on the Exchange, usually)
+export const SHOP = {
+  sells: [["pickaxe", 25], ["axe", 25], ["rod", 20], ["bronzesword", 250], ["bronzehelm", 200], ["bronzeshield", 300], ["bronzecuirass", 600]],
+  buys: { copper: 6, tin: 6, grimstone: 45, marble: 35, stardust: 120, logs: 4, yewlogs: 70, ashlogs: 28, hide: 8, bones: 2, feather: 1, tusk: 10, husk: 4, pit: 1,
+    receipt: 3, cobweb: 5, geode: 400, olives: 1, sunolive: 30, wheat: 1, tomatoe: 2, goldtomatoe: 60, mask: 40, monocle: 25, manifesto: 15,
+    csardine: 3, cchicken: 3, cbeef: 4, cpork: 7, ctrout: 9, cgloomfin: 14, cmooncarp: 25,
+    pickaxe: 8, axe: 8, rod: 6, bronzesword: 90, bronzehelm: 70, bronzeshield: 110, bronzecuirass: 220 }
+};
 // dying outside the Cage: a quarter of the time one worn item falls where you died. The killer alone can take it
 // for lootMs, then anyone, until it's gone. Leaving mid-fight leaves your character standing there for lingerMs.
 export const PVP = { drop: 0.25, lootMs: 60000, groundMs: 180000, lingerMs: 10000 };
@@ -581,14 +637,14 @@ export const EXAMINE = {
   hive: ["The bees are humming the same four notes. Over and over.", "One bee is wearing a tiny helmet. It salutes you."],
   statue: ["'GALLUS THE BRAVE. He did not flinch.' It's a chicken."],
   fountain: ["The water tastes faintly of coins. People keep throwing Cash in it."],
-  fire: ["A campfire. Cooking comes soon; for now it's just warm."],
+  fire: ["A campfire. Bring raw food and click it to cook."],
   bush: ["A bush. Something inside it is breathing.", "Just a bush. Probably.", "A bush. It rustles when you aren't looking."],
   boulder: ["A big rock. Too big for your pickaxe. For now.", "Someone has scratched 'CRIXUS WAS HERE' into it."],
   hay: ["A hay bale. Waldy sleeps on it, sometimes."],
   counter: ["Polished marble. Aurelia polishes it when she's nervous, which is always."],
   pool: ["Warm, and suspiciously green. Nobody bathes here any more; they just store things."],
   column: ["A marble column. Someone has carved 'Z WAS HERE' into the base."],
-  range: ["A wood-burning range. Cooking comes soon."],
+  range: ["A wood-burning range. Bring raw food and click it to cook; it burns less than a campfire."],
   table: ["A heavy farmhouse table. It's seen a lot of stew."],
   barrel: ["Full of something that smells like olives. Or feet."],
   bed: ["Waldy's bed, apparently. There's a bucket-shaped dent in the pillow."],
@@ -619,7 +675,7 @@ export const EXAMINE = {
   lighthouse: ["A lighthouse. The light points inward, at the island. Nobody knows who it's warning.", "The door's painted on. The light is on anyway."],
   mule: ["A mule. It refuses to move. It has refused for eleven years.", "The mule looks at you. You feel judged by a professional."]
 };
-export const VERB = { pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
+export const VERB = { cook: "Cook-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
 /* ------------------------------------------------------------ quests are data
    goal.type "bring": have goal.n of goal.items in your bag when you talk to the giver (they're taken)
@@ -689,7 +745,7 @@ export function freshChar() {
     v: 1, scene: START.scene, x: START.x, y: START.y, hp: 10,
     inv: [{ k: "coins", n: 25 }, { k: "pickaxe", n: 1 }, { k: "axe", n: 1 }, { k: "rod", n: 1 }],
     eq: { helm: "cap", weapon: "rudis", body: "tunic", shield: "parma", legs: null, gloves: null, boots: "sandals", ring: null },
-    xp: { melee: 0, hp: XP_AT[10], fishing: 0, farming: 0, mining: 0, woodcutting: 0 },
+    xp: { melee: 0, hp: XP_AT[10], fishing: 0, farming: 0, mining: 0, woodcutting: 0, cooking: 0 },
     qs: {}, bank: [], settings: { ...DEFAULT_SETTINGS }, created: Date.now(),
     isle: { plots: Array(ISLE.plots).fill(null), shelf: Array(ISLE.shelf).fill(null), theme: "meadow", themes: ["meadow"], open: true, tier: 1 }
   };
@@ -699,8 +755,13 @@ export function normChar(c) {
   const f = freshChar();
   if (!c || typeof c !== "object") return f;
   const out = { ...f, ...c, xp: { ...f.xp, ...(c.xp || {}) }, eq: { ...f.eq, ...(c.eq || {}) }, settings: { ...f.settings, ...(c.settings || {}) }, qs: { ...(c.qs || {}) } };
-  out.inv = (Array.isArray(c.inv) ? c.inv : f.inv).filter((s) => s && ITEMS[s.k] && s.n > 0).slice(0, INV_MAX);
-  out.bank = (Array.isArray(c.bank) ? c.bank : []).filter((s) => s && ITEMS[s.k] && s.n > 0).slice(0, BANK_MAX);
+  out.bank = (Array.isArray(c.bank) ? c.bank : []).filter((s) => s && ITEMS[s.k] && s.n > 0).slice(0, BANK_MAX).map((s) => ({ k: s.k, n: s.n }));
+  // the bag is re-packed into stacks of 99; anything that no longer fits goes to the bank rather than vanishing
+  out.inv = [];
+  for (const s of (Array.isArray(c.inv) ? c.inv : f.inv).filter((s) => s && ITEMS[s.k] && s.n > 0)) {
+    const left = addInv(out.inv, s.k, s.n); if (!left) continue;
+    const b = out.bank.find((x) => x.k === s.k); if (b) b.n += left; else out.bank.push({ k: s.k, n: left });
+  }
   for (const s of SLOTS) if (out.eq[s] && !ITEMS[out.eq[s]]) out.eq[s] = null;
   if (!SCENES[out.scene]) Object.assign(out, isIsle(out.scene) ? ISLE_FERRY : START);   // back from an island: the ferry at River Bend
   const fi = f.isle, ci = c.isle && typeof c.isle === "object" ? c.isle : {};
