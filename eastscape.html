@@ -429,7 +429,7 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=20";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=22";
 import * as WK from "/v3/assets/js/eastscape-wiki.js?v=7";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -460,7 +460,7 @@ const myEnt = () => Z.players.find((p) => p.id === you?.id);
 
 /* ------------------------------------------------------------ talking to the server */
 const DEV = ["localhost", "127.0.0.1"].includes(location.hostname);
-let ws = null, retry = 0, retryTimer = null, lastMsg = 0, everConnected = false, kicked = false, signedOut = false;
+let ws = null, retry = 0, retryTimer = null, lastMsg = 0, everConnected = false, kicked = false, signedOut = false, restartHold = 0;
 function net(state, text) { $("net").className = `net ${state}`; $("netText").textContent = text; }
 function send(m) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(m)); }
 async function connect() {
@@ -484,11 +484,21 @@ async function connect() {
   ws.onclose = (e) => {
     ws = null;
     if (e.code === 4000) { kicked = true; net("bad", "Opened in another tab"); veil("This character is open in another tab. <br><br><button class='btn' id='takeBack'>Play here instead</button>"); $("takeBack")?.addEventListener("click", () => { kicked = false; connect(); }); return; }
+    if (e.code === 4001) restartHold ||= 25000;   // a planned restart, even if the message before it was missed
     later();
   };
 }
 function later() {
   if (kicked) return;
+  // a PLANNED restart: wait out the deploy once rather than racing it with a
+  // one-second backoff, and say so, because "connection lost" reads as broken
+  if (restartHold) {
+    const wait = restartHold; restartHold = 0; retry = 0;
+    net("warn", "Restarting…");
+    veil(`<span class="spin"></span>EastScape is restarting. Your character is saved — back in about ${Math.ceil(wait / 1000)} seconds…`);
+    retryTimer = setTimeout(connect, wait);
+    return;
+  }
   net("bad", "Reconnecting…");
   if (everConnected) veil('<span class="spin"></span>Connection lost. Reconnecting… your character is safe on the server.');
   const wait = Math.min(10000, 1000 * 2 ** retry++);
@@ -501,7 +511,20 @@ addEventListener("online", () => { if (!ws && !kicked && !signedOut) { retry = 0
 // a quiet socket is a dead socket: ping, and give up on it after 12 seconds of nothing
 setInterval(() => { if (ws && ws.readyState === 1) { send({ t: "ping", c: Date.now() }); if (lastMsg && Date.now() - lastMsg > 12000) ws.close(); } }, 4000);
 
+/* Who is in the scene: the parts of a player or bot that do not change every
+   tick (name, level, weapon, body, max hp) arrive once, in a "who" message,
+   and are merged into every snapshot after it. See the server's snapOf for
+   why — a snapshot carrying all of it to everybody made bandwidth grow with
+   the square of how many people were in a room.
+   Replaced wholesale each time, so someone who leaves does not linger. */
+let ROSTER = new Map();
+const NOBODY = { name: "…", lvl: 1, level: 1, weapon: null, body: null, maxHp: 10 };
+const withWho = (e) => ({ ...NOBODY, ...(ROSTER.get(e.id) || null), ...e });
+
 function onMsg(m) {
+  if (m.type === "who") { ROSTER = new Map(m.who.map((w) => [w.id, w])); return; }
+  // the server is about to go down on purpose; the close that follows is not a fault
+  if (m.type === "restarting") { restartHold = Number(m.holdMs) || 25000; return; }
   if (m.type === "hello") {
     // the server runs newer rules than this page: fetch the new page (at most once a minute, so a half-finished deploy can't loop)
     if (m.version !== G.VERSION) {
@@ -518,7 +541,9 @@ function onMsg(m) {
     if (Z.pending && m.scene === Z.pending.from && performance.now() < Z.pending.until) return;   // the old area's last word, already left
     Z.pending = null;
     if (m.scene !== Z.key) loadScene(m.scene);
-    Z.players = m.players; Z.mobs = m.mobs; Z.bots = m.bots; Z.ground = m.ground || [];
+    // a record with no roster entry yet still draws, as a placeholder, so a
+    // dropped "who" is a wrong name for one tick rather than a missing player
+    Z.players = m.players.map(withWho); Z.mobs = m.mobs; Z.bots = m.bots.map(withWho); Z.ground = m.ground || [];
     if (m.isle) { const was = Z.isle?.theme; Z.isle = m.isle; if (was !== m.isle.theme) Z.bg = paintBg(); } else Z.isle = null;
     checkPred();
     Z.npcs = m.npcs.map((n) => ({ ...Z.defs[n.id], ...n, bubble: Z.npcs.find((o) => o.id === n.id)?.bubble }));

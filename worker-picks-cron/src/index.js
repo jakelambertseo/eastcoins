@@ -99,6 +99,62 @@ async function runBackup(env) {
   return { ok: true, payload };
 }
 
+/**
+ * The nightly EastScape world backup. Same shape as runBackup: one POST, the
+ * Pages function pulls the world from the game worker and writes it to R2.
+ * Separate from the D1 backup because it is a different store with a different
+ * failure mode — D1 has Time Travel, Durable Object storage has nothing.
+ */
+async function runEastscapeBackup(env) {
+  const url = String(env.ESCAPE_BACKUP_URL || "").trim();
+  const key = String(env.PICKS_CRON_KEY || "").trim();
+  if (!url || !key) {
+    console.error("picks-cron: ESCAPE_BACKUP_URL or PICKS_CRON_KEY missing — not backing up EastScape");
+    return { ok: false, error: "not_configured" };
+  }
+  let response;
+  try {
+    response = await fetch(url, { method: "POST", headers: { "X-Picks-Cron-Key": key } });
+  } catch (error) {
+    console.error("picks-cron: eastscape backup request threw", error);
+    return { ok: false, error: "unreachable" };
+  }
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.ok) {
+    // Loud: this is the only copy of everyone's character.
+    console.error(`picks-cron: eastscape backup refused (${response.status})`, payload?.code || "", payload?.message || "");
+    return { ok: false, status: response.status, payload };
+  }
+  console.log(`picks-cron: eastscape backup ${payload.key} — ${payload.characters} characters, ${payload.keys} keys, ${payload.bytes} bytes, pruned ${payload.pruned}`);
+  return { ok: true, payload };
+}
+
+/**
+ * Sample the EastScape world every five minutes, alongside settlement.
+ * Deliberately NOT its own cron minute: a firing delivers one event, and a
+ * metrics sample is not worth spending a minute that settlement might want.
+ * Quiet when it works — only a world that did not answer is worth a line.
+ */
+async function sampleEastscape(env) {
+  const url = String(env.ESCAPE_HEALTH_URL || "").trim();
+  const key = String(env.PICKS_CRON_KEY || "").trim();
+  if (!url || !key) return { ok: false, error: "not_configured" };
+  let response;
+  try {
+    response = await fetch(url, { method: "POST", headers: { "X-Picks-Cron-Key": key } });
+  } catch (error) {
+    console.error("picks-cron: eastscape health request threw", error);
+    return { ok: false, error: "unreachable" };
+  }
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.ok) {
+    console.error(`picks-cron: eastscape health (${response.status})`, payload?.code || "", payload?.message || "");
+    return { ok: false, status: response.status, payload };
+  }
+  if (payload.p95 >= 25) console.warn(`picks-cron: eastscape tick p95 ${payload.p95}ms with ${payload.online} online — half the 50ms budget`);
+  return { ok: true, payload };
+}
+
 /** The daily Discord recap; the endpoint decides whether it is 8 AM Central. */
 async function runRecap(env) {
   const url = String(env.RECAP_URL || "").trim();
@@ -154,9 +210,10 @@ export default {
     // Which schedule fired decides the job; the settlement one is the
     // default so a new trigger can never silently skip payouts.
     if (event.cron === "0 9 * * *") ctx.waitUntil(runBackup(env));
+    else if (event.cron === "20 9 * * *") ctx.waitUntil(runEastscapeBackup(env));
     else if (event.cron === "50 13,14 * * *") ctx.waitUntil(runRecap(env));
     else if (event.cron === "6 21,22 * * 1") ctx.waitUntil(runWeekly(env));
-    else ctx.waitUntil(runSettlement(env, "cron"));
+    else { ctx.waitUntil(runSettlement(env, "cron")); ctx.waitUntil(sampleEastscape(env)); }
   },
 
   // A manual kick, so the Worker-to-Pages link can be proven without
@@ -174,9 +231,14 @@ export default {
       return new Response("Not authorized", { status: 403 });
     }
 
-    // ?job=backup, ?job=recap or ?job=weekly runs those by hand, with the same key.
+    // ?job=backup, ?job=eastscape, ?job=health, ?job=recap or ?job=weekly runs those by hand, with the same key.
     const job = url.searchParams.get("job");
-    const result = job === "backup" ? await runBackup(env) : job === "recap" ? await runRecap(env) : job === "weekly" ? await runWeekly(env) : await runSettlement(env, "manual");
+    const result = job === "backup" ? await runBackup(env)
+      : job === "eastscape" ? await runEastscapeBackup(env)
+      : job === "health" ? await sampleEastscape(env)
+      : job === "recap" ? await runRecap(env)
+      : job === "weekly" ? await runWeekly(env)
+      : await runSettlement(env, "manual");
     return Response.json(result, { status: result.ok ? 200 : 502 });
   }
 };

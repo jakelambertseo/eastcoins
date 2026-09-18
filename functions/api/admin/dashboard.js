@@ -324,7 +324,7 @@ export async function onRequestGet(context) {
   const todayStart = new Date(new Date().toLocaleDateString("en-US", { timeZone: "America/Chicago" })).toISOString();
 
   const [status, ops, reconcile, markets, picks, users, coin, presence, music, tmdbProbe, wallet, book, casinoStats] = await Promise.all([
-    readStatus(db, ["settle:last", "odds:quota", "autoopen:last", "backup:last"]),
+    readStatus(db, ["settle:last", "odds:quota", "autoopen:last", "backup:last", "eastscape:health", "eastscape:backup:last"]),
     db.prepare(`SELECT status, COUNT(*) AS n FROM wallet_operations GROUP BY status`).all(),
     db.prepare(
       `SELECT o.id, o.type, o.amount, o.status, o.last_error, o.created_at, u.twitch_login
@@ -417,6 +417,26 @@ export async function onRequestGet(context) {
     music: music,
     tmdb: tmdbProbe,
     chat: { seJwt: Boolean(String(env.STREAMELEMENTS_JWT || "").trim()), botKey: Boolean(String(env.PICKS_BOT_KEY || "").trim()), cronKey: Boolean(String(env.PICKS_CRON_KEY || "").trim()), openWagering: String(env.PICKS_OPEN_WAGERING || "") === "1" },
+    // EastScape: the world's own health and its own backup. Separate from the
+    // Picks numbers above because it is a separate store with a separate way of
+    // going wrong — Durable Object storage has no Time Travel to fall back on.
+    eastscape: (() => {
+      const h = status["eastscape:health"]?.value || null;
+      const b = status["eastscape:backup:last"]?.value || null;
+      const last = h?.last || null;
+      return {
+        configured: Boolean(env.ESCAPE_WORKER_URL && env.ESCAPE_KEY),
+        at: last?.at || null,
+        ageMin: last?.at ? Math.round((now - new Date(last.at).getTime()) / 60000) : null,
+        down: Boolean(last?.down), error: last?.error || null,
+        online: last?.online ?? null, peak: last?.peak ?? null, scenes: last?.scenes ?? null,
+        p50: last?.p50 ?? null, p95: last?.p95 ?? null, max: last?.max ?? null,
+        budgetMs: h?.budgetMs || 50, busiest: h?.busiest || null,
+        outBytesPerS: last?.outBytesPerS ?? null,
+        history: Array.isArray(h?.history) ? h.history.slice(-24) : [],
+        backup: b ? { at: b.at, ageHours: Math.round((now - new Date(b.at).getTime()) / 3600000), bytes: Number(b.bytes || 0), characters: Number(b.characters || 0), key: b.key } : null
+      };
+    })(),
     backup: (() => {
       const last = status["backup:last"] || null;
       const v = last ? last.value : null;

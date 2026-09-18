@@ -24,10 +24,23 @@ const SNAP_EVERY = 2;        // the world's state goes out ten times a second; y
 const SAVE_MS = 4000;        // a changed character is written at most this long after the change
 const STEP = 240;            // one tile of walking
 const SCENE_IDLE_MS = 120000;
+// a planned restart: when each warning is given, and how long the client is told to wait
+const RESTART_WARN_S = [600, 300, 120, 60, 30, 10];
+const RESTART_HOLD_MS = 25000;   // how long the client waits before trying again, so it reconnects AFTER the deploy
+const METRIC_TICKS = 1200;       // a minute of tick times, kept in memory only   // how long the page waits before trying again, so it reconnects AFTER the deploy
 const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const BOT_LINES = ["anyone know where the good fishing is?", "gz", "cows are free xp lol", "selling feathers", "this farm is peaceful", "wheat run anyone?", "brb", "that yew is taunting me", "who keeps feeding the olives"];
 const EXAMINE_KINDS = new Set(["hive", "notice", "sign", "statue", "fountain", "fire", "bush", "boulder", "hay", "counter", "pool", "column", "range", "table", "barrel", "bed", "plant", "bench", "goatstatue", "chest", "rug", "chair", "sack", "cat", "bucket", "bigtomato", "press", "crate", "scarecrow", "milestone", "toll", "barricade", "chariot", "mule"]);
+
+// constant-time compare, so a wrong key cannot be guessed a character at a time
+function keyOk(request, env) {
+  const want = String(env.ESCAPE_KEY || "").trim(), got = String(request.headers.get("X-Escape-Key") || "").trim();
+  if (!want || !got || want.length !== got.length) return false;
+  let diff = 0;
+  for (let i = 0; i < want.length; i++) diff |= want.charCodeAt(i) ^ got.charCodeAt(i);
+  return diff === 0;
+}
 
 export default {
   async fetch(request, env) {
@@ -37,6 +50,36 @@ export default {
     if (url.pathname === "/where") {
       const t0 = Date.now(), r = await env.WORLD.get(env.WORLD.idFromName("world")).fetch("https://world/where"), j = await r.json();
       return Response.json({ edge: request.cf?.colo, world: j.colo, hopMs: Date.now() - t0, players: j.players }, { headers: { "Cache-Control": "no-store" } });
+    }
+    // Announce a restart before deploying:
+    //   curl -X POST -H "X-Escape-Key: $KEY" "https://<worker>/restart?in=120"
+    //   curl -X POST -H "X-Escape-Key: $KEY" "https://<worker>/restart?cancel=1"
+    // A deploy drops every connection whatever happens; this is what gives
+    // people warning first and gets every character written before it does.
+    if (url.pathname === "/restart") {
+      if (request.method !== "POST") return new Response("POST only", { status: 405 });
+      if (!keyOk(request, env)) return new Response("Forbidden", { status: 403 });
+      const body = url.searchParams.get("cancel") ? { cancel: true } : { in: Math.max(0, Math.min(3600, Number(url.searchParams.get("in")) || 120)) };
+      return env.WORLD.get(env.WORLD.idFromName("world")).fetch("https://world/restart", { method: "POST", body: JSON.stringify(body) });
+    }
+    // The nightly backup pulls from here; the site's /api/eastscape/backup is
+    // what gzips it and puts it in R2, so there is ONE bucket, one prune rule
+    // and one dashboard card for the whole of EastCoin.
+    // How the world is doing. No key: it carries no player data, and the site's
+    // dashboard is not the only thing that should be able to ask.
+    if (url.pathname === "/stats") {
+      const r = await env.WORLD.get(env.WORLD.idFromName("world")).fetch("https://world/stats");
+      return new Response(r.body, { status: r.status, headers: { "content-type": "application/json", "Cache-Control": "no-store" } });
+    }
+    if (url.pathname === "/export") {
+      if (!keyOk(request, env)) return new Response("Forbidden", { status: 403 });
+      return env.WORLD.get(env.WORLD.idFromName("world")).fetch("https://world/export", { method: "POST" });
+    }
+    // Restore. Dry by default; see the DO handler for why it refuses while anyone is on.
+    if (url.pathname === "/restore") {
+      if (request.method !== "POST") return new Response("POST only", { status: 405 });
+      if (!keyOk(request, env)) return new Response("Forbidden", { status: 403 });
+      return env.WORLD.get(env.WORLD.idFromName("world")).fetch(new Request(`https://world/restore${url.search}`, { method: "POST", body: request.body, headers: { "content-type": "application/json" } }));
     }
     if (url.pathname !== "/ws") return new Response("EastScape game server", { status: 404 });
     if (request.headers.get("Upgrade") !== "websocket") return new Response("Expected a websocket", { status: 426 });
@@ -71,6 +114,10 @@ export class World {
     this.timer = null; this.tickN = 0; this.nextChatter = 0;
     this.trades = new Map();    // trade id -> a trade between two players in progress
     this.gseq = 0;              // ids for things lying on the ground
+    // what the last minute looked like: enough to answer "is it the server or is it me"
+    this.startedAt = Date.now();
+    this.tickMs = [];           // rolling tick durations
+    this.msgsIn = 0; this.bytesOut = 0; this.sentOut = 0; this.peak = 0;
     // the Exchange: every offer from every player, online or not. Loaded before anything else runs.
     ctx.blockConcurrencyWhile(async () => { this.ex = (await ctx.storage.get("exchange")) || { next: 1, orders: [], last: {}, tax: 0 }; });
   }
@@ -80,6 +127,19 @@ export class World {
     if (new URL(request.url).pathname === "/where") {
       let colo = null; try { colo = (await (await fetch("https://www.cloudflare.com/cdn-cgi/trace")).text()).match(/colo=(\w+)/)?.[1]; } catch (e) { /* unknown */ }
       return Response.json({ colo, players: this.pls.size });
+    }
+    const path = new URL(request.url).pathname;
+    if (path === "/stats") return Response.json({ ok: true, ...this.statsOf() });
+    if (path === "/export") {
+      await this.saveAll();                       // back up what is true now, not what was true four seconds ago
+      const data = await this.dumpAll();
+      return Response.json({ ok: true, takenAt: new Date().toISOString(), rulesVersion: G.VERSION, saveVersion: G.SAVE_V, online: this.pls.size, count: Object.keys(data).length, data });
+    }
+    if (path === "/restore") return this.restore(request);
+    if (path === "/restart") {
+      const body = await request.json().catch(() => ({}));
+      if (body.cancel) { const was = !!this.restartAt; this.restartAt = 0; this.warned = null; if (was) this.tellAll("The restart is called off. Carry on.", "good"); return Response.json({ ok: true, cancelled: was }); }
+      return Response.json(await this.planRestart(Number(body.in) || 0));
     }
     let user; try { user = JSON.parse(request.headers.get("x-es-user")); } catch (e) { /* none */ }
     if (!user?.id) return new Response("No user", { status: 400 });
@@ -99,6 +159,9 @@ export class World {
     const pl = { id: user.id, login: user.login, name: user.name || user.login, admin: !!user.admin, ws, C,
       x: C.x, y: C.y, path: [], step: null, face: 1, dir: "south", act: null,
       lastSwing: 0, swingAt: 0, hurtAt: 0, regen: Date.now(), dirty: true, needSave: !stored, out: [], god: false, msgs: 0, msgWindow: 0, joinedAt: Date.now() };
+    pl.playFrom = Date.now();
+    pl.cashSeen = this.cashOf(C);
+    if (C.stats) { C.stats.sessions++; C.stats.firstSeen ||= Number(C.created) || Date.now(); C.stats.lastSeen = Date.now(); }
     this.pls.set(user.id, pl);
     this.ctx.storage.put(`who:${String(user.login).toLowerCase()}`, { id: user.id, name: pl.name }).catch(() => {});
     const S = this.scene(C.scene);
@@ -107,7 +170,9 @@ export class World {
     ws.addEventListener("close", () => this.leave(pl));
     ws.addEventListener("error", () => this.leave(pl));
     this.send(pl, { type: "hello", version: G.VERSION, t: Date.now(), you: { id: pl.id, login: pl.login, name: pl.name, admin: pl.admin }, me: this.meOf(pl) });
+    this.send(pl, { type: "who", scene: S.key, who: this.whoOf(S) });
     this.send(pl, JSON.parse(this.snapOf(S, Date.now(), false)));
+    S.whoSig = null;   // the next broadcast tells everyone else this player has arrived
     if (!stored) this.say(pl, "Welcome to EastScape. Your pickaxe, axe and fishing rod are in your bag: click one to wield it before you mine, chop or fish.");
     else this.say(pl, `Welcome back, ${pl.name}.`);
     this.start();
@@ -124,6 +189,7 @@ export class World {
     }
     if (this.pls.get(pl.id) === pl) this.pls.delete(pl.id);
     pl.act = null; pl.path = [];
+    pl.needSave = true;              // an idle session still has time played to bank
     await this.persist(pl);
     if (!this.pls.size) this.stop();
   }
@@ -131,11 +197,12 @@ export class World {
   start() { if (!this.timer) this.timer = setInterval(() => this.tick(), TICK_MS); }
   stop() { if (this.timer) { clearInterval(this.timer); this.timer = null; } }
 
-  send(pl, msg) { try { pl.ws.send(typeof msg === "string" ? msg : JSON.stringify(msg)); } catch (e) { /* closing */ } }
+  send(pl, msg) { const s = typeof msg === "string" ? msg : JSON.stringify(msg); this.sentOut++; this.bytesOut += s.length; try { pl.ws.send(s); } catch (e) { /* closing */ } }
   say(pl, text, cls = "sys", tag) { pl.out.push({ type: "say", text, cls, tag }); }
 
   async persist(pl) {
     if (!pl.needSave) return;
+    this.accrue(pl);
     pl.C.x = pl.x; pl.C.y = pl.y; pl.C.saved = Date.now();
     pl.needSave = false;
     try { await this.ctx.storage.put(`char:${pl.id}`, pl.C); pl.out.push({ type: "saved", t: pl.C.saved }); }
@@ -143,7 +210,7 @@ export class World {
   }
   touch(pl) { pl.dirty = true; pl.needSave = true; pl.changedAt ??= Date.now(); }
 
-  meOf(pl) { const C = pl.C; return { isle: { tier: C.isle.tier, themes: C.isle.themes }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, settings: C.settings, scene: C.scene, god: pl.god, saved: C.saved || 0 }; }
+  meOf(pl) { const C = pl.C; return { isle: { tier: C.isle.tier, themes: C.isle.themes }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, settings: C.settings, scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats }; }
 
   /* ------------------------------------------------------------ scenes */
   scene(key) {
@@ -198,6 +265,7 @@ export class World {
   /* ------------------------------------------------------------ what players ask for */
   onMessage(pl, m) {
     const now = Date.now();
+    this.msgsIn++;
     if (now - pl.msgWindow > 1000) { pl.msgWindow = now; pl.msgs = 0; }
     if (++pl.msgs > 40) return;                       // more than 40 a second is not a person
     const S = this.scene(pl.C.scene), C = pl.C;
@@ -297,7 +365,231 @@ export class World {
     if (after > before) { this.say(pl, `Congratulations, you just advanced a ${G.SKILLS[k].name} level! You are now level ${after}.`, "good"); pl.out.push({ type: "levelup", k, lvl: after }); if (k === "hp") C.hp = Math.min(G.maxHpOf(C), C.hp + (after - before)); }
     if (C.hp > G.maxHpOf(C)) C.hp = G.maxHpOf(C);
     this.touch(pl);
+    if (xp > 0) this.emit(pl, "xp", { skill: k, xp });
   }
+
+  /* ------------------------------------------------------------ the event hook
+
+     Everything that happens to a player goes through emit(). Anything that
+     wants to know subscribes HERE — the stat counters and quests today,
+     achievements, daily tasks and hiscores later — instead of every skill
+     being wired to every system by hand.
+
+       kill    { mob }            a monster died to this player
+       gather  { k, n }           skilling produced an item
+       loot    { k, n }           a monster dropped one
+       cook    { k, n }  burn {}  the range or a fire
+       craft   { k, n }           for Smithing / Crafting when they land
+       xp      { skill, xp }      any xp at all
+       death   { pvp }            this player died
+       pvpkill { victim }         this player killed another
+       quest   { k }              a quest handed in
+
+     Cash is NOT emitted: it moves through shops, the Exchange, trades, quest
+     rewards and island upgrades, and a hook at each of those is a hook someone
+     will forget to add. It is measured by difference in persist() instead.
+     ------------------------------------------------------------ */
+  emit(pl, type, d = {}) {
+    this.countEvent(pl, type, d);
+    this.questEvent(pl, type, d);
+  }
+
+  countEvent(pl, type, d) {
+    const st = pl.C.stats;
+    if (!st) return;                         // a save that predates the counters
+    const bump = (map, k, n) => { if (k && n > 0) st[map][k] = (st[map][k] || 0) + n; };
+    switch (type) {
+      case "kill":    bump("kills", d.mob, 1); break;
+      case "gather":  bump("gathered", d.k, d.n || 1); break;
+      case "loot":    bump("looted", d.k, d.n || 1); break;
+      case "cook":    bump("cooked", d.k, d.n || 1); break;
+      case "craft":   bump("crafted", d.k, d.n || 1); break;
+      case "burn":    st.burnt++; break;
+      case "quest":   st.questsDone++; break;
+      case "pvpkill": st.pvpKills++; break;
+      case "death":   st.deaths++; if (d.pvp) st.pvpDeaths++; break;
+      case "xp": {
+        const xp = Math.trunc(d.xp || 0);
+        if (xp <= 0) break;
+        st.xpTotal += xp;
+        const day = G.dayKeyCT();
+        st.xpDay[day] = (st.xpDay[day] || 0) + xp;
+        // only ever trims on the first xp of a new day, once the log is full
+        const days = Object.keys(st.xpDay);
+        if (days.length > G.STAT_DAYS) for (const k of days.sort().slice(0, days.length - G.STAT_DAYS)) delete st.xpDay[k];
+        break;
+      }
+      default: return;
+    }
+    this.touch(pl);
+  }
+
+  /* ------------------------------------------------------------ planned restarts
+
+     A worker deploy tears the Durable Object down and every socket with it.
+     Characters are written within SAVE_MS of any change, so almost nothing is
+     ever at risk - but "almost" is not what you want during launch month, and
+     being dropped with no warning reads as the game breaking.
+
+     So: announce, count down, write EVERY character, then tell the pages it is
+     a restart rather than a fault. They wait RESTART_HOLD_MS and come back,
+     instead of racing the deploy with a one-second backoff.
+     ------------------------------------------------------------ */
+  tellAll(text, cls = "sys") { for (const p of this.pls.values()) this.say(p, text, cls); }
+
+  async planRestart(seconds) {
+    const s = Math.max(0, Math.min(3600, Math.trunc(seconds)));
+    this.restartAt = Date.now() + s * 1000;
+    this.warned = new Set();
+    this.start();                                   // count down even with nobody on, so the save still happens
+    this.tellAll(s >= 60 ? `EastScape is restarting in ${Math.round(s / 60)} minute${s >= 120 ? "s" : ""}. Your character is saved automatically - you will be back in a moment.` : `EastScape is restarting in ${s} seconds. Hold tight.`, "admin");
+    if (s === 0) await this.doRestart();
+    return { ok: true, at: this.restartAt, players: this.pls.size };
+  }
+
+  restartTick(now) {
+    if (!this.restartAt) return;
+    const left = Math.ceil((this.restartAt - now) / 1000);
+    if (left > 0) {
+      for (const mark of RESTART_WARN_S) {
+        if (left <= mark && !this.warned.has(mark)) {
+          this.warned.add(mark);
+          if (this.pls.size) this.tellAll(mark >= 60 ? `Restarting in ${mark / 60} minute${mark > 60 ? "s" : ""}.` : `Restarting in ${mark} seconds.`, "admin");
+          break;                                    // one warning a tick, never a burst
+        }
+      }
+      return;
+    }
+    this.restartAt = 0;
+    this.doRestart();
+  }
+
+  // write everyone, tell every page this was planned, then let the deploy land
+  async doRestart() {
+    const saved = await this.saveAll();
+    for (const pl of [...this.pls.values()]) {
+      this.send(pl, { type: "restarting", holdMs: RESTART_HOLD_MS });
+      try { pl.ws.close(4001, "restarting"); } catch (e) { /* already gone */ }
+    }
+    return saved;
+  }
+
+  // every connected character, written now. Used by the restart and the backup.
+  async saveAll() {
+    let n = 0;
+    for (const pl of this.pls.values()) {
+      pl.needSave = true;
+      try { await this.persist(pl); n++; } catch (e) { /* one bad write must not stop the rest */ }
+    }
+    try { await this.ctx.storage.put("exchange", this.ex); } catch (e) { /* same */ }
+    return { saved: n };
+  }
+
+  /* What the last minute looked like. Public and cheap: no character data, no
+     names, nothing a player could not see by counting heads. It answers the
+     only question worth asking during a launch — is the world keeping up, or
+     is it one person's connection.
+
+     Tick time is the number that matters: the world steps every TICK_MS, so a
+     p95 anywhere near that budget means everybody is playing a slow game. */
+  statsOf() {
+    const ms = [...this.tickMs].sort((a, b) => a - b);
+    const at = (p) => (ms.length ? ms[Math.min(ms.length - 1, Math.floor(ms.length * p))] : 0);
+    const upS = Math.max(1, Math.round((Date.now() - this.startedAt) / 1000));
+    const scenes = {};
+    for (const [key, S] of this.scenes) { const n = this.playersIn(S).length; if (n) scenes[key] = n; }
+    return {
+      online: this.pls.size, peak: this.peak, scenes: this.scenes.size, busiest: scenes,
+      tick: { budgetMs: TICK_MS, samples: ms.length, p50: at(0.5), p95: at(0.95), p99: at(0.99), max: ms.at(-1) || 0 },
+      rate: { inPerS: +(this.msgsIn / upS).toFixed(1), outPerS: +(this.sentOut / upS).toFixed(1), outBytesPerS: Math.round(this.bytesOut / upS) },
+      trades: this.trades.size, offers: this.ex?.orders?.length || 0,
+      restartAt: this.restartAt || 0, upS
+    };
+  }
+
+  // every key this world owns, paged so a big world cannot be half-dumped
+  async dumpAll() {
+    const out = {};
+    let after;
+    for (;;) {
+      const page = await this.ctx.storage.list(after === undefined ? { limit: 1000 } : { startAfter: after, limit: 1000 });
+      if (!page || !page.size) break;
+      for (const [k, v] of page) { out[k] = v; after = k; }
+      if (page.size < 1000) break;
+    }
+    return out;
+  }
+
+  /* Restore, with two locks on it.
+
+     It is a DRY RUN unless ?apply=yes, and it refuses outright while anybody is
+     connected: a live player holds their character in memory and writes it back
+     within seconds, so restoring underneath them would be undone immediately and
+     look like the restore silently failed. Announce a restart, let everyone drop,
+     then restore.
+
+     ?only=char:  restores just characters and leaves the Exchange alone. */
+  async restore(request) {
+    const u = new URL(request.url);
+    const body = await request.json().catch(() => null);
+    const data = body && typeof body.data === "object" && body.data ? body.data : null;
+    if (!data) return Response.json({ ok: false, code: "NO_DATA", message: "Send { data: { key: value, ... } } from a backup." }, { status: 400 });
+
+    const only = u.searchParams.get("only") || "";
+    const keys = Object.keys(data).filter((k) => !only || k.startsWith(only));
+    if (!keys.length) return Response.json({ ok: false, code: "NOTHING_MATCHED", message: `No keys in that backup start with "${only}".` }, { status: 400 });
+
+    if (u.searchParams.get("apply") !== "yes") {
+      return Response.json({ ok: true, dryRun: true, would: keys.length, online: this.pls.size,
+        blocked: this.pls.size ? `${this.pls.size} player(s) connected — an apply would be refused` : null,
+        sample: keys.slice(0, 12) });
+    }
+    if (this.pls.size) return Response.json({ ok: false, code: "PLAYERS_ONLINE", online: this.pls.size,
+      message: `${this.pls.size} player(s) are connected. Announce a restart and let them drop first, or a live character will overwrite what you restore.` }, { status: 409 });
+
+    let written = 0;
+    for (let i = 0; i < keys.length; i += 100) {
+      const put = {};
+      for (const k of keys.slice(i, i + 100)) put[k] = data[k];
+      await this.ctx.storage.put(put);
+      written += Object.keys(put).length;
+    }
+    // whatever is in memory is now stale: drop it so the next read comes off storage
+    this.scenes.clear();
+    this.ex = (await this.ctx.storage.get("exchange")) || this.ex;
+    return Response.json({ ok: true, restored: written, from: body.takenAt || null });
+  }
+
+  // every coin a character holds, bag and bank
+  cashOf(C) {
+    let n = 0;
+    for (const s of C.inv) if (s.k === "coins") n += s.n;
+    for (const s of C.bank) if (s.k === "coins") n += s.n;
+    return n;
+  }
+
+  /* Time played and cash, both measured rather than hooked.
+
+     Cash: the difference since the last save. Every path that moves money is
+     covered by construction, and nothing new has to remember to report. The
+     cost is that earning and spending the same 100 between two saves nets to
+     nothing — saves land within SAVE_MS of any change, so that is a four-second
+     window, which is the right trade for a lifetime total that can never drift
+     because somebody added a shop.
+
+     Time: accrued here and on leave, so an idle player's time is not lost. */
+  accrue(pl) {
+    const st = pl.C.stats, now = Date.now();
+    if (!st) return 0;
+    if (pl.playFrom) { st.playMs += Math.max(0, now - pl.playFrom); pl.playFrom = now; }
+    const cash = this.cashOf(pl.C), was = Number.isFinite(pl.cashSeen) ? pl.cashSeen : cash;
+    if (cash > was) st.cashIn += cash - was;
+    else if (cash < was) st.cashOut += was - cash;
+    pl.cashSeen = cash;
+    st.lastSeen = now;
+    return now;
+  }
+
   hasTool(pl, skill) {
     const C = pl.C, w = C.eq.weapon; if (w && G.ITEMS[w].tool === skill) return true;
     const k = G.TOOL_OF[skill], nm = G.ITEMS[k].name.toLowerCase();
@@ -368,8 +660,10 @@ export class World {
       if (o && o.state === "active" && q.goal.type === "bring" && !o.told && G.qHave(C, k) >= q.goal.n) { o.told = true; this.say(pl, `${q.name}: you have all ${q.goal.n} ${q.goal.what}. Take them to ${q.giver}.`, "good"); this.touch(pl); }
     }
   }
-  questEvent(pl, type, what) {
-    const C = pl.C;
+  // a subscriber of emit(): quests whose goal is "kill N of X" count here
+  questEvent(pl, type, d) {
+    const C = pl.C, what = d.mob;
+    if (what == null) return;
     for (const k in G.QUESTS) {
       const q = G.QUESTS[k], o = C.qs[k];
       if (o && o.state === "active" && q.goal.type === type && q.goal.mob === what) { o.n++; this.touch(pl); if (o.n === q.goal.n) this.say(pl, `${q.name}: that's ${q.goal.n}. Go back to ${q.giver}.`, "good"); }
@@ -384,12 +678,22 @@ export class World {
     for (const [it, n] of q.reward.items || []) this.give(pl, it, n);
     pl.out.push({ type: "questdone", k });
     this.touch(pl);
+    this.emit(pl, "quest", { k });
   }
 
   /* ------------------------------------------------------------ the tick */
   tick() {
-    const now = Date.now();
+    const t0 = Date.now();
+    this.tickTimed(t0);
+    const took = Date.now() - t0;
+    this.tickMs.push(took);
+    if (this.tickMs.length > METRIC_TICKS) this.tickMs.shift();
+    if (this.pls.size > this.peak) this.peak = this.pls.size;
+  }
+
+  tickTimed(now) {
     this.tickN++;
+    this.restartTick(now);
     const live = new Set([...this.pls.values()].map((p) => p.C.scene));
     for (const [key, S] of this.scenes) {
       if (!live.has(key)) { S.idleSince ||= now; if (now - S.idleSince > SCENE_IDLE_MS && !(S.def.pvp && S.mobs.some((m) => m.dead && now < m.respawnAt))) this.scenes.delete(key); continue; }
@@ -410,7 +714,7 @@ export class World {
     if (this.tickN % SNAP_EVERY === 0) this.broadcast(now); else this.sendPrivate();
     for (const S of this.scenes.values()) if (S.ground.length) S.ground = S.ground.filter((x) => now < x.gone);
     for (const pl of this.pls.values()) if (pl.lingerUntil && now > pl.lingerUntil) { this.pls.delete(pl.id); pl.needSave = true; this.persist(pl); }
-    if (!this.pls.size) this.stop();
+    if (!this.pls.size && !this.restartAt) this.stop();
     // saving: anything changed more than SAVE_MS ago is written now
     for (const pl of this.pls.values()) if (pl.needSave && pl.changedAt && now - pl.changedAt >= SAVE_MS) { pl.changedAt = null; this.persist(pl); }
   }
@@ -458,9 +762,10 @@ export class World {
     return S.bots.filter((b) => b.working?.ob === ob).length + this.playersIn(S).filter((p) => p !== except && p.act?.ob === ob && p.act.started).length;
   }
   // a gather landed: the item pops up over the gatherer for everyone in the area
-  gained(S, pl, k, n = 1) {
+  gained(S, pl, k, n = 1, how = "gather") {
     S.events.push({ type: "gain", who: pl.id, k, n, t: Date.now() });
-    if (S.def.geode && Math.random() < S.def.geode && this.give(pl, "geode")) { S.events.push({ type: "gain", who: pl.id, k: "geode", n: 1, t: Date.now() }); this.say(pl, "Something glints in the dirt: a glimmering geode!", "loot"); }
+    this.emit(pl, how, { k, n });
+    if (S.def.geode && Math.random() < S.def.geode && this.give(pl, "geode")) { S.events.push({ type: "gain", who: pl.id, k: "geode", n: 1, t: Date.now() }); this.emit(pl, "gather", { k: "geode", n: 1 }); this.say(pl, "Something glints in the dirt: a glimmering geode!", "loot"); }
   }
   groupNote(S, pl, a) {
     const n = this.workersOn(S, a.ob, pl); if (n === a.groupSeen) return; a.groupSeen = n;
@@ -566,8 +871,8 @@ export class World {
       const r = G.COOK[raw.k];
       if (raw.n > 1 && (G.roomFor(C.inv, r.to) < 1 || G.roomFor(C.inv, "burnt") < 1)) { this.say(pl, "Your inventory is full.", "bad"); pl.act = null; return; }
       raw.n--; if (!raw.n) C.inv.splice(C.inv.indexOf(raw), 1);
-      if (Math.random() < G.burnChance(r, lv, ob.t === "range")) { this.give(pl, "burnt"); this.say(pl, "You burn it.", "bad"); }
-      else { this.give(pl, r.to); this.gained(S, pl, r.to); this.grant(pl, "cooking", r.xp); }
+      if (Math.random() < G.burnChance(r, lv, ob.t === "range")) { this.give(pl, "burnt"); this.emit(pl, "burn", {}); this.say(pl, "You burn it.", "bad"); }
+      else { this.give(pl, r.to); this.gained(S, pl, r.to, 1, "cook"); this.grant(pl, "cooking", r.xp); }
       this.touch(pl);
       if (!C.inv.some((x) => G.COOK[x.k] && lv >= G.COOK[x.k].lvl)) { this.say(pl, "That's everything cooked."); pl.act = null; }
       return;
@@ -629,10 +934,10 @@ export class World {
     for (const [k, n, chance] of def.drops) {
       if (chance != null && Math.random() >= chance) continue;
       const qty = Array.isArray(n) ? rint(n[0], n[1]) : n;
-      if (this.give(pl, k, qty)) got.push([k, qty]);
+      if (this.give(pl, k, qty)) { got.push([k, qty]); this.emit(pl, "loot", { k, n: qty }); }
     }
     this.say(pl, `You defeat the ${def.name.toLowerCase()}.${got.length ? ` It drops ${got.map(([k, n]) => `${n > 1 ? n + " " : ""}${G.ITEMS[k].name.toLowerCase()}`).join(", ")}.` : ""}`, "loot");
-    this.questEvent(pl, "kill", m.t);
+    this.emit(pl, "kill", { mob: m.t });
   }
   // killer: the player who landed the last hit, or { mob: name }
   die(pl, S, killer) {
@@ -644,6 +949,8 @@ export class World {
       if (pk) this.say(pk, `You beat ${pl.name} in the Cage.`, "good");
       return this.say(pl, `${pk ? pk.name : "Someone"} beat you in the Cage. Nothing lost: you're back outside the bars, patched up.`, "bad");
     }
+    this.emit(pl, "death", { pvp: !!S?.def.pvp });
+    if (pk) this.emit(pk, "pvpkill", { victim: pl.id });
     let lost = null;
     if (S?.def.pvp) {
       const worn = G.SLOTS.filter((s) => C.eq[s]);
@@ -846,14 +1153,49 @@ export class World {
   }
 
   /* ------------------------------------------------------------ telling everyone */
+  /* ------------------------------------------------------------ what goes out
+
+     A snapshot used to carry everyone's name, total level, weapon, body and
+     max hp — none of which change from one tick to the next — to everybody in
+     the scene, ten times a second. The scene's snapshot is built once, so the
+     cost is not CPU: it is that N players each receive N records, which makes
+     egress grow with the SQUARE of how many people are in a room. Measured
+     before this change: 10 in a room cost 31 KB/s each, 40 cost 102, 80 cost
+     197. Launch day is one room with everybody in it.
+
+     So the parts that rarely change go out separately, as a "who" roster, and
+     only when they actually change. The snapshot keeps position and combat
+     state and nothing else, and drops every field that is falsy rather than
+     spending bytes on "act":null,"ob":null,"mob":null,"started":false.
+
+     The client merges the two: it keeps the last roster it saw and fills the
+     rest in from each snapshot. A record for somebody it has no roster entry
+     for still draws — as a placeholder — so a missed message is never a hole.
+     ------------------------------------------------------------ */
+
+  // the parts of a player or bot that do not change every tick
+  whoOf(S) {
+    const out = [];
+    for (const p of this.playersIn(S)) out.push({ id: p.id, name: p.name, lvl: G.totalOf(p.C), weapon: p.C.eq.weapon, body: p.C.eq.body, maxHp: G.maxHpOf(p.C) });
+    for (const b of S.bots) out.push({ id: b.id, name: b.name, level: b.level, art: b.art, hue: b.hue });
+    return out;
+  }
+  // cheap enough to build every broadcast; it only ever SENDS when it differs
+  whoSigOf(who) { let sig = ""; for (const w of who) sig += `${w.id}|${w.name}|${w.lvl ?? w.level}|${w.weapon || ""}|${w.body || ""}|${w.maxHp || ""}|${w.art || ""}|${w.hue || ""};`; return sig; }
+
   snapOf(S, now, withEvents = true) {
     const st = (e) => (e.step ? [e.step.fx, e.step.fy, e.step.tx, e.step.ty, e.step.t0, e.step.ms] : 0);
+    // every field here is sent N×N times a second, so a falsy one is left out
+    // x, y and hp of 0 are real values, so they are never trimmed; everything
+    // else falsy means "nothing happening" and the client reads absence the same way
+    const KEEP = new Set(["id", "x", "y", "hp", "t"]);
+    const trim = (o) => { for (const k in o) if (!KEEP.has(k) && (o[k] === null || o[k] === false || o[k] === 0)) delete o[k]; return o; };
     const out = {
       type: "snap", t: now, scene: S.key, online: this.pls.size,
-      players: this.playersIn(S).map((p) => ({ id: p.id, name: p.name, lvl: G.totalOf(p.C), x: p.x, y: p.y, s: st(p), dir: p.dir, face: p.face, hurtAt: p.hurtAt, swingAt: p.swingAt, act: p.act?.kind || null, started: !!p.act?.started, ob: p.act?.ob ? p.act.ob.id : null, mob: p.act?.kind === "mob" ? p.act.id : null, weapon: p.C.eq.weapon, body: p.C.eq.body, hp: p.C.hp, maxHp: G.maxHpOf(p.C), moving: !!(p.step || p.path.length) })),
-      mobs: S.mobs.map((m) => ({ id: m.id, t: m.t, x: m.x, y: m.y, s: st(m), face: m.face, hp: m.hp, dead: m.dead, hurtAt: m.hurtAt, swingAt: m.swingAt })),
-      npcs: S.npcs.map((n) => ({ id: n.id, x: n.x, y: n.y, s: st(n), face: n.face, held: n.holdUntil > now })),
-      bots: S.bots.map((b) => ({ id: b.id, name: b.name, level: b.level, art: b.art, x: b.x, y: b.y, s: st(b), dir: b.dir, face: b.face, hue: b.hue, work: b.working ? b.working.ob.id : null, workT: b.working ? b.working.ob.t : null })),
+      players: this.playersIn(S).map((p) => trim({ id: p.id, x: p.x, y: p.y, s: st(p), dir: p.dir, face: p.face, hurtAt: p.hurtAt, swingAt: p.swingAt, act: p.act?.kind || null, started: !!p.act?.started, ob: p.act?.ob ? p.act.ob.id : null, mob: p.act?.kind === "mob" ? p.act.id : null, hp: p.C.hp, moving: !!(p.step || p.path.length) })),
+      mobs: S.mobs.map((m) => trim({ id: m.id, t: m.t, x: m.x, y: m.y, s: st(m), face: m.face, hp: m.hp, dead: m.dead, hurtAt: m.hurtAt, swingAt: m.swingAt })),
+      npcs: S.npcs.map((n) => trim({ id: n.id, x: n.x, y: n.y, s: st(n), face: n.face, held: n.holdUntil > now })),
+      bots: S.bots.map((b) => trim({ id: b.id, x: b.x, y: b.y, s: st(b), dir: b.dir, face: b.face, work: b.working ? b.working.ob.id : null, workT: b.working ? b.working.ob.t : null })),
       ground: S.ground.map((x) => ({ id: x.id, k: x.k, n: x.n, x: x.x, y: x.y, owner: x.owner, until: x.until })),
       isle: S.owner ? (() => { const I = this.isleOf(S); return I && { owner: S.owner, name: S.ownerName || this.pls.get(S.owner)?.name || "Someone", plots: I.plots, shelf: I.shelf, theme: I.theme, open: I.open }; })() : null,
       dyn: S.objs.filter((o) => o.stumpUntil > now || o.emptyUntil > now || o.bareUntil > now || o.grownAt > now).map((o) => [o.id, o.stumpUntil || 0, o.emptyUntil || 0, o.bareUntil || 0, o.grownAt || 0]),
@@ -862,13 +1204,20 @@ export class World {
     return JSON.stringify(out);
   }
   broadcast(now) {
-    const snaps = new Map();
+    const snaps = new Map(), rosters = new Map();
     for (const [key, S] of this.scenes) {
       const players = this.playersIn(S); if (!players.length) { S.events = []; continue; }
+      const who = this.whoOf(S), sig = this.whoSigOf(who);
+      // the roster goes out BEFORE the snapshot in the same broadcast, so a
+      // player who just walked in is never referenced before they are known
+      if (sig !== S.whoSig) { S.whoSig = sig; rosters.set(key, JSON.stringify({ type: "who", scene: key, who })); }
       snaps.set(key, this.snapOf(S, now));
       S.events = [];
     }
-    for (const pl of this.pls.values()) { const s = snaps.get(pl.C.scene); if (s) this.send(pl, s); }
+    for (const pl of this.pls.values()) {
+      const r = rosters.get(pl.C.scene); if (r) this.send(pl, r);
+      const s = snaps.get(pl.C.scene); if (s) this.send(pl, s);
+    }
     this.sendPrivate();
   }
   sendPrivate() {
@@ -1059,6 +1408,22 @@ export class World {
       case "resetscene": { this.scenes.delete(S.key); const S2 = this.scene(S.key); this.placeSafely(S2, pl); return note(`${S.def.name} reset: monsters, trees, rocks and bots are back.`); }
       case "reset": { const settings = C.settings; pl.C = G.freshChar(); pl.C.settings = settings; pl.x = pl.C.x; pl.y = pl.C.y; this.moveToScene(pl, pl.C.scene, null, { x: pl.x, y: pl.y }); this.touch(pl); return note("Character reset to a brand-new one."); }
       case "save": pl.needSave = true; this.persist(pl); return note("Saved.");
+      case "saveall": return void this.saveAll().then((r) => note(`Saved ${r.saved} character${r.saved === 1 ? "" : "s"} and the Exchange.`));
+      case "restart": {
+        if (String(m.n) === "cancel") { const was = !!this.restartAt; this.restartAt = 0; this.warned = null; if (was) this.tellAll("The restart is called off. Carry on.", "good"); return note(was ? "Restart cancelled." : "No restart was planned."); }
+        const secs = Math.max(0, Math.min(3600, Math.trunc(Number(m.n)) || 120));
+        this.planRestart(secs);
+        return note(`Restart announced: ${secs}s. Deploy once everyone is saved.`);
+      }
+      case "stats": {
+        this.accrue(pl);
+        const st = pl.C.stats; if (!st) return note("No stats on this character.");
+        const top = (m, n = 5) => Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, n).map(([k, v]) => `${k} ${v}`).join(", ") || "none";
+        note(`save v${pl.C.v} | played ${Math.round(st.playMs / 60000)}m over ${st.sessions} session${st.sessions === 1 ? "" : "s"}`);
+        note(`xp ${st.xpTotal.toLocaleString()} total, ${(st.xpDay[G.dayKeyCT()] || 0).toLocaleString()} today | cash in ${st.cashIn.toLocaleString()}, out ${st.cashOut.toLocaleString()}`);
+        note(`kills: ${top(st.kills)} | deaths ${st.deaths} (pvp ${st.pvpDeaths}) | pvp kills ${st.pvpKills} | quests ${st.questsDone}`);
+        return note(`gathered: ${top(st.gathered)} | looted: ${top(st.looted)} | cooked: ${top(st.cooked)} (burnt ${st.burnt})`);
+      }
       // try a speed bonus without any gear (this session only; it isn't saved)
       case "speed": { pl.speedTest = Math.max(0, Math.min(200, Math.trunc(Number(m.n)) || 0)); this.touch(pl); return note(`Speed test: +${pl.speedTest}% raw, which gives +${G.speedBonus(C, pl.speedTest)}% (${G.stepMsOf(C, pl.speedTest)}ms a tile).`); }
     }

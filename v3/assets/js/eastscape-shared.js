@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 18;
+export const VERSION = 20;
 export const COLS = 22, ROWS = 13;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -742,13 +742,113 @@ export const SETTING_INFO = {
   reducedMotion: ["Reduce motion", "No bobbing, flashing or drifting sparkles."],
   debug: ["Debug info", "Show your tile, the mouse tile and your action in the corner."]
 };
+/* ------------------------------------------------------------ the save format
+
+   Two things make a saved character safe to change:
+
+   ITEM_ALIASES  — an old item key mapped to the one that replaced it. Renaming
+                   an item without a line here DELETES it from every bag and
+                   bank that has not logged in since, because normChar drops
+                   keys that are not in ITEMS. Never remove a line.
+
+   MIGRATIONS    — one function per save version, run in order on any character
+                   below the current one. The index IS the version it produces,
+                   so SAVE_V is derived rather than typed twice.
+
+   A migration must only ever add or reshape. If one throws, the character is
+   kept as it was rather than lost.
+   ------------------------------------------------------------ */
+
+// old key -> current key. Chains are followed ("a" -> "b" -> "c"), so a second
+// rename of the same item only needs its own line.
+export const ITEM_ALIASES = {
+  // "rudis": "woodensword",
+};
+export function aliasKey(k) {
+  let n = 0;
+  while (ITEM_ALIASES[k] && n++ < 8) k = ITEM_ALIASES[k];
+  return k;
+}
+
+export const STAT_DAYS = 60;   // how many days of the xp-per-day log are kept
+const COUNT_MAPS = ["kills", "gathered", "looted", "cooked", "crafted"];
+const STAT_NUMS = ["burnt", "deaths", "pvpKills", "pvpDeaths", "questsDone", "cashIn", "cashOut", "xpTotal", "playMs", "sessions", "firstSeen", "lastSeen"];
+
+export function freshStats() {
+  return {
+    kills: {},      // mob type -> how many killed
+    gathered: {},   // item key  -> how many gathered by skilling (mined, chopped, fished, picked)
+    looted: {},     // item key  -> how many taken off a monster
+    cooked: {},     // item key  -> how many cooked successfully
+    crafted: {},    // item key  -> how many made (Smithing, Crafting, when they land)
+    burnt: 0,
+    deaths: 0, pvpKills: 0, pvpDeaths: 0, questsDone: 0,
+    cashIn: 0, cashOut: 0,
+    xpTotal: 0, xpDay: {},
+    playMs: 0, sessions: 0,
+    firstSeen: 0, lastSeen: 0
+  };
+}
+
+let _ctFmt = null;
+// the Chicago day, "YYYY-MM-DD" — the same day boundary the rest of the site uses
+export function dayKeyCT(t = Date.now()) {
+  _ctFmt ||= new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" });
+  return _ctFmt.format(new Date(t));
+}
+
+export function normStats(s) {
+  const f = freshStats();
+  if (!s || typeof s !== "object") return f;
+  const out = { ...f, ...s };
+  for (const key of COUNT_MAPS) {
+    const src = out[key] && typeof out[key] === "object" ? out[key] : {};
+    const o = {};
+    for (const k in src) {
+      const n = Number(src[k]);
+      if (!Number.isFinite(n) || n <= 0) continue;
+      // gathered/cooked/crafted are keyed by item, so they follow renames too;
+      // if both the old and new key are present their counts add up.
+      const key2 = key === "kills" ? k : aliasKey(k);
+      o[key2] = (o[key2] || 0) + Math.trunc(n);
+    }
+    out[key] = o;
+  }
+  for (const k of STAT_NUMS) out[k] = Number.isFinite(Number(out[k])) ? Math.trunc(Number(out[k])) : 0;
+  const d = out.xpDay && typeof out.xpDay === "object" ? out.xpDay : {};
+  const days = Object.keys(d).filter((k) => /^\d{4}-\d{2}-\d{2}$/.test(k) && Number.isFinite(Number(d[k]))).sort().slice(-STAT_DAYS);
+  out.xpDay = {};
+  for (const k of days) out.xpDay[k] = Math.trunc(Number(d[k]));
+  return out;
+}
+
+// index = the version the step produces. Append only.
+export const MIGRATIONS = [
+  null,   // 0: not a real version
+  null,   // 1: the original format
+  // 2: per-character stat counters. Nothing to backfill - the counters start
+  //    from the day this shipped, which is the whole reason they went in early.
+  (c) => { c.stats = normStats(c.stats); c.stats.firstSeen ||= Number(c.created) || Date.now(); }
+];
+export const SAVE_V = MIGRATIONS.length - 1;
+
+function migrate(out) {
+  const from = Number.isFinite(Number(out.v)) ? Number(out.v) : 1;
+  for (let n = from + 1; n < MIGRATIONS.length; n++) {
+    try { MIGRATIONS[n]?.(out); }
+    catch (e) { /* a broken migration must never cost someone their character */ }
+  }
+  out.v = SAVE_V;
+  return out;
+}
+
 export function freshChar() {
   return {
-    v: 1, scene: START.scene, x: START.x, y: START.y, hp: 10,
+    v: SAVE_V, scene: START.scene, x: START.x, y: START.y, hp: 10,
     inv: [{ k: "coins", n: 25 }, { k: "pickaxe", n: 1 }, { k: "axe", n: 1 }, { k: "rod", n: 1 }],
     eq: { helm: "cap", weapon: "rudis", body: "tunic", shield: "parma", legs: null, gloves: null, boots: "sandals", ring: null },
     xp: { melee: 0, hp: XP_AT[10], fishing: 0, farming: 0, mining: 0, woodcutting: 0, cooking: 0 },
-    qs: {}, bank: [], settings: { ...DEFAULT_SETTINGS }, created: Date.now(),
+    qs: {}, bank: [], settings: { ...DEFAULT_SETTINGS }, created: Date.now(), stats: freshStats(),
     isle: { plots: Array(ISLE.plots).fill(null), shelf: Array(ISLE.shelf).fill(null), theme: "meadow", themes: ["meadow"], open: true, tier: 1 }
   };
 }
@@ -757,24 +857,29 @@ export function normChar(c) {
   const f = freshChar();
   if (!c || typeof c !== "object") return f;
   const out = { ...f, ...c, xp: { ...f.xp, ...(c.xp || {}) }, eq: { ...f.eq, ...(c.eq || {}) }, settings: { ...f.settings, ...(c.settings || {}) }, qs: { ...(c.qs || {}) } };
-  out.bank = (Array.isArray(c.bank) ? c.bank : []).filter((s) => s && ITEMS[s.k] && s.n > 0).slice(0, BANK_MAX).map((s) => ({ k: s.k, n: s.n }));
+  // renames are followed BEFORE anything is filtered against ITEMS: the filter
+  // below deletes keys it does not recognise, so an un-aliased rename would
+  // quietly empty every bag and bank that had not logged in since.
+  const renamed = (st) => (st && st.k ? { k: aliasKey(st.k), n: st.n } : st);
+  out.bank = (Array.isArray(c.bank) ? c.bank : []).map(renamed).filter((s) => s && ITEMS[s.k] && s.n > 0).slice(0, BANK_MAX).map((s) => ({ k: s.k, n: s.n }));
   // the bag is re-packed into stacks of 99; anything that no longer fits goes to the bank rather than vanishing
   out.inv = [];
-  for (const s of (Array.isArray(c.inv) ? c.inv : f.inv).filter((s) => s && ITEMS[s.k] && s.n > 0)) {
+  for (const s of (Array.isArray(c.inv) ? c.inv : f.inv).map(renamed).filter((s) => s && ITEMS[s.k] && s.n > 0)) {
     const left = addInv(out.inv, s.k, s.n); if (!left) continue;
     const b = out.bank.find((x) => x.k === s.k); if (b) b.n += left; else out.bank.push({ k: s.k, n: left });
   }
-  for (const s of SLOTS) if (out.eq[s] && !ITEMS[out.eq[s]]) out.eq[s] = null;
+  for (const s of SLOTS) { if (out.eq[s]) out.eq[s] = aliasKey(out.eq[s]); if (out.eq[s] && !ITEMS[out.eq[s]]) out.eq[s] = null; }
   if (!SCENES[out.scene]) Object.assign(out, isIsle(out.scene) ? ISLE_FERRY : START);   // back from an island: the ferry at River Bend
   const fi = f.isle, ci = c.isle && typeof c.isle === "object" ? c.isle : {};
   out.isle = {
     plots: Array.from({ length: ISLE.plots }, (_, i) => { const p = ci.plots?.[i]; return p && CROPS[p.k] && Number.isFinite(p.at) ? { k: p.k, at: p.at } : null; }),
-    shelf: Array.from({ length: ISLE.shelf }, (_, i) => (ITEMS[ci.shelf?.[i]] ? ci.shelf[i] : null)),
+    shelf: Array.from({ length: ISLE.shelf }, (_, i) => { const k = ci.shelf?.[i] ? aliasKey(ci.shelf[i]) : null; return ITEMS[k] ? k : null; }),
     themes: [...new Set(["meadow", ...(Array.isArray(ci.themes) ? ci.themes : [])])].filter((t) => THEMES[t]),
     theme: fi.theme, open: ci.open !== false, tier: [1, 2, 3].includes(ci.tier) ? ci.tier : 1
   };
   if (out.isle.themes.includes(ci.theme)) out.isle.theme = ci.theme;
-  return out;
+  out.stats = normStats(out.stats);
+  return migrate(out);          // brings an older save up to SAVE_V and stamps out.v
 }
 export const lvlOf = (c, k) => levelOf(c.xp[k] || 0);
 export const maxHpOf = (c) => lvlOf(c, "hp");

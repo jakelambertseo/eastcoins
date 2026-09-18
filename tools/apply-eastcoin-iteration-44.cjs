@@ -1,0 +1,2041 @@
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
+const childProcess = require("child_process");
+
+const ROOT = process.cwd();
+
+function p(rel) {
+  return path.join(
+    ROOT,
+    ...rel.split("/")
+  );
+}
+
+function read(rel) {
+  const full = p(rel);
+
+  if (!fs.existsSync(full)) {
+    throw new Error(
+      `Missing required file: ${rel}`
+    );
+  }
+
+  return fs
+    .readFileSync(full, "utf8")
+    .replace(/\r\n/g, "\n");
+}
+
+function countOf(
+  content,
+  needle
+) {
+  return content
+    .split(needle)
+    .length - 1;
+}
+
+function replaceOne(
+  content,
+  before,
+  after,
+  label
+) {
+  const count =
+    countOf(
+      content,
+      before
+    );
+
+  if (count !== 1) {
+    throw new Error(
+      `${label}: expected 1 match, found ${count}.`
+    );
+  }
+
+  return content.replace(
+    before,
+    after
+  );
+}
+
+function replaceAllRequired(
+  content,
+  before,
+  after,
+  label,
+  min = 1
+) {
+  const count =
+    countOf(
+      content,
+      before
+    );
+
+  if (count < min) {
+    throw new Error(
+      `${label}: expected at least ${min} match(es), found ${count}.`
+    );
+  }
+
+  return content
+    .split(before)
+    .join(after);
+}
+
+function replaceSection(
+  content,
+  start,
+  end,
+  replacement,
+  label
+) {
+  const startIndex =
+    content.indexOf(start);
+
+  if (startIndex < 0) {
+    throw new Error(
+      `${label}: start marker not found.`
+    );
+  }
+
+  const secondStart =
+    content.indexOf(
+      start,
+      startIndex + start.length
+    );
+
+  if (secondStart >= 0) {
+    throw new Error(
+      `${label}: start marker is not unique.`
+    );
+  }
+
+  const endIndex =
+    content.indexOf(
+      end,
+      startIndex + start.length
+    );
+
+  if (endIndex < 0) {
+    throw new Error(
+      `${label}: end marker not found.`
+    );
+  }
+
+  return (
+    content.slice(
+      0,
+      startIndex
+    ) +
+    replacement +
+    content.slice(
+      endIndex
+    )
+  );
+}
+
+const targets = [
+  "index.html",
+  "picks.html",
+  "v2/assets/js/quick-bet.js",
+  "assets/eastcoins-picks.js",
+  "assets/eastcoins-picks-preview.js",
+  "v2/assets/js/card-odds.js",
+  "changelog.html"
+];
+
+const files = new Map(
+  targets.map(
+    (rel) => [
+      rel,
+      read(rel)
+    ]
+  )
+);
+
+/* ================================================================
+   ROOT QUICK BET MARKUP
+   ================================================================ */
+{
+  let html =
+    files.get(
+      "index.html"
+    );
+
+  html = replaceOne(
+    html,
+    '<span>SPORTSBOOK REFERENCE</span>',
+    '<span>PAYOUT MONEYLINE</span>',
+    "Quick Bet moneyline kicker"
+  );
+
+  html = replaceOne(
+    html,
+    '<small>Consensus ML</small>',
+    '<small>The Odds API consensus</small>',
+    "Quick Bet consensus label"
+  );
+
+  html = replaceOne(
+    html,
+    '<div class="quickbet-summary-payout"><span>Projected pool payout</span><strong id="quickBetMultiplier">—</strong></div>',
+    '<div class="quickbet-summary-payout"><span>Moneyline</span><strong id="quickBetMultiplier">—</strong></div>',
+    "Quick Bet payout summary"
+  );
+
+  html = replaceAllRequired(
+    html,
+    '<span>Estimated Return</span>',
+    '<span>Total Return</span>',
+    "Quick Bet return labels",
+    2
+  );
+
+  html = replaceOne(
+    html,
+    '<span>Projected Pool Payout</span>',
+    '<span>Payout Moneyline</span>',
+    "Quick Bet review payout label"
+  );
+
+  html = replaceOne(
+    html,
+    `          Your community-pool multiplier is projected until the market locks.
+          The final confirmed pick cannot be changed after submission.`,
+    `          Your payout is calculated from the displayed consensus moneyline.
+          The moneyline locks when the pick is confirmed; odds can move before confirmation.`,
+    "Quick Bet review warning"
+  );
+
+  html = replaceOne(
+    html,
+    '<span>Projected Payout</span>',
+    '<span>Locked Moneyline</span>',
+    "Quick Bet success payout label"
+  );
+
+  html = replaceOne(
+    html,
+    '<script defer src="/v2/assets/js/quick-bet.js?v=40"></script>',
+    '<script defer src="/v2/assets/js/quick-bet.js?v=44"></script>',
+    "Quick Bet cache bust"
+  );
+
+  const quickBetScript =
+    '<script defer src="/v2/assets/js/quick-bet.js?v=44"></script>';
+
+  html = replaceOne(
+    html,
+    quickBetScript,
+    '<script defer src="/assets/eastcoins-moneyline.js?v=44"></script>\n' +
+      quickBetScript,
+    "Root moneyline helper include"
+  );
+
+  files.set(
+    "index.html",
+    html
+  );
+}
+
+/* ================================================================
+   QUICK BET MONEYLINE CALCULATIONS
+   ================================================================ */
+{
+  let js =
+    files.get(
+      "v2/assets/js/quick-bet.js"
+    );
+
+  js = replaceOne(
+    js,
+    `  const V2 = window.ECV2;
+  const $ = V2.$;`,
+    `  const V2 = window.ECV2;
+  const $ = V2.$;
+  const Moneyline =
+    window.EastcoinMoneyline;`,
+    "Quick Bet moneyline dependency"
+  );
+
+  js = replaceSection(
+    js,
+    `  function poolSnapshot(`,
+    `  function renderTicket() {`,
+    `  function moneylineForSide(
+    side
+  ) {
+    if (
+      side !== "away" &&
+      side !== "home"
+    ) {
+      return null;
+    }
+
+    return (
+      Moneyline?.normalize?.(
+        state.cardOdds?.[side]
+          ?.american
+      ) ?? null
+    );
+  }
+
+  function payoutProjection(
+    side = state.side,
+    wager = state.wager
+  ) {
+    return (
+      Moneyline?.payout?.(
+        wager,
+        moneylineForSide(side)
+      ) || {
+        available: false,
+        moneyline: null,
+        decimal: null,
+        totalReturn: 0,
+        profit: 0
+      }
+    );
+  }
+
+  function renderProjectionLabels() {
+    els.awayProjection.textContent =
+      Moneyline?.format?.(
+        moneylineForSide(
+          "away"
+        )
+      ) || "—";
+
+    els.homeProjection.textContent =
+      Moneyline?.format?.(
+        moneylineForSide(
+          "home"
+        )
+      ) || "—";
+  }
+
+`,
+    "Quick Bet pool algorithm"
+  );
+
+  js = replaceSection(
+    js,
+    `    renderProjectionLabels();
+
+    if (
+      state.side &&`,
+    `    if (!wallet.authenticated) {`,
+    `    renderProjectionLabels();
+
+    if (
+      state.side &&
+      state.wager > 0
+    ) {
+      const projection =
+        payoutProjection(
+          state.side,
+          state.wager
+        );
+
+      els.multiplier.textContent =
+        projection.available
+          ? Moneyline.format(
+              projection.moneyline
+            )
+          : "—";
+
+      els.potentialReturn.textContent =
+        projection.available
+          ? \`\${money(
+              projection.totalReturn
+            )} ZCoins\`
+          : "—";
+    } else {
+      els.multiplier.textContent =
+        "—";
+      els.potentialReturn.textContent =
+        "—";
+    }
+
+`,
+    "Quick Bet ticket payout calculation"
+  );
+
+  js = replaceSection(
+    js,
+    `    const snapshot = poolSnapshot();`,
+    `    els.submit.disabled = false;`,
+    `    const projection =
+      payoutProjection(
+        state.side,
+        state.wager
+      );
+
+    els.note.textContent =
+      projection.available
+        ? "Review the current sportsbook moneyline payout, then lock in the ticket for confirmation. The moneyline shown at confirmation is the payout price."
+        : "A current sportsbook moneyline is required before this pick can be confirmed.";
+
+    els.submit.disabled =
+      !projection.available;
+`,
+    "Quick Bet confirmation note"
+  );
+
+  js = replaceOne(
+    js,
+    `  function selectedReferenceML() {
+    if (!state.side) return null;
+
+    return Number(
+      state.cardOdds?.[state.side]?.american
+    );
+  }`,
+    `  function selectedReferenceML() {
+    return moneylineForSide(
+      state.side
+    );
+  }`,
+    "Quick Bet selected moneyline"
+  );
+
+  js = replaceSection(
+    js,
+    `  function ticketProjection() {`,
+    `  function showTicketStage() {`,
+    `  function ticketProjection() {
+    return payoutProjection(
+      state.side,
+      state.wager
+    );
+  }
+
+`,
+    "Quick Bet ticket projection"
+  );
+
+  js = replaceAllRequired(
+    js,
+    '`${projection.multiplier.toFixed(2)}x`',
+    'projection.available ? Moneyline.format(projection.moneyline) : "—"',
+    "Quick Bet review/success moneyline display",
+    2
+  );
+
+  if (
+    js.includes(
+      "poolSnapshot("
+    ) ||
+    js.includes(
+      "sideMultiplier("
+    ) ||
+    js.includes(
+      "community-pool"
+    )
+  ) {
+    throw new Error(
+      "Quick Bet still contains active community-pool payout logic."
+    );
+  }
+
+  files.set(
+    "v2/assets/js/quick-bet.js",
+    js
+  );
+}
+
+/* ================================================================
+   PICKS PAGE MARKUP + RULES
+   ================================================================ */
+{
+  let html =
+    files.get(
+      "picks.html"
+    );
+
+  html = replaceOne(
+    html,
+    'content="EastCoin Picks community ZCoin prediction markets."',
+    'content="EastCoin Picks ZCoin moneyline prediction markets powered by live sportsbook odds."',
+    "Picks meta description"
+  );
+
+  html = replaceOne(
+    html,
+    '<span class="odds-summary-copy"><strong>Projected Community Odds</strong><small>View pool breakdown</small></span>',
+    '<span class="odds-summary-copy"><strong>Sportsbook Moneyline</strong><small>View payout lines</small></span>',
+    "Picks bet-slip odds heading"
+  );
+
+  html = replaceOne(
+    html,
+    '<span class="odds-summary-value"><strong id="projectedOdds">Even</strong><span class="chevron">⌄</span></span>',
+    '<span class="odds-summary-value"><strong id="projectedOdds">—</strong><span class="chevron">⌄</span></span>',
+    "Picks bet-slip odds initial value"
+  );
+
+  html = replaceOne(
+    html,
+    '<div class="odds-note" id="oddsNote">Even payout until both sides have community action.</div>',
+    '<div class="odds-note" id="oddsNote">Your payout uses the current EastCoin consensus moneyline from The Odds API.</div>',
+    "Picks bet-slip odds note"
+  );
+
+  html = replaceOne(
+    html,
+    `<div class="total-riding">
+        <span>Total ZCoins riding on this game</span>
+        <strong><img src="assets/eastcoins-logo.webp" alt=""><b id="totalRiding">0</b> ZCoins</strong>
+      </div>`,
+    `<div class="total-riding">
+        <span>Potential profit</span>
+        <strong><b id="totalRiding">0 ZCoins</b></strong>
+      </div>`,
+    "Picks profit block"
+  );
+
+  html = replaceOne(
+    html,
+    '<span>Potential Winnings<small>Projected return at current community odds</small></span>',
+    '<span>Potential Return<small>Total return including your original wager</small></span>',
+    "Picks total return label"
+  );
+
+  const rules = [
+    [
+      '<div class="rule"><strong>Live sportsbook moneylines are real reference odds</strong><p>For supported games, EastCoin matches the event to The Odds API and shows the current sportsbook consensus/reference moneyline. Those market prices can move before game time and are shown for real-world context.</p></div>',
+      '<div class="rule"><strong>Live moneylines set the ZCoin payout</strong><p>For supported games, EastCoin uses live U.S. h2h prices from The Odds API to build the displayed consensus moneyline. That displayed moneyline is the payout price for your Pick—not a separate community-derived payout.</p></div>'
+    ],
+    [
+      '<div class="rule"><strong>Sportsbook odds do not directly set your ZCoin payout</strong><p>EastCoin Picks uses a community pool. Your projected multiplier is total ZCoins wagered on the game divided by the ZCoins currently on your selected side.</p></div>',
+      '<div class="rule"><strong>Your moneyline locks when you confirm</strong><p>Odds can move while you are building a ticket. When a Pick is confirmed, the moneyline shown on the confirmed ticket is the line used to calculate that ticket’s payout.</p></div>'
+    ],
+    [
+      '<div class="rule"><strong>Your projected return moves with the community pool</strong><p>Example: if 100 ZCoins are in the game and 40 are on your side, the current projection is 2.50x. More Picks on either side can change that projection before lock.</p></div>',
+      '<div class="rule"><strong>Positive moneylines pay more than the wager in profit</strong><p>Example: a 10 ZCoin Pick at +150 returns 25 ZCoins total if it wins — your original 10 plus 15 ZCoins profit.</p></div>'
+    ],
+    [
+      '<div class="rule"><strong>The community multiplier locks when the game starts</strong><p>At the scheduled start, EastCoin freezes the pool used for payout calculations. The sportsbook moneyline remains reference information; the locked EastCoin pool determines the ZCoin return.</p></div>',
+      '<div class="rule"><strong>Negative moneylines pay based on the favorite price</strong><p>Example: a 10 ZCoin Pick at -200 returns 15 ZCoins total if it wins — your original 10 plus 5 ZCoins profit. EastCoin rounds final returns to the nearest whole ZCoin.</p></div>'
+    ],
+    [
+      '<div class="rule"><strong>One-sided markets are No Action</strong><p>If only one side has community action when the game locks, the market is No Action and affected ZCoin wagers are refunded instead of creating a one-sided payout.</p></div>',
+      '<div class="rule"><strong>Voids and No Action are refunded</strong><p>If a supported event is voided, cancelled, postponed beyond the settlement rules, or otherwise graded No Action, the affected ZCoin wager is returned. A market no longer needs action on both sides to be valid.</p></div>'
+    ],
+    [
+      '<div class="rule"><strong>Wager limits protect the pool</strong><p>The minimum is 1 ZCoin. Your maximum wager is the lower of 15% of your available wallet or 50 ZCoins.</p></div>',
+      '<div class="rule"><strong>Wager limits protect bankrolls</strong><p>The minimum is 1 ZCoin. Your maximum wager is the lower of 15% of your available wallet or 50 ZCoins.</p></div>'
+    ]
+  ];
+
+  for (
+    const [
+      before,
+      after
+    ] of rules
+  ) {
+    html = replaceOne(
+      html,
+      before,
+      after,
+      "How Picks Work rule"
+    );
+  }
+
+  html = replaceOne(
+    html,
+    '<script defer src="assets/eastcoins-picks-preview.js?v=1"></script>',
+    '<script defer src="assets/eastcoins-picks-preview.js?v=44"></script>',
+    "Picks preview cache bust"
+  );
+
+  html = replaceOne(
+    html,
+    '<script defer src="assets/eastcoins-picks.js?v=43"></script>',
+    '<script defer src="assets/eastcoins-picks.js?v=44"></script>',
+    "Picks app cache bust"
+  );
+
+  const previewScript =
+    '<script defer src="assets/eastcoins-picks-preview.js?v=44"></script>';
+
+  html = replaceOne(
+    html,
+    previewScript,
+    '<script defer src="assets/eastcoins-moneyline.js?v=44"></script>\n' +
+      previewScript,
+    "Picks moneyline helper include"
+  );
+
+  files.set(
+    "picks.html",
+    html
+  );
+}
+
+/* ================================================================
+   PICKS FRONTEND — MONEYLINE SOURCE OF TRUTH
+   ================================================================ */
+{
+  let js =
+    files.get(
+      "assets/eastcoins-picks.js"
+    );
+
+  js = replaceOne(
+    js,
+    `  const API = window.EastcoinPicksAPI;
+  const Preview = window.EastcoinPicksPreview;`,
+    `  const API = window.EastcoinPicksAPI;
+  const Preview = window.EastcoinPicksPreview;
+  const Moneyline =
+    window.EastcoinMoneyline;`,
+    "Picks moneyline dependency"
+  );
+
+  js = replaceOne(
+    js,
+    `  if (!Preview) {
+    console.error("EastCoin Picks preview engine failed to load.");
+    return;
+  }`,
+    `  if (!Preview || !Moneyline) {
+    console.error("EastCoin Picks support modules failed to load.");
+    return;
+  }`,
+    "Picks dependency guard"
+  );
+
+  js = replaceOne(
+    js,
+    `      userPick:
+        raw?.userPick ||
+        null
+    };`,
+    `      userPick:
+        raw?.userPick ||
+        null,
+      sportsbook:
+        raw?.sportsbook ||
+        raw?.consensus ||
+        null
+    };`,
+    "Picks normalized sportsbook data"
+  );
+
+  js = replaceOne(
+    js,
+    `      lockedPreview:Number(
+        raw?.finalMultiplier ||
+        raw?.projectedMultiplier ||
+        raw?.lockedPreview ||
+        2
+      ),
+      payout:Number(`,
+    `      lockedMoneyline:
+        Moneyline.normalize(
+          raw?.lockedMoneyline ??
+          raw?.moneylineLocked ??
+          raw?.moneyline ??
+          null
+        ),
+      payout:Number(`,
+    "Picks ticket locked moneyline"
+  );
+
+  js = replaceSection(
+    js,
+    `  function backendMarketSnapshot(`,
+    `  function currentWallet() {`,
+    `  function moneylineSnapshot(
+    game
+  ) {
+    const preview =
+      state.mode === "preview"
+        ? Preview.market(game)
+        : null;
+
+    const awayMoneyline =
+      Moneyline.normalize(
+        game?.sportsbook?.away
+          ?.american ??
+        game?.moneyline?.away ??
+        preview?.awayMoneyline ??
+        null
+      );
+
+    const homeMoneyline =
+      Moneyline.normalize(
+        game?.sportsbook?.home
+          ?.american ??
+        game?.moneyline?.home ??
+        preview?.homeMoneyline ??
+        null
+      );
+
+    const awayDecimal =
+      Moneyline.toDecimal(
+        awayMoneyline
+      );
+
+    const homeDecimal =
+      Moneyline.toDecimal(
+        homeMoneyline
+      );
+
+    return {
+      active:
+        awayMoneyline != null &&
+        homeMoneyline != null &&
+        awayDecimal != null &&
+        homeDecimal != null,
+      awayMoneyline,
+      homeMoneyline,
+      awayDecimal,
+      homeDecimal
+    };
+  }
+
+  function payoutFor(
+    game,
+    side,
+    wager,
+    lockedMoneyline = null
+  ) {
+    const snapshot =
+      moneylineSnapshot(game);
+
+    const current =
+      side === "away"
+        ? snapshot.awayMoneyline
+        : snapshot.homeMoneyline;
+
+    return Moneyline.payout(
+      wager,
+      Moneyline.normalize(
+        lockedMoneyline
+      ) ?? current
+    );
+  }
+
+`,
+    "Picks community pool algorithm"
+  );
+
+  js = replaceOne(
+    js,
+    `  function oddsText(multiplier, active) {
+    return active
+      ? \`\${Number(multiplier).toFixed(2)}x\`
+      : "Even";
+  }`,
+    `  function oddsText(
+    moneyline,
+    active = true
+  ) {
+    return active
+      ? Moneyline.format(
+          moneyline
+        )
+      : "—";
+  }`,
+    "Picks odds formatter"
+  );
+
+  js = replaceSection(
+    js,
+    `  function marketChoice(`,
+    `  function renderMarkets(filter = "") {`,
+    `  function marketChoice(
+    game,
+    side,
+    snapshot,
+    ticket,
+    locked,
+    higherPayout
+  ) {
+    const name =
+      side === "away"
+        ? game.away
+        : game.home;
+
+    const logo =
+      side === "away"
+        ? game.awayLogo
+        : game.homeLogo;
+
+    const price =
+      side === "away"
+        ? snapshot.awayMoneyline
+        : snapshot.homeMoneyline;
+
+    const selected =
+      ticket?.side === side ||
+      String(
+        game?.userPick
+          ?.selection || ""
+      ) === side;
+
+    const higher =
+      higherPayout === side;
+
+    return \`
+      <button
+        class="team-choice \${selected ? "user-pick" : ""} \${higher ? "higher-payout" : ""}"
+        type="button"
+        data-pick="\${side}"
+        data-game="\${game.id}"
+        \${locked || !snapshot.active || Boolean(ticket) || Boolean(game?.userPick) ? "disabled" : ""}>
+        \${logoMarkup(name, logo)}
+        <span class="team-name">
+          <strong>\${name}</strong>
+          <small>\${
+            selected
+              ? "Your locked pick"
+              : !snapshot.active
+                ? "Odds unavailable"
+                : higher
+                  ? "Higher payout"
+                  : "Pick winner"
+          }</small>
+        </span>
+        <span class="team-price">
+          <strong>\${oddsText(price, snapshot.active)}</strong>
+          <small>\${state.session.authenticated ? "Moneyline" : "Login"}</small>
+        </span>
+      </button>
+    \`;
+  }
+
+`,
+    "Picks market choice"
+  );
+
+  js = replaceSection(
+    js,
+    `  function renderMarkets(filter = "") {`,
+    `  function ticketGame(ticket) {`,
+    `  function renderMarkets(filter = "") {
+    const query =
+      String(filter || "")
+        .trim()
+        .toLowerCase();
+
+    const list =
+      state.games.filter(
+        (game) => {
+          if (!query) return true;
+
+          return [
+            game.away,
+            game.home,
+            game.sport,
+            game.family,
+            game.league
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(query);
+        }
+      );
+
+    if (!list.length) {
+      const message =
+        query
+          ? "No current markets match your search."
+          : state.mode ===
+              "unavailable"
+            ? "Picks is temporarily unavailable."
+            : "No eligible sportsbook markets are available right now.";
+
+      els.marketList.innerHTML =
+        \`<div class="empty">\${message}</div>\`;
+      return;
+    }
+
+    els.marketList.innerHTML =
+      list.map((game) => {
+        const snapshot =
+          moneylineSnapshot(game);
+
+        const ticket =
+          ticketForGame(
+            game.id
+          );
+
+        const locked =
+          isLocked(game);
+
+        const higherPayout =
+          snapshot.active
+            ? snapshot.awayDecimal >
+                snapshot.homeDecimal
+              ? "away"
+              : snapshot.homeDecimal >
+                  snapshot.awayDecimal
+                ? "home"
+                : null
+            : null;
+
+        let statusText =
+          snapshot.active
+            ? "Moneyline"
+            : "Odds unavailable";
+
+        let statusClass =
+          snapshot.active
+            ? ""
+            : "waiting";
+
+        if (locked) {
+          statusText =
+            String(
+              game.state || ""
+            ).toUpperCase() ===
+              "SETTLED"
+              ? "Settled"
+              : "Locked";
+          statusClass = "locked";
+        }
+
+        return \`
+          <article class="market-card \${locked ? "locked" : ""}">
+            <header class="market-card-head">
+              <div class="market-meta">
+                <span class="sport-badge">\${familyLabel(game.family, game.sport)}</span>
+                <span class="market-lock">\${formatStart(game)}</span>
+              </div>
+              <span class="market-status \${statusClass}">\${statusText}</span>
+            </header>
+
+            <div class="market-body">
+              \${marketChoice(game, "away", snapshot, ticket, locked, higherPayout)}
+              \${marketChoice(game, "home", snapshot, ticket, locked, higherPayout)}
+            </div>
+
+            <div class="market-pool">
+              <div class="pool-head">
+                <span>Payout source</span>
+                <strong>Sportsbook Moneyline</strong>
+              </div>
+              <div class="pool-labels">
+                <span>Live consensus from The Odds API</span>
+                <span>Locks when the Pick is confirmed</span>
+              </div>
+            </div>
+          </article>
+        \`;
+      }).join("");
+
+    els.marketList
+      .querySelectorAll(
+        "[data-pick]"
+      )
+      .forEach(
+        (button) => {
+          button.addEventListener(
+            "click",
+            () => {
+              requestPick(
+                button.dataset.game,
+                button.dataset.pick
+              );
+            }
+          );
+        }
+      );
+  }
+
+`,
+    "Picks market rendering"
+  );
+
+  js = replaceSection(
+    js,
+    `  function renderTickets() {`,
+    `  function normalizeLeaderboardRow(`,
+    `  function renderTickets() {
+    const sorted =
+      [...state.tickets]
+        .sort(
+          (a, b) =>
+            Number(
+              b.createdAt || 0
+            ) -
+            Number(
+              a.createdAt || 0
+            )
+        );
+
+    if (!sorted.length) {
+      els.ticketList.innerHTML =
+        '<div class="empty">No picks yet. Choose a team from Markets to create your first ticket.</div>';
+      return;
+    }
+
+    els.ticketList.innerHTML =
+      sorted.map((ticket) => {
+        const game =
+          ticketGame(ticket);
+
+        const pickedName =
+          ticket.side === "away"
+            ? game.away
+            : game.home;
+
+        const pickedLogo =
+          ticket.side === "away"
+            ? game.awayLogo
+            : game.homeLogo;
+
+        const opponent =
+          ticket.side === "away"
+            ? game.home
+            : game.away;
+
+        const currentGame =
+          gameById(
+            ticket.gameId
+          ) || game;
+
+        const projection =
+          payoutFor(
+            currentGame,
+            ticket.side,
+            ticket.wager,
+            ticket.lockedMoneyline
+          );
+
+        const projected =
+          ticket.status === "won"
+            ? Number(
+                ticket.payout || 0
+              )
+            : ticket.status === "lost"
+              ? 0
+              : ticket.status ===
+                  "refunded"
+                ? ticket.wager
+                : projection.available
+                  ? projection.totalReturn
+                  : 0;
+
+        const lineLabel =
+          ticket.lockedMoneyline != null
+            ? "Locked ML"
+            : ticket.status === "pending"
+              ? "Current ML"
+              : "Moneyline";
+
+        return \`
+          <article class="ticket \${ticket.status}">
+            <header class="ticket-head">
+              <div class="ticket-team">
+                \${logoMarkup(pickedName, pickedLogo)}
+                <span>
+                  <strong>\${pickedName}</strong>
+                  <small>vs \${opponent}</small>
+                </span>
+              </div>
+              <span class="ticket-status">\${ticket.status}</span>
+            </header>
+
+            <div class="ticket-grid">
+              <div class="ticket-stat">
+                <span>Wager</span>
+                <strong>\${money(ticket.wager)} ZC</strong>
+              </div>
+              <div class="ticket-stat">
+                <span>\${lineLabel}</span>
+                <strong>\${
+                  projection.available
+                    ? Moneyline.format(
+                        projection.moneyline
+                      )
+                    : "—"
+                }</strong>
+              </div>
+              <div class="ticket-stat return">
+                <span>\${
+                  ticket.status === "pending"
+                    ? "Potential"
+                    : ticket.status === "won"
+                      ? "Payout"
+                      : ticket.status === "refunded"
+                        ? "Refund"
+                        : "Return"
+                }</span>
+                <strong>\${money(projected)} ZC</strong>
+              </div>
+            </div>
+
+            <div class="ticket-foot">
+              \${
+                ticket.status === "pending"
+                  ? ticket.lockedMoneyline != null
+                    ? "Moneyline locked when this Pick was confirmed."
+                    : "Current sportsbook line shown; confirmed Picks lock their moneyline."
+                  : ticket.status === "won"
+                    ? "Winning ticket settled from its locked moneyline."
+                    : ticket.status === "refunded"
+                      ? "Full wager returned."
+                      : "Ticket settled."
+              }
+            </div>
+          </article>
+        \`;
+      }).join("");
+  }
+
+`,
+    "Picks ticket rendering"
+  );
+
+  js = replaceAllRequired(
+    js,
+    'returned == null ? "Pool" : "Net"',
+    'returned == null ? "Position" : "Net"',
+    "Community Ledger pool label"
+  );
+
+  js = replaceSection(
+    js,
+    `  function updateBet() {`,
+    `  async function lockPick() {`,
+    `  function updateBet() {
+    const activeBet =
+      state.activeBet;
+
+    if (!activeBet) return;
+
+    const game =
+      gameById(
+        activeBet.gameId
+      );
+
+    if (!game) return;
+
+    const max =
+      currentMaxBet();
+
+    const wager =
+      Math.max(
+        1,
+        Math.min(
+          max,
+          Math.floor(
+            Number(
+              els.wagerRange
+                .value
+            ) || 1
+          )
+        )
+      );
+
+    activeBet.wager =
+      wager;
+
+    const pct =
+      max === 1
+        ? 100
+        : (
+            (wager - 1) /
+            (max - 1)
+          ) * 100;
+
+    els.wagerRange
+      .style
+      .setProperty(
+        "--pct",
+        \`\${Math.max(
+          0,
+          Math.min(
+            100,
+            pct
+          )
+        )}%\`
+      );
+
+    els.wagerValue.textContent =
+      \`\${money(wager)} \${
+        wager === 1
+          ? "ZCoin"
+          : "ZCoins"
+      }\`;
+
+    els.balanceAfter.textContent =
+      \`\${money(
+        currentWallet() -
+        wager
+      )} ZCoins\`;
+
+    const snapshot =
+      moneylineSnapshot(game);
+
+    const selectedMoneyline =
+      activeBet.side === "away"
+        ? snapshot.awayMoneyline
+        : snapshot.homeMoneyline;
+
+    const projection =
+      Moneyline.payout(
+        wager,
+        selectedMoneyline
+      );
+
+    els.projectedOdds.textContent =
+      projection.available
+        ? Moneyline.format(
+            projection.moneyline
+          )
+        : "—";
+
+    els.oddsNote.textContent =
+      projection.available
+        ? "Your payout is calculated directly from this consensus moneyline. The moneyline on the confirmed ticket is the price used for settlement."
+        : "A current sportsbook moneyline is required before this Pick can be confirmed.";
+
+    els.projectedPools.innerHTML = \`
+      <div class="projected-side">
+        <div class="projected-team">
+          \${logoMarkup(game.away, game.awayLogo)}
+          <strong>\${game.away}</strong>
+        </div>
+        <strong>
+          ML \${Moneyline.format(snapshot.awayMoneyline)}
+        </strong>
+      </div>
+
+      <div class="projected-side">
+        <div class="projected-team">
+          \${logoMarkup(game.home, game.homeLogo)}
+          <strong>\${game.home}</strong>
+        </div>
+        <strong>
+          ML \${Moneyline.format(snapshot.homeMoneyline)}
+        </strong>
+      </div>
+    \`;
+
+    els.totalRiding.textContent =
+      projection.available
+        ? \`+\${money(
+            projection.profit
+          )} ZCoins\`
+        : "—";
+
+    els.potentialWinnings.textContent =
+      projection.available
+        ? \`\${money(
+            projection.totalReturn
+          )} ZCoins\`
+        : "—";
+
+    els.lockPickBtn.disabled =
+      !projection.available;
+  }
+
+`,
+    "Picks bet slip moneyline calculation"
+  );
+
+  js = replaceSection(
+    js,
+    `      const snapshot =
+        marketSnapshot(`,
+    `      if (state.mode === "backend") {`,
+    `      const snapshot =
+        moneylineSnapshot(
+          game
+        );
+
+      const selectedMoneyline =
+        activeBet.side === "away"
+          ? snapshot.awayMoneyline
+          : snapshot.homeMoneyline;
+
+`,
+    "Picks lock moneyline selection"
+  );
+
+  js = replaceOne(
+    js,
+    `      Preview.placeTicket({
+        game,
+        side:activeBet.side,
+        wager:activeBet.wager,
+        previewMultiplier:multiplier
+      });`,
+    `      Preview.placeTicket({
+        game,
+        side:activeBet.side,
+        wager:activeBet.wager,
+        previewMoneyline:
+          selectedMoneyline
+      });`,
+    "Preview ticket moneyline lock"
+  );
+
+  js = replaceOne(
+    js,
+    `      toast(
+        "Preview pick locked. Final odds will be set when the game starts."
+      );`,
+    `      toast(
+        "Preview pick locked at the displayed moneyline."
+      );`,
+    "Preview ticket confirmation copy"
+  );
+
+  if (
+    js.includes(
+      "backendMarketSnapshot"
+    ) ||
+    js.includes(
+      "marketSnapshot("
+    ) ||
+    js.includes(
+      "snapshot.awayOdds"
+    ) ||
+    js.includes(
+      "snapshot.homeOdds"
+    ) ||
+    js.includes(
+      "Final pool multiplier"
+    ) ||
+    js.includes(
+      "EastCoin Pool"
+    ) ||
+    js.includes(
+      "community odds"
+    )
+  ) {
+    throw new Error(
+      "Picks still contains active community-pool payout logic/copy."
+    );
+  }
+
+  files.set(
+    "assets/eastcoins-picks.js",
+    js
+  );
+}
+
+/* ================================================================
+   PICKS PREVIEW ENGINE — REMOVE SIMULATED POOL ALGORITHM
+   ================================================================ */
+{
+  let js =
+    files.get(
+      "assets/eastcoins-picks-preview.js"
+    );
+
+  js = replaceOne(
+    js,
+    `  const BASE_WALLET = 3051;`,
+    `  const Moneyline =
+    window.EastcoinMoneyline;
+
+  const BASE_WALLET = 3051;`,
+    "Preview moneyline dependency"
+  );
+
+  js = replaceOne(
+    js,
+    'detail:"25 ZCoin wager · 1.68x final return"',
+    'detail:"25 ZCoin wager · ML -147 payout"',
+    "Preview history moneyline copy"
+  );
+
+  js = replaceOne(
+    js,
+    'detail:"Market closed No Action · full refund"',
+    'detail:"Event graded No Action · full refund"',
+    "Preview history refund copy"
+  );
+
+  js = replaceSection(
+    js,
+    `  function basePool(game) {`,
+    `  function settlementFor(gameId) {`,
+    `  function probabilityToAmerican(
+    probability
+  ) {
+    const p =
+      Math.min(
+        0.78,
+        Math.max(
+          0.22,
+          Number(probability)
+        )
+      );
+
+    if (
+      Math.abs(
+        p - 0.5
+      ) < 0.000001
+    ) {
+      return 100;
+    }
+
+    return p < 0.5
+      ? Math.round(
+          (
+            100 *
+            (1 - p)
+          ) / p
+        )
+      : -Math.round(
+          (
+            100 * p
+          ) /
+          (1 - p)
+        );
+  }
+
+  function previewMoneyline(
+    game
+  ) {
+    const h =
+      hashString(
+        game?.id || ""
+      );
+
+    /*
+      Deterministic preview-only fair probability. This is not presented as
+      real sportsbook data; production Picks uses The Odds API catalog.
+    */
+    const awayProbability =
+      0.36 +
+      (h % 2800) /
+        10000;
+
+    const homeProbability =
+      1 - awayProbability;
+
+    return {
+      awayMoneyline:
+        probabilityToAmerican(
+          awayProbability
+        ),
+      homeMoneyline:
+        probabilityToAmerican(
+          homeProbability
+        )
+    };
+  }
+
+`,
+    "Preview pool seed"
+  );
+
+  js = replaceSection(
+    js,
+    `  function ticketPayout(`,
+    `  function enrichedTickets() {`,
+    `  function ticketPayout(
+    ticket,
+    settlement =
+      settlementFor(
+        ticket.gameId
+      )
+  ) {
+    const status =
+      ticketStatus(
+        ticket,
+        settlement
+      );
+
+    if (status === "won") {
+      const price =
+        Moneyline?.normalize?.(
+          ticket.lockedMoneyline
+        );
+
+      const projection =
+        Moneyline?.payout?.(
+          ticket.wager,
+          price
+        );
+
+      return (
+        projection?.available
+          ? projection.totalReturn
+          : ticket.wager
+      );
+    }
+
+    if (
+      status === "refunded"
+    ) {
+      return ticket.wager;
+    }
+
+    return 0;
+  }
+
+`,
+    "Preview ticket payout"
+  );
+
+  js = replaceSection(
+    js,
+    `  function market(`,
+    `  function placeTicket(`,
+    `  function market(
+    game
+  ) {
+    const line =
+      previewMoneyline(
+        game
+      );
+
+    return {
+      ...line,
+      awayDecimal:
+        Moneyline?.toDecimal?.(
+          line.awayMoneyline
+        ),
+      homeDecimal:
+        Moneyline?.toDecimal?.(
+          line.homeMoneyline
+        ),
+      active: true,
+      settlement:
+        settlementFor(
+          game.id
+        )
+    };
+  }
+
+`,
+    "Preview market algorithm"
+  );
+
+  js = replaceOne(
+    js,
+    `  function placeTicket({game, side, wager, previewMultiplier}) {`,
+    `  function placeTicket({game, side, wager, previewMoneyline}) {`,
+    "Preview ticket input"
+  );
+
+  js = replaceOne(
+    js,
+    `      lockedPreview:Number(previewMultiplier || 2),
+      game:{...game}`,
+    `      lockedMoneyline:
+        Moneyline.normalize(
+          previewMoneyline
+        ),
+      game:{...game}`,
+    "Preview locked moneyline storage"
+  );
+
+  js = replaceSection(
+    js,
+    `  function settleMarket(game, result) {`,
+    `  function clearSettlement(gameId) {`,
+    `  function settleMarket(
+    game,
+    result
+  ) {
+    if (
+      ![
+        "away",
+        "home",
+        "void",
+        "no_action"
+      ].includes(result)
+    ) {
+      throw new Error(
+        "Invalid settlement result."
+      );
+    }
+
+    const settlements =
+      loadSettlements();
+
+    settlements[game.id] = {
+      marketId: game.id,
+      result,
+      settledAt: Date.now()
+    };
+
+    saveSettlements(
+      settlements
+    );
+
+    return settlements[
+      game.id
+    ];
+  }
+
+`,
+    "Preview settlement pool removal"
+  );
+
+  js = replaceSection(
+    js,
+    `  function adminMarket(game) {`,
+    `  window.EastcoinPicksPreview = Object.freeze({`,
+    `  function adminMarket(game) {
+    const line =
+      market(game);
+
+    const settlement =
+      settlementFor(
+        game.id
+      );
+
+    return {
+      ...game,
+      moneyline: line,
+      settlement,
+      userTicketCount:
+        loadTickets().filter(
+          (ticket) =>
+            ticket.gameId ===
+            game.id
+        ).length
+    };
+  }
+
+`,
+    "Preview admin market"
+  );
+
+  if (
+    js.includes(
+      "basePool("
+    ) ||
+    js.includes(
+      "finalMultiplier"
+    ) ||
+    js.includes(
+      "previewMultiplier"
+    ) ||
+    js.includes(
+      "awayShare"
+    ) ||
+    js.includes(
+      "homeShare"
+    )
+  ) {
+    throw new Error(
+      "Preview engine still contains community-pool payout state."
+    );
+  }
+
+  files.set(
+    "assets/eastcoins-picks-preview.js",
+    js
+  );
+}
+
+/* ================================================================
+   CARD ODDS COMMENT — ODDS ARE NO LONGER DECORATIVE REFERENCE ONLY
+   ================================================================ */
+{
+  let js =
+    files.get(
+      "v2/assets/js/card-odds.js"
+    );
+
+  js = replaceOne(
+    js,
+    `        // A verified provider event ID is enough to make the EastCoin Picks
+        // market available. Sportsbook ML is optional display/reference data.`,
+    `        // A verified provider event ID identifies the EastCoin Picks market.
+        // When present, the consensus sportsbook moneyline is also the payout
+        // price shown by Picks; event-card Bet eligibility still requires both lines.`,
+    "Card odds payout-source comment"
+  );
+
+  files.set(
+    "v2/assets/js/card-odds.js",
+    js
+  );
+}
+
+/* ================================================================
+   CHANGELOG
+   ================================================================ */
+{
+  let html =
+    files.get(
+      "changelog.html"
+    );
+
+  const title =
+    "Picks retires community-pool payouts in favor of sportsbook moneylines";
+
+  if (
+    !html.includes(
+      `<h2>${title}</h2>`
+    )
+  ) {
+    html = html.replace(
+      /<div class="release-count">(\d+) major update groups<\/div>/,
+      (_, count) =>
+        `<div class="release-count">${Number(count) + 1} major update groups</div>`
+    );
+
+    html = html.replace(
+      '<article class="timeline-entry latest">',
+      '<article class="timeline-entry">'
+    );
+
+    html = html.replace(
+      /\s*<span class="latest-badge">Latest<\/span>/,
+      ""
+    );
+
+    const entry = `
+<article class="timeline-entry latest">
+<div class="timeline-date">
+<time datetime="2026-08-27">August 27, 2026</time>
+<span class="latest-badge">Latest</span>
+</div>
+<h2>${title}</h2>
+<p>
+    Replaced the original community-pool payout model with standard moneyline
+    payouts driven by EastCoin's live consensus prices from The Odds API.
+    Quick Bet and the full Picks bet slip now use one shared moneyline
+    calculator: positive and negative American odds determine profit and total
+    ZCoin return, with whole-ZCoin returns rounded to the nearest integer.
+    Market cards show sportsbook moneylines instead of pool multipliers, the
+    How Picks Work guide explains standard moneyline examples, and the product
+    rule is now that the displayed moneyline locks when the Pick is confirmed.
+    Community Ledger remains as a transparency/activity feed, but community
+    wagering volume no longer affects anyone's payout.
+</p>
+</article>
+`;
+
+    const timelineEnd =
+      html.lastIndexOf(
+        "</section>"
+      );
+
+    if (timelineEnd < 0) {
+      throw new Error(
+        "Could not locate changelog timeline."
+      );
+    }
+
+    html =
+      html.slice(
+        0,
+        timelineEnd
+      ) +
+      entry +
+      html.slice(
+        timelineEnd
+      );
+  }
+
+  files.set(
+    "changelog.html",
+    html
+  );
+}
+
+/* ================================================================
+   FINAL PREFLIGHT
+   ================================================================ */
+const rootHtml =
+  files.get(
+    "index.html"
+  );
+
+const picksHtml =
+  files.get(
+    "picks.html"
+  );
+
+const quickBet =
+  files.get(
+    "v2/assets/js/quick-bet.js"
+  );
+
+const picks =
+  files.get(
+    "assets/eastcoins-picks.js"
+  );
+
+const preview =
+  files.get(
+    "assets/eastcoins-picks-preview.js"
+  );
+
+function requireContains(
+  content,
+  needle,
+  label
+) {
+  if (!content.includes(needle)) {
+    throw new Error(
+      `${label}: expected transformed marker was not found.`
+    );
+  }
+}
+
+function requireAbsent(
+  content,
+  needle,
+  label
+) {
+  if (content.includes(needle)) {
+    throw new Error(
+      `${label}: old community-pool implementation is still present.`
+    );
+  }
+}
+
+/*
+  Validate the actual transformed structures rather than scanning arbitrary
+  English phrases. This prevents explanatory copy from tripping the installer.
+*/
+requireContains(
+  rootHtml,
+  "PAYOUT MONEYLINE",
+  "Root Quick Bet moneyline heading"
+);
+requireContains(
+  rootHtml,
+  "Payout Moneyline",
+  "Root Quick Bet review label"
+);
+requireContains(
+  rootHtml,
+  "Locked Moneyline",
+  "Root Quick Bet receipt label"
+);
+requireContains(
+  rootHtml,
+  "/assets/eastcoins-moneyline.js?v=44",
+  "Root moneyline helper"
+);
+requireContains(
+  rootHtml,
+  "/v2/assets/js/quick-bet.js?v=44",
+  "Root Quick Bet cache bust"
+);
+
+requireContains(
+  picksHtml,
+  "Sportsbook Moneyline",
+  "Picks bet-slip moneyline heading"
+);
+requireContains(
+  picksHtml,
+  "Live moneylines set the ZCoin payout",
+  "How Picks Work payout rule"
+);
+requireContains(
+  picksHtml,
+  "Your moneyline locks when you confirm",
+  "How Picks Work lock rule"
+);
+requireContains(
+  picksHtml,
+  "assets/eastcoins-moneyline.js?v=44",
+  "Picks moneyline helper"
+);
+requireContains(
+  picksHtml,
+  "assets/eastcoins-picks.js?v=44",
+  "Picks cache bust"
+);
+
+requireContains(
+  quickBet,
+  "Moneyline.payout",
+  "Quick Bet moneyline calculator"
+);
+requireContains(
+  quickBet,
+  "payoutProjection",
+  "Quick Bet payout projection"
+);
+requireAbsent(
+  quickBet,
+  "function poolSnapshot(",
+  "Quick Bet poolSnapshot"
+);
+requireAbsent(
+  quickBet,
+  "function sideMultiplier(",
+  "Quick Bet sideMultiplier"
+);
+
+requireContains(
+  picks,
+  "function moneylineSnapshot(",
+  "Picks moneyline snapshot"
+);
+requireContains(
+  picks,
+  "Moneyline.payout",
+  "Picks moneyline payout"
+);
+requireAbsent(
+  picks,
+  "function backendMarketSnapshot(",
+  "Picks backend pool snapshot"
+);
+requireAbsent(
+  picks,
+  "function marketSnapshot(",
+  "Picks market pool snapshot"
+);
+requireAbsent(
+  picks,
+  "snapshot.awayOdds",
+  "Picks pool away odds"
+);
+requireAbsent(
+  picks,
+  "snapshot.homeOdds",
+  "Picks pool home odds"
+);
+
+requireContains(
+  preview,
+  "lockedMoneyline",
+  "Preview locked moneyline"
+);
+requireAbsent(
+  preview,
+  "function basePool(",
+  "Preview synthetic community pool"
+);
+requireAbsent(
+  preview,
+  "finalMultiplier",
+  "Preview pool multiplier settlement"
+);
+
+/*
+  Syntax-check every transformed JavaScript file BEFORE touching the repo.
+*/
+function syntaxCheck(
+  rel,
+  content
+) {
+  const tempDir =
+    fs.mkdtempSync(
+      path.join(
+        os.tmpdir(),
+        "eastcoin-44-"
+      )
+    );
+
+  const tempFile =
+    path.join(
+      tempDir,
+      path.basename(rel)
+    );
+
+  try {
+    fs.writeFileSync(
+      tempFile,
+      content,
+      "utf8"
+    );
+
+    childProcess.execFileSync(
+      process.execPath,
+      [
+        "--check",
+        tempFile
+      ],
+      {
+        stdio: "pipe"
+      }
+    );
+  } catch (error) {
+    const stderr =
+      error?.stderr
+        ? String(error.stderr)
+        : error?.message ||
+          "Unknown syntax error.";
+
+    throw new Error(
+      `${rel}: transformed JavaScript failed syntax check.\n${stderr}`
+    );
+  } finally {
+    fs.rmSync(
+      tempDir,
+      {
+        recursive: true,
+        force: true
+      }
+    );
+  }
+}
+
+for (
+  const rel of [
+    "v2/assets/js/quick-bet.js",
+    "assets/eastcoins-picks.js",
+    "assets/eastcoins-picks-preview.js",
+    "v2/assets/js/card-odds.js"
+  ]
+) {
+  syntaxCheck(
+    rel,
+    files.get(rel)
+  );
+}
+
+
+/* ================================================================
+   WRITE ONLY AFTER EVERY TRANSFORM/PREFLIGHT SUCCEEDS
+   ================================================================ */
+for (
+  const [rel, content] of
+  files
+) {
+  fs.writeFileSync(
+    p(rel),
+    content,
+    "utf8"
+  );
+
+  console.log(
+    `Updated: ${rel}`
+  );
+}
+
+const helperSource =
+  path.join(
+    __dirname,
+    "..",
+    "replacement",
+    "assets",
+    "eastcoins-moneyline.js"
+  );
+
+const helperTarget =
+  p(
+    "assets/eastcoins-moneyline.js"
+  );
+
+fs.copyFileSync(
+  helperSource,
+  helperTarget
+);
+
+console.log(
+  "Created: assets/eastcoins-moneyline.js"
+);
+
+console.log("");
+console.log(
+  "EastCoin Iteration 44 complete."
+);
+console.log(
+  "Picks payouts now use the displayed sportsbook consensus moneyline sitewide."
+);

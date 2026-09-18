@@ -1,36 +1,65 @@
-EastCoin Picks Rebuild V4
-==========================
+EastCoin Iteration 47 — Football Markets + MultiView Servers
+===============================================================
 
-Changes
--------
+IMPORTANT BASE
+--------------
+GitHub main was still at:
+70dcff478807317077ffcf2f10fcbe16daf6c584
+"Focus Picks markets on today and tomorrow"
 
-1. Fixed Season Profit Leaders overlap
-- Top Picks is now a dedicated horizontal viewport.
-- User cards use fixed widths and no longer flex-shrink into each other.
-- Usernames, records, ranks and profit no longer overlap.
+This patch is intended to be applied AFTER the Iteration 46 performance patch.
+Iteration 46 changes changelog.html, so applying 46 first keeps the release
+timeline clean and lets Iteration 47 become the latest entry.
 
-2. Automatic horizontal scrolling
-- Top Picks now moves automatically from right to left.
-- The five leaders are duplicated into a seamless looping rail.
-- The loop resets invisibly after one complete set.
-- Scroll speed is deliberately slow/readable (~30px/sec).
-- Hover pauses the rail on desktop so a user can read/click comfortably.
-- Touch/manual horizontal scrolling remains possible on mobile.
-- "View all" remains fixed on the right and does not scroll away.
+WHAT CHANGED
+------------
+Picks:
+- Baseball and UFC/MMA remain today + tomorrow.
+- Football uses every still-upcoming NFL/NCAAF game already present in the
+  existing /api/picks/catalog 14-day horizon.
+- Football filter remains visible even if no line is currently posted.
+- A game still requires a real current Odds API h2h home/away moneyline.
+- No fabricated odds and no change to the real-wager safety lock.
+- Picks runtime cache version bumps to 47 on Picks and root.
 
-3. Real Twitch profile pictures in the prototype
-- Top Picks retrieves the current Twitch avatar for each username using:
-  https://decapi.me/twitch/avatar/<username>
-- The full Leaderboard tab uses those avatars too.
-- Avatar URLs are cached locally for 6 hours to avoid repeated calls.
-- Initials remain as a fallback if an avatar cannot be loaded.
-- This is a pre-backend prototype solution.
+MultiView:
+- Loaded EastCoin event panels gain a Servers ▾ button.
+- Server list is generic: Server 1, Server 2, etc.
+- Provider/source names are not exposed.
+- Switching servers changes only that MultiView panel.
+- The selected panel server is remembered locally.
+- Manual URL panels do not get the Servers button unless they originated from
+  an EastCoin event and therefore retain an eventId.
+- Existing player, resize, focus, Solo, Replace and Remove behavior remains.
 
-Production note
----------------
-When EastCoin Twitch OAuth / Worker backend is implemented, replace the
-DecAPI avatar lookup with Twitch Helix Get Users and store/use Twitch's
-profile_image_url. Do not put Twitch app credentials in frontend JS.
+FILES
+-----
+Modified:
+- assets/eastcoins-moneyline-runtime.js
+- assets/eastcoins-multiview.js
+- picks.html
+- index.html
+- multiview.html
+- changelog.html
 
-No Picks market math, wager limits, tickets, history, ZCoins rules, or
-Streamed integration were changed.
+New:
+- assets/eastcoins-multiview-servers.js
+- assets/eastcoins-multiview-servers.css
+
+APPLY
+-----
+From the EastCoin repository root:
+
+git apply --check eastcoin-iteration-47-football-multiview-servers.patch
+git apply eastcoin-iteration-47-football-multiview-servers.patch
+
+Then:
+
+git --no-pager diff --check
+git --no-pager diff --stat -- index.html picks.html multiview.html changelog.html assets/eastcoins-moneyline-runtime.js assets/eastcoins-multiview.js assets/eastcoins-multiview-servers.js assets/eastcoins-multiview-servers.css
+
+git add index.html picks.html multiview.html changelog.html assets/eastcoins-moneyline-runtime.js assets/eastcoins-multiview.js assets/eastcoins-multiview-servers.js assets/eastcoins-multiview-servers.css
+
+git status
+git commit -m "Restore football markets and add MultiView servers"
+git -c gc.auto=0 push origin main

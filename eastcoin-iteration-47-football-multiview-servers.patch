@@ -1,0 +1,1043 @@
+diff --git a/assets/eastcoins-moneyline-runtime.js b/assets/eastcoins-moneyline-runtime.js
+--- a/assets/eastcoins-moneyline-runtime.js
++++ b/assets/eastcoins-moneyline-runtime.js
+@@ -40,2 +40,72 @@
++  function marketSportBucket(game) {
++    const direct = sportBucket(
++      game?.sportKey ||
++      game?.sportTitle ||
++      game?.family ||
++      game?.sport ||
++      ""
++    );
++
++    if (direct !== "other") {
++      return direct;
++    }
++
++    const away =
++      game?.awayTeam ||
++      game?.away?.name ||
++      game?.away ||
++      game?.teams?.away?.name ||
++      "";
++
++    const home =
++      game?.homeTeam ||
++      game?.home?.name ||
++      game?.home ||
++      game?.teams?.home?.name ||
++      "";
++
++    const catalogGame =
++      away && home
++        ? catalogGameByTeams(
++            away,
++            home
++          )
++        : null;
++
++    return sportBucket(
++      catalogGame?.sportKey ||
++      catalogGame?.sportTitle ||
++      ""
++    );
++  }
++
++  function isPicksWindowGame(game) {
++    const ts = eventTimestamp(
++      game?.commenceTime ||
++      game?.startsAt ||
++      game?.starts_at ||
++      game?.startTs ||
++      game?.date
++    );
++
++    if (!ts) return false;
++
++    /*
++      Baseball and UFC/MMA keep the compact today + tomorrow slate.
++      Football is different: the Odds API catalog is already capped at
++      EastCoin's 14-day horizon, so keep every still-upcoming football
++      moneyline in that catalog. This prevents the Football tab from
++      disappearing between NFL/NCAAF game days.
++    */
++    if (
++      marketSportBucket(game) ===
++      "football"
++    ) {
++      return ts > Date.now();
++    }
++
++    return isTodayOrTomorrow(game);
++  }
++
+   function picksCatalogGames(games) {
+     if (!IS_PICKS_PAGE) {
+@@ -49,5 +119,5 @@
+         ? games
+         : []
+-    ).filter(isTodayOrTomorrow);
++    ).filter(isPicksWindowGame);
+   }
+ 
+@@ -195,5 +265,5 @@
+             (IS_PICKS_PAGE
+               ? payload.markets.filter(
+-                  isTodayOrTomorrow
++                  isPicksWindowGame
+                 )
+               : payload.markets
+@@ -340,5 +410,5 @@
+           games: (IS_PICKS_PAGE
+             ? result.games.filter(
+-                isTodayOrTomorrow
++                isPicksWindowGame
+               )
+             : result.games
+@@ -487,4 +557,4 @@
+       <button class="picks-market-filter" type="button" data-picks-sport="baseball">⚾ Baseball</button>
+       <button class="picks-market-filter" type="button" data-picks-sport="combat">🥊 UFC / MMA</button>
+-      <small class="picks-market-window">Today + tomorrow only</small>
++      <small class="picks-market-window">Today + tomorrow · Football upcoming</small>
+     `;
+@@ -632,6 +702,12 @@
+             button.dataset.picksSport;
+ 
++          /*
++            Keep Football discoverable even when the provider temporarily
++            has no posted h2h line. Baseball/UFC buttons can still disappear
++            when their short slate is empty.
++          */
+           button.hidden =
+             key !== "all" &&
++            key !== "football" &&
+             !counts[key];
+         });
+@@ -778,6 +854,25 @@
+     if (!empty.hidden) {
+       empty.textContent =
+-        "No markets in this sport are available today or tomorrow.";
++        picksSportFilter ===
++        "football"
++          ? "No upcoming football moneyline markets are available yet."
++          : "No markets in this sport are available today or tomorrow.";
+     }
+ 
++    const windowNote =
++      controls?.querySelector(
++        ".picks-market-window"
++      );
++
++    setText(
++      windowNote,
++      picksSportFilter ===
++        "football"
++        ? "Upcoming football · 14-day catalog"
++        : picksSportFilter ===
++            "all"
++          ? "Today + tomorrow · Football upcoming"
++          : "Today + tomorrow only"
++    );
++
+     const status =
+@@ -924,6 +1019,15 @@
+     if (cards.length) {
++      const label =
++        picksSportFilter ===
++        "football"
++          ? "Upcoming football"
++          : picksSportFilter ===
++              "all"
++            ? "Current slate"
++            : "Today + tomorrow";
++
+       setText(
+         status,
+-        `Today + tomorrow · ${visible} ${visible === 1 ? "market" : "markets"}`
++        `${label} · ${visible} ${visible === 1 ? "market" : "markets"}`
+       );
+     }
+diff --git a/assets/eastcoins-multiview.js b/assets/eastcoins-multiview.js
+--- a/assets/eastcoins-multiview.js
++++ b/assets/eastcoins-multiview.js
+@@ -47,3 +47,36 @@
+   }
+ 
++  /*
++    Small public bridge for shell-owned MultiView controls. It deliberately
++    exposes only the current slot value and the existing setSource path so
++    extensions can switch a single panel without reaching into internal state.
++  */
++  window.EastcoinMultiviewBridge =
++    Object.freeze({
++      getSource(slot) {
++        const index = Number(slot);
++
++        return Number.isInteger(index)
++          ? state.slots[index] || null
++          : null;
++      },
++
++      setSource(slot, source) {
++        const index = Number(slot);
++
++        if (
++          !Number.isInteger(index) ||
++          index < 0 ||
++          index >= state.slots.length
++        ) {
++          return;
++        }
++
++        setSource(
++          index,
++          source
++        );
++      }
++    });
++
+   function removeSource(slot) {
+diff --git a/picks.html b/picks.html
+--- a/picks.html
++++ b/picks.html
+@@ -40,3 +40,3 @@
+ <script defer src="assets/eastcoins-moneyline.js?v=44"></script>
+-<script defer src="assets/eastcoins-moneyline-runtime.js?v=45"></script>
++<script defer src="assets/eastcoins-moneyline-runtime.js?v=47"></script>
+ <script defer src="assets/eastcoins-picks.js?v=43"></script>
+diff --git a/multiview.html b/multiview.html
+--- a/multiview.html
++++ b/multiview.html
+@@ -40,3 +40,4 @@
+   <link rel="stylesheet" href="assets/eastcoins-shell-polish.css?v=polish7">
+   <link rel="stylesheet" href="assets/eastcoins-multiview.css?v=mv8">
++  <link rel="stylesheet" href="assets/eastcoins-multiview-servers.css?v=47">
+   <link rel="stylesheet" href="assets/eastcoins-events-home.css?v=events4">
+@@ -183,4 +184,5 @@
+   <script src="assets/eastcoins-event-visibility.js?v=visibility2"></script>
+ <script src="assets/eastcoins-multiview-share.js?v=share1"></script>
+-  <script src="assets/eastcoins-multiview.js?v=mv7"></script>
++  <script src="assets/eastcoins-multiview.js?v=47"></script>
++  <script src="assets/eastcoins-multiview-servers.js?v=47"></script>
+ </body>
+diff --git a/changelog.html b/changelog.html
+--- a/changelog.html
++++ b/changelog.html
+@@ -40,3 +40,3 @@
+           </p>
+-<div class="release-count">118 major update groups</div>
++<div class="release-count">119 major update groups</div>
+ </header>
+@@ -183,7 +183,6 @@
+ 
+-<article class="timeline-entry latest">
++<article class="timeline-entry">
+ <div class="timeline-date">
+ <time datetime="2026-08-27">August 27, 2026</time>
+-<span class="latest-badge">Latest</span>
+ </div>
+ <h2>Homepage performance pass defers Twitch and extended event work</h2>
+@@ -334,3 +333,22 @@
+ </p>
+ </article>
++
++<article class="timeline-entry latest">
++<div class="timeline-date">
++<time datetime="2026-08-27">August 27, 2026</time>
++<span class="latest-badge">Latest</span>
++</div>
++<h2>Football markets stay available between game days and MultiView adds server switching</h2>
++<p>
++    Adjusted the Picks market window so Baseball and UFC/MMA remain focused on
++    today and tomorrow while Football can use every still-upcoming NFL/NCAAF
++    moneyline already present in EastCoin's existing 14-day sportsbook catalog.
++    The Football filter now remains visible even when a provider temporarily has
++    no posted line, preventing football from disappearing simply because the next
++    game is more than one day away. MultiView event panels now also include a
++    generic Servers selector. Each panel can independently switch among Server 1,
++    Server 2, and later available sources without exposing provider names or
++    leaving MultiView; the selected panel server is remembered locally.
++</p>
++</article>
+ </section>
+diff --git a/assets/eastcoins-multiview-servers.js b/assets/eastcoins-multiview-servers.js
+new file mode 100644
+--- /dev/null
++++ b/assets/eastcoins-multiview-servers.js
+@@ -0,0 +1,640 @@
++(() => {
++  "use strict";
++
++  const API =
++    window.EastcoinStreamedAPI;
++
++  const MV =
++    window.EastcoinMultiviewBridge;
++
++  if (!API || !MV) {
++    console.warn(
++      "EastCoin MultiView server selector could not initialize."
++    );
++    return;
++  }
++
++  const panels = [
++    ...document.querySelectorAll(
++      ".mv-panel[data-slot]"
++    )
++  ];
++
++  const toast =
++    document.getElementById(
++      "mvToast"
++    );
++
++  const SELECTIONS_KEY =
++    "eastcoinMultiviewServerSelectionsV1";
++
++  let catalogPromise = null;
++  let toastTimer = 0;
++
++  function showToast(message) {
++    if (!toast) return;
++
++    toast.textContent =
++      String(message || "");
++
++    toast.classList.add(
++      "show"
++    );
++
++    window.clearTimeout(
++      toastTimer
++    );
++
++    toastTimer =
++      window.setTimeout(
++        () =>
++          toast.classList.remove(
++            "show"
++          ),
++        2400
++      );
++  }
++
++  function readSelections() {
++    try {
++      const parsed = JSON.parse(
++        localStorage.getItem(
++          SELECTIONS_KEY
++        ) || "{}"
++      );
++
++      return (
++        parsed &&
++        typeof parsed === "object"
++      )
++        ? parsed
++        : {};
++    } catch {
++      return {};
++    }
++  }
++
++  function selectionKey(
++    slot,
++    eventId
++  ) {
++    return `${slot}:${eventId}`;
++  }
++
++  function saveSelection(
++    slot,
++    eventId,
++    stream,
++    index
++  ) {
++    try {
++      const selections =
++        readSelections();
++
++      selections[
++        selectionKey(
++          slot,
++          eventId
++        )
++      ] = {
++        url:
++          String(
++            stream?.embedUrl ||
++            ""
++          ),
++        index,
++        savedAt:
++          Date.now()
++      };
++
++      localStorage.setItem(
++        SELECTIONS_KEY,
++        JSON.stringify(
++          selections
++        )
++      );
++    } catch {}
++  }
++
++  function savedSelection(
++    slot,
++    eventId
++  ) {
++    return readSelections()[
++      selectionKey(
++        slot,
++        eventId
++      )
++    ] || null;
++  }
++
++  function eventKey(match) {
++    return String(
++      match?.id ||
++      match?.matchId ||
++      match?.slug ||
++      `${match?.category || "event"}:${match?.title || ""}:${match?.date || ""}`
++    );
++  }
++
++  function sourceEventId(
++    source
++  ) {
++    if (!source) return "";
++
++    if (
++      source.type ===
++      "event"
++    ) {
++      return String(
++        source.id ||
++        ""
++      );
++    }
++
++    return String(
++      source.eventId ||
++      ""
++    );
++  }
++
++  function cleanCollection(
++    result
++  ) {
++    if (Array.isArray(result)) {
++      return result;
++    }
++
++    if (
++      Array.isArray(
++        result?.data
++      )
++    ) {
++      return result.data;
++    }
++
++    return [];
++  }
++
++  async function allEvents() {
++    if (catalogPromise) {
++      return catalogPromise;
++    }
++
++    catalogPromise =
++      (async () => {
++        const result =
++          await API.getAll(
++            false
++          );
++
++        return cleanCollection(
++          result
++        );
++      })()
++        .catch((error) => {
++          catalogPromise = null;
++          throw error;
++        });
++
++    return catalogPromise;
++  }
++
++  async function resolveEvent(
++    eventId
++  ) {
++    const events =
++      await allEvents();
++
++    return (
++      events.find(
++        (match) =>
++          eventKey(match) ===
++          String(eventId)
++      ) || null
++    );
++  }
++
++  function ensureServerMenu(
++    panel
++  ) {
++    let menu =
++      panel.querySelector(
++        ".mv-server-menu"
++      );
++
++    if (menu) return menu;
++
++    menu =
++      document.createElement(
++        "div"
++      );
++
++    menu.className =
++      "mv-server-menu";
++
++    menu.hidden = true;
++
++    panel.appendChild(
++      menu
++    );
++
++    return menu;
++  }
++
++  function closeMenus(
++    except = null
++  ) {
++    panels.forEach(
++      (panel) => {
++        const menu =
++          panel.querySelector(
++            ".mv-server-menu"
++          );
++
++        if (
++          menu &&
++          menu !== except
++        ) {
++          menu.hidden = true;
++        }
++      }
++    );
++  }
++
++  function syncButton(
++    panel,
++    slot
++  ) {
++    const button =
++      panel.querySelector(
++        "[data-panel-server]"
++      );
++
++    if (!button) return;
++
++    const source =
++      MV.getSource(slot);
++
++    const eventId =
++      sourceEventId(source);
++
++    button.hidden =
++      !eventId;
++
++    if (!eventId) {
++      button.textContent =
++        "Servers ▾";
++
++      ensureServerMenu(
++        panel
++      ).hidden = true;
++
++      return;
++    }
++
++    const saved =
++      savedSelection(
++        slot,
++        eventId
++      );
++
++    const selected =
++      saved &&
++      source?.url &&
++      saved.url ===
++        source.url;
++
++    button.textContent =
++      selected &&
++      Number.isInteger(
++        Number(
++          saved.index
++        )
++      )
++        ? `Server ${Number(saved.index) + 1} ▾`
++        : "Servers ▾";
++  }
++
++  async function openServers(
++    panel,
++    slot
++  ) {
++    const source =
++      MV.getSource(slot);
++
++    const eventId =
++      sourceEventId(source);
++
++    if (!eventId) {
++      showToast(
++        "Server switching is available for EastCoin events."
++      );
++      return;
++    }
++
++    const menu =
++      ensureServerMenu(
++        panel
++      );
++
++    const wasOpen =
++      !menu.hidden;
++
++    closeMenus();
++
++    if (wasOpen) {
++      menu.hidden = true;
++      return;
++    }
++
++    menu.hidden = false;
++    menu.innerHTML = `
++      <div class="mv-server-menu-head">
++        <strong>Servers</strong>
++        <small>Loading…</small>
++      </div>
++    `;
++
++    try {
++      const match =
++        await resolveEvent(
++          eventId
++        );
++
++      if (!match) {
++        throw new Error(
++          "This event is no longer in the EastCoin event catalog."
++        );
++      }
++
++      const streams =
++        (
++          await API.getStreams(
++            match,
++            false
++          )
++        ).filter(
++          (stream) =>
++            Boolean(
++              stream?.embedUrl
++            )
++        );
++
++      if (!streams.length) {
++        throw new Error(
++          "No playable servers are available for this event."
++        );
++      }
++
++      const saved =
++        savedSelection(
++          slot,
++          eventId
++        );
++
++      const activeUrl =
++        source?.type ===
++        "url"
++          ? String(
++              source.url ||
++              ""
++            )
++          : String(
++              saved?.url ||
++              ""
++            );
++
++      menu.innerHTML = `
++        <div class="mv-server-menu-head">
++          <strong>Choose server</strong>
++          <small>${streams.length} available</small>
++        </div>
++        <div class="mv-server-options"></div>
++      `;
++
++      const options =
++        menu.querySelector(
++          ".mv-server-options"
++        );
++
++      streams.forEach(
++        (
++          stream,
++          index
++        ) => {
++          const button =
++            document.createElement(
++              "button"
++            );
++
++          button.type =
++            "button";
++
++          button.className =
++            "mv-server-option";
++
++          button.classList.toggle(
++            "active",
++            activeUrl ===
++              String(
++                stream.embedUrl
++              ) ||
++            (
++              !activeUrl &&
++              index === 0
++            )
++          );
++
++          button.innerHTML = `
++            <span>Server ${index + 1}</span>
++            <small>${button.classList.contains("active") ? "Current" : "Switch"}</small>
++          `;
++
++          button.addEventListener(
++            "click",
++            () => {
++              saveSelection(
++                slot,
++                eventId,
++                stream,
++                index
++              );
++
++              /*
++                Reuse MultiView's existing URL-source path for the selected
++                provider iframe. eventId stays attached so the Servers button
++                remains available after the panel changes or the page reloads.
++              */
++              MV.setSource(
++                slot,
++                {
++                  type: "url",
++                  url:
++                    String(
++                      stream.embedUrl
++                    ),
++                  eventId,
++                  title:
++                    String(
++                      source?.title ||
++                      match?.title ||
++                      `Stream ${slot + 1}`
++                    ),
++                  meta:
++                    String(
++                      source?.meta ||
++                      "EastCoin event"
++                    )
++                }
++              );
++
++              menu.hidden =
++                true;
++
++              syncButton(
++                panel,
++                slot
++              );
++
++              showToast(
++                `Panel ${slot + 1} switched to Server ${index + 1}.`
++              );
++            }
++          );
++
++          options.appendChild(
++            button
++          );
++        }
++      );
++    } catch (error) {
++      menu.innerHTML = `
++        <div class="mv-server-menu-head">
++          <strong>Servers unavailable</strong>
++          <small>${String(error?.message || "Try again.")}</small>
++        </div>
++      `;
++    }
++  }
++
++  panels.forEach(
++    (
++      panel,
++      slot
++    ) => {
++      const actions =
++        panel.querySelector(
++          ".mv-panel-actions"
++        );
++
++      if (!actions) return;
++
++      let button =
++        actions.querySelector(
++          "[data-panel-server]"
++        );
++
++      if (!button) {
++        button =
++          document.createElement(
++            "button"
++          );
++
++        button.type =
++          "button";
++
++        button.dataset.panelServer =
++          "1";
++
++        button.textContent =
++          "Servers ▾";
++
++        button.title =
++          "Choose a server for this panel";
++
++        const replace =
++          actions.querySelector(
++            "[data-panel-replace]"
++          );
++
++        actions.insertBefore(
++          button,
++          replace || null
++        );
++      }
++
++      button.addEventListener(
++        "click",
++        (event) => {
++          event.stopPropagation();
++
++          openServers(
++            panel,
++            slot
++          );
++        }
++      );
++
++      ensureServerMenu(
++        panel
++      );
++
++      syncButton(
++        panel,
++        slot
++      );
++
++      const observer =
++        new MutationObserver(
++          () =>
++            syncButton(
++              panel,
++              slot
++            )
++        );
++
++      observer.observe(
++        panel,
++        {
++          attributes: true,
++          attributeFilter: [
++            "class"
++          ],
++          childList: true,
++          subtree: true
++        }
++      );
++    }
++  );
++
++  document.addEventListener(
++    "click",
++    (event) => {
++      if (
++        event.target.closest(
++          ".mv-server-menu"
++        ) ||
++        event.target.closest(
++          "[data-panel-server]"
++        )
++      ) {
++        return;
++      }
++
++      closeMenus();
++    }
++  );
++
++  document.addEventListener(
++    "keydown",
++    (event) => {
++      if (
++        event.key ===
++        "Escape"
++      ) {
++        closeMenus();
++      }
++    }
++  );
++})();
+diff --git a/assets/eastcoins-multiview-servers.css b/assets/eastcoins-multiview-servers.css
+new file mode 100644
+--- /dev/null
++++ b/assets/eastcoins-multiview-servers.css
+@@ -0,0 +1,130 @@
++/* EastCoin Iteration 47: per-panel server selector */
++
++.mv-panel-actions [data-panel-server][hidden]{
++  display:none!important;
++}
++
++.mv-panel-actions [data-panel-server]{
++  color:#d9c37f;
++  border-color:rgba(201,164,79,.18);
++  background:rgba(201,164,79,.045);
++}
++
++.mv-panel-actions [data-panel-server]:hover,
++.mv-panel-actions [data-panel-server]:focus-visible{
++  color:#ffe7a3;
++  border-color:rgba(201,164,79,.4);
++  background:rgba(122,28,35,.38);
++  outline:0;
++}
++
++.mv-server-menu{
++  position:absolute;
++  top:37px;
++  right:5px;
++  z-index:80;
++  width:min(220px,calc(100% - 10px));
++  max-height:min(310px,calc(100% - 48px));
++  overflow:auto;
++  padding:7px;
++  border:1px solid rgba(201,164,79,.22);
++  border-radius:9px;
++  color:#ddd5c7;
++  background:rgba(7,7,7,.98);
++  box-shadow:0 18px 45px rgba(0,0,0,.58);
++}
++
++.mv-server-menu[hidden]{
++  display:none!important;
++}
++
++.mv-server-menu-head{
++  display:flex;
++  align-items:center;
++  justify-content:space-between;
++  gap:8px;
++  padding:4px 5px 7px;
++  border-bottom:1px solid rgba(255,255,255,.055);
++}
++
++.mv-server-menu-head strong{
++  color:#e7dcc4;
++  font-size:.66rem;
++}
++
++.mv-server-menu-head small{
++  overflow:hidden;
++  color:#696969;
++  font-size:.56rem;
++  text-align:right;
++  text-overflow:ellipsis;
++}
++
++.mv-server-options{
++  display:grid;
++  gap:4px;
++  padding-top:6px;
++}
++
++.mv-server-option{
++  display:flex;
++  align-items:center;
++  justify-content:space-between;
++  gap:10px;
++  width:100%;
++  min-height:31px;
++  padding:6px 8px;
++  border:1px solid rgba(255,255,255,.065);
++  border-radius:7px;
++  color:#aaa297;
++  background:#0d0d0d;
++  cursor:pointer;
++  font:inherit;
++  text-align:left;
++}
++
++.mv-server-option:hover,
++.mv-server-option:focus-visible{
++  color:#f0e6d1;
++  border-color:rgba(201,164,79,.22);
++  background:#141414;
++  outline:0;
++}
++
++.mv-server-option.active{
++  color:#ffe39a;
++  border-color:rgba(201,164,79,.35);
++  background:
++    linear-gradient(
++      180deg,
++      rgba(122,28,35,.55),
++      rgba(53,12,17,.64)
++    );
++}
++
++.mv-server-option span{
++  font-size:.63rem;
++  font-weight:850;
++}
++
++.mv-server-option small{
++  color:#6e695f;
++  font-size:.54rem;
++  font-weight:800;
++  text-transform:uppercase;
++}
++
++.mv-server-option.active small{
++  color:#c9ad62;
++}
++
++@media(max-width:640px){
++  .mv-panel-actions [data-panel-server]{
++    padding-inline:6px;
++  }
++
++  .mv-server-menu{
++    width:min(190px,calc(100% - 8px));
++    right:4px;
++  }
++}
