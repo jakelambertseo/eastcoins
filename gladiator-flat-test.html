@@ -287,6 +287,13 @@ button{font:inherit}
   // with the exits cut through. It runs after a scene's own things are placed, so it only fills open grass,
   // then opens up any brush that cut part of the scene off from its exits.
   const keepOf = (sc) => [...sc.mobs.map(([, x, y]) => [x, y]), ...sc.npcs.map((n) => [n.x, n.y])];
+  function markBanks(g) {
+    const wetAt = (x, y) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (g[y + dy]?.[x + dx] === "~") return true; return false; };
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      if (".,s".includes(g[y][x]) && wetAt(x, y)) g[y][x] = "b";
+      else if (g[y][x] === "b" && !wetAt(x, y)) g[y][x] = ".";
+    }
+  }
   function wild(g, objs, exits, edges, keep = [], seed = 1) {
     const kept = new Set(keep.map(([x, y]) => `${x},${y}`)), rim = [];
     // nothing grows in the water: no tree, bush or rock on a tile that touches it
@@ -300,7 +307,12 @@ button{font:inherit}
         for (let k = 0; k < depth; k++) {
           const x = d === "w" ? k : d === "e" ? COLS - 1 - k : i, y = d === "n" ? k : d === "s" ? ROWS - 1 - k : i;
           if (g[y][x] !== "." || kept.has(`${x},${y}`)) continue;
-          if (kind === "water") { g[y][x] = "~"; rim.push({ x, y }); continue; }
+          if (kind === "water") {
+            let clear = true;
+            for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const t = g[y + dy]?.[x + dx]; if ((t && !".~".includes(t)) || kept.has(`${x + dx},${y + dy}`)) clear = false; }
+            if (clear) { g[y][x] = "~"; rim.push({ x, y }); }
+            continue;
+          }
           const r = hashRand(x, y, seed + 11);
           const t = kind === "rocky" ? (r < 0.45 ? "boulder" : r < 0.8 ? "tree" : "bush") : (r < 0.62 ? "tree" : r < 0.88 ? "bush" : "boulder");
           // about a third of the trees back from the very edge are left as open grass: woods, not a wall of forest
@@ -320,6 +332,7 @@ button{font:inherit}
     for (const ob of objs) if (["tree", "bush", "boulder", "oak"].includes(ob.t) && wet(ob.x, ob.y)) { ob.gone = true; g[ob.y][ob.x] = "."; }
     // everything you can stand on must be reachable from an exit
     for (let pass = 0; pass < 12; pass++) {
+      markBanks(g);
       const q = []; for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (g[y][x] === "e") q.push([x, y]);
       const seen = new Set(q.map(([x, y]) => y * COLS + x));
       while (q.length) { const [x, y] = q.pop(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy, k = ny * COLS + nx; if (nx >= 0 && ny >= 0 && nx < COLS && ny < ROWS && !seen.has(k) && ".,sep".includes(g[ny][nx])) { seen.add(k); q.push([nx, ny]); } } }
@@ -332,6 +345,7 @@ button{font:inherit}
       }
     }
     for (let i = objs.length - 1; i >= 0; i--) if (objs[i].gone) objs.splice(i, 1);
+    markBanks(g);
   }
   const SCENES = {
     farm: {
@@ -441,10 +455,13 @@ button{font:inherit}
   /* ------------------------------------------------------------ the scene you are in */
   const Z = { key: "", g: null, objs: [], blobs: [], bg: null, mobs: [], npcs: [], bots: [], fadeAt: 0 };
   const shore = (x, y) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (Z.g[y + dy]?.[x + dx] === "~") return true; return false; };
-  const walkable = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && ".,sep".includes(Z.g[y][x]);
+  // "b" is a bank: a tile the water reaches into. Nobody stands on water or on a bank. Something that
+  // swims (a boss, a river spirit, a ferryman, later) passes swim = true to walk both.
+  const walkable = (x, y, swim = false) => x >= 0 && y >= 0 && x < COLS && y < ROWS && (swim ? ".,sepb~" : ".,sep").includes(Z.g[y][x]);
   const P = { x: S.x, y: S.y, px: S.x, py: S.y, path: [], step: null, face: 1, act: null, lastSwing: 0, hurtAt: 0, swingAt: 0 };
   function loadScene(key, fromSide) {
     const sc = SCENES[key], b = sc.build();
+    markBanks(b.g);
     Object.assign(Z, { key, g: b.g, objs: b.objs, blobs: b.blobs, fadeAt: performance.now() });
     Z.bg = paintBg();
     Z.mobs = sc.mobs.map(([t, x, y], i) => ({ id: `${key}${i}`, t, x, y, px: x, py: y, hx: x, hy: y, hp: MOBS[t].hp, path: [], step: null, face: Math.random() < .5 ? 1 : -1, nextWander: 0, dead: false, respawnAt: 0, hurtAt: 0, swingAt: 0, lastSwing: 0 }));
@@ -655,10 +672,11 @@ button{font:inherit}
 
   /* ------------------------------------------------------------ pathing: 8 ways, no cutting corners */
   const D8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
-  const canStep = (x, y, dx, dy) => walkable(x + dx, y + dy) && (!dx || !dy || (walkable(x + dx, y) && walkable(x, y + dy)));
+  const canStep = (x, y, dx, dy, swim = false) => walkable(x + dx, y + dy, swim) && (!dx || !dy || (walkable(x + dx, y, swim) && walkable(x, y + dy, swim)));
+  // adjacent: true means stand next to it; a number means stand within that many tiles (fishing reaches 2)
   function path(from, to, adjacent) {
-    const key = (x, y) => y * COLS + x, prev = new Map([[key(from.x, from.y), null]]), q = [from];
-    const done = (c) => adjacent ? Math.max(Math.abs(c.x - to.x), Math.abs(c.y - to.y)) === 1 : c.x === to.x && c.y === to.y;
+    const key = (x, y) => y * COLS + x, prev = new Map([[key(from.x, from.y), null]]), q = [from], reach = adjacent === true ? 1 : adjacent || 0;
+    const done = (c) => { const d = Math.max(Math.abs(c.x - to.x), Math.abs(c.y - to.y)); return reach ? d >= 1 && d <= reach : d === 0; };
     if (done(from)) return [];
     while (q.length) {
       const c = q.shift();
@@ -692,11 +710,13 @@ button{font:inherit}
   function interact(target) {
     if (DLG) closeTalk();
     P.act = { ...target, started: 0 };
-    const p = path(P, { x: target.x, y: target.y }, true);
+    const p = path(P, { x: target.x, y: target.y }, reachOf(target.kind));
     if (p === null) { say("You can't reach that.", "bad"); P.act = null; return; }
     P.path = p;
   }
   const adjacent = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)) === 1;
+  const reachOf = (kind) => (kind === "spot" ? 2 : 1);
+  const inReach = (a, b, r) => { const d = Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)); return d >= 1 && d <= r; };
   const hitChance = (att, def) => Math.max(0.1, Math.min(0.95, 0.5 + (att - def) * 0.04));
   const maxHit = () => 1 + Math.floor(lvl("melee") / 6) + Math.floor(bon().str / 2);
   let splats = [];
@@ -719,7 +739,7 @@ button{font:inherit}
       }
       return;
     }
-    if (!adjacent(P, a)) { P.act = null; return; }
+    if (!inReach(P, a, reachOf(a.kind))) { P.act = null; return; }
     if (a.kind === "npc") { const n = Z.npcs.find((x) => x.id === a.id); if (n) { n.face = P.x > n.x ? 1 : -1; n.turned = P.x !== n.x; n.talking = true; talkTo(n); } P.act = null; return; }
     if (a.kind === "door") { say(`The ${a.name.toLowerCase()} door is shut. Houses you can walk into come next: they're their own scenes.`, "sys"); P.act = null; return; }
     if (a.kind === "well") { say("You look down the well. Something glints at the bottom, but it's too far down.", "sys"); P.act = null; return; }
