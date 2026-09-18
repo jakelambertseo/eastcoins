@@ -129,6 +129,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
 .cstat.xp b{color:#ff981f}
 .cstat .pearl{width:12px;height:12px}
 .btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.btns .btn{min-width:0;justify-content:center;white-space:nowrap}
+.btns.upgrading{grid-template-columns:repeat(2,minmax(0,1fr))}
+.btns .btn.wide{grid-column:1 / -1}
 .btns .btn{justify-content:center;padding:0 8px;white-space:nowrap}
 .btns .btn .pearl{margin-left:3px}
 .btn{border:1px solid var(--line-2);background:var(--panel-3);border-radius:10px;padding:9px 14px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
@@ -1994,6 +1997,10 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     const upLocked = Boolean(upNeed) && levelIn(upNeed.skill) < upNeed.at;
     const short = up ? Math.max(0, Math.ceil(up.cost - S.pearls)) : 0;
     keepMode = full && up && !upLocked && !short ? "upgrade" : "keep";
+    // an upgrade carries a price, and three buttons to a 340px row left it
+    // about 100px; it takes the whole row and Cook and Sell sit under it
+    $("cKeep").classList.toggle("wide", keepMode === "upgrade");
+    $("cKeep").parentElement.classList.toggle("upgrading", keepMode === "upgrade");
     $("cKeep").disabled = full && keepMode !== "upgrade";
     const note = $("cUpNote");
     note.hidden = !full;
@@ -2001,7 +2008,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);l
     else if (!up) { $("cKeep").textContent = "Tank's full"; note.textContent = "That's the biggest tank there is — sell or cook this one."; }
     else if (upLocked) { $("cKeep").textContent = "Tank's full"; note.innerHTML = `Tank's full. A <b>${up.cap}-fish tank</b> needs ${SKILLS[upNeed.skill].name} <b>${upNeed.at}</b> — you're ${levelIn(upNeed.skill)}.`; }
     else if (short) { $("cKeep").textContent = "Tank's full"; note.innerHTML = `Tank's full. A <b>${up.cap}-fish tank</b> costs ${num(up.cost)} pearls — <b>${num(short)}</b> short.`; }
-    else { $("cKeep").innerHTML = `Upgrade <span class="pearl"></span>${num(up.cost)}`; note.innerHTML = `Tank's full. <b>${up.cap}-fish tank</b> buys room and this one goes straight in.`; }
+    else { $("cKeep").innerHTML = `Upgrade to ${up.cap}-fish tank <span class="pearl"></span>${num(up.cost)}`; note.innerHTML = `Tank's full. <b>${up.cap}-fish tank</b> buys room and this one goes straight in.`; }
     $("cSell").innerHTML = `Sell <span class="pearl"></span>${num(rate * 3)}`;
     $("cCook").innerHTML = `Cook <span class="pearl"></span>${num(rate * 2)}`;
     $("cCook").title = "Fewer pearls than selling, but it trains Cooking";
