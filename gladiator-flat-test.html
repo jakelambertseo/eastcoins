@@ -178,7 +178,11 @@ button{font:inherit}
     beef: { name: "Raw beef", icon: "🥩" }, hide: { name: "Cowhide", icon: "🟫" }, chicken: { name: "Raw chicken", icon: "🍗" },
     feather: { name: "Feather", icon: "🪶" }, sardine: { name: "Raw sardine", icon: "🐟" }, trout: { name: "Raw trout", icon: "🐠" },
     copper: { name: "Copper ore", icon: "🟠" }, tin: { name: "Tin ore", icon: "⚪" }, logs: { name: "Logs", icon: "🪵" }, olives: { name: "Olives", icon: "🫒" },
-    pork: { name: "Raw boar", icon: "🥓" }, tusk: { name: "Boar tusk", icon: "🦷" },
+    pork: { name: "Raw boar", icon: "🥓" },
+    yewlogs: { name: "Ancient yew logs", icon: "🪵", ex: "Heavy, dark and faintly warm. The grain moves if you stare." },
+    mooncarp: { name: "Raw moon carp", icon: "🐡", ex: "It's looking at you. It's always looking at you." },
+    stardust: { name: "Stardust", icon: "✨", ex: "Warm, and humming a note you almost recognise." },
+    sunolive: { name: "Sun olive", icon: "🫒", ex: "Glows in the dark. Tastes like a summer you never had." }, tusk: { name: "Boar tusk", icon: "🦷" },
     pit: { name: "Olive pit", icon: "🌰", ex: "It's still warm. And still angry." },
     monocle: { name: "Tiny monocle", icon: "🧐", ex: "The olive was wearing it. You feel slightly more distinguished just holding it." },
     manifesto: { name: "Goat's manifesto", icon: "📜", ex: "Mostly bleats. Page three is surprisingly moving." },
@@ -365,6 +369,8 @@ button{font:inherit}
         for (const [x, y] of [[20, 2], [19, 11], [14, 11]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
         // an oak by the path: Bom Trady's firewood
         for (const [x, y] of [[17, 8]]) { objs.push({ t: "oak", x, y, name: "Oak tree" }); g[y][x] = "#"; }
+        // the teaser: a tree you'll walk past for weeks before you can touch it
+        objs.push({ t: "yew", x: 5, y: 7, name: "Ancient Yew", special: true, req: { skill: "woodcutting", lvl: 60 }, log: "yewlogs", xp: 175, tease: "Its golden needles hum as you get close." }); g[7][5] = "#";
         wild(g, objs, this.exits, { n: "forest", w: "forest", s: "water", e: "forest" }, keepOf(this), 1);
         return { g, objs, blobs: [[7, 8, 3], [15, 4, 3], [18, 9, 2], [5, 11, 2]] };
       },
@@ -379,6 +385,7 @@ button{font:inherit}
         const g = grid(), objs = [];
         for (let y = 0; y < ROWS; y++) { if (y && y < ROWS - 1) g[y][16] = "s"; for (let x = 17; x < COLS; x++) g[y][x] = "~"; }
         objs.push({ t: "spot", x: 17, y: 4, name: "Fishing spot" }, { t: "spot", x: 17, y: 8, name: "Fishing spot" });
+        objs.push({ t: "spot", x: 17, y: 6, name: "Moonlit Eddy", special: true, glow: "#d8c8ff", req: { skill: "fishing", lvl: 40 }, fish: "mooncarp", xp: 120, tease: "Something silver circles down there. It knows you're watching." });
         for (let x = 0; x < 16; x++) g[6][x] = ",";
         const house = { t: "house", img: "hut", x: 9, y: 1, w: 5, h: 3, door: { x: 11, y: 3 }, name: "Fisher's hut" }; objs.push(house);
         block(g, house.x, house.y, house.w, house.h);
@@ -412,6 +419,7 @@ button{font:inherit}
         const forge = { t: "house", x: 12, y: 1, w: 6, h: 3, door: { x: 15, y: 3 }, name: "Forge", roof: "#7a4a3a", wall: "#c8b89a", sign: "STORE" };
         objs.push(bath, forge); block(g, 2, 1, 6, 3); block(g, 12, 1, 6, 3);
         objs.push({ t: "fountain", x: 10, y: 6, name: "Fountain" }); block(g, 10, 6, 2, 2);
+        objs.push({ t: "rock", ore: "stardust", x: 5, y: 6, name: "Fallen Star", special: true, glow: "#e0b0ff", req: { skill: "mining", lvl: 50 }, xp: 150, tease: "It landed during the games last spring. Nobody's managed to chip it since." }); g[6][5] = "#";
         objs.push({ t: "notice", x: 9, y: 2, name: "Notice board" }); g[2][9] = "#";
         objs.push({ t: "statue", x: 15, y: 9, name: "Statue" }); g[9][15] = "#";
         objs.push({ t: "sign", x: 19, y: 6, name: "Signpost" }); g[6][19] = "#";
@@ -432,6 +440,7 @@ button{font:inherit}
         for (let x = 13; x < COLS; x++) g[6][x] = ",";
         for (const [x, y] of [[2, 2], [5, 2], [8, 2], [2, 5], [5, 5], [8, 5], [3, 8], [6, 8]]) { objs.push({ t: "olive", x, y, name: "Olive tree", left: 4 }); g[y][x] = "#"; }
         for (const [x, y] of [[18, 2], [20, 9], [13, 11]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
+        objs.push({ t: "olive", x: 18, y: 4, name: "Sun Olive tree", left: 3, special: true, req: { skill: "farming", lvl: 35 }, crop: "sunolive", xp: 60, tease: "The olives glow like little suns. The Angry Olives won't go near it." }); g[4][18] = "#";
         objs.push({ t: "hive", x: 15, y: 2, name: "Beehive" }, { t: "hive", x: 16, y: 2, name: "Beehive" }); g[2][15] = "#"; g[2][16] = "#";
         objs.push({ t: "shrine", x: 2, y: 10, name: "Shrine" }); block(g, 2, 10, 2, 1);
         objs.push({ t: "fire", x: 12, y: 8, name: "Campfire" }); g[8][12] = "#";
@@ -647,9 +656,13 @@ button{font:inherit}
   const DRAW = { cow: (...a) => drawCow(...a), chicken: (...a) => drawChicken(...a), olive: drawOlive, boar: drawBoar, goat: drawGoat };
   function drawRock(ob, now) {
     const big = ob.t === "vein", w = big ? 30 : 14, h = big ? 24 : 11, X = ob.x * T + 1, Y = ob.y * T + (big ? 31 : 15) - h;
-    const empty = ob.emptyUntil > now, ore = ob.ore === "copper" ? ["#d8793a", "#f4a868"] : ["#a8b4bc", "#eef4f8"];
+    const empty = ob.emptyUntil > now, ore = ob.ore === "copper" ? ["#d8793a", "#f4a868"] : ob.ore === "stardust" ? ["#b86aff", "#f4e0ff"] : ["#a8b4bc", "#eef4f8"];
+    // a fallen star: black-purple stone, a scorch ring, and cracks that glow on a slow pulse
+    const [r1, r2, r3] = ob.ore === "stardust" ? ["#231c33", "#3a2e52", "#4e4070"] : ["#5e5a52", empty ? "#77736a" : "#857f74", empty ? "#8a867c" : "#a49e92"];
+    if (ob.ore === "stardust") { px(X - 3, Y + h - 3, w + 6, 5, "rgba(40,20,10,.35)"); px(X - 1, Y + h - 4, w + 2, 2, "rgba(60,30,10,.3)"); }
     px(X, Y + h - 2, w, 3, "rgba(0,0,0,.25)");
-    px(X + 2, Y, w - 4, h, "#5e5a52"); px(X, Y + 3, w, h - 4, "#5e5a52"); px(X + 2, Y + 1, w - 5, h - 4, empty ? "#77736a" : "#857f74"); px(X + 3, Y + 1, w - 8, 2, empty ? "#8a867c" : "#a49e92");
+    px(X + 2, Y, w - 4, h, r1); px(X, Y + 3, w, h - 4, r1); px(X + 2, Y + 1, w - 5, h - 4, r2); px(X + 3, Y + 1, w - 8, 2, r3);
+    if (ob.ore === "stardust" && !empty) { const k = 0.5 + 0.5 * Math.sin(now / 500); lc.globalAlpha = 0.4 + k * 0.6; px(X + 3, Y + 4, 5, 1, "#c88aff"); px(X + 7, Y + 5, 1, 3, "#c88aff"); px(X + 8, Y + 7, 4, 1, "#e8c8ff"); lc.globalAlpha = 1; }
     if (!empty) for (let i = 0; i < (big ? 10 : 4); i++) { const rx = X + 3 + Math.floor(hashRand(ob.x, i, 7) * (w - 7)), ry = Y + 2 + Math.floor(hashRand(ob.y, i, 8) * (h - 6)); px(rx, ry, 2, 2, ore[0]); px(rx, ry, 1, 1, ore[1]); }
     if (big && Math.floor(now / 700) % 5 === 0) px(X + 8 + (Math.floor(now / 3500) % 3) * 6, Y + 5, 1, 1, "#fff");
   }
@@ -744,6 +757,8 @@ button{font:inherit}
     if (a.kind === "door") { say(`The ${a.name.toLowerCase()} door is shut. Houses you can walk into come next: they're their own scenes.`, "sys"); P.act = null; return; }
     if (a.kind === "well") { say("You look down the well. Something glints at the bottom, but it's too far down.", "sys"); P.act = null; return; }
     const faceIt = () => { P.dir = DIRS[`${Math.sign(a.x - P.x)},${Math.sign(a.y - P.y)}`] || P.dir; P.face = a.x > P.x ? 1 : a.x < P.x ? -1 : P.face; };
+    // anything with a level requirement says so, and what it is, and stops you there
+    if (a.ob?.req && lvl(a.ob.req.skill) < a.ob.req.lvl) { faceIt(); say(`You need a ${SKILLS[a.ob.req.skill].name} level of ${a.ob.req.lvl} to ${(VERB[a.kind] || "use").toLowerCase()} the ${a.ob.name}. ${a.ob.tease || ""}`, "bad"); P.act = null; return; }
     if (EXAMINE[a.kind]) { faceIt(); say(pick(EXAMINE[a.kind]), "sys"); P.act = null; return; }
     if (a.kind === "shrine") {
       faceIt(); P.act = null;
@@ -764,8 +779,8 @@ button{font:inherit}
         a.next = now + 1800;
         if (Math.random() < Math.min(0.9, 0.4 + lvl("mining") * 0.02)) {
           if (!give(ob.ore)) { P.act = null; return; }
-          grant("mining", ob.ore === "tin" ? 18 : 17); say(`You mine some ${ITEMS[ob.ore].name.toLowerCase()}.`, "good");
-          ob.emptyUntil = now + 8000; S.q.ore++; questCheck(); P.act = null; save(); renderPanel();
+          grant("mining", ob.xp || (ob.ore === "tin" ? 18 : 17)); say(`You mine some ${ITEMS[ob.ore].name.toLowerCase()}.`, "good");
+          ob.emptyUntil = now + (ob.special ? 30000 : 8000); S.q.ore++; questCheck(); P.act = null; save(); renderPanel();
         }
       }
       return;
@@ -780,9 +795,10 @@ button{font:inherit}
       a.next = now + 2000;
       const oak = ob.t === "oak";
       if (Math.random() < Math.min(0.9, (oak ? 0.5 : 0.35) + lvl("woodcutting") * 0.02)) {
-        if (!give("logs")) { P.act = null; return; }
-        grant("woodcutting", 25); say(oak ? "You get some logs from the oak." : "You get some logs.", "good"); save(); renderPanel();
-        if (Math.random() < (oak ? 0.08 : 0.2)) { ob.stumpUntil = now + 15000; say(`The ${oak ? "oak" : "tree"} falls.`, "sys"); P.act = null; }
+        const log = ob.log || "logs";
+        if (!give(log)) { P.act = null; return; }
+        grant("woodcutting", ob.xp || 25); say(oak ? "You get some logs from the oak." : `You get some ${ITEMS[log].name.toLowerCase()}.`, "good"); save(); renderPanel();
+        if (Math.random() < (oak || ob.special ? 0.08 : 0.2)) { ob.stumpUntil = now + 15000; say(`The ${oak ? "oak" : "tree"} falls.`, "sys"); P.act = null; }
       }
       return;
     }
@@ -792,8 +808,8 @@ button{font:inherit}
       if (!a.started) { a.started = now; a.next = now + 1500; say("You start picking olives…", "sys"); return; }
       if (now < a.next) return;
       a.next = now + 1500;
-      if (!give("olives")) { P.act = null; return; }
-      grant("farming", 6);
+      if (!give(ob.crop || "olives")) { P.act = null; return; }
+      grant("farming", ob.xp || 6);
       if (--ob.left <= 0) { ob.left = 4; ob.bareUntil = now + 20000; say("That's the last of the olives on this tree.", "sys"); P.act = null; }
       save(); renderPanel(); return;
     }
@@ -809,10 +825,10 @@ button{font:inherit}
       if (!a.started) { a.started = now; a.next = now + 2600; say("You cast out your line…", "sys"); return; }
       if (now >= a.next) {
         a.next = now + 2600;
-        const trout = lvl("fishing") >= 10 && Math.random() < 0.35;
-        if (Math.random() < 0.45) {
-          if (!give(trout ? "trout" : "sardine")) { P.act = null; return; }
-          grant("fishing", trout ? 50 : 20); say(`You catch a ${trout ? "trout" : "sardine"}.`, "good");
+        const sp = a.ob || {}, trout = lvl("fishing") >= 10 && Math.random() < 0.35, fish = sp.fish || (trout ? "trout" : "sardine");
+        if (Math.random() < (sp.fish ? 0.3 : 0.45)) {
+          if (!give(fish)) { P.act = null; return; }
+          grant("fishing", sp.xp || (trout ? 50 : 20)); say(`You catch a ${ITEMS[fish].name.replace(/^Raw /, "").toLowerCase()}.`, "good");
           S.q.fish++; questCheck(); save(); renderPanel();
         }
       }
@@ -1026,7 +1042,7 @@ button{font:inherit}
       if (ob.t === "spot" && Math.abs(ob.x - tx) <= 0 && Math.abs(ob.y - ty) <= 0) return { kind: "spot", ob, x: ob.x, y: ob.y, name: "Fishing spot" };
       if (ob.t === "rock" && ob.x === tx && ob.y === ty) return { kind: "rock", ob, x: ob.x, y: ob.y, name: ob.name };
       if (ob.t === "vein" && tx >= ob.x && tx <= ob.x + 1 && ty >= ob.y && ty <= ob.y + 1) return { kind: "vein", ob, x: tx, y: ty, name: ob.name };
-      if (ob.t === "oak" && Math.abs(tx - ob.x) <= 1 && (ty === ob.y || ty === ob.y - 1) && (tx === ob.x || ty === ob.y - 1)) return { kind: "tree", ob, x: ob.x, y: ob.y, name: ob.name };
+      if ((ob.t === "oak" || ob.t === "yew") && Math.abs(tx - ob.x) <= 1 && (ty === ob.y || ty === ob.y - 1) && (tx === ob.x || ty === ob.y - 1)) return { kind: "tree", ob, x: ob.x, y: ob.y, name: ob.name };
       if ((ob.t === "tree" || ob.t === "olive") && ob.x === tx && (ty === ob.y || ty === ob.y - 1)) return { kind: ob.t, ob, x: ob.x, y: ob.y, name: ob.name };
       if (["hive", "shrine", "notice", "sign", "statue", "fountain", "fire", "bush", "boulder"].includes(ob.t)) {
         const ow = ob.t === "shrine" || ob.t === "fountain" ? 2 : 1, oh = ob.t === "fountain" ? 2 : 1;
@@ -1112,11 +1128,26 @@ button{font:inherit}
         px(X - 4, Y - 13, 5, 3, "#5e8638"); px(X + 10, Y - 15, 4, 2, "#5e8638");
         for (let i = 0; i < 6; i++) { const ax = X - 6 + Math.floor(hashRand(ob.x, i, 61) * 28), ay = Y - 14 + Math.floor(hashRand(ob.y, i, 62) * 16); px(ax, ay, 2, 2, "#8a5a24"); px(ax, ay, 2, 1, "#5a3a14"); }
       } });
+      // the Ancient Yew: dark, tiered, with gold needles
+      if (ob.t === "yew") sprites.push({ y: ob.y * T + 14, draw: () => {
+        const X = ob.x * T, Y = ob.y * T;
+        if (ob.stumpUntil > now) { px(X + 2, Y + 8, 12, 6, "#2a1a10"); px(X + 3, Y + 7, 10, 2, "#d8a830"); return; }
+        px(X - 5, Y + 12, 26, 4, "rgba(0,0,0,.3)"); px(X + 5, Y + 1, 6, 14, "#3a2418"); px(X + 6, Y + 3, 2, 10, "#5a3a24"); px(X + 3, Y + 13, 10, 2, "#3a2418");
+        px(X - 7, Y - 5, 30, 9, "#17302c"); px(X - 4, Y - 13, 24, 9, "#17302c"); px(X, Y - 20, 16, 8, "#17302c"); px(X + 4, Y - 25, 8, 6, "#17302c");
+        px(X - 5, Y - 4, 11, 4, "#24463f"); px(X - 1, Y - 12, 9, 4, "#24463f"); px(X + 3, Y - 19, 6, 3, "#24463f");
+        const tw = Math.floor(now / 400);
+        for (let i = 0; i < 12; i++) { const gx = X - 5 + Math.floor(hashRand(ob.x, i, 71) * 26), gy = Y - 23 + Math.floor(hashRand(ob.y, i, 72) * 26); px(gx, gy, 2, 1, (i + tw) % 4 ? "#e8b82a" : "#fff0a0"); }
+      } });
       if (ob.t === "olive") sprites.push({ y: ob.y * T + 14, draw: () => {
         const X = ob.x * T, Y = ob.y * T, bare = ob.bareUntil > now;
         px(X + 1, Y + 13, 14, 3, "rgba(0,0,0,.25)"); px(X + 6, Y + 4, 3, 11, "#7a6a50"); px(X + 8, Y + 8, 2, 4, "#6a5a40"); px(X + 4, Y + 6, 2, 3, "#7a6a50");
-        px(X - 3, Y - 7, 22, 12, "#6f8a5a"); px(X - 1, Y - 10, 18, 4, "#6f8a5a"); px(X, Y - 8, 7, 4, "#8aa878"); px(X + 9, Y - 5, 7, 3, "#8aa878"); px(X - 3, Y + 3, 22, 2, "#566e44");
-        if (!bare) for (let i = 0; i < 7; i++) px(X - 1 + Math.floor(hashRand(ob.x, i, 2) * 17), Y - 8 + Math.floor(hashRand(ob.y, i, 3) * 11), 2, 2, "#2e2a40");
+        const [c1, c2, c3] = ob.special ? ["#9a8a3a", "#d8c05a", "#7a6a2a"] : ["#6f8a5a", "#8aa878", "#566e44"];
+        px(X - 3, Y - 7, 22, 12, c1); px(X - 1, Y - 10, 18, 4, c1); px(X, Y - 8, 7, 4, c2); px(X + 9, Y - 5, 7, 3, c2); px(X - 3, Y + 3, 22, 2, c3);
+        if (!bare) for (let i = 0; i < 7; i++) { const ox = X - 1 + Math.floor(hashRand(ob.x, i, 2) * 17), oy = Y - 8 + Math.floor(hashRand(ob.y, i, 3) * 11); if (ob.special) { px(ox - 1, oy - 1, 4, 4, "rgba(255,220,90,.35)"); px(ox, oy, 2, 2, "#ffd84a"); } else px(ox, oy, 2, 2, "#2e2a40"); }
+      } });
+      if (ob.special) sprites.push({ y: ob.y * T + 16, draw: () => {
+        for (let i = 0; i < 6; i++) { const k = (now / 2600 + i / 6) % 1, mx = ob.x * T + 8 + Math.sin(i * 2.3 + now / 800) * 9, my = ob.y * T + 8 - k * 30; lc.globalAlpha = Math.sin(k * Math.PI) * 0.9; px(mx, my, 1, 1, ob.glow || "#ffe27a"); if (i % 3 === 0) px(mx, my + 1, 1, 1, ob.glow || "#ffe27a"); }
+        lc.globalAlpha = 1;
       } });
       if (ob.t === "rock" || ob.t === "vein") sprites.push({ y: ob.y * T + (ob.t === "vein" ? 30 : 14), draw: () => drawRock(ob, now) });
       if (ob.t === "fountain") sprites.push({ y: (ob.y + 2) * T - 2, draw: () => {
@@ -1138,7 +1169,9 @@ button{font:inherit}
         if (spr("wheat", X + 8, Y + 15)) return;
         for (let i = 0; i < 3; i++) { const sx = X + 2 + i * 5, sw = Math.round(Math.sin(now / 600 + i + ob.y) * 1); px(sx + 1, Y + 6, 1, 9, "#b89a28"); px(sx + sw, Y - 1, 3, 8, "#f0d040"); px(sx + sw, Y + 1, 1, 5, "#c8a020"); px(sx + sw + 2, Y, 1, 5, "#fff08a"); }
       } });
-      if (ob.t === "spot") sprites.push({ y: ob.y * T, draw: () => { const X = ob.x * T + 8, Y = ob.y * T + 8, r = 3 + ((now / 160) % 5); lc.strokeStyle = "rgba(230,245,255,.85)"; lc.lineWidth = 1; lc.beginPath(); lc.ellipse(X, Y, r, r * 0.55, 0, 0, Math.PI * 2); lc.stroke(); px(X - 1, Y - 1, 2, 2, "#fff"); px(X + 3, Y - 3, 1, 1, "#fff"); } });
+      if (ob.t === "spot") sprites.push({ y: ob.y * T, draw: () => { const X = ob.x * T + 8, Y = ob.y * T + 8, r = 3 + ((now / 160) % 5);
+        if (ob.special) { px(X - 6, Y - 3, 12, 6, "rgba(40,20,90,.35)"); lc.strokeStyle = "rgba(210,190,255,.9)"; lc.lineWidth = 1; for (const rr of [r, (r + 2.5) % 8 + 1]) { lc.beginPath(); lc.ellipse(X, Y, rr * 1.2, rr * 0.6, 0, 0, Math.PI * 2); lc.stroke(); } px(X - 1, Y - 1, 2, 2, "#f0e8ff"); return; }
+        lc.strokeStyle = "rgba(230,245,255,.85)"; lc.lineWidth = 1; lc.beginPath(); lc.ellipse(X, Y, r, r * 0.55, 0, 0, Math.PI * 2); lc.stroke(); px(X - 1, Y - 1, 2, 2, "#fff"); px(X + 3, Y - 3, 1, 1, "#fff"); } });
     }
     // everyone glides between tiles with a little bob; only fighting moves the body
     const bobOf = (e, ms = 80) => (e.step ? -Math.abs(Math.sin(now / ms)) * 1.5 : 0);
@@ -1256,7 +1289,10 @@ button{font:inherit}
         ctx.globalAlpha = 1;
       }
     }
-    if (hoverThing) { const t = `${VERB[hoverThing.kind] || "Examine"} ${hoverThing.name}`; label(t, w / 2, 8, "#fff", 14); }
+    if (hoverThing) {
+      const rq = hoverThing.ob?.req, low = rq && lvl(rq.skill) < rq.lvl;
+      label(`${VERB[hoverThing.kind] || "Examine"} ${hoverThing.name}${rq ? ` (${SKILLS[rq.skill].name} ${rq.lvl})` : ""}`, w / 2, 8, low ? "#ff8a7a" : "#fff", 14);
+    }
     // a scene change fades in
     const fk = (now - Z.fadeAt) / 350; if (fk < 1) { ctx.fillStyle = `rgba(0,0,0,${1 - fk})`; ctx.fillRect(0, 0, w, h); }
     $("dbg").textContent = `Town: ${SCENES[Z.key].name}\nPlayer: bootypaper · level ${total()}\nTile: ${P.x} ${P.y}${hoverTile ? `   Mouse: ${hoverTile.x} ${hoverTile.y}` : ""}\nAction: ${P.act ? (P.act.kind === "mob" ? `fighting ${P.act.name}` : P.act.kind === "spot" ? "fishing" : P.act.kind === "wheat" ? "picking wheat" : P.act.kind) : moving ? "walking" : "none"}`;
