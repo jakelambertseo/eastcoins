@@ -39,8 +39,9 @@ let bad = 0;
 const line = (label, val, max, unit) => { const over = val > max; if (over) bad++; console.log(`  ${over ? "OVER " : "ok   "} ${label.padEnd(34)} ${String(val).padStart(7)} ${unit}  (budget ${max})`); };
 
 console.log("EastScape size budget");
-const code = gz("eastscape.html") + gz("v3/assets/js/eastscape-shared.js") + gz("v3/assets/js/eastscape-sfx.js") + gz("v3/assets/js/eastscape-casino.js");
+const code = gz("eastscape.html") + gz("v3/assets/js/eastscape-shared.js") + gz("v3/assets/js/eastscape-sfx.js");
 line("code, gzipped", kb(code), BUDGET.codeGzKB, "KB");   // (the wiki's words load on first open since 2026-09-20, so they are not startup code)
+line("game windows (lazy: on the first table click, or 6 s after arriving)", kb(gz("v3/assets/js/eastscape-casino.js")), 40, "KB");
 line("wiki words (lazy)", kb(gz("v3/assets/js/eastscape-wiki.js")), 40, "KB");
 
 const lazy = new Set(Object.values(AREA_ART).flat());

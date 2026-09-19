@@ -1190,6 +1190,8 @@ export class World {
       C[k] = Math.min(100, was + G.NEEDS.sip); this.touch(pl); pl.out.push({ type: "need", k });
       return this.say(pl, k === "thirst" ? `You fill a paper cup and drain it. Thirst: ${Math.round(C[k])}%.` : `You load up a plate. Hunger: ${Math.round(C[k])}%.`, "good");
     }
+    if (a.kind === "game" && S.def.real?.[a.ob.t]) { pl.act = null; return pl.out.push({ type: "real", g: a.ob.t }); }   // eastcoin.vip's own game, for real ZCoins: the page opens the window and talks to the site itself
+    if (a.kind === "game" && !G.GAMES[a.ob.t]) { pl.act = null; return; }
     if (a.kind === "game") { pl.act = null; return pl.out.push({ type: "game", g: a.ob.t, pot: Math.floor(this.jack.pot), lastJack: this.jack.wins?.[0] || null }); }
     if (a.kind === "howto") { pl.act = null; return pl.out.push({ type: "popup", title: "How GambaScape works", text: G.HOWTO, icon: "🎰" }); }
     if (a.kind === "board") { pl.act = null; this.tourStep(pl, "board"); return this.dailySend(pl); }
@@ -1829,6 +1831,7 @@ export class World {
   cashTo(pl, n) { if (n > 0 && !this.give(pl, "coins", n) && !this.bankAdd(pl, "coins", n)) this.say(pl, "Your bag and bank are both full: that Cash is lost. Make some room!", "bad"); }
   bet(S, pl, m, now) {
     const g = String(m.g), game = G.GAMES[g]; if (!game || game.run) return;
+    if (S.def.real?.[g]) return this.say(pl, `${S.def.real[g].name} on this floor plays for real ZCoins now. Click the table.`, "bad");
     if (!this.near(S, pl, g, 2)) return this.say(pl, `You need to be at the ${game.name.toLowerCase()} in the Casino.`, "bad");
     if (now - (pl.lastBet || 0) < G.CASINO.betMs) return;
     const amt = Math.floor(Number(m.amt)), have = G.cashIn(pl.C);
@@ -2017,6 +2020,7 @@ export class World {
     if (now - (pl.lastBet || 0) < 250) return; pl.lastBet = now;
     if (op === "start") {
       if (r) return pl.out.push(this.runView(pl, g));
+      if (S.def.real?.[g]) return this.say(pl, `${S.def.real[g].name} on this floor plays for real ZCoins now. Click the table.`, "bad");
       if (!this.near(S, pl, g, 2)) return this.say(pl, `You need to be at the ${game.name} table in the Casino.`, "bad");
       const amt = Math.floor(Number(m.amt)), have = G.cashIn(C);
       if (!(amt >= G.minBetOf(S.def) && amt <= G.maxBetOf(C, S.def))) return this.say(pl, `Bets here are ${G.fmtCash(G.minBetOf(S.def))} to ${G.fmtCash(G.maxBetOf(C, S.def))}.`, "bad");

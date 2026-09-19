@@ -512,6 +512,7 @@ button,input,select{font:inherit}
 <header class="top">
   <span class="logo">🎰 GambaScape</span>
   <span class="clock" id="clock">--:--:--</span>
+  <button type="button" class="wikib" id="gamesBtn" title="The real ZCoin games, one click (G)">🎰 Games</button>
   <button type="button" class="wikib" id="wikiBtn" title="The GambaScape wiki">📖 Wiki</button>
   <button type="button" class="wikib" id="hsBtn" title="Hiscores">🏆 Hiscores</button>
   <span class="spacer"></span>
@@ -631,11 +632,10 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=64";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=65";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=38").then((m) => { WK = m; }));
-import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=10";
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=39").then((m) => { WK = m; }));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=2";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -825,6 +825,7 @@ function onEvent(e) {
   if (e.type === "need") { SFX.play(e.blocked ? "ui_error" : e.k === "thirst" ? "splash" : "eat"); if (e.blocked) CZ.blocked(e.k); return; }
   if (e.type === "cashier") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true; SFX.play("ui_open"); return CZ.cashier(!!e.ruby); }
   if (e.type === "dex") return CZ.dex(e);
+  if (e.type === "real") { if ($("gameWin").hidden || CZ.game !== e.g) openReal(e.g); return; }
   if (e.type === "prize") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true; SFX.play("ui_open"); return CZ.prize(e); }
   if (e.type === "cashed") { SFX.play("coins"); return CZ.cashed(e); }
   if (e.type === "casinonote") { chatLine("Casino", e.text, "casinonote"); if (/JACKPOT/.test(e.text)) SFX.play("jackpot"); return; }
@@ -1632,7 +1633,7 @@ cv.addEventListener("pointerdown", (e) => {
     if (t.kind === "mob") send({ t: "act", kind: "mob", id: t.id });
     else if (t.kind === "npc") send({ t: "act", kind: "npc", id: t.id });
     else if (t.ob?.t === "anvil") openSmith(t.ob);
-    else send({ t: "act", kind: "ob", ob: t.ob.id });
+    else { if (Z.def.real?.[t.ob.t]) openReal(t.ob.t); send({ t: "act", kind: "ob", ob: t.ob.id }); }   // a real table opens at the click; you stroll over while it loads
     // walk there now, the way the server will
     if (from) {
       const at = t.kind === "mob" || t.kind === "npc" ? { x: t.x, y: t.y } : t.kind === "door" && t.ob.door ? t.ob.door : G.nearestCell(t.ob, from);
@@ -2220,6 +2221,16 @@ function isleSign(e) {
   popup("Your island", `${e.open ? "Open to visitors." : "Closed to visitors."} Pick a theme, or change who can visit.`, "🏝️", [...th, [e.open ? "🔒 Close to visitors" : "🔓 Open to visitors", () => send({ t: "isle", op: "open", v: !e.open })], ["Done", null]]);
 }
 
+/* ------------------------------------------------------------ THE REAL TABLES: on the casino's main floor six tables are
+   eastcoin.vip's own games, for real ZCoins. The window is ours (CZ, real mode); it talks to the site's endpoints itself. */
+function openReal(g) {
+  if (String(Z.key).split(":")[0] !== "casino") return say("The real tables are on the casino's main floor. A Casino scroll gets you there from anywhere.");
+  for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin"]) $(w).hidden = true;
+  if ($("gameWin").hidden) SFX.play("ui_open"); CZ.open(g, { real: true });
+}
+$("gamesBtn").addEventListener("click", () => { if ($("gameWin").hidden || !CZ.real) openReal(CZ.realGames()[0]); else { $("gameWin").hidden = true; CZ.closed(); } });
+addEventListener("keydown", (e) => { if ((e.key === "g" || e.key === "G") && !e.ctrlKey && !e.metaKey && !e.altKey && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "")) $("gamesBtn").click(); });
+
 /* ------------------------------------------------------------ the Forge: Brutus's shop */
 let shopN = 1, shopKind = "shop";   // "shop": Brutus at the Forge; "bar": Dex, who sells and never buys
 function openShop(kind) { shopKind = kind; $("shopTitle").textContent = kind === "bar" ? "🍸 The Bar" : "⚒️ The Forge"; $("shopWho").textContent = kind === "bar" ? "Dex the Dealer" : "Brutus the Smith"; openWin("shopWin"); }
@@ -2376,7 +2387,14 @@ function renderEx() {
 /* ------------------------------------------------------------ the Casino's tables
    Every game window (and the Cashier) is drawn by eastscape-casino.js, in the look of the site's own casino.
    The server rolls and pays; that module only shows it. */
-const CZ = createCasino({ G, SFX, send, esc, $, ico, me: () => me, room: () => Z.def, you: () => you, calm: () => set("reducedMotion"), now: () => snow() });
+/* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
+   seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
+   wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=11", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex"]);
+let czReal = null;
+const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, me: () => me, room: () => Z.def, you: () => you, calm: () => set("reducedMotion"), now: () => snow() }))));
+const CZ = new Proxy({}, { get: (_, k) => (czReal ? czReal[k] : k === "game" ? null : k === "real" ? false : k === "realGames" ? () => Object.keys(G.REAL_TABLES) : CZ_QUIET.has(k) ? () => {} : (...a) => { czLoad().then((z) => z[k](...a)).catch(() => say("Couldn't load the game windows. Check your connection and try again.")); }) });
+setTimeout(czLoad, 6000);
 /* ------------------------------------------------------------ roulette: the shared table
    The server runs the clock and draws the number; this draws the board, everybody's chips and the wheel. */
 let ROUL = null, roulChip = 10, roulGot = 0, roulSpunRound = 0, roulAngle = 0, roulBallAngle = 0, roulMine = 0, roulBanner = null, roulPrevPhase = null;
