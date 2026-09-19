@@ -32,6 +32,7 @@ const METRIC_TICKS = 1200;       // a minute of tick times, kept in memory only 
 const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const CASINO_LINES = ["one more spin", "im due", "LETS GOOO", "two cherries again lol", "who took my machine", "this one's hot i can feel it", "down bad. back to the workyard", "heads never fails", "brb selling logs", "jackpot's getting big", "gg house", "roll under 5 u cowards", "never lucky", "ok last one for real"];
+const PIT_LINES = ["HIT HIM", "my rent is on the chicken", "fixed. it's all fixed", "that cow has HANDS", "who let the goose in", "never bet against the olive", "ref??? REF???", "i've seen this one before. he folds", "put it all on the little guy", "one more fight then i'm going home", "that's a dive if i ever saw one"];
 const BOT_LINES = ["anyone know where the good fishing is?", "gz", "cows are free xp lol", "selling feathers", "this farm is peaceful", "wheat run anyone?", "brb", "that yew is taunting me", "who keeps feeding the olives"];
 const EXAMINE_KINDS = new Set(["hive", "notice", "sign", "statue", "fountain", "fire", "bush", "boulder", "hay", "counter", "pool", "column", "range", "table", "barrel", "bed", "plant", "bench", "goatstatue", "chest", "rug", "chair", "sack", "cat", "bucket", "bigtomato", "press", "crate", "scarecrow", "milestone", "toll", "barricade", "chariot", "mule"]);
 
@@ -348,6 +349,7 @@ export class World {
       case "ex": return this.exOp(S, pl, m);
       case "bet": return this.bet(S, pl, m, now);
       case "run": return this.run(S, pl, m, now);
+      case "fight": return this.fightOp(S, pl, m, now);
       case "daily": return this.dailyOp(S, pl, m);
       case "roul": return this.roulOp(S, pl, m, now);
       case "tour": return this.tourOp(S, pl, m);
@@ -375,7 +377,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob) return;
-      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", roulette: "roulette", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", roulette: "roulette", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       if (!kind) return;
       const at = kind === "door" && ob.door ? ob.door : G.nearestCell(ob, f);
       act = { kind, ob, x: at.x, y: at.y, name: ob.name };
@@ -519,6 +521,7 @@ export class World {
   // write everyone, tell every page this was planned, then let the deploy land
   async doRestart() {
     this.roulRefundAll("The table closes for a restart: your roulette bets are back in your bag.");
+    this.fightRefundAll("The pit closes for a restart: your bets are back in your bag.");
     const saved = await this.saveAll();
     for (const pl of [...this.pls.values()]) {
       this.send(pl, { type: "restarting", holdMs: RESTART_HOLD_MS });
@@ -852,7 +855,8 @@ export class World {
     const live = new Set([...this.pls.values()].map((p) => p.C.scene));
     for (const [key, S] of this.scenes) {
       if (key === "roulette") this.rouletteTick(S, now);
-      if (!live.has(key)) { S.idleSince ||= now; if (now - S.idleSince > SCENE_IDLE_MS && !(S.def.pvp && S.mobs.some((m) => m.dead && now < m.respawnAt)) && !S.roulette?.bets.length) this.scenes.delete(key); continue; }
+      if (key === "fightpit") this.fightTick(S, now);
+      if (!live.has(key)) { S.idleSince ||= now; if (now - S.idleSince > SCENE_IDLE_MS && !(S.def.pvp && S.mobs.some((m) => m.dead && now < m.respawnAt)) && !S.roulette?.bets.length && !S.fight?.bets.length) this.scenes.delete(key); continue; }
       S.idleSince = 0;
       for (const pl of this.playersIn(S)) this.playerTick(S, pl, now);
       for (const o of S.objs) if (o.t === "wheat" && S.g[o.y][o.x] === "f" && !(o.grownAt > now)) {
@@ -864,7 +868,7 @@ export class World {
     // the simulated players chat now and then
     if (now > this.nextChatter) {
       this.nextChatter = now + 9000;
-      for (const key of live) { const S = this.scenes.get(key); if (S?.bots.length && Math.random() < 0.035) S.events.push({ type: "bubble", id: pick(S.bots).id, text: pick(S.def.floor === "casino" ? CASINO_LINES : BOT_LINES), t: now }); }
+      for (const key of live) { const S = this.scenes.get(key); if (S?.bots.length && Math.random() < 0.035) S.events.push({ type: "bubble", id: pick(S.bots).id, text: pick(S.key === "fightpit" ? PIT_LINES : S.def.floor === "casino" ? CASINO_LINES : BOT_LINES), t: now }); }
     }
     for (const T of this.trades.values()) { const a = this.pls.get(T.a), b = this.pls.get(T.b); if (!a || !b || G.cheb(a, b) > G.TRADE_RANGE + 2) this.tradeEnd(T, "Trade cancelled: you walked too far apart."); }
     if (this.tickN % SNAP_EVERY === 0) this.broadcast(now); else this.sendPrivate();
@@ -983,6 +987,7 @@ export class World {
     }
     if (a.kind === "bank") return pl.out.push({ type: "bank" });
     if (a.kind === "cashier") { pl.act = null; return pl.out.push({ type: "cashier" }); }
+    if (a.kind === "fight") { pl.act = null; return pl.out.push({ ...this.fightView(S, pl, now), open: true }); }
     if (a.kind === "cooler" || a.kind === "buffet") {   // a drink or a plate: a fifth of the meter a click, free, until you're full
       pl.act = null; const k = a.kind === "cooler" ? "thirst" : "hunger", was = G.needOf(C, k);
       if (was >= 100) return this.say(pl, k === "thirst" ? "You couldn't drink another drop." : "You couldn't eat another bite.");
@@ -1647,6 +1652,86 @@ export class World {
       const world = mult >= G.CASINO.worldWin;
       for (const p of this.pls.values()) if (world || p.C.scene === S.key) p.out.push({ type: "casinonote", text: world ? `🎰 ${text}` : text });
     }
+  }
+
+  /* ------------------------------------------------------------ the Fight Pit: one fight for the whole room
+     The same shape as roulette. Bets are open for FIGHTS.betMs; then the winner is decided by ONE random number against
+     the posted chance, a script of blows is written to fit it, and the room watches for fightMs; then everyone is paid
+     and the next pair comes out. Bets are paid when the fight ENDS (so your Cash doesn't give the result away), which
+     is why this ticks even when the room is empty and why a restart mid-fight pays out on the spot. */
+  fightPair() {
+    const pool = G.FIGHTS.pool, a = pick(pool); let b = pick(pool), n = 0; while ((b === a) && n++ < 9) b = pick(pool);
+    const tt = [...G.FIGHTS.titles].sort(() => Math.random() - 0.5);
+    return [{ t: a, title: tt[0] }, { t: b, title: tt[1] }];
+  }
+  fightState(S, now = Date.now()) { return S.fight ||= { round: 1, phase: "bet", endsAt: now + G.FIGHTS.betMs, f: this.fightPair(), bets: [], hist: [], last: null }; }
+  fightView(S, p, now = Date.now()) {
+    const F = this.fightState(S, now), odds = G.fightOdds(F.f[0].t, F.f[1].t);
+    return { type: "fight", round: F.round, phase: F.phase, left: Math.max(0, F.endsAt - now), f: F.f, pays: odds.pays, p: odds.p, hist: F.hist, last: F.last,
+      script: F.phase === "fight" ? F.script : null, startedAt: F.startedAt || 0, winner: F.phase === "result" ? F.winner : null,
+      bets: F.bets.map((b) => ({ name: b.name, side: b.side, amt: b.amt, me: b.id === p.id })), luck: p.C.luck | 0 };
+  }
+  fightSend(S) { for (const p of this.playersIn(S)) p.out.push(this.fightView(S, p)); }
+  fightOp(S, pl, m, now) {
+    if (S.key !== "fightpit") return; const F = this.fightState(S, now);
+    if (m.op === "open") return pl.out.push(this.fightView(S, pl, now));
+    if (m.op === "clear") {
+      if (F.phase !== "bet") return; const back = F.bets.filter((b) => b.id === pl.id).reduce((a, b) => a + b.amt, 0); if (!back) return;
+      F.bets = F.bets.filter((b) => b.id !== pl.id); this.cashTo(pl, back); this.touch(pl); this.say(pl, `Bets taken back: ${G.fmtCash(back)}.`); return this.fightSend(S);
+    }
+    if (m.op !== "bet") return;
+    if (F.phase !== "bet") return this.say(pl, "No more bets: they're already at it.", "bad");
+    const side = m.side === 1 ? 1 : 0, amt = Math.floor(Number(m.amt)), mine = F.bets.filter((b) => b.id === pl.id), staked = mine.reduce((a, b) => a + b.amt, 0);
+    if (!(amt >= 1)) return;
+    if (mine.some((b) => b.side !== side)) return this.say(pl, "You've already backed the other one. Take your bet back first if you've changed your mind.", "bad");
+    if (staked + amt > G.FIGHTS.maxStake) return this.say(pl, `Up to ${G.fmtCash(G.FIGHTS.maxStake)} a fight. You've got ${G.fmtCash(staked)} down.`, "bad");
+    if (G.cashIn(pl.C) < amt) return this.say(pl, `You only have ${G.fmtCash(G.cashIn(pl.C))} in your bag.`, "bad");
+    if (this.tooEmpty(pl)) return;
+    if (!staked) this.spendNeeds(pl);
+    G.takeInv(pl.C.inv, "coins", amt); this.touch(pl); this.tourStep(pl, "play");
+    if (mine[0]) mine[0].amt += amt; else F.bets.push({ id: pl.id, name: pl.name, side, amt });
+    this.fightSend(S);
+  }
+  fightTick(S, now) {
+    const F = this.fightState(S, now); if (now < F.endsAt) return;
+    if (F.phase === "bet") {
+      const odds = G.fightOdds(F.f[0].t, F.f[1].t), winner = crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296 < odds.p[0] ? 0 : 1, loser = 1 - winner;
+      // the blows, written to fit: the loser's hundred points all go, the winner keeps some; one blow every second or so
+      const n = 9 + Math.floor(Math.random() * 3), hp = [100, 100], keep = 12 + Math.floor(Math.random() * 60), script = [];
+      let lossLeft = 100, winLeft = 100 - keep;
+      for (let i = 0; i < n; i++) {
+        const last = i === n - 1, by = last ? winner : (Math.random() < 0.55 ? winner : loser), on = 1 - by;
+        let dmg = on === loser ? (last ? lossLeft : Math.min(lossLeft - 1, Math.round(lossLeft / (n - i) * (0.5 + Math.random())))) : Math.min(winLeft, Math.round(winLeft / Math.max(1, n - i - 1) * (0.4 + Math.random())));
+        dmg = Math.max(0, dmg); if (on === loser) lossLeft -= dmg; else winLeft -= dmg; hp[on] -= dmg;
+        script.push({ at: 900 + Math.round(i * (G.FIGHTS.fightMs - 3200) / (n - 1)), by, dmg, hp: [...hp] });
+      }
+      const luckyIds = new Set(); for (const id of new Set(F.bets.map((b) => b.id))) { const p = this.pls.get(id); if (p && (p.C.luck | 0) > 0) { p.C.luck--; luckyIds.add(id); this.touch(p); } }
+      Object.assign(F, { phase: "fight", winner, script, startedAt: now, pays: odds.pays, lucky: [...luckyIds], endsAt: now + G.FIGHTS.fightMs });
+      return this.fightSend(S);
+    }
+    if (F.phase === "fight") { this.fightPay(S, F); Object.assign(F, { phase: "result", endsAt: now + G.FIGHTS.showMs }); return this.fightSend(S); }
+    Object.assign(F, { round: F.round + 1, phase: "bet", f: this.fightPair(), bets: [], script: null, winner: null, startedAt: 0, endsAt: now + G.FIGHTS.betMs });
+    this.fightSend(S);
+  }
+  fightPay(S, F) {
+    const w = F.winner, name = (f) => `${G.MOBS[f.t].name} ${f.title}`, wins = [];
+    for (const b of F.bets) {
+      if (b.side !== w) continue;
+      const mult = F.pays[w], payout = F.lucky?.includes(b.id) ? Math.round(b.amt * mult * (1 + G.LUCK.bonus)) : Math.floor(b.amt * mult); wins.push({ name: b.name, payout, mult });
+      const p = this.pls.get(b.id); if (p) { this.cashTo(p, payout); this.touch(p); } else this.creditOffline(b.id, payout);
+    }
+    const text = `${name(F.f[w])} beats ${name(F.f[1 - w])}. ${wins.length ? `Paid: ${wins.map((x) => `${x.name} +${x.payout.toLocaleString()}`).join(", ")}.` : F.bets.length ? "Nobody had the winner." : "Nobody had money on it."}`;
+    for (const p of this.playersIn(S)) p.out.push({ type: "casinonote", text: `Fight Pit: ${text}` });
+    for (const x of wins) if (x.mult >= G.FIGHTS.bigWin && x.payout >= 200) for (const p of this.pls.values()) if (p.C.scene !== S.key) p.out.push({ type: "casinonote", text: `🥊 ${x.name} backed ${name(F.f[w])} at ${x.mult}× in the Fight Pit and won ${G.fmtCash(x.payout)}!` });
+    F.last = { winner: w, f: F.f, wins: wins.map((x) => ({ name: x.name, payout: x.payout })) }; F.hist = [{ t: F.f[w].t, mult: F.pays[w] }, ...F.hist].slice(0, 10); F.bets = [];
+  }
+  // a restart: open bets go back; a fight already decided is paid on the spot
+  fightRefundAll(why) {
+    const S = this.scenes.get("fightpit"), F = S?.fight; if (!F || !F.bets.length) return;
+    if (F.phase === "fight") return this.fightPay(S, F);
+    if (F.phase !== "bet") return;
+    for (const b of F.bets) { const p = this.pls.get(b.id); if (p) { this.cashTo(p, b.amt); this.touch(p); this.say(p, why); } else this.creditOffline(b.id, b.amt); }
+    F.bets = [];
   }
 
   /* Higher or Lower and Mines are RUNS: the stake is taken at the start, every step is decided here, and the run

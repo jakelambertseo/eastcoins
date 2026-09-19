@@ -626,9 +626,9 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=52";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=29";
-import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=2";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=53";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=30";
+import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=3";
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=1";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -822,6 +822,7 @@ function onEvent(e) {
   if (e.type === "daily") return renderDaily(e);
   if (e.type === "roulopen") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "gameWin", "dailyWin"]) $(w).hidden = true; $("roulWin").hidden = false; renderRoul(); return; }
   if (e.type === "roul") { roulSet(e); return; }
+  if (e.type === "fight") { const was = FIGHT; FIGHT = { ...e, until: performance.now() + e.left }; if (e.phase === "fight" && was?.phase !== "fight") SFX.play("task_done"); if (e.open || CZ.game === "fight") CZ.fight(FIGHT, e.open); return; }
   if (e.type === "exnote") { SFX.play("coins"); chatLine("Market", e.text.charAt(0).toUpperCase() + e.text.slice(1), "exnote"); say(`Market: ${e.text}`, "loot"); return; }
   if (e.type === "tradereq") { SFX.play("chat"); tradeReqLine(e.from, e.name); return; }
   if (e.type === "levelup") return levelUp(e.k, e.lvl);
@@ -830,8 +831,11 @@ function onEvent(e) {
 let savedAt = 0;
 
 /* ------------------------------------------------------------ the scene you're in: built from the shared rules */
+let SFXfight = "";
+let FIGHT = null;   // the Fight Pit's fight, as the server last told it (only while you're in the room)
 function loadScene(key) {
   if (Z.key && (G.sceneDef(key)?.interior || Z.def?.interior)) SFX.play("door");
+  FIGHT = null; if (String(key).split(":")[0] === "fightpit") setTimeout(() => send({ t: "fight", op: "open" }), 300);
   const b = G.buildScene(key);
   Object.assign(Z, { key, g: b.g, objs: b.objs, fadeAt: performance.now(), defs: {} });
   Z.def = G.sceneDef(key); Z.isle = null; Z.ground = [];
@@ -959,6 +963,8 @@ const AREA_ART = {
   cloud: ["t_csky", "t_cpath", "o_skyash", "o_cloudbush", "o_cloudcolumn", "o_rock_dragonstone_ore", "o_rock_onyx_ore"],
   boneyard: [...WILD_ART, "moth", "ghoul", "understudy"],
   sky: ["ram", "angel", "goose"],
+  // the Fight Pit: everyone who might be sent out to fight, and the corner clutter
+  fightpit: ["olive", "hornworm", "boar", "goat", "highwayman", "gnasher", "moth", "taxwraith", "ghoul", "chandelier", "understudy", "ram", "revenant", "angel", "goose", "o_crate", "o_barrel"],   // (FIGHTS.pool, less the three that are core)
   // scenery that only the CLOSED areas use (the farm, the river, the hills, the islands). Nobody can walk there, so nobody
   // downloads it. WHEN AN AREA REOPENS, move what it uses out of this list and into a list under that area's own key.
   closed: ["o_barrel", "o_bed", "o_bigtomato", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chair", "o_chariot", "o_crate", "o_cypress", "o_cypress_stump", "o_ferry", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_olive", "o_olive_bare", "o_palm", "o_pedestal", "o_plot", "o_press", "o_rock_marble", "o_sack", "o_scarecrow", "o_shrine", "o_table", "o_toll", "o_vein_copper", "o_vine", "o_vine_bare", "o_vine_gold", "o_yew", "o_yew_stump"],   // (no open area has these yet: kept out of the login's downloads)
@@ -1209,6 +1215,18 @@ function paintRoom(o, f) {
     if (ob.img && IMG[ob.img]) { o.save(); o.globalAlpha = 0.45; o.filter = "brightness(0)"; o.drawImage(IMG[ob.img].im, X + 1, Y + 2, w, h); o.restore(); o.drawImage(IMG[ob.img].im, X, Y, w, h); continue; }
     f(X + 1, Y + 1, w - 2, h - 2, ob.color); f(X + 3, Y + 3, w - 6, 1, "#e8c050"); f(X + 3, Y + h - 4, w - 6, 1, "#e8c050"); f(X + 3, Y + 3, 1, h - 6, "#e8c050"); f(X + w - 4, Y + 3, 1, h - 6, "#e8c050");
     for (let i = X + 3; i < X + w - 3; i += 4) { f(i, Y, 2, 1, "#e8d8a8"); f(i, Y + h - 1, 2, 1, "#e8d8a8"); }
+  }
+  // a lettered sign over a door in the back wall (def.doorSigns)
+  for (const d of def.doorSigns || []) { o.font = "800 6.5px Nunito, sans-serif"; o.textAlign = "center"; o.textBaseline = "middle"; const w = o.measureText(d.text).width + 9, cx = (d.x + 0.5) * T, cy = Y0 - 29; f(cx - w / 2 - 1, cy - 5.5, w + 2, 11, "#2a1a10"); f(cx - w / 2, cy - 4.5, w, 9, "#7a1a22"); f(cx - w / 2, cy - 4.5, w, 1, "#c8963a"); f(cx - w / 2, cy + 3.5, w, 1, "#c8963a"); o.fillStyle = "#ffd98a"; o.fillText(d.text, cx, cy + 0.5); }
+  // the fight pit: a sunk oval of sand with a plank rail round it, and the scuffs of everybody who lost in it
+  if (def.pit) {
+    const P = def.pit, cx = (P.x + P.w / 2) * T, cy = (P.y + P.h / 2) * T, rx = P.w * T / 2 - 3, ry = P.h * T / 2 - 3;
+    o.fillStyle = "rgba(0,0,0,.35)"; o.beginPath(); o.ellipse(cx, cy + 3, rx + 3, ry + 3, 0, 0, 7); o.fill();
+    o.fillStyle = "#5a3a20"; o.beginPath(); o.ellipse(cx, cy, rx + 2, ry + 2, 0, 0, 7); o.fill();
+    o.fillStyle = "#c9a86a"; o.beginPath(); o.ellipse(cx, cy, rx - 3, ry - 3, 0, 0, 7); o.fill();
+    o.fillStyle = "#b8955a"; for (let i = 0; i < 46; i++) { const a = hashRand(i, 3, 9) * 6.283, r = Math.sqrt(hashRand(i, 5, 2)) * 0.9; o.fillRect(Math.round(cx + Math.cos(a) * (rx - 8) * r), Math.round(cy + Math.sin(a) * (ry - 8) * r), 2 + (i % 3), 1); }
+    o.fillStyle = "rgba(122,26,34,.35)"; for (let i = 0; i < 5; i++) { const a = hashRand(i, 8, 4) * 6.283, r = hashRand(i, 1, 6) * 0.7; o.beginPath(); o.ellipse(cx + Math.cos(a) * rx * r, cy + Math.sin(a) * ry * r, 4, 2, 0, 0, 7); o.fill(); }
+    o.strokeStyle = "#3a2410"; o.lineWidth = 1; for (let i = 0; i < 28; i++) { const a = i / 28 * 6.283; f(Math.round(cx + Math.cos(a) * (rx + 0.5)) - 1, Math.round(cy + Math.sin(a) * (ry + 0.5)) - 3, 2, 5, "#8a5a32"); }
   }
   // what each roped-off room is called, lettered in gold on the carpet at its way in (def.zones)
   for (const z of def.zones || []) { o.font = "800 7px Nunito, sans-serif"; o.textAlign = "center"; o.textBaseline = "middle"; const w = o.measureText(z.text).width + 10, cx = z.x * T, cy = z.y * T; f(cx - w / 2, cy - 5.5, w, 11, "rgba(20,8,10,.78)"); f(cx - w / 2, cy - 5.5, w, 1, "#c8963a"); f(cx - w / 2, cy + 4.5, w, 1, "#c8963a"); o.fillStyle = "#ffd98a"; o.fillText(z.text, cx, cy + 0.5); }
@@ -1558,7 +1576,7 @@ function aimCamera(P, now) {
   view.ox = Math.round(view.bx - cam.x * view.s); view.oy = Math.round(view.by - cam.y * view.s);
 }
 const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
-const KIND_OF = { coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
+const KIND_OF = { fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
 function thingAt(wx, wy) {
   const now = snow(), near = (x_, y_, rx, ry) => Math.abs(wx - x_) <= rx && wy <= y_ + 4 && wy >= y_ - ry;
   for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})${m.c && m.c !== you?.id ? " · someone's fighting it" : ""}` }; }
@@ -1890,6 +1908,17 @@ function frame() {
     const p = posOf(m, now), hurt = hurtNow(m), lunge = now - m.swingAt < 200 ? m.face * 2 : 0;
     if (!spr(m.t, p.px * T + 8 + lunge, p.py * T + 14 + bobOf(p.moving, 110), m.face < 0, hurt ? RED : "")) (DRAW[m.t] || drawBlob)(p.px * T + 8 + lunge, p.py * T + (MOBS[m.t].oy ?? 14) + bobOf(p.moving, 110), m.face, hurt);
   } });
+  if (FIGHT && Z.def.pit) {
+    const P = Z.def.pit, cx = (P.x + P.w / 2) * T, cy = (P.y + P.h / 2) * T + 6, el = FIGHT.phase === "fight" ? now - FIGHT.startedAt : -1, done = (FIGHT.script || []).filter((h) => h.at <= el), lastHit = done[done.length - 1];
+    const hp = lastHit ? lastHit.hp : [100, 100], over = FIGHT.phase === "result" || (FIGHT.phase === "fight" && done.length === FIGHT.script.length && el > lastHit.at + 500), win = FIGHT.phase === "result" ? FIGHT.winner : over ? lastHit.by : -1;
+    FIGHT.f.forEach((ft, i) => {
+      const dir = i ? -1 : 1, swing = lastHit && lastHit.by === i && el - lastHit.at < 260, hit = lastHit && lastHit.by !== i && el - lastHit.at < 320, down = over && win !== i;
+      const x = cx - dir * 30 + (swing ? dir * 16 : 0) + (hit ? -dir * 4 : 0) + (FIGHT.phase === "fight" && !calm && !over ? Math.sin(pnow / 170 + i * 2) * 3 * dir : 0), y = cy + (over && win === i && !calm ? -Math.abs(Math.sin(pnow / 130)) * 6 : 0);
+      sprites.push({ y: cy + 1 + i, draw: () => { if (down) { lc.globalAlpha = 0.35; } if (!spr(ft.t, x, y, i === 1, hit ? RED : "")) (DRAW[ft.t] || drawBlob)(x, y, dir, hit); lc.globalAlpha = 1;
+        if (swing && !calm) { px(x + dir * 14, y - 16, 3, 3, "#fff"); px(x + dir * 18, y - 12, 2, 2, "#ffe27a"); } } });
+    });
+    if (lastHit && el - lastHit.at < 260 && SFXfight !== `${FIGHT.round}:${done.length}`) { SFXfight = `${FIGHT.round}:${done.length}`; SFX.play(lastHit.dmg ? "hit" : "miss"); if (done.length === FIGHT.script.length) SFX.play("mob_die"); }
+  }
   for (const n of Z.npcs) sprites.push({ y: posOf(n, now).py * T + 14, draw: () => {
     const p = posOf(n, now), side = p.moving || (n.held && DLG?.npc?.id === n.id && P && P.x !== n.x), k = `${n.art}_${side ? "east" : "south"}`;
     if (!spr(k, p.px * T + 8, p.py * T + 15 + bobOf(p.moving), side && n.face < 0, "", npcScale(k, n.art))) drawPerson(p.px * T + 8, p.py * T + 15, n.face, n);
@@ -1953,6 +1982,14 @@ function frame() {
     if (names) label(n.name, sx(p.px * T + 8), sy(p.py * T + 15) + 2, "#fff", 12);
   }
   for (const pl of Z.players) { const bb = botBubbles.get(pl.id); if (bb && pnow - bb.at < 4500) { const p = pos(pl); bubble(bb.text, sx(p.px * T + 8), sy(p.py * T - 12)); } }
+  if (FIGHT && Z.def.pit) {   // names, odds and health over the two in the pit; the clock over the middle
+    const P = Z.def.pit, cx = (P.x + P.w / 2) * T, cy = (P.y + P.h / 2) * T + 6, el = FIGHT.phase === "fight" ? now - FIGHT.startedAt : -1, done = (FIGHT.script || []).filter((h) => h.at <= el), lastHit = done[done.length - 1], hp = lastHit ? lastHit.hp : [100, 100];
+    FIGHT.f.forEach((ft, i) => { const dir = i ? -1 : 1, x = sx(cx - dir * 30), y = sy(cy - 40); label(MOBS[ft.t].name, x, y, i ? "#ff9aa6" : "#ffe27a", 13); label(FIGHT.phase === "bet" ? `pays ${FIGHT.pays[i]}×` : `${Math.max(0, hp[i])}%`, x, y + 14, "#fff", 12);
+      if (FIGHT.phase !== "bet") { const bw = 44; ctx.fillStyle = "#300"; ctx.fillRect(x - bw / 2, y + 30, bw, 6); ctx.fillStyle = hp[i] > 35 ? "#4ddb8b" : "#ff6b85"; ctx.fillRect(x - bw / 2, y + 30, bw * Math.max(0, hp[i]) / 100, 6); }
+      if (lastHit && lastHit.by !== i && el - lastHit.at < 700 && lastHit.dmg) label(`-${lastHit.dmg}`, x, y + 44 - (el - lastHit.at) / 25, "#ff6b85", 16); });
+    const left = Math.max(0, Math.ceil((FIGHT.until - performance.now()) / 1000));
+    label(FIGHT.phase === "bet" ? `BETS CLOSE IN ${left}` : FIGHT.phase === "fight" ? "FIGHT!" : `${MOBS[FIGHT.f[FIGHT.winner].t].name.toUpperCase()} WINS`, sx(cx), sy(cy + 18), FIGHT.phase === "bet" ? "#8ff0b4" : "#ffe27a", 16);
+  }
   // what a go at each rock, tree and fishing spot is worth, written over it (not while it's chopped down or mined out)
   for (const ob of Z.objs) { const v = G.nodeValue(ob); if (!v || ob.gone || ob.edge || objBusy(ob, now)) continue; const tall = ["tree", "oak", "yew", "cypress", "deadtree", "willow", "skyash", "olive"].includes(ob.t); label(G.fmtCash(v), sx((ob.x + (ob.w || 1) / 2) * T), sy(ob.y * T - (tall ? 30 : 12)), ob.special ? "#ffe27a" : "#8ff0b4", 13); }
   for (const ob of Z.objs) if (ob.t === "coinstatue") label("CASH IN HERE", sx((ob.x + 1) * T), sy(ob.y * T - 34), "#ffe27a", 13);
@@ -2312,7 +2349,7 @@ function renderEx() {
 /* ------------------------------------------------------------ the Casino's tables
    Every game window (and the Cashier) is drawn by eastscape-casino.js, in the look of the site's own casino.
    The server rolls and pays; that module only shows it. */
-const CZ = createCasino({ G, SFX, send, esc, $, ico, me: () => me, you: () => you, calm: () => set("reducedMotion") });
+const CZ = createCasino({ G, SFX, send, esc, $, ico, me: () => me, you: () => you, calm: () => set("reducedMotion"), now: () => snow() });
 /* ------------------------------------------------------------ roulette: the shared table
    The server runs the clock and draws the number; this draws the board, everybody's chips and the wheel. */
 let ROUL = null, roulChip = 10, roulGot = 0, roulSpunRound = 0, roulAngle = 0, roulBallAngle = 0, roulMine = 0, roulBanner = null, roulPrevPhase = null;
