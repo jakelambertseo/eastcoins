@@ -134,7 +134,10 @@ export class World {
     this.tickMs = [];           // rolling tick durations
     this.msgsIn = 0; this.bytesOut = 0; this.sentOut = 0; this.peak = 0;
     // the Exchange: every offer from every player, online or not. Loaded before anything else runs.
-    ctx.blockConcurrencyWhile(async () => { this.ex = (await ctx.storage.get("exchange")) || { next: 1, orders: [], last: {}, tax: 0 }; });
+    ctx.blockConcurrencyWhile(async () => {
+      this.ex = (await ctx.storage.get("exchange")) || { next: 1, orders: [], last: {}, tax: 0 };
+      this.jack = (await ctx.storage.get("jackpot")) || { pot: G.JACKPOT.seed, wins: [] };
+    });
   }
 
   /* ------------------------------------------------------------ connections */
@@ -528,6 +531,7 @@ export class World {
       try { await this.persist(pl); n++; } catch (e) { /* one bad write must not stop the rest */ }
     }
     try { await this.ctx.storage.put("exchange", this.ex); } catch (e) { /* same */ }
+    try { await this.ctx.storage.put("jackpot", this.jack); this.jackDirty = false; } catch (e) { /* same */ }
     return { saved: n };
   }
 
@@ -666,6 +670,7 @@ export class World {
     // whatever is in memory is now stale: drop it so the next read comes off storage
     this.scenes.clear();
     this.ex = (await this.ctx.storage.get("exchange")) || this.ex;
+    this.jack = (await this.ctx.storage.get("jackpot")) || this.jack;
     return Response.json({ ok: true, restored: written, from: body.takenAt || null });
   }
 
@@ -812,6 +817,7 @@ export class World {
 
   tickTimed(now) {
     this.tickN++;
+    if (this.jackDirty && this.tickN % 100 === 0) { this.jackDirty = false; this.ctx.storage.put("jackpot", this.jack).catch(() => { this.jackDirty = true; }); }
     this.restartTick(now);
     const live = new Set([...this.pls.values()].map((p) => p.C.scene));
     for (const [key, S] of this.scenes) {
@@ -946,7 +952,7 @@ export class World {
       return this.say(pl, `You go into ${inside.name.replace(/^The /, "the ")}.`);
     }
     if (a.kind === "bank") return pl.out.push({ type: "bank" });
-    if (a.kind === "game") { pl.act = null; return pl.out.push({ type: "game", g: a.ob.t }); }
+    if (a.kind === "game") { pl.act = null; return pl.out.push({ type: "game", g: a.ob.t, pot: Math.floor(this.jack.pot), lastJack: this.jack.wins?.[0] || null }); }
     if (a.kind === "board") { pl.act = null; return this.dailySend(pl); }
     if (a.kind === "roulette") { pl.act = null; pl.out.push({ type: "roulopen" }); return this.roulSendTo(S, pl); }
     if (a.kind === "exchange") { pl.out.push({ type: "exchange" }); return this.exSend(pl); }
@@ -1553,12 +1559,27 @@ export class World {
       const W = G.REELS.reduce((a, r) => a + r.w, 0), spin = () => { let x = Math.random() * W; for (const r of G.REELS) { if ((x -= r.w) < 0) return r.k; } return G.REELS[0].k; };
       const reels = [spin(), spin(), spin()]; res = { reels }; mult = G.slotsPay(reels);
     }
+    let jackpot = 0;
+    if (g === "slots") {
+      const J = this.jack; if (J.pot < G.JACKPOT.cap) J.pot = Math.min(G.JACKPOT.cap, J.pot + amt * G.JACKPOT.slice);
+      if (res.reels.every((r) => r === "seven")) {
+        jackpot = Math.floor(J.pot * G.jackpotShare(amt)); J.pot -= jackpot;
+        if (J.pot < G.JACKPOT.seed) J.pot = G.JACKPOT.seed;   // the house tops it back up
+        J.wins = [{ name: pl.name, amt: jackpot, at: now }, ...(J.wins || [])].slice(0, 10);
+      }
+      this.jackDirty = true; res.pot = Math.floor(J.pot);
+    }
     pl.lastBet = now;
     G.takeInv(pl.C.inv, "coins", amt);
-    const payout = Math.floor(amt * mult);
+    const payout = Math.floor(amt * mult) + jackpot;
     this.cashTo(pl, payout);
     this.touch(pl);
-    pl.out.push({ type: "gameResult", g, bet: amt, mult, payout, ...res });
+    pl.out.push({ type: "gameResult", g, bet: amt, mult, payout, jackpot, ...res });
+    if (jackpot) {
+      // a jackpot is written at once, with the winner, so a crash can't pay it twice or lose it
+      this.persist(pl).catch(() => {}); this.ctx.storage.put("jackpot", this.jack).then(() => { this.jackDirty = false; }).catch(() => {});
+      for (const p of this.pls.values()) p.out.push({ type: "casinonote", text: `🎰💰 JACKPOT! ${pl.name} hit three sevens and won ${G.fmtCash(jackpot)} from the jackpot!` });
+    }
     // the room hears about a good win; everyone hears about a great one
     if (mult >= G.CASINO.roomWin && payout - amt > 0) {
       const text = `${pl.name} won ${G.fmtCash(payout)} on ${game.name} (${mult}×)!`;
