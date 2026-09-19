@@ -55,7 +55,10 @@ http.createServer(async (req, res) => {
     if (u.pathname.startsWith("/api/")) {
       const r = route(u.pathname); if (!r) { res.writeHead(404, { "content-type": "application/json" }); return res.end(JSON.stringify({ ok: false, code: "NO_ROUTE" })); }
       const mod = await import(pathToFileURL(r.file).href), body = await new Promise((ok) => { const c = []; req.on("data", (d) => c.push(d)); req.on("end", () => ok(Buffer.concat(c))); });
-      const request = new Request(u.href, { method: req.method, headers: { "content-type": req.headers["content-type"] || "application/json", cookie: `__Host-ec_session=${TOKEN}`, ...(req.headers["x-escape-key"] ? { "x-escape-key": req.headers["x-escape-key"] } : {}) }, body: req.method === "GET" || req.method === "HEAD" ? undefined : body });
+      // `x-rig-user: somebody` makes the call as ANOTHER player (made on the spot, 500 ZC), so a PvP table can be filled from one browser
+      let token = TOKEN; const other = String(req.headers["x-rig-user"] || "").toLowerCase().replace(/[^a-z0-9_]/g, "");
+      if (other) { token = `rig_${other}`; if (!raw.prepare(`SELECT 1 FROM users WHERE twitch_id = ?`).get(`rig:${other}`)) { raw.prepare(`INSERT INTO users (twitch_id, twitch_login, display_name) VALUES (?, ?, ?)`).run(`rig:${other}`, other, other); raw.prepare(`INSERT INTO sessions (session_hash, user_id, expires_at) VALUES (?, ?, datetime('now', '+30 day'))`).run(crypto.createHash("sha256").update(token).digest("hex"), `rig:${other}`); balances[other] = 500; } }
+      const request = new Request(u.href, { method: req.method, headers: { "content-type": req.headers["content-type"] || "application/json", cookie: `__Host-ec_session=${token}`, ...(req.headers["x-escape-key"] ? { "x-escape-key": req.headers["x-escape-key"] } : {}) }, body: req.method === "GET" || req.method === "HEAD" ? undefined : body });
       const h = mod[`onRequest${req.method[0]}${req.method.slice(1).toLowerCase()}`] || mod.onRequest; if (!h) { res.writeHead(405); return res.end(); }
       const out = await h({ env, request, params: r.params, waitUntil() {}, next: async () => new Response("", { status: 404 }) });
       res.writeHead(out.status, Object.fromEntries(out.headers)); return res.end(Buffer.from(await out.arrayBuffer()));

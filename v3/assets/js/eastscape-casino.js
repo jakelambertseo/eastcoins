@@ -152,6 +152,14 @@ const CSS = `
 .cz-cbag{margin-top:10px;max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;padding:4px 10px;background:var(--panel)}
 .cz-gear{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}.cz-gear button{display:grid;justify-items:center;gap:2px;padding:6px 2px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);cursor:pointer}.cz-gear button:disabled{opacity:.4;cursor:not-allowed}
 .cz-gear button.own{box-shadow:inset 0 0 0 1px rgba(77,219,139,.6)}.cz-gear .ico,.cz-gear img{width:30px;height:30px;image-rendering:pixelated}.cz-gear small{font:800 11.5px var(--body);color:var(--gold)}.cz-chip:disabled{opacity:.4;cursor:not-allowed}
+.cz-rr{position:relative;width:min(100%,430px);aspect-ratio:1;margin:0 auto}.cz-rrseat{position:absolute;width:74px;margin:-37px 0 0 -37px;text-align:center;transition:opacity .4s,filter .4s}
+.cz-rrseat img,.cz-rrseat i{display:block;width:54px;height:54px;margin:0 auto;border-radius:50%;border:3px solid var(--line-2);background:#241d19;object-fit:cover;font:800 20px/48px var(--body);color:var(--muted);font-style:normal}
+.cz-rrseat b{display:block;font:800 11.5px var(--body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}.cz-rrseat small{font:700 10.5px var(--body);color:var(--muted)}
+.cz-rrseat.me img,.cz-rrseat.me i{border-color:var(--gold)}.cz-rrseat.aim img,.cz-rrseat.aim i{border-color:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.18)}.cz-rrseat.out{opacity:.32;filter:grayscale(1)}.cz-rrseat.out img,.cz-rrseat.out i{border-color:var(--red)}
+.cz-rrseat.won img,.cz-rrseat.won i{border-color:var(--gold);box-shadow:0 0 0 5px rgba(232,191,53,.35)}.cz-rrseat.open i{border-style:dashed;cursor:pointer;color:var(--gold)}
+.cz-rrcyl{position:absolute;left:50%;top:50%;width:34%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 50% 50%,#3a332e 0 22%,#15110f 23% 100%);border:3px solid var(--line-2);display:grid;place-items:center;text-align:center}
+.cz-rrcyl b{font:800 22px var(--display);color:var(--gold)}.cz-rrcyl small{display:block;font:700 11px var(--body);color:var(--muted)}.cz-rrcyl.bang{animation:czbang .35s}@keyframes czbang{0%{transform:translate(-50%,-50%) scale(1.18);border-color:var(--red)}100%{transform:translate(-50%,-50%) scale(1)}}
+@media (prefers-reduced-motion:reduce){.cz-rrcyl.bang{animation:none}}
 .cz-realtabs{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 10px}.cz-realtabs button{padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);background:transparent;color:var(--muted);font:800 12.5px var(--body);cursor:pointer}.cz-realtabs button[aria-pressed=true]{background:var(--gold);color:#1a1405;border-color:var(--gold)}.cz-cur{align-items:center}.cz-curl{font:700 12px var(--body);color:var(--muted)}.cz-cur button[aria-pressed=true]{background:#ff9aa8;border-color:#ff9aa8}.cz-cur button:first-of-type[aria-pressed=true]{background:var(--gold);border-color:var(--gold)}
 .cz-luck a{color:var(--gold)}
 .cz-total{font:800 54px var(--display);letter-spacing:-.04em;color:var(--gold);line-height:1;text-shadow:0 0 30px rgba(232,191,53,.35)}
@@ -202,7 +210,7 @@ export function createCasino(env) {
     const body = $("gameBody"); body.replaceChildren();
     const grid = el("div", "cz-grid"), stage = el("section", "cz-stage"), side = el("div", "cz-side");
     R.phase = el("div", "cz-phase"); R.board = el("div", "cz-board"); R.mult = el("div", "cz-mult"); R.bet = el("div", "cz-bet"); R.pop = el("div", "cz-pop");
-    if (REAL) { const tabs = el("div", "cz-realtabs", Object.entries(REAL_KEY).map(([g, k]) => `<button type="button" data-g="${g}" aria-pressed="${g === GAME}">${esc(UI[g].title)}</button>`).join("")); tabs.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { if (b.dataset.g !== GAME) api.open(b.dataset.g, { real: true }); })); body.append(tabs);
+    if (REAL && REAL_KEY[GAME]) { const tabs = el("div", "cz-realtabs", Object.entries(REAL_KEY).map(([g, k]) => `<button type="button" data-g="${g}" aria-pressed="${g === GAME}">${esc(UI[g].title)}</button>`).join("")); tabs.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { if (b.dataset.g !== GAME) api.open(b.dataset.g, { real: true }); })); body.append(tabs);
       const cur = el("div", "cz-realtabs cz-cur"); R.curZ = el("button", "", ""); R.curT = el("button", "", ""); R.curZ.type = R.curT.type = "button"; cur.append(el("span", "cz-curl", "Bet with"), R.curZ, R.curT, el("span", "cz-curl", "either way, a win is paid in real ZCoins"));
       const pick = (v) => { if (busy) return; TIX = v;   /* (a run already going keeps the stake it started with: this only decides the NEXT bet) */ try { localStorage.setItem("gs_real_cur", v ? "tix" : "zc"); } catch (x) { /* fine */ } SFX.play("ui_click"); refresh(); };
       R.curZ.addEventListener("click", () => pick(false)); R.curT.addEventListener("click", () => pick(true)); body.append(cur); }
@@ -582,6 +590,84 @@ export function createCasino(env) {
   }
   let myLast = { round: 0, amt: 0 };
 
+  /* ---------------------------------------------------------- RUSSIAN ROULETTE: eastcoin.vip's PvP table, in this window (v59)
+     The site runs all of it (/api/casino/pvp/state and /join, game "roulette"): the 30 s lobby, the fixed 20 ZC buy-in,
+     the elimination, the payout, the seed. It is the SAME table the website's page shows, so the two rooms share one
+     lobby. ZCoins only (the owner's call): no ticket stakes here, so the site's PvP code is untouched. This window asks
+     for the table's state every RR_POLL ms WHILE IT IS OPEN and the tab is showing, and not otherwise; the site's own
+     page asks at the same rate. A result is played back only if it settled in the last RR_STALE ms. */
+  const RR_POLL = 2000, RR_STALE = 45000; let rr = { st: null, seen: null, playing: false, timer: null, joining: false };
+  const rrOpen = () => GAME === "russian" && !$("gameWin").hidden;
+  function rrSeats(players, cls = () => "", extra = () => "", openSeat = false) {
+    const n = players.length + (openSeat ? 1 : 0), ring = el("div", "cz-rr");
+    const at = (i) => { const a = (i / Math.max(n, 1)) * Math.PI * 2 - Math.PI / 2; return `left:${50 + Math.cos(a) * 41}%;top:${50 + Math.sin(a) * 41}%`; };
+    ring.innerHTML = players.map((pl, i) => `<div class="cz-rrseat ${cls(pl, i)}" style="${at(i)}" data-seat="${i}">${pl.avatar ? `<img src="${esc(String(pl.avatar).replace("-300x300.", "-70x70."))}" alt="">` : `<i>${esc((pl.displayName || pl.login || "?")[0].toUpperCase())}</i>`}<b>${esc(pl.displayName || pl.login)}</b><small>${extra(pl, i)}</small></div>`).join("")
+      + (openSeat ? `<div class="cz-rrseat open" style="${at(players.length)}" id="czRrSit"><i>+</i><b>Sit here</b><small>${rr.st?.config?.stake ?? 20} ZC</small></div>` : "")
+      + `<div class="cz-rrcyl" id="czRrCyl"><div><b id="czRrBig"></b><small id="czRrSmall"></small></div></div>`;
+    return ring;
+  }
+  function rrDraw() {
+    if (!rrOpen() || rr.playing) return; const st = rr.st; if (!st) return;
+    const L = st.lobby, cfg = st.config || {}, mine = st.me?.login, left = L ? Math.max(0, Math.ceil((L.startsAt - (st.now + (performance.now() - rr.at))) / 1000)) : 0;
+    const can = cfg.canBet && !cfg.paused && !(L && (L.youIn || L.players.length >= cfg.maxPlayers));
+    const sig = `${L ? L.players.map((x) => x.login).join(",") : "-"}|${can}`;   /* seats are rebuilt only when who is sitting changes, so faces don't reload every tick */
+    if (rr.sig !== sig || !$("czRrCyl")) { rr.sig = sig; R.board.replaceChildren(rrSeats(L ? L.players : [], (pl) => (pl.login === mine ? "me" : ""), () => (L ? `1 in ${L.players.length}` : ""), can)); $("czRrSit")?.addEventListener("click", rrJoin); }
+    $("czRrBig").textContent = L ? `${L.pot} ZC` : "Empty"; $("czRrSmall").textContent = L ? (left ? `starts in ${left}s` : "loading…") : "first to sit opens the table";
+    phase(cfg.paused ? "Closed for now" : L ? (L.youIn ? `You're in · starts in ${left}s` : `Table's open · starts in ${left}s`) : "Nobody at the table", cfg.paused ? "bad" : "open");
+    R.lock.disabled = !can || rr.joining; R.lock.textContent = rr.joining ? "Sitting down…" : L?.youIn ? "You're seated" : !cfg.canBet ? "Log in on eastcoin.vip to play" : `Sit down · ${cfg.stake ?? 20} ZC`;
+    note(L ? (L.players.length < 2 ? "One more and it's a game. Alone when the clock runs out? You're refunded." : `${L.players.length} seated. Whoever is left standing takes all ${L.pot} ZC. The house takes nothing.`) : `Everyone pays ${cfg.stake ?? 20} ZC. The cylinder goes round until one is left, and they take every buy-in. It's the same table as eastcoin.vip's: you may be joined from there.`);
+    const last = st.last, res = last?.result, names = (last?.players || []).map((x) => x.displayName || x.login);
+    R.rrSide.innerHTML = `<h2>Your ZCoins<small>on eastcoin.vip</small></h2><div class="cz-stats"><div class="cz-stat"><span>Balance</span><strong>${ZC.bal == null ? "–" : money(ZC.bal)}</strong></div><div class="cz-stat"><span>Tables this hour</span><strong>${st.me ? `${st.me.joinsThisHour ?? 0} of ${cfg.maxPerHour ?? 10}` : "–"}</strong></div></div>`
+      + (last && last.status === "SETTLED" && res ? `<h2 style="margin-top:12px">Last table<small>${last.players.length} sat down</small></h2><div class="cz-betlist"><div class="me"><span>🏆 ${esc(names[res.winner] ?? "?")}</span><strong>+${last.pot} ZC</strong></div>${(res.order || []).map((sx, k) => `<div><span>${k + 1}. ${esc(names[sx] ?? "?")}</span><strong>out</strong></div>`).join("")}</div>${last.seed ? `<p class="cz-note" style="text-align:left"><a href="/?view=verify&game=roulette&seed=${encodeURIComponent(last.seed)}&hash=${encodeURIComponent(last.hash)}&players=${last.players.length}" target="_blank" rel="noopener">Check that table's seed →</a></p>` : ""}` : last && last.status === "VOID" ? `<h2 style="margin-top:12px">Last table</h2><p class="cz-note" style="text-align:left">Nobody else sat down, so the buy-in went back.</p>` : "");
+  }
+  async function rrPlay(round) {   // the site has already decided and paid this: it is only shown
+    rr.playing = true; const t = token, pls = round.players, res = round.result, out = new Set(), mine = rr.st?.me?.login, stillHere = () => t === token && rrOpen();
+    const paint = (aim) => { R.board.replaceChildren(rrSeats(pls, (pl, i) => `${pl.login === mine ? "me" : ""} ${out.has(i) ? "out" : ""} ${aim === i ? "aim" : ""}`, (pl, i) => (out.has(i) ? "out" : ""))); };
+    phase("The cylinder's loaded", "open"); R.lock.disabled = true; R.lock.textContent = "Table's playing"; paint(null);
+    for (let k = 0; k < res.stages.length; k++) {
+      const sg = res.stages[k], alive = pls.map((_, i) => i).filter((i) => !out.has(i));
+      for (let c = 0; c <= sg.live; c++) {
+        if (!stillHere()) { rr.playing = false; return; } const seat = alive[c % alive.length]; paint(seat);
+        $("czRrBig").textContent = `${c + 1} / ${sg.chambers}`; $("czRrSmall").textContent = `round ${k + 1} of ${res.stages.length}`;
+        phase(`${pls[seat].displayName || pls[seat].login} pulls…`, "open"); await wait(calm() ? 60 : c === sg.live ? 900 : 520);
+        if (c < sg.live) SFX.play("ui_click");
+      }
+      if (!stillHere()) { rr.playing = false; return; }
+      out.add(sg.shot); paint(null); $("czRrCyl")?.classList.add("bang"); SFX.play("hit"); $("czRrBig").textContent = "BANG"; $("czRrSmall").textContent = `${pls[sg.shot].displayName || pls[sg.shot].login} is out`;
+      phase(`${pls[sg.shot].displayName || pls[sg.shot].login} is out`, "bad"); await wait(calm() ? 100 : 1300);
+    }
+    if (!stillHere()) { rr.playing = false; return; }
+    const w = res.winner, won = pls[w]?.login === mine, wasIn = pls.some((x) => x.login === mine);
+    R.board.replaceChildren(rrSeats(pls, (pl, i) => `${pl.login === mine ? "me" : ""} ${i === w ? "won" : "out"}`, (pl, i) => (i === w ? `+${round.pot} ZC` : "out")));
+    $("czRrBig").textContent = `${round.pot} ZC`; $("czRrSmall").textContent = "winner takes all";
+    phase(`${pls[w].displayName || pls[w].login} takes ${round.pot} ZC`, "done");
+    if (won) { ZC.bal = (ZC.bal ?? 0) + round.pot; pop(`+${round.pot - (rr.st?.config?.stake ?? 20)} ZC`, "last one standing"); SFX.play("win_big"); } else if (wasIn) SFX.play("lose");
+    await wait(calm() ? 300 : 2600); rr.playing = false; rr.sig = null; if (stillHere()) rrDraw();
+  }
+  async function rrPoll(first) {
+    if (!rrOpen()) { clearInterval(rr.timer); rr.timer = null; return; } if (document.hidden && !first) return;
+    const st = await ask("/api/casino/pvp/state?game=roulette"); if (!rrOpen()) return; if (!st.ok) { if (first) phase(st.message || "Couldn't reach the table", "bad"); return; }
+    rr.st = st; rr.at = performance.now(); const last = st.last;
+    if (last && last.id !== rr.seen) { const fresh = rr.seen !== null || (last.players || []).some((x) => x.login === st.me?.login); rr.seen = last.id;
+      if (last.status === "SETTLED" && last.result?.stages && fresh && last.settledAt && st.now - last.settledAt < RR_STALE && !rr.playing) return rrPlay(last);
+      if (last.status === "VOID" && (last.players || []).some((x) => x.login === st.me?.login) && st.now - (last.settledAt || 0) < RR_STALE) { ZC.bal = (ZC.bal ?? 0) + (st.config?.stake ?? 20); phase("Nobody else sat down: your 20 ZC is back", "open"); } }
+    rrDraw();
+  }
+  async function rrJoin() {
+    if (rr.joining || rr.playing) return; rr.joining = true; rrDraw(); SFX.play("chip");
+    const r = await ask("/api/casino/pvp/join", { game: "roulette" }); rr.joining = false; if (!rrOpen()) return;
+    if (!r.ok) { phase(r.message || "That didn't go through. Nothing was charged.", "bad"); SFX.play("ui_error"); return; }
+    if (r.balance != null) ZC.bal = Number(r.balance); if (rr.st && r.lobby) rr.st.lobby = r.lobby; rrDraw(); rrPoll();
+  }
+  async function russian() {
+    REAL = true; GAME = "russian"; frame("Russian Roulette", "Real ZCoins · 20 a seat · the last one standing takes every buy-in · the house takes nothing");
+    R.lock = lockBtn(); R.lock.textContent = "Asking the table…"; R.lock.disabled = true; R.lock.addEventListener("click", rrJoin); R.note = el("p", "cz-note"); R.bet.append(R.lock, R.note);
+    const side = el("section", "cz-card"); R.rrSide = side; R.side.append(side); const rules = el("section", "cz-card"); rules.innerHTML = `<h2>How it goes</h2><p class="cz-note" style="text-align:left">The first to sit opens the table and starts a 30 second clock. Whoever is in at zero plays. Each round the cylinder holds one live chamber; seats pull in turn; whoever gets it is out. Reload, again, until one is left. Every seat starts on exactly the same chance. eastcoin.vip's limits apply: ten tables an hour, 400 ZC an hour out.</p>`; R.side.append(rules);
+    rr = { st: null, seen: null, playing: false, timer: null, joining: false }; phase("Asking the table…", "open");
+    if (ZC.bal == null) ask("/api/picks/bootstrap").then((b) => { const n = Number(b?.session?.wallet?.balance); if (Number.isFinite(n)) { ZC.bal = n; rrDraw(); } });
+    await rrPoll(true); clearInterval(rr.timer); rr.timer = setInterval(() => { rrPoll(); if (!rr.playing && rr.st?.lobby) rrDraw(); }, RR_POLL);
+  }
+
   /* ---------------------------------------------------------- the Cashier, in the same clothes */
   let lastCashed = null;
   /* THE HOUSE RUBY's exchange: tickets into real ZCoins. The window only asks; the game server takes the tickets and the SITE
@@ -663,7 +749,7 @@ export function createCasino(env) {
     cashier() { lastCashed = null; dexSt = null; dexMsg = null; dexTicket = null; dexWait = false; send({ t: "dex", op: "status" }); cashier(); }, cashed(e) { cashier(e); }, dex, prize, fight,
     closed() { token++; busy = false; GAME = null; prizeHush(); prizeSpin = null; },
     blocked(k) { if (!GAME || GAME === "cashier") return; if (GAME === "fight") { phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); return note(G.NEED_TEXT[k]); } busy = false; UI[GAME]?.idle?.(); phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[k]); refresh(); },
-    stake, get game() { return GAME; }, get real() { return REAL; }, realGames: () => Object.keys(REAL_KEY)
+    stake, russian, get game() { return GAME; }, get real() { return REAL; }, realGames: () => Object.keys(REAL_KEY)
   };
   return api;
 }

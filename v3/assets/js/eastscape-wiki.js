@@ -121,6 +121,16 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-19", title: "Russian Roulette is in the Roulette Room",
+    items: [
+      "THERE'S A NEW TABLE UPSTAIRS: Russian Roulette, on the left of the Roulette Room. It is eastcoin.vip's own table, the very same one, so you may find yourself sitting across from someone playing on the website.",
+      "HOW IT GOES: the first to sit opens the table and starts a 30 second clock. Everyone pays 20 ZCoins. Each round the cylinder holds one live chamber and the seats pull in turn; whoever gets it is out. Reload, and again, until one is left. THE LAST ONE STANDING TAKES EVERY BUY-IN, and the house takes nothing. Alone when the clock runs out? Your 20 comes back.",
+      "ZCOINS ONLY at this table: no tickets. The site's limits apply (ten tables an hour, 400 ZC an hour out), and every table's seed can be checked afterwards from the window.",
+      "The classic roulette wheel next to it still takes tickets for now.",
+      "TICKETS STAY ON YOU. They can't be dropped, banked or handed over in a trade any more: they only leave your bag by being spent. Any tickets you had in the bank are back in your bag."
+    ]
+  },
+  {
     date: "2026-09-19", title: "Slots and Dice play for ZCoins (or tickets)",
     items: [
       "SLOTS AND DICE ARE REAL NOW. Same machines, same dice table, same 'Bet with' switch as the other tables: ZCoins, or tickets at 1,000 a ZCoin, and a win pays real ZCoins. The usual rules: 1 to 20 a bet, ten plays an hour at each game, 400 an hour out, and a seed you can check afterwards.",
