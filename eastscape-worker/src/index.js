@@ -19,7 +19,8 @@
 
 import * as G from "../../v3/assets/js/eastscape-shared.js";
 
-const TICK_MS = 50;          // the world steps twenty times a second, so actions start the moment you arrive
+const TICK_MS = 50;
+const CLAIM_MS = 10000;       // a claimed monster is freed 10s after its claimer's last swing          // the world steps twenty times a second, so actions start the moment you arrive
 const SNAP_EVERY = 2;        // the world's state goes out ten times a second; your own news (xp, messages, dialogue) every tick
 const SAVE_MS = 4000;        // a changed character is written at most this long after the change
 const STEP = 240;            // one tile of walking
@@ -359,7 +360,11 @@ export class World {
     let act = null;
     if (m.kind === "pvp") { if (!S.def.pvp) return; const T = this.pls.get(String(m.id)); if (!T || T === pl || T.C.scene !== S.key) return; act = { kind: "pvp", id: T.id, x: T.x, y: T.y, name: T.name }; }
     else if (m.kind === "ground") { const it = S.ground.find((x) => x.id === m.id); if (it) act = { kind: "ground", id: it.id, x: it.x, y: it.y, name: G.ITEMS[it.k].name }; }
-    else if (m.kind === "mob") { const mob = S.mobs.find((x) => x.id === m.id && !x.dead); if (mob) act = { kind: "mob", id: mob.id, x: mob.x, y: mob.y, name: G.MOBS[mob.t].name }; }
+    else if (m.kind === "mob") {
+      const mob = S.mobs.find((x) => x.id === m.id && !x.dead); if (!mob) return;
+      if (!this.mayFight(S, mob, pl, now)) return this.say(pl, `${this.claimOf(S, mob, now).name} is already fighting that.`, "bad");
+      act = { kind: "mob", id: mob.id, x: mob.x, y: mob.y, name: G.MOBS[mob.t].name };
+    }
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob) return;
@@ -891,6 +896,7 @@ export class World {
     const faceIt = () => { pl.dir = G.DIRS[`${Math.sign(a.x - pl.x)},${Math.sign(a.y - pl.y)}`] || pl.dir; pl.face = a.x > pl.x ? 1 : a.x < pl.x ? -1 : pl.face; };
     if (a.kind === "mob") {
       const m = S.mobs.find((x) => x.id === a.id); if (!m || m.dead) { pl.act = null; return; }
+      if (!this.mayFight(S, m, pl, now)) { pl.act = null; return this.say(pl, `${this.claimOf(S, m, now).name} is already fighting that.`, "bad"); }
       if (G.cheb(pl, m) !== 1) { const p = G.findPath(S.g, pl, m, 1); if (p && p.length) pl.path = p; else if (!p) pl.act = null; return; }
       a.x = m.x; a.y = m.y; faceIt();
       // the weapon sets the pace now: a gladius swings every 1.8s, a maul every 3s
@@ -898,6 +904,7 @@ export class World {
       if (!a.started) { a.started = now; pl.lastSwing = now - Math.max(0, swingMs - 600); m.lastSwing = now; }
       if (now - pl.lastSwing >= swingMs) {
         pl.lastSwing = now; pl.swingAt = now; pl.fightAt = now;
+        if (!S.def.pvp) m.claim = { id: pl.id, until: now + CLAIM_MS };
         const def = G.MOBS[m.t], hit = Math.random() < G.hitChance(G.attackRollOf(C), def.def), dmg = hit ? rint(1, G.maxHitOf(C)) : 0;
         m.hp -= dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: dmg, kind: dmg ? "hit" : "miss", t: now });
         this.award(pl, dmg);
@@ -1074,7 +1081,7 @@ export class World {
     const def = G.MOBS[m.t];
     // the more people fighting here, the sooner it comes back (see G.respawnMs): same monsters on screen, less waiting
     const fighters = this.playersIn(S).filter((p) => now - (p.fightAt || 0) < 60000).length;
-    m.dead = true; m.respawnAt = now + G.respawnMs(S.def, m.t, fighters); pl.act = null;
+    m.dead = true; m.claim = null; m.respawnAt = now + G.respawnMs(S.def, m.t, fighters); pl.act = null;
     const got = [];
     for (const [k, n, chance] of def.drops) {
       if (chance != null && Math.random() >= chance) continue;
@@ -1228,6 +1235,13 @@ export class World {
     this.say(pl, `You harvest ${n} ${nm}.`, "good");
   }
 
+  // First hit claims a monster (outside the Wilderness, where anything goes): the claim is renewed by every swing and
+  // lapses after CLAIM_MS without one, or when the claimer leaves the area. Nobody else can attack it meanwhile.
+  claimOf(S, m, now) {
+    const c = m.claim; if (!c || S.def.pvp || now > c.until) return null;
+    const p = this.pls.get(c.id); return p && p.C.scene === S.key && !p.dead ? p : null;
+  }
+  mayFight(S, m, pl, now) { const c = this.claimOf(S, m, now); return !c || c === pl; }
   mobsTick(S, now) {
     const players = this.playersIn(S);
     for (const m of S.mobs) {
@@ -1240,14 +1254,15 @@ export class World {
           if (Math.max(Math.abs(dx), Math.abs(dy)) === r && G.walkableIn(S.g, x, y) && S.g[y][x] !== "e" && !this.occupied(S, x, y, m)) spot = { x, y };
         }
         if (!spot) { m.respawnAt = now + 1000; continue; }
-        Object.assign(m, { dead: false, hp: G.MOBS[m.t].hp, x: spot.x, y: spot.y, path: [], step: null });
+        Object.assign(m, { dead: false, hp: G.MOBS[m.t].hp, x: spot.x, y: spot.y, path: [], step: null, claim: null, target: null });
         continue;
       }
       const def = G.MOBS[m.t];
       let foe = players.find((p) => p.act?.kind === "mob" && p.act.id === m.id && G.cheb(p, m) === 1 && !p.step);
       if (!foe && def.aggro) {
         const ok = (p) => p.C.scene === S.key && !G.inCage(S.def, p.x, p.y) && G.cheb(p, { x: m.hx, y: m.hy }) <= def.aggro + 5;
-        let tgt = m.target ? players.find((p) => p.id === m.target) : null;
+        const owner = this.claimOf(S, m, now);
+        let tgt = owner || (m.target ? players.find((p) => p.id === m.target) : null);
         if (!tgt || !ok(tgt)) { tgt = players.filter((p) => ok(p) && G.cheb(p, m) <= def.aggro).sort((a, b) => G.cheb(a, m) - G.cheb(b, m))[0] || null; m.target = tgt ? tgt.id : null; }
         if (tgt) {
           if (G.cheb(tgt, m) === 1 && !tgt.step) foe = tgt;
@@ -1262,6 +1277,7 @@ export class World {
           if (!foe.god) { C.hp -= dmg; this.touch(foe); }
           if (dmg) foe.hurtAt = now;
           foe.combatAt = now;
+          if (!S.def.pvp && this.mayFight(S, m, foe, now)) m.claim = { id: foe.id, until: now + CLAIM_MS };
           S.events.push({ type: "splat", who: `p:${foe.id}`, n: dmg, kind: dmg ? "hit" : "miss", t: now });
           if (!foe.act && !foe.path.length && !foe.lingerUntil) foe.act = { kind: "mob", id: m.id, x: m.x, y: m.y, name: def.name, started: 0 };
           if (C.hp <= 0) this.die(foe, S, { mob: def.name });
@@ -1338,7 +1354,7 @@ export class World {
     const out = {
       type: "snap", t: now, scene: S.key, online: this.pls.size,
       players: this.playersIn(S).map((p) => trim({ id: p.id, x: p.x, y: p.y, s: st(p), dir: p.dir, face: p.face, hurtAt: p.hurtAt, swingAt: p.swingAt, act: p.act?.kind || null, started: !!p.act?.started, ob: p.act?.ob ? p.act.ob.id : null, mob: p.act?.kind === "mob" ? p.act.id : null, hp: p.C.hp, moving: !!(p.step || p.path.length) })),
-      mobs: S.mobs.map((m) => trim({ id: m.id, t: m.t, x: m.x, y: m.y, s: st(m), face: m.face, hp: m.hp, dead: m.dead, hurtAt: m.hurtAt, swingAt: m.swingAt })),
+      mobs: S.mobs.map((m) => trim({ id: m.id, t: m.t, x: m.x, y: m.y, s: st(m), face: m.face, hp: m.hp, dead: m.dead, hurtAt: m.hurtAt, swingAt: m.swingAt, c: this.claimOf(S, m, now)?.id })),
       npcs: S.npcs.map((n) => trim({ id: n.id, x: n.x, y: n.y, s: st(n), face: n.face, held: n.holdUntil > now })),
       bots: S.bots.map((b) => trim({ id: b.id, x: b.x, y: b.y, s: st(b), dir: b.dir, face: b.face, work: b.working ? b.working.ob.id : null, workT: b.working ? b.working.ob.t : null })),
       ground: S.ground.map((x) => ({ id: x.id, k: x.k, n: x.n, x: x.x, y: x.y, owner: x.owner, until: x.until })),

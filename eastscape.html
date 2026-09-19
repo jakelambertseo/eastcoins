@@ -204,7 +204,7 @@ button,input,select{font:inherit}
 .ipick{position:relative}
 .ipick>button{display:flex;align-items:center;gap:6px;width:100%;min-width:170px;padding:4px 8px;border:1px solid #8a7a5a;border-radius:4px;background:#fffaf0;font:inherit;font-size:13px;cursor:pointer;text-align:left;color:#2a2016}
 .ipick>button .ico{width:20px;height:20px;vertical-align:0}.ipick>button::after{content:"▾";margin-left:auto;opacity:.6}
-.ipop{position:absolute;z-index:30;top:calc(100% + 3px);left:0;width:max(100%,260px);max-height:260px;display:flex;flex-direction:column;background:#fffaf0;border:1px solid #8a7a5a;border-radius:5px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.ipop{position:fixed;z-index:200;color:#2a2016;font-family:Nunito,sans-serif;display:flex;flex-direction:column;background:#fffaf0;border:1px solid #8a7a5a;border-radius:5px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
 .ipop input{margin:6px;padding:5px 7px;border:1px solid #bfb193;border-radius:4px;font:inherit;font-size:13px}
 .ipop ul{list-style:none;margin:0;padding:0 4px 4px;overflow:auto}
 .ipop li{display:flex;align-items:center;gap:7px;padding:4px 6px;border-radius:4px;cursor:pointer;font-size:13px}
@@ -516,7 +516,7 @@ button,input,select{font:inherit}
 </main>
 <script type="module">
 import * as G from "/v3/assets/js/eastscape-shared.js?v=31";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=11";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=12";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -1298,7 +1298,7 @@ const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.cl
 const KIND_OF = { range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
 function thingAt(wx, wy) {
   const now = snow(), near = (x_, y_, rx, ry) => Math.abs(wx - x_) <= rx && wy <= y_ + 4 && wy >= y_ - ry;
-  for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})` }; }
+  for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})${m.c && m.c !== you?.id ? " · someone's fighting it" : ""}` }; }
   for (const n of Z.npcs) { const p = posOf(n, now); if (near(p.px * T + 8, p.py * T + 14, 6, 24)) return { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach }; }
   for (const pl of Z.players) if (pl.id !== you?.id) { const p = posOf(pl, now); if (near(p.px * T + 8, p.py * T + 14, 6, 24)) return Z.def.pvp ? { kind: "pvp", id: pl.id, x: pl.x, y: pl.y, name: `${pl.name} (level ${pl.lvl})` } : { kind: "player", id: pl.id, x: pl.x, y: pl.y, name: pl.name }; }
   const tx = Math.floor(wx / T), ty = Math.floor(wy / T);
@@ -1888,13 +1888,21 @@ function itemPicker(host, keys, value, onPick, { placeholder = "Choose an item",
   const label = (k) => (k ? `${ico(k)} ${esc(ITEMS[k].name)}` : allowAll ? "All items" : placeholder);
   host.innerHTML = `<div class="ipick"><button type="button" aria-haspopup="listbox" aria-expanded="false">${label(value)}</button></div>`;
   const wrap = host.firstChild, btn = wrap.firstChild;
-  const close = () => { wrap.querySelector(".ipop")?.remove(); btn.setAttribute("aria-expanded", "false"); document.removeEventListener("pointerdown", outside, true); };
-  const outside = (e) => { if (!wrap.contains(e.target)) close(); };
+  // the list lives on the page itself (a window's scrolling body would clip it), placed under the button, or over it
+  // when there's no room below; it closes if anything scrolls or resizes underneath it
+  let pop = null;
+  const close = () => { pop?.remove(); pop = null; btn.setAttribute("aria-expanded", "false"); document.removeEventListener("pointerdown", outside, true); removeEventListener("resize", close); document.removeEventListener("scroll", onScroll, true); };
+  const outside = (e) => { if (!wrap.contains(e.target) && !pop?.contains(e.target)) close(); };
+  const onScroll = (e) => { if (!pop?.contains(e.target)) close(); };
   btn.addEventListener("click", () => {
-    if (wrap.querySelector(".ipop")) return close();
-    const pop = document.createElement("div"); pop.className = "ipop";
+    if (pop) return close();
+    pop = document.createElement("div"); pop.className = "ipop";
     pop.innerHTML = `<input type="search" placeholder="Search…" aria-label="Search items"><ul role="listbox"></ul>`;
-    wrap.append(pop); btn.setAttribute("aria-expanded", "true");
+    const r = btn.getBoundingClientRect(), below = innerHeight - r.bottom - 8, above = r.top - 8, up = below < 200 && above > below;
+    Object.assign(pop.style, { position: "fixed", left: `${Math.max(8, Math.min(r.left, innerWidth - Math.max(r.width, 260) - 8))}px`, width: `${Math.max(r.width, 260)}px`,
+      maxHeight: `${Math.max(140, Math.min(300, up ? above : below))}px`, ...(up ? { bottom: `${innerHeight - r.top + 3}px`, top: "auto" } : { top: `${r.bottom + 3}px` }) });
+    document.body.append(pop); btn.setAttribute("aria-expanded", "true");
+    addEventListener("resize", close); document.addEventListener("scroll", onScroll, true);
     const inp = pop.querySelector("input"), ul = pop.querySelector("ul");
     const draw = () => {
       const q = inp.value.trim().toLowerCase(), list = keys.filter((k) => !q || ITEMS[k].name.toLowerCase().includes(q));
