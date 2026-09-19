@@ -189,7 +189,11 @@ button,input,select{font:inherit}
 .gm-stage{display:grid;place-items:center;gap:6px;min-height:118px;margin:4px 0 10px;padding:12px;border-radius:8px;background:radial-gradient(circle at 50% 40%,#2f6a3e,#153a22);color:#fff3d8;text-align:center}
 .gm-stage.dice{background:radial-gradient(circle at 50% 40%,#2a4a7a,#142640)}.gm-stage.slots{background:radial-gradient(circle at 50% 40%,#6a1a2a,#2a0a12)}
 .gm-big{font-size:46px;line-height:1}
-.gm-reels{display:flex;gap:8px}.gm-reels span{display:grid;place-items:center;width:62px;height:62px;border-radius:8px;background:#fff8e8;font-size:38px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.18)}
+.gmi{image-rendering:pixelated;width:32px;height:32px;vertical-align:middle}.gmi.big{width:96px;height:96px}.gmi.mid{width:64px;height:64px}.gmi.tiny{width:16px;height:16px;vertical-align:-3px}.gmi.flip{transform:scaleX(-1) rotate(12deg)}
+.gm-coin{display:grid;place-items:center}.gm-dicepair{display:flex;gap:10px}.gm-roll{font-size:34px;font-weight:900;line-height:1;text-shadow:0 2px 0 rgba(0,0,0,.4)}
+.gm-reels span .gmi{width:64px;height:64px}
+.gm-pays{display:flex;flex-wrap:wrap;gap:4px 10px;justify-content:center;font-size:12px;margin:2px 0 4px}.gm-pays span{white-space:nowrap}
+.gm-reels{display:flex;gap:8px}.gm-reels span{display:grid;place-items:center;width:76px;height:76px;border-radius:8px;background:#fff8e8;box-shadow:inset 0 -4px 0 rgba(0,0,0,.18),0 0 0 3px #c8963a}
 .gm-msg{font-weight:800;min-height:1.3em;font-size:15px;text-shadow:0 1px 0 rgba(0,0,0,.6)}.gm-msg.won{color:#ffe27a}.gm-msg.lost{color:#f4d4d4}
 .gm-actions{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
 .gm-actions .btn{min-width:110px}
@@ -546,7 +550,7 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=32";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=33";
 import * as WK from "/v3/assets/js/eastscape-wiki.js?v=13";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -800,8 +804,8 @@ function say(text, cls = "sys") {
 /* ------------------------------------------------------------ the art (PixelLab, style A) */
 const ART = "/v3/assets/img/glad/flat/", ART_V = 3;
 // pictures replaced after they first shipped (the edge keeps each URL for a year): bump the one that changed
-const ART_VER = { chicken: 4, olive: 4, rotten: 4, chandelier: 4, revenant: 4, farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
-const ART_FILES = ["casino", "dex_south", "dex_east", "t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
+const ART_VER = { o_dicetable: 4, chicken: 4, olive: 4, rotten: 4, chandelier: 4, revenant: 4, farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
+const ART_FILES = ["casino", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d, "legend_" + d]),
   "bank", "store", "cottage", "signpost", "tree2", "tree3", "tree4", "o_spot", "g_bush", "g_boulder", "g_grass", "g_flowers",
   ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
@@ -1479,7 +1483,7 @@ function frame() {
     const oa = objArt(ob, now);
     if (oa) {
       const sc = OBJ_SCALE[oa] || (oa === "o_rock_empty" && ob.t === "vein" ? 2 : 1), bob = (ob.t === "ferry" || ob.t === "boatback") && !calm ? Math.round(Math.sin(pnow / 600)) : 0;
-      sprites.push({ y: (ob.y + ob.h) * T - 1, draw: () => spr(oa, (ob.x + ob.w / 2) * T, (ob.y + ob.h) * T + bob, flipOf(ob), "", sc) });
+      sprites.push({ y: (ob.y + ob.h) * T - 1, draw: () => spr(oa, (ob.x + ob.w / 2) * T, (ob.y + ob.h) * T + bob, ob.flip || flipOf(ob), "", sc) });
       // special ones keep their sparkles; a fire sends up embers
       const fire = ob.t === "fire";
       if ((ob.special || fire) && !calm && !objBusy(ob, now)) sprites.push({ y: ob.y * T + 16, draw: () => { for (let i = 0; i < 6; i++) { const k = (pnow / (fire ? 1100 : 2600) + i / 6) % 1, mx = ob.x * T + 8 + Math.sin(i * 2.3 + pnow / 800) * (fire ? 3 : 9), my = ob.y * T + (fire ? 4 : 8) - k * (fire ? 18 : 30); lc.globalAlpha = Math.sin(k * Math.PI) * 0.9; px(mx, my, 1, 1, ob.glow || (fire ? (i % 2 ? "#ffb030" : "#ff6a1a") : "#ffe27a")); } lc.globalAlpha = 1; } });
@@ -2034,6 +2038,7 @@ function renderEx() {
 /* ------------------------------------------------------------ the Casino: three placeholder games
    The server rolls and pays; this only shows it. A click starts the animation, the result lands it. */
 let GAME = null, gameBet = 10, diceTarget = 50, gameHist = [], gameBusy = false;
+const CART = "/v3/assets/img/glad/flat/casino/", CART_V = 1, cimg = (k, cls = "") => `<img class="gmi ${cls}" src="${CART}${k}.png?v=${CART_V}" alt="">`;
 function openGame(g) {
   GAME = g; gameBusy = false; const def = G.GAMES[g];
   $("gameTitle").textContent = `${def.icon} ${def.name}`; $("gameSub").textContent = "Cash only · the house keeps a little";
@@ -2043,9 +2048,9 @@ function openGame(g) {
 function renderGame(res) {
   if (!GAME) return;
   const g = GAME, cash = G.cashIn(me), C = G.CASINO;
-  const stage = g === "cointable" ? `<div class="gm-big${gameBusy ? " spin" : ""}" id="gmShow">🪙</div>`
-    : g === "dicetable" ? `<div class="gm-big${gameBusy ? " shake" : ""}" id="gmShow">🎲</div>`
-    : `<div class="gm-reels" id="gmShow">${(res?.reels || ["cherry", "bell", "seven"]).map((k) => `<span>${G.REELS.find((r) => r.k === k).icon}</span>`).join("")}</div>`;
+  const stage = g === "cointable" ? `<div class="gm-coin${gameBusy ? " spin" : ""}" id="gmShow">${cimg(res?.side === "tails" ? "coin_tails" : "coin_heads", "big")}</div>`
+    : g === "dicetable" ? `<div class="gm-dicepair${gameBusy ? " shake" : ""}">${cimg("die", "mid")}${cimg("die", "mid flip")}</div><div class="gm-roll" id="gmShow">${res?.roll ?? "?"}</div>`
+    : `<div class="gm-reels" id="gmShow">${(res?.reels || ["cherry", "bell", "seven"]).map((k) => `<span>${cimg(`reel_${k}`)}</span>`).join("")}</div>`;
   const mult = G.diceMult(diceTarget);
   $("gameBody").innerHTML = `<p class="note" style="margin:0 0 8px">${esc(G.GAMES[g].ex)}</p>
     <div class="gm-bet">Bet <input type="number" id="gmAmt" min="${C.minBet}" max="${C.maxBet}" value="${gameBet}">
@@ -2055,9 +2060,9 @@ function renderGame(res) {
     ${g === "dicetable" ? `<div class="gm-dice"><label>Roll under <b id="gmT">${diceTarget}</b> · wins ${diceTarget - 1}% of the time · pays <b id="gmM">${mult}×</b>
       <input type="range" id="gmTarget" min="${G.DICE.min}" max="${G.DICE.max}" value="${diceTarget}"></label></div>` : ""}
     <div class="gm-actions">${g === "cointable"
-      ? `<button class="btn" data-play="heads">Heads</button><button class="btn" data-play="tails">Tails</button>`
+      ? `<button class="btn" data-play="heads">${cimg("coin_heads", "tiny")} Heads</button><button class="btn" data-play="tails">${cimg("coin_tails", "tiny")} Tails</button>`
       : `<button class="btn" data-play="go">${g === "slots" ? "Spin" : "Roll"}</button>`}</div>
-    ${g === "slots" ? `<p class="note" style="text-align:center">${G.REELS.map((r) => `${r.icon}×3 pays ${r.pay}×`).join(" · ")} · 🍒🍒 pays ${G.SLOT_TWO_CHERRIES}×</p>` : ""}
+    ${g === "slots" ? `<div class="gm-pays">${G.REELS.map((r) => `<span>${cimg(`reel_${r.k}`, "tiny")}${cimg(`reel_${r.k}`, "tiny")}${cimg(`reel_${r.k}`, "tiny")} <b>${r.pay}×</b></span>`).join("")}<span>${cimg("reel_cherry", "tiny")}${cimg("reel_cherry", "tiny")} <b>${G.SLOT_TWO_CHERRIES}×</b></span></div>` : ""}
     <div class="gm-hist">${gameHist.map((h) => `<span class="${h > 0 ? "w" : ""}">${h > 0 ? "+" : ""}${h.toLocaleString()}</span>`).join("")}</div>`;
   const amt = $("gmAmt");
   amt.addEventListener("change", () => { gameBet = Math.max(C.minBet, Math.min(C.maxBet, +amt.value | 0)); amt.value = gameBet; });
@@ -2068,7 +2073,7 @@ function renderGame(res) {
     gameBet = Math.max(C.minBet, Math.min(C.maxBet, +amt.value | 0));
     if (gameBet > G.cashIn(me)) { $("gmMsg").className = "gm-msg lost"; $("gmMsg").textContent = `You only have ${G.fmtCash(G.cashIn(me))}.`; return; }
     gameBusy = true; renderGame();
-    if (g === "slots") { const reels = $("gmShow").children; let i = 0; spinTimer = setInterval(() => { for (const r of reels) r.textContent = G.REELS[(i++ + Math.floor(Math.random() * 6)) % G.REELS.length].icon; }, 70); }
+    if (g === "slots") { const reels = [...$("gmShow").querySelectorAll("img")]; spinTimer = setInterval(() => { for (const r of reels) r.src = `${CART}reel_${G.REELS[Math.floor(Math.random() * G.REELS.length)].k}.png?v=${CART_V}`; }, 80); }
     send({ t: "bet", g, amt: gameBet, pick: g === "cointable" ? b.dataset.play : g === "dicetable" ? diceTarget : null });
     setTimeout(() => { if (gameBusy) { gameBusy = false; clearInterval(spinTimer); renderGame(); } }, 4000);   // the server said no (it says why in the log)
   }));
@@ -2081,8 +2086,7 @@ function gameResult(e) {
     clearInterval(spinTimer); gameBusy = false; gameHist = [e.payout - e.bet, ...gameHist].slice(0, 10);
     renderGame(e);
     const show = $("gmShow"), msg = $("gmMsg"), won = e.payout > 0;
-    if (e.g === "cointable") show.textContent = e.side === "heads" ? "👑" : "🌾";
-    if (e.g === "dicetable") show.textContent = String(e.roll);
+
     msg.className = `gm-msg ${won ? "won" : "lost"}`;
     msg.textContent = e.g === "cointable" ? `${e.side === "heads" ? "Heads" : "Tails"}. ${won ? `You win ${G.fmtCash(e.payout)}!` : "You lose."}`
       : e.g === "dicetable" ? `Rolled ${e.roll} (needed under ${e.target}). ${won ? `You win ${G.fmtCash(e.payout)}!` : "You lose."}`
