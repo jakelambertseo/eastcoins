@@ -95,7 +95,7 @@ console.log("\n-- and IS re-sent when something static changes --");
 {
   const cases = [
     ["someone equips something", (w) => { const pl = w.pls.get("u1"); pl.C.eq.weapon = "bronzesword"; } ],
-    ["someone levels up", (w) => w.grant(w.pls.get("u1"), "melee", 5000)],
+    ["someone levels up", (w) => w.grant(w.pls.get("u1"), "attack", 5000)],
     ["max hp changes", (w) => w.grant(w.pls.get("u1"), "hp", 5000)]
   ];
   for (const [name, change] of cases) {

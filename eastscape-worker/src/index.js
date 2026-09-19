@@ -210,7 +210,7 @@ export class World {
   }
   touch(pl) { pl.dirty = true; pl.needSave = true; pl.changedAt ??= Date.now(); }
 
-  meOf(pl) { const C = pl.C; return { isle: { tier: C.isle.tier, themes: C.isle.themes }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, settings: C.settings, scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats }; }
+  meOf(pl) { const C = pl.C; return { isle: { tier: C.isle.tier, themes: C.isle.themes }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats }; }
 
   /* ------------------------------------------------------------ scenes */
   scene(key) {
@@ -308,6 +308,12 @@ export class World {
       }
       case "quest": return this.questOp(S, pl, m);
       case "talked": { const n = S.npcs.find((x) => x.id === m.npc); if (n) n.holdUntil = 0; return; }
+      case "stance": {
+        const k = String(m.k || "");
+        if (!G.STANCES[k] || C.stance === k) return;
+        C.stance = k; this.touch(pl);
+        return this.say(pl, `Stance: ${G.STANCES[k].name}. ${G.STANCES[k].blurb}`, "good");
+      }
       case "settings": {
         for (const [k, v] of Object.entries(m.patch || {})) if (k in G.DEFAULT_SETTINGS && typeof v === "boolean") C.settings[k] = v;
         this.touch(pl); return;
@@ -359,6 +365,10 @@ export class World {
     G.addInv(pl.C.inv, k, q); this.touch(pl); return q;
   }
   grant(pl, k, xp, track = true) {
+    // A skill that no longer exists (a stale quest reward, an old admin macro)
+    // used to throw in here, and this runs inside the tick — one bad key would
+    // stop the world for everybody. Ignore it instead.
+    if (!G.SKILLS[k]) { console.warn(`grant: no such skill "${k}"`); return; }
     const C = pl.C, before = G.lvlOf(C, k);
     C.xp[k] = Math.max(0, (C.xp[k] || 0) + xp); const after = G.lvlOf(C, k);
     if (xp > 0) pl.out.push({ type: "xp", k, xp, track });
@@ -590,6 +600,15 @@ export class World {
     return now;
   }
 
+  /* Damage into xp, split by the stance. Every stance pays the same total, so
+     this is only ever deciding WHERE it goes — see STANCES in the rules file.
+     Hitpoints xp is granted untracked (false) so the skill ring keeps showing
+     the combat skill the player is actually training. */
+  award(pl, dmg) {
+    if (!(dmg > 0)) return;
+    for (const [skill, xp] of G.xpForDamage(pl.C, dmg)) this.grant(pl, skill, xp, skill !== "hp");
+  }
+
   hasTool(pl, skill) {
     const C = pl.C, w = C.eq.weapon; if (w && G.ITEMS[w].tool === skill) return true;
     const k = G.TOOL_OF[skill], nm = G.ITEMS[k].name.toLowerCase();
@@ -600,7 +619,8 @@ export class World {
   }
   equip(pl, i) {
     const C = pl.C, st = C.inv[i]; if (!st) return; const it = G.ITEMS[st.k]; if (!it?.slot) return;
-    if (it.req && G.lvlOf(C, it.req.skill) < it.req.lvl) return this.say(pl, `You need a ${G.SKILLS[it.req.skill].name} level of ${it.req.lvl} to use the ${it.name.toLowerCase()}.`, "bad");
+    const miss = G.missingReq(C, it);
+    if (miss) return this.say(pl, `You need a ${G.SKILLS[miss.skill].name} level of ${miss.lvl} to use the ${it.name.toLowerCase()}.`, "bad");
     const old = C.eq[it.slot];
     if (st.n > 1) st.n--; else C.inv.splice(i, 1);
     if (old) this.give(pl, old);
@@ -779,12 +799,14 @@ export class World {
       const m = S.mobs.find((x) => x.id === a.id); if (!m || m.dead) { pl.act = null; return; }
       if (G.cheb(pl, m) !== 1) { const p = G.findPath(S.g, pl, m, 1); if (p && p.length) pl.path = p; else if (!p) pl.act = null; return; }
       a.x = m.x; a.y = m.y; faceIt();
-      if (!a.started) { a.started = now; pl.lastSwing = now - 1800; m.lastSwing = now; }
-      if (now - pl.lastSwing >= 2400) {
+      // the weapon sets the pace now: a gladius swings every 1.8s, a maul every 3s
+      const swingMs = G.swingMsOf(C);
+      if (!a.started) { a.started = now; pl.lastSwing = now - Math.max(0, swingMs - 600); m.lastSwing = now; }
+      if (now - pl.lastSwing >= swingMs) {
         pl.lastSwing = now; pl.swingAt = now;
-        const def = G.MOBS[m.t], hit = Math.random() < G.hitChance(G.lvlOf(C, "melee") + 1 + G.bonusOf(C).acc, def.def), dmg = hit ? rint(1, G.maxHitOf(C)) : 0;
+        const def = G.MOBS[m.t], hit = Math.random() < G.hitChance(G.attackRollOf(C), def.def), dmg = hit ? rint(1, G.maxHitOf(C)) : 0;
         m.hp -= dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: dmg, kind: dmg ? "hit" : "miss", t: now });
-        if (dmg) { this.grant(pl, "melee", dmg * 4); this.grant(pl, "hp", Math.round(dmg * 1.33), false); }
+        this.award(pl, dmg);
         if (m.hp <= 0) this.killMob(S, pl, m, now);
       }
       return;
@@ -976,12 +998,12 @@ export class World {
     if (!a.started) { a.started = now; pl.lastSwing = now - 1800; }
     if (now - pl.lastSwing < 2400) return;
     pl.lastSwing = now; pl.swingAt = now; pl.combatAt = now; T.combatAt = now;
-    const TC = T.C, hit = Math.random() < G.hitChance(G.lvlOf(C, "melee") + 1 + G.bonusOf(C).acc, (G.lvlOf(TC, "melee") + G.bonusOf(TC).def) / 2), dmg = hit ? rint(1, G.maxHitOf(C)) : 0;
+    const TC = T.C, hit = Math.random() < G.hitChance(G.attackRollOf(C), G.defenceRollOf(TC)), dmg = hit ? rint(1, G.maxHitOf(C)) : 0;
     if (!T.god) { TC.hp -= dmg; this.touch(T); }
     if (dmg) T.hurtAt = now;
     S.events.push({ type: "splat", who: `p:${T.id}`, n: dmg, kind: dmg ? "hit" : "miss", t: now });
     // real fights train you; the Cage doesn't
-    if (dmg && !cage) { this.grant(pl, "melee", dmg * 4); this.grant(pl, "hp", Math.round(dmg * 1.33), false); }
+    if (!cage) this.award(pl, dmg);
     // hit back, if they weren't doing anything
     if (!T.act && !T.path.length && !T.step && !T.lingerUntil) T.act = { kind: "pvp", id: pl.id, x: pl.x, y: pl.y, name: pl.name, started: 0 };
     if (TC.hp <= 0) this.die(T, S, pl);
@@ -1113,7 +1135,7 @@ export class World {
         m.face = foe.x > m.x ? 1 : -1;
         if (now - m.lastSwing >= G.MOBS[m.t].speed) {
           m.lastSwing = now; m.swingAt = now;
-          const C = foe.C, hit = Math.random() < G.hitChance(G.MOBS[m.t].att, (G.lvlOf(C, "melee") + G.bonusOf(C).def) / 2), dmg = hit ? rint(1, G.MOBS[m.t].max) : 0;
+          const C = foe.C, hit = Math.random() < G.hitChance(G.MOBS[m.t].att, G.defenceRollOf(C)), dmg = hit ? rint(1, G.MOBS[m.t].max) : 0;
           if (!foe.god) { C.hp -= dmg; this.touch(foe); }
           if (dmg) foe.hurtAt = now;
           foe.combatAt = now;

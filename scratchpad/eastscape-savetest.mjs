@@ -26,7 +26,7 @@ console.log("\n-- a v1 character migrates --");
   ok("gains a stats block", !!c.stats);
   ok("firstSeen falls back to created", c.stats.firstSeen === 1700000000000, String(c.stats.firstSeen));
   ok("keeps its items", invOf(c, "logs") === 40, String(invOf(c, "logs")));
-  ok("keeps its xp", c.xp.melee === 500);
+  ok("its melee xp became the three combat skills", c.xp.attack === 500 && c.xp.strength === 500 && c.xp.defence === 500, JSON.stringify(c.xp));
   ok("migrating twice is a no-op", G.normChar(c).stats.firstSeen === 1700000000000);
 }
 
@@ -39,20 +39,30 @@ console.log("\n-- a character with no version at all (pre-v field) --");
 console.log("\n-- item renames --");
 {
   // pretend "rudis" was renamed to "bronzesword" and "parma" to "bronzeshield"
-  G.ITEM_ALIASES.rudis = "bronzesword";
-  G.ITEM_ALIASES.parma = "bronzeshield";
+  // NOT a real alias target: bronzesword is itself aliased now, and the point
+  // of this test is one hop, not the chain (which has its own test below).
+  G.ITEM_ALIASES.rudis = "grudge";
+  G.ITEM_ALIASES.parma = "lantern";
   const old = { v: 2, inv: [{ k: "rudis", n: 1 }, { k: "logs", n: 3 }], bank: [{ k: "parma", n: 2 }],
     eq: { weapon: "rudis", shield: "parma" }, isle: { shelf: ["rudis"] }, xp: {}, qs: {},
-    stats: { gathered: { rudis: 4, bronzesword: 1 }, kills: { cow: 7 } } };
+    stats: { gathered: { rudis: 4, grudge: 1 }, kills: { cow: 7 } } };
   const c = G.normChar(old);
-  ok("a renamed bag item survives", invOf(c, "bronzesword") === 1, JSON.stringify(c.inv));
+  ok("a renamed bag item survives", invOf(c, "grudge") === 1, JSON.stringify(c.inv));
   ok("the old key is gone from the bag", invOf(c, "rudis") === 0);
-  ok("a renamed bank item survives", bankOf(c, "bronzeshield") === 2, JSON.stringify(c.bank));
-  ok("renamed equipment follows", c.eq.weapon === "bronzesword" && c.eq.shield === "bronzeshield", JSON.stringify(c.eq));
-  ok("a renamed island shelf item follows", c.isle.shelf[0] === "bronzesword", String(c.isle.shelf[0]));
-  ok("stat counts merge under the new key", c.stats.gathered.bronzesword === 5, String(c.stats.gathered.bronzesword));
+  ok("a renamed bank item survives", bankOf(c, "lantern") === 2, JSON.stringify(c.bank));
+  ok("renamed equipment follows", c.eq.weapon === "grudge" && c.eq.shield === "lantern", JSON.stringify(c.eq));
+  ok("a renamed island shelf item follows", c.isle.shelf[0] === "grudge", String(c.isle.shelf[0]));
+  ok("stat counts merge under the new key", c.stats.gathered.grudge === 5, String(c.stats.gathered.grudge));
   ok("kills are NOT item-aliased", c.stats.kills.cow === 7);
   delete G.ITEM_ALIASES.rudis; delete G.ITEM_ALIASES.parma;
+}
+
+console.log("\n-- the real aliases in the table --");
+{
+  const c = G.normChar({ v: 2, inv: [{ k: "bronzesword", n: 1 }, { k: "bronzehelm", n: 1 }], xp: {}, qs: {} });
+  ok("bronzesword -> bronze_sword", invOf(c, "bronze_sword") === 1, JSON.stringify(c.inv));
+  ok("bronzehelm -> bronze_helm", invOf(c, "bronze_helm") === 1);
+  for (const [from, to] of Object.entries(G.ITEM_ALIASES)) ok(`${from} -> ${to} is a real item`, !!G.ITEMS[to]);
 }
 
 console.log("\n-- a chain of renames --");
@@ -114,8 +124,8 @@ console.log("\n-- a save from a FUTURE version (a rollback) --");
 console.log("\n-- a migration that throws must not lose the character --");
 {
   G.MIGRATIONS.push(() => { throw new Error("boom"); });
-  const c = G.normChar({ v: 1, inv: [{ k: "logs", n: 6 }], xp: { melee: 99 }, qs: {} });
-  ok("the character survives", invOf(c, "logs") === 6 && c.xp.melee === 99);
+  const c = G.normChar({ v: 1, inv: [{ k: "logs", n: 6 }], xp: { attack: 99 }, qs: {} });
+  ok("the character survives", invOf(c, "logs") === 6 && c.xp.attack === 99, JSON.stringify(c.xp));
   G.MIGRATIONS.pop();
 }
 

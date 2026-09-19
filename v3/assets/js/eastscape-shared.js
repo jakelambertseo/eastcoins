@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 20;
+export const VERSION = 21;
 export const COLS = 22, ROWS = 13;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -70,10 +70,6 @@ export const ITEMS = {
   cmooncarp: { name: "Cooked moon carp", icon: "🐡", heal: 14, ex: "It glows faintly in your stomach. That's normal. Probably." },
   burnt: { name: "Burnt food", icon: "⚫", ex: "Whatever it was, it's charcoal now." },
   // the Forge's Bronze set (Brutus sells it); req is what you need to wear it
-  bronzesword: { name: "Bronze gladius", short: "Gladius", icon: "🗡️", slot: "weapon", acc: 8, str: 6, req: { skill: "melee", lvl: 5 }, ex: "Short, sharp, and very Roman." },
-  bronzehelm: { name: "Bronze helm", short: "Helm", icon: "⛑️", slot: "helm", def: 3, req: { skill: "melee", lvl: 5 }, ex: "Rings like a bell when hit. Try not to get hit." },
-  bronzeshield: { name: "Bronze shield", short: "Shield", icon: "🛡️", slot: "shield", def: 5, req: { skill: "melee", lvl: 5 }, ex: "Round, heavy, and slightly dented already." },
-  bronzecuirass: { name: "Bronze cuirass", short: "Cuirass", icon: "🛡️", slot: "body", def: 6, tier: "bronze", req: { skill: "melee", lvl: 10 }, ex: "Moulded bronze with somebody else's muscles on it. You'll grow into them." },
   toga: { name: "Goat-sized toga", short: "Toga", icon: "🥻", slot: "body", def: 3, acc: 1, ex: "Smells of goat. Fits you perfectly, which is worrying." },
   parma: { name: "Parma", icon: "🛡️", slot: "shield", def: 3 },
   sandals: { name: "Sandals", icon: "🩴", slot: "boots", def: 1 }
@@ -81,7 +77,130 @@ export const ITEMS = {
 // what a character looks like comes from their body armour: "tiro" (a recruit) unless it has a tier
 export const outfitOf = (eq) => ITEMS[eq?.body]?.tier || "tiro";
 export const SLOTS = ["helm", "weapon", "body", "shield", "legs", "gloves", "boots", "ring"];
-export const SKILLS = { melee: { name: "Melee", icon: "⚔️" }, hp: { name: "Hitpoints", icon: "❤️" }, fishing: { name: "Fishing", icon: "🎣" }, cooking: { name: "Cooking", icon: "🍳" }, farming: { name: "Harvesting", icon: "🌾" }, mining: { name: "Mining", icon: "⛏️" }, woodcutting: { name: "Woodcutting", icon: "🪓" } };
+
+/* ------------------------------------------------------------ the gear ladder
+
+   Five tiers, one every ten levels, generated rather than typed out: ten items
+   a tier by hand is fifty chances to fat-finger a number, and level 100 means
+   ten tiers. The knobs are the TIERS table; everything else is arithmetic.
+
+   What gates what:
+     weapons   Attack        (and the maul also wants Strength — it is the
+                              heavy one, and it should be the Aggressive
+                              player's reward for going that way)
+     armour    Defence       so Defence cannot be skipped
+     jewelry   Hitpoints     all-round bonuses, equal in each, which is the
+                             shape RPG MO uses: Armor, Aim and Power the same
+                             number, behind a Health requirement well above it
+
+   Three weapons a tier, at roughly equal damage per second but very different
+   feels: the gladius lands often for little, the maul rarely for a lot. Fast is
+   better against something armoured, slow is better against something soft.
+   ------------------------------------------------------------ */
+
+// per-tier knobs. `set` is the whole suit's defence; `wAcc`/`wStr` are the
+// middle weapon's, which the other two are scaled from; `jewel` is the ring's
+// bonus, the same in all three stats.
+export const TIERS = [
+  { key: "bronze",      name: "Bronze",      gate: 10, set: 20, wAcc: 8,  wStr: 6,  jewel: 2, mark: "🟫", ex: "Soft, cheap and honest. It has saved more recruits than it has failed." },
+  { key: "emerald",     name: "Emerald",     gate: 20, set: 34, wAcc: 12, wStr: 10, jewel: 3, mark: "🟩", ex: "Green glass that turned out not to be glass. It hums faintly in the cold." },
+  { key: "diamond",     name: "Diamond",     gate: 30, set: 48, wAcc: 16, wStr: 14, jewel: 5, mark: "💎", ex: "Cuts everything, including the person carrying it, if they are careless." },
+  { key: "dragonstone", name: "Dragonstone", gate: 40, set: 62, wAcc: 20, wStr: 18, jewel: 6, mark: "🔶", ex: "Warm to the touch, always, whatever the weather. Nobody asks why." },
+  { key: "onyx",        name: "Onyx",        gate: 50, set: 76, wAcc: 24, wStr: 22, jewel: 8, mark: "⬛", ex: "Black all the way through. Light goes in and does not come back out." }
+];
+export const tierOf = (key) => TIERS.find((t) => t.key === key) || null;
+
+// how a suit's defence is shared out, and what each piece is called
+const ARMOUR = {
+  body:   { share: 0.30, name: "cuirass", short: "Cuirass", icon: "🦺" },
+  shield: { share: 0.25, name: "shield",  short: "Shield",  icon: "🛡️" },
+  legs:   { share: 0.18, name: "greaves", short: "Greaves", icon: "👖" },
+  helm:   { share: 0.15, name: "helm",    short: "Helm",    icon: "⛑️" },
+  boots:  { share: 0.06, name: "boots",   short: "Boots",   icon: "🥾" },
+  gloves: { share: 0.06, name: "gloves",  short: "Gloves",  icon: "🧤" }
+};
+// acc and str are multiples of the tier's middle weapon
+const WEAPONS = {
+  gladius: { name: "gladius", short: "Gladius", icon: "🔪", speed: 1800, acc: 1.3, str: 0.6, ex: "Quick, and it asks nothing of your shoulders." },
+  sword:   { name: "longsword", short: "Sword", icon: "🗡️", speed: 2400, acc: 1.0, str: 1.0, ex: "The one everybody learns on, at every tier." },
+  maul:    { name: "maul",    short: "Maul",    icon: "🔨", speed: 3000, acc: 0.7, str: 1.4, needsStr: true, ex: "Slow, stupid and enormous. When it lands, it lands." }
+};
+
+for (const t of TIERS) {
+  for (const [slot, a] of Object.entries(ARMOUR)) {
+    ITEMS[`${t.key}_${slot}`] = {
+      name: `${t.name} ${a.name}`, short: a.short, icon: a.icon, slot,
+      def: Math.round(t.set * a.share), tier: t.key,
+      req: { skill: "defence", lvl: t.gate }, ex: t.ex
+    };
+  }
+  for (const [kind, w] of Object.entries(WEAPONS)) {
+    ITEMS[`${t.key}_${kind}`] = {
+      name: `${t.name} ${w.name}`, short: w.short, icon: w.icon, slot: "weapon",
+      acc: Math.round(t.wAcc * w.acc), str: Math.round(t.wStr * w.str), speed: w.speed, tier: t.key,
+      req: w.needsStr
+        ? [{ skill: "attack", lvl: t.gate }, { skill: "strength", lvl: t.gate }]
+        : { skill: "attack", lvl: t.gate },
+      ex: w.ex
+    };
+  }
+  ITEMS[`${t.key}_ring`] = {
+    name: `${t.name} ring`, short: "Ring", icon: "💍", slot: "ring",
+    acc: t.jewel, str: t.jewel, def: t.jewel, tier: t.key,
+    req: { skill: "hp", lvl: t.gate },
+    ex: "Jewelry asks for a strong constitution and gives a little of everything back."
+  };
+}
+
+/* A requirement is one {skill, lvl} or a list of them, so the maul can want
+   both Attack and Strength. Both sides read it through here. */
+export const reqsOf = (it) => (!it?.req ? [] : Array.isArray(it.req) ? it.req : [it.req]);
+export const missingReq = (c, it) => reqsOf(it).find((r) => lvlOf(c, r.skill) < r.lvl) || null;
+export const SKILLS = {
+  attack: { name: "Attack", icon: "⚔️" }, strength: { name: "Strength", icon: "💪" }, defence: { name: "Defence", icon: "🛡️" },
+  hp: { name: "Hitpoints", icon: "❤️" }, fishing: { name: "Fishing", icon: "🎣" }, cooking: { name: "Cooking", icon: "🍳" },
+  farming: { name: "Harvesting", icon: "🌾" }, mining: { name: "Mining", icon: "⛏️" }, woodcutting: { name: "Woodcutting", icon: "🪓" }
+};
+export const COMBAT_SKILLS = ["attack", "strength", "defence"];
+
+/* ------------------------------------------------------------ stances
+
+   How a hit's xp is shared out. The rule that makes this work, and the one
+   thing not to break: EVERY stance gives the same total. Four xp per point of
+   damage to combat, plus four thirds to Hitpoints, whichever you pick. Only the
+   destination changes.
+
+   Break that and one stance becomes the fast one, everybody uses it, and the
+   choice stops being about the character you are building. A stance that pays
+   less is a trap for exactly the players who do not do the arithmetic.
+
+   Thirds are kept as thirds rather than rounded to 1: at one damage, rounding
+   1.33 down to 1 three times would quietly pay Controlled 3 instead of 4. Xp is
+   a number, not an integer, and levels come off thresholds — so the fraction
+   simply carries. Only the display rounds.
+   ------------------------------------------------------------ */
+export const COMBAT_XP = 4;        // per point of damage, split by the stance
+export const HP_XP = 4 / 3;        // per point of damage, in every stance
+export const DEFAULT_STANCE = "controlled";
+export const STANCES = {
+  accurate:   { name: "Accurate",   icon: "🎯", share: { attack: 1 },                       blurb: "Every hit teaches you to land the next one. Attack xp." },
+  aggressive: { name: "Aggressive", icon: "💥", share: { strength: 1 },                     blurb: "Swing like you mean it. Strength xp, and a bigger maximum hit as it climbs." },
+  defensive:  { name: "Defensive",  icon: "🛡️", share: { defence: 1 },                      blurb: "Watch what they do before you do it. Defence xp, and you get hit less." },
+  controlled: { name: "Controlled", icon: "⚖️", share: { attack: 1 / 3, strength: 1 / 3, defence: 1 / 3 }, blurb: "A little of each. Slower to a milestone, further along everywhere." }
+};
+export const stanceOf = (c) => (STANCES[c?.stance] ? c.stance : DEFAULT_STANCE);
+/** What one hit is worth, as [skill, xp] pairs. Always totals COMBAT_XP + HP_XP per damage. */
+export function xpForDamage(c, dmg) {
+  const out = [];
+  for (const [skill, share] of Object.entries(STANCES[stanceOf(c)].share)) out.push([skill, COMBAT_XP * share * dmg]);
+  out.push(["hp", HP_XP * dmg]);
+  return out;
+}
+
+/* How long a swing takes. A weapon with no speed of its own swings at SWING_MS,
+   which is what the game used for everything before weapons had speeds. */
+export const SWING_MS = 2400;
+export const swingMsOf = (c) => ITEMS[c?.eq?.weapon]?.speed || SWING_MS;
 export const TOOL_OF = { mining: "pickaxe", woodcutting: "axe", fishing: "rod" };
 export const INV_MAX = 30;
 export const BANK_MAX = 200;
@@ -582,9 +701,34 @@ export const MOBS = {
   goat: { name: "Goat in a Toga", size: "m", lvl: 12, hp: 24, att: 9, def: 8, max: 3, speed: 2400, box: [7, 26], drops: [["manifesto", 1], ["bones", 1], ["toga", 1, 0.25]] }
 };
 
+/* ---------------------------------------------------------- tier drops
+
+   Everything above Bronze is found, not bought. Each of these monsters can drop
+   any piece of a tier; the chance below is the chance of getting SOMETHING from
+   that tier, spread evenly over its ten pieces, so no single slot is the one
+   everybody farms for.
+
+   A tier drops from things around its own gate and a little above, and the
+   tier above it drops rarely from the same monster — so a good night at the Tax
+   Wraiths is mostly Emerald with the occasional Diamond, which is the shape
+   that keeps somebody coming back. */
+const TIER_DROPS = {
+  gnasher:    [["emerald", 0.04]],
+  taxwraith:  [["emerald", 0.08], ["diamond", 0.02]],
+  chandelier: [["diamond", 0.08], ["dragonstone", 0.015]],
+  revenant:   [["dragonstone", 0.10], ["onyx", 0.02]]
+};
+for (const [mob, tiers] of Object.entries(TIER_DROPS)) {
+  if (!MOBS[mob]) continue;
+  for (const [tier, chance] of tiers) {
+    const pieces = Object.keys(ITEMS).filter((k) => k.startsWith(`${tier}_`));
+    for (const k of pieces) MOBS[mob].drops.push([k, 1, chance / pieces.length]);
+  }
+}
+
 /* ------------------------------------------------------------ words */
 // what it takes to climb down into the Wilderness (PvP). Change it here.
-export const WILD_REQ = { skill: "melee", lvl: 10 };
+export const WILD_REQ = { skill: "defence", lvl: 10 };   // the Wilderness asks you to be able to take a hit
 
 // cooking: raw -> cooked at a range, hearth or campfire. Burns less as you level, never at burnStop and above.
 export const COOK = {
@@ -599,12 +743,28 @@ export const EAT_MS = 1200;
 
 // the Forge: Brutus sells tools and the Bronze set, and buys what you gather (for less than you'll get on the Exchange, usually)
 export const SHOP = {
-  sells: [["pickaxe", 25], ["axe", 25], ["rod", 20], ["bronzesword", 250], ["bronzehelm", 200], ["bronzeshield", 300], ["bronzecuirass", 600]],
+  // Brutus stocks tools and BRONZE ONLY. Everything above bronze is found, not
+  // bought — otherwise the fastest route to the best gear in the game is to
+  // stand at the copper vein and walk away, which is not a route anybody should
+  // enjoy discovering.
+  sells: [["pickaxe", 25], ["axe", 25], ["rod", 20],
+    ["bronze_gladius", 220], ["bronze_sword", 250], ["bronze_maul", 280],
+    ["bronze_helm", 200], ["bronze_shield", 300], ["bronze_body", 600], ["bronze_legs", 360], ["bronze_boots", 120], ["bronze_gloves", 120], ["bronze_ring", 180]],
   buys: { copper: 6, tin: 6, grimstone: 45, marble: 35, stardust: 120, logs: 4, yewlogs: 70, ashlogs: 28, hide: 8, bones: 2, feather: 1, tusk: 10, husk: 4, pit: 1,
     receipt: 3, cobweb: 5, geode: 400, olives: 1, sunolive: 30, wheat: 1, tomatoe: 2, goldtomatoe: 60, mask: 40, monocle: 25, manifesto: 15,
     csardine: 3, cchicken: 3, cbeef: 4, cpork: 7, ctrout: 9, cgloomfin: 14, cmooncarp: 25,
-    pickaxe: 8, axe: 8, rod: 6, bronzesword: 90, bronzehelm: 70, bronzeshield: 110, bronzecuirass: 220 }
+    pickaxe: 8, axe: 8, rod: 6 }
 };
+/* Brutus buys gear back at a fraction of what a piece is worth, generated from
+   the same table that made it. Never at or above what he sells it for — that is
+   a money printer, and the content check fails the build if it ever becomes one. */
+{
+  const worth = (it) => Math.round(((it.def || 0) * 9 + (it.acc || 0) * 5 + (it.str || 0) * 6) * 1.6);
+  for (const t of TIERS) for (const k of Object.keys(ITEMS)) {
+    if (!k.startsWith(`${t.key}_`)) continue;
+    SHOP.buys[k] = Math.max(2, Math.round(worth(ITEMS[k]) * 0.35));
+  }
+}
 // dying outside the Cage: a quarter of the time one worn item falls where you died. The killer alone can take it
 // for lootMs, then anyone, until it's gone. Leaving mid-fight leaves your character standing there for lingerMs.
 export const PVP = { drop: 0.25, lootMs: 60000, groundMs: 180000, lingerMs: 10000 };
@@ -710,7 +870,7 @@ export const QUESTS = {
       ready: "Field's quiet. You're a natural.", hand: "What do I get?",
       done: "Cash, and my respect. Mostly the Cash."
     },
-    reward: { coins: 60, xp: { melee: 200 }, text: "60 Cash, 200 Melee xp" }
+    reward: { coins: 60, xp: { attack: 100, strength: 100 }, text: "60 Cash, 100 Attack and 100 Strength xp" }
   },
   catch: {
     name: "Catch of the Day", giver: "Old Tullius", where: "River Bend", icon: "🐟",
@@ -762,7 +922,13 @@ export const SETTING_INFO = {
 // old key -> current key. Chains are followed ("a" -> "b" -> "c"), so a second
 // rename of the same item only needs its own line.
 export const ITEM_ALIASES = {
-  // "rudis": "woodensword",
+  // The hand-written bronze pieces became rows of the generated tier table
+  // (2026-09-18). Without these four lines every bronze item in every bag and
+  // bank would be silently deleted on the next login.
+  bronzesword: "bronze_sword",
+  bronzehelm: "bronze_helm",
+  bronzeshield: "bronze_shield",
+  bronzecuirass: "bronze_body"
 };
 export function aliasKey(k) {
   let n = 0;
@@ -828,7 +994,22 @@ export const MIGRATIONS = [
   null,   // 1: the original format
   // 2: per-character stat counters. Nothing to backfill - the counters start
   //    from the day this shipped, which is the whole reason they went in early.
-  (c) => { c.stats = normStats(c.stats); c.stats.firstSeen ||= Number(c.created) || Date.now(); }
+  (c) => { c.stats = normStats(c.stats); c.stats.firstSeen ||= Number(c.created) || Date.now(); },
+  // 3: Melee became Attack, Strength and Defence.
+  //
+  //    The old melee level did three jobs at once — it was your accuracy, your
+  //    maximum hit AND your defence. So copying it into all three is not a
+  //    generous reading, it is the EXACT one: accuracy, max hit and defence all
+  //    come out identical to what the character had a moment ago. Dividing it
+  //    would quietly nerf everyone for having played before, and the only
+  //    visible side effect of copying is that total xp triples on paper.
+  (c) => {
+    const melee = Number(c.xp?.melee) || 0;
+    c.xp = { ...(c.xp || {}) };
+    for (const k of COMBAT_SKILLS) c.xp[k] = Math.max(Number(c.xp[k]) || 0, melee);
+    delete c.xp.melee;
+    if (!STANCES[c.stance]) c.stance = DEFAULT_STANCE;
+  }
 ];
 export const SAVE_V = MIGRATIONS.length - 1;
 
@@ -847,7 +1028,8 @@ export function freshChar() {
     v: SAVE_V, scene: START.scene, x: START.x, y: START.y, hp: 10,
     inv: [{ k: "coins", n: 25 }, { k: "pickaxe", n: 1 }, { k: "axe", n: 1 }, { k: "rod", n: 1 }],
     eq: { helm: "cap", weapon: "rudis", body: "tunic", shield: "parma", legs: null, gloves: null, boots: "sandals", ring: null },
-    xp: { melee: 0, hp: XP_AT[10], fishing: 0, farming: 0, mining: 0, woodcutting: 0, cooking: 0 },
+    stance: DEFAULT_STANCE,
+    xp: { attack: 0, strength: 0, defence: 0, hp: XP_AT[10], fishing: 0, farming: 0, mining: 0, woodcutting: 0, cooking: 0 },
     qs: {}, bank: [], settings: { ...DEFAULT_SETTINGS }, created: Date.now(), stats: freshStats(),
     isle: { plots: Array(ISLE.plots).fill(null), shelf: Array(ISLE.shelf).fill(null), theme: "meadow", themes: ["meadow"], open: true, tier: 1 }
   };
@@ -878,15 +1060,31 @@ export function normChar(c) {
     theme: fi.theme, open: ci.open !== false, tier: [1, 2, 3].includes(ci.tier) ? ci.tier : 1
   };
   if (out.isle.themes.includes(ci.theme)) out.isle.theme = ci.theme;
+  out.stance = stanceOf(out);
   out.stats = normStats(out.stats);
   return migrate(out);          // brings an older save up to SAVE_V and stamps out.v
 }
 export const lvlOf = (c, k) => levelOf(c.xp[k] || 0);
 export const maxHpOf = (c) => lvlOf(c, "hp");
-export const combatOf = (c) => Math.floor((lvlOf(c, "melee") * 1.3 + lvlOf(c, "hp")) / 2.3) + 2;
+// The three combat skills weigh the same. Equal thirds is also what keeps the
+// split neutral: a character whose attack, strength and defence all equal their
+// old melee level comes out at exactly the combat level they had before.
+export const meleeOf = (c) => (lvlOf(c, "attack") + lvlOf(c, "strength") + lvlOf(c, "defence")) / 3;
+export const combatOf = (c) => Math.floor((meleeOf(c) * 1.3 + lvlOf(c, "hp")) / 2.3) + 2;
 export const totalOf = (c) => Object.keys(SKILLS).reduce((n, k) => n + lvlOf(c, k), 0);
 export const bonusOf = (c) => { const b = { acc: 0, str: 0, def: 0 }; for (const k of Object.values(c.eq)) if (k && ITEMS[k]) for (const q in b) b[q] += ITEMS[k][q] || 0; return b; };
-export const maxHitOf = (c) => 1 + Math.floor(lvlOf(c, "melee") / 6) + Math.floor(bonusOf(c).str / 2);
+export const maxHitOf = (c) => 1 + Math.floor(lvlOf(c, "strength") / 6) + Math.floor(bonusOf(c).str / 2);
+
+/* The two rolls, in one place so the server and the page can never disagree.
+
+   Defence stays halved. Not for elegance — without it the numbers break: a
+   level 50 defence with 20 from gear rolls 70 against a revenant's 32 attack,
+   which clamps to the 10% floor and the hardest thing in the game stops landing
+   hits. Halved, a Defensive character ends up exactly as hard to hit as a
+   melee-50 character was before the split, while somebody who poured everything
+   into Strength is genuinely fragile. That difference IS the split. */
+export const attackRollOf = (c) => lvlOf(c, "attack") + 1 + bonusOf(c).acc;
+export const defenceRollOf = (c) => (lvlOf(c, "defence") + bonusOf(c).def) / 2;
 export const hitChance = (att, def) => Math.max(0.1, Math.min(0.95, 0.5 + (att - def) * 0.04));
 
 /* ------------------------------------------------------------ the Exchange

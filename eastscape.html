@@ -131,6 +131,10 @@ button,input,select{font:inherit}
 .slot.nobuy{opacity:.45}
 .cols2{display:grid;grid-template-columns:1.5fr 1fr;gap:12px}
 @media (max-width:620px){.cols2{grid-template-columns:1fr}}
+.stances{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 8px}
+.stbtn{font-size:13px;padding:3px 6px}
+.stbtn.on{color:#ffe45c;box-shadow:inset 0 0 0 2px rgba(255,228,92,.55)}
+.stnote{display:block;padding:4px 10px 2px;opacity:.75;font-size:12px;line-height:1.35}
 .cols2 h4,.wiki h4{margin:0 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#6a5a40}
 .grid8{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:3px}
 .grid8 .slot{font-size:22px}
@@ -429,7 +433,7 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=22";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=23";
 import * as WK from "/v3/assets/js/eastscape-wiki.js?v=7";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -714,11 +718,12 @@ function spr(k, x, y, flip = false, filter = "", sc = 1) {
   lc.drawImage(a.im, -Math.round(a.cx), -a.foot); lc.restore(); return true;
 }
 // item and skill icons (PixelLab): art where it exists, the emoji where it doesn't
-const ITEM_ART = new Set(["ashlogs", "axe", "beef", "bogplate", "bones", "bronzecuirass", "bronzehelm", "bronzeshield", "bronzesword", "burnt", "cap", "cbeef", "cchicken", "cgloomfin", "chicken", "cmooncarp", "cobweb", "coins", "copper", "cpork", "csardine", "ctrout", "feather", "geode", "gloomfin", "goldtomatoe", "grimstone", "grudge", "hide", "husk", "lantern", "logs", "manifesto", "marble", "mask", "menace", "monocle", "mooncarp", "olives", "parma", "pickaxe", "pit", "pork", "receipt", "rod", "rudis", "sandals", "sardine", "spiderboots", "stardust", "sunolive", "tin", "toga", "tomatoe", "trout", "tunic", "tusk", "wheat", "wraithhood", "yewlogs"]), SKILL_ART = new Set(["cooking", "farming", "fishing", "hp", "melee", "mining", "woodcutting"]), EQ_ART = new Set(["body", "boots", "gloves", "helm", "legs", "ring", "shield", "weapon"]);
+const ITEM_ART = new Set(["ashlogs", "axe", "beef", "bogplate", "bones", "bronzecuirass", "bronzehelm", "bronzeshield", "bronzesword", "burnt", "cap", "cbeef", "cchicken", "cgloomfin", "chicken", "cmooncarp", "cobweb", "coins", "copper", "cpork", "csardine", "ctrout", "feather", "geode", "gloomfin", "goldtomatoe", "grimstone", "grudge", "hide", "husk", "lantern", "logs", "manifesto", "marble", "mask", "menace", "monocle", "mooncarp", "olives", "parma", "pickaxe", "pit", "pork", "receipt", "rod", "rudis", "sandals", "sardine", "spiderboots", "stardust", "sunolive", "tin", "toga", "tomatoe", "trout", "tunic", "tusk", "wheat", "wraithhood", "yewlogs"]), SKILL_ART = new Set(["cooking", "farming", "fishing", "hp", "mining", "woodcutting"]), EQ_ART = new Set(["body", "boots", "gloves", "helm", "legs", "ring", "shield", "weapon"]);
 const IART = "/v3/assets/img/glad/flat/items/", IART_V = 2, ICO_IMG = {};
 for (const k of [...ITEM_ART, ...[...SKILL_ART].map((x) => "skill_" + x), ...[...EQ_ART].map((x) => "eq_" + x)]) { const im = new Image(); im.src = `${IART}${k}.png?v=${IART_V}`; ICO_IMG[k] = im; }
 const artOf = (k) => `<img class="ico" src="${IART}${k}.png?v=${IART_V}" alt="">`;
-const ico = (k) => (ITEM_ART.has(k) ? artOf(k) : ITEMS[k]?.icon || "");
+const ART_ALIAS = { bronze_body: "bronzecuirass", bronze_helm: "bronzehelm", bronze_shield: "bronzeshield", bronze_sword: "bronzesword" };
+const ico = (k) => { const a = ART_ALIAS[k] || k; return ITEM_ART.has(a) ? artOf(a) : ITEMS[k]?.icon || ""; };
 const sico = (k) => (SKILL_ART.has(k) ? artOf(`skill_${k}`) : SKILLS[k]?.icon || "");
 // on the canvas: centred on x, y, size pixels square
 function drawIco(k, x, y, size, skill) {
@@ -1992,9 +1997,15 @@ function renderPanel() {
     p.querySelectorAll(".eq[data-slot]").forEach((el) => el.addEventListener("click", () => send({ t: "unequip", slot: el.dataset.slot })));
   }
   if (tab === "skills") {
-    p.innerHTML = `<div class="ph">Skills <small>total ${total()}</small></div><div class="sk">${Object.entries(SKILLS).map(([k, s]) => {
+    // The stance decides where a hit's xp goes. Every stance pays the same
+    // total, so the copy says what you GET, never which is best.
+    const st = me.stance || G.DEFAULT_STANCE;
+    const stances = Object.entries(G.STANCES).map(([k, v]) =>
+      `<button type="button" class="btn stbtn${k === st ? " on" : ""}" data-stance="${k}" title="${esc(v.blurb)}">${v.icon} ${esc(v.name)}</button>`).join("");
+    p.innerHTML = `<div class="ph">Stance</div><div class="stances">${stances}</div><small class="stnote">${esc(G.STANCES[st].blurb)} Every stance earns the same xp — only where it goes changes.</small>
+      <div class="ph">Skills <small>total ${total()}</small></div><div class="sk">${Object.entries(SKILLS).map(([k, s]) => {
       const L = lvl(k), lo = XP_AT[L], hi = XP_AT[Math.min(99, L + 1)], pc = L >= 99 ? 100 : Math.floor((me.xp[k] - lo) / (hi - lo) * 100);
-      return `<div class="skr"><i>${sico(k)}</i><span><b>${s.name}</b><small>${me.xp[k].toLocaleString()} xp · ${L >= 99 ? "max" : `${(hi - me.xp[k]).toLocaleString()} to go`}</small><div class="xpb"><i style="width:${pc}%"></i></div></span><span class="lv">${L}</span></div>`;
+      return `<div class="skr"><i>${sico(k)}</i><span><b>${s.name}</b><small>${Math.floor(me.xp[k]).toLocaleString()} xp · ${L >= 99 ? "max" : `${Math.ceil(hi - me.xp[k]).toLocaleString()} to go`}</small><div class="xpb"><i style="width:${pc}%"></i></div></span><span class="lv">${L}</span></div>`;
     }).join("")}</div>`;
   }
   if (tab === "quests") {
@@ -2091,6 +2102,13 @@ function renderAdmin(p) {
     go();
   }));
 }
+document.addEventListener("click", (e) => {
+  const b = e.target.closest?.("[data-stance]");
+  if (!b) return;
+  send({ t: "stance", k: b.dataset.stance });
+  if (me) me.stance = b.dataset.stance;          // paint it at once; the server confirms
+  renderPanel();
+});
 document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => { tab = b.dataset.tab; syncTabs(); renderPanel(); }));
 window.__es = { get EX() { return EX; }, get TR() { return TR; }, wikiGo, get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED };
 
