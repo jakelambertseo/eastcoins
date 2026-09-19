@@ -29,7 +29,7 @@ const fighter = (level) => { const c = G.freshChar(); c.xp.melee = G.XP_AT[level
   if (t) { for (const s of ["helm", "body", "legs", "shield", "boots", "gloves"]) if (G.ITEMS[`${t.key}_${s}`]) c.eq[s] = `${t.key}_${s}`; c.eq.weapon = `${t.key}_sword`; } return c; };
 const FOOD = Math.min(...Object.entries(G.ITEMS).filter(([k, it]) => it.heal && !it.meal && G.valueOf(k)).map(([k, it]) => G.valueOf(k) / it.heal));   // $ per hp, cheapest cooked food
 function dropsOf(mob) { let cash = 0; for (const [k, n, p] of G.MOBS[mob].drops) { if (p != null && rnd() >= p) continue; const q = Array.isArray(n) ? rint(n[0], n[1]) : n; cash += (k === "coins" ? 1 : G.ITEMS[k]?.slot ? 0 : G.valueOf(k)) * q; }
-  for (const f of G.FINDS) if (rnd() < G.findChance(mob, f)) cash += G.valueOf(f[0]); return cash; }   // (gear drops and the click-to-use finds are left at $0: they're kept, not sold)
+  const rare = G.rollRare(mob, rnd()); if (rare && !G.ITEMS[rare].slot) cash += G.valueOf(rare); return cash; }   // (gear drops and the click-to-use finds are left at $0: they're kept, not sold)
 function fight(level, mobs) {   // mobs: [[type, how many there are in the scene]]
   const c = fighter(level), def = G.defenceRollOf(c), back = mobs.flatMap(([t, n]) => Array.from({ length: n }, () => ({ t, at: 0 })));
   let t = 0, cash = 0, hurt = 0, kills = 0;

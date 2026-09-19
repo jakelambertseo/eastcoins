@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 52;
+export const VERSION = 53;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -83,8 +83,8 @@ export const ITEMS = {
   rewind_watch: { name: "Rewind watch", icon: "⌚", use: "rewind", ex: "Click within a minute of losing a bet and it never happened: your stake comes back (up to $500). Works once." },
   tp_scroll: { name: "Casino scroll", short: "Scroll", icon: "📜", use: "tp", ex: "Click it and you're standing on the casino floor, wherever you were. Dex sells them at the bar." },
   // gear, SMITHED: what only a crafter can make
-  gamblers_ring: { name: "Gambler's ring", short: "G. ring", icon: "💍", slot: "ring", fx: { thrift: 0.5 }, ex: "Smithed from bronze and a boar's tusk." },
-  bookies_amulet: { name: "Bookie's amulet", short: "Bookie's", icon: "📿", slot: "amulet", fx: { limit: 250 }, ex: "Smithed from bronze, hide and feathers." },
+  gamblers_ring: { name: "Gambler's ring", short: "G. ring", icon: "💍", slot: "ring", fx: { thrift: 0.5 }, ex: "Smithed from bronze, and greased with boar fat so it never sticks." },
+  bookies_amulet: { name: "Bookie's amulet", short: "Bookie's", icon: "📿", slot: "amulet", fx: { limit: 250 }, ex: "Smithed from bronze and a highwayman's hide." },
   adjusters_visor: { name: "Loss adjuster's visor", short: "Visor", icon: "🧢", slot: "helm", def: 1, fx: { back: 0.01 }, ex: "Smithed from bronze and hornworm husk. Insurance, of a sort." },
   stake_loafers: { name: "Stakeholder's loafers", short: "Loafers", icon: "👞", slot: "boots", def: 1, fx: { power: 0.5 }, ex: "Smithed from emerald, hide and cobweb. They do nothing on their own." },
   // gear, DROPPED: rare, and only from things that fight back
@@ -1222,25 +1222,37 @@ export const MOBS = {
    tier above it drops rarely from the same monster — so a good night at the Tax
    Wraiths is mostly Emerald with the occasional Diamond, which is the shape
    that keeps somebody coming back. */
-const TIER_DROPS = {
-  gnasher:    [["emerald", 0.04]],
-  taxwraith:  [["emerald", 0.08], ["diamond", 0.02]],
-  chandelier: [["diamond", 0.08], ["dragonstone", 0.015]],
-  revenant:   [["dragonstone", 0.10], ["onyx", 0.02]],
-  moth:       [["emerald", 0.03]],
-  ghoul:      [["emerald", 0.05], ["diamond", 0.02]],
-  understudy: [["diamond", 0.06], ["dragonstone", 0.015]],
-  ram:        [["dragonstone", 0.04]],
-  angel:      [["dragonstone", 0.06], ["onyx", 0.015]],
-  goose:      [["onyx", 0.05]]
+/* WHAT A MONSTER DROPS (2026-09-20, the owner: "1-3 items, with the third being a rare one"). The same three lines for
+   every monster, so nobody needs the wiki to know what a kill is:
+     1. CASH, always: the bounty (BOUNTY, further down, fills this in so an average kill is worth what it should be)
+     2. ITS ONE THING, always: whatever crafting wants from it (or, for the late ones, a piece of their scene's ore)
+     3. A RARE: one roll a kill, and at most one rare a kill. It's either one of the monster's own named pieces (`rare`
+        here: [item, chance a kill]) or one of the casino FINDS every monster shares (chips, free play, boxes, dice, watches).
+   Gone with this: bones, pits, feathers and tusks (nothing used the first two; the recipes that used the others changed),
+   and the thirty-row tables that gave every piece of emerald and diamond gear a fraction of a percent each. Tier gear is
+   smithed; what DROPS is the named stuff you can't make. (Until then a Tax Wraith had 31 rows.) */
+export const LOOT = {
+  chicken:    { item: ["chicken", 1] },
+  cow:        { item: ["beef", 1] },
+  rotten:     { item: ["tomatoe", [1, 3]] },
+  hornworm:   { item: ["husk", 1] },
+  boar:       { item: ["pork", 1] },
+  highwayman: { item: ["hide", 1], rare: [["mask", 0.1], ["sharps_gloves", 0.006]] },
+  gnasher:    { item: ["emerald_ore", 1], rare: [["bogplate", 0.03]] },
+  moth:       { item: ["emerald_ore", 1], rare: [["angels_ring", 0.006]] },
+  taxwraith:  { item: ["receipt", 1], rare: [["wraithhood", 0.03], ["menace", 0.02], ["angels_ring", 0.01], ["spiderboots", 0.004]] },
+  ghoul:      { item: ["diamond_ore", 1], rare: [["sharps_gloves", 0.012]] },
+  understudy: { item: ["diamond_ore", [1, 2]], rare: [["sharps_gloves", 0.025]] },
+  chandelier: { item: ["cobweb", 1], rare: [["lantern", 0.03], ["angels_ring", 0.02], ["spiderboots", 0.01]] },
+  ram:        { item: ["dragonstone_ore", 1], rare: [["grudge", 0.02]] },
+  // the closed roads' residents, kept to the same rule for when they reopen
+  olive:      { item: ["olives", [2, 5]], rare: [["monocle", 0.1]] },
+  goat:       { item: ["manifesto", 1], rare: [["toga", 0.25]] },
+  revenant:   { item: ["dragonstone_ore", 1], rare: [["grudge", 0.04], ["menace", 0.03]] },
+  angel:      { item: ["dragonstone_ore", 1] },
+  goose:      { item: ["onyx_ore", 1] }
 };
-for (const [mob, tiers] of Object.entries(TIER_DROPS)) {
-  if (!MOBS[mob]) continue;
-  for (const [tier, chance] of tiers) {
-    const pieces = Object.keys(ITEMS).filter((k) => k.startsWith(`${tier}_`));
-    for (const k of pieces) MOBS[mob].drops.push([k, 1, chance / pieces.length]);
-  }
-}
+for (const [t, L] of Object.entries(LOOT)) if (MOBS[t]) { MOBS[t].drops = [L.item]; MOBS[t].rare = L.rare || []; }
 
 /* ------------------------------------------------------------ words */
 // what it takes to climb down into the Wilderness (PvP). Change it here.
@@ -1607,8 +1619,8 @@ for (const [i, t] of TIERS.entries()) {
 }
 
 // what only a crafter can make (2026-09-20): each takes something dug up AND something killed
-recipe("smith_gamblers_ring", { skill: "smithing", station: "anvil", in: [["bronze_bar", 2], ["tusk", 1]], out: ["gamblers_ring", 1], lvl: 5, xp: 60, ms: 2600 });
-recipe("smith_bookies_amulet", { skill: "smithing", station: "anvil", in: [["bronze_bar", 3], ["hide", 2], ["feather", 10]], out: ["bookies_amulet", 1], lvl: 10, xp: 90, ms: 2600 });
+recipe("smith_gamblers_ring", { skill: "smithing", station: "anvil", in: [["bronze_bar", 2], ["pork", 1]], out: ["gamblers_ring", 1], lvl: 5, xp: 60, ms: 2600 });
+recipe("smith_bookies_amulet", { skill: "smithing", station: "anvil", in: [["bronze_bar", 3], ["hide", 2]], out: ["bookies_amulet", 1], lvl: 10, xp: 90, ms: 2600 });
 recipe("smith_adjusters_visor", { skill: "smithing", station: "anvil", in: [["bronze_bar", 2], ["husk", 3]], out: ["adjusters_visor", 1], lvl: 15, xp: 120, ms: 2600 });
 recipe("smith_stake_loafers", { skill: "smithing", station: "anvil", in: [["emerald_bar", 2], ["hide", 3], ["cobweb", 1]], out: ["stake_loafers", 1], lvl: 25, xp: 220, ms: 2600 });
 recipe("cook_chickendinner", { skill: "cooking", station: "fire", in: [["chicken", 1], ["wheat", 2]], out: ["chickendinner", 1], lvl: 3, xp: 45, burnStop: 22 });
@@ -1699,15 +1711,16 @@ export const BOUNTY = { chicken: 23, cow: 47, rotten: 59, olive: 60, hornworm: 7
 for (const [t, want] of Object.entries(BOUNTY)) {
   const m = MOBS[t]; m.drops = m.drops.filter(([k]) => k !== "coins");
   const other = m.drops.reduce((a, [k, n, p]) => a + (VALUE[k] ?? 0) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0), gap = Math.round(want * 0.88 - other);
-  if (gap >= 2) m.drops.push(["coins", [Math.max(1, Math.round(gap * 0.6)), Math.round(gap * 1.4)]]);
+  if (gap >= 2) m.drops.unshift(["coins", [Math.max(1, Math.round(gap * 0.6)), Math.round(gap * 1.4)]]);   // Cash first: it's line one of every table
 }
 /* FINDS: what any kill can turn up on top of the monster's own drops. [item, share]: the chance is share x the
    monster's bounty / the find's worth, so every monster gives the same fraction of its pay this way and a chicken
    farmer sees a red chip about once in 250 kills while the Understudy coughs one up every 14. */
 export const FINDS = [["chip_red", 0.04, 250], ["chip_black", 0.03, 1000], ["chip_gold", 0.03, 5000], ["chip_free", 0.008, 50], ["mysterybox", 0.008, 60], ["devils_dice", 0.004, 50], ["rewind_watch", 0.006, 250]];
 export const findChance = (mob, [, share, worth]) => Math.min(0.25, share * (BOUNTY[mob] || 0) / worth);
-// the two pieces of gambling gear that only drop (crafters make the other four)
-for (const [t, k, p] of [["highwayman", "sharps_gloves", 0.006], ["ghoul", "sharps_gloves", 0.012], ["understudy", "sharps_gloves", 0.025], ["moth", "angels_ring", 0.006], ["taxwraith", "angels_ring", 0.01], ["chandelier", "angels_ring", 0.02]]) MOBS[t].drops.push([k, 1, p]);
+/** A monster's whole rare line: its own named pieces, then the casino finds, each with its chance a kill. ONE roll decides. */
+export const raresOf = (mob) => [...(MOBS[mob]?.rare || []), ...(BOUNTY[mob] ? FINDS.map((f) => [f[0], findChance(mob, f)]) : [])];
+export const rollRare = (mob, r) => { for (const [k, p] of raresOf(mob)) { if (r < p) return k; r -= p; } return null; };
 export const BOX = [["clover", 3], ["chip_red", 2], ["chip_free", 3], ["beer", 3], ["whiskey", 2], ["cocktail", 2], ["steakdinner", 2], ["tp_scroll", 3], ["devils_dice", 2], ["rewind_watch", 1], ["chip_black", 0.3]];   // what's in a mystery box, by weight
 export const valueOf = (k) => VALUE[k] ?? SHOP.buys[k] ?? 0;
 /** The first thing a raw material can be made into, and what that's worth each: the Cashier's "worth more made" nudge. */
@@ -1716,7 +1729,8 @@ export const madeFrom = (k) => { const r = Object.values(RECIPES).filter((x) => 
 export const nodeValue = (ob) => (ob.t === "rock" || ob.t === "vein" ? valueOf(ob.ore) : ob.t === "spot" ? valueOf(ob.fish || "sardine") : ob.t === "wheat" ? valueOf("wheat")
   : ob.t === "olive" || ob.t === "vine" ? valueOf(ob.crop || "olives") : ["tree", "oak", "yew", "cypress", "deadtree", "willow", "skyash"].includes(ob.t) ? valueOf(ob.log || "logs") : 0);
 /** What a monster's drops come to on an average kill. */
-export const mobValue = (t) => Math.round((MOBS[t]?.drops || []).reduce((a, [k, n, p]) => a + (k === "coins" ? 1 : valueOf(k)) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0));
+export const mobValue = (t) => Math.round((MOBS[t]?.drops || []).reduce((a, [k, n, p]) => a + (k === "coins" ? 1 : valueOf(k)) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0)
+  + raresOf(t).reduce((a, [k, p]) => a + (ITEMS[k]?.slot ? 0 : valueOf(k)) * p, 0));
 /** What the Cashier will take off you in one go: loot and things you made, never tools, charms or anything you could wear. */
 export const isLoot = (k) => k !== "coins" && valueOf(k) > 0 && !ITEMS[k]?.slot && !ITEMS[k]?.luck && !ITEMS[k]?.use && !ITEMS[k]?.drink;
 

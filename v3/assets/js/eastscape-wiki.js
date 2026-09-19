@@ -121,6 +121,16 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-20", title: "Simpler drops: Cash, its one thing, and a rare",
+    items: [
+      "Every monster now drops the same three lines. CASH, always. ITS ONE THING, always: chicken from chickens, beef from cows, tomatoes from rotten tomatoes, husk from hornworms, pork from boars, hide from highwaymen, emerald ore from gnashers and moths, a receipt from Tax Wraiths, diamond ore from ghouls and the Understudy, cobweb from the spider, dragonstone ore from rams. And A RARE: one roll a kill, at most one a kill.",
+      "The rare is either one of the monster's own named pieces (the highwayman's mask, the Bog-hound hide, the wraith's hood, the Ring of Mild Menace, the Lantern shield, the Eight-league boots, the Grudge knife from rams, Card sharp's gloves, the Angel's ring) or a casino find (house chips, a free-play chip, a mystery box, Devil's dice, a rewind watch). A piece of gear dropping is announced to everyone in the scene. Each monster's wiki page lists its rares and the chance of each.",
+      "A kill is worth exactly what it was: the Cash makes up the difference.",
+      "Gone: bones, pits, feathers and tusks (what you have still sells), and the long tables that gave every piece of emerald and diamond gear a tiny chance from late monsters. That gear is smithed at the camp.",
+      "Two recipes changed to match: the Gambler's ring is 2 bronze bars and a piece of pork; the Bookie's amulet is 3 bronze bars and 2 hides (hide comes from highwaymen now)."
+    ]
+  },
+  {
     date: "2026-09-20", title: "One way out: the Yard, the Gloam, Cloudreach",
     items: [
       "THE WORLD IS ONE LINE NOW. The casino has one arch (OUTSIDE), and it leads to three scenes in a row: the Yard (levels 1 to 14), the Gloam (15 to 29) and Cloudreach (30 and up). Every one of them has its rocks, trees and fish AND its monsters, so whatever you and your friends are doing, you're doing it in the same field. The further out you walk, the more everything is worth.",
