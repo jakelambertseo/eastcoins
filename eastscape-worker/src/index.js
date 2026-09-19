@@ -31,6 +31,7 @@ const RESTART_HOLD_MS = 25000;   // how long the client waits before trying agai
 const METRIC_TICKS = 1200;       // a minute of tick times, kept in memory only   // how long the page waits before trying again, so it reconnects AFTER the deploy
 const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const CASINO_LINES = ["one more spin", "im due", "LETS GOOO", "two cherries again lol", "who took my machine", "this one's hot i can feel it", "down bad. back to the workyard", "heads never fails", "brb selling logs", "jackpot's getting big", "gg house", "roll under 5 u cowards", "never lucky", "ok last one for real"];
 const BOT_LINES = ["anyone know where the good fishing is?", "gz", "cows are free xp lol", "selling feathers", "this farm is peaceful", "wheat run anyone?", "brb", "that yew is taunting me", "who keeps feeding the olives"];
 const EXAMINE_KINDS = new Set(["hive", "notice", "sign", "statue", "fountain", "fire", "bush", "boulder", "hay", "counter", "pool", "column", "range", "table", "barrel", "bed", "plant", "bench", "goatstatue", "chest", "rug", "chair", "sack", "cat", "bucket", "bigtomato", "press", "crate", "scarecrow", "milestone", "toll", "barricade", "chariot", "mule"]);
 
@@ -848,7 +849,7 @@ export class World {
     // the simulated players chat now and then
     if (now > this.nextChatter) {
       this.nextChatter = now + 9000;
-      for (const key of live) { const S = this.scenes.get(key); if (S?.bots.length && Math.random() < 0.035) S.events.push({ type: "bubble", id: pick(S.bots).id, text: pick(BOT_LINES), t: now }); }
+      for (const key of live) { const S = this.scenes.get(key); if (S?.bots.length && Math.random() < 0.035) S.events.push({ type: "bubble", id: pick(S.bots).id, text: pick(S.def.floor === "casino" ? CASINO_LINES : BOT_LINES), t: now }); }
     }
     for (const T of this.trades.values()) { const a = this.pls.get(T.a), b = this.pls.get(T.b); if (!a || !b || G.cheb(a, b) > G.TRADE_RANGE + 2) this.tradeEnd(T, "Trade cancelled: you walked too far apart."); }
     if (this.tickN % SNAP_EVERY === 0) this.broadcast(now); else this.sendPrivate();
@@ -1334,7 +1335,7 @@ export class World {
       if (!this.stepEntity(S, n, now, false) && now > n.nextWander) {
         n.nextWander = now + (n.level ? 1500 : 4000) + Math.random() * 5000;
         if (n.level && Math.random() < 0.45) {
-          const jobs = S.objs.filter((o) => ["tree", "oak", "cypress", "rock", "vein", "spot", "olive", "vine"].includes(o.t) && !o.special && !(o.stumpUntil > now) && !(o.emptyUntil > now));
+          const jobs = S.objs.filter((o) => ["tree", "oak", "cypress", "rock", "vein", "spot", "olive", "vine", "slots", "cointable", "dicetable"].includes(o.t) && !o.special && !(o.stumpUntil > now) && !(o.emptyUntil > now));
           const ob = jobs.length && pick(jobs), at = ob && G.nearestCell(ob, n), p = ob && G.findPath(S.g, n, at, ob.t === "spot" ? 2 : 1);
           if (p) { n.path = p; n.goal = { ob, x: at.x, y: at.y }; }
         } else if (n.level) { const tx = rint(2, G.COLS - 3), ty = rint(2, G.ROWS - 3); if (G.walkableIn(S.g, tx, ty)) { const p = G.findPath(S.g, n, { x: tx, y: ty }, 0); if (p) n.path = p.slice(0, 8); } }
