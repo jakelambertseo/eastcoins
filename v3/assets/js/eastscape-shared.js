@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 37;
+export const VERSION = 38;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -344,7 +344,7 @@ export function markBanks(g) {
 function wild(g, objs, exits, edges, keep = [], seed = 1) {
   const kept = new Set(keep.map(([x, y]) => `${x},${y}`)), rim = [];
   const wet = (x, y) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (g[y + dy]?.[x + dx] === "~") return true; return false; };
-  const put = (t, x, y) => { if (wet(x, y)) return; const ob = { t, x, y, name: { tree: "Tree", bush: "Bush", boulder: "Boulder" }[t] }; objs.push(ob); g[y][x] = "#"; rim.push(ob); };
+  const put = (t, x, y) => { if (wet(x, y)) return; const ob = { t, x, y, edge: true, name: { tree: "Tree", bush: "Bush", boulder: "Boulder" }[t] }; objs.push(ob); /* (edge: the treeline, not a place to work; the page leaves its price off) */ g[y][x] = "#"; rim.push(ob); };
   for (const d of ["n", "s", "w", "e"]) {
     const kind = edges[d] || "forest", len = d === "n" || d === "s" ? COLS : ROWS, dc = d.charCodeAt(0);
     if (kind !== "open") for (let i = 0; i < len; i++) {
@@ -535,49 +535,70 @@ Object.assign(SCENES, {
     bots: [{ name: "Oenomaus", level: 38 }]
   },
   // west of the Olive Grove: a wood where it is always five minutes before dark. Levels 20-38.
+  /* THE SKILLING LINE runs west from the casino: the Workyard, then the Gloam, then Cloudreach. Same three jobs at
+     every stop (rock, wood, fish), worth more the further out you go, and gated by level so there is somewhere to
+     be heading. No monsters on this line (2026-09-20): fighting is the other arch. */
   gloam: {
-    name: "The Gloam", ground: "gloam", exits: { e: "grove" }, tint: "rgba(8,30,48,.32)",
+    name: "The Gloam", ground: "gloam", exits: { e: "workyard", w: "cloud" }, tint: "rgba(8,30,48,.32)",
     build() {
       const g = grid(), objs = [], keep = [];
-      for (let x = 8; x < COLS; x++) g[6][x] = ",";
-      for (let y = 3; y <= 6; y++) g[y][8] = ",";
-      for (let x = 3; x <= 8; x++) g[3][x] = ",";
-      // the black pond, fished from its south bank
-      for (let y = 8; y <= 10; y++) for (let x = 2; x <= 6; x++) g[y][x] = "~";
-      for (const x of [3, 5]) objs.push({ t: "spot", x, y: 8, name: "Lantern pool", req: { skill: "fishing", lvl: 30 }, fish: "lanternfish", xp: 95, glow: "#7ad8ff", tease: "Little lights drift under the surface. They move away when you lean closer." });
-      for (let x = 2; x <= 7; x++) keep.push([x, 7]);
-      for (const [x, y] of [[17, 3], [18, 4], [16, 9]]) { objs.push({ t: "rock", ore: "emerald_ore", x, y, name: "Emerald rock", req: { skill: "mining", lvl: 20 }, xp: 45, tease: "Green glints in the rock. Your pickaxe isn't up to it yet." }); g[y][x] = "#"; }
-      for (const [x, y] of [[4, 1], [6, 1]]) { objs.push({ t: "rock", ore: "diamond_ore", x, y, name: "Diamond rock", req: { skill: "mining", lvl: 30 }, xp: 65, tease: "Something in there catches light that isn't here." }); g[y][x] = "#"; }
-      for (const [x, y] of [[11, 2], [13, 10], [10, 10]]) { objs.push({ t: "willow", x, y, name: "Gloomwillow", log: "willowlogs", req: { skill: "woodcutting", lvl: 35 }, xp: 110, tease: "The fronds close up around the trunk when you raise your axe." }); g[y][x] = "#"; }
-      objs.push({ t: "fire", x: 12, y: 7, name: "Campfire" }); g[7][12] = "#";
-      for (let x = 8; x < COLS; x++) keep.push([x, 5], [x, 7]);
+      for (let x = 0; x < COLS; x++) g[13][x] = ",";
+      for (let y = 6; y <= 13; y++) g[y][31] = ","; for (let y = 13; y <= 18; y++) g[y][19] = ","; for (let y = 6; y <= 13; y++) g[y][10] = ",";
+      for (const [x, y] of [[5, 4], [8, 3], [12, 5], [6, 8], [14, 8], [16, 4], [3, 7]]) { objs.push({ t: "willow", x, y, name: "Gloomwillow", log: "willowlogs", req: { skill: "woodcutting", lvl: 15 }, xp: 60, tease: "The fronds close up around the trunk when you raise your axe." }); g[y][x] = "#"; }
+      for (const [x, y] of [[29, 4], [32, 3], [34, 5], [36, 8], [33, 9]]) { objs.push({ t: "rock", ore: "emerald_ore", x, y, name: "Emerald rock", req: { skill: "mining", lvl: 15 }, xp: 45, tease: "Green glints in the rock. Your pickaxe isn't up to it yet." }); g[y][x] = "#"; }
+      for (const [x, y] of [[31, 19], [34, 21], [36, 18], [38, 22]]) { objs.push({ t: "rock", ore: "diamond_ore", x, y, name: "Diamond rock", req: { skill: "mining", lvl: 25 }, xp: 65, tease: "Something in there catches light that isn't here." }); g[y][x] = "#"; }
+      // the black pond, fished from its north bank
+      for (let y = 20; y <= 23; y++) for (let x = 13; x <= 25; x++) g[y][x] = "~";
+      for (const x of [15, 19, 23]) objs.push({ t: "spot", x, y: 20, name: "Lantern pool", req: { skill: "fishing", lvl: 15 }, fish: "lanternfish", xp: 60, glow: "#7ad8ff", tease: "Little lights drift under the surface. They move away when you lean closer." });
+      for (let x = 12; x <= 26; x++) keep.push([x, 19], [x, 18]);
+      objs.push({ t: "fire", x: 22, y: 10, name: "Campfire" }); g[10][22] = "#";
+      objs.push({ t: "sign", x: 3, y: 11, name: "West: Cloudreach. Bring level 30 and a head for heights." }); g[11][3] = "#";
+      for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "scrub", s: "scrub", w: "scrub", e: "scrub" }, [...keepOf(this), ...keep], 9);
       return { g, objs, blobs: [] };
     },
-    mobs: [["moth", 15, 5], ["moth", 19, 8], ["moth", 14, 3], ["ghoul", 9, 9], ["ghoul", 7, 4], ["understudy", 3, 5]],
-    npcs: [], bots: []
+    mobs: [], npcs: [], bots: []
   },
-  // north off Tomatoe Hill, up past the tops of the vines: an island of cloud in the open sky. Levels 40-55.
   cloud: {
-    name: "Cloudreach", ground: "cloud", exits: { s: "tomato" },
+    name: "Cloudreach", ground: "cloud", exits: { e: "gloam" },
     build() {
       const g = grid(), objs = [], keep = [];
-      for (let y = 4; y < ROWS; y++) { g[y][16] = ","; g[y][17] = ","; }
-      for (let x = 5; x <= 17; x++) g[4][x] = ",";
-      // a hole in the cloud: the sky below, and eels in it, fished from its east side
-      for (let y = 7; y <= 9; y++) for (let x = 8; x <= 11; x++) g[y][x] = "~";
-      for (const y of [7, 9]) objs.push({ t: "spot", x: 11, y, name: "Hole in the cloud", req: { skill: "fishing", lvl: 50 }, fish: "skyeel", xp: 150, glow: "#bfe8ff", tease: "Long shapes swim through the open sky below. Your line isn't long enough yet." });
-      for (let y = 6; y <= 10; y++) keep.push([12, y]);
-      for (const [x, y] of [[4, 7], [5, 9], [3, 9]]) { objs.push({ t: "rock", ore: "dragonstone_ore", x, y, name: "Dragonstone rock", req: { skill: "mining", lvl: 40 }, xp: 90, tease: "Red crystal, warm through your gloves. It laughs at your pickaxe." }); g[y][x] = "#"; }
-      for (const [x, y] of [[14, 2], [16, 2]]) { objs.push({ t: "rock", ore: "onyx_ore", x, y, name: "Storm-struck onyx", req: { skill: "mining", lvl: 50 }, xp: 120, tease: "Black stone, still crackling from the last lightning. Not yet." }); g[y][x] = "#"; }
-      for (const [x, y] of [[7, 2], [3, 5], [13, 11]]) { objs.push({ t: "skyash", x, y, name: "Skyash", log: "skyashlogs", req: { skill: "woodcutting", lvl: 50 }, xp: 150, tease: "The leaves ring like little bells. Your axe would just bounce off." }); g[y][x] = "#"; }
-      objs.push({ t: "fire", x: 14, y: 6, name: "Cloud-fire" }); g[6][14] = "#";
-      for (let x = 5; x <= 17; x++) keep.push([x, 3], [x, 5]);
-      for (let y = 5; y < ROWS; y++) keep.push([15, y], [18, y]);
+      for (let x = 5; x < COLS; x++) g[13][x] = ",";
+      for (let y = 6; y <= 13; y++) g[y][11] = ","; for (let y = 6; y <= 13; y++) g[y][32] = ","; for (let y = 13; y <= 17; y++) g[y][22] = ",";
+      for (const [x, y] of [[8, 4], [10, 7], [13, 3], [14, 6], [7, 8]]) { objs.push({ t: "rock", ore: "dragonstone_ore", x, y, name: "Dragonstone rock", req: { skill: "mining", lvl: 30 }, xp: 90, tease: "Red crystal, warm through your gloves. It laughs at your pickaxe." }); g[y][x] = "#"; }
+      for (const [x, y] of [[30, 4], [33, 3], [35, 6], [31, 8]]) { objs.push({ t: "rock", ore: "onyx_ore", x, y, name: "Storm-struck onyx", req: { skill: "mining", lvl: 40 }, xp: 120, tease: "Black stone, still crackling from the last lightning. Not yet." }); g[y][x] = "#"; }
+      for (const [x, y] of [[6, 18], [9, 20], [12, 18], [10, 23], [14, 21]]) { objs.push({ t: "skyash", x, y, name: "Skyash", log: "skyashlogs", req: { skill: "woodcutting", lvl: 30 }, xp: 110, tease: "The leaves ring like little bells. Your axe would just bounce off." }); g[y][x] = "#"; }
+      // a hole in the cloud: the sky below, and eels in it, fished from its north side
+      for (let y = 19; y <= 22; y++) for (let x = 27; x <= 36; x++) g[y][x] = "~";
+      for (const x of [29, 32, 35]) objs.push({ t: "spot", x, y: 19, name: "Hole in the cloud", req: { skill: "fishing", lvl: 30 }, fish: "skyeel", xp: 110, glow: "#bfe8ff", tease: "Long shapes swim through the open sky below. Your line isn't long enough yet." });
+      for (let x = 26; x <= 37; x++) keep.push([x, 18], [x, 17]);
+      objs.push({ t: "fire", x: 22, y: 10, name: "Cloud-fire" }); g[10][22] = "#";
+      for (let x = 5; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "water", s: "water", w: "water", e: "water" }, [...keepOf(this), ...keep], 10);
       return { g, objs, blobs: [] };
     },
-    mobs: [["ram", 6, 6], ["ram", 7, 11], ["angel", 14, 9], ["angel", 12, 2], ["goose", 9, 5]],
+    mobs: [], npcs: [], bots: []
+  },
+  /* THE THIRD FIGHT MAP, past the Rough. It wears the Wilderness's clothes (dark: true) but nobody can attack you here
+     but the residents. Gnashers and moths by the gate, ghouls and Tax Wraiths in the middle, a Chandelier Spider and
+     the Understudy at the far end. Several of them come for you on sight. */
+  boneyard: {
+    name: "The Boneyard", dark: true, exits: { w: "rough" }, tint: "rgba(60,20,70,.2)",
+    build() {
+      const g = grid(), objs = [], keep = [];
+      for (let x = 0; x <= 39; x++) g[13][x] = ",";
+      for (let y = 5; y <= 13; y++) g[y][16] = ","; for (let y = 13; y <= 21; y++) g[y][29] = ",";
+      objs.push({ t: "fire", x: 5, y: 10, name: "Campfire" }); g[10][5] = "#";
+      for (const [x, y] of [[9, 5], [11, 6], [10, 8], [20, 18], [22, 19], [21, 21], [33, 5], [35, 6], [34, 8], [25, 5], [13, 20], [37, 20]]) { objs.push({ t: "gravestone", x, y, name: "Gravestone" }); g[y][x] = "#"; }
+      for (const [x, y] of [[7, 19], [27, 9], [38, 11]]) { objs.push({ t: "skeleton", x, y, name: "Somebody who stayed" }); g[y][x] = "#"; }
+      for (const [x, y] of [[4, 4], [18, 3], [30, 22], [40, 4], [6, 22], [24, 22], [41, 22]]) { objs.push({ t: "deadtree", x, y, name: "Dead tree" }); g[y][x] = "#"; }
+      for (let x = 0; x <= 39; x++) keep.push([x, 12], [x, 14]);
+      wild(g, objs, this.exits, { n: "scrub", s: "scrub", w: "scrub", e: "rocky" }, [...keepOf(this), ...keep], 33);
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["gnasher", 8, 8], ["gnasher", 10, 18], ["gnasher", 13, 9], ["moth", 17, 8], ["moth", 19, 17], ["moth", 21, 6], ["moth", 15, 19],
+      ["ghoul", 24, 8], ["ghoul", 26, 18], ["ghoul", 28, 6], ["taxwraith", 31, 9], ["taxwraith", 33, 18], ["taxwraith", 35, 16],
+      ["chandelier", 38, 7], ["understudy", 38, 19]],
     npcs: [], bots: []
   },
   // east of the Forum: the great road, a toll post, highwaymen, and a barricade where the road washed out
@@ -637,10 +658,10 @@ Object.assign(SCENES, {
   },
   // WEST of the casino, the first stop on the skilling line: a bit of everything a beginner gathers
   workyard: {
-    name: "The Workyard", exits: { e: "casino" },
+    name: "The Workyard", exits: { e: "casino", w: "gloam" },
     build() {
       const g = grid(), objs = [], keep = [];
-      for (let x = 9; x < COLS; x++) g[13][x] = ",";
+      for (let x = 0; x < COLS; x++) g[13][x] = ",";
       for (let y = 6; y <= 13; y++) g[y][12] = ","; for (let y = 13; y <= 17; y++) g[y][20] = ","; for (let y = 6; y <= 13; y++) g[y][32] = ",";
       // the woods, north-west
       for (const [x, y] of [[4, 3], [7, 2], [10, 4], [5, 6], [8, 7], [14, 3], [16, 6], [3, 9], [17, 2]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
@@ -649,13 +670,14 @@ Object.assign(SCENES, {
       for (const [x, y] of [[29, 3], [31, 4], [34, 3], [36, 5], [33, 6]]) { objs.push({ t: "rock", ore: "copper", x, y, name: "Copper rock" }); g[y][x] = "#"; }
       for (const [x, y] of [[31, 20], [33, 21], [36, 20], [34, 23], [38, 22]]) { objs.push({ t: "rock", ore: "tin", x, y, name: "Tin rock" }); g[y][x] = "#"; }
       // the wheat field, west
-      for (let y = 11; y <= 15; y++) for (const x of [3, 4, 5, 6]) { objs.push({ t: "wheat", x, y, name: "Wheat" }); g[y][x] = "#"; }
+      for (let y = 16; y <= 20; y++) for (const x of [4, 5, 6, 7]) { objs.push({ t: "wheat", x, y, name: "Wheat" }); g[y][x] = "#"; }
+      objs.push({ t: "sign", x: 3, y: 11, name: "West: the Gloam. Better rock, better wood, better fish. Level 15 or so." }); g[11][3] = "#";
       // the pond, south: fished from its north bank
       for (let y = 19; y <= 22; y++) for (let x = 15; x <= 25; x++) g[y][x] = "~";
       for (const x of [17, 20, 23]) objs.push({ t: "spot", x, y: 19, name: "Fishing spot" });
       for (let x = 14; x <= 26; x++) keep.push([x, 18], [x, 17]);
       objs.push({ t: "fire", x: 24, y: 10, name: "Campfire" }); g[10][24] = "#";
-      for (let x = 9; x < COLS; x++) keep.push([x, 12], [x, 14]);
+      for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "forest" }, [...keepOf(this), ...keep], 12);
       return { g, objs, blobs: [] };
     },
@@ -684,22 +706,23 @@ Object.assign(SCENES, {
   },
   // the second (and last, for now) fight map: past the Paddock, where the money is better and so are the teeth
   rough: {
-    name: "The Rough", exits: { w: "paddock" },
+    name: "The Rough", exits: { w: "paddock", e: "boneyard" },
     build() {
       const g = grid(), objs = [], keep = [];
-      for (let x = 0; x <= 38; x++) g[13][x] = ",";
+      for (let x = 0; x < COLS; x++) g[13][x] = ",";
       for (let y = 5; y <= 13; y++) g[y][14] = ","; for (let y = 13; y <= 21; y++) g[y][27] = ",";
       objs.push({ t: "fire", x: 6, y: 10, name: "Campfire" }); g[10][6] = "#";
       for (const [x, y] of [[4, 4], [39, 4], [5, 22], [40, 21], [21, 3], [22, 23], [33, 9]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
       for (const [x, y] of [[18, 8], [31, 18], [36, 6]]) { objs.push({ t: "boulder", x, y, name: "Boulder" }); g[y][x] = "#"; }
-      for (let x = 0; x <= 38; x++) keep.push([x, 12], [x, 14]);
+      for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
+      objs.push({ t: "sign", x: 41, y: 11, name: "East: the Boneyard. Things that were buried for a reason. Combat 20 at the very least." }); g[11][41] = "#";
       wild(g, objs, this.exits, { n: "rocky", s: "forest", w: "forest", e: "rocky" }, [...keepOf(this), ...keep], 21);
       return { g, objs, blobs: [] };
     },
     // hornworms and boars by the gate, highwaymen (who carry actual Cash) in the middle, two gnashers at the far end
     mobs: [["hornworm", 7, 6], ["hornworm", 10, 18], ["hornworm", 5, 19], ["boar", 12, 8], ["boar", 17, 17], ["boar", 19, 6], ["boar", 15, 21],
       ["highwayman", 25, 7], ["highwayman", 29, 10], ["highwayman", 24, 19], ["highwayman", 31, 20], ["highwayman", 34, 15],
-      ["gnasher", 38, 7], ["gnasher", 39, 19]],
+      ["gnasher", 37, 6], ["gnasher", 38, 20]],
     npcs: [], bots: []
   },
   // inside the Casino: a hangout first, a gambling den second. Games of chance for Cash (never ZCoins), the
@@ -1156,8 +1179,8 @@ export const LUCK = { bonus: 0.025, gather: 1 / 12, kill: 1 / 8, max: 300 };
 /* ------------------------------------------------------------ what's open (2026-09-19 reset)
    One casino (with its Roulette Room), one town, one skilling area, one combat area. Everything else still exists in
    the code but can't be reached yet; a saved character standing somewhere closed wakes up in the casino. */
-export const OPEN = new Set(["casino", "roulette", "forum", "bathhouse", "workyard", "paddock", "rough"]);
-export const OPEN_DAILY = new Set(["logs", "tin", "copper", "sardine", "wheat", "cows", "chickens", "rotten"]);
+export const OPEN = new Set(["casino", "roulette", "forum", "bathhouse", "workyard", "gloam", "cloud", "paddock", "rough", "boneyard"]);
+export const OPEN_DAILY = new Set(["logs", "tin", "copper", "sardine", "wheat", "cows", "chickens", "rotten", "boar", "highwayman", "emerald", "lantern", "willow", "diamond", "dragonstone", "moths", "ghouls"]);
 for (const k of Object.keys(SCENES)) if (!OPEN.has(k)) SCENES[k].wikiHide = true;   // closed areas stay out of the wiki
 
 /* ------------------------------------------------------------ the House Tour: how a new player learns the loop
@@ -1178,8 +1201,8 @@ export const HOWTO = `GAMBA is a casino. You'll spend most of your time right he
 PLAY: wander the floor. Slots down the west wall, the coin tables and the Wheel beside them, cards and dice to the east, Mines and Plinko in the south-east corner, roulette through the door in the back wall. Bets come out of the Cash in your bag.
 
 BROKE? Go and get more. It's quick.
-  WEST arch, the Workyard: chop, mine, fish. Every rock and tree has its price written over it.
-  EAST arch, the Paddock (and the Rough beyond it): monsters drop things worth money. Bigger monsters, bigger money.
+  WEST arch: the Workyard, then the Gloam, then Cloudreach. Chop, mine, fish. Every rock and tree has its price written over it, and it's worth more the further out you go.
+  EAST arch: the Paddock, then the Rough, then the Boneyard. Monsters drop things worth money. Bigger monsters, bigger money.
   FRONT door, the workshop: anything you MAKE from what you found sells for DOUBLE. Ore into bars, bars into swords, fish into dinner.
 Then bring it to a CASHIER, by either arch. One click and it's Cash.
 
@@ -1228,14 +1251,14 @@ export const DAILY = [
   { id: "boar", what: "kill", k: "boar", n: 6, cash: 200, req: { skill: "melee", lvl: 8 } },
   { id: "highwayman", what: "kill", k: "highwayman", n: 5, cash: 260, req: { skill: "melee", lvl: 12 } },
   { id: "ashlogs", what: "gather", k: "ashlogs", n: 20, cash: 350, req: { skill: "woodcutting", lvl: 20 } },
-  { id: "emerald", what: "gather", k: "emerald_ore", n: 15, cash: 400, req: { skill: "mining", lvl: 20 } },
+  { id: "emerald", what: "gather", k: "emerald_ore", n: 15, cash: 400, req: { skill: "mining", lvl: 15 } },
   { id: "moths", what: "kill", k: "moth", n: 8, cash: 380, req: { skill: "melee", lvl: 20 } },
-  { id: "lantern", what: "gather", k: "lanternfish", n: 12, cash: 420, req: { skill: "fishing", lvl: 30 } },
-  { id: "diamond", what: "gather", k: "diamond_ore", n: 12, cash: 520, req: { skill: "mining", lvl: 30 } },
+  { id: "lantern", what: "gather", k: "lanternfish", n: 12, cash: 420, req: { skill: "fishing", lvl: 15 } },
+  { id: "diamond", what: "gather", k: "diamond_ore", n: 12, cash: 520, req: { skill: "mining", lvl: 25 } },
   { id: "ghouls", what: "kill", k: "ghoul", n: 6, cash: 520, req: { skill: "melee", lvl: 28 } },
-  { id: "willow", what: "gather", k: "willowlogs", n: 20, cash: 560, req: { skill: "woodcutting", lvl: 35 } },
+  { id: "willow", what: "gather", k: "willowlogs", n: 20, cash: 560, req: { skill: "woodcutting", lvl: 15 } },
   { id: "rams", what: "kill", k: "ram", n: 6, cash: 700, req: { skill: "melee", lvl: 40 } },
-  { id: "dragonstone", what: "gather", k: "dragonstone_ore", n: 10, cash: 800, req: { skill: "mining", lvl: 40 } }
+  { id: "dragonstone", what: "gather", k: "dragonstone_ore", n: 10, cash: 800, req: { skill: "mining", lvl: 30 } }
 ];
 export const DAILY_COUNT = 3;
 export const chicagoDay = (t = Date.now()) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(t);
@@ -1331,8 +1354,10 @@ export const SHOP = {
    copper $10 + tin $10 -> bronze bar $40 -> a bronze sword (2 bars) $160. One list, read by the Cashier, by Brutus,
    by the labels over rocks and monsters, and by the wiki. A made thing is never priced here by hand. */
 export const VALUE = {
-  logs: 10, copper: 10, tin: 10, sardine: 10, trout: 25, wheat: 4, olives: 3,
-  emerald_ore: 30, diamond_ore: 50, dragonstone_ore: 80, onyx_ore: 120,
+  logs: 10, copper: 10, tin: 10, sardine: 10, trout: 18, wheat: 4, olives: 3,
+  willowlogs: 15, emerald_ore: 15, lanternfish: 16, diamond_ore: 22,            // the Gloam
+  skyashlogs: 28, dragonstone_ore: 30, skyeel: 30, onyx_ore: 40,                // Cloudreach
+  receipt: 15, cobweb: 25,                                                      // the Boneyard's leavings
   chicken: 8, feather: 1, bones: 3, beef: 12, hide: 14, tomatoe: 5, husk: 10, pork: 16, tusk: 18, pit: 2, mask: 60, monocle: 40, manifesto: 25
 };
 for (const [k, v] of Object.entries(SHOP.buys)) if (!(k in VALUE) && !ITEMS[k]?.slot) VALUE[k] = v;      // the closed areas keep Brutus's old prices until they reopen

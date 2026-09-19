@@ -121,6 +121,15 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-20", title: "Three more places to make money",
+    items: [
+      "The skilling line now runs three maps deep out the WEST arch. Past the Workyard is the Gloam (level 15): emerald rock $15, gloomwillow $15, lanternfish $16, and diamond rock $22 at Mining 25. Past that is Cloudreach (level 30): dragonstone $30, skyash $28, sky eels $30, and storm-struck onyx $40 at Mining 40.",
+      "The fight line runs three deep out the EAST arch. Past the Rough is the Boneyard: Bog Gnashers and Lantern Moths by the gate, Sorry Ghouls and Tax Wraiths (who carry real Cash) in the middle, a Chandelier Spider and the Understudy at the far end. Several of them come for you on sight. Combat 20 at the very least.",
+      "There are no monsters on the skilling line any more, and the workshop in town is still the one place to make things. Everything you bring back from the new maps smelts and sells for double like everything else.",
+      "More jobs on the task board now that there are places to do them: emeralds, lanternfish, gloomwillow, diamonds, dragonstone, boars, highwaymen, moths and ghouls."
+    ]
+  },
+  {
     date: "2026-09-20", title: "Go broke, go get more",
     items: [
       "Every table has been rebuilt to look and play like the casino on eastcoin.vip: a dark table, one gold button, what it pays beside the board, and your sitting's bets, net and best win. Mines has the tile board and the ladder, Higher or Lower deals real cards and shows your run, Plinko drops a ball through real pegs, Scratch-Off has foil you actually scratch, Slots has spinning reels and the jackpot on the table, Dice is a slider and a track, and the Coin flips.",
