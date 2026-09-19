@@ -270,6 +270,13 @@ button,input,select{font:inherit}
 .ph small{font-weight:600;text-transform:none;color:#6a5a40}
 .inv{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:4px 7px 4px 5px}
 #panel{overflow-x:hidden}
+/* scrollbars that belong on a scroll: a thin leather thumb on a faint parchment track */
+:is(#panel,#chatLog,.win,.win *)::-webkit-scrollbar{width:9px;height:9px}
+:is(#panel,#chatLog,.win,.win *)::-webkit-scrollbar-track{background:rgba(90,58,30,.10);border-radius:5px;margin:6px 0}
+:is(#panel,#chatLog,.win,.win *)::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#9a7244,#7a5530);border:2px solid transparent;background-clip:padding-box;border-radius:5px;min-height:28px}
+:is(#panel,#chatLog,.win,.win *)::-webkit-scrollbar-thumb:hover{background:linear-gradient(90deg,#b0844f,#8a6036);background-clip:padding-box}
+@supports not selector(::-webkit-scrollbar){#panel,#chatLog,.win,.win *{scrollbar-width:thin;scrollbar-color:#8a6036 rgba(90,58,30,.10)}}
+.phsep{border-top:2px solid rgba(0,0,0,.1);margin-top:8px}
 .ico{width:1.3em;height:1.3em;image-rendering:pixelated;vertical-align:-.3em;object-fit:contain}
 .slot .ico,.eq .ico{width:84%;height:84%;vertical-align:0}.slot .ico{margin-top:18%}.eq .ico{width:62%;height:62%}
 .slot{position:relative;aspect-ratio:1;border:1px solid #bfb193;background:#e6dcc4;display:grid;place-items:center;font-size:26px;cursor:pointer;user-select:none}
@@ -477,8 +484,8 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=27";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=9";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=28";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=10";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -735,7 +742,7 @@ const ART_FILES = ["t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpat
   // the Wilderness (PixelLab, 2026-09-18)
   "t_wdirt", "t_wwater", "deadtree", "w_tree", "snag", "w_bush", "w_boulder", "grimstone", "gravestone", "skeleton", "rope", "cagesign", "gnasher", "taxwraith", "chandelier", "revenant",
   // the rest of the monsters (PixelLab, overnight 2026-09-18)
-  "olive", "boar", "goat", "rotten", "hornworm", "highwayman",
+  "olive", "boar", "goat", "rotten", "hornworm", "highwayman", "moth", "ghoul", "understudy", "ram", "angel", "goose",
   // scenery (PixelLab, overnight 2026-09-18)
   "o_anvil", "o_barrel", "o_barricade", "o_bed", "o_bench", "o_bigtomato", "o_booth", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chair", "o_chariot", "o_chest", "o_cloudbush", "o_cloudcolumn", "o_column", "o_crate", "o_cypress", "o_cypress_stump", "o_deadtree_stump", "o_ferry", "o_fire", "o_fountain", "o_furnace", "o_glowcap", "o_goatstatue", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_notice", "o_oak", "o_oak_stump", "o_olive", "o_olive_bare", "o_palm", "o_pedestal", "o_plant", "o_plot", "o_press", "o_range", "o_rock_copper", "o_rock_diamond_ore", "o_rock_dragonstone_ore", "o_rock_emerald_ore", "o_rock_empty", "o_rock_marble", "o_rock_onyx_ore", "o_rock_stardust", "o_rock_tin", "o_sack", "o_scarecrow", "o_shrine", "o_sign", "o_skyash", "o_spot", "o_stall", "o_statue", "o_table", "o_toll", "o_tree_stump", "o_vein_copper", "o_vine", "o_vine_bare", "o_vine_gold", "o_willow", "o_yew", "o_yew_stump"];
 const IMG = {};
@@ -1718,13 +1725,20 @@ function openSmith(ob) {
   const all = G.recipesAt("anvil");
   const lv = lvl("smithing");
   $("smithSub").textContent = `Smithing ${lv}`;
+  // lowest level first, and a divider each time the level (a gear tier) changes; inside a tier, weapons, then head to toe
+  const slotRank = (k) => { const it = ITEMS[k] || {}; return it.slot ? G.SLOTS.indexOf(it.slot) : 99; };
+  all.sort((a, b) => a.lvl - b.lvl || slotRank(a.out[0]) - slotRank(b.out[0]) || ITEMS[a.out[0]].name.localeCompare(ITEMS[b.out[0]].name));
+  let lastLvl = null;
   $("smithList").innerHTML = all.map((r) => {
+    const tier = G.tierOf(ITEMS[r.out[0]]?.tier), head = r.lvl !== lastLvl ? `<div class="skh rcph"><span>${esc(tier ? tier.name : "Level " + r.lvl)}</span><small>level ${r.lvl}</small></div>` : ""; lastLvl = r.lvl;
+    return head + (() => {
     const out = ITEMS[r.out[0]], needLvl = lv < r.lvl;
     const have = r.in.map(([k, n]) => `${G.countItems(me, [k])}/${n} ${ITEMS[k].name.toLowerCase()}`).join(", ");
     const short = !needLvl && !r.in.every(([k, n]) => G.countItems(me, [k]) >= n);
     const why = needLvl ? `Needs Smithing ${r.lvl}` : short ? `You have ${have}` : `${have} · ${r.xp} xp`;
     return `<button type="button" class="rcpr" data-r="${r.id}"${needLvl || short ? " disabled" : ""}>
       <i>${ico(r.out[0])}</i><span><b>${esc(out.name)}</b><small>${esc(why)}</small></span><span class="lv">${r.lvl}</span></button>`;
+    })();
   }).join("") || `<p class="note">Nothing to make here.</p>`;
   $("smithList").querySelectorAll("[data-r]").forEach((el) => el.addEventListener("click", () => {
     $("smithWin").hidden = true;
@@ -2133,6 +2147,7 @@ function renderPanel() {
     const slot = (area) => { const k = me.eq[area], it = k && ITEMS[k]; return `<button type="button" class="eq${it ? "" : " empty"}" data-slot="${area}"${it ? ` data-item="${k}"` : ""} style="grid-area:${area}" title="${it ? `${esc(it.name)} — click to take off` : `${area}: empty`}"${it ? "" : " disabled"}>${it ? ico(k) : EQ_ART.has(area) ? artOf(`eq_${area}`) : EMPTY[area]}<small>${it ? esc(it.short || it.name) : ""}</small></button>`; };
     const b = G.bonusOf(me), tool = me.eq.weapon && ITEMS[me.eq.weapon].tool;
     p.innerHTML = `<div class="ph">Equipment <small>paper doll</small></div><div class="doll">${G.SLOTS.map(slot).join("")}</div>
+      <div class="ph phsep">My Combat Stats</div>
       <div class="bonl"><div class="bh">${me.eq.weapon ? `${ico(me.eq.weapon)} ${esc(ITEMS[me.eq.weapon].name)}` : "✊ Unarmed"}${tool ? ` · lets you train ${SKILLS[tool].name}` : ""}</div>
         <div><i>⊕</i><span>accuracy</span><b>+${b.acc}</b></div><div><i>🔺</i><span>strength</span><b>+${b.str}</b></div>
         <div><i>🎯</i><span>max hit</span><b>${G.maxHitOf(me)}</b></div><div><i>🛡️</i><span>defence</span><b>+${b.def}</b></div>
