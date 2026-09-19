@@ -596,8 +596,8 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=41";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=19";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=42";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=20";
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=1";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -1431,12 +1431,12 @@ function renderTour() {
 // Dex always knows what you should do next
 function whatNext() {
   const st = G.tourOf(me); if (st) return `You're on the tour: ${st.text.charAt(0).toLowerCase()}${st.text.slice(1)}.`;
-  const cash = G.cashIn(me), att = G.lvlOf(me, "attack"), tiered = G.SLOTS.some((sl) => ITEMS[me.eq[sl]]?.tier);
+  const cash = G.cashIn(me), att = G.lvlOf(me, "melee"), tiered = G.SLOTS.some((sl) => ITEMS[me.eq[sl]]?.tier);
   const charm = me.inv.find((x) => ITEMS[x.k].luck);
   if (charm) return `You've got a ${ITEMS[charm.k].name.toLowerCase()} in your bag. Click it, then play: your wins pay more while you're lucky.`;
   if (cash >= 20 && !(me.luck | 0)) return "You're playing without luck. Go and work the Workyard (west arch) for lucky clovers, or fight in the Paddock (east arch) for horseshoes. Use one and every win pays more. You'll come back with things to sell, too.";
   if (cash < 20) return "You're light. The board left of the bar has three paid jobs today, and the work's one arch away: skilling west, fighting east.";
-  if (att < 10) return "Toughen up in the Paddock, out the east arch. At Attack 10 you can swing bronze: Brutus sells it in town, out the front door.";
+  if (att < 10) return "Toughen up in the Paddock, out the east arch. At Combat 10 you can use bronze: Brutus sells it in town, out the front door.";
   if (!tiered) return "Get some real gear on. Brutus sells bronze in town, or smelt your own at his furnace: copper and tin are in the Workyard.";
   return "You're set up. Play the floor, try roulette through the back door where the whole room bets together, keep your luck topped up out the arches, and do the daily jobs for bankroll.";
 }
@@ -1973,7 +1973,7 @@ async function openHiscores() {
 }
 function renderHs() {
   if (!hsData?.boards) return;
-  const order = ["total", "combat", ...Object.keys(SKILLS)];
+  const order = ["total", ...Object.keys(SKILLS)];   // (the separate "combat level" board is still served, just not shown: one Combat tab is enough)
   const label = (k) => (k === "total" ? "Overall" : k === "combat" ? "Combat" : SKILLS[k].name);
   $("hsSub").textContent = `${hsData.players} character${hsData.players === 1 ? "" : "s"}`;
   $("hsTabs").innerHTML = order.map((k) => `<button type="button" data-hs="${k}" class="${k === hsTab ? "on" : ""}">${label(k)}</button>`).join("");
