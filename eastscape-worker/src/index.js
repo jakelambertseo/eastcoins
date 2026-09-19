@@ -345,6 +345,8 @@ export class World {
       }
       case "bank": return this.bankOp(S, pl, m);
       case "ex": return this.exOp(S, pl, m);
+      case "bet": return this.bet(S, pl, m, now);
+      case "daily": return this.dailyOp(S, pl, m);
       case "trade": return this.tradeOp(S, pl, m);
       case "admin": return pl.admin ? this.admin(S, pl, m) : undefined;
     }
@@ -368,7 +370,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob) return;
-      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", slots: "game", cointable: "game", dicetable: "game", notice: "board", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       if (!kind) return;
       const at = kind === "door" ? ob.door : G.nearestCell(ob, f);
       act = { kind, ob, x: at.x, y: at.y, name: ob.name };
@@ -433,6 +435,7 @@ export class World {
   emit(pl, type, d = {}) {
     this.countEvent(pl, type, d);
     this.questEvent(pl, type, d);
+    this.dailyEvent(pl, type, d);
   }
 
   countEvent(pl, type, d) {
@@ -940,6 +943,8 @@ export class World {
       return this.say(pl, `You go into ${inside.name.replace(/^The /, "the ")}.`);
     }
     if (a.kind === "bank") return pl.out.push({ type: "bank" });
+    if (a.kind === "game") { pl.act = null; return pl.out.push({ type: "game", g: a.ob.t }); }
+    if (a.kind === "board") { pl.act = null; return this.dailySend(pl); }
     if (a.kind === "exchange") { pl.out.push({ type: "exchange" }); return this.exSend(pl); }
     if (a.kind === "hole") {
       if (G.lvlOf(C, G.WILD_REQ.skill) < G.WILD_REQ.lvl) return pl.out.push({ type: "popup", title: "The Wilderness", icon: "☠️", text: `You need level ${G.WILD_REQ.lvl} in ${G.SKILLS[G.WILD_REQ.skill].name} to enter the Wilderness.` });
@@ -1521,6 +1526,68 @@ export class World {
       if (o.done >= o.qty) break;
     }
     return [...touched];
+  }
+
+  /* ------------------------------------------------------------ the Casino: games of chance for Cash (never ZCoins)
+     The server rolls, pays and announces; the page only animates what it's told. Bets come out of your bag. */
+  cashTo(pl, n) { if (n > 0 && !this.give(pl, "coins", n) && !this.bankAdd(pl, "coins", n)) this.say(pl, "Your bag and bank are both full: that Cash is lost. Make some room!", "bad"); }
+  bet(S, pl, m, now) {
+    const g = String(m.g), game = G.GAMES[g]; if (!game) return;
+    if (!this.near(S, pl, g, 2)) return this.say(pl, `You need to be at the ${game.name.toLowerCase()} in the Casino.`, "bad");
+    if (now - (pl.lastBet || 0) < G.CASINO.betMs) return;
+    const amt = Math.floor(Number(m.amt)), have = G.cashIn(pl.C);
+    if (!(amt >= G.CASINO.minBet && amt <= G.CASINO.maxBet)) return this.say(pl, `Bets are ${G.CASINO.minBet} to ${G.fmtCash(G.CASINO.maxBet)}.`, "bad");
+    if (have < amt) return this.say(pl, `You only have ${G.fmtCash(have)} in your bag.`, "bad");
+    let mult = 0, res = {};
+    if (g === "cointable") {
+      const pick = m.pick === "tails" ? "tails" : "heads", side = Math.random() < 0.5 ? "heads" : "tails";
+      res = { pick, side }; if (side === pick) mult = G.FLIP_PAYS;
+    } else if (g === "dicetable") {
+      const target = Math.max(G.DICE.min, Math.min(G.DICE.max, Math.floor(Number(m.pick)) || 50)), roll = 1 + Math.floor(Math.random() * 100);
+      res = { target, roll }; if (roll < target) mult = G.diceMult(target);
+    } else {
+      const W = G.REELS.reduce((a, r) => a + r.w, 0), spin = () => { let x = Math.random() * W; for (const r of G.REELS) { if ((x -= r.w) < 0) return r.k; } return G.REELS[0].k; };
+      const reels = [spin(), spin(), spin()]; res = { reels }; mult = G.slotsPay(reels);
+    }
+    pl.lastBet = now;
+    G.takeInv(pl.C.inv, "coins", amt);
+    const payout = Math.floor(amt * mult);
+    this.cashTo(pl, payout);
+    this.touch(pl);
+    pl.out.push({ type: "gameResult", g, bet: amt, mult, payout, ...res });
+    // the room hears about a good win; everyone hears about a great one
+    if (mult >= G.CASINO.roomWin && payout - amt > 0) {
+      const text = `${pl.name} won ${G.fmtCash(payout)} on ${game.name} (${mult}×)!`;
+      const world = mult >= G.CASINO.worldWin;
+      for (const p of this.pls.values()) if (world || p.C.scene === S.key) p.out.push({ type: "casinonote", text: world ? `🎰 ${text}` : text });
+    }
+  }
+
+  /* ------------------------------------------------------------ daily tasks (the board in the Casino) */
+  dailyState(pl) {
+    const C = pl.C, day = G.chicagoDay();
+    if (!C.daily || C.daily.day !== day) { C.daily = { day, tasks: G.dailyFor(C, pl.id, day).map((id) => ({ id, got: 0, claimed: false })) }; this.touch(pl); }
+    return C.daily;
+  }
+  dailySend(pl) { const D = this.dailyState(pl); pl.out.push({ type: "daily", day: D.day, tasks: D.tasks }); }
+  dailyEvent(pl, type, d) {
+    if (type !== "gather" && type !== "kill") return;
+    const D = this.dailyState(pl);
+    for (const t of D.tasks) {
+      const def = G.dailyDef(t.id); if (!def || t.claimed || t.got >= def.n) continue;
+      if (def.what !== type || (type === "gather" ? d.k : d.mob) !== def.k) continue;
+      t.got = Math.min(def.n, t.got + (d.n || 1)); this.touch(pl);
+      if (t.got >= def.n) this.say(pl, `Daily task done! Claim your ${G.fmtCash(def.cash)} at the task board in the Casino.`, "good");
+    }
+  }
+  dailyOp(S, pl, m) {
+    if (m.op === "open") return this.dailySend(pl);
+    if (m.op !== "claim" || !this.near(S, pl, "notice", 2)) return;
+    const D = this.dailyState(pl), t = D.tasks.find((x) => x.id === m.id), def = t && G.dailyDef(t.id);
+    if (!def || t.claimed || t.got < def.n) return;
+    t.claimed = true; this.cashTo(pl, def.cash); this.touch(pl);
+    this.say(pl, `You're paid ${G.fmtCash(def.cash)} for the day's work.`, "good");
+    this.dailySend(pl);
   }
 
   /* ------------------------------------------------------------ trading face to face

@@ -181,6 +181,29 @@ button,input,select{font:inherit}
 .offer .otop{display:flex;align-items:center;gap:8px}
 .offer .otop i{font-style:normal;font-size:26px}
 .offer .otop b{font-size:14px;display:block}
+/* the Casino */
+.chat-log p.casinonote b{color:#ff8ab0}
+.gm-bet{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-bottom:10px}
+.gm-bet input{width:90px;padding:5px 7px;border:1px solid #8a7a5a;border-radius:4px;background:#fffaf0;font:inherit}
+.gm-bet button{padding:3px 9px}
+.gm-stage{display:grid;place-items:center;gap:6px;min-height:118px;margin:4px 0 10px;padding:12px;border-radius:8px;background:radial-gradient(circle at 50% 40%,#2f6a3e,#153a22);color:#fff3d8;text-align:center}
+.gm-stage.dice{background:radial-gradient(circle at 50% 40%,#2a4a7a,#142640)}.gm-stage.slots{background:radial-gradient(circle at 50% 40%,#6a1a2a,#2a0a12)}
+.gm-big{font-size:46px;line-height:1}
+.gm-reels{display:flex;gap:8px}.gm-reels span{display:grid;place-items:center;width:62px;height:62px;border-radius:8px;background:#fff8e8;font-size:38px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.18)}
+.gm-msg{font-weight:800;min-height:1.3em}.gm-msg.win{color:#ffe27a}.gm-msg.lose{color:#f0c0c0}
+.gm-actions{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.gm-actions .btn{min-width:110px}
+.gm-hist{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:8px;font-size:11.5px}
+.gm-hist span{padding:1px 7px;border-radius:9px;background:rgba(58,38,22,.12)}.gm-hist span.w{background:rgba(40,120,40,.2);color:#1f6a24}
+.gm-dice{display:grid;gap:4px;margin-bottom:6px;font-size:13px}.gm-dice input[type=range]{width:100%}
+.spin{animation:gmspin .5s linear infinite}@keyframes gmspin{to{transform:rotateY(360deg)}}
+.shake{animation:gmshake .4s ease-in-out infinite}@keyframes gmshake{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+@media (prefers-reduced-motion:reduce){.spin,.shake{animation:none}}
+.dl-row{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;padding:7px 9px;background:#e6dcc4;border:1px solid #bfb193;border-radius:6px;margin-bottom:6px}
+.dl-row>i{font-style:normal;display:flex;justify-content:center;font-size:24px}.dl-row>i .ico{width:28px;height:28px;vertical-align:0}
+.dl-row b{display:block}.dl-row small{color:#6a5a40;font-size:12px}
+.dl-bar{height:6px;border-radius:3px;background:rgba(58,38,22,.15);margin-top:4px;overflow:hidden}.dl-bar i{display:block;height:100%;background:#4a9a4a}
+.dl-row.claimed{opacity:.6}
 /* the market */
 .mk-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
 .mk-bar .search{flex:1 1 160px;margin:0}
@@ -462,6 +485,14 @@ button,input,select{font:inherit}
       <div class="win-head"><b>🔨 Anvil</b><small id="smithSub"></small><button type="button" class="win-x" data-close="smithWin" aria-label="Close">×</button></div>
       <div class="win-body"><div class="rcp" id="smithList"></div></div>
     </section>
+    <section class="win" id="gameWin" aria-label="Casino game" hidden style="width:min(430px,calc(100% - 28px))">
+      <div class="win-head"><b id="gameTitle">🎰 Casino</b><small id="gameSub">Cash only · the house keeps a little</small><button type="button" class="win-x" data-close="gameWin" aria-label="Close">×</button></div>
+      <div class="win-body" id="gameBody"></div>
+    </section>
+    <section class="win" id="dailyWin" aria-label="Daily tasks" hidden style="width:min(460px,calc(100% - 28px))">
+      <div class="win-head"><b>📋 Daily tasks</b><small id="dailySub">Fresh every morning</small><button type="button" class="win-x" data-close="dailyWin" aria-label="Close">×</button></div>
+      <div class="win-body" id="dailyBody"></div>
+    </section>
     <section class="win" id="shopWin" aria-label="The Forge" hidden>
       <div class="win-head"><b>⚒️ The Forge</b><small>Brutus the Smith</small><button type="button" class="win-x" data-close="shopWin" aria-label="Close">×</button></div>
       <div class="win-body cols2">
@@ -515,8 +546,8 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=31";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=12";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=32";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=13";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -678,6 +709,10 @@ function onEvent(e) {
   if (e.type === "display") return pickItems(`🏺 Put something on display`, "Visitors can look but not touch.", (s) => s.k !== "coins", (s, i) => send({ t: "isle", op: "show", i: e.i, s: i }), "Your bag is empty.");
   if (e.type === "islesign") return isleSign(e);
   if (e.type === "exchange") return openWin("exWin");
+  if (e.type === "game") return openGame(e.g);
+  if (e.type === "gameResult") return gameResult(e);
+  if (e.type === "casinonote") { chatLine("Casino", e.text, "casinonote"); return; }
+  if (e.type === "daily") return renderDaily(e);
   if (e.type === "exnote") { chatLine("Market", e.text.charAt(0).toUpperCase() + e.text.slice(1), "exnote"); say(`Market: ${e.text}`, "loot"); return; }
   if (e.type === "tradereq") { tradeReqLine(e.from, e.name); return; }
   if (e.type === "levelup") return levelUp(e.k, e.lvl);
@@ -692,7 +727,7 @@ function loadScene(key) {
   Z.def = G.sceneDef(key); Z.isle = null; Z.ground = [];
   Z.def.npcs.forEach((n, i) => { Z.defs[`${key}n${i}`] = n.art || !NPC_ART[n.name] ? n : { ...n, art: NPC_ART[n.name] }; });
   Z.npcs = []; botBubbles.clear(); PRED.on = false; PRED.path = []; PRED.step = null;
-  for (const id of ["bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin"]) $(id).hidden = true;
+  for (const id of ["bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin", "gameWin", "dailyWin"]) $(id).hidden = true;
   Z.exits = exitsOf();
   Z.bg = paintBg();
   if (DLG) closeTalk();
@@ -766,7 +801,7 @@ function say(text, cls = "sys") {
 const ART = "/v3/assets/img/glad/flat/", ART_V = 3;
 // pictures replaced after they first shipped (the edge keeps each URL for a year): bump the one that changed
 const ART_VER = { chicken: 4, olive: 4, rotten: 4, chandelier: 4, revenant: 4, farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
-const ART_FILES = ["t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
+const ART_FILES = ["casino", "dex_south", "dex_east", "t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d, "legend_" + d]),
   "bank", "store", "cottage", "signpost", "tree2", "tree3", "tree4", "o_spot", "g_bush", "g_boulder", "g_grass", "g_flowers",
   ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
@@ -776,7 +811,7 @@ const ART_FILES = ["t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpat
   // the rest of the monsters (PixelLab, overnight 2026-09-18)
   "olive", "boar", "goat", "rotten", "hornworm", "highwayman", "moth", "ghoul", "understudy", "ram", "angel", "goose",
   // scenery (PixelLab, overnight 2026-09-18)
-  "o_anvil", "o_barrel", "o_barricade", "o_bed", "o_bench", "o_bigtomato", "o_booth", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chair", "o_chariot", "o_chest", "o_cloudbush", "o_cloudcolumn", "o_column", "o_crate", "o_cypress", "o_cypress_stump", "o_deadtree_stump", "o_ferry", "o_fire", "o_fountain", "o_furnace", "o_glowcap", "o_goatstatue", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_notice", "o_oak", "o_oak_stump", "o_olive", "o_olive_bare", "o_palm", "o_pedestal", "o_plant", "o_plot", "o_press", "o_range", "o_rock_copper", "o_rock_diamond_ore", "o_rock_dragonstone_ore", "o_rock_emerald_ore", "o_rock_empty", "o_rock_marble", "o_rock_onyx_ore", "o_rock_stardust", "o_rock_tin", "o_sack", "o_scarecrow", "o_shrine", "o_sign", "o_skyash", "o_spot", "o_stall", "o_statue", "o_table", "o_toll", "o_tree_stump", "o_vein_copper", "o_vine", "o_vine_bare", "o_vine_gold", "o_willow", "o_yew", "o_yew_stump"];
+  "o_anvil", "o_bar", "o_barrel", "o_barricade", "o_bed", "o_bench", "o_bigtomato", "o_booth", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chair", "o_chariot", "o_chest", "o_cloudbush", "o_cloudcolumn", "o_cointable", "o_column", "o_crate", "o_cypress", "o_cypress_stump", "o_deadtree_stump", "o_dicetable", "o_ferry", "o_fire", "o_fountain", "o_furnace", "o_glowcap", "o_goatstatue", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_notice", "o_oak", "o_oak_stump", "o_olive", "o_olive_bare", "o_palm", "o_pedestal", "o_plant", "o_plot", "o_press", "o_range", "o_rock_copper", "o_rock_diamond_ore", "o_rock_dragonstone_ore", "o_rock_emerald_ore", "o_rock_empty", "o_rock_marble", "o_rock_onyx_ore", "o_rock_stardust", "o_rock_tin", "o_sack", "o_scarecrow", "o_shrine", "o_sign", "o_skyash", "o_slots", "o_sofa", "o_spot", "o_stall", "o_statue", "o_table", "o_toll", "o_tree_stump", "o_vein_copper", "o_vine", "o_vine_bare", "o_vine_gold", "o_willow", "o_yew", "o_yew_stump"];
 const IMG = {};
 // NPCs whose art came later (PixelLab, overnight 2026-09-18): matched by name, so the shared rules don't change
 // NPC art came out at different sizes: draw everyone at one height (the hero is 48), a few on purpose
@@ -993,10 +1028,11 @@ function paintRoom(o, f) {
   f(0, 0, W, H, "#060504");
   const X0 = x0 * T, Y0 = y0 * T, X1 = (x1 + 1) * T, Y1 = (y1 + 1) * T;
   // the back wall: a band of plaster above the floor, then the floor itself
-  f(X0 - 4, Y0 - 22, X1 - X0 + 8, 22, def.floor === "marble" ? "#d8d0bc" : "#b8986a"); f(X0 - 4, Y0 - 4, X1 - X0 + 8, 4, "#6a5a40");
+  f(X0 - 4, Y0 - 22, X1 - X0 + 8, 22, def.floor === "marble" ? "#d8d0bc" : def.floor === "casino" ? "#4a1e28" : "#b8986a"); f(X0 - 4, Y0 - 4, X1 - X0 + 8, 4, "#6a5a40");
   for (let x = X0; x < X1; x += 24) f(x, Y0 - 20, 1, 16, "rgba(0,0,0,.08)");
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const X = x * T, Y = y * T;
+    if (def.floor === "casino") { f(X, Y, T, T, "#5a1626"); f(X + 7, Y + 7, 2, 2, "#c8963a"); f(X + 7, Y + 2, 2, 1, "#7a2a38"); f(X + 7, Y + 13, 2, 1, "#7a2a38"); f(X + 2, Y + 7, 1, 2, "#7a2a38"); f(X + 13, Y + 7, 1, 2, "#7a2a38"); if ((x + y) % 2) f(X, Y, 1, 1, "#c8963a"); continue; }
     if (def.floor === "marble") { f(X, Y, T, T, (x + y) % 2 ? "#e8e2d4" : "#cfc6b2"); if (hashRand(x, y, 9) < 0.2) f(X + 3, Y + 5, 6, 1, "rgba(120,110,90,.25)"); }
     else { f(X, Y, T, T, "#9a6a3a"); f(X, Y + (x % 2 ? 7 : 3), T, 1, "#7a4a26"); f(X + ((y * 5) % 16), Y, 1, T, "#86582e"); }
   }
@@ -1295,7 +1331,7 @@ function fit() {
   return { w, h };
 }
 const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
-const KIND_OF = { range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
+const KIND_OF = { slots: "game", cointable: "game", dicetable: "game", notice: "board", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
 function thingAt(wx, wy) {
   const now = snow(), near = (x_, y_, rx, ry) => Math.abs(wx - x_) <= rx && wy <= y_ + 4 && wy >= y_ - ry;
   for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})${m.c && m.c !== you?.id ? " · someone's fighting it" : ""}` }; }
@@ -1816,7 +1852,7 @@ function openWin(id) {
 document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => { $(b.dataset.close).hidden = true; if (b.dataset.close === "wikiWin" && location.hash.startsWith("#wiki")) history.replaceState(null, "", location.pathname + location.search); }));
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape" || e.target.closest?.("input, textarea, select") || !$("pop").hidden || DLG) return;
-  for (const w of ["wikiWin", "bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin"]) if (!$(w).hidden) { $(w).hidden = true; return; }
+  for (const w of ["wikiWin", "bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin", "gameWin", "dailyWin"]) if (!$(w).hidden) { $(w).hidden = true; return; }
 });
 // windows that need you standing somewhere close themselves when you walk off
 setInterval(() => { if (PRED.on && PRED.step) for (const w of ["bankWin", "exWin"]) $(w).hidden = true; }, 300);
@@ -1993,6 +2029,79 @@ function renderEx() {
     body.querySelectorAll("[data-sellto]").forEach((b) => b.addEventListener("click", () => { exPost = { side: "sell", k: b.dataset.sellto, qty: +b.dataset.n, price: +b.dataset.p }; renderEx(); }));
   }
   body.querySelectorAll("[data-cancel]").forEach((b) => b.addEventListener("click", () => send({ t: "ex", op: "cancel", id: +b.dataset.cancel })));
+}
+
+/* ------------------------------------------------------------ the Casino: three placeholder games
+   The server rolls and pays; this only shows it. A click starts the animation, the result lands it. */
+let GAME = null, gameBet = 10, diceTarget = 50, gameHist = [], gameBusy = false;
+function openGame(g) {
+  GAME = g; gameBusy = false; const def = G.GAMES[g];
+  $("gameTitle").textContent = `${def.icon} ${def.name}`; $("gameSub").textContent = "Cash only · the house keeps a little";
+  for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true;
+  $("gameWin").hidden = false; renderGame();
+}
+function renderGame(res) {
+  if (!GAME) return;
+  const g = GAME, cash = G.cashIn(me), C = G.CASINO;
+  const stage = g === "cointable" ? `<div class="gm-big${gameBusy ? " spin" : ""}" id="gmShow">🪙</div>`
+    : g === "dicetable" ? `<div class="gm-big${gameBusy ? " shake" : ""}" id="gmShow">🎲</div>`
+    : `<div class="gm-reels" id="gmShow">${(res?.reels || ["cherry", "bell", "seven"]).map((k) => `<span>${G.REELS.find((r) => r.k === k).icon}</span>`).join("")}</div>`;
+  const mult = G.diceMult(diceTarget);
+  $("gameBody").innerHTML = `<p class="note" style="margin:0 0 8px">${esc(G.GAMES[g].ex)}</p>
+    <div class="gm-bet">Bet <input type="number" id="gmAmt" min="${C.minBet}" max="${C.maxBet}" value="${gameBet}">
+      ${[10, 50, 100, 500].map((n) => `<button class="btn plain" data-amt="${n}">${n}</button>`).join("")}
+      <small style="margin-left:auto">You have <b>${G.fmtCash(cash)}</b></small></div>
+    <div class="gm-stage ${g === "dicetable" ? "dice" : g === "slots" ? "slots" : ""}">${stage}<div class="gm-msg" id="gmMsg"></div></div>
+    ${g === "dicetable" ? `<div class="gm-dice"><label>Roll under <b id="gmT">${diceTarget}</b> · wins ${diceTarget - 1}% of the time · pays <b id="gmM">${mult}×</b>
+      <input type="range" id="gmTarget" min="${G.DICE.min}" max="${G.DICE.max}" value="${diceTarget}"></label></div>` : ""}
+    <div class="gm-actions">${g === "cointable"
+      ? `<button class="btn" data-play="heads">Heads</button><button class="btn" data-play="tails">Tails</button>`
+      : `<button class="btn" data-play="go">${g === "slots" ? "Spin" : "Roll"}</button>`}</div>
+    ${g === "slots" ? `<p class="note" style="text-align:center">${G.REELS.map((r) => `${r.icon}×3 pays ${r.pay}×`).join(" · ")} · 🍒🍒 pays ${G.SLOT_TWO_CHERRIES}×</p>` : ""}
+    <div class="gm-hist">${gameHist.map((h) => `<span class="${h > 0 ? "w" : ""}">${h > 0 ? "+" : ""}${h.toLocaleString()}</span>`).join("")}</div>`;
+  const amt = $("gmAmt");
+  amt.addEventListener("change", () => { gameBet = Math.max(C.minBet, Math.min(C.maxBet, +amt.value | 0)); amt.value = gameBet; });
+  $("gameBody").querySelectorAll("[data-amt]").forEach((b) => b.addEventListener("click", () => { gameBet = +b.dataset.amt; amt.value = gameBet; }));
+  $("gmTarget")?.addEventListener("input", (e) => { diceTarget = +e.target.value; $("gmT").textContent = diceTarget; $("gmM").textContent = `${G.diceMult(diceTarget)}×`; });
+  $("gameBody").querySelectorAll("[data-play]").forEach((b) => b.addEventListener("click", () => {
+    if (gameBusy) return;
+    gameBet = Math.max(C.minBet, Math.min(C.maxBet, +amt.value | 0));
+    if (gameBet > G.cashIn(me)) { $("gmMsg").className = "gm-msg lose"; $("gmMsg").textContent = `You only have ${G.fmtCash(G.cashIn(me))}.`; return; }
+    gameBusy = true; renderGame();
+    if (g === "slots") { const reels = $("gmShow").children; let i = 0; spinTimer = setInterval(() => { for (const r of reels) r.textContent = G.REELS[(i++ + Math.floor(Math.random() * 6)) % G.REELS.length].icon; }, 70); }
+    send({ t: "bet", g, amt: gameBet, pick: g === "cointable" ? b.dataset.play : g === "dicetable" ? diceTarget : null });
+    setTimeout(() => { if (gameBusy) { gameBusy = false; clearInterval(spinTimer); renderGame(); } }, 4000);   // the server said no (it says why in the log)
+  }));
+}
+let spinTimer = null;
+function gameResult(e) {
+  if (e.g !== GAME) return;
+  // let the animation run a beat, then land it
+  setTimeout(() => {
+    clearInterval(spinTimer); gameBusy = false; gameHist = [e.payout - e.bet, ...gameHist].slice(0, 10);
+    renderGame(e);
+    const show = $("gmShow"), msg = $("gmMsg"), won = e.payout > 0;
+    if (e.g === "cointable") show.textContent = e.side === "heads" ? "👑" : "🌾";
+    if (e.g === "dicetable") show.textContent = String(e.roll);
+    msg.className = `gm-msg ${won ? "win" : "lose"}`;
+    msg.textContent = e.g === "cointable" ? `${e.side === "heads" ? "Heads" : "Tails"}. ${won ? `You win ${G.fmtCash(e.payout)}!` : "You lose."}`
+      : e.g === "dicetable" ? `Rolled ${e.roll} (needed under ${e.target}). ${won ? `You win ${G.fmtCash(e.payout)}!` : "You lose."}`
+      : won ? `${e.mult}× — you win ${G.fmtCash(e.payout)}!` : "No luck.";
+  }, 550);
+}
+
+/* ------------------------------------------------------------ daily tasks: the board in the Casino */
+function renderDaily(e) {
+  for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "gameWin"]) $(w).hidden = true;
+  $("dailyWin").hidden = false; $("dailySub").textContent = `Today (${e.day}) · fresh every morning`;
+  $("dailyBody").innerHTML = e.tasks.map((t) => {
+    const d = G.dailyDef(t.id); if (!d) return "";
+    const what = d.what === "kill" ? `Defeat ${d.n} ${MOBS[d.k].name.toLowerCase()}${d.n > 1 ? "s" : ""}` : `Gather ${d.n} ${ITEMS[d.k].name.toLowerCase()}`;
+    const icon = d.what === "kill" ? "⚔️" : ico(d.k), done = t.got >= d.n;
+    return `<div class="dl-row${t.claimed ? " claimed" : ""}"><i>${icon}</i><span><b>${esc(what)}</b><small>${t.got.toLocaleString()} / ${d.n} · pays ${G.fmtCash(d.cash)}</small><div class="dl-bar"><i style="width:${Math.round((t.got / d.n) * 100)}%"></i></div></span>
+      ${t.claimed ? `<span class="tag2 done">Paid</span>` : done ? `<button class="btn" data-claim="${t.id}">Claim</button>` : `<span class="tag2 done">In progress</span>`}</div>`;
+  }).join("") + `<p class="note">Tasks count what you gather and defeat today. New ones every morning, picked for your levels.</p>`;
+  $("dailyBody").querySelectorAll("[data-claim]").forEach((b) => b.addEventListener("click", () => send({ t: "daily", op: "claim", id: b.dataset.claim })));
 }
 
 /* ------------------------------------------------------------ trading face to face */
