@@ -208,6 +208,28 @@ button,input,select{font:inherit}
 .dl-row b{display:block}.dl-row small{color:#6a5a40;font-size:12px}
 .dl-bar{height:6px;border-radius:3px;background:rgba(58,38,22,.15);margin-top:4px;overflow:hidden}.dl-bar i{display:block;height:100%;background:#4a9a4a}
 .dl-row.claimed{opacity:.6}
+/* roulette */
+.rl-top{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;margin-bottom:10px}
+.rl-wheelbox{position:relative;width:132px;height:132px}
+.rl-wheel{width:132px;height:132px;border-radius:50%;border:5px solid #6b4423;box-shadow:0 0 0 2px #c8963a,inset 0 0 0 16px rgba(0,0,0,.18)}
+.rl-wheel.go{transition:transform var(--spin,6s) cubic-bezier(.12,.72,.12,1)}
+.rl-hub{position:absolute;inset:44px;border-radius:50%;background:radial-gradient(circle,#e8c060,#8a6a2a);box-shadow:0 0 0 3px #3a2616}
+.rl-pin{position:absolute;left:50%;top:-6px;width:0;height:0;margin-left:-7px;border:7px solid transparent;border-top:12px solid #ffe27a;filter:drop-shadow(0 1px 0 #000)}
+.rl-state b{display:block;font-size:17px}.rl-state small{display:block;color:#6a5a40}
+.rl-timer{height:7px;border-radius:4px;background:rgba(58,38,22,.15);margin:6px 0;overflow:hidden}.rl-timer i{display:block;height:100%;background:#c8963a;transition:width .25s linear}
+.rl-hist{display:flex;gap:3px;flex-wrap:wrap}.rl-n{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 4px;border-radius:4px;font-size:12px;font-weight:900;color:#fff}
+.rl-n.red{background:#b8202a}.rl-n.black{background:#1a1a1a}.rl-n.green{background:#1f7a3a}
+.rl-chips{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:8px;font-size:13px}
+.rl-chips button{width:40px;height:40px;border-radius:50%;border:3px dashed #fff8;font-weight:900;color:#fff;cursor:pointer;font-size:12px}
+.rl-chips button[aria-pressed="true"]{outline:3px solid #ffe27a;outline-offset:1px}
+.rl-board{display:grid;grid-template-columns:36px repeat(12,minmax(26px,1fr));gap:2px;background:#0f4a24;padding:5px;border-radius:6px;overflow-x:auto}
+.rl-cell{position:relative;min-height:30px;display:grid;place-items:center;border:1px solid #d8c890;color:#fff;font-weight:900;font-size:12.5px;cursor:pointer;border-radius:3px;background:transparent;font-family:inherit;padding:0}
+.rl-cell.red{background:#a81c26}.rl-cell.black{background:#1a1a1a}.rl-cell.green{background:#1f7a3a}.rl-cell.out{background:#16602f;font-size:11.5px}
+.rl-cell:hover{filter:brightness(1.25)}.rl-cell:disabled{cursor:default;filter:none;opacity:.85}
+.rl-cell.hit{box-shadow:0 0 0 3px #ffe27a;z-index:1}
+.rl-cell em{position:absolute;right:-3px;top:-5px;min-width:18px;padding:0 3px;border-radius:9px;background:#e8e0c8;color:#2a2016;font:800 10px/15px Nunito,sans-serif;font-style:normal;box-shadow:0 1px 0 rgba(0,0,0,.4)}
+.rl-cell em.me{background:#ffd45a}
+.rl-who{margin-top:8px;font-size:12.5px;display:grid;gap:2px}.rl-who b{color:#3a2616}
 /* the market */
 .mk-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
 .mk-bar .search{flex:1 1 160px;margin:0}
@@ -493,6 +515,10 @@ button,input,select{font:inherit}
       <div class="win-head"><b id="gameTitle">🎰 Casino</b><small id="gameSub">Cash only · the house keeps a little</small><button type="button" class="win-x" data-close="gameWin" aria-label="Close">×</button></div>
       <div class="win-body" id="gameBody"></div>
     </section>
+    <section class="win" id="roulWin" aria-label="Roulette" hidden style="width:min(600px,calc(100% - 28px))">
+      <div class="win-head"><b>🎡 Roulette</b><small id="roulSub">One table, one spin for everyone</small><button type="button" class="win-x" data-close="roulWin" aria-label="Close">×</button></div>
+      <div class="win-body" id="roulBody"></div>
+    </section>
     <section class="win" id="dailyWin" aria-label="Daily tasks" hidden style="width:min(460px,calc(100% - 28px))">
       <div class="win-head"><b>📋 Daily tasks</b><small id="dailySub">Fresh every morning</small><button type="button" class="win-x" data-close="dailyWin" aria-label="Close">×</button></div>
       <div class="win-body" id="dailyBody"></div>
@@ -550,8 +576,8 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=33";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=13";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=35";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=14";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -717,6 +743,8 @@ function onEvent(e) {
   if (e.type === "gameResult") return gameResult(e);
   if (e.type === "casinonote") { chatLine("Casino", e.text, "casinonote"); return; }
   if (e.type === "daily") return renderDaily(e);
+  if (e.type === "roulopen") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "gameWin", "dailyWin"]) $(w).hidden = true; $("roulWin").hidden = false; renderRoul(); return; }
+  if (e.type === "roul") { roulSet(e); return; }
   if (e.type === "exnote") { chatLine("Market", e.text.charAt(0).toUpperCase() + e.text.slice(1), "exnote"); say(`Market: ${e.text}`, "loot"); return; }
   if (e.type === "tradereq") { tradeReqLine(e.from, e.name); return; }
   if (e.type === "levelup") return levelUp(e.k, e.lvl);
@@ -731,7 +759,7 @@ function loadScene(key) {
   Z.def = G.sceneDef(key); Z.isle = null; Z.ground = [];
   Z.def.npcs.forEach((n, i) => { Z.defs[`${key}n${i}`] = n.art || !NPC_ART[n.name] ? n : { ...n, art: NPC_ART[n.name] }; });
   Z.npcs = []; botBubbles.clear(); PRED.on = false; PRED.path = []; PRED.step = null;
-  for (const id of ["bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin", "gameWin", "dailyWin"]) $(id).hidden = true;
+  for (const id of ["bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin", "gameWin", "dailyWin", "roulWin"]) $(id).hidden = true;
   Z.exits = exitsOf();
   Z.bg = paintBg();
   if (DLG) closeTalk();
@@ -805,7 +833,7 @@ function say(text, cls = "sys") {
 const ART = "/v3/assets/img/glad/flat/", ART_V = 3;
 // pictures replaced after they first shipped (the edge keeps each URL for a year): bump the one that changed
 const ART_VER = { o_dicetable: 4, chicken: 4, olive: 4, rotten: 4, chandelier: 4, revenant: 4, farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
-const ART_FILES = ["casino", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
+const ART_FILES = ["casino", "t_casino", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d, "legend_" + d]),
   "bank", "store", "cottage", "signpost", "tree2", "tree3", "tree4", "o_spot", "g_bush", "g_boulder", "g_grass", "g_flowers",
   ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
@@ -815,7 +843,7 @@ const ART_FILES = ["casino", "dex_south", "dex_east", "dookie_south", "dookie_ea
   // the rest of the monsters (PixelLab, overnight 2026-09-18)
   "olive", "boar", "goat", "rotten", "hornworm", "highwayman", "moth", "ghoul", "understudy", "ram", "angel", "goose",
   // scenery (PixelLab, overnight 2026-09-18)
-  "o_anvil", "o_bar", "o_barrel", "o_barricade", "o_bed", "o_bench", "o_bigtomato", "o_booth", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chair", "o_chariot", "o_chest", "o_cloudbush", "o_cloudcolumn", "o_cointable", "o_column", "o_crate", "o_cypress", "o_cypress_stump", "o_deadtree_stump", "o_dicetable", "o_ferry", "o_fire", "o_fountain", "o_furnace", "o_glowcap", "o_goatstatue", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_notice", "o_oak", "o_oak_stump", "o_olive", "o_olive_bare", "o_palm", "o_pedestal", "o_plant", "o_plot", "o_press", "o_range", "o_rock_copper", "o_rock_diamond_ore", "o_rock_dragonstone_ore", "o_rock_emerald_ore", "o_rock_empty", "o_rock_marble", "o_rock_onyx_ore", "o_rock_stardust", "o_rock_tin", "o_sack", "o_scarecrow", "o_shrine", "o_sign", "o_skyash", "o_slots", "o_sofa", "o_spot", "o_stall", "o_statue", "o_table", "o_toll", "o_tree_stump", "o_vein_copper", "o_vine", "o_vine_bare", "o_vine_gold", "o_willow", "o_yew", "o_yew_stump"];
+  "o_anvil", "o_bar", "o_barrel", "o_barricade", "o_bed", "o_bench", "o_bigtomato", "o_booth", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chair", "o_chariot", "o_chest", "o_cloudbush", "o_cloudcolumn", "o_cointable", "o_column", "o_crate", "o_cypress", "o_cypress_stump", "o_deadtree_stump", "o_dicetable", "o_ferry", "o_fire", "o_fountain", "o_furnace", "o_glowcap", "o_goatstatue", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_notice", "o_oak", "o_oak_stump", "o_olive", "o_olive_bare", "o_palm", "o_pedestal", "o_plant", "o_plot", "o_press", "o_range", "o_rock_copper", "o_rock_diamond_ore", "o_rock_dragonstone_ore", "o_rock_emerald_ore", "o_rock_empty", "o_rock_marble", "o_rock_onyx_ore", "o_rock_stardust", "o_rock_tin", "o_roomdoor", "o_roulette", "o_sack", "o_scarecrow", "o_shrine", "o_sign", "o_skyash", "o_slots", "o_sofa", "o_spot", "o_stall", "o_statue", "o_table", "o_toll", "o_tree_stump", "o_vein_copper", "o_vine", "o_vine_bare", "o_vine_gold", "o_willow", "o_yew", "o_yew_stump"];
 const IMG = {};
 // NPCs whose art came later (PixelLab, overnight 2026-09-18): matched by name, so the shared rules don't change
 // NPC art came out at different sizes: draw everyone at one height (the hero is 48), a few on purpose
@@ -1036,6 +1064,13 @@ function paintRoom(o, f) {
   for (let x = X0; x < X1; x += 24) f(x, Y0 - 20, 1, 16, "rgba(0,0,0,.08)");
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const X = x * T, Y = y * T;
+    if (def.floor === "casino" && IMG.t_casino) {
+      // patterned carpet in the middle, plain dark carpet framing it along the walls (a Wang sheet: 1 = patterned)
+      const plain = (cx, cy) => cx <= x0 || cx >= x1 || cy <= y0 || cy >= y1;
+      const vtx = (vx, vy) => [[vx - 1, vy - 1], [vx, vy - 1], [vx - 1, vy], [vx, vy]].some(([a, b]) => plain(a, b)) ? 0 : 1;
+      const bits = [vtx(x, y), vtx(x + 1, y), vtx(x, y + 1), vtx(x + 1, y + 1)], [sx, sy] = WANG[bits[0] * 8 + bits[1] * 4 + bits[2] * 2 + bits[3]];
+      o.drawImage(IMG.t_casino.im, sx, sy, 32, 32, X, Y, T, T); continue;
+    }
     if (def.floor === "casino") { f(X, Y, T, T, "#5a1626"); f(X + 7, Y + 7, 2, 2, "#c8963a"); f(X + 7, Y + 2, 2, 1, "#7a2a38"); f(X + 7, Y + 13, 2, 1, "#7a2a38"); f(X + 2, Y + 7, 1, 2, "#7a2a38"); f(X + 13, Y + 7, 1, 2, "#7a2a38"); if ((x + y) % 2) f(X, Y, 1, 1, "#c8963a"); continue; }
     if (def.floor === "marble") { f(X, Y, T, T, (x + y) % 2 ? "#e8e2d4" : "#cfc6b2"); if (hashRand(x, y, 9) < 0.2) f(X + 3, Y + 5, 6, 1, "rgba(120,110,90,.25)"); }
     else { f(X, Y, T, T, "#9a6a3a"); f(X, Y + (x % 2 ? 7 : 3), T, 1, "#7a4a26"); f(X + ((y * 5) % 16), Y, 1, T, "#86582e"); }
@@ -1048,6 +1083,7 @@ function paintRoom(o, f) {
   // rugs lie on the floor, under everything else
   for (const ob of Z.objs) if (ob.t === "rug") {
     const X = ob.x * T, Y = ob.y * T, w = ob.w * T, h = ob.h * T;
+    if (ob.img && IMG[ob.img]) { o.drawImage(IMG[ob.img].im, X, Y, w, h); continue; }
     f(X + 1, Y + 1, w - 2, h - 2, ob.color); f(X + 3, Y + 3, w - 6, 1, "#e8c050"); f(X + 3, Y + h - 4, w - 6, 1, "#e8c050"); f(X + 3, Y + 3, 1, h - 6, "#e8c050"); f(X + w - 4, Y + 3, 1, h - 6, "#e8c050");
     for (let i = X + 3; i < X + w - 3; i += 4) { f(i, Y, 2, 1, "#e8d8a8"); f(i, Y + h - 1, 2, 1, "#e8d8a8"); }
   }
@@ -1335,7 +1371,7 @@ function fit() {
   return { w, h };
 }
 const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
-const KIND_OF = { slots: "game", cointable: "game", dicetable: "game", notice: "board", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
+const KIND_OF = { slots: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
 function thingAt(wx, wy) {
   const now = snow(), near = (x_, y_, rx, ry) => Math.abs(wx - x_) <= rx && wy <= y_ + 4 && wy >= y_ - ry;
   for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})${m.c && m.c !== you?.id ? " · someone's fighting it" : ""}` }; }
@@ -1374,7 +1410,7 @@ cv.addEventListener("pointerdown", (e) => {
     else send({ t: "act", kind: "ob", ob: t.ob.id });
     // walk there now, the way the server will
     if (from) {
-      const at = t.kind === "mob" || t.kind === "npc" ? { x: t.x, y: t.y } : t.kind === "door" ? t.ob.door : G.nearestCell(t.ob, from);
+      const at = t.kind === "mob" || t.kind === "npc" ? { x: t.x, y: t.y } : t.kind === "door" && t.ob.door ? t.ob.door : G.nearestCell(t.ob, from);
       predGo(G.findPath(Z.g, from, at, t.reach || G.reachOf(t.kind) || 1));
     }
     clickMark = { x: t.x, y: t.y, at: performance.now(), red: t.kind === "mob" }; return;
@@ -1856,7 +1892,7 @@ function openWin(id) {
 document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => { $(b.dataset.close).hidden = true; if (b.dataset.close === "wikiWin" && location.hash.startsWith("#wiki")) history.replaceState(null, "", location.pathname + location.search); }));
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape" || e.target.closest?.("input, textarea, select") || !$("pop").hidden || DLG) return;
-  for (const w of ["wikiWin", "bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin", "gameWin", "dailyWin"]) if (!$(w).hidden) { $(w).hidden = true; return; }
+  for (const w of ["wikiWin", "bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin", "gameWin", "dailyWin", "roulWin"]) if (!$(w).hidden) { $(w).hidden = true; return; }
 });
 // windows that need you standing somewhere close themselves when you walk off
 setInterval(() => { if (PRED.on && PRED.step) for (const w of ["bankWin", "exWin"]) $(w).hidden = true; }, 300);
@@ -2093,6 +2129,62 @@ function gameResult(e) {
       : won ? `${e.mult}× — you win ${G.fmtCash(e.payout)}!` : "No luck.";
   }, 550);
 }
+
+/* ------------------------------------------------------------ roulette: the shared table
+   The server runs the clock and draws the number; this draws the board, everybody's chips and the wheel. */
+let ROUL = null, roulChip = 10, roulGot = 0, roulSpunRound = 0, roulAngle = 0;
+const ROUL_CHIPS = [[5, "#6a6a72"], [10, "#2a5aa8"], [50, "#b8202a"], [100, "#1a1a1a"], [250, "#7a3aa8"]];
+function roulSet(e) { ROUL = e; roulGot = performance.now(); if (!$("roulWin").hidden) renderRoul(); }
+function roulWheelBg() {
+  const seg = 360 / 37;
+  return `conic-gradient(${G.ROULETTE_WHEEL.map((n, i) => `${{ red: "#b8202a", black: "#1a1a1a", green: "#1f7a3a" }[G.rouletteColor(n)]} ${(i * seg).toFixed(2)}deg ${((i + 1) * seg).toFixed(2)}deg`).join(",")})`;
+}
+function renderRoul() {
+  if (!ROUL) { $("roulBody").innerHTML = '<p class="note">Joining the table…</p>'; send({ t: "roul", op: "open" }); return; }
+  const R = ROUL, betting = R.phase === "bet", left = Math.max(0, R.left - (performance.now() - roulGot));
+  const cell = (label, kind, pick, cls = "", span = "") => {
+    const on = R.bets.filter((b) => b.kind === kind && (kind !== "num" || b.pick === pick)), tot = on.reduce((a, b) => a + b.amt, 0), mine = on.some((b) => b.me);
+    const hit = R.last && !betting ? false : R.last && G.ROULETTE_BETS[kind]?.wins(R.last.n, pick);
+    return `<button class="rl-cell ${cls}${hit ? " hit" : ""}" data-k="${kind}"${pick != null ? ` data-p="${pick}"` : ""}${span ? ` style="${span}"` : ""}${betting ? "" : " disabled"}>${label}${tot ? `<em class="${mine ? "me" : ""}">${tot >= 1000 ? `${Math.round(tot / 100) / 10}k` : tot}</em>` : ""}</button>`;
+  };
+  // the classic layout: 0 down the left, three rows of twelve (3,6,9… on top), dozens, then the even-money bets
+  const rows = [3, 2, 1].map((r, i) => Array.from({ length: 12 }, (_, c) => { const n = c * 3 + r; return cell(n, "num", n, G.rouletteColor(n), `grid-row:${i + 1};grid-column:${c + 2}`); }).join("")).join("");
+  const board = `<div class="rl-board">${cell(0, "num", 0, "green", "grid-row:1/4;grid-column:1")}${rows}
+    ${["d1", "d2", "d3"].map((k, i) => cell(G.ROULETTE_BETS[k].label, k, null, "out", `grid-row:4;grid-column:${2 + i * 4}/span 4`)).join("")}
+    ${["low", "even", "red", "black", "odd", "high"].map((k, i) => cell(G.ROULETTE_BETS[k].label, k, null, k === "red" ? "red" : k === "black" ? "black" : "out", `grid-row:5;grid-column:${2 + i * 2}/span 2`)).join("")}</div>`;
+  const byName = new Map(); for (const b of R.bets) { const a = byName.get(b.name) || []; a.push(`${b.amt.toLocaleString()} on ${G.rouletteLabel(b.kind, b.pick)}`); byName.set(b.name, a); }
+  const myStake = R.bets.filter((b) => b.me).reduce((a, b) => a + b.amt, 0);
+  const last = R.last ? `<span class="rl-n ${R.last.col}">${R.last.n}</span>` : "—";
+  $("roulSub").textContent = `Round ${R.round} · up to ${G.fmtCash(G.ROULETTE.maxStake)} a spin`;
+  $("roulBody").innerHTML = `<div class="rl-top"><div class="rl-wheelbox"><div class="rl-wheel" id="rlWheel" style="background:${roulWheelBg()};transform:rotate(${roulAngle}deg)"></div><div class="rl-hub"></div><div class="rl-pin"></div></div>
+      <div class="rl-state"><b>${betting ? `Place your bets · ${Math.ceil(left / 1000)}s` : "No more bets · the ball is rolling"}</b>
+        <small>${betting ? (R.last ? `Last: ${R.last.n} ${R.last.col}${R.last.wins.length ? ` · ${R.last.wins.map((w) => `${esc(w.name)} +${w.payout.toLocaleString()}`).join(", ")}` : " · no winners"}` : "Chips on the board, then wait for the wheel.") : "Good luck."}</small>
+        <div class="rl-timer"><i id="rlTime" style="width:${Math.round((left / (betting ? G.ROULETTE.betMs : G.ROULETTE.spinMs)) * 100)}%"></i></div>
+        <div class="rl-hist">${R.hist.map((n) => `<span class="rl-n ${G.rouletteColor(n)}">${n}</span>`).join("")}</div></div></div>
+    <div class="rl-chips">Chip ${ROUL_CHIPS.map(([v, c]) => `<button type="button" data-chip="${v}" style="background:${c}" aria-pressed="${v === roulChip}">${v}</button>`).join("")}
+      <small style="margin-left:auto">Your stake ${G.fmtCash(myStake)} · bag ${G.fmtCash(G.cashIn(me))}</small>
+      ${myStake && betting ? `<button class="btn plain" id="rlClear" style="width:auto;height:auto;border-radius:4px;border:0;color:inherit">Take back</button>` : ""}</div>
+    ${board}
+    <div class="rl-who">${byName.size ? [...byName].map(([n, list]) => `<div><b>${esc(n)}</b>: ${esc(list.join(", "))}</div>`).join("") : '<span class="note">Nobody has bet this round yet.</span>'}</div>`;
+  $("roulBody").querySelectorAll("[data-chip]").forEach((b) => b.addEventListener("click", () => { roulChip = +b.dataset.chip; renderRoul(); }));
+  $("roulBody").querySelectorAll(".rl-cell").forEach((b) => b.addEventListener("click", () => send({ t: "roul", op: "bet", kind: b.dataset.k, pick: b.dataset.p != null ? +b.dataset.p : null, amt: roulChip })));
+  $("rlClear")?.addEventListener("click", () => send({ t: "roul", op: "clear" }));
+  // spin the wheel once per round, landing the drawn number under the pin when the ball stops
+  if (!betting && R.result != null && roulSpunRound !== R.round) {
+    roulSpunRound = R.round;
+    const seg = 360 / 37, idx = G.ROULETTE_WHEEL.indexOf(R.result), target = 360 - (idx + 0.5) * seg;
+    roulAngle = roulAngle - (roulAngle % 360) + 360 * 6 + target;
+    const w = $("rlWheel"); w.style.setProperty("--spin", `${Math.max(1, left) / 1000}s`);
+    requestAnimationFrame(() => { w.classList.add("go"); w.style.transform = `rotate(${roulAngle}deg)`; });
+  }
+}
+// the countdown ticks on its own between server updates
+setInterval(() => {
+  if (!ROUL || $("roulWin").hidden) return;
+  const betting = ROUL.phase === "bet", left = Math.max(0, ROUL.left - (performance.now() - roulGot));
+  const t = $("rlTime"); if (t) t.style.width = `${Math.round((left / (betting ? G.ROULETTE.betMs : G.ROULETTE.spinMs)) * 100)}%`;
+  const b = $("roulBody").querySelector(".rl-state b"); if (b && betting) b.textContent = `Place your bets · ${Math.ceil(left / 1000)}s`;
+}, 250);
 
 /* ------------------------------------------------------------ daily tasks: the board in the Casino */
 function renderDaily(e) {

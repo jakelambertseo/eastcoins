@@ -347,6 +347,7 @@ export class World {
       case "ex": return this.exOp(S, pl, m);
       case "bet": return this.bet(S, pl, m, now);
       case "daily": return this.dailyOp(S, pl, m);
+      case "roul": return this.roulOp(S, pl, m, now);
       case "trade": return this.tradeOp(S, pl, m);
       case "admin": return pl.admin ? this.admin(S, pl, m) : undefined;
     }
@@ -370,9 +371,9 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob) return;
-      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", slots: "game", cointable: "game", dicetable: "game", notice: "board", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", slots: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       if (!kind) return;
-      const at = kind === "door" ? ob.door : G.nearestCell(ob, f);
+      const at = kind === "door" && ob.door ? ob.door : G.nearestCell(ob, f);
       act = { kind, ob, x: at.x, y: at.y, name: ob.name };
       // the anvil is told which recipe; the page sends its id with the click
       if (kind === "smith" && m.pick && G.RECIPES[String(m.pick)]) act.pick = String(m.pick);
@@ -510,6 +511,7 @@ export class World {
 
   // write everyone, tell every page this was planned, then let the deploy land
   async doRestart() {
+    this.roulRefundAll("The table closes for a restart: your roulette bets are back in your bag.");
     const saved = await this.saveAll();
     for (const pl of [...this.pls.values()]) {
       this.send(pl, { type: "restarting", holdMs: RESTART_HOLD_MS });
@@ -813,7 +815,8 @@ export class World {
     this.restartTick(now);
     const live = new Set([...this.pls.values()].map((p) => p.C.scene));
     for (const [key, S] of this.scenes) {
-      if (!live.has(key)) { S.idleSince ||= now; if (now - S.idleSince > SCENE_IDLE_MS && !(S.def.pvp && S.mobs.some((m) => m.dead && now < m.respawnAt))) this.scenes.delete(key); continue; }
+      if (key === "roulette") this.rouletteTick(S, now);
+      if (!live.has(key)) { S.idleSince ||= now; if (now - S.idleSince > SCENE_IDLE_MS && !(S.def.pvp && S.mobs.some((m) => m.dead && now < m.respawnAt)) && !S.roulette?.bets.length) this.scenes.delete(key); continue; }
       S.idleSince = 0;
       for (const pl of this.playersIn(S)) this.playerTick(S, pl, now);
       for (const o of S.objs) if (o.t === "wheat" && S.g[o.y][o.x] === "f" && !(o.grownAt > now)) {
@@ -945,6 +948,7 @@ export class World {
     if (a.kind === "bank") return pl.out.push({ type: "bank" });
     if (a.kind === "game") { pl.act = null; return pl.out.push({ type: "game", g: a.ob.t }); }
     if (a.kind === "board") { pl.act = null; return this.dailySend(pl); }
+    if (a.kind === "roulette") { pl.act = null; pl.out.push({ type: "roulopen" }); return this.roulSendTo(S, pl); }
     if (a.kind === "exchange") { pl.out.push({ type: "exchange" }); return this.exSend(pl); }
     if (a.kind === "hole") {
       if (G.lvlOf(C, G.WILD_REQ.skill) < G.WILD_REQ.lvl) return pl.out.push({ type: "popup", title: "The Wilderness", icon: "☠️", text: `You need level ${G.WILD_REQ.lvl} in ${G.SKILLS[G.WILD_REQ.skill].name} to enter the Wilderness.` });
@@ -1561,6 +1565,84 @@ export class World {
       const world = mult >= G.CASINO.worldWin;
       for (const p of this.pls.values()) if (world || p.C.scene === S.key) p.out.push({ type: "casinonote", text: world ? `🎰 ${text}` : text });
     }
+  }
+
+  /* ------------------------------------------------------------ roulette: one table, one spin for everyone
+     Bets are open for ROULETTE.betMs; then the ball rolls (spinMs) and every bet is settled AT ONCE, the moment the
+     number is drawn, so nobody can leave with a bet unpaid. The room is told the number and the winners when the
+     ball stops. Bets come out of the bag; winnings go to the bag (or bank). */
+  roulState(S, now = Date.now()) { return S.roulette ||= { round: 1, phase: "bet", endsAt: now + G.ROULETTE.betMs, bets: [], hist: [], last: null }; }
+  roulView(S, p, now = Date.now()) {
+    const R = this.roulState(S, now);
+    return { type: "roul", round: R.round, phase: R.phase, left: Math.max(0, R.endsAt - now), hist: R.hist, last: R.last,
+      result: R.phase === "spin" ? R.result : null,
+      bets: R.bets.map((b) => ({ name: b.name, kind: b.kind, pick: b.pick, amt: b.amt, me: b.id === p.id })) };
+  }
+  roulSendTo(S, p) { p.out.push(this.roulView(S, p)); }
+  roulSend(S) { for (const p of this.playersIn(S)) this.roulSendTo(S, p); }
+  roulOp(S, pl, m, now) {
+    if (S.key !== "roulette") return;
+    const R = this.roulState(S, now);
+    if (m.op === "open") return this.roulSendTo(S, pl);
+    if (m.op === "clear") {
+      if (R.phase !== "bet") return;
+      const mine = R.bets.filter((b) => b.id === pl.id), back = mine.reduce((a, b) => a + b.amt, 0); if (!back) return;
+      R.bets = R.bets.filter((b) => b.id !== pl.id); this.cashTo(pl, back); this.touch(pl);
+      this.say(pl, `Bets taken back: ${G.fmtCash(back)}.`); return this.roulSend(S);
+    }
+    if (m.op !== "bet") return;
+    if (R.phase !== "bet") return this.say(pl, "No more bets: the ball's rolling.", "bad");
+    const kind = String(m.kind), def = G.ROULETTE_BETS[kind]; if (!def) return;
+    const pick = kind === "num" ? Math.floor(Number(m.pick)) : null; if (kind === "num" && !(pick >= 0 && pick <= 36)) return;
+    const amt = Math.floor(Number(m.amt)), staked = R.bets.filter((b) => b.id === pl.id).reduce((a, b) => a + b.amt, 0);
+    if (!(amt >= 1)) return;
+    if (staked + amt > G.ROULETTE.maxStake) return this.say(pl, `Up to ${G.fmtCash(G.ROULETTE.maxStake)} a spin. You've got ${G.fmtCash(staked)} down.`, "bad");
+    if (G.cashIn(pl.C) < amt) return this.say(pl, `You only have ${G.fmtCash(G.cashIn(pl.C))} in your bag.`, "bad");
+    G.takeInv(pl.C.inv, "coins", amt); this.touch(pl);
+    const same = R.bets.find((b) => b.id === pl.id && b.kind === kind && b.pick === pick);
+    if (same) same.amt += amt; else R.bets.push({ id: pl.id, name: pl.name, kind, pick, amt });
+    this.roulSend(S);
+  }
+  rouletteTick(S, now) {
+    const R = this.roulState(S, now);
+    if (now < R.endsAt) return;
+    if (R.phase === "bet") {
+      if (!R.bets.length) { R.endsAt = now + G.ROULETTE.betMs; return this.roulSend(S); }   // nobody's in: a fresh window
+      // draw the number and settle every bet now, while everyone's still here
+      const n = crypto.getRandomValues(new Uint32Array(1))[0] % 37, wins = [];
+      for (const b of R.bets) {
+        const def = G.ROULETTE_BETS[b.kind]; if (!def.wins(n, b.pick)) continue;
+        const payout = b.amt * def.pays; wins.push({ name: b.name, id: b.id, payout, label: G.rouletteLabel(b.kind, b.pick), mult: def.pays });
+        const p = this.pls.get(b.id);
+        if (p) { this.cashTo(p, payout); this.touch(p); } else this.creditOffline(b.id, payout);
+      }
+      Object.assign(R, { phase: "spin", result: n, wins, endsAt: now + G.ROULETTE.spinMs });
+      return this.roulSend(S);
+    }
+    // the ball has stopped: tell the room, then open the next round
+    const n = R.result, col = G.rouletteColor(n), wins = R.wins || [];
+    const total = new Map(); for (const w of wins) total.set(w.name, (total.get(w.name) || 0) + w.payout);
+    const text = `${n} ${col}. ${total.size ? `Winners: ${[...total].map(([nm, v]) => `${nm} +${v.toLocaleString()}`).join(", ")}.` : "No winners this spin."}`;
+    for (const p of this.playersIn(S)) p.out.push({ type: "casinonote", text: `Roulette: ${text}` });
+    for (const w of wins) if (w.mult >= G.ROULETTE.bigWin) for (const p of this.pls.values()) if (p.C.scene !== S.key) p.out.push({ type: "casinonote", text: `🎡 ${w.name} hit ${w.label} on roulette for ${G.fmtCash(w.payout)}!` });
+    R.last = { n, col, wins: wins.map((w) => ({ name: w.name, payout: w.payout, label: w.label })) };
+    R.hist = [n, ...R.hist].slice(0, 14);
+    Object.assign(R, { round: R.round + 1, phase: "bet", bets: [], result: null, wins: null, endsAt: now + G.ROULETTE.betMs });
+    this.roulSend(S);
+  }
+  // hand every open bet back (a restart during betting); settled spins are already paid
+  roulRefundAll(why) {
+    const S = this.scenes.get("roulette"), R = S?.roulette; if (!R || R.phase !== "bet" || !R.bets.length) return;
+    for (const b of R.bets) { const p = this.pls.get(b.id); if (p) { this.cashTo(p, b.amt); this.touch(p); this.say(p, why); } else this.creditOffline(b.id, b.amt); }
+    R.bets = [];
+  }
+  // someone who left before a spin still gets paid: straight into their stored bank
+  async creditOffline(id, n) {
+    try {
+      const key = `char:${id}`, c = await this.ctx.storage.get(key); if (!c) return;
+      c.bank ||= []; const b = c.bank.find((x) => x.k === "coins"); if (b) b.n += n; else c.bank.push({ k: "coins", n });
+      await this.ctx.storage.put(key, c);
+    } catch (e) { /* the bet is lost only if storage itself fails */ }
   }
 
   /* ------------------------------------------------------------ daily tasks (the board in the Casino) */
