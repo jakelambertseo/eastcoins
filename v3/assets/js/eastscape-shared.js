@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 59;
+export const VERSION = 60;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -1018,7 +1018,15 @@ Object.assign(SCENES, {
       "Red, black, odd, even, a dozen or a single number. A single number pays thirty-six times. It also mostly doesn't.",
       "Everyone at this table plays the same spin. Win together, lose together. Mostly lose together.",
       "No more bets once the ball is rolling. I will know.",
-      "Zero is green, and zero belongs to the house. Nothing personal."] }]
+      "Zero is green, and zero belongs to the house. Nothing personal."] },
+      /* the Russian Roulette dealer (the owner, 2026-09-19): stands behind that table, striped jersey, ponytail, whiskey in hand */
+      { name: "Bino", art: "arbino", x: 17, y: 10, still: true, reach: 3, hair: "#5a3a1e", shirt: "#e8601c", pants: "#1a1a1a", lines: [
+      "Russian Roulette. Twenty ZCoins a seat, last one standing takes the lot. I just load the thing.",
+      "Who Dey. Sit down, the clock starts when the first one does.",
+      "The whiskey's for me. Steadies the hands. You'd want steady hands on this table.",
+      "House takes nothing here. I get paid in stories, and most of them end the same way.",
+      "Could be somebody from the website across from you. Same table. Same cylinder.",
+      "Alone when the clock runs out? You get your twenty back. Nobody plays this by themselves. I checked."] }]
   },
   farmhouse: {
     name: "The Farmhouse", interior: true, floor: "wood", room: [6, 4, 15, 10], exitTo: { scene: "farm", x: 4, y: 5 }, entry: { x: 10, y: 10 },
