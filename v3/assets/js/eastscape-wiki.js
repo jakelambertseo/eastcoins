@@ -121,6 +121,15 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-20", title: "A smaller bag, a wallet, and a Buffs bar",
+    items: [
+      "Your bag holds 20 things now, not 30, so it fills and sends you back past the tables to the Cashier. If you had more than 20, the extra went to your bank: nothing was lost.",
+      "Under the bag is your wallet: your Cash, what the loot in your bag would sell for (it turns green when there's money to collect), the slots jackpot, today's three paid jobs with their progress, and a line on what to do next.",
+      "Top right of the game is now a Buffs bar. It shows everything that's improving your odds. There's one kind today (Lucky, from clovers and horseshoes); it's built to hold several.",
+      "The casino looks lived in: a janitor's bucket and a wet-floor sign by a spilled drink, coats by the doors, a suitcase nobody came back for, and chips, cards, losing slips and one shoe on the carpet."
+    ]
+  },
+  {
     date: "2026-09-20", title: "The casino floor, laid out like a real one",
     items: [
       "Every kind of game now has its own roped-off room, named in gold on the carpet at its way in. SLOTS fill the north-west: three banks of machines back to back, plus the wall. WHEELS and COIN FLIP share the south-west. The CARD ROOM (Higher or Lower, and the blackjack and poker tables that open soon) is next to THE BAR in the north-east. The DICE PIT and INSTANT WINS (two Plinko machines, two Mines tables, two Scratch-Off kiosks) are in the south-east.",

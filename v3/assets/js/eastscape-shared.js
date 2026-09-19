@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 40;
+export const VERSION = 41;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -264,7 +264,8 @@ export function xpForDamage(c, dmg) {
 export const SWING_MS = 2400;
 export const swingMsOf = (c) => ITEMS[c?.eq?.weapon]?.speed || SWING_MS;
 export const TOOL_OF = { mining: "pickaxe", woodcutting: "axe", fishing: "rod" };
-export const INV_MAX = 30;
+export const INV_MAX = 20;   // (was 30 until 2026-09-20: a casino game wants a small bag that fills, so you walk back past the tables to the Cashier.
+                             //  normChar re-packs an old 30-slot bag on load and sends what no longer fits to the bank, so nothing is lost.)
 export const BANK_MAX = 200;
 // a bag slot holds up to 99 of a thing; Cash (and anything marked nocap) piles up without limit. The bank has no cap.
 export const STACK_MAX = 99;
@@ -809,6 +810,17 @@ Object.assign(SCENES, {
       put("planter", 25, 11, "Planter", 2); put("trashcan", 17, 4, "Bin");
       // the Cashier buys everything you bring back, at the price written over it outside: one window by each arch
       put("cashier", 2, 11, "Cashier", 2); put("cashier", 40, 11, "Cashier", 2);
+      /* LIVED IN. Somebody works here and a lot of people lose here: a janitor's bucket and a wet-floor sign by a spilled
+         drink in the east aisle, coats by both doors, a suitcase somebody walked in with and never picked up again, and
+         on the carpet what people drop: chips, cards, losing slips, one shoe. Litter is `soft` (you walk over it) and
+         `flat` (drawn on the floor, under everyone). */
+      const litter = (t, x, y, name) => { if (g[y][x] === "i") objs.push({ t, x, y, name, soft: true, flat: true }); };
+      put("mopbucket", 38, 12, "Mop bucket"); put("wetfloor", 36, 14, "Wet floor"); litter("l_spill", 37, 13, "Somebody's drink");
+      put("coatrack", 24, 4, "Coat rack"); put("coatrack", 19, 21, "Coat rack"); put("suitcase", 3, 15, "A suitcase. It's been here a while.");
+      for (const [x, y] of [[27, 18], [8, 10], [22, 16], [35, 19]]) litter("l_chips", x, y, "Dropped chips");
+      for (const [x, y] of [[28, 8], [31, 6], [25, 7]]) litter("l_cards", x, y, "Dropped cards");
+      for (const [x, y] of [[12, 13], [30, 18], [16, 20], [7, 12], [33, 13], [3, 8]]) litter("l_slips", x, y, "Losing slips");
+      litter("l_spill", 35, 7, "Somebody's drink"); litter("l_shoe", 13, 14, "One shoe. Just the one.");
       return { g, objs, blobs: [] };
     },
     // the regulars at the machines are simulated players: they walk up to a game, play a while, and move on
@@ -1213,6 +1225,14 @@ export function slotsPay(reels) {
    world turns up lucky charms; using one makes your next N bets "lucky", and a lucky win pays `bonus` more. Even
    lucky, every game stays just under 100% back, so the casino can't be turned into a Cash printer. */
 export const LUCK = { bonus: 0.025, gather: 1 / 12, kill: 1 / 8, max: 300 };
+/* BUFFS: whatever is improving your odds right now, shown top-right of the game. There is one today (luck); the bar,
+   the chips and this list are built for several, because players will end up stacking them. A buff is { id, left }
+   plus what BUFFS says about it; `icon` is an item icon. To add one: a row here, a line in buffsOf, and the server
+   spending it wherever it applies. */
+export const BUFFS = {
+  luck: { name: "Lucky", icon: "clover", unit: "bet", ex: `Every win pays ${LUCK.bonus * 100}% more. One is used up per bet.` }
+};
+export const buffsOf = (c) => [(c?.luck | 0) > 0 && { id: "luck", left: c.luck | 0 }].filter(Boolean);
 
 /* ------------------------------------------------------------ what's open (2026-09-19 reset)
    One casino (with its Roulette Room), one town, one skilling area, one combat area. Everything else still exists in
