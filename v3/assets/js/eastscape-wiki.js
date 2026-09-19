@@ -51,6 +51,7 @@ export const GUIDES = [
       <li><b>Dice</b> (by the bar): pick a number from 5 to 95 and roll 1–100 under it. The lower your number, the bigger the payout.</li>
       <li>Bets are 1 to 500 Cash, from your bag. The house keeps a little on every game, about 3%. The server decides every result.</li>
       <li>Big wins are announced to the room, and huge ones to everyone.</li></ul>
+      <p><b>The Roulette Room</b> is through the red curtains at the back. One table, one spin for everyone: bets are open for 25 seconds, then the ball rolls and the whole room sees the number together. Red, black, odd, even, 1–18, 19–36 (2×), dozens (3×) and single numbers (36×); up to 500 Cash a spin. Green zero is the house's.</p>
       <p><b>The task board</b> by the door has three <b>daily tasks</b> just for you, picked for your levels: gather this many, defeat that many. They count what you do today, pay Cash when you claim them at the board, and refresh every morning (Chicago time). Handy when the slots have been unkind.</p>`
   },
   {
@@ -123,6 +124,7 @@ export const UPDATES = [
       "The Forge building in the Forum is now the Casino. Brutus still works his smithy right outside.",
       "Inside: slots, coin flip and dice for Cash (never ZCoins), a bar, sofas, and Dex the Dealer.",
       "The task board moved in too: three daily tasks each, picked for your levels, paid in Cash.",
+      "Through the curtains at the back: the Roulette Room, one shared table where everyone plays the same spin.",
     ],
   },
   {

@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 25;
+export const VERSION = 26;
 export const COLS = 22, ROWS = 13;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -637,10 +637,11 @@ Object.assign(SCENES, {
       const g = room(4, 3, 17, 10, 10), objs = [];
       objs.push({ t: "bar", x: 12, y: 4, w: 4, h: 1, name: "Bar" }); block(g, 12, 4, 4, 1);
       objs.push({ t: "notice", x: 6, y: 3, name: "Task board" }); g[3][6] = "#";
+      objs.push({ t: "roomdoor", x: 16, y: 3, name: "Roulette room", enter: "roulette" }); g[3][16] = "#";
       for (const y of [5, 7, 9]) { objs.push({ t: "slots", x: 4, y, name: "Slot machine", flip: true }); g[y][4] = "#"; }
       objs.push({ t: "cointable", x: 8, y: 6, w: 2, h: 1, name: "Coin Flip table" }); block(g, 8, 6, 2, 1);
       objs.push({ t: "dicetable", x: 13, y: 7, w: 2, h: 1, name: "Dice table" }); block(g, 13, 7, 2, 1);
-      objs.push({ t: "rug", x: 9, y: 8, w: 4, h: 3, color: "#5a1a2a", name: "Rug" });
+      objs.push({ t: "rug", img: "rug_casino", x: 9, y: 8, w: 4, h: 3, color: "#5a1a2a", name: "Rug" });
       for (const [x, y] of [[16, 9], [7, 9]]) { objs.push({ t: "sofa", x, y, w: 2, h: 1, name: "Sofa" }); block(g, x, y, 2, 1); }
       for (const [x, y] of [[17, 5], [17, 7], [5, 10]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
       return { g, objs, blobs: [] };
@@ -653,11 +654,35 @@ Object.assign(SCENES, {
       "Every roll's decided by the house, fair and square. I just hand over the money.",
       "No ZCoins in here, friend. Cash only. What happens in EastScape stays in EastScape."] },
       { name: "DookieBetts", art: "dookie", x: 14, y: 6, still: true, reach: 2, hair: "#1a1a1a", shirt: "#c8102e", pants: "#1a1a1a", lines: [
-        "Dice table's open. Roll under your number. Low number, big money. Simple.",
-        "Twenty-three on the jersey, twenty-three on the dice. Coincidence? Absolutely.",
-        "I don't lose. I just hand people Cash on a delay.",
-        "Five is the bravest number on this table. Ninety-five is for people who like winning a little, a lot.",
-        "Big win? The whole room hears about it. Bigger win? The whole world does."] }]
+        "One more roll. Just one. Then one more after that. Then we'll talk.",
+        "You're up? That's the dice telling you to bet bigger. You're down? That's the dice telling you you're due.",
+        "Roll under five. Twenty-four times your money. Honestly it'd be irresponsible NOT to.",
+        "I haven't left this table since the doors opened. My island's all weeds now. Worth it.",
+        "Broke? Beautiful. Board by the door pays for chopping logs. Chop, come back, roll. That's a business plan.",
+        "Coin flip's fifty-fifty. That means you literally cannot lose half the time. Do the math. Then bet it all.",
+        "Last week I lost my pickaxe, my boots and my good trousers in one night. Best night of my life.",
+        "Scared money don't make money. Scared money doesn't make anything. Put the whole stack on it.",
+        "The sevens are hot tonight. They're always hot. That's why I sleep here.",
+        "You walking away? On THIS streak? Nah. Nah nah nah. One more."] }]
+  },
+  // through the curtains at the back of the Casino: one big table everyone plays at once
+  roulette: {
+    name: "The Roulette Room", interior: true, floor: "casino", room: [4, 3, 17, 10], exitTo: { scene: "casino", x: 16, y: 4 }, entry: { x: 10, y: 10 },
+    wall: [{ t: "banner", x: 5 }, { t: "lamp", x: 7.5 }, { t: "lamp", x: 10.5 }, { t: "lamp", x: 13.5 }, { t: "banner", x: 16.5 }],
+    build() {
+      const g = room(4, 3, 17, 10, 10), objs = [];
+      objs.push({ t: "roulette", x: 8, y: 5, w: 4, h: 2, name: "Roulette table" }); block(g, 8, 5, 4, 2);
+      for (const [x, y] of [[5, 9], [15, 9]]) { objs.push({ t: "sofa", x, y, w: 2, h: 1, name: "Sofa" }); block(g, x, y, 2, 1); }
+      for (const [x, y] of [[4, 4], [17, 4], [4, 7], [17, 7]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
+      return { g, objs, blobs: [] };
+    },
+    mobs: [], bots: [],
+    npcs: [{ name: "Rouge the Croupier", art: "rouge", x: 10, y: 4, still: true, reach: 3, hair: "#1a1a1a", shirt: "#1a1a1a", pants: "#1a1a1a", lines: [
+      "Place your bets. The wheel waits for no one, but it does wait twenty-five seconds.",
+      "Red, black, odd, even, a dozen or a single number. A single number pays thirty-six times. It also mostly doesn't.",
+      "Everyone at this table plays the same spin. Win together, lose together. Mostly lose together.",
+      "No more bets once the ball is rolling. I will know.",
+      "Zero is green, and zero belongs to the house. Nothing personal."] }]
   },
   farmhouse: {
     name: "The Farmhouse", interior: true, floor: "wood", room: [6, 4, 15, 10], exitTo: { scene: "farm", x: 4, y: 5 }, entry: { x: 10, y: 10 },
@@ -953,6 +978,29 @@ export function slotsPay(reels) {
   return reels.filter((r) => r === "cherry").length === 2 ? SLOT_TWO_CHERRIES : 0;
 }
 
+/* ------------------------------------------------------------ roulette: one shared table, one spin for everyone
+
+   A single-zero wheel on a clock: bets are open for `betMs`, then the ball rolls for `spinMs` and the room sees the
+   result together. Standard payouts, so the house keeps the green zero (97.3% back). */
+export const ROULETTE = { betMs: 25000, spinMs: 6000, maxStake: 500, bigWin: 20 };
+export const ROULETTE_WHEEL = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
+const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+export const rouletteColor = (n) => (n === 0 ? "green" : RED.has(n) ? "red" : "black");
+// kind -> what it pays (total returned per 1 staked) and when it wins
+export const ROULETTE_BETS = {
+  red:   { label: "Red",    pays: 2,  wins: (n) => RED.has(n) },
+  black: { label: "Black",  pays: 2,  wins: (n) => n > 0 && !RED.has(n) },
+  odd:   { label: "Odd",    pays: 2,  wins: (n) => n > 0 && n % 2 === 1 },
+  even:  { label: "Even",   pays: 2,  wins: (n) => n > 0 && n % 2 === 0 },
+  low:   { label: "1–18",   pays: 2,  wins: (n) => n >= 1 && n <= 18 },
+  high:  { label: "19–36",  pays: 2,  wins: (n) => n >= 19 },
+  d1:    { label: "1st 12", pays: 3,  wins: (n) => n >= 1 && n <= 12 },
+  d2:    { label: "2nd 12", pays: 3,  wins: (n) => n >= 13 && n <= 24 },
+  d3:    { label: "3rd 12", pays: 3,  wins: (n) => n >= 25 },
+  num:   { label: "Number", pays: 36, wins: (n, pick) => n === pick }
+};
+export const rouletteLabel = (kind, pick) => (kind === "num" ? String(pick) : ROULETTE_BETS[kind]?.label || kind);
+
 /* ------------------------------------------------------------ daily tasks: the board in the Casino
 
    Three a day per person, picked from what their levels allow, the same three all day (by who and which day), fresh
@@ -1144,7 +1192,7 @@ export const EXAMINE = {
   lighthouse: ["A lighthouse. The light points inward, at the island. Nobody knows who it's warning.", "The door's painted on. The light is on anyway."],
   mule: ["A mule. It refuses to move. It has refused for eleven years.", "The mule looks at you. You feel judged by a professional."]
 };
-export const VERB = { game: "Play", board: "Read", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
+export const VERB = { game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
 /* ------------------------------------------------------------ quests are data
    goal.type "bring": have goal.n of goal.items in your bag when you talk to the giver (they're taken)
