@@ -339,10 +339,12 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob) return;
-      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", range: "cook", fire: "cook", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       if (!kind) return;
       const at = kind === "door" ? ob.door : G.nearestCell(ob, f);
       act = { kind, ob, x: at.x, y: at.y, name: ob.name };
+      // the anvil is told which recipe; the page sends its id with the click
+      if (kind === "smith" && m.pick && G.RECIPES[String(m.pick)]) act.pick = String(m.pick);
     }
     if (!act) return;
     act.started = 0;
@@ -879,24 +881,51 @@ export class World {
       }
       return;
     }
-    if (a.kind === "cook") {
-      const lv = G.lvlOf(C, "cooking"), raw = C.inv.find((x) => G.COOK[x.k] && lv >= G.COOK[x.k].lvl);
-      if (!raw) {
-        const tooHard = C.inv.find((x) => G.COOK[x.k]);
-        this.say(pl, tooHard ? `You need a Cooking level of ${G.COOK[tooHard.k].lvl} to cook ${G.ITEMS[tooHard.k].name.toLowerCase()}.` : "You have nothing raw to cook.", tooHard ? "bad" : "sys");
+    /* Every station — campfire, range, furnace, anvil — runs the same loop off
+       the RECIPES table. Cooking behaves exactly as it did; smelting and
+       smithing are rows, not code. A station is `auto` when it should just get
+       on with the best thing you can make (cooking, smelting); the anvil is
+       not, because "which of the forty things" is a question only you can
+       answer, so it waits for a.pick. */
+    if (a.kind === "cook" || a.kind === "smelt" || a.kind === "smith") {
+      const st = G.STATIONS[ob.t];
+      if (!st) { pl.act = null; return; }
+      const lv = G.lvlOf(C, st.skill), all = G.recipesAt(ob.t);
+      // the anvil is told what to make; everything else takes the best it can
+      const wanted = a.pick ? all.find((r) => r.id === a.pick) : null;
+      const r = st.auto ? all.find((x) => G.canMake(C, x)) : (wanted && G.canMake(C, wanted) ? wanted : null);
+      if (!r) {
+        if (!st.auto && wanted) this.say(pl, G.lvlOf(C, wanted.skill) < wanted.lvl
+          ? `You need a ${G.SKILLS[wanted.skill].name} level of ${wanted.lvl} to ${st.verb} that.`
+          : `You don't have what that takes: ${wanted.in.map(([k, n]) => `${n} × ${G.ITEMS[k].name.toLowerCase()}`).join(", ")}.`, "bad");
+        else {
+          // nothing doable: say whether it is a level or a missing ingredient
+          const tooHard = all.find((x) => x.in.every(([k, n]) => G.countItems(C, [k]) >= n) && lv < x.lvl);
+          this.say(pl, tooHard
+            ? `You need a ${G.SKILLS[tooHard.skill].name} level of ${tooHard.lvl} to ${st.verb} that.`
+            : `You have nothing to ${st.verb} at the ${st.name}.`, tooHard ? "bad" : "sys");
+        }
         pl.act = null; return;
       }
-      if (!a.started) { a.started = now; a.next = now + 1800; pl.swingAt = now; this.say(pl, `You start cooking the ${G.ITEMS[raw.k].name.toLowerCase().replace(/^raw /, "")}.`); return; }
+      const outName = G.ITEMS[r.out[0]].name.toLowerCase();
+      if (!a.started) { a.started = now; a.next = now + r.ms; pl.swingAt = now; this.say(pl, `You start ${st.verb === "cook" ? "cooking" : st.verb === "smelt" ? "smelting" : "hammering out"} the ${st.verb === "cook" ? G.ITEMS[r.in[0][0]].name.toLowerCase().replace(/^raw /, "") : outName}.`); return; }
       if (now - pl.swingAt > 900) pl.swingAt = now;
       if (now < a.next) return;
-      a.next = now + 1800;
-      const r = G.COOK[raw.k];
-      if (raw.n > 1 && (G.roomFor(C.inv, r.to) < 1 || G.roomFor(C.inv, "burnt") < 1)) { this.say(pl, "Your inventory is full.", "bad"); pl.act = null; return; }
-      raw.n--; if (!raw.n) C.inv.splice(C.inv.indexOf(raw), 1);
-      if (Math.random() < G.burnChance(r, lv, ob.t === "range")) { this.give(pl, "burnt"); this.emit(pl, "burn", {}); this.say(pl, "You burn it.", "bad"); }
-      else { this.give(pl, r.to); this.gained(S, pl, r.to, 1, "cook"); this.grant(pl, "cooking", r.xp); }
+      a.next = now + r.ms;
+      // room for what comes out, and for the ruined version if it can fail
+      if (G.roomFor(C.inv, r.out[0]) < r.out[1] || (r.burnStop != null && G.roomFor(C.inv, "burnt") < 1)) { this.say(pl, "Your inventory is full.", "bad"); pl.act = null; return; }
+      for (const [k, n] of r.in) G.takeInv(C.inv, k, n);
+      if (r.burnStop != null && Math.random() < G.burnChance(r, lv, ob.t === "range")) { this.give(pl, "burnt"); this.emit(pl, "burn", {}); this.say(pl, "You burn it.", "bad"); }
+      else {
+        this.give(pl, r.out[0], r.out[1]);
+        this.gained(S, pl, r.out[0], r.out[1], r.skill === "cooking" ? "cook" : "craft");
+        this.grant(pl, r.skill, r.xp);
+        if (r.skill !== "cooking") this.say(pl, `You make ${r.out[1] > 1 ? `${r.out[1]} × ` : "a "}${outName}.`, "good");
+      }
       this.touch(pl);
-      if (!C.inv.some((x) => G.COOK[x.k] && lv >= G.COOK[x.k].lvl)) { this.say(pl, "That's everything cooked."); pl.act = null; }
+      this.questCheck(pl);
+      const again = st.auto ? all.some((x) => G.canMake(C, x)) : G.canMake(C, r);
+      if (!again) { this.say(pl, `That's everything you can ${st.verb} for now.`); pl.act = null; }
       return;
     }
     if (a.kind === "tree") {

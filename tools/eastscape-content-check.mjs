@@ -129,6 +129,28 @@ head("cooking and crops");
   console.log(`  checked ${Object.keys(G.COOK).length} recipes, ${Object.keys(G.CROPS).length} crops`);
 }
 
+head("recipes");
+{
+  const stations = new Set(Object.keys(G.STATIONS));
+  for (const [id, r] of Object.entries(G.RECIPES)) {
+    if (!G.SKILLS[r.skill]) bad(`recipe "${id}" trains "${r.skill}"`, "no such skill");
+    if (!stations.has(r.station)) bad(`recipe "${id}" is made at "${r.station}"`, `not one of ${[...stations].join(", ")}`);
+    if (G.STATIONS[r.station] && G.STATIONS[r.station].skill !== r.skill) bad(`recipe "${id}" trains ${r.skill} at a ${r.station}`, `which is a ${G.STATIONS[r.station].skill} station`);
+    for (const [k, n] of r.in || []) { if (!G.ITEMS[k]) bad(`recipe "${id}" needs "${k}"`, "no such item"); if (!(n >= 1)) bad(`recipe "${id}" needs a bad amount of "${k}"`, String(n)); }
+    if (!G.ITEMS[r.out?.[0]]) bad(`recipe "${id}" makes "${r.out?.[0]}"`, "no such item");
+    if (!(r.lvl >= 1)) bad(`recipe "${id}" has no level`);
+    if (!(r.xp > 0)) bad(`recipe "${id}" gives no xp`);
+    if ((r.in || []).some(([k]) => k === r.out?.[0])) bad(`recipe "${id}" makes what it consumes`, "an infinite loop");
+  }
+  // a station nothing can be made at is a thing players will click forever
+  for (const st of stations) if (!G.recipesAt(st).length) bad(`the ${st} has no recipes`);
+  // and a station that exists in no map cannot be used at all
+  const placed = new Set();
+  for (const def of Object.values(G.SCENES)) { try { for (const o of def.build?.().objs || []) placed.add(o.t); } catch (e) { /* island scenes need args */ } }
+  for (const st of stations) if (!placed.has(st)) warn(`the ${st} is in no map`, "its recipes cannot be reached");
+  console.log(`  checked ${Object.keys(G.RECIPES).length} recipes across ${stations.size} stations`);
+}
+
 head("quests");
 {
   const npcNames = new Set(), npcQuests = new Set();
@@ -186,16 +208,18 @@ head("dead inventory");
   const cooked = new Set(Object.values(G.COOK).map((r) => r.to));
   const crops = new Set(Object.keys(G.CROPS));
   const quested = new Set(Object.values(G.QUESTS).flatMap((q) => (q.reward?.items || []).map(([k]) => k)));
+  const made = new Set(Object.values(G.RECIPES).map((r) => r.out[0]));
   const start = new Set([...G.freshChar().inv.map((s) => s.k), ...Object.values(G.freshChar().eq).filter(Boolean)]);
   const gatherable = new Set(["logs", "yewlogs", "ashlogs", "copper", "tin", "grimstone", "marble", "stardust", "olives", "sunolive", "wheat", "tomatoe", "goldtomatoe", "sardine", "trout", "mooncarp", "gloomfin", "geode", "burnt", "coins"]);
   for (const k of Object.keys(G.ITEMS)) {
-    if (dropped.has(k) || sold.has(k) || cooked.has(k) || crops.has(k) || quested.has(k) || start.has(k) || gatherable.has(k)) continue;
+    if (dropped.has(k) || sold.has(k) || cooked.has(k) || crops.has(k) || quested.has(k) || start.has(k) || gatherable.has(k) || made.has(k)) continue;
     warn(`item "${k}" (${G.ITEMS[k].name})`, "nothing drops, sells, cooks, grows or rewards it — check it is gatherable");
   }
   // and anything you can get but cannot sell is a dead end in the bag
   const rawForCooking = new Set(Object.keys(G.COOK));   // raw meat and fish exist to be cooked; the cooked one is what sells
-  for (const k of [...dropped, ...cooked, ...crops]) {
-    if (k in G.SHOP.buys || k === "coins" || G.ITEMS[k]?.heal || G.ITEMS[k]?.slot || rawForCooking.has(k)) continue;
+  const usedInARecipe = new Set(Object.values(G.RECIPES).flatMap((r) => r.in.map(([k]) => k)));
+  for (const k of [...dropped, ...cooked, ...crops, ...made]) {
+    if (k in G.SHOP.buys || k === "coins" || G.ITEMS[k]?.heal || G.ITEMS[k]?.slot || rawForCooking.has(k) || usedInARecipe.has(k)) continue;
     warn(`item "${k}" can be obtained but the shop will not buy it`, "and it neither heals, is worn, nor cooks into something");
   }
 }
