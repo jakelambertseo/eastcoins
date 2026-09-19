@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 56;
+export const VERSION = 57;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -26,8 +26,7 @@ export const levelOf = (xp) => { let l = 1; while (l < 99 && xp >= XP_AT[l + 1])
 
 /* ------------------------------------------------------------ things you can carry */
 export const ITEMS = {
-  coins: { name: "Cash", icon: "💵", nocap: true, ex: "Casino chips: what the tables take. You get them at the Prize Counter, for tickets." },
-  tickets: { name: "Tickets", icon: "🎟️", nocap: true, ex: "What the world outside pays in. Every kill and every catch is worth tickets; the Prize Counter (the House Ruby, in the middle of the casino) turns them into chips, gear, dinner, and scratch cards that pay real ZCoins." },
+  tickets: { name: "Tickets", icon: "🎟️", nocap: true, ex: "The one currency in GambaScape. Every kill, catch and daily job pays tickets. They buy everything at the Prize Counter, and every table takes them: 1,000 tickets stand in for 1 ZCoin at the real tables, and what you win there is paid in real ZCoins." },
   zcoin: { name: "ZCoin", icon: "🪙", ex: "A REAL ZCoin, from eastcoin.vip. Rare. Take it to the Prize Counter and it goes straight onto your ZCoin balance." }, wheat: { name: "Wheat", icon: "🌾" }, bones: { name: "Bones", icon: "🦴" },
   beef: { name: "Raw beef", icon: "🥩" }, hide: { name: "Cowhide", icon: "🟫" }, chicken: { name: "Raw chicken", icon: "🍗" },
   feather: { name: "Feather", icon: "🪶" }, sardine: { name: "Sardine", icon: "🐟", heal: 3, ex: "Sell it, or eat it as it comes. You're a gambler, not a chef." }, trout: { name: "Trout", icon: "🐠", heal: 5, ex: "Sell it or eat it. From Fishing 10 the Yard's pond gives these up too." },
@@ -74,15 +73,15 @@ export const ITEMS = {
   cmooncarp: { name: "Cooked moon carp", icon: "🐡", heal: 14, ex: "It glows faintly in your stomach. That's normal. Probably." },
   burnt: { name: "Burnt food", icon: "⚫", ex: "Whatever it was, it's charcoal now." },
   // ---- 2026-09-20: THE THINGS THAT CHANGE HOW THE CASINO TREATS YOU (see FX, below the casino's numbers) ----
-  // fighting's windfalls: house chips, worth a lump of Cash at the Ruby or a Cashier
+  // fighting's windfalls: house chips, worth a lump of tickets at the Ruby or a Cashier
   chip_red: { name: "Red house chip", icon: "🔴", ex: "Somebody's winnings, dropped in a hurry. The Cashier will take it." },
   chip_black: { name: "Black house chip", icon: "⚫", ex: "A thousand dollars of somebody else's bad night." },
   chip_gold: { name: "Gold house chip", icon: "🟡", ex: "There are maybe six of these. One of them was inside that thing you just killed." },
   // fighting's other finds: things you click
-  chip_free: { name: "Free-play chip", icon: "🟢", use: "free", ex: "Click it: your next bet at a machine or a table game is on the house, up to $100. Win and you keep the winnings." },
+  chip_free: { name: "Free-play chip", icon: "🟢", use: "free", ex: "Click it: your next bet at a machine or a table game is on the house, up to 100 tickets. Win and you keep the winnings." },
   mysterybox: { name: "Mystery box", icon: "🎁", use: "box", ex: "It rattles. Click it and find out." },
   devils_dice: { name: "Devil's dice", icon: "🎲", use: "devil", ex: "Click within two minutes of a win: TRIPLE what you won, one time in three. The other two times, it's gone." },
-  rewind_watch: { name: "Rewind watch", icon: "⌚", use: "rewind", ex: "Click within a minute of losing a bet and it never happened: your stake comes back (up to $500). Works once." },
+  rewind_watch: { name: "Rewind watch", icon: "⌚", use: "rewind", ex: "Click within a minute of losing a bet and it never happened: your stake comes back (up to 500 tickets). Works once." },
   tp_scroll: { name: "Casino scroll", short: "Scroll", icon: "📜", use: "tp", ex: "Click it and you're standing on the casino floor, wherever you were. Dex sells them at the bar." },
   // gear (all of it DROPS since 2026-09-20: see LOOT)
   gamblers_ring: { name: "Gambler's ring", short: "G. ring", icon: "💍", slot: "ring", fx: { thrift: 0.5 }, ex: "A rare drop, from the Yard's boars and hornworms." },
@@ -298,7 +297,7 @@ export const TOOL_OF = { mining: "pickaxe", woodcutting: "axe", fishing: "rod" }
 export const INV_MAX = 20;   // (was 30 until 2026-09-20: a casino game wants a small bag that fills, so you walk back past the tables to the Cashier.
                              //  normChar re-packs an old 30-slot bag on load and sends what no longer fits to the bank, so nothing is lost.)
 export const BANK_MAX = 200;
-// a bag slot holds up to 99 of a thing; Cash (and anything marked nocap) piles up without limit. The bank has no cap.
+// a bag slot holds up to 99 of a thing; tickets (and anything marked nocap) piles up without limit. The bank has no cap.
 export const STACK_MAX = 99;
 export const capOf = (k) => (ITEMS[k]?.nocap ? Infinity : STACK_MAX);
 // how many more of k the bag can take
@@ -315,11 +314,11 @@ export const addInv = (inv, k, n) => {
   return n;
 };
 // take up to n of k, from the last stacks first; returns how many were taken
-// the bag's tidy order: Cash, tools, weapons and armour (by slot, best tier first), food, then everything else by name.
+// the bag's tidy order: tickets, tools, weapons and armour (by slot, best tier first), food, then everything else by name.
 // Partial stacks of the same thing are merged back into 99s, so a sort can free slots.
 export function sortInv(inv) {
   const tierRank = (k) => { const t = ITEMS[k]?.tier, i = TIERS.findIndex((x) => x.key === t); return i < 0 ? 99 : -i; };
-  const group = (k) => { const it = ITEMS[k] || {}; return k === "coins" ? 0 : it.tool ? 1 : it.slot ? 2 + SLOTS.indexOf(it.slot) / 10 : it.heal ? 3 : 4; };
+  const group = (k) => { const it = ITEMS[k] || {}; return k === "tickets" ? 0 : it.tool ? 1 : it.slot ? 2 + SLOTS.indexOf(it.slot) / 10 : it.heal ? 3 : 4; };
   const totals = new Map(); for (const s of inv) totals.set(s.k, (totals.get(s.k) || 0) + s.n);
   const keys = [...totals.keys()].sort((a, b) => group(a) - group(b) || tierRank(a) - tierRank(b) || (ITEMS[a]?.name || a).localeCompare(ITEMS[b]?.name || b));
   const out = []; for (const k of keys) addInv(out, k, totals.get(k));
@@ -333,10 +332,10 @@ export const takeInv = (inv, k, n) => {
 export const EX_SLOTS = 8;         // Exchange offers a player can have open at once
 export const EX_TAX = 0.01;        // the Exchange keeps 1% of every sale (rounded down); direct trades are free
 export const TRADE_RANGE = 5;      // how close two players must stay to trade face to face
-export const cashIn = (c) => c.inv.find((x) => x.k === "coins")?.n || 0;
+export const cashIn = (c) => c.inv.find((x) => x.k === "tickets")?.n || 0;
 export const fmtTix = (n) => `${Number(n).toLocaleString()} ticket${Number(n) === 1 ? "" : "s"}`;
 export const tixIn = (c) => c.inv.find((x) => x.k === "tickets")?.n || 0;
-export const fmtCash = (n) => `$${Math.round(n).toLocaleString()}`;   // Cash is written like money everywhere: it is what the tables take
+export const fmtCash = (n) => `🎟${Math.round(n).toLocaleString()}`;   /* ONE currency since v57 (2026-09-19): "tickets" is tickets, and an amount wears the ticket, never a $ */   // tickets is written like money everywhere: it is what the tables take
 
 /* ------------------------------------------------------------ directions and reach */
 export const DIRS = { "1,0": "east", "-1,0": "west", "0,1": "south", "0,-1": "north", "1,1": "south-east", "-1,1": "south-west", "1,-1": "north-east", "-1,-1": "north-west" };
@@ -523,7 +522,7 @@ export const SCENES = {
     npcs: [
       { name: "Livia the Broker", x: 12, y: 16, still: true, opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Selling? Buying? Use the stall. I just take my 1%.", "Offers keep working while you sleep. Come back and collect.", "The best price wins, and whoever was there first."] },
            { name: "Charon the Ferryman", art: "charon", x: 18, y: 21, still: true, opens: "ferry", hair: "#e8e8e8", shirt: "#3a3a5a", pants: "#2a2a3a", lines: ["Islands. Everyone gets one. Nobody knows who's paying for them.", "The river's closed, so now it's a cart. Don't ask how a cart gets to an island. I don't.", "Plant something before you go back in there and lose your shirt. It grows while you're away.", "Wheat, ten minutes. Tomatoes, twenty. Both sell. Both cook."] },
-           { name: "Gaius", x: 25, y: 15, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: Coo. The Forge buys ore. Coo.", "PIGEON: He doesn't talk. I do the talking. Coo.", "PIGEON: The Bank keeps your things safe. Aurelia counts everything twice. Coo.", "PIGEON: West is the Olive Grove. Bring a sword. Seriously. Coo.", "PIGEON: North is Tomatoe Hill. Don't correct her spelling. Coo.", "PIGEON: East is the Via Appia. Highwaymen. Hold on to your Cash. Coo."] }],
+           { name: "Gaius", x: 25, y: 15, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: Coo. The Forge buys ore. Coo.", "PIGEON: He doesn't talk. I do the talking. Coo.", "PIGEON: The Bank keeps your things safe. Aurelia counts everything twice. Coo.", "PIGEON: West is the Olive Grove. Bring a sword. Seriously. Coo.", "PIGEON: North is Tomatoe Hill. Don't correct her spelling. Coo.", "PIGEON: East is the Via Appia. Highwaymen. Hold on to your tickets. Coo."] }],
     bots: [{ name: "Gannicus", level: 55 }, { name: "Naevia", level: 31 }]
   },
   grove: {
@@ -719,7 +718,7 @@ Object.assign(SCENES, {
       for (let x = 14; x <= 26; x++) keep.push([x, 18], [x, 17]);
       objs.push({ t: "sign", x: 27, y: 15, name: "GEAR, CHIPS AND PRIZES are all at the Prize Counter now: the big ruby in the middle of the casino. Bring your tickets." }); g[15][27] = "#";
       objs.push({ t: "sign", x: 41, y: 11, name: "THE YARD. Click a monster to fight it. Chickens by the gate; it gets meaner the further west you walk. Nothing here attacks first. The pond is for anyone who'd rather fish." }); g[11][41] = "#";
-      objs.push({ t: "sign", x: 3, y: 11, name: "West: the Gloam. Bigger monsters, bigger Cash, better fish. Combat 12 or so." }); g[11][3] = "#";
+      objs.push({ t: "sign", x: 3, y: 11, name: "West: the Gloam. Bigger monsters, bigger tickets, better fish. Combat 12 or so." }); g[11][3] = "#";
       for (const [x, y] of [[36, 7], [29, 22], [17, 6], [7, 8]]) { objs.push({ t: "hay", x, y, name: "Hay bale" }); g[y][x] = "#"; }
       for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "forest" }, [...keepOf(this), ...keep], 12);
@@ -770,7 +769,7 @@ Object.assign(SCENES, {
       wild(g, objs, this.exits, { n: "rocky", s: "forest", w: "forest", e: "rocky" }, [...keepOf(this), ...keep], 21);
       return { g, objs, blobs: [] };
     },
-    // hornworms and boars by the gate, highwaymen (who carry actual Cash) in the middle, two gnashers at the far end
+    // hornworms and boars by the gate, highwaymen (who carry actual tickets) in the middle, two gnashers at the far end
     mobs: [["hornworm", 7, 6], ["hornworm", 10, 18], ["hornworm", 5, 19], ["boar", 12, 8], ["boar", 17, 17], ["boar", 19, 6], ["boar", 15, 21],
       ["highwayman", 25, 7], ["highwayman", 29, 10], ["highwayman", 24, 19], ["highwayman", 31, 20], ["highwayman", 34, 15],
       ["gnasher", 37, 6], ["gnasher", 38, 20]],
@@ -802,7 +801,7 @@ Object.assign(SCENES, {
       return { g, objs, blobs: [] };
     },
     mobs: [], bots: [{ name: "RingsideRon", level: 22 }, { name: "bloodsport99", level: 47 }, { name: "ChalkEater", level: 9 }],
-    npcs: [{ name: "Vince the Bouncer", art: "vince", x: 23, y: 5, still: true, hair: "#1a1a1a", shirt: "#141418", pants: "#141418", lines: ["High Roller Room. You're on the list if you've got $2,500 on you, or if you've just come from a fight and it shows.", "Tables in there take ten times what they take out here. A hundred dollars is the smallest bet anyone will look at.", "No, I don't know who's going to win. Yes, everybody asks.", "Shoes. I always look at the shoes."] }]
+    npcs: [{ name: "Vince the Bouncer", art: "vince", x: 23, y: 5, still: true, hair: "#1a1a1a", shirt: "#141418", pants: "#141418", lines: ["High Roller Room. Shut. Refit. Don't ask me when.", "When it opens again, you'll hear about it. Everyone will.", "No, I don't know who's going to win. Yes, everybody asks.", "Shoes. I always look at the shoes."] }]
   },
   /* THE HIGH ROLLER ROOM (2026-09-20): through the door in the Fight Pit's back wall. The same games, ten times the
      limits (def.limits), and a $100 floor. Vince lets you in with HIGH_ROLLER.cash in your bag or the High Roller buff
@@ -824,7 +823,7 @@ Object.assign(SCENES, {
       // the lounge in the middle: somewhere to sit and be seen, and the good buffet
       put("cocktail", 21, 10, "Cocktail table"); put("cocktail", 22, 13, "Cocktail table");
       for (const [x, y] of [[20, 10], [22, 10], [21, 13], [23, 13]]) if (g[y][x] === "i") objs.push({ t: "armchair", x, y, name: "Armchair", soft: true });
-      put("buffet", 19, 6, "The good buffet", 2); put("cooler", 21, 6, "Sparkling water"); put("atm", 31, 6, "Cash machine (it only takes)"); put("piano", 23, 6, "Piano", 2);
+      put("buffet", 19, 6, "The good buffet", 2); put("cooler", 21, 6, "Sparkling water"); put("atm", 31, 6, "tickets machine (it only takes)"); put("piano", 23, 6, "Piano", 2);
       put("planter", 11, 6, "Planter", 2); put("planter", 11, 19, "Planter", 2); put("planter", 31, 19, "Planter", 2); put("coatrack", 32, 12, "Coat rack"); put("suitcase", 12, 17, "Somebody's suitcase. It's heavy.");
       for (const [x, y] of [[16, 8], [24, 17], [28, 11]]) if (g[y][x] === "i") objs.push({ t: "l_chips", x, y, name: "Dropped chips", soft: true, flat: true });
       return { g, objs, blobs: [] };
@@ -832,7 +831,7 @@ Object.assign(SCENES, {
     mobs: [], bots: [{ name: "MaxBetMarv", level: 58 }, { name: "WhaleWatcher", level: 41 }],
     npcs: [{ name: "Sterling the Host", art: "sterling", x: 21, y: 17, still: true, hair: "#d8d8e0", shirt: "#f4f0e8", pants: "#1a1a1a", lines: ["Welcome to the room. Same games, ten times the limits, and nobody out there can hear you scream.", "A hundred dollars is the smallest bet at any table in here. If that stings, the door's behind you, and no hard feelings.", "A word on luck and dinners: they cover the first $1,500 of a bet. Past that you're on your own, like the rest of us.", "The buffet is better in here. That isn't a secret, it's the whole point.", "Biggest pot I've seen walk out of here was on Mines. Biggest I've seen walk IN, too."] }]
   },
-  // inside the Casino: a hangout first, a gambling den second. Games of chance for Cash (never ZCoins), the
+  // inside the Casino: a hangout first, a gambling den second. Games of chance for tickets (never ZCoins), the
   // daily-task board, a bar, and Dex, who has seen everything and will tell you about most of it.
   /* GAMBA's hub (2026-09-19): the casino is the middle of the world and where everyone starts. Four ways out, as on
      the owner's map: NORTH the upper floors (Floor 2 is the Roulette Room), WEST the skilling line, EAST the combat
@@ -846,8 +845,8 @@ Object.assign(SCENES, {
        ZCoins. The WINDOW is GambaScape's own (the owner: "keep the current casino game interfaces... hook them up to
        zcoin"); behind it, every bet goes from the page straight to the site's endpoints (eastscape-casino.js, REAL MODE),
        so the limits (20 a bet, ten an hour a game, 400 an hour out), the result, the fairness seed and the ledger are
-       the site's. The game server never touches a ZCoin. Their Cash copies are retired HERE (the server refuses a Cash bet at them on a floor that lists
-       them); the High Roller Room keeps its own Cash tables, and slots, dice, roulette and the Fight Pit were always Cash. */
+       the site's. The game server never touches a ZCoin. Their tickets copies are retired HERE (the server refuses a tickets bet at them on a floor that lists
+       them); the High Roller Room keeps its own tickets tables, and slots, dice, roulette and the Fight Pit were always tickets. */
     real: REAL_TABLES,
     smoke: [38.5, 5.2, 42.6, 10.2],   // where the page hangs a haze: the smoking section (tile coordinates)
     // (the rooms were named in gold on the carpet, def.zones, until the owner found the lettering too big: 2026-09-20. The page still knows how to draw them.)
@@ -908,7 +907,7 @@ Object.assign(SCENES, {
       for (const [x, y] of [[26, 6], [29, 7], [27, 9]]) { seat(x, y + 1); seat(x + 1, y + 1); }
       rope(28, 11, 30, 11); put("cooler", 31, 4, "Water cooler"); put("buffet", 29, 4, "Buffet", 2); put("plant", 32, 7, "Potted palm"); put("trashcan", 32, 9, "Bin");
       // THE BAR and its lounge, north-east
-      put("bar", 34, 5, "Bar", 4); put("atm", 40, 4, "Cash machine (out of order, thankfully)"); put("jukebox", 33, 4, "Jukebox"); put("piano", 33, 8, "Grand piano", 2);
+      put("bar", 34, 5, "Bar", 4); put("atm", 40, 4, "tickets machine (out of order, thankfully)"); put("jukebox", 33, 4, "Jukebox"); put("piano", 33, 8, "Grand piano", 2);
       for (const x of [34, 35, 36, 37]) seat(x, 6);
       for (const [x, y] of [[36, 8], [36, 10]]) put("cocktail", x, y, "Cocktail table");
       put("sofa", 33, 10, "Sofa", 2);
@@ -950,11 +949,11 @@ Object.assign(SCENES, {
       "Gear's at the Prize Counter now, a set for every level. Better gear, faster kills, bigger monsters, more tickets. I sell dinner. We all have our lane.",
       "Once in a while something out there drops a real ZCoin. An actual one. Bank it at the counter before you do anything stupid.",
       "Broke? Happens to the best of us. The board by the door has jobs that pay. Fresh ones every morning.",
-      "Biggest win I've seen? Someone hit three sevens on that end machine. Bought everyone a drink. You can too: a round's $300.",
+      "Biggest win I've seen? Someone hit three sevens on that end machine. Bought everyone a drink. You can too: a round's 300 tickets.",
       "Drinks work. A lager and your wins pay a little more, a Safety Net and your losses hurt a little less. One at a time.",
       "Going out past the Gloam? Take a Casino scroll. Click it and you're back on my floor.",
       "Every roll's decided by the house, fair and square. I just hand over the money.",
-      "No ZCoins in here, friend. Cash only. What happens in EastScape stays in EastScape."] },
+      "Tickets or ZCoins, friend, the tables take both. Win, and it is ZCoins you walk out with."] },
       { name: "DookieBetts", art: "dookie", x: 28, y: 18, still: true, reach: 2, hair: "#1a1a1a", shirt: "#c8102e", pants: "#1a1a1a", lines: [
         "One more roll. Just one. Then one more after that. Then we'll talk.",
         "You're up? That's the dice telling you to bet bigger. You're down? That's the dice telling you you're due.",
@@ -984,9 +983,9 @@ Object.assign(SCENES, {
       { name: "Rent Money Randy", art: "randy", x: 18, y: 21, hair: "#5a4a3a", shirt: "#8a5a32", pants: "#8a5a32", lines: [
         "It's a barrel. Yes. No, I don't want to talk about it. Dice. It was the dice.",
         "I was up four thousand. Then I was up two thousand. Then I was in a barrel.",
-        "The task board pays Cash for chopping logs. I'd go, but the barrel doesn't fit through the arch.",
+        "The task board pays tickets for chopping logs. I'd go, but the barrel doesn't fit through the arch.",
         "Rent's due Friday. So am I. We'll see who gets there first.",
-        "Spot me ten Cash? I'll pay you back twenty. I've got a feeling about the coin table.",
+        "Spot me ten tickets? I'll pay you back twenty. I've got a feeling about the coin table.",
         "The barrel's actually quite roomy. Don't end up in one."] },
       { name: "Whale Wendell", art: "wendell", x: 28, y: 8, hair: "#1a1a1a", shirt: "#f4f4f4", pants: "#f4f4f4", lines: [
         "Five hundred a spin. It's the most the house lets me bet. I've written letters.",
@@ -1199,19 +1198,19 @@ export const MOBS = {
   boar: { name: "Wild boar", size: "m", lvl: 8, hp: 16, att: 6, def: 6, max: 2, speed: 2800, box: [15, 23], drops: [["pork", 1], ["tusk", 1], ["bones", 1]] },
   rotten: { name: "Rotten Tomatoe", size: "s", lvl: 4, hp: 10, att: 3, def: 2, max: 1, speed: 2600, box: [6, 15], drops: [["tomatoe", [1, 3]], ["husk", 1, 0.05]] },
   hornworm: { name: "Tomatoe Hornworm", size: "m", lvl: 7, hp: 15, att: 6, def: 5, max: 2, speed: 2800, box: [15, 13], drops: [["husk", 1], ["tomatoe", 1, 0.5]] },
-  highwayman: { name: "Highwayman", size: "m", lvl: 12, hp: 22, att: 10, def: 9, max: 3, speed: 2400, box: [7, 26], drops: [["coins", [5, 20]], ["bones", 1], ["mask", 1, 0.15]] },
-  gnasher: { name: "Bog Gnasher", size: "m", lvl: 18, hp: 30, att: 14, def: 12, max: 4, speed: 2600, aggro: 3, oy: 12, box: [10, 24], drops: [["bones", 1], ["coins", [5, 25]], ["bogplate", 1, 0.03]] },
-  taxwraith: { name: "Tax Wraith", size: "m", lvl: 28, hp: 42, att: 20, def: 18, max: 5, speed: 2400, aggro: 4, box: [9, 25], drops: [["coins", [20, 80]], ["receipt", 1], ["wraithhood", 1, 0.03], ["menace", 1, 0.02], ["spiderboots", 1, 0.004]] },
+  highwayman: { name: "Highwayman", size: "m", lvl: 12, hp: 22, att: 10, def: 9, max: 3, speed: 2400, box: [7, 26], drops: [["tickets", [5, 20]], ["bones", 1], ["mask", 1, 0.15]] },
+  gnasher: { name: "Bog Gnasher", size: "m", lvl: 18, hp: 30, att: 14, def: 12, max: 4, speed: 2600, aggro: 3, oy: 12, box: [10, 24], drops: [["bones", 1], ["tickets", [5, 25]], ["bogplate", 1, 0.03]] },
+  taxwraith: { name: "Tax Wraith", size: "m", lvl: 28, hp: 42, att: 20, def: 18, max: 5, speed: 2400, aggro: 4, box: [9, 25], drops: [["tickets", [20, 80]], ["receipt", 1], ["wraithhood", 1, 0.03], ["menace", 1, 0.02], ["spiderboots", 1, 0.004]] },
   chandelier: { name: "Chandelier Spider", size: "l", lvl: 34, hp: 50, att: 24, def: 20, max: 6, speed: 2600, aggro: 4, oy: 12, box: [17, 41], drops: [["cobweb", 1], ["bones", 1], ["lantern", 1, 0.03], ["spiderboots", 1, 0.01]] },
-  revenant: { name: "Sulking Revenant", size: "l", lvl: 45, hp: 80, att: 32, def: 28, max: 8, speed: 2800, aggro: 5, box: [9, 30], drops: [["bones", 2], ["coins", [50, 150]], ["grudge", 1, 0.04], ["menace", 1, 0.03]] },
+  revenant: { name: "Sulking Revenant", size: "l", lvl: 45, hp: 80, att: 32, def: 28, max: 8, speed: 2800, aggro: 5, box: [9, 30], drops: [["bones", 2], ["tickets", [50, 150]], ["grudge", 1, 0.04], ["menace", 1, 0.03]] },
   // the Gloam
-  moth: { name: "Lantern Moth", size: "s", lvl: 22, hp: 28, att: 16, def: 12, max: 4, speed: 2200, box: [4, 15], drops: [["coins", [5, 20]], ["emerald_ore", 1, 0.3]] },
-  ghoul: { name: "Sorry Ghoul", size: "m", lvl: 30, hp: 46, att: 22, def: 19, max: 5, speed: 2400, box: [7, 24], drops: [["bones", 1], ["coins", [20, 60]], ["diamond_ore", 1, 0.2]] },
-  understudy: { name: "The Understudy", size: "l", lvl: 38, hp: 62, att: 27, def: 23, max: 7, speed: 2600, box: [12, 43], drops: [["coins", [40, 120]], ["diamond_ore", [1, 2], 0.25]] },
+  moth: { name: "Lantern Moth", size: "s", lvl: 22, hp: 28, att: 16, def: 12, max: 4, speed: 2200, box: [4, 15], drops: [["tickets", [5, 20]], ["emerald_ore", 1, 0.3]] },
+  ghoul: { name: "Sorry Ghoul", size: "m", lvl: 30, hp: 46, att: 22, def: 19, max: 5, speed: 2400, box: [7, 24], drops: [["bones", 1], ["tickets", [20, 60]], ["diamond_ore", 1, 0.2]] },
+  understudy: { name: "The Understudy", size: "l", lvl: 38, hp: 62, att: 27, def: 23, max: 7, speed: 2600, box: [12, 43], drops: [["tickets", [40, 120]], ["diamond_ore", [1, 2], 0.25]] },
   // Cloudreach
-  ram: { name: "Cumulus Ram", size: "m", lvl: 42, hp: 66, att: 29, def: 26, max: 7, speed: 2600, box: [14, 25], drops: [["bones", 1], ["coins", [30, 90]], ["dragonstone_ore", 1, 0.15]] },
-  angel: { name: "Angel of Minor Inconvenience", size: "m", lvl: 48, hp: 84, att: 34, def: 30, max: 8, speed: 2400, aggro: 4, box: [8, 25], drops: [["coins", [60, 160]], ["dragonstone_ore", 1, 0.25]] },
-  goose: { name: "Thunder Goose", size: "l", lvl: 55, hp: 110, att: 40, def: 36, max: 10, speed: 2800, box: [21, 35], drops: [["bones", 2], ["feather", [10, 30]], ["coins", [100, 250]], ["onyx_ore", 1, 0.3]] },
+  ram: { name: "Cumulus Ram", size: "m", lvl: 42, hp: 66, att: 29, def: 26, max: 7, speed: 2600, box: [14, 25], drops: [["bones", 1], ["tickets", [30, 90]], ["dragonstone_ore", 1, 0.15]] },
+  angel: { name: "Angel of Minor Inconvenience", size: "m", lvl: 48, hp: 84, att: 34, def: 30, max: 8, speed: 2400, aggro: 4, box: [8, 25], drops: [["tickets", [60, 160]], ["dragonstone_ore", 1, 0.25]] },
+  goose: { name: "Thunder Goose", size: "l", lvl: 55, hp: 110, att: 40, def: 36, max: 10, speed: 2800, box: [21, 35], drops: [["bones", 2], ["feather", [10, 30]], ["tickets", [100, 250]], ["onyx_ore", 1, 0.3]] },
   goat: { name: "Goat in a Toga", size: "m", lvl: 12, hp: 24, att: 9, def: 8, max: 3, speed: 2400, box: [7, 26], drops: [["manifesto", 1], ["bones", 1], ["toga", 1, 0.25]] }
 };
 
@@ -1228,7 +1227,7 @@ export const MOBS = {
    that keeps somebody coming back. */
 /* FASTER KILLS (2026-09-20, the owner: "an arcade style feedback loop"). Fighting is click-and-wait, and a 20-second wait is
    a long time to look at a cow. Every monster has HALF the hit points it was written with, so a kill at your own level is
-   about 8-12 seconds and the Cash, the drop and the rare roll come round twice as often. What a kill PAYS was re-measured
+   about 8-12 seconds and the tickets, the drop and the rare roll come round twice as often. What a kill PAYS was re-measured
    for the shorter fight (BOUNTY), so an hour's fighting is worth what it was. */
 for (const m of Object.values(MOBS)) m.hp = Math.max(2, Math.round(m.hp / 2));
 
@@ -1304,15 +1303,15 @@ for (const [raw, c] of Object.entries({
 
 /* ------------------------------------------------------------ the Casino (2026-09-18)
 
-   Games of chance for Cash, never ZCoins. The server rolls every result; the page only shows it. Each game keeps a
-   small edge (a Cash sink, which the economy wants), bets are capped, and big wins are announced so the room feels
+   Games of chance for tickets, never ZCoins. The server rolls every result; the page only shows it. Each game keeps a
+   small edge (a tickets sink, which the economy wants), bets are capped, and big wins are announced so the room feels
    alive. Placeholders to iterate on: the numbers all live here. */
 export const CASINO = { minBet: 1, maxBet: 500, betMs: 900, roomWin: 5, worldWin: 25 };
 export const GAMES = {
   slots: { name: "Slots", icon: "🎰", ex: "Three of a kind pays; two cherries pay 1.4×. Three sevens also wins the jackpot." },
   cointable: { name: "Coin Flip", icon: "🪙", ex: "Heads or tails. Pays 1.95×." },
   dicetable: { name: "Dice", icon: "🎲", ex: "Roll 1–100 under your number. The lower you go, the more it pays." },
-  // the games people know from the site's casino, for Cash (2026-09-19). They stand round the rug you arrive on.
+  // the games people know from the site's casino, for tickets (2026-09-19). They stand round the rug you arrive on.
   wheel: { name: "Wheel", icon: "🎡", ex: "Red or black pays 1.97×. The thin gold sliver pays 58×." },
   hilo: { name: "Higher or Lower", icon: "🃏", run: true, ex: "Is the next card higher or lower? Every right call multiplies your stake; cash out whenever you like. A tie is a push." },
   mines: { name: "Mines", icon: "💣", run: true, ex: "25 tiles, some are bombs. Every gem multiplies your stake; cash out before you find a bomb." },
@@ -1349,7 +1348,7 @@ export const REELS = [
   { k: "star", icon: "⭐", w: 8, pay: 40 }, { k: "diamond", icon: "💎", w: 4, pay: 120 }, { k: "seven", icon: "7️⃣", w: 2, pay: 500 }
 ];
 export const SLOT_TWO_CHERRIES = 1.4;
-/* the slots jackpot: 2% of every spin goes into one pot everybody shares; three sevens wins it (a 500 Cash spin
+/* the slots jackpot: 2% of every spin goes into one pot everybody shares; three sevens wins it (a 500 tickets spin
    wins all of it, smaller spins a share in proportion, the rest stays in the pot). The regular pays above were
    trimmed to make room, so slots still return about 96.5% overall. The house seeds it again after a win. */
 export const JACKPOT = { slice: 0.02, seed: 1000, cap: 50000 };
@@ -1363,7 +1362,7 @@ export function slotsPay(reels) {
 
    The whole game in a line: gamble in the casino; when you want better odds, go and skill or fight. Working in the
    world turns up lucky charms; using one makes your next N bets "lucky", and a lucky win pays `bonus` more. Even
-   lucky, every game stays just under 100% back, so the casino can't be turned into a Cash printer. */
+   lucky, every game stays just under 100% back, so the casino can't be turned into a tickets printer. */
 export const LUCK = { bonus: 0.025, gather: 1 / 12, shoe: 1 / 150, max: 300 };   // luck is SKILLING's reward alone (2026-09-20): clovers, and rarely a horseshoe
 /* THE FIGHT PIT'S NUMBERS. Two monsters are drawn from `pool`; the chance each wins comes from their levels (square
    roots, so a chicken against a revenant is a long shot, not a no-hoper) and is clamped to 25-75%; each side pays
@@ -1394,7 +1393,7 @@ export const NEED_TEXT = { thirst: "You're too thirsty to gamble. There's a wate
    The owner's brief: three jobs that each pay DIFFERENTLY, and the item effects of "Gamble With Your Friends" on gear,
    cooked meals and alcohol.
      SKILLING is the only way to get LUCKY (clovers while you gather).
-     FIGHTING pays in windfalls: a Cash bounty on every monster (BOUNTY), house chips, free-play chips, mystery boxes,
+     FIGHTING pays in windfalls: a tickets bounty on every monster (BOUNTY), house chips, free-play chips, mystery boxes,
        Devil's dice, rewind watches, the two rare-drop pieces of gambling gear, and HIGH ROLLER (double limits).
      CRAFTING makes what you keep: four smithed pieces of gambling gear and four cooked dinners, every one of which
        needs something dug up AND something killed. Dex's bar sells the drinks.
@@ -1406,14 +1405,19 @@ export const NEED_TEXT = { thirst: "You're too thirsty to gamble. There's a wate
    THE CEILING. Every game returns about 97% and luck adds ~2.4%. GEAR ALONE can add at most 1.5% of profit and 1.5% of
    losses (FX_CAP.gear), so gear never takes a game over 100% by itself. Everything stacked (gear + meal + drink) stops
    at FX_CAP.all, which with luck is about 104% back: the top of the band eastcoin.vip's own casino is drawn in, and
-   only for as long as the dinner and the drink last, both of which cost work or Cash. edgeOf() is the ONE place this
+   only for as long as the dinner and the drink last, both of which cost work or tickets. edgeOf() is the ONE place this
    is added up and the server is the only thing that calls it for money.
    *** CASH ONLY. If a GAMBA table ever takes real ZCoins, none of this may touch it (see BACKLOG: "Never"). *** */
-/* THE HOUSE RUBY's exchange (2026-09-20): Cash into real ZCoins, $100 each, or a $500 Ruby ticket (a scratch reveal with a
+/* THE HOUSE RUBY's exchange (2026-09-20): tickets into real ZCoins, $100 each, or a $500 Ruby ticket (a scratch reveal with a
    face of 5 ZCoins that pays 25, 10, 5, 2 or nothing). ONE allowance of 25 an hour covers both. The SITE is the authority
    (functions/api/eastscape/exchange.js): these are its numbers, mirrored for the page and the game server, and
    tools/dex-test.mjs fails if they drift. */
-export const DEX = { ticketPrice: 1000, rate: 100, capHour: 25, ticket: { face: 5, table: [[25, 4], [10, 12], [5, 30], [2, 30], [0, 24]] } };
+/* v57 (2026-09-19, the owner): TICKETS ARE THE ONLY CURRENCY, and the real tables take ZCoins OR tickets. DEX.rate tickets
+   stand in for 1 ZCoin; a ticket bet is an ordinary eastcoin.vip bet staked by the house (functions/api/eastscape/_stake.js)
+   and it pays REAL ZCoins. capHour is the backstop: the most ZCoins' worth of tickets one player may stake in an hour
+   (banking dropped ZCoins counts against it too). maxStake is the casino's own 20 a bet. The Ruby's scratch tickets and
+   its tickets exchange are gone: betting tickets is the conversion. */
+export const DEX = { rate: 1000, capHour: 50, maxStake: 20 };
 export const FX_CAP = { gear: { win: 0.015, back: 0.015, angel: 0.0075 }, all: { win: 0.05, back: 0.03, angel: 0.01 } };
 export const ROLLER = { kill: 1 / 8, bets: 10, max: 100, mult: 2 };
 export const FREEPLAY = 100, DEVIL = { ms: 120000, odds: 1 / 3, pays: 3, max: 5000 }, REWIND = { ms: 60000, max: 500 };
@@ -1430,8 +1434,8 @@ export function edgeOf(c) {
 }
 /** The most this player may put on one bet right now: the table's limit, plus gear/meal/drink, doubled while a High Roller. */
 /* THE DAILY PRIZE WHEEL (2026-09-20): one free spin a Chicago day at the wheel by the casino's front door. A reason to
-   show up, and a first stake for anyone who arrives broke. Twelve slices, weighted; Cash slices grow 10% for every
-   day in a row you've spun (up to +70%), so a streak is worth keeping and missing a day costs something. About $100 of Cash a
+   show up, and a first stake for anyone who arrives broke. Twelve slices, weighted; ticket slices grow 10% for every
+   day in a row you've spun (up to +70%), so a streak is worth keeping and missing a day costs something. About $100 of tickets a
    spin on average plus the odd item, more with a streak: a minute of mining, so it's a gift and not a job. */
 export const PRIZE = { streakStep: 0.1, streakMax: 7, slices: [
   { cash: 50, w: 18 }, { k: "clover", n: 1, w: 12 }, { cash: 100, w: 16 }, { k: "beer", n: 1, w: 10 }, { cash: 150, w: 12 }, { k: "chip_free", n: 1, w: 9 },
@@ -1483,14 +1487,14 @@ export const buffsOf = (c) => {
 /* ------------------------------------------------------------ what's open (2026-09-19 reset)
    One casino (with its Roulette Room), one town, one skilling area, one combat area. Everything else still exists in
    the code but can't be reached yet; a saved character standing somewhere closed wakes up in the casino. */
-export const OPEN = new Set(["casino", "roulette", "fightpit", "highroller", "forum", "bathhouse", "workyard", "gloam", "cloud"]);   // (paddock, rough, boneyard closed 2026-09-20: their monsters live in the three scenes of the one line out)
+export const OPEN = new Set(["casino", "roulette", "fightpit", /* "highroller": closed for now (the owner, 2026-09-19) */ "forum", "bathhouse", "workyard", "gloam", "cloud"]);   // (paddock, rough, boneyard closed 2026-09-20: their monsters live in the three scenes of the one line out)
 export const OPEN_DAILY = new Set(["sardine", "lantern", "cows", "chickens", "rotten", "boar", "highwayman", "moths", "ghouls", "rams"]);   // kills and fish: that's the world now
 for (const k of Object.keys(SCENES)) if (!OPEN.has(k)) SCENES[k].wikiHide = true;   // closed areas stay out of the wiki
 
 /* ------------------------------------------------------------ the House Tour: how a new player learns the loop
 
    Gamble first, run dry, do a job, get paid, come back. Dex walks you through it once, inside the casino. `step` is
-   an index into TOUR; TOUR.length means finished. (Paid in Cash for now; the DEX exchange slots into the last step.) */
+   an index into TOUR; TOUR.length means finished. (Paid in tickets for now; the DEX exchange slots into the last step.) */
 export const TOUR = [
   { id: "meet",  text: "Say hello to Dex, behind the bar" },
   { id: "play",  text: "Play any game on the floor with your free chip" },
@@ -1503,14 +1507,15 @@ export const tourOf = (c) => (c?.tour && c.tour.step < TOUR.length ? TOUR[c.tour
 export const HOWTO = `GambaScape is a casino. You'll spend most of your time right here.
 
 REAL ZCOINS: Coin Flip, the Wheels, Higher or Lower, Mines, Plinko and Scratch-Off on this floor are eastcoin.vip's own games, for REAL ZCoins, with the site's rules: 20 a bet, ten plays an hour a game, 400 an hour out. Click one (or the Games button, top left) and it opens. Hit a limit? That's what the arch is for.
-CHIPS: slots, dice, roulette upstairs, the Fight Pit and the High Roller Room play for chips (Cash), which you get at the Prize Counter for tickets.
+TICKETS OR ZCOINS: every one of those tables takes either. Pick "ZCoins" and you bet your own; pick "Tickets" and 1,000 tickets stand in for each ZCoin. Either way a win is paid in REAL ZCoins. Ticket bets have an allowance of 50 ZCoins' worth an hour.
+TICKETS ONLY, for now: slots, dice, roulette upstairs and the Fight Pit take tickets and pay tickets. (The High Roller Room is closed.)
 
-PLAY: every kind of game has its own roped-off room, named on the carpet at its way in. SLOTS fill the north-west. WHEELS and COIN FLIP are below them. The CARD ROOM is by the bar. The DICE PIT and the INSTANT WINS machines (Plinko, Mines, Scratch-Off) are in the south-east. Roulette is through the door in the back wall. Bets come out of the Cash in your bag.
+PLAY: every kind of game has its own roped-off room, named on the carpet at its way in. SLOTS fill the north-west. WHEELS and COIN FLIP are below them. The CARD ROOM is by the bar. The DICE PIT and the INSTANT WINS machines (Plinko, Mines, Scratch-Off) are in the south-east. Roulette is through the door in the back wall. Bets come out of the tickets in your bag.
 
 BROKE? Go and win some tickets. It's quick.
   OUT THE ARCH: the Yard, then the Gloam, then Cloudreach. CLICK A MONSTER to fight it. Every kill pays the same three ways: TICKETS, the monster's own drop, and a roll at something rare. The further out you walk, the bigger all three get.
   RATHER NOT FIGHT? Every scene has a pond. Fishing is safe, it never runs out, and it's the only place lucky clovers turn up. A fish is food, too: click one to eat it.
-  THE PRIZE COUNTER is the big ruby in the middle of this floor (the Cashier windows work too). It takes your drops and fish for more tickets, and trades tickets for CHIPS to play with, gear for every level, drinks and dinners, and Ruby scratch tickets that pay REAL ZCOINS.
+  THE PRIZE COUNTER is the big ruby in the middle of this floor (the Cashier windows work too). It takes your drops and fish for more tickets, and sells gear for every level, drinks, dinners and Casino scrolls.
   REAL ZCOINS also turn up, rarely, on a kill or a catch. Bank them at the counter.
 
 THIRSTY? HUNGRY? Every bet takes a little out of you. Under 20% the tables turn you away: the water cooler and the buffet are on the card room's back wall, next to the bar, and they're free.
@@ -1518,7 +1523,7 @@ THIRSTY? HUNGRY? Every bet takes a little out of you. Under 20% the tables turn 
 BUFFS. Lucky clovers (from fishing) make your wins pay more. Kills can make you a HIGH ROLLER (double table limits for a few bets) and turn up house chips, free-play chips, mystery boxes and rare gear that changes how the tables treat you while you wear it. Dex sells drinks and dinners that do the same for a while.
 Everything you've got going is in the BUFFS bar, top right. Hover one to see what it does.
 
-FREE MONEY: the Daily Prize Wheel by the front door is one free spin a day. Spin it every day and the Cash slices grow.
+FREE MONEY: the Daily Prize Wheel by the front door is one free spin a day. Spin it every day and the ticket slices grow.
 VIP: every dollar you ever bet counts toward your tier (Bronze, Silver, Gold, Platinum, Diamond). It shows by your name, and every tier raises your table limits.
 
 FAR FROM HOME? Dex sells Casino scrolls. Click one and you're back on the floor.
@@ -1552,7 +1557,7 @@ export const rouletteLabel = (kind, pick) => (kind === "num" ? String(pick) : RO
 /* ------------------------------------------------------------ daily tasks: the board in the Casino
 
    Three a day per person, picked from what their levels allow, the same three all day (by who and which day), fresh
-   each Chicago morning. They count what you gather and kill after the day starts; claim the Cash at the board. */
+   each Chicago morning. They count what you gather and kill after the day starts; claim the tickets at the board. */
 // (`cash` is what the job pays, in TICKETS since 2026-09-20)
 export const DAILY = [
   { id: "logs", what: "gather", k: "logs", n: 50, cash: 150, req: null },
@@ -1651,13 +1656,13 @@ export const AFK_KINDS = { rock: "mining", vein: "mining", spot: "fishing", tree
    tickets for prizes"). The world outside pays TICKETS; the House Ruby (and the two Cashier windows) is the one place
    they're spent. A ticket is worth what a dollar was, so every number in the game kept its size: a cow pays about 28
    tickets, $100 of casino chips costs 100. What's behind the counter:
-     chips      Cash for the tables, 1 for 1 (the only way to get any, apart from the free wheel and winning)
+     chips      tickets for the tables, 1 for 1 (the only way to get any, apart from the free wheel and winning)
      ZCoins     a Ruby scratch ticket (DEX.ticketPrice), and banking any ZCoins you found (no charge)
      the bar    Dex's drinks and dinners, and Casino scrolls, at his prices
      gear       the plain set of every tier, which Brutus used to sell out in the Yard
    NOT here on purpose: lucky clovers (fishing's alone) and the fighting finds (free-play chips, boxes, dice, watches).
    An entry is { id, group, price, give: [item, n] | cash: n }. */
-export const PRIZE_CHIPS = [100, 500, 2500];
+export const PRIZE_CHIPS = [];   /* no chips to buy since v57: the tables take tickets */
 export const prizesOf = () => [
   ...PRIZE_CHIPS.map((n) => ({ id: `chips${n}`, group: "chips", price: n, cash: n, name: `${fmtCash(n)} in chips` })),
   ...BAR.sells.map(([k, p]) => ({ id: k, group: "bar", price: p, give: [k, 1] })),
@@ -1665,13 +1670,13 @@ export const prizesOf = () => [
   ...GEAR_FOR_SALE.map(([k, p]) => ({ id: k, group: `gear:${ITEMS[k].tier}`, price: p, give: [k, 1] }))
 ];
 /* Brutus sells the PLAIN set of every tier (2026-09-20: nothing is smithed any more, so this is how you gear up, and it
-   gives Cash somewhere to go that isn't a table). Bronze is what it always cost; each tier up costs several times the
+   gives tickets somewhere to go that isn't a table). Bronze is what it always cost; each tier up costs several times the
    last, priced at roughly 20 minutes' fighting for emerald up to a couple of hours' for onyx. The good stuff still drops. */
 const GEAR_PRICE = { gladius: 220, sword: 250, maul: 280, helm: 200, shield: 300, body: 600, legs: 360, boots: 120, gloves: 120, ring: 180, amulet: 260 };
 const TIER_COST = { bronze: 1, emerald: 4, diamond: 12, dragonstone: 30, onyx: 75 };
 const GEAR_FOR_SALE = TIERS.flatMap((t) => Object.entries(GEAR_PRICE).filter(([k]) => ITEMS[`${t.key}_${k}`]).map(([k, p]) => [`${t.key}_${k}`, p * TIER_COST[t.key]]));
 /* Dex's bar (2026-09-20): drinks and the scroll home. Priced so a lager about pays for itself at the table limit and
-   costs you at small stakes: a drink is for someone betting big, and otherwise a Cash sink. `round` buys everyone on
+   costs you at small stakes: a drink is for someone betting big, and otherwise a tickets sink. `round` buys everyone on
    the floor who isn't already drinking a lager's worth of bets. */
 export const BAR = { sells: [["beer", 40], ["cocktail", 90], ["whiskey", 100], ["champagne", 200], ["chickendinner", 80], ["steakdinner", 150], ["porkchops", 150], ["fishplatter", 300], ["tp_scroll", 50]], round: { price: 300, k: "beer", bets: 10 } };
 export const SHOP = {
@@ -1735,13 +1740,13 @@ export const CRAFT_PAYS = 2, CRAFT_STEP = 1.25;
 /* BOUNTY: what an average kill comes to, everything counted. From tools/eastscape-balance.mjs (2026-09-20): a fighter of
    the monster's own level, in the gear that level wears, should make 1.15x what a miner of that level makes in the same
    time (the owner: "mostly match, with fighting winning slightly"). Before this a hornworm paid a fifth of what the
-   rock next to it did. 88% of it is the monster's own drops plus Cash it carries (a "coins" drop fills the gap); the
+   rock next to it did. 88% of it is the monster's own drops plus tickets it carries (a "tickets" drop fills the gap); the
    rest arrives as FINDS, below, which is why a bigger monster turns up more chips. */
 export const BOUNTY = { chicken: 18, cow: 28, rotten: 34, olive: 35, hornworm: 45, boar: 47, highwayman: 40, goat: 42, gnasher: 80, moth: 74, taxwraith: 142, ghoul: 177, chandelier: 185, understudy: 207, ram: 255, angel: 287, revenant: 289, goose: 316 };   // (re-measured 2026-09-20 for half-length fights: a kill pays less, and there are twice as many)
 for (const [t, want] of Object.entries(BOUNTY)) {
-  const m = MOBS[t]; m.drops = m.drops.filter(([k]) => k !== "coins");
+  const m = MOBS[t]; m.drops = m.drops.filter(([k]) => k !== "tickets");
   const other = m.drops.reduce((a, [k, n, p]) => a + (VALUE[k] ?? 0) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0), gap = Math.round(want * 0.88 - other);
-  if (gap >= 2) m.drops.unshift(["tickets", [Math.max(1, Math.round(gap * 0.6)), Math.round(gap * 1.4)]]);   // tickets first: line one of every table (it was Cash until 2026-09-20)
+  if (gap >= 2) m.drops.unshift(["tickets", [Math.max(1, Math.round(gap * 0.6)), Math.round(gap * 1.4)]]);   // tickets first: line one of every table (it was tickets until 2026-09-20)
 }
 /* FINDS: what any kill can turn up on top of the monster's own drops. [item, share]: the chance is share x the
    monster's bounty / the find's worth, so every monster gives the same fraction of its pay this way and a chicken
@@ -1766,10 +1771,10 @@ export const madeFrom = (k) => { const r = Object.values(RECIPES).filter((x) => 
 export const nodeValue = (ob) => (ob.t === "rock" || ob.t === "vein" ? valueOf(ob.ore) : ob.t === "spot" ? valueOf(ob.fish || "sardine") : ob.t === "wheat" ? valueOf("wheat")
   : ob.t === "olive" || ob.t === "vine" ? valueOf(ob.crop || "olives") : ["tree", "oak", "yew", "cypress", "deadtree", "willow", "skyash"].includes(ob.t) ? valueOf(ob.log || "logs") : 0);
 /** What a monster's drops come to on an average kill. */
-export const mobValue = (t) => Math.round((MOBS[t]?.drops || []).reduce((a, [k, n, p]) => a + (k === "coins" || k === "tickets" ? 1 : valueOf(k)) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0)
+export const mobValue = (t) => Math.round((MOBS[t]?.drops || []).reduce((a, [k, n, p]) => a + (k === "tickets" || k === "tickets" ? 1 : valueOf(k)) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0)
   + raresOf(t).reduce((a, [k, p]) => a + (ITEMS[k]?.slot ? 0 : valueOf(k)) * p, 0));
 /** What the Cashier will take off you in one go: loot and things you made, never tools, charms or anything you could wear. */
-export const isLoot = (k) => k !== "coins" && k !== "tickets" && k !== "zcoin" && valueOf(k) > 0 && !ITEMS[k]?.slot && !ITEMS[k]?.luck && !ITEMS[k]?.use && !ITEMS[k]?.drink;
+export const isLoot = (k) => k !== "tickets" && k !== "tickets" && k !== "zcoin" && valueOf(k) > 0 && !ITEMS[k]?.slot && !ITEMS[k]?.luck && !ITEMS[k]?.use && !ITEMS[k]?.drink;
 
 // dying outside the Cage: a quarter of the time one worn item falls where you died. The killer alone can take it
 // for lootMs, then anyone, until it's gone. Leaving mid-fight leaves your character standing there for lingerMs.
@@ -1810,7 +1815,7 @@ export const EXAMINE = {
   anvil: ["Scarred all over. Every mark on it used to be somebody's sword."],
   hive: ["The bees are humming the same four notes. Over and over.", "One bee is wearing a tiny helmet. It salutes you."],
   statue: ["'GALLUS THE BRAVE. He did not flinch.' It's a chicken."],
-  fountain: ["The water tastes faintly of coins. People keep throwing Cash in it."],
+  fountain: ["The water tastes faintly of coins. People keep throwing tickets in it."],
   fire: ["A campfire. Bring raw food and click it to cook."],
   bush: ["A bush. Something inside it is breathing.", "Just a bush. Probably.", "A bush. It rustles when you aren't looking."],
   boulder: ["A big rock. Too big for your pickaxe. For now.", "Someone has scratched 'CRIXUS WAS HERE' into it."],
@@ -1850,7 +1855,7 @@ export const EXAMINE = {
   lighthouse: ["A lighthouse. The light points inward, at the island. Nobody knows who it's warning.", "The door's painted on. The light is on anyway."],
   mule: ["A mule. It refuses to move. It has refused for eleven years.", "The mule looks at you. You feel judged by a professional."]
 };
-export const VERB = { prizewheel: "Spin", fameboard: "Read", cart: "Ride", fight: "Bet on", coinstatue: "Cash in at", cooler: "Drink at", buffet: "Eat at", cashier: "Cash in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
+export const VERB = { prizewheel: "Spin", fameboard: "Read", cart: "Ride", fight: "Bet on", coinstatue: "tickets in at", cooler: "Drink at", buffet: "Eat at", cashier: "tickets in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
 /* ------------------------------------------------------------ quests are data
    goal.type "bring": have goal.n of goal.items in your bag when you talk to the giver (they're taken)
@@ -1869,7 +1874,7 @@ export const QUESTS = {
       ready: "Now those are logs. Hand 'em over.", hand: "Here you go.",
       done: "Kitchen's warm. You did good, rookie. Come back when you want real work."
     },
-    reward: { coins: 40, xp: { woodcutting: 150 }, text: "40 Cash, 150 Woodcutting xp" }
+    reward: { coins: 40, xp: { woodcutting: 150 }, text: "40 tickets, 150 Woodcutting xp" }
   },
   cattle: {
     name: "Cattle Drive", giver: "Bom Trady", where: "Ludus Farm", icon: "🐄", requires: ["firewood"],
@@ -1881,9 +1886,9 @@ export const QUESTS = {
       accepted: "Hit them until they stop mooing. Waldy says that's the whole trick.",
       progress: "That's {have} cows so far. I said 5.",
       ready: "Field's quiet. You're a natural.", hand: "What do I get?",
-      done: "Cash, and my respect. Mostly the Cash."
+      done: "tickets, and my respect. Mostly the tickets."
     },
-    reward: { coins: 60, xp: { melee: 200 }, text: "60 Cash and 200 Combat xp" }
+    reward: { coins: 60, xp: { melee: 200 }, text: "60 tickets and 200 Combat xp" }
   },
   catch: {
     name: "Catch of the Day", giver: "Old Tullius", where: "River Bend", icon: "🐟",
@@ -1898,7 +1903,7 @@ export const QUESTS = {
       ready: "Oh, lovely fish. Give them here.", hand: "Here they are.",
       done: "Supper sorted. Here, take something for your trouble."
     },
-    reward: { coins: 40, xp: { fishing: 150 }, text: "40 Cash, 150 Fishing xp" }
+    reward: { coins: 40, xp: { fishing: 150 }, text: "40 tickets, 150 Fishing xp" }
   }
 };
 
@@ -2046,7 +2051,7 @@ function migrate(out) {
 export function freshChar() {
   return {
     v: SAVE_V, scene: START.scene, x: START.x, y: START.y, hp: 10, hunger: 100, thirst: 100, wagered: 0, spin: null, roller: 0, free: 0, meal: null, drink: null, tour: { step: 0, logs: 0, chickens: 0 },
-    inv: [{ k: "coins", n: 25 }, { k: "rod", n: 1 }],
+    inv: [{ k: "tickets", n: 25 }, { k: "rod", n: 1 }],
     eq: { helm: "cap", weapon: "rudis", body: "tunic", shield: "parma", legs: null, gloves: null, boots: "sandals", ring: null },
     stance: DEFAULT_STANCE,
     xp: { melee: 0, hp: XP_AT[10], fishing: 0, farming: 0, mining: 0, woodcutting: 0, cooking: 0, smithing: 0 },

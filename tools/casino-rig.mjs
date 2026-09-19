@@ -19,8 +19,8 @@ class Stmt {
 const raw = new DatabaseSync(":memory:"), db = { prepare: (sql) => new Stmt(raw, sql), batch: async (list) => { const out = []; for (const s of list) out.push(await s.run()); return out; } };
 for (const f of fs.readdirSync(path.join(REPO, "migrations")).filter((x) => x.endsWith(".sql")).sort()) { try { raw.exec(fs.readFileSync(path.join(REPO, "migrations", f), "utf8")); } catch (e) { console.log(`(migration ${f}: ${String(e.message).slice(0, 80)})`); } }
 const TOKEN = "rig_token", balances = { bootypaper: 500 };
-raw.exec(`INSERT INTO users (twitch_id, twitch_login, display_name) VALUES ('u1', 'bootypaper', 'BootyPaper')`);
-raw.prepare(`INSERT INTO sessions (session_hash, user_id, expires_at) VALUES (?, 'u1', datetime('now', '+30 day'))`).run(crypto.createHash("sha256").update(TOKEN).digest("hex"));
+raw.exec(`INSERT INTO users (twitch_id, twitch_login, display_name) VALUES ('dev:bootypaper', 'bootypaper', 'BootyPaper')`);
+raw.prepare(`INSERT INTO sessions (session_hash, user_id, expires_at) VALUES (?, 'dev:bootypaper', datetime('now', '+30 day'))`).run(crypto.createHash("sha256").update(TOKEN).digest("hex"));
 
 const realFetch = globalThis.fetch;
 globalThis.fetch = async (url, opts = {}) => {
@@ -30,7 +30,8 @@ globalThis.fetch = async (url, opts = {}) => {
   if (opts.method === "PUT") { balances[login] = (balances[login] || 0) + Number(m[2]); return Response.json({ newAmount: balances[login] }); }
   return Response.json({ points: balances[login] ?? 0 });
 };
-const env = { PICKS_DB: db, STREAMELEMENTS_JWT: "jwt", STREAMELEMENTS_CHANNEL_ID: "ch" };
+const env = { PICKS_DB: db, STREAMELEMENTS_JWT: "jwt", STREAMELEMENTS_CHANNEL_ID: "ch", ESCAPE_KEY: "rig".repeat(12) };   // the dev game server is started with the same key and SITE=http://localhost:4321, so ticket stakes run end to end
+// (the player's id is dev:bootypaper: what the game server's dev login calls them)
 
 // /api/casino/wheel/bet -> functions/api/casino/[game]/bet.js with params.game = "wheel", the way Pages routes it
 function route(p) {
@@ -50,11 +51,11 @@ const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; ch
 http.createServer(async (req, res) => {
   const u = new URL(req.url, `http://localhost:${PORT}`);
   try {
-    if (u.pathname === "/__rig") { const n = (t) => { try { return raw.prepare(`SELECT COUNT(*) n FROM ${t}`).get().n; } catch { return null; } }; res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify({ balances, wallet_operations: n("wallet_operations"), plinko_drops: n("plinko_drops"), scratch_cards: n("scratch_cards"), hilo_games: n("hilo_games"), mines_games: n("mines_games"), coin_bets: n("coin_bets"), casino_bets: n("casino_bets"), ops: raw.prepare(`SELECT idempotency_key k, amount, status FROM wallet_operations ORDER BY rowid DESC LIMIT 12`).all() })); }
+    if (u.pathname === "/__rig") { const n = (t) => { try { return raw.prepare(`SELECT COUNT(*) n FROM ${t}`).get().n; } catch { return null; } }; res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify({ balances, wallet_operations: n("wallet_operations"), gamba_stakes: (() => { try { return raw.prepare(`SELECT id, zc, status, game FROM gamba_stakes ORDER BY rowid DESC LIMIT 8`).all(); } catch { return []; } })(), plinko_drops: n("plinko_drops"), scratch_cards: n("scratch_cards"), hilo_games: n("hilo_games"), mines_games: n("mines_games"), coin_bets: n("coin_bets"), casino_bets: n("casino_bets"), ops: raw.prepare(`SELECT idempotency_key k, amount, status FROM wallet_operations ORDER BY rowid DESC LIMIT 12`).all() })); }
     if (u.pathname.startsWith("/api/")) {
       const r = route(u.pathname); if (!r) { res.writeHead(404, { "content-type": "application/json" }); return res.end(JSON.stringify({ ok: false, code: "NO_ROUTE" })); }
       const mod = await import(pathToFileURL(r.file).href), body = await new Promise((ok) => { const c = []; req.on("data", (d) => c.push(d)); req.on("end", () => ok(Buffer.concat(c))); });
-      const request = new Request(u.href, { method: req.method, headers: { "content-type": req.headers["content-type"] || "application/json", cookie: `__Host-ec_session=${TOKEN}` }, body: req.method === "GET" || req.method === "HEAD" ? undefined : body });
+      const request = new Request(u.href, { method: req.method, headers: { "content-type": req.headers["content-type"] || "application/json", cookie: `__Host-ec_session=${TOKEN}`, ...(req.headers["x-escape-key"] ? { "x-escape-key": req.headers["x-escape-key"] } : {}) }, body: req.method === "GET" || req.method === "HEAD" ? undefined : body });
       const h = mod[`onRequest${req.method[0]}${req.method.slice(1).toLowerCase()}`] || mod.onRequest; if (!h) { res.writeHead(405); return res.end(); }
       const out = await h({ env, request, params: r.params, waitUntil() {}, next: async () => new Response("", { status: 404 }) });
       res.writeHead(out.status, Object.fromEntries(out.headers)); return res.end(Buffer.from(await out.arrayBuffer()));

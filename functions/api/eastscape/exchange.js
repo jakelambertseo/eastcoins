@@ -1,56 +1,56 @@
 /* POST /api/eastscape/exchange — called by the GambaScape game server, never by a page.
 
-   The House Ruby: a player turns the Cash they earned in the game into
-   real ZCoins. Two ways, both on ONE hourly allowance (the owner's
-   number, 2026-09-20: "roughly 25 max"):
+   The two ways GambaScape puts ZCoins into the world, on ONE hourly
+   allowance per player (CAP_HOUR, the owner's backstop, 2026-09-19):
 
-     ZCOINS   $100 of Cash for 1 ZCoin, straight.
-     TICKET   $500 for a Ruby ticket with a FACE of 5 ZCoins: a scratch
-              reveal that pays 25, 10, 5, 2 or nothing (TICKET.table,
-              86% of face back on average, so a ticket is never a
-              better deal than the straight rate — it is the same money
-              with a story). A ticket uses 5 of the hour's 25 whatever
-              it pays, so the allowance bounds what the machine gives
-              out ON AVERAGE at 25 an hour a head, and no single ticket
-              can pay more than one hour's allowance.
+     STAKE    A TICKET STAKE: the player bets tickets at a real table,
+              1,000 tickets standing in for 1 ZCoin (the rate lives in the
+              game's rules file; the game server has ALREADY taken the
+              tickets). This endpoint writes a voucher for N ZCoins
+              (gamba_stakes, see _stake.js) that one ordinary bet may
+              claim in place of a wallet debit. The games return about
+              100%, so a ZCoin of vouchers is about a ZCoin minted: that
+              is why vouchers are counted against the allowance when they
+              are WRITTEN, by face.
+     PAY      Banking ZCoins that dropped from a kill or a catch: a
+              straight credit.
+
+   (The Ruby scratch tickets and the Cash-for-ZCoins exchange that lived
+   here until 2026-09-19 are gone: betting tickets is the conversion now.
+   gamba_tickets is left in place, unread.)
 
    This is one of the few places on the site that makes ZCoins out of
    nothing, so the rules are the ones The Grind lives by:
 
      - The game server is the only caller, and proves it with ESCAPE_KEY
-       (the shared key the ban kick and the backup use, compared in
-       constant time). It has ALREADY taken the Cash off the character
-       before it asks.
-     - THIS endpoint is the authority on the allowance. Straight
-       exchanges are counted from wallet_operations — the ledger itself,
-       so a stuck or pending payment still counts — and tickets from
-       gamba_tickets by face value.
-     - Every ask carries an id from the game server. A straight exchange
-       is paid under GAMBA:DEX:<id>; a ticket is ROLLED ONCE into
-       gamba_tickets (the id is its primary key) and paid under
-       GAMBA:TICKET:<id>. A retry after a timeout can never pay twice or
-       roll again: a second ask for an id says what happened the first time.
+       (compared in constant time). It has ALREADY taken what the ask
+       costs off the character before it asks.
+     - THIS endpoint is the authority on the allowance. Credits are
+       counted from wallet_operations (the ledger itself, so a stuck or
+       pending payment still counts) and vouchers from gamba_stakes.
+     - Every ask carries an id from the game server. A credit is paid
+       under GAMBA:DEX:<id>; a voucher's id is its primary key. A retry
+       after a timeout can never pay or write twice: a second ask for an
+       id says what happened the first time.
      - A refusal says whether it is DEFINITE (nothing was or will be
-       paid: the game gives the Cash back) or not (the outcome is
-       unknown: the game keeps the Cash aside and asks again later with
-       the same id). The game never refunds on an unknown.
+       given: the game hands back what it took) or not (the outcome is
+       unknown: the game keeps it aside and asks again later with the
+       same id). The game never refunds on an unknown.
      - DAY_BREAKER is not a design limit, it is a fuse: if the whole site
-       has somehow been paid this much in a day, stop and let a person look.
+       has somehow been given this much in a day, stop and let a person look.
 
-   { op: "status", userId }              -> { ok, left, capHour, rate, ticket, enabled }
-   { op: "pay", userId, id, zc }         -> { ok, zc, balance, left }            | { ok:false, code, definite, left? }
-   { op: "ticket", userId, id }          -> { ok, prize, face, balance, left }   | { ok:false, code, definite, left? }
+   { op: "status", userId }              -> { ok, left, capHour, maxStake, open:[{id,zc}], enabled }
+   { op: "pay", userId, id, zc }         -> { ok, zc, balance, left }     | { ok:false, code, definite, left? }
+   { op: "stake", userId, id, zc }       -> { ok, voucher, zc, left }     | { ok:false, code, definite, left? }
 
-   RATE, CAP_HOUR and TICKET mirror DEX in v3/assets/js/eastscape-shared.js
-   (the page and the game server read that one). Change one, change the
-   other; tools/dex-test.mjs fails if they drift. */
+   CAP_HOUR and MAX_STAKE mirror DEX in v3/assets/js/eastscape-shared.js.
+   Change one, change the other; tools/dex-test.mjs fails if they drift. */
 
 import { moveBalance, beginOperation, finishOperation, walletWritesEnabled, newId } from "../picks/_lib.js";
 import { ensureBans, isBanned } from "../picks/_bans.js";
+import { ensureStakes } from "./_stake.js";
 
-export const RATE = 100, CAP_HOUR = 25, DAY_BREAKER = 2000;
-// [ZCoins paid, chances in 100]. 25*4 + 10*12 + 5*30 + 2*30 = 430 over 100 tickets of face 5: 86%.
-export const TICKET = { face: 5, table: [[25, 4], [10, 12], [5, 30], [2, 30], [0, 24]] };
+export const CAP_HOUR = 50, MAX_STAKE = 20, DAY_BREAKER = 2000;   // MAX_STAKE: the casino's own 20 ZC a bet
 const noStore = { "Cache-Control": "no-store" };
 const say = (body, status = 200) => Response.json(body, { status, headers: noStore });
 
@@ -62,15 +62,7 @@ function keyOk(request, env) {
   return diff === 0;
 }
 
-let ticketsReady = false;
-async function ensureTickets(db) {
-  if (ticketsReady) return;
-  await db.prepare(`CREATE TABLE IF NOT EXISTS gamba_tickets (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, face INTEGER NOT NULL, prize INTEGER NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')))`).run();
-  await db.prepare(`CREATE INDEX IF NOT EXISTS idx_gamba_tickets_user ON gamba_tickets (user_id, created_at)`).run();
-  ticketsReady = true;
-}
-
-/** ZCoins of this player's hourly allowance already spoken for: straight exchanges paid (or possibly paid), and tickets by face. */
+/** ZCoins of this player's hourly allowance already spoken for: credits paid (or possibly paid), and ticket stakes written, by face. */
 async function usedThisHour(db, userId) {
   const paid = await db
     .prepare(
@@ -81,16 +73,8 @@ async function usedThisHour(db, userId) {
     )
     .bind(userId)
     .first();
-  const faces = await db.prepare(`SELECT COALESCE(SUM(face), 0) AS n FROM gamba_tickets WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`).bind(userId).first();
-  return Number(paid?.n || 0) + Number(faces?.n || 0);
-}
-
-/** One roll of the ticket table, from the platform's own randomness. */
-function rollTicket() {
-  const total = TICKET.table.reduce((a, [, w]) => a + w, 0);
-  let r = crypto.getRandomValues(new Uint32Array(1))[0] % total;   // total is 100: 2^32 mod 100 is 96, a bias of one part in forty million
-  for (const [zc, w] of TICKET.table) { if (r < w) return zc; r -= w; }
-  return 0;
+  const staked = await db.prepare(`SELECT COALESCE(SUM(zc), 0) AS n FROM gamba_stakes WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`).bind(userId).first();
+  return Number(paid?.n || 0) + Number(staked?.n || 0);
 }
 
 /** Credit `zc` under `key`, once. Returns { ok, balance } | { ok:false, definite }. */
@@ -125,22 +109,22 @@ export async function onRequestPost(context) {
   const user = userId ? await db.prepare(`SELECT twitch_id, twitch_login FROM users WHERE twitch_id = ?`).bind(userId).first() : null;
   if (!user) return say({ ok: false, code: "NO_USER", definite: true, message: "The Ruby doesn't know you. Log in to eastcoin.vip once and come back." }, 404);
 
-  await ensureTickets(db);
+  await ensureStakes(db);
   const used = await usedThisHour(db, userId), left = Math.max(0, CAP_HOUR - used);
-  if (body.op === "status") return say({ ok: true, left, capHour: CAP_HOUR, rate: RATE, ticket: TICKET, enabled: walletWritesEnabled(env) });
-  if (body.op !== "pay" && body.op !== "ticket") return say({ ok: false, code: "BAD_OP", definite: true }, 400);
+  if (body.op === "status") {
+    // vouchers written and never bet: the game hands one of these back rather than taking tickets again
+    const open = await db.prepare(`SELECT id, zc FROM gamba_stakes WHERE user_id = ? AND status = 'OPEN' ORDER BY created_at LIMIT 20`).bind(userId).all();
+    return say({ ok: true, left, capHour: CAP_HOUR, maxStake: MAX_STAKE, open: (open.results || []).map((r) => ({ id: r.id, zc: Number(r.zc) })), enabled: walletWritesEnabled(env) });
+  }
+  if (body.op !== "pay" && body.op !== "stake") return say({ ok: false, code: "BAD_OP", definite: true }, 400);
 
-  const id = String(body.id || ""), isTicket = body.op === "ticket", zc = isTicket ? TICKET.face : Math.floor(Number(body.zc));
-  if (!/^[a-z0-9_-]{8,64}$/i.test(id) || !(zc >= 1 && zc <= CAP_HOUR)) return say({ ok: false, code: "BAD_REQUEST", definite: true, left }, 400);
+  const id = String(body.id || ""), isStake = body.op === "stake", zc = Math.floor(Number(body.zc));
+  if (!/^[a-z0-9_-]{8,64}$/i.test(id) || !(zc >= 1 && zc <= (isStake ? MAX_STAKE : CAP_HOUR))) return say({ ok: false, code: "BAD_REQUEST", definite: true, left }, 400);
 
-  // asked before? then say what happened the first time: nothing new is rolled, nothing new is paid
-  if (isTicket) {
-    const row = await db.prepare(`SELECT prize, face FROM gamba_tickets WHERE id = ? AND user_id = ?`).bind(id, userId).first();
-    if (row) {
-      if (!Number(row.prize)) return say({ ok: true, duplicate: true, prize: 0, face: Number(row.face), left });
-      const paid = await credit(env, db, user, `GAMBA:TICKET:${id}`, Number(row.prize));
-      return paid.ok ? say({ ok: true, duplicate: true, prize: Number(row.prize), face: Number(row.face), balance: paid.balance, left }) : say({ ok: false, code: paid.code, definite: false, left }, 502);   // it WAS rolled: never a definite no
-    }
+  // asked before? then say what happened the first time: nothing new is written, nothing new is paid
+  if (isStake) {
+    const row = await db.prepare(`SELECT zc, status FROM gamba_stakes WHERE id = ? AND user_id = ?`).bind(id, userId).first();
+    if (row) return say({ ok: true, duplicate: true, voucher: id, zc: Number(row.zc), used: row.status === "USED", left });
   } else {
     const prior = await db.prepare(`SELECT status, amount, balance_after FROM wallet_operations WHERE idempotency_key = ?`).bind(`GAMBA:DEX:${id}`).first();
     if (prior) {
@@ -153,19 +137,16 @@ export async function onRequestPost(context) {
   if (!walletWritesEnabled(env)) return say({ ok: false, code: "WALLET_NOT_CONFIGURED", definite: true, left, message: "ZCoin transfers aren't switched on right now." }, 503);
   await ensureBans(db);
   if (await isBanned(db, userId)) return say({ ok: false, code: "BANNED", definite: true, left }, 403);
-  if (zc > left) return say({ ok: false, code: "CAP", definite: true, left, message: left ? `The Ruby has ${left} ZCoin${left === 1 ? "" : "s"} left for you this hour.` : "That's your ZCoins for this hour. It refills as the hour rolls on." }, 429);
+  if (zc > left) return say({ ok: false, code: "CAP", definite: true, left, message: left ? `GambaScape has ${left} ZCoin${left === 1 ? "" : "s"} of play left for you this hour.` : "That's your GambaScape ZCoins for this hour. It refills as the hour rolls on." }, 429);
   const day = await db.prepare(`SELECT COALESCE(SUM(amount), 0) AS n FROM wallet_operations WHERE idempotency_key >= 'GAMBA:' AND idempotency_key < 'GAMBA;' AND status = 'CONFIRMED' AND created_at >= datetime('now', '-1 day')`).first();
-  if (Number(day?.n || 0) + (isTicket ? TICKET.table[0][0] : zc) > DAY_BREAKER) return say({ ok: false, code: "BREAKER", definite: true, left, message: "The Ruby is out of ZCoins for today. A mod has been told." }, 429);
+  const dayStakes = await db.prepare(`SELECT COALESCE(SUM(zc), 0) AS n FROM gamba_stakes WHERE created_at >= datetime('now', '-1 day')`).first();
+  if (Number(day?.n || 0) + Number(dayStakes?.n || 0) + zc > DAY_BREAKER) return say({ ok: false, code: "BREAKER", definite: true, left, message: "GambaScape is out of ZCoins for today. A mod has been told." }, 429);
 
-  if (isTicket) {
-    // rolled ONCE, and written down before a coin moves: the id is the primary key, so a second ask finds this row
-    const prize = rollTicket();
-    const put = await db.prepare(`INSERT OR IGNORE INTO gamba_tickets (id, user_id, face, prize) VALUES (?, ?, ?, ?)`).bind(id, userId, TICKET.face, prize).run();
+  if (isStake) {
+    // the id is the primary key, so a second ask finds this row instead of writing another
+    const put = await db.prepare(`INSERT OR IGNORE INTO gamba_stakes (id, user_id, zc) VALUES (?, ?, ?)`).bind(id, userId, zc).run();
     if (!put.meta?.changes) return say({ ok: false, code: "UNSETTLED", definite: false, left });
-    if (!prize) return say({ ok: true, prize: 0, face: TICKET.face, left: left - TICKET.face });
-    const paid = await credit(env, db, user, `GAMBA:TICKET:${id}`, prize);
-    if (!paid.ok) return say({ ok: false, code: paid.code, definite: false, left: left - TICKET.face }, 502);
-    return say({ ok: true, prize, face: TICKET.face, balance: paid.balance, left: left - TICKET.face });
+    return say({ ok: true, voucher: id, zc, left: left - zc });
   }
 
   const paid = await credit(env, db, user, `GAMBA:DEX:${id}`, zc);

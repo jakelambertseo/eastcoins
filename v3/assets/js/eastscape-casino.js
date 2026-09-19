@@ -152,7 +152,7 @@ const CSS = `
 .cz-cbag{margin-top:10px;max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;padding:4px 10px;background:var(--panel)}
 .cz-gear{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}.cz-gear button{display:grid;justify-items:center;gap:2px;padding:6px 2px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);cursor:pointer}.cz-gear button:disabled{opacity:.4;cursor:not-allowed}
 .cz-gear button.own{box-shadow:inset 0 0 0 1px rgba(77,219,139,.6)}.cz-gear .ico,.cz-gear img{width:30px;height:30px;image-rendering:pixelated}.cz-gear small{font:800 11.5px var(--body);color:var(--gold)}.cz-chip:disabled{opacity:.4;cursor:not-allowed}
-.cz-realtabs{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 10px}.cz-realtabs button{padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);background:transparent;color:var(--muted);font:800 12.5px var(--body);cursor:pointer}.cz-realtabs button[aria-pressed=true]{background:var(--gold);color:#1a1405;border-color:var(--gold)}
+.cz-realtabs{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 10px}.cz-realtabs button{padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);background:transparent;color:var(--muted);font:800 12.5px var(--body);cursor:pointer}.cz-realtabs button[aria-pressed=true]{background:var(--gold);color:#1a1405;border-color:var(--gold)}.cz-cur{align-items:center}.cz-curl{font:700 12px var(--body);color:var(--muted)}.cz-cur button[aria-pressed=true]{background:#ff9aa8;border-color:#ff9aa8}.cz-cur button:first-of-type[aria-pressed=true]{background:var(--gold);border-color:var(--gold)}
 .cz-luck a{color:var(--gold)}
 .cz-total{font:800 54px var(--display);letter-spacing:-.04em;color:var(--gold);line-height:1;text-shadow:0 0 30px rgba(232,191,53,.35)}
 @media (prefers-reduced-motion:reduce){.cz-coin.spin,.cz-reel.spin .cz-strip{animation:none}}
@@ -169,6 +169,16 @@ export function createCasino(env) {
      limits (20 a bet, ten plays an hour a game, 400 an hour out), the result, the fairness seed, the ledger. Nothing of
      GambaScape's (luck, dinners, drinks, gear, hunger, VIP, the High Roller Room) touches a real table. */
   let REAL = false; const ZC = { bal: null, me: null, uid: null, last: null };
+  /* v57: a real table takes ZCOINS OR TICKETS. TIX: this bet is staked with tickets (G.DEX.rate of them a ZCoin). The game
+     server takes the tickets and the site writes a one-use voucher (type:"stake"); the bet then goes to the very same
+     endpoint with that voucher in place of a wallet debit. Same limits, same seed, same odds, and it pays REAL ZCoins. */
+  let TIX = false; try { TIX = localStorage.getItem("gs_real_cur") === "tix"; } catch (x) { /* private window */ }
+  let stakeWait = null;
+  const tixHave = () => G.tixIn(env.me() || { inv: [] }), tixCost = (zc) => zc * G.DEX.rate;
+  function getStake(g, zc) {   // -> { ok, voucher } | { ok:false, message }
+    return new Promise((done) => { const t = setTimeout(() => { if (stakeWait?.done === done) { stakeWait = null; done({ ok: false, message: "The house didn't answer. If tickets were taken they are held, not lost: try again in a minute." }); } }, 25000); stakeWait = { done, t }; send({ t: "dex", op: "stake", zc, g }); });
+  }
+  function stake(e) { const w = stakeWait; if (!w) return; stakeWait = null; clearTimeout(w.t); w.done(e.voucher ? { ok: true, voucher: e.voucher } : { ok: false, code: "STAKE", message: e.error || "The house said no. Nothing was taken." }); }
   const money = (n) => (REAL ? `${Number(n).toLocaleString()} ZC` : G.fmtCash(n)), cash = () => (REAL ? ZC.bal ?? 0 : G.cashIn(env.me())), calm = () => env.calm();
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   let styled = false, GAME = null, R = {}, bet = 10, betCash = 10, betZc = 5, busy = false, token = 0, jack = { pot: null, last: null };
@@ -192,7 +202,10 @@ export function createCasino(env) {
     const body = $("gameBody"); body.replaceChildren();
     const grid = el("div", "cz-grid"), stage = el("section", "cz-stage"), side = el("div", "cz-side");
     R.phase = el("div", "cz-phase"); R.board = el("div", "cz-board"); R.mult = el("div", "cz-mult"); R.bet = el("div", "cz-bet"); R.pop = el("div", "cz-pop");
-    if (REAL) { const tabs = el("div", "cz-realtabs", Object.entries(REAL_KEY).map(([g, k]) => `<button type="button" data-g="${g}" aria-pressed="${g === GAME}">${esc(UI[g].title)}</button>`).join("")); tabs.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { if (b.dataset.g !== GAME) api.open(b.dataset.g, { real: true }); })); body.append(tabs); }
+    if (REAL) { const tabs = el("div", "cz-realtabs", Object.entries(REAL_KEY).map(([g, k]) => `<button type="button" data-g="${g}" aria-pressed="${g === GAME}">${esc(UI[g].title)}</button>`).join("")); tabs.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { if (b.dataset.g !== GAME) api.open(b.dataset.g, { real: true }); })); body.append(tabs);
+      const cur = el("div", "cz-realtabs cz-cur"); R.curZ = el("button", "", ""); R.curT = el("button", "", ""); R.curZ.type = R.curT.type = "button"; cur.append(el("span", "cz-curl", "Bet with"), R.curZ, R.curT, el("span", "cz-curl", "either way, a win is paid in real ZCoins"));
+      const pick = (v) => { if (busy) return; TIX = v;   /* (a run already going keeps the stake it started with: this only decides the NEXT bet) */ try { localStorage.setItem("gs_real_cur", v ? "tix" : "zc"); } catch (x) { /* fine */ } SFX.play("ui_click"); refresh(); };
+      R.curZ.addEventListener("click", () => pick(false)); R.curT.addEventListener("click", () => pick(true)); body.append(cur); }
     stage.append(R.phase, R.board, R.mult, R.bet, R.pop); grid.append(stage, side); body.append(grid); R.side = side; R.stage = stage;
     win.hidden = false; return R;
   }
@@ -218,9 +231,10 @@ export function createCasino(env) {
   }
   function lockStake(on) { if (R.stake) R.stake.disabled = on; for (const c of R.chips || []) c.disabled = on; }
   function record(g, delta) { const s = sess(g); s.bets++; s.net += delta; s.best = Math.max(s.best, delta); s.recent = [delta, ...s.recent].slice(0, 12); }
-  function refresh() {            // everything that depends on your Cash, your luck or your session, without touching the board
+  function refresh() {            // everything that depends on your tickets, your luck or your session, without touching the board
     if (!GAME || !R.stats) return; const s = sess(GAME), me = env.me();
-    R.stats.innerHTML = `<div class="cz-stat"><span>${REAL ? "Your ZCoins" : "Your cash"}</span><strong>${money(cash())}</strong></div><div class="cz-stat"><span>Net</span><strong class="${s.net > 0 ? "up" : s.net < 0 ? "dn" : ""}">${s.net > 0 ? "+" : s.net < 0 ? "−" : ""}${money(Math.abs(s.net))}</strong></div><div class="cz-stat"><span>Bets</span><strong>${s.bets}</strong></div><div class="cz-stat"><span>Best win</span><strong>${s.best ? `+${money(s.best)}` : "–"}</strong></div>`;
+    if (REAL && R.curZ) { R.curZ.textContent = `ZCoins · ${bet}`; R.curT.textContent = `🎟 Tickets · ${tixCost(bet).toLocaleString()}`; R.curZ.setAttribute("aria-pressed", String(!TIX)); R.curT.setAttribute("aria-pressed", String(TIX)); }
+    R.stats.innerHTML = `<div class="cz-stat"><span>${REAL ? "Your ZCoins" : "Your tickets"}</span><strong>${money(cash())}</strong></div>${REAL ? `<div class="cz-stat"><span>Your tickets</span><strong>${G.fmtCash(tixHave())}</strong></div>` : ""}<div class="cz-stat"><span>Net</span><strong class="${s.net > 0 ? "up" : s.net < 0 ? "dn" : ""}">${s.net > 0 ? "+" : s.net < 0 ? "−" : ""}${money(Math.abs(s.net))}</strong></div><div class="cz-stat"><span>Bets</span><strong>${s.bets}</strong></div><div class="cz-stat"><span>Best win</span><strong>${s.best ? `+${money(s.best)}` : "–"}</strong></div>`;
     R.recent.innerHTML = s.recent.map((d) => `<span class="${d > 0 ? "w" : ""}">${d > 0 ? "+" : d < 0 ? "−" : ""}${Math.abs(d).toLocaleString()}</span>`).join("");
     if (REAL) { R.needs.innerHTML = ""; R.luck.className = "cz-luck"; R.luck.innerHTML = realRules(); if (R.jack) R.jack.remove(); UI[GAME]?.refresh?.(); return; }
     R.needs.innerHTML = [["thirst", "Thirst", ""], ["hunger", "Hunger", "food"]].map(([k, n, cls]) => { const v = Math.round(G.needOf(me, k)); return `<div class="cz-need ${cls}${v < G.NEEDS.floor ? " low" : ""}">${n} ${v}%<i><u style="width:${v}%"></u></i></div>`; }).join("");
@@ -232,8 +246,9 @@ export function createCasino(env) {
     UI[GAME]?.refresh?.();
   }
   const empty = () => { const why = G.tooEmpty(env.me()); if (why) { phase(why === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[why]); SFX.play("ui_error"); } return !!why; };
-  const broke = () => { if (REAL) { if (ZC.bal != null && bet > ZC.bal) { phase(`You only have ${money(ZC.bal)}`, "bad"); note(REAL_NUDGE); SFX.play("ui_error"); return true; } return false; } if (empty()) return true; return brokeOnly(); };
-  const brokeOnly = () => { if (bet > cash() + (env.me()?.free | 0)) { phase(`You only have ${money(cash())}`, "bad"); note("Broke? Trade tickets for chips at the Prize Counter (the big ruby). No tickets? Out the arch to the Yard: click a monster, or fish the pond. The counter takes what you bring back, too."); SFX.play("ui_error"); return true; } return false; };
+  const broke = () => { if (REAL && TIX) { if (tixCost(bet) > tixHave()) { phase(`That's ${tixCost(bet).toLocaleString()} tickets. You have ${tixHave().toLocaleString()}`, "bad"); note(`${G.DEX.rate.toLocaleString()} tickets stand in for 1 ZCoin. Out the arch: every kill and catch pays tickets.`); SFX.play("ui_error"); return true; } return false; }
+    if (REAL) { if (ZC.bal != null && bet > ZC.bal) { phase(`You only have ${money(ZC.bal)}`, "bad"); note(REAL_NUDGE); SFX.play("ui_error"); return true; } return false; } if (empty()) return true; return brokeOnly(); };
+  const brokeOnly = () => { if (bet > cash() + (env.me()?.free | 0)) { phase(`You only have ${money(cash())}`, "bad"); note("Out of tickets? Out the arch to the Yard: click a monster, or fish the pond. The Prize Counter (the big ruby) takes what you bring back for more."); SFX.play("ui_error"); return true; } return false; };
   function place(pick) {          // one bet, one answer
     if (busy || broke()) return; busy = true; const g = GAME, t = token; R.pop?.classList.remove("show");
     if (REAL) return realPlace(g, pick, t);
@@ -365,7 +380,7 @@ export function createCasino(env) {
         if (r) {
           big.outerHTML = this.card(r.card, r.suit, this.fresh ? "flip" : "").replace('class="', 'id="czCard" class="'); this.fresh = false;
           for (const s of ["higher", "lower"]) { const ways = r.odds ? Math.round((s === "higher" ? r.odds.pHigher : r.odds.pLower) * 13) : G.hiloWays(r.card, s), f = r.odds ? r.odds[s] || 0 : G.hiloFactor(r.card, s); R.calls[s].disabled = !ways; R.calls[s].innerHTML = `<b>${s === "higher" ? "▲ Higher" : "▼ Lower"}</b><small>${!ways ? "can't be" : f === 1 ? "can't lose · 1×" : `${(r.mult * f).toFixed(2)}× · ${Math.round(ways / 13 * 100)}%`}</small>`; }
-          R.cash.disabled = !r.cash; R.cash.textContent = r.cash ? `Cash out ${money(r.cash)}` : "Make a call first"; R.mult.innerHTML = `${r.mult.toFixed(2)}×<small>card ${r.cards} of ${G.HILO.maxCards}${r.lucky ? " · 🍀 lucky" : ""}</small>`;
+          R.cash.disabled = !r.cash; R.cash.textContent = r.cash ? `tickets out ${money(r.cash)}` : "Make a call first"; R.mult.innerHTML = `${r.mult.toFixed(2)}×<small>card ${r.cards} of ${G.HILO.maxCards}${r.lucky ? " · 🍀 lucky" : ""}</small>`;
           R.pays.innerHTML = `<div class="cz-rung"><span>Higher than ${G.HILO.names[r.card]}</span><strong>${(r.odds ? r.odds.higher : G.hiloWays(r.card, "higher") && G.hiloFactor(r.card, "higher")) ? `${Number(r.odds ? r.odds.higher : G.hiloFactor(r.card, "higher")).toFixed(2)}×` : "–"}</strong></div><div class="cz-rung"><span>Lower than ${G.HILO.names[r.card]}</span><strong>${(r.odds ? r.odds.lower : G.hiloWays(r.card, "lower") && G.hiloFactor(r.card, "lower")) ? `${Number(r.odds ? r.odds.lower : G.hiloFactor(r.card, "lower")).toFixed(2)}×` : "–"}</strong></div><div class="cz-rung"><span>Same card</span><strong>push</strong></div><div class="cz-rung"><span>Tops out at</span><strong>${G.HILO.maxMult}×</strong></div>`;
         } else { R.lock.disabled = false; R.lock.textContent = `Deal · ${money(bet)}`; if (!this.shown) R.pays.innerHTML = `<div class="cz-rung"><span>From a 7</span><strong>2.00× either way</strong></div><div class="cz-rung"><span>From a 10, lower</span><strong>1.33×</strong></div><div class="cz-rung"><span>From a 10, higher</span><strong>4.00×</strong></div><div class="cz-rung"><span>Same card</span><strong>push</strong></div><div class="cz-rung"><span>Tops out at</span><strong>${G.HILO.maxMult}×</strong></div>`; }
         $("czTrail").innerHTML = trail.map((c) => this.card(c.card, c.suit, "sm")).join("");
@@ -400,7 +415,7 @@ export function createCasino(env) {
           if (r) { if (r.open.includes(i)) { cls += " safe"; inner = img("gem"); } else off = false; }
           else if (o) { if (o.bombs.includes(i)) { cls += ` bomb${o.hit === i ? " hit" : ""}`; inner = img("bomb"); } else { cls += o.open.includes(i) ? " safe" : " dim"; inner = img("gem"); } }
           if (t.className !== cls) { t.className = cls; t.innerHTML = inner; } t.disabled = off; });
-        if (r) { R.cash.disabled = !r.cash; R.cash.textContent = r.cash ? `Cash out ${money(r.cash)}` : "Find a gem first"; R.mult.innerHTML = found ? `${r.mult}×<small>next gem ${r.next}×${r.lucky ? " · 🍀 lucky" : ""}</small>` : `<small>${r.mines} bomb${r.mines === 1 ? "" : "s"} under there somewhere</small>`; }
+        if (r) { R.cash.disabled = !r.cash; R.cash.textContent = r.cash ? `tickets out ${money(r.cash)}` : "Find a gem first"; R.mult.innerHTML = found ? `${r.mult}×<small>next gem ${r.next}×${r.lucky ? " · 🍀 lucky" : ""}</small>` : `<small>${r.mines} bomb${r.mines === 1 ? "" : "s"} under there somewhere</small>`; }
         else { R.lock.disabled = false; R.lock.textContent = `${o ? "Go again" : "Start"} · ${money(bet)}`; }
         let html = ""; for (let k = 1; k <= top; k++) html += `<div class="cz-rung${k === found && (r || o?.how === "cash") ? " at" : r && k === found + 1 ? " next" : ""}"><span>${k} gem${k === 1 ? "" : "s"}</span><strong>${mm(m, k)}× · ${money(Math.round(stake * mm(m, k)))}</strong></div>`;
         R.pays.innerHTML = html; R.pays.querySelector(".at,.next")?.scrollIntoView({ block: "nearest" });
@@ -423,7 +438,7 @@ export function createCasino(env) {
   const REAL_KEY = { cointable: "flip", wheel: "wheel", hilo: "hilo", mines: "mines", plinko: "plinko", scratch: "scratch" };   // our table -> the site's name for the game
   const REAL_LIM = { min: 1, max: 20 }, REAL_WHEEL = { red: 2.03, black: 2.03, gold: 60 }, REAL_PLINKO = [25, 4, 2, 1.5, 1.1, 1.05, 0.3, 1.05, 1.1, 1.5, 2, 4, 25];
   const REAL_SYM = { crown: "seven", diamond: "diamond", fire: "star", clover: "bell", target: "lemon", football: "cherry", coin: "gem" };   // the site's scratch symbols -> our pictures (same seven prizes, same prices)
-  const REAL_NUDGE = "Out of ZCoins, or hit a limit? Out the arch: every kill and catch can drop a real ZCoin, and tickets buy Ruby scratch tickets at the Prize Counter.";
+  const REAL_NUDGE = "Out of ZCoins? Switch to Tickets: 1,000 stand in for a ZCoin, and everything out the arch pays them. Every kill and catch can drop a real ZCoin, too.";
   const realMinesMult = (m, k) => { let f = 1; for (let i = 0; i < k; i++) f *= (25 - i) / (25 - m - i); return Math.round(f * 100) / 100; };
   const realMinesTop = (m) => { let last = 1; for (let k = 1; k <= 25 - m; k++) { if (realMinesMult(m, k) > 30) break; last = k; } return last; };
   async function ask(path, body) {
@@ -432,7 +447,7 @@ export function createCasino(env) {
   }
   function realRules() {
     const k = REAL_KEY[GAME], me = ZC.me, left = me ? Math.max(0, (me.playsCap ?? 10) - (me.played?.[k] | 0)) : null, L = ZC.last;
-    return `<b>Real ZCoins.</b> eastcoin.vip's own game and rules: ${REAL_LIM.max} ZC a bet, ten plays an hour at each game, ${me?.hourCap ?? 400} ZC an hour out.`
+    return `<b>${TIX ? `Tickets in, real ZCoins out.</b> ${G.DEX.rate.toLocaleString()} tickets stand in for each ZCoin (${G.DEX.capHour} ZCoins' worth of ticket bets an hour). Same game,` : "Real ZCoins.</b>"} eastcoin.vip's own game and rules: ${REAL_LIM.max} ZC a bet, ten plays an hour at each game, ${me?.hourCap ?? 400} ZC an hour out.`
       + (me ? ` <b>${left} of ${me.playsCap ?? 10}</b> plays left here this hour · ${me.hourNet >= 0 ? "+" : "−"}${Math.abs(me.hourNet | 0)} of ${me.hourCap} this hour.` : "")
       + (L && L.g === GAME && L.seed ? ` <a href="/?view=verify&game=${k}&seed=${encodeURIComponent(L.seed)}${L.hash ? `&hash=${encodeURIComponent(L.hash)}` : ""}${L.mines ? `&mines=${L.mines}` : ""}" target="_blank" rel="noopener">Check the last one's seed →</a>` : "")
       + ` ${esc(REAL_NUDGE)}`;
@@ -454,16 +469,17 @@ export function createCasino(env) {
   }
   /* one bet, one answer: Plinko and Scratch-Off settle at once; the coin and the wheel are a round the whole room shares */
   async function realPlace(g, pick, t) {
-    const k = REAL_KEY[g], stake = bet;
+    const k = REAL_KEY[g], stake = bet; let voucher;
+    if (TIX) { phase(`Putting up ${tixCost(stake).toLocaleString()} tickets…`, "open"); const v = await getStake(g, stake); if (!v.ok) return realFail(g, v, t); voucher = v.voucher; }
     if (g === "plinko" || g === "scratch") {
-      UI[g].start?.(); const r = await ask(`/api/casino/${k}/${g === "plinko" ? "drop" : "buy"}`, { stake }); if (!r.ok) return realFail(g, r, t);
+      UI[g].start?.(); const r = await ask(`/api/casino/${k}/${g === "plinko" ? "drop" : "buy"}`, { stake, voucher }); if (!r.ok) return realFail(g, r, t);
       const d = r.drop || r.card; if (r.balance != null) ZC.bal = Number(r.balance); played(g); hourNet(d.payout - d.stake); ZC.last = { g, seed: d.seed, hash: d.hash };
       if (t !== token || GAME !== g) return;
       return UI[g].result(g === "plinko" ? { g, bet: d.stake, payout: d.payout, mult: d.multiplier, path: [...String(d.path)].map((c) => (c === "R" ? 1 : 0)), bucket: d.bucket }
         : { g, bet: d.stake, payout: d.payout, mult: d.multiplier, grid: d.grid.map((x) => REAL_SYM[x] || "gem"), prize: d.prize ? REAL_SYM[d.prize] || "gem" : null });
     }
     // a shared round: get in, wait for the flip or the spin, then play it back
-    const r = await ask(k === "flip" ? "/api/coin/bet" : `/api/casino/${k}/bet`, k === "flip" ? { side: pick, wager: stake } : { pick, wager: stake }); if (!r.ok) return realFail(g, r, t);
+    const r = await ask(k === "flip" ? "/api/coin/bet" : `/api/casino/${k}/bet`, k === "flip" ? { side: pick, wager: stake, voucher } : { pick, wager: stake, voucher }); if (!r.ok) return realFail(g, r, t);
     if (r.balance != null) ZC.bal = Number(r.balance); played(g); const round = r.round, live = () => t === token && GAME === g;
     if (live()) { refresh(); SFX.play("chip"); }
     for (let i = 0; i < 60; i++) {   // (it keeps asking even if the window is shut: on the site it is a poll that settles a finished round and pays it)
@@ -489,7 +505,8 @@ export function createCasino(env) {
     if (busy) return; const k = REAL_KEY[g], t = token, r0 = RUNS[g], had = r0; busy = true;
     const done = (e) => { busy = false; if (t !== token || GAME !== g) return; RUNS[g] = e.run; UI[g].run(e, had); lockStake(!!e.run); refresh(); };
     if (op === "start") {
-      const r = await ask(`/api/casino/${k}/start`, g === "mines" ? { stake: args.amt, mines: args.mines } : { stake: args.amt }); if (!r.ok) return realFail(g, r, t);
+      let voucher; if (TIX) { const v = await getStake(g, args.amt); if (!v.ok) return realFail(g, v, t); voucher = v.voucher; }
+      const r = await ask(`/api/casino/${k}/start`, g === "mines" ? { stake: args.amt, mines: args.mines, voucher } : { stake: args.amt, voucher }); if (!r.ok) return realFail(g, r, t);
       if (r.balance != null) ZC.bal = Number(r.balance); played(g); return done({ g, run: g === "hilo" ? hlView(r.game) : mnView(r.game) });
     }
     if (!r0?.id) { busy = false; return; }
@@ -552,30 +569,25 @@ export function createCasino(env) {
 
   /* ---------------------------------------------------------- the Cashier, in the same clothes */
   let lastCashed = null;
-  /* THE HOUSE RUBY's exchange: Cash into real ZCoins. The window only asks; the game server takes the Cash and the SITE
+  /* THE HOUSE RUBY's exchange: tickets into real ZCoins. The window only asks; the game server takes the tickets and the SITE
      decides (allowance, ticket roll, payment). Everything shown here came back from there. */
   let dexSt = null, dexMsg = null, dexTicket = null, dexWait = false, gearTier = null;
   const tix = () => G.tixIn(env.me() || { inv: [] }), tixTxt = (n) => `${env.ico("tickets")}<b>${Number(n).toLocaleString()}</b>`;
   function dexCard() {
     const card = el("section", "cz-card cz-dex"), D = G.DEX, st = dexSt, left = st?.ok ? st.left : null, on = !!(st?.ok && st.enabled), me = env.me();
     const zc = me.inv.filter((x) => x.k === "zcoin").reduce((a, x) => a + x.n, 0), can = Math.min(zc, left ?? 0);
-    card.innerHTML = `<h2>Real ZCoins<small>up to ${D.capHour} an hour</small></h2>
-      ${st ? (on ? `<div class="cz-dexbar"><i style="width:${Math.round((left / D.capHour) * 100)}%"></i></div><p class="cz-note" style="text-align:left">${left} of ${D.capHour} left this hour${st.dev ? " · PRETEND (dev server): no ZCoins move" : ""}</p>` : `<p class="cz-dexmsg bad">${esc(st.message || "The Ruby isn't paying out right now.")}</p>`) : `<p class="cz-note" style="text-align:left">Asking the Ruby…</p>`}
-      <button type="button" class="cz-dexgo alt" id="czDexTk"${on && left >= D.ticket.face && tix() >= D.ticketPrice && !dexWait ? "" : " disabled"} title="Pays ${D.ticket.table.filter(([z]) => z).map(([z, w]) => `${z} ZC (${w}%)`).join(", ")}, or nothing (${D.ticket.table.find(([z]) => !z)[1]}%). Uses ${D.ticket.face} of your hour.">Ruby scratch ticket · ${Number(D.ticketPrice).toLocaleString()} tickets · win up to ${D.ticket.table[0][0]} ZCoins</button>
-      <button type="button" class="cz-dexgo" id="czDexBank" style="margin-top:6px"${on && can >= 1 && !dexWait ? "" : " disabled"}>${zc ? `Bank ${can || zc} ZCoin${(can || zc) === 1 ? "" : "s"} from your bag` : "No ZCoins in your bag (they drop, rarely)"}</button>
-      ${dexTicket ? `<div class="cz-rtk"><div><b>${dexTicket.zc ? `${dexTicket.zc} ZC` : "Nothing"}</b><small>${dexTicket.zc ? "paid to your ZCoins" : "better luck next ticket"}</small></div><button type="button" id="czRtkFoil"${dexTicket.shown ? ' class="off"' : ""}>SCRATCH</button></div>` : ""}
+    card.innerHTML = `<h2>ZCoins you found<small>bank them here</small></h2>
+      ${st ? (on ? `<div class="cz-dexbar"><i style="width:${Math.round((left / D.capHour) * 100)}%"></i></div><p class="cz-note" style="text-align:left">${left} of ${D.capHour} left this hour (ticket bets share it)${st.dev ? " · PRETEND (dev server): no ZCoins move" : ""}</p>` : `<p class="cz-dexmsg bad">${esc(st.message || "The Ruby isn't paying out right now.")}</p>`) : `<p class="cz-note" style="text-align:left">Asking the Ruby…</p>`}
+      <button type="button" class="cz-dexgo" id="czDexBank"${on && can >= 1 && !dexWait ? "" : " disabled"}>${zc ? `Bank ${can || zc} ZCoin${(can || zc) === 1 ? "" : "s"} from your bag` : "No ZCoins in your bag (they drop, rarely)"}</button>
       <p class="cz-dexmsg ${dexMsg?.cls || ""}">${esc(dexMsg?.text || "")}</p>`;
     card.querySelector("#czDexBank")?.addEventListener("click", () => { dexWait = true; dexMsg = { text: "The Ruby hums…" }; dexTicket = null; send({ t: "dex", op: "bank" }); cashier(); });
-    card.querySelector("#czDexTk")?.addEventListener("click", () => { dexWait = true; dexMsg = { text: "The Ruby prints a ticket…" }; dexTicket = null; send({ t: "dex", op: "ticket" }); cashier(); });
-    card.querySelector("#czRtkFoil")?.addEventListener("click", (ev) => { ev.currentTarget.classList.add("off"); dexTicket.shown = true; if (dexTicket.zc) { SFX.play(dexTicket.zc >= 10 ? "win_big" : "win_small"); pop(`+${dexTicket.zc} ZC`, "real ZCoins"); } else SFX.play("lose"); });
     return card;
   }
   function dex(e) {
     dexWait = false; if (e.status) dexSt = e.status;
     if (e.error) dexMsg = { text: e.error, cls: "bad" };
     else if (e.done) {
-      if (e.done.op === "ticket") { dexTicket = { zc: e.done.zc, shown: false }; dexMsg = { text: "Scratch it.", cls: "" }; SFX.play("ui_open"); }
-      else { dexMsg = { text: `${e.done.zc} ZCoin${e.done.zc === 1 ? "" : "s"} banked${e.done.balance != null ? `: you now have ${Number(e.done.balance).toLocaleString()} ZC on eastcoin.vip` : ""}.${e.done.again ? " (That was the one the Ruby was still working on.)" : ""}`, cls: "good" }; SFX.play("coins"); pop(`+${e.done.zc} ZC`, "real ZCoins"); }
+      { dexMsg = { text: `${e.done.zc} ZCoin${e.done.zc === 1 ? "" : "s"} banked${e.done.balance != null ? `: you now have ${Number(e.done.balance).toLocaleString()} ZC on eastcoin.vip` : ""}.${e.done.again ? " (That was the one the Ruby was still working on.)" : ""}`, cls: "good" }; SFX.play("coins"); pop(`+${e.done.zc} ZC`, "real ZCoins"); }
     } else if (!dexMsg || dexMsg.text.endsWith("…")) dexMsg = e.held ? { text: "The Ruby is still working on your last one. Look again in a minute.", cls: "" } : null;
     if (GAME === "cashier" && !$("gameWin").hidden) cashier();
   }
@@ -585,12 +597,12 @@ export function createCasino(env) {
   function prize(e) {
     if (e.done && prizeSpin && performance.now() < prizeSpin.until && GAME === "prize" && !$("gameWin").hidden) return;   /* a second click while it turns: the first answer is the one being shown */
     prizeHush(); prizeSpin = null;
-    GAME = "prize"; frame("Daily Prize Wheel", "One free spin a day · spin every day and the Cash slices grow"); const P = G.PRIZE, n = P.slices.length, step = 360 / n, streak = e.streak || 1;
+    GAME = "prize"; frame("Daily Prize Wheel", "One free spin a day · spin every day and the ticket slices grow"); const P = G.PRIZE, n = P.slices.length, step = 360 / n, streak = e.streak || 1;
     const cols = ["#c8202c", "#1d1a18", "#2a7a4a", "#1d1a18", "#c8202c", "#1d1a18", "#2a5a9a", "#1d1a18", "#c8202c", "#1d1a18", "#e8bf35", "#6a2a9a"];
     const disc = el("div", "cz-pwdisc"); disc.style.background = `conic-gradient(${P.slices.map((_, i) => `${cols[i % cols.length]} ${i * step}deg ${(i + 1) * step}deg`).join(",")})`;
     disc.innerHTML = P.slices.map((p, i) => `<span style="transform:rotate(${(i + 0.5) * step}deg);--r:46%"><b style="top:-138px">${esc(p.cash ? G.prizeText(p, e.done ? streak + 1 : streak) : (G.ITEMS[p.k].short || G.ITEMS[p.k].name))}</b></span>`).join("");
     const wrap = el("div", "cz-pw"); wrap.append(el("div", "cz-pwpin"), disc, el("div", "cz-pwhub")); R.board.append(wrap);
-    const card = el("section", "cz-card"); card.innerHTML = `<h2>Your streak<small>${streak} day${streak === 1 ? "" : "s"} in a row</small></h2><p class="cz-note" style="text-align:left">Every day in a row adds ${P.streakStep * 100}% to the Cash slices, up to +${P.streakStep * P.streakMax * 100}%. Miss a day and it starts again. The wheel resets at midnight, Central.</p>`; R.side.append(card);
+    const card = el("section", "cz-card"); card.innerHTML = `<h2>Your streak<small>${streak} day${streak === 1 ? "" : "s"} in a row</small></h2><p class="cz-note" style="text-align:left">Every day in a row adds ${P.streakStep * 100}% to the ticket slices, up to +${P.streakStep * P.streakMax * 100}%. Miss a day and it starts again. The wheel resets at midnight, Central.</p>`; R.side.append(card);
     const rest = (i) => { disc.style.transition = "none"; disc.style.transform = `rotate(${-(i + 0.5) * step}deg)`; };
     if (e.done) { if (e.i != null) rest(e.i); phase(e.text ? `Today's spin: you won ${e.text}` : "You've had today's spin", e.text ? "done" : "open"); return note("It's in your bag already. Come back tomorrow: it's free every day."); }
     const ms = env.calm() ? 300 : 4400; phase("Spinning…", "open"); const t = token;
@@ -612,14 +624,12 @@ export function createCasino(env) {
     if (rows.length) { const bag = el("div", "cz-cbag"); bag.innerHTML = rows.map((r) => `<div class="cz-csrow">${env.ico(r.k)}<span><b>${esc(G.ITEMS[r.k].name)}</b> × ${r.n.toLocaleString()}<small>${r.v} each</small></span><strong>${(r.n * r.v).toLocaleString()}</strong><button type="button" class="cz-chip" data-cs="${r.k}">Trade</button></div>`).join(""); R.bet.append(bag); bag.querySelectorAll("[data-cs]").forEach((b) => b.addEventListener("click", () => send({ t: "cashout", op: "one", k: b.dataset.cs }))); }
     // the shelves
     R.side.classList.add("cz-shelves"); const P = G.prizesOf(), buy = (id) => { SFX.play("chip", { vol: 0.5 }); send({ t: "counter", op: "buy", id, n: 1 }); };
-    const chips = el("section", "cz-card"); chips.innerHTML = `<h2>Casino chips<small>you have ${money(cash())}</small></h2><p class="cz-note" style="text-align:left">Cash for the tables: 1 ticket, $1.</p><div class="cz-dexrow">${P.filter((x) => x.group === "chips").map((x) => `<button type="button" class="cz-chip" data-buy="${x.id}"${have >= x.price ? "" : " disabled"}>${money(x.cash)}</button>`).join("")}<button type="button" class="cz-chip" id="czAllChips"${have ? "" : " disabled"}>All of it</button></div>`;
-    chips.querySelector("#czAllChips").addEventListener("click", () => { SFX.play("coins"); send({ t: "counter", op: "allchips" }); });
     const bar = el("section", "cz-card"); bar.innerHTML = `<h2>Drinks, dinners and the way home</h2>` + P.filter((x) => x.group === "bar").map((x) => { const it = G.ITEMS[x.give[0]], f = (it.meal || it.drink)?.fx; return `<div class="cz-csrow">${env.ico(x.give[0])}<span><b>${esc(it.name)}</b><small>${esc(f ? `${(it.meal || it.drink).bets} bets: ${G.fxText(f)}${it.meal ? " · Well Fed" : ""}` : it.use === "tp" ? "click it anywhere: back to the casino" : it.tool ? "you need one to fish" : "")}</small></span><strong>${x.price.toLocaleString()}</strong><button type="button" class="cz-chip" data-buy="${x.id}"${have >= x.price ? "" : " disabled"}>Get</button></div>`; }).join("");
     const lvl = G.lvlOf(me, "melee"), tiers = G.TIERS.filter((t) => P.some((x) => x.group === `gear:${t.key}`)); gearTier = gearTier || ([...tiers].reverse().find((t) => t.gate <= lvl) || tiers[0]).key;
     const gear = el("section", "cz-card"); gear.innerHTML = `<h2>Arms and armour<small>better gear, faster kills</small></h2><div class="cz-dexrow">${tiers.map((t) => `<button type="button" class="cz-chip" data-tier="${t.key}" aria-pressed="${t.key === gearTier}" title="Combat ${t.gate} to wear">${esc(t.name)}</button>`).join("")}</div>`
       + `<p class="cz-note" style="text-align:left">Needs Combat ${G.tierOf(gearTier).gate}${lvl < G.tierOf(gearTier).gate ? ` (you're ${lvl})` : ""}. The plain set: the good stuff only drops.</p><div class="cz-gear">${P.filter((x) => x.group === `gear:${gearTier}`).map((x) => { const it = G.ITEMS[x.give[0]], own = me.inv.some((q) => q.k === x.give[0]) || Object.values(me.eq || {}).includes(x.give[0]); return `<button type="button" data-buy="${x.id}"${have >= x.price ? "" : " disabled"} class="${own ? "own" : ""}" title="${esc(`${it.name}${own ? " (you have one)" : ""}: ${[it.acc && `+${it.acc} accuracy`, it.str && `+${it.str} strength`, it.def && `+${it.def} defence`].filter(Boolean).join(", ")}`)}">${env.ico(x.give[0])}<small>${x.price >= 10000 ? `${Math.round(x.price / 100) / 10}K` : x.price.toLocaleString()}</small></button>`; }).join("")}</div>`;
     gear.querySelectorAll("[data-tier]").forEach((b) => b.addEventListener("click", () => { gearTier = b.dataset.tier; cashier(); }));
-    R.side.append(dexCard(), chips, bar, gear);
+    R.side.append(dexCard(), bar, gear);
     R.side.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => buy(b.dataset.buy)));
     R.side.scrollTop = keepScroll;
   }
@@ -628,7 +638,7 @@ export function createCasino(env) {
     open(g, info = {}) {
       const ui = UI[g]; if (!ui) return false; if (info.pot != null) { jack.pot = info.pot; jack.last = info.lastJack || null; }
       const real = !!info.real && !!REAL_KEY[g]; if (real !== REAL) { RUNS.hilo = RUNS.mines = null; } REAL = real; bet = REAL ? betZc : betCash;
-      GAME = g; frame(ui.title, REAL ? `REAL ZCoins · ${ui.realSub || ui.sub}` : "Chips only · the house keeps a little"); phase(""); ui.build();
+      GAME = g; frame(ui.title, REAL ? `ZCoins or tickets · pays REAL ZCoins · ${ui.realSub || ui.sub}` : "Tickets in, tickets out"); phase(""); ui.build();
       if (REAL) realInit(g, token); else if (ui.run) send({ t: "run", g, op: "state" });
       refresh(); return true;
     },
@@ -638,7 +648,7 @@ export function createCasino(env) {
     cashier() { lastCashed = null; dexSt = null; dexMsg = null; dexTicket = null; dexWait = false; send({ t: "dex", op: "status" }); cashier(); }, cashed(e) { cashier(e); }, dex, prize, fight,
     closed() { token++; busy = false; GAME = null; prizeHush(); prizeSpin = null; },
     blocked(k) { if (!GAME || GAME === "cashier") return; if (GAME === "fight") { phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); return note(G.NEED_TEXT[k]); } busy = false; UI[GAME]?.idle?.(); phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[k]); refresh(); },
-    get game() { return GAME; }, get real() { return REAL; }, realGames: () => Object.keys(REAL_KEY)
+    stake, get game() { return GAME; }, get real() { return REAL; }, realGames: () => Object.keys(REAL_KEY)
   };
   return api;
 }

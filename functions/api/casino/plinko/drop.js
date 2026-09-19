@@ -5,6 +5,7 @@
    for their next drop. Ten drops an hour; 1 to 20 ZC. */
 
 import { getSessionUser, walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOperation, newId, json, fail } from "../../picks/_lib.js";
+import { stakeFor, reopenStake, BAD_VOUCHER } from "../../eastscape/_stake.js";
 import { settlePot } from "../_pot.js";
 import { ensureSchema, touchPresence, capCheck } from "../_engine.js";
 import { ensurePlinko, commitFor, rotateCommit, pathFor, bucketOf, multiplierFor, publicDrop, dropsLastHour, edgeFor, TABLE_RETURN, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "./_plinko.js";
@@ -33,21 +34,27 @@ export async function onRequestPost(context) {
 
   const balance = await readBalance(context.env, user.login);
   if (balance === null) return fail("BALANCE_UNAVAILABLE", "Couldn't read your ZCoin balance.", 503);
-  if (stake > balance) return fail("INSUFFICIENT_FUNDS", `That's more than your ${balance.toLocaleString()} ZCoins.`, 409);
+  if (!body.voucher && stake > balance) return fail("INSUFFICIENT_FUNDS", `That's more than your ${balance.toLocaleString()} ZCoins.`, 409);
 
   // The seed whose hash this player was already shown.
   const commit = await commitFor(db, user.id);
   if (!commit) return fail("NO_COMMIT", "Couldn't set up the board. Try again.", 500);
 
   const id = newId("pk");
+  /* A GambaScape TICKET STAKE (eastscape/_stake.js): the house put this one up, so no ZCoin leaves the wallet and no
+     debit is written. Claimed here, after every limit above, so a refused bet never spends one. Everything after
+     this point (the seed, the edge, the payout, the rows) is the same bet. */
+  const voucher = await stakeFor(db, user.id, body, stake, `plinko:${id}`);
+  if (voucher && !voucher.ok) return fail("BAD_VOUCHER", BAD_VOUCHER, 409);
+
   const opId = newId("op");
-  const begun = await beginOperation(db, {
+  const begun = voucher ? { ok: true } : await beginOperation(db, {
     id: opId, idempotencyKey: `CASINO:PLINKO:BET:${id}`, userId: user.id,
     marketId: null, pickId: null, type: "WAGER_DEBIT", amount: -stake
   });
   if (!begun.ok) return fail("DUPLICATE", "That drop is already going.", 409);
 
-  const debit = await moveBalance(context.env, user.login, -stake);
+  const debit = voucher ? { ok: true, balance } : await moveBalance(context.env, user.login, -stake);
   if (!debit.ok) {
     await finishOperation(db, opId, "FAILED", { error: debit.error });
     return fail("DEBIT_FAILED", "Couldn't take the stake from your balance. Nothing was charged.", 502);
@@ -67,6 +74,7 @@ export async function onRequestPost(context) {
       .bind(id, user.id, commit.seed, commit.hash, stake, path, bucket, multiplier, payout, edge)
       .run();
   } catch (error) {
+    if (voucher) { await reopenStake(db, voucher.id); return fail("BET_FAILED", "That didn't go through. Your ticket stake is still good: try again.", 500); }
     const refund = await moveBalance(context.env, user.login, stake);
     await finishOperation(db, opId, refund.ok ? "FAILED" : "NEEDS_RECONCILIATION", {
       balanceAfter: refund.ok ? refund.balance : null,
@@ -82,7 +90,7 @@ export async function onRequestPost(context) {
     return fail("NEEDS_RECONCILIATION", "Something went wrong and your stake couldn't be returned automatically. A moderator has been notified.", 500);
   }
 
-  await finishOperation(db, opId, "CONFIRMED", { balanceAfter: debit.balance });
+  if (!voucher) await finishOperation(db, opId, "CONFIRMED", { balanceAfter: debit.balance });
   // The Daily Pot pays on a bet: this one may be the one that crosses
   // its line. Never lets the bet fail; the next bet tries again.
   await settlePot(context.env, db).catch(() => {});

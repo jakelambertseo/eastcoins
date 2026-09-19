@@ -121,6 +121,17 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-19", title: "One currency: tickets. And the tables take tickets or ZCoins",
+    items: [
+      "CHIPS AND CASH ARE GONE. There is one currency in GambaScape now: TICKETS. Kills, catches and daily jobs pay them, the Prize Counter takes them, and every table takes them. Your bag panel shows Tickets and your real ZCoins side by side. (Chips anyone was holding were wiped: the game is still in testing.)",
+      "THE SIX REAL TABLES TAKE ZCOINS OR TICKETS. Coin Flip, the Wheel, Higher or Lower, Mines, Plinko and Scratch-Off have a 'Bet with' switch: ZCoins (your own) or Tickets, where 1,000 tickets stand in for each ZCoin. It is the very same eastcoin.vip game either way, same limits, same fairness seeds, and A WIN IS ALWAYS PAID IN REAL ZCOINS.",
+      "Ticket bets have an allowance: 50 ZCoins' worth an hour. Banking ZCoins you found shares it. When it runs out the Tickets side waits for the hour to roll on; ZCoin bets still work.",
+      "THE RUBY'S SCRATCH TICKETS AND ITS EXCHANGE ARE GONE: betting tickets is the way tickets become ZCoins now. The Prize Counter still banks any ZCoins you find, and still sells gear, dinners, drinks and Casino scrolls.",
+      "Slots, dice, roulette upstairs and the Fight Pit take tickets and pay tickets for now. They are next in line to become ZCoin games.",
+      "THE HIGH ROLLER ROOM IS CLOSED for a refit. Vince is still on the door, and still won't tell you anything."
+    ]
+  },
+  {
     date: "2026-09-20", title: "The real tables are in the building",
     items: [
       "COIN FLIP, THE WHEELS, HIGHER OR LOWER, MINES, PLINKO AND SCRATCH-OFF ON THE CASINO'S MAIN FLOOR NOW PLAY FOR REAL ZCOINS, from your real eastcoin.vip balance. They're the same windows you know; behind them is the site's own casino. Click a table and it opens the moment you click (your character strolls over on its own).",
