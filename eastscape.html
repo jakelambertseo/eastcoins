@@ -632,10 +632,10 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=66";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=67";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=40").then((m) => { WK = m; }));
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=41").then((m) => { WK = m; }));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=2";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -2397,7 +2397,7 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=12", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=13", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
 let czReal = null;
 const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, me: () => me, room: () => Z.def, you: () => you, calm: () => set("reducedMotion"), now: () => snow() }))));
 const CZ = new Proxy({}, { get: (_, k) => (czReal ? czReal[k] : k === "game" ? null : k === "real" ? false : k === "realGames" ? () => Object.keys(G.REAL_TABLES) : CZ_QUIET.has(k) ? () => {} : (...a) => { czLoad().then((z) => z[k](...a)).catch(() => say("Couldn't load the game windows. Check your connection and try again.")); }) });
