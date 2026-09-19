@@ -612,8 +612,8 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=46";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=24";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=47";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=25";
 import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=1";
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=1";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
@@ -940,8 +940,10 @@ const WILD_ART = ["t_wdirt", "t_wwater", "deadtree", "w_tree", "snag", "w_bush",
 const CASINO_ART = ["o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "t_casino", "rug_casino", "dex_south", "dex_east", "dookie_south", "dookie_east", "o_slots", "o_cointable", "o_dicetable", "o_bar", "o_sofa", "o_walldoor", "o_roulsign", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east"];
 const AREA_ART = {
   wild: WILD_ART, deep: WILD_ART,
-  gloam: ["t_gwater", "t_gpath", "o_willow", "o_glowcap", "o_rock_emerald_ore", "o_rock_diamond_ore", "moth", "ghoul", "understudy"],
-  cloud: ["t_csky", "t_cpath", "o_skyash", "o_cloudbush", "o_cloudcolumn", "o_rock_dragonstone_ore", "o_rock_onyx_ore", "ram", "angel", "goose"],
+  gloam: ["t_gwater", "t_gpath", "o_willow", "o_glowcap", "w_boulder", "o_rock_emerald_ore", "o_rock_diamond_ore"],
+  cloud: ["t_csky", "t_cpath", "o_skyash", "o_cloudbush", "o_cloudcolumn", "o_rock_dragonstone_ore", "o_rock_onyx_ore"],
+  boneyard: [...WILD_ART, "moth", "ghoul", "understudy"],
+  sky: ["ram", "angel", "goose"],   // (no open area has these yet: kept out of the login's downloads)
   farm: ["tom_south", "tom_east", "waldy_south", "waldy_east", ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].map((d) => "legend_" + d)],
   river: ["charon_south", "charon_east", "tullius_south", "tullius_east"], grove: ["olive", "boar", "goat"], tomato: ["nonna_south", "nonna_east", "hornworm"],
   appia: ["vibius_south", "vibius_east", "highwayman"], farmhouse: ["cassia_south", "cassia_east"],   // (closed for now: nothing here loads at login)
@@ -1037,7 +1039,7 @@ function paintBg() {
   const c = document.createElement("canvas"); c.width = W * A; c.height = H * A;
   const o = c.getContext("2d"), f = (x, y, w, h, col) => { o.fillStyle = col; o.fillRect(x, y, w, h); };
   o.imageSmoothingEnabled = false;
-  const inside = Z.def?.interior, dark = Z.def?.pvp, theme = Z.isle?.theme, GT = GROUNDS[Z.def?.ground];
+  const inside = Z.def?.interior, dark = Z.def?.pvp || Z.def?.dark, theme = Z.isle?.theme, GT = GROUNDS[Z.def?.ground];
   if (inside) { o.scale(A, A); paintRoom(o, f); return c; }
   const DIRT = GT && IMG[GT.path] ? IMG[GT.path] : dark && IMG.t_wdirt ? IMG.t_wdirt : IMG.t_dirt, WATER = GT && IMG[GT.water] ? IMG[GT.water] : dark && IMG.t_wwater ? IMG.t_wwater : IMG.t_water;
   if (DIRT && WATER) {
@@ -1687,7 +1689,7 @@ function frame() {
   // ---- the low-resolution world
   lc.clearRect(0, 0, W, H); lc.drawImage(Z.bg, 0, 0, W, H);
   for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
-    if (Z.g[y][x] === "~" && hashRand(x, y, 5) < 0.35 && !calm) { const o = Math.floor((pnow / 180 + hashRand(x, y) * 16) % 16); px(x * T + o % 12, y * T + 4 + (x * 3 + y) % 8, 4, 1, Z.def.pvp ? "#4a6a4a" : "#7ab4ec"); }
+    if (Z.g[y][x] === "~" && hashRand(x, y, 5) < 0.35 && !calm) { const o = Math.floor((pnow / 180 + hashRand(x, y) * 16) % 16); px(x * T + o % 12, y * T + 4 + (x * 3 + y) % 8, 4, 1, Z.def.pvp || Z.def.dark ? "#4a6a4a" : "#7ab4ec"); }
     // (exits are no longer painted blue: see the signposts and the arrows below)
   }
   if (Z.def.tint || Z.isle?.theme === "gloom") { lc.fillStyle = Z.def.tint || "rgba(40,30,60,.25)"; lc.fillRect(0, 0, W, H); }
@@ -1771,7 +1773,7 @@ function frame() {
     } });
     if (ob.t === "well" && IMG.well) sprites.push({ y: (ob.y + 2) * T - 1, draw: () => spr("well", (ob.x + 1) * T, (ob.y + 2) * T - 1) });
     if (ob.t === "tree") sprites.push({ y: ob.y * T + 14, draw: () => {
-      if (pvp && spr("w_tree", ob.x * T + 8, ob.y * T + 15, flipOf(ob))) return;
+      if ((pvp || Z.def.dark) && spr("w_tree", ob.x * T + 8, ob.y * T + 15, flipOf(ob))) return;
       if (ob.stumpUntil > now) { const X = ob.x * T, Y = ob.y * T; px(X + 3, Y + 13, 10, 2, "rgba(0,0,0,.25)"); px(X + 4, Y + 8, 8, 6, "#6b4423"); px(X + 5, Y + 7, 6, 2, "#b8905a"); px(X + 7, Y + 8, 2, 1, "#8a6a3a"); return; }
       if (!spr(treeArt(ob), ob.x * T + 8, ob.y * T + 15, flipOf(ob))) { const X = ob.x * T, Y = ob.y * T; px(X + 6, Y + 6, 4, 10, "#6b4423"); px(X - 3, Y - 8, 22, 16, "#3f7a3a"); px(X, Y - 9, 8, 5, "#5a9a4a"); }
     } });
@@ -1919,7 +1921,7 @@ function frame() {
   }
   for (const pl of Z.players) { const bb = botBubbles.get(pl.id); if (bb && pnow - bb.at < 4500) { const p = pos(pl); bubble(bb.text, sx(p.px * T + 8), sy(p.py * T - 12)); } }
   // what a go at each rock, tree and fishing spot is worth, written over it (not while it's chopped down or mined out)
-  for (const ob of Z.objs) { const v = G.nodeValue(ob); if (!v || ob.gone || objBusy(ob, now)) continue; const tall = ["tree", "oak", "yew", "cypress", "deadtree", "willow", "skyash", "olive"].includes(ob.t); label(G.fmtCash(v), sx((ob.x + (ob.w || 1) / 2) * T), sy(ob.y * T - (tall ? 30 : 12)), ob.special ? "#ffe27a" : "#8ff0b4", 13); }
+  for (const ob of Z.objs) { const v = G.nodeValue(ob); if (!v || ob.gone || ob.edge || objBusy(ob, now)) continue; const tall = ["tree", "oak", "yew", "cypress", "deadtree", "willow", "skyash", "olive"].includes(ob.t); label(G.fmtCash(v), sx((ob.x + (ob.w || 1) / 2) * T), sy(ob.y * T - (tall ? 30 : 12)), ob.special ? "#ffe27a" : "#8ff0b4", 13); }
   for (const ob of Z.objs) if (ob.t === "furnace" || ob.t === "anvil" || ob.t === "range") label("pays 2×", sx((ob.x + 0.5) * T), sy(ob.y * T - 16), "#ffe27a", 12);
   for (const b of Z.bots) { const p = posOf(b, now), x = sx(p.px * T + 8), y = sy(p.py * T + 15); if (names) { label(b.name, x, y + 2, "#fff", 12); label(`level ${b.level}`, x, y + 15, "#ffe45c", 11); } const bb = botBubbles.get(b.id); if (bb && pnow - bb.at < 3500) bubble(bb.text, x, sy(p.py * T - 10)); }
   const pp = P ? ownPos(P, now) : null, hx = pp ? sx(pp.px * T + 8) : 0, hy = pp ? sy(pp.py * T + 15) : 0;
