@@ -223,6 +223,7 @@ button,input,select{font:inherit}
 .mn-info{font-size:13px;font-weight:800}.pk-cv{image-rendering:auto;max-width:100%}
 .sc-grid{display:grid;grid-template-columns:repeat(3,72px);gap:6px}.sc-c{position:relative;width:72px;height:72px;border-radius:7px;background:#fff8e8;display:grid;place-items:center;box-shadow:0 0 0 2px #c8963a;overflow:hidden}
 .sc-c .gmi{width:48px;height:48px;object-fit:contain}.gm-pays .gmi{object-fit:contain}.sc-c::after{content:"";position:absolute;inset:0;background:url(/v3/assets/img/glad/flat/casino/foil.png?v=1) center/100% 100% no-repeat;image-rendering:pixelated;transition:opacity .25s,transform .25s}.sc-c.open::after{opacity:0;transform:scale(1.3)}.sc-c.hot{box-shadow:0 0 0 3px #ffe27a,0 0 12px #ffd24a}
+.cs-row{display:grid;grid-template-columns:28px 1fr auto auto;gap:8px;align-items:center;padding:6px 4px;border-top:1px solid rgba(58,38,22,.15)}.cs-row:first-child{border-top:0}.cs-row small{display:block;font-size:11.5px;opacity:.75}.cs-row .btn{padding:3px 10px}
 .gm-dice{display:grid;gap:4px;margin-bottom:6px;font-size:13px}.gm-dice input[type=range]{width:100%}
 .spin{animation:gmspin .5s linear infinite}@keyframes gmspin{to{transform:rotateY(360deg)}}
 .shake{animation:gmshake .4s ease-in-out infinite}@keyframes gmshake{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
@@ -611,8 +612,8 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=44";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=22";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=45";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=23";
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=1";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -765,7 +766,7 @@ function onMsg(m) {
     $("online").textContent = `${m.online} online`;
     return;
   }
-  if (m.type === "me") { me = m.me; renderTour(); renderPanel(); if (!$("shopWin").hidden) renderShop(); if (!$("smithWin").hidden && smithAt) openSmith(smithAt); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input"))) renderEx(); return; }
+  if (m.type === "me") { me = m.me; renderTour(); renderPanel(); if (!$("gameWin").hidden && !GAME) renderCashier(lastCashed); if (!$("shopWin").hidden) renderShop(); if (!$("smithWin").hidden && smithAt) openSmith(smithAt); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input"))) renderEx(); return; }
   if (m.type === "exch") { EX = m; if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input:not(#mkQ)"))) renderEx(); return; }
   if (m.type === "trade") { if (m.closed) { TR = null; $("tradeWin").hidden = true; } else { TR = m; openWin("tradeWin"); } return; }
   if (m.type === "pong") return;
@@ -799,6 +800,8 @@ function onEvent(e) {
   if (e.type === "game") { if (e.pot != null) { jackPot = e.pot; jackLast = e.lastJack; } return openGame(e.g); }
   if (e.type === "gameResult") return gameResult(e);
   if (e.type === "run") return runMsg(e);
+  if (e.type === "cashier") return openCashier();
+  if (e.type === "cashed") { SFX.play("coins"); lastCashed = e; return renderCashier(e); }
   if (e.type === "casinonote") { chatLine("Casino", e.text, "casinonote"); if (/JACKPOT/.test(e.text)) SFX.play("jackpot"); return; }
   if (e.type === "daily") return renderDaily(e);
   if (e.type === "roulopen") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "gameWin", "dailyWin"]) $(w).hidden = true; $("roulWin").hidden = false; renderRoul(); return; }
@@ -899,7 +902,7 @@ function say(text, cls = "sys") {
 const ART = "/v3/assets/img/glad/flat/", ART_V = 3;
 // pictures replaced after they first shipped (the edge keeps each URL for a year): bump the one that changed
 const ART_VER = { t_casino: 4, rug_casino: 4, o_dicetable: 4, chicken: 4, olive: 4, rotten: 4, chandelier: 4, revenant: 4, farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
-const ART_FILES = ["casino", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
+const ART_FILES = ["casino", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d, "legend_" + d]),
   "bank", "store", "cottage", "signpost", "tree2", "tree3", "tree4", "o_spot", "g_bush", "g_boulder", "g_grass", "g_flowers",
   ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
@@ -933,7 +936,7 @@ const loadArt = (k) => new Promise((res) => {
 /* art that only one area needs waits until you go there (or next door to it). Everything else is the core set,
    loaded at startup. A new area's pictures go in its list here; tools/eastscape-budget.mjs measures both halves. */
 const WILD_ART = ["t_wdirt", "t_wwater", "deadtree", "w_tree", "snag", "w_bush", "w_boulder", "grimstone", "gravestone", "skeleton", "rope", "cagesign", "gnasher", "taxwraith", "chandelier", "revenant"];
-const CASINO_ART = ["o_hilo", "o_mines", "o_plinko", "o_scratch", "t_casino", "rug_casino", "dex_south", "dex_east", "dookie_south", "dookie_east", "o_slots", "o_cointable", "o_dicetable", "o_bar", "o_sofa", "o_walldoor", "o_roulsign", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east"];
+const CASINO_ART = ["o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "t_casino", "rug_casino", "dex_south", "dex_east", "dookie_south", "dookie_east", "o_slots", "o_cointable", "o_dicetable", "o_bar", "o_sofa", "o_walldoor", "o_roulsign", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east"];
 const AREA_ART = {
   wild: WILD_ART, deep: WILD_ART,
   gloam: ["t_gwater", "t_gpath", "o_willow", "o_glowcap", "o_rock_emerald_ore", "o_rock_diamond_ore", "moth", "ghoul", "understudy"],
@@ -941,6 +944,7 @@ const AREA_ART = {
   farm: ["tom_south", "tom_east", "waldy_south", "waldy_east", ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].map((d) => "legend_" + d)],
   river: ["charon_south", "charon_east", "tullius_south", "tullius_east"], grove: ["olive", "boar", "goat"], tomato: ["nonna_south", "nonna_east", "hornworm"],
   appia: ["vibius_south", "vibius_east", "highwayman"], farmhouse: ["cassia_south", "cassia_east"],   // (closed for now: nothing here loads at login)
+  rough: ["hornworm", "boar", "highwayman", "gnasher"],
   roulette: ["t_roulette", "o_roulette", "rouge_south", "rouge_east"]   // (CASINO_ART is core now: the casino is where everyone starts)
 };
 const LAZY_ART = new Set(Object.values(AREA_ART).flat());
@@ -1528,7 +1532,7 @@ function aimCamera(P, now) {
   view.ox = Math.round(view.bx - cam.x * view.s); view.oy = Math.round(view.by - cam.y * view.s);
 }
 const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
-const KIND_OF = { howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
+const KIND_OF = { cashier: "cashier", howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
 function thingAt(wx, wy) {
   const now = snow(), near = (x_, y_, rx, ry) => Math.abs(wx - x_) <= rx && wy <= y_ + 4 && wy >= y_ - ry;
   for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})${m.c && m.c !== you?.id ? " · someone's fighting it" : ""}` }; }
@@ -1898,7 +1902,7 @@ function frame() {
   if (Z.isle) for (const ob of Z.objs) if (ob.t === "pedestal") { const k = Z.isle.shelf[ob.i]; if (k && ITEMS[k]) drawIco(k, sx(ob.x * T + 8), sy(ob.y * T - 2) + (calm ? 0 : Math.sin(pnow / 500 + ob.i) * 2), 30); }
   for (const m of Z.mobs) if (!m.dead) {
     const p = posOf(m, now), x = sx(p.px * T + 8), y = sy(p.py * T + 15);
-    if (names) label(MOBS[m.t].name, x, y + 2, "#ffb23f", 12);
+    if (names) { label(MOBS[m.t].name, x, y + 2, "#ffb23f", 12); const mv = G.mobValue(m.t); if (mv) label(`~${G.fmtCash(mv)}`, x, y + 15, "#8ff0b4", 11); }
     if (m.hp < MOBS[m.t].hp) { const bw = 30; ctx.fillStyle = "#c00"; ctx.fillRect(x - bw / 2, sy(p.py * T - 5), bw, 5); ctx.fillStyle = "#0c0"; ctx.fillRect(x - bw / 2, sy(p.py * T - 5), bw * Math.max(0, m.hp / MOBS[m.t].hp), 5); }
   }
   for (const n of Z.npcs) {
@@ -1913,6 +1917,9 @@ function frame() {
     if (names) label(n.name, sx(p.px * T + 8), sy(p.py * T + 15) + 2, "#fff", 12);
   }
   for (const pl of Z.players) { const bb = botBubbles.get(pl.id); if (bb && pnow - bb.at < 4500) { const p = pos(pl); bubble(bb.text, sx(p.px * T + 8), sy(p.py * T - 12)); } }
+  // what a go at each rock, tree and fishing spot is worth, written over it (not while it's chopped down or mined out)
+  for (const ob of Z.objs) { const v = G.nodeValue(ob); if (!v || ob.gone || objBusy(ob, now)) continue; const tall = ["tree", "oak", "yew", "cypress", "deadtree", "willow", "skyash", "olive"].includes(ob.t); label(G.fmtCash(v), sx((ob.x + (ob.w || 1) / 2) * T), sy(ob.y * T - (tall ? 30 : 12)), ob.special ? "#ffe27a" : "#8ff0b4", 13); }
+  for (const ob of Z.objs) if (ob.t === "furnace" || ob.t === "anvil" || ob.t === "range") label("pays 2×", sx((ob.x + 0.5) * T), sy(ob.y * T - 16), "#ffe27a", 12);
   for (const b of Z.bots) { const p = posOf(b, now), x = sx(p.px * T + 8), y = sy(p.py * T + 15); if (names) { label(b.name, x, y + 2, "#fff", 12); label(`level ${b.level}`, x, y + 15, "#ffe45c", 11); } const bb = botBubbles.get(b.id); if (bb && pnow - bb.at < 3500) bubble(bb.text, x, sy(p.py * T - 10)); }
   const pp = P ? ownPos(P, now) : null, hx = pp ? sx(pp.px * T + 8) : 0, hy = pp ? sy(pp.py * T + 15) : 0;
   if (P && P.mob && me.hp < maxHp()) { ctx.fillStyle = "#c00"; ctx.fillRect(hx - 18, hy - 29 * S2, 36, 5); ctx.fillStyle = "#0c0"; ctx.fillRect(hx - 18, hy - 29 * S2, 36 * Math.max(0, me.hp / maxHp()), 5); }
@@ -2269,6 +2276,26 @@ function renderEx() {
    The server rolls and pays; this only shows it. A click starts the animation, the result lands it. */
 let GAME = null, gameBet = 10, diceTarget = 50, gameHist = [], gameBusy = false, jackPot = null, jackLast = null;
 const CART = "/v3/assets/img/glad/flat/casino/", CART_V = 1, cimg = (k, cls = "") => `<img class="gmi ${cls}" src="${CART}${k}.png?v=${CART_V}" alt="">`;
+/* the Cashier: what's in your bag, what each thing is worth, and one button that turns the lot into Cash */
+let lastCashed = null;
+function openCashier() {
+  GAME = null; lastCashed = null; for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true;
+  $("gameTitle").textContent = "Cashier"; $("gameSub").textContent = "Everything you bring back, for what it said over it";
+  $("gameWin").hidden = false; renderCashier();
+}
+function renderCashier(done) {
+  if ($("gameWin").hidden || GAME) return;
+  const rows = [...new Map(me.inv.filter((s) => s.k !== "coins" && G.valueOf(s.k) > 0).map((s) => [s.k, 0])).keys()].map((k) => ({ k, n: me.inv.filter((s) => s.k === k).reduce((a, s) => a + s.n, 0), v: G.valueOf(k), loot: G.isLoot(k) }));
+  const loot = rows.filter((r) => r.loot), total = loot.reduce((a, r) => a + r.n * r.v, 0);
+  $("gameBody").innerHTML = `${done ? `<div class="gm-luck on">Paid out ${G.fmtCash(done.total)} for ${done.count} thing${done.count === 1 ? "" : "s"}. The tables are right behind you.</div>` : ""}
+    <div class="gm-stage wheel" style="min-height:0"><div class="hl-mult">${G.fmtCash(total)}<small>${loot.length ? "for everything you found and made" : "nothing to cash in yet"}</small></div>
+      <div class="gm-actions"><button class="btn" id="csAll" ${loot.length ? "" : "disabled"}>Cash in the lot</button></div></div>
+    ${rows.length ? `<div class="mk-list">${rows.map((r) => `<div class="cs-row">${ico(r.k)}<span><b>${esc(ITEMS[r.k].name)}</b> × ${r.n.toLocaleString()}<small>${G.fmtCash(r.v)} each${r.loot ? "" : " · kept unless you sell it yourself"}</small></span><b>${G.fmtCash(r.n * r.v)}</b><button class="btn plain" data-cs="${r.k}">Sell</button></div>`).join("")}</div>`
+      : `<p class="note">Your bag has nothing in it that's worth money. West arch: rocks, trees and fish. East arch: monsters. Every one of them has its price written over it, and anything you make from them in the workshop sells for double.</p>`}
+    <p class="note" style="margin-top:8px">You have <b>${G.fmtCash(G.cashIn(me))}</b>.</p>`;
+  $("csAll")?.addEventListener("click", () => send({ t: "cashout", op: "all" }));
+  $("gameBody").querySelectorAll("[data-cs]").forEach((b) => b.addEventListener("click", () => send({ t: "cashout", op: "one", k: b.dataset.cs })));
+}
 /* the five from the site's casino (2026-09-19). Wheel, Plinko and Scratch-Off are one bet, one answer, like the coin.
    Higher or Lower and Mines are runs: the server holds the run and tells the page only what it may know. */
 let wheelRot = 0, minesCount = 3, scratchTimer = null, plinkoRaf = 0;

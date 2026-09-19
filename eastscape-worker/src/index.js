@@ -199,7 +199,7 @@ export class World {
     this.send(pl, { type: "who", scene: S.key, who: this.whoOf(S) });
     this.send(pl, JSON.parse(this.snapOf(S, Date.now(), false)));
     S.whoSig = null;   // the next broadcast tells everyone else this player has arrived
-    if (!stored) this.say(pl, "Welcome to GAMBA. Play the tables all around you. Want better odds? Work out the west arch or fight out the east one: you'll find lucky charms that make your wins pay more. Say hello to Dex behind the bar.");
+    if (!stored) this.say(pl, "Welcome to GAMBA. Wander the floor and play what you like. Broke? West arch to mine and chop, east arch to fight: everything out there has its price written over it, and the Cashier by each arch turns it into Cash. Say hello to Dex behind the bar.");
     else this.say(pl, `Welcome back, ${pl.name}.`);
     if (this.exDeliver(pl)) this.exCommit(pl);   // market sales and purchases made while you were away
     this.start();
@@ -321,6 +321,7 @@ export class World {
       case "eat": return this.eat(pl, m.i | 0, now);
       case "sort": { const out = G.sortInv(C.inv); if (G.countItems({ inv: out }, Object.keys(G.ITEMS)) !== G.countItems(C, Object.keys(G.ITEMS))) return; C.inv = out; this.touch(pl); return; }
       case "shop": return this.shopOp(S, pl, m);
+      case "cashout": return this.cashOut(S, pl, m);
       case "unequip": return this.unequip(pl, String(m.slot));
       case "drop": {
         const i = m.i | 0, st = C.inv[i]; if (!st) return;
@@ -373,7 +374,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob) return;
-      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", roulette: "roulette", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", roulette: "roulette", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       if (!kind) return;
       const at = kind === "door" && ob.door ? ob.door : G.nearestCell(ob, f);
       act = { kind, ob, x: at.x, y: at.y, name: ob.name };
@@ -717,10 +718,10 @@ export class World {
 
   hasTool(pl, skill) {
     const C = pl.C, w = C.eq.weapon; if (w && G.ITEMS[w].tool === skill) return true;
+    // (2026-09-20) a tool in the bag is a tool in the hand: nobody should have to learn to wield a pickaxe to go and earn ten dollars
     const k = G.TOOL_OF[skill], nm = G.ITEMS[k].name.toLowerCase();
-    if (!C.inv.some((x) => x.k === k)) { this.say(pl, `You need a ${nm} to do that.`, "bad"); return false; }
-    this.say(pl, `You need to hold your ${nm} first. Click it in your inventory to wield it.`, "bad");
-    pl.out.push({ type: "hint", k });
+    if (C.inv.some((x) => G.ITEMS[x.k]?.tool === skill)) return true;
+    this.say(pl, `You need a ${nm} to do that. Brutus sells them in the workshop, out the casino's front door.`, "bad");
     return false;
   }
   equip(pl, i) {
@@ -778,6 +779,18 @@ export class World {
       this.give(pl, "coins", qty * price); this.touch(pl);
       return this.say(pl, `You sell ${qty > 1 ? `${qty} × ` : "the "}${G.ITEMS[k].name.toLowerCase()} for ${G.fmtCash(qty * price)}.`, "good");
     }
+  }
+  /* the Cashier: everything you brought back, for what it said over it. "all" sells loot and things you made and
+     leaves tools, charms and anything wearable alone; one item at a time sells whatever you point at. */
+  cashOut(S, pl, m) {
+    const C = pl.C; if (!this.near(S, pl, "cashier", 3)) return this.say(pl, "You need to be at the Cashier's window, on the casino floor.", "bad");
+    const keys = m.op === "all" ? [...new Set(C.inv.map((s) => s.k))].filter(G.isLoot) : [String(m.k)].filter((k) => k !== "coins" && G.valueOf(k) > 0 && C.inv.some((s) => s.k === k));
+    let total = 0, count = 0;
+    for (const k of keys) { const n = G.takeInv(C.inv, k, G.countItems({ inv: C.inv, bank: [] }, [k])); total += n * G.valueOf(k); count += n; }
+    if (!count) return this.say(pl, "The Cashier looks in your bag. \"Nothing in there I can pay you for. The arches are that way.\"");
+    this.cashTo(pl, total); this.touch(pl);
+    pl.out.push({ type: "cashed", total, count });
+    this.say(pl, `The Cashier counts out ${G.fmtCash(total)} for ${count} thing${count === 1 ? "" : "s"}. The tables are right behind you.`, "good");
   }
   unequip(pl, slot) {
     const C = pl.C, k = C.eq[slot]; if (!k) return;
@@ -968,6 +981,7 @@ export class World {
       return this.say(pl, `You go into ${inside.name.replace(/^The /, "the ")}.`);
     }
     if (a.kind === "bank") return pl.out.push({ type: "bank" });
+    if (a.kind === "cashier") { pl.act = null; return pl.out.push({ type: "cashier" }); }
     if (a.kind === "game") { pl.act = null; return pl.out.push({ type: "game", g: a.ob.t, pot: Math.floor(this.jack.pot), lastJack: this.jack.wins?.[0] || null }); }
     if (a.kind === "howto") { pl.act = null; return pl.out.push({ type: "popup", title: "How GAMBA works", text: G.HOWTO, icon: "🎰" }); }
     if (a.kind === "board") { pl.act = null; this.tourStep(pl, "board"); return this.dailySend(pl); }
