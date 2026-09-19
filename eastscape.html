@@ -589,6 +589,7 @@ button,input,select{font:inherit}
 <script type="module">
 import * as G from "/v3/assets/js/eastscape-shared.js?v=37";
 import * as WK from "/v3/assets/js/eastscape-wiki.js?v=15";
+import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=1";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -620,7 +621,18 @@ const myEnt = () => Z.players.find((p) => p.id === you?.id);
 const DEV = ["localhost", "127.0.0.1"].includes(location.hostname);
 let ws = null, retry = 0, retryTimer = null, lastMsg = 0, everConnected = false, kicked = false, signedOut = false, restartHold = 0;
 function net(state, text) { $("net").className = `net ${state}`; $("netText").textContent = text; }
-function send(m) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(m)); }
+// what a swing sounds like, by what you're doing with it
+const SWING_SFX = { mob: "swing", pvp: "swing", tree: "chop", rock: "mine", vein: "mine", spot: "cast", cook: "cook", smelt: "smelt", smith: "anvil", olive: "pick", wheat: "pick" };
+let sfxSwing = 0;
+function send(m) {
+  if (ws && ws.readyState === 1) ws.send(JSON.stringify(m));
+  if (m.t === "equip" || m.t === "unequip") SFX.play("equip");
+  else if (m.t === "drop") SFX.play("drop");
+  else if (m.t === "eat") SFX.play("eat");
+  else if (m.t === "roul" && m.op === "bet") SFX.play("chip");
+}
+// every button clicks (the canvas has its own sounds)
+document.addEventListener("click", (e) => { if (e.target.closest?.("button") && !e.target.closest("canvas")) SFX.play("ui_click", { vol: 0.8 }); }, true);
 async function connect() {
   clearTimeout(retryTimer);
   if (ws && ws.readyState <= 1) return;
@@ -711,9 +723,18 @@ function onMsg(m) {
     for (const o of Z.objs) { o.stumpUntil = 0; o.emptyUntil = 0; o.bareUntil = 0; o.grownAt = 0; }
     for (const [id, st, em, ba, gr] of m.dyn) { const o = Z.objs[id]; if (o) Object.assign(o, { stumpUntil: st, emptyUntil: em, bareUntil: ba, grownAt: gr }); }
     for (const o of Z.objs) if (o.t === "wheat") Z.g[o.y][o.x] = o.grownAt > m.t ? "f" : "#";
+    const mine = you && Z.players.find((x) => x.id === you.id);
+    if (mine && mine.swingAt && mine.swingAt !== sfxSwing) {
+      if (sfxSwing) SFX.play(SWING_SFX[mine.act] || "swing");
+      sfxSwing = mine.swingAt;
+    }
     for (const e of m.ev || []) {
-      if (e.type === "splat") splats.push({ who: e.who, n: e.n, kind: e.kind, at: performance.now() });
-      if (e.type === "gain") gains.push({ who: e.who, k: e.k, n: e.n, at: performance.now() });
+      if (e.type === "splat") {
+        splats.push({ who: e.who, n: e.n, kind: e.kind, at: performance.now() });
+        if (e.who === `p:${you?.id}`) SFX.play(e.n ? "hurt" : "miss");
+        else if (mine?.mob && e.who === mine.mob) SFX.play(e.n ? "hit" : "miss");
+      }
+      if (e.type === "gain") { gains.push({ who: e.who, k: e.k, n: e.n, at: performance.now() }); if (e.who === you?.id) SFX.play(G.COOK[e.k] && mine?.act === "spot" ? "splash" : "gain"); }
       if (e.type === "bubble") { botBubbles.set(e.id, { text: e.text, at: performance.now() }); const b = Z.bots.find((x) => x.id === e.id); if (b) chatLine(b.name, e.text, "bot"); }
     }
     $("online").textContent = `${m.online} online`;
@@ -752,19 +773,20 @@ function onEvent(e) {
   if (e.type === "exchange") return openWin("exWin");
   if (e.type === "game") { if (e.pot != null) { jackPot = e.pot; jackLast = e.lastJack; } return openGame(e.g); }
   if (e.type === "gameResult") return gameResult(e);
-  if (e.type === "casinonote") { chatLine("Casino", e.text, "casinonote"); return; }
+  if (e.type === "casinonote") { chatLine("Casino", e.text, "casinonote"); if (/JACKPOT/.test(e.text)) SFX.play("jackpot"); return; }
   if (e.type === "daily") return renderDaily(e);
   if (e.type === "roulopen") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "gameWin", "dailyWin"]) $(w).hidden = true; $("roulWin").hidden = false; renderRoul(); return; }
   if (e.type === "roul") { roulSet(e); return; }
-  if (e.type === "exnote") { chatLine("Market", e.text.charAt(0).toUpperCase() + e.text.slice(1), "exnote"); say(`Market: ${e.text}`, "loot"); return; }
-  if (e.type === "tradereq") { tradeReqLine(e.from, e.name); return; }
+  if (e.type === "exnote") { SFX.play("coins"); chatLine("Market", e.text.charAt(0).toUpperCase() + e.text.slice(1), "exnote"); say(`Market: ${e.text}`, "loot"); return; }
+  if (e.type === "tradereq") { SFX.play("chat"); tradeReqLine(e.from, e.name); return; }
   if (e.type === "levelup") return levelUp(e.k, e.lvl);
-  if (e.type === "chat") { if (e.scene === Z.key) botBubbles.set(e.id, { text: e.text, at: performance.now() }); chatLine(e.name, e.text, e.id === you?.id ? "mine" : ""); return; }
+  if (e.type === "chat") { if (e.id !== you?.id) SFX.play("chat", { vol: 0.6 }); if (e.scene === Z.key) botBubbles.set(e.id, { text: e.text, at: performance.now() }); chatLine(e.name, e.text, e.id === you?.id ? "mine" : ""); return; }
 }
 let savedAt = 0;
 
 /* ------------------------------------------------------------ the scene you're in: built from the shared rules */
 function loadScene(key) {
+  if (Z.key && (G.sceneDef(key)?.interior || Z.def?.interior)) SFX.play("door");
   const b = G.buildScene(key);
   Object.assign(Z, { key, g: b.g, objs: b.objs, fadeAt: performance.now(), defs: {} });
   Z.def = G.sceneDef(key); Z.isle = null; Z.ground = [];
@@ -837,6 +859,11 @@ document.addEventListener("keydown", (e) => {
 
 /* ------------------------------------------------------------ messages */
 function say(text, cls = "sys") {
+  if (/^Oh dear, you are dead/.test(text)) SFX.play("die");
+  else if (/^You defeat /.test(text)) SFX.play("mob_die");
+  else if (/^You stop .*idle/.test(text)) SFX.play("idle_stop");
+  else if (/^Daily task done/.test(text)) SFX.play("task_done");
+  else if (cls === "bad") SFX.play("ui_error");
   const p = document.createElement("p"); p.className = cls; p.textContent = text;
   const log = $("log"); log.append(p); while (log.children.length > 5) log.firstChild.remove();
   setTimeout(() => p.remove(), 9000);
@@ -1338,6 +1365,7 @@ function popup(title, text, icon, buttons) {
 }
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("pop").hidden) $("pop").hidden = true; });
 function questBanner(q) {
+  SFX.play("task_done");
   const b = $("qdone"); b.innerHTML = `<small>Quest complete!</small><b>${q.icon} ${esc(q.name)}</b><span>${esc(q.reward.text)}</span>`;
   b.hidden = false; b.classList.remove("show"); void b.offsetWidth; b.classList.add("show");
   clearTimeout(questBanner.t); questBanner.t = setTimeout(() => { b.hidden = true; }, 4200);
@@ -1916,6 +1944,7 @@ function openSmith(ob) {
 }
 
 function openWin(id) {
+  SFX.play("ui_open");
   for (const w of ["bankWin", "exWin", "wikiWin"]) if (w !== id && id !== "tradeWin") $(w).hidden = true;
   $(id).hidden = false;
   if (id === "bankWin") renderBank();
@@ -1924,7 +1953,7 @@ function openWin(id) {
   if (id === "tradeWin") renderTrade();
   if (id === "wikiWin") wikiGo(wikiRoute || "home");
 }
-document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => { $(b.dataset.close).hidden = true; if (b.dataset.close === "wikiWin" && location.hash.startsWith("#wiki")) history.replaceState(null, "", location.pathname + location.search); }));
+document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_close"); $(b.dataset.close).hidden = true; if (b.dataset.close === "wikiWin" && location.hash.startsWith("#wiki")) history.replaceState(null, "", location.pathname + location.search); }));
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape" || e.target.closest?.("input, textarea, select") || !$("pop").hidden || DLG) return;
   for (const w of ["wikiWin", "bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin", "gameWin", "dailyWin", "roulWin"]) if (!$(w).hidden) { $(w).hidden = true; return; }
@@ -2145,17 +2174,21 @@ function renderGame(res) {
     gameBet = Math.max(C.minBet, Math.min(C.maxBet, +amt.value | 0));
     if (gameBet > G.cashIn(me)) { $("gmMsg").className = "gm-msg lost"; $("gmMsg").textContent = `You only have ${G.fmtCash(G.cashIn(me))}.`; return; }
     gameBusy = true; renderGame();
+    gameLoop?.stop(); gameLoop = g === "slots" ? SFX.play("slots_spin") : (SFX.play(g === "cointable" ? "coin_flip" : "dice"), null);
     if (g === "slots") { const reels = [...$("gmShow").querySelectorAll("img")]; spinTimer = setInterval(() => { for (const r of reels) r.src = `${CART}reel_${G.REELS[Math.floor(Math.random() * G.REELS.length)].k}.png?v=${CART_V}`; }, 80); }
     send({ t: "bet", g, amt: gameBet, pick: g === "cointable" ? b.dataset.play : g === "dicetable" ? diceTarget : null });
-    setTimeout(() => { if (gameBusy) { gameBusy = false; clearInterval(spinTimer); renderGame(); } }, 4000);   // the server said no (it says why in the log)
+    setTimeout(() => { if (gameBusy) { gameBusy = false; clearInterval(spinTimer); gameLoop?.stop(); gameLoop = null; renderGame(); } }, 4000);   // the server said no (it says why in the log)
   }));
 }
-let spinTimer = null;
+let spinTimer = null, gameLoop = null;
 function gameResult(e) {
   if (e.g !== GAME) return;
   // let the animation run a beat, then land it
   setTimeout(() => {
     clearInterval(spinTimer); gameBusy = false; gameHist = [e.payout - e.bet, ...gameHist].slice(0, 10);
+    gameLoop?.stop(); gameLoop = null;
+    if (e.g === "slots") SFX.play("reel_stop");
+    SFX.play(e.jackpot ? "jackpot" : e.payout > e.bet * 4 ? "win_big" : e.payout > 0 ? "win_small" : "lose");
     if (e.pot != null) jackPot = e.pot;
     if (e.jackpot) jackLast = { name: you?.name, amt: e.jackpot };
     renderGame(e);
@@ -2172,14 +2205,19 @@ function gameResult(e) {
    The server runs the clock and draws the number; this draws the board, everybody's chips and the wheel. */
 let ROUL = null, roulChip = 10, roulGot = 0, roulSpunRound = 0, roulAngle = 0, roulBallAngle = 0, roulMine = 0, roulBanner = null, roulPrevPhase = null;
 const ROUL_CHIPS = [[5, "#6a6a72"], [10, "#2a5aa8"], [50, "#b8202a"], [100, "#1a1a1a"], [250, "#7a3aa8"]];
+let roulLoop = null;
 function roulSet(e) {
+  if (e.phase === "spin" && roulPrevPhase !== "spin") { roulLoop?.stop(); roulLoop = SFX.play("roul_ball", { vol: $("roulWin").hidden ? 0 : 1 }); }
+  if (e.phase === "bet" && roulPrevPhase === "spin") { roulLoop?.stop(); roulLoop = null; if (!$("roulWin").hidden) SFX.play("roul_drop"); }
   if (e.phase === "spin" && roulPrevPhase !== "spin") roulMine = e.bets.filter((b) => b.me).reduce((a, b) => a + b.amt, 0);
   if (e.phase === "bet" && roulPrevPhase === "spin" && e.last) {
     const mine = e.last.wins.filter((w) => w.name === you?.name).reduce((a, w) => a + w.payout, 0), others = e.last.wins.filter((w) => w.name !== you?.name);
     const who = others.length ? `${[...new Set(others.map((w) => w.name))].slice(0, 3).join(", ")} won!` : "";
     roulBanner = roulMine ? { cls: mine ? "won" : "lost", text: mine ? `You won ${G.fmtCash(mine)}!` : `You lost ${G.fmtCash(roulMine)}`, sub: `${e.last.n} ${e.last.col}${who ? ` · ${who}` : ""}` }
       : { cls: "other", text: `${e.last.n} ${e.last.col}`, sub: who || "No winners this spin" };
-    roulBanner.until = performance.now() + 6000; roulMine = 0;
+    roulBanner.until = performance.now() + 6000;
+    if (roulMine && !$("roulWin").hidden) setTimeout(() => SFX.play(mine ? (mine > roulMine * 4 ? "win_big" : "win_small") : "lose"), 250);
+    roulMine = 0;
   }
   roulPrevPhase = e.phase; ROUL = e; roulGot = performance.now(); if (!$("roulWin").hidden) renderRoul();
 }
@@ -2292,6 +2330,7 @@ function renderTrade() {
 /* ------------------------------------------------------------ level ups: in the chat, a banner, and a little burst */
 const bursts = [];
 function levelUp(k, l) {
+  SFX.play("levelup");
   const s = SKILLS[k]; if (!s) return;
   const log = $("chatLog"); log.querySelector(".empty")?.remove();
   const p = document.createElement("p"); p.className = "loot"; p.textContent = `🎉 Level up! Your ${s.name} is now level ${l}.`; log.append(p); log.scrollTop = log.scrollHeight;
@@ -2575,6 +2614,11 @@ function renderPanel() {
       `<label class="set" for="set-${k}"><span><b>${name}</b><small>${about}</small></span><span class="sw"><input type="checkbox" id="set-${k}" data-k="${k}"${set(k) ? " checked" : ""}><span></span></span></label>`).join("")}</div>
       <p class="note">There's no save button, on purpose: the server saves your character a few seconds after anything changes, and again the moment you close the tab or lose connection.${savedAt ? ` Last saved ${new Date(savedAt).toLocaleTimeString()}.` : ""}</p>`;
     p.querySelectorAll("input[data-k]").forEach((el) => el.addEventListener("change", () => { me.settings[el.dataset.k] = el.checked; send({ t: "settings", patch: { [el.dataset.k]: el.checked } }); }));
+    p.querySelector(".sets").insertAdjacentHTML("afterbegin", `<label class="set" for="set-sfx"><span><b>Sound effects</b><small>This browser only. Made in the game, so they cost nothing to load.</small></span><span class="sw"><input type="checkbox" id="set-sfx"${SFX.enabled() ? " checked" : ""}><span></span></span></label>
+      <label class="set" for="set-vol"><span><b>Volume</b><small>${Math.round(SFX.volume() * 100)}%</small></span><input type="range" id="set-vol" min="0" max="100" value="${Math.round(SFX.volume() * 100)}" style="width:120px"></label>`);
+    $("set-sfx").addEventListener("change", (e) => { SFX.setEnabled(e.target.checked); if (e.target.checked) SFX.play("levelup"); });
+    $("set-vol").addEventListener("input", (e) => { SFX.setVolume(+e.target.value / 100); e.target.previousElementSibling.querySelector("small").textContent = `${e.target.value}%`; });
+    $("set-vol").addEventListener("change", () => SFX.play("coins"));
   }
   if (tab === "help") {
     p.innerHTML = `<div class="ph">How to play</div><div class="note">
