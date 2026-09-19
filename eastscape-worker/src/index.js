@@ -313,6 +313,7 @@ export class World {
       case "isle": return this.isleOp(S, pl, m);
       case "equip": return this.equip(pl, m.i | 0);
       case "eat": return this.eat(pl, m.i | 0, now);
+      case "sort": { const out = G.sortInv(C.inv); if (G.countItems({ inv: out }, Object.keys(G.ITEMS)) !== G.countItems(C, Object.keys(G.ITEMS))) return; C.inv = out; this.touch(pl); return; }
       case "shop": return this.shopOp(S, pl, m);
       case "unequip": return this.unequip(pl, String(m.slot));
       case "drop": {

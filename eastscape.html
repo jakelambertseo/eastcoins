@@ -132,6 +132,8 @@ button,input,select{font:inherit}
 .cols2{display:grid;grid-template-columns:1.5fr 1fr;gap:12px}
 @media (max-width:620px){.cols2{grid-template-columns:1fr}}
 .stances{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 8px}
+.invsort{margin-right:6px;font:800 11px/1.4 Nunito,sans-serif;padding:1px 9px;border-radius:9px;border:1px solid #8a6a3a;background:#e8d8a8;color:#3a2616;cursor:pointer;vertical-align:1px}
+.invsort:hover{background:#fff3c8}.invsort:focus-visible{outline:2px solid #3a2616;outline-offset:1px}
 .stbtn{font-size:13px;padding:3px 6px;display:flex;align-items:center;justify-content:center;gap:5px}
 .stbtn .ico{width:22px;height:22px;image-rendering:pixelated;flex:none}
 .stbtn.on{color:#ffe45c;box-shadow:inset 0 0 0 2px rgba(255,228,92,.55)}
@@ -475,7 +477,7 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=25";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=26";
 import * as WK from "/v3/assets/js/eastscape-wiki.js?v=8";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -2093,7 +2095,8 @@ function renderPanel() {
       return `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" title="${esc(title)}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}</div>`;
     });
     while (cells.length < G.INV_MAX) cells.push('<div class="slot empty"></div>');
-    p.innerHTML = `<div class="ph">Inventory <small>${me.inv.length}/${G.INV_MAX}</small></div><div class="inv">${cells.join("")}</div>`;
+    p.innerHTML = `<div class="ph">Inventory <span><button type="button" class="invsort" id="invSort" title="Sort: Cash, tools, gear, food, then the rest. Merges part-stacks.">Sort</button> <small>${me.inv.length}/${G.INV_MAX}</small></span></div><div class="inv">${cells.join("")}</div>`;
+    $("invSort").addEventListener("click", () => send({ t: "sort" }));
     p.querySelectorAll(".slot[data-i]").forEach((el) => el.addEventListener("click", (e) => {
       const i = +el.dataset.i, s = me.inv[i]; if (!s) return;
       if (e.shiftKey) {
