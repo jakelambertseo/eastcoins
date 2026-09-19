@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 22;
+export const VERSION = 23;
 export const COLS = 22, ROWS = 13;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -69,6 +69,17 @@ export const ITEMS = {
   cgloomfin: { name: "Cooked gloomfin", icon: "🐟", heal: 10, ex: "Still slightly annoyed. Very filling." },
   cmooncarp: { name: "Cooked moon carp", icon: "🐡", heal: 14, ex: "It glows faintly in your stomach. That's normal. Probably." },
   burnt: { name: "Burnt food", icon: "⚫", ex: "Whatever it was, it's charcoal now." },
+  // the Gloam and Cloudreach (2026-09-18): where the tier ores actually live
+  emerald_ore: { name: "Emerald ore", icon: "🟢", ex: "Green rock with greener bits. Smelt two for an Emerald bar." },
+  diamond_ore: { name: "Diamond ore", icon: "💠", ex: "It was pressed into this shape in the dark for a very long time. It is not grateful." },
+  dragonstone_ore: { name: "Dragonstone ore", icon: "🔴", ex: "Warm. Always warm. The clouds up there keep their distance from it." },
+  onyx_ore: { name: "Onyx ore", icon: "⚫", ex: "Lightning hit this and it held on to some. Your hair stands up when you carry it." },
+  willowlogs: { name: "Gloomwillow logs", icon: "🪵", ex: "Damp, dark and faintly glowing at the ends. They burn blue." },
+  skyashlogs: { name: "Skyash logs", icon: "🪵", ex: "Light enough to float. Please don't let go of them." },
+  lanternfish: { name: "Raw lanternfish", icon: "🐟", ex: "It has its own little light. It keeps it on even now." },
+  clanternfish: { name: "Cooked lanternfish", icon: "🐟", heal: 12, ex: "The light goes out when it's cooked. That's how you know." },
+  skyeel: { name: "Raw sky eel", icon: "🐍", ex: "Caught from a cloud, out of the open sky. It is very surprised about it too." },
+  cskyeel: { name: "Cooked sky eel", icon: "🐍", heal: 16, ex: "Tastes like a thunderstorm smells." },
   // the Forge's Bronze set (Brutus sells it); req is what you need to wear it
   toga: { name: "Goat-sized toga", short: "Toga", icon: "🥻", slot: "body", def: 3, acc: 1, ex: "Smells of goat. Fits you perfectly, which is worrying." },
   parma: { name: "Parma", icon: "🛡️", slot: "shield", def: 3 },
@@ -343,8 +354,9 @@ function wild(g, objs, exits, edges, keep = [], seed = 1) {
           continue;
         }
         const r = hashRand(x, y, seed + 11);
-        const t = kind === "rocky" ? (r < 0.45 ? "boulder" : r < 0.8 ? "tree" : "bush") : (r < 0.62 ? "tree" : r < 0.88 ? "bush" : "boulder");
+        const t = kind === "scrub" ? (r < 0.6 ? "bush" : "boulder") : kind === "rocky" ? (r < 0.45 ? "boulder" : r < 0.8 ? "tree" : "bush") : (r < 0.62 ? "tree" : r < 0.88 ? "bush" : "boulder");
         if (t === "tree" && k > 0 && hashRand(x, y, seed + 13) < 0.45) continue;   // woods, not a wall of forest
+        if (kind === "scrub" && hashRand(x, y, seed + 14) < (k > 0 ? 0.6 : 0.3)) continue;   // clumps, not a hedge
         put(t, x, y);
       }
     }
@@ -471,7 +483,7 @@ export const SCENES = {
     bots: [{ name: "Gannicus", level: 55 }, { name: "Naevia", level: 31 }]
   },
   grove: {
-    name: "Olive Grove", exits: { e: "forum" },
+    name: "Olive Grove", exits: { e: "forum", w: "gloam" },
     build() {
       const g = grid(), objs = [];
       for (let x = 13; x < COLS; x++) g[6][x] = ",";
@@ -494,7 +506,7 @@ export const SCENES = {
 Object.assign(SCENES, {
   // north of the Forum: a hill of tomato vines, a giant tomato, and a Nonna who insists on the spelling
   tomato: {
-    name: "Tomatoe Hill", exits: { s: "forum" },
+    name: "Tomatoe Hill", exits: { s: "forum", n: "cloud" },
     build() {
       const g = grid(), objs = [];
       for (let y = 6; y < ROWS; y++) g[y][17] = ",";
@@ -513,6 +525,52 @@ Object.assign(SCENES, {
     mobs: [["rotten", 12, 8], ["rotten", 14, 10], ["rotten", 11, 11], ["hornworm", 19, 6], ["hornworm", 15, 8]],
     npcs: [{ name: "Nonna Tomatoe", x: 13, y: 7, still: true, hair: "#e8e8e8", shirt: "#c43a3a", pants: "#3a2a2a", lines: ["Tomatoe. With an e. Say it back to me.", "The big one? That's the Big Tomatoe. It was here before the town. Probably before the hill.", "The rotten ones walk at night. And in the day. Mostly they just walk.", "The golden vine is not for you. Not yet. Maybe not ever."] }],
     bots: [{ name: "Oenomaus", level: 38 }]
+  },
+  // west of the Olive Grove: a wood where it is always five minutes before dark. Levels 20-38.
+  gloam: {
+    name: "The Gloam", ground: "gloam", exits: { e: "grove" }, tint: "rgba(8,30,48,.32)",
+    build() {
+      const g = grid(), objs = [], keep = [];
+      for (let x = 8; x < COLS; x++) g[6][x] = ",";
+      for (let y = 3; y <= 6; y++) g[y][8] = ",";
+      for (let x = 3; x <= 8; x++) g[3][x] = ",";
+      // the black pond, fished from its south bank
+      for (let y = 8; y <= 10; y++) for (let x = 2; x <= 6; x++) g[y][x] = "~";
+      for (const x of [3, 5]) objs.push({ t: "spot", x, y: 8, name: "Lantern pool", req: { skill: "fishing", lvl: 30 }, fish: "lanternfish", xp: 95, glow: "#7ad8ff", tease: "Little lights drift under the surface. They move away when you lean closer." });
+      for (let x = 2; x <= 7; x++) keep.push([x, 7]);
+      for (const [x, y] of [[17, 3], [18, 4], [16, 9]]) { objs.push({ t: "rock", ore: "emerald_ore", x, y, name: "Emerald rock", req: { skill: "mining", lvl: 20 }, xp: 45, tease: "Green glints in the rock. Your pickaxe isn't up to it yet." }); g[y][x] = "#"; }
+      for (const [x, y] of [[4, 1], [6, 1]]) { objs.push({ t: "rock", ore: "diamond_ore", x, y, name: "Diamond rock", req: { skill: "mining", lvl: 30 }, xp: 65, tease: "Something in there catches light that isn't here." }); g[y][x] = "#"; }
+      for (const [x, y] of [[11, 2], [13, 10], [10, 10]]) { objs.push({ t: "willow", x, y, name: "Gloomwillow", log: "willowlogs", req: { skill: "woodcutting", lvl: 35 }, xp: 110, tease: "The fronds close up around the trunk when you raise your axe." }); g[y][x] = "#"; }
+      objs.push({ t: "fire", x: 12, y: 7, name: "Campfire" }); g[7][12] = "#";
+      for (let x = 8; x < COLS; x++) keep.push([x, 5], [x, 7]);
+      wild(g, objs, this.exits, { n: "scrub", s: "scrub", w: "scrub", e: "scrub" }, [...keepOf(this), ...keep], 9);
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["moth", 15, 5], ["moth", 19, 8], ["moth", 14, 3], ["ghoul", 9, 9], ["ghoul", 7, 4], ["understudy", 3, 5]],
+    npcs: [], bots: []
+  },
+  // north off Tomatoe Hill, up past the tops of the vines: an island of cloud in the open sky. Levels 40-55.
+  cloud: {
+    name: "Cloudreach", ground: "cloud", exits: { s: "tomato" },
+    build() {
+      const g = grid(), objs = [], keep = [];
+      for (let y = 4; y < ROWS; y++) { g[y][16] = ","; g[y][17] = ","; }
+      for (let x = 5; x <= 17; x++) g[4][x] = ",";
+      // a hole in the cloud: the sky below, and eels in it, fished from its east side
+      for (let y = 7; y <= 9; y++) for (let x = 8; x <= 11; x++) g[y][x] = "~";
+      for (const y of [7, 9]) objs.push({ t: "spot", x: 11, y, name: "Hole in the cloud", req: { skill: "fishing", lvl: 50 }, fish: "skyeel", xp: 150, glow: "#bfe8ff", tease: "Long shapes swim through the open sky below. Your line isn't long enough yet." });
+      for (let y = 6; y <= 10; y++) keep.push([12, y]);
+      for (const [x, y] of [[4, 7], [5, 9], [3, 9]]) { objs.push({ t: "rock", ore: "dragonstone_ore", x, y, name: "Dragonstone rock", req: { skill: "mining", lvl: 40 }, xp: 90, tease: "Red crystal, warm through your gloves. It laughs at your pickaxe." }); g[y][x] = "#"; }
+      for (const [x, y] of [[14, 2], [16, 2]]) { objs.push({ t: "rock", ore: "onyx_ore", x, y, name: "Storm-struck onyx", req: { skill: "mining", lvl: 50 }, xp: 120, tease: "Black stone, still crackling from the last lightning. Not yet." }); g[y][x] = "#"; }
+      for (const [x, y] of [[7, 2], [3, 5], [13, 11]]) { objs.push({ t: "skyash", x, y, name: "Skyash", log: "skyashlogs", req: { skill: "woodcutting", lvl: 50 }, xp: 150, tease: "The leaves ring like little bells. Your axe would just bounce off." }); g[y][x] = "#"; }
+      objs.push({ t: "fire", x: 14, y: 6, name: "Cloud-fire" }); g[6][14] = "#";
+      for (let x = 5; x <= 17; x++) keep.push([x, 3], [x, 5]);
+      for (let y = 5; y < ROWS; y++) keep.push([15, y], [18, y]);
+      wild(g, objs, this.exits, { n: "water", s: "water", w: "water", e: "water" }, [...keepOf(this), ...keep], 10);
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["ram", 6, 6], ["ram", 7, 11], ["angel", 14, 9], ["angel", 12, 2], ["goose", 9, 5]],
+    npcs: [], bots: []
   },
   // east of the Forum: the great road, a toll post, highwaymen, and a barricade where the road washed out
   appia: {
@@ -759,6 +817,14 @@ export const MOBS = {
   taxwraith: { name: "Tax Wraith", size: "m", lvl: 28, hp: 42, att: 20, def: 18, max: 5, speed: 2400, aggro: 4, box: [9, 25], drops: [["coins", [20, 80]], ["receipt", 1], ["wraithhood", 1, 0.03], ["menace", 1, 0.02], ["spiderboots", 1, 0.004]] },
   chandelier: { name: "Chandelier Spider", size: "l", lvl: 34, hp: 50, att: 24, def: 20, max: 6, speed: 2600, aggro: 4, oy: 12, box: [17, 41], drops: [["cobweb", 1], ["bones", 1], ["lantern", 1, 0.03], ["spiderboots", 1, 0.01]] },
   revenant: { name: "Sulking Revenant", size: "l", lvl: 45, hp: 80, att: 32, def: 28, max: 8, speed: 2800, aggro: 5, box: [9, 30], drops: [["bones", 2], ["coins", [50, 150]], ["grudge", 1, 0.04], ["menace", 1, 0.03]] },
+  // the Gloam
+  moth: { name: "Lantern Moth", size: "s", lvl: 22, hp: 28, att: 16, def: 12, max: 4, speed: 2200, box: [6, 16], drops: [["coins", [5, 20]], ["emerald_ore", 1, 0.3]] },
+  ghoul: { name: "Sorry Ghoul", size: "m", lvl: 30, hp: 46, att: 22, def: 19, max: 5, speed: 2400, aggro: 3, box: [9, 24], drops: [["bones", 1], ["coins", [20, 60]], ["diamond_ore", 1, 0.2]] },
+  understudy: { name: "The Understudy", size: "l", lvl: 38, hp: 62, att: 27, def: 23, max: 7, speed: 2600, aggro: 4, box: [12, 34], drops: [["coins", [40, 120]], ["diamond_ore", [1, 2], 0.25]] },
+  // Cloudreach
+  ram: { name: "Cumulus Ram", size: "m", lvl: 42, hp: 66, att: 29, def: 26, max: 7, speed: 2600, box: [9, 24], drops: [["bones", 1], ["coins", [30, 90]], ["dragonstone_ore", 1, 0.15]] },
+  angel: { name: "Angel of Minor Inconvenience", size: "m", lvl: 48, hp: 84, att: 34, def: 30, max: 8, speed: 2400, aggro: 4, box: [9, 24], drops: [["coins", [60, 160]], ["dragonstone_ore", 1, 0.25]] },
+  goose: { name: "Thunder Goose", size: "l", lvl: 55, hp: 110, att: 40, def: 36, max: 10, speed: 2800, aggro: 5, box: [12, 34], drops: [["bones", 2], ["feather", [10, 30]], ["coins", [100, 250]], ["onyx_ore", 1, 0.3]] },
   goat: { name: "Goat in a Toga", size: "m", lvl: 12, hp: 24, att: 9, def: 8, max: 3, speed: 2400, box: [7, 26], drops: [["manifesto", 1], ["bones", 1], ["toga", 1, 0.25]] }
 };
 
@@ -777,7 +843,13 @@ const TIER_DROPS = {
   gnasher:    [["emerald", 0.04]],
   taxwraith:  [["emerald", 0.08], ["diamond", 0.02]],
   chandelier: [["diamond", 0.08], ["dragonstone", 0.015]],
-  revenant:   [["dragonstone", 0.10], ["onyx", 0.02]]
+  revenant:   [["dragonstone", 0.10], ["onyx", 0.02]],
+  moth:       [["emerald", 0.03]],
+  ghoul:      [["emerald", 0.05], ["diamond", 0.02]],
+  understudy: [["diamond", 0.06], ["dragonstone", 0.015]],
+  ram:        [["dragonstone", 0.04]],
+  angel:      [["dragonstone", 0.06], ["onyx", 0.015]],
+  goose:      [["onyx", 0.05]]
 };
 for (const [mob, tiers] of Object.entries(TIER_DROPS)) {
   if (!MOBS[mob]) continue;
@@ -821,7 +893,8 @@ for (const [raw, c] of Object.entries({
   sardine: { to: "csardine", lvl: 1, xp: 30, burnStop: 20 }, chicken: { to: "cchicken", lvl: 1, xp: 30, burnStop: 20 },
   beef: { to: "cbeef", lvl: 5, xp: 40, burnStop: 25 }, pork: { to: "cpork", lvl: 10, xp: 60, burnStop: 35 },
   trout: { to: "ctrout", lvl: 15, xp: 70, burnStop: 40 }, gloomfin: { to: "cgloomfin", lvl: 25, xp: 100, burnStop: 55 },
-  mooncarp: { to: "cmooncarp", lvl: 40, xp: 150, burnStop: 70 }
+  mooncarp: { to: "cmooncarp", lvl: 40, xp: 150, burnStop: 70 },
+  lanternfish: { to: "clanternfish", lvl: 30, xp: 120, burnStop: 60 }, skyeel: { to: "cskyeel", lvl: 50, xp: 190, burnStop: 80 }
 })) recipe(`cook_${raw}`, { skill: "cooking", station: "fire", in: [[raw, 1]], out: [c.to, 1], lvl: c.lvl, xp: c.xp, burnStop: c.burnStop });
 
 // the old name, kept so the wiki and anything else reading it still work
@@ -842,10 +915,10 @@ export const COOK = Object.fromEntries(Object.values(RECIPES)
    it is one `smelt` line per tier here and nothing else changes. */
 const SMELT = {
   bronze:      [["copper", 1], ["tin", 1]],
-  emerald:     [["copper", 2], ["tin", 2], ["grimstone", 1]],
-  diamond:     [["grimstone", 2], ["marble", 1]],
-  dragonstone: [["marble", 2], ["stardust", 1]],
-  onyx:        [["stardust", 2], ["grimstone", 3]]
+  emerald:     [["emerald_ore", 2]],                       // the Gloam, Mining 20
+  diamond:     [["diamond_ore", 2]],                       // the Gloam, Mining 30
+  dragonstone: [["dragonstone_ore", 2]],                   // Cloudreach, Mining 40
+  onyx:        [["onyx_ore", 2], ["grimstone", 1]]         // Cloudreach, Mining 50, plus a trip to the Wilderness
 };
 // how many bars a piece takes — the big slots cost more, and a maul costs most
 const BARS = { body: 5, legs: 3, shield: 3, helm: 2, boots: 1, gloves: 1, gladius: 1, sword: 2, maul: 3 };
@@ -884,7 +957,8 @@ export const SHOP = {
   sells: [["pickaxe", 25], ["axe", 25], ["rod", 20],
     ["bronze_gladius", 220], ["bronze_sword", 250], ["bronze_maul", 280],
     ["bronze_helm", 200], ["bronze_shield", 300], ["bronze_body", 600], ["bronze_legs", 360], ["bronze_boots", 120], ["bronze_gloves", 120], ["bronze_ring", 180], ["bronze_amulet", 260]],
-  buys: { copper: 6, tin: 6, grimstone: 45, marble: 35, stardust: 120, logs: 4, yewlogs: 70, ashlogs: 28, hide: 8, bones: 2, feather: 1, tusk: 10, husk: 4, pit: 1,
+  buys: { emerald_ore: 30, diamond_ore: 50, dragonstone_ore: 80, onyx_ore: 120, willowlogs: 40, skyashlogs: 65, clanternfish: 18, cskyeel: 32,
+    copper: 6, tin: 6, grimstone: 45, marble: 35, stardust: 120, logs: 4, yewlogs: 70, ashlogs: 28, hide: 8, bones: 2, feather: 1, tusk: 10, husk: 4, pit: 1,
     receipt: 3, cobweb: 5, geode: 400, olives: 1, sunolive: 30, wheat: 1, tomatoe: 2, goldtomatoe: 60, mask: 40, monocle: 25, manifesto: 15,
     csardine: 3, cchicken: 3, cbeef: 4, cpork: 7, ctrout: 9, cgloomfin: 14, cmooncarp: 25,
     pickaxe: 8, axe: 8, rod: 6 }
