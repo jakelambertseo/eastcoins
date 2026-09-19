@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 38;
+export const VERSION = 39;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -733,57 +733,78 @@ Object.assign(SCENES, {
      the south door is the building's front door onto the Forum. */
   casino: {
     name: "The Casino", interior: true, floor: "casino", wallH: 34, room: [1, 4, 42, 21], exits: { w: "workyard", e: "paddock" }, labels: { w: "SKILLING", e: "COMBAT", s: "TOWN" }, exitTo: { scene: "forum", x: 21, y: 5 }, entry: { x: 21, y: 20 },
-    wall: [{ t: "banner", x: 3 }, { t: "lamp", x: 7 }, { t: "lamp", x: 11 }, { t: "painting1", x: 14.5, dy: 7, frame: true }, { t: "lamp", x: 19 }, { t: "lamp", x: 24 }, { t: "neon", x: 30, dy: 16 }, { t: "lamp", x: 33.5 }, { t: "painting2", x: 36.5, dy: 5 }, { t: "lamp", x: 38 }, { t: "banner", x: 41 }],
+    wall: [{ t: "banner", x: 3 }, { t: "lamp", x: 7 }, { t: "lamp", x: 11 }, { t: "painting1", x: 14.5, dy: 7, frame: true }, { t: "lamp", x: 17 }, { t: "lamp", x: 24 }, { t: "painting2", x: 28, dy: 5 }, { t: "lamp", x: 31 }, { t: "neon", x: 35.5, dy: 16 }, { t: "lamp", x: 39.3 }, { t: "banner", x: 41 }],
+    // what each room is called, written on the carpet at its way in (tile coordinates)
+    zones: [{ x: 10.5, y: 12.4, text: "▲ SLOTS" }, { x: 10.5, y: 14.6, text: "▼ WHEELS · COIN FLIP" }, { x: 32.5, y: 12.4, text: "▲ CARDS · BAR" }, { x: 32.5, y: 14.6, text: "▼ DICE · INSTANT WINS" }],
     build() {
       const g = room(1, 4, 42, 21, 21), objs = [];
       for (let y = SPAN.w[0]; y <= SPAN.w[1]; y++) { g[y][0] = "e"; g[y][COLS - 1] = "e"; }
       objs.push({ t: "walldoor", x: 21, y: 3, name: "Floor 2: the Roulette Room", enter: "roulette" });
       objs.push({ t: "roulsign", x: 21, y: 2, name: "Roulette", dy: -3 });
-      objs.push({ t: "notice", x: 9, y: 4, name: "Task board" }); g[4][9] = "#";
-      objs.push({ t: "bar", x: 28, y: 5, w: 4, h: 1, name: "Bar" }); block(g, 28, 5, 4, 1);
-      /* THE FLOOR, IN SECTIONS (2026-09-20). You arrive on an empty rug and have to go and look: that is the point.
-         Two aisles stay clear, door to door (x 20-23) and arch to arch (row 13); everything else is set down in
-         neighbourhoods, a little unevenly on purpose, the way a real floor grows:
-           west wall   SLOTS ALLEY: machines along the wall and in crooked little islands, Scratch-Off, the jukebox
-           west-centre THE COIN CORNER: the coin tables and the Wheel
-           centre      the House Ruby behind its ropes
-           east-centre THE CARD PIT: Higher or Lower, dice, the poker and blackjack tables
-           north-east  THE BAR: Dex, sofas, cocktail tables, the broken cash machine
-           south-east  THE DROP ZONE: Mines, Plinko, the piano
-         A Cashier's window stands by each arch, so whatever you bring back is money before you reach a table. */
+      /* THE FLOOR, LIKE A REAL ONE (2026-09-20, the owner: "put games together, as in sections... rope them off").
+         Every kind of game has its own roped-off room, and you can see which is which from the aisles:
+
+             SLOTS (three banks, back to back)   |  aisle  |   CARD ROOM          |  THE BAR
+           --------- rope, one way in ----------    door     ------- rope --------------------
+             Cashier        the long aisle, arch to arch, round the House Ruby        Cashier
+           --------- rope, one way in ----------   entrance  ------- rope --------------------
+             WHEELS    |    COIN FLIP            |  aisle  |   DICE PIT   |   INSTANT WINS
+
+         Ropes are real: the posts AND the rope between them block the way, so a section is entered through its gap.
+         rope() lays a line of posts two tiles apart and leaves a "ropeline" marker the page draws the rope from. */
       const put = (t, x, y, name, w = 1, extra = {}) => { objs.push({ t, x, y, ...(w > 1 ? { w, h: 1 } : {}), name, ...extra }); block(g, x, y, w, 1); };
-      for (const y of [5, 7, 9, 16, 18, 20]) { put("slots", 1, y, "Slot machine", 1, { flip: true }); put("slots", 42, y, "Slot machine"); }
-      for (const [x, y, flip] of [[6, 6, true], [7, 6, false], [9, 8, true], [5, 16, false], [6, 16, true], [8, 18, true], [9, 18, false], [10, 19, true]]) put("slots", x, y, "Slot machine", 1, { flip });
-      put("scratch", 9, 11, "Scratch-Off", 2); put("jukebox", 5, 4, "Jukebox");
-      for (const [x, y] of [[14, 9], [16, 11], [14, 16]]) put("cointable", x, y, "Coin Flip table", 2);
-      put("wheel", 16, 19, "Wheel", 2, { art: "o_prizewheel" }); put("prizewheel", 16, 4, "Prize wheel (opening soon)", 2); put("blackjack", 12, 6, "Blackjack table (opening soon)", 2);
+      const posts = new Set();
+      const rope = (x1, y1, x2, y2) => {
+        const dx = Math.sign(x2 - x1), dy = Math.sign(y2 - y1), n = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1));
+        for (let k = 0; k <= n; k++) { const x = x1 + dx * k, y = y1 + dy * k; g[y][x] = "#"; if ((k % 2 === 0 || k === n) && !posts.has(`${x},${y}`)) { posts.add(`${x},${y}`); objs.push({ t: "ropepost", x, y, name: "Velvet rope" }); } }
+        for (let k = 0; k < n; k += 2) { const a = Math.min(n, k + 2); objs.push({ t: "ropeline", x: x1 + dx * k, y: y1 + dy * k, x2: x1 + dx * a, y2: y1 + dy * a, name: "Velvet rope" }); }
+      };
+      put("notice", 19, 4, "Task board");
+      // SLOTS: the whole north-west floor. Three banks, two machines deep, plus the wall.
+      for (const bx of [4, 9, 14]) for (let y = 5; y <= 9; y++) { put("slots", bx, y, "Slot machine", 1, { flip: true }); put("slots", bx + 1, y, "Slot machine"); }
+      for (const y of [5, 7, 9]) put("slots", 1, y, "Slot machine", 1, { flip: true });
+      rope(4, 11, 8, 11); rope(12, 11, 18, 11); rope(18, 7, 18, 11);
+      // WHEELS and COIN FLIP share the south-west, with a rope between them
+      put("wheel", 4, 18, "Wheel", 2, { art: "o_prizewheel" }); put("wheel", 8, 19, "Wheel", 2, { art: "o_prizewheel" }); put("prizewheel", 6, 21, "Prize wheel (opening soon)", 2);
+      for (const [x, y] of [[13, 17], [16, 18], [13, 20]]) put("cointable", x, y, "Coin Flip table", 2);
+      rope(4, 15, 8, 15); rope(12, 15, 18, 15); rope(18, 15, 18, 19); rope(11, 17, 11, 21);
+      // the House Ruby, properly roped now
       put("coinstatue", 21, 13, "The House Ruby", 2);
-      for (const [x, y] of [[20, 12], [23, 12], [20, 14], [23, 14]]) put("ropepost", x, y, "Velvet rope");
+      rope(20, 12, 23, 12); rope(20, 14, 23, 14); rope(20, 12, 20, 14); rope(23, 12, 23, 14);
       objs.push({ t: "rug", img: "rug_casino", x: 20, y: 17, w: 4, h: 3, color: "#5a1a2a", name: "Rug" });
-      put("howto", 25, 21, "How GAMBA works", 1, { art: "o_notice" });
-      put("hilo", 26, 9, "Higher or Lower", 2);
-      for (const [x, y] of [[33, 9], [30, 11], [35, 15]]) put("dicetable", x, y, "Dice table", 2);
-      put("pokertable", 27, 16, "Poker table (opening soon)", 3); put("blackjack", 38, 16, "Blackjack table (opening soon)", 2);
-      put("atm", 39, 4, "Cash machine (out of order, thankfully)");
-      put("mines", 29, 19, "Mines", 2); put("plinko", 33, 19, "Plinko", 2); put("piano", 37, 19, "Grand piano", 2);
-      for (const [x, y] of [[5, 21], [11, 21], [30, 21], [36, 21], [14, 5], [34, 5], [36, 7]]) put("sofa", x, y, "Sofa", 2);
-      for (const [x, y] of [[17, 7], [24, 6], [33, 7], [38, 9], [18, 15], [25, 14], [12, 20], [36, 12]]) put("cocktail", x, y, "Cocktail table");
-      for (const [x, y] of [[3, 4], [40, 4], [17, 21], [28, 21], [12, 4], [25, 4], [3, 21], [40, 21]]) put("plant", x, y, "Potted palm");
+      put("howto", 24, 21, "How GAMBA works", 1, { art: "o_notice" });
+      // THE CARD ROOM: Higher or Lower up front, blackjack and poker behind (those two open soon)
+      put("hilo", 26, 6, "Higher or Lower", 2); put("hilo", 29, 7, "Higher or Lower", 2);
+      put("blackjack", 27, 9, "Blackjack table (opening soon)", 2); put("blackjack", 30, 10, "Blackjack table (opening soon)", 2); put("pokertable", 25, 10, "Poker table (opening soon)", 3);
+      rope(24, 7, 24, 11); rope(24, 11, 30, 11); rope(32, 5, 32, 9);
+      // THE BAR and its lounge, north-east
+      put("bar", 34, 5, "Bar", 4); put("atm", 40, 4, "Cash machine (out of order, thankfully)"); put("jukebox", 38, 4, "Jukebox"); put("piano", 39, 9, "Grand piano", 2);
+      for (const [x, y] of [[34, 8], [37, 8], [36, 10]]) put("cocktail", x, y, "Cocktail table");
+      put("sofa", 40, 6, "Sofa", 2); put("sofa", 33, 10, "Sofa", 2);
+      rope(34, 11, 38, 11);
+      // THE DICE PIT
+      for (const [x, y] of [[26, 16], [29, 17], [26, 19]]) put("dicetable", x, y, "Dice table", 2);
+      rope(24, 15, 30, 15); rope(24, 15, 24, 19); rope(32, 17, 32, 21);
+      // INSTANT WINS: the machines you just walk up to
+      put("plinko", 34, 17, "Plinko", 2); put("plinko", 37, 17, "Plinko", 2); put("mines", 34, 20, "Mines", 2); put("mines", 37, 20, "Mines", 2); put("scratch", 40, 17, "Scratch-Off", 2); put("scratch", 40, 20, "Scratch-Off", 2);
+      rope(34, 15, 40, 15);
+      // along the south wall, and greenery in the corners
+      for (const [x, y] of [[3, 4], [12, 4], [25, 4], [42, 4], [17, 21], [27, 21], [2, 21], [42, 21], [42, 8], [42, 18]]) put("plant", x, y, "Potted palm");
       // the Cashier buys everything you bring back, at the price written over it outside: one window by each arch
-      for (const x of [3, 39]) put("cashier", x, 10, "Cashier", 2);
+      put("cashier", 2, 11, "Cashier", 2); put("cashier", 40, 11, "Cashier", 2);
       return { g, objs, blobs: [] };
     },
     // the regulars at the machines are simulated players: they walk up to a game, play a while, and move on
     mobs: [], bots: [{ name: "due4aWin", level: 14 }, { name: "SlotGoblin", level: 37 }, { name: "AllInAlan", level: 61 }],
-    npcs: [{ name: "Dex the Dealer", art: "dex", x: 29, y: 4, still: true, reach: 2, hair: "#1a1a1a", shirt: "#9a2a2a", pants: "#1a1a1a", lines: [
-      "Welcome in. Have a wander: slots down the west wall, cards and dice this side, Mines and Plinko in the far corner. The house always wins, a little.",
+    npcs: [{ name: "Dex the Dealer", art: "dex", x: 35, y: 4, still: true, reach: 2, hair: "#1a1a1a", shirt: "#9a2a2a", pants: "#1a1a1a", lines: [
+      "Welcome in. Every game has its own room: slots are the whole north-west floor, wheels and coin tables below them, cards next to me, dice and the instant machines in the south-east. The house always wins, a little.",
       "Broke? West arch to dig and chop, east arch to hit things. Everything out there has its price written on it. The Cashier by the arch turns it into money.",
       "Here's a tip for free: take what you find to the workshop out front first. Anything you make sells for double.",
       "Broke? Happens to the best of us. The board by the door has jobs that pay. Fresh ones every morning.",
       "Biggest win I've seen? Someone hit three sevens on that end machine. Bought everyone a drink. We don't sell drinks.",
       "Every roll's decided by the house, fair and square. I just hand over the money.",
       "No ZCoins in here, friend. Cash only. What happens in EastScape stays in EastScape."] },
-      { name: "DookieBetts", art: "dookie", x: 34, y: 8, still: true, reach: 2, hair: "#1a1a1a", shirt: "#c8102e", pants: "#1a1a1a", lines: [
+      { name: "DookieBetts", art: "dookie", x: 28, y: 18, still: true, reach: 2, hair: "#1a1a1a", shirt: "#c8102e", pants: "#1a1a1a", lines: [
         "One more roll. Just one. Then one more after that. Then we'll talk.",
         "You're up? That's the dice telling you to bet bigger. You're down? That's the dice telling you you're due.",
         "Roll under five. Twenty-four times your money. Honestly it'd be irresponsible NOT to.",
@@ -795,7 +816,7 @@ Object.assign(SCENES, {
         "The sevens are hot tonight. They're always hot. That's why I sleep here.",
         "You walking away? On THIS streak? Nah. Nah nah nah. One more."] },
       // the regulars (2026-09-19): nobody here is a good influence
-      { name: "Parlay Pete", art: "pete", x: 39, y: 6, hair: "#3a2a1a", shirt: "#6a6a72", pants: "#3a3a44", lines: [
+      { name: "Parlay Pete", art: "pete", x: 38, y: 6, hair: "#3a2a1a", shirt: "#6a6a72", pants: "#3a3a44", lines: [
         "Twelve-leg parlay. Eleven hit. ELEVEN. The twelfth was a chicken fight in the Paddock. The chicken LOST.",
         "I don't chase losses. I follow them at a respectful distance until they turn around.",
         "The cash machine's been out of order for a year. Best thing that ever happened to me. Don't tell it I said that.",
@@ -809,14 +830,14 @@ Object.assign(SCENES, {
         "Two cherries pays, dear. People forget that. Two cherries has paid for this whole visor.",
         "I brought my own bucket. You have to show the machine you're serious.",
         "Lucky clover from the Workyard, that's the trick. I eat them. You're supposed to click them? Hm."] },
-      { name: "Rent Money Randy", art: "randy", x: 15, y: 21, hair: "#5a4a3a", shirt: "#8a5a32", pants: "#8a5a32", lines: [
+      { name: "Rent Money Randy", art: "randy", x: 18, y: 21, hair: "#5a4a3a", shirt: "#8a5a32", pants: "#8a5a32", lines: [
         "It's a barrel. Yes. No, I don't want to talk about it. Dice. It was the dice.",
         "I was up four thousand. Then I was up two thousand. Then I was in a barrel.",
         "The task board pays Cash for chopping logs. I'd go, but the barrel doesn't fit through the arch.",
         "Rent's due Friday. So am I. We'll see who gets there first.",
         "Spot me ten Cash? I'll pay you back twenty. I've got a feeling about the coin table.",
         "The barrel's actually quite roomy. Don't end up in one."] },
-      { name: "Whale Wendell", art: "wendell", x: 31, y: 17, hair: "#1a1a1a", shirt: "#f4f4f4", pants: "#f4f4f4", lines: [
+      { name: "Whale Wendell", art: "wendell", x: 28, y: 8, hair: "#1a1a1a", shirt: "#f4f4f4", pants: "#f4f4f4", lines: [
         "Five hundred a spin. It's the most the house lets me bet. I've written letters.",
         "I don't look at my balance. My balance looks at me.",
         "Poker's opening soon, they keep telling me. I've already reserved every seat.",
@@ -1198,7 +1219,7 @@ export const TOUR_CHIP = 10, TOUR_PAY = 60, TOUR_GIFT = "clover", TOUR_JOB = { l
 export const tourOf = (c) => (c?.tour && c.tour.step < TOUR.length ? TOUR[c.tour.step] : null);
 export const HOWTO = `GAMBA is a casino. You'll spend most of your time right here.
 
-PLAY: wander the floor. Slots down the west wall, the coin tables and the Wheel beside them, cards and dice to the east, Mines and Plinko in the south-east corner, roulette through the door in the back wall. Bets come out of the Cash in your bag.
+PLAY: every kind of game has its own roped-off room, named on the carpet at its way in. SLOTS fill the north-west. WHEELS and COIN FLIP are below them. The CARD ROOM is by the bar. The DICE PIT and the INSTANT WINS machines (Plinko, Mines, Scratch-Off) are in the south-east. Roulette is through the door in the back wall. Bets come out of the Cash in your bag.
 
 BROKE? Go and get more. It's quick.
   WEST arch: the Workyard, then the Gloam, then Cloudreach. Chop, mine, fish. Every rock and tree has its price written over it, and it's worth more the further out you go.

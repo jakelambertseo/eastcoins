@@ -121,6 +121,14 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-20", title: "The casino floor, laid out like a real one",
+    items: [
+      "Every kind of game now has its own roped-off room, named in gold on the carpet at its way in. SLOTS fill the north-west: three banks of machines back to back, plus the wall. WHEELS and COIN FLIP share the south-west. The CARD ROOM (Higher or Lower, and the blackjack and poker tables that open soon) is next to THE BAR in the north-east. The DICE PIT and INSTANT WINS (two Plinko machines, two Mines tables, two Scratch-Off kiosks) are in the south-east.",
+      "The velvet ropes are real: you go into a room through its gap. The long aisle from the skilling arch to the fighting arch stays clear, with a Cashier at each end and the House Ruby in the middle.",
+      "Dex, DookieBetts and the regulars have moved to where they belong: Dex behind the bar, Dookie in the dice pit, Whale Wendell in the card room."
+    ]
+  },
+  {
     date: "2026-09-20", title: "Three more places to make money",
     items: [
       "The skilling line now runs three maps deep out the WEST arch. Past the Workyard is the Gloam (level 15): emerald rock $15, gloomwillow $15, lanternfish $16, and diamond rock $22 at Mining 25. Past that is Cloudreach (level 30): dragonstone $30, skyash $28, sky eels $30, and storm-struck onyx $40 at Mining 40.",
