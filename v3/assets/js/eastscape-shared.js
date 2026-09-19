@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 51;
+export const VERSION = 52;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -724,7 +724,7 @@ Object.assign(SCENES, {
       for (let x = 14; x <= 26; x++) keep.push([x, 18], [x, 17]);
       // THE CAMP, between the pond and the tin: the only place in the world to smelt and smith
       for (let y = 14; y <= 18; y++) for (let x = 26; x <= 33; x++) { g[y][x] = ","; keep.push([x, y]); }
-      for (const [t, x, y, name] of [["furnace", 27, 15, "Furnace"], ["anvil", 29, 15, "Anvil"], ["range", 31, 15, "Cooking range"], ["crate", 33, 15, "Crate of ore"], ["barrel", 33, 16, "Quenching barrel"], ["crate", 26, 18, "Crate"]]) { objs.push({ t, x, y, name }); g[y][x] = "#"; }
+      for (const [t, x, y, name] of [["furnace", 27, 15, "Furnace"], ["anvil", 29, 15, "Anvil"], ["range", 33, 17, "Cooking range"], ["crate", 33, 15, "Crate of ore"], ["barrel", 33, 16, "Quenching barrel"], ["crate", 26, 18, "Crate"]]) { objs.push({ t, x, y, name }); g[y][x] = "#"; }
       objs.push({ t: "sign", x: 26, y: 15, name: "THE CAMP. Smelt, smith and cook here before you cash in: anything you MAKE is worth double. Brutus buys what you smith." }); g[15][26] = "#";
       objs.push({ t: "sign", x: 13, y: 11, name: "West of here: the animals. Chickens, cows, tomatoes that went bad, hornworms and boars. Nothing here attacks first." }); g[11][13] = "#";
       objs.push({ t: "sign", x: 3, y: 11, name: "West: the Gloam. Better rock, better wood, better fish, worse company. Level 15 or so." }); g[11][3] = "#";

@@ -5,8 +5,11 @@
    notes) rendered to audio the first time it plays, so the whole library costs nothing to load. Retro on purpose, to
    sit with the pixel art.
 
-   Swapping a sound for a real recording later is one line: give its entry a `file` (a URL to an .ogg/.mp3/.wav) and
-   that file is fetched and used instead of the recipe. Every call site stays the same.
+   Swapping a sound for a real recording is one line: give its entry a `file` (a URL to an .ogg/.mp3/.wav), or `files`
+   (several takes: one is picked at random each time, never the same one twice running, so a minute of mining doesn't
+   sound like a loop). They're fetched the first time that sound plays, and the recipe stays as the fallback if a file
+   doesn't arrive. Every call site stays the same. Chopping, mining, the sword's swing and its hit are recordings the
+   owner supplied (2026-09-20), made ready by tools/eastscape-sfx-import.mjs (mono, 22 kHz, trimmed, one loudness).
 
    Browsers won't play audio before the player has clicked or pressed a key, so nothing plays until then.
    On/off and volume live in this browser (localStorage), not on the account: sound is a per-device thing.
@@ -24,6 +27,9 @@ const tone = (f, t, d, v = 0.3, w = "square", extra = {}) => ({ w, f, t, d, v, .
 const notes = (list, step, d, v, w = "square", extra = {}) => list.map((f, i) => tone(f, i * step, d, v, w, extra));
 const ticks = (n, every, extra = {}) => Array.from({ length: n }, (_, i) => ({ w: "noise", t: i * every, d: 0.025, v: 0.35, lp: 3500, ...extra }));
 
+const SFX_V = 1;   // bump when a recording is replaced: the files are cached hard
+const takes = (name, n) => Array.from({ length: n }, (_, i) => `/v3/assets/sfx/${name}${i + 1}.wav?v=${SFX_V}`);
+
 export const SOUNDS = {
   // the interface
   ui_click:   { vol: 0.35, layers: [tone(1100, 0, 0.035, 0.25, "square", { f2: 850, duty: 0.5, lp: 5000 })] },
@@ -38,8 +44,8 @@ export const SOUNDS = {
   eat:        { vol: 0.45, layers: ticks(3, 0.09, { d: 0.045, lp: 1600, v: 0.4 }) },
   gain:       { vol: 0.3, layers: [tone(880, 0, 0.1, 0.18, "sine", { f2: 1320 })] },
   // gathering and making
-  chop:       { vol: 0.5, layers: [{ w: "noise", d: 0.09, v: 0.45, lp: 2200 }, tone(190, 0, 0.09, 0.35, "tri", { f2: 85 })] },
-  mine:       { vol: 0.45, layers: [tone(1850, 0, 0.06, 0.2, "square", { f2: 1450, duty: 0.25 }), { w: "noise", d: 0.05, v: 0.3, lp: 6000, hp: 1200 }] },
+  chop:       { vol: 0.55, files: takes("chop", 4), layers: [{ w: "noise", d: 0.09, v: 0.45, lp: 2200 }, tone(190, 0, 0.09, 0.35, "tri", { f2: 85 })] },
+  mine:       { vol: 0.5, files: takes("mine", 5), layers: [tone(1850, 0, 0.06, 0.2, "square", { f2: 1450, duty: 0.25 }), { w: "noise", d: 0.05, v: 0.3, lp: 6000, hp: 1200 }] },
   cast:       { vol: 0.4, layers: [{ w: "noise", a: 0.03, d: 0.28, v: 0.25, lp: 5000, hp: 1800 }] },
   splash:     { vol: 0.4, layers: [{ w: "noise", d: 0.3, v: 0.35, lp: 2400 }] },
   cook:       { vol: 0.35, layers: [{ w: "noise", a: 0.02, s: 0.2, d: 0.2, v: 0.2, lp: 4500, hp: 1600 }] },
@@ -47,8 +53,8 @@ export const SOUNDS = {
   anvil:      { vol: 0.4, layers: [tone(1480, 0, 0.3, 0.22, "square", { duty: 0.15 }), tone(2960, 0, 0.4, 0.12, "sine"), { w: "noise", d: 0.03, v: 0.3, lp: 5000 }] },
   pick:       { vol: 0.35, layers: [tone(620, 0, 0.05, 0.22, "tri", { f2: 820 })] },
   // fighting
-  swing:      { vol: 0.35, layers: [{ w: "noise", a: 0.01, d: 0.12, v: 0.3, lp: 5000, hp: 1400 }] },
-  hit:        { vol: 0.5, layers: [{ w: "noise", d: 0.08, v: 0.45, lp: 1800 }, tone(150, 0, 0.09, 0.3, "square", { f2: 60, lp: 1500 })] },
+  swing:      { vol: 0.4, files: takes("swing", 3), layers: [{ w: "noise", a: 0.01, d: 0.12, v: 0.3, lp: 5000, hp: 1400 }] },
+  hit:        { vol: 0.55, files: takes("hit", 2), layers: [{ w: "noise", d: 0.08, v: 0.45, lp: 1800 }, tone(150, 0, 0.09, 0.3, "square", { f2: 60, lp: 1500 })] },
   miss:       { vol: 0.3, layers: [{ w: "noise", d: 0.05, v: 0.2, lp: 7000, hp: 3000 }] },
   hurt:       { vol: 0.45, layers: [tone(300, 0, 0.15, 0.3, "square", { f2: 120, lp: 1800 })] },
   mob_die:    { vol: 0.45, layers: [tone(420, 0, 0.35, 0.28, "square", { f2: 60, lp: 2000 }), { w: "noise", d: 0.22, v: 0.25, lp: 1000 }] },
@@ -76,7 +82,7 @@ export const SOUNDS = {
 };
 
 let ac = null, master = null, on = true, vol = 0.6;
-const bufs = new Map(), last = new Map();
+const bufs = new Map(), last = new Map(), loading = new Map(), lastTake = new Map();
 try { on = localStorage.getItem("es_sfx") !== "0"; const v = parseFloat(localStorage.getItem("es_vol")); if (Number.isFinite(v)) vol = v; } catch (e) { /* private mode */ }
 
 // the first click or key unlocks audio (browsers insist)
@@ -121,8 +127,10 @@ function render(def) {
 async function bufferOf(name) {
   if (bufs.has(name)) return bufs.get(name);
   const def = SOUNDS[name]; let b = null;
-  if (def.file) { try { b = await ac.decodeAudioData(await (await fetch(def.file)).arrayBuffer()); } catch (e) { b = null; } }
-  if (!b && def.layers) b = render(def);
+  const load = async (url) => { try { const r = await fetch(url); if (!r.ok || !/audio|octet/.test(r.headers.get("content-type") || "")) return null; return await ac.decodeAudioData(await r.arrayBuffer()); } catch (e) { return null; } };
+  const urls = def.files || (def.file ? [def.file] : []);
+  if (urls.length) { const got = (await Promise.all(urls.map(load))).filter(Boolean); if (got.length) b = got; }   // every take that arrived
+  if (!b && def.layers) b = [render(def)];
   bufs.set(name, b); return b;
 }
 
@@ -134,8 +142,11 @@ export function play(name, o = {}) {
   if (ac.state === "suspended") ac.resume();
   const now = performance.now(); if (now - (last.get(name) || 0) < 40) return { stop() {} }; last.set(name, now);
   let src = null, stopped = false;
-  bufferOf(name).then((b) => {
-    if (!b || stopped) return;
+  const pending = bufs.has(name) ? Promise.resolve(bufs.get(name)) : (loading.get(name) || loading.set(name, bufferOf(name)).get(name));
+  pending.then((list) => {
+    if (!list?.length || stopped) return;
+    let i = Math.floor(Math.random() * list.length); if (list.length > 1 && i === lastTake.get(name)) i = (i + 1) % list.length; lastTake.set(name, i);
+    const b = list[i];
     src = ac.createBufferSource(); src.buffer = b; src.loop = !!def.loop;
     const j = o.jitter ?? (def.loop ? 0 : 0.05); src.playbackRate.value = (o.rate || 1) * (1 + (Math.random() * 2 - 1) * j);
     const g = ac.createGain(); g.gain.value = (def.vol ?? 0.4) * (o.vol ?? 1);
