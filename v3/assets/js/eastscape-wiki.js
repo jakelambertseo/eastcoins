@@ -121,6 +121,17 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-20", title: "The real tables are in the building",
+    items: [
+      "COIN FLIP, THE WHEELS, HIGHER OR LOWER, MINES, PLINKO AND SCRATCH-OFF ON THE CASINO'S MAIN FLOOR NOW PLAY FOR REAL ZCOINS, from your real eastcoin.vip balance. They're the same windows you know; behind them is the site's own casino. Click a table and it opens the moment you click (your character strolls over on its own).",
+      "They play by the site's rules, exactly: 1 to 20 ZCoins a bet, ten plays an hour at each game, 400 an hour out, the same fairness seeds (there's a \"check the last one's seed\" link in the window), the same Daily Jackpot, and your results show on your eastcoin.vip profile. Nothing in GambaScape (luck, dinners, drinks, gear, hunger, VIP) touches these tables.",
+      "COIN FLIP AND THE WHEEL ARE SHARED ROUNDS, as they are on the site: one flip every 30 seconds and one spin a minute for the whole room. Get your bet in and the window counts you down to it.",
+      "A GAMES BUTTON (top left, or press G) opens them from anywhere on the main floor, and a strip across the top of the window hops between the six.",
+      "HIT A LIMIT, OR OUT OF ZCOINS? That's what the arch is for: every kill and catch can drop a real ZCoin, and tickets buy Ruby scratch tickets at the Prize Counter.",
+      "STILL CHIPS: the slots, the dice pit, roulette upstairs, the Fight Pit and the whole High Roller Room (which keeps its own chip versions of every table)."
+    ]
+  },
+  {
     date: "2026-09-20", title: "Tickets, the Prize Counter, and real ZCoin drops",
     items: [
       "THE WORLD OUTSIDE PAYS TICKETS NOW, like an arcade. Every kill and every daily job pays tickets instead of Cash, and the numbers over monsters and fishing spots have a little ticket beside them so nobody mistakes them for ZCoins. A ticket is worth exactly what a dollar was: a cow still pays about 28.",

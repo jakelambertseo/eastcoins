@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 55;
+export const VERSION = 56;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -424,6 +424,7 @@ function wild(g, objs, exits, edges, keep = [], seed = 1) {
   markBanks(g);
 }
 
+export const REAL_TABLES = { cointable: { name: "Coin Flip" }, wheel: { name: "Wheel" }, hilo: { name: "Higher or Lower" }, mines: { name: "Mines" }, plinko: { name: "Plinko" }, scratch: { name: "Scratch-Off" } };
 export const SCENES = {
   farm: {
     name: "Ludus Farm", exits: { e: "river", n: "forum" },
@@ -841,6 +842,13 @@ Object.assign(SCENES, {
     name: "The Casino", interior: true, floor: "casino", wallH: 34, room: [1, 4, 42, 21], exits: { w: "workyard" }, labels: { w: "OUTSIDE", s: "TOWN" }, exitTo: { scene: "forum", x: 21, y: 5 }, entry: { x: 21, y: 20 },
     wall: [{ t: "banner", x: 3 }, { t: "lamp", x: 7 }, { t: "lamp", x: 11 }, { t: "painting1", x: 14.5, dy: 7, frame: true }, { t: "lamp", x: 17 }, { t: "lamp", x: 24 }, { t: "painting2", x: 28, dy: 5 }, { t: "lamp", x: 31 }, { t: "neon", x: 35.5, dy: 16 }, { t: "lamp", x: 39.3 }, { t: "banner", x: 41 }],
     doorSigns: [{ x: 10, text: "FIGHTING" }],
+    /* THE REAL TABLES (2026-09-20). On this floor, these tables are eastcoin.vip's own casino games, played for REAL
+       ZCoins. The WINDOW is GambaScape's own (the owner: "keep the current casino game interfaces... hook them up to
+       zcoin"); behind it, every bet goes from the page straight to the site's endpoints (eastscape-casino.js, REAL MODE),
+       so the limits (20 a bet, ten an hour a game, 400 an hour out), the result, the fairness seed and the ledger are
+       the site's. The game server never touches a ZCoin. Their Cash copies are retired HERE (the server refuses a Cash bet at them on a floor that lists
+       them); the High Roller Room keeps its own Cash tables, and slots, dice, roulette and the Fight Pit were always Cash. */
+    real: REAL_TABLES,
     smoke: [38.5, 5.2, 42.6, 10.2],   // where the page hangs a haze: the smoking section (tile coordinates)
     // (the rooms were named in gold on the carpet, def.zones, until the owner found the lettering too big: 2026-09-20. The page still knows how to draw them.)
     build() {
@@ -930,6 +938,7 @@ Object.assign(SCENES, {
       for (const [x, y] of [[28, 8], [31, 6], [25, 7]]) litter("l_cards", x, y, "Dropped cards");
       for (const [x, y] of [[12, 13], [30, 18], [16, 20], [7, 12], [33, 13], [3, 8]]) litter("l_slips", x, y, "Losing slips");
       litter("l_spill", 35, 7, "Somebody's drink"); litter("l_shoe", 13, 14, "One shoe. Just the one.");
+      for (const o of objs) if (REAL_TABLES[o.t]) o.name = `${REAL_TABLES[o.t].name}: real ZCoins`;
       return { g, objs, blobs: [] };
     },
     // the regulars at the machines are simulated players: they walk up to a game, play a while, and move on
@@ -1492,6 +1501,9 @@ export const TOUR = [
 export const TOUR_CHIP = 10, TOUR_PAY = 60, TOUR_GIFT = "clover", TOUR_JOB = { fish: 5, chickens: 3 };
 export const tourOf = (c) => (c?.tour && c.tour.step < TOUR.length ? TOUR[c.tour.step] : null);
 export const HOWTO = `GambaScape is a casino. You'll spend most of your time right here.
+
+REAL ZCOINS: Coin Flip, the Wheels, Higher or Lower, Mines, Plinko and Scratch-Off on this floor are eastcoin.vip's own games, for REAL ZCoins, with the site's rules: 20 a bet, ten plays an hour a game, 400 an hour out. Click one (or the Games button, top left) and it opens. Hit a limit? That's what the arch is for.
+CHIPS: slots, dice, roulette upstairs, the Fight Pit and the High Roller Room play for chips (Cash), which you get at the Prize Counter for tickets.
 
 PLAY: every kind of game has its own roped-off room, named on the carpet at its way in. SLOTS fill the north-west. WHEELS and COIN FLIP are below them. The CARD ROOM is by the bar. The DICE PIT and the INSTANT WINS machines (Plinko, Mines, Scratch-Off) are in the south-east. Roulette is through the door in the back wall. Bets come out of the Cash in your bag.
 

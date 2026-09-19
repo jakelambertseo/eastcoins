@@ -152,6 +152,8 @@ const CSS = `
 .cz-cbag{margin-top:10px;max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;padding:4px 10px;background:var(--panel)}
 .cz-gear{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}.cz-gear button{display:grid;justify-items:center;gap:2px;padding:6px 2px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);cursor:pointer}.cz-gear button:disabled{opacity:.4;cursor:not-allowed}
 .cz-gear button.own{box-shadow:inset 0 0 0 1px rgba(77,219,139,.6)}.cz-gear .ico,.cz-gear img{width:30px;height:30px;image-rendering:pixelated}.cz-gear small{font:800 11.5px var(--body);color:var(--gold)}.cz-chip:disabled{opacity:.4;cursor:not-allowed}
+.cz-realtabs{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 10px}.cz-realtabs button{padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);background:transparent;color:var(--muted);font:800 12.5px var(--body);cursor:pointer}.cz-realtabs button[aria-pressed=true]{background:var(--gold);color:#1a1405;border-color:var(--gold)}
+.cz-luck a{color:var(--gold)}
 .cz-total{font:800 54px var(--display);letter-spacing:-.04em;color:var(--gold);line-height:1;text-shadow:0 0 30px rgba(232,191,53,.35)}
 @media (prefers-reduced-motion:reduce){.cz-coin.spin,.cz-reel.spin .cz-strip{animation:none}}
 `;
@@ -161,9 +163,15 @@ export function createCasino(env) {
   const img = (k, cls = "") => `<img class="cz-i ${cls}" src="${CART}${k}.png?v=${CV}" alt="">`;
   const sym = (k) => (k === "gem" ? "gem" : `reel_${k}`);
   const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
-  const money = (n) => G.fmtCash(n), cash = () => G.cashIn(env.me()), calm = () => env.calm();
+  /* REAL MODE (2026-09-20). On the casino's main floor six of these windows are eastcoin.vip's OWN games, for real ZCoins:
+     the window is the same, but every bet goes to the site's endpoints (REALAPI, below) instead of the game server, and
+     the answer is translated into the message shape the window already understands. The site decides everything: the
+     limits (20 a bet, ten plays an hour a game, 400 an hour out), the result, the fairness seed, the ledger. Nothing of
+     GambaScape's (luck, dinners, drinks, gear, hunger, VIP, the High Roller Room) touches a real table. */
+  let REAL = false; const ZC = { bal: null, me: null, uid: null, last: null };
+  const money = (n) => (REAL ? `${Number(n).toLocaleString()} ZC` : G.fmtCash(n)), cash = () => (REAL ? ZC.bal ?? 0 : G.cashIn(env.me())), calm = () => env.calm();
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-  let styled = false, GAME = null, R = {}, bet = 10, busy = false, token = 0, jack = { pot: null, last: null };
+  let styled = false, GAME = null, R = {}, bet = 10, betCash = 10, betZc = 5, busy = false, token = 0, jack = { pot: null, last: null };
   const SESS = {}, RUNS = { hilo: null, mines: null }, PICK = { cointable: "heads", wheel: "red" };
   let diceTarget = 50, mineCount = 3, wheelRot = 0, trail = [], scratch = null;
   const sess = (g) => (SESS[g] ||= { bets: 0, net: 0, best: 0, recent: [] });
@@ -184,19 +192,20 @@ export function createCasino(env) {
     const body = $("gameBody"); body.replaceChildren();
     const grid = el("div", "cz-grid"), stage = el("section", "cz-stage"), side = el("div", "cz-side");
     R.phase = el("div", "cz-phase"); R.board = el("div", "cz-board"); R.mult = el("div", "cz-mult"); R.bet = el("div", "cz-bet"); R.pop = el("div", "cz-pop");
+    if (REAL) { const tabs = el("div", "cz-realtabs", Object.entries(REAL_KEY).map(([g, k]) => `<button type="button" data-g="${g}" aria-pressed="${g === GAME}">${esc(UI[g].title)}</button>`).join("")); tabs.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { if (b.dataset.g !== GAME) api.open(b.dataset.g, { real: true }); })); body.append(tabs); }
     stage.append(R.phase, R.board, R.mult, R.bet, R.pop); grid.append(stage, side); body.append(grid); R.side = side; R.stage = stage;
     win.hidden = false; return R;
   }
   function stakeRow() {
     const row = el("div", "cz-stakerow"), C = G.CASINO; R.stake = el("input", "cz-stake"); R.stake.type = "number"; R.stake.min = C.minBet; R.stake.max = C.maxBet; R.stake.value = bet; R.stake.setAttribute("aria-label", "Bet");
-    const room = () => env.room?.() || null, low = () => G.minBetOf(room()), big = (room()?.limits?.mult || 1) > 1;
-    const top = () => G.maxBetOf(env.me(), room());   /* your own limit: the table's, plus a Bookie's amulet or champagne, doubled while a High Roller */
-    const setBet = (v) => { bet = Math.max(low(), Math.min(top(), Math.floor(v) || low())); R.stake.value = bet; R.stake.min = low(); R.stake.max = top(); refresh(); };
-    R.stake.addEventListener("input", () => { bet = Math.max(low(), Math.min(top(), Math.floor(+R.stake.value) || low())); refresh(); });
+    const room = () => env.room?.() || null, low = () => (REAL ? REAL_LIM.min : G.minBetOf(room())), big = !REAL && (room()?.limits?.mult || 1) > 1;
+    const top = () => (REAL ? REAL_LIM.max : G.maxBetOf(env.me(), room()));   /* your own limit: the table's, plus a Bookie's amulet or champagne, doubled while a High Roller */
+    const setBet = (v) => { bet = Math.max(low(), Math.min(top(), Math.floor(v) || low())); if (REAL) betZc = bet; else betCash = bet; R.stake.value = bet; R.stake.min = low(); R.stake.max = top(); refresh(); };
+    R.stake.addEventListener("input", () => { bet = Math.max(low(), Math.min(top(), Math.floor(+R.stake.value) || low())); if (REAL) betZc = bet; else betCash = bet; refresh(); });
     if (bet < low() || bet > top()) { bet = Math.max(low(), Math.min(top(), bet)); R.stake.value = bet; }
     R.stake.addEventListener("blur", () => { R.stake.value = bet; });
     row.append(R.stake); R.chips = [];
-    for (const [label, fn] of [...(big ? [["100", () => 100], ["500", () => 500], ["1K", () => 1000], ["5K", () => 5000]] : [["10", () => 10], ["50", () => 50], ["100", () => 100], ["500", () => 500]]), ["½", () => bet / 2], ["2×", () => bet * 2], ["Max", () => Math.min(top(), Math.max(cash(), env.me()?.free | 0))]]) { const b = el("button", "cz-chip", label); b.type = "button"; b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); setBet(fn()); }); R.chips.push(b); row.append(b); }
+    for (const [label, fn] of [...(REAL ? [["1", () => 1], ["5", () => 5], ["10", () => 10], ["20", () => 20]] : big ? [["100", () => 100], ["500", () => 500], ["1K", () => 1000], ["5K", () => 5000]] : [["10", () => 10], ["50", () => 50], ["100", () => 100], ["500", () => 500]]), ["½", () => bet / 2], ["2×", () => bet * 2], ["Max", () => Math.min(top(), REAL ? Math.max(1, cash()) : Math.max(cash(), env.me()?.free | 0))]]) { const b = el("button", "cz-chip", label); b.type = "button"; b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); setBet(fn()); }); R.chips.push(b); row.append(b); }
     return row;
   }
   const lockBtn = (cls = "") => { const b = el("button", `cz-lock ${cls}`); b.type = "button"; return b; };
@@ -211,8 +220,9 @@ export function createCasino(env) {
   function record(g, delta) { const s = sess(g); s.bets++; s.net += delta; s.best = Math.max(s.best, delta); s.recent = [delta, ...s.recent].slice(0, 12); }
   function refresh() {            // everything that depends on your Cash, your luck or your session, without touching the board
     if (!GAME || !R.stats) return; const s = sess(GAME), me = env.me();
-    R.stats.innerHTML = `<div class="cz-stat"><span>Your cash</span><strong>${money(cash())}</strong></div><div class="cz-stat"><span>Net</span><strong class="${s.net > 0 ? "up" : s.net < 0 ? "dn" : ""}">${s.net > 0 ? "+" : s.net < 0 ? "−" : ""}${money(Math.abs(s.net))}</strong></div><div class="cz-stat"><span>Bets</span><strong>${s.bets}</strong></div><div class="cz-stat"><span>Best win</span><strong>${s.best ? `+${money(s.best)}` : "–"}</strong></div>`;
+    R.stats.innerHTML = `<div class="cz-stat"><span>${REAL ? "Your ZCoins" : "Your cash"}</span><strong>${money(cash())}</strong></div><div class="cz-stat"><span>Net</span><strong class="${s.net > 0 ? "up" : s.net < 0 ? "dn" : ""}">${s.net > 0 ? "+" : s.net < 0 ? "−" : ""}${money(Math.abs(s.net))}</strong></div><div class="cz-stat"><span>Bets</span><strong>${s.bets}</strong></div><div class="cz-stat"><span>Best win</span><strong>${s.best ? `+${money(s.best)}` : "–"}</strong></div>`;
     R.recent.innerHTML = s.recent.map((d) => `<span class="${d > 0 ? "w" : ""}">${d > 0 ? "+" : d < 0 ? "−" : ""}${Math.abs(d).toLocaleString()}</span>`).join("");
+    if (REAL) { R.needs.innerHTML = ""; R.luck.className = "cz-luck"; R.luck.innerHTML = realRules(); if (R.jack) R.jack.remove(); UI[GAME]?.refresh?.(); return; }
     R.needs.innerHTML = [["thirst", "Thirst", ""], ["hunger", "Hunger", "food"]].map(([k, n, cls]) => { const v = Math.round(G.needOf(me, k)); return `<div class="cz-need ${cls}${v < G.NEEDS.floor ? " low" : ""}">${n} ${v}%<i><u style="width:${v}%"></u></i></div>`; }).join("");
     const luck = me?.luck | 0; R.luck.className = `cz-luck${luck ? " on" : ""}`;
     const others = G.buffsOf(me).filter((b) => b.id !== "luck").map((b) => `${b.name}${b.left != null ? ` × ${b.left}` : ""}`), lim = G.maxBetOf(me, env.room?.());
@@ -222,10 +232,11 @@ export function createCasino(env) {
     UI[GAME]?.refresh?.();
   }
   const empty = () => { const why = G.tooEmpty(env.me()); if (why) { phase(why === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[why]); SFX.play("ui_error"); } return !!why; };
-  const broke = () => { if (empty()) return true; return brokeOnly(); };
+  const broke = () => { if (REAL) { if (ZC.bal != null && bet > ZC.bal) { phase(`You only have ${money(ZC.bal)}`, "bad"); note(REAL_NUDGE); SFX.play("ui_error"); return true; } return false; } if (empty()) return true; return brokeOnly(); };
   const brokeOnly = () => { if (bet > cash() + (env.me()?.free | 0)) { phase(`You only have ${money(cash())}`, "bad"); note("Broke? Trade tickets for chips at the Prize Counter (the big ruby). No tickets? Out the arch to the Yard: click a monster, or fish the pond. The counter takes what you bring back, too."); SFX.play("ui_error"); return true; } return false; };
   function place(pick) {          // one bet, one answer
     if (busy || broke()) return; busy = true; const g = GAME, t = token; R.pop?.classList.remove("show");
+    if (REAL) return realPlace(g, pick, t);
     UI[g].start?.(); send({ t: "bet", g, amt: bet, pick });
     setTimeout(() => { if (busy && t === token && GAME === g && !UI[g].pending) { busy = false; UI[g].idle?.(); phase("No answer from the table. Try again.", "bad"); } }, 4500);
   }
@@ -241,14 +252,14 @@ export function createCasino(env) {
   /* ---------------------------------------------------------- the tables */
   const UI = {
     cointable: {
-      title: "Coin Flip", sub: "Heads or tails · pays 1.95×",
+      title: "Coin Flip", sub: "Heads or tails · pays 1.95×", realSub: "Heads or tails · a flip for the whole room every 30 seconds · pays 2×",
       build() {
         R.board.innerHTML = `<div class="cz-coinbox"><div class="cz-coin" id="czCoin">${`<img class="h" src="${CART}coin_heads.png?v=${CV}" alt=""><img class="t" src="${CART}coin_tails.png?v=${CV}" alt="">`}</div></div>`;
         const picks = el("div", "cz-picks"); R.picks = {};
-        for (const s of ["heads", "tails"]) { const b = el("button", "cz-pick", `<b>${s === "heads" ? "Heads" : "Tails"}</b><small>${G.FLIP_PAYS}×</small>`); b.type = "button"; b.addEventListener("click", () => { PICK.cointable = s; SFX.play("ui_click"); refresh(); }); R.picks[s] = b; picks.append(b); }
+        for (const s of ["heads", "tails"]) { const b = el("button", "cz-pick", `<b>${s === "heads" ? "Heads" : "Tails"}</b><small>${REAL ? 2 : G.FLIP_PAYS}×</small>`); b.type = "button"; b.addEventListener("click", () => { PICK.cointable = s; SFX.play("ui_click"); refresh(); }); R.picks[s] = b; picks.append(b); }
         R.lock = lockBtn(); R.lock.addEventListener("click", () => place(PICK.cointable)); R.note = el("p", "cz-note");
         R.bet.append(picks, stakeRow(), R.lock, R.note); sideCards("What it pays"); phase("Pick a side", "open");
-        R.pays.innerHTML = `<div class="cz-rung"><span>You call it right</span><strong>${G.FLIP_PAYS}×</strong></div><div class="cz-rung"><span>You don't</span><strong>0</strong></div><div class="cz-rung"><span>Chance</span><strong>50%</strong></div>`;
+        R.pays.innerHTML = `<div class="cz-rung"><span>You call it right</span><strong>${REAL ? "about 2" : G.FLIP_PAYS}×</strong></div><div class="cz-rung"><span>You don't</span><strong>0</strong></div><div class="cz-rung"><span>Chance</span><strong>50%</strong></div>`;
       },
       refresh() { for (const s of ["heads", "tails"]) R.picks[s].classList.toggle("on", PICK.cointable === s); R.lock.disabled = busy; R.lock.textContent = busy ? "In the air…" : `Flip ${PICK.cointable} · ${money(bet)}`; },
       start() { const c = $("czCoin"); if (!calm()) c.classList.add("spin"); phase("In the air…"); SFX.play("coin_flip"); refresh(); },
@@ -290,12 +301,12 @@ export function createCasino(env) {
       }
     },
     wheel: {
-      title: "Wheel", sub: "Red or black, or the gold sliver",
+      title: "Wheel", sub: "Red or black, or the gold sliver", realSub: "Red or black, or the gold sliver · one spin a minute for the whole room",
       build() {
         const W = G.WHEEL, w = (360 - W.gold) / W.slices, parts = [`#e8b83a 0 ${W.gold}deg`]; for (let i = 0; i < W.slices; i++) parts.push(`${i % 2 ? "#1a1a1a" : "#c8202c"} ${W.gold + i * w}deg ${W.gold + (i + 1) * w}deg`);
         R.board.innerHTML = `<div class="cz-wheelbox"><div class="cz-wheel" id="czWheel" style="background:conic-gradient(${parts.join(",")});transform:rotate(${wheelRot}deg)"></div><div class="cz-hub"></div><div class="cz-pin"></div></div>`;
         const picks = el("div", "cz-picks"); R.picks = {};
-        for (const s of ["red", "black", "gold"]) { const b = el("button", `cz-pick ${s}`, `<b>${s[0].toUpperCase()}${s.slice(1)}</b><small>${W.pays[s]}×</small>`); b.type = "button"; b.addEventListener("click", () => { PICK.wheel = s; SFX.play("ui_click"); refresh(); }); R.picks[s] = b; picks.append(b); }
+        for (const s of ["red", "black", "gold"]) { const b = el("button", `cz-pick ${s}`, `<b>${s[0].toUpperCase()}${s.slice(1)}</b><small>${REAL ? REAL_WHEEL[s] : W.pays[s]}×</small>`); b.type = "button"; b.addEventListener("click", () => { PICK.wheel = s; SFX.play("ui_click"); refresh(); }); R.picks[s] = b; picks.append(b); }
         R.lock = lockBtn(); R.lock.addEventListener("click", () => place(PICK.wheel)); R.note = el("p", "cz-note"); R.bet.append(picks, stakeRow(), R.lock, R.note); sideCards("What it pays"); phase("Pick a colour", "open");
         R.pays.innerHTML = `<div class="cz-rung"><span>Red · 49.2%</span><strong>${W.pays.red}×</strong></div><div class="cz-rung"><span>Black · 49.2%</span><strong>${W.pays.black}×</strong></div><div class="cz-rung next"><span>Gold · 1 in 60</span><strong>${W.pays.gold}×</strong></div>`;
       },
@@ -306,7 +317,7 @@ export function createCasino(env) {
     plinko: {
       title: "Plinko", sub: "Twelve rows of pegs · the edges pay 25×",
       build() {
-        const P = G.PLINKO; let rows = ""; for (let r = 0; r < P.rows; r++) rows += `<div class="cz-pkrow">${"<i class='cz-peg'></i>".repeat(r + 1)}</div>`;
+        const P = REAL ? { rows: 12, pays: REAL_PLINKO } : G.PLINKO; let rows = ""; for (let r = 0; r < P.rows; r++) rows += `<div class="cz-pkrow">${"<i class='cz-peg'></i>".repeat(r + 1)}</div>`;
         R.board.innerHTML = `<div class="cz-pkwrap"><div class="cz-pk" id="czPk"><div class="cz-ball" id="czBall"></div>${rows}</div><div class="cz-buckets">${P.pays.map((x, i) => `<div class="cz-bucket ${x >= 4 ? "big" : x >= 1 ? "mid" : ""}" data-b="${i}">${x}×</div>`).join("")}</div></div>`;
         R.lock = lockBtn(); R.lock.addEventListener("click", () => place(null)); R.note = el("p", "cz-note"); R.bet.append(stakeRow(), R.lock, R.note); sideCards("What it pays", "how often"); phase("Drop when ready", "open");
         const C = [1, 12, 66, 220, 495, 792, 924]; R.pays.innerHTML = [0, 1, 2, 3, 4, 5, 6].map((i) => `<div class="cz-rung" data-r="${i}"><span>${i === 6 ? "the middle" : i === 0 ? "either edge" : `${i + 1} in from the edge`} · ${((C[i] * (i === 6 ? 1 : 2)) / 40.96).toFixed(i < 2 ? 2 : 1)}%</span><strong>${P.pays[i]}×</strong></div>`).join("");
@@ -343,8 +354,8 @@ export function createCasino(env) {
       build() {
         R.board.innerHTML = `<div class="cz-hl"><div class="cz-trail" id="czTrail"></div><div class="cz-cardx empty" id="czCard"><span>?</span></div></div>`;
         const calls = el("div", "cz-picks"); R.calls = {};
-        for (const s of ["higher", "lower"]) { const b = el("button", `cz-pick ${s === "higher" ? "up" : "down"}`); b.type = "button"; b.addEventListener("click", () => send({ t: "run", g: "hilo", op: "call", call: s })); R.calls[s] = b; calls.append(b); }
-        R.callRow = calls; R.cash = lockBtn(); R.cash.addEventListener("click", () => send({ t: "run", g: "hilo", op: "cash" }));
+        for (const s of ["higher", "lower"]) { const b = el("button", `cz-pick ${s === "higher" ? "up" : "down"}`); b.type = "button"; b.addEventListener("click", () => runOp("hilo", "call", { call: s })); R.calls[s] = b; calls.append(b); }
+        R.callRow = calls; R.cash = lockBtn(); R.cash.addEventListener("click", () => runOp("hilo", "cash"));
         R.lock = lockBtn(); R.lock.addEventListener("click", () => startRun("hilo")); R.note = el("p", "cz-note"); R.stakeRow = stakeRow();
         R.bet.append(R.cash, calls, R.stakeRow, R.lock, R.note); sideCards("How it pays", "this card"); trail = [];
       },
@@ -353,9 +364,9 @@ export function createCasino(env) {
         const r = RUNS.hilo, big = $("czCard"); R.cash.hidden = R.callRow.hidden = !r; R.lock.hidden = R.stakeRow.hidden = !!r;
         if (r) {
           big.outerHTML = this.card(r.card, r.suit, this.fresh ? "flip" : "").replace('class="', 'id="czCard" class="'); this.fresh = false;
-          for (const s of ["higher", "lower"]) { const ways = G.hiloWays(r.card, s), f = G.hiloFactor(r.card, s); R.calls[s].disabled = !ways; R.calls[s].innerHTML = `<b>${s === "higher" ? "▲ Higher" : "▼ Lower"}</b><small>${!ways ? "can't be" : f === 1 ? "can't lose · 1×" : `${(r.mult * f).toFixed(2)}× · ${Math.round(ways / 13 * 100)}%`}</small>`; }
+          for (const s of ["higher", "lower"]) { const ways = r.odds ? Math.round((s === "higher" ? r.odds.pHigher : r.odds.pLower) * 13) : G.hiloWays(r.card, s), f = r.odds ? r.odds[s] || 0 : G.hiloFactor(r.card, s); R.calls[s].disabled = !ways; R.calls[s].innerHTML = `<b>${s === "higher" ? "▲ Higher" : "▼ Lower"}</b><small>${!ways ? "can't be" : f === 1 ? "can't lose · 1×" : `${(r.mult * f).toFixed(2)}× · ${Math.round(ways / 13 * 100)}%`}</small>`; }
           R.cash.disabled = !r.cash; R.cash.textContent = r.cash ? `Cash out ${money(r.cash)}` : "Make a call first"; R.mult.innerHTML = `${r.mult.toFixed(2)}×<small>card ${r.cards} of ${G.HILO.maxCards}${r.lucky ? " · 🍀 lucky" : ""}</small>`;
-          R.pays.innerHTML = `<div class="cz-rung"><span>Higher than ${G.HILO.names[r.card]}</span><strong>${G.hiloWays(r.card, "higher") ? `${G.hiloFactor(r.card, "higher").toFixed(2)}×` : "–"}</strong></div><div class="cz-rung"><span>Lower than ${G.HILO.names[r.card]}</span><strong>${G.hiloWays(r.card, "lower") ? `${G.hiloFactor(r.card, "lower").toFixed(2)}×` : "–"}</strong></div><div class="cz-rung"><span>Same card</span><strong>push</strong></div><div class="cz-rung"><span>Tops out at</span><strong>${G.HILO.maxMult}×</strong></div>`;
+          R.pays.innerHTML = `<div class="cz-rung"><span>Higher than ${G.HILO.names[r.card]}</span><strong>${(r.odds ? r.odds.higher : G.hiloWays(r.card, "higher") && G.hiloFactor(r.card, "higher")) ? `${Number(r.odds ? r.odds.higher : G.hiloFactor(r.card, "higher")).toFixed(2)}×` : "–"}</strong></div><div class="cz-rung"><span>Lower than ${G.HILO.names[r.card]}</span><strong>${(r.odds ? r.odds.lower : G.hiloWays(r.card, "lower") && G.hiloFactor(r.card, "lower")) ? `${Number(r.odds ? r.odds.lower : G.hiloFactor(r.card, "lower")).toFixed(2)}×` : "–"}</strong></div><div class="cz-rung"><span>Same card</span><strong>push</strong></div><div class="cz-rung"><span>Tops out at</span><strong>${G.HILO.maxMult}×</strong></div>`;
         } else { R.lock.disabled = false; R.lock.textContent = `Deal · ${money(bet)}`; if (!this.shown) R.pays.innerHTML = `<div class="cz-rung"><span>From a 7</span><strong>2.00× either way</strong></div><div class="cz-rung"><span>From a 10, lower</span><strong>1.33×</strong></div><div class="cz-rung"><span>From a 10, higher</span><strong>4.00×</strong></div><div class="cz-rung"><span>Same card</span><strong>push</strong></div><div class="cz-rung"><span>Tops out at</span><strong>${G.HILO.maxMult}×</strong></div>`; }
         $("czTrail").innerHTML = trail.map((c) => this.card(c.card, c.suit, "sm")).join("");
       },
@@ -373,16 +384,16 @@ export function createCasino(env) {
       title: "Mines", sub: "Twenty-five tiles, a few of them bombs · every gem pays more", run: true,
       build() {
         const board = el("div", "cz-mines"); R.tiles = [];
-        for (let i = 0; i < G.MINES.tiles; i++) { const b = el("button", "cz-tile"); b.type = "button"; b.addEventListener("click", () => { if (RUNS.mines) send({ t: "run", g: "mines", op: "pick", i }); }); R.tiles.push(b); board.append(b); }
+        for (let i = 0; i < G.MINES.tiles; i++) { const b = el("button", "cz-tile"); b.type = "button"; b.addEventListener("click", () => { if (RUNS.mines) runOp("mines", "pick", { i }); }); R.tiles.push(b); board.append(b); }
         R.board.append(board);
         R.bombRow = el("div", "cz-bombs", "<span>Bombs</span>"); R.bombBtns = [];
         for (const n of [1, 3, 5, 10]) { const b = el("button", "", String(n)); b.type = "button"; b.addEventListener("click", () => { mineCount = n; SFX.play("ui_click"); refresh(); }); R.bombBtns.push([n, b]); R.bombRow.append(b); }
-        R.cash = lockBtn(); R.cash.addEventListener("click", () => send({ t: "run", g: "mines", op: "cash" }));
+        R.cash = lockBtn(); R.cash.addEventListener("click", () => runOp("mines", "cash"));
         R.lock = lockBtn(); R.lock.addEventListener("click", () => startRun("mines")); R.note = el("p", "cz-note"); R.stakeRow = stakeRow();
         R.bet.append(R.cash, R.bombRow, R.stakeRow, R.lock, R.note); sideCards("What it pays", "gems found"); this.last = null; phase("Pick your bombs, then start", "open");
       },
       refresh() {
-        const r = RUNS.mines, o = this.last, m = r ? r.mines : o ? o.mines : mineCount, found = r ? r.open.length : o ? o.open.length : 0, top = G.minesTop(m), stake = r ? r.stake : bet;
+        const r = RUNS.mines, o = this.last, m = r ? r.mines : o ? o.mines : mineCount, found = r ? r.open.length : o ? o.open.length : 0, mm = REAL ? realMinesMult : G.minesMult, top = REAL ? realMinesTop(m) : G.minesTop(m), stake = r ? r.stake : bet;
         R.cash.hidden = !r; R.lock.hidden = R.stakeRow.hidden = R.bombRow.hidden = !!r;
         for (const [n, b] of R.bombBtns) b.classList.toggle("on", n === mineCount);
         R.tiles.forEach((t, i) => { let cls = "cz-tile", inner = "", off = true;
@@ -391,7 +402,7 @@ export function createCasino(env) {
           if (t.className !== cls) { t.className = cls; t.innerHTML = inner; } t.disabled = off; });
         if (r) { R.cash.disabled = !r.cash; R.cash.textContent = r.cash ? `Cash out ${money(r.cash)}` : "Find a gem first"; R.mult.innerHTML = found ? `${r.mult}×<small>next gem ${r.next}×${r.lucky ? " · 🍀 lucky" : ""}</small>` : `<small>${r.mines} bomb${r.mines === 1 ? "" : "s"} under there somewhere</small>`; }
         else { R.lock.disabled = false; R.lock.textContent = `${o ? "Go again" : "Start"} · ${money(bet)}`; }
-        let html = ""; for (let k = 1; k <= top; k++) html += `<div class="cz-rung${k === found && (r || o?.how === "cash") ? " at" : r && k === found + 1 ? " next" : ""}"><span>${k} gem${k === 1 ? "" : "s"}</span><strong>${G.minesMult(m, k)}× · ${money(Math.floor(stake * G.minesMult(m, k)))}</strong></div>`;
+        let html = ""; for (let k = 1; k <= top; k++) html += `<div class="cz-rung${k === found && (r || o?.how === "cash") ? " at" : r && k === found + 1 ? " next" : ""}"><span>${k} gem${k === 1 ? "" : "s"}</span><strong>${mm(m, k)}× · ${money(Math.round(stake * mm(m, k)))}</strong></div>`;
         R.pays.innerHTML = html; R.pays.querySelector(".at,.next")?.scrollIntoView({ block: "nearest" });
       },
       run(e, had) {
@@ -403,7 +414,104 @@ export function createCasino(env) {
       }
     }
   };
-  function startRun(g) { if (broke()) return; send({ t: "run", g, op: "start", amt: bet, mines: mineCount }); }
+  function startRun(g) { if (broke()) return; runOp(g, "start", { amt: bet, mines: mineCount }); }
+  function runOp(g, op, args = {}) { if (REAL) return realRun(g, op, args); send({ t: "run", g, op, ...args }); }
+
+  /* ---------------------------------------------------------- REAL MODE: eastcoin.vip's endpoints behind these windows
+     One function per kind of game. Each asks the site, then hands the window the SAME message the game server would have
+     sent it (gameResult / run), so the windows above don't know the difference. A refusal is shown as the site worded it. */
+  const REAL_KEY = { cointable: "flip", wheel: "wheel", hilo: "hilo", mines: "mines", plinko: "plinko", scratch: "scratch" };   // our table -> the site's name for the game
+  const REAL_LIM = { min: 1, max: 20 }, REAL_WHEEL = { red: 2.03, black: 2.03, gold: 60 }, REAL_PLINKO = [25, 4, 2, 1.5, 1.1, 1.05, 0.3, 1.05, 1.1, 1.5, 2, 4, 25];
+  const REAL_SYM = { crown: "seven", diamond: "diamond", fire: "star", clover: "bell", target: "lemon", football: "cherry", coin: "gem" };   // the site's scratch symbols -> our pictures (same seven prizes, same prices)
+  const REAL_NUDGE = "Out of ZCoins, or hit a limit? Out the arch: every kill and catch can drop a real ZCoin, and tickets buy Ruby scratch tickets at the Prize Counter.";
+  const realMinesMult = (m, k) => { let f = 1; for (let i = 0; i < k; i++) f *= (25 - i) / (25 - m - i); return Math.round(f * 100) / 100; };
+  const realMinesTop = (m) => { let last = 1; for (let k = 1; k <= 25 - m; k++) { if (realMinesMult(m, k) > 30) break; last = k; } return last; };
+  async function ask(path, body) {
+    try { const r = await fetch(path, body ? { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify(body) } : { credentials: "same-origin" }); const j = await r.json().catch(() => null); return j && typeof j === "object" ? j : { ok: false, message: "The table didn't answer. Try again." }; }
+    catch (e) { return { ok: false, message: "Couldn't reach the table. Check your connection and try again." }; }
+  }
+  function realRules() {
+    const k = REAL_KEY[GAME], me = ZC.me, left = me ? Math.max(0, (me.playsCap ?? 10) - (me.played?.[k] | 0)) : null, L = ZC.last;
+    return `<b>Real ZCoins.</b> eastcoin.vip's own game and rules: ${REAL_LIM.max} ZC a bet, ten plays an hour at each game, ${me?.hourCap ?? 400} ZC an hour out.`
+      + (me ? ` <b>${left} of ${me.playsCap ?? 10}</b> plays left here this hour · ${me.hourNet >= 0 ? "+" : "−"}${Math.abs(me.hourNet | 0)} of ${me.hourCap} this hour.` : "")
+      + (L && L.g === GAME && L.seed ? ` <a href="/?view=verify&game=${k}&seed=${encodeURIComponent(L.seed)}${L.hash ? `&hash=${encodeURIComponent(L.hash)}` : ""}${L.mines ? `&mines=${L.mines}` : ""}" target="_blank" rel="noopener">Check the last one's seed →</a>` : "")
+      + ` ${esc(REAL_NUDGE)}`;
+  }
+  function realFail(g, r, t) {
+    busy = false; if (t !== token || GAME !== g) return; UI[g].idle?.(); phase(r.message || "That didn't go through. Nothing was charged.", "bad");
+    note(["RATE_LIMIT", "WIN_CAP", "INSUFFICIENT_FUNDS"].includes(r.code) ? REAL_NUDGE : ""); SFX.play("ui_error"); refresh();
+  }
+  const played = (g) => { if (ZC.me) { ZC.me.played ||= {}; ZC.me.played[REAL_KEY[g]] = (ZC.me.played[REAL_KEY[g]] | 0) + 1; } };
+  const hourNet = (d) => { if (ZC.me) ZC.me.hourNet = (ZC.me.hourNet | 0) + d; };
+  async function realInit(g, t) {
+    const k = REAL_KEY[g], state = ask(k === "flip" ? "/api/coin/state" : `/api/casino/${k}/state`), mine = ask("/api/casino/me");
+    if (ZC.bal == null) { const b = await ask("/api/picks/bootstrap"); const n = Number(b?.session?.wallet?.balance); if (Number.isFinite(n)) ZC.bal = n; if (b?.session && !b.session.authenticated) { if (t === token) { phase("Log in on eastcoin.vip to play for ZCoins", "bad"); } return; } }
+    const [st, m] = await Promise.all([state, mine]); if (m?.me) ZC.me = m.me; if (st?.me?.id) ZC.uid = String(st.me.id);
+    if (t !== token || GAME !== g) return;
+    if (st?.config && st.config.canBet === false) { phase("ZCoin play isn't switched on right now", "bad"); }
+    if (st?.live && (g === "hilo" || g === "mines")) { const had = RUNS[g]; RUNS[g] = g === "hilo" ? hlView(st.live) : mnView(st.live); UI[g].run({ g, run: RUNS[g] }, had); lockStake(true); }
+    refresh();
+  }
+  /* one bet, one answer: Plinko and Scratch-Off settle at once; the coin and the wheel are a round the whole room shares */
+  async function realPlace(g, pick, t) {
+    const k = REAL_KEY[g], stake = bet;
+    if (g === "plinko" || g === "scratch") {
+      UI[g].start?.(); const r = await ask(`/api/casino/${k}/${g === "plinko" ? "drop" : "buy"}`, { stake }); if (!r.ok) return realFail(g, r, t);
+      const d = r.drop || r.card; if (r.balance != null) ZC.bal = Number(r.balance); played(g); hourNet(d.payout - d.stake); ZC.last = { g, seed: d.seed, hash: d.hash };
+      if (t !== token || GAME !== g) return;
+      return UI[g].result(g === "plinko" ? { g, bet: d.stake, payout: d.payout, mult: d.multiplier, path: [...String(d.path)].map((c) => (c === "R" ? 1 : 0)), bucket: d.bucket }
+        : { g, bet: d.stake, payout: d.payout, mult: d.multiplier, grid: d.grid.map((x) => REAL_SYM[x] || "gem"), prize: d.prize ? REAL_SYM[d.prize] || "gem" : null });
+    }
+    // a shared round: get in, wait for the flip or the spin, then play it back
+    const r = await ask(k === "flip" ? "/api/coin/bet" : `/api/casino/${k}/bet`, k === "flip" ? { side: pick, wager: stake } : { pick, wager: stake }); if (!r.ok) return realFail(g, r, t);
+    if (r.balance != null) ZC.bal = Number(r.balance); played(g); const round = r.round, live = () => t === token && GAME === g;
+    if (live()) { refresh(); SFX.play("chip"); }
+    for (let i = 0; i < 60; i++) {   // (it keeps asking even if the window is shut: on the site it is a poll that settles a finished round and pays it)
+      const st = await ask(k === "flip" ? "/api/coin/state" : `/api/casino/${k}/state`); if (st?.me?.id) ZC.uid = String(st.me.id);
+      const cur = st?.round?.no === round ? st.round : null, done = cur?.result ? { result: cur.result, seed: cur.seed, hash: cur.hash, bets: st.bets } : st?.last?.no === round && st.last.result ? st.last : st?.round?.no > round + 1 ? { gone: true } : null;
+      if (done) {
+        if (done.gone) { busy = false; if (live()) { UI[g].idle?.(); phase("That round is over. Your result is on your eastcoin.vip casino page.", "open"); } return; }
+        const mineBet = (done.bets || []).find((b) => String(b.user?.id) === ZC.uid), payout = Number(mineBet?.payout || 0); ZC.bal = (ZC.bal ?? 0) + payout; hourNet(payout - stake); ZC.last = { g, seed: done.seed, hash: done.hash };
+        if (!live()) { busy = false; return; }
+        UI[g].start?.(); const res = done.result;
+        return UI[g].result(g === "cointable" ? { g, bet: stake, payout, mult: Math.round(payout / stake * 100) / 100, side: String(res) }
+          : { g, bet: stake, payout, mult: Math.round(payout / stake * 100) / 100, color: res.color, angle: res.color === "gold" ? Math.max(0, res.angle - 354) : res.angle + G.WHEEL.gold });
+      }
+      if (live() && cur) { const left = Math.max(0, Math.ceil(((cur.flipsAt || cur.closesAt) - (st.now || Date.now())) / 1000)); phase(left ? `You're in on ${pick} · ${g === "cointable" ? "flips" : "spins"} in ${left}s` : g === "cointable" ? "In the air…" : "Spinning…", "open"); note(`${(st.bets || []).length} in this round. It's one ${g === "cointable" ? "flip" : "spin"} for the whole room.`); }
+      await wait(1500);
+    }
+    busy = false; if (live()) { UI[g].idle?.(); phase("That took too long to come back. Your bet stands: check your eastcoin.vip casino page.", "bad"); }
+  }
+  /* Higher or Lower and Mines: a run, played call by call against the site */
+  const hlView = (gm) => { const c = gm.cards[gm.cards.length - 1]; return { id: gm.id, stake: gm.stake, card: c.rank, suit: Math.max(0, SUITS.indexOf(c.suit)), mult: gm.multiplier, cards: gm.cards.length, rights: gm.rights, cash: gm.rights > 0 ? gm.potential : 0, odds: gm.odds }; };
+  const mnView = (gm) => ({ id: gm.id, stake: gm.stake, mines: gm.mines, open: gm.picks, mult: gm.multiplier, next: gm.next, top: realMinesTop(gm.mines), cash: gm.canCashOut ? gm.potential : 0 });
+  async function realRun(g, op, args) {
+    if (busy) return; const k = REAL_KEY[g], t = token, r0 = RUNS[g], had = r0; busy = true;
+    const done = (e) => { busy = false; if (t !== token || GAME !== g) return; RUNS[g] = e.run; UI[g].run(e, had); lockStake(!!e.run); refresh(); };
+    if (op === "start") {
+      const r = await ask(`/api/casino/${k}/start`, g === "mines" ? { stake: args.amt, mines: args.mines } : { stake: args.amt }); if (!r.ok) return realFail(g, r, t);
+      if (r.balance != null) ZC.bal = Number(r.balance); played(g); return done({ g, run: g === "hilo" ? hlView(r.game) : mnView(r.game) });
+    }
+    if (!r0?.id) { busy = false; return; }
+    const over = (gm, how, extra = {}) => { const pay = Number(gm.payout || 0); if (how !== "bust") ZC.bal = (ZC.bal ?? 0) + pay; hourNet(pay - gm.stake); ZC.last = { g, seed: gm.seed, hash: gm.hash, mines: gm.mines };
+      const last = g === "hilo" ? gm.cards[gm.cards.length - 1] : null;
+      return { g, run: null, over: { how, payout: pay, stake: gm.stake, mult: gm.multiplier, ...(g === "hilo" ? { card: last.rank, suit: Math.max(0, SUITS.indexOf(last.suit)) } : { bombs: gm.bombs || [], open: gm.picks, mines: gm.mines }), ...extra } }; };
+    if (op === "cash") { const r = await ask(`/api/casino/${k}/cashout`, { id: r0.id }); if (!r.ok) return realFail(g, r, t); if (r.balance != null) { const e = over(r.game, "cash"); ZC.bal = Number(r.balance); return done(e); } return done(over(r.game, "cash")); }
+    if (g === "hilo" && op === "call") {
+      const r = await ask("/api/casino/hilo/call", { id: r0.id, call: args.call }); if (!r.ok) return realFail(g, r, t);
+      const step = { from: r0.card, call: args.call, tie: r.outcome === "push" };
+      if (r.outcome === "bust") return done(over(r.game, "bust", step));
+      if (r.game.status !== "LIVE") { const e = over(r.game, "cash", { ...step, auto: true }); if (r.balance != null) ZC.bal = Number(r.balance); return done(e); }
+      return done({ g, run: hlView(r.game), step });
+    }
+    if (g === "mines" && op === "pick") {
+      const r = await ask("/api/casino/mines/pick", { id: r0.id, tile: args.i }); if (!r.ok) return realFail(g, r, t);
+      if (r.outcome === "bomb") return done(over(r.game, "bust", { hit: args.i }));
+      if (r.game.status !== "LIVE") { const e = over(r.game, "cash", { auto: true }); if (r.balance != null) ZC.bal = Number(r.balance); return done(e); }
+      return done({ g, run: mnView(r.game), step: { i: args.i } });
+    }
+    busy = false;
+  }
 
   /* ---------------------------------------------------------- the Fight Pit's betting window
      One fight for the whole room, so this is the roulette table's shape: who's fighting and what each pays, your money
@@ -516,14 +624,21 @@ export function createCasino(env) {
     R.side.scrollTop = keepScroll;
   }
 
-  return {
-    open(g, info = {}) { const ui = UI[g]; if (!ui) return false; if (info.pot != null) { jack.pot = info.pot; jack.last = info.lastJack || null; } GAME = g; frame(ui.title, "Cash only · the house keeps a little"); phase(""); ui.build(); if (ui.run) send({ t: "run", g, op: "state" }); refresh(); return true; },
+  const api = {
+    open(g, info = {}) {
+      const ui = UI[g]; if (!ui) return false; if (info.pot != null) { jack.pot = info.pot; jack.last = info.lastJack || null; }
+      const real = !!info.real && !!REAL_KEY[g]; if (real !== REAL) { RUNS.hilo = RUNS.mines = null; } REAL = real; bet = REAL ? betZc : betCash;
+      GAME = g; frame(ui.title, REAL ? `REAL ZCoins · ${ui.realSub || ui.sub}` : "Chips only · the house keeps a little"); phase(""); ui.build();
+      if (REAL) realInit(g, token); else if (ui.run) send({ t: "run", g, op: "state" });
+      refresh(); return true;
+    },
     result(e) { if (e.g !== GAME || !UI[e.g]) return; UI[e.g].result(e); },
     run(e) { const had = RUNS[e.g]; RUNS[e.g] = e.run; if (e.luck != null && env.me()) env.me().luck = e.luck; if (GAME !== e.g) return; UI[e.g].run(e, had); lockStake(!!e.run); refresh(); },
     me() { if ($("gameWin").hidden) return; if (GAME === "cashier") cashier(); else refresh(); },
     cashier() { lastCashed = null; dexSt = null; dexMsg = null; dexTicket = null; dexWait = false; send({ t: "dex", op: "status" }); cashier(); }, cashed(e) { cashier(e); }, dex, prize, fight,
     closed() { token++; busy = false; GAME = null; prizeHush(); prizeSpin = null; },
     blocked(k) { if (!GAME || GAME === "cashier") return; if (GAME === "fight") { phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); return note(G.NEED_TEXT[k]); } busy = false; UI[GAME]?.idle?.(); phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[k]); refresh(); },
-    get game() { return GAME; }
+    get game() { return GAME; }, get real() { return REAL; }, realGames: () => Object.keys(REAL_KEY)
   };
+  return api;
 }
