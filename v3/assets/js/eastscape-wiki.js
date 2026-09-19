@@ -46,7 +46,8 @@ export const GUIDES = [
   {
     id: "casino", title: "The Casino", icon: "🎰",
     body: `<p>The Casino is the red building in <a data-wiki="areas/forum">the Forum</a>: somewhere to hang out, have a flutter and pick up paid work. It's <b>Cash only</b> (never ZCoins).</p>
-      <ul><li><b>Slots</b> (left wall): three reels. Three of a kind pays, from 5× for cherries up to 500× for three sevens; two cherries pay 1.5×.</li>
+      <ul><li><b>Slots</b> (left wall): three reels. Three of a kind pays, from 5× for cherries up to 500× for three sevens; two cherries pay 1.4×.</li>
+      <li><b>The jackpot:</b> 2% of every slots spin goes into one pot everybody shares, shown at the top of the machine. Three sevens wins it on top of the 500×: a 500 Cash spin wins the whole pot, smaller spins a share in proportion (the rest stays in for the next person). The whole world hears about it.</li>
       <li><b>Coin Flip</b> (the round table): heads or tails, pays 1.95×.</li>
       <li><b>Dice</b> (by the bar): pick a number from 5 to 95 and roll 1–100 under it. The lower your number, the bigger the payout.</li>
       <li>Bets are 1 to 500 Cash, from your bag. The house keeps a little on every game, about 3%. The server decides every result.</li>
@@ -124,7 +125,8 @@ export const UPDATES = [
       "The Forge building in the Forum is now the Casino. Brutus still works his smithy right outside.",
       "Inside: slots, coin flip and dice for Cash (never ZCoins), a bar, sofas, and Dex the Dealer.",
       "The task board moved in too: three daily tasks each, picked for your levels, paid in Cash.",
-      "Through the curtains at the back: the Roulette Room, one shared table where everyone plays the same spin.",
+      "Through the door at the back: the Roulette Room, one shared table where everyone plays the same spin.",
+      "The slots have a jackpot everyone feeds: three sevens wins it.",
     ],
   },
   {

@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 27;
+export const VERSION = 28;
 export const COLS = 22, ROWS = 13;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -961,7 +961,7 @@ for (const [raw, c] of Object.entries({
    alive. Placeholders to iterate on: the numbers all live here. */
 export const CASINO = { minBet: 1, maxBet: 500, betMs: 900, roomWin: 5, worldWin: 25 };
 export const GAMES = {
-  slots: { name: "Slots", icon: "🎰", ex: "Three reels. Three of a kind pays; two cherries pay 1.5×." },
+  slots: { name: "Slots", icon: "🎰", ex: "Three of a kind pays; two cherries pay 1.4×. Three sevens also wins the jackpot." },
   cointable: { name: "Coin Flip", icon: "🪙", ex: "Heads or tails. Pays 1.95×." },
   dicetable: { name: "Dice", icon: "🎲", ex: "Roll 1–100 under your number. The lower you go, the more it pays." }
 };
@@ -973,7 +973,12 @@ export const REELS = [
   { k: "cherry", icon: "🍒", w: 30, pay: 5 }, { k: "lemon", icon: "🍋", w: 22, pay: 8 }, { k: "bell", icon: "🔔", w: 14, pay: 15 },
   { k: "star", icon: "⭐", w: 8, pay: 40 }, { k: "diamond", icon: "💎", w: 4, pay: 120 }, { k: "seven", icon: "7️⃣", w: 2, pay: 500 }
 ];
-export const SLOT_TWO_CHERRIES = 1.5;
+export const SLOT_TWO_CHERRIES = 1.4;
+/* the slots jackpot: 2% of every spin goes into one pot everybody shares; three sevens wins it (a 500 Cash spin
+   wins all of it, smaller spins a share in proportion, the rest stays in the pot). The regular pays above were
+   trimmed to make room, so slots still return about 96.5% overall. The house seeds it again after a win. */
+export const JACKPOT = { slice: 0.02, seed: 1000, cap: 50000 };
+export const jackpotShare = (bet) => Math.min(1, bet / CASINO.maxBet);
 export function slotsPay(reels) {
   if (reels[0] === reels[1] && reels[1] === reels[2]) return REELS.find((x) => x.k === reels[0]).pay;
   return reels.filter((r) => r === "cherry").length === 2 ? SLOT_TWO_CHERRIES : 0;
