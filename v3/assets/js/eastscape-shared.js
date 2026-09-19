@@ -818,13 +818,13 @@ export const MOBS = {
   chandelier: { name: "Chandelier Spider", size: "l", lvl: 34, hp: 50, att: 24, def: 20, max: 6, speed: 2600, aggro: 4, oy: 12, box: [17, 41], drops: [["cobweb", 1], ["bones", 1], ["lantern", 1, 0.03], ["spiderboots", 1, 0.01]] },
   revenant: { name: "Sulking Revenant", size: "l", lvl: 45, hp: 80, att: 32, def: 28, max: 8, speed: 2800, aggro: 5, box: [9, 30], drops: [["bones", 2], ["coins", [50, 150]], ["grudge", 1, 0.04], ["menace", 1, 0.03]] },
   // the Gloam
-  moth: { name: "Lantern Moth", size: "s", lvl: 22, hp: 28, att: 16, def: 12, max: 4, speed: 2200, box: [6, 16], drops: [["coins", [5, 20]], ["emerald_ore", 1, 0.3]] },
-  ghoul: { name: "Sorry Ghoul", size: "m", lvl: 30, hp: 46, att: 22, def: 19, max: 5, speed: 2400, aggro: 3, box: [9, 24], drops: [["bones", 1], ["coins", [20, 60]], ["diamond_ore", 1, 0.2]] },
-  understudy: { name: "The Understudy", size: "l", lvl: 38, hp: 62, att: 27, def: 23, max: 7, speed: 2600, aggro: 4, box: [12, 34], drops: [["coins", [40, 120]], ["diamond_ore", [1, 2], 0.25]] },
+  moth: { name: "Lantern Moth", size: "s", lvl: 22, hp: 28, att: 16, def: 12, max: 4, speed: 2200, box: [4, 15], drops: [["coins", [5, 20]], ["emerald_ore", 1, 0.3]] },
+  ghoul: { name: "Sorry Ghoul", size: "m", lvl: 30, hp: 46, att: 22, def: 19, max: 5, speed: 2400, box: [7, 24], drops: [["bones", 1], ["coins", [20, 60]], ["diamond_ore", 1, 0.2]] },
+  understudy: { name: "The Understudy", size: "l", lvl: 38, hp: 62, att: 27, def: 23, max: 7, speed: 2600, box: [12, 43], drops: [["coins", [40, 120]], ["diamond_ore", [1, 2], 0.25]] },
   // Cloudreach
-  ram: { name: "Cumulus Ram", size: "m", lvl: 42, hp: 66, att: 29, def: 26, max: 7, speed: 2600, box: [9, 24], drops: [["bones", 1], ["coins", [30, 90]], ["dragonstone_ore", 1, 0.15]] },
-  angel: { name: "Angel of Minor Inconvenience", size: "m", lvl: 48, hp: 84, att: 34, def: 30, max: 8, speed: 2400, aggro: 4, box: [9, 24], drops: [["coins", [60, 160]], ["dragonstone_ore", 1, 0.25]] },
-  goose: { name: "Thunder Goose", size: "l", lvl: 55, hp: 110, att: 40, def: 36, max: 10, speed: 2800, aggro: 5, box: [12, 34], drops: [["bones", 2], ["feather", [10, 30]], ["coins", [100, 250]], ["onyx_ore", 1, 0.3]] },
+  ram: { name: "Cumulus Ram", size: "m", lvl: 42, hp: 66, att: 29, def: 26, max: 7, speed: 2600, box: [14, 25], drops: [["bones", 1], ["coins", [30, 90]], ["dragonstone_ore", 1, 0.15]] },
+  angel: { name: "Angel of Minor Inconvenience", size: "m", lvl: 48, hp: 84, att: 34, def: 30, max: 8, speed: 2400, aggro: 4, box: [8, 25], drops: [["coins", [60, 160]], ["dragonstone_ore", 1, 0.25]] },
+  goose: { name: "Thunder Goose", size: "l", lvl: 55, hp: 110, att: 40, def: 36, max: 10, speed: 2800, box: [21, 35], drops: [["bones", 2], ["feather", [10, 30]], ["coins", [100, 250]], ["onyx_ore", 1, 0.3]] },
   goat: { name: "Goat in a Toga", size: "m", lvl: 12, hp: 24, att: 9, def: 8, max: 3, speed: 2400, box: [7, 26], drops: [["manifesto", 1], ["bones", 1], ["toga", 1, 0.25]] }
 };
 

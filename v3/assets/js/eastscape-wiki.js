@@ -109,8 +109,8 @@ export const UPDATES = [
   {
     date: "2026-09-18", title: "The Gloam and Cloudreach",
     items: [
-      "The Gloam, west of the Olive Grove: a wood where it is always five minutes before dark. Emerald and Diamond ore, Gloomwillows, and lanternfish in the black pond. Mind the Sorry Ghouls.",
-      "Cloudreach, north off Tomatoe Hill: an island of cloud in the open sky. Dragonstone and storm-struck Onyx ore, Skyash trees, and sky eels fished straight out of the sky.",
+      "The Gloam, west of the Olive Grove: a wood where it is always five minutes before dark. Emerald and Diamond ore, Gloomwillows, and lanternfish in the black pond.",
+      "Cloudreach, north off Tomatoe Hill: an island of cloud in the open sky. Dragonstone and storm-struck Onyx ore, Skyash trees, and sky eels fished straight out of the sky. The Angels of Minor Inconvenience attack on sight.",
       "Every tier of bar now smelts from its own ore (Onyx also wants one Wilderness grimstone).",
       "Six new monsters, up to level 55. Your body armour now shows its tier on your character.",
       "Right-click any item for its wiki page, and the xp tracker tells you when your next level lands.",
