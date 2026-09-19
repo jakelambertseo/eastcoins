@@ -612,8 +612,8 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=48";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=26";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=49";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=27";
 import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=1";
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=1";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
@@ -903,7 +903,7 @@ function say(text, cls = "sys") {
 const ART = "/v3/assets/img/glad/flat/", ART_V = 3;
 // pictures replaced after they first shipped (the edge keeps each URL for a year): bump the one that changed
 const ART_VER = { t_casino: 4, rug_casino: 4, o_dicetable: 4, chicken: 4, olive: 4, rotten: 4, chandelier: 4, revenant: 4, farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
-const ART_FILES = ["casino", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
+const ART_FILES = ["casino", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d, "legend_" + d]),
   "bank", "store", "cottage", "signpost", "tree2", "tree3", "tree4", "o_spot", "g_bush", "g_boulder", "g_grass", "g_flowers",
   ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
@@ -937,13 +937,16 @@ const loadArt = (k) => new Promise((res) => {
 /* art that only one area needs waits until you go there (or next door to it). Everything else is the core set,
    loaded at startup. A new area's pictures go in its list here; tools/eastscape-budget.mjs measures both halves. */
 const WILD_ART = ["t_wdirt", "t_wwater", "deadtree", "w_tree", "snag", "w_bush", "w_boulder", "grimstone", "gravestone", "skeleton", "rope", "cagesign", "gnasher", "taxwraith", "chandelier", "revenant"];
-const CASINO_ART = ["o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "t_casino", "rug_casino", "dex_south", "dex_east", "dookie_south", "dookie_east", "o_slots", "o_cointable", "o_dicetable", "o_bar", "o_sofa", "o_walldoor", "o_roulsign", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east"];
+const CASINO_ART = ["o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "t_casino", "rug_casino", "dex_south", "dex_east", "dookie_south", "dookie_east", "o_slots", "o_cointable", "o_dicetable", "o_bar", "o_sofa", "o_walldoor", "o_roulsign", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east"];
 const AREA_ART = {
   wild: WILD_ART, deep: WILD_ART,
   gloam: ["t_gwater", "t_gpath", "o_willow", "o_glowcap", "w_boulder", "o_rock_emerald_ore", "o_rock_diamond_ore"],
   cloud: ["t_csky", "t_cpath", "o_skyash", "o_cloudbush", "o_cloudcolumn", "o_rock_dragonstone_ore", "o_rock_onyx_ore"],
   boneyard: [...WILD_ART, "moth", "ghoul", "understudy"],
-  sky: ["ram", "angel", "goose"],   // (no open area has these yet: kept out of the login's downloads)
+  sky: ["ram", "angel", "goose"],
+  // scenery that only the CLOSED areas use (the farm, the river, the hills, the islands). Nobody can walk there, so nobody
+  // downloads it. WHEN AN AREA REOPENS, move what it uses out of this list and into a list under that area's own key.
+  closed: ["o_barrel", "o_bed", "o_bigtomato", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chair", "o_chariot", "o_crate", "o_cypress", "o_cypress_stump", "o_ferry", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_olive", "o_olive_bare", "o_palm", "o_pedestal", "o_plot", "o_press", "o_rock_marble", "o_sack", "o_scarecrow", "o_shrine", "o_table", "o_toll", "o_vein_copper", "o_vine", "o_vine_bare", "o_vine_gold", "o_yew", "o_yew_stump"],   // (no open area has these yet: kept out of the login's downloads)
   farm: ["tom_south", "tom_east", "waldy_south", "waldy_east", ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].map((d) => "legend_" + d)],
   river: ["charon_south", "charon_east", "tullius_south", "tullius_east"], grove: ["olive", "boar", "goat"], tomato: ["nonna_south", "nonna_east", "hornworm"],
   appia: ["vibius_south", "vibius_east", "highwayman"], farmhouse: ["cassia_south", "cassia_east"],   // (closed for now: nothing here loads at login)
@@ -1663,8 +1666,13 @@ function casinoLife(sprites, pnow, calm) {
     }
   }
   lc.restore();
+  if (Z.def.smoke) {   // a slow grey haze hanging over the smoking section
+    const [sx0, sy0, sx1, sy1] = Z.def.smoke.map((v) => v * T);
+    for (let i = 0; i < 5; i++) { const k = pnow / 9000 + i * 1.3, cx = sx0 + (sx1 - sx0) * (0.5 + 0.42 * Math.sin(k * 1.1 + i)), cy = sy0 + (sy1 - sy0) * (0.5 + 0.4 * Math.cos(k * 0.8 + i * 2)), gr = lc.createRadialGradient(cx, cy, 2, cx, cy, 26); gr.addColorStop(0, "rgba(205,205,215,.13)"); gr.addColorStop(1, "rgba(205,205,215,0)"); lc.fillStyle = gr; lc.fillRect(cx - 26, cy - 26, 52, 52); }
+  }
   for (const ob of Z.objs) {
     const cx = (ob.x + (ob.w || 1) / 2) * T, fy = (ob.y + (ob.h || 1)) * T;
+    if (ob.t === "ashtray") sprites.push({ y: fy - 0.5, draw: () => { for (let i = 0; i < 3; i++) { const k = (pnow / 3200 + i / 3) % 1; lc.globalAlpha = 0.5 * (1 - k); px(cx + 1 + Math.round(Math.sin(k * 5 + i) * 3), fy - 14 - Math.round(k * 18), 2, 2, "#d8d8e0"); lc.globalAlpha = 1; } } });
     if (ob.t === "slots") sprites.push({ y: fy - 0.5, draw: () => { const on = Math.floor(pnow / 320 + ob.y * 1.7 + ob.x) % 3; if (on) px(cx - 1, fy - 19, 2, 2, on === 1 ? "#fff3a0" : "#ff5a5a"); } });
     else if (ob.t === "prizewheel") sprites.push({ y: fy - 0.5, draw: () => { const h = Math.floor(pnow / 110) % 12; for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2, lit = i === h || i === (h + 6) % 12; px(cx - 0.5 + Math.cos(a) * 13, fy - 22 + Math.sin(a) * 13, 1, 1, lit ? "#fff7c0" : "#c8963a"); } } });
     else if (ob.t === "coinstatue") sprites.push({ y: fy - 0.5, draw: () => { for (let i = 0; i < 5; i++) { const k = (pnow / 1900 + i / 5) % 1, a = Math.sin(k * Math.PI); if (a < 0.55) continue; const gx = cx + Math.round((hashRand(i, 3, 7) - 0.5) * 20), gy = fy - 12 - Math.round(hashRand(i, 9, 2) * 20); px(gx, gy - 1, 1, 3, "#fff"); px(gx - 1, gy, 3, 1, "#fff"); } } });
