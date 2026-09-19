@@ -214,6 +214,15 @@ button,input,select{font:inherit}
 .rl-wheel{width:132px;height:132px;border-radius:50%;border:5px solid #6b4423;box-shadow:0 0 0 2px #c8963a,inset 0 0 0 16px rgba(0,0,0,.18)}
 .rl-wheel.go{transition:transform var(--spin,6s) cubic-bezier(.12,.72,.12,1)}
 .rl-hub{position:absolute;inset:44px;border-radius:50%;background:radial-gradient(circle,#e8c060,#8a6a2a);box-shadow:0 0 0 3px #3a2616}
+.rl-ballring{position:absolute;inset:5px;border-radius:50%;pointer-events:none}
+.rl-ballring i{position:absolute;left:50%;top:5px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,#cfcfcf 60%,#8a8a8a);box-shadow:0 1px 2px rgba(0,0,0,.6)}
+.rl-ballring.go{transition:transform var(--spin,6s) cubic-bezier(.1,.6,.18,1)}.rl-ballring.go i{animation:rlDrop var(--spin,6s) ease-in forwards}
+@keyframes rlDrop{0%,70%{top:5px}100%{top:19px}}
+.rl-banner{grid-column:1/-1;text-align:center;font-weight:900;font-size:18px;padding:7px 10px;border-radius:6px;animation:rlPop .35s ease-out}
+.rl-banner.won{background:#1f6a2a;color:#fff3c8;box-shadow:0 0 0 2px #ffe27a}.rl-banner.lost{background:#5a1a22;color:#f4d4d4}.rl-banner.other{background:rgba(58,38,22,.14);color:#3a2616;font-size:15px}
+.rl-banner small{display:block;font-size:12.5px;font-weight:700;opacity:.9}
+@keyframes rlPop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.rl-banner{animation:none}}
 .rl-pin{position:absolute;left:50%;top:-6px;width:0;height:0;margin-left:-7px;border:7px solid transparent;border-top:12px solid #ffe27a;filter:drop-shadow(0 1px 0 #000)}
 .rl-state b{display:block;font-size:17px}.rl-state small{display:block;color:#6a5a40}
 .rl-timer{height:7px;border-radius:4px;background:rgba(58,38,22,.15);margin:6px 0;overflow:hidden}.rl-timer i{display:block;height:100%;background:#c8963a;transition:width .25s linear}
@@ -576,7 +585,7 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=35";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=36";
 import * as WK from "/v3/assets/js/eastscape-wiki.js?v=14";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -832,8 +841,8 @@ function say(text, cls = "sys") {
 /* ------------------------------------------------------------ the art (PixelLab, style A) */
 const ART = "/v3/assets/img/glad/flat/", ART_V = 3;
 // pictures replaced after they first shipped (the edge keeps each URL for a year): bump the one that changed
-const ART_VER = { o_dicetable: 4, chicken: 4, olive: 4, rotten: 4, chandelier: 4, revenant: 4, farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
-const ART_FILES = ["casino", "t_casino", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
+const ART_VER = { t_casino: 4, rug_casino: 4, o_dicetable: 4, chicken: 4, olive: 4, rotten: 4, chandelier: 4, revenant: 4, farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
+const ART_FILES = ["casino", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d, "legend_" + d]),
   "bank", "store", "cottage", "signpost", "tree2", "tree3", "tree4", "o_spot", "g_bush", "g_boulder", "g_grass", "g_flowers",
   ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
@@ -843,7 +852,7 @@ const ART_FILES = ["casino", "t_casino", "rug_casino", "rouge_south", "rouge_eas
   // the rest of the monsters (PixelLab, overnight 2026-09-18)
   "olive", "boar", "goat", "rotten", "hornworm", "highwayman", "moth", "ghoul", "understudy", "ram", "angel", "goose",
   // scenery (PixelLab, overnight 2026-09-18)
-  "o_anvil", "o_bar", "o_barrel", "o_barricade", "o_bed", "o_bench", "o_bigtomato", "o_booth", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chair", "o_chariot", "o_chest", "o_cloudbush", "o_cloudcolumn", "o_cointable", "o_column", "o_crate", "o_cypress", "o_cypress_stump", "o_deadtree_stump", "o_dicetable", "o_ferry", "o_fire", "o_fountain", "o_furnace", "o_glowcap", "o_goatstatue", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_notice", "o_oak", "o_oak_stump", "o_olive", "o_olive_bare", "o_palm", "o_pedestal", "o_plant", "o_plot", "o_press", "o_range", "o_rock_copper", "o_rock_diamond_ore", "o_rock_dragonstone_ore", "o_rock_emerald_ore", "o_rock_empty", "o_rock_marble", "o_rock_onyx_ore", "o_rock_stardust", "o_rock_tin", "o_roomdoor", "o_roulette", "o_sack", "o_scarecrow", "o_shrine", "o_sign", "o_skyash", "o_slots", "o_sofa", "o_spot", "o_stall", "o_statue", "o_table", "o_toll", "o_tree_stump", "o_vein_copper", "o_vine", "o_vine_bare", "o_vine_gold", "o_willow", "o_yew", "o_yew_stump"];
+  "o_anvil", "o_bar", "o_barrel", "o_barricade", "o_bed", "o_bench", "o_bigtomato", "o_booth", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chair", "o_chariot", "o_chest", "o_cloudbush", "o_cloudcolumn", "o_cointable", "o_column", "o_crate", "o_cypress", "o_cypress_stump", "o_deadtree_stump", "o_dicetable", "o_ferry", "o_fire", "o_fountain", "o_furnace", "o_glowcap", "o_goatstatue", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_notice", "o_oak", "o_oak_stump", "o_olive", "o_olive_bare", "o_palm", "o_pedestal", "o_plant", "o_plot", "o_press", "o_range", "o_rock_copper", "o_rock_diamond_ore", "o_rock_dragonstone_ore", "o_rock_emerald_ore", "o_rock_empty", "o_rock_marble", "o_rock_onyx_ore", "o_rock_stardust", "o_rock_tin", "o_roomdoor", "o_roulette", "o_roulsign", "o_sack", "o_scarecrow", "o_shrine", "o_sign", "o_skyash", "o_slots", "o_sofa", "o_spot", "o_stall", "o_statue", "o_table", "o_toll", "o_tree_stump", "o_vein_copper", "o_vine", "o_vine_bare", "o_vine_gold", "o_walldoor", "o_willow", "o_yew", "o_yew_stump"];
 const IMG = {};
 // NPCs whose art came later (PixelLab, overnight 2026-09-18): matched by name, so the shared rules don't change
 // NPC art came out at different sizes: draw everyone at one height (the hero is 48), a few on purpose
@@ -1060,30 +1069,32 @@ function paintRoom(o, f) {
   f(0, 0, W, H, "#060504");
   const X0 = x0 * T, Y0 = y0 * T, X1 = (x1 + 1) * T, Y1 = (y1 + 1) * T;
   // the back wall: a band of plaster above the floor, then the floor itself
-  f(X0 - 4, Y0 - 22, X1 - X0 + 8, 22, def.floor === "marble" ? "#d8d0bc" : def.floor === "casino" ? "#4a1e28" : "#b8986a"); f(X0 - 4, Y0 - 4, X1 - X0 + 8, 4, "#6a5a40");
-  for (let x = X0; x < X1; x += 24) f(x, Y0 - 20, 1, 16, "rgba(0,0,0,.08)");
+  const WH = def.wallH || 22;   // how tall the back wall is drawn (the Casino's is taller, for the sign over its door)
+  f(X0 - 4, Y0 - WH, X1 - X0 + 8, WH, def.floor === "marble" ? "#d8d0bc" : def.floor === "casino" ? "#4a1e28" : "#b8986a"); f(X0 - 4, Y0 - 4, X1 - X0 + 8, 4, "#6a5a40");
+  for (let x = X0; x < X1; x += 24) f(x, Y0 - WH + 2, 1, WH - 6, "rgba(0,0,0,.08)");
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const X = x * T, Y = y * T;
-    if (def.floor === "casino" && IMG.t_casino) {
+    const CARPET = IMG[def.carpet || "t_casino"];
+    if (def.floor === "casino" && CARPET) {
       // patterned carpet in the middle, plain dark carpet framing it along the walls (a Wang sheet: 1 = patterned)
       const plain = (cx, cy) => cx <= x0 || cx >= x1 || cy <= y0 || cy >= y1;
       const vtx = (vx, vy) => [[vx - 1, vy - 1], [vx, vy - 1], [vx - 1, vy], [vx, vy]].some(([a, b]) => plain(a, b)) ? 0 : 1;
       const bits = [vtx(x, y), vtx(x + 1, y), vtx(x, y + 1), vtx(x + 1, y + 1)], [sx, sy] = WANG[bits[0] * 8 + bits[1] * 4 + bits[2] * 2 + bits[3]];
-      o.drawImage(IMG.t_casino.im, sx, sy, 32, 32, X, Y, T, T); continue;
+      o.drawImage(CARPET.im, sx, sy, 32, 32, X, Y, T, T); continue;
     }
     if (def.floor === "casino") { f(X, Y, T, T, "#5a1626"); f(X + 7, Y + 7, 2, 2, "#c8963a"); f(X + 7, Y + 2, 2, 1, "#7a2a38"); f(X + 7, Y + 13, 2, 1, "#7a2a38"); f(X + 2, Y + 7, 1, 2, "#7a2a38"); f(X + 13, Y + 7, 1, 2, "#7a2a38"); if ((x + y) % 2) f(X, Y, 1, 1, "#c8963a"); continue; }
     if (def.floor === "marble") { f(X, Y, T, T, (x + y) % 2 ? "#e8e2d4" : "#cfc6b2"); if (hashRand(x, y, 9) < 0.2) f(X + 3, Y + 5, 6, 1, "rgba(120,110,90,.25)"); }
     else { f(X, Y, T, T, "#9a6a3a"); f(X, Y + (x % 2 ? 7 : 3), T, 1, "#7a4a26"); f(X + ((y * 5) % 16), Y, 1, T, "#86582e"); }
   }
   // side walls and the front wall with its doorway
-  f(X0 - 4, Y0 - 22, 4, Y1 - Y0 + 26, "#3a2e22"); f(X1, Y0 - 22, 4, Y1 - Y0 + 26, "#3a2e22");
+  f(X0 - 4, Y0 - WH, 4, Y1 - Y0 + WH + 4, "#3a2e22"); f(X1, Y0 - WH, 4, Y1 - Y0 + WH + 4, "#3a2e22");
   for (let x = x0; x <= x1; x++) if (Z.g[y1 + 1][x] !== "e") f(x * T, Y1, T, 5, "#3a2e22");
   f(X0 - 4, Y1, 4, 5, "#3a2e22"); f(X1, Y1, 4, 5, "#3a2e22");
   for (let x = x0; x <= x1; x++) if (Z.g[y1 + 1][x] === "e") { f(x * T, Y1, T, T, "#2a2016"); f(x * T + 2, Y1 + 2, T - 4, T - 6, "#8a4a2a"); }
   // rugs lie on the floor, under everything else
   for (const ob of Z.objs) if (ob.t === "rug") {
     const X = ob.x * T, Y = ob.y * T, w = ob.w * T, h = ob.h * T;
-    if (ob.img && IMG[ob.img]) { o.drawImage(IMG[ob.img].im, X, Y, w, h); continue; }
+    if (ob.img && IMG[ob.img]) { o.save(); o.globalAlpha = 0.45; o.filter = "brightness(0)"; o.drawImage(IMG[ob.img].im, X + 1, Y + 2, w, h); o.restore(); o.drawImage(IMG[ob.img].im, X, Y, w, h); continue; }
     f(X + 1, Y + 1, w - 2, h - 2, ob.color); f(X + 3, Y + 3, w - 6, 1, "#e8c050"); f(X + 3, Y + h - 4, w - 6, 1, "#e8c050"); f(X + 3, Y + 3, 1, h - 6, "#e8c050"); f(X + w - 4, Y + 3, 1, h - 6, "#e8c050");
     for (let i = X + 3; i < X + w - 3; i += 4) { f(i, Y, 2, 1, "#e8d8a8"); f(i, Y + h - 1, 2, 1, "#e8d8a8"); }
   }
@@ -1371,7 +1382,7 @@ function fit() {
   return { w, h };
 }
 const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
-const KIND_OF = { slots: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
+const KIND_OF = { slots: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
 function thingAt(wx, wy) {
   const now = snow(), near = (x_, y_, rx, ry) => Math.abs(wx - x_) <= rx && wy <= y_ + 4 && wy >= y_ - ry;
   for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})${m.c && m.c !== you?.id ? " · someone's fighting it" : ""}` }; }
@@ -1519,7 +1530,7 @@ function frame() {
     const oa = objArt(ob, now);
     if (oa) {
       const sc = OBJ_SCALE[oa] || (oa === "o_rock_empty" && ob.t === "vein" ? 2 : 1), bob = (ob.t === "ferry" || ob.t === "boatback") && !calm ? Math.round(Math.sin(pnow / 600)) : 0;
-      sprites.push({ y: (ob.y + ob.h) * T - 1, draw: () => spr(oa, (ob.x + ob.w / 2) * T, (ob.y + ob.h) * T + bob, ob.flip || flipOf(ob), "", sc) });
+      sprites.push({ y: (ob.y + ob.h) * T - 1, draw: () => spr(oa, (ob.x + ob.w / 2) * T, (ob.y + ob.h) * T + bob + (ob.dy || 0), ob.flip || flipOf(ob), "", sc) });
       // special ones keep their sparkles; a fire sends up embers
       const fire = ob.t === "fire";
       if ((ob.special || fire) && !calm && !objBusy(ob, now)) sprites.push({ y: ob.y * T + 16, draw: () => { for (let i = 0; i < 6; i++) { const k = (pnow / (fire ? 1100 : 2600) + i / 6) % 1, mx = ob.x * T + 8 + Math.sin(i * 2.3 + pnow / 800) * (fire ? 3 : 9), my = ob.y * T + (fire ? 4 : 8) - k * (fire ? 18 : 30); lc.globalAlpha = Math.sin(k * Math.PI) * 0.9; px(mx, my, 1, 1, ob.glow || (fire ? (i % 2 ? "#ffb030" : "#ff6a1a") : "#ffe27a")); } lc.globalAlpha = 1; } });
@@ -2132,9 +2143,19 @@ function gameResult(e) {
 
 /* ------------------------------------------------------------ roulette: the shared table
    The server runs the clock and draws the number; this draws the board, everybody's chips and the wheel. */
-let ROUL = null, roulChip = 10, roulGot = 0, roulSpunRound = 0, roulAngle = 0;
+let ROUL = null, roulChip = 10, roulGot = 0, roulSpunRound = 0, roulAngle = 0, roulBallAngle = 0, roulMine = 0, roulBanner = null, roulPrevPhase = null;
 const ROUL_CHIPS = [[5, "#6a6a72"], [10, "#2a5aa8"], [50, "#b8202a"], [100, "#1a1a1a"], [250, "#7a3aa8"]];
-function roulSet(e) { ROUL = e; roulGot = performance.now(); if (!$("roulWin").hidden) renderRoul(); }
+function roulSet(e) {
+  if (e.phase === "spin" && roulPrevPhase !== "spin") roulMine = e.bets.filter((b) => b.me).reduce((a, b) => a + b.amt, 0);
+  if (e.phase === "bet" && roulPrevPhase === "spin" && e.last) {
+    const mine = e.last.wins.filter((w) => w.name === you?.name).reduce((a, w) => a + w.payout, 0), others = e.last.wins.filter((w) => w.name !== you?.name);
+    const who = others.length ? `${[...new Set(others.map((w) => w.name))].slice(0, 3).join(", ")} won!` : "";
+    roulBanner = roulMine ? { cls: mine ? "won" : "lost", text: mine ? `You won ${G.fmtCash(mine)}!` : `You lost ${G.fmtCash(roulMine)}`, sub: `${e.last.n} ${e.last.col}${who ? ` · ${who}` : ""}` }
+      : { cls: "other", text: `${e.last.n} ${e.last.col}`, sub: who || "No winners this spin" };
+    roulBanner.until = performance.now() + 6000; roulMine = 0;
+  }
+  roulPrevPhase = e.phase; ROUL = e; roulGot = performance.now(); if (!$("roulWin").hidden) renderRoul();
+}
 function roulWheelBg() {
   const seg = 360 / 37;
   return `conic-gradient(${G.ROULETTE_WHEEL.map((n, i) => `${{ red: "#b8202a", black: "#1a1a1a", green: "#1f7a3a" }[G.rouletteColor(n)]} ${(i * seg).toFixed(2)}deg ${((i + 1) * seg).toFixed(2)}deg`).join(",")})`;
@@ -2156,7 +2177,8 @@ function renderRoul() {
   const myStake = R.bets.filter((b) => b.me).reduce((a, b) => a + b.amt, 0);
   const last = R.last ? `<span class="rl-n ${R.last.col}">${R.last.n}</span>` : "—";
   $("roulSub").textContent = `Round ${R.round} · up to ${G.fmtCash(G.ROULETTE.maxStake)} a spin`;
-  $("roulBody").innerHTML = `<div class="rl-top"><div class="rl-wheelbox"><div class="rl-wheel" id="rlWheel" style="background:${roulWheelBg()};transform:rotate(${roulAngle}deg)"></div><div class="rl-hub"></div><div class="rl-pin"></div></div>
+  const banner = roulBanner && performance.now() < roulBanner.until ? `<div class="rl-banner ${roulBanner.cls}">${esc(roulBanner.text)}<small>${esc(roulBanner.sub)}</small></div>` : "";
+  $("roulBody").innerHTML = `<div class="rl-top">${banner}<div class="rl-wheelbox"><div class="rl-wheel" id="rlWheel" style="background:${roulWheelBg()};transform:rotate(${roulAngle}deg)"></div><div class="rl-hub"></div><div class="rl-ballring" id="rlBall" style="transform:rotate(${roulBallAngle}deg)"><i></i></div><div class="rl-pin"></div></div>
       <div class="rl-state"><b>${betting ? `Place your bets · ${Math.ceil(left / 1000)}s` : "No more bets · the ball is rolling"}</b>
         <small>${betting ? (R.last ? `Last: ${R.last.n} ${R.last.col}${R.last.wins.length ? ` · ${R.last.wins.map((w) => `${esc(w.name)} +${w.payout.toLocaleString()}`).join(", ")}` : " · no winners"}` : "Chips on the board, then wait for the wheel.") : "Good luck."}</small>
         <div class="rl-timer"><i id="rlTime" style="width:${Math.round((left / (betting ? G.ROULETTE.betMs : G.ROULETTE.spinMs)) * 100)}%"></i></div>
@@ -2174,8 +2196,11 @@ function renderRoul() {
     roulSpunRound = R.round;
     const seg = 360 / 37, idx = G.ROULETTE_WHEEL.indexOf(R.result), target = 360 - (idx + 0.5) * seg;
     roulAngle = roulAngle - (roulAngle % 360) + 360 * 6 + target;
-    const w = $("rlWheel"); w.style.setProperty("--spin", `${Math.max(1, left) / 1000}s`);
-    requestAnimationFrame(() => { w.classList.add("go"); w.style.transform = `rotate(${roulAngle}deg)`; });
+    const w = $("rlWheel"), ball = $("rlBall"), dur = `${Math.max(1, left) / 1000}s`;
+    // the ball runs the other way round and comes to rest at the pin, where the winning pocket stops
+    roulBallAngle = roulBallAngle - (roulBallAngle % 360) - 360 * 9;
+    for (const el of [w, ball]) el.style.setProperty("--spin", dur);
+    requestAnimationFrame(() => { w.classList.add("go"); w.style.transform = `rotate(${roulAngle}deg)`; ball.classList.add("go"); ball.style.transform = `rotate(${roulBallAngle}deg)`; });
   }
 }
 // the countdown ticks on its own between server updates
