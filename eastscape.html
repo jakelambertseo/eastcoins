@@ -190,6 +190,7 @@ button,input,select{font:inherit}
 .mk-row b{display:block;font-size:13.5px}.mk-row small{display:block;color:#6a5a40;font-size:11.5px}
 .mk-row .pr{font-weight:800;white-space:nowrap;text-align:right}.mk-row .pr small{font-weight:600}
 .mk-row.mine{background:#efe6cf;border-style:dashed}
+.mk-row.click{cursor:pointer}.mk-row.click:hover{background:#f2e8cc}.mk-row.click:focus-visible{outline:2px solid #3a2616}
 .mk-buy{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding-top:5px;border-top:1px solid #d0c4a8}
 .mk-buy input{width:80px}
 .mk-h{display:flex;align-items:center;gap:8px;margin:12px 0 5px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#6a5a40}
@@ -1946,13 +1947,20 @@ function renderEx() {
       <div class="mk-h">For sale · newest first</div>
       <div class="mk-list">${list.map((l) => row(ico(l.k), esc(ITEMS[l.k].name), `${l.left.toLocaleString()} for sale · ${l.mine ? "your listing" : esc(l.name)} · ${ago(l.at)}`,
         `<span class="pr">${G.fmtCash(l.price)}<small>each</small></span>`,
-        l.mine ? "<span></span>" : `<button class="btn" data-buy="${l.id}">${exBuyOpen === l.id ? "Close" : "Buy"}</button>${exBuyOpen === l.id ? `<div class="mk-buy">How many <input type="number" id="mkBuyQ" min="1" max="${l.left}" value="${l.left}"> <span id="mkBuyT">${G.fmtCash(l.left * l.price)}</span> <button class="btn" id="mkBuyGo" data-k="${l.k}" data-p="${l.price}">Buy now</button></div>` : ""}`,
-        l.mine ? "mine" : "")).join("") || `<div class="mk-empty">${exK || q ? "Nothing listed that matches. Post a buy offer and sellers will come to you." : "Nothing is for sale yet. Be the first: post an offer."}</div>`}</div>
+        (l.mine ? `<span class="tag2 done">Yours</span>` : `<button class="btn" data-buy="${l.id}">${exBuyOpen === l.id ? "Close" : "Buy"}</button>`)
+        + (exBuyOpen !== l.id ? "" : l.mine
+          ? `<div class="mk-buy">This is your listing: other players see a Buy button here. <button class="btn plain" data-cancel="${EX.mine.find((o) => o.id === l.id) ? l.id : ""}">Take it down</button></div>`
+          : `<div class="mk-buy">How many <input type="number" id="mkBuyQ" min="1" max="${l.left}" value="${l.left}"> <span id="mkBuyT">${G.fmtCash(l.left * l.price)}</span> <button class="btn" id="mkBuyGo" data-k="${l.k}" data-p="${l.price}">Buy now</button></div>`),
+        `${l.mine ? "mine" : ""} click" data-row="${l.id}`)).join("") || `<div class="mk-empty">${exK || q ? "Nothing listed that matches. Post a buy offer and sellers will come to you." : "Nothing is for sale yet. Be the first: post an offer."}</div>`}</div>
       ${myBuys.length ? `<div class="mk-h">Your buy offers</div><div class="mk-list">${myBuys.map((o) => row(ico(o.k), esc(ITEMS[o.k].name), `${o.done.toLocaleString()} of ${o.qty.toLocaleString()} bought · ${ago(o.at)}`, `<span class="pr">${G.fmtCash(o.price)}<small>each</small></span>`, `<button class="btn plain" data-cancel="${o.id}">Take down</button>`)).join("")}</div>` : ""}`;
     itemPicker($("mkK"), tradeable.filter((k) => EX.listings.some((l) => l.k === k)), exK, (k) => { exK = k; renderEx(); }, { allowAll: true });
     const qi = $("mkQ"); qi.addEventListener("input", () => { exQ = qi.value; const pos = qi.selectionStart; renderEx(); const n = $("mkQ"); n.focus(); n.setSelectionRange(pos, pos); });
     $("mkPostBuy").addEventListener("click", () => { exPost = { side: "buy", k: exK, qty: 1, price: book(exK).sell || last(exK) || 1 }; renderEx(); });
-    body.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => { exBuyOpen = exBuyOpen === +b.dataset.buy ? null : +b.dataset.buy; renderEx(); }));
+    body.querySelectorAll("[data-row]").forEach((r) => r.addEventListener("click", (e) => {
+      if (e.target.closest(".mk-buy")) return;
+      exBuyOpen = exBuyOpen === +r.dataset.row ? null : +r.dataset.row; renderEx();
+      $("mkBuyQ")?.focus(); $("mkBuyQ")?.select();
+    }));
     const bq = $("mkBuyQ");
     if (bq) {
       const go = $("mkBuyGo"), price = +go.dataset.p;
