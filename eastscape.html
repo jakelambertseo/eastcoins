@@ -81,6 +81,8 @@ button,input,select{font:inherit}
 .buff{display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 5px;border-radius:12px;background:rgba(16,50,24,.92);color:#d8ffd0;box-shadow:0 0 0 2px #4aa84a;cursor:help}
 .buff img{width:18px;height:18px;image-rendering:pixelated}.buff.worn{background:rgba(60,44,16,.92);color:#ffe9b0;box-shadow:0 0 0 2px #c8963a}.buff.b-roller{background:rgba(20,20,24,.95);color:#ffd84a;box-shadow:0 0 0 2px #ffd84a}.buff.b-drink{background:rgba(70,40,10,.92);color:#ffd9a0;box-shadow:0 0 0 2px #d8963a}.buff.b-meal{background:rgba(60,20,16,.92);color:#ffd0c0;box-shadow:0 0 0 2px #d86a4a}.buff.b-free{background:rgba(10,50,40,.92);color:#c0ffe6;box-shadow:0 0 0 2px #3ac89a}.buff.none{background:rgba(255,255,255,.06);box-shadow:0 0 0 1px rgba(255,255,255,.14);color:#aca298;padding-left:10px;font-weight:700}
 /* the wallet, under the bag: money first, then what turns into money, then what improves your odds */
+.rarelog{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.rarelog span{position:relative;display:grid;place-items:center;aspect-ratio:1;border-radius:6px;background:rgba(255,255,255,.05);filter:grayscale(1) brightness(.45);cursor:help}.rarelog span.has{filter:none;background:rgba(232,191,53,.16);box-shadow:0 0 0 1px rgba(232,191,53,.5)}
+.rarelog .ico{width:22px;height:22px}.rarelog em{position:absolute;right:2px;bottom:0;font:800 9.5px Nunito,sans-serif;color:#ffd84a;font-style:normal;text-shadow:0 1px 1px #000}
 .wl-vipbar{display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}.wl-vipbar>u{display:block;height:100%}
 .wallets{margin:6px 7px 4px 5px;display:grid;gap:6px}.wallets>.wl-next{border-top:0;padding:0 3px;color:#5a4a3a}
 .wallet{padding:8px;border-radius:8px;background:linear-gradient(#1c1613,#120e0c);color:#f4ede5;box-shadow:0 0 0 2px #c8963a,0 0 0 4px #3a2410;display:grid;gap:6px}
@@ -628,11 +630,11 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=62";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=63";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=36").then((m) => { WK = m; }));
-import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=8";
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=37").then((m) => { WK = m; }));
+import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=9";
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=2";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -966,9 +968,9 @@ const CASINO_ART = ["o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slip
 const AREA_ART = {
   wild: WILD_ART, deep: WILD_ART,
   // the one line out of the casino (2026-09-20): every scene has its rocks, trees, fish AND its monsters
-  workyard: ["hornworm", "boar"],
+  workyard: ["hornworm", "boar"],   // (monsters and a pond in every scene since 2026-09-20: the rocks', the trees' and the stations' pictures are no longer asked for out here)
   gloam: ["t_gwater", "t_gpath", "o_willow", "o_glowcap", "w_boulder", "o_rock_emerald_ore", "o_rock_diamond_ore", "highwayman", "gnasher", "moth", "taxwraith"],
-  cloud: ["t_csky", "t_cpath", "o_skyash", "o_cloudbush", "o_cloudcolumn", "o_rock_dragonstone_ore", "o_rock_onyx_ore", "ghoul", "understudy", "chandelier", "ram"],
+  cloud: ["t_csky", "t_cpath", "o_skyash", "o_cloudbush", "o_cloudcolumn", "o_rock_dragonstone_ore", "o_rock_onyx_ore", "ghoul", "understudy", "chandelier", "ram", "goose"],
   boneyard: [...WILD_ART, "moth", "ghoul", "understudy"],
   sky: ["ram", "angel", "goose"],
   // the Fight Pit: everyone who might be sent out to fight, and the corner clutter
@@ -1495,7 +1497,7 @@ function showTalk(n, text, options, have) {
 let tourSeen = null;
 const luckLine = () => ((me?.luck | 0) > 0
   ? `<div class="gm-luck on">🍀 Lucky: your next ${me.luck} bet${me.luck === 1 ? "" : "s"} pay ${G.LUCK.bonus * 100}% more when they win.</div>`
-  : `<div class="gm-luck">Want better odds? Lucky clovers turn up while you chop, mine and fish in the Yard (out the arch). Click one in your bag and your wins pay more.</div>`);
+  : `<div class="gm-luck">Want better odds? Lucky clovers turn up while you fish (there's a pond in the Yard, out the arch). Click one in your bag and your wins pay more.</div>`);
 function renderTour() {
   // the buffs bar: everything that's improving your odds right now (one kind today, built for several)
   const buffs = G.buffsOf(me);
@@ -1515,11 +1517,11 @@ function whatNext() {
   const cash = G.cashIn(me), att = G.lvlOf(me, "melee"), tiered = G.SLOTS.some((sl) => ITEMS[me.eq[sl]]?.tier);
   const charm = me.inv.find((x) => ITEMS[x.k].luck);
   if (charm) return `You've got a ${ITEMS[charm.k].name.toLowerCase()} in your bag. Click it, then play: your wins pay more while you're lucky.`;
-  if (cash >= 20 && !(me.luck | 0)) return "You're playing without luck. Go out the arch to the Yard: chop, mine or fish for lucky clovers, or fight for house chips and High Roller. Use one and every win pays more. You'll come back with things to sell, too.";
-  if (cash < 20) return "You're light. The task board by the back door has three paid jobs today, and the work's one arch away: skilling west, fighting east.";
-  if (att < 10) return "Toughen up in the Paddock, out the east arch. At Combat 10 you can use bronze: Brutus sells it in town, out the front door.";
-  if (!tiered) return "Get some real gear on. Brutus sells bronze in town, or smelt your own at his furnace: copper and tin are in the Workyard.";
-  return "You're set up. Play the floor, try roulette through the back door where the whole room bets together, keep your luck topped up out the arches, and do the daily jobs for bankroll.";
+  if (cash >= 20 && !(me.luck | 0)) return "You're playing without luck. Go out the arch to the Yard: fish for lucky clovers, or fight for Cash, house chips and High Roller. Use one and every win pays more. You'll come back with things to sell, too.";
+  if (cash < 20) return "You're light. The task board by the back door has three paid jobs today, and the work's one arch away: click a monster, or fish the pond.";
+  if (att < 10) return "Toughen up on the Yard's chickens and cows, out the arch. At Combat 10 you can wear bronze: Brutus sells it right there, by the pond.";
+  if (!tiered) return "Get some real gear on. Brutus, in the Yard by the pond, sells a set for every level. Better gear means faster kills and bigger monsters.";
+  return "You're set up. Play the floor, try roulette through the back door where the whole room bets together, keep your luck topped up at the pond, and do the daily jobs for bankroll.";
 }
 function talkTo(n) {
   const k = G.npcQuest(me, n), bye = ["Bye.", closeTalk];
@@ -2704,10 +2706,16 @@ function renderStats() {
    (so a full bag reads as "go and see the Cashier"); the jackpot, because it's the dream; today's three paid jobs
    with their progress; and one line on what to do next. Everything here is already known to the page. */
 const UIA = "/v3/assets/img/glad/flat/ui/";
+// THE COLLECTION: every rare there is, lit once you've been given one. Bragging rights, and a reason to fight something new.
+function raresCard() {
+  const all = [...new Set([...G.OPEN].flatMap((k) => SCENES[k]?.mobs || []).flatMap(([t]) => G.raresOf(t).map(([k]) => k)))];
+  const got = all.filter((k) => (me.found?.[k] | 0) > 0).length;
+  return `<div class="wallets"><div class="wallet"><div class="wl-h"><img src="${UIA}w_sack.png?v=1" alt="">Rares found<span style="margin-left:auto;color:#ffd84a">${got} / ${all.length}</span></div><div class="rarelog">${all.map((k) => { const n = me.found?.[k] | 0, from = Object.keys(MOBS).filter((t) => (MOBS[t].rare || []).some(([r]) => r === k)).map((t) => MOBS[t].name); return `<span class="${n ? "has" : ""}" data-item="${k}" title="${esc(n ? `${ITEMS[k].name}: found ${n}` : `Not found yet: ${from.length ? `a rare drop from ${from.join(", ")}` : "any monster can drop it"}`)}">${ico(k)}${n > 1 ? `<em>${n}</em>` : ""}</span>`; }).join("")}</div></div></div>`;
+}
 // today's three paid jobs: they live on the Quests tab (the wallet is for money)
 function jobsCard() {
   const jobs = (me.daily || []).map((t) => { const d = G.dailyDef(t.id); if (!d) return ""; const done = t.got >= d.n, what = d.what === "kill" ? `${d.n} ${MOBS[d.k].name.toLowerCase()}${d.n > 1 ? "s" : ""}` : `${d.what === "make" ? "Make " : ""}${d.n} ${ITEMS[d.k].name.toLowerCase()}`;
-    return `<div class="wl-job${t.claimed ? " paid" : done ? " done" : ""}" title="${t.claimed ? "Paid" : done ? "Done: claim it at the task board in the casino" : d.what === "kill" ? "Fight: out the arch, in the Yard and beyond" : d.what === "make" ? "Make it: at the camp in the Yard, by the rocks" : "Gather: out the arch, in the Yard and beyond"}">${d.what === "kill" ? `<img class="ico" src="${UIA}combat.png?v=1" alt="">` : ico(d.k)}<span>${esc(what)}<i><u style="width:${Math.round(Math.min(1, t.got / d.n) * 100)}%"></u></i></span><b>${t.claimed ? "paid" : done ? "claim!" : G.fmtCash(d.cash)}</b></div>`; }).join("");
+    return `<div class="wl-job${t.claimed ? " paid" : done ? " done" : ""}" title="${t.claimed ? "Paid" : done ? "Done: claim it at the task board in the casino" : d.what === "kill" ? "Fight: out the arch, in the Yard and beyond" : "Fish: there's a pond in every scene out the arch"}">${d.what === "kill" ? `<img class="ico" src="${UIA}combat.png?v=1" alt="">` : ico(d.k)}<span>${esc(what)}<i><u style="width:${Math.round(Math.min(1, t.got / d.n) * 100)}%"></u></i></span><b>${t.claimed ? "paid" : done ? "claim!" : G.fmtCash(d.cash)}</b></div>`; }).join("");
   return jobs ? `<div class="wallets"><div class="wallet"><div class="wl-h"><img src="${UIA}w_jobs.png?v=1" alt="">Today's paid jobs</div>${jobs}<div class="wl-next" style="border:0;padding-top:2px">Claim them at the task board by the casino's back wall. New ones every morning.</div></div></div>` : "";
 }
 function walletCard() {
@@ -2716,7 +2724,7 @@ function walletCard() {
     <div class="wallet wl-needs">${[["thirst", "w_water", "Thirst"], ["hunger", "w_food", "Hunger"]].map(([k, i, n]) => { const v = Math.round(G.needOf(me, k)), low = v < G.NEEDS.floor, fed = (me.meal?.left | 0) > 0; return `<div class="wl-need${low ? " low" : ""}" title="${n}: ${v}%. Every bet takes a little${fed ? " (not while you're Well Fed)" : ""}. Under ${G.NEEDS.floor}% the tables won't take your bets: the water cooler and the buffet are on the card room's back wall, next to the bar."><img src="${UIA}${i}.png?v=1" alt=""><span>${n}<i><u style="width:${v}%"></u></i></span><b>${v}%</b></div>`; }).join("")}</div>
     <div class="wallet wl-cash"><img src="${UIA}w_cash.png?v=1" alt=""><span><small>Your cash</small><b>${G.fmtCash(cash)}</b></span></div>
     <div class="wallet">
-      <div class="wl-row${loot ? " go" : ""}" title="What the Cashier would pay for the loot and made things in your bag"><img src="${UIA}w_sack.png?v=1" alt=""><span>${loot ? (full ? "Bag's full" : "In your bag") : "Nothing to sell"}<small>${loot ? "see a Cashier or the Ruby" : "out the arch: gather, fight, make"}</small></span><b>${loot ? `+${G.fmtCash(loot)}` : ""}</b></div>
+      <div class="wl-row${loot ? " go" : ""}" title="What the Cashier would pay for the loot and made things in your bag"><img src="${UIA}w_sack.png?v=1" alt=""><span>${loot ? (full ? "Bag's full" : "In your bag") : "Nothing to sell"}<small>${loot ? "see a Cashier or the Ruby" : "out the arch: fight or fish"}</small></span><b>${loot ? `+${G.fmtCash(loot)}` : ""}</b></div>
       ${me.jack ? `<div class="wl-row" title="The slots jackpot: three sevens wins it"><img src="${UIA}w_jackpot.png?v=1" alt=""><span>Slots jackpot<small>three sevens takes it</small></span><b style="color:#ffd84a">${G.fmtCash(me.jack)}</b></div>` : ""}
     </div>
     ${(() => { const v = G.vipOf(me), nx = v.next; return `<div class="wallet wl-vip" title="Every dollar you bet counts, win or lose. Your tier shows by your name and raises every table's limit${v.limit ? ` (yours: +${G.fmtCash(v.limit)})` : ""}."><div class="wl-h" style="margin:0"><b style="color:${v.col}">◆ ${v.name} VIP</b><span style="margin-left:auto;text-transform:none;letter-spacing:0">${nx ? `${G.fmtCash(Math.max(0, nx.at - v.wagered))} more bet to ${nx.name}` : "the top of the house"}</span></div><i class="wl-vipbar"><u style="width:${nx ? Math.round(((v.wagered - v.at) / (nx.at - v.at)) * 100) : 100}%;background:${(nx || v).col}"></u></i></div>`; })()}
@@ -2794,7 +2802,7 @@ function renderPanel() {
   if (tab === "quests") {
     const order = { ready: 0, active: 1, new: 2, done: 3, locked: 4 }, keys = Object.keys(QUESTS).filter((k) => G.OPEN.has(WIKI.npcs[QUESTS[k].giver]?.scene) || ["active", "ready", "done"].includes(G.qState(me, k))).sort((a, b) => order[G.qState(me, a)] - order[G.qState(me, b)]);   /* quests whose giver lives down a closed road wait until it reopens */
     const done = keys.filter((k) => G.qState(me, k) === "done").length;
-    p.innerHTML = `${jobsCard()}<div class="ph">Quests <small>${done}/${keys.length} done</small></div><div class="qs">${keys.map((k) => {
+    p.innerHTML = `${jobsCard()}${raresCard()}<div class="ph">Quests <small>${done}/${keys.length} done</small></div><div class="qs">${keys.map((k) => {
       const q = QUESTS[k], st = G.qState(me, k), have = Math.min(G.qHave(me, k), q.goal.n);
       const line = st === "new" ? `Talk to ${q.giver} at ${q.where}.` : st === "locked" ? "Finish an earlier quest to unlock this." : st === "done" ? `Reward: ${q.reward.text}` : q.brief;
       const tag = { new: "Not started", active: "In progress", ready: `Hand in to ${q.giver}`, done: "Done", locked: "Locked" }[st];

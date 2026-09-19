@@ -203,7 +203,7 @@ export class World {
     this.send(pl, { type: "who", scene: S.key, who: this.whoOf(S) });
     this.send(pl, JSON.parse(this.snapOf(S, Date.now(), false)));
     S.whoSig = null;   // the next broadcast tells everyone else this player has arrived
-    if (!stored) this.say(pl, "Welcome to GambaScape. Wander the floor and play what you like. Broke? Out the arch to the Yard, to mine, chop, fish or fight: everything out there has its price written over it, and the Cashier by each arch turns it into Cash. Say hello to Dex behind the bar.");
+    if (!stored) this.say(pl, "Welcome to GambaScape. Wander the floor and play what you like. Broke? Out the arch to the Yard, and click a monster (or fish the pond): everything out there has its price written over it, and the Cashier by each arch turns it into Cash. Say hello to Dex behind the bar.");
     else this.say(pl, `Welcome back, ${pl.name}.`);
     if (this.exDeliver(pl)) this.exCommit(pl);   // market sales and purchases made while you were away
     this.start();
@@ -241,7 +241,7 @@ export class World {
   }
   touch(pl) { pl.dirty = true; pl.needSave = true; pl.changedAt ??= Date.now(); }
 
-  meOf(pl) { const C = pl.C; return { isle: { tier: C.isle.tier, themes: C.isle.themes }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), wagered: Number(C.wagered) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats }; }
+  meOf(pl) { const C = pl.C; return { isle: { tier: C.isle.tier, themes: C.isle.themes }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats }; }
 
   /* ------------------------------------------------------------ scenes */
   scene(key) {
@@ -379,7 +379,7 @@ export class World {
     }
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
-      const ob = S.objs[m.ob | 0]; if (!ob) return;
+      const ob = S.objs[m.ob | 0]; if (!ob || ob.edge) return;   // (the border's trees and rocks are scenery)
       const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", roulette: "roulette", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       if (!kind) return;
       const at = kind === "door" && ob.door ? ob.door : G.nearestCell(ob, f);
@@ -764,6 +764,7 @@ export class World {
       if (G.roomFor(C.inv, k) < 1) this.say(pl, `It dropped a ${name}, and your bag was too full to take it. Ouch.`, "bad");
       else {
       G.addInv(C.inv, k, 1); this.touch(pl); this.emit(pl, "loot", { k, n: 1 });
+      C.found = C.found && typeof C.found === "object" ? C.found : {}; C.found[k] = (C.found[k] | 0) + 1;   // the collection log
       this.say(pl, it.slot ? `RARE DROP: ${it.name}! ${it.fx ? "Wear it and the tables treat you differently." : "You can't make that one: it only drops."}` : worth ? `It was carrying a ${name}! That's ${G.fmtCash(worth)} at the Ruby.` : `RARE DROP: a ${name}! Click it in your bag to see what it does.`, "loot");
       if (it.slot) for (const p of this.pls.values()) if (p !== pl && p.C.scene === C.scene) p.out.push({ type: "casinonote", text: `✨ ${pl.name} got a rare drop: ${it.name}, from a ${G.MOBS[mob].name.toLowerCase()}.` });
       if (worth >= 1000) for (const p of this.pls.values()) if (worth >= 5000 || p.C.scene === C.scene) p.out.push({ type: "casinonote", text: `💰 ${pl.name} found a ${name} (${G.fmtCash(worth)}) on a ${G.MOBS[mob].name.toLowerCase()}!` });
@@ -1281,12 +1282,12 @@ export class World {
     }
     if (a.kind === "spot") {
       if (!this.hasTool(pl, "fishing")) { pl.act = null; return; }
-      if (!a.started) { a.started = now; a.next = now + 2600; this.say(pl, "You cast out your line…"); return; }
+      if (!a.started) { a.started = now; a.next = now + G.FISHING.ms; this.say(pl, "You cast out your line…"); return; }
       if (now < a.next) return;
-      a.next = now + 2600;
-      const trout = G.lvlOf(C, "fishing") >= 10 && Math.random() < 0.35, fish = ob.fish || (trout ? "trout" : "sardine");
+      a.next = now + G.FISHING.ms;
+      const lvl = G.lvlOf(C, "fishing"), trout = lvl >= G.FISHING.troutAt && Math.random() < G.FISHING.troutShare, fish = ob.fish || (trout ? "trout" : "sardine");
       this.groupNote(S, pl, a);
-      if (Math.random() < (ob.fish ? 0.3 : 0.45) + bonus) {
+      if (Math.random() < G.FISHING.chance(lvl) + bonus) {
         if (!this.give(pl, fish)) { pl.act = null; return; }
         this.gained(S, pl, fish);
         this.grant(pl, "fishing", gx(ob.xp || (trout ? 50 : 20))); this.say(pl, `You catch a ${G.ITEMS[fish].name.replace(/^Raw /, "").toLowerCase()}.`, "good"); this.questCheck(pl);
@@ -2116,11 +2117,11 @@ export class World {
   }
   tourEvent(pl, type, d) {
     const t = pl.C.tour; if (G.tourOf(pl.C)?.id !== "job") return;
-    if (type === "gather" && d.k === "logs") t.logs = Math.min(G.TOUR_JOB.logs, (t.logs || 0) + (d.n || 1));
+    if (type === "gather" && G.ITEMS[d.k]?.heal) t.fish = Math.min(G.TOUR_JOB.fish, (t.fish || 0) + (d.n || 1));
     else if (type === "kill" && d.mob === "chicken") t.chickens = Math.min(G.TOUR_JOB.chickens, (t.chickens || 0) + 1);
     else return;
     this.touch(pl);
-    if (t.logs >= G.TOUR_JOB.logs || t.chickens >= G.TOUR_JOB.chickens) this.tourStep(pl, "job");
+    if (t.fish >= G.TOUR_JOB.fish || t.chickens >= G.TOUR_JOB.chickens) this.tourStep(pl, "job");
   }
   tourOp(S, pl, m) {
     const C = pl.C, dex = S.npcs.find((n) => n.name === "Dex the Dealer");
@@ -2135,6 +2136,12 @@ export class World {
   dailyState(pl) {
     const C = pl.C, day = G.chicagoDay();
     if (!C.daily || C.daily.day !== day) { C.daily = { day, tasks: G.dailyFor(C, pl.id, day).map((id) => ({ id, got: 0, claimed: false })) }; this.touch(pl); }
+    // a job that can no longer be done (its rocks or trees left the world mid-day) is swapped for one that can; a claimed one is left alone
+    if (C.daily.tasks.some((t) => !t.claimed && !G.OPEN_DAILY.has(t.id))) {
+      const have = new Set(C.daily.tasks.filter((t) => t.claimed || G.OPEN_DAILY.has(t.id)).map((t) => t.id));
+      const spare = G.DAILY.filter((d) => G.OPEN_DAILY.has(d.id) && !have.has(d.id) && (!d.req || G.lvlOf(C, d.req.skill) >= d.req.lvl)).map((d) => d.id);
+      C.daily.tasks = C.daily.tasks.map((t) => (t.claimed || G.OPEN_DAILY.has(t.id) ? t : spare.length ? { id: spare.shift(), got: 0, claimed: false } : null)).filter(Boolean); this.touch(pl);
+    }
     return C.daily;
   }
   dailySend(pl) { const D = this.dailyState(pl); pl.out.push({ type: "daily", day: D.day, tasks: D.tasks }); }
