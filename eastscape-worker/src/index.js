@@ -159,7 +159,7 @@ export class World {
     if (path === "/restore") return this.restore(request);
     if (path === "/kick") {
       const pl = this.pls.get(new URL(request.url).searchParams.get("id")); if (!pl) return Response.json({ ok: true, online: false });
-      this.send(pl, { type: "kicked", message: "You've been removed from GAMBA." });
+      this.send(pl, { type: "kicked", message: "You've been removed from GambaScape." });
       await this.leave(pl, true); try { pl.ws.close(4003, "removed"); } catch (e) { /* already gone */ }
       return Response.json({ ok: true, online: true });
     }
@@ -201,7 +201,7 @@ export class World {
     this.send(pl, { type: "who", scene: S.key, who: this.whoOf(S) });
     this.send(pl, JSON.parse(this.snapOf(S, Date.now(), false)));
     S.whoSig = null;   // the next broadcast tells everyone else this player has arrived
-    if (!stored) this.say(pl, "Welcome to GAMBA. Wander the floor and play what you like. Broke? West arch to mine and chop, east arch to fight: everything out there has its price written over it, and the Cashier by each arch turns it into Cash. Say hello to Dex behind the bar.");
+    if (!stored) this.say(pl, "Welcome to GambaScape. Wander the floor and play what you like. Broke? West arch to mine and chop, east arch to fight: everything out there has its price written over it, and the Cashier by each arch turns it into Cash. Say hello to Dex behind the bar.");
     else this.say(pl, `Welcome back, ${pl.name}.`);
     if (this.exDeliver(pl)) this.exCommit(pl);   // market sales and purchases made while you were away
     this.start();
@@ -239,7 +239,7 @@ export class World {
   }
   touch(pl) { pl.dirty = true; pl.needSave = true; pl.changedAt ??= Date.now(); }
 
-  meOf(pl) { const C = pl.C; return { isle: { tier: C.isle.tier, themes: C.isle.themes }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats }; }
+  meOf(pl) { const C = pl.C; return { isle: { tier: C.isle.tier, themes: C.isle.themes }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats }; }
 
   /* ------------------------------------------------------------ scenes */
   scene(key) {
@@ -377,7 +377,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob) return;
-      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", roulette: "roulette", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", roulette: "roulette", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       if (!kind) return;
       const at = kind === "door" && ob.door ? ob.door : G.nearestCell(ob, f);
       act = { kind, ob, x: at.x, y: at.y, name: ob.name };
@@ -444,8 +444,8 @@ export class World {
     this.questEvent(pl, type, d);
     this.dailyEvent(pl, type, d);
     this.tourEvent(pl, type, d);
-    if (type === "gather") this.luckDrop(pl, "clover", G.LUCK.gather);
-    else if (type === "kill") this.luckDrop(pl, "horseshoe", G.LUCK.kill);
+    if (type === "gather") { this.luckDrop(pl, "clover", G.LUCK.gather); this.luckDrop(pl, "horseshoe", G.LUCK.shoe); }   // luck is skilling's alone
+    else if (type === "kill") this.killFinds(pl, d);                                                                          // windfalls are fighting's
   }
 
   countEvent(pl, type, d) {
@@ -496,7 +496,7 @@ export class World {
     this.restartAt = Date.now() + s * 1000;
     this.warned = new Set();
     this.start();                                   // count down even with nobody on, so the save still happens
-    this.tellAll(s >= 60 ? `GAMBA is restarting in ${Math.round(s / 60)} minute${s >= 120 ? "s" : ""}. Your character is saved automatically - you will be back in a moment.` : `GAMBA is restarting in ${s} seconds. Hold tight.`, "admin");
+    this.tellAll(s >= 60 ? `GambaScape is restarting in ${Math.round(s / 60)} minute${s >= 120 ? "s" : ""}. Your character is saved automatically - you will be back in a moment.` : `GambaScape is restarting in ${s} seconds. Hold tight.`, "admin");
     if (s === 0) await this.doRestart();
     return { ok: true, at: this.restartAt, players: this.pls.size };
   }
@@ -742,13 +742,73 @@ export class World {
   // eating: a moment's pause, and your next swing waits a little
   // lucky charms: click one and your next N bets are lucky (see G.LUCK)
   useItem(pl, i) {
-    const C = pl.C, st = C.inv[i], it = st && G.ITEMS[st.k]; if (!it?.luck) return;
+    const C = pl.C, st = C.inv[i], it = st && G.ITEMS[st.k]; if (!it) return;
+    if (it.drink || it.use) return this.useSpecial(pl, i, st, it);
+    if (!it.luck) return;
     if ((C.luck | 0) >= G.LUCK.max) return this.say(pl, `You're as lucky as it gets (${G.LUCK.max} lucky bets saved up). Go and spend some.`, "bad");
     st.n--; if (!st.n) C.inv.splice(i, 1);
     C.luck = Math.min(G.LUCK.max, (C.luck | 0) + it.luck); this.touch(pl);
     this.say(pl, `You feel lucky. Your next ${C.luck} bets pay ${G.LUCK.bonus * 100}% more when they win.`, "good");
   }
-  // working turns up charms: called for every gather and every kill
+  /* FIGHTING's rewards (G.FINDS): house chips and the things you click, more often from bigger monsters; and one kill
+     in eight makes you a High Roller. The room hears about a black chip, everyone hears about a gold one. */
+  killFinds(pl, d) {
+    const C = pl.C, mob = d?.mob; if (!G.BOUNTY[mob]) return;
+    for (const f of G.FINDS) {
+      const [k] = f; if (Math.random() >= G.findChance(mob, f) || G.roomFor(C.inv, k) < 1) continue;
+      G.addInv(C.inv, k, 1); this.touch(pl);
+      const worth = G.valueOf(k), name = G.ITEMS[k].name.toLowerCase();
+      this.say(pl, worth ? `It was carrying a ${name}! That's ${G.fmtCash(worth)} at the Ruby.` : `It dropped a ${name}! Click it in your bag to see what it does.`, "loot");
+      if (worth >= 1000) for (const p of this.pls.values()) if (worth >= 5000 || p.C.scene === C.scene) p.out.push({ type: "casinonote", text: `💰 ${pl.name} found a ${name} (${G.fmtCash(worth)}) on a ${G.MOBS[mob].name.toLowerCase()}!` });
+    }
+    if (Math.random() < G.ROLLER.kill && (C.roller | 0) < G.ROLLER.max) {
+      C.roller = Math.min(G.ROLLER.max, (C.roller | 0) + G.ROLLER.bets); this.touch(pl);
+      this.say(pl, `The fight's gone to your head. HIGH ROLLER: every table will take double from you, for your next ${C.roller} big bets.`, "loot");
+    }
+  }
+  /* drinks, scrolls, boxes, dice, watches and free-play chips: everything in the bag that's clicked and isn't food or luck */
+  useSpecial(pl, i, st, it) {
+    const C = pl.C, now = Date.now(), take = () => { st.n--; if (!st.n) C.inv.splice(C.inv.indexOf(st), 1); this.touch(pl); };
+    if (it.drink) {
+      const k = st.k; take(); C.drink = { k, left: it.drink.bets }; C.thirst = Math.min(100, G.needOf(C, "thirst") + 10);
+      pl.out.push({ type: "need", k: "thirst" });
+      return this.say(pl, `You drink the ${it.name.toLowerCase()}. For your next ${it.drink.bets} bets: ${G.fxText(it.drink.fx)}.`, "good");
+    }
+    if (it.use === "tp") {
+      const S = this.scenes.get(C.scene);
+      if (C.scene === G.START.scene) return this.say(pl, "You're already in the casino.");
+      if (S?.def?.pvp || now - (pl.hurtAt || 0) < 8000) return this.say(pl, S?.def?.pvp ? "The scroll won't work in the Wilderness." : "Not while something's hitting you. Get clear first.", "bad");
+      take(); pl.act = null; pl.path = []; this.moveToScene(pl, G.START.scene, null, G.START);
+      return this.say(pl, "The scroll burns up in your hand, and you're standing on the casino floor.", "good");
+    }
+    if (it.use === "free") {
+      if ((C.free | 0) > 0) return this.say(pl, "You've already got a free play waiting. Go and use it.", "bad");
+      take(); C.free = G.FREEPLAY;
+      return this.say(pl, `Your next bet at a machine or a table game is on the house, up to ${G.fmtCash(G.FREEPLAY)}. Win and you keep the winnings.`, "good");
+    }
+    if (it.use === "box") {
+      const total = G.BOX.reduce((a, [, w]) => a + w, 0); let r = Math.random() * total, got = G.BOX[0][0];
+      for (const [k, w] of G.BOX) { r -= w; if (r < 0) { got = k; break; } }
+      take(); this.give(pl, got, 1);
+      return this.say(pl, `You open the mystery box: a ${G.ITEMS[got].name.toLowerCase()}!`, "loot");
+    }
+    if (it.use === "devil") {
+      const w = pl.lastWin; if (!w || now - w.at > G.DEVIL.ms) return this.say(pl, "The dice only roll within two minutes of a win. Go and win something.", "bad");
+      const amt = Math.min(G.DEVIL.max, w.amt); if (G.cashIn(C) < amt) return this.say(pl, `You'd need the ${G.fmtCash(amt)} you won still in your bag.`, "bad");
+      take(); pl.lastWin = null; G.takeInv(C.inv, "coins", amt);
+      if (Math.random() < G.DEVIL.odds) {
+        this.cashTo(pl, amt * G.DEVIL.pays); this.say(pl, `The Devil's dice come up sixes. Your ${G.fmtCash(amt)} is now ${G.fmtCash(amt * G.DEVIL.pays)}!`, "loot");
+        const S = this.scenes.get(C.scene); if (S && amt >= 200) for (const p of this.playersIn(S)) if (p !== pl) p.out.push({ type: "casinonote", text: `😈 ${pl.name} rolled the Devil's dice and tripled ${G.fmtCash(amt)}!` });
+      } else this.say(pl, `Snake eyes. The Devil keeps your ${G.fmtCash(amt)}.`, "bad");
+      return;
+    }
+    if (it.use === "rewind") {
+      const l = pl.lastLoss; if (!l || now - l.at > G.REWIND.ms) return this.say(pl, "The watch only winds back a bet you lost in the last minute.", "bad");
+      const amt = Math.min(G.REWIND.max, l.amt); take(); pl.lastLoss = null; this.cashTo(pl, amt);
+      return this.say(pl, `The hands spin backwards. That bet never happened: ${G.fmtCash(amt)} is back in your bag.`, "loot");
+    }
+  }
+  // working turns up charms: called for every gather
   luckDrop(pl, k, chance) {
     if (Math.random() >= chance || G.roomFor(pl.C.inv, k) < 1) return;
     G.addInv(pl.C.inv, k, 1); this.touch(pl);
@@ -759,16 +819,28 @@ export class World {
     if (now - (pl.lastEat || 0) < G.EAT_MS) return;
     pl.lastEat = now; pl.lastSwing = Math.max(pl.lastSwing, now - 1200);
     st.n--; if (!st.n) C.inv.splice(i, 1);
-    const before = C.hp; C.hp = Math.min(G.maxHpOf(C), C.hp + it.heal); C.hunger = Math.min(100, G.needOf(C, "hunger") + G.NEEDS.food); this.touch(pl);
+    const before = C.hp; C.hp = Math.min(G.maxHpOf(C), C.hp + it.heal); C.hunger = Math.min(100, G.needOf(C, "hunger") + G.NEEDS.food);
+    if (it.meal) { C.hunger = 100; C.thirst = 100; C.meal = { k: st.k, left: it.meal.bets }; pl.out.push({ type: "need", k: "hunger" }); this.say(pl, `A proper dinner. WELL FED for your next ${it.meal.bets} bets: no hunger or thirst, and ${G.fxText(it.meal.fx)}.`, "loot"); }
+    this.touch(pl);
     this.say(pl, C.hp > before ? `You eat the ${it.name.toLowerCase()}. It heals ${C.hp - before}.` : `You eat the ${it.name.toLowerCase()}. You were already full.`, "good");
   }
   // the Forge: buy from Brutus, sell him what you gathered. You have to be standing with him.
   shopOp(S, pl, m) {
-    const C = pl.C, n = S.npcs.find((x) => x.opens === "shop");
-    if (!n || G.cheb(pl, n) > 3) return this.say(pl, "You need to be at the Forge, with Brutus.", "bad");
+    const C = pl.C, bar = m.shop === "bar", n = bar ? S.npcs.find((x) => x.name === "Dex the Dealer") : S.npcs.find((x) => x.opens === "shop");
+    if (!n || G.cheb(pl, n) > (bar ? 5 : 3)) return this.say(pl, bar ? "You need to be at the bar, with Dex." : "You need to be at the Forge, with Brutus.", "bad");
     const cash = () => C.inv.find((x) => x.k === "coins");
+    if (bar && m.op === "round") {   // a round for the room: everyone on the floor who isn't already drinking
+      const rd = G.BAR.round, c = cash(); if (!c || c.n < rd.price) return this.say(pl, `A round is ${G.fmtCash(rd.price)}.`, "bad");
+      const who = this.playersIn(S).filter((p) => !p.lingerUntil && !((p.C.drink?.left | 0) > 0));
+      if (!who.length) return this.say(pl, "Everybody's already got a drink in their hand.");
+      c.n -= rd.price; if (!c.n) C.inv.splice(C.inv.indexOf(c), 1); this.touch(pl);
+      for (const p of who) { p.C.drink = { k: rd.k, left: rd.bets }; this.touch(p); if (p !== pl) this.say(p, `${pl.name} bought the room a round! ${G.ITEMS[rd.k].name} for your next ${rd.bets} bets: ${G.fxText(G.ITEMS[rd.k].drink.fx)}.`, "loot"); }
+      for (const p of this.playersIn(S)) p.out.push({ type: "casinonote", text: `🍻 ${pl.name} bought the room a round!` });
+      return this.say(pl, `A round for the room: ${who.length} ${who.length === 1 ? "drink" : "drinks"} poured, yours included.`, "good");
+    }
+    if (bar && m.op !== "buy") return;
     if (m.op === "buy") {
-      const row = G.SHOP.sells.find(([k]) => k === m.k); if (!row) return;
+      const row = (bar ? G.BAR : G.SHOP).sells.find(([k]) => k === m.k); if (!row) return;
       const [k, price] = row, want = Math.max(1, Math.min(1000, m.n === "all" ? 1000 : m.n | 0)), have = cash()?.n || 0, room = G.roomFor(C.inv, k), qty = Math.min(want, Math.floor(have / price), room);
       if (room < 1) return this.say(pl, "Your inventory is full.", "bad");
       if (qty < 1) return this.say(pl, `That's ${G.fmtCash(price)}. You have ${G.fmtCash(have)}.`, "bad");
@@ -788,7 +860,8 @@ export class World {
      leaves tools, charms and anything wearable alone; one item at a time sells whatever you point at. */
   cashOut(S, pl, m) {
     const C = pl.C; if (!this.near(S, pl, "cashier", 3) && !this.near(S, pl, "coinstatue", 3)) return this.say(pl, "You need to be at the House Ruby or a Cashier's window, on the casino floor.", "bad");
-    const keys = m.op === "all" ? [...new Set(C.inv.map((s) => s.k))].filter(G.isLoot) : [String(m.k)].filter((k) => k !== "coins" && G.valueOf(k) > 0 && C.inv.some((s) => s.k === k));
+    const keys = m.op === "all" ? [...new Set(C.inv.map((s) => s.k))].filter(G.isLoot) : [String(m.k)].filter((k) => G.isLoot(k) && C.inv.some((s) => s.k === k));
+    if (m.op !== "all" && !keys.length && G.ITEMS[String(m.k)]?.slot) return this.say(pl, "The Cashier doesn't buy anything you could wear or hold. Brutus, at the Forge out front, buys what's been smithed.", "bad");
     let total = 0, count = 0;
     for (const k of keys) { const n = G.takeInv(C.inv, k, G.countItems({ inv: C.inv, bank: [] }, [k])); total += n * G.valueOf(k); count += n; }
     if (!count) return this.say(pl, "The Cashier looks in your bag. \"Nothing in there I can pay you for. The arches are that way.\"");
@@ -995,7 +1068,7 @@ export class World {
       return this.say(pl, k === "thirst" ? `You fill a paper cup and drain it. Thirst: ${Math.round(C[k])}%.` : `You load up a plate. Hunger: ${Math.round(C[k])}%.`, "good");
     }
     if (a.kind === "game") { pl.act = null; return pl.out.push({ type: "game", g: a.ob.t, pot: Math.floor(this.jack.pot), lastJack: this.jack.wins?.[0] || null }); }
-    if (a.kind === "howto") { pl.act = null; return pl.out.push({ type: "popup", title: "How GAMBA works", text: G.HOWTO, icon: "🎰" }); }
+    if (a.kind === "howto") { pl.act = null; return pl.out.push({ type: "popup", title: "How GambaScape works", text: G.HOWTO, icon: "🎰" }); }
     if (a.kind === "board") { pl.act = null; this.tourStep(pl, "board"); return this.dailySend(pl); }
     if (a.kind === "roulette") { pl.act = null; pl.out.push({ type: "roulopen" }); return this.roulSendTo(S, pl); }
     if (a.kind === "exchange") { pl.out.push({ type: "exchange" }); return this.exSend(pl); }
@@ -1005,7 +1078,7 @@ export class World {
     }
     if (a.kind === "rope") { this.moveToScene(pl, "farm", null, { x: 10, y: 9 }); return this.say(pl, "You climb back up to the farm. Nobody can attack you up here."); }
     if (a.kind === "ferry") return pl.out.push({ type: "ferry" });
-    if (a.kind === "boatback") { this.moveToScene(pl, "river", null, G.ISLE_FERRY); return this.say(pl, "Charon rows you back to River Bend without a word."); }
+    if (a.kind === "boatback") { this.moveToScene(pl, G.ISLE_FERRY.scene, null, G.ISLE_FERRY); return this.say(pl, "Charon takes you back to the square without a word."); }
     if (a.kind === "plot" || a.kind === "pedestal" || a.kind === "islesign") return this.isleUse(S, pl, a, now);
     if (a.kind === "well") return this.say(pl, "You look down the well. Something glints at the bottom, but it's too far down.");
     if (a.ob?.req && G.lvlOf(C, a.ob.req.skill) < a.ob.req.lvl) return this.say(pl, `You need a ${G.SKILLS[a.ob.req.skill].name} level of ${a.ob.req.lvl} to ${(G.VERB[a.kind] || "use").toLowerCase()} the ${a.ob.name}. ${a.ob.tease || ""}`, "bad");
@@ -1198,6 +1271,7 @@ export class World {
   }
 
   /* ------------------------------------------------------------ islands */
+  atFerry(S, pl) { return this.near(S, pl, "ferry", 3) || this.near(S, pl, "cart", 3); }
   async isleOp(S, pl, m) {
     const C = pl.C, I = C.isle, mine = S.owner === pl.id;
     if (m.op === "list") {
@@ -1205,7 +1279,7 @@ export class World {
       return pl.out.push({ type: "isles", list });
     }
     if (m.op === "go") {
-      if (S.key !== "river" || !this.near(S, pl, "ferry", 3)) return this.say(pl, "You need to be at Charon's ferry, at River Bend.", "bad");
+      if (!this.atFerry(S, pl)) return this.say(pl, "You need to be at Charon's cart, in the square outside the casino.", "bad");
       let id = pl.id, name = pl.name;
       if (m.id != null) { const o = this.pls.get(String(m.id)); if (!o) return this.say(pl, "They aren't around right now. Try their name."); id = o.id; name = o.name; }
       else if (m.name) {
@@ -1213,20 +1287,20 @@ export class World {
         if (!who) return this.say(pl, `Charon has never heard of anyone called ${String(m.name).slice(0, 25)}.`);
         id = who.id; name = who.name;
       }
-      if (pl.left || pl.C.scene !== "river") return;
+      if (pl.left || pl.C.scene !== S.key) return;
       const owner = this.pls.get(id);
       let copy = null;
       if (id !== pl.id && !owner) copy = G.normChar(await this.ctx.storage.get(`char:${id}`)).isle;
-      if (pl.left || pl.C.scene !== "river") return;
+      if (pl.left || pl.C.scene !== S.key) return;
       const isle = owner ? owner.C.isle : copy || I, key = G.isleKey(isle, id);
       if (id !== pl.id && !isle.open) return this.say(pl, `${name}'s island is closed to visitors.`);
       const S2 = this.scene(key); S2.ownerName = name; if (copy) S2.isleCopy = copy;
       this.moveToScene(pl, key, null, G.SCENES.isle.entry); pl.dir = "north";
-      return this.say(pl, id === pl.id ? "Charon rows you out to your island." : `Charon rows you out to ${name}'s island.`, "good");
+      return this.say(pl, id === pl.id ? "Charon takes you out to your island." : `Charon takes you out to ${name}'s island.`, "good");
     }
     if (m.op === "upgrade") {
       const next = G.ISLE_TIERS[I.tier + 1];
-      if (S.key !== "river" || !this.near(S, pl, "ferry", 3) || !next) return;
+      if (!this.atFerry(S, pl) || !next) return;
       const cash = C.inv.find((x) => x.k === "coins");
       if (!cash || cash.n < next.price) return this.say(pl, `${next.name} costs ${G.fmtCash(next.price)}.`, "bad");
       cash.n -= next.price; if (!cash.n) C.inv.splice(C.inv.indexOf(cash), 1);
@@ -1237,7 +1311,7 @@ export class World {
     }
     if (m.op === "buy") {
       const th = G.THEMES[m.theme];
-      if (S.key !== "river" || !this.near(S, pl, "ferry", 3) || !th || th.price == null || I.themes.includes(m.theme)) return;
+      if (!this.atFerry(S, pl) || !th || th.price == null || I.themes.includes(m.theme)) return;
       const cash = C.inv.find((x) => x.k === "coins");
       if (!cash || cash.n < th.price) return this.say(pl, `The ${th.name} theme costs ${G.fmtCash(th.price)}.`, "bad");
       cash.n -= th.price; if (!cash.n) C.inv.splice(C.inv.indexOf(cash), 1);
@@ -1249,7 +1323,7 @@ export class World {
     if (m.op === "theme") { if (!I.themes.includes(m.theme)) return; I.theme = m.theme; this.touch(pl); return this.say(pl, `Your island is now ${G.THEMES[m.theme].name}.`, "good"); }
     if (m.op === "open") {
       I.open = !!m.v; this.touch(pl);
-      if (!I.open) for (const p of [...this.pls.values()]) if (p !== pl && G.ownerOf(p.C.scene) === pl.id) { this.moveToScene(p, "river", null, G.ISLE_FERRY); this.say(p, `${pl.name} closed their island. Charon rows you back.`); }
+      if (!I.open) for (const p of [...this.pls.values()]) if (p !== pl && G.ownerOf(p.C.scene) === pl.id) { this.moveToScene(p, G.ISLE_FERRY.scene, null, G.ISLE_FERRY); this.say(p, `${pl.name} closed their island. Charon takes you back.`); }
       return this.say(pl, I.open ? "Your island is open: anyone can visit." : "Your island is closed to visitors.", "good");
     }
     if (m.op === "plant") {
@@ -1588,15 +1662,31 @@ export class World {
     const why = G.tooEmpty(pl.C); if (!why) return false;
     pl.out.push({ type: "need", k: why, blocked: true }); this.say(pl, G.NEED_TEXT[why], "bad"); return true;
   }
-  spendNeeds(pl) { const C = pl.C; for (const [k, n] of Object.entries(G.NEEDS.perBet)) C[k] = Math.max(0, G.needOf(C, k) - n); }
+  /* One bet's worth of everything: the player's effects are read FIRST (so the last bet of a dinner still counts), then
+     the dinner and the drink each lose a bet, and hunger and thirst go down unless Well Fed. Returns the effects, which
+     the bet keeps until it's settled. */
+  fxTake(pl) {
+    const C = pl.C, e = G.edgeOf(C);
+    for (const k of ["meal", "drink"]) if (C[k] && --C[k].left <= 0) { this.say(pl, k === "meal" ? "You could eat again. (Well Fed has worn off.)" : `The ${G.ITEMS[C[k].k]?.name.toLowerCase() || "drink"} has worn off.`); C[k] = null; }
+    if (!e.fed) for (const [k, n] of Object.entries(G.NEEDS.perBet)) C[k] = Math.max(0, G.needOf(C, k) - n * e.thrift);
+    return e;
+  }
+  // a stake that goes over the normal limit uses up one of a High Roller's big bets
+  bigBet(pl, before, after) { const C = pl.C, base = G.baseBetOf(C); if (before <= base && after > base && (C.roller | 0) > 0) C.roller--; }
+  // a lost stake: the angel's chance of all of it, else the insured share
+  lossBack(pl, lost, e) {
+    const back = G.backWith(lost, e, Math.random()); if (!back) return 0;
+    this.say(pl, back >= lost ? `An angel's on your shoulder: your ${G.fmtCash(lost)} comes back.` : `Insurance: ${G.fmtCash(back)} of that comes back.`, "good"); return back;
+  }
   cashTo(pl, n) { if (n > 0 && !this.give(pl, "coins", n) && !this.bankAdd(pl, "coins", n)) this.say(pl, "Your bag and bank are both full: that Cash is lost. Make some room!", "bad"); }
   bet(S, pl, m, now) {
     const g = String(m.g), game = G.GAMES[g]; if (!game || game.run) return;
     if (!this.near(S, pl, g, 2)) return this.say(pl, `You need to be at the ${game.name.toLowerCase()} in the Casino.`, "bad");
     if (now - (pl.lastBet || 0) < G.CASINO.betMs) return;
     const amt = Math.floor(Number(m.amt)), have = G.cashIn(pl.C);
-    if (!(amt >= G.CASINO.minBet && amt <= G.CASINO.maxBet)) return this.say(pl, `Bets are ${G.CASINO.minBet} to ${G.fmtCash(G.CASINO.maxBet)}.`, "bad");
-    if (have < amt) return this.say(pl, `You only have ${G.fmtCash(have)} in your bag.`, "bad");
+    if (!(amt >= G.CASINO.minBet && amt <= G.maxBetOf(pl.C))) return this.say(pl, `Bets are ${G.CASINO.minBet} to ${G.fmtCash(G.maxBetOf(pl.C))}.`, "bad");
+    const onHouse = Math.min(amt, pl.C.free | 0);   // a free-play chip covers this much of the stake
+    if (have < amt - onHouse) return this.say(pl, `You only have ${G.fmtCash(have)} in your bag.`, "bad");
     if (this.tooEmpty(pl)) return;
     let mult = 0, res = {};
     if (g === "cointable") {
@@ -1633,11 +1723,13 @@ export class World {
       }
       this.jackDirty = true; res.pot = Math.floor(J.pot);
     }
-    pl.lastBet = now; this.tourStep(pl, "play"); this.spendNeeds(pl);
-    G.takeInv(pl.C.inv, "coins", amt);
+    pl.lastBet = now; this.tourStep(pl, "play"); this.bigBet(pl, 0, amt); const e = this.fxTake(pl);
+    G.takeInv(pl.C.inv, "coins", amt - onHouse); if (onHouse) { pl.C.free = 0; res.free = onHouse; }
     const lucky = (pl.C.luck | 0) > 0; if (lucky) pl.C.luck--;
-    const plain = Math.floor(amt * mult), payout = (lucky && plain ? Math.round(amt * mult * (1 + G.LUCK.bonus)) : plain) + jackpot;
-    res.lucky = lucky ? Math.max(0, payout - jackpot - plain) : null; res.luck = pl.C.luck | 0;
+    const plain = Math.floor(amt * mult), boosted = G.payWith(plain, amt, e, lucky), own = amt - onHouse;
+    const ret = Math.max(0, boosted - onHouse), saved = ret < own ? this.lossBack(pl, own - ret, e) : 0, payout = ret + saved + jackpot;   /* the house's chip goes back to the house; what it won is yours */
+    res.lucky = boosted > plain ? boosted - plain : null; res.saved = saved || null; res.luck = pl.C.luck | 0;
+    if (payout > own) pl.lastWin = { amt: payout - own, at: now }; else if (payout < own) pl.lastLoss = { amt: own - payout, at: now };
     this.cashTo(pl, payout);
     this.touch(pl);
     pl.out.push({ type: "gameResult", g, bet: amt, mult, payout, jackpot, ...res });
@@ -1684,10 +1776,12 @@ export class World {
     const side = m.side === 1 ? 1 : 0, amt = Math.floor(Number(m.amt)), mine = F.bets.filter((b) => b.id === pl.id), staked = mine.reduce((a, b) => a + b.amt, 0);
     if (!(amt >= 1)) return;
     if (mine.some((b) => b.side !== side)) return this.say(pl, "You've already backed the other one. Take your bet back first if you've changed your mind.", "bad");
-    if (staked + amt > G.FIGHTS.maxStake) return this.say(pl, `Up to ${G.fmtCash(G.FIGHTS.maxStake)} a fight. You've got ${G.fmtCash(staked)} down.`, "bad");
+    const top = G.FIGHTS.maxStake - G.CASINO.maxBet + G.maxBetOf(pl.C);
+    if (staked + amt > top) return this.say(pl, `Up to ${G.fmtCash(top)} a fight. You've got ${G.fmtCash(staked)} down.`, "bad");
     if (G.cashIn(pl.C) < amt) return this.say(pl, `You only have ${G.fmtCash(G.cashIn(pl.C))} in your bag.`, "bad");
     if (this.tooEmpty(pl)) return;
-    if (!staked) this.spendNeeds(pl);
+    if (!staked) (F.fx ||= {})[pl.id] = this.fxTake(pl);
+    this.bigBet(pl, staked, staked + amt);
     G.takeInv(pl.C.inv, "coins", amt); this.touch(pl); this.tourStep(pl, "play");
     if (mine[0]) mine[0].amt += amt; else F.bets.push({ id: pl.id, name: pl.name, side, amt });
     this.fightSend(S);
@@ -1718,9 +1812,15 @@ export class World {
     const w = F.winner, name = (f) => `${G.MOBS[f.t].name} ${f.title}`, wins = [];
     for (const b of F.bets) {
       if (b.side !== w) continue;
-      const mult = F.pays[w], payout = F.lucky?.includes(b.id) ? Math.round(b.amt * mult * (1 + G.LUCK.bonus)) : Math.floor(b.amt * mult); wins.push({ name: b.name, payout, mult });
-      const p = this.pls.get(b.id); if (p) { this.cashTo(p, payout); this.touch(p); } else this.creditOffline(b.id, payout);
+      const mult = F.pays[w], payout = G.payWith(Math.floor(b.amt * mult), b.amt, F.fx?.[b.id], F.lucky?.includes(b.id)); wins.push({ name: b.name, payout, mult });
+      const p = this.pls.get(b.id); if (p) { this.cashTo(p, payout); p.lastWin = { amt: payout - b.amt, at: Date.now() }; this.touch(p); } else this.creditOffline(b.id, payout);
     }
+    for (const b of F.bets) {   // the losers: insurance, and the odd angel
+      if (b.side === w) continue; const p = this.pls.get(b.id), e = F.fx?.[b.id]; if (!e) continue;
+      const back = p ? this.lossBack(p, b.amt, e) : G.backWith(b.amt, e, Math.random());
+      if (p) { this.cashTo(p, back); p.lastLoss = { amt: b.amt - back, at: Date.now() }; this.touch(p); } else if (back) this.creditOffline(b.id, back);
+    }
+    F.fx = {};
     const text = `${name(F.f[w])} beats ${name(F.f[1 - w])}. ${wins.length ? `Paid: ${wins.map((x) => `${x.name} +${x.payout.toLocaleString()}`).join(", ")}.` : F.bets.length ? "Nobody had the winner." : "Nobody had money on it."}`;
     for (const p of this.playersIn(S)) p.out.push({ type: "casinonote", text: `Fight Pit: ${text}` });
     for (const x of wins) if (x.mult >= G.FIGHTS.bigWin && x.payout >= 200) for (const p of this.pls.values()) if (p.C.scene !== S.key) p.out.push({ type: "casinonote", text: `🥊 ${x.name} backed ${name(F.f[w])} at ${x.mult}× in the Fight Pit and won ${G.fmtCash(x.payout)}!` });
@@ -1746,10 +1846,11 @@ export class World {
   }
   runCash(g, r) {
     const plain = g === "hilo" ? (r.rights ? G.hiloPays(r.stake, r.mult) : 0) : (r.open.length ? Math.floor(r.stake * G.minesMult(r.mines, r.open.length)) : 0);
-    return r.lucky && plain ? Math.round(plain * (1 + G.LUCK.bonus)) : plain;
+    return G.payWith(plain, r.stake, r.fx, r.lucky);
   }
   runEnd(S, pl, g, how, extra = {}) {
-    const r = pl.C.runs[g], payout = how === "cash" ? this.runCash(g, r) : how === "refund" ? r.stake : 0;
+    const r = pl.C.runs[g], saved = how === "bust" ? this.lossBack(pl, r.stake, r.fx) : 0, payout = how === "cash" ? this.runCash(g, r) : how === "refund" ? r.stake : saved;
+    if (payout > r.stake) pl.lastWin = { amt: payout - r.stake, at: Date.now() }; else if (payout < r.stake) pl.lastLoss = { amt: r.stake - payout, at: Date.now() };
     const mult = g === "hilo" ? Math.min(G.HILO.maxMult, r.mult) : G.minesMult(r.mines, r.open.length);
     delete pl.C.runs[g]; this.cashTo(pl, payout); this.touch(pl);
     pl.out.push({ type: "run", g, run: null, luck: pl.C.luck | 0, over: { how, payout, stake: r.stake, mult: Math.round(mult * 100) / 100, ...(g === "mines" ? { bombs: r.bombs, open: r.open, mines: r.mines } : { card: r.card, suit: r.suit }), ...extra } });
@@ -1768,16 +1869,16 @@ export class World {
       if (r) return pl.out.push(this.runView(pl, g));
       if (!this.near(S, pl, g, 2)) return this.say(pl, `You need to be at the ${game.name} table in the Casino.`, "bad");
       const amt = Math.floor(Number(m.amt)), have = G.cashIn(C);
-      if (!(amt >= G.CASINO.minBet && amt <= G.CASINO.maxBet)) return this.say(pl, `Bets are ${G.CASINO.minBet} to ${G.fmtCash(G.CASINO.maxBet)}.`, "bad");
+      if (!(amt >= G.CASINO.minBet && amt <= G.maxBetOf(C))) return this.say(pl, `Bets are ${G.CASINO.minBet} to ${G.fmtCash(G.maxBetOf(C))}.`, "bad");
       if (have < amt) return this.say(pl, `You only have ${G.fmtCash(have)} in your bag.`, "bad");
       if (this.tooEmpty(pl)) return;
-      G.takeInv(C.inv, "coins", amt); this.tourStep(pl, "play"); this.spendNeeds(pl);
+      G.takeInv(C.inv, "coins", amt); this.tourStep(pl, "play"); this.bigBet(pl, 0, amt); const fx = this.fxTake(pl);
       const lucky = (C.luck | 0) > 0; if (lucky) C.luck--;
-      if (g === "hilo") C.runs[g] = { stake: amt, lucky, card: 1 + Math.floor(Math.random() * 13), suit: Math.floor(Math.random() * 4), mult: 1, cards: 1, rights: 0 };
+      if (g === "hilo") C.runs[g] = { stake: amt, lucky, fx, card: 1 + Math.floor(Math.random() * 13), suit: Math.floor(Math.random() * 4), mult: 1, cards: 1, rights: 0 };
       else {
         const mines = Math.max(G.MINES.min, Math.min(G.MINES.max, Math.floor(Number(m.mines)) || 3)), all = Array.from({ length: G.MINES.tiles }, (_, i) => i);
         for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [all[i], all[j]] = [all[j], all[i]]; }
-        C.runs[g] = { stake: amt, lucky, mines, bombs: all.slice(0, mines).sort((a, b) => a - b), open: [] };
+        C.runs[g] = { stake: amt, lucky, fx, mines, bombs: all.slice(0, mines).sort((a, b) => a - b), open: [] };
       }
       this.touch(pl); return pl.out.push(this.runView(pl, g));
     }
@@ -1832,10 +1933,12 @@ export class World {
     const pick = kind === "num" ? Math.floor(Number(m.pick)) : null; if (kind === "num" && !(pick >= 0 && pick <= 36)) return;
     const amt = Math.floor(Number(m.amt)), staked = R.bets.filter((b) => b.id === pl.id).reduce((a, b) => a + b.amt, 0);
     if (!(amt >= 1)) return;
-    if (staked + amt > G.ROULETTE.maxStake) return this.say(pl, `Up to ${G.fmtCash(G.ROULETTE.maxStake)} a spin. You've got ${G.fmtCash(staked)} down.`, "bad");
+    const top = G.ROULETTE.maxStake - G.CASINO.maxBet + G.maxBetOf(pl.C);
+    if (staked + amt > top) return this.say(pl, `Up to ${G.fmtCash(top)} a spin. You've got ${G.fmtCash(staked)} down.`, "bad");
     if (G.cashIn(pl.C) < amt) return this.say(pl, `You only have ${G.fmtCash(G.cashIn(pl.C))} in your bag.`, "bad");
     if (this.tooEmpty(pl)) return;
-    if (!staked) this.spendNeeds(pl);   // one spin, however many chips
+    if (!staked) (R.fx ||= {})[pl.id] = this.fxTake(pl);   // one spin, however many chips
+    this.bigBet(pl, staked, staked + amt);
     G.takeInv(pl.C.inv, "coins", amt); this.touch(pl); this.tourStep(pl, "play");
     const same = R.bets.find((b) => b.id === pl.id && b.kind === kind && b.pick === pick);
     if (same) same.amt += amt; else R.bets.push({ id: pl.id, name: pl.name, kind, pick, amt });
@@ -1851,11 +1954,18 @@ export class World {
       // a spin uses up one lucky bet for everyone at the table who has any; their wins pay the bonus
       const luckyIds = new Set(); for (const id of new Set(R.bets.map((b) => b.id))) { const p = this.pls.get(id); if (p && (p.C.luck | 0) > 0) { p.C.luck--; luckyIds.add(id); this.touch(p); } }
       for (const b of R.bets) {
-        const def = G.ROULETTE_BETS[b.kind]; if (!def.wins(n, b.pick)) continue;
-        const payout = luckyIds.has(b.id) ? Math.round(b.amt * def.pays * (1 + G.LUCK.bonus)) : b.amt * def.pays; wins.push({ name: b.name, id: b.id, payout, label: G.rouletteLabel(b.kind, b.pick), mult: def.pays });
+        const def = G.ROULETTE_BETS[b.kind];
+        if (!def.wins(n, b.pick)) {   // a losing chip: insurance, and the odd angel
+          const q = this.pls.get(b.id), e = R.fx?.[b.id]; if (!e) continue;
+          const back = q ? this.lossBack(q, b.amt, e) : G.backWith(b.amt, e, Math.random());
+          if (q) { this.cashTo(q, back); this.touch(q); } else if (back) this.creditOffline(b.id, back);
+          continue;
+        }
+        const payout = G.payWith(b.amt * def.pays, b.amt, R.fx?.[b.id], luckyIds.has(b.id)); wins.push({ name: b.name, id: b.id, payout, label: G.rouletteLabel(b.kind, b.pick), mult: def.pays });
         const p = this.pls.get(b.id);
         if (p) { this.cashTo(p, payout); this.touch(p); } else this.creditOffline(b.id, payout);
       }
+      R.fx = {};
       Object.assign(R, { phase: "spin", result: n, wins, endsAt: now + G.ROULETTE.spinMs });
       return this.roulSend(S);
     }
@@ -1917,11 +2027,12 @@ export class World {
   }
   dailySend(pl) { const D = this.dailyState(pl); pl.out.push({ type: "daily", day: D.day, tasks: D.tasks }); }
   dailyEvent(pl, type, d) {
-    if (type !== "gather" && type !== "kill") return;
+    const what = type === "cook" || type === "craft" ? "make" : type;
+    if (what !== "gather" && what !== "kill" && what !== "make") return;
     const D = this.dailyState(pl);
     for (const t of D.tasks) {
       const def = G.dailyDef(t.id); if (!def || t.claimed || t.got >= def.n) continue;
-      if (def.what !== type || (type === "gather" ? d.k : d.mob) !== def.k) continue;
+      if (def.what !== what || (what === "kill" ? d.mob : d.k) !== def.k) continue;
       t.got = Math.min(def.n, t.got + (d.n || 1)); this.touch(pl);
       if (t.got >= def.n) this.say(pl, `Daily task done! Claim your ${G.fmtCash(def.cash)} at the task board in the Casino.`, "good");
     }

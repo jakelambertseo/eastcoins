@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>GAMBA</title>
+<title>GambaScape</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -79,9 +79,10 @@ button,input,select{font:inherit}
 .buffbar{position:absolute;right:10px;top:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:60%;padding:4px 6px 4px 10px;border-radius:16px;background:rgba(12,10,9,.72);box-shadow:0 0 0 1px rgba(255,255,255,.12);font-size:12.5px;font-weight:800;color:#f4ede5}
 .buffbar>small{letter-spacing:.12em;text-transform:uppercase;font-size:10.5px;color:#aca298}
 .buff{display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 5px;border-radius:12px;background:rgba(16,50,24,.92);color:#d8ffd0;box-shadow:0 0 0 2px #4aa84a;cursor:help}
-.buff img{width:18px;height:18px;image-rendering:pixelated}.buff.none{background:rgba(255,255,255,.06);box-shadow:0 0 0 1px rgba(255,255,255,.14);color:#aca298;padding-left:10px;font-weight:700}
+.buff img{width:18px;height:18px;image-rendering:pixelated}.buff.worn{background:rgba(60,44,16,.92);color:#ffe9b0;box-shadow:0 0 0 2px #c8963a}.buff.b-roller{background:rgba(20,20,24,.95);color:#ffd84a;box-shadow:0 0 0 2px #ffd84a}.buff.b-drink{background:rgba(70,40,10,.92);color:#ffd9a0;box-shadow:0 0 0 2px #d8963a}.buff.b-meal{background:rgba(60,20,16,.92);color:#ffd0c0;box-shadow:0 0 0 2px #d86a4a}.buff.b-free{background:rgba(10,50,40,.92);color:#c0ffe6;box-shadow:0 0 0 2px #3ac89a}.buff.none{background:rgba(255,255,255,.06);box-shadow:0 0 0 1px rgba(255,255,255,.14);color:#aca298;padding-left:10px;font-weight:700}
 /* the wallet, under the bag: money first, then what turns into money, then what improves your odds */
-.wallet{margin:6px 7px 4px 5px;padding:8px;border-radius:8px;background:linear-gradient(#1c1613,#120e0c);color:#f4ede5;box-shadow:0 0 0 2px #c8963a,0 0 0 4px #3a2410;display:grid;gap:6px}
+.wallets{margin:6px 7px 4px 5px;display:grid;gap:6px}.wallets>.wl-next{border-top:0;padding:0 3px;color:#5a4a3a}
+.wallet{padding:8px;border-radius:8px;background:linear-gradient(#1c1613,#120e0c);color:#f4ede5;box-shadow:0 0 0 2px #c8963a,0 0 0 4px #3a2410;display:grid;gap:6px}
 .wl-cash{display:flex;align-items:center;gap:8px}.wl-cash img{width:40px;height:40px;image-rendering:pixelated}.wl-cash b{font-size:26px;line-height:1;color:#ffd84a;letter-spacing:-.02em}.wl-cash small{display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#aca298;font-weight:800}
 .wl-row{display:flex;align-items:center;gap:7px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,.05);font-size:12.5px;line-height:1.25}.wl-row img{width:24px;height:24px;image-rendering:pixelated;flex:none}.wl-row b{margin-left:auto;white-space:nowrap}
 .wl-row.go{background:rgba(77,219,139,.14);color:#c8ffd8}.wl-row.go b{color:#4ddb8b}.wl-row small{display:block;color:#aca298;font-size:11px}
@@ -505,9 +506,9 @@ button,input,select{font:inherit}
 </head>
 <body>
 <header class="top">
-  <span class="logo">🎰 GAMBA</span>
+  <span class="logo">🎰 GambaScape</span>
   <span class="clock" id="clock">--:--:--</span>
-  <button type="button" class="wikib" id="wikiBtn" title="The GAMBA wiki">📖 Wiki</button>
+  <button type="button" class="wikib" id="wikiBtn" title="The GambaScape wiki">📖 Wiki</button>
   <button type="button" class="wikib" id="hsBtn" title="Hiscores">🏆 Hiscores</button>
   <span class="spacer"></span>
   <span class="net" id="net" role="status" aria-live="polite"><i></i><span id="netText">Connecting…</span></span>
@@ -531,7 +532,7 @@ button,input,select{font:inherit}
     <div class="qdone" id="qdone" hidden></div>
     <div class="chat" id="chat">
       <div class="chat-box" id="chatBox" hidden>
-        <div class="chat-head"><b>Chat</b><small id="chatWhere">everyone in GAMBA</small></div>
+        <div class="chat-head"><b>Chat</b><small id="chatWhere">everyone in GambaScape</small></div>
         <div class="chat-log" id="chatLog" aria-live="polite"><p class="empty">Nobody has said anything here yet.</p></div>
         <form class="chat-form" id="chatForm" autocomplete="off"><input id="chatIn" maxlength="120" placeholder="Say something… (Enter)" aria-label="Chat message"><button type="submit">Send</button></form>
       </div>
@@ -574,7 +575,7 @@ button,input,select{font:inherit}
       <div class="win-body" id="dailyBody"></div>
     </section>
     <section class="win" id="shopWin" aria-label="The Forge" hidden>
-      <div class="win-head"><b>⚒️ The Forge</b><small>Brutus the Smith</small><button type="button" class="win-x" data-close="shopWin" aria-label="Close">×</button></div>
+      <div class="win-head"><b id="shopTitle">⚒️ The Forge</b><small id="shopWho">Brutus the Smith</small><button type="button" class="win-x" data-close="shopWin" aria-label="Close">×</button></div>
       <div class="win-body cols2">
         <div><h4>For sale</h4><div class="grid8" id="shopSell"></div></div>
         <div><h4>Your bag <small style="text-transform:none;letter-spacing:0;font-weight:600">(click to sell)</small></h4><div class="grid8" id="shopBag"></div></div>
@@ -603,11 +604,11 @@ button,input,select{font:inherit}
       <div class="win-foot" id="tradeFoot"></div>
     </section>
     <section class="win" id="wikiWin" aria-label="Wiki" hidden style="width:min(980px,calc(100% - 28px));height:calc(100% - 28px)">
-      <div class="win-head"><b>📖 GAMBA Wiki</b><small>built from the game itself</small><button type="button" class="win-x" data-close="wikiWin" aria-label="Close">×</button></div>
+      <div class="win-head"><b>📖 GambaScape Wiki</b><small>built from the game itself</small><button type="button" class="win-x" data-close="wikiWin" aria-label="Close">×</button></div>
       <div class="wiki"><nav id="wikiNav"></nav><article id="wikiPage"></article></div>
     </section>
     <div class="cover" id="gate" hidden>
-      <div class="card"><div style="font-size:36px">🎰</div><h2>GAMBA is members-only</h2><p>Log in with Twitch to play. Your character is saved to your Twitch account, so you can pick up from any browser.</p><a class="btn" href="/api/picks/auth/twitch/start?returnTo=%2Feastscape">Log in with Twitch</a></div>
+      <div class="card"><div style="font-size:36px">🎰</div><h2>GambaScape is members-only</h2><p>Log in with Twitch to play. Your character is saved to your Twitch account, so you can pick up from any browser.</p><a class="btn" href="/api/picks/auth/twitch/start?returnTo=%2Feastscape">Log in with Twitch</a></div>
     </div>
     <div class="cover soft" id="veil" hidden><div class="card" id="veilText"><span class="spin"></span>Connecting…</div></div>
   </section>
@@ -626,9 +627,11 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=55";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=31";
-import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=3";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=56";
+// the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
+let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=32").then((m) => { WK = m; }));
+import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=4";
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=1";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -696,7 +699,7 @@ async function connect() {
   ws.onclose = (e) => {
     ws = null;
     if (e.code === 4000) { kicked = true; net("bad", "Opened in another tab"); veil("This character is open in another tab. <br><br><button class='btn' id='takeBack'>Play here instead</button>"); $("takeBack")?.addEventListener("click", () => { kicked = false; connect(); }); return; }
-    if (e.code === 4003) { kicked = true; net("bad", "Removed"); veil("You've been removed from GAMBA."); return; }
+    if (e.code === 4003) { kicked = true; net("bad", "Removed"); veil("You've been removed from GambaScape."); return; }
     if (e.code === 4001) restartHold ||= 25000;   // a planned restart, even if the message before it was missed
     later();
   };
@@ -708,7 +711,7 @@ function later() {
   if (restartHold) {
     const wait = restartHold; restartHold = 0; retry = 0;
     net("warn", "Restarting…");
-    veil(`<span class="spin"></span>GAMBA is restarting. Your character is saved — back in about ${Math.ceil(wait / 1000)} seconds…`);
+    veil(`<span class="spin"></span>GambaScape is restarting. Your character is saved — back in about ${Math.ceil(wait / 1000)} seconds…`);
     retryTimer = setTimeout(connect, wait);
     return;
   }
@@ -972,6 +975,10 @@ const AREA_ART = {
   river: ["charon_south", "charon_east", "tullius_south", "tullius_east"], grove: ["olive", "boar", "goat"], tomato: ["nonna_south", "nonna_east", "hornworm"],
   appia: ["vibius_south", "vibius_east", "highwayman"], farmhouse: ["cassia_south", "cassia_east"],   // (closed for now: nothing here loads at login)
   rough: ["hornworm", "boar", "highwayman", "gnasher"],
+  // Charon's cart in the square, and the islands it goes to (reopened 2026-09-20)
+  forum: ["o_chariot", "charon_south", "charon_east"],
+  isle: ["o_ferry", "o_islesign", "o_lighthouse", "o_palm", "o_pedestal", "o_plot"], isle2: ["o_ferry", "o_islesign", "o_lighthouse", "o_palm", "o_pedestal", "o_plot"], shore: ["o_ferry", "o_islesign", "o_lighthouse", "o_palm", "o_pedestal", "o_plot"],
+  home: ["o_bed", "o_chest", "o_table", "o_chair"],
   roulette: ["t_roulette", "o_roulette", "rouge_south", "rouge_east"]   // (CASINO_ART is core now: the casino is where everyone starts)
 };
 const LAZY_ART = new Set(Object.values(AREA_ART).flat());
@@ -1012,7 +1019,7 @@ function spr(k, x, y, flip = false, filter = "", sc = 1) {
   lc.drawImage(a.im, -Math.round(a.cx), -a.foot); lc.restore(); return true;
 }
 // item and skill icons (PixelLab): art where it exists, the emoji where it doesn't
-const ITEM_ART = new Set(["ashlogs", "axe", "beef", "bogplate", "bones", "bronze_amulet", "bronze_bar", "bronze_body", "bronze_boots", "bronze_gladius", "bronze_gloves", "bronze_helm", "bronze_legs", "bronze_maul", "bronze_ring", "bronze_shield", "bronze_sword", "bronzecuirass", "bronzehelm", "bronzeshield", "bronzesword", "burnt", "cap", "cbeef", "cchicken", "cgloomfin", "chicken", "clanternfish", "clover", "cmooncarp", "cobweb", "coins", "copper", "cpork", "csardine", "cskyeel", "ctrout", "diamond_amulet", "diamond_bar", "diamond_body", "diamond_boots", "diamond_gladius", "diamond_gloves", "diamond_helm", "diamond_legs", "diamond_maul", "diamond_ore", "diamond_ring", "diamond_shield", "diamond_sword", "dragonstone_amulet", "dragonstone_bar", "dragonstone_body", "dragonstone_boots", "dragonstone_gladius", "dragonstone_gloves", "dragonstone_helm", "dragonstone_legs", "dragonstone_maul", "dragonstone_ore", "dragonstone_ring", "dragonstone_shield", "dragonstone_sword", "emerald_amulet", "emerald_bar", "emerald_body", "emerald_boots", "emerald_gladius", "emerald_gloves", "emerald_helm", "emerald_legs", "emerald_maul", "emerald_ore", "emerald_ring", "emerald_shield", "emerald_sword", "feather", "geode", "gloomfin", "goldtomatoe", "grimstone", "grudge", "hide", "horseshoe", "husk", "lantern", "lanternfish", "logs", "manifesto", "marble", "mask", "menace", "monocle", "mooncarp", "olives", "onyx_amulet", "onyx_bar", "onyx_body", "onyx_boots", "onyx_gladius", "onyx_gloves", "onyx_helm", "onyx_legs", "onyx_maul", "onyx_ore", "onyx_ring", "onyx_shield", "onyx_sword", "parma", "pickaxe", "pit", "pork", "receipt", "rod", "rudis", "sandals", "sardine", "skyashlogs", "skyeel", "spiderboots", "stardust", "sunolive", "tin", "toga", "tomatoe", "trout", "tunic", "tusk", "wheat", "willowlogs", "wraithhood", "yewlogs"]), SKILL_ART = new Set(["attack", "cooking", "defence", "farming", "fishing", "hp", "melee", "mining", "smithing", "strength", "woodcutting"]), EQ_ART = new Set(["amulet", "body", "boots", "gloves", "helm", "legs", "ring", "shield", "weapon"]);
+const ITEM_ART = new Set(["adjusters_visor", "angels_ring", "ashlogs", "axe", "beef", "beer", "bogplate", "bones", "bookies_amulet", "bronze_amulet", "bronze_bar", "bronze_body", "bronze_boots", "bronze_gladius", "bronze_gloves", "bronze_helm", "bronze_legs", "bronze_maul", "bronze_ring", "bronze_shield", "bronze_sword", "bronzecuirass", "bronzehelm", "bronzeshield", "bronzesword", "burnt", "cap", "cbeef", "cchicken", "cgloomfin", "champagne", "chicken", "chickendinner", "chip_black", "chip_free", "chip_gold", "chip_red", "clanternfish", "clover", "cmooncarp", "cobweb", "cocktail", "coins", "copper", "cpork", "csardine", "cskyeel", "ctrout", "devils_dice", "diamond_amulet", "diamond_bar", "diamond_body", "diamond_boots", "diamond_gladius", "diamond_gloves", "diamond_helm", "diamond_legs", "diamond_maul", "diamond_ore", "diamond_ring", "diamond_shield", "diamond_sword", "dragonstone_amulet", "dragonstone_bar", "dragonstone_body", "dragonstone_boots", "dragonstone_gladius", "dragonstone_gloves", "dragonstone_helm", "dragonstone_legs", "dragonstone_maul", "dragonstone_ore", "dragonstone_ring", "dragonstone_shield", "dragonstone_sword", "emerald_amulet", "emerald_bar", "emerald_body", "emerald_boots", "emerald_gladius", "emerald_gloves", "emerald_helm", "emerald_legs", "emerald_maul", "emerald_ore", "emerald_ring", "emerald_shield", "emerald_sword", "feather", "fishplatter", "gamblers_ring", "geode", "gloomfin", "goldtomatoe", "grimstone", "grudge", "hide", "horseshoe", "husk", "lantern", "lanternfish", "logs", "manifesto", "marble", "mask", "menace", "monocle", "mooncarp", "mysterybox", "olives", "onyx_amulet", "onyx_bar", "onyx_body", "onyx_boots", "onyx_gladius", "onyx_gloves", "onyx_helm", "onyx_legs", "onyx_maul", "onyx_ore", "onyx_ring", "onyx_shield", "onyx_sword", "parma", "pickaxe", "pit", "pork", "porkchops", "receipt", "rewind_watch", "rod", "rudis", "sandals", "sardine", "sharps_gloves", "skyashlogs", "skyeel", "spiderboots", "stake_loafers", "stardust", "steakdinner", "sunolive", "tin", "toga", "tomatoe", "tp_scroll", "trout", "tunic", "tusk", "wheat", "whiskey", "willowlogs", "wraithhood", "yewlogs"]), SKILL_ART = new Set(["attack", "cooking", "defence", "farming", "fishing", "hp", "melee", "mining", "smithing", "strength", "woodcutting"]), EQ_ART = new Set(["amulet", "body", "boots", "gloves", "helm", "legs", "ring", "shield", "weapon"]);
 const IART = "/v3/assets/img/glad/flat/items/", IART_V = 5, ICO_IMG = {};
 // (canvas icons are fetched the first time each is drawn; the <img> icons in windows load as they appear)
 const artOf = (k) => `<img class="ico" src="${IART}${k}.png?v=${IART_V}" alt="">`;
@@ -1486,8 +1493,8 @@ const luckLine = () => ((me?.luck | 0) > 0
 function renderTour() {
   // the buffs bar: everything that's improving your odds right now (one kind today, built for several)
   const buffs = G.buffsOf(me);
-  $("buffBar").innerHTML = `<small>Buffs</small>` + (buffs.length ? buffs.map((b) => { const d = G.BUFFS[b.id]; return `<span class="buff" title="${esc(`${d.name}: ${d.ex} ${b.left} ${d.unit}${b.left === 1 ? "" : "s"} left.`)}"><img src="${IART}${d.icon}.png?v=${IART_V}" alt="">${esc(d.name)} × ${b.left}</span>`; }).join("")
-    : `<span class="buff none" title="Lucky clovers turn up while you work out the west arch; monsters out the east arch drop horseshoes. Click one in your bag.">none yet</span>`);
+  $("buffBar").innerHTML = `<small>Buffs</small>` + (buffs.length ? buffs.map((b) => `<span class="buff${b.left == null ? " worn" : ""} b-${b.id.split(":")[0]}" title="${esc(`${b.ex}${b.left != null ? ` ${b.left} ${b.unit}${b.left === 1 ? "" : "s"} left.` : ""}`)}"><img src="${IART}${b.icon}.png?v=${IART_V}" alt="">${esc(b.name)}${b.left != null ? ` × ${b.left}` : ""}</span>`).join("")
+    : `<span class="buff none" title="Skilling finds lucky clovers. Fighting makes you a High Roller. Crafting makes rings, amulets and dinners. Dex sells drinks.">none yet</span>`);
   const box = $("tourBox"), t = me?.tour, st = G.tourOf(me);
   if (t && tourSeen != null && t.step > tourSeen) SFX.play("task_done");
   tourSeen = t ? t.step : null;
@@ -1502,7 +1509,7 @@ function whatNext() {
   const cash = G.cashIn(me), att = G.lvlOf(me, "melee"), tiered = G.SLOTS.some((sl) => ITEMS[me.eq[sl]]?.tier);
   const charm = me.inv.find((x) => ITEMS[x.k].luck);
   if (charm) return `You've got a ${ITEMS[charm.k].name.toLowerCase()} in your bag. Click it, then play: your wins pay more while you're lucky.`;
-  if (cash >= 20 && !(me.luck | 0)) return "You're playing without luck. Go and work the Workyard (west arch) for lucky clovers, or fight in the Paddock (east arch) for horseshoes. Use one and every win pays more. You'll come back with things to sell, too.";
+  if (cash >= 20 && !(me.luck | 0)) return "You're playing without luck. Go and work the Workyard (west arch) for lucky clovers, or fight in the Paddock (east arch) for house chips and High Roller. Use one and every win pays more. You'll come back with things to sell, too.";
   if (cash < 20) return "You're light. The task board by the back door has three paid jobs today, and the work's one arch away: skilling west, fighting east.";
   if (att < 10) return "Toughen up in the Paddock, out the east arch. At Combat 10 you can use bronze: Brutus sells it in town, out the front door.";
   if (!tiered) return "Get some real gear on. Brutus sells bronze in town, or smelt your own at his furnace: copper and tin are in the Workyard.";
@@ -1516,10 +1523,12 @@ function talkTo(n) {
     if (st === "meet") opts.push(["I'm new here.", () => { send({ t: "tour", op: "talk" }); showTalk(n, [me.tour?.again ? "Round again? Fine." : `New blood. First one's on the house: here's ${G.fmtCash(G.TOUR_CHIP)}. Go and lose it somewhere on my floor.`, "Slots on the walls, coins on the round table, dice with DookieBetts. Pick one."], [["On it.", closeTalk]]); }]);
     if (st === "paid") opts.push(["The job's done. Pay me.", () => { send({ t: "tour", op: "talk" }); showTalk(n, ["Honest work. Here's your money.", "And a lucky clover, on the house. Click it in your bag: your next bets pay more when they win. That's the whole game, friend: play, and when you want better odds or more Cash, go out an arch and work for it."], [["Got it.", closeTalk]]); }]);
     if (!st) opts.push(["Give me the House Tour.", () => { send({ t: "tour", op: "start" }); showTalk(n, "Step one: say hello properly.", [["Hello, Dex.", () => talkTo(n)]]); }]);
+    opts.push(["What's behind the bar?", () => { closeTalk(); openShop("bar"); }]);
+    opts.push([`A round for the room (${G.fmtCash(G.BAR.round.price)})`, () => { closeTalk(); send({ t: "shop", shop: "bar", op: "round" }); }]);
     opts.push(["What should I do next?", () => showTalk(n, whatNext(), [["Something else…", () => talkTo(n)], bye])]);
     return showTalk(n, st ? "You're on the House Tour. Eyes top-left: it tells you the next thing." : pick(n.lines), [...opts, chat, bye]);
   }
-  if (n.opens === "shop") return showTalk(n, pick(n.lines), [["Let's trade.", () => { closeTalk(); openWin("shopWin"); }], chat, bye]);
+  if (n.opens === "shop") return showTalk(n, pick(n.lines), [["Let's trade.", () => { closeTalk(); openShop("shop"); }], chat, bye]);
   if (n.opens === "ferry") return showTalk(n, pick(n.lines), [
     ["Take me to my island.", () => { closeTalk(); send({ t: "isle", op: "go" }); }],
     ["Row me to someone else's island.", () => { closeTalk(); openWin("isleWin"); send({ t: "isle", op: "list" }); setTimeout(() => $("isleName").focus(), 50); }],
@@ -1576,7 +1585,7 @@ function aimCamera(P, now) {
   view.ox = Math.round(view.bx - cam.x * view.s); view.oy = Math.round(view.by - cam.y * view.s);
 }
 const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
-const KIND_OF = { fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
+const KIND_OF = { cart: "ferry", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
 function thingAt(wx, wy) {
   const now = snow(), near = (x_, y_, rx, ry) => Math.abs(wx - x_) <= rx && wy <= y_ + 4 && wy >= y_ - ry;
   for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})${m.c && m.c !== you?.id ? " · someone's fighting it" : ""}` }; }
@@ -2196,18 +2205,20 @@ function isleSign(e) {
 }
 
 /* ------------------------------------------------------------ the Forge: Brutus's shop */
-let shopN = 1;
+let shopN = 1, shopKind = "shop";   // "shop": Brutus at the Forge; "bar": Dex, who sells and never buys
+function openShop(kind) { shopKind = kind; $("shopTitle").textContent = kind === "bar" ? "🍸 The Bar" : "⚒️ The Forge"; $("shopWho").textContent = kind === "bar" ? "Dex the Dealer" : "Brutus the Smith"; openWin("shopWin"); }
 $("shopQty").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { shopN = b.dataset.n === "all" ? "all" : +b.dataset.n; $("shopQty").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); }));
 function renderShop() {
   if (!me) return;
   const cash = G.cashIn(me), short = (p) => (p >= 1000 ? `${Math.floor(p / 100) / 10}K` : String(p));
-  $("shopSell").innerHTML = G.SHOP.sells.map(([k, p]) => { const it = ITEMS[k], rq = it.req ? ` · needs ${SKILLS[it.req.skill].name} ${it.req.lvl}` : "";
-    return `<div class="slot${cash < p ? " nobuy" : ""}" data-k="${k}" title="${esc(it.name)}: ${G.fmtCash(p)}${rq}">${ico(k)}<em class="price">${short(p)}</em></div>`; }).join("");
-  $("shopBag").innerHTML = me.inv.map((s, i) => { const p = G.SHOP.buys[s.k];
-    return `<div class="slot${p ? "" : " nobuy"}" data-i="${i}" data-item="${s.k}" title="${esc(ITEMS[s.k].name)}${p ? `: Brutus pays ${G.fmtCash(p)} each` : ": Brutus won't buy this"}">${ico(s.k)}${s.n > 1 ? qty(s.n) : ""}${p ? `<em class="price">${short(p)}</em>` : ""}</div>`; }).join("") || `<p class="note">Your bag is empty.</p>`;
+  const bar = shopKind === "bar";
+  $("shopSell").innerHTML = (bar ? G.BAR : G.SHOP).sells.map(([k, p]) => { const it = ITEMS[k], rq = it.req ? ` · needs ${SKILLS[it.req.skill].name} ${it.req.lvl}` : "";
+    return `<div class="slot${cash < p ? " nobuy" : ""}" data-k="${k}" title="${esc(it.name)}: ${G.fmtCash(p)}${rq}${bar && it.ex ? `\n${esc(it.ex)}` : ""}">${ico(k)}<em class="price">${short(p)}</em></div>`; }).join("");
+  $("shopBag").innerHTML = me.inv.map((s, i) => { const p = bar ? 0 : G.SHOP.buys[s.k];
+    return `<div class="slot${p ? "" : " nobuy"}" data-i="${i}" data-item="${s.k}" title="${esc(ITEMS[s.k].name)}${p ? `: Brutus pays ${G.fmtCash(p)} each` : bar ? ": Dex sells, he doesn't buy" : ": Brutus won't buy this"}">${ico(s.k)}${s.n > 1 ? qty(s.n) : ""}${p ? `<em class="price">${short(p)}</em>` : ""}</div>`; }).join("") || `<p class="note">Your bag is empty.</p>`;
   $("shopNote").textContent = `You have ${G.fmtCash(cash)}`;
-  $("shopSell").querySelectorAll("[data-k]").forEach((el) => el.addEventListener("click", () => send({ t: "shop", op: "buy", k: el.dataset.k, n: shopN })));
-  $("shopBag").querySelectorAll("[data-i]").forEach((el) => el.addEventListener("click", () => send({ t: "shop", op: "sell", i: +el.dataset.i, n: shopN })));
+  $("shopSell").querySelectorAll("[data-k]").forEach((el) => el.addEventListener("click", () => send({ t: "shop", shop: shopKind, op: "buy", k: el.dataset.k, n: shopN })));
+  $("shopBag").querySelectorAll("[data-i]").forEach((el) => el.addEventListener("click", () => !bar && send({ t: "shop", op: "sell", i: +el.dataset.i, n: shopN })));
 }
 
 /* ------------------------------------------------------------ the bank */
@@ -2390,7 +2401,7 @@ function renderRoul() {
   const byName = new Map(); for (const b of R.bets) { const a = byName.get(b.name) || []; a.push(`${b.amt.toLocaleString()} on ${G.rouletteLabel(b.kind, b.pick)}`); byName.set(b.name, a); }
   const myStake = R.bets.filter((b) => b.me).reduce((a, b) => a + b.amt, 0);
   const last = R.last ? `<span class="rl-n ${R.last.col}">${R.last.n}</span>` : "—";
-  $("roulSub").textContent = `Round ${R.round} · up to ${G.fmtCash(G.ROULETTE.maxStake)} a spin`;
+  $("roulSub").textContent = `Round ${R.round} · up to ${G.fmtCash(G.maxBetOf(me))} a spin`;
   const banner = roulBanner && performance.now() < roulBanner.until ? `<div class="rl-banner ${roulBanner.cls}">${esc(roulBanner.text)}<small>${esc(roulBanner.sub)}</small></div>` : "";
   $("roulBody").innerHTML = `${luckLine()}<div class="rl-top">${banner}<div class="rl-wheelbox"><div class="rl-wheel" id="rlWheel" style="background:${roulWheelBg()};transform:rotate(${roulAngle}deg)"></div><div class="rl-hub"></div><div class="rl-ballring" id="rlBall" style="transform:rotate(${roulBallAngle}deg)"><i></i></div><div class="rl-pin"></div></div>
       <div class="rl-state"><b>${betting ? `Place your bets · ${Math.ceil(left / 1000)}s` : "No more bets · the ball is rolling"}</b>
@@ -2538,13 +2549,14 @@ function wikiNav(active) {
   $("wikiSearch").addEventListener("input", (e) => { const q = e.target.value.trim(); if (q) wikiGo(`search/${q}`, false); });
 }
 function wikiGo(route, setNav = true) {
+  if (WK.stub) loadWiki().then(() => { if (!$("wikiWin").hidden) wikiGo(route, setNav); }).catch(() => {});
   wikiRoute = route;
   if (setNav) wikiNav(route);
   if (!location.hash.startsWith(`#wiki/${route}`)) history.replaceState(null, "", `#wiki/${route}`);
   const [kind, ...rest] = route.split("/"), id = decodeURIComponent(rest.join("/")), page = $("wikiPage");
   const cards = (list) => `<div class="cards">${list.map((p) => `<a class="card" data-wiki="${esc(p.route)}"><i>${p.icon}</i>${esc(p.title)}</a>`).join("")}</div>`;
   let html = "";
-  if (kind === "home") html = `<h2><i>🎰</i>GAMBA Wiki</h2><p class="lede">Everything in the game, written from the game itself: every item, monster, drop, skill, quest and place on these pages comes from the same rules the server plays by.</p>
+  if (kind === "home") html = `<h2><i>🎰</i>GambaScape Wiki</h2><p class="lede">Everything in the game, written from the game itself: every item, monster, drop, skill, quest and place on these pages comes from the same rules the server plays by.</p>
     <h3>Start here</h3>${cards(wikiPages().filter((p) => p.group === "Guides"))}<h3>Browse</h3>${cards(["Skills", "Quests", "Monsters", "Areas", "People", "Items"].map((g) => ({ route: `list/${g}`, title: g, icon: { Skills: "📶", Quests: "📜", Monsters: "👹", Areas: "🗺️", People: "🧑", Items: "🎒" }[g] })))}
     <h3>Latest update</h3>${wikiUpdate(WK.UPDATES[0])}`;
   else if (kind === "updates") html = `<h2><i>📰</i>Updates</h2><p class="lede">Every change to the game, newest first.</p>${WK.UPDATES.map(wikiUpdate).join("")}`;
@@ -2684,16 +2696,21 @@ function renderStats() {
    (so a full bag reads as "go and see the Cashier"); the jackpot, because it's the dream; today's three paid jobs
    with their progress; and one line on what to do next. Everything here is already known to the page. */
 const UIA = "/v3/assets/img/glad/flat/ui/";
+// today's three paid jobs: they live on the Quests tab (the wallet is for money)
+function jobsCard() {
+  const jobs = (me.daily || []).map((t) => { const d = G.dailyDef(t.id); if (!d) return ""; const done = t.got >= d.n, what = d.what === "kill" ? `${d.n} ${MOBS[d.k].name.toLowerCase()}${d.n > 1 ? "s" : ""}` : `${d.what === "make" ? "Make " : ""}${d.n} ${ITEMS[d.k].name.toLowerCase()}`;
+    return `<div class="wl-job${t.claimed ? " paid" : done ? " done" : ""}" title="${t.claimed ? "Paid" : done ? "Done: claim it at the task board in the casino" : d.what === "kill" ? "Fight: out the east arch" : d.what === "make" ? "Make it: the workshop is out the casino's front door" : "Gather: out the west arch"}">${d.what === "kill" ? `<img class="ico" src="${UIA}combat.png?v=1" alt="">` : ico(d.k)}<span>${esc(what)}<i><u style="width:${Math.round(Math.min(1, t.got / d.n) * 100)}%"></u></i></span><b>${t.claimed ? "paid" : done ? "claim!" : G.fmtCash(d.cash)}</b></div>`; }).join("");
+  return jobs ? `<div class="wallets"><div class="wallet"><div class="wl-h"><img src="${UIA}w_jobs.png?v=1" alt="">Today's paid jobs</div>${jobs}<div class="wl-next" style="border:0;padding-top:2px">Claim them at the task board by the casino's back wall. New ones every morning.</div></div></div>` : "";
+}
 function walletCard() {
   const cash = G.cashIn(me), loot = me.inv.filter((s) => G.isLoot(s.k)).reduce((a, s) => a + s.n * G.valueOf(s.k), 0), full = me.inv.length >= G.INV_MAX;
-  const jobs = (me.daily || []).map((t) => { const d = G.dailyDef(t.id); if (!d) return ""; const done = t.got >= d.n, what = d.what === "kill" ? `${d.n} ${MOBS[d.k].name.toLowerCase()}${d.n > 1 ? "s" : ""}` : `${d.n} ${ITEMS[d.k].name.toLowerCase()}`;
-    return `<div class="wl-job${t.claimed ? " paid" : done ? " done" : ""}" title="${t.claimed ? "Paid" : done ? "Done: claim it at the task board in the casino" : d.what === "kill" ? "Fight: out the east arch" : "Gather: out the west arch"}">${d.what === "kill" ? `<img class="ico" src="${UIA}combat.png?v=1" alt="">` : ico(d.k)}<span>${esc(what)}<i><u style="width:${Math.round(Math.min(1, t.got / d.n) * 100)}%"></u></i></span><b>${t.claimed ? "paid" : done ? "claim!" : G.fmtCash(d.cash)}</b></div>`; }).join("");
-  return `<div class="wallet">
-    <div class="wl-cash"><img src="${UIA}w_cash.png?v=1" alt=""><span><small>Your cash</small><b>${G.fmtCash(cash)}</b></span></div>
-    <div class="wl-needs">${[["thirst", "w_water", "Thirst"], ["hunger", "w_food", "Hunger"]].map(([k, i, n]) => { const v = Math.round(G.needOf(me, k)), low = v < G.NEEDS.floor; return `<div class="wl-need${low ? " low" : ""}" title="${n}: ${v}%. Every bet takes a little. Under ${G.NEEDS.floor}% the tables won't take your bets: the water cooler and the buffet are on the card room's back wall, next to the bar."><img src="${UIA}${i}.png?v=1" alt=""><span>${n}<i><u style="width:${v}%"></u></i></span><b>${v}%</b></div>`; }).join("")}</div>
-    <div class="wl-row${loot ? " go" : ""}" title="What the Cashier would pay for the loot and made things in your bag"><img src="${UIA}w_sack.png?v=1" alt=""><span>${loot ? (full ? "Bag's full" : "In your bag") : "Nothing to sell"}<small>${loot ? "see a Cashier, by either arch" : "west arch to gather, east to fight"}</small></span><b>${loot ? `+${G.fmtCash(loot)}` : ""}</b></div>
-    ${me.jack ? `<div class="wl-row" title="The slots jackpot: three sevens wins it"><img src="${UIA}w_jackpot.png?v=1" alt=""><span>Slots jackpot<small>three sevens takes it</small></span><b style="color:#ffd84a">${G.fmtCash(me.jack)}</b></div>` : ""}
-    ${jobs ? `<div class="wl-h"><img src="${UIA}w_jobs.png?v=1" alt="">Today's paid jobs</div>${jobs}` : ""}
+  return `<div class="wallets">
+    <div class="wallet wl-needs">${[["thirst", "w_water", "Thirst"], ["hunger", "w_food", "Hunger"]].map(([k, i, n]) => { const v = Math.round(G.needOf(me, k)), low = v < G.NEEDS.floor, fed = (me.meal?.left | 0) > 0; return `<div class="wl-need${low ? " low" : ""}" title="${n}: ${v}%. Every bet takes a little${fed ? " (not while you're Well Fed)" : ""}. Under ${G.NEEDS.floor}% the tables won't take your bets: the water cooler and the buffet are on the card room's back wall, next to the bar."><img src="${UIA}${i}.png?v=1" alt=""><span>${n}<i><u style="width:${v}%"></u></i></span><b>${v}%</b></div>`; }).join("")}</div>
+    <div class="wallet wl-cash"><img src="${UIA}w_cash.png?v=1" alt=""><span><small>Your cash</small><b>${G.fmtCash(cash)}</b></span></div>
+    <div class="wallet">
+      <div class="wl-row${loot ? " go" : ""}" title="What the Cashier would pay for the loot and made things in your bag"><img src="${UIA}w_sack.png?v=1" alt=""><span>${loot ? (full ? "Bag's full" : "In your bag") : "Nothing to sell"}<small>${loot ? "see a Cashier, by either arch" : "west arch to gather, east to fight"}</small></span><b>${loot ? `+${G.fmtCash(loot)}` : ""}</b></div>
+      ${me.jack ? `<div class="wl-row" title="The slots jackpot: three sevens wins it"><img src="${UIA}w_jackpot.png?v=1" alt=""><span>Slots jackpot<small>three sevens takes it</small></span><b style="color:#ffd84a">${G.fmtCash(me.jack)}</b></div>` : ""}
+    </div>
     <div class="wl-next">${esc(whatNext())}</div>
   </div>`;
 }
@@ -2707,7 +2724,7 @@ function renderPanel() {
     // "is this better than what I have on" is the only question being asked here
     const cells = me.inv.map((s, i) => {
       const it = ITEMS[s.k], cmp = it.slot ? G.compareText(me, s.k) : "";
-      const what = it.luck ? `click to use: your next ${it.luck} bets are lucky` : it.heal ? `click to eat (heals ${it.heal})` : it.slot ? (it.slot === "weapon" ? "click to wield" : "click to wear") : "click to examine";
+      const what = it.luck ? `click to use: your next ${it.luck} bets are lucky` : it.drink ? "click to drink" : it.use ? "click to use" : it.meal ? "click to eat: Well Fed" : it.heal ? `click to eat (heals ${it.heal})` : it.slot ? (it.slot === "weapon" ? "click to wield" : "click to wear") : "click to examine";
       const title = `${it.name}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}` + (cmp ? `\n${cmp}` : "") + `\n${what}, shift-click to drop, right-click for the wiki`;
       return `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" data-item="${s.k}" title="${esc(title)}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}</div>`;
     });
@@ -2722,7 +2739,7 @@ function renderPanel() {
         return send({ t: "drop", i });
       }
       if (ITEMS[s.k].heal) return send({ t: "eat", i });
-      if (ITEMS[s.k].luck) return send({ t: "use", i });
+      if (ITEMS[s.k].luck || ITEMS[s.k].use || ITEMS[s.k].drink) return send({ t: "use", i });
       if (ITEMS[s.k].slot) send({ t: "equip", i });
       else say(`${ITEMS[s.k].name}${s.n > 1 ? ` (×${s.n.toLocaleString()})` : ""}.${ITEMS[s.k].ex ? " " + ITEMS[s.k].ex : ""}`);
     }));
@@ -2766,14 +2783,14 @@ function renderPanel() {
     }).join("")}`;
   }
   if (tab === "quests") {
-    const order = { ready: 0, active: 1, new: 2, done: 3, locked: 4 }, keys = Object.keys(QUESTS).sort((a, b) => order[G.qState(me, a)] - order[G.qState(me, b)]);
+    const order = { ready: 0, active: 1, new: 2, done: 3, locked: 4 }, keys = Object.keys(QUESTS).filter((k) => G.OPEN.has(WIKI.npcs[QUESTS[k].giver]?.scene) || ["active", "ready", "done"].includes(G.qState(me, k))).sort((a, b) => order[G.qState(me, a)] - order[G.qState(me, b)]);   /* quests whose giver lives down a closed road wait until it reopens */
     const done = keys.filter((k) => G.qState(me, k) === "done").length;
-    p.innerHTML = `<div class="ph">Quests <small>${done}/${keys.length} done</small></div><div class="qs">${keys.map((k) => {
+    p.innerHTML = `${jobsCard()}<div class="ph">Quests <small>${done}/${keys.length} done</small></div><div class="qs">${keys.map((k) => {
       const q = QUESTS[k], st = G.qState(me, k), have = Math.min(G.qHave(me, k), q.goal.n);
       const line = st === "new" ? `Talk to ${q.giver} at ${q.where}.` : st === "locked" ? "Finish an earlier quest to unlock this." : st === "done" ? `Reward: ${q.reward.text}` : q.brief;
       const tag = { new: "Not started", active: "In progress", ready: `Hand in to ${q.giver}`, done: "Done", locked: "Locked" }[st];
       return `<div class="q ${st}"><b>${q.icon} ${esc(q.name)}</b><em class="qtag">${tag}</em><small>${esc(line)}</small>${st === "active" || st === "ready" ? `<div class="xpb"><i style="width:${(have / q.goal.n) * 100}%"></i></div><small>${have}/${q.goal.n} ${q.goal.what}</small>` : ""}</div>`;
-    }).join("")}</div>`;
+    }).join("") || `<p class="note" style="padding:6px 10px">No story quests right now: they come back when the roads out of town reopen. Today's paid jobs are above.</p>`}</div>`;
   }
   if (tab === "settings") {
     p.innerHTML = `<div class="ph">Settings <small>saved to your account</small></div><div class="sets">${Object.entries(G.SETTING_INFO).map(([k, [name, about]]) =>
@@ -2886,7 +2903,7 @@ setInterval(() => {
 
 artReady.then(() => { if (Z.key) Z.bg = paintBg(); });
 requestAnimationFrame(frame);
-veil('<span class="spin"></span>Connecting to GAMBA…');
+veil('<span class="spin"></span>Connecting to GambaScape…');
 connect();
 </script>
 </body>
