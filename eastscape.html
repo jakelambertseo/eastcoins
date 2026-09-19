@@ -83,6 +83,7 @@ button,input,select{font:inherit}
 /* the wallet, under the bag: money first, then what turns into money, then what improves your odds */
 .rarelog{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.rarelog span{position:relative;display:grid;place-items:center;aspect-ratio:1;border-radius:6px;background:rgba(255,255,255,.05);filter:grayscale(1) brightness(.45);cursor:help}.rarelog span.has{filter:none;background:rgba(232,191,53,.16);box-shadow:0 0 0 1px rgba(232,191,53,.5)}
 .rarelog .ico{width:22px;height:22px}.rarelog em{position:absolute;right:2px;bottom:0;font:800 9.5px Nunito,sans-serif;color:#ffd84a;font-style:normal;text-shadow:0 1px 1px #000}
+.wl-two{display:grid;grid-template-columns:1fr 1fr;gap:6px}.wl-two .wl-cash{gap:6px}.wl-two .wl-cash img,.wl-two .wl-cash .ico{width:30px;height:30px;image-rendering:pixelated}.wl-two .wl-cash b{font-size:19px}.wl-tix b{color:#ff9aa8}
 .wl-vipbar{display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}.wl-vipbar>u{display:block;height:100%}
 .wallets{margin:6px 7px 4px 5px;display:grid;gap:6px}.wallets>.wl-next{border-top:0;padding:0 3px;color:#5a4a3a}
 .wallet{padding:8px;border-radius:8px;background:linear-gradient(#1c1613,#120e0c);color:#f4ede5;box-shadow:0 0 0 2px #c8963a,0 0 0 4px #3a2410;display:grid;gap:6px}
@@ -630,11 +631,11 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=63";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=64";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=37").then((m) => { WK = m; }));
-import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=9";
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=38").then((m) => { WK = m; }));
+import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=10";
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=2";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -1027,7 +1028,7 @@ function spr(k, x, y, flip = false, filter = "", sc = 1) {
   lc.drawImage(a.im, -Math.round(a.cx), -a.foot); lc.restore(); return true;
 }
 // item and skill icons (PixelLab): art where it exists, the emoji where it doesn't
-const ITEM_ART = new Set(["adjusters_visor", "angels_ring", "ashlogs", "axe", "beef", "beer", "bogplate", "bones", "bookies_amulet", "bronze_amulet", "bronze_bar", "bronze_body", "bronze_boots", "bronze_gladius", "bronze_gloves", "bronze_helm", "bronze_legs", "bronze_maul", "bronze_ring", "bronze_shield", "bronze_sword", "bronzecuirass", "bronzehelm", "bronzeshield", "bronzesword", "burnt", "cap", "cbeef", "cchicken", "cgloomfin", "champagne", "chicken", "chickendinner", "chip_black", "chip_free", "chip_gold", "chip_red", "clanternfish", "clover", "cmooncarp", "cobweb", "cocktail", "coins", "copper", "cpork", "csardine", "cskyeel", "ctrout", "devils_dice", "diamond_amulet", "diamond_bar", "diamond_body", "diamond_boots", "diamond_gladius", "diamond_gloves", "diamond_helm", "diamond_legs", "diamond_maul", "diamond_ore", "diamond_ring", "diamond_shield", "diamond_sword", "dragonstone_amulet", "dragonstone_bar", "dragonstone_body", "dragonstone_boots", "dragonstone_gladius", "dragonstone_gloves", "dragonstone_helm", "dragonstone_legs", "dragonstone_maul", "dragonstone_ore", "dragonstone_ring", "dragonstone_shield", "dragonstone_sword", "emerald_amulet", "emerald_bar", "emerald_body", "emerald_boots", "emerald_gladius", "emerald_gloves", "emerald_helm", "emerald_legs", "emerald_maul", "emerald_ore", "emerald_ring", "emerald_shield", "emerald_sword", "feather", "fishplatter", "gamblers_ring", "geode", "gloomfin", "goldtomatoe", "grimstone", "grudge", "hide", "horseshoe", "husk", "lantern", "lanternfish", "logs", "manifesto", "marble", "mask", "menace", "monocle", "mooncarp", "mysterybox", "olives", "onyx_amulet", "onyx_bar", "onyx_body", "onyx_boots", "onyx_gladius", "onyx_gloves", "onyx_helm", "onyx_legs", "onyx_maul", "onyx_ore", "onyx_ring", "onyx_shield", "onyx_sword", "parma", "pickaxe", "pit", "pork", "porkchops", "receipt", "rewind_watch", "rod", "rudis", "sandals", "sardine", "sharps_gloves", "skyashlogs", "skyeel", "spiderboots", "stake_loafers", "stardust", "steakdinner", "sunolive", "tin", "toga", "tomatoe", "tp_scroll", "trout", "tunic", "tusk", "wheat", "whiskey", "willowlogs", "wraithhood", "yewlogs"]), SKILL_ART = new Set(["attack", "cooking", "defence", "farming", "fishing", "hp", "melee", "mining", "smithing", "strength", "woodcutting"]), EQ_ART = new Set(["amulet", "body", "boots", "gloves", "helm", "legs", "ring", "shield", "weapon"]);
+const ITEM_ART = new Set(["adjusters_visor", "angels_ring", "ashlogs", "axe", "beef", "beer", "bogplate", "bones", "bookies_amulet", "bronze_amulet", "bronze_bar", "bronze_body", "bronze_boots", "bronze_gladius", "bronze_gloves", "bronze_helm", "bronze_legs", "bronze_maul", "bronze_ring", "bronze_shield", "bronze_sword", "bronzecuirass", "bronzehelm", "bronzeshield", "bronzesword", "burnt", "cap", "cbeef", "cchicken", "cgloomfin", "champagne", "chicken", "chickendinner", "chip_black", "chip_free", "chip_gold", "chip_red", "clanternfish", "clover", "cmooncarp", "cobweb", "cocktail", "coins", "copper", "cpork", "csardine", "cskyeel", "ctrout", "devils_dice", "diamond_amulet", "diamond_bar", "diamond_body", "diamond_boots", "diamond_gladius", "diamond_gloves", "diamond_helm", "diamond_legs", "diamond_maul", "diamond_ore", "diamond_ring", "diamond_shield", "diamond_sword", "dragonstone_amulet", "dragonstone_bar", "dragonstone_body", "dragonstone_boots", "dragonstone_gladius", "dragonstone_gloves", "dragonstone_helm", "dragonstone_legs", "dragonstone_maul", "dragonstone_ore", "dragonstone_ring", "dragonstone_shield", "dragonstone_sword", "emerald_amulet", "emerald_bar", "emerald_body", "emerald_boots", "emerald_gladius", "emerald_gloves", "emerald_helm", "emerald_legs", "emerald_maul", "emerald_ore", "emerald_ring", "emerald_shield", "emerald_sword", "feather", "fishplatter", "gamblers_ring", "geode", "gloomfin", "goldtomatoe", "grimstone", "grudge", "hide", "horseshoe", "husk", "lantern", "lanternfish", "logs", "manifesto", "marble", "mask", "menace", "monocle", "mooncarp", "mysterybox", "olives", "onyx_amulet", "onyx_bar", "onyx_body", "onyx_boots", "onyx_gladius", "onyx_gloves", "onyx_helm", "onyx_legs", "onyx_maul", "onyx_ore", "onyx_ring", "onyx_shield", "onyx_sword", "parma", "pickaxe", "pit", "pork", "porkchops", "receipt", "rewind_watch", "rod", "rudis", "sandals", "sardine", "sharps_gloves", "skyashlogs", "skyeel", "spiderboots", "stake_loafers", "stardust", "steakdinner", "sunolive", "tickets", "tin", "toga", "tomatoe", "tp_scroll", "trout", "tunic", "tusk", "wheat", "whiskey", "willowlogs", "wraithhood", "yewlogs", "zcoin"]), SKILL_ART = new Set(["attack", "cooking", "defence", "farming", "fishing", "hp", "melee", "mining", "smithing", "strength", "woodcutting"]), EQ_ART = new Set(["amulet", "body", "boots", "gloves", "helm", "legs", "ring", "shield", "weapon"]);
 const IART = "/v3/assets/img/glad/flat/items/", IART_V = 5, ICO_IMG = {};
 // (canvas icons are fetched the first time each is drawn; the <img> icons in windows load as they appear)
 const artOf = (k) => `<img class="ico" src="${IART}${k}.png?v=${IART_V}" alt="">`;
@@ -1517,10 +1518,12 @@ function whatNext() {
   const cash = G.cashIn(me), att = G.lvlOf(me, "melee"), tiered = G.SLOTS.some((sl) => ITEMS[me.eq[sl]]?.tier);
   const charm = me.inv.find((x) => ITEMS[x.k].luck);
   if (charm) return `You've got a ${ITEMS[charm.k].name.toLowerCase()} in your bag. Click it, then play: your wins pay more while you're lucky.`;
-  if (cash >= 20 && !(me.luck | 0)) return "You're playing without luck. Go out the arch to the Yard: fish for lucky clovers, or fight for Cash, house chips and High Roller. Use one and every win pays more. You'll come back with things to sell, too.";
+  if (cash < 20 && G.tixIn(me) >= 50) return `You've got ${G.fmtTix(G.tixIn(me))} and no chips. The Prize Counter is the big ruby in the middle of the casino: it swaps tickets for chips, 1 for $1, and sells gear, dinner and Ruby scratch tickets that pay real ZCoins.`;
+  if (me.inv.some((x) => x.k === "zcoin")) return "You're carrying REAL ZCoins. Bank them at the Prize Counter (the big ruby) and they go onto your eastcoin.vip balance.";
+  if (cash >= 20 && !(me.luck | 0)) return "You're playing without luck. Go out the arch to the Yard: fish for lucky clovers, or fight for tickets, house chips and High Roller. Use one and every win pays more. You'll come back with things to sell, too.";
   if (cash < 20) return "You're light. The task board by the back door has three paid jobs today, and the work's one arch away: click a monster, or fish the pond.";
-  if (att < 10) return "Toughen up on the Yard's chickens and cows, out the arch. At Combat 10 you can wear bronze: Brutus sells it right there, by the pond.";
-  if (!tiered) return "Get some real gear on. Brutus, in the Yard by the pond, sells a set for every level. Better gear means faster kills and bigger monsters.";
+  if (att < 10) return "Toughen up on the Yard's chickens and cows, out the arch. At Combat 10 you can wear bronze: it's behind the Prize Counter, for tickets.";
+  if (!tiered) return "Get some real gear on. The Prize Counter has a set for every level, for tickets. Better gear means faster kills, bigger monsters and more tickets.";
   return "You're set up. Play the floor, try roulette through the back door where the whole room bets together, keep your luck topped up at the pond, and do the daily jobs for bankroll.";
 }
 function talkTo(n) {
@@ -1685,6 +1688,10 @@ const fmtMins = (m) => (!Number.isFinite(m) || m > 60 * 99 ? "—" : m >= 60 ? `
 const xpShort = (n) => (Number.isInteger(n) ? n.toLocaleString() : (Math.round(n * 10) / 10).toLocaleString(undefined, { maximumFractionDigits: 1 }));
 let tracker = null, splats = [], hintSlot = null;
 const gains = [];   // items popping up over whoever gathered them
+function tixLabel(n, x, y, color, size = 13, pre = "") {
+  const text = `${pre}${Number(n).toLocaleString()}`; ctx.font = `700 ${size}px "Nunito", system-ui, sans-serif`;
+  const w = ctx.measureText(text).width, ic = size + 3; label(text, x + ic / 2 + 1, y, color, size); drawIco("tickets", x - w / 2 - 1, y + size / 2 + 1, ic);
+}
 function label(text, x, y, color, size = 13) {
   ctx.font = `700 ${size}px "Nunito", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "top";
   ctx.lineWidth = 3; ctx.strokeStyle = "rgba(0,0,0,.85)"; ctx.strokeText(text, x, y); ctx.fillStyle = color; ctx.fillText(text, x, y);
@@ -1984,7 +1991,7 @@ function frame() {
   if (Z.isle) for (const ob of Z.objs) if (ob.t === "pedestal") { const k = Z.isle.shelf[ob.i]; if (k && ITEMS[k]) drawIco(k, sx(ob.x * T + 8), sy(ob.y * T - 2) + (calm ? 0 : Math.sin(pnow / 500 + ob.i) * 2), 30); }
   for (const m of Z.mobs) if (!m.dead) {
     const p = posOf(m, now), x = sx(p.px * T + 8), y = sy(p.py * T + 15);
-    if (names) { label(MOBS[m.t].name, x, y + 2, "#ffb23f", 12); const mv = G.mobValue(m.t); if (mv) label(`~${G.fmtCash(mv)}`, x, y + 15, "#8ff0b4", 11); }
+    if (names) { label(MOBS[m.t].name, x, y + 2, "#ffb23f", 12); const mv = G.mobValue(m.t); if (mv) tixLabel(mv, x, y + 15, "#ff9aa8", 11, "~"); }
     if (m.hp < MOBS[m.t].hp) { const bw = 30; ctx.fillStyle = "#c00"; ctx.fillRect(x - bw / 2, sy(p.py * T - 5), bw, 5); ctx.fillStyle = "#0c0"; ctx.fillRect(x - bw / 2, sy(p.py * T - 5), bw * Math.max(0, m.hp / MOBS[m.t].hp), 5); }
   }
   for (const n of Z.npcs) {
@@ -2008,9 +2015,9 @@ function frame() {
     label(FIGHT.phase === "bet" ? `BETS CLOSE IN ${left}` : FIGHT.phase === "fight" ? "FIGHT!" : `${MOBS[FIGHT.f[FIGHT.winner].t].name.toUpperCase()} WINS`, sx(cx), sy(cy + 18), FIGHT.phase === "bet" ? "#8ff0b4" : "#ffe27a", 16);
   }
   // what a go at each rock, tree and fishing spot is worth, written over it (not while it's chopped down or mined out)
-  for (const ob of Z.objs) { const v = G.nodeValue(ob); if (!v || ob.gone || ob.edge || objBusy(ob, now)) continue; const tall = ["tree", "oak", "yew", "cypress", "deadtree", "willow", "skyash", "olive"].includes(ob.t); label(G.fmtCash(v), sx((ob.x + (ob.w || 1) / 2) * T), sy(ob.y * T - (tall ? 30 : 12)), ob.special ? "#ffe27a" : "#8ff0b4", 13); }
+  for (const ob of Z.objs) { const v = G.nodeValue(ob); if (!v || ob.gone || ob.edge || objBusy(ob, now)) continue; const tall = ["tree", "oak", "yew", "cypress", "deadtree", "willow", "skyash", "olive"].includes(ob.t); tixLabel(v, sx((ob.x + (ob.w || 1) / 2) * T), sy(ob.y * T - (tall ? 30 : 12)), ob.special ? "#ffe27a" : "#ff9aa8", 13); }
   if (me && me.spinDay !== G.chicagoDay()) for (const ob of Z.objs) if (ob.t === "prizewheel") label("FREE SPIN", sx((ob.x + 1) * T), sy(ob.y * T - 30 + Math.sin(pnow / 300) * 2), "#7dffb0", 13);
-  for (const ob of Z.objs) if (ob.t === "coinstatue") { label("CASH IN HERE", sx((ob.x + 1) * T), sy(ob.y * T - 34), "#ffe27a", 13); label("and trade Cash for ZCoins", sx((ob.x + 1) * T), sy(ob.y * T - 22), "#ff9aa8", 10); }
+  for (const ob of Z.objs) if (ob.t === "coinstatue") { label("PRIZE COUNTER", sx((ob.x + 1) * T), sy(ob.y * T - 34), "#ffe27a", 13); label("tickets for chips, gear and ZCoins", sx((ob.x + 1) * T), sy(ob.y * T - 22), "#ff9aa8", 10); }
   for (const ob of Z.objs) if (ob.t === "furnace" || ob.t === "anvil" || ob.t === "range") label("pays 2×", sx((ob.x + 0.5) * T), sy(ob.y * T - 16), "#ffe27a", 12);
   for (const b of Z.bots) { const p = posOf(b, now), x = sx(p.px * T + 8), y = sy(p.py * T + 15); if (names) { label(b.name, x, y + 2, "#fff", 12); label(`level ${b.level}`, x, y + 15, "#ffe45c", 11); } const bb = botBubbles.get(b.id); if (bb && pnow - bb.at < 3500) bubble(bb.text, x, sy(p.py * T - 10)); }
   const pp = P ? ownPos(P, now) : null, hx = pp ? sx(pp.px * T + 8) : 0, hy = pp ? sy(pp.py * T + 15) : 0;
@@ -2583,7 +2590,7 @@ function wikiGo(route, setNav = true) {
       ${Object.entries(G.COOK).some(([, r]) => r.to === id) ? `<h3>Cooked from</h3><p>${Object.entries(G.COOK).filter(([, r]) => r.to === id).map(([raw, r]) => `${wl(`items/${raw}`, `${ico(raw)} ${esc(ITEMS[raw].name)}`)} at Cooking ${r.lvl} (${r.xp} xp; no more burning from level ${r.burnStop})`).join("")}</p>` : ""}
       ${G.COOK[id] ? `<h3>Cooking</h3><p>Cook it at a range or campfire (Cooking ${G.COOK[id].lvl}) to make ${wl(`items/${G.COOK[id].to}`, `${ico(G.COOK[id].to)} ${esc(ITEMS[G.COOK[id].to].name)}`)}.</p>` : ""}
       ${it.req ? `<p>Needs <b>${SKILLS[it.req.skill].name} ${it.req.lvl}</b> to use.</p>` : ""}
-      ${G.SHOP.sells.some(([k]) => k === id) || G.SHOP.buys[id] ? `<h3>The Forge</h3><p>${G.SHOP.sells.some(([k]) => k === id) ? `Brutus sells it for <b>${G.fmtCash(G.SHOP.sells.find(([k]) => k === id)[1])}</b>. ` : ""}${G.SHOP.buys[id] ? `He buys it for <b>${G.fmtCash(G.SHOP.buys[id])}</b>.` : ""}</p>` : ""}
+      ${(() => { const pz = G.prizesOf().find((x) => x.give && x.give[0] === id); return pz || G.isLoot(id) ? `<h3>The Prize Counter</h3><p>${pz ? `On the shelf for <b>${G.fmtTix(pz.price)}</b>. ` : ""}${G.isLoot(id) ? `Trades in for <b>${G.fmtTix(G.valueOf(id))}</b>.` : ""}</p>` : ""; })()}
       ${rewards.length ? `<h3>Quest rewards</h3><p>${rewards.map(([k, q]) => wl(`quests/${k}`, esc(q.name))).join(", ")}</p>` : ""}
       ${qs.length ? `<h3>Wanted for</h3><p>${qs.map((k) => wl(`quests/${k}`, esc(QUESTS[k].name))).join(", ")}</p>` : ""}
       ${EX.last[id] ? `<h3>On the market</h3><p>Last sold for ${G.fmtCash(EX.last[id].price)}.</p>` : ""}`;
@@ -2715,16 +2722,17 @@ function raresCard() {
 // today's three paid jobs: they live on the Quests tab (the wallet is for money)
 function jobsCard() {
   const jobs = (me.daily || []).map((t) => { const d = G.dailyDef(t.id); if (!d) return ""; const done = t.got >= d.n, what = d.what === "kill" ? `${d.n} ${MOBS[d.k].name.toLowerCase()}${d.n > 1 ? "s" : ""}` : `${d.what === "make" ? "Make " : ""}${d.n} ${ITEMS[d.k].name.toLowerCase()}`;
-    return `<div class="wl-job${t.claimed ? " paid" : done ? " done" : ""}" title="${t.claimed ? "Paid" : done ? "Done: claim it at the task board in the casino" : d.what === "kill" ? "Fight: out the arch, in the Yard and beyond" : "Fish: there's a pond in every scene out the arch"}">${d.what === "kill" ? `<img class="ico" src="${UIA}combat.png?v=1" alt="">` : ico(d.k)}<span>${esc(what)}<i><u style="width:${Math.round(Math.min(1, t.got / d.n) * 100)}%"></u></i></span><b>${t.claimed ? "paid" : done ? "claim!" : G.fmtCash(d.cash)}</b></div>`; }).join("");
+    return `<div class="wl-job${t.claimed ? " paid" : done ? " done" : ""}" title="${t.claimed ? "Paid" : done ? "Done: claim it at the task board in the casino" : d.what === "kill" ? "Fight: out the arch, in the Yard and beyond" : "Fish: there's a pond in every scene out the arch"}">${d.what === "kill" ? `<img class="ico" src="${UIA}combat.png?v=1" alt="">` : ico(d.k)}<span>${esc(what)}<i><u style="width:${Math.round(Math.min(1, t.got / d.n) * 100)}%"></u></i></span><b>${t.claimed ? "paid" : done ? "claim!" : `${d.cash} tickets`}</b></div>`; }).join("");
   return jobs ? `<div class="wallets"><div class="wallet"><div class="wl-h"><img src="${UIA}w_jobs.png?v=1" alt="">Today's paid jobs</div>${jobs}<div class="wl-next" style="border:0;padding-top:2px">Claim them at the task board by the casino's back wall. New ones every morning.</div></div></div>` : "";
 }
 function walletCard() {
   const cash = G.cashIn(me), loot = me.inv.filter((s) => G.isLoot(s.k)).reduce((a, s) => a + s.n * G.valueOf(s.k), 0), full = me.inv.length >= G.INV_MAX;
   return `<div class="wallets">
     <div class="wallet wl-needs">${[["thirst", "w_water", "Thirst"], ["hunger", "w_food", "Hunger"]].map(([k, i, n]) => { const v = Math.round(G.needOf(me, k)), low = v < G.NEEDS.floor, fed = (me.meal?.left | 0) > 0; return `<div class="wl-need${low ? " low" : ""}" title="${n}: ${v}%. Every bet takes a little${fed ? " (not while you're Well Fed)" : ""}. Under ${G.NEEDS.floor}% the tables won't take your bets: the water cooler and the buffet are on the card room's back wall, next to the bar."><img src="${UIA}${i}.png?v=1" alt=""><span>${n}<i><u style="width:${v}%"></u></i></span><b>${v}%</b></div>`; }).join("")}</div>
-    <div class="wallet wl-cash"><img src="${UIA}w_cash.png?v=1" alt=""><span><small>Your cash</small><b>${G.fmtCash(cash)}</b></span></div>
+    <div class="wl-two"><div class="wallet wl-cash wl-tix" title="Tickets: what kills and catches pay. Spend them at the Prize Counter, the big ruby in the middle of the casino.">${ico("tickets")}<span><small>Tickets</small><b>${G.tixIn(me).toLocaleString()}</b></span></div>
+    <div class="wallet wl-cash" title="Chips: what the tables take. The Prize Counter swaps tickets for them, 1 for $1."><img src="${UIA}w_cash.png?v=1" alt=""><span><small>Chips</small><b>${G.fmtCash(cash)}</b></span></div></div>
     <div class="wallet">
-      <div class="wl-row${loot ? " go" : ""}" title="What the Cashier would pay for the loot and made things in your bag"><img src="${UIA}w_sack.png?v=1" alt=""><span>${loot ? (full ? "Bag's full" : "In your bag") : "Nothing to sell"}<small>${loot ? "see a Cashier or the Ruby" : "out the arch: fight or fish"}</small></span><b>${loot ? `+${G.fmtCash(loot)}` : ""}</b></div>
+      <div class="wl-row${loot ? " go" : ""}" title="What the Cashier would pay for the loot and made things in your bag"><img src="${UIA}w_sack.png?v=1" alt=""><span>${loot ? (full ? "Bag's full" : "In your bag") : "Nothing to trade in"}<small>${loot ? "take it to the Prize Counter" : "out the arch: fight or fish"}</small></span><b>${loot ? `+${loot.toLocaleString()} tickets` : ""}</b></div>
       ${me.jack ? `<div class="wl-row" title="The slots jackpot: three sevens wins it"><img src="${UIA}w_jackpot.png?v=1" alt=""><span>Slots jackpot<small>three sevens takes it</small></span><b style="color:#ffd84a">${G.fmtCash(me.jack)}</b></div>` : ""}
     </div>
     ${(() => { const v = G.vipOf(me), nx = v.next; return `<div class="wallet wl-vip" title="Every dollar you bet counts, win or lose. Your tier shows by your name and raises every table's limit${v.limit ? ` (yours: +${G.fmtCash(v.limit)})` : ""}."><div class="wl-h" style="margin:0"><b style="color:${v.col}">◆ ${v.name} VIP</b><span style="margin-left:auto;text-transform:none;letter-spacing:0">${nx ? `${G.fmtCash(Math.max(0, nx.at - v.wagered))} more bet to ${nx.name}` : "the top of the house"}</span></div><i class="wl-vipbar"><u style="width:${nx ? Math.round(((v.wagered - v.at) / (nx.at - v.at)) * 100) : 100}%;background:${(nx || v).col}"></u></i></div>`; })()}
