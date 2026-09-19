@@ -121,6 +121,15 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-20", title: "Hunger and thirst",
+    items: [
+      "Gambling is thirsty work. Every bet takes a little off your Thirst and your Hunger (about forty bets to a drink). Under 20% on either, the tables won't take your bets until you've had something.",
+      "The water cooler and a new buffet stand side by side on the card room's back wall, next to the bar. Each click gives you back 20%, free, as many clicks as it takes.",
+      "Cooked food from your bag fills you up too (25% a piece), so a fisherman never goes hungry.",
+      "Both meters are in the wallet under your bag and on every table. Working, fighting and standing about cost nothing: only betting does."
+    ]
+  },
+  {
     date: "2026-09-20", title: "A smaller bag, a wallet, and a Buffs bar",
     items: [
       "Your bag holds 20 things now, not 30, so it fills and sends you back past the tables to the Cashier. If you had more than 20, the extra went to your bank: nothing was lost.",

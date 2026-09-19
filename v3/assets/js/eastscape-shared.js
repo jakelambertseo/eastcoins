@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 41;
+export const VERSION = 42;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -789,7 +789,7 @@ Object.assign(SCENES, {
       put("hilo", 26, 6, "Higher or Lower", 2); put("hilo", 29, 7, "Higher or Lower", 2);
       put("blackjack", 27, 9, "Blackjack table (opening soon)", 2); put("blackjack", 30, 10, "Blackjack table (opening soon)", 2); put("pokertable", 25, 10, "Poker table (opening soon)", 3);
       for (const [x, y] of [[26, 6], [29, 7], [27, 9]]) { seat(x, y + 1); seat(x + 1, y + 1); }
-      rope(28, 11, 30, 11); put("cooler", 31, 4, "Water cooler"); put("plant", 32, 7, "Potted palm"); put("trashcan", 32, 9, "Bin");
+      rope(28, 11, 30, 11); put("cooler", 31, 4, "Water cooler"); put("buffet", 29, 4, "Buffet", 2); put("plant", 32, 7, "Potted palm"); put("trashcan", 32, 9, "Bin");
       // THE BAR and its lounge, north-east
       put("bar", 34, 5, "Bar", 4); put("atm", 40, 4, "Cash machine (out of order, thankfully)"); put("jukebox", 33, 4, "Jukebox"); put("piano", 33, 8, "Grand piano", 2);
       for (const x of [34, 35, 36, 37]) seat(x, 6);
@@ -1225,6 +1225,17 @@ export function slotsPay(reels) {
    world turns up lucky charms; using one makes your next N bets "lucky", and a lucky win pays `bonus` more. Even
    lucky, every game stays just under 100% back, so the casino can't be turned into a Cash printer. */
 export const LUCK = { bonus: 0.025, gather: 1 / 12, kill: 1 / 8, max: 300 };
+/* HUNGER AND THIRST (2026-09-20, the owner: "so that users don't spam gambling"). Two meters, 0 to 100. Every bet
+   takes a little off both; under `floor` the tables turn you away until you've had something. The water cooler and
+   the buffet beside it (the card room's back wall) give `sip` a click, free, as many clicks as it takes. Cooked food
+   from your bag feeds you too (`food` per item), which is one more reason to go and catch a fish. Primitive on
+   purpose: nothing drains while you work, fight or stand about, only when you bet. About forty bets to a drink. */
+export const NEEDS = { floor: 20, sip: 20, food: 25, perBet: { thirst: 2, hunger: 1.25 } };
+export const needOf = (c, k) => Math.max(0, Math.min(100, c?.[k] ?? 100));
+/** Why the tables won't take this player's bet, or null if they will. */
+export const tooEmpty = (c) => (needOf(c, "thirst") < NEEDS.floor ? "thirst" : needOf(c, "hunger") < NEEDS.floor ? "hunger" : null);
+export const NEED_TEXT = { thirst: "You're too thirsty to gamble. The water cooler is on the card room's back wall, next to the bar.", hunger: "You're too hungry to gamble. The buffet is on the card room's back wall, next to the water cooler." };
+
 /* BUFFS: whatever is improving your odds right now, shown top-right of the game. There is one today (luck); the bar,
    the chips and this list are built for several, because players will end up stacking them. A buff is { id, left }
    plus what BUFFS says about it; `icon` is an item icon. To add one: a row here, a line in buffsOf, and the server
@@ -1263,6 +1274,8 @@ BROKE? Go and get more. It's quick.
   EAST arch: the Paddock, then the Rough, then the Boneyard. Monsters drop things worth money. Bigger monsters, bigger money.
   FRONT door, the workshop: anything you MAKE from what you found sells for DOUBLE. Ore into bars, bars into swords, fish into dinner.
 Then bring it to a CASHIER, by either arch. One click and it's Cash.
+
+THIRSTY? HUNGRY? Every bet takes a little out of you. Under 20% the tables turn you away: the water cooler and the buffet are on the card room's back wall, next to the bar, and they're free.
 
 WANT BETTER ODDS? Out there you'll also find lucky clovers and horseshoes. Click one in your bag and your next bets are LUCKY: every win pays more.
 
@@ -1515,7 +1528,7 @@ export const EXAMINE = {
   lighthouse: ["A lighthouse. The light points inward, at the island. Nobody knows who it's warning.", "The door's painted on. The light is on anyway."],
   mule: ["A mule. It refuses to move. It has refused for eleven years.", "The mule looks at you. You feel judged by a professional."]
 };
-export const VERB = { cashier: "Cash in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
+export const VERB = { cooler: "Drink at", buffet: "Eat at", cashier: "Cash in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
 /* ------------------------------------------------------------ quests are data
    goal.type "bring": have goal.n of goal.items in your bag when you talk to the giver (they're taken)
@@ -1710,7 +1723,7 @@ function migrate(out) {
 
 export function freshChar() {
   return {
-    v: SAVE_V, scene: START.scene, x: START.x, y: START.y, hp: 10, tour: { step: 0, logs: 0, chickens: 0 },
+    v: SAVE_V, scene: START.scene, x: START.x, y: START.y, hp: 10, hunger: 100, thirst: 100, tour: { step: 0, logs: 0, chickens: 0 },
     inv: [{ k: "coins", n: 25 }, { k: "pickaxe", n: 1 }, { k: "axe", n: 1 }, { k: "rod", n: 1 }],
     eq: { helm: "cap", weapon: "rudis", body: "tunic", shield: "parma", legs: null, gloves: null, boots: "sandals", ring: null },
     stance: DEFAULT_STANCE,

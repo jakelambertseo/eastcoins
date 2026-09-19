@@ -65,6 +65,8 @@ const CSS = `
 .cz-stat{background:var(--panel-2);border-radius:9px;padding:7px 9px}.cz-stat span{display:block;color:var(--muted-2);font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.cz-stat strong{font:800 16px var(--display)}
 .cz-stat strong.up{color:var(--green)}.cz-stat strong.dn{color:var(--red)}
 .cz-recent{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}.cz-recent span{padding:2px 8px;border-radius:9px;background:var(--panel-2);color:var(--muted);font-size:11.5px;font-weight:800}.cz-recent span.w{background:var(--green-dim);color:var(--green)}
+.cz-needs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}.cz-need{background:var(--panel-2);border-radius:9px;padding:6px 9px;font-size:11.5px;font-weight:800;color:var(--muted)}.cz-need i{display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:4px}.cz-need i>u{display:block;height:100%;background:#6ab7ff}
+.cz-need.food i>u{background:#ffb04a}.cz-need.low{color:var(--red);box-shadow:0 0 0 1px rgba(255,107,133,.5)}.cz-need.low i>u{background:var(--red)}
 .cz-luck{font-size:12.5px;line-height:1.45;color:var(--muted)}.cz-luck.on{color:var(--green);font-weight:800}
 .cz-jack{text-align:center;background:linear-gradient(#2a0a12,#140508);border-color:rgba(232,191,53,.45);box-shadow:inset 0 0 18px rgba(255,200,80,.12)}
 .cz-jack b{display:block;font:800 28px var(--display);color:var(--gold);text-shadow:0 0 12px rgba(255,210,90,.5)}.cz-jack small{color:var(--muted);font-size:11.5px}
@@ -175,7 +177,7 @@ export function createCasino(env) {
   function sideCards(paysTitle, paysNote) {
     if (GAME === "slots") { R.jack = el("section", "cz-card cz-jack"); R.side.append(R.jack); }
     const pays = el("section", "cz-card"); pays.innerHTML = `<h2>${paysTitle}<small>${paysNote || ""}</small></h2>`; R.pays = el("div", "cz-rungs"); pays.append(R.pays);
-    const you = el("section", "cz-card"); you.innerHTML = `<h2>This sitting<small>since you sat down</small></h2>`; R.stats = el("div", "cz-stats"); R.recent = el("div", "cz-recent"); you.append(R.stats, R.recent);
+    const you = el("section", "cz-card"); you.innerHTML = `<h2>This sitting<small>since you sat down</small></h2>`; R.stats = el("div", "cz-stats"); R.needs = el("div", "cz-needs"); R.recent = el("div", "cz-recent"); you.append(R.stats, R.needs, R.recent);
     const luck = el("section", "cz-card"); R.luck = el("div", "cz-luck"); luck.append(R.luck);
     R.side.append(pays, you, luck);
   }
@@ -185,12 +187,15 @@ export function createCasino(env) {
     if (!GAME || !R.stats) return; const s = sess(GAME), me = env.me();
     R.stats.innerHTML = `<div class="cz-stat"><span>Your cash</span><strong>${money(cash())}</strong></div><div class="cz-stat"><span>Net</span><strong class="${s.net > 0 ? "up" : s.net < 0 ? "dn" : ""}">${s.net > 0 ? "+" : s.net < 0 ? "−" : ""}${money(Math.abs(s.net))}</strong></div><div class="cz-stat"><span>Bets</span><strong>${s.bets}</strong></div><div class="cz-stat"><span>Best win</span><strong>${s.best ? `+${money(s.best)}` : "–"}</strong></div>`;
     R.recent.innerHTML = s.recent.map((d) => `<span class="${d > 0 ? "w" : ""}">${d > 0 ? "+" : d < 0 ? "−" : ""}${Math.abs(d).toLocaleString()}</span>`).join("");
+    R.needs.innerHTML = [["thirst", "Thirst", ""], ["hunger", "Hunger", "food"]].map(([k, n, cls]) => { const v = Math.round(G.needOf(me, k)); return `<div class="cz-need ${cls}${v < G.NEEDS.floor ? " low" : ""}">${n} ${v}%<i><u style="width:${v}%"></u></i></div>`; }).join("");
     const luck = me?.luck | 0; R.luck.className = `cz-luck${luck ? " on" : ""}`;
     R.luck.textContent = luck ? `🍀 Lucky: your next ${luck} bet${luck === 1 ? "" : "s"} pay ${G.LUCK.bonus * 100}% more when they win.` : "Want better odds? Lucky clovers turn up while you work out the west arch, and monsters out the east arch drop horseshoes. Use one and your wins pay more.";
     if (R.jack && jack.pot != null) R.jack.innerHTML = `<small>JACKPOT</small><b>${money(Math.floor(jack.pot))}</b><small>Three sevens wins it · a ${money(G.CASINO.maxBet)} spin wins it all${jack.last ? ` · last: ${esc(jack.last.name)} ${money(jack.last.amt)}` : ""}</small>`;
     UI[GAME]?.refresh?.();
   }
-  const broke = () => { if (bet > cash()) { phase(`You only have ${money(cash())}`, "bad"); note("Broke? West arch to mine and chop, east arch to fight. The Cashier by either arch pays for what you bring back."); SFX.play("ui_error"); return true; } return false; };
+  const empty = () => { const why = G.tooEmpty(env.me()); if (why) { phase(why === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[why]); SFX.play("ui_error"); } return !!why; };
+  const broke = () => { if (empty()) return true; return brokeOnly(); };
+  const brokeOnly = () => { if (bet > cash()) { phase(`You only have ${money(cash())}`, "bad"); note("Broke? West arch to mine and chop, east arch to fight. The Cashier by either arch pays for what you bring back."); SFX.play("ui_error"); return true; } return false; };
   function place(pick) {          // one bet, one answer
     if (busy || broke()) return; busy = true; const g = GAME, t = token; R.pop?.classList.remove("show");
     UI[g].start?.(); send({ t: "bet", g, amt: bet, pick });
@@ -392,6 +397,7 @@ export function createCasino(env) {
     me() { if ($("gameWin").hidden) return; if (GAME === "cashier") cashier(); else refresh(); },
     cashier() { lastCashed = null; cashier(); }, cashed(e) { cashier(e); },
     closed() { token++; busy = false; GAME = null; },
+    blocked(k) { if (!GAME || GAME === "cashier") return; busy = false; UI[GAME]?.idle?.(); phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[k]); refresh(); },
     get game() { return GAME; }
   };
 }
