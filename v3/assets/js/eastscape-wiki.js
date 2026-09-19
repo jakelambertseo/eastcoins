@@ -44,14 +44,15 @@ export const GUIDES = [
       <li><b>Deposit bag</b> and <b>Deposit worn</b> empty your inventory or your equipment in one click.</li></ul>`
   },
   {
-    id: "exchange", title: "The Exchange", icon: "⚖️",
-    body: `<p>The Exchange is the market stall in <a data-wiki="areas/forum">the Forum</a>. Everyone's offers are on one board.</p>
-      <ul><li><b>Sell offer:</b> the items leave your bag and wait on the board at your price.</li>
-      <li><b>Buy order:</b> the Cash leaves your bag and waits on the board at your price.</li>
-      <li>Offers match on their own: <b>the best price wins, then whoever was first</b>. A trade happens at the price of the offer that was already waiting, so a buyer who bid more than it cost gets the difference back.</li>
-      <li>Offers keep working <b>while you're offline</b>. What they earn waits in the offer until you <b>collect</b> it at the stall.</li>
-      <li>You can have <b>8 offers</b> at once. Cancelling returns whatever hasn't sold (or the Cash that hasn't been spent).</li>
-      <li>The Exchange keeps <b>1%</b> of each sale, rounded down (so small sales are free). Trading face to face is always free.</li></ul>`
+    id: "exchange", title: "The Market", icon: "⚖️",
+    body: `<p>The market is Livia's stall in <a data-wiki="areas/forum">the Forum</a>. It has two sides.</p>
+      <ul><li><b>Buy:</b> the newest things for sale, first. Search by name or pick an item from the list, then press <b>Buy</b> on a listing. It's in your bank straight away.</li>
+      <li>Can't find it? <b>Post a buy offer</b>: say what you'll pay, and it fills when someone sells at or under that. You get the difference back if it fills cheaper.</li>
+      <li><b>Sell:</b> <b>post a sell offer</b> from anything in your bag or bank, and see how your offers are doing. The Sell side also shows people who want something you have.</li>
+      <li>Offers match on their own: <b>the best price wins, then whoever was first</b>, at the price of the offer that was already waiting.</li>
+      <li>There's nothing to collect: <b>what you buy and what you earn goes straight to your bank</b>, even while you're offline. You'll get a line in chat each time, and a summary when you log back in.</li>
+      <li>Cash for buying comes from your bag first, then your bank. You can have <b>8 offers</b> up at once; taking one down puts what's left back in your bank.</li>
+      <li>The market keeps <b>1%</b> of each sale, rounded down (so small sales are free). Trading face to face is always free.</li></ul>`
   },
   {
     id: "trading", title: "Trading with players", icon: "🤝",
@@ -106,6 +107,14 @@ export const GUIDES = [
 
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
+  {
+    date: "2026-09-18", title: "A simpler market",
+    items: [
+      "The Exchange is now a two-sided market: Buy shows the newest listings with a search and an item picker; Sell shows your offers and people who want what you have.",
+      "Buy straight off a listing, or post a buy offer. Sell from your bag or your bank.",
+      "Nothing to collect any more: purchases and takings go straight to your bank, and you get a chat line every time something of yours sells or fills.",
+    ],
+  },
   {
     date: "2026-09-18", title: "The Gloam and Cloudreach",
     items: [
