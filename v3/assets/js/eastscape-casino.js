@@ -470,18 +470,24 @@ export function createCasino(env) {
     if (GAME === "cashier" && atRuby && !$("gameWin").hidden) cashier();
   }
   /* THE DAILY PRIZE WHEEL: the server has already decided and paid the prize (e.i is its slice); this is the spin to it. */
+  let prizeSpin = null;   /* { until, snd }: a wheel that is still turning */
+  const prizeHush = () => { try { prizeSpin?.snd?.stop(); } catch (x) { /* already over */ } };
   function prize(e) {
+    if (e.done && prizeSpin && performance.now() < prizeSpin.until && GAME === "prize" && !$("gameWin").hidden) return;   /* a second click while it turns: the first answer is the one being shown */
+    prizeHush(); prizeSpin = null;
     GAME = "prize"; frame("Daily Prize Wheel", "One free spin a day · spin every day and the Cash slices grow"); const P = G.PRIZE, n = P.slices.length, step = 360 / n, streak = e.streak || 1;
     const cols = ["#c8202c", "#1d1a18", "#2a7a4a", "#1d1a18", "#c8202c", "#1d1a18", "#2a5a9a", "#1d1a18", "#c8202c", "#1d1a18", "#e8bf35", "#6a2a9a"];
     const disc = el("div", "cz-pwdisc"); disc.style.background = `conic-gradient(${P.slices.map((_, i) => `${cols[i % cols.length]} ${i * step}deg ${(i + 1) * step}deg`).join(",")})`;
     disc.innerHTML = P.slices.map((p, i) => `<span style="transform:rotate(${(i + 0.5) * step}deg);--r:46%"><b style="top:-138px">${esc(p.cash ? G.prizeText(p, e.done ? streak + 1 : streak) : (G.ITEMS[p.k].short || G.ITEMS[p.k].name))}</b></span>`).join("");
     const wrap = el("div", "cz-pw"); wrap.append(el("div", "cz-pwpin"), disc, el("div", "cz-pwhub")); R.board.append(wrap);
     const card = el("section", "cz-card"); card.innerHTML = `<h2>Your streak<small>${streak} day${streak === 1 ? "" : "s"} in a row</small></h2><p class="cz-note" style="text-align:left">Every day in a row adds ${P.streakStep * 100}% to the Cash slices, up to +${P.streakStep * P.streakMax * 100}%. Miss a day and it starts again. The wheel resets at midnight, Central.</p>`; R.side.append(card);
-    if (e.done) { phase("You've had today's spin", "open"); return note("Come back tomorrow: it's free every day."); }
-    phase("Spinning…", "open"); const t = token; SFX.play("roul_ball", { vol: 0.6 });
+    const rest = (i) => { disc.style.transition = "none"; disc.style.transform = `rotate(${-(i + 0.5) * step}deg)`; };
+    if (e.done) { if (e.i != null) rest(e.i); phase(e.text ? `Today's spin: you won ${e.text}` : "You've had today's spin", e.text ? "done" : "open"); return note("It's in your bag already. Come back tomorrow: it's free every day."); }
+    const ms = env.calm() ? 300 : 4400; phase("Spinning…", "open"); const t = token;
+    prizeSpin = { until: performance.now() + ms + 200, snd: env.calm() ? null : SFX.play("roul_ball", { vol: 0.6 }) };
     const to = 360 * 6 - (e.i + 0.5) * step + (Math.random() - 0.5) * step * 0.6;
     requestAnimationFrame(() => requestAnimationFrame(() => { disc.style.transform = `rotate(${env.calm() ? to % 360 : to}deg)`; if (env.calm()) disc.style.transition = "none"; }));
-    setTimeout(() => { if (t !== token || GAME !== "prize") return; phase(`You won ${e.text}!`, "done"); pop(e.text, streak > 1 ? `day ${streak} streak` : "free spin"); SFX.play("win_small"); note("It's in your bag. See you tomorrow."); }, env.calm() ? 300 : 4400);
+    setTimeout(() => { prizeHush(); if (t !== token || GAME !== "prize") return; phase(`You won ${e.text}!`, "done"); pop(e.text, streak > 1 ? `day ${streak} streak` : "free spin"); SFX.play("win_small"); note("It's in your bag. See you tomorrow."); }, ms);
   }
   function cashier(done) {
     if (done !== undefined) lastCashed = done; GAME = "cashier"; frame(atRuby ? "The House Ruby" : "Cashier", atRuby ? "Cash in what you found · trade Cash for real ZCoins" : "Everything you bring back, for what it said over it"); const me = env.me();
@@ -501,7 +507,7 @@ export function createCasino(env) {
     run(e) { const had = RUNS[e.g]; RUNS[e.g] = e.run; if (e.luck != null && env.me()) env.me().luck = e.luck; if (GAME !== e.g) return; UI[e.g].run(e, had); lockStake(!!e.run); refresh(); },
     me() { if ($("gameWin").hidden) return; if (GAME === "cashier") cashier(); else refresh(); },
     cashier(ruby) { lastCashed = null; atRuby = !!ruby; if (atRuby) { dexSt = null; dexMsg = null; dexTicket = null; dexWait = false; send({ t: "dex", op: "status" }); } cashier(); }, cashed(e) { cashier(e); }, dex, prize, fight,
-    closed() { token++; busy = false; GAME = null; },
+    closed() { token++; busy = false; GAME = null; prizeHush(); prizeSpin = null; },
     blocked(k) { if (!GAME || GAME === "cashier") return; if (GAME === "fight") { phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); return note(G.NEED_TEXT[k]); } busy = false; UI[GAME]?.idle?.(); phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[k]); refresh(); },
     get game() { return GAME; }
   };
