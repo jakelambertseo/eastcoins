@@ -1,0 +1,48 @@
+/* shared by the unlinked arcade test pages (*-test.html). Not part of the site shell. */
+
+:root{--ink:#0c0a09;--panel:#161311;--panel-2:#1e1a17;--panel-3:#241f1b;--line:rgba(255,255,255,.1);--line-2:rgba(255,255,255,.16);
+  --text:#f4ede5;--muted:#aca298;--muted-2:#7d746a;--gold:#e8bf35;--gold-dim:rgba(232,191,53,.13);
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;--body:"Figtree","Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box}
+html{background:var(--ink);color-scheme:dark}
+body{margin:0;min-height:100vh;background:var(--ink);color:var(--text);font-family:var(--body);padding:0 16px 40px}
+button{font:inherit;color:inherit}
+.topbar{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.brand{font-family:var(--display);font-weight:800}.brand span{color:var(--gold)}
+.mock-tag{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2a1300;background:var(--gold);padding:4px 9px;border-radius:99px}
+.page{max-width:1180px;margin:0 auto}
+.head{padding:18px 0 14px}
+.eyebrow{font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);letter-spacing:-.02em;margin:4px 0;line-height:1}
+.sub{color:var(--muted);margin:0;max-width:70ch;line-height:1.5}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:18px;align-items:start}
+@media (max-width:920px){.layout{grid-template-columns:minmax(0,1fr)}}
+.stage{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);box-shadow:0 24px 60px rgba(0,0,0,.55);background:#10240f;touch-action:manipulation;user-select:none;-webkit-user-select:none;cursor:pointer}
+.stage canvas{display:block;width:100%;height:auto}
+.veil{position:absolute;inset:0;display:grid;place-items:center;background:rgba(8,7,10,.8);backdrop-filter:blur(3px);text-align:center;padding:20px;cursor:default;overflow:auto}
+.veil[hidden]{display:none}
+.veil h2{font-family:var(--display);font-size:clamp(1.6rem,4vw,2.4rem);margin:0 0 6px;letter-spacing:-.02em}
+.veil p{color:var(--muted);margin:0 0 14px;line-height:1.5}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.btn{border:1px solid var(--line-2);background:var(--panel-3);border-radius:10px;padding:11px 22px;font-weight:800;cursor:pointer}
+.btn.go{background:var(--gold);color:#2a1300;border-color:var(--gold);font-size:1.05rem}
+.btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:10px;overflow:hidden;margin:0 0 14px}
+.seg button{border:0;background:var(--panel-2);padding:7px 14px;font-weight:700;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--gold-dim);color:var(--gold)}
+.board{margin:0 auto 14px;border-collapse:collapse;font-size:.95rem;min-width:min(420px,100%)}
+.board td{padding:4px 10px;border-top:1px solid var(--line);text-align:left;font-variant-numeric:tabular-nums}
+.board tr:first-child td{border-top:0}.board td:first-child{color:var(--muted);width:2.4em}.board td:last-child{text-align:right}
+.board tr.me td{color:var(--gold);font-weight:800}
+.board i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.card h3{font-family:var(--display);font-size:1rem;margin:0 0 10px}
+.stat{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px solid var(--line);font-size:.92rem}
+.stat:first-of-type{border-top:0}.stat span{color:var(--muted)}.stat b{font-variant-numeric:tabular-nums}
+.how{margin:0;padding-left:18px;color:var(--muted);line-height:1.55;font-size:.9rem}.how b{color:var(--text)}
+.note{font-size:.8rem;color:var(--muted-2);line-height:1.5;margin:8px 0 0}
+.keys{display:inline-block;padding:1px 7px;border-radius:6px;border:1px solid var(--line-2);background:var(--panel-2);font-weight:800;font-size:.85em}
+.games{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-top:18px}
+.game{display:block;text-decoration:none;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.game:hover{border-color:var(--gold)}.game b{display:block;font-family:var(--display);font-size:1.25rem;margin:8px 0 4px}.game span{color:var(--muted);font-size:.92rem;line-height:1.45}.game i{font-style:normal;font-size:2rem}
+.game small{display:block;margin-top:10px;color:var(--muted-2);font-weight:700;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase}
