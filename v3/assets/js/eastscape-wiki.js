@@ -123,6 +123,7 @@ export const UPDATES = [
   {
     date: "2026-09-20", title: "Go broke, go get more",
     items: [
+      "Every table has been rebuilt to look and play like the casino on eastcoin.vip: a dark table, one gold button, what it pays beside the board, and your sitting's bets, net and best win. Mines has the tile board and the ladder, Higher or Lower deals real cards and shows your run, Plinko drops a ball through real pegs, Scratch-Off has foil you actually scratch, Slots has spinning reels and the jackpot on the table, Dice is a slider and a track, and the Coin flips.",
       "Everything out in the world now has its price written over it: $10 a rock, $10 a log, and so on. Monsters show roughly what a kill is worth.",
       "New: the Cashier, a window by each arch on the casino floor. One click turns everything you found and made into Cash. It leaves your tools, charms and anything you could wear alone.",
       "Making things pays DOUBLE. A bronze bar sells for twice the ore in it, a sword for twice the bars, cooked food for twice the raw. The workshop out the front door has a furnace, an anvil and now a cooking range.",
