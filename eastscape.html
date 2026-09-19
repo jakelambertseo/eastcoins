@@ -190,7 +190,7 @@ button,input,select{font:inherit}
 .gm-stage.dice{background:radial-gradient(circle at 50% 40%,#2a4a7a,#142640)}.gm-stage.slots{background:radial-gradient(circle at 50% 40%,#6a1a2a,#2a0a12)}
 .gm-big{font-size:46px;line-height:1}
 .gm-reels{display:flex;gap:8px}.gm-reels span{display:grid;place-items:center;width:62px;height:62px;border-radius:8px;background:#fff8e8;font-size:38px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.18)}
-.gm-msg{font-weight:800;min-height:1.3em}.gm-msg.win{color:#ffe27a}.gm-msg.lose{color:#f0c0c0}
+.gm-msg{font-weight:800;min-height:1.3em;font-size:15px;text-shadow:0 1px 0 rgba(0,0,0,.6)}.gm-msg.won{color:#ffe27a}.gm-msg.lost{color:#f4d4d4}
 .gm-actions{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
 .gm-actions .btn{min-width:110px}
 .gm-hist{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:8px;font-size:11.5px}
@@ -2066,7 +2066,7 @@ function renderGame(res) {
   $("gameBody").querySelectorAll("[data-play]").forEach((b) => b.addEventListener("click", () => {
     if (gameBusy) return;
     gameBet = Math.max(C.minBet, Math.min(C.maxBet, +amt.value | 0));
-    if (gameBet > G.cashIn(me)) { $("gmMsg").className = "gm-msg lose"; $("gmMsg").textContent = `You only have ${G.fmtCash(G.cashIn(me))}.`; return; }
+    if (gameBet > G.cashIn(me)) { $("gmMsg").className = "gm-msg lost"; $("gmMsg").textContent = `You only have ${G.fmtCash(G.cashIn(me))}.`; return; }
     gameBusy = true; renderGame();
     if (g === "slots") { const reels = $("gmShow").children; let i = 0; spinTimer = setInterval(() => { for (const r of reels) r.textContent = G.REELS[(i++ + Math.floor(Math.random() * 6)) % G.REELS.length].icon; }, 70); }
     send({ t: "bet", g, amt: gameBet, pick: g === "cointable" ? b.dataset.play : g === "dicetable" ? diceTarget : null });
@@ -2083,7 +2083,7 @@ function gameResult(e) {
     const show = $("gmShow"), msg = $("gmMsg"), won = e.payout > 0;
     if (e.g === "cointable") show.textContent = e.side === "heads" ? "👑" : "🌾";
     if (e.g === "dicetable") show.textContent = String(e.roll);
-    msg.className = `gm-msg ${won ? "win" : "lose"}`;
+    msg.className = `gm-msg ${won ? "won" : "lost"}`;
     msg.textContent = e.g === "cointable" ? `${e.side === "heads" ? "Heads" : "Tails"}. ${won ? `You win ${G.fmtCash(e.payout)}!` : "You lose."}`
       : e.g === "dicetable" ? `Rolled ${e.roll} (needed under ${e.target}). ${won ? `You win ${G.fmtCash(e.payout)}!` : "You lose."}`
       : won ? `${e.mult}× — you win ${G.fmtCash(e.payout)}!` : "No luck.";
