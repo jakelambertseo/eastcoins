@@ -627,11 +627,11 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=56";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=57";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=32").then((m) => { WK = m; }));
-import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=4";
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=33").then((m) => { WK = m; }));
+import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=5";
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=1";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -819,7 +819,8 @@ function onEvent(e) {
   if (e.type === "gameResult") return CZ.result(e);
   if (e.type === "run") return CZ.run(e);
   if (e.type === "need") { SFX.play(e.blocked ? "ui_error" : e.k === "thirst" ? "splash" : "eat"); if (e.blocked) CZ.blocked(e.k); return; }
-  if (e.type === "cashier") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true; SFX.play("ui_open"); return CZ.cashier(); }
+  if (e.type === "cashier") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true; SFX.play("ui_open"); return CZ.cashier(!!e.ruby); }
+  if (e.type === "dex") return CZ.dex(e);
   if (e.type === "cashed") { SFX.play("coins"); return CZ.cashed(e); }
   if (e.type === "casinonote") { chatLine("Casino", e.text, "casinonote"); if (/JACKPOT/.test(e.text)) SFX.play("jackpot"); return; }
   if (e.type === "daily") return renderDaily(e);
@@ -925,7 +926,7 @@ function say(text, cls = "sys") {
 const ART = "/v3/assets/img/glad/flat/", ART_V = 3;
 // pictures replaced after they first shipped (the edge keeps each URL for a year): bump the one that changed
 const ART_VER = { t_casino: 4, rug_casino: 4, o_dicetable: 4, chicken: 4, olive: 4, rotten: 4, chandelier: 4, revenant: 4, farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
-const ART_FILES = ["casino", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
+const ART_FILES = ["casino", "vince_south", "vince_east", "sterling_south", "sterling_east", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d, "legend_" + d]),
   "bank", "store", "cottage", "signpost", "tree2", "tree3", "tree4", "o_spot", "g_bush", "g_boulder", "g_grass", "g_flowers",
   ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
@@ -967,7 +968,7 @@ const AREA_ART = {
   boneyard: [...WILD_ART, "moth", "ghoul", "understudy"],
   sky: ["ram", "angel", "goose"],
   // the Fight Pit: everyone who might be sent out to fight, and the corner clutter
-  fightpit: ["olive", "hornworm", "boar", "goat", "highwayman", "gnasher", "moth", "taxwraith", "ghoul", "chandelier", "understudy", "ram", "revenant", "angel", "goose", "o_crate", "o_barrel"],   // (FIGHTS.pool, less the three that are core)
+  fightpit: ["olive", "hornworm", "boar", "goat", "highwayman", "gnasher", "moth", "taxwraith", "ghoul", "chandelier", "understudy", "ram", "revenant", "angel", "goose", "o_crate", "o_barrel", "vince_south", "vince_east"],   // (FIGHTS.pool, less the three that are core)
   // scenery that only the CLOSED areas use (the farm, the river, the hills, the islands). Nobody can walk there, so nobody
   // downloads it. WHEN AN AREA REOPENS, move what it uses out of this list and into a list under that area's own key.
   closed: ["o_barrel", "o_bed", "o_bigtomato", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chair", "o_chariot", "o_crate", "o_cypress", "o_cypress_stump", "o_ferry", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_olive", "o_olive_bare", "o_palm", "o_pedestal", "o_plot", "o_press", "o_rock_marble", "o_sack", "o_scarecrow", "o_shrine", "o_table", "o_toll", "o_vein_copper", "o_vine", "o_vine_bare", "o_vine_gold", "o_yew", "o_yew_stump"],   // (no open area has these yet: kept out of the login's downloads)
@@ -977,6 +978,7 @@ const AREA_ART = {
   rough: ["hornworm", "boar", "highwayman", "gnasher"],
   // Charon's cart in the square, and the islands it goes to (reopened 2026-09-20)
   forum: ["o_chariot", "charon_south", "charon_east"],
+  highroller: ["sterling_south", "sterling_east"],
   isle: ["o_ferry", "o_islesign", "o_lighthouse", "o_palm", "o_pedestal", "o_plot"], isle2: ["o_ferry", "o_islesign", "o_lighthouse", "o_palm", "o_pedestal", "o_plot"], shore: ["o_ferry", "o_islesign", "o_lighthouse", "o_palm", "o_pedestal", "o_plot"],
   home: ["o_bed", "o_chest", "o_table", "o_chair"],
   roulette: ["t_roulette", "o_roulette", "rouge_south", "rouge_east"]   // (CASINO_ART is core now: the casino is where everyone starts)
@@ -2001,7 +2003,7 @@ function frame() {
   }
   // what a go at each rock, tree and fishing spot is worth, written over it (not while it's chopped down or mined out)
   for (const ob of Z.objs) { const v = G.nodeValue(ob); if (!v || ob.gone || ob.edge || objBusy(ob, now)) continue; const tall = ["tree", "oak", "yew", "cypress", "deadtree", "willow", "skyash", "olive"].includes(ob.t); label(G.fmtCash(v), sx((ob.x + (ob.w || 1) / 2) * T), sy(ob.y * T - (tall ? 30 : 12)), ob.special ? "#ffe27a" : "#8ff0b4", 13); }
-  for (const ob of Z.objs) if (ob.t === "coinstatue") label("CASH IN HERE", sx((ob.x + 1) * T), sy(ob.y * T - 34), "#ffe27a", 13);
+  for (const ob of Z.objs) if (ob.t === "coinstatue") { label("CASH IN HERE", sx((ob.x + 1) * T), sy(ob.y * T - 34), "#ffe27a", 13); label("and trade Cash for ZCoins", sx((ob.x + 1) * T), sy(ob.y * T - 22), "#ff9aa8", 10); }
   for (const ob of Z.objs) if (ob.t === "furnace" || ob.t === "anvil" || ob.t === "range") label("pays 2×", sx((ob.x + 0.5) * T), sy(ob.y * T - 16), "#ffe27a", 12);
   for (const b of Z.bots) { const p = posOf(b, now), x = sx(p.px * T + 8), y = sy(p.py * T + 15); if (names) { label(b.name, x, y + 2, "#fff", 12); label(`level ${b.level}`, x, y + 15, "#ffe45c", 11); } const bb = botBubbles.get(b.id); if (bb && pnow - bb.at < 3500) bubble(bb.text, x, sy(p.py * T - 10)); }
   const pp = P ? ownPos(P, now) : null, hx = pp ? sx(pp.px * T + 8) : 0, hy = pp ? sy(pp.py * T + 15) : 0;
@@ -2360,7 +2362,7 @@ function renderEx() {
 /* ------------------------------------------------------------ the Casino's tables
    Every game window (and the Cashier) is drawn by eastscape-casino.js, in the look of the site's own casino.
    The server rolls and pays; that module only shows it. */
-const CZ = createCasino({ G, SFX, send, esc, $, ico, me: () => me, you: () => you, calm: () => set("reducedMotion"), now: () => snow() });
+const CZ = createCasino({ G, SFX, send, esc, $, ico, me: () => me, room: () => Z.def, you: () => you, calm: () => set("reducedMotion"), now: () => snow() });
 /* ------------------------------------------------------------ roulette: the shared table
    The server runs the clock and draws the number; this draws the board, everybody's chips and the wheel. */
 let ROUL = null, roulChip = 10, roulGot = 0, roulSpunRound = 0, roulAngle = 0, roulBallAngle = 0, roulMine = 0, roulBanner = null, roulPrevPhase = null;
