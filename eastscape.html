@@ -612,8 +612,8 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=47";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=25";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=48";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=26";
 import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=1";
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=1";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
@@ -1192,6 +1192,8 @@ function paintRoom(o, f) {
     f(X + 1, Y + 1, w - 2, h - 2, ob.color); f(X + 3, Y + 3, w - 6, 1, "#e8c050"); f(X + 3, Y + h - 4, w - 6, 1, "#e8c050"); f(X + 3, Y + 3, 1, h - 6, "#e8c050"); f(X + w - 4, Y + 3, 1, h - 6, "#e8c050");
     for (let i = X + 3; i < X + w - 3; i += 4) { f(i, Y, 2, 1, "#e8d8a8"); f(i, Y + h - 1, 2, 1, "#e8d8a8"); }
   }
+  // what each roped-off room is called, lettered in gold on the carpet at its way in (def.zones)
+  for (const z of def.zones || []) { o.font = "800 7px Nunito, sans-serif"; o.textAlign = "center"; o.textBaseline = "middle"; const w = o.measureText(z.text).width + 10, cx = z.x * T, cy = z.y * T; f(cx - w / 2, cy - 5.5, w, 11, "rgba(20,8,10,.78)"); f(cx - w / 2, cy - 5.5, w, 1, "#c8963a"); f(cx - w / 2, cy + 4.5, w, 1, "#c8963a"); o.fillStyle = "#ffd98a"; o.fillText(z.text, cx, cy + 0.5); }
   // plaques over the ways out (def.labels): on the side walls beside the arches, and over the front door
   if (def.labels) {
     const plaque = (cx, cy, text) => { const w = text.length * 4.4 + 8; f(cx - w / 2, cy - 5, w, 10, "#2a1a10"); f(cx - w / 2 + 1, cy - 4, w - 2, 8, "#c8963a"); o.fillStyle = "#2a1a10"; o.font = "800 6.5px Nunito, sans-serif"; o.textAlign = "center"; o.textBaseline = "middle"; o.fillText(text, cx, cy + 0.5); };
@@ -1714,6 +1716,11 @@ function frame() {
     }
   }
   for (const ob of Z.objs) {
+    if (ob.t === "ropeline") {   // the velvet rope between two posts: a sagging red line from post top to post top, sorted just behind the posts
+      const x1 = ob.x * T + 8, x2 = ob.x2 * T + 8, y1 = (ob.y + 1) * T - 12, y2 = (ob.y2 + 1) * T - 12, mx = (x1 + x2) / 2, my = (y1 + y2) / 2 + (ob.y === ob.y2 ? 4 : 2);
+      sprites.push({ y: (Math.max(ob.y, ob.y2) + 1) * T - 1.5, draw: () => { for (const [w, c] of [[2.4, "#3a0a10"], [1.2, "#c8202c"]]) { lc.strokeStyle = c; lc.lineWidth = w; lc.lineCap = "round"; lc.beginPath(); lc.moveTo(x1, y1); lc.quadraticCurveTo(mx, my, x2, y2); lc.stroke(); } } });
+      continue;
+    }
     const oa = objArt(ob, now);
     if (oa) {
       const sc = OBJ_SCALE[oa] || (oa === "o_rock_empty" && ob.t === "vein" ? 2 : 1), bob = (ob.t === "ferry" || ob.t === "boatback") && !calm ? Math.round(Math.sin(pnow / 600)) : 0;
