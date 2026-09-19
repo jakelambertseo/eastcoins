@@ -51,7 +51,8 @@ export const GUIDES = [
       <li><b>Coin Flip</b> (the round table): heads or tails, pays 1.95×.</li>
       <li><b>Dice</b> (by the bar): pick a number from 5 to 95 and roll 1–100 under it. The lower your number, the bigger the payout.</li>
       <li>Bets are 1 to 500 Cash, from your bag. The house keeps a little on every game, about 3%. The server decides every result.</li>
-      <li>Big wins are announced to the room, and huge ones to everyone.</li></ul>
+      <li>Big wins are announced to the room, and huge ones to everyone.</li>
+      <li><b>Luck:</b> lucky clovers (found while skilling in the Workyard) and lucky horseshoes (dropped by monsters in the Paddock) make your next 15 or 25 bets lucky. A lucky win pays 2.5% more, at every table including roulette. Your lucky bets show top-right.</li></ul>
       <p><b>The Roulette Room</b> is through the red curtains at the back. One table, one spin for everyone: bets are open for 25 seconds, then the ball rolls and the whole room sees the number together. Red, black, odd, even, 1–18, 19–36 (2×), dozens (3×) and single numbers (36×); up to 500 Cash a spin. Green zero is the house's.</p>
       <p><b>The task board</b> by the door has three <b>daily tasks</b> just for you, picked for your levels: gather this many, defeat that many. They count what you do today, pay Cash when you claim them at the board, and refresh every morning (Chicago time). Handy when the slots have been unkind.</p>`
   },
@@ -119,6 +120,15 @@ export const GUIDES = [
 
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
+  {
+    date: "2026-09-19", title: "A simpler GAMBA: bigger tiles, luck, and a smaller world",
+    items: [
+      "Everything is drawn twice the size, and the view follows you.",
+      "Luck: want better odds? Work in the Workyard and you'll find lucky clovers; monsters in the Paddock drop lucky horseshoes. Click one in your bag and your next bets are lucky: every win pays 2.5% more. It shows top-right and at every table.",
+      "The world is small on purpose for now: the casino (with its Roulette Room), the town, the Workyard and the Paddock. The roads out of town are closed; more opens later. Anyone who was standing somewhere else wakes up in the casino.",
+      "Combat stances are gone. Every hit now trains Attack, Strength and Defence evenly.",
+    ],
+  },
   {
     date: "2026-09-19", title: "Welcome to GAMBA",
     items: [

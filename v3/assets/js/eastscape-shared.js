@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 30;
+export const VERSION = 31;
 export const COLS = 22, ROWS = 13;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -69,6 +69,8 @@ export const ITEMS = {
   cgloomfin: { name: "Cooked gloomfin", icon: "🐟", heal: 10, ex: "Still slightly annoyed. Very filling." },
   cmooncarp: { name: "Cooked moon carp", icon: "🐡", heal: 14, ex: "It glows faintly in your stomach. That's normal. Probably." },
   burnt: { name: "Burnt food", icon: "⚫", ex: "Whatever it was, it's charcoal now." },
+  clover: { name: "Lucky clover", icon: "🍀", luck: 15, ex: "Turns up while you chop, mine, fish and pick. Click it: your next 15 bets pay more." },
+  horseshoe: { name: "Lucky horseshoe", icon: "🧲", luck: 25, ex: "Monsters drop them. Click it: your next 25 bets pay more." },
   // the Gloam and Cloudreach (2026-09-18): where the tier ores actually live
   emerald_ore: { name: "Emerald ore", icon: "🟢", ex: "Green rock with greener bits. Smelt two for an Emerald bar." },
   diamond_ore: { name: "Diamond ore", icon: "💠", ex: "It was pressed into this shape in the dark for a very long time. It is not grateful." },
@@ -244,7 +246,7 @@ export const STANCES = {
   defensive:  { name: "Defensive",  icon: "🛡️", share: { defence: 1 },                      blurb: "Watch what they do before you do it. Defence xp, and you get hit less." },
   controlled: { name: "Controlled", icon: "⚖️", share: { attack: 1 / 3, strength: 1 / 3, defence: 1 / 3 }, blurb: "A little of each. Slower to a milestone, further along everywhere." }
 };
-export const stanceOf = (c) => (STANCES[c?.stance] ? c.stance : DEFAULT_STANCE);
+export const stanceOf = () => DEFAULT_STANCE;   // stances were removed (2026-09-19): every hit trains all three evenly
 /** What one hit is worth, as [skill, xp] pairs. Always totals COMBAT_XP + HP_XP per damage. */
 export function xpForDamage(c, dmg) {
   const out = [];
@@ -444,7 +446,7 @@ export const SCENES = {
     bots: [{ name: "Spartacus", level: 77 }]
   },
   forum: {
-    name: "The Forum", exits: { s: "farm", w: "grove", n: "tomato", e: "appia" },
+    name: "The Forum", exits: {},   // (was s: farm, w: grove, n: tomato, e: appia — closed for now, see OPEN)
     build() {
       const g = grid(), objs = [];
       for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
@@ -457,6 +459,7 @@ export const SCENES = {
       for (let y = 0; y < 5; y++) for (let x = 16; x <= 18; x++) g[y][x] = "p";
       for (let x = 18; x < COLS; x++) for (let y = 5; y <= 7; y++) g[y][x] = "p";
       const paved = g.map((r) => r.slice());
+      for (const [x, y] of [[16, 12], [17, 12], [18, 12], [16, 0], [17, 0], [18, 0], [0, 5], [0, 6], [0, 7], [21, 5], [21, 6], [21, 7]]) { objs.push({ t: "roadblock", art: "o_barricade", x, y, name: "Road closed" }); g[y][x] = "#"; }
       const bath = { t: "house", img: "bank", x: 2, y: 2, w: 5, h: 3, door: { x: 4, y: 4 }, name: "Bank", roof: "#8a9aa8", wall: "#efe6d4", sign: "BANK", enter: "bathhouse" };
       const forge = { t: "house", img: "casino", x: 11, y: 1, w: 5, h: 3, door: { x: 13, y: 3 }, name: "Casino", roof: "#7a2a2a", wall: "#9a3a3a", enter: "casino" };
       objs.push(bath, forge); block(g, 2, 2, 5, 3); block(g, 11, 1, 5, 3);
@@ -1030,6 +1033,20 @@ export function slotsPay(reels) {
   return reels.filter((r) => r === "cherry").length === 2 ? SLOT_TWO_CHERRIES : 0;
 }
 
+/* ------------------------------------------------------------ luck: the one buff (2026-09-19 reset)
+
+   The whole game in a line: gamble in the casino; when you want better odds, go and skill or fight. Working in the
+   world turns up lucky charms; using one makes your next N bets "lucky", and a lucky win pays `bonus` more. Even
+   lucky, every game stays just under 100% back, so the casino can't be turned into a Cash printer. */
+export const LUCK = { bonus: 0.025, gather: 1 / 12, kill: 1 / 8, max: 300 };
+
+/* ------------------------------------------------------------ what's open (2026-09-19 reset)
+   One casino (with its Roulette Room), one town, one skilling area, one combat area. Everything else still exists in
+   the code but can't be reached yet; a saved character standing somewhere closed wakes up in the casino. */
+export const OPEN = new Set(["casino", "roulette", "forum", "bathhouse", "workyard", "paddock"]);
+export const OPEN_DAILY = new Set(["logs", "tin", "copper", "sardine", "wheat", "cows", "chickens", "rotten"]);
+for (const k of Object.keys(SCENES)) if (!OPEN.has(k)) SCENES[k].wikiHide = true;   // closed areas stay out of the wiki
+
 /* ------------------------------------------------------------ the House Tour: how a new player learns the loop
 
    Gamble first, run dry, do a job, get paid, come back. Dex walks you through it once, inside the casino. `step` is
@@ -1041,17 +1058,17 @@ export const TOUR = [
   { id: "job",   text: "Do a job: chop 5 logs (west arch) or beat 3 chickens (east arch)" },
   { id: "paid",  text: "Go back to Dex and get paid" }
 ];
-export const TOUR_CHIP = 10, TOUR_PAY = 60, TOUR_JOB = { logs: 5, chickens: 3 };
+export const TOUR_CHIP = 10, TOUR_PAY = 60, TOUR_GIFT = "clover", TOUR_JOB = { logs: 5, chickens: 3 };
 export const tourOf = (c) => (c?.tour && c.tour.step < TOUR.length ? TOUR[c.tour.step] : null);
-export const HOWTO = `GAMBA is a casino with a world outside it.
+export const HOWTO = `GAMBA is a casino. You'll spend most of your time right here.
 
-1. Play. Slots, coin flip and dice are on this floor; roulette is upstairs (the door in the back wall). Bets come out of the Cash in your bag.
-2. Run dry? The task board left of the bar has three paid jobs a day, picked for your levels.
-3. Do the work. The WEST arch leads to skilling (trees, ore, wheat, fish). The EAST arch leads to fighting. The front door leads to town: the smithy, the market and the bank.
-4. Get stronger. Better gear comes from Brutus in town or your own smithing, and it opens the tougher areas further out, which pay more.
-5. Come back and play.
+PLAY: slots, coin flip and dice on this floor, roulette through the door in the back wall. Bets come out of the Cash in your bag.
 
-Dex, behind the bar, will always tell you what to do next.`;
+WANT BETTER ODDS? Go out and work. While you chop, mine, fish and pick in the Workyard (WEST arch) you'll find lucky clovers. Monsters in the Paddock (EAST arch) drop lucky horseshoes. Click one in your bag and your next bets are LUCKY: every win pays more.
+
+OUT OF CASH? The task board left of the bar has three paid jobs a day. Anything you gather sells in town (the front door): Brutus buys it, or put it on the market.
+
+That's it. Play, work for luck and Cash, play better. Dex, behind the bar, always knows what you should do next.`;
 
 /* ------------------------------------------------------------ roulette: one shared table, one spin for everyone
 
@@ -1107,7 +1124,7 @@ export const DAILY_COUNT = 3;
 export const chicagoDay = (t = Date.now()) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(t);
 // the day's three for a character: the ones their levels allow, shuffled by who and which day
 export function dailyFor(c, id, day) {
-  const ok = DAILY.filter((t) => !t.req || lvlOf(c, t.req.skill) >= t.req.lvl);
+  const ok = DAILY.filter((t) => OPEN_DAILY.has(t.id) && (!t.req || lvlOf(c, t.req.skill) >= t.req.lvl));
   const seed = [...`${id}:${day}`].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7);
   return ok.map((t, i) => [hashRand(i, seed, 97), t]).sort((a, b) => a[0] - b[0]).slice(0, DAILY_COUNT).map(([, t]) => t.id);
 }
@@ -1256,6 +1273,7 @@ export const EXAMINE = {
   cypress: ["A tall, thin cypress. The road is lined with them, all leaning very slightly east."],
   milestone: ["'ROMA · MILES: ' and then nothing. Someone scratched the number off. Twice.", "'YOU ARE HERE.' Helpful."],
   toll: ["A toll post. The price board has been painted over with 'NO'."],
+  roadblock: ["Road closed. There's more world out there, and it opens soon. For now: the casino, this town, the Workyard and the Paddock."],
   barricade: ["Timber and rope. Past it, the road just stops: washed out. The Bandit Camp is somewhere beyond."],
   chariot: ["A chariot with one wheel. Whoever left it left in a hurry, or a very bad mood."],
   rope: ["A rope back up to the farm. Somebody has tied a very bad knot, but it holds."],
@@ -1481,6 +1499,7 @@ export function normChar(c) {
     const b = out.bank.find((x) => x.k === s.k); if (b) b.n += left; else out.bank.push({ k: s.k, n: left });
   }
   for (const s of SLOTS) { if (out.eq[s]) out.eq[s] = aliasKey(out.eq[s]); if (out.eq[s] && !ITEMS[out.eq[s]]) out.eq[s] = null; }
+  if (!OPEN.has(String(out.scene).split(":")[0])) Object.assign(out, START);
   if (!SCENES[out.scene]) Object.assign(out, isIsle(out.scene) ? ISLE_FERRY : START);   // back from an island: the ferry at River Bend
   const fi = f.isle, ci = c.isle && typeof c.isle === "object" ? c.isle : {};
   out.isle = {
