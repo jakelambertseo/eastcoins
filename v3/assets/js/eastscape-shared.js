@@ -861,6 +861,9 @@ export const canMake = (c, r) => lvlOf(c, r.skill) >= r.lvl && r.in.every(([k, n
 // the chance to burn at a cooking level: about half when you first can, nothing by burnStop; a range is kinder than a fire
 export const burnChance = (r, lvl, range) => lvl >= r.burnStop ? 0 : Math.max(0.03, 0.5 * (r.burnStop - lvl) / Math.max(1, r.burnStop - r.lvl)) * (range ? 0.8 : 1);
 export const EAT_MS = 1200;
+// repeating skills stop after this long with no input from the player: the resources never run dry, but you have to be there
+export const AFK_MS = 3 * 60 * 1000;
+export const AFK_KINDS = { rock: "mining", vein: "mining", spot: "fishing", tree: "chopping", olive: "picking", wheat: "picking", cook: "cooking", smelt: "smelting", smith: "smithing" };
 
 // the Forge: Brutus sells tools and the Bronze set, and buys what you gather (for less than you'll get on the Exchange, usually)
 export const SHOP = {

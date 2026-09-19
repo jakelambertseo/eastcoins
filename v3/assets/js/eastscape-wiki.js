@@ -107,6 +107,17 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-18", title: "Attack, Strength, Defence, Smithing and five gear tiers",
+    items: [
+      "Melee is now three skills: Attack (accuracy), Strength (max hit) and Defence. Your old Melee level carried over into all three.",
+      "Pick a stance in the Skills tab to choose which skill your fights train.",
+      "Gear goes from Bronze up through Emerald, Diamond, Dragonstone and Onyx, ten levels apart. Weapons swing at different speeds.",
+      "A new skill, Smithing: smelt ore into bars and hammer bars into gear. Brutus still sells bronze.",
+      "An amulet slot, hover-to-compare on gear, an xp tracker and hiscores.",
+      "Fishing, mining, chopping, picking, cooking and smithing now stop after 3 minutes with no clicks. The resources never run dry, but you have to be there.",
+    ],
+  },
+  {
     date: "2026-09-18", title: "Cooking, eating and the Forge",
     items: [
       "A new skill, Cooking: cook raw fish and meat at the Farmhouse range, your cottage hearth or a campfire. Food can burn, less as you level.",
