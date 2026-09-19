@@ -632,10 +632,10 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=67";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=68";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=41").then((m) => { WK = m; }));
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=42").then((m) => { WK = m; }));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=2";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -826,6 +826,7 @@ function onEvent(e) {
   if (e.type === "cashier") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true; SFX.play("ui_open"); return CZ.cashier(!!e.ruby); }
   if (e.type === "dex") { if (e.done) zcRead(); return CZ.dex(e); }
   if (e.type === "stake") return CZ.stake(e);
+  if (e.type === "rr") { if ($("gameWin").hidden || CZ.game !== "russian") openRussian(); return; }
   if (e.type === "real") { if ($("gameWin").hidden || CZ.game !== e.g) openReal(e.g); return; }
   if (e.type === "prize") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true; SFX.play("ui_open"); return CZ.prize(e); }
   if (e.type === "cashed") { SFX.play("coins"); return CZ.cashed(e); }
@@ -1597,7 +1598,7 @@ function aimCamera(P, now) {
   view.ox = Math.round(view.bx - cam.x * view.s); view.oy = Math.round(view.by - cam.y * view.s);
 }
 const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
-const KIND_OF = { prizewheel: "prize", fameboard: "fame", cart: "ferry", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
+const KIND_OF = { rrtable: "rr", prizewheel: "prize", fameboard: "fame", cart: "ferry", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
 function thingAt(wx, wy) {
   const now = snow(), near = (x_, y_, rx, ry) => Math.abs(wx - x_) <= rx && wy <= y_ + 4 && wy >= y_ - ry;
   for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})${m.c && m.c !== you?.id ? " · someone's fighting it" : ""}` }; }
@@ -1633,6 +1634,7 @@ cv.addEventListener("pointerdown", (e) => {
     if (t.kind === "mob") send({ t: "act", kind: "mob", id: t.id });
     else if (t.kind === "npc") send({ t: "act", kind: "npc", id: t.id });
     else if (t.ob?.t === "anvil") openSmith(t.ob);
+    else if (t.ob?.t === "rrtable") { openRussian(); send({ t: "act", kind: "ob", ob: t.ob.id }); }   /* opens at the click; you stroll over */
     else { if (Z.def.real?.[t.ob.t]) openReal(t.ob.t); send({ t: "act", kind: "ob", ob: t.ob.id }); }   // a real table opens at the click; you stroll over while it loads
     // walk there now, the way the server will
     if (from) {
@@ -2230,6 +2232,10 @@ async function zcRead() {
 }
 setTimeout(zcRead, 2500);
 new MutationObserver(() => { if ($("gameWin").hidden) zcRead(); }).observe($("gameWin"), { attributes: true, attributeFilter: ["hidden"] });
+function openRussian() {
+  for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin"]) $(w).hidden = true;
+  if ($("gameWin").hidden) SFX.play("ui_open"); CZ.russian();
+}
 function openReal(g) {
   if (String(Z.key).split(":")[0] !== "casino") return say("The real tables are on the casino's main floor. A Casino scroll gets you there from anywhere.");
   for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin"]) $(w).hidden = true;
@@ -2397,7 +2403,7 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=13", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=14", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
 let czReal = null;
 const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, me: () => me, room: () => Z.def, you: () => you, calm: () => set("reducedMotion"), now: () => snow() }))));
 const CZ = new Proxy({}, { get: (_, k) => (czReal ? czReal[k] : k === "game" ? null : k === "real" ? false : k === "realGames" ? () => Object.keys(G.REAL_TABLES) : CZ_QUIET.has(k) ? () => {} : (...a) => { czLoad().then((z) => z[k](...a)).catch(() => say("Couldn't load the game windows. Check your connection and try again.")); }) });
@@ -2514,11 +2520,11 @@ function renderTrade() {
     $("tradeBody").innerHTML = `<div class="trade-cols"><div><h4>Your offer</h4><div class="trade-box${TR.ok.you ? " ok" : ""}">${offerHtml(TR.you, true)}</div></div>
       <div><h4>${esc(TR.themName)}'s offer</h4><div class="trade-box${TR.ok.them ? " ok" : ""}">${offerHtml(TR.them, false)}</div></div></div>
       <h4 style="margin-top:12px">Your bag · click to offer (shift-click offers the whole stack)</h4><div class="grid8" id="tradeBag">${me.inv.filter((s) => s.k !== "coins").map((s) => slotHtml(s, s.k, "data-k")).join("")}</div>`;
-    $("tradeFoot").innerHTML = `<label class="note" style="padding:0">tickets to offer <input id="trCash" type="number" min="0" value="${TR.you.cash}" style="width:110px"></label><span class="note" style="padding:0">you have ${G.fmtCash(G.cashIn(me))}</span><span style="flex:1"></span>
+    $("tradeFoot").innerHTML = `<span class="note" style="padding:0">Items only: tickets can't change hands.</span><span style="flex:1"></span>
       <span class="note" style="padding:0">${TR.ok.them ? `${esc(TR.themName)} has accepted.` : TR.ok.you ? "Waiting for them…" : ""}</span><button class="btn" id="trOk"${TR.ok.you ? " disabled" : ""}>Accept</button><button class="btn danger" id="trNo">Decline</button>`;
     $("tradeBody").querySelectorAll("[data-k]").forEach((el) => el.addEventListener("click", (e) => send({ t: "trade", op: "add", k: el.dataset.k, n: e.shiftKey ? "all" : 1 })));
     $("tradeBody").querySelectorAll("[data-rm]").forEach((el) => el.addEventListener("click", () => send({ t: "trade", op: "remove", k: el.dataset.rm })));
-    $("trCash").addEventListener("change", () => send({ t: "trade", op: "cash", n: +$("trCash").value || 0 }));
+    $("trCash")?.addEventListener("change", () => send({ t: "trade", op: "cash", n: +$("trCash").value || 0 }));
   } else {
     $("tradeBody").innerHTML = `<div class="warn">Check this carefully. Nothing moves until you both accept this screen too.</div>
       <div class="trade-cols" style="margin-top:10px"><div><h4>You give</h4><div class="trade-box${TR.ok.you ? " ok" : ""}"><b>${esc(listOf(TR.you))}</b></div></div><div><h4>You get</h4><div class="trade-box${TR.ok.them ? " ok" : ""}"><b>${esc(listOf(TR.them))}</b></div></div></div>`;

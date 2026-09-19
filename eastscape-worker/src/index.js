@@ -381,7 +381,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob || ob.edge) return;   // (the border's trees and rocks are scenery)
-      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", roulette: "roulette", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", roulette: "roulette", rrtable: "rr", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       if (!kind) return;
       const at = kind === "door" && ob.door ? ob.door : G.nearestCell(ob, f);
       act = { kind, ob, x: at.x, y: at.y, name: ob.name };
@@ -1192,6 +1192,7 @@ export class World {
     if (a.kind === "cashier") { pl.act = null; return pl.out.push({ type: "cashier", ruby: a.ob?.t === "coinstatue" }); }
     if (a.kind === "fight") { pl.act = null; return pl.out.push({ ...this.fightView(S, pl, now), open: true }); }
     if (a.kind === "prize") { pl.act = null; return this.prizeSpin(pl); }
+    if (a.kind === "rr") { pl.act = null; return pl.out.push({ type: "rr" }); }   /* Russian Roulette is the site's table: the page opens its window and talks to the site */
     if (a.kind === "fame") { pl.act = null; const F = this.fameToday(); return pl.out.push({ type: "popup", title: "Winners' Wall", icon: "🏆", text: F.rows.length ? `TODAY'S BIGGEST WINS\n\n${F.rows.map((r, i) => `${i + 1}. ${r.name}: +${G.fmtCash(r.profit)} on ${r.game}`).join("\n")}\n\nWin ${G.fmtCash(G_FAME_MIN)} or more on one bet to get your name up here. The wall is wiped at midnight, Central.` : `Nobody's won ${G.fmtCash(G_FAME_MIN)} on one bet yet today. The wall is empty, and it could be your name at the top of it.` }); }
     if (a.kind === "cooler" || a.kind === "buffet") {   // a drink or a plate: a fifth of the meter a click, free, until you're full
       pl.act = null; const k = a.kind === "cooler" ? "thirst" : "hunger", was = G.needOf(C, k);
@@ -1666,8 +1667,12 @@ export class World {
   bankOp(S, pl, m) {
     if (!this.near(S, pl, "booth")) return this.say(pl, "You need to be at a bank booth.", "bad");
     const C = pl.C, qty = (want, have) => Math.max(1, Math.min(have, want === "all" ? have : Math.floor(Number(want)) || 1));
+    /* TICKETS STAY ON YOU (the owner, 2026-09-19: "cant drop or get rid of their tickets... or bank them or anything like that").
+       They are the one currency and they turn into ZCoins at the tables, so they only ever leave your bag by being SPENT:
+       no drop (see "drop"), no bank, no gift in a trade. normChar moves any that were banked before this back to the bag. */
+    if (m.op === "dep" && C.inv[m.i | 0]?.k === "tickets") return this.say(pl, "Tickets stay on you. The bank won't take them.");
     if (m.op === "dep") { const st = C.inv[m.i | 0]; if (!st) return; const k = st.k, q = qty(m.n, G.countItems(C, [k])); if (!this.bankAdd(pl, k, q)) return; G.takeInv(C.inv, k, q); }
-    else if (m.op === "depinv") { for (const st of [...C.inv]) { if (!this.bankAdd(pl, st.k, st.n)) break; C.inv.splice(C.inv.indexOf(st), 1); } }
+    else if (m.op === "depinv") { for (const st of [...C.inv]) { if (st.k === "tickets") continue; if (!this.bankAdd(pl, st.k, st.n)) break; C.inv.splice(C.inv.indexOf(st), 1); } }
     else if (m.op === "depeq") { for (const sl of G.SLOTS) { const k = C.eq[sl]; if (k && this.bankAdd(pl, k, 1)) C.eq[sl] = null; } }
     else if (m.op === "wd") { const st = C.bank[m.i | 0]; if (!st) return; const q = this.giveUpTo(pl, st.k, qty(m.n, st.n)); if (!q) return; st.n -= q; if (!st.n) C.bank.splice(C.bank.indexOf(st), 1); }
     else return;
@@ -2251,7 +2256,7 @@ export class World {
     if (T.stage === "offer" && (m.op === "add" || m.op === "remove" || m.op === "cash")) {
       if (m.op === "add") { const k = String(m.k); if (!G.ITEMS[k] || k === "tickets") return; const have = G.countItems(C, [k]) - (mine.items[k] || 0); const n = Math.max(0, Math.min(have, m.n === "all" ? have : Math.floor(Number(m.n)) || 1)); if (n) mine.items[k] = (mine.items[k] || 0) + n; }
       if (m.op === "remove") delete mine.items[String(m.k)];
-      if (m.op === "cash") mine.cash = Math.max(0, Math.min(G.cashIn(C), Math.floor(Number(m.n)) || 0));
+      if (m.op === "cash") { mine.cash = 0; this.say(pl, "Tickets can't change hands. Trade items instead."); }   /* (tickets stay on you: see bankOp) */
       T.ok = {}; return this.tradeSync(T);   // any change means both have to accept again
     }
     if (m.op === "accept") {
