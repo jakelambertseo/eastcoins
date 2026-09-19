@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 49;
+export const VERSION = 50;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -764,7 +764,7 @@ Object.assign(SCENES, {
      fight is pure chance (FIGHTS, below); what you watch is the server's script of it. The pit itself is one big
      object (`fightring`) you click to bet; the floor round it is where the crowd stands. */
   fightpit: {
-    name: "The Fight Pit", interior: true, floor: "wood", room: [9, 5, 34, 20], exitTo: { scene: "casino", x: 10, y: 5 }, entry: { x: 21, y: 20 },
+    name: "The Fight Pit", interior: true, floor: "wood", wallH: 34, room: [9, 5, 34, 20], exitTo: { scene: "casino", x: 10, y: 5 }, entry: { x: 21, y: 20 },
     pit: { x: 15, y: 9, w: 14, h: 7 },
     wall: [{ t: "banner", x: 10 }, { t: "lamp", x: 13 }, { t: "lamp", x: 17.5 }, { t: "lamp", x: 26 }, { t: "lamp", x: 30.5 }, { t: "banner", x: 33.5 }],
     doorSigns: [{ x: 22, text: "HIGH ROLLERS" }],
