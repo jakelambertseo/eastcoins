@@ -1696,12 +1696,13 @@ export class World {
     const F = this.fightState(S, now); if (now < F.endsAt) return;
     if (F.phase === "bet") {
       const odds = G.fightOdds(F.f[0].t, F.f[1].t), winner = crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296 < odds.p[0] ? 0 : 1, loser = 1 - winner;
-      // the blows, written to fit: the loser's hundred points all go, the winner keeps some; one blow every second or so
-      const n = 9 + Math.floor(Math.random() * 3), hp = [100, 100], keep = 12 + Math.floor(Math.random() * 60), script = [];
+      // the blows, written to fit: the loser's hundred points all go, the winner keeps some. A blow every second and a
+      // half or so, a quarter of them misses, and the lead is allowed to change hands: it's a long fight (FIGHTS.fightMs)
+      const n = 22 + Math.floor(Math.random() * 6), hp = [100, 100], keep = 6 + Math.floor(Math.random() * 50), script = [];
       let lossLeft = 100, winLeft = 100 - keep;
       for (let i = 0; i < n; i++) {
-        const last = i === n - 1, by = last ? winner : (Math.random() < 0.55 ? winner : loser), on = 1 - by;
-        let dmg = on === loser ? (last ? lossLeft : Math.min(lossLeft - 1, Math.round(lossLeft / (n - i) * (0.5 + Math.random())))) : Math.min(winLeft, Math.round(winLeft / Math.max(1, n - i - 1) * (0.4 + Math.random())));
+        const last = i === n - 1, early = i < n * 0.6, by = last ? winner : (Math.random() < (early ? 0.45 : 0.6) ? winner : loser), on = 1 - by, miss = !last && Math.random() < 0.25;
+        let dmg = miss ? 0 : on === loser ? (last ? lossLeft : Math.min(lossLeft - 1, Math.round(lossLeft / (n - i) * (0.5 + Math.random() * 1.4)))) : Math.min(winLeft, Math.round(winLeft / Math.max(1, n - i - 1) * (0.5 + Math.random() * 1.6)));
         dmg = Math.max(0, dmg); if (on === loser) lossLeft -= dmg; else winLeft -= dmg; hp[on] -= dmg;
         script.push({ at: 900 + Math.round(i * (G.FIGHTS.fightMs - 3200) / (n - 1)), by, dmg, hp: [...hp] });
       }
