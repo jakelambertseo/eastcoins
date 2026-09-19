@@ -157,7 +157,7 @@ export class World {
     if (path === "/restore") return this.restore(request);
     if (path === "/kick") {
       const pl = this.pls.get(new URL(request.url).searchParams.get("id")); if (!pl) return Response.json({ ok: true, online: false });
-      this.send(pl, { type: "kicked", message: "You've been removed from EastScape." });
+      this.send(pl, { type: "kicked", message: "You've been removed from GAMBA." });
       await this.leave(pl, true); try { pl.ws.close(4003, "removed"); } catch (e) { /* already gone */ }
       return Response.json({ ok: true, online: true });
     }
@@ -198,7 +198,7 @@ export class World {
     this.send(pl, { type: "who", scene: S.key, who: this.whoOf(S) });
     this.send(pl, JSON.parse(this.snapOf(S, Date.now(), false)));
     S.whoSig = null;   // the next broadcast tells everyone else this player has arrived
-    if (!stored) this.say(pl, "Welcome to EastScape. Your pickaxe, axe and fishing rod are in your bag: click one to wield it before you mine, chop or fish.");
+    if (!stored) this.say(pl, "Welcome to GAMBA. The tables are all around you; the task board by the bar pays Cash. Skilling is out the west arch, fighting out the east, town through the front door. Your pickaxe, axe and rod are in your bag.");
     else this.say(pl, `Welcome back, ${pl.name}.`);
     if (this.exDeliver(pl)) this.exCommit(pl);   // market sales and purchases made while you were away
     this.start();
@@ -270,7 +270,7 @@ export class World {
     // nearest open tile to the middle
     let best = null;
     for (let y = 1; y < G.ROWS - 1; y++) for (let x = 1; x < G.COLS - 1; x++) if (G.walkableIn(S.g, x, y) && S.g[y][x] !== "e") { const d = Math.hypot(x - 11, y - 7); if (!best || d < best.d) best = { x, y, d }; }
-    if (S.key === "farm" && G.walkableIn(S.g, G.START.x, G.START.y)) best = G.START;
+    if (S.key === G.START.scene && G.walkableIn(S.g, G.START.x, G.START.y)) best = G.START;
     pl.x = best.x; pl.y = best.y; this.touch(pl);
   }
   moveToScene(pl, key, side, at) {
@@ -490,7 +490,7 @@ export class World {
     this.restartAt = Date.now() + s * 1000;
     this.warned = new Set();
     this.start();                                   // count down even with nobody on, so the save still happens
-    this.tellAll(s >= 60 ? `EastScape is restarting in ${Math.round(s / 60)} minute${s >= 120 ? "s" : ""}. Your character is saved automatically - you will be back in a moment.` : `EastScape is restarting in ${s} seconds. Hold tight.`, "admin");
+    this.tellAll(s >= 60 ? `GAMBA is restarting in ${Math.round(s / 60)} minute${s >= 120 ? "s" : ""}. Your character is saved automatically - you will be back in a moment.` : `GAMBA is restarting in ${s} seconds. Hold tight.`, "admin");
     if (s === 0) await this.doRestart();
     return { ok: true, at: this.restartAt, players: this.pls.size };
   }
@@ -1127,9 +1127,9 @@ export class World {
       this.say(pl, `${pk ? `${pk.name} killed you` : `A ${killer?.mob?.toLowerCase() || "monster"} killed you`} in the Wilderness.${nm ? ` You dropped your ${nm}.` : " You kept everything this time."}`, "bad");
       for (const p of this.pls.values()) if (p !== pl && p !== pk && G.sceneDef(p.C.scene)?.pvp) this.say(p, `☠️ ${pl.name} was killed by ${pk ? pk.name : `a ${killer?.mob?.toLowerCase() || "monster"}`}.`);
     }
-    this.say(pl, "Oh dear, you are dead! You wake up at the farmhouse.", "bad");
+    this.say(pl, "Oh dear, you are dead! You wake up on the casino floor. Nobody looks surprised.", "bad");
     C.hp = G.maxHpOf(C);
-    this.moveToScene(pl, "farm", null, { x: 4, y: 6 });
+    this.moveToScene(pl, G.START.scene, null, { x: G.START.x, y: G.START.y });
   }
 
   // one swing at another player, in the Wilderness

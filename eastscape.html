@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>EastScape</title>
+<title>GAMBA</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -468,9 +468,9 @@ button,input,select{font:inherit}
 </head>
 <body>
 <header class="top">
-  <span class="logo">⚔ EastScape</span>
+  <span class="logo">🎰 GAMBA</span>
   <span class="clock" id="clock">--:--:--</span>
-  <button type="button" class="wikib" id="wikiBtn" title="The EastScape wiki">📖 Wiki</button>
+  <button type="button" class="wikib" id="wikiBtn" title="The GAMBA wiki">📖 Wiki</button>
   <button type="button" class="wikib" id="hsBtn" title="Hiscores">🏆 Hiscores</button>
   <span class="spacer"></span>
   <span class="net" id="net" role="status" aria-live="polite"><i></i><span id="netText">Connecting…</span></span>
@@ -492,7 +492,7 @@ button,input,select{font:inherit}
     <div class="qdone" id="qdone" hidden></div>
     <div class="chat" id="chat">
       <div class="chat-box" id="chatBox" hidden>
-        <div class="chat-head"><b>Chat</b><small id="chatWhere">everyone in EastScape</small></div>
+        <div class="chat-head"><b>Chat</b><small id="chatWhere">everyone in GAMBA</small></div>
         <div class="chat-log" id="chatLog" aria-live="polite"><p class="empty">Nobody has said anything here yet.</p></div>
         <form class="chat-form" id="chatForm" autocomplete="off"><input id="chatIn" maxlength="120" placeholder="Say something… (Enter)" aria-label="Chat message"><button type="submit">Send</button></form>
       </div>
@@ -564,11 +564,11 @@ button,input,select{font:inherit}
       <div class="win-foot" id="tradeFoot"></div>
     </section>
     <section class="win" id="wikiWin" aria-label="Wiki" hidden style="width:min(980px,calc(100% - 28px));height:calc(100% - 28px)">
-      <div class="win-head"><b>📖 EastScape Wiki</b><small>built from the game itself</small><button type="button" class="win-x" data-close="wikiWin" aria-label="Close">×</button></div>
+      <div class="win-head"><b>📖 GAMBA Wiki</b><small>built from the game itself</small><button type="button" class="win-x" data-close="wikiWin" aria-label="Close">×</button></div>
       <div class="wiki"><nav id="wikiNav"></nav><article id="wikiPage"></article></div>
     </section>
     <div class="cover" id="gate" hidden>
-      <div class="card"><div style="font-size:36px">⚔️</div><h2>EastScape is members-only</h2><p>Log in with Twitch to play. Your character is saved to your Twitch account, so you can pick up from any browser.</p><a class="btn" href="/api/picks/auth/twitch/start?returnTo=%2Feastscape">Log in with Twitch</a></div>
+      <div class="card"><div style="font-size:36px">🎰</div><h2>GAMBA is members-only</h2><p>Log in with Twitch to play. Your character is saved to your Twitch account, so you can pick up from any browser.</p><a class="btn" href="/api/picks/auth/twitch/start?returnTo=%2Feastscape">Log in with Twitch</a></div>
     </div>
     <div class="cover soft" id="veil" hidden><div class="card" id="veilText"><span class="spin"></span>Connecting…</div></div>
   </section>
@@ -587,8 +587,8 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=37";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=15";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=38";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=16";
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=1";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -655,7 +655,7 @@ async function connect() {
   ws.onclose = (e) => {
     ws = null;
     if (e.code === 4000) { kicked = true; net("bad", "Opened in another tab"); veil("This character is open in another tab. <br><br><button class='btn' id='takeBack'>Play here instead</button>"); $("takeBack")?.addEventListener("click", () => { kicked = false; connect(); }); return; }
-    if (e.code === 4003) { kicked = true; net("bad", "Removed"); veil("You've been removed from EastScape."); return; }
+    if (e.code === 4003) { kicked = true; net("bad", "Removed"); veil("You've been removed from GAMBA."); return; }
     if (e.code === 4001) restartHold ||= 25000;   // a planned restart, even if the message before it was missed
     later();
   };
@@ -667,7 +667,7 @@ function later() {
   if (restartHold) {
     const wait = restartHold; restartHold = 0; retry = 0;
     net("warn", "Restarting…");
-    veil(`<span class="spin"></span>EastScape is restarting. Your character is saved — back in about ${Math.ceil(wait / 1000)} seconds…`);
+    veil(`<span class="spin"></span>GAMBA is restarting. Your character is saved — back in about ${Math.ceil(wait / 1000)} seconds…`);
     retryTimer = setTimeout(connect, wait);
     return;
   }
@@ -912,8 +912,7 @@ const AREA_ART = {
   wild: WILD_ART, deep: WILD_ART,
   gloam: ["t_gwater", "t_gpath", "o_willow", "o_glowcap", "o_rock_emerald_ore", "o_rock_diamond_ore", "moth", "ghoul", "understudy"],
   cloud: ["t_csky", "t_cpath", "o_skyash", "o_cloudbush", "o_cloudcolumn", "o_rock_dragonstone_ore", "o_rock_onyx_ore", "ram", "angel", "goose"],
-  casino: CASINO_ART,
-  roulette: [...CASINO_ART, "t_roulette", "o_roulette", "rouge_south", "rouge_east"]
+  roulette: ["t_roulette", "o_roulette", "rouge_south", "rouge_east"]   // (CASINO_ART is core now: the casino is where everyone starts)
 };
 const LAZY_ART = new Set(Object.values(AREA_ART).flat());
 const artReady = Promise.all(ART_FILES.filter((k) => !LAZY_ART.has(k)).map(loadArt));
@@ -1142,6 +1141,13 @@ function paintRoom(o, f) {
   for (let x = x0; x <= x1; x++) if (Z.g[y1 + 1][x] !== "e") f(x * T, Y1, T, 5, "#3a2e22");
   f(X0 - 4, Y1, 4, 5, "#3a2e22"); f(X1, Y1, 4, 5, "#3a2e22");
   for (let x = x0; x <= x1; x++) if (Z.g[y1 + 1][x] === "e") { f(x * T, Y1, T, T, "#2a2016"); f(x * T + 2, Y1 + 2, T - 4, T - 6, "#8a4a2a"); }
+  for (let y = y0; y <= y1; y++) for (const [x, wallX] of [[x0 - 1, X0 - 4], [x1 + 1, X1]]) if (Z.g[y]?.[x] === "e") {
+    const CP = IMG[def.carpet || "t_casino"], X = x * T, Y = y * T;
+    if (def.floor === "casino" && CP) o.drawImage(CP.im, WANG[0][0], WANG[0][1], 32, 32, X, Y, T, T); else f(X, Y, T, T, "#6a5a40");
+    f(wallX, Y, 4, T, def.floor === "casino" ? "#3a0f18" : "#6a5a40");                                   // the wall opens here
+    if (Z.g[y - 1]?.[x] !== "e") { f(X, Y - 3, T, 3, "#c8963a"); f(wallX, Y - 3, 4, 3, "#c8963a"); }   // a gold lintel over the arch
+    if (Z.g[y + 1]?.[x] !== "e") { f(X, Y + T, T, 2, "#c8963a"); f(wallX, Y + T, 4, 2, "#c8963a"); }
+  }
   // rugs lie on the floor, under everything else
   for (const ob of Z.objs) if (ob.t === "rug") {
     const X = ob.x * T, Y = ob.y * T, w = ob.w * T, h = ob.h * T;
@@ -2395,7 +2401,7 @@ function wikiGo(route, setNav = true) {
   const [kind, ...rest] = route.split("/"), id = decodeURIComponent(rest.join("/")), page = $("wikiPage");
   const cards = (list) => `<div class="cards">${list.map((p) => `<a class="card" data-wiki="${esc(p.route)}"><i>${p.icon}</i>${esc(p.title)}</a>`).join("")}</div>`;
   let html = "";
-  if (kind === "home") html = `<h2><i>⚔️</i>EastScape Wiki</h2><p class="lede">Everything in the game, written from the game itself: every item, monster, drop, skill, quest and place on these pages comes from the same rules the server plays by.</p>
+  if (kind === "home") html = `<h2><i>🎰</i>GAMBA Wiki</h2><p class="lede">Everything in the game, written from the game itself: every item, monster, drop, skill, quest and place on these pages comes from the same rules the server plays by.</p>
     <h3>Start here</h3>${cards(wikiPages().filter((p) => p.group === "Guides"))}<h3>Browse</h3>${cards(["Skills", "Quests", "Monsters", "Areas", "People", "Items"].map((g) => ({ route: `list/${g}`, title: g, icon: { Skills: "📶", Quests: "📜", Monsters: "👹", Areas: "🗺️", People: "🧑", Items: "🎒" }[g] })))}
     <h3>Latest update</h3>${wikiUpdate(WK.UPDATES[0])}`;
   else if (kind === "updates") html = `<h2><i>📰</i>Updates</h2><p class="lede">Every change to the game, newest first.</p>${WK.UPDATES.map(wikiUpdate).join("")}`;
@@ -2720,7 +2726,7 @@ setInterval(() => {
 
 artReady.then(() => { if (Z.key) Z.bg = paintBg(); });
 requestAnimationFrame(frame);
-veil('<span class="spin"></span>Connecting to the EastScape server…');
+veil('<span class="spin"></span>Connecting to GAMBA…');
 connect();
 </script>
 </body>
