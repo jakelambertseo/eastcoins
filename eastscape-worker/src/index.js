@@ -345,6 +345,7 @@ export class World {
       case "bank": return this.bankOp(S, pl, m);
       case "ex": return this.exOp(S, pl, m);
       case "bet": return this.bet(S, pl, m, now);
+      case "run": return this.run(S, pl, m, now);
       case "daily": return this.dailyOp(S, pl, m);
       case "roul": return this.roulOp(S, pl, m, now);
       case "tour": return this.tourOp(S, pl, m);
@@ -372,7 +373,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob) return;
-      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", slots: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", roulette: "roulette", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", roulette: "roulette", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       if (!kind) return;
       const at = kind === "door" && ob.door ? ob.door : G.nearestCell(ob, f);
       act = { kind, ob, x: at.x, y: at.y, name: ob.name };
@@ -1335,7 +1336,7 @@ export class World {
       if (!this.stepEntity(S, n, now, false) && now > n.nextWander) {
         n.nextWander = now + (n.level ? 1500 : 4000) + Math.random() * 5000;
         if (n.level && Math.random() < 0.45) {
-          const jobs = S.objs.filter((o) => ["tree", "oak", "cypress", "rock", "vein", "spot", "olive", "vine", "slots", "cointable", "dicetable"].includes(o.t) && !o.special && !(o.stumpUntil > now) && !(o.emptyUntil > now));
+          const jobs = S.objs.filter((o) => ["tree", "oak", "cypress", "rock", "vein", "spot", "olive", "vine", "slots", "cointable", "dicetable", "wheel", "hilo", "mines", "plinko", "scratch"].includes(o.t) && !o.special && !(o.stumpUntil > now) && !(o.emptyUntil > now));
           const ob = jobs.length && pick(jobs), at = ob && G.nearestCell(ob, n), p = ob && G.findPath(S.g, n, at, ob.t === "spot" ? 2 : 1);
           if (p) { n.path = p; n.goal = { ob, x: at.x, y: at.y }; }
         } else if (n.level) { const tx = rint(2, G.COLS - 3), ty = rint(2, G.ROWS - 3); if (G.walkableIn(S.g, tx, ty)) { const p = G.findPath(S.g, n, { x: tx, y: ty }, 0); if (p) n.path = p.slice(0, 8); } }
@@ -1558,7 +1559,7 @@ export class World {
      The server rolls, pays and announces; the page only animates what it's told. Bets come out of your bag. */
   cashTo(pl, n) { if (n > 0 && !this.give(pl, "coins", n) && !this.bankAdd(pl, "coins", n)) this.say(pl, "Your bag and bank are both full: that Cash is lost. Make some room!", "bad"); }
   bet(S, pl, m, now) {
-    const g = String(m.g), game = G.GAMES[g]; if (!game) return;
+    const g = String(m.g), game = G.GAMES[g]; if (!game || game.run) return;
     if (!this.near(S, pl, g, 2)) return this.say(pl, `You need to be at the ${game.name.toLowerCase()} in the Casino.`, "bad");
     if (now - (pl.lastBet || 0) < G.CASINO.betMs) return;
     const amt = Math.floor(Number(m.amt)), have = G.cashIn(pl.C);
@@ -1571,6 +1572,20 @@ export class World {
     } else if (g === "dicetable") {
       const target = Math.max(G.DICE.min, Math.min(G.DICE.max, Math.floor(Number(m.pick)) || 50)), roll = 1 + Math.floor(Math.random() * 100);
       res = { target, roll }; if (roll < target) mult = G.diceMult(target);
+    } else if (g === "wheel") {
+      const pick = ["red", "black", "gold"].includes(m.pick) ? m.pick : "red", angle = Math.floor(Math.random() * 3600) / 10, color = G.wheelColor(angle);
+      res = { pick, angle, color }; if (color === pick) mult = G.WHEEL.pays[pick];
+    } else if (g === "plinko") {
+      const path = Array.from({ length: G.PLINKO.rows }, () => (Math.random() < 0.5 ? 0 : 1)), bucket = path.reduce((a, b) => a + b, 0);
+      res = { path, bucket }; mult = G.PLINKO.pays[bucket];
+    } else if (g === "scratch") {
+      // the card is decided first, then laid out to match it: exactly three of the winner, and never three of anything else
+      let x = Math.random() * 1000, prize = null; for (const s of G.SCRATCH) { if ((x -= s.w) < 0) { prize = s; break; } }
+      const pool = []; for (const s of G.SCRATCH) if (s !== prize) pool.push(s.k, s.k);
+      for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+      const grid = prize ? [prize.k, prize.k, prize.k, ...pool.slice(0, 6)] : pool.slice(0, 9);
+      for (let i = grid.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [grid[i], grid[j]] = [grid[j], grid[i]]; }
+      res = { grid, prize: prize ? prize.k : null }; if (prize) mult = prize.x;
     } else {
       const W = G.REELS.reduce((a, r) => a + r.w, 0), spin = () => { let x = Math.random() * W; for (const r of G.REELS) { if ((x -= r.w) < 0) return r.k; } return G.REELS[0].k; };
       const reels = [spin(), spin(), spin()]; res = { reels }; mult = G.slotsPay(reels);
@@ -1603,6 +1618,73 @@ export class World {
       const text = `${pl.name} won ${G.fmtCash(payout)} on ${game.name} (${mult}×)!`;
       const world = mult >= G.CASINO.worldWin;
       for (const p of this.pls.values()) if (world || p.C.scene === S.key) p.out.push({ type: "casinonote", text: world ? `🎰 ${text}` : text });
+    }
+  }
+
+  /* Higher or Lower and Mines are RUNS: the stake is taken at the start, every step is decided here, and the run
+     lives on the character (C.runs), so closing the window, walking off or a restart never loses it. What the page
+     is told never includes what it could cheat with: not the next card, not where the bombs are (until it's over). */
+  runView(pl, g) {
+    const r = pl.C.runs?.[g]; if (!r) return { type: "run", g, run: null, luck: pl.C.luck | 0 };
+    const run = g === "hilo" ? { stake: r.stake, card: r.card, suit: r.suit, mult: r.mult, cards: r.cards, rights: r.rights, lucky: r.lucky, cash: this.runCash(g, r) }
+      : { stake: r.stake, mines: r.mines, open: r.open, mult: G.minesMult(r.mines, r.open.length), next: G.minesMult(r.mines, r.open.length + 1), top: G.minesTop(r.mines), lucky: r.lucky, cash: this.runCash(g, r) };
+    return { type: "run", g, run, luck: pl.C.luck | 0 };
+  }
+  runCash(g, r) {
+    const plain = g === "hilo" ? (r.rights ? G.hiloPays(r.stake, r.mult) : 0) : (r.open.length ? Math.floor(r.stake * G.minesMult(r.mines, r.open.length)) : 0);
+    return r.lucky && plain ? Math.round(plain * (1 + G.LUCK.bonus)) : plain;
+  }
+  runEnd(S, pl, g, how, extra = {}) {
+    const r = pl.C.runs[g], payout = how === "cash" ? this.runCash(g, r) : how === "refund" ? r.stake : 0;
+    const mult = g === "hilo" ? Math.min(G.HILO.maxMult, r.mult) : G.minesMult(r.mines, r.open.length);
+    delete pl.C.runs[g]; this.cashTo(pl, payout); this.touch(pl);
+    pl.out.push({ type: "run", g, run: null, luck: pl.C.luck | 0, over: { how, payout, stake: r.stake, mult: Math.round(mult * 100) / 100, ...(g === "mines" ? { bombs: r.bombs, open: r.open, mines: r.mines } : { card: r.card, suit: r.suit }), ...extra } });
+    if (how === "cash" && mult >= G.CASINO.roomWin && payout > r.stake) {
+      const text = `${pl.name} won ${G.fmtCash(payout)} on ${G.GAMES[g].name} (${Math.round(mult * 100) / 100}×)!`, world = mult >= G.CASINO.worldWin;
+      for (const p of this.pls.values()) if (world || p.C.scene === S.key) p.out.push({ type: "casinonote", text: world ? `🎰 ${text}` : text });
+    }
+  }
+  run(S, pl, m, now) {
+    const g = String(m.g), game = G.GAMES[g]; if (!game?.run) return;
+    const C = pl.C; C.runs = C.runs && typeof C.runs === "object" ? C.runs : {};
+    const r = C.runs[g], op = String(m.op);
+    if (op === "state") return pl.out.push(this.runView(pl, g));
+    if (now - (pl.lastBet || 0) < 250) return; pl.lastBet = now;
+    if (op === "start") {
+      if (r) return pl.out.push(this.runView(pl, g));
+      if (!this.near(S, pl, g, 2)) return this.say(pl, `You need to be at the ${game.name} table in the Casino.`, "bad");
+      const amt = Math.floor(Number(m.amt)), have = G.cashIn(C);
+      if (!(amt >= G.CASINO.minBet && amt <= G.CASINO.maxBet)) return this.say(pl, `Bets are ${G.CASINO.minBet} to ${G.fmtCash(G.CASINO.maxBet)}.`, "bad");
+      if (have < amt) return this.say(pl, `You only have ${G.fmtCash(have)} in your bag.`, "bad");
+      G.takeInv(C.inv, "coins", amt); this.tourStep(pl, "play");
+      const lucky = (C.luck | 0) > 0; if (lucky) C.luck--;
+      if (g === "hilo") C.runs[g] = { stake: amt, lucky, card: 1 + Math.floor(Math.random() * 13), suit: Math.floor(Math.random() * 4), mult: 1, cards: 1, rights: 0 };
+      else {
+        const mines = Math.max(G.MINES.min, Math.min(G.MINES.max, Math.floor(Number(m.mines)) || 3)), all = Array.from({ length: G.MINES.tiles }, (_, i) => i);
+        for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [all[i], all[j]] = [all[j], all[i]]; }
+        C.runs[g] = { stake: amt, lucky, mines, bombs: all.slice(0, mines).sort((a, b) => a - b), open: [] };
+      }
+      this.touch(pl); return pl.out.push(this.runView(pl, g));
+    }
+    if (!r) return pl.out.push(this.runView(pl, g));
+    if (op === "cash") { if (!this.runCash(g, r)) return; return this.runEnd(S, pl, g, "cash"); }
+    if (g === "hilo" && op === "call") {
+      const call = m.call === "lower" ? "lower" : "higher", f = G.hiloFactor(r.card, call); if (!f) return;
+      const next = 1 + Math.floor(Math.random() * 13), suit = Math.floor(Math.random() * 4), from = r.card;
+      const won = call === "higher" ? next > from : next < from, tie = next === from;
+      r.card = next; r.suit = suit; r.cards++;
+      if (!won && !tie) return this.runEnd(S, pl, g, "bust", { from, call });
+      if (won && f > 1) { r.mult *= f; r.rights++; }
+      this.touch(pl);
+      if (r.mult >= G.HILO.maxMult || r.cards >= G.HILO.maxCards) return this.runEnd(S, pl, g, r.rights ? "cash" : "refund", { from, call, auto: true });
+      return pl.out.push({ ...this.runView(pl, g), step: { from, call, tie } });
+    }
+    if (g === "mines" && op === "pick") {
+      const i = Math.floor(Number(m.i)); if (!(i >= 0 && i < G.MINES.tiles) || r.open.includes(i)) return;
+      if (r.bombs.includes(i)) return this.runEnd(S, pl, g, "bust", { hit: i });
+      r.open.push(i); this.touch(pl);
+      if (r.open.length >= G.minesTop(r.mines)) return this.runEnd(S, pl, g, "cash", { auto: true });
+      return pl.out.push({ ...this.runView(pl, g), step: { i } });
     }
   }
 

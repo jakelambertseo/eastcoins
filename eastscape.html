@@ -208,6 +208,21 @@ button,input,select{font:inherit}
 .gm-actions .btn{min-width:110px}
 .gm-hist{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:8px;font-size:11.5px}
 .gm-hist span{padding:1px 7px;border-radius:9px;background:rgba(58,38,22,.12)}.gm-hist span.w{background:rgba(40,120,40,.2);color:#1f6a24}
+.gm-stage.wheel{background:radial-gradient(circle at 50% 40%,#7a1a3a,#2a0a18)}.gm-stage.hilo{background:radial-gradient(circle at 50% 40%,#1f5a8a,#0e2438)}.gm-stage.mines{background:radial-gradient(circle at 50% 40%,#4a2a7a,#1a0e30)}.gm-stage.plinko{background:radial-gradient(circle at 50% 30%,#8a4a1a,#2a1408)}.gm-stage.scratch{background:radial-gradient(circle at 50% 40%,#1a6a5a,#0a2a24)}
+.wh-box{position:relative;width:170px;height:170px}.wh-disc{width:100%;height:100%;border-radius:50%;box-shadow:0 0 0 5px #c8963a,0 0 0 8px #3a2410,0 6px 14px rgba(0,0,0,.5)}
+.wh-hub{position:absolute;left:50%;top:50%;width:26px;height:26px;margin:-13px;border-radius:50%;background:radial-gradient(#ffe27a,#c8963a);box-shadow:0 0 0 3px #3a2410}
+.wh-pin{position:absolute;left:50%;top:-12px;margin-left:-9px;border:9px solid transparent;border-top:16px solid #ffe27a;filter:drop-shadow(0 2px 0 #3a2410)}
+.btn.wh-red{background:#b8202a;color:#fff}.btn.wh-black{background:#1a1a1a;color:#fff}.btn.wh-gold{background:#e8b83a;color:#2a1a08}
+.hl-row{display:flex;gap:8px;align-items:center;justify-content:center}.hl-card{display:grid;place-items:center;align-content:center;gap:4px;width:102px;height:150px;background:url(/v3/assets/img/glad/flat/casino/card_face.png?v=1) center/100% 100% no-repeat;image-rendering:pixelated;color:#1a1a1a;font-weight:900;line-height:1;filter:drop-shadow(0 5px 0 rgba(0,0,0,.35))}
+.hl-card b{font-size:40px}.hl-card .gmi{width:auto;height:auto;zoom:2}.hl-card.red{color:#b8202a}.hl-card.back{background-image:url(/v3/assets/img/glad/flat/casino/card_back.png?v=1)}.hl-card.in{animation:hlIn .22s ease-out}
+@keyframes hlIn{from{transform:translateX(26px) rotate(8deg);opacity:0}}
+.hl-mult{font-size:22px;font-weight:900;text-shadow:0 2px 0 rgba(0,0,0,.4)}.hl-mult small{display:block;font-size:11.5px;font-weight:700;opacity:.85}
+.mn-grid{display:grid;grid-template-columns:repeat(5,52px);gap:4px}.mn-t{width:52px;height:52px;padding:0;border:0;border-radius:4px;background:url(/v3/assets/img/glad/flat/casino/tile.png?v=1) center/100% 100% no-repeat;image-rendering:pixelated;cursor:pointer;display:grid;place-items:center}.mn-t .gmi{width:auto;height:auto;zoom:2}
+.mn-t:hover:not(:disabled){filter:brightness(1.2)}.mn-t:disabled{cursor:default}.mn-t.gem{background:#143a24;box-shadow:inset 0 0 0 2px #2f8a4e}.mn-t.bomb{background:#3a1418;box-shadow:inset 0 0 0 2px #8a2a2a}.mn-t:disabled:not(.gem):not(.bomb){filter:saturate(.5) brightness(.8)}.mn-t.hit{background:#b8202a;animation:mnHit .3s}.mn-t.dim{opacity:.45}
+@keyframes mnHit{50%{transform:scale(1.25)}}
+.mn-info{font-size:13px;font-weight:800}.pk-cv{image-rendering:auto;max-width:100%}
+.sc-grid{display:grid;grid-template-columns:repeat(3,72px);gap:6px}.sc-c{position:relative;width:72px;height:72px;border-radius:7px;background:#fff8e8;display:grid;place-items:center;box-shadow:0 0 0 2px #c8963a;overflow:hidden}
+.sc-c .gmi{width:48px;height:48px;object-fit:contain}.gm-pays .gmi{object-fit:contain}.sc-c::after{content:"";position:absolute;inset:0;background:url(/v3/assets/img/glad/flat/casino/foil.png?v=1) center/100% 100% no-repeat;image-rendering:pixelated;transition:opacity .25s,transform .25s}.sc-c.open::after{opacity:0;transform:scale(1.3)}.sc-c.hot{box-shadow:0 0 0 3px #ffe27a,0 0 12px #ffd24a}
 .gm-dice{display:grid;gap:4px;margin-bottom:6px;font-size:13px}.gm-dice input[type=range]{width:100%}
 .spin{animation:gmspin .5s linear infinite}@keyframes gmspin{to{transform:rotateY(360deg)}}
 .shake{animation:gmshake .4s ease-in-out infinite}@keyframes gmshake{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
@@ -596,8 +611,8 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=43";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=21";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=44";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=22";
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=1";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -783,6 +798,7 @@ function onEvent(e) {
   if (e.type === "exchange") return openWin("exWin");
   if (e.type === "game") { if (e.pot != null) { jackPot = e.pot; jackLast = e.lastJack; } return openGame(e.g); }
   if (e.type === "gameResult") return gameResult(e);
+  if (e.type === "run") return runMsg(e);
   if (e.type === "casinonote") { chatLine("Casino", e.text, "casinonote"); if (/JACKPOT/.test(e.text)) SFX.play("jackpot"); return; }
   if (e.type === "daily") return renderDaily(e);
   if (e.type === "roulopen") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "gameWin", "dailyWin"]) $(w).hidden = true; $("roulWin").hidden = false; renderRoul(); return; }
@@ -883,7 +899,7 @@ function say(text, cls = "sys") {
 const ART = "/v3/assets/img/glad/flat/", ART_V = 3;
 // pictures replaced after they first shipped (the edge keeps each URL for a year): bump the one that changed
 const ART_VER = { t_casino: 4, rug_casino: 4, o_dicetable: 4, chicken: 4, olive: 4, rotten: 4, chandelier: 4, revenant: 4, farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
-const ART_FILES = ["casino", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
+const ART_FILES = ["casino", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d, "legend_" + d]),
   "bank", "store", "cottage", "signpost", "tree2", "tree3", "tree4", "o_spot", "g_bush", "g_boulder", "g_grass", "g_flowers",
   ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
@@ -917,7 +933,7 @@ const loadArt = (k) => new Promise((res) => {
 /* art that only one area needs waits until you go there (or next door to it). Everything else is the core set,
    loaded at startup. A new area's pictures go in its list here; tools/eastscape-budget.mjs measures both halves. */
 const WILD_ART = ["t_wdirt", "t_wwater", "deadtree", "w_tree", "snag", "w_bush", "w_boulder", "grimstone", "gravestone", "skeleton", "rope", "cagesign", "gnasher", "taxwraith", "chandelier", "revenant"];
-const CASINO_ART = ["t_casino", "rug_casino", "dex_south", "dex_east", "dookie_south", "dookie_east", "o_slots", "o_cointable", "o_dicetable", "o_bar", "o_sofa", "o_walldoor", "o_roulsign", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east"];
+const CASINO_ART = ["o_hilo", "o_mines", "o_plinko", "o_scratch", "t_casino", "rug_casino", "dex_south", "dex_east", "dookie_south", "dookie_east", "o_slots", "o_cointable", "o_dicetable", "o_bar", "o_sofa", "o_walldoor", "o_roulsign", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east"];
 const AREA_ART = {
   wild: WILD_ART, deep: WILD_ART,
   gloam: ["t_gwater", "t_gpath", "o_willow", "o_glowcap", "o_rock_emerald_ore", "o_rock_diamond_ore", "moth", "ghoul", "understudy"],
@@ -1512,7 +1528,7 @@ function aimCamera(P, now) {
   view.ox = Math.round(view.bx - cam.x * view.s); view.oy = Math.round(view.by - cam.y * view.s);
 }
 const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
-const KIND_OF = { howto: "howto", slots: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
+const KIND_OF = { howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
 function thingAt(wx, wy) {
   const now = snow(), near = (x_, y_, rx, ry) => Math.abs(wx - x_) <= rx && wy <= y_ + 4 && wy >= y_ - ry;
   for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})${m.c && m.c !== you?.id ? " · someone's fighting it" : ""}` }; }
@@ -1617,7 +1633,7 @@ function bubble(text, x, y) {
 /* the casino floor is never still: drifting spotlights on the carpet, lamps that breathe, a neon sign that buzzes,
    bulbs chasing round the prize wheel, a bulb on every slot machine, music off the jukebox, glints on the ruby.
    All of it is a few dozen small rectangles a frame, only in a casino room, and none of it under reduced motion. */
-const GAME_T = new Set(["slots", "cointable", "dicetable"]);
+const GAME_T = new Set(["slots", "cointable", "dicetable", "wheel", "hilo", "mines", "plinko", "scratch"]);
 function casinoLife(sprites, pnow, calm) {
   if (calm) return;
   const r = Z.def.room, Y0 = r ? r[1] * T : 0;
@@ -2253,16 +2269,95 @@ function renderEx() {
    The server rolls and pays; this only shows it. A click starts the animation, the result lands it. */
 let GAME = null, gameBet = 10, diceTarget = 50, gameHist = [], gameBusy = false, jackPot = null, jackLast = null;
 const CART = "/v3/assets/img/glad/flat/casino/", CART_V = 1, cimg = (k, cls = "") => `<img class="gmi ${cls}" src="${CART}${k}.png?v=${CART_V}" alt="">`;
+/* the five from the site's casino (2026-09-19). Wheel, Plinko and Scratch-Off are one bet, one answer, like the coin.
+   Higher or Lower and Mines are runs: the server holds the run and tells the page only what it may know. */
+let wheelRot = 0, minesCount = 3, scratchTimer = null, plinkoRaf = 0;
+const RUNS = { hilo: null, mines: null }, RUN_OVER = { hilo: null, mines: null }, RUN_STEP = { hilo: 0 };
+const SUITS = ["♠", "♥", "♦", "♣"], scImg = (k, cls = "") => cimg(k === "gem" ? "gem" : `reel_${k}`, cls);
+function wheelBg() {
+  const W = G.WHEEL, w = (360 - W.gold) / W.slices, parts = [`#e8b83a 0 ${W.gold}deg`];
+  for (let i = 0; i < W.slices; i++) parts.push(`${i % 2 ? "#1a1a1a" : "#b8202a"} ${W.gold + i * w}deg ${W.gold + (i + 1) * w}deg`);
+  return `conic-gradient(${parts.join(",")})`;
+}
+const wheelStage = () => `<div class="wh-box"><div class="wh-disc" id="gmWheel" style="background:${wheelBg()};transform:rotate(${wheelRot}deg)"></div><div class="wh-hub"></div><div class="wh-pin"></div></div>`;
+// the result's angle is turned to sit under the pin; the wheel always goes round a few times first
+function wheelSpin(e) {
+  const el = $("gmWheel"); if (!el || set("reducedMotion")) { wheelRot = 360 - e.angle; return 550; }
+  wheelRot = Math.ceil(wheelRot / 360) * 360 + 360 * 4 + (360 - e.angle);
+  el.style.transition = "transform 2.6s cubic-bezier(.12,.72,.12,1)"; el.style.transform = `rotate(${wheelRot}deg)`; return 2750;
+}
+const PK = { dx: 26, dy: 18, top: 20, w: 344, h: 266 }, PK_BALL = new Image(); PK_BALL.src = `${CART}ball.png?v=${CART_V}`;
+function plinkoDraw(ball, bucket) {
+  const cv = $("gmPlinko"); if (!cv) return; const c = cv.getContext("2d"), P = G.PLINKO, cx = PK.w / 2;
+  c.clearRect(0, 0, PK.w, PK.h);
+  for (let r = 0; r < P.rows; r++) for (let j = 0; j <= r; j++) { c.fillStyle = "#ffd88a"; c.beginPath(); c.arc(cx + (j - r / 2) * PK.dx, PK.top + r * PK.dy, 3, 0, 7); c.fill(); }
+  const by = PK.top + P.rows * PK.dy + 4;
+  P.pays.forEach((x, i) => {
+    const bx = cx + (i - P.rows / 2) * PK.dx - PK.dx / 2 + 1, hot = bucket === i;
+    c.fillStyle = hot ? "#fff3a0" : x >= 4 ? "#c43a2a" : x >= 1.4 ? "#d8822a" : x >= 1 ? "#b89a3a" : "#5a4a3a"; c.fillRect(bx, by, PK.dx - 2, 22);
+    c.fillStyle = hot ? "#2a1a08" : "#fff"; c.font = "800 10px Nunito, sans-serif"; c.textAlign = "center"; c.fillText(`${x}×`, bx + PK.dx / 2 - 1, by + 13);
+  });
+  if (ball) { c.imageSmoothingEnabled = false; if (PK_BALL.complete && PK_BALL.naturalWidth) c.drawImage(PK_BALL, Math.round(ball.x - 10), Math.round(ball.y - 12)); else { c.fillStyle = "#ff9a2a"; c.beginPath(); c.arc(ball.x, ball.y, 7, 0, 7); c.fill(); } }
+}
+function plinkoDrop(e) {
+  const P = G.PLINKO, cx = PK.w / 2, step = 125, pos = [{ x: cx, y: PK.top - 12 }]; let rights = 0;
+  e.path.forEach((b, r) => { rights += b; pos.push({ x: cx + (rights - (r + 1) / 2) * PK.dx, y: r + 1 < P.rows ? PK.top + (r + 1) * PK.dy - 7 : PK.top + P.rows * PK.dy + 2 }); });
+  if (set("reducedMotion")) return 400;
+  const t0 = performance.now(); cancelAnimationFrame(plinkoRaf); let last = -1;
+  const tick = (t) => {
+    const k = Math.min(P.rows, (t - t0) / step), i = Math.min(P.rows - 1, Math.floor(k)), f = k - i, a = pos[i], b = pos[i + 1];
+    if (i !== last && i > 0) { last = i; SFX.play("chip", { vol: 0.35, rate: 1.2 + i * 0.04 }); }
+    plinkoDraw({ x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f - Math.sin(f * Math.PI) * 5 });
+    if (k < P.rows && GAME === "plinko") plinkoRaf = requestAnimationFrame(tick);
+  };
+  plinkoRaf = requestAnimationFrame(tick); return P.rows * step + 150;
+}
+const hlCard = (rank, suit, cls = "") => `<div class="hl-card ${suit === 1 || suit === 2 ? "red" : ""} ${cls}" title="${G.HILO.names[rank]}${SUITS[suit]}"><b>${G.HILO.names[rank]}</b>${cimg(`suit_${suit}`)}</div>`;
+function hiloStage() {
+  const r = RUNS.hilo, o = RUN_OVER.hilo;
+  if (r) return `<div class="hl-row">${hlCard(r.card, r.suit, "in")}<div class="hl-mult">${r.mult.toFixed(2)}×<small>card ${r.cards} of ${G.HILO.maxCards}${r.lucky ? " · 🍀 lucky" : ""}</small></div></div>`;
+  if (o) return `<div class="hl-row">${hlCard(o.card, o.suit, "in")}<div class="hl-mult">${o.how === "bust" ? "Bust" : `${o.mult}×`}</div></div>`;
+  return `<div class="hl-row"><div class="hl-card back"></div></div>`;
+}
+function minesStage() {
+  const r = RUNS.mines, o = RUN_OVER.mines, cells = [];
+  for (let i = 0; i < G.MINES.tiles; i++) {
+    if (r) cells.push(r.open.includes(i) ? `<button class="mn-t gem" disabled>${cimg("gem")}</button>` : `<button class="mn-t" data-tile="${i}"></button>`);
+    else if (o) cells.push(o.bombs.includes(i) ? `<button class="mn-t bomb ${o.hit === i ? "hit" : ""}" disabled>${cimg("bomb")}</button>` : `<button class="mn-t gem ${o.open.includes(i) ? "" : "dim"}" disabled>${cimg("gem")}</button>`);
+    else cells.push(`<button class="mn-t" disabled></button>`);
+  }
+  return `<div class="mn-grid">${cells.join("")}</div>${r ? `<div class="mn-info">${r.open.length ? `${r.mult}× now` : "Pick a tile"} · next gem ${r.next}× · ${r.mines} bomb${r.mines === 1 ? "" : "s"}${r.lucky ? " · 🍀" : ""}</div>` : ""}`;
+}
+const scratchStage = (res) => `<div class="sc-grid" id="gmScratch">${(res?.grid || Array(9).fill(null)).map((k) => `<div class="sc-c${res?.prize && k === res.prize ? " win" : ""}">${k ? scImg(k) : ""}</div>`).join("")}</div>`;
+function runMsg(e) {
+  const had = RUNS[e.g]; RUNS[e.g] = e.run; if (e.luck != null && me) me.luck = e.luck;
+  if (e.over) {
+    RUN_OVER[e.g] = e.over; gameHist = [e.over.payout - e.over.stake, ...gameHist].slice(0, 10);
+    SFX.play(e.over.how === "bust" ? "lose" : e.over.payout > e.over.stake * 4 ? "win_big" : "win_small");
+  } else if (e.run && !had) { RUN_OVER[e.g] = null; SFX.play(e.g === "hilo" ? "coin_flip" : "chip"); }
+  else if (e.step) SFX.play(e.step.tie ? "chip" : "gain", { vol: 0.6 });
+  if (GAME === e.g) renderGame();
+}
+function runText(g) {
+  const o = RUN_OVER[g]; if (!o || RUNS[g]) return ["", ""];
+  if (o.how === "bust") return ["lost", g === "hilo" ? `${G.HILO.names[o.card]} is not ${o.call}. You lose ${G.fmtCash(o.stake)}.` : `Boom. You lose ${G.fmtCash(o.stake)}.`];
+  if (o.how === "refund") return ["", `Nothing moved: your ${G.fmtCash(o.stake)} comes back.`];
+  return ["won", `${o.auto ? "Top of the ladder! " : ""}Cashed out at ${o.mult}×: you win ${G.fmtCash(o.payout)}!`];
+}
 function openGame(g) {
   GAME = g; gameBusy = false; const def = G.GAMES[g];
-  $("gameTitle").textContent = `${def.icon} ${def.name}`; $("gameSub").textContent = "Cash only · the house keeps a little";
+  if (def.run) send({ t: "run", g, op: "state" });
+  const TI = { slots: "reel_seven", cointable: "coin_heads", dicetable: "die", hilo: "card_back", mines: "bomb", plinko: "ball", scratch: "foil" }[g];
+  $("gameTitle").innerHTML = `${TI ? `<img src="${CART}${TI}.png?v=${CART_V}" alt="" style="height:20px;width:auto;image-rendering:pixelated;vertical-align:-4px;margin-right:6px">` : `${def.icon} `}${esc(def.name)}`; $("gameSub").textContent = "Cash only · the house keeps a little";
   for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true;
   $("gameWin").hidden = false; renderGame();
 }
 function renderGame(res) {
   if (!GAME) return;
   const g = GAME, cash = G.cashIn(me), C = G.CASINO;
-  const stage = g === "cointable" ? `<div class="gm-coin${gameBusy ? " spin" : ""}" id="gmShow">${cimg(res?.side === "tails" ? "coin_tails" : "coin_heads", "big")}</div>`
+  const run = G.GAMES[g].run ? RUNS[g] : null;
+  const stage = g === "wheel" ? wheelStage() : g === "hilo" ? hiloStage() : g === "mines" ? minesStage() : g === "scratch" ? scratchStage(res)
+    : g === "plinko" ? `<canvas class="pk-cv" id="gmPlinko" width="${PK.w}" height="${PK.h}"></canvas>` : g === "cointable" ? `<div class="gm-coin${gameBusy ? " spin" : ""}" id="gmShow">${cimg(res?.side === "tails" ? "coin_tails" : "coin_heads", "big")}</div>`
     : g === "dicetable" ? `<div class="gm-dicepair${gameBusy ? " shake" : ""}">${cimg("die", "mid")}${cimg("die", "mid flip")}</div><div class="gm-roll" id="gmShow">${res?.roll ?? "?"}</div>`
     : `<div class="gm-reels" id="gmShow">${(res?.reels || ["cherry", "bell", "seven"]).map((k) => `<span>${cimg(`reel_${k}`)}</span>`).join("")}</div>`;
   const mult = G.diceMult(diceTarget);
@@ -2271,15 +2366,34 @@ function renderGame(res) {
       ${[10, 50, 100, 500].map((n) => `<button class="btn plain" data-amt="${n}">${n}</button>`).join("")}
       <small style="margin-left:auto">You have <b>${G.fmtCash(cash)}</b></small></div>
     ${g === "slots" && jackPot != null ? `<div class="gm-jack"><small>JACKPOT</small><b id="gmJack">${Math.floor(jackPot).toLocaleString()} Cash</b><small>Three ${cimg("reel_seven", "tiny")} wins it · a ${G.CASINO.maxBet} spin wins it all${jackLast ? ` · last won by ${esc(jackLast.name)} (${jackLast.amt.toLocaleString()})` : ""}</small></div>` : ""}
-    <div class="gm-stage ${g === "dicetable" ? "dice" : g === "slots" ? "slots" : ""}">${stage}<div class="gm-msg" id="gmMsg"></div></div>
+    <div class="gm-stage ${g === "dicetable" ? "dice" : g === "cointable" ? "" : g}">${stage}<div class="gm-msg" id="gmMsg"></div></div>
     ${g === "dicetable" ? `<div class="gm-dice"><label>Roll under <b id="gmT">${diceTarget}</b> · wins ${diceTarget - 1}% of the time · pays <b id="gmM">${mult}×</b>
       <input type="range" id="gmTarget" min="${G.DICE.min}" max="${G.DICE.max}" value="${diceTarget}"></label></div>` : ""}
-    <div class="gm-actions">${g === "cointable"
+    ${g === "mines" && !run ? `<div class="gm-dice"><label>Bombs: <b id="gmMines">${minesCount}</b> · first gem pays <b id="gmMinesX">${G.minesMult(minesCount, 1)}×</b> · top of the ladder <b id="gmMinesTop">${G.minesMult(minesCount, G.minesTop(minesCount))}×</b>
+      <input type="range" id="gmMinesN" min="${G.MINES.min}" max="${G.MINES.max}" value="${minesCount}"></label></div>` : ""}
+    <div class="gm-actions">${g === "wheel" ? `<button class="btn wh-red" data-play="red">Red ${G.WHEEL.pays.red}×</button><button class="btn wh-black" data-play="black">Black ${G.WHEEL.pays.black}×</button><button class="btn wh-gold" data-play="gold">Gold ${G.WHEEL.pays.gold}×</button>`
+      : g === "plinko" ? `<button class="btn" data-play="go">Drop</button>` : g === "scratch" ? `<button class="btn" data-play="go">Buy a card</button>`
+      : g === "hilo" ? (run ? `<button class="btn" data-run="call" data-call="higher" ${G.hiloWays(run.card, "higher") ? "" : "disabled"}>▲ Higher ${G.hiloWays(run.card, "higher") ? (G.hiloFactor(run.card, "higher") === 1 ? "(can't lose)" : `${(run.mult * G.hiloFactor(run.card, "higher")).toFixed(2)}×`) : ""}</button><button class="btn" data-run="call" data-call="lower" ${G.hiloWays(run.card, "lower") ? "" : "disabled"}>▼ Lower ${G.hiloWays(run.card, "lower") ? (G.hiloFactor(run.card, "lower") === 1 ? "(can't lose)" : `${(run.mult * G.hiloFactor(run.card, "lower")).toFixed(2)}×`) : ""}</button><button class="btn plain" data-run="cash" ${run.cash ? "" : "disabled"}>Cash out ${run.cash ? G.fmtCash(run.cash) : ""}</button>` : `<button class="btn" data-run="start">Deal</button>`)
+      : g === "mines" ? (run ? `<button class="btn" data-run="cash" ${run.cash ? "" : "disabled"}>Cash out ${run.cash ? G.fmtCash(run.cash) : ""}</button>` : `<button class="btn" data-run="start">Start</button>`)
+      : g === "cointable"
       ? `<button class="btn" data-play="heads">${cimg("coin_heads", "tiny")} Heads</button><button class="btn" data-play="tails">${cimg("coin_tails", "tiny")} Tails</button>`
       : `<button class="btn" data-play="go">${g === "slots" ? "Spin" : "Roll"}</button>`}</div>
+    ${g === "scratch" ? `<div class="gm-pays">${G.SCRATCH.map((p) => `<span>${scImg(p.k, "tiny")}${scImg(p.k, "tiny")}${scImg(p.k, "tiny")} <b>${p.x}×</b></span>`).join("")}</div>` : ""}
     ${g === "slots" ? `<div class="gm-pays">${G.REELS.map((r) => `<span>${cimg(`reel_${r.k}`, "tiny")}${cimg(`reel_${r.k}`, "tiny")}${cimg(`reel_${r.k}`, "tiny")} <b>${r.pay}×</b></span>`).join("")}<span>${cimg("reel_cherry", "tiny")}${cimg("reel_cherry", "tiny")} <b>${G.SLOT_TWO_CHERRIES}×</b></span></div>` : ""}
     <div class="gm-hist">${gameHist.map((h) => `<span class="${h > 0 ? "w" : ""}">${h > 0 ? "+" : ""}${h.toLocaleString()}</span>`).join("")}</div>`;
   const amt = $("gmAmt");
+  if (run) { amt.value = run.stake; amt.disabled = true; $("gameBody").querySelectorAll("[data-amt]").forEach((b) => { b.disabled = true; }); }
+  if (g === "plinko") plinkoDraw(res?.bucket != null ? { x: PK.w / 2 + (res.bucket - G.PLINKO.rows / 2) * PK.dx, y: PK.top + G.PLINKO.rows * PK.dy + 2 } : null, res?.bucket);
+  if (G.GAMES[g].run) { const [cls, text] = runText(g); $("gmMsg").className = `gm-msg ${cls}`; $("gmMsg").textContent = text; }
+  $("gmMinesN")?.addEventListener("input", (e) => { minesCount = +e.target.value; $("gmMines").textContent = minesCount; $("gmMinesX").textContent = `${G.minesMult(minesCount, 1)}×`; $("gmMinesTop").textContent = `${G.minesMult(minesCount, G.minesTop(minesCount))}×`; });
+  $("gameBody").querySelectorAll("[data-tile]").forEach((b) => b.addEventListener("click", () => send({ t: "run", g, op: "pick", i: +b.dataset.tile })));
+  $("gameBody").querySelectorAll("[data-run]").forEach((b) => b.addEventListener("click", () => {
+    const op = b.dataset.run;
+    if (op !== "start") return send({ t: "run", g, op, call: b.dataset.call });
+    gameBet = Math.max(C.minBet, Math.min(C.maxBet, +amt.value | 0));
+    if (gameBet > G.cashIn(me)) { $("gmMsg").className = "gm-msg lost"; $("gmMsg").textContent = `You only have ${G.fmtCash(G.cashIn(me))}.`; return; }
+    send({ t: "run", g, op: "start", amt: gameBet, mines: minesCount });
+  }));
   amt.addEventListener("change", () => { gameBet = Math.max(C.minBet, Math.min(C.maxBet, +amt.value | 0)); amt.value = gameBet; });
   $("gameBody").querySelectorAll("[data-amt]").forEach((b) => b.addEventListener("click", () => { gameBet = +b.dataset.amt; amt.value = gameBet; }));
   $("gmTarget")?.addEventListener("input", (e) => { diceTarget = +e.target.value; $("gmT").textContent = diceTarget; $("gmM").textContent = `${G.diceMult(diceTarget)}×`; });
@@ -2288,32 +2402,49 @@ function renderGame(res) {
     gameBet = Math.max(C.minBet, Math.min(C.maxBet, +amt.value | 0));
     if (gameBet > G.cashIn(me)) { $("gmMsg").className = "gm-msg lost"; $("gmMsg").textContent = `You only have ${G.fmtCash(G.cashIn(me))}.`; return; }
     gameBusy = true; renderGame();
-    gameLoop?.stop(); gameLoop = g === "slots" ? SFX.play("slots_spin") : (SFX.play(g === "cointable" ? "coin_flip" : "dice"), null);
+    gameLoop?.stop(); clearTimeout(scratchTimer); gameLoop = g === "slots" ? SFX.play("slots_spin") : (SFX.play(g === "cointable" ? "coin_flip" : g === "dicetable" ? "dice" : "chip"), null);
     if (g === "slots") { const reels = [...$("gmShow").querySelectorAll("img")]; spinTimer = setInterval(() => { for (const r of reels) r.src = `${CART}reel_${G.REELS[Math.floor(Math.random() * G.REELS.length)].k}.png?v=${CART_V}`; }, 80); }
-    send({ t: "bet", g, amt: gameBet, pick: g === "cointable" ? b.dataset.play : g === "dicetable" ? diceTarget : null });
+    send({ t: "bet", g, amt: gameBet, pick: g === "cointable" || g === "wheel" ? b.dataset.play : g === "dicetable" ? diceTarget : null });
     setTimeout(() => { if (gameBusy) { gameBusy = false; clearInterval(spinTimer); gameLoop?.stop(); gameLoop = null; renderGame(); } }, 4000);   // the server said no (it says why in the log)
   }));
 }
 let spinTimer = null, gameLoop = null;
 function gameResult(e) {
   if (e.g !== GAME) return;
-  // let the animation run a beat, then land it
+  // let the animation run a beat, then land it (the wheel and the ball take as long as they take)
+  const wait = e.g === "wheel" ? wheelSpin(e) : e.g === "plinko" ? plinkoDrop(e) : 550;
   setTimeout(() => {
+    if (e.g !== GAME) { gameBusy = false; return; }
     clearInterval(spinTimer); gameBusy = false; gameHist = [e.payout - e.bet, ...gameHist].slice(0, 10);
     gameLoop?.stop(); gameLoop = null;
     if (e.g === "slots") SFX.play("reel_stop");
-    SFX.play(e.jackpot ? "jackpot" : e.payout > e.bet * 4 ? "win_big" : e.payout > 0 ? "win_small" : "lose");
+    if (e.g !== "scratch") SFX.play(e.jackpot ? "jackpot" : e.payout > e.bet * 4 ? "win_big" : e.payout > e.bet ? "win_small" : e.payout === e.bet ? "chip" : "lose");
     if (e.pot != null) jackPot = e.pot;
     if (e.jackpot) jackLast = { name: you?.name, amt: e.jackpot };
     renderGame(e);
     const show = $("gmShow"), msg = $("gmMsg"), won = e.payout > 0;
 
-    msg.className = `gm-msg ${won ? "won" : "lost"}`;
-    msg.textContent = e.g === "cointable" ? `${e.side === "heads" ? "Heads" : "Tails"}. ${won ? `You win ${G.fmtCash(e.payout)}!` : "You lose."}`
+    if (e.g === "scratch") {
+      // the card is already decided and paid; the boxes open one by one, and the verdict waits for the last of them
+      const cells = [...document.querySelectorAll("#gmScratch .sc-c")], quick = set("reducedMotion"); let i = 0;
+      const open = () => {
+        if (GAME !== "scratch" || !cells[0]?.isConnected) return;
+        if (i < cells.length && !quick) { cells[i++].classList.add("open"); SFX.play("chip", { vol: 0.3, rate: 1 + i * 0.05 }); scratchTimer = setTimeout(open, 140); return; }
+        cells.forEach((c) => { c.classList.add("open"); if (c.classList.contains("win")) c.classList.add("hot"); });
+        SFX.play(e.payout > e.bet * 4 ? "win_big" : e.payout > e.bet ? "win_small" : e.payout ? "chip" : "lose");
+        msg.className = `gm-msg ${won ? "won" : "lost"}`;
+        msg.textContent = won && e.payout <= e.bet ? "Three gems: your stake comes back." : won ? `Three of a kind, ${e.mult}×: you win ${G.fmtCash(e.payout)}!${e.lucky ? ` (+${e.lucky} lucky)` : ""}` : "No three of a kind.";
+      };
+      return open();
+    }
+    msg.className = `gm-msg ${e.payout >= e.bet && won ? "won" : "lost"}`;
+    msg.textContent = e.g === "wheel" ? `${e.color[0].toUpperCase()}${e.color.slice(1)}. ${won ? `You win ${G.fmtCash(e.payout)}!` : "You lose."}`
+      : e.g === "plinko" ? (e.payout > e.bet ? `${e.mult}× — you win ${G.fmtCash(e.payout)}!` : e.payout === e.bet ? "1× — your stake comes back." : `${e.mult}× — ${G.fmtCash(e.payout)} back.`)
+      : e.g === "cointable" ? `${e.side === "heads" ? "Heads" : "Tails"}. ${won ? `You win ${G.fmtCash(e.payout)}!` : "You lose."}`
       : e.g === "dicetable" ? `Rolled ${e.roll} (needed under ${e.target}). ${won ? `You win ${G.fmtCash(e.payout)}!` : "You lose."}`
       : e.jackpot ? `JACKPOT! You win ${G.fmtCash(e.payout)}!` : won ? `${e.mult}× — you win ${G.fmtCash(e.payout)}!` : "No luck.";
     if (won && e.lucky) msg.textContent += ` (+${e.lucky} lucky)`;
-  }, 550);
+  }, wait);
 }
 
 /* ------------------------------------------------------------ roulette: the shared table
