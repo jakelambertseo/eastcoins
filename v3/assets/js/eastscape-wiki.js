@@ -124,6 +124,7 @@ export const UPDATES = [
     date: "2026-09-20", title: "The casino floor, laid out like a real one",
     items: [
       "Every kind of game now has its own roped-off room, named in gold on the carpet at its way in. SLOTS fill the north-west: three banks of machines back to back, plus the wall. WHEELS and COIN FLIP share the south-west. The CARD ROOM (Higher or Lower, and the blackjack and poker tables that open soon) is next to THE BAR in the north-east. The DICE PIT and INSTANT WINS (two Plinko machines, two Mines tables, two Scratch-Off kiosks) are in the south-east.",
+      "Later the same day: fewer ropes (just a short run either side of each way in), and the rooms are broken up with the things a casino is full of. Stools at the slot machines, the tables and the bar (stand on one: it's where you'd sit), soda and snack machines, a water cooler, bins, planter boxes, and a smoking section in the north-east corner with club chairs, ashtrays and its own haze.",
       "The velvet ropes are real: you go into a room through its gap. The long aisle from the skilling arch to the fighting arch stays clear, with a Cashier at each end and the House Ruby in the middle.",
       "Dex, DookieBetts and the regulars have moved to where they belong: Dex behind the bar, Dookie in the dice pit, Whale Wendell in the card room."
     ]
