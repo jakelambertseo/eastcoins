@@ -637,7 +637,7 @@ Object.assign(SCENES, {
       const g = room(4, 3, 17, 10, 10), objs = [];
       objs.push({ t: "bar", x: 12, y: 4, w: 4, h: 1, name: "Bar" }); block(g, 12, 4, 4, 1);
       objs.push({ t: "notice", x: 6, y: 3, name: "Task board" }); g[3][6] = "#";
-      for (const y of [5, 7, 9]) { objs.push({ t: "slots", x: 4, y, name: "Slot machine" }); g[y][4] = "#"; }
+      for (const y of [5, 7, 9]) { objs.push({ t: "slots", x: 4, y, name: "Slot machine", flip: true }); g[y][4] = "#"; }
       objs.push({ t: "cointable", x: 8, y: 6, w: 2, h: 1, name: "Coin Flip table" }); block(g, 8, 6, 2, 1);
       objs.push({ t: "dicetable", x: 13, y: 7, w: 2, h: 1, name: "Dice table" }); block(g, 13, 7, 2, 1);
       objs.push({ t: "rug", x: 9, y: 8, w: 4, h: 3, color: "#5a1a2a", name: "Rug" });
@@ -651,7 +651,13 @@ Object.assign(SCENES, {
       "Broke? Happens to the best of us. The board by the door has jobs that pay. Fresh ones every morning.",
       "Biggest win I've seen? Someone hit three sevens on that end machine. Bought everyone a drink. We don't sell drinks.",
       "Every roll's decided by the house, fair and square. I just hand over the money.",
-      "No ZCoins in here, friend. Cash only. What happens in EastScape stays in EastScape."] }]
+      "No ZCoins in here, friend. Cash only. What happens in EastScape stays in EastScape."] },
+      { name: "DookieBetts", art: "dookie", x: 14, y: 6, still: true, reach: 2, hair: "#1a1a1a", shirt: "#c8102e", pants: "#1a1a1a", lines: [
+        "Dice table's open. Roll under your number. Low number, big money. Simple.",
+        "Twenty-three on the jersey, twenty-three on the dice. Coincidence? Absolutely.",
+        "I don't lose. I just hand people Cash on a delay.",
+        "Five is the bravest number on this table. Ninety-five is for people who like winning a little, a lot.",
+        "Big win? The whole room hears about it. Bigger win? The whole world does."] }]
   },
   farmhouse: {
     name: "The Farmhouse", interior: true, floor: "wood", room: [6, 4, 15, 10], exitTo: { scene: "farm", x: 4, y: 5 }, entry: { x: 10, y: 10 },
