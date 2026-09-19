@@ -224,5 +224,14 @@ head("dead inventory");
   }
 }
 
+// the size budget rides along, so one command checks both the content and the weight
+{
+  const { spawnSync } = await import("child_process");
+  const { fileURLToPath } = await import("url");
+  console.log("");
+  const r = spawnSync(process.execPath, [fileURLToPath(new URL("./eastscape-budget.mjs", import.meta.url))], { stdio: "inherit" });
+  if (r.status) errors++;
+}
+
 console.log(`\n${errors} error${errors === 1 ? "" : "s"}, ${warns} warning${warns === 1 ? "" : "s"}\n`);
 process.exit(errors ? 1 : 0);

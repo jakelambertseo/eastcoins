@@ -772,7 +772,9 @@ function loadScene(key) {
   Z.npcs = []; botBubbles.clear(); PRED.on = false; PRED.path = []; PRED.step = null;
   for (const id of ["bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin", "gameWin", "dailyWin", "roulWin"]) $(id).hidden = true;
   Z.exits = exitsOf();
+  loadAreaArt(key);
   Z.bg = paintBg();
+  setTimeout(() => { if (Z.key !== key) return; for (const k of Object.values(Z.def.exits || {})) loadAreaArt(k); for (const ob of Z.objs) if (ob.enter) loadAreaArt(ob.enter); if (Z.def.exitTo) loadAreaArt(Z.def.exitTo.scene); }, 3000);
   if (DLG) closeTalk();
   renderStats();
 }
@@ -875,7 +877,26 @@ const loadArt = (k) => new Promise((res) => {
   };
   im.onerror = () => res(); im.src = `${ART}${k}.png?v=${ART_VER[k] || ART_V}`;
 });
-const artReady = Promise.all(ART_FILES.map(loadArt));
+/* art that only one area needs waits until you go there (or next door to it). Everything else is the core set,
+   loaded at startup. A new area's pictures go in its list here; tools/eastscape-budget.mjs measures both halves. */
+const WILD_ART = ["t_wdirt", "t_wwater", "deadtree", "w_tree", "snag", "w_bush", "w_boulder", "grimstone", "gravestone", "skeleton", "rope", "cagesign", "gnasher", "taxwraith", "chandelier", "revenant"];
+const CASINO_ART = ["t_casino", "rug_casino", "dex_south", "dex_east", "dookie_south", "dookie_east", "o_slots", "o_cointable", "o_dicetable", "o_bar", "o_sofa", "o_walldoor", "o_roulsign"];
+const AREA_ART = {
+  wild: WILD_ART, deep: WILD_ART,
+  gloam: ["t_gwater", "t_gpath", "o_willow", "o_glowcap", "o_rock_emerald_ore", "o_rock_diamond_ore", "moth", "ghoul", "understudy"],
+  cloud: ["t_csky", "t_cpath", "o_skyash", "o_cloudbush", "o_cloudcolumn", "o_rock_dragonstone_ore", "o_rock_onyx_ore", "ram", "angel", "goose"],
+  casino: CASINO_ART,
+  roulette: [...CASINO_ART, "t_roulette", "o_roulette", "rouge_south", "rouge_east"]
+};
+const LAZY_ART = new Set(Object.values(AREA_ART).flat());
+const artReady = Promise.all(ART_FILES.filter((k) => !LAZY_ART.has(k)).map(loadArt));
+const areaAsked = new Set();
+// fetch an area's pictures once; repaint the ground if you're standing in it when they land
+function loadAreaArt(key) {
+  const base = String(key).split(":")[0], list = AREA_ART[base]; if (!list || areaAsked.has(base)) return;
+  areaAsked.add(base);
+  Promise.all(list.filter((k) => !IMG[k]).map((k) => { artAsked.add(k); return loadArt(k); })).then(() => { if (Z.key && Z.key.split(":")[0] === base) Z.bg = paintBg(); });
+}
 // every tree picture also comes in a darker, a lighter and a yellower green, baked once at load (no per-frame filter),
 // so a treeline mixes 4 shapes x 4 shades instead of repeating one tree
 const TREE_TINTS = { d: "brightness(0.84) hue-rotate(-6deg)", l: "brightness(1.1) saturate(1.08)", y: "hue-rotate(14deg) brightness(1.03) saturate(0.95)" };
@@ -907,7 +928,7 @@ function spr(k, x, y, flip = false, filter = "", sc = 1) {
 // item and skill icons (PixelLab): art where it exists, the emoji where it doesn't
 const ITEM_ART = new Set(["ashlogs", "axe", "beef", "bogplate", "bones", "bronze_amulet", "bronze_bar", "bronze_body", "bronze_boots", "bronze_gladius", "bronze_gloves", "bronze_helm", "bronze_legs", "bronze_maul", "bronze_ring", "bronze_shield", "bronze_sword", "bronzecuirass", "bronzehelm", "bronzeshield", "bronzesword", "burnt", "cap", "cbeef", "cchicken", "cgloomfin", "chicken", "clanternfish", "cmooncarp", "cobweb", "coins", "copper", "cpork", "csardine", "cskyeel", "ctrout", "diamond_amulet", "diamond_bar", "diamond_body", "diamond_boots", "diamond_gladius", "diamond_gloves", "diamond_helm", "diamond_legs", "diamond_maul", "diamond_ore", "diamond_ring", "diamond_shield", "diamond_sword", "dragonstone_amulet", "dragonstone_bar", "dragonstone_body", "dragonstone_boots", "dragonstone_gladius", "dragonstone_gloves", "dragonstone_helm", "dragonstone_legs", "dragonstone_maul", "dragonstone_ore", "dragonstone_ring", "dragonstone_shield", "dragonstone_sword", "emerald_amulet", "emerald_bar", "emerald_body", "emerald_boots", "emerald_gladius", "emerald_gloves", "emerald_helm", "emerald_legs", "emerald_maul", "emerald_ore", "emerald_ring", "emerald_shield", "emerald_sword", "feather", "geode", "gloomfin", "goldtomatoe", "grimstone", "grudge", "hide", "husk", "lantern", "lanternfish", "logs", "manifesto", "marble", "mask", "menace", "monocle", "mooncarp", "olives", "onyx_amulet", "onyx_bar", "onyx_body", "onyx_boots", "onyx_gladius", "onyx_gloves", "onyx_helm", "onyx_legs", "onyx_maul", "onyx_ore", "onyx_ring", "onyx_shield", "onyx_sword", "parma", "pickaxe", "pit", "pork", "receipt", "rod", "rudis", "sandals", "sardine", "skyashlogs", "skyeel", "spiderboots", "stardust", "sunolive", "tin", "toga", "tomatoe", "trout", "tunic", "tusk", "wheat", "willowlogs", "wraithhood", "yewlogs"]), SKILL_ART = new Set(["attack", "cooking", "defence", "farming", "fishing", "hp", "melee", "mining", "smithing", "strength", "woodcutting"]), EQ_ART = new Set(["amulet", "body", "boots", "gloves", "helm", "legs", "ring", "shield", "weapon"]);
 const IART = "/v3/assets/img/glad/flat/items/", IART_V = 4, ICO_IMG = {};
-for (const k of [...ITEM_ART, ...[...SKILL_ART].map((x) => "skill_" + x), ...[...EQ_ART].map((x) => "eq_" + x)]) { const im = new Image(); im.src = `${IART}${k}.png?v=${IART_V}`; ICO_IMG[k] = im; }
+// (canvas icons are fetched the first time each is drawn; the <img> icons in windows load as they appear)
 const artOf = (k) => `<img class="ico" src="${IART}${k}.png?v=${IART_V}" alt="">`;
 const ART_ALIAS = { bronze_body: "bronzecuirass", bronze_helm: "bronzehelm", bronze_shield: "bronzeshield", bronze_sword: "bronzesword" };
 const ico = (k) => { const a = ART_ALIAS[k] || k; return ITEM_ART.has(a) ? artOf(a) : ITEMS[k]?.icon || ""; };
@@ -916,7 +937,8 @@ const STANCE_ICO = { accurate: "attack", aggressive: "strength", defensive: "def
 const sico = (k) => (SKILL_ART.has(k) ? artOf(`skill_${k}`) : SKILLS[k]?.icon || "");
 // on the canvas: centred on x, y, size pixels square
 function drawIco(k, x, y, size, skill) {
-  const im = ICO_IMG[skill ? `skill_${k}` : k];
+  const key = skill ? `skill_${k}` : ART_ALIAS[k] || k, have = skill ? SKILL_ART.has(k) : ITEM_ART.has(key);
+  let im = ICO_IMG[key]; if (!im && have) { im = new Image(); im.src = `${IART}${key}.png?v=${IART_V}`; ICO_IMG[key] = im; }
   if (im && im.complete && im.naturalWidth) { const sm = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false; ctx.drawImage(im, Math.round(x - size / 2), Math.round(y - size / 2), size, size); ctx.imageSmoothingEnabled = sm; return; }
   ctx.font = `${Math.round(size * 0.8)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(skill ? SKILLS[k].icon : ITEMS[k].icon, x, y);
 }
