@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 34;
+export const VERSION = 35;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -704,7 +704,7 @@ Object.assign(SCENES, {
       objs.push({ t: "rug", img: "rug_casino", x: 20, y: 17, w: 4, h: 3, color: "#5a1a2a", name: "Rug" });
       objs.push({ t: "howto", art: "o_notice", x: 25, y: 20, name: "How GAMBA works" }); g[20][25] = "#";
       for (const [x, y] of [[5, 21], [11, 21], [30, 21], [36, 21], [14, 5], [36, 5]]) { objs.push({ t: "sofa", x, y, w: 2, h: 1, name: "Sofa" }); block(g, x, y, 2, 1); }
-      for (const [x, y] of [[3, 4], [40, 4], [17, 21], [27, 21], [12, 4], [25, 4], [3, 21], [40, 21]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
+      for (const [x, y] of [[3, 4], [40, 4], [17, 21], [28, 21], [12, 4], [25, 4], [3, 21], [40, 21]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
       /* a busy floor (2026-09-19). All of this is furniture: the tables that aren't games yet say so in their name,
          so nobody clicks a poker table expecting cards. The middle of the hall is the house's showpiece behind ropes. */
       objs.push({ t: "coinstatue", x: 21, y: 13, w: 2, h: 1, name: "The House Ruby" }); block(g, 21, 13, 2, 1);
@@ -716,6 +716,10 @@ Object.assign(SCENES, {
       objs.push({ t: "atm", x: 39, y: 4, name: "Cash machine (out of order, thankfully)" }); g[4][39] = "#";
       objs.push({ t: "prizewheel", x: 16, y: 4, w: 2, h: 1, name: "Prize wheel (opening soon)" }); block(g, 16, 4, 2, 1);
       objs.push({ t: "piano", x: 37, y: 19, w: 2, h: 1, name: "Grand piano" }); block(g, 37, 19, 2, 1);
+      // the games everyone already knows from the site stand round the rug you arrive on: nothing to go looking for
+      for (const [t, x, y, name, art] of [["wheel", 13, 19, "Wheel", "o_prizewheel"], ["hilo", 17, 18, "Higher or Lower"], ["mines", 24, 18, "Mines"], ["plinko", 28, 19, "Plinko"], ["scratch", 18, 20, "Scratch-Off"], ["cointable", 26, 20, "Coin Flip table"]]) {
+        objs.push({ t, x, y, w: 2, h: 1, name, ...(art ? { art } : {}) }); block(g, x, y, 2, 1);
+      }
       return { g, objs, blobs: [] };
     },
     // the regulars at the machines are simulated players: they walk up to a game, play a while, and move on
@@ -752,14 +756,14 @@ Object.assign(SCENES, {
         "Two cherries pays, dear. People forget that. Two cherries has paid for this whole visor.",
         "I brought my own bucket. You have to show the machine you're serious.",
         "Lucky clover from the Workyard, that's the trick. I eat them. You're supposed to click them? Hm."] },
-      { name: "Rent Money Randy", art: "randy", x: 18, y: 20, hair: "#5a4a3a", shirt: "#8a5a32", pants: "#8a5a32", lines: [
+      { name: "Rent Money Randy", art: "randy", x: 15, y: 21, hair: "#5a4a3a", shirt: "#8a5a32", pants: "#8a5a32", lines: [
         "It's a barrel. Yes. No, I don't want to talk about it. Dice. It was the dice.",
         "I was up four thousand. Then I was up two thousand. Then I was in a barrel.",
         "The task board pays Cash for chopping logs. I'd go, but the barrel doesn't fit through the arch.",
         "Rent's due Friday. So am I. We'll see who gets there first.",
         "Spot me ten Cash? I'll pay you back twenty. I've got a feeling about the coin table.",
         "The barrel's actually quite roomy. Don't end up in one."] },
-      { name: "Whale Wendell", art: "wendell", x: 29, y: 18, hair: "#1a1a1a", shirt: "#f4f4f4", pants: "#f4f4f4", lines: [
+      { name: "Whale Wendell", art: "wendell", x: 31, y: 17, hair: "#1a1a1a", shirt: "#f4f4f4", pants: "#f4f4f4", lines: [
         "Five hundred a spin. It's the most the house lets me bet. I've written letters.",
         "I don't look at my balance. My balance looks at me.",
         "Poker's opening soon, they keep telling me. I've already reserved every seat.",
@@ -1064,8 +1068,35 @@ export const CASINO = { minBet: 1, maxBet: 500, betMs: 900, roomWin: 5, worldWin
 export const GAMES = {
   slots: { name: "Slots", icon: "🎰", ex: "Three of a kind pays; two cherries pay 1.4×. Three sevens also wins the jackpot." },
   cointable: { name: "Coin Flip", icon: "🪙", ex: "Heads or tails. Pays 1.95×." },
-  dicetable: { name: "Dice", icon: "🎲", ex: "Roll 1–100 under your number. The lower you go, the more it pays." }
+  dicetable: { name: "Dice", icon: "🎲", ex: "Roll 1–100 under your number. The lower you go, the more it pays." },
+  // the games people know from the site's casino, for Cash (2026-09-19). They stand round the rug you arrive on.
+  wheel: { name: "Wheel", icon: "🎡", ex: "Red or black pays 1.97×. The thin gold sliver pays 58×." },
+  hilo: { name: "Higher or Lower", icon: "🃏", run: true, ex: "Is the next card higher or lower? Every right call multiplies your stake; cash out whenever you like. A tie is a push." },
+  mines: { name: "Mines", icon: "💣", run: true, ex: "25 tiles, some are bombs. Every gem multiplies your stake; cash out before you find a bomb." },
+  plinko: { name: "Plinko", icon: "🟠", ex: "Drop the ball through twelve rows of pegs. The edges pay 25×." },
+  scratch: { name: "Scratch-Off", icon: "🎟️", ex: "Nine boxes. Three of a kind wins that symbol's prize." }
 };
+/* Every number for the new tables lives here; the server plays them and the page draws them from the same figures.
+   Each returns about 97% before luck, the same as the coin and the dice, so no table is the smart one to farm. */
+export const WHEEL = { gold: 6, slices: 24, pays: { red: 1.97, black: 1.97, gold: 58 } };   // degrees of gold; the rest is 24 equal slices
+export function wheelColor(angle) { const a = ((angle % 360) + 360) % 360; if (a < WHEEL.gold) return "gold"; return Math.floor((a - WHEEL.gold) / ((360 - WHEEL.gold) / WHEEL.slices)) % 2 ? "black" : "red"; }
+// Higher or Lower: ranks 1 (ace, low) to 13 (king). A call is priced fairly on the twelve cards that can settle it
+// (a tie is a push), and the house's cut comes off once, at cash-out, so a long run isn't shaved on every card.
+export const HILO = { edge: 0.97, maxMult: 50, maxCards: 12, names: ["", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"] };
+export const hiloWays = (rank, call) => (call === "higher" ? 13 - rank : rank - 1);           // how many of the 12 other ranks win
+export const hiloFactor = (rank, call) => { const w = hiloWays(rank, call); return w > 0 ? 12 / w : 0; };
+export const hiloPays = (stake, mult) => Math.floor(stake * Math.min(HILO.maxMult, mult) * HILO.edge);
+// Mines: the fair price of k safe picks with m bombs is C(25,k)/C(25-m,k); the run cashes itself at the last rung under the cap
+export const MINES = { tiles: 25, min: 1, max: 10, edge: 0.97, maxMult: 50 };
+export function minesMult(m, k) { let x = 1; for (let i = 0; i < k; i++) x *= (MINES.tiles - i) / (MINES.tiles - m - i); return Math.floor(x * MINES.edge * 100) / 100; }
+export function minesTop(m) { let k = 1; while (k < MINES.tiles - m && minesMult(m, k + 1) <= MINES.maxMult) k++; return k; }
+// Plinko: 12 rows, 13 buckets. Returns 97.1%; every bucket but the middle pays the stake back or better.
+export const PLINKO = { rows: 12, pays: [25, 4, 2, 1.4, 1.1, 1, 0.3, 1, 1.1, 1.4, 2, 4, 25] };
+// Scratch-Off: chances in 1000, rarest first. 97.5% back; about three cards in eight win something.
+export const SCRATCH = [
+  { k: "seven", x: 100, w: 1 }, { k: "diamond", x: 25, w: 3 }, { k: "star", x: 10, w: 10 }, { k: "bell", x: 5, w: 30 },
+  { k: "lemon", x: 3, w: 50 }, { k: "cherry", x: 2, w: 120 }, { k: "gem", x: 1, w: 160 }
+];
 export const FLIP_PAYS = 1.95;                                          // 97.5% back
 export const DICE = { min: 5, max: 95, rtp: 0.97 };                     // win if the roll (1-100) is under your number
 export const diceMult = (target) => Math.floor((DICE.rtp * 100 / (target - 1)) * 100) / 100;

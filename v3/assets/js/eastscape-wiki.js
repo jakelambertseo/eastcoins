@@ -121,6 +121,15 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-19", title: "Five more games, right where you walk in",
+    items: [
+      "Wheel, Higher or Lower, Mines, Plinko and Scratch-Off now stand round the rug you arrive on, with a Coin Flip table beside them. The same games as the site's casino, played for Cash.",
+      "Wheel: red or black pays 1.97×, the gold sliver 58×. Plinko: twelve rows, 25× at the edges. Scratch-Off: three of a kind, up to 100×.",
+      "Higher or Lower and Mines are runs: every right call or gem multiplies your stake and you cash out when you like. A run is kept for you if you close the window, walk away or the game restarts.",
+      "Luck works on all of them, and every table returns about the same, so play the one you enjoy."
+    ]
+  },
+  {
     date: "2026-09-19", title: "The casino floor fills up",
     items: [
       "The hall has furniture now: the House Ruby behind velvet ropes in the middle, poker and blackjack tables (opening soon), a prize wheel, cocktail tables, a jukebox, a grand piano, a cash machine that thankfully doesn't work, and art on the back wall.",
@@ -152,6 +161,7 @@ export const UPDATES = [
     items: [
       "The Forge building in the Forum is now the Casino. Brutus still works his smithy right outside.",
       "Inside: slots, coin flip and dice for Cash (never ZCoins), a bar, sofas, and Dex the Dealer.",
+      "Round the rug where you walk in: Wheel, Higher or Lower, Mines, Plinko and Scratch-Off, the games from the site's casino, for Cash. Higher or Lower and Mines are runs you cash out of; a run is kept for you if you leave the table.",
       "The task board moved in too: three daily tasks each, picked for your levels, paid in Cash.",
       "Through the door at the back: the Roulette Room, one shared table where everyone plays the same spin.",
       "The slots have a jackpot everyone feeds: three sevens wins it.",
