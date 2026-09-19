@@ -477,8 +477,8 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=26";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=8";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=27";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=9";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -727,7 +727,7 @@ function say(text, cls = "sys") {
 const ART = "/v3/assets/img/glad/flat/", ART_V = 3;
 // pictures replaced after they first shipped (the edge keeps each URL for a year): bump the one that changed
 const ART_VER = { chicken: 4, olive: 4, rotten: 4, chandelier: 4, revenant: 4, farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
-const ART_FILES = ["t_dirt", "t_water", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
+const ART_FILES = ["t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d, "legend_" + d]),
   "bank", "store", "cottage", "signpost", "tree2", "tree3", "tree4", "o_spot", "g_bush", "g_boulder", "g_grass", "g_flowers",
   ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
@@ -737,7 +737,7 @@ const ART_FILES = ["t_dirt", "t_water", "farmhouse", "hut", "well", "tree", "hay
   // the rest of the monsters (PixelLab, overnight 2026-09-18)
   "olive", "boar", "goat", "rotten", "hornworm", "highwayman",
   // scenery (PixelLab, overnight 2026-09-18)
-  "o_anvil", "o_barrel", "o_barricade", "o_bed", "o_bench", "o_bigtomato", "o_booth", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chair", "o_chariot", "o_chest", "o_column", "o_crate", "o_cypress", "o_cypress_stump", "o_deadtree_stump", "o_ferry", "o_fire", "o_fountain", "o_furnace", "o_goatstatue", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_notice", "o_oak", "o_oak_stump", "o_olive", "o_olive_bare", "o_palm", "o_pedestal", "o_plant", "o_plot", "o_press", "o_range", "o_rock_copper", "o_rock_empty", "o_rock_marble", "o_rock_stardust", "o_rock_tin", "o_sack", "o_scarecrow", "o_shrine", "o_sign", "o_spot", "o_stall", "o_statue", "o_table", "o_toll", "o_tree_stump", "o_vein_copper", "o_vine", "o_vine_bare", "o_vine_gold", "o_yew", "o_yew_stump"];
+  "o_anvil", "o_barrel", "o_barricade", "o_bed", "o_bench", "o_bigtomato", "o_booth", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chair", "o_chariot", "o_chest", "o_cloudbush", "o_cloudcolumn", "o_column", "o_crate", "o_cypress", "o_cypress_stump", "o_deadtree_stump", "o_ferry", "o_fire", "o_fountain", "o_furnace", "o_glowcap", "o_goatstatue", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_notice", "o_oak", "o_oak_stump", "o_olive", "o_olive_bare", "o_palm", "o_pedestal", "o_plant", "o_plot", "o_press", "o_range", "o_rock_copper", "o_rock_diamond_ore", "o_rock_dragonstone_ore", "o_rock_emerald_ore", "o_rock_empty", "o_rock_marble", "o_rock_onyx_ore", "o_rock_stardust", "o_rock_tin", "o_sack", "o_scarecrow", "o_shrine", "o_sign", "o_skyash", "o_spot", "o_stall", "o_statue", "o_table", "o_toll", "o_tree_stump", "o_vein_copper", "o_vine", "o_vine_bare", "o_vine_gold", "o_willow", "o_yew", "o_yew_stump"];
 const IMG = {};
 // NPCs whose art came later (PixelLab, overnight 2026-09-18): matched by name, so the shared rules don't change
 // NPC art came out at different sizes: draw everyone at one height (the hero is 48), a few on purpose
@@ -775,8 +775,8 @@ function spr(k, x, y, flip = false, filter = "", sc = 1) {
   lc.drawImage(a.im, -Math.round(a.cx), -a.foot); lc.restore(); return true;
 }
 // item and skill icons (PixelLab): art where it exists, the emoji where it doesn't
-const ITEM_ART = new Set(["ashlogs", "axe", "beef", "bogplate", "bones", "bronze_amulet", "bronze_bar", "bronze_body", "bronze_boots", "bronze_gladius", "bronze_gloves", "bronze_helm", "bronze_legs", "bronze_maul", "bronze_ring", "bronze_shield", "bronze_sword", "bronzecuirass", "bronzehelm", "bronzeshield", "bronzesword", "burnt", "cap", "cbeef", "cchicken", "cgloomfin", "chicken", "cmooncarp", "cobweb", "coins", "copper", "cpork", "csardine", "ctrout", "diamond_amulet", "diamond_bar", "diamond_body", "diamond_boots", "diamond_gladius", "diamond_gloves", "diamond_helm", "diamond_legs", "diamond_maul", "diamond_ring", "diamond_shield", "diamond_sword", "dragonstone_amulet", "dragonstone_bar", "dragonstone_body", "dragonstone_boots", "dragonstone_gladius", "dragonstone_gloves", "dragonstone_helm", "dragonstone_legs", "dragonstone_maul", "dragonstone_ring", "dragonstone_shield", "dragonstone_sword", "emerald_amulet", "emerald_bar", "emerald_body", "emerald_boots", "emerald_gladius", "emerald_gloves", "emerald_helm", "emerald_legs", "emerald_maul", "emerald_ring", "emerald_shield", "emerald_sword", "feather", "geode", "gloomfin", "goldtomatoe", "grimstone", "grudge", "hide", "husk", "lantern", "logs", "manifesto", "marble", "mask", "menace", "monocle", "mooncarp", "olives", "onyx_amulet", "onyx_bar", "onyx_body", "onyx_boots", "onyx_gladius", "onyx_gloves", "onyx_helm", "onyx_legs", "onyx_maul", "onyx_ring", "onyx_shield", "onyx_sword", "parma", "pickaxe", "pit", "pork", "receipt", "rod", "rudis", "sandals", "sardine", "spiderboots", "stardust", "sunolive", "tin", "toga", "tomatoe", "trout", "tunic", "tusk", "wheat", "wraithhood", "yewlogs"]), SKILL_ART = new Set(["attack", "cooking", "defence", "farming", "fishing", "hp", "melee", "mining", "smithing", "strength", "woodcutting"]), EQ_ART = new Set(["amulet", "body", "boots", "gloves", "helm", "legs", "ring", "shield", "weapon"]);
-const IART = "/v3/assets/img/glad/flat/items/", IART_V = 3, ICO_IMG = {};
+const ITEM_ART = new Set(["ashlogs", "axe", "beef", "bogplate", "bones", "bronze_amulet", "bronze_bar", "bronze_body", "bronze_boots", "bronze_gladius", "bronze_gloves", "bronze_helm", "bronze_legs", "bronze_maul", "bronze_ring", "bronze_shield", "bronze_sword", "bronzecuirass", "bronzehelm", "bronzeshield", "bronzesword", "burnt", "cap", "cbeef", "cchicken", "cgloomfin", "chicken", "clanternfish", "cmooncarp", "cobweb", "coins", "copper", "cpork", "csardine", "cskyeel", "ctrout", "diamond_amulet", "diamond_bar", "diamond_body", "diamond_boots", "diamond_gladius", "diamond_gloves", "diamond_helm", "diamond_legs", "diamond_maul", "diamond_ore", "diamond_ring", "diamond_shield", "diamond_sword", "dragonstone_amulet", "dragonstone_bar", "dragonstone_body", "dragonstone_boots", "dragonstone_gladius", "dragonstone_gloves", "dragonstone_helm", "dragonstone_legs", "dragonstone_maul", "dragonstone_ore", "dragonstone_ring", "dragonstone_shield", "dragonstone_sword", "emerald_amulet", "emerald_bar", "emerald_body", "emerald_boots", "emerald_gladius", "emerald_gloves", "emerald_helm", "emerald_legs", "emerald_maul", "emerald_ore", "emerald_ring", "emerald_shield", "emerald_sword", "feather", "geode", "gloomfin", "goldtomatoe", "grimstone", "grudge", "hide", "husk", "lantern", "lanternfish", "logs", "manifesto", "marble", "mask", "menace", "monocle", "mooncarp", "olives", "onyx_amulet", "onyx_bar", "onyx_body", "onyx_boots", "onyx_gladius", "onyx_gloves", "onyx_helm", "onyx_legs", "onyx_maul", "onyx_ore", "onyx_ring", "onyx_shield", "onyx_sword", "parma", "pickaxe", "pit", "pork", "receipt", "rod", "rudis", "sandals", "sardine", "skyashlogs", "skyeel", "spiderboots", "stardust", "sunolive", "tin", "toga", "tomatoe", "trout", "tunic", "tusk", "wheat", "willowlogs", "wraithhood", "yewlogs"]), SKILL_ART = new Set(["attack", "cooking", "defence", "farming", "fishing", "hp", "melee", "mining", "smithing", "strength", "woodcutting"]), EQ_ART = new Set(["amulet", "body", "boots", "gloves", "helm", "legs", "ring", "shield", "weapon"]);
+const IART = "/v3/assets/img/glad/flat/items/", IART_V = 4, ICO_IMG = {};
 for (const k of [...ITEM_ART, ...[...SKILL_ART].map((x) => "skill_" + x), ...[...EQ_ART].map((x) => "eq_" + x)]) { const im = new Image(); im.src = `${IART}${k}.png?v=${IART_V}`; ICO_IMG[k] = im; }
 const artOf = (k) => `<img class="ico" src="${IART}${k}.png?v=${IART_V}" alt="">`;
 const ART_ALIAS = { bronze_body: "bronzecuirass", bronze_helm: "bronzehelm", bronze_shield: "bronzeshield", bronze_sword: "bronzesword" };
@@ -793,7 +793,7 @@ function drawIco(k, x, y, size, skill) {
 // scenery art: o_<type>, rocks and veins by their ore, the golden vine its own; null when there's no picture
 const objArt = (ob, now = 0) => {
   if (ob.t === "plot") return null;
-  const k = ob.stumpUntil > now ? `o_${ob.t}_stump` : ob.emptyUntil > now ? "o_rock_empty" : ob.bareUntil > now ? `o_${ob.t}_bare`
+  const k = ob.stumpUntil > now ? (IMG[`o_${ob.t}_stump`] ? `o_${ob.t}_stump` : "o_tree_stump") : ob.emptyUntil > now ? "o_rock_empty" : ob.bareUntil > now ? `o_${ob.t}_bare`
     : ob.t === "rock" || ob.t === "vein" ? `o_${ob.t}_${ob.ore}` : ob.t === "vine" && ob.special ? "o_vine_gold" : ob.t === "boatback" ? "o_ferry" : `o_${ob.t}`;
   return IMG[k] ? k : null;
 };
@@ -808,6 +808,11 @@ const flipOf = (ob) => VARY.has(ob.t) && hashRand(ob.x, ob.y, 77) < 0.5;
 // a few pictures came out small for their spot: drawn a bit bigger
 const OBJ_SCALE = {}, HOUSE_SCALE = {};   // integer sizes only: a fractional scale makes pixel art uneven
 const objBusy = (ob, now) => ob.stumpUntil > now || ob.emptyUntil > now || ob.bareUntil > now;
+// themed ground: its two Wang sheets, and what the edge bushes and boulders look like there
+const GROUNDS = {
+  gloam: { water: "t_gwater", path: "t_gpath", bush: "o_glowcap", boulder: "w_boulder" },
+  cloud: { water: "t_csky", path: "t_cpath", bush: "o_cloudbush", boulder: "o_cloudcolumn" }
+};
 const WANG = [[64, 32], [96, 32], [64, 64], [32, 64], [64, 0], [96, 64], [0, 32], [96, 96], [32, 32], [64, 96], [32, 0], [0, 64], [96, 0], [0, 0], [32, 96], [0, 96]];
 
 /* ------------------------------------------------------------ painting: ground and the things that do not move */
@@ -815,9 +820,9 @@ function paintBg() {
   const c = document.createElement("canvas"); c.width = W * A; c.height = H * A;
   const o = c.getContext("2d"), f = (x, y, w, h, col) => { o.fillStyle = col; o.fillRect(x, y, w, h); };
   o.imageSmoothingEnabled = false;
-  const inside = Z.def?.interior, dark = Z.def?.pvp, theme = Z.isle?.theme;
+  const inside = Z.def?.interior, dark = Z.def?.pvp, theme = Z.isle?.theme, GT = GROUNDS[Z.def?.ground];
   if (inside) { o.scale(A, A); paintRoom(o, f); return c; }
-  const DIRT = dark && IMG.t_wdirt ? IMG.t_wdirt : IMG.t_dirt, WATER = dark && IMG.t_wwater ? IMG.t_wwater : IMG.t_water;
+  const DIRT = GT && IMG[GT.path] ? IMG[GT.path] : dark && IMG.t_wdirt ? IMG.t_wdirt : IMG.t_dirt, WATER = GT && IMG[GT.water] ? IMG[GT.water] : dark && IMG.t_wwater ? IMG.t_wwater : IMG.t_water;
   if (DIRT && WATER) {
     // the Wilderness paints its sand (the Cage floor) as dirt
     const cell = (x, y) => { const t = Z.g[Math.max(0, Math.min(ROWS - 1, y))][Math.max(0, Math.min(COLS - 1, x))]; return t === "~" ? "w" : t === "," || (dark && t === "s") ? "d" : "g"; };
@@ -826,7 +831,7 @@ function paintBg() {
       const corners = [[x, y], [x + 1, y], [x, y + 1], [x + 1, y + 1]], wet = corners.map(([a, b]) => vert(a, b, "w"));
       let sheet, bits;
       if (wet.some(Boolean)) { sheet = WATER.im; bits = wet.map((v) => (v ? 0 : 1)); }
-      else { sheet = DIRT.im; bits = corners.map(([a, b]) => (vert(a, b, "d") ? 1 : 0)); }   // both dirt sheets (farm and Wilderness) have their corners this way round
+      else { sheet = DIRT.im; bits = corners.map(([a, b]) => (GT && IMG[GT.path] ? (vert(a, b, "d") ? 0 : 1) : vert(a, b, "d") ? 1 : 0)); }   // both dirt sheets (farm and Wilderness) have their corners this way round
       const [sx, sy] = WANG[bits[0] * 8 + bits[1] * 4 + bits[2] * 2 + bits[3]];
       o.drawImage(sheet, sx, sy, 32, 32, x * 32, y * 32, 32, 32);
     }
@@ -841,7 +846,7 @@ function paintBg() {
     o.save(); o.translate(x, y); if (flip) o.scale(-1, 1); if (lit !== 1) o.filter = `brightness(${lit.toFixed(2)})`;
     o.drawImage(a.im, -a.cx / A, -a.foot / A, a.im.width / A, a.im.height / A); o.restore(); return true;
   };
-  if (!dark && theme !== "gloom") for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (Z.g[y][x] === ".") {
+  if (!dark && !GT && theme !== "gloom") for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (Z.g[y][x] === ".") {
     const r = hashRand(x, y, 31), X = x * T, Y = y * T;
     if (r < 0.2 && IMG.g_grass && IMG.g_flowers) { const im = (r < 0.09 ? IMG.g_flowers : IMG.g_grass).im, fx = X + Math.floor(hashRand(x, y, 35) * 4) - 2, fy = Y + Math.floor(hashRand(x, y, 36) * 4) - 2; o.save(); if (hashRand(x, y, 37) < 0.5) { o.translate(fx + T, fy); o.scale(-1, 1); } else o.translate(fx, fy); o.drawImage(im, 0, 0, T, T); o.restore(); continue; }
     if (r < 0.09) { const c = ["#f4f0e0", "#f2c230", "#d8506a", "#a070d8"][Math.floor(hashRand(x, y, 32) * 4)]; for (let i = 0; i < 3; i++) { const fx = X + 2 + Math.floor(hashRand(x, i, 33) * 11), fy = Y + 3 + Math.floor(hashRand(y, i, 34) * 10); f(fx, fy + 1, 1, 2, "#3f6a2a"); f(fx - 1, fy, 3, 1, c); f(fx, fy - 1, 1, 3, c); } }
@@ -856,6 +861,7 @@ function paintBg() {
   for (const ob of Z.objs) {
     const X = ob.x * T, Y = ob.y * T;
     if (ob.t === "plot" && IMG.o_plot) { o.drawImage(IMG.o_plot.im, X, Y, T, T); continue; }
+    if (GT && (ob.t === "bush" || ob.t === "boulder") && bgSpr(GT[ob.t], X + 8, Y + 16, ob)) continue;
     if (!dark && (ob.t === "bush" || ob.t === "boulder") && bgSpr(`g_${ob.t}`, X + 8, Y + 16, ob)) continue;
     if (objArt(ob)) continue;
     if (ob.t === "fenceH") { f(X, Y + 7, T, 2, "#6b3f23"); f(X, Y + 11, T, 2, "#6b3f23"); f(X + 6, Y + 2, 4, 13, "#4a2a16"); f(X + 7, Y + 2, 2, 12, "#7a4a26"); f(X + 6, Y + 1, 4, 2, "#8a5a32"); }
@@ -1064,6 +1070,7 @@ function drawWildMob(t) {
     lc.restore();
   };
 }
+const drawBlob = (x, y, face, hurt) => { px(x - 7, y - 1, 14, 3, "rgba(0,0,0,.25)"); px(x - 6, y - 14, 12, 13, hurt ? "#c04040" : "#2a2440"); px(x - 4, y - 16, 8, 3, hurt ? "#c04040" : "#2a2440"); px(x - 3 + face, y - 11, 2, 2, "#ffe27a"); px(x + 1 + face, y - 11, 2, 2, "#ffe27a"); };
 const DRAW = { gnasher: drawWildMob("gnasher"), taxwraith: drawWildMob("taxwraith"), chandelier: drawWildMob("chandelier"), revenant: drawWildMob("revenant"), cow: drawCow, chicken: drawChicken, olive: drawOlive, boar: drawBoar, goat: drawGoat, rotten: drawRotten, hornworm: drawHornworm, highwayman: drawHighwayman };
 function drawRock(ob, now) {
   if (ob.ore === "grimstone" && !(ob.emptyUntil > now) && spr("grimstone", ob.x * T + 8, ob.y * T + 16)) return;
@@ -1232,7 +1239,7 @@ function fit() {
   return { w, h };
 }
 const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
-const KIND_OF = { range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
+const KIND_OF = { range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
 function thingAt(wx, wy) {
   const now = snow(), near = (x_, y_, rx, ry) => Math.abs(wx - x_) <= rx && wy <= y_ + 4 && wy >= y_ - ry;
   for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})` }; }
@@ -1518,7 +1525,7 @@ function frame() {
   const hurtNow = (e) => !calm && now - (e.hurtAt || 0) < 200;
   for (const m of Z.mobs) if (!m.dead) sprites.push({ y: posOf(m, now).py * T + 14, draw: () => {
     const p = posOf(m, now), hurt = hurtNow(m), lunge = now - m.swingAt < 200 ? m.face * 2 : 0;
-    if (!spr(m.t, p.px * T + 8 + lunge, p.py * T + 14 + bobOf(p.moving, 110), m.face < 0, hurt ? RED : "")) DRAW[m.t](p.px * T + 8 + lunge, p.py * T + (MOBS[m.t].oy ?? 14) + bobOf(p.moving, 110), m.face, hurt);
+    if (!spr(m.t, p.px * T + 8 + lunge, p.py * T + 14 + bobOf(p.moving, 110), m.face < 0, hurt ? RED : "")) (DRAW[m.t] || drawBlob)(p.px * T + 8 + lunge, p.py * T + (MOBS[m.t].oy ?? 14) + bobOf(p.moving, 110), m.face, hurt);
   } });
   for (const n of Z.npcs) sprites.push({ y: posOf(n, now).py * T + 14, draw: () => {
     const p = posOf(n, now), side = p.moving || (n.held && DLG?.npc?.id === n.id && P && P.x !== n.x), k = `${n.art}_${side ? "east" : "south"}`;
@@ -2036,7 +2043,7 @@ if (location.hash.startsWith("#wiki")) { wikiRoute = decodeURIComponent(location
 // what a resource needs and gives, read from the same rules the server uses
 function resourceInfo(ob) {
   const lv = ob.req?.lvl || 1, rows = [];
-  if (ob.t === "tree" || ob.t === "oak" || ob.t === "yew" || ob.t === "cypress" || ob.t === "deadtree") rows.push({ skill: "woodcutting", lvl: lv, gives: ob.log || "logs", xp: ob.xp || 25, note: ob.t === "oak" || ob.special ? "Rarely falls." : "Falls now and then; grows back in 15s." });
+  if (ob.t === "tree" || ob.t === "oak" || ob.t === "yew" || ob.t === "cypress" || ob.t === "deadtree" || ob.t === "willow" || ob.t === "skyash") rows.push({ skill: "woodcutting", lvl: lv, gives: ob.log || "logs", xp: ob.xp || 25, note: ob.t === "oak" || ob.special ? "Rarely falls." : "Falls now and then; grows back in 15s." });
   if (ob.t === "rock") rows.push({ skill: "mining", lvl: lv, gives: ob.ore, xp: ob.xp || (ob.ore === "tin" ? 18 : 17), note: `One ore, then empty for ${ob.special ? 30 : 8}s.` });
   if (ob.t === "vein") rows.push({ skill: "mining", lvl: lv, gives: ob.ore, xp: 9, note: "Slow, but never runs dry." });
   if (ob.t === "olive" || ob.t === "vine") rows.push({ skill: "farming", lvl: lv, gives: ob.crop || "olives", xp: ob.xp || 6, note: `${ob.picks || 4} picks, then bare for 20s.` });
