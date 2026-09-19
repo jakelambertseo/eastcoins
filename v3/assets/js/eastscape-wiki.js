@@ -124,7 +124,8 @@ export const UPDATES = [
     date: "2026-09-20", title: "The Fight Pit",
     items: [
       "There's a second door in the casino's back wall, in the slots room, with FIGHTING lettered over it. Behind it: a sand pit, a rail to lean on, and two monsters who have been told the other one said something about their mother.",
-      "One fight at a time for the whole room. You get 30 seconds to put money on one of them (up to $500, one side only), then they go at it, then the winners are paid and the next pair comes out. Click the pit or either betting board.",
+      "One fight at a time for the whole room. You get 30 seconds to put money on one of them (up to $500, one side only), then a proper 40-second scrap with misses and the lead changing hands, then the winners are paid, ten seconds to gloat, and the next pair comes out. Click the pit or either betting board.",
+      "There are two water coolers and two buffets along the pit's back wall, so you never have to leave the rail (or miss a fight) to eat or drink.",
       "It is pure luck. The price on each fighter comes from its level: a chicken against a revenant pays big, because it mostly loses. Whoever you back, the house keeps 5%. Nothing else decides it.",
       "The House Ruby in the middle of the casino floor now takes your loot: click it to cash in, the same as a Cashier's window."
     ]

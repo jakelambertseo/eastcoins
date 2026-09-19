@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 45;
+export const VERSION = 46;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -743,6 +743,9 @@ Object.assign(SCENES, {
       for (const x of [16, 18, 20, 23, 25, 27]) for (const y of [8, 16]) if (g[y][x] === "i") objs.push({ t: "stool", x, y, name: "Stool", soft: true });
       for (const y of [10, 12, 14]) for (const x of [14, 29]) if (g[y][x] === "i") objs.push({ t: "stool", x, y, name: "Stool", soft: true });
       for (const [t, x, y, name] of [["crate", 9, 5, "Crate"], ["barrel", 10, 5, "Barrel"], ["barrel", 34, 5, "Barrel"], ["crate", 33, 5, "Crate"], ["crate", 9, 20, "Crate"], ["barrel", 34, 20, "Barrel"], ["trashcan", 25, 20, "Bin"], ["cooler", 17, 5, "Water cooler"]]) { objs.push({ t, x, y, name }); g[y][x] = "#"; }
+      // a drink and a plate without leaving the rail: nobody should miss a fight for a sandwich
+      objs.push({ t: "buffet", x: 18, y: 5, w: 2, h: 1, name: "Buffet" }); block(g, 18, 5, 2, 1);
+      objs.push({ t: "cooler", x: 27, y: 5, name: "Water cooler" }); g[5][27] = "#"; objs.push({ t: "buffet", x: 25, y: 5, w: 2, h: 1, name: "Buffet" }); block(g, 25, 5, 2, 1);
       for (const [x, y] of [[11, 12], [32, 13], [19, 18], [26, 7]]) if (g[y][x] === "i") objs.push({ t: "l_slips", x, y, name: "Losing slips", soft: true, flat: true });
       return { g, objs, blobs: [] };
     },
@@ -1255,7 +1258,8 @@ export const LUCK = { bonus: 0.025, gather: 1 / 12, kill: 1 / 8, max: 300 };
    roots, so a chicken against a revenant is a long shot, not a no-hoper) and is clamped to 25-75%; each side pays
    `edge` / its chance, so whichever you back the house keeps 5%. WHO WINS IS ONE RANDOM NUMBER against that chance and
    nothing else: no stats, no gear, no streaks. The blows you watch are written afterwards to fit the result. */
-export const FIGHTS = { betMs: 30000, fightMs: 13000, showMs: 6000, maxStake: 500, edge: 0.95, minP: 0.25, maxP: 0.75, bigWin: 2.5,
+export const FIGHTS = { betMs: 30000, fightMs: 40000, showMs: 10000,   // 30s to bet, a 40s fight, 10s to gloat: 40s between one fight ending and the next starting
+  maxStake: 500, edge: 0.95, minP: 0.25, maxP: 0.75, bigWin: 2.5,
   pool: ["chicken", "cow", "rotten", "olive", "hornworm", "boar", "goat", "highwayman", "gnasher", "moth", "taxwraith", "ghoul", "chandelier", "understudy", "ram", "revenant", "angel", "goose"],
   titles: ["the Unpaid", "Two-Time Runner-Up", "of No Fixed Address", "the People's Champ", "on a Six-Fight Skid", "Who Owes Dex Money", "the Undercard", "from Accounts", "the Pride of the Paddock", "Fresh off a Bye", "the Contractually Obligated", "Last Seen Fleeing"] };
 export function fightOdds(a, b) {
@@ -1272,7 +1276,7 @@ export const NEEDS = { floor: 20, sip: 20, food: 25, perBet: { thirst: 2, hunger
 export const needOf = (c, k) => Math.max(0, Math.min(100, c?.[k] ?? 100));
 /** Why the tables won't take this player's bet, or null if they will. */
 export const tooEmpty = (c) => (needOf(c, "thirst") < NEEDS.floor ? "thirst" : needOf(c, "hunger") < NEEDS.floor ? "hunger" : null);
-export const NEED_TEXT = { thirst: "You're too thirsty to gamble. The water cooler is on the card room's back wall, next to the bar.", hunger: "You're too hungry to gamble. The buffet is on the card room's back wall, next to the water cooler." };
+export const NEED_TEXT = { thirst: "You're too thirsty to gamble. There's a water cooler on the card room's back wall, next to the bar, and two in the Fight Pit.", hunger: "You're too hungry to gamble. There's a buffet on the card room's back wall, next to the water cooler, and two in the Fight Pit." };
 
 /* BUFFS: whatever is improving your odds right now, shown top-right of the game. There is one today (luck); the bar,
    the chips and this list are built for several, because players will end up stacking them. A buff is { id, left }
