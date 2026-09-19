@@ -23,13 +23,13 @@ const stat = (xs) => { const s = [...xs].sort((a, b) => a - b), q = (p) => s[Mat
 
 function mine(level, ore) { const p = Math.min(0.9, 0.4 + level * 0.02), v = G.valueOf(ore); let t = 0, cash = 0; while (t < HOUR) { t += 1.8; if (rnd() < p) { cash += v; t += HOP; } } return cash; }
 function chop(level, log) { const p = Math.min(0.9, 0.35 + level * 0.02), v = G.valueOf(log); let t = 0, cash = 0; while (t < HOUR) { t += 2; if (rnd() < p) { cash += v; if (rnd() < 0.2) t += HOP; } } return cash; }
-function fish(level, named) { const F = G.FISHING; let t = 0, cash = 0; while (t < HOUR) { t += F.ms / 1000; if (rnd() < F.chance(level)) cash += G.valueOf(named || (level >= F.troutAt && rnd() < F.troutShare ? "trout" : "sardine")); } return cash; }
+const ZC = { n: 0 };   /* real ZCoins dropped in the row being simulated */ function fish(level, named) { const F = G.FISHING; let t = 0, cash = 0; while (t < HOUR) { t += F.ms / 1000; if (rnd() >= F.chance(level)) continue; const k = named || (level >= F.troutAt && rnd() < F.troutShare ? "trout" : "sardine"); cash += G.valueOf(k); if (rnd() < (G.ZDROP.fish[k] || 0)) ZC.n += rnd() < G.ZDROP.big ? G.ZDROP.bigN : 1; } return cash; }
 
 const fighter = (level) => { const c = G.freshChar(); c.xp.melee = G.XP_AT[level]; c.xp.hp = Math.max(c.xp.hp, G.XP_AT[Math.max(10, level)]); const t = [...G.TIERS].reverse().find((x) => x.gate <= level);
   if (t) { for (const s of ["helm", "body", "legs", "shield", "boots", "gloves"]) if (G.ITEMS[`${t.key}_${s}`]) c.eq[s] = `${t.key}_${s}`; c.eq.weapon = `${t.key}_sword`; } return c; };
 const FOOD = Math.min(...Object.entries(G.ITEMS).filter(([k, it]) => it.heal && !it.meal && G.valueOf(k)).map(([k, it]) => G.valueOf(k) / it.heal));   // $ per hp, cheapest cooked food
-function dropsOf(mob) { let cash = 0; for (const [k, n, p] of G.MOBS[mob].drops) { if (p != null && rnd() >= p) continue; const q = Array.isArray(n) ? rint(n[0], n[1]) : n; cash += (k === "coins" ? 1 : G.ITEMS[k]?.slot ? 0 : G.valueOf(k)) * q; }
-  const rare = G.rollRare(mob, rnd()); if (rare && !G.ITEMS[rare].slot) cash += G.valueOf(rare); return cash; }   // (gear drops and the click-to-use finds are left at $0: they're kept, not sold)
+function dropsOf(mob) { let cash = 0; for (const [k, n, p] of G.MOBS[mob].drops) { if (p != null && rnd() >= p) continue; const q = Array.isArray(n) ? rint(n[0], n[1]) : n; cash += (k === "coins" || k === "tickets" ? 1 : G.ITEMS[k]?.slot ? 0 : G.valueOf(k)) * q; }
+  const rare = G.rollRare(mob, rnd()); if (rare === "zcoin") ZC.n += rnd() < G.ZDROP.big ? G.ZDROP.bigN : 1; else if (rare && !G.ITEMS[rare].slot) cash += G.valueOf(rare); return cash; }   // (gear drops and the click-to-use finds are left at $0: they're kept, not sold)
 function fight(level, mobs) {   // mobs: [[type, how many there are in the scene]]
   const c = fighter(level), def = G.defenceRollOf(c), back = mobs.flatMap(([t, n]) => Array.from({ length: n }, () => ({ t, at: 0 })));
   let t = 0, cash = 0, hurt = 0, kills = 0;
@@ -49,8 +49,8 @@ function craft(level, ore, make) {   // mine RUN_ORES, walk to the Forum, smelt 
 }
 
 const rows = [];
-const add = (who, job, fn) => { const cash = [], extra = []; for (let i = 0; i < HOURS; i++) { const r = fn(); if (typeof r === "number") cash.push(r); else { cash.push(r.cash - r.food); extra.push(r); } }
-  const s = stat(cash), D = G.DEX; rows.push({ who, job, "Cash/hr": s.avg, "slow hr (p10)": s.p10, "good hr (p90)": s.p90, "best hr seen": s.best, "ZC at $100 (uncapped)": +(s.avg / D.rate).toFixed(1), "ZC/hr you can take": Math.min(D.capHour, Math.floor(s.avg / D.rate)), "minutes to fill the 25": s.avg ? Math.round(D.capHour * D.rate / s.avg * 60) : "-", ...(extra.length ? { "kills/hr": Math.round(extra.reduce((a, r) => a + r.kills, 0) / extra.length), "food $/hr": Math.round(extra.reduce((a, r) => a + r.food, 0) / extra.length) } : {}) }); };
+const add = (who, job, fn) => { ZC.n = 0; const cash = [], extra = []; for (let i = 0; i < HOURS; i++) { const r = fn(); if (typeof r === "number") cash.push(r); else { cash.push(r.cash - r.food); extra.push(r); } }
+  const s = stat(cash), D = G.DEX; rows.push({ who, job, "ZCoins dropped/hr": +(ZC.n / HOURS).toFixed(1), "tickets/hr": s.avg, "slow hr (p10)": s.p10, "good hr (p90)": s.p90, "best hr seen": s.best, "ZC at $100 (uncapped)": +(s.avg / D.rate).toFixed(1), "ZC/hr you can take": Math.min(D.capHour, Math.floor(s.avg / D.rate)), "minutes to fill the 25": s.avg ? Math.round(D.capHour * D.rate / s.avg * 60) : "-", ...(extra.length ? { "kills/hr": Math.round(extra.reduce((a, r) => a + r.kills, 0) / extra.length), "food $/hr": Math.round(extra.reduce((a, r) => a + r.food, 0) / extra.length) } : {}) }); };
 
 const yard = G.SCENES.workyard.mobs, gloam = G.SCENES.gloam.mobs, cloud = G.SCENES.cloud.mobs, count = (list, keep) => Object.entries(list.reduce((a, [m]) => (keep.includes(m) ? { ...a, [m]: (a[m] || 0) + 1 } : a), {}));
 add("new (lvl 1)", "fish the Yard's pond", () => fish(1)); add("new (lvl 1)", "fight chickens + cows", () => fight(1, count(yard, ["chicken", "cow"])));

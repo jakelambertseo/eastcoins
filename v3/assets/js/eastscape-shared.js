@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 54;
+export const VERSION = 55;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -26,7 +26,9 @@ export const levelOf = (xp) => { let l = 1; while (l < 99 && xp >= XP_AT[l + 1])
 
 /* ------------------------------------------------------------ things you can carry */
 export const ITEMS = {
-  coins: { name: "Cash", icon: "💵", nocap: true, ex: "The money of EastScape. Earned from quests and the Exchange." }, wheat: { name: "Wheat", icon: "🌾" }, bones: { name: "Bones", icon: "🦴" },
+  coins: { name: "Cash", icon: "💵", nocap: true, ex: "Casino chips: what the tables take. You get them at the Prize Counter, for tickets." },
+  tickets: { name: "Tickets", icon: "🎟️", nocap: true, ex: "What the world outside pays in. Every kill and every catch is worth tickets; the Prize Counter (the House Ruby, in the middle of the casino) turns them into chips, gear, dinner, and scratch cards that pay real ZCoins." },
+  zcoin: { name: "ZCoin", icon: "🪙", ex: "A REAL ZCoin, from eastcoin.vip. Rare. Take it to the Prize Counter and it goes straight onto your ZCoin balance." }, wheat: { name: "Wheat", icon: "🌾" }, bones: { name: "Bones", icon: "🦴" },
   beef: { name: "Raw beef", icon: "🥩" }, hide: { name: "Cowhide", icon: "🟫" }, chicken: { name: "Raw chicken", icon: "🍗" },
   feather: { name: "Feather", icon: "🪶" }, sardine: { name: "Sardine", icon: "🐟", heal: 3, ex: "Sell it, or eat it as it comes. You're a gambler, not a chef." }, trout: { name: "Trout", icon: "🐠", heal: 5, ex: "Sell it or eat it. From Fishing 10 the Yard's pond gives these up too." },
   copper: { name: "Copper ore", icon: "🟠" }, tin: { name: "Tin ore", icon: "⚪" }, logs: { name: "Logs", icon: "🪵" }, olives: { name: "Olives", icon: "🫒" },
@@ -332,6 +334,8 @@ export const EX_SLOTS = 8;         // Exchange offers a player can have open at 
 export const EX_TAX = 0.01;        // the Exchange keeps 1% of every sale (rounded down); direct trades are free
 export const TRADE_RANGE = 5;      // how close two players must stay to trade face to face
 export const cashIn = (c) => c.inv.find((x) => x.k === "coins")?.n || 0;
+export const fmtTix = (n) => `${Number(n).toLocaleString()} ticket${Number(n) === 1 ? "" : "s"}`;
+export const tixIn = (c) => c.inv.find((x) => x.k === "tickets")?.n || 0;
 export const fmtCash = (n) => `$${Math.round(n).toLocaleString()}`;   // Cash is written like money everywhere: it is what the tables take
 
 /* ------------------------------------------------------------ directions and reach */
@@ -499,7 +503,7 @@ export const SCENES = {
       const bank = { t: "house", img: "bank", x: 8, y: 5, w: 5, h: 3, door: { x: 10, y: 7 }, name: "Bank", roof: "#8a9aa8", wall: "#efe6d4", sign: "BANK", enter: "bathhouse" };
       objs.push(casino, bank); block(g, 19, 2, 5, 3); block(g, 8, 5, 5, 3);
       // (the smithy stood here until 2026-09-20: the furnace, the anvil, the range and Brutus are at the Yard's camp now, next to the rocks)
-      objs.push({ t: "sign", x: 30, y: 8, name: "Brutus has moved: out the casino's arch, to the Yard, by the pond. He sells arms and armour for every level now." }); g[8][30] = "#";
+      objs.push({ t: "sign", x: 30, y: 8, name: "The smithy's closed. Arms and armour for every level are at the Prize Counter: the big ruby in the middle of the casino." }); g[8][30] = "#";
       // the market stall, south-west; Livia stands behind it
       objs.push({ t: "stall", x: 11, y: 17, w: 2, h: 1, name: "Exchange stall" }); block(g, 11, 17, 2, 1);
       objs.push({ t: "fountain", x: 21, y: 12, w: 2, h: 2, name: "Fountain" }); block(g, 21, 12, 2, 2);
@@ -712,10 +716,7 @@ Object.assign(SCENES, {
       for (let y = 19; y <= 22; y++) for (let x = 15; x <= 25; x++) g[y][x] = "~";
       for (const x of [16, 18, 20, 22, 24]) objs.push({ t: "spot", x, y: 19, name: "Fishing spot" });
       for (let x = 14; x <= 26; x++) keep.push([x, 18], [x, 17]);
-      // Brutus's pitch, by the pond: gear for every level, and he buys what you don't want
-      for (let y = 14; y <= 18; y++) for (let x = 26; x <= 33; x++) { g[y][x] = ","; keep.push([x, y]); }
-      for (const [t, x, y, name] of [["crate", 27, 15, "Crate of helmets"], ["crate", 28, 15, "Crate of swords"], ["barrel", 32, 15, "Barrel"], ["crate", 33, 15, "Crate"], ["barrel", 33, 16, "Barrel"]]) { objs.push({ t, x, y, name }); g[y][x] = "#"; }
-      objs.push({ t: "sign", x: 26, y: 15, name: "BRUTUS: arms and armour for every level. Better gear, faster kills, bigger monsters, more Cash." }); g[15][26] = "#";
+      objs.push({ t: "sign", x: 27, y: 15, name: "GEAR, CHIPS AND PRIZES are all at the Prize Counter now: the big ruby in the middle of the casino. Bring your tickets." }); g[15][27] = "#";
       objs.push({ t: "sign", x: 41, y: 11, name: "THE YARD. Click a monster to fight it. Chickens by the gate; it gets meaner the further west you walk. Nothing here attacks first. The pond is for anyone who'd rather fish." }); g[11][41] = "#";
       objs.push({ t: "sign", x: 3, y: 11, name: "West: the Gloam. Bigger monsters, bigger Cash, better fish. Combat 12 or so." }); g[11][3] = "#";
       for (const [x, y] of [[36, 7], [29, 22], [17, 6], [7, 8]]) { objs.push({ t: "hay", x, y, name: "Hay bale" }); g[y][x] = "#"; }
@@ -729,7 +730,7 @@ Object.assign(SCENES, {
       ["rotten", 21, 4], ["rotten", 24, 7], ["rotten", 19, 8], ["rotten", 22, 10],
       ["hornworm", 12, 5], ["hornworm", 15, 8], ["hornworm", 10, 9], ["hornworm", 11, 17],
       ["boar", 5, 5], ["boar", 8, 17], ["boar", 4, 19], ["boar", 11, 21], ["boar", 6, 22]],
-    npcs: [{ name: "Brutus the Smith", x: 30, y: 17, still: true, opens: "shop", hair: "#2a1a10", shirt: "#5a3a2a", pants: "#3a2a1a", lines: ["Arms and armour for every level. Buy the plain stuff from me; the good stuff you'll have to take off something.", "Bronze is where it starts. Nobody walks into the Wilderness in a tunic twice.", "Brought ore? I'll take it. Brought a goat? Take it back."] }],
+    npcs: [],   // (Brutus sold gear here for a few hours on 2026-09-20; it is behind the Prize Counter now)
     bots: []
   },
   // EAST of the casino, the first stop on the combat line: things a beginner can win a fight with
@@ -935,9 +936,10 @@ Object.assign(SCENES, {
     mobs: [], bots: [{ name: "due4aWin", level: 14 }, { name: "SlotGoblin", level: 37 }, { name: "AllInAlan", level: 61 }],
     npcs: [{ name: "Dex the Dealer", art: "dex", x: 35, y: 4, still: true, reach: 2, hair: "#1a1a1a", shirt: "#9a2a2a", pants: "#1a1a1a", lines: [
       "Welcome in. Every game has its own room: slots are the whole north-west floor, wheels and coin tables below them, cards next to me, dice and the instant machines in the south-east. The house always wins, a little.",
-      "Broke? Out the arch and hit something. Every monster pays Cash, drops its one thing, and now and then coughs up something rare. A Cashier in here buys the drops.",
+      "Broke? Out the arch and hit something. Every monster pays tickets, drops its one thing, and now and then coughs up something rare. The Prize Counter, that ruby behind you, turns tickets into chips.",
       "Don't fancy a fight? Fish. Every scene out there has a pond, it's safe, and it's the only place lucky clovers turn up.",
-      "Brutus sells gear in the Yard, by the pond. Better gear, faster kills, bigger monsters. I sell dinner. We all have our lane.",
+      "Gear's at the Prize Counter now, a set for every level. Better gear, faster kills, bigger monsters, more tickets. I sell dinner. We all have our lane.",
+      "Once in a while something out there drops a real ZCoin. An actual one. Bank it at the counter before you do anything stupid.",
       "Broke? Happens to the best of us. The board by the door has jobs that pay. Fresh ones every morning.",
       "Biggest win I've seen? Someone hit three sevens on that end machine. Bought everyone a drink. You can too: a round's $300.",
       "Drinks work. A lager and your wins pay a little more, a Safety Net and your losses hurt a little less. One at a time.",
@@ -1402,7 +1404,7 @@ export const NEED_TEXT = { thirst: "You're too thirsty to gamble. There's a wate
    face of 5 ZCoins that pays 25, 10, 5, 2 or nothing). ONE allowance of 25 an hour covers both. The SITE is the authority
    (functions/api/eastscape/exchange.js): these are its numbers, mirrored for the page and the game server, and
    tools/dex-test.mjs fails if they drift. */
-export const DEX = { rate: 100, capHour: 25, ticket: { face: 5, table: [[25, 4], [10, 12], [5, 30], [2, 30], [0, 24]] } };
+export const DEX = { ticketPrice: 1000, rate: 100, capHour: 25, ticket: { face: 5, table: [[25, 4], [10, 12], [5, 30], [2, 30], [0, 24]] } };
 export const FX_CAP = { gear: { win: 0.015, back: 0.015, angel: 0.0075 }, all: { win: 0.05, back: 0.03, angel: 0.01 } };
 export const ROLLER = { kill: 1 / 8, bets: 10, max: 100, mult: 2 };
 export const FREEPLAY = 100, DEVIL = { ms: 120000, odds: 1 / 3, pays: 3, max: 5000 }, REWIND = { ms: 60000, max: 500 };
@@ -1493,11 +1495,11 @@ export const HOWTO = `GambaScape is a casino. You'll spend most of your time rig
 
 PLAY: every kind of game has its own roped-off room, named on the carpet at its way in. SLOTS fill the north-west. WHEELS and COIN FLIP are below them. The CARD ROOM is by the bar. The DICE PIT and the INSTANT WINS machines (Plinko, Mines, Scratch-Off) are in the south-east. Roulette is through the door in the back wall. Bets come out of the Cash in your bag.
 
-BROKE? Go and get more. It's quick.
-  OUT THE ARCH: the Yard, then the Gloam, then Cloudreach. CLICK A MONSTER to fight it. Every kill pays the same three ways: Cash, the monster's own drop, and a roll at something rare. The further out you walk, the bigger all three get.
-  RATHER NOT FIGHT? Every scene has a pond. Fishing is safe and slow-ish, it never runs out, and it's the only place lucky clovers turn up. A fish is food, too: click one to eat it.
-  GEAR: Brutus, in the Yard by the pond, sells arms and armour for every level. Better gear, faster kills.
-Then bring it to the HOUSE RUBY in the middle of the floor, or to a CASHIER's window. One click and it's Cash.
+BROKE? Go and win some tickets. It's quick.
+  OUT THE ARCH: the Yard, then the Gloam, then Cloudreach. CLICK A MONSTER to fight it. Every kill pays the same three ways: TICKETS, the monster's own drop, and a roll at something rare. The further out you walk, the bigger all three get.
+  RATHER NOT FIGHT? Every scene has a pond. Fishing is safe, it never runs out, and it's the only place lucky clovers turn up. A fish is food, too: click one to eat it.
+  THE PRIZE COUNTER is the big ruby in the middle of this floor (the Cashier windows work too). It takes your drops and fish for more tickets, and trades tickets for CHIPS to play with, gear for every level, drinks and dinners, and Ruby scratch tickets that pay REAL ZCOINS.
+  REAL ZCOINS also turn up, rarely, on a kill or a catch. Bank them at the counter.
 
 THIRSTY? HUNGRY? Every bet takes a little out of you. Under 20% the tables turn you away: the water cooler and the buffet are on the card room's back wall, next to the bar, and they're free.
 
@@ -1539,6 +1541,7 @@ export const rouletteLabel = (kind, pick) => (kind === "num" ? String(pick) : RO
 
    Three a day per person, picked from what their levels allow, the same three all day (by who and which day), fresh
    each Chicago morning. They count what you gather and kill after the day starts; claim the Cash at the board. */
+// (`cash` is what the job pays, in TICKETS since 2026-09-20)
 export const DAILY = [
   { id: "logs", what: "gather", k: "logs", n: 50, cash: 150, req: null },
   { id: "tin", what: "gather", k: "tin", n: 25, cash: 120, req: null },
@@ -1632,6 +1635,23 @@ export const AFK_MS = 3 * 60 * 1000;
 export const AFK_KINDS = { rock: "mining", vein: "mining", spot: "fishing", tree: "chopping", olive: "picking", wheat: "picking", cook: "cooking", smelt: "smelting", smith: "smithing" };
 
 // the Forge: Brutus sells tools and the Bronze set, and buys what you gather (for less than you'll get on the Exchange, usually)
+/* THE PRIZE COUNTER (2026-09-20, the owner: "an arcade style feedback loop... a central place where you can trade in
+   tickets for prizes"). The world outside pays TICKETS; the House Ruby (and the two Cashier windows) is the one place
+   they're spent. A ticket is worth what a dollar was, so every number in the game kept its size: a cow pays about 28
+   tickets, $100 of casino chips costs 100. What's behind the counter:
+     chips      Cash for the tables, 1 for 1 (the only way to get any, apart from the free wheel and winning)
+     ZCoins     a Ruby scratch ticket (DEX.ticketPrice), and banking any ZCoins you found (no charge)
+     the bar    Dex's drinks and dinners, and Casino scrolls, at his prices
+     gear       the plain set of every tier, which Brutus used to sell out in the Yard
+   NOT here on purpose: lucky clovers (fishing's alone) and the fighting finds (free-play chips, boxes, dice, watches).
+   An entry is { id, group, price, give: [item, n] | cash: n }. */
+export const PRIZE_CHIPS = [100, 500, 2500];
+export const prizesOf = () => [
+  ...PRIZE_CHIPS.map((n) => ({ id: `chips${n}`, group: "chips", price: n, cash: n, name: `${fmtCash(n)} in chips` })),
+  ...BAR.sells.map(([k, p]) => ({ id: k, group: "bar", price: p, give: [k, 1] })),
+  { id: "rod", group: "bar", price: 20, give: ["rod", 1] },
+  ...GEAR_FOR_SALE.map(([k, p]) => ({ id: k, group: `gear:${ITEMS[k].tier}`, price: p, give: [k, 1] }))
+];
 /* Brutus sells the PLAIN set of every tier (2026-09-20: nothing is smithed any more, so this is how you gear up, and it
    gives Cash somewhere to go that isn't a table). Bronze is what it always cost; each tier up costs several times the
    last, priced at roughly 20 minutes' fighting for emerald up to a couple of hours' for onyx. The good stuff still drops. */
@@ -1709,15 +1729,22 @@ export const BOUNTY = { chicken: 18, cow: 28, rotten: 34, olive: 35, hornworm: 4
 for (const [t, want] of Object.entries(BOUNTY)) {
   const m = MOBS[t]; m.drops = m.drops.filter(([k]) => k !== "coins");
   const other = m.drops.reduce((a, [k, n, p]) => a + (VALUE[k] ?? 0) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0), gap = Math.round(want * 0.88 - other);
-  if (gap >= 2) m.drops.unshift(["coins", [Math.max(1, Math.round(gap * 0.6)), Math.round(gap * 1.4)]]);   // Cash first: it's line one of every table
+  if (gap >= 2) m.drops.unshift(["tickets", [Math.max(1, Math.round(gap * 0.6)), Math.round(gap * 1.4)]]);   // tickets first: line one of every table (it was Cash until 2026-09-20)
 }
 /* FINDS: what any kill can turn up on top of the monster's own drops. [item, share]: the chance is share x the
    monster's bounty / the find's worth, so every monster gives the same fraction of its pay this way and a chicken
    farmer sees a red chip about once in 250 kills while the Understudy coughs one up every 14. */
 export const FINDS = [["chip_red", 0.04, 250], ["chip_black", 0.03, 1000], ["chip_gold", 0.03, 5000], ["chip_free", 0.008, 50], ["mysterybox", 0.008, 60], ["devils_dice", 0.004, 50], ["rewind_watch", 0.006, 250]];
 export const findChance = (mob, [, share, worth]) => Math.min(0.25, share * (BOUNTY[mob] || 0) / worth);
+/* REAL ZCOINS, RARELY (2026-09-20, the owner: "rare drops for raw zcoins from fishing and mob killing"). A `zcoin` is an
+   item: it lands in your bag like anything else, and the Prize Counter banks it onto your eastcoin.vip balance through the
+   same endpoint, the same hourly allowance (DEX.capHour) and the same day fuse as everything else that mints ZCoins, so
+   the drop rate here can never out-run the cap. A kill's chance grows a little with the monster's level; a catch's with
+   the water. One drop in twenty is a handful (`bigN`) instead of one. At these numbers an hour of fighting turns up
+   about 2 to 5 ZCoins and an hour of fishing 1.5 to 5; tools/eastscape-grind-sim.mjs prints the measured figure. */
+export const ZDROP = { kill: (lvl) => 0.006 + lvl * 0.0002, fish: { sardine: 0.0025, trout: 0.0025, lanternfish: 0.003, skyeel: 0.0033 }, big: 0.05, bigN: 5 };
 /** A monster's whole rare line: its own named pieces, then the casino finds, each with its chance a kill. ONE roll decides. */
-export const raresOf = (mob) => [...(MOBS[mob]?.rare || []), ...(BOUNTY[mob] ? FINDS.map((f) => [f[0], findChance(mob, f)]) : [])];
+export const raresOf = (mob) => [...(BOUNTY[mob] ? [["zcoin", ZDROP.kill(MOBS[mob].lvl)]] : []), ...(MOBS[mob]?.rare || []), ...(BOUNTY[mob] ? FINDS.map((f) => [f[0], findChance(mob, f)]) : [])];
 export const rollRare = (mob, r) => { for (const [k, p] of raresOf(mob)) { if (r < p) return k; r -= p; } return null; };
 export const BOX = [["clover", 3], ["chip_red", 2], ["chip_free", 3], ["beer", 3], ["whiskey", 2], ["cocktail", 2], ["steakdinner", 2], ["tp_scroll", 3], ["devils_dice", 2], ["rewind_watch", 1], ["chip_black", 0.3]];   // what's in a mystery box, by weight
 export const valueOf = (k) => VALUE[k] ?? SHOP.buys[k] ?? 0;
@@ -1727,10 +1754,10 @@ export const madeFrom = (k) => { const r = Object.values(RECIPES).filter((x) => 
 export const nodeValue = (ob) => (ob.t === "rock" || ob.t === "vein" ? valueOf(ob.ore) : ob.t === "spot" ? valueOf(ob.fish || "sardine") : ob.t === "wheat" ? valueOf("wheat")
   : ob.t === "olive" || ob.t === "vine" ? valueOf(ob.crop || "olives") : ["tree", "oak", "yew", "cypress", "deadtree", "willow", "skyash"].includes(ob.t) ? valueOf(ob.log || "logs") : 0);
 /** What a monster's drops come to on an average kill. */
-export const mobValue = (t) => Math.round((MOBS[t]?.drops || []).reduce((a, [k, n, p]) => a + (k === "coins" ? 1 : valueOf(k)) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0)
+export const mobValue = (t) => Math.round((MOBS[t]?.drops || []).reduce((a, [k, n, p]) => a + (k === "coins" || k === "tickets" ? 1 : valueOf(k)) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0)
   + raresOf(t).reduce((a, [k, p]) => a + (ITEMS[k]?.slot ? 0 : valueOf(k)) * p, 0));
 /** What the Cashier will take off you in one go: loot and things you made, never tools, charms or anything you could wear. */
-export const isLoot = (k) => k !== "coins" && valueOf(k) > 0 && !ITEMS[k]?.slot && !ITEMS[k]?.luck && !ITEMS[k]?.use && !ITEMS[k]?.drink;
+export const isLoot = (k) => k !== "coins" && k !== "tickets" && k !== "zcoin" && valueOf(k) > 0 && !ITEMS[k]?.slot && !ITEMS[k]?.luck && !ITEMS[k]?.use && !ITEMS[k]?.drink;
 
 // dying outside the Cage: a quarter of the time one worn item falls where you died. The killer alone can take it
 // for lootMs, then anyone, until it's gone. Leaving mid-fight leaves your character standing there for lingerMs.

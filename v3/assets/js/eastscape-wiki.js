@@ -121,6 +121,16 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-20", title: "Tickets, the Prize Counter, and real ZCoin drops",
+    items: [
+      "THE WORLD OUTSIDE PAYS TICKETS NOW, like an arcade. Every kill and every daily job pays tickets instead of Cash, and the numbers over monsters and fishing spots have a little ticket beside them so nobody mistakes them for ZCoins. A ticket is worth exactly what a dollar was: a cow still pays about 28.",
+      "THE PRIZE COUNTER is the big ruby in the middle of the casino (both Cashier windows work too). It takes your drops and fish for more tickets, and it's the one place tickets are spent: CASINO CHIPS to play with (1 ticket, $1, or all of it in one click), drinks, dinners and Casino scrolls, a set of arms and armour for every level (Brutus has packed up his pitch in the Yard), and Ruby scratch tickets.",
+      "RUBY SCRATCH TICKETS cost 1,000 tickets and pay 25, 10, 5 or 2 REAL ZCoins, or nothing. Five an hour at most. Trading Cash straight for ZCoins is gone: this is the way now.",
+      "REAL ZCOINS DROP, RARELY. Any kill, and any catch at a pond, can turn up an actual ZCoin (one time in twenty it's five of them). About 2 to 5 an hour if you're at it steadily, a little more the deeper you go. It lands in your bag; BANK it at the Prize Counter and it goes onto your eastcoin.vip balance. Banking counts toward the same 25-an-hour allowance as scratch tickets, and anything over waits in your bag. Everyone in the scene hears about it.",
+      "Your bag panel shows Tickets and Chips side by side. The free daily wheel and anything you win at the tables are still chips."
+    ]
+  },
+  {
     date: "2026-09-20", title: "Outside is simple now: fight, or fish",
     items: [
       "THE WORLD OUTSIDE THE CASINO IS MONSTERS AND A POND. Go out the arch, click a monster, get paid: Cash, its one drop, and a roll at something rare. That's the job. If you'd rather not fight, every scene has a pond. Mining, woodcutting, smelting, smithing and cooking are gone from the world (your levels in them are kept, in case they come back).",

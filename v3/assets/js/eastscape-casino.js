@@ -148,6 +148,10 @@ const CSS = `
 .cz-pwdisc span{position:absolute;left:50%;top:50%;width:0;height:0}.cz-pwdisc span b{position:absolute;left:-40px;width:80px;top:calc(-1 * var(--r));text-align:center;font:800 11.5px var(--body);color:#fff;text-shadow:0 1px 2px #000,0 0 3px #000;line-height:1.05}
 .cz-pwpin{position:absolute;left:50%;top:-12px;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:22px solid #fff;filter:drop-shadow(0 2px 2px rgba(0,0,0,.6));z-index:2}
 .cz-pwhub{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff2b0,#e8bf35 60%,#8a6a10);box-shadow:0 0 0 3px #3a2410;z-index:1}
+.cz-shelves{max-height:min(600px,72vh);overflow-y:auto;padding-right:4px}.cz-tixtotal{display:flex;align-items:center;justify-content:center;gap:10px}.cz-tixtotal .ico,.cz-tixtotal img{width:46px;height:46px;image-rendering:pixelated}.cz-tixtotal b{font:inherit}
+.cz-cbag{margin-top:10px;max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;padding:4px 10px;background:var(--panel)}
+.cz-gear{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}.cz-gear button{display:grid;justify-items:center;gap:2px;padding:6px 2px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);cursor:pointer}.cz-gear button:disabled{opacity:.4;cursor:not-allowed}
+.cz-gear button.own{box-shadow:inset 0 0 0 1px rgba(77,219,139,.6)}.cz-gear .ico,.cz-gear img{width:30px;height:30px;image-rendering:pixelated}.cz-gear small{font:800 11.5px var(--body);color:var(--gold)}.cz-chip:disabled{opacity:.4;cursor:not-allowed}
 .cz-total{font:800 54px var(--display);letter-spacing:-.04em;color:var(--gold);line-height:1;text-shadow:0 0 30px rgba(232,191,53,.35)}
 @media (prefers-reduced-motion:reduce){.cz-coin.spin,.cz-reel.spin .cz-strip{animation:none}}
 `;
@@ -219,7 +223,7 @@ export function createCasino(env) {
   }
   const empty = () => { const why = G.tooEmpty(env.me()); if (why) { phase(why === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[why]); SFX.play("ui_error"); } return !!why; };
   const broke = () => { if (empty()) return true; return brokeOnly(); };
-  const brokeOnly = () => { if (bet > cash() + (env.me()?.free | 0)) { phase(`You only have ${money(cash())}`, "bad"); note("Broke? Out the arch to the Yard: click a monster, or fish the pond. A Cashier or the Ruby in here arch pays for what you bring back."); SFX.play("ui_error"); return true; } return false; };
+  const brokeOnly = () => { if (bet > cash() + (env.me()?.free | 0)) { phase(`You only have ${money(cash())}`, "bad"); note("Broke? Trade tickets for chips at the Prize Counter (the big ruby). No tickets? Out the arch to the Yard: click a monster, or fish the pond. The counter takes what you bring back, too."); SFX.play("ui_error"); return true; } return false; };
   function place(pick) {          // one bet, one answer
     if (busy || broke()) return; busy = true; const g = GAME, t = token; R.pop?.classList.remove("show");
     UI[g].start?.(); send({ t: "bet", g, amt: bet, pick });
@@ -442,20 +446,18 @@ export function createCasino(env) {
   let lastCashed = null;
   /* THE HOUSE RUBY's exchange: Cash into real ZCoins. The window only asks; the game server takes the Cash and the SITE
      decides (allowance, ticket roll, payment). Everything shown here came back from there. */
-  let atRuby = false, dexSt = null, dexMsg = null, dexZc = 5, dexTicket = null, dexWait = false;
+  let dexSt = null, dexMsg = null, dexTicket = null, dexWait = false, gearTier = null;
+  const tix = () => G.tixIn(env.me() || { inv: [] }), tixTxt = (n) => `${env.ico("tickets")}<b>${Number(n).toLocaleString()}</b>`;
   function dexCard() {
-    const card = el("section", "cz-card cz-dex"), D = G.DEX, st = dexSt, left = st?.ok ? st.left : null, on = !!(st?.ok && st.enabled), have = cash();
-    const most = Math.max(0, Math.min(left ?? 0, Math.floor(have / D.rate))); if (st?.ok && dexZc > most) dexZc = Math.max(1, most);
-    card.innerHTML = `<h2>The Ruby's exchange<small>Cash into <em>real ZCoins</em></small></h2>
-      <p class="cz-note" style="text-align:left">${money(D.rate)} of Cash is 1 ZCoin. Up to ${D.capHour} ZCoins an hour, tickets included.</p>
+    const card = el("section", "cz-card cz-dex"), D = G.DEX, st = dexSt, left = st?.ok ? st.left : null, on = !!(st?.ok && st.enabled), me = env.me();
+    const zc = me.inv.filter((x) => x.k === "zcoin").reduce((a, x) => a + x.n, 0), can = Math.min(zc, left ?? 0);
+    card.innerHTML = `<h2>Real ZCoins<small>up to ${D.capHour} an hour</small></h2>
       ${st ? (on ? `<div class="cz-dexbar"><i style="width:${Math.round((left / D.capHour) * 100)}%"></i></div><p class="cz-note" style="text-align:left">${left} of ${D.capHour} left this hour${st.dev ? " · PRETEND (dev server): no ZCoins move" : ""}</p>` : `<p class="cz-dexmsg bad">${esc(st.message || "The Ruby isn't paying out right now.")}</p>`) : `<p class="cz-note" style="text-align:left">Asking the Ruby…</p>`}
-      <div class="cz-dexrow">${[1, 5, 10, 25].map((n) => `<button type="button" class="cz-chip" data-zc="${n}" aria-pressed="${n === dexZc}"${on && n <= most ? "" : " disabled"}>${n} ZC</button>`).join("")}</div>
-      <button type="button" class="cz-dexgo" id="czDexGo"${on && most >= 1 && !dexWait ? "" : " disabled"}>${most >= 1 || !on ? `Trade ${money(dexZc * D.rate)} for ${dexZc} ZCoin${dexZc === 1 ? "" : "s"}` : have < D.rate ? `You need ${money(D.rate)} for 1 ZCoin` : "Nothing left this hour"}</button>
-      <button type="button" class="cz-dexgo alt" id="czDexTk"${on && left >= D.ticket.face && have >= D.ticket.face * D.rate && !dexWait ? "" : " disabled"} title="Pays ${D.ticket.table.filter(([z]) => z).map(([z, w]) => `${z} ZC (${w}%)`).join(", ")}, or nothing (${D.ticket.table.find(([z]) => !z)[1]}%). Uses ${D.ticket.face} of your hour.">Ruby ticket · ${money(D.ticket.face * D.rate)} · win up to ${D.ticket.table[0][0]} ZCoins</button>
+      <button type="button" class="cz-dexgo alt" id="czDexTk"${on && left >= D.ticket.face && tix() >= D.ticketPrice && !dexWait ? "" : " disabled"} title="Pays ${D.ticket.table.filter(([z]) => z).map(([z, w]) => `${z} ZC (${w}%)`).join(", ")}, or nothing (${D.ticket.table.find(([z]) => !z)[1]}%). Uses ${D.ticket.face} of your hour.">Ruby scratch ticket · ${Number(D.ticketPrice).toLocaleString()} tickets · win up to ${D.ticket.table[0][0]} ZCoins</button>
+      <button type="button" class="cz-dexgo" id="czDexBank" style="margin-top:6px"${on && can >= 1 && !dexWait ? "" : " disabled"}>${zc ? `Bank ${can || zc} ZCoin${(can || zc) === 1 ? "" : "s"} from your bag` : "No ZCoins in your bag (they drop, rarely)"}</button>
       ${dexTicket ? `<div class="cz-rtk"><div><b>${dexTicket.zc ? `${dexTicket.zc} ZC` : "Nothing"}</b><small>${dexTicket.zc ? "paid to your ZCoins" : "better luck next ticket"}</small></div><button type="button" id="czRtkFoil"${dexTicket.shown ? ' class="off"' : ""}>SCRATCH</button></div>` : ""}
       <p class="cz-dexmsg ${dexMsg?.cls || ""}">${esc(dexMsg?.text || "")}</p>`;
-    card.querySelectorAll("[data-zc]").forEach((b) => b.addEventListener("click", () => { dexZc = +b.dataset.zc; SFX.play("chip", { vol: 0.5 }); cashier(); }));
-    card.querySelector("#czDexGo")?.addEventListener("click", () => { dexWait = true; dexMsg = { text: "The Ruby hums…" }; dexTicket = null; send({ t: "dex", op: "pay", zc: dexZc }); cashier(); });
+    card.querySelector("#czDexBank")?.addEventListener("click", () => { dexWait = true; dexMsg = { text: "The Ruby hums…" }; dexTicket = null; send({ t: "dex", op: "bank" }); cashier(); });
     card.querySelector("#czDexTk")?.addEventListener("click", () => { dexWait = true; dexMsg = { text: "The Ruby prints a ticket…" }; dexTicket = null; send({ t: "dex", op: "ticket" }); cashier(); });
     card.querySelector("#czRtkFoil")?.addEventListener("click", (ev) => { ev.currentTarget.classList.add("off"); dexTicket.shown = true; if (dexTicket.zc) { SFX.play(dexTicket.zc >= 10 ? "win_big" : "win_small"); pop(`+${dexTicket.zc} ZC`, "real ZCoins"); } else SFX.play("lose"); });
     return card;
@@ -464,10 +466,10 @@ export function createCasino(env) {
     dexWait = false; if (e.status) dexSt = e.status;
     if (e.error) dexMsg = { text: e.error, cls: "bad" };
     else if (e.done) {
-      if (e.done.op === "ticket") { dexTicket = { zc: e.done.zc, shown: false }; dexMsg = { text: `Scratch it. (${money(e.done.cash)} paid.)`, cls: "" }; SFX.play("ui_open"); }
-      else { dexMsg = { text: `${e.done.zc} ZCoin${e.done.zc === 1 ? "" : "s"} paid${e.done.balance != null ? `: you now have ${Number(e.done.balance).toLocaleString()} ZC on eastcoin.vip` : ""}.${e.done.again ? " (That was the one the Ruby was still working on.)" : ""}`, cls: "good" }; SFX.play("coins"); pop(`+${e.done.zc} ZC`, "real ZCoins"); }
-    } else if (!dexMsg || dexMsg.text.endsWith("…")) dexMsg = e.held ? { text: "The Ruby is still working on your last exchange. Look again in a minute.", cls: "" } : null;
-    if (GAME === "cashier" && atRuby && !$("gameWin").hidden) cashier();
+      if (e.done.op === "ticket") { dexTicket = { zc: e.done.zc, shown: false }; dexMsg = { text: "Scratch it.", cls: "" }; SFX.play("ui_open"); }
+      else { dexMsg = { text: `${e.done.zc} ZCoin${e.done.zc === 1 ? "" : "s"} banked${e.done.balance != null ? `: you now have ${Number(e.done.balance).toLocaleString()} ZC on eastcoin.vip` : ""}.${e.done.again ? " (That was the one the Ruby was still working on.)" : ""}`, cls: "good" }; SFX.play("coins"); pop(`+${e.done.zc} ZC`, "real ZCoins"); }
+    } else if (!dexMsg || dexMsg.text.endsWith("…")) dexMsg = e.held ? { text: "The Ruby is still working on your last one. Look again in a minute.", cls: "" } : null;
+    if (GAME === "cashier" && !$("gameWin").hidden) cashier();
   }
   /* THE DAILY PRIZE WHEEL: the server has already decided and paid the prize (e.i is its slice); this is the spin to it. */
   let prizeSpin = null;   /* { until, snd }: a wheel that is still turning */
@@ -489,16 +491,29 @@ export function createCasino(env) {
     requestAnimationFrame(() => requestAnimationFrame(() => { disc.style.transform = `rotate(${env.calm() ? to % 360 : to}deg)`; if (env.calm()) disc.style.transition = "none"; }));
     setTimeout(() => { prizeHush(); if (t !== token || GAME !== "prize") return; phase(`You won ${e.text}!`, "done"); pop(e.text, streak > 1 ? `day ${streak} streak` : "free spin"); SFX.play("win_small"); note("It's in your bag. See you tomorrow."); }, ms);
   }
+  /* THE PRIZE COUNTER (the House Ruby and both Cashier windows). Left: your tickets, and what your bag trades in for.
+     Right: what tickets buy. Everything is decided by the server; this only asks. */
   function cashier(done) {
-    if (done !== undefined) lastCashed = done; GAME = "cashier"; frame(atRuby ? "The House Ruby" : "Cashier", atRuby ? "Cash in what you found · trade Cash for real ZCoins" : "Everything you bring back, for what it said over it"); const me = env.me();
-    const keys = [...new Set(me.inv.filter((s) => G.isLoot(s.k)).map((s) => s.k))], rows = keys.map((k) => ({ k, n: me.inv.filter((s) => s.k === k).reduce((a, s) => a + s.n, 0), v: G.valueOf(k), loot: G.isLoot(k) }));
-    const loot = rows.filter((r) => r.loot), total = loot.reduce((a, r) => a + r.n * r.v, 0);
-    phase(lastCashed ? `Paid out ${money(lastCashed.total)} · the tables are right behind you` : loot.length ? "Here's what it comes to" : "Nothing to cash in yet", lastCashed ? "done" : "open");
-    R.board.innerHTML = `<div style="text-align:center"><div class="cz-total">${money(total)}</div><div class="cz-note" style="margin-top:6px">${loot.length ? "for everything you found and made" : "Out the arch: monsters and fish. Every kill pays Cash and drops its one thing; bring the things here. (Anything you can wear or hold isn't sold here: Brutus, at the Forge, buys what's smithed.)"}</div></div>`;
-    R.lock = lockBtn(); R.lock.textContent = "Cash in the lot"; R.lock.disabled = !loot.length; R.lock.addEventListener("click", () => send({ t: "cashout", op: "all" })); R.bet.append(R.lock);
-    const card = el("section", "cz-card"); card.innerHTML = `<h2>In your bag<small>you have ${money(cash())}</small></h2>` + (rows.length ? rows.map((r) => `<div class="cz-csrow">${env.ico(r.k)}<span><b>${esc(G.ITEMS[r.k].name)}</b> × ${r.n.toLocaleString()}<small>${money(r.v)} each${(() => { const m = G.madeFrom(r.k); return m && G.valueOf(m.out) > r.v ? ` · <em style="color:var(--gold);font-style:normal">${esc(m.verb)} it first: ${esc(G.ITEMS[m.out].name.toLowerCase())} pays ${money(G.valueOf(m.out))}</em>` : ""; })()}</small></span><strong>${money(r.n * r.v)}</strong><button type="button" class="cz-chip" data-cs="${r.k}">Sell</button></div>`).join("") : `<p class="cz-note" style="text-align:left">Nothing in there is worth money yet.</p>`);
-    if (atRuby) R.side.append(dexCard());
-    R.side.append(card); card.querySelectorAll("[data-cs]").forEach((b) => b.addEventListener("click", () => send({ t: "cashout", op: "one", k: b.dataset.cs })));
+    const keepScroll = GAME === "cashier" ? R.side?.scrollTop || 0 : 0;
+    if (done !== undefined) lastCashed = done; GAME = "cashier"; frame("The Prize Counter", "Tickets in, prizes out"); const me = env.me(), have = tix();
+    const keys = [...new Set(me.inv.filter((x) => G.isLoot(x.k)).map((x) => x.k))], rows = keys.map((k) => ({ k, n: me.inv.filter((x) => x.k === k).reduce((a, x) => a + x.n, 0), v: G.valueOf(k) }));
+    const total = rows.reduce((a, r) => a + r.n * r.v, 0);
+    phase(lastCashed ? `Traded in for ${Number(lastCashed.total).toLocaleString()} tickets` : "Your tickets", lastCashed ? "done" : "open");
+    R.board.innerHTML = `<div style="text-align:center"><div class="cz-total cz-tixtotal">${tixTxt(have)}</div><div class="cz-note" style="margin-top:6px">${rows.length ? `and ${Number(total).toLocaleString()} more for what's in your bag` : "Every kill and every catch out the arch pays tickets. Bring the drops and the fish here for more."}</div></div>`;
+    R.lock = lockBtn(); R.lock.textContent = rows.length ? `Trade in the lot · +${Number(total).toLocaleString()} tickets` : "Nothing to trade in"; R.lock.disabled = !rows.length; R.lock.addEventListener("click", () => send({ t: "cashout", op: "all" })); R.bet.append(R.lock);
+    if (rows.length) { const bag = el("div", "cz-cbag"); bag.innerHTML = rows.map((r) => `<div class="cz-csrow">${env.ico(r.k)}<span><b>${esc(G.ITEMS[r.k].name)}</b> × ${r.n.toLocaleString()}<small>${r.v} each</small></span><strong>${(r.n * r.v).toLocaleString()}</strong><button type="button" class="cz-chip" data-cs="${r.k}">Trade</button></div>`).join(""); R.bet.append(bag); bag.querySelectorAll("[data-cs]").forEach((b) => b.addEventListener("click", () => send({ t: "cashout", op: "one", k: b.dataset.cs }))); }
+    // the shelves
+    R.side.classList.add("cz-shelves"); const P = G.prizesOf(), buy = (id) => { SFX.play("chip", { vol: 0.5 }); send({ t: "counter", op: "buy", id, n: 1 }); };
+    const chips = el("section", "cz-card"); chips.innerHTML = `<h2>Casino chips<small>you have ${money(cash())}</small></h2><p class="cz-note" style="text-align:left">Cash for the tables: 1 ticket, $1.</p><div class="cz-dexrow">${P.filter((x) => x.group === "chips").map((x) => `<button type="button" class="cz-chip" data-buy="${x.id}"${have >= x.price ? "" : " disabled"}>${money(x.cash)}</button>`).join("")}<button type="button" class="cz-chip" id="czAllChips"${have ? "" : " disabled"}>All of it</button></div>`;
+    chips.querySelector("#czAllChips").addEventListener("click", () => { SFX.play("coins"); send({ t: "counter", op: "allchips" }); });
+    const bar = el("section", "cz-card"); bar.innerHTML = `<h2>Drinks, dinners and the way home</h2>` + P.filter((x) => x.group === "bar").map((x) => { const it = G.ITEMS[x.give[0]], f = (it.meal || it.drink)?.fx; return `<div class="cz-csrow">${env.ico(x.give[0])}<span><b>${esc(it.name)}</b><small>${esc(f ? `${(it.meal || it.drink).bets} bets: ${G.fxText(f)}${it.meal ? " · Well Fed" : ""}` : it.use === "tp" ? "click it anywhere: back to the casino" : it.tool ? "you need one to fish" : "")}</small></span><strong>${x.price.toLocaleString()}</strong><button type="button" class="cz-chip" data-buy="${x.id}"${have >= x.price ? "" : " disabled"}>Get</button></div>`; }).join("");
+    const lvl = G.lvlOf(me, "melee"), tiers = G.TIERS.filter((t) => P.some((x) => x.group === `gear:${t.key}`)); gearTier = gearTier || ([...tiers].reverse().find((t) => t.gate <= lvl) || tiers[0]).key;
+    const gear = el("section", "cz-card"); gear.innerHTML = `<h2>Arms and armour<small>better gear, faster kills</small></h2><div class="cz-dexrow">${tiers.map((t) => `<button type="button" class="cz-chip" data-tier="${t.key}" aria-pressed="${t.key === gearTier}" title="Combat ${t.gate} to wear">${esc(t.name)}</button>`).join("")}</div>`
+      + `<p class="cz-note" style="text-align:left">Needs Combat ${G.tierOf(gearTier).gate}${lvl < G.tierOf(gearTier).gate ? ` (you're ${lvl})` : ""}. The plain set: the good stuff only drops.</p><div class="cz-gear">${P.filter((x) => x.group === `gear:${gearTier}`).map((x) => { const it = G.ITEMS[x.give[0]], own = me.inv.some((q) => q.k === x.give[0]) || Object.values(me.eq || {}).includes(x.give[0]); return `<button type="button" data-buy="${x.id}"${have >= x.price ? "" : " disabled"} class="${own ? "own" : ""}" title="${esc(`${it.name}${own ? " (you have one)" : ""}: ${[it.acc && `+${it.acc} accuracy`, it.str && `+${it.str} strength`, it.def && `+${it.def} defence`].filter(Boolean).join(", ")}`)}">${env.ico(x.give[0])}<small>${x.price >= 10000 ? `${Math.round(x.price / 100) / 10}K` : x.price.toLocaleString()}</small></button>`; }).join("")}</div>`;
+    gear.querySelectorAll("[data-tier]").forEach((b) => b.addEventListener("click", () => { gearTier = b.dataset.tier; cashier(); }));
+    R.side.append(dexCard(), chips, bar, gear);
+    R.side.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => buy(b.dataset.buy)));
+    R.side.scrollTop = keepScroll;
   }
 
   return {
@@ -506,7 +521,7 @@ export function createCasino(env) {
     result(e) { if (e.g !== GAME || !UI[e.g]) return; UI[e.g].result(e); },
     run(e) { const had = RUNS[e.g]; RUNS[e.g] = e.run; if (e.luck != null && env.me()) env.me().luck = e.luck; if (GAME !== e.g) return; UI[e.g].run(e, had); lockStake(!!e.run); refresh(); },
     me() { if ($("gameWin").hidden) return; if (GAME === "cashier") cashier(); else refresh(); },
-    cashier(ruby) { lastCashed = null; atRuby = !!ruby; if (atRuby) { dexSt = null; dexMsg = null; dexTicket = null; dexWait = false; send({ t: "dex", op: "status" }); } cashier(); }, cashed(e) { cashier(e); }, dex, prize, fight,
+    cashier() { lastCashed = null; dexSt = null; dexMsg = null; dexTicket = null; dexWait = false; send({ t: "dex", op: "status" }); cashier(); }, cashed(e) { cashier(e); }, dex, prize, fight,
     closed() { token++; busy = false; GAME = null; prizeHush(); prizeSpin = null; },
     blocked(k) { if (!GAME || GAME === "cashier") return; if (GAME === "fight") { phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); return note(G.NEED_TEXT[k]); } busy = false; UI[GAME]?.idle?.(); phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[k]); refresh(); },
     get game() { return GAME; }
