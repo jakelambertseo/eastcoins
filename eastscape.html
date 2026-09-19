@@ -297,7 +297,8 @@ button,input,select{font:inherit}
 .bonl{margin:4px 8px 8px;border:2px solid #8a7a5a;background:#e6dcc4}
 .bonl .bh{padding:4px 8px;font-size:13px;color:#5a4a30;border-bottom:2px solid #bfb193}
 .bonl div:not(.bh){display:grid;grid-template-columns:22px 1fr auto;gap:6px;align-items:center;padding:4px 8px;font-size:13px;border-bottom:1px solid #d0c4a8}
-.bonl i{font-style:normal;text-align:center}
+.rst{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 1px}.rst em{font-style:normal;display:inline-flex;align-items:center;gap:2px;font-size:11px;font-weight:800;padding:0 5px 0 2px;border-radius:8px;background:rgba(58,38,22,.10);color:#4a3a24}.rst em .ico{width:13px;height:13px;vertical-align:0}.rst em.up{background:rgba(40,120,40,.16);color:#1f6a24}
+.bonl i{font-style:normal;text-align:center;display:flex;justify-content:center}.bonl i .ico{width:18px;height:18px;vertical-align:0}
 .sk{display:grid;gap:6px;padding:8px}
 .skr{display:grid;grid-template-columns:30px 1fr auto;gap:8px;align-items:center;padding:6px 8px;background:#e6dcc4;border:1px solid #bfb193}
 .skr i{font-style:normal;font-size:22px;text-align:center}
@@ -484,7 +485,7 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=28";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=29";
 import * as WK from "/v3/assets/js/eastscape-wiki.js?v=10";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -1719,6 +1720,14 @@ function renderHs() {
   $("hsTabs").querySelectorAll("[data-hs]").forEach((b) => b.addEventListener("click", () => { hsTab = b.dataset.hs; renderHs(); }));
 }
 
+// a piece's numbers as little chips, green where it beats what you're wearing in that slot
+function statChips(k) {
+  const it = ITEMS[k]; if (!it?.slot) return "";
+  const worn = ITEMS[me?.eq?.[it.slot]] || {}, rows = [["acc", "attack"], ["str", "strength"], ["def", "defence"]].filter(([f]) => it[f]);
+  const chips = rows.map(([f, sk]) => `<em class="${(it[f] || 0) > (worn[f] || 0) ? "up" : ""}" title="${f === "acc" ? "Accuracy" : f === "str" ? "Strength" : "Defence"}">${sico(sk)}+${it[f]}</em>`);
+  if (it.speed) chips.push(`<em title="Attack speed">${it.speed <= 1800 ? "fast" : it.speed >= 3000 ? "slow" : "medium"}</em>`);
+  return chips.length ? `<span class="rst">${chips.join("")}</span>` : "";
+}
 let smithAt = null;
 function openSmith(ob) {
   smithAt = ob;
@@ -1737,7 +1746,7 @@ function openSmith(ob) {
     const short = !needLvl && !r.in.every(([k, n]) => G.countItems(me, [k]) >= n);
     const why = needLvl ? `Needs Smithing ${r.lvl}` : short ? `You have ${have}` : `${have} · ${r.xp} xp`;
     return `<button type="button" class="rcpr" data-r="${r.id}"${needLvl || short ? " disabled" : ""}>
-      <i>${ico(r.out[0])}</i><span><b>${esc(out.name)}</b><small>${esc(why)}</small></span><span class="lv">${r.lvl}</span></button>`;
+      <i>${ico(r.out[0])}</i><span><b>${esc(out.name)}</b>${statChips(r.out[0])}<small>${esc(why)}</small></span><span class="lv">${r.lvl}</span></button>`;
     })();
   }).join("") || `<p class="note">Nothing to make here.</p>`;
   $("smithList").querySelectorAll("[data-r]").forEach((el) => el.addEventListener("click", () => {
@@ -2071,7 +2080,7 @@ function showInfo(t, cx, cy) {
     const m = Z.mobs.find((x) => x.id === t.id), d = MOBS[m?.t]; if (!d) return;
     wiki = `monsters/${m.t}`;
     html = `<h5>👹 ${esc(d.name)}</h5><div class="sub">Level ${d.lvl} monster</div>
-      <dl><dt>Hitpoints</dt><dd>${m.hp}/${d.hp}</dd><dt>Max hit</dt><dd>${d.max}</dd><dt>Attack / defence</dt><dd>${d.att} / ${d.def}</dd><dt>Attacks every</dt><dd>${(d.speed / 1000).toFixed(1)}s</dd><dt>Respawns after</dt><dd>${G.fmtWait(G.respawnMs(Z.def, m.t))}</dd></dl>
+      <dl><dt>Hitpoints</dt><dd>${m.hp}/${d.hp}</dd><dt>Max hit</dt><dd>${d.max}</dd><dt>Attack / defence</dt><dd>${d.att} / ${d.def}</dd><dt>Attacks every</dt><dd>${(d.speed / 1000).toFixed(1)}s</dd><dt>Respawns after</dt><dd>${G.fmtWait(G.respawnMs(Z.def, m.t))}${Z.def.pvp ? "" : ", sooner when busy"}</dd></dl>
       <b>Drops</b><ul>${d.drops.map(([k, n, ch]) => `<li>${ico(k)} ${esc(ITEMS[k].name)}${Array.isArray(n) ? ` ×${n[0]}–${n[1]}` : n > 1 ? ` ×${n}` : ""} · ${ch == null ? "always" : pct(ch)}</li>`).join("")}</ul>`;
   } else if (t.ob) {
     const rows = resourceInfo(t.ob), ex = G.EXAMINE[KIND_OF[t.ob.t]] || null;
@@ -2146,12 +2155,12 @@ function renderPanel() {
     const EMPTY = { helm: "⛑️", amulet: "📿", weapon: "🗡️", body: "🥋", shield: "🛡️", legs: "👖", gloves: "🧤", boots: "🥾", ring: "💍" };
     const slot = (area) => { const k = me.eq[area], it = k && ITEMS[k]; return `<button type="button" class="eq${it ? "" : " empty"}" data-slot="${area}"${it ? ` data-item="${k}"` : ""} style="grid-area:${area}" title="${it ? `${esc(it.name)} — click to take off` : `${area}: empty`}"${it ? "" : " disabled"}>${it ? ico(k) : EQ_ART.has(area) ? artOf(`eq_${area}`) : EMPTY[area]}<small>${it ? esc(it.short || it.name) : ""}</small></button>`; };
     const b = G.bonusOf(me), tool = me.eq.weapon && ITEMS[me.eq.weapon].tool;
-    p.innerHTML = `<div class="ph">Equipment <small>paper doll</small></div><div class="doll">${G.SLOTS.map(slot).join("")}</div>
+    p.innerHTML = `<div class="ph">Equipment</div><div class="doll">${G.SLOTS.map(slot).join("")}</div>
       <div class="ph phsep">My Combat Stats</div>
       <div class="bonl"><div class="bh">${me.eq.weapon ? `${ico(me.eq.weapon)} ${esc(ITEMS[me.eq.weapon].name)}` : "✊ Unarmed"}${tool ? ` · lets you train ${SKILLS[tool].name}` : ""}</div>
-        <div><i>⊕</i><span>accuracy</span><b>+${b.acc}</b></div><div><i>🔺</i><span>strength</span><b>+${b.str}</b></div>
-        <div><i>🎯</i><span>max hit</span><b>${G.maxHitOf(me)}</b></div><div><i>🛡️</i><span>defence</span><b>+${b.def}</b></div>
-        <div><i>👟</i><span>speed</span><b>+${G.speedBonus(me, me.speedTest || 0)}%</b></div></div>
+        <div><i>${sico("attack")}</i><span>accuracy</span><b>+${b.acc}</b></div><div><i>${sico("strength")}</i><span>strength</span><b>+${b.str}</b></div>
+        <div><i>${sico("melee")}</i><span>max hit</span><b>${G.maxHitOf(me)}</b></div><div><i>${sico("defence")}</i><span>defence</span><b>+${b.def}</b></div>
+        <div><i>${ITEM_ART.has("sandals") ? artOf("sandals") : "👟"}</i><span>speed</span><b>+${G.speedBonus(me, me.speedTest || 0)}%</b></div></div>
       <p class="note">Click something you're wearing to take it off; right-click any item for its wiki page. Tools go in your weapon hand: hold the pickaxe to mine, the axe to chop, the rod to fish.</p>`;
     p.querySelectorAll(".eq[data-slot]").forEach((el) => el.addEventListener("click", () => send({ t: "unequip", slot: el.dataset.slot })));
   }

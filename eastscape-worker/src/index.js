@@ -896,7 +896,7 @@ export class World {
       const swingMs = G.swingMsOf(C);
       if (!a.started) { a.started = now; pl.lastSwing = now - Math.max(0, swingMs - 600); m.lastSwing = now; }
       if (now - pl.lastSwing >= swingMs) {
-        pl.lastSwing = now; pl.swingAt = now;
+        pl.lastSwing = now; pl.swingAt = now; pl.fightAt = now;
         const def = G.MOBS[m.t], hit = Math.random() < G.hitChance(G.attackRollOf(C), def.def), dmg = hit ? rint(1, G.maxHitOf(C)) : 0;
         m.hp -= dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: dmg, kind: dmg ? "hit" : "miss", t: now });
         this.award(pl, dmg);
@@ -1071,7 +1071,9 @@ export class World {
 
   killMob(S, pl, m, now) {
     const def = G.MOBS[m.t];
-    m.dead = true; m.respawnAt = now + G.respawnMs(S.def, m.t); pl.act = null;
+    // the more people fighting here, the sooner it comes back (see G.respawnMs): same monsters on screen, less waiting
+    const fighters = this.playersIn(S).filter((p) => now - (p.fightAt || 0) < 60000).length;
+    m.dead = true; m.respawnAt = now + G.respawnMs(S.def, m.t, fighters); pl.act = null;
     const got = [];
     for (const [k, n, chance] of def.drops) {
       if (chance != null && Math.random() >= chance) continue;
