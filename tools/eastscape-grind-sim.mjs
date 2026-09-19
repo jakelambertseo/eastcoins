@@ -23,7 +23,7 @@ const stat = (xs) => { const s = [...xs].sort((a, b) => a - b), q = (p) => s[Mat
 
 function mine(level, ore) { const p = Math.min(0.9, 0.4 + level * 0.02), v = G.valueOf(ore); let t = 0, cash = 0; while (t < HOUR) { t += 1.8; if (rnd() < p) { cash += v; t += HOP; } } return cash; }
 function chop(level, log) { const p = Math.min(0.9, 0.35 + level * 0.02), v = G.valueOf(log); let t = 0, cash = 0; while (t < HOUR) { t += 2; if (rnd() < p) { cash += v; if (rnd() < 0.2) t += HOP; } } return cash; }
-function fish(level, named) { let t = 0, cash = 0; while (t < HOUR) { t += 2.6; if (rnd() < (named ? 0.3 : 0.45)) cash += G.valueOf(named || (level >= 10 && rnd() < 0.35 ? "trout" : "sardine")); } return cash; }
+function fish(level, named) { const F = G.FISHING; let t = 0, cash = 0; while (t < HOUR) { t += F.ms / 1000; if (rnd() < F.chance(level)) cash += G.valueOf(named || (level >= F.troutAt && rnd() < F.troutShare ? "trout" : "sardine")); } return cash; }
 
 const fighter = (level) => { const c = G.freshChar(); c.xp.melee = G.XP_AT[level]; c.xp.hp = Math.max(c.xp.hp, G.XP_AT[Math.max(10, level)]); const t = [...G.TIERS].reverse().find((x) => x.gate <= level);
   if (t) { for (const s of ["helm", "body", "legs", "shield", "boots", "gloves"]) if (G.ITEMS[`${t.key}_${s}`]) c.eq[s] = `${t.key}_${s}`; c.eq.weapon = `${t.key}_sword`; } return c; };
@@ -52,12 +52,13 @@ const rows = [];
 const add = (who, job, fn) => { const cash = [], extra = []; for (let i = 0; i < HOURS; i++) { const r = fn(); if (typeof r === "number") cash.push(r); else { cash.push(r.cash - r.food); extra.push(r); } }
   const s = stat(cash), D = G.DEX; rows.push({ who, job, "Cash/hr": s.avg, "slow hr (p10)": s.p10, "good hr (p90)": s.p90, "best hr seen": s.best, "ZC at $100 (uncapped)": +(s.avg / D.rate).toFixed(1), "ZC/hr you can take": Math.min(D.capHour, Math.floor(s.avg / D.rate)), "minutes to fill the 25": s.avg ? Math.round(D.capHour * D.rate / s.avg * 60) : "-", ...(extra.length ? { "kills/hr": Math.round(extra.reduce((a, r) => a + r.kills, 0) / extra.length), "food $/hr": Math.round(extra.reduce((a, r) => a + r.food, 0) / extra.length) } : {}) }); };
 
-add("new (lvl 1)", "mine copper/tin", () => mine(1, "copper")); add("new (lvl 1)", "chop trees", () => chop(1, "logs")); add("new (lvl 1)", "fish sardines", () => fish(1)); add("new (lvl 1)", "fight chickens + cows", () => fight(1, [["chicken", 6], ["cow", 5]]));
-add("new (lvl 10)", "mine + smelt bronze bars", () => craft(10, "copper", { tier: "bronze" })); add("new (lvl 10)", "mine + smelt + smith swords", () => craft(10, "copper", { tier: "bronze", k: "bronze_sword", bars: 2 }));
-add("regular (lvl 15)", "mine emerald", () => mine(15, "emerald_ore")); add("regular (lvl 15)", "chop gloomwillow", () => chop(15, "willowlogs")); add("regular (lvl 15)", "fish (trout mix)", () => fish(15)); add("regular (lvl 12)", "fight the Yard (boars, hornworms, cows)", () => fight(12, [["boar", 3], ["hornworm", 2], ["cow", 4]]));
-add("grinder (lvl 25)", "mine diamond", () => mine(25, "diamond_ore")); add("grinder (lvl 28)", "fight the Gloam", () => fight(28, [["taxwraith", 3], ["moth", 4], ["gnasher", 3], ["highwayman", 4]]));
-add("grinder (lvl 30)", "mine dragonstone", () => mine(30, "dragonstone_ore")); add("grinder (lvl 30)", "fish sky eels", () => fish(30, "skyeel")); add("grinder (lvl 30)", "mine + smelt diamond bars", () => craft(30, "diamond_ore", { tier: "diamond" }));
-add("no-lifer (lvl 40)", "mine onyx", () => mine(40, "onyx_ore")); add("no-lifer (lvl 42)", "fight Cloudreach", () => fight(42, [["understudy", 1], ["chandelier", 1], ["ghoul", 3], ["ram", 3]]));
+const yard = G.SCENES.workyard.mobs, gloam = G.SCENES.gloam.mobs, cloud = G.SCENES.cloud.mobs, count = (list, keep) => Object.entries(list.reduce((a, [m]) => (keep.includes(m) ? { ...a, [m]: (a[m] || 0) + 1 } : a), {}));
+add("new (lvl 1)", "fish the Yard's pond", () => fish(1)); add("new (lvl 1)", "fight chickens + cows", () => fight(1, count(yard, ["chicken", "cow"])));
+add("regular (lvl 12)", "fish the Yard's pond", () => fish(12)); add("regular (lvl 12)", "fight the Yard's west end", () => fight(12, count(yard, ["boar", "hornworm", "rotten"])));
+add("grinder (lvl 20)", "fish lantern pools", () => fish(20, "lanternfish")); add("grinder (lvl 20)", "fight the Gloam (no wraiths)", () => fight(20, count(gloam, ["highwayman", "moth", "gnasher"])));
+add("grinder (lvl 30)", "fish lantern pools", () => fish(30, "lanternfish")); add("grinder (lvl 30)", "fight the Gloam", () => fight(30, count(gloam, ["taxwraith", "moth", "gnasher"])));
+add("no-lifer (lvl 42)", "fish sky eels", () => fish(42, "skyeel")); add("no-lifer (lvl 42)", "fight Cloudreach", () => fight(42, count(cloud, ["understudy", "chandelier", "ghoul", "ram"])));
+add("no-lifer (lvl 55)", "fight Cloudreach + geese", () => fight(55, count(cloud, ["ram", "goose", "understudy", "chandelier"])));
 console.log(`GambaScape grind simulation: ${HOURS} simulated hours per row, rules v${G.VERSION}. $${G.DEX.rate} = 1 ZC, ${G.DEX.capHour} ZC an hour.\n`);
 console.table(rows);
 

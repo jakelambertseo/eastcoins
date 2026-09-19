@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 53;
+export const VERSION = 54;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -28,7 +28,7 @@ export const levelOf = (xp) => { let l = 1; while (l < 99 && xp >= XP_AT[l + 1])
 export const ITEMS = {
   coins: { name: "Cash", icon: "💵", nocap: true, ex: "The money of EastScape. Earned from quests and the Exchange." }, wheat: { name: "Wheat", icon: "🌾" }, bones: { name: "Bones", icon: "🦴" },
   beef: { name: "Raw beef", icon: "🥩" }, hide: { name: "Cowhide", icon: "🟫" }, chicken: { name: "Raw chicken", icon: "🍗" },
-  feather: { name: "Feather", icon: "🪶" }, sardine: { name: "Raw sardine", icon: "🐟" }, trout: { name: "Raw trout", icon: "🐠" },
+  feather: { name: "Feather", icon: "🪶" }, sardine: { name: "Sardine", icon: "🐟", heal: 3, ex: "Sell it, or eat it as it comes. You're a gambler, not a chef." }, trout: { name: "Trout", icon: "🐠", heal: 5, ex: "Sell it or eat it. From Fishing 10 the Yard's pond gives these up too." },
   copper: { name: "Copper ore", icon: "🟠" }, tin: { name: "Tin ore", icon: "⚪" }, logs: { name: "Logs", icon: "🪵" }, olives: { name: "Olives", icon: "🫒" },
   pork: { name: "Raw boar", icon: "🥓" }, tusk: { name: "Boar tusk", icon: "🦷" },
   tomatoe: { name: "Tomatoe", icon: "🍅", ex: "Nonna insists on the e. Nobody has ever won that argument." },
@@ -82,19 +82,19 @@ export const ITEMS = {
   devils_dice: { name: "Devil's dice", icon: "🎲", use: "devil", ex: "Click within two minutes of a win: TRIPLE what you won, one time in three. The other two times, it's gone." },
   rewind_watch: { name: "Rewind watch", icon: "⌚", use: "rewind", ex: "Click within a minute of losing a bet and it never happened: your stake comes back (up to $500). Works once." },
   tp_scroll: { name: "Casino scroll", short: "Scroll", icon: "📜", use: "tp", ex: "Click it and you're standing on the casino floor, wherever you were. Dex sells them at the bar." },
-  // gear, SMITHED: what only a crafter can make
-  gamblers_ring: { name: "Gambler's ring", short: "G. ring", icon: "💍", slot: "ring", fx: { thrift: 0.5 }, ex: "Smithed from bronze, and greased with boar fat so it never sticks." },
-  bookies_amulet: { name: "Bookie's amulet", short: "Bookie's", icon: "📿", slot: "amulet", fx: { limit: 250 }, ex: "Smithed from bronze and a highwayman's hide." },
-  adjusters_visor: { name: "Loss adjuster's visor", short: "Visor", icon: "🧢", slot: "helm", def: 1, fx: { back: 0.01 }, ex: "Smithed from bronze and hornworm husk. Insurance, of a sort." },
-  stake_loafers: { name: "Stakeholder's loafers", short: "Loafers", icon: "👞", slot: "boots", def: 1, fx: { power: 0.5 }, ex: "Smithed from emerald, hide and cobweb. They do nothing on their own." },
+  // gear (all of it DROPS since 2026-09-20: see LOOT)
+  gamblers_ring: { name: "Gambler's ring", short: "G. ring", icon: "💍", slot: "ring", fx: { thrift: 0.5 }, ex: "A rare drop, from the Yard's boars and hornworms." },
+  bookies_amulet: { name: "Bookie's amulet", short: "Bookie's", icon: "📿", slot: "amulet", fx: { limit: 250 }, ex: "A rare drop, from highwaymen and Bog Gnashers." },
+  adjusters_visor: { name: "Loss adjuster's visor", short: "Visor", icon: "🧢", slot: "helm", def: 1, fx: { back: 0.01 }, ex: "A rare drop, from Lantern Moths and Tax Wraiths. Insurance, of a sort." },
+  stake_loafers: { name: "Stakeholder's loafers", short: "Loafers", icon: "👞", slot: "boots", def: 1, fx: { power: 0.5 }, ex: "A rare drop, from Sorry Ghouls, Cumulus Rams and Thunder Geese. They do nothing on their own." },
   // gear, DROPPED: rare, and only from things that fight back
   sharps_gloves: { name: "Card sharp's gloves", short: "Sharp's", icon: "🧤", slot: "gloves", def: 1, fx: { win: 0.01 }, ex: "A rare drop. There's still a card up one sleeve." },
   angels_ring: { name: "Angel's ring", short: "Angel's", icon: "💍", slot: "ring", fx: { angel: 0.005 }, ex: "A rare drop. Somebody up there owes you one." },
   // meals, COOKED from something gathered and something killed: all of them leave you Well Fed (no hunger or thirst while they last)
-  chickendinner: { name: "Winner's chicken dinner", short: "Chicken d.", icon: "🍗", heal: 6, meal: { bets: 30, fx: { back: 0.01 } }, ex: "Cooked from chicken and wheat." },
-  steakdinner: { name: "Steak dinner", icon: "🍽️", heal: 8, meal: { bets: 30, fx: { win: 0.02 } }, ex: "Cooked from beef and wheat." },
-  porkchops: { name: "High roller's chops", short: "Chops", icon: "🍖", heal: 10, meal: { bets: 30, fx: { limit: 250 } }, ex: "Cooked from boar and tomatoes." },
-  fishplatter: { name: "Fisherman's platter", short: "Platter", icon: "🐟", heal: 14, meal: { bets: 40, fx: { win: 0.015, back: 0.015 } }, ex: "Cooked from a lanternfish and two sardines." },
+  chickendinner: { name: "Winner's chicken dinner", short: "Chicken d.", icon: "🍗", heal: 6, meal: { bets: 30, fx: { back: 0.01 } }, ex: "From Dex's kitchen." },
+  steakdinner: { name: "Steak dinner", icon: "🍽️", heal: 8, meal: { bets: 30, fx: { win: 0.02 } }, ex: "From Dex's kitchen." },
+  porkchops: { name: "High roller's chops", short: "Chops", icon: "🍖", heal: 10, meal: { bets: 30, fx: { limit: 250 } }, ex: "From Dex's kitchen." },
+  fishplatter: { name: "Fisherman's platter", short: "Platter", icon: "🐟", heal: 14, meal: { bets: 40, fx: { win: 0.015, back: 0.015 } }, ex: "From Dex's kitchen." },
   // drinks, from Dex's bar: one at a time
   beer: { name: "House lager", short: "Lager", icon: "🍺", drink: { bets: 15, fx: { win: 0.01 } }, ex: "Dex pours it. Click to drink." },
   whiskey: { name: "Top-shelf whiskey", short: "Whiskey", icon: "🥃", drink: { bets: 10, fx: { win: 0.03 } }, ex: "Liquid confidence. Click to drink." },
@@ -109,9 +109,9 @@ export const ITEMS = {
   onyx_ore: { name: "Onyx ore", icon: "⚫", ex: "Lightning hit this and it held on to some. Your hair stands up when you carry it." },
   willowlogs: { name: "Gloomwillow logs", icon: "🪵", ex: "Damp, dark and faintly glowing at the ends. They burn blue." },
   skyashlogs: { name: "Skyash logs", icon: "🪵", ex: "Light enough to float. Please don't let go of them." },
-  lanternfish: { name: "Raw lanternfish", icon: "🐟", ex: "It has its own little light. It keeps it on even now." },
+  lanternfish: { name: "Lanternfish", icon: "🐟", heal: 9, ex: "It has its own little light. It keeps it on even now." },
   clanternfish: { name: "Cooked lanternfish", icon: "🐟", heal: 12, ex: "The light goes out when it's cooked. That's how you know." },
-  skyeel: { name: "Raw sky eel", icon: "🐍", ex: "Caught from a cloud, out of the open sky. It is very surprised about it too." },
+  skyeel: { name: "Sky eel", icon: "🐍", heal: 14, ex: "Caught from a cloud, out of the open sky. It is very surprised about it too." },
   cskyeel: { name: "Cooked sky eel", icon: "🐍", heal: 16, ex: "Tastes like a thunderstorm smells." },
   // the Forge's Bronze set (Brutus sells it); req is what you need to wear it
   toga: { name: "Goat-sized toga", short: "Toga", icon: "🥻", slot: "body", def: 3, acc: 1, ex: "Smells of goat. Fits you perfectly, which is worrying." },
@@ -251,7 +251,7 @@ export const COMBAT_SKILLS = ["melee"];
 // the only place it is earned, even though it is not something you choose.
 export const SKILL_GROUPS = [
   { name: "Combat", keys: ["melee", "hp"] },
-  { name: "Skilling", keys: ["fishing", "cooking", "farming", "mining", "woodcutting", "smithing"] }
+  { name: "Skilling", keys: ["fishing", "farming"] }   // (cooking, mining, woodcutting and smithing still exist and keep their xp; nothing in the open world uses them since 2026-09-20)
 ];
 
 /* ------------------------------------------------------------ stances
@@ -499,7 +499,7 @@ export const SCENES = {
       const bank = { t: "house", img: "bank", x: 8, y: 5, w: 5, h: 3, door: { x: 10, y: 7 }, name: "Bank", roof: "#8a9aa8", wall: "#efe6d4", sign: "BANK", enter: "bathhouse" };
       objs.push(casino, bank); block(g, 19, 2, 5, 3); block(g, 8, 5, 5, 3);
       // (the smithy stood here until 2026-09-20: the furnace, the anvil, the range and Brutus are at the Yard's camp now, next to the rocks)
-      objs.push({ t: "sign", x: 30, y: 8, name: "The smithy has moved: out the casino's arch, to the camp in the Yard. Brutus went with it." }); g[8][30] = "#";
+      objs.push({ t: "sign", x: 30, y: 8, name: "Brutus has moved: out the casino's arch, to the Yard, by the pond. He sells arms and armour for every level now." }); g[8][30] = "#";
       // the market stall, south-west; Livia stands behind it
       objs.push({ t: "stall", x: 11, y: 17, w: 2, h: 1, name: "Exchange stall" }); block(g, 11, 17, 2, 1);
       objs.push({ t: "fountain", x: 21, y: 12, w: 2, h: 2, name: "Fountain" }); block(g, 21, 12, 2, 2);
@@ -574,24 +574,22 @@ Object.assign(SCENES, {
     build() {
       const g = grid(), objs = [], keep = [];
       for (let x = 0; x < COLS; x++) g[13][x] = ",";
-      for (let y = 6; y <= 13; y++) g[y][31] = ","; for (let y = 13; y <= 18; y++) g[y][19] = ","; for (let y = 6; y <= 13; y++) g[y][10] = ",";
-      for (const [x, y] of [[5, 4], [8, 3], [12, 5], [6, 8], [12, 9], [9, 10], [3, 7]]) { objs.push({ t: "willow", x, y, name: "Gloomwillow", log: "willowlogs", req: { skill: "woodcutting", lvl: 15 }, xp: 60, tease: "The fronds close up around the trunk when you raise your axe." }); g[y][x] = "#"; }
-      for (const [x, y] of [[29, 4], [32, 3], [34, 5], [36, 8], [33, 9]]) { objs.push({ t: "rock", ore: "emerald_ore", x, y, name: "Emerald rock", req: { skill: "mining", lvl: 15 }, xp: 45, tease: "Green glints in the rock. Your pickaxe isn't up to it yet." }); g[y][x] = "#"; }
-      for (const [x, y] of [[31, 19], [34, 21], [36, 18], [38, 22]]) { objs.push({ t: "rock", ore: "diamond_ore", x, y, name: "Diamond rock", req: { skill: "mining", lvl: 25 }, xp: 65, tease: "Something in there catches light that isn't here." }); g[y][x] = "#"; }
+      for (let y = 13; y <= 18; y++) g[y][19] = ",";
       // the black pond, fished from its north bank
       for (let y = 20; y <= 23; y++) for (let x = 13; x <= 25; x++) g[y][x] = "~";
-      for (const x of [15, 19, 23]) objs.push({ t: "spot", x, y: 20, name: "Lantern pool", req: { skill: "fishing", lvl: 15 }, fish: "lanternfish", xp: 60, glow: "#7ad8ff", tease: "Little lights drift under the surface. They move away when you lean closer." });
+      for (const x of [15, 17, 19, 21, 23]) objs.push({ t: "spot", x, y: 20, name: "Lantern pool", req: { skill: "fishing", lvl: 15 }, fish: "lanternfish", xp: 60, glow: "#7ad8ff", tease: "Little lights drift under the surface. They move away when you lean closer." });
       for (let x = 12; x <= 26; x++) keep.push([x, 19], [x, 18]);
-      objs.push({ t: "fire", x: 21, y: 16, name: "Campfire" }); g[16][21] = "#";   // cook here; smelting and smithing are back at the Yard's camp
+      objs.push({ t: "fire", x: 21, y: 16, name: "Campfire" }); g[16][21] = "#";   // somewhere to stand
       objs.push({ t: "sign", x: 3, y: 11, name: "West: Cloudreach. Bring level 30 and a head for heights." }); g[11][3] = "#";
       objs.push({ t: "sign", x: 16, y: 15, name: "SOUTH-WEST: Tax Wraiths. They come for you on sight. So do the Bog Gnashers in the clearing to the north. Everything else here minds its own business." }); g[15][16] = "#";
       for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "scrub", s: "scrub", w: "scrub", e: "scrub" }, [...keepOf(this), ...keep], 9);
       return { g, objs, blobs: [] };
     },
-    // highwaymen work the gap between the pond and the diamonds, moths drift among the emerald rocks. The two that attack on sight are
-    // boxed in by their own reach: gnashers in the north clearing (willows end at x16, emeralds start at x29), wraiths in the far south-west
-    mobs: [["highwayman", 27, 16], ["highwayman", 28, 19], ["highwayman", 27, 22], ["highwayman", 29, 17], ["moth", 31, 7], ["moth", 35, 8], ["moth", 37, 4], ["moth", 30, 10],
+    // highwaymen north-west and by the pond, moths north-east. The two that attack on sight are boxed in by their own reach:
+    // gnashers in the north clearing, Tax Wraiths in the far south-west (tools/eastscape-aggro-check.mjs)
+    mobs: [["highwayman", 8, 5], ["highwayman", 12, 8], ["highwayman", 5, 9], ["highwayman", 28, 17], ["highwayman", 30, 21], ["highwayman", 34, 18],
+      ["moth", 31, 7], ["moth", 35, 8], ["moth", 37, 4], ["moth", 30, 10], ["moth", 38, 21], ["moth", 36, 16],
       ["gnasher", 21, 3], ["gnasher", 21, 5], ["gnasher", 21, 4], ["taxwraith", 4, 20], ["taxwraith", 6, 21], ["taxwraith", 5, 22]],
     npcs: [], bots: []
   },
@@ -600,22 +598,21 @@ Object.assign(SCENES, {
     build() {
       const g = grid(), objs = [], keep = [];
       for (let x = 5; x < COLS; x++) g[13][x] = ",";
-      for (let y = 6; y <= 13; y++) g[y][11] = ","; for (let y = 6; y <= 13; y++) g[y][32] = ","; for (let y = 13; y <= 17; y++) g[y][22] = ",";
-      for (const [x, y] of [[8, 4], [10, 7], [13, 3], [14, 6], [7, 8]]) { objs.push({ t: "rock", ore: "dragonstone_ore", x, y, name: "Dragonstone rock", req: { skill: "mining", lvl: 30 }, xp: 90, tease: "Red crystal, warm through your gloves. It laughs at your pickaxe." }); g[y][x] = "#"; }
-      for (const [x, y] of [[30, 4], [33, 3], [35, 6], [31, 8]]) { objs.push({ t: "rock", ore: "onyx_ore", x, y, name: "Storm-struck onyx", req: { skill: "mining", lvl: 40 }, xp: 120, tease: "Black stone, still crackling from the last lightning. Not yet." }); g[y][x] = "#"; }
-      for (const [x, y] of [[6, 18], [9, 20], [11, 18], [10, 23], [11, 22]]) { objs.push({ t: "skyash", x, y, name: "Skyash", log: "skyashlogs", req: { skill: "woodcutting", lvl: 30 }, xp: 110, tease: "The leaves ring like little bells. Your axe would just bounce off." }); g[y][x] = "#"; }
+      for (let y = 13; y <= 17; y++) g[y][31] = ",";
       // a hole in the cloud: the sky below, and eels in it, fished from its north side
       for (let y = 19; y <= 22; y++) for (let x = 27; x <= 36; x++) g[y][x] = "~";
-      for (const x of [29, 32, 35]) objs.push({ t: "spot", x, y: 19, name: "Hole in the cloud", req: { skill: "fishing", lvl: 30 }, fish: "skyeel", xp: 110, glow: "#bfe8ff", tease: "Long shapes swim through the open sky below. Your line isn't long enough yet." });
+      for (const x of [28, 30, 32, 34, 36]) objs.push({ t: "spot", x, y: 19, name: "Hole in the cloud", req: { skill: "fishing", lvl: 30 }, fish: "skyeel", xp: 110, glow: "#bfe8ff", tease: "Long shapes swim through the open sky below. Your line isn't long enough yet." });
       for (let x = 26; x <= 37; x++) keep.push([x, 18], [x, 17]);
       objs.push({ t: "fire", x: 22, y: 10, name: "Cloud-fire" }); g[10][22] = "#";
-      objs.push({ t: "sign", x: 24, y: 14, name: "SOUTH: a Chandelier Spider. It comes for you on sight. The ghouls, the rams and the Understudy wait to be asked." }); g[14][24] = "#";
+      objs.push({ t: "sign", x: 26, y: 14, name: "SOUTH-WEST: a Chandelier Spider. It comes for you on sight. The ghouls, the rams and the Understudy and the Thunder Geese wait to be asked." }); g[14][26] = "#";
       for (let x = 5; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "water", s: "water", w: "water", e: "water" }, [...keepOf(this), ...keep], 10);
       return { g, objs, blobs: [] };
     },
-    // ghouls and the Understudy in the middle north, rams by the way in; the Chandelier Spider (it attacks on sight) has the south middle to itself
-    mobs: [["ghoul", 17, 4], ["ghoul", 21, 6], ["ghoul", 26, 4], ["understudy", 26, 9], ["ram", 39, 16], ["ram", 40, 19], ["ram", 38, 21], ["chandelier", 20, 22]],
+    // ghouls and the Understudy in the middle north, rams by the way in, Thunder Geese at the far west end; the Chandelier Spider
+    // (it attacks on sight) has the south-west middle to itself
+    mobs: [["ghoul", 17, 4], ["ghoul", 21, 6], ["ghoul", 26, 4], ["ghoul", 23, 9], ["understudy", 30, 8], ["ram", 39, 16], ["ram", 40, 19], ["ram", 38, 7], ["ram", 35, 5],
+      ["goose", 8, 5], ["goose", 11, 8], ["goose", 7, 9], ["chandelier", 17, 21]],
     npcs: [], bots: []
   },
   /* THE THIRD FIGHT MAP, past the Rough. It wears the Wilderness's clothes (dark: true) but nobody can attack you here
@@ -710,34 +707,29 @@ Object.assign(SCENES, {
     build() {
       const g = grid(), objs = [], keep = [];
       for (let x = 0; x < COLS; x++) g[13][x] = ",";
-      for (let y = 13; y <= 17; y++) g[y][20] = ","; for (let y = 6; y <= 13; y++) g[y][32] = ",";
-      // the wheat field and the woods, north
-      for (let y = 4; y <= 8; y++) for (const x of [15, 16, 17, 18]) { objs.push({ t: "wheat", x, y, name: "Wheat" }); g[y][x] = "#"; }
-      for (const [x, y] of [[20, 3], [23, 2], [26, 4], [21, 6], [24, 7], [19, 9], [27, 8], [22, 9], [20, 11]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
-      objs.push({ t: "oak", x: 24, y: 4, name: "Oak tree" }); g[4][24] = "#";
-      // the diggings: copper to the north-east, tin to the south-east
-      for (const [x, y] of [[29, 3], [31, 4], [34, 3], [36, 5], [33, 6]]) { objs.push({ t: "rock", ore: "copper", x, y, name: "Copper rock" }); g[y][x] = "#"; }
-      for (const [x, y] of [[31, 20], [33, 21], [36, 20], [34, 23], [38, 22]]) { objs.push({ t: "rock", ore: "tin", x, y, name: "Tin rock" }); g[y][x] = "#"; }
-      // the pond, south: fished from its north bank
+      for (let y = 13; y <= 17; y++) g[y][20] = ",";
+      // the pond, south: fished from its north bank. The one quiet job out here.
       for (let y = 19; y <= 22; y++) for (let x = 15; x <= 25; x++) g[y][x] = "~";
-      for (const x of [17, 20, 23]) objs.push({ t: "spot", x, y: 19, name: "Fishing spot" });
+      for (const x of [16, 18, 20, 22, 24]) objs.push({ t: "spot", x, y: 19, name: "Fishing spot" });
       for (let x = 14; x <= 26; x++) keep.push([x, 18], [x, 17]);
-      // THE CAMP, between the pond and the tin: the only place in the world to smelt and smith
+      // Brutus's pitch, by the pond: gear for every level, and he buys what you don't want
       for (let y = 14; y <= 18; y++) for (let x = 26; x <= 33; x++) { g[y][x] = ","; keep.push([x, y]); }
-      for (const [t, x, y, name] of [["furnace", 27, 15, "Furnace"], ["anvil", 29, 15, "Anvil"], ["range", 33, 17, "Cooking range"], ["crate", 33, 15, "Crate of ore"], ["barrel", 33, 16, "Quenching barrel"], ["crate", 26, 18, "Crate"]]) { objs.push({ t, x, y, name }); g[y][x] = "#"; }
-      objs.push({ t: "sign", x: 26, y: 15, name: "THE CAMP. Smelt, smith and cook here before you cash in: anything you MAKE is worth double. Brutus buys what you smith." }); g[15][26] = "#";
-      objs.push({ t: "sign", x: 13, y: 11, name: "West of here: the animals. Chickens, cows, tomatoes that went bad, hornworms and boars. Nothing here attacks first." }); g[11][13] = "#";
-      objs.push({ t: "sign", x: 3, y: 11, name: "West: the Gloam. Better rock, better wood, better fish, worse company. Level 15 or so." }); g[11][3] = "#";
-      for (const [x, y] of [[6, 13], [9, 13]]) keep.push([x, y]);
+      for (const [t, x, y, name] of [["crate", 27, 15, "Crate of helmets"], ["crate", 28, 15, "Crate of swords"], ["barrel", 32, 15, "Barrel"], ["crate", 33, 15, "Crate"], ["barrel", 33, 16, "Barrel"]]) { objs.push({ t, x, y, name }); g[y][x] = "#"; }
+      objs.push({ t: "sign", x: 26, y: 15, name: "BRUTUS: arms and armour for every level. Better gear, faster kills, bigger monsters, more Cash." }); g[15][26] = "#";
+      objs.push({ t: "sign", x: 41, y: 11, name: "THE YARD. Click a monster to fight it. Chickens by the gate; it gets meaner the further west you walk. Nothing here attacks first. The pond is for anyone who'd rather fish." }); g[11][41] = "#";
+      objs.push({ t: "sign", x: 3, y: 11, name: "West: the Gloam. Bigger monsters, bigger Cash, better fish. Combat 12 or so." }); g[11][3] = "#";
+      for (const [x, y] of [[36, 7], [29, 22], [17, 6], [7, 8]]) { objs.push({ t: "hay", x, y, name: "Hay bale" }); g[y][x] = "#"; }
       for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
-      for (const [x, y] of [[8, 8], [6, 18]]) { objs.push({ t: "hay", x, y, name: "Hay bale" }); g[y][x] = "#"; }
       wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "forest" }, [...keepOf(this), ...keep], 12);
       return { g, objs, blobs: [] };
     },
-    // the animals keep to the west end: chickens and bad tomatoes north of the path, cows, hornworms and boars south of it
-    mobs: [["chicken", 4, 4], ["chicken", 7, 6], ["chicken", 10, 4], ["chicken", 5, 9], ["chicken", 9, 10], ["rotten", 12, 7], ["rotten", 3, 7], ["rotten", 11, 10],
-      ["cow", 4, 16], ["cow", 8, 17], ["cow", 11, 16], ["cow", 6, 20], ["hornworm", 3, 21], ["hornworm", 10, 21], ["boar", 12, 19], ["boar", 9, 22], ["boar", 4, 22]],
-    npcs: [{ name: "Brutus the Smith", x: 30, y: 17, still: true, opens: "shop", hair: "#2a1a10", shirt: "#5a3a2a", pants: "#3a2a1a", lines: ["Tools, bronze, and I buy what you smith. Furnace, anvil, range: it's all right here. Anything you make is worth double.", "Bronze is where it starts. Nobody walks into the Wilderness in a tunic twice.", "Brought ore? I'll take it. Brought a goat? Take it back."] }],
+    // east to west, easy to hard: chickens at the gate, then cows, bad tomatoes, hornworms, and boars at the far end
+    mobs: [["chicken", 38, 5], ["chicken", 41, 8], ["chicken", 36, 9], ["chicken", 39, 18], ["chicken", 41, 21], ["chicken", 36, 20],
+      ["cow", 30, 4], ["cow", 33, 7], ["cow", 27, 6], ["cow", 30, 21], ["cow", 34, 22],
+      ["rotten", 21, 4], ["rotten", 24, 7], ["rotten", 19, 8], ["rotten", 22, 10],
+      ["hornworm", 12, 5], ["hornworm", 15, 8], ["hornworm", 10, 9], ["hornworm", 11, 17],
+      ["boar", 5, 5], ["boar", 8, 17], ["boar", 4, 19], ["boar", 11, 21], ["boar", 6, 22]],
+    npcs: [{ name: "Brutus the Smith", x: 30, y: 17, still: true, opens: "shop", hair: "#2a1a10", shirt: "#5a3a2a", pants: "#3a2a1a", lines: ["Arms and armour for every level. Buy the plain stuff from me; the good stuff you'll have to take off something.", "Bronze is where it starts. Nobody walks into the Wilderness in a tunic twice.", "Brought ore? I'll take it. Brought a goat? Take it back."] }],
     bots: []
   },
   // EAST of the casino, the first stop on the combat line: things a beginner can win a fight with
@@ -943,8 +935,9 @@ Object.assign(SCENES, {
     mobs: [], bots: [{ name: "due4aWin", level: 14 }, { name: "SlotGoblin", level: 37 }, { name: "AllInAlan", level: 61 }],
     npcs: [{ name: "Dex the Dealer", art: "dex", x: 35, y: 4, still: true, reach: 2, hair: "#1a1a1a", shirt: "#9a2a2a", pants: "#1a1a1a", lines: [
       "Welcome in. Every game has its own room: slots are the whole north-west floor, wheels and coin tables below them, cards next to me, dice and the instant machines in the south-east. The house always wins, a little.",
-      "Broke? Out the arch. Dig, chop, fish or hit things: it's all in the Yard, and everything out there has its price written on it. A Cashier in here turns it into money.",
-      "Here's a tip for free: there's a camp in the Yard, by the rocks. Smelt it, smith it or cook it before you bring it in. Anything you make sells for double.",
+      "Broke? Out the arch and hit something. Every monster pays Cash, drops its one thing, and now and then coughs up something rare. A Cashier in here buys the drops.",
+      "Don't fancy a fight? Fish. Every scene out there has a pond, it's safe, and it's the only place lucky clovers turn up.",
+      "Brutus sells gear in the Yard, by the pond. Better gear, faster kills, bigger monsters. I sell dinner. We all have our lane.",
       "Broke? Happens to the best of us. The board by the door has jobs that pay. Fresh ones every morning.",
       "Biggest win I've seen? Someone hit three sevens on that end machine. Bought everyone a drink. You can too: a round's $300.",
       "Drinks work. A lager and your wins pay a little more, a Safety Net and your losses hurt a little less. One at a time.",
@@ -1222,6 +1215,12 @@ export const MOBS = {
    tier above it drops rarely from the same monster — so a good night at the Tax
    Wraiths is mostly Emerald with the occasional Diamond, which is the shape
    that keeps somebody coming back. */
+/* FASTER KILLS (2026-09-20, the owner: "an arcade style feedback loop"). Fighting is click-and-wait, and a 20-second wait is
+   a long time to look at a cow. Every monster has HALF the hit points it was written with, so a kill at your own level is
+   about 8-12 seconds and the Cash, the drop and the rare roll come round twice as often. What a kill PAYS was re-measured
+   for the shorter fight (BOUNTY), so an hour's fighting is worth what it was. */
+for (const m of Object.values(MOBS)) m.hp = Math.max(2, Math.round(m.hp / 2));
+
 /* WHAT A MONSTER DROPS (2026-09-20, the owner: "1-3 items, with the third being a rare one"). The same three lines for
    every monster, so nobody needs the wiki to know what a kill is:
      1. CASH, always: the bounty (BOUNTY, further down, fills this in so an average kill is worth what it should be)
@@ -1235,22 +1234,22 @@ export const LOOT = {
   chicken:    { item: ["chicken", 1] },
   cow:        { item: ["beef", 1] },
   rotten:     { item: ["tomatoe", [1, 3]] },
-  hornworm:   { item: ["husk", 1] },
-  boar:       { item: ["pork", 1] },
-  highwayman: { item: ["hide", 1], rare: [["mask", 0.1], ["sharps_gloves", 0.006]] },
-  gnasher:    { item: ["emerald_ore", 1], rare: [["bogplate", 0.03]] },
-  moth:       { item: ["emerald_ore", 1], rare: [["angels_ring", 0.006]] },
-  taxwraith:  { item: ["receipt", 1], rare: [["wraithhood", 0.03], ["menace", 0.02], ["angels_ring", 0.01], ["spiderboots", 0.004]] },
-  ghoul:      { item: ["diamond_ore", 1], rare: [["sharps_gloves", 0.012]] },
+  hornworm:   { item: ["husk", 1], rare: [["gamblers_ring", 0.006]] },
+  boar:       { item: ["pork", 1], rare: [["gamblers_ring", 0.01]] },
+  highwayman: { item: ["hide", 1], rare: [["mask", 0.1], ["bookies_amulet", 0.008], ["sharps_gloves", 0.006]] },
+  gnasher:    { item: ["emerald_ore", 1], rare: [["bogplate", 0.03], ["bookies_amulet", 0.01]] },
+  moth:       { item: ["emerald_ore", 1], rare: [["adjusters_visor", 0.01], ["angels_ring", 0.006]] },
+  taxwraith:  { item: ["receipt", 1], rare: [["wraithhood", 0.03], ["menace", 0.02], ["adjusters_visor", 0.01], ["angels_ring", 0.01], ["spiderboots", 0.004]] },
+  ghoul:      { item: ["diamond_ore", 1], rare: [["sharps_gloves", 0.012], ["stake_loafers", 0.008]] },
   understudy: { item: ["diamond_ore", [1, 2]], rare: [["sharps_gloves", 0.025]] },
   chandelier: { item: ["cobweb", 1], rare: [["lantern", 0.03], ["angels_ring", 0.02], ["spiderboots", 0.01]] },
-  ram:        { item: ["dragonstone_ore", 1], rare: [["grudge", 0.02]] },
+  ram:        { item: ["dragonstone_ore", 1], rare: [["grudge", 0.02], ["stake_loafers", 0.015]] },
   // the closed roads' residents, kept to the same rule for when they reopen
   olive:      { item: ["olives", [2, 5]], rare: [["monocle", 0.1]] },
   goat:       { item: ["manifesto", 1], rare: [["toga", 0.25]] },
   revenant:   { item: ["dragonstone_ore", 1], rare: [["grudge", 0.04], ["menace", 0.03]] },
   angel:      { item: ["dragonstone_ore", 1] },
-  goose:      { item: ["onyx_ore", 1] }
+  goose:      { item: ["onyx_ore", 1], rare: [["stake_loafers", 0.02], ["spiderboots", 0.01]] }
 };
 for (const [t, L] of Object.entries(LOOT)) if (MOBS[t]) { MOBS[t].drops = [L.item]; MOBS[t].rare = L.rare || []; }
 
@@ -1474,7 +1473,7 @@ export const buffsOf = (c) => {
    One casino (with its Roulette Room), one town, one skilling area, one combat area. Everything else still exists in
    the code but can't be reached yet; a saved character standing somewhere closed wakes up in the casino. */
 export const OPEN = new Set(["casino", "roulette", "fightpit", "highroller", "forum", "bathhouse", "workyard", "gloam", "cloud"]);   // (paddock, rough, boneyard closed 2026-09-20: their monsters live in the three scenes of the one line out)
-export const OPEN_DAILY = new Set(["logs", "tin", "copper", "sardine", "wheat", "cows", "chickens", "rotten", "boar", "highwayman", "emerald", "lantern", "willow", "diamond", "dragonstone", "moths", "ghouls", "bars", "cooked", "dinners", "steaks", "swords"]);
+export const OPEN_DAILY = new Set(["sardine", "lantern", "cows", "chickens", "rotten", "boar", "highwayman", "moths", "ghouls", "rams"]);   // kills and fish: that's the world now
 for (const k of Object.keys(SCENES)) if (!OPEN.has(k)) SCENES[k].wikiHide = true;   // closed areas stay out of the wiki
 
 /* ------------------------------------------------------------ the House Tour: how a new player learns the loop
@@ -1485,26 +1484,24 @@ export const TOUR = [
   { id: "meet",  text: "Say hello to Dex, behind the bar" },
   { id: "play",  text: "Play any game on the floor with your free chip" },
   { id: "board", text: "Read the task board, left of the bar" },
-  { id: "job",   text: "Do a job: out the arch to the Yard, and chop 5 logs or beat 3 chickens" },
+  { id: "job",   text: "Do a job: out the arch to the Yard, and beat 3 chickens or catch 5 fish" },
   { id: "paid",  text: "Go back to Dex and get paid" }
 ];
-export const TOUR_CHIP = 10, TOUR_PAY = 60, TOUR_GIFT = "clover", TOUR_JOB = { logs: 5, chickens: 3 };
+export const TOUR_CHIP = 10, TOUR_PAY = 60, TOUR_GIFT = "clover", TOUR_JOB = { fish: 5, chickens: 3 };
 export const tourOf = (c) => (c?.tour && c.tour.step < TOUR.length ? TOUR[c.tour.step] : null);
 export const HOWTO = `GambaScape is a casino. You'll spend most of your time right here.
 
 PLAY: every kind of game has its own roped-off room, named on the carpet at its way in. SLOTS fill the north-west. WHEELS and COIN FLIP are below them. The CARD ROOM is by the bar. The DICE PIT and the INSTANT WINS machines (Plinko, Mines, Scratch-Off) are in the south-east. Roulette is through the door in the back wall. Bets come out of the Cash in your bag.
 
 BROKE? Go and get more. It's quick.
-  OUT THE ARCH: the Yard, then the Gloam, then Cloudreach. Every one of them has rocks, trees, fish AND monsters, and everything has its price written over it. The further out you walk, the more it's all worth.
-  THE CAMP, in the Yard by the rocks: a furnace, an anvil, a range, and Brutus. Anything you MAKE from what you found sells for DOUBLE. Ore into bars, bars into swords, fish into dinner. Brutus buys what you smith. (Out deeper there's a campfire to cook on; smelting and smithing are only at the camp, and you pass it on every walk home.)
+  OUT THE ARCH: the Yard, then the Gloam, then Cloudreach. CLICK A MONSTER to fight it. Every kill pays the same three ways: Cash, the monster's own drop, and a roll at something rare. The further out you walk, the bigger all three get.
+  RATHER NOT FIGHT? Every scene has a pond. Fishing is safe and slow-ish, it never runs out, and it's the only place lucky clovers turn up. A fish is food, too: click one to eat it.
+  GEAR: Brutus, in the Yard by the pond, sells arms and armour for every level. Better gear, faster kills.
 Then bring it to the HOUSE RUBY in the middle of the floor, or to a CASHIER's window. One click and it's Cash.
 
 THIRSTY? HUNGRY? Every bet takes a little out of you. Under 20% the tables turn you away: the water cooler and the buffet are on the card room's back wall, next to the bar, and they're free.
 
-EACH JOB PAYS DIFFERENTLY.
-  SKILLING is the only way to get LUCKY: clovers turn up while you gather. Click one and your next bets pay more when they win.
-  FIGHTING pays in windfalls: every monster carries Cash, any kill can turn up a house chip worth up to $5,000, a free-play chip, a mystery box, and kills make you a HIGH ROLLER (double table limits for a few bets). Two pieces of gambling gear only ever drop.
-  CRAFTING makes what you keep: rings, amulets and visors that change how the tables treat you for as long as you wear them, and dinners that keep you at the table. Dex sells drinks; they work too.
+BUFFS. Lucky clovers (from fishing) make your wins pay more. Kills can make you a HIGH ROLLER (double table limits for a few bets) and turn up house chips, free-play chips, mystery boxes and rare gear that changes how the tables treat you while you wear it. Dex sells drinks and dinners that do the same for a while.
 Everything you've got going is in the BUFFS bar, top right. Hover one to see what it does.
 
 FREE MONEY: the Daily Prize Wheel by the front door is one free spin a day. Spin it every day and the Cash slices grow.
@@ -1618,15 +1615,7 @@ for (const [i, t] of TIERS.entries()) {
   }
 }
 
-// what only a crafter can make (2026-09-20): each takes something dug up AND something killed
-recipe("smith_gamblers_ring", { skill: "smithing", station: "anvil", in: [["bronze_bar", 2], ["pork", 1]], out: ["gamblers_ring", 1], lvl: 5, xp: 60, ms: 2600 });
-recipe("smith_bookies_amulet", { skill: "smithing", station: "anvil", in: [["bronze_bar", 3], ["hide", 2]], out: ["bookies_amulet", 1], lvl: 10, xp: 90, ms: 2600 });
-recipe("smith_adjusters_visor", { skill: "smithing", station: "anvil", in: [["bronze_bar", 2], ["husk", 3]], out: ["adjusters_visor", 1], lvl: 15, xp: 120, ms: 2600 });
-recipe("smith_stake_loafers", { skill: "smithing", station: "anvil", in: [["emerald_bar", 2], ["hide", 3], ["cobweb", 1]], out: ["stake_loafers", 1], lvl: 25, xp: 220, ms: 2600 });
-recipe("cook_chickendinner", { skill: "cooking", station: "fire", in: [["chicken", 1], ["wheat", 2]], out: ["chickendinner", 1], lvl: 3, xp: 45, burnStop: 22 });
-recipe("cook_steakdinner", { skill: "cooking", station: "fire", in: [["beef", 1], ["wheat", 2]], out: ["steakdinner", 1], lvl: 8, xp: 70, burnStop: 30 });
-recipe("cook_porkchops", { skill: "cooking", station: "fire", in: [["pork", 1], ["tomatoe", 2]], out: ["porkchops", 1], lvl: 14, xp: 100, burnStop: 40 });
-recipe("cook_fishplatter", { skill: "cooking", station: "fire", in: [["lanternfish", 1], ["sardine", 2]], out: ["fishplatter", 1], lvl: 18, xp: 140, burnStop: 45 });
+// (the gambling gear and the dinners had recipes here until 2026-09-20: the gear drops now, and Dex sells the dinners)
 
 /** Every recipe a station can run, hardest first so "the best thing you can make" is recipesAt()[0]. */
 export const recipesAt = (station) => Object.values(RECIPES)
@@ -1643,18 +1632,22 @@ export const AFK_MS = 3 * 60 * 1000;
 export const AFK_KINDS = { rock: "mining", vein: "mining", spot: "fishing", tree: "chopping", olive: "picking", wheat: "picking", cook: "cooking", smelt: "smelting", smith: "smithing" };
 
 // the Forge: Brutus sells tools and the Bronze set, and buys what you gather (for less than you'll get on the Exchange, usually)
+/* Brutus sells the PLAIN set of every tier (2026-09-20: nothing is smithed any more, so this is how you gear up, and it
+   gives Cash somewhere to go that isn't a table). Bronze is what it always cost; each tier up costs several times the
+   last, priced at roughly 20 minutes' fighting for emerald up to a couple of hours' for onyx. The good stuff still drops. */
+const GEAR_PRICE = { gladius: 220, sword: 250, maul: 280, helm: 200, shield: 300, body: 600, legs: 360, boots: 120, gloves: 120, ring: 180, amulet: 260 };
+const TIER_COST = { bronze: 1, emerald: 4, diamond: 12, dragonstone: 30, onyx: 75 };
+const GEAR_FOR_SALE = TIERS.flatMap((t) => Object.entries(GEAR_PRICE).filter(([k]) => ITEMS[`${t.key}_${k}`]).map(([k, p]) => [`${t.key}_${k}`, p * TIER_COST[t.key]]));
 /* Dex's bar (2026-09-20): drinks and the scroll home. Priced so a lager about pays for itself at the table limit and
    costs you at small stakes: a drink is for someone betting big, and otherwise a Cash sink. `round` buys everyone on
    the floor who isn't already drinking a lager's worth of bets. */
-export const BAR = { sells: [["beer", 40], ["cocktail", 90], ["whiskey", 100], ["champagne", 200], ["tp_scroll", 50]], round: { price: 300, k: "beer", bets: 10 } };
+export const BAR = { sells: [["beer", 40], ["cocktail", 90], ["whiskey", 100], ["champagne", 200], ["chickendinner", 80], ["steakdinner", 150], ["porkchops", 150], ["fishplatter", 300], ["tp_scroll", 50]], round: { price: 300, k: "beer", bets: 10 } };
 export const SHOP = {
   // Brutus stocks tools and BRONZE ONLY. Everything above bronze is found, not
   // bought — otherwise the fastest route to the best gear in the game is to
   // stand at the copper vein and walk away, which is not a route anybody should
   // enjoy discovering.
-  sells: [["pickaxe", 25], ["axe", 25], ["rod", 20],
-    ["bronze_gladius", 220], ["bronze_sword", 250], ["bronze_maul", 280],
-    ["bronze_helm", 200], ["bronze_shield", 300], ["bronze_body", 600], ["bronze_legs", 360], ["bronze_boots", 120], ["bronze_gloves", 120], ["bronze_ring", 180], ["bronze_amulet", 260]],
+  sells: [["rod", 20], ...GEAR_FOR_SALE],
   buys: { emerald_ore: 30, diamond_ore: 50, dragonstone_ore: 80, onyx_ore: 120, willowlogs: 40, skyashlogs: 65, clanternfish: 18, cskyeel: 32,
     copper: 6, tin: 6, grimstone: 45, marble: 35, stardust: 120, logs: 4, yewlogs: 70, ashlogs: 28, hide: 8, bones: 2, feather: 1, tusk: 10, husk: 4, pit: 1,
     receipt: 3, cobweb: 5, geode: 400, olives: 1, sunolive: 30, wheat: 1, tomatoe: 2, goldtomatoe: 60, mask: 40, monocle: 25, manifesto: 15,
@@ -1681,14 +1674,19 @@ export const SHOP = {
    anvil earned twice what anyone else could: see tools/eastscape-balance.mjs.) One list, read by the Cashier, by Brutus,
    by the labels over rocks and monsters, and by the wiki. A made thing is never priced here by hand. */
 export const VALUE = {
-  logs: 10, copper: 10, tin: 10, sardine: 10, trout: 18, wheat: 4, olives: 3,
-  willowlogs: 15, emerald_ore: 15, lanternfish: 16, diamond_ore: 22,            // the Gloam
-  skyashlogs: 28, dragonstone_ore: 30, skyeel: 30, onyx_ore: 40,                // Cloudreach
+  logs: 10, copper: 10, tin: 10, sardine: 10, trout: 18, wheat: 4, olives: 3,   // (fish: see FISHING)
+  willowlogs: 15, emerald_ore: 15, lanternfish: 20, diamond_ore: 22,            // the Gloam
+  skyashlogs: 28, dragonstone_ore: 30, skyeel: 40, onyx_ore: 40,                // Cloudreach
   receipt: 15, cobweb: 25,                                                      // the Boneyard's leavings
   chip_red: 250, chip_black: 1000, chip_gold: 5000,                             // fighting's windfalls
   chicken: 8, feather: 1, bones: 3, beef: 12, hide: 14, tomatoe: 5, husk: 10, pork: 16, tusk: 18, pit: 2, mask: 60, monocle: 40, manifesto: 25
 };
 for (const [k, v] of Object.entries(SHOP.buys)) if (!(k in VALUE) && !ITEMS[k]?.slot) VALUE[k] = v;      // the closed areas keep Brutus's old prices until they reopen
+/* FISHING is the one quiet job: you can't die, it never runs dry, and you can do it with a drink in your hand. A cast every
+   `ms`, and your chance of a bite grows with your Fishing level exactly as mining's did. It is tuned to pay between two thirds and nine tenths of
+   what fighting does at the same level (tools/eastscape-grind-sim.mjs): safe money is a little less money. It's also the
+   only place lucky clovers come from now, and a fish is food as it comes out of the water. */
+export const FISHING = { ms: 2600, chance: (lvl) => Math.min(0.9, 0.4 + lvl * 0.02), troutAt: 10, troutShare: 0.35 };
 export const CRAFT_PAYS = 2, CRAFT_STEP = 1.25;
 { // RAW[k]: the raw materials in one of a thing, and how many times it has been worked. Bars before the gear made of them.
   const RAW = Object.fromEntries(Object.entries(VALUE).map(([k, v]) => [k, { v, steps: 0 }]));
@@ -1707,7 +1705,7 @@ export const CRAFT_PAYS = 2, CRAFT_STEP = 1.25;
    time (the owner: "mostly match, with fighting winning slightly"). Before this a hornworm paid a fifth of what the
    rock next to it did. 88% of it is the monster's own drops plus Cash it carries (a "coins" drop fills the gap); the
    rest arrives as FINDS, below, which is why a bigger monster turns up more chips. */
-export const BOUNTY = { chicken: 23, cow: 47, rotten: 59, olive: 60, hornworm: 75, boar: 82, highwayman: 66, goat: 70, gnasher: 135, moth: 119, taxwraith: 240, ghoul: 289, chandelier: 311, understudy: 351, ram: 421, angel: 492, revenant: 497, goose: 550 };
+export const BOUNTY = { chicken: 18, cow: 28, rotten: 34, olive: 35, hornworm: 45, boar: 47, highwayman: 40, goat: 42, gnasher: 80, moth: 74, taxwraith: 142, ghoul: 177, chandelier: 185, understudy: 207, ram: 255, angel: 287, revenant: 289, goose: 316 };   // (re-measured 2026-09-20 for half-length fights: a kill pays less, and there are twice as many)
 for (const [t, want] of Object.entries(BOUNTY)) {
   const m = MOBS[t]; m.drops = m.drops.filter(([k]) => k !== "coins");
   const other = m.drops.reduce((a, [k, n, p]) => a + (VALUE[k] ?? 0) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0), gap = Math.round(want * 0.88 - other);
@@ -2009,7 +2007,7 @@ function migrate(out) {
 export function freshChar() {
   return {
     v: SAVE_V, scene: START.scene, x: START.x, y: START.y, hp: 10, hunger: 100, thirst: 100, wagered: 0, spin: null, roller: 0, free: 0, meal: null, drink: null, tour: { step: 0, logs: 0, chickens: 0 },
-    inv: [{ k: "coins", n: 25 }, { k: "pickaxe", n: 1 }, { k: "axe", n: 1 }, { k: "rod", n: 1 }],
+    inv: [{ k: "coins", n: 25 }, { k: "rod", n: 1 }],
     eq: { helm: "cap", weapon: "rudis", body: "tunic", shield: "parma", legs: null, gloves: null, boots: "sandals", ring: null },
     stance: DEFAULT_STANCE,
     xp: { melee: 0, hp: XP_AT[10], fishing: 0, farming: 0, mining: 0, woodcutting: 0, cooking: 0, smithing: 0 },

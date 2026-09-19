@@ -121,6 +121,20 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-20", title: "Outside is simple now: fight, or fish",
+    items: [
+      "THE WORLD OUTSIDE THE CASINO IS MONSTERS AND A POND. Go out the arch, click a monster, get paid: Cash, its one drop, and a roll at something rare. That's the job. If you'd rather not fight, every scene has a pond. Mining, woodcutting, smelting, smithing and cooking are gone from the world (your levels in them are kept, in case they come back).",
+      "KILLS ARE TWICE AS FAST. Every monster has half the hit points, so a fight at your own level is about 8 to 12 seconds. Each kill pays a little less and there are twice as many of them, so an hour's fighting is worth what it was, with twice the drops and twice the rare rolls.",
+      "MORE MONSTERS. The Yard has 24 (chickens by the gate, then cows, rotten tomatoes, hornworms, and boars at the far end). The Gloam has 18. Cloudreach has 13, including Thunder Geese at the far west end for anyone past level 50.",
+      "FISHING is the quiet job. Your chance of a bite now grows with your Fishing level, there are five spots at every pond, and the fish are worth more out deeper: it pays somewhat less than fighting does (two thirds to nine tenths, depending on your level), for none of the risk. It's the ONLY place lucky clovers come from. And a fish is food straight out of the water: click one to eat it.",
+      "BRUTUS SELLS GEAR FOR EVERY LEVEL, in the Yard by the pond: bronze at Combat 10, emerald at 20, diamond at 30, dragonstone at 40, onyx at 50. Bronze costs what it did; onyx is a couple of hours' fighting. The GOOD stuff still only drops.",
+      "ALL SIX PIECES OF GAMBLING GEAR ARE RARE DROPS NOW. Gambler's ring: boars and hornworms. Bookie's amulet: highwaymen and gnashers. Loss adjuster's visor: moths and Tax Wraiths. Stakeholder's loafers: ghouls, rams and geese. Card sharp's gloves and the Angel's ring: where they were.",
+      "DEX HAS A KITCHEN. The four dinners (Well Fed, plus an effect each) are on his menu with the drinks.",
+      "RARES FOUND. The Quests tab has a collection: every rare there is, greyed out until you've found one, with a count. Hover one to see what drops it.",
+      "Today's jobs are kills and fish only. New characters start with a rod and $25."
+    ]
+  },
+  {
     date: "2026-09-20", title: "Simpler drops: Cash, its one thing, and a rare",
     items: [
       "Every monster now drops the same three lines. CASH, always. ITS ONE THING, always: chicken from chickens, beef from cows, tomatoes from rotten tomatoes, husk from hornworms, pork from boars, hide from highwaymen, emerald ore from gnashers and moths, a receipt from Tax Wraiths, diamond ore from ghouls and the Understudy, cobweb from the spider, dragonstone ore from rams. And A RARE: one roll a kill, at most one a kill.",
