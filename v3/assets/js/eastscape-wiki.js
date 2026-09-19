@@ -125,6 +125,8 @@ export const UPDATES = [
       "The game has a name: GAMBA. The casino is now the middle of the world, and where everyone starts (and wakes up after dying).",
       "Four ways out of the casino: north is Floor 2 (the Roulette Room), the west arch leads to skilling (the Workyard: trees, copper, tin, wheat and a fishing pond), the east arch to fighting (the Paddock: chickens, cows and rotten tomatoes), and the front door to town for crafting and the market.",
       "The casino floor is bigger, with more slot machines. Everything that was in the world before is still there, through the front door.",
+      "New here? Dex gives you the House Tour: a free chip, a first game, a first job and a first payday, with the next step always shown top-left. Anyone can ask him for it, or ask \"What should I do next?\" any time.",
+      "The ways out of the casino are labelled, and there's a \"How GAMBA works\" board by the front door.",
     ],
   },
   {

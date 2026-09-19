@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 29;
+export const VERSION = 30;
 export const COLS = 22, ROWS = 13;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -674,13 +674,14 @@ Object.assign(SCENES, {
      line, SOUTH the town (crafting: the smithy and the market). The side archways are real exits at the grid's edge;
      the south door is the building's front door onto the Forum. */
   casino: {
-    name: "The Casino", interior: true, floor: "casino", wallH: 34, room: [1, 3, 20, 10], exits: { w: "workyard", e: "paddock" }, exitTo: { scene: "forum", x: 13, y: 4 }, entry: { x: 10, y: 10 },
+    name: "The Casino", interior: true, floor: "casino", wallH: 34, room: [1, 3, 20, 10], exits: { w: "workyard", e: "paddock" }, labels: { w: "SKILLING", e: "COMBAT", s: "TOWN" }, exitTo: { scene: "forum", x: 13, y: 4 }, entry: { x: 10, y: 10 },
     wall: [{ t: "banner", x: 2.5 }, { t: "lamp", x: 4.5 }, { t: "lamp", x: 7.5 }, { t: "lamp", x: 11 }, { t: "lamp", x: 17 }, { t: "banner", x: 19 }],
     build() {
       const g = room(1, 3, 20, 10, 10), objs = [];
       for (let y = SPAN.w[0]; y <= SPAN.w[1]; y++) { g[y][0] = "e"; g[y][COLS - 1] = "e"; }
       objs.push({ t: "bar", x: 12, y: 4, w: 4, h: 1, name: "Bar" }); block(g, 12, 4, 4, 1);
       objs.push({ t: "notice", x: 6, y: 3, name: "Task board" }); g[3][6] = "#";
+      objs.push({ t: "howto", art: "o_notice", x: 13, y: 10, name: "How GAMBA works" }); g[10][13] = "#";
       objs.push({ t: "walldoor", x: 9, y: 2, name: "Floor 2: the Roulette Room", enter: "roulette" });
       objs.push({ t: "roulsign", x: 9, y: 1, name: "Roulette", dy: -3 });
       for (const y of [3, 8, 10]) { objs.push({ t: "slots", x: 1, y, name: "Slot machine", flip: true }); g[y][1] = "#"; }
@@ -689,7 +690,7 @@ Object.assign(SCENES, {
       objs.push({ t: "dicetable", x: 14, y: 7, w: 2, h: 1, name: "Dice table" }); block(g, 14, 7, 2, 1);
       objs.push({ t: "rug", img: "rug_casino", x: 9, y: 8, w: 4, h: 3, color: "#5a1a2a", name: "Rug" });
       for (const [x, y] of [[17, 10], [4, 10]]) { objs.push({ t: "sofa", x, y, w: 2, h: 1, name: "Sofa" }); block(g, x, y, 2, 1); }
-      for (const [x, y] of [[20, 4], [3, 3], [7, 10], [14, 10]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
+      for (const [x, y] of [[17, 3], [3, 3], [7, 10], [14, 10]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
       return { g, objs, blobs: [] };
     },
     mobs: [], bots: [],
@@ -1029,6 +1030,29 @@ export function slotsPay(reels) {
   return reels.filter((r) => r === "cherry").length === 2 ? SLOT_TWO_CHERRIES : 0;
 }
 
+/* ------------------------------------------------------------ the House Tour: how a new player learns the loop
+
+   Gamble first, run dry, do a job, get paid, come back. Dex walks you through it once, inside the casino. `step` is
+   an index into TOUR; TOUR.length means finished. (Paid in Cash for now; the DEX exchange slots into the last step.) */
+export const TOUR = [
+  { id: "meet",  text: "Say hello to Dex, behind the bar" },
+  { id: "play",  text: "Play any game on the floor with your free chip" },
+  { id: "board", text: "Read the task board, left of the bar" },
+  { id: "job",   text: "Do a job: chop 5 logs (west arch) or beat 3 chickens (east arch)" },
+  { id: "paid",  text: "Go back to Dex and get paid" }
+];
+export const TOUR_CHIP = 10, TOUR_PAY = 60, TOUR_JOB = { logs: 5, chickens: 3 };
+export const tourOf = (c) => (c?.tour && c.tour.step < TOUR.length ? TOUR[c.tour.step] : null);
+export const HOWTO = `GAMBA is a casino with a world outside it.
+
+1. Play. Slots, coin flip and dice are on this floor; roulette is upstairs (the door in the back wall). Bets come out of the Cash in your bag.
+2. Run dry? The task board left of the bar has three paid jobs a day, picked for your levels.
+3. Do the work. The WEST arch leads to skilling (trees, ore, wheat, fish). The EAST arch leads to fighting. The front door leads to town: the smithy, the market and the bank.
+4. Get stronger. Better gear comes from Brutus in town or your own smithing, and it opens the tougher areas further out, which pay more.
+5. Come back and play.
+
+Dex, behind the bar, will always tell you what to do next.`;
+
 /* ------------------------------------------------------------ roulette: one shared table, one spin for everyone
 
    A single-zero wheel on a clock: bets are open for `betMs`, then the ball rolls for `spinMs` and the room sees the
@@ -1243,7 +1267,7 @@ export const EXAMINE = {
   lighthouse: ["A lighthouse. The light points inward, at the island. Nobody knows who it's warning.", "The door's painted on. The light is on anyway."],
   mule: ["A mule. It refuses to move. It has refused for eleven years.", "The mule looks at you. You feel judged by a professional."]
 };
-export const VERB = { game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
+export const VERB = { howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
 /* ------------------------------------------------------------ quests are data
    goal.type "bring": have goal.n of goal.items in your bag when you talk to the giver (they're taken)
@@ -1431,7 +1455,7 @@ function migrate(out) {
 
 export function freshChar() {
   return {
-    v: SAVE_V, scene: START.scene, x: START.x, y: START.y, hp: 10,
+    v: SAVE_V, scene: START.scene, x: START.x, y: START.y, hp: 10, tour: { step: 0, logs: 0, chickens: 0 },
     inv: [{ k: "coins", n: 25 }, { k: "pickaxe", n: 1 }, { k: "axe", n: 1 }, { k: "rod", n: 1 }],
     eq: { helm: "cap", weapon: "rudis", body: "tunic", shield: "parma", legs: null, gloves: null, boots: "sandals", ring: null },
     stance: DEFAULT_STANCE,
