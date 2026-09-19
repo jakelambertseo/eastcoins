@@ -121,6 +121,18 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-20", title: "One way out: the Yard, the Gloam, Cloudreach",
+    items: [
+      "THE WORLD IS ONE LINE NOW. The casino has one arch (OUTSIDE), and it leads to three scenes in a row: the Yard (levels 1 to 14), the Gloam (15 to 29) and Cloudreach (30 and up). Every one of them has its rocks, trees and fish AND its monsters, so whatever you and your friends are doing, you're doing it in the same field. The further out you walk, the more everything is worth.",
+      "THE CAMP. In the Yard, between the pond and the tin rocks: a furnace, an anvil, a cooking range, and Brutus (who moved out there with his shop, and still buys what you smith). It's the only place to smelt and smith, it's right beside the rocks, and you pass it on every walk home. Anything you make sells for double, so make it before you cash in.",
+      "The Yard's animals live at its west end: chickens, cows, rotten tomatoes, hornworms and boars. None of them attack first.",
+      "The Gloam now has highwaymen, lantern moths, Bog Gnashers and Tax Wraiths. Gnashers (the north clearing) and wraiths (the far south-west) come for you on sight; signs say where, and they can't reach the rocks, the pond or the path. Cloudreach has Sorry Ghouls, the Understudy, Cumulus Rams, and one Chandelier Spider in the middle of the south that you should not wander into by accident.",
+      "There's a campfire to cook on in the Gloam and in Cloudreach. Smelting and smithing are only at the Yard's camp.",
+      "The Paddock, the Rough and the Boneyard are closed (their monsters moved into the line). If you logged out in one, you'll wake up in the casino. The Forum keeps the bank, the Exchange and Charon's cart; its smithy has moved to the camp.",
+      "Cashing in is still only inside the casino, at the Ruby or a Cashier's window."
+    ]
+  },
+  {
     date: "2026-09-20", title: "A free spin every day, VIP tiers, and the Winners' Wall",
     items: [
       "THE DAILY PRIZE WHEEL is open: the big wheel by the casino's front door. One free spin a day: Cash from $50 to $1,000, lucky clovers, a lager, free-play chips, Casino scrolls, a mystery box, even a black house chip. Spin every day: each day in a row adds 10% to the Cash slices, up to +70%. It resets at midnight, Central. It says FREE SPIN over it until you've had yours.",

@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 50;
+export const VERSION = 51;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -498,10 +498,8 @@ export const SCENES = {
       const casino = { t: "house", img: "casino", x: 19, y: 2, w: 5, h: 3, door: { x: 21, y: 4 }, name: "Casino", roof: "#7a2a2a", wall: "#9a3a3a", enter: "casino" };
       const bank = { t: "house", img: "bank", x: 8, y: 5, w: 5, h: 3, door: { x: 10, y: 7 }, name: "Bank", roof: "#8a9aa8", wall: "#efe6d4", sign: "BANK", enter: "bathhouse" };
       objs.push(casino, bank); block(g, 19, 2, 5, 3); block(g, 8, 5, 5, 3);
-      // the smithy, east of the casino: furnace, anvil, and Brutus between them
-      objs.push({ t: "furnace", x: 30, y: 7, name: "Furnace" }); g[7][30] = "#";
-      objs.push({ t: "anvil", x: 33, y: 7, name: "Anvil" }); g[7][33] = "#";
-      objs.push({ t: "range", x: 27, y: 7, name: "Cooking range" }); g[7][27] = "#";
+      // (the smithy stood here until 2026-09-20: the furnace, the anvil, the range and Brutus are at the Yard's camp now, next to the rocks)
+      objs.push({ t: "sign", x: 30, y: 8, name: "The smithy has moved: out the casino's arch, to the camp in the Yard. Brutus went with it." }); g[8][30] = "#";
       // the market stall, south-west; Livia stands behind it
       objs.push({ t: "stall", x: 11, y: 17, w: 2, h: 1, name: "Exchange stall" }); block(g, 11, 17, 2, 1);
       objs.push({ t: "fountain", x: 21, y: 12, w: 2, h: 2, name: "Fountain" }); block(g, 21, 12, 2, 2);
@@ -517,7 +515,7 @@ export const SCENES = {
       return { g, objs, blobs: [] };
     },
     mobs: [],
-    npcs: [{ name: "Brutus the Smith", x: 31, y: 8, still: true, opens: "shop", hair: "#2a1a10", shirt: "#5a3a2a", pants: "#3a2a1a", lines: ["Tools, bronze, and I'll buy whatever you dug up. Fair prices. Mostly fair.", "Bronze is where it starts. Nobody walks into the Wilderness in a tunic twice.", "Brought ore? I'll take it. Brought a goat? Take it back."] },
+    npcs: [
       { name: "Livia the Broker", x: 12, y: 16, still: true, opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Selling? Buying? Use the stall. I just take my 1%.", "Offers keep working while you sleep. Come back and collect.", "The best price wins, and whoever was there first."] },
            { name: "Charon the Ferryman", art: "charon", x: 18, y: 21, still: true, opens: "ferry", hair: "#e8e8e8", shirt: "#3a3a5a", pants: "#2a2a3a", lines: ["Islands. Everyone gets one. Nobody knows who's paying for them.", "The river's closed, so now it's a cart. Don't ask how a cart gets to an island. I don't.", "Plant something before you go back in there and lose your shirt. It grows while you're away.", "Wheat, ten minutes. Tomatoes, twenty. Both sell. Both cook."] },
            { name: "Gaius", x: 25, y: 15, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: Coo. The Forge buys ore. Coo.", "PIGEON: He doesn't talk. I do the talking. Coo.", "PIGEON: The Bank keeps your things safe. Aurelia counts everything twice. Coo.", "PIGEON: West is the Olive Grove. Bring a sword. Seriously. Coo.", "PIGEON: North is Tomatoe Hill. Don't correct her spelling. Coo.", "PIGEON: East is the Via Appia. Highwaymen. Hold on to your Cash. Coo."] }],
@@ -577,20 +575,25 @@ Object.assign(SCENES, {
       const g = grid(), objs = [], keep = [];
       for (let x = 0; x < COLS; x++) g[13][x] = ",";
       for (let y = 6; y <= 13; y++) g[y][31] = ","; for (let y = 13; y <= 18; y++) g[y][19] = ","; for (let y = 6; y <= 13; y++) g[y][10] = ",";
-      for (const [x, y] of [[5, 4], [8, 3], [12, 5], [6, 8], [14, 8], [16, 4], [3, 7]]) { objs.push({ t: "willow", x, y, name: "Gloomwillow", log: "willowlogs", req: { skill: "woodcutting", lvl: 15 }, xp: 60, tease: "The fronds close up around the trunk when you raise your axe." }); g[y][x] = "#"; }
+      for (const [x, y] of [[5, 4], [8, 3], [12, 5], [6, 8], [12, 9], [9, 10], [3, 7]]) { objs.push({ t: "willow", x, y, name: "Gloomwillow", log: "willowlogs", req: { skill: "woodcutting", lvl: 15 }, xp: 60, tease: "The fronds close up around the trunk when you raise your axe." }); g[y][x] = "#"; }
       for (const [x, y] of [[29, 4], [32, 3], [34, 5], [36, 8], [33, 9]]) { objs.push({ t: "rock", ore: "emerald_ore", x, y, name: "Emerald rock", req: { skill: "mining", lvl: 15 }, xp: 45, tease: "Green glints in the rock. Your pickaxe isn't up to it yet." }); g[y][x] = "#"; }
       for (const [x, y] of [[31, 19], [34, 21], [36, 18], [38, 22]]) { objs.push({ t: "rock", ore: "diamond_ore", x, y, name: "Diamond rock", req: { skill: "mining", lvl: 25 }, xp: 65, tease: "Something in there catches light that isn't here." }); g[y][x] = "#"; }
       // the black pond, fished from its north bank
       for (let y = 20; y <= 23; y++) for (let x = 13; x <= 25; x++) g[y][x] = "~";
       for (const x of [15, 19, 23]) objs.push({ t: "spot", x, y: 20, name: "Lantern pool", req: { skill: "fishing", lvl: 15 }, fish: "lanternfish", xp: 60, glow: "#7ad8ff", tease: "Little lights drift under the surface. They move away when you lean closer." });
       for (let x = 12; x <= 26; x++) keep.push([x, 19], [x, 18]);
-      objs.push({ t: "fire", x: 22, y: 10, name: "Campfire" }); g[10][22] = "#";
+      objs.push({ t: "fire", x: 21, y: 16, name: "Campfire" }); g[16][21] = "#";   // cook here; smelting and smithing are back at the Yard's camp
       objs.push({ t: "sign", x: 3, y: 11, name: "West: Cloudreach. Bring level 30 and a head for heights." }); g[11][3] = "#";
+      objs.push({ t: "sign", x: 16, y: 15, name: "SOUTH-WEST: Tax Wraiths. They come for you on sight. So do the Bog Gnashers in the clearing to the north. Everything else here minds its own business." }); g[15][16] = "#";
       for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "scrub", s: "scrub", w: "scrub", e: "scrub" }, [...keepOf(this), ...keep], 9);
       return { g, objs, blobs: [] };
     },
-    mobs: [], npcs: [], bots: []
+    // highwaymen work the gap between the pond and the diamonds, moths drift among the emerald rocks. The two that attack on sight are
+    // boxed in by their own reach: gnashers in the north clearing (willows end at x16, emeralds start at x29), wraiths in the far south-west
+    mobs: [["highwayman", 27, 16], ["highwayman", 28, 19], ["highwayman", 27, 22], ["highwayman", 29, 17], ["moth", 31, 7], ["moth", 35, 8], ["moth", 37, 4], ["moth", 30, 10],
+      ["gnasher", 21, 3], ["gnasher", 21, 5], ["gnasher", 21, 4], ["taxwraith", 4, 20], ["taxwraith", 6, 21], ["taxwraith", 5, 22]],
+    npcs: [], bots: []
   },
   cloud: {
     name: "Cloudreach", ground: "cloud", exits: { e: "gloam" },
@@ -600,23 +603,26 @@ Object.assign(SCENES, {
       for (let y = 6; y <= 13; y++) g[y][11] = ","; for (let y = 6; y <= 13; y++) g[y][32] = ","; for (let y = 13; y <= 17; y++) g[y][22] = ",";
       for (const [x, y] of [[8, 4], [10, 7], [13, 3], [14, 6], [7, 8]]) { objs.push({ t: "rock", ore: "dragonstone_ore", x, y, name: "Dragonstone rock", req: { skill: "mining", lvl: 30 }, xp: 90, tease: "Red crystal, warm through your gloves. It laughs at your pickaxe." }); g[y][x] = "#"; }
       for (const [x, y] of [[30, 4], [33, 3], [35, 6], [31, 8]]) { objs.push({ t: "rock", ore: "onyx_ore", x, y, name: "Storm-struck onyx", req: { skill: "mining", lvl: 40 }, xp: 120, tease: "Black stone, still crackling from the last lightning. Not yet." }); g[y][x] = "#"; }
-      for (const [x, y] of [[6, 18], [9, 20], [12, 18], [10, 23], [14, 21]]) { objs.push({ t: "skyash", x, y, name: "Skyash", log: "skyashlogs", req: { skill: "woodcutting", lvl: 30 }, xp: 110, tease: "The leaves ring like little bells. Your axe would just bounce off." }); g[y][x] = "#"; }
+      for (const [x, y] of [[6, 18], [9, 20], [11, 18], [10, 23], [11, 22]]) { objs.push({ t: "skyash", x, y, name: "Skyash", log: "skyashlogs", req: { skill: "woodcutting", lvl: 30 }, xp: 110, tease: "The leaves ring like little bells. Your axe would just bounce off." }); g[y][x] = "#"; }
       // a hole in the cloud: the sky below, and eels in it, fished from its north side
       for (let y = 19; y <= 22; y++) for (let x = 27; x <= 36; x++) g[y][x] = "~";
       for (const x of [29, 32, 35]) objs.push({ t: "spot", x, y: 19, name: "Hole in the cloud", req: { skill: "fishing", lvl: 30 }, fish: "skyeel", xp: 110, glow: "#bfe8ff", tease: "Long shapes swim through the open sky below. Your line isn't long enough yet." });
       for (let x = 26; x <= 37; x++) keep.push([x, 18], [x, 17]);
       objs.push({ t: "fire", x: 22, y: 10, name: "Cloud-fire" }); g[10][22] = "#";
+      objs.push({ t: "sign", x: 24, y: 14, name: "SOUTH: a Chandelier Spider. It comes for you on sight. The ghouls, the rams and the Understudy wait to be asked." }); g[14][24] = "#";
       for (let x = 5; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "water", s: "water", w: "water", e: "water" }, [...keepOf(this), ...keep], 10);
       return { g, objs, blobs: [] };
     },
-    mobs: [], npcs: [], bots: []
+    // ghouls and the Understudy in the middle north, rams by the way in; the Chandelier Spider (it attacks on sight) has the south middle to itself
+    mobs: [["ghoul", 17, 4], ["ghoul", 21, 6], ["ghoul", 26, 4], ["understudy", 26, 9], ["ram", 39, 16], ["ram", 40, 19], ["ram", 38, 21], ["chandelier", 20, 22]],
+    npcs: [], bots: []
   },
   /* THE THIRD FIGHT MAP, past the Rough. It wears the Wilderness's clothes (dark: true) but nobody can attack you here
      but the residents. Gnashers and moths by the gate, ghouls and Tax Wraiths in the middle, a Chandelier Spider and
      the Understudy at the far end. Several of them come for you on sight. */
   boneyard: {
-    name: "The Boneyard", dark: true, exits: { w: "rough" }, tint: "rgba(60,20,70,.2)",
+    name: "The Boneyard", wikiHide: true, dark: true, exits: { w: "rough" }, tint: "rgba(60,20,70,.2)",
     build() {
       const g = grid(), objs = [], keep = [];
       for (let x = 0; x <= 39; x++) g[13][x] = ",";
@@ -690,35 +696,53 @@ Object.assign(SCENES, {
     npcs: [{ name: "Aurelia", x: 21, y: 9, still: true, opens: "bank", reach: 2, hair: "#1a1a2a", shirt: "#3a6a8a", pants: "#2a2a3a", lines: ["Welcome to the Bank. Your things are safe with us. Mostly.", "Use any booth. I'm the one counting.", "Two hundred different things we'll hold for you. Stack them as high as you like."] }]
   },
   // WEST of the casino, the first stop on the skilling line: a bit of everything a beginner gathers
+  /* ONE WAY OUT (2026-09-20, the owner: "one entrance for skilling/combat/crafting, all available in a few scenes"). The
+     casino's arch leads to a single line of three scenes, and the further you walk the better it pays:
+       the Yard (levels 1-14)  ->  the Gloam (15-29)  ->  Cloudreach (30+)
+     Each has its rocks, trees, fish AND its monsters, so friends doing different jobs are standing in the same field.
+     THE CAMP is in the Yard only: furnace, anvil, range and Brutus, right beside the rocks, and every walk home from
+     anywhere passes it. Out deeper there is a campfire to cook on and nothing else. Cashing in is still only inside
+     the casino: the walk past the tables is the point. Monsters that come for you on sight are kept where their reach
+     (home +/-3 by +/-2 of wandering, plus their aggro) can't touch a rock, a pool or the path.
+     The old combat line (paddock, rough, boneyard) is still defined below and closed, like the farm. */
   workyard: {
-    name: "The Workyard", exits: { e: "casino", w: "gloam" },
+    name: "The Yard", exits: { e: "casino", w: "gloam" },
     build() {
       const g = grid(), objs = [], keep = [];
       for (let x = 0; x < COLS; x++) g[13][x] = ",";
-      for (let y = 6; y <= 13; y++) g[y][12] = ","; for (let y = 13; y <= 17; y++) g[y][20] = ","; for (let y = 6; y <= 13; y++) g[y][32] = ",";
-      // the woods, north-west
-      for (const [x, y] of [[4, 3], [7, 2], [10, 4], [5, 6], [8, 7], [14, 3], [16, 6], [3, 9], [17, 2]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
-      objs.push({ t: "oak", x: 12, y: 4, name: "Oak tree" }); g[4][12] = "#";
+      for (let y = 13; y <= 17; y++) g[y][20] = ","; for (let y = 6; y <= 13; y++) g[y][32] = ",";
+      // the wheat field and the woods, north
+      for (let y = 4; y <= 8; y++) for (const x of [15, 16, 17, 18]) { objs.push({ t: "wheat", x, y, name: "Wheat" }); g[y][x] = "#"; }
+      for (const [x, y] of [[20, 3], [23, 2], [26, 4], [21, 6], [24, 7], [19, 9], [27, 8], [22, 9], [20, 11]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
+      objs.push({ t: "oak", x: 24, y: 4, name: "Oak tree" }); g[4][24] = "#";
       // the diggings: copper to the north-east, tin to the south-east
       for (const [x, y] of [[29, 3], [31, 4], [34, 3], [36, 5], [33, 6]]) { objs.push({ t: "rock", ore: "copper", x, y, name: "Copper rock" }); g[y][x] = "#"; }
       for (const [x, y] of [[31, 20], [33, 21], [36, 20], [34, 23], [38, 22]]) { objs.push({ t: "rock", ore: "tin", x, y, name: "Tin rock" }); g[y][x] = "#"; }
-      // the wheat field, west
-      for (let y = 16; y <= 20; y++) for (const x of [4, 5, 6, 7]) { objs.push({ t: "wheat", x, y, name: "Wheat" }); g[y][x] = "#"; }
-      objs.push({ t: "sign", x: 3, y: 11, name: "West: the Gloam. Better rock, better wood, better fish. Level 15 or so." }); g[11][3] = "#";
       // the pond, south: fished from its north bank
       for (let y = 19; y <= 22; y++) for (let x = 15; x <= 25; x++) g[y][x] = "~";
       for (const x of [17, 20, 23]) objs.push({ t: "spot", x, y: 19, name: "Fishing spot" });
       for (let x = 14; x <= 26; x++) keep.push([x, 18], [x, 17]);
-      objs.push({ t: "fire", x: 24, y: 10, name: "Campfire" }); g[10][24] = "#";
+      // THE CAMP, between the pond and the tin: the only place in the world to smelt and smith
+      for (let y = 14; y <= 18; y++) for (let x = 26; x <= 33; x++) { g[y][x] = ","; keep.push([x, y]); }
+      for (const [t, x, y, name] of [["furnace", 27, 15, "Furnace"], ["anvil", 29, 15, "Anvil"], ["range", 31, 15, "Cooking range"], ["crate", 33, 15, "Crate of ore"], ["barrel", 33, 16, "Quenching barrel"], ["crate", 26, 18, "Crate"]]) { objs.push({ t, x, y, name }); g[y][x] = "#"; }
+      objs.push({ t: "sign", x: 26, y: 15, name: "THE CAMP. Smelt, smith and cook here before you cash in: anything you MAKE is worth double. Brutus buys what you smith." }); g[15][26] = "#";
+      objs.push({ t: "sign", x: 13, y: 11, name: "West of here: the animals. Chickens, cows, tomatoes that went bad, hornworms and boars. Nothing here attacks first." }); g[11][13] = "#";
+      objs.push({ t: "sign", x: 3, y: 11, name: "West: the Gloam. Better rock, better wood, better fish, worse company. Level 15 or so." }); g[11][3] = "#";
+      for (const [x, y] of [[6, 13], [9, 13]]) keep.push([x, y]);
       for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
+      for (const [x, y] of [[8, 8], [6, 18]]) { objs.push({ t: "hay", x, y, name: "Hay bale" }); g[y][x] = "#"; }
       wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "forest" }, [...keepOf(this), ...keep], 12);
       return { g, objs, blobs: [] };
     },
-    mobs: [], npcs: [], bots: []
+    // the animals keep to the west end: chickens and bad tomatoes north of the path, cows, hornworms and boars south of it
+    mobs: [["chicken", 4, 4], ["chicken", 7, 6], ["chicken", 10, 4], ["chicken", 5, 9], ["chicken", 9, 10], ["rotten", 12, 7], ["rotten", 3, 7], ["rotten", 11, 10],
+      ["cow", 4, 16], ["cow", 8, 17], ["cow", 11, 16], ["cow", 6, 20], ["hornworm", 3, 21], ["hornworm", 10, 21], ["boar", 12, 19], ["boar", 9, 22], ["boar", 4, 22]],
+    npcs: [{ name: "Brutus the Smith", x: 30, y: 17, still: true, opens: "shop", hair: "#2a1a10", shirt: "#5a3a2a", pants: "#3a2a1a", lines: ["Tools, bronze, and I buy what you smith. Furnace, anvil, range: it's all right here. Anything you make is worth double.", "Bronze is where it starts. Nobody walks into the Wilderness in a tunic twice.", "Brought ore? I'll take it. Brought a goat? Take it back."] }],
+    bots: []
   },
   // EAST of the casino, the first stop on the combat line: things a beginner can win a fight with
   paddock: {
-    name: "The Paddock", exits: { w: "casino", e: "rough" },
+    name: "The Paddock", wikiHide: true, exits: { w: "casino", e: "rough" },
     build() {
       const g = grid(), objs = [], keep = [];
       for (let x = 0; x < COLS; x++) g[13][x] = ",";
@@ -739,7 +763,7 @@ Object.assign(SCENES, {
   },
   // the second (and last, for now) fight map: past the Paddock, where the money is better and so are the teeth
   rough: {
-    name: "The Rough", exits: { w: "paddock", e: "boneyard" },
+    name: "The Rough", wikiHide: true, exits: { w: "paddock", e: "boneyard" },
     build() {
       const g = grid(), objs = [], keep = [];
       for (let x = 0; x < COLS; x++) g[13][x] = ",";
@@ -821,14 +845,14 @@ Object.assign(SCENES, {
      line, SOUTH the town (crafting: the smithy and the market). The side archways are real exits at the grid's edge;
      the south door is the building's front door onto the Forum. */
   casino: {
-    name: "The Casino", interior: true, floor: "casino", wallH: 34, room: [1, 4, 42, 21], exits: { w: "workyard", e: "paddock" }, labels: { w: "SKILLING", e: "COMBAT", s: "TOWN" }, exitTo: { scene: "forum", x: 21, y: 5 }, entry: { x: 21, y: 20 },
+    name: "The Casino", interior: true, floor: "casino", wallH: 34, room: [1, 4, 42, 21], exits: { w: "workyard" }, labels: { w: "OUTSIDE", s: "TOWN" }, exitTo: { scene: "forum", x: 21, y: 5 }, entry: { x: 21, y: 20 },
     wall: [{ t: "banner", x: 3 }, { t: "lamp", x: 7 }, { t: "lamp", x: 11 }, { t: "painting1", x: 14.5, dy: 7, frame: true }, { t: "lamp", x: 17 }, { t: "lamp", x: 24 }, { t: "painting2", x: 28, dy: 5 }, { t: "lamp", x: 31 }, { t: "neon", x: 35.5, dy: 16 }, { t: "lamp", x: 39.3 }, { t: "banner", x: 41 }],
     doorSigns: [{ x: 10, text: "FIGHTING" }],
     smoke: [38.5, 5.2, 42.6, 10.2],   // where the page hangs a haze: the smoking section (tile coordinates)
     // (the rooms were named in gold on the carpet, def.zones, until the owner found the lettering too big: 2026-09-20. The page still knows how to draw them.)
     build() {
       const g = room(1, 4, 42, 21, 21), objs = [];
-      for (let y = SPAN.w[0]; y <= SPAN.w[1]; y++) { g[y][0] = "e"; g[y][COLS - 1] = "e"; }
+      for (let y = SPAN.w[0]; y <= SPAN.w[1]; y++) g[y][0] = "e";   // one arch, west (the east one was the combat line's until 2026-09-20)
       objs.push({ t: "walldoor", x: 21, y: 3, name: "Floor 2: the Roulette Room", enter: "roulette" });
       objs.push({ t: "roulsign", x: 21, y: 2, name: "Roulette", dy: -3 });
       objs.push({ t: "walldoor", x: 10, y: 3, name: "The Fight Pit", enter: "fightpit" });   // (its sign is lettered by the page: def.doorSigns)
@@ -919,8 +943,8 @@ Object.assign(SCENES, {
     mobs: [], bots: [{ name: "due4aWin", level: 14 }, { name: "SlotGoblin", level: 37 }, { name: "AllInAlan", level: 61 }],
     npcs: [{ name: "Dex the Dealer", art: "dex", x: 35, y: 4, still: true, reach: 2, hair: "#1a1a1a", shirt: "#9a2a2a", pants: "#1a1a1a", lines: [
       "Welcome in. Every game has its own room: slots are the whole north-west floor, wheels and coin tables below them, cards next to me, dice and the instant machines in the south-east. The house always wins, a little.",
-      "Broke? West arch to dig and chop, east arch to hit things. Everything out there has its price written on it. The Cashier by the arch turns it into money.",
-      "Here's a tip for free: take what you find to the workshop out front first. Anything you make sells for double.",
+      "Broke? Out the arch. Dig, chop, fish or hit things: it's all in the Yard, and everything out there has its price written on it. A Cashier in here turns it into money.",
+      "Here's a tip for free: there's a camp in the Yard, by the rocks. Smelt it, smith it or cook it before you bring it in. Anything you make sells for double.",
       "Broke? Happens to the best of us. The board by the door has jobs that pay. Fresh ones every morning.",
       "Biggest win I've seen? Someone hit three sevens on that end machine. Bought everyone a drink. You can too: a round's $300.",
       "Drinks work. A lager and your wins pay a little more, a Safety Net and your losses hurt a little less. One at a time.",
@@ -940,11 +964,11 @@ Object.assign(SCENES, {
         "You walking away? On THIS streak? Nah. Nah nah nah. One more."] },
       // the regulars (2026-09-19): nobody here is a good influence
       { name: "Parlay Pete", art: "pete", x: 40, y: 8, hair: "#3a2a1a", shirt: "#6a6a72", pants: "#3a3a44", lines: [
-        "Twelve-leg parlay. Eleven hit. ELEVEN. The twelfth was a chicken fight in the Paddock. The chicken LOST.",
+        "Twelve-leg parlay. Eleven hit. ELEVEN. The twelfth was a chicken fight in the Yard. The chicken LOST.",
         "I don't chase losses. I follow them at a respectful distance until they turn around.",
         "The cash machine's been out of order for a year. Best thing that ever happened to me. Don't tell it I said that.",
         "My system can't lose. It just hasn't won YET. Those are different things.",
-        "I told my wife I was at the Workyard. Technically I walked through it.",
+        "I told my wife I was at the Yard. Technically I walked through it.",
         "You want a lock? Red. Always red. Unless it's black. It's one of those two, I'm almost sure."] },
       { name: "Nana Jackpot", art: "nana", x: 2, y: 8, still: true, hair: "#e8e8e8", shirt: "#e8a0b8", pants: "#8a6a8a", lines: [
         "This is MY machine, dear. I've been warming it up since Tuesday. Sit somewhere else.",
@@ -952,7 +976,7 @@ Object.assign(SCENES, {
         "My grandson thinks I'm at church. In a way I am.",
         "Two cherries pays, dear. People forget that. Two cherries has paid for this whole visor.",
         "I brought my own bucket. You have to show the machine you're serious.",
-        "Lucky clover from the Workyard, that's the trick. I eat them. You're supposed to click them? Hm."] },
+        "Lucky clover from the Yard, that's the trick. I eat them. You're supposed to click them? Hm."] },
       { name: "Rent Money Randy", art: "randy", x: 18, y: 21, hair: "#5a4a3a", shirt: "#8a5a32", pants: "#8a5a32", lines: [
         "It's a barrel. Yes. No, I don't want to talk about it. Dice. It was the dice.",
         "I was up four thousand. Then I was up two thousand. Then I was in a barrel.",
@@ -966,7 +990,7 @@ Object.assign(SCENES, {
         "Poker's opening soon, they keep telling me. I've already reserved every seat.",
         "You skill for luck? Adorable. I have a man who clicks my clovers for me.",
         "Lost a fortune on roulette upstairs last night. Won it back. Lost it again. Lovely evening.",
-        "Kid, the secret is simple: start rich. Failing that, the Paddock drops horseshoes."] }]
+        "Kid, the secret is simple: start rich. Failing that, go and hit something in the Yard: it makes the tables take you seriously."] }]
   },
   // through the curtains at the back of the Casino: one big table everyone plays at once
   roulette: {
@@ -1437,7 +1461,7 @@ export const buffsOf = (c) => {
 /* ------------------------------------------------------------ what's open (2026-09-19 reset)
    One casino (with its Roulette Room), one town, one skilling area, one combat area. Everything else still exists in
    the code but can't be reached yet; a saved character standing somewhere closed wakes up in the casino. */
-export const OPEN = new Set(["casino", "roulette", "fightpit", "highroller", "forum", "bathhouse", "workyard", "gloam", "cloud", "paddock", "rough", "boneyard"]);
+export const OPEN = new Set(["casino", "roulette", "fightpit", "highroller", "forum", "bathhouse", "workyard", "gloam", "cloud"]);   // (paddock, rough, boneyard closed 2026-09-20: their monsters live in the three scenes of the one line out)
 export const OPEN_DAILY = new Set(["logs", "tin", "copper", "sardine", "wheat", "cows", "chickens", "rotten", "boar", "highwayman", "emerald", "lantern", "willow", "diamond", "dragonstone", "moths", "ghouls", "bars", "cooked", "dinners", "steaks", "swords"]);
 for (const k of Object.keys(SCENES)) if (!OPEN.has(k)) SCENES[k].wikiHide = true;   // closed areas stay out of the wiki
 
@@ -1449,7 +1473,7 @@ export const TOUR = [
   { id: "meet",  text: "Say hello to Dex, behind the bar" },
   { id: "play",  text: "Play any game on the floor with your free chip" },
   { id: "board", text: "Read the task board, left of the bar" },
-  { id: "job",   text: "Do a job: chop 5 logs (west arch) or beat 3 chickens (east arch)" },
+  { id: "job",   text: "Do a job: out the arch to the Yard, and chop 5 logs or beat 3 chickens" },
   { id: "paid",  text: "Go back to Dex and get paid" }
 ];
 export const TOUR_CHIP = 10, TOUR_PAY = 60, TOUR_GIFT = "clover", TOUR_JOB = { logs: 5, chickens: 3 };
@@ -1459,10 +1483,9 @@ export const HOWTO = `GambaScape is a casino. You'll spend most of your time rig
 PLAY: every kind of game has its own roped-off room, named on the carpet at its way in. SLOTS fill the north-west. WHEELS and COIN FLIP are below them. The CARD ROOM is by the bar. The DICE PIT and the INSTANT WINS machines (Plinko, Mines, Scratch-Off) are in the south-east. Roulette is through the door in the back wall. Bets come out of the Cash in your bag.
 
 BROKE? Go and get more. It's quick.
-  WEST arch: the Workyard, then the Gloam, then Cloudreach. Chop, mine, fish. Every rock and tree has its price written over it, and it's worth more the further out you go.
-  EAST arch: the Paddock, then the Rough, then the Boneyard. Monsters drop things worth money. Bigger monsters, bigger money.
-  FRONT door, the workshop: anything you MAKE from what you found sells for DOUBLE. Ore into bars, bars into swords, fish into dinner. Brutus, at the Forge, buys what you smith.
-Then bring it to the HOUSE RUBY in the middle of the floor, or to a CASHIER by either arch. One click and it's Cash.
+  OUT THE ARCH: the Yard, then the Gloam, then Cloudreach. Every one of them has rocks, trees, fish AND monsters, and everything has its price written over it. The further out you walk, the more it's all worth.
+  THE CAMP, in the Yard by the rocks: a furnace, an anvil, a range, and Brutus. Anything you MAKE from what you found sells for DOUBLE. Ore into bars, bars into swords, fish into dinner. Brutus buys what you smith. (Out deeper there's a campfire to cook on; smelting and smithing are only at the camp, and you pass it on every walk home.)
+Then bring it to the HOUSE RUBY in the middle of the floor, or to a CASHIER's window. One click and it's Cash.
 
 THIRSTY? HUNGRY? Every bet takes a little out of you. Under 20% the tables turn you away: the water cooler and the buffet are on the card room's back wall, next to the bar, and they're free.
 
@@ -1764,7 +1787,7 @@ export const EXAMINE = {
   cypress: ["A tall, thin cypress. The road is lined with them, all leaning very slightly east."],
   milestone: ["'ROMA · MILES: ' and then nothing. Someone scratched the number off. Twice.", "'YOU ARE HERE.' Helpful."],
   toll: ["A toll post. The price board has been painted over with 'NO'."],
-  roadblock: ["Road closed. There's more world out there, and it opens soon. For now: the casino, this town, the Workyard and the Paddock."],
+  roadblock: ["Road closed. There's more world out there, and it opens soon. For now: the casino, this town, and the three scenes out the casino's arch."],
   barricade: ["Timber and rope. Past it, the road just stops: washed out. The Bandit Camp is somewhere beyond."],
   chariot: ["A chariot with one wheel. Whoever left it left in a hurry, or a very bad mood."],
   rope: ["A rope back up to the farm. Somebody has tied a very bad knot, but it holds."],

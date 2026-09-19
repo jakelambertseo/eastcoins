@@ -17,7 +17,7 @@
 import * as G from "../v3/assets/js/eastscape-shared.js";
 
 const HOURS = Math.max(20, Number(process.argv[2]) || 200), HOUR = 3600;
-const HOP = 0.9, WALK = 3, TRIP = 38, RUN_ORES = 60;
+const HOP = 0.9, WALK = 3, TRIP = 6, RUN_ORES = 60;   // TRIP: rocks to the camp and back is a few steps since 2026-09-20 (it was 38 s each way to the Forum)
 const rnd = Math.random, rint = (a, b) => a + Math.floor(rnd() * (b - a + 1));
 const stat = (xs) => { const s = [...xs].sort((a, b) => a - b), q = (p) => s[Math.min(s.length - 1, Math.floor(p * s.length))]; return { avg: Math.round(s.reduce((a, b) => a + b, 0) / s.length), p10: Math.round(q(0.1)), p90: Math.round(q(0.9)), best: Math.round(s[s.length - 1]) }; };
 
@@ -54,10 +54,10 @@ const add = (who, job, fn) => { const cash = [], extra = []; for (let i = 0; i <
 
 add("new (lvl 1)", "mine copper/tin", () => mine(1, "copper")); add("new (lvl 1)", "chop trees", () => chop(1, "logs")); add("new (lvl 1)", "fish sardines", () => fish(1)); add("new (lvl 1)", "fight chickens + cows", () => fight(1, [["chicken", 6], ["cow", 5]]));
 add("new (lvl 10)", "mine + smelt bronze bars", () => craft(10, "copper", { tier: "bronze" })); add("new (lvl 10)", "mine + smelt + smith swords", () => craft(10, "copper", { tier: "bronze", k: "bronze_sword", bars: 2 }));
-add("regular (lvl 15)", "mine emerald", () => mine(15, "emerald_ore")); add("regular (lvl 15)", "chop gloomwillow", () => chop(15, "willowlogs")); add("regular (lvl 15)", "fish (trout mix)", () => fish(15)); add("regular (lvl 12)", "fight the Rough", () => fight(12, [["boar", 4], ["highwayman", 5], ["hornworm", 3]]));
-add("grinder (lvl 25)", "mine diamond", () => mine(25, "diamond_ore")); add("grinder (lvl 28)", "fight the Boneyard", () => fight(28, [["taxwraith", 3], ["moth", 4], ["gnasher", 3]]));
+add("regular (lvl 15)", "mine emerald", () => mine(15, "emerald_ore")); add("regular (lvl 15)", "chop gloomwillow", () => chop(15, "willowlogs")); add("regular (lvl 15)", "fish (trout mix)", () => fish(15)); add("regular (lvl 12)", "fight the Yard (boars, hornworms, cows)", () => fight(12, [["boar", 3], ["hornworm", 2], ["cow", 4]]));
+add("grinder (lvl 25)", "mine diamond", () => mine(25, "diamond_ore")); add("grinder (lvl 28)", "fight the Gloam", () => fight(28, [["taxwraith", 3], ["moth", 4], ["gnasher", 3], ["highwayman", 4]]));
 add("grinder (lvl 30)", "mine dragonstone", () => mine(30, "dragonstone_ore")); add("grinder (lvl 30)", "fish sky eels", () => fish(30, "skyeel")); add("grinder (lvl 30)", "mine + smelt diamond bars", () => craft(30, "diamond_ore", { tier: "diamond" }));
-add("no-lifer (lvl 40)", "mine onyx", () => mine(40, "onyx_ore")); add("no-lifer (lvl 38)", "fight the Boneyard, all of it", () => fight(38, [["understudy", 1], ["chandelier", 1], ["ghoul", 3], ["taxwraith", 3]]));
+add("no-lifer (lvl 40)", "mine onyx", () => mine(40, "onyx_ore")); add("no-lifer (lvl 42)", "fight Cloudreach", () => fight(42, [["understudy", 1], ["chandelier", 1], ["ghoul", 3], ["ram", 3]]));
 console.log(`GambaScape grind simulation: ${HOURS} simulated hours per row, rules v${G.VERSION}. $${G.DEX.rate} = 1 ZC, ${G.DEX.capHour} ZC an hour.\n`);
 console.table(rows);
 
