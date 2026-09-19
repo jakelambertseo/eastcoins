@@ -485,7 +485,7 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=29";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=30";
 import * as WK from "/v3/assets/js/eastscape-wiki.js?v=10";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -760,11 +760,24 @@ const loadArt = (k) => new Promise((res) => {
     for (let y = 0; y < im.height; y++) for (let x = 0; x < im.width; x++) if (d[(y * im.width + x) * 4 + 3] > 40) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
     // its silhouette, for the cast shadow
     const sh = document.createElement("canvas"); sh.width = im.width; sh.height = im.height; const so = sh.getContext("2d"); so.drawImage(im, 0, 0); so.globalCompositeOperation = "source-in"; so.fillStyle = "#1a1020"; so.fillRect(0, 0, im.width, im.height);
-    IMG[k] = { im, sh, cx: (x0 + x1 + 1) / 2, foot: y1 + 1, top: y0, w: x1 - x0 + 1 }; res();
+    IMG[k] = { im, sh, cx: (x0 + x1 + 1) / 2, foot: y1 + 1, top: y0, w: x1 - x0 + 1 };
+    if (/^tree\d?$/.test(k)) treeTints(k);
+    res();
   };
   im.onerror = () => res(); im.src = `${ART}${k}.png?v=${ART_VER[k] || ART_V}`;
 });
 const artReady = Promise.all(ART_FILES.map(loadArt));
+// every tree picture also comes in a darker, a lighter and a yellower green, baked once at load (no per-frame filter),
+// so a treeline mixes 4 shapes x 4 shades instead of repeating one tree
+const TREE_TINTS = { d: "brightness(0.84) hue-rotate(-6deg)", l: "brightness(1.1) saturate(1.08)", y: "hue-rotate(14deg) brightness(1.03) saturate(0.95)" };
+function treeTints(k) {
+  const a = IMG[k];
+  for (const [t, f] of Object.entries(TREE_TINTS)) {
+    const c = document.createElement("canvas"); c.width = a.im.width; c.height = a.im.height;
+    const o = c.getContext("2d"); o.imageSmoothingEnabled = false; o.filter = f; o.drawImage(a.im, 0, 0);
+    IMG[`${k}~${t}`] = { ...a, im: c };
+  }
+}
 // pictures only some players need (the tier outfits): fetched the first time one is on screen, drawn from then on
 const artAsked = new Set();
 const wantArt = (k) => { if (IMG[k]) return k; if (!artAsked.has(k)) { artAsked.add(k); loadArt(k); } return null; };
@@ -811,7 +824,11 @@ const WALL_CX = { banner: 5, lamp: 4, vault: 0, herbs: 1, shelf: 1, window: 0 };
 const VARY = new Set(["tree", "oak", "olive", "cypress", "yew", "rock", "vein", "deadtree", "snag", "gravestone", "bush", "boulder", "crate", "barrel", "plant", "palm", "vine", "hive", "skeleton"]);
 // the common tree comes in a few shapes; which one stands where is fixed by its position
 const TREE_KINDS = ["tree", "tree2", "tree3", "tree4"];
-const treeArt = (ob) => { const have = TREE_KINDS.filter((k) => IMG[k]); return have[Math.floor(hashRand(ob.x, ob.y, 79) * have.length)] || "tree"; };
+const treeArt = (ob) => {
+  const have = TREE_KINDS.filter((k) => IMG[k]), k = have[Math.floor(hashRand(ob.x, ob.y, 79) * have.length)] || "tree";
+  const t = ["", "d", "l", "y"][Math.floor(hashRand(ob.x, ob.y, 83) * 4)];
+  return t && IMG[`${k}~${t}`] ? `${k}~${t}` : k;
+};
 const flipOf = (ob) => VARY.has(ob.t) && hashRand(ob.x, ob.y, 77) < 0.5;
 // a few pictures came out small for their spot: drawn a bit bigger
 const OBJ_SCALE = {}, HOUSE_SCALE = {};   // integer sizes only: a fractional scale makes pixel art uneven
