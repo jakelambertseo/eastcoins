@@ -628,10 +628,10 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=61";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=62";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=35").then((m) => { WK = m; }));
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=36").then((m) => { WK = m; }));
 import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=7";
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=2";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
@@ -2529,7 +2529,7 @@ const WIKI = (() => {
   // one line per place a thing comes from (the same tree type appears many times in an area)
   for (const k in sources) { const seen = new Set(); sources[k] = sources[k].filter((s) => { const id = `${s.scene}|${s.obj}|${s.lvl}`; if (seen.has(id)) return false; seen.add(id); return true; }); }
   const drops = {};
-  for (const [t, m] of Object.entries(MOBS)) for (const [k, n, ch] of m.drops) (drops[k] ||= []).push({ mob: t, n, ch });
+  for (const [t, m] of Object.entries(MOBS)) { for (const [k, n, ch] of m.drops) (drops[k] ||= []).push({ mob: t, n, ch }); for (const [k, ch] of G.raresOf(t)) (drops[k] ||= []).push({ mob: t, n: 1, ch }); }
   const inQuests = {};
   for (const [qk, q] of Object.entries(QUESTS)) for (const k of q.goal.items || []) (inQuests[k] ||= []).push(qk);
   return { areas, sources, npcs, drops, inQuests };
@@ -2591,7 +2591,8 @@ function wikiGo(route, setNav = true) {
     html = `<h2><i>👹</i>${esc(m.name)}</h2><p class="lede">Level ${m.lvl} · ${G.MOB_SIZES[m.size] || "Medium"}${m.aggro ? " · attacks on sight" : ""}.</p>
       <table class="tbl"><tr><th>Hitpoints</th><th>Attack</th><th>Defence</th><th>Max hit</th><th>Attacks every</th></tr><tr><td>${m.hp}</td><td>${m.att}</td><td>${m.def}</td><td>${m.max}</td><td>${(m.speed / 1000).toFixed(1)}s</td></tr></table>
       <h3>Found in</h3><p>${where.map((a) => `${areaLink(a.key)} (${a.mobs[id]})`).join(", ") || "Nowhere yet."}</p>
-      <h3>Drops</h3><table class="tbl"><tr><th>Item</th><th>How many</th><th>Chance</th></tr>${m.drops.map(([k, n, ch]) => `<tr><td>${wl(`items/${k}`, `${ico(k)} ${esc(ITEMS[k].name)}`)}</td><td>${qn(n)}</td><td>${ch == null ? "Always" : pct(ch)}</td></tr>`).join("")}</table>`;
+      <h3>Drops</h3><table class="tbl"><tr><th>Item</th><th>How many</th><th>Chance</th></tr>${m.drops.map(([k, n, ch]) => `<tr><td>${wl(`items/${k}`, `${ico(k)} ${esc(ITEMS[k].name)}`)}</td><td>${qn(n)}</td><td>${ch == null ? "Always" : pct(ch)}</td></tr>`).join("")}</table>
+      <h3>The rare</h3><p>One roll a kill, and at most one of these:</p><table class="tbl"><tr><th>Item</th><th>Chance a kill</th></tr>${G.raresOf(id).map(([k, ch]) => `<tr><td>${wl(`items/${k}`, `${ico(k)} ${esc(ITEMS[k].name)}`)}</td><td>${ch >= 0.01 ? pct(ch) : `1 in ${Math.round(1 / ch).toLocaleString()}`}</td></tr>`).join("")}</table>`;
   }
   else if (kind === "skills" && SKILLS[id]) {
     const s = SKILLS[id], rows = [];
@@ -2658,7 +2659,7 @@ function showInfo(t, cx, cy) {
     wiki = `monsters/${m.t}`;
     html = `<h5>👹 ${esc(d.name)}</h5><div class="sub">Level ${d.lvl} monster</div>
       <dl><dt>Hitpoints</dt><dd>${m.hp}/${d.hp}</dd><dt>Max hit</dt><dd>${d.max}</dd><dt>Attack / defence</dt><dd>${d.att} / ${d.def}</dd><dt>Attacks every</dt><dd>${(d.speed / 1000).toFixed(1)}s</dd><dt>Respawns after</dt><dd>${G.fmtWait(G.respawnMs(Z.def, m.t))}${Z.def.pvp ? "" : ", sooner when busy"}</dd></dl>
-      <b>Drops</b><ul>${d.drops.map(([k, n, ch]) => `<li>${ico(k)} ${esc(ITEMS[k].name)}${Array.isArray(n) ? ` ×${n[0]}–${n[1]}` : n > 1 ? ` ×${n}` : ""} · ${ch == null ? "always" : pct(ch)}</li>`).join("")}</ul>`;
+      <b>Drops</b><ul>${d.drops.map(([k, n, ch]) => `<li>${ico(k)} ${esc(ITEMS[k].name)}${Array.isArray(n) ? ` ×${n[0]}–${n[1]}` : n > 1 ? ` ×${n}` : ""} · ${ch == null ? "always" : pct(ch)}</li>`).join("")}${(d.rare || []).map(([k, ch]) => `<li>${ico(k)} ${esc(ITEMS[k].name)} · rare, ${pct(ch)}</li>`).join("")}<li>…or a casino find: chips, free play, a mystery box</li></ul>`;
   } else if (t.ob) {
     const rows = resourceInfo(t.ob), ex = G.EXAMINE[KIND_OF[t.ob.t]] || null;
     if (!rows.length && !ex) return;

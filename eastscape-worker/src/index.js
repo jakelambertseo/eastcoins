@@ -758,12 +758,16 @@ export class World {
      in eight makes you a High Roller. The room hears about a black chip, everyone hears about a gold one. */
   killFinds(pl, d) {
     const C = pl.C, mob = d?.mob; if (!G.BOUNTY[mob]) return;
-    for (const f of G.FINDS) {
-      const [k] = f; if (Math.random() >= G.findChance(mob, f) || G.roomFor(C.inv, k) < 1) continue;
-      G.addInv(C.inv, k, 1); this.touch(pl);
-      const worth = G.valueOf(k), name = G.ITEMS[k].name.toLowerCase();
-      this.say(pl, worth ? `It was carrying a ${name}! That's ${G.fmtCash(worth)} at the Ruby.` : `It dropped a ${name}! Click it in your bag to see what it does.`, "loot");
+    const k = G.rollRare(mob, Math.random());   // ONE roll: the monster's own rares, then the casino finds (G.raresOf)
+    if (k) {
+      const it = G.ITEMS[k], worth = it.slot ? 0 : G.valueOf(k), name = it.name.toLowerCase();
+      if (G.roomFor(C.inv, k) < 1) this.say(pl, `It dropped a ${name}, and your bag was too full to take it. Ouch.`, "bad");
+      else {
+      G.addInv(C.inv, k, 1); this.touch(pl); this.emit(pl, "loot", { k, n: 1 });
+      this.say(pl, it.slot ? `RARE DROP: ${it.name}! ${it.fx ? "Wear it and the tables treat you differently." : "You can't make that one: it only drops."}` : worth ? `It was carrying a ${name}! That's ${G.fmtCash(worth)} at the Ruby.` : `RARE DROP: a ${name}! Click it in your bag to see what it does.`, "loot");
+      if (it.slot) for (const p of this.pls.values()) if (p !== pl && p.C.scene === C.scene) p.out.push({ type: "casinonote", text: `✨ ${pl.name} got a rare drop: ${it.name}, from a ${G.MOBS[mob].name.toLowerCase()}.` });
       if (worth >= 1000) for (const p of this.pls.values()) if (worth >= 5000 || p.C.scene === C.scene) p.out.push({ type: "casinonote", text: `💰 ${pl.name} found a ${name} (${G.fmtCash(worth)}) on a ${G.MOBS[mob].name.toLowerCase()}!` });
+      }
     }
     if (Math.random() < G.ROLLER.kill && (C.roller | 0) < G.ROLLER.max) {
       C.roller = Math.min(G.ROLLER.max, (C.roller | 0) + G.ROLLER.bets); this.touch(pl);
