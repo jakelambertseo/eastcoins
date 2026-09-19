@@ -233,7 +233,10 @@ button,input,select{font:inherit}
 .wiki .card i{font-style:normal;font-size:22px}
 .wiki .up{border-left:4px solid #d9738f;padding:4px 0 4px 12px;margin:0 0 14px}
 .wiki .up small{color:#6a5a40;font-weight:800}
-@media (max-width:620px){.wiki{grid-template-columns:1fr}.wiki nav{display:none}}
+/* phones: the contents become a strip across the top (search on its own row, then the sections scroll sideways) */
+@media (max-width:620px){.wiki{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
+.wiki nav{display:flex;flex-wrap:nowrap;gap:4px;overflow-x:auto;overflow-y:hidden;border-right:0;border-bottom:2px solid rgba(0,0,0,.1);padding:6px;-webkit-overflow-scrolling:touch}
+.wiki nav .search{flex:0 0 150px;margin:0}.wiki nav button{width:auto;flex:0 0 auto;white-space:nowrap;padding:7px 10px}.wiki nav hr{display:none}}
 
 /* the door for visitors who aren't signed in, and the "reconnecting" veil */
 .cover{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,5,4,.78);z-index:9;padding:16px}
@@ -527,6 +530,7 @@ async function connect() {
   ws.onclose = (e) => {
     ws = null;
     if (e.code === 4000) { kicked = true; net("bad", "Opened in another tab"); veil("This character is open in another tab. <br><br><button class='btn' id='takeBack'>Play here instead</button>"); $("takeBack")?.addEventListener("click", () => { kicked = false; connect(); }); return; }
+    if (e.code === 4003) { kicked = true; net("bad", "Removed"); veil("You've been removed from EastScape."); return; }
     if (e.code === 4001) restartHold ||= 25000;   // a planned restart, even if the message before it was missed
     later();
   };

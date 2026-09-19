@@ -89,10 +89,20 @@ async function handle(context) {
     byLogin: admin.login
   });
 
+  // a ban also ends a live EastScape session; the game holds its own socket, so it has to be told
+  if (banned) context.waitUntil?.(kickFromEastscape(context.env, user.twitch_id));
+
   return json({
     ok: true,
     login,
     displayName: String(user.display_name || user.twitch_login),
     ban: publicBan(row)
   });
+}
+
+// Best effort: a game that cannot be reached only means the ban waits for their next login (tickets already refuse them).
+async function kickFromEastscape(env, id) {
+  const base = String(env.ESCAPE_WORKER_URL || "").trim().replace(/\/$/, ""), key = String(env.ESCAPE_KEY || "").trim();
+  if (!base || !key) return;
+  try { await fetch(`${base}/kick?id=${encodeURIComponent(String(id))}`, { method: "POST", headers: { "X-Escape-Key": key } }); } catch (e) { /* game unreachable */ }
 }

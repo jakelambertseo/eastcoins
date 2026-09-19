@@ -81,6 +81,14 @@ export default {
       if (!keyOk(request, env)) return new Response("Forbidden", { status: 403 });
       return env.WORLD.get(env.WORLD.idFromName("world")).fetch("https://world/export", { method: "POST" });
     }
+    // Kick one player off now (the site's ban endpoint calls this, so a ban lands mid-session too).
+    //   curl -X POST -H "X-Escape-Key: $KEY" "https://<worker>/kick?id=<twitch id>"
+    if (url.pathname === "/kick") {
+      if (request.method !== "POST") return new Response("POST only", { status: 405 });
+      if (!keyOk(request, env)) return new Response("Forbidden", { status: 403 });
+      const id = String(url.searchParams.get("id") || ""); if (!id) return new Response("No id", { status: 400 });
+      return env.WORLD.get(env.WORLD.idFromName("world")).fetch(`https://world/kick?id=${encodeURIComponent(id)}`, { method: "POST" });
+    }
     // Restore. Dry by default; see the DO handler for why it refuses while anyone is on.
     if (url.pathname === "/restore") {
       if (request.method !== "POST") return new Response("POST only", { status: 405 });
@@ -143,6 +151,12 @@ export class World {
       return Response.json({ ok: true, takenAt: new Date().toISOString(), rulesVersion: G.VERSION, saveVersion: G.SAVE_V, online: this.pls.size, count: Object.keys(data).length, data });
     }
     if (path === "/restore") return this.restore(request);
+    if (path === "/kick") {
+      const pl = this.pls.get(new URL(request.url).searchParams.get("id")); if (!pl) return Response.json({ ok: true, online: false });
+      this.send(pl, { type: "kicked", message: "You've been removed from EastScape." });
+      await this.leave(pl, true); try { pl.ws.close(4003, "removed"); } catch (e) { /* already gone */ }
+      return Response.json({ ok: true, online: true });
+    }
     if (path === "/restart") {
       const body = await request.json().catch(() => ({}));
       if (body.cancel) { const was = !!this.restartAt; this.restartAt = 0; this.warned = null; if (was) this.tellAll("The restart is called off. Carry on.", "good"); return Response.json({ ok: true, cancelled: was }); }
