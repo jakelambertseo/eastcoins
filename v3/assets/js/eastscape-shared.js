@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 32;
+export const VERSION = 33;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -148,7 +148,7 @@ for (const t of TIERS) {
     ITEMS[`${t.key}_${slot}`] = {
       name: `${t.name} ${a.name}`, short: a.short, icon: a.icon, slot,
       def: Math.round(t.set * a.share), tier: t.key,
-      req: { skill: "defence", lvl: t.gate }, ex: t.ex
+      req: { skill: "melee", lvl: t.gate }, ex: t.ex
     };
   }
   for (const [kind, w] of Object.entries(WEAPONS)) {
@@ -156,8 +156,8 @@ for (const t of TIERS) {
       name: `${t.name} ${w.name}`, short: w.short, icon: w.icon, slot: "weapon",
       acc: Math.round(t.wAcc * w.acc), str: Math.round(t.wStr * w.str), speed: w.speed, tier: t.key,
       req: w.needsStr
-        ? [{ skill: "attack", lvl: t.gate }, { skill: "strength", lvl: t.gate }]
-        : { skill: "attack", lvl: t.gate },
+        ? { skill: "melee", lvl: t.gate }
+        : { skill: "melee", lvl: t.gate },
       ex: w.ex
     };
   }
@@ -210,16 +210,18 @@ export function compareText(c, k) {
   return bits.join(", ");
 }
 export const SKILLS = {
-  attack: { name: "Attack", icon: "⚔️" }, strength: { name: "Strength", icon: "💪" }, defence: { name: "Defence", icon: "🛡️" },
+  // ONE combat skill (2026-09-19): it is your accuracy, your max hit and your defence. The key stays "melee" (what it
+  // was before the three-way split) so the hiscores' separate "combat level" board keeps its own name.
+  melee: { name: "Combat", icon: "⚔️" },
   hp: { name: "Hitpoints", icon: "❤️" }, fishing: { name: "Fishing", icon: "🎣" }, cooking: { name: "Cooking", icon: "🍳" },
   farming: { name: "Harvesting", icon: "🌾" }, mining: { name: "Mining", icon: "⛏️" }, woodcutting: { name: "Woodcutting", icon: "🪓" },
   smithing: { name: "Smithing", icon: "🔨" }
 };
-export const COMBAT_SKILLS = ["attack", "strength", "defence"];
+export const COMBAT_SKILLS = ["melee"];
 // how the skills panel groups them. Hitpoints sits with combat because that is
 // the only place it is earned, even though it is not something you choose.
 export const SKILL_GROUPS = [
-  { name: "Combat", keys: ["attack", "strength", "defence", "hp"] },
+  { name: "Combat", keys: ["melee", "hp"] },
   { name: "Skilling", keys: ["fishing", "cooking", "farming", "mining", "woodcutting", "smithing"] }
 ];
 
@@ -243,10 +245,10 @@ export const COMBAT_XP = 4;        // per point of damage, split by the stance
 export const HP_XP = 4 / 3;        // per point of damage, in every stance
 export const DEFAULT_STANCE = "controlled";
 export const STANCES = {
-  accurate:   { name: "Accurate",   icon: "🎯", share: { attack: 1 },                       blurb: "Every hit teaches you to land the next one. Attack xp." },
-  aggressive: { name: "Aggressive", icon: "💥", share: { strength: 1 },                     blurb: "Swing like you mean it. Strength xp, and a bigger maximum hit as it climbs." },
-  defensive:  { name: "Defensive",  icon: "🛡️", share: { defence: 1 },                      blurb: "Watch what they do before you do it. Defence xp, and you get hit less." },
-  controlled: { name: "Controlled", icon: "⚖️", share: { attack: 1 / 3, strength: 1 / 3, defence: 1 / 3 }, blurb: "A little of each. Slower to a milestone, further along everywhere." }
+  accurate:   { name: "Accurate",   icon: "🎯", share: { melee: 1 },                       blurb: "Every hit teaches you to land the next one. Attack xp." },
+  aggressive: { name: "Aggressive", icon: "💥", share: { melee: 1 },                     blurb: "Swing like you mean it. Strength xp, and a bigger maximum hit as it climbs." },
+  defensive:  { name: "Defensive",  icon: "🛡️", share: { melee: 1 },                      blurb: "Watch what they do before you do it. Defence xp, and you get hit less." },
+  controlled: { name: "Controlled", icon: "⚖️", share: { melee: 1 }, blurb: "A little of each. Slower to a milestone, further along everywhere." }
 };
 export const stanceOf = () => DEFAULT_STANCE;   // stances were removed (2026-09-19): every hit trains all three evenly
 /** What one hit is worth, as [skill, xp] pairs. Always totals COMBAT_XP + HP_XP per damage. */
@@ -976,7 +978,7 @@ for (const [mob, tiers] of Object.entries(TIER_DROPS)) {
 
 /* ------------------------------------------------------------ words */
 // what it takes to climb down into the Wilderness (PvP). Change it here.
-export const WILD_REQ = { skill: "defence", lvl: 10 };   // the Wilderness asks you to be able to take a hit
+export const WILD_REQ = { skill: "melee", lvl: 10 };   // the Wilderness asks you to be able to take a hit
 
 /* ------------------------------------------------------------ making things
 
@@ -1117,16 +1119,16 @@ export const DAILY = [
   { id: "chickens", what: "kill", k: "chicken", n: 10, cash: 80, req: null },
   { id: "rotten", what: "kill", k: "rotten", n: 8, cash: 120, req: null },
   { id: "trout", what: "gather", k: "trout", n: 20, cash: 220, req: { skill: "fishing", lvl: 15 } },
-  { id: "boar", what: "kill", k: "boar", n: 6, cash: 200, req: { skill: "attack", lvl: 8 } },
-  { id: "highwayman", what: "kill", k: "highwayman", n: 5, cash: 260, req: { skill: "attack", lvl: 12 } },
+  { id: "boar", what: "kill", k: "boar", n: 6, cash: 200, req: { skill: "melee", lvl: 8 } },
+  { id: "highwayman", what: "kill", k: "highwayman", n: 5, cash: 260, req: { skill: "melee", lvl: 12 } },
   { id: "ashlogs", what: "gather", k: "ashlogs", n: 20, cash: 350, req: { skill: "woodcutting", lvl: 20 } },
   { id: "emerald", what: "gather", k: "emerald_ore", n: 15, cash: 400, req: { skill: "mining", lvl: 20 } },
-  { id: "moths", what: "kill", k: "moth", n: 8, cash: 380, req: { skill: "attack", lvl: 20 } },
+  { id: "moths", what: "kill", k: "moth", n: 8, cash: 380, req: { skill: "melee", lvl: 20 } },
   { id: "lantern", what: "gather", k: "lanternfish", n: 12, cash: 420, req: { skill: "fishing", lvl: 30 } },
   { id: "diamond", what: "gather", k: "diamond_ore", n: 12, cash: 520, req: { skill: "mining", lvl: 30 } },
-  { id: "ghouls", what: "kill", k: "ghoul", n: 6, cash: 520, req: { skill: "attack", lvl: 28 } },
+  { id: "ghouls", what: "kill", k: "ghoul", n: 6, cash: 520, req: { skill: "melee", lvl: 28 } },
   { id: "willow", what: "gather", k: "willowlogs", n: 20, cash: 560, req: { skill: "woodcutting", lvl: 35 } },
-  { id: "rams", what: "kill", k: "ram", n: 6, cash: 700, req: { skill: "attack", lvl: 40 } },
+  { id: "rams", what: "kill", k: "ram", n: 6, cash: 700, req: { skill: "melee", lvl: 40 } },
   { id: "dragonstone", what: "gather", k: "dragonstone_ore", n: 10, cash: 800, req: { skill: "mining", lvl: 40 } }
 ];
 export const DAILY_COUNT = 3;
@@ -1327,7 +1329,7 @@ export const QUESTS = {
       ready: "Field's quiet. You're a natural.", hand: "What do I get?",
       done: "Cash, and my respect. Mostly the Cash."
     },
-    reward: { coins: 60, xp: { attack: 100, strength: 100 }, text: "60 Cash, 100 Attack and 100 Strength xp" }
+    reward: { coins: 60, xp: { melee: 200 }, text: "60 Cash and 200 Combat xp" }
   },
   catch: {
     name: "Catch of the Day", giver: "Old Tullius", where: "River Bend", icon: "🐟",
@@ -1463,9 +1465,16 @@ export const MIGRATIONS = [
   (c) => {
     const melee = Number(c.xp?.melee) || 0;
     c.xp = { ...(c.xp || {}) };
-    for (const k of COMBAT_SKILLS) c.xp[k] = Math.max(Number(c.xp[k]) || 0, melee);
+    for (const k of ["attack", "strength", "defence"]) c.xp[k] = Math.max(Number(c.xp[k]) || 0, melee);   // (named here: step 4 folds them back into one)
     delete c.xp.melee;
     if (!STANCES[c.stance]) c.stance = DEFAULT_STANCE;
+  },
+  // 4: Attack, Strength and Defence became ONE Combat skill (key "melee" again). It takes the best of the three, so
+  //    nobody comes out weaker at anything; for anyone who trained them evenly (every hit since stances went) it's exact.
+  (c) => {
+    c.xp = { ...(c.xp || {}) };
+    c.xp.melee = Math.max(Number(c.xp.melee) || 0, Number(c.xp.attack) || 0, Number(c.xp.strength) || 0, Number(c.xp.defence) || 0);
+    delete c.xp.attack; delete c.xp.strength; delete c.xp.defence;
   }
 ];
 export const SAVE_V = MIGRATIONS.length - 1;
@@ -1486,7 +1495,7 @@ export function freshChar() {
     inv: [{ k: "coins", n: 25 }, { k: "pickaxe", n: 1 }, { k: "axe", n: 1 }, { k: "rod", n: 1 }],
     eq: { helm: "cap", weapon: "rudis", body: "tunic", shield: "parma", legs: null, gloves: null, boots: "sandals", ring: null },
     stance: DEFAULT_STANCE,
-    xp: { attack: 0, strength: 0, defence: 0, hp: XP_AT[10], fishing: 0, farming: 0, mining: 0, woodcutting: 0, cooking: 0, smithing: 0 },
+    xp: { melee: 0, hp: XP_AT[10], fishing: 0, farming: 0, mining: 0, woodcutting: 0, cooking: 0, smithing: 0 },
     qs: {}, bank: [], settings: { ...DEFAULT_SETTINGS }, created: Date.now(), stats: freshStats(),
     isle: { plots: Array(ISLE.plots).fill(null), shelf: Array(ISLE.shelf).fill(null), theme: "meadow", themes: ["meadow"], open: true, tier: 1 }
   };
@@ -1527,11 +1536,11 @@ export const maxHpOf = (c) => lvlOf(c, "hp");
 // The three combat skills weigh the same. Equal thirds is also what keeps the
 // split neutral: a character whose attack, strength and defence all equal their
 // old melee level comes out at exactly the combat level they had before.
-export const meleeOf = (c) => (lvlOf(c, "attack") + lvlOf(c, "strength") + lvlOf(c, "defence")) / 3;
+export const meleeOf = (c) => lvlOf(c, "melee");
 export const combatOf = (c) => Math.floor((meleeOf(c) * 1.3 + lvlOf(c, "hp")) / 2.3) + 2;
 export const totalOf = (c) => Object.keys(SKILLS).reduce((n, k) => n + lvlOf(c, k), 0);
 export const bonusOf = (c) => { const b = { acc: 0, str: 0, def: 0 }; for (const k of Object.values(c.eq)) if (k && ITEMS[k]) for (const q in b) b[q] += ITEMS[k][q] || 0; return b; };
-export const maxHitOf = (c) => 1 + Math.floor(lvlOf(c, "strength") / 6) + Math.floor(bonusOf(c).str / 2);
+export const maxHitOf = (c) => 1 + Math.floor(lvlOf(c, "melee") / 6) + Math.floor(bonusOf(c).str / 2);
 
 /* The two rolls, in one place so the server and the page can never disagree.
 
@@ -1541,8 +1550,8 @@ export const maxHitOf = (c) => 1 + Math.floor(lvlOf(c, "strength") / 6) + Math.f
    hits. Halved, a Defensive character ends up exactly as hard to hit as a
    melee-50 character was before the split, while somebody who poured everything
    into Strength is genuinely fragile. That difference IS the split. */
-export const attackRollOf = (c) => lvlOf(c, "attack") + 1 + bonusOf(c).acc;
-export const defenceRollOf = (c) => (lvlOf(c, "defence") + bonusOf(c).def) / 2;
+export const attackRollOf = (c) => lvlOf(c, "melee") + 1 + bonusOf(c).acc;
+export const defenceRollOf = (c) => (lvlOf(c, "melee") + bonusOf(c).def) / 2;
 export const hitChance = (att, def) => Math.max(0.1, Math.min(0.95, 0.5 + (att - def) * 0.04));
 
 /* ------------------------------------------------------------ the Exchange

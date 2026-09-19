@@ -126,7 +126,7 @@ export const UPDATES = [
       "Every area is now twice as wide and twice as tall, and the view follows you as you walk. The casino is a proper hall: more slot machines, three coin tables, three dice tables.",
       "Luck: want better odds? Work in the Workyard and you'll find lucky clovers; monsters in the Paddock drop lucky horseshoes. Click one in your bag and your next bets are lucky: every win pays 2.5% more. It shows top-right and at every table.",
       "The world is small on purpose for now: the casino (with its Roulette Room), the town, the Workyard and the Paddock. The roads out of town are closed; more opens later. Anyone who was standing somewhere else wakes up in the casino.",
-      "Combat stances are gone. Every hit now trains Attack, Strength and Defence evenly.",
+      "Combat is ONE skill now. Attack, Strength and Defence merged into Combat (you keep the best of your three levels), and stances are gone: hit things, get better at all of it.",
     ],
   },
   {
@@ -264,8 +264,8 @@ export const UPDATES = [
 // how each skill is trained, in words (the resources and their levels are added from the rules)
 export const SKILL_GUIDE = {
   cooking: "Cook raw fish and meat at a range, hearth or campfire. Each food needs a level to cook and stops burning at a higher one. Cooked food heals when you eat it.",
-  melee: "Fight monsters with a weapon in hand. Every point of damage you deal gives Melee xp (and a little Hitpoints xp).",
-  hp: "Goes up alongside Melee as you deal damage. Your Hitpoints level is your maximum health.",
+  melee: "Fight monsters with a weapon in hand. Every point of damage you deal gives Combat xp (and a little Hitpoints xp). One skill does it all: it makes you hit more often, hit harder and get hit less, and it's what better weapons and armour ask for.",
+  hp: "Goes up alongside Combat as you deal damage. Your Hitpoints level is your maximum health.",
   fishing: "Hold a fishing rod and click the bubbling water. You fish from the bank, two tiles away. Trout start biting at level 10.",
   farming: "Harvesting: pick wheat on the Ludus Farm and olives in the Olive Grove. No tool needed.",
   mining: "Hold a pickaxe and click a rock. Small rocks give one ore and then need a moment to refill; the big vein at River Bend is slow but never runs dry.",
