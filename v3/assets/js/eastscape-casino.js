@@ -144,6 +144,10 @@ const CSS = `
 .cz-rtk{position:relative;margin:10px auto 0;width:min(100%,300px);aspect-ratio:2/1;border-radius:14px;background:radial-gradient(circle at 50% 40%,#5a0f1c,#22060b);border:2px solid #e8bf35;display:grid;place-items:center;overflow:hidden}
 .cz-rtk b{font:800 40px var(--display);color:#ffd84a;text-shadow:0 0 22px rgba(255,216,74,.5)}.cz-rtk small{display:block;text-align:center;font:700 12px var(--body);color:#f4c8cf;letter-spacing:.08em;text-transform:uppercase}
 .cz-rtk button{position:absolute;inset:0;border:0;cursor:pointer;font:800 20px var(--display);letter-spacing:.12em;color:#3a3a44;background:repeating-linear-gradient(135deg,#d8d8e4 0 12px,#b8b8c8 12px 24px);transition:opacity .45s ease,transform .45s ease}.cz-rtk button.off{opacity:0;transform:scale(1.15);pointer-events:none}
+.cz-pw{position:relative;width:min(330px,82%);aspect-ratio:1;margin:4px auto 0}.cz-pwdisc{position:absolute;inset:0;border-radius:50%;border:6px solid #e8bf35;box-shadow:0 0 0 3px #3a2410,0 0 40px rgba(232,191,53,.25);transition:transform 4.2s cubic-bezier(.12,.72,.12,1)}
+.cz-pwdisc span{position:absolute;left:50%;top:50%;width:0;height:0}.cz-pwdisc span b{position:absolute;left:-40px;width:80px;top:calc(-1 * var(--r));text-align:center;font:800 11.5px var(--body);color:#fff;text-shadow:0 1px 2px #000,0 0 3px #000;line-height:1.05}
+.cz-pwpin{position:absolute;left:50%;top:-12px;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:22px solid #fff;filter:drop-shadow(0 2px 2px rgba(0,0,0,.6));z-index:2}
+.cz-pwhub{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff2b0,#e8bf35 60%,#8a6a10);box-shadow:0 0 0 3px #3a2410;z-index:1}
 .cz-total{font:800 54px var(--display);letter-spacing:-.04em;color:var(--gold);line-height:1;text-shadow:0 0 30px rgba(232,191,53,.35)}
 @media (prefers-reduced-motion:reduce){.cz-coin.spin,.cz-reel.spin .cz-strip{animation:none}}
 `;
@@ -465,6 +469,20 @@ export function createCasino(env) {
     } else if (!dexMsg || dexMsg.text.endsWith("…")) dexMsg = e.held ? { text: "The Ruby is still working on your last exchange. Look again in a minute.", cls: "" } : null;
     if (GAME === "cashier" && atRuby && !$("gameWin").hidden) cashier();
   }
+  /* THE DAILY PRIZE WHEEL: the server has already decided and paid the prize (e.i is its slice); this is the spin to it. */
+  function prize(e) {
+    GAME = "prize"; frame("Daily Prize Wheel", "One free spin a day · spin every day and the Cash slices grow"); const P = G.PRIZE, n = P.slices.length, step = 360 / n, streak = e.streak || 1;
+    const cols = ["#c8202c", "#1d1a18", "#2a7a4a", "#1d1a18", "#c8202c", "#1d1a18", "#2a5a9a", "#1d1a18", "#c8202c", "#1d1a18", "#e8bf35", "#6a2a9a"];
+    const disc = el("div", "cz-pwdisc"); disc.style.background = `conic-gradient(${P.slices.map((_, i) => `${cols[i % cols.length]} ${i * step}deg ${(i + 1) * step}deg`).join(",")})`;
+    disc.innerHTML = P.slices.map((p, i) => `<span style="transform:rotate(${(i + 0.5) * step}deg);--r:46%"><b style="top:-138px">${esc(p.cash ? G.prizeText(p, e.done ? streak + 1 : streak) : (G.ITEMS[p.k].short || G.ITEMS[p.k].name))}</b></span>`).join("");
+    const wrap = el("div", "cz-pw"); wrap.append(el("div", "cz-pwpin"), disc, el("div", "cz-pwhub")); R.board.append(wrap);
+    const card = el("section", "cz-card"); card.innerHTML = `<h2>Your streak<small>${streak} day${streak === 1 ? "" : "s"} in a row</small></h2><p class="cz-note" style="text-align:left">Every day in a row adds ${P.streakStep * 100}% to the Cash slices, up to +${P.streakStep * P.streakMax * 100}%. Miss a day and it starts again. The wheel resets at midnight, Central.</p>`; R.side.append(card);
+    if (e.done) { phase("You've had today's spin", "open"); return note("Come back tomorrow: it's free every day."); }
+    phase("Spinning…", "open"); const t = token; SFX.play("roul_ball", { vol: 0.6 });
+    const to = 360 * 6 - (e.i + 0.5) * step + (Math.random() - 0.5) * step * 0.6;
+    requestAnimationFrame(() => requestAnimationFrame(() => { disc.style.transform = `rotate(${env.calm() ? to % 360 : to}deg)`; if (env.calm()) disc.style.transition = "none"; }));
+    setTimeout(() => { if (t !== token || GAME !== "prize") return; phase(`You won ${e.text}!`, "done"); pop(e.text, streak > 1 ? `day ${streak} streak` : "free spin"); SFX.play("win_small"); note("It's in your bag. See you tomorrow."); }, env.calm() ? 300 : 4400);
+  }
   function cashier(done) {
     if (done !== undefined) lastCashed = done; GAME = "cashier"; frame(atRuby ? "The House Ruby" : "Cashier", atRuby ? "Cash in what you found · trade Cash for real ZCoins" : "Everything you bring back, for what it said over it"); const me = env.me();
     const keys = [...new Set(me.inv.filter((s) => G.isLoot(s.k)).map((s) => s.k))], rows = keys.map((k) => ({ k, n: me.inv.filter((s) => s.k === k).reduce((a, s) => a + s.n, 0), v: G.valueOf(k), loot: G.isLoot(k) }));
@@ -482,7 +500,7 @@ export function createCasino(env) {
     result(e) { if (e.g !== GAME || !UI[e.g]) return; UI[e.g].result(e); },
     run(e) { const had = RUNS[e.g]; RUNS[e.g] = e.run; if (e.luck != null && env.me()) env.me().luck = e.luck; if (GAME !== e.g) return; UI[e.g].run(e, had); lockStake(!!e.run); refresh(); },
     me() { if ($("gameWin").hidden) return; if (GAME === "cashier") cashier(); else refresh(); },
-    cashier(ruby) { lastCashed = null; atRuby = !!ruby; if (atRuby) { dexSt = null; dexMsg = null; dexTicket = null; dexWait = false; send({ t: "dex", op: "status" }); } cashier(); }, cashed(e) { cashier(e); }, dex, fight,
+    cashier(ruby) { lastCashed = null; atRuby = !!ruby; if (atRuby) { dexSt = null; dexMsg = null; dexTicket = null; dexWait = false; send({ t: "dex", op: "status" }); } cashier(); }, cashed(e) { cashier(e); }, dex, prize, fight,
     closed() { token++; busy = false; GAME = null; },
     blocked(k) { if (!GAME || GAME === "cashier") return; if (GAME === "fight") { phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); return note(G.NEED_TEXT[k]); } busy = false; UI[GAME]?.idle?.(); phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[k]); refresh(); },
     get game() { return GAME; }

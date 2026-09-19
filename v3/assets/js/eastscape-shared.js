@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 48;
+export const VERSION = 49;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -864,7 +864,8 @@ Object.assign(SCENES, {
       put("soda", 7, 4, "Soda machine"); put("snacks", 8, 4, "Snack machine");
       rope(6, 11, 8, 11); rope(12, 11, 14, 11); put("planter", 16, 11, "Planter", 2);
       // WHEELS and COIN FLIP share the south-west, with a rope between them
-      put("wheel", 4, 18, "Wheel", 2, { art: "o_prizewheel" }); put("wheel", 8, 19, "Wheel", 2, { art: "o_prizewheel" }); put("prizewheel", 6, 21, "Prize wheel (opening soon)", 2);
+      put("wheel", 4, 18, "Wheel", 2, { art: "o_prizewheel" }); put("wheel", 8, 19, "Wheel", 2, { art: "o_prizewheel" }); put("prizewheel", 6, 21, "Daily Prize Wheel: one free spin a day", 2);
+      put("fameboard", 24, 4, "Winners' Wall: today's biggest wins", 1, { art: "o_notice" });
       for (const [x, y] of [[13, 17], [16, 18], [13, 20]]) put("cointable", x, y, "Coin Flip table", 2);
       for (const [x, y] of [[13, 17], [16, 18], [13, 20]]) { seat(x, y + 1); seat(x + 1, y + 1); }
       rope(6, 15, 8, 15); rope(12, 15, 14, 15); put("planter", 16, 15, "Planter", 2);
@@ -1382,9 +1383,26 @@ export function edgeOf(c) {
   return out;
 }
 /** The most this player may put on one bet right now: the table's limit, plus gear/meal/drink, doubled while a High Roller. */
+/* THE DAILY PRIZE WHEEL (2026-09-20): one free spin a Chicago day at the wheel by the casino's front door. A reason to
+   show up, and a first stake for anyone who arrives broke. Twelve slices, weighted; Cash slices grow 10% for every
+   day in a row you've spun (up to +70%), so a streak is worth keeping and missing a day costs something. About $100 of Cash a
+   spin on average plus the odd item, more with a streak: a minute of mining, so it's a gift and not a job. */
+export const PRIZE = { streakStep: 0.1, streakMax: 7, slices: [
+  { cash: 50, w: 18 }, { k: "clover", n: 1, w: 12 }, { cash: 100, w: 16 }, { k: "beer", n: 1, w: 10 }, { cash: 150, w: 12 }, { k: "chip_free", n: 1, w: 9 },
+  { cash: 250, w: 8 }, { k: "tp_scroll", n: 2, w: 6 }, { cash: 500, w: 4 }, { k: "mysterybox", n: 1, w: 3 }, { cash: 1000, w: 1.5 }, { k: "chip_black", n: 1, w: 0.5 }] };
+export const prizeText = (p, streak = 1) => (p.cash ? fmtCash(Math.round(p.cash * (1 + PRIZE.streakStep * Math.min(PRIZE.streakMax, Math.max(0, streak - 1))))) : `${p.n > 1 ? `${p.n} × ` : ""}${ITEMS[p.k].name}`);
+export const dayBefore = (day) => { const d = new Date(`${day}T12:00:00Z`); d.setUTCDate(d.getUTCDate() - 1); return d.toISOString().slice(0, 10); };
+
+/* VIP (2026-09-20): every dollar you've ever put on a table counts, win or lose, and the tier shows by your name for
+   everyone to see. The long game for a grinder, and bragging rights for everybody else. Each tier raises every
+   table's limit a little; nothing here touches what a bet is worth. */
+export const VIP = [{ name: "Guest", at: 0, limit: 0, col: "#aca298" }, { name: "Bronze", at: 10000, limit: 50, col: "#c8864a" }, { name: "Silver", at: 50000, limit: 100, col: "#d8d8e4" },
+  { name: "Gold", at: 250000, limit: 250, col: "#ffd84a" }, { name: "Platinum", at: 1000000, limit: 500, col: "#9ae8e0" }, { name: "Diamond", at: 5000000, limit: 1000, col: "#b8a0ff" }];
+export const vipOf = (c) => { const w = Math.max(0, Number(c?.wagered) || 0); let i = 0; while (VIP[i + 1] && w >= VIP[i + 1].at) i++; return { i, ...VIP[i], wagered: w, next: VIP[i + 1] || null }; };
+
 /* `def` is the room you're standing in: the High Roller Room (def.limits) multiplies every table's limit and has a floor. */
 export const minBetOf = (def) => def?.limits?.min || CASINO.minBet;
-export const baseBetOf = (c, def) => (CASINO.maxBet + Math.round(edgeOf(c).limit)) * (def?.limits?.mult || 1);
+export const baseBetOf = (c, def) => (CASINO.maxBet + Math.round(edgeOf(c).limit) + vipOf(c).limit) * (def?.limits?.mult || 1);
 export const maxBetOf = (c, def) => baseBetOf(c, def) * ((c?.roller | 0) > 0 ? ROLLER.mult : 1);
 /* Luck and every effect cover the first FX_COVER of a stake and no more: a $5,000 bet in the High Roller Room gets the
    bonus a $1,500 one would. Without this the ceiling above is a percentage of ANY stake, and the biggest room in the
@@ -1453,6 +1471,9 @@ EACH JOB PAYS DIFFERENTLY.
   FIGHTING pays in windfalls: every monster carries Cash, any kill can turn up a house chip worth up to $5,000, a free-play chip, a mystery box, and kills make you a HIGH ROLLER (double table limits for a few bets). Two pieces of gambling gear only ever drop.
   CRAFTING makes what you keep: rings, amulets and visors that change how the tables treat you for as long as you wear them, and dinners that keep you at the table. Dex sells drinks; they work too.
 Everything you've got going is in the BUFFS bar, top right. Hover one to see what it does.
+
+FREE MONEY: the Daily Prize Wheel by the front door is one free spin a day. Spin it every day and the Cash slices grow.
+VIP: every dollar you ever bet counts toward your tier (Bronze, Silver, Gold, Platinum, Diamond). It shows by your name, and every tier raises your table limits.
 
 FAR FROM HOME? Dex sells Casino scrolls. Click one and you're back on the floor.
 YOUR ISLAND: Charon's cart, in the square out the front door. Plant wheat or tomatoes; they grow while you're away.
@@ -1755,7 +1776,7 @@ export const EXAMINE = {
   lighthouse: ["A lighthouse. The light points inward, at the island. Nobody knows who it's warning.", "The door's painted on. The light is on anyway."],
   mule: ["A mule. It refuses to move. It has refused for eleven years.", "The mule looks at you. You feel judged by a professional."]
 };
-export const VERB = { cart: "Ride", fight: "Bet on", coinstatue: "Cash in at", cooler: "Drink at", buffet: "Eat at", cashier: "Cash in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
+export const VERB = { prizewheel: "Spin", fameboard: "Read", cart: "Ride", fight: "Bet on", coinstatue: "Cash in at", cooler: "Drink at", buffet: "Eat at", cashier: "Cash in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
 /* ------------------------------------------------------------ quests are data
    goal.type "bring": have goal.n of goal.items in your bag when you talk to the giver (they're taken)
@@ -1950,7 +1971,7 @@ function migrate(out) {
 
 export function freshChar() {
   return {
-    v: SAVE_V, scene: START.scene, x: START.x, y: START.y, hp: 10, hunger: 100, thirst: 100, roller: 0, free: 0, meal: null, drink: null, tour: { step: 0, logs: 0, chickens: 0 },
+    v: SAVE_V, scene: START.scene, x: START.x, y: START.y, hp: 10, hunger: 100, thirst: 100, wagered: 0, spin: null, roller: 0, free: 0, meal: null, drink: null, tour: { step: 0, logs: 0, chickens: 0 },
     inv: [{ k: "coins", n: 25 }, { k: "pickaxe", n: 1 }, { k: "axe", n: 1 }, { k: "rod", n: 1 }],
     eq: { helm: "cap", weapon: "rudis", body: "tunic", shield: "parma", legs: null, gloves: null, boots: "sandals", ring: null },
     stance: DEFAULT_STANCE,

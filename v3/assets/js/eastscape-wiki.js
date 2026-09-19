@@ -121,6 +121,14 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-20", title: "A free spin every day, VIP tiers, and the Winners' Wall",
+    items: [
+      "THE DAILY PRIZE WHEEL is open: the big wheel by the casino's front door. One free spin a day: Cash from $50 to $1,000, lucky clovers, a lager, free-play chips, Casino scrolls, a mystery box, even a black house chip. Spin every day: each day in a row adds 10% to the Cash slices, up to +70%. It resets at midnight, Central. It says FREE SPIN over it until you've had yours.",
+      "VIP TIERS. Every dollar you ever bet counts, win or lose: Bronze at $10,000, Silver at $50,000, Gold at $250,000, Platinum at $1,000,000, Diamond at $5,000,000. Your tier shows as a coloured diamond by your name for everyone to see, and each tier raises every table's limit (Bronze +$50 up to Diamond +$1,000). Your progress is under your bag.",
+      "THE WINNERS' WALL, on the back wall right of the Roulette door: today's five biggest single wins, from any table, roulette and the Fight Pit included. Win $500 or more on one bet to get on it. Wiped at midnight, Central."
+    ]
+  },
+  {
     date: "2026-09-20", title: "The House Ruby pays in ZCoins, and the High Roller Room",
     items: [
       "THE HOUSE RUBY NOW TRADES CASH FOR REAL ZCOINS. Click the big ruby in the middle of the casino floor. $100 of Cash is 1 ZCoin, paid straight to your eastcoin.vip balance. You can take up to 25 ZCoins in any hour.",
