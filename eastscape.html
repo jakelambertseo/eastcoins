@@ -76,6 +76,9 @@ button,input,select{font:inherit}
 @keyframes qpop{from{transform:translateX(-50%) scale(.6);opacity:0}to{transform:translateX(-50%) scale(1);opacity:1}}
 @media (prefers-reduced-motion:reduce){.qdone.show{animation:none}}
 .tourbox{position:absolute;left:10px;top:10px;max-width:min(330px,62%);padding:7px 11px 8px;border-radius:8px;background:rgba(26,14,18,.86);color:#f4ead0;font-size:13px;line-height:1.35;box-shadow:0 0 0 2px #c8963a;pointer-events:none}
+.luckbox{position:absolute;right:10px;top:10px;padding:5px 11px;border-radius:14px;background:rgba(16,50,24,.9);color:#d8ffd0;font-size:13px;font-weight:800;box-shadow:0 0 0 2px #4aa84a;pointer-events:none}
+.gm-luck{margin:0 0 8px;padding:6px 9px;border-radius:6px;font-size:12.5px;line-height:1.35;background:rgba(58,38,22,.09);color:#4a3a24}
+.gm-luck.on{background:rgba(40,120,40,.16);color:#1f5a24;font-weight:800}
 .tourbox small{display:block;color:#ffd45a;font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:10.5px;margin-bottom:1px}
 .tourbox .bar{height:5px;border-radius:3px;background:rgba(255,255,255,.15);margin-top:5px;overflow:hidden}.tourbox .bar i{display:block;height:100%;background:#ffd45a}
 #popText{white-space:pre-line}
@@ -488,6 +491,7 @@ button,input,select{font:inherit}
     <div class="dbg" id="dbg" hidden></div>
     <!-- no in-game chat: the game sits beside the site's Twitch chat. These are the game's own messages. -->
     <div class="tourbox" id="tourBox" hidden></div>
+    <div class="luckbox" id="luckBox" hidden></div>
     <div class="feed" id="log" aria-live="polite"></div>
     <div class="dlg" id="dlg" role="dialog" aria-label="Conversation" hidden>
       <div class="dlg-face" id="dlgFace"></div>
@@ -592,8 +596,8 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=39";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=17";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=40";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=18";
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=1";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -634,6 +638,7 @@ function send(m) {
   if (m.t === "equip" || m.t === "unequip") SFX.play("equip");
   else if (m.t === "drop") SFX.play("drop");
   else if (m.t === "eat") SFX.play("eat");
+  else if (m.t === "use") SFX.play("task_done");
   else if (m.t === "roul" && m.op === "bet") SFX.play("chip");
 }
 // every button clicks (the canvas has its own sounds)
@@ -957,8 +962,8 @@ function spr(k, x, y, flip = false, filter = "", sc = 1) {
   lc.drawImage(a.im, -Math.round(a.cx), -a.foot); lc.restore(); return true;
 }
 // item and skill icons (PixelLab): art where it exists, the emoji where it doesn't
-const ITEM_ART = new Set(["ashlogs", "axe", "beef", "bogplate", "bones", "bronze_amulet", "bronze_bar", "bronze_body", "bronze_boots", "bronze_gladius", "bronze_gloves", "bronze_helm", "bronze_legs", "bronze_maul", "bronze_ring", "bronze_shield", "bronze_sword", "bronzecuirass", "bronzehelm", "bronzeshield", "bronzesword", "burnt", "cap", "cbeef", "cchicken", "cgloomfin", "chicken", "clanternfish", "cmooncarp", "cobweb", "coins", "copper", "cpork", "csardine", "cskyeel", "ctrout", "diamond_amulet", "diamond_bar", "diamond_body", "diamond_boots", "diamond_gladius", "diamond_gloves", "diamond_helm", "diamond_legs", "diamond_maul", "diamond_ore", "diamond_ring", "diamond_shield", "diamond_sword", "dragonstone_amulet", "dragonstone_bar", "dragonstone_body", "dragonstone_boots", "dragonstone_gladius", "dragonstone_gloves", "dragonstone_helm", "dragonstone_legs", "dragonstone_maul", "dragonstone_ore", "dragonstone_ring", "dragonstone_shield", "dragonstone_sword", "emerald_amulet", "emerald_bar", "emerald_body", "emerald_boots", "emerald_gladius", "emerald_gloves", "emerald_helm", "emerald_legs", "emerald_maul", "emerald_ore", "emerald_ring", "emerald_shield", "emerald_sword", "feather", "geode", "gloomfin", "goldtomatoe", "grimstone", "grudge", "hide", "husk", "lantern", "lanternfish", "logs", "manifesto", "marble", "mask", "menace", "monocle", "mooncarp", "olives", "onyx_amulet", "onyx_bar", "onyx_body", "onyx_boots", "onyx_gladius", "onyx_gloves", "onyx_helm", "onyx_legs", "onyx_maul", "onyx_ore", "onyx_ring", "onyx_shield", "onyx_sword", "parma", "pickaxe", "pit", "pork", "receipt", "rod", "rudis", "sandals", "sardine", "skyashlogs", "skyeel", "spiderboots", "stardust", "sunolive", "tin", "toga", "tomatoe", "trout", "tunic", "tusk", "wheat", "willowlogs", "wraithhood", "yewlogs"]), SKILL_ART = new Set(["attack", "cooking", "defence", "farming", "fishing", "hp", "melee", "mining", "smithing", "strength", "woodcutting"]), EQ_ART = new Set(["amulet", "body", "boots", "gloves", "helm", "legs", "ring", "shield", "weapon"]);
-const IART = "/v3/assets/img/glad/flat/items/", IART_V = 4, ICO_IMG = {};
+const ITEM_ART = new Set(["ashlogs", "axe", "beef", "bogplate", "bones", "bronze_amulet", "bronze_bar", "bronze_body", "bronze_boots", "bronze_gladius", "bronze_gloves", "bronze_helm", "bronze_legs", "bronze_maul", "bronze_ring", "bronze_shield", "bronze_sword", "bronzecuirass", "bronzehelm", "bronzeshield", "bronzesword", "burnt", "cap", "cbeef", "cchicken", "cgloomfin", "chicken", "clanternfish", "clover", "cmooncarp", "cobweb", "coins", "copper", "cpork", "csardine", "cskyeel", "ctrout", "diamond_amulet", "diamond_bar", "diamond_body", "diamond_boots", "diamond_gladius", "diamond_gloves", "diamond_helm", "diamond_legs", "diamond_maul", "diamond_ore", "diamond_ring", "diamond_shield", "diamond_sword", "dragonstone_amulet", "dragonstone_bar", "dragonstone_body", "dragonstone_boots", "dragonstone_gladius", "dragonstone_gloves", "dragonstone_helm", "dragonstone_legs", "dragonstone_maul", "dragonstone_ore", "dragonstone_ring", "dragonstone_shield", "dragonstone_sword", "emerald_amulet", "emerald_bar", "emerald_body", "emerald_boots", "emerald_gladius", "emerald_gloves", "emerald_helm", "emerald_legs", "emerald_maul", "emerald_ore", "emerald_ring", "emerald_shield", "emerald_sword", "feather", "geode", "gloomfin", "goldtomatoe", "grimstone", "grudge", "hide", "horseshoe", "husk", "lantern", "lanternfish", "logs", "manifesto", "marble", "mask", "menace", "monocle", "mooncarp", "olives", "onyx_amulet", "onyx_bar", "onyx_body", "onyx_boots", "onyx_gladius", "onyx_gloves", "onyx_helm", "onyx_legs", "onyx_maul", "onyx_ore", "onyx_ring", "onyx_shield", "onyx_sword", "parma", "pickaxe", "pit", "pork", "receipt", "rod", "rudis", "sandals", "sardine", "skyashlogs", "skyeel", "spiderboots", "stardust", "sunolive", "tin", "toga", "tomatoe", "trout", "tunic", "tusk", "wheat", "willowlogs", "wraithhood", "yewlogs"]), SKILL_ART = new Set(["attack", "cooking", "defence", "farming", "fishing", "hp", "melee", "mining", "smithing", "strength", "woodcutting"]), EQ_ART = new Set(["amulet", "body", "boots", "gloves", "helm", "legs", "ring", "shield", "weapon"]);
+const IART = "/v3/assets/img/glad/flat/items/", IART_V = 5, ICO_IMG = {};
 // (canvas icons are fetched the first time each is drawn; the <img> icons in windows load as they appear)
 const artOf = (k) => `<img class="ico" src="${IART}${k}.png?v=${IART_V}" alt="">`;
 const ART_ALIAS = { bronze_body: "bronzecuirass", bronze_helm: "bronzehelm", bronze_shield: "bronzeshield", bronze_sword: "bronzesword" };
@@ -1410,7 +1415,11 @@ function showTalk(n, text, options, have) {
 }
 // the House Tour's tracker, top-left of the game
 let tourSeen = null;
+const luckLine = () => ((me?.luck | 0) > 0
+  ? `<div class="gm-luck on">🍀 Lucky: your next ${me.luck} bet${me.luck === 1 ? "" : "s"} pay ${G.LUCK.bonus * 100}% more when they win.</div>`
+  : `<div class="gm-luck">Want better odds? Lucky clovers turn up while you work in the Workyard (west arch) and monsters in the Paddock (east arch) drop lucky horseshoes. Use one and your wins pay more.</div>`);
 function renderTour() {
+  const lb = $("luckBox"); lb.hidden = !((me?.luck | 0) > 0); if (!lb.hidden) lb.textContent = `🍀 Lucky × ${me.luck}`;
   const box = $("tourBox"), t = me?.tour, st = G.tourOf(me);
   if (t && tourSeen != null && t.step > tourSeen) SFX.play("task_done");
   tourSeen = t ? t.step : null;
@@ -1423,10 +1432,13 @@ function renderTour() {
 function whatNext() {
   const st = G.tourOf(me); if (st) return `You're on the tour: ${st.text.charAt(0).toLowerCase()}${st.text.slice(1)}.`;
   const cash = G.cashIn(me), att = G.lvlOf(me, "attack"), tiered = G.SLOTS.some((sl) => ITEMS[me.eq[sl]]?.tier);
+  const charm = me.inv.find((x) => ITEMS[x.k].luck);
+  if (charm) return `You've got a ${ITEMS[charm.k].name.toLowerCase()} in your bag. Click it, then play: your wins pay more while you're lucky.`;
+  if (cash >= 20 && !(me.luck | 0)) return "You're playing without luck. Go and work the Workyard (west arch) for lucky clovers, or fight in the Paddock (east arch) for horseshoes. Use one and every win pays more. You'll come back with things to sell, too.";
   if (cash < 20) return "You're light. The board left of the bar has three paid jobs today, and the work's one arch away: skilling west, fighting east.";
   if (att < 10) return "Toughen up in the Paddock, out the east arch. At Attack 10 you can swing bronze: Brutus sells it in town, out the front door.";
   if (!tiered) return "Get some real gear on. Brutus sells bronze in town, or smelt your own at his furnace: copper and tin are in the Workyard.";
-  return "You're set up. Play the floor, try roulette upstairs where the whole room bets together, and keep the daily jobs ticking over for bankroll.";
+  return "You're set up. Play the floor, try roulette through the back door where the whole room bets together, keep your luck topped up out the arches, and do the daily jobs for bankroll.";
 }
 function talkTo(n) {
   const k = G.npcQuest(me, n), bye = ["Bye.", closeTalk];
@@ -1434,7 +1446,7 @@ function talkTo(n) {
   if (n.name === "Dex the Dealer") {
     const st = G.tourOf(me)?.id, opts = [];
     if (st === "meet") opts.push(["I'm new here.", () => { send({ t: "tour", op: "talk" }); showTalk(n, [me.tour?.again ? "Round again? Fine." : `New blood. First one's on the house: here's ${G.fmtCash(G.TOUR_CHIP)}. Go and lose it somewhere on my floor.`, "Slots on the walls, coins on the round table, dice with DookieBetts. Pick one."], [["On it.", closeTalk]]); }]);
-    if (st === "paid") opts.push(["The job's done. Pay me.", () => { send({ t: "tour", op: "talk" }); showTalk(n, ["Honest work. Here's your money.", "That's the whole game, friend: play, run dry, work, get paid, play. The board has fresh jobs every morning, and the further out you go, the better it pays."], [["Got it.", closeTalk]]); }]);
+    if (st === "paid") opts.push(["The job's done. Pay me.", () => { send({ t: "tour", op: "talk" }); showTalk(n, ["Honest work. Here's your money.", "And a lucky clover, on the house. Click it in your bag: your next bets pay more when they win. That's the whole game, friend: play, and when you want better odds or more Cash, go out an arch and work for it."], [["Got it.", closeTalk]]); }]);
     if (!st) opts.push(["Give me the House Tour.", () => { send({ t: "tour", op: "start" }); showTalk(n, "Step one: say hello properly.", [["Hello, Dex.", () => talkTo(n)]]); }]);
     opts.push(["What should I do next?", () => showTalk(n, whatNext(), [["Something else…", () => talkTo(n)], bye])]);
     return showTalk(n, st ? "You're on the House Tour. Eyes top-left: it tells you the next thing." : pick(n.lines), [...opts, chat, bye]);
@@ -1473,13 +1485,26 @@ document.addEventListener("keydown", (e) => {
 $("dlgX").addEventListener("click", closeTalk);
 
 /* ------------------------------------------------------------ input: the page asks, the server decides */
-let mouse = null, view = { s: 3, ox: 0, oy: 0 }, hoverTile = null, hoverThing = null, clickMark = null;
+/* Tiles are drawn ZOOM times the size they'd be if the whole map fitted the screen, so the screen shows a window onto
+   the map (11 x 6.5 tiles) that follows you and stops at the map's edges (a room's walls, indoors). view.bx/by/bw/bh
+   is the game's rectangle on the page; view.s/ox/oy turn world pixels into page pixels, camera included. */
+const ZOOM = 2, cam = { x: 0, y: 0 };
+let mouse = null, view = { s: 3, ox: 0, oy: 0, bx: 0, by: 0, bw: 0, bh: 0 }, hoverTile = null, hoverThing = null, clickMark = null;
 function fit() {
   const d = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight;
   if (cv.width !== Math.round(w * d) || cv.height !== Math.round(h * d)) { cv.width = Math.round(w * d); cv.height = Math.round(h * d); }
   ctx.setTransform(d, 0, 0, d, 0, 0);
-  const s = Math.min(w / W, h / H); view = { s, ox: Math.round((w - W * s) / 2), oy: Math.round((h - H * s) / 2) };
+  const s0 = Math.min(w / W, h / H), bx = Math.round((w - W * s0) / 2), by = Math.round((h - H * s0) / 2), s = s0 * ZOOM;
+  view = { s, bx, by, bw: W * s0, bh: H * s0, ox: Math.round(bx - cam.x * s), oy: Math.round(by - cam.y * s) };
   return { w, h };
+}
+function aimCamera(P, now) {
+  const ww = W / ZOOM, wh = H / ZOOM, r = Z.def?.interior && Z.def.room;
+  const [x0, y0, x1, y1] = r ? [(r[0] - 1) * T, r[1] * T - (Z.def.wallH || 22) - 6, (r[2] + 2) * T, (r[3] + 2) * T + 4] : [0, 0, W, H];
+  const p = P ? ownPos(P, now) : { px: COLS / 2, py: ROWS / 2 };
+  const at = (c, lo, hi, win) => (hi - lo <= win ? (lo + hi - win) / 2 : Math.max(lo, Math.min(hi - win, c - win / 2)));
+  cam.x = Math.round(at(p.px * T + 8, x0, x1, ww) * 2) / 2; cam.y = Math.round(at(p.py * T + 4, y0, y1, wh) * 2) / 2;
+  view.ox = Math.round(view.bx - cam.x * view.s); view.oy = Math.round(view.by - cam.y * view.s);
 }
 const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
 const KIND_OF = { howto: "howto", slots: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
@@ -1600,6 +1625,7 @@ function frame() {
   const now = snow(), pnow = performance.now(), calm = set("reducedMotion");
   predTick(pnow);
   const P = myEnt();
+  aimCamera(P, now);
   // ---- the low-resolution world
   lc.clearRect(0, 0, W, H); lc.drawImage(Z.bg, 0, 0, W, H);
   for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
@@ -1886,7 +1912,7 @@ function frame() {
     if (a <= 0) tracker = null;
     else {
       const k = tracker.k, l = lvl(k), lo = XP_AT[l], hi = XP_AT[Math.min(99, l + 1)], f = l >= 99 ? 1 : (me.xp[k] - lo) / (hi - lo);
-      const r = 22, cx = view.ox + (W * S2) / 2, cy = view.oy + 34 + r;
+      const r = 22, cx = view.bx + view.bw / 2, cy = view.by + 34 + r;
       ctx.globalAlpha = a;
       ctx.fillStyle = "rgba(20,24,20,.82)"; ctx.beginPath(); ctx.arc(cx, cy, r + 4, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = "rgba(255,255,255,.14)"; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
@@ -1908,16 +1934,18 @@ function frame() {
   }
   if (pvp || Z.isle) {
     const cage = P && G.inCage(Z.def, P.x, P.y), text = Z.isle ? `${Z.def.home ? "🏠" : "🏝️"} ${Z.isle.owner === you.id ? `Your ${Z.def.home ? "cottage" : Z.def.name === "The Far Shore" ? "far shore" : "island"}` : `${Z.isle.name}'s ${Z.def.home ? "cottage" : "island"}`}` : cage ? "🛡️ The Cage: fights here cost nothing" : "☠️ PvP: anyone can attack you";
-    ctx.font = `800 13px "Nunito", system-ui, sans-serif`; const bw = ctx.measureText(text).width + 20, bx = view.ox + 10, by = view.oy + 10;
+    ctx.font = `800 13px "Nunito", system-ui, sans-serif`; const bw = ctx.measureText(text).width + 20, bx = view.bx + 10, by = view.by + 10;
     ctx.fillStyle = Z.isle ? "rgba(20,60,90,.85)" : cage ? "rgba(30,60,40,.88)" : "rgba(110,14,14,.88)"; ctx.fillRect(bx, by, bw, 24);
     ctx.fillStyle = "#fff"; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(text, bx + 10, by + 12);
   }
   const hovEx = !hoverThing && hoverTile && exitAt(hoverTile.x, hoverTile.y);
-  if (hovEx && hovEx.dest) label(`${{ n: "↑", s: "↓", w: "←", e: "→" }[hovEx.side]} To ${hovEx.dest.replace(/^The /, "the ")}`, view.ox + (W * S2) / 2, view.oy + 8, "#fff", 14);
+  if (hovEx && hovEx.dest) label(`${{ n: "↑", s: "↓", w: "←", e: "→" }[hovEx.side]} To ${hovEx.dest.replace(/^The /, "the ")}`, view.bx + view.bw / 2, view.by + 8, "#fff", 14);
   if (hoverThing) {
     const rq = hoverThing.ob?.req, low = rq && lvl(rq.skill) < rq.lvl;
-    label(`${G.VERB[hoverThing.kind] || "Examine"} ${hoverThing.name}${rq ? ` (${SKILLS[rq.skill].name} ${rq.lvl})` : ""}`, view.ox + (W * S2) / 2, view.oy + 8, low ? "#ff8a7a" : "#fff", 14);
+    label(`${G.VERB[hoverThing.kind] || "Examine"} ${hoverThing.name}${rq ? ` (${SKILLS[rq.skill].name} ${rq.lvl})` : ""}`, view.bx + view.bw / 2, view.by + 8, low ? "#ff8a7a" : "#fff", 14);
   }
+  // the map beyond the window is hidden behind the page's black
+  ctx.fillStyle = "#000"; ctx.fillRect(0, 0, w, view.by); ctx.fillRect(0, view.by + view.bh, w, h); ctx.fillRect(0, 0, view.bx, h); ctx.fillRect(view.bx + view.bw, 0, w, h);
   const fk = (performance.now() - Z.fadeAt) / 200; if (fk < 1) { ctx.fillStyle = `rgba(0,0,0,${1 - fk})`; ctx.fillRect(0, 0, w, h); }
   $("dbg").hidden = !set("debug");
   if (set("debug") && P) $("dbg").textContent = `Scene: ${Z.def.name}\nTile: ${P.x} ${P.y}${hoverTile ? `   Mouse: ${hoverTile.x} ${hoverTile.y}` : ""}\nAction: ${P.act || (P.moving ? "walking" : "none")}\nClock offset: ${Math.round(offset || 0)} ms`;
@@ -2200,7 +2228,7 @@ function renderGame(res) {
     : g === "dicetable" ? `<div class="gm-dicepair${gameBusy ? " shake" : ""}">${cimg("die", "mid")}${cimg("die", "mid flip")}</div><div class="gm-roll" id="gmShow">${res?.roll ?? "?"}</div>`
     : `<div class="gm-reels" id="gmShow">${(res?.reels || ["cherry", "bell", "seven"]).map((k) => `<span>${cimg(`reel_${k}`)}</span>`).join("")}</div>`;
   const mult = G.diceMult(diceTarget);
-  $("gameBody").innerHTML = `<p class="note" style="margin:0 0 8px">${esc(G.GAMES[g].ex)}</p>
+  $("gameBody").innerHTML = `<p class="note" style="margin:0 0 8px">${esc(G.GAMES[g].ex)}</p>${luckLine()}
     <div class="gm-bet">Bet <input type="number" id="gmAmt" min="${C.minBet}" max="${C.maxBet}" value="${gameBet}">
       ${[10, 50, 100, 500].map((n) => `<button class="btn plain" data-amt="${n}">${n}</button>`).join("")}
       <small style="margin-left:auto">You have <b>${G.fmtCash(cash)}</b></small></div>
@@ -2246,6 +2274,7 @@ function gameResult(e) {
     msg.textContent = e.g === "cointable" ? `${e.side === "heads" ? "Heads" : "Tails"}. ${won ? `You win ${G.fmtCash(e.payout)}!` : "You lose."}`
       : e.g === "dicetable" ? `Rolled ${e.roll} (needed under ${e.target}). ${won ? `You win ${G.fmtCash(e.payout)}!` : "You lose."}`
       : e.jackpot ? `JACKPOT! You win ${G.fmtCash(e.payout)}!` : won ? `${e.mult}× — you win ${G.fmtCash(e.payout)}!` : "No luck.";
+    if (won && e.lucky) msg.textContent += ` (+${e.lucky} lucky)`;
   }, 550);
 }
 
@@ -2291,7 +2320,7 @@ function renderRoul() {
   const last = R.last ? `<span class="rl-n ${R.last.col}">${R.last.n}</span>` : "—";
   $("roulSub").textContent = `Round ${R.round} · up to ${G.fmtCash(G.ROULETTE.maxStake)} a spin`;
   const banner = roulBanner && performance.now() < roulBanner.until ? `<div class="rl-banner ${roulBanner.cls}">${esc(roulBanner.text)}<small>${esc(roulBanner.sub)}</small></div>` : "";
-  $("roulBody").innerHTML = `<div class="rl-top">${banner}<div class="rl-wheelbox"><div class="rl-wheel" id="rlWheel" style="background:${roulWheelBg()};transform:rotate(${roulAngle}deg)"></div><div class="rl-hub"></div><div class="rl-ballring" id="rlBall" style="transform:rotate(${roulBallAngle}deg)"><i></i></div><div class="rl-pin"></div></div>
+  $("roulBody").innerHTML = `${luckLine()}<div class="rl-top">${banner}<div class="rl-wheelbox"><div class="rl-wheel" id="rlWheel" style="background:${roulWheelBg()};transform:rotate(${roulAngle}deg)"></div><div class="rl-hub"></div><div class="rl-ballring" id="rlBall" style="transform:rotate(${roulBallAngle}deg)"><i></i></div><div class="rl-pin"></div></div>
       <div class="rl-state"><b>${betting ? `Place your bets · ${Math.ceil(left / 1000)}s` : "No more bets · the ball is rolling"}</b>
         <small>${betting ? (R.last ? `Last: ${R.last.n} ${R.last.col}${R.last.wins.length ? ` · ${R.last.wins.map((w) => `${esc(w.name)} +${w.payout.toLocaleString()}`).join(", ")}` : " · no winners"}` : "Chips on the board, then wait for the wheel.") : "Good luck."}</small>
         <div class="rl-timer"><i id="rlTime" style="width:${Math.round((left / (betting ? G.ROULETTE.betMs : G.ROULETTE.spinMs)) * 100)}%"></i></div>
@@ -2423,7 +2452,7 @@ function wikiPages() {
   for (const g of WK.GUIDES) pages.push({ route: `guides/${g.id}`, title: g.title, icon: g.icon, group: "Guides" });
   for (const [k, s] of Object.entries(SKILLS)) pages.push({ route: `skills/${k}`, title: s.name, icon: sico(k), group: "Skills" });
   for (const [k, q] of Object.entries(QUESTS)) pages.push({ route: `quests/${k}`, title: q.name, icon: q.icon, group: "Quests" });
-  for (const [k, m] of Object.entries(MOBS)) pages.push({ route: `monsters/${k}`, title: m.name, icon: "👹", group: "Monsters" });
+  for (const [k, m] of Object.entries(MOBS).filter(([k]) => Object.values(areas).some((a) => a.mobs[k]))) pages.push({ route: `monsters/${k}`, title: m.name, icon: "👹", group: "Monsters" });
   for (const [k, d] of Object.entries(SCENES).filter(([, d]) => !d.wikiHide)) pages.push({ route: `areas/${k}`, title: d.name, icon: d.interior ? "🚪" : "🗺️", group: "Areas" });
   for (const n of Object.keys(WIKI.npcs)) pages.push({ route: `npcs/${n}`, title: n, icon: "🧑", group: "People" });
   for (const [k, it] of Object.entries(ITEMS)) pages.push({ route: `items/${k}`, title: it.name, icon: ico(k), group: "Items" });
@@ -2589,7 +2618,7 @@ function renderPanel() {
     // "is this better than what I have on" is the only question being asked here
     const cells = me.inv.map((s, i) => {
       const it = ITEMS[s.k], cmp = it.slot ? G.compareText(me, s.k) : "";
-      const what = it.heal ? `click to eat (heals ${it.heal})` : it.slot ? (it.slot === "weapon" ? "click to wield" : "click to wear") : "click to examine";
+      const what = it.luck ? `click to use: your next ${it.luck} bets are lucky` : it.heal ? `click to eat (heals ${it.heal})` : it.slot ? (it.slot === "weapon" ? "click to wield" : "click to wear") : "click to examine";
       const title = `${it.name}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}` + (cmp ? `\n${cmp}` : "") + `\n${what}, shift-click to drop, right-click for the wiki`;
       return `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" data-item="${s.k}" title="${esc(title)}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}</div>`;
     });
@@ -2604,6 +2633,7 @@ function renderPanel() {
         return send({ t: "drop", i });
       }
       if (ITEMS[s.k].heal) return send({ t: "eat", i });
+      if (ITEMS[s.k].luck) return send({ t: "use", i });
       if (ITEMS[s.k].slot) send({ t: "equip", i });
       else say(`${ITEMS[s.k].name}${s.n > 1 ? ` (×${s.n.toLocaleString()})` : ""}.${ITEMS[s.k].ex ? " " + ITEMS[s.k].ex : ""}`);
     }));
@@ -2627,8 +2657,7 @@ function renderPanel() {
     const st = me.stance || G.DEFAULT_STANCE;
     const stances = Object.entries(G.STANCES).map(([k, v]) =>
       `<button type="button" class="btn stbtn${k === st ? " on" : ""}" data-stance="${k}" title="${esc(v.blurb)}">${STANCE_ICO[k] ? sico(STANCE_ICO[k]) : v.icon} ${esc(v.name)}</button>`).join("");
-    p.innerHTML = `<div class="ph">Stance</div><div class="stances">${stances}</div><small class="stnote">${esc(G.STANCES[st].blurb)} Every stance earns the same xp — only where it goes changes.</small>
-      ${(() => {
+    p.innerHTML = `      ${(() => {
       const rows = Object.entries(xpSess).filter(([k, r]) => SKILLS[k] && r.xp > 0).sort((a, b) => b[1].last - a[1].last);
       if (!rows.length) return "";
       return `<div class="ph">This session <small><button type="button" class="lnk" id="xpReset">reset</button></small></div><div class="xps">${rows.map(([k, r]) => {

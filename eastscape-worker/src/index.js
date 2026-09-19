@@ -198,7 +198,7 @@ export class World {
     this.send(pl, { type: "who", scene: S.key, who: this.whoOf(S) });
     this.send(pl, JSON.parse(this.snapOf(S, Date.now(), false)));
     S.whoSig = null;   // the next broadcast tells everyone else this player has arrived
-    if (!stored) this.say(pl, "Welcome to GAMBA. The tables are all around you; the task board by the bar pays Cash. Skilling is out the west arch, fighting out the east, town through the front door. Your pickaxe, axe and rod are in your bag.");
+    if (!stored) this.say(pl, "Welcome to GAMBA. Play the tables all around you. Want better odds? Work out the west arch or fight out the east one: you'll find lucky charms that make your wins pay more. Say hello to Dex behind the bar.");
     else this.say(pl, `Welcome back, ${pl.name}.`);
     if (this.exDeliver(pl)) this.exCommit(pl);   // market sales and purchases made while you were away
     this.start();
@@ -236,7 +236,7 @@ export class World {
   }
   touch(pl) { pl.dirty = true; pl.needSave = true; pl.changedAt ??= Date.now(); }
 
-  meOf(pl) { const C = pl.C; return { isle: { tier: C.isle.tier, themes: C.isle.themes }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats }; }
+  meOf(pl) { const C = pl.C; return { isle: { tier: C.isle.tier, themes: C.isle.themes }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, luck: C.luck | 0, settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats }; }
 
   /* ------------------------------------------------------------ scenes */
   scene(key) {
@@ -336,12 +336,7 @@ export class World {
       }
       case "quest": return this.questOp(S, pl, m);
       case "talked": { const n = S.npcs.find((x) => x.id === m.npc); if (n) n.holdUntil = 0; return; }
-      case "stance": {
-        const k = String(m.k || "");
-        if (!G.STANCES[k] || C.stance === k) return;
-        C.stance = k; this.touch(pl);
-        return this.say(pl, `Stance: ${G.STANCES[k].name}. ${G.STANCES[k].blurb}`, "good");
-      }
+      case "stance": return;   // stances were removed (2026-09-19)
       case "settings": {
         for (const [k, v] of Object.entries(m.patch || {})) if (k in G.DEFAULT_SETTINGS && typeof v === "boolean") C.settings[k] = v;
         this.touch(pl); return;
@@ -352,6 +347,7 @@ export class World {
       case "daily": return this.dailyOp(S, pl, m);
       case "roul": return this.roulOp(S, pl, m, now);
       case "tour": return this.tourOp(S, pl, m);
+      case "use": return this.useItem(pl, m.i | 0);
       case "trade": return this.tradeOp(S, pl, m);
       case "admin": return pl.admin ? this.admin(S, pl, m) : undefined;
     }
@@ -442,6 +438,8 @@ export class World {
     this.questEvent(pl, type, d);
     this.dailyEvent(pl, type, d);
     this.tourEvent(pl, type, d);
+    if (type === "gather") this.luckDrop(pl, "clover", G.LUCK.gather);
+    else if (type === "kill") this.luckDrop(pl, "horseshoe", G.LUCK.kill);
   }
 
   countEvent(pl, type, d) {
@@ -735,6 +733,20 @@ export class World {
     this.touch(pl);
   }
   // eating: a moment's pause, and your next swing waits a little
+  // lucky charms: click one and your next N bets are lucky (see G.LUCK)
+  useItem(pl, i) {
+    const C = pl.C, st = C.inv[i], it = st && G.ITEMS[st.k]; if (!it?.luck) return;
+    if ((C.luck | 0) >= G.LUCK.max) return this.say(pl, `You're as lucky as it gets (${G.LUCK.max} lucky bets saved up). Go and spend some.`, "bad");
+    st.n--; if (!st.n) C.inv.splice(i, 1);
+    C.luck = Math.min(G.LUCK.max, (C.luck | 0) + it.luck); this.touch(pl);
+    this.say(pl, `You feel lucky. Your next ${C.luck} bets pay ${G.LUCK.bonus * 100}% more when they win.`, "good");
+  }
+  // working turns up charms: called for every gather and every kill
+  luckDrop(pl, k, chance) {
+    if (Math.random() >= chance || G.roomFor(pl.C.inv, k) < 1) return;
+    G.addInv(pl.C.inv, k, 1); this.touch(pl);
+    this.say(pl, `You find a ${G.ITEMS[k].name.toLowerCase()}! Click it in your bag, then go and gamble.`, "loot");
+  }
   eat(pl, i, now) {
     const C = pl.C, st = C.inv[i], it = st && G.ITEMS[st.k]; if (!it?.heal) return;
     if (now - (pl.lastEat || 0) < G.EAT_MS) return;
@@ -1574,7 +1586,9 @@ export class World {
     }
     pl.lastBet = now; this.tourStep(pl, "play");
     G.takeInv(pl.C.inv, "coins", amt);
-    const payout = Math.floor(amt * mult) + jackpot;
+    const lucky = (pl.C.luck | 0) > 0; if (lucky) pl.C.luck--;
+    const plain = Math.floor(amt * mult), payout = (lucky && plain ? Math.round(amt * mult * (1 + G.LUCK.bonus)) : plain) + jackpot;
+    res.lucky = lucky ? Math.max(0, payout - jackpot - plain) : null; res.luck = pl.C.luck | 0;
     this.cashTo(pl, payout);
     this.touch(pl);
     pl.out.push({ type: "gameResult", g, bet: amt, mult, payout, jackpot, ...res });
@@ -1634,9 +1648,11 @@ export class World {
       if (!R.bets.length) { R.endsAt = now + G.ROULETTE.betMs; return this.roulSend(S); }   // nobody's in: a fresh window
       // draw the number and settle every bet now, while everyone's still here
       const n = crypto.getRandomValues(new Uint32Array(1))[0] % 37, wins = [];
+      // a spin uses up one lucky bet for everyone at the table who has any; their wins pay the bonus
+      const luckyIds = new Set(); for (const id of new Set(R.bets.map((b) => b.id))) { const p = this.pls.get(id); if (p && (p.C.luck | 0) > 0) { p.C.luck--; luckyIds.add(id); this.touch(p); } }
       for (const b of R.bets) {
         const def = G.ROULETTE_BETS[b.kind]; if (!def.wins(n, b.pick)) continue;
-        const payout = b.amt * def.pays; wins.push({ name: b.name, id: b.id, payout, label: G.rouletteLabel(b.kind, b.pick), mult: def.pays });
+        const payout = luckyIds.has(b.id) ? Math.round(b.amt * def.pays * (1 + G.LUCK.bonus)) : b.amt * def.pays; wins.push({ name: b.name, id: b.id, payout, label: G.rouletteLabel(b.kind, b.pick), mult: def.pays });
         const p = this.pls.get(b.id);
         if (p) { this.cashTo(p, payout); this.touch(p); } else this.creditOffline(b.id, payout);
       }
@@ -1690,7 +1706,7 @@ export class World {
     if (m.op === "start" && (!C.tour || C.tour.step >= G.TOUR.length)) { C.tour = { step: 0, logs: 0, chickens: 0, again: !!C.tour }; this.touch(pl); }
     const step = G.tourOf(C)?.id;
     if (step === "meet") { if (!C.tour.again) this.cashTo(pl, G.TOUR_CHIP); this.tourStep(pl, "meet"); }
-    else if (step === "paid") { if (!C.tour.again) this.cashTo(pl, G.TOUR_PAY); this.tourStep(pl, "paid"); this.say(pl, C.tour.again ? "That's the tour. You know the way." : `Dex pays you ${G.fmtCash(G.TOUR_PAY)}. That's the whole game: play, work, get paid, play.`, "good"); }
+    else if (step === "paid") { if (!C.tour.again) { this.cashTo(pl, G.TOUR_PAY); if (G.roomFor(C.inv, G.TOUR_GIFT) > 0) G.addInv(C.inv, G.TOUR_GIFT, 1); } this.tourStep(pl, "paid"); this.say(pl, C.tour.again ? "That's the tour. You know the way." : `Dex pays you ${G.fmtCash(G.TOUR_PAY)} and a lucky clover. Click the clover in your bag: your next bets pay more. There's more luck out both arches.`, "good"); }
   }
 
   /* ------------------------------------------------------------ daily tasks (the board in the Casino) */
