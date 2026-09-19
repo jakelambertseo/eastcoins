@@ -1751,12 +1751,12 @@ export class World {
   /* THE DAILY PRIZE WHEEL: one spin a Chicago day. The prize is decided and given here; the page only spins to it. */
   prizeSpin(pl) {
     const C = pl.C, day = G.chicagoDay(), last = C.spin;
-    if (last?.day === day) return pl.out.push({ type: "prize", done: true, streak: last.streak | 0 });
+    if (last?.day === day) return pl.out.push({ type: "prize", done: true, streak: last.streak | 0, i: last.i ?? null, text: last.text || null });   // what today's spin was, so the window can show it
     const streak = last?.day === G.dayBefore(day) ? (last.streak | 0) + 1 : 1, P = G.PRIZE, total = P.slices.reduce((a, s) => a + s.w, 0);
     let r = Math.random() * total, i = 0; for (; i < P.slices.length - 1; i++) { r -= P.slices[i].w; if (r < 0) break; }
     const p = P.slices[i];
     if (p.k && G.roomFor(C.inv, p.k) < p.n) return this.say(pl, "Your bag's too full for a prize. Make some room and spin again: it's still free.", "bad");
-    C.spin = { day, streak }; const cash = p.cash ? Math.round(p.cash * (1 + P.streakStep * Math.min(P.streakMax, streak - 1))) : 0;
+    C.spin = { day, streak, i, text: G.prizeText(p, streak) }; const cash = p.cash ? Math.round(p.cash * (1 + P.streakStep * Math.min(P.streakMax, streak - 1))) : 0;
     if (cash) this.cashTo(pl, cash); else this.give(pl, p.k, p.n);
     this.touch(pl); pl.out.push({ type: "prize", i, streak, text: G.prizeText(p, streak) });
     if ((p.cash || 0) >= 1000 || p.k === "chip_black") for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `🎡 ${pl.name} hit ${G.prizeText(p, streak)} on the Daily Prize Wheel!` });
@@ -2241,6 +2241,7 @@ export class World {
       }
       case "item": { const k = String(m.k), n = Math.max(1, Math.min(1000000, m.n | 0)); if (!G.ITEMS[k]) return; const got = this.giveUpTo(pl, k, n); if (got) note(`Gave ${got.toLocaleString()} × ${G.ITEMS[k].name}.`); return; }
       case "clearinv": C.inv = []; this.touch(pl); return note("Inventory cleared.");
+      case "respin": C.spin = null; this.touch(pl); return note("Your Daily Prize Wheel spin is free again (your streak starts over).");
       // the House Ruby's held exchanges: list them, and let one go (after looking at the site's Wallet tab to see whether it paid)
       case "dexlist": return this.ctx.storage.list({ prefix: "dex:", limit: 50 }).then((all) => note(all.size ? [...all].map(([k, r]) => `${k} · ${r.name} · ${r.op} ${r.zc} ZC · ${G.fmtCash(r.cash)} held · ${new Date(r.at).toISOString().slice(0, 16)}${r.stuck ? " · STUCK" : ""}`).join(" | ") : "No held exchanges."));
       case "dexrelease": { const key = String(m.key || ""); if (!key.startsWith("dex:")) return; return this.ctx.storage.get(key).then(async (r) => { if (!r) return note("No such record."); await this.ctx.storage.delete(key); const who = key.split(":").slice(1, -1).join(":"), p = this.pls.get(who); if (m.refund) { if (p) { this.cashTo(p, r.cash); this.touch(p); } else await this.creditOffline(who, r.cash); } note(`Released ${key}${m.refund ? `, ${G.fmtCash(r.cash)} given back` : " (it paid: no Cash back)"}.`); }); }

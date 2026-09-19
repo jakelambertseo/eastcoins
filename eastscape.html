@@ -632,7 +632,7 @@ import * as G from "/v3/assets/js/eastscape-shared.js?v=62";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=36").then((m) => { WK = m; }));
-import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=7";
+import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=8";
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=2";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -2846,7 +2846,7 @@ function renderAdmin(p) {
       <div class="row"><input type="number" id="aQty" value="1" min="1" aria-label="Quantity"><button class="btn" data-a="item">Give</button><button class="btn danger" data-a="clearinv">Clear inventory</button></div>
     </fieldset>
     <fieldset><legend>You</legend>
-      <div class="row"><button class="btn" data-a="heal">Heal</button><button class="btn ${me.god ? "" : "plain"}" data-a="god">God mode: ${me.god ? "on" : "off"}</button></div>
+      <div class="row"><button class="btn" data-a="heal">Heal</button><button class="btn plain" data-a="respin" title="Makes your Daily Prize Wheel spin free again, for testing">Free spin again</button><button class="btn ${me.god ? "" : "plain"}" data-a="god">God mode: ${me.god ? "on" : "off"}</button></div>
       <div class="row"><select id="aScene">${opts(scenes)}</select><button class="btn" data-a="tp">Teleport</button></div>
       <div class="row"><button class="btn plain" data-a="resetscene">Reset this area</button><span class="tag">monsters, trees, rocks, bots</span></div>
     </fieldset>
@@ -2875,7 +2875,7 @@ function renderAdmin(p) {
     clearxp: () => ({ cmd: "clearxp", skill: v("aSkill") }),
     clearall: () => ({ cmd: "clearxp", skill: "all" }),
     item: () => ({ cmd: "item", k: v("aItem"), n: +v("aQty") }),
-    clearinv: () => ({ cmd: "clearinv" }), heal: () => ({ cmd: "heal" }), god: () => ({ cmd: "god" }),
+    clearinv: () => ({ cmd: "clearinv" }), heal: () => ({ cmd: "heal" }), god: () => ({ cmd: "god" }), respin: () => ({ cmd: "respin" }),
     tp: () => ({ cmd: "tp", scene: v("aScene") }), resetscene: () => ({ cmd: "resetscene" }),
     quest: () => ({ cmd: "quest", k: v("aQuest"), state: v("aQState") }), resetquests: () => ({ cmd: "resetquests" }),
     reset: () => ({ cmd: "reset" }), speed: () => ({ cmd: "speed", n: +v("aSpeed") }),
