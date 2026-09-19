@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 46;
+export const VERSION = 47;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -71,8 +71,37 @@ export const ITEMS = {
   cgloomfin: { name: "Cooked gloomfin", icon: "🐟", heal: 10, ex: "Still slightly annoyed. Very filling." },
   cmooncarp: { name: "Cooked moon carp", icon: "🐡", heal: 14, ex: "It glows faintly in your stomach. That's normal. Probably." },
   burnt: { name: "Burnt food", icon: "⚫", ex: "Whatever it was, it's charcoal now." },
+  // ---- 2026-09-20: THE THINGS THAT CHANGE HOW THE CASINO TREATS YOU (see FX, below the casino's numbers) ----
+  // fighting's windfalls: house chips, worth a lump of Cash at the Ruby or a Cashier
+  chip_red: { name: "Red house chip", icon: "🔴", ex: "Somebody's winnings, dropped in a hurry. The Cashier will take it." },
+  chip_black: { name: "Black house chip", icon: "⚫", ex: "A thousand dollars of somebody else's bad night." },
+  chip_gold: { name: "Gold house chip", icon: "🟡", ex: "There are maybe six of these. One of them was inside that thing you just killed." },
+  // fighting's other finds: things you click
+  chip_free: { name: "Free-play chip", icon: "🟢", use: "free", ex: "Click it: your next bet at a machine or a table game is on the house, up to $100. Win and you keep the winnings." },
+  mysterybox: { name: "Mystery box", icon: "🎁", use: "box", ex: "It rattles. Click it and find out." },
+  devils_dice: { name: "Devil's dice", icon: "🎲", use: "devil", ex: "Click within two minutes of a win: TRIPLE what you won, one time in three. The other two times, it's gone." },
+  rewind_watch: { name: "Rewind watch", icon: "⌚", use: "rewind", ex: "Click within a minute of losing a bet and it never happened: your stake comes back (up to $500). Works once." },
+  tp_scroll: { name: "Casino scroll", short: "Scroll", icon: "📜", use: "tp", ex: "Click it and you're standing on the casino floor, wherever you were. Dex sells them at the bar." },
+  // gear, SMITHED: what only a crafter can make
+  gamblers_ring: { name: "Gambler's ring", short: "G. ring", icon: "💍", slot: "ring", fx: { thrift: 0.5 }, ex: "Smithed from bronze and a boar's tusk." },
+  bookies_amulet: { name: "Bookie's amulet", short: "Bookie's", icon: "📿", slot: "amulet", fx: { limit: 250 }, ex: "Smithed from bronze, hide and feathers." },
+  adjusters_visor: { name: "Loss adjuster's visor", short: "Visor", icon: "🧢", slot: "helm", def: 1, fx: { back: 0.01 }, ex: "Smithed from bronze and hornworm husk. Insurance, of a sort." },
+  stake_loafers: { name: "Stakeholder's loafers", short: "Loafers", icon: "👞", slot: "boots", def: 1, fx: { power: 0.5 }, ex: "Smithed from emerald, hide and cobweb. They do nothing on their own." },
+  // gear, DROPPED: rare, and only from things that fight back
+  sharps_gloves: { name: "Card sharp's gloves", short: "Sharp's", icon: "🧤", slot: "gloves", def: 1, fx: { win: 0.01 }, ex: "A rare drop. There's still a card up one sleeve." },
+  angels_ring: { name: "Angel's ring", short: "Angel's", icon: "💍", slot: "ring", fx: { angel: 0.005 }, ex: "A rare drop. Somebody up there owes you one." },
+  // meals, COOKED from something gathered and something killed: all of them leave you Well Fed (no hunger or thirst while they last)
+  chickendinner: { name: "Winner's chicken dinner", short: "Chicken d.", icon: "🍗", heal: 6, meal: { bets: 30, fx: { back: 0.01 } }, ex: "Cooked from chicken and wheat." },
+  steakdinner: { name: "Steak dinner", icon: "🍽️", heal: 8, meal: { bets: 30, fx: { win: 0.02 } }, ex: "Cooked from beef and wheat." },
+  porkchops: { name: "High roller's chops", short: "Chops", icon: "🍖", heal: 10, meal: { bets: 30, fx: { limit: 250 } }, ex: "Cooked from boar and tomatoes." },
+  fishplatter: { name: "Fisherman's platter", short: "Platter", icon: "🐟", heal: 14, meal: { bets: 40, fx: { win: 0.015, back: 0.015 } }, ex: "Cooked from a lanternfish and two sardines." },
+  // drinks, from Dex's bar: one at a time
+  beer: { name: "House lager", short: "Lager", icon: "🍺", drink: { bets: 15, fx: { win: 0.01 } }, ex: "Dex pours it. Click to drink." },
+  whiskey: { name: "Top-shelf whiskey", short: "Whiskey", icon: "🥃", drink: { bets: 10, fx: { win: 0.03 } }, ex: "Liquid confidence. Click to drink." },
+  cocktail: { name: "The Safety Net", short: "Safety Net", icon: "🍸", drink: { bets: 15, fx: { back: 0.02 } }, ex: "Pink, strong, and it takes the edge off losing. Click to drink." },
+  champagne: { name: "Champagne", icon: "🍾", drink: { bets: 10, fx: { limit: 500, win: 0.01 } }, ex: "The pit bosses see the bottle and raise your limits. Click to drink." },
   clover: { name: "Lucky clover", icon: "🍀", luck: 15, ex: "Turns up while you chop, mine, fish and pick. Click it: your next 15 bets pay more." },
-  horseshoe: { name: "Lucky horseshoe", icon: "🧲", luck: 25, ex: "Monsters drop them. Click it: your next 25 bets pay more." },
+  horseshoe: { name: "Lucky horseshoe", icon: "🧲", luck: 25, ex: "Rare, and only found while skilling. Click it: your next 25 bets pay more." },
   // the Gloam and Cloudreach (2026-09-18): where the tier ores actually live
   emerald_ore: { name: "Emerald ore", icon: "🟢", ex: "Green rock with greener bits. Smelt two for an Emerald bar." },
   diamond_ore: { name: "Diamond ore", icon: "💠", ex: "It was pressed into this shape in the dark for a very long time. It is not grateful." },
@@ -478,6 +507,8 @@ export const SCENES = {
       objs.push({ t: "fountain", x: 21, y: 12, w: 2, h: 2, name: "Fountain" }); block(g, 21, 12, 2, 2);
       objs.push({ t: "statue", x: 31, y: 18, name: "Statue" }); g[18][31] = "#";
       objs.push({ t: "sign", x: 25, y: 20, name: "Signpost" }); g[20][25] = "#";
+      // Charon's cart (2026-09-20): the way out to your island, now that River Bend and its ferry are closed
+      objs.push({ t: "cart", art: "o_chariot", x: 15, y: 20, w: 2, h: 1, name: "Charon's cart" }); block(g, 15, 20, 2, 1);
       objs.push({ t: "rock", ore: "stardust", x: 6, y: 19, name: "Fallen Star", special: true, glow: "#e0b0ff", req: { skill: "mining", lvl: 50 }, xp: 150, tease: "It landed during the games last spring. Nobody's managed to chip it yet." }); g[19][6] = "#";
       for (const [x, y] of [[16, 9], [27, 9], [15, 18], [28, 17], [19, 20]]) { objs.push({ t: "bush", x, y, name: "Planter" }); g[y][x] = "#"; }
       for (const [x, y] of [[14, 12], [29, 13]]) { objs.push({ t: "bench", x, y, w: 3, h: 1, name: "Bench" }); block(g, x, y, 3, 1); }
@@ -488,6 +519,7 @@ export const SCENES = {
     mobs: [],
     npcs: [{ name: "Brutus the Smith", x: 31, y: 8, still: true, opens: "shop", hair: "#2a1a10", shirt: "#5a3a2a", pants: "#3a2a1a", lines: ["Tools, bronze, and I'll buy whatever you dug up. Fair prices. Mostly fair.", "Bronze is where it starts. Nobody walks into the Wilderness in a tunic twice.", "Brought ore? I'll take it. Brought a goat? Take it back."] },
       { name: "Livia the Broker", x: 12, y: 16, still: true, opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Selling? Buying? Use the stall. I just take my 1%.", "Offers keep working while you sleep. Come back and collect.", "The best price wins, and whoever was there first."] },
+           { name: "Charon the Ferryman", art: "charon", x: 18, y: 21, still: true, opens: "ferry", hair: "#e8e8e8", shirt: "#3a3a5a", pants: "#2a2a3a", lines: ["Islands. Everyone gets one. Nobody knows who's paying for them.", "The river's closed, so now it's a cart. Don't ask how a cart gets to an island. I don't.", "Plant something before you go back in there and lose your shirt. It grows while you're away.", "Wheat, ten minutes. Tomatoes, twenty. Both sell. Both cook."] },
            { name: "Gaius", x: 25, y: 15, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: Coo. The Forge buys ore. Coo.", "PIGEON: He doesn't talk. I do the talking. Coo.", "PIGEON: The Bank keeps your things safe. Aurelia counts everything twice. Coo.", "PIGEON: West is the Olive Grove. Bring a sword. Seriously. Coo.", "PIGEON: North is Tomatoe Hill. Don't correct her spelling. Coo.", "PIGEON: East is the Via Appia. Highwaymen. Hold on to your Cash. Coo."] }],
     bots: [{ name: "Gannicus", level: 55 }, { name: "Naevia", level: 31 }]
   },
@@ -859,7 +891,9 @@ Object.assign(SCENES, {
       "Broke? West arch to dig and chop, east arch to hit things. Everything out there has its price written on it. The Cashier by the arch turns it into money.",
       "Here's a tip for free: take what you find to the workshop out front first. Anything you make sells for double.",
       "Broke? Happens to the best of us. The board by the door has jobs that pay. Fresh ones every morning.",
-      "Biggest win I've seen? Someone hit three sevens on that end machine. Bought everyone a drink. We don't sell drinks.",
+      "Biggest win I've seen? Someone hit three sevens on that end machine. Bought everyone a drink. You can too: a round's $300.",
+      "Drinks work. A lager and your wins pay a little more, a Safety Net and your losses hurt a little less. One at a time.",
+      "Going out past the Gloam? Take a Casino scroll. Click it and you're back on my floor.",
       "Every roll's decided by the house, fair and square. I just hand over the money.",
       "No ZCoins in here, friend. Cash only. What happens in EastScape stays in EastScape."] },
       { name: "DookieBetts", art: "dookie", x: 28, y: 18, still: true, reach: 2, hair: "#1a1a1a", shirt: "#c8102e", pants: "#1a1a1a", lines: [
@@ -1024,9 +1058,9 @@ Object.assign(SCENES, {
   /* a player's island: one layout per upgrade tier (isle, isle2, isle3), plus the Far Shore past isle3's bridge
      and the cottage inside. Keys are "<layout>:<owner id>". What's planted, shown and painted lives on the owner's
      character (c.isle); the server sends it with each snapshot. Plot and pedestal numbers carry over between tiers. */
-  isle: { name: "Island", island: true, exitTo: { scene: "river", x: 15, y: 10 }, entry: { x: 10, y: 10 }, build() { return isleBuild(1); }, mobs: [], npcs: [], bots: [] },
-  isle2: { name: "Island", island: true, wikiHide: true, exitTo: { scene: "river", x: 15, y: 10 }, entry: { x: 10, y: 10 }, build() { return isleBuild(2); }, mobs: [], npcs: [], bots: [] },
-  isle3: { name: "Island", island: true, wikiHide: true, exits: { e: "shore" }, exitTo: { scene: "river", x: 15, y: 10 }, entry: { x: 10, y: 10 }, build() { return isleBuild(3); }, mobs: [], npcs: [], bots: [] },
+  isle: { name: "Island", island: true, exitTo: { scene: "forum", x: 16, y: 21 }, entry: { x: 10, y: 10 }, build() { return isleBuild(1); }, mobs: [], npcs: [], bots: [] },
+  isle2: { name: "Island", island: true, wikiHide: true, exitTo: { scene: "forum", x: 16, y: 21 }, entry: { x: 10, y: 10 }, build() { return isleBuild(2); }, mobs: [], npcs: [], bots: [] },
+  isle3: { name: "Island", island: true, wikiHide: true, exits: { e: "shore" }, exitTo: { scene: "forum", x: 16, y: 21 }, entry: { x: 10, y: 10 }, build() { return isleBuild(3); }, mobs: [], npcs: [], bots: [] },
   shore: {
     name: "The Far Shore", island: true, exits: { w: "isle3" },
     build() {
@@ -1253,7 +1287,7 @@ export function slotsPay(reels) {
    The whole game in a line: gamble in the casino; when you want better odds, go and skill or fight. Working in the
    world turns up lucky charms; using one makes your next N bets "lucky", and a lucky win pays `bonus` more. Even
    lucky, every game stays just under 100% back, so the casino can't be turned into a Cash printer. */
-export const LUCK = { bonus: 0.025, gather: 1 / 12, kill: 1 / 8, max: 300 };
+export const LUCK = { bonus: 0.025, gather: 1 / 12, shoe: 1 / 150, max: 300 };   // luck is SKILLING's reward alone (2026-09-20): clovers, and rarely a horseshoe
 /* THE FIGHT PIT'S NUMBERS. Two monsters are drawn from `pool`; the chance each wins comes from their levels (square
    roots, so a chicken against a revenant is a long shot, not a no-hoper) and is clamped to 25-75%; each side pays
    `edge` / its chance, so whichever you back the house keeps 5%. WHO WINS IS ONE RANDOM NUMBER against that chance and
@@ -1278,20 +1312,73 @@ export const needOf = (c, k) => Math.max(0, Math.min(100, c?.[k] ?? 100));
 export const tooEmpty = (c) => (needOf(c, "thirst") < NEEDS.floor ? "thirst" : needOf(c, "hunger") < NEEDS.floor ? "hunger" : null);
 export const NEED_TEXT = { thirst: "You're too thirsty to gamble. There's a water cooler on the card room's back wall, next to the bar, and two in the Fight Pit.", hunger: "You're too hungry to gamble. There's a buffet on the card room's back wall, next to the water cooler, and two in the Fight Pit." };
 
-/* BUFFS: whatever is improving your odds right now, shown top-right of the game. There is one today (luck); the bar,
-   the chips and this list are built for several, because players will end up stacking them. A buff is { id, left }
-   plus what BUFFS says about it; `icon` is an item icon. To add one: a row here, a line in buffsOf, and the server
-   spending it wherever it applies. */
-export const BUFFS = {
-  luck: { name: "Lucky", icon: "clover", unit: "bet", ex: `Every win pays ${LUCK.bonus * 100}% more. One is used up per bet.` }
+/* ------------------------------------------------------------ FX: gear, meals, drinks and finds (2026-09-20)
+
+   The owner's brief: three jobs that each pay DIFFERENTLY, and the item effects of "Gamble With Your Friends" on gear,
+   cooked meals and alcohol.
+     SKILLING is the only way to get LUCKY (clovers while you gather).
+     FIGHTING pays in windfalls: a Cash bounty on every monster (BOUNTY), house chips, free-play chips, mystery boxes,
+       Devil's dice, rewind watches, the two rare-drop pieces of gambling gear, and HIGH ROLLER (double limits).
+     CRAFTING makes what you keep: four smithed pieces of gambling gear and four cooked dinners, every one of which
+       needs something dug up AND something killed. Dex's bar sells the drinks.
+   An item carries `fx`: win (+share of PROFIT on a win), back (share of a lost stake returned), angel (chance a lost
+   stake comes back whole), limit (+$ on every table's limit), thrift (hunger and thirst cost this much of normal),
+   power (worn gear's other effects are this much stronger). A meal is `meal: {bets, fx}`, a drink `drink: {bets, fx}`;
+   one of each at a time, a new one replaces the old.
+
+   THE CEILING. Every game returns about 97% and luck adds ~2.4%. GEAR ALONE can add at most 1.5% of profit and 1.5% of
+   losses (FX_CAP.gear), so gear never takes a game over 100% by itself. Everything stacked (gear + meal + drink) stops
+   at FX_CAP.all, which with luck is about 104% back: the top of the band eastcoin.vip's own casino is drawn in, and
+   only for as long as the dinner and the drink last, both of which cost work or Cash. edgeOf() is the ONE place this
+   is added up and the server is the only thing that calls it for money.
+   *** CASH ONLY. If a GAMBA table ever takes real ZCoins, none of this may touch it (see BACKLOG: "Never"). *** */
+export const FX_CAP = { gear: { win: 0.015, back: 0.015, angel: 0.0075 }, all: { win: 0.05, back: 0.03, angel: 0.01 } };
+export const ROLLER = { kill: 1 / 8, bets: 10, max: 100, mult: 2 };
+export const FREEPLAY = 100, DEVIL = { ms: 120000, odds: 1 / 3, pays: 3, max: 5000 }, REWIND = { ms: 60000, max: 500 };
+export function edgeOf(c) {
+  const worn = SLOTS.map((s) => ITEMS[c?.eq?.[s]]?.fx).filter(Boolean), power = 1 + worn.reduce((a, f) => a + (f.power || 0), 0);
+  const g = { win: 0, back: 0, angel: 0, limit: 0 }; let thrift = 1;
+  for (const f of worn) { for (const k of Object.keys(g)) g[k] += (f[k] || 0) * power; if (f.thrift) thrift = Math.min(thrift, f.thrift); }
+  for (const k of ["win", "back", "angel"]) g[k] = Math.min(FX_CAP.gear[k], g[k]);
+  const out = { ...g, thrift, power };
+  for (const st of [c?.meal, c?.drink]) { const it = st && (st.left | 0) > 0 && ITEMS[st.k], f = it && (it.meal || it.drink)?.fx; if (f) for (const k of Object.keys(g)) out[k] += f[k] || 0; }
+  for (const k of ["win", "back", "angel"]) out[k] = Math.min(FX_CAP.all[k], out[k]);
+  out.fed = (c?.meal?.left | 0) > 0;
+  return out;
+}
+/** The most this player may put on one bet right now: the table's limit, plus gear/meal/drink, doubled while a High Roller. */
+export const baseBetOf = (c) => CASINO.maxBet + Math.round(edgeOf(c).limit);
+export const maxBetOf = (c) => baseBetOf(c) * ((c?.roller | 0) > 0 ? ROLLER.mult : 1);
+/** What a winning bet pays with this player's effects (e from edgeOf, fixed when the stake went down). `plain` is the game's own payout. */
+export const payWith = (plain, stake, e, lucky) => (plain > 0 ? Math.round(plain * (lucky ? 1 + LUCK.bonus : 1) + Math.max(0, plain - stake) * (e?.win || 0)) : 0);
+/** What comes back from a LOST stake: all of it if the angel roll (0..1) lands, else the insured share. */
+export const backWith = (lost, e, roll) => (lost > 0 && e ? (roll < (e.angel || 0) ? lost : Math.round(lost * (e.back || 0))) : 0);
+const pct = (n) => `${Math.round(n * 1000) / 10}%`;
+export const fxText = (f) => [f.win && `wins pay ${pct(f.win)} more profit`, f.back && `${pct(f.back)} of every loss comes back`, f.angel && `1 lost bet in ${Math.round(1 / f.angel)} comes back whole`,
+  f.limit && `every table lets you bet $${f.limit} more`, f.thrift && `betting makes you ${pct(1 - f.thrift)} less hungry and thirsty`, f.power && `your other worn gambling gear is ${pct(f.power)} stronger`].filter(Boolean).join("; ");
+for (const it of Object.values(ITEMS)) {   // say what it does, once, from the numbers
+  if (it.fx) it.ex = `Worn: ${fxText(it.fx)}. ${it.ex || ""}`.trim();
+  if (it.meal) it.ex = `${it.ex || ""} Eat it: WELL FED for ${it.meal.bets} bets (no hunger or thirst), and ${fxText(it.meal.fx)}.`.trim();
+  if (it.drink) it.ex = `${it.ex || ""} For ${it.drink.bets} bets: ${fxText(it.drink.fx)}.`.trim();
+}
+
+/* BUFFS: whatever is changing how the casino treats you right now, shown top-right of the game. buffsOf returns them
+   ready to draw: { id, name, icon (an item icon), ex, left (null for something worn), unit }. */
+export const buffsOf = (c) => {
+  const out = [], one = (id, name, icon, ex, left = null, unit = "bet") => out.push({ id, name, icon, ex, left, unit });
+  if ((c?.luck | 0) > 0) one("luck", "Lucky", "clover", `Every win pays ${LUCK.bonus * 100}% more. One is used up per bet. Only skilling finds clovers.`, c.luck | 0);
+  if ((c?.roller | 0) > 0) one("roller", "High Roller", "chip_black", "Every table's limit is doubled. One is used up each time you bet over the normal limit. From fighting.", c.roller | 0, "big bet");
+  if ((c?.free | 0) > 0) one("free", "Free play", "chip_free", `Your next bet at a machine or table game is on the house, up to $${c.free}.`, 1);
+  for (const st of [c?.meal, c?.drink]) { const it = st && (st.left | 0) > 0 && ITEMS[st.k]; if (it) one(it.meal ? "meal" : "drink", it.meal ? "Well Fed" : it.short || it.name, st.k, `${it.name}: ${it.meal ? "no hunger or thirst, and " : ""}${fxText((it.meal || it.drink).fx)}.`, st.left | 0); }
+  for (const s of SLOTS) { const k = c?.eq?.[s], it = k && ITEMS[k]; if (it?.fx) one(`worn:${k}`, it.short || it.name, k, `${it.name} (worn): ${fxText(it.fx)}.`); }
+  return out;
 };
-export const buffsOf = (c) => [(c?.luck | 0) > 0 && { id: "luck", left: c.luck | 0 }].filter(Boolean);
 
 /* ------------------------------------------------------------ what's open (2026-09-19 reset)
    One casino (with its Roulette Room), one town, one skilling area, one combat area. Everything else still exists in
    the code but can't be reached yet; a saved character standing somewhere closed wakes up in the casino. */
 export const OPEN = new Set(["casino", "roulette", "fightpit", "forum", "bathhouse", "workyard", "gloam", "cloud", "paddock", "rough", "boneyard"]);
-export const OPEN_DAILY = new Set(["logs", "tin", "copper", "sardine", "wheat", "cows", "chickens", "rotten", "boar", "highwayman", "emerald", "lantern", "willow", "diamond", "dragonstone", "moths", "ghouls"]);
+export const OPEN_DAILY = new Set(["logs", "tin", "copper", "sardine", "wheat", "cows", "chickens", "rotten", "boar", "highwayman", "emerald", "lantern", "willow", "diamond", "dragonstone", "moths", "ghouls", "bars", "cooked", "dinners", "steaks", "swords"]);
 for (const k of Object.keys(SCENES)) if (!OPEN.has(k)) SCENES[k].wikiHide = true;   // closed areas stay out of the wiki
 
 /* ------------------------------------------------------------ the House Tour: how a new player learns the loop
@@ -1307,19 +1394,26 @@ export const TOUR = [
 ];
 export const TOUR_CHIP = 10, TOUR_PAY = 60, TOUR_GIFT = "clover", TOUR_JOB = { logs: 5, chickens: 3 };
 export const tourOf = (c) => (c?.tour && c.tour.step < TOUR.length ? TOUR[c.tour.step] : null);
-export const HOWTO = `GAMBA is a casino. You'll spend most of your time right here.
+export const HOWTO = `GambaScape is a casino. You'll spend most of your time right here.
 
 PLAY: every kind of game has its own roped-off room, named on the carpet at its way in. SLOTS fill the north-west. WHEELS and COIN FLIP are below them. The CARD ROOM is by the bar. The DICE PIT and the INSTANT WINS machines (Plinko, Mines, Scratch-Off) are in the south-east. Roulette is through the door in the back wall. Bets come out of the Cash in your bag.
 
 BROKE? Go and get more. It's quick.
   WEST arch: the Workyard, then the Gloam, then Cloudreach. Chop, mine, fish. Every rock and tree has its price written over it, and it's worth more the further out you go.
   EAST arch: the Paddock, then the Rough, then the Boneyard. Monsters drop things worth money. Bigger monsters, bigger money.
-  FRONT door, the workshop: anything you MAKE from what you found sells for DOUBLE. Ore into bars, bars into swords, fish into dinner.
+  FRONT door, the workshop: anything you MAKE from what you found sells for DOUBLE. Ore into bars, bars into swords, fish into dinner. Brutus, at the Forge, buys what you smith.
 Then bring it to the HOUSE RUBY in the middle of the floor, or to a CASHIER by either arch. One click and it's Cash.
 
 THIRSTY? HUNGRY? Every bet takes a little out of you. Under 20% the tables turn you away: the water cooler and the buffet are on the card room's back wall, next to the bar, and they're free.
 
-WANT BETTER ODDS? Out there you'll also find lucky clovers and horseshoes. Click one in your bag and your next bets are LUCKY: every win pays more.
+EACH JOB PAYS DIFFERENTLY.
+  SKILLING is the only way to get LUCKY: clovers turn up while you gather. Click one and your next bets pay more when they win.
+  FIGHTING pays in windfalls: every monster carries Cash, any kill can turn up a house chip worth up to $5,000, a free-play chip, a mystery box, and kills make you a HIGH ROLLER (double table limits for a few bets). Two pieces of gambling gear only ever drop.
+  CRAFTING makes what you keep: rings, amulets and visors that change how the tables treat you for as long as you wear them, and dinners that keep you at the table. Dex sells drinks; they work too.
+Everything you've got going is in the BUFFS bar, top right. Hover one to see what it does.
+
+FAR FROM HOME? Dex sells Casino scrolls. Click one and you're back on the floor.
+YOUR ISLAND: Charon's cart, in the square out the front door. Plant wheat or tomatoes; they grow while you're away.
 
 That's it. Play, go broke, go get more, play better. Dex, behind the bar, always knows what you should do next.`;
 
@@ -1371,7 +1465,13 @@ export const DAILY = [
   { id: "ghouls", what: "kill", k: "ghoul", n: 6, cash: 520, req: { skill: "melee", lvl: 28 } },
   { id: "willow", what: "gather", k: "willowlogs", n: 20, cash: 560, req: { skill: "woodcutting", lvl: 15 } },
   { id: "rams", what: "kill", k: "ram", n: 6, cash: 700, req: { skill: "melee", lvl: 40 } },
-  { id: "dragonstone", what: "gather", k: "dragonstone_ore", n: 10, cash: 800, req: { skill: "mining", lvl: 30 } }
+  { id: "dragonstone", what: "gather", k: "dragonstone_ore", n: 10, cash: 800, req: { skill: "mining", lvl: 30 } },
+  // things you MAKE (2026-09-20): the workshop gets its share of the board, so ore has somewhere better to go than the Cashier
+  { id: "bars", what: "make", k: "bronze_bar", n: 10, cash: 220, req: { skill: "smithing", lvl: 10 } },
+  { id: "cooked", what: "make", k: "cchicken", n: 8, cash: 110, req: null },
+  { id: "dinners", what: "make", k: "chickendinner", n: 3, cash: 200, req: { skill: "cooking", lvl: 3 } },
+  { id: "steaks", what: "make", k: "steakdinner", n: 3, cash: 320, req: { skill: "cooking", lvl: 8 } },
+  { id: "swords", what: "make", k: "bronze_sword", n: 3, cash: 380, req: { skill: "smithing", lvl: 10 } }
 ];
 export const DAILY_COUNT = 3;
 export const chicagoDay = (t = Date.now()) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(t);
@@ -1420,6 +1520,16 @@ for (const [i, t] of TIERS.entries()) {
   }
 }
 
+// what only a crafter can make (2026-09-20): each takes something dug up AND something killed
+recipe("smith_gamblers_ring", { skill: "smithing", station: "anvil", in: [["bronze_bar", 2], ["tusk", 1]], out: ["gamblers_ring", 1], lvl: 5, xp: 60, ms: 2600 });
+recipe("smith_bookies_amulet", { skill: "smithing", station: "anvil", in: [["bronze_bar", 3], ["hide", 2], ["feather", 10]], out: ["bookies_amulet", 1], lvl: 10, xp: 90, ms: 2600 });
+recipe("smith_adjusters_visor", { skill: "smithing", station: "anvil", in: [["bronze_bar", 2], ["husk", 3]], out: ["adjusters_visor", 1], lvl: 15, xp: 120, ms: 2600 });
+recipe("smith_stake_loafers", { skill: "smithing", station: "anvil", in: [["emerald_bar", 2], ["hide", 3], ["cobweb", 1]], out: ["stake_loafers", 1], lvl: 25, xp: 220, ms: 2600 });
+recipe("cook_chickendinner", { skill: "cooking", station: "fire", in: [["chicken", 1], ["wheat", 2]], out: ["chickendinner", 1], lvl: 3, xp: 45, burnStop: 22 });
+recipe("cook_steakdinner", { skill: "cooking", station: "fire", in: [["beef", 1], ["wheat", 2]], out: ["steakdinner", 1], lvl: 8, xp: 70, burnStop: 30 });
+recipe("cook_porkchops", { skill: "cooking", station: "fire", in: [["pork", 1], ["tomatoe", 2]], out: ["porkchops", 1], lvl: 14, xp: 100, burnStop: 40 });
+recipe("cook_fishplatter", { skill: "cooking", station: "fire", in: [["lanternfish", 1], ["sardine", 2]], out: ["fishplatter", 1], lvl: 18, xp: 140, burnStop: 45 });
+
 /** Every recipe a station can run, hardest first so "the best thing you can make" is recipesAt()[0]. */
 export const recipesAt = (station) => Object.values(RECIPES)
   .filter((r) => r.station === station || (station === "range" && r.station === "fire"))
@@ -1435,6 +1545,10 @@ export const AFK_MS = 3 * 60 * 1000;
 export const AFK_KINDS = { rock: "mining", vein: "mining", spot: "fishing", tree: "chopping", olive: "picking", wheat: "picking", cook: "cooking", smelt: "smelting", smith: "smithing" };
 
 // the Forge: Brutus sells tools and the Bronze set, and buys what you gather (for less than you'll get on the Exchange, usually)
+/* Dex's bar (2026-09-20): drinks and the scroll home. Priced so a lager about pays for itself at the table limit and
+   costs you at small stakes: a drink is for someone betting big, and otherwise a Cash sink. `round` buys everyone on
+   the floor who isn't already drinking a lager's worth of bets. */
+export const BAR = { sells: [["beer", 40], ["cocktail", 90], ["whiskey", 100], ["champagne", 200], ["tp_scroll", 50]], round: { price: 300, k: "beer", bets: 10 } };
 export const SHOP = {
   // Brutus stocks tools and BRONZE ONLY. Everything above bronze is found, not
   // bought — otherwise the fastest route to the best gear in the game is to
@@ -1463,33 +1577,62 @@ export const SHOP = {
 
    GAMBA in one loop: gamble; go broke; go and get more. Skilling (west arch) and fighting (east arch) turn up things
    the Cashier on the casino floor buys for the amount written over them out in the world. Take them to the workshop
-   (front door) first and whatever you MAKE sells for DOUBLE what went into it, because you had to go and get it:
-   copper $10 + tin $10 -> bronze bar $40 -> a bronze sword (2 bars) $160. One list, read by the Cashier, by Brutus,
+   (front door) first and whatever you MAKE sells for DOUBLE the raw materials in it, because you had to go and get
+   them, and a quarter more again for every further step: copper $10 + tin $10 -> bronze bar $40 -> a bronze sword
+   (2 bars, $40 of ore) $100. (Until 2026-09-20 each step doubled the last, so a sword was $160 and a miner with an
+   anvil earned twice what anyone else could: see tools/eastscape-balance.mjs.) One list, read by the Cashier, by Brutus,
    by the labels over rocks and monsters, and by the wiki. A made thing is never priced here by hand. */
 export const VALUE = {
   logs: 10, copper: 10, tin: 10, sardine: 10, trout: 18, wheat: 4, olives: 3,
   willowlogs: 15, emerald_ore: 15, lanternfish: 16, diamond_ore: 22,            // the Gloam
   skyashlogs: 28, dragonstone_ore: 30, skyeel: 30, onyx_ore: 40,                // Cloudreach
   receipt: 15, cobweb: 25,                                                      // the Boneyard's leavings
+  chip_red: 250, chip_black: 1000, chip_gold: 5000,                             // fighting's windfalls
   chicken: 8, feather: 1, bones: 3, beef: 12, hide: 14, tomatoe: 5, husk: 10, pork: 16, tusk: 18, pit: 2, mask: 60, monocle: 40, manifesto: 25
 };
 for (const [k, v] of Object.entries(SHOP.buys)) if (!(k in VALUE) && !ITEMS[k]?.slot) VALUE[k] = v;      // the closed areas keep Brutus's old prices until they reopen
-export const CRAFT_PAYS = 2;
-for (let pass = 0; pass < 4; pass++) for (const r of Object.values(RECIPES)) {                                // bars before the gear made of them
-  if (r.in.every(([k]) => VALUE[k] != null)) VALUE[r.out[0]] = Math.round(CRAFT_PAYS * r.in.reduce((a, [k, n]) => a + VALUE[k] * n, 0) / (r.out[1] || 1));
+export const CRAFT_PAYS = 2, CRAFT_STEP = 1.25;
+{ // RAW[k]: the raw materials in one of a thing, and how many times it has been worked. Bars before the gear made of them.
+  const RAW = Object.fromEntries(Object.entries(VALUE).map(([k, v]) => [k, { v, steps: 0 }]));
+  for (let pass = 0; pass < 4; pass++) for (const r of Object.values(RECIPES)) {
+    if (!r.in.every(([k]) => RAW[k])) continue;
+    const raw = r.in.reduce((a, [k, n]) => a + RAW[k].v * n, 0) / (r.out[1] || 1), steps = 1 + Math.max(...r.in.map(([k]) => RAW[k].steps));
+    RAW[r.out[0]] = { v: raw, steps }; VALUE[r.out[0]] = Math.round(CRAFT_PAYS * raw * CRAFT_STEP ** (steps - 1));
+  }
 }
 { // Brutus pays what the Cashier pays. Neither may pay what Brutus SELLS a thing for, or buying and selling it back is a money printer.
   const sold = Object.fromEntries(SHOP.sells);
   for (const [k, v] of Object.entries(VALUE)) { if (sold[k]) VALUE[k] = Math.min(v, Math.floor(sold[k] * 0.7)); SHOP.buys[k] = VALUE[k]; }
 }
+/* BOUNTY: what an average kill comes to, everything counted. From tools/eastscape-balance.mjs (2026-09-20): a fighter of
+   the monster's own level, in the gear that level wears, should make 1.15x what a miner of that level makes in the same
+   time (the owner: "mostly match, with fighting winning slightly"). Before this a hornworm paid a fifth of what the
+   rock next to it did. 88% of it is the monster's own drops plus Cash it carries (a "coins" drop fills the gap); the
+   rest arrives as FINDS, below, which is why a bigger monster turns up more chips. */
+export const BOUNTY = { chicken: 23, cow: 47, rotten: 59, olive: 60, hornworm: 75, boar: 82, highwayman: 66, goat: 70, gnasher: 135, moth: 119, taxwraith: 240, ghoul: 289, chandelier: 311, understudy: 351, ram: 421, angel: 492, revenant: 497, goose: 550 };
+for (const [t, want] of Object.entries(BOUNTY)) {
+  const m = MOBS[t]; m.drops = m.drops.filter(([k]) => k !== "coins");
+  const other = m.drops.reduce((a, [k, n, p]) => a + (VALUE[k] ?? 0) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0), gap = Math.round(want * 0.88 - other);
+  if (gap >= 2) m.drops.push(["coins", [Math.max(1, Math.round(gap * 0.6)), Math.round(gap * 1.4)]]);
+}
+/* FINDS: what any kill can turn up on top of the monster's own drops. [item, share]: the chance is share x the
+   monster's bounty / the find's worth, so every monster gives the same fraction of its pay this way and a chicken
+   farmer sees a red chip about once in 250 kills while the Understudy coughs one up every 14. */
+export const FINDS = [["chip_red", 0.04, 250], ["chip_black", 0.03, 1000], ["chip_gold", 0.03, 5000], ["chip_free", 0.008, 50], ["mysterybox", 0.008, 60], ["devils_dice", 0.004, 50], ["rewind_watch", 0.006, 250]];
+export const findChance = (mob, [, share, worth]) => Math.min(0.25, share * (BOUNTY[mob] || 0) / worth);
+// the two pieces of gambling gear that only drop (crafters make the other four)
+for (const [t, k, p] of [["highwayman", "sharps_gloves", 0.006], ["ghoul", "sharps_gloves", 0.012], ["understudy", "sharps_gloves", 0.025], ["moth", "angels_ring", 0.006], ["taxwraith", "angels_ring", 0.01], ["chandelier", "angels_ring", 0.02]]) MOBS[t].drops.push([k, 1, p]);
+export const BOX = [["clover", 3], ["chip_red", 2], ["chip_free", 3], ["beer", 3], ["whiskey", 2], ["cocktail", 2], ["steakdinner", 2], ["tp_scroll", 3], ["devils_dice", 2], ["rewind_watch", 1], ["chip_black", 0.3]];   // what's in a mystery box, by weight
 export const valueOf = (k) => VALUE[k] ?? SHOP.buys[k] ?? 0;
+/** The first thing a raw material can be made into, and what that's worth each: the Cashier's "worth more made" nudge. */
+export const madeFrom = (k) => { const r = Object.values(RECIPES).filter((x) => x.in.some(([i]) => i === k) && !ITEMS[x.out[0]]?.slot).sort((a, b) => a.lvl - b.lvl)[0]; return r ? { r, out: r.out[0], verb: STATIONS[r.station === "fire" ? "range" : r.station]?.verb || "make" } : null; };
 /** What one go at a thing in the world is worth: the label drawn over a rock, a tree, a fishing spot. */
 export const nodeValue = (ob) => (ob.t === "rock" || ob.t === "vein" ? valueOf(ob.ore) : ob.t === "spot" ? valueOf(ob.fish || "sardine") : ob.t === "wheat" ? valueOf("wheat")
   : ob.t === "olive" || ob.t === "vine" ? valueOf(ob.crop || "olives") : ["tree", "oak", "yew", "cypress", "deadtree", "willow", "skyash"].includes(ob.t) ? valueOf(ob.log || "logs") : 0);
 /** What a monster's drops come to on an average kill. */
 export const mobValue = (t) => Math.round((MOBS[t]?.drops || []).reduce((a, [k, n, p]) => a + (k === "coins" ? 1 : valueOf(k)) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0));
 /** What the Cashier will take off you in one go: loot and things you made, never tools, charms or anything you could wear. */
-export const isLoot = (k) => k !== "coins" && valueOf(k) > 0 && !ITEMS[k]?.slot && !ITEMS[k]?.luck;
+export const isLoot = (k) => k !== "coins" && valueOf(k) > 0 && !ITEMS[k]?.slot && !ITEMS[k]?.luck && !ITEMS[k]?.use && !ITEMS[k]?.drink;
 
 // dying outside the Cage: a quarter of the time one worn item falls where you died. The killer alone can take it
 // for lootMs, then anyone, until it's gone. Leaving mid-fight leaves your character standing there for lingerMs.
@@ -1511,7 +1654,7 @@ export const ISLE_TIERS = [null,
   { name: "Island", plots: 8, shelf: 6 },
   { name: "Bigger island", price: 5000, plots: 12, shelf: 9, ex: "More land: 12 plots, 9 pedestals and a bigger pen." },
   { name: "The Far Shore", price: 20000, plots: 20, shelf: 15, ex: "A bridge off the east side to a second island: 8 more plots, 6 more pedestals and a lighthouse." }];
-export const ISLE_FERRY = { scene: "river", x: 15, y: 10 };
+export const ISLE_FERRY = { scene: "forum", x: 16, y: 21 };   // (was River Bend's ferry until 2026-09-20: Charon works from a cart in the square now)
 export const CROPS = {
   wheat: { lvl: 1, ms: 10 * 60000, yield: [3, 5], xp: 30 },
   tomatoe: { lvl: 5, ms: 20 * 60000, yield: [3, 6], xp: 70 },
@@ -1570,7 +1713,7 @@ export const EXAMINE = {
   lighthouse: ["A lighthouse. The light points inward, at the island. Nobody knows who it's warning.", "The door's painted on. The light is on anyway."],
   mule: ["A mule. It refuses to move. It has refused for eleven years.", "The mule looks at you. You feel judged by a professional."]
 };
-export const VERB = { fight: "Bet on", coinstatue: "Cash in at", cooler: "Drink at", buffet: "Eat at", cashier: "Cash in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
+export const VERB = { cart: "Ride", fight: "Bet on", coinstatue: "Cash in at", cooler: "Drink at", buffet: "Eat at", cashier: "Cash in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
 /* ------------------------------------------------------------ quests are data
    goal.type "bring": have goal.n of goal.items in your bag when you talk to the giver (they're taken)
@@ -1765,7 +1908,7 @@ function migrate(out) {
 
 export function freshChar() {
   return {
-    v: SAVE_V, scene: START.scene, x: START.x, y: START.y, hp: 10, hunger: 100, thirst: 100, tour: { step: 0, logs: 0, chickens: 0 },
+    v: SAVE_V, scene: START.scene, x: START.x, y: START.y, hp: 10, hunger: 100, thirst: 100, roller: 0, free: 0, meal: null, drink: null, tour: { step: 0, logs: 0, chickens: 0 },
     inv: [{ k: "coins", n: 25 }, { k: "pickaxe", n: 1 }, { k: "axe", n: 1 }, { k: "rod", n: 1 }],
     eq: { helm: "cap", weapon: "rudis", body: "tunic", shield: "parma", legs: null, gloves: null, boots: "sandals", ring: null },
     stance: DEFAULT_STANCE,
@@ -1801,6 +1944,7 @@ export function normChar(c) {
     theme: fi.theme, open: ci.open !== false, tier: [1, 2, 3].includes(ci.tier) ? ci.tier : 1
   };
   if (out.isle.themes.includes(ci.theme)) out.isle.theme = ci.theme;
+  for (const k of ["meal", "drink"]) if (!out[k] || !ITEMS[out[k].k]?.[k] || !((out[k].left | 0) > 0)) out[k] = null;
   out.stance = stanceOf(out);
   out.stats = normStats(out.stats);
   return migrate(out);          // brings an older save up to SAVE_V and stamps out.v

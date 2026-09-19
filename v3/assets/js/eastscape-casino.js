@@ -174,11 +174,12 @@ export function createCasino(env) {
   }
   function stakeRow() {
     const row = el("div", "cz-stakerow"), C = G.CASINO; R.stake = el("input", "cz-stake"); R.stake.type = "number"; R.stake.min = C.minBet; R.stake.max = C.maxBet; R.stake.value = bet; R.stake.setAttribute("aria-label", "Bet");
-    const setBet = (v) => { bet = Math.max(C.minBet, Math.min(C.maxBet, Math.floor(v) || C.minBet)); R.stake.value = bet; refresh(); };
-    R.stake.addEventListener("input", () => { bet = Math.max(C.minBet, Math.min(C.maxBet, Math.floor(+R.stake.value) || C.minBet)); refresh(); });
+    const top = () => G.maxBetOf(env.me());   /* your own limit: the table's, plus a Bookie's amulet or champagne, doubled while a High Roller */
+    const setBet = (v) => { bet = Math.max(C.minBet, Math.min(top(), Math.floor(v) || C.minBet)); R.stake.value = bet; R.stake.max = top(); refresh(); };
+    R.stake.addEventListener("input", () => { bet = Math.max(C.minBet, Math.min(top(), Math.floor(+R.stake.value) || C.minBet)); refresh(); });
     R.stake.addEventListener("blur", () => { R.stake.value = bet; });
     row.append(R.stake); R.chips = [];
-    for (const [label, fn] of [["10", () => 10], ["50", () => 50], ["100", () => 100], ["500", () => 500], ["½", () => bet / 2], ["2×", () => bet * 2], ["Max", () => Math.min(C.maxBet, cash())]]) { const b = el("button", "cz-chip", label); b.type = "button"; b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); setBet(fn()); }); R.chips.push(b); row.append(b); }
+    for (const [label, fn] of [["10", () => 10], ["50", () => 50], ["100", () => 100], ["500", () => 500], ["½", () => bet / 2], ["2×", () => bet * 2], ["Max", () => Math.min(top(), Math.max(cash(), env.me()?.free | 0))]]) { const b = el("button", "cz-chip", label); b.type = "button"; b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); setBet(fn()); }); R.chips.push(b); row.append(b); }
     return row;
   }
   const lockBtn = (cls = "") => { const b = el("button", `cz-lock ${cls}`); b.type = "button"; return b; };
@@ -197,23 +198,25 @@ export function createCasino(env) {
     R.recent.innerHTML = s.recent.map((d) => `<span class="${d > 0 ? "w" : ""}">${d > 0 ? "+" : d < 0 ? "−" : ""}${Math.abs(d).toLocaleString()}</span>`).join("");
     R.needs.innerHTML = [["thirst", "Thirst", ""], ["hunger", "Hunger", "food"]].map(([k, n, cls]) => { const v = Math.round(G.needOf(me, k)); return `<div class="cz-need ${cls}${v < G.NEEDS.floor ? " low" : ""}">${n} ${v}%<i><u style="width:${v}%"></u></i></div>`; }).join("");
     const luck = me?.luck | 0; R.luck.className = `cz-luck${luck ? " on" : ""}`;
-    R.luck.textContent = luck ? `🍀 Lucky: your next ${luck} bet${luck === 1 ? "" : "s"} pay ${G.LUCK.bonus * 100}% more when they win.` : "Want better odds? Lucky clovers turn up while you work out the west arch, and monsters out the east arch drop horseshoes. Use one and your wins pay more.";
+    const others = G.buffsOf(me).filter((b) => b.id !== "luck").map((b) => `${b.name}${b.left != null ? ` × ${b.left}` : ""}`), lim = G.maxBetOf(me);
+    R.luck.textContent = (luck ? `🍀 Lucky: your next ${luck} bet${luck === 1 ? "" : "s"} pay ${G.LUCK.bonus * 100}% more when they win.` : "Want better odds? Only skilling finds lucky clovers (west arch). Fighting makes you a High Roller. Crafting makes rings and dinners, and Dex sells drinks.")
+      + (others.length ? ` Also on: ${others.join(" · ")}.` : "") + (lim !== G.CASINO.maxBet ? ` Your limit here is ${money(lim)}.` : "");
     if (R.jack && jack.pot != null) R.jack.innerHTML = `<small>JACKPOT</small><b>${money(Math.floor(jack.pot))}</b><small>Three sevens wins it · a ${money(G.CASINO.maxBet)} spin wins it all${jack.last ? ` · last: ${esc(jack.last.name)} ${money(jack.last.amt)}` : ""}</small>`;
     UI[GAME]?.refresh?.();
   }
   const empty = () => { const why = G.tooEmpty(env.me()); if (why) { phase(why === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[why]); SFX.play("ui_error"); } return !!why; };
   const broke = () => { if (empty()) return true; return brokeOnly(); };
-  const brokeOnly = () => { if (bet > cash()) { phase(`You only have ${money(cash())}`, "bad"); note("Broke? West arch to mine and chop, east arch to fight. The Cashier by either arch pays for what you bring back."); SFX.play("ui_error"); return true; } return false; };
+  const brokeOnly = () => { if (bet > cash() + (env.me()?.free | 0)) { phase(`You only have ${money(cash())}`, "bad"); note("Broke? West arch to mine and chop, east arch to fight. The Cashier by either arch pays for what you bring back."); SFX.play("ui_error"); return true; } return false; };
   function place(pick) {          // one bet, one answer
     if (busy || broke()) return; busy = true; const g = GAME, t = token; R.pop?.classList.remove("show");
     UI[g].start?.(); send({ t: "bet", g, amt: bet, pick });
     setTimeout(() => { if (busy && t === token && GAME === g && !UI[g].pending) { busy = false; UI[g].idle?.(); phase("No answer from the table. Try again.", "bad"); } }, 4500);
   }
   function settle(e, text, won) {
-    const delta = e.payout - e.bet; record(e.g, delta); busy = false;
+    const own = e.bet - (e.free || 0), delta = e.payout - own; record(e.g, delta); busy = false;
     phase(text, delta > 0 ? "done" : e.payout ? "open" : "bad");
     if (e.jackpot) { pop(`JACKPOT`, `+${money(e.payout)}`); SFX.play("jackpot"); }
-    else if (delta > 0) { pop(`+${money(delta)}`, `${e.mult}×${e.lucky ? ` · +${e.lucky} lucky` : ""}`); SFX.play(e.payout > e.bet * 4 ? "win_big" : "win_small"); }
+    else if (delta > 0) { pop(`+${money(delta)}`, `${e.mult}×${e.lucky ? ` · +${e.lucky} from buffs` : ""}${e.free ? " · free play" : ""}`); SFX.play(e.payout > e.bet * 4 ? "win_big" : "win_small"); }
     else SFX.play(e.payout === e.bet ? "chip" : "lose");
     refresh();
   }
@@ -304,7 +307,7 @@ export function createCasino(env) {
     scratch: {
       title: "Scratch-Off", sub: "Nine boxes · three of a kind wins",
       build() {
-        R.board.innerHTML = `<div class="cz-ticket idle" id="czTicket"><div class="cz-tktop"><b>GAMBA Scratch</b><span id="czTkNo">match three</span></div><div class="cz-tkgrid"><div class="cz-tkcells" id="czCells">${"<div class='cz-tkcell'></div>".repeat(9)}</div><canvas class="cz-foil gone" id="czFoil" width="300" height="300"></canvas></div></div>`;
+        R.board.innerHTML = `<div class="cz-ticket idle" id="czTicket"><div class="cz-tktop"><b>GambaScape Scratch</b><span id="czTkNo">match three</span></div><div class="cz-tkgrid"><div class="cz-tkcells" id="czCells">${"<div class='cz-tkcell'></div>".repeat(9)}</div><canvas class="cz-foil gone" id="czFoil" width="300" height="300"></canvas></div></div>`;
         R.lock = lockBtn(); R.lock.addEventListener("click", () => (scratch && !scratch.done ? this.reveal() : place(null))); R.note = el("p", "cz-note"); R.bet.append(stakeRow(), R.lock, R.note); sideCards("The prizes", "chance per card"); phase("Buy a card", "open");
         R.pays.innerHTML = G.SCRATCH.map((s) => `<div class="cz-rung" data-k="${s.k}"><span>${img(sym(s.k))}${img(sym(s.k))}${img(sym(s.k))} · ${(s.w / 10).toFixed(1)}%</span><strong>${s.x}×</strong></div>`).join("");
         const cv = $("czFoil"); let down = false, strokes = 0, last = null;
@@ -407,7 +410,7 @@ export function createCasino(env) {
       R.lock.textContent = `${myAmt ? "Add" : "Bet"} ${money(bet)} on ${names[fightSide]} · pays ${v.pays[fightSide]}×`;
     }
     R.bet.append(R.note);
-    note(betting ? (myAmt ? `You have ${money(myAmt)} on ${names[mySide]}. If it wins you're paid ${money(Math.floor(myAmt * v.pays[mySide]))}.` : `Up to ${money(G.FIGHTS.maxStake)} a fight. One side only.`) : v.phase === "fight" ? (myAmt ? `${money(myAmt)} riding on ${names[mySide]}.` : "No money on this one. The next pair is out in a moment.") : "");
+    note(betting ? (myAmt ? `You have ${money(myAmt)} on ${names[mySide]}. If it wins you're paid ${money(Math.floor(myAmt * v.pays[mySide]))}.` : `Up to ${money(G.maxBetOf(env.me()))} a fight. One side only.`) : v.phase === "fight" ? (myAmt ? `${money(myAmt)} riding on ${names[mySide]}.` : "No money on this one. The next pair is out in a moment.") : "");
     R.pays.innerHTML = `<div class="cz-betlist">${v.bets.length ? v.bets.map((b) => `<div class="${b.me ? "me" : ""}"><span>${esc(b.me ? "You" : b.name)} · ${esc(names[b.side])}</span><strong>${money(b.amt)}</strong></div>`).join("") : `<div><span>Nobody yet. Be the first.</span></div>`}</div>${v.hist.length ? `<h2 style="margin:10px 0 6px">Lately<small>who won, at what price</small></h2><div class="cz-recent">${v.hist.map((h) => `<span class="${h.mult >= 2 ? "w" : ""}">${esc(G.MOBS[h.t].name)} ${h.mult}×</span>`).join("")}</div>` : ""}`;
     if (v.phase === "result" && FV._paid !== v.round) { FV._paid = v.round; const w = v.last?.wins?.find((x) => x.name === env.you()?.name); if (myLast.round === v.round && myLast.amt) { record("fight", (w ? w.payout : 0) - myLast.amt); if (w) { pop(`+${money(w.payout - myLast.amt)}`, `${names[v.winner]} wins`); SFX.play(w.payout > myLast.amt * 3 ? "win_big" : "win_small"); } else SFX.play("lose"); } }
     if (myAmt) myLast = { round: v.round, amt: myAmt };
@@ -426,12 +429,12 @@ export function createCasino(env) {
   let lastCashed = null;
   function cashier(done) {
     if (done !== undefined) lastCashed = done; GAME = "cashier"; frame("Cashier", "Everything you bring back, for what it said over it"); const me = env.me();
-    const keys = [...new Set(me.inv.filter((s) => s.k !== "coins" && G.valueOf(s.k) > 0).map((s) => s.k))], rows = keys.map((k) => ({ k, n: me.inv.filter((s) => s.k === k).reduce((a, s) => a + s.n, 0), v: G.valueOf(k), loot: G.isLoot(k) }));
+    const keys = [...new Set(me.inv.filter((s) => G.isLoot(s.k)).map((s) => s.k))], rows = keys.map((k) => ({ k, n: me.inv.filter((s) => s.k === k).reduce((a, s) => a + s.n, 0), v: G.valueOf(k), loot: G.isLoot(k) }));
     const loot = rows.filter((r) => r.loot), total = loot.reduce((a, r) => a + r.n * r.v, 0);
     phase(lastCashed ? `Paid out ${money(lastCashed.total)} · the tables are right behind you` : loot.length ? "Here's what it comes to" : "Nothing to cash in yet", lastCashed ? "done" : "open");
-    R.board.innerHTML = `<div style="text-align:center"><div class="cz-total">${money(total)}</div><div class="cz-note" style="margin-top:6px">${loot.length ? "for everything you found and made" : "West arch: rocks, trees, fish. East arch: monsters. Make something from them in the workshop and it sells for double."}</div></div>`;
+    R.board.innerHTML = `<div style="text-align:center"><div class="cz-total">${money(total)}</div><div class="cz-note" style="margin-top:6px">${loot.length ? "for everything you found and made" : "West arch: rocks, trees, fish. East arch: monsters. Make something from them in the workshop and it sells for double. (Anything you can wear or hold isn't sold here: Brutus, at the Forge, buys what's smithed.)"}</div></div>`;
     R.lock = lockBtn(); R.lock.textContent = "Cash in the lot"; R.lock.disabled = !loot.length; R.lock.addEventListener("click", () => send({ t: "cashout", op: "all" })); R.bet.append(R.lock);
-    const card = el("section", "cz-card"); card.innerHTML = `<h2>In your bag<small>you have ${money(cash())}</small></h2>` + (rows.length ? rows.map((r) => `<div class="cz-csrow">${env.ico(r.k)}<span><b>${esc(G.ITEMS[r.k].name)}</b> × ${r.n.toLocaleString()}<small>${money(r.v)} each${r.loot ? "" : " · kept unless you sell it yourself"}</small></span><strong>${money(r.n * r.v)}</strong><button type="button" class="cz-chip" data-cs="${r.k}">Sell</button></div>`).join("") : `<p class="cz-note" style="text-align:left">Nothing in there is worth money yet.</p>`);
+    const card = el("section", "cz-card"); card.innerHTML = `<h2>In your bag<small>you have ${money(cash())}</small></h2>` + (rows.length ? rows.map((r) => `<div class="cz-csrow">${env.ico(r.k)}<span><b>${esc(G.ITEMS[r.k].name)}</b> × ${r.n.toLocaleString()}<small>${money(r.v)} each${(() => { const m = G.madeFrom(r.k); return m && G.valueOf(m.out) > r.v ? ` · <em style="color:var(--gold);font-style:normal">${esc(m.verb)} it first: ${esc(G.ITEMS[m.out].name.toLowerCase())} pays ${money(G.valueOf(m.out))}</em>` : ""; })()}</small></span><strong>${money(r.n * r.v)}</strong><button type="button" class="cz-chip" data-cs="${r.k}">Sell</button></div>`).join("") : `<p class="cz-note" style="text-align:left">Nothing in there is worth money yet.</p>`);
     R.side.append(card); card.querySelectorAll("[data-cs]").forEach((b) => b.addEventListener("click", () => send({ t: "cashout", op: "one", k: b.dataset.cs })));
   }
 

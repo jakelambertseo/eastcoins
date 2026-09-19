@@ -30,7 +30,7 @@ export const GUIDES = [
   },
   {
     id: "saving", title: "Saving (there's no button)", icon: "💾",
-    body: `<p>Your character lives on the GAMBA server. It's saved a few seconds after anything changes, and again the moment you close the tab or lose your connection. Come back on any browser, logged in with the same Twitch account, and you're exactly where you left off.</p>`
+    body: `<p>Your character lives on the GambaScape server. It's saved a few seconds after anything changes, and again the moment you close the tab or lose your connection. Come back on any browser, logged in with the same Twitch account, and you're exactly where you left off.</p>`
   },
   {
     id: "group", title: "Working together", icon: "🤝",
@@ -52,7 +52,7 @@ export const GUIDES = [
       <li><b>Dice</b> (by the bar): pick a number from 5 to 95 and roll 1–100 under it. The lower your number, the bigger the payout.</li>
       <li>Bets are 1 to 500 Cash, from your bag. The house keeps a little on every game, about 3%. The server decides every result.</li>
       <li>Big wins are announced to the room, and huge ones to everyone.</li>
-      <li><b>Luck:</b> lucky clovers (found while skilling in the Workyard) and lucky horseshoes (dropped by monsters in the Paddock) make your next 15 or 25 bets lucky. A lucky win pays 2.5% more, at every table including roulette. Your lucky bets show top-right.</li></ul>
+      <li><b>Luck:</b> lucky clovers and, rarely, lucky horseshoes turn up while you SKILL (never from monsters) and make your next 15 or 25 bets lucky. A lucky win pays 2.5% more, at every table including roulette. Your lucky bets show top-right.</li></ul>
       <p><b>The Roulette Room</b> is through the red curtains at the back. One table, one spin for everyone: bets are open for 25 seconds, then the ball rolls and the whole room sees the number together. Red, black, odd, even, 1–18, 19–36 (2×), dozens (3×) and single numbers (36×); up to 500 Cash a spin. Green zero is the house's.</p>
       <p><b>The task board</b> by the door has three <b>daily tasks</b> just for you, picked for your levels: gather this many, defeat that many. They count what you do today, pay Cash when you claim them at the board, and refresh every morning (Chicago time). Handy when the slots have been unkind.</p>`
   },
@@ -120,6 +120,23 @@ export const GUIDES = [
 
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
+  {
+    date: "2026-09-20", title: "GambaScape: three jobs, three rewards, and a bar",
+    items: [
+      "The game is called GambaScape now.",
+      "FIGHTING PAYS PROPERLY. Every monster carries Cash on top of its drops, measured so a fighter of the right level earns a little MORE a minute than a miner of that level, for the risk. A cow is worth about $47 a kill, a boar $82, a Tax Wraith $240, the Understudy $350. Before this, everything past a cow paid worse than the rock next to it.",
+      "SKILLING is now the only way to get Lucky: clovers turn up while you gather (and, rarely, a horseshoe). Monsters no longer drop horseshoes; the ones you have still work.",
+      "FIGHTING has its own rewards. Any kill can turn up a house chip (red $250, black $1,000, gold $5,000), a free-play chip (your next bet is on the house, up to $100), a mystery box, Devil's dice (within two minutes of a win: triple it, one time in three, or lose it) or a rewind watch (within a minute of a loss: it never happened, up to $500). Bigger monsters turn them up far more often. One kill in eight makes you a HIGH ROLLER: every table takes double from you for your next 10 bets over the normal limit. Two pieces of gambling gear only ever drop: Card sharp's gloves (wins pay 1% more profit) and the Angel's ring (1 lost bet in 200 comes back whole).",
+      "CRAFTING makes what you keep. At the anvil: the Gambler's ring (half the hunger and thirst), the Bookie's amulet (+$250 on every table), the Loss adjuster's visor (1% of every loss comes back) and the Stakeholder's loafers (your other gambling gear is 50% stronger). At the range, four dinners: every one leaves you WELL FED (no hunger or thirst) for 30 bets or more, and adds an effect of its own. Each takes something dug up AND something killed.",
+      "DEX'S BAR IS OPEN. Talk to Dex: lager, The Safety Net, whiskey and champagne each change your next 10 to 15 bets. One drink at a time. $300 buys a round for everyone on the floor.",
+      "CASINO SCROLLS. Dex sells them for $50. Click one anywhere (not the Wilderness, not mid-fight) and you're back on the casino floor.",
+      "YOUR ISLAND IS BACK. Charon has a cart in the square out the casino's front door. Plant wheat or tomatoes on your island and they grow while you're away; upgrades and themes are sold from the cart.",
+      "Everything that's on is in the Buffs bar, top right. Hover one to read it. Your table limit on every game follows your buffs. The ceiling: gear alone can never take a game over 100% back, and everything stacked with luck stops at about 104%, for as long as the dinner and the drink last.",
+      "WHAT THINGS MADE ARE WORTH changed. A made thing sells for double the RAW materials in it, plus a quarter for each further step: a bronze bar is $40, a bronze sword $100 (it was $160, which paid a miner with an anvil twice what anyone else could earn). The Cashier now tells you when something in your bag is worth more made into something first.",
+      "The Cashier no longer buys anything you can wear or hold (so a click can't sell your sword). Brutus, at the Forge, buys what you smith.",
+      "Today's paid jobs moved to the Quests tab, and there are jobs for MAKING things now (bars, swords, dinners). Under your bag: thirst and hunger, your cash, and what your bag is worth, each in its own box."
+    ]
+  },
   {
     date: "2026-09-20", title: "The Fight Pit",
     items: [
