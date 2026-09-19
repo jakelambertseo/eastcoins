@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 26;
+export const VERSION = 27;
 export const COLS = 22, ROWS = 13;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -631,13 +631,14 @@ Object.assign(SCENES, {
   // inside the Casino: a hangout first, a gambling den second. Games of chance for Cash (never ZCoins), the
   // daily-task board, a bar, and Dex, who has seen everything and will tell you about most of it.
   casino: {
-    name: "The Casino", interior: true, floor: "casino", room: [4, 3, 17, 10], exitTo: { scene: "forum", x: 13, y: 4 }, entry: { x: 10, y: 10 },
+    name: "The Casino", interior: true, floor: "casino", wallH: 34, room: [4, 3, 17, 10], exitTo: { scene: "forum", x: 13, y: 4 }, entry: { x: 10, y: 10 },
     wall: [{ t: "banner", x: 5 }, { t: "lamp", x: 8 }, { t: "lamp", x: 11 }, { t: "lamp", x: 14 }, { t: "banner", x: 16.5 }],
     build() {
       const g = room(4, 3, 17, 10, 10), objs = [];
       objs.push({ t: "bar", x: 12, y: 4, w: 4, h: 1, name: "Bar" }); block(g, 12, 4, 4, 1);
       objs.push({ t: "notice", x: 6, y: 3, name: "Task board" }); g[3][6] = "#";
-      objs.push({ t: "roomdoor", x: 16, y: 3, name: "Roulette room", enter: "roulette" }); g[3][16] = "#";
+      objs.push({ t: "walldoor", x: 9, y: 2, name: "Roulette room", enter: "roulette" });
+      objs.push({ t: "roulsign", x: 9, y: 1, name: "Roulette", dy: -3 });
       for (const y of [5, 7, 9]) { objs.push({ t: "slots", x: 4, y, name: "Slot machine", flip: true }); g[y][4] = "#"; }
       objs.push({ t: "cointable", x: 8, y: 6, w: 2, h: 1, name: "Coin Flip table" }); block(g, 8, 6, 2, 1);
       objs.push({ t: "dicetable", x: 13, y: 7, w: 2, h: 1, name: "Dice table" }); block(g, 13, 7, 2, 1);
@@ -667,7 +668,7 @@ Object.assign(SCENES, {
   },
   // through the curtains at the back of the Casino: one big table everyone plays at once
   roulette: {
-    name: "The Roulette Room", interior: true, floor: "casino", room: [4, 3, 17, 10], exitTo: { scene: "casino", x: 16, y: 4 }, entry: { x: 10, y: 10 },
+    name: "The Roulette Room", interior: true, floor: "casino", carpet: "t_roulette", room: [4, 3, 17, 10], exitTo: { scene: "casino", x: 9, y: 4 }, entry: { x: 10, y: 10 },
     wall: [{ t: "banner", x: 5 }, { t: "lamp", x: 7.5 }, { t: "lamp", x: 10.5 }, { t: "lamp", x: 13.5 }, { t: "banner", x: 16.5 }],
     build() {
       const g = room(4, 3, 17, 10, 10), objs = [];
@@ -1192,7 +1193,7 @@ export const EXAMINE = {
   lighthouse: ["A lighthouse. The light points inward, at the island. Nobody knows who it's warning.", "The door's painted on. The light is on anyway."],
   mule: ["A mule. It refuses to move. It has refused for eleven years.", "The mule looks at you. You feel judged by a professional."]
 };
-export const VERB = { game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
+export const VERB = { game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
 /* ------------------------------------------------------------ quests are data
    goal.type "bring": have goal.n of goal.items in your bag when you talk to the giver (they're taken)
