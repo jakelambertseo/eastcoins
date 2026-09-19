@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Mash Dash — Test</title>
+<link rel="stylesheet" href="/v3/assets/fonts/fonts.css">
+<style>
+:root{--ink:#0c0a09;--panel:#161311;--panel-2:#1e1a17;--panel-3:#241f1b;--line:rgba(255,255,255,.1);--line-2:rgba(255,255,255,.16);
+  --text:#f4ede5;--muted:#aca298;--muted-2:#7d746a;--gold:#e8bf35;--gold-dim:rgba(232,191,53,.13);
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;--body:"Figtree","Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box}
+html{background:var(--ink);color-scheme:dark}
+body{margin:0;min-height:100vh;background:var(--ink);color:var(--text);font-family:var(--body);padding:0 16px 40px}
+button{font:inherit;color:inherit}
+.topbar{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.brand{font-family:var(--display);font-weight:800}.brand span{color:var(--gold)}
+.mock-tag{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2a1300;background:var(--gold);padding:4px 9px;border-radius:99px}
+.page{max-width:1180px;margin:0 auto}
+.head{padding:18px 0 14px}
+.eyebrow{font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);letter-spacing:-.02em;margin:4px 0;line-height:1}
+.sub{color:var(--muted);margin:0;max-width:70ch;line-height:1.5}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:18px;align-items:start}
+@media (max-width:920px){.layout{grid-template-columns:minmax(0,1fr)}}
+.stage{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);box-shadow:0 24px 60px rgba(0,0,0,.55);background:#10240f;touch-action:manipulation;user-select:none;-webkit-user-select:none;cursor:pointer}
+.stage canvas{display:block;width:100%;height:auto;aspect-ratio:960/640}
+.veil{position:absolute;inset:0;display:grid;place-items:center;background:rgba(8,7,10,.8);backdrop-filter:blur(3px);text-align:center;padding:20px;cursor:default;overflow:auto}
+.veil[hidden]{display:none}
+.veil h2{font-family:var(--display);font-size:clamp(1.6rem,4vw,2.4rem);margin:0 0 6px;letter-spacing:-.02em}
+.veil p{color:var(--muted);margin:0 0 14px;line-height:1.5}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.btn{border:1px solid var(--line-2);background:var(--panel-3);border-radius:10px;padding:11px 22px;font-weight:800;cursor:pointer}
+.btn.go{background:var(--gold);color:#2a1300;border-color:var(--gold);font-size:1.05rem}
+.btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:10px;overflow:hidden;margin:0 0 14px}
+.seg button{border:0;background:var(--panel-2);padding:7px 14px;font-weight:700;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--gold-dim);color:var(--gold)}
+.board{margin:0 auto 14px;border-collapse:collapse;font-size:.95rem;min-width:min(420px,100%)}
+.board td{padding:4px 10px;border-top:1px solid var(--line);text-align:left;font-variant-numeric:tabular-nums}
+.board tr:first-child td{border-top:0}.board td:first-child{color:var(--muted);width:2.4em}.board td:last-child{text-align:right}
+.board tr.me td{color:var(--gold);font-weight:800}
+.board i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.card h3{font-family:var(--display);font-size:1rem;margin:0 0 10px}
+.stat{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px solid var(--line);font-size:.92rem}
+.stat:first-of-type{border-top:0}.stat span{color:var(--muted)}.stat b{font-variant-numeric:tabular-nums}
+.how{margin:0;padding-left:18px;color:var(--muted);line-height:1.55;font-size:.9rem}.how b{color:var(--text)}
+.note{font-size:.8rem;color:var(--muted-2);line-height:1.5;margin:8px 0 0}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="brand">East<span>Coin</span> Arcade</div><div class="mock-tag">Test page</div></div>
+<div class="page">
+  <div class="head">
+    <div class="eyebrow">Arcade · game 2</div>
+    <h1>Mash Dash</h1>
+    <p class="sub">Eight lanes, a hundred yards, zero skill. Hammer your mouse or the space bar as fast as you can and try to survive whatever the stadium throws at the pack. No ZCoins: best times and bragging rights only.</p>
+  </div>
+  <div class="layout">
+    <div class="stage" id="stage">
+      <canvas id="cv" width="960" height="640" aria-label="Mash Dash race"></canvas>
+      <div class="veil" id="veil">
+        <div>
+          <h2 id="vTitle">Mash Dash</h2>
+          <p id="vSub">Click, tap or hit Space as fast as you physically can. That's the whole game.</p>
+          <table class="board" id="vBoard" hidden></table>
+          <div><div class="seg" id="diffSeg" role="group" aria-label="How fast the others are">
+            <button data-diff="chill" aria-pressed="false">Chill</button><button data-diff="rowdy" aria-pressed="true">Rowdy</button><button data-diff="unhinged" aria-pressed="false">Unhinged</button>
+          </div></div>
+          <div class="row"><button class="btn go" id="play">Race</button></div>
+        </div>
+      </div>
+    </div>
+    <aside>
+      <div class="card"><h3>Your records</h3>
+        <div class="stat"><span>Best time</span><b id="rBest">–</b></div>
+        <div class="stat"><span>Wins · races</span><b id="rWins">0 · 0</b></div>
+        <div class="stat"><span>Best win streak</span><b id="rStreak">0</b></div>
+        <div class="stat"><span>Fastest mashing</span><b id="rRate">–</b></div>
+        <p class="note">Kept in this browser only while this is a test. On the site these become the leaderboard.</p>
+      </div>
+      <div class="card"><h3>What can happen</h3>
+        <ul class="how">
+          <li><b>⚡ Lightning</b> zaps whoever is in first.</li>
+          <li><b>🍌 Peels</b> and <b>boost pads</b> land in random lanes.</li>
+          <li><b>MASH FRENZY</b>: every press counts double.</li>
+          <li><b>Headwind</b>: everything gets heavier.</li>
+          <li><b>Switcheroo</b>: first and last trade places. Once.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+<script>
+(() => {
+"use strict";
+const cv = document.getElementById("cv"), c = cv.getContext("2d"), W = 960, H = 640, $ = (id) => document.getElementById(id);
+const LANES = 8, FIELD = 100, PXM = 15;                                     // eight lanes, a hundred yards, PXM pixels to the yard
+const IMP = 2.6, DRAG = 2.2, MIN_GAP = 70;                                  // a press adds IMP yd/s; speed bleeds off at DRAG a second; presses closer than MIN_GAP ms don't count
+const COLS = ["#e8bf35", "#ff6b85", "#4ddb8b", "#6ab7ff", "#c58bff", "#ff9d4d", "#5fe0d8", "#f2f2f2"];
+const NAMES = ["GoalLineGary", "BlitzBetty", "HailMaryHank", "PuntPolice", "TurfToeTina", "SnapCountSam", "PylonPete", "FlagOnThePlay", "OnsideOllie", "FairCatchFran"];
+const DIFF = { chill: [4.4, 6.0], rowdy: [5.6, 7.4], unhinged: [7.0, 9.0] };
+const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const ORD = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
+function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+/* ---------------- records ---------------- */
+const KEY = "ec_mashdash_test_v1";
+let REC = { best: 0, wins: 0, races: 0, streak: 0, bestStreak: 0, rate: 0 };
+try { REC = { ...REC, ...(JSON.parse(localStorage.getItem(KEY)) || {}) }; } catch (e) {}
+const showRec = () => { $("rBest").textContent = REC.best ? `${REC.best.toFixed(2)}s` : "–"; $("rWins").textContent = `${REC.wins} · ${REC.races}`; $("rStreak").textContent = REC.bestStreak; $("rRate").textContent = REC.rate ? `${REC.rate.toFixed(1)} a second` : "–"; };
+const saveRec = () => { try { localStorage.setItem(KEY, JSON.stringify(REC)); } catch (e) {} showRec(); };
+showRec();
+
+/* ---------------- sound ---------------- */
+let AC = null;
+function tone(f0, f1, dur, vol = 0.1, type = "triangle") { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(30, f1), t + dur); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g).connect(AC.destination); o.start(t); o.stop(t + dur); } catch (e) {} }
+const SND = { step: (k) => tone(180 + k * 14, 120, 0.05, 0.04, "square"), beep: (hi) => tone(hi ? 880 : 440, hi ? 880 : 440, hi ? 0.4 : 0.15, 0.12), zap: () => { tone(1800, 90, 0.35, 0.14, "sawtooth"); tone(90, 40, 0.5, 0.18, "sine"); }, slip: () => tone(700, 160, 0.4, 0.1, "sine"), boost: () => tone(300, 1400, 0.3, 0.1, "sawtooth"), frenzy: () => [660, 880, 1100].forEach((f, i) => setTimeout(() => tone(f, f * 1.2, 0.12, 0.1, "square"), i * 70)), wind: () => tone(240, 120, 1.2, 0.06, "sine"), swap: () => { tone(300, 900, 0.25, 0.1); setTimeout(() => tone(900, 300, 0.25, 0.1), 200); }, win: () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => tone(f, f, 0.2, 0.12), i * 100)) };
+
+/* ---------------- the race ---------------- */
+let M = null, diff = "rowdy", lastT = 0;
+function newRace() {
+  const seed = (Math.random() * 2 ** 31) | 0, r = rng(seed), [lo, hi] = DIFF[diff], names = [...NAMES].sort(() => Math.random() - 0.5), myLane = 3;
+  const R = Array.from({ length: LANES }, (_, i) => ({ i, me: i === myLane, name: i === myLane ? "YOU" : names[i], col: COLS[i], pos: 0, v: 0, stun: 0, spin: 0, boost: 0, done: 0, hop: 0, presses: 0, rate: lo + Math.random() * (hi - lo), next: 0 }));
+  // the chaos is written before the gun goes, from the race's seed, so it's the same race for everyone in it
+  const events = []; let t = 2.2 + r() * 1.2, swapped = false;
+  while (t < 40) { const x = r(); let type = x < 0.24 ? "lightning" : x < 0.46 ? "peels" : x < 0.66 ? "boosts" : x < 0.82 ? "frenzy" : x < 0.93 ? "wind" : "swap"; if (type === "swap") { if (swapped) type = "frenzy"; else swapped = true; } events.push({ t, type, pick: [r(), r(), r(), r()] }); t += 2.3 + r() * 1.7; }
+  M = { seed, R, events, items: [], fx: [], state: "count", t: -3.2, cam: 0, shake: 0, frenzy: 0, wind: 0, banner: null, flash: 0, myTimes: [], peak: 0, lastPress: 0, lastBeep: 4 };
+  $("veil").hidden = true;
+}
+const me = () => M.R.find((x) => x.me);
+const racing = () => M.R.filter((x) => !x.done);
+const place = (x) => 1 + M.R.filter((o) => (o.done && (!x.done || o.done < x.done)) || (!o.done && !x.done && o.pos > x.pos)).length;
+function say(text, col = "#fff") { M.banner = { text, col, t: 0 }; }
+
+function press(x) {            // one stride
+  if (M.state !== "run" || x.done || x.stun > 0 || x.spin > 0) return;
+  x.v += IMP * (M.frenzy > 0 ? 2 : 1); x.hop = 1; x.presses++;
+}
+function myPress() {
+  if (!M) return; const now = performance.now();
+  if (M.state === "count") { M.early = 0.35; return; }                     // jumping the gun just makes your guy flinch
+  if (M.state !== "run" || now - M.lastPress < MIN_GAP) return; M.lastPress = now;
+  M.myTimes.push(now); while (M.myTimes.length && now - M.myTimes[0] > 1000) M.myTimes.shift(); M.peak = Math.max(M.peak, M.myTimes.length);
+  SND.step(Math.min(10, M.myTimes.length)); press(me());
+}
+function fire(ev) {
+  const live = racing().sort((a, b) => b.pos - a.pos); if (live.length < 2) return; const lead = live[0];
+  if (ev.type === "lightning") { lead.stun = 1.25; lead.v *= 0.2; M.flash = 1; M.shake = 14; SND.zap(); M.fx.push({ kind: "bolt", lane: lead.i, y: lead.pos, t: 0 }); say(`⚡ LIGHTNING hits ${lead.name}`, "#ffe27a"); }
+  if (ev.type === "peels" || ev.type === "boosts") {
+    const lanes = [...live].sort((a, b) => ((a.i * 7 + Math.floor(ev.pick[0] * 97)) % 11) - ((b.i * 7 + Math.floor(ev.pick[0] * 97)) % 11)).slice(0, Math.min(live.length, ev.type === "peels" ? 3 : 3));
+    lanes.forEach((x, k) => M.items.push({ lane: x.i, y: x.pos + 9 + ev.pick[1 + (k % 3)] * 7, kind: ev.type === "peels" ? "peel" : "boost" }));
+    say(ev.type === "peels" ? "🍌 PEELS ON THE FIELD" : "🚀 BOOST PADS", ev.type === "peels" ? "#ffe27a" : "#8ff0b4"); (ev.type === "peels" ? SND.slip : SND.boost)();
+  }
+  if (ev.type === "frenzy") { M.frenzy = 2.6; say("MASH FRENZY ×2", "#ff8ad0"); SND.frenzy(); }
+  if (ev.type === "wind") { M.wind = 2.2; say("💨 HEADWIND", "#a8d8ff"); SND.wind(); }
+  if (ev.type === "swap") { const last = live[live.length - 1]; if (lead.pos > FIELD * 0.3 && lead.pos < FIELD * 0.82 && lead.pos - last.pos > 4) { [lead.pos, last.pos] = [last.pos, lead.pos]; M.shake = 10; SND.swap(); M.fx.push({ kind: "poof", lane: lead.i, y: lead.pos, t: 0 }, { kind: "poof", lane: last.i, y: last.pos, t: 0 }); say(`🔀 SWITCHEROO: ${lead.name} ⇄ ${last.name}`, "#c58bff"); } else { M.frenzy = 2.6; say("MASH FRENZY ×2", "#ff8ad0"); SND.frenzy(); } }
+}
+function update(dt) {
+  M.t += dt; M.shake = Math.max(0, M.shake - dt * 40); M.flash = Math.max(0, M.flash - dt * 3); M.frenzy = Math.max(0, M.frenzy - dt); M.wind = Math.max(0, M.wind - dt); M.early = Math.max(0, (M.early || 0) - dt);
+  if (M.banner) { M.banner.t += dt; if (M.banner.t > 1.7) M.banner = null; }
+  for (const f of M.fx) f.t += dt; M.fx = M.fx.filter((f) => f.t < 0.7);
+  if (M.state === "count") { const n = Math.ceil(-M.t); if (n !== M.lastBeep && n >= 1 && n <= 3) { M.lastBeep = n; SND.beep(false); } if (M.t >= 0) { M.state = "run"; SND.beep(true); say("MASH!", "#8ff0b4"); } return; }
+  while (M.events.length && M.events[0].t <= M.t) fire(M.events.shift());
+  for (const x of M.R) {
+    x.hop = Math.max(0, x.hop - dt * 9); x.stun = Math.max(0, x.stun - dt); x.spin = Math.max(0, x.spin - dt);
+    if (x.done) { x.pos += x.v * dt; x.v *= Math.exp(-3 * dt); continue; }
+    if (!x.me && M.state === "run") {     // the others mash like people: a pace each, wobbly, a bit quicker when they're behind, tiring late
+      x.next -= dt; if (x.next <= 0) { press(x); const behind = Math.max(...M.R.map((o) => o.pos)) - x.pos > 8 ? 1.07 : 1, tired = 1 - 0.1 * (x.pos / FIELD); x.next = 1 / (x.rate * behind * tired * (0.78 + Math.random() * 0.44)); }
+    }
+    x.v *= Math.exp(-DRAG * (M.wind > 0 ? 1.9 : 1) * dt); x.pos += x.v * dt;
+    for (const it of M.items) if (!it.gone && it.lane === x.i && x.pos >= it.y && x.pos - x.v * dt < it.y + 0.5) {
+      it.gone = true; if (it.kind === "peel") { x.spin = 0.9; x.v *= 0.3; if (x.me) { SND.slip(); M.shake = 8; } } else { x.v += 8; x.boost = 0.6; if (x.me) SND.boost(); }
+    }
+    x.boost = Math.max(0, x.boost - dt);
+    if (x.pos >= FIELD) { x.done = M.t; x.pos = FIELD; if (x.me) SND.win(); if (M.R.filter((o) => o.done).length === 1) { say(`${x.name === "YOU" ? "YOU WIN" : `${x.name} wins`}!`, x.col); M.shake = 8; } }
+  }
+  const mine = me(), target = Math.max(-2, Math.min(FIELD + 10 - VIEW, (mine.done ? FIELD : mine.pos) - VIEW * 0.3));   // you sit a third of the way along; the view stops at the end zone
+  M.cam += (target - M.cam) * (calm ? 1 : 1 - Math.pow(0.002, dt));
+  const allIn = M.R.every((o) => o.done);
+  if (M.state === "run" && (allIn || (mine.done && M.t > mine.done + 2.2) || M.t > 45)) finish();
+}
+function finish() {
+  M.state = "over"; const mine = me(), order = [...M.R].sort((a, b) => (a.done || 1e9) - (b.done || 1e9) || b.pos - a.pos), my = order.indexOf(mine) + 1;
+  REC.races++; if (my === 1) { REC.wins++; REC.streak++; REC.bestStreak = Math.max(REC.bestStreak, REC.streak); } else REC.streak = 0;
+  const newBest = mine.done && (!REC.best || mine.done < REC.best); if (newBest) REC.best = Math.round(mine.done * 100) / 100; REC.rate = Math.max(REC.rate, M.peak); saveRec();
+  $("vTitle").textContent = my === 1 ? "You win!" : `You came ${ORD[my - 1]}`;
+  $("vSub").textContent = `${mine.done ? `${mine.done.toFixed(2)}s` : "Did not finish"} · ${mine.presses} presses · peak ${M.peak} a second${newBest ? " · NEW BEST TIME" : ""}`;
+  const b = $("vBoard"); b.hidden = false; b.innerHTML = order.map((x, i) => `<tr class="${x.me ? "me" : ""}"><td>${ORD[i]}</td><td><i style="background:${x.col}"></i>${x.name}</td><td>${x.done ? `${x.done.toFixed(2)}s` : `${Math.round(x.pos)} yd`}</td></tr>`).join("");
+  $("play").textContent = "Race again"; $("veil").hidden = false;
+}
+
+/* ---------------- drawing: lanes run left to right, stacked down the screen ---------------- */
+const TOP = 96, LH = 62, X_START = 150, VIEW = (W - X_START - 40) / PXM;      // VIEW: yards of track on screen
+const laneY = (i) => TOP + LH * i + LH / 2, sx = (yd) => X_START + (yd - M.cam) * PXM, FH = LH * LANES;
+function drawTrack() {
+  c.fillStyle = "#0b1d0e"; c.fillRect(0, 0, W, H);
+  for (let yd = Math.floor(M.cam / 5) * 5 - 10; yd < M.cam + VIEW + 15; yd += 5) { c.fillStyle = Math.floor(yd / 5) % 2 ? "#1d5a2c" : "#1a5027"; c.fillRect(sx(yd), TOP, 5 * PXM + 1, FH); }
+  c.fillStyle = "#16301c"; c.fillRect(sx(0) - 600, TOP, 600, FH);                                              // behind the start
+  const fx = sx(FIELD); c.fillStyle = "#7a1f2a"; c.fillRect(fx + 20, TOP, 700, FH);
+  c.save(); c.translate(fx + 96, TOP + FH / 2); c.rotate(Math.PI / 2); c.fillStyle = "rgba(255,255,255,.25)"; c.font = "800 60px 'Bricolage Grotesque', sans-serif"; c.textAlign = "center"; c.fillText("TOUCHDOWN", 0, 20); c.restore();
+  for (let k = 0; k < Math.ceil(FH / 10); k++) for (let q = 0; q < 2; q++) { c.fillStyle = (k + q) % 2 ? "#111" : "#f4f4f4"; c.fillRect(fx + q * 10, TOP + k * 10, 10, Math.min(10, TOP + FH - (TOP + k * 10))); }   // the line
+  c.font = "800 14px Figtree, sans-serif"; c.textAlign = "center";
+  for (let yd = Math.max(0, Math.ceil(M.cam / 10) * 10 - 10); yd <= FIELD; yd += 10) { const x = sx(yd); c.fillStyle = "rgba(255,255,255,.5)"; c.fillRect(x, TOP, 2, FH); c.fillStyle = "rgba(255,255,255,.6)"; c.fillText(yd === 0 ? "START" : yd === FIELD ? "" : `${FIELD - yd}`, x, TOP + FH + 20); }
+  c.strokeStyle = "rgba(255,255,255,.28)"; c.lineWidth = 2; for (let i = 0; i <= LANES; i++) { c.beginPath(); c.moveTo(0, TOP + LH * i); c.lineTo(W, TOP + LH * i); c.stroke(); }
+  // the crowd along the bottom rail, bouncing
+  for (let k = 0; k < 60; k++) { const yd = Math.floor(M.cam / 2) * 2 + k * 1.4 - 8, x = sx(yd), y = H - 26 + ((k * 37) % 14) + (calm ? 0 : Math.sin(performance.now() / 160 + k * 1.7) * 3); c.fillStyle = COLS[Math.abs(Math.floor(yd * 3)) % COLS.length]; c.globalAlpha = 0.55; c.beginPath(); c.arc(x, y, 7, 0, 7); c.fill(); c.fillRect(x - 6, y + 6, 12, 12); c.globalAlpha = 1; }
+}
+function drawItems() {
+  for (const it of M.items) { if (it.gone) continue; const x = sx(it.y), y = laneY(it.lane); if (x < -40 || x > W + 40) continue;
+    if (it.kind === "peel") { c.font = "30px serif"; c.textAlign = "center"; c.fillText("🍌", x, y + 10); }
+    else { c.fillStyle = "#3ce37f"; for (let k = 0; k < 3; k++) { const xx = x - 12 + k * 12 + (calm ? 0 : (performance.now() / 60) % 12); c.globalAlpha = 0.9 - k * 0.25; c.beginPath(); c.moveTo(xx, y - 20); c.lineTo(xx + 14, y); c.lineTo(xx, y + 20); c.lineTo(xx - 7, y + 20); c.lineTo(xx + 7, y); c.lineTo(xx - 7, y - 20); c.fill(); } c.globalAlpha = 1; } }
+}
+function drawRunner(x) {
+  const px = sx(x.pos), py = laneY(x.i), sp = Math.min(1, x.v / 9), t = performance.now(), wob = x.spin > 0 ? (t / 40) % (Math.PI * 2) : Math.sin(t / 50 + x.i) * sp * 0.2 + sp * 0.18, flinch = x.me && M.early ? 6 : 0;
+  if (sp > 0.45 && !calm && !x.done) { c.fillStyle = "rgba(255,255,255,.28)"; for (let k = 0; k < 3; k++) c.fillRect(px - 34 - Math.random() * 22 - sp * 14, py - 12 + k * 11 + Math.random() * 3, 10 + sp * 18, 3); }
+  c.save(); c.translate(px + flinch + (x.stun > 0 ? Math.sin(t / 18) * 4 : 0), py - x.hop * 7); c.scale(0.82, 0.82); c.rotate(wob);
+  if (x.boost > 0) { c.fillStyle = "rgba(60,227,127,.55)"; c.beginPath(); c.moveTo(-16, -12); c.lineTo(-52 - Math.random() * 18, 0); c.lineTo(-16, 12); c.fill(); }
+  const leg = Math.sin(t / (70 - sp * 35) + x.i) * (6 + sp * 12); c.strokeStyle = "#f0f0f0"; c.lineWidth = 6; c.lineCap = "round"; c.beginPath(); c.moveTo(-6, 16); c.lineTo(-6 - leg, 30); c.moveTo(6, 16); c.lineTo(6 + leg, 30); c.stroke();
+  c.beginPath(); c.moveTo(-16, 0); c.lineTo(-24 + leg, 8); c.moveTo(16, 0); c.lineTo(26 - leg, 6); c.stroke();
+  c.fillStyle = x.stun > 0 && Math.floor(t / 60) % 2 ? "#fff" : x.col; c.beginPath(); c.ellipse(0, 0, 20, 22 + x.hop * 3, 0, 0, 7); c.fill(); c.lineWidth = 3; c.strokeStyle = "rgba(0,0,0,.45)"; c.stroke();
+  for (const dx of [-2, 11]) { c.fillStyle = "#fff"; c.beginPath(); c.arc(dx, -7, 6, 0, 7); c.fill(); c.fillStyle = "#111"; c.beginPath(); c.arc(dx + 2 + (x.spin > 0 ? Math.cos(t / 40) * 2 : sp * 1.5), -7 + (x.stun > 0 ? 2 : 0), x.stun > 0 ? 1.5 : 3, 0, 7); c.fill(); }
+  c.strokeStyle = "#111"; c.lineWidth = 2.5; c.beginPath(); if (x.stun > 0 || x.spin > 0) c.arc(6, 9, 5, 0, 7); else if (sp > 0.6) c.arc(6, 5, 7, 0.15, Math.PI - 0.15); else { c.moveTo(1, 8); c.lineTo(11, 8); } c.stroke();
+  c.restore();
+  c.font = `800 ${x.me ? 13 : 11}px Figtree, sans-serif`; c.textAlign = "right"; c.lineWidth = 4; c.strokeStyle = "rgba(0,0,0,.6)"; const label = x.me ? "YOU ▶" : x.name.length > 12 ? `${x.name.slice(0, 11)}…` : x.name, lx = Math.max(px - 30, 96);
+  c.strokeText(label, lx, py - 16); c.fillStyle = x.me ? "#fff" : "rgba(255,255,255,.8)"; c.fillText(label, lx, py - 16);
+  if (x.done) { c.textAlign = "left"; c.fillStyle = x.col; c.font = "800 16px Figtree, sans-serif"; c.strokeText(ORD[place(x) - 1], px + 26, py + 6); c.fillText(ORD[place(x) - 1], px + 26, py + 6); }
+}
+function drawFx() {
+  for (const f of M.fx) { const x = sx(f.y), y = laneY(f.lane), k = f.t / 0.7;
+    if (f.kind === "bolt" && f.t < 0.4) { c.strokeStyle = "#fff7b0"; c.lineWidth = 6; c.shadowColor = "#ffe27a"; c.shadowBlur = 24; c.beginPath(); c.moveTo(x + 40, 0); let yy = 0; while (yy < y - 20) { yy += 36; c.lineTo(x + (Math.random() - 0.5) * 50, Math.min(yy, y - 10)); } c.stroke(); c.shadowBlur = 0; }
+    if (f.kind === "poof") { c.globalAlpha = 1 - k; c.fillStyle = "#c58bff"; for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283; c.beginPath(); c.arc(x + Math.cos(a) * k * 46, y + Math.sin(a) * k * 46, 9 * (1 - k) + 3, 0, 7); c.fill(); } c.globalAlpha = 1; } }
+}
+function hud() {
+  const mine = me(), rate = M.myTimes.filter((t) => performance.now() - t < 1000).length;
+  c.fillStyle = "rgba(0,0,0,.55)"; c.fillRect(0, 0, W, TOP - 8);
+  c.textAlign = "left"; c.fillStyle = "#fff"; c.font = "800 34px 'Bricolage Grotesque', sans-serif"; c.fillText(M.state === "count" || M.state === "demo" ? "–" : ORD[place(mine) - 1], 22, 54);
+  c.font = "700 13px Figtree, sans-serif"; c.fillStyle = "#aca298"; c.fillText(`${Math.max(0, M.t).toFixed(1)}s · ${Math.max(0, Math.round(FIELD - mine.pos))} yd to go`, 110, 36);
+  c.fillStyle = "rgba(255,255,255,.15)"; c.fillRect(110, 46, 150, 12); c.fillStyle = rate >= 9 ? "#ff8ad0" : rate >= 6 ? "#8ff0b4" : "#e8bf35"; c.fillRect(110, 46, 150 * Math.min(1, rate / 12), 12); c.fillStyle = "#fff"; c.font = "800 12px Figtree, sans-serif"; c.fillText(`${rate} a second`, 270, 57);
+  // the whole pack at a glance
+  const bx = 400, bw = W - bx - 30, byy = 44; c.fillStyle = "rgba(255,255,255,.2)"; c.fillRect(bx, byy - 2, bw, 4); c.fillStyle = "#f4f4f4"; c.fillRect(bx + bw - 3, byy - 12, 3, 24);
+  for (const x of [...M.R].sort((a, b) => a.me - b.me)) { c.fillStyle = x.col; c.beginPath(); c.arc(bx + bw * Math.min(1, x.pos / FIELD), byy, x.me ? 9 : 5, 0, 7); c.fill(); if (x.me) { c.strokeStyle = "#fff"; c.lineWidth = 2; c.stroke(); } }
+  if (M.frenzy > 0) { c.strokeStyle = `rgba(255,138,208,${0.5 + Math.sin(performance.now() / 50) * 0.4})`; c.lineWidth = 10; c.strokeRect(5, 5, W - 10, H - 10); }
+  if (M.wind > 0 && !calm) { c.strokeStyle = "rgba(200,230,255,.5)"; c.lineWidth = 2; for (let k = 0; k < 26; k++) { const y = TOP + ((k * 97) % FH), x = W - (((performance.now() / 1.2) + k * 131) % (W + 80)); c.beginPath(); c.moveTo(x, y); c.lineTo(x + 50, y - 5); c.stroke(); } }
+  c.textAlign = "center";
+  if (M.state === "count") { const n = Math.ceil(-M.t); c.font = "800 150px 'Bricolage Grotesque', sans-serif"; c.lineWidth = 12; c.strokeStyle = "rgba(0,0,0,.6)"; c.strokeText(n > 3 ? "READY" : String(n), W / 2, H / 2 + 60); c.fillStyle = "#fff"; c.fillText(n > 3 ? "READY" : String(n), W / 2, H / 2 + 60); c.font = "800 20px Figtree, sans-serif"; c.fillStyle = "#e8bf35"; c.fillText("Finger on the mouse or the space bar…", W / 2, H / 2 + 104); }
+  if (M.banner) { const b = M.banner, k = Math.min(1, b.t * 8), a = Math.min(1, (1.7 - b.t) * 3); c.globalAlpha = a; c.fillStyle = "rgba(0,0,0,.7)"; c.fillRect(0, TOP + FH + 2, W, H - TOP - FH - 2); c.font = `800 ${Math.round(30 + 12 * (1 - k))}px 'Bricolage Grotesque', sans-serif`; c.fillStyle = b.col; c.fillText(b.text, W / 2, H - 12); c.globalAlpha = 1; }   // along the bottom rail, so it never covers a runner
+  if (M.state === "run" && (mine.stun > 0 || mine.spin > 0)) { c.textAlign = "left"; c.font = "800 18px Figtree, sans-serif"; c.lineWidth = 5; c.strokeStyle = "rgba(0,0,0,.7)"; const tx = sx(mine.pos) + 30, ty = laneY(mine.i) + 6, tt = mine.stun > 0 ? "ZAPPED!" : "WHOOPS"; c.strokeText(tt, tx, ty); c.fillStyle = "#ffe27a"; c.fillText(tt, tx, ty); c.textAlign = "center"; }
+  if (M.flash > 0) { c.fillStyle = `rgba(255,255,230,${M.flash * 0.6})`; c.fillRect(0, 0, W, H); }
+}
+function draw() {
+  c.save(); if (M.shake > 0 && !calm) c.translate((Math.random() - 0.5) * M.shake, (Math.random() - 0.5) * M.shake);
+  drawTrack(); drawItems(); [...M.R].sort((a, b) => a.i - b.i).forEach(drawRunner); drawFx(); c.restore(); hud();
+}
+function frame(t) { const dt = Math.min(0.05, (t - lastT) / 1000 || 0); lastT = t; if (M) { if (M.state !== "over" && M.state !== "demo") update(dt); draw(); } requestAnimationFrame(frame); }
+
+/* ---------------- input ---------------- */
+$("stage").addEventListener("pointerdown", (e) => { if (e.target.closest(".veil")) return; e.preventDefault(); myPress(); });
+addEventListener("keydown", (e) => { if (e.code !== "Space" && e.code !== "Enter") return; if (!$("veil").hidden) { if (e.code === "Enter") newRace(); return; } e.preventDefault(); if (!e.repeat) myPress(); });
+document.querySelectorAll("#diffSeg button").forEach((b) => b.addEventListener("click", () => { diff = b.dataset.diff; document.querySelectorAll("#diffSeg button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); }));
+$("play").addEventListener("click", newRace);
+// something to look at behind the menu
+newRace(); M.state = "demo"; M.t = 0; M.R.forEach((x, i) => { x.pos = 3 + ((i * 5) % 7); x.v = 5; }); M.cam = 0; $("veil").hidden = false;
+requestAnimationFrame(frame);
+window.__mash = { get M() { return M; }, press: myPress, tick: (dt) => { if (M.state !== "over") update(dt); draw(); } };
+})();
+</script>
+</body>
+</html>
