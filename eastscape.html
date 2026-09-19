@@ -737,7 +737,7 @@ const ART_FILES = ["t_dirt", "t_water", "farmhouse", "hut", "well", "tree", "hay
   // the rest of the monsters (PixelLab, overnight 2026-09-18)
   "olive", "boar", "goat", "rotten", "hornworm", "highwayman",
   // scenery (PixelLab, overnight 2026-09-18)
-  "o_barrel", "o_barricade", "o_bed", "o_bench", "o_bigtomato", "o_booth", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chair", "o_chariot", "o_chest", "o_column", "o_crate", "o_cypress", "o_cypress_stump", "o_deadtree_stump", "o_ferry", "o_fire", "o_fountain", "o_goatstatue", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_notice", "o_oak", "o_oak_stump", "o_olive", "o_olive_bare", "o_pedestal", "o_plant", "o_plot", "o_press", "o_range", "o_rock_copper", "o_rock_empty", "o_rock_marble", "o_rock_stardust", "o_rock_tin", "o_sack", "o_scarecrow", "o_shrine", "o_sign", "o_stall", "o_statue", "o_table", "o_toll", "o_tree_stump", "o_vein_copper", "o_vine", "o_vine_bare", "o_vine_gold", "o_yew", "o_yew_stump"];
+  "o_anvil", "o_barrel", "o_barricade", "o_bed", "o_bench", "o_bigtomato", "o_booth", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chair", "o_chariot", "o_chest", "o_column", "o_crate", "o_cypress", "o_cypress_stump", "o_deadtree_stump", "o_ferry", "o_fire", "o_fountain", "o_furnace", "o_goatstatue", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_notice", "o_oak", "o_oak_stump", "o_olive", "o_olive_bare", "o_palm", "o_pedestal", "o_plant", "o_plot", "o_press", "o_range", "o_rock_copper", "o_rock_empty", "o_rock_marble", "o_rock_stardust", "o_rock_tin", "o_sack", "o_scarecrow", "o_shrine", "o_sign", "o_spot", "o_stall", "o_statue", "o_table", "o_toll", "o_tree_stump", "o_vein_copper", "o_vine", "o_vine_bare", "o_vine_gold", "o_yew", "o_yew_stump"];
 const IMG = {};
 // NPCs whose art came later (PixelLab, overnight 2026-09-18): matched by name, so the shared rules don't change
 // NPC art came out at different sizes: draw everyone at one height (the hero is 48), a few on purpose
@@ -745,7 +745,7 @@ const NPC_H = { tom: 58, gaius: 58, nonna: 44 };
 // (no scaling: the NPCs are drawn in the hero's style at the hero's size; shrinking pixel art by a fraction mangles it)
 const npcScale = () => 1;
 const NPC_ART = { "Brutus the Smith": "brutus", "Charon the Ferryman": "charon", "Livia the Broker": "livia", "Gaius": "gaius", "Nonna Tomatoe": "nonna", "Centurion Vibius": "vibius", "Aurelia": "aurelia", "Cassia": "cassia" };
-const artReady = Promise.all(ART_FILES.map((k) => new Promise((res) => {
+const loadArt = (k) => new Promise((res) => {
   const im = new Image(); im.onload = () => {
     const c = document.createElement("canvas"); c.width = im.width; c.height = im.height; const o = c.getContext("2d"); o.drawImage(im, 0, 0);
     const d = o.getImageData(0, 0, im.width, im.height).data; let x0 = im.width, x1 = -1, y0 = im.height, y1 = -1;
@@ -755,7 +755,11 @@ const artReady = Promise.all(ART_FILES.map((k) => new Promise((res) => {
     IMG[k] = { im, sh, cx: (x0 + x1 + 1) / 2, foot: y1 + 1, top: y0, w: x1 - x0 + 1 }; res();
   };
   im.onerror = () => res(); im.src = `${ART}${k}.png?v=${ART_VER[k] || ART_V}`;
-})));
+});
+const artReady = Promise.all(ART_FILES.map(loadArt));
+// pictures only some players need (the tier outfits): fetched the first time one is on screen, drawn from then on
+const artAsked = new Set();
+const wantArt = (k) => { if (IMG[k]) return k; if (!artAsked.has(k)) { artAsked.add(k); loadArt(k); } return null; };
 /* painted sunlight: everything stands on its own shadow, its silhouette laid flat on the ground and leaning away
    from a sun behind the viewer's left shoulder. Purely a picture; nothing in the game knows about light. */
 const SHADOW = { skew: -0.85, flat: 0.28, alpha: 0.15 }, NO_SHADOW = new Set(["hole", "o_spot", "o_plot"]);
@@ -1531,7 +1535,7 @@ function frame() {
     const p = pos(pl), d = (pl.id === you.id && PRED.on ? PRED.dir : pl.dir) || "south", sw = now - pl.swingAt, working = pl.started && pl.act !== "spot" && !p.moving;
     const lunge = working && sw < 260 && !calm ? Math.sin((sw / 260) * Math.PI) * 4 : 0;
     const [ux, uy] = Object.keys(DIRS).find((k) => DIRS[k] === d).split(",").map(Number);
-    const fit = G.outfitOf({ body: pl.body }), hk = fit === "tiro" && IMG[`hero_tiro_${d}`] ? `hero_tiro_${d}` : `hero_${d}`;
+    const fit = G.outfitOf({ body: pl.body }), hk = (fit !== "tiro" && wantArt(`hero_${fit}_${d}`)) || (fit === "tiro" && IMG[`hero_tiro_${d}`] ? `hero_tiro_${d}` : `hero_${d}`);
     spr(hk, p.px * T + 8 + ux * lunge * 0.7, p.py * T + 15 + uy * lunge * 0.7 + bobOf(p.moving), false, (hurtNow(pl) ? RED : "") + (pl.id === you.id ? "" : " hue-rotate(200deg)"));
   } });
   sprites.sort((a, b) => a.y - b.y).forEach((s) => s.draw());
