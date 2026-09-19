@@ -203,7 +203,7 @@ export class World {
     this.send(pl, { type: "who", scene: S.key, who: this.whoOf(S) });
     this.send(pl, JSON.parse(this.snapOf(S, Date.now(), false)));
     S.whoSig = null;   // the next broadcast tells everyone else this player has arrived
-    if (!stored) this.say(pl, "Welcome to GambaScape. Wander the floor and play what you like. Broke? West arch to mine and chop, east arch to fight: everything out there has its price written over it, and the Cashier by each arch turns it into Cash. Say hello to Dex behind the bar.");
+    if (!stored) this.say(pl, "Welcome to GambaScape. Wander the floor and play what you like. Broke? Out the arch to the Yard, to mine, chop, fish or fight: everything out there has its price written over it, and the Cashier by each arch turns it into Cash. Say hello to Dex behind the bar.");
     else this.say(pl, `Welcome back, ${pl.name}.`);
     if (this.exDeliver(pl)) this.exCommit(pl);   // market sales and purchases made while you were away
     this.start();
