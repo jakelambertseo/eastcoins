@@ -126,6 +126,14 @@ const CSS = `
 .cz-tkcell{display:grid;place-items:center;border-radius:10px;background:var(--panel-2);border:1px solid var(--line)}.cz-tkcell img{width:56%;image-rendering:pixelated}.cz-tkcell.win{background:rgba(232,191,53,.16);border-color:rgba(232,191,53,.6);box-shadow:0 0 18px rgba(232,191,53,.35)}
 .cz-foil{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;border-radius:12px;transition:opacity .35s ease}.cz-foil.gone{opacity:0;pointer-events:none}
 .cz-ticket.idle .cz-tkgrid::after{content:"Buy a card to scratch";position:absolute;inset:0;display:grid;place-items:center;color:var(--muted-2);font-size:14px;font-weight:700}
+/* the fight pit */
+.cz-card2{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:stretch;width:100%}.cz-vs{align-self:center;font:800 22px var(--display);color:var(--muted-2)}
+.cz-fighter{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;border-radius:13px;border:1px solid var(--line-2);background:var(--panel-2);text-align:center;cursor:pointer;color:var(--text);font:inherit;min-width:0}
+.cz-fighter:hover:not(:disabled){border-color:rgba(232,191,53,.5)}.cz-fighter:disabled{cursor:default}.cz-fighter.on{border-color:var(--gold);background:var(--gold-dim)}.cz-fighter.won{border-color:var(--green);background:var(--green-dim)}.cz-fighter.lost{opacity:.45}
+.cz-fighter img{height:72px;width:auto;max-width:100%;image-rendering:pixelated;object-fit:contain}.cz-fighter img.flip{transform:scaleX(-1)}
+.cz-fighter b{font:800 15px var(--display);line-height:1.15}.cz-fighter small{color:var(--muted);font-size:11.5px;line-height:1.25}.cz-fighter strong{font:800 22px var(--display);color:var(--gold)}.cz-fighter em{font-style:normal;color:var(--muted-2);font-size:11.5px}
+.cz-hpbar{width:100%;height:8px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden}.cz-hpbar u{display:block;height:100%;background:var(--green);transition:width .25s ease}
+.cz-betlist{display:flex;flex-direction:column;gap:2px;max-height:150px;overflow-y:auto;font-size:13px}.cz-betlist div{display:flex;justify-content:space-between;gap:8px;padding:4px 8px;border-radius:7px;color:var(--muted)}.cz-betlist div.me{background:var(--gold-dim);color:var(--text)}
 /* cashier */
 .cz-csrow{display:grid;grid-template-columns:30px 1fr auto auto;gap:10px;align-items:center;padding:7px 2px;border-top:1px solid var(--line);font-size:13.5px}.cz-csrow:first-child{border-top:0}.cz-csrow small{display:block;color:var(--muted-2);font-size:11.5px}
 .cz-csrow strong{font:800 15px var(--display);color:var(--gold)}.cz-csrow img.ico,.cz-csrow .ico{width:26px;height:26px;image-rendering:pixelated}
@@ -377,6 +385,43 @@ export function createCasino(env) {
   };
   function startRun(g) { if (broke()) return; send({ t: "run", g, op: "start", amt: bet, mines: mineCount }); }
 
+  /* ---------------------------------------------------------- the Fight Pit's betting window
+     One fight for the whole room, so this is the roulette table's shape: who's fighting and what each pays, your money
+     on one of them, everybody else's money, a clock. It is rebuilt from each message (they are few) except the clock
+     and the health bars, which run off the page's own timer. */
+  let fightSide = 0, fightTimer = 0, FV = null;
+  const MART = "/v3/assets/img/glad/flat/";
+  function fight(v, opening) {
+    FV = v; if (GAME !== "fight" || opening) { GAME = "fight"; frame("The Fight Pit", "Two go in. Pick one. It's all luck."); sideCards("Money down", "this fight"); R.note = el("p", "cz-note"); }
+    const names = v.f.map((f) => G.MOBS[f.t].name), mine = v.bets.filter((b) => b.me), myAmt = mine.reduce((a, b) => a + b.amt, 0), mySide = mine[0]?.side, betting = v.phase === "bet";
+    if (mySide != null) fightSide = mySide;
+    const pot = [0, 1].map((i) => v.bets.filter((b) => b.side === i).reduce((a, b) => a + b.amt, 0));
+    R.board.innerHTML = `<div class="cz-card2">${v.f.map((f, i) => `${i ? `<div class="cz-vs">VS</div>` : ""}<button type="button" class="cz-fighter${betting && fightSide === i ? " on" : ""}${v.phase === "result" ? (v.winner === i ? " won" : " lost") : ""}" data-side="${i}" ${betting && (mySide == null || mySide === i) ? "" : "disabled"}>
+      <img class="${i ? "flip" : ""}" src="${MART}${f.t}.png?v=3" alt=""><b>${esc(names[i])}</b><small>${esc(f.title)} · level ${G.MOBS[f.t].lvl}</small><strong>${v.pays[i]}×</strong><em>wins ${Math.round(v.p[i] * 100)}% of the time · ${money(pot[i])} on it</em>
+      <div class="cz-hpbar" data-hp="${i}" ${betting ? "hidden" : ""}><u style="width:100%"></u></div></button>`).join("")}</div>`;
+    R.board.querySelectorAll("[data-side]").forEach((b) => b.addEventListener("click", () => { fightSide = +b.dataset.side; SFX.play("ui_click"); fight(FV); }));
+    R.bet.replaceChildren();
+    if (betting) {
+      R.lock = lockBtn(); R.lock.addEventListener("click", () => { if (!broke()) { send({ t: "fight", op: "bet", side: fightSide, amt: bet }); SFX.play("chip"); } });
+      R.bet.append(stakeRow(), R.lock); if (myAmt) { const back = lockBtn("alt"); back.textContent = `Take my ${money(myAmt)} back`; back.style.height = "40px"; back.addEventListener("click", () => send({ t: "fight", op: "clear" })); R.bet.append(back); }
+      R.lock.textContent = `${myAmt ? "Add" : "Bet"} ${money(bet)} on ${names[fightSide]} · pays ${v.pays[fightSide]}×`;
+    }
+    R.bet.append(R.note);
+    note(betting ? (myAmt ? `You have ${money(myAmt)} on ${names[mySide]}. If it wins you're paid ${money(Math.floor(myAmt * v.pays[mySide]))}.` : `Up to ${money(G.FIGHTS.maxStake)} a fight. One side only.`) : v.phase === "fight" ? (myAmt ? `${money(myAmt)} riding on ${names[mySide]}.` : "No money on this one. The next pair is out in a moment.") : "");
+    R.pays.innerHTML = `<div class="cz-betlist">${v.bets.length ? v.bets.map((b) => `<div class="${b.me ? "me" : ""}"><span>${esc(b.me ? "You" : b.name)} · ${esc(names[b.side])}</span><strong>${money(b.amt)}</strong></div>`).join("") : `<div><span>Nobody yet. Be the first.</span></div>`}</div>${v.hist.length ? `<h2 style="margin:10px 0 6px">Lately<small>who won, at what price</small></h2><div class="cz-recent">${v.hist.map((h) => `<span class="${h.mult >= 2 ? "w" : ""}">${esc(G.MOBS[h.t].name)} ${h.mult}×</span>`).join("")}</div>` : ""}`;
+    if (v.phase === "result" && FV._paid !== v.round) { FV._paid = v.round; const w = v.last?.wins?.find((x) => x.name === env.you()?.name); if (myLast.round === v.round && myLast.amt) { record("fight", (w ? w.payout : 0) - myLast.amt); if (w) { pop(`+${money(w.payout - myLast.amt)}`, `${names[v.winner]} wins`); SFX.play(w.payout > myLast.amt * 3 ? "win_big" : "win_small"); } else SFX.play("lose"); } }
+    if (myAmt) myLast = { round: v.round, amt: myAmt };
+    clearInterval(fightTimer); const tick = () => {
+      if (GAME !== "fight" || $("gameWin").hidden) return clearInterval(fightTimer);
+      const left = Math.max(0, Math.ceil((FV.until - performance.now()) / 1000));
+      phase(FV.phase === "bet" ? `Bets close in ${left}` : FV.phase === "fight" ? "They're at it" : `${names[FV.winner]} wins · next fight in ${left}`, FV.phase === "bet" ? "open" : FV.phase === "fight" ? "" : "done");
+      if (FV.phase === "fight" && FV.script) { const elapsed = env.now() - FV.startedAt, done = FV.script.filter((h) => h.at <= elapsed), hp = done.length ? done[done.length - 1].hp : [100, 100]; R.board.querySelectorAll("[data-hp]").forEach((n) => { const v2 = Math.max(0, hp[+n.dataset.hp]); n.firstElementChild.style.width = `${v2}%`; n.firstElementChild.style.background = v2 > 35 ? "var(--green)" : "var(--red)"; }); }
+      if (FV.phase === "result") R.board.querySelectorAll("[data-hp]").forEach((n) => { n.firstElementChild.style.width = +n.dataset.hp === FV.winner ? "30%" : "0%"; });
+    }; tick(); fightTimer = setInterval(tick, 200);
+    refresh();
+  }
+  let myLast = { round: 0, amt: 0 };
+
   /* ---------------------------------------------------------- the Cashier, in the same clothes */
   let lastCashed = null;
   function cashier(done) {
@@ -395,9 +440,9 @@ export function createCasino(env) {
     result(e) { if (e.g !== GAME || !UI[e.g]) return; UI[e.g].result(e); },
     run(e) { const had = RUNS[e.g]; RUNS[e.g] = e.run; if (e.luck != null && env.me()) env.me().luck = e.luck; if (GAME !== e.g) return; UI[e.g].run(e, had); lockStake(!!e.run); refresh(); },
     me() { if ($("gameWin").hidden) return; if (GAME === "cashier") cashier(); else refresh(); },
-    cashier() { lastCashed = null; cashier(); }, cashed(e) { cashier(e); },
+    cashier() { lastCashed = null; cashier(); }, cashed(e) { cashier(e); }, fight,
     closed() { token++; busy = false; GAME = null; },
-    blocked(k) { if (!GAME || GAME === "cashier") return; busy = false; UI[GAME]?.idle?.(); phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[k]); refresh(); },
+    blocked(k) { if (!GAME || GAME === "cashier") return; if (GAME === "fight") { phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); return note(G.NEED_TEXT[k]); } busy = false; UI[GAME]?.idle?.(); phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[k]); refresh(); },
     get game() { return GAME; }
   };
 }

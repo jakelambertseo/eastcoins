@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 43;
+export const VERSION = 44;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -726,6 +726,29 @@ Object.assign(SCENES, {
       ["gnasher", 37, 6], ["gnasher", 38, 20]],
     npcs: [], bots: []
   },
+  /* THE FIGHT PIT (2026-09-20): through the door marked FIGHTING on the casino's back wall. Two monsters, one sand pit,
+     and everybody round the rail with money on it. One fight at a time for the whole room, on a clock, exactly like
+     the roulette table: FIGHTS.betMs to get your money down, then they go at it, then the next pair comes out. The
+     fight is pure chance (FIGHTS, below); what you watch is the server's script of it. The pit itself is one big
+     object (`fightring`) you click to bet; the floor round it is where the crowd stands. */
+  fightpit: {
+    name: "The Fight Pit", interior: true, floor: "wood", room: [9, 5, 34, 20], exitTo: { scene: "casino", x: 10, y: 5 }, entry: { x: 21, y: 20 },
+    pit: { x: 15, y: 9, w: 14, h: 7 },
+    wall: [{ t: "banner", x: 10 }, { t: "lamp", x: 13 }, { t: "lamp", x: 17.5 }, { t: "banner", x: 21.6 }, { t: "lamp", x: 26 }, { t: "lamp", x: 30.5 }, { t: "banner", x: 33.5 }],
+    build() {
+      const g = room(9, 5, 34, 20, 21), objs = [];
+      objs.push({ t: "fightring", x: 15, y: 9, w: 14, h: 7, name: "The pit: bet on the fight" }); block(g, 15, 9, 14, 7);
+      for (const [x, y] of [[12, 6], [31, 6]]) { objs.push({ t: "fightboard", art: "o_notice", x, y, name: "Tonight's card: bet on the fight" }); g[y][x] = "#"; }
+      // somewhere to perch along the rail, crates and barrels in the corners, and a bin that's seen things
+      for (const x of [16, 18, 20, 23, 25, 27]) for (const y of [8, 16]) if (g[y][x] === "i") objs.push({ t: "stool", x, y, name: "Stool", soft: true });
+      for (const y of [10, 12, 14]) for (const x of [14, 29]) if (g[y][x] === "i") objs.push({ t: "stool", x, y, name: "Stool", soft: true });
+      for (const [t, x, y, name] of [["crate", 9, 5, "Crate"], ["barrel", 10, 5, "Barrel"], ["barrel", 34, 5, "Barrel"], ["crate", 33, 5, "Crate"], ["crate", 9, 20, "Crate"], ["barrel", 34, 20, "Barrel"], ["trashcan", 25, 20, "Bin"], ["cooler", 17, 5, "Water cooler"]]) { objs.push({ t, x, y, name }); g[y][x] = "#"; }
+      for (const [x, y] of [[11, 12], [32, 13], [19, 18], [26, 7]]) if (g[y][x] === "i") objs.push({ t: "l_slips", x, y, name: "Losing slips", soft: true, flat: true });
+      return { g, objs, blobs: [] };
+    },
+    mobs: [], bots: [{ name: "RingsideRon", level: 22 }, { name: "bloodsport99", level: 47 }, { name: "ChalkEater", level: 9 }],
+    npcs: []
+  },
   // inside the Casino: a hangout first, a gambling den second. Games of chance for Cash (never ZCoins), the
   // daily-task board, a bar, and Dex, who has seen everything and will tell you about most of it.
   /* GAMBA's hub (2026-09-19): the casino is the middle of the world and where everyone starts. Four ways out, as on
@@ -735,6 +758,7 @@ Object.assign(SCENES, {
   casino: {
     name: "The Casino", interior: true, floor: "casino", wallH: 34, room: [1, 4, 42, 21], exits: { w: "workyard", e: "paddock" }, labels: { w: "SKILLING", e: "COMBAT", s: "TOWN" }, exitTo: { scene: "forum", x: 21, y: 5 }, entry: { x: 21, y: 20 },
     wall: [{ t: "banner", x: 3 }, { t: "lamp", x: 7 }, { t: "lamp", x: 11 }, { t: "painting1", x: 14.5, dy: 7, frame: true }, { t: "lamp", x: 17 }, { t: "lamp", x: 24 }, { t: "painting2", x: 28, dy: 5 }, { t: "lamp", x: 31 }, { t: "neon", x: 35.5, dy: 16 }, { t: "lamp", x: 39.3 }, { t: "banner", x: 41 }],
+    doorSigns: [{ x: 10, text: "FIGHTING" }],
     smoke: [38.5, 5.2, 42.6, 10.2],   // where the page hangs a haze: the smoking section (tile coordinates)
     // what each room is called, written on the carpet at its way in (tile coordinates)
     zones: [{ x: 10.5, y: 12.4, text: "▲ SLOTS" }, { x: 10.5, y: 14.6, text: "▼ WHEELS · COIN FLIP" }, { x: 32.5, y: 12.4, text: "▲ CARDS · BAR" }, { x: 32.5, y: 14.6, text: "▼ DICE · INSTANT WINS" }],
@@ -743,6 +767,7 @@ Object.assign(SCENES, {
       for (let y = SPAN.w[0]; y <= SPAN.w[1]; y++) { g[y][0] = "e"; g[y][COLS - 1] = "e"; }
       objs.push({ t: "walldoor", x: 21, y: 3, name: "Floor 2: the Roulette Room", enter: "roulette" });
       objs.push({ t: "roulsign", x: 21, y: 2, name: "Roulette", dy: -3 });
+      objs.push({ t: "walldoor", x: 10, y: 3, name: "The Fight Pit", enter: "fightpit" });   // (its sign is lettered by the page: def.doorSigns)
       /* THE FLOOR, LIKE A REAL ONE (2026-09-20, the owner: "put games together, as in sections... rope them off").
          Every kind of game has its own roped-off room, and you can see which is which from the aisles:
 
@@ -1227,6 +1252,18 @@ export function slotsPay(reels) {
    world turns up lucky charms; using one makes your next N bets "lucky", and a lucky win pays `bonus` more. Even
    lucky, every game stays just under 100% back, so the casino can't be turned into a Cash printer. */
 export const LUCK = { bonus: 0.025, gather: 1 / 12, kill: 1 / 8, max: 300 };
+/* THE FIGHT PIT'S NUMBERS. Two monsters are drawn from `pool`; the chance each wins comes from their levels (square
+   roots, so a chicken against a revenant is a long shot, not a no-hoper) and is clamped to 25-75%; each side pays
+   `edge` / its chance, so whichever you back the house keeps 5%. WHO WINS IS ONE RANDOM NUMBER against that chance and
+   nothing else: no stats, no gear, no streaks. The blows you watch are written afterwards to fit the result. */
+export const FIGHTS = { betMs: 30000, fightMs: 13000, showMs: 6000, maxStake: 500, edge: 0.95, minP: 0.25, maxP: 0.75, bigWin: 2.5,
+  pool: ["chicken", "cow", "rotten", "olive", "hornworm", "boar", "goat", "highwayman", "gnasher", "moth", "taxwraith", "ghoul", "chandelier", "understudy", "ram", "revenant", "angel", "goose"],
+  titles: ["the Unpaid", "Two-Time Runner-Up", "of No Fixed Address", "the People's Champ", "on a Six-Fight Skid", "Who Owes Dex Money", "the Undercard", "from Accounts", "the Pride of the Paddock", "Fresh off a Bye", "the Contractually Obligated", "Last Seen Fleeing"] };
+export function fightOdds(a, b) {
+  const sa = Math.sqrt(MOBS[a].lvl), sb = Math.sqrt(MOBS[b].lvl), p = Math.max(FIGHTS.minP, Math.min(FIGHTS.maxP, sa / (sa + sb)));
+  return { p: [p, 1 - p], pays: [Math.floor(FIGHTS.edge / p * 100) / 100, Math.floor(FIGHTS.edge / (1 - p) * 100) / 100] };
+}
+
 /* HUNGER AND THIRST (2026-09-20, the owner: "so that users don't spam gambling"). Two meters, 0 to 100. Every bet
    takes a little off both; under `floor` the tables turn you away until you've had something. The water cooler and
    the buffet beside it (the card room's back wall) give `sip` a click, free, as many clicks as it takes. Cooked food
@@ -1250,7 +1287,7 @@ export const buffsOf = (c) => [(c?.luck | 0) > 0 && { id: "luck", left: c.luck |
 /* ------------------------------------------------------------ what's open (2026-09-19 reset)
    One casino (with its Roulette Room), one town, one skilling area, one combat area. Everything else still exists in
    the code but can't be reached yet; a saved character standing somewhere closed wakes up in the casino. */
-export const OPEN = new Set(["casino", "roulette", "forum", "bathhouse", "workyard", "gloam", "cloud", "paddock", "rough", "boneyard"]);
+export const OPEN = new Set(["casino", "roulette", "fightpit", "forum", "bathhouse", "workyard", "gloam", "cloud", "paddock", "rough", "boneyard"]);
 export const OPEN_DAILY = new Set(["logs", "tin", "copper", "sardine", "wheat", "cows", "chickens", "rotten", "boar", "highwayman", "emerald", "lantern", "willow", "diamond", "dragonstone", "moths", "ghouls"]);
 for (const k of Object.keys(SCENES)) if (!OPEN.has(k)) SCENES[k].wikiHide = true;   // closed areas stay out of the wiki
 
@@ -1530,7 +1567,7 @@ export const EXAMINE = {
   lighthouse: ["A lighthouse. The light points inward, at the island. Nobody knows who it's warning.", "The door's painted on. The light is on anyway."],
   mule: ["A mule. It refuses to move. It has refused for eleven years.", "The mule looks at you. You feel judged by a professional."]
 };
-export const VERB = { coinstatue: "Cash in at", cooler: "Drink at", buffet: "Eat at", cashier: "Cash in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
+export const VERB = { fight: "Bet on", coinstatue: "Cash in at", cooler: "Drink at", buffet: "Eat at", cashier: "Cash in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
 /* ------------------------------------------------------------ quests are data
    goal.type "bring": have goal.n of goal.items in your bag when you talk to the giver (they're taken)

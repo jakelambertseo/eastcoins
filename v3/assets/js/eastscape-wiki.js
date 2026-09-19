@@ -121,6 +121,15 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-20", title: "The Fight Pit",
+    items: [
+      "There's a second door in the casino's back wall, in the slots room, with FIGHTING lettered over it. Behind it: a sand pit, a rail to lean on, and two monsters who have been told the other one said something about their mother.",
+      "One fight at a time for the whole room. You get 30 seconds to put money on one of them (up to $500, one side only), then they go at it, then the winners are paid and the next pair comes out. Click the pit or either betting board.",
+      "It is pure luck. The price on each fighter comes from its level: a chicken against a revenant pays big, because it mostly loses. Whoever you back, the house keeps 5%. Nothing else decides it.",
+      "The House Ruby in the middle of the casino floor now takes your loot: click it to cash in, the same as a Cashier's window."
+    ]
+  },
+  {
     date: "2026-09-20", title: "Hunger and thirst",
     items: [
       "Gambling is thirsty work. Every bet takes a little off your Thirst and your Hunger (about forty bets to a drink). Under 20% on either, the tables won't take your bets until you've had something.",
