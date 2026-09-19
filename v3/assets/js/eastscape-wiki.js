@@ -123,7 +123,7 @@ export const UPDATES = [
   {
     date: "2026-09-19", title: "A simpler GAMBA: bigger tiles, luck, and a smaller world",
     items: [
-      "Everything is drawn twice the size, and the view follows you.",
+      "Every area is now twice as wide and twice as tall, and the view follows you as you walk. The casino is a proper hall: more slot machines, three coin tables, three dice tables.",
       "Luck: want better odds? Work in the Workyard and you'll find lucky clovers; monsters in the Paddock drop lucky horseshoes. Click one in your bag and your next bets are lucky: every win pays 2.5% more. It shows top-right and at every table.",
       "The world is small on purpose for now: the casino (with its Roulette Room), the town, the Workyard and the Paddock. The roads out of town are closed; more opens later. Anyone who was standing somewhere else wakes up in the casino.",
       "Combat stances are gone. Every hit now trains Attack, Strength and Defence evenly.",

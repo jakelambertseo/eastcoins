@@ -13,8 +13,10 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 31;
-export const COLS = 22, ROWS = 13;
+export const VERSION = 32;
+// Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
+// you (ZOOM in the page), so characters look the size they always did and there's four times the room.
+export const COLS = 44, ROWS = 26;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
 /* ------------------------------------------------------------ OSRS curve */
@@ -303,7 +305,7 @@ export const fmtCash = (n) => `${Math.round(n).toLocaleString()} Cash`;
 /* ------------------------------------------------------------ directions and reach */
 export const DIRS = { "1,0": "east", "-1,0": "west", "0,1": "south", "0,-1": "north", "1,1": "south-east", "-1,1": "south-west", "1,-1": "north-east", "-1,-1": "north-west" };
 export const D8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
-export const SPAN = { n: [16, 18], s: [16, 18], e: [5, 7], w: [5, 7] }, OPP = { n: "s", s: "n", e: "w", w: "e" };
+export const SPAN = { n: [21, 23], s: [21, 23], e: [12, 14], w: [12, 14] }, OPP = { n: "s", s: "n", e: "w", w: "e" };
 /* movement speed. Walking one tile takes STEP_MS; a speed bonus (boots, pets, potions later: an item's "spd", in %)
    shortens that. The first 20% counts in full, anything past it counts half, and the total can't pass +50%
    (about 6 tiles a second), so every upgrade is worth having but nothing stacks into chaos. The server times your
@@ -449,40 +451,40 @@ export const SCENES = {
     name: "The Forum", exits: {},   // (was s: farm, w: grove, n: tomato, e: appia — closed for now, see OPEN)
     build() {
       const g = grid(), objs = [];
+      // a big paved square
       for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
-        const dx = (x - 10.5) / 9.6, dy = (y - 5.6) / 5.4, wob = (hashRand(x, y, 51) - 0.5) * 0.22;
+        const dx = (x - 21.5) / 19, dy = (y - 13.5) / 10, wob = (hashRand(x, y, 51) - 0.5) * 0.2;
         if (dx * dx + dy * dy < 1 + wob) g[y][x] = "p";
       }
-      // roads out of town on all four sides
-      for (let y = 7; y < ROWS; y++) for (let x = 16; x <= 18; x++) g[y][x] = "p";
-      for (let x = 0; x < 4; x++) for (let y = 5; y <= 7; y++) g[y][x] = "p";
-      for (let y = 0; y < 5; y++) for (let x = 16; x <= 18; x++) g[y][x] = "p";
-      for (let x = 18; x < COLS; x++) for (let y = 5; y <= 7; y++) g[y][x] = "p";
+      // three roads out (all closed for now), and the run up to the casino's doors
+      for (let y = 20; y < ROWS; y++) for (let x = 21; x <= 23; x++) g[y][x] = "p";
+      for (let x = 0; x < 6; x++) for (let y = 12; y <= 14; y++) g[y][x] = "p";
+      for (let x = 38; x < COLS; x++) for (let y = 12; y <= 14; y++) g[y][x] = "p";
+      for (let y = 2; y < 8; y++) for (let x = 17; x <= 26; x++) g[y][x] = "p";
       const paved = g.map((r) => r.slice());
-      for (const [x, y] of [[16, 12], [17, 12], [18, 12], [16, 0], [17, 0], [18, 0], [0, 5], [0, 6], [0, 7], [21, 5], [21, 6], [21, 7]]) { objs.push({ t: "roadblock", art: "o_barricade", x, y, name: "Road closed" }); g[y][x] = "#"; }
-      const bath = { t: "house", img: "bank", x: 2, y: 2, w: 5, h: 3, door: { x: 4, y: 4 }, name: "Bank", roof: "#8a9aa8", wall: "#efe6d4", sign: "BANK", enter: "bathhouse" };
-      const forge = { t: "house", img: "casino", x: 11, y: 1, w: 5, h: 3, door: { x: 13, y: 3 }, name: "Casino", roof: "#7a2a2a", wall: "#9a3a3a", enter: "casino" };
-      objs.push(bath, forge); block(g, 2, 2, 5, 3); block(g, 11, 1, 5, 3);
-      objs.push({ t: "fountain", x: 10, y: 6, w: 2, h: 2, name: "Fountain" }); block(g, 10, 6, 2, 2);
-      objs.push({ t: "rock", ore: "stardust", x: 4, y: 8, name: "Fallen Star", special: true, glow: "#e0b0ff", req: { skill: "mining", lvl: 50 }, xp: 150, tease: "It landed during the games last spring. Nobody's managed to chip it since." }); g[8][4] = "#";
-      // the smithy corner, left of Brutus's door: the furnace and the anvil side by side, Brutus between them and his shop
-      objs.push({ t: "furnace", x: 10, y: 3, name: "Furnace" }); g[3][10] = "#";
-      objs.push({ t: "anvil", x: 9, y: 3, name: "Anvil" }); g[3][9] = "#";
-      // the Exchange: a market stall down in the south-west of the square, away from the shop front
-      objs.push({ t: "stall", x: 7, y: 8, w: 2, h: 1, name: "Exchange stall" }); block(g, 7, 8, 2, 1);
-      objs.push({ t: "statue", x: 15, y: 9, name: "Statue" }); g[9][15] = "#";
-      objs.push({ t: "sign", x: 19, y: 3, name: "Signpost" }); g[3][19] = "#";
-      for (const [x, y] of [[13, 9]]) { objs.push({ t: "bush", x, y, name: "Planter" }); g[y][x] = "#"; }
+      for (const [x, y] of [[21, 25], [22, 25], [23, 25], [0, 12], [0, 13], [0, 14], [43, 12], [43, 13], [43, 14]]) { objs.push({ t: "roadblock", art: "o_barricade", x, y, name: "Road closed" }); g[y][x] = "#"; }
+      const casino = { t: "house", img: "casino", x: 19, y: 2, w: 5, h: 3, door: { x: 21, y: 4 }, name: "Casino", roof: "#7a2a2a", wall: "#9a3a3a", enter: "casino" };
+      const bank = { t: "house", img: "bank", x: 8, y: 5, w: 5, h: 3, door: { x: 10, y: 7 }, name: "Bank", roof: "#8a9aa8", wall: "#efe6d4", sign: "BANK", enter: "bathhouse" };
+      objs.push(casino, bank); block(g, 19, 2, 5, 3); block(g, 8, 5, 5, 3);
+      // the smithy, east of the casino: furnace, anvil, and Brutus between them
+      objs.push({ t: "furnace", x: 30, y: 7, name: "Furnace" }); g[7][30] = "#";
+      objs.push({ t: "anvil", x: 33, y: 7, name: "Anvil" }); g[7][33] = "#";
+      // the market stall, south-west; Livia stands behind it
+      objs.push({ t: "stall", x: 11, y: 17, w: 2, h: 1, name: "Exchange stall" }); block(g, 11, 17, 2, 1);
+      objs.push({ t: "fountain", x: 21, y: 12, w: 2, h: 2, name: "Fountain" }); block(g, 21, 12, 2, 2);
+      objs.push({ t: "statue", x: 31, y: 18, name: "Statue" }); g[18][31] = "#";
+      objs.push({ t: "sign", x: 25, y: 20, name: "Signpost" }); g[20][25] = "#";
+      objs.push({ t: "rock", ore: "stardust", x: 6, y: 19, name: "Fallen Star", special: true, glow: "#e0b0ff", req: { skill: "mining", lvl: 50 }, xp: 150, tease: "It landed during the games last spring. Nobody's managed to chip it yet." }); g[19][6] = "#";
+      for (const [x, y] of [[16, 9], [27, 9], [15, 18], [28, 17], [19, 20]]) { objs.push({ t: "bush", x, y, name: "Planter" }); g[y][x] = "#"; }
+      for (const [x, y] of [[14, 12], [29, 13]]) { objs.push({ t: "bench", x, y, w: 3, h: 1, name: "Bench" }); block(g, x, y, 3, 1); }
       for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (g[y][x] === "#" && paved[y][x] === "p") g[y][x] = "P";
-      // open ground in front of the Exchange so the treeline doesn't swallow Livia's stall
-      const clear = []; for (let y = 9; y <= 11; y++) for (let x = 5; x <= 10; x++) clear.push([x, y]);
-      wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "forest" }, [...keepOf(this), ...clear], 4);
+      wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "forest" }, keepOf(this), 4);
       return { g, objs, blobs: [] };
     },
     mobs: [],
-    npcs: [{ name: "Brutus the Smith", x: 11, y: 4, still: true, opens: "shop", hair: "#2a1a10", shirt: "#5a3a2a", pants: "#3a2a1a", lines: ["Tools, bronze, and I'll buy whatever you dug up. Fair prices. Mostly fair.", "Bronze is where it starts. Nobody walks into the Wilderness in a tunic twice.", "Brought ore? I'll take it. Brought a goat? Take it back."] },
-      { name: "Livia the Broker", x: 8, y: 7, still: true, opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Selling? Buying? Use the stall. I just take my 1%.", "Offers keep working while you sleep. Come back and collect.", "The best price wins, and whoever was there first."] },
-           { name: "Gaius", x: 13, y: 7, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: Coo. The Forge buys ore. Coo.", "PIGEON: He doesn't talk. I do the talking. Coo.", "PIGEON: The Bank keeps your things safe. Aurelia counts everything twice. Coo.", "PIGEON: West is the Olive Grove. Bring a sword. Seriously. Coo.", "PIGEON: North is Tomatoe Hill. Don't correct her spelling. Coo.", "PIGEON: East is the Via Appia. Highwaymen. Hold on to your Cash. Coo."] }],
+    npcs: [{ name: "Brutus the Smith", x: 31, y: 8, still: true, opens: "shop", hair: "#2a1a10", shirt: "#5a3a2a", pants: "#3a2a1a", lines: ["Tools, bronze, and I'll buy whatever you dug up. Fair prices. Mostly fair.", "Bronze is where it starts. Nobody walks into the Wilderness in a tunic twice.", "Brought ore? I'll take it. Brought a goat? Take it back."] },
+      { name: "Livia the Broker", x: 12, y: 16, still: true, opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Selling? Buying? Use the stall. I just take my 1%.", "Offers keep working while you sleep. Come back and collect.", "The best price wins, and whoever was there first."] },
+           { name: "Gaius", x: 25, y: 15, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: Coo. The Forge buys ore. Coo.", "PIGEON: He doesn't talk. I do the talking. Coo.", "PIGEON: The Bank keeps your things safe. Aurelia counts everything twice. Coo.", "PIGEON: West is the Olive Grove. Bring a sword. Seriously. Coo.", "PIGEON: North is Tomatoe Hill. Don't correct her spelling. Coo.", "PIGEON: East is the Via Appia. Highwaymen. Hold on to your Cash. Coo."] }],
     bots: [{ name: "Gannicus", level: 55 }, { name: "Naevia", level: 31 }]
   },
   grove: {
@@ -598,7 +600,7 @@ Object.assign(SCENES, {
   }
 });
 // everyone starts (and wakes up after dying) on the casino floor: GAMBA is the casino, the world is outside it
-export const START = { scene: "casino", x: 10, y: 9 };
+export const START = { scene: "casino", x: 21, y: 18 };
 
 /* interiors: a room in the middle of the dark. "e" tiles on the room's bottom edge lead back out to exitTo.
    Rooms are drawn by the page from their floor kind and objects; nothing grows or spawns indoors. */
@@ -611,44 +613,46 @@ function room(x0, y0, x1, y1, doorX) {
 Object.assign(SCENES, {
   // the scene key stays "bathhouse" so saved characters standing in it still load; everything a player sees says Bank
   bathhouse: {
-    name: "The Bank", interior: true, floor: "marble", room: [4, 3, 17, 10], exitTo: { scene: "forum", x: 4, y: 5 }, entry: { x: 10, y: 10 },
+    name: "The Bank", interior: true, floor: "marble", room: [15, 9, 28, 16], exitTo: { scene: "forum", x: 10, y: 8 }, entry: { x: 21, y: 16 },
     // on the back wall, left to right: a banner, a lamp, the vault door, a lamp, a banner
-    wall: [{ t: "banner", x: 6 }, { t: "lamp", x: 8.5 }, { t: "vault", x: 10.5 }, { t: "lamp", x: 12.5 }, { t: "banner", x: 15 }],
+    wall: [{ t: "banner", x: 17 }, { t: "lamp", x: 19.5 }, { t: "vault", x: 21.5 }, { t: "lamp", x: 23.5 }, { t: "banner", x: 26 }],
     build() {
-      const g = room(4, 3, 17, 10, 10), objs = [];
-      // the bank counter runs wall to wall; the tellers work behind it
-      for (const x of [6, 10, 14]) objs.push({ t: "booth", x, y: 4, name: "Bank booth" });
-      objs.push({ t: "counter", x: 4, y: 4, w: 14, h: 1, name: "Counter" }); block(g, 4, 4, 14, 1);
-      // a red runner from the door to the counter (you walk on it)
-      objs.push({ t: "rug", x: 10, y: 5, w: 2, h: 6, color: "#9a2a2a", name: "Runner" });
-      for (const [x, y] of [[4, 6], [17, 6], [4, 9], [17, 9]]) { objs.push({ t: "column", x, y, name: "Column" }); g[y][x] = "#"; }
-      for (const [x, y] of [[5, 5], [16, 5], [6, 10], [15, 10]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
-      objs.push({ t: "bench", x: 6, y: 7, w: 3, h: 1, name: "Bench" }); block(g, 6, 7, 3, 1);
-      objs.push({ t: "bench", x: 13, y: 7, w: 3, h: 1, name: "Bench" }); block(g, 13, 7, 3, 1);
-      objs.push({ t: "goatstatue", x: 7, y: 9, name: "Statue" }); g[9][7] = "#";
-      objs.push({ t: "chest", x: 14, y: 9, name: "Strongbox" }); g[9][14] = "#";
+      const g = room(15, 9, 28, 16, 21), objs = [];
+      for (const x of [17, 21, 25]) objs.push({ t: "booth", x, y: 10, name: "Bank booth" });
+      objs.push({ t: "counter", x: 15, y: 10, w: 14, h: 1, name: "Counter" }); block(g, 15, 10, 14, 1);
+      objs.push({ t: "rug", x: 21, y: 11, w: 2, h: 6, color: "#9a2a2a", name: "Runner" });
+      for (const [x, y] of [[15, 12], [28, 12], [15, 15], [28, 15]]) { objs.push({ t: "column", x, y, name: "Column" }); g[y][x] = "#"; }
+      for (const [x, y] of [[16, 11], [27, 11], [17, 16], [26, 16]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
+      objs.push({ t: "bench", x: 17, y: 13, w: 3, h: 1, name: "Bench" }); block(g, 17, 13, 3, 1);
+      objs.push({ t: "bench", x: 24, y: 13, w: 3, h: 1, name: "Bench" }); block(g, 24, 13, 3, 1);
+      objs.push({ t: "goatstatue", x: 18, y: 15, name: "Statue" }); g[15][18] = "#";
+      objs.push({ t: "chest", x: 25, y: 15, name: "Strongbox" }); g[15][25] = "#";
       return { g, objs, blobs: [] };
     },
     mobs: [], bots: [],
-    npcs: [{ name: "Aurelia", x: 10, y: 3, still: true, opens: "bank", reach: 2, hair: "#1a1a2a", shirt: "#3a6a8a", pants: "#2a2a3a", lines: ["Welcome to the Bank. Your things are safe with us. Mostly.", "Use any booth. I'm the one counting.", "Two hundred different things we'll hold for you. Stack them as high as you like."] }]
+    npcs: [{ name: "Aurelia", x: 21, y: 9, still: true, opens: "bank", reach: 2, hair: "#1a1a2a", shirt: "#3a6a8a", pants: "#2a2a3a", lines: ["Welcome to the Bank. Your things are safe with us. Mostly.", "Use any booth. I'm the one counting.", "Two hundred different things we'll hold for you. Stack them as high as you like."] }]
   },
   // WEST of the casino, the first stop on the skilling line: a bit of everything a beginner gathers
   workyard: {
     name: "The Workyard", exits: { e: "casino" },
     build() {
       const g = grid(), objs = [], keep = [];
-      for (let x = 7; x < COLS; x++) g[6][x] = ",";
-      for (const [x, y] of [[4, 3], [7, 2], [10, 3], [5, 10], [8, 11]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
-      objs.push({ t: "oak", x: 13, y: 2, name: "Oak tree" }); g[2][13] = "#";
-      for (const [x, y] of [[16, 2], [17, 3], [18, 2]]) { objs.push({ t: "rock", ore: "copper", x, y, name: "Copper rock" }); g[y][x] = "#"; }
-      for (const [x, y] of [[17, 10], [18, 11], [19, 10]]) { objs.push({ t: "rock", ore: "tin", x, y, name: "Tin rock" }); g[y][x] = "#"; }
-      for (let y = 5; y < 8; y++) for (const x of [3, 4]) { objs.push({ t: "wheat", x, y, name: "Wheat" }); g[y][x] = "#"; }
-      // a fishing pond, fished from its north bank
-      for (let y = 9; y <= 10; y++) for (let x = 11; x <= 14; x++) g[y][x] = "~";
-      objs.push({ t: "spot", x: 12, y: 9, name: "Fishing spot" }, { t: "spot", x: 13, y: 9, name: "Fishing spot" });
-      for (let x = 10; x <= 15; x++) keep.push([x, 8], [x, 7]);
-      objs.push({ t: "fire", x: 9, y: 4, name: "Campfire" }); g[4][9] = "#";
-      for (let x = 7; x < COLS; x++) keep.push([x, 5], [x, 7]);
+      for (let x = 9; x < COLS; x++) g[13][x] = ",";
+      for (let y = 6; y <= 13; y++) g[y][12] = ","; for (let y = 13; y <= 17; y++) g[y][20] = ","; for (let y = 6; y <= 13; y++) g[y][32] = ",";
+      // the woods, north-west
+      for (const [x, y] of [[4, 3], [7, 2], [10, 4], [5, 6], [8, 7], [14, 3], [16, 6], [3, 9], [17, 2]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
+      objs.push({ t: "oak", x: 12, y: 4, name: "Oak tree" }); g[4][12] = "#";
+      // the diggings: copper to the north-east, tin to the south-east
+      for (const [x, y] of [[29, 3], [31, 4], [34, 3], [36, 5], [33, 6]]) { objs.push({ t: "rock", ore: "copper", x, y, name: "Copper rock" }); g[y][x] = "#"; }
+      for (const [x, y] of [[31, 20], [33, 21], [36, 20], [34, 23], [38, 22]]) { objs.push({ t: "rock", ore: "tin", x, y, name: "Tin rock" }); g[y][x] = "#"; }
+      // the wheat field, west
+      for (let y = 11; y <= 15; y++) for (const x of [3, 4, 5, 6]) { objs.push({ t: "wheat", x, y, name: "Wheat" }); g[y][x] = "#"; }
+      // the pond, south: fished from its north bank
+      for (let y = 19; y <= 22; y++) for (let x = 15; x <= 25; x++) g[y][x] = "~";
+      for (const x of [17, 20, 23]) objs.push({ t: "spot", x, y: 19, name: "Fishing spot" });
+      for (let x = 14; x <= 26; x++) keep.push([x, 18], [x, 17]);
+      objs.push({ t: "fire", x: 24, y: 10, name: "Campfire" }); g[10][24] = "#";
+      for (let x = 9; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "forest" }, [...keepOf(this), ...keep], 12);
       return { g, objs, blobs: [] };
     },
@@ -659,15 +663,19 @@ Object.assign(SCENES, {
     name: "The Paddock", exits: { w: "casino" },
     build() {
       const g = grid(), objs = [], keep = [];
-      for (let x = 0; x <= 14; x++) g[6][x] = ",";
-      objs.push({ t: "hay", x: 9, y: 3, name: "Hay bale" }, { t: "hay", x: 10, y: 3, name: "Hay bale" }); g[3][9] = "#"; g[3][10] = "#";
-      objs.push({ t: "fire", x: 8, y: 9, name: "Campfire" }); g[9][8] = "#";
-      for (const [x, y] of [[3, 2], [19, 11], [2, 10]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
-      for (let x = 0; x <= 14; x++) keep.push([x, 5], [x, 7]);
+      for (let x = 0; x <= 34; x++) g[13][x] = ",";
+      for (let y = 6; y <= 13; y++) g[y][11] = ","; for (let y = 13; y <= 20; y++) g[y][24] = ",";
+      for (const [x, y] of [[15, 9], [16, 9], [28, 17]]) { objs.push({ t: "hay", x, y, name: "Hay bale" }); g[y][x] = "#"; }
+      objs.push({ t: "fire", x: 14, y: 16, name: "Campfire" }); g[16][14] = "#";
+      for (const [x, y] of [[3, 3], [40, 22], [4, 21], [39, 3], [20, 2]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
+      for (let x = 0; x <= 34; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "rocky" }, [...keepOf(this), ...keep], 13);
       return { g, objs, blobs: [] };
     },
-    mobs: [["chicken", 5, 3], ["chicken", 7, 4], ["chicken", 4, 9], ["chicken", 6, 10], ["cow", 12, 3], ["cow", 14, 9], ["cow", 16, 4], ["rotten", 18, 8], ["rotten", 19, 3]],
+    // chickens by the gate, cows in the middle, rotten tomatoes at the far end
+    mobs: [["chicken", 6, 5], ["chicken", 9, 8], ["chicken", 5, 10], ["chicken", 8, 18], ["chicken", 12, 20], ["chicken", 6, 21],
+      ["cow", 19, 6], ["cow", 23, 9], ["cow", 27, 5], ["cow", 21, 19], ["cow", 27, 21],
+      ["rotten", 34, 7], ["rotten", 38, 10], ["rotten", 36, 18], ["rotten", 39, 21]],
     npcs: [], bots: []
   },
   // inside the Casino: a hangout first, a gambling den second. Games of chance for Cash (never ZCoins), the
@@ -677,33 +685,34 @@ Object.assign(SCENES, {
      line, SOUTH the town (crafting: the smithy and the market). The side archways are real exits at the grid's edge;
      the south door is the building's front door onto the Forum. */
   casino: {
-    name: "The Casino", interior: true, floor: "casino", wallH: 34, room: [1, 3, 20, 10], exits: { w: "workyard", e: "paddock" }, labels: { w: "SKILLING", e: "COMBAT", s: "TOWN" }, exitTo: { scene: "forum", x: 13, y: 4 }, entry: { x: 10, y: 10 },
-    wall: [{ t: "banner", x: 2.5 }, { t: "lamp", x: 4.5 }, { t: "lamp", x: 7.5 }, { t: "lamp", x: 11 }, { t: "lamp", x: 17 }, { t: "banner", x: 19 }],
+    name: "The Casino", interior: true, floor: "casino", wallH: 34, room: [1, 4, 42, 21], exits: { w: "workyard", e: "paddock" }, labels: { w: "SKILLING", e: "COMBAT", s: "TOWN" }, exitTo: { scene: "forum", x: 21, y: 5 }, entry: { x: 21, y: 20 },
+    wall: [{ t: "banner", x: 3 }, { t: "lamp", x: 6 }, { t: "lamp", x: 12 }, { t: "lamp", x: 17 }, { t: "lamp", x: 25.5 }, { t: "lamp", x: 33 }, { t: "lamp", x: 38 }, { t: "banner", x: 41 }],
     build() {
-      const g = room(1, 3, 20, 10, 10), objs = [];
+      const g = room(1, 4, 42, 21, 21), objs = [];
       for (let y = SPAN.w[0]; y <= SPAN.w[1]; y++) { g[y][0] = "e"; g[y][COLS - 1] = "e"; }
-      objs.push({ t: "bar", x: 12, y: 4, w: 4, h: 1, name: "Bar" }); block(g, 12, 4, 4, 1);
-      objs.push({ t: "notice", x: 6, y: 3, name: "Task board" }); g[3][6] = "#";
-      objs.push({ t: "howto", art: "o_notice", x: 13, y: 10, name: "How GAMBA works" }); g[10][13] = "#";
-      objs.push({ t: "walldoor", x: 9, y: 2, name: "Floor 2: the Roulette Room", enter: "roulette" });
-      objs.push({ t: "roulsign", x: 9, y: 1, name: "Roulette", dy: -3 });
-      for (const y of [3, 8, 10]) { objs.push({ t: "slots", x: 1, y, name: "Slot machine", flip: true }); g[y][1] = "#"; }
-      for (const y of [3, 9]) { objs.push({ t: "slots", x: 20, y, name: "Slot machine" }); g[y][20] = "#"; }
-      objs.push({ t: "cointable", x: 6, y: 6, w: 2, h: 1, name: "Coin Flip table" }); block(g, 6, 6, 2, 1);
-      objs.push({ t: "dicetable", x: 14, y: 7, w: 2, h: 1, name: "Dice table" }); block(g, 14, 7, 2, 1);
-      objs.push({ t: "rug", img: "rug_casino", x: 9, y: 8, w: 4, h: 3, color: "#5a1a2a", name: "Rug" });
-      for (const [x, y] of [[17, 10], [4, 10]]) { objs.push({ t: "sofa", x, y, w: 2, h: 1, name: "Sofa" }); block(g, x, y, 2, 1); }
-      for (const [x, y] of [[17, 3], [3, 3], [7, 10], [14, 10]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
+      objs.push({ t: "walldoor", x: 21, y: 3, name: "Floor 2: the Roulette Room", enter: "roulette" });
+      objs.push({ t: "roulsign", x: 21, y: 2, name: "Roulette", dy: -3 });
+      objs.push({ t: "notice", x: 9, y: 4, name: "Task board" }); g[4][9] = "#";
+      objs.push({ t: "bar", x: 28, y: 5, w: 4, h: 1, name: "Bar" }); block(g, 28, 5, 4, 1);
+      // slot machines down both side walls (the arches stay clear), and a row of four in the middle of the floor
+      for (const y of [5, 7, 9, 17, 19]) { objs.push({ t: "slots", x: 1, y, name: "Slot machine", flip: true }); g[y][1] = "#"; objs.push({ t: "slots", x: 42, y, name: "Slot machine" }); g[y][42] = "#"; }
+      for (const x of [18, 20, 23, 25]) { objs.push({ t: "slots", x, y: 9, name: "Slot machine", flip: x < 22 }); g[9][x] = "#"; }
+      for (const [x, y] of [[8, 9], [8, 16], [13, 12]]) { objs.push({ t: "cointable", x, y, w: 2, h: 1, name: "Coin Flip table" }); block(g, x, y, 2, 1); }
+      for (const [x, y] of [[33, 9], [33, 16], [29, 12]]) { objs.push({ t: "dicetable", x, y, w: 2, h: 1, name: "Dice table" }); block(g, x, y, 2, 1); }
+      objs.push({ t: "rug", img: "rug_casino", x: 20, y: 17, w: 4, h: 3, color: "#5a1a2a", name: "Rug" });
+      objs.push({ t: "howto", art: "o_notice", x: 25, y: 20, name: "How GAMBA works" }); g[20][25] = "#";
+      for (const [x, y] of [[5, 21], [11, 21], [30, 21], [36, 21], [14, 5], [36, 5]]) { objs.push({ t: "sofa", x, y, w: 2, h: 1, name: "Sofa" }); block(g, x, y, 2, 1); }
+      for (const [x, y] of [[3, 4], [40, 4], [17, 21], [27, 21], [12, 4], [25, 4], [3, 21], [40, 21]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
       return { g, objs, blobs: [] };
     },
     mobs: [], bots: [],
-    npcs: [{ name: "Dex the Dealer", art: "dex", x: 13, y: 3, still: true, reach: 2, hair: "#1a1a1a", shirt: "#9a2a2a", pants: "#1a1a1a", lines: [
+    npcs: [{ name: "Dex the Dealer", art: "dex", x: 29, y: 4, still: true, reach: 2, hair: "#1a1a1a", shirt: "#9a2a2a", pants: "#1a1a1a", lines: [
       "Welcome in. Slots on the left, coins in the middle, dice by the bar. The house always wins, a little.",
       "Broke? Happens to the best of us. The board by the door has jobs that pay. Fresh ones every morning.",
       "Biggest win I've seen? Someone hit three sevens on that end machine. Bought everyone a drink. We don't sell drinks.",
       "Every roll's decided by the house, fair and square. I just hand over the money.",
       "No ZCoins in here, friend. Cash only. What happens in EastScape stays in EastScape."] },
-      { name: "DookieBetts", art: "dookie", x: 15, y: 6, still: true, reach: 2, hair: "#1a1a1a", shirt: "#c8102e", pants: "#1a1a1a", lines: [
+      { name: "DookieBetts", art: "dookie", x: 34, y: 8, still: true, reach: 2, hair: "#1a1a1a", shirt: "#c8102e", pants: "#1a1a1a", lines: [
         "One more roll. Just one. Then one more after that. Then we'll talk.",
         "You're up? That's the dice telling you to bet bigger. You're down? That's the dice telling you you're due.",
         "Roll under five. Twenty-four times your money. Honestly it'd be irresponsible NOT to.",
@@ -717,17 +726,17 @@ Object.assign(SCENES, {
   },
   // through the curtains at the back of the Casino: one big table everyone plays at once
   roulette: {
-    name: "The Roulette Room", interior: true, floor: "casino", carpet: "t_roulette", room: [4, 3, 17, 10], exitTo: { scene: "casino", x: 9, y: 4 }, entry: { x: 10, y: 10 },
-    wall: [{ t: "banner", x: 5 }, { t: "lamp", x: 7.5 }, { t: "lamp", x: 10.5 }, { t: "lamp", x: 13.5 }, { t: "banner", x: 16.5 }],
+    name: "The Roulette Room", interior: true, floor: "casino", carpet: "t_roulette", room: [14, 8, 29, 17], exitTo: { scene: "casino", x: 21, y: 5 }, entry: { x: 21, y: 17 },
+    wall: [{ t: "banner", x: 15 }, { t: "lamp", x: 17.5 }, { t: "lamp", x: 21.5 }, { t: "lamp", x: 25.5 }, { t: "banner", x: 28.5 }],
     build() {
-      const g = room(4, 3, 17, 10, 10), objs = [];
-      objs.push({ t: "roulette", x: 8, y: 5, w: 4, h: 2, name: "Roulette table" }); block(g, 8, 5, 4, 2);
-      for (const [x, y] of [[5, 9], [15, 9]]) { objs.push({ t: "sofa", x, y, w: 2, h: 1, name: "Sofa" }); block(g, x, y, 2, 1); }
-      for (const [x, y] of [[4, 4], [17, 4], [4, 7], [17, 7]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
+      const g = room(14, 8, 29, 17, 21), objs = [];
+      objs.push({ t: "roulette", x: 20, y: 11, w: 4, h: 2, name: "Roulette table" }); block(g, 20, 11, 4, 2);
+      for (const [x, y] of [[15, 16], [27, 16]]) { objs.push({ t: "sofa", x, y, w: 2, h: 1, name: "Sofa" }); block(g, x, y, 2, 1); }
+      for (const [x, y] of [[14, 9], [29, 9], [14, 13], [29, 13]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
       return { g, objs, blobs: [] };
     },
     mobs: [], bots: [],
-    npcs: [{ name: "Rouge the Croupier", art: "rouge", x: 10, y: 4, still: true, reach: 3, hair: "#1a1a1a", shirt: "#1a1a1a", pants: "#1a1a1a", lines: [
+    npcs: [{ name: "Rouge the Croupier", art: "rouge", x: 22, y: 10, still: true, reach: 3, hair: "#1a1a1a", shirt: "#1a1a1a", pants: "#1a1a1a", lines: [
       "Place your bets. The wheel waits for no one, but it does wait twenty-five seconds.",
       "Red, black, odd, even, a dozen or a single number. A single number pays thirty-six times. It also mostly doesn't.",
       "Everyone at this table plays the same spin. Win together, lose together. Mostly lose together.",
