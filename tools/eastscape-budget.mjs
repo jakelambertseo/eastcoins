@@ -4,7 +4,7 @@
    getting heavy. The server side (tick time, bandwidth per player) is watched by the load test and the dashboard's
    EastScape card; this covers the page.
 
-   - code: the page, the shared rules and the wiki, gzipped (what actually crosses the wire)
+   - code: the page, the shared rules, the wiki and the sounds, gzipped (what actually crosses the wire)
    - startup art: every picture loaded at login (ART_FILES minus the per-area lists)
    - each area's art: what walking into it fetches the first time
    Exits 1 if anything is over budget. Raise a budget on purpose, never by accident. */
@@ -39,7 +39,7 @@ let bad = 0;
 const line = (label, val, max, unit) => { const over = val > max; if (over) bad++; console.log(`  ${over ? "OVER " : "ok   "} ${label.padEnd(34)} ${String(val).padStart(7)} ${unit}  (budget ${max})`); };
 
 console.log("EastScape size budget");
-const code = gz("eastscape.html") + gz("v3/assets/js/eastscape-shared.js") + gz("v3/assets/js/eastscape-wiki.js");
+const code = gz("eastscape.html") + gz("v3/assets/js/eastscape-shared.js") + gz("v3/assets/js/eastscape-wiki.js") + gz("v3/assets/js/eastscape-sfx.js");
 line("code, gzipped", kb(code), BUDGET.codeGzKB, "KB");
 
 const lazy = new Set(Object.values(AREA_ART).flat());
