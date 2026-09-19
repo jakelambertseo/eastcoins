@@ -236,7 +236,7 @@ export class World {
   }
   touch(pl) { pl.dirty = true; pl.needSave = true; pl.changedAt ??= Date.now(); }
 
-  meOf(pl) { const C = pl.C; return { isle: { tier: C.isle.tier, themes: C.isle.themes }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats }; }
+  meOf(pl) { const C = pl.C; return { isle: { tier: C.isle.tier, themes: C.isle.themes }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats }; }
 
   /* ------------------------------------------------------------ scenes */
   scene(key) {
@@ -351,6 +351,7 @@ export class World {
       case "bet": return this.bet(S, pl, m, now);
       case "daily": return this.dailyOp(S, pl, m);
       case "roul": return this.roulOp(S, pl, m, now);
+      case "tour": return this.tourOp(S, pl, m);
       case "trade": return this.tradeOp(S, pl, m);
       case "admin": return pl.admin ? this.admin(S, pl, m) : undefined;
     }
@@ -374,7 +375,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob) return;
-      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", slots: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", slots: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", roulette: "roulette", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       if (!kind) return;
       const at = kind === "door" && ob.door ? ob.door : G.nearestCell(ob, f);
       act = { kind, ob, x: at.x, y: at.y, name: ob.name };
@@ -440,6 +441,7 @@ export class World {
     this.countEvent(pl, type, d);
     this.questEvent(pl, type, d);
     this.dailyEvent(pl, type, d);
+    this.tourEvent(pl, type, d);
   }
 
   countEvent(pl, type, d) {
@@ -953,7 +955,8 @@ export class World {
     }
     if (a.kind === "bank") return pl.out.push({ type: "bank" });
     if (a.kind === "game") { pl.act = null; return pl.out.push({ type: "game", g: a.ob.t, pot: Math.floor(this.jack.pot), lastJack: this.jack.wins?.[0] || null }); }
-    if (a.kind === "board") { pl.act = null; return this.dailySend(pl); }
+    if (a.kind === "howto") { pl.act = null; return pl.out.push({ type: "popup", title: "How GAMBA works", text: G.HOWTO, icon: "🎰" }); }
+    if (a.kind === "board") { pl.act = null; this.tourStep(pl, "board"); return this.dailySend(pl); }
     if (a.kind === "roulette") { pl.act = null; pl.out.push({ type: "roulopen" }); return this.roulSendTo(S, pl); }
     if (a.kind === "exchange") { pl.out.push({ type: "exchange" }); return this.exSend(pl); }
     if (a.kind === "hole") {
@@ -1569,7 +1572,7 @@ export class World {
       }
       this.jackDirty = true; res.pot = Math.floor(J.pot);
     }
-    pl.lastBet = now;
+    pl.lastBet = now; this.tourStep(pl, "play");
     G.takeInv(pl.C.inv, "coins", amt);
     const payout = Math.floor(amt * mult) + jackpot;
     this.cashTo(pl, payout);
@@ -1619,7 +1622,7 @@ export class World {
     if (!(amt >= 1)) return;
     if (staked + amt > G.ROULETTE.maxStake) return this.say(pl, `Up to ${G.fmtCash(G.ROULETTE.maxStake)} a spin. You've got ${G.fmtCash(staked)} down.`, "bad");
     if (G.cashIn(pl.C) < amt) return this.say(pl, `You only have ${G.fmtCash(G.cashIn(pl.C))} in your bag.`, "bad");
-    G.takeInv(pl.C.inv, "coins", amt); this.touch(pl);
+    G.takeInv(pl.C.inv, "coins", amt); this.touch(pl); this.tourStep(pl, "play");
     const same = R.bets.find((b) => b.id === pl.id && b.kind === kind && b.pick === pick);
     if (same) same.amt += amt; else R.bets.push({ id: pl.id, name: pl.name, kind, pick, amt });
     this.roulSend(S);
@@ -1664,6 +1667,30 @@ export class World {
       c.bank ||= []; const b = c.bank.find((x) => x.k === "coins"); if (b) b.n += n; else c.bank.push({ k: "coins", n });
       await this.ctx.storage.put(key, c);
     } catch (e) { /* the bet is lost only if storage itself fails */ }
+  }
+
+  /* ------------------------------------------------------------ the House Tour (see G.TOUR) */
+  tourStep(pl, id) {   // move on if `id` is the step they're on
+    const t = pl.C.tour; if (!t || G.tourOf(pl.C)?.id !== id) return false;
+    t.step++; this.touch(pl);
+    const next = G.tourOf(pl.C); if (next) this.say(pl, `House Tour: ${next.text}.`, "good");
+    return true;
+  }
+  tourEvent(pl, type, d) {
+    const t = pl.C.tour; if (G.tourOf(pl.C)?.id !== "job") return;
+    if (type === "gather" && d.k === "logs") t.logs = Math.min(G.TOUR_JOB.logs, (t.logs || 0) + (d.n || 1));
+    else if (type === "kill" && d.mob === "chicken") t.chickens = Math.min(G.TOUR_JOB.chickens, (t.chickens || 0) + 1);
+    else return;
+    this.touch(pl);
+    if (t.logs >= G.TOUR_JOB.logs || t.chickens >= G.TOUR_JOB.chickens) this.tourStep(pl, "job");
+  }
+  tourOp(S, pl, m) {
+    const C = pl.C, dex = S.npcs.find((n) => n.name === "Dex the Dealer");
+    if (!dex || G.cheb(pl, dex) > 4) return this.say(pl, "Dex is behind the bar in the casino.", "bad");
+    if (m.op === "start" && (!C.tour || C.tour.step >= G.TOUR.length)) { C.tour = { step: 0, logs: 0, chickens: 0, again: !!C.tour }; this.touch(pl); }
+    const step = G.tourOf(C)?.id;
+    if (step === "meet") { if (!C.tour.again) this.cashTo(pl, G.TOUR_CHIP); this.tourStep(pl, "meet"); }
+    else if (step === "paid") { if (!C.tour.again) this.cashTo(pl, G.TOUR_PAY); this.tourStep(pl, "paid"); this.say(pl, C.tour.again ? "That's the tour. You know the way." : `Dex pays you ${G.fmtCash(G.TOUR_PAY)}. That's the whole game: play, work, get paid, play.`, "good"); }
   }
 
   /* ------------------------------------------------------------ daily tasks (the board in the Casino) */
