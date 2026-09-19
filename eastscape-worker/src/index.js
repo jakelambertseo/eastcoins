@@ -203,7 +203,7 @@ export class World {
     this.send(pl, { type: "who", scene: S.key, who: this.whoOf(S) });
     this.send(pl, JSON.parse(this.snapOf(S, Date.now(), false)));
     S.whoSig = null;   // the next broadcast tells everyone else this player has arrived
-    if (!stored) this.say(pl, "Welcome to GambaScape. Wander the floor and play what you like. Broke? Out the arch to the Yard, and click a monster (or fish the pond): everything out there has its price written over it, and the Cashier by each arch turns it into Cash. Say hello to Dex behind the bar.");
+    if (!stored) this.say(pl, "Welcome to GambaScape. Wander the floor and play what you like. Broke? Out the arch to the Yard, and click a monster (or fish the pond): everything out there has its price written over it, and the Cashier by each arch turns it into tickets. Say hello to Dex behind the bar.");
     else this.say(pl, `Welcome back, ${pl.name}.`);
     if (this.exDeliver(pl)) this.exCommit(pl);   // market sales and purchases made while you were away
     this.start();
@@ -331,7 +331,7 @@ export class World {
       case "unequip": return this.unequip(pl, String(m.slot));
       case "drop": {
         const i = m.i | 0, st = C.inv[i]; if (!st) return;
-        if (st.k === "coins") return this.say(pl, "You'd rather not drop your Cash.");
+        if (st.k === "tickets") return this.say(pl, "You'd rather not drop your tickets.");
         C.inv.splice(i, 1); this.say(pl, `You drop the ${G.ITEMS[st.k].name.toLowerCase()}.`); this.touch(pl); return;
       }
       case "chat": {
@@ -439,7 +439,7 @@ export class World {
        pvpkill { victim }         this player killed another
        quest   { k }              a quest handed in
 
-     Cash is NOT emitted: it moves through shops, the Exchange, trades, quest
+     tickets is NOT emitted: it moves through shops, the Exchange, trades, quest
      rewards and island upgrades, and a hook at each of those is a hook someone
      will forget to add. It is measured by difference in persist() instead.
      ------------------------------------------------------------ */
@@ -689,14 +689,14 @@ export class World {
   // every coin a character holds, bag and bank
   cashOf(C) {
     let n = 0;
-    for (const s of C.inv) if (s.k === "coins") n += s.n;
-    for (const s of C.bank) if (s.k === "coins") n += s.n;
+    for (const s of C.inv) if (s.k === "tickets") n += s.n;
+    for (const s of C.bank) if (s.k === "tickets") n += s.n;
     return n;
   }
 
   /* Time played and cash, both measured rather than hooked.
 
-     Cash: the difference since the last save. Every path that moves money is
+     tickets: the difference since the last save. Every path that moves money is
      covered by construction, and nothing new has to remember to report. The
      cost is that earning and spending the same 100 between two saves nets to
      nothing — saves land within SAVE_MS of any change, so that is a four-second
@@ -814,7 +814,7 @@ export class World {
     if (it.use === "devil") {
       const w = pl.lastWin; if (!w || now - w.at > G.DEVIL.ms) return this.say(pl, "The dice only roll within two minutes of a win. Go and win something.", "bad");
       const amt = Math.min(G.DEVIL.max, w.amt); if (G.cashIn(C) < amt) return this.say(pl, `You'd need the ${G.fmtCash(amt)} you won still in your bag.`, "bad");
-      take(); pl.lastWin = null; G.takeInv(C.inv, "coins", amt);
+      take(); pl.lastWin = null; G.takeInv(C.inv, "tickets", amt);
       if (Math.random() < G.DEVIL.odds) {
         this.cashTo(pl, amt * G.DEVIL.pays); this.say(pl, `The Devil's dice come up sixes. Your ${G.fmtCash(amt)} is now ${G.fmtCash(amt * G.DEVIL.pays)}!`, "loot");
         const S = this.scenes.get(C.scene); if (S && amt >= 200) for (const p of this.playersIn(S)) if (p !== pl) p.out.push({ type: "casinonote", text: `😈 ${pl.name} rolled the Devil's dice and tripled ${G.fmtCash(amt)}!` });
@@ -847,7 +847,7 @@ export class World {
   shopOp(S, pl, m) {
     const C = pl.C, bar = m.shop === "bar", n = bar ? S.npcs.find((x) => x.name === "Dex the Dealer") : S.npcs.find((x) => x.opens === "shop");
     if (!n || G.cheb(pl, n) > (bar ? 5 : 3)) return this.say(pl, bar ? "You need to be at the bar, with Dex." : "You need to be at the Forge, with Brutus.", "bad");
-    const cash = () => C.inv.find((x) => x.k === "coins");
+    const cash = () => C.inv.find((x) => x.k === "tickets");
     if (bar && m.op === "round") {   // a round for the room: everyone on the floor who isn't already drinking
       const rd = G.BAR.round, c = cash(); if (!c || c.n < rd.price) return this.say(pl, `A round is ${G.fmtCash(rd.price)}.`, "bad");
       const who = this.playersIn(S).filter((p) => !p.lingerUntil && !((p.C.drink?.left | 0) > 0));
@@ -871,7 +871,7 @@ export class World {
       const st = C.inv[m.i | 0]; if (!st) return; const price = G.SHOP.buys[st.k];
       if (!price) return this.say(pl, `Brutus squints at the ${G.ITEMS[st.k].name.toLowerCase()}. "Not buying that."`);
       const k = st.k, all = G.countItems(C, [k]), qty = G.takeInv(C.inv, k, Math.max(1, Math.min(all, m.n === "all" ? all : m.n | 0)));
-      this.give(pl, "coins", qty * price); this.touch(pl);
+      this.give(pl, "tickets", qty * price); this.touch(pl);
       return this.say(pl, `You sell ${qty > 1 ? `${qty} × ` : "the "}${G.ITEMS[k].name.toLowerCase()} for ${G.fmtCash(qty * price)}.`, "good");
     }
   }
@@ -879,20 +879,19 @@ export class World {
      leaves tools, charms and anything wearable alone; one item at a time sells whatever you point at. */
   atCounter(S, pl) { return this.near(S, pl, "coinstatue", 3) || this.near(S, pl, "cashier", 3); }
   tixTo(pl, n) { if (n > 0 && !this.give(pl, "tickets", n) && !this.bankAdd(pl, "tickets", n)) this.say(pl, "Your bag and bank are both full: those tickets are lost. Make some room!", "bad"); }
-  /* THE PRIZE COUNTER: tickets in, prizes out (G.prizesOf). Chips are Cash, 1 for 1; everything else is an item. */
+  /* THE PRIZE COUNTER: tickets in, prizes out (G.prizesOf). Chips are tickets, 1 for 1; everything else is an item. */
   counterOp(S, pl, m) {
     if (!this.atCounter(S, pl)) return this.say(pl, "You need to be at the Prize Counter: the House Ruby or a Cashier's window, on the casino floor.", "bad");
     const C = pl.C, tix = G.tixIn(C);
-    if (m.op === "allchips") { if (!tix) return; G.takeInv(C.inv, "tickets", tix); this.cashTo(pl, tix); this.touch(pl); return this.say(pl, `All ${G.fmtTix(tix)} into chips: ${G.fmtCash(tix)}. The tables are right behind you.`, "good"); }
     if (m.op !== "buy") return;
     const p = G.prizesOf().find((x) => x.id === String(m.id)); if (!p) return;
     const n = Math.max(1, Math.min(99, m.n | 0 || 1)), cost = p.price * n, it = p.give && G.ITEMS[p.give[0]];
     if (tix < cost) return this.say(pl, `That's ${G.fmtTix(cost)}. You have ${G.fmtTix(tix)}.`, "bad");
     if (it && G.roomFor(C.inv, p.give[0]) < p.give[1] * n) return this.say(pl, "Your bag's too full for that.", "bad");
     G.takeInv(C.inv, "tickets", cost);
-    if (p.cash) this.cashTo(pl, p.cash * n); else this.give(pl, p.give[0], p.give[1] * n);
+    this.give(pl, p.give[0], p.give[1] * n);
     this.touch(pl);
-    this.say(pl, p.cash ? `${G.fmtCash(p.cash * n)} in chips for ${G.fmtTix(cost)}. Go and play.` : `${n > 1 ? `${n} × ` : ""}${it.name} for ${G.fmtTix(cost)}.`, "good");
+    this.say(pl, `${n > 1 ? `${n} × ` : ""}${it.name} for ${G.fmtTix(cost)}.`, "good");
   }
   cashOut(S, pl, m) {
     const C = pl.C; if (!this.atCounter(S, pl)) return this.say(pl, "You need to be at the Prize Counter: the House Ruby or a Cashier's window, on the casino floor.", "bad");
@@ -905,16 +904,16 @@ export class World {
     pl.out.push({ type: "cashed", total, count });
     this.say(pl, `The counter hands over ${G.fmtTix(total)} for ${count} thing${count === 1 ? "" : "s"}. Spend them right here.`, "good");
   }
-  /* ------------------------------------------------------------ THE HOUSE RUBY: Cash into real ZCoins (2026-09-20)
+  /* ------------------------------------------------------------ THE HOUSE RUBY: tickets into real ZCoins (2026-09-20)
      The SITE decides everything about ZCoins (functions/api/eastscape/exchange.js: the hourly allowance, the ticket's
      roll, the one-and-only payment per id). This side's whole job is the CASH, and the order things happen in:
-       1. the Cash comes off the character, and a record of the ask goes into storage under dex:<player>:<id>
+       1. the tickets comes off the character, and a record of the ask goes into storage under dex:<player>:<id>
        2. BOTH are saved before the site is asked anything
-       3. the site answers: paid -> the record goes; a DEFINITE no -> the Cash comes back and the record goes;
-          anything else (a timeout, an error page, "unsettled") -> the record stays, marked stuck, the Cash stays held,
+       3. the site answers: paid -> the record goes; a DEFINITE no -> the tickets comes back and the record goes;
+          anything else (a timeout, an error page, "unsettled") -> the record stays, marked stuck, the tickets stays held,
           and the SAME id is asked again the next time the player opens the Ruby. Asking twice is safe: the site pays
           an id once. A crash between 2 and 3 leaves a record that is retried the same way.
-     The Cash is never given back on an unknown, and ZCoins are never asked for before the Cash is safely gone. */
+     The tickets is never given back on an unknown, and ZCoins are never asked for before the tickets is safely gone. */
   async dexAsk(body) {
     if (this.env.DEV === "1" && !this.env.ESCAPE_KEY) return this.dexDev(body);
     try {
@@ -926,68 +925,77 @@ export class World {
   // `wrangler dev` has no key and must never reach the real site: a pretend Ruby with the same answers, so the window can be worked on
   dexDev(body) {
     const D = (this.devDex ||= { used: 0, seen: new Map() }), left = Math.max(0, G.DEX.capHour - D.used);
-    if (body.op === "status") return { ok: true, left, capHour: G.DEX.capHour, rate: G.DEX.rate, ticket: G.DEX.ticket, enabled: true, dev: true };
+    if (body.op === "status") return { ok: true, left, capHour: G.DEX.capHour, maxStake: G.DEX.maxStake, open: [], enabled: true, dev: true };
     if (D.seen.has(body.id)) return { ...D.seen.get(body.id), duplicate: true };
-    const cost = body.op === "ticket" ? G.DEX.ticket.face : body.zc | 0; if (cost > left) return { ok: false, code: "CAP", definite: true, left, message: "That's your ZCoins for this hour (pretend)." };
-    D.used += cost; let ans;
-    if (body.op === "ticket") { let r = Math.floor(Math.random() * 100), prize = 0; for (const [z, w] of G.DEX.ticket.table) { if (r < w) { prize = z; break; } r -= w; } ans = { ok: true, prize, face: G.DEX.ticket.face, balance: 1000 + prize, left: left - cost }; }
-    else ans = { ok: true, zc: cost, balance: 1000 + cost, left: left - cost };
+    const cost = body.zc | 0; if (cost > left) return { ok: false, code: "CAP", definite: true, left, message: "That's your GambaScape ZCoins for this hour (pretend)." };
+    D.used += cost; const ans = body.op === "stake" ? { ok: true, voucher: body.id, zc: cost, left: left - cost } : { ok: true, zc: cost, balance: 1000 + cost, left: left - cost };
     D.seen.set(body.id, ans); return ans;
   }
   dexKey(pl, id) { return `dex:${pl.id}:${id}`; }
+  /* Two asks, one machinery (v57):
+       "bank"   ZCoins you found on a kill or a catch go onto your eastcoin.vip balance. At the Prize Counter.
+       "stake"  A TICKET STAKE: G.DEX.rate tickets for each ZCoin of a bet at a real table. The tickets are taken and saved
+                HERE, then the site writes a voucher, and the page sends that voucher with an ordinary bet. At any real table.
+     Both count against the one hourly allowance, which the site owns. */
   async dexOp(S, pl, m, now) {
-    if (!this.atCounter(S, pl)) return this.say(pl, "You need to be at the Prize Counter: the House Ruby or a Cashier's window, on the casino floor.", "bad");
-    if (pl.dexBusy || now - (pl.lastDex || 0) < 1500) return; pl.lastDex = now;
-    const op = String(m.op), C = pl.C;
+    const op = String(m.op), C = pl.C, stake = op === "stake";
+    if (stake ? String(S.key).split(":")[0] !== "casino" : !this.atCounter(S, pl)) return stake ? pl.out.push({ type: "stake", g: m.g, error: "The real tables are on the casino's main floor." }) : this.say(pl, "You need to be at the Prize Counter: the House Ruby or a Cashier's window, on the casino floor.", "bad");
+    const fail = (error, status) => pl.out.push(stake ? { type: "stake", g: m.g, error, status } : { type: "dex", error, status });
+    if (pl.dexBusy || now - (pl.lastDex || 0) < (stake ? 400 : 1500)) { if (stake) fail("One at a time. Try that again."); return; } pl.lastDex = now;
     pl.dexBusy = true;
     try {
       // anything left over from before (a timeout, a restart mid-ask) is asked again FIRST, with its own id
       const old = await this.ctx.storage.list({ prefix: `dex:${pl.id}:`, limit: 5 });
       for (const [key, rec] of old) await this.dexSettle(pl, key, rec, true);
       if (op === "status") { const st = await this.dexAsk({ op: "status", userId: pl.id }); return pl.out.push({ type: "dex", status: st, held: (await this.ctx.storage.list({ prefix: `dex:${pl.id}:`, limit: 5 })).size }); }
-      if (op !== "bank" && op !== "ticket") return;   // ("bank": ZCoins you found; "ticket": a Ruby scratch ticket, bought with tickets)
-      if ((await this.ctx.storage.list({ prefix: `dex:${pl.id}:`, limit: 1 })).size) return pl.out.push({ type: "dex", error: "The Ruby is still working on your last one. Give it a minute and look again." });
-      const have = G.countItems({ inv: C.inv, bank: [] }, ["zcoin"]);
-      if (op === "bank" && !have) return pl.out.push({ type: "dex", error: "You've no ZCoins in your bag to bank. They turn up, rarely, on a kill or a catch." });
-      if (op === "ticket" && G.tixIn(C) < G.DEX.ticketPrice) return pl.out.push({ type: "dex", error: `A Ruby ticket is ${G.fmtTix(G.DEX.ticketPrice)}. You have ${G.fmtTix(G.tixIn(C))}.` });
+      if (op !== "bank" && !stake) return;
+      if ((await this.ctx.storage.list({ prefix: `dex:${pl.id}:`, limit: 1 })).size) return fail("The house is still working on your last one. Give it a minute and try again.");
+      const have = G.countItems({ inv: C.inv, bank: [] }, ["zcoin"]), want = Math.floor(Number(m.zc));
+      if (!stake && !have) return fail("You've no ZCoins in your bag to bank. They turn up, rarely, on a kill or a catch.");
+      if (stake && !(want >= 1 && want <= G.DEX.maxStake)) return fail(`A ticket bet is 1 to ${G.DEX.maxStake} ZCoins' worth.`);
+      if (stake && G.tixIn(C) < want * G.DEX.rate) return fail(`That's ${G.fmtTix(want * G.DEX.rate)} (${G.DEX.rate.toLocaleString()} a ZCoin). You have ${G.fmtTix(G.tixIn(C))}. Out the arch: everything out there pays tickets.`);
       // ask what's left BEFORE taking anything, so the usual refusal (the hour's allowance) costs nothing and risks nothing
       const st = await this.dexAsk({ op: "status", userId: pl.id });
-      if (!st.ok || !st.enabled) return pl.out.push({ type: "dex", status: st, error: st.message || "The Ruby isn't paying out right now. Nothing was taken." });
-      const zc = op === "ticket" ? G.DEX.ticket.face : Math.min(have, st.left, G.DEX.capHour);
-      if (zc < 1 || zc > st.left) return pl.out.push({ type: "dex", status: st, error: st.left ? `The Ruby has ${st.left} ZCoin${st.left === 1 ? "" : "s"} left for you this hour.` : "That's your ZCoins for this hour. It refills as the hour rolls on; what you found will keep." });
-      const back = op === "ticket" ? { k: "tickets", n: G.DEX.ticketPrice } : { k: "zcoin", n: zc };
+      if (!st.ok || !st.enabled) return fail(st.message || "ZCoins aren't moving right now. Nothing was taken.", st);
+      if (stake) { const spare = (st.open || []).find((v) => v.zc === want); if (spare) return pl.out.push({ type: "stake", g: m.g, voucher: spare.id, zc: want, spare: true, status: st }); }   // paid for earlier and never bet: it's still yours
+      const zc = stake ? want : Math.min(have, st.left, G.DEX.capHour);
+      if (zc < 1 || zc > st.left) return fail(stake ? (st.left ? `You've ${st.left} ZCoin${st.left === 1 ? "" : "s"}' worth of ticket bets left this hour. ZCoin bets still work.` : "That's your ticket bets for this hour. It refills as the hour rolls on. ZCoin bets still work.") : (st.left ? `There's room for ${st.left} more ZCoin${st.left === 1 ? "" : "s"} this hour.` : "That's your ZCoins for this hour. It refills as the hour rolls on; what you found will keep."), st);
+      const back = stake ? { k: "tickets", n: zc * G.DEX.rate } : { k: "zcoin", n: zc };
       if (pl.left || G.countItems({ inv: C.inv, bank: [] }, [back.k]) < back.n) return;
-      const id = `${op === "ticket" ? "t" : "x"}${Date.now().toString(36)}${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`, key = this.dexKey(pl, id), rec = { id, op: op === "ticket" ? "ticket" : "pay", zc, back, at: Date.now(), name: pl.name };
+      const id = `${stake ? "s" : "x"}${Date.now().toString(36)}${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`, key = this.dexKey(pl, id), rec = { id, op: stake ? "stake" : "pay", zc, back, g: stake ? String(m.g || "") : undefined, at: Date.now(), name: pl.name };
       G.takeInv(C.inv, back.k, back.n); this.touch(pl);
       await this.ctx.storage.put(key, rec); await this.persist(pl);
-      if (pl.needSave) { /* the character did not save: put everything back and stop */ this.give(pl, back.k, back.n); await this.ctx.storage.delete(key); return pl.out.push({ type: "dex", error: "Couldn't save just now. Nothing was taken. Try again in a moment." }); }
+      if (pl.needSave) { /* the character did not save: put everything back and stop */ this.give(pl, back.k, back.n); await this.ctx.storage.delete(key); return fail("Couldn't save just now. Nothing was taken. Try again in a moment."); }
       await this.dexSettle(pl, key, rec, false);
     } finally { pl.dexBusy = false; }
   }
-  // what an exchange took goes back the way it came: tickets for a scratch ticket, the ZCoins themselves for a banking
+  // what an ask took goes back the way it came: tickets for a stake, the ZCoins themselves for a banking
   async dexRefund(pl, rec) {
-    const back = rec.back || (rec.cash ? { k: "coins", n: rec.cash } : null); if (!back) return;   // (rec.cash: a record from before tickets, 2026-09-20)
+    const back = rec.back && G.ITEMS[rec.back.k] ? rec.back : null; if (!back) return;   // (a record from before v57 that took tickets: tickets no longer exists)
     if (!pl.left) { if (!this.give(pl, back.k, back.n)) this.bankAdd(pl, back.k, back.n); this.touch(pl); return this.persist(pl); }
-    try { const ck = `char:${pl.id}`, c = await this.ctx.storage.get(ck); if (!c) return; c.bank ||= []; const s = c.bank.find((x) => x.k === back.k); if (s) s.n += back.n; else c.bank.push({ k: back.k, n: back.n }); await this.ctx.storage.put(ck, c); } catch (e) { /* lost only if storage itself fails */ }
+    try { const ck = `char:${pl.id}`, c = await this.ctx.storage.get(ck); if (!c) return; c.bank ||= []; const b = c.bank.find((x) => x.k === back.k); if (b) b.n += back.n; else c.bank.push({ k: back.k, n: back.n }); await this.ctx.storage.put(ck, c); } catch (e) { /* lost only if storage itself fails */ }
   }
   // ask the site about one record and act on the answer. `again`: this is a retry of something left over
   async dexSettle(pl, key, rec, again) {
-    const ans = await this.dexAsk({ op: rec.op, userId: pl.id, id: rec.id, zc: rec.zc });
-    const status = (left) => ({ ok: true, left, capHour: G.DEX.capHour, rate: G.DEX.rate, ticket: G.DEX.ticket, enabled: true });
+    if (rec.op !== "pay" && rec.op !== "stake") { await this.ctx.storage.delete(key); return this.dexRefund(pl, rec); }   // a Ruby scratch ticket left over from before v57: the site no longer rolls them, so it is simply given back
+    const stake = rec.op === "stake", ans = await this.dexAsk({ op: rec.op, userId: pl.id, id: rec.id, zc: rec.zc });
+    const status = (left) => ({ ok: true, left, capHour: G.DEX.capHour, maxStake: G.DEX.maxStake, enabled: true });
     if (ans.ok) {
       await this.ctx.storage.delete(key);
-      const got = rec.op === "ticket" ? ans.prize | 0 : ans.zc | 0;
-      if (!pl.left) pl.out.push({ type: "dex", done: { op: rec.op === "ticket" ? "ticket" : "bank", zc: got, face: ans.face, balance: ans.balance, again }, status: status(ans.left) });
-      if (got >= 10) for (const p of this.pls.values()) p.out.push({ type: "casinonote", text: rec.op === "ticket" ? `💎 ${rec.name} scratched a Ruby ticket for ${got} ZCoins!` : `💎 ${rec.name} banked ${got} ZCoins at the Prize Counter.` });
+      if (stake) { if (!pl.left && !ans.used) pl.out.push({ type: "stake", g: rec.g, voucher: ans.voucher || rec.id, zc: rec.zc, status: status(ans.left), again }); return; }   // (left, or a retry: the voucher stays OPEN on the site and is handed back the next time they bet that amount)
+      const got = ans.zc | 0;
+      if (!pl.left) pl.out.push({ type: "dex", done: { op: "bank", zc: got, balance: ans.balance, again }, status: status(ans.left) });
+      if (got >= 10) for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `💎 ${rec.name} banked ${got} ZCoins at the Prize Counter.` });
       return;
     }
-    if (ans.definite) {   // nothing was or will be paid: what it cost comes back
+    if (ans.definite) {   // nothing was or will be given: what it cost comes back
       await this.ctx.storage.delete(key); await this.dexRefund(pl, rec);
-      if (!pl.left) pl.out.push({ type: "dex", error: `${ans.message || "The Ruby said no."} What it took is back in your bag.`, status: ans.left != null ? status(ans.left) : null });
+      const error = `${ans.message || "The house said no."} What it took is back in your bag.`;
+      if (!pl.left) pl.out.push(stake ? { type: "stake", g: rec.g, error, status: ans.left != null ? status(ans.left) : null } : { type: "dex", error, status: ans.left != null ? status(ans.left) : null });
       return;
     }
     if (!rec.stuck) { rec.stuck = true; await this.ctx.storage.put(key, rec); }
-    if (!pl.left && !again) pl.out.push({ type: "dex", error: "The Ruby jammed and couldn't say whether that went through. What it took is held, not lost: open the counter again in a minute and it will finish the job or give it back." });
+    if (!pl.left && !again) { const error = "The house jammed and couldn't say whether that went through. What it took is held, not lost: try again in a minute and it will finish the job or give it back."; pl.out.push(stake ? { type: "stake", g: rec.g, error } : { type: "dex", error }); }
   }
   unequip(pl, slot) {
     const C = pl.C, k = C.eq[slot]; if (!k) return;
@@ -1023,7 +1031,7 @@ export class World {
     const C = pl.C, q = G.QUESTS[k];
     if (q.goal.type === "bring") { let left = q.goal.n; for (const key of q.goal.items) { left -= G.takeInv(C.inv, key, left); if (!left) break; } }
     C.qs[k] = { ...(C.qs[k] || {}), state: "done" };
-    if (q.reward.coins) this.give(pl, "coins", q.reward.coins);
+    if (q.reward.coins) this.give(pl, "tickets", q.reward.coins);
     for (const [sk, xp] of Object.entries(q.reward.xp || {})) this.grant(pl, sk, xp);
     for (const [it, n] of q.reward.items || []) this.give(pl, it, n);
     pl.out.push({ type: "questdone", k });
@@ -1176,6 +1184,7 @@ export class World {
     if (a.kind === "door") {
       if (!a.ob?.enter || !G.SCENES[a.ob.enter]) return this.say(pl, `The ${a.name.toLowerCase()} is shut. It'll open soon.`);
       const inside = G.SCENES[a.ob.enter];
+      if (!G.OPEN.has(String(a.ob.enter)) && !pl.god) { pl.act = null; return this.say(pl, "Vince doesn't move. \"Room's shut. Refit. Don't ask me when.\"", "bad"); }
       if (inside.door?.cash && !pl.god && G.cashIn(C) < inside.door.cash && !((C.roller | 0) > 0)) { pl.act = null; return this.say(pl, `Vince looks at your shoes. "List says ${G.fmtCash(inside.door.cash)} on you, or fresh from a fight and looking it (High Roller). You've got ${G.fmtCash(G.cashIn(C))}."`, "bad"); } this.moveToScene(pl, a.ob.enter, null, inside.entry); pl.dir = "north";
       return this.say(pl, `You go into ${inside.name.replace(/^The /, "the ")}.`);
     }
@@ -1427,7 +1436,7 @@ export class World {
     if (m.op === "upgrade") {
       const next = G.ISLE_TIERS[I.tier + 1];
       if (!this.atFerry(S, pl) || !next) return;
-      const cash = C.inv.find((x) => x.k === "coins");
+      const cash = C.inv.find((x) => x.k === "tickets");
       if (!cash || cash.n < next.price) return this.say(pl, `${next.name} costs ${G.fmtCash(next.price)}.`, "bad");
       cash.n -= next.price; if (!cash.n) C.inv.splice(C.inv.indexOf(cash), 1);
       const oldKey = G.isleKey(I, pl.id); I.tier++; this.touch(pl);
@@ -1438,7 +1447,7 @@ export class World {
     if (m.op === "buy") {
       const th = G.THEMES[m.theme];
       if (!this.atFerry(S, pl) || !th || th.price == null || I.themes.includes(m.theme)) return;
-      const cash = C.inv.find((x) => x.k === "coins");
+      const cash = C.inv.find((x) => x.k === "tickets");
       if (!cash || cash.n < th.price) return this.say(pl, `The ${th.name} theme costs ${G.fmtCash(th.price)}.`, "bad");
       cash.n -= th.price; if (!cash.n) C.inv.splice(C.inv.indexOf(cash), 1);
       I.themes.push(m.theme); this.touch(pl);
@@ -1463,7 +1472,7 @@ export class World {
     }
     if (m.op === "show") {
       const i = m.i | 0, st = C.inv[m.s | 0];
-      if (!st || st.k === "coins" || I.shelf[i] !== null || !within("pedestal", i)) return;
+      if (!st || st.k === "tickets" || I.shelf[i] !== null || !within("pedestal", i)) return;
       st.n--; if (!st.n) C.inv.splice(C.inv.indexOf(st), 1);
       I.shelf[i] = st.k; this.touch(pl);
       return this.say(pl, `You put your ${G.ITEMS[st.k].name.toLowerCase()} on display.`, "good");
@@ -1667,13 +1676,13 @@ export class World {
 
   /* ------------------------------------------------------------ the Exchange: the stall in the Forum
      Offers keep working while their owner is away; what they earn waits in the offer's box until collected.
-     Anything that moves items or Cash between a character and the Exchange saves both in one write. */
+     Anything that moves items or tickets between a character and the Exchange saves both in one write. */
   async exCommit(...pls) {
     const put = { exchange: this.ex };
     for (const p of pls) { p.C.x = p.x; p.C.y = p.y; put[`char:${p.id}`] = p.C; p.needSave = false; p.changedAt = null; }
     await this.ctx.storage.put(put);
   }
-  /* The market (rebuilt 2026-09-18): two sides, no collecting. Whatever an offer earns (items or Cash) goes straight to
+  /* The market (rebuilt 2026-09-18): two sides, no collecting. Whatever an offer earns (items or tickets) goes straight to
      the owner's bank — at once if they're on, the moment they next log in if they're not (it waits in the offer's box
      until then). Every fill is told to the owner in chat; fills that happened while they were away are summed up at login.
      Matching is unchanged: best price first, then whoever was first, at the waiting offer's price, 1% to the house. */
@@ -1697,7 +1706,7 @@ export class World {
     let moved = false;
     for (const o of this.exMine(pl)) {
       if (o.box.items && this.bankAdd(pl, o.k, o.box.items)) { o.box.items = 0; moved = true; }
-      if (o.box.cash && this.bankAdd(pl, "coins", o.box.cash)) { o.box.cash = 0; moved = true; }
+      if (o.box.cash && this.bankAdd(pl, "tickets", o.box.cash)) { o.box.cash = 0; moved = true; }
       if (!o.open && !o.closedAt) o.closedAt = Date.now();
     }
     // closed offers stay on the owner's list for three days (so "recent" means something), then go
@@ -1712,9 +1721,9 @@ export class World {
     const C = pl.C, now = Date.now();
     if (m.op === "open") return this.exSend(pl);
     if (!this.near(S, pl, "stall")) return this.say(pl, "You need to be at the market stall in the Forum.", "bad");
-    // Cash for an offer comes from your bag first, then your bank
-    const payCash = (n) => { const bag = Math.min(n, G.cashIn(C)); if (bag) G.takeInv(C.inv, "coins", bag); let left = n - bag; if (left) { const b = C.bank.find((x) => x.k === "coins"); b.n -= left; if (!b.n) C.bank.splice(C.bank.indexOf(b), 1); } };
-    const cashAll = () => G.cashIn(C) + (C.bank.find((x) => x.k === "coins")?.n || 0);
+    // tickets for an offer comes from your bag first, then your bank
+    const payCash = (n) => { const bag = Math.min(n, G.cashIn(C)); if (bag) G.takeInv(C.inv, "tickets", bag); let left = n - bag; if (left) { const b = C.bank.find((x) => x.k === "tickets"); b.n -= left; if (!b.n) C.bank.splice(C.bank.indexOf(b), 1); } };
+    const cashAll = () => G.cashIn(C) + (C.bank.find((x) => x.k === "tickets")?.n || 0);
     // items for a sell offer come from your bag first, then your bank
     const haveAll = (k) => G.countItems(C, [k]) + (C.bank.find((x) => x.k === k)?.n || 0);
     const takeItems = (k, n) => { const bag = G.takeInv(C.inv, k, n); let left = n - bag; if (left) { const b = C.bank.find((x) => x.k === k); b.n -= left; if (!b.n) C.bank.splice(C.bank.indexOf(b), 1); } };
@@ -1730,7 +1739,7 @@ export class World {
     };
     if (m.op === "place" || m.op === "buynow") {
       const side = m.op === "buynow" ? "buy" : m.side === "buy" ? "buy" : "sell", k = String(m.k), qty = Math.floor(Number(m.qty)), price = Math.floor(Number(m.price));
-      if (!G.ITEMS[k] || k === "coins") return this.say(pl, "You can't trade that on the market.", "bad");
+      if (!G.ITEMS[k] || k === "tickets") return this.say(pl, "You can't trade that on the market.", "bad");
       if (!(qty >= 1 && qty <= 1e9 && price >= 1 && price <= 1e9)) return this.say(pl, "Pick a quantity and a price of at least 1.", "bad");
       if (m.op === "place" && this.exOpen(pl).length >= G.EX_SLOTS) return this.say(pl, `You can have ${G.EX_SLOTS} offers up at once. Cancel one first.`, "bad");
       if (side === "sell") {
@@ -1781,7 +1790,7 @@ export class World {
     return [...touched];
   }
 
-  /* ------------------------------------------------------------ the Casino: games of chance for Cash (never ZCoins)
+  /* ------------------------------------------------------------ the Casino: games of chance for tickets (never ZCoins)
      The server rolls, pays and announces; the page only animates what it's told. Bets come out of your bag. */
   /* hunger and thirst: the tables turn away anyone under the floor (and say why, once, not on every click) */
   tooEmpty(pl) {
@@ -1828,7 +1837,7 @@ export class World {
     const back = G.backWith(lost, e, Math.random()); if (!back) return 0;
     this.say(pl, back >= lost ? `An angel's on your shoulder: your ${G.fmtCash(lost)} comes back.` : `Insurance: ${G.fmtCash(back)} of that comes back.`, "good"); return back;
   }
-  cashTo(pl, n) { if (n > 0 && !this.give(pl, "coins", n) && !this.bankAdd(pl, "coins", n)) this.say(pl, "Your bag and bank are both full: that Cash is lost. Make some room!", "bad"); }
+  cashTo(pl, n) { if (n > 0 && !this.give(pl, "tickets", n) && !this.bankAdd(pl, "tickets", n)) this.say(pl, "Your bag and bank are both full: those tickets are lost. Make some room!", "bad"); }
   bet(S, pl, m, now) {
     const g = String(m.g), game = G.GAMES[g]; if (!game || game.run) return;
     if (S.def.real?.[g]) return this.say(pl, `${S.def.real[g].name} on this floor plays for real ZCoins now. Click the table.`, "bad");
@@ -1875,7 +1884,7 @@ export class World {
       this.jackDirty = true; res.pot = Math.floor(J.pot);
     }
     pl.lastBet = now; this.tourStep(pl, "play"); this.bigBet(pl, 0, amt, S.def); const e = this.fxTake(pl);
-    G.takeInv(pl.C.inv, "coins", amt - onHouse); if (onHouse) { pl.C.free = 0; res.free = onHouse; }
+    G.takeInv(pl.C.inv, "tickets", amt - onHouse); if (onHouse) { pl.C.free = 0; res.free = onHouse; }
     const lucky = (pl.C.luck | 0) > 0; if (lucky) pl.C.luck--;
     const plain = Math.floor(amt * mult), boosted = G.payWith(plain, amt, e, lucky), own = amt - onHouse;
     const ret = Math.max(0, boosted - onHouse), saved = ret < own ? this.lossBack(pl, own - ret, e) : 0, payout = ret + saved + jackpot;   /* the house's chip goes back to the house; what it won is yours */
@@ -1901,7 +1910,7 @@ export class World {
   /* ------------------------------------------------------------ the Fight Pit: one fight for the whole room
      The same shape as roulette. Bets are open for FIGHTS.betMs; then the winner is decided by ONE random number against
      the posted chance, a script of blows is written to fit it, and the room watches for fightMs; then everyone is paid
-     and the next pair comes out. Bets are paid when the fight ENDS (so your Cash doesn't give the result away), which
+     and the next pair comes out. Bets are paid when the fight ENDS (so your tickets doesn't give the result away), which
      is why this ticks even when the room is empty and why a restart mid-fight pays out on the spot. */
   fightPair() {
     const pool = G.FIGHTS.pool, a = pick(pool); let b = pick(pool), n = 0; while ((b === a) && n++ < 9) b = pick(pool);
@@ -1934,7 +1943,7 @@ export class World {
     if (this.tooEmpty(pl)) return;
     if (!staked) (F.fx ||= {})[pl.id] = this.fxTake(pl);
     this.bigBet(pl, staked, staked + amt);
-    G.takeInv(pl.C.inv, "coins", amt); this.touch(pl); this.tourStep(pl, "play");
+    G.takeInv(pl.C.inv, "tickets", amt); this.touch(pl); this.tourStep(pl, "play");
     if (mine[0]) mine[0].amt += amt; else F.bets.push({ id: pl.id, name: pl.name, side, amt });
     this.fightSend(S);
   }
@@ -2026,7 +2035,7 @@ export class World {
       if (!(amt >= G.minBetOf(S.def) && amt <= G.maxBetOf(C, S.def))) return this.say(pl, `Bets here are ${G.fmtCash(G.minBetOf(S.def))} to ${G.fmtCash(G.maxBetOf(C, S.def))}.`, "bad");
       if (have < amt) return this.say(pl, `You only have ${G.fmtCash(have)} in your bag.`, "bad");
       if (this.tooEmpty(pl)) return;
-      G.takeInv(C.inv, "coins", amt); this.tourStep(pl, "play"); this.bigBet(pl, 0, amt, S.def); const fx = this.fxTake(pl);
+      G.takeInv(C.inv, "tickets", amt); this.tourStep(pl, "play"); this.bigBet(pl, 0, amt, S.def); const fx = this.fxTake(pl);
       const lucky = (C.luck | 0) > 0; if (lucky) C.luck--;
       if (g === "hilo") C.runs[g] = { stake: amt, lucky, fx, card: 1 + Math.floor(Math.random() * 13), suit: Math.floor(Math.random() * 4), mult: 1, cards: 1, rights: 0 };
       else {
@@ -2093,7 +2102,7 @@ export class World {
     if (this.tooEmpty(pl)) return;
     if (!staked) (R.fx ||= {})[pl.id] = this.fxTake(pl);   // one spin, however many chips
     this.bigBet(pl, staked, staked + amt);
-    G.takeInv(pl.C.inv, "coins", amt); this.touch(pl); this.tourStep(pl, "play");
+    G.takeInv(pl.C.inv, "tickets", amt); this.touch(pl); this.tourStep(pl, "play");
     const same = R.bets.find((b) => b.id === pl.id && b.kind === kind && b.pick === pick);
     if (same) same.amt += amt; else R.bets.push({ id: pl.id, name: pl.name, kind, pick, amt });
     this.roulSend(S);
@@ -2144,7 +2153,7 @@ export class World {
   async creditOffline(id, n) {
     try {
       const key = `char:${id}`, c = await this.ctx.storage.get(key); if (!c) return;
-      c.bank ||= []; const b = c.bank.find((x) => x.k === "coins"); if (b) b.n += n; else c.bank.push({ k: "coins", n });
+      c.bank ||= []; const b = c.bank.find((x) => x.k === "tickets"); if (b) b.n += n; else c.bank.push({ k: "tickets", n });
       await this.ctx.storage.put(key, c);
     } catch (e) { /* the bet is lost only if storage itself fails */ }
   }
@@ -2208,7 +2217,7 @@ export class World {
   }
 
   /* ------------------------------------------------------------ trading face to face
-     Both players put up items and Cash, both accept, then both confirm on a second screen. Nothing moves until the
+     Both players put up items and tickets, both accept, then both confirm on a second screen. Nothing moves until the
      final confirm, and then it all moves at once and both characters are saved together. */
   tradeView(T, forId) {
     const other = forId === T.a ? T.b : T.a;
@@ -2240,7 +2249,7 @@ export class World {
     const mine = T.off[pl.id], C = pl.C;
     if (m.op === "decline") return this.tradeEnd(T, `${pl.name} declined the trade.`);
     if (T.stage === "offer" && (m.op === "add" || m.op === "remove" || m.op === "cash")) {
-      if (m.op === "add") { const k = String(m.k); if (!G.ITEMS[k] || k === "coins") return; const have = G.countItems(C, [k]) - (mine.items[k] || 0); const n = Math.max(0, Math.min(have, m.n === "all" ? have : Math.floor(Number(m.n)) || 1)); if (n) mine.items[k] = (mine.items[k] || 0) + n; }
+      if (m.op === "add") { const k = String(m.k); if (!G.ITEMS[k] || k === "tickets") return; const have = G.countItems(C, [k]) - (mine.items[k] || 0); const n = Math.max(0, Math.min(have, m.n === "all" ? have : Math.floor(Number(m.n)) || 1)); if (n) mine.items[k] = (mine.items[k] || 0) + n; }
       if (m.op === "remove") delete mine.items[String(m.k)];
       if (m.op === "cash") mine.cash = Math.max(0, Math.min(G.cashIn(C), Math.floor(Number(m.n)) || 0));
       T.ok = {}; return this.tradeSync(T);   // any change means both have to accept again
@@ -2260,10 +2269,10 @@ export class World {
     const after = (p, give, get) => {
       const inv = p.C.inv.map((s) => ({ k: s.k, n: s.n }));
       for (const [k, n] of Object.entries(give.items)) G.takeInv(inv, k, n);
-      if (give.cash) G.takeInv(inv, "coins", give.cash);
+      if (give.cash) G.takeInv(inv, "tickets", give.cash);
       let over = 0;
       for (const [k, n] of Object.entries(get.items)) over += G.addInv(inv, k, n);
-      if (get.cash) over += G.addInv(inv, "coins", get.cash);
+      if (get.cash) over += G.addInv(inv, "tickets", get.cash);
       return over ? null : inv;
     };
     const newA = after(A, T.off[A.id], T.off[B.id]), newB = after(B, T.off[B.id], T.off[A.id]);

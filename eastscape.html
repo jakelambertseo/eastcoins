@@ -83,7 +83,7 @@ button,input,select{font:inherit}
 /* the wallet, under the bag: money first, then what turns into money, then what improves your odds */
 .rarelog{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.rarelog span{position:relative;display:grid;place-items:center;aspect-ratio:1;border-radius:6px;background:rgba(255,255,255,.05);filter:grayscale(1) brightness(.45);cursor:help}.rarelog span.has{filter:none;background:rgba(232,191,53,.16);box-shadow:0 0 0 1px rgba(232,191,53,.5)}
 .rarelog .ico{width:22px;height:22px}.rarelog em{position:absolute;right:2px;bottom:0;font:800 9.5px Nunito,sans-serif;color:#ffd84a;font-style:normal;text-shadow:0 1px 1px #000}
-.wl-two{display:grid;grid-template-columns:1fr 1fr;gap:6px}.wl-two .wl-cash{gap:6px}.wl-two .wl-cash img,.wl-two .wl-cash .ico{width:30px;height:30px;image-rendering:pixelated}.wl-two .wl-cash b{font-size:19px}.wl-tix b{color:#ff9aa8}
+.wl-two{display:grid;grid-template-columns:1fr 1fr;gap:6px}.wl-two .wl-cash{gap:6px}.wl-two .wl-cash img,.wl-two .wl-cash .ico{width:30px;height:30px;image-rendering:pixelated}.wl-two .wl-cash b{font-size:19px}.wl-tix b{color:#ff9aa8}.wl-zc b{color:#ffd84a}
 .wl-vipbar{display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}.wl-vipbar>u{display:block;height:100%}
 .wallets{margin:6px 7px 4px 5px;display:grid;gap:6px}.wallets>.wl-next{border-top:0;padding:0 3px;color:#5a4a3a}
 .wallet{padding:8px;border-radius:8px;background:linear-gradient(#1c1613,#120e0c);color:#f4ede5;box-shadow:0 0 0 2px #c8963a,0 0 0 4px #3a2410;display:grid;gap:6px}
@@ -518,7 +518,7 @@ button,input,select{font:inherit}
   <span class="spacer"></span>
   <span class="net" id="net" role="status" aria-live="polite"><i></i><span id="netText">Connecting…</span></span>
   <span class="online" id="online"></span>
-  <span class="topcash" title="Your Cash (in your bag)"><img src="/v3/assets/img/glad/flat/ui/cash.png?v=1" alt=""><b id="topCash">0</b></span>
+  <span class="topcash" title="Your tickets (in your bag)"><img src="/v3/assets/img/glad/flat/items/tickets.png?v=1" alt=""><b id="topCash">0</b></span>
   <span class="me"><img id="topAv" alt="" hidden><span id="topName">—</span></span>
 </header>
 <main class="wrap">
@@ -568,7 +568,7 @@ button,input,select{font:inherit}
       <div class="win-body"><div class="rcp" id="smithList"></div></div>
     </section>
     <section class="win" id="gameWin" aria-label="Casino game" hidden style="width:min(430px,calc(100% - 28px))">
-      <div class="win-head"><b id="gameTitle">🎰 Casino</b><small id="gameSub">Cash only · the house keeps a little</small><button type="button" class="win-x" data-close="gameWin" aria-label="Close">×</button></div>
+      <div class="win-head"><b id="gameTitle">🎰 Casino</b><small id="gameSub">Tickets in, tickets out</small><button type="button" class="win-x" data-close="gameWin" aria-label="Close">×</button></div>
       <div class="win-body" id="gameBody"></div>
     </section>
     <section class="win" id="roulWin" aria-label="Roulette" hidden style="width:min(600px,calc(100% - 28px))">
@@ -632,10 +632,10 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=65";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=66";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=39").then((m) => { WK = m; }));
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=40").then((m) => { WK = m; }));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=2";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -824,7 +824,8 @@ function onEvent(e) {
   if (e.type === "run") return CZ.run(e);
   if (e.type === "need") { SFX.play(e.blocked ? "ui_error" : e.k === "thirst" ? "splash" : "eat"); if (e.blocked) CZ.blocked(e.k); return; }
   if (e.type === "cashier") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true; SFX.play("ui_open"); return CZ.cashier(!!e.ruby); }
-  if (e.type === "dex") return CZ.dex(e);
+  if (e.type === "dex") { if (e.done) zcRead(); return CZ.dex(e); }
+  if (e.type === "stake") return CZ.stake(e);
   if (e.type === "real") { if ($("gameWin").hidden || CZ.game !== e.g) openReal(e.g); return; }
   if (e.type === "prize") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true; SFX.play("ui_open"); return CZ.prize(e); }
   if (e.type === "cashed") { SFX.play("coins"); return CZ.cashed(e); }
@@ -1519,9 +1520,8 @@ function whatNext() {
   const cash = G.cashIn(me), att = G.lvlOf(me, "melee"), tiered = G.SLOTS.some((sl) => ITEMS[me.eq[sl]]?.tier);
   const charm = me.inv.find((x) => ITEMS[x.k].luck);
   if (charm) return `You've got a ${ITEMS[charm.k].name.toLowerCase()} in your bag. Click it, then play: your wins pay more while you're lucky.`;
-  if (cash < 20 && G.tixIn(me) >= 50) return `You've got ${G.fmtTix(G.tixIn(me))} and no chips. The Prize Counter is the big ruby in the middle of the casino: it swaps tickets for chips, 1 for $1, and sells gear, dinner and Ruby scratch tickets that pay real ZCoins.`;
   if (me.inv.some((x) => x.k === "zcoin")) return "You're carrying REAL ZCoins. Bank them at the Prize Counter (the big ruby) and they go onto your eastcoin.vip balance.";
-  if (cash >= 20 && !(me.luck | 0)) return "You're playing without luck. Go out the arch to the Yard: fish for lucky clovers, or fight for tickets, house chips and High Roller. Use one and every win pays more. You'll come back with things to sell, too.";
+  if (cash >= 20 && !(me.luck | 0)) return "You're playing without luck. Go out the arch to the Yard: fish for lucky clovers, or fight for tickets, ticket bundles and High Roller. Use one and every win pays more. You'll come back with things to sell, too.";
   if (cash < 20) return "You're light. The task board by the back door has three paid jobs today, and the work's one arch away: click a monster, or fish the pond.";
   if (att < 10) return "Toughen up on the Yard's chickens and cows, out the arch. At Combat 10 you can wear bronze: it's behind the Prize Counter, for tickets.";
   if (!tiered) return "Get some real gear on. The Prize Counter has a set for every level, for tickets. Better gear means faster kills, bigger monsters and more tickets.";
@@ -1533,7 +1533,7 @@ function talkTo(n) {
   if (n.name === "Dex the Dealer") {
     const st = G.tourOf(me)?.id, opts = [];
     if (st === "meet") opts.push(["I'm new here.", () => { send({ t: "tour", op: "talk" }); showTalk(n, [me.tour?.again ? "Round again? Fine." : `New blood. First one's on the house: here's ${G.fmtCash(G.TOUR_CHIP)}. Go and lose it somewhere on my floor.`, "Slots on the walls, coins on the round table, dice with DookieBetts. Pick one."], [["On it.", closeTalk]]); }]);
-    if (st === "paid") opts.push(["The job's done. Pay me.", () => { send({ t: "tour", op: "talk" }); showTalk(n, ["Honest work. Here's your money.", "And a lucky clover, on the house. Click it in your bag: your next bets pay more when they win. That's the whole game, friend: play, and when you want better odds or more Cash, go out an arch and work for it."], [["Got it.", closeTalk]]); }]);
+    if (st === "paid") opts.push(["The job's done. Pay me.", () => { send({ t: "tour", op: "talk" }); showTalk(n, ["Honest work. Here's your money.", "And a lucky clover, on the house. Click it in your bag: your next bets pay more when they win. That's the whole game, friend: play, and when you want better odds or more tickets, go out an arch and work for it."], [["Got it.", closeTalk]]); }]);
     if (!st) opts.push(["Give me the House Tour.", () => { send({ t: "tour", op: "start" }); showTalk(n, "Step one: say hello properly.", [["Hello, Dex.", () => talkTo(n)]]); }]);
     opts.push(["What's behind the bar?", () => { closeTalk(); openShop("bar"); }]);
     opts.push([`A round for the room (${G.fmtCash(G.BAR.round.price)})`, () => { closeTalk(); send({ t: "shop", shop: "bar", op: "round" }); }]);
@@ -2018,7 +2018,7 @@ function frame() {
   // what a go at each rock, tree and fishing spot is worth, written over it (not while it's chopped down or mined out)
   for (const ob of Z.objs) { const v = G.nodeValue(ob); if (!v || ob.gone || ob.edge || objBusy(ob, now)) continue; const tall = ["tree", "oak", "yew", "cypress", "deadtree", "willow", "skyash", "olive"].includes(ob.t); tixLabel(v, sx((ob.x + (ob.w || 1) / 2) * T), sy(ob.y * T - (tall ? 30 : 12)), ob.special ? "#ffe27a" : "#ff9aa8", 13); }
   if (me && me.spinDay !== G.chicagoDay()) for (const ob of Z.objs) if (ob.t === "prizewheel") label("FREE SPIN", sx((ob.x + 1) * T), sy(ob.y * T - 30 + Math.sin(pnow / 300) * 2), "#7dffb0", 13);
-  for (const ob of Z.objs) if (ob.t === "coinstatue") { label("PRIZE COUNTER", sx((ob.x + 1) * T), sy(ob.y * T - 34), "#ffe27a", 13); label("tickets for chips, gear and ZCoins", sx((ob.x + 1) * T), sy(ob.y * T - 22), "#ff9aa8", 10); }
+  for (const ob of Z.objs) if (ob.t === "coinstatue") { label("PRIZE COUNTER", sx((ob.x + 1) * T), sy(ob.y * T - 34), "#ffe27a", 13); label("tickets for gear, dinner and drinks", sx((ob.x + 1) * T), sy(ob.y * T - 22), "#ff9aa8", 10); }
   for (const ob of Z.objs) if (ob.t === "furnace" || ob.t === "anvil" || ob.t === "range") label("pays 2×", sx((ob.x + 0.5) * T), sy(ob.y * T - 16), "#ffe27a", 12);
   for (const b of Z.bots) { const p = posOf(b, now), x = sx(p.px * T + 8), y = sy(p.py * T + 15); if (names) { label(b.name, x, y + 2, "#fff", 12); label(`level ${b.level}`, x, y + 15, "#ffe45c", 11); } const bb = botBubbles.get(b.id); if (bb && pnow - bb.at < 3500) bubble(bb.text, x, sy(p.py * T - 10)); }
   const pp = P ? ownPos(P, now) : null, hx = pp ? sx(pp.px * T + 8) : 0, hy = pp ? sy(pp.py * T + 15) : 0;
@@ -2223,6 +2223,13 @@ function isleSign(e) {
 
 /* ------------------------------------------------------------ THE REAL TABLES: on the casino's main floor six tables are
    eastcoin.vip's own games, for real ZCoins. The window is ours (CZ, real mode); it talks to the site's endpoints itself. */
+let ZCBAL = null, zcAt = 0;
+async function zcRead() {
+  if (performance.now() - zcAt < 4000) return; zcAt = performance.now();
+  try { const r = await fetch("/api/picks/bootstrap", { credentials: "same-origin" }), j = await r.json(), n = Number(j?.session?.wallet?.balance); if (Number.isFinite(n) && n !== ZCBAL) { ZCBAL = n; renderPanel(); } } catch (x) { /* no site behind this page (a dev server): the box shows a dash */ }
+}
+setTimeout(zcRead, 2500);
+new MutationObserver(() => { if ($("gameWin").hidden) zcRead(); }).observe($("gameWin"), { attributes: true, attributeFilter: ["hidden"] });
 function openReal(g) {
   if (String(Z.key).split(":")[0] !== "casino") return say("The real tables are on the casino's main floor. A Casino scroll gets you there from anywhere.");
   for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin"]) $(w).hidden = true;
@@ -2320,7 +2327,7 @@ function renderEx() {
       <label>Item<span id="mkPick"></span></label>
       ${d.k ? `<div class="mk-note">Cheapest listed: <b>${b.sell != null ? G.fmtCash(b.sell) : "—"}</b> · best buy offer: <b>${b.buy != null ? G.fmtCash(b.buy) : "—"}</b> · last sold: <b>${last(d.k) ? G.fmtCash(last(d.k)) : "—"}</b>${sell ? `<br>You have ${have.toLocaleString()} (bag and bank).` : ""}</div>
       <label>How many<input id="mkQty" type="number" min="1" ${sell ? `max="${have}"` : ""} value="${d.qty}"></label>
-      <label>Price each (Cash)<input id="mkPrice" type="number" min="1" value="${d.price}"></label>
+      <label>Price each (tickets)<input id="mkPrice" type="number" min="1" value="${d.price}"></label>
       <div class="mk-note">${sell ? `You'd get <b>${G.fmtCash(total - tax)}</b> when it all sells (${G.fmtCash(total)} less ${G.fmtCash(tax)} to the house). The items leave your bag or bank now; takings go to your bank.`
         : `This puts up <b>${G.fmtCash(total)}</b> now (you have ${G.fmtCash(cashAll())}, bag and bank). If it fills cheaper, you get the difference back. Items go to your bank.`}</div>` : `<div class="mk-note">${sell ? "Pick something from your bag or bank to sell." : "Pick the item you want to buy."}</div>`}
       <div class="row"><button class="btn" id="mkGo"${d.k ? "" : " disabled"}>${sell ? "Post sell offer" : "Post buy offer"}</button><button class="btn plain" id="mkBack">Back</button></div></div>`;
@@ -2390,7 +2397,7 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=11", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=12", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
 let czReal = null;
 const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, me: () => me, room: () => Z.def, you: () => you, calm: () => set("reducedMotion"), now: () => snow() }))));
 const CZ = new Proxy({}, { get: (_, k) => (czReal ? czReal[k] : k === "game" ? null : k === "real" ? false : k === "realGames" ? () => Object.keys(G.REAL_TABLES) : CZ_QUIET.has(k) ? () => {} : (...a) => { czLoad().then((z) => z[k](...a)).catch(() => say("Couldn't load the game windows. Check your connection and try again.")); }) });
@@ -2507,7 +2514,7 @@ function renderTrade() {
     $("tradeBody").innerHTML = `<div class="trade-cols"><div><h4>Your offer</h4><div class="trade-box${TR.ok.you ? " ok" : ""}">${offerHtml(TR.you, true)}</div></div>
       <div><h4>${esc(TR.themName)}'s offer</h4><div class="trade-box${TR.ok.them ? " ok" : ""}">${offerHtml(TR.them, false)}</div></div></div>
       <h4 style="margin-top:12px">Your bag · click to offer (shift-click offers the whole stack)</h4><div class="grid8" id="tradeBag">${me.inv.filter((s) => s.k !== "coins").map((s) => slotHtml(s, s.k, "data-k")).join("")}</div>`;
-    $("tradeFoot").innerHTML = `<label class="note" style="padding:0">Cash to offer <input id="trCash" type="number" min="0" value="${TR.you.cash}" style="width:110px"></label><span class="note" style="padding:0">you have ${G.fmtCash(G.cashIn(me))}</span><span style="flex:1"></span>
+    $("tradeFoot").innerHTML = `<label class="note" style="padding:0">tickets to offer <input id="trCash" type="number" min="0" value="${TR.you.cash}" style="width:110px"></label><span class="note" style="padding:0">you have ${G.fmtCash(G.cashIn(me))}</span><span style="flex:1"></span>
       <span class="note" style="padding:0">${TR.ok.them ? `${esc(TR.themName)} has accepted.` : TR.ok.you ? "Waiting for them…" : ""}</span><button class="btn" id="trOk"${TR.ok.you ? " disabled" : ""}>Accept</button><button class="btn danger" id="trNo">Decline</button>`;
     $("tradeBody").querySelectorAll("[data-k]").forEach((el) => el.addEventListener("click", (e) => send({ t: "trade", op: "add", k: el.dataset.k, n: e.shiftKey ? "all" : 1 })));
     $("tradeBody").querySelectorAll("[data-rm]").forEach((el) => el.addEventListener("click", () => send({ t: "trade", op: "remove", k: el.dataset.rm })));
@@ -2723,11 +2730,11 @@ function renderStats() {
   $("topCash").textContent = G.cashIn(me).toLocaleString();
   $("stats").innerHTML = [
     ["hp", `${Math.max(0, me.hp)}/${maxHp()}${me.god ? " ⭐" : ""}`, "Hitpoints"], ["combat", G.combatOf(me), "Combat level"],
-    ["total", total(), "Total level"], ["cash", G.cashIn(me).toLocaleString(), "Cash"],
+    ["total", total(), "Total level"], ["cash", G.cashIn(me).toLocaleString(), "tickets"],
     ["bag", `${me.inv.length}/${G.INV_MAX}`, "Inventory"], ["area", Z.key ? (Z.def.island ? "Island" : Z.def.home ? "Cottage" : Z.def.name.replace(/^The /, "").split(" ")[0]) : "", "Area"]
   ].map(([i, v, t]) => `<div class="stat" title="${t}"><i><img src="/v3/assets/img/glad/flat/ui/${i}.png?v=1" alt=""></i><b>${v}</b></div>`).join("");
 }
-/* Under the bag: what a casino player looks at. Cash first and biggest; then what's in the bag that TURNS INTO cash
+/* Under the bag: what a casino player looks at. tickets first and biggest; then what's in the bag that TURNS INTO cash
    (so a full bag reads as "go and see the Cashier"); the jackpot, because it's the dream; today's three paid jobs
    with their progress; and one line on what to do next. Everything here is already known to the page. */
 const UIA = "/v3/assets/img/glad/flat/ui/";
@@ -2747,8 +2754,8 @@ function walletCard() {
   const cash = G.cashIn(me), loot = me.inv.filter((s) => G.isLoot(s.k)).reduce((a, s) => a + s.n * G.valueOf(s.k), 0), full = me.inv.length >= G.INV_MAX;
   return `<div class="wallets">
     <div class="wallet wl-needs">${[["thirst", "w_water", "Thirst"], ["hunger", "w_food", "Hunger"]].map(([k, i, n]) => { const v = Math.round(G.needOf(me, k)), low = v < G.NEEDS.floor, fed = (me.meal?.left | 0) > 0; return `<div class="wl-need${low ? " low" : ""}" title="${n}: ${v}%. Every bet takes a little${fed ? " (not while you're Well Fed)" : ""}. Under ${G.NEEDS.floor}% the tables won't take your bets: the water cooler and the buffet are on the card room's back wall, next to the bar."><img src="${UIA}${i}.png?v=1" alt=""><span>${n}<i><u style="width:${v}%"></u></i></span><b>${v}%</b></div>`; }).join("")}</div>
-    <div class="wl-two"><div class="wallet wl-cash wl-tix" title="Tickets: what kills and catches pay. Spend them at the Prize Counter, the big ruby in the middle of the casino.">${ico("tickets")}<span><small>Tickets</small><b>${G.tixIn(me).toLocaleString()}</b></span></div>
-    <div class="wallet wl-cash" title="Chips: what the tables take. The Prize Counter swaps tickets for them, 1 for $1."><img src="${UIA}w_cash.png?v=1" alt=""><span><small>Chips</small><b>${G.fmtCash(cash)}</b></span></div></div>
+    <div class="wl-two"><div class="wallet wl-cash wl-tix" title="Tickets: the one currency here. Kills, catches and jobs pay them; the Prize Counter and every table take them.">${ico("tickets")}<span><small>Tickets</small><b>${G.tixIn(me).toLocaleString()}</b></span></div>
+    <div class="wallet wl-cash wl-zc" title="Your real ZCoins on eastcoin.vip. The tables on the main floor take ZCoins or tickets, and pay ZCoins either way.">${ico("zcoin")}<span><small>ZCoins</small><b>${ZCBAL == null ? "–" : Number(ZCBAL).toLocaleString()}</b></span></div></div>
     <div class="wallet">
       <div class="wl-row${loot ? " go" : ""}" title="What the Cashier would pay for the loot and made things in your bag"><img src="${UIA}w_sack.png?v=1" alt=""><span>${loot ? (full ? "Bag's full" : "In your bag") : "Nothing to trade in"}<small>${loot ? "take it to the Prize Counter" : "out the arch: fight or fish"}</small></span><b>${loot ? `+${loot.toLocaleString()} tickets` : ""}</b></div>
       ${me.jack ? `<div class="wl-row" title="The slots jackpot: three sevens wins it"><img src="${UIA}w_jackpot.png?v=1" alt=""><span>Slots jackpot<small>three sevens takes it</small></span><b style="color:#ffd84a">${G.fmtCash(me.jack)}</b></div>` : ""}
@@ -2772,12 +2779,12 @@ function renderPanel() {
       return `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" data-item="${s.k}" title="${esc(title)}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}</div>`;
     });
     while (cells.length < G.INV_MAX) cells.push('<div class="slot empty"></div>');
-    p.innerHTML = `<div class="ph">Inventory <span><button type="button" class="invsort" id="invSort" title="Sort: Cash, tools, gear, food, then the rest. Merges part-stacks.">Sort</button> <small>${me.inv.length}/${G.INV_MAX}</small></span></div><div class="inv">${cells.join("")}</div>${walletCard()}`;
+    p.innerHTML = `<div class="ph">Inventory <span><button type="button" class="invsort" id="invSort" title="Sort: tickets, tools, gear, food, then the rest. Merges part-stacks.">Sort</button> <small>${me.inv.length}/${G.INV_MAX}</small></span></div><div class="inv">${cells.join("")}</div>${walletCard()}`;
     $("invSort").addEventListener("click", () => send({ t: "sort" }));
     p.querySelectorAll(".slot[data-i]").forEach((el) => el.addEventListener("click", (e) => {
       const i = +el.dataset.i, s = me.inv[i]; if (!s) return;
       if (e.shiftKey) {
-        if (s.k === "coins") return say("You'd rather not drop your Cash.");
+        if (s.k === "coins") return say("You'd rather not drop your tickets.");
         if (set("confirmDrop")) return popup("Drop it?", `Drop ${s.n > 1 ? `${s.n.toLocaleString()} × ` : "the "}${ITEMS[s.k].name.toLowerCase()}? It's gone for good.`, ITEMS[s.k].icon, [["Drop it", () => send({ t: "drop", i })], ["Keep it", null]]);
         return send({ t: "drop", i });
       }
