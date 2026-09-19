@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 42;
+export const VERSION = 43;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -781,8 +781,10 @@ Object.assign(SCENES, {
       rope(6, 15, 8, 15); rope(12, 15, 14, 15); put("planter", 16, 15, "Planter", 2);
       put("trashcan", 11, 17, "Bin"); put("plant", 11, 19, "Potted palm"); put("soda", 10, 21, "Soda machine"); put("snacks", 11, 21, "Snack machine");
       // the House Ruby, properly roped now
-      put("coinstatue", 21, 13, "The House Ruby", 2);
-      rope(20, 12, 23, 12); rope(20, 14, 23, 14); rope(20, 12, 20, 14); rope(23, 12, 23, 14);
+      // THE HOUSE RUBY, dead centre: the place you bring everything back to. Click it to cash in what you found and made
+      // (the same as a Cashier's window); it becomes the ZCoin exchange too. Four posts, no rope: you walk right up to it.
+      put("coinstatue", 21, 13, "The House Ruby: cash in here", 2);
+      for (const [x, y] of [[20, 12], [23, 12], [20, 14], [23, 14]]) put("ropepost", x, y, "Velvet rope");
       objs.push({ t: "rug", img: "rug_casino", x: 20, y: 17, w: 4, h: 3, color: "#5a1a2a", name: "Rug" });
       put("howto", 24, 21, "How GAMBA works", 1, { art: "o_notice" });
       // THE CARD ROOM: Higher or Lower up front, blackjack and poker behind (those two open soon)
@@ -1273,7 +1275,7 @@ BROKE? Go and get more. It's quick.
   WEST arch: the Workyard, then the Gloam, then Cloudreach. Chop, mine, fish. Every rock and tree has its price written over it, and it's worth more the further out you go.
   EAST arch: the Paddock, then the Rough, then the Boneyard. Monsters drop things worth money. Bigger monsters, bigger money.
   FRONT door, the workshop: anything you MAKE from what you found sells for DOUBLE. Ore into bars, bars into swords, fish into dinner.
-Then bring it to a CASHIER, by either arch. One click and it's Cash.
+Then bring it to the HOUSE RUBY in the middle of the floor, or to a CASHIER by either arch. One click and it's Cash.
 
 THIRSTY? HUNGRY? Every bet takes a little out of you. Under 20% the tables turn you away: the water cooler and the buffet are on the card room's back wall, next to the bar, and they're free.
 
@@ -1528,7 +1530,7 @@ export const EXAMINE = {
   lighthouse: ["A lighthouse. The light points inward, at the island. Nobody knows who it's warning.", "The door's painted on. The light is on anyway."],
   mule: ["A mule. It refuses to move. It has refused for eleven years.", "The mule looks at you. You feel judged by a professional."]
 };
-export const VERB = { cooler: "Drink at", buffet: "Eat at", cashier: "Cash in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
+export const VERB = { coinstatue: "Cash in at", cooler: "Drink at", buffet: "Eat at", cashier: "Cash in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
 /* ------------------------------------------------------------ quests are data
    goal.type "bring": have goal.n of goal.items in your bag when you talk to the giver (they're taken)
