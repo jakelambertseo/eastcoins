@@ -269,7 +269,7 @@ export class World {
     if (G.walkableIn(S.g, pl.x, pl.y) && S.g[pl.y][pl.x] !== "e") return;
     // nearest open tile to the middle
     let best = null;
-    for (let y = 1; y < G.ROWS - 1; y++) for (let x = 1; x < G.COLS - 1; x++) if (G.walkableIn(S.g, x, y) && S.g[y][x] !== "e") { const d = Math.hypot(x - 11, y - 7); if (!best || d < best.d) best = { x, y, d }; }
+    for (let y = 1; y < G.ROWS - 1; y++) for (let x = 1; x < G.COLS - 1; x++) if (G.walkableIn(S.g, x, y) && S.g[y][x] !== "e") { const d = Math.hypot(x - G.COLS / 2, y - G.ROWS / 2); if (!best || d < best.d) best = { x, y, d }; }
     if (S.key === G.START.scene && G.walkableIn(S.g, G.START.x, G.START.y)) best = G.START;
     pl.x = best.x; pl.y = best.y; this.touch(pl);
   }
