@@ -19,6 +19,8 @@ import { GAMES as PVP, outcomeFor, chambersFor, MIN_PLAYERS, MAX_PLAYERS } from 
 import { RL, turnFor } from "./pvp/_redlight.js";
 import { triggerFor, drawFor, TRIGGER_MIN, TRIGGER_MAX } from "./_pot.js";
 import { rarityFor, coinsFor, pickIndex, tierItems, ODDS, COINS } from "../crate/_crate.js";
+import { rollFor as diceRoll, fairFor as diceFair, MIN_TARGET as DICE_MIN, MAX_TARGET as DICE_MAX } from "./dice/_dice.js";
+import { reelsFor as slotsReels, lineFor as slotsLine, priceFor as slotsPrice, payTable as slotsTable } from "./slots/_slots.js";
 import { outcomeFor as scratchOutcome, gridFor as scratchGrid, PRIZES as SCRATCH_PRIZES, RETURN as SCRATCH_RETURN } from "./scratch/_scratch.js";
 
 const clampInt = (v, lo, hi, dflt) => {
@@ -112,6 +114,22 @@ export async function onRequestGet({ request }) {
     });
   }
 
+  if (game === "dice") {
+    const roll = await diceRoll(seed), target = clampInt(q.get("target"), DICE_MIN, DICE_MAX, 50);
+    return json({
+      ...base, name: "Dice", roll, target, won: roll < target, fairPrice: Math.round(diceFair(target) * 10000) / 10000,
+      rule: "roll = floor(sha256(seed:dice) as a fraction x 100) + 1; you win when the roll is UNDER your number; a win pays 100/(number-1) times the play's edge"
+    });
+  }
+
+  if (game === "slots") {
+    const reels = await slotsReels(seed), line = slotsLine(reels);
+    return json({
+      ...base, name: "Slots", reels, line: line.key, jackpot: line.jackpot, quotedPrice: Math.round(slotsPrice(line) * 10000) / 10000, table: slotsTable(),
+      rule: "reel i = sha256(seed:reel:i) as a fraction of 80, walked down cherry 30, lemon 22, bell 14, star 8, diamond 4, seven 2; three of a kind pays that symbol, exactly two cherries pays a little, three sevens pays the jackpot as it stood"
+    });
+  }
+
   if (game === "pot") {
     // The hidden line and, given the day's total stakes, the draw.
     const total = clampInt(q.get("total"), 0, 100000000, 0);
@@ -138,5 +156,5 @@ export async function onRequestGet({ request }) {
     });
   }
 
-  return fail("BAD_GAME", "game must be one of: hilo, mines, plinko, scratch, wheel, race, flip, roulette, standing, redlight, pot, crate");
+  return fail("BAD_GAME", "game must be one of: hilo, mines, plinko, scratch, dice, slots, wheel, race, flip, roulette, standing, redlight, pot, crate");
 }

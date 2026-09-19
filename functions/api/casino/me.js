@@ -13,6 +13,8 @@ import { gamesLastHour as hiloPlays } from "./hilo/_hilo.js";
 import { gamesLastHour as minesPlays } from "./mines/_mines.js";
 import { dropsLastHour as plinkoPlays } from "./plinko/_plinko.js";
 import { cardsLastHour as scratchPlays } from "./scratch/_scratch.js";
+import { rollsLastHour as dicePlays } from "./dice/_dice.js";
+import { spinsLastHour as slotsPlays } from "./slots/_slots.js";
 import { GAMES as PVP, joinsLastHour as pvpPlays } from "./pvp/_pvp.js";
 import { ensureGrind, nextShiftAt, workingShift, JOBS as GRIND_JOBS } from "./grind/_grind.js";
 import { getSessionUser } from "../picks/_lib.js";
@@ -52,6 +54,8 @@ export async function onRequestGet(context) {
         ["mines", () => minesPlays(db, uid)],
         ["plinko", () => plinkoPlays(db, uid)],
         ["scratch", () => scratchPlays(db, uid)],
+        ["dice", () => dicePlays(db, uid)],
+        ["slots", () => slotsPlays(db, uid)],
         ...Object.values(PVP).filter((g) => !g.paused).map((g) => [g.key, () => pvpPlays(db, g.key, uid)])
       ];
       const counted = await Promise.all(counters.map(([, run]) => run().catch(() => 0)));

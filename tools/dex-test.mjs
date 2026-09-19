@@ -114,6 +114,46 @@ check("exactly the allowance was handed out", n === Math.floor(left / 5), `${n} 
 raw.exec(`UPDATE gamba_stakes SET created_at = datetime('now', '-2 hour') WHERE user_id = 'u1'`); raw.exec(`UPDATE wallet_operations SET created_at = datetime('now', '-2 hour')`);
 r = await ask({ op: "status", userId: "u1" }); check("an hour on: the allowance is back", r.body.left === M.CAP_HOUR);
 
+// ---- GambaScape's own tables: DICE and SLOTS (built from plinko/drop.js, so the money steps are the same ones)
+{
+  const E = await import(ROOT + "casino/_engine.js"), D = await import(ROOT + "casino/dice/_dice.js"), S = await import(ROOT + "casino/slots/_slots.js");
+  balances.alice = 1000; raw.exec(`DELETE FROM gamba_stakes`);
+  let b0 = balances.alice, n0 = await E.hourlyNet(db, "u1");
+  r = await post("casino/dice/roll.js", {}, { stake: 5, target: 50 });
+  check("Dice from the wallet: 5 out, the payout back, and the roll is the seed's", r.body.ok && balances.alice === b0 - 5 + r.body.roll.payout && r.body.roll.roll === await D.rollFor(r.body.roll.seed) && (r.body.roll.won ? [10, 11].includes(r.body.roll.payout) : r.body.roll.payout === 0), JSON.stringify(r.body).slice(0, 200));
+  check("…and the hourly cap sees it", (await E.hourlyNet(db, "u1")) === n0 + r.body.roll.payout - 5);
+  check("…and the hash shown beforehand was that seed's", r.body.roll.hash === await E.sha256(r.body.roll.seed));
+  for (const bad of [{ target: 4 }, { target: 96 }, { target: "x" }, { stake: 21 }, { stake: 0 }]) { b0 = balances.alice; const x = await post("casino/dice/roll.js", {}, { stake: 5, target: 50, ...bad }); check(`Dice ${JSON.stringify(bad)}: refused, nothing charged`, !x.body.ok && balances.alice === b0); }
+  await newStake("dicestake1", 5); b0 = balances.alice; d0 = debits(); r = await post("casino/dice/roll.js", {}, { stake: 5, target: 80, voucher: "dicestake1" });
+  check("Dice on a ticket stake: no debit, payout in ZCoins", r.body.ok && balances.alice === b0 + r.body.roll.payout && debits() === d0);
+
+  await S.ensureSlots(db); const pot0 = raw.prepare(`SELECT centi, reserve FROM slots_pot`).get();
+  b0 = balances.alice; r = await post("casino/slots/spin.js", {}, { stake: 5 });
+  const reels = r.body.ok ? await S.reelsFor(r.body.spin.seed) : [];
+  check("Slots from the wallet: 5 out, the payout back, the reels are the seed's", r.body.ok && balances.alice === b0 - 5 + r.body.spin.payout && reels.join() === r.body.spin.reels.join(), JSON.stringify(r.body).slice(0, 200));
+  check("…and 2% of the stake went into the pot", raw.prepare(`SELECT centi FROM slots_pot`).get().centi === pot0.centi + 10);
+  // a seed that spins three sevens, found by looking (1 in 64,000), then planted as this player's committed seed
+  let lucky = null; for (let i = 0; i < 400000 && !lucky; i++) { const s = `jackpot-hunt-${i}`; if ((await S.reelsFor(s)).every((x) => x === "seven")) lucky = s; }
+  check("found a three-sevens seed to plant", !!lucky);
+  const plant = async () => raw.prepare(`UPDATE slots_commits SET seed = ?, hash = ? WHERE user_id = 'u1'`).run(lucky, await E.sha256(lucky));
+  raw.exec(`UPDATE slots_pot SET centi = 30000, reserve = 1234`); await plant(); b0 = balances.alice;
+  r = await post("casino/slots/spin.js", {}, { stake: 10 });
+  check("three sevens on a HALF stake wins half the pot, the rest stays", r.body.ok && r.body.spin.jackpot === 150 && r.body.spin.payout === 150 && balances.alice === b0 - 10 + 150 && raw.prepare(`SELECT centi FROM slots_pot`).get().centi === 30020 - 15000, JSON.stringify(r.body.spin || r.body).slice(0, 200));
+  await plant(); b0 = balances.alice; const before2 = raw.prepare(`SELECT centi, reserve FROM slots_pot`).get();
+  r = await post("casino/slots/spin.js", {}, { stake: 20 });
+  const after2 = raw.prepare(`SELECT centi, reserve, last_login FROM slots_pot`).get();
+  check("three sevens on a FULL stake wins all of it; the pot restarts at the seed plus what was waiting", r.body.ok && r.body.spin.payout === Math.floor((before2.centi + 40) / 100) && balances.alice === b0 - 20 + r.body.spin.payout && after2.centi === S.JACKPOT.seed * 100 + before2.reserve && after2.reserve === 0 && after2.last_login === "alice", JSON.stringify({ spin: r.body.spin?.payout, before2, after2 }));
+  raw.exec(`UPDATE slots_pot SET centi = ${S.JACKPOT.ceiling * 100 - 5}, reserve = 0`); await S.feedPot(db, 20);
+  const capd = raw.prepare(`SELECT centi, reserve FROM slots_pot`).get(); check("the pot stops at its ceiling and the overflow waits in reserve", capd.centi === S.JACKPOT.ceiling * 100 && capd.reserve === 35);
+  // the returns, measured over seeds with the real functions
+  let sl = 0, dc = 0; const N = 40000;
+  for (let i = 0; i < N; i++) { const s = `measure-${i}`, e = await E.edgeFor(s); const line = S.lineFor(await S.reelsFor(s)); sl += line.jackpot ? 0 : S.priceFor(line) * e; dc += (await D.rollFor(s)) < 50 ? D.fairFor(50) * e : 0; }
+  check(`Slots' regular pays return about 98% (the other 2% is the pot): ${(sl / N * 100).toFixed(2)}%`, Math.abs(sl / N - 0.98) < 0.02);
+  check(`Dice returns about 100%: ${(dc / N * 100).toFixed(2)}%`, Math.abs(dc / N - 1) < 0.02);
+  raw.exec(`DELETE FROM dice_rolls`); let okN = 0, lim = null; for (let i = 0; i < 12; i++) { const x = await post("casino/dice/roll.js", {}, { stake: 1, target: 95 }); if (x.body.ok) okN++; else { lim = x.body.code; break; } }
+  check("ten rolls an hour, then RATE_LIMIT (or the win cap first)", (okN === 10 && lim === "RATE_LIMIT") || lim === "WIN_CAP", `${okN} ${lim}`);
+}
+
 // ---- StreamElements down: a banking is NOT a definite no
 seDown = true; r = await ask({ op: "pay", userId: "u1", id: "exchdown1", zc: 3 }); check("wallet down on a banking: not definite, the game holds the coins", !r.body.ok && r.body.definite === false); seDown = false;
 

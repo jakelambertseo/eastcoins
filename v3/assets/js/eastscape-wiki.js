@@ -121,6 +121,16 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-19", title: "Slots and Dice play for ZCoins (or tickets)",
+    items: [
+      "SLOTS AND DICE ARE REAL NOW. Same machines, same dice table, same 'Bet with' switch as the other tables: ZCoins, or tickets at 1,000 a ZCoin, and a win pays real ZCoins. The usual rules: 1 to 20 a bet, ten plays an hour at each game, 400 an hour out, and a seed you can check afterwards.",
+      "THE SLOTS JACKPOT IS REAL ZCOINS. 2% of every spin feeds one pot everybody shares. Three sevens wins it: a 20 ZC spin takes all of it, a smaller spin takes its share and the rest stays. It stops growing at 500 (anything over waits and starts the next pot), and it restarts at 50 after a win.",
+      "Slots pay tables are a little different from the old chip machines: about one spin in three pays something, the biggest regular prize is three diamonds at about 61x, and three sevens is the jackpot rather than a price.",
+      "DICE pays the fair price for your number: under 50 is about 2.04x, under 5 is 25x.",
+      "Still tickets in, tickets out: roulette upstairs and the Fight Pit. They are next."
+    ]
+  },
+  {
     date: "2026-09-19", title: "One currency: tickets. And the tables take tickets or ZCoins",
     items: [
       "CHIPS AND CASH ARE GONE. There is one currency in GambaScape now: TICKETS. Kills, catches and daily jobs pay them, the Prize Counter takes them, and every table takes them. Your bag panel shows Tickets and your real ZCoins side by side. (Chips anyone was holding were wiped: the game is still in testing.)",

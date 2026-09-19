@@ -236,7 +236,7 @@ export function createCasino(env) {
     if (REAL && R.curZ) { R.curZ.textContent = `ZCoins · ${bet}`; R.curT.textContent = `🎟 Tickets · ${tixCost(bet).toLocaleString()}`; R.curZ.setAttribute("aria-pressed", String(!TIX)); R.curT.setAttribute("aria-pressed", String(TIX)); }
     R.stats.innerHTML = `<div class="cz-stat"><span>${REAL ? "Your ZCoins" : "Your tickets"}</span><strong>${money(cash())}</strong></div>${REAL ? `<div class="cz-stat"><span>Your tickets</span><strong>${G.fmtCash(tixHave())}</strong></div>` : ""}<div class="cz-stat"><span>Net</span><strong class="${s.net > 0 ? "up" : s.net < 0 ? "dn" : ""}">${s.net > 0 ? "+" : s.net < 0 ? "−" : ""}${money(Math.abs(s.net))}</strong></div><div class="cz-stat"><span>Bets</span><strong>${s.bets}</strong></div><div class="cz-stat"><span>Best win</span><strong>${s.best ? `+${money(s.best)}` : "–"}</strong></div>`;
     R.recent.innerHTML = s.recent.map((d) => `<span class="${d > 0 ? "w" : ""}">${d > 0 ? "+" : d < 0 ? "−" : ""}${Math.abs(d).toLocaleString()}</span>`).join("");
-    if (REAL) { R.needs.innerHTML = ""; R.luck.className = "cz-luck"; R.luck.innerHTML = realRules(); if (R.jack) R.jack.remove(); UI[GAME]?.refresh?.(); return; }
+    if (REAL) { R.needs.innerHTML = ""; R.luck.className = "cz-luck"; R.luck.innerHTML = realRules(); if (R.jack) R.jack.innerHTML = jack.pot == null ? "" : `<small>JACKPOT · REAL ZCOINS</small><b>${money(Math.floor(jack.pot))}</b><small>Three sevens wins it · a ${REAL_LIM.max} ZC spin wins it all, a smaller one its share · 2% of every spin feeds it${jack.last ? ` · last: ${esc(jack.last.name)} ${money(jack.last.amt)}` : ""}</small>`; UI[GAME]?.refresh?.(); return; }
     R.needs.innerHTML = [["thirst", "Thirst", ""], ["hunger", "Hunger", "food"]].map(([k, n, cls]) => { const v = Math.round(G.needOf(me, k)); return `<div class="cz-need ${cls}${v < G.NEEDS.floor ? " low" : ""}">${n} ${v}%<i><u style="width:${v}%"></u></i></div>`; }).join("");
     const luck = me?.luck | 0; R.luck.className = `cz-luck${luck ? " on" : ""}`;
     const others = G.buffsOf(me).filter((b) => b.id !== "luck").map((b) => `${b.name}${b.left != null ? ` × ${b.left}` : ""}`), lim = G.maxBetOf(me, env.room?.());
@@ -289,8 +289,8 @@ export function createCasino(env) {
         R.range.addEventListener("input", () => { diceTarget = +R.range.value; refresh(); });
         R.lock = lockBtn(); R.lock.addEventListener("click", () => place(diceTarget)); R.note = el("p", "cz-note"); R.bet.append(R.range, stakeRow(), R.lock, R.note); sideCards("What it pays", "slide to choose"); phase("Set your number", "open");
       },
-      refresh() { const m = G.diceMult(diceTarget); $("czZone").style.width = `${diceTarget - 1}%`; R.mult.innerHTML = `Roll under ${diceTarget}<small>wins ${diceTarget - 1}% of the time · pays ${m}×</small>`; R.lock.disabled = busy; R.lock.textContent = busy ? "Rolling…" : `Roll · ${money(bet)} to win ${money(Math.floor(bet * m))}`;
-        R.pays.innerHTML = [10, 25, 50, 75, 90].map((t) => `<div class="cz-rung${t === diceTarget ? " at" : ""}"><span>Under ${t} · ${t - 1}%</span><strong>${G.diceMult(t)}×</strong></div>`).join(""); },
+      refresh() { const dm = REAL ? realDiceMult : G.diceMult, m = dm(diceTarget); $("czZone").style.width = `${diceTarget - 1}%`; R.mult.innerHTML = `Roll under ${diceTarget}<small>wins ${diceTarget - 1}% of the time · pays ${m}×</small>`; R.lock.disabled = busy; R.lock.textContent = busy ? "Rolling…" : `Roll · ${money(bet)} to win ${money(Math.floor(bet * m))}`;
+        R.pays.innerHTML = [10, 25, 50, 75, 90].map((t) => `<div class="cz-rung${t === diceTarget ? " at" : ""}"><span>Under ${t} · ${t - 1}%</span><strong>${REAL ? "about " : ""}${dm(t)}×</strong></div>`).join(""); },
       start() { phase("Rolling…"); SFX.play("dice"); const r = $("czRoll"); r.className = "cz-roll"; this.iv = setInterval(() => { r.textContent = 1 + Math.floor(Math.random() * 100); $("czMark").style.left = `${Math.random() * 100}%`; }, 70); refresh(); },
       idle() { clearInterval(this.iv); refresh(); },
       async result(e) { const t = token; await wait(calm() ? 0 : 450); clearInterval(this.iv); if (t !== token) return; const r = $("czRoll"); r.textContent = e.roll; r.className = `cz-roll ${e.payout ? "w" : "l"}`; $("czMark").style.left = `${e.roll}%`; await wait(calm() ? 0 : 550); if (t !== token) return; settle(e, `Rolled ${e.roll} · needed under ${e.target} · ${e.payout ? `you win ${money(e.payout)}` : "you lose"}`); }
@@ -302,7 +302,12 @@ export function createCasino(env) {
         R.board.innerHTML = `<div class="cz-reels">${[0, 1, 2].map((i) => `<div class="cz-reel" id="czReel${i}"><div class="cz-strip">${strip()}${strip()}</div></div>`).join("")}</div>`;
         this.show(["cherry", "bell", "seven"]);
         R.lock = lockBtn(); R.lock.addEventListener("click", () => place(null)); R.note = el("p", "cz-note"); R.bet.append(stakeRow(), R.lock, R.note); sideCards("What it pays", "three of a kind"); phase("Pull when ready", "open");
-        R.pays.innerHTML = G.REELS.slice().reverse().map((r) => `<div class="cz-rung"><span>${img(`reel_${r.k}`)}${img(`reel_${r.k}`)}${img(`reel_${r.k}`)}</span><strong>${r.pay}×</strong></div>`).join("") + `<div class="cz-rung"><span>${img("reel_cherry")}${img("reel_cherry")} any two</span><strong>${G.SLOT_TWO_CHERRIES}×</strong></div>`;
+        this.pays();
+      },
+      pays() {
+        if (!R.pays) return; const three = (k) => `${img(`reel_${k}`)}${img(`reel_${k}`)}${img(`reel_${k}`)}`, cfg = REAL ? REAL_CFG.slots : null;
+        if (REAL) { R.pays.innerHTML = cfg ? cfg.pays.map((x) => `<div class="cz-rung"><span>${x.three ? three(x.key) : `${img("reel_cherry")}${img("reel_cherry")} any two`}</span><strong>${x.jackpot ? "JACKPOT" : `${x.multiplier}×`}</strong></div>`).join("") : `<div class="cz-rung"><span>Asking the machine…</span><strong></strong></div>`; return; }
+        R.pays.innerHTML = G.REELS.slice().reverse().map((r) => `<div class="cz-rung"><span>${three(r.k)}</span><strong>${r.pay}×</strong></div>`).join("") + `<div class="cz-rung"><span>${img("reel_cherry")}${img("reel_cherry")} any two</span><strong>${G.SLOT_TWO_CHERRIES}×</strong></div>`;
       },
       show(keys, hit) { keys.forEach((k, i) => { const reel = $(`czReel${i}`), idx = G.REELS.findIndex((r) => r.k === k); reel.querySelector(".cz-strip").style.transform = `translateY(${-96 * idx}px)`; reel.classList.toggle("hit", !!hit); }); },
       refresh() { R.lock.disabled = busy; R.lock.textContent = busy ? "Spinning…" : `Spin · ${money(bet)}`; },
@@ -435,7 +440,11 @@ export function createCasino(env) {
   /* ---------------------------------------------------------- REAL MODE: eastcoin.vip's endpoints behind these windows
      One function per kind of game. Each asks the site, then hands the window the SAME message the game server would have
      sent it (gameResult / run), so the windows above don't know the difference. A refusal is shown as the site worded it. */
-  const REAL_KEY = { cointable: "flip", wheel: "wheel", hilo: "hilo", mines: "mines", plinko: "plinko", scratch: "scratch" };   // our table -> the site's name for the game
+  const REAL_KEY = { cointable: "flip", wheel: "wheel", hilo: "hilo", mines: "mines", plinko: "plinko", scratch: "scratch", dicetable: "dice", slots: "slots" };
+  /* the instant games: which endpoint takes the bet and what it calls its answer. Dice and slots are GambaScape-only site games (v58). */
+  const REAL_INSTANT = { plinko: ["drop", "drop"], scratch: ["buy", "card"], dicetable: ["roll", "roll"], slots: ["spin", "spin"] };
+  const REAL_CFG = {};   /* what each game's state endpoint says about itself: the pay table is READ from the site, never copied here */
+  const realDiceMult = (t) => Math.round((100 / (t - 1)) * 100) / 100;   // our table -> the site's name for the game
   const REAL_LIM = { min: 1, max: 20 }, REAL_WHEEL = { red: 2.03, black: 2.03, gold: 60 }, REAL_PLINKO = [25, 4, 2, 1.5, 1.1, 1.05, 0.3, 1.05, 1.1, 1.5, 2, 4, 25];
   const REAL_SYM = { crown: "seven", diamond: "diamond", fire: "star", clover: "bell", target: "lemon", football: "cherry", coin: "gem" };   // the site's scratch symbols -> our pictures (same seven prizes, same prices)
   const REAL_NUDGE = "Out of ZCoins? Switch to Tickets: 1,000 stand in for a ZCoin, and everything out the arch pays them. Every kill and catch can drop a real ZCoin, too.";
@@ -449,7 +458,7 @@ export function createCasino(env) {
     const k = REAL_KEY[GAME], me = ZC.me, left = me ? Math.max(0, (me.playsCap ?? 10) - (me.played?.[k] | 0)) : null, L = ZC.last;
     return `<b>${TIX ? `Tickets in, real ZCoins out.</b> ${G.DEX.rate.toLocaleString()} tickets stand in for each ZCoin (${G.DEX.capHour} ZCoins' worth of ticket bets an hour). Same game,` : "Real ZCoins.</b>"} eastcoin.vip's own game and rules: ${REAL_LIM.max} ZC a bet, ten plays an hour at each game, ${me?.hourCap ?? 400} ZC an hour out.`
       + (me ? ` <b>${left} of ${me.playsCap ?? 10}</b> plays left here this hour · ${me.hourNet >= 0 ? "+" : "−"}${Math.abs(me.hourNet | 0)} of ${me.hourCap} this hour.` : "")
-      + (L && L.g === GAME && L.seed ? ` <a href="/?view=verify&game=${k}&seed=${encodeURIComponent(L.seed)}${L.hash ? `&hash=${encodeURIComponent(L.hash)}` : ""}${L.mines ? `&mines=${L.mines}` : ""}" target="_blank" rel="noopener">Check the last one's seed →</a>` : "")
+      + (L && L.g === GAME && L.seed ? ` <a href="/?view=verify&game=${k}&seed=${encodeURIComponent(L.seed)}${L.hash ? `&hash=${encodeURIComponent(L.hash)}` : ""}${L.mines ? `&mines=${L.mines}` : ""}${L.target ? `&target=${L.target}` : ""}" target="_blank" rel="noopener">Check the last one's seed →</a>` : "")
       + ` ${esc(REAL_NUDGE)}`;
   }
   function realFail(g, r, t) {
@@ -462,6 +471,7 @@ export function createCasino(env) {
     const k = REAL_KEY[g], state = ask(k === "flip" ? "/api/coin/state" : `/api/casino/${k}/state`), mine = ask("/api/casino/me");
     if (ZC.bal == null) { const b = await ask("/api/picks/bootstrap"); const n = Number(b?.session?.wallet?.balance); if (Number.isFinite(n)) ZC.bal = n; if (b?.session && !b.session.authenticated) { if (t === token) { phase("Log in on eastcoin.vip to play for ZCoins", "bad"); } return; } }
     const [st, m] = await Promise.all([state, mine]); if (m?.me) ZC.me = m.me; if (st?.me?.id) ZC.uid = String(st.me.id);
+    if (st?.config) REAL_CFG[g] = st.config; if (g === "slots" && st?.pot) { jack.pot = st.pot.amount; jack.last = st.pot.last ? { name: st.pot.last.login, amt: st.pot.last.amount } : null; if (t === token && GAME === g) UI.slots.pays?.(); }
     if (t !== token || GAME !== g) return;
     if (st?.config && st.config.canBet === false) { phase("ZCoin play isn't switched on right now", "bad"); }
     if (st?.live && (g === "hilo" || g === "mines")) { const had = RUNS[g]; RUNS[g] = g === "hilo" ? hlView(st.live) : mnView(st.live); UI[g].run({ g, run: RUNS[g] }, had); lockStake(true); }
@@ -471,12 +481,17 @@ export function createCasino(env) {
   async function realPlace(g, pick, t) {
     const k = REAL_KEY[g], stake = bet; let voucher;
     if (TIX) { phase(`Putting up ${tixCost(stake).toLocaleString()} tickets…`, "open"); const v = await getStake(g, stake); if (!v.ok) return realFail(g, v, t); voucher = v.voucher; }
-    if (g === "plinko" || g === "scratch") {
-      UI[g].start?.(); const r = await ask(`/api/casino/${k}/${g === "plinko" ? "drop" : "buy"}`, { stake, voucher }); if (!r.ok) return realFail(g, r, t);
-      const d = r.drop || r.card; if (r.balance != null) ZC.bal = Number(r.balance); played(g); hourNet(d.payout - d.stake); ZC.last = { g, seed: d.seed, hash: d.hash };
+    if (REAL_INSTANT[g]) {
+      const [verb, noun] = REAL_INSTANT[g];
+      UI[g].start?.(); const r = await ask(`/api/casino/${k}/${verb}`, g === "dicetable" ? { stake, target: pick, voucher } : { stake, voucher }); if (!r.ok) return realFail(g, r, t);
+      const d = r[noun]; if (r.balance != null) ZC.bal = Number(r.balance); played(g); hourNet(d.payout - d.stake); ZC.last = { g, seed: d.seed, hash: d.hash, target: d.target };
+      if (g === "slots" && r.pot) { jack.pot = r.pot.amount; if (r.pot.last) jack.last = { name: r.pot.last.login, amt: r.pot.last.amount }; }
       if (t !== token || GAME !== g) return;
-      return UI[g].result(g === "plinko" ? { g, bet: d.stake, payout: d.payout, mult: d.multiplier, path: [...String(d.path)].map((c) => (c === "R" ? 1 : 0)), bucket: d.bucket }
-        : { g, bet: d.stake, payout: d.payout, mult: d.multiplier, grid: d.grid.map((x) => REAL_SYM[x] || "gem"), prize: d.prize ? REAL_SYM[d.prize] || "gem" : null });
+      const base = { g, bet: d.stake, payout: d.payout, mult: d.multiplier };
+      return UI[g].result(g === "plinko" ? { ...base, path: [...String(d.path)].map((c) => (c === "R" ? 1 : 0)), bucket: d.bucket }
+        : g === "scratch" ? { ...base, grid: d.grid.map((x) => REAL_SYM[x] || "gem"), prize: d.prize ? REAL_SYM[d.prize] || "gem" : null }
+        : g === "dicetable" ? { ...base, roll: d.roll, target: d.target }
+        : { ...base, reels: d.reels, jackpot: d.jackpot || 0, mult: d.payout ? Math.round((d.payout / d.stake) * 100) / 100 : 0 });
     }
     // a shared round: get in, wait for the flip or the spin, then play it back
     const r = await ask(k === "flip" ? "/api/coin/bet" : `/api/casino/${k}/bet`, k === "flip" ? { side: pick, wager: stake, voucher } : { pick, wager: stake, voucher }); if (!r.ok) return realFail(g, r, t);

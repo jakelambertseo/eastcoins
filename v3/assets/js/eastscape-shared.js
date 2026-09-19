@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 57;
+export const VERSION = 58;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -423,7 +423,8 @@ function wild(g, objs, exits, edges, keep = [], seed = 1) {
   markBanks(g);
 }
 
-export const REAL_TABLES = { cointable: { name: "Coin Flip" }, wheel: { name: "Wheel" }, hilo: { name: "Higher or Lower" }, mines: { name: "Mines" }, plinko: { name: "Plinko" }, scratch: { name: "Scratch-Off" } };
+export const REAL_TABLES = { cointable: { name: "Coin Flip" }, wheel: { name: "Wheel" }, hilo: { name: "Higher or Lower" }, mines: { name: "Mines" }, plinko: { name: "Plinko" }, scratch: { name: "Scratch-Off" },
+  slots: { name: "Slots" }, dicetable: { name: "Dice" } };   /* slots and dice (v58) are GambaScape-only games on the site's casino backend: functions/api/casino/{slots,dice} */
 export const SCENES = {
   farm: {
     name: "Ludus Farm", exits: { e: "river", n: "forum" },
@@ -937,7 +938,7 @@ Object.assign(SCENES, {
       for (const [x, y] of [[28, 8], [31, 6], [25, 7]]) litter("l_cards", x, y, "Dropped cards");
       for (const [x, y] of [[12, 13], [30, 18], [16, 20], [7, 12], [33, 13], [3, 8]]) litter("l_slips", x, y, "Losing slips");
       litter("l_spill", 35, 7, "Somebody's drink"); litter("l_shoe", 13, 14, "One shoe. Just the one.");
-      for (const o of objs) if (REAL_TABLES[o.t]) o.name = `${REAL_TABLES[o.t].name}: real ZCoins`;
+      for (const o of objs) if (REAL_TABLES[o.t]) o.name = `${REAL_TABLES[o.t].name}: ZCoins or tickets`;
       return { g, objs, blobs: [] };
     },
     // the regulars at the machines are simulated players: they walk up to a game, play a while, and move on
@@ -1506,9 +1507,9 @@ export const TOUR_CHIP = 10, TOUR_PAY = 60, TOUR_GIFT = "clover", TOUR_JOB = { f
 export const tourOf = (c) => (c?.tour && c.tour.step < TOUR.length ? TOUR[c.tour.step] : null);
 export const HOWTO = `GambaScape is a casino. You'll spend most of your time right here.
 
-REAL ZCOINS: Coin Flip, the Wheels, Higher or Lower, Mines, Plinko and Scratch-Off on this floor are eastcoin.vip's own games, for REAL ZCoins, with the site's rules: 20 a bet, ten plays an hour a game, 400 an hour out. Click one (or the Games button, top left) and it opens. Hit a limit? That's what the arch is for.
+REAL ZCOINS: Coin Flip, the Wheels, Higher or Lower, Mines, Plinko, Scratch-Off, Slots and Dice on this floor are eastcoin.vip's own games, for REAL ZCoins, with the site's rules: 20 a bet, ten plays an hour a game, 400 an hour out. Click one (or the Games button, top left) and it opens. Hit a limit? That's what the arch is for.
 TICKETS OR ZCOINS: every one of those tables takes either. Pick "ZCoins" and you bet your own; pick "Tickets" and 1,000 tickets stand in for each ZCoin. Either way a win is paid in REAL ZCoins. Ticket bets have an allowance of 50 ZCoins' worth an hour.
-TICKETS ONLY, for now: slots, dice, roulette upstairs and the Fight Pit take tickets and pay tickets. (The High Roller Room is closed.)
+SLOTS AND DICE are the same deal (the slots JACKPOT is real ZCoins: three sevens wins it). TICKETS ONLY, for now: roulette upstairs and the Fight Pit take tickets and pay tickets. (The High Roller Room is closed.)
 
 PLAY: every kind of game has its own roped-off room, named on the carpet at its way in. SLOTS fill the north-west. WHEELS and COIN FLIP are below them. The CARD ROOM is by the bar. The DICE PIT and the INSTANT WINS machines (Plinko, Mines, Scratch-Off) are in the south-east. Roulette is through the door in the back wall. Bets come out of the tickets in your bag.
 

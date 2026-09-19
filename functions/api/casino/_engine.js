@@ -366,7 +366,10 @@ export async function hourlyNet(db, userId) {
   // The PvP tables. A refund is neither a win nor a loss.
   const pvp = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - stake WHEN status = 'LOST' THEN -stake ELSE 0 END), 0) AS net FROM pvp_entries WHERE user_id = ? AND updated_at >= datetime('now', '-1 hour')`);
   const scratch = await q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM scratch_cards WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
-  return coin + shared + hilo + mines + plinko + pvp + scratch;
+  // GambaScape's own tables (2026-09-19): dice and slots. A slots jackpot is in `payout`, so it counts.
+  const dice = await q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM dice_rolls WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
+  const slots = await q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM slots_spins WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
+  return coin + shared + hilo + mines + plinko + pvp + scratch + dice + slots;
 }
 
 /** Whether this person may place another bet, and where they stand. */
