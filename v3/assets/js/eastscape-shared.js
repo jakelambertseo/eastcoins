@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 33;
+export const VERSION = 34;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -688,7 +688,7 @@ Object.assign(SCENES, {
      the south door is the building's front door onto the Forum. */
   casino: {
     name: "The Casino", interior: true, floor: "casino", wallH: 34, room: [1, 4, 42, 21], exits: { w: "workyard", e: "paddock" }, labels: { w: "SKILLING", e: "COMBAT", s: "TOWN" }, exitTo: { scene: "forum", x: 21, y: 5 }, entry: { x: 21, y: 20 },
-    wall: [{ t: "banner", x: 3 }, { t: "lamp", x: 6 }, { t: "lamp", x: 12 }, { t: "lamp", x: 17 }, { t: "lamp", x: 25.5 }, { t: "lamp", x: 33 }, { t: "lamp", x: 38 }, { t: "banner", x: 41 }],
+    wall: [{ t: "banner", x: 3 }, { t: "lamp", x: 7 }, { t: "lamp", x: 11 }, { t: "painting1", x: 14.5, dy: 7, frame: true }, { t: "lamp", x: 19 }, { t: "lamp", x: 24 }, { t: "neon", x: 30, dy: 16 }, { t: "lamp", x: 33.5 }, { t: "painting2", x: 36.5, dy: 5 }, { t: "lamp", x: 38 }, { t: "banner", x: 41 }],
     build() {
       const g = room(1, 4, 42, 21, 21), objs = [];
       for (let y = SPAN.w[0]; y <= SPAN.w[1]; y++) { g[y][0] = "e"; g[y][COLS - 1] = "e"; }
@@ -705,9 +705,21 @@ Object.assign(SCENES, {
       objs.push({ t: "howto", art: "o_notice", x: 25, y: 20, name: "How GAMBA works" }); g[20][25] = "#";
       for (const [x, y] of [[5, 21], [11, 21], [30, 21], [36, 21], [14, 5], [36, 5]]) { objs.push({ t: "sofa", x, y, w: 2, h: 1, name: "Sofa" }); block(g, x, y, 2, 1); }
       for (const [x, y] of [[3, 4], [40, 4], [17, 21], [27, 21], [12, 4], [25, 4], [3, 21], [40, 21]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
+      /* a busy floor (2026-09-19). All of this is furniture: the tables that aren't games yet say so in their name,
+         so nobody clicks a poker table expecting cards. The middle of the hall is the house's showpiece behind ropes. */
+      objs.push({ t: "coinstatue", x: 21, y: 13, w: 2, h: 1, name: "The House Ruby" }); block(g, 21, 13, 2, 1);
+      for (const [x, y] of [[20, 12], [23, 12], [20, 14], [23, 14]]) { objs.push({ t: "ropepost", x, y, name: "Velvet rope" }); g[y][x] = "#"; }
+      for (const [x, y] of [[13, 16], [27, 16]]) { objs.push({ t: "pokertable", x, y, w: 3, h: 1, name: "Poker table (opening soon)" }); block(g, x, y, 3, 1); }
+      for (const [x, y] of [[12, 7], [4, 15], [37, 15]]) { objs.push({ t: "blackjack", x, y, w: 2, h: 1, name: "Blackjack table (opening soon)" }); block(g, x, y, 2, 1); }
+      for (const [x, y] of [[17, 6], [24, 6], [6, 7], [38, 8], [18, 15], [25, 15], [10, 19], [33, 19]]) { objs.push({ t: "cocktail", x, y, name: "Cocktail table" }); g[y][x] = "#"; }
+      objs.push({ t: "jukebox", x: 5, y: 4, name: "Jukebox" }); g[4][5] = "#";
+      objs.push({ t: "atm", x: 39, y: 4, name: "Cash machine (out of order, thankfully)" }); g[4][39] = "#";
+      objs.push({ t: "prizewheel", x: 16, y: 4, w: 2, h: 1, name: "Prize wheel (opening soon)" }); block(g, 16, 4, 2, 1);
+      objs.push({ t: "piano", x: 37, y: 19, w: 2, h: 1, name: "Grand piano" }); block(g, 37, 19, 2, 1);
       return { g, objs, blobs: [] };
     },
-    mobs: [], bots: [],
+    // the regulars at the machines are simulated players: they walk up to a game, play a while, and move on
+    mobs: [], bots: [{ name: "due4aWin", level: 14 }, { name: "SlotGoblin", level: 37 }, { name: "AllInAlan", level: 61 }],
     npcs: [{ name: "Dex the Dealer", art: "dex", x: 29, y: 4, still: true, reach: 2, hair: "#1a1a1a", shirt: "#9a2a2a", pants: "#1a1a1a", lines: [
       "Welcome in. Slots on the left, coins in the middle, dice by the bar. The house always wins, a little.",
       "Broke? Happens to the best of us. The board by the door has jobs that pay. Fresh ones every morning.",
@@ -724,7 +736,36 @@ Object.assign(SCENES, {
         "Last week I lost my pickaxe, my boots and my good trousers in one night. Best night of my life.",
         "Scared money don't make money. Scared money doesn't make anything. Put the whole stack on it.",
         "The sevens are hot tonight. They're always hot. That's why I sleep here.",
-        "You walking away? On THIS streak? Nah. Nah nah nah. One more."] }]
+        "You walking away? On THIS streak? Nah. Nah nah nah. One more."] },
+      // the regulars (2026-09-19): nobody here is a good influence
+      { name: "Parlay Pete", art: "pete", x: 39, y: 6, hair: "#3a2a1a", shirt: "#6a6a72", pants: "#3a3a44", lines: [
+        "Twelve-leg parlay. Eleven hit. ELEVEN. The twelfth was a chicken fight in the Paddock. The chicken LOST.",
+        "I don't chase losses. I follow them at a respectful distance until they turn around.",
+        "The cash machine's been out of order for a year. Best thing that ever happened to me. Don't tell it I said that.",
+        "My system can't lose. It just hasn't won YET. Those are different things.",
+        "I told my wife I was at the Workyard. Technically I walked through it.",
+        "You want a lock? Red. Always red. Unless it's black. It's one of those two, I'm almost sure."] },
+      { name: "Nana Jackpot", art: "nana", x: 2, y: 8, still: true, hair: "#e8e8e8", shirt: "#e8a0b8", pants: "#8a6a8a", lines: [
+        "This is MY machine, dear. I've been warming it up since Tuesday. Sit somewhere else.",
+        "The jackpot's close. I can feel it in my hip.",
+        "My grandson thinks I'm at church. In a way I am.",
+        "Two cherries pays, dear. People forget that. Two cherries has paid for this whole visor.",
+        "I brought my own bucket. You have to show the machine you're serious.",
+        "Lucky clover from the Workyard, that's the trick. I eat them. You're supposed to click them? Hm."] },
+      { name: "Rent Money Randy", art: "randy", x: 18, y: 20, hair: "#5a4a3a", shirt: "#8a5a32", pants: "#8a5a32", lines: [
+        "It's a barrel. Yes. No, I don't want to talk about it. Dice. It was the dice.",
+        "I was up four thousand. Then I was up two thousand. Then I was in a barrel.",
+        "The task board pays Cash for chopping logs. I'd go, but the barrel doesn't fit through the arch.",
+        "Rent's due Friday. So am I. We'll see who gets there first.",
+        "Spot me ten Cash? I'll pay you back twenty. I've got a feeling about the coin table.",
+        "The barrel's actually quite roomy. Don't end up in one."] },
+      { name: "Whale Wendell", art: "wendell", x: 29, y: 18, hair: "#1a1a1a", shirt: "#f4f4f4", pants: "#f4f4f4", lines: [
+        "Five hundred a spin. It's the most the house lets me bet. I've written letters.",
+        "I don't look at my balance. My balance looks at me.",
+        "Poker's opening soon, they keep telling me. I've already reserved every seat.",
+        "You skill for luck? Adorable. I have a man who clicks my clovers for me.",
+        "Lost a fortune on roulette upstairs last night. Won it back. Lost it again. Lovely evening.",
+        "Kid, the secret is simple: start rich. Failing that, the Paddock drops horseshoes."] }]
   },
   // through the curtains at the back of the Casino: one big table everyone plays at once
   roulette: {

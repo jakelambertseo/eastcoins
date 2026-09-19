@@ -121,6 +121,14 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-19", title: "The casino floor fills up",
+    items: [
+      "The hall has furniture now: the House Ruby behind velvet ropes in the middle, poker and blackjack tables (opening soon), a prize wheel, cocktail tables, a jukebox, a grand piano, a cash machine that thankfully doesn't work, and art on the back wall.",
+      "It moves: spotlights drift over the carpet, the lamps breathe, the JACKPOT sign buzzes, the slot machines blink. Turn on Reduced motion in Settings and it all holds still.",
+      "Meet the regulars: Parlay Pete, Nana Jackpot, Rent Money Randy and Whale Wendell. None of them should be listened to. There are a few players at the machines now too."
+    ]
+  },
+  {
     date: "2026-09-19", title: "A simpler GAMBA: bigger tiles, luck, and a smaller world",
     items: [
       "Every area is now twice as wide and twice as tall, and the view follows you as you walk. The casino is a proper hall: more slot machines, three coin tables, three dice tables.",
