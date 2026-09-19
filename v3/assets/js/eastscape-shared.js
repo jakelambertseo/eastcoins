@@ -467,18 +467,20 @@ export const SCENES = {
       objs.push({ t: "furnace", x: 10, y: 3, name: "Furnace" }); g[3][10] = "#";
       objs.push({ t: "anvil", x: 9, y: 3, name: "Anvil" }); g[3][9] = "#";
       // the Exchange: a market stall down in the south-west of the square, away from the shop front
-      objs.push({ t: "stall", x: 7, y: 10, w: 2, h: 1, name: "Exchange stall" }); block(g, 7, 10, 2, 1);
+      objs.push({ t: "stall", x: 7, y: 8, w: 2, h: 1, name: "Exchange stall" }); block(g, 7, 8, 2, 1);
       objs.push({ t: "statue", x: 15, y: 9, name: "Statue" }); g[9][15] = "#";
       objs.push({ t: "sign", x: 19, y: 3, name: "Signpost" }); g[3][19] = "#";
-      for (const [x, y] of [[6, 9], [13, 9]]) { objs.push({ t: "bush", x, y, name: "Planter" }); g[y][x] = "#"; }
+      for (const [x, y] of [[13, 9]]) { objs.push({ t: "bush", x, y, name: "Planter" }); g[y][x] = "#"; }
       for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (g[y][x] === "#" && paved[y][x] === "p") g[y][x] = "P";
-      wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "forest" }, keepOf(this), 4);
+      // open ground in front of the Exchange so the treeline doesn't swallow Livia's stall
+      const clear = []; for (let y = 9; y <= 11; y++) for (let x = 5; x <= 10; x++) clear.push([x, y]);
+      wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "forest" }, [...keepOf(this), ...clear], 4);
       return { g, objs, blobs: [] };
     },
     mobs: [],
     npcs: [{ name: "Brutus the Smith", x: 11, y: 4, still: true, opens: "shop", hair: "#2a1a10", shirt: "#5a3a2a", pants: "#3a2a1a", lines: ["Tools, bronze, and I'll buy whatever you dug up. Fair prices. Mostly fair.", "Bronze is where it starts. Nobody walks into the Wilderness in a tunic twice.", "Brought ore? I'll take it. Brought a goat? Take it back."] },
-      { name: "Livia the Broker", x: 8, y: 9, still: true, opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Selling? Buying? Use the stall. I just take my 1%.", "Offers keep working while you sleep. Come back and collect.", "The best price wins, and whoever was there first."] },
-           { name: "Gaius", x: 7, y: 7, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: Coo. The Forge buys ore. Coo.", "PIGEON: He doesn't talk. I do the talking. Coo.", "PIGEON: The Bank keeps your things safe. Aurelia counts everything twice. Coo.", "PIGEON: West is the Olive Grove. Bring a sword. Seriously. Coo.", "PIGEON: North is Tomatoe Hill. Don't correct her spelling. Coo.", "PIGEON: East is the Via Appia. Highwaymen. Hold on to your Cash. Coo."] }],
+      { name: "Livia the Broker", x: 8, y: 7, still: true, opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Selling? Buying? Use the stall. I just take my 1%.", "Offers keep working while you sleep. Come back and collect.", "The best price wins, and whoever was there first."] },
+           { name: "Gaius", x: 13, y: 7, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: Coo. The Forge buys ore. Coo.", "PIGEON: He doesn't talk. I do the talking. Coo.", "PIGEON: The Bank keeps your things safe. Aurelia counts everything twice. Coo.", "PIGEON: West is the Olive Grove. Bring a sword. Seriously. Coo.", "PIGEON: North is Tomatoe Hill. Don't correct her spelling. Coo.", "PIGEON: East is the Via Appia. Highwaymen. Hold on to your Cash. Coo."] }],
     bots: [{ name: "Gannicus", level: 55 }, { name: "Naevia", level: 31 }]
   },
   grove: {
