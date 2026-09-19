@@ -612,8 +612,9 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=45";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=23";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=46";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=24";
+import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=1";
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=1";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -766,7 +767,7 @@ function onMsg(m) {
     $("online").textContent = `${m.online} online`;
     return;
   }
-  if (m.type === "me") { me = m.me; renderTour(); renderPanel(); if (!$("gameWin").hidden && !GAME) renderCashier(lastCashed); if (!$("shopWin").hidden) renderShop(); if (!$("smithWin").hidden && smithAt) openSmith(smithAt); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input"))) renderEx(); return; }
+  if (m.type === "me") { me = m.me; renderTour(); renderPanel(); CZ.me(); if (!$("shopWin").hidden) renderShop(); if (!$("smithWin").hidden && smithAt) openSmith(smithAt); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input"))) renderEx(); return; }
   if (m.type === "exch") { EX = m; if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input:not(#mkQ)"))) renderEx(); return; }
   if (m.type === "trade") { if (m.closed) { TR = null; $("tradeWin").hidden = true; } else { TR = m; openWin("tradeWin"); } return; }
   if (m.type === "pong") return;
@@ -797,11 +798,11 @@ function onEvent(e) {
   if (e.type === "display") return pickItems(`🏺 Put something on display`, "Visitors can look but not touch.", (s) => s.k !== "coins", (s, i) => send({ t: "isle", op: "show", i: e.i, s: i }), "Your bag is empty.");
   if (e.type === "islesign") return isleSign(e);
   if (e.type === "exchange") return openWin("exWin");
-  if (e.type === "game") { if (e.pot != null) { jackPot = e.pot; jackLast = e.lastJack; } return openGame(e.g); }
-  if (e.type === "gameResult") return gameResult(e);
-  if (e.type === "run") return runMsg(e);
-  if (e.type === "cashier") return openCashier();
-  if (e.type === "cashed") { SFX.play("coins"); lastCashed = e; return renderCashier(e); }
+  if (e.type === "game") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true; SFX.play("ui_open"); return CZ.open(e.g, { pot: e.pot, lastJack: e.lastJack }); }
+  if (e.type === "gameResult") return CZ.result(e);
+  if (e.type === "run") return CZ.run(e);
+  if (e.type === "cashier") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true; SFX.play("ui_open"); return CZ.cashier(); }
+  if (e.type === "cashed") { SFX.play("coins"); return CZ.cashed(e); }
   if (e.type === "casinonote") { chatLine("Casino", e.text, "casinonote"); if (/JACKPOT/.test(e.text)) SFX.play("jackpot"); return; }
   if (e.type === "daily") return renderDaily(e);
   if (e.type === "roulopen") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "gameWin", "dailyWin"]) $(w).hidden = true; $("roulWin").hidden = false; renderRoul(); return; }
@@ -2090,7 +2091,7 @@ function openWin(id) {
   if (id === "tradeWin") renderTrade();
   if (id === "wikiWin") wikiGo(wikiRoute || "home");
 }
-document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_close"); $(b.dataset.close).hidden = true; if (b.dataset.close === "wikiWin" && location.hash.startsWith("#wiki")) history.replaceState(null, "", location.pathname + location.search); }));
+document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_close"); $(b.dataset.close).hidden = true; if (b.dataset.close === "gameWin") CZ.closed(); if (b.dataset.close === "wikiWin" && location.hash.startsWith("#wiki")) history.replaceState(null, "", location.pathname + location.search); }));
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape" || e.target.closest?.("input, textarea, select") || !$("pop").hidden || DLG) return;
   for (const w of ["wikiWin", "bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin", "gameWin", "dailyWin", "roulWin"]) if (!$(w).hidden) { $(w).hidden = true; return; }
@@ -2272,208 +2273,10 @@ function renderEx() {
   body.querySelectorAll("[data-cancel]").forEach((b) => b.addEventListener("click", () => send({ t: "ex", op: "cancel", id: +b.dataset.cancel })));
 }
 
-/* ------------------------------------------------------------ the Casino: three placeholder games
-   The server rolls and pays; this only shows it. A click starts the animation, the result lands it. */
-let GAME = null, gameBet = 10, diceTarget = 50, gameHist = [], gameBusy = false, jackPot = null, jackLast = null;
-const CART = "/v3/assets/img/glad/flat/casino/", CART_V = 1, cimg = (k, cls = "") => `<img class="gmi ${cls}" src="${CART}${k}.png?v=${CART_V}" alt="">`;
-/* the Cashier: what's in your bag, what each thing is worth, and one button that turns the lot into Cash */
-let lastCashed = null;
-function openCashier() {
-  GAME = null; lastCashed = null; for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true;
-  $("gameTitle").textContent = "Cashier"; $("gameSub").textContent = "Everything you bring back, for what it said over it";
-  $("gameWin").hidden = false; renderCashier();
-}
-function renderCashier(done) {
-  if ($("gameWin").hidden || GAME) return;
-  const rows = [...new Map(me.inv.filter((s) => s.k !== "coins" && G.valueOf(s.k) > 0).map((s) => [s.k, 0])).keys()].map((k) => ({ k, n: me.inv.filter((s) => s.k === k).reduce((a, s) => a + s.n, 0), v: G.valueOf(k), loot: G.isLoot(k) }));
-  const loot = rows.filter((r) => r.loot), total = loot.reduce((a, r) => a + r.n * r.v, 0);
-  $("gameBody").innerHTML = `${done ? `<div class="gm-luck on">Paid out ${G.fmtCash(done.total)} for ${done.count} thing${done.count === 1 ? "" : "s"}. The tables are right behind you.</div>` : ""}
-    <div class="gm-stage wheel" style="min-height:0"><div class="hl-mult">${G.fmtCash(total)}<small>${loot.length ? "for everything you found and made" : "nothing to cash in yet"}</small></div>
-      <div class="gm-actions"><button class="btn" id="csAll" ${loot.length ? "" : "disabled"}>Cash in the lot</button></div></div>
-    ${rows.length ? `<div class="mk-list">${rows.map((r) => `<div class="cs-row">${ico(r.k)}<span><b>${esc(ITEMS[r.k].name)}</b> × ${r.n.toLocaleString()}<small>${G.fmtCash(r.v)} each${r.loot ? "" : " · kept unless you sell it yourself"}</small></span><b>${G.fmtCash(r.n * r.v)}</b><button class="btn plain" data-cs="${r.k}">Sell</button></div>`).join("")}</div>`
-      : `<p class="note">Your bag has nothing in it that's worth money. West arch: rocks, trees and fish. East arch: monsters. Every one of them has its price written over it, and anything you make from them in the workshop sells for double.</p>`}
-    <p class="note" style="margin-top:8px">You have <b>${G.fmtCash(G.cashIn(me))}</b>.</p>`;
-  $("csAll")?.addEventListener("click", () => send({ t: "cashout", op: "all" }));
-  $("gameBody").querySelectorAll("[data-cs]").forEach((b) => b.addEventListener("click", () => send({ t: "cashout", op: "one", k: b.dataset.cs })));
-}
-/* the five from the site's casino (2026-09-19). Wheel, Plinko and Scratch-Off are one bet, one answer, like the coin.
-   Higher or Lower and Mines are runs: the server holds the run and tells the page only what it may know. */
-let wheelRot = 0, minesCount = 3, scratchTimer = null, plinkoRaf = 0;
-const RUNS = { hilo: null, mines: null }, RUN_OVER = { hilo: null, mines: null }, RUN_STEP = { hilo: 0 };
-const SUITS = ["♠", "♥", "♦", "♣"], scImg = (k, cls = "") => cimg(k === "gem" ? "gem" : `reel_${k}`, cls);
-function wheelBg() {
-  const W = G.WHEEL, w = (360 - W.gold) / W.slices, parts = [`#e8b83a 0 ${W.gold}deg`];
-  for (let i = 0; i < W.slices; i++) parts.push(`${i % 2 ? "#1a1a1a" : "#b8202a"} ${W.gold + i * w}deg ${W.gold + (i + 1) * w}deg`);
-  return `conic-gradient(${parts.join(",")})`;
-}
-const wheelStage = () => `<div class="wh-box"><div class="wh-disc" id="gmWheel" style="background:${wheelBg()};transform:rotate(${wheelRot}deg)"></div><div class="wh-hub"></div><div class="wh-pin"></div></div>`;
-// the result's angle is turned to sit under the pin; the wheel always goes round a few times first
-function wheelSpin(e) {
-  const el = $("gmWheel"); if (!el || set("reducedMotion")) { wheelRot = 360 - e.angle; return 550; }
-  wheelRot = Math.ceil(wheelRot / 360) * 360 + 360 * 4 + (360 - e.angle);
-  el.style.transition = "transform 2.6s cubic-bezier(.12,.72,.12,1)"; el.style.transform = `rotate(${wheelRot}deg)`; return 2750;
-}
-const PK = { dx: 26, dy: 18, top: 20, w: 344, h: 266 }, PK_BALL = new Image(); PK_BALL.src = `${CART}ball.png?v=${CART_V}`;
-function plinkoDraw(ball, bucket) {
-  const cv = $("gmPlinko"); if (!cv) return; const c = cv.getContext("2d"), P = G.PLINKO, cx = PK.w / 2;
-  c.clearRect(0, 0, PK.w, PK.h);
-  for (let r = 0; r < P.rows; r++) for (let j = 0; j <= r; j++) { c.fillStyle = "#ffd88a"; c.beginPath(); c.arc(cx + (j - r / 2) * PK.dx, PK.top + r * PK.dy, 3, 0, 7); c.fill(); }
-  const by = PK.top + P.rows * PK.dy + 4;
-  P.pays.forEach((x, i) => {
-    const bx = cx + (i - P.rows / 2) * PK.dx - PK.dx / 2 + 1, hot = bucket === i;
-    c.fillStyle = hot ? "#fff3a0" : x >= 4 ? "#c43a2a" : x >= 1.4 ? "#d8822a" : x >= 1 ? "#b89a3a" : "#5a4a3a"; c.fillRect(bx, by, PK.dx - 2, 22);
-    c.fillStyle = hot ? "#2a1a08" : "#fff"; c.font = "800 10px Nunito, sans-serif"; c.textAlign = "center"; c.fillText(`${x}×`, bx + PK.dx / 2 - 1, by + 13);
-  });
-  if (ball) { c.imageSmoothingEnabled = false; if (PK_BALL.complete && PK_BALL.naturalWidth) c.drawImage(PK_BALL, Math.round(ball.x - 10), Math.round(ball.y - 12)); else { c.fillStyle = "#ff9a2a"; c.beginPath(); c.arc(ball.x, ball.y, 7, 0, 7); c.fill(); } }
-}
-function plinkoDrop(e) {
-  const P = G.PLINKO, cx = PK.w / 2, step = 125, pos = [{ x: cx, y: PK.top - 12 }]; let rights = 0;
-  e.path.forEach((b, r) => { rights += b; pos.push({ x: cx + (rights - (r + 1) / 2) * PK.dx, y: r + 1 < P.rows ? PK.top + (r + 1) * PK.dy - 7 : PK.top + P.rows * PK.dy + 2 }); });
-  if (set("reducedMotion")) return 400;
-  const t0 = performance.now(); cancelAnimationFrame(plinkoRaf); let last = -1;
-  const tick = (t) => {
-    const k = Math.min(P.rows, (t - t0) / step), i = Math.min(P.rows - 1, Math.floor(k)), f = k - i, a = pos[i], b = pos[i + 1];
-    if (i !== last && i > 0) { last = i; SFX.play("chip", { vol: 0.35, rate: 1.2 + i * 0.04 }); }
-    plinkoDraw({ x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f - Math.sin(f * Math.PI) * 5 });
-    if (k < P.rows && GAME === "plinko") plinkoRaf = requestAnimationFrame(tick);
-  };
-  plinkoRaf = requestAnimationFrame(tick); return P.rows * step + 150;
-}
-const hlCard = (rank, suit, cls = "") => `<div class="hl-card ${suit === 1 || suit === 2 ? "red" : ""} ${cls}" title="${G.HILO.names[rank]}${SUITS[suit]}"><b>${G.HILO.names[rank]}</b>${cimg(`suit_${suit}`)}</div>`;
-function hiloStage() {
-  const r = RUNS.hilo, o = RUN_OVER.hilo;
-  if (r) return `<div class="hl-row">${hlCard(r.card, r.suit, "in")}<div class="hl-mult">${r.mult.toFixed(2)}×<small>card ${r.cards} of ${G.HILO.maxCards}${r.lucky ? " · 🍀 lucky" : ""}</small></div></div>`;
-  if (o) return `<div class="hl-row">${hlCard(o.card, o.suit, "in")}<div class="hl-mult">${o.how === "bust" ? "Bust" : `${o.mult}×`}</div></div>`;
-  return `<div class="hl-row"><div class="hl-card back"></div></div>`;
-}
-function minesStage() {
-  const r = RUNS.mines, o = RUN_OVER.mines, cells = [];
-  for (let i = 0; i < G.MINES.tiles; i++) {
-    if (r) cells.push(r.open.includes(i) ? `<button class="mn-t gem" disabled>${cimg("gem")}</button>` : `<button class="mn-t" data-tile="${i}"></button>`);
-    else if (o) cells.push(o.bombs.includes(i) ? `<button class="mn-t bomb ${o.hit === i ? "hit" : ""}" disabled>${cimg("bomb")}</button>` : `<button class="mn-t gem ${o.open.includes(i) ? "" : "dim"}" disabled>${cimg("gem")}</button>`);
-    else cells.push(`<button class="mn-t" disabled></button>`);
-  }
-  return `<div class="mn-grid">${cells.join("")}</div>${r ? `<div class="mn-info">${r.open.length ? `${r.mult}× now` : "Pick a tile"} · next gem ${r.next}× · ${r.mines} bomb${r.mines === 1 ? "" : "s"}${r.lucky ? " · 🍀" : ""}</div>` : ""}`;
-}
-const scratchStage = (res) => `<div class="sc-grid" id="gmScratch">${(res?.grid || Array(9).fill(null)).map((k) => `<div class="sc-c${res?.prize && k === res.prize ? " win" : ""}">${k ? scImg(k) : ""}</div>`).join("")}</div>`;
-function runMsg(e) {
-  const had = RUNS[e.g]; RUNS[e.g] = e.run; if (e.luck != null && me) me.luck = e.luck;
-  if (e.over) {
-    RUN_OVER[e.g] = e.over; gameHist = [e.over.payout - e.over.stake, ...gameHist].slice(0, 10);
-    SFX.play(e.over.how === "bust" ? "lose" : e.over.payout > e.over.stake * 4 ? "win_big" : "win_small");
-  } else if (e.run && !had) { RUN_OVER[e.g] = null; SFX.play(e.g === "hilo" ? "coin_flip" : "chip"); }
-  else if (e.step) SFX.play(e.step.tie ? "chip" : "gain", { vol: 0.6 });
-  if (GAME === e.g) renderGame();
-}
-function runText(g) {
-  const o = RUN_OVER[g]; if (!o || RUNS[g]) return ["", ""];
-  if (o.how === "bust") return ["lost", g === "hilo" ? `${G.HILO.names[o.card]} is not ${o.call}. You lose ${G.fmtCash(o.stake)}.` : `Boom. You lose ${G.fmtCash(o.stake)}.`];
-  if (o.how === "refund") return ["", `Nothing moved: your ${G.fmtCash(o.stake)} comes back.`];
-  return ["won", `${o.auto ? "Top of the ladder! " : ""}Cashed out at ${o.mult}×: you win ${G.fmtCash(o.payout)}!`];
-}
-function openGame(g) {
-  GAME = g; gameBusy = false; const def = G.GAMES[g];
-  if (def.run) send({ t: "run", g, op: "state" });
-  const TI = { slots: "reel_seven", cointable: "coin_heads", dicetable: "die", hilo: "card_back", mines: "bomb", plinko: "ball", scratch: "foil" }[g];
-  $("gameTitle").innerHTML = `${TI ? `<img src="${CART}${TI}.png?v=${CART_V}" alt="" style="height:20px;width:auto;image-rendering:pixelated;vertical-align:-4px;margin-right:6px">` : `${def.icon} `}${esc(def.name)}`; $("gameSub").textContent = "Cash only · the house keeps a little";
-  for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true;
-  $("gameWin").hidden = false; renderGame();
-}
-function renderGame(res) {
-  if (!GAME) return;
-  const g = GAME, cash = G.cashIn(me), C = G.CASINO;
-  const run = G.GAMES[g].run ? RUNS[g] : null;
-  const stage = g === "wheel" ? wheelStage() : g === "hilo" ? hiloStage() : g === "mines" ? minesStage() : g === "scratch" ? scratchStage(res)
-    : g === "plinko" ? `<canvas class="pk-cv" id="gmPlinko" width="${PK.w}" height="${PK.h}"></canvas>` : g === "cointable" ? `<div class="gm-coin${gameBusy ? " spin" : ""}" id="gmShow">${cimg(res?.side === "tails" ? "coin_tails" : "coin_heads", "big")}</div>`
-    : g === "dicetable" ? `<div class="gm-dicepair${gameBusy ? " shake" : ""}">${cimg("die", "mid")}${cimg("die", "mid flip")}</div><div class="gm-roll" id="gmShow">${res?.roll ?? "?"}</div>`
-    : `<div class="gm-reels" id="gmShow">${(res?.reels || ["cherry", "bell", "seven"]).map((k) => `<span>${cimg(`reel_${k}`)}</span>`).join("")}</div>`;
-  const mult = G.diceMult(diceTarget);
-  $("gameBody").innerHTML = `<p class="note" style="margin:0 0 8px">${esc(G.GAMES[g].ex)}</p>${luckLine()}
-    <div class="gm-bet">Bet <input type="number" id="gmAmt" min="${C.minBet}" max="${C.maxBet}" value="${gameBet}">
-      ${[10, 50, 100, 500].map((n) => `<button class="btn plain" data-amt="${n}">${n}</button>`).join("")}
-      <small style="margin-left:auto">You have <b>${G.fmtCash(cash)}</b></small></div>
-    ${g === "slots" && jackPot != null ? `<div class="gm-jack"><small>JACKPOT</small><b id="gmJack">${Math.floor(jackPot).toLocaleString()} Cash</b><small>Three ${cimg("reel_seven", "tiny")} wins it · a ${G.CASINO.maxBet} spin wins it all${jackLast ? ` · last won by ${esc(jackLast.name)} (${jackLast.amt.toLocaleString()})` : ""}</small></div>` : ""}
-    <div class="gm-stage ${g === "dicetable" ? "dice" : g === "cointable" ? "" : g}">${stage}<div class="gm-msg" id="gmMsg"></div></div>
-    ${g === "dicetable" ? `<div class="gm-dice"><label>Roll under <b id="gmT">${diceTarget}</b> · wins ${diceTarget - 1}% of the time · pays <b id="gmM">${mult}×</b>
-      <input type="range" id="gmTarget" min="${G.DICE.min}" max="${G.DICE.max}" value="${diceTarget}"></label></div>` : ""}
-    ${g === "mines" && !run ? `<div class="gm-dice"><label>Bombs: <b id="gmMines">${minesCount}</b> · first gem pays <b id="gmMinesX">${G.minesMult(minesCount, 1)}×</b> · top of the ladder <b id="gmMinesTop">${G.minesMult(minesCount, G.minesTop(minesCount))}×</b>
-      <input type="range" id="gmMinesN" min="${G.MINES.min}" max="${G.MINES.max}" value="${minesCount}"></label></div>` : ""}
-    <div class="gm-actions">${g === "wheel" ? `<button class="btn wh-red" data-play="red">Red ${G.WHEEL.pays.red}×</button><button class="btn wh-black" data-play="black">Black ${G.WHEEL.pays.black}×</button><button class="btn wh-gold" data-play="gold">Gold ${G.WHEEL.pays.gold}×</button>`
-      : g === "plinko" ? `<button class="btn" data-play="go">Drop</button>` : g === "scratch" ? `<button class="btn" data-play="go">Buy a card</button>`
-      : g === "hilo" ? (run ? `<button class="btn" data-run="call" data-call="higher" ${G.hiloWays(run.card, "higher") ? "" : "disabled"}>▲ Higher ${G.hiloWays(run.card, "higher") ? (G.hiloFactor(run.card, "higher") === 1 ? "(can't lose)" : `${(run.mult * G.hiloFactor(run.card, "higher")).toFixed(2)}×`) : ""}</button><button class="btn" data-run="call" data-call="lower" ${G.hiloWays(run.card, "lower") ? "" : "disabled"}>▼ Lower ${G.hiloWays(run.card, "lower") ? (G.hiloFactor(run.card, "lower") === 1 ? "(can't lose)" : `${(run.mult * G.hiloFactor(run.card, "lower")).toFixed(2)}×`) : ""}</button><button class="btn plain" data-run="cash" ${run.cash ? "" : "disabled"}>Cash out ${run.cash ? G.fmtCash(run.cash) : ""}</button>` : `<button class="btn" data-run="start">Deal</button>`)
-      : g === "mines" ? (run ? `<button class="btn" data-run="cash" ${run.cash ? "" : "disabled"}>Cash out ${run.cash ? G.fmtCash(run.cash) : ""}</button>` : `<button class="btn" data-run="start">Start</button>`)
-      : g === "cointable"
-      ? `<button class="btn" data-play="heads">${cimg("coin_heads", "tiny")} Heads</button><button class="btn" data-play="tails">${cimg("coin_tails", "tiny")} Tails</button>`
-      : `<button class="btn" data-play="go">${g === "slots" ? "Spin" : "Roll"}</button>`}</div>
-    ${g === "scratch" ? `<div class="gm-pays">${G.SCRATCH.map((p) => `<span>${scImg(p.k, "tiny")}${scImg(p.k, "tiny")}${scImg(p.k, "tiny")} <b>${p.x}×</b></span>`).join("")}</div>` : ""}
-    ${g === "slots" ? `<div class="gm-pays">${G.REELS.map((r) => `<span>${cimg(`reel_${r.k}`, "tiny")}${cimg(`reel_${r.k}`, "tiny")}${cimg(`reel_${r.k}`, "tiny")} <b>${r.pay}×</b></span>`).join("")}<span>${cimg("reel_cherry", "tiny")}${cimg("reel_cherry", "tiny")} <b>${G.SLOT_TWO_CHERRIES}×</b></span></div>` : ""}
-    <div class="gm-hist">${gameHist.map((h) => `<span class="${h > 0 ? "w" : ""}">${h > 0 ? "+" : ""}${h.toLocaleString()}</span>`).join("")}</div>`;
-  const amt = $("gmAmt");
-  if (run) { amt.value = run.stake; amt.disabled = true; $("gameBody").querySelectorAll("[data-amt]").forEach((b) => { b.disabled = true; }); }
-  if (g === "plinko") plinkoDraw(res?.bucket != null ? { x: PK.w / 2 + (res.bucket - G.PLINKO.rows / 2) * PK.dx, y: PK.top + G.PLINKO.rows * PK.dy + 2 } : null, res?.bucket);
-  if (G.GAMES[g].run) { const [cls, text] = runText(g); $("gmMsg").className = `gm-msg ${cls}`; $("gmMsg").textContent = text; }
-  $("gmMinesN")?.addEventListener("input", (e) => { minesCount = +e.target.value; $("gmMines").textContent = minesCount; $("gmMinesX").textContent = `${G.minesMult(minesCount, 1)}×`; $("gmMinesTop").textContent = `${G.minesMult(minesCount, G.minesTop(minesCount))}×`; });
-  $("gameBody").querySelectorAll("[data-tile]").forEach((b) => b.addEventListener("click", () => send({ t: "run", g, op: "pick", i: +b.dataset.tile })));
-  $("gameBody").querySelectorAll("[data-run]").forEach((b) => b.addEventListener("click", () => {
-    const op = b.dataset.run;
-    if (op !== "start") return send({ t: "run", g, op, call: b.dataset.call });
-    gameBet = Math.max(C.minBet, Math.min(C.maxBet, +amt.value | 0));
-    if (gameBet > G.cashIn(me)) { $("gmMsg").className = "gm-msg lost"; $("gmMsg").textContent = `You only have ${G.fmtCash(G.cashIn(me))}.`; return; }
-    send({ t: "run", g, op: "start", amt: gameBet, mines: minesCount });
-  }));
-  amt.addEventListener("change", () => { gameBet = Math.max(C.minBet, Math.min(C.maxBet, +amt.value | 0)); amt.value = gameBet; });
-  $("gameBody").querySelectorAll("[data-amt]").forEach((b) => b.addEventListener("click", () => { gameBet = +b.dataset.amt; amt.value = gameBet; }));
-  $("gmTarget")?.addEventListener("input", (e) => { diceTarget = +e.target.value; $("gmT").textContent = diceTarget; $("gmM").textContent = `${G.diceMult(diceTarget)}×`; });
-  $("gameBody").querySelectorAll("[data-play]").forEach((b) => b.addEventListener("click", () => {
-    if (gameBusy) return;
-    gameBet = Math.max(C.minBet, Math.min(C.maxBet, +amt.value | 0));
-    if (gameBet > G.cashIn(me)) { $("gmMsg").className = "gm-msg lost"; $("gmMsg").textContent = `You only have ${G.fmtCash(G.cashIn(me))}.`; return; }
-    gameBusy = true; renderGame();
-    gameLoop?.stop(); clearTimeout(scratchTimer); gameLoop = g === "slots" ? SFX.play("slots_spin") : (SFX.play(g === "cointable" ? "coin_flip" : g === "dicetable" ? "dice" : "chip"), null);
-    if (g === "slots") { const reels = [...$("gmShow").querySelectorAll("img")]; spinTimer = setInterval(() => { for (const r of reels) r.src = `${CART}reel_${G.REELS[Math.floor(Math.random() * G.REELS.length)].k}.png?v=${CART_V}`; }, 80); }
-    send({ t: "bet", g, amt: gameBet, pick: g === "cointable" || g === "wheel" ? b.dataset.play : g === "dicetable" ? diceTarget : null });
-    setTimeout(() => { if (gameBusy) { gameBusy = false; clearInterval(spinTimer); gameLoop?.stop(); gameLoop = null; renderGame(); } }, 4000);   // the server said no (it says why in the log)
-  }));
-}
-let spinTimer = null, gameLoop = null;
-function gameResult(e) {
-  if (e.g !== GAME) return;
-  // let the animation run a beat, then land it (the wheel and the ball take as long as they take)
-  const wait = e.g === "wheel" ? wheelSpin(e) : e.g === "plinko" ? plinkoDrop(e) : 550;
-  setTimeout(() => {
-    if (e.g !== GAME) { gameBusy = false; return; }
-    clearInterval(spinTimer); gameBusy = false; gameHist = [e.payout - e.bet, ...gameHist].slice(0, 10);
-    gameLoop?.stop(); gameLoop = null;
-    if (e.g === "slots") SFX.play("reel_stop");
-    if (e.g !== "scratch") SFX.play(e.jackpot ? "jackpot" : e.payout > e.bet * 4 ? "win_big" : e.payout > e.bet ? "win_small" : e.payout === e.bet ? "chip" : "lose");
-    if (e.pot != null) jackPot = e.pot;
-    if (e.jackpot) jackLast = { name: you?.name, amt: e.jackpot };
-    renderGame(e);
-    const show = $("gmShow"), msg = $("gmMsg"), won = e.payout > 0;
-
-    if (e.g === "scratch") {
-      // the card is already decided and paid; the boxes open one by one, and the verdict waits for the last of them
-      const cells = [...document.querySelectorAll("#gmScratch .sc-c")], quick = set("reducedMotion"); let i = 0;
-      const open = () => {
-        if (GAME !== "scratch" || !cells[0]?.isConnected) return;
-        if (i < cells.length && !quick) { cells[i++].classList.add("open"); SFX.play("chip", { vol: 0.3, rate: 1 + i * 0.05 }); scratchTimer = setTimeout(open, 140); return; }
-        cells.forEach((c) => { c.classList.add("open"); if (c.classList.contains("win")) c.classList.add("hot"); });
-        SFX.play(e.payout > e.bet * 4 ? "win_big" : e.payout > e.bet ? "win_small" : e.payout ? "chip" : "lose");
-        msg.className = `gm-msg ${won ? "won" : "lost"}`;
-        msg.textContent = won && e.payout <= e.bet ? "Three gems: your stake comes back." : won ? `Three of a kind, ${e.mult}×: you win ${G.fmtCash(e.payout)}!${e.lucky ? ` (+${e.lucky} lucky)` : ""}` : "No three of a kind.";
-      };
-      return open();
-    }
-    msg.className = `gm-msg ${e.payout >= e.bet && won ? "won" : "lost"}`;
-    msg.textContent = e.g === "wheel" ? `${e.color[0].toUpperCase()}${e.color.slice(1)}. ${won ? `You win ${G.fmtCash(e.payout)}!` : "You lose."}`
-      : e.g === "plinko" ? (e.payout > e.bet ? `${e.mult}× — you win ${G.fmtCash(e.payout)}!` : e.payout === e.bet ? "1× — your stake comes back." : `${e.mult}× — ${G.fmtCash(e.payout)} back.`)
-      : e.g === "cointable" ? `${e.side === "heads" ? "Heads" : "Tails"}. ${won ? `You win ${G.fmtCash(e.payout)}!` : "You lose."}`
-      : e.g === "dicetable" ? `Rolled ${e.roll} (needed under ${e.target}). ${won ? `You win ${G.fmtCash(e.payout)}!` : "You lose."}`
-      : e.jackpot ? `JACKPOT! You win ${G.fmtCash(e.payout)}!` : won ? `${e.mult}× — you win ${G.fmtCash(e.payout)}!` : "No luck.";
-    if (won && e.lucky) msg.textContent += ` (+${e.lucky} lucky)`;
-  }, wait);
-}
-
+/* ------------------------------------------------------------ the Casino's tables
+   Every game window (and the Cashier) is drawn by eastscape-casino.js, in the look of the site's own casino.
+   The server rolls and pays; that module only shows it. */
+const CZ = createCasino({ G, SFX, send, esc, $, ico, me: () => me, you: () => you, calm: () => set("reducedMotion") });
 /* ------------------------------------------------------------ roulette: the shared table
    The server runs the clock and draws the number; this draws the board, everybody's chips and the wheel. */
 let ROUL = null, roulChip = 10, roulGot = 0, roulSpunRound = 0, roulAngle = 0, roulBallAngle = 0, roulMine = 0, roulBanner = null, roulPrevPhase = null;
@@ -2981,7 +2784,7 @@ document.addEventListener("click", (e) => {
   renderPanel();
 });
 document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => { tab = b.dataset.tab; syncTabs(); renderPanel(); }));
-window.__es = { get EX() { return EX; }, get TR() { return TR; }, wikiGo, get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED };
+window.__es = { CZ, get EX() { return EX; }, get TR() { return TR; }, wikiGo, get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED };
 
 setInterval(() => {
   const d = new Date(); $("clock").textContent = d.toTimeString().slice(0, 8);
