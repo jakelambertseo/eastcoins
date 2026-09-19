@@ -29,10 +29,15 @@ export async function onRequestPost(context) {
   const now = Date.now();
   const round = roundAt(now);
   // A little grace at the edge so a click as the clock hits zero is not
-  // refused by a slow network; the flip itself is decided by the seed,
-  // so a late bet cannot see the result first.
+  // refused by a slow network. (It is NOT true that a late bet cannot see
+  // the result: see the check just below.)
   if (round.phase !== "bets" && now - round.flipsAt > 1500) return fail("BETS_CLOSED", "Bets are closed — next round in a moment.", 409);
-  await ensureRound(db, round.no);
+  /* THE LATE-BET HOLE (closed 2026-09-19). The grace above lets a bet land up to 1.5 s after the clock closes, but the
+     state endpoint settles the round and publishes its result and seed the moment it closes. Until today nothing here
+     looked, so for a second and a half anyone could READ the result and then bet on it. A round that has a result
+     takes no more bets: the grace now only ever covers a round nobody has settled yet, whose seed is still secret. */
+  const roundRow = await ensureRound(db, round.no);
+  if (roundRow?.result) return fail("BETS_CLOSED", "Bets are closed — next round in a moment.", 409);
 
   const already = await db.prepare(`SELECT id FROM coin_bets WHERE round_no = ? AND user_id = ?`).bind(round.no, user.id).first();
   if (already) return fail("ALREADY_IN", "You're already in this round.", 409);

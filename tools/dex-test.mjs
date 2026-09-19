@@ -154,6 +154,28 @@ r = await ask({ op: "status", userId: "u1" }); check("an hour on: the allowance 
   check("ten rolls an hour, then RATE_LIMIT (or the win cap first)", (okN === 10 && lim === "RATE_LIMIT") || lim === "WIN_CAP", `${okN} ${lim}`);
 }
 
+// ---- THE LATE-BET HOLE (closed 2026-09-19): read the published result, then try to bet on it, on a frozen clock
+{
+  const get = async (file, params, who = "u1") => { const mod = await import(ROOT + file); const res = await mod.onRequestGet({ env, params, waitUntil() {}, request: new Request("https://eastcoin.vip/api/x", { headers: { cookie: `__Host-ec_session=${TOKENS[who]}` } }) }); return res.json(); };
+  const realNow = Date.now; raw.exec(`DELETE FROM coin_bets; DELETE FROM casino_bets; DELETE FROM wallet_operations`); balances.alice = 1000; balances.bob = 1000;
+  try {
+    // Coin Flip: 30 s rounds, bets close at +15 s. Stand half a second after the close of a round far in the future.
+    const coinNo = Math.floor(realNow() / 30000) + 1000, tCoin = coinNo * 30000 + 15000 + 500; Date.now = () => tCoin;
+    let x = await post("coin/bet.js", {}, { side: "heads", wager: 5 }, "u2");
+    check("an honest click half a second late, before anyone has settled the round: still taken (the grace)", x.body.ok, JSON.stringify(x.body).slice(0, 120));
+    const st = await get("coin/state.js", {});
+    check("the state endpoint has now published that round's result", st.round?.no === coinNo && !!st.round.result && !!st.round.seed, JSON.stringify(st.round || {}).slice(0, 160));
+    const b0 = balances.alice; x = await post("coin/bet.js", {}, { side: String(st.round.result), wager: 20 });
+    check("COIN FLIP: a bet on the side that was just published is REFUSED, nothing charged", x.body.code === "BETS_CLOSED" && balances.alice === b0 && count(`SELECT COUNT(*) n FROM coin_bets WHERE user_id = 'u1' AND round_no = ${coinNo}`) === 0, JSON.stringify(x.body).slice(0, 120));
+    // The Wheel: 60 s rounds, bets close at +40 s.
+    const whNo = Math.floor(realNow() / 60000) + 1000, tWh = whNo * 60000 + 40000 + 500; Date.now = () => tWh;
+    const ws = await get("casino/[game]/state.js", { game: "wheel" });
+    check("the Wheel's state has published its result", ws.round?.no === whNo && !!ws.round.result?.color);
+    const b1 = balances.alice; x = await post("casino/[game]/bet.js", { game: "wheel" }, { pick: ws.round.result.color, wager: 20 });
+    check("THE WHEEL: a bet on the colour that was just published is REFUSED, nothing charged", x.body.code === "BETS_CLOSED" && balances.alice === b1, JSON.stringify(x.body).slice(0, 120));
+  } finally { Date.now = realNow; }
+}
+
 // ---- StreamElements down: a banking is NOT a definite no
 seDown = true; r = await ask({ op: "pay", userId: "u1", id: "exchdown1", zc: 3 }); check("wallet down on a banking: not definite, the game holds the coins", !r.body.ok && r.body.definite === false); seDown = false;
 

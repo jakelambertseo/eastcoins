@@ -34,7 +34,12 @@ export async function onRequestPost(context) {
   // A little grace at the edge for a slow network; the seed decides the
   // outcome, so a late bet still cannot see the result first.
   if (round.phase !== "bets" && now - round.closesAt > 1500) return fail("BETS_CLOSED", "Bets are closed — next round in a moment.", 409);
-  await ensureRound(db, game, round.no);
+  /* THE LATE-BET HOLE (closed 2026-09-19). The grace above lets a bet land up to 1.5 s after the clock closes, but the
+     state endpoint settles the round and publishes its result and seed the moment it closes. Until today nothing here
+     looked, so for a second and a half anyone could READ the result and then bet on it. A round that has a result
+     takes no more bets: the grace now only ever covers a round nobody has settled yet, whose seed is still secret. */
+  const roundRow = await ensureRound(db, game, round.no);
+  if (roundRow?.result) return fail("BETS_CLOSED", "Bets are closed — next round in a moment.", 409);
 
   const already = await db.prepare(`SELECT id FROM casino_bets WHERE game = ? AND round_no = ? AND user_id = ?`).bind(game.key, round.no, user.id).first();
   if (already) return fail("ALREADY_IN", "You're already in this round.", 409);
