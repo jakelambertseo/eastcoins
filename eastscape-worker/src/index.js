@@ -1139,7 +1139,7 @@ export class World {
       return this.say(pl, `You go into ${inside.name.replace(/^The /, "the ")}.`);
     }
     if (a.kind === "bank") return pl.out.push({ type: "bank" });
-    if (a.kind === "cashier") { pl.act = null; return pl.out.push({ type: "cashier", ruby: ob.t === "coinstatue" }); }
+    if (a.kind === "cashier") { pl.act = null; return pl.out.push({ type: "cashier", ruby: a.ob?.t === "coinstatue" }); }
     if (a.kind === "fight") { pl.act = null; return pl.out.push({ ...this.fightView(S, pl, now), open: true }); }
     if (a.kind === "prize") { pl.act = null; return this.prizeSpin(pl); }
     if (a.kind === "fame") { pl.act = null; const F = this.fameToday(); return pl.out.push({ type: "popup", title: "Winners' Wall", icon: "🏆", text: F.rows.length ? `TODAY'S BIGGEST WINS\n\n${F.rows.map((r, i) => `${i + 1}. ${r.name}: +${G.fmtCash(r.profit)} on ${r.game}`).join("\n")}\n\nWin ${G.fmtCash(G_FAME_MIN)} or more on one bet to get your name up here. The wall is wiped at midnight, Central.` : `Nobody's won ${G.fmtCash(G_FAME_MIN)} on one bet yet today. The wall is empty, and it could be your name at the top of it.` }); }
