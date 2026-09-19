@@ -113,6 +113,7 @@ export const UPDATES = [
       "The Exchange is now a two-sided market: Buy shows the newest listings with a search and an item picker; Sell shows your offers and people who want what you have.",
       "Buy straight off a listing, or post a buy offer. Sell from your bag or your bank.",
       "Nothing to collect any more: purchases and takings go straight to your bank, and you get a chat line every time something of yours sells or fills.",
+      "First hit claims a monster: once you've hit it, nobody else can attack it until the fight ends or you leave it alone for 10 seconds (not in the Wilderness). Busy areas also respawn faster.",
     ],
   },
   {
