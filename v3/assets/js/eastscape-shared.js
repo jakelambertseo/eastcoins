@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 35;
+export const VERSION = 36;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -302,7 +302,7 @@ export const EX_SLOTS = 8;         // Exchange offers a player can have open at 
 export const EX_TAX = 0.01;        // the Exchange keeps 1% of every sale (rounded down); direct trades are free
 export const TRADE_RANGE = 5;      // how close two players must stay to trade face to face
 export const cashIn = (c) => c.inv.find((x) => x.k === "coins")?.n || 0;
-export const fmtCash = (n) => `${Math.round(n).toLocaleString()} Cash`;
+export const fmtCash = (n) => `$${Math.round(n).toLocaleString()}`;   // Cash is written like money everywhere: it is what the tables take
 
 /* ------------------------------------------------------------ directions and reach */
 export const DIRS = { "1,0": "east", "-1,0": "west", "0,1": "south", "0,-1": "north", "1,1": "south-east", "-1,1": "south-west", "1,-1": "north-east", "-1,-1": "north-west" };
@@ -471,6 +471,7 @@ export const SCENES = {
       // the smithy, east of the casino: furnace, anvil, and Brutus between them
       objs.push({ t: "furnace", x: 30, y: 7, name: "Furnace" }); g[7][30] = "#";
       objs.push({ t: "anvil", x: 33, y: 7, name: "Anvil" }); g[7][33] = "#";
+      objs.push({ t: "range", x: 27, y: 7, name: "Cooking range" }); g[7][27] = "#";
       // the market stall, south-west; Livia stands behind it
       objs.push({ t: "stall", x: 11, y: 17, w: 2, h: 1, name: "Exchange stall" }); block(g, 11, 17, 2, 1);
       objs.push({ t: "fountain", x: 21, y: 12, w: 2, h: 2, name: "Fountain" }); block(g, 21, 12, 2, 2);
@@ -662,15 +663,16 @@ Object.assign(SCENES, {
   },
   // EAST of the casino, the first stop on the combat line: things a beginner can win a fight with
   paddock: {
-    name: "The Paddock", exits: { w: "casino" },
+    name: "The Paddock", exits: { w: "casino", e: "rough" },
     build() {
       const g = grid(), objs = [], keep = [];
-      for (let x = 0; x <= 34; x++) g[13][x] = ",";
+      for (let x = 0; x < COLS; x++) g[13][x] = ",";
       for (let y = 6; y <= 13; y++) g[y][11] = ","; for (let y = 13; y <= 20; y++) g[y][24] = ",";
       for (const [x, y] of [[15, 9], [16, 9], [28, 17]]) { objs.push({ t: "hay", x, y, name: "Hay bale" }); g[y][x] = "#"; }
       objs.push({ t: "fire", x: 14, y: 16, name: "Campfire" }); g[16][14] = "#";
       for (const [x, y] of [[3, 3], [40, 22], [4, 21], [39, 3], [20, 2]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
-      for (let x = 0; x <= 34; x++) keep.push([x, 12], [x, 14]);
+      for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
+      objs.push({ t: "sign", x: 40, y: 11, name: "East: the Rough. Bigger things, bigger money. Combat 8 or so." }); g[11][40] = "#";
       wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "rocky" }, [...keepOf(this), ...keep], 13);
       return { g, objs, blobs: [] };
     },
@@ -678,6 +680,26 @@ Object.assign(SCENES, {
     mobs: [["chicken", 6, 5], ["chicken", 9, 8], ["chicken", 5, 10], ["chicken", 8, 18], ["chicken", 12, 20], ["chicken", 6, 21],
       ["cow", 19, 6], ["cow", 23, 9], ["cow", 27, 5], ["cow", 21, 19], ["cow", 27, 21],
       ["rotten", 34, 7], ["rotten", 38, 10], ["rotten", 36, 18], ["rotten", 39, 21]],
+    npcs: [], bots: []
+  },
+  // the second (and last, for now) fight map: past the Paddock, where the money is better and so are the teeth
+  rough: {
+    name: "The Rough", exits: { w: "paddock" },
+    build() {
+      const g = grid(), objs = [], keep = [];
+      for (let x = 0; x <= 38; x++) g[13][x] = ",";
+      for (let y = 5; y <= 13; y++) g[y][14] = ","; for (let y = 13; y <= 21; y++) g[y][27] = ",";
+      objs.push({ t: "fire", x: 6, y: 10, name: "Campfire" }); g[10][6] = "#";
+      for (const [x, y] of [[4, 4], [39, 4], [5, 22], [40, 21], [21, 3], [22, 23], [33, 9]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
+      for (const [x, y] of [[18, 8], [31, 18], [36, 6]]) { objs.push({ t: "boulder", x, y, name: "Boulder" }); g[y][x] = "#"; }
+      for (let x = 0; x <= 38; x++) keep.push([x, 12], [x, 14]);
+      wild(g, objs, this.exits, { n: "rocky", s: "forest", w: "forest", e: "rocky" }, [...keepOf(this), ...keep], 21);
+      return { g, objs, blobs: [] };
+    },
+    // hornworms and boars by the gate, highwaymen (who carry actual Cash) in the middle, two gnashers at the far end
+    mobs: [["hornworm", 7, 6], ["hornworm", 10, 18], ["hornworm", 5, 19], ["boar", 12, 8], ["boar", 17, 17], ["boar", 19, 6], ["boar", 15, 21],
+      ["highwayman", 25, 7], ["highwayman", 29, 10], ["highwayman", 24, 19], ["highwayman", 31, 20], ["highwayman", 34, 15],
+      ["gnasher", 38, 7], ["gnasher", 39, 19]],
     npcs: [], bots: []
   },
   // inside the Casino: a hangout first, a gambling den second. Games of chance for Cash (never ZCoins), the
@@ -696,36 +718,44 @@ Object.assign(SCENES, {
       objs.push({ t: "roulsign", x: 21, y: 2, name: "Roulette", dy: -3 });
       objs.push({ t: "notice", x: 9, y: 4, name: "Task board" }); g[4][9] = "#";
       objs.push({ t: "bar", x: 28, y: 5, w: 4, h: 1, name: "Bar" }); block(g, 28, 5, 4, 1);
-      // slot machines down both side walls (the arches stay clear), and a row of four in the middle of the floor
-      for (const y of [5, 7, 9, 17, 19]) { objs.push({ t: "slots", x: 1, y, name: "Slot machine", flip: true }); g[y][1] = "#"; objs.push({ t: "slots", x: 42, y, name: "Slot machine" }); g[y][42] = "#"; }
-      for (const x of [18, 20, 23, 25]) { objs.push({ t: "slots", x, y: 9, name: "Slot machine", flip: x < 22 }); g[9][x] = "#"; }
-      for (const [x, y] of [[8, 9], [8, 16], [13, 12]]) { objs.push({ t: "cointable", x, y, w: 2, h: 1, name: "Coin Flip table" }); block(g, x, y, 2, 1); }
-      for (const [x, y] of [[33, 9], [33, 16], [29, 12]]) { objs.push({ t: "dicetable", x, y, w: 2, h: 1, name: "Dice table" }); block(g, x, y, 2, 1); }
+      /* THE FLOOR, IN SECTIONS (2026-09-20). You arrive on an empty rug and have to go and look: that is the point.
+         Two aisles stay clear, door to door (x 20-23) and arch to arch (row 13); everything else is set down in
+         neighbourhoods, a little unevenly on purpose, the way a real floor grows:
+           west wall   SLOTS ALLEY: machines along the wall and in crooked little islands, Scratch-Off, the jukebox
+           west-centre THE COIN CORNER: the coin tables and the Wheel
+           centre      the House Ruby behind its ropes
+           east-centre THE CARD PIT: Higher or Lower, dice, the poker and blackjack tables
+           north-east  THE BAR: Dex, sofas, cocktail tables, the broken cash machine
+           south-east  THE DROP ZONE: Mines, Plinko, the piano
+         A Cashier's window stands by each arch, so whatever you bring back is money before you reach a table. */
+      const put = (t, x, y, name, w = 1, extra = {}) => { objs.push({ t, x, y, ...(w > 1 ? { w, h: 1 } : {}), name, ...extra }); block(g, x, y, w, 1); };
+      for (const y of [5, 7, 9, 16, 18, 20]) { put("slots", 1, y, "Slot machine", 1, { flip: true }); put("slots", 42, y, "Slot machine"); }
+      for (const [x, y, flip] of [[6, 6, true], [7, 6, false], [9, 8, true], [5, 16, false], [6, 16, true], [8, 18, true], [9, 18, false], [10, 19, true]]) put("slots", x, y, "Slot machine", 1, { flip });
+      put("scratch", 9, 11, "Scratch-Off", 2); put("jukebox", 5, 4, "Jukebox");
+      for (const [x, y] of [[14, 9], [16, 11], [14, 16]]) put("cointable", x, y, "Coin Flip table", 2);
+      put("wheel", 16, 19, "Wheel", 2, { art: "o_prizewheel" }); put("prizewheel", 16, 4, "Prize wheel (opening soon)", 2); put("blackjack", 12, 6, "Blackjack table (opening soon)", 2);
+      put("coinstatue", 21, 13, "The House Ruby", 2);
+      for (const [x, y] of [[20, 12], [23, 12], [20, 14], [23, 14]]) put("ropepost", x, y, "Velvet rope");
       objs.push({ t: "rug", img: "rug_casino", x: 20, y: 17, w: 4, h: 3, color: "#5a1a2a", name: "Rug" });
-      objs.push({ t: "howto", art: "o_notice", x: 25, y: 20, name: "How GAMBA works" }); g[20][25] = "#";
-      for (const [x, y] of [[5, 21], [11, 21], [30, 21], [36, 21], [14, 5], [36, 5]]) { objs.push({ t: "sofa", x, y, w: 2, h: 1, name: "Sofa" }); block(g, x, y, 2, 1); }
-      for (const [x, y] of [[3, 4], [40, 4], [17, 21], [28, 21], [12, 4], [25, 4], [3, 21], [40, 21]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
-      /* a busy floor (2026-09-19). All of this is furniture: the tables that aren't games yet say so in their name,
-         so nobody clicks a poker table expecting cards. The middle of the hall is the house's showpiece behind ropes. */
-      objs.push({ t: "coinstatue", x: 21, y: 13, w: 2, h: 1, name: "The House Ruby" }); block(g, 21, 13, 2, 1);
-      for (const [x, y] of [[20, 12], [23, 12], [20, 14], [23, 14]]) { objs.push({ t: "ropepost", x, y, name: "Velvet rope" }); g[y][x] = "#"; }
-      for (const [x, y] of [[13, 16], [27, 16]]) { objs.push({ t: "pokertable", x, y, w: 3, h: 1, name: "Poker table (opening soon)" }); block(g, x, y, 3, 1); }
-      for (const [x, y] of [[12, 7], [4, 15], [37, 15]]) { objs.push({ t: "blackjack", x, y, w: 2, h: 1, name: "Blackjack table (opening soon)" }); block(g, x, y, 2, 1); }
-      for (const [x, y] of [[17, 6], [24, 6], [6, 7], [38, 8], [18, 15], [25, 15], [10, 19], [33, 19]]) { objs.push({ t: "cocktail", x, y, name: "Cocktail table" }); g[y][x] = "#"; }
-      objs.push({ t: "jukebox", x: 5, y: 4, name: "Jukebox" }); g[4][5] = "#";
-      objs.push({ t: "atm", x: 39, y: 4, name: "Cash machine (out of order, thankfully)" }); g[4][39] = "#";
-      objs.push({ t: "prizewheel", x: 16, y: 4, w: 2, h: 1, name: "Prize wheel (opening soon)" }); block(g, 16, 4, 2, 1);
-      objs.push({ t: "piano", x: 37, y: 19, w: 2, h: 1, name: "Grand piano" }); block(g, 37, 19, 2, 1);
-      // the games everyone already knows from the site stand round the rug you arrive on: nothing to go looking for
-      for (const [t, x, y, name, art] of [["wheel", 13, 19, "Wheel", "o_prizewheel"], ["hilo", 17, 18, "Higher or Lower"], ["mines", 24, 18, "Mines"], ["plinko", 28, 19, "Plinko"], ["scratch", 18, 20, "Scratch-Off"], ["cointable", 26, 20, "Coin Flip table"]]) {
-        objs.push({ t, x, y, w: 2, h: 1, name, ...(art ? { art } : {}) }); block(g, x, y, 2, 1);
-      }
+      put("howto", 25, 21, "How GAMBA works", 1, { art: "o_notice" });
+      put("hilo", 26, 9, "Higher or Lower", 2);
+      for (const [x, y] of [[33, 9], [30, 11], [35, 15]]) put("dicetable", x, y, "Dice table", 2);
+      put("pokertable", 27, 16, "Poker table (opening soon)", 3); put("blackjack", 38, 16, "Blackjack table (opening soon)", 2);
+      put("atm", 39, 4, "Cash machine (out of order, thankfully)");
+      put("mines", 29, 19, "Mines", 2); put("plinko", 33, 19, "Plinko", 2); put("piano", 37, 19, "Grand piano", 2);
+      for (const [x, y] of [[5, 21], [11, 21], [30, 21], [36, 21], [14, 5], [34, 5], [36, 7]]) put("sofa", x, y, "Sofa", 2);
+      for (const [x, y] of [[17, 7], [24, 6], [33, 7], [38, 9], [18, 15], [25, 14], [12, 20], [36, 12]]) put("cocktail", x, y, "Cocktail table");
+      for (const [x, y] of [[3, 4], [40, 4], [17, 21], [28, 21], [12, 4], [25, 4], [3, 21], [40, 21]]) put("plant", x, y, "Potted palm");
+      // the Cashier buys everything you bring back, at the price written over it outside: one window by each arch
+      for (const x of [3, 39]) put("cashier", x, 10, "Cashier", 2);
       return { g, objs, blobs: [] };
     },
     // the regulars at the machines are simulated players: they walk up to a game, play a while, and move on
     mobs: [], bots: [{ name: "due4aWin", level: 14 }, { name: "SlotGoblin", level: 37 }, { name: "AllInAlan", level: 61 }],
     npcs: [{ name: "Dex the Dealer", art: "dex", x: 29, y: 4, still: true, reach: 2, hair: "#1a1a1a", shirt: "#9a2a2a", pants: "#1a1a1a", lines: [
-      "Welcome in. Slots on the left, coins in the middle, dice by the bar. The house always wins, a little.",
+      "Welcome in. Have a wander: slots down the west wall, cards and dice this side, Mines and Plinko in the far corner. The house always wins, a little.",
+      "Broke? West arch to dig and chop, east arch to hit things. Everything out there has its price written on it. The Cashier by the arch turns it into money.",
+      "Here's a tip for free: take what you find to the workshop out front first. Anything you make sells for double.",
       "Broke? Happens to the best of us. The board by the door has jobs that pay. Fresh ones every morning.",
       "Biggest win I've seen? Someone hit three sevens on that end machine. Bought everyone a drink. We don't sell drinks.",
       "Every roll's decided by the house, fair and square. I just hand over the money.",
@@ -1126,7 +1156,7 @@ export const LUCK = { bonus: 0.025, gather: 1 / 12, kill: 1 / 8, max: 300 };
 /* ------------------------------------------------------------ what's open (2026-09-19 reset)
    One casino (with its Roulette Room), one town, one skilling area, one combat area. Everything else still exists in
    the code but can't be reached yet; a saved character standing somewhere closed wakes up in the casino. */
-export const OPEN = new Set(["casino", "roulette", "forum", "bathhouse", "workyard", "paddock"]);
+export const OPEN = new Set(["casino", "roulette", "forum", "bathhouse", "workyard", "paddock", "rough"]);
 export const OPEN_DAILY = new Set(["logs", "tin", "copper", "sardine", "wheat", "cows", "chickens", "rotten"]);
 for (const k of Object.keys(SCENES)) if (!OPEN.has(k)) SCENES[k].wikiHide = true;   // closed areas stay out of the wiki
 
@@ -1145,13 +1175,17 @@ export const TOUR_CHIP = 10, TOUR_PAY = 60, TOUR_GIFT = "clover", TOUR_JOB = { l
 export const tourOf = (c) => (c?.tour && c.tour.step < TOUR.length ? TOUR[c.tour.step] : null);
 export const HOWTO = `GAMBA is a casino. You'll spend most of your time right here.
 
-PLAY: slots, coin flip and dice on this floor, roulette through the door in the back wall. Bets come out of the Cash in your bag.
+PLAY: wander the floor. Slots down the west wall, the coin tables and the Wheel beside them, cards and dice to the east, Mines and Plinko in the south-east corner, roulette through the door in the back wall. Bets come out of the Cash in your bag.
 
-WANT BETTER ODDS? Go out and work. While you chop, mine, fish and pick in the Workyard (WEST arch) you'll find lucky clovers. Monsters in the Paddock (EAST arch) drop lucky horseshoes. Click one in your bag and your next bets are LUCKY: every win pays more.
+BROKE? Go and get more. It's quick.
+  WEST arch, the Workyard: chop, mine, fish. Every rock and tree has its price written over it.
+  EAST arch, the Paddock (and the Rough beyond it): monsters drop things worth money. Bigger monsters, bigger money.
+  FRONT door, the workshop: anything you MAKE from what you found sells for DOUBLE. Ore into bars, bars into swords, fish into dinner.
+Then bring it to a CASHIER, by either arch. One click and it's Cash.
 
-OUT OF CASH? The task board left of the bar has three paid jobs a day. Anything you gather sells in town (the front door): Brutus buys it, or put it on the market.
+WANT BETTER ODDS? Out there you'll also find lucky clovers and horseshoes. Click one in your bag and your next bets are LUCKY: every win pays more.
 
-That's it. Play, work for luck and Cash, play better. Dex, behind the bar, always knows what you should do next.`;
+That's it. Play, go broke, go get more, play better. Dex, behind the bar, always knows what you should do next.`;
 
 /* ------------------------------------------------------------ roulette: one shared table, one spin for everyone
 
@@ -1289,6 +1323,36 @@ export const SHOP = {
     SHOP.buys[k] = Math.max(2, Math.round(worth(ITEMS[k]) * 0.35));
   }
 }
+/* ------------------------------------------------------------ what things are worth (2026-09-20)
+
+   GAMBA in one loop: gamble; go broke; go and get more. Skilling (west arch) and fighting (east arch) turn up things
+   the Cashier on the casino floor buys for the amount written over them out in the world. Take them to the workshop
+   (front door) first and whatever you MAKE sells for DOUBLE what went into it, because you had to go and get it:
+   copper $10 + tin $10 -> bronze bar $40 -> a bronze sword (2 bars) $160. One list, read by the Cashier, by Brutus,
+   by the labels over rocks and monsters, and by the wiki. A made thing is never priced here by hand. */
+export const VALUE = {
+  logs: 10, copper: 10, tin: 10, sardine: 10, trout: 25, wheat: 4, olives: 3,
+  emerald_ore: 30, diamond_ore: 50, dragonstone_ore: 80, onyx_ore: 120,
+  chicken: 8, feather: 1, bones: 3, beef: 12, hide: 14, tomatoe: 5, husk: 10, pork: 16, tusk: 18, pit: 2, mask: 60, monocle: 40, manifesto: 25
+};
+for (const [k, v] of Object.entries(SHOP.buys)) if (!(k in VALUE) && !ITEMS[k]?.slot) VALUE[k] = v;      // the closed areas keep Brutus's old prices until they reopen
+export const CRAFT_PAYS = 2;
+for (let pass = 0; pass < 4; pass++) for (const r of Object.values(RECIPES)) {                                // bars before the gear made of them
+  if (r.in.every(([k]) => VALUE[k] != null)) VALUE[r.out[0]] = Math.round(CRAFT_PAYS * r.in.reduce((a, [k, n]) => a + VALUE[k] * n, 0) / (r.out[1] || 1));
+}
+{ // Brutus pays what the Cashier pays. Neither may pay what Brutus SELLS a thing for, or buying and selling it back is a money printer.
+  const sold = Object.fromEntries(SHOP.sells);
+  for (const [k, v] of Object.entries(VALUE)) { if (sold[k]) VALUE[k] = Math.min(v, Math.floor(sold[k] * 0.7)); SHOP.buys[k] = VALUE[k]; }
+}
+export const valueOf = (k) => VALUE[k] ?? SHOP.buys[k] ?? 0;
+/** What one go at a thing in the world is worth: the label drawn over a rock, a tree, a fishing spot. */
+export const nodeValue = (ob) => (ob.t === "rock" || ob.t === "vein" ? valueOf(ob.ore) : ob.t === "spot" ? valueOf(ob.fish || "sardine") : ob.t === "wheat" ? valueOf("wheat")
+  : ob.t === "olive" || ob.t === "vine" ? valueOf(ob.crop || "olives") : ["tree", "oak", "yew", "cypress", "deadtree", "willow", "skyash"].includes(ob.t) ? valueOf(ob.log || "logs") : 0);
+/** What a monster's drops come to on an average kill. */
+export const mobValue = (t) => Math.round((MOBS[t]?.drops || []).reduce((a, [k, n, p]) => a + (k === "coins" ? 1 : valueOf(k)) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0));
+/** What the Cashier will take off you in one go: loot and things you made, never tools, charms or anything you could wear. */
+export const isLoot = (k) => k !== "coins" && valueOf(k) > 0 && !ITEMS[k]?.slot && !ITEMS[k]?.luck;
+
 // dying outside the Cage: a quarter of the time one worn item falls where you died. The killer alone can take it
 // for lootMs, then anyone, until it's gone. Leaving mid-fight leaves your character standing there for lingerMs.
 export const PVP = { drop: 0.25, lootMs: 60000, groundMs: 180000, lingerMs: 10000 };
@@ -1368,7 +1432,7 @@ export const EXAMINE = {
   lighthouse: ["A lighthouse. The light points inward, at the island. Nobody knows who it's warning.", "The door's painted on. The light is on anyway."],
   mule: ["A mule. It refuses to move. It has refused for eleven years.", "The mule looks at you. You feel judged by a professional."]
 };
-export const VERB = { howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
+export const VERB = { cashier: "Cash in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
 /* ------------------------------------------------------------ quests are data
    goal.type "bring": have goal.n of goal.items in your bag when you talk to the giver (they're taken)

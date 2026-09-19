@@ -121,6 +121,18 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-20", title: "Go broke, go get more",
+    items: [
+      "Everything out in the world now has its price written over it: $10 a rock, $10 a log, and so on. Monsters show roughly what a kill is worth.",
+      "New: the Cashier, a window by each arch on the casino floor. One click turns everything you found and made into Cash. It leaves your tools, charms and anything you could wear alone.",
+      "Making things pays DOUBLE. A bronze bar sells for twice the ore in it, a sword for twice the bars, cooked food for twice the raw. The workshop out the front door has a furnace, an anvil and now a cooking range.",
+      "Tools just work from your bag: no more wielding a pickaxe before you can mine.",
+      "A second fight map, the Rough, east of the Paddock: hornworms, boars, highwaymen carrying actual Cash, and two Bog Gnashers at the far end. Come at Combat 8 or so.",
+      "The casino floor has been re-planned into neighbourhoods so there's room to wander: Slots Alley down the west wall, the Coin Corner, the Card Pit, the Bar, and the Drop Zone (Mines and Plinko) in the south-east. The entrance is clear again.",
+      "Cash is written as dollars now ($250), because that's what it is."
+    ]
+  },
+  {
     date: "2026-09-19", title: "Five more games, right where you walk in",
     items: [
       "Wheel, Higher or Lower, Mines, Plinko and Scratch-Off now stand round the rug you arrive on, with a Coin Flip table beside them. The same games as the site's casino, played for Cash.",
