@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 47;
+export const VERSION = 48;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -766,9 +766,11 @@ Object.assign(SCENES, {
   fightpit: {
     name: "The Fight Pit", interior: true, floor: "wood", room: [9, 5, 34, 20], exitTo: { scene: "casino", x: 10, y: 5 }, entry: { x: 21, y: 20 },
     pit: { x: 15, y: 9, w: 14, h: 7 },
-    wall: [{ t: "banner", x: 10 }, { t: "lamp", x: 13 }, { t: "lamp", x: 17.5 }, { t: "banner", x: 21.6 }, { t: "lamp", x: 26 }, { t: "lamp", x: 30.5 }, { t: "banner", x: 33.5 }],
+    wall: [{ t: "banner", x: 10 }, { t: "lamp", x: 13 }, { t: "lamp", x: 17.5 }, { t: "lamp", x: 26 }, { t: "lamp", x: 30.5 }, { t: "banner", x: 33.5 }],
+    doorSigns: [{ x: 22, text: "HIGH ROLLERS" }],
     build() {
       const g = room(9, 5, 34, 20, 21), objs = [];
+      objs.push({ t: "walldoor", x: 22, y: 4, name: "The High Roller Room", enter: "highroller" });   // (the owner, 2026-09-20: "a high roller section, accessible from a door in the fighting ring")
       objs.push({ t: "fightring", x: 15, y: 9, w: 14, h: 7, name: "The pit: bet on the fight" }); block(g, 15, 9, 14, 7);
       for (const [x, y] of [[12, 6], [31, 6]]) { objs.push({ t: "fightboard", art: "o_notice", x, y, name: "Tonight's card: bet on the fight" }); g[y][x] = "#"; }
       // somewhere to perch along the rail, crates and barrels in the corners, and a bin that's seen things
@@ -782,7 +784,35 @@ Object.assign(SCENES, {
       return { g, objs, blobs: [] };
     },
     mobs: [], bots: [{ name: "RingsideRon", level: 22 }, { name: "bloodsport99", level: 47 }, { name: "ChalkEater", level: 9 }],
-    npcs: []
+    npcs: [{ name: "Vince the Bouncer", art: "vince", x: 23, y: 5, still: true, hair: "#1a1a1a", shirt: "#141418", pants: "#141418", lines: ["High Roller Room. You're on the list if you've got $2,500 on you, or if you've just come from a fight and it shows.", "Tables in there take ten times what they take out here. A hundred dollars is the smallest bet anyone will look at.", "No, I don't know who's going to win. Yes, everybody asks.", "Shoes. I always look at the shoes."] }]
+  },
+  /* THE HIGH ROLLER ROOM (2026-09-20): through the door in the Fight Pit's back wall. The same games, ten times the
+     limits (def.limits), and a $100 floor. Vince lets you in with HIGH_ROLLER.cash in your bag or the High Roller buff
+     (which you get from fighting, which is why the door is where it is). Luck and effects cover the first FX_COVER of a
+     stake only, so big bets are big swings, not a better job. No slots in here: the jackpot belongs to the main floor. */
+  highroller: {
+    name: "The High Roller Room", interior: true, floor: "casino", wallH: 34, room: [11, 6, 32, 19], exitTo: { scene: "fightpit", x: 22, y: 5 }, entry: { x: 21, y: 19 },
+    limits: { min: 100, mult: 10 }, door: { cash: 2500 },
+    wall: [{ t: "lamp", x: 12.5 }, { t: "painting2", x: 15.5, dy: 5 }, { t: "lamp", x: 18.5 }, { t: "neon", x: 21.5, dy: 16 }, { t: "lamp", x: 24.5 }, { t: "painting1", x: 27.5, dy: 7, frame: true }, { t: "lamp", x: 30.5 }],
+    build() {
+      const g = room(11, 6, 32, 19, 21), objs = [];
+      const put = (t, x, y, name, w = 1, extra = {}) => { objs.push({ t, x, y, ...(w > 1 ? { w, h: 1 } : {}), name, ...extra }); block(g, x, y, w, 1); };
+      const seat = (x, y) => { if (g[y][x] === "i") objs.push({ t: "stool", x, y, name: "Stool", soft: true }); };
+      put("cointable", 13, 9, "High-limit Coin Flip", 2); put("cointable", 13, 13, "High-limit Coin Flip", 2);
+      put("dicetable", 17, 11, "High-limit Dice", 2); put("wheel", 17, 15, "High-limit Wheel", 2, { art: "o_prizewheel" });
+      put("hilo", 25, 9, "High-limit Higher or Lower", 2); put("hilo", 25, 13, "High-limit Higher or Lower", 2);
+      put("mines", 29, 9, "High-limit Mines", 2); put("plinko", 29, 13, "High-limit Plinko", 2); put("scratch", 29, 16, "High-limit Scratch-Off", 2);
+      for (const [x, y] of [[13, 10], [14, 10], [13, 14], [14, 14], [17, 12], [18, 12], [25, 10], [26, 10], [25, 14], [26, 14], [17, 16], [18, 16]]) seat(x, y);
+      // the lounge in the middle: somewhere to sit and be seen, and the good buffet
+      put("cocktail", 21, 10, "Cocktail table"); put("cocktail", 22, 13, "Cocktail table");
+      for (const [x, y] of [[20, 10], [22, 10], [21, 13], [23, 13]]) if (g[y][x] === "i") objs.push({ t: "armchair", x, y, name: "Armchair", soft: true });
+      put("buffet", 19, 6, "The good buffet", 2); put("cooler", 21, 6, "Sparkling water"); put("atm", 31, 6, "Cash machine (it only takes)"); put("piano", 23, 6, "Piano", 2);
+      put("planter", 11, 6, "Planter", 2); put("planter", 11, 19, "Planter", 2); put("planter", 31, 19, "Planter", 2); put("coatrack", 32, 12, "Coat rack"); put("suitcase", 12, 17, "Somebody's suitcase. It's heavy.");
+      for (const [x, y] of [[16, 8], [24, 17], [28, 11]]) if (g[y][x] === "i") objs.push({ t: "l_chips", x, y, name: "Dropped chips", soft: true, flat: true });
+      return { g, objs, blobs: [] };
+    },
+    mobs: [], bots: [{ name: "MaxBetMarv", level: 58 }, { name: "WhaleWatcher", level: 41 }],
+    npcs: [{ name: "Sterling the Host", art: "sterling", x: 21, y: 17, still: true, hair: "#d8d8e0", shirt: "#f4f0e8", pants: "#1a1a1a", lines: ["Welcome to the room. Same games, ten times the limits, and nobody out there can hear you scream.", "A hundred dollars is the smallest bet at any table in here. If that stings, the door's behind you, and no hard feelings.", "A word on luck and dinners: they cover the first $1,500 of a bet. Past that you're on your own, like the rest of us.", "The buffet is better in here. That isn't a secret, it's the whole point.", "Biggest pot I've seen walk out of here was on Mines. Biggest I've seen walk IN, too."] }]
   },
   // inside the Casino: a hangout first, a gambling den second. Games of chance for Cash (never ZCoins), the
   // daily-task board, a bar, and Dex, who has seen everything and will tell you about most of it.
@@ -1332,6 +1362,11 @@ export const NEED_TEXT = { thirst: "You're too thirsty to gamble. There's a wate
    only for as long as the dinner and the drink last, both of which cost work or Cash. edgeOf() is the ONE place this
    is added up and the server is the only thing that calls it for money.
    *** CASH ONLY. If a GAMBA table ever takes real ZCoins, none of this may touch it (see BACKLOG: "Never"). *** */
+/* THE HOUSE RUBY's exchange (2026-09-20): Cash into real ZCoins, $100 each, or a $500 Ruby ticket (a scratch reveal with a
+   face of 5 ZCoins that pays 25, 10, 5, 2 or nothing). ONE allowance of 25 an hour covers both. The SITE is the authority
+   (functions/api/eastscape/exchange.js): these are its numbers, mirrored for the page and the game server, and
+   tools/dex-test.mjs fails if they drift. */
+export const DEX = { rate: 100, capHour: 25, ticket: { face: 5, table: [[25, 4], [10, 12], [5, 30], [2, 30], [0, 24]] } };
 export const FX_CAP = { gear: { win: 0.015, back: 0.015, angel: 0.0075 }, all: { win: 0.05, back: 0.03, angel: 0.01 } };
 export const ROLLER = { kill: 1 / 8, bets: 10, max: 100, mult: 2 };
 export const FREEPLAY = 100, DEVIL = { ms: 120000, odds: 1 / 3, pays: 3, max: 5000 }, REWIND = { ms: 60000, max: 500 };
@@ -1347,12 +1382,19 @@ export function edgeOf(c) {
   return out;
 }
 /** The most this player may put on one bet right now: the table's limit, plus gear/meal/drink, doubled while a High Roller. */
-export const baseBetOf = (c) => CASINO.maxBet + Math.round(edgeOf(c).limit);
-export const maxBetOf = (c) => baseBetOf(c) * ((c?.roller | 0) > 0 ? ROLLER.mult : 1);
+/* `def` is the room you're standing in: the High Roller Room (def.limits) multiplies every table's limit and has a floor. */
+export const minBetOf = (def) => def?.limits?.min || CASINO.minBet;
+export const baseBetOf = (c, def) => (CASINO.maxBet + Math.round(edgeOf(c).limit)) * (def?.limits?.mult || 1);
+export const maxBetOf = (c, def) => baseBetOf(c, def) * ((c?.roller | 0) > 0 ? ROLLER.mult : 1);
+/* Luck and every effect cover the first FX_COVER of a stake and no more: a $5,000 bet in the High Roller Room gets the
+   bonus a $1,500 one would. Without this the ceiling above is a percentage of ANY stake, and the biggest room in the
+   building would be the best job in the game for anyone holding a dinner. */
+export const FX_COVER = 1500;
+const cover = (stake) => (stake > FX_COVER ? FX_COVER / stake : 1);
 /** What a winning bet pays with this player's effects (e from edgeOf, fixed when the stake went down). `plain` is the game's own payout. */
-export const payWith = (plain, stake, e, lucky) => (plain > 0 ? Math.round(plain * (lucky ? 1 + LUCK.bonus : 1) + Math.max(0, plain - stake) * (e?.win || 0)) : 0);
+export const payWith = (plain, stake, e, lucky) => (plain > 0 ? Math.round(plain + (plain * (lucky ? LUCK.bonus : 0) + Math.max(0, plain - stake) * (e?.win || 0)) * cover(stake)) : 0);
 /** What comes back from a LOST stake: all of it if the angel roll (0..1) lands, else the insured share. */
-export const backWith = (lost, e, roll) => (lost > 0 && e ? (roll < (e.angel || 0) ? lost : Math.round(lost * (e.back || 0))) : 0);
+export const backWith = (lost, e, roll) => (lost > 0 && e ? Math.round((roll < (e.angel || 0) ? lost : lost * (e.back || 0)) * cover(lost)) : 0);
 const pct = (n) => `${Math.round(n * 1000) / 10}%`;
 export const fxText = (f) => [f.win && `wins pay ${pct(f.win)} more profit`, f.back && `${pct(f.back)} of every loss comes back`, f.angel && `1 lost bet in ${Math.round(1 / f.angel)} comes back whole`,
   f.limit && `every table lets you bet $${f.limit} more`, f.thrift && `betting makes you ${pct(1 - f.thrift)} less hungry and thirsty`, f.power && `your other worn gambling gear is ${pct(f.power)} stronger`].filter(Boolean).join("; ");
@@ -1377,7 +1419,7 @@ export const buffsOf = (c) => {
 /* ------------------------------------------------------------ what's open (2026-09-19 reset)
    One casino (with its Roulette Room), one town, one skilling area, one combat area. Everything else still exists in
    the code but can't be reached yet; a saved character standing somewhere closed wakes up in the casino. */
-export const OPEN = new Set(["casino", "roulette", "fightpit", "forum", "bathhouse", "workyard", "gloam", "cloud", "paddock", "rough", "boneyard"]);
+export const OPEN = new Set(["casino", "roulette", "fightpit", "highroller", "forum", "bathhouse", "workyard", "gloam", "cloud", "paddock", "rough", "boneyard"]);
 export const OPEN_DAILY = new Set(["logs", "tin", "copper", "sardine", "wheat", "cows", "chickens", "rotten", "boar", "highwayman", "emerald", "lantern", "willow", "diamond", "dragonstone", "moths", "ghouls", "bars", "cooked", "dinners", "steaks", "swords"]);
 for (const k of Object.keys(SCENES)) if (!OPEN.has(k)) SCENES[k].wikiHide = true;   // closed areas stay out of the wiki
 

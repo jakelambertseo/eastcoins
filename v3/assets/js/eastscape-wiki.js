@@ -121,6 +121,16 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-20", title: "The House Ruby pays in ZCoins, and the High Roller Room",
+    items: [
+      "THE HOUSE RUBY NOW TRADES CASH FOR REAL ZCOINS. Click the big ruby in the middle of the casino floor. $100 of Cash is 1 ZCoin, paid straight to your eastcoin.vip balance. You can take up to 25 ZCoins in any hour.",
+      "RUBY TICKETS. $500 buys a ticket you scratch right there: it pays 25, 10, 5 or 2 ZCoins, or nothing. A ticket uses 5 of your hour's 25 whatever it pays. On average a ticket pays a little less than trading straight: it's the same money with a story.",
+      "If the Ruby ever can't tell whether a trade went through, your Cash is HELD, not lost. Open the Ruby again a minute later and it finishes the job or hands the Cash back.",
+      "THE HIGH ROLLER ROOM. There's a new door in the Fight Pit's back wall, and Vince in front of it. He lets you in with $2,500 on you, or with the High Roller buff (which you get from fighting). Inside: the same games at TEN TIMES the limits, $100 minimum, the good buffet, and Sterling. Luck and buffs cover the first $1,500 of any bet, so a $5,000 flip is a big swing, not a better deal.",
+      "The wiki's words now load when you first open the wiki, which makes the game itself start a little faster."
+    ]
+  },
+  {
     date: "2026-09-20", title: "GambaScape: three jobs, three rewards, and a bar",
     items: [
       "The game is called GambaScape now.",

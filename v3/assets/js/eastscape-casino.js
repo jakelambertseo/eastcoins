@@ -137,6 +137,13 @@ const CSS = `
 /* cashier */
 .cz-csrow{display:grid;grid-template-columns:30px 1fr auto auto;gap:10px;align-items:center;padding:7px 2px;border-top:1px solid var(--line);font-size:13.5px}.cz-csrow:first-child{border-top:0}.cz-csrow small{display:block;color:var(--muted-2);font-size:11.5px}
 .cz-csrow strong{font:800 15px var(--display);color:var(--gold)}.cz-csrow img.ico,.cz-csrow .ico{width:26px;height:26px;image-rendering:pixelated}
+.cz-dex h2 em{font-style:normal;color:var(--gold)}.cz-dexrow{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.cz-dexrow .cz-chip[aria-pressed=true]{background:var(--gold);color:#1a1405;border-color:var(--gold)}
+.cz-dexgo{width:100%;height:44px;border-radius:11px;border:1px solid rgba(232,191,53,.5);background:var(--gold);color:#1a1405;font:800 14.5px var(--display);cursor:pointer}.cz-dexgo:disabled{opacity:.45;cursor:not-allowed}
+.cz-dexgo.alt{background:linear-gradient(135deg,#ff5a7a,#c8202c);color:#fff;border-color:rgba(255,120,140,.6);margin-top:6px}.cz-dexmsg{margin:8px 0 0;font-size:12.5px;color:var(--muted);min-height:1.2em}.cz-dexmsg.bad{color:var(--red)}.cz-dexmsg.good{color:#4ddb8b}
+.cz-dexbar{height:7px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;margin:6px 0 2px}.cz-dexbar>i{display:block;height:100%;background:linear-gradient(90deg,#ff5a7a,#e8bf35)}
+.cz-rtk{position:relative;margin:10px auto 0;width:min(100%,300px);aspect-ratio:2/1;border-radius:14px;background:radial-gradient(circle at 50% 40%,#5a0f1c,#22060b);border:2px solid #e8bf35;display:grid;place-items:center;overflow:hidden}
+.cz-rtk b{font:800 40px var(--display);color:#ffd84a;text-shadow:0 0 22px rgba(255,216,74,.5)}.cz-rtk small{display:block;text-align:center;font:700 12px var(--body);color:#f4c8cf;letter-spacing:.08em;text-transform:uppercase}
+.cz-rtk button{position:absolute;inset:0;border:0;cursor:pointer;font:800 20px var(--display);letter-spacing:.12em;color:#3a3a44;background:repeating-linear-gradient(135deg,#d8d8e4 0 12px,#b8b8c8 12px 24px);transition:opacity .45s ease,transform .45s ease}.cz-rtk button.off{opacity:0;transform:scale(1.15);pointer-events:none}
 .cz-total{font:800 54px var(--display);letter-spacing:-.04em;color:var(--gold);line-height:1;text-shadow:0 0 30px rgba(232,191,53,.35)}
 @media (prefers-reduced-motion:reduce){.cz-coin.spin,.cz-reel.spin .cz-strip{animation:none}}
 `;
@@ -174,12 +181,14 @@ export function createCasino(env) {
   }
   function stakeRow() {
     const row = el("div", "cz-stakerow"), C = G.CASINO; R.stake = el("input", "cz-stake"); R.stake.type = "number"; R.stake.min = C.minBet; R.stake.max = C.maxBet; R.stake.value = bet; R.stake.setAttribute("aria-label", "Bet");
-    const top = () => G.maxBetOf(env.me());   /* your own limit: the table's, plus a Bookie's amulet or champagne, doubled while a High Roller */
-    const setBet = (v) => { bet = Math.max(C.minBet, Math.min(top(), Math.floor(v) || C.minBet)); R.stake.value = bet; R.stake.max = top(); refresh(); };
-    R.stake.addEventListener("input", () => { bet = Math.max(C.minBet, Math.min(top(), Math.floor(+R.stake.value) || C.minBet)); refresh(); });
+    const room = () => env.room?.() || null, low = () => G.minBetOf(room()), big = (room()?.limits?.mult || 1) > 1;
+    const top = () => G.maxBetOf(env.me(), room());   /* your own limit: the table's, plus a Bookie's amulet or champagne, doubled while a High Roller */
+    const setBet = (v) => { bet = Math.max(low(), Math.min(top(), Math.floor(v) || low())); R.stake.value = bet; R.stake.min = low(); R.stake.max = top(); refresh(); };
+    R.stake.addEventListener("input", () => { bet = Math.max(low(), Math.min(top(), Math.floor(+R.stake.value) || low())); refresh(); });
+    if (bet < low() || bet > top()) { bet = Math.max(low(), Math.min(top(), bet)); R.stake.value = bet; }
     R.stake.addEventListener("blur", () => { R.stake.value = bet; });
     row.append(R.stake); R.chips = [];
-    for (const [label, fn] of [["10", () => 10], ["50", () => 50], ["100", () => 100], ["500", () => 500], ["½", () => bet / 2], ["2×", () => bet * 2], ["Max", () => Math.min(top(), Math.max(cash(), env.me()?.free | 0))]]) { const b = el("button", "cz-chip", label); b.type = "button"; b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); setBet(fn()); }); R.chips.push(b); row.append(b); }
+    for (const [label, fn] of [...(big ? [["100", () => 100], ["500", () => 500], ["1K", () => 1000], ["5K", () => 5000]] : [["10", () => 10], ["50", () => 50], ["100", () => 100], ["500", () => 500]]), ["½", () => bet / 2], ["2×", () => bet * 2], ["Max", () => Math.min(top(), Math.max(cash(), env.me()?.free | 0))]]) { const b = el("button", "cz-chip", label); b.type = "button"; b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); setBet(fn()); }); R.chips.push(b); row.append(b); }
     return row;
   }
   const lockBtn = (cls = "") => { const b = el("button", `cz-lock ${cls}`); b.type = "button"; return b; };
@@ -198,9 +207,9 @@ export function createCasino(env) {
     R.recent.innerHTML = s.recent.map((d) => `<span class="${d > 0 ? "w" : ""}">${d > 0 ? "+" : d < 0 ? "−" : ""}${Math.abs(d).toLocaleString()}</span>`).join("");
     R.needs.innerHTML = [["thirst", "Thirst", ""], ["hunger", "Hunger", "food"]].map(([k, n, cls]) => { const v = Math.round(G.needOf(me, k)); return `<div class="cz-need ${cls}${v < G.NEEDS.floor ? " low" : ""}">${n} ${v}%<i><u style="width:${v}%"></u></i></div>`; }).join("");
     const luck = me?.luck | 0; R.luck.className = `cz-luck${luck ? " on" : ""}`;
-    const others = G.buffsOf(me).filter((b) => b.id !== "luck").map((b) => `${b.name}${b.left != null ? ` × ${b.left}` : ""}`), lim = G.maxBetOf(me);
+    const others = G.buffsOf(me).filter((b) => b.id !== "luck").map((b) => `${b.name}${b.left != null ? ` × ${b.left}` : ""}`), lim = G.maxBetOf(me, env.room?.());
     R.luck.textContent = (luck ? `🍀 Lucky: your next ${luck} bet${luck === 1 ? "" : "s"} pay ${G.LUCK.bonus * 100}% more when they win.` : "Want better odds? Only skilling finds lucky clovers (west arch). Fighting makes you a High Roller. Crafting makes rings and dinners, and Dex sells drinks.")
-      + (others.length ? ` Also on: ${others.join(" · ")}.` : "") + (lim !== G.CASINO.maxBet ? ` Your limit here is ${money(lim)}.` : "");
+      + (others.length ? ` Also on: ${others.join(" · ")}.` : "") + (lim !== G.CASINO.maxBet ? ` Your limit here is ${money(lim)}.` : "") + ((env.room?.()?.limits?.mult || 1) > 1 ? ` High Roller Room: bets from ${money(G.minBetOf(env.room()))}; luck and buffs cover the first ${money(G.FX_COVER)} of a bet.` : "");
     if (R.jack && jack.pot != null) R.jack.innerHTML = `<small>JACKPOT</small><b>${money(Math.floor(jack.pot))}</b><small>Three sevens wins it · a ${money(G.CASINO.maxBet)} spin wins it all${jack.last ? ` · last: ${esc(jack.last.name)} ${money(jack.last.amt)}` : ""}</small>`;
     UI[GAME]?.refresh?.();
   }
@@ -427,14 +436,44 @@ export function createCasino(env) {
 
   /* ---------------------------------------------------------- the Cashier, in the same clothes */
   let lastCashed = null;
+  /* THE HOUSE RUBY's exchange: Cash into real ZCoins. The window only asks; the game server takes the Cash and the SITE
+     decides (allowance, ticket roll, payment). Everything shown here came back from there. */
+  let atRuby = false, dexSt = null, dexMsg = null, dexZc = 5, dexTicket = null, dexWait = false;
+  function dexCard() {
+    const card = el("section", "cz-card cz-dex"), D = G.DEX, st = dexSt, left = st?.ok ? st.left : null, on = !!(st?.ok && st.enabled), have = cash();
+    const most = Math.max(0, Math.min(left ?? 0, Math.floor(have / D.rate))); if (st?.ok && dexZc > most) dexZc = Math.max(1, most);
+    card.innerHTML = `<h2>The Ruby's exchange<small>Cash into <em>real ZCoins</em></small></h2>
+      <p class="cz-note" style="text-align:left">${money(D.rate)} of Cash is 1 ZCoin. Up to ${D.capHour} ZCoins an hour, tickets included.</p>
+      ${st ? (on ? `<div class="cz-dexbar"><i style="width:${Math.round((left / D.capHour) * 100)}%"></i></div><p class="cz-note" style="text-align:left">${left} of ${D.capHour} left this hour${st.dev ? " · PRETEND (dev server): no ZCoins move" : ""}</p>` : `<p class="cz-dexmsg bad">${esc(st.message || "The Ruby isn't paying out right now.")}</p>`) : `<p class="cz-note" style="text-align:left">Asking the Ruby…</p>`}
+      <div class="cz-dexrow">${[1, 5, 10, 25].map((n) => `<button type="button" class="cz-chip" data-zc="${n}" aria-pressed="${n === dexZc}"${on && n <= most ? "" : " disabled"}>${n} ZC</button>`).join("")}</div>
+      <button type="button" class="cz-dexgo" id="czDexGo"${on && most >= 1 && !dexWait ? "" : " disabled"}>${most >= 1 || !on ? `Trade ${money(dexZc * D.rate)} for ${dexZc} ZCoin${dexZc === 1 ? "" : "s"}` : have < D.rate ? `You need ${money(D.rate)} for 1 ZCoin` : "Nothing left this hour"}</button>
+      <button type="button" class="cz-dexgo alt" id="czDexTk"${on && left >= D.ticket.face && have >= D.ticket.face * D.rate && !dexWait ? "" : " disabled"} title="Pays ${D.ticket.table.filter(([z]) => z).map(([z, w]) => `${z} ZC (${w}%)`).join(", ")}, or nothing (${D.ticket.table.find(([z]) => !z)[1]}%). Uses ${D.ticket.face} of your hour.">Ruby ticket · ${money(D.ticket.face * D.rate)} · win up to ${D.ticket.table[0][0]} ZCoins</button>
+      ${dexTicket ? `<div class="cz-rtk"><div><b>${dexTicket.zc ? `${dexTicket.zc} ZC` : "Nothing"}</b><small>${dexTicket.zc ? "paid to your ZCoins" : "better luck next ticket"}</small></div><button type="button" id="czRtkFoil"${dexTicket.shown ? ' class="off"' : ""}>SCRATCH</button></div>` : ""}
+      <p class="cz-dexmsg ${dexMsg?.cls || ""}">${esc(dexMsg?.text || "")}</p>`;
+    card.querySelectorAll("[data-zc]").forEach((b) => b.addEventListener("click", () => { dexZc = +b.dataset.zc; SFX.play("chip", { vol: 0.5 }); cashier(); }));
+    card.querySelector("#czDexGo")?.addEventListener("click", () => { dexWait = true; dexMsg = { text: "The Ruby hums…" }; dexTicket = null; send({ t: "dex", op: "pay", zc: dexZc }); cashier(); });
+    card.querySelector("#czDexTk")?.addEventListener("click", () => { dexWait = true; dexMsg = { text: "The Ruby prints a ticket…" }; dexTicket = null; send({ t: "dex", op: "ticket" }); cashier(); });
+    card.querySelector("#czRtkFoil")?.addEventListener("click", (ev) => { ev.currentTarget.classList.add("off"); dexTicket.shown = true; if (dexTicket.zc) { SFX.play(dexTicket.zc >= 10 ? "win_big" : "win_small"); pop(`+${dexTicket.zc} ZC`, "real ZCoins"); } else SFX.play("lose"); });
+    return card;
+  }
+  function dex(e) {
+    dexWait = false; if (e.status) dexSt = e.status;
+    if (e.error) dexMsg = { text: e.error, cls: "bad" };
+    else if (e.done) {
+      if (e.done.op === "ticket") { dexTicket = { zc: e.done.zc, shown: false }; dexMsg = { text: `Scratch it. (${money(e.done.cash)} paid.)`, cls: "" }; SFX.play("ui_open"); }
+      else { dexMsg = { text: `${e.done.zc} ZCoin${e.done.zc === 1 ? "" : "s"} paid${e.done.balance != null ? `: you now have ${Number(e.done.balance).toLocaleString()} ZC on eastcoin.vip` : ""}.${e.done.again ? " (That was the one the Ruby was still working on.)" : ""}`, cls: "good" }; SFX.play("coins"); pop(`+${e.done.zc} ZC`, "real ZCoins"); }
+    } else if (!dexMsg || dexMsg.text.endsWith("…")) dexMsg = e.held ? { text: "The Ruby is still working on your last exchange. Look again in a minute.", cls: "" } : null;
+    if (GAME === "cashier" && atRuby && !$("gameWin").hidden) cashier();
+  }
   function cashier(done) {
-    if (done !== undefined) lastCashed = done; GAME = "cashier"; frame("Cashier", "Everything you bring back, for what it said over it"); const me = env.me();
+    if (done !== undefined) lastCashed = done; GAME = "cashier"; frame(atRuby ? "The House Ruby" : "Cashier", atRuby ? "Cash in what you found · trade Cash for real ZCoins" : "Everything you bring back, for what it said over it"); const me = env.me();
     const keys = [...new Set(me.inv.filter((s) => G.isLoot(s.k)).map((s) => s.k))], rows = keys.map((k) => ({ k, n: me.inv.filter((s) => s.k === k).reduce((a, s) => a + s.n, 0), v: G.valueOf(k), loot: G.isLoot(k) }));
     const loot = rows.filter((r) => r.loot), total = loot.reduce((a, r) => a + r.n * r.v, 0);
     phase(lastCashed ? `Paid out ${money(lastCashed.total)} · the tables are right behind you` : loot.length ? "Here's what it comes to" : "Nothing to cash in yet", lastCashed ? "done" : "open");
     R.board.innerHTML = `<div style="text-align:center"><div class="cz-total">${money(total)}</div><div class="cz-note" style="margin-top:6px">${loot.length ? "for everything you found and made" : "West arch: rocks, trees, fish. East arch: monsters. Make something from them in the workshop and it sells for double. (Anything you can wear or hold isn't sold here: Brutus, at the Forge, buys what's smithed.)"}</div></div>`;
     R.lock = lockBtn(); R.lock.textContent = "Cash in the lot"; R.lock.disabled = !loot.length; R.lock.addEventListener("click", () => send({ t: "cashout", op: "all" })); R.bet.append(R.lock);
     const card = el("section", "cz-card"); card.innerHTML = `<h2>In your bag<small>you have ${money(cash())}</small></h2>` + (rows.length ? rows.map((r) => `<div class="cz-csrow">${env.ico(r.k)}<span><b>${esc(G.ITEMS[r.k].name)}</b> × ${r.n.toLocaleString()}<small>${money(r.v)} each${(() => { const m = G.madeFrom(r.k); return m && G.valueOf(m.out) > r.v ? ` · <em style="color:var(--gold);font-style:normal">${esc(m.verb)} it first: ${esc(G.ITEMS[m.out].name.toLowerCase())} pays ${money(G.valueOf(m.out))}</em>` : ""; })()}</small></span><strong>${money(r.n * r.v)}</strong><button type="button" class="cz-chip" data-cs="${r.k}">Sell</button></div>`).join("") : `<p class="cz-note" style="text-align:left">Nothing in there is worth money yet.</p>`);
+    if (atRuby) R.side.append(dexCard());
     R.side.append(card); card.querySelectorAll("[data-cs]").forEach((b) => b.addEventListener("click", () => send({ t: "cashout", op: "one", k: b.dataset.cs })));
   }
 
@@ -443,7 +482,7 @@ export function createCasino(env) {
     result(e) { if (e.g !== GAME || !UI[e.g]) return; UI[e.g].result(e); },
     run(e) { const had = RUNS[e.g]; RUNS[e.g] = e.run; if (e.luck != null && env.me()) env.me().luck = e.luck; if (GAME !== e.g) return; UI[e.g].run(e, had); lockStake(!!e.run); refresh(); },
     me() { if ($("gameWin").hidden) return; if (GAME === "cashier") cashier(); else refresh(); },
-    cashier() { lastCashed = null; cashier(); }, cashed(e) { cashier(e); }, fight,
+    cashier(ruby) { lastCashed = null; atRuby = !!ruby; if (atRuby) { dexSt = null; dexMsg = null; dexTicket = null; dexWait = false; send({ t: "dex", op: "status" }); } cashier(); }, cashed(e) { cashier(e); }, dex, fight,
     closed() { token++; busy = false; GAME = null; },
     blocked(k) { if (!GAME || GAME === "cashier") return; if (GAME === "fight") { phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); return note(G.NEED_TEXT[k]); } busy = false; UI[GAME]?.idle?.(); phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[k]); refresh(); },
     get game() { return GAME; }
