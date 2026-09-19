@@ -2451,7 +2451,7 @@ function wikiPages() {
   for (const g of WK.GUIDES) pages.push({ route: `guides/${g.id}`, title: g.title, icon: g.icon, group: "Guides" });
   for (const [k, s] of Object.entries(SKILLS)) pages.push({ route: `skills/${k}`, title: s.name, icon: sico(k), group: "Skills" });
   for (const [k, q] of Object.entries(QUESTS)) pages.push({ route: `quests/${k}`, title: q.name, icon: q.icon, group: "Quests" });
-  for (const [k, m] of Object.entries(MOBS).filter(([k]) => Object.values(areas).some((a) => a.mobs[k]))) pages.push({ route: `monsters/${k}`, title: m.name, icon: "👹", group: "Monsters" });
+  for (const [k, m] of Object.entries(MOBS).filter(([k]) => Object.values(WIKI.areas).some((a) => a.mobs[k]))) pages.push({ route: `monsters/${k}`, title: m.name, icon: "👹", group: "Monsters" });
   for (const [k, d] of Object.entries(SCENES).filter(([, d]) => !d.wikiHide)) pages.push({ route: `areas/${k}`, title: d.name, icon: d.interior ? "🚪" : "🗺️", group: "Areas" });
   for (const n of Object.keys(WIKI.npcs)) pages.push({ route: `npcs/${n}`, title: n, icon: "🧑", group: "People" });
   for (const [k, it] of Object.entries(ITEMS)) pages.push({ route: `items/${k}`, title: it.name, icon: ico(k), group: "Items" });
