@@ -44,6 +44,16 @@ export const GUIDES = [
       <li><b>Deposit bag</b> and <b>Deposit worn</b> empty your inventory or your equipment in one click.</li></ul>`
   },
   {
+    id: "casino", title: "The Casino", icon: "🎰",
+    body: `<p>The Casino is the red building in <a data-wiki="areas/forum">the Forum</a>: somewhere to hang out, have a flutter and pick up paid work. It's <b>Cash only</b> (never ZCoins).</p>
+      <ul><li><b>Slots</b> (left wall): three reels. Three of a kind pays, from 5× for cherries up to 500× for three sevens; two cherries pay 1.5×.</li>
+      <li><b>Coin Flip</b> (the round table): heads or tails, pays 1.95×.</li>
+      <li><b>Dice</b> (by the bar): pick a number from 5 to 95 and roll 1–100 under it. The lower your number, the bigger the payout.</li>
+      <li>Bets are 1 to 500 Cash, from your bag. The house keeps a little on every game, about 3%. The server decides every result.</li>
+      <li>Big wins are announced to the room, and huge ones to everyone.</li></ul>
+      <p><b>The task board</b> by the door has three <b>daily tasks</b> just for you, picked for your levels: gather this many, defeat that many. They count what you do today, pay Cash when you claim them at the board, and refresh every morning (Chicago time). Handy when the slots have been unkind.</p>`
+  },
+  {
     id: "exchange", title: "The Market", icon: "⚖️",
     body: `<p>The market is Livia's stall in <a data-wiki="areas/forum">the Forum</a>. It has two sides.</p>
       <ul><li><b>Buy:</b> the newest things for sale, first. Search by name or pick an item from the list, then press <b>Buy</b> on a listing. It's in your bank straight away.</li>
@@ -107,6 +117,14 @@ export const GUIDES = [
 
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
+  {
+    date: "2026-09-18", title: "The Casino",
+    items: [
+      "The Forge building in the Forum is now the Casino. Brutus still works his smithy right outside.",
+      "Inside: slots, coin flip and dice for Cash (never ZCoins), a bar, sofas, and Dex the Dealer.",
+      "The task board moved in too: three daily tasks each, picked for your levels, paid in Cash.",
+    ],
+  },
   {
     date: "2026-09-18", title: "A simpler market",
     items: [

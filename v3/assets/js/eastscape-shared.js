@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 24;
+export const VERSION = 25;
 export const COLS = 22, ROWS = 13;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -458,11 +458,10 @@ export const SCENES = {
       for (let x = 18; x < COLS; x++) for (let y = 5; y <= 7; y++) g[y][x] = "p";
       const paved = g.map((r) => r.slice());
       const bath = { t: "house", img: "bank", x: 2, y: 2, w: 5, h: 3, door: { x: 4, y: 4 }, name: "Bank", roof: "#8a9aa8", wall: "#efe6d4", sign: "BANK", enter: "bathhouse" };
-      const forge = { t: "house", img: "store", x: 11, y: 1, w: 5, h: 3, door: { x: 13, y: 3 }, name: "Forge", roof: "#7a4a3a", wall: "#c8b89a", sign: "FORGE" };
+      const forge = { t: "house", img: "casino", x: 11, y: 1, w: 5, h: 3, door: { x: 13, y: 3 }, name: "Casino", roof: "#7a2a2a", wall: "#9a3a3a", enter: "casino" };
       objs.push(bath, forge); block(g, 2, 2, 5, 3); block(g, 11, 1, 5, 3);
       objs.push({ t: "fountain", x: 10, y: 6, w: 2, h: 2, name: "Fountain" }); block(g, 10, 6, 2, 2);
       objs.push({ t: "rock", ore: "stardust", x: 4, y: 8, name: "Fallen Star", special: true, glow: "#e0b0ff", req: { skill: "mining", lvl: 50 }, xp: 150, tease: "It landed during the games last spring. Nobody's managed to chip it since." }); g[8][4] = "#";
-      objs.push({ t: "notice", x: 16, y: 3, name: "Notice board" }); g[3][16] = "#";
       // the smithy corner, left of Brutus's door: the furnace and the anvil side by side, Brutus between them and his shop
       objs.push({ t: "furnace", x: 10, y: 3, name: "Furnace" }); g[3][10] = "#";
       objs.push({ t: "anvil", x: 9, y: 3, name: "Anvil" }); g[3][9] = "#";
@@ -628,6 +627,31 @@ Object.assign(SCENES, {
     },
     mobs: [], bots: [],
     npcs: [{ name: "Aurelia", x: 10, y: 3, still: true, opens: "bank", reach: 2, hair: "#1a1a2a", shirt: "#3a6a8a", pants: "#2a2a3a", lines: ["Welcome to the Bank. Your things are safe with us. Mostly.", "Use any booth. I'm the one counting.", "Two hundred different things we'll hold for you. Stack them as high as you like."] }]
+  },
+  // inside the Casino: a hangout first, a gambling den second. Games of chance for Cash (never ZCoins), the
+  // daily-task board, a bar, and Dex, who has seen everything and will tell you about most of it.
+  casino: {
+    name: "The Casino", interior: true, floor: "casino", room: [4, 3, 17, 10], exitTo: { scene: "forum", x: 13, y: 4 }, entry: { x: 10, y: 10 },
+    wall: [{ t: "banner", x: 5 }, { t: "lamp", x: 8 }, { t: "lamp", x: 11 }, { t: "lamp", x: 14 }, { t: "banner", x: 16.5 }],
+    build() {
+      const g = room(4, 3, 17, 10, 10), objs = [];
+      objs.push({ t: "bar", x: 12, y: 4, w: 4, h: 1, name: "Bar" }); block(g, 12, 4, 4, 1);
+      objs.push({ t: "notice", x: 6, y: 3, name: "Task board" }); g[3][6] = "#";
+      for (const y of [5, 7, 9]) { objs.push({ t: "slots", x: 4, y, name: "Slot machine" }); g[y][4] = "#"; }
+      objs.push({ t: "cointable", x: 8, y: 6, w: 2, h: 1, name: "Coin Flip table" }); block(g, 8, 6, 2, 1);
+      objs.push({ t: "dicetable", x: 13, y: 7, w: 2, h: 1, name: "Dice table" }); block(g, 13, 7, 2, 1);
+      objs.push({ t: "rug", x: 9, y: 8, w: 4, h: 3, color: "#5a1a2a", name: "Rug" });
+      for (const [x, y] of [[16, 9], [7, 9]]) { objs.push({ t: "sofa", x, y, w: 2, h: 1, name: "Sofa" }); block(g, x, y, 2, 1); }
+      for (const [x, y] of [[17, 5], [17, 7], [5, 10]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
+      return { g, objs, blobs: [] };
+    },
+    mobs: [], bots: [],
+    npcs: [{ name: "Dex the Dealer", art: "dex", x: 13, y: 3, still: true, reach: 2, hair: "#1a1a1a", shirt: "#9a2a2a", pants: "#1a1a1a", lines: [
+      "Welcome in. Slots on the left, coins in the middle, dice by the bar. The house always wins, a little.",
+      "Broke? Happens to the best of us. The board by the door has jobs that pay. Fresh ones every morning.",
+      "Biggest win I've seen? Someone hit three sevens on that end machine. Bought everyone a drink. We don't sell drinks.",
+      "Every roll's decided by the house, fair and square. I just hand over the money.",
+      "No ZCoins in here, friend. Cash only. What happens in EastScape stays in EastScape."] }]
   },
   farmhouse: {
     name: "The Farmhouse", interior: true, floor: "wood", room: [6, 4, 15, 10], exitTo: { scene: "farm", x: 4, y: 5 }, entry: { x: 10, y: 10 },
@@ -898,6 +922,68 @@ for (const [raw, c] of Object.entries({
   lanternfish: { to: "clanternfish", lvl: 30, xp: 120, burnStop: 60 }, skyeel: { to: "cskyeel", lvl: 50, xp: 190, burnStop: 80 }
 })) recipe(`cook_${raw}`, { skill: "cooking", station: "fire", in: [[raw, 1]], out: [c.to, 1], lvl: c.lvl, xp: c.xp, burnStop: c.burnStop });
 
+/* ------------------------------------------------------------ the Casino (2026-09-18)
+
+   Games of chance for Cash, never ZCoins. The server rolls every result; the page only shows it. Each game keeps a
+   small edge (a Cash sink, which the economy wants), bets are capped, and big wins are announced so the room feels
+   alive. Placeholders to iterate on: the numbers all live here. */
+export const CASINO = { minBet: 1, maxBet: 500, betMs: 900, roomWin: 5, worldWin: 25 };
+export const GAMES = {
+  slots: { name: "Slots", icon: "🎰", ex: "Three reels. Three of a kind pays; two cherries pay 1.5×." },
+  cointable: { name: "Coin Flip", icon: "🪙", ex: "Heads or tails. Pays 1.95×." },
+  dicetable: { name: "Dice", icon: "🎲", ex: "Roll 1–100 under your number. The lower you go, the more it pays." }
+};
+export const FLIP_PAYS = 1.95;                                          // 97.5% back
+export const DICE = { min: 5, max: 95, rtp: 0.97 };                     // win if the roll (1-100) is under your number
+export const diceMult = (target) => Math.floor((DICE.rtp * 100 / (target - 1)) * 100) / 100;
+// reel weights (of 80) and what three of each pay; about 96.9% back, a win about one spin in three, top prize 1 in 64,000
+export const REELS = [
+  { k: "cherry", icon: "🍒", w: 30, pay: 5 }, { k: "lemon", icon: "🍋", w: 22, pay: 8 }, { k: "bell", icon: "🔔", w: 14, pay: 15 },
+  { k: "star", icon: "⭐", w: 8, pay: 40 }, { k: "diamond", icon: "💎", w: 4, pay: 120 }, { k: "seven", icon: "7️⃣", w: 2, pay: 500 }
+];
+export const SLOT_TWO_CHERRIES = 1.5;
+export function slotsPay(reels) {
+  if (reels[0] === reels[1] && reels[1] === reels[2]) return REELS.find((x) => x.k === reels[0]).pay;
+  return reels.filter((r) => r === "cherry").length === 2 ? SLOT_TWO_CHERRIES : 0;
+}
+
+/* ------------------------------------------------------------ daily tasks: the board in the Casino
+
+   Three a day per person, picked from what their levels allow, the same three all day (by who and which day), fresh
+   each Chicago morning. They count what you gather and kill after the day starts; claim the Cash at the board. */
+export const DAILY = [
+  { id: "logs", what: "gather", k: "logs", n: 50, cash: 150, req: null },
+  { id: "tin", what: "gather", k: "tin", n: 25, cash: 120, req: null },
+  { id: "copper", what: "gather", k: "copper", n: 25, cash: 120, req: null },
+  { id: "sardine", what: "gather", k: "sardine", n: 20, cash: 100, req: null },
+  { id: "wheat", what: "gather", k: "wheat", n: 30, cash: 90, req: null },
+  { id: "olives", what: "gather", k: "olives", n: 40, cash: 110, req: null },
+  { id: "cows", what: "kill", k: "cow", n: 5, cash: 80, req: null },
+  { id: "chickens", what: "kill", k: "chicken", n: 10, cash: 80, req: null },
+  { id: "rotten", what: "kill", k: "rotten", n: 8, cash: 120, req: null },
+  { id: "trout", what: "gather", k: "trout", n: 20, cash: 220, req: { skill: "fishing", lvl: 15 } },
+  { id: "boar", what: "kill", k: "boar", n: 6, cash: 200, req: { skill: "attack", lvl: 8 } },
+  { id: "highwayman", what: "kill", k: "highwayman", n: 5, cash: 260, req: { skill: "attack", lvl: 12 } },
+  { id: "ashlogs", what: "gather", k: "ashlogs", n: 20, cash: 350, req: { skill: "woodcutting", lvl: 20 } },
+  { id: "emerald", what: "gather", k: "emerald_ore", n: 15, cash: 400, req: { skill: "mining", lvl: 20 } },
+  { id: "moths", what: "kill", k: "moth", n: 8, cash: 380, req: { skill: "attack", lvl: 20 } },
+  { id: "lantern", what: "gather", k: "lanternfish", n: 12, cash: 420, req: { skill: "fishing", lvl: 30 } },
+  { id: "diamond", what: "gather", k: "diamond_ore", n: 12, cash: 520, req: { skill: "mining", lvl: 30 } },
+  { id: "ghouls", what: "kill", k: "ghoul", n: 6, cash: 520, req: { skill: "attack", lvl: 28 } },
+  { id: "willow", what: "gather", k: "willowlogs", n: 20, cash: 560, req: { skill: "woodcutting", lvl: 35 } },
+  { id: "rams", what: "kill", k: "ram", n: 6, cash: 700, req: { skill: "attack", lvl: 40 } },
+  { id: "dragonstone", what: "gather", k: "dragonstone_ore", n: 10, cash: 800, req: { skill: "mining", lvl: 40 } }
+];
+export const DAILY_COUNT = 3;
+export const chicagoDay = (t = Date.now()) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(t);
+// the day's three for a character: the ones their levels allow, shuffled by who and which day
+export function dailyFor(c, id, day) {
+  const ok = DAILY.filter((t) => !t.req || lvlOf(c, t.req.skill) >= t.req.lvl);
+  const seed = [...`${id}:${day}`].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7);
+  return ok.map((t, i) => [hashRand(i, seed, 97), t]).sort((a, b) => a[0] - b[0]).slice(0, DAILY_COUNT).map(([, t]) => t.id);
+}
+export const dailyDef = (id) => DAILY.find((t) => t.id === id);
+
 // the old name, kept so the wiki and anything else reading it still work
 export const COOK = Object.fromEntries(Object.values(RECIPES)
   .filter((r) => r.skill === "cooking")
@@ -1052,7 +1138,7 @@ export const EXAMINE = {
   lighthouse: ["A lighthouse. The light points inward, at the island. Nobody knows who it's warning.", "The door's painted on. The light is on anyway."],
   mule: ["A mule. It refuses to move. It has refused for eleven years.", "The mule looks at you. You feel judged by a professional."]
 };
-export const VERB = { cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
+export const VERB = { game: "Play", board: "Read", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
 /* ------------------------------------------------------------ quests are data
    goal.type "bring": have goal.n of goal.items in your bag when you talk to the giver (they're taken)
