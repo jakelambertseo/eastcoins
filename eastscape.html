@@ -154,7 +154,7 @@ button,input,select{font:inherit}
 .xpsr{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:7px;padding:3px 6px;background:rgba(0,0,0,.10)}
 .xpsr b{display:block;font-size:12px}
 .xpsr small{display:block;opacity:.72;font-size:11px}
-.xpsr .lv{font-size:12px;opacity:.85;white-space:nowrap}
+.xpsr .lv{font-size:11px;white-space:nowrap;padding:2px 7px;border-radius:9px;background:rgba(58,38,22,.14);color:#3a2616}.xpsr .lv b{display:inline;font-size:12px}
 .xpsr i img{width:18px;height:18px}
 .lnk{background:none;border:0;color:inherit;font:inherit;text-decoration:underline;cursor:pointer;opacity:.8;padding:0}
 .hstabs{display:flex;flex-wrap:wrap;gap:3px;margin:0 0 8px}
@@ -1313,6 +1313,8 @@ const xpDrops = [];
 let xpSess = {};
 const rateOf = (r) => { const mins = Math.max(0.5, (r.last - r.first) / 60000); return r.xp / (mins / 60); };
 const fmtHr = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(Math.round(n)));
+// a drop chance people can read: "25%", "1.5%", "0.2% (1 in 500)"
+const pct = (c) => (c >= 0.1 ? `${Math.round(c * 100)}%` : c >= 0.01 ? `${+(c * 100).toFixed(1)}%` : `${+(c * 100).toFixed(2)}% (1 in ${Math.round(1 / c).toLocaleString()})`);
 const fmtMins = (m) => (!Number.isFinite(m) || m > 60 * 99 ? "—" : m >= 60 ? `${Math.floor(m / 60)}h ${Math.round(m % 60)}m` : `${Math.max(1, Math.round(m))}m`);
 // one decimal, and none at all when it lands whole: "+4", "+1.3"
 const xpShort = (n) => (Number.isInteger(n) ? n.toLocaleString() : (Math.round(n * 10) / 10).toLocaleString(undefined, { maximumFractionDigits: 1 }));
@@ -1738,7 +1740,7 @@ document.addEventListener("keydown", (e) => {
 setInterval(() => { if (PRED.on && PRED.step) for (const w of ["bankWin", "exWin"]) $(w).hidden = true; }, 300);
 // stack sizes the old-school way: in full to 9,999, then K (white) and M (green); the exact number is in the tooltip
 const qty = (n) => n >= 1e6 ? `<em class="m">${(n / 1e6).toFixed(n < 1e7 ? 1 : 0).replace(/\.0$/, "")}M</em>` : n >= 1e4 ? `<em class="k">${Math.floor(n / 1000)}K</em>` : `<em>${n.toLocaleString()}</em>`;
-const slotHtml = (s, i, attr = "data-i") => `<div class="slot" ${attr}="${i}" title="${esc(ITEMS[s.k].name)}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}</div>`;
+const slotHtml = (s, i, attr = "data-i") => `<div class="slot" ${attr}="${i}" data-item="${s.k}" title="${esc(ITEMS[s.k].name)}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}</div>`;
 
 /* ------------------------------------------------------------ islands */
 function renderIsles(list) {
@@ -1769,7 +1771,7 @@ function renderShop() {
   $("shopSell").innerHTML = G.SHOP.sells.map(([k, p]) => { const it = ITEMS[k], rq = it.req ? ` · needs ${SKILLS[it.req.skill].name} ${it.req.lvl}` : "";
     return `<div class="slot${cash < p ? " nobuy" : ""}" data-k="${k}" title="${esc(it.name)}: ${G.fmtCash(p)}${rq}">${ico(k)}<em class="price">${short(p)}</em></div>`; }).join("");
   $("shopBag").innerHTML = me.inv.map((s, i) => { const p = G.SHOP.buys[s.k];
-    return `<div class="slot${p ? "" : " nobuy"}" data-i="${i}" title="${esc(ITEMS[s.k].name)}${p ? `: Brutus pays ${G.fmtCash(p)} each` : ": Brutus won't buy this"}">${ico(s.k)}${s.n > 1 ? qty(s.n) : ""}${p ? `<em class="price">${short(p)}</em>` : ""}</div>`; }).join("") || `<p class="note">Your bag is empty.</p>`;
+    return `<div class="slot${p ? "" : " nobuy"}" data-i="${i}" data-item="${s.k}" title="${esc(ITEMS[s.k].name)}${p ? `: Brutus pays ${G.fmtCash(p)} each` : ": Brutus won't buy this"}">${ico(s.k)}${s.n > 1 ? qty(s.n) : ""}${p ? `<em class="price">${short(p)}</em>` : ""}</div>`; }).join("") || `<p class="note">Your bag is empty.</p>`;
   $("shopNote").textContent = `You have ${G.fmtCash(cash)}`;
   $("shopSell").querySelectorAll("[data-k]").forEach((el) => el.addEventListener("click", () => send({ t: "shop", op: "buy", k: el.dataset.k, n: shopN })));
   $("shopBag").querySelectorAll("[data-i]").forEach((el) => el.addEventListener("click", () => send({ t: "shop", op: "sell", i: +el.dataset.i, n: shopN })));
@@ -1963,7 +1965,7 @@ function wikiGo(route, setNav = true) {
     html = `<h2><i>${ico(id)}</i>${esc(it.name)}</h2>${it.ex ? `<p class="lede">“${esc(it.ex)}”</p>` : ""}
       ${it.slot ? `<h3>Equipment</h3><table class="tbl"><tr><th>Slot</th><th>Accuracy</th><th>Strength</th><th>Defence</th><th>Lets you</th></tr><tr><td>${it.slot}</td><td>+${it.acc || 0}</td><td>+${it.str || 0}</td><td>+${it.def || 0}</td><td>${it.tool ? `train ${wl(`skills/${it.tool}`, SKILLS[it.tool].name)}` : "—"}</td></tr></table>` : ""}
       ${src.length ? `<h3>Gathered from</h3><table class="tbl"><tr><th>What</th><th>Where</th><th>Skill</th><th>Level</th></tr>${src.map((s) => `<tr><td>${esc(s.obj)}</td><td>${areaLink(s.scene)}</td><td>${wl(`skills/${s.skill}`, SKILLS[s.skill].name)}</td><td>${s.lvl}</td></tr>`).join("")}</table>` : ""}
-      ${dr.length ? `<h3>Dropped by</h3><table class="tbl"><tr><th>Monster</th><th>How many</th><th>Chance</th></tr>${dr.map((d) => `<tr><td>${wl(`monsters/${d.mob}`, esc(MOBS[d.mob].name))}</td><td>${qn(d.n)}</td><td>${d.ch == null ? "Always" : `${Math.round(d.ch * 100)}%`}</td></tr>`).join("")}</table>` : ""}
+      ${dr.length ? `<h3>Dropped by</h3><table class="tbl"><tr><th>Monster</th><th>How many</th><th>Chance</th></tr>${dr.map((d) => `<tr><td>${wl(`monsters/${d.mob}`, esc(MOBS[d.mob].name))}</td><td>${qn(d.n)}</td><td>${d.ch == null ? "Always" : pct(d.ch)}</td></tr>`).join("")}</table>` : ""}
       ${it.heal ? `<h3>Food</h3><p>Heals <b>${it.heal}</b> hitpoints. Click it in your bag to eat.</p>` : ""}
       ${Object.entries(G.COOK).some(([, r]) => r.to === id) ? `<h3>Cooked from</h3><p>${Object.entries(G.COOK).filter(([, r]) => r.to === id).map(([raw, r]) => `${wl(`items/${raw}`, `${ico(raw)} ${esc(ITEMS[raw].name)}`)} at Cooking ${r.lvl} (${r.xp} xp; no more burning from level ${r.burnStop})`).join("")}</p>` : ""}
       ${G.COOK[id] ? `<h3>Cooking</h3><p>Cook it at a range or campfire (Cooking ${G.COOK[id].lvl}) to make ${wl(`items/${G.COOK[id].to}`, `${ico(G.COOK[id].to)} ${esc(ITEMS[G.COOK[id].to].name)}`)}.</p>` : ""}
@@ -1978,7 +1980,7 @@ function wikiGo(route, setNav = true) {
     html = `<h2><i>👹</i>${esc(m.name)}</h2><p class="lede">Level ${m.lvl} · ${G.MOB_SIZES[m.size] || "Medium"}${m.aggro ? " · attacks on sight" : ""}.</p>
       <table class="tbl"><tr><th>Hitpoints</th><th>Attack</th><th>Defence</th><th>Max hit</th><th>Attacks every</th></tr><tr><td>${m.hp}</td><td>${m.att}</td><td>${m.def}</td><td>${m.max}</td><td>${(m.speed / 1000).toFixed(1)}s</td></tr></table>
       <h3>Found in</h3><p>${where.map((a) => `${areaLink(a.key)} (${a.mobs[id]})`).join(", ") || "Nowhere yet."}</p>
-      <h3>Drops</h3><table class="tbl"><tr><th>Item</th><th>How many</th><th>Chance</th></tr>${m.drops.map(([k, n, ch]) => `<tr><td>${wl(`items/${k}`, `${ico(k)} ${esc(ITEMS[k].name)}`)}</td><td>${qn(n)}</td><td>${ch == null ? "Always" : `${Math.round(ch * 100)}%`}</td></tr>`).join("")}</table>`;
+      <h3>Drops</h3><table class="tbl"><tr><th>Item</th><th>How many</th><th>Chance</th></tr>${m.drops.map(([k, n, ch]) => `<tr><td>${wl(`items/${k}`, `${ico(k)} ${esc(ITEMS[k].name)}`)}</td><td>${qn(n)}</td><td>${ch == null ? "Always" : pct(ch)}</td></tr>`).join("")}</table>`;
   }
   else if (kind === "skills" && SKILLS[id]) {
     const s = SKILLS[id], rows = [];
@@ -2016,6 +2018,12 @@ function wikiGo(route, setNav = true) {
 }
 function wikiUpdate(u) { return `<div class="up"><small>${u.date}</small><h3 style="margin:2px 0 4px">${esc(u.title)}</h3><ul>${u.items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul></div>`; }
 $("wikiWin").addEventListener("click", (e) => { const a = e.target.closest("[data-wiki]"); if (a) { e.preventDefault(); wikiGo(a.dataset.wiki); } });
+// right-click any item (bag, gear, bank, shop, trade) to open its wiki page
+document.addEventListener("contextmenu", (e) => {
+  const el = e.target.closest?.("[data-item], [data-k], [data-rm]"); if (!el || e.target.closest("canvas")) return;
+  const k = el.dataset.item || el.dataset.k || el.dataset.rm; if (!ITEMS[k]) return;
+  e.preventDefault(); wikiRoute = `items/${k}`; openWin("wikiWin");
+});
 $("wikiBtn").addEventListener("click", () => { if ($("wikiWin").hidden) openWin("wikiWin"); else $("wikiWin").hidden = true; });
 // a shared link straight to a page: /eastscape#wiki/items/logs
 if (location.hash.startsWith("#wiki")) { wikiRoute = decodeURIComponent(location.hash.slice(6)) || "home"; setTimeout(() => openWin("wikiWin"), 0); }
@@ -2039,7 +2047,7 @@ function showInfo(t, cx, cy) {
     wiki = `monsters/${m.t}`;
     html = `<h5>👹 ${esc(d.name)}</h5><div class="sub">Level ${d.lvl} monster</div>
       <dl><dt>Hitpoints</dt><dd>${m.hp}/${d.hp}</dd><dt>Max hit</dt><dd>${d.max}</dd><dt>Attack / defence</dt><dd>${d.att} / ${d.def}</dd><dt>Attacks every</dt><dd>${(d.speed / 1000).toFixed(1)}s</dd><dt>Respawns after</dt><dd>${G.fmtWait(G.respawnMs(Z.def, m.t))}</dd></dl>
-      <b>Drops</b><ul>${d.drops.map(([k, n, ch]) => `<li>${ico(k)} ${esc(ITEMS[k].name)}${Array.isArray(n) ? ` ×${n[0]}–${n[1]}` : n > 1 ? ` ×${n}` : ""} · ${ch == null ? "always" : `${Math.round(ch * 100)}%`}</li>`).join("")}</ul>`;
+      <b>Drops</b><ul>${d.drops.map(([k, n, ch]) => `<li>${ico(k)} ${esc(ITEMS[k].name)}${Array.isArray(n) ? ` ×${n[0]}–${n[1]}` : n > 1 ? ` ×${n}` : ""} · ${ch == null ? "always" : pct(ch)}</li>`).join("")}</ul>`;
   } else if (t.ob) {
     const rows = resourceInfo(t.ob), ex = G.EXAMINE[KIND_OF[t.ob.t]] || null;
     if (!rows.length && !ex) return;
@@ -2091,8 +2099,8 @@ function renderPanel() {
     const cells = me.inv.map((s, i) => {
       const it = ITEMS[s.k], cmp = it.slot ? G.compareText(me, s.k) : "";
       const what = it.heal ? `click to eat (heals ${it.heal})` : it.slot ? (it.slot === "weapon" ? "click to wield" : "click to wear") : "click to examine";
-      const title = `${it.name}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}` + (cmp ? `\n${cmp}` : "") + `\n${what}, shift-click to drop`;
-      return `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" title="${esc(title)}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}</div>`;
+      const title = `${it.name}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}` + (cmp ? `\n${cmp}` : "") + `\n${what}, shift-click to drop, right-click for the wiki`;
+      return `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" data-item="${s.k}" title="${esc(title)}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}</div>`;
     });
     while (cells.length < G.INV_MAX) cells.push('<div class="slot empty"></div>');
     p.innerHTML = `<div class="ph">Inventory <span><button type="button" class="invsort" id="invSort" title="Sort: Cash, tools, gear, food, then the rest. Merges part-stacks.">Sort</button> <small>${me.inv.length}/${G.INV_MAX}</small></span></div><div class="inv">${cells.join("")}</div>`;
@@ -2111,14 +2119,14 @@ function renderPanel() {
   }
   if (tab === "equip") {
     const EMPTY = { helm: "⛑️", amulet: "📿", weapon: "🗡️", body: "🥋", shield: "🛡️", legs: "👖", gloves: "🧤", boots: "🥾", ring: "💍" };
-    const slot = (area) => { const k = me.eq[area], it = k && ITEMS[k]; return `<button type="button" class="eq${it ? "" : " empty"}" data-slot="${area}" style="grid-area:${area}" title="${it ? `${esc(it.name)} — click to take off` : `${area}: empty`}"${it ? "" : " disabled"}>${it ? ico(k) : EQ_ART.has(area) ? artOf(`eq_${area}`) : EMPTY[area]}<small>${it ? esc(it.short || it.name) : ""}</small></button>`; };
+    const slot = (area) => { const k = me.eq[area], it = k && ITEMS[k]; return `<button type="button" class="eq${it ? "" : " empty"}" data-slot="${area}"${it ? ` data-item="${k}"` : ""} style="grid-area:${area}" title="${it ? `${esc(it.name)} — click to take off` : `${area}: empty`}"${it ? "" : " disabled"}>${it ? ico(k) : EQ_ART.has(area) ? artOf(`eq_${area}`) : EMPTY[area]}<small>${it ? esc(it.short || it.name) : ""}</small></button>`; };
     const b = G.bonusOf(me), tool = me.eq.weapon && ITEMS[me.eq.weapon].tool;
     p.innerHTML = `<div class="ph">Equipment <small>paper doll</small></div><div class="doll">${G.SLOTS.map(slot).join("")}</div>
       <div class="bonl"><div class="bh">${me.eq.weapon ? `${ico(me.eq.weapon)} ${esc(ITEMS[me.eq.weapon].name)}` : "✊ Unarmed"}${tool ? ` · lets you train ${SKILLS[tool].name}` : ""}</div>
         <div><i>⊕</i><span>accuracy</span><b>+${b.acc}</b></div><div><i>🔺</i><span>strength</span><b>+${b.str}</b></div>
         <div><i>🎯</i><span>max hit</span><b>${G.maxHitOf(me)}</b></div><div><i>🛡️</i><span>defence</span><b>+${b.def}</b></div>
         <div><i>👟</i><span>speed</span><b>+${G.speedBonus(me, me.speedTest || 0)}%</b></div></div>
-      <p class="note">Click something you're wearing to take it off. Tools go in your weapon hand: hold the pickaxe to mine, the axe to chop, the rod to fish.</p>`;
+      <p class="note">Click something you're wearing to take it off; right-click any item for its wiki page. Tools go in your weapon hand: hold the pickaxe to mine, the axe to chop, the rod to fish.</p>`;
     p.querySelectorAll(".eq[data-slot]").forEach((el) => el.addEventListener("click", () => send({ t: "unequip", slot: el.dataset.slot })));
   }
   if (tab === "skills") {
@@ -2133,7 +2141,7 @@ function renderPanel() {
       if (!rows.length) return "";
       return `<div class="ph">This session <small><button type="button" class="lnk" id="xpReset">reset</button></small></div><div class="xps">${rows.map(([k, r]) => {
         const L = lvl(k), hi = XP_AT[Math.min(99, L + 1)], rate = rateOf(r), left = hi - me.xp[k];
-        return `<div class="xpsr"><i>${sico(k)}</i><span><b>${SKILLS[k].name}</b><small>${Math.round(r.xp).toLocaleString()} xp · ${fmtHr(rate)}/hr</small></span><span class="lv">${L >= 99 ? "max" : fmtMins(left / (rate / 60))}</span></div>`;
+        return `<div class="xpsr"><i>${sico(k)}</i><span><b>${SKILLS[k].name}</b><small>${Math.round(r.xp).toLocaleString()} xp · ${fmtHr(rate)}/hr${L < 99 ? ` · ${Math.ceil(left).toLocaleString()} to go` : ""}</small></span><span class="lv">${L >= 99 ? "max level" : (() => { const t = fmtMins(left / (rate / 60)); return t === "—" ? `level ${L + 1}` : `level ${L + 1} in <b>${t.replace(/m$/, " min")}</b>`; })()}</span></div>`;
       }).join("")}</div>`;
     })()}
       <div class="ph">Skills <small>total ${total()}</small></div>${G.SKILL_GROUPS.map((grp) => {
