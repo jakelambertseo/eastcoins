@@ -165,7 +165,7 @@ export class World {
     const C = G.normChar(stored);
     const pl = { id: user.id, login: user.login, name: user.name || user.login, admin: !!user.admin, ws, C,
       x: C.x, y: C.y, path: [], step: null, face: 1, dir: "south", act: null,
-      lastSwing: 0, swingAt: 0, hurtAt: 0, regen: Date.now(), dirty: true, needSave: !stored, out: [], god: false, msgs: 0, msgWindow: 0, joinedAt: Date.now() };
+      lastSwing: 0, swingAt: 0, hurtAt: 0, regen: Date.now(), dirty: true, needSave: !stored, out: [], god: false, msgs: 0, msgWindow: 0, joinedAt: Date.now(), lastInput: Date.now() };
     pl.playFrom = Date.now();
     pl.cashSeen = this.cashOf(C);
     if (C.stats) { C.stats.sessions++; C.stats.firstSeen ||= Number(C.created) || Date.now(); C.stats.lastSeen = Date.now(); }
@@ -276,6 +276,7 @@ export class World {
     if (now - pl.msgWindow > 1000) { pl.msgWindow = now; pl.msgs = 0; }
     if (++pl.msgs > 40) return;                       // more than 40 a second is not a person
     const S = this.scene(pl.C.scene), C = pl.C;
+    if (m.t !== "ping") pl.lastInput = now;               // anything but the page's own heartbeat means someone is there
     switch (m.t) {
       case "ping": return this.send(pl, { type: "pong", t: now, c: m.c });
       case "walk": {
@@ -866,6 +867,11 @@ export class World {
 
   doAction(S, pl, now) {
     const a = pl.act, C = pl.C; if (!a || pl.path.length) return;
+    // AFK: a repeating skill stops once nobody has touched the game for a while (see G.AFK_MS)
+    if (G.AFK_KINDS[a.kind] && now - pl.lastInput > G.AFK_MS) {
+      pl.act = null;
+      return this.say(pl, `You stop ${G.AFK_KINDS[a.kind]}: you've been idle for ${Math.round(G.AFK_MS / 60000)} minutes. Click to carry on.`);
+    }
     const faceIt = () => { pl.dir = G.DIRS[`${Math.sign(a.x - pl.x)},${Math.sign(a.y - pl.y)}`] || pl.dir; pl.face = a.x > pl.x ? 1 : a.x < pl.x ? -1 : pl.face; };
     if (a.kind === "mob") {
       const m = S.mobs.find((x) => x.id === a.id); if (!m || m.dead) { pl.act = null; return; }
