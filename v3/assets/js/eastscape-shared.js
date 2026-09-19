@@ -266,6 +266,16 @@ export const addInv = (inv, k, n) => {
   return n;
 };
 // take up to n of k, from the last stacks first; returns how many were taken
+// the bag's tidy order: Cash, tools, weapons and armour (by slot, best tier first), food, then everything else by name.
+// Partial stacks of the same thing are merged back into 99s, so a sort can free slots.
+export function sortInv(inv) {
+  const tierRank = (k) => { const t = ITEMS[k]?.tier, i = TIERS.findIndex((x) => x.key === t); return i < 0 ? 99 : -i; };
+  const group = (k) => { const it = ITEMS[k] || {}; return k === "coins" ? 0 : it.tool ? 1 : it.slot ? 2 + SLOTS.indexOf(it.slot) / 10 : it.heal ? 3 : 4; };
+  const totals = new Map(); for (const s of inv) totals.set(s.k, (totals.get(s.k) || 0) + s.n);
+  const keys = [...totals.keys()].sort((a, b) => group(a) - group(b) || tierRank(a) - tierRank(b) || (ITEMS[a]?.name || a).localeCompare(ITEMS[b]?.name || b));
+  const out = []; for (const k of keys) addInv(out, k, totals.get(k));
+  return out;
+}
 export const takeInv = (inv, k, n) => {
   let got = 0;
   for (let i = inv.length - 1; i >= 0 && got < n; i--) { const s = inv[i]; if (s.k !== k) continue; const t = Math.min(n - got, s.n); s.n -= t; got += t; if (!s.n) inv.splice(i, 1); }
