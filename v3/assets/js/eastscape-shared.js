@@ -76,7 +76,9 @@ export const ITEMS = {
 };
 // what a character looks like comes from their body armour: "tiro" (a recruit) unless it has a tier
 export const outfitOf = (eq) => ITEMS[eq?.body]?.tier || "tiro";
-export const SLOTS = ["helm", "weapon", "body", "shield", "legs", "gloves", "boots", "ring"];
+export const SLOTS = ["helm", "amulet", "weapon", "body", "shield", "legs", "gloves", "boots", "ring"];
+// the two jewelry slots, which gate on Hitpoints rather than Attack or Defence
+export const JEWELRY = ["amulet", "ring"];
 
 /* ------------------------------------------------------------ the gear ladder
 
@@ -144,6 +146,12 @@ for (const t of TIERS) {
       ex: w.ex
     };
   }
+  ITEMS[`${t.key}_amulet`] = {
+    name: `${t.name} amulet`, short: "Amulet", icon: "📿", slot: "amulet",
+    acc: t.jewel + 1, str: t.jewel + 1, def: t.jewel + 1, tier: t.key,
+    req: { skill: "hp", lvl: t.gate },
+    ex: "Heavier than it looks, and it sits right over the notch in your collarbone."
+  };
   ITEMS[`${t.key}_ring`] = {
     name: `${t.name} ring`, short: "Ring", icon: "💍", slot: "ring",
     acc: t.jewel, str: t.jewel, def: t.jewel, tier: t.key,
@@ -155,6 +163,37 @@ for (const t of TIERS) {
 /* A requirement is one {skill, lvl} or a list of them, so the maul can want
    both Attack and Strength. Both sides read it through here. */
 export const reqsOf = (it) => (!it?.req ? [] : Array.isArray(it.req) ? it.req : [it.req]);export const missingReq = (c, it) => reqsOf(it).find((r) => lvlOf(c, r.skill) < r.lvl) || null;
+
+/* What swapping to an item would do. Fifty-five pieces is too many to hold in
+   your head, and "is this better" is the only question the inventory is really
+   being asked. Returns nulls for anything that is not worn. */
+export function compareOf(c, k) {
+  const it = ITEMS[k];
+  if (!it?.slot) return null;
+  const now = { ...c, eq: { ...c.eq } };
+  const then = { ...c, eq: { ...c.eq, [it.slot]: k } };
+  const a = bonusOf(now), b = bonusOf(then);
+  return {
+    slot: it.slot, replacing: c.eq?.[it.slot] || null,
+    acc: b.acc - a.acc, str: b.str - a.str, def: b.def - a.def,
+    maxHit: [maxHitOf(now), maxHitOf(then)],
+    swingMs: it.slot === "weapon" ? [swingMsOf(now), swingMsOf(then)] : null,
+    missing: missingReq(c, it)
+  };
+}
+/** The same thing as a short line of text, so every surface words it the same. */
+export function compareText(c, k) {
+  const d = compareOf(c, k);
+  if (!d) return "";
+  const sign = (n) => (n > 0 ? `+${n}` : String(n));
+  const bits = [];
+  for (const [q, label] of [["acc", "acc"], ["str", "str"], ["def", "def"]]) if (d[q]) bits.push(`${sign(d[q])} ${label}`);
+  if (d.maxHit[0] !== d.maxHit[1]) bits.push(`max hit ${d.maxHit[0]}\u2192${d.maxHit[1]}`);
+  if (d.swingMs && d.swingMs[0] !== d.swingMs[1]) bits.push(`swing ${(d.swingMs[0] / 1000).toFixed(1)}s\u2192${(d.swingMs[1] / 1000).toFixed(1)}s`);
+  if (d.missing) return `Needs ${SKILLS[d.missing.skill].name} ${d.missing.lvl}`;
+  if (!bits.length) return d.replacing === k ? "Already worn" : "No change";
+  return bits.join(", ");
+}
 export const SKILLS = {
   attack: { name: "Attack", icon: "⚔️" }, strength: { name: "Strength", icon: "💪" }, defence: { name: "Defence", icon: "🛡️" },
   hp: { name: "Hitpoints", icon: "❤️" }, fishing: { name: "Fishing", icon: "🎣" }, cooking: { name: "Cooking", icon: "🍳" },
@@ -397,7 +436,7 @@ export const SCENES = {
       for (let x = 18; x < COLS; x++) for (let y = 5; y <= 7; y++) g[y][x] = "p";
       const paved = g.map((r) => r.slice());
       const bath = { t: "house", img: "bank", x: 2, y: 2, w: 5, h: 3, door: { x: 4, y: 4 }, name: "Bank", roof: "#8a9aa8", wall: "#efe6d4", sign: "BANK", enter: "bathhouse" };
-      const forge = { t: "house", img: "store", x: 11, y: 1, w: 5, h: 3, door: { x: 13, y: 3 }, name: "Forge", roof: "#7a4a3a", wall: "#c8b89a", sign: "STORE" };
+      const forge = { t: "house", img: "store", x: 11, y: 1, w: 5, h: 3, door: { x: 13, y: 3 }, name: "Forge", roof: "#7a4a3a", wall: "#c8b89a", sign: "FORGE" };
       objs.push(bath, forge); block(g, 2, 2, 5, 3); block(g, 11, 1, 5, 3);
       objs.push({ t: "fountain", x: 10, y: 6, w: 2, h: 2, name: "Fountain" }); block(g, 10, 6, 2, 2);
       objs.push({ t: "rock", ore: "stardust", x: 5, y: 6, name: "Fallen Star", special: true, glow: "#e0b0ff", req: { skill: "mining", lvl: 50 }, xp: 150, tease: "It landed during the games last spring. Nobody's managed to chip it since." }); g[6][5] = "#";
@@ -831,7 +870,7 @@ export const SHOP = {
   // enjoy discovering.
   sells: [["pickaxe", 25], ["axe", 25], ["rod", 20],
     ["bronze_gladius", 220], ["bronze_sword", 250], ["bronze_maul", 280],
-    ["bronze_helm", 200], ["bronze_shield", 300], ["bronze_body", 600], ["bronze_legs", 360], ["bronze_boots", 120], ["bronze_gloves", 120], ["bronze_ring", 180]],
+    ["bronze_helm", 200], ["bronze_shield", 300], ["bronze_body", 600], ["bronze_legs", 360], ["bronze_boots", 120], ["bronze_gloves", 120], ["bronze_ring", 180], ["bronze_amulet", 260]],
   buys: { copper: 6, tin: 6, grimstone: 45, marble: 35, stardust: 120, logs: 4, yewlogs: 70, ashlogs: 28, hide: 8, bones: 2, feather: 1, tusk: 10, husk: 4, pit: 1,
     receipt: 3, cobweb: 5, geode: 400, olives: 1, sunolive: 30, wheat: 1, tomatoe: 2, goldtomatoe: 60, mask: 40, monocle: 25, manifesto: 15,
     csardine: 3, cchicken: 3, cbeef: 4, cpork: 7, ctrout: 9, cgloomfin: 14, cmooncarp: 25,

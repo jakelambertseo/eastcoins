@@ -67,6 +67,12 @@ export default {
     // and one dashboard card for the whole of EastCoin.
     // How the world is doing. No key: it carries no player data, and the site's
     // dashboard is not the only thing that should be able to ask.
+    // Hiscores. Public, no key — it is the same levels everybody can already see
+    // over each other's heads, and bragging rights only work in public.
+    if (url.pathname === "/hiscores") {
+      const r = await env.WORLD.get(env.WORLD.idFromName("world")).fetch("https://world/hiscores");
+      return new Response(r.body, { status: r.status, headers: { "content-type": "application/json", "Cache-Control": "public, max-age=30" } });
+    }
     if (url.pathname === "/stats") {
       const r = await env.WORLD.get(env.WORLD.idFromName("world")).fetch("https://world/stats");
       return new Response(r.body, { status: r.status, headers: { "content-type": "application/json", "Cache-Control": "no-store" } });
@@ -130,6 +136,7 @@ export class World {
     }
     const path = new URL(request.url).pathname;
     if (path === "/stats") return Response.json({ ok: true, ...this.statsOf() });
+    if (path === "/hiscores") return Response.json(await this.hiscores());
     if (path === "/export") {
       await this.saveAll();                       // back up what is true now, not what was true four seconds ago
       const data = await this.dumpAll();
@@ -517,6 +524,69 @@ export class World {
       trades: this.trades.size, offers: this.ex?.orders?.length || 0,
       restartAt: this.restartAt || 0, upS
     };
+  }
+
+  /* ------------------------------------------------------------ hiscores
+
+     Every character, ranked. Built by reading all of them out of storage,
+     which is exactly the kind of thing that should NOT happen on every page
+     view — so it is cached for CACHE_MS and computed at most once in that
+     window no matter how many people are looking.
+
+     The long-term home for this is D1, written on save, so the world does no
+     work for it at all. At this size one read a minute is cheaper than that
+     pipeline, and the shape of the answer is the same either way, so moving it
+     later is a change of source and not of feature. */
+  async hiscores() {
+    const CACHE_MS = 60000, now = Date.now();
+    if (this.hsAt && now - this.hsAt < CACHE_MS) return this.hs;
+
+    const rows = [];
+    let after;
+    for (;;) {
+      const page = await this.ctx.storage.list(after === undefined ? { prefix: "char:", limit: 500 } : { prefix: "char:", startAfter: after, limit: 500 });
+      if (!page || !page.size) break;
+      for (const [key, raw] of page) {
+        after = key;
+        const C = G.normChar(raw);
+        const skills = {};
+        for (const k of Object.keys(G.SKILLS)) skills[k] = G.lvlOf(C, k);
+        rows.push({
+          id: key.slice(5),
+          name: raw?.name || null,
+          total: G.totalOf(C),
+          xp: Math.round(Object.values(C.xp).reduce((n, v) => n + (Number(v) || 0), 0)),
+          combat: G.combatOf(C),
+          skills,
+          // a couple of things worth bragging about that are not levels
+          kills: Object.values(C.stats?.kills || {}).reduce((n, v) => n + v, 0),
+          playMs: C.stats?.playMs || 0
+        });
+      }
+      if (page.size < 500) break;
+    }
+    // names are not on the character; they live in the who: index
+    const names = new Map();
+    for (const pl of this.pls.values()) names.set(pl.id, pl.name);
+    let wafter;
+    for (;;) {
+      const page = await this.ctx.storage.list(wafter === undefined ? { prefix: "who:", limit: 500 } : { prefix: "who:", startAfter: wafter, limit: 500 });
+      if (!page || !page.size) break;
+      for (const [key, v] of page) { wafter = key; if (v?.id && v?.name && !names.has(v.id)) names.set(v.id, v.name); }
+      if (page.size < 500) break;
+    }
+    for (const r of rows) r.name = names.get(r.id) || r.name || "Someone";
+
+    const board = (key) => [...rows].sort((a, b) => (key === "total" ? b.total - a.total || b.xp - a.xp
+      : key === "combat" ? b.combat - a.combat || b.total - a.total
+      : b.skills[key] - a.skills[key] || b.xp - a.xp)).slice(0, 50)
+      .map((r, i) => ({ rank: i + 1, name: r.name, level: key === "total" ? r.total : key === "combat" ? r.combat : r.skills[key], xp: r.xp, kills: r.kills }));
+
+    const boards = { total: board("total"), combat: board("combat") };
+    for (const k of Object.keys(G.SKILLS)) boards[k] = board(k);
+    this.hs = { ok: true, at: new Date(now).toISOString(), players: rows.length, boards };
+    this.hsAt = now;
+    return this.hs;
   }
 
   // every key this world owns, paged so a big world cannot be half-dumped

@@ -147,6 +147,23 @@ button,input,select{font:inherit}
 .rcpr small{display:block;opacity:.75;font-size:11px}
 .rcpr .lv{font-size:12px;opacity:.8;white-space:nowrap}
 .rcpr img,.rcpr .ico{width:22px;height:22px}
+.xps{display:grid;gap:3px;padding:0 8px}
+.xpsr{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:7px;padding:3px 6px;background:rgba(0,0,0,.10)}
+.xpsr b{display:block;font-size:12px}
+.xpsr small{display:block;opacity:.72;font-size:11px}
+.xpsr .lv{font-size:12px;opacity:.85;white-space:nowrap}
+.xpsr i img{width:18px;height:18px}
+.lnk{background:none;border:0;color:inherit;font:inherit;text-decoration:underline;cursor:pointer;opacity:.8;padding:0}
+.hstabs{display:flex;flex-wrap:wrap;gap:3px;margin:0 0 8px}
+.hstabs button{font-size:12px;padding:2px 8px;background:rgba(0,0,0,.16);border:2px solid transparent;color:inherit;font-family:inherit;cursor:pointer}
+.hstabs button.on{border-color:rgba(255,228,92,.6);color:#ffe45c}
+.hsbody{max-height:54vh;overflow:auto}
+.hsr{display:grid;grid-template-columns:34px 1fr auto auto;align-items:center;gap:9px;padding:4px 7px;font-size:13px}
+.hsr:nth-child(odd){background:rgba(0,0,0,.10)}
+.hsr .rk{opacity:.7;text-align:right}
+.hsr.me{color:#ffe45c;font-weight:700}
+.hsr .xp{opacity:.6;font-size:11px}
+.hsr b{font-weight:600}
 .cols2 h4,.wiki h4{margin:0 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#6a5a40}
 .grid8{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:3px}
 .grid8 .slot{font-size:22px}
@@ -258,7 +275,7 @@ button,input,select{font:inherit}
 .slot em{position:absolute;left:0;top:0;font-style:normal;font-size:10px;font-weight:800;line-height:1;color:#ffe45c;background:rgba(26,16,8,.66);padding:1px 2px;border-radius:2px;text-shadow:none;pointer-events:none}
 .slot em.k{color:#fff}.slot em.m{color:#7dff6a}
 .doll{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(4,64px);gap:6px;justify-content:center;padding:14px 6px 8px;
-  grid-template-areas:". helm ." "weapon body shield" ". legs ." "gloves boots ring"}
+  grid-template-areas:". helm amulet" "weapon body shield" ". legs ." "gloves boots ring"}
 .eq{border:2px solid #8a7a5a;border-radius:4px;background:#d8cbac;display:grid;place-items:center;font-size:30px;position:relative;cursor:pointer;color:inherit;padding:0}
 .eq:hover:not(:disabled){background:#e6dcc4}
 .eq:disabled{cursor:default}
@@ -350,6 +367,7 @@ button,input,select{font:inherit}
   <span class="logo">⚔ EastScape</span>
   <span class="clock" id="clock">--:--:--</span>
   <button type="button" class="wikib" id="wikiBtn" title="The EastScape wiki">📖 Wiki</button>
+  <button type="button" class="wikib" id="hsBtn" title="Hiscores">🏆 Hiscores</button>
   <span class="spacer"></span>
   <span class="net" id="net" role="status" aria-live="polite"><i></i><span id="netText">Connecting…</span></span>
   <span class="online" id="online"></span>
@@ -391,6 +409,10 @@ button,input,select{font:inherit}
     <section class="win" id="pickWin" aria-label="Choose an item" hidden>
       <div class="win-head"><b id="pickTitle">Choose</b><button type="button" class="win-x" data-close="pickWin" aria-label="Close">×</button></div>
       <div class="win-body"><p class="note" id="pickNote" style="margin:0 0 8px"></p><div class="grid8" id="pickGrid"></div></div>
+    </section>
+    <section class="win" id="hsWin" aria-label="Hiscores" hidden>
+      <div class="win-head"><b>🏆 Hiscores</b><small id="hsSub"></small><button type="button" class="win-x" data-close="hsWin" aria-label="Close">×</button></div>
+      <div class="win-body"><div class="hstabs" id="hsTabs"></div><div class="hsbody" id="hsBody"><p class="note">Loading…</p></div></div>
     </section>
     <section class="win" id="smithWin" aria-label="Anvil" hidden>
       <div class="win-head"><b>🔨 Anvil</b><small id="smithSub"></small><button type="button" class="win-x" data-close="smithWin" aria-label="Close">×</button></div>
@@ -495,6 +517,7 @@ async function connect() {
       if (r.status === 401) { signedOut = true; $("gate").hidden = false; $("veil").hidden = true; net("bad", "Not logged in"); return; }
       const j = await r.json(); if (!j.ok) throw new Error(j.message || "no ticket");
       url = `${j.ws}?ticket=${j.ticket}`;
+      window.EASTSCAPE_WS = j.ws;                 // the hiscores fetch reuses this host
       if (j.avatar) { $("topAv").src = j.avatar; $("topAv").hidden = false; $("topAv").onerror = () => { $("topAv").hidden = true; }; }
     }
   } catch (e) { return later(); }
@@ -588,7 +611,14 @@ function onMsg(m) {
 }
 function onEvent(e) {
   if (e.type === "say") { if (e.tag === "group" && !set("groupNotes")) return; return say(e.text, e.cls); }
-  if (e.type === "xp") { xpDrops.push({ k: e.k, xp: e.xp, at: performance.now() }); if (e.track) tracker = { k: e.k, at: performance.now() }; return; }
+  if (e.type === "xp") {
+    xpDrops.push({ k: e.k, xp: e.xp, at: performance.now() });
+    // every xp drop already arrives; counting them IS the tracker
+    const row = (xpSess[e.k] ||= { xp: 0, first: Date.now(), last: 0 });
+    row.xp += e.xp; row.last = Date.now();
+    if (e.track) tracker = { k: e.k, at: performance.now() };
+    return;
+  }
   if (e.type === "hint") { hintSlot = { k: e.k, until: performance.now() + 8000 }; tab = "inv"; syncTabs(); renderPanel(); setTimeout(renderPanel, 8100); return; }
   if (e.type === "talk") { const n = Z.npcs.find((x) => x.id === e.npc); if (n) talkTo(n); return; }
   if (e.type === "popup") return popup(e.title, e.text, e.icon, [["Okay", null]]);
@@ -616,7 +646,7 @@ function loadScene(key) {
   Z.def = G.sceneDef(key); Z.isle = null; Z.ground = [];
   Z.def.npcs.forEach((n, i) => { Z.defs[`${key}n${i}`] = n.art || !NPC_ART[n.name] ? n : { ...n, art: NPC_ART[n.name] }; });
   Z.npcs = []; botBubbles.clear(); PRED.on = false; PRED.path = []; PRED.step = null;
-  for (const id of ["bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin"]) $(id).hidden = true;
+  for (const id of ["bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin"]) $(id).hidden = true;
   Z.exits = exitsOf();
   Z.bg = paintBg();
   if (DLG) closeTalk();
@@ -1268,6 +1298,13 @@ function keyMove() {
 
 /* ------------------------------------------------------------ the frame */
 const xpDrops = [];
+/* Session xp, per skill. Deliberately not saved: "this session" means since you
+   sat down, which is the number you want while deciding whether to carry on.
+   Lifetime totals live on the character (stats.xpTotal). */
+let xpSess = {};
+const rateOf = (r) => { const mins = Math.max(0.5, (r.last - r.first) / 60000); return r.xp / (mins / 60); };
+const fmtHr = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(Math.round(n)));
+const fmtMins = (m) => (!Number.isFinite(m) || m > 60 * 99 ? "—" : m >= 60 ? `${Math.floor(m / 60)}h ${Math.round(m % 60)}m` : `${Math.max(1, Math.round(m))}m`);
 // one decimal, and none at all when it lands whole: "+4", "+1.3"
 const xpShort = (n) => (Number.isInteger(n) ? n.toLocaleString() : (Math.round(n * 10) / 10).toLocaleString(undefined, { maximumFractionDigits: 1 }));
 let tracker = null, splats = [], hintSlot = null;
@@ -1625,6 +1662,34 @@ function frame() {
 /* The anvil asks which of forty things you want, so unlike the furnace it does
    not just get on with it. Everything is listed, including what you cannot make
    yet — seeing the next rung is most of why a ladder works. */
+/* Hiscores. Fetched from the game server rather than the socket, so opening it
+   costs the world nothing it was not already doing — the board is cached for a
+   minute on that side, however many people look. */
+let hsData = null, hsTab = "total", hsAt = 0;
+async function openHiscores() {
+  openWin("hsWin");
+  if (hsData && Date.now() - hsAt < 60000) return renderHs();
+  $("hsBody").innerHTML = '<p class="note">Loading\u2026</p>';
+  try {
+    const base = DEV ? `http://${location.hostname}:8787` : (window.EASTSCAPE_WS || "").replace(/^ws/, "http").replace(/\/ws$/, "");
+    const r = await fetch(`${base}/hiscores`);
+    hsData = await r.json(); hsAt = Date.now();
+  } catch (e) { $("hsBody").innerHTML = '<p class="note">The hiscores are unreachable right now.</p>'; return; }
+  renderHs();
+}
+function renderHs() {
+  if (!hsData?.boards) return;
+  const order = ["total", "combat", ...Object.keys(SKILLS)];
+  const label = (k) => (k === "total" ? "Overall" : k === "combat" ? "Combat" : SKILLS[k].name);
+  $("hsSub").textContent = `${hsData.players} character${hsData.players === 1 ? "" : "s"}`;
+  $("hsTabs").innerHTML = order.map((k) => `<button type="button" data-hs="${k}" class="${k === hsTab ? "on" : ""}">${label(k)}</button>`).join("");
+  const rows = hsData.boards[hsTab] || [];
+  $("hsBody").innerHTML = rows.length
+    ? rows.map((r) => `<div class="hsr${you && r.name === you.name ? " me" : ""}"><span class="rk">${r.rank}</span><b>${esc(r.name)}</b><span>${r.level}</span><span class="xp">${r.xp.toLocaleString()} xp</span></div>`).join("")
+    : '<p class="note">Nobody on this board yet.</p>';
+  $("hsTabs").querySelectorAll("[data-hs]").forEach((b) => b.addEventListener("click", () => { hsTab = b.dataset.hs; renderHs(); }));
+}
+
 let smithAt = null;
 function openSmith(ob) {
   smithAt = ob;
@@ -1658,7 +1723,7 @@ function openWin(id) {
 document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => { $(b.dataset.close).hidden = true; if (b.dataset.close === "wikiWin" && location.hash.startsWith("#wiki")) history.replaceState(null, "", location.pathname + location.search); }));
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape" || e.target.closest?.("input, textarea, select") || !$("pop").hidden || DLG) return;
-  for (const w of ["wikiWin", "bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin"]) if (!$(w).hidden) { $(w).hidden = true; return; }
+  for (const w of ["wikiWin", "bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin"]) if (!$(w).hidden) { $(w).hidden = true; return; }
 });
 // windows that need you standing somewhere close themselves when you walk off
 setInterval(() => { if (PRED.on && PRED.step) for (const w of ["bankWin", "exWin"]) $(w).hidden = true; }, 300);
@@ -2012,7 +2077,14 @@ function renderPanel() {
   const p = $("panel");
   if (tab === "inv") {
     const hint = hintSlot && hintSlot.until > performance.now() ? hintSlot.k : null;
-    const cells = me.inv.map((s, i) => `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" title="${esc(ITEMS[s.k].name)}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""} — ${ITEMS[s.k].heal ? `click to eat (heals ${ITEMS[s.k].heal})` : ITEMS[s.k].slot ? (ITEMS[s.k].slot === "weapon" ? "click to wield" : "click to wear") : "click to examine"}, shift-click to drop">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}</div>`);
+    // an equippable piece says what it would change: with five tiers of gear,
+    // "is this better than what I have on" is the only question being asked here
+    const cells = me.inv.map((s, i) => {
+      const it = ITEMS[s.k], cmp = it.slot ? G.compareText(me, s.k) : "";
+      const what = it.heal ? `click to eat (heals ${it.heal})` : it.slot ? (it.slot === "weapon" ? "click to wield" : "click to wear") : "click to examine";
+      const title = `${it.name}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}` + (cmp ? `\n${cmp}` : "") + `\n${what}, shift-click to drop`;
+      return `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" title="${esc(title)}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}</div>`;
+    });
     while (cells.length < G.INV_MAX) cells.push('<div class="slot empty"></div>');
     p.innerHTML = `<div class="ph">Inventory <small>${me.inv.length}/${G.INV_MAX}</small></div><div class="inv">${cells.join("")}</div>`;
     p.querySelectorAll(".slot[data-i]").forEach((el) => el.addEventListener("click", (e) => {
@@ -2028,7 +2100,7 @@ function renderPanel() {
     }));
   }
   if (tab === "equip") {
-    const EMPTY = { helm: "⛑️", weapon: "🗡️", body: "🥋", shield: "🛡️", legs: "👖", gloves: "🧤", boots: "🥾", ring: "💍" };
+    const EMPTY = { helm: "⛑️", amulet: "📿", weapon: "🗡️", body: "🥋", shield: "🛡️", legs: "👖", gloves: "🧤", boots: "🥾", ring: "💍" };
     const slot = (area) => { const k = me.eq[area], it = k && ITEMS[k]; return `<button type="button" class="eq${it ? "" : " empty"}" data-slot="${area}" style="grid-area:${area}" title="${it ? `${esc(it.name)} — click to take off` : `${area}: empty`}"${it ? "" : " disabled"}>${it ? ico(k) : EQ_ART.has(area) ? artOf(`eq_${area}`) : EMPTY[area]}<small>${it ? esc(it.short || it.name) : ""}</small></button>`; };
     const b = G.bonusOf(me), tool = me.eq.weapon && ITEMS[me.eq.weapon].tool;
     p.innerHTML = `<div class="ph">Equipment <small>paper doll</small></div><div class="doll">${G.SLOTS.map(slot).join("")}</div>
@@ -2046,6 +2118,14 @@ function renderPanel() {
     const stances = Object.entries(G.STANCES).map(([k, v]) =>
       `<button type="button" class="btn stbtn${k === st ? " on" : ""}" data-stance="${k}" title="${esc(v.blurb)}">${v.icon} ${esc(v.name)}</button>`).join("");
     p.innerHTML = `<div class="ph">Stance</div><div class="stances">${stances}</div><small class="stnote">${esc(G.STANCES[st].blurb)} Every stance earns the same xp — only where it goes changes.</small>
+      ${(() => {
+      const rows = Object.entries(xpSess).filter(([k, r]) => SKILLS[k] && r.xp > 0).sort((a, b) => b[1].last - a[1].last);
+      if (!rows.length) return "";
+      return `<div class="ph">This session <small><button type="button" class="lnk" id="xpReset">reset</button></small></div><div class="xps">${rows.map(([k, r]) => {
+        const L = lvl(k), hi = XP_AT[Math.min(99, L + 1)], rate = rateOf(r), left = hi - me.xp[k];
+        return `<div class="xpsr"><i>${sico(k)}</i><span><b>${SKILLS[k].name}</b><small>${Math.round(r.xp).toLocaleString()} xp · ${fmtHr(rate)}/hr</small></span><span class="lv">${L >= 99 ? "max" : fmtMins(left / (rate / 60))}</span></div>`;
+      }).join("")}</div>`;
+    })()}
       <div class="ph">Skills <small>total ${total()}</small></div>${G.SKILL_GROUPS.map((grp) => {
       // a group's own total, because "how far along is my combat" is the
       // question the divider is there to answer
@@ -2152,6 +2232,8 @@ function renderAdmin(p) {
   }));
 }
 document.addEventListener("click", (e) => {
+  if (e.target.id === "xpReset") { xpSess = {}; renderPanel(); return; }
+  if (e.target.id === "hsBtn" || e.target.closest?.("#hsBtn")) { openHiscores(); return; }
   const b = e.target.closest?.("[data-stance]");
   if (!b) return;
   send({ t: "stance", k: b.dataset.stance });
