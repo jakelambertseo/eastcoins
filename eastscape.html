@@ -1488,7 +1488,7 @@ $("dlgX").addEventListener("click", closeTalk);
 /* Tiles are drawn ZOOM times the size they'd be if the whole map fitted the screen, so the screen shows a window onto
    the map (11 x 6.5 tiles) that follows you and stops at the map's edges (a room's walls, indoors). view.bx/by/bw/bh
    is the game's rectangle on the page; view.s/ox/oy turn world pixels into page pixels, camera included. */
-const ZOOM = 2, cam = { x: 0, y: 0 };
+const ZOOM = 1, cam = { x: 0, y: 0 };   // 1 = the whole map fits the screen (2 was tried on 2026-09-19 and was the wrong way round)
 let mouse = null, view = { s: 3, ox: 0, oy: 0, bx: 0, by: 0, bw: 0, bh: 0 }, hoverTile = null, hoverThing = null, clickMark = null;
 function fit() {
   const d = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight;
@@ -1499,6 +1499,7 @@ function fit() {
   return { w, h };
 }
 function aimCamera(P, now) {
+  if (ZOOM === 1) { cam.x = 0; cam.y = 0; view.ox = view.bx; view.oy = view.by; return; }
   const ww = W / ZOOM, wh = H / ZOOM, r = Z.def?.interior && Z.def.room;
   const [x0, y0, x1, y1] = r ? [(r[0] - 1) * T, r[1] * T - (Z.def.wallH || 22) - 6, (r[2] + 2) * T, (r[3] + 2) * T + 4] : [0, 0, W, H];
   const p = P ? ownPos(P, now) : { px: COLS / 2, py: ROWS / 2 };
