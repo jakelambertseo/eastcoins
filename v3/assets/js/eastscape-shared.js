@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 28;
+export const VERSION = 29;
 export const COLS = 22, ROWS = 13;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
@@ -594,7 +594,8 @@ Object.assign(SCENES, {
     bots: []
   }
 });
-export const START = { scene: "farm", x: 4, y: 5 };
+// everyone starts (and wakes up after dying) on the casino floor: GAMBA is the casino, the world is outside it
+export const START = { scene: "casino", x: 10, y: 9 };
 
 /* interiors: a room in the middle of the dark. "e" tiles on the room's bottom edge lead back out to exitTo.
    Rooms are drawn by the page from their floor kind and objects; nothing grows or spawns indoors. */
@@ -628,23 +629,67 @@ Object.assign(SCENES, {
     mobs: [], bots: [],
     npcs: [{ name: "Aurelia", x: 10, y: 3, still: true, opens: "bank", reach: 2, hair: "#1a1a2a", shirt: "#3a6a8a", pants: "#2a2a3a", lines: ["Welcome to the Bank. Your things are safe with us. Mostly.", "Use any booth. I'm the one counting.", "Two hundred different things we'll hold for you. Stack them as high as you like."] }]
   },
+  // WEST of the casino, the first stop on the skilling line: a bit of everything a beginner gathers
+  workyard: {
+    name: "The Workyard", exits: { e: "casino" },
+    build() {
+      const g = grid(), objs = [], keep = [];
+      for (let x = 7; x < COLS; x++) g[6][x] = ",";
+      for (const [x, y] of [[4, 3], [7, 2], [10, 3], [5, 10], [8, 11]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
+      objs.push({ t: "oak", x: 13, y: 2, name: "Oak tree" }); g[2][13] = "#";
+      for (const [x, y] of [[16, 2], [17, 3], [18, 2]]) { objs.push({ t: "rock", ore: "copper", x, y, name: "Copper rock" }); g[y][x] = "#"; }
+      for (const [x, y] of [[17, 10], [18, 11], [19, 10]]) { objs.push({ t: "rock", ore: "tin", x, y, name: "Tin rock" }); g[y][x] = "#"; }
+      for (let y = 5; y < 8; y++) for (const x of [3, 4]) { objs.push({ t: "wheat", x, y, name: "Wheat" }); g[y][x] = "#"; }
+      // a fishing pond, fished from its north bank
+      for (let y = 9; y <= 10; y++) for (let x = 11; x <= 14; x++) g[y][x] = "~";
+      objs.push({ t: "spot", x: 12, y: 9, name: "Fishing spot" }, { t: "spot", x: 13, y: 9, name: "Fishing spot" });
+      for (let x = 10; x <= 15; x++) keep.push([x, 8], [x, 7]);
+      objs.push({ t: "fire", x: 9, y: 4, name: "Campfire" }); g[4][9] = "#";
+      for (let x = 7; x < COLS; x++) keep.push([x, 5], [x, 7]);
+      wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "forest" }, [...keepOf(this), ...keep], 12);
+      return { g, objs, blobs: [] };
+    },
+    mobs: [], npcs: [], bots: []
+  },
+  // EAST of the casino, the first stop on the combat line: things a beginner can win a fight with
+  paddock: {
+    name: "The Paddock", exits: { w: "casino" },
+    build() {
+      const g = grid(), objs = [], keep = [];
+      for (let x = 0; x <= 14; x++) g[6][x] = ",";
+      objs.push({ t: "hay", x: 9, y: 3, name: "Hay bale" }, { t: "hay", x: 10, y: 3, name: "Hay bale" }); g[3][9] = "#"; g[3][10] = "#";
+      objs.push({ t: "fire", x: 8, y: 9, name: "Campfire" }); g[9][8] = "#";
+      for (const [x, y] of [[3, 2], [19, 11], [2, 10]]) { objs.push({ t: "tree", x, y, name: "Tree" }); g[y][x] = "#"; }
+      for (let x = 0; x <= 14; x++) keep.push([x, 5], [x, 7]);
+      wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "rocky" }, [...keepOf(this), ...keep], 13);
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["chicken", 5, 3], ["chicken", 7, 4], ["chicken", 4, 9], ["chicken", 6, 10], ["cow", 12, 3], ["cow", 14, 9], ["cow", 16, 4], ["rotten", 18, 8], ["rotten", 19, 3]],
+    npcs: [], bots: []
+  },
   // inside the Casino: a hangout first, a gambling den second. Games of chance for Cash (never ZCoins), the
   // daily-task board, a bar, and Dex, who has seen everything and will tell you about most of it.
+  /* GAMBA's hub (2026-09-19): the casino is the middle of the world and where everyone starts. Four ways out, as on
+     the owner's map: NORTH the upper floors (Floor 2 is the Roulette Room), WEST the skilling line, EAST the combat
+     line, SOUTH the town (crafting: the smithy and the market). The side archways are real exits at the grid's edge;
+     the south door is the building's front door onto the Forum. */
   casino: {
-    name: "The Casino", interior: true, floor: "casino", wallH: 34, room: [4, 3, 17, 10], exitTo: { scene: "forum", x: 13, y: 4 }, entry: { x: 10, y: 10 },
-    wall: [{ t: "banner", x: 5 }, { t: "lamp", x: 8 }, { t: "lamp", x: 11 }, { t: "lamp", x: 14 }, { t: "banner", x: 16.5 }],
+    name: "The Casino", interior: true, floor: "casino", wallH: 34, room: [1, 3, 20, 10], exits: { w: "workyard", e: "paddock" }, exitTo: { scene: "forum", x: 13, y: 4 }, entry: { x: 10, y: 10 },
+    wall: [{ t: "banner", x: 2.5 }, { t: "lamp", x: 4.5 }, { t: "lamp", x: 7.5 }, { t: "lamp", x: 11 }, { t: "lamp", x: 17 }, { t: "banner", x: 19 }],
     build() {
-      const g = room(4, 3, 17, 10, 10), objs = [];
+      const g = room(1, 3, 20, 10, 10), objs = [];
+      for (let y = SPAN.w[0]; y <= SPAN.w[1]; y++) { g[y][0] = "e"; g[y][COLS - 1] = "e"; }
       objs.push({ t: "bar", x: 12, y: 4, w: 4, h: 1, name: "Bar" }); block(g, 12, 4, 4, 1);
       objs.push({ t: "notice", x: 6, y: 3, name: "Task board" }); g[3][6] = "#";
-      objs.push({ t: "walldoor", x: 9, y: 2, name: "Roulette room", enter: "roulette" });
+      objs.push({ t: "walldoor", x: 9, y: 2, name: "Floor 2: the Roulette Room", enter: "roulette" });
       objs.push({ t: "roulsign", x: 9, y: 1, name: "Roulette", dy: -3 });
-      for (const y of [5, 7, 9]) { objs.push({ t: "slots", x: 4, y, name: "Slot machine", flip: true }); g[y][4] = "#"; }
-      objs.push({ t: "cointable", x: 8, y: 6, w: 2, h: 1, name: "Coin Flip table" }); block(g, 8, 6, 2, 1);
-      objs.push({ t: "dicetable", x: 13, y: 7, w: 2, h: 1, name: "Dice table" }); block(g, 13, 7, 2, 1);
+      for (const y of [3, 8, 10]) { objs.push({ t: "slots", x: 1, y, name: "Slot machine", flip: true }); g[y][1] = "#"; }
+      for (const y of [3, 9]) { objs.push({ t: "slots", x: 20, y, name: "Slot machine" }); g[y][20] = "#"; }
+      objs.push({ t: "cointable", x: 6, y: 6, w: 2, h: 1, name: "Coin Flip table" }); block(g, 6, 6, 2, 1);
+      objs.push({ t: "dicetable", x: 14, y: 7, w: 2, h: 1, name: "Dice table" }); block(g, 14, 7, 2, 1);
       objs.push({ t: "rug", img: "rug_casino", x: 9, y: 8, w: 4, h: 3, color: "#5a1a2a", name: "Rug" });
-      for (const [x, y] of [[16, 9], [7, 9]]) { objs.push({ t: "sofa", x, y, w: 2, h: 1, name: "Sofa" }); block(g, x, y, 2, 1); }
-      for (const [x, y] of [[17, 5], [17, 7], [5, 10]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
+      for (const [x, y] of [[17, 10], [4, 10]]) { objs.push({ t: "sofa", x, y, w: 2, h: 1, name: "Sofa" }); block(g, x, y, 2, 1); }
+      for (const [x, y] of [[20, 4], [3, 3], [7, 10], [14, 10]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
       return { g, objs, blobs: [] };
     },
     mobs: [], bots: [],
@@ -654,7 +699,7 @@ Object.assign(SCENES, {
       "Biggest win I've seen? Someone hit three sevens on that end machine. Bought everyone a drink. We don't sell drinks.",
       "Every roll's decided by the house, fair and square. I just hand over the money.",
       "No ZCoins in here, friend. Cash only. What happens in EastScape stays in EastScape."] },
-      { name: "DookieBetts", art: "dookie", x: 14, y: 6, still: true, reach: 2, hair: "#1a1a1a", shirt: "#c8102e", pants: "#1a1a1a", lines: [
+      { name: "DookieBetts", art: "dookie", x: 15, y: 6, still: true, reach: 2, hair: "#1a1a1a", shirt: "#c8102e", pants: "#1a1a1a", lines: [
         "One more roll. Just one. Then one more after that. Then we'll talk.",
         "You're up? That's the dice telling you to bet bigger. You're down? That's the dice telling you you're due.",
         "Roll under five. Twenty-four times your money. Honestly it'd be irresponsible NOT to.",

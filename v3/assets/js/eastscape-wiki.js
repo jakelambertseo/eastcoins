@@ -30,7 +30,7 @@ export const GUIDES = [
   },
   {
     id: "saving", title: "Saving (there's no button)", icon: "💾",
-    body: `<p>Your character lives on the EastScape server. It's saved a few seconds after anything changes, and again the moment you close the tab or lose your connection. Come back on any browser, logged in with the same Twitch account, and you're exactly where you left off.</p>`
+    body: `<p>Your character lives on the GAMBA server. It's saved a few seconds after anything changes, and again the moment you close the tab or lose your connection. Come back on any browser, logged in with the same Twitch account, and you're exactly where you left off.</p>`
   },
   {
     id: "group", title: "Working together", icon: "🤝",
@@ -119,6 +119,14 @@ export const GUIDES = [
 
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
+  {
+    date: "2026-09-19", title: "Welcome to GAMBA",
+    items: [
+      "The game has a name: GAMBA. The casino is now the middle of the world, and where everyone starts (and wakes up after dying).",
+      "Four ways out of the casino: north is Floor 2 (the Roulette Room), the west arch leads to skilling (the Workyard: trees, copper, tin, wheat and a fishing pond), the east arch to fighting (the Paddock: chickens, cows and rotten tomatoes), and the front door to town for crafting and the market.",
+      "The casino floor is bigger, with more slot machines. Everything that was in the world before is still there, through the front door.",
+    ],
+  },
   {
     date: "2026-09-18", title: "The Casino",
     items: [
@@ -223,7 +231,7 @@ export const UPDATES = [
   {
     date: "2026-09-18", title: "The server",
     items: [
-      "EastScape moved to its own game server: everything is decided there, and your character saves itself continuously.",
+      "The game moved to its own game server: everything is decided there, and your character saves itself continuously.",
       "Game-wide chat (bottom left, closed until you open it).",
       "Settings, and an admin panel for the builder.",
       "Your own movement is instant: the page walks you straight away and the server keeps it honest.",
