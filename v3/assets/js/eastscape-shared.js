@@ -461,14 +461,13 @@ export const SCENES = {
       const forge = { t: "house", img: "store", x: 11, y: 1, w: 5, h: 3, door: { x: 13, y: 3 }, name: "Forge", roof: "#7a4a3a", wall: "#c8b89a", sign: "FORGE" };
       objs.push(bath, forge); block(g, 2, 2, 5, 3); block(g, 11, 1, 5, 3);
       objs.push({ t: "fountain", x: 10, y: 6, w: 2, h: 2, name: "Fountain" }); block(g, 10, 6, 2, 2);
-      objs.push({ t: "rock", ore: "stardust", x: 5, y: 6, name: "Fallen Star", special: true, glow: "#e0b0ff", req: { skill: "mining", lvl: 50 }, xp: 150, tease: "It landed during the games last spring. Nobody's managed to chip it since." }); g[6][5] = "#";
-      objs.push({ t: "notice", x: 8, y: 2, name: "Notice board" }); g[2][8] = "#";
-      // the Forge works outside, either side of Brutus's door: ore in at the
-      // furnace on the left, bars out on the anvil to the right
+      objs.push({ t: "rock", ore: "stardust", x: 4, y: 8, name: "Fallen Star", special: true, glow: "#e0b0ff", req: { skill: "mining", lvl: 50 }, xp: 150, tease: "It landed during the games last spring. Nobody's managed to chip it since." }); g[8][4] = "#";
+      objs.push({ t: "notice", x: 16, y: 3, name: "Notice board" }); g[3][16] = "#";
+      // the smithy corner, left of Brutus's door: the furnace and the anvil side by side, Brutus between them and his shop
       objs.push({ t: "furnace", x: 10, y: 3, name: "Furnace" }); g[3][10] = "#";
-      objs.push({ t: "anvil", x: 16, y: 3, name: "Anvil" }); g[3][16] = "#";
-      // the Exchange: a market stall where offers are placed and collected
-      objs.push({ t: "stall", x: 14, y: 5, w: 2, h: 1, name: "Exchange stall" }); block(g, 14, 5, 2, 1);
+      objs.push({ t: "anvil", x: 9, y: 3, name: "Anvil" }); g[3][9] = "#";
+      // the Exchange: a market stall down in the south-west of the square, away from the shop front
+      objs.push({ t: "stall", x: 7, y: 10, w: 2, h: 1, name: "Exchange stall" }); block(g, 7, 10, 2, 1);
       objs.push({ t: "statue", x: 15, y: 9, name: "Statue" }); g[9][15] = "#";
       objs.push({ t: "sign", x: 19, y: 3, name: "Signpost" }); g[3][19] = "#";
       for (const [x, y] of [[6, 9], [13, 9]]) { objs.push({ t: "bush", x, y, name: "Planter" }); g[y][x] = "#"; }
@@ -478,7 +477,7 @@ export const SCENES = {
     },
     mobs: [],
     npcs: [{ name: "Brutus the Smith", x: 11, y: 4, still: true, opens: "shop", hair: "#2a1a10", shirt: "#5a3a2a", pants: "#3a2a1a", lines: ["Tools, bronze, and I'll buy whatever you dug up. Fair prices. Mostly fair.", "Bronze is where it starts. Nobody walks into the Wilderness in a tunic twice.", "Brought ore? I'll take it. Brought a goat? Take it back."] },
-      { name: "Livia the Broker", x: 15, y: 4, still: true, opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Selling? Buying? Use the stall. I just take my 1%.", "Offers keep working while you sleep. Come back and collect.", "The best price wins, and whoever was there first."] },
+      { name: "Livia the Broker", x: 8, y: 9, still: true, opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Selling? Buying? Use the stall. I just take my 1%.", "Offers keep working while you sleep. Come back and collect.", "The best price wins, and whoever was there first."] },
            { name: "Gaius", x: 7, y: 7, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: Coo. The Forge buys ore. Coo.", "PIGEON: He doesn't talk. I do the talking. Coo.", "PIGEON: The Bank keeps your things safe. Aurelia counts everything twice. Coo.", "PIGEON: West is the Olive Grove. Bring a sword. Seriously. Coo.", "PIGEON: North is Tomatoe Hill. Don't correct her spelling. Coo.", "PIGEON: East is the Via Appia. Highwaymen. Hold on to your Cash. Coo."] }],
     bots: [{ name: "Gannicus", level: 55 }, { name: "Naevia", level: 31 }]
   },
@@ -978,7 +977,11 @@ export const SHOP = {
 export const PVP = { drop: 0.25, lootMs: 60000, groundMs: 180000, lingerMs: 10000 };
 // how long a monster stays dead: 15s everywhere, but in the Wilderness it scales with level, from 1 minute
 // (level 15 and under) to 3 minutes (level 45 and up), so a kill there is worth something
-export const respawnMs = (sc, t) => (sc?.pvp ? 60000 + Math.round(Math.max(0, Math.min(1, (MOBS[t].lvl - 15) / 30)) * 120000) : 15000);
+// how long a monster stays dead. Outside the Wilderness it's 15s for one person, shared out between everyone who has
+// fought in the area in the last minute (15s, 7.5s, 5s, then a 4s floor), so a busy area refills without more monsters on it.
+export const RESPAWN = { base: 15000, floor: 4000 };
+export const respawnMs = (sc, t, fighters = 1) => (sc?.pvp ? 60000 + Math.round(Math.max(0, Math.min(1, (MOBS[t].lvl - 15) / 30)) * 120000)
+  : Math.max(RESPAWN.floor, Math.round(RESPAWN.base / Math.max(1, fighters))));
 export const fmtWait = (ms) => { const s = Math.round(ms / 1000), m = Math.floor(s / 60); return m ? `${m}m${s % 60 ? ` ${s % 60}s` : ""}` : `${s}s`; };
 export const inCage = (def, x, y) => !!def?.cage && x >= def.cage[0] && x <= def.cage[2] && y >= def.cage[1] && y <= def.cage[3];
 
