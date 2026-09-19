@@ -196,6 +196,7 @@ export class World {
     S.whoSig = null;   // the next broadcast tells everyone else this player has arrived
     if (!stored) this.say(pl, "Welcome to EastScape. Your pickaxe, axe and fishing rod are in your bag: click one to wield it before you mine, chop or fish.");
     else this.say(pl, `Welcome back, ${pl.name}.`);
+    if (this.exDeliver(pl)) this.exCommit(pl);   // market sales and purchases made while you were away
     this.start();
   }
 
@@ -1398,44 +1399,84 @@ export class World {
     for (const p of pls) { p.C.x = p.x; p.C.y = p.y; put[`char:${p.id}`] = p.C; p.needSave = false; p.changedAt = null; }
     await this.ctx.storage.put(put);
   }
+  /* The market (rebuilt 2026-09-18): two sides, no collecting. Whatever an offer earns (items or Cash) goes straight to
+     the owner's bank — at once if they're on, the moment they next log in if they're not (it waits in the offer's box
+     until then). Every fill is told to the owner in chat; fills that happened while they were away are summed up at login.
+     Matching is unchanged: best price first, then whoever was first, at the waiting offer's price, 1% to the house. */
   exMine(pl) { return this.ex.orders.filter((o) => o.owner === pl.id); }
-  exSend(pl) { this.send(pl, { type: "exch", mine: this.exMine(pl), book: G.exSummary(this.ex.orders), last: this.ex.last }); }
+  exOpen(pl) { return this.ex.orders.filter((o) => o.owner === pl.id && o.open); }
+  exSend(pl) {
+    const open = this.ex.orders.filter((o) => o.open && o.done < o.qty);
+    const view = (o) => ({ id: o.id, k: o.k, left: o.qty - o.done, price: o.price, name: o.name, at: o.at, mine: o.owner === pl.id });
+    const listings = open.filter((o) => o.side === "sell").sort((x, y) => y.at - x.at).slice(0, 80).map(view);
+    const wanted = open.filter((o) => o.side === "buy").sort((x, y) => y.at - x.at).slice(0, 80).map(view);
+    const mine = this.exMine(pl).sort((x, y) => y.at - x.at).map((o) => ({ id: o.id, side: o.side, k: o.k, qty: o.qty, done: o.done, price: o.price, open: o.open, at: o.at, closedAt: o.closedAt || 0 }));
+    this.send(pl, { type: "exch", listings, wanted, mine, book: G.exSummary(this.ex.orders), last: this.ex.last });
+  }
+  exNote(ownerId, text) {
+    const p = this.pls.get(ownerId);
+    if (p) { p.out.push({ type: "exnote", text }); return; }
+    const q = (this.ex.news ||= {})[ownerId] ||= []; q.push(text); if (q.length > 20) q.splice(0, q.length - 20);
+  }
+  // move whatever an owner's offers have earned into their bank (only while they're connected: that's the character we hold)
+  exDeliver(pl) {
+    let moved = false;
+    for (const o of this.exMine(pl)) {
+      if (o.box.items && this.bankAdd(pl, o.k, o.box.items)) { o.box.items = 0; moved = true; }
+      if (o.box.cash && this.bankAdd(pl, "coins", o.box.cash)) { o.box.cash = 0; moved = true; }
+      if (!o.open && !o.closedAt) o.closedAt = Date.now();
+    }
+    // closed offers stay on the owner's list for three days (so "recent" means something), then go
+    const now = Date.now();
+    this.ex.orders = this.ex.orders.filter((o) => o.open || o.box.items || o.box.cash || (o.qty > 0 && now - (o.closedAt || now) < 3 * 86400000));
+    const news = this.ex.news?.[pl.id];
+    if (news?.length) { pl.out.push({ type: "exnote", text: `While you were away: ${news.join(" · ")}. It's in your bank.` }); delete this.ex.news[pl.id]; moved = true; }
+    if (moved) this.touch(pl);
+    return moved;
+  }
   exOp(S, pl, m) {
     const C = pl.C, now = Date.now();
-    if (!this.near(S, pl, "stall")) return this.say(pl, "You need to be at the Exchange stall in the Forum.", "bad");
     if (m.op === "open") return this.exSend(pl);
-    if (m.op === "place") {
-      const side = m.side === "buy" ? "buy" : "sell", k = String(m.k), qty = Math.floor(Number(m.qty)), price = Math.floor(Number(m.price));
-      if (!G.ITEMS[k] || k === "coins") return this.say(pl, "You can't trade that on the Exchange.", "bad");
-      if (!(qty >= 1 && qty <= 1e9 && price >= 1 && price <= 1e9)) return this.say(pl, "Pick a quantity and a price of at least 1.", "bad");
-      if (this.exMine(pl).length >= G.EX_SLOTS) return this.say(pl, `You can have ${G.EX_SLOTS} offers at once. Collect or cancel one first.`, "bad");
-      if (side === "sell") {
-        const have = G.countItems(C, [k]); if (have < qty) return this.say(pl, `You only have ${have} ${G.ITEMS[k].name.toLowerCase()}.`, "bad");
-        let left = qty; for (const st of C.inv.filter((x) => x.k === k)) { const t = Math.min(left, st.n); st.n -= t; left -= t; if (!st.n) C.inv.splice(C.inv.indexOf(st), 1); if (!left) break; }
-      } else {
-        const cost = qty * price; if (G.cashIn(C) < cost) return this.say(pl, `That needs ${G.fmtCash(cost)}. You have ${G.fmtCash(G.cashIn(C))}.`, "bad");
-        const st = C.inv.find((x) => x.k === "coins"); st.n -= cost; if (!st.n) C.inv.splice(C.inv.indexOf(st), 1);
-      }
+    if (!this.near(S, pl, "stall")) return this.say(pl, "You need to be at the market stall in the Forum.", "bad");
+    // Cash for an offer comes from your bag first, then your bank
+    const payCash = (n) => { const bag = Math.min(n, G.cashIn(C)); if (bag) G.takeInv(C.inv, "coins", bag); let left = n - bag; if (left) { const b = C.bank.find((x) => x.k === "coins"); b.n -= left; if (!b.n) C.bank.splice(C.bank.indexOf(b), 1); } };
+    const cashAll = () => G.cashIn(C) + (C.bank.find((x) => x.k === "coins")?.n || 0);
+    // items for a sell offer come from your bag first, then your bank
+    const haveAll = (k) => G.countItems(C, [k]) + (C.bank.find((x) => x.k === k)?.n || 0);
+    const takeItems = (k, n) => { const bag = G.takeInv(C.inv, k, n); let left = n - bag; if (left) { const b = C.bank.find((x) => x.k === k); b.n -= left; if (!b.n) C.bank.splice(C.bank.indexOf(b), 1); } };
+    const place = (side, k, qty, price, now_) => {
       const o = { id: this.ex.next++, owner: pl.id, name: pl.name, side, k, qty, done: 0, price, at: now, open: true, box: { items: 0, cash: 0 } };
       this.ex.orders.push(o);
-      this.say(pl, `Offer placed: ${side === "sell" ? "selling" : "buying"} ${qty.toLocaleString()} × ${G.ITEMS[k].name} at ${G.fmtCash(price)} each.`, "good");
       const touched = this.exMatch(o);
+      // "buy now": whatever the listings couldn't fill isn't left behind as an offer
+      if (now_ && o.done < o.qty) { o.box.cash += (o.qty - o.done) * o.price; o.qty = o.done; o.open = false; }
+      for (const p of new Set([pl, ...touched])) { this.exDeliver(p); this.exSend(p); }
       this.touch(pl); this.exCommit(pl, ...touched.filter((p) => p !== pl));
-      this.exSend(pl); for (const p of touched) if (p !== pl) this.exSend(p);
-      return;
+      return o;
+    };
+    if (m.op === "place" || m.op === "buynow") {
+      const side = m.op === "buynow" ? "buy" : m.side === "buy" ? "buy" : "sell", k = String(m.k), qty = Math.floor(Number(m.qty)), price = Math.floor(Number(m.price));
+      if (!G.ITEMS[k] || k === "coins") return this.say(pl, "You can't trade that on the market.", "bad");
+      if (!(qty >= 1 && qty <= 1e9 && price >= 1 && price <= 1e9)) return this.say(pl, "Pick a quantity and a price of at least 1.", "bad");
+      if (m.op === "place" && this.exOpen(pl).length >= G.EX_SLOTS) return this.say(pl, `You can have ${G.EX_SLOTS} offers up at once. Cancel one first.`, "bad");
+      if (side === "sell") {
+        const have = haveAll(k); if (have < qty) return this.say(pl, `You only have ${have.toLocaleString()} ${G.ITEMS[k].name.toLowerCase()} (bag and bank).`, "bad");
+        takeItems(k, qty);
+      } else {
+        const cost = qty * price; if (cashAll() < cost) return this.say(pl, `That needs ${G.fmtCash(cost)}. You have ${G.fmtCash(cashAll())} (bag and bank).`, "bad");
+        payCash(cost);
+      }
+      const o = place(side, k, qty, price, m.op === "buynow");
+      if (m.op === "buynow") return this.say(pl, o.done ? `You buy ${o.done.toLocaleString()} × ${G.ITEMS[k].name}. It's in your bank.` : "Somebody got there first: nothing left at that price.", o.done ? "good" : "bad");
+      return this.say(pl, `Offer up: ${side === "sell" ? "selling" : "buying"} ${qty.toLocaleString()} × ${G.ITEMS[k].name} at ${G.fmtCash(price)} each.`, "good");
     }
     const o = this.ex.orders.find((x) => x.id === (m.id | 0) && x.owner === pl.id); if (!o) return;
     if (m.op === "cancel" && o.open) {
-      o.open = false;
+      o.open = false; o.closedAt = now;
       const left = o.qty - o.done;
       if (o.side === "sell") o.box.items += left; else o.box.cash += left * o.price;
-      this.say(pl, "Offer cancelled. What's left is waiting to be collected.");
-    }
-    if (m.op === "collect" || m.op === "cancel") {
-      if (o.box.items) o.box.items -= this.giveUpTo(pl, o.k, o.box.items);
-      if (o.box.cash && this.give(pl, "coins", o.box.cash)) o.box.cash = 0;
-      // a finished offer with nothing left in its box is done with
-      if (!o.open && !o.box.items && !o.box.cash) this.ex.orders.splice(this.ex.orders.indexOf(o), 1);
+      this.exDeliver(pl);
+      this.say(pl, "Offer taken down. What was left is back in your bank.");
       this.touch(pl); this.exCommit(pl); this.exSend(pl);
     }
   }
@@ -1452,10 +1493,14 @@ export class World {
       sell.box.cash += gross - tax;
       if (buy.price > price) buy.box.cash += (buy.price - price) * q;   // bid more than it cost: the difference comes back
       this.ex.last[o.k] = { price, at: Date.now() }; this.ex.tax += tax;
+      const nm = G.ITEMS[o.k].name;
       for (const side of [sell, buy]) {
-        if (side.done >= side.qty) side.open = false;
-        const p = this.pls.get(side.owner);
-        if (p) { touched.add(p); this.say(p, `Exchange: ${side.side === "sell" ? "sold" : "bought"} ${q.toLocaleString()} × ${G.ITEMS[o.k].name} at ${G.fmtCash(price)} each. Collect it at the stall.`, "loot"); }
+        if (side.done >= side.qty) { side.open = false; side.closedAt = Date.now(); }
+        const p = this.pls.get(side.owner); if (p) touched.add(p);
+        // the one who was waiting hears about it; the one who just clicked already knows
+        if (side !== o) this.exNote(side.owner, side.side === "sell"
+          ? `sold ${q.toLocaleString()} × ${nm} for ${G.fmtCash(gross - tax)}`
+          : `bought ${q.toLocaleString()} × ${nm} at ${G.fmtCash(price)} each`);
       }
       if (o.done >= o.qty) break;
     }

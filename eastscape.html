@@ -181,6 +181,35 @@ button,input,select{font:inherit}
 .offer .otop{display:flex;align-items:center;gap:8px}
 .offer .otop i{font-style:normal;font-size:26px}
 .offer .otop b{font-size:14px;display:block}
+/* the market */
+.mk-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+.mk-bar .search{flex:1 1 160px;margin:0}
+.mk-list{display:grid;gap:4px}
+.mk-row{display:grid;grid-template-columns:30px 1fr auto auto;gap:8px;align-items:center;padding:5px 8px;background:#e6dcc4;border:1px solid #bfb193;border-radius:5px;font-size:13px}
+.mk-row>i{font-style:normal;display:flex;justify-content:center}.mk-row>i .ico{width:26px;height:26px;vertical-align:0}
+.mk-row b{display:block;font-size:13.5px}.mk-row small{display:block;color:#6a5a40;font-size:11.5px}
+.mk-row .pr{font-weight:800;white-space:nowrap;text-align:right}.mk-row .pr small{font-weight:600}
+.mk-row.mine{background:#efe6cf;border-style:dashed}
+.mk-buy{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding-top:5px;border-top:1px solid #d0c4a8}
+.mk-buy input{width:80px}
+.mk-h{display:flex;align-items:center;gap:8px;margin:12px 0 5px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#6a5a40}
+.mk-h::after{content:"";flex:1;height:1px;background:currentColor;opacity:.35}
+.mk-form{display:grid;gap:8px;max-width:420px}
+.mk-form label{display:grid;gap:3px;font-size:12px;font-weight:800;color:#5a4a30}
+.mk-form input[type=number]{padding:5px 7px;border:1px solid #8a7a5a;border-radius:4px;background:#fffaf0;font:inherit}
+.mk-note{font-size:12.5px;color:#4a3a24;background:rgba(58,38,22,.07);border-radius:4px;padding:6px 8px}
+.mk-empty{padding:14px;text-align:center;color:#6a5a40;font-size:13px;border:1px dashed #bfb193;border-radius:5px}
+/* an item dropdown with pictures: a button that opens a searchable list */
+.ipick{position:relative}
+.ipick>button{display:flex;align-items:center;gap:6px;width:100%;min-width:170px;padding:4px 8px;border:1px solid #8a7a5a;border-radius:4px;background:#fffaf0;font:inherit;font-size:13px;cursor:pointer;text-align:left;color:#2a2016}
+.ipick>button .ico{width:20px;height:20px;vertical-align:0}.ipick>button::after{content:"▾";margin-left:auto;opacity:.6}
+.ipop{position:absolute;z-index:30;top:calc(100% + 3px);left:0;width:max(100%,260px);max-height:260px;display:flex;flex-direction:column;background:#fffaf0;border:1px solid #8a7a5a;border-radius:5px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.ipop input{margin:6px;padding:5px 7px;border:1px solid #bfb193;border-radius:4px;font:inherit;font-size:13px}
+.ipop ul{list-style:none;margin:0;padding:0 4px 4px;overflow:auto}
+.ipop li{display:flex;align-items:center;gap:7px;padding:4px 6px;border-radius:4px;cursor:pointer;font-size:13px}
+.ipop li .ico{width:20px;height:20px;vertical-align:0}.ipop li small{margin-left:auto;color:#6a5a40}
+.ipop li:hover,.ipop li.on{background:#f0dfb4}
+.chat-log p.exnote b{color:#ffd45a}
 .tag2{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:3px;color:#fff}
 .tag2.sell{background:#b8503a}.tag2.buy{background:#3a7a3a}.tag2.done{background:#6a5a40}
 .offer .bar{height:6px;background:#bfb193;border-radius:3px;overflow:hidden}.offer .bar i{display:block;height:100%;background:#3f9a2e}
@@ -450,9 +479,9 @@ button,input,select{font:inherit}
         <span style="flex:1"></span><button type="button" class="btn plain" id="depInv">Deposit bag</button><button type="button" class="btn plain" id="depEq">Deposit worn</button></div>
     </section>
     <section class="win" id="exWin" aria-label="The Exchange" hidden>
-      <div class="win-head"><b>⚖️ The Exchange</b><small>1% of each sale goes to the house</small><button type="button" class="win-x" data-close="exWin" aria-label="Close">×</button></div>
+      <div class="win-head"><b>⚖️ Market</b><small>Everything lands in your bank · 1% of each sale to the house</small><button type="button" class="win-x" data-close="exWin" aria-label="Close">×</button></div>
       <div class="win-body">
-        <div class="ex-tabs" role="tablist"><button data-ex="mine" aria-pressed="true">My offers</button><button data-ex="browse" aria-pressed="false">Browse</button><button data-ex="new" aria-pressed="false">New offer</button></div>
+        <div class="ex-tabs" role="tablist"><button data-ex="buy" aria-pressed="true">Buy</button><button data-ex="sell" aria-pressed="false">Sell</button></div>
         <div id="exBody"></div>
       </div>
     </section>
@@ -485,8 +514,8 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=30";
-import * as WK from "/v3/assets/js/eastscape-wiki.js?v=10";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=31";
+import * as WK from "/v3/assets/js/eastscape-wiki.js?v=11";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -617,8 +646,8 @@ function onMsg(m) {
     $("online").textContent = `${m.online} online`;
     return;
   }
-  if (m.type === "me") { me = m.me; renderPanel(); if (!$("shopWin").hidden) renderShop(); if (!$("smithWin").hidden && smithAt) openSmith(smithAt); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("exWin").hidden && exTab === "new") renderEx(); return; }
-  if (m.type === "exch") { EX = m; if (!$("exWin").hidden) renderEx(); return; }
+  if (m.type === "me") { me = m.me; renderPanel(); if (!$("shopWin").hidden) renderShop(); if (!$("smithWin").hidden && smithAt) openSmith(smithAt); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input"))) renderEx(); return; }
+  if (m.type === "exch") { EX = m; if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input:not(#mkQ)"))) renderEx(); return; }
   if (m.type === "trade") { if (m.closed) { TR = null; $("tradeWin").hidden = true; } else { TR = m; openWin("tradeWin"); } return; }
   if (m.type === "pong") return;
   if (m.type === "kicked") { kicked = true; return; }
@@ -648,6 +677,7 @@ function onEvent(e) {
   if (e.type === "display") return pickItems(`🏺 Put something on display`, "Visitors can look but not touch.", (s) => s.k !== "coins", (s, i) => send({ t: "isle", op: "show", i: e.i, s: i }), "Your bag is empty.");
   if (e.type === "islesign") return isleSign(e);
   if (e.type === "exchange") return openWin("exWin");
+  if (e.type === "exnote") { chatLine("Market", e.text.charAt(0).toUpperCase() + e.text.slice(1), "exnote"); say(`Market: ${e.text}`, "loot"); return; }
   if (e.type === "tradereq") { tradeReqLine(e.from, e.name); return; }
   if (e.type === "levelup") return levelUp(e.k, e.lvl);
   if (e.type === "chat") { if (e.scene === Z.key) botBubbles.set(e.id, { text: e.text, at: performance.now() }); chatLine(e.name, e.text, e.id === you?.id ? "mine" : ""); return; }
@@ -1846,57 +1876,107 @@ function renderBank() {
 }
 
 /* ------------------------------------------------------------ the Exchange */
-let EX = { mine: [], book: {}, last: {} }, exTab = "mine", exDraft = { side: "sell", k: "", qty: 1, price: 1 };
-$("exWin").querySelectorAll("[data-ex]").forEach((b) => b.addEventListener("click", () => { exTab = b.dataset.ex; renderEx(); }));
+let EX = { listings: [], wanted: [], mine: [], book: {}, last: {} }, exTab = "buy", exPost = null, exQ = "", exK = "", exBuyOpen = null;
+$("exWin").querySelectorAll("[data-ex]").forEach((b) => b.addEventListener("click", () => { exTab = b.dataset.ex; exPost = null; exBuyOpen = null; renderEx(); }));
+// what you own of something, bag and bank together (the market takes from both and pays into the bank)
+const ownAll = (k) => G.countItems(me, [k]) + (me.bank?.find((x) => x.k === k)?.n || 0);
+const cashAll = () => G.cashIn(me) + (me.bank?.find((x) => x.k === "coins")?.n || 0);
+const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? "just now" : m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`; };
+// a dropdown of items that shows their pictures and filters as you type
+function itemPicker(host, keys, value, onPick, { placeholder = "Choose an item", note = null, allowAll = false } = {}) {
+  const label = (k) => (k ? `${ico(k)} ${esc(ITEMS[k].name)}` : allowAll ? "All items" : placeholder);
+  host.innerHTML = `<div class="ipick"><button type="button" aria-haspopup="listbox" aria-expanded="false">${label(value)}</button></div>`;
+  const wrap = host.firstChild, btn = wrap.firstChild;
+  const close = () => { wrap.querySelector(".ipop")?.remove(); btn.setAttribute("aria-expanded", "false"); document.removeEventListener("pointerdown", outside, true); };
+  const outside = (e) => { if (!wrap.contains(e.target)) close(); };
+  btn.addEventListener("click", () => {
+    if (wrap.querySelector(".ipop")) return close();
+    const pop = document.createElement("div"); pop.className = "ipop";
+    pop.innerHTML = `<input type="search" placeholder="Search…" aria-label="Search items"><ul role="listbox"></ul>`;
+    wrap.append(pop); btn.setAttribute("aria-expanded", "true");
+    const inp = pop.querySelector("input"), ul = pop.querySelector("ul");
+    const draw = () => {
+      const q = inp.value.trim().toLowerCase(), list = keys.filter((k) => !q || ITEMS[k].name.toLowerCase().includes(q));
+      ul.innerHTML = (allowAll && !q ? [`<li data-k="" class="${value ? "" : "on"}">All items</li>`] : []).concat(list.slice(0, 120).map((k) => `<li role="option" data-k="${k}" class="${k === value ? "on" : ""}">${ico(k)} ${esc(ITEMS[k].name)}${note ? `<small>${esc(note(k))}</small>` : ""}</li>`)).join("") || `<li>No items match.</li>`;
+      ul.querySelectorAll("li[data-k]").forEach((li) => li.addEventListener("click", () => { close(); onPick(li.dataset.k); }));
+    };
+    inp.addEventListener("input", draw);
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); ul.querySelector("li[data-k]")?.click(); } if (e.key === "Escape") { e.stopPropagation(); close(); btn.focus(); } });
+    draw(); inp.focus(); document.addEventListener("pointerdown", outside, true);
+  });
+}
 function renderEx() {
   $("exWin").querySelectorAll("[data-ex]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.ex === exTab)));
-  const body = $("exBody"), name = (k) => `${ico(k)} ${esc(ITEMS[k].name)}`;
-  if (exTab === "mine") {
-    const cards = EX.mine.map((o) => {
-      const pc = Math.round((o.done / o.qty) * 100), waiting = o.box.items || o.box.cash, state = o.open ? `<span class="tag2 ${o.side}">${o.side === "sell" ? "Selling" : "Buying"}</span>` : `<span class="tag2 done">${o.done >= o.qty ? "Finished" : "Cancelled"}</span>`;
-      return `<div class="offer"><div class="otop"><i>${ico(o.k)}</i><span><b>${esc(ITEMS[o.k].name)}</b>${state}</span></div>
-        <div>${o.done.toLocaleString()} of ${o.qty.toLocaleString()} at ${G.fmtCash(o.price)} each</div><div class="bar"><i style="width:${pc}%"></i></div>
-        ${waiting ? `<div><b>Ready to collect:</b> ${o.box.items ? `${o.box.items.toLocaleString()} × ${esc(ITEMS[o.k].name)}` : ""}${o.box.items && o.box.cash ? " and " : ""}${o.box.cash ? G.fmtCash(o.box.cash) : ""}</div>` : ""}
-        <div class="row">${waiting ? `<button class="btn" data-collect="${o.id}">Collect</button>` : ""}${o.open ? `<button class="btn plain" data-cancel="${o.id}">Cancel</button>` : ""}</div></div>`;
-    });
-    for (let i = EX.mine.length; i < G.EX_SLOTS; i++) cards.push(`<button class="offer empty" data-newslot>+ New offer</button>`);
-    body.innerHTML = `<div class="offers">${cards.join("")}</div>`;
-    body.querySelectorAll("[data-collect]").forEach((b) => b.addEventListener("click", () => send({ t: "ex", op: "collect", id: +b.dataset.collect })));
-    body.querySelectorAll("[data-cancel]").forEach((b) => b.addEventListener("click", () => send({ t: "ex", op: "cancel", id: +b.dataset.cancel })));
-    body.querySelectorAll("[data-newslot]").forEach((b) => b.addEventListener("click", () => { exTab = "new"; renderEx(); }));
+  const body = $("exBody"), book = (k) => EX.book[k] || {}, last = (k) => EX.last[k]?.price;
+  const tradeable = Object.keys(ITEMS).filter((k) => k !== "coins").sort((a, b) => ITEMS[a].name.localeCompare(ITEMS[b].name));
+  const row = (icon, title, sub, right, extra = "", cls = "") => `<div class="mk-row ${cls}"><i>${icon}</i><span><b>${title}</b><small>${sub}</small></span>${right}${extra}</div>`;
+
+  // ---------- posting an offer (either side)
+  if (exPost) {
+    const d = exPost, sell = d.side === "sell";
+    const keys = sell ? tradeable.filter((k) => ownAll(k) > 0) : tradeable;
+    if (d.k && !keys.includes(d.k)) d.k = "";
+    const b = book(d.k), have = d.k ? ownAll(d.k) : 0, total = d.qty * d.price, tax = G.exTax(total);
+    body.innerHTML = `<div class="mk-form">
+      <div class="mk-h">${sell ? "Post a sell offer" : "Post a buy offer"}</div>
+      <label>Item<span id="mkPick"></span></label>
+      ${d.k ? `<div class="mk-note">Cheapest listed: <b>${b.sell != null ? G.fmtCash(b.sell) : "—"}</b> · best buy offer: <b>${b.buy != null ? G.fmtCash(b.buy) : "—"}</b> · last sold: <b>${last(d.k) ? G.fmtCash(last(d.k)) : "—"}</b>${sell ? `<br>You have ${have.toLocaleString()} (bag and bank).` : ""}</div>
+      <label>How many<input id="mkQty" type="number" min="1" ${sell ? `max="${have}"` : ""} value="${d.qty}"></label>
+      <label>Price each (Cash)<input id="mkPrice" type="number" min="1" value="${d.price}"></label>
+      <div class="mk-note">${sell ? `You'd get <b>${G.fmtCash(total - tax)}</b> when it all sells (${G.fmtCash(total)} less ${G.fmtCash(tax)} to the house). The items leave your bag or bank now; takings go to your bank.`
+        : `This puts up <b>${G.fmtCash(total)}</b> now (you have ${G.fmtCash(cashAll())}, bag and bank). If it fills cheaper, you get the difference back. Items go to your bank.`}</div>` : `<div class="mk-note">${sell ? "Pick something from your bag or bank to sell." : "Pick the item you want to buy."}</div>`}
+      <div class="row"><button class="btn" id="mkGo"${d.k ? "" : " disabled"}>${sell ? "Post sell offer" : "Post buy offer"}</button><button class="btn plain" id="mkBack">Back</button></div></div>`;
+    itemPicker($("mkPick"), keys, d.k, (k) => {
+      const bk = book(k); d.k = k;
+      d.price = (sell ? bk.buy || bk.sell : bk.sell) || last(k) || 1; d.qty = sell ? ownAll(k) : 1; renderEx();
+    }, { note: sell ? (k) => `×${ownAll(k).toLocaleString()}` : null });
+    const upd = () => { d.qty = Math.max(1, +$("mkQty").value | 0); if (sell) d.qty = Math.min(d.qty, have); d.price = Math.max(1, +$("mkPrice").value | 0); };
+    for (const id of ["mkQty", "mkPrice"]) $(id)?.addEventListener("change", () => { upd(); renderEx(); });
+    $("mkGo").addEventListener("click", () => { upd(); send({ t: "ex", op: "place", side: d.side, k: d.k, qty: d.qty, price: d.price }); exPost = null; renderEx(); });
+    $("mkBack").addEventListener("click", () => { exPost = null; renderEx(); });
+    return;
   }
-  if (exTab === "browse") {
-    const keys = Object.keys(ITEMS).filter((k) => k !== "coins" && (EX.book[k] || EX.last[k]));
-    body.innerHTML = keys.length ? `<table class="tbl"><thead><tr><th>Item</th><th>Cheapest</th><th>For sale</th><th>Best bid</th><th>Wanted</th><th>Last sold</th></tr></thead><tbody>${keys.map((k) => {
-      const b = EX.book[k] || {}, l = EX.last[k];
-      return `<tr class="click" data-k="${k}"><td>${name(k)}</td><td>${b.sell != null ? G.fmtCash(b.sell) : "—"}</td><td>${b.sellQty ? b.sellQty.toLocaleString() : "—"}</td><td>${b.buy != null ? G.fmtCash(b.buy) : "—"}</td><td>${b.buyQty ? b.buyQty.toLocaleString() : "—"}</td><td>${l ? G.fmtCash(l.price) : "—"}</td></tr>`;
-    }).join("")}</tbody></table><p class="note">Click a row to make an offer on it.</p>` : `<p class="note">The board is empty. Be the first: place an offer.</p>`;
-    body.querySelectorAll("tr[data-k]").forEach((r) => r.addEventListener("click", () => {
-      const k = r.dataset.k, b = EX.book[k] || {}, mine = G.countItems(me, [k]);
-      exDraft = mine ? { side: "sell", k, qty: mine, price: b.buy || b.sell || EX.last[k]?.price || 1 } : { side: "buy", k, qty: 1, price: b.sell || EX.last[k]?.price || 1 };
-      exTab = "new"; renderEx();
-    }));
-  }
-  if (exTab === "new") {
-    const d = exDraft, sellable = [...new Set(me.inv.map((s) => s.k))].filter((k) => k !== "coins"), buyable = Object.keys(ITEMS).filter((k) => k !== "coins");
-    const list = d.side === "sell" ? sellable : buyable; if (!list.includes(d.k)) d.k = list[0] || "";
-    const b = EX.book[d.k] || {}, total = d.qty * d.price, tax = G.exTax(total);
-    body.innerHTML = `<div class="form">
-      <div class="qty" role="group" aria-label="Sell or buy"><button data-side="sell" aria-pressed="${d.side === "sell"}">Sell</button><button data-side="buy" aria-pressed="${d.side === "buy"}">Buy</button></div>
-      ${list.length ? `<label>Item<select id="exK">${list.map((k) => `<option value="${k}"${k === d.k ? " selected" : ""}>${ITEMS[k].icon} ${esc(ITEMS[k].name)}${d.side === "sell" ? ` (you have ${G.countItems(me, [k]).toLocaleString()})` : ""}</option>`).join("")}</select></label>
-      <label>How many<input id="exQty" type="number" min="1" value="${d.qty}"></label>
-      <label>Price each (Cash)<input id="exPrice" type="number" min="1" value="${d.price}"></label>
-      <div class="sum">Board now: cheapest ${b.sell != null ? G.fmtCash(b.sell) : "—"} · best bid ${b.buy != null ? G.fmtCash(b.buy) : "—"} · last sold ${EX.last[d.k] ? G.fmtCash(EX.last[d.k].price) : "—"}</div>
-      <div class="sum">${d.side === "sell" ? `You'd get up to <b>${G.fmtCash(total - tax)}</b> (${G.fmtCash(total)} less ${G.fmtCash(tax)} to the house). The items leave your bag now.` : `This puts <b>${G.fmtCash(total)}</b> on the board now (you have ${G.fmtCash(G.cashIn(me))}). If it fills cheaper, you get the difference back.`}</div>
-      <button class="btn" id="exPlace">${d.side === "sell" ? "Place sell offer" : "Place buy order"}</button>` : `<p class="note">You have nothing in your bag to sell. Bring things from the bank, or switch to Buy.</p>`}</div>`;
-    body.querySelectorAll("[data-side]").forEach((x) => x.addEventListener("click", () => { d.side = x.dataset.side; renderEx(); }));
-    const upd = () => { d.k = $("exK").value; d.qty = Math.max(1, +$("exQty").value | 0); d.price = Math.max(1, +$("exPrice").value | 0); };
-    if ($("exK")) {
-      $("exK").addEventListener("change", () => { upd(); renderEx(); });
-      for (const id of ["exQty", "exPrice"]) $(id).addEventListener("change", () => { upd(); renderEx(); });
-      $("exPlace").addEventListener("click", () => { upd(); send({ t: "ex", op: "place", side: d.side, k: d.k, qty: d.qty, price: d.price }); exTab = "mine"; renderEx(); });
+
+  // ---------- the Buy tab: newest listings, a search and a picker, buy on the row
+  if (exTab === "buy") {
+    const q = exQ.trim().toLowerCase();
+    const list = EX.listings.filter((l) => (!exK || l.k === exK) && (!q || ITEMS[l.k].name.toLowerCase().includes(q)));
+    const myBuys = EX.mine.filter((o) => o.side === "buy" && o.open);
+    body.innerHTML = `<div class="mk-bar"><input class="search" id="mkQ" placeholder="Search listings…" value="${esc(exQ)}" aria-label="Search listings"><span id="mkK"></span><button class="btn" id="mkPostBuy">Post a buy offer</button></div>
+      <div class="mk-h">For sale · newest first</div>
+      <div class="mk-list">${list.map((l) => row(ico(l.k), esc(ITEMS[l.k].name), `${l.left.toLocaleString()} for sale · ${l.mine ? "your listing" : esc(l.name)} · ${ago(l.at)}`,
+        `<span class="pr">${G.fmtCash(l.price)}<small>each</small></span>`,
+        l.mine ? "<span></span>" : `<button class="btn" data-buy="${l.id}">${exBuyOpen === l.id ? "Close" : "Buy"}</button>${exBuyOpen === l.id ? `<div class="mk-buy">How many <input type="number" id="mkBuyQ" min="1" max="${l.left}" value="${l.left}"> <span id="mkBuyT">${G.fmtCash(l.left * l.price)}</span> <button class="btn" id="mkBuyGo" data-k="${l.k}" data-p="${l.price}">Buy now</button></div>` : ""}`,
+        l.mine ? "mine" : "")).join("") || `<div class="mk-empty">${exK || q ? "Nothing listed that matches. Post a buy offer and sellers will come to you." : "Nothing is for sale yet. Be the first: post an offer."}</div>`}</div>
+      ${myBuys.length ? `<div class="mk-h">Your buy offers</div><div class="mk-list">${myBuys.map((o) => row(ico(o.k), esc(ITEMS[o.k].name), `${o.done.toLocaleString()} of ${o.qty.toLocaleString()} bought · ${ago(o.at)}`, `<span class="pr">${G.fmtCash(o.price)}<small>each</small></span>`, `<button class="btn plain" data-cancel="${o.id}">Take down</button>`)).join("")}</div>` : ""}`;
+    itemPicker($("mkK"), tradeable.filter((k) => EX.listings.some((l) => l.k === k)), exK, (k) => { exK = k; renderEx(); }, { allowAll: true });
+    const qi = $("mkQ"); qi.addEventListener("input", () => { exQ = qi.value; const pos = qi.selectionStart; renderEx(); const n = $("mkQ"); n.focus(); n.setSelectionRange(pos, pos); });
+    $("mkPostBuy").addEventListener("click", () => { exPost = { side: "buy", k: exK, qty: 1, price: book(exK).sell || last(exK) || 1 }; renderEx(); });
+    body.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => { exBuyOpen = exBuyOpen === +b.dataset.buy ? null : +b.dataset.buy; renderEx(); }));
+    const bq = $("mkBuyQ");
+    if (bq) {
+      const go = $("mkBuyGo"), price = +go.dataset.p;
+      bq.addEventListener("input", () => { $("mkBuyT").textContent = G.fmtCash(Math.max(1, +bq.value | 0) * price); });
+      go.addEventListener("click", () => { send({ t: "ex", op: "buynow", k: go.dataset.k, qty: Math.max(1, +bq.value | 0), price }); exBuyOpen = null; });
     }
   }
+
+  // ---------- the Sell tab: your offers, and what people want
+  if (exTab === "sell") {
+    const mySells = EX.mine.filter((o) => o.side === "sell").sort((a, b) => (b.open - a.open) || b.at - a.at);
+    const wanted = EX.wanted.filter((w) => !w.mine && ownAll(w.k) > 0);
+    body.innerHTML = `<div class="mk-bar"><button class="btn" id="mkPostSell">Post a sell offer</button><small class="note" style="margin:0">From your bag or bank. You can have ${G.EX_SLOTS} offers up at once.</small></div>
+      <div class="mk-h">Your sell offers</div>
+      <div class="mk-list">${mySells.map((o) => row(ico(o.k), esc(ITEMS[o.k].name),
+        `${o.done.toLocaleString()} of ${o.qty.toLocaleString()} sold · ${o.open ? ago(o.at) : o.done >= o.qty ? "sold out" : "taken down"}`,
+        `<span class="pr">${G.fmtCash(o.price)}<small>each</small></span>`,
+        o.open ? `<button class="btn plain" data-cancel="${o.id}">Take down</button>` : `<span class="tag2 ${o.done >= o.qty ? "buy" : "done"}">${o.done >= o.qty ? "Sold" : "Closed"}</span>`)).join("") || `<div class="mk-empty">You haven't put anything up for sale.</div>`}</div>
+      ${wanted.length ? `<div class="mk-h">People want things you have</div><div class="mk-list">${wanted.map((w) => row(ico(w.k), esc(ITEMS[w.k].name), `${esc(w.name)} wants ${w.left.toLocaleString()} · you have ${ownAll(w.k).toLocaleString()}`,
+        `<span class="pr">${G.fmtCash(w.price)}<small>each</small></span>`, `<button class="btn" data-sellto="${w.k}" data-p="${w.price}" data-n="${Math.min(w.left, ownAll(w.k))}">Sell</button>`)).join("")}</div>` : ""}`;
+    $("mkPostSell").addEventListener("click", () => { exPost = { side: "sell", k: "", qty: 1, price: 1 }; renderEx(); });
+    body.querySelectorAll("[data-sellto]").forEach((b) => b.addEventListener("click", () => { exPost = { side: "sell", k: b.dataset.sellto, qty: +b.dataset.n, price: +b.dataset.p }; renderEx(); }));
+  }
+  body.querySelectorAll("[data-cancel]").forEach((b) => b.addEventListener("click", () => send({ t: "ex", op: "cancel", id: +b.dataset.cancel })));
 }
 
 /* ------------------------------------------------------------ trading face to face */
@@ -2024,7 +2104,7 @@ function wikiGo(route, setNav = true) {
       ${G.SHOP.sells.some(([k]) => k === id) || G.SHOP.buys[id] ? `<h3>The Forge</h3><p>${G.SHOP.sells.some(([k]) => k === id) ? `Brutus sells it for <b>${G.fmtCash(G.SHOP.sells.find(([k]) => k === id)[1])}</b>. ` : ""}${G.SHOP.buys[id] ? `He buys it for <b>${G.fmtCash(G.SHOP.buys[id])}</b>.` : ""}</p>` : ""}
       ${rewards.length ? `<h3>Quest rewards</h3><p>${rewards.map(([k, q]) => wl(`quests/${k}`, esc(q.name))).join(", ")}</p>` : ""}
       ${qs.length ? `<h3>Wanted for</h3><p>${qs.map((k) => wl(`quests/${k}`, esc(QUESTS[k].name))).join(", ")}</p>` : ""}
-      ${EX.last[id] ? `<h3>On the Exchange</h3><p>Last sold for ${G.fmtCash(EX.last[id].price)}.</p>` : ""}`;
+      ${EX.last[id] ? `<h3>On the market</h3><p>Last sold for ${G.fmtCash(EX.last[id].price)}.</p>` : ""}`;
   }
   else if (kind === "monsters" && MOBS[id]) {
     const m = MOBS[id], where = Object.values(WIKI.areas).filter((a) => a.mobs[id]);
