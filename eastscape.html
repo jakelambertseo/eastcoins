@@ -132,7 +132,8 @@ button,input,select{font:inherit}
 .cols2{display:grid;grid-template-columns:1.5fr 1fr;gap:12px}
 @media (max-width:620px){.cols2{grid-template-columns:1fr}}
 .stances{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 8px}
-.stbtn{font-size:13px;padding:3px 6px}
+.stbtn{font-size:13px;padding:3px 6px;display:flex;align-items:center;justify-content:center;gap:5px}
+.stbtn .ico{width:22px;height:22px;image-rendering:pixelated;flex:none}
 .stbtn.on{color:#ffe45c;box-shadow:inset 0 0 0 2px rgba(255,228,92,.55)}
 .stnote{display:block;padding:4px 10px 2px;opacity:.75;font-size:12px;line-height:1.35}
 .skh{display:flex;align-items:center;gap:8px;margin:10px 10px 2px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;opacity:.6}
@@ -774,6 +775,8 @@ for (const k of [...ITEM_ART, ...[...SKILL_ART].map((x) => "skill_" + x), ...[..
 const artOf = (k) => `<img class="ico" src="${IART}${k}.png?v=${IART_V}" alt="">`;
 const ART_ALIAS = { bronze_body: "bronzecuirass", bronze_helm: "bronzehelm", bronze_shield: "bronzeshield", bronze_sword: "bronzesword" };
 const ico = (k) => { const a = ART_ALIAS[k] || k; return ITEM_ART.has(a) ? artOf(a) : ITEMS[k]?.icon || ""; };
+// the stance buttons wear the skill each one trains; Controlled (all three) wears the old Melee icon
+const STANCE_ICO = { accurate: "attack", aggressive: "strength", defensive: "defence", controlled: "melee" };
 const sico = (k) => (SKILL_ART.has(k) ? artOf(`skill_${k}`) : SKILLS[k]?.icon || "");
 // on the canvas: centred on x, y, size pixels square
 function drawIco(k, x, y, size, skill) {
@@ -2120,7 +2123,7 @@ function renderPanel() {
     // total, so the copy says what you GET, never which is best.
     const st = me.stance || G.DEFAULT_STANCE;
     const stances = Object.entries(G.STANCES).map(([k, v]) =>
-      `<button type="button" class="btn stbtn${k === st ? " on" : ""}" data-stance="${k}" title="${esc(v.blurb)}">${v.icon} ${esc(v.name)}</button>`).join("");
+      `<button type="button" class="btn stbtn${k === st ? " on" : ""}" data-stance="${k}" title="${esc(v.blurb)}">${STANCE_ICO[k] ? sico(STANCE_ICO[k]) : v.icon} ${esc(v.name)}</button>`).join("");
     p.innerHTML = `<div class="ph">Stance</div><div class="stances">${stances}</div><small class="stnote">${esc(G.STANCES[st].blurb)} Every stance earns the same xp — only where it goes changes.</small>
       ${(() => {
       const rows = Object.entries(xpSess).filter(([k, r]) => SKILLS[k] && r.xp > 0).sort((a, b) => b[1].last - a[1].last);
