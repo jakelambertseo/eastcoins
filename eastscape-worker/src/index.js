@@ -34,6 +34,7 @@ const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const CASINO_LINES = ["one more spin", "im due", "LETS GOOO", "two cherries again lol", "who took my machine", "this one's hot i can feel it", "down bad. back to the workyard", "heads never fails", "brb selling logs", "jackpot's getting big", "gg house", "roll under 5 u cowards", "never lucky", "ok last one for real"];
 const PIT_LINES = ["HIT HIM", "my rent is on the chicken", "fixed. it's all fixed", "that cow has HANDS", "who let the goose in", "never bet against the olive", "ref??? REF???", "i've seen this one before. he folds", "put it all on the little guy", "one more fight then i'm going home", "that's a dive if i ever saw one"];
 const BOT_LINES = ["anyone know where the good fishing is?", "gz", "cows are free xp lol", "selling feathers", "this farm is peaceful", "wheat run anyone?", "brb", "that yew is taunting me", "who keeps feeding the olives"];
+const G_FAME_MIN = 500;   // a single win of this much goes on the Winners' Wall
 const EXAMINE_KINDS = new Set(["hive", "notice", "sign", "statue", "fountain", "fire", "bush", "boulder", "hay", "counter", "pool", "column", "range", "table", "barrel", "bed", "plant", "bench", "goatstatue", "chest", "rug", "chair", "sack", "cat", "bucket", "bigtomato", "press", "crate", "scarecrow", "milestone", "toll", "barricade", "chariot", "mule"]);
 
 // constant-time compare, so a wrong key cannot be guessed a character at a time
@@ -139,6 +140,7 @@ export class World {
     ctx.blockConcurrencyWhile(async () => {
       this.ex = (await ctx.storage.get("exchange")) || { next: 1, orders: [], last: {}, tax: 0 };
       this.jack = (await ctx.storage.get("jackpot")) || { pot: G.JACKPOT.seed, wins: [] };
+      this.fame = (await ctx.storage.get("fame")) || null;   // the Winners' Wall
     });
   }
 
@@ -239,7 +241,7 @@ export class World {
   }
   touch(pl) { pl.dirty = true; pl.needSave = true; pl.changedAt ??= Date.now(); }
 
-  meOf(pl) { const C = pl.C; return { isle: { tier: C.isle.tier, themes: C.isle.themes }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats }; }
+  meOf(pl) { const C = pl.C; return { isle: { tier: C.isle.tier, themes: C.isle.themes }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), wagered: Number(C.wagered) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats }; }
 
   /* ------------------------------------------------------------ scenes */
   scene(key) {
@@ -378,7 +380,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob) return;
-      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", roulette: "roulette", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", roulette: "roulette", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       if (!kind) return;
       const at = kind === "door" && ob.door ? ob.door : G.nearestCell(ob, f);
       act = { kind, ob, x: at.x, y: at.y, name: ob.name };
@@ -679,6 +681,7 @@ export class World {
     this.scenes.clear();
     this.ex = (await this.ctx.storage.get("exchange")) || this.ex;
     this.jack = (await this.ctx.storage.get("jackpot")) || this.jack;
+    this.fame = (await this.ctx.storage.get("fame")) || this.fame || null;
     return Response.json({ ok: true, restored: written, from: body.takenAt || null });
   }
 
@@ -1138,6 +1141,8 @@ export class World {
     if (a.kind === "bank") return pl.out.push({ type: "bank" });
     if (a.kind === "cashier") { pl.act = null; return pl.out.push({ type: "cashier", ruby: ob.t === "coinstatue" }); }
     if (a.kind === "fight") { pl.act = null; return pl.out.push({ ...this.fightView(S, pl, now), open: true }); }
+    if (a.kind === "prize") { pl.act = null; return this.prizeSpin(pl); }
+    if (a.kind === "fame") { pl.act = null; const F = this.fameToday(); return pl.out.push({ type: "popup", title: "Winners' Wall", icon: "🏆", text: F.rows.length ? `TODAY'S BIGGEST WINS\n\n${F.rows.map((r, i) => `${i + 1}. ${r.name}: +${G.fmtCash(r.profit)} on ${r.game}`).join("\n")}\n\nWin ${G.fmtCash(G_FAME_MIN)} or more on one bet to get your name up here. The wall is wiped at midnight, Central.` : `Nobody's won ${G.fmtCash(G_FAME_MIN)} on one bet yet today. The wall is empty, and it could be your name at the top of it.` }); }
     if (a.kind === "cooler" || a.kind === "buffet") {   // a drink or a plate: a fifth of the meter a click, free, until you're full
       pl.act = null; const k = a.kind === "cooler" ? "thirst" : "hunger", was = G.needOf(C, k);
       if (was >= 100) return this.say(pl, k === "thirst" ? "You couldn't drink another drop." : "You couldn't eat another bite.");
@@ -1546,12 +1551,12 @@ export class World {
   // the parts of a player or bot that do not change every tick
   whoOf(S) {
     const out = [];
-    for (const p of this.playersIn(S)) out.push({ id: p.id, name: p.name, lvl: G.totalOf(p.C), weapon: p.C.eq.weapon, body: p.C.eq.body, maxHp: G.maxHpOf(p.C) });
+    for (const p of this.playersIn(S)) out.push({ id: p.id, name: p.name, vip: G.vipOf(p.C).i || undefined, lvl: G.totalOf(p.C), weapon: p.C.eq.weapon, body: p.C.eq.body, maxHp: G.maxHpOf(p.C) });
     for (const b of S.bots) out.push({ id: b.id, name: b.name, level: b.level, art: b.art, hue: b.hue });
     return out;
   }
   // cheap enough to build every broadcast; it only ever SENDS when it differs
-  whoSigOf(who) { let sig = ""; for (const w of who) sig += `${w.id}|${w.name}|${w.lvl ?? w.level}|${w.weapon || ""}|${w.body || ""}|${w.maxHp || ""}|${w.art || ""}|${w.hue || ""};`; return sig; }
+  whoSigOf(who) { let sig = ""; for (const w of who) sig += `${w.id}|${w.name}|${w.vip || 0}|${w.lvl ?? w.level}|${w.weapon || ""}|${w.body || ""}|${w.maxHp || ""}|${w.art || ""}|${w.hue || ""};`; return sig; }
 
   snapOf(S, now, withEvents = true) {
     const st = (e) => (e.step ? [e.step.fx, e.step.fy, e.step.tx, e.step.ty, e.step.t0, e.step.ms] : 0);
@@ -1739,6 +1744,27 @@ export class World {
     const why = G.tooEmpty(pl.C); if (!why) return false;
     pl.out.push({ type: "need", k: why, blocked: true }); this.say(pl, G.NEED_TEXT[why], "bad"); return true;
   }
+  /* THE DAILY PRIZE WHEEL: one spin a Chicago day. The prize is decided and given here; the page only spins to it. */
+  prizeSpin(pl) {
+    const C = pl.C, day = G.chicagoDay(), last = C.spin;
+    if (last?.day === day) return pl.out.push({ type: "prize", done: true, streak: last.streak | 0 });
+    const streak = last?.day === G.dayBefore(day) ? (last.streak | 0) + 1 : 1, P = G.PRIZE, total = P.slices.reduce((a, s) => a + s.w, 0);
+    let r = Math.random() * total, i = 0; for (; i < P.slices.length - 1; i++) { r -= P.slices[i].w; if (r < 0) break; }
+    const p = P.slices[i];
+    if (p.k && G.roomFor(C.inv, p.k) < p.n) return this.say(pl, "Your bag's too full for a prize. Make some room and spin again: it's still free.", "bad");
+    C.spin = { day, streak }; const cash = p.cash ? Math.round(p.cash * (1 + P.streakStep * Math.min(P.streakMax, streak - 1))) : 0;
+    if (cash) this.cashTo(pl, cash); else this.give(pl, p.k, p.n);
+    this.touch(pl); pl.out.push({ type: "prize", i, streak, text: G.prizeText(p, streak) });
+    if ((p.cash || 0) >= 1000 || p.k === "chip_black") for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `🎡 ${pl.name} hit ${G.prizeText(p, streak)} on the Daily Prize Wheel!` });
+  }
+  /* THE WINNERS' WALL: today's five biggest single wins, kept across restarts. */
+  fameToday() { const day = G.chicagoDay(); if (this.fame?.day !== day) this.fame = { day, rows: [] }; return this.fame; }
+  fameWin(pl, game, profit) {
+    if (!(profit >= G_FAME_MIN)) return; const F = this.fameToday();
+    if (F.rows.length >= 5 && profit <= F.rows[F.rows.length - 1].profit) return;
+    F.rows = [...F.rows, { name: pl.name, game, profit }].sort((a, b) => b.profit - a.profit).slice(0, 5);
+    this.ctx.storage.put("fame", F).catch(() => {});
+  }
   /* One bet's worth of everything: the player's effects are read FIRST (so the last bet of a dinner still counts), then
      the dinner and the drink each lose a bet, and hunger and thirst go down unless Well Fed. Returns the effects, which
      the bet keeps until it's settled. */
@@ -1749,7 +1775,10 @@ export class World {
     return e;
   }
   // a stake that goes over the normal limit uses up one of a High Roller's big bets
-  bigBet(pl, before, after, def) { const C = pl.C, base = G.baseBetOf(C, def); if (before <= base && after > base && (C.roller | 0) > 0) C.roller--; }
+  bigBet(pl, before, after, def) {
+    const C = pl.C, was = G.vipOf(C).i; C.wagered = (Number(C.wagered) || 0) + Math.max(0, after - before);
+    const now = G.vipOf(C); if (now.i > was) { this.say(pl, `You've made ${now.name} VIP. Every table will take ${G.fmtCash(now.limit)} more from you, and everyone can see it by your name.`, "loot"); for (const p of this.pls.values()) if (p !== pl) p.out.push({ type: "casinonote", text: `⭐ ${pl.name} just made ${now.name} VIP.` }); }
+    const base = G.baseBetOf(C, def); if (before <= base && after > base && (C.roller | 0) > 0) C.roller--; }
   // a lost stake: the angel's chance of all of it, else the insured share
   lossBack(pl, lost, e) {
     const back = G.backWith(lost, e, Math.random()); if (!back) return 0;
@@ -1806,6 +1835,7 @@ export class World {
     const plain = Math.floor(amt * mult), boosted = G.payWith(plain, amt, e, lucky), own = amt - onHouse;
     const ret = Math.max(0, boosted - onHouse), saved = ret < own ? this.lossBack(pl, own - ret, e) : 0, payout = ret + saved + jackpot;   /* the house's chip goes back to the house; what it won is yours */
     res.lucky = boosted > plain ? boosted - plain : null; res.saved = saved || null; res.luck = pl.C.luck | 0;
+    this.fameWin(pl, game.name, payout - own);
     if (payout > own) pl.lastWin = { amt: payout - own, at: now }; else if (payout < own) pl.lastLoss = { amt: own - payout, at: now };
     this.cashTo(pl, payout);
     this.touch(pl);
@@ -1890,7 +1920,7 @@ export class World {
     for (const b of F.bets) {
       if (b.side !== w) continue;
       const mult = F.pays[w], payout = G.payWith(Math.floor(b.amt * mult), b.amt, F.fx?.[b.id], F.lucky?.includes(b.id)); wins.push({ name: b.name, payout, mult });
-      const p = this.pls.get(b.id); if (p) { this.cashTo(p, payout); p.lastWin = { amt: payout - b.amt, at: Date.now() }; this.touch(p); } else this.creditOffline(b.id, payout);
+      const p = this.pls.get(b.id); if (p) { this.cashTo(p, payout); p.lastWin = { amt: payout - b.amt, at: Date.now() }; this.fameWin(p, "the Fight Pit", payout - b.amt); this.touch(p); } else this.creditOffline(b.id, payout);
     }
     for (const b of F.bets) {   // the losers: insurance, and the odd angel
       if (b.side === w) continue; const p = this.pls.get(b.id), e = F.fx?.[b.id]; if (!e) continue;
@@ -1927,6 +1957,7 @@ export class World {
   }
   runEnd(S, pl, g, how, extra = {}) {
     const r = pl.C.runs[g], saved = how === "bust" ? this.lossBack(pl, r.stake, r.fx) : 0, payout = how === "cash" ? this.runCash(g, r) : how === "refund" ? r.stake : saved;
+    this.fameWin(pl, G.GAMES[g].name, payout - r.stake);
     if (payout > r.stake) pl.lastWin = { amt: payout - r.stake, at: Date.now() }; else if (payout < r.stake) pl.lastLoss = { amt: r.stake - payout, at: Date.now() };
     const mult = g === "hilo" ? Math.min(G.HILO.maxMult, r.mult) : G.minesMult(r.mines, r.open.length);
     delete pl.C.runs[g]; this.cashTo(pl, payout); this.touch(pl);
@@ -2040,7 +2071,7 @@ export class World {
         }
         const payout = G.payWith(b.amt * def.pays, b.amt, R.fx?.[b.id], luckyIds.has(b.id)); wins.push({ name: b.name, id: b.id, payout, label: G.rouletteLabel(b.kind, b.pick), mult: def.pays });
         const p = this.pls.get(b.id);
-        if (p) { this.cashTo(p, payout); this.touch(p); } else this.creditOffline(b.id, payout);
+        if (p) { this.cashTo(p, payout); this.fameWin(p, "Roulette", payout - b.amt); this.touch(p); } else this.creditOffline(b.id, payout);
       }
       R.fx = {};
       Object.assign(R, { phase: "spin", result: n, wins, endsAt: now + G.ROULETTE.spinMs });

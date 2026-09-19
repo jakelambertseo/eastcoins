@@ -81,6 +81,7 @@ button,input,select{font:inherit}
 .buff{display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 5px;border-radius:12px;background:rgba(16,50,24,.92);color:#d8ffd0;box-shadow:0 0 0 2px #4aa84a;cursor:help}
 .buff img{width:18px;height:18px;image-rendering:pixelated}.buff.worn{background:rgba(60,44,16,.92);color:#ffe9b0;box-shadow:0 0 0 2px #c8963a}.buff.b-roller{background:rgba(20,20,24,.95);color:#ffd84a;box-shadow:0 0 0 2px #ffd84a}.buff.b-drink{background:rgba(70,40,10,.92);color:#ffd9a0;box-shadow:0 0 0 2px #d8963a}.buff.b-meal{background:rgba(60,20,16,.92);color:#ffd0c0;box-shadow:0 0 0 2px #d86a4a}.buff.b-free{background:rgba(10,50,40,.92);color:#c0ffe6;box-shadow:0 0 0 2px #3ac89a}.buff.none{background:rgba(255,255,255,.06);box-shadow:0 0 0 1px rgba(255,255,255,.14);color:#aca298;padding-left:10px;font-weight:700}
 /* the wallet, under the bag: money first, then what turns into money, then what improves your odds */
+.wl-vipbar{display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}.wl-vipbar>u{display:block;height:100%}
 .wallets{margin:6px 7px 4px 5px;display:grid;gap:6px}.wallets>.wl-next{border-top:0;padding:0 3px;color:#5a4a3a}
 .wallet{padding:8px;border-radius:8px;background:linear-gradient(#1c1613,#120e0c);color:#f4ede5;box-shadow:0 0 0 2px #c8963a,0 0 0 4px #3a2410;display:grid;gap:6px}
 .wl-cash{display:flex;align-items:center;gap:8px}.wl-cash img{width:40px;height:40px;image-rendering:pixelated}.wl-cash b{font-size:26px;line-height:1;color:#ffd84a;letter-spacing:-.02em}.wl-cash small{display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#aca298;font-weight:800}
@@ -627,11 +628,11 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=57";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=58";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=33").then((m) => { WK = m; }));
-import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=5";
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=34").then((m) => { WK = m; }));
+import { createCasino } from "/v3/assets/js/eastscape-casino.js?v=6";
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=1";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -821,6 +822,7 @@ function onEvent(e) {
   if (e.type === "need") { SFX.play(e.blocked ? "ui_error" : e.k === "thirst" ? "splash" : "eat"); if (e.blocked) CZ.blocked(e.k); return; }
   if (e.type === "cashier") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true; SFX.play("ui_open"); return CZ.cashier(!!e.ruby); }
   if (e.type === "dex") return CZ.dex(e);
+  if (e.type === "prize") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true; SFX.play("ui_open"); return CZ.prize(e); }
   if (e.type === "cashed") { SFX.play("coins"); return CZ.cashed(e); }
   if (e.type === "casinonote") { chatLine("Casino", e.text, "casinonote"); if (/JACKPOT/.test(e.text)) SFX.play("jackpot"); return; }
   if (e.type === "daily") return renderDaily(e);
@@ -1587,7 +1589,7 @@ function aimCamera(P, now) {
   view.ox = Math.round(view.bx - cam.x * view.s); view.oy = Math.round(view.by - cam.y * view.s);
 }
 const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
-const KIND_OF = { cart: "ferry", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
+const KIND_OF = { prizewheel: "prize", fameboard: "fame", cart: "ferry", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
 function thingAt(wx, wy) {
   const now = snow(), near = (x_, y_, rx, ry) => Math.abs(wx - x_) <= rx && wy <= y_ + 4 && wy >= y_ - ry;
   for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})${m.c && m.c !== you?.id ? " · someone's fighting it" : ""}` }; }
@@ -1964,7 +1966,7 @@ function frame() {
   const names = set("names");
   for (const pl of Z.players) {
     const p = pos(pl), x = sx(p.px * T + 8), y = sy(p.py * T + 15);
-    if (pl.id === you.id || names) { label(pl.name, x, y + 4, pl.id === you.id ? "#fff" : pvp ? "#ff7a6a" : "#9fd0ff"); label(`level ${pl.lvl}`, x, y + 18, "#ffe45c", 12); }
+    if (pl.id === you.id || names) { const tier = G.VIP[pl.id === you.id ? G.vipOf(me).i : pl.vip | 0]; label(tier?.at ? `◆ ${pl.name}` : pl.name, x, y + 4, tier?.at ? tier.col : pl.id === you.id ? "#fff" : pvp ? "#ff7a6a" : "#9fd0ff"); label(`level ${pl.lvl}`, x, y + 18, "#ffe45c", 12); }
     if (pvp && pl.id !== you.id && pl.hp < pl.maxHp) { const bw = 30, by = sy(p.py * T - 13); ctx.fillStyle = "#c00"; ctx.fillRect(x - bw / 2, by, bw, 5); ctx.fillStyle = "#0c0"; ctx.fillRect(x - bw / 2, by, bw * Math.max(0, pl.hp / pl.maxHp), 5); }
   }
   // things lying on the ground: yours to take, or somebody's for a little while
@@ -2003,6 +2005,7 @@ function frame() {
   }
   // what a go at each rock, tree and fishing spot is worth, written over it (not while it's chopped down or mined out)
   for (const ob of Z.objs) { const v = G.nodeValue(ob); if (!v || ob.gone || ob.edge || objBusy(ob, now)) continue; const tall = ["tree", "oak", "yew", "cypress", "deadtree", "willow", "skyash", "olive"].includes(ob.t); label(G.fmtCash(v), sx((ob.x + (ob.w || 1) / 2) * T), sy(ob.y * T - (tall ? 30 : 12)), ob.special ? "#ffe27a" : "#8ff0b4", 13); }
+  if (me && me.spinDay !== G.chicagoDay()) for (const ob of Z.objs) if (ob.t === "prizewheel") label("FREE SPIN", sx((ob.x + 1) * T), sy(ob.y * T - 30 + Math.sin(pnow / 300) * 2), "#7dffb0", 13);
   for (const ob of Z.objs) if (ob.t === "coinstatue") { label("CASH IN HERE", sx((ob.x + 1) * T), sy(ob.y * T - 34), "#ffe27a", 13); label("and trade Cash for ZCoins", sx((ob.x + 1) * T), sy(ob.y * T - 22), "#ff9aa8", 10); }
   for (const ob of Z.objs) if (ob.t === "furnace" || ob.t === "anvil" || ob.t === "range") label("pays 2×", sx((ob.x + 0.5) * T), sy(ob.y * T - 16), "#ffe27a", 12);
   for (const b of Z.bots) { const p = posOf(b, now), x = sx(p.px * T + 8), y = sy(p.py * T + 15); if (names) { label(b.name, x, y + 2, "#fff", 12); label(`level ${b.level}`, x, y + 15, "#ffe45c", 11); } const bb = botBubbles.get(b.id); if (bb && pnow - bb.at < 3500) bubble(bb.text, x, sy(p.py * T - 10)); }
@@ -2713,6 +2716,7 @@ function walletCard() {
       <div class="wl-row${loot ? " go" : ""}" title="What the Cashier would pay for the loot and made things in your bag"><img src="${UIA}w_sack.png?v=1" alt=""><span>${loot ? (full ? "Bag's full" : "In your bag") : "Nothing to sell"}<small>${loot ? "see a Cashier, by either arch" : "west arch to gather, east to fight"}</small></span><b>${loot ? `+${G.fmtCash(loot)}` : ""}</b></div>
       ${me.jack ? `<div class="wl-row" title="The slots jackpot: three sevens wins it"><img src="${UIA}w_jackpot.png?v=1" alt=""><span>Slots jackpot<small>three sevens takes it</small></span><b style="color:#ffd84a">${G.fmtCash(me.jack)}</b></div>` : ""}
     </div>
+    ${(() => { const v = G.vipOf(me), nx = v.next; return `<div class="wallet wl-vip" title="Every dollar you bet counts, win or lose. Your tier shows by your name and raises every table's limit${v.limit ? ` (yours: +${G.fmtCash(v.limit)})` : ""}."><div class="wl-h" style="margin:0"><b style="color:${v.col}">◆ ${v.name} VIP</b><span style="margin-left:auto;text-transform:none;letter-spacing:0">${nx ? `${G.fmtCash(Math.max(0, nx.at - v.wagered))} more bet to ${nx.name}` : "the top of the house"}</span></div><i class="wl-vipbar"><u style="width:${nx ? Math.round(((v.wagered - v.at) / (nx.at - v.at)) * 100) : 100}%;background:${(nx || v).col}"></u></i></div>`; })()}
     <div class="wl-next">${esc(whatNext())}</div>
   </div>`;
 }
