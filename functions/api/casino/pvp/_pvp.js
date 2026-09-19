@@ -46,6 +46,7 @@
 
 import { moveBalance, beginOperation, finishOperation, newId } from "../../picks/_lib.js";
 import { sha256, randomSeed, MAX_BETS_PER_HOUR } from "../_engine.js";
+import { RL, replay, lightsClosed, lightOpen, lightMs } from "./_redlight.js";
 
 export const STAKE = 20;
 export const LOBBY_MS = 60 * 1000;
@@ -64,8 +65,15 @@ const STUCK_MS = 2 * 60 * 1000;
 // in the browser, where no ZCoin can move. Flip to false to reopen.
 export const GAMES = {
   roulette: { key: "roulette", name: "Russian Roulette", paused: false, lobbyMs: 30 * 1000 },
-  standing: { key: "standing", name: "Last One Standing", paused: true }
+  standing: { key: "standing", name: "Last One Standing", paused: true },
+  // PLAYED, not drawn: after the lobby closes the round stays open while the runners send a sprint for every light,
+  // and it settles when the replay of those sprints (rules in _redlight.js) has a winner. Same buy-in, same lobby,
+  // same winner-takes-all, same idempotent payout as the tables above.
+  redlight: { key: "redlight", name: "Red Light, Green Light", paused: true, played: true, lobbyMs: 30 * 1000, maxPlayers: RL.maxPlayers, practice: "/redlight-test" }
 };
+export const maxPlayersFor = (game) => game?.maxPlayers ?? MAX_PLAYERS;
+// the longest a race can take from the lobby closing: every light, then a beat for the last poll to land
+export const RACE_MAX_MS = RL.introMs + RL.maxLights * lightMs() + 5000;
 export const gameFor = (key) => GAMES[String(key || "").toLowerCase()] || null;
 
 let ready = false;
@@ -107,7 +115,16 @@ export async function ensurePvp(db) {
     )`),
     db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_pvp_entry_once ON pvp_entries (round_id, user_id)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_pvp_entries_round ON pvp_entries (round_id, seat)`),
-    db.prepare(`CREATE INDEX IF NOT EXISTS idx_pvp_entries_user ON pvp_entries (user_id, updated_at)`)
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_pvp_entries_user ON pvp_entries (user_id, updated_at)`),
+    // a played game's inputs: one sprint per seat per light, and the first one sent is the one that stands
+    db.prepare(`CREATE TABLE IF NOT EXISTS pvp_moves (
+      round_id TEXT NOT NULL,
+      seat INTEGER NOT NULL,
+      light INTEGER NOT NULL,
+      run_ms INTEGER NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (round_id, seat, light)
+    )`)
   ]);
   ready = true;
 }
@@ -216,6 +233,31 @@ export async function joinsLastHour(db, game, userId) {
 
 const parse = (t) => { try { return t ? JSON.parse(t) : null; } catch { return null; } };
 
+/** Every sprint sent for a round, as runs[light][seat]. */
+export async function runsFor(db, roundId) {
+  const rows = await db.prepare(`SELECT seat, light, run_ms FROM pvp_moves WHERE round_id = ?`).bind(roundId).all();
+  const runs = [];
+  for (const m of rows.results || []) { (runs[Number(m.light)] ||= [])[Number(m.seat)] = Number(m.run_ms); }
+  return runs;
+}
+
+/**
+ * A race in progress, as the page may see it: every light that has CLOSED (its turn, everyone's sprint, who went
+ * out), the standings after them, and for the light being picked right now only WHO has locked in — never what.
+ * The turn of an open light is not in here, and neither is the seed.
+ */
+export async function raceView(db, row, entries, now, viewerId = null) {
+  const startsAt = Number(row.starts_at), runs = await runsFor(db, row.id);
+  const closed = lightsClosed(startsAt, now), open = lightOpen(startsAt, now);
+  const rep = await replay(row.seed, entries.length, runs, closed);
+  const mine = viewerId ? entries.findIndex((e) => e.user_id === String(viewerId)) : -1;
+  return {
+    light: open, closed, lights: rep.lights, pos: rep.pos, alive: rep.alive, outAt: rep.outAt, winner: rep.winner, how: rep.how,
+    locked: entries.map((_, s) => open >= 0 && runs[open]?.[s] != null),
+    mySeat: mine, myRun: mine >= 0 && open >= 0 ? runs[open]?.[mine] ?? null : null
+  };
+}
+
 export function publicRound(row, entries, { revealSeed = false, viewerId = null } = {}) {
   if (!row) return null;
   const over = row.status === "SETTLED" || row.status === "VOID";
@@ -304,11 +346,20 @@ export async function settleDue(env, db, game, now = Date.now()) {
           AND (status = 'LOBBY' OR (status = 'SETTLING' AND starts_at < ?))
         ORDER BY starts_at ASC LIMIT 3`
     )
-    .bind(game.key, now, now - STUCK_MS)
+    .bind(game.key, now, now - STUCK_MS - (game.played ? RACE_MAX_MS : 0))
     .all();
 
   const done = [];
   for (const r of due.results || []) {
+    // A played game is only due once its race has a winner; until then the round stays open and is left alone.
+    let raced = null;
+    if (game.played) {
+      const seats = await entriesFor(db, r.id);
+      if (seats.length >= MIN_PLAYERS) {
+        raced = await replay(r.seed, seats.length, await runsFor(db, r.id), lightsClosed(Number(r.starts_at), now));
+        if (raced.winner === null) continue;
+      }
+    }
     const claim = await db
       .prepare(`UPDATE pvp_rounds SET status = 'SETTLING' WHERE id = ? AND status IN ('LOBBY', 'SETTLING')`)
       .bind(r.id)
@@ -327,7 +378,10 @@ export async function settleDue(env, db, game, now = Date.now()) {
       continue;
     }
 
-    const outcome = await outcomeFor(game, r.seed, entries.map((e) => e.user_id));
+    // (a seat cannot be added once the clock has run out, so the replay above saw the same seats as `entries`)
+    const outcome = raced && raced.alive.length === entries.length ? raced : game.played
+      ? await replay(r.seed, entries.length, await runsFor(db, r.id), lightsClosed(Number(r.starts_at), now))
+      : await outcomeFor(game, r.seed, entries.map((e) => e.user_id));
     const pays = payoutsFor(game, outcome, entries.length);
     for (let i = 0; i < entries.length; i += 1) await payEntry(env, db, entries[i], pays[i]);
     await db

@@ -7,7 +7,7 @@
 import { getSessionUser, walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOperation, newId, json, fail } from "../../picks/_lib.js";
 import { settlePot } from "../_pot.js";
 import { ensureSchema, touchPresence, capCheck, MAX_BETS_PER_HOUR } from "../_engine.js";
-import { ensurePvp, gameFor, settleDue, lobbyFor, openLobby, entriesFor, publicRound, joinsLastHour, STAKE, MAX_PLAYERS } from "./_pvp.js";
+import { ensurePvp, gameFor, settleDue, lobbyFor, openLobby, entriesFor, publicRound, joinsLastHour, STAKE, maxPlayersFor, RACE_MAX_MS } from "./_pvp.js";
 
 export async function onRequestPost(context) {
   const db = context.env.PICKS_DB;
@@ -26,7 +26,7 @@ export async function onRequestPost(context) {
   // Refused before anything is touched, so a paused table cannot take a
   // buy-in from anyone, however they reached the page.
   if (game.paused) {
-    return fail("PAUSED", "This table is closed while it's being worked on. Practice it at eastcoin.vip/pvp-test — no ZCoins change hands there.", 409);
+    return fail("PAUSED", `This table is closed while it's being worked on. Practice it at eastcoin.vip${game.practice || "/pvp-test"} — no ZCoins change hands there.`, 409);
   }
 
   const now = Date.now();
@@ -51,9 +51,15 @@ export async function onRequestPost(context) {
   if (!lobby) lobby = await openLobby(db, game, now);
   if (!lobby) return fail("NO_LOBBY", "Couldn't open a table. Try again.", 500);
 
+  // A played game keeps its round open while the race runs. Nobody sits down at a race that has started, and
+  // this is checked BEFORE any money moves.
+  if (game.played && Number(lobby.starts_at) <= now) {
+    const left = Math.max(1, Math.ceil((Number(lobby.starts_at) + RACE_MAX_MS - now) / 1000));
+    return fail("RUNNING", `A race is on. The next one opens when it finishes, ${left}s at the most.`, 409);
+  }
   const seated = await entriesFor(db, lobby.id);
   if (seated.some((e) => e.user_id === String(user.id))) return fail("ALREADY_IN", "You're already at this table.", 409);
-  if (seated.length >= MAX_PLAYERS) return fail("FULL", `The table is full at ${MAX_PLAYERS}. The next one opens when this plays.`, 409);
+  if (seated.length >= maxPlayersFor(game)) return fail("FULL", `The table is full at ${maxPlayersFor(game)}. The next one opens when this plays.`, 409);
 
   const entryId = newId("pv");
   const opId = newId("op");

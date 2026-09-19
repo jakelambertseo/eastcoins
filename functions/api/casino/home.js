@@ -110,7 +110,7 @@ export async function onRequestGet(context) {
     const seats = lobby ? await pvpEntries(db, lobby.id).catch(() => []) : [];
     games.push({
       key: g.key, name: g.name, route: g.key, pvp: true, round: null,
-      lobby: lobby ? { startsAt: Number(lobby.starts_at), players: seats.length, pot: PVP_STAKE * seats.length } : null,
+      lobby: lobby ? { startsAt: Number(lobby.starts_at), players: seats.length, pot: PVP_STAKE * seats.length, playing: Boolean(g.played) && Number(lobby.starts_at) <= now } : null,
       lobbySeconds: pvpLobbyMs(g) / 1000,
       inRound: seats.length, staked: PVP_STAKE * seats.length, room: Number(room?.n || 0), people: who
     });

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Red Light, Green Light — Practice</title>
+<link rel="stylesheet" href="/v3/assets/fonts/fonts.css">
+<style>
+:root{--ink:#0c0a09;--line:rgba(255,255,255,.1);--text:#f4ede5;--muted:#aca298;--gold:#e8bf35;
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;--body:"Figtree","Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box}
+html{background:var(--ink);color-scheme:dark}
+body{margin:0;min-height:100vh;background:var(--ink);color:var(--text);font-family:var(--body);padding:0 16px 40px}
+.topbar{max-width:1240px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.brand{font-family:var(--display);font-weight:800}.brand span{color:var(--gold)}
+.mock-tag{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2a1300;background:var(--gold);padding:4px 9px;border-radius:99px}
+.page{max-width:1240px;margin:0 auto}
+.head{padding:18px 0 14px}
+.eyebrow{font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.9rem,5vw,2.7rem);letter-spacing:-.02em;margin:4px 0;line-height:1.02}
+.sub{color:var(--muted);margin:0;max-width:74ch;line-height:1.5}
+.sub b{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="brand">East<span>Coin</span> Casino</div><div class="mock-tag">Practice · no ZCoins</div></div>
+<div class="page">
+  <div class="head">
+    <div class="eyebrow">PvP · up to 6 runners</div>
+    <h1>Red Light, Green Light</h1>
+    <p class="sub">Six lanes, a hundred yards, and a referee with his back turned. <b>Hold the button</b> for as long as you dare sprint. He spins round when he feels like it, and anyone still moving is out. First across the goal line takes every buy-in. This page is the real game against bots, with pretend chips: nothing here touches your ZCoins.</p>
+  </div>
+  <div id="game"></div>
+</div>
+<script src="/v3/assets/js/v3-redlight.js?v=1"></script>
+<script type="module">
+import { sandboxApi } from "/v3/assets/js/redlight-sandbox.js?v=1";
+const go = () => (window.ECRedLight ? window.ECRedLight.mount(document.getElementById("game"), sandboxApi, { unit: "chips" }) : setTimeout(go, 30));
+go();
+window.__rl = sandboxApi;
+</script>
+</body>
+</html>

@@ -12,7 +12,8 @@
 
 import { getSessionUser, walletWritesEnabled } from "../../picks/_lib.js";
 import { ensureSchema, touchPresence, roomFor, hourlyNet, HOUR_WIN_CAP, MAX_BETS_PER_HOUR } from "../_engine.js";
-import { ensurePvp, gameFor, settleDue, lobbyFor, entriesFor, publicRound, joinsLastHour, STAKE, lobbyMsFor, MIN_PLAYERS, MAX_PLAYERS, chambersFor } from "./_pvp.js";
+import { ensurePvp, gameFor, settleDue, lobbyFor, entriesFor, publicRound, joinsLastHour, STAKE, lobbyMsFor, MIN_PLAYERS, maxPlayersFor, chambersFor, raceView } from "./_pvp.js";
+import { RL } from "./_redlight.js";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
@@ -33,7 +34,10 @@ export async function onRequestGet(context) {
   await settleDue(context.env, db, game, now);
 
   const lobbyRow = await lobbyFor(db, game);
-  const lobby = lobbyRow ? publicRound(lobbyRow, await entriesFor(db, lobbyRow.id), { viewerId: user?.id }) : null;
+  const lobbySeats = lobbyRow ? await entriesFor(db, lobbyRow.id) : [];
+  const lobby = lobbyRow ? publicRound(lobbyRow, lobbySeats, { viewerId: user?.id }) : null;
+  // a played game's round stays open while it runs: once the clock is out, the same row is the race
+  const race = game.played && lobbyRow && Number(lobbyRow.starts_at) <= now ? await raceView(db, lobbyRow, lobbySeats, now, user?.id) : null;
 
   const lastRow = await db
     .prepare(`SELECT * FROM pvp_rounds WHERE game = ? AND status IN ('SETTLED', 'VOID') ORDER BY settled_at DESC LIMIT 1`)
@@ -96,7 +100,7 @@ export async function onRequestGet(context) {
   // What each table size pays, so the page can show it without doing
   // the maths itself and disagreeing with the server.
   const table = [];
-  for (let n = MIN_PLAYERS; n <= MAX_PLAYERS; n += 1) {
+  for (let n = MIN_PLAYERS; n <= maxPlayersFor(game); n += 1) {
     // Both games pay the winner the whole pot; roulette also says how big
     // the first cylinder is, since that is what the table looks like.
     table.push({ players: n, pot: STAKE * n, chance: n, chambers: game.key === "roulette" ? chambersFor(n) : undefined });
@@ -108,13 +112,15 @@ export async function onRequestGet(context) {
     game: game.key,
     name: game.name,
     config: {
-      stake: STAKE, lobbySeconds: lobbyMsFor(game) / 1000, minPlayers: MIN_PLAYERS, maxPlayers: MAX_PLAYERS,
+      stake: STAKE, lobbySeconds: lobbyMsFor(game) / 1000, minPlayers: MIN_PLAYERS, maxPlayers: maxPlayersFor(game),
+      rules: game.played ? RL : undefined, practice: game.practice,
       maxPerHour: MAX_BETS_PER_HOUR, hourCap: HOUR_WIN_CAP,
       canBet: Boolean(user) && walletWritesEnabled(context.env),
       paused: Boolean(game.paused),
       table
     },
     lobby,
+    race,
     last,
     history,
     room: await roomFor(db, game, now),

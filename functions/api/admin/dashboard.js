@@ -173,7 +173,7 @@ async function bookOf(db) {
    house's take is stake minus payout on decided bets only; a bet still
    live counts as neither. */
 
-const GAME_NAMES = { wheel: "Wheel", race: "Horse Race", flip: "Coin Flip", hilo: "Higher or Lower", mines: "Mines", plinko: "Plinko", scratch: "Scratch-Off", roulette: "Russian Roulette", standing: "Last One Standing" };
+const GAME_NAMES = { wheel: "Wheel", race: "Horse Race", flip: "Coin Flip", hilo: "Higher or Lower", mines: "Mines", plinko: "Plinko", scratch: "Scratch-Off", roulette: "Russian Roulette", standing: "Last One Standing", redlight: "Red Light, Green Light" };
 
 async function casinoBook(db) {
   const [shared, coin, hilo, mines, plinko, pvp, scratch, everyoneByTable, recentByTable] = await Promise.all([

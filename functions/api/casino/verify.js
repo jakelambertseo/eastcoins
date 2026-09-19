@@ -16,6 +16,7 @@ import { bombsFor, ladderFor, MIN_MINES, MAX_MINES, DEFAULT_MINES, TILES } from 
 import { pathFor, bucketOf, multiplierFor, ROWS, TABLE_RETURN as PLINKO_RETURN } from "./plinko/_plinko.js";
 import { resultOf } from "../coin/_coin.js";
 import { GAMES as PVP, outcomeFor, chambersFor, MIN_PLAYERS, MAX_PLAYERS } from "./pvp/_pvp.js";
+import { RL, turnFor } from "./pvp/_redlight.js";
 import { triggerFor, drawFor, TRIGGER_MIN, TRIGGER_MAX } from "./_pot.js";
 import { rarityFor, coinsFor, pickIndex, tierItems, ODDS, COINS } from "../crate/_crate.js";
 import { outcomeFor as scratchOutcome, gridFor as scratchGrid, PRIZES as SCRATCH_PRIZES, RETURN as SCRATCH_RETURN } from "./scratch/_scratch.js";
@@ -92,6 +93,15 @@ export async function onRequestGet({ request }) {
     });
   }
 
+  if (game === "redlight") {
+    const turns = [];
+    for (let k = 0; k < RL.maxLights; k += 1) turns.push({ light: k + 1, turnsAfterMs: await turnFor(seed, k) });
+    return json({
+      ...base, name: PVP.redlight.name, turns, rules: RL,
+      rule: "light k: the referee turns sha256(seed:light:k) of the way from 0.8s to 4.0s after it goes green; anyone whose sprint is longer than that is out; first across 100 yards wins, or the last runner in; a dead heat is decided by sha256(seed:tie:k)"
+    });
+  }
+
   if (game === "scratch") {
     const prize = await scratchOutcome(seed);
     const grid = await scratchGrid(seed, prize);
@@ -128,5 +138,5 @@ export async function onRequestGet({ request }) {
     });
   }
 
-  return fail("BAD_GAME", "game must be one of: hilo, mines, plinko, scratch, wheel, race, flip, roulette, standing, pot, crate");
+  return fail("BAD_GAME", "game must be one of: hilo, mines, plinko, scratch, wheel, race, flip, roulette, standing, redlight, pot, crate");
 }
