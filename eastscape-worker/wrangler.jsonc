@@ -8,6 +8,8 @@
   "main": "src/index.js",
   "compatibility_date": "2026-08-21",
   "workers_dev": true,
+  // its own name on our domain: some school/work networks and ad-blockers block *.workers.dev
+  "routes": [{ "pattern": "play.eastcoin.vip", "custom_domain": true }],
   "preview_urls": false,
   "durable_objects": {
     "bindings": [{ "name": "WORLD", "class_name": "World" }]

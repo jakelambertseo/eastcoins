@@ -3,7 +3,7 @@
 import { getSessionUser } from "../picks/_lib.js";
 import { ensureTickets, randomTicket, isAdminLogin, TICKET_TTL_S } from "./_tickets.js";
 
-const WS_URL = "wss://eastcoin-eastscape.jake-7f5.workers.dev/ws";
+const WS_URL = "wss://play.eastcoin.vip/ws";   // the game server on our own domain (was *.workers.dev, which some networks block)
 const noStore = { "Cache-Control": "no-store" };
 
 export async function onRequestPost(context) {
