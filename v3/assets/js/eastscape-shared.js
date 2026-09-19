@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 44;
+export const VERSION = 45;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -760,8 +760,7 @@ Object.assign(SCENES, {
     wall: [{ t: "banner", x: 3 }, { t: "lamp", x: 7 }, { t: "lamp", x: 11 }, { t: "painting1", x: 14.5, dy: 7, frame: true }, { t: "lamp", x: 17 }, { t: "lamp", x: 24 }, { t: "painting2", x: 28, dy: 5 }, { t: "lamp", x: 31 }, { t: "neon", x: 35.5, dy: 16 }, { t: "lamp", x: 39.3 }, { t: "banner", x: 41 }],
     doorSigns: [{ x: 10, text: "FIGHTING" }],
     smoke: [38.5, 5.2, 42.6, 10.2],   // where the page hangs a haze: the smoking section (tile coordinates)
-    // what each room is called, written on the carpet at its way in (tile coordinates)
-    zones: [{ x: 10.5, y: 12.4, text: "▲ SLOTS" }, { x: 10.5, y: 14.6, text: "▼ WHEELS · COIN FLIP" }, { x: 32.5, y: 12.4, text: "▲ CARDS · BAR" }, { x: 32.5, y: 14.6, text: "▼ DICE · INSTANT WINS" }],
+    // (the rooms were named in gold on the carpet, def.zones, until the owner found the lettering too big: 2026-09-20. The page still knows how to draw them.)
     build() {
       const g = room(1, 4, 42, 21, 21), objs = [];
       for (let y = SPAN.w[0]; y <= SPAN.w[1]; y++) { g[y][0] = "e"; g[y][COLS - 1] = "e"; }
