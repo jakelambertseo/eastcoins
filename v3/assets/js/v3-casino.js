@@ -34,7 +34,7 @@
     mines: { title: "Mines", icon: "💣", blurb: "Twenty-five tiles, a few of them bombs. Every safe one pays more; cash out before you find one.", route: "mines" },
     plinko: { title: "Plinko", icon: "🎯", blurb: "Drop a ball through the pegs. Every bucket but the middle pays; the edges pay 25×.", route: "plinko" },
     scratch: { title: "Scratch-Off", icon: "🎟️", blurb: "Rub the foil off. Three of a kind pays, from money back on coins to 100× on crowns.", route: "scratch" },
-    grind: { title: "The Grind", icon: "🔨", blurb: "Broke? Put in a shift: 100 clicks pays 5 ZC, sorting 35 chips pays 15. One shift of each an hour, for anyone under 50.", route: "grind" },
+    grind: { title: "The Grind", icon: "🔨", blurb: "Broke? Put in a shift: 100 clicks pays 5 ZC, sorting 35 chips pays 15. One shift of each every 4 hours, for anyone under 50.", route: "grind" },
     roulette: { title: "Russian Roulette - PVP", iconUrl: "https://cdn.7tv.app/emote/01G1FDHE4R0005G1MWWMPGSX71/1x.webp", icon: "🔫", blurb: "Everyone puts in 20. One live round. Whoever it fires on pays the rest.", route: "roulette" },
     standing: { title: "Last One Standing - PVP", icon: "🏆", blurb: "Everyone puts in 20. One knocked out at a time; the last one takes the lot.", route: "standing", hidden: true }
   };
@@ -369,9 +369,9 @@
           const waits = jobs.map((j) => (j.nextShiftAt ? Date.parse(j.nextShiftAt) - now : 0));
           const open = waits.filter((w) => w <= 0).length;
           const soonest = Math.min(...waits.filter((w) => w > 0));
-          r.plays.textContent = gr.working ? "On a shift" : open ? `${open} job${open === 1 ? "" : "s"} open` : `Next job in ${Math.ceil(soonest / 60000)}m`;
+          r.plays.textContent = gr.working ? "On a shift" : open ? `${open} job${open === 1 ? "" : "s"} open` : `Next job in ${soonest >= 3600000 ? `${Math.floor(soonest / 3600000)}h ${Math.ceil((soonest % 3600000) / 60000)}m` : `${Math.ceil(soonest / 60000)}m`}`;
           r.plays.classList.toggle("out", !open && !gr.working);
-          r.plays.title = "One shift of each job an hour, for anyone under 50 ZC.";
+          r.plays.title = "One shift of each job every 4 hours, for anyone under 50 ZC.";
         }
       } else if (cap && data.me?.played) {
         const left = Math.max(0, cap - Number(data.me.played[g.key] || 0));

@@ -8,7 +8,7 @@
 
 import { getSessionUser, walletWritesEnabled, readBalance, newId, json, fail } from "../../picks/_lib.js";
 import { ensureSchema, touchPresence, randomSeed } from "../_engine.js";
-import { ensureGrind, workingShift, nextShiftAt, publicShift, jobOf, BROKE_LINE } from "./_grind.js";
+import { ensureGrind, workingShift, nextShiftAt, publicShift, jobOf, BROKE_LINE, SHIFT_COOLDOWN_MS } from "./_grind.js";
 
 const GRIND = { key: "grind" };
 
@@ -34,7 +34,8 @@ export async function onRequestPost(context) {
   const next = await nextShiftAt(db, user.id, job.key, now);
   if (next) {
     const mins = Math.ceil((next - now) / 60000);
-    return fail("COOLDOWN", `One ${job.name} shift an hour — your next one opens in ${mins} minute${mins === 1 ? "" : "s"}.`, 429);
+    const wait = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins} minute${mins === 1 ? "" : "s"}`;
+    return fail("COOLDOWN", `One ${job.name} shift every ${Math.round(SHIFT_COOLDOWN_MS / 3600000)} hours — your next one opens in ${wait}.`, 429);
   }
 
   const balance = await readBalance(context.env, user.login);

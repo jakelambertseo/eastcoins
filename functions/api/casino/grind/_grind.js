@@ -46,7 +46,8 @@ import { moveBalance, beginOperation, finishOperation, newId } from "../../picks
 import { sha256 } from "../_engine.js";
 
 export const BROKE_LINE = 50;
-export const SHIFT_COOLDOWN_MS = 60 * 60 * 1000;
+/* FOUR hours since 2026-09-19 (the owner: "its getting abused"); it was one. Each job still has its own clock. */
+export const SHIFT_COOLDOWN_MS = 4 * 60 * 60 * 1000;
 
 export const JOBS = {
   clicks: { key: "clicks", name: "Clock in", units: 100, unitName: "clicks", pay: 5, msPerUnit: 120, batchMax: 25 },
