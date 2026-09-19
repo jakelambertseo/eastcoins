@@ -375,7 +375,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob) return;
-      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", cooler: "cooler", buffet: "buffet", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", roulette: "roulette", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", roulette: "roulette", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       if (!kind) return;
       const at = kind === "door" && ob.door ? ob.door : G.nearestCell(ob, f);
       act = { kind, ob, x: at.x, y: at.y, name: ob.name };
@@ -784,7 +784,7 @@ export class World {
   /* the Cashier: everything you brought back, for what it said over it. "all" sells loot and things you made and
      leaves tools, charms and anything wearable alone; one item at a time sells whatever you point at. */
   cashOut(S, pl, m) {
-    const C = pl.C; if (!this.near(S, pl, "cashier", 3)) return this.say(pl, "You need to be at the Cashier's window, on the casino floor.", "bad");
+    const C = pl.C; if (!this.near(S, pl, "cashier", 3) && !this.near(S, pl, "coinstatue", 3)) return this.say(pl, "You need to be at the House Ruby or a Cashier's window, on the casino floor.", "bad");
     const keys = m.op === "all" ? [...new Set(C.inv.map((s) => s.k))].filter(G.isLoot) : [String(m.k)].filter((k) => k !== "coins" && G.valueOf(k) > 0 && C.inv.some((s) => s.k === k));
     let total = 0, count = 0;
     for (const k of keys) { const n = G.takeInv(C.inv, k, G.countItems({ inv: C.inv, bank: [] }, [k])); total += n * G.valueOf(k); count += n; }
