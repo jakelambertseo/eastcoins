@@ -154,12 +154,23 @@ const CSS = `
 .cz-gear button.own{box-shadow:inset 0 0 0 1px rgba(77,219,139,.6)}.cz-gear .ico,.cz-gear img{width:30px;height:30px;image-rendering:pixelated}.cz-gear small{font:800 11.5px var(--body);color:var(--gold)}.cz-chip:disabled{opacity:.4;cursor:not-allowed}
 .cz-rr{position:relative;width:min(100%,430px);aspect-ratio:1;margin:0 auto}.cz-rrseat{position:absolute;width:74px;margin:-37px 0 0 -37px;text-align:center;transition:opacity .4s,filter .4s}
 .cz-rrseat img,.cz-rrseat i{display:block;width:54px;height:54px;margin:0 auto;border-radius:50%;border:3px solid var(--line-2);background:#241d19;object-fit:cover;font:800 20px/48px var(--body);color:var(--muted);font-style:normal}
-.cz-rrseat b{display:block;font:800 11.5px var(--body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}.cz-rrseat small{font:700 10.5px var(--body);color:var(--muted)}
+.cz-rrseat b{display:block;font:800 11.5px var(--body);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}.cz-rrseat small{font:700 10.5px var(--body);color:var(--muted)}
 .cz-rrseat.me img,.cz-rrseat.me i{border-color:var(--gold)}.cz-rrseat.aim img,.cz-rrseat.aim i{border-color:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.18)}.cz-rrseat.out{opacity:.32;filter:grayscale(1)}.cz-rrseat.out img,.cz-rrseat.out i{border-color:var(--red)}
 .cz-rrseat.won img,.cz-rrseat.won i{border-color:var(--gold);box-shadow:0 0 0 5px rgba(232,191,53,.35)}.cz-rrseat.open i{border-style:dashed;cursor:pointer;color:var(--gold)}
-.cz-rrcyl{position:absolute;left:50%;top:50%;width:34%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 50% 50%,#3a332e 0 22%,#15110f 23% 100%);border:3px solid var(--line-2);display:grid;place-items:center;text-align:center}
-.cz-rrcyl b{font:800 22px var(--display);color:var(--gold)}.cz-rrcyl small{display:block;font:700 11px var(--body);color:var(--muted)}.cz-rrcyl.bang{animation:czbang .35s}@keyframes czbang{0%{transform:translate(-50%,-50%) scale(1.18);border-color:var(--red)}100%{transform:translate(-50%,-50%) scale(1)}}
-@media (prefers-reduced-motion:reduce){.cz-rrcyl.bang{animation:none}}
+.cz-rrcyl{position:absolute;left:50%;top:50%;width:44%;aspect-ratio:1;transform:translate(-50%,-50%);container-type:inline-size}
+.cz-hammer{position:absolute;left:50%;top:-4cqw;z-index:3;width:0;height:0;margin-left:-4.5cqw;border:4.5cqw solid transparent;border-top:7cqw solid var(--gold);filter:drop-shadow(0 0 6px rgba(232,191,53,.6))}
+.cz-cyl{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 50% 42%,#453c36 0,#2a231f 52%,#15110f 100%);box-shadow:inset 0 0 0 2px rgba(255,255,255,.08),inset 0 0 40px rgba(0,0,0,.75),0 14px 34px rgba(0,0,0,.6);transition:transform .26s cubic-bezier(.3,.7,.3,1);will-change:transform}
+.cz-cyl.spin{transition:transform 1s cubic-bezier(.12,.8,.2,1)}
+.cz-cyl::after{content:"";position:absolute;left:50%;top:50%;width:26cqw;height:26cqw;margin:-13cqw;border-radius:50%;background:radial-gradient(circle at 40% 35%,#554a42,#1a1512);box-shadow:inset 0 0 0 2px rgba(255,255,255,.08),0 0 0 4px rgba(0,0,0,.4)}
+.cz-ch{position:absolute;left:50%;top:50%;width:calc(var(--d,14) * 1cqw);height:calc(var(--d,14) * 1cqw);margin:calc(var(--d,14) * -.5cqw);border-radius:50%;background:#0a0807;box-shadow:inset 0 3px 8px rgba(0,0,0,.95),0 0 0 2px rgba(255,255,255,.08);transform:rotate(var(--a)) translateY(-35cqw);transition:background .2s,box-shadow .2s}
+.cz-ch.under{box-shadow:inset 0 3px 8px rgba(0,0,0,.95),0 0 0 3px rgba(232,191,53,.9),0 0 16px rgba(232,191,53,.5)}
+.cz-ch.spent{background:#2f2824;box-shadow:inset 0 2px 4px rgba(0,0,0,.6),0 0 0 2px rgba(255,255,255,.04)}.cz-ch.spent.under{box-shadow:inset 0 2px 4px rgba(0,0,0,.6),0 0 0 3px rgba(232,191,53,.55)}
+.cz-ch.live{background:radial-gradient(circle at 40% 35%,#ffe9a0,#c9962a 55%,#7a5312);box-shadow:0 0 0 3px var(--red),0 0 22px rgba(255,107,133,.95)}
+.cz-rrword{position:absolute;inset:0;z-index:2;display:grid;place-items:center;align-content:center;text-align:center;font-family:var(--display);font-weight:800;font-size:11cqw;white-space:nowrap;text-shadow:0 0 8px #000,0 0 18px #000,0 0 28px #000;pointer-events:none;color:var(--gold)}
+.cz-rrword small{display:block;font:700 6.5cqw var(--body);color:var(--text)}.cz-rrword.bang{color:var(--red);font-size:17cqw}.cz-rrword.click{color:var(--muted)}.cz-rrword.reload{color:var(--muted);font-size:8cqw}
+.cz-rr.bang{animation:czrrshake .45s}.cz-rr.bang .cz-cyl{box-shadow:inset 0 0 0 2px rgba(255,107,133,.5),inset 0 0 40px rgba(0,0,0,.75),0 0 0 5px rgba(255,107,133,.35),0 0 50px rgba(255,107,133,.55)}
+@keyframes czrrshake{0%,100%{transform:translate(0,0)}20%{transform:translate(-6px,3px)}40%{transform:translate(5px,-4px)}60%{transform:translate(-4px,2px)}80%{transform:translate(3px,-1px)}}
+@media (prefers-reduced-motion:reduce){.cz-rr.bang{animation:none}.cz-cyl,.cz-cyl.spin{transition:none}}
 .cz-realtabs{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 10px}.cz-realtabs button{padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);background:transparent;color:var(--muted);font:800 12.5px var(--body);cursor:pointer}.cz-realtabs button[aria-pressed=true]{background:var(--gold);color:#1a1405;border-color:var(--gold)}.cz-cur{align-items:center}.cz-curl{font:700 12px var(--body);color:var(--muted)}.cz-cur button[aria-pressed=true]{background:#ff9aa8;border-color:#ff9aa8}.cz-cur button:first-of-type[aria-pressed=true]{background:var(--gold);border-color:var(--gold)}
 .cz-luck a{color:var(--gold)}
 .cz-total{font:800 54px var(--display);letter-spacing:-.04em;color:var(--gold);line-height:1;text-shadow:0 0 30px rgba(232,191,53,.35)}
@@ -598,12 +609,26 @@ export function createCasino(env) {
      page asks at the same rate. A result is played back only if it settled in the last RR_STALE ms. */
   const RR_POLL = 2000, RR_STALE = 45000; let rr = { st: null, seen: null, playing: false, timer: null, joining: false };
   const rrOpen = () => GAME === "russian" && !$("gameWin").hidden;
+  /* THE CYLINDER is eastcoin.vip's own drawing (v3-pvp.js loadCylinder / turnTo; styles .rr-* in v3.css), so the two rooms
+     look alike: chambers on a ring inside a disc, a fixed hammer at the top, and turning the disc brings a chamber under it. */
+  const CYL_R = 35;
+  function rrLoad(cyl, chambers) {
+    cyl.replaceChildren(); cyl.style.setProperty("--d", String(Math.max(7, Math.min(17, Math.floor((2 * Math.PI * CYL_R) / (chambers * 1.45))))));
+    for (let c = 0; c < chambers; c++) { const ch = el("i", "cz-ch"); ch.style.setProperty("--a", `${(c * 360) / chambers}deg`); cyl.append(ch); }
+    cyl.dataset.chambers = String(chambers); cyl.classList.remove("spin"); cyl.style.transition = "none"; rrTurn(cyl, 0, false); void cyl.offsetWidth; cyl.style.transition = "";
+  }
+  function rrTurn(cyl, c, spin) {   // bring chamber c under the hammer, always turning the same way; a spin adds two full turns first
+    const chambers = Number(cyl.dataset.chambers || 6), cur = Number(cyl.dataset.angle || 0); let target = -((c * 360) / chambers);
+    while (target > cur - (spin ? 720 : 0)) target -= 360; if (!spin && target < cur - 360) target += 360;
+    cyl.classList.toggle("spin", !!spin && !calm()); cyl.style.transform = `rotate(${target}deg)`; cyl.dataset.angle = String(target);
+  }
   function rrSeats(players, cls = () => "", extra = () => "", openSeat = false) {
     const n = players.length + (openSeat ? 1 : 0), ring = el("div", "cz-rr");
     const at = (i) => { const a = (i / Math.max(n, 1)) * Math.PI * 2 - Math.PI / 2; return `left:${50 + Math.cos(a) * 41}%;top:${50 + Math.sin(a) * 41}%`; };
     ring.innerHTML = players.map((pl, i) => `<div class="cz-rrseat ${cls(pl, i)}" style="${at(i)}" data-seat="${i}">${pl.avatar ? `<img src="${esc(String(pl.avatar).replace("-300x300.", "-70x70."))}" alt="">` : `<i>${esc((pl.displayName || pl.login || "?")[0].toUpperCase())}</i>`}<b>${esc(pl.displayName || pl.login)}</b><small>${extra(pl, i)}</small></div>`).join("")
       + (openSeat ? `<div class="cz-rrseat open" style="${at(players.length)}" id="czRrSit"><i>+</i><b>Sit here</b><small>${rr.st?.config?.stake ?? 20} ZC</small></div>` : "")
-      + `<div class="cz-rrcyl" id="czRrCyl"><div><b id="czRrBig"></b><small id="czRrSmall"></small></div></div>`;
+      + `<div class="cz-rrcyl" id="czRrCyl"><i class="cz-hammer"></i><div class="cz-cyl" id="czCyl"></div><div class="cz-rrword" id="czRrWord"><div><span id="czRrBig"></span><small id="czRrSmall"></small></div></div></div>`;
+    rrLoad(ring.querySelector("#czCyl"), Math.max(6, players.length ? players.length * Math.max(1, Math.ceil(6 / players.length)) : 6));
     return ring;
   }
   function rrDraw() {
@@ -621,26 +646,33 @@ export function createCasino(env) {
       + (last && last.status === "SETTLED" && res ? `<h2 style="margin-top:12px">Last table<small>${last.players.length} sat down</small></h2><div class="cz-betlist"><div class="me"><span>🏆 ${esc(names[res.winner] ?? "?")}</span><strong>+${last.pot} ZC</strong></div>${(res.order || []).map((sx, k) => `<div><span>${k + 1}. ${esc(names[sx] ?? "?")}</span><strong>out</strong></div>`).join("")}</div>${last.seed ? `<p class="cz-note" style="text-align:left"><a href="/?view=verify&game=roulette&seed=${encodeURIComponent(last.seed)}&hash=${encodeURIComponent(last.hash)}&players=${last.players.length}" target="_blank" rel="noopener">Check that table's seed →</a></p>` : ""}` : last && last.status === "VOID" ? `<h2 style="margin-top:12px">Last table</h2><p class="cz-note" style="text-align:left">Nobody else sat down, so the buy-in went back.</p>` : "");
   }
   async function rrPlay(round) {   // the site has already decided and paid this: it is only shown
-    rr.playing = true; const t = token, pls = round.players, res = round.result, out = new Set(), mine = rr.st?.me?.login, stillHere = () => t === token && rrOpen();
-    const paint = (aim) => { R.board.replaceChildren(rrSeats(pls, (pl, i) => `${pl.login === mine ? "me" : ""} ${out.has(i) ? "out" : ""} ${aim === i ? "aim" : ""}`, (pl, i) => (out.has(i) ? "out" : ""))); };
-    phase("The cylinder's loaded", "open"); R.lock.disabled = true; R.lock.textContent = "Table's playing"; paint(null);
+    rr.playing = true; const t = token, pls = round.players, res = round.result, out = new Set(), mine = rr.st?.me?.login, stillHere = () => t === token && rrOpen(), nm = (i) => pls[i].displayName || pls[i].login;
+    R.board.replaceChildren(rrSeats(pls, (pl) => (pl.login === mine ? "me" : ""), () => "")); R.lock.disabled = true; R.lock.textContent = "Table's playing";
+    const ring = R.board.querySelector(".cz-rr"), cyl = $("czCyl"), word = $("czRrWord"), seats = [...ring.querySelectorAll(".cz-rrseat")], say = (txt, cls = "") => { word.className = `cz-rrword ${cls}`; word.innerHTML = `<div>${txt}</div>`; };
+    let remaining = pls.map((_, i) => i);
     for (let k = 0; k < res.stages.length; k++) {
-      const sg = res.stages[k], alive = pls.map((_, i) => i).filter((i) => !out.has(i));
-      for (let c = 0; c <= sg.live; c++) {
-        if (!stillHere()) { rr.playing = false; return; } const seat = alive[c % alive.length]; paint(seat);
-        $("czRrBig").textContent = `${c + 1} / ${sg.chambers}`; $("czRrSmall").textContent = `round ${k + 1} of ${res.stages.length}`;
-        phase(`${pls[seat].displayName || pls[seat].login} pulls…`, "open"); await wait(calm() ? 60 : c === sg.live ? 900 : 520);
-        if (c < sg.live) SFX.play("ui_click");
+      const sg = res.stages[k]; rrLoad(cyl, sg.chambers); const chs = [...cyl.children];
+      say(k > 0 ? "Reload" : "", "reload"); phase(k > 0 ? `${remaining.length} left: reloading…` : "Spinning…", "open"); note(`${sg.chambers} chambers · 1 live`);
+      if (k > 0) await wait(calm() ? 60 : 700); if (!stillHere()) { rr.playing = false; return; }
+      rrTurn(cyl, 0, true); SFX.play("dice"); await wait(calm() ? 80 : 1000);
+      for (let c = 0; c < sg.chambers; c++) {
+        if (!stillHere()) { rr.playing = false; return; }
+        const who = c === sg.live && Number.isInteger(sg.shot) ? sg.shot : remaining[c % remaining.length];   /* the record is the authority: the live chamber goes to the seat the site says was shot */
+        seats.forEach((x) => x.classList.remove("aim")); seats[who]?.classList.add("aim"); chs.forEach((ch) => ch.classList.remove("under")); chs[c].classList.add("under"); rrTurn(cyl, c, false);
+        phase(`${nm(who)} pulls…`, "open"); note(`${sg.chambers - c} chamber${sg.chambers - c === 1 ? "" : "s"} left · 1 live`); say("");
+        await wait(calm() ? 60 : 700); if (!stillHere()) { rr.playing = false; return; }
+        if (c === sg.live) {
+          chs[c].className = "cz-ch live under"; ring.classList.remove("bang"); void ring.offsetWidth; ring.classList.add("bang"); say("BANG", "bang"); SFX.play("hit");
+          seats[who]?.classList.remove("aim"); seats[who]?.classList.add("out"); const sm = seats[who]?.querySelector("small"); if (sm) sm.textContent = "out"; phase(`${nm(who)} is out`, "bad"); note("");
+          remaining = remaining.filter((x) => x !== who); out.add(who); await wait(calm() ? 120 : 1150); ring.classList.remove("bang"); break;
+        }
+        chs[c].className = "cz-ch spent under"; say("click", "click"); SFX.play("ui_click"); await wait(calm() ? 30 : 340);
       }
-      if (!stillHere()) { rr.playing = false; return; }
-      out.add(sg.shot); paint(null); $("czRrCyl")?.classList.add("bang"); SFX.play("hit"); $("czRrBig").textContent = "BANG"; $("czRrSmall").textContent = `${pls[sg.shot].displayName || pls[sg.shot].login} is out`;
-      phase(`${pls[sg.shot].displayName || pls[sg.shot].login} is out`, "bad"); await wait(calm() ? 100 : 1300);
     }
     if (!stillHere()) { rr.playing = false; return; }
     const w = res.winner, won = pls[w]?.login === mine, wasIn = pls.some((x) => x.login === mine);
-    R.board.replaceChildren(rrSeats(pls, (pl, i) => `${pl.login === mine ? "me" : ""} ${i === w ? "won" : "out"}`, (pl, i) => (i === w ? `+${round.pot} ZC` : "out")));
-    $("czRrBig").textContent = `${round.pot} ZC`; $("czRrSmall").textContent = "winner takes all";
-    phase(`${pls[w].displayName || pls[w].login} takes ${round.pot} ZC`, "done");
+    seats.forEach((x, i2) => { x.classList.remove("aim"); if (i2 === w) { x.classList.add("won"); const sm = x.querySelector("small"); if (sm) sm.textContent = `+${round.pot} ZC`; } });
+    say(`${round.pot} ZC<small>winner takes all</small>`); phase(`${nm(w)} takes ${round.pot} ZC`, "done"); note("");
     if (won) { ZC.bal = (ZC.bal ?? 0) + round.pot; pop(`+${round.pot - (rr.st?.config?.stake ?? 20)} ZC`, "last one standing"); SFX.play("win_big"); } else if (wasIn) SFX.play("lose");
     await wait(calm() ? 300 : 2600); rr.playing = false; rr.sig = null; if (stillHere()) rrDraw();
   }
