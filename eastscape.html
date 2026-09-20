@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>GambaScape</title>
+<title>EastScape</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -513,10 +513,10 @@ button,input,select{font:inherit}
 </head>
 <body>
 <header class="top">
-  <span class="logo">🎰 GambaScape</span>
+  <span class="logo">🎰 EastScape</span>
   <span class="clock" id="clock">--:--:--</span>
   <button type="button" class="wikib" id="gamesBtn" title="The real ZCoin games, one click (G)">🎰 Games</button>
-  <button type="button" class="wikib" id="wikiBtn" title="The GambaScape wiki">📖 Wiki</button>
+  <button type="button" class="wikib" id="wikiBtn" title="The EastScape wiki">📖 Wiki</button>
   <button type="button" class="wikib" id="hsBtn" title="Hiscores">🏆 Hiscores</button>
   <span class="spacer"></span>
   <span class="net" id="net" role="status" aria-live="polite"><i></i><span id="netText">Connecting…</span></span>
@@ -540,7 +540,7 @@ button,input,select{font:inherit}
     <div class="qdone" id="qdone" hidden></div>
     <div class="chat" id="chat">
       <div class="chat-box" id="chatBox" hidden>
-        <div class="chat-head"><b>Chat</b><small id="chatWhere">everyone in GambaScape</small></div>
+        <div class="chat-head"><b>Chat</b><small id="chatWhere">everyone in EastScape</small></div>
         <div class="chat-log" id="chatLog" aria-live="polite"><p class="empty">Nobody has said anything here yet.</p></div>
         <form class="chat-form" id="chatForm" autocomplete="off"><input id="chatIn" maxlength="120" placeholder="Say something… (Enter)" aria-label="Chat message"><button type="submit">Send</button></form>
       </div>
@@ -612,11 +612,11 @@ button,input,select{font:inherit}
       <div class="win-foot" id="tradeFoot"></div>
     </section>
     <section class="win" id="wikiWin" aria-label="Wiki" hidden style="width:min(980px,calc(100% - 28px));height:calc(100% - 28px)">
-      <div class="win-head"><b>📖 GambaScape Wiki</b><small>built from the game itself</small><button type="button" class="win-x" data-close="wikiWin" aria-label="Close">×</button></div>
+      <div class="win-head"><b>📖 EastScape Wiki</b><small>built from the game itself</small><button type="button" class="win-x" data-close="wikiWin" aria-label="Close">×</button></div>
       <div class="wiki"><nav id="wikiNav"></nav><article id="wikiPage"></article></div>
     </section>
     <div class="cover" id="gate" hidden>
-      <div class="card"><div style="font-size:36px">🎰</div><h2>GambaScape is members-only</h2><p>Log in with Twitch to play. Your character is saved to your Twitch account, so you can pick up from any browser.</p><a class="btn" href="/api/picks/auth/twitch/start?returnTo=%2Feastscape">Log in with Twitch</a></div>
+      <div class="card"><div style="font-size:36px">🎰</div><h2>EastScape is members-only</h2><p>Log in with Twitch to play. Your character is saved to your Twitch account, so you can pick up from any browser.</p><a class="btn" href="/api/picks/auth/twitch/start?returnTo=%2Feastscape">Log in with Twitch</a></div>
     </div>
     <div class="cover soft" id="veil" hidden><div class="card" id="veilText"><span class="spin"></span>Connecting…</div></div>
   </section>
@@ -635,10 +635,10 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=74";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=75";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=44").then((m) => { WK = m; }));
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=45").then((m) => { WK = m; }));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=2";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -706,7 +706,7 @@ async function connect() {
   ws.onclose = (e) => {
     ws = null;
     if (e.code === 4000) { kicked = true; net("bad", "Opened in another tab"); veil("This character is open in another tab. <br><br><button class='btn' id='takeBack'>Play here instead</button>"); $("takeBack")?.addEventListener("click", () => { kicked = false; connect(); }); return; }
-    if (e.code === 4003) { kicked = true; net("bad", "Removed"); veil("You've been removed from GambaScape."); return; }
+    if (e.code === 4003) { kicked = true; net("bad", "Removed"); veil("You've been removed from EastScape."); return; }
     if (e.code === 4001) restartHold ||= 25000;   // a planned restart, even if the message before it was missed
     later();
   };
@@ -718,7 +718,7 @@ function later() {
   if (restartHold) {
     const wait = restartHold; restartHold = 0; retry = 0;
     net("warn", "Restarting…");
-    veil(`<span class="spin"></span>GambaScape is restarting. Your character is saved — back in about ${Math.ceil(wait / 1000)} seconds…`);
+    veil(`<span class="spin"></span>EastScape is restarting. Your character is saved — back in about ${Math.ceil(wait / 1000)} seconds…`);
     retryTimer = setTimeout(connect, wait);
     return;
   }
@@ -2414,7 +2414,7 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=19", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=20", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
 let czReal = null;
 const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, say: (t, c) => say(t, c),
   /* a shared round's view, built from the site's state: fed to the very handlers the game server's own views used to reach */
@@ -2624,7 +2624,7 @@ function wikiGo(route, setNav = true) {
   const [kind, ...rest] = route.split("/"), id = decodeURIComponent(rest.join("/")), page = $("wikiPage");
   const cards = (list) => `<div class="cards">${list.map((p) => `<a class="card" data-wiki="${esc(p.route)}"><i>${p.icon}</i>${esc(p.title)}</a>`).join("")}</div>`;
   let html = "";
-  if (kind === "home") html = `<h2><i>🎰</i>GambaScape Wiki</h2><p class="lede">Everything in the game, written from the game itself: every item, monster, drop, skill, quest and place on these pages comes from the same rules the server plays by.</p>
+  if (kind === "home") html = `<h2><i>🎰</i>EastScape Wiki</h2><p class="lede">Everything in the game, written from the game itself: every item, monster, drop, skill, quest and place on these pages comes from the same rules the server plays by.</p>
     <h3>Start here</h3>${cards(wikiPages().filter((p) => p.group === "Guides"))}<h3>Browse</h3>${cards(["Skills", "Quests", "Monsters", "Areas", "People", "Items"].map((g) => ({ route: `list/${g}`, title: g, icon: { Skills: "📶", Quests: "📜", Monsters: "👹", Areas: "🗺️", People: "🧑", Items: "🎒" }[g] })))}
     <h3>Latest update</h3>${wikiUpdate(WK.UPDATES[0])}`;
   else if (kind === "updates") html = `<h2><i>📰</i>Updates</h2><p class="lede">Every change to the game, newest first.</p>${WK.UPDATES.map(wikiUpdate).join("")}`;
@@ -2979,7 +2979,7 @@ setInterval(() => {
 
 artReady.then(() => { if (Z.key) Z.bg = paintBg(); });
 requestAnimationFrame(frame);
-veil('<span class="spin"></span>Connecting to GambaScape…');
+veil('<span class="spin"></span>Connecting to EastScape…');
 connect();
 </script>
 </body>

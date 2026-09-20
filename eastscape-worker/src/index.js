@@ -161,7 +161,7 @@ export class World {
     if (path === "/restore") return this.restore(request);
     if (path === "/kick") {
       const pl = this.pls.get(new URL(request.url).searchParams.get("id")); if (!pl) return Response.json({ ok: true, online: false });
-      this.send(pl, { type: "kicked", message: "You've been removed from GambaScape." });
+      this.send(pl, { type: "kicked", message: "You've been removed from EastScape." });
       await this.leave(pl, true); try { pl.ws.close(4003, "removed"); } catch (e) { /* already gone */ }
       return Response.json({ ok: true, online: true });
     }
@@ -203,7 +203,7 @@ export class World {
     this.send(pl, { type: "who", scene: S.key, who: this.whoOf(S) });
     this.send(pl, JSON.parse(this.snapOf(S, Date.now(), false)));
     S.whoSig = null;   // the next broadcast tells everyone else this player has arrived
-    if (!stored) this.say(pl, "Welcome to GambaScape. Wander the floor and play what you like. Broke? Out the arch to the Yard, and click a monster (or fish the pond): everything out there has its price written over it, and the Cashier by each arch turns it into tickets. Say hello to Dex behind the bar.");
+    if (!stored) this.say(pl, "Welcome to EastScape. Wander the floor and play what you like. Broke? Out the arch to the Yard, and click a monster (or fish the pond): everything out there has its price written over it, and the Cashier by each arch turns it into tickets. Say hello to Dex behind the bar.");
     else this.say(pl, `Welcome back, ${pl.name}.`);
     if (this.exDeliver(pl)) this.exCommit(pl);   // market sales and purchases made while you were away
     this.start();
@@ -500,7 +500,7 @@ export class World {
     this.restartAt = Date.now() + s * 1000;
     this.warned = new Set();
     this.start();                                   // count down even with nobody on, so the save still happens
-    this.tellAll(s >= 60 ? `GambaScape is restarting in ${Math.round(s / 60)} minute${s >= 120 ? "s" : ""}. Your character is saved automatically - you will be back in a moment.` : `GambaScape is restarting in ${s} seconds. Hold tight.`, "admin");
+    this.tellAll(s >= 60 ? `EastScape is restarting in ${Math.round(s / 60)} minute${s >= 120 ? "s" : ""}. Your character is saved automatically - you will be back in a moment.` : `EastScape is restarting in ${s} seconds. Hold tight.`, "admin");
     if (s === 0) await this.doRestart();
     return { ok: true, at: this.restartAt, players: this.pls.size };
   }
@@ -935,7 +935,7 @@ export class World {
     const D = (this.devDex ||= { used: 0, seen: new Map() }), left = Math.max(0, G.DEX.capHour - D.used);
     if (body.op === "status") return { ok: true, left, capHour: G.DEX.capHour, maxStake: G.DEX.maxStake, open: [], enabled: true, dev: true };
     if (D.seen.has(body.id)) return { ...D.seen.get(body.id), duplicate: true };
-    const cost = body.zc | 0; if (cost > left) return { ok: false, code: "CAP", definite: true, left, message: "That's your GambaScape ZCoins for this hour (pretend)." };
+    const cost = body.zc | 0; if (cost > left) return { ok: false, code: "CAP", definite: true, left, message: "That's your EastScape ZCoins for this hour (pretend)." };
     D.used += cost; const ans = body.op === "stake" ? { ok: true, voucher: body.id, zc: cost, left: left - cost } : { ok: true, zc: cost, balance: 1000 + cost, left: left - cost };
     D.seen.set(body.id, ans); return ans;
   }
@@ -1211,7 +1211,7 @@ export class World {
     if (a.kind === "game" && S.def.real?.[a.ob.t]) { pl.act = null; return pl.out.push({ type: "real", g: a.ob.t }); }   // eastcoin.vip's own game, for real ZCoins: the page opens the window and talks to the site itself
     if (a.kind === "game" && !G.GAMES[a.ob.t]) { pl.act = null; return; }
     if (a.kind === "game") { pl.act = null; return pl.out.push({ type: "game", g: a.ob.t, pot: Math.floor(this.jack.pot), lastJack: this.jack.wins?.[0] || null }); }
-    if (a.kind === "howto") { pl.act = null; return pl.out.push({ type: "popup", title: "How GambaScape works", text: G.HOWTO, icon: "🎰" }); }
+    if (a.kind === "howto") { pl.act = null; return pl.out.push({ type: "popup", title: "How EastScape works", text: G.HOWTO, icon: "🎰" }); }
     if (a.kind === "board") { pl.act = null; this.tourStep(pl, "board"); return this.dailySend(pl); }
     if (a.kind === "roulette" && S.def.realRound) { pl.act = null; return pl.out.push({ type: "roundopen", key: S.def.realRound }); }
     if (a.kind === "roulette") { pl.act = null; pl.out.push({ type: "roulopen" }); return this.roulSendTo(S, pl); }
