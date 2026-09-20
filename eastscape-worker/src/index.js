@@ -1345,7 +1345,7 @@ export class World {
       if (!a.started) { a.started = now; a.next = now + G.FISHING.ms; this.say(pl, "You cast out your line…"); return; }
       if (now < a.next) return;
       const fx = G.fxOf(C); a.next = now + Math.round(G.FISHING.ms / (1 + fx.speed));
-      const lvl = G.lvlOf(C, "fishing"), trout = lvl >= G.FISHING.troutAt && Math.random() < G.FISHING.troutShare, fish = ob.fish || (trout ? "trout" : "sardine");
+      const lvl = G.lvlOf(C, "fishing"), fish = G.fishAt(ob, lvl, Math.random()), trout = fish === ob.fish2;   /* v68: every spot names its fish, and a second one from fish2lvl (`trout` now just means "the second fish") */
       this.groupNote(S, pl, a);
       if (Math.random() < Math.min(0.97, G.FISHING.chance(lvl) + bonus + fx.bite)) {
         if (!this.give(pl, fish)) { pl.act = null; return; }
@@ -1353,7 +1353,7 @@ export class World {
         if (fx.tix > 0 && Math.random() < fx.tix && this.give(pl, fish)) this.say(pl, "Two on one line!", "good");   /* the ticket buffs, for a fisher: that chance of a second fish */
         if (Math.random() < (G.ZDROP.fish[fish] || 0) * (1 + fx.zdrop)) this.zcoinDrop(pl, "the end of a fishing line");
         if ((C.luck | 0) > 0) { C.luck--; this.touch(pl); }
-        this.grant(pl, "fishing", gx(ob.xp || (trout ? 50 : 20))); this.say(pl, `You catch a ${G.ITEMS[fish].name.replace(/^Raw /, "").toLowerCase()}.`, "good"); this.questCheck(pl);
+        this.grant(pl, "fishing", gx(trout ? ob.xp2 || ob.xp || 50 : ob.xp || 20)); this.say(pl, `You catch a ${G.ITEMS[fish].name.replace(/^Raw /, "").toLowerCase()}.`, "good"); this.questCheck(pl);
       }
     }
   }
@@ -1394,6 +1394,7 @@ export class World {
       this.say(pl, `${pk ? `${pk.name} killed you` : `A ${killer?.mob?.toLowerCase() || "monster"} killed you`} in the Wilderness.${nm ? ` You dropped your ${nm}.` : " You kept everything this time."}`, "bad");
       for (const p of this.pls.values()) if (p !== pl && p !== pk && G.sceneDef(p.C.scene)?.pvp) this.say(p, `☠️ ${pl.name} was killed by ${pk ? pk.name : `a ${killer?.mob?.toLowerCase() || "monster"}`}.`);
     }
+    { const bill = pl.god || S?.def.pvp ? 0 : G.deathBill(C, S?.key); if (bill > 0) { G.takeInv(C.inv, "tickets", bill); this.touch(pl); this.say(pl, `THE HOSPITAL BILL: ${G.fmtTix(bill)}. They patched you up and went through your pockets.`, "bad"); } }   /* v68: the only thing a death costs */
     this.say(pl, "Oh dear, you are dead! You wake up on the casino floor. Nobody looks surprised.", "bad");
     C.hp = G.maxHpOf(C);
     this.moveToScene(pl, G.START.scene, null, { x: G.START.x, y: G.START.y });
