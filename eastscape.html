@@ -1642,8 +1642,7 @@ cv.addEventListener("pointerdown", (e) => {
     if (t.kind === "mob") send({ t: "act", kind: "mob", id: t.id });
     else if (t.kind === "npc") send({ t: "act", kind: "npc", id: t.id });
     else if (t.ob?.t === "anvil") openSmith(t.ob);
-    else if (t.ob?.t === "rrtable") { openRussian(); send({ t: "act", kind: "ob", ob: t.ob.id }); }   /* opens at the click; you stroll over */
-    else { if (Z.def.real?.[t.ob.t]) openReal(t.ob.t); send({ t: "act", kind: "ob", ob: t.ob.id }); }   // a real table opens at the click; you stroll over while it loads
+    else send({ t: "act", kind: "ob", ob: t.ob.id });   /* (a real table opens when you ARRIVE: the server answers {type:"real"}) */
     // walk there now, the way the server will
     if (from) {
       const at = t.kind === "mob" || t.kind === "npc" ? { x: t.x, y: t.y } : t.kind === "door" && t.ob.door ? t.ob.door : G.nearestCell(t.ob, from);
@@ -2244,12 +2243,16 @@ function openRussian() {
   for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin"]) $(w).hidden = true;
   if ($("gameWin").hidden) SFX.play("ui_open"); CZ.russian();
 }
-function openReal(g) {
+/* WALK TO YOUR TABLE (the owner, 2026-09-19: "i want users to feel the weight/simulation of walking towards their favorite
+   slot, table, etc and gambling there"). Clicking a table walks you to it and opens THAT game when you arrive, with no way
+   to hop to another game from there. The strip of every game, and opening from wherever you stand, belong to the Games
+   button and the G key alone (`menu`). */
+function openReal(g, menu = false) {
   if (String(Z.key).split(":")[0] !== "casino") return say("The real tables are on the casino's main floor. A Casino scroll gets you there from anywhere.");
   for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin"]) $(w).hidden = true;
-  if ($("gameWin").hidden) SFX.play("ui_open"); CZ.open(g, { real: true });
+  if ($("gameWin").hidden) SFX.play("ui_open"); CZ.open(g, { real: true, menu });
 }
-$("gamesBtn").addEventListener("click", () => { if ($("gameWin").hidden || !CZ.real) openReal(CZ.realGames()[0]); else { $("gameWin").hidden = true; CZ.closed(); } });
+$("gamesBtn").addEventListener("click", () => { if ($("gameWin").hidden || !CZ.real) openReal(CZ.realGames()[0], true); else { $("gameWin").hidden = true; CZ.closed(); } });
 addEventListener("keydown", (e) => { if ((e.key === "g" || e.key === "G") && !e.ctrlKey && !e.metaKey && !e.altKey && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "")) $("gamesBtn").click(); });
 
 /* ------------------------------------------------------------ the Forge: Brutus's shop */
@@ -2411,7 +2414,7 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=17", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=18", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
 let czReal = null;
 const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, say: (t, c) => say(t, c),
   /* a shared round's view, built from the site's state: fed to the very handlers the game server's own views used to reach */
