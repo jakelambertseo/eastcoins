@@ -178,6 +178,18 @@ const CSS = `
 .cz-peg{background:rgba(70,45,20,.5);box-shadow:none}.cz-need i,.cz-hpbar,.cz-dexbar{background:rgba(70,45,20,.2)}.cz-pick:hover:not(:disabled){border-color:#8a6210}.cz-pick.on{border-color:#8a6210;background:var(--gold-dim)}.cz-marker{background:#2a2016}.cz-pick.black.on{border-color:#1a1410;background:rgba(0,0,0,.1)}.cz-rrseat.aim img,.cz-rrseat.aim i{border-color:#2a2016;box-shadow:0 0 0 4px rgba(42,32,22,.22)}
 .cz-pop b{text-shadow:0 2px 0 rgba(255,255,255,.5)}.cz-pop span{color:#f4ede5}.cz-rrseat img,.cz-rrseat i{background:var(--panel-3)}
 .cz-jack,.cz-ticket,.cz-reels,.cz-rrcyl,.cz-rtk,.cz-tkgrid,.cz-pw{--text:#f4ede5;--muted:#c8b898;--muted-2:#a89878;--gold:#e8bf35;--gold-dim:rgba(232,191,53,.13);--green:#4ddb8b;--red:#ff6b85;--line:rgba(255,255,255,.1);--line-2:rgba(255,255,255,.16);color:var(--text)}
+/* PIXELLAB BUTTONS (2026-09-19, the owner: "i want them drawn custom from pixellab, and also the bet/spin button background").
+   One UI sheet, cut into four: czbtn (the gold action button), czbtn_off (the same, dull), czpill_on / czpill (a gold and a wooden
+   pill). Each is stretched sideways only: border-image with NO top or bottom slice, so the whole height of the art is the height
+   of the button and only the middle widens. The end caps are 16px (big) and 20px (pill) of the art, drawn at the width that keeps
+   their shape at the button's height. #gameWin.cz in front so these beat the plain rules above. */
+#gameWin.cz .cz-lock,#gameWin.cz .cz-dexgo{border-style:solid;border-color:transparent;border-width:0 15px;border-image:url(/v3/assets/img/glad/flat/ui/czbtn.png?v=1) 0 16 fill / 0 15px stretch;background:none;box-shadow:none;border-radius:0;color:#3a2604;text-shadow:0 1px 0 rgba(255,246,196,.75);image-rendering:pixelated}
+#gameWin.cz .cz-dexgo{border-width:0 12px;border-image-width:0 12px}
+#gameWin.cz .cz-lock:hover:not(:disabled),#gameWin.cz .cz-dexgo:hover:not(:disabled){filter:brightness(1.07)}#gameWin.cz .cz-lock:active:not(:disabled){transform:translateY(1px)}
+#gameWin.cz .cz-lock:disabled,#gameWin.cz .cz-dexgo:disabled{border-image-source:url(/v3/assets/img/glad/flat/ui/czbtn_off.png?v=1);background:none;color:#d9cdb6;text-shadow:0 1px 0 #1a0e08;cursor:default}
+#gameWin.cz .cz-realtabs button{border-style:solid;border-color:transparent;border-width:0 14px;border-image:url(/v3/assets/img/glad/flat/ui/czpill.png?v=1) 0 20 fill / 0 14px stretch;background:none;border-radius:0;box-shadow:none;min-height:30px;padding:0 2px;color:#f3e7cc;text-shadow:0 1px 0 #1a0e08;image-rendering:pixelated}
+#gameWin.cz .cz-realtabs button:hover{filter:brightness(1.12)}
+#gameWin.cz .cz-realtabs button[aria-pressed=true]{border-image-source:url(/v3/assets/img/glad/flat/ui/czpill_on.png?v=1);background:none;color:#3a2604;text-shadow:0 1px 0 rgba(255,246,196,.75)}
 .cz-realtabs{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 10px}.cz-realtabs button{padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);background:transparent;color:var(--muted);font:800 12.5px var(--body);cursor:pointer}.cz-realtabs button[aria-pressed=true]{background:linear-gradient(#f0c848,#cf9a2e);color:#2a1c04;border-color:#8a6210}.cz-cur{align-items:center}.cz-curl{font:700 12px var(--body);color:var(--muted)}.cz-cur button[aria-pressed=true]{background:#ff9aa8;border-color:#ff9aa8}.cz-cur button:first-of-type[aria-pressed=true]{background:linear-gradient(#f0c848,#cf9a2e);border-color:#8a6210}
 .cz-luck a{color:var(--gold)}
 .cz-total{font:800 54px var(--display);letter-spacing:-.04em;color:var(--gold);line-height:1;text-shadow:0 0 30px rgba(232,191,53,.35)}

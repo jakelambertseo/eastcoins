@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 69;
+export const VERSION = 70;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -1649,7 +1649,9 @@ export const bandOf = (scene) => BANDS[String(scene || "").split(":")[0]] || nul
 export const bandBlock = (c, scene, kind) => { const b = bandOf(scene); if (!b) return null; const skill = kind === "fish" ? "fishing" : "melee", need = b[0], have = lvlOf(c, skill);
   return have >= need ? null : { need, have, skill, text: `needs ${kind === "fish" ? "Fishing" : "Combat"} ${need}` }; };
 export const OPEN = new Set(["casino", "roulette", "fightpit", /* "highroller": closed for now (the owner, 2026-09-19) */ "forum", "bathhouse", "workyard", "gloam", "mire", "boneyard", "cloud", "thunderhead"]);   // (paddock, rough, boneyard closed 2026-09-20: their monsters live in the three scenes of the one line out)
-export const OPEN_DAILY = new Set(["sardine", "lantern", "cows", "chickens", "rotten", "boar", "highwayman", "moths", "ghouls", "rams"]);   // kills and fish: that's the world now
+export const OPEN_DAILY = new Set(["sardine", "lantern", "trout", "cows", "chickens", "rotten", "boar", "highwayman", "moths", "ghouls", "rams",
+  "olive", "hornworms", "perch", "toadstools", "goats", "boneidle", "gnashers", "catfish", "twisters", "counters", "sharks", "wraiths", "mudskipper", "stagehands", "spiders", "ushers", "understudies", "bonefish", "ghostcarp",
+  "brainstorms", "revenants", "seagoats", "angels", "skyeel", "cloudray", "golems", "geese", "wolves", "drakes", "thehouse", "marlin", "squid"]);   // kills and fish: that's the world now
 for (const k of Object.keys(SCENES)) if (!OPEN.has(k)) SCENES[k].wikiHide = true;   // closed areas stay out of the wiki
 
 /* ------------------------------------------------------------ the House Tour: how a new player learns the loop
@@ -1730,18 +1732,53 @@ export const DAILY = [
   { id: "cows", what: "kill", k: "cow", n: 5, cash: 80, req: null },
   { id: "chickens", what: "kill", k: "chicken", n: 10, cash: 80, req: null },
   { id: "rotten", what: "kill", k: "rotten", n: 8, cash: 120, req: null },
-  { id: "trout", what: "gather", k: "trout", n: 20, cash: 220, req: { skill: "fishing", lvl: 15 } },
+  { id: "trout", what: "gather", k: "trout", n: 20, cash: 160, req: { skill: "fishing", lvl: 10 } },
   { id: "boar", what: "kill", k: "boar", n: 6, cash: 200, req: { skill: "melee", lvl: 8 } },
   { id: "highwayman", what: "kill", k: "highwayman", n: 5, cash: 260, req: { skill: "melee", lvl: 12 } },
   { id: "ashlogs", what: "gather", k: "ashlogs", n: 20, cash: 350, req: { skill: "woodcutting", lvl: 20 } },
   { id: "emerald", what: "gather", k: "emerald_ore", n: 15, cash: 400, req: { skill: "mining", lvl: 15 } },
   { id: "moths", what: "kill", k: "moth", n: 8, cash: 380, req: { skill: "melee", lvl: 20 } },
-  { id: "lantern", what: "gather", k: "lanternfish", n: 12, cash: 420, req: { skill: "fishing", lvl: 15 } },
+  { id: "lantern", what: "gather", k: "lanternfish", n: 12, cash: 200, req: { skill: "fishing", lvl: 20 } },
   { id: "diamond", what: "gather", k: "diamond_ore", n: 12, cash: 520, req: { skill: "mining", lvl: 25 } },
-  { id: "ghouls", what: "kill", k: "ghoul", n: 6, cash: 520, req: { skill: "melee", lvl: 28 } },
+  { id: "ghouls", what: "kill", k: "ghoul", n: 6, cash: 520, req: { skill: "melee", lvl: 30 } },
   { id: "willow", what: "gather", k: "willowlogs", n: 20, cash: 560, req: { skill: "woodcutting", lvl: 15 } },
   { id: "rams", what: "kill", k: "ram", n: 6, cash: 700, req: { skill: "melee", lvl: 40 } },
   { id: "dragonstone", what: "gather", k: "dragonstone_ore", n: 10, cash: 800, req: { skill: "mining", lvl: 30 } },
+  /* v70: THE SIX BANDS' JOBS. One for every monster and every fish out the arch, each asking for the level its scene does (a kill
+     job's `req` is Combat, a fish job's is Fishing), so the board only ever hands you work you can walk to and start. A job
+     pays a bonus of about 45% of what those kills or catches are worth anyway. */
+  { id: "olive", what: "kill", k: "olive", n: 8, cash: 125, req: { skill: "melee", lvl: 5 } },
+  { id: "hornworms", what: "kill", k: "hornworm", n: 6, cash: 120, req: { skill: "melee", lvl: 6 } },
+  { id: "perch", what: "gather", k: "perch", n: 20, cash: 110, req: { skill: "fishing", lvl: 5 } },
+  { id: "toadstools", what: "kill", k: "toadstool", n: 8, cash: 130, req: { skill: "melee", lvl: 10 } },
+  { id: "goats", what: "kill", k: "goat", n: 6, cash: 115, req: { skill: "melee", lvl: 10 } },
+  { id: "boneidle", what: "kill", k: "boneidle", n: 6, cash: 215, req: { skill: "melee", lvl: 14 } },
+  { id: "gnashers", what: "kill", k: "gnasher", n: 5, cash: 180, req: { skill: "melee", lvl: 16 } },
+  { id: "catfish", what: "gather", k: "catfish", n: 15, cash: 150, req: { skill: "fishing", lvl: 15 } },
+  { id: "twisters", what: "kill", k: "twister", n: 8, cash: 260, req: { skill: "melee", lvl: 20 } },
+  { id: "counters", what: "kill", k: "counter", n: 6, cash: 240, req: { skill: "melee", lvl: 22 } },
+  { id: "sharks", what: "kill", k: "shark", n: 5, cash: 320, req: { skill: "melee", lvl: 24 } },
+  { id: "wraiths", what: "kill", k: "taxwraith", n: 5, cash: 320, req: { skill: "melee", lvl: 26 } },
+  { id: "mudskipper", what: "gather", k: "mudskipper", n: 12, cash: 150, req: { skill: "fishing", lvl: 25 } },
+  { id: "stagehands", what: "kill", k: "stagehand", n: 6, cash: 500, req: { skill: "melee", lvl: 30 } },
+  { id: "spiders", what: "kill", k: "chandelier", n: 4, cash: 330, req: { skill: "melee", lvl: 32 } },
+  { id: "ushers", what: "kill", k: "usher", n: 5, cash: 430, req: { skill: "melee", lvl: 34 } },
+  { id: "understudies", what: "kill", k: "understudy", n: 5, cash: 465, req: { skill: "melee", lvl: 36 } },
+  { id: "bonefish", what: "gather", k: "bonefish", n: 15, cash: 190, req: { skill: "fishing", lvl: 30 } },
+  { id: "ghostcarp", what: "gather", k: "ghostcarp", n: 12, cash: 195, req: { skill: "fishing", lvl: 35 } },
+  { id: "brainstorms", what: "kill", k: "brainstorm", n: 8, cash: 890, req: { skill: "melee", lvl: 40 } },
+  { id: "revenants", what: "kill", k: "revenant", n: 5, cash: 650, req: { skill: "melee", lvl: 43 } },
+  { id: "seagoats", what: "kill", k: "seagoat", n: 5, cash: 640, req: { skill: "melee", lvl: 44 } },
+  { id: "angels", what: "kill", k: "angel", n: 5, cash: 645, req: { skill: "melee", lvl: 46 } },
+  { id: "skyeel", what: "gather", k: "skyeel", n: 12, cash: 215, req: { skill: "fishing", lvl: 40 } },
+  { id: "cloudray", what: "gather", k: "cloudray", n: 12, cash: 260, req: { skill: "fishing", lvl: 45 } },
+  { id: "golems", what: "kill", k: "golem", n: 6, cash: 920, req: { skill: "melee", lvl: 50 } },
+  { id: "geese", what: "kill", k: "goose", n: 6, cash: 985, req: { skill: "melee", lvl: 52 } },
+  { id: "wolves", what: "kill", k: "wolf", n: 5, cash: 810, req: { skill: "melee", lvl: 56 } },
+  { id: "drakes", what: "kill", k: "drake", n: 5, cash: 930, req: { skill: "melee", lvl: 60 } },
+  { id: "thehouse", what: "kill", k: "house", n: 2, cash: 500, req: { skill: "melee", lvl: 65 } },
+  { id: "marlin", what: "gather", k: "stormmarlin", n: 12, cash: 240, req: { skill: "fishing", lvl: 50 } },
+  { id: "squid", what: "gather", k: "thundersquid", n: 10, cash: 235, req: { skill: "fishing", lvl: 58 } },
   // things you MAKE (2026-09-20): the workshop gets its share of the board, so ore has somewhere better to go than the Cashier
   { id: "bars", what: "make", k: "bronze_bar", n: 10, cash: 220, req: { skill: "smithing", lvl: 10 } },
   { id: "cooked", what: "make", k: "cchicken", n: 8, cash: 110, req: null },
