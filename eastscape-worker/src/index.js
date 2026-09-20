@@ -959,7 +959,7 @@ export class World {
   tixTo(pl, n) { this.earned(pl, n); if (n > 0 && !this.give(pl, "tickets", n) && !this.bankAdd(pl, "tickets", n)) this.say(pl, "Your bag and bank are both full: those tickets are lost. Make some room!", "bad"); }
   /* THE PRIZE COUNTER: tickets in, prizes out (G.prizesOf). Chips are tickets, 1 for 1; everything else is an item. */
   counterOp(S, pl, m) {
-    if (!this.atCounter(S, pl)) return this.say(pl, "You need to be at the Prize Counter: the House Ruby or a Cashier's window, on the casino floor.", "bad");
+    if (!this.atCounter(S, pl)) return this.say(pl, "You need to be at the Prize Counter: the big ruby in the middle of the casino floor.", "bad");
     const C = pl.C, tix = G.tixIn(C);
     if (m.op !== "buy") return;
     const p = G.prizesOf().find((x) => x.id === String(m.id)); if (!p) return;
@@ -972,7 +972,7 @@ export class World {
     this.say(pl, `${n > 1 ? `${n} × ` : ""}${it.name} for ${G.fmtTix(cost)}.`, "good");
   }
   cashOut(S, pl, m) {
-    const C = pl.C; if (!this.atCounter(S, pl)) return this.say(pl, "You need to be at the Prize Counter: the House Ruby or a Cashier's window, on the casino floor.", "bad");
+    const C = pl.C; if (!this.atCounter(S, pl)) return this.say(pl, "You need to be at the Prize Counter: the big ruby in the middle of the casino floor.", "bad");
     const keys = m.op === "all" ? [...new Set(C.inv.map((s) => s.k))].filter(G.isLoot) : [String(m.k)].filter((k) => G.isLoot(k) && C.inv.some((s) => s.k === k));
     if (m.op !== "all" && !keys.length && G.ITEMS[String(m.k)]?.slot) return this.say(pl, "The Cashier doesn't buy anything you could wear or hold. Brutus, at the Forge out front, buys what's been smithed.", "bad");
     let total = 0, count = 0;
@@ -1017,7 +1017,7 @@ export class World {
      Both count against the one hourly allowance, which the site owns. */
   async dexOp(S, pl, m, now) {
     const op = String(m.op), C = pl.C, stake = op === "stake";
-    if (stake ? !(S.def.real || S.def.realRound) : !this.atCounter(S, pl)) return stake ? pl.out.push({ type: "stake", g: m.g, error: "There's no ZCoin table in this room." }) : this.say(pl, "You need to be at the Prize Counter: the House Ruby or a Cashier's window, on the casino floor.", "bad");
+    if (stake ? !(S.def.real || S.def.realRound) : !this.atCounter(S, pl)) return stake ? pl.out.push({ type: "stake", g: m.g, error: "There's no ZCoin table in this room." }) : this.say(pl, "You need to be at the Prize Counter: the big ruby in the middle of the casino floor.", "bad");
     const fail = (error, status) => pl.out.push(stake ? { type: "stake", g: m.g, error, status } : { type: "dex", error, status });
     if (pl.dexBusy || now - (pl.lastDex || 0) < (stake ? 400 : 1500)) { if (stake) fail("One at a time. Try that again."); return; } pl.lastDex = now;
     pl.dexBusy = true;
