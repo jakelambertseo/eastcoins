@@ -635,10 +635,10 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=73";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=74";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=43").then((m) => { WK = m; }));
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=44").then((m) => { WK = m; }));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=2";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -2414,7 +2414,7 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=18", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=19", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
 let czReal = null;
 const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, say: (t, c) => say(t, c),
   /* a shared round's view, built from the site's state: fed to the very handlers the game server's own views used to reach */
@@ -2780,14 +2780,13 @@ function jobsCard() {
 function walletCard() {
   const cash = G.cashIn(me), loot = me.inv.filter((s) => G.isLoot(s.k)).reduce((a, s) => a + s.n * G.valueOf(s.k), 0), full = me.inv.length >= G.INV_MAX;
   return `<div class="wallets">
-    <div class="wallet wl-needs">${[["thirst", "w_water", "Thirst"], ["hunger", "w_food", "Hunger"]].map(([k, i, n]) => { const v = Math.round(G.needOf(me, k)), low = v < G.NEEDS.floor, fed = (me.meal?.left | 0) > 0; return `<div class="wl-need${low ? " low" : ""}" title="${n}: ${v}%. Every bet takes a little${fed ? " (not while you're Well Fed)" : ""}. Under ${G.NEEDS.floor}% the tables won't take your bets: the water cooler and the buffet are on the card room's back wall, next to the bar."><img src="${UIA}${i}.png?v=1" alt=""><span>${n}<i><u style="width:${v}%"></u></i></span><b>${v}%</b></div>`; }).join("")}</div>
     <div class="wl-two"><div class="wallet wl-cash wl-tix" title="Tickets: the one currency here. Kills, catches and jobs pay them; the Prize Counter and every table take them.">${ico("tickets")}<span><small>Tickets</small><b>${G.tixIn(me).toLocaleString()}</b></span></div>
     <div class="wallet wl-cash wl-zc" title="Your real ZCoins on eastcoin.vip. The tables on the main floor take ZCoins or tickets, and pay ZCoins either way.">${ico("zcoin")}<span><small>ZCoins</small><b>${ZCBAL == null ? "–" : Number(ZCBAL).toLocaleString()}</b></span></div></div>
     <div class="wallet">
       <div class="wl-row${loot ? " go" : ""}" title="What the Cashier would pay for the loot and made things in your bag"><img src="${UIA}w_sack.png?v=1" alt=""><span>${loot ? (full ? "Bag's full" : "In your bag") : "Nothing to trade in"}<small>${loot ? "take it to the Prize Counter" : "out the arch: fight or fish"}</small></span><b>${loot ? `+${loot.toLocaleString()} tickets` : ""}</b></div>
       ${me.jack ? `<div class="wl-row" title="The slots jackpot: three sevens wins it"><img src="${UIA}w_jackpot.png?v=1" alt=""><span>Slots jackpot<small>three sevens takes it</small></span><b style="color:#ffd84a">${G.fmtCash(me.jack)}</b></div>` : ""}
     </div>
-    ${(() => { const v = G.vipOf(me), nx = v.next; return `<div class="wallet wl-vip" title="Every dollar you bet counts, win or lose. Your tier shows by your name and raises every table's limit${v.limit ? ` (yours: +${G.fmtCash(v.limit)})` : ""}."><div class="wl-h" style="margin:0"><b style="color:${v.col}">◆ ${v.name} VIP</b><span style="margin-left:auto;text-transform:none;letter-spacing:0">${nx ? `${G.fmtCash(Math.max(0, nx.at - v.wagered))} more bet to ${nx.name}` : "the top of the house"}</span></div><i class="wl-vipbar"><u style="width:${nx ? Math.round(((v.wagered - v.at) / (nx.at - v.at)) * 100) : 100}%;background:${(nx || v).col}"></u></i></div>`; })()}
+    ${(() => { const v = G.vipOf(me), nx = v.next; return `<div class="wallet wl-vip" title="Every ticket you EARN counts (kills, trade-ins, daily jobs). Your tier shows by your name and takes a little off every Prize Counter price${v.off ? ` (yours: ${Math.round(v.off * 100)}% off)` : ""}."><div class="wl-h" style="margin:0"><b style="color:${v.col}">◆ ${v.name} VIP</b><span style="margin-left:auto;text-transform:none;letter-spacing:0">${nx ? `${G.fmtCash(Math.max(0, nx.at - v.earned))} more earned to ${nx.name}` : "the top of the house"}</span></div><i class="wl-vipbar"><u style="width:${nx ? Math.round(((v.wagered - v.at) / (nx.at - v.at)) * 100) : 100}%;background:${(nx || v).col}"></u></i></div>`; })()}
     <div class="wl-next">${esc(whatNext())}</div>
   </div>`;
 }
@@ -2801,7 +2800,7 @@ function renderPanel() {
     // "is this better than what I have on" is the only question being asked here
     const cells = me.inv.map((s, i) => {
       const it = ITEMS[s.k], cmp = it.slot ? G.compareText(me, s.k) : "";
-      const what = it.luck ? `click to use: your next ${it.luck} bets are lucky` : it.drink ? "click to drink" : it.use ? "click to use" : it.meal ? "click to eat: Well Fed" : it.heal ? `click to eat (heals ${it.heal})` : it.slot ? (it.slot === "weapon" ? "click to wield" : "click to wear") : "click to examine";
+      const what = it.luck ? `click to use: your next ${it.luck} kills or catches are lucky` : it.drink ? "click to drink" : it.use ? "click to use" : it.meal ? "click to eat: a buff for out the arch" : it.heal ? `click to eat (heals ${it.heal})` : it.slot ? (it.slot === "weapon" ? "click to wield" : "click to wear") : "click to examine";
       const title = `${it.name}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}` + (cmp ? `\n${cmp}` : "") + `\n${what}, shift-click to drop, right-click for the wiki`;
       return `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" data-item="${s.k}" title="${esc(title)}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}</div>`;
     });
