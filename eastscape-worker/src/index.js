@@ -376,6 +376,8 @@ export class World {
     else if (m.kind === "mob") {
       const mob = S.mobs.find((x) => x.id === m.id && !x.dead); if (!mob) return;
       if (!this.mayFight(S, mob, pl, now)) return this.say(pl, `${this.claimOf(S, mob, now).name} is already fighting that.`, "bad");
+      { const gate = mob.target === pl.id || pl.god ? null : G.bandBlock(C, S.key, "fight");   /* LEVEL BANDS: a soft gate. Something already attacking you can always be fought back */
+        if (gate) return this.say(pl, `${S.def.name} is for Combat ${gate.need} and up. You're ${gate.have}. ${gate.need <= 10 ? "The Yard will get you there." : "Work the scene before this one a while longer."}`, "bad"); }
       act = { kind: "mob", id: mob.id, x: mob.x, y: mob.y, name: G.MOBS[mob.t].name };
     }
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
@@ -1339,6 +1341,7 @@ export class World {
     }
     if (a.kind === "spot") {
       if (!this.hasTool(pl, "fishing")) { pl.act = null; return; }
+      { const gate = pl.god ? null : G.bandBlock(C, S.key, "fish"); if (gate) { pl.act = null; return this.say(pl, `This water is for Fishing ${gate.need} and up. You're ${gate.have}.`, "bad"); } }   /* LEVEL BANDS */
       if (!a.started) { a.started = now; a.next = now + G.FISHING.ms; this.say(pl, "You cast out your line…"); return; }
       if (now < a.next) return;
       const fx = G.fxOf(C); a.next = now + Math.round(G.FISHING.ms / (1 + fx.speed));

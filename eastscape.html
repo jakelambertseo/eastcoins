@@ -635,7 +635,7 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=75";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=76";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=45").then((m) => { WK = m; }));
@@ -2001,7 +2001,7 @@ function frame() {
   if (Z.isle) for (const ob of Z.objs) if (ob.t === "pedestal") { const k = Z.isle.shelf[ob.i]; if (k && ITEMS[k]) drawIco(k, sx(ob.x * T + 8), sy(ob.y * T - 2) + (calm ? 0 : Math.sin(pnow / 500 + ob.i) * 2), 30); }
   for (const m of Z.mobs) if (!m.dead) {
     const p = posOf(m, now), x = sx(p.px * T + 8), y = sy(p.py * T + 15);
-    if (names) { label(MOBS[m.t].name, x, y + 2, "#ffb23f", 12); const mv = G.mobValue(m.t); if (mv) tixLabel(mv, x, y + 15, "#ff9aa8", 11, "~"); }
+    if (names) { label(MOBS[m.t].name, x, y + 2, "#ffb23f", 12); const mv = G.mobValue(m.t), gate = me ? G.bandBlock(me, Z.key, "fight") : null; if (gate) label(gate.text, x, y + 15, "#ff6b6b", 11); else if (mv) tixLabel(mv, x, y + 15, "#ff9aa8", 11, "~"); }   /* (LEVEL BANDS: what you need, where the pay would be) */
     if (m.hp < MOBS[m.t].hp) { const bw = 30; ctx.fillStyle = "#c00"; ctx.fillRect(x - bw / 2, sy(p.py * T - 5), bw, 5); ctx.fillStyle = "#0c0"; ctx.fillRect(x - bw / 2, sy(p.py * T - 5), bw * Math.max(0, m.hp / MOBS[m.t].hp), 5); }
   }
   for (const n of Z.npcs) {
@@ -2025,7 +2025,7 @@ function frame() {
     label(FIGHT.phase === "bet" ? `BETS CLOSE IN ${left}` : FIGHT.phase === "fight" ? "FIGHT!" : `${MOBS[FIGHT.f[FIGHT.winner].t].name.toUpperCase()} WINS`, sx(cx), sy(cy + 18), FIGHT.phase === "bet" ? "#8ff0b4" : "#ffe27a", 16);
   }
   // what a go at each rock, tree and fishing spot is worth, written over it (not while it's chopped down or mined out)
-  for (const ob of Z.objs) { const v = G.nodeValue(ob); if (!v || ob.gone || ob.edge || objBusy(ob, now)) continue; const tall = ["tree", "oak", "yew", "cypress", "deadtree", "willow", "skyash", "olive"].includes(ob.t); tixLabel(v, sx((ob.x + (ob.w || 1) / 2) * T), sy(ob.y * T - (tall ? 30 : 12)), ob.special ? "#ffe27a" : "#ff9aa8", 13); }
+  for (const ob of Z.objs) { const v = G.nodeValue(ob); if (!v || ob.gone || ob.edge || objBusy(ob, now)) continue; const tall = ["tree", "oak", "yew", "cypress", "deadtree", "willow", "skyash", "olive"].includes(ob.t); const fgate = ob.t === "spot" && me ? G.bandBlock(me, Z.key, "fish") : null; if (fgate) { label(fgate.text, sx((ob.x + (ob.w || 1) / 2) * T), sy(ob.y * T - 12), "#ff6b6b", 12); continue; } tixLabel(v, sx((ob.x + (ob.w || 1) / 2) * T), sy(ob.y * T - (tall ? 30 : 12)), ob.special ? "#ffe27a" : "#ff9aa8", 13); }
   if (me && me.spinDay !== G.chicagoDay()) for (const ob of Z.objs) if (ob.t === "prizewheel") label("FREE SPIN", sx((ob.x + 1) * T), sy(ob.y * T - 30 + Math.sin(pnow / 300) * 2), "#7dffb0", 13);
   for (const ob of Z.objs) if (ob.t === "coinstatue") { label("PRIZE COUNTER", sx((ob.x + 1) * T), sy(ob.y * T - 34), "#ffe27a", 13); label("tickets for gear, dinner and drinks", sx((ob.x + 1) * T), sy(ob.y * T - 22), "#ff9aa8", 10); }
   for (const ob of Z.objs) if (ob.t === "furnace" || ob.t === "anvil" || ob.t === "range") label("pays 2×", sx((ob.x + 0.5) * T), sy(ob.y * T - 16), "#ffe27a", 12);
