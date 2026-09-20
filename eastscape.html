@@ -276,7 +276,8 @@ button,input,select{font:inherit}
 .rl-chips button{width:40px;height:40px;border-radius:50%;border:3px dashed #fff8;font-weight:900;color:#fff;cursor:pointer;font-size:12px}
 .rl-chips button[aria-pressed="true"]{outline:3px solid #ffe27a;outline-offset:1px}
 /* the game windows' gold buttons (eastscape-casino.js), so roulette's switch and chips match the other tables */
-.rl-gold button{width:auto;min-width:42px;height:38px;padding:0 12px;border-radius:10px;border:1px solid rgba(70,45,20,.38);background:#ecdcb6;color:#2a2016;font:800 13.5px Nunito,sans-serif}.rl-gold button.pill{border-radius:999px;height:32px}
+.rl-gold button{width:auto;min-width:42px;height:38px;padding:0 12px;border-radius:10px;border:1px solid rgba(70,45,20,.38);background:#ecdcb6;color:#2a2016;font:800 13.5px Nunito,sans-serif}.rl-gold button.pill{height:32px;border-style:solid;border-color:transparent;border-width:0 14px;border-image:url(/v3/assets/img/glad/flat/ui/czpill.png?v=1) 0 20 fill / 0 14px stretch;background:none;border-radius:0;box-shadow:none;padding:0 2px;color:#f3e7cc;text-shadow:0 1px 0 #1a0e08;image-rendering:pixelated}
+.rl-gold button.pill[aria-pressed="true"]{border-image-source:url(/v3/assets/img/glad/flat/ui/czpill_on.png?v=1);background:none;box-shadow:none;color:#3a2604;text-shadow:0 1px 0 rgba(255,246,196,.75)}
 .rl-gold button[aria-pressed="true"]{outline:0;background:linear-gradient(#f0c848,#cf9a2e);border-color:#8a6210;color:#2a1c04;box-shadow:0 2px 0 #8a6210}.rl-gold button:hover{border-color:#8a6210}
 .rl-board{display:grid;grid-template-columns:36px repeat(12,minmax(26px,1fr));gap:2px;background:#0f4a24;padding:5px;border-radius:6px;overflow-x:auto}
 .rl-cell{position:relative;min-height:30px;display:grid;place-items:center;border:1px solid #d8c890;color:#fff;font-weight:900;font-size:12.5px;cursor:pointer;border-radius:3px;background:transparent;font-family:inherit;padding:0}
@@ -635,10 +636,10 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=78";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=79";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=47").then((m) => { WK = m; }));
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=48").then((m) => { WK = m; }));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=2";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -2418,7 +2419,7 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=20", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=21", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
 let czReal = null;
 const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, say: (t, c) => say(t, c),
   /* a shared round's view, built from the site's state: fed to the very handlers the game server's own views used to reach */
@@ -2578,7 +2579,7 @@ const WIKI = (() => {
   const areas = {}, sources = {}, npcs = {};
   const addSrc = (k, s) => { (sources[k] ||= []).push(s); };
   for (const key of Object.keys(SCENES).filter((k) => !SCENES[k].wikiHide)) {
-    const def = SCENES[key], b = G.buildScene(key), a = areas[key] = { key, def, mobs: {}, res: {}, buildings: [] };
+    const def = SCENES[key], b = G.buildScene(key), a = areas[key] = { key, def, mobs: {}, res: {}, buildings: [], spots: b.objs.filter((o) => o.t === "spot") };
     for (const [t] of def.mobs) a.mobs[t] = (a.mobs[t] || 0) + 1;
     for (const n of def.npcs) npcs[n.name] = { ...n, scene: key };
     for (const o of b.objs) {
@@ -2678,7 +2679,11 @@ function wikiGo(route, setNav = true) {
   }
   else if (kind === "areas" && SCENES[id]) {
     const a = WIKI.areas[id], d = a.def, ex = d.interior ? [d.exitTo.scene] : Object.values(d.exits || {});
+    const band = G.bandOf(id), fishes = [...new Map((a.spots || []).flatMap((o) => [[o.fish || "sardine", o.req?.lvl || 1], ...(o.fish2 ? [[o.fish2, o.fish2lvl]] : [])]))], bill = G.DEATH[id];
     html = `<h2><i>${d.interior ? "🚪" : "🗺️"}</i>${esc(d.name)}</h2>
+      ${band ? `<p class="lede">For <b>Combat ${band[0]}${band[1] < 99 ? ` to ${band[1]}` : " and up"}</b>. You can walk in at any level, but you can't start a fight here until your Combat is ${band[0]}, or fish here until your Fishing is ${band[0]}. Nothing here attacks first.</p>` : ""}
+      ${fishes.length ? `<h3>Fishing</h3><p>${fishes.map(([k, l]) => `${wl(`items/${k}`, esc(ITEMS[k].name))} (Fishing ${l})`).join(", ")}</p>` : ""}
+      ${bill ? `<h3>If you die here</h3><p>The hospital bill: ${Math.round(bill.share * 100)}% of the tickets you're carrying, at most ${G.fmtTix(bill.cap)}. Nothing else is taken.</p>` : ""}
       <h3>Leads to</h3><p>${ex.map(areaLink).join(", ")}${a.buildings.filter((b) => b.enter).map((b) => `, ${areaLink(b.enter)} (door)`).join("")}</p>
       ${Object.keys(a.mobs).length ? `<h3>Monsters</h3><p>${Object.entries(a.mobs).map(([t, n]) => `${wl(`monsters/${t}`, esc(MOBS[t].name))} (${n})`).join(", ")}</p>` : `<h3>Monsters</h3><p>None: it's safe here.</p>`}
       ${d.npcs.length ? `<h3>People</h3><p>${d.npcs.map((n) => wl(`npcs/${n.name}`, esc(n.name))).join(", ")}</p>` : ""}
