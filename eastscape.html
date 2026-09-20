@@ -639,10 +639,10 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=81";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=82";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=50").then((m) => { WK = m; }));
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=51").then((m) => { WK = m; }));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=2";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -1007,7 +1007,7 @@ const AREA_ART = {
   highroller: ["sterling_south", "sterling_east"],
   isle: ["o_ferry", "o_islesign", "o_lighthouse", "o_palm", "o_pedestal", "o_plot"], isle2: ["o_ferry", "o_islesign", "o_lighthouse", "o_palm", "o_pedestal", "o_plot"], shore: ["o_ferry", "o_islesign", "o_lighthouse", "o_palm", "o_pedestal", "o_plot"],
   home: ["o_bed", "o_chest", "o_table", "o_chair"],
-  roulette: ["t_roulette", "o_roulette", "o_rrtable", "rouge_south", "rouge_east", "arbino_south", "arbino_east"]   // (CASINO_ART is core now: the casino is where everyone starts)
+  roulette: ["t_roulette", "o_rrtable", "arbino_south", "arbino_east"]   // (CASINO_ART is core now: the casino is where everyone starts)
 };
 const LAZY_ART = new Set(Object.values(AREA_ART).flat());
 const artReady = Promise.all(ART_FILES.filter((k) => !LAZY_ART.has(k)).map(loadArt));

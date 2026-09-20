@@ -1069,7 +1069,7 @@ export class World {
     this.restartTick(now);
     const live = new Set([...this.pls.values()].map((p) => p.C.scene));
     for (const [key, S] of this.scenes) {
-      if (key === "roulette" && !S.def.realRound) this.rouletteTick(S, now);   /* (a realRound room's game is the site's: no rounds are run here) */
+      if (key === "roulette" && !S.def.realRound && S.objs.some((o) => o.t === "roulette")) this.rouletteTick(S, now);   /* (v73: no wheel in the room, no rounds) */   /* (a realRound room's game is the site's: no rounds are run here) */
       if (key === "fightpit" && !S.def.realRound) this.fightTick(S, now);
       if (!live.has(key)) { S.idleSince ||= now; if (now - S.idleSince > SCENE_IDLE_MS && !(S.def.pvp && S.mobs.some((m) => m.dead && now < m.respawnAt)) && !S.roulette?.bets.length && !S.fight?.bets.length) this.scenes.delete(key); continue; }
       S.idleSince = 0;
