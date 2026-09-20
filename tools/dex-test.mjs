@@ -70,7 +70,10 @@ const newStake = async (id, zc, who = "u1") => { const a = await ask({ op: "stak
 
 let before = balances.alice, d0 = debits();
 r = await post("casino/plinko/drop.js", {}, { stake: 5, voucher: "stake0001" });
-check("Plinko on a ticket stake: plays, wallet only ever goes UP by the payout, no debit written", r.body.ok && balances.alice === before + r.body.drop.payout && debits() === d0 && r.body.drop.stake === 5, JSON.stringify(r.body).slice(0, 160));
+/* After 11 PM Central the first bet of a day also pays out the Daily Pot (house money, its own credit), so that credit is
+   taken off before the wallet is compared: run late at night, this check used to fail on a pot it never meant to measure. */
+const potPaid = () => raw.prepare(`SELECT COALESCE(SUM(amount), 0) n FROM wallet_operations WHERE idempotency_key LIKE 'CASINO:POT:PAY:%' AND status = 'CONFIRMED'`).get().n;
+check("Plinko on a ticket stake: plays, wallet only ever goes UP by the payout, no debit written", r.body.ok && balances.alice - potPaid() === before + r.body.drop.payout && debits() === d0 && r.body.drop.stake === 5, JSON.stringify(r.body).slice(0, 160));
 check("the voucher is spent, and says where", raw.prepare(`SELECT status, game FROM gamba_stakes WHERE id = 'stake0001'`).get().status === "USED" && String(raw.prepare(`SELECT game FROM gamba_stakes WHERE id = 'stake0001'`).get().game).startsWith("plinko:"));
 before = balances.alice; r = await post("casino/plinko/drop.js", {}, { stake: 5, voucher: "stake0001" });
 check("the same voucher again: refused, nothing moves, no drop written", r.body.code === "BAD_VOUCHER" && balances.alice === before && count(`SELECT COUNT(*) n FROM plinko_drops`) === 1);

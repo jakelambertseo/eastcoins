@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 71;
+export const VERSION = 72;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -496,7 +496,7 @@ export const SCENES = {
       return { g, objs, blobs: [] };
     },
     mobs: [["chicken", 4, 9], ["chicken", 5, 10], ["chicken", 6, 9], ["chicken", 3, 10]],
-    npcs: [{ name: "Charon the Ferryman", x: 15, y: 11, still: true, opens: "ferry", hair: "#e8e8e8", shirt: "#3a3a5a", pants: "#2a2a3a", lines: ["Islands. Everyone gets one. Nobody knows who's paying for them.", "I row, you ride. No refunds, no questions, no singing.", "Your island grows while you're away. Mine doesn't. I don't have one. It's fine."] },
+    npcs: [{ name: "Charon the Ferryman", x: 15, y: 11, still: true, opens: "ferry", hair: "#e8e8e8", shirt: "#3a3a5a", pants: "#2a2a3a", lines: ["Everyone gets an island. Hop on.", "Plant something. It grows while you're gone."] },
       { name: "Old Tullius", art: "tullius", quests: ["catch"], x: 15, y: 6, hair: "#d8d8d8", shirt: "#5a7a3a", pants: "#3a3a2a", lines: ["The fish bite best where the water bubbles.", "Can't fish with a sword, lad. Hold your rod.", "Don't let the chickens fool you. One took my eye.", "That big copper vein never runs dry. Slow, mind."] }],
     bots: [{ name: "Spartacus", level: 77 }]
   },
@@ -537,9 +537,9 @@ export const SCENES = {
     },
     mobs: [],
     npcs: [
-      { name: "Livia the Broker", x: 12, y: 16, still: true, opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Selling? Buying? Use the stall. I just take my 1%.", "Offers keep working while you sleep. Come back and collect.", "The best price wins, and whoever was there first."] },
+      { name: "Livia the Broker", x: 12, y: 16, still: true, opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Buying? Selling? Use the stall. I take 1%.", "It keeps selling while you sleep."] },
            { name: "Charon the Ferryman", art: "charon", x: 18, y: 21, still: true, opens: "ferry", hair: "#e8e8e8", shirt: "#3a3a5a", pants: "#2a2a3a", lines: ["Islands. Everyone gets one. Nobody knows who's paying for them.", "The river's closed, so now it's a cart. Don't ask how a cart gets to an island. I don't.", "Plant something before you go back in there and lose your shirt. It grows while you're away.", "Wheat, ten minutes. Tomatoes, twenty. Both sell. Both cook."] },
-           { name: "Gaius", x: 25, y: 15, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: Coo. The Forge buys ore. Coo.", "PIGEON: He doesn't talk. I do the talking. Coo.", "PIGEON: The Bank keeps your things safe. Aurelia counts everything twice. Coo.", "PIGEON: West is the Olive Grove. Bring a sword. Seriously. Coo.", "PIGEON: North is Tomatoe Hill. Don't correct her spelling. Coo.", "PIGEON: East is the Via Appia. Highwaymen. Hold on to your tickets. Coo."] }],
+           { name: "Gaius", x: 25, y: 15, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: He doesn't talk. I do. Coo.", "PIGEON: Casino's that way. Everything's that way. Coo."] }],
     bots: [{ name: "Gannicus", level: 55 }, { name: "Naevia", level: 31 }]
   },
   grove: {
@@ -767,7 +767,7 @@ Object.assign(SCENES, {
       return { g, objs, blobs: [] };
     },
     mobs: [], bots: [],
-    npcs: [{ name: "Aurelia", x: 21, y: 9, still: true, opens: "bank", reach: 2, hair: "#1a1a2a", shirt: "#3a6a8a", pants: "#2a2a3a", lines: ["Welcome to the Bank. Your things are safe with us. Mostly.", "Use any booth. I'm the one counting.", "Two hundred different things we'll hold for you. Stack them as high as you like."] }]
+    npcs: [{ name: "Aurelia", x: 21, y: 9, still: true, opens: "bank", reach: 2, hair: "#1a1a2a", shirt: "#3a6a8a", pants: "#2a2a3a", lines: ["Welcome to the Bank. Use any booth.", "We hold anything. Not tickets."] }]
   },
   // WEST of the casino, the first stop on the skilling line: a bit of everything a beginner gathers
   /* ONE WAY OUT (2026-09-20, the owner: "one entrance for skilling/combat/crafting, all available in a few scenes"). The
@@ -882,7 +882,7 @@ Object.assign(SCENES, {
       return { g, objs, blobs: [] };
     },
     mobs: [], bots: [{ name: "RingsideRon", level: 22 }, { name: "bloodsport99", level: 47 }, { name: "ChalkEater", level: 9 }],
-    npcs: [{ name: "Vince the Bouncer", art: "vince", x: 23, y: 5, still: true, hair: "#1a1a1a", shirt: "#141418", pants: "#141418", lines: ["High Roller Room. Shut. Refit. Don't ask me when.", "When it opens again, you'll hear about it. Everyone will.", "No, I don't know who's going to win. Yes, everybody asks.", "Shoes. I always look at the shoes."] }]
+    npcs: [{ name: "Vince the Bouncer", art: "vince", x: 23, y: 5, still: true, hair: "#1a1a1a", shirt: "#141418", pants: "#141418", lines: ["Room's shut. Refit.", "Shoes. I always look at the shoes."] }]
   },
   /* THE HIGH ROLLER ROOM (2026-09-20): through the door in the Fight Pit's back wall. The same games, ten times the
      limits (def.limits), and a $100 floor. Vince lets you in with HIGH_ROLLER.cash in your bag or the High Roller buff
@@ -1023,58 +1023,13 @@ Object.assign(SCENES, {
     },
     // the regulars at the machines are simulated players: they walk up to a game, play a while, and move on
     mobs: [], bots: [{ name: "due4aWin", level: 14 }, { name: "SlotGoblin", level: 37 }, { name: "AllInAlan", level: 61 }],
-    npcs: [{ name: "Dex the Dealer", art: "dex", x: 35, y: 4, still: true, reach: 2, hair: "#1a1a1a", shirt: "#9a2a2a", pants: "#1a1a1a", lines: [
-      "Welcome in. Every game has its own room: slots are the whole north-west floor, wheels and coin tables below them, cards next to me, dice and the instant machines in the south-east. The house always wins, a little.",
-      "Broke? Out the arch and hit something. Every monster pays tickets, drops its one thing, and now and then coughs up something rare. The Prize Counter, that ruby behind you, turns tickets into chips.",
-      "Don't fancy a fight? Fish. Every scene out there has a pond, it's safe, and it's the only place lucky clovers turn up.",
-      "Gear's at the Prize Counter now, a set for every level. Better gear, faster kills, bigger monsters, more tickets. I sell dinner. We all have our lane.",
-      "Once in a while something out there drops a real ZCoin. An actual one. Bank it at the counter before you do anything stupid.",
-      "Broke? Happens to the best of us. The board by the door has jobs that pay. Fresh ones every morning.",
-      "Biggest win I've seen? Someone hit three sevens on that end machine. Bought everyone a drink. You can too: a round's 300 tickets.",
-      "Drinks work. A lager and your wins pay a little more, a Safety Net and your losses hurt a little less. One at a time.",
-      "Going out past the Gloam? Take a Casino scroll. Click it and you're back on my floor.",
-      "Every roll's decided by the house, fair and square. I just hand over the money.",
-      "Tickets or ZCoins, friend, the tables take both. Win, and it is ZCoins you walk out with."] },
-      { name: "DookieBetts", art: "dookie", x: 28, y: 18, still: true, reach: 2, hair: "#1a1a1a", shirt: "#c8102e", pants: "#1a1a1a", lines: [
-        "One more roll. Just one. Then one more after that. Then we'll talk.",
-        "You're up? That's the dice telling you to bet bigger. You're down? That's the dice telling you you're due.",
-        "Roll under five. Twenty-four times your money. Honestly it'd be irresponsible NOT to.",
-        "I haven't left this table since the doors opened. My island's all weeds now. Worth it.",
-        "Broke? Beautiful. Board by the door pays for chopping logs. Chop, come back, roll. That's a business plan.",
-        "Coin flip's fifty-fifty. That means you literally cannot lose half the time. Do the math. Then bet it all.",
-        "Last week I lost my pickaxe, my boots and my good trousers in one night. Best night of my life.",
-        "Scared money don't make money. Scared money doesn't make anything. Put the whole stack on it.",
-        "The sevens are hot tonight. They're always hot. That's why I sleep here.",
-        "You walking away? On THIS streak? Nah. Nah nah nah. One more."] },
+    npcs: [{ name: "Dex the Dealer", art: "dex", x: 35, y: 4, still: true, reach: 2, hair: "#1a1a1a", shirt: "#9a2a2a", pants: "#1a1a1a", lines: ["Drinks and dinner are at the Prize Counter. They help out the arch, not in here.", "Broke? Out the arch. Hit something.", "A round for the room is 300 tickets. Be a hero."] },
+      { name: "DookieBetts", art: "dookie", x: 28, y: 18, still: true, reach: 2, hair: "#1a1a1a", shirt: "#c8102e", pants: "#1a1a1a", lines: ["One more. Then one more after that.", "Scared money don't make money.", "You walking away? On THIS streak? Nah."] },
       // the regulars (2026-09-19): nobody here is a good influence
-      { name: "Parlay Pete", art: "pete", x: 40, y: 8, hair: "#3a2a1a", shirt: "#6a6a72", pants: "#3a3a44", lines: [
-        "Twelve-leg parlay. Eleven hit. ELEVEN. The twelfth was a chicken fight in the Yard. The chicken LOST.",
-        "I don't chase losses. I follow them at a respectful distance until they turn around.",
-        "The cash machine's been out of order for a year. Best thing that ever happened to me. Don't tell it I said that.",
-        "My system can't lose. It just hasn't won YET. Those are different things.",
-        "I told my wife I was at the Yard. Technically I walked through it.",
-        "You want a lock? Red. Always red. Unless it's black. It's one of those two, I'm almost sure."] },
-      { name: "Nana Jackpot", art: "nana", x: 2, y: 8, still: true, hair: "#e8e8e8", shirt: "#e8a0b8", pants: "#8a6a8a", lines: [
-        "This is MY machine, dear. I've been warming it up since Tuesday. Sit somewhere else.",
-        "The jackpot's close. I can feel it in my hip.",
-        "My grandson thinks I'm at church. In a way I am.",
-        "Two cherries pays, dear. People forget that. Two cherries has paid for this whole visor.",
-        "I brought my own bucket. You have to show the machine you're serious.",
-        "Lucky clover from the Yard, that's the trick. I eat them. You're supposed to click them? Hm."] },
-      { name: "Rent Money Randy", art: "randy", x: 18, y: 21, hair: "#5a4a3a", shirt: "#8a5a32", pants: "#8a5a32", lines: [
-        "It's a barrel. Yes. No, I don't want to talk about it. Dice. It was the dice.",
-        "I was up four thousand. Then I was up two thousand. Then I was in a barrel.",
-        "The task board pays tickets for chopping logs. I'd go, but the barrel doesn't fit through the arch.",
-        "Rent's due Friday. So am I. We'll see who gets there first.",
-        "Spot me ten tickets? I'll pay you back twenty. I've got a feeling about the coin table.",
-        "The barrel's actually quite roomy. Don't end up in one."] },
-      { name: "Whale Wendell", art: "wendell", x: 28, y: 8, hair: "#1a1a1a", shirt: "#f4f4f4", pants: "#f4f4f4", lines: [
-        "Five hundred a spin. It's the most the house lets me bet. I've written letters.",
-        "I don't look at my balance. My balance looks at me.",
-        "Poker's opening soon, they keep telling me. I've already reserved every seat.",
-        "You skill for luck? Adorable. I have a man who clicks my clovers for me.",
-        "Lost a fortune on roulette upstairs last night. Won it back. Lost it again. Lovely evening.",
-        "Kid, the secret is simple: start rich. Failing that, go and hit something in the Yard: it makes the tables take you seriously."] }]
+      { name: "Parlay Pete", art: "pete", x: 40, y: 8, hair: "#3a2a1a", shirt: "#6a6a72", pants: "#3a3a44", lines: ["Five-leg parlay. Can't lose.", "It lost."] },
+      { name: "Nana Jackpot", art: "nana", x: 2, y: 8, still: true, hair: "#e8e8e8", shirt: "#e8a0b8", pants: "#8a6a8a", lines: ["Three sevens, dear. That's the dream.", "I've had this machine since Tuesday."] },
+      { name: "Rent Money Randy", art: "randy", x: 18, y: 21, hair: "#5a4a3a", shirt: "#8a5a32", pants: "#8a5a32", lines: ["It's fine. Rent's not due till the first.", "Double or nothing fixes everything."] },
+      { name: "Whale Wendell", art: "wendell", x: 28, y: 8, hair: "#1a1a1a", shirt: "#f4f4f4", pants: "#f4f4f4", lines: ["Twenty a bet. It's the principle.", "Tickets, ZCoins. I've got both. Mostly neither."] }]
   },
   // through the curtains at the back of the Casino: one big table everyone plays at once
   roulette: {
@@ -1094,20 +1049,9 @@ Object.assign(SCENES, {
       return { g, objs, blobs: [] };
     },
     mobs: [], bots: [],
-    npcs: [{ name: "Rouge the Croupier", art: "rouge", x: 22, y: 10, still: true, reach: 3, hair: "#1a1a1a", shirt: "#1a1a1a", pants: "#1a1a1a", lines: [
-      "Place your bets. The wheel waits for no one, but it does wait twenty-five seconds.",
-      "Red, black, odd, even, a dozen or a single number. A single number pays thirty-six times. It also mostly doesn't.",
-      "Everyone at this table plays the same spin. Win together, lose together. Mostly lose together.",
-      "No more bets once the ball is rolling. I will know.",
-      "Zero is green, and zero belongs to the house. Nothing personal."] },
+    npcs: [{ name: "Rouge the Croupier", art: "rouge", x: 22, y: 10, still: true, reach: 3, hair: "#1a1a1a", shirt: "#1a1a1a", pants: "#1a1a1a", lines: ["Pick a spot. One a spin.", "Zero is green. Zero is mine."] },
       /* the Russian Roulette dealer (the owner, 2026-09-19): stands behind that table, striped jersey, ponytail, whiskey in hand */
-      { name: "Bino", art: "arbino", x: 15, y: 11,   /* (the owner's tile, 2026-09-19: beside the table, so his name isn't drawn over it) */ still: true, reach: 3, hair: "#5a3a1e", shirt: "#e8601c", pants: "#1a1a1a", lines: [
-      "Russian Roulette. Twenty ZCoins a seat, last one standing takes the lot. I just load the thing.",
-      "Who Dey. Sit down, the clock starts when the first one does.",
-      "The whiskey's for me. Steadies the hands. You'd want steady hands on this table.",
-      "House takes nothing here. I get paid in stories, and most of them end the same way.",
-      "Could be somebody from the website across from you. Same table. Same cylinder.",
-      "Alone when the clock runs out? You get your twenty back. Nobody plays this by themselves. I checked."] }]
+      { name: "Bino", art: "arbino", x: 15, y: 11,   /* (the owner's tile, 2026-09-19: beside the table, so his name isn't drawn over it) */ still: true, reach: 3, hair: "#5a3a1e", shirt: "#e8601c", pants: "#1a1a1a", lines: ["Twenty a seat. Last one standing takes the pot.", "The whiskey's for me.", "Who Dey."] }]
   },
   farmhouse: {
     name: "The Farmhouse", interior: true, floor: "wood", room: [6, 4, 15, 10], exitTo: { scene: "farm", x: 4, y: 5 }, entry: { x: 10, y: 10 },
@@ -1667,32 +1611,17 @@ export const TOUR = [
 ];
 export const TOUR_CHIP = 10, TOUR_PAY = 60, TOUR_GIFT = "clover", TOUR_JOB = { fish: 5, chickens: 3 };
 export const tourOf = (c) => (c?.tour && c.tour.step < TOUR.length ? TOUR[c.tour.step] : null);
-export const HOWTO = `EastScape is a casino. You'll spend most of your time right here.
+export const HOWTO = `PLAY. Click a table. Every game takes ZCoins or tickets. Wins pay real ZCoins. Press G for the list.
 
-REAL ZCOINS: Coin Flip, the Wheels, Higher or Lower, Mines, Plinko, Scratch-Off, Slots and Dice on this floor are eastcoin.vip's own games, for REAL ZCoins, with the site's rules: 20 a bet, ten plays an hour a game, 400 an hour out. Click one (or the Games button, top left) and it opens. Hit a limit? That's what the arch is for.
-TICKETS OR ZCOINS: every one of those tables takes either. Pick "ZCoins" and you bet your own; pick "Tickets" and 1,000 tickets stand in for each ZCoin. Either way a win is paid in REAL ZCoins. Ticket bets have an allowance of 50 ZCoins' worth an hour.
-SLOTS AND DICE are the same deal (the slots JACKPOT is real ZCoins: three sevens wins it). So are ROULETTE upstairs (one spot a spin, a spin a minute) and THE FIGHT PIT (one side a fight, a fight every minute and a half): everyone in the room is on the same spin and the same fight. (The High Roller Room is closed.)
+OUT OF TICKETS? Out the arch. Hit something, or fish. Nothing out there attacks first.
 
-PLAY: every kind of game has its own roped-off room, named on the carpet at its way in. SLOTS fill the north-west. WHEELS and COIN FLIP are below them. The CARD ROOM is by the bar. The DICE PIT and the INSTANT WINS machines (Plinko, Mines, Scratch-Off) are in the south-east. Roulette is through the door in the back wall. Bets come out of the tickets in your bag.
+THE BIG RUBY is the Prize Counter: trade in your drops, buy gear, food and drinks.
 
-BROKE? Go and win some tickets. It's quick.
-  OUT THE ARCH, six scenes in a line, each one ten levels harder: the Yard (1-9), the Gloam (10-19), the Lantern Mire (20-29), the Boneyard (30-39), Cloudreach (40-49) and the Thunderhead (50 and up). You can walk anywhere, but you can't START a fight until your Combat reaches that scene's level, or fish its water until your Fishing does. DYING costs a hospital bill: a tenth of the tickets you're carrying (a twentieth in the Yard), capped by how deep you were. Nothing else is ever taken. CLICK A MONSTER to fight it. Every kill pays the same three ways: TICKETS, the monster's own drop, and a roll at something rare. The further out you walk, the bigger all three get.
-  RATHER NOT FIGHT? Every scene has a pond. Fishing is safe, it never runs out, and it's the only place lucky clovers turn up. A fish is food, too: click one to eat it.
-  THE PRIZE COUNTER is the big ruby in the middle of this floor (the Cashier windows work too). It takes your drops and fish for more tickets, and sells gear for every level, drinks, dinners and Casino scrolls.
-  REAL ZCOINS also turn up, rarely, on a kill or a catch. Bank them at the counter.
+SIX SCENES, WEST: the Yard 1-9, the Gloam 10-19, the Lantern Mire 20-29, the Boneyard 30-39, Cloudreach 40-49, the Thunderhead 50+.
 
-THIRSTY? HUNGRY? Every bet takes a little out of you. Under 20% the tables turn you away: the water cooler and the buffet are on the card room's back wall, next to the bar, and they're free.
+DIE and you pay a small hospital bill in tickets. Nothing else.
 
-BUFFS. Lucky clovers (from fishing) make your wins pay more. Kills can make you a HIGH ROLLER (double table limits for a few bets) and turn up house chips, free-play chips, mystery boxes and rare gear that changes how the tables treat you while you wear it. Dex sells drinks and dinners that do the same for a while.
-Everything you've got going is in the BUFFS bar, top right. Hover one to see what it does.
-
-FREE MONEY: the Daily Prize Wheel by the front door is one free spin a day. Spin it every day and the ticket slices grow.
-VIP: every dollar you ever bet counts toward your tier (Bronze, Silver, Gold, Platinum, Diamond). It shows by your name, and every tier raises your table limits.
-
-FAR FROM HOME? Dex sells Casino scrolls. Click one and you're back on the floor.
-YOUR ISLAND: Charon's cart, in the square out the front door. Plant wheat or tomatoes; they grow while you're away.
-
-That's it. Play, go broke, go get more, play better. Dex, behind the bar, always knows what you should do next.`;
+FREE EVERY DAY: a spin on the Prize Wheel by the door, and three jobs on this board's neighbour.`;
 
 /* ------------------------------------------------------------ roulette: one shared table, one spin for everyone
 

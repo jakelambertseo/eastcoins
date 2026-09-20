@@ -13,120 +13,47 @@
    ============================================================ */
 
 // guides: { id, title, icon, body } — body is simple HTML (paragraphs, lists, <b>). Link a page with <a data-wiki="items/logs">.
+/* PLAIN WORDS (the owner, 2026-09-19: "gamer dads, hanging out with a beer in hand... reading is at the bottom of their list").
+   Every guide is a few short lines. Guides for things that are closed (the Forge, cooking, the Wilderness, tools) are gone. */
 export const GUIDES = [
-  {
-    id: "road", title: "The road west: six scenes", icon: "🗺️",
-    body: `<p>Out the casino's arch the world runs in a straight line west, one scene for every ten levels: THE YARD (1 to 9), THE GLOAM (10 to 19), THE LANTERN MIRE (20 to 29), THE BONEYARD (30 to 39), CLOUDREACH (40 to 49) and THE THUNDERHEAD (50 and up). Each has about two dozen monsters of five or six kinds, and one stretch of water with two kinds of fish.</p><p>YOU CAN WALK ANYWHERE. What's gated is the work: you can't START a fight in a scene until your Combat level reaches its first level, and you can't fish its water until your Fishing level does. The two are separate, so someone who only fishes can reach the deepest water without ever swinging a sword. The label over a monster or a fishing spot tells you what it needs.</p><p>NOTHING ATTACKS FIRST, anywhere. Every monster waits to be clicked. It's a game to relax in.</p><p>THE DEEPER YOU GO, THE MORE IT PAYS: a Yard chicken is worth about 18 tickets, a Boneyard ghoul about 175, and The House, the walking slot machine at the end of the Thunderhead, about 555. Fishing pays a little less than fighting at the same level, and it's the only place lucky clovers come from.</p><p>EVERY WATER HAS TWO FISH: the first bites at the scene's level, the second five or so levels later. Sardine and perch in the Yard; trout and catfish in the Gloam; lanternfish and mudskipper in the Mire's lake; bonefish and ghost carp in the Boneyard's flooded crypt; sky eel and cloud ray in Cloudreach; storm marlin and thunder squid in the sea under the Thunderhead. All of them heal when eaten and trade in at the Prize Counter.</p><p>DYING costs a hospital bill and nothing else: a twentieth of the tickets you're carrying in the Yard (250 at most), a tenth anywhere deeper (1,000 in the Gloam up to 6,000 in the Thunderhead). Your gear, your bag, your ZCoins and your levels are never touched. Spend or bet your tickets before you go somewhere dangerous.</p><p>TODAY'S JOBS (the board in the casino) are drawn from the monsters and fish your levels can reach, so there is always one for the scene you're working.</p><p>A Casino scroll from the Prize Counter takes you straight back to the casino floor from anywhere out here.</p>`
-  },
-  {
-    id: "start", title: "Getting started", icon: "🧭",
-    body: `<p>You wake up at the <a data-wiki="areas/farm">Ludus Farm</a>, just outside the farmhouse door, with a wooden rudis in your hand and a <a data-wiki="items/pickaxe">pickaxe</a>, an <a data-wiki="items/axe">axe</a> and a <a data-wiki="items/rod">fishing rod</a> in your bag.</p>
-      <ul><li><b>Walk:</b> click the ground, or hold WASD / the arrow keys.</li>
-      <li><b>Do things:</b> click them. Hovering tells you what a click will do.</li>
-      <li><b>Talk:</b> click a person. A <b>red arrow</b> over someone means they have work for you; <b>gold</b> means you can hand it in.</li>
-      <li><b>Travel:</b> walk onto the blue tiles at the edge of an area. Doors lead into buildings.</li></ul>
-      <p>Start with <a data-wiki="npcs/Bom Trady">Bom Trady</a>, the big man by the path. His first job teaches you to use your axe.</p>`
-  },
-  {
-    id: "tools", title: "Tools and equipment", icon: "🪓",
-    body: `<p>Tools go in your <b>weapon hand</b>, and you have to be holding the right one to use a skill: the pickaxe to <a data-wiki="skills/mining">mine</a>, the axe to <a data-wiki="skills/woodcutting">chop</a>, the rod to <a data-wiki="skills/fishing">fish</a>.</p>
-      <p>Click a tool in your bag to wield it; whatever you were holding goes back in the bag. Click your sword to fight properly again. Click anything on the Equipment tab to take it off.</p>`
-  },
-  {
-    id: "saving", title: "Saving (there's no button)", icon: "💾",
-    body: `<p>Your character lives on the EastScape server. It's saved a few seconds after anything changes, and again the moment you close the tab or lose your connection. Come back on any browser, logged in with the same Twitch account, and you're exactly where you left off.</p>`
-  },
-  {
-    id: "group", title: "Working together", icon: "🤝",
-    body: `<p>Every other player working the same tree, rock, fishing spot or olive tree as you gives you <b>+1%</b> to your chance of success and to your xp. The more the merrier.</p>`
-  },
-  {
-    id: "bank", title: "The bank", icon: "🏛️",
-    body: `<p>The <a data-wiki="areas/bathhouse">Bank</a> is the building marked BANK in <a data-wiki="areas/forum">the Forum</a>, the town square. Walk in and use any booth (or talk to Aurelia).</p>
-      <ul><li>It holds <b>200 different items</b>, and each stack is unlimited.</li>
-      <li>Click an item to move it; pick <b>1, 5, 10 or All</b> first to move more at once.</li>
-      <li><b>Deposit bag</b> and <b>Deposit worn</b> empty your inventory or your equipment in one click.</li></ul>`
-  },
-  {
-    id: "casino", title: "The Casino", icon: "🎰",
-    body: `<p>The Casino is the red building in <a data-wiki="areas/forum">the Forum</a>: somewhere to hang out, have a flutter and pick up paid work. It's <b>Cash only</b> (never ZCoins).</p>
-      <ul><li><b>Slots</b> (left wall): three reels. Three of a kind pays, from 5× for cherries up to 500× for three sevens; two cherries pay 1.4×.</li>
-      <li><b>The jackpot:</b> 2% of every slots spin goes into one pot everybody shares, shown at the top of the machine. Three sevens wins it on top of the 500×: a 500 Cash spin wins the whole pot, smaller spins a share in proportion (the rest stays in for the next person). The whole world hears about it.</li>
-      <li><b>Coin Flip</b> (the round table): heads or tails, pays 1.95×.</li>
-      <li><b>Dice</b> (by the bar): pick a number from 5 to 95 and roll 1–100 under it. The lower your number, the bigger the payout.</li>
-      <li>Bets are 1 to 500 Cash, from your bag. The house keeps a little on every game, about 3%. The server decides every result.</li>
-      <li>Big wins are announced to the room, and huge ones to everyone.</li>
-      <li><b>Luck:</b> lucky clovers and, rarely, lucky horseshoes turn up while you SKILL (never from monsters) and make your next 15 or 25 bets lucky. A lucky win pays 2.5% more, at every table including roulette. Your lucky bets show top-right.</li></ul>
-      <p><b>The Roulette Room</b> is through the red curtains at the back. One table, one spin for everyone: bets are open for 25 seconds, then the ball rolls and the whole room sees the number together. Red, black, odd, even, 1–18, 19–36 (2×), dozens (3×) and single numbers (36×); up to 500 Cash a spin. Green zero is the house's.</p>
-      <p><b>The task board</b> by the door has three <b>daily tasks</b> just for you, picked for your levels: gather this many, defeat that many. They count what you do today, pay Cash when you claim them at the board, and refresh every morning (Chicago time). Handy when the slots have been unkind.</p>`
-  },
-  {
-    id: "exchange", title: "The Market", icon: "⚖️",
-    body: `<p>The market is Livia's stall in <a data-wiki="areas/forum">the Forum</a>. It has two sides.</p>
-      <ul><li><b>Buy:</b> the newest things for sale, first. Search by name or pick an item from the list, then press <b>Buy</b> on a listing. It's in your bank straight away.</li>
-      <li>Can't find it? <b>Post a buy offer</b>: say what you'll pay, and it fills when someone sells at or under that. You get the difference back if it fills cheaper.</li>
-      <li><b>Sell:</b> <b>post a sell offer</b> from anything in your bag or bank, and see how your offers are doing. The Sell side also shows people who want something you have.</li>
-      <li>Offers match on their own: <b>the best price wins, then whoever was first</b>, at the price of the offer that was already waiting.</li>
-      <li>There's nothing to collect: <b>what you buy and what you earn goes straight to your bank</b>, even while you're offline. You'll get a line in chat each time, and a summary when you log back in.</li>
-      <li>Cash for buying comes from your bag first, then your bank. You can have <b>8 offers</b> up at once; taking one down puts what's left back in your bank.</li>
-      <li>The market keeps <b>1%</b> of each sale, rounded down (so small sales are free). Trading face to face is always free.</li></ul>`
-  },
-  {
-    id: "trading", title: "Trading with players", icon: "🤝",
-    body: `<p>Click another player (you need to be within 5 tiles) to ask to trade. When they click you back (or press Accept in chat), a trade window opens.</p>
-      <ul><li>Click items in your bag to offer them; type an amount of Cash to offer Cash.</li>
-      <li>Both press <b>Accept</b>. Then both check the <b>second screen</b> and press Accept again. Nothing moves until both have accepted twice.</li>
-      <li>Any change to either offer resets both accepts, so nobody can swap something out at the last second.</li></ul>`
-  },
-  {
-    id: "speed", title: "Movement speed", icon: "👟",
-    body: `<p>Walking one tile takes a quarter of a second. Speed bonuses (from boots, pets and potions, as they arrive) make that faster:</p>
-      <ul><li>The first <b>+20%</b> counts in full.</li><li>Anything past that counts <b>half</b>.</li><li>The total can't go past <b>+50%</b>.</li></ul>
-      <p>So +40% from gear gives +30% speed, and stacking past +80% doesn't help. Your Equipment tab shows your current speed.</p>`
-  },
-  {
-    id: "cooking", title: "Cooking and eating", icon: "🍳",
-    body: `<p>Raw fish and meat can be cooked at the <b>range</b> in the Farmhouse, the <b>hearth</b> in your island cottage, or any <b>campfire</b>. Click one with raw food in your bag and you'll cook it all, one at a time.</p>
-      <ul><li>You can burn food. The chance drops as your Cooking level rises, and each food stops burning at a certain level. Ranges and hearths burn a little less than campfires.</li>
-      <li><b>Click cooked food in your bag to eat it.</b> It heals hitpoints straight away, even mid-fight, but your next swing waits a moment.</li>
-      <li>Better food heals more: sardines and chicken 3, trout 7, moon carp 14.</li></ul>`
-  },
-  {
-    id: "forge", title: "The Forge", icon: "⚒️",
-    body: `<p><b>Brutus the Smith</b> stands outside the store in <a data-wiki="areas/forum">the Forum</a>. Talk to him to trade.</p>
-      <ul><li>He sells tools and the <b>Bronze set</b>: a gladius, a helm, a shield and a cuirass. Bronze needs Melee 5 (the cuirass needs Melee 10), and wearing the cuirass changes how you look.</li>
-      <li>He buys ore, logs, hides, bones, food and most things you'll find, for Cash. The Exchange usually pays more, but Brutus pays right now.</li>
-      <li>Pick 1, 5, 10 or All before clicking to buy or sell more at once.</li></ul>`
-  },
-  {
-    id: "wilderness", title: "The Wilderness", icon: "☠️",
-    body: `<p>The pit with a rope on the <a data-wiki="areas/farm">Ludus Farm</a> leads down to <a data-wiki="areas/wild">the Wilderness</a>. You need level 10 Melee to climb down.</p>
-      <ul><li><b>Anyone can attack anyone</b> down there. Click another player to fight them.</li>
-      <li><b>The Cage</b>, just past the rope, is a ring for fair fights: dying in the Cage costs nothing, and you're patched up outside the bars. Fights in the Cage don't give xp.</li>
-      <li>Die anywhere else down there and there's a <b>1 in 4 chance</b> you drop one of the things you're wearing. Whoever killed you has a minute to pick it up; after that, anyone can.</li>
-      <li>The monsters <b>come for you</b>: get close and they attack.</li>
-      <li><a data-wiki="areas/deep">The Deep Wild</a>, further in, has the best gathering in the game: Grimstone, Deadwood and the Black Pool give <b>50% more xp</b> and succeed more often, and now and then you'll dig up a glimmering geode.</li>
-      <li>Logging out mid-fight doesn't save you: your character stays where it was for 10 seconds.</li></ul>
-      <p>Climb the rope to get back up to the farm.</p>`
-  },
-  {
-    id: "islands", title: "Your island", icon: "🏝️",
-    body: `<p>Everyone has an island. Talk to <b>Charon the Ferryman</b> on the shore at <a data-wiki="areas/river">River Bend</a> and he'll row you out.</p>
-      <ul><li><b>Plots:</b> plant wheat, tomatoes or golden tomatoes from your bag. They grow in real time, whether you're online or not; come back and harvest more than you planted, plus Harvesting xp.</li>
-      <li><b>Pedestals:</b> put six things on display. Click one again to take it back.</li>
-      <li><b>Themes:</b> the sign by the dock changes your island's look. Charon sells new themes; others will come from events.</li>
-      <li><b>Visitors:</b> anyone can visit your island by asking Charon for you by name. They can look, but they can't pick your crops or touch your things. The sign can close your island to visitors.</li>
-      <li><b>The cottage:</b> walk in through its door. It's yours; one day you'll be able to furnish it.</li>
-      <li><b>Upgrades</b> (from Charon): a <b>Bigger island</b> (5,000 Cash: 12 plots, 9 pedestals) and then <b>The Far Shore</b> (20,000 Cash: a bridge off the east side to a second island with 8 more plots, 6 more pedestals and a lighthouse). Everything you've planted or put on show stays put.</li>
-      <li>The pet pens are empty for now. One day they won't be.</li></ul>`
-  }
+  { id: "start", title: "Start here", icon: "🧭",
+    body: `<p><b>Click to walk. Click things to use them.</b></p><p>Play the tables in the casino. Out of tickets? Go out the arch and hit something, or fish.</p><p>Press <b>G</b> for the games list.</p>` },
+  { id: "casino", title: "The casino", icon: "🎰",
+    body: `<p>Every game takes <b>ZCoins or tickets</b>. 1,000 tickets = 1 ZCoin. <b>Wins pay real ZCoins.</b></p><p>1 to 20 a bet. Ten plays an hour at each game.</p><p>Click a table and you walk over and play. Roulette, Russian Roulette and the Fight Pit are through the doors at the back.</p>` },
+  { id: "tickets", title: "Tickets and the Prize Counter", icon: "🎟️",
+    body: `<p>Kills, fish and daily jobs pay <b>tickets</b>.</p><p>The big ruby in the casino is the <b>Prize Counter</b>: trade in your drops, buy gear, food and drinks.</p><p>Tickets stay on you. They can't be dropped, banked or traded.</p>` },
+  { id: "road", title: "The road west", icon: "🗺️",
+    body: `<p>Six scenes, west from the casino. Each is ten levels harder.</p><ul><li><a data-wiki="areas/workyard">The Yard</a> 1-9</li><li><a data-wiki="areas/gloam">The Gloam</a> 10-19</li><li><a data-wiki="areas/mire">The Lantern Mire</a> 20-29</li><li><a data-wiki="areas/boneyard">The Boneyard</a> 30-39</li><li><a data-wiki="areas/cloud">Cloudreach</a> 40-49</li><li><a data-wiki="areas/thunderhead">The Thunderhead</a> 50+</li></ul><p>Walk anywhere. You can't fight or fish in a scene until your level matches it. <b>Nothing attacks first.</b></p>` },
+  { id: "fighting", title: "Fighting", icon: "⚔️",
+    body: `<p>Click a monster. Deeper scenes pay more tickets.</p><p>Better gear means faster kills. Gear is at the Prize Counter. The best pieces only drop.</p><p>Eat a fish to heal.</p>` },
+  { id: "fishing", title: "Fishing", icon: "🎣",
+    body: `<p>Every scene has water with two fish. You need a rod.</p><p>Fish heal when eaten and trade in for tickets. It pays a bit less than fighting, and nothing hits you.</p><p>Lucky clovers only come from fishing.</p>` },
+  { id: "buffs", title: "Food, drinks and luck", icon: "🍺",
+    body: `<p>A dinner lasts 20 minutes, a drink 10. The clock only runs out the arch.</p><p>They make you faster, tougher or richer out there. Never at the tables.</p><p>Lucky? A real ZCoin is more likely to drop.</p>` },
+  { id: "zcoins", title: "Finding ZCoins", icon: "💎",
+    body: `<p>Any kill or catch can drop a real ZCoin. Rarely.</p><p>Bank it at the Prize Counter and it's on your eastcoin.vip balance.</p>` },
+  { id: "dying", title: "Dying", icon: "💀",
+    body: `<p>You wake up in the casino and pay a hospital bill: 5% of your tickets in the Yard, 10% anywhere deeper.</p><p>Nothing else is taken.</p>` },
+  { id: "jobs", title: "Today's jobs", icon: "📋",
+    body: `<p>The board in the casino. Three jobs a day, paid in tickets. They match your levels.</p><p>There's a free spin on the Prize Wheel every day too.</p>` },
+  { id: "vip", title: "VIP", icon: "👑",
+    body: `<p>Earn tickets, climb the tiers. Each tier takes a bit more off Prize Counter prices, up to 10%.</p>` },
+  { id: "bank", title: "The bank", icon: "🏛️",
+    body: `<p><a data-wiki="npcs/Aurelia">Aurelia</a> in town, or the chest in the Yard. It holds anything except tickets.</p>` },
+  { id: "trading", title: "Trading and the Market", icon: "🤝",
+    body: `<p>Click a player to trade items. Both of you accept.</p><p><a data-wiki="npcs/Livia the Broker">Livia's</a> stall in town sells things to other players while you're away. She takes 1%.</p>` },
+  { id: "islands", title: "Your island", icon: "🏝️",
+    body: `<p><a data-wiki="npcs/Charon the Ferryman">Charon's</a> cart in town takes you to your own island. Plant something. It grows while you're gone.</p>` },
+  { id: "saving", title: "Saving", icon: "💾",
+    body: `<p>It saves itself.</p>` }
 ];
 
-// the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
     date: "2026-09-19", title: "New buttons, fewer words",
     items: [
+      "LESS READING EVERYWHERE: the wiki's guides, the casino's how-to board and what people say to you have all been cut down to a few short lines. Guides for things that are closed are gone.",
+      "RUSSIAN ROULETTE HAS A HAND-DRAWN CYLINDER, and Mines' bomb buttons match the rest.",
       "THE GAME WINDOWS HAVE NEW HAND-DRAWN BUTTONS: a gold Spin / Bet / Drop button, wooden and gold pills for the games and the ZCoins / Tickets switch, wooden stake buttons, and proper poker chips at the roulette table.",
       "FEWER WORDS. Every game's explainer is one short line now. The numbers you need are on the buttons and the pay table.",
       "FISHING IN THE YARD AND THE GLOAM PAYS A LITTLE LESS: sardine 8, perch 10, trout 14, catfish 18 tickets. Fishing was paying as much as fighting out there; it's meant to be the quieter job for a bit less. The deeper waters were already right."

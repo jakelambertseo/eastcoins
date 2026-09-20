@@ -162,16 +162,18 @@ const CSS = `
 .cz-rrseat.won img,.cz-rrseat.won i{border-color:var(--gold);box-shadow:0 0 0 5px rgba(232,191,53,.35)}.cz-rrseat.open i{border-style:dashed;cursor:pointer;color:var(--gold)}
 .cz-rrcyl{position:absolute;left:50%;top:50%;width:44%;aspect-ratio:1;transform:translate(-50%,-50%);container-type:inline-size}
 .cz-hammer{position:absolute;left:50%;top:-4cqw;z-index:3;width:0;height:0;margin-left:-4.5cqw;border:4.5cqw solid transparent;border-top:7cqw solid var(--gold);filter:drop-shadow(0 0 6px rgba(232,191,53,.6))}
-.cz-cyl{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 50% 42%,#453c36 0,#2a231f 52%,#15110f 100%);box-shadow:inset 0 0 0 2px rgba(255,255,255,.08),inset 0 0 40px rgba(0,0,0,.75),0 14px 34px rgba(0,0,0,.6);transition:transform .26s cubic-bezier(.3,.7,.3,1);will-change:transform}
+/* THE CYLINDER IS DRAWN (PixelLab, 2026-09-19, the owner: "redraw the cylinder imagery... its a popular game"): a steel disc with no holes in it
+   (rr_cyl), and a chamber (rr_hole) or a brass cartridge (rr_bullet) laid on it for each seat, because the number of chambers changes with
+   the table. Chambers sit at 25cqw (CYL_R), inside the disc's flat face. The gold pointer at the top is still CSS. */
+.cz-cyl{position:absolute;inset:0;border-radius:50%;background:url(/v3/assets/img/glad/flat/casino/rr_cyl.png?v=1) center/100% 100% no-repeat;image-rendering:pixelated;filter:drop-shadow(0 12px 18px rgba(0,0,0,.55));transition:transform .26s cubic-bezier(.3,.7,.3,1);will-change:transform}
 .cz-cyl.spin{transition:transform 1s cubic-bezier(.12,.8,.2,1)}
-.cz-cyl::after{content:"";position:absolute;left:50%;top:50%;width:26cqw;height:26cqw;margin:-13cqw;border-radius:50%;background:radial-gradient(circle at 40% 35%,#554a42,#1a1512);box-shadow:inset 0 0 0 2px rgba(255,255,255,.08),0 0 0 4px rgba(0,0,0,.4)}
-.cz-ch{position:absolute;left:50%;top:50%;width:calc(var(--d,14) * 1cqw);height:calc(var(--d,14) * 1cqw);margin:calc(var(--d,14) * -.5cqw);border-radius:50%;background:#0a0807;box-shadow:inset 0 3px 8px rgba(0,0,0,.95),0 0 0 2px rgba(255,255,255,.08);transform:rotate(var(--a)) translateY(-35cqw);transition:background .2s,box-shadow .2s}
-.cz-ch.under{box-shadow:inset 0 3px 8px rgba(0,0,0,.95),0 0 0 3px rgba(232,191,53,.9),0 0 16px rgba(232,191,53,.5)}
-.cz-ch.spent{background:#2f2824;box-shadow:inset 0 2px 4px rgba(0,0,0,.6),0 0 0 2px rgba(255,255,255,.04)}.cz-ch.spent.under{box-shadow:inset 0 2px 4px rgba(0,0,0,.6),0 0 0 3px rgba(232,191,53,.55)}
-.cz-ch.live{background:radial-gradient(circle at 40% 35%,#ffe9a0,#c9962a 55%,#7a5312);box-shadow:0 0 0 3px var(--red),0 0 22px rgba(255,107,133,.95)}
+.cz-ch{position:absolute;left:50%;top:50%;width:calc(var(--d,14) * 1cqw);height:calc(var(--d,14) * 1cqw);margin:calc(var(--d,14) * -.5cqw);border-radius:50%;background:url(/v3/assets/img/glad/flat/casino/rr_hole.png?v=1) center/100% 100% no-repeat;image-rendering:pixelated;transform:rotate(var(--a)) translateY(-25cqw);transition:filter .2s,box-shadow .2s}
+.cz-ch.under{box-shadow:0 0 0 3px rgba(232,191,53,.95),0 0 14px rgba(232,191,53,.6)}
+.cz-ch.spent{filter:grayscale(1) brightness(.55)}.cz-ch.spent.under{box-shadow:0 0 0 3px rgba(232,191,53,.5)}
+.cz-ch.live{background-image:url(/v3/assets/img/glad/flat/casino/rr_bullet.png?v=1);filter:none;box-shadow:0 0 0 3px var(--red),0 0 22px rgba(255,107,133,.95)}
 .cz-rrword{position:absolute;inset:0;z-index:2;display:grid;place-items:center;align-content:center;text-align:center;font-family:var(--display);font-weight:800;font-size:11cqw;white-space:nowrap;text-shadow:0 0 8px #000,0 0 18px #000,0 0 28px #000;pointer-events:none;color:var(--gold)}
 .cz-rrword small{display:block;font:700 6.5cqw var(--body);color:var(--text)}.cz-rrword.bang{color:var(--red);font-size:17cqw}.cz-rrword.click{color:var(--muted)}.cz-rrword.reload{color:var(--muted);font-size:8cqw}
-.cz-rr.bang{animation:czrrshake .45s}.cz-rr.bang .cz-cyl{box-shadow:inset 0 0 0 2px rgba(255,107,133,.5),inset 0 0 40px rgba(0,0,0,.75),0 0 0 5px rgba(255,107,133,.35),0 0 50px rgba(255,107,133,.55)}
+.cz-rr.bang{animation:czrrshake .45s}.cz-rr.bang .cz-cyl{filter:drop-shadow(0 0 26px rgba(255,80,100,.9))}
 @keyframes czrrshake{0%,100%{transform:translate(0,0)}20%{transform:translate(-6px,3px)}40%{transform:translate(5px,-4px)}60%{transform:translate(-4px,2px)}80%{transform:translate(3px,-1px)}}
 @media (prefers-reduced-motion:reduce){.cz-rr.bang{animation:none}.cz-cyl,.cz-cyl.spin{transition:none}}
 .cz-lock,.cz-dexgo{background:linear-gradient(#f0c848,#cf9a2e);border-color:#8a6210;color:#2a1c04;box-shadow:0 2px 0 #8a6210}.cz-lock:disabled,.cz-dexgo:disabled{background:var(--panel-3);border-color:var(--line-2);color:var(--muted-2);box-shadow:none}
@@ -192,6 +194,9 @@ const CSS = `
 #gameWin.cz .cz-chip{height:42px;min-width:44px;padding:0 1px;border-style:solid;border-color:transparent;border-width:0 12px;border-image:url(/v3/assets/img/glad/flat/ui/czchip.png?v=1) 0 22 fill / 0 12px stretch;background:none;border-radius:0;box-shadow:none;color:#f3e7cc;text-shadow:0 1px 0 #1a0e08;image-rendering:pixelated}
 #gameWin.cz .cz-chip:hover:not(:disabled),#gameWin.cz .cz-chip[aria-pressed=true]{border-image-source:url(/v3/assets/img/glad/flat/ui/czchip_on.png?v=1);color:#3a2604;text-shadow:0 1px 0 rgba(255,246,196,.75)}
 #gameWin.cz .cz-chip:disabled{filter:grayscale(.7) brightness(.8);cursor:default}
+#gameWin.cz .cz-bombs button{height:36px;min-width:46px;padding:0 1px;border-style:solid;border-color:transparent;border-width:0 10px;border-image:url(/v3/assets/img/glad/flat/ui/czchip.png?v=1) 0 22 fill / 0 10px stretch;background:none;border-radius:0;color:#f3e7cc;text-shadow:0 1px 0 #1a0e08;image-rendering:pixelated}
+#gameWin.cz .cz-bombs button.on,#gameWin.cz .cz-bombs button:hover:not(:disabled){border-image-source:url(/v3/assets/img/glad/flat/ui/czchip_on.png?v=1);background:none;color:#3a2604;text-shadow:0 1px 0 rgba(255,246,196,.75)}
+#gameWin.cz .cz-bombs button:disabled{filter:grayscale(.7) brightness(.8)}
 #gameWin.cz .cz-realtabs button[aria-pressed=true]{border-image-source:url(/v3/assets/img/glad/flat/ui/czpill_on.png?v=1);background:none;color:#3a2604;text-shadow:0 1px 0 rgba(255,246,196,.75)}
 .cz-realtabs{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 10px}.cz-realtabs button{padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);background:transparent;color:var(--muted);font:800 12.5px var(--body);cursor:pointer}.cz-realtabs button[aria-pressed=true]{background:linear-gradient(#f0c848,#cf9a2e);color:#2a1c04;border-color:#8a6210}.cz-cur{align-items:center}.cz-curl{font:700 12px var(--body);color:var(--muted)}.cz-cur button[aria-pressed=true]{background:#ff9aa8;border-color:#ff9aa8}.cz-cur button:first-of-type[aria-pressed=true]{background:linear-gradient(#f0c848,#cf9a2e);border-color:#8a6210}
 .cz-luck a{color:var(--gold)}
@@ -704,7 +709,7 @@ export function createCasino(env) {
   const rrOpen = () => GAME === "russian" && !$("gameWin").hidden;
   /* THE CYLINDER is eastcoin.vip's own drawing (v3-pvp.js loadCylinder / turnTo; styles .rr-* in v3.css), so the two rooms
      look alike: chambers on a ring inside a disc, a fixed hammer at the top, and turning the disc brings a chamber under it. */
-  const CYL_R = 35;
+  const CYL_R = 25;   /* where the chambers sit on the drawn disc, in cqw of the cylinder box (its flat face ends at about 36) */
   function rrLoad(cyl, chambers) {
     cyl.replaceChildren(); cyl.style.setProperty("--d", String(Math.max(7, Math.min(17, Math.floor((2 * Math.PI * CYL_R) / (chambers * 1.45))))));
     for (let c = 0; c < chambers; c++) { const ch = el("i", "cz-ch"); ch.style.setProperty("--a", `${(c * 360) / chambers}deg`); cyl.append(ch); }
