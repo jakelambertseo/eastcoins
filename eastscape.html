@@ -632,7 +632,7 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=71";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=72";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=42").then((m) => { WK = m; }));
@@ -972,7 +972,7 @@ const CASINO_ART = ["o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slip
 const AREA_ART = {
   wild: WILD_ART, deep: WILD_ART,
   // the one line out of the casino (2026-09-20): every scene has its rocks, trees, fish AND its monsters
-  workyard: ["hornworm", "boar"],   // (monsters and a pond in every scene since 2026-09-20: the rocks', the trees' and the stations' pictures are no longer asked for out here)
+  workyard: ["hornworm", "boar", "o_chest"],   // (monsters and a pond in every scene since 2026-09-20: the rocks', the trees' and the stations' pictures are no longer asked for out here)
   gloam: ["t_gwater", "t_gpath", "o_willow", "o_glowcap", "w_boulder", "o_rock_emerald_ore", "o_rock_diamond_ore", "highwayman", "gnasher", "moth", "taxwraith"],
   cloud: ["t_csky", "t_cpath", "o_skyash", "o_cloudbush", "o_cloudcolumn", "o_rock_dragonstone_ore", "o_rock_onyx_ore", "ghoul", "understudy", "chandelier", "ram", "goose"],
   boneyard: [...WILD_ART, "moth", "ghoul", "understudy"],
