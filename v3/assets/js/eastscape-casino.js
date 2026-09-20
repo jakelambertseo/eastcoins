@@ -198,6 +198,7 @@ export function createCasino(env) {
   /* v57: a real table takes ZCOINS OR TICKETS. TIX: this bet is staked with tickets (G.DEX.rate of them a ZCoin). The game
      server takes the tickets and the site writes a one-use voucher (type:"stake"); the bet then goes to the very same
      endpoint with that voucher in place of a wallet debit. Same limits, same seed, same odds, and it pays REAL ZCoins. */
+  let MENU = false;
   let TIX = false; try { TIX = localStorage.getItem("gs_real_cur") === "tix"; } catch (x) { /* private window */ }
   let stakeWait = null;
   const tixHave = () => G.tixIn(env.me() || { inv: [] }), tixCost = (zc) => zc * G.DEX.rate;
@@ -228,7 +229,7 @@ export function createCasino(env) {
     const body = $("gameBody"); body.replaceChildren();
     const grid = el("div", "cz-grid"), stage = el("section", "cz-stage"), side = el("div", "cz-side");
     R.phase = el("div", "cz-phase"); R.board = el("div", "cz-board"); R.mult = el("div", "cz-mult"); R.bet = el("div", "cz-bet"); R.pop = el("div", "cz-pop");
-    if (REAL && REAL_KEY[GAME]) { const tabs = el("div", "cz-realtabs", Object.entries(REAL_KEY).map(([g, k]) => `<button type="button" data-g="${g}" aria-pressed="${g === GAME}">${esc(UI[g].title)}</button>`).join("")); tabs.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { if (b.dataset.g !== GAME) api.open(b.dataset.g, { real: true }); })); body.append(tabs); }
+    if (REAL && REAL_KEY[GAME] && MENU) { const tabs = el("div", "cz-realtabs", Object.entries(REAL_KEY).map(([g, k]) => `<button type="button" data-g="${g}" aria-pressed="${g === GAME}">${esc(UI[g].title)}</button>`).join("")); tabs.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { if (b.dataset.g !== GAME) api.open(b.dataset.g, { real: true, menu: true }); })); body.append(tabs); }
     if (REAL && GAME !== "russian") {
       const cur = el("div", "cz-realtabs cz-cur"); R.curZ = el("button", "", ""); R.curT = el("button", "", ""); R.curZ.type = R.curT.type = "button"; cur.append(el("span", "cz-curl", "Bet with"), R.curZ, R.curT, el("span", "cz-curl", "either way, a win is paid in real ZCoins"));
       const pick = (v) => { if (busy) return; TIX = v;   /* (a run already going keeps the stake it started with: this only decides the NEXT bet) */ try { localStorage.setItem("gs_real_cur", v ? "tix" : "zc"); } catch (x) { /* fine */ } SFX.play("ui_click"); refresh(); };
@@ -849,6 +850,7 @@ export function createCasino(env) {
   const api = {
     open(g, info = {}) {
       const ui = UI[g]; if (!ui) return false; if (info.pot != null) { jack.pot = info.pot; jack.last = info.lastJack || null; }
+      MENU = !!info.menu;   /* the strip of every game shows only when the window came from the Games button / G, never at a table you walked to */
       const real = !!info.real && !!REAL_KEY[g]; if (real !== REAL) { RUNS.hilo = RUNS.mines = null; } REAL = real; bet = REAL ? betZc : betCash;
       GAME = g; frame(ui.title, REAL ? `ZCoins or tickets · pays REAL ZCoins · ${ui.realSub || ui.sub}` : "Tickets in, tickets out"); phase(""); ui.build();
       if (REAL) realInit(g, token); else if (ui.run) send({ t: "run", g, op: "state" });
