@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 66;
+export const VERSION = 67;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -1525,6 +1525,17 @@ export const buffsOf = (c) => {
 /* ------------------------------------------------------------ what's open (2026-09-19 reset)
    One casino (with its Roulette Room), one town, one skilling area, one combat area. Everything else still exists in
    the code but can't be reached yet; a saved character standing somewhere closed wakes up in the casino. */
+/* LEVEL BANDS (the owner, 2026-09-19): the world outside runs in ten-level bands, one a scene: the Yard is 1-9, the Gloam
+   10-19, then 20-29, 30-39 and on. A SOFT gate: anyone may walk anywhere, but you can't START a fight in a scene until
+   your COMBAT level reaches its band, and you can't fish its water until your FISHING level does (the two are separate,
+   so a fisher reaches deep water without ever swinging a sword). A monster that is already attacking you can always be
+   fought back. Ore and trees will take the same gate when they return; oceans and lakes are just more water in a band.
+   INTERIM: Cloudreach holds everything from 30 up until the scenes for 20-29, 30-39, 40-49 and 50+ are built. */
+export const BANDS = { workyard: [1, 9], gloam: [10, 19], cloud: [30, 99] };
+export const bandOf = (scene) => BANDS[String(scene || "").split(":")[0]] || null;
+/** Why this character can't fight / fish in this scene yet, or null if they can. kind: "fight" | "fish". */
+export const bandBlock = (c, scene, kind) => { const b = bandOf(scene); if (!b) return null; const skill = kind === "fish" ? "fishing" : "melee", need = b[0], have = lvlOf(c, skill);
+  return have >= need ? null : { need, have, skill, text: `needs ${kind === "fish" ? "Fishing" : "Combat"} ${need}` }; };
 export const OPEN = new Set(["casino", "roulette", "fightpit", /* "highroller": closed for now (the owner, 2026-09-19) */ "forum", "bathhouse", "workyard", "gloam", "cloud"]);   // (paddock, rough, boneyard closed 2026-09-20: their monsters live in the three scenes of the one line out)
 export const OPEN_DAILY = new Set(["sardine", "lantern", "cows", "chickens", "rotten", "boar", "highwayman", "moths", "ghouls", "rams"]);   // kills and fish: that's the world now
 for (const k of Object.keys(SCENES)) if (!OPEN.has(k)) SCENES[k].wikiHide = true;   // closed areas stay out of the wiki
