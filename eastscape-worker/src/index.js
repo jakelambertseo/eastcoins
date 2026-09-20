@@ -35,6 +35,8 @@ const CASINO_LINES = ["one more spin", "im due", "LETS GOOO", "two cherries agai
 const PIT_LINES = ["HIT HIM", "my rent is on the chicken", "fixed. it's all fixed", "that cow has HANDS", "who let the goose in", "never bet against the olive", "ref??? REF???", "i've seen this one before. he folds", "put it all on the little guy", "one more fight then i'm going home", "that's a dive if i ever saw one"];
 const BOT_LINES = ["anyone know where the good fishing is?", "gz", "cows are free xp lol", "selling feathers", "this farm is peaceful", "wheat run anyone?", "brb", "that yew is taunting me", "who keeps feeding the olives"];
 const G_FAME_MIN = 500;   // a single win of this much goes on the Winners' Wall
+const RR_ASK_MS = 2500;   // the Roulette Room asks the site for the table's state at most this often, whoever is asking
+const FLOORS = new Set(["casino", "roulette", "fightpit"]);   // where the table's bell is heard
 const EXAMINE_KINDS = new Set(["hive", "notice", "sign", "statue", "fountain", "fire", "bush", "boulder", "hay", "counter", "pool", "column", "range", "table", "barrel", "bed", "plant", "bench", "goatstatue", "chest", "rug", "chair", "sack", "cat", "bucket", "bigtomato", "press", "crate", "scarecrow", "milestone", "toll", "barricade", "chariot", "mule"]);
 
 // constant-time compare, so a wrong key cannot be guessed a character at a time
@@ -291,6 +293,67 @@ export class World {
     this.touch(pl);
     pl.out.push({ type: "scene", key });
     this.send(pl, JSON.parse(this.snapOf(S, Date.now(), false)));
+    if (key === "roulette") { if (this.rrT?.seats.length) pl.out.push(this.rrSeatsMsg(S)); this.rrLook(Date.now()); }   /* who is at the table, and one look in case the website opened it */
+  }
+
+  /* ------------------------------------------------------------ THE ROULETTE ROOM (v74): the bell, the seats, the bar cart
+     Russian Roulette is eastcoin.vip's table and the window talks to the site itself. This is only the ROOM round it, and it
+     never touches a ZCoin: the game server asks the site's PUBLIC state (GET /api/casino/pvp/state, no session, no key) and
+     shows people what it says.
+       WHEN IT ASKS: when someone clicks the table or a seat, when a window says the table changed (t:"rr"), when someone walks
+       into the room, and once when the lobby's clock runs out (which is also what settles the round on the site). Never on a
+       timer otherwise, and never more than once in RR_ASK_MS however many people ask: a busy table costs the site a handful
+       of requests a game.
+       WHAT IT DOES WITH THE ANSWER: a NEW lobby rings the bell on the casino floor (once per lobby); seated players who are
+       in the room are walked to their stool (once per lobby: walk away and you are not dragged back); when the round is
+       settled the room is sent the stages so everyone sees who slumps, and the floor is told who took the pot. */
+  rrSeatsMsg(S) {
+    const T = this.rrT, here = S ? this.playersIn(S) : [], key = (x) => String(x || "").toLowerCase().replace(/^dev:/, "");
+    return { type: "rrseats", id: T?.id || null, left: T?.startsAt ? Math.max(0, T.startsAt - Date.now()) : 0, seats: (T?.seats || []).map((x, i) => ({ i, name: x.name, pid: here.find((p) => key(p.login) === key(x.login))?.id ?? null })) };
+  }
+  async rrLook(now = Date.now()) {
+    if (this.rrBusy) return; if (now - (this.rrAskedAt || 0) < RR_ASK_MS) { this.rrDueAt = Math.min(this.rrDueAt || Infinity, this.rrAskedAt + RR_ASK_MS + 50); return; }
+    this.rrBusy = true; this.rrAskedAt = now; if (this.rrDueAt && this.rrDueAt <= now + RR_ASK_MS) this.rrDueAt = 0;
+    try { const r = await fetch(`${this.env.SITE}/api/casino/pvp/state?game=roulette`), st = await r.json(); if (st?.ok) this.rrTake(st); }
+    catch (e) { /* the site didn't answer: the room just shows nothing new */ }
+    finally { this.rrBusy = false; }
+  }
+  rrTake(st) {
+    const now = Date.now(), T = (this.rrT ||= { id: null, seats: [], belled: null, walked: new Set(), tries: 0, startsAt: 0 }), S = this.scenes.get("roulette"), L = st.lobby, last = st.last;
+    const key = (x) => String(x || "").toLowerCase().replace(/^dev:/, "");
+    if (L && L.status === "LOBBY") {
+      if (T.id !== L.id) { T.id = L.id; T.walked = new Set(); } T.tries = 0;
+      T.startsAt = now + Math.max(0, Number(L.startsAt) - Number(st.now)); this.rrDueAt = T.startsAt + 1200;
+      T.seats = (L.players || []).slice(0, G.RR_SEATS.length).map((x) => ({ login: x.login, name: x.displayName || x.login }));
+      if (T.belled !== L.id && T.seats.length) { T.belled = L.id;   /* THE BELL: everyone on the casino's floors, once per lobby */
+        const msg = { type: "rrbell", name: T.seats[0].name, left: Math.max(0, T.startsAt - now), n: T.seats.length };
+        for (const p of this.pls.values()) if (FLOORS.has(String(p.C.scene).split(":")[0]) && key(p.login) !== key(T.seats[0].login)) p.out.push(msg); }
+      if (S) { T.seats.forEach((x, i) => { const pl = this.playersIn(S).find((q) => key(q.login) === key(x.login)), [sx, sy] = G.RR_SEATS[i];
+          if (!pl || T.walked.has(pl.id)) return; T.walked.add(pl.id); if (pl.x === sx && pl.y === sy) return;
+          const path = G.findPath(S.g, this.from(pl), { x: sx, y: sy }, 0); if (path) { pl.act = null; pl.path = path; this.kick(S, pl, now); } });
+        const m = this.rrSeatsMsg(S); for (const p of this.playersIn(S)) p.out.push(m); }
+      return;
+    }
+    if (!T.id) return;
+    if (last && last.id === T.id) {
+      const names = (last.players || []).map((x) => x.displayName || x.login), res = last.result;
+      if (last.status === "SETTLED" && res?.stages && S) { const seats = this.rrSeatsMsg(S).seats;
+        for (const p of this.playersIn(S)) p.out.push({ type: "rrshow", id: last.id, seats, stages: res.stages.map((g) => ({ chambers: g.chambers, live: g.live, shot: g.shot, players: g.players })), winner: res.winner, pot: last.pot }); }
+      if (last.status === "SETTLED" && res) { const text = `🔫 ${names[res.winner] ?? "Somebody"} took ${last.pot} ZC at Russian Roulette.`, wait = G.rrShowMs(res.stages || []);
+        setTimeout(() => { for (const p of this.pls.values()) if (FLOORS.has(String(p.C.scene).split(":")[0])) p.out.push({ type: "casinonote", text }); }, Math.min(wait, 60000)); }   /* after the room has watched it: no spoilers */
+      T.id = null; T.seats = []; T.startsAt = 0; this.rrDueAt = 0;
+      if (S && !(last.status === "SETTLED" && res?.stages)) { const m = this.rrSeatsMsg(S); for (const p of this.playersIn(S)) p.out.push(m); }
+      return;
+    }
+    if (++T.tries < 8) this.rrDueAt = now + 2000;   /* the clock is out but the site hasn't finished paying: look again shortly */
+    else { T.id = null; T.seats = []; this.rrDueAt = 0; if (S) { const m = this.rrSeatsMsg(S); for (const p of this.playersIn(S)) p.out.push(m); } }
+  }
+  /* BINO'S BAR CART: a shot of whiskey for a ticket. It does nothing at all except tell the room. */
+  rrShot(S, pl, now) {
+    if (now - (pl.shotAt || 0) < G.RR_SHOT.everyMs) return this.say(pl, "Bino: Easy. Let that one land first.");
+    const c = pl.C.inv.find((x) => x.k === "tickets"); if (!c || c.n < G.RR_SHOT.price) return this.say(pl, `Bino: A shot's ${G.fmtCash(G.RR_SHOT.price)}.`, "bad");
+    pl.shotAt = now; c.n -= G.RR_SHOT.price; if (!c.n) pl.C.inv.splice(pl.C.inv.indexOf(c), 1); this.touch(pl);
+    for (const p of this.playersIn(S)) p.out.push({ type: "casinonote", text: `🥃 ${pl.name} takes a shot.` });
   }
 
   /* ------------------------------------------------------------ what players ask for */
@@ -357,6 +420,7 @@ export class World {
       case "daily": return this.dailyOp(S, pl, m);
       case "roul": return S.def.realRound ? undefined : this.roulOp(S, pl, m, now);
       case "tour": return this.tourOp(S, pl, m);
+      case "rr": return S.key === "roulette" ? this.rrLook(now) : undefined;   /* "the table changed": the page's window saw a lobby or sat down */
       case "use": return this.useItem(pl, m.i | 0);
       case "trade": return this.tradeOp(S, pl, m);
       case "admin": return pl.admin ? this.admin(S, pl, m) : undefined;
@@ -383,7 +447,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob || ob.edge) return;   // (the border's trees and rocks are scenery)
-      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", roulette: "roulette", rrtable: "rr", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       if (!kind) return;
       const at = kind === "door" && ob.door ? ob.door : G.nearestCell(ob, f);
       act = { kind, ob, x: at.x, y: at.y, name: ob.name };
@@ -1067,6 +1131,7 @@ export class World {
     }
     if (this.jackDirty && this.tickN % 100 === 0) { this.jackDirty = false; this.ctx.storage.put("jackpot", this.jack).catch(() => { this.jackDirty = true; }); }
     this.restartTick(now);
+    if (this.rrDueAt && now >= this.rrDueAt) { this.rrDueAt = 0; this.rrLook(now); }   /* the Russian Roulette lobby's clock ran out (or a look was put off): ask the site once */
     const live = new Set([...this.pls.values()].map((p) => p.C.scene));
     for (const [key, S] of this.scenes) {
       if (key === "roulette" && !S.def.realRound && S.objs.some((o) => o.t === "roulette")) this.rouletteTick(S, now);   /* (v73: no wheel in the room, no rounds) */   /* (a realRound room's game is the site's: no rounds are run here) */
@@ -1207,7 +1272,9 @@ export class World {
     if (a.kind === "fight" && S.def.realRound) { pl.act = null; return pl.out.push({ type: "roundopen", key: S.def.realRound }); }
     if (a.kind === "fight") { pl.act = null; return pl.out.push({ ...this.fightView(S, pl, now), open: true }); }
     if (a.kind === "prize") { pl.act = null; return this.prizeSpin(pl); }
-    if (a.kind === "rr") { pl.act = null; return pl.out.push({ type: "rr" }); }   /* Russian Roulette is the site's table: the page opens its window and talks to the site */
+    if (a.kind === "rrboard") { pl.act = null; return pl.out.push({ type: "rrboard" }); }
+    if (a.kind === "shot") { pl.act = null; return this.rrShot(S, pl, now); }
+    if (a.kind === "rr") { pl.act = null; this.rrLook(now); return pl.out.push({ type: "rr" }); }   /* Russian Roulette is the site's table: the page opens its window and talks to the site */
     if (a.kind === "fame") { pl.act = null; const F = this.fameToday(); return pl.out.push({ type: "popup", title: "Winners' Wall", icon: "🏆", text: F.rows.length ? `TODAY'S BIGGEST WINS\n\n${F.rows.map((r, i) => `${i + 1}. ${r.name}: +${G.fmtCash(r.profit)} on ${r.game}`).join("\n")}\n\nWin ${G.fmtCash(G_FAME_MIN)} or more on one bet to get your name up here. The wall is wiped at midnight, Central.` : `Nobody's won ${G.fmtCash(G_FAME_MIN)} on one bet yet today. The wall is empty, and it could be your name at the top of it.` }); }
     if (a.kind === "cooler" || a.kind === "buffet") { pl.act = null; return this.say(pl, a.kind === "cooler" ? "You fill a paper cup and drain it. Refreshing. It does nothing else." : "You load up a plate. It's free, and it tastes like it."); }   /* (hunger and thirst are off: BACKLOG) */
     if (a.kind === "game" && S.def.real?.[a.ob.t]) { pl.act = null; return pl.out.push({ type: "real", g: a.ob.t }); }   // eastcoin.vip's own game, for real ZCoins: the page opens the window and talks to the site itself

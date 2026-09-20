@@ -639,10 +639,10 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=82";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=83";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=51").then((m) => { WK = m; }));
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=52").then((m) => { WK = m; }));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=2";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -835,6 +835,10 @@ function onEvent(e) {
   if (e.type === "stake") return CZ.stake(e);
   if (e.type === "roundopen") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", e.key === "roul" ? "gameWin" : "roulWin"]) $(w).hidden = true; if (e.key === "roul") { $("roulWin").hidden = false; renderRoul(); } else if (FIGHT) CZ.fight(FIGHT, true); else say("The card's still being written. Try again in a second."); return; }
   if (e.type === "rr") { if ($("gameWin").hidden || CZ.game !== "russian") openRussian(); return; }
+  if (e.type === "rrseats") { if (!RRS.show) RRS = { seats: e.seats, out: new Set(), won: null, show: null }; else RRS.next = e.seats; return; }
+  if (e.type === "rrshow") { const t0 = performance.now(); RRS = { seats: e.seats, out: new Set(), won: null, show: { t0, line: G.rrTimeline(e.stages), winner: e.winner, pot: e.pot, k: 0 } }; return; }
+  if (e.type === "rrbell") return rrBell(e);
+  if (e.type === "rrboard") return rrBoard();
   if (e.type === "real") { if ($("gameWin").hidden || CZ.game !== e.g) openReal(e.g); return; }
   if (e.type === "prize") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true; SFX.play("ui_open"); return CZ.prize(e); }
   if (e.type === "cashed") { SFX.play("coins"); return CZ.cashed(e); }
@@ -946,7 +950,7 @@ function say(text, cls = "sys") {
 const ART = "/v3/assets/img/glad/flat/", ART_V = 3;
 // pictures replaced after they first shipped (the edge keeps each URL for a year): bump the one that changed
 const ART_VER = { t_casino: 4, rug_casino: 4, o_dicetable: 4, chicken: 4, olive: 4, rotten: 4, chandelier: 4, revenant: 4, farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
-const ART_FILES = ["casino", "o_rrtable", "arbino_south", "arbino_east", "vince_south", "vince_east", "sterling_south", "sterling_east", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
+const ART_FILES = ["casino", "o_rrtable", "o_barcart", "arbino_south", "arbino_east", "vince_south", "vince_east", "sterling_south", "sterling_east", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "hero_tiro_" + d, "legend_" + d]),
   "bank", "store", "cottage", "signpost", "tree2", "tree3", "tree4", "o_spot", "g_bush", "g_boulder", "g_grass", "g_flowers",
   ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
@@ -1007,7 +1011,7 @@ const AREA_ART = {
   highroller: ["sterling_south", "sterling_east"],
   isle: ["o_ferry", "o_islesign", "o_lighthouse", "o_palm", "o_pedestal", "o_plot"], isle2: ["o_ferry", "o_islesign", "o_lighthouse", "o_palm", "o_pedestal", "o_plot"], shore: ["o_ferry", "o_islesign", "o_lighthouse", "o_palm", "o_pedestal", "o_plot"],
   home: ["o_bed", "o_chest", "o_table", "o_chair"],
-  roulette: ["t_roulette", "o_rrtable", "arbino_south", "arbino_east"]   // (CASINO_ART is core now: the casino is where everyone starts)
+  roulette: ["t_roulette", "o_rrtable", "o_barcart", "o_notice", "o_stool", "arbino_south", "arbino_east"]   // (CASINO_ART is core now: the casino is where everyone starts)
 };
 const LAZY_ART = new Set(Object.values(AREA_ART).flat());
 const artReady = Promise.all(ART_FILES.filter((k) => !LAZY_ART.has(k)).map(loadArt));
@@ -1039,8 +1043,9 @@ function castShadow(ctx2, a, flip, sc) {
   ctx2.save(); ctx2.transform(1, 0, SHADOW.skew, SHADOW.flat, 0, 0); if (flip) ctx2.scale(-1, 1); if (sc !== 1) ctx2.scale(sc, sc);
   ctx2.globalAlpha = SHADOW.alpha; ctx2.drawImage(a.sh, -Math.round(a.cx), -a.foot); ctx2.restore();
 }
-function spr(k, x, y, flip = false, filter = "", sc = 1) {
+function spr(k, x, y, flip = false, filter = "", sc = 1, rot = 0) {
   const a = IMG[k]; if (!a) return false;
+  if (rot) { lc.save(); lc.setTransform(1, 0, 0, 1, Math.round(x * A), Math.round((y - 3) * A)); lc.rotate(rot); if (filter) lc.filter = filter; lc.drawImage(a.im, -Math.round(a.cx), -a.foot); lc.restore(); return true; }   /* lying down: turned about the feet, no shadow */
   if (a.sh && !NO_SHADOW.has(k)) { lc.save(); lc.setTransform(1, 0, 0, 1, Math.round(x * A), Math.round(y * A)); castShadow(lc, a, flip, sc); lc.restore(); }
   lc.save(); lc.setTransform(1, 0, 0, 1, Math.round(x * A), Math.round(y * A)); if (flip) lc.scale(-1, 1); if (sc !== 1) lc.scale(sc, sc);
   if (filter) lc.filter = filter;
@@ -1209,6 +1214,32 @@ function paintBg() {
   return c;
 }
 
+/* THE STAR CARPET (v74). The casino's floor was burgundy and gold, which is also eastcoin.vip's own palette: people shown
+   screenshots said the floor was too red, that players, tables and NPCs didn't stand out on it, and that it blended into
+   the site (the owner, 2026-09-20, with two reference photos: a blacklight star carpet and a purple swirl one). So the floor
+   is COOL AND DARK (near-black indigo) and everything standing on it is warm, which is what makes a sprite pop; the stars
+   are big, scattered and turned, in magenta, blue, violet, amber, orange and teal, at about 40% so they stay floor
+   (at 60% they fought the sprites, which was the complaint in the first place).
+   WHY IT IS PAINTED HERE AND NOT A TILE: two PixelLab tilesets were tried first. A 16-pixel repeating tile cannot hold a
+   star or a swirl; it makes a fine grid. The reference carpets work because a motif is bigger than a tile, so the pattern
+   is laid over the whole room from hashRand (the same floor every visit, every player). It is painted ONCE into the room's
+   cached picture, so it costs nothing per frame. A room with its own `carpet` sheet (the Roulette Room's green) keeps it. */
+const STAR_COLS = ["#d83a9a", "#3a5ae0", "#7a3ad0", "#e8b83a", "#e0582a", "#2aa8c8"], STAR_BASE = "#15103a", STAR_FRAME = "#0c0920", STAR_TRIM = "#6a3ad0";
+function starCarpet(o, x0, y0, x1, y1) {
+  const X0 = x0 * T, Y0 = y0 * T, RW = (x1 - x0 + 1) * T, RH = (y1 - y0 + 1) * T, IX = X0 + T, IY = Y0 + T, IW = RW - 2 * T, IH = RH - 2 * T, C = 21;
+  o.fillStyle = STAR_FRAME; o.fillRect(X0, Y0, RW, RH);
+  o.save(); o.beginPath(); o.rect(IX, IY, IW, IH); o.clip(); o.fillStyle = STAR_BASE; o.fillRect(IX, IY, IW, IH);
+  const star = (cx, cy, r, rot, fill, line) => { o.beginPath(); for (let i = 0; i < 10; i++) { const a = rot + (i * Math.PI) / 5, q = i % 2 ? r * 0.45 : r; o[i ? "lineTo" : "moveTo"](cx + Math.sin(a) * q, cy - Math.cos(a) * q); } o.closePath(); if (fill) { o.fillStyle = fill; o.fill(); } if (line) { o.strokeStyle = line; o.lineWidth = 1; o.stroke(); } };
+  for (let gy = -1; gy * C < IH + C; gy++) for (let gx = -1; gx * C < IW + C; gx++) {
+    const h = (n) => hashRand(gx + x0 * 7 + 40, gy + y0 * 5 + 40, n), cx = IX + gx * C + (h(1) - 0.5) * 11 + (gy & 1 ? C / 2 : 0), cy = IY + gy * C + (h(2) - 0.5) * 11, r = 4.5 + h(3) * 5.5, rot = (h(4) - 0.5) * 1.3, col = STAR_COLS[Math.floor(h(5) * STAR_COLS.length)];
+    o.globalAlpha = 0.42;
+    if (h(6) < 0.28) { star(cx, cy, r, rot, null, col); star(cx, cy, r * 0.55, rot, null, col); }   // the reference's nested outline stars
+    else { star(cx, cy, r, rot, col); if (h(7) < 0.4) { o.globalAlpha = 1; star(cx, cy, r * 0.42, rot, STAR_BASE); } }
+  }
+  o.restore(); o.globalAlpha = 1; o.fillStyle = STAR_TRIM;
+  o.fillRect(IX - 1, IY - 1, IW + 2, 1); o.fillRect(IX - 1, IY + IH, IW + 2, 1); o.fillRect(IX - 1, IY, 1, IH); o.fillRect(IX + IW, IY, 1, IH);
+}
+
 /* ------------------------------------------------------------ rooms: a lit floor in the dark, walls round it, the furniture */
 function paintRoom(o, f) {
   const def = Z.def, [x0, y0, x1, y1] = def.room;
@@ -1216,9 +1247,11 @@ function paintRoom(o, f) {
   const X0 = x0 * T, Y0 = y0 * T, X1 = (x1 + 1) * T, Y1 = (y1 + 1) * T;
   // the back wall: a band of plaster above the floor, then the floor itself
   const WH = def.wallH || 22;   // how tall the back wall is drawn (the Casino's is taller, for the sign over its door)
-  f(X0 - 4, Y0 - WH, X1 - X0 + 8, WH, def.floor === "marble" ? "#d8d0bc" : def.floor === "casino" ? "#4a1e28" : "#b8986a"); f(X0 - 4, Y0 - 4, X1 - X0 + 8, 4, "#6a5a40");
+  f(X0 - 4, Y0 - WH, X1 - X0 + 8, WH, def.floor === "marble" ? "#d8d0bc" : def.floor === "casino" ? (def.carpet ? "#4a1e28" : "#2a2058") : "#b8986a"); f(X0 - 4, Y0 - 4, X1 - X0 + 8, 4, def.floor === "casino" && !def.carpet ? "#4a3a8a" : "#6a5a40");
   for (let x = X0; x < X1; x += 24) f(x, Y0 - WH + 2, 1, WH - 6, "rgba(0,0,0,.08)");
+  const STARS = def.floor === "casino" && !def.carpet; if (STARS) starCarpet(o, x0, y0, x1, y1);
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    if (STARS) continue;
     const X = x * T, Y = y * T;
     const CARPET = IMG[def.carpet || "t_casino"];
     if (def.floor === "casino" && CARPET) {
@@ -1239,8 +1272,8 @@ function paintRoom(o, f) {
   for (let x = x0; x <= x1; x++) if (Z.g[y1 + 1][x] === "e") { f(x * T, Y1, T, T, "#2a2016"); f(x * T + 2, Y1 + 2, T - 4, T - 6, "#8a4a2a"); }
   for (let y = y0; y <= y1; y++) for (const [x, wallX] of [[x0 - 1, X0 - 4], [x1 + 1, X1]]) if (Z.g[y]?.[x] === "e") {
     const CP = IMG[def.carpet || "t_casino"], X = x * T, Y = y * T;
-    if (def.floor === "casino" && CP) o.drawImage(CP.im, WANG[0][0], WANG[0][1], 32, 32, X, Y, T, T); else f(X, Y, T, T, "#6a5a40");
-    f(wallX, Y, 4, T, def.floor === "casino" ? "#3a0f18" : "#6a5a40");                                   // the wall opens here
+    if (STARS) f(X, Y, T, T, STAR_FRAME); else if (def.floor === "casino" && CP) o.drawImage(CP.im, WANG[0][0], WANG[0][1], 32, 32, X, Y, T, T); else f(X, Y, T, T, "#6a5a40");
+    f(wallX, Y, 4, T, STARS ? "#15103a" : def.floor === "casino" ? "#3a0f18" : "#6a5a40");                                   // the wall opens here
     if (Z.g[y - 1]?.[x] !== "e") { f(X, Y - 3, T, 3, "#c8963a"); f(wallX, Y - 3, 4, 3, "#c8963a"); }   // a gold lintel over the arch
     if (Z.g[y + 1]?.[x] !== "e") { f(X, Y + T, T, 2, "#c8963a"); f(wallX, Y + T, 4, 2, "#c8963a"); }
   }
@@ -1614,7 +1647,7 @@ function aimCamera(P, now) {
   view.ox = Math.round(view.bx - cam.x * view.s); view.oy = Math.round(view.by - cam.y * view.s);
 }
 const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
-const KIND_OF = { rrtable: "rr", prizewheel: "prize", fameboard: "fame", cart: "ferry", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
+const KIND_OF = { rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", prizewheel: "prize", fameboard: "fame", cart: "ferry", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
 function thingAt(wx, wy) {
   const now = snow(), near = (x_, y_, rx, ry) => Math.abs(wx - x_) <= rx && wy <= y_ + 4 && wy >= y_ - ry;
   for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})${m.c && m.c !== you?.id ? " · someone's fighting it" : ""}` }; }
@@ -1977,7 +2010,8 @@ function frame() {
     const lunge = working && sw < 260 && !calm ? Math.sin((sw / 260) * Math.PI) * 4 : 0;
     const [ux, uy] = Object.keys(DIRS).find((k) => DIRS[k] === d).split(",").map(Number);
     const fit = G.outfitOf({ body: pl.body }), hk = (fit !== "tiro" && wantArt(`hero_${fit}_${d}`)) || (fit === "tiro" && IMG[`hero_tiro_${d}`] ? `hero_tiro_${d}` : `hero_${d}`);
-    spr(hk, p.px * T + 8 + ux * lunge * 0.7, p.py * T + 15 + uy * lunge * 0.7 + bobOf(p.moving), false, (hurtNow(pl) ? RED : "") + (pl.id === you.id ? "" : " hue-rotate(200deg)"));
+    const seat = rrSeatOf(pl), down = seat && RRS.out.has(seat.i) && !p.moving;   /* shot at the table: slumped beside the stool until the table clears */
+    spr(hk, p.px * T + 8 + ux * lunge * 0.7, p.py * T + 15 + uy * lunge * 0.7 + bobOf(p.moving), false, (down ? "grayscale(1) brightness(.7)" : hurtNow(pl) ? RED : "") + (pl.id === you.id ? "" : " hue-rotate(200deg)"), 1, down ? Math.PI / 2 : 0);
   } });
   sprites.sort((a, b) => a.y - b.y).forEach((s) => s.draw());
 
@@ -1991,6 +2025,12 @@ function frame() {
   // what's in everyone's hand, until the art has tools (the sword is already in the sprite)
   for (const pl of Z.players) if (pl.weapon && pl.weapon !== "rudis") { const p = pos(pl); heldIcon(pl.weapon, sx(p.px * T + 8), sy(p.py * T + 15), pl.id === you.id && PRED.on ? PRED.dir : pl.dir, S2); }
   for (const b of Z.bots) if (b.work != null && !GAME_T.has(b.workT)) { const p = posOf(b, now), t = b.workT; heldIcon(t === "spot" ? "rod" : t === "rock" || t === "vein" ? "pickaxe" : t === "olive" ? "olives" : "axe", sx(p.px * T + 8), sy(p.py * T + 15), b.dir, S2); }
+  // the Russian Roulette table: a name over every taken stool whose player isn't standing in the room (someone on the website, or out on the floor)
+  if (String(Z.key).split(":")[0] === "roulette") { rrRoomTick(pnow);
+    for (const st of RRS.seats) { const [tx, ty] = G.RR_SEATS[st.i] || []; if (tx == null) continue; const here = st.pid != null && Z.players.some((q) => q.id === st.pid), x = sx(tx * T + 8), y = sy(ty * T + 2);
+      const out = RRS.out.has(st.i), won = RRS.won === st.i;
+      if (!here) label(out ? `✕ ${st.name}` : st.name, x, y, out ? "#8a8a8a" : won ? "#ffe27a" : "#ffb0d0", 12);
+      if (won) label(`+${RRS.show?.pot ?? ""} ZC`, x, y - 16, "#ffe27a", 13); else if (out && here) label("out", x, y - 16, "#ff7a6a", 12); } }
   // names under everyone
   const names = set("names");
   for (const pl of Z.players) {
@@ -2247,6 +2287,31 @@ async function zcRead() {
 }
 setTimeout(zcRead, 2500); setTimeout(() => { if (ZCBAL == null) zcRead(); }, 12000);   /* and once more if the first one found no session yet */
 new MutationObserver(() => { if ($("gameWin").hidden) zcRead(); }).observe($("gameWin"), { attributes: true, attributeFilter: ["hidden"] });
+/* THE ROULETTE ROOM (v74). RRS is who the game server says is at the Russian Roulette table (from the site's own state):
+   a name over each taken stool, and, when a table has been settled, the same playback clock as the window (G.rrTimeline)
+   so the room sees each seat slump when the window says BANG. Nothing here decides anything. */
+let RRS = { seats: [], out: new Set(), won: null, show: null };
+function rrRoomTick(pnow) {
+  const sh = RRS.show; if (!sh) return;
+  while (sh.k < sh.line.length && pnow - sh.t0 >= sh.line[sh.k].at) { const ev = sh.line[sh.k++]; if (ev.end) { RRS.won = sh.winner; sh.endAt = pnow; } else { RRS.out.add(ev.seat); if ($("gameWin").hidden) SFX.play("hit", { vol: 0.5 }); } }
+  if (sh.endAt && pnow - sh.endAt > 4200) RRS = { seats: RRS.next || [], out: new Set(), won: null, show: null };
+}
+const rrSeatOf = (pl) => (String(Z.key).split(":")[0] === "roulette" ? RRS.seats.find((x) => x.pid === pl.id) : null);
+function rrBell(e) {
+  SFX.play("task_done", { vol: 0.5 }); const secs = Math.max(1, Math.round(e.left / 1000));
+  const log = $("chatLog"); log.querySelector(".empty")?.remove();
+  const p = document.createElement("p"); p.className = "casinonote"; const b0 = document.createElement("b"); b0.textContent = "Bino: "; p.append(b0, document.createTextNode(`🔫 ${e.name} sat down. Seat open, ${secs}s. `));
+  const door = String(Z.key).split(":")[0] === "casino" ? Z.objs.findIndex((o) => o.enter === "roulette") : -1;
+  if (door >= 0) { const b = document.createElement("button"); b.className = "act"; b.type = "button"; b.textContent = "Walk there"; b.addEventListener("click", () => { send({ t: "act", kind: "ob", ob: Z.objs[door].id ?? door }); b.remove(); }); p.append(b); setTimeout(() => b.remove(), e.left + 1000); }
+  log.append(p); log.scrollTop = log.scrollHeight; say(`🔫 Russian Roulette: ${e.name} sat down. Seat open, ${secs}s.`, "good");
+  if (!chatOpen) { unread++; $("chatUnread").textContent = unread > 9 ? "9+" : String(unread); $("chatUnread").hidden = false; }
+}
+async function rrBoard() {
+  let b = null; try { b = await (await fetch("/api/casino/pvp/board?game=roulette")).json(); } catch (x) { /* no site behind this page */ }
+  if (!b?.ok) return popup("The table's wall of fame", "Bino's still chalking it up. Try again in a minute.", "🔫", [["Okay", null]]);
+  const rows = (list, fmt) => (list.length ? list.map((r, i) => `${i + 1}. ${fmt(r)}`).join("\n") : "Nobody yet.");
+  popup("The table's wall of fame", `TODAY'S BIGGEST POTS\n${rows(b.pots, (r) => `${r.name}: ${r.pot} ZC (${r.players} at the table)`)}\n\nLONGEST WINNING RUN\n${rows(b.streaks, (r) => `${r.name}: ${r.n} in a row`)}\n\nMOST TIMES SHOT\n${rows(b.shot, (r) => `${r.name}: ${r.n}`)}`, "🔫", [["Okay", null]]);
+}
 function openRussian() {
   for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin"]) $(w).hidden = true;
   if ($("gameWin").hidden) SFX.play("ui_open"); CZ.russian();
@@ -2422,12 +2487,12 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=23", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=24", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
 let czReal = null;
 const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, say: (t, c) => say(t, c),
   /* a shared round's view, built from the site's state: fed to the very handlers the game server's own views used to reach */
   onFight: (v) => { const was = FIGHT; FIGHT = { ...v, until: performance.now() + v.left }; if (v.phase === "fight" && was?.phase !== "fight" && was) SFX.play("task_done"); if (CZ.game === "fight") CZ.fight(FIGHT, false); },
-  onRoul: (v) => roulSet(v), me: () => me, room: () => Z.def, you: () => you, calm: () => set("reducedMotion"), now: () => snow() }))));
+  onRoul: (v) => roulSet(v), rrChanged: () => { if (String(Z.key).split(":")[0] === "roulette") send({ t: "rr" }); }, me: () => me, room: () => Z.def, you: () => you, calm: () => set("reducedMotion"), now: () => snow() }))));
 const CZ = new Proxy({}, { get: (_, k) => (czReal ? czReal[k] : k === "game" ? null : k === "real" || k === "tix" ? false : k === "realGames" ? () => Object.keys(G.REAL_TABLES) : CZ_QUIET.has(k) ? () => {} : (...a) => { czLoad().then((z) => z[k](...a)).catch(() => say("Couldn't load the game windows. Check your connection and try again.")); }) });
 setTimeout(czLoad, 6000);
 /* ------------------------------------------------------------ roulette: the shared table
