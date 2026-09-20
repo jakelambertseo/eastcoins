@@ -276,7 +276,10 @@ button,input,select{font:inherit}
 .rl-chips button{width:40px;height:40px;border-radius:50%;border:3px dashed #fff8;font-weight:900;color:#fff;cursor:pointer;font-size:12px}
 .rl-chips button[aria-pressed="true"]{outline:3px solid #ffe27a;outline-offset:1px}
 /* the game windows' gold buttons (eastscape-casino.js), so roulette's switch and chips match the other tables */
-.rl-gold button{width:auto;min-width:42px;height:38px;padding:0 12px;border-radius:10px;border:1px solid rgba(70,45,20,.38);background:#ecdcb6;color:#2a2016;font:800 13.5px Nunito,sans-serif}.rl-gold button.pill{height:32px;border-style:solid;border-color:transparent;border-width:0 14px;border-image:url(/v3/assets/img/glad/flat/ui/czpill.png?v=1) 0 20 fill / 0 14px stretch;background:none;border-radius:0;box-shadow:none;padding:0 2px;color:#f3e7cc;text-shadow:0 1px 0 #1a0e08;image-rendering:pixelated}
+.rl-gold button{width:auto;min-width:42px;height:38px;padding:0 12px;border-radius:10px;border:1px solid rgba(70,45,20,.38);background:#ecdcb6;color:#2a2016;font:800 13.5px Nunito,sans-serif}.rl-gold button[data-chip]{width:46px;min-width:46px;height:46px;padding:0;border:0;border-radius:50%;background:center/100% 100% no-repeat;box-shadow:none;color:#fff;font:900 14px Nunito,sans-serif;text-shadow:0 1px 0 #000,0 0 3px #000;image-rendering:pixelated;transition:transform .1s}
+.rl-gold button[data-chip="1"]{background-image:url(/v3/assets/img/glad/flat/ui/rlchip_1.png?v=1);color:#1a1410;text-shadow:0 1px 0 #fff}.rl-gold button[data-chip="5"]{background-image:url(/v3/assets/img/glad/flat/ui/rlchip_5.png?v=1)}.rl-gold button[data-chip="10"]{background-image:url(/v3/assets/img/glad/flat/ui/rlchip_10.png?v=1)}.rl-gold button[data-chip="20"]{background-image:url(/v3/assets/img/glad/flat/ui/rlchip_20.png?v=1)}
+.rl-gold button[data-chip]:hover{transform:translateY(-2px);border:0}.rl-gold button[data-chip="1"][aria-pressed="true"]{background:url(/v3/assets/img/glad/flat/ui/rlchip_1.png?v=1) center/100% 100% no-repeat}.rl-gold button[data-chip="5"][aria-pressed="true"]{background:url(/v3/assets/img/glad/flat/ui/rlchip_5.png?v=1) center/100% 100% no-repeat}.rl-gold button[data-chip="10"][aria-pressed="true"]{background:url(/v3/assets/img/glad/flat/ui/rlchip_10.png?v=1) center/100% 100% no-repeat}.rl-gold button[data-chip="20"][aria-pressed="true"]{background:url(/v3/assets/img/glad/flat/ui/rlchip_20.png?v=1) center/100% 100% no-repeat}.rl-gold button[data-chip][aria-pressed="true"]{box-shadow:0 0 0 3px #f0c848,0 3px 0 3px #8a6210;transform:translateY(-2px);color:#fff;text-shadow:0 1px 0 #000,0 0 3px #000}.rl-gold button[data-chip="1"][aria-pressed="true"]{color:#1a1410;text-shadow:0 1px 0 #fff}
+.rl-gold button.pill{height:32px;border-style:solid;border-color:transparent;border-width:0 14px;border-image:url(/v3/assets/img/glad/flat/ui/czpill.png?v=1) 0 20 fill / 0 14px stretch;background:none;border-radius:0;box-shadow:none;padding:0 2px;color:#f3e7cc;text-shadow:0 1px 0 #1a0e08;image-rendering:pixelated}
 .rl-gold button.pill[aria-pressed="true"]{border-image-source:url(/v3/assets/img/glad/flat/ui/czpill_on.png?v=1);background:none;box-shadow:none;color:#3a2604;text-shadow:0 1px 0 rgba(255,246,196,.75)}
 .rl-gold button[aria-pressed="true"]{outline:0;background:linear-gradient(#f0c848,#cf9a2e);border-color:#8a6210;color:#2a1c04;box-shadow:0 2px 0 #8a6210}.rl-gold button:hover{border-color:#8a6210}
 .rl-board{display:grid;grid-template-columns:36px repeat(12,minmax(26px,1fr));gap:2px;background:#0f4a24;padding:5px;border-radius:6px;overflow-x:auto}
@@ -636,10 +639,10 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=79";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=80";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=48").then((m) => { WK = m; }));
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=49").then((m) => { WK = m; }));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=2";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -2419,7 +2422,7 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=21", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=22", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
 let czReal = null;
 const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, say: (t, c) => say(t, c),
   /* a shared round's view, built from the site's state: fed to the very handlers the game server's own views used to reach */
@@ -2469,11 +2472,11 @@ function renderRoul() {
   const byName = new Map(); for (const b of R.bets) { const a = byName.get(b.name) || []; a.push(`${b.amt.toLocaleString()} on ${G.rouletteLabel(b.kind, b.pick)}`); byName.set(b.name, a); }
   const myStake = R.bets.filter((b) => b.me).reduce((a, b) => a + b.amt, 0);
   const last = R.last ? `<span class="rl-n ${R.last.col}">${R.last.n}</span>` : "—";
-  $("roulSub").textContent = REALR ? "ZCoins or tickets · pays REAL ZCoins · ONE spot a spin, 1 to 20 · a spin a minute" : `Round ${R.round} · up to ${G.fmtCash(G.maxBetOf(me))} a spin`;
+  $("roulSub").textContent = REALR ? "Pick one spot. A spin a minute." : `Round ${R.round} · up to ${G.fmtCash(G.maxBetOf(me))} a spin`;
   const banner = roulBanner && performance.now() < roulBanner.until ? `<div class="rl-banner ${roulBanner.cls}">${esc(roulBanner.text)}<small>${esc(roulBanner.sub)}</small></div>` : "";
-  $("roulBody").innerHTML = `${REALR ? `<div class="rl-chips rl-gold" style="margin-bottom:6px">Bet with <button type="button" class="pill" data-cur="zc" aria-pressed="${!TIXR}">ZCoins · ${roulChip}</button><button type="button" class="pill" data-cur="tix" aria-pressed="${!!TIXR}">🎟 Tickets · ${(roulChip * G.DEX.rate).toLocaleString()}</button><small style="margin-left:auto">either way, a win is paid in real ZCoins</small></div>` : luckLine()}<div class="rl-top">${banner}<div class="rl-wheelbox"><div class="rl-wheel" id="rlWheel" style="background:${roulWheelBg()};transform:rotate(${roulAngle}deg)"></div><div class="rl-hub"></div><div class="rl-ballring" id="rlBall" style="transform:rotate(${roulBallAngle}deg)"><i></i></div><div class="rl-pin"></div></div>
+  $("roulBody").innerHTML = `${REALR ? `<div class="rl-chips rl-gold" style="margin-bottom:6px">Bet with <button type="button" class="pill" data-cur="zc" aria-pressed="${!TIXR}">ZCoins · ${roulChip}</button><button type="button" class="pill" data-cur="tix" aria-pressed="${!!TIXR}">🎟 Tickets · ${(roulChip * G.DEX.rate).toLocaleString()}</button><small style="margin-left:auto">wins pay ZCoins</small></div>` : luckLine()}<div class="rl-top">${banner}<div class="rl-wheelbox"><div class="rl-wheel" id="rlWheel" style="background:${roulWheelBg()};transform:rotate(${roulAngle}deg)"></div><div class="rl-hub"></div><div class="rl-ballring" id="rlBall" style="transform:rotate(${roulBallAngle}deg)"><i></i></div><div class="rl-pin"></div></div>
       <div class="rl-state"><b>${betting ? (R.hold > 0 ? `Next spin opens in ${Math.ceil((R.hold - (performance.now() - roulGot)) / 1000)}s` : `Place your bet · ${Math.ceil(left / 1000)}s`) : "No more bets · the ball is rolling"}</b>
-        <small>${betting ? (R.last ? `Last: ${R.last.n} ${R.last.col}${R.last.wins.length ? ` · ${R.last.wins.map((w) => `${esc(w.name)} +${w.payout.toLocaleString()}`).join(", ")}` : " · no winners"}` : "Chips on the board, then wait for the wheel.") : "Good luck."}</small>
+        <small>${betting ? (R.last ? `Last: ${R.last.n} ${R.last.col}${R.last.wins.length ? ` · ${R.last.wins.map((w) => `${esc(w.name)} +${w.payout.toLocaleString()}`).join(", ")}` : " · no winners"}` : "Pick a spot.") : "Good luck."}</small>
         <div class="rl-timer"><i id="rlTime" style="width:${Math.min(100, Math.round((left / (betting ? (REALR ? 40000 : G.ROULETTE.betMs) : (REALR ? 12000 : G.ROULETTE.spinMs))) * 100))}%"></i></div>
         <div class="rl-hist">${R.hist.map((n) => `<span class="rl-n ${G.rouletteColor(n)}">${n}</span>`).join("")}</div></div></div>
     <div class="rl-chips${REALR ? " rl-gold" : ""}">Chip ${(REALR ? [[1, "#6a6a72"], [5, "#2a5aa8"], [10, "#b8202a"], [20, "#1a1a1a"]] : ROUL_CHIPS).map(([v, c]) => `<button type="button" data-chip="${v}"${REALR ? "" : ` style="background:${c}"`} aria-pressed="${v === roulChip}">${v}</button>`).join("")}
