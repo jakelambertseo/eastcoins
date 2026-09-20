@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 74;
+export const VERSION = 75;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -136,6 +136,12 @@ export const ITEMS = {
   sandals: { name: "Sandals", icon: "🩴", slot: "boots", def: 1 }
 };
 // what a character looks like comes from their body armour: "tiro" (a recruit) unless it has a tier
+/* PEOPLE (v75). An unarmoured player used to be a Roman novice in a tunic, left over from when this was Gladiator, and the
+   casino's fake players were one Spartan, colour-shifted. The owner picked SIX MODERN, EVERYDAY LOOKS (look1..look6, eight
+   facings each, PixelLab), to match Dex, Bino and the rest. Nobody chooses: lookOf() turns an account id (or a fake player's
+   name) into the same look every time, on every screen, with nothing stored. Armour still replaces the whole sprite. */
+export const LOOKS = 6;
+export const lookOf = (key) => { let h = 2166136261; for (const ch of String(key)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return ((h >>> 0) % LOOKS) + 1; };
 export const outfitOf = (eq) => ITEMS[eq?.body]?.tier || "tiro";
 export const SLOTS = ["helm", "amulet", "weapon", "body", "shield", "legs", "gloves", "boots", "ring"];
 // the two jewelry slots, which gate on Hitpoints rather than Attack or Defence
@@ -551,9 +557,9 @@ export const SCENES = {
     },
     mobs: [],
     npcs: [
-      { name: "Livia the Broker", x: 12, y: 16, still: true, opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Buying? Selling? Use the stall. I take 1%.", "It keeps selling while you sleep."] },
+      { name: "Livia the Broker", art: "livia", x: 12, y: 16, still: true, opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Buying? Selling? Use the stall. I take 1%.", "It keeps selling while you sleep."] },
            { name: "Charon the Ferryman", art: "charon", x: 18, y: 21, still: true, opens: "ferry", hair: "#e8e8e8", shirt: "#3a3a5a", pants: "#2a2a3a", lines: ["Islands. Everyone gets one. Nobody knows who's paying for them.", "The river's closed, so now it's a cart. Don't ask how a cart gets to an island. I don't.", "Plant something before you go back in there and lose your shirt. It grows while you're away.", "Wheat, ten minutes. Tomatoes, twenty. Both sell. Both cook."] },
-           { name: "Gaius", x: 25, y: 15, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: He doesn't talk. I do. Coo.", "PIGEON: Casino's that way. Everything's that way. Coo."] }],
+           { name: "Gaius", art: "gaius", x: 25, y: 15, hair: "#5a3a2a", shirt: "#9a3a5a", pants: "#3a2a3a", pigeon: true, lines: ["PIGEON: He doesn't talk. I do. Coo.", "PIGEON: Casino's that way. Everything's that way. Coo."] }],
     bots: [{ name: "Gannicus", level: 55 }, { name: "Naevia", level: 31 }]
   },
   grove: {
@@ -781,7 +787,7 @@ Object.assign(SCENES, {
       return { g, objs, blobs: [] };
     },
     mobs: [], bots: [],
-    npcs: [{ name: "Aurelia", x: 21, y: 9, still: true, opens: "bank", reach: 2, hair: "#1a1a2a", shirt: "#3a6a8a", pants: "#2a2a3a", lines: ["Welcome to the Bank. Use any booth.", "We hold anything. Not tickets."] }]
+    npcs: [{ name: "Aurelia", art: "aurelia", x: 21, y: 9, still: true, opens: "bank", reach: 2, hair: "#1a1a2a", shirt: "#3a6a8a", pants: "#2a2a3a", lines: ["Welcome to the Bank. Use any booth.", "We hold anything. Not tickets."] }]
   },
   // WEST of the casino, the first stop on the skilling line: a bit of everything a beginner gathers
   /* ONE WAY OUT (2026-09-20, the owner: "one entrance for skilling/combat/crafting, all available in a few scenes"). The

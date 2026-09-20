@@ -50,6 +50,14 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-20", title: "New faces",
+    items: [
+      "EVERYONE LOOKS LIKE SOMEONE NOW: six everyday looks for players without armour (you get one and keep it), and the other gamblers on the floor wear them too. No more tunics.",
+      "LIVIA, GAIUS AND AURELIA have been drawn.",
+      "RUSSIAN ROULETTE'S WINDOW now lists who's at the table and who's watching."
+    ]
+  },
+  {
     date: "2026-09-20", title: "A new carpet, and a proper Russian Roulette room",
     items: [
       "THE CASINO HAS A NEW CARPET: dark, with big stars. You, the tables and everyone else stand out on it now.",
