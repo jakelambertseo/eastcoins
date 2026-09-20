@@ -44,7 +44,7 @@ export async function onRequestGet(context) {
   }];
 
   for (const g of Object.values(GAMES)) {
-    if (g.paused) continue;   // pulled from the floor for now
+    if (g.paused || g.hidden) continue;   // pulled from the floor for now, or GambaScape-only (roulette, the Fight Pit)
     const r = roundAt(g, now);
     const [inRound, room, who] = await Promise.all([
       db.prepare(`SELECT COUNT(*) AS n, COALESCE(SUM(wager), 0) AS staked FROM casino_bets WHERE game = ? AND round_no = ?`).bind(g.key, r.no).first(),

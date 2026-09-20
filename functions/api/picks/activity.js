@@ -93,7 +93,7 @@ export async function onRequestGet(context) {
   for (const h of music) items.push({ type: "song", at: new Date(h.playedAt).toISOString(), who: { login: h.login, displayName: h.login, avatar: "" }, title: h.title });
 
   // The casino's results: every settled bet, win or loss.
-  const GAME_NAME = { flip: "Coin Flip", wheel: "Wheel", race: "Horse Race", hilo: "Higher or Lower", mines: "Mines", plinko: "Plinko", scratch: "Scratch-Off", roulette: "Russian Roulette", standing: "Last One Standing", redlight: "Red Light, Green Light" };
+  const GAME_NAME = { flip: "Coin Flip", wheel: "Wheel", roul: "Roulette", pit: "The Fight Pit", dice: "Dice", slots: "Slots", race: "Horse Race", hilo: "Higher or Lower", mines: "Mines", plinko: "Plinko", scratch: "Scratch-Off", roulette: "Russian Roulette", standing: "Last One Standing", redlight: "Red Light, Green Light" };
   const casino = await casinoResults(db);
   for (const c of casino) items.push({ type: "casino", at: c.at, who: c.who, game: c.game, gameName: GAME_NAME[c.game] || c.game, pick: c.pick, wager: c.wager, profit: c.profit, status: c.status });
   // The Daily Pot's hits.

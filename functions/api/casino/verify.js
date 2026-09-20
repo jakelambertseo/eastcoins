@@ -77,6 +77,16 @@ export async function onRequestGet({ request }) {
     return json({ ...base, name: g.name, result, describe: g.describe(result), rule: `from sha256(seed:${game})` });
   }
 
+  if (game === "roul") {
+    const g = SHARED.roul, result = await g.outcome(seed);
+    return json({ ...base, name: g.name, result, describe: g.describe(result), rule: "n = floor(sha256(seed:roul) as a fraction x 37) on a single-zero wheel; an even-money spot pays 37/18, a dozen 37/12, a number 37, each times the round's edge" });
+  }
+
+  if (game === "pit") {
+    const g = SHARED.pit, no = clampInt(q.get("round"), 0, 1e12, 0), card = await g.cardFor(no), result = await g.outcome(seed, no);
+    return json({ ...base, name: g.name, round: no, card, result, rule: "the card (who fights, and side a's chance p from the square roots of their levels, clamped 25-75%) comes from sha256(pit:card:<round>), so it is public before the bets close; side a wins when sha256(seed:pit) as a fraction is under p; each side pays 1/its chance times the round's edge. Pass &round=<the round number>." });
+  }
+
   if (game === "flip") {
     return json({ ...base, name: "Coin Flip", result: await resultOf(seed), rule: "the low bit of sha256(seed:flip): even is heads, odd is tails" });
   }
@@ -156,5 +166,5 @@ export async function onRequestGet({ request }) {
     });
   }
 
-  return fail("BAD_GAME", "game must be one of: hilo, mines, plinko, scratch, dice, slots, wheel, race, flip, roulette, standing, redlight, pot, crate");
+  return fail("BAD_GAME", "game must be one of: hilo, mines, plinko, scratch, dice, slots, roul, pit, wheel, race, flip, roulette, standing, redlight, pot, crate");
 }

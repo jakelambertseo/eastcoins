@@ -138,7 +138,7 @@ async function picksPart(db, uid) {
 
 /* ---------------------------------------------------------- casino */
 
-const GAME_NAMES = { flip: "Coin Flip", wheel: "Wheel", race: "Horse Race", hilo: "Higher or Lower", mines: "Mines", plinko: "Plinko", scratch: "Scratch-Off", roulette: "Russian Roulette", standing: "Last One Standing", redlight: "Red Light, Green Light" };
+const GAME_NAMES = { flip: "Coin Flip", wheel: "Wheel", roul: "Roulette", pit: "The Fight Pit", dice: "Dice", slots: "Slots", race: "Horse Race", hilo: "Higher or Lower", mines: "Mines", plinko: "Plinko", scratch: "Scratch-Off", roulette: "Russian Roulette", standing: "Last One Standing", redlight: "Red Light, Green Light" };
 
 async function casinoPart(db, uid, from, to) {
   const a = sqlStamp(from), b = sqlStamp(to);

@@ -176,6 +176,41 @@ r = await ask({ op: "status", userId: "u1" }); check("an hour on: the allowance 
   } finally { Date.now = realNow; }
 }
 
+// ---- GambaScape's shared rooms on the round engine: ROULETTE ("roul") and THE FIGHT PIT ("pit")
+{
+  const E = await import(ROOT + "casino/_engine.js");
+  const get = async (file, params, who = "u1") => { const mod = await import(ROOT + file); const res = await mod.onRequestGet({ env, params, waitUntil() {}, request: new Request("https://eastcoin.vip/api/x", { headers: { cookie: `__Host-ec_session=${TOKENS[who]}` } }) }); return res.json(); };
+  check("the pit's fighters, levels and clamps are the game's own", JSON.stringify(E.PIT_POOL) === JSON.stringify(G.FIGHTS.pool.map((k) => [k, G.MOBS[k].lvl])) && E.PIT_TITLES === G.FIGHTS.titles.length && E.PIT_MIN_P === G.FIGHTS.minP && E.PIT_MAX_P === G.FIGHTS.maxP);
+  check("both are hidden from the site's floor", E.GAMES.roul.hidden && E.GAMES.pit.hidden && (await get("casino/home.js", {})).games.every((g) => g.key !== "roul" && g.key !== "pit"));
+  let fairOk = true; for (const k of E.GAMES.roul.picks) { let w = 0; for (let n = 0; n < 37; n++) if (E.GAMES.roul.wins(k, { n })) w++; if (Math.abs((w / 37) * E.GAMES.roul.payout[k] - 1) > 1e-9) fairOk = false; }
+  check("every roulette spot is priced exactly fair (chance x price = 1), all 46 of them", fairOk && E.GAMES.roul.picks.length === 46);
+  let cardOk = true; for (let no = 1; no < 400; no++) { const c = await E.pitCard(no); if (c.f[0].t === c.f[1].t || c.f[0].title === c.f[1].title || c.p[0] < 0.25 || c.p[0] > 0.75 || Math.abs(c.p[0] * c.price.a - 1) > 1e-9 || Math.abs(c.p[1] * c.price.b - 1) > 1e-9) cardOk = false; }
+  check("400 pit cards: two different fighters, two different titles, 25-75%, both sides priced exactly fair", cardOk);
+  let aw = 0; const N = 6000, card7 = await E.pitCard(7); for (let i = 0; i < N; i++) if ((await E.GAMES.pit.outcome(`pit-measure-${i}`, 7)).winner === "a") aw++;
+  check(`side a wins as often as its card says (${(card7.p[0] * 100).toFixed(1)}% on the card, ${(aw / N * 100).toFixed(1)}% measured)`, Math.abs(aw / N - card7.p[0]) < 0.03);
+  const realNow = Date.now; raw.exec(`DELETE FROM casino_bets; DELETE FROM wallet_operations`); balances.alice = 1000; balances.bob = 1000;
+  try {
+    // roulette: 60 s rounds. Bet in the window, then stand after the close and let the state endpoint settle it.
+    const no = Math.floor(realNow() / 60000) + 5000; Date.now = () => no * 60000 + 5000;
+    let x = await post("casino/[game]/bet.js", { game: "roul" }, { pick: "red", wager: 10 }); check("roulette takes a bet on red", x.body.ok, JSON.stringify(x.body).slice(0, 120));
+    x = await post("casino/[game]/bet.js", { game: "roul" }, { pick: "n17", wager: 5 }); check("one spot a spin: a second bet in the round is refused", x.body.code === "ALREADY_IN");
+    x = await post("casino/[game]/bet.js", { game: "roul" }, { pick: "n37", wager: 5 }, "u2"); check("there is no pocket 37", x.body.code === "BAD_PICK");
+    x = await post("casino/[game]/bet.js", { game: "roul" }, { pick: "n0", wager: 5 }, "u2"); check("a bet on zero is taken", x.body.ok);
+    Date.now = () => no * 60000 + 41000; const st = await get("casino/[game]/state.js", { game: "roul" }); const n = st.round?.result?.n, red = E.GAMES.roul.wins("red", { n });
+    const mine = st.bets.find((b) => b.user.login === "alice"), edge = await E.edgeFor(st.round.seed);
+    check(`the spin (${n} ${st.round?.result?.color}) settles red correctly: ${red ? "paid 10 x 37/18 x the round's edge" : "lost"}`, Number.isInteger(n) && n >= 0 && n <= 36 && mine && (red ? mine.status === "WON" && mine.payout === Math.round(10 * (37 / 18) * edge) && balances.alice === 1000 - 10 + mine.payout : mine.status === "LOST" && balances.alice === 990), JSON.stringify(mine));
+    const zero = st.bets.find((b) => b.user.login === "bob"); check("…and zero: paid 37 x the edge only if it came up", n === 0 ? zero.payout === Math.round(5 * 37 * edge) : zero.status === "LOST" && balances.bob === 995);
+    // the pit: 90 s rounds; the card is in the state BEFORE the close, the winner only after
+    raw.exec(`DELETE FROM casino_bets`); const pn = Math.floor(realNow() / 90000) + 5000; Date.now = () => pn * 90000 + 5000;
+    const before = await get("casino/[game]/state.js", { game: "pit" }), card = before.card;
+    check("the pit's state shows the card and no result while bets are open", card && card.no === pn && card.f.length === 2 && before.round.result == null && before.round.seed == null);
+    const bal0 = balances.alice; x = await post("casino/[game]/bet.js", { game: "pit" }, { pick: "a", wager: 20 }); check("the pit takes 20 on side a", x.body.ok && balances.alice === bal0 - 20);
+    Date.now = () => pn * 90000 + 41000; const after = await get("casino/[game]/state.js", { game: "pit" }), w = after.round.result?.winner, pe = await E.edgeFor(after.round.seed), pb = after.bets.find((b) => b.user.login === "alice");
+    check(`the fight settles (${after.round.result?.t} wins): side a ${w === "a" ? "paid 20 x 1/p x the edge" : "lost"}`, (w === "a" || w === "b") && (w === "a" ? pb.payout === Math.round(20 * card.price.a * pe) && balances.alice === bal0 - 20 + pb.payout : pb.status === "LOST" && balances.alice === bal0 - 20), JSON.stringify(pb));
+    x = await post("casino/[game]/bet.js", { game: "pit" }, { pick: w, wager: 20 }, "u2"); check("the late-bet hole stays shut here too: a bet on the published winner is refused", x.body.code === "BETS_CLOSED");
+  } finally { Date.now = realNow; }
+}
+
 // ---- StreamElements down: a banking is NOT a definite no
 seDown = true; r = await ask({ op: "pay", userId: "u1", id: "exchdown1", zc: 3 }); check("wallet down on a banking: not definite, the game holds the coins", !r.body.ok && r.body.definite === false); seDown = false;
 

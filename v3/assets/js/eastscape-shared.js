@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 60;
+export const VERSION = 61;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -1007,7 +1007,7 @@ Object.assign(SCENES, {
          the SAME table: a GambaScape player and someone on the website sit in one lobby. ZCoins only, 20 a seat, the winner
          takes every buy-in, the house takes nothing. The window (eastscape-casino.js russian()) talks to /api/casino/pvp/*
          itself and the site's code is untouched; the game server only walks you to the table. */
-      objs.push({ t: "rrtable", art: "o_pokertable", x: 16, y: 11, w: 2, h: 2, name: "Russian Roulette: real ZCoins, winner takes all" }); block(g, 16, 11, 2, 2);
+      objs.push({ t: "rrtable", art: "o_rrtable", x: 16, y: 11, w: 2, h: 2, name: "Russian Roulette: real ZCoins, winner takes all" }); block(g, 16, 11, 2, 2);
       for (const [x, y] of [[15, 16], [27, 16]]) { objs.push({ t: "sofa", x, y, w: 2, h: 1, name: "Sofa" }); block(g, x, y, 2, 1); }
       for (const [x, y] of [[14, 9], [29, 9], [14, 13], [29, 13]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
       return { g, objs, blobs: [] };
@@ -1020,7 +1020,7 @@ Object.assign(SCENES, {
       "No more bets once the ball is rolling. I will know.",
       "Zero is green, and zero belongs to the house. Nothing personal."] },
       /* the Russian Roulette dealer (the owner, 2026-09-19): stands behind that table, striped jersey, ponytail, whiskey in hand */
-      { name: "Bino", art: "arbino", x: 17, y: 10, still: true, reach: 3, hair: "#5a3a1e", shirt: "#e8601c", pants: "#1a1a1a", lines: [
+      { name: "Bino", art: "arbino", x: 16, y: 11,   /* (the owner put him ON the table's back-left tile, 2026-09-19: he reads as standing right behind it) */ still: true, reach: 3, hair: "#5a3a1e", shirt: "#e8601c", pants: "#1a1a1a", lines: [
       "Russian Roulette. Twenty ZCoins a seat, last one standing takes the lot. I just load the thing.",
       "Who Dey. Sit down, the clock starts when the first one does.",
       "The whiskey's for me. Steadies the hands. You'd want steady hands on this table.",

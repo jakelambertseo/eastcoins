@@ -94,7 +94,65 @@ export async function ensureColumn(db, table, column, decl) {
   await db.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${decl}`).run().catch(() => {});
 }
 
+/* GAMBASCAPE'S TWO SHARED ROOMS (2026-09-19): classic roulette and the Fight Pit. They run on this engine like the Wheel
+   (one round for the whole room, one bet a player a round, fair prices quoted and the play's own edge multiplied in at
+   settle) and are `hidden`: they have no page or floor card on eastcoin.vip, only a window in GambaScape.
+
+   ROULETTE (key "roul": "roulette" is the PvP Russian Roulette table everywhere else in this codebase). A single-zero
+   wheel, 37 pockets. ONE spot a spin (the owner's call): an even-money spot, a dozen, or one number. The FAIR prices:
+   18 pockets in 37 is 37/18, a dozen 37/12, a number 37. n = floor(sha256(seed:roul) as a fraction x 37).
+
+   THE FIGHT PIT (key "pit"). Two fighters from PIT_POOL. WHO IS FIGHTING is a pure function of the ROUND NUMBER, which
+   is public, so the card and its prices can be shown before the bets close without touching the seed; WHO WINS is
+   sha256(seed:pit) as a fraction against side a's chance, and the seed stays secret until the round closes. The chance
+   comes from the fighters' levels (square roots, clamped 25-75%); each side's FAIR price is 1 / its chance. PIT_POOL and
+   PIT_TITLES mirror FIGHTS.pool / MOBS levels / FIGHTS.titles in v3/assets/js/eastscape-shared.js so the game can draw the
+   same two monsters: tools/dex-test.mjs fails if they drift. */
+const ROUL_RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+const ROUL_SPOTS = {
+  red: (n) => ROUL_RED.has(n), black: (n) => n > 0 && !ROUL_RED.has(n), odd: (n) => n > 0 && n % 2 === 1, even: (n) => n > 0 && n % 2 === 0,
+  low: (n) => n >= 1 && n <= 18, high: (n) => n >= 19, d1: (n) => n >= 1 && n <= 12, d2: (n) => n >= 13 && n <= 24, d3: (n) => n >= 25
+};
+const ROUL_PICKS = [...Object.keys(ROUL_SPOTS), ...Array.from({ length: 37 }, (_, n) => `n${n}`)];
+export const PIT_POOL = [["chicken", 1], ["cow", 2], ["rotten", 4], ["olive", 6], ["hornworm", 7], ["boar", 8], ["goat", 12], ["highwayman", 12], ["gnasher", 18], ["moth", 22], ["taxwraith", 28], ["ghoul", 30], ["chandelier", 34], ["understudy", 38], ["ram", 42], ["revenant", 45], ["angel", 48], ["goose", 55]];
+export const PIT_TITLES = 12, PIT_MIN_P = 0.25, PIT_MAX_P = 0.75;
+/** The card for a round: two different fighters, a title each, side a's chance, and both fair prices. From the round number alone. */
+export async function pitCard(no) {
+  const h = await sha256(`pit:card:${no}`), at = (i, mod) => parseInt(h.slice(i * 6, i * 6 + 6), 16) % mod;
+  const a = at(0, PIT_POOL.length); let b = at(1, PIT_POOL.length - 1); if (b >= a) b += 1;
+  const ta = at(2, PIT_TITLES); let tb = at(3, PIT_TITLES - 1); if (tb >= ta) tb += 1;
+  const sa = Math.sqrt(PIT_POOL[a][1]), sb = Math.sqrt(PIT_POOL[b][1]), p = Math.max(PIT_MIN_P, Math.min(PIT_MAX_P, sa / (sa + sb)));
+  return { no, f: [{ t: PIT_POOL[a][0], title: ta }, { t: PIT_POOL[b][0], title: tb }], p: [p, 1 - p], price: { a: 1 / p, b: 1 / (1 - p) } };
+}
+
 export const GAMES = {
+  roul: {
+    key: "roul", name: "Roulette", hidden: true,
+    cycleMs: 60 * 1000, betMs: 40 * 1000,
+    picks: ROUL_PICKS,
+    payout: Object.fromEntries(ROUL_PICKS.map((k) => [k, ROUL_SPOTS[k] ? (k[0] === "d" ? 37 / 12 : 37 / 18) : 37])),
+    async outcome(seed) {
+      const h = await sha256(`${seed}:roul`);
+      const n = Math.floor((parseInt(h.slice(0, 8), 16) / 0x100000000) * 37);
+      return { n, color: n === 0 ? "green" : ROUL_RED.has(n) ? "red" : "black" };
+    },
+    wins: (pick, result) => (ROUL_SPOTS[pick] ? ROUL_SPOTS[pick](result.n) : pick === `n${result.n}`),
+    describe: (result) => `${result.n} ${result.color}`
+  },
+  pit: {
+    key: "pit", name: "The Fight Pit", hidden: true,
+    cycleMs: 90 * 1000, betMs: 40 * 1000,
+    picks: ["a", "b"],
+    payout: { a: 2, b: 2 },   // (never used: priceFor below prices each round's card)
+    cardFor: (no) => pitCard(no),
+    async priceFor(pick, no) { return (await pitCard(no)).price[pick]; },
+    async outcome(seed, no) {
+      const h = await sha256(`${seed}:pit`), u = parseInt(h.slice(0, 8), 16) / 0x100000000, card = await pitCard(no);
+      return { winner: u < card.p[0] ? "a" : "b", draw: u, t: card.f[u < card.p[0] ? 0 : 1].t };
+    },
+    wins: (pick, result) => pick === result.winner,
+    describe: (result) => result.t
+  },
   wheel: {
     key: "wheel",
     name: "Wheel",
@@ -235,7 +293,7 @@ export async function settleRound(env, db, game, no, now = Date.now()) {
   const round = await ensureRound(db, game, no);
   let result = parseResult(round.result);
   if (!result) {
-    result = await game.outcome(round.seed);
+    result = await game.outcome(round.seed, no);   // (the round number: the Fight Pit's card is a function of it)
     const claimed = await db
       .prepare(`UPDATE casino_rounds SET result = ?, settled_at = CURRENT_TIMESTAMP WHERE game = ? AND no = ? AND result IS NULL`)
       .bind(JSON.stringify(result), game.key, no)
@@ -261,7 +319,8 @@ export async function settleRound(env, db, game, no, now = Date.now()) {
       continue;
     }
     const edge = await edgeFor(round.seed);
-    const payout = Math.round(Number(b.wager) * Number(game.payout[b.pick] || 0) * edge);
+    const price = game.priceFor ? await game.priceFor(b.pick, no) : game.payout[b.pick];
+    const payout = Math.round(Number(b.wager) * Number(price || 0) * edge);
     const opId = newId("op");
     const begun = await beginOperation(db, {
       id: opId,
@@ -346,7 +405,7 @@ export function publicConfig(game, canBet) {
     segments: game.segments || undefined,
     runners: game.runners ? game.runners.map((r) => ({ key: r.key, name: r.name, pays: r.pays, p: Math.round(r.p * 1000) / 1000, color: r.color })) : undefined,
     hourCap: HOUR_WIN_CAP,
-    paused: Boolean(game.paused),
+    paused: Boolean(game.paused), hidden: Boolean(game.hidden),
     canBet: canBet && !game.paused
   };
 }

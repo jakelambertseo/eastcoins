@@ -43,8 +43,9 @@ export async function onRequestGet(context) {
       result,
       seed: result ? row.seed : null
     },
+    card: game.cardFor ? await game.cardFor(round.no) : undefined,   // the Fight Pit: who is fighting this round, and at what price
     bets,
-    last: prevRow ? { no: prevRow.no, result: parse(prevRow.result), hash: prevRow.hash, seed: prevRow.seed, bets: last } : null,
+    last: prevRow ? { no: prevRow.no, result: parse(prevRow.result), hash: prevRow.hash, seed: prevRow.seed, bets: last, card: game.cardFor ? await game.cardFor(prevRow.no) : undefined } : null,
     room,
     me: user ? { id: user.id, login: user.login, displayName: user.displayName, bet: mine, betsThisHour: await betsLastHour(db, game, user.id), hourNet: await hourlyNet(db, user.id) } : null
   });
