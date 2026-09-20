@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 62;
+export const VERSION = 63;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -717,6 +717,9 @@ Object.assign(SCENES, {
       for (let y = 19; y <= 22; y++) for (let x = 15; x <= 25; x++) g[y][x] = "~";
       for (const x of [16, 18, 20, 22, 24]) objs.push({ t: "spot", x, y: 19, name: "Fishing spot" });
       for (let x = 14; x <= 26; x++) keep.push([x, 18], [x, 17]);
+      /* A BANK CHEST in the Yard (the owner, 2026-09-19): a `booth` in a chest's clothes, so it IS the bank, the same
+         window and the same rules as Aurelia's counters in town (tickets still can't go in). Saves the walk. */
+      objs.push({ t: "booth", art: "o_chest", x: 35, y: 16, name: "Bank chest" }); g[16][35] = "#";
       objs.push({ t: "sign", x: 27, y: 15, name: "GEAR, CHIPS AND PRIZES are all at the Prize Counter now: the big ruby in the middle of the casino. Bring your tickets." }); g[15][27] = "#";
       objs.push({ t: "sign", x: 41, y: 11, name: "THE YARD. Click a monster to fight it. Chickens by the gate; it gets meaner the further west you walk. Nothing here attacks first. The pond is for anyone who'd rather fish." }); g[11][41] = "#";
       objs.push({ t: "sign", x: 3, y: 11, name: "West: the Gloam. Bigger monsters, bigger tickets, better fish. Combat 12 or so." }); g[11][3] = "#";
